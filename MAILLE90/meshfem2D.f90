@@ -7,7 +7,7 @@
 !                         Dimitri Komatitsch
 !          Universite de Pau et des Pays de l'Adour, France
 !
-!                         (c) December 2004
+!                         (c) January 2005
 !
 !========================================================================
 
@@ -51,8 +51,8 @@
 
   character(len=50) interfacesfile,title
 
-  integer imatnum,inumabs,inumelem
-  integer nelemabs,npgeo,nspec
+  integer imatnum,inumabs,inumsurface,inumelem
+  integer nelemabs,nelemsurface,npgeo,nspec
   integer k,icol,ili,istepx,istepz,ix,iz,irec,i,j
   integer ixdebzone,ixfinzone,izdebzone,izfinzone,imodnum
   integer izone,imodele,nbzone,nbmodeles
@@ -63,7 +63,7 @@
 
   logical codehaut,codebas,codegauche,codedroite
 
-  double precision tang1,tangN,vpzone,vszone
+  double precision tang1,tangN,vpzone,vszone,poisson_ratio
   double precision cutvect,xspacerec,zspacerec
   double precision anglerec,xfin,zfin,xdeb,zdeb,xmin,xmax,dt
   double precision rhoread,cpread,csread,aniso3read,aniso4read
@@ -71,7 +71,7 @@
   logical interpol,gnuplot,readmodel,outputgrid
   logical abshaut,absbas,absgauche,absdroite
   logical source_surf,enreg_surf,meshvect,initialfield,modelvect,boundvect
-  logical TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
+  logical ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
 
   integer, external :: num
   double precision, external :: value_spline
@@ -110,6 +110,7 @@
   call read_value_integer(IIN_PAR,IGNORE_JUNK,ngnod)
   call read_value_logical(IIN_PAR,IGNORE_JUNK,initialfield)
   call read_value_logical(IIN_PAR,IGNORE_JUNK,readmodel)
+  call read_value_logical(IIN_PAR,IGNORE_JUNK,ELASTIC)
   call read_value_logical(IIN_PAR,IGNORE_JUNK,TURN_ANISOTROPY_ON)
   call read_value_logical(IIN_PAR,IGNORE_JUNK,TURN_ATTENUATION_ON)
 
@@ -195,7 +196,7 @@
   call read_value_double_precision(IIN_PAR,IGNORE_JUNK,factor)
 
 ! if Dirac source time function, use a very thin Gaussian instead
-  if(time_function_type == 3) f0 = 1.d0 / (5.d0 * dt)
+  if(time_function_type == 4) f0 = 1.d0 / (5.d0 * dt)
 
 ! time delay of the source in seconds, use a 20 % security margin
   t0 = 1.20d0 / f0
@@ -205,7 +206,7 @@
   print *,'Position xs, zs = ',xs,zs
   print *,'Frequency, delay = ',f0,t0
   print *,'Source type (1=force, 2=explosion): ',source_type
-  print *,'Time function type (1=Ricker, 2=Gaussian, 3=Dirac): ',time_function_type
+  print *,'Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac): ',time_function_type
   print *,'Angle of the source if force = ',angle
   print *,'Multiplying factor = ',factor
 
@@ -266,15 +267,19 @@
 
   do imodele=1,nbmodeles
     read(IIN_PAR,*) i,icodematread,rhoread,cpread,csread,aniso3read,aniso4read
-    if(i < 1 .or. i > nbmodeles) stop 'Wrong material point number'
+    if(i < 1 .or. i > nbmodeles) stop 'Wrong model number!!'
     icodemat(i) = icodematread
     rho(i) = rhoread
     cp(i) = cpread
     cs(i) = csread
+
+    if(rho(i) <= 0.d0 .or. cp(i) <= 0.d0 .or. cs(i) < 0.d0) stop 'negative value of velocity or density'
+
+! check that Cs = 0 if acoustic simulation
+    if(.not. ELASTIC .and. cs(i) > 0.0001) stop 'must have Cs = 0 for acoustic model'
+
     aniso3(i) = aniso3read
     aniso4(i) = aniso4read
-    if(i <= 0) stop 'Negative model number not allowed !!'
-    if(rho(i) <= 0.d0 .or. cp(i) <= 0.d0 .or. cs(i) < 0.d0) stop 'negative value of velocity or density'
   enddo
 
   print *
@@ -321,8 +326,9 @@
     print *,'vp = ',vpzone
     print *,'vs = ',vszone
     print *,'rho = ',rho(imodnum)
-    print *,'Poisson''s ratio = ', &
-      0.5d0*(vpzone*vpzone-2.d0*vszone*vszone) / (vpzone*vpzone-vszone*vszone)
+    poisson_ratio = 0.5d0*(vpzone*vpzone-2.d0*vszone*vszone) / (vpzone*vpzone-vszone*vszone)
+    print *,'Poisson''s ratio = ',poisson_ratio
+    if(poisson_ratio <= -1.00001d0 .or. poisson_ratio >= 0.50001d0) stop 'incorrect value of Poisson''s ratio'
   else
     print *,'Model # ',imodnum,' anisotrope'
     print *,'c11 = ',cp(imodnum)
@@ -369,6 +375,20 @@
   print *
   print *,'Les elements de controle sont des elements ',ngnod,' noeuds'
   print *
+
+!---
+
+! perform basic checks on parameters read
+
+! for acoustic
+  if(TURN_ANISOTROPY_ON .and. .not. ELASTIC) stop 'currently cannot have anisotropy in acoustic simulation'
+
+  if(TURN_ATTENUATION_ON .and. .not. ELASTIC) stop 'currently cannot have attenuation in acoustic simulation'
+
+  if(source_type == 2 .and. .not. ELASTIC) stop 'currently cannot have moment tensor source in acoustic simulation'
+
+! for attenuation
+  if(TURN_ANISOTROPY_ON .and. TURN_ATTENUATION_ON) stop 'cannot have anisotropy and attenuation both turned on in current version'
 
 !---
 
@@ -593,8 +613,8 @@
   write(15,*) 'sismostype vecttype'
   write(15,*) sismostype,vecttype
 
-  write(15,*) 'readmodel outputgrid TURN_ANISOTROPY_ON TURN_ATTENUATION_ON'
-  write(15,*) readmodel,outputgrid,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
+  write(15,*) 'readmodel outputgrid ELASTIC TURN_ANISOTROPY_ON TURN_ATTENUATION_ON'
+  write(15,*) readmodel,outputgrid,ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
 
   write(15,*) 'ncycl dtinc'
   write(15,*) nt,dt
@@ -617,7 +637,6 @@
 !
 !--- introduction des bords absorbants
 !
-
   nelemabs = 0
   if(absbas) nelemabs = nelemabs + nx
   if(abshaut) nelemabs = nelemabs + nx
@@ -633,8 +652,16 @@
   if(abshaut .and. absgauche) nelemabs = nelemabs - 1
   if(abshaut .and. absdroite) nelemabs = nelemabs - 1
 
-  write(15,*) 'numat ngnod nspec pointsdisp nelemabs'
-  write(15,*) nbmodeles,ngnod,nspec,pointsdisp,nelemabs
+!
+!--- introduction de la surface libre si milieu acoustique
+!
+  nelemsurface = nx
+
+! on a deux fois trop d'elements si elements 9 noeuds
+  if(ngnod == 9) nelemsurface = nelemsurface / 2
+
+  write(15,*) 'numat ngnod nspec pointsdisp nelemabs nelemsurface'
+  write(15,*) nbmodeles,ngnod,nspec,pointsdisp,nelemabs,nelemsurface
 
   write(15,*) 'Material sets (num 0 rho vp vs 0 0) or (num 1 rho c11 c13 c33 c44)'
   do i=1,nbmodeles
@@ -671,7 +698,6 @@
 !
 !--- sauvegarde des bords absorbants
 !
-
   print *
   print *,'Au total il y a ',nelemabs,' elements absorbants'
   print *
@@ -706,6 +732,29 @@
   enddo
   endif
 
+!
+!--- sauvegarde de la surface libre
+!
+  print *
+  print *,'Au total il y a ',nelemsurface,' elements a la surface libre'
+  print *
+
+! generer la liste des elements a la surface libre
+  if(nelemsurface > 0) then
+  write(15,*) 'Liste des elements a la surface libre'
+  write(15,*) abshaut
+  inumsurface = 0
+  do iz = 1,nzread
+  do ix = 1,nxread
+    inumelem = (iz-1)*nxread + ix
+    if(iz == nzread) then
+      inumsurface = inumsurface + 1
+      write(15,*) inumsurface,inumelem
+    endif
+  enddo
+  enddo
+  endif
+
   close(15)
 
  10 format('')
@@ -718,7 +767,7 @@
 ! routines de maillage
 ! ********************
 
-! --- numero global du noeud
+!--- numero global du noeud
 
   integer function num(i,j,nx)
 
@@ -730,7 +779,7 @@
 
   end function num
 
-! --- representation des interfaces par un spline
+!--- representation des interfaces par un spline
 
   double precision function value_spline(x,xinterface,zinterface,coefs_interface,npoints_interface)
 
@@ -830,18 +879,6 @@
 
   end subroutine splint
 
-
-
-
-
-
-
-
-
-
-
-
-
 !--------------------
 
   subroutine read_value_integer(iin,ignore_junk,value_to_read)
@@ -881,15 +918,6 @@
  200 format(a100)
 
   end subroutine read_value_integer
-
-
-
-
-
-
-
-
-
 
 !--------------------
 
@@ -931,14 +959,6 @@
 
   end subroutine read_value_double_precision
 
-
-
-
-
-
-
-
-
 !--------------------
 
   subroutine read_value_logical(iin,ignore_junk,value_to_read)
@@ -979,14 +999,6 @@
 
   end subroutine read_value_logical
 
-
-
-
-
-
-
-
-
 !--------------------
 
   subroutine read_value_string(iin,ignore_junk,value_to_read)
@@ -1026,7 +1038,4 @@
  200 format(a100)
 
   end subroutine read_value_string
-
-
-
 

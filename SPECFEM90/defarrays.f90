@@ -7,14 +7,14 @@
 !                         Dimitri Komatitsch
 !          Universite de Pau et des Pays de l'Adour, France
 !
-!                          (c) December 2004
+!                          (c) January 2005
 !
 !========================================================================
 
   subroutine defarrays(vpext,vsext,rhoext,density,elastcoef, &
           xigll,zigll,xix,xiz,gammax,gammaz,a11,a12, &
           ibool,kmato,coord,npoin,rsizemin,rsizemax, &
-          cpoverdxmin,cpoverdxmax,rlambdaSmin,rlambdaSmax,rlambdaPmin,rlambdaPmax, &
+          cpoverdxmin,cpoverdxmax,lambdaSmin,lambdaSmax,lambdaPmin,lambdaPmax, &
           vpmin,vpmax,readmodel,nspec,numat,source_type,ix_source,iz_source,ispec_source)
 
 ! define all the arrays for the variational formulation
@@ -46,14 +46,14 @@
   double precision rhoext(npoin)
 
   double precision vsmin,vsmax,densmin,densmax
-  double precision rKmod,rlambda,rmu,denst
-  double precision rKvol,cploc,csloc,x0,z0
+  double precision lambdaplus2mu,lambda,mu,denst
+  double precision kappa,cploc,csloc,x0,z0
   double precision x1,z1,x2,z2,rdist1,rdist2,rapportmin,rapportmax
-  double precision rlambmin,rlambmax
+  double precision lambdamin,lambdamax
   double precision flagxprime,flagzprime,sig0
 
   double precision rsizemin,rsizemax,cpoverdxmin,cpoverdxmax, &
-    rlambdaSmin,rlambdaSmax,rlambdaPmin,rlambdaPmax,vpmin,vpmax
+    lambdaSmin,lambdaSmax,lambdaPmin,lambdaPmax,vpmin,vpmax
 
   logical readmodel
 
@@ -81,23 +81,24 @@
   cpoverdxmin = HUGEVAL
   cpoverdxmax = -HUGEVAL
 
-  rlambdaPmin = HUGEVAL
-  rlambdaSmin = HUGEVAL
-  rlambdaPmax = -HUGEVAL
-  rlambdaSmax = -HUGEVAL
+  lambdaPmin = HUGEVAL
+  lambdaSmin = HUGEVAL
+  lambdaPmax = -HUGEVAL
+  lambdaSmax = -HUGEVAL
 
   do ispec=1,nspec
 
- material = kmato(ispec)
+    material = kmato(ispec)
 
- rlambda = elastcoef(1,material)
- rmu    = elastcoef(2,material)
- rKmod  = elastcoef(3,material)
- denst  = density(material)
+    lambda = elastcoef(1,material)
+    mu = elastcoef(2,material)
+    lambdaplus2mu  = elastcoef(3,material)
+    denst = density(material)
 
- rKvol  = rlambda + 2.d0*rmu/3.d0
- cploc = dsqrt((rKvol + 4.d0*rmu/3.d0)/denst)
- csloc = dsqrt(rmu/denst)
+    kappa = lambda + 2.d0*mu/3.d0
+
+    cploc = sqrt((kappa + 4.d0*mu/3.d0)/denst)
+    csloc = sqrt(mu/denst)
 
   do j=1,NGLLZ
     do i=1,NGLLX
@@ -108,20 +109,20 @@
     cploc = vpext(ipointnum)
     csloc = vsext(ipointnum)
     denst = rhoext(ipointnum)
-    rmu   = denst*csloc*csloc
-    rlambda  = denst*cploc*cploc - 2.d0*rmu
-    rKmod  = rlambda + 2.d0*rmu
+    mu   = denst*csloc*csloc
+    lambda  = denst*cploc*cploc - 2.d0*mu
+    lambdaplus2mu  = lambda + 2.d0*mu
   endif
 
 !--- calculer min et max du modele de vitesse et densite
-  vpmin = dmin1(vpmin,cploc)
-  vpmax = dmax1(vpmax,cploc)
+  vpmin = min(vpmin,cploc)
+  vpmax = max(vpmax,cploc)
 
-  vsmin = dmin1(vsmin,csloc)
-  vsmax = dmax1(vsmax,csloc)
+  vsmin = min(vsmin,csloc)
+  vsmax = max(vsmax,csloc)
 
-  densmin = dmin1(densmin,denst)
-  densmax = dmax1(densmax,denst)
+  densmin = min(densmin,denst)
+  densmax = max(densmax,denst)
 
 !--- stocker parametres pour verifs diverses
   if(i < NGLLX .and. j < NGLLZ) then
@@ -133,18 +134,18 @@
     x2 = coord(1,ibool(i,j+1,ispec))
     z2 = coord(2,ibool(i,j+1,ispec))
 
-    rdist1 = dsqrt((x1-x0)**2 + (z1-z0)**2)
-    rdist2 = dsqrt((x2-x0)**2 + (z2-z0)**2)
+    rdist1 = sqrt((x1-x0)**2 + (z1-z0)**2)
+    rdist2 = sqrt((x2-x0)**2 + (z2-z0)**2)
 
-    rsizemin = dmin1(rsizemin,rdist1)
-    rsizemin = dmin1(rsizemin,rdist2)
-    rsizemax = dmax1(rsizemax,rdist1)
-    rsizemax = dmax1(rsizemax,rdist2)
+    rsizemin = min(rsizemin,rdist1)
+    rsizemin = min(rsizemin,rdist2)
+    rsizemax = max(rsizemax,rdist1)
+    rsizemax = max(rsizemax,rdist2)
 
-    rapportmin = cploc / dmax1(rdist1,rdist2)
-    rapportmax = cploc / dmin1(rdist1,rdist2)
-    cpoverdxmin = dmin1(cpoverdxmin,rapportmin)
-    cpoverdxmax = dmax1(cpoverdxmax,rapportmax)
+    rapportmin = cploc / max(rdist1,rdist2)
+    rapportmax = cploc / min(rdist1,rdist2)
+    cpoverdxmin = min(cpoverdxmin,rapportmin)
+    cpoverdxmax = max(cpoverdxmax,rapportmax)
 
     x0 = coord(1,ibool(1,1,ispec))
     z0 = coord(2,ibool(1,1,ispec))
@@ -153,18 +154,18 @@
     x2 = coord(1,ibool(1,NGLLZ,ispec))
     z2 = coord(2,ibool(1,NGLLZ,ispec))
 
-    rdist1 = dsqrt((x1-x0)**2 + (z1-z0)**2)
-    rdist2 = dsqrt((x2-x0)**2 + (z2-z0)**2)
+    rdist1 = sqrt((x1-x0)**2 + (z1-z0)**2)
+    rdist2 = sqrt((x2-x0)**2 + (z2-z0)**2)
 
-    rlambmin = cploc/dmax1(rdist1,rdist2)
-    rlambmax = cploc/dmin1(rdist1,rdist2)
-    rlambdaPmin = dmin1(rlambdaPmin,rlambmin)
-    rlambdaPmax = dmax1(rlambdaPmax,rlambmax)
+    lambdamin = cploc/max(rdist1,rdist2)
+    lambdamax = cploc/min(rdist1,rdist2)
+    lambdaPmin = min(lambdaPmin,lambdamin)
+    lambdaPmax = max(lambdaPmax,lambdamax)
 
-    rlambmin = csloc/dmax1(rdist1,rdist2)
-    rlambmax = csloc/dmin1(rdist1,rdist2)
-    rlambdaSmin = dmin1(rlambdaSmin,rlambmin)
-    rlambdaSmax = dmax1(rlambdaSmax,rlambmax)
+    lambdamin = csloc/max(rdist1,rdist2)
+    lambdamax = csloc/min(rdist1,rdist2)
+    lambdaSmin = min(lambdaSmin,lambdamin)
+    lambdaSmax = max(lambdaSmax,lambdamax)
 
   endif
 

@@ -123,13 +123,13 @@
 
   gammaf = one
 
-  if (x == -half) gammaf = -two*dsqrt(pi)
-  if (x ==  half) gammaf =  dsqrt(pi)
+  if (x == -half) gammaf = -two*sqrt(pi)
+  if (x ==  half) gammaf =  sqrt(pi)
   if (x ==  one ) gammaf =  one
   if (x ==  two ) gammaf =  one
-  if (x ==  1.5d0) gammaf =  dsqrt(pi)/2.d0
-  if (x ==  2.5d0) gammaf =  1.5d0*dsqrt(pi)/2.d0
-  if (x ==  3.5d0) gammaf =  2.5d0*1.5d0*dsqrt(pi)/2.d0
+  if (x ==  1.5d0) gammaf =  sqrt(pi)/2.d0
+  if (x ==  2.5d0) gammaf =  1.5d0*sqrt(pi)/2.d0
+  if (x ==  3.5d0) gammaf =  2.5d0*1.5d0*sqrt(pi)/2.d0
   if (x ==  3.d0 ) gammaf =  2.d0
   if (x ==  4.d0 ) gammaf = 6.d0
   if (x ==  5.d0 ) gammaf = 24.d0
@@ -173,15 +173,15 @@
 
   xlast = 0.d0
   n   = np-1
-  dth = 4.d0*datan(1.d0)/(2.d0*dble(n)+2.d0)
+  dth = 4.d0*atan(1.d0)/(2.d0*dble(n)+2.d0)
   p = 0.d0
   pd = 0.d0
   jmin = 0
   do j=1,np
    if(j == 1) then
-      x = dcos((2.d0*(dble(j)-1.d0)+1.d0)*dth)
+      x = cos((2.d0*(dble(j)-1.d0)+1.d0)*dth)
    else
-      x1 = dcos((2.d0*(dble(j)-1.d0)+1.d0)*dth)
+      x1 = cos((2.d0*(dble(j)-1.d0)+1.d0)*dth)
       x2 = xlast
       x  = (x1+x2)/2.d0
    endif

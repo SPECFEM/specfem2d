@@ -18,6 +18,7 @@ nx                              = 80             ! number of elements along X
 ngnod                           = 4              ! noeuds de controle pour blocs (4 ou 9)
 initialfield                    = .false.        ! use a plane wave as source or not
 readmodel                       = .false.        ! read external earth model or not
+ELASTIC                         = .true.         ! elastic or acoustic simulation
 TURN_ANISOTROPY_ON              = .false.        ! turn anisotropy on or off
 TURN_ATTENUATION_ON             = .false.        ! turn attenuation on or off
 #
@@ -39,7 +40,7 @@ source_surf                     = .true.         ! source dans le volume ou a la
 xs                              = 2000.          ! source location x in meters
 zs                              = 1500.          ! source location z in meters
 source_type                     = 1              ! force = 1 or explosion = 2
-time_function_type              = 1              ! Ricker = 1, Gaussian = 2, Dirac = 3
+time_function_type              = 1              ! Ricker = 1, first derivative = 2, Gaussian = 3, Dirac = 4
 f0                              = 10.0           ! dominant source frequency (Hz) if not Dirac
 angle                           = 0.             ! angle of the source (for a force only)
 factor                          = 1.d10          ! amplification factor
@@ -71,7 +72,7 @@ outputgrid                      = .false.        ! save the grid in a text file 
 #
 # velocity and density model (nx,nz)
 #
-nbmodels                        = 3              ! nb de modeles differents (rho,vp,vs)
+nbmodels                        = 3              ! nb de modeles differents (0,rho,vp,vs,0,0)
 1 0 2700.d0 3000.d0 1732.051d0 0 0
 2 0 2500.d0 2700.d0 1558.845d0 0 0
 3 0 2200.d0 2500.d0 1443.375d0 0 0
