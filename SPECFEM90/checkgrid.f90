@@ -11,7 +11,7 @@
 !
 !========================================================================
 
-  subroutine checkgrid(deltat,gltfu,initialfield,rsizemin,rsizemax, &
+  subroutine checkgrid(deltat,f0,t0,initialfield,rsizemin,rsizemax, &
     cpoverdxmin,cpoverdxmax,rlamdaSmin,rlamdaSmax,rlamdaPmin,rlamdaPmax)
 
 !
@@ -22,13 +22,11 @@
 
   include "constants.h"
 
-  double precision gltfu(20)
+  double precision f0,t0
   double precision deltat,rsizemin,rsizemax,cpoverdxmin,cpoverdxmax, &
     rlamdaSmin,rlamdaSmax,rlamdaPmin,rlamdaPmax
 
   logical initialfield
-
-  double precision f0,t0
 
 !
 !----  verification taille de grille min et max
@@ -48,9 +46,6 @@
   print *
 
   if(.not. initialfield) then
-
-    f0 = gltfu(5)
-    t0 = gltfu(6)
 
     print *,' Onset time = ',t0
     print *,' Fundamental period = ',1.d0/f0

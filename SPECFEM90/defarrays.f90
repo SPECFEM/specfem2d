@@ -13,9 +13,9 @@
 
   subroutine defarrays(vpext,vsext,rhoext,density,elastcoef, &
           xigll,zigll,xix,xiz,gammax,gammaz,a11,a12, &
-          ibool,kmato,coord,gltfu,npoin,rsizemin,rsizemax, &
-          cpoverdxmin,cpoverdxmax,rlambdaSmin,rlambdaSmax, &
-          rlambdaPmin,rlambdaPmax,vpmin,vpmax,ireadmodel,nspec,numat)
+          ibool,kmato,coord,npoin,rsizemin,rsizemax, &
+          cpoverdxmin,cpoverdxmax,rlambdaSmin,rlambdaSmax,rlambdaPmin,rlambdaPmax, &
+          vpmin,vpmax,readmodel,nspec,numat,source_type,ix_source,iz_source,ispec_source)
 
 ! define all the arrays for the variational formulation
 
@@ -24,7 +24,7 @@
   include "constants.h"
 
   integer i,j,ispec,material,ipointnum,npoin,nspec,numat
-  integer isourx,isourz,ielems,ir,is
+  integer ix_source,iz_source,ispec_source,ir,is,source_type
 
   integer kmato(nspec),ibool(NGLLX,NGLLX,nspec)
 
@@ -41,7 +41,6 @@
 
   double precision xigll(NGLLX),zigll(NGLLZ)
 
-  double precision gltfu(20)
   double precision vpext(npoin)
   double precision vsext(npoin)
   double precision rhoext(npoin)
@@ -56,7 +55,7 @@
   double precision rsizemin,rsizemax,cpoverdxmin,cpoverdxmax, &
     rlambdaSmin,rlambdaSmax,rlambdaPmin,rlambdaPmax,vpmin,vpmax
 
-  logical ireadmodel
+  logical readmodel
 
   double precision, external :: lagrange_deriv_GLL
 
@@ -104,7 +103,7 @@
     do i=1,NGLLX
 
 !--- si formulation heterogene pour un modele de vitesse externe
-  if(ireadmodel) then
+  if(readmodel) then
     ipointnum = ibool(i,j,ispec)
     cploc = vpext(ipointnum)
     csloc = vsext(ipointnum)
@@ -182,13 +181,9 @@
   print *
 
 ! seulement si source explosive
-  if(nint(gltfu(2)) == 2) then
+  if(source_type == 2) then
 
-  isourx = nint(gltfu(10))
-  isourz = nint(gltfu(11))
-  ielems = nint(gltfu(12))
-
-  if(isourx == 1 .or. isourx == NGLLX .or. isourz == 1 .or. isourz == NGLLX) &
+  if(ix_source == 1 .or. ix_source == NGLLX .or. iz_source == 1 .or. iz_source == NGLLX) &
         stop 'Explosive source on element edge'
 
 !---- definir a11 et a12 - dirac (schema en croix)
@@ -196,15 +191,15 @@
   sig0 = one
 
   do ir=1,NGLLX
-    flagxprime = lagrange_deriv_GLL(ir-1,isourx-1,xigll,NGLLX)
-    a11(ir,isourz) = a11(ir,isourz) + sig0*xix(isourx,isourz,ielems)*flagxprime
-    a12(ir,isourz) = a12(ir,isourz) + sig0*xiz(isourx,isourz,ielems)*flagxprime
+    flagxprime = lagrange_deriv_GLL(ir-1,ix_source-1,xigll,NGLLX)
+    a11(ir,iz_source) = a11(ir,iz_source) + sig0*xix(ix_source,iz_source,ispec_source)*flagxprime
+    a12(ir,iz_source) = a12(ir,iz_source) + sig0*xiz(ix_source,iz_source,ispec_source)*flagxprime
   enddo
 
   do is=1,NGLLZ
-    flagzprime = lagrange_deriv_GLL(is-1,isourz-1,zigll,NGLLZ)
-    a11(isourx,is) = a11(isourx,is) + sig0*gammax(isourx,isourz,ielems)*flagzprime
-    a12(isourx,is) = a12(isourx,is) + sig0*gammaz(isourx,isourz,ielems)*flagzprime
+    flagzprime = lagrange_deriv_GLL(is-1,iz_source-1,zigll,NGLLZ)
+    a11(ix_source,is) = a11(ix_source,is) + sig0*gammax(ix_source,iz_source,ispec_source)*flagzprime
+    a12(ix_source,is) = a12(ix_source,is) + sig0*gammaz(ix_source,iz_source,ispec_source)*flagzprime
   enddo
 
   endif
