@@ -1,19 +1,23 @@
-!=====================================================================
+
+!========================================================================
 !
-!             P r e m a i l l e u r    F o r t r a n  9 0
-!             -------------------------------------------
-!
-!                           Version 2.0
-!                           -----------
+!                   M E S H F E M 2 D  Version 5.0
+!                   ------------------------------
 !
 !                         Dimitri Komatitsch
-!    Department of Earth and Planetary Sciences - Harvard University
+!          Universite de Pau et des Pays de l'Adour, France
 !
-!                         (c) February 1998
+!                          (c) May 2004
 !
-!=====================================================================
+!========================================================================
 
-  program  maille
+!========================================================================
+!
+!  Mesh generator for SPECFEM2D version 5.0
+!
+!========================================================================
+
+  program meshfem2D
 
   implicit none
 
@@ -35,9 +39,9 @@
   double precision, allocatable :: xtopo(:),ztopo(:),coefs_topo(:), &
       xinterf(:),zinterf(:),coefs_interf(:)
 
-! arrays for the source
-  double precision, allocatable :: xs(:),zs(:),f0(:),t0(:),angle(:),factor(:)
-  integer, allocatable :: isource_type(:),itimetype(:)
+! for the source
+  double precision xs,zs,f0,t0,angle,factor
+  integer isource_type
 
 ! arrays for the receivers
   double precision, allocatable :: xrec(:),zrec(:)
@@ -48,36 +52,34 @@
   character(len=50) interffile,topofile,title
   character(len=15) junk
 
-  integer imatnum,inumabs,inumelem,nelemperio,nxgll,netyp
+  integer imatnum,inumabs,inumelem,netyp
   integer icodehaut,icodebas,icodegauche,icodedroite
-  integer nelemabs,ndime,npgeo,nspel,ndofn,ninterf,ntopo
+  integer nelemabs,npgeo,nspec,ninterf,ntopo
   integer k,icol,ili,istepx,istepz,ncut,ix,iz,irec,i,j
   integer ixdebzone,ixfinzone,izdebzone,izfinzone,imodnum
-  integer izone,imodele,nbzone,nbmodeles,iaffinfo
-  integer itaff,itfirstaff,iptsdisp,isubsamp,nrec,n1ana,n2ana
-  integer irepr,nrec1,nrec2,isamp,nbsources,isismostype,ivecttype
-  integer ngnod,nt,niter,idegpoly,nx,nz,nxread,nzread
-  integer inumelem2,ix2,iz2,inumperio
+  integer izone,imodele,nbzone,nbmodeles
+  integer itaff,iptsdisp,isubsamp,nrec
+  integer isismostype,ivecttype
+  integer ngnod,nt,nx,nz,nxread,nzread
   integer icodematread
 
-  double precision valseuil,freqmaxrep,ratio
+  double precision ratio
   double precision tang1,tangN,vpzone,vszone
-  double precision orig_x,orig_z,sizemax,cutvect,scalex,scalez
-  double precision factorxsu,factorana,xspacerec,zspacerec
-  double precision anglerec,anglerec2,xfin,zfin,xfin2,zfin2,xdeb,zdeb,xmin,xmax
+  double precision cutvect
+  double precision xspacerec,zspacerec
+  double precision anglerec,xfin,zfin,xdeb,zdeb,xmin,xmax
   double precision dt
   double precision rhoread,cpread,csread,aniso3read,aniso4read
 
-  logical interpol,ignuplot,ireadmodel,iavs,ioutputgrid
+  logical interpol,ignuplot,ireadmodel,ioutputgrid
   logical abshaut,absbas,absgauche,absdroite
-  logical periohaut,periogauche
-  logical sismos,isources_surf,ienreg_surf,display
-  logical ivectplot,imeshvect
-  logical iexec,initialfield
-  logical imodelvect,iboundvect,usletter,compenergy
+  logical isource_surf,ienreg_surf
+  logical imeshvect
+  logical initialfield
+  logical imodelvect,iboundvect
 
   integer, external :: num
-  double precision, external :: bottom,botprime,spl,spl_prime,dens
+  double precision, external :: bottom,spl,dens
 
 ! --- code des numeros d'aretes pour les bords absorbants
   integer, parameter :: iaretebas    = 1
@@ -124,12 +126,10 @@
   read(10,1)junk,xmax
   read(10,2)junk,nx
   read(10,2)junk,nz
-  read(10,2)junk,idegpoly
   read(10,2)junk,ngnod
   read(10,1)junk,ratio
   read(10,4)junk,initialfield
   read(10,4)junk,ireadmodel
-  read(10,4)junk,iexec
 
   nxread = nx
   nzread = nz
@@ -150,8 +150,6 @@
   read(10,4)junk,absbas
   read(10,4)junk,absgauche
   read(10,4)junk,absdroite
-  read(10,4)junk,periohaut
-  read(10,4)junk,periogauche
 
 ! skip comment
   read(10,*)
@@ -161,7 +159,6 @@
 ! read time step parameters
   read(10,2)junk,nt
   read(10,1)junk,dt
-  read(10,2)junk,niter
 
 ! skip comment
   read(10,*)
@@ -169,40 +166,22 @@
   read(10,*)
 
 ! read source parameters
-  read(10,2)junk,nbsources
-  read(10,4)junk,isources_surf
-  read(10,1)junk,valseuil
-  read(10,1)junk,freqmaxrep
-  print *,'Nb de sources a lire : ',nbsources
+  read(10,4)junk,isource_surf
+  read(10,1)junk,xs
+  read(10,1)junk,zs
+  read(10,1)junk,f0
+  read(10,1)junk,t0
+  read(10,2)junk,isource_type
+  read(10,1)junk,angle
+  read(10,1)junk,factor
 
-  allocate(xs(nbsources))
-  allocate(zs(nbsources))
-  allocate(f0(nbsources))
-  allocate(t0(nbsources))
-  allocate(isource_type(nbsources))
-  allocate(itimetype(nbsources))
-  allocate(angle(nbsources))
-  allocate(factor(nbsources))
-
-  do i=1,nbsources
-    read(10,*)
-    read(10,1)junk,xs(i)
-    read(10,1)junk,zs(i)
-    read(10,1)junk,f0(i)
-    read(10,1)junk,t0(i)
-    read(10,2)junk,isource_type(i)
-    read(10,2)junk,itimetype(i)
-    read(10,1)junk,angle(i)
-    read(10,1)junk,factor(i)
-
-    print *
-    print *,' Source #',i
-    print *,'Position xs, zs = ',xs(i),zs(i)
-    print *,'Frequency, delay = ',f0(i),t0(i)
-    print *,'Source type (1=force 2=explo) : ',isource_type(i)
-    print *,'Angle of the source if force = ',angle(i)
-    print *,'Multiplying factor = ',factor(i)
-  enddo
+  print *
+  print *,'Source:'
+  print *,'Position xs, zs = ',xs,zs
+  print *,'Frequency, delay = ',f0,t0
+  print *,'Source type (1=force 2=explo) : ',isource_type
+  print *,'Angle of the source if force = ',angle
+  print *,'Multiplying factor = ',factor
 
 ! skip comment
   read(10,*)
@@ -210,68 +189,26 @@
   read(10,*)
 
 ! read receivers line parameters
-  read(10,4)junk,sismos
-  read(10,2)junk,isamp
   read(10,4)junk,ienreg_surf
   read(10,2)junk,isismostype
-  read(10,*)
-  read(10,2)junk,nrec1
+  read(10,2)junk,nrec
   read(10,1)junk,xdeb
   read(10,1)junk,zdeb
   read(10,1)junk,xfin
   read(10,1)junk,zfin
   read(10,1)junk,anglerec
-  read(10,2)junk,irepr
-  read(10,*)
-  read(10,2)junk,nrec2
-  read(10,1)junk,xfin2
-  read(10,1)junk,zfin2
-  read(10,1)junk,anglerec2
-  read(10,*)
-  read(10,1)junk,factorxsu
-  read(10,2)junk,n1ana
-  read(10,2)junk,n2ana
-  read(10,1)junk,factorana
-
-! determination et affichage position ligne de receivers
-  if(nrec2 < 0) stop 'negative value of nrec2 !'
-
-  if(nrec2 == 0) then
-    nrec = nrec1
-  else
-    nrec = nrec1 + nrec2 - 1
-  endif
 
   allocate(xrec(nrec))
   allocate(zrec(nrec))
 
-  if(nrec2 == 0) then
   print *
-  print *,'There are ',nrec,' receivers on a single line'
+  print *,'There are ',nrec,' receivers'
   xspacerec=(xfin-xdeb)/dble(nrec-1)
   zspacerec=(zfin-zdeb)/dble(nrec-1)
   do i=1,nrec
-     xrec(i) = xdeb + dble(i-1)*xspacerec
-     zrec(i) = zdeb + dble(i-1)*zspacerec
+    xrec(i) = xdeb + dble(i-1)*xspacerec
+    zrec(i) = zdeb + dble(i-1)*zspacerec
   enddo
-  else
-  print *
-  print *,'There are ',nrec,' receivers on two lines'
-  print *,'First line contains ',nrec1,' receivers'
-  print *,'Second line contains ',nrec2,' receivers'
-  xspacerec=(xfin-xdeb)/dble(nrec1-1)
-  zspacerec=(zfin-zdeb)/dble(nrec1-1)
-  do i=1,nrec1
-     xrec(i) = xdeb + dble(i-1)*xspacerec
-     zrec(i) = zdeb + dble(i-1)*zspacerec
-  enddo
-  xspacerec=(xfin2-xfin)/dble(nrec2-1)
-  zspacerec=(zfin2-zfin)/dble(nrec2-1)
-  do i=1,nrec2
-     xrec(i+nrec1-1) = xfin + dble(i-1)*xspacerec
-     zrec(i+nrec1-1) = zfin + dble(i-1)*zspacerec
-  enddo
-  endif
 
 ! skip comment
   read(10,*)
@@ -279,11 +216,7 @@
   read(10,*)
 
 ! read display parameters
-  read(10,4)junk,display
   read(10,2)junk,itaff
-  read(10,2)junk,itfirstaff
-  read(10,2)junk,iaffinfo
-  read(10,4)junk,ivectplot
   read(10,2)junk,ivecttype
   read(10,1)junk,cutvect
   read(10,4)junk,imeshvect
@@ -292,16 +225,8 @@
   read(10,4)junk,interpol
   read(10,2)junk,iptsdisp
   read(10,2)junk,isubsamp
-  read(10,1)junk,scalex
-  read(10,1)junk,scalez
-  read(10,1)junk,sizemax
-  read(10,4)junk,usletter
-  read(10,1)junk,orig_x
-  read(10,1)junk,orig_z
   read(10,4)junk,ignuplot
-  read(10,4)junk,iavs
   read(10,4)junk,ioutputgrid
-  read(10,4)junk,compenergy
 
 ! skip comment
   read(10,*)
@@ -444,21 +369,13 @@
 
   if(ngnod /= 4.and.ngnod /= 9) stop 'erreur ngnod different de 4 ou 9 !!'
 
-  if (ngnod == 4) then
   print *
-  print *,'Le maillage comporte ',nx,' x ',nz,' elements'
-  print *,'La grille equivalente a une taille de ', &
-        nx*idegpoly + 1,' x ',nz*idegpoly + 1,' points (', &
-        (nx*idegpoly + 1)*(nz*idegpoly + 1),' points)'
+  if(ngnod == 4) then
+    print *,'Le maillage comporte ',nx,' x ',nz,' elements'
   else
-  print *
-  print *,'Le maillage comporte ',nx/2,' x ',nz/2,' elements'
-  print *,'La grille equivalente a une taille de ', &
-        nx*idegpoly/2 + 1,' x ',nz*idegpoly/2 + 1,' points (', &
-        (nx*idegpoly/2 + 1)*(nz*idegpoly/2 + 1),' points)'
-
+    print *,'Le maillage comporte ',nx/2,' x ',nz/2,' elements'
   endif
-  print *,'Chaque element comporte ',idegpoly+1,' points dans chaque direction'
+  print *
   print *,'Les elements de controle sont des elements ',ngnod,' noeuds'
   print *
 
@@ -540,12 +457,10 @@
 
 ! *** eventuellement modifier sources si sources en surface
   print *
-  print *, 'Position (x,z) des ',nbsources,' sources'
+  print *, 'Position (x,z) de la source'
   print *
-  do i=1,nbsources
-   if(isources_surf) zs(i) = spl(xs(i),xtopo,ztopo,coefs_topo,ntopo)
-   print *, 'Source ',i,' = ',xs(i),zs(i)
-  enddo
+  if(isource_surf) zs = spl(xs,xtopo,ztopo,coefs_topo,ntopo)
+  print *, 'Source = ',xs,zs
 
 ! *** eventuellement modifier recepteurs si enregistrement en surface
   print *
@@ -716,86 +631,55 @@
   open(unit=15,file='../SPECFEM90/DataBase',status='unknown')
 
   write(15,*) '#'
-  write(15,*) '# Base de Donnees pour Specfem - Premailleur Fortran 90'
-  write(15,*) '# ',title
-  write(15,*) '# Dimitri Komatitsch, (c) EPS - Harvard February 1998'
+  write(15,*) '# DataBase for SPECFEM2D version 5.0'
+  write(15,*) '# Dimitri Komatitsch, (c) University of Pau, France, May 2004'
   write(15,*) '#'
 
   write(15,*) 'Titre simulation'
   write(15,40) title
 
-  ndofn = 2
-  ndime = 2
   npgeo = (nx+1)*(nz+1)
   if(ngnod == 4) then
-    nspel = nx*nz
+    nspec = nx*nz
   else
-    nspel = nx*nz/4
+    nspec = nx*nz/4
   endif
-  write(15,*) 'ndofn ndime npgeo'
-  write(15,*) ndofn,ndime,npgeo
+  write(15,*) 'npgeo'
+  write(15,*) npgeo
 
-  write(15,*) 'display ignuplot interpol'
-  write(15,*) display,ignuplot,interpol
+  write(15,*) 'ignuplot interpol'
+  write(15,*) ignuplot,interpol
 
-  write(15,*) 'itaff itfirstaff icolor inumber'
-  write(15,*) itaff,itfirstaff,0,0
+  write(15,*) 'itaff icolor inumber'
+  write(15,*) itaff,0,0
 
-  write(15,*) 'ivectplot imeshvect imodelvect iboundvect cutvect isubsamp'
-  write(15,*) ivectplot,imeshvect,imodelvect,iboundvect,cutvect,isubsamp
+  write(15,*) 'imeshvect imodelvect iboundvect cutvect isubsamp'
+  write(15,*) imeshvect,imodelvect,iboundvect,cutvect,isubsamp
 
-  write(15,*) 'scalex scalez sizemax angle rapport USletter'
-  write(15,*) scalex,scalez,sizemax,20.,0.40,usletter
+  write(15,*) 'nrec anglerec'
+  write(15,*) nrec,anglerec
 
-  write(15,*) 'orig_x orig_z isymbols'
-  write(15,*) orig_x,orig_z,' T'
+  write(15,*) 'initialfield'
+  write(15,*) initialfield
 
-  write(15,*) 'valseuil freqmaxrep'
-  write(15,*) valseuil,freqmaxrep
+  write(15,*) 'isismostype ivecttype'
+  write(15,*) isismostype,ivecttype
 
-  write(15,*) 'sismos nrec nrec1 nrec2 isamp'
-  write(15,*) sismos,nrec,nrec1,nrec2,isamp
+  write(15,*) 'ireadmodel ioutputgrid'
+  write(15,*) ireadmodel,ioutputgrid
 
-  write(15,*) 'irepr anglerec anglerec2'
-  write(15,*) irepr,anglerec,anglerec2
+  write(15,*) 'ncycl dtinc'
+  write(15,*) nt,dt
 
-  write(15,*) 'compenergy'
-  write(15,*) compenergy
+  write(15,*) 'source'
+  write(15,*) '6 ',isource_type,xs-xmin,zs,f0,t0,factor,angle,' 0'
 
-  write(15,*) 'initialfield factorana factorxsu n1ana n2ana'
-  write(15,*) initialfield,factorana,factorxsu,n1ana,n2ana
-
-  write(15,*) 'isismostype ivecttype iaffinfo'
-  write(15,*) isismostype,ivecttype,iaffinfo
-
-  write(15,*) 'ireadmodel ioutputgrid iavs'
-  write(15,*) ireadmodel,ioutputgrid,iavs
-
-  write(15,*) 'iexec iecho'
-  if(iexec) then
-    write(15,*) '1 1'
-  else
-    write(15,*) '0 1'
-  endif
-
-  write(15,*) 'ncycl dtinc niter'
-  write(15,*) nt,dt,niter
-
-  write(15,*) 'nltfl (number of force or pressure sources)'
-  write(15,*) nbsources
-
-  write(15,*) 'Collocated forces and/or pressure sources:'
-  do i=1,nbsources
-    write(15,*) itimetype(i),isource_type(i), &
-         xs(i)-xmin,zs(i),f0(i),t0(i),factor(i),angle(i),0
-  enddo
-
-  write(15,*) 'Receivers positions:'
+  write(15,*) 'Receiver positions:'
   do irec=1,nrec
     write(15,*) irec,xrec(irec)-xmin,zrec(irec)
   enddo
 
-  write(15,*) 'Coordinates of macroblocs mesh (coorg):'
+  write(15,*) 'Coordinates of macrobloc mesh (coorg):'
   do j=0,nz
     do i=0,nx
       write(15,*) num(i,j,nx),x(i,j)-xmin,z(i,j)
@@ -821,22 +705,10 @@
   if(abshaut .and. absgauche) nelemabs = nelemabs - 1
   if(abshaut .and. absdroite) nelemabs = nelemabs - 1
 
-!
-!--- introduction des bords periodiques
-!
-
-  nelemperio = 0
-  if(periohaut) nelemperio = nelemperio + nx
-  if(periogauche) nelemperio = nelemperio + nz
-
-! on a deux fois trop d'elements si elements 9 noeuds
-  if(ngnod == 9) nelemperio = nelemperio / 2
-
   netyp = 2
-  nxgll = idegpoly + 1
 
-  write(15,*) 'netyp numat ngnod nxgll nygll nspec iptsdisp ielemabs ielemperio'
-  write(15,*) netyp,nbmodeles,ngnod,nxgll,nxgll,nspel,iptsdisp,nelemabs,nelemperio
+  write(15,*) 'netyp numat ngnod nspec iptsdisp ielemabs'
+  write(15,*) netyp,nbmodeles,ngnod,nspec,iptsdisp,nelemabs
 
   write(15,*) 'Material sets (num 0 rho vp vs 0 0) or (num 2 rho c11 c13 c33 c44)'
   do i=1,nbmodeles
@@ -868,49 +740,6 @@
 
     enddo
     enddo
-  endif
-
-!
-!--- sauvegarde des bords periodiques
-!
-
-  print *
-  print *,'Au total il y a ',nelemperio,' elements periodiques'
-  print *
-  print *,'Bords periodiques actifs :'
-  print *
-  print *,'Haut   = ',periohaut
-  print *,'Gauche = ',periogauche
-  print *
-
-! generer la liste des elements periodiques
-  if(nelemperio > 0) then
-
-  write(15,*) 'Liste des elements periodiques (haut gauche) :'
-  inumperio = 0
-
-  if(periogauche) then
-    do iz=1,nzread
-      ix=1
-      inumelem = (iz-1)*nxread + ix
-      ix2 = nxread
-      inumelem2 = (iz-1)*nxread + ix2
-      inumperio = inumperio + 1
-      write(15,*) inumperio,inumelem,4,inumelem2,2
-    enddo
-  endif
-
-  if(periohaut) then
-    do ix=1,nxread
-      iz=1
-      inumelem = (iz-1)*nxread + ix
-      iz2 = nzread
-      inumelem2 = (iz2-1)*nxread + ix
-      inumperio = inumperio + 1
-      write(15,*) inumperio,inumelem,1,inumelem2,3
-    enddo
-  endif
-
   endif
 
 !
@@ -957,7 +786,7 @@
  15 format(e10.5,1x,e10.5)
  40 format(a50)
 
-  end program maille
+  end program meshfem2D
 
 ! *****************
 ! routines maillage
