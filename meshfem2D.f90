@@ -63,10 +63,10 @@
   integer ngnod,nt,nx,nz,nxread,nzread
   integer icodematread
 
-  logical codehaut,codebas,codegauche,codedroite,output_postscript_snapshot,output_PNM_image
+  logical codehaut,codebas,codegauche,codedroite,output_postscript_snapshot,output_PNM_image,plot_lowerleft_corner_only
 
   double precision tang1,tangN,vpzone,vszone,poisson_ratio
-  double precision cutvect,xspacerec,zspacerec
+  double precision cutvect,xspacerec,zspacerec,sizemax_arrows
   double precision anglerec,xfin,zfin,xdeb,zdeb,xmin,xmax,dt
   double precision rhoread,cpread,csread,aniso3read,aniso4read
 
@@ -252,8 +252,17 @@
   call read_value_logical(IIN,IGNORE_JUNK,interpol)
   call read_value_integer(IIN,IGNORE_JUNK,pointsdisp)
   call read_value_integer(IIN,IGNORE_JUNK,subsamp)
+  call read_value_double_precision(IIN,IGNORE_JUNK,sizemax_arrows)
   call read_value_logical(IIN,IGNORE_JUNK,gnuplot)
   call read_value_logical(IIN,IGNORE_JUNK,outputgrid)
+
+! can use only one point to display lower-left corner only for interpolated snapshot
+  if(pointsdisp < 3) then
+    pointsdisp = 3
+    plot_lowerleft_corner_only = .true.
+  else
+    plot_lowerleft_corner_only = .false.
+  endif
 
 ! lecture des differents modeles de materiaux
   call read_value_integer(IIN,IGNORE_JUNK,nbmodeles)
@@ -611,8 +620,8 @@
   write(15,*) 'itaff output_postscript_snapshot output_PNM_image colors numbers'
   write(15,*) itaff,output_postscript_snapshot,output_PNM_image,' 1 0'
 
-  write(15,*) 'meshvect modelvect boundvect cutvect subsamp nx_sem_PNM'
-  write(15,*) meshvect,modelvect,boundvect,cutvect,subsamp,nxread
+  write(15,*) 'meshvect modelvect boundvect cutvect subsamp sizemax_arrows nx_sem_PNM'
+  write(15,*) meshvect,modelvect,boundvect,cutvect,subsamp,sizemax_arrows,nxread
 
   write(15,*) 'anglerec'
   write(15,*) anglerec
@@ -665,8 +674,8 @@
 ! on a deux fois trop d'elements si elements 9 noeuds
   if(ngnod == 9) nelemsurface = nelemsurface / 2
 
-  write(15,*) 'numat ngnod nspec pointsdisp nelemabs nelemsurface'
-  write(15,*) nbmodeles,ngnod,nspec,pointsdisp,nelemabs,nelemsurface
+  write(15,*) 'numat ngnod nspec pointsdisp plot_lowerleft_corner_only nelemabs nelemsurface'
+  write(15,*) nbmodeles,ngnod,nspec,pointsdisp,plot_lowerleft_corner_only,nelemabs,nelemsurface
 
   write(15,*) 'Material sets (num 0 rho vp vs 0 0) or (num 1 rho c11 c13 c33 c44)'
   do i=1,nbmodeles

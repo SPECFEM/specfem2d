@@ -29,14 +29,15 @@
   character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name
 
-  integer irec,irecord,length_station_name,length_network_name,iorientation,isample
+  integer irec,irecord,length_station_name,length_network_name,iorientation,isample,number_of_components
 
   character(len=4) chn
   character(len=1) component
   character(len=150) sisname
 
-! to write seismograms in single precision SEP binary format
-  real(kind=4), dimension(NSTEP*nrec) :: buffer_SEP_binary
+! to write seismograms in single precision SEP and double precision binary format
+  real(kind=4), dimension(NSTEP*nrec) :: buffer_binary_single
+  double precision, dimension(NSTEP*nrec) :: buffer_binary_double
 
 ! scaling factor for Seismic Unix xsu dislay
   double precision, parameter :: FACTORXSU = 1.d0
@@ -45,20 +46,29 @@
 
 ! write seismograms in ASCII format
 
-! save displacement, velocity or acceleration
+! save displacement, velocity, acceleration or pressure
   if(sismostype == 1) then
     component = 'd'
   else if(sismostype == 2) then
     component = 'v'
   else if(sismostype == 3) then
     component = 'a'
+  else if(sismostype == 4) then
+    component = 'p'
   else
     stop 'wrong component to save for seismograms'
   endif
 
   do irec = 1,nrec
 
-    do iorientation = 1,NDIM
+! only one seismogram if pressurs
+    if(sismostype == 4) then
+      number_of_components = 1
+    else
+      number_of_components = NDIM
+    endif
+
+    do iorientation = 1,number_of_components
 
       if(iorientation == 1) then
         chn = 'BHX'
@@ -67,6 +77,9 @@
       else
         stop 'incorrect channel value'
       endif
+
+! in case of pressure, use different abbreviation
+      if(sismostype == 4) chn = 'PRE'
 
 ! create the name of the seismogram file for each slice
 ! file name includes the name of the station, the network and the component
@@ -109,40 +122,77 @@
 ! write seismograms in single precision SEP binary format
 
 ! X component
+
+! delete the old files
+  open(unit=11,file='OUTPUT_FILES/Ux_file_single.bin',status='unknown')
+  close(11,status='delete')
+
+  open(unit=11,file='OUTPUT_FILES/Ux_file_double.bin',status='unknown')
+  close(11,status='delete')
+
+  open(unit=11,file='OUTPUT_FILES/pressure_file_single.bin',status='unknown')
+  close(11,status='delete')
+
+  open(unit=11,file='OUTPUT_FILES/pressure_file_double.bin',status='unknown')
+  close(11,status='delete')
+
   irecord = 0
   do irec=1,nrec
     do isample=1,NSTEP
       irecord = irecord + 1
-      buffer_SEP_binary(irecord) = sngl(sisux(isample,irec))
+      buffer_binary_single(irecord) = sngl(sisux(isample,irec))
+      buffer_binary_double(irecord) = sisux(isample,irec)
     enddo
   enddo
 
-! delete the old file
-  open(unit=11,file='OUTPUT_FILES/Ux_file.bin',status='unknown')
-  close(11,status='delete')
+! write the new files
+  if(sismostype == 4) then
+    open(unit=11,file='OUTPUT_FILES/pressure_file_single.bin',status='unknown',access='direct',recl=4*NSTEP*nrec)
+  else
+    open(unit=11,file='OUTPUT_FILES/Ux_file_single.bin',status='unknown',access='direct',recl=4*NSTEP*nrec)
+  endif
+  write(11,rec=1) buffer_binary_single
+  close(11)
 
-! write the new file
-  open(unit=11,file='OUTPUT_FILES/Ux_file.bin',status='unknown',access='direct',recl=NSTEP*nrec)
-  write(11,rec=1) buffer_SEP_binary
+  if(sismostype == 4) then
+    open(unit=11,file='OUTPUT_FILES/pressure_file_double.bin',status='unknown',access='direct',recl=8*NSTEP*nrec)
+  else
+    open(unit=11,file='OUTPUT_FILES/Ux_file_double.bin',status='unknown',access='direct',recl=8*NSTEP*nrec)
+  endif
+  write(11,rec=1) buffer_binary_double
   close(11)
 
 ! Z component
+
+! delete the old files
+  open(unit=11,file='OUTPUT_FILES/Uz_file_single.bin',status='unknown')
+  close(11,status='delete')
+
+  open(unit=11,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown')
+  close(11,status='delete')
+
+! no Z component seismogram if pressurs
+  if(sismostype /= 4) then
+
   irecord = 0
   do irec=1,nrec
     do isample=1,NSTEP
       irecord = irecord + 1
-      buffer_SEP_binary(irecord) = sngl(sisuz(isample,irec))
+      buffer_binary_single(irecord) = sngl(sisuz(isample,irec))
+      buffer_binary_double(irecord) = sisuz(isample,irec)
     enddo
   enddo
 
-! delete the old file
-  open(unit=11,file='OUTPUT_FILES/Uz_file.bin',status='unknown')
-  close(11,status='delete')
-
-! write the new file
-  open(unit=11,file='OUTPUT_FILES/Uz_file.bin',status='unknown',access='direct',recl=NSTEP*nrec)
-  write(11,rec=1) buffer_SEP_binary
+! write the new files
+  open(unit=11,file='OUTPUT_FILES/Uz_file_single.bin',status='unknown',access='direct',recl=4*NSTEP*nrec)
+  write(11,rec=1) buffer_binary_single
   close(11)
+
+  open(unit=11,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown',access='direct',recl=8*NSTEP*nrec)
+  write(11,rec=1) buffer_binary_double
+  close(11)
+
+  endif
 
 !----
 
@@ -158,11 +208,11 @@
   enddo
 
   if(sismostype == 1) then
-    write(11,*) '@title="Ux@displacement@component"@<@Ux_file.bin'
+    write(11,*) '@title="Ux@displacement@component"@<@Ux_file_single.bin'
   else if(sismostype == 2) then
-    write(11,*) '@title="Ux@velocity@component"@<@Ux_file.bin'
+    write(11,*) '@title="Ux@velocity@component"@<@Ux_file_single.bin'
   else
-    write(11,*) '@title="Ux@acceleration@component"@<@Ux_file.bin'
+    write(11,*) '@title="Ux@acceleration@component"@<@Ux_file_single.bin'
   endif
 
   close(11)
@@ -199,8 +249,8 @@
   120 format('sed -e ''1,$s/ //g'' -e ''1,$s/@/ /g'' -e ''1,1p'' -e ''$,$s/Ux/Uz/g'' <tempfile > receiver_line_Xsu_XWindow')
 
   130 format('sed -e ''1,$s/xwigb/pswigp/g'' ', &
-        '-e ''1,$s/Ux_file.bin/Ux_file.bin > uxpoly.ps/g'' ', &
-        '-e ''1,$s/Uz_file.bin/Uz_file.bin > uzpoly.ps/g'' receiver_line_Xsu_XWindow > receiver_line_Xsu_postscript')
+        '-e ''1,$s/Ux_file_single.bin/Ux_file_single.bin > uxpoly.ps/g'' ', &
+        '-e ''1,$s/Uz_file_single.bin/Uz_file_single.bin > uzpoly.ps/g'' receiver_line_Xsu_XWindow > receiver_line_Xsu_postscript')
 
   140 format(f12.5)
 

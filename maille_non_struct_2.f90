@@ -52,7 +52,7 @@
   integer nelemabs,npgeo,nspec,ntopo,nspecvolume,nspecWz
   integer k,ix,iz,irec,i,j,iadd
   integer imodele,nbmodeles,iaffinfo
-  integer itaff,itfirstaff,iptsdisp,isubsamp,nrec,n1ana,n2ana
+  integer itaff,itfirstaff,pointsdisp,isubsamp,nrec,n1ana,n2ana
   integer irepr,nrec1,nrec2,isamp,nbsources,isismostype,ivecttype
   integer ngnod,nt,niter,idegpoly,nx,nz
   integer icodematread
@@ -329,7 +329,7 @@
   read(10,4)junk,imodelvect
   read(10,4)junk,iboundvect
   read(10,4)junk,interpol
-  read(10,2)junk,iptsdisp
+  read(10,2)junk,pointsdisp
   read(10,2)junk,isubsamp
   read(10,1)junk,scalex
   read(10,1)junk,scalez
@@ -645,8 +645,8 @@
   netyp = 2
   nxgll = idegpoly + 1
 
-  write(15,*) 'netyp numat ngnod nxgll nygll nspec iptsdisp ielemabs ielemperio'
-  write(15,*) netyp,nbmodeles,ngnod,nxgll,nxgll,nspec,iptsdisp, &
+  write(15,*) 'netyp numat ngnod nxgll nygll nspec pointsdisp ielemabs ielemperio'
+  write(15,*) netyp,nbmodeles,ngnod,nxgll,nxgll,nspec,pointsdisp, &
                 nelemabs,nelemperio
 
   write(15,*) 'Material sets (num 0 rho vp vs 0 0)'

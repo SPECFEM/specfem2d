@@ -13,7 +13,7 @@
 
   subroutine defarrays(vpext,vsext,rhoext,density,elastcoef, &
           ibool,kmato,coord,npoin,rsizemin,rsizemax, &
-          cpoverdxmin,cpoverdxmax,lambdaSmin,lambdaSmax,lambdaPmin,lambdaPmax, &
+          cpoverdxmax,lambdaSmin,lambdaSmax,lambdaPmin,lambdaPmax, &
           vpmin,vpmax,read_external_model,nspec,numat)
 
 ! define all the arrays for the variational formulation
@@ -40,7 +40,7 @@
   double precision x1,z1,x2,z2,rdist1,rdist2,rapportmin,rapportmax
   double precision lambdamin,lambdamax
 
-  double precision rsizemin,rsizemax,cpoverdxmin,cpoverdxmax, &
+  double precision rsizemin,rsizemax,cpoverdxmax, &
     lambdaSmin,lambdaSmax,lambdaPmin,lambdaPmax,vpmin,vpmax
 
   logical read_external_model
@@ -61,7 +61,6 @@
   rsizemin = HUGEVAL
   rsizemax = -HUGEVAL
 
-  cpoverdxmin = HUGEVAL
   cpoverdxmax = -HUGEVAL
 
   lambdaPmin = HUGEVAL
@@ -92,9 +91,9 @@
     cploc = vpext(ipointnum)
     csloc = vsext(ipointnum)
     denst = rhoext(ipointnum)
-    mu   = denst*csloc*csloc
-    lambda  = denst*cploc*cploc - 2.d0*mu
-    lambdaplus2mu  = lambda + 2.d0*mu
+    mu = denst*csloc*csloc
+    lambda = denst*cploc*cploc - 2.d0*mu
+    lambdaplus2mu = lambda + 2.d0*mu
   endif
 
 !--- calculer min et max du modele de vitesse et densite
@@ -127,7 +126,6 @@
 
     rapportmin = cploc / max(rdist1,rdist2)
     rapportmax = cploc / min(rdist1,rdist2)
-    cpoverdxmin = min(cpoverdxmin,rapportmin)
     cpoverdxmax = max(cpoverdxmax,rapportmax)
 
     x0 = coord(1,ibool(1,1,ispec))
@@ -156,13 +154,13 @@
  enddo
   enddo
 
-  print *
-  print *,'********'
-  print *,'Modele : vitesse P min,max = ',vpmin,vpmax
-  print *,'Modele : vitesse S min,max = ',vsmin,vsmax
-  print *,'Modele : densite min,max = ',densmin,densmax
-  print *,'********'
-  print *
+  write(IOUT,*)
+  write(IOUT,*) '********'
+  write(IOUT,*) 'Modele : vitesse P min,max = ',vpmin,vpmax
+  write(IOUT,*) 'Modele : vitesse S min,max = ',vsmin,vsmax
+  write(IOUT,*) 'Modele : densite min,max = ',densmin,densmax
+  write(IOUT,*) '********'
+  write(IOUT,*)
 
   end subroutine defarrays
 

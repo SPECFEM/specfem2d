@@ -50,7 +50,7 @@ factor                          = 1.d4           # amplification factor
 # receiver line parameters
 #
 enreg_surf                      = .false.        # enregistrement volume ou surface
-sismostype                      = 2              # record 1=displ 2=veloc 3=accel
+sismostype                      = 2              # record 1=displ 2=veloc 3=accel 4=pressure
 nrec                            = 101            # number of receivers
 xdeb                            = 300.           # first receiver x in meters
 zdeb                            = 1700.          # first receiver z in meters
@@ -69,8 +69,9 @@ meshvect                        = .true.         # display mesh on vector plots 
 modelvect                       = .false.        # display velocity model on vector plots
 boundvect                       = .true.         # display boundary conditions on plots
 interpol                        = .true.         # interpolation of the display or not
-pointsdisp                      = 6              # points for interpolation of display
+pointsdisp                      = 6              # points for interpolation of display (set to 1 for lower-left corner only)
 subsamp                         = 1              # subsampling of color snapshots
+sizemax_arrows                  = 1.d0           # maximum size of arrows on vector plots in cm
 gnuplot                         = .false.        # generate a GNUPLOT file for the grid
 outputgrid                      = .false.        # save the grid in a text file or not
 #

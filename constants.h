@@ -62,9 +62,6 @@
   double precision, parameter :: SCALEX = 1.d0
   double precision, parameter :: SCALEZ = 1.d0
 
-! taille de la plus grande fleche en centimetres
-  double precision, parameter :: SIZEMAX = 1.d0
-
 ! US letter paper or European A4
   logical, parameter :: US_LETTER = .false.
 

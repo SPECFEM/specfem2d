@@ -5,16 +5,16 @@
 #-------------------------------->
 
 # title of job, and file that contains interface data
-title                           = Test sinusoide elastique
-interfacesfile                  = interface_sinus.dat
+title                           = Lacq Thomas
+interfacesfile                  = interfaces_thomas_Lacq.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
-xmax                            = 4000.d0        # abscissa of right side of the model
-nx                              = 80             # number of elements along X
+xmax                            = 25000.d0        # abscissa of right side of the model
+nx                              = 250             # number of elements along X
 ngnod                           = 9              # noeuds de controle pour blocs (4 ou 9)
 initialfield                    = .false.        # use a plane wave as source or not
-readmodel                       = .false.        # read external earth model or not
+read_external_model             = .false.        # read external earth model or not
 ELASTIC                         = .true.         # elastic or acoustic simulation
 TURN_ANISOTROPY_ON              = .false.        # turn anisotropy on or off
 TURN_ATTENUATION_ON             = .false.        # turn attenuation on or off
@@ -26,54 +26,53 @@ absorbgauche                    = .true.
 absorbdroite                    = .true.
 
 # time step parameters
-nt                              = 1400           # nb total de pas de temps
+nt                              = 10000           # nb total de pas de temps
 dt                              = 1.d-3          # valeur du pas de temps
 
 # source parameters
 source_surf                     = .false.        # source dans le volume ou a la surface
-xs                              = 2000.          # source location x in meters
-zs                              = 1200.          # source location z in meters
+xs                              = 12500.          # source location x in meters
+zs                              = 10000.          # source location z in meters
 source_type                     = 1              # force = 1 or explosion = 2
-time_function_type              = 1              # Ricker = 1, first derivative = 2, Gaussian = 3, Dirac = 4
+time_function_type              = 3              # Ricker = 1, first derivative = 2, Gaussian = 3, Dirac = 4
 f0                              = 10.0           # dominant source frequency (Hz) if not Dirac
 angleforce                      = 0.             # angle of the source (for a force only)
 Mxx                             = 1.             # Mxx component (for a moment tensor source only)
 Mzz                             = 1.             # Mzz component (for a moment tensor source only)
 Mxz                             = 0.             # Mxz component (for a moment tensor source only)
-factor                          = 1.d12          # amplification factor
+factor                          = 0.1          # amplification factor
 
 # receiver line parameters
-enreg_surf                      = .true.         # enregistrement volume ou surface
-sismostype                      = 1              # record 1=displ 2=veloc 3=accel 4=pressure
-nrec                            = 101            # number of receivers
-xdeb                            = 300.           # first receiver x in meters
-zdeb                            = 2200.          # first receiver z in meters
-xfin                            = 3700.          # last receiver x in meters
-zfin                            = 2200.          # last receiver z in meters
+enreg_surf                      = .false.         # enregistrement volume ou surface
+sismostype                      = 2              # record 1=displ 2=veloc 3=accel 4=pressure
+nrec                            = 4            # number of receivers
+xdeb                            = 5000.           # first receiver x in meters
+zdeb                            = 15000.          # first receiver z in meters
+xfin                            = 20000.          # last receiver x in meters
+zfin                            = 15000.          # last receiver z in meters
 anglerec                        = 0.d0           # angle to rotate components at receivers
 
 # display parameters
-itaff                           = 100            # display frequency in time steps
+itaff                           = 250            # display frequency in time steps
 output_postscript_snapshot      = .true.         # output Postscript image of the results
-output_PNM_image                = .true.         # output PNM image of the results
+output_PNM_image                = .false.         # output PNM image of the results
 vecttype                        = 1              # display 1=displ 2=veloc 3=accel
-cutvect                         = 1.             # amplitude min en % pour vector plots
-meshvect                        = .true.         # display mesh on vector plots or not
-modelvect                       = .false.        # display velocity model on vector plots
+cutvect                         = 1.d0            # amplitude min en % pour vector plots
+meshvect                        = .false.         # display mesh on vector plots or not
+modelvect                       = .true.        # display velocity model on vector plots
 boundvect                       = .true.         # display boundary conditions on plots
 interpol                        = .true.         # interpolation of the display or not
-pointsdisp                      = 6              # points for interpolation of display (set to 1 for lower-left corner only)
-subsamp                         = 1              # subsampling of color snapshots
-sizemax_arrows                  = 1.d0           # maximum size of arrows on vector plots in cm
+pointsdisp                      = 1              # points for interpolation of display (set to 1 for lower-left corner only)
+subsamp                         = 2              # subsampling of color snapshots
+sizemax_arrows                  = 0.4d0           # maximum size of arrows on vector plots in cm
 gnuplot                         = .false.        # generate a GNUPLOT file for the grid
 outputgrid                      = .false.        # save the grid in a text file or not
 
 # velocity and density model (nx,nz)
-nbmodels                        = 2              # nb de modeles differents (0,rho,vp,vs,0,0)
+nbmodels                        = 1              # nb de modeles differents (0,rho,vp,vs,0,0)
 1 0 2700.d0 3000.d0 1732.051d0 0 0
-2 0 1800.d0 2000.d0 1100.845d0 0 0
+#2 0 1800.d0 2000.d0 1100.845d0 0 0
 #3 0 2200.d0 2500.d0 1443.375d0 0 0
-nbzone                          = 2              # nb of zones and model number for each
-1 80  1 40 1
-1 80 31 40 2
+nbzone                          = 1              # nb of zones and model number for each
+1 250  1 150 1
 #1 80 41 60 3

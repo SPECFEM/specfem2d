@@ -14,8 +14,8 @@ O = obj
 
 # Intel Linux
 F90 = ifort
-FLAGS_CHECK=-O0 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check bounds
-FLAGS_NOCHECK=-O3 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds
+FLAGS_CHECK=-O0 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check bounds
+FLAGS_NOCHECK=-O3 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check nobounds
 #FLAGS_NOCHECK = $(FLAGS_CHECK)
 
 #
