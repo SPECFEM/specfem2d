@@ -133,7 +133,7 @@
   integer numat,ngnod,nspec,iptsdisp,nelemabs,nelemsurface
 
   logical interpol,meshvect,modelvect,boundvect,read_external_model,initialfield,abshaut, &
-    outputgrid,gnuplot,ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
+    outputgrid,gnuplot,ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,output_postscript_image,output_PNM_image
 
   double precision cutvect,anglerec,xirec,gammarec
 
@@ -230,7 +230,7 @@
   read(IIN,*) gnuplot,interpol
 
   read(IIN,40) datlin
-  read(IIN,*) itaff,colors,numbers
+  read(IIN,*) itaff,output_postscript_image,output_PNM_image,colors,numbers
 
   read(IIN,40) datlin
   read(IIN,*) meshvect,modelvect,boundvect,cutvect,subsamp,nx_sem_PNM
@@ -1628,6 +1628,8 @@
 !
 !----  affichage postscript
 !
+  if(output_postscript_image) then
+
   write(IOUT,*) 'Dump PostScript'
 
 ! for elastic medium
@@ -1691,9 +1693,13 @@
   endif
   write(IOUT,*) 'Fin dump PostScript'
 
+  endif
+
 !
 !----  affichage image PNM
 !
+  if(output_PNM_image) then
+
   write(IOUT,*) 'Creation image PNM de taille ',NX_IMAGE_PNM,' x ',NZ_IMAGE_PNM
 
   donnees_image_PNM_2D(:,:) = 0.d0
@@ -1721,6 +1727,8 @@
   call cree_image_PNM(donnees_image_PNM_2D,iglob_image_PNM_2D,NX_IMAGE_PNM,NZ_IMAGE_PNM,it,cutvect)
 
   write(IOUT,*) 'Fin creation image PNM'
+
+  endif
 
 !----  save temporary seismograms
   call write_seismograms(sisux,sisuz,station_name,network_name,NSTEP,nrec,deltat,sismostype,st_xval,it,t0)
