@@ -36,7 +36,7 @@
   integer ndofn,ndime,ngnod,nnode,nbcnd,n1ana
   integer nofst,npgeo,nspel,nbmodeles,nbsources,nrec,lquad,isamp,nrec1,nrec2
   integer irec,imatnum,netyp,nxgll,nelemperio,nelemabs,nx,nz,i,j
-  integer irepr,nrecsur3,nt,niter,itaff,itfirstaff,numerocourant,iptsdisp,isubsamp
+  integer irepr,nrecsur3,nt,niter,itaff,itfirstaff,numerocourant,pointsdisp,isubsamp
 
   double precision R,theta_i,theta_init,delta_theta,eta_j,valseuil,freqmaxrep
   double precision f0,t0,xs,zs,angle,factor,dist,xoffs,zoffs
@@ -706,7 +706,7 @@
   scalex = 1.
   scalez = 1.
   sizemax = 1.
-  iptsdisp = 7
+  pointsdisp = 7
   isubsamp = 2
   orig_x = 2.3
   orig_z = 3.4
@@ -812,7 +812,7 @@
   nelemabs = 0
 
   write(15,*) 'params spectraux'
-  write(15,*) netyp,nbmodeles,ngnod,nxgll,nxgll,nspel,iptsdisp, &
+  write(15,*) netyp,nbmodeles,ngnod,nxgll,nxgll,nspel,pointsdisp, &
                 nelemabs,nelemperio
 
   write(15,*) 'Material sets (num 0 rho vp vs 0 0)'

@@ -28,6 +28,7 @@
 !               - more flexible DATA/Par_file with any number of comment lines
 !               - Xsu scripts for seismograms
 !               - subtract t0 from seismograms
+!               - seismograms and snapshots in pressure in addition to velocity if acoustic medium
 !
 ! version 5.0, May 2004 :
 !               - got rid of useless routines, suppressed commons etc.
@@ -104,7 +105,7 @@
   double precision xixl,xizl,gammaxl,gammazl,jacobianl
 
 ! material properties of the elastic medium
-  double precision mul_relaxed,lambdal_relaxed,lambdalplus2mul_relaxed,cpsquare
+  double precision mul_relaxed,lambdal_relaxed,lambdalplus2mul_relaxed,cpsquare,denst
   double precision mul_unrelaxed,lambdal_unrelaxed,lambdalplus2mul_unrelaxed
 
   double precision, dimension(:,:), allocatable :: coord,accel,veloc,displ, &
@@ -120,22 +121,23 @@
   integer, dimension(:,:), allocatable  :: knods
   integer, dimension(:), allocatable :: kmato,numabs,numsurface
 
-  integer ie,k
+  integer ie,k,material
 
   integer ispec_selected_source,iglob_source,ix_source,iz_source
   double precision a,displnorm_all
   double precision, dimension(:), allocatable :: source_time_function
 
-  double precision rsizemin,rsizemax,cpoverdxmin,cpoverdxmax, &
+  double precision rsizemin,rsizemax,cpoverdxmax, &
     lambdaSmin,lambdaSmax,lambdaPmin,lambdaPmax,vpmin,vpmax
 
-  integer colors,numbers,subsamp,vecttype,itaff,nrec,sismostype
-  integer numat,ngnod,nspec,iptsdisp,nelemabs,nelemsurface
+  integer colors,numbers,subsamp,vecttype,IT_AFFICHE,nrec,sismostype
+  integer numat,ngnod,nspec,pointsdisp,nelemabs,nelemsurface
 
   logical interpol,meshvect,modelvect,boundvect,read_external_model,initialfield,abshaut, &
-    outputgrid,gnuplot,ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,output_postscript_snapshot,output_PNM_image
+    outputgrid,gnuplot,ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,output_postscript_snapshot,output_PNM_image, &
+    plot_lowerleft_corner_only
 
-  double precision cutvect,anglerec,xirec,gammarec
+  double precision cutvect,sizemax_arrows,anglerec,xirec,gammarec
 
 ! for absorbing and free surface conditions
   integer ispecabs,ispecsurface,inum,numabsread,numsurfaceread,i1abs,i2abs
@@ -211,13 +213,13 @@
 !
   call datim(stitle)
 
-  write(*,*)
-  write(*,*)
-  write(*,*) '*********************'
-  write(*,*) '****             ****'
-  write(*,*) '****  SPECFEM2D  ****'
-  write(*,*) '****             ****'
-  write(*,*) '*********************'
+  write(IOUT,*)
+  write(IOUT,*)
+  write(IOUT,*) '*********************'
+  write(IOUT,*) '****             ****'
+  write(IOUT,*) '****  SPECFEM2D  ****'
+  write(IOUT,*) '****             ****'
+  write(IOUT,*) '*********************'
 
 !
 !---- read parameters from input file
@@ -230,10 +232,10 @@
   read(IIN,*) gnuplot,interpol
 
   read(IIN,40) datlin
-  read(IIN,*) itaff,output_postscript_snapshot,output_PNM_image,colors,numbers
+  read(IIN,*) IT_AFFICHE,output_postscript_snapshot,output_PNM_image,colors,numbers
 
   read(IIN,40) datlin
-  read(IIN,*) meshvect,modelvect,boundvect,cutvect,subsamp,nx_sem_PNM
+  read(IIN,*) meshvect,modelvect,boundvect,cutvect,subsamp,sizemax_arrows,nx_sem_PNM
   cutvect = cutvect / 100.d0
 
   read(IIN,40) datlin
@@ -250,7 +252,7 @@
 
 !---- check parameters read
   write(IOUT,200) npgeo,NDIM
-  write(IOUT,600) itaff,colors,numbers
+  write(IOUT,600) IT_AFFICHE,colors,numbers
   write(IOUT,700) sismostype,anglerec
   write(IOUT,750) initialfield,read_external_model,ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,outputgrid
   write(IOUT,800) vecttype,100.d0*cutvect,subsamp
@@ -304,25 +306,25 @@
 !---- read the basic properties of the spectral elements
 !
   read(IIN,40) datlin
-  read(IIN,*) numat,ngnod,nspec,iptsdisp,nelemabs,nelemsurface
+  read(IIN,*) numat,ngnod,nspec,pointsdisp,plot_lowerleft_corner_only,nelemabs,nelemsurface
 
 !
 !---- allocate arrays
 !
   allocate(shape2D(ngnod,NGLLX,NGLLZ))
   allocate(dershape2D(NDIM,ngnod,NGLLX,NGLLZ))
-  allocate(shape2D_display(ngnod,iptsdisp,iptsdisp))
-  allocate(dershape2D_display(NDIM,ngnod,iptsdisp,iptsdisp))
+  allocate(shape2D_display(ngnod,pointsdisp,pointsdisp))
+  allocate(dershape2D_display(NDIM,ngnod,pointsdisp,pointsdisp))
   allocate(xix(NGLLX,NGLLZ,nspec))
   allocate(xiz(NGLLX,NGLLZ,nspec))
   allocate(gammax(NGLLX,NGLLZ,nspec))
   allocate(gammaz(NGLLX,NGLLZ,nspec))
   allocate(jacobian(NGLLX,NGLLZ,nspec))
-  allocate(flagrange(NGLLX,iptsdisp))
-  allocate(xinterp(iptsdisp,iptsdisp))
-  allocate(zinterp(iptsdisp,iptsdisp))
-  allocate(Uxinterp(iptsdisp,iptsdisp))
-  allocate(Uzinterp(iptsdisp,iptsdisp))
+  allocate(flagrange(NGLLX,pointsdisp))
+  allocate(xinterp(pointsdisp,pointsdisp))
+  allocate(zinterp(pointsdisp,pointsdisp))
+  allocate(Uxinterp(pointsdisp,pointsdisp))
+  allocate(Uzinterp(pointsdisp,pointsdisp))
   allocate(density(numat))
   allocate(elastcoef(4,numat))
   allocate(kmato(nspec))
@@ -380,7 +382,7 @@
 !---- print element group main parameters
 !
   write(IOUT,107)
-  write(IOUT,207) nspec,ngnod,NGLLX,NGLLZ,NGLLX*NGLLZ,iptsdisp,numat,nelemabs
+  write(IOUT,207) nspec,ngnod,NGLLX,NGLLZ,NGLLX*NGLLZ,pointsdisp,numat,nelemabs
 
 ! set up Gauss-Lobatto-Legendre derivation matrices
   call define_derivative_matrices(xigll,zigll,wxgll,wzgll,hprime_xx,hprime_zz)
@@ -413,8 +415,8 @@
       codeabs(ILEFT,inum) = codeabsread(3)
       codeabs(IRIGHT,inum) = codeabsread(4)
     enddo
-    write(*,*)
-    write(*,*) 'Number of absorbing elements: ',nelemabs
+    write(IOUT,*)
+    write(IOUT,*) 'Number of absorbing elements: ',nelemabs
   endif
 
 !
@@ -427,8 +429,8 @@
     if(inum < 1 .or. inum > nelemsurface) stop 'Wrong free surface element number'
     numsurface(inum) = numsurfaceread
   enddo
-  write(*,*)
-  write(*,*) 'Number of free surface elements: ',nelemsurface
+  write(IOUT,*)
+  write(IOUT,*) 'Number of free surface elements: ',nelemsurface
 
 !
 !---- close input file
@@ -456,10 +458,10 @@
   endif
 
 !---- compute shape functions and their derivatives for regular !interpolated display grid
-  do j = 1,iptsdisp
-    do i = 1,iptsdisp
-      xirec  = 2.d0*dble(i-1)/dble(iptsdisp-1) - 1.d0
-      gammarec  = 2.d0*dble(j-1)/dble(iptsdisp-1) - 1.d0
+  do j = 1,pointsdisp
+    do i = 1,pointsdisp
+      xirec  = 2.d0*dble(i-1)/dble(pointsdisp-1) - 1.d0
+      gammarec  = 2.d0*dble(j-1)/dble(pointsdisp-1) - 1.d0
       call define_shape_functions(shape2D_display(:,i,j),dershape2D_display(:,:,i,j),xirec,gammarec,ngnod)
     enddo
   enddo
@@ -467,12 +469,11 @@
 !---- compute Lagrange interpolants on a regular interpolated grid in (xi,gamma)
 !---- for display (assumes NGLLX = NGLLZ)
   do j=1,NGLLX
-    do i=1,iptsdisp
-      xirec  = 2.d0*dble(i-1)/dble(iptsdisp-1) - 1.d0
+    do i=1,pointsdisp
+      xirec  = 2.d0*dble(i-1)/dble(pointsdisp-1) - 1.d0
       flagrange(j,i) = hgll(j-1,xirec,xigll,NGLLX)
     enddo
   enddo
-
 
 ! read total number of receivers
   open(unit=IIN,file='DATA/STATIONS',status='old')
@@ -565,9 +566,9 @@
 !--- save the grid of points in a file
 !
   if(outputgrid) then
-    print *
-    print *,'Saving the grid in a text file...'
-    print *
+    write(IOUT,*)
+    write(IOUT,*) 'Saving the grid in a text file...'
+    write(IOUT,*)
     open(unit=55,file='OUTPUT_FILES/grid_points_and_model.txt',status='unknown')
     write(55,*) npoin
     do n = 1,npoin
@@ -623,9 +624,9 @@
 !----  eventuellement lecture d'un modele externe de vitesse et de densite
 !
   if(read_external_model) then
-    print *
-    print *,'Reading velocity and density model from external file...'
-    print *
+    write(IOUT,*)
+    write(IOUT,*) 'Reading velocity and density model from external file...'
+    write(IOUT,*)
     open(unit=55,file='OUTPUT_FILES/grid_points_and_model.txt',status='old')
     read(55,*) nbpoin
     if(nbpoin /= npoin) stop 'Wrong number of points in input file'
@@ -640,7 +641,7 @@
 !
   call defarrays(vpext,vsext,rhoext,density,elastcoef, &
           ibool,kmato,coord,npoin,rsizemin,rsizemax, &
-          cpoverdxmin,cpoverdxmax,lambdaSmin,lambdaSmax,lambdaPmin,lambdaPmax, &
+          cpoverdxmax,lambdaSmin,lambdaSmax,lambdaPmin,lambdaPmax, &
           vpmin,vpmax,read_external_model,nspec,numat)
 
 ! build the global mass matrix once and for all
@@ -675,7 +676,7 @@
 !---- verifier le maillage, la stabilite et le nb de points par lambda
 !---- seulement si la source en temps n'est pas un Dirac (sinon spectre non defini)
   if(time_function_type /= 4) call checkgrid(deltat,f0,t0,initialfield, &
-      rsizemin,rsizemax,cpoverdxmin,cpoverdxmax,lambdaSmin,lambdaSmax,lambdaPmin,lambdaPmax)
+      rsizemin,rsizemax,cpoverdxmax,lambdaSmin,lambdaSmax,lambdaPmin,lambdaPmax)
 
 !
 !---- for color PNM images
@@ -704,8 +705,8 @@
   allocate(copy_iglob_image_PNM_2D(NX_IMAGE_PNM,NZ_IMAGE_PNM))
 
 ! creer tous les pixels
-  print *
-  print *,'localisation de tous les pixels des images PNM'
+  write(IOUT,*)
+  write(IOUT,*) 'localisation de tous les pixels des images PNM'
 
   taille_pixel_horizontal = (xmax_PNM_image - xmin_PNM_image) / dble(NX_IMAGE_PNM-1)
   taille_pixel_vertical = (zmax_PNM_image - zmin_PNM_image) / dble(NZ_IMAGE_PNM-1)
@@ -790,7 +791,7 @@
 
   deallocate(copy_iglob_image_PNM_2D)
 
-  print *,'fin localisation de tous les pixels des images PNM'
+  write(IOUT,*) 'fin localisation de tous les pixels des images PNM'
 
 !
 !---- initialiser sismogrammes
@@ -810,9 +811,9 @@
 !----  eventuellement lecture des champs initiaux dans un fichier
 !
   if(initialfield) then
-    print *
-    print *,'Reading initial fields from external file...'
-    print *
+    write(IOUT,*)
+    write(IOUT,*) 'Reading initial fields from external file...'
+    write(IOUT,*)
     open(unit=55,file='OUTPUT_FILES/wavefields.txt',status='unknown')
     read(55,*) nbpoin
     if(nbpoin /= npoin) stop 'Wrong number of points in input file'
@@ -831,7 +832,7 @@
     deallocate(velocread)
     deallocate(accelread)
     close(55)
-    print *,'Max norm of initial displacement = ',maxval(sqrt(displ(1,:)**2 + displ(2,:)**2))
+    write(IOUT,*) 'Max norm of initial displacement = ',maxval(sqrt(displ(1,:)**2 + displ(2,:)**2))
   endif
 
 ! attenuation constants from Carcione 1993 Geophysics volume 58 pages 111 and 112
@@ -872,9 +873,9 @@
 
     allocate(source_time_function(NSTEP))
 
-    print *
-    print *,'Saving the source time function in a text file...'
-    print *
+    write(IOUT,*)
+    write(IOUT,*) 'Saving the source time function in a text file...'
+    write(IOUT,*)
     open(unit=55,file='OUTPUT_FILES/source.txt',status='unknown')
 
 ! boucle principale d'evolution en temps
@@ -922,15 +923,6 @@
 
 ! compute current time
     time = (it-1)*deltat
-
-    if(mod(it,itaff) == 0) then
-      write(IOUT,*)
-      if(time >= 1.d-3) then
-        write(IOUT,100) it,time
-      else
-        write(IOUT,101) it,time
-      endif
-    endif
 
 ! compute Grad(displ) at time step n for attenuation
   if(TURN_ATTENUATION_ON) call compute_gradient_attenuation(displ,duxdxl_n,duzdxl_n, &
@@ -1540,16 +1532,28 @@
 
   endif ! end of test on attenuation
 
-!----  display max of norm of displacement
-  if(mod(it,itaff) == 0) then
+!----  display time step max of norm of displacement
+  if(mod(it,IT_AFFICHE) == 0 .or. it == 5) then
+
+    write(IOUT,*)
+    if(time >= 1.d-3) then
+      write(IOUT,100) it,time
+    else
+      write(IOUT,101) it,time
+    endif
+
     displnorm_all = maxval(sqrt(displ(1,:)**2 + displ(2,:)**2))
-    print *,'Max norm of field = ',displnorm_all
+    write(IOUT,*) 'Max norm of field = ',displnorm_all
 ! check stability of the code, exit if unstable
     if(displnorm_all > STABILITY_THRESHOLD) stop 'code became unstable and blew up'
+
+    write(IOUT,*)
   endif
 
 ! store the seismograms
-  if(sismostype < 1 .or. sismostype > 3) stop 'Wrong field code for seismogram output'
+  if(sismostype < 1 .or. sismostype > 4) stop 'Wrong field code for seismogram output'
+
+  if(ELASTIC .and. sismostype == 4) stop 'pressure seismograms implemented for an acoustic medium only'
 
   if(.not. ELASTIC) then
     if(sismostype == 1) then
@@ -1558,7 +1562,7 @@
 ! for acoustic medium, compute gradient for display, displ represents the potential
       call compute_gradient_fluid(displ,vector_field_postscript, &
             xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,NSPEC,npoin)
-    else
+    else if(sismostype == 3) then
 ! for acoustic medium, compute gradient for display, veloc represents the first derivative of the potential
       call compute_gradient_fluid(veloc,vector_field_postscript, &
             xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,NSPEC,npoin)
@@ -1594,8 +1598,23 @@
         else
 
 ! for acoustic medium
-          dxd = vector_field_postscript(1,iglob)
-          dzd = vector_field_postscript(2,iglob)
+
+! pressure = - rho * Chi_dot
+          if(sismostype == 4) then
+
+            material = kmato(ispec_selected_rec(irec))
+            denst = density(material)
+            if(read_external_model) denst = rhoext(ibool(i,j,ispec_selected_rec(irec)))
+
+            dxd = - denst * veloc(1,iglob)
+            dzd = ZERO
+
+! velocity
+          else
+            dxd = vector_field_postscript(1,iglob)
+            dzd = vector_field_postscript(2,iglob)
+
+          endif
 
         endif
 
@@ -1615,15 +1634,7 @@
 !
 !----  affichage des resultats a certains pas de temps
 !
-  if(mod(it,itaff) == 0 .or. it == 5 .or. it == NSTEP) then
-
-  write(IOUT,*)
-  if(time >= 1.d-3) then
-    write(IOUT,110) time
-  else
-    write(IOUT,111) time
-  endif
-  write(IOUT,*)
+  if(mod(it,IT_AFFICHE) == 0 .or. it == 5 .or. it == NSTEP) then
 
 !
 !----  affichage postscript
@@ -1640,7 +1651,8 @@
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
           colors,numbers,subsamp,vecttype,interpol,meshvect,modelvect, &
-          boundvect,read_external_model,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod,ELASTIC)
+          boundvect,read_external_model,cutvect,sizemax_arrows,nelemabs,numat,pointsdisp,nspec,ngnod,ELASTIC, &
+          plot_lowerleft_corner_only)
 
   else if(ELASTIC .and. vecttype == 2) then
     write(IOUT,*) 'drawing velocity field...'
@@ -1649,7 +1661,8 @@
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
           colors,numbers,subsamp,vecttype,interpol,meshvect,modelvect, &
-          boundvect,read_external_model,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod,ELASTIC)
+          boundvect,read_external_model,cutvect,sizemax_arrows,nelemabs,numat,pointsdisp,nspec,ngnod,ELASTIC, &
+          plot_lowerleft_corner_only)
 
   else if(ELASTIC .and. vecttype == 3) then
     write(IOUT,*) 'drawing acceleration field...'
@@ -1658,7 +1671,8 @@
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
           colors,numbers,subsamp,vecttype,interpol,meshvect,modelvect, &
-          boundvect,read_external_model,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod,ELASTIC)
+          boundvect,read_external_model,cutvect,sizemax_arrows,nelemabs,numat,pointsdisp,nspec,ngnod,ELASTIC, &
+          plot_lowerleft_corner_only)
 
 ! for acoustic medium
   else if(.not. ELASTIC .and. vecttype == 1) then
@@ -1674,7 +1688,8 @@
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
           colors,numbers,subsamp,vecttype,interpol,meshvect,modelvect, &
-          boundvect,read_external_model,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod,ELASTIC)
+          boundvect,read_external_model,cutvect,sizemax_arrows,nelemabs,numat,pointsdisp,nspec,ngnod,ELASTIC, &
+          plot_lowerleft_corner_only)
 
   else if(.not. ELASTIC .and. vecttype == 3) then
     write(IOUT,*) 'drawing acoustic acceleration field from velocity potential...'
@@ -1686,7 +1701,8 @@
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
           colors,numbers,subsamp,vecttype,interpol,meshvect,modelvect, &
-          boundvect,read_external_model,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod,ELASTIC)
+          boundvect,read_external_model,cutvect,sizemax_arrows,nelemabs,numat,pointsdisp,nspec,ngnod,ELASTIC, &
+          plot_lowerleft_corner_only)
 
   else
     stop 'wrong field code for PostScript display'
@@ -1707,7 +1723,7 @@
   do j = 1,NZ_IMAGE_PNM
     do i = 1,NX_IMAGE_PNM
       if(iglob_image_PNM_2D(i,j) /= -1) then
-! display vertical component of vector
+! display vertical component of vector if elastic medium
         if(ELASTIC) then
           if(vecttype == 1) then
             donnees_image_PNM_2D(i,j) = displ(2,iglob_image_PNM_2D(i,j))
@@ -1717,8 +1733,9 @@
             donnees_image_PNM_2D(i,j) = accel(2,iglob_image_PNM_2D(i,j))
           endif
         else
-! for acoustic medium
+! display pressure if acoustic medium
           donnees_image_PNM_2D(i,j) = vector_field_postscript(2,iglob_image_PNM_2D(i,j))
+stop 'DK DK ceci a debugger par DK, mettre pressure au lieu de veloc'
         endif
       endif
     enddo
@@ -1764,7 +1781,7 @@
   'Number of spectral element control nodes. . .(npgeo) =',i8/5x, &
   'Number of space dimensions. . . . . . . . . . (NDIM) =',i8)
   600   format(//1x,'C o n t r o l',/1x,13('='),//5x, &
-  'Display frequency  . . . . . . . . . . . . . (itaff) = ',i5/ 5x, &
+  'Display frequency . . . . . . . . . . . (IT_AFFICHE) = ',i5/ 5x, &
   'Color display . . . . . . . . . . . . . . . (colors) = ',i5/ 5x, &
   '        ==  0     black and white display              ',  / 5x, &
   '        ==  1     color display                        ',  /5x, &
@@ -1798,7 +1815,7 @@
            'Number of points in X-direction . . .  (NGLLX) =',i7,/5x, &
            'Number of points in Y-direction . . .  (NGLLZ) =',i7,/5x, &
            'Number of points per element. . .(NGLLX*NGLLZ) =',i7,/5x, &
-           'Number of points for display . . . .(iptsdisp) =',i7,/5x, &
+           'Number of points for display . . .(pointsdisp) =',i7,/5x, &
            'Number of element material sets . . .  (numat) =',i7,/5x, &
            'Number of absorbing elements . . . .(nelemabs) =',i7)
 

@@ -15,7 +15,8 @@
           xinterp,zinterp,shapeint,Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
           colors,numbers,subsamp,vecttype,interpol,meshvect,modelvect, &
-          boundvect,read_external_model,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod,ELASTIC)
+          boundvect,read_external_model,cutvect,sizemax_arrows,nelemabs,numat,pointsdisp,nspec,ngnod,ELASTIC, &
+          plot_lowerleft_corner_only)
 
 !
 ! routine affichage postscript
@@ -29,17 +30,17 @@
   integer, parameter :: MAXCOLORS = 100
   double precision, dimension(MAXCOLORS) :: red,green,blue
 
-  integer it,nrec,nelemabs,numat,iptsdisp,nspec
+  integer it,nrec,nelemabs,numat,pointsdisp,pointsdisp_loop,nspec
   integer i,npoin,npgeo,ngnod
 
   integer kmato(nspec),knods(ngnod,nspec)
   integer ibool(NGLLX,NGLLZ,nspec)
 
-  double precision xinterp(iptsdisp,iptsdisp),zinterp(iptsdisp,iptsdisp)
-  double precision shapeint(ngnod,iptsdisp,iptsdisp)
-  double precision Uxinterp(iptsdisp,iptsdisp)
-  double precision Uzinterp(iptsdisp,iptsdisp)
-  double precision flagrange(NGLLX,iptsdisp)
+  double precision xinterp(pointsdisp,pointsdisp),zinterp(pointsdisp,pointsdisp)
+  double precision shapeint(ngnod,pointsdisp,pointsdisp)
+  double precision Uxinterp(pointsdisp,pointsdisp)
+  double precision Uzinterp(pointsdisp,pointsdisp)
+  double precision flagrange(NGLLX,pointsdisp)
   double precision density(numat),elastcoef(4,numat)
 
   double precision dt,timeval,x_source,z_source
@@ -50,7 +51,7 @@
   double precision, dimension(nrec) :: st_xval,st_zval
 
   integer numabs(nelemabs),codeabs(4,nelemabs)
-  logical anyabs,ELASTIC
+  logical anyabs,ELASTIC,plot_lowerleft_corner_only
 
   double precision xmax,zmax,height,xw,zw,usoffset,sizex,sizez,vpmin,vpmax
 
@@ -67,7 +68,7 @@
 
   integer colors,numbers,subsamp,vecttype
   logical interpol,meshvect,modelvect,boundvect,read_external_model
-  double precision cutvect
+  double precision cutvect,sizemax_arrows
 
   double precision rapp_page,dispmax,xmin,zmin
 
@@ -171,8 +172,8 @@
 ! recherche des positions maximales des points de la grille
   xmax=maxval(coord(1,:))
   zmax=maxval(coord(2,:))
-  write(*,*) 'Max X = ',xmax
-  write(*,*) 'Max Z = ',zmax
+  write(IOUT,*) 'Max X = ',xmax
+  write(IOUT,*) 'Max Z = ',zmax
 
 ! limite du repere physique
   xmin=0.d0
@@ -183,7 +184,7 @@
 
 ! recherche de la valeur maximum de la norme du deplacement
   dispmax = maxval(sqrt(displ(1,:)**2 + displ(2,:)**2))
-  write(*,*) 'Max norme = ',dispmax
+  write(IOUT,*) 'Max norme = ',dispmax
 
 ! hauteur des numeros de domaine en CM
   height = 0.25d0
@@ -355,7 +356,7 @@
 !---- print the spectral elements mesh in PostScript
 !
 
-  print *,'Shape functions based on ',ngnod,' control nodes'
+  write(IOUT,*) 'Shape functions based on ',ngnod,' control nodes'
 
   convert = pi/180.d0
 
@@ -444,8 +445,8 @@
 
   write(24,*) '% elem ',ispec
 
-  do i=1,iptsdisp
-  do j=1,iptsdisp
+  do i=1,pointsdisp
+  do j=1,pointsdisp
   xinterp(i,j) = 0.d0
   zinterp(i,j) = 0.d0
   do in = 1,ngnod
@@ -469,22 +470,22 @@
 
 ! tracer des droites si elements 4 noeuds
 
-  ir=iptsdisp
+  ir=pointsdisp
   x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
   z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
   x2 = x2 * centim
   z2 = z2 * centim
   write(24,681) x2,z2
 
-  ir=iptsdisp
-  is=iptsdisp
+  ir=pointsdisp
+  is=pointsdisp
   x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
   z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
   x2 = x2 * centim
   z2 = z2 * centim
   write(24,681) x2,z2
 
-  is=iptsdisp
+  is=pointsdisp
   ir=1
   x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
   z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
@@ -503,7 +504,7 @@
   else
 
 ! tracer des courbes si elements 9 noeuds
-  do ir=2,iptsdisp
+  do ir=2,pointsdisp
     x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
     z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
     x2 = x2 * centim
@@ -511,8 +512,8 @@
     write(24,681) x2,z2
   enddo
 
-  ir=iptsdisp
-  do is=2,iptsdisp
+  ir=pointsdisp
+  do is=2,pointsdisp
     x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
     z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
     x2 = x2 * centim
@@ -520,8 +521,8 @@
     write(24,681) x2,z2
   enddo
 
-  is=iptsdisp
-  do ir=iptsdisp-1,1,-1
+  is=pointsdisp
+  do ir=pointsdisp-1,1,-1
     x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
     z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
     x2 = x2 * centim
@@ -530,7 +531,7 @@
   enddo
 
   ir=1
-  do is=iptsdisp-1,2,-1
+  do is=pointsdisp-1,2,-1
     x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
     z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
     x2 = x2 * centim
@@ -662,7 +663,7 @@
 
 ! return if the maximum displacement equals zero (no source)
   if(dispmax == 0.d0) then
-    print *,' null displacement : returning !'
+    write(IOUT,*) ' null displacement : returning !'
     return
   endif
 
@@ -679,15 +680,22 @@
 
   if(interpol) then
 
-  print *,'Interpolating the vector field...'
+  write(IOUT,*) 'Interpolating the vector field...'
 
   do ispec=1,nspec
 
 ! interpolation sur grille reguliere
-  if(mod(ispec,1000) == 0) write(*,*) 'Interpolation uniform grid element ',ispec
+  if(mod(ispec,1000) == 0) write(IOUT,*) 'Interpolation uniform grid element ',ispec
 
-  do i=1,iptsdisp
-  do j=1,iptsdisp
+! option to plot only lowerleft corner value to avoid very large files if dense meshes
+  if(plot_lowerleft_corner_only) then
+    pointsdisp_loop = 1
+  else
+    pointsdisp_loop = pointsdisp
+  endif
+
+  do i=1,pointsdisp_loop
+  do j=1,pointsdisp_loop
 
   xinterp(i,j) = 0.d0
   zinterp(i,j) = 0.d0
@@ -714,13 +722,13 @@
   x1 =(xinterp(i,j)-xmin)*rapp_page
   z1 =(zinterp(i,j)-zmin)*rapp_page
 
-  x2 = Uxinterp(i,j)*sizemax/dispmax
-  z2 = Uzinterp(i,j)*sizemax/dispmax
+  x2 = Uxinterp(i,j)*sizemax_arrows/dispmax
+  z2 = Uzinterp(i,j)*sizemax_arrows/dispmax
 
   d = sqrt(x2**2 + z2**2)
 
 ! ignorer si vecteur trop petit
-  if(d > cutvect*sizemax) then
+  if(d > cutvect*sizemax_arrows) then
 
   d1 = d * rapport
   d2 = d1 * cos(angle*convert)
@@ -779,13 +787,13 @@
   x1 =(coord(1,ipoin)-xmin)*rapp_page
   z1 =(coord(2,ipoin)-zmin)*rapp_page
 
-  x2 = displ(1,ipoin)*sizemax/dispmax
-  z2 = displ(2,ipoin)*sizemax/dispmax
+  x2 = displ(1,ipoin)*sizemax_arrows/dispmax
+  z2 = displ(2,ipoin)*sizemax_arrows/dispmax
 
   d = sqrt(x2**2 + z2**2)
 
 ! ignorer si vecteur trop petit
-  if(d > cutvect*sizemax) then
+  if(d > cutvect*sizemax_arrows) then
 
   d1 = d * rapport
   d2 = d1 * cos(angle*convert)

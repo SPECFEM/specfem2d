@@ -26,6 +26,7 @@
 
   double precision, dimension(NGLLX,NGLLZ,NSPEC) :: xix,xiz,gammax,gammaz
 
+! for compatibility with elastic arrays, potential is declared as a vector but correctly used below as a scalar
   double precision, dimension(NDIM,npoin) :: potential,veloc_field_postscript
 
 ! array with derivatives of Lagrange polynomials
