@@ -41,7 +41,7 @@
 
 ! ouverture du fichier image
   write(nom_fichier,222) it
-  222 format('image',i5.5,'.pnm')
+  222 format('OUTPUT_FILES/image',i5.5,'.pnm')
 
 ! ouvrir le fichier
   open(unit=27, file=nom_fichier, status='unknown')
