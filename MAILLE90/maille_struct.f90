@@ -112,10 +112,10 @@
 
 ! formats
 
- 1 format(a,f12.5)
- 2 format(a,i8)
+ 1 format(a,f20.8)
+ 2 format(a,i)
  3 format(a,a)
- 4 format(a,l8)
+ 4 format(a,l)
 
 ! read the header
   do i=1,10
@@ -781,7 +781,7 @@
 
  10 format('')
  15 format(e10.5,1x,e10.5)
- 40   format(a50)
+ 40 format(a50)
 
   end program maille_struct
 
