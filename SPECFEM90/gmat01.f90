@@ -26,7 +26,7 @@
   double precision density(numat),elastcoef(4,numat)
 
   integer in,n,indic
-  double precision young,poiss,denst,cp,cs,amu,a2mu,alam
+  double precision young,poisson,denst,cp,cs,amu,a2mu,alam
   double precision val1,val2,val3,val4
   double precision c11,c13,c33,c44
 
@@ -55,17 +55,19 @@
       Kmod  = alam + a2mu
       Kvol  = alam + a2mu/3.d0
       young = 9.d0*Kvol*amu/(3.d0*Kvol + amu)
-      poiss = half*(3.d0*Kvol-a2mu)/(3.d0*Kvol+amu)
-      if (poiss < 0.d0 .or. poiss >= 0.50001d0) stop 'Poisson''s ratio out of range !'
+      poisson = half*(3.d0*Kvol-a2mu)/(3.d0*Kvol+amu)
+! Poisson's ratio must be between -1 and +1/2
+      if (poisson < -1.d0 .or. poisson > 0.5d0) stop 'Poisson''s ratio out of range'
 
 !---- materiau isotrope, module de Young et coefficient de Poisson donnes
    else if(indic == 1) then
       young = val1
-      poiss = val2
-      if (poiss < 0.d0 .or. poiss >= 0.50001d0) stop 'Poisson''s ratio out of range !'
-      a2mu  = young/(one+poiss)
+      poisson = val2
+! Poisson's ratio must be between -1 and +1/2
+      if (poisson < -1.d0 .or. poisson > 0.5d0) stop 'Poisson''s ratio out of range'
+      a2mu  = young/(one+poisson)
       amu   = half*a2mu
-      alam  = a2mu*poiss/(one-two*poiss)
+      alam  = a2mu*poisson/(one-two*poisson)
       Kmod  = alam + a2mu
       Kvol  = alam + a2mu/3.d0
       cp    = dsqrt((Kvol + 4.d0*amu/3.d0)/denst)
@@ -106,7 +108,7 @@
 !----    check the input
 !
   if(indic == 0 .or. indic == 1) then
-    write(iout,200) n,cp,cs,denst,poiss,alam,amu,Kvol,young
+    write(iout,200) n,cp,cs,denst,poisson,alam,amu,Kvol,young
   else
     write(iout,300) n,c11,c13,c33,c44,denst, &
         sqrt(c33/denst),sqrt(c11/denst),sqrt(c44/denst),sqrt(c44/denst)
@@ -128,7 +130,7 @@
          'P-wave velocity. . . . . . . . . . . (cp) =',1pe15.8,/5x, &
          'S-wave velocity. . . . . . . . . . . (cs) =',1pe15.8,/5x, &
          'Mass density. . . . . . . . . . . (denst) =',1pe15.8,/5x, &
-         'Poisson''s ratio . . . . . . . . . (poiss) =',1pe15.8,/5x, &
+         'Poisson''s ratio . . . . . . . .(poisson) =',1pe15.8,/5x, &
          'First Lame parameter Lambda. . . . (alam) =',1pe15.8,/5x, &
          'Second Lame parameter Mu. . . . . . (amu) =',1pe15.8,/5x, &
          'Bulk modulus K . . . . . . . . . . (Kvol) =',1pe15.8,/5x, &
