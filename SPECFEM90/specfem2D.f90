@@ -20,7 +20,7 @@
 ! version 5.0 : - got rid of useless routines, suppressed commons etc.
 !               - weak formulation based explicitly on stress tensor
 !               - implementation of full anisotropy
-!               - implementation of attenuation
+!               - implementation of attenuation based on memory variables
 
 ! version 5.0 is based on SPECFEM2D version 4.2
 ! (c) June 1998 by Dimitri Komatitsch, Harvard University, USA
@@ -80,7 +80,8 @@
   double precision xixl,xizl,gammaxl,gammazl,jacobianl
 
 ! material properties of the elastic medium
-  double precision mul,lambdal,lambdalplus2mul
+  double precision mul_relaxed,lambdal_relaxed,lambdalplus2mul_relaxed
+  double precision mul_unrelaxed,lambdal_unrelaxed,lambdalplus2mul_unrelaxed
 
   double precision, dimension(:), allocatable :: xirec,etarec
 
@@ -107,13 +108,13 @@
   double precision f0,t0,factor,a,angleforce,ricker,displnorm_all
 
   double precision rsizemin,rsizemax,cpoverdxmin,cpoverdxmax, &
-    lambdalSmin,lambdalSmax,lambdalPmin,lambdalPmax,vpmin,vpmax
+    lambdal_Smin,lambdal_Smax,lambdal_Pmin,lambdal_Pmax,vpmin,vpmax
 
   integer icolor,inumber,isubsamp,ivecttype,itaff,nrec,isismostype
   integer numat,ngnod,nspec,iptsdisp,nelemabs
 
   logical interpol,imeshvect,imodelvect,iboundvect,ireadmodel,initialfield, &
-    ioutputgrid,ignuplot
+    ioutputgrid,ignuplot,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
 
   double precision cutvect,anglerec
 
@@ -124,10 +125,12 @@
 
   logical, dimension(:,:), allocatable  :: codeabs
 
-! DK DK feb99 for attenuation
+! for attenuation
+  integer nspec_allocate
+
   double precision tau_epsilon_nu1_mech1,tau_sigma_nu1_mech1, &
-  tau_epsilon_nu2_mech1,tau_sigma_nu2_mech1,tau_epsilon_nu1_mech2, &
-  tau_sigma_nu1_mech2,tau_epsilon_nu2_mech2,tau_sigma_nu2_mech2
+    tau_epsilon_nu2_mech1,tau_sigma_nu2_mech1,tau_epsilon_nu1_mech2, &
+    tau_sigma_nu1_mech2,tau_epsilon_nu2_mech2,tau_sigma_nu2_mech2
 
   double precision Un,Unp1,tauinv,Sn,Snp1,theta_n,theta_np1
   double precision phi_nu1_mech1,phi_nu2_mech1,phi_nu1_mech2,phi_nu2_mech2
@@ -141,7 +144,7 @@
 
   double precision, dimension(:,:,:), allocatable :: &
     e1_mech1,e11_mech1,e13_mech1,e1_mech2,e11_mech2,e13_mech2, &
-    DxUx_n,DzUz_n,DxUz_n,DzUx_n,DxUx_np1,DzUz_np1,DxUz_np1,DzUx_np1
+    duxdxl_n,duzdzl_n,duzdxl_n,duxdzl_n,duxdxl_np1,duzdzl_np1,duzdxl_np1,duxdzl_np1
 
 ! title of the plot
   character(len=60) stitle
@@ -207,13 +210,13 @@
   read(IIN,*) isismostype,ivecttype
 
   read(IIN,40) datlin
-  read(IIN,*) ireadmodel,ioutputgrid
+  read(IIN,*) ireadmodel,ioutputgrid,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
 
 !---- check parameters read
   write(IOUT,200) npgeo,NDIME
   write(IOUT,600) itaff,icolor,inumber
   write(IOUT,700) nrec,isismostype,anglerec
-  write(IOUT,750) initialfield,ireadmodel,ioutputgrid
+  write(IOUT,750) initialfield,ireadmodel,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,ioutputgrid
   write(IOUT,800) ivecttype,100.d0*cutvect,isubsamp
 
 !---- read time step
@@ -317,28 +320,29 @@
   allocate(knods(ngnod,nspec))
   allocate(ibool(NGLLX,NGLLZ,nspec))
 
-! DK DK feb99 for attenuation
-!! DK DK declarer le flag TURN_ATTGEN_ON et le lire depuis le parfile
-!! DK DK aussi faire attention a ne pas mettre aniso et attenuation (tester et stop si les deux)
-!! DK DK aussi mettre a jour comments feb99 -> 2004
-if(TURN_ATTGEN_ON) then
-  allocate(e1_mech1(NGLLX,NGLLZ,nspec))
-  allocate(e11_mech1(NGLLX,NGLLZ,nspec))
-  allocate(e13_mech1(NGLLX,NGLLZ,nspec))
-  allocate(e1_mech2(NGLLX,NGLLZ,nspec))
-  allocate(e11_mech2(NGLLX,NGLLZ,nspec))
-  allocate(e13_mech2(NGLLX,NGLLZ,nspec))
-  allocate(DxUx_n(NGLLX,NGLLZ,nspec))
-  allocate(DzUz_n(NGLLX,NGLLZ,nspec))
-  allocate(DxUz_n(NGLLX,NGLLZ,nspec))
-  allocate(DzUx_n(NGLLX,NGLLZ,nspec))
-  allocate(DxUx_np1(NGLLX,NGLLZ,nspec))
-  allocate(DzUz_np1(NGLLX,NGLLZ,nspec))
-  allocate(DxUz_np1(NGLLX,NGLLZ,nspec))
-  allocate(DzUx_np1(NGLLX,NGLLZ,nspec))
-else
- allocate_size_one
-endif
+! for attenuation
+  if(TURN_ANISOTROPY_ON .and. TURN_ATTENUATION_ON) stop 'cannot have anisotropy and attenuation both turned on in current version'
+
+  if(TURN_ATTENUATION_ON) then
+    nspec_allocate = nspec
+  else
+    nspec_allocate = 1
+  endif
+
+  allocate(e1_mech1(NGLLX,NGLLZ,nspec_allocate))
+  allocate(e11_mech1(NGLLX,NGLLZ,nspec_allocate))
+  allocate(e13_mech1(NGLLX,NGLLZ,nspec_allocate))
+  allocate(e1_mech2(NGLLX,NGLLZ,nspec_allocate))
+  allocate(e11_mech2(NGLLX,NGLLZ,nspec_allocate))
+  allocate(e13_mech2(NGLLX,NGLLZ,nspec_allocate))
+  allocate(duxdxl_n(NGLLX,NGLLZ,nspec_allocate))
+  allocate(duzdzl_n(NGLLX,NGLLZ,nspec_allocate))
+  allocate(duzdxl_n(NGLLX,NGLLZ,nspec_allocate))
+  allocate(duxdzl_n(NGLLX,NGLLZ,nspec_allocate))
+  allocate(duxdxl_np1(NGLLX,NGLLZ,nspec_allocate))
+  allocate(duzdzl_np1(NGLLX,NGLLZ,nspec_allocate))
+  allocate(duzdxl_np1(NGLLX,NGLLZ,nspec_allocate))
+  allocate(duxdzl_np1(NGLLX,NGLLZ,nspec_allocate))
 
 ! --- allocate arrays for absorbing boundary conditions
   if(nelemabs <= 0) then
@@ -526,8 +530,8 @@ endif
   call defarrays(vpext,vsext,rhoext,density,elastcoef, &
           xigll,yigll,xix,xiz,gammax,gammaz,a11,a12, &
           ibool,kmato,coord,gltfu,npoin,rsizemin,rsizemax, &
-          cpoverdxmin,cpoverdxmax,lambdalSmin,lambdalSmax, &
-          lambdalPmin,lambdalPmax,vpmin,vpmax,ireadmodel,nspec,numat)
+          cpoverdxmin,cpoverdxmax,lambdal_Smin,lambdal_Smax, &
+          lambdal_Pmin,lambdal_Pmax,vpmin,vpmax,ireadmodel,nspec,numat)
 
 ! build the global mass matrix once and for all
   rmass(:) = ZERO
@@ -553,7 +557,7 @@ endif
 !---- verifier le maillage, la stabilite et le nb de points par lambda
 !
   call checkgrid(deltat,gltfu,initialfield,rsizemin,rsizemax, &
-      cpoverdxmin,cpoverdxmax,lambdalSmin,lambdalSmax,lambdalPmin,lambdalPmax)
+      cpoverdxmin,cpoverdxmax,lambdal_Smin,lambdal_Smax,lambdal_Pmin,lambdal_Pmax)
 
 !
 !---- initialiser sismogrammes
@@ -597,10 +601,11 @@ endif
     print *,'Max norm of initial displacement = ',maxval(sqrt(displ(1,:)**2 + displ(2,:)**2))
   endif
 
-! DK DK attenuation constants from Carcione 1993 Geophysics volume 58 pages 111 and 112
+! attenuation constants from Carcione 1993 Geophysics volume 58 pages 111 and 112
 ! for two memory-variables mechanisms.
 ! beware: these values implement specific values of the quality factor Q,
 ! see Carcione 1993 for details
+
   tau_epsilon_nu1_mech1 = 0.0334d0
   tau_sigma_nu1_mech1   = 0.0303d0
   tau_epsilon_nu2_mech1 = 0.0352d0
@@ -610,20 +615,18 @@ endif
   tau_epsilon_nu2_mech2 = 0.0029d0
   tau_sigma_nu2_mech2   = 0.0024d0
 
-  inv_tau_sigma_nu1_mech1 = 1.d0 / tau_sigma_nu1_mech1
-  inv_tau_sigma_nu2_mech1 = 1.d0 / tau_sigma_nu2_mech1
-  inv_tau_sigma_nu1_mech2 = 1.d0 / tau_sigma_nu1_mech2
-  inv_tau_sigma_nu2_mech2 = 1.d0 / tau_sigma_nu2_mech2
+  inv_tau_sigma_nu1_mech1 = ONE / tau_sigma_nu1_mech1
+  inv_tau_sigma_nu2_mech1 = ONE / tau_sigma_nu2_mech1
+  inv_tau_sigma_nu1_mech2 = ONE / tau_sigma_nu1_mech2
+  inv_tau_sigma_nu2_mech2 = ONE / tau_sigma_nu2_mech2
 
-  phi_nu1_mech1 = (1.d0 - tau_epsilon_nu1_mech1/tau_sigma_nu1_mech1) / tau_sigma_nu1_mech1
-  phi_nu2_mech1 = (1.d0 - tau_epsilon_nu2_mech1/tau_sigma_nu2_mech1) / tau_sigma_nu2_mech1
-  phi_nu1_mech2 = (1.d0 - tau_epsilon_nu1_mech2/tau_sigma_nu1_mech2) / tau_sigma_nu1_mech2
-  phi_nu2_mech2 = (1.d0 - tau_epsilon_nu2_mech2/tau_sigma_nu2_mech2) / tau_sigma_nu2_mech2
+  phi_nu1_mech1 = (ONE - tau_epsilon_nu1_mech1/tau_sigma_nu1_mech1) / tau_sigma_nu1_mech1
+  phi_nu2_mech1 = (ONE - tau_epsilon_nu2_mech1/tau_sigma_nu2_mech1) / tau_sigma_nu2_mech1
+  phi_nu1_mech2 = (ONE - tau_epsilon_nu1_mech2/tau_sigma_nu1_mech2) / tau_sigma_nu1_mech2
+  phi_nu2_mech2 = (ONE - tau_epsilon_nu2_mech2/tau_sigma_nu2_mech2) / tau_sigma_nu2_mech2
 
-  Mu_nu1 = 1.d0 - (1.d0 - tau_epsilon_nu1_mech1/tau_sigma_nu1_mech1) &
-                  - (1.d0 - tau_epsilon_nu1_mech2/tau_sigma_nu1_mech2)
-  Mu_nu2 = 1.d0 - (1.d0 - tau_epsilon_nu2_mech1/tau_sigma_nu2_mech1) &
-                  - (1.d0 - tau_epsilon_nu2_mech2/tau_sigma_nu2_mech2)
+  Mu_nu1 = ONE - (ONE - tau_epsilon_nu1_mech1/tau_sigma_nu1_mech1) - (ONE - tau_epsilon_nu1_mech2/tau_sigma_nu1_mech2)
+  Mu_nu2 = ONE - (ONE - tau_epsilon_nu2_mech1/tau_sigma_nu2_mech1) - (ONE - tau_epsilon_nu2_mech2/tau_sigma_nu2_mech2)
 
   deltatsquare = deltat * deltat
   deltatcube = deltatsquare * deltat
@@ -653,8 +656,9 @@ endif
       endif
     endif
 
-! DK DK calculer Grad(U) a l'instant n pour attenuation
-  call calc_gradient(DxUx_n,DzUz_n,DxUz_n,DzUx_n,xjaci,hprime,hTprime,ibool,displ,NGLLX,npoin,ndime,nspec)
+! compute Grad(displ) at time step n for attenuation
+  if(TURN_ATTENUATION_ON) call compute_gradient_attenuation(displ,duxdxl_n,duzdxl_n, &
+      duxdzl_n,duzdzl_n,xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,NSPEC,npoin)
 
 ! `predictor' update displacement using finite-difference time scheme (Newmark)
     displ(:,:) = displ(:,:) + deltat*veloc(:,:) + deltatsquareover2*accel(:,:)
@@ -664,10 +668,10 @@ endif
 !   integration over spectral elements
     do ispec = 1,NSPEC
 
-! get elastic parameters of current spectral element
-      lambdal = elastcoef(1,kmato(ispec))
-      mul = elastcoef(2,kmato(ispec))
-      lambdalplus2mul = lambdal + 2.d0*mul
+! get relaxed elastic parameters of current spectral element
+      lambdal_relaxed = elastcoef(1,kmato(ispec))
+      mul_relaxed = elastcoef(2,kmato(ispec))
+      lambdalplus2mul_relaxed = lambdal_relaxed + TWO*mul_relaxed
 
 ! first double loop over GLL to compute and store gradients
       do j = 1,NGLLZ
@@ -679,10 +683,15 @@ endif
             cpl = vpext(iglob)
             csl = vsext(iglob)
             rhol = rhoext(iglob)
-            mul = rhol*csl*csl
-            lambdal = rhol*cpl*cpl - 2.d0*mul
-            lambdalplus2mul = lambdal + 2.d0*mul
+            mul_relaxed = rhol*csl*csl
+            lambdal_relaxed = rhol*cpl*cpl - TWO*mul_relaxed
+            lambdalplus2mul_relaxed = lambdal_relaxed + TWO*mul_relaxed
           endif
+
+! compute unrelaxed elastic coefficients from formulas in Carcione 1993 page 111
+      lambdal_unrelaxed = (lambdal_relaxed + mul_relaxed) * Mu_nu1 - mul_relaxed * Mu_nu2
+      mul_unrelaxed = mul_relaxed * Mu_nu2
+      lambdalplus2mul_unrelaxed = lambdal_unrelaxed + TWO*mul_unrelaxed
 
 ! derivative along x
           tempx1l = ZERO
@@ -716,70 +725,29 @@ endif
           duzdxl = tempz1l*xixl + tempz2l*gammaxl
           duzdzl = tempz1l*xizl + tempz2l*gammazl
 
-
-
-
-
-
-
-
-
-
-
-! compute stress tensor
-
-! DK DK for attenuation
+! compute stress tensor (include attenuation or anisotropy if needed)
 
   if(TURN_ATTENUATION_ON) then
 
 ! compute the stress using the unrelaxed Lame parameters (Carcione page 111)
-    sigma_xx = (rlambda_unrelax + 2.d0*rmu_unrelax)*DxUx + rlambda_unrelax*DzUz
-    sigma_zz = rlambda_unrelax*DxUx + (rlambda_unrelax + 2.d0*rmu_unrelax)*DzUz
-    sigma_xz = rmu_unrelax*(DxUz + DzUx)
+    sigma_xx = lambdalplus2mul_unrelaxed*duxdxl + lambdal_unrelaxed*duzdzl
+    sigma_xz = mul_unrelaxed*(duzdxl + duxdzl)
+    sigma_zz = lambdalplus2mul_unrelaxed*duzdzl + lambdal_unrelaxed*duxdxl
 
 ! add the memory variables using the relaxed parameters (Carcione page 111)
 ! beware: there is a bug in Carcione's equation for sigma_zz
-    sigma_xx = sigma_xx + (rlambda_relax + rmu_relax)* (e1_mech1(i,j,k) + e1_mech2(i,j,k)) &
-      + 2.d0 * rmu_relax * (e11_mech1(i,j,k) + e11_mech2(i,j,k))
-    sigma_zz = sigma_zz + (rlambda_relax + rmu_relax)* (e1_mech1(i,j,k) + e1_mech2(i,j,k)) &
-      - 2.d0 * rmu_relax * (e11_mech1(i,j,k) + e11_mech2(i,j,k))
-    sigma_xz = sigma_xz + rmu_relax * (e13_mech1(i,j,k) + e13_mech2(i,j,k))
+    sigma_xx = sigma_xx + (lambdal_relaxed + mul_relaxed)* (e1_mech1(i,j,k) + e1_mech2(i,j,k)) + TWO * mul_relaxed * (e11_mech1(i,j,k) + e11_mech2(i,j,k))
+    sigma_xz = sigma_xz + mul_relaxed * (e13_mech1(i,j,k) + e13_mech2(i,j,k))
+    sigma_zz = sigma_zz + (lambdal_relaxed + mul_relaxed)* (e1_mech1(i,j,k) + e1_mech2(i,j,k)) - TWO * mul_relaxed * (e11_mech1(i,j,k) + e11_mech2(i,j,k))
 
   else
 
-! DK DK no attenuation
-
-! old clean
-          sigma_xx = lambdalplus2mul*duxdxl + lambdal*duzdzl
-          sigma_xz = mul*(duzdxl + duxdzl)
-          sigma_zz = lambdalplus2mul*duzdzl + lambdal*duxdxl
-
-! new dirty
-  sigma_xx = (rlambda_relax + 2.d0*rmu_relax)*DxUx + rlambda_relax*DzUz
-  sigma_zz = rlambda_relax*DxUx + (rlambda_relax + 2.d0*rmu_relax)*DzUz
-  sigma_xz = rmu_relax*(DxUz + DzUx)
+! no attenuation
+    sigma_xx = lambdalplus2mul_relaxed*duxdxl + lambdal_relaxed*duzdzl
+    sigma_xz = mul_relaxed*(duzdxl + duxdzl)
+    sigma_zz = lambdalplus2mul_relaxed*duzdzl + lambdal_relaxed*duxdxl
 
   endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 ! full anisotropy
   if(TURN_ANISOTROPY_ON) then
@@ -880,12 +848,12 @@ endif
       ispec = numabs(ispecabs)
 
 ! get elastic parameters of current spectral element
-      lambdal = elastcoef(1,kmato(ispec))
-      mul = elastcoef(2,kmato(ispec))
+      lambdal_relaxed = elastcoef(1,kmato(ispec))
+      mul_relaxed = elastcoef(2,kmato(ispec))
       rhol  = density(kmato(ispec))
-      rKvol  = lambdal + 2.d0*mul/3.d0
-      cpl = dsqrt((rKvol + 4.d0*mul/3.d0)/rhol)
-      csl = dsqrt(mul/rhol)
+      rKvol  = lambdal_relaxed + TWO*mul_relaxed/3.d0
+      cpl = dsqrt((rKvol + 4.d0*mul_relaxed/3.d0)/rhol)
+      csl = dsqrt(mul_relaxed/rhol)
 
 
 !--- left absorbing boundary
@@ -909,8 +877,8 @@ endif
           rho_vp = rhol*cpl
           rho_vs = rhol*csl
 
-          nx = -1.d0
-          nz = 0.d0
+          nx = -ONE
+          nz = ZERO
 
           vx = veloc(1,iglob)
           vz = veloc(2,iglob)
@@ -950,8 +918,8 @@ endif
           rho_vp = rhol*cpl
           rho_vs = rhol*csl
 
-          nx = 1.d0
-          nz = 0.d0
+          nx = ONE
+          nz = ZERO
 
           vx = veloc(1,iglob)
           vz = veloc(2,iglob)
@@ -997,8 +965,8 @@ endif
           rho_vp = rhol*cpl
           rho_vs = rhol*csl
 
-          nx = 0.d0
-          nz = -1.d0
+          nx = ZERO
+          nz = -ONE
 
           vx = veloc(1,iglob)
           vz = veloc(2,iglob)
@@ -1044,8 +1012,8 @@ endif
           rho_vp = rhol*cpl
           rho_vs = rhol*csl
 
-          nx = 0.d0
-          nz = 1.d0
+          nx = ZERO
+          nz = ONE
 
           vx = veloc(1,iglob)
           vz = veloc(2,iglob)
@@ -1079,7 +1047,7 @@ endif
 
 ! Ricker wavelet for the source time function
   a = pi*pi*f0*f0
-  ricker = - factor * (1.d0-2.d0*a*(time-t0)**2)*exp(-a*(time-t0)**2)
+  ricker = - factor * (ONE-TWO*a*(time-t0)**2)*exp(-a*(time-t0)**2)
 
 ! --- collocated force
   if(nint(gltfu(2)) == 1) then
@@ -1111,25 +1079,20 @@ endif
 ! `corrector' update velocity
   veloc(:,:) = veloc(:,:) + deltatover2*accel(:,:)
 
+! implement attenuation
+  if(TURN_ATTENUATION_ON) then
 
+! compute Grad(displ) at time step n+1 for attenuation
+    call compute_gradient_attenuation(displ,duxdxl_np1,duzdxl_np1, &
+      duxdzl_np1,duzdzl_np1,xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,NSPEC,npoin)
 
-
-
-
-
-
-! DK DK feb99 mettre a jour memory variables par Runge-Kutta ordre 4 ici for attenuation
-
-
-! calculer Grad(U) a l'instant n+1 pour attenuation
-  call calc_gradient(DxUx_np1,DzUz_np1,DxUz_np1,DzUx_np1,xjaci,hprime,hTprime,ibool,displ,NGLLX,npoin,ndime,nspec)
-
+! update memory variables with fourth-order Runge-Kutta time scheme for attenuation
   do k=1,nspec
   do j=1,NGLLZ
   do i=1,NGLLX
 
-  theta_n   = DxUx_n(i,j,k) + DzUz_n(i,j,k)
-  theta_np1 = DxUx_np1(i,j,k) + DzUz_np1(i,j,k)
+  theta_n   = duxdxl_n(i,j,k) + duzdzl_n(i,j,k)
+  theta_np1 = duxdxl_np1(i,j,k) + duzdzl_np1(i,j,k)
 
 ! evolution e1_mech1
   Un = e1_mech1(i,j,k)
@@ -1165,8 +1128,8 @@ endif
   tauinvsquare = tauinv * tauinv
   tauinvcube = tauinvsquare * tauinv
   tauinvUn = tauinv * Un
-  Sn   = (DxUx_n(i,j,k) - theta_n/2.d0) * phi_nu2_mech1
-  Snp1 = (DxUx_np1(i,j,k) - theta_np1/2.d0) * phi_nu2_mech1
+  Sn   = (duxdxl_n(i,j,k) - theta_n/TWO) * phi_nu2_mech1
+  Snp1 = (duxdxl_np1(i,j,k) - theta_np1/TWO) * phi_nu2_mech1
   Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
       twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
       fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
@@ -1179,8 +1142,8 @@ endif
   tauinvsquare = tauinv * tauinv
   tauinvcube = tauinvsquare * tauinv
   tauinvUn = tauinv * Un
-  Sn   = (DxUx_n(i,j,k) - theta_n/2.d0) * phi_nu2_mech2
-  Snp1 = (DxUx_np1(i,j,k) - theta_np1/2.d0) * phi_nu2_mech2
+  Sn   = (duxdxl_n(i,j,k) - theta_n/TWO) * phi_nu2_mech2
+  Snp1 = (duxdxl_np1(i,j,k) - theta_np1/TWO) * phi_nu2_mech2
   Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
       twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
       fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
@@ -1193,8 +1156,8 @@ endif
   tauinvsquare = tauinv * tauinv
   tauinvcube = tauinvsquare * tauinv
   tauinvUn = tauinv * Un
-  Sn   = (DzUx_n(i,j,k) + DxUz_n(i,j,k)) * phi_nu2_mech1
-  Snp1 = (DzUx_np1(i,j,k) + DxUz_np1(i,j,k)) * phi_nu2_mech1
+  Sn   = (duxdzl_n(i,j,k) + duzdxl_n(i,j,k)) * phi_nu2_mech1
+  Snp1 = (duxdzl_np1(i,j,k) + duzdxl_np1(i,j,k)) * phi_nu2_mech1
   Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
       twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
       fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
@@ -1207,8 +1170,8 @@ endif
   tauinvsquare = tauinv * tauinv
   tauinvcube = tauinvsquare * tauinv
   tauinvUn = tauinv * Un
-  Sn   = (DzUx_n(i,j,k) + DxUz_n(i,j,k)) * phi_nu2_mech2
-  Snp1 = (DzUx_np1(i,j,k) + DxUz_np1(i,j,k)) * phi_nu2_mech2
+  Sn   = (duxdzl_n(i,j,k) + duzdxl_n(i,j,k)) * phi_nu2_mech2
+  Snp1 = (duxdzl_np1(i,j,k) + duzdxl_np1(i,j,k)) * phi_nu2_mech2
   Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
       twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
       fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
@@ -1219,21 +1182,7 @@ endif
   enddo
   enddo
 
-! DK DK feb99 mettre a jour memory variables par Runge-Kutta ordre 4 ici for attenuation
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  endif ! end of test on attenuation
 
 !----  display max of norm of displacement
   if(mod(it,itaff) == 0) then
@@ -1359,6 +1308,8 @@ endif
   750   format(//1x,'C o n t r o l',/1x,34('='),//5x, &
   'Read external initial field or not . .(initialfield) = ',l6/5x, &
   'Read external velocity model or not. . .(ireadmodel) = ',l6/5x, &
+  'Turn anisotropy on or off. . . .(TURN_ANISOTROPY_ON) = ',l6/5x, &
+  'Turn attenuation on or off. . .(TURN_ATTENUATION_ON) = ',l6/5x, &
   'Save grid in external file or not . . .(ioutputgrid) = ',l6)
   800   format(//1x,'C o n t r o l',/1x,34('='),//5x, &
   'Vector display type . . . . . . . . . . .(ivecttype) = ',i6/5x, &

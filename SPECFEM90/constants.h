@@ -87,9 +87,6 @@
 ! anisotropic copper crystal (cubic symmetry)
 !
 
-! switch anisotropy on or off
-  logical, parameter :: TURN_ANISOTROPY_ON = .false.
-
 ! regular c_ijkl with no rotation
   double precision, parameter :: c11val = 169.d9
   double precision, parameter :: c12val = 122.d9

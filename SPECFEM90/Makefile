@@ -25,7 +25,7 @@ LINK = $(F90)
 EXEC = xspecfem2D
 OBJS = $O/checkgrid.o $O/datim.o $O/defarrays.o\
         $O/lagrange_poly.o $O/gmat01.o $O/gll_library.o $O/plotgll.o $O/define_derivative_matrices.o\
-        $O/plotpost.o $O/positrec.o $O/positsource.o $O/q49spec.o\
+        $O/plotpost.o $O/positrec.o $O/positsource.o $O/q49spec.o $O/compute_gradient_attenuation.o\
         $O/specfem2D.o $O/write_seismograms.o $O/createnum_fast.o $O/createnum_slow.o $O/q49shape.o
 
 default: all
@@ -83,6 +83,9 @@ $O/q49spec.o: q49spec.f90 constants.h
     
 $O/specfem2D.o: specfem2D.f90 constants.h
 	${F90} $(FLAGS) -c -o $O/specfem2D.o specfem2D.f90
+    
+$O/compute_gradient_attenuation.o: compute_gradient_attenuation.f90 constants.h
+	${F90} $(FLAGS) -c -o $O/compute_gradient_attenuation.o compute_gradient_attenuation.f90
     
 $O/write_seismograms.o: write_seismograms.f90 constants.h
 	${F90} $(FLAGS) -c -o $O/write_seismograms.o write_seismograms.f90
