@@ -122,7 +122,7 @@
   close(11,status='delete')
 
 ! write the new file
-  open(unit=11,file='OUTPUT_FILES/Ux_file.bin',status='unknown',access='direct',recl=4*NSTEP*nrec)
+  open(unit=11,file='OUTPUT_FILES/Ux_file.bin',status='unknown',access='direct',recl=NSTEP*nrec)
   write(11,rec=1) buffer_SEP_binary
   close(11)
 
@@ -140,7 +140,7 @@
   close(11,status='delete')
 
 ! write the new file
-  open(unit=11,file='OUTPUT_FILES/Uz_file.bin',status='unknown',access='direct',recl=4*NSTEP*nrec)
+  open(unit=11,file='OUTPUT_FILES/Uz_file.bin',status='unknown',access='direct',recl=NSTEP*nrec)
   write(11,rec=1) buffer_SEP_binary
   close(11)
 
