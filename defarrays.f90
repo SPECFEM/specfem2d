@@ -14,7 +14,7 @@
   subroutine defarrays(vpext,vsext,rhoext,density,elastcoef, &
           ibool,kmato,coord,npoin,rsizemin,rsizemax, &
           cpoverdxmin,cpoverdxmax,lambdaSmin,lambdaSmax,lambdaPmin,lambdaPmax, &
-          vpmin,vpmax,readmodel,nspec,numat)
+          vpmin,vpmax,read_external_model,nspec,numat)
 
 ! define all the arrays for the variational formulation
 
@@ -43,7 +43,7 @@
   double precision rsizemin,rsizemax,cpoverdxmin,cpoverdxmax, &
     lambdaSmin,lambdaSmax,lambdaPmin,lambdaPmax,vpmin,vpmax
 
-  logical readmodel
+  logical read_external_model
 
 !
 !-----------------------------------------------------------------------
@@ -87,7 +87,7 @@
     do i=1,NGLLX
 
 !--- si formulation heterogene pour un modele de vitesse externe
-  if(readmodel) then
+  if(read_external_model) then
     ipointnum = ibool(i,j,ispec)
     cploc = vpext(ipointnum)
     csloc = vsext(ipointnum)
