@@ -1,51 +1,38 @@
 
-!=====================================================================
+!========================================================================
 !
-!                 S p e c f e m  V e r s i o n  4 . 2
-!                 -----------------------------------
+!                   S P E C F E M 2 D  Version 5.0
+!                   ------------------------------
 !
 !                         Dimitri Komatitsch
-!    Department of Earth and Planetary Sciences - Harvard University
-!                         Jean-Pierre Vilotte
-!                 Departement de Sismologie - IPGP - Paris
-!                           (c) June 1998
+!          Universite de Pau et des Pays de l'Adour, France
 !
-!=====================================================================
+!                          (c) May 2004
+!
+!========================================================================
 
-  subroutine createnum_slow(knods,ibool,npoin)
-!
-!=======================================================================
-!
-!    "c r e a t e n u m _ s l o w": generate the global numbering
-!
-!=======================================================================
-!
+  subroutine createnum_slow(knods,ibool,npoin,nspec,ngnod)
 
-  use iounit
-  use infos
-  use spela202
+! generate the global numbering
 
   implicit none
 
-  integer knods(ngnod,nspec),ibool(nxgll,nygll,nspec)
-  integer npoin
+  include "constants.h"
+
+  integer npoin,nspec,ngnod
+
+  integer knods(ngnod,nspec),ibool(NGLLX,NGLLY,nspec)
 
   integer i,j,num2,i2,j2,ipos,ipos2,iloc,jloc,kloc
   integer ngnodloc,ngnodother,nedgeloc,nedgeother,npedge,numelem,npcorn
+
   logical alreadyexist
 
   integer ngnoddeb(4),ngnodfin(4)
 
-!
-!-----------------------------------------------------------------------
-!
-
-!
-!----  create global numbering from mesh structure
-!
+!----  create global mesh numbering
   print *
-  print *
-  print *,'Generating global numbering from mesh structure (slow version)...'
+  print *,'Generating global mesh numbering (slow version)...'
   print *
 
   npoin = 0
@@ -71,26 +58,20 @@
   ngnodfin(4)= 1
 
 ! initialisation du tableau de numerotation globale
-  do numelem = 1,nspec
-  do i=1,nxgll
-    do j=1,nygll
-  ibool(i,j,numelem) = 0
-  enddo
-  enddo
-  enddo
+  ibool(:,:,:) = 0
 
   do numelem = 1,nspec
-  do i=1,nxgll
-    do j=1,nygll
+  do i=1,NGLLX
+    do j=1,NGLLY
 
 ! verifier que le point n'a pas deja ete genere
 
-  if(ibool(i,j,numelem)  ==  0) then
+  if(ibool(i,j,numelem) == 0) then
 
 !
 !---- point interieur a un element, donc forcement unique
 !
-  if(i  /=  1 .and. i  /=  nxgll .and. j  /=  1 .and. j  /=  nygll) then
+  if(i /= 1 .and. i /= NGLLX .and. j /= 1 .and. j /= NGLLY) then
 
     npoin = npoin + 1
     ibool(i,j,numelem) = npoin
@@ -98,17 +79,17 @@
 !
 !---- point au coin d'un element, rechercher les coins des autres elements
 !
-  else if((i == 1.and.j == 1) .or. (i == 1.and.j == nygll) .or. &
-                (i == nxgll.and.j == 1) .or. (i == nxgll.and.j == nygll)) then
+  else if((i == 1 .and. j == 1) .or. (i == 1 .and. j == NGLLY) .or. &
+          (i == NGLLX .and. j == 1) .or. (i == NGLLX .and. j == NGLLY)) then
 
 ! trouver numero local du coin
-  if(i == 1.and.j == 1) then
+  if(i == 1 .and. j == 1) then
     ngnodloc = 1
-  else if(i == nxgll.and.j == 1) then
+  else if(i == NGLLX .and. j == 1) then
     ngnodloc = 2
-  else if(i == nxgll.and.j == nygll) then
+  else if(i == NGLLX .and. j == NGLLY) then
     ngnodloc = 3
-  else if(i == 1.and.j == nygll) then
+  else if(i == 1 .and. j == NGLLY) then
     ngnodloc = 4
   endif
 
@@ -116,7 +97,7 @@
 
   alreadyexist = .false.
 
-  if(numelem  >  1) then
+  if(numelem > 1) then
 
   do num2=1,numelem-1
 
@@ -124,22 +105,22 @@
     do ngnodother=1,4
 
 ! voir si ce coin a deja ete genere
-      if(knods(ngnodother,num2)  ==  knods(ngnodloc,numelem)) then
+      if(knods(ngnodother,num2) == knods(ngnodloc,numelem)) then
         alreadyexist = .true.
 
 ! obtenir la numerotation dans l'autre element
-          if(ngnodother  ==  1) then
+          if(ngnodother == 1) then
             i2 = 1
             j2 = 1
-          else if(ngnodother  ==  2) then
-            i2 = nxgll
+          else if(ngnodother == 2) then
+            i2 = NGLLX
             j2 = 1
-          else if(ngnodother  ==  3) then
-            i2 = nxgll
-            j2 = nygll
-          else if(ngnodother  ==  4) then
+          else if(ngnodother == 3) then
+            i2 = NGLLX
+            j2 = NGLLY
+          else if(ngnodother == 4) then
             i2 = 1
-            j2 = nygll
+            j2 = NGLLY
             else
                   stop 'bad corner'
             endif
@@ -173,9 +154,9 @@
 ! trouver numero local de l'arete
   if(j == 1) then
     nedgeloc = 1
-  else if(i == nxgll) then
+  else if(i == NGLLX) then
     nedgeloc = 2
-  else if(j == nygll) then
+  else if(j == NGLLY) then
     nedgeloc = 3
   else if(i == 1) then
     nedgeloc = 4
@@ -185,7 +166,7 @@
 
   alreadyexist = .false.
 
-  if(numelem  >  1) then
+  if(numelem > 1) then
 
   do num2=1,numelem-1
 
@@ -194,9 +175,9 @@
 
 !--- detecter un eventuel defaut dans la structure topologique du maillage
 
-  if((knods(ngnoddeb(nedgeother),num2)  ==  knods(ngnoddeb(nedgeloc),numelem)) &
+  if((knods(ngnoddeb(nedgeother),num2) == knods(ngnoddeb(nedgeloc),numelem)) &
        .and. &
-    (knods(ngnodfin(nedgeother),num2)  ==  knods(ngnodfin(nedgeloc),numelem))) then
+    (knods(ngnodfin(nedgeother),num2) == knods(ngnodfin(nedgeloc),numelem))) then
   stop 'Improper topology of the input mesh detected'
 
 !--- sinon voir si cette arete a deja ete generee
@@ -208,28 +189,28 @@
         alreadyexist = .true.
 
 ! obtenir la numerotation dans l'autre element
-! maillage conforme donc on doit supposer que nxgll == nygll
+! maillage conforme donc on doit supposer que NGLLX == NGLLY
 
 ! generer toute l'arete pour eviter des recherches superflues
-  do kloc = 2,nxgll-1
+  do kloc = 2,NGLLX-1
 
 ! calculer l'abscisse le long de l'arete de depart
-          if(nedgeloc  ==  1) then
+          if(nedgeloc == 1) then
             iloc = kloc
             jloc = 1
             ipos = iloc
-          else if(nedgeloc  ==  2) then
-            iloc = nxgll
+          else if(nedgeloc == 2) then
+            iloc = NGLLX
             jloc = kloc
             ipos = jloc
-          else if(nedgeloc  ==  3) then
+          else if(nedgeloc == 3) then
             iloc = kloc
-            jloc = nygll
-            ipos = nxgll - iloc + 1
-          else if(nedgeloc  ==  4) then
+            jloc = NGLLY
+            ipos = NGLLX - iloc + 1
+          else if(nedgeloc == 4) then
             iloc = 1
             jloc = kloc
-            ipos = nygll - jloc + 1
+            ipos = NGLLY - jloc + 1
             else
                   stop 'bad nedgeloc'
             endif
@@ -237,30 +218,30 @@
 ! calculer l'abscisse le long de l'arete d'arrivee
 ! topologie du maillage coherente, donc sens de parcours des aretes opposes
 
-        ipos2 = nxgll - ipos + 1
+        ipos2 = NGLLX - ipos + 1
 
 ! calculer les coordonnees reelles dans l'element d'arrivee
-          if(nedgeother  ==  1) then
+          if(nedgeother == 1) then
             i2 = ipos2
             j2 = 1
-          else if(nedgeother  ==  2) then
-            i2 = nxgll
+          else if(nedgeother == 2) then
+            i2 = NGLLX
             j2 = ipos2
-          else if(nedgeother  ==  3) then
-            i2 = nxgll - ipos2 + 1
-            j2 = nygll
-          else if(nedgeother  ==  4) then
+          else if(nedgeother == 3) then
+            i2 = NGLLX - ipos2 + 1
+            j2 = NGLLY
+          else if(nedgeother == 4) then
             i2 = 1
-            j2 = nygll - ipos2 + 1
+            j2 = NGLLY - ipos2 + 1
             else
                   stop 'bad nedgeother'
             endif
 
 ! verifier que le point de depart n'existe pas deja
-      if(ibool(iloc,jloc,numelem)  /=  0) stop 'point genere deux fois'
+      if(ibool(iloc,jloc,numelem) /= 0) stop 'point genere deux fois'
 
 ! verifier que le point d'arrivee existe bien deja
-      if(ibool(i2,j2,num2)  ==  0) stop 'point inconnu dans le maillage'
+      if(ibool(i2,j2,num2) == 0) stop 'point inconnu dans le maillage'
 
 ! affecter le meme numero
       ibool(iloc,jloc,numelem) = ibool(i2,j2,num2)
@@ -294,17 +275,15 @@
   enddo
 
 ! verification de la coherence de la numerotation generee
-  if(minval(ibool) /= 1 .or. maxval(ibool) /= npoin) &
-          stop 'Error while generating global numbering'
+  if(minval(ibool) /= 1 .or. maxval(ibool) /= npoin) stop 'Error while generating global numbering'
 
   print *,'Total number of points of the global mesh: ',npoin
-  print *
-  print *,'divided up as follows:'
+  print *,'distributed as follows:'
   print *
   print *,'Number of interior points: ',npoin-npedge-npcorn
   print *,'Number of edge points (without corners): ',npedge
   print *,'Number of corner points: ',npcorn
   print *
 
-  return
   end subroutine createnum_slow
+

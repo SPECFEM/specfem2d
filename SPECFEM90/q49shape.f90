@@ -1,19 +1,18 @@
 
-!=====================================================================
+!========================================================================
 !
-!                 S p e c f e m  V e r s i o n  4 . 2
-!                 -----------------------------------
+!                   S P E C F E M 2 D  Version 5.0
+!                   ------------------------------
 !
 !                         Dimitri Komatitsch
-!    Department of Earth and Planetary Sciences - Harvard University
-!                         Jean-Pierre Vilotte
-!                 Departement de Sismologie - IPGP - Paris
-!                           (c) June 1998
+!          Universite de Pau et des Pays de l'Adour, France
 !
-!=====================================================================
+!                          (c) May 2004
+!
+!========================================================================
 
-  subroutine q49shape(shape,dershape,xi,yi,ngnod,nxgll,nygll,ndime)
-!
+  subroutine q49shape(shape,dershape,xi,yi,ngnod,NGLLX,NGLLY,NDIME)
+
 !=======================================================================
 !
 !     "q 4 9 s h a p e" : set up the shape functions and their derivatives
@@ -36,15 +35,14 @@
 !                           Local coordinate system : s,t
 !
 !=======================================================================
-!
 
   implicit none
 
-  integer ngnod,nxgll,nygll,ndime
+  integer ngnod,NGLLX,NGLLY,NDIME
 
-  double precision shape(ngnod,nxgll,nxgll)
-  double precision dershape(ndime,ngnod,nxgll,nxgll)
-  double precision xi(nxgll),yi(nygll)
+  double precision shape(ngnod,NGLLX,NGLLX)
+  double precision dershape(NDIME,ngnod,NGLLX,NGLLX)
+  double precision xi(NGLLX),yi(NGLLY)
 
   double precision, parameter :: &
        zero=0.d0,one=1.d0,two=2.d0,half=0.5d0,quart=0.25d0
@@ -55,21 +53,17 @@
   double precision, external :: hgll
 
 !
-!-----------------------------------------------------------------------
-!
-
-!
 !---- set up the shape functions and their local derivatives
 !
-  if(ngnod   ==   4) then
+  if(ngnod == 4) then
 !
 !----    4-noded rectangular element
 !
- do l2 = 1,nygll
+ do l2 = 1,NGLLY
 
     t  = yi(l2)
 
-    do l1 = 1,nxgll
+    do l1 = 1,NGLLX
 
        s  = xi(l1)
 
@@ -99,15 +93,15 @@
     enddo
  enddo
 
-  else if(ngnod   ==   9) then
+  else if(ngnod == 9) then
 !
 !----    9-noded rectangular element
 !
- do l2 = 1,nygll
+ do l2 = 1,NGLLY
 
     t  = yi(l2)
 
-    do l1 = 1,nxgll
+    do l1 = 1,NGLLX
 
        s  = xi(l1)
 
@@ -167,8 +161,8 @@
  enddo
 
   else
-        stop 'Error : wrong number of control nodes !!'
+    stop 'Error : wrong number of control nodes'
   endif
 
-  return
   end subroutine q49shape
+

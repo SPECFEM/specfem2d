@@ -1,31 +1,23 @@
-!=====================================================================
+
+!========================================================================
 !
-!                 S p e c f e m  V e r s i o n  4 . 2
-!                 -----------------------------------
+!                   S P E C F E M 2 D  Version 5.0
+!                   ------------------------------
 !
 !                         Dimitri Komatitsch
-!    Department of Earth and Planetary Sciences - Harvard University
-!                         Jean-Pierre Vilotte
-!                 Departement de Sismologie - IPGP - Paris
-!                           (c) June 1998
+!          Universite de Pau et des Pays de l'Adour, France
 !
-!=====================================================================
+!                          (c) May 2004
+!
+!========================================================================
 
   subroutine gmat01(density,elastcoef,numat)
-!
-!=======================================================================
-!
-!     "g m a t 0 1" : Read properties of a two-dimensional
-!                     isotropic or anisotropic linear elastic element
-!
-!=======================================================================
-!
-  use iounit
-  use infos
+
+! read properties of a 2D isotropic or anisotropic linear elastic element
 
   implicit none
 
-  double precision, parameter :: zero=0.d0,half=0.5d0,one=1.0d0,two=2.0d0
+  include "constants.h"
 
   character(len=80) datlin
   double precision Kmod,Kvol
@@ -37,16 +29,14 @@
   double precision young,poiss,denst,cp,cs,amu,a2mu,alam
   double precision val1,val2,val3,val4
   double precision c11,c13,c33,c44
-!
-!-----------------------------------------------------------------------
-!
-  density(:) = zero
-  elastcoef(:,:) = zero
 
 !
 !---- loop over the different material sets
 !
-  if(iecho  /=  0) write(iout,100) numat
+  density(:) = zero
+  elastcoef(:,:) = zero
+
+  write(iout,100) numat
 
   read(iin ,40) datlin
   do in = 1,numat
@@ -66,15 +56,13 @@
       Kvol  = alam + a2mu/3.d0
       young = 9.d0*Kvol*amu/(3.d0*Kvol + amu)
       poiss = half*(3.d0*Kvol-a2mu)/(3.d0*Kvol+amu)
-      if (poiss < 0.d0 .or. poiss >= 0.50001d0) &
-                 stop 'Poisson''s ratio out of range !'
+      if (poiss < 0.d0 .or. poiss >= 0.50001d0) stop 'Poisson''s ratio out of range !'
 
 !---- materiau isotrope, module de Young et coefficient de Poisson donnes
    else if(indic == 1) then
       young = val1
       poiss = val2
-      if (poiss < 0.d0 .or. poiss >= 0.50001d0) &
-                 stop 'Poisson''s ratio out of range !'
+      if (poiss < 0.d0 .or. poiss >= 0.50001d0) stop 'Poisson''s ratio out of range !'
       a2mu  = young/(one+poiss)
       amu   = half*a2mu
       alam  = a2mu*poiss/(one-two*poiss)
@@ -117,27 +105,22 @@
 !
 !----    check the input
 !
-  if(iecho  /=  0) then
-    if(indic == 0 .or. indic == 1) then
-      write(iout,200) n,cp,cs,denst,poiss,alam,amu,Kvol,young
-    else
-      write(iout,300) n,c11,c13,c33,c44,denst, &
-          sqrt(c33/denst),sqrt(c11/denst),sqrt(c44/denst),sqrt(c44/denst)
-
-    endif
+  if(indic == 0 .or. indic == 1) then
+    write(iout,200) n,cp,cs,denst,poiss,alam,amu,Kvol,young
+  else
+    write(iout,300) n,c11,c13,c33,c44,denst, &
+        sqrt(c33/denst),sqrt(c11/denst),sqrt(c44/denst),sqrt(c44/denst)
   endif
 
   enddo
 
-  return
 !
 !---- formats
 !
   40    format(a80)
   100   format(//,' M a t e r i a l   s e t s :  ', &
          ' 2 D  e l a s t i c i t y', &
-         /1x,54('='),//5x, &
-         'Number of material sets . . . . . . (numat) =',i5)
+         /1x,54('='),//5x,'Number of material sets . . . . . . (numat) =',i5)
   200   format(//5x,'------------------------',/5x, &
          '-- Isotropic material --',/5x, &
          '------------------------',/5x, &
@@ -165,3 +148,4 @@
          'Velocity of qSV along horizontal axis . . =',1pe15.8)
 
   end subroutine gmat01
+
