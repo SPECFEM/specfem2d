@@ -841,8 +841,8 @@
   implicit none
   integer i,j,nx
 
-    num = j*(nx+1) + i + 1
-  return
+  num = j*(nx+1) + i + 1
+
   end function num
 
 ! ------- definition des fonctions representant les interfaces -------
@@ -854,8 +854,9 @@
   double precision function bottom(x)
   implicit none
   double precision x
-    bottom = 0.d0
-  return
+
+  bottom = 0.d0
+
   end function bottom
 
 !
@@ -876,7 +877,6 @@
   if (xp > xtopo(ntopo)) xp = xtopo(ntopo)
   call splint(xtopo,ztopo,coefs,ntopo,xp,spl)
 
-  return
   end function spl
 
 ! --- fonction de densification du maillage horizontal
@@ -889,7 +889,6 @@
 
   dens = xmin + dble(xmax-xmin)*psi(ix)
 
-  return
   end function dens
 
 ! --------------------------------------
@@ -926,7 +925,6 @@
 
   deallocate(u)
 
-  return
   end subroutine spline
 
 ! --------------
@@ -959,6 +957,6 @@
 
   Y=A*YA(KLO)+B*YA(KHI)+((A**3-A)*Y2A(KLO)+ &
               (B**3-B)*Y2A(KHI))*(H**2)/6.d0
-  RETURN
+
   end subroutine SPLINT
 
