@@ -75,14 +75,14 @@
 
 !-----------------------------------------------------------------------
 
-!! DK DK
-!! DK DK anisotropic copper crystal (cubic symmetry)
-!! DK DK
+!
+! anisotropic copper crystal (cubic symmetry)
+!
 
 ! switch anisotropy on or off
   logical, parameter :: TURN_ANISOTROPY_ON = .false.
 
-!! DK DK regular c_ijkl with no rotation
+! regular c_ijkl with no rotation
   double precision, parameter :: c11val = 169.d9
   double precision, parameter :: c12val = 122.d9
   double precision, parameter :: c13val = c12val
