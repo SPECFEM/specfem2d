@@ -1,80 +1,90 @@
 
-!=====================================================================
+!========================================================================
 !
-!                 S p e c f e m  V e r s i o n  4 . 2
-!                 -----------------------------------
+!                   S P E C F E M 2 D  Version 5.0
+!                   ------------------------------
 !
 !                         Dimitri Komatitsch
-!    Department of Earth and Planetary Sciences - Harvard University
-!                         Jean-Pierre Vilotte
-!                 Departement de Sismologie - IPGP - Paris
-!                           (c) June 1998
+!          Universite de Pau et des Pays de l'Adour, France
 !
-!=====================================================================
+!                          (c) May 2004
+!
+!========================================================================
 
-  subroutine plotpost(U,coord,vpext,gltfl,posrec,nltfl,it,dt,coorg, &
+  subroutine plotpost(displ,coord,vpext,gltfl,posrec,it,dt,coorg, &
           xinterp,zinterp,shapeint, &
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
-          numabs,codeabs,codeperio,anyabs,anyperio)
+          numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
+          icolor,inumber,isubsamp,ivecttype,interpol,imeshvect,imodelvect, &
+          iboundvect,ireadmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod)
 
 !
 ! routine affichage postscript
 !
 
-  use palette
-  use captio
-  use timeparams
-  use constspec
-  use mesh01
-  use spela202
-
   implicit none
 
-!--- ecrire legendes ou non
-  logical, parameter :: legendes=.true.
+  include "constants.h"
+
+! color palette
+  integer, parameter :: MAXCOLORS = 100
+  double precision, dimension(MAXCOLORS) :: red,green,blue
+
+  integer it,nrec,nelemabs,numat,iptsdisp,nspec
+  integer i,iglobrec,iglobsource,npoin,npgeo,ngnod
 
   integer kmato(nspec),knods(ngnod,nspec)
-  integer ibool(nxgll,nygll,nspec)
+  integer ibool(NGLLX,NGLLY,nspec)
 
   double precision xinterp(iptsdisp,iptsdisp),zinterp(iptsdisp,iptsdisp)
   double precision shapeint(ngnod,iptsdisp,iptsdisp)
   double precision Uxinterp(iptsdisp,iptsdisp)
   double precision Uzinterp(iptsdisp,iptsdisp)
-  double precision flagrange(0:nxgll-1,iptsdisp)
+  double precision flagrange(NGLLX,iptsdisp)
   double precision density(numat),elastcoef(4,numat)
 
-  integer nltfl,it
   double precision dt,timeval
-  double precision U(ndime,npoin),coord(ndime,npoin)
+  double precision displ(NDIME,npoin),coord(NDIME,npoin)
   double precision vpext(npoin)
 
-  double precision coorg(ndime,npgeo)
-  double precision gltfl(20,nltfl)
-  double precision posrec(ndime,nrec)
+  double precision coorg(NDIME,npgeo)
+  double precision gltfl(20)
+  double precision posrec(NDIME,nrec)
 
   integer numabs(nelemabs),codeabs(4,nelemabs)
-  integer codeperio(4,nelemperio)
-  logical anyabs,anyperio
+  logical anyabs
 
-! limite pour afficher des points a la place des recepteurs
-  integer, parameter :: ndots = 10
+  double precision xmax,zmax,height,xw,zw,usoffset,sizex,sizez,vpmin,vpmax
 
-! taille de la fenetre de display Postscript en pourcentage de la feuille
-  double precision, parameter :: rpercentx = 70.0d0, rpercentz = 77.0d0
+  character(len=100) name
+  character ch1(100),ch2(100)
+  equivalence (name,ch1)
+  logical first
 
-  double precision xmax,zmax,height,xw,zw,usoffset
-  integer i,iglobrec,iglobsource
-  character(len=40) name
+  double precision convert,x1,rlamda,rmu,denst,rKvol,cploc,xa,za,xb,zb
+  double precision z1,x2,z2,d,d1,d2,dummy,theta,thetaup,thetadown
+
+  integer k,j,ispec,material,is,ir,nbcols,imat,icol,l,longueur
+  integer indice,ii,ipoin,in,nnum,ispecabs,ideb,ifin,ibord
+
+  integer icolor,inumber,isubsamp,ivecttype
+  logical interpol,imeshvect,imodelvect,iboundvect,ireadmodel
+  double precision cutvect
+
+  double precision rapp_page,dispmax,xmin,zmin
+
+! title of the plot
+  character(len=60) stitle
 
 ! papier A4 ou US letter
-  if(usletter) then
-  usoffset = 1.75d0
-  sizex = 27.94d0
-  sizez = 21.59d0
+  if(US_LETTER) then
+    usoffset = 1.75d0
+    sizex = 27.94d0
+    sizez = 21.59d0
   else
-  usoffset = 0.
-  sizex = 29.7d0
-  sizez = 21.d0
+    usoffset = 0.
+    sizex = 29.7d0
+    sizez = 21.d0
   endif
 
 ! definition de la palette de couleur
@@ -175,7 +185,7 @@
                         / 100.d0
 
 ! recherche de la valeur maximum de la norme du deplacement
-  dispmax = maxval(sqrt(U(1,:)**2 + U(2,:)**2))
+  dispmax = maxval(sqrt(displ(1,:)**2 + displ(2,:)**2))
   write(*,*) 'Max norme = ',dispmax
 
 ! hauteur des numeros de domaine en CM
@@ -292,9 +302,6 @@
   write(24,*) '%'
   write(24,*) '24. CM 3.45 CM MV'
   write(24,620) usoffset,cutvect*100.d0
-  write(24,*) '%'
-  write(24,*) '24. CM 4.2 CM MV'
-  write(24,630) usoffset,niter
 
   write(24,*) '%'
   write(24,*) '/Times-Roman findfont'
@@ -342,12 +349,490 @@
   write(24,*) '%'
 
 !
-!----   plot mesh and displacement vector field in a PostScript file
+!---- print the spectral elements mesh in PostScript
 !
-  call plotvect(knods,coorg,coord,U, &
-          density,elastcoef,kmato,flagrange,xinterp,zinterp,shapeint, &
-          Uxinterp,Uzinterp,ibool,vpext, &
-          numabs,codeabs,codeperio,anyabs,anyperio)
+
+  print *,'Shape functions based on ',ngnod,' control nodes'
+
+  convert = pi/180.d0
+
+!
+!----  draw the velocity model in background
+!
+  if(imodelvect) then
+
+  do ispec=1,nspec
+    do i=1,NGLLX-isubsamp,isubsamp
+          do j=1,NGLLX-isubsamp,isubsamp
+
+  if((vpmax-vpmin)/vpmin  >  0.02d0) then
+  if(ireadmodel) then
+    x1 = (vpext(ibool(i,j,ispec))-vpmin)/ (vpmax-vpmin)
+  else
+ material = kmato(ispec)
+ rlamda = elastcoef(1,material)
+ rmu    = elastcoef(2,material)
+ denst  = density(material)
+ rKvol  = rlamda + 2.d0*rmu/3.d0
+ cploc = dsqrt((rKvol + 4.d0*rmu/3.d0)/denst)
+ x1 = (cploc-vpmin)/(vpmax-vpmin)
+  endif
+  else
+    x1 = 0.5d0
+  endif
+
+! rescaler pour eviter gris trop sombre
+  x1 = x1*0.7 + 0.2
+  if (x1  >  1.d0) x1=1.d0
+
+! inverser echelle : blanc = vpmin, gris = vpmax
+  x1 = 1.d0 - x1
+
+  xw = coord(1,ibool(i,j,ispec))
+  zw = coord(2,ibool(i,j,ispec))
+  xw = (xw-xmin)*rapp_page + orig_x
+  zw = (zw-zmin)*rapp_page + orig_z
+  xw = xw * centim
+  zw = zw * centim
+    write(24,500) xw,zw
+  xw = coord(1,ibool(i+isubsamp,j,ispec))
+  zw = coord(2,ibool(i+isubsamp,j,ispec))
+  xw = (xw-xmin)*rapp_page + orig_x
+  zw = (zw-zmin)*rapp_page + orig_z
+  xw = xw * centim
+  zw = zw * centim
+    write(24,499) xw,zw
+  xw = coord(1,ibool(i+isubsamp,j+isubsamp,ispec))
+  zw = coord(2,ibool(i+isubsamp,j+isubsamp,ispec))
+  xw = (xw-xmin)*rapp_page + orig_x
+  zw = (zw-zmin)*rapp_page + orig_z
+  xw = xw * centim
+  zw = zw * centim
+    write(24,499) xw,zw
+  xw = coord(1,ibool(i,j+isubsamp,ispec))
+  zw = coord(2,ibool(i,j+isubsamp,ispec))
+  xw = (xw-xmin)*rapp_page + orig_x
+  zw = (zw-zmin)*rapp_page + orig_z
+  xw = xw * centim
+  zw = zw * centim
+    write(24,499) xw,zw
+    write(24,604) x1
+
+          enddo
+    enddo
+  enddo
+
+  endif
+
+!
+!---- draw spectral element mesh
+!
+
+  if (imeshvect) then
+
+  write(24,*) '%'
+  write(24,*) '% spectral element mesh'
+  write(24,*) '%'
+
+  do ispec=1,nspec
+
+  write(24,*) '% elem ',ispec
+
+  do i=1,iptsdisp
+  do j=1,iptsdisp
+  xinterp(i,j) = 0.d0
+  zinterp(i,j) = 0.d0
+  do in = 1,ngnod
+    nnum = knods(in,ispec)
+      xinterp(i,j) = xinterp(i,j) + shapeint(in,i,j)*coorg(1,nnum)
+      zinterp(i,j) = zinterp(i,j) + shapeint(in,i,j)*coorg(2,nnum)
+  enddo
+  enddo
+  enddo
+
+  is = 1
+  ir = 1
+  x1 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
+  z1 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
+  x1 = x1 * centim
+  z1 = z1 * centim
+  write(24,*) 'MK'
+  write(24,681) x1,z1
+
+  if (ngnod  ==  4) then
+
+! tracer des droites si elements 4 noeuds
+
+  ir=iptsdisp
+  x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
+  x2 = x2 * centim
+  z2 = z2 * centim
+  write(24,681) x2,z2
+
+  ir=iptsdisp
+  is=iptsdisp
+  x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
+  x2 = x2 * centim
+  z2 = z2 * centim
+  write(24,681) x2,z2
+
+  is=iptsdisp
+  ir=1
+  x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
+  x2 = x2 * centim
+  z2 = z2 * centim
+  write(24,681) x2,z2
+
+  ir=1
+  is=2
+  x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
+  x2 = x2 * centim
+  z2 = z2 * centim
+  write(24,681) x2,z2
+
+  else
+
+! tracer des courbes si elements 9 noeuds
+  do ir=2,iptsdisp
+  x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
+  x2 = x2 * centim
+  z2 = z2 * centim
+  write(24,681) x2,z2
+  enddo
+
+  ir=iptsdisp
+  do is=2,iptsdisp
+  x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
+  x2 = x2 * centim
+  z2 = z2 * centim
+  write(24,681) x2,z2
+  enddo
+
+  is=iptsdisp
+  do ir=iptsdisp-1,1,-1
+  x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
+  x2 = x2 * centim
+  z2 = z2 * centim
+  write(24,681) x2,z2
+  enddo
+
+  ir=1
+  do is=iptsdisp-1,2,-1
+  x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
+  x2 = x2 * centim
+  z2 = z2 * centim
+  write(24,681) x2,z2
+  enddo
+
+  endif
+
+  write(24,*) 'CO'
+
+  if (icolor  ==  1) then
+
+! For the moment 20 different colors max
+  nbcols = 20
+
+! Use a different color for each material set
+  imat = kmato(ispec)
+  icol = mod(imat - 1,nbcols) + 1
+
+  write(24,680) red(icol),green(icol),blue(icol)
+
+  endif
+
+  if(imodelvect) then
+  write(24,*) 'GC'
+  else
+  write(24,*) 'GG'
+  endif
+
+! write the element number, the group number and the
+! material number inside the element
+  if (inumber  ==  1) then
+
+  xw = (coorg(1,knods(1,ispec)) + coorg(1,knods(2,ispec)) + &
+          coorg(1,knods(3,ispec)) + coorg(1,knods(4,ispec))) / 4.d0
+  zw = (coorg(2,knods(1,ispec)) + coorg(2,knods(2,ispec)) + &
+          coorg(2,knods(3,ispec)) + coorg(2,knods(4,ispec))) / 4.d0
+  xw = (xw-xmin)*rapp_page + orig_x
+  zw = (zw-zmin)*rapp_page + orig_z
+  xw = xw * centim
+  zw = zw * centim
+  if (icolor  ==  1) write(24,*) '1 setgray'
+
+  write(24,500) xw,zw
+
+!--- ecriture numero de l'element
+  write(24,502) ispec
+
+  endif
+
+  enddo
+
+  endif
+
+!
+!----  draw the boundary conditions
+!
+
+  if(anyabs .and. iboundvect) then
+
+  write(24,*) '%'
+  write(24,*) '% boundary conditions on the mesh'
+  write(24,*) '%'
+
+  write(24,*) '0.05 CM SLW'
+
+!--- bords absorbants
+
+  if(anyabs) then
+
+  do ispecabs = 1,nelemabs
+  ispec = numabs(ispecabs)
+
+!--- une couleur pour chaque condition absorbante
+!--- bord absorbant de type "haut"   : orange
+!--- bord absorbant de type "bas"    : vert clair
+!--- bord absorbant de type "gauche" : rose clair
+!--- bord absorbant de type "droite" : turquoise
+
+  do ibord = 1,4
+
+  if(codeabs(ibord,ispecabs)  /=  0) then
+
+  if(ibord  ==  ihaut) then
+    write(24,*) '1. .85 0. RG'
+    ideb = 3
+    ifin = 4
+  else if(ibord  ==  ibas) then
+    write(24,*) '.4 1. .4 RG'
+    ideb = 1
+    ifin = 2
+  else if(ibord  ==  igauche) then
+    write(24,*) '1. .43 1. RG'
+    ideb = 4
+    ifin = 1
+  else if(ibord  ==  idroite) then
+    write(24,*) '.25 1. 1. RG'
+    ideb = 2
+    ifin = 3
+  else
+    stop 'Wrong absorbing boundary code'
+  endif
+
+  x1 = (coorg(1,knods(ideb,ispec))-xmin)*rapp_page + orig_x
+  z1 = (coorg(2,knods(ideb,ispec))-zmin)*rapp_page + orig_z
+  x2 = (coorg(1,knods(ifin,ispec))-xmin)*rapp_page + orig_x
+  z2 = (coorg(2,knods(ifin,ispec))-zmin)*rapp_page + orig_z
+  x1 = x1 * centim
+  z1 = z1 * centim
+  x2 = x2 * centim
+  z2 = z2 * centim
+  write(24,602) x1,z1,x2,z2
+
+  endif
+  enddo
+
+  enddo
+
+  endif
+
+  write(24,*) '0 setgray'
+  write(24,*) '0.01 CM SLW'
+
+  endif
+
+!
+!----  draw the normalized displacement field
+!
+
+! return if the maximum displacement equals zero (no source)
+  if (dispmax  ==  0.d0) then
+    print *,' null displacement : returning !'
+    return
+  endif
+
+  write(24,*) '%'
+  write(24,*) '% vector field'
+  write(24,*) '%'
+
+! fleches en couleur si modele de vitesse en background
+  if(imodelvect) then
+        write(24,*) 'Colvects'
+  else
+        write(24,*) '0 setgray'
+  endif
+
+  if (interpol) then
+
+  print *,'Interpolating the vector field...'
+
+  do ispec=1,nspec
+
+! interpolation sur grille reguliere
+  if(mod(ispec,100)  ==  0) &
+       write(*,*) 'Interpolation uniform grid element ',ispec
+
+  do i=1,iptsdisp
+  do j=1,iptsdisp
+
+  xinterp(i,j) = 0.d0
+  zinterp(i,j) = 0.d0
+  do in = 1,ngnod
+    nnum = knods(in,ispec)
+      xinterp(i,j) = xinterp(i,j) + shapeint(in,i,j)*coorg(1,nnum)
+      zinterp(i,j) = zinterp(i,j) + shapeint(in,i,j)*coorg(2,nnum)
+  enddo
+
+  Uxinterp(i,j) = 0.d0
+  Uzinterp(i,j) = 0.d0
+
+  do k=1,NGLLX
+  do l=1,NGLLX
+
+  Uxinterp(i,j) = Uxinterp(i,j) + &
+                displ(1,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
+  Uzinterp(i,j) = Uzinterp(i,j) + &
+                displ(2,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
+
+  enddo
+  enddo
+
+  x1 =(xinterp(i,j)-xmin)*rapp_page
+  z1 =(zinterp(i,j)-zmin)*rapp_page
+
+  x2 = Uxinterp(i,j)*sizemax/dispmax
+  z2 = Uzinterp(i,j)*sizemax/dispmax
+
+  d = dsqrt(x2**2 + z2**2)
+
+! ignorer si vecteur trop petit
+  if (d  >  cutvect*sizemax) then
+
+  d1 = d * rapport
+  d2 = d1 * dcos(angle*convert)
+
+  dummy = x2/d
+  if (dummy  >  0.9999d0) dummy = 0.9999d0
+  if (dummy  <  -0.9999d0) dummy = -0.9999d0
+  theta = dacos(dummy)
+
+  if(z2  <  0.d0) theta = 360.d0*convert - theta
+  thetaup = theta - angle*convert
+  thetadown = theta + angle*convert
+
+! tracer le vecteur proprement dit
+  x1 = (orig_x+x1) * centim
+  z1 = (orig_z+z1) * centim
+  x2 = x2 * centim
+  z2 = z2 * centim
+  xa = -d2*dcos(thetaup)
+  za = -d2*dsin(thetaup)
+  xa = xa * centim
+  za = za * centim
+  xb = -d2*dcos(thetadown)
+  zb = -d2*dsin(thetadown)
+  xb = xb * centim
+  zb = zb * centim
+  write(name,700) xb,zb,xa,za,x2,z2,x1,z1
+
+! filtrer les blancs inutiles pour diminuer taille fichier PostScript
+  longueur = 49
+  indice = 1
+  first = .false.
+  do ii=1,longueur-1
+    if(ch1(ii)  /=  ' '.or.first) then
+    if(ch1(ii)  /=  ' '.or.ch1(ii+1)  /=  ' ') then
+          ch2(indice) = ch1(ii)
+          indice = indice + 1
+          first = .true.
+    endif
+    endif
+  enddo
+  ch2(indice) = ch1(longueur)
+  write(24,200) (ch2(ii),ii=1,indice)
+
+  endif
+
+  enddo
+  enddo
+  enddo
+
+  else
+! tracer les vecteurs deplacement aux noeuds du maillage
+
+  do ipoin=1,npoin
+
+  x1 =(coord(1,ipoin)-xmin)*rapp_page
+  z1 =(coord(2,ipoin)-zmin)*rapp_page
+
+  x2 = displ(1,ipoin)*sizemax/dispmax
+  z2 = displ(2,ipoin)*sizemax/dispmax
+
+  d = dsqrt(x2**2 + z2**2)
+
+! ignorer si vecteur trop petit
+  if (d  >  cutvect*sizemax) then
+
+  d1 = d * rapport
+  d2 = d1 * dcos(angle*convert)
+
+  dummy = x2/d
+  if (dummy  >  0.9999d0) dummy = 0.9999d0
+  if (dummy  <  -0.9999d0) dummy = -0.9999d0
+  theta = dacos(dummy)
+
+  if(z2  <  0.d0) theta = 360.d0*convert - theta
+  thetaup = theta - angle*convert
+  thetadown = theta + angle*convert
+
+! tracer le vecteur proprement dit
+  x1 = (orig_x+x1) * centim
+  z1 = (orig_z+z1) * centim
+  x2 = x2 * centim
+  z2 = z2 * centim
+  xa = -d2*dcos(thetaup)
+  za = -d2*dsin(thetaup)
+  xa = xa * centim
+  za = za * centim
+  xb = -d2*dcos(thetadown)
+  zb = -d2*dsin(thetadown)
+  xb = xb * centim
+  zb = zb * centim
+  write(name,700) xb,zb,xa,za,x2,z2,x1,z1
+
+! filtrer les blancs inutiles pour diminuer taille fichier PostScript
+  longueur = 49
+  indice = 1
+  first = .false.
+  do ii=1,longueur-1
+    if(ch1(ii)  /=  ' '.or.first) then
+    if(ch1(ii)  /=  ' '.or.ch1(ii+1)  /=  ' ') then
+          ch2(indice) = ch1(ii)
+          indice = indice + 1
+          first = .true.
+    endif
+    endif
+  enddo
+  ch2(indice) = ch1(longueur)
+  write(24,200) (ch2(ii),ii=1,indice)
+
+  endif
+
+  enddo
+
+  endif
+
+  write(24,*) '0 setgray'
 
 ! sources et recepteurs en couleur si modele de vitesse
   if(imodelvect) then
@@ -357,11 +842,9 @@
   endif
 
 !
-!----  write position of the sources
+!----  write position of the source
 !
-  do i=1,nltfl
-
-  iglobsource = nint(gltfl(9,i))
+  iglobsource = nint(gltfl(9))
 
   xw = coord(1,iglobsource)
   zw = coord(2,iglobsource)
@@ -371,17 +854,15 @@
   zw = zw * centim
   write(24,510) xw,zw
   if (isymbols) then
-  write(24,*) 'Cross'
+    write(24,*) 'Cross'
   else
-  write(24,*) '(S',i,') show'
+    write(24,*) '(S) show'
   endif
-  enddo
 
 !
 !----  write position of the receivers
 !
   do i=1,nrec
-  if(i  ==  n1ana .or. i  ==  n2ana) write(24,*) '% solution analytique trace ',i
   if(i  ==  1) write(24,*) '% debut ligne recepteurs'
   if(i  ==  nrec) write(24,*) '% fin ligne recepteurs'
 
@@ -395,16 +876,11 @@
   zw = zw * centim
   write(24,510) xw,zw
   if (isymbols) then
-  if(nrec  >  ndots.and.i  /=  1.and.i  /=  nrec &
-              .and.i  /=  n1ana.and.i  /=  n2ana) then
-        if(i  >  nrec1) then
-   write(24,*) 'HDot'
-        else
-   write(24,*) 'VDot'
-        endif
-  else
-   write(24,*) 'Losange'
-  endif
+    if(nrec > ndots .and. i /= 1 .and. i /= nrec) then
+      write(24,*) 'VDot'
+    else
+      write(24,*) 'Losange'
+    endif
   else
   write(24,*) '(R',i,') show'
   endif
@@ -417,14 +893,24 @@
   close(24)
 
  10   format('%!PS-Adobe-2.0',/,'%%',/,'%% Title: ',a50,/, &
-          '%% Created by: Specfem Version 4.2',/, &
+          '%% Created by: Specfem Version 5.0',/, &
           '%% Author: Dimitri Komatitsch',/,'%%')
  510  format(f5.1,1x,f5.1,' M')
  600  format(f6.3,' neg CM 0 MR (Time =',f6.3,' s) show')
  601  format(f6.3,' neg CM 0 MR (Time =',1pe10.3,' s) show')
  610  format(f6.3,' neg CM 0 MR (Time step = ',i5,') show')
  620  format(f6.3,' neg CM 0 MR (Cut =',f5.2,' \%) show')
- 630  format(f6.3,' neg CM 0 MR (Niter =',i2,') show')
  640  format(f6.3,' neg CM 0 MR (Max norm =',1pe10.3,') show')
 
+ 200  format(80(a1))
+ 499  format(f5.1,1x,f5.1,' L')
+ 500  format(f5.1,1x,f5.1,' M')
+ 502  format('fN (',i4,') Cshow')
+ 680  format(f4.2,1x,f4.2,1x,f4.2,' RG GF')
+ 681  format(f6.2,1x,f6.2)
+ 602  format(f6.2,1x,f6.2,' M ',f6.2,1x,f6.2,' L ST')
+ 604  format('CP ',f4.2,' BK')
+ 700  format(8(f5.1,1x),'F')
+
   end subroutine plotpost
+

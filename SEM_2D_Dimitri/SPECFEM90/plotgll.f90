@@ -1,44 +1,38 @@
-!=====================================================================
+
+!========================================================================
 !
-!                 S p e c f e m  V e r s i o n  4 . 2
-!                 -----------------------------------
+!                   S P E C F E M 2 D  Version 5.0
+!                   ------------------------------
 !
 !                         Dimitri Komatitsch
-!    Department of Earth and Planetary Sciences - Harvard University
-!                         Jean-Pierre Vilotte
-!                 Departement de Sismologie - IPGP - Paris
-!                           (c) June 1998
+!          Universite de Pau et des Pays de l'Adour, France
 !
-!=====================================================================
+!                          (c) May 2004
+!
+!========================================================================
 
-  subroutine plotgll(knods,ibool,coorg,coord)
-!
-!=======================================================================
-!
-!     "p l o t g l l" : Print the Gauss-Lobatto-Legendre mesh
-!                       in a Gnuplot file
-!
-!=======================================================================
-!
-  use mesh01
-  use spela202
-  use iounit
+  subroutine plotgll(knods,ibool,coorg,coord,npoin,npgeo,ngnod,nspec)
+
+! output the Gauss-Lobatto-Legendre mesh in a gnuplot file
 
   implicit none
 
-  integer knods(ngnod,nspec),ibool(nxgll,nxgll,nspec)
-  double precision coorg(ndime,npgeo),coord(ndime,npoin)
+  include "constants.h"
+
+  integer ispec,iy,ix,iglobnum,iglobnum2,ibloc,inode,npoin,npgeo,ngnod,nspec
+
+  integer knods(ngnod,nspec),ibool(NGLLX,NGLLX,nspec)
+
+  double precision coorg(NDIME,npgeo),coord(NDIME,npoin)
 
 ! coordinates of the nodes for Gnuplot file
-  integer maxnnode
-  parameter(maxnnode=9)
-  real xval(maxnnode),zval(maxnnode)
+  integer, parameter :: MAXNGNOD = 9
+  double precision xval(MAXNGNOD),zval(MAXNGNOD)
 
-  integer ispel,iy,ix,iglobnum,iglobnum2,ibloc,inode
   character(len=70) name
 
 !
-!---- print the GLL mesh in a Gnuplot file
+!---- output the GLL mesh in a Gnuplot file
 !
 
   write(iout,*)
@@ -61,75 +55,75 @@
   open(unit=21,file=name,status='unknown')
   write(21,10)
 
-  do ispel = 1,nspec
+  do ispec = 1,nspec
 
 !
 !----    plot the lines in xi-direction
 !
-   do iy = 1,nygll
-          do ix = 1,nxgll-1
+   do iy = 1,NGLLY
+     do ix = 1,NGLLX-1
 !
 !----   get the global point number
 !
-         iglobnum = ibool(ix,iy,ispel)
+         iglobnum = ibool(ix,iy,ispec)
 !
 !----   do the same for next point on horizontal line
 !
-         iglobnum2 = ibool(ix+1,iy,ispel)
+         iglobnum2 = ibool(ix+1,iy,ispec)
 
-  write(20,15) sngl(coord(1,iglobnum)),sngl(coord(2,iglobnum))
-  write(20,15) sngl(coord(1,iglobnum2)),sngl(coord(2,iglobnum2))
+  write(20,15) coord(1,iglobnum),coord(2,iglobnum)
+  write(20,15) coord(1,iglobnum2),coord(2,iglobnum2)
   write(20,10)
 
-  if ((iy == 1).or.(iy == nygll)) then
-  write(21,15) sngl(coord(1,iglobnum)),sngl(coord(2,iglobnum))
-  write(21,15) sngl(coord(1,iglobnum2)),sngl(coord(2,iglobnum2))
-  write(21,10)
+  if(iy == 1 .or. iy == NGLLY) then
+    write(21,15) coord(1,iglobnum),coord(2,iglobnum)
+    write(21,15) coord(1,iglobnum2),coord(2,iglobnum2)
+    write(21,10)
   endif
 
-          enddo
+    enddo
   enddo
 
 !
 !----    plot the lines in eta-direction
 !
-   do ix = 1,nxgll
-          do iy = 1,nygll-1
+   do ix = 1,NGLLX
+     do iy = 1,NGLLY-1
 !
 !----   get the global point number
 !
-         iglobnum = ibool(ix,iy,ispel)
+         iglobnum = ibool(ix,iy,ispec)
 !
 !----   do the same for next point on vertical line
 !
-         iglobnum2 = ibool(ix,iy+1,ispel)
+         iglobnum2 = ibool(ix,iy+1,ispec)
 
-  write(20,15) sngl(coord(1,iglobnum)),sngl(coord(2,iglobnum))
-  write(20,15) sngl(coord(1,iglobnum2)),sngl(coord(2,iglobnum2))
+  write(20,15) coord(1,iglobnum),coord(2,iglobnum)
+  write(20,15) coord(1,iglobnum2),coord(2,iglobnum2)
   write(20,10)
 
-  if ((ix == 1).or.(ix == nxgll)) then
-  write(21,15) sngl(coord(1,iglobnum)),sngl(coord(2,iglobnum))
-  write(21,15) sngl(coord(1,iglobnum2)),sngl(coord(2,iglobnum2))
-  write(21,10)
+  if(ix == 1 .or. ix == NGLLX) then
+    write(21,15) coord(1,iglobnum),coord(2,iglobnum)
+    write(21,15) coord(1,iglobnum2),coord(2,iglobnum2)
+    write(21,10)
   endif
 
-          enddo
+    enddo
   enddo
   enddo
 
 !
-!----  Plot the macroblocs mesh using Gnuplot
+!----  plot the macrobloc mesh using Gnuplot
 !
   do ibloc = 1,nspec
   do inode = 1,ngnod
 
-   xval(inode) =  sngl(coorg(1,knods(inode,ibloc)))
-   zval(inode) =  sngl(coorg(2,knods(inode,ibloc)))
+   xval(inode) = coorg(1,knods(inode,ibloc))
+   zval(inode) = coorg(2,knods(inode,ibloc))
 
   enddo
 
-  if(ngnod  ==  4) then
+  if(ngnod == 4) then
 !
 !----  4-noded rectangular element
 !
@@ -207,14 +201,7 @@
 !
 !----  generate the command file for Gnuplot
 !
-  open(unit=20,file='plotmeshes',status='unknown')
-  write(20,*) '#!/bin/sh'
-  write(20,10)
-  write(20,*) 'gnuplot macros_mesh.gnu'
-  write(20,*) 'gnuplot gll_mesh.gnu'
-  close(20)
-
-  open(unit=20,file='gll_mesh.gnu',status='unknown')
+  open(unit=20,file='plotall_gll_mesh.gnu',status='unknown')
   write(20,*) 'set term x11'
   write(20,*) 'set xlabel "X"'
   write(20,*) 'set ylabel "Y"'
@@ -224,11 +211,11 @@
   write(20,*) 'pause -1 "Hit any key to exit..."'
   close(20)
 
-  open(unit=20,file='macros_mesh.gnu',status='unknown')
+  open(unit=20,file='plotall_macros_mesh.gnu',status='unknown')
   write(20,*) 'set term x11'
   write(20,*) 'set xlabel "X"'
   write(20,*) 'set ylabel "Y"'
-  write(20,*) 'set title "Spectral Elements (Macroblocs) Mesh"'
+  write(20,*) 'set title "Spectral Element (Macrobloc) Mesh"'
   write(20,*) 'plot "macros2.gnu" title '''' w l 2,', &
             ' "macros1.gnu" title '''' w linesp 1 3'
   write(20,*) 'pause -1 "Hit any key to exit..."'
@@ -238,8 +225,8 @@
 !----
 !
 
-10 format('')
-15 format(e10.5,1x,e10.5)
+ 10 format('')
+ 15 format(e10.5,1x,e10.5)
 
-  return
   end subroutine plotgll
+
