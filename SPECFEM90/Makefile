@@ -14,7 +14,7 @@ O = obj
 # Intel Linux
 F90 = ifort
 #FLAGS=-O0 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check bounds -CB
-FLAGS=-O2 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds
+FLAGS=-O3 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds
 
 #
 # g95 (free f95 compiler from http://www.g95.org, still under development, but works)
@@ -32,12 +32,12 @@ EXEC = xspecfem2D
 OBJS = $O/checkgrid.o $O/datim.o $O/defarrays.o\
         $O/lagrange_poly.o $O/gmat01.o $O/gll_library.o $O/plotgll.o $O/define_derivative_matrices.o\
         $O/plotpost.o $O/positrec.o $O/positsource.o $O/q49spec.o $O/compute_gradient_attenuation.o\
-        $O/specfem2D.o $O/write_seismograms.o $O/createnum_fast.o $O/createnum_slow.o $O/q49shape.o
+        $O/specfem2D.o $O/write_seismograms.o $O/createnum_fast.o $O/createnum_slow.o $O/q49shape.o $O/cree_image_PNM.o
 
 default: all
 
 clean:
-	/bin/rm -f $(EXEC) $(EXEC).trace $O/*.o *.o $O/*.il *.mod core *.gnu *.ps Ux* Uz* sources;
+	/bin/rm -f $(EXEC) $(EXEC).trace $O/*.o *.o $O/*.il *.mod core *.gnu *.ps Ux*.dat Uz*.dat image*.pnm sources;
 
 all: $(OBJS)
 	$(LINK) $(FLAGS) -o $(EXEC) $(OBJS)
@@ -92,6 +92,9 @@ $O/specfem2D.o: specfem2D.f90 constants.h
     
 $O/compute_gradient_attenuation.o: compute_gradient_attenuation.f90 constants.h
 	${F90} $(FLAGS) -c -o $O/compute_gradient_attenuation.o compute_gradient_attenuation.f90
+    
+$O/cree_image_PNM.o: cree_image_PNM.f90 constants.h
+	${F90} $(FLAGS) -c -o $O/cree_image_PNM.o cree_image_PNM.f90
     
 $O/write_seismograms.o: write_seismograms.f90 constants.h
 	${F90} $(FLAGS) -c -o $O/write_seismograms.o write_seismograms.f90
