@@ -26,7 +26,7 @@
 
   double precision, dimension(NGLLX,NGLLZ,NSPEC) :: xix,xiz,gammax,gammaz
 
-  double precision, dimension(NDIME,npoin) :: potential,veloc_field_postscript
+  double precision, dimension(NDIM,npoin) :: potential,veloc_field_postscript
 
 ! array with derivatives of Lagrange polynomials
   double precision, dimension(NGLLX,NGLLX) :: hprime_xx

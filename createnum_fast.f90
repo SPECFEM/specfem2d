@@ -22,7 +22,7 @@
   integer npoin,npgeo,nspec,ngnod
   integer knods(ngnod,nspec),ibool(NGLLX,NGLLZ,nspec)
   double precision shape(ngnod,NGLLX,NGLLX)
-  double precision coorg(NDIME,npgeo)
+  double precision coorg(NDIM,npgeo)
 
   integer i,j
 
@@ -124,7 +124,7 @@
   ifseg(1) = .true.
   ninseg(1) = ntot
 
-  do j=1,NDIME
+  do j=1,NDIM
 !  Sort within each segment
    ioff=1
    do iseg=1,nseg

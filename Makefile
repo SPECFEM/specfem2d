@@ -28,19 +28,27 @@ FLAGS=-O3 -implicitnone -warn stderrors -warn truncated_source -warn argument_ch
 ##FLAGS=-fast -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nounderflow -check nobounds
 
 LINK = $(F90) 
-EXEC = xspecfem2D
-OBJS = $O/checkgrid.o $O/datim.o $O/defarrays.o\
-        $O/lagrange_poly.o $O/gmat01.o $O/gll_library.o $O/plotgll.o $O/define_derivative_matrices.o\
-        $O/plotpost.o $O/positrec.o $O/positsource.o $O/q49spec.o $O/compute_gradient_attenuation.o\
-        $O/specfem2D.o $O/write_seismograms.o $O/createnum_fast.o $O/createnum_slow.o $O/q49shape.o $O/cree_image_PNM.o $O/compute_gradient_fluid.o
 
-default: all
+OBJS_MESHFEM2D = $O/meshfem2D.o
+
+OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/defarrays.o\
+        $O/lagrange_poly.o $O/gmat01.o $O/gll_library.o $O/plotgll.o $O/define_derivative_matrices.o\
+        $O/plotpost.o $O/locate_receivers.o $O/positsource.o $O/compute_gradient_attenuation.o\
+        $O/specfem2D.o $O/write_seismograms.o $O/createnum_fast.o $O/createnum_slow.o\
+        $O/define_shape_functions.o $O/cree_image_PNM.o $O/compute_gradient_fluid.o $O/recompute_jacobian.o
+
+default: meshfem2D specfem2D
+
+all: default
 
 clean:
-	/bin/rm -f $(EXEC) $(EXEC).trace $O/*.o *.o $O/*.il *.mod core *.gnu *.ps Ux*.dat Uz*.dat Ux*.bin Uz*.bin image*.pnm xconvolve_source_timefunction *receiver_line_* sources;
+	/bin/rm -f xmeshfem2D xmeshfem2D.trace xspecfem2D xspecfem2D.trace $O/*.o *.o $O/*.il *.mod core *.gnu *.ps Ux*.bin Uz*.bin image*.pnm xconvolve_source_timefunction *receiver_line_* plotgnu source.txt *.sem*
 
-all: $(OBJS)
-	$(LINK) $(FLAGS) -o $(EXEC) $(OBJS)
+meshfem2D: $(OBJS_MESHFEM2D)
+	$(LINK) $(FLAGS) -o xmeshfem2D $(OBJS_MESHFEM2D)
+
+specfem2D: $(OBJS_SPECFEM2D)
+	$(LINK) $(FLAGS) -o xspecfem2D $(OBJS_SPECFEM2D)
 
 convolve_source_timefunction: $O/convolve_source_timefunction.o
 	${F90} $(FLAGS) -o xconvolve_source_timefunction $O/convolve_source_timefunction.o
@@ -48,6 +56,9 @@ convolve_source_timefunction: $O/convolve_source_timefunction.o
 $O/checkgrid.o: checkgrid.f90 constants.h
 	${F90} $(FLAGS) -c -o $O/checkgrid.o checkgrid.f90
     
+$O/meshfem2D.o: meshfem2D.f90
+	${F90} $(FLAGS) -c -o $O/meshfem2D.o meshfem2D.f90
+
 $O/createnum_fast.o: createnum_fast.f90 constants.h
 	${F90} $(FLAGS) -c -o $O/createnum_fast.o createnum_fast.f90
     
@@ -81,17 +92,17 @@ $O/plotgll.o: plotgll.f90 constants.h
 $O/plotpost.o: plotpost.f90 constants.h
 	${F90} $(FLAGS) -c -o $O/plotpost.o plotpost.f90
     
-$O/positrec.o: positrec.f90 constants.h
-	${F90} $(FLAGS) -c -o $O/positrec.o positrec.f90
+$O/locate_receivers.o: locate_receivers.f90 constants.h
+	${F90} $(FLAGS) -c -o $O/locate_receivers.o locate_receivers.f90
+    
+$O/recompute_jacobian.o: recompute_jacobian.f90 constants.h
+	${F90} $(FLAGS) -c -o $O/recompute_jacobian.o recompute_jacobian.f90
     
 $O/positsource.o: positsource.f90 constants.h
 	${F90} $(FLAGS) -c -o $O/positsource.o positsource.f90
     
-$O/q49shape.o: q49shape.f90 constants.h
-	${F90} $(FLAGS) -c -o $O/q49shape.o q49shape.f90
-    
-$O/q49spec.o: q49spec.f90 constants.h
-	${F90} $(FLAGS) -c -o $O/q49spec.o q49spec.f90
+$O/define_shape_functions.o: define_shape_functions.f90 constants.h
+	${F90} $(FLAGS) -c -o $O/define_shape_functions.o define_shape_functions.f90
     
 $O/specfem2D.o: specfem2D.f90 constants.h
 	${F90} $(FLAGS) -c -o $O/specfem2D.o specfem2D.f90

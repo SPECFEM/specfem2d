@@ -23,7 +23,7 @@
 
   integer knods(ngnod,nspec),ibool(NGLLX,NGLLX,nspec)
 
-  double precision coorg(NDIME,npgeo),coord(NDIME,npoin)
+  double precision coorg(NDIM,npgeo),coord(NDIM,npoin)
 
 ! coordinates of the nodes for Gnuplot file
   integer, parameter :: MAXNGNOD = 9

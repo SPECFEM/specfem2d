@@ -11,7 +11,7 @@
 !
 !========================================================================
 
-  subroutine positsource(coord,ibool,npoin,nspec,xs,zs,source_type,ix_source,iz_source,ispec_source,iglob_source)
+  subroutine positsource(coord,ibool,npoin,nspec,x_source,z_source,source_type,ix_source,iz_source,ispec_source,iglob_source)
 
 !
 !----- calculer la position reelle de la source
@@ -24,8 +24,8 @@
   integer npoin,nspec,source_type
   integer ibool(NGLLX,NGLLZ,nspec)
 
-  double precision xs,zs
-  double precision coord(NDIME,npoin)
+  double precision x_source,z_source
+  double precision coord(NDIM,npoin)
 
   integer ip,ix,iz,numelem,ilowx,ilowz,ihighx,ihighz,ix_source,iz_source,ispec_source,iglob_source
 
@@ -62,7 +62,7 @@
             xp = coord(1,ip)
             zp = coord(2,ip)
 
-            dist = sqrt((xp-xs)**2 + (zp-zs)**2)
+            dist = sqrt((xp-x_source)**2 + (zp-z_source)**2)
 
 ! retenir le point pour lequel l'ecart est minimal
             if(dist < distmin) then
@@ -79,7 +79,7 @@
 
   distminmax = max(distmin,distminmax)
 
-  write(iout,150) xs,zs,coord(1,iglob_source),coord(2,iglob_source),distmin
+  write(iout,150) x_source,z_source,coord(1,iglob_source),coord(2,iglob_source),distmin
   write(iout,160) distminmax
 
  150 format(1x,f12.3,1x,f12.3,1x,f12.3,1x,f12.3,f12.3)
