@@ -48,6 +48,9 @@
 ! number of spatial dimensions
   integer, parameter :: NDIME = 2
 
+! display non lineaire pour rehausser les faibles amplitudes sur les images PNM
+  double precision, parameter :: POWER_DISPLAY_PNM = 0.30d0
+
 ! X and Z scaling du display pour PostScript
   double precision, parameter :: SCALEX = 1.d0
   double precision, parameter :: SCALEZ = 1.d0

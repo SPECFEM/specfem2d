@@ -34,7 +34,7 @@ OBJS = $O/meshfem2D.o
 default: all
 
 clean:
-	/bin/rm -f $(EXEC) $(EXEC).trace $O/*.o *.o $O/*.il *.mod core *.gnu *.ps
+	/bin/rm -f $(EXEC) $(EXEC).trace $O/*.o *.o $O/*.il *.mod core *.gnu *.ps plotgnu
 
 all: $(OBJS)
 	$(LINK) $(FLAGS) -o $(EXEC) $(OBJS)
