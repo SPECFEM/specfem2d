@@ -7,11 +7,11 @@
 !                         Dimitri Komatitsch
 !          Universite de Pau et des Pays de l'Adour, France
 !
-!                          (c) December 2004
+!                          (c) January 2005
 !
 !========================================================================
 
-  subroutine write_seismograms(sisux,sisuz,nt,nrec,deltat,sismostype,iglob_rec,coord,npoin)
+  subroutine write_seismograms(sisux,sisuz,nt,nrec,deltat,sismostype,iglob_rec,coord,npoin,t0)
 
 ! save the seismograms in ASCII format
 
@@ -20,7 +20,7 @@
   include "constants.h"
 
   integer nt,nrec,sismostype,npoin
-  double precision deltat
+  double precision deltat,t0
 
   integer iglob_rec(nrec)
 
@@ -42,7 +42,7 @@
     write(name,221) irec
     open(unit=11,file=name,status='unknown')
     do it=1,nt
-      write(11,*) sngl(dble(it-1)*deltat),' ',sngl(sisux(it,irec))
+      write(11,*) sngl(dble(it-1)*deltat - t0),' ',sngl(sisux(it,irec))
     enddo
     close(11)
   enddo
@@ -52,7 +52,7 @@
     write(name,222) irec
     open(unit=11,file=name,status='unknown')
     do it=1,nt
-      write(11,*) sngl(dble(it-1)*deltat),' ',sngl(sisuz(it,irec))
+      write(11,*) sngl(dble(it-1)*deltat - t0),' ',sngl(sisuz(it,irec))
     enddo
     close(11)
   enddo
@@ -62,13 +62,17 @@
 ! write seismograms in single precision binary format
 
 ! X component
-  open(unit=11,file='Ux_file.bin',status='unknown',access='direct',recl=nt*nrec*4)
-  write(11,rec=1) (sngl(sisux(irec,1)),irec=1,nt*nrec)
+  open(unit=11,file='Ux_file.bin',status='unknown',access='direct',recl=nt*4)
+  do irec=1,nrec
+    write(11,rec=irec) (sngl(sisux(it,irec)),it=1,nt)
+  enddo
   close(11)
 
 ! Z component
-  open(unit=11,file='Uz_file.bin',status='unknown',access='direct',recl=nt*nrec*4)
-  write(11,rec=1) (sngl(sisuz(irec,1)),irec=1,nt*nrec)
+  open(unit=11,file='Uz_file.bin',status='unknown',access='direct',recl=nt*4)
+  do irec=1,nrec
+    write(11,rec=irec) (sngl(sisuz(it,irec)),it=1,nt)
+  enddo
   close(11)
 
 !----
@@ -76,7 +80,8 @@
 ! ligne de recepteurs pour Xsu
   open(unit=11,file='receiver_line_Xsu_XWindow',status='unknown')
 
-  write(11,110) FACTORXSU,nt,deltat,nrec
+! subtract t0 from seismograms to get correct zero time
+  write(11,110) FACTORXSU,nt,deltat,-t0,nrec
 
   do irec=1,nrec
     write(11,140) coord(1,iglob_rec(irec))
@@ -120,7 +125,7 @@
 ! formats
   100 format('#!/bin/csh -f')
 
-  110 format('xwigb@xcur=',f8.2,'@n1=',i5,'@d1=',f15.8,'@label1="Time@(s)"@label2="x@(m)"@n2=',i5,'@x2=')
+  110 format('xwigb@xcur=',f8.2,'@n1=',i5,'@d1=',f15.8,'@f1=',f15.8,'@label1="Time@(s)"@label2="x@(m)"@n2=',i5,'@x2=')
 
   120 format('sed -e ''1,$s/ //g'' -e ''1,$s/@/ /g'' -e ''1,1p'' -e ''$,$s/Ux/Uz/g'' <tempfile > receiver_line_Xsu_XWindow')
 
