@@ -21,10 +21,6 @@
 
   implicit none
 
-! definir les tableaux pour allocation dynamique
-
-  integer, parameter :: ANISOTROPIC_MATERIAL = 1
-
 ! coordinates of the grid points of the mesh
   double precision, dimension(:,:), allocatable :: x,z
 
@@ -47,22 +43,21 @@
          xinterface_top,zinterface_top,coefs_interface_top
 
 ! for the source
-  integer isource_type
+  integer source_type,time_function_type
   double precision xs,zs,f0,t0,angle,factor
 
 ! arrays for the receivers
   double precision, dimension(:), allocatable :: xrec,zrec
 
   character(len=50) interfacesfile,title
-  character(len=34) junk
 
   integer imatnum,inumabs,inumelem
   integer nelemabs,npgeo,nspec
   integer k,icol,ili,istepx,istepz,ix,iz,irec,i,j
   integer ixdebzone,ixfinzone,izdebzone,izfinzone,imodnum
   integer izone,imodele,nbzone,nbmodeles
-  integer itaff,iptsdisp,isubsamp,nrec
-  integer isismostype,ivecttype
+  integer itaff,pointsdisp,subsamp,nrec
+  integer sismostype,vecttype
   integer ngnod,nt,nx,nz,nxread,nzread
   integer icodematread
 
@@ -73,13 +68,23 @@
   double precision anglerec,xfin,zfin,xdeb,zdeb,xmin,xmax,dt
   double precision rhoread,cpread,csread,aniso3read,aniso4read
 
-  logical interpol,ignuplot,ireadmodel,ioutputgrid
+  logical interpol,gnuplot,readmodel,outputgrid
   logical abshaut,absbas,absgauche,absdroite
-  logical isource_surf,ienreg_surf,imeshvect,initialfield,imodelvect,iboundvect
+  logical source_surf,enreg_surf,meshvect,initialfield,modelvect,boundvect
   logical TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
 
   integer, external :: num
   double precision, external :: value_spline
+
+! flag to indicate an anisotropic material
+  integer, parameter :: ANISOTROPIC_MATERIAL = 1
+
+! file number for input Par file and interface file
+  integer, parameter :: IIN_PAR = 10
+  integer, parameter :: IIN_INTERFACES = 15
+
+! ignore variable name field (junk) at the beginning of each input line
+  logical, parameter :: IGNORE_JUNK = .true.,DONT_IGNORE_JUNK = .false.
 
 ! ***
 ! *** read the parameter file
@@ -90,39 +95,23 @@
 
   open(unit=10,file='Par',status='old')
 
-! formats
- 1 format(a,f12.5)
- 2 format(a,i8)
- 3 format(a,a)
- 4 format(a,l8)
-
-! read the header
-  do i=1,10
-    read(10,*)
-  enddo
-
 ! read file names and path for output
-  read(10,3) junk,title
-  read(10,3) junk,interfacesfile
+  call read_value_string(IIN_PAR,IGNORE_JUNK,title)
+  call read_value_string(IIN_PAR,IGNORE_JUNK,interfacesfile)
 
   write(*,*) 'Titre de la simulation'
   write(*,*) title
   print *
 
-! skip comment
-  read(10,*)
-  read(10,*)
-  read(10,*)
-
 ! read grid parameters
-  read(10,1) junk,xmin
-  read(10,1) junk,xmax
-  read(10,2) junk,nx
-  read(10,2) junk,ngnod
-  read(10,4) junk,initialfield
-  read(10,4) junk,ireadmodel
-  read(10,4) junk,TURN_ANISOTROPY_ON
-  read(10,4) junk,TURN_ATTENUATION_ON
+  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,xmin)
+  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,xmax)
+  call read_value_integer(IIN_PAR,IGNORE_JUNK,nx)
+  call read_value_integer(IIN_PAR,IGNORE_JUNK,ngnod)
+  call read_value_logical(IIN_PAR,IGNORE_JUNK,initialfield)
+  call read_value_logical(IIN_PAR,IGNORE_JUNK,readmodel)
+  call read_value_logical(IIN_PAR,IGNORE_JUNK,TURN_ANISOTROPY_ON)
+  call read_value_logical(IIN_PAR,IGNORE_JUNK,TURN_ATTENUATION_ON)
 
 ! get interface data from external file to count the spectral elements along Z
   print *,'Reading interface data from file ',interfacesfile(1:len_trim(interfacesfile)),' to count the spectral elements'
@@ -130,36 +119,21 @@
 
   max_npoints_interface = -1
 
-! skip header
-  read(15,*)
-  read(15,*)
-  read(15,*)
-
 ! read number of interfaces
-  read(15,*) number_of_interfaces
+  call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,number_of_interfaces)
   if(number_of_interfaces < 2) stop 'not enough interfaces (minimum is 2)'
-
-! skip header
-  read(15,*)
-  read(15,*)
-  read(15,*)
 
 ! loop on all the interfaces
   do interface_current = 1,number_of_interfaces
 
-! skip header
-    read(15,*)
-    read(15,*)
-    read(15,*)
-
-    read(15,*) npoints_interface_bottom
+    call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,npoints_interface_bottom)
     if(npoints_interface_bottom < 2) stop 'not enough interface points (minimum is 2)'
     max_npoints_interface = max(npoints_interface_bottom,max_npoints_interface)
     print *,'Reading ',npoints_interface_bottom,' points for interface ',interface_current
 
 ! loop on all the points describing this interface
     do ipoint_current = 1,npoints_interface_bottom
-      read(15,*) xinterface_dummy,zinterface_dummy
+      read(IIN_INTERFACES,*) xinterface_dummy,zinterface_dummy
       if(ipoint_current > 1 .and. xinterface_dummy <= xinterface_dummy_previous) &
         stop 'interface points must be sorted in increasing X'
       xinterface_dummy_previous = xinterface_dummy
@@ -172,21 +146,11 @@
 
   allocate(nz_layer(number_of_layers))
 
-! skip header
-    read(15,*)
-    read(15,*)
-    read(15,*)
-
 ! loop on all the layers
   do ilayer = 1,number_of_layers
 
-! skip header
-    read(15,*)
-    read(15,*)
-    read(15,*)
-
 ! read number of spectral elements in vertical direction in this layer
-    read(15,*) nz_layer(ilayer)
+    call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,nz_layer(ilayer))
     if(nz_layer(ilayer) < 1) stop 'not enough spectral elements along Z in layer (minimum is 1)'
     print *,'There are ',nz_layer(ilayer),' spectral elements along Z in layer ',ilayer
 
@@ -210,63 +174,50 @@
     nz = nz * 2
   endif
 
-! skip comment
-  read(10,*)
-  read(10,*)
-  read(10,*)
-
 ! read absorbing boundaries parameters
-  read(10,4) junk,abshaut
-  read(10,4) junk,absbas
-  read(10,4) junk,absgauche
-  read(10,4) junk,absdroite
-
-! skip comment
-  read(10,*)
-  read(10,*)
-  read(10,*)
+  call read_value_logical(IIN_PAR,IGNORE_JUNK,abshaut)
+  call read_value_logical(IIN_PAR,IGNORE_JUNK,absbas)
+  call read_value_logical(IIN_PAR,IGNORE_JUNK,absgauche)
+  call read_value_logical(IIN_PAR,IGNORE_JUNK,absdroite)
 
 ! read time step parameters
-  read(10,2) junk,nt
-  read(10,1) junk,dt
-
-! skip comment
-  read(10,*)
-  read(10,*)
-  read(10,*)
+  call read_value_integer(IIN_PAR,IGNORE_JUNK,nt)
+  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,dt)
 
 ! read source parameters
-  read(10,4) junk,isource_surf
-  read(10,1) junk,xs
-  read(10,1) junk,zs
-  read(10,1) junk,f0
-  read(10,1) junk,t0
-  read(10,2) junk,isource_type
-  read(10,1) junk,angle
-  read(10,1) junk,factor
+  call read_value_logical(IIN_PAR,IGNORE_JUNK,source_surf)
+  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,xs)
+  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,zs)
+  call read_value_integer(IIN_PAR,IGNORE_JUNK,source_type)
+  call read_value_integer(IIN_PAR,IGNORE_JUNK,time_function_type)
+  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,f0)
+  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,angle)
+  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,factor)
+
+! if Dirac source time function, use a very thin Gaussian instead
+  if(time_function_type == 3) f0 = 1.d0 / (5.d0 * dt)
+
+! time delay of the source in seconds, use a 20 % security margin
+  t0 = 1.20d0 / f0
 
   print *
   print *,'Source:'
   print *,'Position xs, zs = ',xs,zs
   print *,'Frequency, delay = ',f0,t0
-  print *,'Source type (1=force 2=explosion) : ',isource_type
+  print *,'Source type (1=force, 2=explosion): ',source_type
+  print *,'Time function type (1=Ricker, 2=Gaussian, 3=Dirac): ',time_function_type
   print *,'Angle of the source if force = ',angle
   print *,'Multiplying factor = ',factor
 
-! skip comment
-  read(10,*)
-  read(10,*)
-  read(10,*)
-
 ! read receivers line parameters
-  read(10,4) junk,ienreg_surf
-  read(10,2) junk,isismostype
-  read(10,2) junk,nrec
-  read(10,1) junk,xdeb
-  read(10,1) junk,zdeb
-  read(10,1) junk,xfin
-  read(10,1) junk,zfin
-  read(10,1) junk,anglerec
+  call read_value_logical(IIN_PAR,IGNORE_JUNK,enreg_surf)
+  call read_value_integer(IIN_PAR,IGNORE_JUNK,sismostype)
+  call read_value_integer(IIN_PAR,IGNORE_JUNK,nrec)
+  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,xdeb)
+  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,zdeb)
+  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,xfin)
+  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,zfin)
+  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,anglerec)
 
   allocate(xrec(nrec))
   allocate(zrec(nrec))
@@ -280,31 +231,21 @@
     zrec(i) = zdeb + dble(i-1)*zspacerec
   enddo
 
-! skip comment
-  read(10,*)
-  read(10,*)
-  read(10,*)
-
 ! read display parameters
-  read(10,2) junk,itaff
-  read(10,2) junk,ivecttype
-  read(10,1) junk,cutvect
-  read(10,4) junk,imeshvect
-  read(10,4) junk,imodelvect
-  read(10,4) junk,iboundvect
-  read(10,4) junk,interpol
-  read(10,2) junk,iptsdisp
-  read(10,2) junk,isubsamp
-  read(10,4) junk,ignuplot
-  read(10,4) junk,ioutputgrid
-
-! skip comment
-  read(10,*)
-  read(10,*)
-  read(10,*)
+  call read_value_integer(IIN_PAR,IGNORE_JUNK,itaff)
+  call read_value_integer(IIN_PAR,IGNORE_JUNK,vecttype)
+  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,cutvect)
+  call read_value_logical(IIN_PAR,IGNORE_JUNK,meshvect)
+  call read_value_logical(IIN_PAR,IGNORE_JUNK,modelvect)
+  call read_value_logical(IIN_PAR,IGNORE_JUNK,boundvect)
+  call read_value_logical(IIN_PAR,IGNORE_JUNK,interpol)
+  call read_value_integer(IIN_PAR,IGNORE_JUNK,pointsdisp)
+  call read_value_integer(IIN_PAR,IGNORE_JUNK,subsamp)
+  call read_value_logical(IIN_PAR,IGNORE_JUNK,gnuplot)
+  call read_value_logical(IIN_PAR,IGNORE_JUNK,outputgrid)
 
 ! lecture des differents modeles de materiaux
-  read(10,2) junk,nbmodeles
+  call read_value_integer(IIN_PAR,IGNORE_JUNK,nbmodeles)
   if(nbmodeles <= 0) stop 'Negative number of models not allowed !!'
 
   allocate(icodemat(nbmodeles))
@@ -324,7 +265,7 @@
   num_modele(:,:) = 0
 
   do imodele=1,nbmodeles
-    read(10,*) i,icodematread,rhoread,cpread,csread,aniso3read,aniso4read
+    read(IIN_PAR,*) i,icodematread,rhoread,cpread,csread,aniso3read,aniso4read
     if(i < 1 .or. i > nbmodeles) stop 'Wrong material point number'
     icodemat(i) = icodematread
     rho(i) = rhoread
@@ -351,7 +292,7 @@
   print *
 
 ! lecture des numeros de modele des differentes zones
-  read(10,2) junk,nbzone
+  call read_value_integer(IIN_PAR,IGNORE_JUNK,nbzone)
 
   if(nbzone <= 0) stop 'Negative number of zones not allowed !!'
 
@@ -361,7 +302,7 @@
 
   do izone = 1,nbzone
 
-    read(10,*) ixdebzone,ixfinzone,izdebzone,izfinzone,imodnum
+    read(IIN_PAR,*) ixdebzone,ixfinzone,izdebzone,izfinzone,imodnum
 
     if(imodnum < 1) stop 'Negative model number not allowed !!'
     if(ixdebzone < 1) stop 'Left coordinate of zone negative !!'
@@ -450,46 +391,26 @@
   allocate(zinterface_top(max_npoints_interface))
   allocate(coefs_interface_top(max_npoints_interface))
 
-! skip header
-  read(15,*)
-  read(15,*)
-  read(15,*)
-
 ! read number of interfaces
-  read(15,*) number_of_interfaces
-
-! skip header
-  read(15,*)
-  read(15,*)
-  read(15,*)
-
-! skip header
-  read(15,*)
-  read(15,*)
-  read(15,*)
+  call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,number_of_interfaces)
 
 ! read bottom interface
-  read(15,*) npoints_interface_bottom
+  call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,npoints_interface_bottom)
 
 ! loop on all the points describing this interface
   do ipoint_current = 1,npoints_interface_bottom
-    read(15,*) xinterface_bottom(ipoint_current),zinterface_bottom(ipoint_current)
+    read(IIN_INTERFACES,*) xinterface_bottom(ipoint_current),zinterface_bottom(ipoint_current)
   enddo
 
 ! boucle sur toutes les couches
   do ilayer = 1,number_of_layers
 
-! skip header
-  read(15,*)
-  read(15,*)
-  read(15,*)
-
 ! read top interface
-  read(15,*) npoints_interface_top
+  call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,npoints_interface_top)
 
 ! loop on all the points describing this interface
   do ipoint_current = 1,npoints_interface_top
-    read(15,*) xinterface_top(ipoint_current),zinterface_top(ipoint_current)
+    read(IIN_INTERFACES,*) xinterface_top(ipoint_current),zinterface_top(ipoint_current)
   enddo
 
 ! calculer le spline pour l'interface du bas, imposer la tangente aux deux bords
@@ -508,10 +429,10 @@
   if(ilayer == number_of_layers) then
 
 ! modifier position de la source si source exactement en surface
-    if(isource_surf) zs = value_spline(xs,xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
+    if(source_surf) zs = value_spline(xs,xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
 
 ! modifier position des recepteurs si enregistrement exactement en surface
-    if(ienreg_surf) then
+    if(enreg_surf) then
       do irec=1,nrec
         zrec(irec) = value_spline(xrec(irec),xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
       enddo
@@ -654,14 +575,14 @@
   write(15,*) 'npgeo'
   write(15,*) npgeo
 
-  write(15,*) 'ignuplot interpol'
-  write(15,*) ignuplot,interpol
+  write(15,*) 'gnuplot interpol'
+  write(15,*) gnuplot,interpol
 
-  write(15,*) 'itaff icolor inumber'
-  write(15,*) itaff,1,0
+  write(15,*) 'itaff colors numbers'
+  write(15,*) itaff,' 1 0'
 
-  write(15,*) 'imeshvect imodelvect iboundvect cutvect isubsamp nx_sem_PNM'
-  write(15,*) imeshvect,imodelvect,iboundvect,cutvect,isubsamp,nxread
+  write(15,*) 'meshvect modelvect boundvect cutvect subsamp nx_sem_PNM'
+  write(15,*) meshvect,modelvect,boundvect,cutvect,subsamp,nxread
 
   write(15,*) 'nrec anglerec'
   write(15,*) nrec,anglerec
@@ -669,17 +590,17 @@
   write(15,*) 'initialfield'
   write(15,*) initialfield
 
-  write(15,*) 'isismostype ivecttype'
-  write(15,*) isismostype,ivecttype
+  write(15,*) 'sismostype vecttype'
+  write(15,*) sismostype,vecttype
 
-  write(15,*) 'ireadmodel ioutputgrid TURN_ANISOTROPY_ON TURN_ATTENUATION_ON'
-  write(15,*) ireadmodel,ioutputgrid,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
+  write(15,*) 'readmodel outputgrid TURN_ANISOTROPY_ON TURN_ATTENUATION_ON'
+  write(15,*) readmodel,outputgrid,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
 
   write(15,*) 'ncycl dtinc'
   write(15,*) nt,dt
 
   write(15,*) 'source'
-  write(15,*) isource_type,xs-xmin,zs,f0,t0,factor,angle,' 0'
+  write(15,*) source_type,time_function_type,xs-xmin,zs,f0,t0,factor,angle
 
   write(15,*) 'Receiver positions:'
   do irec=1,nrec
@@ -712,8 +633,8 @@
   if(abshaut .and. absgauche) nelemabs = nelemabs - 1
   if(abshaut .and. absdroite) nelemabs = nelemabs - 1
 
-  write(15,*) 'numat ngnod nspec iptsdisp ielemabs'
-  write(15,*) nbmodeles,ngnod,nspec,iptsdisp,nelemabs
+  write(15,*) 'numat ngnod nspec pointsdisp nelemabs'
+  write(15,*) nbmodeles,ngnod,nspec,pointsdisp,nelemabs
 
   write(15,*) 'Material sets (num 0 rho vp vs 0 0) or (num 1 rho c11 c13 c33 c44)'
   do i=1,nbmodeles
@@ -908,4 +829,204 @@
   Y = A*YA(KLO) + B*YA(KHI) + ((A**3-A)*Y2A(KLO) + (B**3-B)*Y2A(KHI))*(H**2)/6.d0
 
   end subroutine splint
+
+
+
+
+
+
+
+
+
+
+
+
+
+!--------------------
+
+  subroutine read_value_integer(iin,ignore_junk,value_to_read)
+
+  implicit none
+
+  integer iin
+  logical ignore_junk
+
+  integer value_to_read
+
+  integer ios
+
+  character(len=100) string_read
+  character(len=34) junk
+
+  do
+    read(unit=iin,fmt=200,iostat=ios) string_read
+    if(ios /= 0) stop 'error while reading input file'
+
+! suppress leading white spaces, if any
+    string_read = adjustl(string_read)
+
+! exit loop when we find the first line that is not a comment
+    if(string_read(1:1) /= '#') exit
+
+  enddo
+
+  if(ignore_junk) then
+    read(string_read,100) junk,value_to_read
+  else
+    read(string_read,*) value_to_read
+  endif
+
+! format
+ 100 format(a,i8)
+ 200 format(a100)
+
+  end subroutine read_value_integer
+
+
+
+
+
+
+
+
+
+
+!--------------------
+
+  subroutine read_value_double_precision(iin,ignore_junk,value_to_read)
+
+  implicit none
+
+  integer iin
+  logical ignore_junk
+
+  double precision value_to_read
+
+  integer ios
+
+  character(len=100) string_read
+  character(len=34) junk
+
+  do
+    read(unit=iin,fmt=200,iostat=ios) string_read
+    if(ios /= 0) stop 'error while reading input file'
+
+! suppress leading white spaces, if any
+    string_read = adjustl(string_read)
+
+! exit loop when we find the first line that is not a comment
+    if(string_read(1:1) /= '#') exit
+
+  enddo
+
+  if(ignore_junk) then
+    read(string_read,100) junk,value_to_read
+  else
+    read(string_read,*) value_to_read
+  endif
+
+! format
+ 100 format(a,f12.5)
+ 200 format(a100)
+
+  end subroutine read_value_double_precision
+
+
+
+
+
+
+
+
+
+!--------------------
+
+  subroutine read_value_logical(iin,ignore_junk,value_to_read)
+
+  implicit none
+
+  integer iin
+  logical ignore_junk
+
+  logical value_to_read
+
+  integer ios
+
+  character(len=100) string_read
+  character(len=34) junk
+
+  do
+    read(unit=iin,fmt=200,iostat=ios) string_read
+    if(ios /= 0) stop 'error while reading input file'
+
+! suppress leading white spaces, if any
+    string_read = adjustl(string_read)
+
+! exit loop when we find the first line that is not a comment
+    if(string_read(1:1) /= '#') exit
+
+  enddo
+
+  if(ignore_junk) then
+    read(string_read,100) junk,value_to_read
+  else
+    read(string_read,*) value_to_read
+  endif
+
+! format
+ 100 format(a,l8)
+ 200 format(a100)
+
+  end subroutine read_value_logical
+
+
+
+
+
+
+
+
+
+!--------------------
+
+  subroutine read_value_string(iin,ignore_junk,value_to_read)
+
+  implicit none
+
+  integer iin
+  logical ignore_junk
+
+  character(len=*) value_to_read
+
+  integer ios
+
+  character(len=100) string_read
+  character(len=34) junk
+
+  do
+    read(unit=iin,fmt=200,iostat=ios) string_read
+    if(ios /= 0) stop 'error while reading input file'
+
+! suppress leading white spaces, if any
+    string_read = adjustl(string_read)
+
+! exit loop when we find the first line that is not a comment
+    if(string_read(1:1) /= '#') exit
+
+  enddo
+
+  if(ignore_junk) then
+    read(string_read,100) junk,value_to_read
+  else
+    read(string_read,*) value_to_read
+  endif
+
+! format
+ 100 format(a34,a)
+ 200 format(a100)
+
+  end subroutine read_value_string
+
+
+
 
