@@ -588,7 +588,8 @@
 !---- definir la position reelle des points source et recepteurs
   if(source_type == 1) then
 ! collocated force source
-    call locate_source_force(coord,ibool,npoin,nspec,x_source,z_source,source_type,ix_source,iz_source,ispec_selected_source,iglob_source)
+    call locate_source_force(coord,ibool,npoin,nspec,x_source,z_source,source_type, &
+      ix_source,iz_source,ispec_selected_source,iglob_source)
 
   else if(source_type == 2) then
 ! moment-tensor source
