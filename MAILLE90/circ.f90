@@ -21,53 +21,64 @@
 
   program circ
 
-  implicit double precision (a-h,o-z)
+  implicit none
 
 ! max size of the model in elements
-  parameter(mnx=7)
-  parameter(mnz=7)
+  integer, parameter :: mnx=7,mnz=7
 
-  parameter(pi=3.141592653589793d0)
+  double precision, parameter :: pi=3.141592653589793d0
 
 ! seuil pour considerer deux points comme confondus
-  parameter(rseuil=1.d-2)
+  double precision, parameter :: rseuil=1.d-2
+
+! declare variables
+  integer imaxabs,n2ana,itimetype,isource_type,nump1,nump2,nump3,nump4
+  integer ndofn,ndime,ngnod,nnode,nbcnd,n1ana
+  integer nofst,npgeo,nspel,nbmodeles,nbsources,nrec,lquad,isamp,nrec1,nrec2
+  integer irec,imatnum,netyp,nxgll,nelemperio,nelemabs,nx,nz,i,j
+  integer irepr,nrecsur3,nt,niter,itaff,itfirstaff,numerocourant,iptsdisp,isubsamp
+
+  double precision R,theta_i,theta_init,delta_theta,eta_j,valseuil,freqmaxrep
+  double precision f0,t0,xs,zs,angle,factor,dist,xoffs,zoffs
+  double precision xrec,zrec,rho,cp,cs,anglerec
+  double precision anglerec2,dt,alphanewm,betanewm,gammanewm
+  double precision cutvect,cutcolor,scalex,scalez,sizemax,orig_x,orig_z
+  double precision factorana,factorxsu
 
 ! stockage de la grille curvi (x et z)
-  parameter(npoinz1=(4*mnx+1)*(mnz+1))
-  parameter(nelemz1=(4*mnx)*mnz)
+  integer, parameter :: npoinz1=(4*mnx+1)*(mnz+1), nelemz1=(4*mnx)*mnz
   double precision x1(0:4*mnx,0:mnz)
   double precision z1(0:4*mnx,0:mnz)
-  parameter(npoinz3=(2*mnx+1)*(4*mnz+1))
-  parameter(nelemz3=(2*mnx)*(4*mnz))
+
+  integer, parameter :: npoinz3=(2*mnx+1)*(4*mnz+1), nelemz3=(2*mnx)*(4*mnz)
   double precision x3(0:2*mnx,0:4*mnz)
   double precision z3(0:2*mnx,0:4*mnz)
-  parameter(npoinz4=(2*mnx+1)*(2*mnz+1))
-  parameter(nelemz4=(2*mnx)*(2*mnz))
+
+  integer, parameter :: npoinz4=(2*mnx+1)*(2*mnz+1), nelemz4=(2*mnx)*(2*mnz)
   double precision x4(0:2*mnx,0:2*mnz)
   double precision z4(0:2*mnx,0:2*mnz)
 
-  parameter(npoinz1b=(2*mnx+1)*(mnz+1))
-  parameter(nelemz1b=(2*mnx)*mnz)
+  integer, parameter :: npoinz1b=(2*mnx+1)*(mnz+1), nelemz1b=(2*mnx)*mnz
   double precision x1b(0:2*mnx,0:mnz)
   double precision z1b(0:2*mnx,0:mnz)
-  parameter(npoinz2b=(mnx+1)*(2*mnz+1))
-  parameter(nelemz2b=mnx*(2*mnz))
+
+  integer, parameter :: npoinz2b=(mnx+1)*(2*mnz+1), nelemz2b=mnx*(2*mnz)
   double precision x2b(0:mnx,0:2*mnz)
   double precision z2b(0:mnx,0:2*mnz)
-  parameter(npoinz3b=(4*mnx+1)*(4*mnz+1))
-  parameter(nelemz3b=(4*mnx)*(4*mnz))
+
+  integer, parameter :: npoinz3b=(4*mnx+1)*(4*mnz+1), nelemz3b=(4*mnx)*(4*mnz)
   double precision x3b(0:4*mnx,0:4*mnz)
   double precision z3b(0:4*mnx,0:4*mnz)
-  parameter(npoinz4b=(2*mnx+1)*(2*mnz+1))
-  parameter(nelemz4b=(2*mnx)*(2*mnz))
+
+  integer, parameter :: npoinz4b=(2*mnx+1)*(2*mnz+1), nelemz4b=(2*mnx)*(2*mnz)
   double precision x4b(0:2*mnx,0:2*mnz)
   double precision z4b(0:2*mnx,0:2*mnz)
 
 ! nombre max de points de maillage, et nombre exact d'elements
-  parameter(npoin = npoinz1+npoinz3+npoinz4+ &
-                    npoinz1b+npoinz2b+npoinz3b+npoinz4b)
-  parameter(nelem = nelemz1+nelemz3+nelemz4+ &
-                    nelemz1b+nelemz2b+nelemz3b+nelemz4b)
+  integer, parameter :: npoin = npoinz1+npoinz3+npoinz4+ &
+                    npoinz1b+npoinz2b+npoinz3b+npoinz4b
+  integer, parameter :: nelem = nelemz1+nelemz3+nelemz4+ &
+                    nelemz1b+nelemz2b+nelemz3b+nelemz4b
 
 ! coordonnees geometriques des points
   double precision xpoint(npoin)
@@ -90,9 +101,7 @@
   integer numpoin4(nelem)
 
 ! nom du fichier GNUPLOT contenant la grille
-  character file1*50
-  character title*50
-  character external_mod*50
+  character(len=50) file1,title
 
   logical iexternal, aleatoire, topoplane, simulate, absstacey
   logical absorbhaut, absorbbas, absorbgauche, sismos

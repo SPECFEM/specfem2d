@@ -12,7 +12,7 @@
 !
 !=====================================================================
 
-  subroutine q49spec(shape,shapeint,dershape,dvolu,xjaci,xi,yi, &
+  subroutine q49spec(shapeint,dershape,dvolu,xjaci,xi, &
               coorg,knods,ngnod,nxgll,nygll,ndime,nspec,npgeo, &
               xirec,etarec,flagrange,iptsdisp)
 !
@@ -45,13 +45,12 @@
   integer ngnod,nxgll,nygll,ndime,nspec,npgeo,iptsdisp
 
   integer knods(ngnod,nspec)
-  double precision shape(ngnod,nxgll,nxgll)
   double precision shapeint(ngnod,iptsdisp,iptsdisp)
   double precision dershape(ndime,ngnod,nxgll,nxgll)
   double precision dvolu(nspec,nxgll,nxgll)
   double precision xjaci(nspec,ndime,ndime,nxgll,nxgll)
   double precision coorg(ndime,npgeo)
-  double precision xi(nxgll),yi(nygll)
+  double precision xi(nxgll)
   double precision xirec(iptsdisp),etarec(iptsdisp)
   double precision flagrange(0:nxgll-1,iptsdisp)
 

@@ -52,17 +52,15 @@
   integer imatnum,inumabs,inumelem,nelemperio,nxgll,netyp
   integer icodehaut,icodebas,icodegauche,icodedroite
   integer nelemabs,npgeo,nspec,ntopo
-  integer k,icol,ili,istepx,istepz,ncut,ix,iz,irec,i,j
-  integer ixdebzone,ixfinzone,izdebzone,izfinzone,imodnum
-  integer izone,imodele,nbzone,nbmodeles,iaffinfo
+  integer k,icol,ili,istepx,istepz,ix,iz,irec,i,j
+  integer imodele,nbmodeles,iaffinfo
   integer itaff,itfirstaff,iptsdisp,isubsamp,nrec,n1ana,n2ana
   integer irepr,nrec1,nrec2,isamp,nbsources,isismostype,ivecttype
   integer ngnod,nt,niter,idegpoly,nx,nz,nxread,nzread
-  integer inumelem2,ix2,iz2,inumperio
   integer icodematread
 
   double precision valseuil,freqmaxrep,ratio
-  double precision tang1,tangN,vpzone,vszone
+  double precision tang1,tangN
   double precision orig_x,orig_z,sizemax,cutvect,scalex,scalez
   double precision factorxsu,factorana,xspacerec,zspacerec
   double precision anglerec,anglerec2,xmin,xmax
@@ -74,7 +72,7 @@
   logical abshaut,absbas,absgauche,absdroite,absstacey
   logical periohaut,periogauche
   logical sismos,isources_surf,ienreg_surf,ienreg_surf2,display
-  logical ivectplot,imeshvect,isymbols
+  logical ivectplot,imeshvect
   logical topoplane,iexec,initialfield
   logical imodelvect,iboundvect,usletter,compenergy
 

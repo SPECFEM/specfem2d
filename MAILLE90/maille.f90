@@ -72,7 +72,7 @@
   logical abshaut,absbas,absgauche,absdroite
   logical periohaut,periogauche
   logical sismos,isources_surf,ienreg_surf,display
-  logical ivectplot,imeshvect,isymbols
+  logical ivectplot,imeshvect
   logical iexec,initialfield
   logical imodelvect,iboundvect,usletter,compenergy
 
@@ -994,13 +994,6 @@
 ! --- bas du modele
 !
 
-  double precision function botprime(x)
-  implicit none
-  double precision x
-    botprime = 0.d0
-  return
-  end function botprime
-
   double precision function bottom(x)
   implicit none
   double precision x
@@ -1029,24 +1022,6 @@
   return
   end function spl
 
-!--- derivee spline
-  double precision function spl_prime(x,xtopo,ztopo,coefs,ntopo)
-  implicit none
-  integer ntopo
-  double precision x
-  double precision xtopo(ntopo),ztopo(ntopo)
-  double precision coefs(ntopo)
-
-  if (x < xtopo(1).or.x > xtopo(ntopo)) then
-      spl_prime = 0.d0
-  else
-  call splintderiv(xtopo,ztopo,coefs,ntopo,x,spl_prime)
-  endif
-
-  return
-  end function spl_prime
-
-
 ! --- fonction de densification du maillage horizontal
 
   double precision function dens(ix,psi,xmin,xmax,nx)
@@ -1066,15 +1041,16 @@
   subroutine spline(x,y,n,yp1,ypn,y2)
   implicit none
 
-  integer, parameter :: nmax=20000
   integer n
-  double precision x(n),y(n),y2(n),u(nmax)
+  double precision x(n),y(n),y2(n)
+  double precision, dimension(:), allocatable :: u
   double precision yp1,ypn
 
   integer i,k
   double precision sig,p,qn,un
 
-  if(n > nmax) stop 'array too small in spline'
+  allocate(u(n))
+
   y2(1)=-0.5
   u(1)=(3./(x(2)-x(1)))*((y(2)-y(1))/(x(2)-x(1))-yp1)
   do i=2,n-1
@@ -1090,6 +1066,9 @@
   do k=n-1,1,-1
       y2(k)=y2(k)*y2(k+1)+u(k)
   enddo
+
+  deallocate(u)
+
   return
   end subroutine spline
 
@@ -1108,15 +1087,14 @@
 
   KLO=1
   KHI=N
-  1     IF (KHI-KLO > 1) THEN
+  do while (KHI-KLO > 1)
       K=(KHI+KLO)/2
       IF(XA(K) > X)THEN
             KHI=K
       ELSE
             KLO=K
       ENDIF
-  GOTO 1
-  ENDIF
+  enddo
   H=XA(KHI)-XA(KLO)
   IF (H == 0.d0) stop 'Bad input in spline evaluation'
   A=(XA(KHI)-X)/H
@@ -1127,36 +1105,3 @@
   RETURN
   end subroutine SPLINT
 
-! --------------
-
-! evaluation de la derivee premiere du spline (inspire de Numerical Recipes)
-  SUBROUTINE SPLINTDERIV(XA,YA,Y2A,N,X,Y)
-  implicit none
-
-  integer n
-  double precision XA(N),YA(N),Y2A(N)
-  double precision x,y
-
-  integer k,klo,khi
-  double precision h,a,b
-
-  KLO=1
-  KHI=N
-  1     IF (KHI-KLO > 1) THEN
-      K=(KHI+KLO)/2
-      IF(XA(K) > X)THEN
-            KHI=K
-      ELSE
-            KLO=K
-      ENDIF
-  GOTO 1
-  ENDIF
-  H=XA(KHI)-XA(KLO)
-  IF (H == 0.d0) stop 'Bad input in spline derivative evaluation'
-  A=(XA(KHI)-X)/H
-  B=(X-XA(KLO))/H
-
-  Y=(-YA(KLO)+YA(KHI))/h+((-3.0d0*A**2+1.0d0)*Y2A(KLO)+ &
-        (3.0d0*B**2-1.0d0)*Y2A(KHI))*H/6.d0
-  RETURN
-  end subroutine SPLINTDERIV

@@ -16,7 +16,7 @@
          a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13x,a13z,force, &
          ibool,displ,veloc,accel,Uxnewloc,Uznewloc, &
          rmass,nxgll,npoin,ndime,nspec,gltfu,nltfl,initialfield, &
-         numabs,is_bordabs,nelemabs,anyabs)
+         is_bordabs,nelemabs,anyabs)
 
   use timeparams
 
@@ -36,7 +36,6 @@
   double precision Uxnewloc(nxgll,nxgll,nspec)
   double precision Uznewloc(nxgll,nxgll,nspec)
 
-  integer numabs(nelemabs)
   integer is_bordabs(nspec)
 
 ! petits tableaux locaux (could be suppressed if needed)
@@ -62,7 +61,7 @@
 
   double precision, external :: dirac,ricker
 
-  integer i,j,k,l,n,isource,ielems,iglobsource,iglobnum,ip,numer_abs
+  integer i,j,k,l,n,isource,ielems,iglobsource,iglobnum,numer_abs
   double precision sig
   logical initialfield
 

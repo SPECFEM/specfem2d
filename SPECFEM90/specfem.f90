@@ -57,8 +57,8 @@
 
   logical anyabs,anyperio
 
-  integer i,it,irec,iter,itsis,iglobrec,iglobsource
-  integer nbpoin,inump,n,npoinext,nseis,netyp,ipoin,ispec
+  integer i,it,irec,iter,itsis,iglobrec
+  integer nbpoin,inump,n,npoinext,nseis,netyp,ispec
 
   double precision valux,valuz,rhoextread,vpextread,vsextread
   double precision dcosrot,dsinrot,dcosrot1,dsinrot1,dcosrot2,dsinrot2
@@ -594,10 +594,8 @@ allocate(ibool(nxgll,nygll,nspec))
   time = it*deltat
   call qsumspec(hprime,hTprime, &
           a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13x,a13z,force, &
-          ibool,displ,veloc,accel, &
-          Uxnewloc,Uznewloc,rmass,nxgll,npoin,ndime, &
-          nspec,gltfu,nltfl,initialfield, &
-          numabs,is_bordabs,nelemabs,anyabs)
+          ibool,displ,veloc,accel,Uxnewloc,Uznewloc,rmass,nxgll,npoin,ndime, &
+          nspec,gltfu,nltfl,initialfield,is_bordabs,nelemabs,anyabs)
 
 !
 !----  mise a jour globale du deplacement par multicorrector
