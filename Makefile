@@ -32,7 +32,7 @@ FLAGS_NOCHECK=-O3 -implicitnone -warn stderrors -warn truncated_source -warn arg
 
 LINK = $(F90) 
 
-OBJS_MESHFEM2D = $O/meshfem2D.o
+OBJS_MESHFEM2D = $O/meshfem2D.o $O/read_value_parameters.o
 
 OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/defarrays.o\
         $O/lagrange_poly.o $O/gmat01.o $O/gll_library.o $O/plotgll.o $O/define_derivative_matrices.o\
@@ -78,6 +78,9 @@ $O/convolve_source_timefunction.o: convolve_source_timefunction.f90
 
 $O/create_earth_model.o: create_earth_model.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/create_earth_model.o create_earth_model.f90
+
+$O/read_value_parameters.o: read_value_parameters.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/read_value_parameters.o read_value_parameters.f90
 
 $O/datim.o: datim.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/datim.o datim.f90
