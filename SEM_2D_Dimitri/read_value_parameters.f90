@@ -84,7 +84,7 @@
   logical ignore_junk
   character(len=100) string_read
 
-  integer ios,iin
+  integer ios,iin,position_equal_sign
 
   do
     read(unit=iin,fmt=200,iostat=ios) string_read
@@ -105,8 +105,15 @@
 ! suppress trailing comments, if any
   if(index(string_read,'#') > 0) string_read = string_read(1:index(string_read,'#')-1)
 
-! suppress leading junk (first 34 characters) if needed
-  if(ignore_junk) string_read = string_read(35:len_trim(string_read))
+! suppress leading junk (until the first equal sign) if needed
+  if(ignore_junk) then
+    position_equal_sign = index(string_read,'=')
+    if(position_equal_sign <= 1) stop 'incorrect syntax detected in DATA/Par_file'
+    string_read = string_read(position_equal_sign+1:len_trim(string_read))
+  endif
+
+! suppress leading white spaces again, if any, after having suppressed the leading junk
+  string_read = adjustl(string_read)
 
 ! format
  200 format(a100)
