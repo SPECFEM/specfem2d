@@ -447,7 +447,7 @@
 !
 
 ! version "propre mais lente" ou version "sale mais rapide"
-  if(fast_numbering) then
+  if(FAST_NUMBERING) then
     call createnum_fast(knods,ibool,shape2D,coorg,npoin,npgeo,nspec,ngnod)
   else
     call createnum_slow(knods,ibool,npoin,nspec,ngnod)
@@ -1635,7 +1635,7 @@
 ! for elastic medium
   if(ELASTIC .and. vecttype == 1) then
     write(IOUT,*) 'drawing displacement field...'
-    call plotpost(displ,coord,vpext,iglob_source,st_xval,st_zval, &
+    call plotpost(displ,coord,vpext,x_source,z_source,st_xval,st_zval, &
           it,deltat,coorg,xinterp,zinterp,shape2D_display, &
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
@@ -1644,7 +1644,7 @@
 
   else if(ELASTIC .and. vecttype == 2) then
     write(IOUT,*) 'drawing velocity field...'
-    call plotpost(veloc,coord,vpext,iglob_source,st_xval,st_zval, &
+    call plotpost(veloc,coord,vpext,x_source,z_source,st_xval,st_zval, &
           it,deltat,coorg,xinterp,zinterp,shape2D_display, &
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
@@ -1653,7 +1653,7 @@
 
   else if(ELASTIC .and. vecttype == 3) then
     write(IOUT,*) 'drawing acceleration field...'
-    call plotpost(accel,coord,vpext,iglob_source,st_xval,st_zval, &
+    call plotpost(accel,coord,vpext,x_source,z_source,st_xval,st_zval, &
           it,deltat,coorg,xinterp,zinterp,shape2D_display, &
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
@@ -1669,7 +1669,7 @@
 ! for acoustic medium, compute gradient for display, displ represents the potential
     call compute_gradient_fluid(displ,vector_field_postscript, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,NSPEC,npoin)
-    call plotpost(vector_field_postscript,coord,vpext,iglob_source,st_xval,st_zval, &
+    call plotpost(vector_field_postscript,coord,vpext,x_source,z_source,st_xval,st_zval, &
           it,deltat,coorg,xinterp,zinterp,shape2D_display, &
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
@@ -1681,7 +1681,7 @@
 ! for acoustic medium, compute gradient for display, veloc represents the first derivative of the potential
     call compute_gradient_fluid(veloc,vector_field_postscript, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,NSPEC,npoin)
-    call plotpost(vector_field_postscript,coord,vpext,iglob_source,st_xval,st_zval, &
+    call plotpost(vector_field_postscript,coord,vpext,x_source,z_source,st_xval,st_zval, &
           it,deltat,coorg,xinterp,zinterp,shape2D_display, &
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
