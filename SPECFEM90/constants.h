@@ -1,7 +1,7 @@
 
 ! polynomial degree
   integer, parameter :: NGLLX = 5
-  integer, parameter :: NGLLY = NGLLX
+  integer, parameter :: NGLLZ = NGLLX
 
 ! select fast (Paul Fischer) or slow (topology only) global numbering algorithm
   logical, parameter :: FAST_NUMBERING = .true.
@@ -18,20 +18,18 @@
 ! integer, parameter :: IOUT = 41
 
 ! flags for absorbing boundaries
-  integer, parameter :: IHAUT   = 1
-  integer, parameter :: IBAS    = 2
-  integer, parameter :: IGAUCHE = 3
-  integer, parameter :: IDROITE = 4
-
-  integer, parameter :: IARETEBAS    = 1
-  integer, parameter :: IARETEDROITE = 2
-  integer, parameter :: IARETEHAUT   = 3
-  integer, parameter :: IARETEGAUCHE = 4
+  integer, parameter :: ITOP = 1
+  integer, parameter :: IBOTTOM = 2
+  integer, parameter :: ILEFT = 3
+  integer, parameter :: IRIGHT = 4
 
 ! a few useful constants
   double precision, parameter :: ZERO = 0.d0,ONE = 1.d0
-  double precision, parameter :: HALF = 0.5d0,TWO = 2.0d0
+  double precision, parameter :: HALF = 0.5d0,TWO = 2.0d0,QUART = 0.25d0
+! pi
   double precision, parameter :: PI = 3.141592653589793d0
+! 4/3
+  double precision, parameter :: FOUR_THIRDS = 4.d0/3.d0
 
 ! parameters to define the Gauss-Lobatto-Legendre points
   double precision, parameter :: GAUSSALPHA = ZERO,GAUSSBETA = ZERO
@@ -74,4 +72,41 @@
 
 ! taille de la fenetre de display Postscript en pourcentage de la feuille
   double precision, parameter :: RPERCENTX = 70.0d0,RPERCENTZ = 77.0d0
+
+!-----------------------------------------------------------------------
+
+!! DK DK
+!! DK DK anisotropic copper crystal (cubic symmetry)
+!! DK DK
+
+! switch anisotropy on or off
+  logical, parameter :: TURN_ANISOTROPY_ON = .false.
+
+!! DK DK regular c_ijkl with no rotation
+  double precision, parameter :: c11val = 169.d9
+  double precision, parameter :: c12val = 122.d9
+  double precision, parameter :: c13val = c12val
+  double precision, parameter :: c14val = 0.d0
+  double precision, parameter :: c15val = 0.d0
+  double precision, parameter :: c16val = 0.d0
+
+  double precision, parameter :: c22val = c11val
+  double precision, parameter :: c23val = c12val
+  double precision, parameter :: c24val = 0.d0
+  double precision, parameter :: c25val = 0.d0
+  double precision, parameter :: c26val = 0.d0
+
+  double precision, parameter :: c33val = c11val
+  double precision, parameter :: c34val = 0.d0
+  double precision, parameter :: c35val = 0.d0
+  double precision, parameter :: c36val = 0.d0
+
+  double precision, parameter :: c44val = 75.3d9
+  double precision, parameter :: c45val = 0.d0
+  double precision, parameter :: c46val = 0.d0
+
+  double precision, parameter :: c55val = c44val
+  double precision, parameter :: c56val = 0.d0
+
+  double precision, parameter :: c66val = c44val
 

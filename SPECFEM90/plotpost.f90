@@ -34,7 +34,7 @@
   integer i,iglobrec,iglobsource,npoin,npgeo,ngnod
 
   integer kmato(nspec),knods(ngnod,nspec)
-  integer ibool(NGLLX,NGLLY,nspec)
+  integer ibool(NGLLX,NGLLZ,nspec)
 
   double precision xinterp(iptsdisp,iptsdisp),zinterp(iptsdisp,iptsdisp)
   double precision shapeint(ngnod,iptsdisp,iptsdisp)
@@ -181,8 +181,7 @@
   zmin=0.d0
 
 ! rapport taille page/taille domaine physique
-  rapp_page = min(rpercentz*sizez/(zmax-zmin),rpercentx*sizex/(xmax-xmin)) &
-                        / 100.d0
+  rapp_page = min(rpercentz*sizez/(zmax-zmin),rpercentx*sizex/(xmax-xmin)) / 100.d0
 
 ! recherche de la valeur maximum de la norme du deplacement
   dispmax = maxval(sqrt(displ(1,:)**2 + displ(2,:)**2))
@@ -284,17 +283,17 @@
   write(24,*) '/Times-Roman findfont'
   write(24,*) '.5 CM SCSF'
 
-  if (legendes) then
+  if(legendes) then
   write(24,*) '24. CM 1.2 CM MV'
   write(24,610) usoffset,it
   write(24,*) '%'
 
   write(24,*) '24. CM 1.95 CM MV'
   timeval = it*dt
-  if(timeval  >=  1.d-3) then
-  write(24,600) usoffset,timeval
+  if(timeval >= 1.d-3) then
+    write(24,600) usoffset,timeval
   else
-  write(24,601) usoffset,timeval
+    write(24,601) usoffset,timeval
   endif
   write(24,*) '%'
   write(24,*) '24. CM 2.7 CM MV'
@@ -306,7 +305,7 @@
   write(24,*) '%'
   write(24,*) '/Times-Roman findfont'
   write(24,*) '.6 CM SCSF'
-  if (icolor  ==  1) write(24,*) '.4 .9 .9 setrgbcolor'
+  if(icolor == 1) write(24,*) '.4 .9 .9 setrgbcolor'
   write(24,*) '11 CM 1.1 CM MV'
   write(24,*) '(X axis) show'
   write(24,*) '%'
@@ -317,15 +316,15 @@
   write(24,*) '%'
   write(24,*) '/Times-Roman findfont'
   write(24,*) '.7 CM SCSF'
-  if (icolor  ==  1) write(24,*) '.8 0 .8 setrgbcolor'
+  if (icolor == 1) write(24,*) '.8 0 .8 setrgbcolor'
   write(24,*) '24.35 CM 18.9 CM MV'
   write(24,*) usoffset,' CM 2 div neg 0 MR'
   write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  if (ivecttype  ==  1) then
+  if (ivecttype == 1) then
       write(24,*) '(Displacement vector field) show'
-  else if (ivecttype  ==  2) then
+  else if (ivecttype == 2) then
       write(24,*) '(Velocity vector field) show'
-  else if (ivecttype  ==  3) then
+  else if (ivecttype == 3) then
       write(24,*) '(Acceleration vector field) show'
   else
       stop 'Bad field code in PostScript display'
@@ -365,7 +364,7 @@
     do i=1,NGLLX-isubsamp,isubsamp
           do j=1,NGLLX-isubsamp,isubsamp
 
-  if((vpmax-vpmin)/vpmin  >  0.02d0) then
+  if((vpmax-vpmin)/vpmin > 0.02d0) then
   if(ireadmodel) then
     x1 = (vpext(ibool(i,j,ispec))-vpmin)/ (vpmax-vpmin)
   else
@@ -383,7 +382,7 @@
 
 ! rescaler pour eviter gris trop sombre
   x1 = x1*0.7 + 0.2
-  if (x1  >  1.d0) x1=1.d0
+  if (x1 > 1.d0) x1=1.d0
 
 ! inverser echelle : blanc = vpmin, gris = vpmax
   x1 = 1.d0 - x1
@@ -459,7 +458,7 @@
   write(24,*) 'MK'
   write(24,681) x1,z1
 
-  if (ngnod  ==  4) then
+  if (ngnod == 4) then
 
 ! tracer des droites si elements 4 noeuds
 
@@ -536,7 +535,7 @@
 
   write(24,*) 'CO'
 
-  if (icolor  ==  1) then
+  if (icolor == 1) then
 
 ! For the moment 20 different colors max
   nbcols = 20
@@ -557,7 +556,7 @@
 
 ! write the element number, the group number and the
 ! material number inside the element
-  if (inumber  ==  1) then
+  if (inumber == 1) then
 
   xw = (coorg(1,knods(1,ispec)) + coorg(1,knods(2,ispec)) + &
           coorg(1,knods(3,ispec)) + coorg(1,knods(4,ispec))) / 4.d0
@@ -567,7 +566,7 @@
   zw = (zw-zmin)*rapp_page + orig_z
   xw = xw * centim
   zw = zw * centim
-  if (icolor  ==  1) write(24,*) '1 setgray'
+  if (icolor == 1) write(24,*) '1 setgray'
 
   write(24,500) xw,zw
 
@@ -607,21 +606,21 @@
 
   do ibord = 1,4
 
-  if(codeabs(ibord,ispecabs)  /=  0) then
+  if(codeabs(ibord,ispecabs) /= 0) then
 
-  if(ibord  ==  ihaut) then
+  if(ibord == ITOP) then
     write(24,*) '1. .85 0. RG'
     ideb = 3
     ifin = 4
-  else if(ibord  ==  ibas) then
+  else if(ibord == IBOTTOM) then
     write(24,*) '.4 1. .4 RG'
     ideb = 1
     ifin = 2
-  else if(ibord  ==  igauche) then
+  else if(ibord == ILEFT) then
     write(24,*) '1. .43 1. RG'
     ideb = 4
     ifin = 1
-  else if(ibord  ==  idroite) then
+  else if(ibord == IRIGHT) then
     write(24,*) '.25 1. 1. RG'
     ideb = 2
     ifin = 3
@@ -656,7 +655,7 @@
 !
 
 ! return if the maximum displacement equals zero (no source)
-  if (dispmax  ==  0.d0) then
+  if (dispmax == 0.d0) then
     print *,' null displacement : returning !'
     return
   endif
@@ -679,8 +678,7 @@
   do ispec=1,nspec
 
 ! interpolation sur grille reguliere
-  if(mod(ispec,100)  ==  0) &
-       write(*,*) 'Interpolation uniform grid element ',ispec
+  if(mod(ispec,1000) == 0) write(*,*) 'Interpolation uniform grid element ',ispec
 
   do i=1,iptsdisp
   do j=1,iptsdisp
@@ -716,17 +714,17 @@
   d = dsqrt(x2**2 + z2**2)
 
 ! ignorer si vecteur trop petit
-  if (d  >  cutvect*sizemax) then
+  if (d > cutvect*sizemax) then
 
   d1 = d * rapport
   d2 = d1 * dcos(angle*convert)
 
   dummy = x2/d
-  if (dummy  >  0.9999d0) dummy = 0.9999d0
-  if (dummy  <  -0.9999d0) dummy = -0.9999d0
+  if (dummy > 0.9999d0) dummy = 0.9999d0
+  if (dummy < -0.9999d0) dummy = -0.9999d0
   theta = dacos(dummy)
 
-  if(z2  <  0.d0) theta = 360.d0*convert - theta
+  if(z2 < 0.d0) theta = 360.d0*convert - theta
   thetaup = theta - angle*convert
   thetadown = theta + angle*convert
 
@@ -750,12 +748,12 @@
   indice = 1
   first = .false.
   do ii=1,longueur-1
-    if(ch1(ii)  /=  ' '.or.first) then
-    if(ch1(ii)  /=  ' '.or.ch1(ii+1)  /=  ' ') then
-          ch2(indice) = ch1(ii)
-          indice = indice + 1
-          first = .true.
-    endif
+    if(ch1(ii) /= ' ' .or. first) then
+      if(ch1(ii) /= ' ' .or. ch1(ii+1) /= ' ') then
+        ch2(indice) = ch1(ii)
+        indice = indice + 1
+        first = .true.
+      endif
     endif
   enddo
   ch2(indice) = ch1(longueur)
@@ -781,17 +779,17 @@
   d = dsqrt(x2**2 + z2**2)
 
 ! ignorer si vecteur trop petit
-  if (d  >  cutvect*sizemax) then
+  if (d > cutvect*sizemax) then
 
   d1 = d * rapport
   d2 = d1 * dcos(angle*convert)
 
   dummy = x2/d
-  if (dummy  >  0.9999d0) dummy = 0.9999d0
-  if (dummy  <  -0.9999d0) dummy = -0.9999d0
+  if (dummy > 0.9999d0) dummy = 0.9999d0
+  if (dummy < -0.9999d0) dummy = -0.9999d0
   theta = dacos(dummy)
 
-  if(z2  <  0.d0) theta = 360.d0*convert - theta
+  if(z2 < 0.d0) theta = 360.d0*convert - theta
   thetaup = theta - angle*convert
   thetadown = theta + angle*convert
 
@@ -815,12 +813,12 @@
   indice = 1
   first = .false.
   do ii=1,longueur-1
-    if(ch1(ii)  /=  ' '.or.first) then
-    if(ch1(ii)  /=  ' '.or.ch1(ii+1)  /=  ' ') then
-          ch2(indice) = ch1(ii)
-          indice = indice + 1
-          first = .true.
-    endif
+    if(ch1(ii) /= ' ' .or. first) then
+      if(ch1(ii) /= ' ' .or. ch1(ii+1) /= ' ') then
+        ch2(indice) = ch1(ii)
+        indice = indice + 1
+        first = .true.
+      endif
     endif
   enddo
   ch2(indice) = ch1(longueur)
@@ -863,8 +861,8 @@
 !----  write position of the receivers
 !
   do i=1,nrec
-  if(i  ==  1) write(24,*) '% debut ligne recepteurs'
-  if(i  ==  nrec) write(24,*) '% fin ligne recepteurs'
+  if(i == 1) write(24,*) '% debut ligne recepteurs'
+  if(i == nrec) write(24,*) '% fin ligne recepteurs'
 
   iglobrec = nint(posrec(1,i))
   xw = coord(1,iglobrec)

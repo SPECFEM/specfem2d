@@ -21,7 +21,7 @@
 
   integer npoin,nspec,ngnod
 
-  integer knods(ngnod,nspec),ibool(NGLLX,NGLLY,nspec)
+  integer knods(ngnod,nspec),ibool(NGLLX,NGLLZ,nspec)
 
   integer i,j,num2,i2,j2,ipos,ipos2,iloc,jloc,kloc
   integer ngnodloc,ngnodother,nedgeloc,nedgeother,npedge,numelem,npcorn
@@ -62,7 +62,7 @@
 
   do numelem = 1,nspec
   do i=1,NGLLX
-    do j=1,NGLLY
+    do j=1,NGLLZ
 
 ! verifier que le point n'a pas deja ete genere
 
@@ -71,7 +71,7 @@
 !
 !---- point interieur a un element, donc forcement unique
 !
-  if(i /= 1 .and. i /= NGLLX .and. j /= 1 .and. j /= NGLLY) then
+  if(i /= 1 .and. i /= NGLLX .and. j /= 1 .and. j /= NGLLZ) then
 
     npoin = npoin + 1
     ibool(i,j,numelem) = npoin
@@ -79,17 +79,17 @@
 !
 !---- point au coin d'un element, rechercher les coins des autres elements
 !
-  else if((i == 1 .and. j == 1) .or. (i == 1 .and. j == NGLLY) .or. &
-          (i == NGLLX .and. j == 1) .or. (i == NGLLX .and. j == NGLLY)) then
+  else if((i == 1 .and. j == 1) .or. (i == 1 .and. j == NGLLZ) .or. &
+          (i == NGLLX .and. j == 1) .or. (i == NGLLX .and. j == NGLLZ)) then
 
 ! trouver numero local du coin
   if(i == 1 .and. j == 1) then
     ngnodloc = 1
   else if(i == NGLLX .and. j == 1) then
     ngnodloc = 2
-  else if(i == NGLLX .and. j == NGLLY) then
+  else if(i == NGLLX .and. j == NGLLZ) then
     ngnodloc = 3
-  else if(i == 1 .and. j == NGLLY) then
+  else if(i == 1 .and. j == NGLLZ) then
     ngnodloc = 4
   endif
 
@@ -117,10 +117,10 @@
             j2 = 1
           else if(ngnodother == 3) then
             i2 = NGLLX
-            j2 = NGLLY
+            j2 = NGLLZ
           else if(ngnodother == 4) then
             i2 = 1
-            j2 = NGLLY
+            j2 = NGLLZ
             else
                   stop 'bad corner'
             endif
@@ -156,7 +156,7 @@
     nedgeloc = 1
   else if(i == NGLLX) then
     nedgeloc = 2
-  else if(j == NGLLY) then
+  else if(j == NGLLZ) then
     nedgeloc = 3
   else if(i == 1) then
     nedgeloc = 4
@@ -189,7 +189,7 @@
         alreadyexist = .true.
 
 ! obtenir la numerotation dans l'autre element
-! maillage conforme donc on doit supposer que NGLLX == NGLLY
+! maillage conforme donc on doit supposer que NGLLX == NGLLZ
 
 ! generer toute l'arete pour eviter des recherches superflues
   do kloc = 2,NGLLX-1
@@ -205,12 +205,12 @@
             ipos = jloc
           else if(nedgeloc == 3) then
             iloc = kloc
-            jloc = NGLLY
+            jloc = NGLLZ
             ipos = NGLLX - iloc + 1
           else if(nedgeloc == 4) then
             iloc = 1
             jloc = kloc
-            ipos = NGLLY - jloc + 1
+            ipos = NGLLZ - jloc + 1
             else
                   stop 'bad nedgeloc'
             endif
@@ -229,10 +229,10 @@
             j2 = ipos2
           else if(nedgeother == 3) then
             i2 = NGLLX - ipos2 + 1
-            j2 = NGLLY
+            j2 = NGLLZ
           else if(nedgeother == 4) then
             i2 = 1
-            j2 = NGLLY - ipos2 + 1
+            j2 = NGLLZ - ipos2 + 1
             else
                   stop 'bad nedgeother'
             endif
