@@ -46,7 +46,7 @@ default: meshfem2D specfem2D
 all: default
 
 clean:
-	/bin/rm -f xmeshfem2D xmeshfem2D.trace xspecfem2D xspecfem2D.trace $O/*.o *.o $O/*.il *.mod core *.gnu *.ps Ux*.bin Uz*.bin image*.pnm xconvolve_source_timefunction *receiver_line_* plotgnu source.txt *.sem*
+	/bin/rm -r -f xmeshfem2D xmeshfem2D.trace xspecfem2D xspecfem2D.trace $O/*.o *.o $O/*.il *.mod core *.gnu *.ps Ux*.bin Uz*.bin image*.pnm xconvolve_source_timefunction *receiver_line_* plotgnu source.txt *.sem* OUTPUT_FILES/*
 
 meshfem2D: $(OBJS_MESHFEM2D)
 	$(LINK) $(FLAGS_CHECK) -o xmeshfem2D $(OBJS_MESHFEM2D)

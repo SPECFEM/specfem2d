@@ -173,6 +173,7 @@
   if(ngnod == 9) then
     nx = nx * 2
     nz = nz * 2
+    nz_layer = nz_layer * 2
   endif
 
 ! read absorbing boundaries parameters
