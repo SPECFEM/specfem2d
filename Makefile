@@ -41,7 +41,7 @@ OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/defarrays.o\
         $O/define_shape_functions.o $O/cree_image_PNM.o $O/compute_gradient_fluid.o\
         $O/recompute_jacobian.o $O/compute_arrays_source.o $O/locate_source_moment_tensor.o
 
-default: meshfem2D specfem2D
+default: meshfem2D specfem2D convolve_source_timefunction
 
 all: default
 
