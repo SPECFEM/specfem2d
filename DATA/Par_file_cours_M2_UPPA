@@ -62,7 +62,7 @@ anglerec                        = 0.d0           ! angle to rotate components at
 # display parameters
 #
 itaff                           = 100            ! display frequency in time steps
-output_postscript_image         = .true.         ! output Postscript image of the results
+output_postscript_snapshot      = .true.         ! output Postscript image of the results
 output_PNM_image                = .true.         ! output PNM image of the results
 vecttype                        = 1              ! display 1=displ 2=veloc 3=accel
 cutvect                         = 1.             ! amplitude min en % pour vector plots
