@@ -35,7 +35,7 @@
 
   double precision density(numat),elastcoef(4,numat)
 
-  double precision coord(NDIME,npoin)
+  double precision coord(NDIM,npoin)
 
   double precision a11(NGLLX,NGLLX),a12(NGLLX,NGLLX)
 

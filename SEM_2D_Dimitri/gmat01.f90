@@ -125,11 +125,11 @@
          'P-wave velocity. . . . . . . . . . . (cp) =',1pe15.8,/5x, &
          'S-wave velocity. . . . . . . . . . . (cs) =',1pe15.8,/5x, &
          'Mass density. . . . . . . . . . (density) =',1pe15.8,/5x, &
-         'Poisson''s ratio . . . . . . . .(poisson) =',1pe15.8,/5x, &
+         'Poisson''s ratio. . . . . . . . .(poisson) =',1pe15.8,/5x, &
          'First Lame parameter Lambda. . . (lambda) =',1pe15.8,/5x, &
          'Second Lame parameter Mu. . . . . . .(mu) =',1pe15.8,/5x, &
          'Bulk modulus K . . . . . . . . . .(kappa) =',1pe15.8,/5x, &
-         'Young''s modulus E . . . . . . . .(young) =',1pe15.8)
+         'Young''s modulus E. . . . . . . . .(young) =',1pe15.8)
   300   format(//5x,'-------------------------------------',/5x, &
          '-- Transverse anisotropic material --',/5x, &
          '-------------------------------------',/5x, &

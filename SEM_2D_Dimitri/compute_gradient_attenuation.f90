@@ -26,7 +26,7 @@
 
   double precision, dimension(NGLLX,NGLLZ,NSPEC) :: duxdxl,duzdxl,duxdzl,duzdzl,xix,xiz,gammax,gammaz
 
-  double precision, dimension(NDIME,npoin) :: displ
+  double precision, dimension(NDIM,npoin) :: displ
 
 ! array with derivatives of Lagrange polynomials
   double precision, dimension(NGLLX,NGLLX) :: hprime_xx

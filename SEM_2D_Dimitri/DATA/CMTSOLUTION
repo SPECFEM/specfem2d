@@ -1,0 +1,13 @@
+ PDE 2000 01 01 01 01 01.00   0.0000  000.0000  10.0 4.5 4.5 Middle of Half Space 
+event name:      B00002
+time shift:      0.0000
+half duration:   0.0000
+latitude:       34.5000
+longitude:    -117.5000
+depth:           30.0000
+Mrr:       0.000000e+00
+Mtt:       0.000000e+00
+Mpp:       0.000000e+00
+Mrt:       0.000000e+00
+Mrp:       0.000000e+00
+Mtp:       7.498942e+22

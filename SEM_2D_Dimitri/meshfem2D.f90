@@ -26,7 +26,7 @@
 
 ! to compute the coordinate transformation
   integer :: ioffset
-  double precision :: eta,absx,a00,a01,bot0,top0
+  double precision :: gamma,absx,a00,a01,bot0,top0
 
 ! stockage du modele de vitesse et densite
   double precision, dimension(:), allocatable :: rho,cp,cs,aniso3,aniso4
@@ -79,7 +79,7 @@
 ! flag to indicate an anisotropic material
   integer, parameter :: ANISOTROPIC_MATERIAL = 1
 
-! file number for input Par file and interface file
+! file number for input DATA/Par_file and interface file
   integer, parameter :: IIN_PAR = 10
   integer, parameter :: IIN_INTERFACES = 15
 
@@ -93,7 +93,7 @@
   print *,'Reading the parameter file ... '
   print *
 
-  open(unit=10,file='Par',status='old')
+  open(unit=10,file='DATA/Par_file',status='old')
 
 ! read file names and path for output
   call read_value_string(IIN_PAR,IGNORE_JUNK,title)
@@ -115,8 +115,8 @@
   call read_value_logical(IIN_PAR,IGNORE_JUNK,TURN_ATTENUATION_ON)
 
 ! get interface data from external file to count the spectral elements along Z
-  print *,'Reading interface data from file ',interfacesfile(1:len_trim(interfacesfile)),' to count the spectral elements'
-  open(unit=15,file=interfacesfile,status='old')
+  print *,'Reading interface data from file DATA/',interfacesfile(1:len_trim(interfacesfile)),' to count the spectral elements'
+  open(unit=15,file='DATA/'//interfacesfile,status='old')
 
   max_npoints_interface = -1
 
@@ -400,8 +400,8 @@
   z(:,:) = 0.d0
 
 ! get interface data from external file
-  print *,'Reading interface data from file ',interfacesfile(1:len_trim(interfacesfile))
-  open(unit=15,file=interfacesfile,status='old')
+  print *,'Reading interface data from file DATA/',interfacesfile(1:len_trim(interfacesfile))
+  open(unit=15,file='DATA/'//interfacesfile,status='old')
 
   allocate(xinterface_bottom(max_npoints_interface))
   allocate(zinterface_bottom(max_npoints_interface))
@@ -481,9 +481,9 @@
       do iz = 0,nz_layer(ilayer)
 
 ! linear interpolation between bottom and top
-        eta = dble(iz) / dble(nz_layer(ilayer))
-        a00 = 1.d0 - eta
-        a01 = eta
+        gamma = dble(iz) / dble(nz_layer(ilayer))
+        a00 = 1.d0 - gamma
+        a01 = gamma
 
 ! coordinates of the grid points
         x(ix,iz + ioffset) = absx
@@ -576,10 +576,10 @@
 
 ! *** generation de la base de donnees
 
-  open(unit=15,file='../SPECFEM90/DataBase',status='unknown')
+  open(unit=15,file='Database',status='unknown')
 
   write(15,*) '#'
-  write(15,*) '# DataBase for SPECFEM2D'
+  write(15,*) '# Database for SPECFEM2D'
   write(15,*) '# Dimitri Komatitsch, (c) University of Pau, France'
   write(15,*) '#'
 
@@ -604,8 +604,8 @@
   write(15,*) 'meshvect modelvect boundvect cutvect subsamp nx_sem_PNM'
   write(15,*) meshvect,modelvect,boundvect,cutvect,subsamp,nxread
 
-  write(15,*) 'nrec anglerec'
-  write(15,*) nrec,anglerec
+  write(15,*) 'anglerec'
+  write(15,*) anglerec
 
   write(15,*) 'initialfield'
   write(15,*) initialfield
@@ -621,11 +621,6 @@
 
   write(15,*) 'source'
   write(15,*) source_type,time_function_type,xs-xmin,zs,f0,t0,factor,angle
-
-  write(15,*) 'Receiver positions:'
-  do irec=1,nrec
-    write(15,*) irec,xrec(irec)-xmin,zrec(irec)
-  enddo
 
   write(15,*) 'Coordinates of macrobloc mesh (coorg):'
   do j=0,nz
@@ -757,9 +752,26 @@
 
   close(15)
 
+
+!
+!--- write the STATIONS file
+!
+  print *
+  print *,'writing the DATA/STATIONS file'
+  print *
+
+  open(unit=15,file='DATA/STATIONS',status='unknown')
+  write(15,*) nrec
+  do irec=1,nrec
+    write(15,100) irec,xrec(irec)-xmin,zrec(irec)
+  enddo
+  close(15)
+
  10 format('')
  15 format(e10.5,1x,e10.5)
  40 format(a50)
+
+ 100 format('S',i3.3,'    AA ',f20.7,1x,f20.7,'       0.0         0.0')
 
   end program meshfem2D
 
