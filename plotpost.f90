@@ -11,7 +11,7 @@
 !
 !========================================================================
 
-  subroutine plotpost(displ,coord,vpext,iglob_source,iglob_rec,it,dt,coorg, &
+  subroutine plotpost(displ,coord,vpext,iglob_source,st_xval,st_zval,it,dt,coorg, &
           xinterp,zinterp,shapeint, &
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
@@ -44,11 +44,11 @@
   double precision density(numat),elastcoef(4,numat)
 
   double precision dt,timeval
-  double precision displ(NDIME,npoin),coord(NDIME,npoin)
+  double precision displ(NDIM,npoin),coord(NDIM,npoin)
   double precision vpext(npoin)
 
-  double precision coorg(NDIME,npgeo)
-  integer iglob_rec(nrec)
+  double precision coorg(NDIM,npgeo)
+  double precision, dimension(nrec) :: st_xval,st_zval
 
   integer numabs(nelemabs),codeabs(4,nelemabs)
   logical anyabs,ELASTIC
@@ -869,8 +869,8 @@
   if(i == 1) write(24,*) '% debut ligne recepteurs'
   if(i == nrec) write(24,*) '% fin ligne recepteurs'
 
-  xw = coord(1,iglob_rec(i))
-  zw = coord(2,iglob_rec(i))
+  xw = st_xval(i)
+  zw = st_zval(i)
 
   xw = (xw-xmin)*rapp_page + orig_x
   zw = (zw-zmin)*rapp_page + orig_z

@@ -15,10 +15,10 @@
 
 !
 ! *** Version optimisee avec maillage non structure Jacques Muller - Elf ***
-! *** Raffinement d'un facteur 3 en surface ***
+! *** Raffinement d'un facteur 2 en surface ***
 !
 
-  program maille_non_struct_3
+  program maille_non_struct_2
 
   implicit none
 
@@ -94,7 +94,7 @@
 
   print *
   print *,' *** Version optimisee avec maillage non structure ***'
-  print *,' *** Raffinement d''un facteur 3 en surface ***'
+  print *,' *** Raffinement d''un facteur 2 en surface ***'
   print *
 
 ! ***
@@ -104,7 +104,7 @@
   print *,' Reading the parameter file ... '
   print *
 
-  open(unit=10,file='Par',status='old')
+  open(unit=10,file='DATA/Par_file',status='old')
 
 ! formats
  1 format(a,f12.5)
@@ -154,9 +154,9 @@
   if(nz < 2) stop 'nz must be greater or equal to 2'
   if(mod(nx,2) /= 0) stop 'nx must be even'
 
-! multiplier par 3 pour implementer le deraffinement non conforme
-  nx = nx * 3
-  nz = nz * 3
+! multiplier par 2 pour implementer le deraffinement non conforme
+  nx = nx * 2
+  nz = nz * 2
 
 ! multiplier par 2 pour elements 9 noeuds
   nx = nx * 2
@@ -415,20 +415,20 @@
   if(ngnod /= 9) stop 'erreur ngnod different de 9 !!'
 
 ! calcul du nombre total d'elements spectraux, absorbants et periodiques
-  nspecvolume = (nx/2/3)*((nz-6)/2/3)
-  nspecWz = 5*(nx/2/3)
+  nspecvolume = (nx/2/2)*((nz-4)/2/2)
+  nspecWz = 3*(nx/2/2)
   nspec = nspecvolume + nspecWz
   nelemperio = 0
 
   if(absgauche .or. absdroite .or. absbas) then
-    nelemabs = 2 * (nz/6 - 2) + nx/6 + 3 + 3
+    nelemabs = 2 * (nz/4 - 2) + nx/4 + 2 + 2
   else
     nelemabs = 0
   endif
 
   print *
-  print *,'Le maillage comporte ',nspec,' elements spectraux (nx = ',nx/6, &
-     ' nz = ',nz/6,')'
+  print *,'Le maillage comporte ',nspec,' elements spectraux (nx = ',nx/4, &
+     ' nz = ',nz/4,')'
   print *,'soit ',nspecvolume,' elements spectraux dans le volume'
   print *,'et ',nspecWz,' elements spectraux dans la couche Wz'
   print *,'Chaque element comporte ',idegpoly+1,' points dans chaque direction'
@@ -661,80 +661,56 @@
   k=0
 
 ! zone structuree dans le volume
-  do j=0,nz-12,6
-  do i=0,nx-6,6
+  do j=0,nz-8,4
+  do i=0,nx-4,4
       k = k + 1
-      write(15,*) k,imatnum,num(i,j,nx),num(i+6,j,nx),num(i+6,j+6,nx), &
-              num(i,j+6,nx),num(i+3,j,nx),num(i+6,j+3,nx), &
-              num(i+3,j+6,nx),num(i,j+3,nx),num(i+3,j+3,nx)
+      write(15,*) k,imatnum,num(i,j,nx),num(i+4,j,nx),num(i+4,j+4,nx), &
+              num(i,j+4,nx),num(i+2,j,nx),num(i+4,j+2,nx), &
+              num(i+2,j+4,nx),num(i,j+2,nx),num(i+2,j+2,nx)
   enddo
   enddo
 
   if(k /= nspecvolume) stop 'nombre d''elements incoherent dans le volume'
 
 ! zone non structuree dans la couche Wz
-  j=nz-6
-  do i=0,nx-12,12
+  j=nz-4
+  do i=0,nx-8,8
 
 ! element 1 du raccord
       k = k + 1
-      write(15,*) k,imatnum,num(i,j,nx),num(i+6,j,nx),num(i+4,j+2,nx), &
-              num(i,j+2,nx),num(i+3,j,nx),num(i+5,j+1,nx), &
-              num(i+2,j+2,nx),num(i,j+1,nx),num(i+3,j+1,nx)
+      write(15,*) k,imatnum,num(i,j,nx),num(i+4,j,nx),num(i+2,j+2,nx), &
+              num(i,j+2,nx),num(i+2,j,nx),num(i+3,j+1,nx), &
+              num(i+1,j+2,nx),num(i,j+1,nx),num(i+1,j+1,nx)
 
 ! element 2 du raccord
       k = k + 1
-      write(15,*) k,imatnum,num(i,j+2,nx),num(i+4,j+2,nx),num(i+2,j+4,nx), &
-              num(i,j+4,nx),num(i+2,j+2,nx),num(i+3,j+3,nx), &
+      write(15,*) k,imatnum,num(i,j+2,nx),num(i+2,j+2,nx),num(i+2,j+4,nx), &
+              num(i,j+4,nx),num(i+1,j+2,nx),num(i+2,j+3,nx), &
               num(i+1,j+4,nx),num(i,j+3,nx),num(i+1,j+3,nx)
 
 ! element 3 du raccord
       k = k + 1
-      write(15,*) k,imatnum,num(i,j+4,nx),num(i+2,j+4,nx),num(i+2,j+6,nx), &
-              num(i,j+6,nx),num(i+1,j+4,nx),num(i+2,j+5,nx), &
-              num(i+1,j+6,nx),num(i,j+5,nx),num(i+1,j+5,nx)
+      write(15,*) k,imatnum,num(i+2,j+2,nx),num(i+4,j,nx),num(i+4,j+4,nx), &
+              num(i+2,j+4,nx),num(i+3,j+1,nx),num(i+4,j+2,nx), &
+              num(i+3,j+4,nx),num(i+2,j+3,nx),num(i+3,j+3,nx)
 
 ! element 4 du raccord
       k = k + 1
-      write(15,*) k,imatnum,num(i+2,j+4,nx),num(i+4,j+2,nx),num(i+4,j+6,nx), &
-              num(i+2,j+6,nx),num(i+3,j+3,nx),num(i+4,j+4,nx), &
-              num(i+3,j+6,nx),num(i+2,j+5,nx),num(i+3,j+5,nx)
+      write(15,*) k,imatnum,num(i+4,j,nx),num(i+6,j+2,nx),num(i+6,j+4,nx), &
+              num(i+4,j+4,nx),num(i+5,j+1,nx),num(i+6,j+3,nx), &
+              num(i+5,j+4,nx),num(i+4,j+2,nx),num(i+5,j+3,nx)
 
 ! element 5 du raccord
       k = k + 1
-      write(15,*) k,imatnum,num(i+4,j+2,nx),num(i+6,j,nx),num(i+6,j+6,nx), &
-              num(i+4,j+6,nx),num(i+5,j+1,nx),num(i+6,j+3,nx), &
-              num(i+5,j+6,nx),num(i+4,j+4,nx),num(i+5,j+3,nx)
+      write(15,*) k,imatnum,num(i+4,j,nx),num(i+8,j,nx),num(i+8,j+2,nx), &
+              num(i+6,j+2,nx),num(i+6,j,nx),num(i+8,j+1,nx), &
+              num(i+7,j+2,nx),num(i+5,j+1,nx),num(i+7,j+1,nx)
 
 ! element 6 du raccord
       k = k + 1
-      write(15,*) k,imatnum,num(i+6,j,nx),num(i+8,j+2,nx),num(i+8,j+6,nx), &
-              num(i+6,j+6,nx),num(i+7,j+1,nx),num(i+8,j+4,nx), &
-              num(i+7,j+6,nx),num(i+6,j+3,nx),num(i+7,j+3,nx)
-
-! element 7 du raccord
-      k = k + 1
-      write(15,*) k,imatnum,num(i+8,j+2,nx),num(i+10,j+4,nx),num(i+10,j+6,nx), &
-              num(i+8,j+6,nx),num(i+9,j+3,nx),num(i+10,j+5,nx), &
-              num(i+9,j+6,nx),num(i+8,j+4,nx),num(i+9,j+4,nx)
-
-! element 8 du raccord
-      k = k + 1
-      write(15,*) k,imatnum,num(i+6,j,nx),num(i+12,j,nx),num(i+12,j+2,nx), &
-              num(i+8,j+2,nx),num(i+9,j,nx),num(i+12,j+1,nx), &
-              num(i+10,j+2,nx),num(i+7,j+1,nx),num(i+10,j+1,nx)
-
-! element 9 du raccord
-      k = k + 1
-      write(15,*) k,imatnum,num(i+8,j+2,nx),num(i+12,j+2,nx),num(i+12,j+4,nx), &
-              num(i+10,j+4,nx),num(i+10,j+2,nx),num(i+12,j+3,nx), &
-              num(i+11,j+4,nx),num(i+9,j+3,nx),num(i+11,j+3,nx)
-
-! element 10 du raccord
-      k = k + 1
-      write(15,*) k,imatnum,num(i+10,j+4,nx),num(i+12,j+4,nx),num(i+12,j+6,nx),&
-              num(i+10,j+6,nx),num(i+11,j+4,nx),num(i+12,j+5,nx), &
-              num(i+11,j+6,nx),num(i+10,j+5,nx),num(i+11,j+5,nx)
+      write(15,*) k,imatnum,num(i+6,j+2,nx),num(i+8,j+2,nx),num(i+8,j+4,nx), &
+              num(i+6,j+4,nx),num(i+7,j+2,nx),num(i+8,j+3,nx), &
+              num(i+7,j+4,nx),num(i+6,j+3,nx),num(i+7,j+3,nx)
 
   enddo
 
@@ -762,8 +738,8 @@
   write(15,*) 'Liste des elements absorbants (haut bas gauche droite) :'
 
 ! repasser aux vrais valeurs de nx et nz
-  nx = nx / 6
-  nz = nz / 6
+  nx = nx / 4
+  nz = nz / 4
 
   inumabs = 0
 
@@ -821,8 +797,8 @@
     write(15,*) inumabs,inumelem,icodehaut,icodebas,icodegauche,icodedroite
   enddo
 
-! partie non structuree du bord de gauche (trois elements)
-  do iadd = 1,3
+! partie non structuree du bord de gauche (deux elements)
+  do iadd = 1,2
     inumabs = inumabs + 1
     inumelem = nx*(nz-1) + iadd
     icodehaut = 0
@@ -832,8 +808,8 @@
     write(15,*) inumabs,inumelem,icodehaut,icodebas,icodegauche,icodedroite
   enddo
 
-! partie non structuree du bord de droite (trois elements)
-  do iadd = 1,3
+! partie non structuree du bord de droite (deux elements)
+  do iadd = 1,2
     inumabs = inumabs + 1
     inumelem = nspec - iadd + 1
     icodehaut = 0
@@ -853,7 +829,7 @@
 
  40 format(a50)
 
-  end program maille_non_struct_3
+  end program maille_non_struct_2
 
 ! *****************
 ! routines maillage
@@ -979,7 +955,8 @@
   A=(XA(KHI)-X)/H
   B=(X-XA(KLO))/H
 
-  Y=A*YA(KLO)+B*YA(KHI)+((A**3-A)*Y2A(KLO)+ (B**3-B)*Y2A(KHI))*(H**2)/6.d0
+  Y=A*YA(KLO)+B*YA(KHI)+((A**3-A)*Y2A(KLO)+ &
+              (B**3-B)*Y2A(KHI))*(H**2)/6.d0
 
   end subroutine SPLINT
 

@@ -42,11 +42,18 @@
 ! parameters to define the Gauss-Lobatto-Legendre points
   double precision, parameter :: GAUSSALPHA = ZERO,GAUSSBETA = ZERO
 
-! large value for maximum
-  double precision, parameter :: HUGEVAL = 1.d+30
+! very large and very small values
+  double precision, parameter :: HUGEVAL = 1.d+30,TINYVAL = 1.d-9
 
 ! number of spatial dimensions
-  integer, parameter :: NDIME = 2
+  integer, parameter :: NDIM = 2
+
+! maximum length of station and network name for receivers
+  integer, parameter :: MAX_LENGTH_STATION_NAME = 32
+  integer, parameter :: MAX_LENGTH_NETWORK_NAME = 8
+
+! number of iterations to solve the system for xi and eta
+  integer, parameter :: NUM_ITER = 4
 
 ! display non lineaire pour rehausser les faibles amplitudes sur les images PNM
   double precision, parameter :: POWER_DISPLAY_PNM = 0.30d0
