@@ -44,7 +44,7 @@ def createSU():
 	print sismostype
 	chdir(SEM+'/OUTPUT_FILES')
 	labels='label1="Time" label2="Receivers"'
-	# Create headers ans Su file
+	# Create headers and Su file
 	if sismostype==4:
 		ordres=['suaddhead < pressure_file_single.bin ns='+str(nt)+' | sushw key=dt a='+str(int(dt*1e6))+' > pressure_file.su']
 		ordres.append('suxwigb < pressure_file.su perc=96 '+labels+' title=" Pressure : '+title+'"&')

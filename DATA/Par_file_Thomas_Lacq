@@ -1,8 +1,6 @@
 #
 # This is the parameter file
-# Put variable names first and actual value after 34th column
 #
-#-------------------------------->
 
 # title of job, and file that contains interface data
 title                           = Lacq Thomas
@@ -27,13 +25,13 @@ absorbdroite                    = .true.
 
 # time step parameters
 nt                              = 10000           # nb total de pas de temps
-dt                              = 1.d-3          # valeur du pas de temps
+deltat                          = 1.d-3          # valeur du pas de temps
 
 # source parameters
 source_surf                     = .false.        # source dans le volume ou a la surface
 xs                              = 12500.          # source location x in meters
 zs                              = 10000.          # source location z in meters
-source_type                     = 1              # force = 1 or explosion = 2
+source_type                     = 1              # force = 1 or moment tensor = 2
 time_function_type              = 5              # Ricker = 1, first derivative = 2, Gaussian = 3, Dirac = 4, Heaviside = 5
 f0                              = 10.0           # dominant source frequency (Hz) if not Dirac
 angleforce                      = 0.             # angle of the source (for a force only)
@@ -43,14 +41,25 @@ Mxz                             = 0.             # Mxz component (for a moment t
 factor                          = 0.1          # amplification factor
 
 # receiver line parameters
-enreg_surf                      = .false.         # enregistrement volume ou surface
-sismostype                      = 2              # record 1=displ 2=veloc 3=accel 4=pressure
-nrec                            = 4            # number of receivers
+sismostype                      = 2               # record 1=displ 2=veloc 3=accel 4=pressure
+nreceiverlines                  = 2               # number of receiver lines
+anglerec                        = 0.d0            # angle to rotate components at receivers
+
+# first receiver line
+nrec                            = 4               # number of receivers (can be 1 or more)
 xdeb                            = 5000.           # first receiver x in meters
-zdeb                            = 15000.          # first receiver z in meters
-xfin                            = 20000.          # last receiver x in meters
-zfin                            = 15000.          # last receiver z in meters
-anglerec                        = 0.d0           # angle to rotate components at receivers
+zdeb                            = 5000.           # first receiver z in meters
+xfin                            = 20000.          # last receiver x in meters (ignored if only one receiver)
+zfin                            = 5000.           # last receiver z in meters (ignored if only one receiver)
+enreg_surf                      = .true.          # enregistrement volume ou surface
+
+# second receiver line
+nrec                            = 1               # number of receivers (can be 1 or more)
+xdeb                            = 6000.           # first receiver x in meters
+zdeb                            = 7000.           # first receiver z in meters
+xfin                            = 99999.          # last receiver x in meters (ignored if only one receiver)
+zfin                            = 99999.          # last receiver z in meters (ignored if only one receiver)
+enreg_surf                      = .false.         # enregistrement volume ou surface
 
 # display parameters
 itaff                           = 250            # display frequency in time steps
