@@ -9,6 +9,9 @@
 ! mesh tolerance for fast global numbering
   double precision, parameter :: SMALLVALTOL = 0.000001d0
 
+! displacement threshold above which we consider the code became unstable
+  double precision, parameter :: STABILITY_THRESHOLD = 1.d+25
+
 ! input and output files
   integer, parameter :: IIN  = 40
 
