@@ -1,13 +1,13 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.0
+!                   S P E C F E M 2 D  Version 5.1
 !                   ------------------------------
 !
 !                         Dimitri Komatitsch
 !          Universite de Pau et des Pays de l'Adour, France
 !
-!                          (c) May 2004
+!                          (c) December 2004
 !
 !========================================================================
 
@@ -54,7 +54,7 @@
 !
   if(ngnod == 4) then
 !
-!----    4-noded rectangular element
+!----    4-node rectangular element
 !
  do l2 = 1,NGLLZ
 
@@ -92,7 +92,7 @@
 
   else if(ngnod == 9) then
 !
-!----    9-noded rectangular element
+!----    9-node rectangular element
 !
  do l2 = 1,NGLLZ
 

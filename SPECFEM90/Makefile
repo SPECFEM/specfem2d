@@ -1,7 +1,7 @@
 #
-# Makefile for SPECFEM2D version 5.0
+# Makefile for SPECFEM2D version 5.1
 #
-# Dimitri Komatitsch, Universite de Pau et des Pays de l'Adour, May 2004
+# Dimitri Komatitsch, Universite de Pau et des Pays de l'Adour, December 2004
 # 
 SHELL=/bin/sh
 
@@ -13,7 +13,7 @@ O = obj
 
 # Intel Linux
 F90 = ifort
-#FLAGS=-O0 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check bounds -C
+#FLAGS=-O0 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check bounds -CB
 FLAGS=-O2 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds
 
 #

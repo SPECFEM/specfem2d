@@ -1,19 +1,19 @@
 
 !========================================================================
 !
-!                   M E S H F E M 2 D  Version 5.0
+!                   M E S H F E M 2 D  Version 5.1
 !                   ------------------------------
 !
 !                         Dimitri Komatitsch
 !          Universite de Pau et des Pays de l'Adour, France
 !
-!                          (c) May 2004
+!                         (c) December 2004
 !
 !========================================================================
 
 !========================================================================
 !
-!  Mesh generator for SPECFEM2D version 5.0
+!  Basic mesh generator for SPECFEM2D
 !
 !========================================================================
 
@@ -23,38 +23,42 @@
 
 ! definir les tableaux pour allocation dynamique
 
-! coordinates of the grid points
-  double precision, allocatable :: x(:,:),z(:,:)
+  integer, parameter :: ANISOTROPIC_MATERIAL = 1
 
-! variables needed to compute the transformation
-  double precision, allocatable :: psi(:),eta(:),absx(:), &
-      a00(:),a01(:),valeta(:),bot0(:),top0(:)
+! coordinates of the grid points of the mesh
+  double precision, dimension(:,:), allocatable :: x,z
+
+! to compute the coordinate transformation
+  integer :: ioffset
+  double precision :: eta,absx,a00,a01,bot0,top0
 
 ! stockage du modele de vitesse et densite
-  double precision, allocatable :: rho(:),cp(:),cs(:),aniso3(:),aniso4(:)
-  integer, allocatable :: icodemat(:)
-  integer, allocatable :: num_modele(:,:)
+  double precision, dimension(:), allocatable :: rho,cp,cs,aniso3,aniso4
+  integer, dimension(:), allocatable :: icodemat
+  integer, dimension(:,:), allocatable :: num_modele
 
-! the topography data
-  double precision, allocatable :: xtopo(:),ztopo(:),coefs_topo(:), &
-      xinterf(:),zinterf(:),coefs_interf(:)
+! interface data
+  integer interface_current,ipoint_current,number_of_interfaces,npoints_interface_bottom,npoints_interface_top
+  integer ilayer,number_of_layers,max_npoints_interface
+  double precision xinterface_dummy,zinterface_dummy,xinterface_dummy_previous
+  integer, dimension(:), allocatable :: nz_layer
+  double precision, dimension(:), allocatable :: &
+         xinterface_bottom,zinterface_bottom,coefs_interface_bottom, &
+         xinterface_top,zinterface_top,coefs_interface_top
 
 ! for the source
-  double precision xs,zs,f0,t0,angle,factor
   integer isource_type
+  double precision xs,zs,f0,t0,angle,factor
 
 ! arrays for the receivers
-  double precision, allocatable :: xrec(:),zrec(:)
+  double precision, dimension(:), allocatable :: xrec,zrec
 
-! nom du fichier GNUPLOT contenant la grille
-  character(len=50) file1
-
-  character(len=50) interffile,topofile,title
+  character(len=50) interfacesfile,title
   character(len=34) junk
 
-  integer imatnum,inumabs,inumelem,netyp
-  integer nelemabs,npgeo,nspec,ninterf,ntopo
-  integer k,icol,ili,istepx,istepz,ncut,ix,iz,irec,i,j
+  integer imatnum,inumabs,inumelem
+  integer nelemabs,npgeo,nspec
+  integer k,icol,ili,istepx,istepz,ix,iz,irec,i,j
   integer ixdebzone,ixfinzone,izdebzone,izfinzone,imodnum
   integer izone,imodele,nbzone,nbmodeles
   integer itaff,iptsdisp,isubsamp,nrec
@@ -64,30 +68,24 @@
 
   logical codehaut,codebas,codegauche,codedroite
 
-  double precision ratio
   double precision tang1,tangN,vpzone,vszone
-  double precision cutvect
-  double precision xspacerec,zspacerec
-  double precision anglerec,xfin,zfin,xdeb,zdeb,xmin,xmax
-  double precision dt
+  double precision cutvect,xspacerec,zspacerec
+  double precision anglerec,xfin,zfin,xdeb,zdeb,xmin,xmax,dt
   double precision rhoread,cpread,csread,aniso3read,aniso4read
 
   logical interpol,ignuplot,ireadmodel,ioutputgrid
   logical abshaut,absbas,absgauche,absdroite
-  logical isource_surf,ienreg_surf
-  logical imeshvect
-  logical initialfield
-  logical imodelvect,iboundvect
+  logical isource_surf,ienreg_surf,imeshvect,initialfield,imodelvect,iboundvect
   logical TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
 
   integer, external :: num
-  double precision, external :: bottom,spl,dens
+  double precision, external :: value_spline
 
 ! ***
 ! *** read the parameter file
 ! ***
 
-  print *,' Reading the parameter file ... '
+  print *,'Reading the parameter file ... '
   print *
 
   open(unit=10,file='Par',status='old')
@@ -104,9 +102,8 @@
   enddo
 
 ! read file names and path for output
-  read(10,3)junk,title
-  read(10,3)junk,topofile
-  read(10,3)junk,interffile
+  read(10,3) junk,title
+  read(10,3) junk,interfacesfile
 
   write(*,*) 'Titre de la simulation'
   write(*,*) title
@@ -118,16 +115,91 @@
   read(10,*)
 
 ! read grid parameters
-  read(10,1)junk,xmin
-  read(10,1)junk,xmax
-  read(10,2)junk,nx
-  read(10,2)junk,nz
-  read(10,2)junk,ngnod
-  read(10,1)junk,ratio
-  read(10,4)junk,initialfield
-  read(10,4)junk,ireadmodel
-  read(10,4)junk,TURN_ANISOTROPY_ON
-  read(10,4)junk,TURN_ATTENUATION_ON
+  read(10,1) junk,xmin
+  read(10,1) junk,xmax
+  read(10,2) junk,nx
+  read(10,2) junk,ngnod
+  read(10,4) junk,initialfield
+  read(10,4) junk,ireadmodel
+  read(10,4) junk,TURN_ANISOTROPY_ON
+  read(10,4) junk,TURN_ATTENUATION_ON
+
+! get interface data from external file to count the spectral elements along Z
+  print *,'Reading interface data from file ',interfacesfile(1:len_trim(interfacesfile)),' to count the spectral elements'
+  open(unit=15,file=interfacesfile,status='old')
+
+  max_npoints_interface = -1
+
+! skip header
+  read(15,*)
+  read(15,*)
+  read(15,*)
+
+! read number of interfaces
+  read(15,*) number_of_interfaces
+  if(number_of_interfaces < 2) stop 'not enough interfaces (minimum is 2)'
+
+! skip header
+  read(15,*)
+  read(15,*)
+  read(15,*)
+
+! loop on all the interfaces
+  do interface_current = 1,number_of_interfaces
+
+! skip header
+    read(15,*)
+    read(15,*)
+    read(15,*)
+
+    read(15,*) npoints_interface_bottom
+    if(npoints_interface_bottom < 2) stop 'not enough interface points (minimum is 2)'
+    max_npoints_interface = max(npoints_interface_bottom,max_npoints_interface)
+    print *,'Reading ',npoints_interface_bottom,' points for interface ',interface_current
+
+! loop on all the points describing this interface
+    do ipoint_current = 1,npoints_interface_bottom
+      read(15,*) xinterface_dummy,zinterface_dummy
+      if(ipoint_current > 1 .and. xinterface_dummy <= xinterface_dummy_previous) &
+        stop 'interface points must be sorted in increasing X'
+      xinterface_dummy_previous = xinterface_dummy
+    enddo
+
+  enddo
+
+! define number of layers
+  number_of_layers = number_of_interfaces - 1
+
+  allocate(nz_layer(number_of_layers))
+
+! skip header
+    read(15,*)
+    read(15,*)
+    read(15,*)
+
+! loop on all the layers
+  do ilayer = 1,number_of_layers
+
+! skip header
+    read(15,*)
+    read(15,*)
+    read(15,*)
+
+! read number of spectral elements in vertical direction in this layer
+    read(15,*) nz_layer(ilayer)
+    if(nz_layer(ilayer) < 1) stop 'not enough spectral elements along Z in layer (minimum is 1)'
+    print *,'There are ',nz_layer(ilayer),' spectral elements along Z in layer ',ilayer
+
+  enddo
+
+  close(15)
+
+! compute total number of spectral elements in vertical direction
+  nz = sum(nz_layer)
+
+  print *
+  print *,'Total number of spectral elements along Z = ',nz
+  print *
 
   nxread = nx
   nzread = nz
@@ -144,10 +216,10 @@
   read(10,*)
 
 ! read absorbing boundaries parameters
-  read(10,4)junk,abshaut
-  read(10,4)junk,absbas
-  read(10,4)junk,absgauche
-  read(10,4)junk,absdroite
+  read(10,4) junk,abshaut
+  read(10,4) junk,absbas
+  read(10,4) junk,absgauche
+  read(10,4) junk,absdroite
 
 ! skip comment
   read(10,*)
@@ -155,8 +227,8 @@
   read(10,*)
 
 ! read time step parameters
-  read(10,2)junk,nt
-  read(10,1)junk,dt
+  read(10,2) junk,nt
+  read(10,1) junk,dt
 
 ! skip comment
   read(10,*)
@@ -164,20 +236,20 @@
   read(10,*)
 
 ! read source parameters
-  read(10,4)junk,isource_surf
-  read(10,1)junk,xs
-  read(10,1)junk,zs
-  read(10,1)junk,f0
-  read(10,1)junk,t0
-  read(10,2)junk,isource_type
-  read(10,1)junk,angle
-  read(10,1)junk,factor
+  read(10,4) junk,isource_surf
+  read(10,1) junk,xs
+  read(10,1) junk,zs
+  read(10,1) junk,f0
+  read(10,1) junk,t0
+  read(10,2) junk,isource_type
+  read(10,1) junk,angle
+  read(10,1) junk,factor
 
   print *
   print *,'Source:'
   print *,'Position xs, zs = ',xs,zs
   print *,'Frequency, delay = ',f0,t0
-  print *,'Source type (1=force 2=explo) : ',isource_type
+  print *,'Source type (1=force 2=explosion) : ',isource_type
   print *,'Angle of the source if force = ',angle
   print *,'Multiplying factor = ',factor
 
@@ -187,22 +259,22 @@
   read(10,*)
 
 ! read receivers line parameters
-  read(10,4)junk,ienreg_surf
-  read(10,2)junk,isismostype
-  read(10,2)junk,nrec
-  read(10,1)junk,xdeb
-  read(10,1)junk,zdeb
-  read(10,1)junk,xfin
-  read(10,1)junk,zfin
-  read(10,1)junk,anglerec
+  read(10,4) junk,ienreg_surf
+  read(10,2) junk,isismostype
+  read(10,2) junk,nrec
+  read(10,1) junk,xdeb
+  read(10,1) junk,zdeb
+  read(10,1) junk,xfin
+  read(10,1) junk,zfin
+  read(10,1) junk,anglerec
 
   allocate(xrec(nrec))
   allocate(zrec(nrec))
 
   print *
   print *,'There are ',nrec,' receivers'
-  xspacerec=(xfin-xdeb)/dble(nrec-1)
-  zspacerec=(zfin-zdeb)/dble(nrec-1)
+  xspacerec = (xfin-xdeb) / dble(nrec-1)
+  zspacerec = (zfin-zdeb) / dble(nrec-1)
   do i=1,nrec
     xrec(i) = xdeb + dble(i-1)*xspacerec
     zrec(i) = zdeb + dble(i-1)*zspacerec
@@ -214,17 +286,17 @@
   read(10,*)
 
 ! read display parameters
-  read(10,2)junk,itaff
-  read(10,2)junk,ivecttype
-  read(10,1)junk,cutvect
-  read(10,4)junk,imeshvect
-  read(10,4)junk,imodelvect
-  read(10,4)junk,iboundvect
-  read(10,4)junk,interpol
-  read(10,2)junk,iptsdisp
-  read(10,2)junk,isubsamp
-  read(10,4)junk,ignuplot
-  read(10,4)junk,ioutputgrid
+  read(10,2) junk,itaff
+  read(10,2) junk,ivecttype
+  read(10,1) junk,cutvect
+  read(10,4) junk,imeshvect
+  read(10,4) junk,imodelvect
+  read(10,4) junk,iboundvect
+  read(10,4) junk,interpol
+  read(10,2) junk,iptsdisp
+  read(10,2) junk,isubsamp
+  read(10,4) junk,ignuplot
+  read(10,4) junk,ioutputgrid
 
 ! skip comment
   read(10,*)
@@ -232,8 +304,7 @@
   read(10,*)
 
 ! lecture des differents modeles de materiaux
-
-  read(10,2)junk,nbmodeles
+  read(10,2) junk,nbmodeles
   if(nbmodeles <= 0) stop 'Negative number of models not allowed !!'
 
   allocate(icodemat(nbmodeles))
@@ -253,24 +324,23 @@
   num_modele(:,:) = 0
 
   do imodele=1,nbmodeles
-      read(10,*) i,icodematread,rhoread,cpread,csread,aniso3read,aniso4read
-      if(i<1 .or. i>nbmodeles) stop 'Wrong material point number'
-      icodemat(i) = icodematread
-      rho(i) = rhoread
-      cp(i) = cpread
-      cs(i) = csread
-      aniso3(i) = aniso3read
-      aniso4(i) = aniso4read
-      if(i <= 0) stop 'Negative model number not allowed !!'
-      if (rho(i) < 0.d0 .or. cp(i) < 0.d0 .or. cs(i) < 0.d0) &
-          stop 'Negative value of velocity or density'
+    read(10,*) i,icodematread,rhoread,cpread,csread,aniso3read,aniso4read
+    if(i < 1 .or. i > nbmodeles) stop 'Wrong material point number'
+    icodemat(i) = icodematread
+    rho(i) = rhoread
+    cp(i) = cpread
+    cs(i) = csread
+    aniso3(i) = aniso3read
+    aniso4(i) = aniso4read
+    if(i <= 0) stop 'Negative model number not allowed !!'
+    if(rho(i) <= 0.d0 .or. cp(i) <= 0.d0 .or. cs(i) < 0.d0) stop 'negative value of velocity or density'
   enddo
 
   print *
   print *, 'Nb de modeles de roche = ',nbmodeles
   print *
   do i=1,nbmodeles
-    if(icodemat(i) /= 2) then
+    if(icodemat(i) /= ANISOTROPIC_MATERIAL) then
       print *,'Modele #',i,' isotrope'
       print *,'rho,cp,cs = ',rho(i),cp(i),cs(i)
     else
@@ -280,8 +350,8 @@
   enddo
   print *
 
-! *** lecture des numeros de modele des differentes zones
-  read(10,2)junk,nbzone
+! lecture des numeros de modele des differentes zones
+  read(10,2) junk,nbzone
 
   if(nbzone <= 0) stop 'Negative number of zones not allowed !!'
 
@@ -289,54 +359,56 @@
   print *, 'Nb de zones du modele = ',nbzone
   print *
 
-  do izone=1,nbzone
-      read(10,*) ixdebzone,ixfinzone,izdebzone,izfinzone,imodnum
+  do izone = 1,nbzone
 
-  if (imodnum < 1) stop 'Negative model number not allowed !!'
-  if (ixdebzone < 1) stop 'Left coordinate of zone negative !!'
-  if (ixfinzone > nxread) stop 'Right coordinate of zone too high !!'
-  if (izdebzone < 1) stop 'Bottom coordinate of zone negative !!'
-  if (izfinzone > nzread) stop 'Top coordinate of zone too high !!'
+    read(10,*) ixdebzone,ixfinzone,izdebzone,izfinzone,imodnum
 
-      print *,'Zone ',izone
-      print *,'IX from ',ixdebzone,' to ',ixfinzone
-      print *,'IZ from ',izdebzone,' to ',izfinzone
-  if(icodemat(imodnum) /= 2) then
-      vpzone = cp(imodnum)
-      vszone = cs(imodnum)
-      print *,'Model # ',imodnum,' isotrope'
-      print *,'vp = ',vpzone
-      print *,'vs = ',vszone
-      print *,'rho = ',rho(imodnum)
-      print *,'Poisson''s ratio = ', &
-        0.5d0*(vpzone*vpzone-2.d0*vszone*vszone)/(vpzone*vpzone-vszone*vszone)
+    if(imodnum < 1) stop 'Negative model number not allowed !!'
+    if(ixdebzone < 1) stop 'Left coordinate of zone negative !!'
+    if(ixfinzone > nxread) stop 'Right coordinate of zone too high !!'
+    if(izdebzone < 1) stop 'Bottom coordinate of zone negative !!'
+    if(izfinzone > nzread) stop 'Top coordinate of zone too high !!'
+
+    print *,'Zone ',izone
+    print *,'IX from ',ixdebzone,' to ',ixfinzone
+    print *,'IZ from ',izdebzone,' to ',izfinzone
+
+  if(icodemat(imodnum) /= ANISOTROPIC_MATERIAL) then
+    vpzone = cp(imodnum)
+    vszone = cs(imodnum)
+    print *,'Model # ',imodnum,' isotrope'
+    print *,'vp = ',vpzone
+    print *,'vs = ',vszone
+    print *,'rho = ',rho(imodnum)
+    print *,'Poisson''s ratio = ', &
+      0.5d0*(vpzone*vpzone-2.d0*vszone*vszone) / (vpzone*vpzone-vszone*vszone)
   else
-      print *,'Model # ',imodnum,' anisotrope'
-      print *,'c11 = ',cp(imodnum)
-      print *,'c13 = ',cs(imodnum)
-      print *,'c33 = ',aniso3(imodnum)
-      print *,'c44 = ',aniso4(imodnum)
-      print *,'rho = ',rho(imodnum)
+    print *,'Model # ',imodnum,' anisotrope'
+    print *,'c11 = ',cp(imodnum)
+    print *,'c13 = ',cs(imodnum)
+    print *,'c33 = ',aniso3(imodnum)
+    print *,'c44 = ',aniso4(imodnum)
+    print *,'rho = ',rho(imodnum)
   endif
-      print *,' -----'
+  print *,' -----'
 
 ! stocker le modele de vitesse et densite
-   do i=ixdebzone,ixfinzone
-      do j=izdebzone,izfinzone
-        if(ngnod == 4) then
-          num_modele(i,j) = imodnum
-        else
-          num_modele(2*(i-1)+1,2*(j-1)+1) = imodnum
-          num_modele(2*(i-1)+1,2*(j-1)+2) = imodnum
-          num_modele(2*(i-1)+2,2*(j-1)+1) = imodnum
-          num_modele(2*(i-1)+2,2*(j-1)+2) = imodnum
-        endif
-      enddo
+   do i = ixdebzone,ixfinzone
+     do j = izdebzone,izfinzone
+       if(ngnod == 4) then
+         num_modele(i,j) = imodnum
+       else
+         num_modele(2*(i-1)+1,2*(j-1)+1) = imodnum
+         num_modele(2*(i-1)+1,2*(j-1)+2) = imodnum
+         num_modele(2*(i-1)+2,2*(j-1)+1) = imodnum
+         num_modele(2*(i-1)+2,2*(j-1)+2) = imodnum
+       endif
+     enddo
    enddo
 
   enddo
 
-  if (minval(num_modele) <= 0) stop 'Velocity model not entirely set...'
+  if(minval(num_modele) <= 0) stop 'Velocity model not entirely set...'
 
   close(10)
 
@@ -345,27 +417,7 @@
 
 ! --------- fin lecture fichier parametres --------------
 
-  allocate(psi(0:nx))
-  allocate(eta(0:nz))
-  allocate(absx(0:nx))
-  allocate(a00(0:nz))
-  allocate(a01(0:nz))
-  allocate(valeta(0:nz))
-  allocate(bot0(0:nx))
-  allocate(top0(0:nx))
-
-! calcul des points regulierement espaces
-  do i=0,nx
-    psi(i) = i/dble(nx)
-  enddo
-
-  do j=0,nz
-    eta(j) = j/dble(nz)
-  enddo
-
-! quelques verifications de base a faire
-
-  if(ngnod /= 4.and.ngnod /= 9) stop 'erreur ngnod different de 4 ou 9 !!'
+  if(ngnod /= 4 .and. ngnod /= 9) stop 'erreur ngnod different de 4 ou 9 !!'
 
   print *
   if(ngnod == 4) then
@@ -377,211 +429,167 @@
   print *,'Les elements de controle sont des elements ',ngnod,' noeuds'
   print *
 
-!------------------------------------------------------
+!---
 
+! allocate arrays for the grid
   allocate(x(0:nx,0:nz))
   allocate(z(0:nx,0:nz))
 
-  x(:,:)=0.d0
-  z(:,:)=0.d0
+  x(:,:) = 0.d0
+  z(:,:) = 0.d0
 
-! get topography data from external file
-  print *,'Reading topography from file ',topofile
-  open(unit=15,file=topofile,status='old')
-  read(15,*) ntopo
-  if (ntopo < 2) stop 'Not enough topography points (min 2)'
-  print *,'Reading ',ntopo,' points from topography file'
-  print *
+! get interface data from external file
+  print *,'Reading interface data from file ',interfacesfile(1:len_trim(interfacesfile))
+  open(unit=15,file=interfacesfile,status='old')
 
-  allocate(xtopo(ntopo))
-  allocate(ztopo(ntopo))
-  allocate(coefs_topo(ntopo))
+  allocate(xinterface_bottom(max_npoints_interface))
+  allocate(zinterface_bottom(max_npoints_interface))
+  allocate(coefs_interface_bottom(max_npoints_interface))
 
-  do i=1,ntopo
-    read(15,*) xtopo(i),ztopo(i)
+  allocate(xinterface_top(max_npoints_interface))
+  allocate(zinterface_top(max_npoints_interface))
+  allocate(coefs_interface_top(max_npoints_interface))
+
+! skip header
+  read(15,*)
+  read(15,*)
+  read(15,*)
+
+! read number of interfaces
+  read(15,*) number_of_interfaces
+
+! skip header
+  read(15,*)
+  read(15,*)
+  read(15,*)
+
+! skip header
+  read(15,*)
+  read(15,*)
+  read(15,*)
+
+! read bottom interface
+  read(15,*) npoints_interface_bottom
+
+! loop on all the points describing this interface
+  do ipoint_current = 1,npoints_interface_bottom
+    read(15,*) xinterface_bottom(ipoint_current),zinterface_bottom(ipoint_current)
   enddo
-  close(15)
 
-! get interface data from external file, if any
-  if(interffile /= 'none') then
-  print *,'Reading interface from file ',interffile
-  open(unit=15,file=interffile,status='old')
-  read(15,*) ninterf
-  if (ninterf < 2) stop 'Not enough interface points (min 2)'
-  print *,'Reading ',ninterf,' points from interface file'
+! boucle sur toutes les couches
+  do ilayer = 1,number_of_layers
 
-  allocate(xinterf(ninterf))
-  allocate(zinterf(ninterf))
-  allocate(coefs_interf(ninterf))
+! skip header
+  read(15,*)
+  read(15,*)
+  read(15,*)
 
-  do i=1,ninterf
-    read(15,*) xinterf(i),zinterf(i)
+! read top interface
+  read(15,*) npoints_interface_top
+
+! loop on all the points describing this interface
+  do ipoint_current = 1,npoints_interface_top
+    read(15,*) xinterface_top(ipoint_current),zinterface_top(ipoint_current)
   enddo
 
-  close(15)
+! calculer le spline pour l'interface du bas, imposer la tangente aux deux bords
+  tang1 = (zinterface_bottom(2)-zinterface_bottom(1)) / (xinterface_bottom(2)-xinterface_bottom(1))
+  tangN = (zinterface_bottom(npoints_interface_bottom)-zinterface_bottom(npoints_interface_bottom-1)) / &
+          (xinterface_bottom(npoints_interface_bottom)-xinterface_bottom(npoints_interface_bottom-1))
+  call spline(xinterface_bottom,zinterface_bottom,npoints_interface_bottom,tang1,tangN,coefs_interface_bottom)
+
+! calculer le spline pour l'interface du haut, imposer la tangente aux deux bords
+  tang1 = (zinterface_top(2)-zinterface_top(1)) / (xinterface_top(2)-xinterface_top(1))
+  tangN = (zinterface_top(npoints_interface_top)-zinterface_top(npoints_interface_top-1)) / &
+          (xinterface_top(npoints_interface_top)-xinterface_top(npoints_interface_top-1))
+  call spline(xinterface_top,zinterface_top,npoints_interface_top,tang1,tangN,coefs_interface_top)
+
+! tester si on est sur la derniere couche, qui contient la topographie
+  if(ilayer == number_of_layers) then
+
+! modifier position de la source si source exactement en surface
+    if(isource_surf) zs = value_spline(xs,xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
+
+! modifier position des recepteurs si enregistrement exactement en surface
+    if(ienreg_surf) then
+      do irec=1,nrec
+        zrec(irec) = value_spline(xrec(irec),xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
+      enddo
+    endif
+
+  endif
+
+! calcul de l'offset de cette couche en nombre d'elements spectraux suivant Z
+  if(ilayer > 1) then
+    ioffset = sum(nz_layer(1:ilayer-1))
   else
-    print *,'*** No interface file specified ***'
+    ioffset = 0
   endif
 
-! check the values read
-  print *
-  print *, 'Topography data points (x,z)'
-  print *, '----------------------------'
-  print *
-  print *, 'Topo 1 = (',xtopo(1),',',ztopo(1),')'
-  print *, 'Topo ntopo = (',xtopo(ntopo),',',ztopo(ntopo),')'
+!--- definition du maillage
 
-!--- calculate the spline function for the topography
-!--- imposer les tangentes aux deux bords
-  tang1 = (ztopo(2)-ztopo(1))/(xtopo(2)-xtopo(1))
-  tangN = (ztopo(ntopo)-ztopo(ntopo-1))/(xtopo(ntopo)-xtopo(ntopo-1))
-  call spline(xtopo,ztopo,ntopo,tang1,tangN,coefs_topo)
+    do ix = 0,nx
 
-!--- calculate the spline function for the interface
-!--- imposer les tangentes aux deux bords
-  if (interffile /= 'none') then
-  tang1 = (zinterf(2)-zinterf(1))/(xinterf(2)-xinterf(1))
-  tangN = (zinterf(ntopo)-zinterf(ntopo-1))/(xinterf(ntopo)-xinterf(ntopo-1))
-  call spline(xinterf,zinterf,Ninterf,tang1,tangN,coefs_interf)
-  endif
+! points regulierement espaces suivant X
+      absx = xmin + (xmax - xmin) * dble(ix) / dble(nx)
 
-! *** afficher limites du modele lu
-  print *
-  print *, 'Limites absolues modele fichier topo :'
-  print *
-  print *, 'Xmin = ',minval(xtopo),'   Xmax = ',maxval(xtopo)
-  print *, 'Zmin = ',minval(ztopo),'   Zmax = ',maxval(ztopo)
-  print *
+! value of the bottom and top splines
+      bot0 = value_spline(absx,xinterface_bottom,zinterface_bottom,coefs_interface_bottom,npoints_interface_bottom)
+      top0 = value_spline(absx,xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
 
-! *** eventuellement modifier sources si sources en surface
-  print *
-  print *, 'Position (x,z) de la source'
-  print *
-  if(isource_surf) zs = spl(xs,xtopo,ztopo,coefs_topo,ntopo)
-  print *, 'Source = ',xs,zs
+      do iz = 0,nz_layer(ilayer)
 
-! *** eventuellement modifier recepteurs si enregistrement en surface
-  print *
-  print *, 'Position (x,z) des ',nrec,' receivers'
-  print *
-  do irec=1,nrec
-   if(ienreg_surf) zrec(irec) = spl(xrec(irec),xtopo,ztopo,coefs_topo,ntopo)
-   print *, 'Receiver ',irec,' = ',xrec(irec),zrec(irec)
-  enddo
+! linear interpolation between bottom and top
+        eta = dble(iz) / dble(nz_layer(ilayer))
+        a00 = 1.d0 - eta
+        a01 = eta
 
-!--- definition du maillage suivant X
-  do ix=0,nx
-    absx(ix) = dens(ix,psi,xmin,xmax,nx)
-  enddo
+! coordinates of the grid points
+        x(ix,iz + ioffset) = absx
+        z(ix,iz + ioffset) = a00*bot0 + a01*top0
 
-  if (interffile == 'none') then
+      enddo
 
-! *** une seule zone si pas d'interface specifiee
-
-  do iz=0,nz
-    valeta(iz) = eta(iz)
-    a00(iz) = 1-valeta(iz)
-    a01(iz) = valeta(iz)
-  enddo
-
-  do ix=0,nx
-    bot0(ix) = bottom(absx(ix))
-    top0(ix) = spl(absx(ix),xtopo,ztopo,coefs_topo,ntopo)
-  enddo
-
-! valeurs de x et y pour display domaine physique
-  do ix=0,nx
-    do iz=0,nz
-      x(ix,iz) = absx(ix)
-      z(ix,iz) = a00(iz)*bot0(ix) + a01(iz)*top0(ix)
     enddo
+
+! l'interface du haut devient celle du bas pour passer a la couche suivante
+    npoints_interface_bottom = npoints_interface_top
+    xinterface_bottom(:) = xinterface_top(:)
+    zinterface_bottom(:) = zinterface_top(:)
+
   enddo
 
-  else
-
-! *** deux zones si topo
-
-  ncut = nint(nz*ratio)
-
-! *** ZONE DU BAS ***
-
-  do iz=0,ncut
-    valeta(iz) = dble(iz)/(nz*ratio)
-    a00(iz) = 1-valeta(iz)
-    a01(iz) = valeta(iz)
-  enddo
-
-  do ix=0,nx
-    bot0(ix) = bottom(absx(ix))
-    top0(ix) = spl(absx(ix),xinterf,zinterf,coefs_interf,ninterf)
-  enddo
-
-! valeurs de x et y pour display domaine physique
-  do ix=0,nx
-    do iz=0,ncut
-      x(ix,iz) = absx(ix)
-      z(ix,iz) = a00(iz)*bot0(ix) + a01(iz)*top0(ix)
-    enddo
-  enddo
-
-! *** ZONE DU HAUT ***
-
-  do iz=0,nz-ncut
-    valeta(iz) = dble(iz)/(nz*(1.d0-ratio))
-    a00(iz) = 1-valeta(iz)
-    a01(iz) = valeta(iz)
-  enddo
-
-  do ix=0,nx
-    bot0(ix) = spl(absx(ix),xinterf,zinterf,coefs_interf,ninterf)
-    top0(ix) = spl(absx(ix),xtopo,ztopo,coefs_topo,ntopo)
-  enddo
-
-! valeurs de x et y pour display domaine physique
-  do ix=0,nx
-    do iz=0,nz-ncut
-      x(ix,iz+ncut) = absx(ix)
-      z(ix,iz+ncut) = a00(iz)*bot0(ix) + a01(iz)*top0(ix)
-    enddo
-  enddo
-
-  endif
+  close(15)
 
 ! calculer min et max de X et Z sur la grille
   print *
-  print *, 'Valeurs min et max de X sur le maillage = ',minval(x),maxval(x)
-  print *, 'Valeurs min et max de Z sur le maillage = ',minval(z),maxval(z)
+  print *,'Valeurs min et max de X sur le maillage = ',minval(x),maxval(x)
+  print *,'Valeurs min et max de Z sur le maillage = ',minval(z),maxval(z)
   print *
 
+! afficher position de la source et des recepteurs
+  print *
+  print *,'Position (x,z) de la source'
+  print *
+  print *,'Source = ',xs,zs
+  print *
+  print *,'Position (x,z) des ',nrec,' recepteurs'
+  print *
+  do irec=1,nrec
+    print *,'Receiver ',irec,' = ',xrec(irec),zrec(irec)
+  enddo
+
 ! ***
-! *** generer un fichier 'GNUPLOT' pour le controle de la grille ***
+! *** generer un fichier Gnuplot pour le controle de la grille ***
 ! ***
 
   print *
-  print *,' Ecriture de la grille format GNUPLOT...'
+  print *,'Ecriture de la grille format Gnuplot...'
 
-  file1='gridfile.gnu'
-
- open(unit=20,file=file1,status='unknown')
-
-! dessin de la topo de surface (splines)
-  do i=0,nx-1
-    write(20,15) sngl(absx(i)),sngl(top0(i))
-    write(20,15) sngl(absx(i+1)),sngl(top0(i+1))
-    write(20,10)
-  enddo
-
-! dessin de l'interface du milieu
-  if (interffile /= 'none') then
-  do i=0,nx-1
-    write(20,15) sngl(absx(i)),sngl(bot0(i))
-    write(20,15) sngl(absx(i+1)),sngl(bot0(i+1))
-    write(20,10)
-  enddo
-  endif
+  open(unit=20,file='gridfile.gnu',status='unknown')
 
 ! dessin des lignes horizontales de la grille
-  print *, 'Ecriture lignes horizontales'
+  print *,'Ecriture lignes horizontales'
   istepx = 1
   if(ngnod == 4) then
     istepz = 1
@@ -597,7 +605,7 @@
   enddo
 
 ! dessin des lignes verticales de la grille
-  print *, 'Ecriture lignes verticales'
+  print *,'Ecriture lignes verticales'
   if(ngnod == 4) then
     istepx = 1
   else
@@ -615,13 +623,14 @@
   close(20)
 
 ! cree le script de dessin pour gnuplot
-  open(unit=20,file='plotgrid.gnu',status='unknown')
-  write(20,*) 'set term postscript landscape monochrome solid "Helvetica" 22'
-  write(20,*) 'set output "grille.ps"'
-  write(20,*) 'plot "gridfile.gnu" title "Macroblocs mesh" w l'
+  open(unit=20,file='plotgnu',status='unknown')
+  write(20,*) '#set term postscript landscape monochrome solid "Helvetica" 22'
+  write(20,*) '#set output "grille.ps"'
+  write(20,*) 'plot "gridfile.gnu" title "Macrobloc mesh" w l'
+  write(20,*) 'pause -1 "appuyez sur une touche"'
   close(20)
 
-  print *,' Fin ecriture de la grille format GNUPLOT'
+  print *,'Fin ecriture de la grille format Gnuplot'
   print *
 
 ! *** generation de la base de donnees
@@ -629,8 +638,8 @@
   open(unit=15,file='../SPECFEM90/DataBase',status='unknown')
 
   write(15,*) '#'
-  write(15,*) '# DataBase for SPECFEM2D version 5.0'
-  write(15,*) '# Dimitri Komatitsch, (c) University of Pau, France, May 2004'
+  write(15,*) '# DataBase for SPECFEM2D'
+  write(15,*) '# Dimitri Komatitsch, (c) University of Pau, France'
   write(15,*) '#'
 
   write(15,*) 'Titre simulation'
@@ -649,7 +658,7 @@
   write(15,*) ignuplot,interpol
 
   write(15,*) 'itaff icolor inumber'
-  write(15,*) itaff,0,0
+  write(15,*) itaff,1,0
 
   write(15,*) 'imeshvect imodelvect iboundvect cutvect isubsamp'
   write(15,*) imeshvect,imodelvect,iboundvect,cutvect,isubsamp
@@ -670,7 +679,7 @@
   write(15,*) nt,dt
 
   write(15,*) 'source'
-  write(15,*) '6 ',isource_type,xs-xmin,zs,f0,t0,factor,angle,' 0'
+  write(15,*) isource_type,xs-xmin,zs,f0,t0,factor,angle,' 0'
 
   write(15,*) 'Receiver positions:'
   do irec=1,nrec
@@ -703,12 +712,10 @@
   if(abshaut .and. absgauche) nelemabs = nelemabs - 1
   if(abshaut .and. absdroite) nelemabs = nelemabs - 1
 
-  netyp = 2
+  write(15,*) 'numat ngnod nspec iptsdisp ielemabs'
+  write(15,*) nbmodeles,ngnod,nspec,iptsdisp,nelemabs
 
-  write(15,*) 'netyp numat ngnod nspec iptsdisp ielemabs'
-  write(15,*) netyp,nbmodeles,ngnod,nspec,iptsdisp,nelemabs
-
-  write(15,*) 'Material sets (num 0 rho vp vs 0 0) or (num 2 rho c11 c13 c33 c44)'
+  write(15,*) 'Material sets (num 0 rho vp vs 0 0) or (num 1 rho c11 c13 c33 c44)'
   do i=1,nbmodeles
     write(15,*) i,icodemat(i),rho(i),cp(i),cs(i),aniso3(i),aniso4(i)
   enddo
@@ -759,17 +766,17 @@
   if(nelemabs > 0) then
   write(15,*) 'Liste des elements absorbants (haut bas gauche droite) :'
   inumabs = 0
-  do iz=1,nzread
-  do ix=1,nxread
+  do iz = 1,nzread
+  do ix = 1,nxread
     codehaut = .false.
     codebas = .false.
     codegauche = .false.
     codedroite = .false.
     inumelem = (iz-1)*nxread + ix
-    if(abshaut   .and. iz==nzread) codehaut = .true.
-    if(absbas    .and. iz== 1) codebas = .true.
-    if(absgauche .and. ix== 1) codegauche = .true.
-    if(absdroite .and. ix==nxread) codedroite = .true.
+    if(abshaut   .and. iz == nzread) codehaut = .true.
+    if(absbas    .and. iz == 1) codebas = .true.
+    if(absgauche .and. ix == 1) codegauche = .true.
+    if(absdroite .and. ix == nxread) codedroite = .true.
     if(codehaut .or. codebas .or. codegauche .or. codedroite) then
       inumabs = inumabs + 1
       write(15,*) inumabs,inumelem,codehaut,codebas,codegauche,codedroite
@@ -786,79 +793,54 @@
 
   end program meshfem2D
 
-! *****************
-! routines maillage
-! *****************
+! ********************
+! routines de maillage
+! ********************
 
 ! --- numero global du noeud
 
   integer function num(i,j,nx)
+
   implicit none
+
   integer i,j,nx
 
     num = j*(nx+1) + i + 1
 
   end function num
 
-! ------- definition des fonctions representant les interfaces -------
+! --- representation des interfaces par un spline
 
-!
-! --- bas du modele
-!
-
-  double precision function bottom(x)
-  implicit none
-  double precision x
-
-    bottom = 0.d0
-
-  end function bottom
-
-!
-! --- representation interfaces par un spline
-!
-
-!--- spline
-
-  double precision function spl(x,xtopo,ztopo,coefs,ntopo)
+  double precision function value_spline(x,xinterface,zinterface,coefs_interface,npoints_interface)
 
   implicit none
-  integer ntopo
+
+  integer npoints_interface
   double precision x,xp
-  double precision xtopo(ntopo),ztopo(ntopo)
-  double precision coefs(ntopo)
+  double precision, dimension(npoints_interface) :: xinterface,zinterface,coefs_interface
 
-  spl = 0.
+  value_spline = 0.d0
+
   xp = x
-  if (xp < xtopo(1)) xp = xtopo(1)
-  if (xp > xtopo(ntopo)) xp = xtopo(ntopo)
-  call splint(xtopo,ztopo,coefs,ntopo,xp,spl)
 
-  end function spl
+! si on sort du modele, prolonger par continuite
+  if(xp < xinterface(1)) xp = xinterface(1)
+  if(xp > xinterface(npoints_interface)) xp = xinterface(npoints_interface)
 
-! --- fonction de densification du maillage horizontal
+  call splint(xinterface,zinterface,coefs_interface,npoints_interface,xp,value_spline)
 
-  double precision function dens(ix,psi,xmin,xmax,nx)
-
-  implicit none
-  integer ix,nx
-  double precision psi(0:nx)
-  double precision xmin,xmax
-
-  dens = xmin + dble(xmax-xmin)*psi(ix)
-
-  end function dens
+  end function value_spline
 
 ! --------------------------------------
 
-! routine de calcul des coefs du spline (Numerical Recipes)
+! routine de calcul des coefs du spline (adapted from Numerical Recipes)
 
   subroutine spline(x,y,n,yp1,ypn,y2)
 
   implicit none
 
   integer n
-  double precision x(n),y(n),y2(n)
+  double precision, dimension(n) :: x,y,y2
   double precision, dimension(:), allocatable :: u
   double precision yp1,ypn
 
@@ -867,18 +849,21 @@
 
   allocate(u(n))
 
-  y2(1)=-0.5
-  u(1)=(3./(x(2)-x(1)))*((y(2)-y(1))/(x(2)-x(1))-yp1)
+  y2(1)=-0.5d0
+  u(1)=(3.d0/(x(2)-x(1)))*((y(2)-y(1))/(x(2)-x(1))-yp1)
+
   do i=2,n-1
     sig=(x(i)-x(i-1))/(x(i+1)-x(i-1))
-    p=sig*y2(i-1)+2.
-    y2(i)=(sig-1.)/p
-    u(i)=(6.*((y(i+1)-y(i))/(x(i+1)-x(i))-(y(i)-y(i-1)) &
+    p=sig*y2(i-1)+2.d0
+    y2(i)=(sig-1.d0)/p
+    u(i)=(6.d0*((y(i+1)-y(i))/(x(i+1)-x(i))-(y(i)-y(i-1)) &
                /(x(i)-x(i-1)))/(x(i+1)-x(i-1))-sig*u(i-1))/p
   enddo
-  qn=0.5
-  un=(3./(x(n)-x(n-1)))*(ypn-(y(n)-y(n-1))/(x(n)-x(n-1)))
-  y2(n)=(un-qn*u(n-1))/(qn*y2(n-1)+1.)
+
+  qn=0.5d0
+  un=(3.d0/(x(n)-x(n-1)))*(ypn-(y(n)-y(n-1))/(x(n)-x(n-1)))
+  y2(n)=(un-qn*u(n-1))/(qn*y2(n-1)+1.d0)
+
   do k=n-1,1,-1
     y2(k)=y2(k)*y2(k+1)+u(k)
   enddo
@@ -889,35 +874,38 @@
 
 ! --------------
 
-! routine d'evaluation du spline (Numerical Recipes)
+! routine d'evaluation du spline (adapted from Numerical Recipes)
 
-  SUBROUTINE SPLINT(XA,YA,Y2A,N,X,Y)
+  subroutine splint(XA,YA,Y2A,N,X,Y)
 
   implicit none
 
   integer n
-  double precision XA(N),YA(N),Y2A(N)
+  double precision, dimension(n) :: XA,YA,Y2A
   double precision x,y
 
   integer k,klo,khi
   double precision h,a,b
 
-  KLO=1
-  KHI=N
+  KLO = 1
+  KHI = N
+
   do while (KHI-KLO > 1)
     K=(KHI+KLO)/2
-    IF(XA(K) > X)THEN
+    if(XA(K) > X) then
       KHI=K
-    ELSE
+    else
       KLO=K
-    ENDIF
+    endif
   enddo
-  H=XA(KHI)-XA(KLO)
-  IF (H == 0.d0) stop 'Bad input in spline evaluation'
-  A=(XA(KHI)-X)/H
-  B=(X-XA(KLO))/H
 
-  Y=A*YA(KLO)+B*YA(KHI)+((A**3-A)*Y2A(KLO)+ (B**3-B)*Y2A(KHI))*(H**2)/6.d0
+  H = XA(KHI)-XA(KLO)
+  IF (H == 0.d0) stop 'bad input in spline evaluation'
 
-  end subroutine SPLINT
+  A = (XA(KHI)-X) / H
+  B = (X-XA(KLO)) / H
+
+  Y = A*YA(KLO) + B*YA(KHI) + ((A**3-A)*Y2A(KLO) + (B**3-B)*Y2A(KHI))*(H**2)/6.d0
+
+  end subroutine splint
 
