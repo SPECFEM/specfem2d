@@ -16,6 +16,12 @@ F90 = ifort
 #FLAGS=-O0 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check bounds -C
 FLAGS=-fast -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds
 
+#
+# g95 (free f95 compiler from http://www.g95.org, still under development, but works)
+#
+#F90 = g95
+#FLAGS = -O
+
 # Dec Alpha
 #F90 = f90
 #FLAGS=-O0 -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nounderflow -check bounds -C
