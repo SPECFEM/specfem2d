@@ -1,13 +1,13 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.0
+!                   S P E C F E M 2 D  Version 5.1
 !                   ------------------------------
 !
 !                         Dimitri Komatitsch
 !          Universite de Pau et des Pays de l'Adour, France
 !
-!                          (c) May 2004
+!                          (c) December 2004
 !
 !========================================================================
 

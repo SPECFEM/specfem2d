@@ -1,13 +1,13 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.0
+!                   S P E C F E M 2 D  Version 5.1
 !                   ------------------------------
 !
 !                         Dimitri Komatitsch
 !          Universite de Pau et des Pays de l'Adour, France
 !
-!                          (c) May 2004
+!                          (c) December 2004
 !
 !========================================================================
 
@@ -121,9 +121,9 @@
           else if(ngnodother == 4) then
             i2 = 1
             j2 = NGLLZ
-            else
-                  stop 'bad corner'
-            endif
+          else
+            stop 'bad corner'
+          endif
 
 ! affecter le meme numero
           ibool(i,j,numelem) = ibool(i2,j2,num2)
@@ -249,7 +249,7 @@
   enddo
 
 ! sortir de la recherche
-          goto 135
+        goto 135
 
       endif
     enddo
