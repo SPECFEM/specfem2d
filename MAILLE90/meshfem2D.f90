@@ -50,7 +50,7 @@
   character(len=50) file1
 
   character(len=50) interffile,topofile,title
-  character(len=15) junk
+  character(len=34) junk
 
   integer imatnum,inumabs,inumelem,netyp
   integer nelemabs,npgeo,nspec,ninterf,ntopo
@@ -78,6 +78,7 @@
   logical imeshvect
   logical initialfield
   logical imodelvect,iboundvect
+  logical TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
 
   integer, external :: num
   double precision, external :: bottom,spl,dens
@@ -125,6 +126,8 @@
   read(10,1)junk,ratio
   read(10,4)junk,initialfield
   read(10,4)junk,ireadmodel
+  read(10,4)junk,TURN_ANISOTROPY_ON
+  read(10,4)junk,TURN_ATTENUATION_ON
 
   nxread = nx
   nzread = nz
@@ -660,8 +663,8 @@
   write(15,*) 'isismostype ivecttype'
   write(15,*) isismostype,ivecttype
 
-  write(15,*) 'ireadmodel ioutputgrid'
-  write(15,*) ireadmodel,ioutputgrid
+  write(15,*) 'ireadmodel ioutputgrid TURN_ANISOTROPY_ON TURN_ATTENUATION_ON'
+  write(15,*) ireadmodel,ioutputgrid,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
 
   write(15,*) 'ncycl dtinc'
   write(15,*) nt,dt
