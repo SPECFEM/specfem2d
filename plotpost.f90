@@ -11,7 +11,7 @@
 !
 !========================================================================
 
-  subroutine plotpost(displ,coord,vpext,iglob_source,st_xval,st_zval,it,dt,coorg, &
+  subroutine plotpost(displ,coord,vpext,x_source,z_source,st_xval,st_zval,it,dt,coorg, &
           xinterp,zinterp,shapeint, &
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
@@ -31,7 +31,7 @@
   double precision, dimension(MAXCOLORS) :: red,green,blue
 
   integer it,nrec,nelemabs,numat,iptsdisp,nspec
-  integer i,iglob_source,npoin,npgeo,ngnod
+  integer i,npoin,npgeo,ngnod
 
   integer kmato(nspec),knods(ngnod,nspec)
   integer ibool(NGLLX,NGLLZ,nspec)
@@ -43,7 +43,7 @@
   double precision flagrange(NGLLX,iptsdisp)
   double precision density(numat),elastcoef(4,numat)
 
-  double precision dt,timeval
+  double precision dt,timeval,x_source,z_source
   double precision displ(NDIM,npoin),coord(NDIM,npoin)
   double precision vpext(npoin)
 
@@ -849,8 +849,8 @@
 !
 !----  write position of the source
 !
-  xw = coord(1,iglob_source)
-  zw = coord(2,iglob_source)
+  xw = x_source
+  zw = z_source
   xw = (xw-xmin)*rapp_page + orig_x
   zw = (zw-zmin)*rapp_page + orig_z
   xw = xw * centim
