@@ -44,12 +44,9 @@
          xinterface_bottom,zinterface_bottom,coefs_interface_bottom, &
          xinterface_top,zinterface_top,coefs_interface_top
 
-! for the source
-  integer source_type,time_function_type
-  double precision xs,zs,f0,t0,angleforce,Mxx,Mzz,Mxz,factor
-
-! arrays for the receivers
-  double precision, dimension(:), allocatable :: xrec,zrec
+! for the source and receivers
+  integer source_type,time_function_type,nrec_total,irec_global_number
+  double precision xs,zs,f0,t0,angleforce,Mxx,Mzz,Mxz,factor,xrec,zrec
 
   character(len=50) interfacesfile,title
 
@@ -58,22 +55,25 @@
   integer k,icol,ili,istepx,istepz,ix,iz,irec,i,j
   integer ixdebzone,ixfinzone,izdebzone,izfinzone,imodnum
   integer izone,imodele,nbzone,nbmodeles
-  integer itaff,pointsdisp,subsamp,nrec
-  integer sismostype,vecttype
-  integer ngnod,nt,nx,nz,nxread,nzread
-  integer icodematread
+  integer itaff,pointsdisp,subsamp,sismostype,vecttype
+  integer ngnod,nt,nx,nz,nxread,nzread,icodematread,ireceiverlines,nreceiverlines
+
+  integer, dimension(:), allocatable :: nrec
 
   logical codehaut,codebas,codegauche,codedroite,output_postscript_snapshot,output_PNM_image,plot_lowerleft_corner_only
 
   double precision tang1,tangN,vpzone,vszone,poisson_ratio
-  double precision cutvect,xspacerec,zspacerec,sizemax_arrows
-  double precision anglerec,xfin,zfin,xdeb,zdeb,xmin,xmax,dt
+  double precision cutvect,sizemax_arrows,anglerec,xmin,xmax,deltat
   double precision rhoread,cpread,csread,aniso3read,aniso4read
+
+  double precision, dimension(:), allocatable :: xdeb,zdeb,xfin,zfin
 
   logical interpol,gnuplot,read_external_model,outputgrid
   logical abshaut,absbas,absgauche,absdroite
-  logical source_surf,enreg_surf,meshvect,initialfield,modelvect,boundvect
+  logical source_surf,meshvect,initialfield,modelvect,boundvect
   logical ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
+
+  logical, dimension(:), allocatable :: enreg_surf
 
   integer, external :: num
   double precision, external :: value_spline
@@ -185,7 +185,7 @@
 
 ! read time step parameters
   call read_value_integer(IIN,IGNORE_JUNK,nt)
-  call read_value_double_precision(IIN,IGNORE_JUNK,dt)
+  call read_value_double_precision(IIN,IGNORE_JUNK,deltat)
 
 ! read source parameters
   call read_value_logical(IIN,IGNORE_JUNK,source_surf)
@@ -202,7 +202,7 @@
 
 ! if Dirac source time function, use a very thin Gaussian instead
 ! if Heaviside source time function, use a very thin error function instead
-  if(time_function_type == 4 .or. time_function_type == 5) f0 = 1.d0 / (10.d0 * dt)
+  if(time_function_type == 4 .or. time_function_type == 5) f0 = 1.d0 / (10.d0 * deltat)
 
 ! time delay of the source in seconds, use a 20 % security margin (use 2 / f0 if error function)
   if(time_function_type == 5) then
@@ -216,33 +216,36 @@
   print *,'Position xs, zs = ',xs,zs
   print *,'Frequency, delay = ',f0,t0
   print *,'Source type (1=force, 2=explosion): ',source_type
-  print *,'Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac): ',time_function_type
+  print *,'Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside): ',time_function_type
   print *,'Angle of the source if force = ',angleforce
   print *,'Mxx of the source if moment tensor = ',Mxx
   print *,'Mzz of the source if moment tensor = ',Mzz
   print *,'Mxz of the source if moment tensor = ',Mxz
   print *,'Multiplying factor = ',factor
 
-! read receivers line parameters
-  call read_value_logical(IIN,IGNORE_JUNK,enreg_surf)
+! read receiver line parameters
   call read_value_integer(IIN,IGNORE_JUNK,sismostype)
-  call read_value_integer(IIN,IGNORE_JUNK,nrec)
-  call read_value_double_precision(IIN,IGNORE_JUNK,xdeb)
-  call read_value_double_precision(IIN,IGNORE_JUNK,zdeb)
-  call read_value_double_precision(IIN,IGNORE_JUNK,xfin)
-  call read_value_double_precision(IIN,IGNORE_JUNK,zfin)
+  call read_value_integer(IIN,IGNORE_JUNK,nreceiverlines)
   call read_value_double_precision(IIN,IGNORE_JUNK,anglerec)
 
-  allocate(xrec(nrec))
-  allocate(zrec(nrec))
+  if(nreceiverlines < 1) stop 'number of receiver lines must be greater than 1'
 
-  print *
-  print *,'There are ',nrec,' receivers'
-  xspacerec = (xfin-xdeb) / dble(nrec-1)
-  zspacerec = (zfin-zdeb) / dble(nrec-1)
-  do i=1,nrec
-    xrec(i) = xdeb + dble(i-1)*xspacerec
-    zrec(i) = zdeb + dble(i-1)*zspacerec
+! allocate receiver line arrays
+  allocate(nrec(nreceiverlines))
+  allocate(xdeb(nreceiverlines))
+  allocate(zdeb(nreceiverlines))
+  allocate(xfin(nreceiverlines))
+  allocate(zfin(nreceiverlines))
+  allocate(enreg_surf(nreceiverlines))
+
+! loop on all the receiver lines
+  do ireceiverlines = 1,nreceiverlines
+    call read_value_integer(IIN,IGNORE_JUNK,nrec(ireceiverlines))
+    call read_value_double_precision(IIN,IGNORE_JUNK,xdeb(ireceiverlines))
+    call read_value_double_precision(IIN,IGNORE_JUNK,zdeb(ireceiverlines))
+    call read_value_double_precision(IIN,IGNORE_JUNK,xfin(ireceiverlines))
+    call read_value_double_precision(IIN,IGNORE_JUNK,zfin(ireceiverlines))
+    call read_value_logical(IIN,IGNORE_JUNK,enreg_surf(ireceiverlines))
   enddo
 
 ! read display parameters
@@ -470,19 +473,9 @@
   call spline(xinterface_top,zinterface_top,npoints_interface_top,tang1,tangN,coefs_interface_top)
 
 ! tester si on est sur la derniere couche, qui contient la topographie
-  if(ilayer == number_of_layers) then
-
-! modifier position de la source si source exactement en surface
-    if(source_surf) zs = value_spline(xs,xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
-
-! modifier position des recepteurs si enregistrement exactement en surface
-    if(enreg_surf) then
-      do irec=1,nrec
-        zrec(irec) = value_spline(xrec(irec),xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
-      enddo
-    endif
-
-  endif
+! et modifier position de la source si source exactement en surface
+  if(source_surf .and. ilayer == number_of_layers) &
+      zs = value_spline(xs,xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
 
 ! calcul de l'offset de cette couche en nombre d'elements spectraux suivant Z
   if(ilayer > 1) then
@@ -531,18 +524,6 @@
   print *,'Valeurs min et max de X sur le maillage = ',minval(x),maxval(x)
   print *,'Valeurs min et max de Z sur le maillage = ',minval(z),maxval(z)
   print *
-
-! afficher position de la source et des recepteurs
-  print *
-  print *,'Position (x,z) de la source'
-  print *
-  print *,'Source = ',xs,zs
-  print *
-  print *,'Position (x,z) des ',nrec,' recepteurs'
-  print *
-  do irec=1,nrec
-    print *,'Receiver ',irec,' = ',xrec(irec),zrec(irec)
-  enddo
 
 ! ***
 ! *** generer un fichier Gnuplot pour le controle de la grille ***
@@ -645,16 +626,16 @@
   write(15,*) 'read_external_model outputgrid ELASTIC TURN_ANISOTROPY_ON TURN_ATTENUATION_ON'
   write(15,*) read_external_model,outputgrid,ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
 
-  write(15,*) 'ncycl dtinc'
-  write(15,*) nt,dt
+  write(15,*) 'nt deltat'
+  write(15,*) nt,deltat
 
   write(15,*) 'source'
-  write(15,*) source_type,time_function_type,xs-xmin,zs,f0,t0,factor,angleforce,Mxx,Mzz,Mxz
+  write(15,*) source_type,time_function_type,xs,zs,f0,t0,factor,angleforce,Mxx,Mzz,Mxz
 
   write(15,*) 'Coordinates of macrobloc mesh (coorg):'
   do j=0,nz
     do i=0,nx
-      write(15,*) num(i,j,nx),x(i,j)-xmin,z(i,j)
+      write(15,*) num(i,j,nx),x(i,j),z(i,j)
     enddo
   enddo
 
@@ -781,25 +762,70 @@
 
   close(15)
 
+! print position of the source
+  print *
+  print *,'Position (x,z) of the source = ',xs,zs
+  print *
 
-!
-!--- write the STATIONS file
-!
+!--- compute position of the receivers and write the STATIONS file
+
   print *
   print *,'writing the DATA/STATIONS file'
   print *
 
+! total number of receivers in all the receiver lines
+  nrec_total = sum(nrec)
+
+  print *
+  print *,'There are ',nrec_total,' receivers'
+
+  print *
+  print *,'Position (x,z) of the ',nrec_total,' receivers'
+  print *
+
   open(unit=15,file='DATA/STATIONS',status='unknown')
-  write(15,*) nrec
-  do irec=1,nrec
-    write(15,100) irec,xrec(irec)-xmin,zrec(irec)
+  write(15,*) nrec_total
+
+  irec_global_number = 0
+
+! loop on all the receiver lines
+  do ireceiverlines = 1,nreceiverlines
+
+! loop on all the receivers of this receiver line
+    do irec = 1,nrec(ireceiverlines)
+
+! compute global receiver number
+      irec_global_number = irec_global_number + 1
+
+! compute coordinates of the receiver
+      if(nrec(ireceiverlines) > 1) then
+        xrec = xdeb(ireceiverlines) + dble(irec-1)*(xfin(ireceiverlines)-xdeb(ireceiverlines))/dble(nrec(ireceiverlines)-1)
+        zrec = zdeb(ireceiverlines) + dble(irec-1)*(zfin(ireceiverlines)-zdeb(ireceiverlines))/dble(nrec(ireceiverlines)-1)
+      else
+        xrec = xdeb(ireceiverlines)
+        zrec = zdeb(ireceiverlines)
+      endif
+
+! modifier position du recepteur si enregistrement exactement en surface
+      if(enreg_surf(ireceiverlines)) &
+        zrec = value_spline(xrec,xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
+
+! display position of the receiver
+      print *,'Receiver ',irec_global_number,' = ',xrec,zrec
+
+      write(15,100) irec_global_number,xrec,zrec
+
+    enddo
   enddo
+
   close(15)
+
+  print *
 
  10 format('')
  40 format(a50)
 
- 100 format('S',i3.3,'    AA ',f20.7,1x,f20.7,'       0.0         0.0')
+ 100 format('S',i4.4,'    AA ',f20.7,1x,f20.7,'       0.0         0.0')
 
   end program meshfem2D
 

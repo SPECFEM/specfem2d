@@ -177,6 +177,7 @@
 ! for color PNM images
   integer :: NX_IMAGE_PNM,NZ_IMAGE_PNM,iplus1,jplus1,iminus1,jminus1,nx_sem_PNM
   double precision :: xmin_PNM_image,xmax_PNM_image,zmin_PNM_image,zmax_PNM_image,taille_pixel_horizontal,taille_pixel_vertical
+  integer, dimension(:), allocatable :: ispec_for_PNM_image
   integer, dimension(:,:), allocatable :: iglob_image_PNM_2D,copy_iglob_image_PNM_2D
   double precision, dimension(:,:), allocatable :: donnees_image_PNM_2D
 
@@ -799,6 +800,17 @@
   deallocate(copy_iglob_image_PNM_2D)
 
   write(IOUT,*) 'fin localisation de tous les pixels des images PNM'
+
+! assign ispec number to be able to determine density for acoustic PNM snapshots
+  allocate(ispec_for_PNM_image(npoin))
+  do ispec = 1,nspec
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+        iglob = ibool(i,j,ispec)
+        ispec_for_PNM_image(iglob) = ispec
+      enddo
+    enddo
+  enddo
 
 !
 !---- initialiser sismogrammes
@@ -1736,20 +1748,34 @@
 
   do j = 1,NZ_IMAGE_PNM
     do i = 1,NX_IMAGE_PNM
-      if(iglob_image_PNM_2D(i,j) /= -1) then
+
+      iglob = iglob_image_PNM_2D(i,j)
+
+      if(iglob /= -1) then
 ! display vertical component of vector if elastic medium
         if(ELASTIC) then
+
           if(vecttype == 1) then
-            donnees_image_PNM_2D(i,j) = displ(2,iglob_image_PNM_2D(i,j))
+            donnees_image_PNM_2D(i,j) = displ(2,iglob)
           else if(vecttype == 2) then
-            donnees_image_PNM_2D(i,j) = veloc(2,iglob_image_PNM_2D(i,j))
+            donnees_image_PNM_2D(i,j) = veloc(2,iglob)
           else
-            donnees_image_PNM_2D(i,j) = accel(2,iglob_image_PNM_2D(i,j))
+            donnees_image_PNM_2D(i,j) = accel(2,iglob)
           endif
+
         else
 ! display pressure if acoustic medium
-          donnees_image_PNM_2D(i,j) = vector_field_postscript(2,iglob_image_PNM_2D(i,j))
-stop 'DK DK ceci a debugger par DK, mettre pressure au lieu de veloc'
+
+! pressure = - rho * Chi_dot
+          material = kmato(ispec_for_PNM_image(iglob))
+          denst = density(material)
+          if(read_external_model) denst = rhoext(iglob)
+
+          donnees_image_PNM_2D(i,j) = - denst * veloc(1,iglob)
+
+! uncomment this for vertical component of velocity vector instead in acoustic medium
+!         donnees_image_PNM_2D(i,j) = vector_field_postscript(2,iglob)
+
         endif
       endif
     enddo
