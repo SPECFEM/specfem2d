@@ -38,10 +38,10 @@
   double precision xcor,ycor
 
 !----  create global mesh numbering
-  print *
-  print *
-  print *,'Generating global mesh numbering (fast version)...'
-  print *
+  write(IOUT,*)
+  write(IOUT,*)
+  write(IOUT,*) 'Generating global mesh numbering (fast version)...'
+  write(IOUT,*)
 
   nxyz = NGLLX*NGLLZ
   ntot = nxyz*nspec
@@ -197,9 +197,9 @@
 ! verification de la coherence de la numerotation generee
   if(minval(ibool) /= 1 .or. maxval(ibool) /= npoin) stop 'Error while generating global numbering'
 
-  print *
-  print *,'Total number of points of the global mesh: ',npoin
-  print *
+  write(IOUT,*)
+  write(IOUT,*) 'Total number of points of the global mesh: ',npoin
+  write(IOUT,*)
 
   end subroutine createnum_fast
 

@@ -31,9 +31,9 @@
   integer ngnoddeb(4),ngnodfin(4)
 
 !----  create global mesh numbering
-  print *
-  print *,'Generating global mesh numbering (slow version)...'
-  print *
+  write(IOUT,*)
+  write(IOUT,*) 'Generating global mesh numbering (slow version)...'
+  write(IOUT,*)
 
   npoin = 0
   npedge = 0
@@ -277,13 +277,13 @@
 ! verification de la coherence de la numerotation generee
   if(minval(ibool) /= 1 .or. maxval(ibool) /= npoin) stop 'Error while generating global numbering'
 
-  print *,'Total number of points of the global mesh: ',npoin
-  print *,'distributed as follows:'
-  print *
-  print *,'Number of interior points: ',npoin-npedge-npcorn
-  print *,'Number of edge points (without corners): ',npedge
-  print *,'Number of corner points: ',npcorn
-  print *
+  write(IOUT,*) 'Total number of points of the global mesh: ',npoin
+  write(IOUT,*) 'distributed as follows:'
+  write(IOUT,*)
+  write(IOUT,*) 'Number of interior points: ',npoin-npedge-npcorn
+  write(IOUT,*) 'Number of edge points (without corners): ',npedge
+  write(IOUT,*) 'Number of corner points: ',npcorn
+  write(IOUT,*)
 
   end subroutine createnum_slow
 
