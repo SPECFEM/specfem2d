@@ -39,7 +39,7 @@ OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/defarrays.o\
         $O/plotpost.o $O/locate_receivers.o $O/locate_source_force.o $O/compute_gradient_attenuation.o\
         $O/specfem2D.o $O/write_seismograms.o $O/createnum_fast.o $O/createnum_slow.o\
         $O/define_shape_functions.o $O/cree_image_PNM.o $O/compute_gradient_fluid.o\
-        $O/recompute_jacobian.o $O/compute_arrays_source.o $O/locate_source_moment_tensor.o
+        $O/recompute_jacobian.o $O/compute_arrays_source.o $O/locate_source_moment_tensor.o $O/numerical_recipes.o
 
 default: meshfem2D specfem2D convolve_source_timefunction
 
@@ -136,6 +136,9 @@ $O/compute_arrays_source.o: compute_arrays_source.f90 constants.h
     
 $O/cree_image_PNM.o: cree_image_PNM.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/cree_image_PNM.o cree_image_PNM.f90
+    
+$O/numerical_recipes.o: numerical_recipes.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/numerical_recipes.o numerical_recipes.f90
     
 $O/write_seismograms.o: write_seismograms.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/write_seismograms.o write_seismograms.f90
