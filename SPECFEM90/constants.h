@@ -29,10 +29,15 @@
 ! a few useful constants
   double precision, parameter :: ZERO = 0.d0,ONE = 1.d0
   double precision, parameter :: HALF = 0.5d0,TWO = 2.0d0,QUART = 0.25d0
+
 ! pi
   double precision, parameter :: PI = 3.141592653589793d0
+
 ! 4/3
   double precision, parameter :: FOUR_THIRDS = 4.d0/3.d0
+
+! 1/24
+  double precision, parameter :: ONE_OVER_24 = 1.d0 / 24.d0
 
 ! parameters to define the Gauss-Lobatto-Legendre points
   double precision, parameter :: GAUSSALPHA = ZERO,GAUSSBETA = ZERO

@@ -20,6 +20,7 @@
 ! version 5.0 : - got rid of useless routines, suppressed commons etc.
 !               - weak formulation based explicitly on stress tensor
 !               - implementation of full anisotropy
+!               - implementation of attenuation
 
 ! version 5.0 is based on SPECFEM2D version 4.2
 ! (c) June 1998 by Dimitri Komatitsch, Harvard University, USA
@@ -122,6 +123,25 @@
   double precision nx,nz,vx,vz,vn,rho_vp,rho_vs,tx,tz,weight,xxi,zeta,rKvol
 
   logical, dimension(:,:), allocatable  :: codeabs
+
+! DK DK feb99 for attenuation
+  double precision tau_epsilon_nu1_mech1,tau_sigma_nu1_mech1, &
+  tau_epsilon_nu2_mech1,tau_sigma_nu2_mech1,tau_epsilon_nu1_mech2, &
+  tau_sigma_nu1_mech2,tau_epsilon_nu2_mech2,tau_sigma_nu2_mech2
+
+  double precision Un,Unp1,tauinv,Sn,Snp1,theta_n,theta_np1
+  double precision phi_nu1_mech1,phi_nu2_mech1,phi_nu1_mech2,phi_nu2_mech2
+  double precision deltatsquare,deltatcube,deltatfourth
+  double precision twelvedeltat,fourdeltatsquare
+  double precision tauinvsquare,tauinvcube,tauinvUn
+  double precision inv_tau_sigma_nu1_mech1,inv_tau_sigma_nu2_mech1
+  double precision inv_tau_sigma_nu1_mech2,inv_tau_sigma_nu2_mech2
+
+  double precision Mu_nu1,Mu_nu2
+
+  double precision, dimension(:,:,:), allocatable :: &
+    e1_mech1,e11_mech1,e13_mech1,e1_mech2,e11_mech2,e13_mech2, &
+    DxUx_n,DzUz_n,DxUz_n,DzUx_n,DxUx_np1,DzUz_np1,DxUz_np1,DzUx_np1
 
 ! title of the plot
   character(len=60) stitle
@@ -296,6 +316,29 @@
   allocate(kmato(nspec))
   allocate(knods(ngnod,nspec))
   allocate(ibool(NGLLX,NGLLZ,nspec))
+
+! DK DK feb99 for attenuation
+!! DK DK declarer le flag TURN_ATTGEN_ON et le lire depuis le parfile
+!! DK DK aussi faire attention a ne pas mettre aniso et attenuation (tester et stop si les deux)
+!! DK DK aussi mettre a jour comments feb99 -> 2004
+if(TURN_ATTGEN_ON) then
+  allocate(e1_mech1(NGLLX,NGLLZ,nspec))
+  allocate(e11_mech1(NGLLX,NGLLZ,nspec))
+  allocate(e13_mech1(NGLLX,NGLLZ,nspec))
+  allocate(e1_mech2(NGLLX,NGLLZ,nspec))
+  allocate(e11_mech2(NGLLX,NGLLZ,nspec))
+  allocate(e13_mech2(NGLLX,NGLLZ,nspec))
+  allocate(DxUx_n(NGLLX,NGLLZ,nspec))
+  allocate(DzUz_n(NGLLX,NGLLZ,nspec))
+  allocate(DxUz_n(NGLLX,NGLLZ,nspec))
+  allocate(DzUx_n(NGLLX,NGLLZ,nspec))
+  allocate(DxUx_np1(NGLLX,NGLLZ,nspec))
+  allocate(DzUz_np1(NGLLX,NGLLZ,nspec))
+  allocate(DxUz_np1(NGLLX,NGLLZ,nspec))
+  allocate(DzUx_np1(NGLLX,NGLLZ,nspec))
+else
+ allocate_size_one
+endif
 
 ! --- allocate arrays for absorbing boundary conditions
   if(nelemabs <= 0) then
@@ -554,6 +597,41 @@
     print *,'Max norm of initial displacement = ',maxval(sqrt(displ(1,:)**2 + displ(2,:)**2))
   endif
 
+! DK DK attenuation constants from Carcione 1993 Geophysics volume 58 pages 111 and 112
+! for two memory-variables mechanisms.
+! beware: these values implement specific values of the quality factor Q,
+! see Carcione 1993 for details
+  tau_epsilon_nu1_mech1 = 0.0334d0
+  tau_sigma_nu1_mech1   = 0.0303d0
+  tau_epsilon_nu2_mech1 = 0.0352d0
+  tau_sigma_nu2_mech1   = 0.0287d0
+  tau_epsilon_nu1_mech2 = 0.0028d0
+  tau_sigma_nu1_mech2   = 0.0025d0
+  tau_epsilon_nu2_mech2 = 0.0029d0
+  tau_sigma_nu2_mech2   = 0.0024d0
+
+  inv_tau_sigma_nu1_mech1 = 1.d0 / tau_sigma_nu1_mech1
+  inv_tau_sigma_nu2_mech1 = 1.d0 / tau_sigma_nu2_mech1
+  inv_tau_sigma_nu1_mech2 = 1.d0 / tau_sigma_nu1_mech2
+  inv_tau_sigma_nu2_mech2 = 1.d0 / tau_sigma_nu2_mech2
+
+  phi_nu1_mech1 = (1.d0 - tau_epsilon_nu1_mech1/tau_sigma_nu1_mech1) / tau_sigma_nu1_mech1
+  phi_nu2_mech1 = (1.d0 - tau_epsilon_nu2_mech1/tau_sigma_nu2_mech1) / tau_sigma_nu2_mech1
+  phi_nu1_mech2 = (1.d0 - tau_epsilon_nu1_mech2/tau_sigma_nu1_mech2) / tau_sigma_nu1_mech2
+  phi_nu2_mech2 = (1.d0 - tau_epsilon_nu2_mech2/tau_sigma_nu2_mech2) / tau_sigma_nu2_mech2
+
+  Mu_nu1 = 1.d0 - (1.d0 - tau_epsilon_nu1_mech1/tau_sigma_nu1_mech1) &
+                  - (1.d0 - tau_epsilon_nu1_mech2/tau_sigma_nu1_mech2)
+  Mu_nu2 = 1.d0 - (1.d0 - tau_epsilon_nu2_mech1/tau_sigma_nu2_mech1) &
+                  - (1.d0 - tau_epsilon_nu2_mech2/tau_sigma_nu2_mech2)
+
+  deltatsquare = deltat * deltat
+  deltatcube = deltatsquare * deltat
+  deltatfourth = deltatsquare * deltatsquare
+
+  twelvedeltat = 12.d0 * deltat
+  fourdeltatsquare = 4.d0 * deltatsquare
+
 !
 !----          s t a r t   t i m e   i t e r a t i o n s
 !
@@ -574,6 +652,9 @@
         write(IOUT,101) it,time
       endif
     endif
+
+! DK DK calculer Grad(U) a l'instant n pour attenuation
+  call calc_gradient(DxUx_n,DzUz_n,DxUz_n,DzUx_n,xjaci,hprime,hTprime,ibool,displ,NGLLX,npoin,ndime,nspec)
 
 ! `predictor' update displacement using finite-difference time scheme (Newmark)
     displ(:,:) = displ(:,:) + deltat*veloc(:,:) + deltatsquareover2*accel(:,:)
@@ -635,10 +716,70 @@
           duzdxl = tempz1l*xixl + tempz2l*gammaxl
           duzdzl = tempz1l*xizl + tempz2l*gammazl
 
+
+
+
+
+
+
+
+
+
+
 ! compute stress tensor
+
+! DK DK for attenuation
+
+  if(TURN_ATTENUATION_ON) then
+
+! compute the stress using the unrelaxed Lame parameters (Carcione page 111)
+    sigma_xx = (rlambda_unrelax + 2.d0*rmu_unrelax)*DxUx + rlambda_unrelax*DzUz
+    sigma_zz = rlambda_unrelax*DxUx + (rlambda_unrelax + 2.d0*rmu_unrelax)*DzUz
+    sigma_xz = rmu_unrelax*(DxUz + DzUx)
+
+! add the memory variables using the relaxed parameters (Carcione page 111)
+! beware: there is a bug in Carcione's equation for sigma_zz
+    sigma_xx = sigma_xx + (rlambda_relax + rmu_relax)* (e1_mech1(i,j,k) + e1_mech2(i,j,k)) &
+      + 2.d0 * rmu_relax * (e11_mech1(i,j,k) + e11_mech2(i,j,k))
+    sigma_zz = sigma_zz + (rlambda_relax + rmu_relax)* (e1_mech1(i,j,k) + e1_mech2(i,j,k)) &
+      - 2.d0 * rmu_relax * (e11_mech1(i,j,k) + e11_mech2(i,j,k))
+    sigma_xz = sigma_xz + rmu_relax * (e13_mech1(i,j,k) + e13_mech2(i,j,k))
+
+  else
+
+! DK DK no attenuation
+
+! old clean
           sigma_xx = lambdalplus2mul*duxdxl + lambdal*duzdzl
           sigma_xz = mul*(duzdxl + duxdzl)
           sigma_zz = lambdalplus2mul*duzdzl + lambdal*duxdxl
+
+! new dirty
+  sigma_xx = (rlambda_relax + 2.d0*rmu_relax)*DxUx + rlambda_relax*DzUz
+  sigma_zz = rlambda_relax*DxUx + (rlambda_relax + 2.d0*rmu_relax)*DzUz
+  sigma_xz = rmu_relax*(DxUz + DzUx)
+
+  endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ! full anisotropy
   if(TURN_ANISOTROPY_ON) then
@@ -969,6 +1110,130 @@
 
 ! `corrector' update velocity
   veloc(:,:) = veloc(:,:) + deltatover2*accel(:,:)
+
+
+
+
+
+
+
+
+! DK DK feb99 mettre a jour memory variables par Runge-Kutta ordre 4 ici for attenuation
+
+
+! calculer Grad(U) a l'instant n+1 pour attenuation
+  call calc_gradient(DxUx_np1,DzUz_np1,DxUz_np1,DzUx_np1,xjaci,hprime,hTprime,ibool,displ,NGLLX,npoin,ndime,nspec)
+
+  do k=1,nspec
+  do j=1,NGLLZ
+  do i=1,NGLLX
+
+  theta_n   = DxUx_n(i,j,k) + DzUz_n(i,j,k)
+  theta_np1 = DxUx_np1(i,j,k) + DzUz_np1(i,j,k)
+
+! evolution e1_mech1
+  Un = e1_mech1(i,j,k)
+  tauinv = - inv_tau_sigma_nu1_mech1
+  tauinvsquare = tauinv * tauinv
+  tauinvcube = tauinvsquare * tauinv
+  tauinvUn = tauinv * Un
+  Sn   = theta_n * phi_nu1_mech1
+  Snp1 = theta_np1 * phi_nu1_mech1
+  Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
+      twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
+      fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
+      deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
+  e1_mech1(i,j,k) = Unp1
+
+! evolution e1_mech2
+  Un = e1_mech2(i,j,k)
+  tauinv = - inv_tau_sigma_nu1_mech2
+  tauinvsquare = tauinv * tauinv
+  tauinvcube = tauinvsquare * tauinv
+  tauinvUn = tauinv * Un
+  Sn   = theta_n * phi_nu1_mech2
+  Snp1 = theta_np1 * phi_nu1_mech2
+  Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
+      twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
+      fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
+      deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
+  e1_mech2(i,j,k) = Unp1
+
+! evolution e11_mech1
+  Un = e11_mech1(i,j,k)
+  tauinv = - inv_tau_sigma_nu2_mech1
+  tauinvsquare = tauinv * tauinv
+  tauinvcube = tauinvsquare * tauinv
+  tauinvUn = tauinv * Un
+  Sn   = (DxUx_n(i,j,k) - theta_n/2.d0) * phi_nu2_mech1
+  Snp1 = (DxUx_np1(i,j,k) - theta_np1/2.d0) * phi_nu2_mech1
+  Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
+      twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
+      fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
+      deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
+  e11_mech1(i,j,k) = Unp1
+
+! evolution e11_mech2
+  Un = e11_mech2(i,j,k)
+  tauinv = - inv_tau_sigma_nu2_mech2
+  tauinvsquare = tauinv * tauinv
+  tauinvcube = tauinvsquare * tauinv
+  tauinvUn = tauinv * Un
+  Sn   = (DxUx_n(i,j,k) - theta_n/2.d0) * phi_nu2_mech2
+  Snp1 = (DxUx_np1(i,j,k) - theta_np1/2.d0) * phi_nu2_mech2
+  Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
+      twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
+      fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
+      deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
+  e11_mech2(i,j,k) = Unp1
+
+! evolution e13_mech1
+  Un = e13_mech1(i,j,k)
+  tauinv = - inv_tau_sigma_nu2_mech1
+  tauinvsquare = tauinv * tauinv
+  tauinvcube = tauinvsquare * tauinv
+  tauinvUn = tauinv * Un
+  Sn   = (DzUx_n(i,j,k) + DxUz_n(i,j,k)) * phi_nu2_mech1
+  Snp1 = (DzUx_np1(i,j,k) + DxUz_np1(i,j,k)) * phi_nu2_mech1
+  Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
+      twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
+      fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
+      deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
+  e13_mech1(i,j,k) = Unp1
+
+! evolution e13_mech2
+  Un = e13_mech2(i,j,k)
+  tauinv = - inv_tau_sigma_nu2_mech2
+  tauinvsquare = tauinv * tauinv
+  tauinvcube = tauinvsquare * tauinv
+  tauinvUn = tauinv * Un
+  Sn   = (DzUx_n(i,j,k) + DxUz_n(i,j,k)) * phi_nu2_mech2
+  Snp1 = (DzUx_np1(i,j,k) + DxUz_np1(i,j,k)) * phi_nu2_mech2
+  Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
+      twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
+      fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
+      deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
+  e13_mech2(i,j,k) = Unp1
+
+  enddo
+  enddo
+  enddo
+
+! DK DK feb99 mettre a jour memory variables par Runge-Kutta ordre 4 ici for attenuation
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 !----  display max of norm of displacement
   if(mod(it,itaff) == 0) then
