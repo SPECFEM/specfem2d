@@ -1,0 +1,118 @@
+# ----------------------------------------------------------------
+#
+#    This is the parameter file
+#    Put variable names first and actual value after 15th column
+#
+# ----------------------------------------------------------------
+<-           ->
+#
+# File names and path for different outputs
+#
+title         =PML thin slice periodic conditions
+topofile      =topoPMLthinslice.dat
+interffile    =none
+#
+# geometry of the model (origin lower-left corner = 0,0) and mesh description
+#
+xmin          =0.0d0         ! abscissa of left side of the model
+xmax          =15.d0         ! abscissa of right side of the model
+nx            =20            ! number of elements along X
+nz            =100            ! number of elements along Z
+idegpoly      =5             ! degre approximation spectrale (nb points - 1)
+ngnod         =4             ! nb noeuds de controle pour blocs generes (4 ou 9)
+ratio         =0.967741      ! ratio pour separation en deux zones
+initialfield  =.false.       ! use a plane wave as source or not
+ireadmodel    =.false.       ! use a plane wave as source or not
+iexec         =.true.        ! only simulate memory allocation or not
+#
+# absorbing boundaries parameters
+#
+absorbhaut    =.false.       ! Absorbing boundary active or not 
+absorbbas     =.false.      
+absorbgauche  =.false.      
+absorbdroite  =.false.      
+periohaut     =.true.        ! Periodic boundary active or not
+periogauche   =.false.
+#
+# time step parameters
+#
+nt            =7500          ! nb total de pas de temps
+dt            =2.e-5        ! valeur du pas de temps
+niter         =1             ! nb d'iterations de corrector
+#
+# sources parameters
+#
+nbsources     =1             ! nb of sources
+isources_surf =.false.       ! sources dans le volume ou a la surface
+valseuil      =5.            ! threshold for maximum frequency of the source
+freqmaxrep    =3000.         ! maximum frequency for plots of source function
+# source #1	
+xs            =9.0          ! source location x in meters    4.5
+zs            =27.75         ! source location z in meters
+f0            =700.0          ! central source frequency (Hz)
+t0            =0.0015d0        ! time delay of the source in seconds
+source_type   =1             ! source type : force=1 or explosion=2
+itimetype     =6             ! time type : dirac=7 ricker=6 first_deriv=5
+angle         =0.           ! angle of the source (for a force only) -90.
+factor        =1.d10         ! amplification factor
+#
+# receiver line parameters
+#
+sismos        =.true.        ! store the seismograms or not
+isamp         =5             ! sampling rate for seismogram output
+ienreg_surf   =.false.        ! enregistrement dans le volume ou a la surface
+isismostype   =1             ! record 1=displacement 2=velocity 3=acceleration
+### first line ###
+nrec          =2             ! number of receivers
+xdeb          =3.75d0        ! first receiver x in meters	   10.5
+zdeb          =33.75d0        ! first receiver z in meters	
+xfin          =3.75d0        ! last receiver x in meters
+zfin          =33.75d0        ! last receiver z in meters
+anglerec      =0.d0         ! angle to rotate the components at the receivers
+irepr         =1             ! representation (1=X 2=Z 3=distance)
+### second line (optional) ###
+nrec2         =0              ! number of receivers
+xfin2         =3900.d0        ! last receiver x in meters
+zfin2         =1920.d0        ! last receiver z in meters
+anglerec2     =0.d0          ! angle to rotate the components at the receivers
+###
+factorxsu     =3.5           ! factor for Seismic Unix seismograms
+n1ana         =1             ! first receiver for analytical solution
+n2ana         =50            ! second receiver for analytical solution
+factorana     =1.d6          ! factor for analytical solution
+#
+# display parameters
+#
+display       =.true.        ! display the simulation using PostScript or not
+itaff         =200            ! display frequency in time steps
+itfirstaff    =5             ! time step of first display
+iaffinfo      =40            ! interval in time steps to output some basic info
+ivectplot     =.true.        ! vector plots or not
+ivecttype     =1             ! display 1=displacement 2=velocity 3=acceleration
+cutvect       =0.5           ! amplitude min affichee en % pour vector plots
+imeshvect     =.true.        ! display mesh on vector plots or not
+imodelvect    =.false.       ! display velocity model on vector plots or not
+iboundvect    =.true.        ! display boundary conditions on vector plots
+interpol      =.false.        ! interpolation of the display or not
+iptsdisp      =6             ! nb of points for interpolation of the display
+isubsamp      =2             ! subsampling of color snapshots
+scalex        =1.            ! X-scaling du display pour PostScript
+scalez        =1.            ! Z-scaling du display pour PostScript
+sizemax       =1.            ! taille de la plus grande fleche en centimetres
+usletter      =.true.        ! US letter paper or French A4
+orig_x        =2.4d0         ! X-axis origin of PostScript plot in centimeters
+orig_z        =2.9d0         ! Z-axis origin of PostScript plot in centimeters
+ignuplot      =.false.       ! generate a GNUPLOT file for the grid
+iavs          =.false.        ! generate an AVS file for the grid and data
+ioutputgrid   =.false.       ! save the grid in a text file or not
+compenergy    =.false.       ! compute the total and potential energy or not
+#
+# velocity and density model (nx,nz)
+#
+nbmodels      =2             ! nb de modeles differents (rho,vp,vs) 1400.
+1 0 2200.d0 2000.d0 1154.73d0 0 0
+2 0 2200.d0 2000.d0 1154.73d0 0 0
+nbzone        =3             ! nb of zones and model number for each zone
+1 20 1   100 1
+17 20 1   100 2
+1  4 1   100 2
