@@ -533,7 +533,7 @@
   print *
   print *,'Ecriture de la grille format Gnuplot...'
 
-  open(unit=20,file='gridfile.gnu',status='unknown')
+  open(unit=20,file='OUTPUT_FILES/gridfile.gnu',status='unknown')
 
 ! dessin des lignes horizontales de la grille
   print *,'Ecriture lignes horizontales'
@@ -570,7 +570,7 @@
   close(20)
 
 ! cree le script de dessin pour gnuplot
-  open(unit=20,file='plotgnu',status='unknown')
+  open(unit=20,file='OUTPUT_FILES/plotgnu',status='unknown')
   write(20,*) '#set term postscript landscape monochrome solid "Helvetica" 22'
   write(20,*) '#set output "grille.ps"'
   write(20,*) 'plot "gridfile.gnu" title "Macrobloc mesh" w l'
@@ -582,7 +582,7 @@
 
 ! *** generation de la base de donnees
 
-  open(unit=15,file='Database',status='unknown')
+  open(unit=15,file='OUTPUT_FILES/Database',status='unknown')
 
   write(15,*) '#'
   write(15,*) '# Database for SPECFEM2D'
