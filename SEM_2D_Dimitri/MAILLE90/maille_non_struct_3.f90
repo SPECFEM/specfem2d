@@ -107,11 +107,10 @@
   open(unit=10,file='Par',status='old')
 
 ! formats
-
- 1 format(a,f20.8)
- 2 format(a,i20)
+ 1 format(a,f12.5)
+ 2 format(a,i8)
  3 format(a,a)
- 4 format(a,l20)
+ 4 format(a,l8)
 
 ! read the header
   do i=1,10
