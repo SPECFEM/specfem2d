@@ -14,6 +14,10 @@ TRNDIR = ./bak
 #F90 = pgf90
 #FLAGS=-c -fast -Mnobounds -Minline -Mneginfo -Mdclchk
 
+# Dec Alpha
+#F90 = f90
+#FLAGS=-c -fast -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nounderflow -check bounds
+
 # Intel Linux
 F90 = ifort
 FLAGS=-c -O3 -e95 -implicitnone

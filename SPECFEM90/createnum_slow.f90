@@ -12,7 +12,7 @@
 !
 !=====================================================================
 
-  subroutine createnum_slow(knods,ibool,kmato,npoin)
+  subroutine createnum_slow(knods,ibool,npoin)
 !
 !=======================================================================
 !
@@ -27,7 +27,7 @@
 
   implicit none
 
-  integer knods(ngnod,nspec),ibool(nxgll,nygll,nspec),kmato(nspec)
+  integer knods(ngnod,nspec),ibool(nxgll,nygll,nspec)
   integer npoin
 
   integer i,j,num2,i2,j2,ipos,ipos2,iloc,jloc,kloc
