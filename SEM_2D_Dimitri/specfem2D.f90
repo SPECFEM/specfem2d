@@ -70,7 +70,7 @@
   integer i,j,it,irec,ipoin,ip,id
   integer nbpoin,inump,n,npoinext,ispec,npoin,npgeo,iglob
 
-  double precision dxd,dzd,valux,valuz,hlagrange,rhoextread,vpextread,vsextread
+  double precision dxd,dzd,valux,valuz,hlagrange,xdummy,zdummy
   double precision cpl,csl,rhol
   double precision cosrot,sinrot
   double precision xi,gamma,x,z
@@ -132,7 +132,7 @@
   integer colors,numbers,subsamp,vecttype,itaff,nrec,sismostype
   integer numat,ngnod,nspec,iptsdisp,nelemabs,nelemsurface
 
-  logical interpol,meshvect,modelvect,boundvect,readmodel,initialfield,abshaut, &
+  logical interpol,meshvect,modelvect,boundvect,read_external_model,initialfield,abshaut, &
     outputgrid,gnuplot,ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
 
   double precision cutvect,anglerec,xirec,gammarec
@@ -246,13 +246,13 @@
   read(IIN,*) sismostype,vecttype
 
   read(IIN,40) datlin
-  read(IIN,*) readmodel,outputgrid,ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
+  read(IIN,*) read_external_model,outputgrid,ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
 
 !---- check parameters read
   write(IOUT,200) npgeo,NDIM
   write(IOUT,600) itaff,colors,numbers
   write(IOUT,700) sismostype,anglerec
-  write(IOUT,750) initialfield,readmodel,ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,outputgrid
+  write(IOUT,750) initialfield,read_external_model,ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,outputgrid
   write(IOUT,800) vecttype,100.d0*cutvect,subsamp
 
 !---- read time step
@@ -328,6 +328,8 @@
   allocate(kmato(nspec))
   allocate(knods(ngnod,nspec))
   allocate(ibool(NGLLX,NGLLZ,nspec))
+
+  if(read_external_model .and. outputgrid) stop 'cannot output the grid and read external model at the same time'
 
 ! for acoustic
   if(TURN_ANISOTROPY_ON .and. .not. ELASTIC) stop 'currently cannot have anisotropy in acoustic simulation'
@@ -525,7 +527,7 @@
 
   allocate(rmass(npoin))
 
-  if(readmodel) then
+  if(read_external_model) then
     npoinext = npoin
   else
     npoinext = 1
@@ -566,10 +568,10 @@
     print *
     print *,'Saving the grid in a text file...'
     print *
-    open(unit=55,file='OUTPUT_FILES/gridpoints.txt',status='unknown')
+    open(unit=55,file='OUTPUT_FILES/grid_points_and_model.txt',status='unknown')
     write(55,*) npoin
     do n = 1,npoin
-      write(55,*) n,(coord(i,n), i=1,NDIM)
+      write(55,*) (coord(i,n), i=1,NDIM)
     enddo
     close(55)
   endif
@@ -620,19 +622,15 @@
 !
 !----  eventuellement lecture d'un modele externe de vitesse et de densite
 !
-  if(readmodel) then
+  if(read_external_model) then
     print *
     print *,'Reading velocity and density model from external file...'
     print *
-    open(unit=55,file='OUTPUT_FILES/extmodel.txt',status='unknown')
+    open(unit=55,file='OUTPUT_FILES/grid_points_and_model.txt',status='old')
     read(55,*) nbpoin
     if(nbpoin /= npoin) stop 'Wrong number of points in input file'
     do n = 1,npoin
-      read(55,*) inump,rhoextread,vpextread,vsextread
-      if(inump<1 .or. inump>npoin) stop 'Wrong point number'
-      rhoext(inump) = rhoextread
-      vpext(inump) = vpextread
-      vsext(inump) = vsextread
+      read(55,*) xdummy,zdummy,rhoext(n),vpext(n),vsext(n)
     enddo
     close(55)
   endif
@@ -643,7 +641,7 @@
   call defarrays(vpext,vsext,rhoext,density,elastcoef, &
           ibool,kmato,coord,npoin,rsizemin,rsizemax, &
           cpoverdxmin,cpoverdxmax,lambdaSmin,lambdaSmax,lambdaPmin,lambdaPmax, &
-          vpmin,vpmax,readmodel,nspec,numat)
+          vpmin,vpmax,read_external_model,nspec,numat)
 
 ! build the global mass matrix once and for all
   rmass(:) = ZERO
@@ -652,7 +650,7 @@
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
 ! if external density model
-        if(readmodel) then
+        if(read_external_model) then
           rhol = rhoext(iglob)
           cpsquare = vpext(iglob)**2
         else
@@ -981,7 +979,7 @@
         do i = 1,NGLLX
 
 !--- if external medium, get elastic parameters of current grid point
-          if(readmodel) then
+          if(read_external_model) then
             iglob = ibool(i,j,ispec)
             cpl = vpext(iglob)
             csl = vsext(iglob)
@@ -1185,7 +1183,7 @@
           zgamma = xix(i,j,ispec) * jacobian(i,j,ispec)
 
 ! external velocity model
-          if(readmodel) then
+          if(read_external_model) then
             cpl = vpext(iglob)
             csl = vsext(iglob)
             rhol = rhoext(iglob)
@@ -1231,7 +1229,7 @@
           zgamma = xix(i,j,ispec) * jacobian(i,j,ispec)
 
 ! external velocity model
-          if(readmodel) then
+          if(read_external_model) then
             cpl = vpext(iglob)
             csl = vsext(iglob)
             rhol = rhoext(iglob)
@@ -1283,7 +1281,7 @@
           xxi = gammaz(i,j,ispec) * jacobian(i,j,ispec)
 
 ! external velocity model
-          if(readmodel) then
+          if(read_external_model) then
             cpl = vpext(iglob)
             csl = vsext(iglob)
             rhol = rhoext(iglob)
@@ -1335,7 +1333,7 @@
           xxi = gammaz(i,j,ispec) * jacobian(i,j,ispec)
 
 ! external velocity model
-          if(readmodel) then
+          if(read_external_model) then
             cpl = vpext(iglob)
             csl = vsext(iglob)
             rhol = rhoext(iglob)
@@ -1640,7 +1638,7 @@
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
           colors,numbers,subsamp,vecttype,interpol,meshvect,modelvect, &
-          boundvect,readmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod,ELASTIC)
+          boundvect,read_external_model,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod,ELASTIC)
 
   else if(ELASTIC .and. vecttype == 2) then
     write(IOUT,*) 'drawing velocity field...'
@@ -1649,7 +1647,7 @@
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
           colors,numbers,subsamp,vecttype,interpol,meshvect,modelvect, &
-          boundvect,readmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod,ELASTIC)
+          boundvect,read_external_model,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod,ELASTIC)
 
   else if(ELASTIC .and. vecttype == 3) then
     write(IOUT,*) 'drawing acceleration field...'
@@ -1658,7 +1656,7 @@
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
           colors,numbers,subsamp,vecttype,interpol,meshvect,modelvect, &
-          boundvect,readmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod,ELASTIC)
+          boundvect,read_external_model,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod,ELASTIC)
 
 ! for acoustic medium
   else if(.not. ELASTIC .and. vecttype == 1) then
@@ -1674,7 +1672,7 @@
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
           colors,numbers,subsamp,vecttype,interpol,meshvect,modelvect, &
-          boundvect,readmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod,ELASTIC)
+          boundvect,read_external_model,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod,ELASTIC)
 
   else if(.not. ELASTIC .and. vecttype == 3) then
     write(IOUT,*) 'drawing acoustic acceleration field from velocity potential...'
@@ -1686,7 +1684,7 @@
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
           colors,numbers,subsamp,vecttype,interpol,meshvect,modelvect, &
-          boundvect,readmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod,ELASTIC)
+          boundvect,read_external_model,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod,ELASTIC)
 
   else
     stop 'wrong field code for PostScript display'
@@ -1769,8 +1767,8 @@
   'Seismograms recording type . . . . . . .(sismostype) = ',i6/5x, &
   'Angle for first line of receivers. . . . .(anglerec) = ',f6.2)
   750   format(//1x,'C o n t r o l',/1x,13('='),//5x, &
-  'Read external initial field or not . .(initialfield) = ',l6/5x, &
-  'Read external velocity model or not . . .(readmodel) = ',l6/5x, &
+  'Read external initial field. . . . . .(initialfield) = ',l6/5x, &
+  'Read external velocity model. .(read_external_model) = ',l6/5x, &
   'Elastic simulation or acoustic. . . . . . .(ELASTIC) = ',l6/5x, &
   'Turn anisotropy on or off. . . .(TURN_ANISOTROPY_ON) = ',l6/5x, &
   'Turn attenuation on or off. . .(TURN_ATTENUATION_ON) = ',l6/5x, &

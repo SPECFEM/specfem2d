@@ -68,7 +68,7 @@
   double precision anglerec,xfin,zfin,xdeb,zdeb,xmin,xmax,dt
   double precision rhoread,cpread,csread,aniso3read,aniso4read
 
-  logical interpol,gnuplot,readmodel,outputgrid
+  logical interpol,gnuplot,read_external_model,outputgrid
   logical abshaut,absbas,absgauche,absdroite
   logical source_surf,enreg_surf,meshvect,initialfield,modelvect,boundvect
   logical ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
@@ -109,7 +109,7 @@
   call read_value_integer(IIN_PAR,IGNORE_JUNK,nx)
   call read_value_integer(IIN_PAR,IGNORE_JUNK,ngnod)
   call read_value_logical(IIN_PAR,IGNORE_JUNK,initialfield)
-  call read_value_logical(IIN_PAR,IGNORE_JUNK,readmodel)
+  call read_value_logical(IIN_PAR,IGNORE_JUNK,read_external_model)
   call read_value_logical(IIN_PAR,IGNORE_JUNK,ELASTIC)
   call read_value_logical(IIN_PAR,IGNORE_JUNK,TURN_ANISOTROPY_ON)
   call read_value_logical(IIN_PAR,IGNORE_JUNK,TURN_ATTENUATION_ON)
@@ -620,8 +620,8 @@
   write(15,*) 'sismostype vecttype'
   write(15,*) sismostype,vecttype
 
-  write(15,*) 'readmodel outputgrid ELASTIC TURN_ANISOTROPY_ON TURN_ATTENUATION_ON'
-  write(15,*) readmodel,outputgrid,ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
+  write(15,*) 'read_external_model outputgrid ELASTIC TURN_ANISOTROPY_ON TURN_ATTENUATION_ON'
+  write(15,*) read_external_model,outputgrid,ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
 
   write(15,*) 'ncycl dtinc'
   write(15,*) nt,dt

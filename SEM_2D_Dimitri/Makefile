@@ -46,7 +46,7 @@ default: meshfem2D specfem2D
 all: default
 
 clean:
-	/bin/rm -r -f xmeshfem2D xmeshfem2D.trace xspecfem2D xspecfem2D.trace $O/*.o *.o $O/*.il *.mod core *.gnu *.ps Ux*.bin Uz*.bin image*.pnm xconvolve_source_timefunction *receiver_line_* plotgnu source.txt *.sem* OUTPUT_FILES/*
+	/bin/rm -r -f xmeshfem2D xmeshfem2D.trace xspecfem2D xspecfem2D.trace $O/*.o *.o $O/*.il *.mod core *.gnu *.ps Ux*.bin Uz*.bin image*.pnm xconvolve_source_timefunction *receiver_line_* plotgnu source.txt *.sem* xcreate_earth_model
 
 meshfem2D: $(OBJS_MESHFEM2D)
 	$(LINK) $(FLAGS_CHECK) -o xmeshfem2D $(OBJS_MESHFEM2D)
@@ -57,6 +57,9 @@ specfem2D: $(OBJS_SPECFEM2D)
 
 convolve_source_timefunction: $O/convolve_source_timefunction.o
 	${F90} $(FLAGS_CHECK) -o xconvolve_source_timefunction $O/convolve_source_timefunction.o
+
+create_earth_model: $O/create_earth_model.o
+	${F90} $(FLAGS_CHECK) -o xcreate_earth_model $O/create_earth_model.o
 
 $O/checkgrid.o: checkgrid.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/checkgrid.o checkgrid.f90
@@ -72,6 +75,9 @@ $O/createnum_slow.o: createnum_slow.f90 constants.h
     
 $O/convolve_source_timefunction.o: convolve_source_timefunction.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/convolve_source_timefunction.o convolve_source_timefunction.f90
+
+$O/create_earth_model.o: create_earth_model.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/create_earth_model.o create_earth_model.f90
 
 $O/datim.o: datim.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/datim.o datim.f90

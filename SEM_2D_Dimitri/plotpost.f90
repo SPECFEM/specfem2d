@@ -15,7 +15,7 @@
           xinterp,zinterp,shapeint,Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
           colors,numbers,subsamp,vecttype,interpol,meshvect,modelvect, &
-          boundvect,readmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod,ELASTIC)
+          boundvect,read_external_model,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod,ELASTIC)
 
 !
 ! routine affichage postscript
@@ -66,7 +66,7 @@
   integer indice,ii,ipoin,in,nnum,ispecabs,ideb,ifin,ibord
 
   integer colors,numbers,subsamp,vecttype
-  logical interpol,meshvect,modelvect,boundvect,readmodel
+  logical interpol,meshvect,modelvect,boundvect,read_external_model
   double precision cutvect
 
   double precision rapp_page,dispmax,xmin,zmin
@@ -369,7 +369,7 @@
           do j=1,NGLLX-subsamp,subsamp
 
   if((vpmax-vpmin)/vpmin > 0.02d0) then
-  if(readmodel) then
+  if(read_external_model) then
     x1 = (vpext(ibool(i,j,ispec))-vpmin)/ (vpmax-vpmin)
   else
     material = kmato(ispec)
