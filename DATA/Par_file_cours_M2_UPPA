@@ -1,9 +1,8 @@
-# ----------------------------------------------------------------
 #
-#    This is the parameter file
-#    Put variable names first and actual value after 34th column
+# This is the parameter file
+# Put variable names first and actual value after 34th column
 #
-# ----------------------------------------------------------------
+#-------------------------------->
 #
 # title of job, and file that contains interface data
 #
@@ -12,76 +11,76 @@ interfacesfile                  = interfaces_cours_M2_UPPA_curved.dat
 #
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 #
-xmin                            = 0.d0           ! abscissa of left side of the model
-xmax                            = 4000.d0        ! abscissa of right side of the model
-nx                              = 80             ! number of elements along X
-ngnod                           = 9              ! noeuds de controle pour blocs (4 ou 9)
-initialfield                    = .false.        ! use a plane wave as source or not
-readmodel                       = .false.        ! read external earth model or not
-ELASTIC                         = .true.         ! elastic or acoustic simulation
-TURN_ANISOTROPY_ON              = .false.        ! turn anisotropy on or off
-TURN_ATTENUATION_ON             = .false.        ! turn attenuation on or off
+xmin                            = 0.d0           # abscissa of left side of the model
+xmax                            = 4000.d0        # abscissa of right side of the model
+nx                              = 80             # number of elements along X
+ngnod                           = 9              # noeuds de controle pour blocs (4 ou 9)
+initialfield                    = .false.        # use a plane wave as source or not
+readmodel                       = .false.        # read external earth model or not
+ELASTIC                         = .true.         # elastic or acoustic simulation
+TURN_ANISOTROPY_ON              = .false.        # turn anisotropy on or off
+TURN_ATTENUATION_ON             = .false.        # turn attenuation on or off
 #
 # absorbing boundaries parameters
 #
-absorbhaut                      = .false.        ! absorbing boundary active or not
+absorbhaut                      = .false.        # absorbing boundary active or not
 absorbbas                       = .true.
 absorbgauche                    = .true.
 absorbdroite                    = .true.
 #
 # time step parameters
 #
-nt                              = 1600           ! nb total de pas de temps
-dt                              = 1.d-3          ! valeur du pas de temps
+nt                              = 1600           # nb total de pas de temps
+dt                              = 1.d-3          # valeur du pas de temps
 #
 # source parameters
 #
-source_surf                     = .true.         ! source dans le volume ou a la surface
-xs                              = 2000.          ! source location x in meters
-zs                              = 1500.          ! source location z in meters
-source_type                     = 1              ! force = 1 or explosion = 2
-time_function_type              = 1              ! Ricker = 1, first derivative = 2, Gaussian = 3, Dirac = 4
-f0                              = 10.0           ! dominant source frequency (Hz) if not Dirac
-angleforce                      = 0.             ! angle of the source (for a force only)
-Mxx                             = 1.             ! Mxx component (for a moment tensor source only)
-Mzz                             = 1.             ! Mzz component (for a moment tensor source only)
-Mxz                             = 0.             ! Mxz component (for a moment tensor source only)
-factor                          = 1.d10          ! amplification factor
+source_surf                     = .true.         # source dans le volume ou a la surface
+xs                              = 2000.          # source location x in meters
+zs                              = 1500.          # source location z in meters
+source_type                     = 1              # force = 1 or explosion = 2
+time_function_type              = 1              # Ricker = 1, first derivative = 2, Gaussian = 3, Dirac = 4
+f0                              = 10.0           # dominant source frequency (Hz) if not Dirac
+angleforce                      = 0.             # angle of the source (for a force only)
+Mxx                             = 1.             # Mxx component (for a moment tensor source only)
+Mzz                             = 1.             # Mzz component (for a moment tensor source only)
+Mxz                             = 0.             # Mxz component (for a moment tensor source only)
+factor                          = 1.d10          # amplification factor
 #
 # receiver line parameters
 #
-enreg_surf                      = .true.         ! enregistrement volume ou surface
-sismostype                      = 1              ! record 1=displ 2=veloc 3=accel
-nrec                            = 11             ! number of receivers
-xdeb                            = 300.           ! first receiver x in meters
-zdeb                            = 2200.          ! first receiver z in meters
-xfin                            = 3700.          ! last receiver x in meters
-zfin                            = 2200.          ! last receiver z in meters
-anglerec                        = 0.d0           ! angle to rotate components at receivers
+enreg_surf                      = .true.         # enregistrement volume ou surface
+sismostype                      = 1              # record 1=displ 2=veloc 3=accel
+nrec                            = 11             # number of receivers
+xdeb                            = 300.           # first receiver x in meters
+zdeb                            = 2200.          # first receiver z in meters
+xfin                            = 3700.          # last receiver x in meters
+zfin                            = 2200.          # last receiver z in meters
+anglerec                        = 0.d0           # angle to rotate components at receivers
 #
 # display parameters
 #
-itaff                           = 100            ! display frequency in time steps
-output_postscript_snapshot      = .true.         ! output Postscript image of the results
-output_PNM_image                = .true.         ! output PNM image of the results
-vecttype                        = 1              ! display 1=displ 2=veloc 3=accel
-cutvect                         = 1.             ! amplitude min en % pour vector plots
-meshvect                        = .true.         ! display mesh on vector plots or not
-modelvect                       = .false.        ! display velocity model on vector plots
-boundvect                       = .true.         ! display boundary conditions on plots
-interpol                        = .true.         ! interpolation of the display or not
-pointsdisp                      = 6              ! points for interpolation of display
-subsamp                         = 1              ! subsampling of color snapshots
-gnuplot                         = .false.        ! generate a GNUPLOT file for the grid
-outputgrid                      = .false.        ! save the grid in a text file or not
+itaff                           = 100            # display frequency in time steps
+output_postscript_snapshot      = .true.         # output Postscript image of the results
+output_PNM_image                = .true.         # output PNM image of the results
+vecttype                        = 1              # display 1=displ 2=veloc 3=accel
+cutvect                         = 1.             # amplitude min en % pour vector plots
+meshvect                        = .true.         # display mesh on vector plots or not
+modelvect                       = .false.        # display velocity model on vector plots
+boundvect                       = .true.         # display boundary conditions on plots
+interpol                        = .true.         # interpolation of the display or not
+pointsdisp                      = 6              # points for interpolation of display
+subsamp                         = 1              # subsampling of color snapshots
+gnuplot                         = .false.        # generate a GNUPLOT file for the grid
+outputgrid                      = .false.        # save the grid in a text file or not
 #
 # velocity and density model (nx,nz)
 #
-nbmodels                        = 3              ! nb de modeles differents (0,rho,vp,vs,0,0)
+nbmodels                        = 3              # nb de modeles differents (0,rho,vp,vs,0,0)
 1 0 2700.d0 3000.d0 1732.051d0 0 0
 2 0 2500.d0 2700.d0 1558.845d0 0 0
 3 0 2200.d0 2500.d0 1443.375d0 0 0
-nbzone                          = 3              ! nb of zones and model number for each
+nbzone                          = 3              # nb of zones and model number for each
 1 80  1 20 1
 1 80 21 40 2
 1 80 41 60 3
