@@ -1,13 +1,13 @@
 
 !========================================================================
 !
-!                   M E S H F E M 2 D  Version 5.1
+!                   S P E C F E M 2 D  Version 5.1
 !                   ------------------------------
 !
 !                         Dimitri Komatitsch
 !          Universite de Pau et des Pays de l'Adour, France
 !
-!                         (c) January 2005
+!                          (c) January 2005
 !
 !========================================================================
 
@@ -20,6 +20,8 @@
   program meshfem2D
 
   implicit none
+
+  include "constants.h"
 
 ! coordinates of the grid points of the mesh
   double precision, dimension(:,:), allocatable :: x,z
@@ -79,8 +81,7 @@
 ! flag to indicate an anisotropic material
   integer, parameter :: ANISOTROPIC_MATERIAL = 1
 
-! file number for input DATA/Par_file and interface file
-  integer, parameter :: IIN_PAR = 10
+! file number for interface file
   integer, parameter :: IIN_INTERFACES = 15
 
 ! ignore variable name field (junk) at the beginning of each input line
@@ -93,30 +94,30 @@
   print *,'Reading the parameter file ... '
   print *
 
-  open(unit=10,file='DATA/Par_file',status='old')
+  open(unit=IIN,file='DATA/Par_file',status='old')
 
 ! read file names and path for output
-  call read_value_string(IIN_PAR,IGNORE_JUNK,title)
-  call read_value_string(IIN_PAR,IGNORE_JUNK,interfacesfile)
+  call read_value_string(IIN,IGNORE_JUNK,title)
+  call read_value_string(IIN,IGNORE_JUNK,interfacesfile)
 
   write(*,*) 'Titre de la simulation'
   write(*,*) title
   print *
 
 ! read grid parameters
-  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,xmin)
-  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,xmax)
-  call read_value_integer(IIN_PAR,IGNORE_JUNK,nx)
-  call read_value_integer(IIN_PAR,IGNORE_JUNK,ngnod)
-  call read_value_logical(IIN_PAR,IGNORE_JUNK,initialfield)
-  call read_value_logical(IIN_PAR,IGNORE_JUNK,read_external_model)
-  call read_value_logical(IIN_PAR,IGNORE_JUNK,ELASTIC)
-  call read_value_logical(IIN_PAR,IGNORE_JUNK,TURN_ANISOTROPY_ON)
-  call read_value_logical(IIN_PAR,IGNORE_JUNK,TURN_ATTENUATION_ON)
+  call read_value_double_precision(IIN,IGNORE_JUNK,xmin)
+  call read_value_double_precision(IIN,IGNORE_JUNK,xmax)
+  call read_value_integer(IIN,IGNORE_JUNK,nx)
+  call read_value_integer(IIN,IGNORE_JUNK,ngnod)
+  call read_value_logical(IIN,IGNORE_JUNK,initialfield)
+  call read_value_logical(IIN,IGNORE_JUNK,read_external_model)
+  call read_value_logical(IIN,IGNORE_JUNK,ELASTIC)
+  call read_value_logical(IIN,IGNORE_JUNK,TURN_ANISOTROPY_ON)
+  call read_value_logical(IIN,IGNORE_JUNK,TURN_ATTENUATION_ON)
 
 ! get interface data from external file to count the spectral elements along Z
   print *,'Reading interface data from file DATA/',interfacesfile(1:len_trim(interfacesfile)),' to count the spectral elements'
-  open(unit=15,file='DATA/'//interfacesfile,status='old')
+  open(unit=IIN_INTERFACES,file='DATA/'//interfacesfile,status='old')
 
   max_npoints_interface = -1
 
@@ -157,7 +158,7 @@
 
   enddo
 
-  close(15)
+  close(IIN_INTERFACES)
 
 ! compute total number of spectral elements in vertical direction
   nz = sum(nz_layer)
@@ -177,27 +178,27 @@
   endif
 
 ! read absorbing boundaries parameters
-  call read_value_logical(IIN_PAR,IGNORE_JUNK,abshaut)
-  call read_value_logical(IIN_PAR,IGNORE_JUNK,absbas)
-  call read_value_logical(IIN_PAR,IGNORE_JUNK,absgauche)
-  call read_value_logical(IIN_PAR,IGNORE_JUNK,absdroite)
+  call read_value_logical(IIN,IGNORE_JUNK,abshaut)
+  call read_value_logical(IIN,IGNORE_JUNK,absbas)
+  call read_value_logical(IIN,IGNORE_JUNK,absgauche)
+  call read_value_logical(IIN,IGNORE_JUNK,absdroite)
 
 ! read time step parameters
-  call read_value_integer(IIN_PAR,IGNORE_JUNK,nt)
-  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,dt)
+  call read_value_integer(IIN,IGNORE_JUNK,nt)
+  call read_value_double_precision(IIN,IGNORE_JUNK,dt)
 
 ! read source parameters
-  call read_value_logical(IIN_PAR,IGNORE_JUNK,source_surf)
-  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,xs)
-  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,zs)
-  call read_value_integer(IIN_PAR,IGNORE_JUNK,source_type)
-  call read_value_integer(IIN_PAR,IGNORE_JUNK,time_function_type)
-  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,f0)
-  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,angleforce)
-  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,Mxx)
-  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,Mzz)
-  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,Mxz)
-  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,factor)
+  call read_value_logical(IIN,IGNORE_JUNK,source_surf)
+  call read_value_double_precision(IIN,IGNORE_JUNK,xs)
+  call read_value_double_precision(IIN,IGNORE_JUNK,zs)
+  call read_value_integer(IIN,IGNORE_JUNK,source_type)
+  call read_value_integer(IIN,IGNORE_JUNK,time_function_type)
+  call read_value_double_precision(IIN,IGNORE_JUNK,f0)
+  call read_value_double_precision(IIN,IGNORE_JUNK,angleforce)
+  call read_value_double_precision(IIN,IGNORE_JUNK,Mxx)
+  call read_value_double_precision(IIN,IGNORE_JUNK,Mzz)
+  call read_value_double_precision(IIN,IGNORE_JUNK,Mxz)
+  call read_value_double_precision(IIN,IGNORE_JUNK,factor)
 
 ! if Dirac source time function, use a very thin Gaussian instead
   if(time_function_type == 4) f0 = 1.d0 / (5.d0 * dt)
@@ -218,14 +219,14 @@
   print *,'Multiplying factor = ',factor
 
 ! read receivers line parameters
-  call read_value_logical(IIN_PAR,IGNORE_JUNK,enreg_surf)
-  call read_value_integer(IIN_PAR,IGNORE_JUNK,sismostype)
-  call read_value_integer(IIN_PAR,IGNORE_JUNK,nrec)
-  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,xdeb)
-  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,zdeb)
-  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,xfin)
-  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,zfin)
-  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,anglerec)
+  call read_value_logical(IIN,IGNORE_JUNK,enreg_surf)
+  call read_value_integer(IIN,IGNORE_JUNK,sismostype)
+  call read_value_integer(IIN,IGNORE_JUNK,nrec)
+  call read_value_double_precision(IIN,IGNORE_JUNK,xdeb)
+  call read_value_double_precision(IIN,IGNORE_JUNK,zdeb)
+  call read_value_double_precision(IIN,IGNORE_JUNK,xfin)
+  call read_value_double_precision(IIN,IGNORE_JUNK,zfin)
+  call read_value_double_precision(IIN,IGNORE_JUNK,anglerec)
 
   allocate(xrec(nrec))
   allocate(zrec(nrec))
@@ -240,22 +241,22 @@
   enddo
 
 ! read display parameters
-  call read_value_integer(IIN_PAR,IGNORE_JUNK,itaff)
-  call read_value_logical(IIN_PAR,IGNORE_JUNK,output_postscript_snapshot)
-  call read_value_logical(IIN_PAR,IGNORE_JUNK,output_PNM_image)
-  call read_value_integer(IIN_PAR,IGNORE_JUNK,vecttype)
-  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,cutvect)
-  call read_value_logical(IIN_PAR,IGNORE_JUNK,meshvect)
-  call read_value_logical(IIN_PAR,IGNORE_JUNK,modelvect)
-  call read_value_logical(IIN_PAR,IGNORE_JUNK,boundvect)
-  call read_value_logical(IIN_PAR,IGNORE_JUNK,interpol)
-  call read_value_integer(IIN_PAR,IGNORE_JUNK,pointsdisp)
-  call read_value_integer(IIN_PAR,IGNORE_JUNK,subsamp)
-  call read_value_logical(IIN_PAR,IGNORE_JUNK,gnuplot)
-  call read_value_logical(IIN_PAR,IGNORE_JUNK,outputgrid)
+  call read_value_integer(IIN,IGNORE_JUNK,itaff)
+  call read_value_logical(IIN,IGNORE_JUNK,output_postscript_snapshot)
+  call read_value_logical(IIN,IGNORE_JUNK,output_PNM_image)
+  call read_value_integer(IIN,IGNORE_JUNK,vecttype)
+  call read_value_double_precision(IIN,IGNORE_JUNK,cutvect)
+  call read_value_logical(IIN,IGNORE_JUNK,meshvect)
+  call read_value_logical(IIN,IGNORE_JUNK,modelvect)
+  call read_value_logical(IIN,IGNORE_JUNK,boundvect)
+  call read_value_logical(IIN,IGNORE_JUNK,interpol)
+  call read_value_integer(IIN,IGNORE_JUNK,pointsdisp)
+  call read_value_integer(IIN,IGNORE_JUNK,subsamp)
+  call read_value_logical(IIN,IGNORE_JUNK,gnuplot)
+  call read_value_logical(IIN,IGNORE_JUNK,outputgrid)
 
 ! lecture des differents modeles de materiaux
-  call read_value_integer(IIN_PAR,IGNORE_JUNK,nbmodeles)
+  call read_value_integer(IIN,IGNORE_JUNK,nbmodeles)
   if(nbmodeles <= 0) stop 'Negative number of models not allowed !!'
 
   allocate(icodemat(nbmodeles))
@@ -275,7 +276,7 @@
   num_modele(:,:) = 0
 
   do imodele=1,nbmodeles
-    read(IIN_PAR,*) i,icodematread,rhoread,cpread,csread,aniso3read,aniso4read
+    read(IIN,*) i,icodematread,rhoread,cpread,csread,aniso3read,aniso4read
     if(i < 1 .or. i > nbmodeles) stop 'Wrong model number!!'
     icodemat(i) = icodematread
     rho(i) = rhoread
@@ -306,7 +307,7 @@
   print *
 
 ! lecture des numeros de modele des differentes zones
-  call read_value_integer(IIN_PAR,IGNORE_JUNK,nbzone)
+  call read_value_integer(IIN,IGNORE_JUNK,nbzone)
 
   if(nbzone <= 0) stop 'Negative number of zones not allowed !!'
 
@@ -316,7 +317,7 @@
 
   do izone = 1,nbzone
 
-    read(IIN_PAR,*) ixdebzone,ixfinzone,izdebzone,izfinzone,imodnum
+    read(IIN,*) ixdebzone,ixfinzone,izdebzone,izfinzone,imodnum
 
     if(imodnum < 1) stop 'Negative model number not allowed !!'
     if(ixdebzone < 1) stop 'Left coordinate of zone negative !!'
@@ -366,7 +367,7 @@
 
   if(minval(num_modele) <= 0) stop 'Velocity model not entirely set...'
 
-  close(10)
+  close(IIN)
 
   print *
   print *,' Parameter file successfully read... '
@@ -410,7 +411,7 @@
 
 ! get interface data from external file
   print *,'Reading interface data from file DATA/',interfacesfile(1:len_trim(interfacesfile))
-  open(unit=15,file='DATA/'//interfacesfile,status='old')
+  open(unit=IIN_INTERFACES,file='DATA/'//interfacesfile,status='old')
 
   allocate(xinterface_bottom(max_npoints_interface))
   allocate(zinterface_bottom(max_npoints_interface))
@@ -509,7 +510,7 @@
 
   enddo
 
-  close(15)
+  close(IIN_INTERFACES)
 
 ! calculer min et max de X et Z sur la grille
   print *
@@ -899,164 +900,4 @@
   Y = A*YA(KLO) + B*YA(KHI) + ((A**3-A)*Y2A(KLO) + (B**3-B)*Y2A(KHI))*(H**2)/6.d0
 
   end subroutine splint
-
-!--------------------
-
-  subroutine read_value_integer(iin,ignore_junk,value_to_read)
-
-  implicit none
-
-  integer iin
-  logical ignore_junk
-
-  integer value_to_read
-
-  integer ios
-
-  character(len=100) string_read
-  character(len=34) junk
-
-  do
-    read(unit=iin,fmt=200,iostat=ios) string_read
-    if(ios /= 0) stop 'error while reading input file'
-
-! suppress leading white spaces, if any
-    string_read = adjustl(string_read)
-
-! exit loop when we find the first line that is not a comment
-    if(string_read(1:1) /= '#') exit
-
-  enddo
-
-  if(ignore_junk) then
-    read(string_read,100) junk,value_to_read
-  else
-    read(string_read,*) value_to_read
-  endif
-
-! format
- 100 format(a,i8)
- 200 format(a100)
-
-  end subroutine read_value_integer
-
-!--------------------
-
-  subroutine read_value_double_precision(iin,ignore_junk,value_to_read)
-
-  implicit none
-
-  integer iin
-  logical ignore_junk
-
-  double precision value_to_read
-
-  integer ios
-
-  character(len=100) string_read
-  character(len=34) junk
-
-  do
-    read(unit=iin,fmt=200,iostat=ios) string_read
-    if(ios /= 0) stop 'error while reading input file'
-
-! suppress leading white spaces, if any
-    string_read = adjustl(string_read)
-
-! exit loop when we find the first line that is not a comment
-    if(string_read(1:1) /= '#') exit
-
-  enddo
-
-  if(ignore_junk) then
-    read(string_read,100) junk,value_to_read
-  else
-    read(string_read,*) value_to_read
-  endif
-
-! format
- 100 format(a,f12.5)
- 200 format(a100)
-
-  end subroutine read_value_double_precision
-
-!--------------------
-
-  subroutine read_value_logical(iin,ignore_junk,value_to_read)
-
-  implicit none
-
-  integer iin
-  logical ignore_junk
-
-  logical value_to_read
-
-  integer ios
-
-  character(len=100) string_read
-  character(len=34) junk
-
-  do
-    read(unit=iin,fmt=200,iostat=ios) string_read
-    if(ios /= 0) stop 'error while reading input file'
-
-! suppress leading white spaces, if any
-    string_read = adjustl(string_read)
-
-! exit loop when we find the first line that is not a comment
-    if(string_read(1:1) /= '#') exit
-
-  enddo
-
-  if(ignore_junk) then
-    read(string_read,100) junk,value_to_read
-  else
-    read(string_read,*) value_to_read
-  endif
-
-! format
- 100 format(a,l8)
- 200 format(a100)
-
-  end subroutine read_value_logical
-
-!--------------------
-
-  subroutine read_value_string(iin,ignore_junk,value_to_read)
-
-  implicit none
-
-  integer iin
-  logical ignore_junk
-
-  character(len=*) value_to_read
-
-  integer ios
-
-  character(len=100) string_read
-  character(len=34) junk
-
-  do
-    read(unit=iin,fmt=200,iostat=ios) string_read
-    if(ios /= 0) stop 'error while reading input file'
-
-! suppress leading white spaces, if any
-    string_read = adjustl(string_read)
-
-! exit loop when we find the first line that is not a comment
-    if(string_read(1:1) /= '#') exit
-
-  enddo
-
-  if(ignore_junk) then
-    read(string_read,100) junk,value_to_read
-  else
-    read(string_read,*) value_to_read
-  endif
-
-! format
- 100 format(a34,a)
- 200 format(a100)
-
-  end subroutine read_value_string
 
