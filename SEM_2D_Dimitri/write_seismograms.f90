@@ -73,7 +73,7 @@
 
       if(length_network_name < 1 .or. length_network_name > MAX_LENGTH_NETWORK_NAME) stop 'wrong length of network name'
 
-      write(sisname,"(a,'.',a,'.',a3,'.sem',a1)") station_name(irec)(1:length_station_name),&
+      write(sisname,"('OUTPUT_FILES/',a,'.',a,'.',a3,'.sem',a1)") station_name(irec)(1:length_station_name),&
            network_name(irec)(1:length_network_name),chn,component
 
 ! save seismograms in text format with no subsampling.
@@ -104,14 +104,14 @@
 ! write seismograms in single precision binary format
 
 ! X component
-  open(unit=11,file='Ux_file.bin',status='unknown',access='direct',recl=NSTEP*4)
+  open(unit=11,file='OUTPUT_FILES/Ux_file.bin',status='unknown',access='direct',recl=NSTEP*4)
   do irec=1,nrec
     write(11,rec=irec) (sngl(sisux(isample,irec)),isample=1,NSTEP)
   enddo
   close(11)
 
 ! Z component
-  open(unit=11,file='Uz_file.bin',status='unknown',access='direct',recl=NSTEP*4)
+  open(unit=11,file='OUTPUT_FILES/Uz_file.bin',status='unknown',access='direct',recl=NSTEP*4)
   do irec=1,nrec
     write(11,rec=irec) (sngl(sisuz(isample,irec)),isample=1,NSTEP)
   enddo
@@ -120,7 +120,7 @@
 !----
 
 ! ligne de recepteurs pour Xsu
-  open(unit=11,file='receiver_line_Xsu_XWindow',status='unknown')
+  open(unit=11,file='OUTPUT_FILES/receiver_line_Xsu_XWindow',status='unknown')
 
 ! subtract t0 from seismograms to get correct zero time
   write(11,110) FACTORXSU,NSTEP,deltat,-t0,nrec
@@ -141,7 +141,7 @@
   close(11)
 
 ! script de visualisation
-  open(unit=11,file='show_receiver_line_Xsu',status='unknown')
+  open(unit=11,file='OUTPUT_FILES/show_receiver_line_Xsu',status='unknown')
   write(11,100)
   write(11,*)
   write(11,*) '/bin/rm -f tempfile receiver_line_Xsu_postscript'

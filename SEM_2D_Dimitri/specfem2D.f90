@@ -566,7 +566,7 @@
     print *
     print *,'Saving the grid in a text file...'
     print *
-    open(unit=55,file='gridpoints.txt',status='unknown')
+    open(unit=55,file='OUTPUT_FILES/gridpoints.txt',status='unknown')
     write(55,*) npoin
     do n = 1,npoin
       write(55,*) n,(coord(i,n), i=1,NDIM)
@@ -624,7 +624,7 @@
     print *
     print *,'Reading velocity and density model from external file...'
     print *
-    open(unit=55,file='extmodel.txt',status='unknown')
+    open(unit=55,file='OUTPUT_FILES/extmodel.txt',status='unknown')
     read(55,*) nbpoin
     if(nbpoin /= npoin) stop 'Wrong number of points in input file'
     do n = 1,npoin
@@ -815,7 +815,7 @@
     print *
     print *,'Reading initial fields from external file...'
     print *
-    open(unit=55,file='wavefields.txt',status='unknown')
+    open(unit=55,file='OUTPUT_FILES/wavefields.txt',status='unknown')
     read(55,*) nbpoin
     if(nbpoin /= npoin) stop 'Wrong number of points in input file'
     allocate(displread(NDIM))
@@ -877,7 +877,7 @@
     print *
     print *,'Saving the source time function in a text file...'
     print *
-    open(unit=55,file='source.txt',status='unknown')
+    open(unit=55,file='OUTPUT_FILES/source.txt',status='unknown')
 
 ! boucle principale d'evolution en temps
     do it = 1,NSTEP
