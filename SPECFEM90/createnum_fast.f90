@@ -20,7 +20,7 @@
   include "constants.h"
 
   integer npoin,npgeo,nspec,ngnod
-  integer knods(ngnod,nspec),ibool(NGLLX,NGLLY,nspec)
+  integer knods(ngnod,nspec),ibool(NGLLX,NGLLZ,nspec)
   double precision shape(ngnod,NGLLX,NGLLX)
   double precision coorg(NDIME,npgeo)
 
@@ -43,7 +43,7 @@
   print *,'Generating global mesh numbering (fast version)...'
   print *
 
-  nxyz   = NGLLX*NGLLY
+  nxyz   = NGLLX*NGLLZ
   ntot   = nxyz*nspec
 
   allocate(loc(ntot))

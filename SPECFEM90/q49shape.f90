@@ -11,11 +11,11 @@
 !
 !========================================================================
 
-  subroutine q49shape(shape,dershape,xi,yi,ngnod,NGLLX,NGLLY,NDIME)
+  subroutine q49shape(shape,dershape,xi,yi,ngnod)
 
 !=======================================================================
 !
-!     "q 4 9 s h a p e" : set up the shape functions and their derivatives
+!                       set up the shape functions and their derivatives
 !                       for the isoparametric transformation of the
 !                       spectral macroblocs.
 !                       The routine is able to deal with
@@ -38,19 +38,16 @@
 
   implicit none
 
-  integer ngnod,NGLLX,NGLLY,NDIME
+  include "constants.h"
+
+  integer ngnod
 
   double precision shape(ngnod,NGLLX,NGLLX)
   double precision dershape(NDIME,ngnod,NGLLX,NGLLX)
-  double precision xi(NGLLX),yi(NGLLY)
-
-  double precision, parameter :: &
-       zero=0.d0,one=1.d0,two=2.d0,half=0.5d0,quart=0.25d0
+  double precision xi(NGLLX),yi(NGLLZ)
 
   integer l1,l2
   double precision s,sp,sm,t,tp,tm,s2,t2,ss,tt,st
-
-  double precision, external :: hgll
 
 !
 !---- set up the shape functions and their local derivatives
@@ -59,7 +56,7 @@
 !
 !----    4-noded rectangular element
 !
- do l2 = 1,NGLLY
+ do l2 = 1,NGLLZ
 
     t  = yi(l2)
 
@@ -97,7 +94,7 @@
 !
 !----    9-noded rectangular element
 !
- do l2 = 1,NGLLY
+ do l2 = 1,NGLLZ
 
     t  = yi(l2)
 

@@ -60,7 +60,7 @@
 !
 !----    plot the lines in xi-direction
 !
-   do iy = 1,NGLLY
+   do iy = 1,NGLLZ
      do ix = 1,NGLLX-1
 !
 !----   get the global point number
@@ -75,7 +75,7 @@
   write(20,15) coord(1,iglobnum2),coord(2,iglobnum2)
   write(20,10)
 
-  if(iy == 1 .or. iy == NGLLY) then
+  if(iy == 1 .or. iy == NGLLZ) then
     write(21,15) coord(1,iglobnum),coord(2,iglobnum)
     write(21,15) coord(1,iglobnum2),coord(2,iglobnum2)
     write(21,10)
@@ -88,7 +88,7 @@
 !----    plot the lines in eta-direction
 !
    do ix = 1,NGLLX
-     do iy = 1,NGLLY-1
+     do iy = 1,NGLLZ-1
 !
 !----   get the global point number
 !

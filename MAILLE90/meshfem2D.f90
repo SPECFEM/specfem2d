@@ -53,7 +53,6 @@
   character(len=15) junk
 
   integer imatnum,inumabs,inumelem,netyp
-  integer icodehaut,icodebas,icodegauche,icodedroite
   integer nelemabs,npgeo,nspec,ninterf,ntopo
   integer k,icol,ili,istepx,istepz,ncut,ix,iz,irec,i,j
   integer ixdebzone,ixfinzone,izdebzone,izfinzone,imodnum
@@ -62,6 +61,8 @@
   integer isismostype,ivecttype
   integer ngnod,nt,nx,nz,nxread,nzread
   integer icodematread
+
+  logical codehaut,codebas,codegauche,codedroite
 
   double precision ratio
   double precision tang1,tangN,vpzone,vszone
@@ -80,12 +81,6 @@
 
   integer, external :: num
   double precision, external :: bottom,spl,dens
-
-! --- code des numeros d'aretes pour les bords absorbants
-  integer, parameter :: iaretebas    = 1
-  integer, parameter :: iaretedroite = 2
-  integer, parameter :: iaretehaut   = 3
-  integer, parameter :: iaretegauche = 4
 
 ! ***
 ! *** read the parameter file
@@ -763,18 +758,18 @@
   inumabs = 0
   do iz=1,nzread
   do ix=1,nxread
-    icodehaut = 0
-    icodebas = 0
-    icodegauche = 0
-    icodedroite = 0
+    codehaut = .false.
+    codebas = .false.
+    codegauche = .false.
+    codedroite = .false.
     inumelem = (iz-1)*nxread + ix
-    if(abshaut   .and. iz==nzread) icodehaut = iaretehaut
-    if(absbas    .and. iz== 1) icodebas = iaretebas
-    if(absgauche .and. ix== 1) icodegauche = iaretegauche
-    if(absdroite .and. ix==nxread) icodedroite = iaretedroite
-    if(icodehaut>0 .or. icodebas>0 .or. icodegauche>0 .or. icodedroite>0) then
+    if(abshaut   .and. iz==nzread) codehaut = .true.
+    if(absbas    .and. iz== 1) codebas = .true.
+    if(absgauche .and. ix== 1) codegauche = .true.
+    if(absdroite .and. ix==nxread) codedroite = .true.
+    if(codehaut .or. codebas .or. codegauche .or. codedroite) then
       inumabs = inumabs + 1
-      write(15,*) inumabs,inumelem,icodehaut,icodebas,icodegauche,icodedroite
+      write(15,*) inumabs,inumelem,codehaut,codebas,codegauche,codedroite
     endif
   enddo
   enddo

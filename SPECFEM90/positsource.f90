@@ -24,7 +24,7 @@
   integer npoin,nspec
   double precision coord(NDIME,npoin)
   double precision gltfu(20)
-  integer ibool(NGLLX,NGLLY,nspec)
+  integer ibool(NGLLX,NGLLZ,nspec)
 
   double precision dminmax,dmin,xs,zs,xp,zp,dist
   integer ip,ipoint,ix,iy,numelem,ilowx,ilowy,ihighx,ihighy
@@ -42,14 +42,14 @@
       ilowx = 1
       ilowy = 1
       ihighx = NGLLX
-      ihighy = NGLLY
+      ihighy = NGLLZ
 
 ! on ne fait la recherche que sur l'interieur de l'element si source explosive
   if(nint(gltfu(2)) == 2) then
     ilowx = 2
     ilowy = 2
     ihighx = NGLLX-1
-    ihighy = NGLLY-1
+    ihighy = NGLLZ-1
   endif
 
 ! recherche du point de grille le plus proche
