@@ -24,7 +24,7 @@
 
 ! variables needed to compute the transformation
   double precision, allocatable :: psi(:),eta(:),absx(:), &
-      a00(:),a01(:),valeta(:),bot0(:),top0(:),bot_p(:),top_p(:)
+      a00(:),a01(:),valeta(:),bot0(:),top0(:)
 
 ! stockage du modele de vitesse et densite
   double precision, allocatable :: rho(:),cp(:),cs(:),aniso3(:),aniso4(:)
@@ -95,15 +95,14 @@
   open(unit=10,file='Par',status='old')
 
 ! formats
-
- 1 format(a,f20.8)
- 2 format(a,i20)
+ 1 format(a,f12.5)
+ 2 format(a,i8)
  3 format(a,a)
- 4 format(a,l20)
+ 4 format(a,l8)
 
 ! read the header
   do i=1,10
-  read(10,*)
+    read(10,*)
   enddo
 
 ! read file names and path for output
@@ -137,8 +136,8 @@
 
 ! multiplier par 2 si elements 9 noeuds
   if(ngnod == 9) then
-      nx = nx * 2
-      nz = nz * 2
+    nx = nx * 2
+    nz = nz * 2
   endif
 
 ! skip comment
@@ -186,24 +185,23 @@
   allocate(factor(nbsources))
 
   do i=1,nbsources
-      read(10,*)
-      read(10,1)junk,xs(i)
-      read(10,1)junk,zs(i)
-      read(10,1)junk,f0(i)
-      read(10,1)junk,t0(i)
-      read(10,2)junk,isource_type(i)
-      read(10,2)junk,itimetype(i)
-      read(10,1)junk,angle(i)
-      read(10,1)junk,factor(i)
+    read(10,*)
+    read(10,1)junk,xs(i)
+    read(10,1)junk,zs(i)
+    read(10,1)junk,f0(i)
+    read(10,1)junk,t0(i)
+    read(10,2)junk,isource_type(i)
+    read(10,2)junk,itimetype(i)
+    read(10,1)junk,angle(i)
+    read(10,1)junk,factor(i)
 
-      print *
-      print *,' Source #',i
-      print *,'Position xs, zs = ',xs(i),zs(i)
-      print *,'Frequency, delay = ',f0(i),t0(i)
-      print *,'Source type (1=force 2=explo) : ', &
-                    isource_type(i)
-      print *,'Angle of the source if force = ',angle(i)
-      print *,'Multiplying factor = ',factor(i)
+    print *
+    print *,' Source #',i
+    print *,'Position xs, zs = ',xs(i),zs(i)
+    print *,'Frequency, delay = ',f0(i),t0(i)
+    print *,'Source type (1=force 2=explo) : ',isource_type(i)
+    print *,'Angle of the source if force = ',angle(i)
+    print *,'Multiplying factor = ',factor(i)
   enddo
 
 ! skip comment
@@ -402,14 +400,14 @@
 ! stocker le modele de vitesse et densite
    do i=ixdebzone,ixfinzone
       do j=izdebzone,izfinzone
-  if(ngnod == 4) then
-  num_modele(i,j) = imodnum
-  else
-  num_modele(2*(i-1)+1,2*(j-1)+1) = imodnum
-  num_modele(2*(i-1)+1,2*(j-1)+2) = imodnum
-  num_modele(2*(i-1)+2,2*(j-1)+1) = imodnum
-  num_modele(2*(i-1)+2,2*(j-1)+2) = imodnum
-  endif
+        if(ngnod == 4) then
+          num_modele(i,j) = imodnum
+        else
+          num_modele(2*(i-1)+1,2*(j-1)+1) = imodnum
+          num_modele(2*(i-1)+1,2*(j-1)+2) = imodnum
+          num_modele(2*(i-1)+2,2*(j-1)+1) = imodnum
+          num_modele(2*(i-1)+2,2*(j-1)+2) = imodnum
+        endif
       enddo
    enddo
 
@@ -432,15 +430,14 @@
   allocate(valeta(0:nz))
   allocate(bot0(0:nx))
   allocate(top0(0:nx))
-  allocate(bot_p(0:nx))
-  allocate(top_p(0:nx))
 
 ! calcul des points regulierement espaces
   do i=0,nx
-        psi(i) = i/dble(nx)
+    psi(i) = i/dble(nx)
   enddo
+
   do j=0,nz
-        eta(j) = j/dble(nz)
+    eta(j) = j/dble(nz)
   enddo
 
 ! quelques verifications de base a faire
@@ -486,7 +483,7 @@
   allocate(coefs_topo(ntopo))
 
   do i=1,ntopo
-       read(15,*) xtopo(i),ztopo(i)
+    read(15,*) xtopo(i),ztopo(i)
   enddo
   close(15)
 
@@ -503,12 +500,12 @@
   allocate(coefs_interf(ninterf))
 
   do i=1,ninterf
-       read(15,*) xinterf(i),zinterf(i)
+    read(15,*) xinterf(i),zinterf(i)
   enddo
 
   close(15)
   else
-      print *,'*** No interface file specified ***'
+    print *,'*** No interface file specified ***'
   endif
 
 ! check the values read
@@ -546,9 +543,7 @@
   print *, 'Position (x,z) des ',nbsources,' sources'
   print *
   do i=1,nbsources
-   if(isources_surf) then
-      zs(i) = spl(xs(i),xtopo,ztopo,coefs_topo,ntopo)
-   endif
+   if(isources_surf) zs(i) = spl(xs(i),xtopo,ztopo,coefs_topo,ntopo)
    print *, 'Source ',i,' = ',xs(i),zs(i)
   enddo
 
@@ -557,15 +552,13 @@
   print *, 'Position (x,z) des ',nrec,' receivers'
   print *
   do irec=1,nrec
-   if(ienreg_surf) then
-      zrec(irec) = spl(xrec(irec),xtopo,ztopo,coefs_topo,ntopo)
-   endif
+   if(ienreg_surf) zrec(irec) = spl(xrec(irec),xtopo,ztopo,coefs_topo,ntopo)
    print *, 'Receiver ',irec,' = ',xrec(irec),zrec(irec)
   enddo
 
 !--- definition du maillage suivant X
   do ix=0,nx
-          absx(ix) = dens(ix,psi,xmin,xmax,nx)
+    absx(ix) = dens(ix,psi,xmin,xmax,nx)
   enddo
 
   if (interffile == 'none') then
@@ -573,16 +566,14 @@
 ! *** une seule zone si pas d'interface specifiee
 
   do iz=0,nz
-  valeta(iz) = eta(iz)
-  a00(iz) = 1-valeta(iz)
-  a01(iz) = valeta(iz)
+    valeta(iz) = eta(iz)
+    a00(iz) = 1-valeta(iz)
+    a01(iz) = valeta(iz)
   enddo
 
   do ix=0,nx
-          bot0(ix) = bottom(absx(ix))
-          top0(ix) = spl(absx(ix),xtopo,ztopo,coefs_topo,ntopo)
-          bot_p(ix) = botprime(absx(ix))
-          top_p(ix) = spl_prime(absx(ix),xtopo,ztopo,coefs_topo,ntopo)
+    bot0(ix) = bottom(absx(ix))
+    top0(ix) = spl(absx(ix),xtopo,ztopo,coefs_topo,ntopo)
   enddo
 
 ! valeurs de x et y pour display domaine physique
@@ -602,16 +593,14 @@
 ! *** ZONE DU BAS ***
 
   do iz=0,ncut
-  valeta(iz) = dble(iz)/(nz*ratio)
-  a00(iz) = 1-valeta(iz)
-  a01(iz) = valeta(iz)
+    valeta(iz) = dble(iz)/(nz*ratio)
+    a00(iz) = 1-valeta(iz)
+    a01(iz) = valeta(iz)
   enddo
 
   do ix=0,nx
-          bot0(ix) = bottom(absx(ix))
-          top0(ix) = spl(absx(ix),xinterf,zinterf,coefs_interf,ninterf)
-          bot_p(ix) = botprime(absx(ix))
-          top_p(ix) = spl_prime(absx(ix),xinterf,zinterf,coefs_interf,ninterf)
+    bot0(ix) = bottom(absx(ix))
+    top0(ix) = spl(absx(ix),xinterf,zinterf,coefs_interf,ninterf)
   enddo
 
 ! valeurs de x et y pour display domaine physique
@@ -633,8 +622,6 @@
   do ix=0,nx
     bot0(ix) = spl(absx(ix),xinterf,zinterf,coefs_interf,ninterf)
     top0(ix) = spl(absx(ix),xtopo,ztopo,coefs_topo,ntopo)
-    bot_p(ix) = spl_prime(absx(ix),xinterf,zinterf,coefs_interf,ninterf)
-    top_p(ix) = spl_prime(absx(ix),xtopo,ztopo,coefs_topo,ntopo)
   enddo
 
 ! valeurs de x et y pour display domaine physique
@@ -666,17 +653,17 @@
 
 ! dessin de la topo de surface (splines)
   do i=0,nx-1
-            write(20,15) sngl(absx(i)),sngl(top0(i))
-            write(20,15) sngl(absx(i+1)),sngl(top0(i+1))
-            write(20,10)
+    write(20,15) sngl(absx(i)),sngl(top0(i))
+    write(20,15) sngl(absx(i+1)),sngl(top0(i+1))
+    write(20,10)
   enddo
 
 ! dessin de l'interface du milieu
   if (interffile /= 'none') then
   do i=0,nx-1
-            write(20,15) sngl(absx(i)),sngl(bot0(i))
-            write(20,15) sngl(absx(i+1)),sngl(bot0(i+1))
-            write(20,10)
+    write(20,15) sngl(absx(i)),sngl(bot0(i))
+    write(20,15) sngl(absx(i+1)),sngl(bot0(i+1))
+    write(20,10)
   enddo
   endif
 
@@ -684,33 +671,33 @@
   print *, 'Ecriture lignes horizontales'
   istepx = 1
   if(ngnod == 4) then
-      istepz = 1
+    istepz = 1
   else
-      istepz = 2
+    istepz = 2
   endif
   do ili=0,nz,istepz
-        do icol=0,nx-istepx,istepx
-  write(20,15) sngl(x(icol,ili)),sngl(z(icol,ili))
-  write(20,15) sngl(x(icol+istepx,ili)),sngl(z(icol+istepx,ili))
-  write(20,10)
-                   enddo
+    do icol=0,nx-istepx,istepx
+      write(20,15) sngl(x(icol,ili)),sngl(z(icol,ili))
+      write(20,15) sngl(x(icol+istepx,ili)),sngl(z(icol+istepx,ili))
+      write(20,10)
+    enddo
   enddo
 
 ! dessin des lignes verticales de la grille
   print *, 'Ecriture lignes verticales'
   if(ngnod == 4) then
-      istepx = 1
+    istepx = 1
   else
-      istepx = 2
+    istepx = 2
   endif
   istepz = 1
-       do icol=0,nx,istepx
-               do ili=0,nz-istepz,istepz
-  write(20,15) sngl(x(icol,ili)),sngl(z(icol,ili))
-  write(20,15) sngl(x(icol,ili+istepz)),sngl(z(icol,ili+istepz))
-  write(20,10)
-                enddo
-       enddo
+  do icol=0,nx,istepx
+    do ili=0,nz-istepz,istepz
+      write(20,15) sngl(x(icol,ili)),sngl(z(icol,ili))
+      write(20,15) sngl(x(icol,ili+istepz)),sngl(z(icol,ili+istepz))
+      write(20,10)
+    enddo
+  enddo
 
   close(20)
 
@@ -740,10 +727,10 @@
   ndofn = 2
   ndime = 2
   npgeo = (nx+1)*(nz+1)
-  if (ngnod == 4) then
-      nspel = nx*nz
+  if(ngnod == 4) then
+    nspel = nx*nz
   else
-      nspel = nx*nz/4
+    nspel = nx*nz/4
   endif
   write(15,*) 'ndofn ndime npgeo'
   write(15,*) ndofn,ndime,npgeo
@@ -786,9 +773,9 @@
 
   write(15,*) 'iexec iecho'
   if(iexec) then
-    write(15,*) '1       1'
+    write(15,*) '1 1'
   else
-    write(15,*) '0       1'
+    write(15,*) '0 1'
   endif
 
   write(15,*) 'ncycl dtinc niter'
@@ -849,12 +836,11 @@
   nxgll = idegpoly + 1
 
   write(15,*) 'netyp numat ngnod nxgll nygll nspec iptsdisp ielemabs ielemperio'
-  write(15,*) netyp,nbmodeles,ngnod,nxgll,nxgll,nspel,iptsdisp, &
-                nelemabs,nelemperio
+  write(15,*) netyp,nbmodeles,ngnod,nxgll,nxgll,nspel,iptsdisp,nelemabs,nelemperio
 
   write(15,*) 'Material sets (num 0 rho vp vs 0 0) or (num 2 rho c11 c13 c33 c44)'
   do i=1,nbmodeles
-       write(15,*) i,icodemat(i),rho(i),cp(i),cs(i),aniso3(i),aniso4(i)
+    write(15,*) i,icodemat(i),rho(i),cp(i),cs(i),aniso3(i),aniso4(i)
   enddo
 
 
@@ -862,27 +848,26 @@
 
   k=0
   if(ngnod == 4) then
-      do j=0,nz-1
-      do i=0,nx-1
+    do j=0,nz-1
+    do i=0,nx-1
 
-      k = k + 1
-      imatnum = num_modele(i+1,j+1)
-      write(15,*) k,imatnum,num(i,j,nx),num(i+1,j,nx),num(i+1,j+1,nx), &
-                    num(i,j+1,nx)
-      enddo
-      enddo
+    k = k + 1
+    imatnum = num_modele(i+1,j+1)
+    write(15,*) k,imatnum,num(i,j,nx),num(i+1,j,nx),num(i+1,j+1,nx),num(i,j+1,nx)
+    enddo
+    enddo
   else
-      do j=0,nz-2,2
-      do i=0,nx-2,2
+    do j=0,nz-2,2
+    do i=0,nx-2,2
 
-      k = k + 1
-      imatnum = num_modele(i+1,j+1)
-      write(15,*) k,imatnum,num(i,j,nx),num(i+2,j,nx),num(i+2,j+2,nx), &
+    k = k + 1
+    imatnum = num_modele(i+1,j+1)
+    write(15,*) k,imatnum,num(i,j,nx),num(i+2,j,nx),num(i+2,j+2,nx), &
               num(i,j+2,nx),num(i+1,j,nx),num(i+2,j+1,nx), &
               num(i+1,j+2,nx),num(i,j+1,nx),num(i+1,j+1,nx)
 
-      enddo
-      enddo
+    enddo
+    enddo
   endif
 
 !
@@ -985,7 +970,7 @@
   integer i,j,nx
 
     num = j*(nx+1) + i + 1
-  return
+
   end function num
 
 ! ------- definition des fonctions representant les interfaces -------
@@ -997,8 +982,9 @@
   double precision function bottom(x)
   implicit none
   double precision x
+
     bottom = 0.d0
-  return
+
   end function bottom
 
 !
@@ -1006,7 +992,9 @@
 !
 
 !--- spline
+
   double precision function spl(x,xtopo,ztopo,coefs,ntopo)
+
   implicit none
   integer ntopo
   double precision x,xp
@@ -1019,12 +1007,12 @@
   if (xp > xtopo(ntopo)) xp = xtopo(ntopo)
   call splint(xtopo,ztopo,coefs,ntopo,xp,spl)
 
-  return
   end function spl
 
 ! --- fonction de densification du maillage horizontal
 
   double precision function dens(ix,psi,xmin,xmax,nx)
+
   implicit none
   integer ix,nx
   double precision psi(0:nx)
@@ -1032,13 +1020,14 @@
 
   dens = xmin + dble(xmax-xmin)*psi(ix)
 
-  return
   end function dens
 
 ! --------------------------------------
 
 ! routine de calcul des coefs du spline (Numerical Recipes)
+
   subroutine spline(x,y,n,yp1,ypn,y2)
+
   implicit none
 
   integer n
@@ -1054,28 +1043,29 @@
   y2(1)=-0.5
   u(1)=(3./(x(2)-x(1)))*((y(2)-y(1))/(x(2)-x(1))-yp1)
   do i=2,n-1
-      sig=(x(i)-x(i-1))/(x(i+1)-x(i-1))
-      p=sig*y2(i-1)+2.
-      y2(i)=(sig-1.)/p
-      u(i)=(6.*((y(i+1)-y(i))/(x(i+1)-x(i))-(y(i)-y(i-1)) &
-                    /(x(i)-x(i-1)))/(x(i+1)-x(i-1))-sig*u(i-1))/p
+    sig=(x(i)-x(i-1))/(x(i+1)-x(i-1))
+    p=sig*y2(i-1)+2.
+    y2(i)=(sig-1.)/p
+    u(i)=(6.*((y(i+1)-y(i))/(x(i+1)-x(i))-(y(i)-y(i-1)) &
+               /(x(i)-x(i-1)))/(x(i+1)-x(i-1))-sig*u(i-1))/p
   enddo
   qn=0.5
   un=(3./(x(n)-x(n-1)))*(ypn-(y(n)-y(n-1))/(x(n)-x(n-1)))
   y2(n)=(un-qn*u(n-1))/(qn*y2(n-1)+1.)
   do k=n-1,1,-1
-      y2(k)=y2(k)*y2(k+1)+u(k)
+    y2(k)=y2(k)*y2(k+1)+u(k)
   enddo
 
   deallocate(u)
 
-  return
   end subroutine spline
 
 ! --------------
 
 ! routine d'evaluation du spline (Numerical Recipes)
+
   SUBROUTINE SPLINT(XA,YA,Y2A,N,X,Y)
+
   implicit none
 
   integer n
@@ -1088,20 +1078,19 @@
   KLO=1
   KHI=N
   do while (KHI-KLO > 1)
-      K=(KHI+KLO)/2
-      IF(XA(K) > X)THEN
-            KHI=K
-      ELSE
-            KLO=K
-      ENDIF
+    K=(KHI+KLO)/2
+    IF(XA(K) > X)THEN
+      KHI=K
+    ELSE
+      KLO=K
+    ENDIF
   enddo
   H=XA(KHI)-XA(KLO)
   IF (H == 0.d0) stop 'Bad input in spline evaluation'
   A=(XA(KHI)-X)/H
   B=(X-XA(KLO))/H
 
-  Y=A*YA(KLO)+B*YA(KHI)+((A**3-A)*Y2A(KLO)+ &
-              (B**3-B)*Y2A(KHI))*(H**2)/6.d0
-  RETURN
+  Y=A*YA(KLO)+B*YA(KHI)+((A**3-A)*Y2A(KLO)+ (B**3-B)*Y2A(KHI))*(H**2)/6.d0
+
   end subroutine SPLINT
 
