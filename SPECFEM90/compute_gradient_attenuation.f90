@@ -11,7 +11,8 @@
 !
 !========================================================================
 
-  subroutine compute_gradient_attenuation(displ,duxdxl,duzdxl,duxdzl,duzdzl,xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,NSPEC,npoin)
+  subroutine compute_gradient_attenuation(displ,duxdxl,duzdxl,duxdzl,duzdzl, &
+         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,NSPEC,npoin)
 
 ! compute Grad(displ) for attenuation
 

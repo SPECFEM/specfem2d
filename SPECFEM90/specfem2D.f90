@@ -736,9 +736,11 @@
 
 ! add the memory variables using the relaxed parameters (Carcione page 111)
 ! beware: there is a bug in Carcione's equation for sigma_zz
-    sigma_xx = sigma_xx + (lambdal_relaxed + mul_relaxed)* (e1_mech1(i,j,k) + e1_mech2(i,j,k)) + TWO * mul_relaxed * (e11_mech1(i,j,k) + e11_mech2(i,j,k))
+    sigma_xx = sigma_xx + (lambdal_relaxed + mul_relaxed)* &
+      (e1_mech1(i,j,k) + e1_mech2(i,j,k)) + TWO * mul_relaxed * (e11_mech1(i,j,k) + e11_mech2(i,j,k))
     sigma_xz = sigma_xz + mul_relaxed * (e13_mech1(i,j,k) + e13_mech2(i,j,k))
-    sigma_zz = sigma_zz + (lambdal_relaxed + mul_relaxed)* (e1_mech1(i,j,k) + e1_mech2(i,j,k)) - TWO * mul_relaxed * (e11_mech1(i,j,k) + e11_mech2(i,j,k))
+    sigma_zz = sigma_zz + (lambdal_relaxed + mul_relaxed)* &
+      (e1_mech1(i,j,k) + e1_mech2(i,j,k)) - TWO * mul_relaxed * (e11_mech1(i,j,k) + e11_mech2(i,j,k))
 
   else
 
