@@ -37,10 +37,13 @@ OBJS = $O/checkgrid.o $O/datim.o $O/defarrays.o\
 default: all
 
 clean:
-	/bin/rm -f $(EXEC) $(EXEC).trace $O/*.o *.o $O/*.il *.mod core *.gnu *.ps Ux*.dat Uz*.dat image*.pnm sources;
+	/bin/rm -f $(EXEC) $(EXEC).trace $O/*.o *.o $O/*.il *.mod core *.gnu *.ps Ux*.dat Uz*.dat Ux*.bin Uz*.bin image*.pnm xconvolve_source_timefunction *receiver_line_* sources;
 
 all: $(OBJS)
 	$(LINK) $(FLAGS) -o $(EXEC) $(OBJS)
+
+convolve_source_timefunction: $O/convolve_source_timefunction.o
+	${F90} $(FLAGS) -o xconvolve_source_timefunction $O/convolve_source_timefunction.o
 
 $O/checkgrid.o: checkgrid.f90 constants.h
 	${F90} $(FLAGS) -c -o $O/checkgrid.o checkgrid.f90
@@ -51,6 +54,9 @@ $O/createnum_fast.o: createnum_fast.f90 constants.h
 $O/createnum_slow.o: createnum_slow.f90 constants.h
 	${F90} $(FLAGS) -c -o $O/createnum_slow.o createnum_slow.f90
     
+$O/convolve_source_timefunction.o: convolve_source_timefunction.f90
+	${F90} $(FLAGS) -c -o $O/convolve_source_timefunction.o convolve_source_timefunction.f90
+
 $O/datim.o: datim.f90 constants.h
 	${F90} $(FLAGS) -c -o $O/datim.o datim.f90
     

@@ -11,7 +11,7 @@
 !
 !========================================================================
 
-  subroutine positsource(coord,ibool,gltfu,npoin,nspec)
+  subroutine positsource(coord,ibool,npoin,nspec,xs,zs,source_type,ix_source,iz_source,ispec_source,iglob_source)
 
 !
 !----- calculer la position reelle de la source
@@ -21,13 +21,15 @@
 
   include "constants.h"
 
-  integer npoin,nspec
-  double precision coord(NDIME,npoin)
-  double precision gltfu(20)
+  integer npoin,nspec,source_type
   integer ibool(NGLLX,NGLLZ,nspec)
 
-  double precision distminmax,distmin,xs,zs,xp,zp,dist
-  integer ip,ipoint,ix,iy,numelem,ilowx,ilowy,ihighx,ihighy
+  double precision xs,zs
+  double precision coord(NDIME,npoin)
+
+  integer ip,ix,iz,numelem,ilowx,ilowz,ihighx,ihighz,ix_source,iz_source,ispec_source,iglob_source
+
+  double precision distminmax,distmin,xp,zp,dist
 
   write(iout,200)
 
@@ -35,30 +37,26 @@
 
       distmin = +HUGEVAL
 
-! coordonnees demandees pour la source
-      xs = gltfu(3)
-      zs = gltfu(4)
-
       ilowx = 1
-      ilowy = 1
+      ilowz = 1
       ihighx = NGLLX
-      ihighy = NGLLZ
+      ihighz = NGLLZ
 
 ! on ne fait la recherche que sur l'interieur de l'element si source explosive
-  if(nint(gltfu(2)) == 2) then
+  if(source_type == 2) then
     ilowx = 2
-    ilowy = 2
+    ilowz = 2
     ihighx = NGLLX-1
-    ihighy = NGLLZ-1
+    ihighz = NGLLZ-1
   endif
 
 ! recherche du point de grille le plus proche
       do numelem=1,nspec
       do ix=ilowx,ihighx
-      do iy=ilowy,ihighy
+      do iz=ilowz,ihighz
 
 ! numero global du point
-        ip=ibool(ix,iy,numelem)
+        ip=ibool(ix,iz,numelem)
 
 ! coordonnees du point de grille
             xp = coord(1,ip)
@@ -69,21 +67,19 @@
 ! retenir le point pour lequel l'ecart est minimal
             if(dist < distmin) then
               distmin = dist
-              gltfu(9) = ip
-              gltfu(10) = ix
-              gltfu(11) = iy
-              gltfu(12) = numelem
+              iglob_source = ip
+              ix_source = ix
+              iz_source = iz
+              ispec_source = numelem
             endif
 
       enddo
       enddo
       enddo
 
-  ipoint = nint(gltfu(9))
-
   distminmax = max(distmin,distminmax)
 
-  write(iout,150) xs,zs,coord(1,ipoint),coord(2,ipoint),distmin
+  write(iout,150) xs,zs,coord(1,iglob_source),coord(2,iglob_source),distmin
   write(iout,160) distminmax
 
  150 format(1x,f12.3,1x,f12.3,1x,f12.3,1x,f12.3,f12.3)

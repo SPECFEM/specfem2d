@@ -19,8 +19,10 @@
 
 !
 ! version 5.1, December 2004 :
+!               - Dirac and Gaussian time sources and corresponding convolution routine
 !               - more general mesher with any number of curved layers
 !               - color PNM snapshots
+!               - more flexible Par file with any number of comment lines
 !
 ! version 5.0, May 2004 :
 !               - got rid of useless routines, suppressed commons etc.
@@ -45,17 +47,20 @@
 
   character(len=80) datlin
 
-  double precision gltfu(20)
+  integer source_type,time_function_type
+  double precision xs,zs,f0,t0,factor,angleforce
 
   double precision, dimension(:,:), allocatable :: coorg,posrec
   double precision, dimension(:), allocatable :: coorgread
   double precision, dimension(:), allocatable :: posrecread
 
+  integer, dimension(:), allocatable :: iglob_rec
+
   double precision, dimension(:,:), allocatable :: sisux,sisuz
 
   logical anyabs
 
-  integer i,j,it,irec,iglobrec,ipoin,ip,id,ip1,ip2,in,nnum
+  integer i,j,it,irec,ipoin,ip,id,ip1,ip2,in,nnum
   integer nbpoin,inump,n,npoinext,ispec,npoin,npgeo,iglob
 
   double precision valux,valuz,rhoextread,vpextread,vsextread
@@ -113,19 +118,19 @@
   integer, dimension(:,:), allocatable  :: knods
   integer, dimension(:), allocatable :: kmato,numabs
 
-  integer ie,k,iexplo
+  integer ie,k
 
-  integer ielems,iglobsource
-  double precision f0,t0,factor,a,angleforce,ricker,displnorm_all
+  integer ispec_source,iglob_source,ix_source,iz_source
+  double precision a,source_time_function,displnorm_all
 
   double precision rsizemin,rsizemax,cpoverdxmin,cpoverdxmax, &
     lambdal_Smin,lambdal_Smax,lambdal_Pmin,lambdal_Pmax,vpmin,vpmax
 
-  integer icolor,inumber,isubsamp,ivecttype,itaff,nrec,isismostype
+  integer colors,numbers,subsamp,vecttype,itaff,nrec,sismostype
   integer numat,ngnod,nspec,iptsdisp,nelemabs
 
-  logical interpol,imeshvect,imodelvect,iboundvect,ireadmodel,initialfield, &
-    ioutputgrid,ignuplot,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
+  logical interpol,meshvect,modelvect,boundvect,readmodel,initialfield, &
+    outputgrid,gnuplot,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
 
   double precision cutvect,anglerec
 
@@ -208,13 +213,13 @@
   read(IIN,*) npgeo
 
   read(IIN,40) datlin
-  read(IIN,*) ignuplot,interpol
+  read(IIN,*) gnuplot,interpol
 
   read(IIN,40) datlin
-  read(IIN,*) itaff,icolor,inumber
+  read(IIN,*) itaff,colors,numbers
 
   read(IIN,40) datlin
-  read(IIN,*) imeshvect,imodelvect,iboundvect,cutvect,isubsamp,nx_sem_PNM
+  read(IIN,*) meshvect,modelvect,boundvect,cutvect,subsamp,nx_sem_PNM
   cutvect = cutvect / 100.d0
 
   read(IIN,40) datlin
@@ -224,17 +229,17 @@
   read(IIN,*) initialfield
 
   read(IIN,40) datlin
-  read(IIN,*) isismostype,ivecttype
+  read(IIN,*) sismostype,vecttype
 
   read(IIN,40) datlin
-  read(IIN,*) ireadmodel,ioutputgrid,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
+  read(IIN,*) readmodel,outputgrid,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
 
 !---- check parameters read
   write(IOUT,200) npgeo,NDIME
-  write(IOUT,600) itaff,icolor,inumber
-  write(IOUT,700) nrec,isismostype,anglerec
-  write(IOUT,750) initialfield,ireadmodel,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,ioutputgrid
-  write(IOUT,800) ivecttype,100.d0*cutvect,isubsamp
+  write(IOUT,600) itaff,colors,numbers
+  write(IOUT,700) nrec,sismostype,anglerec
+  write(IOUT,750) initialfield,readmodel,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,outputgrid
+  write(IOUT,800) vecttype,100.d0*cutvect,subsamp
 
 !---- read time step
   read(IIN,40) datlin
@@ -249,29 +254,32 @@
   allocate(sisuz(NSTEP,nrec))
   allocate(posrec(NDIME,nrec))
   allocate(coorg(NDIME,npgeo))
+  allocate(iglob_rec(nrec))
 
 !
 !----  read source information
 !
   read(IIN,40) datlin
-  read(IIN,*) (gltfu(k), k=2,9)
+  read(IIN,*) source_type,time_function_type,xs,zs,f0,t0,factor,angleforce
 
 !
 !-----  check the input
 !
  if(.not. initialfield) then
-   iexplo = nint(gltfu(2))
-   if (iexplo == 1) then
-     write(IOUT,212) (gltfu(k), k=3,8)
-   else if(iexplo == 2) then
-     write(IOUT,222) (gltfu(k), k=3,7)
+   if (source_type == 1) then
+     write(IOUT,212) xs,zs,f0,t0,factor,angleforce
+   else if(source_type == 2) then
+     write(IOUT,222) xs,zs,f0,t0,factor
    else
      stop 'Unknown source type number !'
    endif
  endif
 
+! for the source time function
+  a = pi*pi*f0*f0
+
 !-----  convert angle from degrees to radians
-  gltfu(8) = gltfu(8) * pi / 180.d0
+  angleforce = angleforce * pi / 180.d0
 
 !
 !---- read receiver locations
@@ -449,7 +457,7 @@
   allocate(fglobx(npoin))
   allocate(fglobz(npoin))
 
-  if(ireadmodel) then
+  if(readmodel) then
     npoinext = npoin
   else
     npoinext = 1
@@ -486,7 +494,7 @@
 !
 !--- save the grid of points in a file
 !
-  if(ioutputgrid) then
+  if(outputgrid) then
     print *
     print *,'Saving the grid in a text file...'
     print *
@@ -501,7 +509,7 @@
 !
 !-----   plot the GLL mesh in a Gnuplot file
 !
-  if(ignuplot) call plotgll(knods,ibool,coorg,coord,npoin,npgeo,ngnod,nspec)
+  if(gnuplot) call plotgll(knods,ibool,coorg,coord,npoin,npgeo,ngnod,nspec)
 
 !
 !----   define coefficients of the Newmark time scheme
@@ -512,13 +520,13 @@
 !
 !---- definir la position reelle des points source et recepteurs
 !
-  call positsource(coord,ibool,gltfu,npoin,nspec)
-  call positrec(coord,posrec,npoin,nrec)
+  call positsource(coord,ibool,npoin,nspec,xs,zs,source_type,ix_source,iz_source,ispec_source,iglob_source)
+  call positrec(coord,posrec,iglob_rec,npoin,nrec)
 
 !
 !----  eventuellement lecture d'un modele externe de vitesse et de densite
 !
-  if(ireadmodel) then
+  if(readmodel) then
     print *
     print *,'Reading velocity and density model from external file...'
     print *
@@ -540,9 +548,9 @@
 !
   call defarrays(vpext,vsext,rhoext,density,elastcoef, &
           xigll,yigll,xix,xiz,gammax,gammaz,a11,a12, &
-          ibool,kmato,coord,gltfu,npoin,rsizemin,rsizemax, &
-          cpoverdxmin,cpoverdxmax,lambdal_Smin,lambdal_Smax, &
-          lambdal_Pmin,lambdal_Pmax,vpmin,vpmax,ireadmodel,nspec,numat)
+          ibool,kmato,coord,npoin,rsizemin,rsizemax, &
+          cpoverdxmin,cpoverdxmax,lambdal_Smin,lambdal_Smax,lambdal_Pmin,lambdal_Pmax, &
+          vpmin,vpmax,readmodel,nspec,numat,source_type,ix_source,iz_source,ispec_source)
 
 ! build the global mass matrix once and for all
   rmass(:) = ZERO
@@ -551,7 +559,7 @@
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
 !--- if external density model
-        if(ireadmodel) then
+        if(readmodel) then
           rhol = rhoext(iglob)
         else
           rhol = density(kmato(ispec))
@@ -566,9 +574,10 @@
 
 !
 !---- verifier le maillage, la stabilite et le nb de points par lambda
+!---- seulement si la source en temps n'est pas un Dirac (sinon spectre non defini)
 !
-  call checkgrid(deltat,gltfu,initialfield,rsizemin,rsizemax, &
-      cpoverdxmin,cpoverdxmax,lambdal_Smin,lambdal_Smax,lambdal_Pmin,lambdal_Pmax)
+  if(time_function_type /= 3) call checkgrid(deltat,f0,t0,initialfield, &
+      rsizemin,rsizemax,cpoverdxmin,cpoverdxmax,lambdal_Smin,lambdal_Smax,lambdal_Pmin,lambdal_Pmax)
 
 !
 !---- for color PNM images
@@ -803,7 +812,7 @@
         do i = 1,NGLLX
 
 !--- if external medium, get elastic parameters of current grid point
-          if(ireadmodel) then
+          if(readmodel) then
             iglob = ibool(i,j,ispec)
             cpl = vpext(iglob)
             csl = vsext(iglob)
@@ -995,7 +1004,7 @@
           zeta = xix(i,j,ispec) * jacobian(i,j,ispec)
 
 ! external velocity model
-          if(ireadmodel) then
+          if(readmodel) then
             cpl = vpext(iglob)
             csl = vsext(iglob)
             rhol = rhoext(iglob)
@@ -1036,7 +1045,7 @@
           zeta = xix(i,j,ispec) * jacobian(i,j,ispec)
 
 ! external velocity model
-          if(ireadmodel) then
+          if(readmodel) then
             cpl = vpext(iglob)
             csl = vsext(iglob)
             rhol = rhoext(iglob)
@@ -1083,7 +1092,7 @@
           xxi = gammaz(i,j,ispec) * jacobian(i,j,ispec)
 
 ! external velocity model
-          if(ireadmodel) then
+          if(readmodel) then
             cpl = vpext(iglob)
             csl = vsext(iglob)
             rhol = rhoext(iglob)
@@ -1130,7 +1139,7 @@
           xxi = gammaz(i,j,ispec) * jacobian(i,j,ispec)
 
 ! external velocity model
-          if(ireadmodel) then
+          if(readmodel) then
             cpl = vpext(iglob)
             csl = vsext(iglob)
             rhol = rhoext(iglob)
@@ -1167,30 +1176,30 @@
 ! --- add the source
   if(.not. initialfield) then
 
-  f0 = gltfu(5)
-  t0 = gltfu(6)
-  factor = gltfu(7)
-  angleforce = gltfu(8)
+! Ricker source time function
+  if(time_function_type == 1) then
+    source_time_function = - factor * (ONE-TWO*a*(time-t0)**2) * exp(-a*(time-t0)**2)
 
-! Ricker wavelet for the source time function
-  a = pi*pi*f0*f0
-  ricker = - factor * (ONE-TWO*a*(time-t0)**2)*exp(-a*(time-t0)**2)
+! Gaussian or Dirac (we use a very thin Gaussian instead) source time function
+  else if(time_function_type == 2 .or. time_function_type == 3) then
+    source_time_function = factor * exp(-a*(time-t0)**2)
+
+  else
+    stop 'unknown source time function'
+  endif
 
 ! --- collocated force
-  if(nint(gltfu(2)) == 1) then
-    iglobsource = nint(gltfu(9))
-    accel(1,iglobsource) = accel(1,iglobsource) - dsin(angleforce)*ricker
-    accel(2,iglobsource) = accel(2,iglobsource) + dcos(angleforce)*ricker
+  if(source_type == 1) then
+    accel(1,iglob_source) = accel(1,iglob_source) - dsin(angleforce)*source_time_function
+    accel(2,iglob_source) = accel(2,iglob_source) + dcos(angleforce)*source_time_function
 
 !---- explosion
-  else if(nint(gltfu(2)) == 2) then
-!   recuperer numero d'element de la source
-    ielems = nint(gltfu(12))
+  else if(source_type == 2) then
     do i=1,NGLLX
       do j=1,NGLLX
-        iglob = ibool(i,j,ielems)
-        accel(1,iglob) = accel(1,iglob) + a11(i,j)*ricker
-        accel(2,iglob) = accel(2,iglob) + a12(i,j)*ricker
+        iglob = ibool(i,j,ispec_source)
+        accel(1,iglob) = accel(1,iglob) + a11(i,j)*source_time_function
+        accel(2,iglob) = accel(2,iglob) + a12(i,j)*source_time_function
       enddo
     enddo
   endif
@@ -1321,24 +1330,23 @@
 
 ! store the seismograms
   do irec=1,nrec
-    iglobrec = nint(posrec(1,irec))
 
-  if(isismostype == 1) then
-    valux = displ(1,iglobrec)
-    valuz = displ(2,iglobrec)
-  else if(isismostype == 2) then
-    valux = veloc(1,iglobrec)
-    valuz = veloc(2,iglobrec)
-  else if(isismostype == 3) then
-    valux = accel(1,iglobrec)
-    valuz = accel(2,iglobrec)
-  else
-    stop 'Wrong field code for seismogram output'
-  endif
+    if(sismostype == 1) then
+      valux = displ(1,iglob_rec(irec))
+      valuz = displ(2,iglob_rec(irec))
+    else if(sismostype == 2) then
+      valux = veloc(1,iglob_rec(irec))
+      valuz = veloc(2,iglob_rec(irec))
+    else if(sismostype == 3) then
+      valux = accel(1,iglob_rec(irec))
+      valuz = accel(2,iglob_rec(irec))
+    else
+      stop 'Wrong field code for seismogram output'
+    endif
 
 ! rotation eventuelle des composantes
-  sisux(it,irec) =   dcosrot*valux + dsinrot*valuz
-  sisuz(it,irec) = - dsinrot*valux + dcosrot*valuz
+    sisux(it,irec) =   dcosrot*valux + dsinrot*valuz
+    sisuz(it,irec) = - dsinrot*valux + dcosrot*valuz
 
   enddo
 
@@ -1359,30 +1367,30 @@
 !----  affichage postscript
 !
   write(IOUT,*) 'Dump PostScript'
-  if(ivecttype == 1) then
+  if(vecttype == 1) then
     write(IOUT,*) 'drawing displacement field...'
-    call plotpost(displ,coord,vpext,gltfu,posrec, &
+    call plotpost(displ,coord,vpext,iglob_source,iglob_rec, &
           it,deltat,coorg,xinterp,zinterp,shapeint, &
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
-          icolor,inumber,isubsamp,ivecttype,interpol,imeshvect,imodelvect, &
-          iboundvect,ireadmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod)
-  else if(ivecttype == 2) then
+          colors,numbers,subsamp,vecttype,interpol,meshvect,modelvect, &
+          boundvect,readmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod)
+  else if(vecttype == 2) then
     write(IOUT,*) 'drawing velocity field...'
-    call plotpost(veloc,coord,vpext,gltfu,posrec, &
+    call plotpost(veloc,coord,vpext,iglob_source,iglob_rec, &
           it,deltat,coorg,xinterp,zinterp,shapeint, &
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
-          icolor,inumber,isubsamp,ivecttype,interpol,imeshvect,imodelvect, &
-          iboundvect,ireadmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod)
-  else if(ivecttype == 3) then
+          colors,numbers,subsamp,vecttype,interpol,meshvect,modelvect, &
+          boundvect,readmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod)
+  else if(vecttype == 3) then
     write(IOUT,*) 'drawing acceleration field...'
-    call plotpost(accel,coord,vpext,gltfu,posrec, &
+    call plotpost(accel,coord,vpext,iglob_source,iglob_rec, &
           it,deltat,coorg,xinterp,zinterp,shapeint, &
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
-          icolor,inumber,isubsamp,ivecttype,interpol,imeshvect,imodelvect, &
-          iboundvect,ireadmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod)
+          colors,numbers,subsamp,vecttype,interpol,meshvect,modelvect, &
+          boundvect,readmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod)
   else
     stop 'wrong field code for PostScript display'
   endif
@@ -1407,14 +1415,14 @@
   write(IOUT,*) 'Fin creation image PNM'
 
 !----  save temporary seismograms
-  call write_seismograms(sisux,sisuz,NSTEP,nrec,deltat)
+  call write_seismograms(sisux,sisuz,NSTEP,nrec,deltat,sismostype,iglob_rec,coord,npoin)
 
   endif
 
   enddo ! end of the main time loop
 
 !----  save final seismograms
-  call write_seismograms(sisux,sisuz,NSTEP,nrec,deltat)
+  call write_seismograms(sisux,sisuz,NSTEP,nrec,deltat,sismostype,iglob_rec,coord,npoin)
 
 ! print exit banner
   call datim(stitle)
@@ -1440,26 +1448,26 @@
   'Number of space dimensions . . . . . . . . . (NDIME) =',i8)
   600   format(//1x,'C o n t r o l',/1x,34('='),//5x, &
   'Display frequency  . . . . . . . . . . . . . (itaff) = ',i5/ 5x, &
-  'Color display . . . . . . . . . . . . . . . (icolor) = ',i5/ 5x, &
+  'Color display . . . . . . . . . . . . . . . (colors) = ',i5/ 5x, &
   '        ==  0     black and white display              ',  / 5x, &
   '        ==  1     color display                        ',  /5x, &
-  'Numbered mesh . . . . . . . . . . . . . . .(inumber) = ',i5/ 5x, &
+  'Numbered mesh . . . . . . . . . . . . . . .(numbers) = ',i5/ 5x, &
   '        ==  0     do not number the mesh               ',  /5x, &
   '        ==  1     number the mesh                      ')
   700   format(//1x,'C o n t r o l',/1x,34('='),//5x, &
   'Total number of receivers. . . . . . . . . . .(nrec) = ',i6/5x, &
-  'Seismograms recording type. . . . . . .(isismostype) = ',i6/5x, &
+  'Seismograms recording type. . . . . . .(sismostype) = ',i6/5x, &
   'Angle for first line of receivers. . . . .(anglerec) = ',f6.2)
   750   format(//1x,'C o n t r o l',/1x,34('='),//5x, &
   'Read external initial field or not . .(initialfield) = ',l6/5x, &
-  'Read external velocity model or not. . .(ireadmodel) = ',l6/5x, &
+  'Read external velocity model or not. . .(readmodel) = ',l6/5x, &
   'Turn anisotropy on or off. . . .(TURN_ANISOTROPY_ON) = ',l6/5x, &
   'Turn attenuation on or off. . .(TURN_ATTENUATION_ON) = ',l6/5x, &
-  'Save grid in external file or not . . .(ioutputgrid) = ',l6)
+  'Save grid in external file or not . . .(outputgrid) = ',l6)
   800   format(//1x,'C o n t r o l',/1x,34('='),//5x, &
-  'Vector display type . . . . . . . . . . .(ivecttype) = ',i6/5x, &
+  'Vector display type . . . . . . . . . . .(vecttype) = ',i6/5x, &
   'Percentage of cut for vector plots. . . . .(cutvect) = ',f6.2/5x, &
-  'Subsampling for velocity model display . .(isubsamp) = ',i6)
+  'Subsampling for velocity model display . .(subsamp) = ',i6)
 
   703   format(//' I t e r a t i o n s '/1x,29('='),//5x, &
       'Number of time iterations . . . . .(NSTEP) =',i8,/5x, &

@@ -11,12 +11,12 @@
 !
 !========================================================================
 
-  subroutine plotpost(displ,coord,vpext,gltfl,posrec,it,dt,coorg, &
+  subroutine plotpost(displ,coord,vpext,iglob_source,iglob_rec,it,dt,coorg, &
           xinterp,zinterp,shapeint, &
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
-          icolor,inumber,isubsamp,ivecttype,interpol,imeshvect,imodelvect, &
-          iboundvect,ireadmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod)
+          colors,numbers,subsamp,vecttype,interpol,meshvect,modelvect, &
+          boundvect,readmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod)
 
 !
 ! routine affichage postscript
@@ -31,7 +31,7 @@
   double precision, dimension(MAXCOLORS) :: red,green,blue
 
   integer it,nrec,nelemabs,numat,iptsdisp,nspec
-  integer i,iglobrec,iglobsource,npoin,npgeo,ngnod
+  integer i,iglob_source,npoin,npgeo,ngnod
 
   integer kmato(nspec),knods(ngnod,nspec)
   integer ibool(NGLLX,NGLLZ,nspec)
@@ -48,8 +48,7 @@
   double precision vpext(npoin)
 
   double precision coorg(NDIME,npgeo)
-  double precision gltfl(20)
-  double precision posrec(NDIME,nrec)
+  integer iglob_rec(nrec)
 
   integer numabs(nelemabs),codeabs(4,nelemabs)
   logical anyabs
@@ -67,8 +66,8 @@
   integer k,j,ispec,material,is,ir,nbcols,imat,icol,l,longueur
   integer indice,ii,ipoin,in,nnum,ispecabs,ideb,ifin,ibord
 
-  integer icolor,inumber,isubsamp,ivecttype
-  logical interpol,imeshvect,imodelvect,iboundvect,ireadmodel
+  integer colors,numbers,subsamp,vecttype
+  logical interpol,meshvect,modelvect,boundvect,readmodel
   double precision cutvect
 
   double precision rapp_page,dispmax,xmin,zmin
@@ -305,7 +304,7 @@
   write(24,*) '%'
   write(24,*) '/Times-Roman findfont'
   write(24,*) '.6 CM SCSF'
-  if(icolor == 1) write(24,*) '.4 .9 .9 setrgbcolor'
+  if(colors == 1) write(24,*) '.4 .9 .9 setrgbcolor'
   write(24,*) '11 CM 1.1 CM MV'
   write(24,*) '(X axis) show'
   write(24,*) '%'
@@ -316,15 +315,15 @@
   write(24,*) '%'
   write(24,*) '/Times-Roman findfont'
   write(24,*) '.7 CM SCSF'
-  if(icolor == 1) write(24,*) '.8 0 .8 setrgbcolor'
+  if(colors == 1) write(24,*) '.8 0 .8 setrgbcolor'
   write(24,*) '24.35 CM 18.9 CM MV'
   write(24,*) usoffset,' CM 2 div neg 0 MR'
   write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  if(ivecttype == 1) then
+  if(vecttype == 1) then
     write(24,*) '(Displacement vector field) show'
-  else if(ivecttype == 2) then
+  else if(vecttype == 2) then
     write(24,*) '(Velocity vector field) show'
-  else if(ivecttype == 3) then
+  else if(vecttype == 3) then
     write(24,*) '(Acceleration vector field) show'
   else
     stop 'Bad field code in PostScript display'
@@ -358,14 +357,14 @@
 !
 !----  draw the velocity model in background
 !
-  if(imodelvect) then
+  if(modelvect) then
 
   do ispec=1,nspec
-    do i=1,NGLLX-isubsamp,isubsamp
-          do j=1,NGLLX-isubsamp,isubsamp
+    do i=1,NGLLX-subsamp,subsamp
+          do j=1,NGLLX-subsamp,subsamp
 
   if((vpmax-vpmin)/vpmin > 0.02d0) then
-  if(ireadmodel) then
+  if(readmodel) then
     x1 = (vpext(ibool(i,j,ispec))-vpmin)/ (vpmax-vpmin)
   else
     material = kmato(ispec)
@@ -395,24 +394,24 @@
   zw = zw * centim
   write(24,500) xw,zw
 
-  xw = coord(1,ibool(i+isubsamp,j,ispec))
-  zw = coord(2,ibool(i+isubsamp,j,ispec))
+  xw = coord(1,ibool(i+subsamp,j,ispec))
+  zw = coord(2,ibool(i+subsamp,j,ispec))
   xw = (xw-xmin)*rapp_page + orig_x
   zw = (zw-zmin)*rapp_page + orig_z
   xw = xw * centim
   zw = zw * centim
   write(24,499) xw,zw
 
-  xw = coord(1,ibool(i+isubsamp,j+isubsamp,ispec))
-  zw = coord(2,ibool(i+isubsamp,j+isubsamp,ispec))
+  xw = coord(1,ibool(i+subsamp,j+subsamp,ispec))
+  zw = coord(2,ibool(i+subsamp,j+subsamp,ispec))
   xw = (xw-xmin)*rapp_page + orig_x
   zw = (zw-zmin)*rapp_page + orig_z
   xw = xw * centim
   zw = zw * centim
   write(24,499) xw,zw
 
-  xw = coord(1,ibool(i,j+isubsamp,ispec))
-  zw = coord(2,ibool(i,j+isubsamp,ispec))
+  xw = coord(1,ibool(i,j+subsamp,ispec))
+  zw = coord(2,ibool(i,j+subsamp,ispec))
   xw = (xw-xmin)*rapp_page + orig_x
   zw = (zw-zmin)*rapp_page + orig_z
   xw = xw * centim
@@ -430,7 +429,7 @@
 !---- draw spectral element mesh
 !
 
-  if(imeshvect) then
+  if(meshvect) then
 
   write(24,*) '%'
   write(24,*) '% spectral element mesh'
@@ -538,7 +537,7 @@
 
   write(24,*) 'CO'
 
-  if(icolor == 1) then
+  if(colors == 1) then
 
 ! For the moment 20 different colors max
   nbcols = 20
@@ -551,15 +550,14 @@
 
   endif
 
-  if(imodelvect) then
+  if(modelvect) then
   write(24,*) 'GC'
   else
   write(24,*) 'GG'
   endif
 
-! write the element number, the group number and the
-! material number inside the element
-  if(inumber == 1) then
+! write the element number, the group number and the material number inside the element
+  if(numbers == 1) then
 
   xw = (coorg(1,knods(1,ispec)) + coorg(1,knods(2,ispec)) + &
           coorg(1,knods(3,ispec)) + coorg(1,knods(4,ispec))) / 4.d0
@@ -569,7 +567,7 @@
   zw = (zw-zmin)*rapp_page + orig_z
   xw = xw * centim
   zw = zw * centim
-  if(icolor == 1) write(24,*) '1 setgray'
+  if(colors == 1) write(24,*) '1 setgray'
 
   write(24,500) xw,zw
 
@@ -586,7 +584,7 @@
 !----  draw the boundary conditions
 !
 
-  if(anyabs .and. iboundvect) then
+  if(anyabs .and. boundvect) then
 
   write(24,*) '%'
   write(24,*) '% boundary conditions on the mesh'
@@ -668,7 +666,7 @@
   write(24,*) '%'
 
 ! fleches en couleur si modele de vitesse en background
-  if(imodelvect) then
+  if(modelvect) then
         write(24,*) 'Colvects'
   else
         write(24,*) '0 setgray'
@@ -836,7 +834,7 @@
   write(24,*) '0 setgray'
 
 ! sources et recepteurs en couleur si modele de vitesse
-  if(imodelvect) then
+  if(modelvect) then
     write(24,*) 'Colreceiv'
   else
     write(24,*) '0 setgray'
@@ -845,10 +843,8 @@
 !
 !----  write position of the source
 !
-  iglobsource = nint(gltfl(9))
-
-  xw = coord(1,iglobsource)
-  zw = coord(2,iglobsource)
+  xw = coord(1,iglob_source)
+  zw = coord(2,iglob_source)
   xw = (xw-xmin)*rapp_page + orig_x
   zw = (zw-zmin)*rapp_page + orig_z
   xw = xw * centim
@@ -867,9 +863,8 @@
   if(i == 1) write(24,*) '% debut ligne recepteurs'
   if(i == nrec) write(24,*) '% fin ligne recepteurs'
 
-  iglobrec = nint(posrec(1,i))
-  xw = coord(1,iglobrec)
-  zw = coord(2,iglobrec)
+  xw = coord(1,iglob_rec(i))
+  zw = coord(2,iglob_rec(i))
 
   xw = (xw-xmin)*rapp_page + orig_x
   zw = (zw-zmin)*rapp_page + orig_z

@@ -11,7 +11,7 @@
 !
 !========================================================================
 
-  subroutine positrec(coord,posrec,npoin,nrec)
+  subroutine positrec(coord,posrec,iglob_rec,npoin,nrec)
 
 !
 !---- calculer la position reelle des recepteurs
@@ -24,21 +24,22 @@
   integer npoin,nrec
   double precision coord(NDIME,npoin)
   double precision posrec(NDIME,nrec)
+  integer iglob_rec(nrec)
 
   double precision distminmax,distmin,xs,zs,xp,zp,dist
-  integer n,ip,ipoint
+  integer irec,ip
 
   write(iout,200)
 
   distminmax = -HUGEVAL
 
-  do n=1,nrec
+  do irec=1,nrec
 
       distmin = +HUGEVAL
 
 ! coordonnees demandees
-  xs = posrec(1,n)
-  zs = posrec(2,n)
+  xs = posrec(1,irec)
+  zs = posrec(2,irec)
 
     do ip=1,npoin
 
@@ -51,17 +52,14 @@
 ! retenir le point pour lequel l'ecart est minimal
       if(dist < distmin) then
         distmin = dist
-        ipoint = ip
+        iglob_rec(irec) = ip
       endif
 
     enddo
 
     distminmax = max(distmin,distminmax)
 
-  write(iout,150) n,xs,zs,coord(1,ipoint),coord(2,ipoint),distmin
-
-! stocker numero global dans premiere coordonnee
-  posrec(1,n) = dble(ipoint)
+  write(iout,150) irec,xs,zs,coord(1,iglob_rec(irec)),coord(2,iglob_rec(irec)),distmin
 
   enddo
 
