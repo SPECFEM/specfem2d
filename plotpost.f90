@@ -194,7 +194,7 @@
 !
   write(name,222) it
   open(unit=24,file=name,status='unknown')
-  222 format('vect',i5.5,'.ps')
+  222 format('OUTPUT_FILES/vect',i5.5,'.ps')
 
 !
 !---- ecriture de l'entete du fichier PostScript
