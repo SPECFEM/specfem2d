@@ -1,13 +1,13 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.0
+!                   S P E C F E M 2 D  Version 5.1
 !                   ------------------------------
 !
 !                         Dimitri Komatitsch
 !          Universite de Pau et des Pays de l'Adour, France
 !
-!                          (c) May 2004
+!                          (c) December 2004
 !
 !========================================================================
 
@@ -59,29 +59,13 @@
 ! Poisson's ratio must be between -1 and +1/2
       if (poisson < -1.d0 .or. poisson > 0.5d0) stop 'Poisson''s ratio out of range'
 
-!---- materiau isotrope, module de Young et coefficient de Poisson donnes
-   else if(indic == 1) then
-      young = val1
-      poisson = val2
-! Poisson's ratio must be between -1 and +1/2
-      if (poisson < -1.d0 .or. poisson > 0.5d0) stop 'Poisson''s ratio out of range'
-      a2mu  = young/(one+poisson)
-      amu   = half*a2mu
-      alam  = a2mu*poisson/(one-two*poisson)
-      Kmod  = alam + a2mu
-      Kvol  = alam + a2mu/3.d0
-      cp    = dsqrt((Kvol + 4.d0*amu/3.d0)/denst)
-      cs    = dsqrt(amu/denst)
-
 !---- materiau anisotrope, c11, c13, c33 et c44 donnes en Pascal
-   else if(indic == 2) then
+   else
       c11 = val1
       c13 = val2
       c33 = val3
       c44 = val4
 
-   else
-      stop 'Improper value while reading material sets'
    endif
 
 !

@@ -1,13 +1,13 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.0
+!                   S P E C F E M 2 D  Version 5.1
 !                   ------------------------------
 !
 !                         Dimitri Komatitsch
 !          Universite de Pau et des Pays de l'Adour, France
 !
-!                          (c) May 2004
+!                          (c) December 2004
 !
 !========================================================================
 
@@ -43,8 +43,8 @@
   print *,'Generating global mesh numbering (fast version)...'
   print *
 
-  nxyz   = NGLLX*NGLLZ
-  ntot   = nxyz*nspec
+  nxyz = NGLLX*NGLLZ
+  ntot = nxyz*nspec
 
   allocate(loc(ntot))
   allocate(ind(ntot))
@@ -104,15 +104,15 @@
   ymaxval=-HUGEVAL
   ieoff=nxyz*(ie-1)
   do ilocnum=1,nxyz
-    xmaxval=dmax1(xp(ieoff+ilocnum),xmaxval)
-    xminval=dmin1(xp(ieoff+ilocnum),xminval)
-    ymaxval=dmax1(yp(ieoff+ilocnum),ymaxval)
-    yminval=dmin1(yp(ieoff+ilocnum),yminval)
+    xmaxval=max(xp(ieoff+ilocnum),xmaxval)
+    xminval=min(xp(ieoff+ilocnum),xminval)
+    ymaxval=max(yp(ieoff+ilocnum),ymaxval)
+    yminval=min(yp(ieoff+ilocnum),yminval)
   enddo
 
 ! compute the minimum typical "size" of an element in the mesh
-  xtypdist = dmin1(xtypdist,xmaxval-xminval)
-  xtypdist = dmin1(xtypdist,ymaxval-yminval)
+  xtypdist = min(xtypdist,xmaxval-xminval)
+  xtypdist = min(xtypdist,ymaxval-yminval)
 
   enddo
 
@@ -128,10 +128,10 @@
 !  Sort within each segment
    ioff=1
    do iseg=1,nseg
-      if  (j == 1) then
-         call rank (xp(ioff),ind,ninseg(iseg))
+      if(j == 1) then
+        call rank (xp(ioff),ind,ninseg(iseg))
       else
-         call rank (yp(ioff),ind,ninseg(iseg))
+        call rank (yp(ioff),ind,ninseg(iseg))
       endif
       call swap(xp(ioff),work,ind,ninseg(iseg))
       call swap(yp(ioff),work,ind,ninseg(iseg))
@@ -211,6 +211,7 @@
 ! Use Heap Sort (p 233 Numerical Recipes)
 !
   implicit none
+
   integer N
   double precision A(N)
   integer IND(N)
@@ -222,11 +223,11 @@
    IND(j)=j
   enddo
 
-  if (n == 1) return
+  if(n == 1) return
   L=n/2+1
   ir=n
   100 continue
-   IF (l > 1) THEN
+   IF(l > 1) THEN
      l=l-1
      indx=ind(l)
      q=a(indx)
@@ -235,19 +236,19 @@
      q=a(indx)
      ind(ir)=ind(1)
      ir=ir-1
-     if (ir == 1) then
+     if(ir == 1) then
        ind(1)=indx
        return
      endif
    ENDIF
    i=l
    j=l+l
-  200    continue
-   IF (J <= IR) THEN
-      IF (J < IR) THEN
-         IF ( A(IND(j)) < A(IND(j+1)) ) j=j+1
+  200 continue
+   IF(J <= IR) THEN
+      IF(J < IR) THEN
+         IF(A(IND(j)) < A(IND(j+1))) j=j+1
       ENDIF
-      IF (q < A(IND(j))) THEN
+      IF(q < A(IND(j))) THEN
          IND(I)=IND(J)
          I=J
          J=J+J
@@ -275,12 +276,10 @@
 
   integer j
 
-  do J=1,N
-    W(j)=A(j)
-  enddo
+  W(:) = A(:)
 
   do J=1,N
-    A(j)=W(ind(j))
+    A(j) = W(ind(j))
   enddo
 
   end subroutine swap
@@ -298,12 +297,10 @@
 
   integer j
 
-  do J=1,N
-    W(j)=A(j)
-  enddo
+  W(:) = A(:)
 
   do J=1,N
-    A(j)=W(ind(j))
+    A(j) = W(ind(j))
   enddo
 
   end subroutine iswap

@@ -1,13 +1,13 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.0
+!                   S P E C F E M 2 D  Version 5.1
 !                   ------------------------------
 !
 !                         Dimitri Komatitsch
 !          Universite de Pau et des Pays de l'Adour, France
 !
-!                          (c) May 2004
+!                          (c) December 2004
 !
 !========================================================================
 
@@ -39,7 +39,7 @@
   write(iout,*) 'Generating gnuplot meshes...'
   write(iout,*)
 
-! create non empty files for the case of 4-nodes elements
+! create non empty files for the case of 4-node elements
 
   name='macros1.gnu'
   open(unit=30,file=name,status='unknown')
@@ -125,7 +125,7 @@
 
   if(ngnod == 4) then
 !
-!----  4-noded rectangular element
+!----  4-node rectangular element
 !
 
 ! draw the edges of the element using one color
@@ -145,7 +145,7 @@
   else
 
 !
-!----  9-noded rectangular element
+!----  9-node rectangular element
 !
 
 ! draw the edges of the element using one color
@@ -222,10 +222,6 @@
   write(20,*) 'plot "macros2.gnu" title '''' w l 2, "macros1.gnu" title '''' w linesp 1 3'
   write(20,*) 'pause -1 "Hit any key to exit..."'
   close(20)
-
-!
-!----
-!
 
  10 format('')
  15 format(e10.5,1x,e10.5)

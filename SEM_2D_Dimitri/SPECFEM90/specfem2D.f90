@@ -1,30 +1,39 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.0
+!                   S P E C F E M 2 D  Version 5.1
 !                   ------------------------------
 !
 !                         Dimitri Komatitsch
 !          Universite de Pau et des Pays de l'Adour, France
 !
-!                          (c) May 2004
+!                          (c) December 2004
 !
 !========================================================================
 
-!========================================================================
+!====================================================================================
 !
-!  An explicit 2D spectral element solver for the elastic wave equation
+! An explicit 2D spectral element solver for the anelastic anisotropic wave equation
 !
-!========================================================================
+!====================================================================================
 
-! version 5.0 : - got rid of useless routines, suppressed commons etc.
+!
+! version 5.1, December 2004 : more general mesher with any number of curved layers
+!
+! version 5.0, May 2004 :
+!               - got rid of useless routines, suppressed commons etc.
 !               - weak formulation based explicitly on stress tensor
 !               - implementation of full anisotropy
 !               - implementation of attenuation based on memory variables
-
-! version 5.0 is based on SPECFEM2D version 4.2
-! (c) June 1998 by Dimitri Komatitsch, Harvard University, USA
+!
+! based on SPECFEM2D version 4.2, June 1998
+! (c) by Dimitri Komatitsch, Harvard University, USA
 ! and Jean-Pierre Vilotte, Institut de Physique du Globe de Paris, France
+!
+! itself based on SPECFEM2D version 1.0, 1995
+! (c) by Dimitri Komatitsch and Jean-Pierre Vilotte,
+! Institut de Physique du Globe de Paris, France
+!
 
   program specfem2D
 
@@ -45,7 +54,7 @@
   logical anyabs
 
   integer i,j,it,irec,iglobrec,ipoin,ip,id,ip1,ip2,in,nnum
-  integer nbpoin,inump,n,npoinext,netyp,ispec,npoin,npgeo,iglob
+  integer nbpoin,inump,n,npoinext,ispec,npoin,npgeo,iglob
 
   double precision valux,valuz,rhoextread,vpextread,vsextread
   double precision cpl,csl,rhol
@@ -102,7 +111,7 @@
   integer, dimension(:,:), allocatable  :: knods
   integer, dimension(:), allocatable :: kmato,numabs
 
-  integer ie,k,isource,iexplo
+  integer ie,k,iexplo
 
   integer ielems,iglobsource
   double precision f0,t0,factor,a,angleforce,ricker,displnorm_all
@@ -237,14 +246,12 @@
 !----  read source information
 !
   read(IIN,40) datlin
-  read(IIN,*) (gltfu(k), k=1,9)
+  read(IIN,*) (gltfu(k), k=2,9)
 
 !
 !-----  check the input
 !
  if(.not. initialfield) then
-   if(nint(gltfu(1)) /= 6) stop 'Wrong function number in getltf !'
-   isource = nint(gltfu(1))
    iexplo = nint(gltfu(2))
    if (iexplo == 1) then
      write(IOUT,212) (gltfu(k), k=3,8)
@@ -255,12 +262,8 @@
    endif
  endif
 
-!
 !-----  convert angle from degrees to radians
-!
-   isource = nint(gltfu(1))
-   iexplo = nint(gltfu(2))
-   if(isource >= 4 .and. isource <= 6 .and. iexplo == 1) gltfu(8) = gltfu(8) * pi / 180.d0
+  gltfu(8) = gltfu(8) * pi / 180.d0
 
 !
 !---- read receiver locations
@@ -292,7 +295,7 @@
 !---- read the basic properties of the spectral elements
 !
   read(IIN ,40) datlin
-  read(IIN ,*) netyp,numat,ngnod,nspec,iptsdisp,nelemabs
+  read(IIN ,*) numat,ngnod,nspec,iptsdisp,nelemabs
 
 !
 !---- allocate arrays

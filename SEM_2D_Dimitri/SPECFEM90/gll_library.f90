@@ -20,14 +20,14 @@
   integer i
 
   f3 = zero
-  apb   = alpha+beta
-  if (n == 0) then
-   endw1 = zero
-   return
+  apb = alpha+beta
+  if(n == 0) then
+    endw1 = zero
+    return
   endif
-  f1   = gammaf(alpha+two)*gammaf(beta+one)/gammaf(apb+three)
-  f1   = f1*(apb+two)*two**(apb+two)/two
-  if (n == 1) then
+  f1 = gammaf(alpha+two)*gammaf(beta+one)/gammaf(apb+three)
+  f1 = f1*(apb+two)*two**(apb+two)/two
+  if(n == 1) then
    endw1 = f1
    return
   endif
@@ -36,7 +36,7 @@
   fint2 = gammaf(alpha+two)*gammaf(beta+two)/gammaf(apb+four)
   fint2 = fint2*two**(apb+three)
   f2    = (-two*(beta+two)*fint1 + (apb+four)*fint2) * (apb+three)/four
-  if (n == 2) then
+  if(n == 2) then
    endw1 = f2
    return
   endif

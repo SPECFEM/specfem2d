@@ -1,21 +1,22 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.0
+!                   S P E C F E M 2 D  Version 5.1
 !                   ------------------------------
 !
 !                         Dimitri Komatitsch
 !          Universite de Pau et des Pays de l'Adour, France
 !
-!                          (c) May 2004
+!                          (c) December 2004
 !
 !========================================================================
 
   double precision function hgll(I,Z,ZGLL,NZ)
+
 !-------------------------------------------------------------
 !
-!     Compute the value of the Lagrangian interpolant L through
-!     the NZ Gauss-Lobatto Legendre points ZGLL at the point Z
+!  Compute the value of the Lagrangian interpolant L through
+!  the NZ Gauss-Lobatto Legendre points ZGLL at point Z
 !
 !-------------------------------------------------------------
 
