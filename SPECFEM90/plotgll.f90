@@ -203,21 +203,23 @@
 !
   open(unit=20,file='plotall_gll_mesh.gnu',status='unknown')
   write(20,*) 'set term x11'
+  write(20,*) '# set term postscript landscape color solid "Helvetica" 22'
+  write(20,*) '# set output "gll_mesh.ps"'
   write(20,*) 'set xlabel "X"'
   write(20,*) 'set ylabel "Y"'
   write(20,*) 'set title "Gauss-Lobatto-Legendre Mesh"'
-  write(20,*) 'plot "gllmesh1.gnu" title '''' w l 2,', &
-            ' "gllmesh2.gnu" title '''' w linesp 1 3'
+  write(20,*) 'plot "gllmesh1.gnu" title '''' w l 2, "gllmesh2.gnu" title '''' w linesp 1 3'
   write(20,*) 'pause -1 "Hit any key to exit..."'
   close(20)
 
-  open(unit=20,file='plotall_macros_mesh.gnu',status='unknown')
+  open(unit=20,file='plotall_macro_mesh.gnu',status='unknown')
   write(20,*) 'set term x11'
+  write(20,*) '# set term postscript landscape color solid "Helvetica" 22'
+  write(20,*) '# set output "macro_mesh.ps"'
   write(20,*) 'set xlabel "X"'
   write(20,*) 'set ylabel "Y"'
   write(20,*) 'set title "Spectral Element (Macrobloc) Mesh"'
-  write(20,*) 'plot "macros2.gnu" title '''' w l 2,', &
-            ' "macros1.gnu" title '''' w linesp 1 3'
+  write(20,*) 'plot "macros2.gnu" title '''' w l 2, "macros1.gnu" title '''' w linesp 1 3'
   write(20,*) 'pause -1 "Hit any key to exit..."'
   close(20)
 
