@@ -7,7 +7,7 @@
 !                         Dimitri Komatitsch
 !          Universite de Pau et des Pays de l'Adour, France
 !
-!                          (c) December 2004
+!                          (c) January 2005
 !
 !========================================================================
 
@@ -32,7 +32,7 @@
 
   EPS = 1.d-5
   DZ = Z - ZGLL(I)
-  if(dABS(DZ) < EPS) then
+  if(abs(DZ) < EPS) then
    HGLL = 1.d0
    return
   endif

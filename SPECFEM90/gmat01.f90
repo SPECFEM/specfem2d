@@ -7,11 +7,11 @@
 !                         Dimitri Komatitsch
 !          Universite de Pau et des Pays de l'Adour, France
 !
-!                          (c) December 2004
+!                          (c) January 2005
 !
 !========================================================================
 
-  subroutine gmat01(density,elastcoef,numat)
+  subroutine gmat01(density_array,elastcoef,numat)
 
 ! read properties of a 2D isotropic or anisotropic linear elastic element
 
@@ -20,20 +20,20 @@
   include "constants.h"
 
   character(len=80) datlin
-  double precision Kmod,Kvol
+  double precision lambdaplus2mu,kappa
 
   integer numat
-  double precision density(numat),elastcoef(4,numat)
+  double precision density_array(numat),elastcoef(4,numat)
 
   integer in,n,indic
-  double precision young,poisson,denst,cp,cs,amu,a2mu,alam
+  double precision young,poisson,density,cp,cs,mu,two_mu,lambda
   double precision val1,val2,val3,val4
   double precision c11,c13,c33,c44
 
 !
 !---- loop over the different material sets
 !
-  density(:) = zero
+  density_array(:) = zero
   elastcoef(:,:) = zero
 
   write(iout,100) numat
@@ -41,21 +41,32 @@
   read(iin ,40) datlin
   do in = 1,numat
 
-   read(iin ,*) n,indic,denst,val1,val2,val3,val4
+   read(iin ,*) n,indic,density,val1,val2,val3,val4
 
    if(n<1 .or. n>numat) stop 'Wrong material set number'
 
 !---- materiau isotrope, vitesse P et vitesse S donnees
    if(indic == 0) then
+
+! P and S velocity
       cp = val1
       cs = val2
-      amu   = denst*cs*cs
-      a2mu  = 2.d0*amu
-      alam  = denst*cp*cp - a2mu
-      Kmod  = alam + a2mu
-      Kvol  = alam + a2mu/3.d0
-      young = 9.d0*Kvol*amu/(3.d0*Kvol + amu)
-      poisson = half*(3.d0*Kvol-a2mu)/(3.d0*Kvol+amu)
+
+! Lam'e parameters
+      lambdaplus2mu = density*cp*cp
+      mu = density*cs*cs
+      two_mu = 2.d0*mu
+      lambda = lambdaplus2mu - two_mu
+
+! bulk modulus K
+      kappa = lambda + two_mu/3.d0
+
+! Young modulus
+      young = 9.d0*kappa*mu/(3.d0*kappa + mu)
+
+! Poisson's ratio
+      poisson = half*(3.d0*kappa-two_mu)/(3.d0*kappa+mu)
+
 ! Poisson's ratio must be between -1 and +1/2
       if (poisson < -1.d0 .or. poisson > 0.5d0) stop 'Poisson''s ratio out of range'
 
@@ -75,9 +86,9 @@
 !  Transverse anisotropic :  c11, c13, c33, c44
 !
   if(indic == 0 .or. indic == 1) then
-    elastcoef(1,n) = alam
-    elastcoef(2,n) = amu
-    elastcoef(3,n) = Kmod
+    elastcoef(1,n) = lambda
+    elastcoef(2,n) = mu
+    elastcoef(3,n) = lambdaplus2mu
     elastcoef(4,n) = zero
   else
     elastcoef(1,n) = c11
@@ -86,16 +97,16 @@
     elastcoef(4,n) = c44
   endif
 
-  density(n) = denst
+  density_array(n) = density
 
 !
 !----    check the input
 !
   if(indic == 0 .or. indic == 1) then
-    write(iout,200) n,cp,cs,denst,poisson,alam,amu,Kvol,young
+    write(iout,200) n,cp,cs,density,poisson,lambda,mu,kappa,young
   else
-    write(iout,300) n,c11,c13,c33,c44,denst, &
-        sqrt(c33/denst),sqrt(c11/denst),sqrt(c44/denst),sqrt(c44/denst)
+    write(iout,300) n,c11,c13,c33,c44,density, &
+        sqrt(c33/density),sqrt(c11/density),sqrt(c44/density),sqrt(c44/density)
   endif
 
   enddo
@@ -113,12 +124,12 @@
          'Material set number. . . . . . . . (jmat) =',i5,/5x, &
          'P-wave velocity. . . . . . . . . . . (cp) =',1pe15.8,/5x, &
          'S-wave velocity. . . . . . . . . . . (cs) =',1pe15.8,/5x, &
-         'Mass density. . . . . . . . . . . (denst) =',1pe15.8,/5x, &
+         'Mass density. . . . . . . . . . (density) =',1pe15.8,/5x, &
          'Poisson''s ratio . . . . . . . .(poisson) =',1pe15.8,/5x, &
-         'First Lame parameter Lambda. . . . (alam) =',1pe15.8,/5x, &
-         'Second Lame parameter Mu. . . . . . (amu) =',1pe15.8,/5x, &
-         'Bulk modulus K . . . . . . . . . . (Kvol) =',1pe15.8,/5x, &
-         'Young''s modulus E . . . . . . . . (young) =',1pe15.8)
+         'First Lame parameter Lambda. . . (lambda) =',1pe15.8,/5x, &
+         'Second Lame parameter Mu. . . . . . .(mu) =',1pe15.8,/5x, &
+         'Bulk modulus K . . . . . . . . . .(kappa) =',1pe15.8,/5x, &
+         'Young''s modulus E . . . . . . . .(young) =',1pe15.8)
   300   format(//5x,'-------------------------------------',/5x, &
          '-- Transverse anisotropic material --',/5x, &
          '-------------------------------------',/5x, &
@@ -127,7 +138,7 @@
          'c13 coefficient (Pascal). . . . . . (c13) =',1pe15.8,/5x, &
          'c33 coefficient (Pascal). . . . . . (c33) =',1pe15.8,/5x, &
          'c44 coefficient (Pascal). . . . . . (c44) =',1pe15.8,/5x, &
-         'Mass density. . . . . . . . . . . (denst) =',1pe15.8,/5x, &
+         'Mass density. . . . . . . . . . (density) =',1pe15.8,/5x, &
          'Velocity of qP along vertical axis. . . . =',1pe15.8,/5x, &
          'Velocity of qP along horizontal axis. . . =',1pe15.8,/5x, &
          'Velocity of qSV along vertical axis . . . =',1pe15.8,/5x, &

@@ -7,7 +7,7 @@
 !                         Dimitri Komatitsch
 !          Universite de Pau et des Pays de l'Adour, France
 !
-!                          (c) December 2004
+!                          (c) January 2005
 !
 !========================================================================
 
@@ -16,7 +16,7 @@
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
           colors,numbers,subsamp,vecttype,interpol,meshvect,modelvect, &
-          boundvect,readmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod)
+          boundvect,readmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod,ELASTIC)
 
 !
 ! routine affichage postscript
@@ -51,7 +51,7 @@
   integer iglob_rec(nrec)
 
   integer numabs(nelemabs),codeabs(4,nelemabs)
-  logical anyabs
+  logical anyabs,ELASTIC
 
   double precision xmax,zmax,height,xw,zw,usoffset,sizex,sizez,vpmin,vpmax
 
@@ -337,7 +337,13 @@
   write(24,*) '26.45 CM 18.9 CM MV'
   write(24,*) usoffset,' CM 2 div neg 0 MR'
   write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  write(24,*) '(Elastic Wave 2D - Spectral Element Method) show'
+
+  if(ELASTIC) then
+    write(24,*) '(Elastic Wave 2D - Spectral Element Method) show'
+  else
+    write(24,*) '(Acoustic Wave 2D - Spectral Element Method) show'
+  endif
+
   write(24,*) 'grestore'
 
   endif
@@ -372,7 +378,7 @@
     rmu    = elastcoef(2,material)
     denst  = density(material)
     rKvol  = rlamda + 2.d0*rmu/3.d0
-    cploc = dsqrt((rKvol + 4.d0*rmu/3.d0)/denst)
+    cploc = sqrt((rKvol + 4.d0*rmu/3.d0)/denst)
     x1 = (cploc-vpmin)/(vpmax-vpmin)
   endif
   else
@@ -712,18 +718,18 @@
   x2 = Uxinterp(i,j)*sizemax/dispmax
   z2 = Uzinterp(i,j)*sizemax/dispmax
 
-  d = dsqrt(x2**2 + z2**2)
+  d = sqrt(x2**2 + z2**2)
 
 ! ignorer si vecteur trop petit
   if(d > cutvect*sizemax) then
 
   d1 = d * rapport
-  d2 = d1 * dcos(angle*convert)
+  d2 = d1 * cos(angle*convert)
 
   dummy = x2/d
   if(dummy > 0.9999d0) dummy = 0.9999d0
   if(dummy < -0.9999d0) dummy = -0.9999d0
-  theta = dacos(dummy)
+  theta = acos(dummy)
 
   if(z2 < 0.d0) theta = 360.d0*convert - theta
   thetaup = theta - angle*convert
@@ -734,12 +740,12 @@
   z1 = (orig_z+z1) * centim
   x2 = x2 * centim
   z2 = z2 * centim
-  xa = -d2*dcos(thetaup)
-  za = -d2*dsin(thetaup)
+  xa = -d2*cos(thetaup)
+  za = -d2*sin(thetaup)
   xa = xa * centim
   za = za * centim
-  xb = -d2*dcos(thetadown)
-  zb = -d2*dsin(thetadown)
+  xb = -d2*cos(thetadown)
+  zb = -d2*sin(thetadown)
   xb = xb * centim
   zb = zb * centim
   write(name,700) xb,zb,xa,za,x2,z2,x1,z1
@@ -777,18 +783,18 @@
   x2 = displ(1,ipoin)*sizemax/dispmax
   z2 = displ(2,ipoin)*sizemax/dispmax
 
-  d = dsqrt(x2**2 + z2**2)
+  d = sqrt(x2**2 + z2**2)
 
 ! ignorer si vecteur trop petit
   if(d > cutvect*sizemax) then
 
   d1 = d * rapport
-  d2 = d1 * dcos(angle*convert)
+  d2 = d1 * cos(angle*convert)
 
   dummy = x2/d
   if(dummy > 0.9999d0) dummy = 0.9999d0
   if(dummy < -0.9999d0) dummy = -0.9999d0
-  theta = dacos(dummy)
+  theta = acos(dummy)
 
   if(z2 < 0.d0) theta = 360.d0*convert - theta
   thetaup = theta - angle*convert
@@ -799,12 +805,12 @@
   z1 = (orig_z+z1) * centim
   x2 = x2 * centim
   z2 = z2 * centim
-  xa = -d2*dcos(thetaup)
-  za = -d2*dsin(thetaup)
+  xa = -d2*cos(thetaup)
+  za = -d2*sin(thetaup)
   xa = xa * centim
   za = za * centim
-  xb = -d2*dcos(thetadown)
-  zb = -d2*dsin(thetadown)
+  xb = -d2*cos(thetadown)
+  zb = -d2*sin(thetadown)
   xb = xb * centim
   zb = zb * centim
   write(name,700) xb,zb,xa,za,x2,z2,x1,z1

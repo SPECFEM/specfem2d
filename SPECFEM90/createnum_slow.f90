@@ -7,7 +7,7 @@
 !                         Dimitri Komatitsch
 !          Universite de Pau et des Pays de l'Adour, France
 !
-!                          (c) December 2004
+!                          (c) January 2005
 !
 !========================================================================
 

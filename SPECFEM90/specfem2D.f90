@@ -7,7 +7,7 @@
 !                         Dimitri Komatitsch
 !          Universite de Pau et des Pays de l'Adour, France
 !
-!                          (c) December 2004
+!                          (c) January 2005
 !
 !========================================================================
 
@@ -18,11 +18,14 @@
 !====================================================================================
 
 !
-! version 5.1, December 2004 :
+! version 5.1, January 2005 :
 !               - Dirac and Gaussian time sources and corresponding convolution routine
 !               - more general mesher with any number of curved layers
+!               - option for acoustic medium instead of elastic
 !               - color PNM snapshots
 !               - more flexible Par file with any number of comment lines
+!               - Xsu scripts for seismograms
+!               - subtract t0 from seismograms
 !
 ! version 5.0, May 2004 :
 !               - got rid of useless routines, suppressed commons etc.
@@ -65,7 +68,7 @@
 
   double precision valux,valuz,rhoextread,vpextread,vsextread
   double precision cpl,csl,rhol
-  double precision dcosrot,dsinrot,xcor,zcor
+  double precision cosrot,sinrot,xcor,zcor
 
 ! coefficients of the explicit Newmark time scheme
   integer NSTEP
@@ -96,13 +99,13 @@
   double precision xixl,xizl,gammaxl,gammazl,jacobianl
 
 ! material properties of the elastic medium
-  double precision mul_relaxed,lambdal_relaxed,lambdalplus2mul_relaxed
+  double precision mul_relaxed,lambdal_relaxed,lambdalplus2mul_relaxed,cpsquare
   double precision mul_unrelaxed,lambdal_unrelaxed,lambdalplus2mul_unrelaxed
 
   double precision, dimension(:), allocatable :: xirec,etarec
 
   double precision, dimension(:,:), allocatable :: coord,accel,veloc,displ, &
-    flagrange,xinterp,zinterp,Uxinterp,Uzinterp,elastcoef
+    flagrange,xinterp,zinterp,Uxinterp,Uzinterp,elastcoef,vector_field_postscript
 
   double precision, dimension(:), allocatable :: rmass, &
     fglobx,fglobz,density,vpext,vsext,rhoext,displread,velocread,accelread
@@ -116,7 +119,7 @@
 
   integer, dimension(:,:,:), allocatable :: ibool
   integer, dimension(:,:), allocatable  :: knods
-  integer, dimension(:), allocatable :: kmato,numabs
+  integer, dimension(:), allocatable :: kmato,numabs,numsurface
 
   integer ie,k
 
@@ -127,17 +130,17 @@
     lambdal_Smin,lambdal_Smax,lambdal_Pmin,lambdal_Pmax,vpmin,vpmax
 
   integer colors,numbers,subsamp,vecttype,itaff,nrec,sismostype
-  integer numat,ngnod,nspec,iptsdisp,nelemabs
+  integer numat,ngnod,nspec,iptsdisp,nelemabs,nelemsurface
 
-  logical interpol,meshvect,modelvect,boundvect,readmodel,initialfield, &
-    outputgrid,gnuplot,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
+  logical interpol,meshvect,modelvect,boundvect,readmodel,initialfield,abshaut, &
+    outputgrid,gnuplot,ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
 
   double precision cutvect,anglerec
 
-! for absorbing conditions
-  integer ispecabs,inum,numabsread,i1abs,i2abs
+! for absorbing and free surface conditions
+  integer ispecabs,ispecsurface,inum,numabsread,numsurfaceread,i1abs,i2abs
   logical codeabsread(4)
-  double precision nx,nz,vx,vz,vn,rho_vp,rho_vs,tx,tz,weight,xxi,zeta,rKvol
+  double precision nx,nz,vx,vz,vn,rho_vp,rho_vs,tx,tz,weight,xxi,zeta,kappal
 
   logical, dimension(:,:), allocatable  :: codeabs
 
@@ -201,7 +204,7 @@
   write(*,*)
   write(*,*) '*********************************'
   write(*,*) '****                         ****'
-  write(*,*) '****  SPECFEM2D VERSION 5.0  ****'
+  write(*,*) '****  SPECFEM2D VERSION 5.1  ****'
   write(*,*) '****                         ****'
   write(*,*) '*********************************'
 
@@ -232,13 +235,13 @@
   read(IIN,*) sismostype,vecttype
 
   read(IIN,40) datlin
-  read(IIN,*) readmodel,outputgrid,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
+  read(IIN,*) readmodel,outputgrid,ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
 
 !---- check parameters read
   write(IOUT,200) npgeo,NDIME
   write(IOUT,600) itaff,colors,numbers
   write(IOUT,700) nrec,sismostype,anglerec
-  write(IOUT,750) initialfield,readmodel,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,outputgrid
+  write(IOUT,750) initialfield,readmodel,ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,outputgrid
   write(IOUT,800) vecttype,100.d0*cutvect,subsamp
 
 !---- read time step
@@ -288,7 +291,7 @@
   read(IIN,40) datlin
   allocate(posrecread(NDIME))
   do i=1,nrec
-   read(IIN ,*) irec,(posrecread(j),j=1,NDIME)
+   read(IIN,*) irec,(posrecread(j),j=1,NDIME)
    if(irec<1 .or. irec>nrec) stop 'Wrong receiver number'
    posrec(:,irec) = posrecread
   enddo
@@ -310,8 +313,8 @@
 !
 !---- read the basic properties of the spectral elements
 !
-  read(IIN ,40) datlin
-  read(IIN ,*) numat,ngnod,nspec,iptsdisp,nelemabs
+  read(IIN,40) datlin
+  read(IIN,*) numat,ngnod,nspec,iptsdisp,nelemabs,nelemsurface
 
 !
 !---- allocate arrays
@@ -338,6 +341,13 @@
   allocate(kmato(nspec))
   allocate(knods(ngnod,nspec))
   allocate(ibool(NGLLX,NGLLZ,nspec))
+
+! for acoustic
+  if(TURN_ANISOTROPY_ON .and. .not. ELASTIC) stop 'currently cannot have anisotropy in acoustic simulation'
+
+  if(TURN_ATTENUATION_ON .and. .not. ELASTIC) stop 'currently cannot have attenuation in acoustic simulation'
+
+  if(source_type == 2 .and. .not. ELASTIC) stop 'currently cannot have moment tensor source in acoustic simulation'
 
 ! for attenuation
   if(TURN_ANISOTROPY_ON .and. TURN_ATTENUATION_ON) stop 'cannot have anisotropy and attenuation both turned on in current version'
@@ -373,6 +383,10 @@
   allocate(numabs(nelemabs))
   allocate(codeabs(4,nelemabs))
 
+! --- allocate array for free surface condition in acoustic medium
+  if(nelemsurface <= 0) nelemsurface = 1
+  allocate(numsurface(nelemsurface))
+
 !
 !---- print element group main parameters
 !
@@ -400,9 +414,9 @@
 !----  read absorbing boundary data
 !
   if(anyabs) then
-    read(IIN ,40) datlin
+    read(IIN,40) datlin
     do n=1,nelemabs
-      read(IIN ,*) inum,numabsread,codeabsread(1),codeabsread(2),codeabsread(3),codeabsread(4)
+      read(IIN,*) inum,numabsread,codeabsread(1),codeabsread(2),codeabsread(3),codeabsread(4)
       if(inum < 1 .or. inum > nelemabs) stop 'Wrong absorbing element number'
       numabs(inum) = numabsread
       codeabs(ITOP,inum) = codeabsread(1)
@@ -413,6 +427,19 @@
     write(*,*)
     write(*,*) 'Number of absorbing elements: ',nelemabs
   endif
+
+!
+!----  read free surface data
+!
+  read(IIN,40) datlin
+  read(IIN,*) abshaut
+  do n=1,nelemsurface
+    read(IIN,*) inum,numsurfaceread
+    if(inum < 1 .or. inum > nelemsurface) stop 'Wrong free surface element number'
+    numsurface(inum) = numsurfaceread
+  enddo
+  write(*,*)
+  write(*,*) 'Number of free surface elements: ',nelemsurface
 
 !
 !---- compute the spectral element shape functions and their local derivatives
@@ -451,6 +478,13 @@
   allocate(accel(NDIME,npoin))
   allocate(displ(NDIME,npoin))
   allocate(veloc(NDIME,npoin))
+
+! for acoustic medium
+  if(ELASTIC) then
+    allocate(vector_field_postscript(NDIME,1))
+  else
+    allocate(vector_field_postscript(NDIME,npoin))
+  endif
 
   allocate(rmass(npoin))
 
@@ -558,13 +592,22 @@
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
-!--- if external density model
+! if external density model
         if(readmodel) then
           rhol = rhoext(iglob)
+          cpsquare = vpext(iglob)**2
         else
           rhol = density(kmato(ispec))
+          lambdal_relaxed = elastcoef(1,kmato(ispec))
+          mul_relaxed = elastcoef(2,kmato(ispec))
+          cpsquare = (lambdal_relaxed + 2.d0*mul_relaxed) / rhol
         endif
-        rmass(iglob) = rmass(iglob) + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
+! for acoustic medium
+        if(ELASTIC) then
+          rmass(iglob) = rmass(iglob) + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
+        else
+          rmass(iglob) = rmass(iglob) + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / cpsquare
+        endif
       enddo
     enddo
   enddo
@@ -576,7 +619,7 @@
 !---- verifier le maillage, la stabilite et le nb de points par lambda
 !---- seulement si la source en temps n'est pas un Dirac (sinon spectre non defini)
 !
-  if(time_function_type /= 3) call checkgrid(deltat,f0,t0,initialfield, &
+  if(time_function_type /= 4) call checkgrid(deltat,f0,t0,initialfield, &
       rsizemin,rsizemax,cpoverdxmin,cpoverdxmax,lambdal_Smin,lambdal_Smax,lambdal_Pmin,lambdal_Pmax)
 
 !
@@ -700,8 +743,8 @@
   sisux = ZERO
   sisuz = ZERO
 
-  dcosrot = dcos(anglerec)
-  dsinrot = dsin(anglerec)
+  cosrot = cos(anglerec)
+  sinrot = sin(anglerec)
 
 ! initialiser les tableaux a zero
   accel = ZERO
@@ -798,6 +841,31 @@
     displ(:,:) = displ(:,:) + deltat*veloc(:,:) + deltatsquareover2*accel(:,:)
     veloc(:,:) = veloc(:,:) + deltatover2*accel(:,:)
     accel(:,:) = ZERO
+
+
+!--- free surface for an acoustic medium
+
+! if acoustic, the free surface condition is a Dirichlet condition for the potential,
+! not Neumann, in order to impose zero pressure at the surface. Also check that
+! top absorbing boundary is not set because cannot be both absorbing and free surface
+  if(.not. ELASTIC .and. .not. abshaut) then
+
+    do ispecsurface=1,nelemsurface
+
+      ispec = numsurface(ispecsurface)
+
+      j = NGLLZ
+      do i=1,NGLLX
+        iglob = ibool(i,j,ispec)
+        displ(:,iglob) = ZERO
+        veloc(:,iglob) = ZERO
+        accel(:,iglob) = ZERO
+      enddo
+
+    enddo
+
+  endif  ! end of free surface condition for acoustic medium
+
 
 !   integration over spectral elements
     do ispec = 1,NSPEC
@@ -935,6 +1003,12 @@
           tempx2(i,j) = jacobianl*(sigma_xx*gammaxl+sigma_zx*gammazl)
           tempz2(i,j) = jacobianl*(sigma_xz*gammaxl+sigma_zz*gammazl)
 
+! for acoustic medium
+          if(.not. ELASTIC) then
+            tempx1(i,j) = jacobianl*(xixl*dUxdxl + xizl*dUxdzl)
+            tempx2(i,j) = jacobianl*(gammaxl*dUxdxl + gammazl*dUxdzl)
+          endif
+
         enddo
       enddo
 
@@ -950,7 +1024,7 @@
           do k = 1,NGLLX
             fac1 = wxgll(k)*hprime_xx(i,k)
             tempx1l = tempx1l + tempx1(k,j)*fac1
-            tempz1l = tempz1l + tempz1(k,j)*fac1
+            if(ELASTIC) tempz1l = tempz1l + tempz1(k,j)*fac1
           enddo
 
 ! along z direction
@@ -959,15 +1033,21 @@
           do k = 1,NGLLZ
             fac2 = wzgll(k)*hprime_zz(j,k)
             tempx2l = tempx2l + tempx2(i,k)*fac2
-            tempz2l = tempz2l + tempz2(i,k)*fac2
+            if(ELASTIC) tempz2l = tempz2l + tempz2(i,k)*fac2
           enddo
 
+! GLL integration weights
           fac1 = wzgll(j)
           fac2 = wxgll(i)
 
+! for acoustic medium
           iglob = ibool(i,j,ispec)
           accel(1,iglob) = accel(1,iglob) - (fac1*tempx1l + fac2*tempx2l)
-          accel(2,iglob) = accel(2,iglob) - (fac1*tempz1l + fac2*tempz2l)
+          if(ELASTIC) then
+            accel(2,iglob) = accel(2,iglob) - (fac1*tempz1l + fac2*tempz2l)
+          else
+            accel(2,iglob) = zero
+          endif
 
         enddo ! second loop over the GLL points
       enddo
@@ -987,9 +1067,9 @@
       lambdal_relaxed = elastcoef(1,kmato(ispec))
       mul_relaxed = elastcoef(2,kmato(ispec))
       rhol  = density(kmato(ispec))
-      rKvol  = lambdal_relaxed + TWO*mul_relaxed/3.d0
-      cpl = dsqrt((rKvol + 4.d0*mul_relaxed/3.d0)/rhol)
-      csl = dsqrt(mul_relaxed/rhol)
+      kappal  = lambdal_relaxed + TWO*mul_relaxed/3.d0
+      cpl = sqrt((kappal + 4.d0*mul_relaxed/3.d0)/rhol)
+      csl = sqrt(mul_relaxed/rhol)
 
 
 !--- left absorbing boundary
@@ -1026,8 +1106,13 @@
 
           weight = zeta*wzgll(j)
 
-          accel(1,iglob) = accel(1,iglob) - tx*weight
-          accel(2,iglob) = accel(2,iglob) - tz*weight
+! Clayton-Engquist condition if elastic, Sommerfeld condition if acoustic
+          if(ELASTIC) then
+            accel(1,iglob) = accel(1,iglob) - tx*weight
+            accel(2,iglob) = accel(2,iglob) - tz*weight
+          else
+            accel(1,iglob) = accel(1,iglob) - veloc(1,iglob)*weight/cpl
+          endif
 
         enddo
 
@@ -1067,8 +1152,13 @@
 
           weight = zeta*wzgll(j)
 
-          accel(1,iglob) = accel(1,iglob) - tx*weight
-          accel(2,iglob) = accel(2,iglob) - tz*weight
+! Clayton-Engquist condition if elastic, Sommerfeld condition if acoustic
+          if(ELASTIC) then
+            accel(1,iglob) = accel(1,iglob) - tx*weight
+            accel(2,iglob) = accel(2,iglob) - tz*weight
+          else
+            accel(1,iglob) = accel(1,iglob) - veloc(1,iglob)*weight/cpl
+          endif
 
         enddo
 
@@ -1114,8 +1204,13 @@
 
           weight = xxi*wxgll(i)
 
-          accel(1,iglob) = accel(1,iglob) - tx*weight
-          accel(2,iglob) = accel(2,iglob) - tz*weight
+! Clayton-Engquist condition if elastic, Sommerfeld condition if acoustic
+          if(ELASTIC) then
+            accel(1,iglob) = accel(1,iglob) - tx*weight
+            accel(2,iglob) = accel(2,iglob) - tz*weight
+          else
+            accel(1,iglob) = accel(1,iglob) - veloc(1,iglob)*weight/cpl
+          endif
 
         enddo
 
@@ -1161,8 +1256,13 @@
 
           weight = xxi*wxgll(i)
 
-          accel(1,iglob) = accel(1,iglob) - tx*weight
-          accel(2,iglob) = accel(2,iglob) - tz*weight
+! Clayton-Engquist condition if elastic, Sommerfeld condition if acoustic
+          if(ELASTIC) then
+            accel(1,iglob) = accel(1,iglob) - tx*weight
+            accel(2,iglob) = accel(2,iglob) - tz*weight
+          else
+            accel(1,iglob) = accel(1,iglob) - veloc(1,iglob)*weight/cpl
+          endif
 
         enddo
 
@@ -1176,24 +1276,34 @@
 ! --- add the source
   if(.not. initialfield) then
 
-! Ricker source time function
+! Ricker (second derivative of a Gaussian) source time function
   if(time_function_type == 1) then
     source_time_function = - factor * (ONE-TWO*a*(time-t0)**2) * exp(-a*(time-t0)**2)
 
+! first derivative of a Gaussian source time function
+  else if(time_function_type == 2) then
+    source_time_function = - factor * TWO*a*(time-t0) * exp(-a*(time-t0)**2)
+
 ! Gaussian or Dirac (we use a very thin Gaussian instead) source time function
-  else if(time_function_type == 2 .or. time_function_type == 3) then
+  else if(time_function_type == 3 .or. time_function_type == 4) then
     source_time_function = factor * exp(-a*(time-t0)**2)
 
   else
     stop 'unknown source time function'
   endif
 
-! --- collocated force
+! collocated force
+! beware, for acoustic medium, source is a potential, therefore source time function
+! gives shape of velocity, not displacement
   if(source_type == 1) then
-    accel(1,iglob_source) = accel(1,iglob_source) - dsin(angleforce)*source_time_function
-    accel(2,iglob_source) = accel(2,iglob_source) + dcos(angleforce)*source_time_function
+    if(ELASTIC) then
+      accel(1,iglob_source) = accel(1,iglob_source) - sin(angleforce)*source_time_function
+      accel(2,iglob_source) = accel(2,iglob_source) + cos(angleforce)*source_time_function
+    else
+      accel(1,iglob_source) = accel(1,iglob_source) + source_time_function
+    endif
 
-!---- explosion
+! explosion
   else if(source_type == 2) then
     do i=1,NGLLX
       do j=1,NGLLX
@@ -1214,6 +1324,31 @@
 
 ! update velocity
   veloc(:,:) = veloc(:,:) + deltatover2*accel(:,:)
+
+
+!--- free surface for an acoustic medium
+
+! if acoustic, the free surface condition is a Dirichlet condition for the potential,
+! not Neumann, in order to impose zero pressure at the surface. Also check that
+! top absorbing boundary is not set because cannot be both absorbing and free surface
+  if(.not. ELASTIC .and. .not. abshaut) then
+
+    do ispecsurface=1,nelemsurface
+
+      ispec = numsurface(ispecsurface)
+
+      j = NGLLZ
+      do i=1,NGLLX
+        iglob = ibool(i,j,ispec)
+        displ(:,iglob) = ZERO
+        veloc(:,iglob) = ZERO
+        accel(:,iglob) = ZERO
+      enddo
+
+    enddo
+
+  endif  ! end of free surface condition for acoustic medium
+
 
 ! implement attenuation
   if(TURN_ATTENUATION_ON) then
@@ -1323,30 +1458,54 @@
 !----  display max of norm of displacement
   if(mod(it,itaff) == 0) then
     displnorm_all = maxval(sqrt(displ(1,:)**2 + displ(2,:)**2))
-    print *,'Max norm of displacement = ',displnorm_all
+    print *,'Max norm of field = ',displnorm_all
 ! check stability of the code, exit if unstable
     if(displnorm_all > STABILITY_THRESHOLD) stop 'code became unstable and blew up'
   endif
 
 ! store the seismograms
+  if(sismostype < 1 .or. sismostype > 3) stop 'Wrong field code for seismogram output'
+
+  if(.not. ELASTIC) then
+    if(sismostype == 1) then
+      stop 'cannot store displacement field in acoustic medium because of potential formulation'
+    else if(sismostype == 2) then
+! for acoustic medium, compute gradient for display, displ represents the potential
+      call compute_gradient_fluid(displ,vector_field_postscript, &
+            xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,NSPEC,npoin)
+    else
+! for acoustic medium, compute gradient for display, veloc represents the first derivative of the potential
+      call compute_gradient_fluid(veloc,vector_field_postscript, &
+            xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,NSPEC,npoin)
+    endif
+  endif
+
   do irec=1,nrec
 
-    if(sismostype == 1) then
-      valux = displ(1,iglob_rec(irec))
-      valuz = displ(2,iglob_rec(irec))
-    else if(sismostype == 2) then
-      valux = veloc(1,iglob_rec(irec))
-      valuz = veloc(2,iglob_rec(irec))
-    else if(sismostype == 3) then
-      valux = accel(1,iglob_rec(irec))
-      valuz = accel(2,iglob_rec(irec))
+    if(ELASTIC) then
+
+      if(sismostype == 1) then
+        valux = displ(1,iglob_rec(irec))
+        valuz = displ(2,iglob_rec(irec))
+      else if(sismostype == 2) then
+        valux = veloc(1,iglob_rec(irec))
+        valuz = veloc(2,iglob_rec(irec))
+      else
+        valux = accel(1,iglob_rec(irec))
+        valuz = accel(2,iglob_rec(irec))
+      endif
+
     else
-      stop 'Wrong field code for seismogram output'
+
+! for acoustic medium
+      valux = vector_field_postscript(1,iglob_rec(irec))
+      valuz = vector_field_postscript(2,iglob_rec(irec))
+
     endif
 
 ! rotation eventuelle des composantes
-    sisux(it,irec) =   dcosrot*valux + dsinrot*valuz
-    sisuz(it,irec) = - dsinrot*valux + dcosrot*valuz
+    sisux(it,irec) =   cosrot*valux + sinrot*valuz
+    sisuz(it,irec) = - sinrot*valux + cosrot*valuz
 
   enddo
 
@@ -1367,30 +1526,63 @@
 !----  affichage postscript
 !
   write(IOUT,*) 'Dump PostScript'
-  if(vecttype == 1) then
+
+! for elastic medium
+  if(ELASTIC .and. vecttype == 1) then
     write(IOUT,*) 'drawing displacement field...'
     call plotpost(displ,coord,vpext,iglob_source,iglob_rec, &
           it,deltat,coorg,xinterp,zinterp,shapeint, &
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
           colors,numbers,subsamp,vecttype,interpol,meshvect,modelvect, &
-          boundvect,readmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod)
-  else if(vecttype == 2) then
+          boundvect,readmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod,ELASTIC)
+
+  else if(ELASTIC .and. vecttype == 2) then
     write(IOUT,*) 'drawing velocity field...'
     call plotpost(veloc,coord,vpext,iglob_source,iglob_rec, &
           it,deltat,coorg,xinterp,zinterp,shapeint, &
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
           colors,numbers,subsamp,vecttype,interpol,meshvect,modelvect, &
-          boundvect,readmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod)
-  else if(vecttype == 3) then
+          boundvect,readmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod,ELASTIC)
+
+  else if(ELASTIC .and. vecttype == 3) then
     write(IOUT,*) 'drawing acceleration field...'
     call plotpost(accel,coord,vpext,iglob_source,iglob_rec, &
           it,deltat,coorg,xinterp,zinterp,shapeint, &
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
           colors,numbers,subsamp,vecttype,interpol,meshvect,modelvect, &
-          boundvect,readmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod)
+          boundvect,readmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod,ELASTIC)
+
+! for acoustic medium
+  else if(.not. ELASTIC .and. vecttype == 1) then
+    stop 'cannot display displacement field in acoustic medium because of potential formulation'
+
+  else if(.not. ELASTIC .and. vecttype == 2) then
+    write(IOUT,*) 'drawing acoustic velocity field from velocity potential...'
+! for acoustic medium, compute gradient for display, displ represents the potential
+    call compute_gradient_fluid(displ,vector_field_postscript, &
+          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,NSPEC,npoin)
+    call plotpost(vector_field_postscript,coord,vpext,iglob_source,iglob_rec, &
+          it,deltat,coorg,xinterp,zinterp,shapeint, &
+          Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
+          numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
+          colors,numbers,subsamp,vecttype,interpol,meshvect,modelvect, &
+          boundvect,readmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod,ELASTIC)
+
+  else if(.not. ELASTIC .and. vecttype == 3) then
+    write(IOUT,*) 'drawing acoustic acceleration field from velocity potential...'
+! for acoustic medium, compute gradient for display, veloc represents the first derivative of the potential
+    call compute_gradient_fluid(veloc,vector_field_postscript, &
+          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,NSPEC,npoin)
+    call plotpost(vector_field_postscript,coord,vpext,iglob_source,iglob_rec, &
+          it,deltat,coorg,xinterp,zinterp,shapeint, &
+          Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
+          numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
+          colors,numbers,subsamp,vecttype,interpol,meshvect,modelvect, &
+          boundvect,readmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod,ELASTIC)
+
   else
     stop 'wrong field code for PostScript display'
   endif
@@ -1405,8 +1597,21 @@
 
   do j = 1,NZ_IMAGE_PNM
     do i = 1,NX_IMAGE_PNM
-! afficher la composante verticale du deplacement
-      if(iglob_image_PNM_2D(i,j) /= -1) donnees_image_PNM_2D(i,j) = displ(2,iglob_image_PNM_2D(i,j))
+      if(iglob_image_PNM_2D(i,j) /= -1) then
+! display vertical component of vector
+        if(ELASTIC) then
+          if(vecttype == 1) then
+            donnees_image_PNM_2D(i,j) = displ(2,iglob_image_PNM_2D(i,j))
+          else if(vecttype == 2) then
+            donnees_image_PNM_2D(i,j) = veloc(2,iglob_image_PNM_2D(i,j))
+          else
+            donnees_image_PNM_2D(i,j) = accel(2,iglob_image_PNM_2D(i,j))
+          endif
+        else
+! for acoustic medium
+          donnees_image_PNM_2D(i,j) = vector_field_postscript(2,iglob_image_PNM_2D(i,j))
+        endif
+      endif
     enddo
   enddo
 
@@ -1415,14 +1620,14 @@
   write(IOUT,*) 'Fin creation image PNM'
 
 !----  save temporary seismograms
-  call write_seismograms(sisux,sisuz,NSTEP,nrec,deltat,sismostype,iglob_rec,coord,npoin)
+  call write_seismograms(sisux,sisuz,NSTEP,nrec,deltat,sismostype,iglob_rec,coord,npoin,t0)
 
   endif
 
   enddo ! end of the main time loop
 
 !----  save final seismograms
-  call write_seismograms(sisux,sisuz,NSTEP,nrec,deltat,sismostype,iglob_rec,coord,npoin)
+  call write_seismograms(sisux,sisuz,NSTEP,nrec,deltat,sismostype,iglob_rec,coord,npoin,t0)
 
 ! print exit banner
   call datim(stitle)
@@ -1460,10 +1665,11 @@
   'Angle for first line of receivers. . . . .(anglerec) = ',f6.2)
   750   format(//1x,'C o n t r o l',/1x,34('='),//5x, &
   'Read external initial field or not . .(initialfield) = ',l6/5x, &
-  'Read external velocity model or not. . .(readmodel) = ',l6/5x, &
+  'Read external velocity model or not . . .(readmodel) = ',l6/5x, &
+  'Elastic simulation or acoustic. . . . . . .(ELASTIC) = ',l6/5x, &
   'Turn anisotropy on or off. . . .(TURN_ANISOTROPY_ON) = ',l6/5x, &
   'Turn attenuation on or off. . .(TURN_ATTENUATION_ON) = ',l6/5x, &
-  'Save grid in external file or not . . .(outputgrid) = ',l6)
+  'Save grid in external file or not. . . .(outputgrid) = ',l6)
   800   format(//1x,'C o n t r o l',/1x,34('='),//5x, &
   'Vector display type . . . . . . . . . . .(vecttype) = ',i6/5x, &
   'Percentage of cut for vector plots. . . . .(cutvect) = ',f6.2/5x, &
