@@ -86,9 +86,9 @@
   write(iout,150) xs,zs,coord(1,ipoint),coord(2,ipoint),dmin
   write(iout,160) dminmax
 
- 150   format(1x,f12.3,1x,f12.3,1x,f12.3,1x,f12.3,f12.3)
- 160   format(/2x,'Maximum distance between asked and real =',f12.3)
- 200  format(//1x,48('=')/,' =  S o u r c e s  ', &
+ 150 format(1x,f12.3,1x,f12.3,1x,f12.3,1x,f12.3,f12.3)
+ 160 format(/2x,'Maximum distance between asked and real =',f12.3)
+ 200 format(//1x,48('=')/,' =  S o u r c e s  ', &
   'r e a l  p o s i t i o n s  ='/1x,48('=')// &
   '    Source    x-asked      z-asked     x-obtain     z-obtain       dist'/)
 
