@@ -44,7 +44,7 @@
 
 ! for the source
   integer source_type,time_function_type
-  double precision xs,zs,f0,t0,angle,factor
+  double precision xs,zs,f0,t0,angleforce,Mxx,Mzz,Mxz,factor
 
 ! arrays for the receivers
   double precision, dimension(:), allocatable :: xrec,zrec
@@ -192,7 +192,10 @@
   call read_value_integer(IIN_PAR,IGNORE_JUNK,source_type)
   call read_value_integer(IIN_PAR,IGNORE_JUNK,time_function_type)
   call read_value_double_precision(IIN_PAR,IGNORE_JUNK,f0)
-  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,angle)
+  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,angleforce)
+  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,Mxx)
+  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,Mzz)
+  call read_value_double_precision(IIN_PAR,IGNORE_JUNK,Mxz)
   call read_value_double_precision(IIN_PAR,IGNORE_JUNK,factor)
 
 ! if Dirac source time function, use a very thin Gaussian instead
@@ -207,7 +210,10 @@
   print *,'Frequency, delay = ',f0,t0
   print *,'Source type (1=force, 2=explosion): ',source_type
   print *,'Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac): ',time_function_type
-  print *,'Angle of the source if force = ',angle
+  print *,'Angle of the source if force = ',angleforce
+  print *,'Mxx of the source if moment tensor = ',Mxx
+  print *,'Mzz of the source if moment tensor = ',Mzz
+  print *,'Mxz of the source if moment tensor = ',Mxz
   print *,'Multiplying factor = ',factor
 
 ! read receivers line parameters
@@ -620,7 +626,7 @@
   write(15,*) nt,dt
 
   write(15,*) 'source'
-  write(15,*) source_type,time_function_type,xs-xmin,zs,f0,t0,factor,angle
+  write(15,*) source_type,time_function_type,xs-xmin,zs,f0,t0,factor,angleforce,Mxx,Mzz,Mxz
 
   write(15,*) 'Coordinates of macrobloc mesh (coorg):'
   do j=0,nz

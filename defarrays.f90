@@ -12,10 +12,9 @@
 !========================================================================
 
   subroutine defarrays(vpext,vsext,rhoext,density,elastcoef, &
-          xigll,zigll,xix,xiz,gammax,gammaz,a11,a12, &
           ibool,kmato,coord,npoin,rsizemin,rsizemax, &
           cpoverdxmin,cpoverdxmax,lambdaSmin,lambdaSmax,lambdaPmin,lambdaPmax, &
-          vpmin,vpmax,readmodel,nspec,numat,source_type,ix_source,iz_source,ispec_source)
+          vpmin,vpmax,readmodel,nspec,numat)
 
 ! define all the arrays for the variational formulation
 
@@ -24,22 +23,12 @@
   include "constants.h"
 
   integer i,j,ispec,material,ipointnum,npoin,nspec,numat
-  integer ix_source,iz_source,ispec_source,ir,is,source_type
 
   integer kmato(nspec),ibool(NGLLX,NGLLX,nspec)
-
-  double precision xix(NGLLX,NGLLZ,nspec)
-  double precision xiz(NGLLX,NGLLZ,nspec)
-  double precision gammax(NGLLX,NGLLZ,nspec)
-  double precision gammaz(NGLLX,NGLLZ,nspec)
 
   double precision density(numat),elastcoef(4,numat)
 
   double precision coord(NDIM,npoin)
-
-  double precision a11(NGLLX,NGLLX),a12(NGLLX,NGLLX)
-
-  double precision xigll(NGLLX),zigll(NGLLZ)
 
   double precision vpext(npoin)
   double precision vsext(npoin)
@@ -50,23 +39,17 @@
   double precision kappa,cploc,csloc,x0,z0
   double precision x1,z1,x2,z2,rdist1,rdist2,rapportmin,rapportmax
   double precision lambdamin,lambdamax
-  double precision flagxprime,flagzprime,sig0
 
   double precision rsizemin,rsizemax,cpoverdxmin,cpoverdxmax, &
     lambdaSmin,lambdaSmax,lambdaPmin,lambdaPmax,vpmin,vpmax
 
   logical readmodel
 
-  double precision, external :: lagrange_deriv_GLL
-
 !
 !-----------------------------------------------------------------------
 !
 
 !---- compute parameters for the spectral elements
-
-  a11 = zero
-  a12 = zero
 
   vpmin = HUGEVAL
   vsmin = HUGEVAL
@@ -180,30 +163,6 @@
   print *,'Modele : densite min,max = ',densmin,densmax
   print *,'********'
   print *
-
-! seulement si source explosive
-  if(source_type == 2) then
-
-  if(ix_source == 1 .or. ix_source == NGLLX .or. iz_source == 1 .or. iz_source == NGLLX) &
-        stop 'Explosive source on element edge'
-
-!---- definir a11 et a12 - dirac (schema en croix)
-
-  sig0 = one
-
-  do ir=1,NGLLX
-    flagxprime = lagrange_deriv_GLL(ir-1,ix_source-1,xigll,NGLLX)
-    a11(ir,iz_source) = a11(ir,iz_source) + sig0*xix(ix_source,iz_source,ispec_source)*flagxprime
-    a12(ir,iz_source) = a12(ir,iz_source) + sig0*xiz(ix_source,iz_source,ispec_source)*flagxprime
-  enddo
-
-  do is=1,NGLLZ
-    flagzprime = lagrange_deriv_GLL(is-1,iz_source-1,zigll,NGLLZ)
-    a11(ix_source,is) = a11(ix_source,is) + sig0*gammax(ix_source,iz_source,ispec_source)*flagzprime
-    a12(ix_source,is) = a12(ix_source,is) + sig0*gammaz(ix_source,iz_source,ispec_source)*flagzprime
-  enddo
-
-  endif
 
   end subroutine defarrays
 

@@ -1,19 +1,15 @@
-!=====================================================================
+
+!========================================================================
 !
-!          S p e c f e m 3 D  B a s i n  V e r s i o n  1 . 2
-!          --------------------------------------------------
+!                   S P E C F E M 2 D  Version 5.1
+!                   ------------------------------
 !
-!                 Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory - California Institute of Technology
-!         (c) California Institute of Technology July 2004
+!                         Dimitri Komatitsch
+!          Universite de Pau et des Pays de l'Adour, France
 !
-!    A signed non-commercial agreement is required to use this program.
-!   Please check http://www.gps.caltech.edu/research/jtromp for details.
-!           Free for non-commercial academic research ONLY.
-!      This program is distributed WITHOUT ANY WARRANTY whatsoever.
-!      Do not redistribute this program without written permission.
+!                          (c) January 2005
 !
-!=====================================================================
+!========================================================================
 
   program convolve_source_time_function
 

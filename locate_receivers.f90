@@ -171,7 +171,6 @@
     write(IOUT,*) '            original x: ',sngl(st_xval(irec))
     write(IOUT,*) '            original z: ',sngl(st_zval(irec))
     write(IOUT,*) '  distance from source: ',sngl(distance_receiver)
-
     write(IOUT,*) 'closest estimate found: ',sngl(final_distance(irec)),' m away'
     write(IOUT,*) ' in element ',ispec_selected_rec(irec)
     write(IOUT,*) ' at xi,gamma coordinates = ',xi_receiver(irec),gamma_receiver(irec)
