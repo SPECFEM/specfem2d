@@ -1,42 +1,34 @@
-!=====================================================================
+
+!========================================================================
 !
-!                 S p e c f e m  V e r s i o n  4 . 2
-!                 -----------------------------------
+!                   S P E C F E M 2 D  Version 5.0
+!                   ------------------------------
 !
 !                         Dimitri Komatitsch
-!    Department of Earth and Planetary Sciences - Harvard University
-!                         Jean-Pierre Vilotte
-!                 Departement de Sismologie - IPGP - Paris
-!                           (c) June 1998
+!          Universite de Pau et des Pays de l'Adour, France
 !
-!=====================================================================
+!                          (c) May 2004
+!
+!========================================================================
 
-  subroutine qmasspec(rhoext,wx,wy,ibool,dvolu,rmass,density,kmato,npoin)
-!
-!=======================================================================
-!
-!     "q m a s s p e c" : Build the mass matrix for the spectral
-!                         elements
-!
-!=======================================================================
-!
-  use spela202
-  use constspec
+  subroutine qmasspec(rhoext,wxgll,wygll,ibool,dvolu,rmass,density,kmato,npoin,ireadmodel,nspec,numat)
+
+! build the mass matrix
 
   implicit none
 
-  integer npoin
+  include "constants.h"
 
-  double precision wx(0:nxgll-1),wy(0:nygll-1),rmass(npoin), &
-          dvolu(nspec,0:nxgll-1,0:nxgll-1),density(numat)
+  integer npoin,nspec,numat
+
+  double precision wxgll(NGLLX),wygll(NGLLY),rmass(npoin),dvolu(nspec,NGLLX,NGLLX),density(numat)
   double precision rhoext(npoin)
 
-  integer kmato(nspec),ibool(0:nxgll-1,0:nxgll-1,nspec)
+  integer kmato(nspec),ibool(NGLLX,NGLLX,nspec)
 
   integer numelem,material,i,j,iglobnum
+  logical ireadmodel
   double precision denst
-
-  double precision, parameter :: zero=0.d0, one=1.d0
 
 !
 !----  compute the mass matrix by summing the contribution of each point
@@ -49,24 +41,20 @@
   material = kmato(numelem)
   denst    = density(material)
 
-  do i=0,nxgll-1
-       do j=0,nygll-1
+  do i=1,NGLLX
+       do j=1,NGLLY
 
   iglobnum = ibool(i,j,numelem)
 
 !--- si formulation heterogene pour un modele de densite externe
   if(ireadmodel) denst = rhoext(iglobnum)
 
-  rmass(iglobnum) = rmass(iglobnum) + &
-                         denst * wx(i) * wy(j) * dvolu(numelem,i,j)
+  rmass(iglobnum) = rmass(iglobnum) + denst * wxgll(i) * wygll(j) * dvolu(numelem,i,j)
 
       enddo
    enddo
 
   enddo
 
-!----  in case of periodic boundary conditions, fill the mass matrix
-  where(rmass == zero) rmass = one
-
-  return
   end subroutine qmasspec
+

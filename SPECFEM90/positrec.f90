@@ -1,62 +1,62 @@
-!=====================================================================
+
+!========================================================================
 !
-!                 S p e c f e m  V e r s i o n  4 . 2
-!                 -----------------------------------
+!                   S P E C F E M 2 D  Version 5.0
+!                   ------------------------------
 !
 !                         Dimitri Komatitsch
-!    Department of Earth and Planetary Sciences - Harvard University
-!                         Jean-Pierre Vilotte
-!                 Departement de Sismologie - IPGP - Paris
-!                           (c) June 1998
+!          Universite de Pau et des Pays de l'Adour, France
 !
-!=====================================================================
+!                          (c) May 2004
+!
+!========================================================================
 
-  subroutine positrec(coord,posrec,ndime,npoin,nrec)
+  subroutine positrec(coord,posrec,npoin,nrec)
 
 !
 !---- calculer la position reelle des recepteurs
 !
 
-  use iounit
-
   implicit none
 
-  integer ndime,npoin,nrec
-  double precision coord(ndime,npoin)
-  double precision posrec(ndime,nrec)
+  include "constants.h"
+
+  integer npoin,nrec
+  double precision coord(NDIME,npoin)
+  double precision posrec(NDIME,nrec)
 
   double precision dminmax,dmin,xs,zs,xp,zp,dist
   integer n,ip,ipoint
 
   write(iout,200)
 
-  dminmax = -1.d30
+  dminmax = -HUGEVAL
 
   do n=1,nrec
 
-      dmin = +1.d30
+      dmin = +HUGEVAL
 
 ! coordonnees demandees
   xs = posrec(1,n)
   zs = posrec(2,n)
 
-      do ip=1,npoin
+    do ip=1,npoin
 
 ! coordonnees du point de grille
-            xp = coord(1,ip)
-            zp = coord(2,ip)
+      xp = coord(1,ip)
+      zp = coord(2,ip)
 
-            dist = dsqrt((xp-xs)**2 + (zp-zs)**2)
+      dist = dsqrt((xp-xs)**2 + (zp-zs)**2)
 
 ! retenir le point pour lequel l'ecart est minimal
-            if (dist < dmin) then
-                  dmin = dist
-                  ipoint = ip
-            endif
+      if (dist < dmin) then
+        dmin = dist
+        ipoint = ip
+      endif
 
-      enddo
+    enddo
 
-      dminmax = dmax1(dmin,dminmax)
+    dminmax = dmax1(dmin,dminmax)
 
   write(iout,150) n,xs,zs,coord(1,ipoint),coord(2,ipoint),dmin
 
@@ -74,5 +74,5 @@
   '  Receiver    x-asked      z-asked     ', &
   'x-obtain     z-obtain       dist'/)
 
-  return
   end subroutine positrec
+

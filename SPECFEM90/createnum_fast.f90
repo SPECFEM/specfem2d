@@ -1,52 +1,32 @@
 
-!=====================================================================
+!========================================================================
 !
-!                 S p e c f e m  V e r s i o n  4 . 2
-!                 -----------------------------------
+!                   S P E C F E M 2 D  Version 5.0
+!                   ------------------------------
 !
 !                         Dimitri Komatitsch
-!    Department of Earth and Planetary Sciences - Harvard University
-!                         Jean-Pierre Vilotte
-!                 Departement de Sismologie - IPGP - Paris
-!                           (c) June 1998
+!          Universite de Pau et des Pays de l'Adour, France
 !
-!=====================================================================
+!                          (c) May 2004
+!
+!========================================================================
 
-  subroutine createnum_fast(knods,ibool,shape,coorg,npoin,ndime,npgeo)
-!
-!=======================================================================
-!
-!  "c r e a t e n u m _ f a s t": Equivalent de la routine "createnum_slow"
-!           mais avec un algorithme "sale mais tres rapide"
-!
-!  Cette version rapide necessite l'allocation de tableaux supplementaires
-!
-!  Cette version rapide n'accepte pas les conditions periodiques
-!  En cas de conditions periodiques, utiliser la version lente
-!
-!=======================================================================
-!
+  subroutine createnum_fast(knods,ibool,shape,coorg,npoin,npgeo,nspec,ngnod)
 
-  use iounit
-  use infos
-  use spela202
+! equivalent de la routine "createnum_slow" mais algorithme plus rapide
 
   implicit none
 
-  integer npoin,ndime,npgeo
-  integer knods(ngnod,nspec),ibool(nxgll,nygll,nspec)
-  double precision shape(ngnod,nxgll,nxgll)
-  double precision coorg(ndime,npgeo)
+  include "constants.h"
+
+  integer npoin,npgeo,nspec,ngnod
+  integer knods(ngnod,nspec),ibool(NGLLX,NGLLY,nspec)
+  double precision shape(ngnod,NGLLX,NGLLX)
+  double precision coorg(NDIME,npgeo)
 
   integer i,j
 
-  double precision, parameter :: smallvaltol = 0.000001d0
-  double precision, parameter :: HUGEVAL=1.0d+30
-
-  double precision, parameter :: zero = 0.d0
-
 ! tableaux supplementaires pour cette version rapide
-
   integer, dimension(:), allocatable :: loc,ind,ninseg,iglob,iwork
   logical, dimension(:), allocatable :: ifseg
   double precision, dimension(:), allocatable :: xp,yp,work
@@ -57,22 +37,14 @@
   double precision xmaxval,xminval,ymaxval,yminval,xtol,xtypdist
   double precision xcor,ycor
 
-!
-!-----------------------------------------------------------------------
-!
-
-!
-!----  create global numbering from mesh structure
-!
+!----  create global mesh numbering
   print *
   print *
-  print *,'Generating global numbering from mesh structure (fast version)...'
+  print *,'Generating global mesh numbering (fast version)...'
   print *
 
-  nxyz   = nxgll*nygll
+  nxyz   = NGLLX*NGLLY
   ntot   = nxyz*nspec
-
-  print *,'Allocating a few more arrays for the fast version'
 
   allocate(loc(ntot))
   allocate(ind(ntot))
@@ -84,15 +56,13 @@
   allocate(work(ntot))
   allocate(iwork(ntot))
 
-  print *,'Generating the numbering'
-
 ! compute coordinates of the grid points
   do ispec=1,nspec
    ieoff = nxyz*(ispec - 1)
    ilocnum = 0
 
-  do iy = 1,nxgll
-  do ix = 1,nxgll
+  do iy = 1,NGLLX
+  do ix = 1,NGLLX
 
     ilocnum = ilocnum + 1
 
@@ -154,7 +124,7 @@
   ifseg(1) = .true.
   ninseg(1) = ntot
 
-  do j=1,ndime
+  do j=1,NDIME
 !  Sort within each segment
    ioff=1
    do iseg=1,nseg
@@ -206,15 +176,13 @@
   do ispec=1,nspec
    ieoff = nxyz*(ispec - 1)
    ilocnum = 0
-  do iy = 1,nxgll
-  do ix = 1,nxgll
+  do iy = 1,NGLLX
+  do ix = 1,NGLLX
       ilocnum = ilocnum + 1
       ibool(ix,iy,ispec) = iglob(ilocnum + ieoff)
   enddo
   enddo
   enddo
-
-  print *,'Deallocating the arrays'
 
   deallocate(loc)
   deallocate(ind)
@@ -227,18 +195,17 @@
   deallocate(iwork)
 
 ! verification de la coherence de la numerotation generee
-  if(minval(ibool) /= 1 .or. maxval(ibool) /= npoin) &
-          stop 'Error while generating global numbering'
+  if(minval(ibool) /= 1 .or. maxval(ibool) /= npoin) stop 'Error while generating global numbering'
 
   print *
   print *,'Total number of points of the global mesh: ',npoin
   print *
 
-  return
   end subroutine createnum_fast
 
 
 !-----------------------------------------------------------------------
+
   subroutine rank(A,IND,N)
 !
 ! Use Heap Sort (p 233 Numerical Recipes)
@@ -258,24 +225,24 @@
   if (n == 1) return
   L=n/2+1
   ir=n
-  100 CONTINUE
+  100 continue
    IF (l > 1) THEN
-      l=l-1
-      indx=ind(l)
-      q=a(indx)
+     l=l-1
+     indx=ind(l)
+     q=a(indx)
    ELSE
-      indx=ind(ir)
-      q=a(indx)
-      ind(ir)=ind(1)
-      ir=ir-1
-      if (ir == 1) then
-         ind(1)=indx
-         return
-      endif
+     indx=ind(ir)
+     q=a(indx)
+     ind(ir)=ind(1)
+     ir=ir-1
+     if (ir == 1) then
+       ind(1)=indx
+       return
+     endif
    ENDIF
    i=l
    j=l+l
-  200    CONTINUE
+  200    continue
    IF (J <= IR) THEN
       IF (J < IR) THEN
          IF ( A(IND(j)) < A(IND(j+1)) ) j=j+1
@@ -291,9 +258,11 @@
    ENDIF
    IND(I)=INDX
   GOTO 100
+
   end subroutine rank
 
 !-----------------------------------------------------------------------
+
   subroutine swap(a,w,ind,n)
 !
 ! Use IND to sort array A (p 233 Numerical Recipes)
@@ -307,14 +276,13 @@
   integer j
 
   do J=1,N
-   W(j)=A(j)
+    W(j)=A(j)
   enddo
 
   do J=1,N
-   A(j)=W(ind(j))
+    A(j)=W(ind(j))
   enddo
 
-  RETURN
   end subroutine swap
 
 !-----------------------------------------------------------------------
@@ -331,13 +299,12 @@
   integer j
 
   do J=1,N
-   W(j)=A(j)
+    W(j)=A(j)
   enddo
 
   do J=1,N
-   A(j)=W(ind(j))
+    A(j)=W(ind(j))
   enddo
 
-  RETURN
   end subroutine iswap
 
