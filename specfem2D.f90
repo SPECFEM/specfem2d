@@ -191,7 +191,7 @@
 !
 !***********************************************************************
 
-  open (IIN,file='Database')
+  open (IIN,file='OUTPUT_FILES/Database')
 
 ! uncomment this to write to file instead of standard output
 ! open (IOUT,file='results_simulation.txt')

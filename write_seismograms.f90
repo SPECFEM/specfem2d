@@ -22,21 +22,26 @@
   integer nrec,NSTEP,it,sismostype
   double precision t0,deltat
 
-  double precision,dimension(NSTEP,nrec) :: sisux,sisuz
+  double precision, dimension(NSTEP,nrec) :: sisux,sisuz
 
   double precision st_xval(nrec)
 
   character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name
 
-  integer irec,length_station_name,length_network_name,iorientation,isample
+  integer irec,irecord,length_station_name,length_network_name,iorientation,isample
 
   character(len=4) chn
   character(len=1) component
   character(len=150) sisname
 
+! to write seismograms in single precision SEP binary format
+  real(kind=4), dimension(NSTEP*nrec) :: buffer_SEP_binary
+
 ! scaling factor for Seismic Unix xsu dislay
   double precision, parameter :: FACTORXSU = 1.d0
+
+!----
 
 ! write seismograms in ASCII format
 
@@ -101,20 +106,32 @@
 
 !----
 
-! write seismograms in single precision binary format
+! write seismograms in single precision SEP binary format
 
 ! X component
-  open(unit=11,file='OUTPUT_FILES/Ux_file.bin',status='unknown',access='direct',recl=NSTEP*4)
+  irecord = 0
   do irec=1,nrec
-    write(11,rec=irec) (sngl(sisux(isample,irec)),isample=1,NSTEP)
+    do isample=1,NSTEP
+      irecord = irecord + 1
+      buffer_SEP_binary(irecord) = sngl(sisux(isample,irec))
+    enddo
   enddo
+
+  open(unit=11,file='OUTPUT_FILES/Ux_file.bin',status='unknown',access='direct',recl=4*NSTEP*nrec)
+  write(11,rec=1) buffer_SEP_binary
   close(11)
 
 ! Z component
-  open(unit=11,file='OUTPUT_FILES/Uz_file.bin',status='unknown',access='direct',recl=NSTEP*4)
+  irecord = 0
   do irec=1,nrec
-    write(11,rec=irec) (sngl(sisuz(isample,irec)),isample=1,NSTEP)
+    do isample=1,NSTEP
+      irecord = irecord + 1
+      buffer_SEP_binary(irecord) = sngl(sisuz(isample,irec))
+    enddo
   enddo
+
+  open(unit=11,file='OUTPUT_FILES/Uz_file.bin',status='unknown',access='direct',recl=4*NSTEP*nrec)
+  write(11,rec=1) buffer_SEP_binary
   close(11)
 
 !----
