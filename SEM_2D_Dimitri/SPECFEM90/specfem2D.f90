@@ -117,7 +117,7 @@
   double precision cutvect,anglerec
 
 ! for absorbing conditions
-  integer ispecabs,inum,numabsread
+  integer ispecabs,inum,numabsread,i1abs,i2abs
   logical codeabsread(4)
   double precision nx,nz,vx,vz,vn,rho_vp,rho_vs,tx,tz,weight,xxi,zeta,rKvol
 
@@ -834,7 +834,13 @@
 
         j = 1
 
-        do i=1,NGLLX
+! exclude corners to make sure there is no contradiction on the normal
+        i1abs = 1
+        i2abs = NGLLX
+        if(codeabs(ILEFT,ispecabs)) i1abs = 2
+        if(codeabs(IRIGHT,ispecabs)) i2abs = NGLLX-1
+
+        do i=i1abs,i2abs
 
           iglob = ibool(i,j,ispec)
 
@@ -875,7 +881,13 @@
 
         j = NGLLZ
 
-        do i=1,NGLLX
+! exclude corners to make sure there is no contradiction on the normal
+        i1abs = 1
+        i2abs = NGLLX
+        if(codeabs(ILEFT,ispecabs)) i1abs = 2
+        if(codeabs(IRIGHT,ispecabs)) i2abs = NGLLX-1
+
+        do i=i1abs,i2abs
 
           iglob = ibool(i,j,ispec)
 

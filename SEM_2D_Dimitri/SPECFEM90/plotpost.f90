@@ -82,7 +82,7 @@
     sizex = 27.94d0
     sizez = 21.59d0
   else
-    usoffset = 0.
+    usoffset = 0.d0
     sizex = 29.7d0
     sizez = 21.d0
   endif
@@ -316,18 +316,18 @@
   write(24,*) '%'
   write(24,*) '/Times-Roman findfont'
   write(24,*) '.7 CM SCSF'
-  if (icolor == 1) write(24,*) '.8 0 .8 setrgbcolor'
+  if(icolor == 1) write(24,*) '.8 0 .8 setrgbcolor'
   write(24,*) '24.35 CM 18.9 CM MV'
   write(24,*) usoffset,' CM 2 div neg 0 MR'
   write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  if (ivecttype == 1) then
-      write(24,*) '(Displacement vector field) show'
-  else if (ivecttype == 2) then
-      write(24,*) '(Velocity vector field) show'
-  else if (ivecttype == 3) then
-      write(24,*) '(Acceleration vector field) show'
+  if(ivecttype == 1) then
+    write(24,*) '(Displacement vector field) show'
+  else if(ivecttype == 2) then
+    write(24,*) '(Velocity vector field) show'
+  else if(ivecttype == 3) then
+    write(24,*) '(Acceleration vector field) show'
   else
-      stop 'Bad field code in PostScript display'
+    stop 'Bad field code in PostScript display'
   endif
   write(24,*) 'grestore'
   write(24,*) '25.35 CM 18.9 CM MV'
@@ -368,13 +368,13 @@
   if(ireadmodel) then
     x1 = (vpext(ibool(i,j,ispec))-vpmin)/ (vpmax-vpmin)
   else
- material = kmato(ispec)
- rlamda = elastcoef(1,material)
- rmu    = elastcoef(2,material)
- denst  = density(material)
- rKvol  = rlamda + 2.d0*rmu/3.d0
- cploc = dsqrt((rKvol + 4.d0*rmu/3.d0)/denst)
- x1 = (cploc-vpmin)/(vpmax-vpmin)
+    material = kmato(ispec)
+    rlamda = elastcoef(1,material)
+    rmu    = elastcoef(2,material)
+    denst  = density(material)
+    rKvol  = rlamda + 2.d0*rmu/3.d0
+    cploc = dsqrt((rKvol + 4.d0*rmu/3.d0)/denst)
+    x1 = (cploc-vpmin)/(vpmax-vpmin)
   endif
   else
     x1 = 0.5d0
@@ -382,7 +382,7 @@
 
 ! rescaler pour eviter gris trop sombre
   x1 = x1*0.7 + 0.2
-  if (x1 > 1.d0) x1=1.d0
+  if(x1 > 1.d0) x1=1.d0
 
 ! inverser echelle : blanc = vpmin, gris = vpmax
   x1 = 1.d0 - x1
@@ -393,29 +393,32 @@
   zw = (zw-zmin)*rapp_page + orig_z
   xw = xw * centim
   zw = zw * centim
-    write(24,500) xw,zw
+  write(24,500) xw,zw
+
   xw = coord(1,ibool(i+isubsamp,j,ispec))
   zw = coord(2,ibool(i+isubsamp,j,ispec))
   xw = (xw-xmin)*rapp_page + orig_x
   zw = (zw-zmin)*rapp_page + orig_z
   xw = xw * centim
   zw = zw * centim
-    write(24,499) xw,zw
+  write(24,499) xw,zw
+
   xw = coord(1,ibool(i+isubsamp,j+isubsamp,ispec))
   zw = coord(2,ibool(i+isubsamp,j+isubsamp,ispec))
   xw = (xw-xmin)*rapp_page + orig_x
   zw = (zw-zmin)*rapp_page + orig_z
   xw = xw * centim
   zw = zw * centim
-    write(24,499) xw,zw
+  write(24,499) xw,zw
+
   xw = coord(1,ibool(i,j+isubsamp,ispec))
   zw = coord(2,ibool(i,j+isubsamp,ispec))
   xw = (xw-xmin)*rapp_page + orig_x
   zw = (zw-zmin)*rapp_page + orig_z
   xw = xw * centim
   zw = zw * centim
-    write(24,499) xw,zw
-    write(24,604) x1
+  write(24,499) xw,zw
+  write(24,604) x1
 
           enddo
     enddo
@@ -427,7 +430,7 @@
 !---- draw spectral element mesh
 !
 
-  if (imeshvect) then
+  if(imeshvect) then
 
   write(24,*) '%'
   write(24,*) '% spectral element mesh'
@@ -458,7 +461,7 @@
   write(24,*) 'MK'
   write(24,681) x1,z1
 
-  if (ngnod == 4) then
+  if(ngnod == 4) then
 
 ! tracer des droites si elements 4 noeuds
 
@@ -497,45 +500,45 @@
 
 ! tracer des courbes si elements 9 noeuds
   do ir=2,iptsdisp
-  x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
-  write(24,681) x2,z2
+    x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
+    z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
+    x2 = x2 * centim
+    z2 = z2 * centim
+    write(24,681) x2,z2
   enddo
 
   ir=iptsdisp
   do is=2,iptsdisp
-  x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
-  write(24,681) x2,z2
+    x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
+    z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
+    x2 = x2 * centim
+    z2 = z2 * centim
+    write(24,681) x2,z2
   enddo
 
   is=iptsdisp
   do ir=iptsdisp-1,1,-1
-  x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
-  write(24,681) x2,z2
+    x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
+    z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
+    x2 = x2 * centim
+    z2 = z2 * centim
+    write(24,681) x2,z2
   enddo
 
   ir=1
   do is=iptsdisp-1,2,-1
-  x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
-  write(24,681) x2,z2
+    x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
+    z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
+    x2 = x2 * centim
+    z2 = z2 * centim
+    write(24,681) x2,z2
   enddo
 
   endif
 
   write(24,*) 'CO'
 
-  if (icolor == 1) then
+  if(icolor == 1) then
 
 ! For the moment 20 different colors max
   nbcols = 20
@@ -556,7 +559,7 @@
 
 ! write the element number, the group number and the
 ! material number inside the element
-  if (inumber == 1) then
+  if(inumber == 1) then
 
   xw = (coorg(1,knods(1,ispec)) + coorg(1,knods(2,ispec)) + &
           coorg(1,knods(3,ispec)) + coorg(1,knods(4,ispec))) / 4.d0
@@ -566,7 +569,7 @@
   zw = (zw-zmin)*rapp_page + orig_z
   xw = xw * centim
   zw = zw * centim
-  if (icolor == 1) write(24,*) '1 setgray'
+  if(icolor == 1) write(24,*) '1 setgray'
 
   write(24,500) xw,zw
 
@@ -655,7 +658,7 @@
 !
 
 ! return if the maximum displacement equals zero (no source)
-  if (dispmax == 0.d0) then
+  if(dispmax == 0.d0) then
     print *,' null displacement : returning !'
     return
   endif
@@ -671,7 +674,7 @@
         write(24,*) '0 setgray'
   endif
 
-  if (interpol) then
+  if(interpol) then
 
   print *,'Interpolating the vector field...'
 
@@ -714,14 +717,14 @@
   d = dsqrt(x2**2 + z2**2)
 
 ! ignorer si vecteur trop petit
-  if (d > cutvect*sizemax) then
+  if(d > cutvect*sizemax) then
 
   d1 = d * rapport
   d2 = d1 * dcos(angle*convert)
 
   dummy = x2/d
-  if (dummy > 0.9999d0) dummy = 0.9999d0
-  if (dummy < -0.9999d0) dummy = -0.9999d0
+  if(dummy > 0.9999d0) dummy = 0.9999d0
+  if(dummy < -0.9999d0) dummy = -0.9999d0
   theta = dacos(dummy)
 
   if(z2 < 0.d0) theta = 360.d0*convert - theta
@@ -779,14 +782,14 @@
   d = dsqrt(x2**2 + z2**2)
 
 ! ignorer si vecteur trop petit
-  if (d > cutvect*sizemax) then
+  if(d > cutvect*sizemax) then
 
   d1 = d * rapport
   d2 = d1 * dcos(angle*convert)
 
   dummy = x2/d
-  if (dummy > 0.9999d0) dummy = 0.9999d0
-  if (dummy < -0.9999d0) dummy = -0.9999d0
+  if(dummy > 0.9999d0) dummy = 0.9999d0
+  if(dummy < -0.9999d0) dummy = -0.9999d0
   theta = dacos(dummy)
 
   if(z2 < 0.d0) theta = 360.d0*convert - theta
@@ -851,7 +854,7 @@
   xw = xw * centim
   zw = zw * centim
   write(24,510) xw,zw
-  if (isymbols) then
+  if(isymbols) then
     write(24,*) 'Cross'
   else
     write(24,*) '(S) show'
@@ -873,7 +876,7 @@
   xw = xw * centim
   zw = zw * centim
   write(24,510) xw,zw
-  if (isymbols) then
+  if(isymbols) then
     if(nrec > ndots .and. i /= 1 .and. i /= nrec) then
       write(24,*) 'VDot'
     else
