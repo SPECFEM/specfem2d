@@ -61,7 +61,7 @@
   integer ngnod,nt,nx,nz,nxread,nzread
   integer icodematread
 
-  logical codehaut,codebas,codegauche,codedroite
+  logical codehaut,codebas,codegauche,codedroite,output_postscript_image,output_PNM_image
 
   double precision tang1,tangN,vpzone,vszone,poisson_ratio
   double precision cutvect,xspacerec,zspacerec
@@ -241,6 +241,8 @@
 
 ! read display parameters
   call read_value_integer(IIN_PAR,IGNORE_JUNK,itaff)
+  call read_value_logical(IIN_PAR,IGNORE_JUNK,output_postscript_image)
+  call read_value_logical(IIN_PAR,IGNORE_JUNK,output_PNM_image)
   call read_value_integer(IIN_PAR,IGNORE_JUNK,vecttype)
   call read_value_double_precision(IIN_PAR,IGNORE_JUNK,cutvect)
   call read_value_logical(IIN_PAR,IGNORE_JUNK,meshvect)
@@ -605,8 +607,8 @@
   write(15,*) 'gnuplot interpol'
   write(15,*) gnuplot,interpol
 
-  write(15,*) 'itaff colors numbers'
-  write(15,*) itaff,' 1 0'
+  write(15,*) 'itaff output_postscript_image output_PNM_image colors numbers'
+  write(15,*) itaff,output_postscript_image,output_PNM_image,' 1 0'
 
   write(15,*) 'meshvect modelvect boundvect cutvect subsamp nx_sem_PNM'
   write(15,*) meshvect,modelvect,boundvect,cutvect,subsamp,nxread
