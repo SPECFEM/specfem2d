@@ -907,10 +907,10 @@
  499  format(f5.1,1x,f5.1,' L')
  500  format(f5.1,1x,f5.1,' M')
  502  format('fN (',i4,') Cshow')
- 680  format(f4.2,1x,f4.2,1x,f4.2,' RG GF')
+ 680  format(f12.6,1x,f12.6,1x,f12.6,' RG GF')
  681  format(f6.2,1x,f6.2)
  602  format(f6.2,1x,f6.2,' M ',f6.2,1x,f6.2,' L ST')
- 604  format('CP ',f4.2,' BK')
+ 604  format('CP ',f12.6,' BK')
  700  format(8(f5.1,1x),'F')
 
   end subroutine plotpost
