@@ -23,6 +23,7 @@
 !               - Dirac and Gaussian time sources and corresponding convolution routine
 !               - option for acoustic medium instead of elastic
 !               - receivers at any location, not only grid points
+!               - moment-tensor source at any location, not only a grid point
 !               - color PNM snapshots
 !               - more flexible DATA/Par_file with any number of comment lines
 !               - Xsu scripts for seismograms
@@ -52,7 +53,8 @@
   character(len=80) datlin
 
   integer source_type,time_function_type
-  double precision x_source,z_source,f0,t0,factor,angleforce
+  double precision x_source,z_source,xi_source,gamma_source,Mxx,Mzz,Mxz,f0,t0,factor,angleforce
+  double precision, dimension(NDIM,NGLLX,NGLLZ) :: sourcearray
 
   double precision, dimension(:,:), allocatable :: coorg
   double precision, dimension(:), allocatable :: coorgread
@@ -110,10 +112,7 @@
 
   double precision, dimension(:), allocatable :: rmass,density,vpext,vsext,rhoext,displread,velocread,accelread
 
-  double precision, dimension(:,:,:), allocatable :: shape2D,shape2D_display, &
-    xix,xiz,gammax,gammaz,jacobian
-
-  double precision, dimension(:,:), allocatable :: a11,a12
+  double precision, dimension(:,:,:), allocatable :: shape2D,shape2D_display,xix,xiz,gammax,gammaz,jacobian
 
   double precision, dimension(:,:,:,:), allocatable :: dershape2D,dershape2D_display
 
@@ -123,12 +122,12 @@
 
   integer ie,k
 
-  integer ispec_source,iglob_source,ix_source,iz_source
+  integer ispec_selected_source,iglob_source,ix_source,iz_source
   double precision a,displnorm_all
   double precision, dimension(:), allocatable :: source_time_function
 
   double precision rsizemin,rsizemax,cpoverdxmin,cpoverdxmax, &
-    lambdal_Smin,lambdal_Smax,lambdal_Pmin,lambdal_Pmax,vpmin,vpmax
+    lambdaSmin,lambdaSmax,lambdaPmin,lambdaPmax,vpmin,vpmax
 
   integer colors,numbers,subsamp,vecttype,itaff,nrec,sismostype
   integer numat,ngnod,nspec,iptsdisp,nelemabs,nelemsurface
@@ -265,7 +264,7 @@
 !----  read source information
 !
   read(IIN,40) datlin
-  read(IIN,*) source_type,time_function_type,x_source,z_source,f0,t0,factor,angleforce
+  read(IIN,*) source_type,time_function_type,x_source,z_source,f0,t0,factor,angleforce,Mxx,Mzz,Mxz
 
 !
 !-----  check the input
@@ -274,7 +273,7 @@
    if (source_type == 1) then
      write(IOUT,212) x_source,z_source,f0,t0,factor,angleforce
    else if(source_type == 2) then
-     write(IOUT,222) x_source,z_source,f0,t0,factor
+     write(IOUT,222) x_source,z_source,f0,t0,factor,Mxx,Mzz,Mxz
    else
      stop 'Unknown source type number !'
    endif
@@ -319,8 +318,6 @@
   allocate(gammax(NGLLX,NGLLZ,nspec))
   allocate(gammaz(NGLLX,NGLLZ,nspec))
   allocate(jacobian(NGLLX,NGLLZ,nspec))
-  allocate(a11(NGLLX,NGLLZ))
-  allocate(a12(NGLLX,NGLLZ))
   allocate(flagrange(NGLLX,iptsdisp))
   allocate(xinterp(iptsdisp,iptsdisp))
   allocate(zinterp(iptsdisp,iptsdisp))
@@ -588,10 +585,24 @@
   deltatover2 = HALF*deltat
   deltatsquareover2 = HALF*deltat*deltat
 
-!
 !---- definir la position reelle des points source et recepteurs
-!
-  call positsource(coord,ibool,npoin,nspec,x_source,z_source,source_type,ix_source,iz_source,ispec_source,iglob_source)
+  if(source_type == 1) then
+! collocated force source
+    call locate_source_force(coord,ibool,npoin,nspec,x_source,z_source,source_type,ix_source,iz_source,ispec_selected_source,iglob_source)
+
+  else if(source_type == 2) then
+! moment-tensor source
+    call locate_source_moment_tensor(ibool,coord,nspec,npoin,xigll,zigll,x_source,z_source, &
+               ispec_selected_source,xi_source,gamma_source,coorg,knods,ngnod,npgeo)
+
+! compute source array for moment-tensor source
+    call compute_arrays_source(ispec_selected_source,xi_source,gamma_source,sourcearray, &
+               Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,nspec)
+
+  else
+    stop 'incorrect source type'
+  endif
+
 
 ! locate receivers in the mesh
   call locate_receivers(ibool,coord,nspec,npoin,xigll,zigll,nrec,st_xval,st_zval,ispec_selected_rec, &
@@ -629,10 +640,9 @@
 !---- define all arrays
 !
   call defarrays(vpext,vsext,rhoext,density,elastcoef, &
-          xigll,zigll,xix,xiz,gammax,gammaz,a11,a12, &
           ibool,kmato,coord,npoin,rsizemin,rsizemax, &
-          cpoverdxmin,cpoverdxmax,lambdal_Smin,lambdal_Smax,lambdal_Pmin,lambdal_Pmax, &
-          vpmin,vpmax,readmodel,nspec,numat,source_type,ix_source,iz_source,ispec_source)
+          cpoverdxmin,cpoverdxmax,lambdaSmin,lambdaSmax,lambdaPmin,lambdaPmax, &
+          vpmin,vpmax,readmodel,nspec,numat)
 
 ! build the global mass matrix once and for all
   rmass(:) = ZERO
@@ -663,12 +673,10 @@
 ! convertir angle recepteurs en radians
   anglerec = anglerec * pi / 180.d0
 
-!
 !---- verifier le maillage, la stabilite et le nb de points par lambda
 !---- seulement si la source en temps n'est pas un Dirac (sinon spectre non defini)
-!
   if(time_function_type /= 4) call checkgrid(deltat,f0,t0,initialfield, &
-      rsizemin,rsizemax,cpoverdxmin,cpoverdxmax,lambdal_Smin,lambdal_Smax,lambdal_Pmin,lambdal_Pmax)
+      rsizemin,rsizemax,cpoverdxmin,cpoverdxmax,lambdaSmin,lambdaSmax,lambdaPmin,lambdaPmax)
 
 !
 !---- for color PNM images
@@ -1379,15 +1387,17 @@
       accel(1,iglob_source) = accel(1,iglob_source) + source_time_function(it)
     endif
 
-! explosion
+! moment tensor
   else if(source_type == 2) then
-    do i=1,NGLLX
-      do j=1,NGLLX
-        iglob = ibool(i,j,ispec_source)
-        accel(1,iglob) = accel(1,iglob) + a11(i,j)*source_time_function(it)
-        accel(2,iglob) = accel(2,iglob) + a12(i,j)*source_time_function(it)
+
+! add source array
+    do j=1,NGLLZ
+      do i=1,NGLLX
+        iglob = ibool(i,j,ispec_selected_source)
+        accel(:,iglob) = accel(:,iglob) + sourcearray(:,i,j)*source_time_function(it)
       enddo
     enddo
+
   endif
 
   else
@@ -1743,10 +1753,10 @@
  111  format('Sauvegarde deplacement temps t = ',1pe10.4,' s')
  400  format(/1x,41('=')/,' =  T i m e  e v o l u t i o n  l o o p  ='/1x,41('=')/)
 
-  200   format(//1x,'C o n t r o l',/1x,34('='),//5x,&
+  200   format(//1x,'C o n t r o l',/1x,13('='),//5x,&
   'Number of spectral element control nodes. . .(npgeo) =',i8/5x, &
-  'Number of space dimensions . . . . . . . . . (NDIM) =',i8)
-  600   format(//1x,'C o n t r o l',/1x,34('='),//5x, &
+  'Number of space dimensions. . . . . . . . . . (NDIM) =',i8)
+  600   format(//1x,'C o n t r o l',/1x,13('='),//5x, &
   'Display frequency  . . . . . . . . . . . . . (itaff) = ',i5/ 5x, &
   'Color display . . . . . . . . . . . . . . . (colors) = ',i5/ 5x, &
   '        ==  0     black and white display              ',  / 5x, &
@@ -1754,24 +1764,24 @@
   'Numbered mesh . . . . . . . . . . . . . . .(numbers) = ',i5/ 5x, &
   '        ==  0     do not number the mesh               ',  /5x, &
   '        ==  1     number the mesh                      ')
-  700   format(//1x,'C o n t r o l',/1x,34('='),//5x, &
-  'Seismograms recording type. . . . . . .(sismostype) = ',i6/5x, &
+  700   format(//1x,'C o n t r o l',/1x,13('='),//5x, &
+  'Seismograms recording type . . . . . . .(sismostype) = ',i6/5x, &
   'Angle for first line of receivers. . . . .(anglerec) = ',f6.2)
-  750   format(//1x,'C o n t r o l',/1x,34('='),//5x, &
+  750   format(//1x,'C o n t r o l',/1x,13('='),//5x, &
   'Read external initial field or not . .(initialfield) = ',l6/5x, &
   'Read external velocity model or not . . .(readmodel) = ',l6/5x, &
   'Elastic simulation or acoustic. . . . . . .(ELASTIC) = ',l6/5x, &
   'Turn anisotropy on or off. . . .(TURN_ANISOTROPY_ON) = ',l6/5x, &
   'Turn attenuation on or off. . .(TURN_ATTENUATION_ON) = ',l6/5x, &
   'Save grid in external file or not. . . .(outputgrid) = ',l6)
-  800   format(//1x,'C o n t r o l',/1x,34('='),//5x, &
-  'Vector display type . . . . . . . . . . .(vecttype) = ',i6/5x, &
+  800   format(//1x,'C o n t r o l',/1x,13('='),//5x, &
+  'Vector display type. . . . . . . . . . . .(vecttype) = ',i6/5x, &
   'Percentage of cut for vector plots. . . . .(cutvect) = ',f6.2/5x, &
-  'Subsampling for velocity model display . .(subsamp) = ',i6)
+  'Subsampling for velocity model display. . .(subsamp) = ',i6)
 
-  703   format(//' I t e r a t i o n s '/1x,29('='),//5x, &
+  703   format(//' I t e r a t i o n s '/1x,19('='),//5x, &
       'Number of time iterations . . . . .(NSTEP) =',i8,/5x, &
-      'Time step increment . . . . . . . .(deltat) =',1pe15.6,/5x, &
+      'Time step increment. . . . . . . .(deltat) =',1pe15.6,/5x, &
       'Total simulation duration . . . . . (ttot) =',1pe15.6)
 
   107   format(/5x,'--> Isoparametric Spectral Elements <--',//)
@@ -1786,7 +1796,7 @@
            'Number of absorbing elements . . . .(nelemabs) =',i7)
 
   212   format(//,5x, &
-  'Source Type. . . . . . . . . . . . . . = Collocated Force',/5x, &
+     'Source Type. . . . . . . . . . . . . . = Collocated Force',/5x, &
      'X-position (meters). . . . . . . . . . =',1pe20.10,/5x, &
      'Y-position (meters). . . . . . . . . . =',1pe20.10,/5x, &
      'Fundamental frequency (Hz) . . . . . . =',1pe20.10,/5x, &
@@ -1794,12 +1804,15 @@
      'Multiplying factor . . . . . . . . . . =',1pe20.10,/5x, &
      'Angle from vertical direction (deg). . =',1pe20.10,/5x)
   222   format(//,5x, &
-     'Source Type. . . . . . . . . . . . . . = Explosion',/5x, &
+     'Source Type. . . . . . . . . . . . . . = Moment-tensor',/5x, &
      'X-position (meters). . . . . . . . . . =',1pe20.10,/5x, &
      'Y-position (meters). . . . . . . . . . =',1pe20.10,/5x, &
      'Fundamental frequency (Hz) . . . . . . =',1pe20.10,/5x, &
      'Time delay (s) . . . . . . . . . . . . =',1pe20.10,/5x, &
-     'Multiplying factor . . . . . . . . . . =',1pe20.10,/5x)
+     'Multiplying factor . . . . . . . . . . =',1pe20.10,/5x, &
+     'Mxx. . . . . . . . . . . . . . . . . . =',1pe20.10,/5x, &
+     'Mzz. . . . . . . . . . . . . . . . . . =',1pe20.10,/5x, &
+     'Mxz. . . . . . . . . . . . . . . . . . =',1pe20.10)
 
   end program specfem2D
 

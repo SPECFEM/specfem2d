@@ -11,7 +11,7 @@
 !
 !========================================================================
 
-  subroutine positsource(coord,ibool,npoin,nspec,x_source,z_source,source_type,ix_source,iz_source,ispec_source,iglob_source)
+  subroutine locate_source_force(coord,ibool,npoin,nspec,x_source,z_source,source_type,ix_source,iz_source,ispec_source,iglob_source)
 
 !
 !----- calculer la position reelle de la source
@@ -88,5 +88,5 @@
   'r e a l  p o s i t i o n s  ='/1x,48('=')// &
   '    Source    x-asked      z-asked     x-obtain     z-obtain       dist'/)
 
-  end subroutine positsource
+  end subroutine locate_source_force
 

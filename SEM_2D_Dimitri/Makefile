@@ -13,8 +13,8 @@ O = obj
 
 # Intel Linux
 F90 = ifort
-#FLAGS=-O0 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check bounds
-FLAGS=-O3 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds
+FLAGS=-O0 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check bounds
+#FLAGS=-O3 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nobounds
 
 #
 # g95 (free f95 compiler from http://www.g95.org, still under development, but works)
@@ -33,9 +33,10 @@ OBJS_MESHFEM2D = $O/meshfem2D.o
 
 OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/defarrays.o\
         $O/lagrange_poly.o $O/gmat01.o $O/gll_library.o $O/plotgll.o $O/define_derivative_matrices.o\
-        $O/plotpost.o $O/locate_receivers.o $O/positsource.o $O/compute_gradient_attenuation.o\
+        $O/plotpost.o $O/locate_receivers.o $O/locate_source_force.o $O/compute_gradient_attenuation.o\
         $O/specfem2D.o $O/write_seismograms.o $O/createnum_fast.o $O/createnum_slow.o\
-        $O/define_shape_functions.o $O/cree_image_PNM.o $O/compute_gradient_fluid.o $O/recompute_jacobian.o
+        $O/define_shape_functions.o $O/cree_image_PNM.o $O/compute_gradient_fluid.o\
+        $O/recompute_jacobian.o $O/compute_arrays_source.o $O/locate_source_moment_tensor.o
 
 default: meshfem2D specfem2D
 
@@ -98,8 +99,11 @@ $O/locate_receivers.o: locate_receivers.f90 constants.h
 $O/recompute_jacobian.o: recompute_jacobian.f90 constants.h
 	${F90} $(FLAGS) -c -o $O/recompute_jacobian.o recompute_jacobian.f90
     
-$O/positsource.o: positsource.f90 constants.h
-	${F90} $(FLAGS) -c -o $O/positsource.o positsource.f90
+$O/locate_source_force.o: locate_source_force.f90 constants.h
+	${F90} $(FLAGS) -c -o $O/locate_source_force.o locate_source_force.f90
+    
+$O/locate_source_moment_tensor.o: locate_source_moment_tensor.f90 constants.h
+	${F90} $(FLAGS) -c -o $O/locate_source_moment_tensor.o locate_source_moment_tensor.f90
     
 $O/define_shape_functions.o: define_shape_functions.f90 constants.h
 	${F90} $(FLAGS) -c -o $O/define_shape_functions.o define_shape_functions.f90
@@ -112,6 +116,9 @@ $O/compute_gradient_attenuation.o: compute_gradient_attenuation.f90 constants.h
     
 $O/compute_gradient_fluid.o: compute_gradient_fluid.f90 constants.h
 	${F90} $(FLAGS) -c -o $O/compute_gradient_fluid.o compute_gradient_fluid.f90
+    
+$O/compute_arrays_source.o: compute_arrays_source.f90 constants.h
+	${F90} $(FLAGS) -c -o $O/compute_arrays_source.o compute_arrays_source.f90
     
 $O/cree_image_PNM.o: cree_image_PNM.f90 constants.h
 	${F90} $(FLAGS) -c -o $O/cree_image_PNM.o cree_image_PNM.f90
