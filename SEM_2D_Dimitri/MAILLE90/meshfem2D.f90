@@ -660,8 +660,8 @@
   write(15,*) 'itaff icolor inumber'
   write(15,*) itaff,1,0
 
-  write(15,*) 'imeshvect imodelvect iboundvect cutvect isubsamp'
-  write(15,*) imeshvect,imodelvect,iboundvect,cutvect,isubsamp
+  write(15,*) 'imeshvect imodelvect iboundvect cutvect isubsamp nx_sem_PNM'
+  write(15,*) imeshvect,imodelvect,iboundvect,cutvect,isubsamp,nxread
 
   write(15,*) 'nrec anglerec'
   write(15,*) nrec,anglerec

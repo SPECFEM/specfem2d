@@ -25,16 +25,16 @@
   double precision coord(NDIME,npoin)
   double precision posrec(NDIME,nrec)
 
-  double precision dminmax,dmin,xs,zs,xp,zp,dist
+  double precision distminmax,distmin,xs,zs,xp,zp,dist
   integer n,ip,ipoint
 
   write(iout,200)
 
-  dminmax = -HUGEVAL
+  distminmax = -HUGEVAL
 
   do n=1,nrec
 
-      dmin = +HUGEVAL
+      distmin = +HUGEVAL
 
 ! coordonnees demandees
   xs = posrec(1,n)
@@ -46,26 +46,26 @@
       xp = coord(1,ip)
       zp = coord(2,ip)
 
-      dist = dsqrt((xp-xs)**2 + (zp-zs)**2)
+      dist = sqrt((xp-xs)**2 + (zp-zs)**2)
 
 ! retenir le point pour lequel l'ecart est minimal
-      if (dist < dmin) then
-        dmin = dist
+      if(dist < distmin) then
+        distmin = dist
         ipoint = ip
       endif
 
     enddo
 
-    dminmax = dmax1(dmin,dminmax)
+    distminmax = max(distmin,distminmax)
 
-  write(iout,150) n,xs,zs,coord(1,ipoint),coord(2,ipoint),dmin
+  write(iout,150) n,xs,zs,coord(1,ipoint),coord(2,ipoint),distmin
 
 ! stocker numero global dans premiere coordonnee
   posrec(1,n) = dble(ipoint)
 
   enddo
 
-  write(iout,160) dminmax
+  write(iout,160) distminmax
 
  150   format(1x,i7,1x,f12.3,1x,f12.3,1x,f12.3,1x,f12.3,f12.3)
  160   format(/2x,'Maximum distance between asked and real =',f12.3)

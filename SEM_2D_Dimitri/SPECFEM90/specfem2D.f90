@@ -18,7 +18,9 @@
 !====================================================================================
 
 !
-! version 5.1, December 2004 : more general mesher with any number of curved layers
+! version 5.1, December 2004 :
+!               - more general mesher with any number of curved layers
+!               - color PNM snapshots
 !
 ! version 5.0, May 2004 :
 !               - got rid of useless routines, suppressed commons etc.
@@ -155,6 +157,12 @@
     e1_mech1,e11_mech1,e13_mech1,e1_mech2,e11_mech2,e13_mech2, &
     duxdxl_n,duzdzl_n,duzdxl_n,duxdzl_n,duxdxl_np1,duzdzl_np1,duzdxl_np1,duxdzl_np1
 
+! for color PNM images
+  integer :: NX_IMAGE_PNM,NZ_IMAGE_PNM,iplus1,jplus1,iminus1,jminus1,nx_sem_PNM
+  double precision :: xmin_PNM_image,xmax_PNM_image,zmin_PNM_image,zmax_PNM_image,taille_pixel_horizontal,taille_pixel_vertical
+  integer, dimension(:,:), allocatable :: iglob_image_PNM_2D,copy_iglob_image_PNM_2D
+  double precision, dimension(:,:), allocatable :: donnees_image_PNM_2D
+
 ! title of the plot
   character(len=60) stitle
 
@@ -206,7 +214,7 @@
   read(IIN,*) itaff,icolor,inumber
 
   read(IIN,40) datlin
-  read(IIN,*) imeshvect,imodelvect,iboundvect,cutvect,isubsamp
+  read(IIN,*) imeshvect,imodelvect,iboundvect,cutvect,isubsamp,nx_sem_PNM
   cutvect = cutvect / 100.d0
 
   read(IIN,40) datlin
@@ -563,6 +571,121 @@
       cpoverdxmin,cpoverdxmax,lambdal_Smin,lambdal_Smax,lambdal_Pmin,lambdal_Pmax)
 
 !
+!---- for color PNM images
+!
+
+! taille horizontale de l'image
+  xmin_PNM_image = minval(coord(1,:))
+  xmax_PNM_image = maxval(coord(1,:))
+
+! taille verticale de l'image, augmenter un peu pour depasser de la topographie
+  zmin_PNM_image = minval(coord(2,:))
+  zmax_PNM_image = maxval(coord(2,:))
+  zmax_PNM_image = zmin_PNM_image + 1.05d0 * (zmax_PNM_image - zmin_PNM_image)
+
+! calculer le nombre de pixels en horizontal en fonction du nombre d'elements spectraux
+  NX_IMAGE_PNM = nx_sem_PNM * (NGLLX-1) + 1
+
+! calculer le nombre de pixels en vertical en fonction du rapport des tailles
+  NZ_IMAGE_PNM = nint(NX_IMAGE_PNM * (zmax_PNM_image - zmin_PNM_image) / (xmax_PNM_image - xmin_PNM_image))
+
+! allouer un tableau pour les donnees de l'image
+  allocate(donnees_image_PNM_2D(NX_IMAGE_PNM,NZ_IMAGE_PNM))
+
+! allouer un tableau pour le point de grille contenant cette donnee
+  allocate(iglob_image_PNM_2D(NX_IMAGE_PNM,NZ_IMAGE_PNM))
+  allocate(copy_iglob_image_PNM_2D(NX_IMAGE_PNM,NZ_IMAGE_PNM))
+
+! creer tous les pixels
+  print *
+  print *,'localisation de tous les pixels des images PNM'
+
+  taille_pixel_horizontal = (xmax_PNM_image - xmin_PNM_image) / dble(NX_IMAGE_PNM-1)
+  taille_pixel_vertical = (zmax_PNM_image - zmin_PNM_image) / dble(NZ_IMAGE_PNM-1)
+
+  iglob_image_PNM_2D(:,:) = -1
+
+! boucle sur tous les points de grille pour leur affecter un pixel de l'image
+      do n=1,npoin
+
+! calculer les coordonnees du pixel
+      i = nint((coord(1,n) - xmin_PNM_image) / taille_pixel_horizontal + 1)
+      j = nint((coord(2,n) - zmin_PNM_image) / taille_pixel_vertical + 1)
+
+! eviter les effets de bord
+      if(i < 1) i = 1
+      if(i > NX_IMAGE_PNM) i = NX_IMAGE_PNM
+
+      if(j < 1) j = 1
+      if(j > NZ_IMAGE_PNM) j = NZ_IMAGE_PNM
+
+! affecter ce point a ce pixel
+      iglob_image_PNM_2D(i,j) = n
+
+      enddo
+
+! completer les pixels manquants en les localisant par la distance minimum
+  copy_iglob_image_PNM_2D(:,:) = iglob_image_PNM_2D(:,:)
+
+  do j = 1,NZ_IMAGE_PNM
+    do i = 1,NX_IMAGE_PNM
+
+      if(copy_iglob_image_PNM_2D(i,j) == -1) then
+
+        iplus1 = i + 1
+        iminus1 = i - 1
+
+        jplus1 = j + 1
+        jminus1 = j - 1
+
+! eviter les effets de bord
+        if(iminus1 < 1) iminus1 = 1
+        if(iplus1 > NX_IMAGE_PNM) iplus1 = NX_IMAGE_PNM
+
+        if(jminus1 < 1) jminus1 = 1
+        if(jplus1 > NZ_IMAGE_PNM) jplus1 = NZ_IMAGE_PNM
+
+! utiliser les pixels voisins pour remplir les trous
+
+! horizontales
+        if(copy_iglob_image_PNM_2D(iplus1,j) /= -1) then
+          iglob_image_PNM_2D(i,j) = copy_iglob_image_PNM_2D(iplus1,j)
+
+        else if(copy_iglob_image_PNM_2D(iminus1,j) /= -1) then
+          iglob_image_PNM_2D(i,j) = copy_iglob_image_PNM_2D(iminus1,j)
+
+! verticales
+        else if(copy_iglob_image_PNM_2D(i,jplus1) /= -1) then
+          iglob_image_PNM_2D(i,j) = copy_iglob_image_PNM_2D(i,jplus1)
+
+        else if(copy_iglob_image_PNM_2D(i,jminus1) /= -1) then
+          iglob_image_PNM_2D(i,j) = copy_iglob_image_PNM_2D(i,jminus1)
+
+! diagonales
+        else if(copy_iglob_image_PNM_2D(iminus1,jminus1) /= -1) then
+          iglob_image_PNM_2D(i,j) = copy_iglob_image_PNM_2D(iminus1,jminus1)
+
+        else if(copy_iglob_image_PNM_2D(iplus1,jminus1) /= -1) then
+          iglob_image_PNM_2D(i,j) = copy_iglob_image_PNM_2D(iplus1,jminus1)
+
+        else if(copy_iglob_image_PNM_2D(iminus1,jplus1) /= -1) then
+          iglob_image_PNM_2D(i,j) = copy_iglob_image_PNM_2D(iminus1,jplus1)
+
+        else if(copy_iglob_image_PNM_2D(iplus1,jplus1) /= -1) then
+          iglob_image_PNM_2D(i,j) = copy_iglob_image_PNM_2D(iplus1,jplus1)
+
+        endif
+
+      endif
+
+    enddo
+  enddo
+
+  deallocate(copy_iglob_image_PNM_2D)
+
+  print *,'fin localisation de tous les pixels des images PNM'
+
+!
 !---- initialiser sismogrammes
 !
   sisux = ZERO
@@ -608,7 +731,6 @@
 ! for two memory-variables mechanisms.
 ! beware: these values implement specific values of the quality factor Q,
 ! see Carcione 1993 for details
-
   tau_epsilon_nu1_mech1 = 0.0334d0
   tau_sigma_nu1_mech1   = 0.0303d0
   tau_epsilon_nu2_mech1 = 0.0352d0
@@ -663,7 +785,7 @@
   if(TURN_ATTENUATION_ON) call compute_gradient_attenuation(displ,duxdxl_n,duzdxl_n, &
       duxdzl_n,duzdzl_n,xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,NSPEC,npoin)
 
-! `predictor' update displacement using finite-difference time scheme (Newmark)
+! update displacement using finite-difference time scheme (Newmark)
     displ(:,:) = displ(:,:) + deltat*veloc(:,:) + deltatsquareover2*accel(:,:)
     veloc(:,:) = veloc(:,:) + deltatover2*accel(:,:)
     accel(:,:) = ZERO
@@ -1081,7 +1203,7 @@
   accel(1,:) = accel(1,:) / rmass(:)
   accel(2,:) = accel(2,:) / rmass(:)
 
-! `corrector' update velocity
+! update velocity
   veloc(:,:) = veloc(:,:) + deltatover2*accel(:,:)
 
 ! implement attenuation
@@ -1266,6 +1388,24 @@
   endif
   write(IOUT,*) 'Fin dump PostScript'
 
+!
+!----  affichage image PNM
+!
+  write(IOUT,*) 'Creation image PNM de taille ',NX_IMAGE_PNM,' x ',NZ_IMAGE_PNM
+
+  donnees_image_PNM_2D(:,:) = 0.d0
+
+  do j = 1,NZ_IMAGE_PNM
+    do i = 1,NX_IMAGE_PNM
+! afficher la composante verticale du deplacement
+      if(iglob_image_PNM_2D(i,j) /= -1) donnees_image_PNM_2D(i,j) = displ(2,iglob_image_PNM_2D(i,j))
+    enddo
+  enddo
+
+  call cree_image_PNM(donnees_image_PNM_2D,iglob_image_PNM_2D,NX_IMAGE_PNM,NZ_IMAGE_PNM,it,cutvect)
+
+  write(IOUT,*) 'Fin creation image PNM'
+
 !----  save temporary seismograms
   call write_seismograms(sisux,sisuz,NSTEP,nrec,deltat)
 
@@ -1296,7 +1436,7 @@
  400  format(/1x,41('=')/,' =  T i m e  e v o l u t i o n  l o o p  ='/1x,41('=')/)
 
   200   format(//1x,'C o n t r o l',/1x,34('='),//5x,&
-  'Number of spectral element control nodes. . (npgeo) =',i8/5x, &
+  'Number of spectral element control nodes. . .(npgeo) =',i8/5x, &
   'Number of space dimensions . . . . . . . . . (NDIME) =',i8)
   600   format(//1x,'C o n t r o l',/1x,34('='),//5x, &
   'Display frequency  . . . . . . . . . . . . . (itaff) = ',i5/ 5x, &
