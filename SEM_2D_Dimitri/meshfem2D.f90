@@ -201,10 +201,15 @@
   call read_value_double_precision(IIN,IGNORE_JUNK,factor)
 
 ! if Dirac source time function, use a very thin Gaussian instead
-  if(time_function_type == 4) f0 = 1.d0 / (5.d0 * dt)
+! if Heaviside source time function, use a very thin error function instead
+  if(time_function_type == 4 .or. time_function_type == 5) f0 = 1.d0 / (10.d0 * dt)
 
-! time delay of the source in seconds, use a 20 % security margin
-  t0 = 1.20d0 / f0
+! time delay of the source in seconds, use a 20 % security margin (use 2 / f0 if error function)
+  if(time_function_type == 5) then
+    t0 = 2.0d0 / f0
+  else
+    t0 = 1.20d0 / f0
+  endif
 
   print *
   print *,'Source:'

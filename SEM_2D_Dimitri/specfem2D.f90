@@ -61,7 +61,7 @@
   character(len=80) datlin
 
   integer source_type,time_function_type
-  double precision x_source,z_source,xi_source,gamma_source,Mxx,Mzz,Mxz,f0,t0,factor,angleforce
+  double precision x_source,z_source,xi_source,gamma_source,Mxx,Mzz,Mxz,f0,t0,factor,angleforce,hdur,hdur_gauss
   double precision, dimension(NDIM,NGLLX,NGLLZ) :: sourcearray
 
   double precision, dimension(:,:), allocatable :: coorg
@@ -903,11 +903,18 @@
       else if(time_function_type == 3 .or. time_function_type == 4) then
         source_time_function(it) = factor * exp(-a*(time-t0)**2)
 
+! Heaviside source time function (we use a very thin error function instead)
+      else if(time_function_type == 5) then
+        hdur = 1.d0 / f0
+        hdur_gauss = hdur * 5.d0 / 3.d0
+        source_time_function(it) = factor * 0.5d0*(1.0d0+erf(SOURCE_DECAY_RATE*(time-t0)/hdur_gauss))
+
       else
         stop 'unknown source time function'
       endif
 
-      write(55,*) sngl(time-t0),sngl(source_time_function(it))
+! output absolute time in third column, in case user wants to check it as well
+      write(55,*) sngl(time),sngl(source_time_function(it)),sngl(time-t0)
 
     enddo
 

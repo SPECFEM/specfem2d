@@ -21,9 +21,6 @@
 
   include "constants.h"
 
-! source decay rate
-  double precision, parameter :: SOURCE_DECAY_RATE = 2.628d0
-
   integer i,j,N_j
   integer number_remove
   double precision, dimension(:), allocatable :: time,sem,sem_fil
