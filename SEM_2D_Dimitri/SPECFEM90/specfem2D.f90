@@ -103,7 +103,7 @@
   integer ie,k,isource,iexplo
 
   integer ielems,iglobsource
-  double precision f0,t0,factor,a,angleforce,ricker
+  double precision f0,t0,factor,a,angleforce,ricker,displnorm_all
 
   double precision rsizemin,rsizemax,cpoverdxmin,cpoverdxmax, &
     lambdalSmin,lambdalSmax,lambdalPmin,lambdalPmax,vpmin,vpmax
@@ -970,10 +970,13 @@
 ! `corrector' update velocity
   veloc(:,:) = veloc(:,:) + deltatover2*accel(:,:)
 
-!
 !----  display max of norm of displacement
-!
-  if(mod(it,itaff) == 0) print *,'Max norm of displacement = ',maxval(sqrt(displ(1,:)**2 + displ(2,:)**2))
+  if(mod(it,itaff) == 0) then
+    displnorm_all = maxval(sqrt(displ(1,:)**2 + displ(2,:)**2))
+    print *,'Max norm of displacement = ',displnorm_all
+! check stability of the code, exit if unstable
+    if(displnorm_all > STABILITY_THRESHOLD) stop 'code became unstable and blew up'
+  endif
 
 ! store the seismograms
   do irec=1,nrec
