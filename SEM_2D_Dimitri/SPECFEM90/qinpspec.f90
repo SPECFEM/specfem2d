@@ -96,7 +96,7 @@
 !
 !---- read topology and material number for spectral elements
 !
-  call getelspec(knods,ibool,kmato,npoin,numabs,codeabs,codeperio,anyabs,anyperio)
+  call getelspec(knods,kmato,numabs,codeabs,codeperio,anyabs,anyperio)
 
 !
 !---- compute the spectral element shape functions and their local derivatives
@@ -109,20 +109,19 @@
 
 ! version "propre mais lente" ou version "sale mais rapide"
   if(fast_numbering) then
-      call createnum_fast(knods,ibool,kmato,shape,coorg,npoin,ndime,npgeo)
+      call createnum_fast(knods,ibool,shape,coorg,npoin,ndime,npgeo)
   else
-      call createnum_slow(knods,ibool,kmato,npoin)
+      call createnum_slow(knods,ibool,npoin)
   endif
 
 !
 !---- compute the spectral element jacobian matrix
 !
 
-  call q49spec(shape,shapeint,dershape,dvolu,xjaci,xi,yi,coorg, &
+  call q49spec(shapeint,dershape,dvolu,xjaci,xi,coorg, &
                  knods,ngnod,nxgll,nygll,ndime,nspec,npgeo, &
                  xirec,etarec,flagrange,iptsdisp)
 
-  return
 !
 !---- formats
 !
@@ -139,3 +138,4 @@
            'Number of periodic elements. . . .(nelemperio) =',i7)
 
   end subroutine qinpspec
+

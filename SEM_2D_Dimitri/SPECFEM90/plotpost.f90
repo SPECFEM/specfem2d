@@ -63,7 +63,7 @@
   double precision, parameter :: rpercentx = 70.0d0, rpercentz = 77.0d0
 
   double precision xmax,zmax,height,xw,zw,usoffset
-  integer i,iglobrec,iglobsource,ip
+  integer i,iglobrec,iglobsource
   character(len=40) name
 
 ! papier A4 ou US letter

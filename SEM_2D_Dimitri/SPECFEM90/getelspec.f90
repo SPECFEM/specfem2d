@@ -12,7 +12,7 @@
 !
 !=====================================================================
 
-  subroutine getelspec(knods,ibool,kmato,npoin,numabs,codeabs,codeperio,anyabs,anyperio)
+  subroutine getelspec(knods,kmato,numabs,codeabs,codeperio,anyabs,anyperio)
 !
 !=======================================================================
 !
@@ -31,8 +31,7 @@
 
   character(len=80) datlin
 
-  integer knods(ngnod,nspec),ibool(nxgll,nygll,nspec),kmato(nspec)
-  integer npoin
+  integer knods(ngnod,nspec),kmato(nspec)
   integer numabs(nelemabs),codeabs(4,nelemabs)
   integer codeperio(4,nelemperio)
   logical anyabs,anyperio

@@ -12,7 +12,7 @@
 !
 !=====================================================================
 
-  subroutine createnum_fast(knods,ibool,kmato,shape,coorg,npoin,ndime,npgeo)
+  subroutine createnum_fast(knods,ibool,shape,coorg,npoin,ndime,npgeo)
 !
 !=======================================================================
 !
@@ -34,11 +34,11 @@
   implicit none
 
   integer npoin,ndime,npgeo
-  integer knods(ngnod,nspec),ibool(nxgll,nygll,nspec),kmato(nspec)
+  integer knods(ngnod,nspec),ibool(nxgll,nygll,nspec)
   double precision shape(ngnod,nxgll,nxgll)
   double precision coorg(ndime,npgeo)
 
-  integer i,j,numelem
+  integer i,j
 
   double precision, parameter :: smallvaltol = 0.000001d0
   double precision, parameter :: HUGEVAL=1.0d+30

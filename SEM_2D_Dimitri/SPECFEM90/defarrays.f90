@@ -71,7 +71,7 @@
 
   double precision, parameter :: zero=0.d0,one=1.d0
 
-  integer i,j,k
+  integer i,j
   integer numelem,material
   integer ipointnum,n
   integer isourx,isourz,ielems,ir,is,ip,noffsetelem
