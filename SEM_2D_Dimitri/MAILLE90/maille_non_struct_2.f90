@@ -109,9 +109,9 @@
 ! formats
 
  1 format(a,f20.8)
- 2 format(a,i)
+ 2 format(a,i20)
  3 format(a,a)
- 4 format(a,l)
+ 4 format(a,l20)
 
 ! read the header
   do i=1,10
