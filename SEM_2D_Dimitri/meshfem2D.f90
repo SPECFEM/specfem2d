@@ -558,8 +558,8 @@
   endif
   do ili=0,nz,istepz
     do icol=0,nx-istepx,istepx
-      write(20,15) sngl(x(icol,ili)),sngl(z(icol,ili))
-      write(20,15) sngl(x(icol+istepx,ili)),sngl(z(icol+istepx,ili))
+      write(20,*) sngl(x(icol,ili)),sngl(z(icol,ili))
+      write(20,*) sngl(x(icol+istepx,ili)),sngl(z(icol+istepx,ili))
       write(20,10)
     enddo
   enddo
@@ -574,8 +574,8 @@
   istepz = 1
   do icol=0,nx,istepx
     do ili=0,nz-istepz,istepz
-      write(20,15) sngl(x(icol,ili)),sngl(z(icol,ili))
-      write(20,15) sngl(x(icol,ili+istepz)),sngl(z(icol,ili+istepz))
+      write(20,*) sngl(x(icol,ili)),sngl(z(icol,ili))
+      write(20,*) sngl(x(icol,ili+istepz)),sngl(z(icol,ili+istepz))
       write(20,10)
     enddo
   enddo
@@ -584,8 +584,13 @@
 
 ! cree le script de dessin pour gnuplot
   open(unit=20,file='OUTPUT_FILES/plotgnu',status='unknown')
-  write(20,*) '#set term postscript landscape monochrome solid "Helvetica" 22'
-  write(20,*) '#set output "grille.ps"'
+  write(20,*) '#set term X11'
+  write(20,*) 'set term postscript landscape monochrome solid "Helvetica" 22'
+  write(20,*) 'set output "grid.ps"'
+  write(20,*) '#set xrange [',sngl(minval(x)),':',sngl(maxval(x)),']'
+  write(20,*) '#set yrange [',sngl(minval(z)),':',sngl(maxval(z)),']'
+! use same unit length on both X and Y axes
+  write(20,*) 'set size ratio -1'
   write(20,*) 'plot "gridfile.gnu" title "Macrobloc mesh" w l'
   write(20,*) 'pause -1 "appuyez sur une touche"'
   close(20)
@@ -787,7 +792,6 @@
   close(15)
 
  10 format('')
- 15 format(e10.5,1x,e10.5)
  40 format(a50)
 
  100 format('S',i3.3,'    AA ',f20.7,1x,f20.7,'       0.0         0.0')

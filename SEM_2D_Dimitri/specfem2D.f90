@@ -45,6 +45,13 @@
 ! Institut de Physique du Globe de Paris, France
 !
 
+! in case of an acoustic medium, a velocity potential Chi is used, as in Komatitsch
+! and Tromp, Geophysical Journal International, vol. 150, p. 303-318 (2002b).
+! Velocity is then: v = grad(Chi)
+! and pressure is: p = - rho * Chi_dot  (Chi_dot being the time derivative of Chi).
+! Therefore, in order to have a Ricker source in pressure, use the first-derivative
+! of a Gaussian for the time source for Chi in the parameter file.
+
   program specfem2D
 
   implicit none
