@@ -31,7 +31,7 @@ OBJS = $O/checkgrid.o $O/datim.o $O/defarrays.o\
 default: all
 
 clean:
-	/bin/rm -f $(EXEC) $(EXEC).trace $O/*.o *.o *.mod core *.gnu *.ps Ux* Uz* sources;
+	/bin/rm -f $(EXEC) $(EXEC).trace $O/*.o *.o $O/*.il *.mod core *.gnu *.ps Ux* Uz* sources;
 
 all: $(OBJS)
 	$(LINK) $(FLAGS) -o $(EXEC) $(OBJS)
