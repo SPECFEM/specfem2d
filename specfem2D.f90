@@ -133,7 +133,7 @@
   integer numat,ngnod,nspec,iptsdisp,nelemabs,nelemsurface
 
   logical interpol,meshvect,modelvect,boundvect,read_external_model,initialfield,abshaut, &
-    outputgrid,gnuplot,ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,output_postscript_image,output_PNM_image
+    outputgrid,gnuplot,ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,output_postscript_snapshot,output_PNM_image
 
   double precision cutvect,anglerec,xirec,gammarec
 
@@ -230,7 +230,7 @@
   read(IIN,*) gnuplot,interpol
 
   read(IIN,40) datlin
-  read(IIN,*) itaff,output_postscript_image,output_PNM_image,colors,numbers
+  read(IIN,*) itaff,output_postscript_snapshot,output_PNM_image,colors,numbers
 
   read(IIN,40) datlin
   read(IIN,*) meshvect,modelvect,boundvect,cutvect,subsamp,nx_sem_PNM
@@ -1628,7 +1628,7 @@
 !
 !----  affichage postscript
 !
-  if(output_postscript_image) then
+  if(output_postscript_snapshot) then
 
   write(IOUT,*) 'Dump PostScript'
 
