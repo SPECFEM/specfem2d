@@ -17,11 +17,13 @@
 !
 !========================================================================
 
-! cleaned version 5.0 is based on SPECFEM2D version 4.2
+! version 5.0 : - got rid of useless routines, suppressed commons etc.
+!               - weak formulation based explicitly on stress tensor
+!               - implementation of full anisotropy
+
+! version 5.0 is based on SPECFEM2D version 4.2
 ! (c) June 1998 by Dimitri Komatitsch, Harvard University, USA
 ! and Jean-Pierre Vilotte, Institut de Physique du Globe de Paris, France
-
-! version 5.0 : got rid of useless routines, suppressed commons etc.
 
   program specfem2D
 
@@ -42,43 +44,69 @@
   logical anyabs
 
   integer i,j,it,irec,iglobrec,ipoin,ip,id,ip1,ip2,in,nnum
-  integer nbpoin,inump,n,npoinext,netyp,ispec,npoin,npgeo
+  integer nbpoin,inump,n,npoinext,netyp,ispec,npoin,npgeo,iglob
 
   double precision valux,valuz,rhoextread,vpextread,vsextread
+  double precision cpl,csl,rhol
   double precision dcosrot,dsinrot,xcor,zcor
 
 ! coefficients of the explicit Newmark time scheme
   integer NSTEP
-  double precision deltatover2,deltatsqover2,time,deltat
+  double precision deltatover2,deltatsquareover2,time,deltat
 
-  double precision, dimension(:), allocatable :: xigll,yigll,wxgll,wygll,xirec,etarec
+! Gauss-Lobatto-Legendre points and weights
+  double precision, dimension(NGLLX) :: xigll,wxgll
+  double precision, dimension(NGLLZ) :: yigll,wzgll
+
+! array with derivatives of Lagrange polynomials
+  double precision, dimension(NGLLX,NGLLX) :: hprime_xx
+  double precision, dimension(NGLLZ,NGLLZ) :: hprime_zz
+
+! space derivatives
+  double precision tempx1l,tempx2l,tempz1l,tempz2l
+  double precision fac1,fac2,hp1,hp2
+  double precision duxdxl,duzdxl,duxdzl,duzdzl
+  double precision sigma_xx,sigma_xz,sigma_zx,sigma_zz
+
+  double precision, dimension(NGLLX,NGLLZ) :: tempx1,tempx2,tempz1,tempz2
+
+! for anisotropy
+  double precision duydyl,duydzl,duzdyl,duxdyl,duydxl
+  double precision duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
+  double precision duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
+
+! Jacobian matrix and determinant
+  double precision xixl,xizl,gammaxl,gammazl,jacobianl
+
+! material properties of the elastic medium
+  double precision mul,lambdal,lambdalplus2mul
+
+  double precision, dimension(:), allocatable :: xirec,etarec
 
   double precision, dimension(:,:), allocatable :: coord,accel,veloc,displ, &
-    hprime,hTprime,flagrange,xinterp,zinterp,Uxinterp,Uzinterp,elastcoef
+    flagrange,xinterp,zinterp,Uxinterp,Uzinterp,elastcoef
 
   double precision, dimension(:), allocatable :: rmass, &
     fglobx,fglobz,density,vpext,vsext,rhoext,displread,velocread,accelread
 
-  double precision, dimension(:,:,:), allocatable :: shapeint,shape,dvolu, &
-    a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a13x,a13z,Uxnewloc,Uznewloc
+  double precision, dimension(:,:,:), allocatable :: shapeint,shape, &
+    xix,xiz,gammax,gammaz,jacobian,a13x,a13z
 
   double precision, dimension(:,:), allocatable :: a11,a12
 
   double precision, dimension(:,:,:,:), allocatable :: dershape
 
-  double precision, dimension(:,:,:,:,:), allocatable :: xjaci
-
   integer, dimension(:,:,:), allocatable :: ibool
-  integer, dimension(:,:), allocatable  :: knods,codeabs
-  integer, dimension(:), allocatable :: kmato,numabs,is_bordabs
+  integer, dimension(:,:), allocatable  :: knods
+  integer, dimension(:), allocatable :: kmato,numabs
 
-  integer ie,k
-  integer inum,itourne,ntourne,idummy,numabsread
-  integer isource,iexplo
-  integer codeabsread(4)
+  integer ie,k,isource,iexplo
+
+  integer ielems,iglobsource
+  double precision f0,t0,factor,a,angleforce,ricker
 
   double precision rsizemin,rsizemax,cpoverdxmin,cpoverdxmax, &
-    rlamdaSmin,rlamdaSmax,rlamdaPmin,rlamdaPmax,vpmin,vpmax
+    lambdalSmin,lambdalSmax,lambdalPmin,lambdalPmax,vpmin,vpmax
 
   integer icolor,inumber,isubsamp,ivecttype,itaff,nrec,isismostype
   integer numat,ngnod,nspec,iptsdisp,nelemabs
@@ -88,10 +116,16 @@
 
   double precision cutvect,anglerec
 
+! for absorbing conditions
+  integer ispecabs,inum,numabsread
+  logical codeabsread(4)
+  double precision nx,nz,vx,vz,vn,rho_vp,rho_vs,tx,tz,weight,xxi,zeta,rKvol
+
+  logical, dimension(:,:), allocatable  :: codeabs
+
 ! title of the plot
   character(len=60) stitle
 
-!
 !***********************************************************************
 !
 !             i n i t i a l i z a t i o n    p h a s e
@@ -203,7 +237,7 @@
 !
    isource = nint(gltfu(1))
    iexplo = nint(gltfu(2))
-   if(isource >= 4.and.isource <= 6.and.iexplo == 1) gltfu(8) = gltfu(8) * pi / 180.d0
+   if(isource >= 4 .and. isource <= 6 .and. iexplo == 1) gltfu(8) = gltfu(8) * pi / 180.d0
 
 !
 !---- read receiver locations
@@ -240,44 +274,28 @@
 !
 !---- allocate arrays
 !
-
-allocate(shape(ngnod,NGLLX,NGLLY))
-allocate(shapeint(ngnod,iptsdisp,iptsdisp))
-allocate(dershape(NDIME,ngnod,NGLLX,NGLLY))
-allocate(dvolu(nspec,NGLLX,NGLLY))
-allocate(xjaci(nspec,NDIME,NDIME,NGLLX,NGLLY))
-allocate(hprime(NGLLX,NGLLY))
-allocate(hTprime(NGLLX,NGLLY))
-allocate(a1(NGLLX,NGLLY,nspec))
-allocate(a2(NGLLX,NGLLY,nspec))
-allocate(a3(NGLLX,NGLLY,nspec))
-allocate(a4(NGLLX,NGLLY,nspec))
-allocate(a5(NGLLX,NGLLY,nspec))
-allocate(a6(NGLLX,NGLLY,nspec))
-allocate(a7(NGLLX,NGLLY,nspec))
-allocate(a8(NGLLX,NGLLY,nspec))
-allocate(a9(NGLLX,NGLLY,nspec))
-allocate(a10(NGLLX,NGLLY,nspec))
-allocate(a11(NGLLX,NGLLY))
-allocate(a12(NGLLX,NGLLY))
-allocate(xigll(NGLLX))
-allocate(yigll(NGLLY))
-allocate(wxgll(NGLLX))
-allocate(wygll(NGLLY))
-allocate(Uxnewloc(NGLLX,NGLLY,nspec))
-allocate(Uznewloc(NGLLX,NGLLY,nspec))
-allocate(xirec(iptsdisp))
-allocate(etarec(iptsdisp))
-allocate(flagrange(NGLLX,iptsdisp))
-allocate(xinterp(iptsdisp,iptsdisp))
-allocate(zinterp(iptsdisp,iptsdisp))
-allocate(Uxinterp(iptsdisp,iptsdisp))
-allocate(Uzinterp(iptsdisp,iptsdisp))
-allocate(density(numat))
-allocate(elastcoef(4,numat))
-allocate(kmato(nspec))
-allocate(knods(ngnod,nspec))
-allocate(ibool(NGLLX,NGLLY,nspec))
+  allocate(shape(ngnod,NGLLX,NGLLZ))
+  allocate(shapeint(ngnod,iptsdisp,iptsdisp))
+  allocate(dershape(NDIME,ngnod,NGLLX,NGLLZ))
+  allocate(xix(NGLLX,NGLLZ,nspec))
+  allocate(xiz(NGLLX,NGLLZ,nspec))
+  allocate(gammax(NGLLX,NGLLZ,nspec))
+  allocate(gammaz(NGLLX,NGLLZ,nspec))
+  allocate(jacobian(NGLLX,NGLLZ,nspec))
+  allocate(a11(NGLLX,NGLLZ))
+  allocate(a12(NGLLX,NGLLZ))
+  allocate(xirec(iptsdisp))
+  allocate(etarec(iptsdisp))
+  allocate(flagrange(NGLLX,iptsdisp))
+  allocate(xinterp(iptsdisp,iptsdisp))
+  allocate(zinterp(iptsdisp,iptsdisp))
+  allocate(Uxinterp(iptsdisp,iptsdisp))
+  allocate(Uzinterp(iptsdisp,iptsdisp))
+  allocate(density(numat))
+  allocate(elastcoef(4,numat))
+  allocate(kmato(nspec))
+  allocate(knods(ngnod,nspec))
+  allocate(ibool(NGLLX,NGLLZ,nspec))
 
 ! --- allocate arrays for absorbing boundary conditions
   if(nelemabs <= 0) then
@@ -286,7 +304,6 @@ allocate(ibool(NGLLX,NGLLY,nspec))
   else
     anyabs = .true.
   endif
-  allocate(is_bordabs(nspec))
   allocate(numabs(nelemabs))
   allocate(codeabs(4,nelemabs))
 
@@ -294,19 +311,10 @@ allocate(ibool(NGLLX,NGLLY,nspec))
 !---- print element group main parameters
 !
   write(IOUT,107)
-  write(IOUT,207) nspec,ngnod,NGLLX,NGLLY,NGLLX*NGLLY,iptsdisp,numat,nelemabs
+  write(IOUT,207) nspec,ngnod,NGLLX,NGLLZ,NGLLX*NGLLZ,iptsdisp,numat,nelemabs
 
-!
-!----    set up coordinates of the Gauss-Lobatto-Legendre points
-!
- call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
- call zwgljd(yigll,wygll,NGLLY,GAUSSALPHA,GAUSSBETA)
-
-!
-!---- if nb of points is odd, the middle abscissa is exactly zero
-!
-  if(mod(NGLLX,2) /= 0) xigll((NGLLX-1)/2+1) = ZERO
-  if(mod(NGLLY,2) /= 0) yigll((NGLLY-1)/2+1) = ZERO
+! set up Gauss-Lobatto-Legendre derivation matrices
+  call define_derivative_matrices(xigll,yigll,wxgll,wzgll,hprime_xx,hprime_zz)
 
 !
 !---- read the material properties
@@ -326,79 +334,24 @@ allocate(ibool(NGLLX,NGLLY,nspec))
 !----  read absorbing boundary data
 !
   if(anyabs) then
-  read(IIN ,40) datlin
-  do n=1,nelemabs
-    read(IIN ,*) inum,numabsread,codeabsread(1), &
-           codeabsread(2),codeabsread(3),codeabsread(4)
-    if(inum < 1 .or. inum > nelemabs) stop 'Wrong absorbing element number'
-    numabs(inum) = numabsread
-    codeabs(ihaut,inum)   = codeabsread(1)
-    codeabs(ibas,inum)    = codeabsread(2)
-    codeabs(igauche,inum) = codeabsread(3)
-    codeabs(idroite,inum) = codeabsread(4)
-
-!----  eventuellement tourner element counterclockwise si condition absorbante
-
-       if(codeabs(ibas,inum) == iaretebas .or. &
-          codeabs(ihaut,inum) == iaretehaut .or. &
-          codeabs(igauche,inum) == iaretegauche .or. &
-          codeabs(idroite,inum) == iaretedroite) then
-            ntourne = 0
-
-  else if(codeabs(ibas,inum) == iaretegauche .or. &
-          codeabs(ihaut,inum) == iaretedroite .or. &
-          codeabs(igauche,inum) == iaretehaut .or. &
-          codeabs(idroite,inum) == iaretebas) then
-            ntourne = 3
-
-  else if(codeabs(ibas,inum) == iaretehaut .or. &
-          codeabs(ihaut,inum)  == iaretebas .or. &
-          codeabs(igauche,inum) == iaretedroite .or. &
-          codeabs(idroite,inum) == iaretegauche) then
-            ntourne = 2
-
-  else if(codeabs(ibas,inum) == iaretedroite .or. &
-          codeabs(ihaut,inum) == iaretegauche .or. &
-          codeabs(igauche,inum) == iaretebas .or. &
-          codeabs(idroite,inum) == iaretehaut) then
-            ntourne = 1
-  else
-     stop 'Error in absorbing conditions numbering'
+    read(IIN ,40) datlin
+    do n=1,nelemabs
+      read(IIN ,*) inum,numabsread,codeabsread(1),codeabsread(2),codeabsread(3),codeabsread(4)
+      if(inum < 1 .or. inum > nelemabs) stop 'Wrong absorbing element number'
+      numabs(inum) = numabsread
+      codeabs(ITOP,inum) = codeabsread(1)
+      codeabs(IBOTTOM,inum) = codeabsread(2)
+      codeabs(ILEFT,inum) = codeabsread(3)
+      codeabs(IRIGHT,inum) = codeabsread(4)
+    enddo
+    write(*,*)
+    write(*,*) 'Number of absorbing elements: ',nelemabs
   endif
-
-!----  rotate element counterclockwise
-  if(ntourne /= 0) then
-
-  do itourne = 1,ntourne
-
-      idummy = knods(1,numabs(inum))
-      knods(1,numabs(inum)) = knods(2,numabs(inum))
-      knods(2,numabs(inum)) = knods(3,numabs(inum))
-      knods(3,numabs(inum)) = knods(4,numabs(inum))
-      knods(4,numabs(inum)) = idummy
-
-    if(ngnod == 9) then
-      idummy = knods(5,numabs(inum))
-      knods(5,numabs(inum)) = knods(6,numabs(inum))
-      knods(6,numabs(inum)) = knods(7,numabs(inum))
-      knods(7,numabs(inum)) = knods(8,numabs(inum))
-      knods(8,numabs(inum)) = idummy
-    endif
-
-  enddo
-
-  endif
-
-  enddo
-  write(*,*)
-  write(*,*) 'Number of absorbing elements: ',nelemabs
-  endif
-
 
 !
 !---- compute the spectral element shape functions and their local derivatives
 !
-  call q49shape(shape,dershape,xigll,yigll,ngnod,NGLLX,NGLLY,NDIME)
+  call q49shape(shape,dershape,xigll,yigll,ngnod)
 
 !
 !---- generate the global numbering
@@ -415,8 +368,8 @@ allocate(ibool(NGLLX,NGLLY,nspec))
 !---- compute the spectral element jacobian matrix
 !
 
-  call q49spec(shapeint,dershape,dvolu,xjaci,xigll,coorg,knods,ngnod, &
-          NGLLX,NGLLY,NDIME,nspec,npgeo,xirec,etarec,flagrange,iptsdisp)
+  call q49spec(shapeint,dershape,xix,xiz,gammax,gammaz,jacobian,xigll, &
+          coorg,knods,ngnod,nspec,npgeo,xirec,etarec,flagrange,iptsdisp)
 
 !
 !---- close input file
@@ -428,10 +381,13 @@ allocate(ibool(NGLLX,NGLLY,nspec))
 !
 
   allocate(coord(NDIME,npoin))
+
   allocate(accel(NDIME,npoin))
   allocate(displ(NDIME,npoin))
   allocate(veloc(NDIME,npoin))
+
   allocate(rmass(npoin))
+
   allocate(fglobx(npoin))
   allocate(fglobz(npoin))
 
@@ -444,15 +400,15 @@ allocate(ibool(NGLLX,NGLLY,nspec))
   allocate(vsext(npoinext))
   allocate(rhoext(npoinext))
 
-  allocate(a13x(NGLLX,NGLLY,nelemabs))
-  allocate(a13z(NGLLX,NGLLY,nelemabs))
+  allocate(a13x(NGLLX,NGLLZ,nelemabs))
+  allocate(a13z(NGLLX,NGLLZ,nelemabs))
 
 !
 !----  set the coordinates of the points of the global grid
 !
   do ispec = 1,nspec
   do ip1 = 1,NGLLX
-  do ip2 = 1,NGLLY
+  do ip2 = 1,NGLLZ
 
       xcor = zero
       zcor = zero
@@ -492,8 +448,8 @@ allocate(ibool(NGLLX,NGLLY,nspec))
 !
 !----   define coefficients of the Newmark time scheme
 !
-  deltatover2 = 0.5d0*deltat
-  deltatsqover2 = deltat*deltat/2.d0
+  deltatover2 = HALF*deltat
+  deltatsquareover2 = HALF*deltat*deltat
 
 !
 !---- definir la position reelle des points source et recepteurs
@@ -522,88 +478,81 @@ allocate(ibool(NGLLX,NGLLY,nspec))
   endif
 
 !
-!----   build the mass matrix for spectral elements
-!
-  call qmasspec(rhoext,wxgll,wygll,ibool,dvolu,rmass,density,kmato,npoin,ireadmodel,nspec,numat)
-
-!
-!---- definir les tableaux a1 a a13
+!---- define all arrays
 !
   call defarrays(vpext,vsext,rhoext,density,elastcoef, &
-          xigll,yigll,wxgll,wygll,hprime,hTprime, &
-          a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13x,a13z, &
-          ibool,kmato,dvolu,xjaci,coord,gltfu, &
-          numabs,codeabs,anyabs,npoin,rsizemin,rsizemax, &
-          cpoverdxmin,cpoverdxmax,rlamdaSmin,rlamdaSmax, &
-          rlamdaPmin,rlamdaPmax,vpmin,vpmax,ireadmodel,nelemabs,nspec,numat)
+          xigll,yigll,xix,xiz,gammax,gammaz,a11,a12, &
+          ibool,kmato,coord,gltfu,npoin,rsizemin,rsizemax, &
+          cpoverdxmin,cpoverdxmax,lambdalSmin,lambdalSmax, &
+          lambdalPmin,lambdalPmax,vpmin,vpmax,ireadmodel,nspec,numat)
 
-! initialiser les tableaux a zero
-  accel = zero
-  veloc = zero
-  displ = zero
-
-!
-!--- precalculer l'inverse de la matrice de masse pour efficacite
-!
-  rmass(:) = one / rmass(:)
-
-! calculer la numerotation inverse pour les bords absorbants
-  is_bordabs(:) = 0
-  if(anyabs) then
-    do ispec = 1,nelemabs
-      is_bordabs(numabs(ispec)) = ispec
+! build the global mass matrix once and for all
+  rmass(:) = ZERO
+  do ispec = 1,nspec
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+        iglob = ibool(i,j,ispec)
+!--- if external density model
+        if(ireadmodel) then
+          rhol = rhoext(iglob)
+        else
+          rhol = density(kmato(ispec))
+        endif
+        rmass(iglob) = rmass(iglob) + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
+      enddo
     enddo
-  endif
+  enddo
 
 ! convertir angle recepteurs en radians
   anglerec = anglerec * pi / 180.d0
 
 !
-!----  eventuellement lecture des champs initiaux dans un fichier
-!
-  if(initialfield) then
-      print *
-      print *,'Reading initial fields from external file...'
-      print *
-      open(unit=55,file='wavefields.txt',status='unknown')
-      read(55,*) nbpoin
-      if(nbpoin /= npoin) stop 'Wrong number of points in input file'
-      allocate(displread(NDIME))
-      allocate(velocread(NDIME))
-      allocate(accelread(NDIME))
-      do n = 1,npoin
-        read(55,*) inump, (displread(i), i=1,NDIME), &
-            (velocread(i), i=1,NDIME), (accelread(i), i=1,NDIME)
-        if(inump<1 .or. inump>npoin) stop 'Wrong point number'
-        displ(:,inump) = displread
-        veloc(:,inump) = velocread
-        accel(:,inump) = accelread
-      enddo
-      deallocate(displread)
-      deallocate(velocread)
-      deallocate(accelread)
-      close(55)
-  endif
-
-!
-!---- afficher le max du deplacement initial
-!
-  print *,'Max norme U initial = ',maxval(sqrt(displ(1,:)**2 + displ(2,:)**2))
-
-!
 !---- verifier le maillage, la stabilite et le nb de points par lambda
 !
   call checkgrid(deltat,gltfu,initialfield,rsizemin,rsizemax, &
-      cpoverdxmin,cpoverdxmax,rlamdaSmin,rlamdaSmax,rlamdaPmin,rlamdaPmax)
+      cpoverdxmin,cpoverdxmax,lambdalSmin,lambdalSmax,lambdalPmin,lambdalPmax)
 
 !
 !---- initialiser sismogrammes
 !
-  sisux = zero
-  sisuz = zero
+  sisux = ZERO
+  sisuz = ZERO
 
   dcosrot = dcos(anglerec)
   dsinrot = dsin(anglerec)
+
+! initialiser les tableaux a zero
+  accel = ZERO
+  veloc = ZERO
+  displ = ZERO
+
+!
+!----  eventuellement lecture des champs initiaux dans un fichier
+!
+  if(initialfield) then
+    print *
+    print *,'Reading initial fields from external file...'
+    print *
+    open(unit=55,file='wavefields.txt',status='unknown')
+    read(55,*) nbpoin
+    if(nbpoin /= npoin) stop 'Wrong number of points in input file'
+    allocate(displread(NDIME))
+    allocate(velocread(NDIME))
+    allocate(accelread(NDIME))
+    do n = 1,npoin
+      read(55,*) inump, (displread(i), i=1,NDIME), &
+          (velocread(i), i=1,NDIME), (accelread(i), i=1,NDIME)
+      if(inump<1 .or. inump>npoin) stop 'Wrong point number'
+      displ(:,inump) = displread
+      veloc(:,inump) = velocread
+      accel(:,inump) = accelread
+    enddo
+    deallocate(displread)
+    deallocate(velocread)
+    deallocate(accelread)
+    close(55)
+    print *,'Max norm of initial displacement = ',maxval(sqrt(displ(1,:)**2 + displ(2,:)**2))
+  endif
 
 !
 !----          s t a r t   t i m e   i t e r a t i o n s
@@ -612,54 +561,419 @@ allocate(ibool(NGLLX,NGLLY,nspec))
   write(IOUT,400)
 
 ! boucle principale d'evolution en temps
-  do it=1,NSTEP
+  do it = 1,NSTEP
 
 ! compute current time
-  time = (it-1)*deltat
+    time = (it-1)*deltat
 
-  if(mod(it-1,itaff)  ==  0) then
-    if(time  >=  1.d-3) then
-      write(IOUT,100) it,time
-    else
-      write(IOUT,101) it,time
+    if(mod(it,itaff) == 0) then
+      write(IOUT,*)
+      if(time >= 1.d-3) then
+        write(IOUT,100) it,time
+      else
+        write(IOUT,101) it,time
+      endif
     endif
+
+! `predictor' update displacement using finite-difference time scheme (Newmark)
+    displ(:,:) = displ(:,:) + deltat*veloc(:,:) + deltatsquareover2*accel(:,:)
+    veloc(:,:) = veloc(:,:) + deltatover2*accel(:,:)
+    accel(:,:) = ZERO
+
+!   integration over spectral elements
+    do ispec = 1,NSPEC
+
+! get elastic parameters of current spectral element
+      lambdal = elastcoef(1,kmato(ispec))
+      mul = elastcoef(2,kmato(ispec))
+      lambdalplus2mul = lambdal + 2.d0*mul
+
+! first double loop over GLL to compute and store gradients
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+
+!--- if external medium, get elastic parameters of current grid point
+          if(ireadmodel) then
+            iglob = ibool(i,j,ispec)
+            cpl = vpext(iglob)
+            csl = vsext(iglob)
+            rhol = rhoext(iglob)
+            mul = rhol*csl*csl
+            lambdal = rhol*cpl*cpl - 2.d0*mul
+            lambdalplus2mul = lambdal + 2.d0*mul
+          endif
+
+! derivative along x
+          tempx1l = ZERO
+          tempz1l = ZERO
+          do k = 1,NGLLX
+            hp1 = hprime_xx(k,i)
+            iglob = ibool(k,j,ispec)
+            tempx1l = tempx1l + displ(1,iglob)*hp1
+            tempz1l = tempz1l + displ(2,iglob)*hp1
+          enddo
+
+! derivative along z
+          tempx2l = ZERO
+          tempz2l = ZERO
+          do k = 1,NGLLZ
+            hp2 = hprime_zz(k,j)
+            iglob = ibool(i,k,ispec)
+            tempx2l = tempx2l + displ(1,iglob)*hp2
+            tempz2l = tempz2l + displ(2,iglob)*hp2
+          enddo
+
+          xixl = xix(i,j,ispec)
+          xizl = xiz(i,j,ispec)
+          gammaxl = gammax(i,j,ispec)
+          gammazl = gammaz(i,j,ispec)
+
+! derivatives of displacement
+          duxdxl = tempx1l*xixl + tempx2l*gammaxl
+          duxdzl = tempx1l*xizl + tempx2l*gammazl
+
+          duzdxl = tempz1l*xixl + tempz2l*gammaxl
+          duzdzl = tempz1l*xizl + tempz2l*gammazl
+
+! compute stress tensor
+          sigma_xx = lambdalplus2mul*duxdxl + lambdal*duzdzl
+          sigma_xz = mul*(duzdxl + duxdzl)
+          sigma_zz = lambdalplus2mul*duzdzl + lambdal*duxdxl
+
+! full anisotropy
+  if(TURN_ANISOTROPY_ON) then
+
+! implement anisotropy in 2D
+     duydyl = ZERO
+     duydzl = ZERO
+     duzdyl = ZERO
+     duxdyl = ZERO
+     duydxl = ZERO
+
+! precompute some sums
+     duxdxl_plus_duydyl = duxdxl + duydyl
+     duxdxl_plus_duzdzl = duxdxl + duzdzl
+     duydyl_plus_duzdzl = duydyl + duzdzl
+     duxdyl_plus_duydxl = duxdyl + duydxl
+     duzdxl_plus_duxdzl = duzdxl + duxdzl
+     duzdyl_plus_duydzl = duzdyl + duydzl
+
+     sigma_xx = c11val*duxdxl + c16val*duxdyl_plus_duydxl + c12val*duydyl + &
+        c15val*duzdxl_plus_duxdzl + c14val*duzdyl_plus_duydzl + c13val*duzdzl
+
+!     sigma_yy = c12val*duxdxl + c26val*duxdyl_plus_duydxl + c22val*duydyl + &
+!        c25val*duzdxl_plus_duxdzl + c24val*duzdyl_plus_duydzl + c23val*duzdzl
+
+     sigma_zz = c13val*duxdxl + c36val*duxdyl_plus_duydxl + c23val*duydyl + &
+        c35val*duzdxl_plus_duxdzl + c34val*duzdyl_plus_duydzl + c33val*duzdzl
+
+!     sigma_xy = c16val*duxdxl + c66val*duxdyl_plus_duydxl + c26val*duydyl + &
+!        c56val*duzdxl_plus_duxdzl + c46val*duzdyl_plus_duydzl + c36val*duzdzl
+
+     sigma_xz = c15val*duxdxl + c56val*duxdyl_plus_duydxl + c25val*duydyl + &
+        c55val*duzdxl_plus_duxdzl + c45val*duzdyl_plus_duydzl + c35val*duzdzl
+
+!     sigma_yz = c14val*duxdxl + c46val*duxdyl_plus_duydxl + c24val*duydyl + &
+!        c45val*duzdxl_plus_duxdzl + c44val*duzdyl_plus_duydzl + c34val*duzdzl
+
   endif
 
-! calculer le predictor
-  displ(:,:) = displ(:,:) + deltat*veloc(:,:) + deltatsqover2*accel(:,:)
-  veloc(:,:) = veloc(:,:) + deltatover2*accel(:,:)
-  accel(:,:) = zero
+! stress tensor is symmetric
+          sigma_zx = sigma_xz
+
+          jacobianl = jacobian(i,j,ispec)
+
+! weak formulation term based on stress tensor (non-symmetric form)
+          tempx1(i,j) = jacobianl*(sigma_xx*xixl+sigma_zx*xizl)
+          tempz1(i,j) = jacobianl*(sigma_xz*xixl+sigma_zz*xizl)
+
+          tempx2(i,j) = jacobianl*(sigma_xx*gammaxl+sigma_zx*gammazl)
+          tempz2(i,j) = jacobianl*(sigma_xz*gammaxl+sigma_zz*gammazl)
+
+        enddo
+      enddo
 
 !
-!----  calcul du residu d'acceleration pour le corrector
-!----  retourne dans accel le terme Fext - M*A(i,n+1) - K*D(i,n+1)
+! second double-loop over GLL to compute all terms
 !
-  call qsumspec(hprime,hTprime,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13x,a13z, &
-          ibool,displ,veloc,accel,Uxnewloc,Uznewloc,rmass,npoin, &
-          nspec,gltfu,initialfield,is_bordabs,nelemabs,anyabs,time)
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+
+! along x direction
+          tempx1l = ZERO
+          tempz1l = ZERO
+          do k = 1,NGLLX
+            fac1 = wxgll(k)*hprime_xx(i,k)
+            tempx1l = tempx1l + tempx1(k,j)*fac1
+            tempz1l = tempz1l + tempz1(k,j)*fac1
+          enddo
+
+! along z direction
+          tempx2l = ZERO
+          tempz2l = ZERO
+          do k = 1,NGLLZ
+            fac2 = wzgll(k)*hprime_zz(j,k)
+            tempx2l = tempx2l + tempx2(i,k)*fac2
+            tempz2l = tempz2l + tempz2(i,k)*fac2
+          enddo
+
+          fac1 = wzgll(j)
+          fac2 = wxgll(i)
+
+          iglob = ibool(i,j,ispec)
+          accel(1,iglob) = accel(1,iglob) - (fac1*tempx1l + fac2*tempx2l)
+          accel(2,iglob) = accel(2,iglob) - (fac1*tempz1l + fac2*tempz2l)
+
+        enddo ! second loop over the GLL points
+      enddo
+
+    enddo ! end of loop over all spectral elements
 
 !
-!----  mise a jour globale du deplacement par corrector
+!--- absorbing boundaries
 !
+  if(anyabs) then
+
+    do ispecabs=1,nelemabs
+
+      ispec = numabs(ispecabs)
+
+! get elastic parameters of current spectral element
+      lambdal = elastcoef(1,kmato(ispec))
+      mul = elastcoef(2,kmato(ispec))
+      rhol  = density(kmato(ispec))
+      rKvol  = lambdal + 2.d0*mul/3.d0
+      cpl = dsqrt((rKvol + 4.d0*mul/3.d0)/rhol)
+      csl = dsqrt(mul/rhol)
+
+
+!--- left absorbing boundary
+      if(codeabs(ILEFT,ispecabs)) then
+
+        i = 1
+
+        do j=1,NGLLZ
+
+          iglob = ibool(i,j,ispec)
+
+          zeta = xix(i,j,ispec) * jacobian(i,j,ispec)
+
+! external velocity model
+          if(ireadmodel) then
+            cpl = vpext(iglob)
+            csl = vsext(iglob)
+            rhol = rhoext(iglob)
+          endif
+
+          rho_vp = rhol*cpl
+          rho_vs = rhol*csl
+
+          nx = -1.d0
+          nz = 0.d0
+
+          vx = veloc(1,iglob)
+          vz = veloc(2,iglob)
+
+          vn = nx*vx+nz*vz
+
+          tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
+          tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
+
+          weight = zeta*wzgll(j)
+
+          accel(1,iglob) = accel(1,iglob) - tx*weight
+          accel(2,iglob) = accel(2,iglob) - tz*weight
+
+        enddo
+
+      endif  !  end of left absorbing boundary
+
+!--- right absorbing boundary
+      if(codeabs(IRIGHT,ispecabs)) then
+
+        i = NGLLX
+
+        do j=1,NGLLZ
+
+          iglob = ibool(i,j,ispec)
+
+          zeta = xix(i,j,ispec) * jacobian(i,j,ispec)
+
+! external velocity model
+          if(ireadmodel) then
+            cpl = vpext(iglob)
+            csl = vsext(iglob)
+            rhol = rhoext(iglob)
+          endif
+
+          rho_vp = rhol*cpl
+          rho_vs = rhol*csl
+
+          nx = 1.d0
+          nz = 0.d0
+
+          vx = veloc(1,iglob)
+          vz = veloc(2,iglob)
+
+          vn = nx*vx+nz*vz
+
+          tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
+          tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
+
+          weight = zeta*wzgll(j)
+
+          accel(1,iglob) = accel(1,iglob) - tx*weight
+          accel(2,iglob) = accel(2,iglob) - tz*weight
+
+        enddo
+
+      endif  !  end of right absorbing boundary
+
+!--- bottom absorbing boundary
+      if(codeabs(IBOTTOM,ispecabs)) then
+
+        j = 1
+
+        do i=1,NGLLX
+
+          iglob = ibool(i,j,ispec)
+
+          xxi = gammaz(i,j,ispec) * jacobian(i,j,ispec)
+
+! external velocity model
+          if(ireadmodel) then
+            cpl = vpext(iglob)
+            csl = vsext(iglob)
+            rhol = rhoext(iglob)
+          endif
+
+          rho_vp = rhol*cpl
+          rho_vs = rhol*csl
+
+          nx = 0.d0
+          nz = -1.d0
+
+          vx = veloc(1,iglob)
+          vz = veloc(2,iglob)
+
+          vn = nx*vx+nz*vz
+
+          tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
+          tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
+
+          weight = xxi*wxgll(i)
+
+          accel(1,iglob) = accel(1,iglob) - tx*weight
+          accel(2,iglob) = accel(2,iglob) - tz*weight
+
+        enddo
+
+      endif  !  end of bottom absorbing boundary
+
+!--- top absorbing boundary
+      if(codeabs(ITOP,ispecabs)) then
+
+        j = NGLLZ
+
+        do i=1,NGLLX
+
+          iglob = ibool(i,j,ispec)
+
+          xxi = gammaz(i,j,ispec) * jacobian(i,j,ispec)
+
+! external velocity model
+          if(ireadmodel) then
+            cpl = vpext(iglob)
+            csl = vsext(iglob)
+            rhol = rhoext(iglob)
+          endif
+
+          rho_vp = rhol*cpl
+          rho_vs = rhol*csl
+
+          nx = 0.d0
+          nz = 1.d0
+
+          vx = veloc(1,iglob)
+          vz = veloc(2,iglob)
+
+          vn = nx*vx+nz*vz
+
+          tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
+          tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
+
+          weight = xxi*wxgll(i)
+
+          accel(1,iglob) = accel(1,iglob) - tx*weight
+          accel(2,iglob) = accel(2,iglob) - tz*weight
+
+        enddo
+
+      endif  !  end of top absorbing boundary
+
+    enddo
+
+  endif  ! end of absorbing boundaries
+
+
+! --- add the source
+  if(.not. initialfield) then
+
+  f0 = gltfu(5)
+  t0 = gltfu(6)
+  factor = gltfu(7)
+  angleforce = gltfu(8)
+
+! Ricker wavelet for the source time function
+  a = pi*pi*f0*f0
+  ricker = - factor * (1.d0-2.d0*a*(time-t0)**2)*exp(-a*(time-t0)**2)
+
+! --- collocated force
+  if(nint(gltfu(2)) == 1) then
+    iglobsource = nint(gltfu(9))
+    accel(1,iglobsource) = accel(1,iglobsource) - dsin(angleforce)*ricker
+    accel(2,iglobsource) = accel(2,iglobsource) + dcos(angleforce)*ricker
+
+!---- explosion
+  else if(nint(gltfu(2)) == 2) then
+!   recuperer numero d'element de la source
+    ielems = nint(gltfu(12))
+    do i=1,NGLLX
+      do j=1,NGLLX
+        iglob = ibool(i,j,ielems)
+        accel(1,iglob) = accel(1,iglob) + a11(i,j)*ricker
+        accel(2,iglob) = accel(2,iglob) + a12(i,j)*ricker
+      enddo
+    enddo
+  endif
+
+  else
+    stop 'wrong source type'
+  endif
+
+! divide by the mass matrix
+  accel(1,:) = accel(1,:) / rmass(:)
+  accel(2,:) = accel(2,:) / rmass(:)
+
+! `corrector' update velocity
   veloc(:,:) = veloc(:,:) + deltatover2*accel(:,:)
 
 !
 !----  display max of norm of displacement
 !
-  if(mod(it-1,itaff)  ==  0) &
-     print *,'Max norme U = ',maxval(sqrt(displ(1,:)**2 + displ(2,:)**2))
+  if(mod(it,itaff) == 0) print *,'Max norm of displacement = ',maxval(sqrt(displ(1,:)**2 + displ(2,:)**2))
 
 ! store the seismograms
   do irec=1,nrec
     iglobrec = nint(posrec(1,irec))
 
-  if(isismostype  ==  1) then
+  if(isismostype == 1) then
     valux = displ(1,iglobrec)
     valuz = displ(2,iglobrec)
-  else if(isismostype  ==  2) then
+  else if(isismostype == 2) then
     valux = veloc(1,iglobrec)
     valuz = veloc(2,iglobrec)
-  else if(isismostype  ==  3) then
+  else if(isismostype == 3) then
     valux = accel(1,iglobrec)
     valuz = accel(2,iglobrec)
   else
@@ -678,7 +992,7 @@ allocate(ibool(NGLLX,NGLLY,nspec))
   if(mod(it,itaff) == 0 .or. it == 5 .or. it == NSTEP) then
 
   write(IOUT,*)
-  if(time  >=  1.d-3) then
+  if(time >= 1.d-3) then
     write(IOUT,110) time
   else
     write(IOUT,111) time
@@ -689,7 +1003,7 @@ allocate(ibool(NGLLX,NGLLY,nspec))
 !----  affichage postscript
 !
   write(IOUT,*) 'Dump PostScript'
-  if(ivecttype  ==  1) then
+  if(ivecttype == 1) then
     write(IOUT,*) 'drawing displacement field...'
     call plotpost(displ,coord,vpext,gltfu,posrec, &
           it,deltat,coorg,xinterp,zinterp,shapeint, &
@@ -697,7 +1011,7 @@ allocate(ibool(NGLLX,NGLLY,nspec))
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
           icolor,inumber,isubsamp,ivecttype,interpol,imeshvect,imodelvect, &
           iboundvect,ireadmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod)
-  else if(ivecttype  ==  2) then
+  else if(ivecttype == 2) then
     write(IOUT,*) 'drawing velocity field...'
     call plotpost(veloc,coord,vpext,gltfu,posrec, &
           it,deltat,coorg,xinterp,zinterp,shapeint, &
@@ -705,7 +1019,7 @@ allocate(ibool(NGLLX,NGLLY,nspec))
           numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
           icolor,inumber,isubsamp,ivecttype,interpol,imeshvect,imodelvect, &
           iboundvect,ireadmodel,cutvect,nelemabs,numat,iptsdisp,nspec,ngnod)
-  else if(ivecttype  ==  3) then
+  else if(ivecttype == 3) then
     write(IOUT,*) 'drawing acceleration field...'
     call plotpost(accel,coord,vpext,gltfu,posrec, &
           it,deltat,coorg,xinterp,zinterp,shapeint, &
@@ -781,8 +1095,8 @@ allocate(ibool(NGLLX,NGLLY,nspec))
            'Number of spectral elements . . . . .  (nspec) =',i7,/5x, &
            'Number of control nodes per element .  (ngnod) =',i7,/5x, &
            'Number of points in X-direction . . .  (NGLLX) =',i7,/5x, &
-           'Number of points in Y-direction . . .  (NGLLY) =',i7,/5x, &
-           'Number of points per element. . .(NGLLX*NGLLY) =',i7,/5x, &
+           'Number of points in Y-direction . . .  (NGLLZ) =',i7,/5x, &
+           'Number of points per element. . .(NGLLX*NGLLZ) =',i7,/5x, &
            'Number of points for display . . . .(iptsdisp) =',i7,/5x, &
            'Number of element material sets . . .  (numat) =',i7,/5x, &
            'Number of absorbing elements . . . .(nelemabs) =',i7)

@@ -24,10 +24,9 @@ FLAGS=-fast -implicitnone -warn stderrors -warn truncated_source -warn argument_
 LINK = $(F90) 
 EXEC = xspecfem2D
 OBJS = $O/checkgrid.o $O/datim.o $O/defarrays.o\
-        $O/lagrange_poly.o $O/gmat01.o $O/gll_library.o $O/plotgll.o\
+        $O/lagrange_poly.o $O/gmat01.o $O/gll_library.o $O/plotgll.o $O/define_derivative_matrices.o\
         $O/plotpost.o $O/positrec.o $O/positsource.o $O/q49spec.o\
-        $O/qmasspec.o $O/qsumspec.o $O/specfem2D.o\
-	$O/write_seismograms.o $O/createnum_fast.o $O/createnum_slow.o $O/q49shape.o
+        $O/specfem2D.o $O/write_seismograms.o $O/createnum_fast.o $O/createnum_slow.o $O/q49shape.o
 
 default: all
 
@@ -61,6 +60,9 @@ $O/gmat01.o: gmat01.f90 constants.h
 $O/gll_library.o: gll_library.f90 constants.h
 	${F90} $(FLAGS) -c -o $O/gll_library.o gll_library.f90
     
+$O/define_derivative_matrices.o: define_derivative_matrices.f90 constants.h
+	${F90} $(FLAGS) -c -o $O/define_derivative_matrices.o define_derivative_matrices.f90
+    
 $O/plotgll.o: plotgll.f90 constants.h
 	${F90} $(FLAGS) -c -o $O/plotgll.o plotgll.f90
     
@@ -78,12 +80,6 @@ $O/q49shape.o: q49shape.f90 constants.h
     
 $O/q49spec.o: q49spec.f90 constants.h
 	${F90} $(FLAGS) -c -o $O/q49spec.o q49spec.f90
-    
-$O/qmasspec.o: qmasspec.f90 constants.h
-	${F90} $(FLAGS) -c -o $O/qmasspec.o qmasspec.f90
-    
-$O/qsumspec.o: qsumspec.f90 constants.h
-	${F90} $(FLAGS) -c -o $O/qsumspec.o qsumspec.f90
     
 $O/specfem2D.o: specfem2D.f90 constants.h
 	${F90} $(FLAGS) -c -o $O/specfem2D.o specfem2D.f90
