@@ -46,14 +46,14 @@
 
   name='macros2.gnu'
   open(unit=31,file=name,status='unknown')
-  write(31,10)
+  write(31,"('')")
 
   name='gllmesh1.gnu'
   open(unit=20,file=name,status='unknown')
 
   name='gllmesh2.gnu'
   open(unit=21,file=name,status='unknown')
-  write(21,10)
+  write(21,"('')")
 
   do ispec = 1,nspec
 
@@ -71,14 +71,14 @@
 !
          iglobnum2 = ibool(ix+1,iy,ispec)
 
-  write(20,15) coord(1,iglobnum),coord(2,iglobnum)
-  write(20,15) coord(1,iglobnum2),coord(2,iglobnum2)
-  write(20,10)
+  write(20,*) coord(1,iglobnum),coord(2,iglobnum)
+  write(20,*) coord(1,iglobnum2),coord(2,iglobnum2)
+  write(20,"('')")
 
   if(iy == 1 .or. iy == NGLLZ) then
-    write(21,15) coord(1,iglobnum),coord(2,iglobnum)
-    write(21,15) coord(1,iglobnum2),coord(2,iglobnum2)
-    write(21,10)
+    write(21,*) coord(1,iglobnum),coord(2,iglobnum)
+    write(21,*) coord(1,iglobnum2),coord(2,iglobnum2)
+    write(21,"('')")
   endif
 
     enddo
@@ -98,14 +98,14 @@
 !
          iglobnum2 = ibool(ix,iy+1,ispec)
 
-  write(20,15) coord(1,iglobnum),coord(2,iglobnum)
-  write(20,15) coord(1,iglobnum2),coord(2,iglobnum2)
-  write(20,10)
+  write(20,*) coord(1,iglobnum),coord(2,iglobnum)
+  write(20,*) coord(1,iglobnum2),coord(2,iglobnum2)
+  write(20,"('')")
 
   if(ix == 1 .or. ix == NGLLX) then
-    write(21,15) coord(1,iglobnum),coord(2,iglobnum)
-    write(21,15) coord(1,iglobnum2),coord(2,iglobnum2)
-    write(21,10)
+    write(21,*) coord(1,iglobnum),coord(2,iglobnum)
+    write(21,*) coord(1,iglobnum2),coord(2,iglobnum2)
+    write(21,"('')")
   endif
 
     enddo
@@ -129,18 +129,18 @@
 !
 
 ! draw the edges of the element using one color
-    write(30,15) xval(1),zval(1)
-    write(30,15) xval(2),zval(2)
-    write(30,10)
-    write(30,15) xval(2),zval(2)
-    write(30,15) xval(3),zval(3)
-    write(30,10)
-    write(30,15) xval(3),zval(3)
-    write(30,15) xval(4),zval(4)
-    write(30,10)
-    write(30,15) xval(4),zval(4)
-    write(30,15) xval(1),zval(1)
-    write(30,10)
+    write(30,*) xval(1),zval(1)
+    write(30,*) xval(2),zval(2)
+    write(30,"('')")
+    write(30,*) xval(2),zval(2)
+    write(30,*) xval(3),zval(3)
+    write(30,"('')")
+    write(30,*) xval(3),zval(3)
+    write(30,*) xval(4),zval(4)
+    write(30,"('')")
+    write(30,*) xval(4),zval(4)
+    write(30,*) xval(1),zval(1)
+    write(30,"('')")
 
   else
 
@@ -149,44 +149,44 @@
 !
 
 ! draw the edges of the element using one color
-    write(30,15) xval(1),zval(1)
-    write(30,15) xval(5),zval(5)
-    write(30,10)
-    write(30,15) xval(5),zval(5)
-    write(30,15) xval(2),zval(2)
-    write(30,10)
-    write(30,15) xval(2),zval(2)
-    write(30,15) xval(6),zval(6)
-    write(30,10)
-    write(30,15) xval(6),zval(6)
-    write(30,15) xval(3),zval(3)
-    write(30,10)
-    write(30,15) xval(3),zval(3)
-    write(30,15) xval(7),zval(7)
-    write(30,10)
-    write(30,15) xval(7),zval(7)
-    write(30,15) xval(4),zval(4)
-    write(30,10)
-    write(30,15) xval(4),zval(4)
-    write(30,15) xval(8),zval(8)
-    write(30,10)
-    write(30,15) xval(8),zval(8)
-    write(30,15) xval(1),zval(1)
-    write(30,10)
+    write(30,*) xval(1),zval(1)
+    write(30,*) xval(5),zval(5)
+    write(30,"('')")
+    write(30,*) xval(5),zval(5)
+    write(30,*) xval(2),zval(2)
+    write(30,"('')")
+    write(30,*) xval(2),zval(2)
+    write(30,*) xval(6),zval(6)
+    write(30,"('')")
+    write(30,*) xval(6),zval(6)
+    write(30,*) xval(3),zval(3)
+    write(30,"('')")
+    write(30,*) xval(3),zval(3)
+    write(30,*) xval(7),zval(7)
+    write(30,"('')")
+    write(30,*) xval(7),zval(7)
+    write(30,*) xval(4),zval(4)
+    write(30,"('')")
+    write(30,*) xval(4),zval(4)
+    write(30,*) xval(8),zval(8)
+    write(30,"('')")
+    write(30,*) xval(8),zval(8)
+    write(30,*) xval(1),zval(1)
+    write(30,"('')")
 
 ! draw middle lines using another color
-    write(31,15) xval(5),zval(5)
-    write(31,15) xval(9),zval(9)
-    write(31,10)
-    write(31,15) xval(9),zval(9)
-    write(31,15) xval(7),zval(7)
-    write(31,10)
-    write(31,15) xval(8),zval(8)
-    write(31,15) xval(9),zval(9)
-    write(31,10)
-    write(31,15) xval(9),zval(9)
-    write(31,15) xval(6),zval(6)
-    write(31,10)
+    write(31,*) xval(5),zval(5)
+    write(31,*) xval(9),zval(9)
+    write(31,"('')")
+    write(31,*) xval(9),zval(9)
+    write(31,*) xval(7),zval(7)
+    write(31,"('')")
+    write(31,*) xval(8),zval(8)
+    write(31,*) xval(9),zval(9)
+    write(31,"('')")
+    write(31,*) xval(9),zval(9)
+    write(31,*) xval(6),zval(6)
+    write(31,"('')")
 
   endif
 
@@ -222,9 +222,6 @@
   write(20,*) 'plot "macros2.gnu" title '''' w l 2, "macros1.gnu" title '''' w linesp 1 3'
   write(20,*) 'pause -1 "Hit any key to exit..."'
   close(20)
-
- 10 format('')
- 15 format(e10.5,1x,e10.5)
 
   end subroutine plotgll
 

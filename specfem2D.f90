@@ -209,12 +209,12 @@
 !
 !---  read job title and skip remaining titles of the input file
 !
-  read(IIN,40) datlin
-  read(IIN,40) datlin
-  read(IIN,40) datlin
-  read(IIN,40) datlin
-  read(IIN,40) datlin
-  read(IIN,45) stitle
+  read(IIN,"(a80)") datlin
+  read(IIN,"(a80)") datlin
+  read(IIN,"(a80)") datlin
+  read(IIN,"(a80)") datlin
+  read(IIN,"(a80)") datlin
+  read(IIN,"(a50)") stitle
 
 !
 !---- print the date, time and start-up banner
@@ -233,29 +233,29 @@
 !---- read parameters from input file
 !
 
-  read(IIN,40) datlin
+  read(IIN,"(a80)") datlin
   read(IIN,*) npgeo
 
-  read(IIN,40) datlin
+  read(IIN,"(a80)") datlin
   read(IIN,*) gnuplot,interpol
 
-  read(IIN,40) datlin
+  read(IIN,"(a80)") datlin
   read(IIN,*) IT_AFFICHE,output_postscript_snapshot,output_PNM_image,colors,numbers
 
-  read(IIN,40) datlin
+  read(IIN,"(a80)") datlin
   read(IIN,*) meshvect,modelvect,boundvect,cutvect,subsamp,sizemax_arrows,nx_sem_PNM
   cutvect = cutvect / 100.d0
 
-  read(IIN,40) datlin
+  read(IIN,"(a80)") datlin
   read(IIN,*) anglerec
 
-  read(IIN,40) datlin
+  read(IIN,"(a80)") datlin
   read(IIN,*) initialfield
 
-  read(IIN,40) datlin
+  read(IIN,"(a80)") datlin
   read(IIN,*) sismostype,vecttype
 
-  read(IIN,40) datlin
+  read(IIN,"(a80)") datlin
   read(IIN,*) read_external_model,outputgrid,ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
 
 !---- check parameters read
@@ -266,14 +266,14 @@
   write(IOUT,800) vecttype,100.d0*cutvect,subsamp
 
 !---- read time step
-  read(IIN,40) datlin
+  read(IIN,"(a80)") datlin
   read(IIN,*) NSTEP,deltat
   write(IOUT,703) NSTEP,deltat,NSTEP*deltat
 
 !
 !----  read source information
 !
-  read(IIN,40) datlin
+  read(IIN,"(a80)") datlin
   read(IIN,*) source_type,time_function_type,x_source,z_source,f0,t0,factor,angleforce,Mxx,Mzz,Mxz
 
 !
@@ -301,7 +301,7 @@
   allocate(coorg(NDIM,npgeo))
 
   ipoin = 0
-  read(IIN,40) datlin
+  read(IIN,"(a80)") datlin
   allocate(coorgread(NDIM))
   do ip = 1,npgeo
    read(IIN,*) ipoin,(coorgread(id),id =1,NDIM)
@@ -313,7 +313,7 @@
 !
 !---- read the basic properties of the spectral elements
 !
-  read(IIN,40) datlin
+  read(IIN,"(a80)") datlin
   read(IIN,*) numat,ngnod,nspec,pointsdisp,plot_lowerleft_corner_only,nelemabs,nelemsurface
 
 !
@@ -404,7 +404,7 @@
 !----  read spectral macrobloc data
 !
   n = 0
-  read(IIN,40) datlin
+  read(IIN,"(a80)") datlin
   do ie = 1,nspec
     read(IIN,*) n,kmato(n),(knods(k,n), k=1,ngnod)
   enddo
@@ -413,7 +413,7 @@
 !----  read absorbing boundary data
 !
   if(anyabs) then
-    read(IIN,40) datlin
+    read(IIN,"(a80)") datlin
     do n=1,nelemabs
       read(IIN,*) inum,numabsread,codeabsread(1),codeabsread(2),codeabsread(3),codeabsread(4)
       if(inum < 1 .or. inum > nelemabs) stop 'Wrong absorbing element number'
@@ -430,7 +430,7 @@
 !
 !----  read free surface data
 !
-  read(IIN,40) datlin
+  read(IIN,"(a80)") datlin
   read(IIN,*) abshaut
   do n=1,nelemsurface
     read(IIN,*) inum,numsurfaceread
@@ -1563,9 +1563,9 @@
 
     write(IOUT,*)
     if(time >= 1.d-3) then
-      write(IOUT,100) it,time
+      write(IOUT,"('Pas de temps numero ',i5,'   t = ',f7.4,' s')") it,time
     else
-      write(IOUT,101) it,time
+      write(IOUT,"('Pas de temps numero ',i5,'   t = ',1pe10.4,' s')") it,time
     endif
 
     displnorm_all = maxval(sqrt(displ(1,:)**2 + displ(2,:)**2))
@@ -1809,18 +1809,14 @@
 !
 !----  formats
 !
- 40   format(a80)
- 45   format(a50)
- 100  format('Pas de temps numero ',i5,'   t = ',f7.4,' s')
- 101  format('Pas de temps numero ',i5,'   t = ',1pe10.4,' s')
- 110  format('Sauvegarde deplacement temps t = ',f7.4,' s')
- 111  format('Sauvegarde deplacement temps t = ',1pe10.4,' s')
- 400  format(/1x,41('=')/,' =  T i m e  e v o l u t i o n  l o o p  ='/1x,41('=')/)
 
-  200   format(//1x,'C o n t r o l',/1x,13('='),//5x,&
+ 400 format(/1x,41('=')/,' =  T i m e  e v o l u t i o n  l o o p  ='/1x,41('=')/)
+
+ 200 format(//1x,'C o n t r o l',/1x,13('='),//5x,&
   'Number of spectral element control nodes. . .(npgeo) =',i8/5x, &
   'Number of space dimensions. . . . . . . . . . (NDIM) =',i8)
-  600   format(//1x,'C o n t r o l',/1x,13('='),//5x, &
+
+ 600 format(//1x,'C o n t r o l',/1x,13('='),//5x, &
   'Display frequency . . . . . . . . . . . (IT_AFFICHE) = ',i5/ 5x, &
   'Color display . . . . . . . . . . . . . . . (colors) = ',i5/ 5x, &
   '        ==  0     black and white display              ',  / 5x, &
@@ -1828,55 +1824,57 @@
   'Numbered mesh . . . . . . . . . . . . . . .(numbers) = ',i5/ 5x, &
   '        ==  0     do not number the mesh               ',  /5x, &
   '        ==  1     number the mesh                      ')
-  700   format(//1x,'C o n t r o l',/1x,13('='),//5x, &
+
+ 700 format(//1x,'C o n t r o l',/1x,13('='),//5x, &
   'Seismograms recording type . . . . . . .(sismostype) = ',i6/5x, &
   'Angle for first line of receivers. . . . .(anglerec) = ',f6.2)
-  750   format(//1x,'C o n t r o l',/1x,13('='),//5x, &
+
+ 750 format(//1x,'C o n t r o l',/1x,13('='),//5x, &
   'Read external initial field. . . . . .(initialfield) = ',l6/5x, &
   'Read external velocity model. .(read_external_model) = ',l6/5x, &
   'Elastic simulation or acoustic. . . . . . .(ELASTIC) = ',l6/5x, &
   'Turn anisotropy on or off. . . .(TURN_ANISOTROPY_ON) = ',l6/5x, &
   'Turn attenuation on or off. . .(TURN_ATTENUATION_ON) = ',l6/5x, &
   'Save grid in external file or not. . . .(outputgrid) = ',l6)
-  800   format(//1x,'C o n t r o l',/1x,13('='),//5x, &
+
+ 800 format(//1x,'C o n t r o l',/1x,13('='),//5x, &
   'Vector display type. . . . . . . . . . . .(vecttype) = ',i6/5x, &
   'Percentage of cut for vector plots. . . . .(cutvect) = ',f6.2/5x, &
   'Subsampling for velocity model display. . .(subsamp) = ',i6)
 
-  703   format(//' I t e r a t i o n s '/1x,19('='),//5x, &
+ 703 format(//' I t e r a t i o n s '/1x,19('='),//5x, &
       'Number of time iterations . . . . .(NSTEP) =',i8,/5x, &
       'Time step increment. . . . . . . .(deltat) =',1pe15.6,/5x, &
       'Total simulation duration . . . . . (ttot) =',1pe15.6)
 
-  107   format(/5x,'--> Isoparametric Spectral Elements <--',//)
-  207   format(5x, &
-           'Number of spectral elements . . . . .  (nspec) =',i7,/5x, &
-           'Number of control nodes per element .  (ngnod) =',i7,/5x, &
-           'Number of points in X-direction . . .  (NGLLX) =',i7,/5x, &
-           'Number of points in Y-direction . . .  (NGLLZ) =',i7,/5x, &
-           'Number of points per element. . .(NGLLX*NGLLZ) =',i7,/5x, &
-           'Number of points for display . . .(pointsdisp) =',i7,/5x, &
-           'Number of element material sets . . .  (numat) =',i7,/5x, &
-           'Number of absorbing elements . . . .(nelemabs) =',i7)
+ 107 format(/5x,'--> Isoparametric Spectral Elements <--',//)
 
-  212   format(//,5x, &
-     'Source Type. . . . . . . . . . . . . . = Collocated Force',/5x, &
-     'X-position (meters). . . . . . . . . . =',1pe20.10,/5x, &
-     'Y-position (meters). . . . . . . . . . =',1pe20.10,/5x, &
-     'Fundamental frequency (Hz) . . . . . . =',1pe20.10,/5x, &
-     'Time delay (s) . . . . . . . . . . . . =',1pe20.10,/5x, &
-     'Multiplying factor . . . . . . . . . . =',1pe20.10,/5x, &
-     'Angle from vertical direction (deg). . =',1pe20.10,/5x)
-  222   format(//,5x, &
-     'Source Type. . . . . . . . . . . . . . = Moment-tensor',/5x, &
-     'X-position (meters). . . . . . . . . . =',1pe20.10,/5x, &
-     'Y-position (meters). . . . . . . . . . =',1pe20.10,/5x, &
-     'Fundamental frequency (Hz) . . . . . . =',1pe20.10,/5x, &
-     'Time delay (s) . . . . . . . . . . . . =',1pe20.10,/5x, &
-     'Multiplying factor . . . . . . . . . . =',1pe20.10,/5x, &
-     'Mxx. . . . . . . . . . . . . . . . . . =',1pe20.10,/5x, &
-     'Mzz. . . . . . . . . . . . . . . . . . =',1pe20.10,/5x, &
-     'Mxz. . . . . . . . . . . . . . . . . . =',1pe20.10)
+ 207 format(5x,'Number of spectral elements . . . . .  (nspec) =',i7,/5x, &
+               'Number of control nodes per element .  (ngnod) =',i7,/5x, &
+               'Number of points in X-direction . . .  (NGLLX) =',i7,/5x, &
+               'Number of points in Y-direction . . .  (NGLLZ) =',i7,/5x, &
+               'Number of points per element. . .(NGLLX*NGLLZ) =',i7,/5x, &
+               'Number of points for display . . .(pointsdisp) =',i7,/5x, &
+               'Number of element material sets . . .  (numat) =',i7,/5x, &
+               'Number of absorbing elements . . . .(nelemabs) =',i7)
+
+ 212 format(//,5x,'Source Type. . . . . . . . . . . . . . = Collocated Force',/5x, &
+                  'X-position (meters). . . . . . . . . . =',1pe20.10,/5x, &
+                  'Y-position (meters). . . . . . . . . . =',1pe20.10,/5x, &
+                  'Fundamental frequency (Hz) . . . . . . =',1pe20.10,/5x, &
+                  'Time delay (s) . . . . . . . . . . . . =',1pe20.10,/5x, &
+                  'Multiplying factor . . . . . . . . . . =',1pe20.10,/5x, &
+                  'Angle from vertical direction (deg). . =',1pe20.10,/5x)
+
+ 222 format(//,5x,'Source Type. . . . . . . . . . . . . . = Moment-tensor',/5x, &
+                  'X-position (meters). . . . . . . . . . =',1pe20.10,/5x, &
+                  'Y-position (meters). . . . . . . . . . =',1pe20.10,/5x, &
+                  'Fundamental frequency (Hz) . . . . . . =',1pe20.10,/5x, &
+                  'Time delay (s) . . . . . . . . . . . . =',1pe20.10,/5x, &
+                  'Multiplying factor . . . . . . . . . . =',1pe20.10,/5x, &
+                  'Mxx. . . . . . . . . . . . . . . . . . =',1pe20.10,/5x, &
+                  'Mzz. . . . . . . . . . . . . . . . . . =',1pe20.10,/5x, &
+                  'Mxz. . . . . . . . . . . . . . . . . . =',1pe20.10)
 
   end program specfem2D
 
