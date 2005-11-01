@@ -79,11 +79,11 @@
 
   distminmax = max(distmin,distminmax)
 
-  write(iout,150) x_source,z_source,coord(1,iglob_source),coord(2,iglob_source),distmin
-  write(iout,160) distminmax
+  write(iout,"(1x,f12.3,1x,f12.3,1x,f12.3,1x,f12.3,f12.3)") x_source,z_source,coord(1,iglob_source),coord(2,iglob_source),distmin
+  write(iout,*)
+  write(iout,*)
+  write(iout,"('Maximum distance between asked and real =',f12.3)") distminmax
 
- 150 format(1x,f12.3,1x,f12.3,1x,f12.3,1x,f12.3,f12.3)
- 160 format(/2x,'Maximum distance between asked and real =',f12.3)
  200 format(//1x,48('=')/,' =  S o u r c e s  ', &
   'r e a l  p o s i t i o n s  ='/1x,48('=')// &
   '    Source    x-asked      z-asked     x-obtain     z-obtain       dist'/)
