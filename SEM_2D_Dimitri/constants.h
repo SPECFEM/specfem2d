@@ -56,7 +56,7 @@
   integer, parameter :: NUM_ITER = 4
 
 ! error function source decay rate for Heaviside
-  double precision, parameter :: SOURCE_DECAY_RATE = 2.628d0
+  double precision, parameter :: SOURCE_DECAY_RATE = 1.628d0
 
 ! display non lineaire pour rehausser les faibles amplitudes sur les images PNM
   double precision, parameter :: POWER_DISPLAY_PNM = 0.30d0
