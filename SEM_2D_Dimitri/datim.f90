@@ -33,17 +33,9 @@
   dateprint = datein(7:8)//' - '//datein(5:6)//' - '//datein(1:4)
   timeprint = timein(1:2)//':'//timein(3:4)//':'//timein(5:6)
 
-  write(iout,100)
-  write(iout,101) string_input
-  write(iout,102) dateprint,timeprint
-
-!
-!---- formats
-!
-
- 100 format(//1x,79('-')/1x,79('-')/1x,'Program SPECFEM2D: ')
- 101 format(1x,79('-')/1x,79('-')/1x,a50)
- 102 format(1x,79('-')/,1x,79('-')/' D a t e : ',a16,30x,' T i m e  : ',a8/1x,79('-'),/1x,79('-'))
+  write(iout,"(//1x,79('-')/1x,79('-')/1x,'Program SPECFEM2D: ')")
+  write(iout,"(1x,79('-')/1x,79('-')/1x,a50)") string_input
+  write(iout,"(1x,79('-')/,1x,79('-')/' D a t e : ',a16,30x,' T i m e  : ',a8/1x,79('-'),/1x,79('-'))") dateprint,timeprint
 
   end subroutine datim
 

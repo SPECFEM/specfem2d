@@ -203,7 +203,7 @@
   write(11,110) FACTORXSU,NSTEP,deltat,-t0,nrec
 
   do irec=1,nrec
-    write(11,140) st_xval(irec)
+    write(11,"(f12.5)") st_xval(irec)
     if(irec < nrec) write(11,*) ','
   enddo
 
@@ -219,7 +219,7 @@
 
 ! script de visualisation
   open(unit=11,file='OUTPUT_FILES/show_receiver_line_Xsu',status='unknown')
-  write(11,100)
+  write(11,"('#!/bin/csh')")
   write(11,*)
   write(11,*) '/bin/rm -f tempfile receiver_line_Xsu_postscript'
   write(11,*) '# concatener toutes les lignes'
@@ -242,8 +242,6 @@
   close(11)
 
 ! formats
-  100 format('#!/bin/csh -f')
-
   110 format('xwigb@xcur=',f8.2,'@n1=',i5,'@d1=',f15.8,'@f1=',f15.8,'@label1="Time@(s)"@label2="x@(m)"@n2=',i5,'@x2=')
 
   120 format('sed -e ''1,$s/ //g'' -e ''1,$s/@/ /g'' -e ''1,1p'' -e ''$,$s/Ux/Uz/g'' <tempfile > receiver_line_Xsu_XWindow')
@@ -251,8 +249,6 @@
   130 format('sed -e ''1,$s/xwigb/pswigp/g'' ', &
         '-e ''1,$s/Ux_file_single.bin/Ux_file_single.bin > uxpoly.ps/g'' ', &
         '-e ''1,$s/Uz_file_single.bin/Uz_file_single.bin > uzpoly.ps/g'' receiver_line_Xsu_XWindow > receiver_line_Xsu_postscript')
-
-  140 format(f12.5)
 
   end subroutine write_seismograms
 

@@ -192,9 +192,8 @@
 !
 !---- ouverture du fichier PostScript
 !
-  write(name,222) it
+  write(name,"('OUTPUT_FILES/vect',i5.5,'.ps')") it
   open(unit=24,file=name,status='unknown')
-  222 format('OUTPUT_FILES/vect',i5.5,'.ps')
 
 !
 !---- ecriture de l'entete du fichier PostScript
@@ -771,7 +770,7 @@
     endif
   enddo
   ch2(indice) = ch1(longueur)
-  write(24,200) (ch2(ii),ii=1,indice)
+  write(24,"(80(a1))") (ch2(ii),ii=1,indice)
 
   endif
 
@@ -836,7 +835,7 @@
     endif
   enddo
   ch2(indice) = ch1(longueur)
-  write(24,200) (ch2(ii),ii=1,indice)
+  write(24,"(80(a1))") (ch2(ii),ii=1,indice)
 
   endif
 
@@ -902,7 +901,7 @@
   close(24)
 
  10   format('%!PS-Adobe-2.0',/,'%%',/,'%% Title: ',a50,/, &
-          '%% Created by: Specfem Version 5.0',/, &
+          '%% Created by: Specfem2D',/, &
           '%% Author: Dimitri Komatitsch',/,'%%')
  510  format(f5.1,1x,f5.1,' M')
  600  format(f6.3,' neg CM 0 MR (Time =',f6.3,' s) show')
@@ -911,7 +910,6 @@
  620  format(f6.3,' neg CM 0 MR (Cut =',f5.2,' \%) show')
  640  format(f6.3,' neg CM 0 MR (Max norm =',1pe10.3,') show')
 
- 200  format(80(a1))
  499  format(f5.1,1x,f5.1,' L')
  500  format(f5.1,1x,f5.1,' M')
  502  format('fN (',i4,') Cshow')

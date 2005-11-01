@@ -38,7 +38,7 @@
 
   write(iout,100) numat
 
-  read(iin ,40) datlin
+  read(iin ,"(a80)") datlin
   do in = 1,numat
 
    read(iin ,*) n,indic,density,val1,val2,val3,val4
@@ -114,7 +114,6 @@
 !
 !---- formats
 !
-  40    format(a80)
   100   format(//,' M a t e r i a l   s e t s :  ', &
          ' 2 D  e l a s t i c i t y', &
          /1x,54('='),//5x,'Number of material sets . . . . . . (numat) =',i5)

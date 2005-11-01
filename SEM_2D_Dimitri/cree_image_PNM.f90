@@ -40,13 +40,12 @@
   integer :: R, G, B
 
 ! ouverture du fichier image
-  write(nom_fichier,222) it
-  222 format('OUTPUT_FILES/image',i5.5,'.pnm')
+  write(nom_fichier,"('OUTPUT_FILES/image',i5.5,'.pnm')") it
 
 ! ouvrir le fichier
   open(unit=27, file=nom_fichier, status='unknown')
 
-  write(27,100) ! ecrire P3 = format d'image PNM
+  write(27,"('P3')") ! ecrire P3 = format d'image PNM
 
   write(27,*) NX,NY ! ecrire la taille
   write(27,*) '255' ! nombre de nuances
@@ -94,16 +93,13 @@
       endif
 
 ! ecrire l'image en couleur
-      write(27,110) R,G,B
+      write(27,"(i3,' ',i3,' ',i3)") R,G,B
 
     enddo
   enddo
 
 ! fermer le fichier
   close(27)
-
- 100 format('P3')
- 110 format(i3,' ',i3,' ',i3)
 
   end subroutine cree_image_PNM
 

@@ -546,7 +546,7 @@
     do icol=0,nx-istepx,istepx
       write(20,*) sngl(x(icol,ili)),sngl(z(icol,ili))
       write(20,*) sngl(x(icol+istepx,ili)),sngl(z(icol+istepx,ili))
-      write(20,10)
+      write(20,"('')")
     enddo
   enddo
 
@@ -562,7 +562,7 @@
     do ili=0,nz-istepz,istepz
       write(20,*) sngl(x(icol,ili)),sngl(z(icol,ili))
       write(20,*) sngl(x(icol,ili+istepz)),sngl(z(icol,ili+istepz))
-      write(20,10)
+      write(20,"('')")
     enddo
   enddo
 
@@ -594,7 +594,7 @@
   write(15,*) '#'
 
   write(15,*) 'Titre simulation'
-  write(15,40) title
+  write(15,"(a50)") title
 
   npgeo = (nx+1)*(nz+1)
   if(ngnod == 4) then
@@ -813,7 +813,7 @@
 ! display position of the receiver
       print *,'Receiver ',irec_global_number,' = ',xrec,zrec
 
-      write(15,100) irec_global_number,xrec,zrec
+      write(15,"('S',i4.4,'    AA ',f20.7,1x,f20.7,'       0.0         0.0')") irec_global_number,xrec,zrec
 
     enddo
   enddo
@@ -821,11 +821,6 @@
   close(15)
 
   print *
-
- 10 format('')
- 40 format(a50)
-
- 100 format('S',i4.4,'    AA ',f20.7,1x,f20.7,'       0.0         0.0')
 
   end program meshfem2D
 
