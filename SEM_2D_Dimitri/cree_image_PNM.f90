@@ -63,10 +63,10 @@
 ! regarder si le pixel est defini ou non (au dessus de la topographie par exemple)
       if(iglob_image_PNM_2D(ix,iy) == -1) then
 
-! utiliser couleur verte pour afficher les zones non definies
-        R = 0
+! utiliser couleur bleu ciel pour afficher les zones non definies situees au dessus de la topo
+        R = 204
         G = 255
-        B = 0
+        B = 255
 
       else
 
