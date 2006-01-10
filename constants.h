@@ -14,9 +14,9 @@
 
 ! input and output files
   integer, parameter :: IIN  = 40
-
+  integer, parameter :: ISTANDARD_OUTPUT = 6
 ! uncomment this to write to standard output
-  integer, parameter :: IOUT = 6
+  integer, parameter :: IOUT = ISTANDARD_OUTPUT
 ! uncomment this to write to file instead
 ! integer, parameter :: IOUT = 41
 
