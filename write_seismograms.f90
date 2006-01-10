@@ -99,19 +99,19 @@
 ! if the simulation uses many time steps. However, subsampling the output
 ! here would result in a loss of accuracy when one later convolves
 ! the results with the source time function
-      open(unit=IOUT,file=sisname(1:len_trim(sisname)),status='unknown')
+      open(unit=11,file=sisname(1:len_trim(sisname)),status='unknown')
 
 ! make sure we never write more than the maximum number of time steps
 ! subtract offset of the source to make sure travel time is correct
       do isample = 1,min(it,NSTEP)
         if(iorientation == 1) then
-          write(IOUT,*) sngl(dble(isample-1)*deltat - t0),' ',sngl(sisux(isample,irec))
+          write(11,*) sngl(dble(isample-1)*deltat - t0),' ',sngl(sisux(isample,irec))
         else
-          write(IOUT,*) sngl(dble(isample-1)*deltat - t0),' ',sngl(sisuz(isample,irec))
+          write(11,*) sngl(dble(isample-1)*deltat - t0),' ',sngl(sisuz(isample,irec))
         endif
       enddo
 
-      close(IOUT)
+      close(11)
 
       enddo
 

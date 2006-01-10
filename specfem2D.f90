@@ -203,8 +203,8 @@
 
   open (IIN,file='OUTPUT_FILES/Database')
 
-! uncomment this to write to file instead of standard output
-! open (IOUT,file='results_simulation.txt')
+! determine if we write to file instead of standard output
+  if(IOUT /= ISTANDARD_OUTPUT) open (IOUT,file='simulation_results.txt')
 
 !
 !---  read job title and skip remaining titles of the input file
@@ -1804,7 +1804,7 @@
 !
 !----  close output file
 !
-  close(IOUT)
+  if(IOUT /= ISTANDARD_OUTPUT) close(IOUT)
 
 !
 !----  formats
