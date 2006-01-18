@@ -705,6 +705,10 @@
 ! calculer le nombre de pixels en vertical en fonction du rapport des tailles
   NZ_IMAGE_PNM = nint(NX_IMAGE_PNM * (zmax_PNM_image - zmin_PNM_image) / (xmax_PNM_image - xmin_PNM_image))
 
+! convertir la taille de l'image en nombre pair car plus facile pour ensuite faire des movies en MPEG
+  NX_IMAGE_PNM = 2 * (NX_IMAGE_PNM / 2)
+  NZ_IMAGE_PNM = 2 * (NZ_IMAGE_PNM / 2)
+
 ! allouer un tableau pour les donnees de l'image
   allocate(donnees_image_PNM_2D(NX_IMAGE_PNM,NZ_IMAGE_PNM))
 
