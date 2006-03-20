@@ -133,6 +133,7 @@
   integer ispec_selected_source,iglob_source,ix_source,iz_source
   double precision a,displnorm_all
   double precision, dimension(:), allocatable :: source_time_function
+  double precision, external :: erf
 
   double precision rsizemin,rsizemax,cpoverdxmax, &
     lambdaSmin,lambdaSmax,lambdaPmin,lambdaPmax,vpmin,vpmax
