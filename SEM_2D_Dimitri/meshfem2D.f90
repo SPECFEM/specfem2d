@@ -546,7 +546,7 @@
     do icol=0,nx-istepx,istepx
       write(20,*) sngl(x(icol,ili)),sngl(z(icol,ili))
       write(20,*) sngl(x(icol+istepx,ili)),sngl(z(icol+istepx,ili))
-      write(20,"('')")
+      write(20,10)
     enddo
   enddo
 
@@ -562,9 +562,11 @@
     do ili=0,nz-istepz,istepz
       write(20,*) sngl(x(icol,ili)),sngl(z(icol,ili))
       write(20,*) sngl(x(icol,ili+istepz)),sngl(z(icol,ili+istepz))
-      write(20,"('')")
+      write(20,10)
     enddo
   enddo
+
+ 10 format('')
 
   close(20)
 
