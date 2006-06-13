@@ -38,7 +38,7 @@ OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/defarrays.o\
         $O/lagrange_poly.o $O/gmat01.o $O/gll_library.o $O/plotgll.o $O/define_derivative_matrices.o\
         $O/plotpost.o $O/locate_receivers.o $O/locate_source_force.o $O/compute_gradient_attenuation.o\
         $O/specfem2D.o $O/write_seismograms.o $O/createnum_fast.o $O/createnum_slow.o\
-        $O/define_shape_functions.o $O/cree_image_PNM.o $O/compute_gradient_fluid.o\
+        $O/define_shape_functions.o $O/create_color_image.o $O/compute_gradient_fluid.o\
         $O/recompute_jacobian.o $O/compute_arrays_source.o $O/locate_source_moment_tensor.o $O/numerical_recipes.o
 
 default: clean meshfem2D specfem2D convolve_source_timefunction
@@ -134,8 +134,8 @@ $O/compute_gradient_fluid.o: compute_gradient_fluid.f90 constants.h
 $O/compute_arrays_source.o: compute_arrays_source.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/compute_arrays_source.o compute_arrays_source.f90
     
-$O/cree_image_PNM.o: cree_image_PNM.f90 constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/cree_image_PNM.o cree_image_PNM.f90
+$O/create_color_image.o: create_color_image.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/create_color_image.o create_color_image.f90
     
 $O/numerical_recipes.o: numerical_recipes.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/numerical_recipes.o numerical_recipes.f90

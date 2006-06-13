@@ -1751,7 +1751,7 @@
 !
   if(output_PNM_image) then
 
-  write(IOUT,*) 'Creation image PNM de taille ',NX_IMAGE_PNM,' x ',NZ_IMAGE_PNM
+  write(IOUT,*) 'Creating color image of size ',NX_IMAGE_PNM,' x ',NZ_IMAGE_PNM
 
   donnees_image_PNM_2D(:,:) = 0.d0
 
@@ -1790,9 +1790,9 @@
     enddo
   enddo
 
-  call cree_image_PNM(donnees_image_PNM_2D,iglob_image_PNM_2D,NX_IMAGE_PNM,NZ_IMAGE_PNM,it,cutvect)
+  call create_color_image(donnees_image_PNM_2D,iglob_image_PNM_2D,NX_IMAGE_PNM,NZ_IMAGE_PNM,it,cutvect)
 
-  write(IOUT,*) 'Fin creation image PNM'
+  write(IOUT,*) 'End creating color image'
 
   endif
 
