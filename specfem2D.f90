@@ -1572,9 +1572,9 @@
 
     write(IOUT,*)
     if(time >= 1.d-3) then
-      write(IOUT,"('Pas de temps numero ',i5,'   t = ',f7.4,' s')") it,time
+      write(IOUT,"('Pas de temps numero ',i6,'   t = ',f7.4,' s')") it,time
     else
-      write(IOUT,"('Pas de temps numero ',i5,'   t = ',1pe10.4,' s')") it,time
+      write(IOUT,"('Pas de temps numero ',i6,'   t = ',1pe10.4,' s')") it,time
     endif
 
     displnorm_all = maxval(sqrt(displ(1,:)**2 + displ(2,:)**2))
@@ -1826,11 +1826,11 @@
   'Number of space dimensions. . . . . . . . . . (NDIM) =',i8)
 
  600 format(//1x,'C o n t r o l',/1x,13('='),//5x, &
-  'Display frequency . . . . . . . . . . . (IT_AFFICHE) = ',i5/ 5x, &
-  'Color display . . . . . . . . . . . . . . . (colors) = ',i5/ 5x, &
+  'Display frequency . . . . . . . . . . . (IT_AFFICHE) = ',i6/ 5x, &
+  'Color display . . . . . . . . . . . . . . . (colors) = ',i6/ 5x, &
   '        ==  0     black and white display              ',  / 5x, &
   '        ==  1     color display                        ',  /5x, &
-  'Numbered mesh . . . . . . . . . . . . . . .(numbers) = ',i5/ 5x, &
+  'Numbered mesh . . . . . . . . . . . . . . .(numbers) = ',i6/ 5x, &
   '        ==  0     do not number the mesh               ',  /5x, &
   '        ==  1     number the mesh                      ')
 
