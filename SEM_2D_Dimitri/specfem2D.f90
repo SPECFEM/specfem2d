@@ -143,7 +143,7 @@
 
   logical interpol,meshvect,modelvect,boundvect,read_external_model,initialfield,abshaut, &
     outputgrid,gnuplot,ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,output_postscript_snapshot,output_PNM_image, &
-    plot_lowerleft_corner_only
+    plot_lowerleft_corner_only,ACOUSTIC
 
   double precision cutvect,sizemax_arrows,anglerec,xirec,gammarec
 
@@ -259,6 +259,9 @@
   read(IIN,"(a80)") datlin
   read(IIN,*) read_external_model,outputgrid,ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
 
+! simulation is either acoustic or elastic
+  ACOUSTIC = .not. ELASTIC
+
 !---- check parameters read
   write(IOUT,200) npgeo,NDIM
   write(IOUT,600) IT_AFFICHE,colors,numbers
@@ -343,11 +346,11 @@
   if(read_external_model .and. outputgrid) stop 'cannot output the grid and read external model at the same time'
 
 ! for acoustic
-  if(TURN_ANISOTROPY_ON .and. .not. ELASTIC) stop 'currently cannot have anisotropy in acoustic simulation'
+  if(TURN_ANISOTROPY_ON .and. ACOUSTIC) stop 'currently cannot have anisotropy in acoustic simulation'
 
-  if(TURN_ATTENUATION_ON .and. .not. ELASTIC) stop 'currently cannot have attenuation in acoustic simulation'
+  if(TURN_ATTENUATION_ON .and. ACOUSTIC) stop 'currently cannot have attenuation in acoustic simulation'
 
-  if(source_type == 2 .and. .not. ELASTIC) stop 'currently cannot have moment tensor source in acoustic simulation'
+  if(source_type == 2 .and. ACOUSTIC) stop 'currently cannot have moment tensor source in acoustic simulation'
 
 ! for attenuation
   if(TURN_ANISOTROPY_ON .and. TURN_ATTENUATION_ON) stop 'cannot have anisotropy and attenuation both turned on in current version'
@@ -970,7 +973,7 @@
 ! if acoustic, the free surface condition is a Dirichlet condition for the potential,
 ! not Neumann, in order to impose zero pressure at the surface. Also check that
 ! top absorbing boundary is not set because cannot be both absorbing and free surface
-  if(.not. ELASTIC .and. .not. abshaut) then
+  if(ACOUSTIC .and. .not. abshaut) then
 
     do ispecsurface=1,nelemsurface
 
@@ -1118,17 +1121,18 @@
 
           jacobianl = jacobian(i,j,ispec)
 
-! weak formulation term based on stress tensor (non-symmetric form)
-          tempx1(i,j) = jacobianl*(sigma_xx*xixl+sigma_zx*xizl)
-          tempz1(i,j) = jacobianl*(sigma_xz*xixl+sigma_zz*xizl)
-
-          tempx2(i,j) = jacobianl*(sigma_xx*gammaxl+sigma_zx*gammazl)
-          tempz2(i,j) = jacobianl*(sigma_xz*gammaxl+sigma_zz*gammazl)
-
 ! for acoustic medium
-          if(.not. ELASTIC) then
+          if(ACOUSTIC) then
             tempx1(i,j) = jacobianl*(xixl*dUxdxl + xizl*dUxdzl)
             tempx2(i,j) = jacobianl*(gammaxl*dUxdxl + gammazl*dUxdzl)
+
+! weak formulation term based on stress tensor (non-symmetric form)
+          else
+            tempx1(i,j) = jacobianl*(sigma_xx*xixl+sigma_zx*xizl)
+            tempz1(i,j) = jacobianl*(sigma_xz*xixl+sigma_zz*xizl)
+
+            tempx2(i,j) = jacobianl*(sigma_xx*gammaxl+sigma_zx*gammazl)
+            tempz2(i,j) = jacobianl*(sigma_xz*gammaxl+sigma_zz*gammazl)
           endif
 
         enddo
@@ -1439,7 +1443,7 @@
 ! if acoustic, the free surface condition is a Dirichlet condition for the potential,
 ! not Neumann, in order to impose zero pressure at the surface. Also check that
 ! top absorbing boundary is not set because cannot be both absorbing and free surface
-  if(.not. ELASTIC .and. .not. abshaut) then
+  if(ACOUSTIC .and. .not. abshaut) then
 
     do ispecsurface=1,nelemsurface
 
@@ -1586,7 +1590,7 @@
 
   if(ELASTIC .and. sismostype == 4) stop 'pressure seismograms implemented for an acoustic medium only'
 
-  if(.not. ELASTIC) then
+  if(ACOUSTIC) then
     if(sismostype == 1) then
       stop 'cannot store displacement field in acoustic medium because of potential formulation'
     else if(sismostype == 2) then
@@ -1706,10 +1710,10 @@
           plot_lowerleft_corner_only)
 
 ! for acoustic medium
-  else if(.not. ELASTIC .and. vecttype == 1) then
+  else if(ACOUSTIC .and. vecttype == 1) then
     stop 'cannot display displacement field in acoustic medium because of potential formulation'
 
-  else if(.not. ELASTIC .and. vecttype == 2) then
+  else if(ACOUSTIC .and. vecttype == 2) then
     write(IOUT,*) 'drawing acoustic velocity field from velocity potential...'
 ! for acoustic medium, compute gradient for display, displ represents the potential
     call compute_gradient_fluid(displ,vector_field_postscript, &
@@ -1722,7 +1726,7 @@
           boundvect,read_external_model,cutvect,sizemax_arrows,nelemabs,numat,pointsdisp,nspec,ngnod,ELASTIC, &
           plot_lowerleft_corner_only)
 
-  else if(.not. ELASTIC .and. vecttype == 3) then
+  else if(ACOUSTIC .and. vecttype == 3) then
     write(IOUT,*) 'drawing acoustic acceleration field from velocity potential...'
 ! for acoustic medium, compute gradient for display, veloc represents the first derivative of the potential
     call compute_gradient_fluid(veloc,vector_field_postscript, &
