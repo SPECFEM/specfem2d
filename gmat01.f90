@@ -116,11 +116,11 @@
 !
   100   format(//,' M a t e r i a l   s e t s :  ', &
          ' 2 D  e l a s t i c i t y', &
-         /1x,54('='),//5x,'Number of material sets . . . . . . (numat) =',i5)
+         /1x,54('='),//5x,'Number of material sets . . . . . . (numat) =',i6)
   200   format(//5x,'------------------------',/5x, &
          '-- Isotropic material --',/5x, &
          '------------------------',/5x, &
-         'Material set number. . . . . . . . (jmat) =',i5,/5x, &
+         'Material set number. . . . . . . . (jmat) =',i6,/5x, &
          'P-wave velocity. . . . . . . . . . . (cp) =',1pe15.8,/5x, &
          'S-wave velocity. . . . . . . . . . . (cs) =',1pe15.8,/5x, &
          'Mass density. . . . . . . . . . (density) =',1pe15.8,/5x, &
@@ -132,7 +132,7 @@
   300   format(//5x,'-------------------------------------',/5x, &
          '-- Transverse anisotropic material --',/5x, &
          '-------------------------------------',/5x, &
-         'Material set number. . . . . . . . (jmat) =',i5,/5x, &
+         'Material set number. . . . . . . . (jmat) =',i6,/5x, &
          'c11 coefficient (Pascal). . . . . . (c11) =',1pe15.8,/5x, &
          'c13 coefficient (Pascal). . . . . . (c13) =',1pe15.8,/5x, &
          'c33 coefficient (Pascal). . . . . . (c33) =',1pe15.8,/5x, &
