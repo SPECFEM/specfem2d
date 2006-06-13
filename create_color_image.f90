@@ -11,7 +11,7 @@
 !
 !========================================================================
 
-  subroutine cree_image_PNM(donnees_image_PNM_2D,iglob_image_PNM_2D,NX,NY,it,cutvect)
+  subroutine create_color_image(donnees_image_PNM_2D,iglob_image_PNM_2D,NX,NY,it,cutvect)
 
 ! routine d'affichage du deplacement sous forme d'image en couleurs
 
@@ -108,5 +108,5 @@
 ! call the system to convert image to GIF
   call system(system_command)
 
-  end subroutine cree_image_PNM
+  end subroutine create_color_image
 
