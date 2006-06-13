@@ -242,7 +242,7 @@
   close(11)
 
 ! formats
-  110 format('xwigb@xcur=',f8.2,'@n1=',i5,'@d1=',f15.8,'@f1=',f15.8,'@label1="Time@(s)"@label2="x@(m)"@n2=',i5,'@x2=')
+  110 format('xwigb@xcur=',f8.2,'@n1=',i6,'@d1=',f15.8,'@f1=',f15.8,'@label1="Time@(s)"@label2="x@(m)"@n2=',i6,'@x2=')
 
   120 format('sed -e ''1,$s/ //g'' -e ''1,$s/@/ /g'' -e ''1,1p'' -e ''$,$s/Ux/Uz/g'' <tempfile > receiver_line_Xsu_XWindow')
 

@@ -34,13 +34,13 @@
 
   double precision amplitude_max
 
-  character(len=100) nom_fichier
+  character(len=100) nom_fichier,system_command
 
   double precision valeur_normalisee
   integer :: R, G, B
 
 ! ouverture du fichier image
-  write(nom_fichier,"('OUTPUT_FILES/image',i5.5,'.pnm')") it
+  write(nom_fichier,"('OUTPUT_FILES/image',i6.6,'.pnm')") it
 
 ! ouvrir le fichier
   open(unit=27, file=nom_fichier, status='unknown')
@@ -100,6 +100,13 @@
 
 ! fermer le fichier
   close(27)
+
+! open image file and create system command to convert image to more convenient format
+  write(system_command,"('cd OUTPUT_FILES ; convert image',i6.6, &
+          & '.pnm image',i6.6,'.gif ; rm image',i6.6,'.pnm')") it,it,it
+
+! call the system to convert image to GIF
+  call system(system_command)
 
   end subroutine cree_image_PNM
 
