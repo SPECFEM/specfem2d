@@ -11,7 +11,7 @@
 !
 !========================================================================
 
-  subroutine create_color_image(donnees_image_PNM_2D,iglob_image_PNM_2D,NX,NY,it,cutvect)
+  subroutine create_color_image(donnees_image_color_2D,iglob_image_color_2D,NX,NY,it,cutvect)
 
 ! routine d'affichage du deplacement sous forme d'image en couleurs
 
@@ -26,9 +26,9 @@
 
   double precision cutvect
 
-  integer, dimension(NX,NY) :: iglob_image_PNM_2D
+  integer, dimension(NX,NY) :: iglob_image_color_2D
 
-  double precision, dimension(NX,NY) :: donnees_image_PNM_2D
+  double precision, dimension(NX,NY) :: donnees_image_color_2D
 
   integer ix,iy
 
@@ -51,17 +51,17 @@
   write(27,*) '255' ! nombre de nuances
 
 ! calculer l'amplitude maximum
-  amplitude_max = maxval(abs(donnees_image_PNM_2D))
+  amplitude_max = maxval(abs(donnees_image_color_2D))
 
 ! supprimer les petites amplitudes considerees comme du bruit
-  where(abs(donnees_image_PNM_2D) < amplitude_max * cutvect) donnees_image_PNM_2D = 0.d0
+  where(abs(donnees_image_color_2D) < amplitude_max * cutvect) donnees_image_color_2D = 0.d0
 
 ! dans le format PNM, l'image commence par le coin en haut a gauche
   do iy=NY,1,-1
     do ix=1,NX
 
 ! regarder si le pixel est defini ou non (au dessus de la topographie par exemple)
-      if(iglob_image_PNM_2D(ix,iy) == -1) then
+      if(iglob_image_color_2D(ix,iy) == -1) then
 
 ! utiliser couleur bleu ciel pour afficher les zones non definies situees au dessus de la topo
         R = 204
@@ -73,7 +73,7 @@
 ! definir les donnees comme etant le deplacement normalise entre [-1:1]
 ! et converti a l'entier le plus proche
 ! en se rappelant que l'amplitude peut etre negative
-        valeur_normalisee = donnees_image_PNM_2D(ix,iy) / amplitude_max
+        valeur_normalisee = donnees_image_color_2D(ix,iy) / amplitude_max
 
 ! supprimer valeurs en dehors de [-1:+1]
         if(valeur_normalisee < -1.d0) valeur_normalisee = -1.d0
@@ -81,13 +81,13 @@
 
 ! utiliser rouge si deplacement positif, bleu si negatif, pas de vert
         if(valeur_normalisee >= 0.d0) then
-          R = nint(255.d0*valeur_normalisee**POWER_DISPLAY_PNM)
+          R = nint(255.d0*valeur_normalisee**POWER_DISPLAY_COLOR)
           G = 0
           B = 0
         else
           R = 0
           G = 0
-          B = nint(255.d0*abs(valeur_normalisee)**POWER_DISPLAY_PNM)
+          B = nint(255.d0*abs(valeur_normalisee)**POWER_DISPLAY_COLOR)
         endif
 
       endif
