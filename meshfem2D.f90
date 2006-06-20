@@ -60,7 +60,7 @@
 
   integer, dimension(:), allocatable :: nrec
 
-  logical codehaut,codebas,codegauche,codedroite,output_postscript_snapshot,output_PNM_image,plot_lowerleft_corner_only
+  logical codehaut,codebas,codegauche,codedroite,output_postscript_snapshot,output_color_image,plot_lowerleft_corner_only
 
   double precision tang1,tangN,vpzone,vszone,poisson_ratio
   double precision cutvect,sizemax_arrows,anglerec,xmin,xmax,deltat
@@ -251,7 +251,7 @@
 ! read display parameters
   call read_value_integer(IIN,IGNORE_JUNK,itaff)
   call read_value_logical(IIN,IGNORE_JUNK,output_postscript_snapshot)
-  call read_value_logical(IIN,IGNORE_JUNK,output_PNM_image)
+  call read_value_logical(IIN,IGNORE_JUNK,output_color_image)
   call read_value_integer(IIN,IGNORE_JUNK,vecttype)
   call read_value_double_precision(IIN,IGNORE_JUNK,cutvect)
   call read_value_logical(IIN,IGNORE_JUNK,meshvect)
@@ -610,10 +610,10 @@
   write(15,*) 'gnuplot interpol'
   write(15,*) gnuplot,interpol
 
-  write(15,*) 'itaff output_postscript_snapshot output_PNM_image colors numbers'
-  write(15,*) itaff,output_postscript_snapshot,output_PNM_image,' 1 0'
+  write(15,*) 'itaff output_postscript_snapshot output_color_image colors numbers'
+  write(15,*) itaff,output_postscript_snapshot,output_color_image,' 1 0'
 
-  write(15,*) 'meshvect modelvect boundvect cutvect subsamp sizemax_arrows nx_sem_PNM'
+  write(15,*) 'meshvect modelvect boundvect cutvect subsamp sizemax_arrows nx_sem_color'
   write(15,*) meshvect,modelvect,boundvect,cutvect,subsamp,sizemax_arrows,nxread
 
   write(15,*) 'anglerec'

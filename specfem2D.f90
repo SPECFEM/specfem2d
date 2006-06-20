@@ -24,7 +24,7 @@
 !               - option for acoustic medium instead of elastic
 !               - receivers at any location, not only grid points
 !               - moment-tensor source at any location, not only a grid point
-!               - color PNM snapshots
+!               - color color snapshots
 !               - more flexible DATA/Par_file with any number of comment lines
 !               - Xsu scripts for seismograms
 !               - subtract t0 from seismograms
@@ -142,7 +142,7 @@
   integer numat,ngnod,nspec,pointsdisp,nelemabs,nelemsurface
 
   logical interpol,meshvect,modelvect,boundvect,read_external_model,initialfield,abshaut, &
-    outputgrid,gnuplot,ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,output_postscript_snapshot,output_PNM_image, &
+    outputgrid,gnuplot,ELASTIC,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,output_postscript_snapshot,output_color_image, &
     plot_lowerleft_corner_only,ACOUSTIC
 
   double precision cutvect,sizemax_arrows,anglerec,xirec,gammarec
@@ -175,12 +175,13 @@
     e1_mech1,e11_mech1,e13_mech1,e1_mech2,e11_mech2,e13_mech2, &
     duxdxl_n,duzdzl_n,duzdxl_n,duxdzl_n,duxdxl_np1,duzdzl_np1,duzdxl_np1,duxdzl_np1
 
-! for color PNM images
-  integer :: NX_IMAGE_PNM,NZ_IMAGE_PNM,iplus1,jplus1,iminus1,jminus1,nx_sem_PNM
-  double precision :: xmin_PNM_image,xmax_PNM_image,zmin_PNM_image,zmax_PNM_image,taille_pixel_horizontal,taille_pixel_vertical
-  integer, dimension(:), allocatable :: ispec_for_PNM_image
-  integer, dimension(:,:), allocatable :: iglob_image_PNM_2D,copy_iglob_image_PNM_2D
-  double precision, dimension(:,:), allocatable :: donnees_image_PNM_2D
+! for color color images
+  integer :: NX_IMAGE_color,NZ_IMAGE_color,iplus1,jplus1,iminus1,jminus1,nx_sem_color
+  double precision :: xmin_color_image,xmax_color_image, &
+    zmin_color_image,zmax_color_image,taille_pixel_horizontal,taille_pixel_vertical
+  integer, dimension(:), allocatable :: ispec_for_color_image
+  integer, dimension(:,:), allocatable :: iglob_image_color_2D,copy_iglob_image_color_2D
+  double precision, dimension(:,:), allocatable :: donnees_image_color_2D
 
 ! timing information for the stations
   character(len=MAX_LENGTH_STATION_NAME), allocatable, dimension(:) :: station_name
@@ -241,10 +242,10 @@
   read(IIN,*) gnuplot,interpol
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) IT_AFFICHE,output_postscript_snapshot,output_PNM_image,colors,numbers
+  read(IIN,*) IT_AFFICHE,output_postscript_snapshot,output_color_image,colors,numbers
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) meshvect,modelvect,boundvect,cutvect,subsamp,sizemax_arrows,nx_sem_PNM
+  read(IIN,*) meshvect,modelvect,boundvect,cutvect,subsamp,sizemax_arrows,nx_sem_color
   cutvect = cutvect / 100.d0
 
   read(IIN,"(a80)") datlin
@@ -691,70 +692,70 @@
       rsizemin,rsizemax,cpoverdxmax,lambdaSmin,lambdaSmax,lambdaPmin,lambdaPmax)
 
 !
-!---- for color PNM images
+!---- for color color images
 !
 
 ! taille horizontale de l'image
-  xmin_PNM_image = minval(coord(1,:))
-  xmax_PNM_image = maxval(coord(1,:))
+  xmin_color_image = minval(coord(1,:))
+  xmax_color_image = maxval(coord(1,:))
 
 ! taille verticale de l'image, augmenter un peu pour depasser de la topographie
-  zmin_PNM_image = minval(coord(2,:))
-  zmax_PNM_image = maxval(coord(2,:))
-  zmax_PNM_image = zmin_PNM_image + 1.05d0 * (zmax_PNM_image - zmin_PNM_image)
+  zmin_color_image = minval(coord(2,:))
+  zmax_color_image = maxval(coord(2,:))
+  zmax_color_image = zmin_color_image + 1.05d0 * (zmax_color_image - zmin_color_image)
 
 ! calculer le nombre de pixels en horizontal en fonction du nombre d'elements spectraux
-  NX_IMAGE_PNM = nx_sem_PNM * (NGLLX-1) + 1
+  NX_IMAGE_color = nx_sem_color * (NGLLX-1) + 1
 
 ! calculer le nombre de pixels en vertical en fonction du rapport des tailles
-  NZ_IMAGE_PNM = nint(NX_IMAGE_PNM * (zmax_PNM_image - zmin_PNM_image) / (xmax_PNM_image - xmin_PNM_image))
+  NZ_IMAGE_color = nint(NX_IMAGE_color * (zmax_color_image - zmin_color_image) / (xmax_color_image - xmin_color_image))
 
 ! convertir la taille de l'image en nombre pair car plus facile pour ensuite faire des movies en MPEG
-  NX_IMAGE_PNM = 2 * (NX_IMAGE_PNM / 2)
-  NZ_IMAGE_PNM = 2 * (NZ_IMAGE_PNM / 2)
+  NX_IMAGE_color = 2 * (NX_IMAGE_color / 2)
+  NZ_IMAGE_color = 2 * (NZ_IMAGE_color / 2)
 
 ! allouer un tableau pour les donnees de l'image
-  allocate(donnees_image_PNM_2D(NX_IMAGE_PNM,NZ_IMAGE_PNM))
+  allocate(donnees_image_color_2D(NX_IMAGE_color,NZ_IMAGE_color))
 
 ! allouer un tableau pour le point de grille contenant cette donnee
-  allocate(iglob_image_PNM_2D(NX_IMAGE_PNM,NZ_IMAGE_PNM))
-  allocate(copy_iglob_image_PNM_2D(NX_IMAGE_PNM,NZ_IMAGE_PNM))
+  allocate(iglob_image_color_2D(NX_IMAGE_color,NZ_IMAGE_color))
+  allocate(copy_iglob_image_color_2D(NX_IMAGE_color,NZ_IMAGE_color))
 
 ! creer tous les pixels
   write(IOUT,*)
-  write(IOUT,*) 'localisation de tous les pixels des images PNM'
+  write(IOUT,*) 'localisation de tous les pixels des images couleur'
 
-  taille_pixel_horizontal = (xmax_PNM_image - xmin_PNM_image) / dble(NX_IMAGE_PNM-1)
-  taille_pixel_vertical = (zmax_PNM_image - zmin_PNM_image) / dble(NZ_IMAGE_PNM-1)
+  taille_pixel_horizontal = (xmax_color_image - xmin_color_image) / dble(NX_IMAGE_color-1)
+  taille_pixel_vertical = (zmax_color_image - zmin_color_image) / dble(NZ_IMAGE_color-1)
 
-  iglob_image_PNM_2D(:,:) = -1
+  iglob_image_color_2D(:,:) = -1
 
 ! boucle sur tous les points de grille pour leur affecter un pixel de l'image
       do n=1,npoin
 
 ! calculer les coordonnees du pixel
-      i = nint((coord(1,n) - xmin_PNM_image) / taille_pixel_horizontal + 1)
-      j = nint((coord(2,n) - zmin_PNM_image) / taille_pixel_vertical + 1)
+      i = nint((coord(1,n) - xmin_color_image) / taille_pixel_horizontal + 1)
+      j = nint((coord(2,n) - zmin_color_image) / taille_pixel_vertical + 1)
 
 ! eviter les effets de bord
       if(i < 1) i = 1
-      if(i > NX_IMAGE_PNM) i = NX_IMAGE_PNM
+      if(i > NX_IMAGE_color) i = NX_IMAGE_color
 
       if(j < 1) j = 1
-      if(j > NZ_IMAGE_PNM) j = NZ_IMAGE_PNM
+      if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
 
 ! affecter ce point a ce pixel
-      iglob_image_PNM_2D(i,j) = n
+      iglob_image_color_2D(i,j) = n
 
       enddo
 
 ! completer les pixels manquants en les localisant par la distance minimum
-  copy_iglob_image_PNM_2D(:,:) = iglob_image_PNM_2D(:,:)
+  copy_iglob_image_color_2D(:,:) = iglob_image_color_2D(:,:)
 
-  do j = 1,NZ_IMAGE_PNM
-    do i = 1,NX_IMAGE_PNM
+  do j = 1,NZ_IMAGE_color
+    do i = 1,NX_IMAGE_color
 
-      if(copy_iglob_image_PNM_2D(i,j) == -1) then
+      if(copy_iglob_image_color_2D(i,j) == -1) then
 
         iplus1 = i + 1
         iminus1 = i - 1
@@ -764,39 +765,39 @@
 
 ! eviter les effets de bord
         if(iminus1 < 1) iminus1 = 1
-        if(iplus1 > NX_IMAGE_PNM) iplus1 = NX_IMAGE_PNM
+        if(iplus1 > NX_IMAGE_color) iplus1 = NX_IMAGE_color
 
         if(jminus1 < 1) jminus1 = 1
-        if(jplus1 > NZ_IMAGE_PNM) jplus1 = NZ_IMAGE_PNM
+        if(jplus1 > NZ_IMAGE_color) jplus1 = NZ_IMAGE_color
 
 ! utiliser les pixels voisins pour remplir les trous
 
 ! horizontales
-        if(copy_iglob_image_PNM_2D(iplus1,j) /= -1) then
-          iglob_image_PNM_2D(i,j) = copy_iglob_image_PNM_2D(iplus1,j)
+        if(copy_iglob_image_color_2D(iplus1,j) /= -1) then
+          iglob_image_color_2D(i,j) = copy_iglob_image_color_2D(iplus1,j)
 
-        else if(copy_iglob_image_PNM_2D(iminus1,j) /= -1) then
-          iglob_image_PNM_2D(i,j) = copy_iglob_image_PNM_2D(iminus1,j)
+        else if(copy_iglob_image_color_2D(iminus1,j) /= -1) then
+          iglob_image_color_2D(i,j) = copy_iglob_image_color_2D(iminus1,j)
 
 ! verticales
-        else if(copy_iglob_image_PNM_2D(i,jplus1) /= -1) then
-          iglob_image_PNM_2D(i,j) = copy_iglob_image_PNM_2D(i,jplus1)
+        else if(copy_iglob_image_color_2D(i,jplus1) /= -1) then
+          iglob_image_color_2D(i,j) = copy_iglob_image_color_2D(i,jplus1)
 
-        else if(copy_iglob_image_PNM_2D(i,jminus1) /= -1) then
-          iglob_image_PNM_2D(i,j) = copy_iglob_image_PNM_2D(i,jminus1)
+        else if(copy_iglob_image_color_2D(i,jminus1) /= -1) then
+          iglob_image_color_2D(i,j) = copy_iglob_image_color_2D(i,jminus1)
 
 ! diagonales
-        else if(copy_iglob_image_PNM_2D(iminus1,jminus1) /= -1) then
-          iglob_image_PNM_2D(i,j) = copy_iglob_image_PNM_2D(iminus1,jminus1)
+        else if(copy_iglob_image_color_2D(iminus1,jminus1) /= -1) then
+          iglob_image_color_2D(i,j) = copy_iglob_image_color_2D(iminus1,jminus1)
 
-        else if(copy_iglob_image_PNM_2D(iplus1,jminus1) /= -1) then
-          iglob_image_PNM_2D(i,j) = copy_iglob_image_PNM_2D(iplus1,jminus1)
+        else if(copy_iglob_image_color_2D(iplus1,jminus1) /= -1) then
+          iglob_image_color_2D(i,j) = copy_iglob_image_color_2D(iplus1,jminus1)
 
-        else if(copy_iglob_image_PNM_2D(iminus1,jplus1) /= -1) then
-          iglob_image_PNM_2D(i,j) = copy_iglob_image_PNM_2D(iminus1,jplus1)
+        else if(copy_iglob_image_color_2D(iminus1,jplus1) /= -1) then
+          iglob_image_color_2D(i,j) = copy_iglob_image_color_2D(iminus1,jplus1)
 
-        else if(copy_iglob_image_PNM_2D(iplus1,jplus1) /= -1) then
-          iglob_image_PNM_2D(i,j) = copy_iglob_image_PNM_2D(iplus1,jplus1)
+        else if(copy_iglob_image_color_2D(iplus1,jplus1) /= -1) then
+          iglob_image_color_2D(i,j) = copy_iglob_image_color_2D(iplus1,jplus1)
 
         endif
 
@@ -805,17 +806,17 @@
     enddo
   enddo
 
-  deallocate(copy_iglob_image_PNM_2D)
+  deallocate(copy_iglob_image_color_2D)
 
-  write(IOUT,*) 'fin localisation de tous les pixels des images PNM'
+  write(IOUT,*) 'fin localisation de tous les pixels des images couleur'
 
-! assign ispec number to be able to determine density for acoustic PNM snapshots
-  allocate(ispec_for_PNM_image(npoin))
+! assign ispec number to be able to determine density for acoustic color snapshots
+  allocate(ispec_for_color_image(npoin))
   do ispec = 1,nspec
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
-        ispec_for_PNM_image(iglob) = ispec
+        ispec_for_color_image(iglob) = ispec
       enddo
     enddo
   enddo
@@ -1747,50 +1748,50 @@
   endif
 
 !
-!----  affichage image PNM
+!----  affichage image color
 !
-  if(output_PNM_image) then
+  if(output_color_image) then
 
-  write(IOUT,*) 'Creating color image of size ',NX_IMAGE_PNM,' x ',NZ_IMAGE_PNM
+  write(IOUT,*) 'Creating color image of size ',NX_IMAGE_color,' x ',NZ_IMAGE_color
 
-  donnees_image_PNM_2D(:,:) = 0.d0
+  donnees_image_color_2D(:,:) = 0.d0
 
-  do j = 1,NZ_IMAGE_PNM
-    do i = 1,NX_IMAGE_PNM
+  do j = 1,NZ_IMAGE_color
+    do i = 1,NX_IMAGE_color
 
-      iglob = iglob_image_PNM_2D(i,j)
+      iglob = iglob_image_color_2D(i,j)
 
       if(iglob /= -1) then
 ! display vertical component of vector if elastic medium
         if(ELASTIC) then
 
           if(vecttype == 1) then
-            donnees_image_PNM_2D(i,j) = displ(2,iglob)
+            donnees_image_color_2D(i,j) = displ(2,iglob)
           else if(vecttype == 2) then
-            donnees_image_PNM_2D(i,j) = veloc(2,iglob)
+            donnees_image_color_2D(i,j) = veloc(2,iglob)
           else
-            donnees_image_PNM_2D(i,j) = accel(2,iglob)
+            donnees_image_color_2D(i,j) = accel(2,iglob)
           endif
 
         else
 ! display pressure if acoustic medium
 
 ! pressure = - rho * Chi_dot
-          material = kmato(ispec_for_PNM_image(iglob))
+          material = kmato(ispec_for_color_image(iglob))
           denst = density(material)
           if(read_external_model) denst = rhoext(iglob)
 
-          donnees_image_PNM_2D(i,j) = - denst * veloc(1,iglob)
+          donnees_image_color_2D(i,j) = - denst * veloc(1,iglob)
 
 ! uncomment this for vertical component of velocity vector instead in acoustic medium
-!         donnees_image_PNM_2D(i,j) = vector_field_postscript(2,iglob)
+!         donnees_image_color_2D(i,j) = vector_field_postscript(2,iglob)
 
         endif
       endif
     enddo
   enddo
 
-  call create_color_image(donnees_image_PNM_2D,iglob_image_PNM_2D,NX_IMAGE_PNM,NZ_IMAGE_PNM,it,cutvect)
+  call create_color_image(donnees_image_color_2D,iglob_image_color_2D,NX_IMAGE_color,NZ_IMAGE_color,it,cutvect)
 
   write(IOUT,*) 'End creating color image'
 
@@ -1798,7 +1799,6 @@
 
 !----  save temporary seismograms
   call write_seismograms(sisux,sisuz,station_name,network_name,NSTEP,nrec,deltat,sismostype,st_xval,it,t0)
-
 
   endif
 
