@@ -71,7 +71,12 @@
   integer, dimension(:), allocatable :: ispec_selected_rec
   double precision, dimension(:), allocatable :: xi_receiver,gamma_receiver,st_xval,st_zval
 
+! for seismograms
   double precision, dimension(:,:), allocatable :: sisux,sisuz
+
+! to write seismograms in single precision SEP and double precision binary format
+  real(kind=4), dimension(:), allocatable :: buffer_binary_single
+  double precision, dimension(:), allocatable :: buffer_binary_double
 
   logical anyabs
 
@@ -398,7 +403,7 @@
   write(IOUT,207) nspec,ngnod,NGLLX,NGLLZ,NGLLX*NGLLZ,pointsdisp,numat,nelemabs
 
 ! set up Gauss-Lobatto-Legendre derivation matrices
-  call define_derivative_matrices(xigll,zigll,wxgll,wzgll,hprime_xx,hprime_zz)
+  call define_derivation_matrices(xigll,zigll,wxgll,wzgll,hprime_xx,hprime_zz)
 
 !
 !---- read the material properties
@@ -502,6 +507,10 @@
 ! allocate seismogram arrays
   allocate(sisux(NSTEP,nrec))
   allocate(sisuz(NSTEP,nrec))
+
+! to write seismograms in single precision SEP and double precision binary format
+  allocate(buffer_binary_single(NSTEP*nrec))
+  allocate(buffer_binary_double(NSTEP*nrec))
 
 ! receiver information
   allocate(ispec_selected_rec(nrec))
@@ -1798,14 +1807,16 @@
   endif
 
 !----  save temporary seismograms
-  call write_seismograms(sisux,sisuz,station_name,network_name,NSTEP,nrec,deltat,sismostype,st_xval,it,t0)
+  call write_seismograms(sisux,sisuz,station_name,network_name,NSTEP, &
+         nrec,deltat,sismostype,st_xval,it,t0,buffer_binary_single,buffer_binary_double)
 
   endif
 
   enddo ! end of the main time loop
 
 !----  save final seismograms
-  call write_seismograms(sisux,sisuz,station_name,network_name,NSTEP,nrec,deltat,sismostype,st_xval,it,t0)
+  call write_seismograms(sisux,sisuz,station_name,network_name,NSTEP, &
+         nrec,deltat,sismostype,st_xval,it,t0,buffer_binary_single,buffer_binary_double)
 
 ! print exit banner
   call datim(stitle)

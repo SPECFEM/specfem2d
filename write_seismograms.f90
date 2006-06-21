@@ -13,7 +13,8 @@
 
 ! write seismograms to text files
 
-  subroutine write_seismograms(sisux,sisuz,station_name,network_name,NSTEP,nrec,deltat,sismostype,st_xval,it,t0)
+  subroutine write_seismograms(sisux,sisuz,station_name,network_name, &
+      NSTEP,nrec,deltat,sismostype,st_xval,it,t0,buffer_binary_single,buffer_binary_double)
 
   implicit none
 
