@@ -906,7 +906,7 @@
  510  format(f5.1,1x,f5.1,' M')
  600  format(f6.3,' neg CM 0 MR (Time =',f6.3,' s) show')
  601  format(f6.3,' neg CM 0 MR (Time =',1pe10.3,' s) show')
- 610  format(f6.3,' neg CM 0 MR (Time step = ',i6,') show')
+ 610  format(f6.3,' neg CM 0 MR (Time step = ',i7,') show')
  620  format(f6.3,' neg CM 0 MR (Cut =',f5.2,' \%) show')
  640  format(f6.3,' neg CM 0 MR (Max norm =',1pe10.3,') show')
 
