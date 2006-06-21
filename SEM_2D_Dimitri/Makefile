@@ -35,7 +35,7 @@ LINK = $(F90)
 OBJS_MESHFEM2D = $O/meshfem2D.o $O/read_value_parameters.o
 
 OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/defarrays.o\
-        $O/lagrange_poly.o $O/gmat01.o $O/gll_library.o $O/plotgll.o $O/define_derivative_matrices.o\
+        $O/lagrange_poly.o $O/gmat01.o $O/gll_library.o $O/plotgll.o $O/define_derivation_matrices.o\
         $O/plotpost.o $O/locate_receivers.o $O/locate_source_force.o $O/compute_gradient_attenuation.o\
         $O/specfem2D.o $O/write_seismograms.o $O/createnum_fast.o $O/createnum_slow.o\
         $O/define_shape_functions.o $O/create_color_image.o $O/compute_gradient_fluid.o\
@@ -97,8 +97,8 @@ $O/gmat01.o: gmat01.f90 constants.h
 $O/gll_library.o: gll_library.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/gll_library.o gll_library.f90
     
-$O/define_derivative_matrices.o: define_derivative_matrices.f90 constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/define_derivative_matrices.o define_derivative_matrices.f90
+$O/define_derivation_matrices.o: define_derivation_matrices.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/define_derivation_matrices.o define_derivation_matrices.f90
     
 $O/plotgll.o: plotgll.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/plotgll.o plotgll.f90

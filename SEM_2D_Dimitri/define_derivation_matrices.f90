@@ -11,7 +11,7 @@
 !
 !========================================================================
 
-  subroutine define_derivative_matrices(xigll,zigll,wxgll,wzgll,hprime_xx,hprime_zz)
+  subroutine define_derivation_matrices(xigll,zigll,wxgll,wzgll,hprime_xx,hprime_zz)
 
   implicit none
 
@@ -57,5 +57,5 @@
     enddo
   enddo
 
-  end subroutine define_derivative_matrices
+  end subroutine define_derivation_matrices
 
