@@ -24,7 +24,7 @@
 !               - option for acoustic medium instead of elastic
 !               - receivers at any location, not only grid points
 !               - moment-tensor source at any location, not only a grid point
-!               - color color snapshots
+!               - color snapshots
 !               - more flexible DATA/Par_file with any number of comment lines
 !               - Xsu scripts for seismograms
 !               - subtract t0 from seismograms
@@ -180,7 +180,7 @@
     e1_mech1,e11_mech1,e13_mech1,e1_mech2,e11_mech2,e13_mech2, &
     duxdxl_n,duzdzl_n,duzdxl_n,duxdzl_n,duxdxl_np1,duzdzl_np1,duzdxl_np1,duxdzl_np1
 
-! for color color images
+! for color images
   integer :: NX_IMAGE_color,NZ_IMAGE_color,iplus1,jplus1,iminus1,jminus1,nx_sem_color
   double precision :: xmin_color_image,xmax_color_image, &
     zmin_color_image,zmax_color_image,taille_pixel_horizontal,taille_pixel_vertical
@@ -701,7 +701,7 @@
       rsizemin,rsizemax,cpoverdxmax,lambdaSmin,lambdaSmax,lambdaPmin,lambdaPmax)
 
 !
-!---- for color color images
+!---- for color images
 !
 
 ! taille horizontale de l'image
