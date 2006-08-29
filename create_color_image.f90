@@ -15,8 +15,7 @@
 
 ! routine d'affichage du deplacement sous forme d'image en couleurs
 
-! pour voir les snapshots : display image*.pnm
-! pour les convertir en autre format : convert image0001.pnm image0001.jpg
+! to display the snapshots : display image*.gif
 
   implicit none
 
