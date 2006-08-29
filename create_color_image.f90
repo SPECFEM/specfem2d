@@ -30,25 +30,65 @@
 
   double precision, dimension(NX,NY) :: donnees_image_color_2D
 
-  integer ix,iy
+  integer ix,iy,R,G,B,centaines,dizaines,unites,current_rec
 
-  double precision amplitude_max
+  double precision amplitude_max,valeur_normalisee
 
   character(len=100) nom_fichier,system_command
 
-  double precision valeur_normalisee
-  integer :: R, G, B
+! create temporary image files in binary PNM P6 format (smaller) or ASCII PNM P3 format (easier to edit)
+  logical, parameter :: BINARY_FILE = .true.
+
+! ASCII code of character '0' and of carriage return character
+  integer, parameter :: ascii_code_of_zero = 48, ascii_code_of_carriage_return = 10
 
 ! ouverture du fichier image
   write(nom_fichier,"('OUTPUT_FILES/image',i6.6,'.pnm')") it
 
 ! ouvrir le fichier
-  open(unit=27, file=nom_fichier, status='unknown')
+  if(BINARY_FILE) then
 
-  write(27,"('P3')") ! ecrire P3 = format d'image PNM
+    open(unit=27,file=nom_fichier,status='unknown',access='direct',recl=1)
+    write(27,rec=1) 'P'
+    write(27,rec=2) '6' ! ecrire P6 = format d'image PNM binaire
+    write(27,rec=3) char(ascii_code_of_carriage_return)
 
-  write(27,*) NX,NY ! ecrire la taille
-  write(27,*) '255' ! nombre de nuances
+! ecrire la taille
+    centaines = NX / 100
+    dizaines = (NX - 100 * centaines) / 10
+    unites = NX - 100 * centaines - 10 * dizaines
+
+    write(27,rec=4) char(centaines + ascii_code_of_zero)
+    write(27,rec=5) char(dizaines + ascii_code_of_zero)
+    write(27,rec=6) char(unites + ascii_code_of_zero)
+    write(27,rec=7) ' '
+
+    centaines = NY / 100
+    dizaines = (NY - 100 * centaines) / 10
+    unites = NY - 100 * centaines - 10 * dizaines
+
+    write(27,rec=8) char(centaines + ascii_code_of_zero)
+    write(27,rec=9) char(dizaines + ascii_code_of_zero)
+    write(27,rec=10) char(unites + ascii_code_of_zero)
+    write(27,rec=11) char(ascii_code_of_carriage_return)
+
+! nombre de nuances
+    write(27,rec=12) '2'
+    write(27,rec=13) '5'
+    write(27,rec=14) '5'
+    write(27,rec=15) char(ascii_code_of_carriage_return)
+
+! block of image data starts at sixteenth character
+    current_rec = 16
+
+  else
+
+    open(unit=27,file=nom_fichier,status='unknown')
+    write(27,"('P3')") ! ecrire P3 = format d'image PNM ASCII
+    write(27,*) NX,NY  ! ecrire la taille
+    write(27,*) '255'  ! nombre de nuances
+
+  endif
 
 ! calculer l'amplitude maximum
   amplitude_max = maxval(abs(donnees_image_color_2D))
@@ -93,7 +133,25 @@
       endif
 
 ! ecrire l'image en couleur
-      write(27,"(i3,' ',i3,' ',i3)") R,G,B
+      if(BINARY_FILE) then
+
+! first write red
+        write(27,rec=current_rec) char(R)
+        current_rec = current_rec + 1
+
+! then write green
+        write(27,rec=current_rec) char(G)
+        current_rec = current_rec + 1
+
+! then write blue
+        write(27,rec=current_rec) char(B)
+        current_rec = current_rec + 1
+
+      else
+
+        write(27,"(i3,' ',i3,' ',i3)") R,G,B
+
+      endif
 
     enddo
   enddo
