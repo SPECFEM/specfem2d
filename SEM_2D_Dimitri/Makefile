@@ -13,24 +13,17 @@ O = obj
 #FLAGS_NOCHECK=-fast -Mnobounds -Minline -Mneginfo -Mdclchk
 
 # Intel Linux
-F90 = ifort
-FLAGS_CHECK=-O0 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check bounds
-FLAGS_NOCHECK=-O3 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check nobounds
+#F90 = ifort
+#FLAGS_CHECK=-O0 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check bounds
+#FLAGS_NOCHECK=-O3 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check nobounds
 #FLAGS_NOCHECK = $(FLAGS_CHECK)
 
-#
-# g95 (free f95 compiler from http://www.g95.org, still under development, but works)
-#
-#F90 = g95
-#FLAGS_CHECK = -O
-#FLAGS_NOCHECK = $(FLAGS_CHECK)
+# GNU gfortran
+F90 = gfortran
+FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow
+FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
 
-# Dec Alpha
-#F90 = f90
-#FLAGS_CHECK=-O0 -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nounderflow -check bounds -C
-#FLAGS_NOCHECK=-fast -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -check nounderflow -check nobounds
-
-LINK = $(F90) 
+LINK = $(F90)
 
 OBJS_MESHFEM2D = $O/meshfem2D.o $O/read_value_parameters.o
 
