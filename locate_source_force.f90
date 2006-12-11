@@ -11,7 +11,8 @@
 !
 !========================================================================
 
-  subroutine locate_source_force(coord,ibool,npoin,nspec,x_source,z_source,source_type,ix_source,iz_source,ispec_source,iglob_source)
+  subroutine locate_source_force(coord,ibool,npoin,nspec,x_source,z_source,source_type,ix_source,iz_source, &
+                                         ispec_source,iglob_source)
 
 !
 !----- calculer la position reelle de la source
