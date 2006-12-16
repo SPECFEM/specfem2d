@@ -9,19 +9,19 @@ O = obj
 
 # Portland Linux
 #F90 = pgf90
-#FLAGS_CHECK=-O0 -Mbounds -Mneginfo -Mdclchk
 #FLAGS_NOCHECK=-fast -Mnobounds -Minline -Mneginfo -Mdclchk
+#FLAGS_CHECK=-O0 -Mbounds -Mneginfo -Mdclchk
 
 # Intel Linux
-#F90 = ifort
-#FLAGS_CHECK=-O0 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check bounds
-#FLAGS_NOCHECK=-O3 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check nobounds
-#FLAGS_NOCHECK = $(FLAGS_CHECK)
+F90 = ifort
+#FLAGS_NOCHECK=-O0 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check bounds
+FLAGS_NOCHECK=-O3 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check nobounds
+FLAGS_CHECK = $(FLAGS_NOCHECK) -check bounds
 
 # GNU gfortran
-F90 = gfortran
-FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow
-FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
+#F90 = gfortran
+#FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow
+#FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
 
 LINK = $(F90)
 
