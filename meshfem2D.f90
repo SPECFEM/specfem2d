@@ -135,7 +135,7 @@
 
 ! loop on all the points describing this interface
     do ipoint_current = 1,npoints_interface_bottom
-      read(IIN_INTERFACES,*) xinterface_dummy,zinterface_dummy
+      call read_two_interface_points(IIN_INTERFACES,DONT_IGNORE_JUNK,xinterface_dummy,zinterface_dummy)
       if(ipoint_current > 1 .and. xinterface_dummy <= xinterface_dummy_previous) &
         stop 'interface points must be sorted in increasing X'
       xinterface_dummy_previous = xinterface_dummy
@@ -293,7 +293,7 @@
   num_modele(:,:) = 0
 
   do imodele=1,nbmodeles
-    read(IIN,*) i,icodematread,rhoread,cpread,csread,aniso3read,aniso4read
+    call read_material_parameters(IIN,DONT_IGNORE_JUNK,i,icodematread,rhoread,cpread,csread,aniso3read,aniso4read)
     if(i < 1 .or. i > nbmodeles) stop 'Wrong model number!!'
     icodemat(i) = icodematread
     rho(i) = rhoread
@@ -334,7 +334,7 @@
 
   do izone = 1,nbzone
 
-    read(IIN,*) ixdebzone,ixfinzone,izdebzone,izfinzone,imodnum
+    call read_zone_coordinates(IIN,DONT_IGNORE_JUNK,ixdebzone,ixfinzone,izdebzone,izfinzone,imodnum)
 
     if(imodnum < 1) stop 'Negative model number not allowed !!'
     if(ixdebzone < 1) stop 'Left coordinate of zone negative !!'
@@ -446,7 +446,8 @@
 
 ! loop on all the points describing this interface
   do ipoint_current = 1,npoints_interface_bottom
-    read(IIN_INTERFACES,*) xinterface_bottom(ipoint_current),zinterface_bottom(ipoint_current)
+    call read_two_interface_points(IIN_INTERFACES,DONT_IGNORE_JUNK, &
+             xinterface_bottom(ipoint_current),zinterface_bottom(ipoint_current))
   enddo
 
 ! boucle sur toutes les couches
@@ -457,7 +458,8 @@
 
 ! loop on all the points describing this interface
   do ipoint_current = 1,npoints_interface_top
-    read(IIN_INTERFACES,*) xinterface_top(ipoint_current),zinterface_top(ipoint_current)
+    call read_two_interface_points(IIN_INTERFACES,DONT_IGNORE_JUNK, &
+             xinterface_top(ipoint_current),zinterface_top(ipoint_current))
   enddo
 
 ! calculer le spline pour l'interface du bas, imposer la tangente aux deux bords

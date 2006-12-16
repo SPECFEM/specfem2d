@@ -77,6 +77,55 @@
 
 !--------------------
 
+  subroutine read_two_interface_points(iin,ignore_junk,value_to_read_1,value_to_read_2)
+
+  implicit none
+
+  integer iin
+  logical ignore_junk
+  double precision value_to_read_1,value_to_read_2
+  character(len=100) string_read
+
+  call read_next_line(iin,ignore_junk,string_read)
+  read(string_read,*) value_to_read_1,value_to_read_2
+
+  end subroutine read_two_interface_points
+
+!--------------------
+
+  subroutine read_zone_coordinates(iin,ignore_junk,value_to_read_1,value_to_read_2,value_to_read_3,value_to_read_4,value_to_read_5)
+
+  implicit none
+
+  integer iin
+  logical ignore_junk
+  integer value_to_read_1,value_to_read_2,value_to_read_3,value_to_read_4,value_to_read_5
+  character(len=100) string_read
+
+  call read_next_line(iin,ignore_junk,string_read)
+  read(string_read,*) value_to_read_1,value_to_read_2,value_to_read_3,value_to_read_4,value_to_read_5
+
+  end subroutine read_zone_coordinates
+
+!--------------------
+
+  subroutine read_material_parameters(iin,ignore_junk,i,icodematread,rhoread,cpread,csread,aniso3read,aniso4read)
+
+  implicit none
+
+  integer iin
+  logical ignore_junk
+  integer i,icodematread
+  double precision rhoread,cpread,csread,aniso3read,aniso4read
+  character(len=100) string_read
+
+  call read_next_line(iin,ignore_junk,string_read)
+  read(string_read,*) i,icodematread,rhoread,cpread,csread,aniso3read,aniso4read
+
+  end subroutine read_material_parameters
+
+!--------------------
+
   subroutine read_next_line(iin,ignore_junk,string_read)
 
   implicit none
@@ -92,6 +141,9 @@
 
 ! suppress leading white spaces, if any
     string_read = adjustl(string_read)
+
+! suppress trailing carriage return (ASCII code 13) if any (e.g. if input text file coming from Windows/DOS)
+    if(index(string_read,achar(13)) > 0) string_read = string_read(1:index(string_read,achar(13))-1)
 
 ! exit loop when we find the first line that is not a comment or a white line
     if(len_trim(string_read) == 0) cycle

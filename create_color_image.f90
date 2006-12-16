@@ -29,7 +29,7 @@
 
   double precision, dimension(NX,NY) :: donnees_image_color_2D
 
-  integer ix,iy,R,G,B,centaines,dizaines,unites,current_rec
+  integer ix,iy,R,G,B,dixmilliers,milliers,centaines,dizaines,unites,reste,current_rec
 
   double precision amplitude_max,valeur_normalisee
 
@@ -52,33 +52,92 @@
     write(27,rec=2) '6' ! ecrire P6 = format d'image PNM binaire
     write(27,rec=3) char(ascii_code_of_carriage_return)
 
-! ecrire la taille
-    centaines = NX / 100
-    dizaines = (NX - 100 * centaines) / 10
-    unites = NX - 100 * centaines - 10 * dizaines
+! compute and write horizontal size
+    reste = NX
 
-    write(27,rec=4) char(centaines + ascii_code_of_zero)
-    write(27,rec=5) char(dizaines + ascii_code_of_zero)
-    write(27,rec=6) char(unites + ascii_code_of_zero)
-    write(27,rec=7) ' '
+    dixmilliers = reste / 10000
+    reste = reste - 10000 * dixmilliers
 
-    centaines = NY / 100
-    dizaines = (NY - 100 * centaines) / 10
-    unites = NY - 100 * centaines - 10 * dizaines
+    milliers = reste / 1000
+    reste = reste - 1000 * milliers
 
-    write(27,rec=8) char(centaines + ascii_code_of_zero)
-    write(27,rec=9) char(dizaines + ascii_code_of_zero)
-    write(27,rec=10) char(unites + ascii_code_of_zero)
-    write(27,rec=11) char(ascii_code_of_carriage_return)
+    centaines = reste / 100
+    reste = reste - 100 * centaines
 
-! nombre de nuances
-    write(27,rec=12) '2'
-    write(27,rec=13) '5'
-    write(27,rec=14) '5'
+    dizaines = reste / 10
+    reste = reste - 10 * dizaines
+
+    unites = reste
+
+    if(dixmilliers > 0) then
+      write(27,rec=4) char(dixmilliers + ascii_code_of_zero)
+    else
+      write(27,rec=4) ' '
+    endif
+
+    if(milliers > 0) then
+      write(27,rec=5) char(milliers + ascii_code_of_zero)
+    else
+      write(27,rec=5) ' '
+    endif
+
+    if(centaines > 0) then
+      write(27,rec=6) char(centaines + ascii_code_of_zero)
+    else
+      write(27,rec=6) ' '
+    endif
+
+    write(27,rec=7) char(dizaines + ascii_code_of_zero)
+    write(27,rec=8) char(unites + ascii_code_of_zero)
+    write(27,rec=9) ' '
+
+! compute and write vertical size
+    reste = NY
+
+    dixmilliers = reste / 10000
+    reste = reste - 10000 * dixmilliers
+
+    milliers = reste / 1000
+    reste = reste - 1000 * milliers
+
+    centaines = reste / 100
+    reste = reste - 100 * centaines
+
+    dizaines = reste / 10
+    reste = reste - 10 * dizaines
+
+    unites = reste
+
+    if(dixmilliers > 0) then
+      write(27,rec=10) char(dixmilliers + ascii_code_of_zero)
+    else
+      write(27,rec=10) ' '
+    endif
+
+    if(milliers > 0) then
+      write(27,rec=11) char(milliers + ascii_code_of_zero)
+    else
+      write(27,rec=11) ' '
+    endif
+
+    if(centaines > 0) then
+      write(27,rec=12) char(centaines + ascii_code_of_zero)
+    else
+      write(27,rec=12) ' '
+    endif
+
+    write(27,rec=13) char(dizaines + ascii_code_of_zero)
+    write(27,rec=14) char(unites + ascii_code_of_zero)
     write(27,rec=15) char(ascii_code_of_carriage_return)
 
+! nombre de nuances
+    write(27,rec=16) '2'
+    write(27,rec=17) '5'
+    write(27,rec=18) '5'
+    write(27,rec=19) char(ascii_code_of_carriage_return)
+
 ! block of image data starts at sixteenth character
-    current_rec = 16
+    current_rec = 20
 
   else
 
