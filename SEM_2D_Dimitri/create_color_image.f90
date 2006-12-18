@@ -17,6 +17,8 @@
 
 ! to display the snapshots : display image*.gif
 
+! when compiling with Intel ifort, use " -assume byterecl " option to create binary PNM images
+
   implicit none
 
   include "constants.h"
@@ -151,9 +153,6 @@
 ! calculer l'amplitude maximum
   amplitude_max = maxval(abs(donnees_image_color_2D))
 
-! supprimer les petites amplitudes considerees comme du bruit
-  where(abs(donnees_image_color_2D) < amplitude_max * cutvect) donnees_image_color_2D = 0.d0
-
 ! dans le format PNM, l'image commence par le coin en haut a gauche
   do iy=NY,1,-1
     do ix=1,NX
@@ -165,6 +164,14 @@
         R = 204
         G = 255
         B = 255
+
+! supprimer les petites amplitudes considerees comme du bruit
+      else if (abs(donnees_image_color_2D(ix,iy)) < amplitude_max * CUTVECT) then
+
+! use black background where amplitude is negligible
+          R = 0
+          G = 0
+          B = 0
 
       else
 
@@ -218,8 +225,7 @@
   close(27)
 
 ! open image file and create system command to convert image to more convenient format
-  write(system_command,"('cd OUTPUT_FILES ; convert image',i6.6, &
-          & '.pnm image',i6.6,'.gif ; rm image',i6.6,'.pnm')") it,it,it
+  write(system_command,"('cd OUTPUT_FILES ; convert image',i6.6,'.pnm image',i6.6,'.gif ; rm image',i6.6,'.pnm')") it,it,it
 
 ! call the system to convert image to GIF
   call system(system_command)
