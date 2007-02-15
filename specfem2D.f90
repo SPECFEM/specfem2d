@@ -393,8 +393,12 @@
   allocate(codeabs(4,nelemabs))
 
 ! --- allocate array for free surface condition in acoustic medium
-  if(nelemsurface <= 0) nelemsurface = 1
-  allocate(numsurface(nelemsurface))
+  if(nelemsurface <= 0) then
+    nelemsurface = 0
+    allocate(numsurface(1))
+  else
+    allocate(numsurface(nelemsurface))
+  endif
 
 !
 !---- print element group main parameters
@@ -440,15 +444,22 @@
 !
 !----  read free surface data
 !
-  read(IIN,"(a80)") datlin
-  read(IIN,*) abshaut
-  do n=1,nelemsurface
-    read(IIN,*) inum,numsurfaceread
-    if(inum < 1 .or. inum > nelemsurface) stop 'Wrong free surface element number'
-    numsurface(inum) = numsurfaceread
-  enddo
-  write(IOUT,*)
-  write(IOUT,*) 'Number of free surface elements: ',nelemsurface
+  if(nelemsurface > 0) then
+    read(IIN,"(a80)") datlin
+! we need to know if it is also an absorbing edge, in which case we turn off the acoustic free surface
+    read(IIN,*) abshaut
+    do n=1,nelemsurface
+      read(IIN,*) inum,numsurfaceread
+      if(inum < 1 .or. inum > nelemsurface) stop 'Wrong free surface element number'
+      numsurface(inum) = numsurfaceread
+    enddo
+    write(IOUT,*)
+    write(IOUT,*) 'Number of free surface elements: ',nelemsurface
+    if(ACOUSTIC .and. abshaut) then
+      write(IOUT,*)
+      write(IOUT,*) 'top acoustic surface cannot be both absorbing and free, turning off the free surface'
+    endif
+  endif
 
 !
 !---- close input file
@@ -1577,14 +1588,14 @@
 
   endif ! end of test on attenuation
 
-!----  display time step max of norm of displacement
+!----  display time step and max of norm of displacement
   if(mod(it,IT_AFFICHE) == 0 .or. it == 5) then
 
     write(IOUT,*)
-    if(time >= 1.d-3) then
-      write(IOUT,"('Pas de temps numero ',i6,'   t = ',f7.4,' s')") it,time
+    if(time >= 1.d-3 .and. time < 1000.d0) then
+      write(IOUT,"('Time step number ',i6,'   t = ',f9.4,' s')") it,time
     else
-      write(IOUT,"('Pas de temps numero ',i6,'   t = ',1pe10.4,' s')") it,time
+      write(IOUT,"('Time step number ',i6,'   t = ',1pe12.6,' s')") it,time
     endif
 
     displnorm_all = maxval(sqrt(displ(1,:)**2 + displ(2,:)**2))

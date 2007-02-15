@@ -751,6 +751,7 @@
 ! generer la liste des elements a la surface libre
   if(nelemsurface > 0) then
   write(15,*) 'Liste des elements a la surface libre'
+! we need to know if it is also an absorbing edge, in which case we turn off the acoustic free surface
   write(15,*) abshaut
   inumsurface = 0
   do iz = 1,nzread
