@@ -632,7 +632,7 @@
   write(*,*)
   write(*,*) 'Generation de la base de donnees...'
 
-  open(unit=15,file='../SPECFEM90/DataBase',status='unknown')
+  open(unit=15,file='OUTPUT_FILES/Database',status='unknown')
 
   title = 'Modele Canyon Paco'
   write(15,*) '#'

@@ -1268,15 +1268,13 @@
   green(236) = 0.894117647058824
   blue(236) = 0.768627450980392
 
-! recherche des positions maximales des points de la grille
-  xmax=maxval(coord(1,:))
-  zmax=maxval(coord(2,:))
-  write(IOUT,*) 'Max X = ',xmax
-  write(IOUT,*) 'Max Z = ',zmax
-
-! limite du repere physique
-  xmin=0.d0
-  zmin=0.d0
+! get minimum and maximum values of mesh coordinates
+  xmin = minval(coord(1,:))
+  zmin = minval(coord(2,:))
+  xmax = maxval(coord(1,:))
+  zmax = maxval(coord(2,:))
+  write(IOUT,*) 'X min, max = ',xmin,xmax
+  write(IOUT,*) 'Z min, max = ',zmin,zmax
 
 ! rapport taille page/taille domaine physique
   rapp_page = min(rpercentz*sizez/(zmax-zmin),rpercentx*sizex/(xmax-xmin)) / 100.d0
@@ -1387,7 +1385,7 @@
 
   write(24,*) '24. CM 1.95 CM MV'
   timeval = it*dt
-  if(timeval >= 1.d-3) then
+  if(timeval >= 1.d-3 .and. timeval < 1000.d0) then
     write(24,600) usoffset,timeval
   else
     write(24,601) usoffset,timeval
@@ -1997,14 +1995,13 @@
   close(24)
 
  10   format('%!PS-Adobe-2.0',/,'%%',/,'%% Title: ',a50,/, &
-          '%% Created by: Specfem2D',/, &
-          '%% Author: Dimitri Komatitsch',/,'%%')
+          '%% Created by: Specfem2D',/,'%% Author: Dimitri Komatitsch',/,'%%')
  510  format(f5.1,1x,f5.1,' M')
- 600  format(f6.3,' neg CM 0 MR (Time =',f6.3,' s) show')
- 601  format(f6.3,' neg CM 0 MR (Time =',1pe10.3,' s) show')
+ 600  format(f6.3,' neg CM 0 MR (Time =',f8.3,' s) show')
+ 601  format(f6.3,' neg CM 0 MR (Time =',1pe12.3,' s) show')
  610  format(f6.3,' neg CM 0 MR (Time step = ',i7,') show')
  620  format(f6.3,' neg CM 0 MR (Cut =',f5.2,' \%) show')
- 640  format(f6.3,' neg CM 0 MR (Max norm =',1pe10.3,') show')
+ 640  format(f6.3,' neg CM 0 MR (Max norm =',1pe12.3,') show')
 
  499  format(f5.1,1x,f5.1,' L')
  500  format(f5.1,1x,f5.1,' M')
