@@ -1,4 +1,4 @@
-!
+
 !=====================================================================
 !
 !                  P r e m a i l l e u r - 2 D
@@ -15,11 +15,12 @@
 !       (c) Institut de Physique du Globe de Paris, Octobre 1996
 !
 !=====================================================================
-!
+
+! program to mesh a 2D canyon for a study with Paco Sanchez-Sesma and comparison with Kawase (1988)
 
 ! DK DK Mexico August 1999 : mise a jour format base de donnees
 
-  program circ
+  program circular_canyon
 
   implicit none
 
@@ -75,10 +76,8 @@
   double precision z4b(0:2*mnx,0:2*mnz)
 
 ! nombre max de points de maillage, et nombre exact d'elements
-  integer, parameter :: npoin = npoinz1+npoinz3+npoinz4+ &
-                    npoinz1b+npoinz2b+npoinz3b+npoinz4b
-  integer, parameter :: nelem = nelemz1+nelemz3+nelemz4+ &
-                    nelemz1b+nelemz2b+nelemz3b+nelemz4b
+  integer, parameter :: npoin = npoinz1+npoinz3+npoinz4+npoinz1b+npoinz2b+npoinz3b+npoinz4b
+  integer, parameter :: nelem = nelemz1+nelemz3+nelemz4+nelemz1b+nelemz2b+nelemz3b+nelemz4b
 
 ! coordonnees geometriques des points
   double precision xpoint(npoin)
@@ -100,8 +99,7 @@
   integer numpoin3(nelem)
   integer numpoin4(nelem)
 
-! nom du fichier GNUPLOT contenant la grille
-  character(len=50) file1,title
+  character(len=50) title
 
   logical iexternal, aleatoire, topoplane, simulate, absstacey
   logical absorbhaut, absorbbas, absorbgauche, sismos
@@ -130,44 +128,44 @@
 
 ! --- point de depart
   if(i < 2*nx) then
-      x1(i,0) = 2.*R * real(i) / real(2*nx)
+      x1(i,0) = 2.*R * dble(i) / dble(2*nx)
       z1(i,0) = - 2.*R
   else
       x1(i,0) = 2.*R
-      z1(i,0) = - 2.*R * (1. - real(i - 2*nx) / real(2*nx))
+      z1(i,0) = - 2.*R * (1. - dble(i - 2*nx) / dble(2*nx))
   endif
 
 ! --- point d'arrivee
-      theta_i = theta_init + delta_theta * real(i) / real(4*nx)
-      x1(i,nz) = dcos(theta_i)
-      z1(i,nz) = dsin(theta_i)
+      theta_i = theta_init + delta_theta * dble(i) / dble(4*nx)
+      x1(i,nz) = cos(theta_i)
+      z1(i,nz) = sin(theta_i)
 
 ! --- points intermediaires par interpolation lineaire
       do j=1,nz-1
-            eta_j = real(j) / real(nz)
-            x1(i,j) = (1.-eta_j)*x1(i,0) + eta_j*x1(i,nz)
-            z1(i,j) = (1.-eta_j)*z1(i,0) + eta_j*z1(i,nz)
+        eta_j = dble(j) / dble(nz)
+        x1(i,j) = (1.-eta_j)*x1(i,0) + eta_j*x1(i,nz)
+        z1(i,j) = (1.-eta_j)*z1(i,0) + eta_j*z1(i,nz)
       enddo
   enddo
 
 ! generer zone de gauche (zone 3)
   do i=0,2*nx
-      do j=0,4*nz
-      x3(i,j) = 5. * real(i) / real(2*nx) + 2.
-  if(j <= 2*nz) then
-      z3(i,j) = 7. * real(j) / real(2*nz) - 9.
-  else
-      z3(i,j) = 2. * real(j-2*nz) / real(2*nz) - 2.
-  endif
-      enddo
+    do j=0,4*nz
+      x3(i,j) = 5. * dble(i) / dble(2*nx) + 2.
+      if(j <= 2*nz) then
+        z3(i,j) = 7. * dble(j) / dble(2*nz) - 9.
+      else
+        z3(i,j) = 2. * dble(j-2*nz) / dble(2*nz) - 2.
+      endif
+    enddo
   enddo
 
 ! generer zone du bas (zone 4)
   do i=0,2*nx
-      do j=0,2*nz
-      x4(i,j) = 2. * real(i) / real(2*nx)
-      z4(i,j) = 7. * real(j) / real(2*nz) - 9.
-      enddo
+    do j=0,2*nz
+      x4(i,j) = 2. * dble(i) / dble(2*nx)
+      z4(i,j) = 7. * dble(j) / dble(2*nz) - 9.
+    enddo
   enddo
 
 ! ***************************************
@@ -177,40 +175,41 @@
 ! generer les points de base de l'interpolation lineaire (zone 1)
   theta_init = pi / 4.
   delta_theta = pi / 4.
+
   do i=0,2*nx
 ! --- point de depart
-      x1b(i,0) = 2.*R * (real(i) / real(2*nx) - 1.)
+      x1b(i,0) = 2.*R * (dble(i) / dble(2*nx) - 1.)
       z1b(i,0) = - 2.*R
 
 ! --- point d'arrivee
-      theta_i = theta_init + delta_theta * real(i) / real(2*nx)
-      x1b(i,nz) = - dcos(theta_i)
-      z1b(i,nz) = - dsin(theta_i)
+      theta_i = theta_init + delta_theta * dble(i) / dble(2*nx)
+      x1b(i,nz) = - cos(theta_i)
+      z1b(i,nz) = - sin(theta_i)
 
 ! --- points intermediaires par interpolation lineaire
       do j=1,nz-1
-            eta_j = real(j) / real(nz)
-            x1b(i,j) = (1.-eta_j)*x1b(i,0) + eta_j*x1b(i,nz)
-            z1b(i,j) = (1.-eta_j)*z1b(i,0) + eta_j*z1b(i,nz)
+        eta_j = dble(j) / dble(nz)
+        x1b(i,j) = (1.-eta_j)*x1b(i,0) + eta_j*x1b(i,nz)
+        z1b(i,j) = (1.-eta_j)*z1b(i,0) + eta_j*z1b(i,nz)
       enddo
   enddo
 
 ! generer les points de base de l'interpolation lineaire (zone 2)
   theta_init = pi / 4.
+
   do j=0,2*nz
 ! --- point de depart
       x2b(0,j) = - 2.*R
-      z2b(0,j) = 2.*R * (real(j) / real(2*nz) - 1.)
+      z2b(0,j) = 2.*R * (dble(j) / dble(2*nz) - 1.)
 
 ! --- point d'arrivee
-      theta_i = theta_init - &
-              delta_theta * real(j) / real(2*nz)
-      x2b(nx,j) = - dcos(theta_i)
-      z2b(nx,j) = - dsin(theta_i)
+      theta_i = theta_init - delta_theta * dble(j) / dble(2*nz)
+      x2b(nx,j) = - cos(theta_i)
+      z2b(nx,j) = - sin(theta_i)
 
 ! --- points intermediaires par interpolation lineaire
       do i=1,nx-1
-            eta_j = real(i) / real(nx)
+            eta_j = dble(i) / dble(nx)
             x2b(i,j) = (1.-eta_j)*x2b(0,j) + eta_j*x2b(nx,j)
             z2b(i,j) = (1.-eta_j)*z2b(0,j) + eta_j*z2b(nx,j)
       enddo
@@ -219,158 +218,156 @@
 
 ! generer zone de gauche (zone 3)
   do i=0,4*nx
-      do j=0,4*nz
-      x3b(i,j) = 10. * real(i) / real(4*nx) - 12.
-  if(j <= 2*nz) then
-      z3b(i,j) = 7. * real(j) / real(2*nz) - 9.
-  else
-      z3b(i,j) = 2. * real(j-2*nz) / real(2*nz) - 2.
-  endif
-      enddo
+    do j=0,4*nz
+      x3b(i,j) = 10. * dble(i) / dble(4*nx) - 12.
+      if(j <= 2*nz) then
+        z3b(i,j) = 7. * dble(j) / dble(2*nz) - 9.
+      else
+        z3b(i,j) = 2. * dble(j-2*nz) / dble(2*nz) - 2.
+      endif
+    enddo
   enddo
 
 ! generer zone du bas (zone 4)
   do i=0,2*nx
-      do j=0,2*nz
-      x4b(i,j) = 2. * real(i) / real(2*nx) - 2.
-      z4b(i,j) = 7. * real(j) / real(2*nz) - 9.
-      enddo
+    do j=0,2*nz
+      x4b(i,j) = 2. * dble(i) / dble(2*nx) - 2.
+      z4b(i,j) = 7. * dble(j) / dble(2*nz) - 9.
+    enddo
   enddo
 
 ! ***
 ! *** generer un fichier 'GNUPLOT' pour le controle de la grille ***
 ! ***
 
-  write(*,*)' '
-  write(*,*)' Ecriture de la grille format GNUPLOT...'
+  write(*,*)
+  write(*,*) 'Ecriture de la grille format GNUPLOT...'
 
-  file1='grid.GNU'
-
- open(unit=20,file=file1,status='unknown')
+  open(unit=20,file='grid.gnu',status='unknown')
 
 ! *** dessiner la zone 1
   do j=0,nz
-      do i=0,4*nx-1
-      write(20,*) real(x1(i,j)),real(z1(i,j))
-      write(20,*) real(x1(i+1,j)),real(z1(i+1,j))
+    do i=0,4*nx-1
+      write(20,*) sngl(x1(i,j)),sngl(z1(i,j))
+      write(20,*) sngl(x1(i+1,j)),sngl(z1(i+1,j))
       write(20,100)
-      enddo
+    enddo
   enddo
 
   do i=0,4*nx
-      do j=0,nz-1
-      write(20,*) real(x1(i,j)),real(z1(i,j))
-      write(20,*) real(x1(i,j+1)),real(z1(i,j+1))
+    do j=0,nz-1
+      write(20,*) sngl(x1(i,j)),sngl(z1(i,j))
+      write(20,*) sngl(x1(i,j+1)),sngl(z1(i,j+1))
       write(20,100)
-      enddo
+    enddo
   enddo
 
 ! *** dessiner la zone 3
   do j=0,4*nz
-      do i=0,2*nx-1
-      write(20,*) real(x3(i,j)),real(z3(i,j))
-      write(20,*) real(x3(i+1,j)),real(z3(i+1,j))
+    do i=0,2*nx-1
+      write(20,*) sngl(x3(i,j)),sngl(z3(i,j))
+      write(20,*) sngl(x3(i+1,j)),sngl(z3(i+1,j))
       write(20,100)
-      enddo
+    enddo
   enddo
 
   do i=0,2*nx
-      do j=0,4*nz-1
-      write(20,*) real(x3(i,j)),real(z3(i,j))
-      write(20,*) real(x3(i,j+1)),real(z3(i,j+1))
+    do j=0,4*nz-1
+      write(20,*) sngl(x3(i,j)),sngl(z3(i,j))
+      write(20,*) sngl(x3(i,j+1)),sngl(z3(i,j+1))
       write(20,100)
-      enddo
+    enddo
   enddo
 
 ! *** dessiner la zone 4
   do j=0,2*nz
-      do i=0,2*nx-1
-      write(20,*) real(x4(i,j)),real(z4(i,j))
-      write(20,*) real(x4(i+1,j)),real(z4(i+1,j))
+    do i=0,2*nx-1
+      write(20,*) sngl(x4(i,j)),sngl(z4(i,j))
+      write(20,*) sngl(x4(i+1,j)),sngl(z4(i+1,j))
       write(20,100)
-      enddo
+    enddo
   enddo
 
   do i=0,2*nx
-      do j=0,2*nz-1
-      write(20,*) real(x4(i,j)),real(z4(i,j))
-      write(20,*) real(x4(i,j+1)),real(z4(i,j+1))
+    do j=0,2*nz-1
+      write(20,*) sngl(x4(i,j)),sngl(z4(i,j))
+      write(20,*) sngl(x4(i,j+1)),sngl(z4(i,j+1))
       write(20,100)
-      enddo
+    enddo
   enddo
 
 ! *** dessiner la zone 1
   do j=0,nz
-      do i=0,2*nx-1
-      write(20,*) real(x1b(i,j)),real(z1b(i,j))
-      write(20,*) real(x1b(i+1,j)),real(z1b(i+1,j))
+    do i=0,2*nx-1
+      write(20,*) sngl(x1b(i,j)),sngl(z1b(i,j))
+      write(20,*) sngl(x1b(i+1,j)),sngl(z1b(i+1,j))
       write(20,100)
-      enddo
+    enddo
   enddo
 
   do i=0,2*nx
-      do j=0,nz-1
-      write(20,*) real(x1b(i,j)),real(z1b(i,j))
-      write(20,*) real(x1b(i,j+1)),real(z1b(i,j+1))
+    do j=0,nz-1
+      write(20,*) sngl(x1b(i,j)),sngl(z1b(i,j))
+      write(20,*) sngl(x1b(i,j+1)),sngl(z1b(i,j+1))
       write(20,100)
-      enddo
+    enddo
   enddo
 
 ! *** dessiner la zone 2
   do j=0,2*nz
-      do i=0,nx-1
-      write(20,*) real(x2b(i,j)),real(z2b(i,j))
-      write(20,*) real(x2b(i+1,j)),real(z2b(i+1,j))
+    do i=0,nx-1
+      write(20,*) sngl(x2b(i,j)),sngl(z2b(i,j))
+      write(20,*) sngl(x2b(i+1,j)),sngl(z2b(i+1,j))
       write(20,100)
-      enddo
+    enddo
   enddo
 
   do i=0,nx
-      do j=0,2*nz-1
-      write(20,*) real(x2b(i,j)),real(z2b(i,j))
-      write(20,*) real(x2b(i,j+1)),real(z2b(i,j+1))
+    do j=0,2*nz-1
+      write(20,*) sngl(x2b(i,j)),sngl(z2b(i,j))
+      write(20,*) sngl(x2b(i,j+1)),sngl(z2b(i,j+1))
       write(20,100)
-      enddo
+    enddo
   enddo
 
 ! *** dessiner la zone 3
   do j=0,4*nz
-      do i=0,4*nx-1
-      write(20,*) real(x3b(i,j)),real(z3b(i,j))
-      write(20,*) real(x3b(i+1,j)),real(z3b(i+1,j))
+    do i=0,4*nx-1
+      write(20,*) sngl(x3b(i,j)),sngl(z3b(i,j))
+      write(20,*) sngl(x3b(i+1,j)),sngl(z3b(i+1,j))
       write(20,100)
-      enddo
+    enddo
   enddo
 
   do i=0,4*nx
-      do j=0,4*nz-1
-      write(20,*) real(x3b(i,j)),real(z3b(i,j))
-      write(20,*) real(x3b(i,j+1)),real(z3b(i,j+1))
+    do j=0,4*nz-1
+      write(20,*) sngl(x3b(i,j)),sngl(z3b(i,j))
+      write(20,*) sngl(x3b(i,j+1)),sngl(z3b(i,j+1))
       write(20,100)
-      enddo
+    enddo
   enddo
 
 ! *** dessiner la zone 4
   do j=0,2*nz
-      do i=0,2*nx-1
-      write(20,*) real(x4b(i,j)),real(z4b(i,j))
-      write(20,*) real(x4b(i+1,j)),real(z4b(i+1,j))
+    do i=0,2*nx-1
+      write(20,*) sngl(x4b(i,j)),sngl(z4b(i,j))
+      write(20,*) sngl(x4b(i+1,j)),sngl(z4b(i+1,j))
       write(20,100)
-      enddo
+    enddo
   enddo
 
   do i=0,2*nx
-      do j=0,2*nz-1
-      write(20,*) real(x4b(i,j)),real(z4b(i,j))
-      write(20,*) real(x4b(i,j+1)),real(z4b(i,j+1))
+    do j=0,2*nz-1
+      write(20,*) sngl(x4b(i,j)),sngl(z4b(i,j))
+      write(20,*) sngl(x4b(i,j+1)),sngl(z4b(i,j+1))
       write(20,100)
-      enddo
+    enddo
   enddo
 
   close(20)
 
-  write(*,*)' Fin ecriture de la grille format GNUPLOT'
-  write(*,*)' '
+  write(*,*) 'Fin ecriture de la grille format GNUPLOT'
+  write(*,*)
 
  100  format('')
 
@@ -382,65 +379,65 @@
 
 ! *** zone 1
   do j=0,nz
-      do i=0,4*nx
+    do i=0,4*nx
       xpoint(numerocourant) = x1(i,j)
       zpoint(numerocourant) = z1(i,j)
       numerocourant = numerocourant + 1
-      enddo
+    enddo
   enddo
 
 ! *** zone 3
   do j=0,4*nz
-      do i=0,2*nx
+    do i=0,2*nx
       xpoint(numerocourant) = x3(i,j)
       zpoint(numerocourant) = z3(i,j)
       numerocourant = numerocourant + 1
-      enddo
+    enddo
   enddo
 
 ! *** zone 4
   do j=0,2*nz
-      do i=0,2*nx
+    do i=0,2*nx
       xpoint(numerocourant) = x4(i,j)
       zpoint(numerocourant) = z4(i,j)
       numerocourant = numerocourant + 1
-      enddo
+    enddo
   enddo
 
 ! *** zone 1
   do j=0,nz
-      do i=0,2*nx
+    do i=0,2*nx
       xpoint(numerocourant) = x1b(i,j)
       zpoint(numerocourant) = z1b(i,j)
       numerocourant = numerocourant + 1
-      enddo
+    enddo
   enddo
 
 ! *** zone 2
   do j=0,2*nz
-      do i=0,nx
+    do i=0,nx
       xpoint(numerocourant) = x2b(i,j)
       zpoint(numerocourant) = z2b(i,j)
       numerocourant = numerocourant + 1
-      enddo
+    enddo
   enddo
 
 ! *** zone 3
   do j=0,4*nz
-      do i=0,4*nx
+    do i=0,4*nx
       xpoint(numerocourant) = x3b(i,j)
       zpoint(numerocourant) = z3b(i,j)
       numerocourant = numerocourant + 1
-      enddo
+    enddo
   enddo
 
 ! *** zone 4
   do j=0,2*nz
-      do i=0,2*nx
+    do i=0,2*nx
       xpoint(numerocourant) = x4b(i,j)
       zpoint(numerocourant) = z4b(i,j)
       numerocourant = numerocourant + 1
-      enddo
+    enddo
   enddo
 
   print *,'nb de points stockes = ',numerocourant - 1
@@ -454,7 +451,7 @@
 
 ! *** zone 1
   do j=0,nz-1
-      do i=0,4*nx-1
+    do i=0,4*nx-1
       x1e(numerocourant) = x1(i,j)
       z1e(numerocourant) = z1(i,j)
       x2e(numerocourant) = x1(i+1,j)
@@ -464,12 +461,12 @@
       x4e(numerocourant) = x1(i,j+1)
       z4e(numerocourant) = z1(i,j+1)
       numerocourant = numerocourant + 1
-      enddo
+    enddo
   enddo
 
 ! *** zone 3
   do j=0,4*nz-1
-      do i=0,2*nx-1
+    do i=0,2*nx-1
       x1e(numerocourant) = x3(i,j)
       z1e(numerocourant) = z3(i,j)
       x2e(numerocourant) = x3(i+1,j)
@@ -479,12 +476,12 @@
       x4e(numerocourant) = x3(i,j+1)
       z4e(numerocourant) = z3(i,j+1)
       numerocourant = numerocourant + 1
-      enddo
+    enddo
   enddo
 
 ! *** zone 4
   do j=0,2*nz-1
-      do i=0,2*nx-1
+    do i=0,2*nx-1
       x1e(numerocourant) = x4(i,j)
       z1e(numerocourant) = z4(i,j)
       x2e(numerocourant) = x4(i+1,j)
@@ -494,12 +491,12 @@
       x4e(numerocourant) = x4(i,j+1)
       z4e(numerocourant) = z4(i,j+1)
       numerocourant = numerocourant + 1
-      enddo
+    enddo
   enddo
 
 ! *** zone 1
   do j=0,nz-1
-      do i=0,2*nx-1
+    do i=0,2*nx-1
       x1e(numerocourant) = x1b(i,j)
       z1e(numerocourant) = z1b(i,j)
       x2e(numerocourant) = x1b(i+1,j)
@@ -509,12 +506,12 @@
       x4e(numerocourant) = x1b(i,j+1)
       z4e(numerocourant) = z1b(i,j+1)
       numerocourant = numerocourant + 1
-      enddo
+    enddo
   enddo
 
 ! *** zone 2
   do j=0,2*nz-1
-      do i=0,nx-1
+    do i=0,nx-1
       x1e(numerocourant) = x2b(i,j)
       z1e(numerocourant) = z2b(i,j)
       x2e(numerocourant) = x2b(i+1,j)
@@ -524,12 +521,12 @@
       x4e(numerocourant) = x2b(i,j+1)
       z4e(numerocourant) = z2b(i,j+1)
       numerocourant = numerocourant + 1
-      enddo
+    enddo
   enddo
 
 ! *** zone 3
   do j=0,4*nz-1
-      do i=0,4*nx-1
+    do i=0,4*nx-1
       x1e(numerocourant) = x3b(i,j)
       z1e(numerocourant) = z3b(i,j)
       x2e(numerocourant) = x3b(i+1,j)
@@ -539,12 +536,12 @@
       x4e(numerocourant) = x3b(i,j+1)
       z4e(numerocourant) = z3b(i,j+1)
       numerocourant = numerocourant + 1
-      enddo
+    enddo
   enddo
 
 ! *** zone 4
   do j=0,2*nz-1
-      do i=0,2*nx-1
+    do i=0,2*nx-1
       x1e(numerocourant) = x4b(i,j)
       z1e(numerocourant) = z4b(i,j)
       x2e(numerocourant) = x4b(i+1,j)
@@ -554,7 +551,7 @@
       x4e(numerocourant) = x4b(i,j+1)
       z4e(numerocourant) = z4b(i,j+1)
       numerocourant = numerocourant + 1
-      enddo
+    enddo
   enddo
 
   print *,'nb d''elements stockes = ',numerocourant - 1
@@ -563,60 +560,54 @@
 ! *** creation des elements sous forme topologique
 ! ***
 
-  write(*,*)' '
-  write(*,*)' Creation de la topologie des elements...'
-
-  file1='topoelements.txt'
+  write(*,*)
+  write(*,*) 'Creation de la topologie des elements...'
 
   do i=1,nelem
 
 ! recherche point 1
       do j=1,npoin
-        dist = dsqrt((x1e(i)-xpoint(j))**2 + &
-                                (z1e(i)-zpoint(j))**2)
+        dist = sqrt((x1e(i)-xpoint(j))**2 + (z1e(i)-zpoint(j))**2)
         if(dist <= rseuil) then
             nump1 = j
             goto 401
         endif
       enddo
       stop 'point not found !'
- 401        continue
+ 401 continue
 
 ! recherche point 2
       do j=1,npoin
-        dist = dsqrt((x2e(i)-xpoint(j))**2 + &
-                                (z2e(i)-zpoint(j))**2)
+        dist = sqrt((x2e(i)-xpoint(j))**2 + (z2e(i)-zpoint(j))**2)
         if(dist <= rseuil) then
             nump2 = j
             goto 402
         endif
       enddo
       stop 'point not found !'
- 402        continue
+ 402 continue
 
 ! recherche point 3
       do j=1,npoin
-        dist = dsqrt((x3e(i)-xpoint(j))**2 + &
-                                (z3e(i)-zpoint(j))**2)
+        dist = sqrt((x3e(i)-xpoint(j))**2 + (z3e(i)-zpoint(j))**2)
         if(dist <= rseuil) then
             nump3 = j
             goto 403
         endif
       enddo
       stop 'point not found !'
- 403        continue
+ 403 continue
 
 ! recherche point 4
       do j=1,npoin
-        dist = dsqrt((x4e(i)-xpoint(j))**2 + &
-                                (z4e(i)-zpoint(j))**2)
+        dist = sqrt((x4e(i)-xpoint(j))**2 + (z4e(i)-zpoint(j))**2)
         if(dist <= rseuil) then
             nump4 = j
             goto 404
         endif
       enddo
       stop 'point not found !'
- 404        continue
+ 404 continue
 
       numpoin1(i) = nump1
       numpoin2(i) = nump2
@@ -782,28 +773,27 @@
   xoffs = 12.
   zoffs = 9.
   write(15,*) 'Collocated forces and/or pressure sources:'
-      write(15,*) itimetype,isource_type, &
-           xs+xoffs,zs+zoffs,f0,t0,factor,angle,0
+  write(15,*) itimetype,isource_type,xs+xoffs,zs+zoffs,f0,t0,factor,angle,0
 
   write(15,*) 'Receivers (number, angle, position in meters)'
   do irec=1,nrec
- if(irec <= nrecsur3) then
-      xrec = 2.*dble(irec-1)/dble(nrecsur3-1) + 9.
-      zrec = 9.
- else if(irec >= 2*nrecsur3) then
-      xrec = 2.*dble(irec-2*nrecsur3)/dble(nrecsur3) + 13.
-      zrec = 9.
- else
-      angle = pi + pi*dble(irec-nrecsur3)/dble(nrecsur3)
-      xrec = 12. + dcos(angle)
-      zrec = 9. + dsin(angle)
- endif
- write(15,*) irec,xrec,zrec
+  if(irec <= nrecsur3) then
+    xrec = 2.*dble(irec-1)/dble(nrecsur3-1) + 9.
+    zrec = 9.
+  else if(irec >= 2*nrecsur3) then
+    xrec = 2.*dble(irec-2*nrecsur3)/dble(nrecsur3) + 13.
+    zrec = 9.
+  else
+    angle = pi + pi*dble(irec-nrecsur3)/dble(nrecsur3)
+    xrec = 12. + cos(angle)
+    zrec = 9. + sin(angle)
+  endif
+  write(15,*) irec,xrec,zrec
   enddo
 
   write(15,*) 'Coordinates of spectral control points'
   do i=1,npoin
-      write(15,*) i,xpoint(i)+xoffs,zpoint(i)+zoffs
+    write(15,*) i,xpoint(i)+xoffs,zpoint(i)+zoffs
   enddo
 
   netyp = 2
@@ -812,8 +802,7 @@
   nelemabs = 0
 
   write(15,*) 'params spectraux'
-  write(15,*) netyp,nbmodeles,ngnod,nxgll,nxgll,nspel,pointsdisp, &
-                nelemabs,nelemperio
+  write(15,*) netyp,nbmodeles,ngnod,nxgll,nxgll,nspel,pointsdisp,nelemabs,nelemperio
 
   write(15,*) 'Material sets (num 0 rho vp vs 0 0)'
   rho = 1.
@@ -821,19 +810,17 @@
   cs = 1.
   write(15,*) nbmodeles,0,rho,cp,cs,0,0
 
-  write(15,*) 'Spectral elements topology'
+  write(15,*) 'Spectral-element topology'
 
   imatnum = 1
 
   do i=1,nspel
-      write(15,*) i,imatnum,numpoin1(i),numpoin2(i),numpoin3(i), &
-                    numpoin4(i)
+    write(15,*) i,imatnum,numpoin1(i),numpoin2(i),numpoin3(i),numpoin4(i)
   enddo
 
   close(15)
 
- 40   format(a50)
+ 40 format(a50)
 
-! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  end program circular_canyon
 
-  end program circ
