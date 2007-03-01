@@ -1281,7 +1281,7 @@
 
 ! recherche de la valeur maximum de la norme du deplacement
   dispmax = maxval(sqrt(displ(1,:)**2 + displ(2,:)**2))
-  write(IOUT,*) 'Max norme = ',dispmax
+  write(IOUT,*) 'Max norm = ',dispmax
 
 ! hauteur des numeros de domaine en CM
   height = 0.25d0
