@@ -1312,33 +1312,24 @@
   write(24,*) '/MR {rmoveto} def'
   write(24,*) '/MV {moveto} def'
   write(24,*) '/M {moveto} def'
-  write(24,*) '/MK {mark} def'
   write(24,*) '/ST {stroke} def'
   write(24,*) '/CP {closepath} def'
   write(24,*) '/RG {setrgbcolor} def'
   write(24,*) '/GF {gsave fill grestore} def'
-  write(24,*) '/GG {0 setgray ST} def'
-  write(24,*) '/GC {Colmesh ST} def'
-  write(24,*) '/RF {setrgbcolor fill} def'
-  write(24,*) '/SF {setgray fill} def'
-  write(24,*) '/GS {gsave} def'
-  write(24,*) '/GR {grestore} def'
-  write(24,*) '/SLW {setlinewidth} def'
-  write(24,*) '/SCSF {scalefont setfont} def'
   write(24,*) '% different useful symbols'
   write(24,*) '/Point {2 0 360 arc CP 0 setgray fill} def'
   write(24,*) '/VDot {-0.75 -1.5 MR 1.5 0 LR 0 3. LR -1.5 0 LR'
   write(24,*) 'CP fill} def'
   write(24,*) '/HDot {-1.5 -0.75 MR 3. 0 LR 0 1.5 LR -3. 0 LR'
   write(24,*) 'CP fill} def'
-  write(24,*) '/Cross {GS 0.05 CM SLW'
-  write(24,*) 'GS 3 3 MR -6. -6. LR ST GR'
-  write(24,*) 'GS 3 -3 MR -6. 6. LR ST GR'
-  write(24,*) '0.01 CM SLW} def'
+  write(24,*) '/Cross {gsave 0.05 CM setlinewidth'
+  write(24,*) 'gsave 3 3 MR -6. -6. LR ST grestore'
+  write(24,*) 'gsave 3 -3 MR -6. 6. LR ST grestore'
+  write(24,*) '0.01 CM setlinewidth} def'
   write(24,*) '/SmallLine {MV 0.07 CM 0 rlineto} def'
-  write(24,*) '/Diamond {GS 0.05 CM SLW 0 4.2 MR'
+  write(24,*) '/Diamond {gsave 0.05 CM setlinewidth 0 4.2 MR'
   write(24,*) '-3 -4.2 LR 3 -4.2 LR 3 4.2 LR CP ST'
-  write(24,*) 'GR 0.01 CM SLW} def'
+  write(24,*) 'grestore 0.01 CM setlinewidth} def'
   write(24,*) '%'
   write(24,*) '% gray levels for the velocity model'
   write(24,*) '/BK {setgray fill} def'
@@ -1346,14 +1337,14 @@
   write(24,*) '%/BK {pop 1 setgray fill} def'
   write(24,*) '%'
   write(24,*) '% magenta for vectors'
-  write(24,*) '/Colvects {0.01 CM SLW 1. 0. 1. RG} def'
+  write(24,*) '/Colvects {0.01 CM setlinewidth 1. 0. 1. RG} def'
   write(24,*) '% black and white version'
-  write(24,*) '%/Colvects {0.01 CM SLW 0. setgray} def'
+  write(24,*) '%/Colvects {0.01 CM setlinewidth 0. setgray} def'
   write(24,*) '%'
   write(24,*) '% chartreuse for macrobloc mesh'
-  write(24,*) '/Colmesh {0.02 CM SLW 0.5 1. 0. RG} def'
+  write(24,*) '/Colmesh {0.02 CM setlinewidth 0.5 1. 0. RG} def'
   write(24,*) '% black and white version'
-  write(24,*) '%/Colmesh {0.02 CM SLW 0. setgray} def'
+  write(24,*) '%/Colmesh {0.02 CM setlinewidth 0. setgray} def'
   write(24,*) '%'
   write(24,*) '% cyan for sources and receivers'
   write(24,*) '/Colreceiv {0. 1. 1. RG} def'
@@ -1365,16 +1356,16 @@
   write(24,*) '% macro to draw the contour of the elements'
   write(24,*) '/CO {M counttomark 2 idiv {L} repeat cleartomark CP} def'
   write(24,*) '%'
-  write(24,*) '.01 CM SLW'
+  write(24,*) '.01 CM setlinewidth'
   write(24,*) '/Times-Roman findfont'
-  write(24,*) '.35 CM SCSF'
+  write(24,*) '.35 CM scalefont setfont'
   write(24,*) '%'
   write(24,*) '/vshift ',-height/2,' CM def'
   write(24,*) '/Rshow { currentpoint stroke MV'
   write(24,*) 'dup stringwidth pop neg vshift MR show } def'
   write(24,*) '/Cshow { currentpoint stroke MV'
   write(24,*) 'dup stringwidth pop -2 div vshift MR show } def'
-  write(24,*) '/fN {/Helvetica-Bold findfont ',height,' CM SCSF} def'
+  write(24,*) '/fN {/Helvetica-Bold findfont ',height,' CM scalefont setfont} def'
   write(24,*) '%'
   write(24,*) 'gsave newpath 90 rotate'
   write(24,*) '0 ',-sizez,' CM translate 1. 1. scale'
@@ -1388,7 +1379,7 @@
 !
   write(24,*) '0 setgray'
   write(24,*) '/Times-Roman findfont'
-  write(24,*) '.5 CM SCSF'
+  write(24,*) '.5 CM scalefont setfont'
 
   write(24,*) '24. CM 1.2 CM MV'
   write(24,610) usoffset,it
@@ -1410,7 +1401,7 @@
 
   write(24,*) '%'
   write(24,*) '/Times-Roman findfont'
-  write(24,*) '.6 CM SCSF'
+  write(24,*) '.6 CM scalefont setfont'
   if(colors == 1) write(24,*) '.4 .9 .9 setrgbcolor'
   write(24,*) '11 CM 1.1 CM MV'
   write(24,*) '(X axis) show'
@@ -1421,7 +1412,7 @@
   write(24,*) 'grestore'
   write(24,*) '%'
   write(24,*) '/Times-Roman findfont'
-  write(24,*) '.7 CM SCSF'
+  write(24,*) '.7 CM scalefont setfont'
   if(colors == 1) write(24,*) '.8 0 .8 setrgbcolor'
   write(24,*) '24.35 CM 18.9 CM MV'
   write(24,*) usoffset,' CM 2 div neg 0 MR'
@@ -1543,7 +1534,6 @@
 !
 !---- draw the spectral element mesh
 !
-  if(meshvect) then
 
   write(24,*) '%'
   write(24,*) '% spectral element mesh'
@@ -1571,7 +1561,7 @@
   z1 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x1 = x1 * centim
   z1 = z1 * centim
-  write(24,*) 'MK'
+  write(24,*) 'mark'
   write(24,681) x1,z1
 
   if(ngnod == 4) then
@@ -1657,14 +1647,20 @@
   imat = kmato(ispec)
   icol = mod(imat - 1,NUM_COLORS) + 1
 
-  write(24,680) red(icol),green(icol),blue(icol)
+    if(meshvect) then
+      write(24,680) red(icol),green(icol),blue(icol)
+    else
+      write(24,679) red(icol),green(icol),blue(icol)
+    endif
 
   endif
 
-  if(modelvect) then
-  write(24,*) 'GC'
-  else
-  write(24,*) 'GG'
+  if(meshvect) then
+    if(modelvect) then
+      write(24,*) 'Colmesh ST'
+    else
+      write(24,*) '0 setgray ST'
+    endif
   endif
 
 ! write the element number, the group number and the material number inside the element
@@ -1687,8 +1683,6 @@
 
   enddo
 
-  endif
-
 !
 !--- draw absorbing boundaries with a thick color line
 !
@@ -1702,9 +1696,9 @@
 ! use green color
   write(24,*) '0 1 0 RG'
 
-  write(24,*) '0.10 CM SLW'
+  write(24,*) '0.10 CM setlinewidth'
   write(24,*) '% uncomment this when zooming on parts of the mesh'
-  write(24,*) '% 0.02 CM SLW'
+  write(24,*) '% 0.02 CM setlinewidth'
 
   do inum = 1,nelemabs
   ispec = numabs(inum)
@@ -1745,7 +1739,7 @@
   enddo
 
   write(24,*) '0 setgray'
-  write(24,*) '0.01 CM SLW'
+  write(24,*) '0.01 CM setlinewidth'
 
   endif
 
@@ -1759,9 +1753,9 @@
   write(24,*) '% fluid-solid coupling edges in the mesh'
   write(24,*) '%'
 
-  write(24,*) '0.10 CM SLW'
+  write(24,*) '0.10 CM setlinewidth'
   write(24,*) '% uncomment this when zooming on parts of the mesh'
-  write(24,*) '% 0.02 CM SLW'
+  write(24,*) '% 0.02 CM setlinewidth'
 
 ! loop on all the coupling edges
   do inum = 1,num_fluid_solid_edges
@@ -1802,7 +1796,7 @@
   enddo
 
   write(24,*) '0 setgray'
-  write(24,*) '0.01 CM SLW'
+  write(24,*) '0.01 CM setlinewidth'
 
   endif
 
@@ -2054,6 +2048,7 @@
  499 format(f6.2,1x,f6.2,' L')
  500 format(f6.2,1x,f6.2,' M')
  502 format('fN (',i4,') Cshow')
+ 679 format(f12.6,1x,f12.6,1x,f12.6,' RG fill stroke')
  680 format(f12.6,1x,f12.6,1x,f12.6,' RG GF')
  681 format(f6.2,1x,f6.2)
  602 format(f6.2,1x,f6.2,' M ',f6.2,1x,f6.2,' L ST')
