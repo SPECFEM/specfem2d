@@ -1,6 +1,7 @@
 
 ! polynomial degree
   integer, parameter :: NGLLX = 5
+! the code does NOT work if NGLLZ /= NGLLX because it then cannot handle a non-structured mesh
   integer, parameter :: NGLLZ = NGLLX
 
 ! select fast (Paul Fischer) or slow (topology only) global numbering algorithm
@@ -21,10 +22,13 @@
 ! integer, parameter :: IOUT = 41
 
 ! flags for absorbing boundaries
-  integer, parameter :: ITOP = 1
-  integer, parameter :: IBOTTOM = 2
-  integer, parameter :: ILEFT = 3
-  integer, parameter :: IRIGHT = 4
+  integer, parameter :: IBOTTOM = 1
+  integer, parameter :: IRIGHT = 2
+  integer, parameter :: ITOP = 3
+  integer, parameter :: ILEFT = 4
+
+! number of edges of each element
+  integer, parameter :: NEDGES = 4
 
 ! a few useful constants
   double precision, parameter :: ZERO = 0.d0,ONE = 1.d0
@@ -58,18 +62,11 @@
 ! error function source decay rate for Heaviside
   double precision, parameter :: SOURCE_DECAY_RATE = 1.628d0
 
-! display non lineaire pour rehausser les faibles amplitudes sur les images couleur
+! non linear display to enhance small amplitudes in color images
   double precision, parameter :: POWER_DISPLAY_COLOR = 0.30d0
-
-! X and Z scaling du display pour PostScript
-  double precision, parameter :: SCALEX = 1.d0
-  double precision, parameter :: SCALEZ = 1.d0
 
 ! US letter paper or European A4
   logical, parameter :: US_LETTER = .false.
-
-! write symbols on PostScript display
-  logical, parameter :: ISYMBOLS = .true.
 
 ! X and Z axis origin of PostScript plot in centimeters
   double precision, parameter :: ORIG_X = 2.4d0
@@ -79,17 +76,59 @@
   double precision, parameter :: CENTIM = 28.5d0
 
 ! parameters for arrows for PostScript snapshot
-  double precision, parameter :: ANGLE = 20.d0
-  double precision, parameter :: RAPPORT = 0.40d0
+  double precision, parameter :: ARROW_ANGLE = 20.d0
+  double precision, parameter :: ARROW_RATIO = 0.40d0
 
-! ecrire legendes ou non in PostScript display
-  logical, parameter :: LEGENDES = .true.
-
-! limite pour afficher des points a la place des recepteurs
-  integer, parameter :: NDOTS = 30
-
-! taille de la fenetre de display Postscript en pourcentage de la feuille
+! size of frame used for Postscript display in percentage of the size of the page
   double precision, parameter :: RPERCENTX = 70.0d0,RPERCENTZ = 77.0d0
+
+!-----------------------------------------------------------------------
+
+! attenuation constants from J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
+! vol. 58(1), p. 110-120 (1993) for two memory-variable mechanisms (page 112).
+! Beware: these values implement specific values of the quality factors:
+! Qp approximately equal to 13 and Qs approximately equal to 10,
+! which means very high attenuation, see that paper for details.
+! double precision, parameter :: tau_epsilon_nu1_mech1 = 0.0334d0
+! double precision, parameter :: tau_sigma_nu1_mech1   = 0.0303d0
+! double precision, parameter :: tau_epsilon_nu2_mech1 = 0.0352d0
+! double precision, parameter :: tau_sigma_nu2_mech1   = 0.0287d0
+
+! double precision, parameter :: tau_epsilon_nu1_mech2 = 0.0028d0
+! double precision, parameter :: tau_sigma_nu1_mech2   = 0.0025d0
+! double precision, parameter :: tau_epsilon_nu2_mech2 = 0.0029d0
+! double precision, parameter :: tau_sigma_nu2_mech2   = 0.0024d0
+
+! attenuation constants from J. M. Carcione, D. Kosloff and R. Kosloff,
+! Wave propagation simulation in a linear viscoelastic medium, Geophysical Journal International,
+! vol. 95, p. 597-611 (1988) for two memory-variable mechanisms (page 604).
+! Beware: these values implement specific values of the quality factors:
+! Qp approximately equal to 27 and Qs approximately equal to 20,
+! which means very high attenuation, see that paper for details.
+  double precision, parameter :: tau_epsilon_nu1_mech1 = 0.0325305d0
+  double precision, parameter :: tau_sigma_nu1_mech1   = 0.0311465d0
+  double precision, parameter :: tau_epsilon_nu2_mech1 = 0.0332577d0
+  double precision, parameter :: tau_sigma_nu2_mech1   = 0.0304655d0
+
+  double precision, parameter :: tau_epsilon_nu1_mech2 = 0.0032530d0
+  double precision, parameter :: tau_sigma_nu1_mech2   = 0.0031146d0
+  double precision, parameter :: tau_epsilon_nu2_mech2 = 0.0033257d0
+  double precision, parameter :: tau_sigma_nu2_mech2   = 0.0030465d0
+
+  double precision, parameter :: inv_tau_sigma_nu1_mech1 = ONE / tau_sigma_nu1_mech1
+  double precision, parameter :: inv_tau_sigma_nu2_mech1 = ONE / tau_sigma_nu2_mech1
+  double precision, parameter :: inv_tau_sigma_nu1_mech2 = ONE / tau_sigma_nu1_mech2
+  double precision, parameter :: inv_tau_sigma_nu2_mech2 = ONE / tau_sigma_nu2_mech2
+
+  double precision, parameter :: phi_nu1_mech1 = (ONE - tau_epsilon_nu1_mech1/tau_sigma_nu1_mech1) / tau_sigma_nu1_mech1
+  double precision, parameter :: phi_nu2_mech1 = (ONE - tau_epsilon_nu2_mech1/tau_sigma_nu2_mech1) / tau_sigma_nu2_mech1
+  double precision, parameter :: phi_nu1_mech2 = (ONE - tau_epsilon_nu1_mech2/tau_sigma_nu1_mech2) / tau_sigma_nu1_mech2
+  double precision, parameter :: phi_nu2_mech2 = (ONE - tau_epsilon_nu2_mech2/tau_sigma_nu2_mech2) / tau_sigma_nu2_mech2
+
+  double precision, parameter :: Mu_nu1 = ONE - (ONE - tau_epsilon_nu1_mech1/tau_sigma_nu1_mech1) &
+                                              - (ONE - tau_epsilon_nu1_mech2/tau_sigma_nu1_mech2)
+  double precision, parameter :: Mu_nu2 = ONE - (ONE - tau_epsilon_nu2_mech1/tau_sigma_nu2_mech1) &
+                                              - (ONE - tau_epsilon_nu2_mech2/tau_sigma_nu2_mech2)
 
 !-----------------------------------------------------------------------
 
