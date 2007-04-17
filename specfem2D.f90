@@ -1110,7 +1110,7 @@
     print *
     print *,'Mixed acoustic/elastic simulation'
     print *
-    print *,'Beginning of fluid/solid edge detection'
+    print *,'Beginning of fluid/solid edge detection (slow algorithm for now, will be improved later)'
 
 ! define the edges of a given element
     i_begin(IBOTTOM) = 1
