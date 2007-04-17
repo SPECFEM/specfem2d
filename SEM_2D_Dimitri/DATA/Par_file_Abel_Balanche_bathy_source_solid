@@ -1,12 +1,12 @@
 
 # title of job, and file that contains interface data
-title                           = Test for M2 UPPA
-interfacesfile                  = interfaces_M2_UPPA_curved.dat
+title                           = Test for Abel Balanche UMR 6538 Brest
+interfacesfile                  = interfaces_Abel_Brest_bathymetry.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
-xmax                            = 4000.d0        # abscissa of right side of the model
-nx                              = 80             # number of elements along X
+xmax                            = 10000.d0        # abscissa of right side of the model
+nx                              = 134             # number of elements along X
 ngnod                           = 9              # number of control nodes per element (4 or 9)
 initialfield                    = .false.        # use a plane wave as source or not
 assign_external_model           = .false.        # define external earth model or not
@@ -20,13 +20,13 @@ absorbtop                       = .false.
 absorbleft                      = .true.
 
 # time step parameters
-nt                              = 1600           # total number of time steps
+nt                              = 3000           # total number of time steps
 deltat                          = 1.d-3          # duration of a time step
 
 # source parameters
 source_surf                     = .false.        # source inside the medium or at the surface
-xs                              = 2000.          # source location x in meters
-zs                              = 1600.          # source location z in meters
+xs                              = 4000.          # source location x in meters
+zs                              = -7000.          # source location z in meters
 source_type                     = 1              # elastic force or acoustic pressure = 1 or moment tensor = 2
 time_function_type              = 1              # Ricker = 1, first derivative = 2, Gaussian = 3, Dirac = 4, Heaviside = 5
 f0                              = 8.0           # dominant source frequency (Hz) if not Dirac or Heaviside
@@ -37,20 +37,28 @@ Mxz                             = 0.             # Mxz component (for a moment t
 factor                          = 1.d10          # amplification factor
 
 # receiver line parameters for seismograms
-seismotype                      = 1              # record 1=displ 2=veloc 3=accel 4=pressure
-nreceiverlines                  = 1              # number of receiver lines
+seismotype                      = 4              # record 1=displ 2=veloc 3=accel 4=pressure
+nreceiverlines                  = 2              # number of receiver lines
 anglerec                        = 0.d0           # angle to rotate components at receivers
 
-# first receiver line
+# first receiver line (in the ocean)
 nrec                            = 11             # number of receivers
-xdeb                            = 300.           # first receiver x in meters
-zdeb                            = 2200.          # first receiver z in meters
-xfin                            = 3700.          # last receiver x in meters (ignored if onlyone receiver)
-zfin                            = 2200.          # last receiver z in meters (ignored if onlyone receiver)
-enreg_surf                      = .true.         # receivers inside the medium or at the surface
+xdeb                            = 2000.           # first receiver x in meters
+zdeb                            = -2000.          # first receiver z in meters
+xfin                            = 8000.          # last receiver x in meters (ignored if onlyone receiver)
+zfin                            = -2000.          # last receiver z in meters (ignored if onlyone receiver)
+enreg_surf                      = .false.         # receivers inside the medium or at the surface
+
+# second receiver line (in the solid)
+nrec                            = 11             # number of receivers
+xdeb                            = 2000.           # first receiver x in meters
+zdeb                            = -4500.          # first receiver z in meters
+xfin                            = 8000.          # last receiver x in meters (ignored if onlyone receiver)
+zfin                            = -4500.          # last receiver z in meters (ignored if onlyone receiver)
+enreg_surf                      = .false.         # receivers inside the medium or at the surface
 
 # display parameters
-NTSTEP_BETWEEN_OUTPUT_INFO      = 100            # display frequency in time steps
+NTSTEP_BETWEEN_OUTPUT_INFO      = 300            # display frequency in time steps
 output_postscript_snapshot      = .true.         # output Postscript snapshot of the results
 output_color_image              = .true.         # output color image of the results
 imagetype                       = 1              # display 1=displ 2=veloc 3=accel 4=pressure
@@ -66,17 +74,13 @@ gnuplot                         = .false.        # generate a GNUPLOT file for t
 outputgrid                      = .false.        # save the grid in a text file or not
 
 # velocity and density models
-nbmodels                        = 4              # nb of different models
+nbmodels                        = 2              # nb of different models
 # define models as (model_number,1,rho,vp,vs,0,0) or (model_number,2,rho,c11,c13,c33,c44)
 # set vs to zero to make a given model acoustic
 # the mesh can contain both acoustic and elastic models simultaneously
-1 1 2700.d0 3000.d0 1732.051d0 0 0
-2 1 2500.d0 2700.d0 0 0 0 #1558.89d0  0 0
-3 1 2200.d0 2500.d0 1443.375d0 0 0
-4 1 2200.d0 2200.d0 1343.375d0 0 0
+1 1 1020 1500 0 0 0
+2 1 2500 5500 3175.5196 0 0
 # define the different regions of the model in the (nx,nz) spectral element mesh
-nbregions                       = 4              # nb of regions and model number for each
-1 80  1 20 1
-1 80 21 40 2
-1 80 41 60 3
-60 70 21 40 4
+nbregions                       = 2              # nb of regions and model number for each
+1 134  1 44 2
+1 134 45 84 1
