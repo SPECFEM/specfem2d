@@ -1,13 +1,13 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.1
+!                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
 !                         Dimitri Komatitsch
-!          Universite de Pau et des Pays de l'Adour, France
+!                     University of Pau, France
 !
-!                          (c) January 2005
+!                          (c) April 2007
 !
 !========================================================================
 
@@ -28,7 +28,7 @@
 
   logical alreadyexist
 
-  integer ngnoddeb(4),ngnodfin(4)
+  integer, dimension(NEDGES) :: ngnod_begin,ngnod_end
 
 !----  create global mesh numbering
   write(IOUT,*)
@@ -39,23 +39,23 @@
   npedge = 0
   npcorn = 0
 
-! definition des aretes par rapport aux quatre points de controle
+! define edges from the four control points
 
-! --- arete 1 relie point 1 a point 2
-  ngnoddeb(1)= 1
-  ngnodfin(1)= 2
+! --- edge 1 linking point 1 to point 2
+  ngnod_begin(1)= 1
+  ngnod_end(1)= 2
 
-! --- arete 2 relie point 2 a point 3
-  ngnoddeb(2)= 2
-  ngnodfin(2)= 3
+! --- edge 2 linking point 2 to point 3
+  ngnod_begin(2)= 2
+  ngnod_end(2)= 3
 
-! --- arete 3 relie point 3 a point 4
-  ngnoddeb(3)= 3
-  ngnodfin(3)= 4
+! --- edge 3 linking point 3 to point 4
+  ngnod_begin(3)= 3
+  ngnod_end(3)= 4
 
-! --- arete 4 relie point 4 a point 1
-  ngnoddeb(4)= 4
-  ngnodfin(4)= 1
+! --- edge 4 linking point 4 to point 1
+  ngnod_begin(4)= 4
+  ngnod_end(4)= 1
 
 ! initialisation du tableau de numerotation globale
   ibool(:,:,:) = 0
@@ -175,16 +175,16 @@
 
 !--- detecter un eventuel defaut dans la structure topologique du maillage
 
-  if((knods(ngnoddeb(nedgeother),num2) == knods(ngnoddeb(nedgeloc),numelem)) &
+  if((knods(ngnod_begin(nedgeother),num2) == knods(ngnod_begin(nedgeloc),numelem)) &
        .and. &
-    (knods(ngnodfin(nedgeother),num2) == knods(ngnodfin(nedgeloc),numelem))) then
+    (knods(ngnod_end(nedgeother),num2) == knods(ngnod_end(nedgeloc),numelem))) then
   stop 'Improper topology of the input mesh detected'
 
 !--- sinon voir si cette arete a deja ete generee
 
-  else if((knods(ngnoddeb(nedgeother),num2) == knods(ngnodfin(nedgeloc),numelem)) &
+  else if((knods(ngnod_begin(nedgeother),num2) == knods(ngnod_end(nedgeloc),numelem)) &
        .and. &
-    (knods(ngnodfin(nedgeother),num2) == knods(ngnoddeb(nedgeloc),numelem))) then
+    (knods(ngnod_end(nedgeother),num2) == knods(ngnod_begin(nedgeloc),numelem))) then
 
         alreadyexist = .true.
 

@@ -1,37 +1,37 @@
 #
-# Makefile for SPECFEM2D version 5.1
+# Makefile for SPECFEM2D version 5.2
 #
-# Dimitri Komatitsch, Universite de Pau et des Pays de l'Adour, December 2004
+# Dimitri Komatitsch, University of Pau, April 2007
 # 
 SHELL=/bin/sh
 
 O = obj
 
-# Portland Linux
+# Portland
 #F90 = pgf90
-#FLAGS_NOCHECK=-fast -Mnobounds -Minline -Mneginfo -Mdclchk
-#FLAGS_CHECK=-O0 -Mbounds -Mneginfo -Mdclchk
+#FLAGS_NOCHECK=-fast -Mnobounds -Minline -Mneginfo -Mdclchk -Knoieee -Minform=warn -fastsse -tp amd64e -Msmart
+#FLAGS_CHECK=-fast -Mbounds -Mneginfo -Mdclchk -Minform=warn
 
-# Intel Linux
-F90 = ifort
-#FLAGS_NOCHECK=-O0 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check bounds
-FLAGS_NOCHECK=-O3 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check nobounds
-FLAGS_CHECK = $(FLAGS_NOCHECK) -check bounds
+# Intel
+#F90 = ifort
+#FLAGS_NOCHECK=-O3 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check nobounds
+#FLAGS_CHECK = $(FLAGS_NOCHECK) -check bounds
 
 # GNU gfortran
-#F90 = gfortran
-#FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow
-#FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
+F90 = gfortran
+FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow
+FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
 
 LINK = $(F90)
 
 OBJS_MESHFEM2D = $O/meshfem2D.o $O/read_value_parameters.o
 
-OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/defarrays.o\
+OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/enforce_acoustic_free_surface.o\
+        $O/compute_forces_acoustic.o $O/compute_forces_elastic.o\
         $O/lagrange_poly.o $O/gmat01.o $O/gll_library.o $O/plotgll.o $O/define_derivation_matrices.o\
         $O/plotpost.o $O/locate_receivers.o $O/locate_source_force.o $O/compute_gradient_attenuation.o\
-        $O/specfem2D.o $O/write_seismograms.o $O/createnum_fast.o $O/createnum_slow.o\
-        $O/define_shape_functions.o $O/create_color_image.o $O/compute_gradient_fluid.o\
+        $O/specfem2D.o $O/write_seismograms.o $O/define_external_model.o $O/createnum_fast.o $O/createnum_slow.o\
+        $O/define_shape_functions.o $O/create_color_image.o $O/compute_vector_field.o $O/compute_pressure.o\
         $O/recompute_jacobian.o $O/compute_arrays_source.o $O/locate_source_moment_tensor.o $O/numerical_recipes.o
 
 default: clean meshfem2D specfem2D convolve_source_timefunction
@@ -39,7 +39,7 @@ default: clean meshfem2D specfem2D convolve_source_timefunction
 all: default
 
 clean:
-	/bin/rm -r -f xmeshfem2D xmeshfem2D.trace xspecfem2D xspecfem2D.trace $O/*.o *.o $O/*.il *.mod core *.gnu *.ps Ux*.bin Uz*.bin image*.pnm xconvolve_source_timefunction *receiver_line_* plotgnu source.txt *.sem* xcreate_earth_model
+	/bin/rm -r -f xmeshfem2D xmeshfem2D.trace xspecfem2D xspecfem2D.trace $O/*.o *.o $O/*.il *.mod core xconvolve_source_timefunction
 
 meshfem2D: $(OBJS_MESHFEM2D)
 	$(LINK) $(FLAGS_CHECK) -o xmeshfem2D $(OBJS_MESHFEM2D)
@@ -50,9 +50,6 @@ specfem2D: $(OBJS_SPECFEM2D)
 
 convolve_source_timefunction: $O/convolve_source_timefunction.o
 	${F90} $(FLAGS_CHECK) -o xconvolve_source_timefunction $O/convolve_source_timefunction.o
-
-create_earth_model: $O/create_earth_model.o
-	${F90} $(FLAGS_CHECK) -o xcreate_earth_model $O/create_earth_model.o
 
 $O/checkgrid.o: checkgrid.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/checkgrid.o checkgrid.f90
@@ -69,17 +66,11 @@ $O/createnum_slow.o: createnum_slow.f90 constants.h
 $O/convolve_source_timefunction.o: convolve_source_timefunction.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/convolve_source_timefunction.o convolve_source_timefunction.f90
 
-$O/create_earth_model.o: create_earth_model.f90
-	${F90} $(FLAGS_CHECK) -c -o $O/create_earth_model.o create_earth_model.f90
-
 $O/read_value_parameters.o: read_value_parameters.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/read_value_parameters.o read_value_parameters.f90
 
 $O/datim.o: datim.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/datim.o datim.f90
-    
-$O/defarrays.o: defarrays.f90 constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/defarrays.o defarrays.f90
     
 $O/lagrange_poly.o: lagrange_poly.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/lagrange_poly.o lagrange_poly.f90
@@ -118,11 +109,27 @@ $O/define_shape_functions.o: define_shape_functions.f90 constants.h
 $O/specfem2D.o: specfem2D.f90 constants.h
 	${F90} $(FLAGS_NOCHECK) -c -o $O/specfem2D.o specfem2D.f90
     
-$O/compute_gradient_attenuation.o: compute_gradient_attenuation.f90 constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/compute_gradient_attenuation.o compute_gradient_attenuation.f90
+### use optimized compilation option for solver only
+$O/enforce_acoustic_free_surface.o: enforce_acoustic_free_surface.f90 constants.h
+	${F90} $(FLAGS_NOCHECK) -c -o $O/enforce_acoustic_free_surface.o enforce_acoustic_free_surface.f90
     
-$O/compute_gradient_fluid.o: compute_gradient_fluid.f90 constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/compute_gradient_fluid.o compute_gradient_fluid.f90
+### use optimized compilation option for solver only
+$O/compute_forces_acoustic.o: compute_forces_acoustic.f90 constants.h
+	${F90} $(FLAGS_NOCHECK) -c -o $O/compute_forces_acoustic.o compute_forces_acoustic.f90
+    
+### use optimized compilation option for solver only
+$O/compute_forces_elastic.o: compute_forces_elastic.f90 constants.h
+	${F90} $(FLAGS_NOCHECK) -c -o $O/compute_forces_elastic.o compute_forces_elastic.f90
+    
+### use optimized compilation option for solver only
+$O/compute_gradient_attenuation.o: compute_gradient_attenuation.f90 constants.h
+	${F90} $(FLAGS_NOCHECK) -c -o $O/compute_gradient_attenuation.o compute_gradient_attenuation.f90
+    
+$O/compute_vector_field.o: compute_vector_field.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/compute_vector_field.o compute_vector_field.f90
+    
+$O/compute_pressure.o: compute_pressure.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/compute_pressure.o compute_pressure.f90
     
 $O/compute_arrays_source.o: compute_arrays_source.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/compute_arrays_source.o compute_arrays_source.f90
@@ -132,6 +139,9 @@ $O/create_color_image.o: create_color_image.f90 constants.h
     
 $O/numerical_recipes.o: numerical_recipes.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/numerical_recipes.o numerical_recipes.f90
+    
+$O/define_external_model.o: define_external_model.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/define_external_model.o define_external_model.f90
     
 $O/write_seismograms.o: write_seismograms.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/write_seismograms.o write_seismograms.f90

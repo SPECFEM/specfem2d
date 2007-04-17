@@ -1,25 +1,26 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.1
+!                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
 !                         Dimitri Komatitsch
-!          Universite de Pau et des Pays de l'Adour, France
+!                     University of Pau, France
 !
-!                          (c) January 2005
+!                          (c) April 2007
 !
 !========================================================================
 
   subroutine plotpost(displ,coord,vpext,x_source,z_source,st_xval,st_zval,it,dt,coorg, &
           xinterp,zinterp,shapeint,Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
-          numabs,codeabs,anyabs,stitle,npoin,npgeo,vpmin,vpmax,nrec, &
-          colors,numbers,subsamp,vecttype,interpol,meshvect,modelvect, &
-          boundvect,read_external_model,cutvect,sizemax_arrows,nelemabs,numat,pointsdisp,nspec,ngnod,ELASTIC, &
-          plot_lowerleft_corner_only)
+          numabs,codeabs,anyabs,simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
+          colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
+          boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
+          nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
+          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges)
 
 !
-! routine affichage postscript
+! PostScript display routine
 !
 
   implicit none
@@ -45,37 +46,45 @@
 
   double precision dt,timeval,x_source,z_source
   double precision displ(NDIM,npoin),coord(NDIM,npoin)
-  double precision vpext(npoin)
+  double precision vpext(NGLLX,NGLLZ,nspec)
 
   double precision coorg(NDIM,npgeo)
   double precision, dimension(nrec) :: st_xval,st_zval
 
   integer numabs(nelemabs),codeabs(4,nelemabs)
-  logical anyabs,ELASTIC,plot_lowerleft_corner_only
+  logical anyabs,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only
+
+! for fluid/solid edge detection
+  integer :: num_fluid_solid_edges
+  integer, dimension(num_fluid_solid_edges) :: fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge
 
   double precision xmax,zmax,height,xw,zw,usoffset,sizex,sizez,vpmin,vpmax
 
-  character(len=100) name
-  character ch1(100),ch2(100)
-  equivalence (name,ch1)
-  logical first
+! for the file name
+  character(len=100) :: file_name
+
+! to suppress useless white spaces in postscript lines
+  character(len=100) :: postscript_line
+  character(len=1), dimension(100) :: ch1,ch2
+  equivalence (postscript_line,ch1)
+  logical :: first
 
   double precision convert,x1,rlamda,rmu,denst,rKvol,cploc,xa,za,xb,zb
   double precision z1,x2,z2,d,d1,d2,dummy,theta,thetaup,thetadown
 
-  integer k,j,ispec,material,is,ir,imat,icol,l,longueur
-  integer indice,ii,ipoin,in,nnum,ispecabs,ideb,ifin,ibord
+  integer k,j,ispec,material,is,ir,imat,icol,l,line_length
+  integer index_char,ii,ipoin,in,nnum,inum,ideb,ifin,iedge
 
-  integer colors,numbers,subsamp,vecttype
-  logical interpol,meshvect,modelvect,boundvect,read_external_model
-  double precision cutvect,sizemax_arrows
+  integer colors,numbers,subsamp,imagetype
+  logical interpol,meshvect,modelvect,boundvect,assign_external_model
+  double precision cutsnaps,sizemax_arrows
 
-  double precision rapp_page,dispmax,xmin,zmin
+  double precision ratio_page,dispmax,xmin,zmin
 
 ! title of the plot
-  character(len=60) stitle
+  character(len=60) simulation_title
 
-! papier A4 ou US letter
+! A4 or US letter paper
   if(US_LETTER) then
     usoffset = 1.75d0
     sizex = 27.94d0
@@ -85,6 +94,9 @@
     sizex = 29.7d0
     sizez = 21.d0
   endif
+
+! height of domain numbers in centimeters
+  height = 0.25d0
 
 ! define color palette in random order
 
@@ -98,10 +110,10 @@
   green(2) = 0.525490196078431
   blue(2) = 0.933333333333333
 
-! Bisque3
-  red(3) = 0.803921568627451
-  green(3) = 0.717647058823529
-  blue(3) = 0.619607843137255
+! gold
+  red(3) = 1.00000000000000
+  green(3) = 0.840000000000000
+  blue(3) = 0.000000000000000E+000
 
 ! springgreen
   red(4) = 0.000000000000000E+000
@@ -138,10 +150,10 @@
   green(10) = 0.509803921568627
   blue(10) = 0.705882352941177
 
-! gold
-  red(11) = 1.00000000000000
-  green(11) = 0.840000000000000
-  blue(11) = 0.000000000000000E+000
+! Bisque3
+  red(11) = 0.803921568627451
+  green(11) = 0.717647058823529
+  blue(11) = 0.619607843137255
 
 ! Salmon
   red(12) = 0.980392156862745
@@ -1276,26 +1288,23 @@
   write(IOUT,*) 'X min, max = ',xmin,xmax
   write(IOUT,*) 'Z min, max = ',zmin,zmax
 
-! rapport taille page/taille domaine physique
-  rapp_page = min(rpercentz*sizez/(zmax-zmin),rpercentx*sizex/(xmax-xmin)) / 100.d0
+! ratio of physical page size/size of the domain meshed
+  ratio_page = min(rpercentz*sizez/(zmax-zmin),rpercentx*sizex/(xmax-xmin)) / 100.d0
 
-! recherche de la valeur maximum de la norme du deplacement
+! compute the maximum of the norm of the vector
   dispmax = maxval(sqrt(displ(1,:)**2 + displ(2,:)**2))
   write(IOUT,*) 'Max norm = ',dispmax
 
-! hauteur des numeros de domaine en CM
-  height = 0.25d0
+!
+!---- open PostScript file
+!
+  write(file_name,"('OUTPUT_FILES/vect',i6.6,'.ps')") it
+  open(unit=24,file=file_name,status='unknown')
 
 !
-!---- ouverture du fichier PostScript
+!---- write PostScript header
 !
-  write(name,"('OUTPUT_FILES/vect',i6.6,'.ps')") it
-  open(unit=24,file=name,status='unknown')
-
-!
-!---- ecriture de l'entete du fichier PostScript
-!
-  write(24,10) stitle
+  write(24,10) simulation_title
   write(24,*) '/CM {28.5 mul} def'
   write(24,*) '/LR {rlineto} def'
   write(24,*) '/LT {lineto} def'
@@ -1316,7 +1325,7 @@
   write(24,*) '/GR {grestore} def'
   write(24,*) '/SLW {setlinewidth} def'
   write(24,*) '/SCSF {scalefont setfont} def'
-  write(24,*) '% differents symboles utiles'
+  write(24,*) '% different useful symbols'
   write(24,*) '/Point {2 0 360 arc CP 0 setgray fill} def'
   write(24,*) '/VDot {-0.75 -1.5 MR 1.5 0 LR 0 3. LR -1.5 0 LR'
   write(24,*) 'CP fill} def'
@@ -1327,33 +1336,33 @@
   write(24,*) 'GS 3 -3 MR -6. 6. LR ST GR'
   write(24,*) '0.01 CM SLW} def'
   write(24,*) '/SmallLine {MV 0.07 CM 0 rlineto} def'
-  write(24,*) '/Losange {GS 0.05 CM SLW 0 4.2 MR'
+  write(24,*) '/Diamond {GS 0.05 CM SLW 0 4.2 MR'
   write(24,*) '-3 -4.2 LR 3 -4.2 LR 3 4.2 LR CP ST'
   write(24,*) 'GR 0.01 CM SLW} def'
   write(24,*) '%'
-  write(24,*) '% niveaux de gris pour le modele de vitesse'
+  write(24,*) '% gray levels for the velocity model'
   write(24,*) '/BK {setgray fill} def'
-  write(24,*) '% version noir et blanc'
+  write(24,*) '% black and white version'
   write(24,*) '%/BK {pop 1 setgray fill} def'
   write(24,*) '%'
-  write(24,*) '% magenta pour les vecteurs deplacement'
+  write(24,*) '% magenta for vectors'
   write(24,*) '/Colvects {0.01 CM SLW 1. 0. 1. RG} def'
-  write(24,*) '% version noir et blanc'
+  write(24,*) '% black and white version'
   write(24,*) '%/Colvects {0.01 CM SLW 0. setgray} def'
   write(24,*) '%'
-  write(24,*) '% chartreuse pour le maillage des macroblocs'
+  write(24,*) '% chartreuse for macrobloc mesh'
   write(24,*) '/Colmesh {0.02 CM SLW 0.5 1. 0. RG} def'
-  write(24,*) '% version noir et blanc'
+  write(24,*) '% black and white version'
   write(24,*) '%/Colmesh {0.02 CM SLW 0. setgray} def'
   write(24,*) '%'
-  write(24,*) '% cyan pour les sources et recepteurs'
+  write(24,*) '% cyan for sources and receivers'
   write(24,*) '/Colreceiv {0. 1. 1. RG} def'
-  write(24,*) '% version noir et blanc'
+  write(24,*) '% black and white version'
   write(24,*) '%/Colreceiv {0. setgray} def'
   write(24,*) '%'
-  write(24,*) '% macro dessin fleche'
+  write(24,*) '% macro to draw an arrow'
   write(24,*) '/F {MV LR gsave LR ST grestore LR ST} def'
-  write(24,*) '% macro dessin contour elements'
+  write(24,*) '% macro to draw the contour of the elements'
   write(24,*) '/CO {M counttomark 2 idiv {L} repeat cleartomark CP} def'
   write(24,*) '%'
   write(24,*) '.01 CM SLW'
@@ -1369,16 +1378,18 @@
   write(24,*) '%'
   write(24,*) 'gsave newpath 90 rotate'
   write(24,*) '0 ',-sizez,' CM translate 1. 1. scale'
+  write(24,*) '% uncomment this to zoom on parts of the mesh'
+  write(24,*) '% -32 CM -21 CM translate 3. 3. scale'
+  write(24,*) '% -52 CM -24 CM translate 4. 4. scale'
   write(24,*) '%'
 
 !
-!--- ecriture des legendes du fichier PostScript
+!--- write captions of PostScript figure
 !
   write(24,*) '0 setgray'
   write(24,*) '/Times-Roman findfont'
   write(24,*) '.5 CM SCSF'
 
-  if(legendes) then
   write(24,*) '24. CM 1.2 CM MV'
   write(24,610) usoffset,it
   write(24,*) '%'
@@ -1395,7 +1406,7 @@
   write(24,640) usoffset,dispmax
   write(24,*) '%'
   write(24,*) '24. CM 3.45 CM MV'
-  write(24,620) usoffset,cutvect*100.d0
+  write(24,620) usoffset,cutsnaps*100.d0
 
   write(24,*) '%'
   write(24,*) '/Times-Roman findfont'
@@ -1415,11 +1426,11 @@
   write(24,*) '24.35 CM 18.9 CM MV'
   write(24,*) usoffset,' CM 2 div neg 0 MR'
   write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  if(vecttype == 1) then
+  if(imagetype == 1) then
     write(24,*) '(Displacement vector field) show'
-  else if(vecttype == 2) then
+  else if(imagetype == 2) then
     write(24,*) '(Velocity vector field) show'
-  else if(vecttype == 3) then
+  else if(imagetype == 3) then
     write(24,*) '(Acceleration vector field) show'
   else
     stop 'Bad field code in PostScript display'
@@ -1428,24 +1439,24 @@
   write(24,*) '25.35 CM 18.9 CM MV'
   write(24,*) usoffset,' CM 2 div neg 0 MR'
   write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  write(24,*) '(',stitle,') show'
+  write(24,*) '(',simulation_title,') show'
   write(24,*) 'grestore'
   write(24,*) '26.45 CM 18.9 CM MV'
   write(24,*) usoffset,' CM 2 div neg 0 MR'
   write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
 
-  if(ELASTIC) then
-    write(24,*) '(Elastic Wave 2D - Spectral Element Method) show'
-  else
+  if(coupled_acoustic_elastic) then
+    write(24,*) '(Coupled Acoustic/Elastic Wave 2D - SEM) show'
+  else if(any_acoustic) then
     write(24,*) '(Acoustic Wave 2D - Spectral Element Method) show'
+  else
+    write(24,*) '(Elastic Wave 2D - Spectral Element Method) show'
   endif
 
   write(24,*) 'grestore'
 
-  endif
-
   write(24,*) '%'
-  write(24,*) scalex,' ',scalez,' scale'
+  write(24,*) '1 1 scale'
   write(24,*) '%'
 
 !
@@ -1454,7 +1465,7 @@
 
   write(IOUT,*) 'Shape functions based on ',ngnod,' control nodes'
 
-  convert = pi/180.d0
+  convert = PI / 180.d0
 
 !
 !----  draw the velocity model in background
@@ -1466,8 +1477,8 @@
           do j=1,NGLLX-subsamp,subsamp
 
   if((vpmax-vpmin)/vpmin > 0.02d0) then
-  if(read_external_model) then
-    x1 = (vpext(ibool(i,j,ispec))-vpmin)/ (vpmax-vpmin)
+  if(assign_external_model) then
+    x1 = (vpext(i,j,ispec)-vpmin) / (vpmax-vpmin)
   else
     material = kmato(ispec)
     rlamda = elastcoef(1,material)
@@ -1481,44 +1492,46 @@
     x1 = 0.5d0
   endif
 
-! rescaler pour eviter gris trop sombre
+! rescale to avoid very dark gray levels
   x1 = x1*0.7 + 0.2
   if(x1 > 1.d0) x1=1.d0
 
-! inverser echelle : blanc = vpmin, gris = vpmax
+! invert scale: white = vpmin, dark gray = vpmax
   x1 = 1.d0 - x1
 
   xw = coord(1,ibool(i,j,ispec))
   zw = coord(2,ibool(i,j,ispec))
-  xw = (xw-xmin)*rapp_page + orig_x
-  zw = (zw-zmin)*rapp_page + orig_z
+  xw = (xw-xmin)*ratio_page + orig_x
+  zw = (zw-zmin)*ratio_page + orig_z
   xw = xw * centim
   zw = zw * centim
   write(24,500) xw,zw
 
   xw = coord(1,ibool(i+subsamp,j,ispec))
   zw = coord(2,ibool(i+subsamp,j,ispec))
-  xw = (xw-xmin)*rapp_page + orig_x
-  zw = (zw-zmin)*rapp_page + orig_z
+  xw = (xw-xmin)*ratio_page + orig_x
+  zw = (zw-zmin)*ratio_page + orig_z
   xw = xw * centim
   zw = zw * centim
   write(24,499) xw,zw
 
   xw = coord(1,ibool(i+subsamp,j+subsamp,ispec))
   zw = coord(2,ibool(i+subsamp,j+subsamp,ispec))
-  xw = (xw-xmin)*rapp_page + orig_x
-  zw = (zw-zmin)*rapp_page + orig_z
+  xw = (xw-xmin)*ratio_page + orig_x
+  zw = (zw-zmin)*ratio_page + orig_z
   xw = xw * centim
   zw = zw * centim
   write(24,499) xw,zw
 
   xw = coord(1,ibool(i,j+subsamp,ispec))
   zw = coord(2,ibool(i,j+subsamp,ispec))
-  xw = (xw-xmin)*rapp_page + orig_x
-  zw = (zw-zmin)*rapp_page + orig_z
+  xw = (xw-xmin)*ratio_page + orig_x
+  zw = (zw-zmin)*ratio_page + orig_z
   xw = xw * centim
   zw = zw * centim
   write(24,499) xw,zw
+
+! display P-velocity model using gray levels
   write(24,604) x1
 
           enddo
@@ -1528,9 +1541,8 @@
   endif
 
 !
-!---- draw spectral element mesh
+!---- draw the spectral element mesh
 !
-
   if(meshvect) then
 
   write(24,*) '%'
@@ -1555,8 +1567,8 @@
 
   is = 1
   ir = 1
-  x1 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
-  z1 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
+  x1 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z1 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x1 = x1 * centim
   z1 = z1 * centim
   write(24,*) 'MK'
@@ -1564,45 +1576,45 @@
 
   if(ngnod == 4) then
 
-! tracer des droites si elements 4 noeuds
+! draw straight lines if elements have 4 nodes
 
   ir=pointsdisp
-  x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x2 = x2 * centim
   z2 = z2 * centim
   write(24,681) x2,z2
 
   ir=pointsdisp
   is=pointsdisp
-  x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x2 = x2 * centim
   z2 = z2 * centim
   write(24,681) x2,z2
 
   is=pointsdisp
   ir=1
-  x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x2 = x2 * centim
   z2 = z2 * centim
   write(24,681) x2,z2
 
   ir=1
   is=2
-  x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x2 = x2 * centim
   z2 = z2 * centim
   write(24,681) x2,z2
 
   else
 
-! tracer des courbes si elements 9 noeuds
+! draw curved lines if elements have 9 nodes
   do ir=2,pointsdisp
-    x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
-    z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
+    x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+    z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
     x2 = x2 * centim
     z2 = z2 * centim
     write(24,681) x2,z2
@@ -1610,8 +1622,8 @@
 
   ir=pointsdisp
   do is=2,pointsdisp
-    x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
-    z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
+    x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+    z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
     x2 = x2 * centim
     z2 = z2 * centim
     write(24,681) x2,z2
@@ -1619,8 +1631,8 @@
 
   is=pointsdisp
   do ir=pointsdisp-1,1,-1
-    x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
-    z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
+    x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+    z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
     x2 = x2 * centim
     z2 = z2 * centim
     write(24,681) x2,z2
@@ -1628,8 +1640,8 @@
 
   ir=1
   do is=pointsdisp-1,2,-1
-    x2 = (xinterp(ir,is)-xmin)*rapp_page + orig_x
-    z2 = (zinterp(ir,is)-zmin)*rapp_page + orig_z
+    x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+    z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
     x2 = x2 * centim
     z2 = z2 * centim
     write(24,681) x2,z2
@@ -1658,19 +1670,17 @@
 ! write the element number, the group number and the material number inside the element
   if(numbers == 1) then
 
-  xw = (coorg(1,knods(1,ispec)) + coorg(1,knods(2,ispec)) + &
-          coorg(1,knods(3,ispec)) + coorg(1,knods(4,ispec))) / 4.d0
-  zw = (coorg(2,knods(1,ispec)) + coorg(2,knods(2,ispec)) + &
-          coorg(2,knods(3,ispec)) + coorg(2,knods(4,ispec))) / 4.d0
-  xw = (xw-xmin)*rapp_page + orig_x
-  zw = (zw-zmin)*rapp_page + orig_z
+  xw = (coorg(1,knods(1,ispec)) + coorg(1,knods(2,ispec)) + coorg(1,knods(3,ispec)) + coorg(1,knods(4,ispec))) / 4.d0
+  zw = (coorg(2,knods(1,ispec)) + coorg(2,knods(2,ispec)) + coorg(2,knods(3,ispec)) + coorg(2,knods(4,ispec))) / 4.d0
+  xw = (xw-xmin)*ratio_page + orig_x
+  zw = (zw-zmin)*ratio_page + orig_z
   xw = xw * centim
   zw = zw * centim
   if(colors == 1) write(24,*) '1 setgray'
 
   write(24,500) xw,zw
 
-!--- ecriture numero de l'element
+! write spectral element number
   write(24,502) ispec
 
   endif
@@ -1680,7 +1690,7 @@
   endif
 
 !
-!----  draw the boundary conditions
+!--- draw absorbing boundaries with a thick color line
 !
 
   if(anyabs .and. boundvect) then
@@ -1689,49 +1699,40 @@
   write(24,*) '% boundary conditions on the mesh'
   write(24,*) '%'
 
-  write(24,*) '0.05 CM SLW'
+! use green color
+  write(24,*) '0 1 0 RG'
 
-!--- bords absorbants
+  write(24,*) '0.10 CM SLW'
+  write(24,*) '% uncomment this when zooming on parts of the mesh'
+  write(24,*) '% 0.02 CM SLW'
 
-  if(anyabs) then
+  do inum = 1,nelemabs
+  ispec = numabs(inum)
 
-  do ispecabs = 1,nelemabs
-  ispec = numabs(ispecabs)
+  do iedge = 1,4
 
-!--- une couleur pour chaque condition absorbante
-!--- bord absorbant de type "haut"   : orange
-!--- bord absorbant de type "bas"    : vert clair
-!--- bord absorbant de type "gauche" : rose clair
-!--- bord absorbant de type "droite" : turquoise
+  if(codeabs(iedge,inum) /= 0) then
 
-  do ibord = 1,4
-
-  if(codeabs(ibord,ispecabs) /= 0) then
-
-  if(ibord == ITOP) then
-    write(24,*) '1. .85 0. RG'
+  if(iedge == ITOP) then
     ideb = 3
     ifin = 4
-  else if(ibord == IBOTTOM) then
-    write(24,*) '.4 1. .4 RG'
+  else if(iedge == IBOTTOM) then
     ideb = 1
     ifin = 2
-  else if(ibord == ILEFT) then
-    write(24,*) '1. .43 1. RG'
+  else if(iedge == ILEFT) then
     ideb = 4
     ifin = 1
-  else if(ibord == IRIGHT) then
-    write(24,*) '.25 1. 1. RG'
+  else if(iedge == IRIGHT) then
     ideb = 2
     ifin = 3
   else
     stop 'Wrong absorbing boundary code'
   endif
 
-  x1 = (coorg(1,knods(ideb,ispec))-xmin)*rapp_page + orig_x
-  z1 = (coorg(2,knods(ideb,ispec))-zmin)*rapp_page + orig_z
-  x2 = (coorg(1,knods(ifin,ispec))-xmin)*rapp_page + orig_x
-  z2 = (coorg(2,knods(ifin,ispec))-zmin)*rapp_page + orig_z
+  x1 = (coorg(1,knods(ideb,ispec))-xmin)*ratio_page + orig_x
+  z1 = (coorg(2,knods(ideb,ispec))-zmin)*ratio_page + orig_z
+  x2 = (coorg(1,knods(ifin,ispec))-xmin)*ratio_page + orig_x
+  z2 = (coorg(2,knods(ifin,ispec))-zmin)*ratio_page + orig_z
   x1 = x1 * centim
   z1 = z1 * centim
   x2 = x2 * centim
@@ -1743,7 +1744,62 @@
 
   enddo
 
+  write(24,*) '0 setgray'
+  write(24,*) '0.01 CM SLW'
+
   endif
+
+!
+!----  draw the fluid-solid coupling edges with a thick color line
+!
+
+  if(coupled_acoustic_elastic .and. boundvect) then
+
+  write(24,*) '%'
+  write(24,*) '% fluid-solid coupling edges in the mesh'
+  write(24,*) '%'
+
+  write(24,*) '0.10 CM SLW'
+  write(24,*) '% uncomment this when zooming on parts of the mesh'
+  write(24,*) '% 0.02 CM SLW'
+
+! loop on all the coupling edges
+  do inum = 1,num_fluid_solid_edges
+
+! get the edge of the acoustic element
+   ispec = fluid_solid_acoustic_ispec(inum)
+   iedge = fluid_solid_acoustic_iedge(inum)
+
+! use pink color
+  write(24,*) '1 0.75 0.8 RG'
+
+  if(iedge == ITOP) then
+    ideb = 3
+    ifin = 4
+  else if(iedge == IBOTTOM) then
+    ideb = 1
+    ifin = 2
+  else if(iedge == ILEFT) then
+    ideb = 4
+    ifin = 1
+  else if(iedge == IRIGHT) then
+    ideb = 2
+    ifin = 3
+  else
+    stop 'Wrong fluid-solid coupling edge code'
+  endif
+
+  x1 = (coorg(1,knods(ideb,ispec))-xmin)*ratio_page + orig_x
+  z1 = (coorg(2,knods(ideb,ispec))-zmin)*ratio_page + orig_z
+  x2 = (coorg(1,knods(ifin,ispec))-xmin)*ratio_page + orig_x
+  z2 = (coorg(2,knods(ifin,ispec))-zmin)*ratio_page + orig_z
+  x1 = x1 * centim
+  z1 = z1 * centim
+  x2 = x2 * centim
+  z2 = z2 * centim
+  write(24,602) x1,z1,x2,z2
+
+  enddo
 
   write(24,*) '0 setgray'
   write(24,*) '0.01 CM SLW'
@@ -1751,12 +1807,12 @@
   endif
 
 !
-!----  draw the normalized displacement field
+!----  draw the normalized vector field
 !
 
-! return if the maximum displacement equals zero (no source)
+! return if the maximum vector equals zero (no source)
   if(dispmax == 0.d0) then
-    write(IOUT,*) ' null displacement : returning !'
+    write(IOUT,*) 'null vector: returning!'
     return
   endif
 
@@ -1764,7 +1820,7 @@
   write(24,*) '% vector field'
   write(24,*) '%'
 
-! fleches en couleur si modele de vitesse en background
+! color arrows if we draw the velocity model in the background
   if(modelvect) then
         write(24,*) 'Colvects'
   else
@@ -1777,7 +1833,7 @@
 
   do ispec=1,nspec
 
-! interpolation sur grille reguliere
+! interpolation on a uniform grid
   if(mod(ispec,1000) == 0) write(IOUT,*) 'Interpolation uniform grid element ',ispec
 
 ! option to plot only lowerleft corner value to avoid very large files if dense meshes
@@ -1804,27 +1860,25 @@
   do k=1,NGLLX
   do l=1,NGLLX
 
-  Uxinterp(i,j) = Uxinterp(i,j) + &
-                displ(1,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
-  Uzinterp(i,j) = Uzinterp(i,j) + &
-                displ(2,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
+  Uxinterp(i,j) = Uxinterp(i,j) + displ(1,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
+  Uzinterp(i,j) = Uzinterp(i,j) + displ(2,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
 
   enddo
   enddo
 
-  x1 =(xinterp(i,j)-xmin)*rapp_page
-  z1 =(zinterp(i,j)-zmin)*rapp_page
+  x1 =(xinterp(i,j)-xmin)*ratio_page
+  z1 =(zinterp(i,j)-zmin)*ratio_page
 
   x2 = Uxinterp(i,j)*sizemax_arrows/dispmax
   z2 = Uzinterp(i,j)*sizemax_arrows/dispmax
 
   d = sqrt(x2**2 + z2**2)
 
-! ignorer si vecteur trop petit
-  if(d > cutvect*sizemax_arrows) then
+! ignore if vector is too small
+  if(d > cutsnaps*sizemax_arrows) then
 
-  d1 = d * rapport
-  d2 = d1 * cos(angle*convert)
+  d1 = d * ARROW_RATIO
+  d2 = d1 * cos(ARROW_ANGLE*convert)
 
   dummy = x2/d
   if(dummy > 0.9999d0) dummy = 0.9999d0
@@ -1832,10 +1886,10 @@
   theta = acos(dummy)
 
   if(z2 < 0.d0) theta = 360.d0*convert - theta
-  thetaup = theta - angle*convert
-  thetadown = theta + angle*convert
+  thetaup = theta - ARROW_ANGLE*convert
+  thetadown = theta + ARROW_ANGLE*convert
 
-! tracer le vecteur proprement dit
+! draw the vector
   x1 = (orig_x+x1) * centim
   z1 = (orig_z+z1) * centim
   x2 = x2 * centim
@@ -1848,23 +1902,27 @@
   zb = -d2*sin(thetadown)
   xb = xb * centim
   zb = zb * centim
-  write(name,700) xb,zb,xa,za,x2,z2,x1,z1
+  write(postscript_line,700) xb,zb,xa,za,x2,z2,x1,z1
 
-! filtrer les blancs inutiles pour diminuer taille fichier PostScript
-  longueur = 49
-  indice = 1
+! suppress useless white spaces to make PostScript file smaller
+
+! suppress leading white spaces again, if any
+  postscript_line = adjustl(postscript_line)
+
+  line_length = len_trim(postscript_line)
+  index_char = 1
   first = .false.
-  do ii=1,longueur-1
+  do ii = 1,line_length-1
     if(ch1(ii) /= ' ' .or. first) then
       if(ch1(ii) /= ' ' .or. ch1(ii+1) /= ' ') then
-        ch2(indice) = ch1(ii)
-        indice = indice + 1
+        ch2(index_char) = ch1(ii)
+        index_char = index_char + 1
         first = .true.
       endif
     endif
   enddo
-  ch2(indice) = ch1(longueur)
-  write(24,"(80(a1))") (ch2(ii),ii=1,indice)
+  ch2(index_char) = ch1(line_length)
+  write(24,"(100(a1))") (ch2(ii), ii=1,index_char)
 
   endif
 
@@ -1872,24 +1930,24 @@
   enddo
   enddo
 
+! draw the vectors at the nodes of the mesh if we do not interpolate the display on a regular grid
   else
-! tracer les vecteurs deplacement aux noeuds du maillage
 
   do ipoin=1,npoin
 
-  x1 =(coord(1,ipoin)-xmin)*rapp_page
-  z1 =(coord(2,ipoin)-zmin)*rapp_page
+  x1 =(coord(1,ipoin)-xmin)*ratio_page
+  z1 =(coord(2,ipoin)-zmin)*ratio_page
 
   x2 = displ(1,ipoin)*sizemax_arrows/dispmax
   z2 = displ(2,ipoin)*sizemax_arrows/dispmax
 
   d = sqrt(x2**2 + z2**2)
 
-! ignorer si vecteur trop petit
-  if(d > cutvect*sizemax_arrows) then
+! ignore if vector is too small
+  if(d > cutsnaps*sizemax_arrows) then
 
-  d1 = d * rapport
-  d2 = d1 * cos(angle*convert)
+  d1 = d * ARROW_RATIO
+  d2 = d1 * cos(ARROW_ANGLE*convert)
 
   dummy = x2/d
   if(dummy > 0.9999d0) dummy = 0.9999d0
@@ -1897,10 +1955,10 @@
   theta = acos(dummy)
 
   if(z2 < 0.d0) theta = 360.d0*convert - theta
-  thetaup = theta - angle*convert
-  thetadown = theta + angle*convert
+  thetaup = theta - ARROW_ANGLE*convert
+  thetadown = theta + ARROW_ANGLE*convert
 
-! tracer le vecteur proprement dit
+! draw the vector
   x1 = (orig_x+x1) * centim
   z1 = (orig_z+z1) * centim
   x2 = x2 * centim
@@ -1913,23 +1971,27 @@
   zb = -d2*sin(thetadown)
   xb = xb * centim
   zb = zb * centim
-  write(name,700) xb,zb,xa,za,x2,z2,x1,z1
+  write(postscript_line,700) xb,zb,xa,za,x2,z2,x1,z1
 
-! filtrer les blancs inutiles pour diminuer taille fichier PostScript
-  longueur = 49
-  indice = 1
+! suppress useless white spaces to make PostScript file smaller
+
+! suppress leading white spaces again, if any
+  postscript_line = adjustl(postscript_line)
+
+  line_length = len_trim(postscript_line)
+  index_char = 1
   first = .false.
-  do ii=1,longueur-1
+  do ii = 1,line_length-1
     if(ch1(ii) /= ' ' .or. first) then
       if(ch1(ii) /= ' ' .or. ch1(ii+1) /= ' ') then
-        ch2(indice) = ch1(ii)
-        indice = indice + 1
+        ch2(index_char) = ch1(ii)
+        index_char = index_char + 1
         first = .true.
       endif
     endif
   enddo
-  ch2(indice) = ch1(longueur)
-  write(24,"(80(a1))") (ch2(ii),ii=1,indice)
+  ch2(index_char) = ch1(line_length)
+  write(24,"(100(a1))") (ch2(ii), ii=1,index_char)
 
   endif
 
@@ -1939,7 +2001,7 @@
 
   write(24,*) '0 setgray'
 
-! sources et recepteurs en couleur si modele de vitesse
+! sources and receivers in color if velocity model
   if(modelvect) then
     write(24,*) 'Colreceiv'
   else
@@ -1951,41 +2013,29 @@
 !
   xw = x_source
   zw = z_source
-  xw = (xw-xmin)*rapp_page + orig_x
-  zw = (zw-zmin)*rapp_page + orig_z
+  xw = (xw-xmin)*ratio_page + orig_x
+  zw = (zw-zmin)*ratio_page + orig_z
   xw = xw * centim
   zw = zw * centim
-  write(24,510) xw,zw
-  if(isymbols) then
-    write(24,*) 'Cross'
-  else
-    write(24,*) '(S) show'
-  endif
+  write(24,500) xw,zw
+  write(24,*) 'Cross'
 
 !
 !----  write position of the receivers
 !
   do i=1,nrec
-  if(i == 1) write(24,*) '% debut ligne recepteurs'
-  if(i == nrec) write(24,*) '% fin ligne recepteurs'
+    if(i == 1) write(24,*) '% beginning of receiver line'
+    if(i == nrec) write(24,*) '% end of receiver line'
 
-  xw = st_xval(i)
-  zw = st_zval(i)
+    xw = st_xval(i)
+    zw = st_zval(i)
 
-  xw = (xw-xmin)*rapp_page + orig_x
-  zw = (zw-zmin)*rapp_page + orig_z
-  xw = xw * centim
-  zw = zw * centim
-  write(24,510) xw,zw
-  if(isymbols) then
-    if(nrec > ndots .and. i /= 1 .and. i /= nrec) then
-      write(24,*) 'VDot'
-    else
-      write(24,*) 'Losange'
-    endif
-  else
-  write(24,*) '(R',i,') show'
-  endif
+    xw = (xw-xmin)*ratio_page + orig_x
+    zw = (zw-zmin)*ratio_page + orig_z
+    xw = xw * centim
+    zw = zw * centim
+    write(24,500) xw,zw
+    write(24,*) 'Diamond'
   enddo
 
   write(24,*) '%'
@@ -1994,23 +2044,21 @@
 
   close(24)
 
- 10   format('%!PS-Adobe-2.0',/,'%%',/,'%% Title: ',a50,/, &
-          '%% Created by: Specfem2D',/,'%% Author: Dimitri Komatitsch',/,'%%')
- 510  format(f5.1,1x,f5.1,' M')
- 600  format(f6.3,' neg CM 0 MR (Time =',f8.3,' s) show')
- 601  format(f6.3,' neg CM 0 MR (Time =',1pe12.3,' s) show')
- 610  format(f6.3,' neg CM 0 MR (Time step = ',i7,') show')
- 620  format(f6.3,' neg CM 0 MR (Cut =',f5.2,' \%) show')
- 640  format(f6.3,' neg CM 0 MR (Max norm =',1pe12.3,') show')
+ 10  format('%!PS-Adobe-2.0',/,'%%',/,'%% Title: ',a50,/,'%% Created by: Specfem2D',/,'%% Author: Dimitri Komatitsch',/,'%%')
+ 600 format(f6.3,' neg CM 0 MR (Time =',f8.3,' s) show')
+ 601 format(f6.3,' neg CM 0 MR (Time =',1pe12.3,' s) show')
+ 610 format(f6.3,' neg CM 0 MR (Time step = ',i7,') show')
+ 620 format(f6.3,' neg CM 0 MR (Cut =',f5.2,' \%) show')
+ 640 format(f6.3,' neg CM 0 MR (Max norm =',1pe12.3,') show')
 
- 499  format(f5.1,1x,f5.1,' L')
- 500  format(f5.1,1x,f5.1,' M')
- 502  format('fN (',i4,') Cshow')
- 680  format(f12.6,1x,f12.6,1x,f12.6,' RG GF')
- 681  format(f6.2,1x,f6.2)
- 602  format(f6.2,1x,f6.2,' M ',f6.2,1x,f6.2,' L ST')
- 604  format('CP ',f12.6,' BK')
- 700  format(8(f5.1,1x),'F')
+ 499 format(f6.2,1x,f6.2,' L')
+ 500 format(f6.2,1x,f6.2,' M')
+ 502 format('fN (',i4,') Cshow')
+ 680 format(f12.6,1x,f12.6,1x,f12.6,' RG GF')
+ 681 format(f6.2,1x,f6.2)
+ 602 format(f6.2,1x,f6.2,' M ',f6.2,1x,f6.2,' L ST')
+ 604 format('CP ',f12.6,' BK')
+ 700 format(8(f6.2,1x),'F')
 
   end subroutine plotpost
 
