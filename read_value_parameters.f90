@@ -1,13 +1,13 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.1
+!                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
 !                         Dimitri Komatitsch
-!          Universite de Pau et des Pays de l'Adour, France
+!                     University of Pau, France
 !
-!                          (c) January 2005
+!                          (c) April 2007
 !
 !========================================================================
 
@@ -93,7 +93,8 @@
 
 !--------------------
 
-  subroutine read_zone_coordinates(iin,ignore_junk,value_to_read_1,value_to_read_2,value_to_read_3,value_to_read_4,value_to_read_5)
+  subroutine read_region_coordinates(iin,ignore_junk,value_to_read_1,value_to_read_2, &
+                          value_to_read_3,value_to_read_4,value_to_read_5)
 
   implicit none
 
@@ -105,7 +106,7 @@
   call read_next_line(iin,ignore_junk,string_read)
   read(string_read,*) value_to_read_1,value_to_read_2,value_to_read_3,value_to_read_4,value_to_read_5
 
-  end subroutine read_zone_coordinates
+  end subroutine read_region_coordinates
 
 !--------------------
 

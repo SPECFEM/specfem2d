@@ -1,13 +1,13 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.1
+!                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
 !                         Dimitri Komatitsch
-!          Universite de Pau et des Pays de l'Adour, France
+!                     University of Pau, France
 !
-!                          (c) January 2005
+!                          (c) April 2007
 !
 !========================================================================
 
@@ -85,7 +85,7 @@
     read(1,*) station_name(irec),network_name(irec),st_xval(irec),st_zval(irec),stele,stbur
 
 ! check that station is not buried, burial is not implemented in current code
-    if(abs(stbur) > 0.001d0) stop 'stations with non-zero burial not implemented yet'
+    if(abs(stbur) > TINYVAL) stop 'stations with non-zero burial not implemented yet'
 
 ! compute distance between source and receiver
       distance_receiver = sqrt((st_zval(irec)-z_source)**2 + (st_xval(irec)-x_source)**2)

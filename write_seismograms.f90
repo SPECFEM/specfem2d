@@ -1,26 +1,26 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.1
+!                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
 !                         Dimitri Komatitsch
-!          Universite de Pau et des Pays de l'Adour, France
+!                     University of Pau, France
 !
-!                          (c) January 2005
+!                          (c) April 2007
 !
 !========================================================================
 
 ! write seismograms to text files
 
   subroutine write_seismograms(sisux,sisuz,station_name,network_name, &
-      NSTEP,nrec,deltat,sismostype,st_xval,it,t0,buffer_binary_single,buffer_binary_double)
+      NSTEP,nrec,deltat,seismotype,st_xval,it,t0,buffer_binary_single,buffer_binary_double)
 
   implicit none
 
   include "constants.h"
 
-  integer nrec,NSTEP,it,sismostype
+  integer nrec,NSTEP,it,seismotype
   double precision t0,deltat
 
   double precision, dimension(NSTEP,nrec) :: sisux,sisuz
@@ -48,13 +48,13 @@
 ! write seismograms in ASCII format
 
 ! save displacement, velocity, acceleration or pressure
-  if(sismostype == 1) then
+  if(seismotype == 1) then
     component = 'd'
-  else if(sismostype == 2) then
+  else if(seismotype == 2) then
     component = 'v'
-  else if(sismostype == 3) then
+  else if(seismotype == 3) then
     component = 'a'
-  else if(sismostype == 4) then
+  else if(seismotype == 4) then
     component = 'p'
   else
     stop 'wrong component to save for seismograms'
@@ -63,7 +63,7 @@
   do irec = 1,nrec
 
 ! only one seismogram if pressurs
-    if(sismostype == 4) then
+    if(seismotype == 4) then
       number_of_components = 1
     else
       number_of_components = NDIM
@@ -80,7 +80,7 @@
       endif
 
 ! in case of pressure, use different abbreviation
-      if(sismostype == 4) chn = 'PRE'
+      if(seismotype == 4) chn = 'PRE'
 
 ! create the name of the seismogram file for each slice
 ! file name includes the name of the station, the network and the component
@@ -147,7 +147,7 @@
   enddo
 
 ! write the new files
-  if(sismostype == 4) then
+  if(seismotype == 4) then
     open(unit=11,file='OUTPUT_FILES/pressure_file_single.bin',status='unknown',access='direct',recl=4*NSTEP*nrec)
   else
     open(unit=11,file='OUTPUT_FILES/Ux_file_single.bin',status='unknown',access='direct',recl=4*NSTEP*nrec)
@@ -155,7 +155,7 @@
   write(11,rec=1) buffer_binary_single
   close(11)
 
-  if(sismostype == 4) then
+  if(seismotype == 4) then
     open(unit=11,file='OUTPUT_FILES/pressure_file_double.bin',status='unknown',access='direct',recl=8*NSTEP*nrec)
   else
     open(unit=11,file='OUTPUT_FILES/Ux_file_double.bin',status='unknown',access='direct',recl=8*NSTEP*nrec)
@@ -173,7 +173,7 @@
   close(11,status='delete')
 
 ! no Z component seismogram if pressurs
-  if(sismostype /= 4) then
+  if(seismotype /= 4) then
 
   irecord = 0
   do irec=1,nrec
@@ -208,9 +208,9 @@
     if(irec < nrec) write(11,*) ','
   enddo
 
-  if(sismostype == 1) then
+  if(seismotype == 1) then
     write(11,*) '@title="Ux@displacement@component"@<@Ux_file_single.bin'
-  else if(sismostype == 2) then
+  else if(seismotype == 2) then
     write(11,*) '@title="Ux@velocity@component"@<@Ux_file_single.bin'
   else
     write(11,*) '@title="Ux@acceleration@component"@<@Ux_file_single.bin'

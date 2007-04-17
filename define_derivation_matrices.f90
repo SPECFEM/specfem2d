@@ -1,17 +1,17 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.1
+!                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
 !                         Dimitri Komatitsch
-!          Universite de Pau et des Pays de l'Adour, France
+!                     University of Pau, France
 !
-!                          (c) January 2005
+!                          (c) April 2007
 !
 !========================================================================
 
-  subroutine define_derivation_matrices(xigll,zigll,wxgll,wzgll,hprime_xx,hprime_zz)
+  subroutine define_derivation_matrices(xigll,zigll,wxgll,wzgll,hprime_xx,hprime_zz,hprimewgll_xx,hprimewgll_zz)
 
   implicit none
 
@@ -26,8 +26,8 @@
   double precision, dimension(NGLLZ) :: wzgll
 
 ! array with derivatives of Lagrange polynomials
-  double precision, dimension(NGLLX,NGLLX) :: hprime_xx
-  double precision, dimension(NGLLZ,NGLLZ) :: hprime_zz
+  double precision, dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
+  double precision, dimension(NGLLZ,NGLLZ) :: hprime_zz,hprimewgll_zz
 
 ! function for calculating derivatives of Lagrange polynomials
   double precision, external :: lagrange_deriv_GLL
@@ -48,12 +48,14 @@
   do i1=1,NGLLX
     do i2=1,NGLLX
       hprime_xx(i1,i2) = lagrange_deriv_GLL(i1-1,i2-1,xigll,NGLLX)
+      hprimewgll_xx(i1,i2) = wxgll(i2) * hprime_xx(i1,i2)
     enddo
   enddo
 
   do k1=1,NGLLZ
     do k2=1,NGLLZ
       hprime_zz(k1,k2) = lagrange_deriv_GLL(k1-1,k2-1,zigll,NGLLZ)
+      hprimewgll_zz(k1,k2) = wzgll(k2) * hprime_zz(k1,k2)
     enddo
   enddo
 
