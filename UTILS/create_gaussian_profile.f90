@@ -7,7 +7,7 @@
 
   integer, parameter :: N = 200
 
-  double precision, parameter :: horiz_size = 10000.d0, x0 = horiz_size / 2.d0, sigma = horiz_size / 20.d0, height = 400.d0
+  double precision, parameter :: horiz_size = 20000.d0, x0 = horiz_size / 2.d0, sigma = horiz_size / 40.d0, height = 300.d0
 
   double precision :: deltax,x
 
