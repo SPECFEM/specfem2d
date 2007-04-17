@@ -1,45 +1,44 @@
 
 # title of job, and file that contains interface data
-title                           = Test pour cours M2 UPPA
-interfacesfile                  = interfaces_cours_M2_UPPA_curved.dat
+title                           = Test for M2 UPPA
+interfacesfile                  = interfaces_M2_UPPA_curved.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
 xmax                            = 4000.d0        # abscissa of right side of the model
 nx                              = 80             # number of elements along X
-ngnod                           = 9              # noeuds de controle pour blocs (4 ou 9)
+ngnod                           = 9              # number of control nodes per element (4 or 9)
 initialfield                    = .false.        # use a plane wave as source or not
-readmodel                       = .false.        # read external earth model or not
-ELASTIC                         = .true.         # elastic or acoustic simulation
-TURN_ANISOTROPY_ON              = .false.        # turn anisotropy on or off
-TURN_ATTENUATION_ON             = .false.        # turn attenuation on or off
+assign_external_model           = .false.        # define external earth model or not
+TURN_ANISOTROPY_ON              = .false.        # turn anisotropy on or off for solid medium
+TURN_ATTENUATION_ON             = .false.        # turn attenuation on or off for solid medium
 
 # absorbing boundaries parameters
-absorbhaut                      = .false.        # absorbing boundary active or not
-absorbbas                       = .true.
-absorbgauche                    = .true.
-absorbdroite                    = .true.
+absorbbottom                    = .true.         # absorbing boundary active or not
+absorbright                     = .true.
+absorbtop                       = .false.
+absorbleft                      = .true.
 
 # time step parameters
-nt                              = 1600           # nb total de pas de temps
-deltat                          = 1.d-3          # valeur du pas de temps
+nt                              = 1600           # total number of time steps
+deltat                          = 1.d-3          # duration of a time step
 
 # source parameters
-source_surf                     = .true.         # source dans le volume ou a la surface
+source_surf                     = .false.        # source inside the medium or at the surface
 xs                              = 2000.          # source location x in meters
-zs                              = 1500.          # source location z in meters
-source_type                     = 1              # force = 1 or moment tensor = 2
+zs                              = 1600.          # source location z in meters
+source_type                     = 1              # elastic force or acoustic pressure = 1 or moment tensor = 2
 time_function_type              = 1              # Ricker = 1, first derivative = 2, Gaussian = 3, Dirac = 4, Heaviside = 5
-f0                              = 10.0           # dominant source frequency (Hz) if not Dirac
+f0                              = 8.0           # dominant source frequency (Hz) if not Dirac or Heaviside
 angleforce                      = 0.             # angle of the source (for a force only)
 Mxx                             = 1.             # Mxx component (for a moment tensor source only)
 Mzz                             = 1.             # Mzz component (for a moment tensor source only)
 Mxz                             = 0.             # Mxz component (for a moment tensor source only)
 factor                          = 1.d10          # amplification factor
 
-# receiver line parameters
-sismostype                      = 1              # record 1=displ 2=veloc 3=accel 4=pressure
-nreceiverlines                  = 1               # number of receiver lines
+# receiver line parameters for seismograms
+seismotype                      = 1              # record 1=displ 2=veloc 3=accel 4=pressure
+nreceiverlines                  = 1              # number of receiver lines
 anglerec                        = 0.d0           # angle to rotate components at receivers
 
 # first receiver line
@@ -48,14 +47,14 @@ xdeb                            = 300.           # first receiver x in meters
 zdeb                            = 2200.          # first receiver z in meters
 xfin                            = 3700.          # last receiver x in meters (ignored if onlyone receiver)
 zfin                            = 2200.          # last receiver z in meters (ignored if onlyone receiver)
-enreg_surf                      = .true.         # enregistrement volume ou surface
+enreg_surf                      = .true.         # receivers inside the medium or at the surface
 
 # display parameters
-itaff                           = 100            # display frequency in time steps
-output_postscript_snapshot      = .true.         # output Postscript image of the results
-output_PNM_image                = .true.         # output PNM image of the results
-vecttype                        = 1              # display 1=displ 2=veloc 3=accel
-cutvect                         = 1.             # amplitude min en % pour vector plots
+NTSTEP_BETWEEN_OUTPUT_INFO      = 100            # display frequency in time steps
+output_postscript_snapshot      = .true.         # output Postscript snapshot of the results
+output_color_image              = .true.         # output color image of the results
+imagetype                       = 1              # display 1=displ 2=veloc 3=accel 4=pressure
+cutsnaps                        = 1.             # minimum amplitude in % for snapshots
 meshvect                        = .true.         # display mesh on vector plots or not
 modelvect                       = .false.        # display velocity model on vector plots
 boundvect                       = .true.         # display boundary conditions on plots
@@ -66,12 +65,18 @@ sizemax_arrows                  = 1.d0           # maximum size of arrows on vec
 gnuplot                         = .false.        # generate a GNUPLOT file for the grid
 outputgrid                      = .false.        # save the grid in a text file or not
 
-# velocity and density model (nx,nz)
-nbmodels                        = 3              # nb de modeles differents (0,rho,vp,vs,0,0)
-1 0 2700.d0 3000.d0 1732.051d0 0 0
-2 0 2500.d0 2700.d0 1558.845d0 0 0
-3 0 2200.d0 2500.d0 1443.375d0 0 0
-nbzone                          = 3              # nb of zones and model number for each
+# velocity and density models
+nbmodels                        = 4              # nb of different models
+# define models as (model_number,1,rho,vp,vs,0,0) or (model_number,2,rho,c11,c13,c33,c44)
+# set vs to zero to make a given model acoustic
+# the mesh can contain both acoustic and elastic models simultaneously
+1 1 2700.d0 3000.d0 1732.051d0 0 0
+2 1 2500.d0 2700.d0 0 0 0 #1558.89d0  0 0
+3 1 2200.d0 2500.d0 1443.375d0 0 0
+4 1 2200.d0 2200.d0 1343.375d0 0 0
+# define the different regions of the model in the (nx,nz) spectral element mesh
+nbregions                       = 4              # nb of regions and model number for each
 1 80  1 20 1
 1 80 21 40 2
 1 80 41 60 3
+60 70 21 40 4
