@@ -19,5 +19,7 @@ To use the code:
 
 - we do not have PML absorbing conditions implemented in the fluid/solid code yet. We use (older and less efficient) paraxial Clayton-Engquist or Sommerfeld equations instead. This is only by lack of time, I have a student who is currently implementing PML but the code is not fully ready. I will send it to you when it is. (We already have PML in the purely elastic code, see http://www.univ-pau.fr/~dkomati1/published_papers/pml_2nd_order_GJI_typos_fixed.pdf for details, therefore it is only a matter of cutting/pasting the routines). For now, since the paraxial conditions are less efficient, please use a larger model until we send you the code with PML
 
+- there are a few useful scripts and Fortran routines in directory UTILS
+
 - I have made many modifications in the source code recently, I have carefully tested them but if you find bugs please send me an email and I will fix them and send you the patch
 
