@@ -39,7 +39,7 @@
 ! pages={368-392}}
 
 !
-! version 5.2, Dimitri Komatitsch, April 2007 :
+! version 5.2, Dimitri Komatitsch, April 2007:
 !               - general fluid/solid implementation with any number, shape and orientation of
 !                 matching edges
 !               - absorbing edges with any normal vector
@@ -50,7 +50,7 @@
 !               - added CPU time information
 !               - translated many comments from French to English
 !
-! version 5.1, Dimitri Komatitsch, January 2005 :
+! version 5.1, Dimitri Komatitsch, January 2005:
 !               - more general mesher with any number of curved layers
 !               - Dirac and Gaussian time sources and corresponding convolution routine
 !               - option for acoustic medium instead of elastic
@@ -62,7 +62,7 @@
 !               - subtract t0 from seismograms
 !               - seismograms and snapshots in pressure in addition to vector field
 !
-! version 5.0, Dimitri Komatitsch, May 2004 :
+! version 5.0, Dimitri Komatitsch, May 2004:
 !               - got rid of useless routines, suppressed commons etc.
 !               - weak formulation based explicitly on stress tensor
 !               - implementation of full anisotropy
