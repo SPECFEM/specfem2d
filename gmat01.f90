@@ -1,13 +1,13 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.1
+!                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
 !                         Dimitri Komatitsch
-!          Universite de Pau et des Pays de l'Adour, France
+!                     University of Pau, France
 !
-!                          (c) January 2005
+!                          (c) April 2007
 !
 !========================================================================
 
@@ -45,8 +45,8 @@
 
    if(n<1 .or. n>numat) stop 'Wrong material set number'
 
-!---- materiau isotrope, vitesse P et vitesse S donnees
-   if(indic == 0) then
+!---- isotropic material, P and S velocities given
+   if(indic == 1) then
 
 ! P and S velocity
       cp = val1
@@ -58,7 +58,7 @@
       two_mu = 2.d0*mu
       lambda = lambdaplus2mu - two_mu
 
-! bulk modulus K
+! bulk modulus Kappa
       kappa = lambda + two_mu/3.d0
 
 ! Young modulus
@@ -70,12 +70,15 @@
 ! Poisson's ratio must be between -1 and +1/2
       if (poisson < -1.d0 .or. poisson > 0.5d0) stop 'Poisson''s ratio out of range'
 
-!---- materiau anisotrope, c11, c13, c33 et c44 donnes en Pascal
-   else
+!---- anisotropic material, c11, c13, c33 and c44 given in Pascal
+   else if (indic == 2) then
       c11 = val1
       c13 = val2
       c33 = val3
       c44 = val4
+
+   else
+     stop 'wrong model flag read'
 
    endif
 
@@ -85,7 +88,7 @@
 !  Isotropic              :  lambda, mu, K (= lambda + 2*mu), zero
 !  Transverse anisotropic :  c11, c13, c33, c44
 !
-  if(indic == 0 .or. indic == 1) then
+  if(indic == 1) then
     elastcoef(1,n) = lambda
     elastcoef(2,n) = mu
     elastcoef(3,n) = lambdaplus2mu
@@ -102,11 +105,15 @@
 !
 !----    check the input
 !
-  if(indic == 0 .or. indic == 1) then
-    write(iout,200) n,cp,cs,density,poisson,lambda,mu,kappa,young
+  if(indic == 1) then
+! material can be acoustic (fluid) or elastic (solid)
+    if(elastcoef(2,n) > TINYVAL) then
+      write(iout,200) n,cp,cs,density,poisson,lambda,mu,kappa,young
+    else
+      write(iout,300) n,cp,density,kappa
+    endif
   else
-    write(iout,300) n,c11,c13,c33,c44,density, &
-        sqrt(c33/density),sqrt(c11/density),sqrt(c44/density),sqrt(c44/density)
+    write(iout,400) n,c11,c13,c33,c44,density,sqrt(c33/density),sqrt(c11/density),sqrt(c44/density),sqrt(c44/density)
   endif
 
   enddo
@@ -117,9 +124,10 @@
   100   format(//,' M a t e r i a l   s e t s :  ', &
          ' 2 D  e l a s t i c i t y', &
          /1x,54('='),//5x,'Number of material sets . . . . . . (numat) =',i6)
-  200   format(//5x,'------------------------',/5x, &
-         '-- Isotropic material --',/5x, &
-         '------------------------',/5x, &
+
+  200   format(//5x,'----------------------------------------',/5x, &
+         '-- Elastic (solid) isotropic material --',/5x, &
+         '----------------------------------------',/5x, &
          'Material set number. . . . . . . . (jmat) =',i6,/5x, &
          'P-wave velocity. . . . . . . . . . . (cp) =',1pe15.8,/5x, &
          'S-wave velocity. . . . . . . . . . . (cs) =',1pe15.8,/5x, &
@@ -127,9 +135,18 @@
          'Poisson''s ratio. . . . . . . . .(poisson) =',1pe15.8,/5x, &
          'First Lame parameter Lambda. . . (lambda) =',1pe15.8,/5x, &
          'Second Lame parameter Mu. . . . . . .(mu) =',1pe15.8,/5x, &
-         'Bulk modulus K . . . . . . . . . .(kappa) =',1pe15.8,/5x, &
+         'Bulk modulus Kappa . . . . . . . .(kappa) =',1pe15.8,/5x, &
          'Young''s modulus E. . . . . . . . .(young) =',1pe15.8)
-  300   format(//5x,'-------------------------------------',/5x, &
+
+  300   format(//5x,'-------------------------------',/5x, &
+         '-- Acoustic (fluid) material --',/5x, &
+         '-------------------------------',/5x, &
+         'Material set number. . . . . . . . (jmat) =',i6,/5x, &
+         'P-wave velocity. . . . . . . . . . . (cp) =',1pe15.8,/5x, &
+         'Mass density. . . . . . . . . . (density) =',1pe15.8,/5x, &
+         'Bulk modulus Kappa . . . . . . . .(kappa) =',1pe15.8)
+
+  400   format(//5x,'-------------------------------------',/5x, &
          '-- Transverse anisotropic material --',/5x, &
          '-------------------------------------',/5x, &
          'Material set number. . . . . . . . (jmat) =',i6,/5x, &

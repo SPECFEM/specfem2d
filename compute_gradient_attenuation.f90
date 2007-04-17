@@ -1,72 +1,74 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.1
+!                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
 !                         Dimitri Komatitsch
-!          Universite de Pau et des Pays de l'Adour, France
+!                     University of Pau, France
 !
-!                          (c) January 2005
+!                          (c) April 2007
 !
 !========================================================================
 
-  subroutine compute_gradient_attenuation(displ,duxdxl,duzdxl,duxdzl,duzdzl, &
-         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,NSPEC,npoin)
+  subroutine compute_gradient_attenuation(displ_elastic,dux_dxl,duz_dxl,dux_dzl,duz_dzl, &
+         xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,npoin)
 
-! compute Grad(displ) for attenuation
+! compute Grad(displ_elastic) for attenuation
 
   implicit none
 
   include "constants.h"
 
-  integer NSPEC,npoin
+  integer :: nspec,npoin
 
-  integer, dimension(NGLLX,NGLLZ,NSPEC) :: ibool
+  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
 
-  double precision, dimension(NGLLX,NGLLZ,NSPEC) :: duxdxl,duzdxl,duxdzl,duzdzl,xix,xiz,gammax,gammaz
+  logical, dimension(nspec) :: elastic
 
-  double precision, dimension(NDIM,npoin) :: displ
+  double precision, dimension(NGLLX,NGLLZ,nspec) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl,xix,xiz,gammax,gammaz
+
+  double precision, dimension(NDIM,npoin) :: displ_elastic
 
 ! array with derivatives of Lagrange polynomials
   double precision, dimension(NGLLX,NGLLX) :: hprime_xx
   double precision, dimension(NGLLZ,NGLLZ) :: hprime_zz
 
 ! local variables
-  integer i,j,k,ispec,iglob
+  integer :: i,j,k,ispec
 
-! space derivatives
-  double precision tempx1l,tempx2l,tempz1l,tempz2l
-  double precision hp1,hp2
+! spatial derivatives
+  double precision :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
 
 ! jacobian
-  double precision xixl,xizl,gammaxl,gammazl
+  double precision :: xixl,xizl,gammaxl,gammazl
 
 ! loop over spectral elements
-  do ispec = 1,NSPEC
+  do ispec = 1,nspec
 
-! double loop over GLL to compute and store gradients
-    do j = 1,NGLLZ
-      do i = 1,NGLLX
+!---
+!--- elastic spectral element
+!---
+    if(elastic(ispec)) then
 
-! derivative along x
-          tempx1l = ZERO
-          tempz1l = ZERO
+! first double loop over GLL points to compute and store gradients
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+
+! derivative along x and along z
+          dux_dxi = ZERO
+          duz_dxi = ZERO
+
+          dux_dgamma = ZERO
+          duz_dgamma = ZERO
+
+! first double loop over GLL points to compute and store gradients
+! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
-            hp1 = hprime_xx(k,i)
-            iglob = ibool(k,j,ispec)
-            tempx1l = tempx1l + displ(1,iglob)*hp1
-            tempz1l = tempz1l + displ(2,iglob)*hp1
-          enddo
-
-! derivative along z
-          tempx2l = ZERO
-          tempz2l = ZERO
-          do k = 1,NGLLZ
-            hp2 = hprime_zz(k,j)
-            iglob = ibool(i,k,ispec)
-            tempx2l = tempx2l + displ(1,iglob)*hp2
-            tempz2l = tempz2l + displ(2,iglob)*hp2
+            dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(k,i)
+            duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(k,i)
+            dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(k,j)
+            duz_dgamma = duz_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(k,j)
           enddo
 
           xixl = xix(i,j,ispec)
@@ -75,14 +77,17 @@
           gammazl = gammaz(i,j,ispec)
 
 ! derivatives of displacement
-          duxdxl(i,j,ispec) = tempx1l*xixl + tempx2l*gammaxl
-          duxdzl(i,j,ispec) = tempx1l*xizl + tempx2l*gammazl
+          dux_dxl(i,j,ispec) = dux_dxi*xixl + dux_dgamma*gammaxl
+          dux_dzl(i,j,ispec) = dux_dxi*xizl + dux_dgamma*gammazl
 
-          duzdxl(i,j,ispec) = tempz1l*xixl + tempz2l*gammaxl
-          duzdzl(i,j,ispec) = tempz1l*xizl + tempz2l*gammazl
+          duz_dxl(i,j,ispec) = duz_dxi*xixl + duz_dgamma*gammaxl
+          duz_dzl(i,j,ispec) = duz_dxi*xizl + duz_dgamma*gammazl
 
+        enddo
       enddo
-    enddo
+
+    endif
+
   enddo
 
   end subroutine compute_gradient_attenuation
