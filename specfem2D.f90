@@ -1303,11 +1303,12 @@
   jend_left(:) = NGLLZ
   jend_right(:) = NGLLZ
 
-! exclude common points between acoustic absorbing edges and acoustic/elastic matching interface
+! exclude common points between acoustic absorbing edges and acoustic/elastic matching interfaces
   if(coupled_acoustic_elastic .and. anyabs) then
 
-    print *,'excluding common points between acoustic absorbing edges and acoustic/elastic matching interface, if any'
+    print *,'excluding common points between acoustic absorbing edges and acoustic/elastic matching interfaces, if any'
 
+! loop on all the absorbing elements
     do ispecabs = 1,nelemabs
 
       ispec = numabs(ispecabs)
