@@ -267,47 +267,38 @@
   write(24,*) '/MR {rmoveto} def'
   write(24,*) '/MV {moveto} def'
   write(24,*) '/M {moveto} def'
-  write(24,*) '/MK {mark} def'
   write(24,*) '/ST {stroke} def'
   write(24,*) '/CP {closepath} def'
   write(24,*) '/RG {setrgbcolor} def'
   write(24,*) '/GF {gsave fill grestore} def'
-  write(24,*) '/GG {0 setgray ST} def'
-  write(24,*) '/GC {Colmesh ST} def'
-  write(24,*) '/RF {setrgbcolor fill} def'
-  write(24,*) '/SF {setgray fill} def'
-  write(24,*) '/GS {gsave} def'
-  write(24,*) '/GR {grestore} def'
-  write(24,*) '/SLW {setlinewidth} def'
-  write(24,*) '/SCSF {scalefont setfont} def'
   write(24,*) '% different useful symbols'
   write(24,*) '/Point {2 0 360 arc CP 0 setgray fill} def'
   write(24,*) '/VDot {-0.75 -1.5 MR 1.5 0 LR 0 3. LR -1.5 0 LR'
   write(24,*) 'CP fill} def'
   write(24,*) '/HDot {-1.5 -0.75 MR 3. 0 LR 0 1.5 LR -3. 0 LR'
   write(24,*) 'CP fill} def'
-  write(24,*) '/Cross {GS 0.05 CM SLW'
-  write(24,*) 'GS 3 3 MR -6. -6. LR ST GR'
-  write(24,*) 'GS 3 -3 MR -6. 6. LR ST GR'
-  write(24,*) '0.01 CM SLW} def'
+  write(24,*) '/Cross {gsave 0.05 CM setlinewidth'
+  write(24,*) 'gsave 3 3 MR -6. -6. LR ST grestore'
+  write(24,*) 'gsave 3 -3 MR -6. 6. LR ST grestore'
+  write(24,*) '0.01 CM setlinewidth} def'
   write(24,*) '/SmallLine {MV 0.07 CM 0 rlineto} def'
-  write(24,*) '/Diamond {GS 0.05 CM SLW 0 4.2 MR'
+  write(24,*) '/Diamond {gsave 0.05 CM setlinewidth 0 4.2 MR'
   write(24,*) '-3 -4.2 LR 3 -4.2 LR 3 4.2 LR CP ST'
-  write(24,*) 'GR 0.01 CM SLW} def'
+  write(24,*) 'grestore 0.01 CM setlinewidth} def'
   write(24,*) '%'
   write(24,*) '% macro to draw the contour of the elements'
   write(24,*) '/CO {M counttomark 2 idiv {L} repeat cleartomark CP} def'
   write(24,*) '%'
-  write(24,*) '.01 CM SLW'
+  write(24,*) '.01 CM setlinewidth'
   write(24,*) '/Times-Roman findfont'
-  write(24,*) '.35 CM SCSF'
+  write(24,*) '.35 CM scalefont setfont'
   write(24,*) '%'
   write(24,*) '/vshift ',-height/2,' CM def'
   write(24,*) '/Rshow { currentpoint stroke MV'
   write(24,*) 'dup stringwidth pop neg vshift MR show } def'
   write(24,*) '/Cshow { currentpoint stroke MV'
   write(24,*) 'dup stringwidth pop -2 div vshift MR show } def'
-  write(24,*) '/fN {/Helvetica-Bold findfont ',height,' CM SCSF} def'
+  write(24,*) '/fN {/Helvetica-Bold findfont ',height,' CM scalefont setfont} def'
   write(24,*) '%'
   write(24,*) 'gsave newpath 90 rotate'
   write(24,*) '0 ',-sizez,' CM translate 1. 1. scale'
@@ -318,11 +309,11 @@
 !
   write(24,*) '0 setgray'
   write(24,*) '/Times-Roman findfont'
-  write(24,*) '.5 CM SCSF'
+  write(24,*) '.5 CM scalefont setfont'
 
   write(24,*) '%'
   write(24,*) '/Times-Roman findfont'
-  write(24,*) '.6 CM SCSF'
+  write(24,*) '.6 CM scalefont setfont'
   write(24,*) '.4 .9 .9 setrgbcolor'
   write(24,*) '11 CM 1.1 CM MV'
   write(24,*) '(X axis) show'
@@ -333,7 +324,7 @@
   write(24,*) 'grestore'
   write(24,*) '%'
   write(24,*) '/Times-Roman findfont'
-  write(24,*) '.7 CM SCSF'
+  write(24,*) '.7 CM scalefont setfont'
   write(24,*) '.8 0 .8 setrgbcolor'
   write(24,*) '24.35 CM 18.9 CM MV'
   write(24,*) usoffset,' CM 2 div neg 0 MR'
@@ -385,7 +376,7 @@
   z1 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x1 = x1 * centim
   z1 = z1 * centim
-  write(24,*) 'MK'
+  write(24,*) 'mark'
   write(24,681) x1,z1
 
 ! draw straight lines if elements have 4 nodes
@@ -479,7 +470,7 @@
 
 ! display bad elements that are above 80% of the threshold
   if(courant_stability_number >= 0.80 * courant_stability_number_max) then
-    write(24,*) '1 0 0 RG GF GG'
+    write(24,*) '1 0 0 RG GF 0 setgray ST'
   else
 ! do not color the elements if below the threshold
     write(24,*) 'ST'
@@ -522,47 +513,38 @@
   write(24,*) '/MR {rmoveto} def'
   write(24,*) '/MV {moveto} def'
   write(24,*) '/M {moveto} def'
-  write(24,*) '/MK {mark} def'
   write(24,*) '/ST {stroke} def'
   write(24,*) '/CP {closepath} def'
   write(24,*) '/RG {setrgbcolor} def'
   write(24,*) '/GF {gsave fill grestore} def'
-  write(24,*) '/GG {0 setgray ST} def'
-  write(24,*) '/GC {Colmesh ST} def'
-  write(24,*) '/RF {setrgbcolor fill} def'
-  write(24,*) '/SF {setgray fill} def'
-  write(24,*) '/GS {gsave} def'
-  write(24,*) '/GR {grestore} def'
-  write(24,*) '/SLW {setlinewidth} def'
-  write(24,*) '/SCSF {scalefont setfont} def'
   write(24,*) '% different useful symbols'
   write(24,*) '/Point {2 0 360 arc CP 0 setgray fill} def'
   write(24,*) '/VDot {-0.75 -1.5 MR 1.5 0 LR 0 3. LR -1.5 0 LR'
   write(24,*) 'CP fill} def'
   write(24,*) '/HDot {-1.5 -0.75 MR 3. 0 LR 0 1.5 LR -3. 0 LR'
   write(24,*) 'CP fill} def'
-  write(24,*) '/Cross {GS 0.05 CM SLW'
-  write(24,*) 'GS 3 3 MR -6. -6. LR ST GR'
-  write(24,*) 'GS 3 -3 MR -6. 6. LR ST GR'
-  write(24,*) '0.01 CM SLW} def'
+  write(24,*) '/Cross {gsave 0.05 CM setlinewidth'
+  write(24,*) 'gsave 3 3 MR -6. -6. LR ST grestore'
+  write(24,*) 'gsave 3 -3 MR -6. 6. LR ST grestore'
+  write(24,*) '0.01 CM setlinewidth} def'
   write(24,*) '/SmallLine {MV 0.07 CM 0 rlineto} def'
-  write(24,*) '/Diamond {GS 0.05 CM SLW 0 4.2 MR'
+  write(24,*) '/Diamond {gsave 0.05 CM setlinewidth 0 4.2 MR'
   write(24,*) '-3 -4.2 LR 3 -4.2 LR 3 4.2 LR CP ST'
-  write(24,*) 'GR 0.01 CM SLW} def'
+  write(24,*) 'grestore 0.01 CM setlinewidth} def'
   write(24,*) '%'
   write(24,*) '% macro to draw the contour of the elements'
   write(24,*) '/CO {M counttomark 2 idiv {L} repeat cleartomark CP} def'
   write(24,*) '%'
-  write(24,*) '.01 CM SLW'
+  write(24,*) '.01 CM setlinewidth'
   write(24,*) '/Times-Roman findfont'
-  write(24,*) '.35 CM SCSF'
+  write(24,*) '.35 CM scalefont setfont'
   write(24,*) '%'
   write(24,*) '/vshift ',-height/2,' CM def'
   write(24,*) '/Rshow { currentpoint stroke MV'
   write(24,*) 'dup stringwidth pop neg vshift MR show } def'
   write(24,*) '/Cshow { currentpoint stroke MV'
   write(24,*) 'dup stringwidth pop -2 div vshift MR show } def'
-  write(24,*) '/fN {/Helvetica-Bold findfont ',height,' CM SCSF} def'
+  write(24,*) '/fN {/Helvetica-Bold findfont ',height,' CM scalefont setfont} def'
   write(24,*) '%'
   write(24,*) 'gsave newpath 90 rotate'
   write(24,*) '0 ',-sizez,' CM translate 1. 1. scale'
@@ -573,11 +555,11 @@
 !
   write(24,*) '0 setgray'
   write(24,*) '/Times-Roman findfont'
-  write(24,*) '.5 CM SCSF'
+  write(24,*) '.5 CM scalefont setfont'
 
   write(24,*) '%'
   write(24,*) '/Times-Roman findfont'
-  write(24,*) '.6 CM SCSF'
+  write(24,*) '.6 CM scalefont setfont'
   write(24,*) '.4 .9 .9 setrgbcolor'
   write(24,*) '11 CM 1.1 CM MV'
   write(24,*) '(X axis) show'
@@ -588,7 +570,7 @@
   write(24,*) 'grestore'
   write(24,*) '%'
   write(24,*) '/Times-Roman findfont'
-  write(24,*) '.7 CM SCSF'
+  write(24,*) '.7 CM scalefont setfont'
   write(24,*) '.8 0 .8 setrgbcolor'
   write(24,*) '24.35 CM 18.9 CM MV'
   write(24,*) usoffset,' CM 2 div neg 0 MR'
@@ -644,7 +626,7 @@
   z1 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x1 = x1 * centim
   z1 = z1 * centim
-  write(24,*) 'MK'
+  write(24,*) 'mark'
   write(24,681) x1,z1
 
 ! draw straight lines if elements have 4 nodes
@@ -744,11 +726,11 @@
 
 ! display very good elements that are above 80% of the threshold in red
     if(lambdaS_local >= 0.80 * lambdaSmax) then
-      write(24,*) '1 0 0 RG GF GG'
+      write(24,*) '1 0 0 RG GF 0 setgray ST'
 
 ! display bad elements that are below 120% of the threshold in blue
     else if(lambdaS_local <= 1.20 * lambdaSmin) then
-      write(24,*) '0 0 1 RG GF GG'
+      write(24,*) '0 0 1 RG GF 0 setgray ST'
 
     else
 ! do not color the elements if not close to the threshold
@@ -767,11 +749,11 @@
 
 ! display very good elements that are above 80% of the threshold in red
     if(lambdaP_local >= 0.80 * lambdaPmax) then
-      write(24,*) '1 0 0 RG GF GG'
+      write(24,*) '1 0 0 RG GF 0 setgray ST'
 
 ! display bad elements that are below 120% of the threshold in blue
     else if(lambdaP_local <= 1.20 * lambdaPmin) then
-      write(24,*) '0 0 1 RG GF GG'
+      write(24,*) '0 0 1 RG GF 0 setgray ST'
 
     else
 ! do not color the elements if not close to the threshold
@@ -813,47 +795,38 @@
   write(24,*) '/MR {rmoveto} def'
   write(24,*) '/MV {moveto} def'
   write(24,*) '/M {moveto} def'
-  write(24,*) '/MK {mark} def'
   write(24,*) '/ST {stroke} def'
   write(24,*) '/CP {closepath} def'
   write(24,*) '/RG {setrgbcolor} def'
   write(24,*) '/GF {gsave fill grestore} def'
-  write(24,*) '/GG {0 setgray ST} def'
-  write(24,*) '/GC {Colmesh ST} def'
-  write(24,*) '/RF {setrgbcolor fill} def'
-  write(24,*) '/SF {setgray fill} def'
-  write(24,*) '/GS {gsave} def'
-  write(24,*) '/GR {grestore} def'
-  write(24,*) '/SLW {setlinewidth} def'
-  write(24,*) '/SCSF {scalefont setfont} def'
   write(24,*) '% different useful symbols'
   write(24,*) '/Point {2 0 360 arc CP 0 setgray fill} def'
   write(24,*) '/VDot {-0.75 -1.5 MR 1.5 0 LR 0 3. LR -1.5 0 LR'
   write(24,*) 'CP fill} def'
   write(24,*) '/HDot {-1.5 -0.75 MR 3. 0 LR 0 1.5 LR -3. 0 LR'
   write(24,*) 'CP fill} def'
-  write(24,*) '/Cross {GS 0.05 CM SLW'
-  write(24,*) 'GS 3 3 MR -6. -6. LR ST GR'
-  write(24,*) 'GS 3 -3 MR -6. 6. LR ST GR'
-  write(24,*) '0.01 CM SLW} def'
+  write(24,*) '/Cross {gsave 0.05 CM setlinewidth'
+  write(24,*) 'gsave 3 3 MR -6. -6. LR ST grestore'
+  write(24,*) 'gsave 3 -3 MR -6. 6. LR ST grestore'
+  write(24,*) '0.01 CM setlinewidth} def'
   write(24,*) '/SmallLine {MV 0.07 CM 0 rlineto} def'
-  write(24,*) '/Diamond {GS 0.05 CM SLW 0 4.2 MR'
+  write(24,*) '/Diamond {gsave 0.05 CM setlinewidth 0 4.2 MR'
   write(24,*) '-3 -4.2 LR 3 -4.2 LR 3 4.2 LR CP ST'
-  write(24,*) 'GR 0.01 CM SLW} def'
+  write(24,*) 'grestore 0.01 CM setlinewidth} def'
   write(24,*) '%'
   write(24,*) '% macro to draw the contour of the elements'
   write(24,*) '/CO {M counttomark 2 idiv {L} repeat cleartomark CP} def'
   write(24,*) '%'
-  write(24,*) '.01 CM SLW'
+  write(24,*) '.01 CM setlinewidth'
   write(24,*) '/Times-Roman findfont'
-  write(24,*) '.35 CM SCSF'
+  write(24,*) '.35 CM scalefont setfont'
   write(24,*) '%'
   write(24,*) '/vshift ',-height/2,' CM def'
   write(24,*) '/Rshow { currentpoint stroke MV'
   write(24,*) 'dup stringwidth pop neg vshift MR show } def'
   write(24,*) '/Cshow { currentpoint stroke MV'
   write(24,*) 'dup stringwidth pop -2 div vshift MR show } def'
-  write(24,*) '/fN {/Helvetica-Bold findfont ',height,' CM SCSF} def'
+  write(24,*) '/fN {/Helvetica-Bold findfont ',height,' CM scalefont setfont} def'
   write(24,*) '%'
   write(24,*) 'gsave newpath 90 rotate'
   write(24,*) '0 ',-sizez,' CM translate 1. 1. scale'
@@ -864,11 +837,11 @@
 !
   write(24,*) '0 setgray'
   write(24,*) '/Times-Roman findfont'
-  write(24,*) '.5 CM SCSF'
+  write(24,*) '.5 CM scalefont setfont'
 
   write(24,*) '%'
   write(24,*) '/Times-Roman findfont'
-  write(24,*) '.6 CM SCSF'
+  write(24,*) '.6 CM scalefont setfont'
   write(24,*) '.4 .9 .9 setrgbcolor'
   write(24,*) '11 CM 1.1 CM MV'
   write(24,*) '(X axis) show'
@@ -879,7 +852,7 @@
   write(24,*) 'grestore'
   write(24,*) '%'
   write(24,*) '/Times-Roman findfont'
-  write(24,*) '.7 CM SCSF'
+  write(24,*) '.7 CM scalefont setfont'
   write(24,*) '.8 0 .8 setrgbcolor'
   write(24,*) '24.35 CM 18.9 CM MV'
   write(24,*) usoffset,' CM 2 div neg 0 MR'
@@ -931,7 +904,7 @@
   z1 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x1 = x1 * centim
   z1 = z1 * centim
-  write(24,*) 'MK'
+  write(24,*) 'mark'
   write(24,681) x1,z1
 
 ! draw straight lines if elements have 4 nodes
@@ -993,7 +966,7 @@
   x1 = 1.d0 - x1
 
 ! display P-velocity model using gray levels
-      write(24,*) sngl(x1),' setgray GF GG'
+      write(24,*) sngl(x1),' setgray GF 0 setgray ST'
 
   enddo ! end of loop on all the spectral elements
 
