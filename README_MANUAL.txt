@@ -15,6 +15,8 @@ To use the code:
 
 - the seismograms OUTPUT_FILES/*.sem* are simple ASCII files with two columns: time in the first colum and amplitude in the second, therefore they can be visualized with any tool you like, for instance "gnuplot"
 
+- if you set flag "assign_external_model" to .true. in DATA/Par_file, the velocity and density model that is given at the end of DATA/Par_file is then ignored and overwritten by the external velocity and density model that you define yourself in define_external_model.f90
+
 - you can convolve them with any source time function in postprocessing later using "convolve_source_timefunction.csh" and "convolve_source_timefunction.f90", see the manual of the 3D code for details on how to do this
 
 - we do not have PML absorbing conditions implemented in the fluid/solid code yet. We use (older and less efficient) paraxial Clayton-Engquist or Sommerfeld equations instead. This is only by lack of time, I have a student who is currently implementing PML but the code is not fully ready. I will send it to you when it is. (We already have PML in the purely elastic code, see http://www.univ-pau.fr/~dkomati1/published_papers/pml_2nd_order_GJI_typos_fixed.pdf for details, therefore it is only a matter of cutting/pasting the routines). For now, since the paraxial conditions are less efficient, please use a larger model until we send you the code with PML
