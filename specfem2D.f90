@@ -235,10 +235,10 @@
 !
 !***********************************************************************
 
-  open (IIN,file='OUTPUT_FILES/Database')
+  open(IIN,file='OUTPUT_FILES/Database')
 
 ! determine if we write to file instead of standard output
-  if(IOUT /= ISTANDARD_OUTPUT) open (IOUT,file='simulation_results.txt')
+  if(IOUT /= ISTANDARD_OUTPUT) open(IOUT,file='simulation_results.txt')
 
 !
 !---  read job title and skip remaining titles of the input file
