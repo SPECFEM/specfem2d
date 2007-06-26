@@ -18,14 +18,17 @@ O = obj
 #FLAGS_CHECK = $(FLAGS_NOCHECK) -check bounds
 
 # GNU gfortran
-F90 = gfortran
+F90 = /opt/openmpi-1.2.1/gfortran64/bin/mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
+#F90 = gfortran
 #FLAGS_NOCHECK = -O3 -march=opteron -m64 -mfpmath=sse,387
 FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow
 FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
 
 LINK = $(F90)
 
-OBJS_MESHFEM2D = $O/meshfem2D.o $O/read_value_parameters.o
+LIB = /opt/metis-4.0.1/gcc64/lib/libmetis.a /opt/scotch-4.0/gcc64/lib/libscotch.a  /opt/scotch-4.0/gcc64/lib/libscotcherr.a
+
+OBJS_MESHFEM2D = $O/part_unstruct.o $O/meshfem2D.o $O/read_value_parameters.o
 
 OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/enforce_acoustic_free_surface.o\
         $O/compute_forces_acoustic.o $O/compute_forces_elastic.o\
@@ -33,7 +36,8 @@ OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/enforce_acoustic_free_surface.o\
         $O/plotpost.o $O/locate_receivers.o $O/locate_source_force.o $O/compute_gradient_attenuation.o\
         $O/specfem2D.o $O/write_seismograms.o $O/define_external_model.o $O/createnum_fast.o $O/createnum_slow.o\
         $O/define_shape_functions.o $O/create_color_image.o $O/compute_vector_field.o $O/compute_pressure.o\
-        $O/recompute_jacobian.o $O/compute_arrays_source.o $O/locate_source_moment_tensor.o $O/numerical_recipes.o
+        $O/recompute_jacobian.o $O/compute_arrays_source.o $O/locate_source_moment_tensor.o $O/numerical_recipes.o\
+        $O/construct_acoustic_surface.o $O/assemble_MPI.o
 
 default: clean meshfem2D specfem2D convolve_source_timefunction
 
@@ -43,7 +47,7 @@ clean:
 	/bin/rm -r -f xmeshfem2D xmeshfem2D.trace xspecfem2D xspecfem2D.trace $O/*.o *.o $O/*.il *.mod core xconvolve_source_timefunction
 
 meshfem2D: $(OBJS_MESHFEM2D)
-	$(LINK) $(FLAGS_CHECK) -o xmeshfem2D $(OBJS_MESHFEM2D)
+	$(LINK) $(FLAGS_CHECK) -o xmeshfem2D $(OBJS_MESHFEM2D) $(LIB)
 
 ### use optimized compilation option for solver only
 specfem2D: $(OBJS_SPECFEM2D)
@@ -147,3 +151,11 @@ $O/define_external_model.o: define_external_model.f90 constants.h
 $O/write_seismograms.o: write_seismograms.F90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/write_seismograms.o write_seismograms.F90
     
+$O/part_unstruct.o: part_unstruct.F90 constants_unstruct.h 
+	${F90} $(FLAGS_CHECK) -c -o $O/part_unstruct.o part_unstruct.F90
+
+$O/construct_acoustic_surface.o: construct_acoustic_surface.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/construct_acoustic_surface.o construct_acoustic_surface.f90
+
+$O/assemble_MPI.o: assemble_MPI.F90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/assemble_MPI.o assemble_MPI.F90

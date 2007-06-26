@@ -91,6 +91,9 @@
   implicit none
 
   include "constants.h"
+#ifdef USE_MPI
+  include "mpif.h"
+#endif
 
   character(len=80) datlin
 
@@ -112,11 +115,7 @@
 ! pressure in an element
   double precision, dimension(NGLLX,NGLLX) :: pressure_element
 
-! to write seismograms in single precision SEP and double precision binary format
-  real(kind=4), dimension(:), allocatable :: buffer_binary_single
-  double precision, dimension(:), allocatable :: buffer_binary_double
-
-  integer :: i,j,k,it,irec,ipoin,ip,id,nbpoin,inump,n,ispec,iedge,npoin,npgeo,iglob
+  integer :: i,j,k,l,it,irec,ipoin,ip,id,nbpoin,inump,n,ispec,iedge,npoin,npgeo,iglob
   logical :: anyabs
   double precision :: dxd,dzd,valux,valuz,hlagrange,rhol,cosrot,sinrot,xi,gamma,x,z
 
@@ -143,7 +142,6 @@
 
 ! for acoustic medium
   double precision, dimension(:), allocatable :: potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
-
   double precision, dimension(:), allocatable :: rmass_inverse_elastic,rmass_inverse_acoustic,density,displread,velocread,accelread
 
   double precision, dimension(:,:,:), allocatable :: vpext,vsext,rhoext
@@ -158,7 +156,7 @@
   integer, dimension(:), allocatable :: kmato,numabs,ispecnum_acoustic_surface,iedgenum_acoustic_surface, &
      ibegin_bottom,iend_bottom,ibegin_top,iend_top,jbegin_left,jend_left,jbegin_right,jend_right
 
-  integer ispec_selected_source,iglob_source,ix_source,iz_source
+  integer ispec_selected_source,iglob_source,ix_source,iz_source,is_proc_source,nb_proc_source
   double precision a,displnorm_all
   double precision, dimension(:), allocatable :: source_time_function
   double precision, external :: erf
@@ -207,6 +205,23 @@
   integer, dimension(:,:), allocatable :: iglob_image_color,copy_iglob_image_color
   double precision, dimension(:,:), allocatable :: image_color_data
 
+  double precision  :: xmin_color_image_loc, xmax_color_image_loc, zmin_color_image_loc, &
+       zmax_color_image_loc
+  integer  :: min_i, min_j, max_i, max_j
+  integer  :: nb_pixel_loc
+  integer, dimension(:), allocatable  :: nb_pixel_per_proc
+  double precision  :: i_coord, j_coord
+  double precision, dimension(2,4)  :: elmnt_coords
+  integer, dimension(:), allocatable  :: num_pixel_loc
+  integer, dimension(:,:), allocatable  :: num_pixel_recv
+  double precision, dimension(:), allocatable  :: data_pixel_recv
+  double precision, dimension(:), allocatable  :: data_pixel_send
+  logical  :: pixel_is_in
+  double precision  :: dist_pixel, dist_min_pixel
+#ifdef USE_MPI
+  integer, dimension(MPI_STATUS_SIZE)  :: request_mpi_status
+#endif
+
 ! timing information for the stations
   character(len=MAX_LENGTH_STATION_NAME), allocatable, dimension(:) :: station_name
   character(len=MAX_LENGTH_NETWORK_NAME), allocatable, dimension(:) :: network_name
@@ -228,6 +243,46 @@
   integer, dimension(8) :: time_values
   integer ihours,iminutes,iseconds,int_tCPU
   double precision :: time_start,time_end,tCPU
+  
+! for MPI and partitionning
+  integer  :: ier
+  integer  :: nproc
+  integer  :: myrank
+  integer  :: iproc
+  character(len=256)  :: prname
+
+  integer  :: ninterface
+  integer  :: max_interface_size
+  integer, dimension(:), allocatable  :: my_neighbours
+  integer, dimension(:), allocatable  :: my_nelmnts_neighbours
+  integer, dimension(:,:,:), allocatable  :: my_interfaces
+  integer, dimension(:,:), allocatable  :: ibool_interfaces_acoustic,ibool_interfaces_elastic
+  integer, dimension(:), allocatable  :: nibool_interfaces_acoustic,nibool_interfaces_elastic
+  
+  integer  :: ninterface_acoustic, ninterface_elastic
+  integer, dimension(:), allocatable  :: inum_interfaces_acoustic, inum_interfaces_elastic
+
+  double precision, dimension(:,:), allocatable  :: buffer_send_faces_vector_acoustic
+  double precision, dimension(:,:), allocatable  :: buffer_recv_faces_vector_acoustic
+  integer, dimension(:), allocatable  :: tab_requests_send_recv_acoustic
+  double precision, dimension(:,:), allocatable  :: buffer_send_faces_vector_elastic
+  double precision, dimension(:,:), allocatable  :: buffer_recv_faces_vector_elastic
+  integer, dimension(:), allocatable  :: tab_requests_send_recv_elastic
+  integer  :: max_ibool_interfaces_size_acoustic, max_ibool_interfaces_size_elastic 
+
+  integer, dimension(:,:), allocatable  :: acoustic_surface
+  integer, dimension(:,:), allocatable  :: acoustic_edges
+
+
+
+  integer  :: ixmin, ixmax, izmin, izmax
+
+  integer  :: ie, num_interface
+
+  integer  :: nrecloc, irecloc
+  integer, dimension(:), allocatable :: recloc, which_proc_receiver
+  
+  character(len=256)  :: filename
 
 !***********************************************************************
 !
@@ -235,8 +290,23 @@
 !
 !***********************************************************************
 
-  open(IIN,file='OUTPUT_FILES/Database',status='old',action='read')
+#ifdef USE_MPI
+  call MPI_INIT(ier)
+  call MPI_COMM_SIZE(MPI_COMM_WORLD,nproc,ier)
+  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
+  
+#else
+  nproc = 1
+  myrank = 0
+  
+#endif
+  
+  write(prname,230)myrank
+230   format('./OUTPUT_FILES/Database',i5.5)
 
+  open(unit=IIN,file=prname,status='old',action='read')
+
+   
 ! determine if we write to file instead of standard output
   if(IOUT /= ISTANDARD_OUTPUT) open(IOUT,file='simulation_results.txt',status='unknown')
 
@@ -355,7 +425,7 @@
   read(IIN,"(a80)") datlin
   read(IIN,*) numat,ngnod,nspec,pointsdisp,plot_lowerleft_corner_only
   read(IIN,"(a80)") datlin
-  read(IIN,*) nelemabs,nelem_acoustic_surface
+  read(IIN,*) nelemabs,nelem_acoustic_surface,num_fluid_solid_edges
 
 !
 !---- allocate arrays
@@ -402,14 +472,14 @@
   allocate(jend_right(nelemabs))
 
 ! --- allocate array for free surface condition in acoustic medium
-  if(nelem_acoustic_surface <= 0) then
-    nelem_acoustic_surface = 0
-    allocate(ispecnum_acoustic_surface(1))
-    allocate(iedgenum_acoustic_surface(1))
-  else
-    allocate(ispecnum_acoustic_surface(nelem_acoustic_surface))
-    allocate(iedgenum_acoustic_surface(nelem_acoustic_surface))
-  endif
+!!$  if(nelem_acoustic_surface <= 0) then
+!!$    nelem_acoustic_surface = 0
+!!$    allocate(ispecnum_acoustic_surface(1))
+!!$    allocate(iedgenum_acoustic_surface(1))
+!!$  else
+!!$    allocate(ispecnum_acoustic_surface(nelem_acoustic_surface))
+!!$    allocate(iedgenum_acoustic_surface(nelem_acoustic_surface))
+!!$  endif
 
 !
 !---- print element group main parameters
@@ -472,13 +542,52 @@
   allocate(duz_dxl_np1(NGLLX,NGLLZ,nspec_allocate))
   allocate(dux_dzl_np1(NGLLX,NGLLZ,nspec_allocate))
 
+
+!
+!----  read interfaces data
+!
+  print *, 'read the interfaces', myrank
+  read(IIN,"(a80)") datlin
+  read(IIN,*) ninterface, max_interface_size
+  if ( ninterface == 0 ) then
+     !allocate(my_neighbours(1))
+     !allocate(my_nelmnts_neighbours(1))
+     !allocate(my_interfaces(4,1,1))
+     !allocate(ibool_interfaces(NGLLX*1,1,1))
+     !allocate(nibool_interfaces(1,1))
+     
+  else
+     allocate(my_neighbours(ninterface))
+     allocate(my_nelmnts_neighbours(ninterface))
+     allocate(my_interfaces(4,max_interface_size,ninterface))
+     allocate(ibool_interfaces_acoustic(NGLLX*max_interface_size,ninterface))
+     allocate(ibool_interfaces_elastic(NGLLX*max_interface_size,ninterface))
+     allocate(nibool_interfaces_acoustic(ninterface))
+     allocate(nibool_interfaces_elastic(ninterface))
+     allocate(inum_interfaces_acoustic(ninterface))
+     allocate(inum_interfaces_elastic(ninterface))
+
+     do num_interface = 1, ninterface
+        read(IIN,*) my_neighbours(num_interface), my_nelmnts_neighbours(num_interface)
+        do ie = 1, my_nelmnts_neighbours(num_interface)
+           read(IIN,*) my_interfaces(1,ie,num_interface), my_interfaces(2,ie,num_interface), &
+                my_interfaces(3,ie,num_interface), my_interfaces(4,ie,num_interface)
+
+        end do
+     end do
+     print *, 'end read the interfaces', myrank
+     
+  end if
+  
+ 
 !
 !----  read absorbing boundary data
 !
+  read(IIN,"(a80)") datlin
   if(anyabs) then
-    read(IIN,"(a80)") datlin
-    do inum = 1,nelemabs
-      read(IIN,*) numabsread,codeabsread(1),codeabsread(2),codeabsread(3),codeabsread(4)
+     do inum = 1,nelemabs
+      read(IIN,*) numabsread,codeabsread(1),codeabsread(2),codeabsread(3),codeabsread(4), ibegin_bottom(inum), iend_bottom(inum), &
+           jbegin_right(inum), jend_right(inum), ibegin_top(inum), iend_top(inum), jbegin_left(inum), jend_left(inum) 
       if(numabsread < 1 .or. numabsread > nspec) stop 'Wrong absorbing element number'
       numabs(inum) = numabsread
       codeabs(IBOTTOM,inum) = codeabsread(1)
@@ -493,18 +602,50 @@
 !
 !----  read acoustic free surface data
 !
+  read(IIN,"(a80)") datlin
   if(nelem_acoustic_surface > 0) then
-    read(IIN,"(a80)") datlin
-    do inum = 1,nelem_acoustic_surface
-      read(IIN,*) numacoustread,iedgeacoustread
-      if(numacoustread < 1 .or. numacoustread > nspec) stop 'Wrong acoustic free surface element number'
-      if(iedgeacoustread < 1 .or. iedgeacoustread > NEDGES) stop 'Wrong acoustic free surface edge number'
-      ispecnum_acoustic_surface(inum) = numacoustread
-      iedgenum_acoustic_surface(inum) = iedgeacoustread
-    enddo
+     allocate(acoustic_edges(4,nelem_acoustic_surface))
+     print *, 'POYU'
+     do inum = 1,nelem_acoustic_surface
+        read(IIN,*) acoustic_edges(1,inum), acoustic_edges(2,inum), acoustic_edges(3,inum), &
+             acoustic_edges(4,inum)
+     end do
+     print *, 'POYU'
+     allocate(acoustic_surface(5,nelem_acoustic_surface))
+     print *, 'POYU'
+     call construct_acoustic_surface ( nspec, ngnod, knods, nelem_acoustic_surface, &
+          acoustic_edges, acoustic_surface)
+     print *, 'POYU'
+!!$      read(IIN,*) numacoustread,iedgeacoustread
+!!$      if(numacoustread < 1 .or. numacoustread > nspec) stop 'Wrong acoustic free surface element number'
+!!$      if(iedgeacoustread < 1 .or. iedgeacoustread > NEDGES) stop 'Wrong acoustic free surface edge number'
+!!$      ispecnum_acoustic_surface(inum) = numacoustread
+!!$      iedgenum_acoustic_surface(inum) = iedgeacoustread
+!!$    enddo
     write(IOUT,*)
     write(IOUT,*) 'Number of free surface elements: ',nelem_acoustic_surface
   endif
+
+!
+!---- read acoustic elastic coupled edges
+!
+  read(IIN,"(a80)") datlin
+  if ( num_fluid_solid_edges > 0 ) then
+     allocate(fluid_solid_acoustic_ispec(num_fluid_solid_edges))
+     allocate(fluid_solid_acoustic_iedge(num_fluid_solid_edges))
+     allocate(fluid_solid_elastic_ispec(num_fluid_solid_edges))
+     allocate(fluid_solid_elastic_iedge(num_fluid_solid_edges))
+     do inum = 1, num_fluid_solid_edges
+        read(IIN,*) fluid_solid_acoustic_ispec(inum), fluid_solid_elastic_ispec(inum)
+     end do
+  else
+     allocate(fluid_solid_acoustic_ispec(1))
+     allocate(fluid_solid_acoustic_iedge(1))
+     allocate(fluid_solid_elastic_ispec(1))
+     allocate(fluid_solid_elastic_iedge(1))
+     
+  end if
+
 
 !
 !---- close input file
@@ -560,13 +701,7 @@
 
   if(nrec < 1) stop 'need at least one receiver'
 
-! allocate seismogram arrays
-  allocate(sisux(NSTEP,nrec))
-  allocate(sisuz(NSTEP,nrec))
 
-! to write seismograms in single precision SEP and double precision binary format
-  allocate(buffer_binary_single(NSTEP*nrec))
-  allocate(buffer_binary_double(NSTEP*nrec))
 
 ! receiver information
   allocate(ispec_selected_rec(nrec))
@@ -576,6 +711,8 @@
   allocate(gamma_receiver(nrec))
   allocate(station_name(nrec))
   allocate(network_name(nrec))
+  allocate(recloc(nrec))
+  allocate(which_proc_receiver(nrec))
 
 ! allocate 1-D Lagrange interpolators and derivatives
   allocate(hxir(NGLLX))
@@ -706,25 +843,29 @@
   if(source_type == 1) then
 ! collocated force source
     call locate_source_force(coord,ibool,npoin,nspec,x_source,z_source,source_type, &
-      ix_source,iz_source,ispec_selected_source,iglob_source)
+      ix_source,iz_source,ispec_selected_source,iglob_source,is_proc_source,nb_proc_source)
 
 ! check that acoustic source is not exactly on the free surface because pressure is zero there
-    do ispec_acoustic_surface = 1,nelem_acoustic_surface
-      ispec = ispecnum_acoustic_surface(ispec_acoustic_surface)
-      iedge = iedgenum_acoustic_surface(ispec_acoustic_surface)
-      if(.not. elastic(ispec) .and. ispec == ispec_selected_source) then
-        if((iedge == IBOTTOM .and. iz_source == 1) .or. &
-           (iedge == ITOP .and. iz_source == NGLLZ) .or. &
-           (iedge == ILEFT .and. ix_source == 1) .or. &
-           (iedge == IRIGHT .and. ix_source == NGLLX)) &
-          stop 'an acoustic source cannot be located exactly on the free surface because pressure is zero there'
-      endif
-    enddo
-
+    if ( is_proc_source == 1 ) then
+       do ispec_acoustic_surface = 1,nelem_acoustic_surface
+          ispec = acoustic_surface(1,ispec_acoustic_surface)
+          if( .not. elastic(ispec) .and. ispec == ispec_selected_source ) then
+             do j = acoustic_surface(4,ispec_acoustic_surface), acoustic_surface(5,ispec_acoustic_surface)
+                do i = acoustic_surface(2,ispec_acoustic_surface), acoustic_surface(3,ispec_acoustic_surface)
+                   iglob = ibool(i,j,ispec)
+                   if ( iglob_source == iglob ) then
+                      stop 'an acoustic source cannot be located exactly on the free surface because pressure is zero there'
+                   end if
+                end do
+             end do
+          endif
+       enddo
+    end if
+    
   else if(source_type == 2) then
 ! moment-tensor source
-    call locate_source_moment_tensor(ibool,coord,nspec,npoin,xigll,zigll,x_source,z_source, &
-               ispec_selected_source,xi_source,gamma_source,coorg,knods,ngnod,npgeo)
+     call locate_source_moment_tensor(ibool,coord,nspec,npoin,xigll,zigll,x_source,z_source, &
+          ispec_selected_source,is_proc_source,nb_proc_source,nproc,myrank,xi_source,gamma_source,coorg,knods,ngnod,npgeo)
 
 ! compute source array for moment-tensor source
     call compute_arrays_source(ispec_selected_source,xi_source,gamma_source,sourcearray, &
@@ -736,31 +877,52 @@
 
 
 ! locate receivers in the mesh
-  call locate_receivers(ibool,coord,nspec,npoin,xigll,zigll,nrec,st_xval,st_zval,ispec_selected_rec, &
-                 xi_receiver,gamma_receiver,station_name,network_name,x_source,z_source,coorg,knods,ngnod,npgeo)
+  call locate_receivers(ibool,coord,nspec,npoin,xigll,zigll,nrec,nrecloc,recloc,which_proc_receiver,nproc,myrank,&
+       st_xval,st_zval,ispec_selected_rec, &
+       xi_receiver,gamma_receiver,station_name,network_name,x_source,z_source,coorg,knods,ngnod,npgeo)
+
+! allocate seismogram arrays
+  allocate(sisux(NSTEP,nrecloc))
+  allocate(sisuz(NSTEP,nrecloc))
 
 ! check if acoustic receiver is exactly on the free surface because pressure is zero there
   do ispec_acoustic_surface = 1,nelem_acoustic_surface
-    ispec = ispecnum_acoustic_surface(ispec_acoustic_surface)
-    iedge = iedgenum_acoustic_surface(ispec_acoustic_surface)
-    do irec = 1,nrec
-      if(.not. elastic(ispec) .and. ispec == ispec_selected_rec(irec)) then
-         if((iedge == IBOTTOM .and. gamma_receiver(irec) < -0.99d0) .or. &
-            (iedge == ITOP .and. gamma_receiver(irec) > 0.99d0) .or. &
-            (iedge == ILEFT .and. xi_receiver(irec) < -0.99d0) .or. &
-            (iedge == IRIGHT .and. xi_receiver(irec) > 0.99d0)) then
-          if(seismotype == 4) then
-            stop 'an acoustic pressure receiver cannot be located exactly on the free surface because pressure is zero there'
-          else
-            print *, '**********************************************************************'
-            print *, '*** Warning: acoustic receiver located exactly on the free surface ***'
-            print *, '*** Warning: tangential component will be zero there               ***'
-            print *, '**********************************************************************'
-            print *
-          endif
+     ispec = acoustic_surface(1,ispec_acoustic_surface)
+     ixmin = acoustic_surface(2,ispec_acoustic_surface)
+     ixmax = acoustic_surface(3,ispec_acoustic_surface)
+     izmin = acoustic_surface(4,ispec_acoustic_surface)
+     izmax = acoustic_surface(5,ispec_acoustic_surface)
+     do irecloc = 1,nrecloc
+        irec = recloc(irecloc)
+        if(.not. elastic(ispec) .and. ispec == ispec_selected_rec(irec)) then
+           if ( (izmin==1 .and. izmax==1 .and. ixmin==1 .and. ixmax==NGLLX .and. &
+                gamma_receiver(irec) < -0.99d0) .or.&
+                (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==NGLLX .and. &
+                gamma_receiver(irec) > 0.99d0) .or.&
+                (izmin==1 .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==1 .and. &
+                xi_receiver(irec) < -0.99d0) .or.&
+                (izmin==1 .and. izmax==NGLLZ .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
+                xi_receiver(irec) > 0.99d0) .or.&
+                (izmin==1 .and. izmax==1 .and. ixmin==1 .and. ixmax==1 .and. &
+                gamma_receiver(irec) < -0.99d0 .and. xi_receiver(irec) < -0.99d0) .or.&
+                (izmin==1 .and. izmax==1 .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
+                gamma_receiver(irec) < -0.99d0 .and. xi_receiver(irec) > 0.99d0) .or.&
+                (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==1 .and. &
+                gamma_receiver(irec) > 0.99d0 .and. xi_receiver(irec) < -0.99d0) .or.&
+                (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
+                gamma_receiver(irec) > 0.99d0 .and. xi_receiver(irec) > 0.99d0) ) then
+              if(seismotype == 4) then
+                 stop 'an acoustic pressure receiver cannot be located exactly on the free surface because pressure is zero there'
+              else
+                 print *, '**********************************************************************'
+                 print *, '*** Warning: acoustic receiver located exactly on the free surface ***'
+                 print *, '*** Warning: tangential component will be zero there               ***'
+                 print *, '**********************************************************************'
+                 print *
+              endif
+           endif
         endif
-      endif
-    enddo
+     enddo
   enddo
 
 ! define and store Lagrange interpolators at all the receivers
@@ -828,6 +990,59 @@
     enddo
   enddo
 
+#ifdef USE_MPI
+  if ( nproc > 1 ) then
+! preparing for MPI communications
+     call prepare_assemble_MPI (myrank,nspec,ibool, &
+          knods, ngnod, & 
+          npoin, elastic, &
+          ninterface, max_interface_size, &
+          my_neighbours, my_nelmnts_neighbours, my_interfaces, &
+          ibool_interfaces_acoustic, ibool_interfaces_elastic, &
+          nibool_interfaces_acoustic, nibool_interfaces_elastic, &
+          inum_interfaces_acoustic, inum_interfaces_elastic, &
+          ninterface_acoustic, ninterface_elastic &
+          )
+
+  max_ibool_interfaces_size_acoustic = maxval(nibool_interfaces_acoustic(:))
+  max_ibool_interfaces_size_elastic = NDIM*maxval(nibool_interfaces_elastic(:))
+  allocate(tab_requests_send_recv_acoustic(ninterface_acoustic*2))
+  allocate(buffer_send_faces_vector_acoustic(max_ibool_interfaces_size_acoustic,ninterface_acoustic))
+  allocate(buffer_recv_faces_vector_acoustic(max_ibool_interfaces_size_acoustic,ninterface_acoustic))
+  allocate(tab_requests_send_recv_elastic(ninterface_elastic*2))
+  allocate(buffer_send_faces_vector_elastic(max_ibool_interfaces_size_elastic,ninterface_elastic))
+  allocate(buffer_recv_faces_vector_elastic(max_ibool_interfaces_size_elastic,ninterface_elastic))
+
+  call create_MPI_requests_SEND_RECV_acoustic(myrank, &
+     ninterface, ninterface_acoustic, &
+     nibool_interfaces_acoustic, &
+     my_neighbours, &
+     max_ibool_interfaces_size_acoustic, &
+     buffer_send_faces_vector_acoustic, &
+     buffer_recv_faces_vector_acoustic, &
+     tab_requests_send_recv_acoustic, &
+     inum_interfaces_acoustic &
+     )
+  
+  call create_MPI_requests_SEND_RECV_elastic(myrank, &
+     ninterface, ninterface_elastic, &
+     nibool_interfaces_elastic, &
+     my_neighbours, &
+     max_ibool_interfaces_size_elastic, &
+     buffer_send_faces_vector_elastic, &
+     buffer_recv_faces_vector_elastic, &
+     tab_requests_send_recv_elastic, &
+     inum_interfaces_elastic &
+     )
+
+  call assemble_MPI_scalar(myrank,rmass_inverse_acoustic, rmass_inverse_elastic,npoin, &
+     ninterface, max_interface_size, max_ibool_interfaces_size_acoustic, max_ibool_interfaces_size_elastic, &
+     ibool_interfaces_acoustic,ibool_interfaces_elastic, nibool_interfaces_acoustic,nibool_interfaces_elastic, my_neighbours)
+end if
+
+#endif
+
+
 ! fill mass matrix with fictitious non-zero values to make sure it can be inverted globally
   if(any_elastic) where(rmass_inverse_elastic <= 0.d0) rmass_inverse_elastic = 1.d0
   if(any_acoustic) where(rmass_inverse_acoustic <= 0.d0) rmass_inverse_acoustic = 1.d0
@@ -839,10 +1054,12 @@
 ! check the mesh, stability and number of points per wavelength
   call checkgrid(vpext,vsext,rhoext,density,elastcoef,ibool,kmato,coord,npoin,vpmin,vpmax, &
                  assign_external_model,nspec,numat,deltat,f0,t0,initialfield,time_function_type, &
-                 coorg,xinterp,zinterp,shape2D_display,knods,simulation_title,npgeo,pointsdisp,ngnod,any_elastic)
+                 coorg,xinterp,zinterp,shape2D_display,knods,simulation_title,npgeo,pointsdisp,ngnod,any_elastic,myrank,nproc)
 
 ! convert receiver angle to radians
   anglerec = anglerec * pi / 180.d0
+
+
 
 !
 !---- for color images
@@ -851,17 +1068,32 @@
   if(output_color_image) then
 
 ! horizontal size of the image
-  xmin_color_image = minval(coord(1,:))
-  xmax_color_image = maxval(coord(1,:))
+  xmin_color_image_loc = minval(coord(1,:))
+  xmax_color_image_loc = maxval(coord(1,:))
 
 ! vertical size of the image, slightly increase it to go beyond maximum topography
-  zmin_color_image = minval(coord(2,:))
-  zmax_color_image = maxval(coord(2,:))
+  zmin_color_image_loc = minval(coord(2,:))
+  zmax_color_image_loc = maxval(coord(2,:))
+! 
+  xmin_color_image = xmin_color_image_loc
+  xmax_color_image = xmax_color_image_loc
+  zmin_color_image = zmin_color_image_loc
+  zmax_color_image = zmax_color_image_loc
+
+#ifdef USE_MPI
+  call MPI_ALLREDUCE(xmin_color_image_loc, xmin_color_image, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE(xmax_color_image_loc, xmax_color_image, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE(zmin_color_image_loc, zmin_color_image, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE(zmax_color_image_loc, zmax_color_image, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  
+#endif
+
   zmax_color_image = zmin_color_image + 1.05d0 * (zmax_color_image - zmin_color_image)
 
 ! compute number of pixels in the horizontal direction based on typical number
 ! of spectral elements in a given direction (may give bad results for very elongated models)
-  NX_IMAGE_color = nint(sqrt(dble(npgeo))) * (NGLLX-1) + 1
+  !NX_IMAGE_color = nint(sqrt(dble(npgeo))) * (NGLLX-1) + 1
+  NX_IMAGE_color = 800
 
 ! compute number of pixels in the vertical direction based on ratio of sizes
   NZ_IMAGE_color = nint(NX_IMAGE_color * (zmax_color_image - zmin_color_image) / (xmax_color_image - xmin_color_image))
@@ -886,91 +1118,190 @@
 
   iglob_image_color(:,:) = -1
 
-! loop on all the grid points to map them to a pixel in the image
-      do n=1,npoin
+  !!!!!!
+  nb_pixel_loc = 0
+  do ispec = 1, nspec
+     
+     do k = 1, 4
+        elmnt_coords(1,k) = coorg(1,knods(k,ispec))
+        elmnt_coords(2,k) = coorg(2,knods(k,ispec))
 
-! compute the coordinates of this pixel
-      i = nint((coord(1,n) - xmin_color_image) / size_pixel_horizontal + 1)
-      j = nint((coord(2,n) - zmin_color_image) / size_pixel_vertical + 1)
+     end do
+     
+     min_i = floor(minval((elmnt_coords(1,:) - xmin_color_image))/size_pixel_horizontal) + 1
+     max_i = ceiling(maxval((elmnt_coords(1,:) - xmin_color_image))/size_pixel_horizontal) + 1
+     min_j = floor(minval((elmnt_coords(2,:) - zmin_color_image))/size_pixel_vertical) + 1
+     max_j = ceiling(maxval((elmnt_coords(2,:) - zmin_color_image))/size_pixel_vertical) + 1
+          
+     do j = min_j, max_j
+        do i = min_i, max_i
+           i_coord = (i-1)*size_pixel_horizontal + xmin_color_image
+           j_coord = (j-1)*size_pixel_vertical + zmin_color_image
+           
+           call is_in_convex_quadrilateral( elmnt_coords, i_coord, j_coord, pixel_is_in)
 
-! avoid edge effects
-      if(i < 1) i = 1
-      if(i > NX_IMAGE_color) i = NX_IMAGE_color
+           if ( pixel_is_in ) then
+              dist_min_pixel = HUGEVAL
+              do k = 1, NGLLX
+                 do l = 1, NGLLZ
+                    iglob = ibool(k,l,ispec)
+                    dist_pixel = (coord(1,iglob)-i_coord)**2 + (coord(2,iglob)-j_coord)**2
+                    if (dist_pixel < dist_min_pixel) then
+                       dist_min_pixel = dist_pixel
+                       iglob_image_color(i,j) = iglob
+                       
+                    end if
+                    
+                 end do
+              end do
+              if ( dist_min_pixel >= HUGEVAL ) then
+                 stop 'Error in detecting pixel for color image'
+                 
+              end if
+              nb_pixel_loc = nb_pixel_loc + 1
+              
+           end if
+           
+        end do
+     end do
+  end do
 
-      if(j < 1) j = 1
-      if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
+  print *, 'POYOP', nb_pixel_loc, myrank
+  allocate(num_pixel_loc(nb_pixel_loc))
+  
+  nb_pixel_loc = 0
+  do i = 1, NX_IMAGE_color
+     do j = 1, NZ_IMAGE_color
+        if ( iglob_image_color(i,j) /= -1 ) then
+           nb_pixel_loc = nb_pixel_loc + 1
+           num_pixel_loc(nb_pixel_loc) = (j-1)*NX_IMAGE_color + i
+           
+        end if
+        
+     end do
+  end do
+  
+#ifdef USE_MPI
+  allocate(nb_pixel_per_proc(nproc))
+  
+  call MPI_GATHER( nb_pixel_loc, 1, MPI_INTEGER, nb_pixel_per_proc(1), 1, MPI_INTEGER, 0, MPI_COMM_WORLD, ier) 
+  
+  if ( myrank == 0 ) then
+     allocate(num_pixel_recv(maxval(nb_pixel_per_proc(:)),nproc))
+     allocate(data_pixel_recv(maxval(nb_pixel_per_proc(:))))
+  end if
 
-! assign this point to this pixel
-      iglob_image_color(i,j) = n
+  allocate(data_pixel_send(nb_pixel_loc))
+  if ( nproc > 1 ) then
+     if ( myrank == 0 ) then
+        
+        do iproc = 1, nproc-1
 
-      enddo
+           call MPI_RECV(num_pixel_recv(1,iproc+1),nb_pixel_per_proc(iproc+1), MPI_INTEGER, &
+                iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+           do k = 1, nb_pixel_per_proc(iproc+1)
+              j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
+              i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
+              iglob_image_color(i,j) = iproc
+              
+           end do
+        end do
+        
+     else
+        call MPI_SEND(num_pixel_loc(1),nb_pixel_loc,MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
+        
+     end if
 
-! locate missing pixels based on a minimum distance criterion
-! cannot do more than two iterations typically because some pixels must never be found
-! because they do not exist (for instance if they are located above topography)
-  do count_passes = 1,2
+  end if
+#endif
+  
+ 
 
-  print *,'pass ',count_passes,' to locate the missing pixels of color images'
-
-  copy_iglob_image_color(:,:) = iglob_image_color(:,:)
-
-  do j = 1,NZ_IMAGE_color
-    do i = 1,NX_IMAGE_color
-
-      if(copy_iglob_image_color(i,j) == -1) then
-
-        iplus1 = i + 1
-        iminus1 = i - 1
-
-        jplus1 = j + 1
-        jminus1 = j - 1
-
-! avoid edge effects
-        if(iminus1 < 1) iminus1 = 1
-        if(iplus1 > NX_IMAGE_color) iplus1 = NX_IMAGE_color
-
-        if(jminus1 < 1) jminus1 = 1
-        if(jplus1 > NZ_IMAGE_color) jplus1 = NZ_IMAGE_color
-
-! use neighbors of this pixel to fill the holes
-
-! horizontal
-        if(copy_iglob_image_color(iplus1,j) /= -1) then
-          iglob_image_color(i,j) = copy_iglob_image_color(iplus1,j)
-
-        else if(copy_iglob_image_color(iminus1,j) /= -1) then
-          iglob_image_color(i,j) = copy_iglob_image_color(iminus1,j)
-
-! vertical
-        else if(copy_iglob_image_color(i,jplus1) /= -1) then
-          iglob_image_color(i,j) = copy_iglob_image_color(i,jplus1)
-
-        else if(copy_iglob_image_color(i,jminus1) /= -1) then
-          iglob_image_color(i,j) = copy_iglob_image_color(i,jminus1)
-
-! diagonal
-        else if(copy_iglob_image_color(iminus1,jminus1) /= -1) then
-          iglob_image_color(i,j) = copy_iglob_image_color(iminus1,jminus1)
-
-        else if(copy_iglob_image_color(iplus1,jminus1) /= -1) then
-          iglob_image_color(i,j) = copy_iglob_image_color(iplus1,jminus1)
-
-        else if(copy_iglob_image_color(iminus1,jplus1) /= -1) then
-          iglob_image_color(i,j) = copy_iglob_image_color(iminus1,jplus1)
-
-        else if(copy_iglob_image_color(iplus1,jplus1) /= -1) then
-          iglob_image_color(i,j) = copy_iglob_image_color(iplus1,jplus1)
-
-        endif
-
-      endif
-
-    enddo
-  enddo
-
-  enddo
-
-  deallocate(copy_iglob_image_color)
+!!$! loop on all the grid points to map them to a pixel in the image
+!!$      do n=1,npoin
+!!$
+!!$! compute the coordinates of this pixel
+!!$      i = nint((coord(1,n) - xmin_color_image) / size_pixel_horizontal + 1)
+!!$      j = nint((coord(2,n) - zmin_color_image) / size_pixel_vertical + 1)
+!!$
+!!$! avoid edge effects
+!!$      if(i < 1) i = 1
+!!$      if(i > NX_IMAGE_color) i = NX_IMAGE_color
+!!$
+!!$      if(j < 1) j = 1
+!!$      if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
+!!$
+!!$! assign this point to this pixel
+!!$      iglob_image_color(i,j) = n
+!!$
+!!$      enddo
+!!$
+!!$! locate missing pixels based on a minimum distance criterion
+!!$! cannot do more than two iterations typically because some pixels must never be found
+!!$! because they do not exist (for instance if they are located above topography)
+!!$  do count_passes = 1,20
+!!$
+!!$  print *,'pass ',count_passes,' to locate the missing pixels of color images'
+!!$
+!!$  copy_iglob_image_color(:,:) = iglob_image_color(:,:)
+!!$
+!!$  do j = 1,NZ_IMAGE_color
+!!$    do i = 1,NX_IMAGE_color
+!!$
+!!$      if(copy_iglob_image_color(i,j) == -1) then
+!!$
+!!$        iplus1 = i + 1
+!!$        iminus1 = i - 1
+!!$
+!!$        jplus1 = j + 1
+!!$        jminus1 = j - 1
+!!$
+!!$! avoid edge effects
+!!$        if(iminus1 < 1) iminus1 = 1
+!!$        if(iplus1 > NX_IMAGE_color) iplus1 = NX_IMAGE_color
+!!$
+!!$        if(jminus1 < 1) jminus1 = 1
+!!$        if(jplus1 > NZ_IMAGE_color) jplus1 = NZ_IMAGE_color
+!!$
+!!$! use neighbors of this pixel to fill the holes
+!!$
+!!$! horizontal
+!!$        if(copy_iglob_image_color(iplus1,j) /= -1) then
+!!$          iglob_image_color(i,j) = copy_iglob_image_color(iplus1,j)
+!!$
+!!$        else if(copy_iglob_image_color(iminus1,j) /= -1) then
+!!$          iglob_image_color(i,j) = copy_iglob_image_color(iminus1,j)
+!!$
+!!$! vertical
+!!$        else if(copy_iglob_image_color(i,jplus1) /= -1) then
+!!$          iglob_image_color(i,j) = copy_iglob_image_color(i,jplus1)
+!!$
+!!$        else if(copy_iglob_image_color(i,jminus1) /= -1) then
+!!$          iglob_image_color(i,j) = copy_iglob_image_color(i,jminus1)
+!!$
+!!$! diagonal
+!!$        else if(copy_iglob_image_color(iminus1,jminus1) /= -1) then
+!!$          iglob_image_color(i,j) = copy_iglob_image_color(iminus1,jminus1)
+!!$
+!!$        else if(copy_iglob_image_color(iplus1,jminus1) /= -1) then
+!!$          iglob_image_color(i,j) = copy_iglob_image_color(iplus1,jminus1)
+!!$
+!!$        else if(copy_iglob_image_color(iminus1,jplus1) /= -1) then
+!!$          iglob_image_color(i,j) = copy_iglob_image_color(iminus1,jplus1)
+!!$
+!!$        else if(copy_iglob_image_color(iplus1,jplus1) /= -1) then
+!!$          iglob_image_color(i,j) = copy_iglob_image_color(iplus1,jplus1)
+!!$
+!!$        endif
+!!$
+!!$      endif
+!!$
+!!$    enddo
+!!$  enddo
+!!$
+!!$  enddo
+!!$
+!!$  deallocate(copy_iglob_image_color)
 
   write(IOUT,*) 'done locating all the pixels of color images'
 
@@ -1071,31 +1402,33 @@
 ! output absolute time in third column, in case user wants to check it as well
       write(55,*) sngl(time),sngl(source_time_function(it)),sngl(time-t0)
 
-    enddo
+   enddo
 
     close(55)
+    
+    source_time_function(:) = source_time_function(:) / nb_proc_source
 
   else
 
     allocate(source_time_function(1))
 
-  endif
+ endif
 
 !
 !----  check that no element has both acoustic free surface and top absorbing surface
 !
-  do ispec_acoustic_surface = 1,nelem_acoustic_surface
-    ispec = ispecnum_acoustic_surface(ispec_acoustic_surface)
-    iedge = iedgenum_acoustic_surface(ispec_acoustic_surface)
-    if(elastic(ispec)) then
-      stop 'elastic element detected in acoustic free surface'
-    else
-      do inum = 1,nelemabs
-        if(numabs(inum) == ispec .and. codeabs(iedge,inum)) &
-          stop 'acoustic free surface cannot be both absorbing and free'
-      enddo
-    endif
-  enddo
+!!$  do ispec_acoustic_surface = 1,nelem_acoustic_surface
+!!$     ispec = ispecnum_acoustic_surface(ispec_acoustic_surface)
+!!$    iedge = iedgenum_acoustic_surface(ispec_acoustic_surface)
+!!$    if(elastic(ispec)) then
+!!$      stop 'elastic element detected in acoustic free surface'
+!!$    else
+!!$      do inum = 1,nelemabs
+!!$        if(numabs(inum) == ispec .and. codeabs(iedge,inum)) &
+!!$          stop 'acoustic free surface cannot be both absorbing and free'
+!!$      enddo
+!!$    endif
+!!$  enddo
 
 ! determine if coupled fluid-solid simulation
   coupled_acoustic_elastic = any_acoustic .and. any_elastic
@@ -1103,8 +1436,6 @@
 ! fluid/solid edge detection
 ! very basic algorithm in O(nspec^2), simple double loop on the elements
 ! and then loop on the four corners of each of the two elements, could be signficantly improved
-
-  num_fluid_solid_edges_alloc = 0
 
   if(coupled_acoustic_elastic) then
     print *
@@ -1158,55 +1489,10 @@
 
     enddo
 
-! double loop on all the elements
-    do ispec_acoustic = 1, nspec
-      do ispec_elastic = 1, nspec
 
-! one element must be acoustic and the other must be elastic
-! use acoustic element as master to avoid double detection of the same pair (one on each side)
-        if(ispec_acoustic /= ispec_elastic .and. .not. elastic(ispec_acoustic) .and. elastic(ispec_elastic)) then
-
-! loop on the four edges of the two elements
-          do iedge_acoustic = 1,NEDGES
-            do iedge_elastic = 1,NEDGES
-
-! error if the two edges match in direct order
-              if(ibool(i_begin(iedge_acoustic),j_begin(iedge_acoustic),ispec_acoustic) == &
-                 ibool(i_begin(iedge_elastic),j_begin(iedge_elastic),ispec_elastic) .and. &
-                 ibool(i_end(iedge_acoustic),j_end(iedge_acoustic),ispec_acoustic) == &
-                 ibool(i_end(iedge_elastic),j_end(iedge_elastic),ispec_elastic)) &
-                   stop 'topology error (non-inverted coupled elements) found in fluid/solid edge detection'
-
-! the two edges can match in inverse order
-              if(ibool(i_begin(iedge_acoustic),j_begin(iedge_acoustic),ispec_acoustic) == &
-                 ibool(i_end(iedge_elastic),j_end(iedge_elastic),ispec_elastic) .and. &
-                 ibool(i_end(iedge_acoustic),j_end(iedge_acoustic),ispec_acoustic) == &
-                 ibool(i_begin(iedge_elastic),j_begin(iedge_elastic),ispec_elastic)) &
-                   num_fluid_solid_edges_alloc = num_fluid_solid_edges_alloc + 1
-
-            enddo
-          enddo
-
-        endif
-
-      enddo
-    enddo
-
-    print *,'Number of fluid/solid edges detected in mesh = ',num_fluid_solid_edges_alloc
-
-! allocate arrays for fluid/solid matching
-    allocate(fluid_solid_acoustic_ispec(num_fluid_solid_edges_alloc))
-    allocate(fluid_solid_acoustic_iedge(num_fluid_solid_edges_alloc))
-    allocate(fluid_solid_elastic_ispec(num_fluid_solid_edges_alloc))
-    allocate(fluid_solid_elastic_iedge(num_fluid_solid_edges_alloc))
-
-! double loop on all the elements
-    print *,'Creating fluid/solid edge topology...'
-
-    num_fluid_solid_edges = 0
-
-    do ispec_acoustic = 1, nspec
-      do ispec_elastic = 1, nspec
+    do inum = 1, num_fluid_solid_edges
+       ispec_acoustic =  fluid_solid_acoustic_ispec(inum)
+       ispec_elastic =  fluid_solid_elastic_ispec(inum)
 
 ! one element must be acoustic and the other must be elastic
 ! use acoustic element as master to avoid double detection of the same pair (one on each side)
@@ -1218,27 +1504,24 @@
 
 ! store the matching topology if the two edges match in inverse order
               if(ibool(i_begin(iedge_acoustic),j_begin(iedge_acoustic),ispec_acoustic) == &
-                 ibool(i_end(iedge_elastic),j_end(iedge_elastic),ispec_elastic) .and. &
-                 ibool(i_end(iedge_acoustic),j_end(iedge_acoustic),ispec_acoustic) == &
-                 ibool(i_begin(iedge_elastic),j_begin(iedge_elastic),ispec_elastic)) then
-                   num_fluid_solid_edges = num_fluid_solid_edges + 1
-                   fluid_solid_acoustic_ispec(num_fluid_solid_edges) = ispec_acoustic
-                   fluid_solid_acoustic_iedge(num_fluid_solid_edges) = iedge_acoustic
-                   fluid_solid_elastic_ispec(num_fluid_solid_edges) = ispec_elastic
-                   fluid_solid_elastic_iedge(num_fluid_solid_edges) = iedge_elastic
+                   ibool(i_end(iedge_elastic),j_end(iedge_elastic),ispec_elastic) .and. &
+                   ibool(i_end(iedge_acoustic),j_end(iedge_acoustic),ispec_acoustic) == &
+                   ibool(i_begin(iedge_elastic),j_begin(iedge_elastic),ispec_elastic)) then
+                 fluid_solid_acoustic_iedge(inum) = iedge_acoustic
+                 fluid_solid_elastic_iedge(inum) = iedge_elastic
 !                  print *,'edge ',iedge_acoustic,' of acoustic element ',ispec_acoustic, &
 !                          ' is in contact with edge ',iedge_elastic,' of elastic element ',ispec_elastic
-              endif
+                endif
 
-            enddo
+             enddo
           enddo
 
-        endif
+       endif
 
-      enddo
     enddo
+   
 
-    if(num_fluid_solid_edges /= num_fluid_solid_edges_alloc) stop 'error in creation of arrays for fluid/solid matching'
+    !if(num_fluid_solid_edges /= num_fluid_solid_edges_alloc) stop 'error in creation of arrays for fluid/solid matching'
 
 ! make sure fluid/solid matching has been perfectly detected: check that the grid points
 ! have the same physical coordinates
@@ -1282,26 +1565,22 @@
 
   else
 
-! allocate dummy arrays for fluid/solid matching if purely acoustic or purely elastic
-    allocate(fluid_solid_acoustic_ispec(1))
-    allocate(fluid_solid_acoustic_iedge(1))
-    allocate(fluid_solid_elastic_ispec(1))
-    allocate(fluid_solid_elastic_iedge(1))
+
 
   endif
-
+  
 ! default values for acoustic absorbing edges
-  ibegin_bottom(:) = 1
-  ibegin_top(:) = 1
-
-  iend_bottom(:) = NGLLX
-  iend_top(:) = NGLLX
-
-  jbegin_left(:) = 1
-  jbegin_right(:) = 1
-
-  jend_left(:) = NGLLZ
-  jend_right(:) = NGLLZ
+!!$  ibegin_bottom(:) = 1
+!!$  ibegin_top(:) = 1
+!!$
+!!$  iend_bottom(:) = NGLLX
+!!$  iend_top(:) = NGLLX
+!!$
+!!$  jbegin_left(:) = 1
+!!$  jbegin_right(:) = 1
+!!$
+!!$  jend_left(:) = NGLLZ
+!!$  jend_right(:) = NGLLZ
 
 ! exclude common points between acoustic absorbing edges and acoustic/elastic matching interfaces
   if(coupled_acoustic_elastic .and. anyabs) then
@@ -1322,8 +1601,8 @@
 
 ! if acoustic absorbing element and acoustic/elastic coupled element is the same
         if(ispec_acoustic == ispec) then
-
-          if(iedge_acoustic == IBOTTOM) then
+           
+           if(iedge_acoustic == IBOTTOM) then
             jbegin_left(ispecabs) = 2
             jbegin_right(ispecabs) = 2
           endif
@@ -1377,7 +1656,7 @@
 ! *********************************************************
 
   do it = 1,NSTEP
-
+     
 ! compute current time
     time = (it-1)*deltat
 
@@ -1395,16 +1674,16 @@
       potential_dot_dot_acoustic = ZERO
 
 ! free surface for an acoustic medium
-    call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                potential_acoustic,ispecnum_acoustic_surface,iedgenum_acoustic_surface, &
-                ibool,nelem_acoustic_surface,npoin,nspec)
+      call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
+           potential_acoustic,acoustic_surface, &
+           ibool,nelem_acoustic_surface,npoin,nspec)
 
 ! *********************************************************
 ! ************* compute forces for the acoustic elements
 ! *********************************************************
 
     call compute_forces_acoustic(npoin,nspec,nelemabs,numat, &
-               iglob_source,ispec_selected_source,source_type,it,NSTEP,anyabs, &
+               iglob_source,ispec_selected_source,is_proc_source,source_type,it,NSTEP,anyabs, &
                assign_external_model,initialfield,ibool,kmato,numabs, &
                elastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
                potential_acoustic,density,elastcoef,xix,xiz,gammax,gammaz,jacobian, &
@@ -1413,13 +1692,13 @@
                ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
                jbegin_left,jend_left,jbegin_right,jend_right)
 
-    endif ! end of test if any acoustic element
+ endif ! end of test if any acoustic element
 
 ! *********************************************************
 ! ************* add coupling with the elastic side
 ! *********************************************************
 
-    if(coupled_acoustic_elastic) then
+  if(coupled_acoustic_elastic) then
 
 ! loop on all the coupling edges
       do inum = 1,num_fluid_solid_edges
@@ -1479,7 +1758,39 @@
 
       enddo
 
-    endif
+   endif
+
+!!$  potential_dot_dot_acoustic = 1
+!!$      write(filename,282)myrank
+!!$282   format('OUTPUT_FILES/acoustic_before',i5.5)
+!!$      call gnuplot_array ( npoin, nspec, filename, potential_dot_dot_acoustic, coord, ibool)
+
+#ifdef USE_MPI
+   if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
+      call assemble_MPI_vector_acoustic_start(myrank,potential_dot_dot_acoustic,npoin, &
+           ninterface, ninterface_acoustic, &
+           inum_interfaces_acoustic, &
+           max_interface_size, max_ibool_interfaces_size_acoustic,&
+           ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
+           tab_requests_send_recv_acoustic, &
+           buffer_send_faces_vector_acoustic, &
+           buffer_recv_faces_vector_acoustic &
+           )
+      call assemble_MPI_vector_acoustic_wait(myrank,potential_dot_dot_acoustic,npoin, &
+           ninterface, ninterface_acoustic, &
+           inum_interfaces_acoustic, &
+           max_interface_size, max_ibool_interfaces_size_acoustic,&
+           ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
+           tab_requests_send_recv_acoustic, &
+           buffer_send_faces_vector_acoustic, &
+           buffer_recv_faces_vector_acoustic &
+           )      
+   end if
+#endif
+!!$      write(filename,283)myrank
+!!$283   format('OUTPUT_FILES/acoustic_after',i5.5)
+!!$      call gnuplot_array ( npoin, nspec, filename, potential_dot_dot_acoustic, coord, ibool)
+
 
 ! ************************************************************************************
 ! ************* multiply by the inverse of the mass matrix and update velocity
@@ -1492,17 +1803,17 @@
 
 ! free surface for an acoustic medium
     call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                potential_acoustic,ispecnum_acoustic_surface,iedgenum_acoustic_surface, &
+                potential_acoustic,acoustic_surface, &
                 ibool,nelem_acoustic_surface,npoin,nspec)
   endif
-
+ 
 ! *********************************************************
 ! ************* main solver for the elastic elements
 ! *********************************************************
 
-  if(any_elastic) &
+ if(any_elastic) &
     call compute_forces_elastic(npoin,nspec,nelemabs,numat,iglob_source, &
-               ispec_selected_source,source_type,it,NSTEP,anyabs,assign_external_model, &
+               ispec_selected_source,is_proc_source,source_type,it,NSTEP,anyabs,assign_external_model, &
                initialfield,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,angleforce,deltatcube, &
                deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,elastic,codeabs, &
                accel_elastic,veloc_elastic,displ_elastic,density,elastcoef,xix,xiz,gammax,gammaz, &
@@ -1582,15 +1893,54 @@
 
     endif
 
+    
+!!$    accel_elastic = 1
+!!$      write(filename,280)myrank
+!!$280   format('OUTPUT_FILES/accel_elastic_before',i5.5)
+!!$      call gnuplot_array ( npoin, nspec, filename, accel_elastic(2,:), coord, ibool)
+
 ! ************************************************************************************
 ! ************* multiply by the inverse of the mass matrix and update velocity
 ! ************************************************************************************
+
+#ifdef USE_MPI
+ if ( nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
+    call assemble_MPI_vector_elastic_start(myrank,accel_elastic,npoin, &
+     ninterface, ninterface_elastic, &
+     inum_interfaces_elastic, &
+     max_interface_size, max_ibool_interfaces_size_elastic,&
+     ibool_interfaces_elastic, nibool_interfaces_elastic, &
+     tab_requests_send_recv_elastic, &
+     buffer_send_faces_vector_elastic, &
+     buffer_recv_faces_vector_elastic &
+     )
+    call assemble_MPI_vector_elastic_wait(myrank,accel_elastic,npoin, &
+     ninterface, ninterface_elastic, &
+     inum_interfaces_elastic, &
+     max_interface_size, max_ibool_interfaces_size_elastic,&
+     ibool_interfaces_elastic, nibool_interfaces_elastic, &
+     tab_requests_send_recv_elastic, &
+     buffer_send_faces_vector_elastic, &
+     buffer_recv_faces_vector_elastic &
+     )    
+  end if
+#endif
+
+!!$  write(filename,281)myrank
+!!$281 format('OUTPUT_FILES/accel_elastic_after',i5.5)
+!!$  call gnuplot_array ( npoin, nspec, filename, accel_elastic(2,:), coord, ibool)
+!!$#ifdef USE_MPI
+!!$  call MPI_BARRIER(MPI_COMM_WORLD, ier)
+!!$#endif
+!!$
+!!$  stop
 
   if(any_elastic) then
     accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic
     accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic
     veloc_elastic = veloc_elastic + deltatover2*accel_elastic
   endif
+
 
 !----  display time step and max of norm of displacement
   if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5) then
@@ -1620,8 +1970,10 @@
   endif
 
 ! loop on all the receivers to compute and store the seismograms
-  do irec = 1,nrec
-
+  do irecloc = 1,nrecloc
+     
+     irec = recloc(irecloc)
+     
     ispec = ispec_selected_rec(irec)
 
 ! compute pressure in this element if needed
@@ -1695,11 +2047,11 @@
 
 ! rotate seismogram components if needed, except if recording pressure, which is a scalar
     if(seismotype /= 4) then
-      sisux(it,irec) =   cosrot*valux + sinrot*valuz
-      sisuz(it,irec) = - sinrot*valux + cosrot*valuz
+      sisux(it,irecloc) =   cosrot*valux + sinrot*valuz
+      sisuz(it,irecloc) = - sinrot*valux + cosrot*valuz
     else
-      sisux(it,irec) = valux
-      sisuz(it,irec) = ZERO
+      sisux(it,irecloc) = valux
+      sisuz(it,irecloc) = ZERO
     endif
 
   enddo
@@ -1723,14 +2075,14 @@
     call compute_vector_whole_medium(potential_acoustic,displ_elastic,elastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
 
-    call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
-          it,deltat,coorg,xinterp,zinterp,shape2D_display, &
-          Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
-          numabs,codeabs,anyabs,simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
-          colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
-          boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
-          nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
-          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges)
+!!$    call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
+!!$          it,deltat,coorg,xinterp,zinterp,shape2D_display, &
+!!$          Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
+!!$          numabs,codeabs,anyabs,simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
+!!$          colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
+!!$          boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
+!!$          nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
+!!$          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges)
 
   else if(imagetype == 2) then
 
@@ -1739,14 +2091,14 @@
     call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,elastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
 
-    call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
-          it,deltat,coorg,xinterp,zinterp,shape2D_display, &
-          Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
-          numabs,codeabs,anyabs,simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
-          colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
-          boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
-          nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
-          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges)
+!!$    call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
+!!$          it,deltat,coorg,xinterp,zinterp,shape2D_display, &
+!!$          Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
+!!$          numabs,codeabs,anyabs,simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
+!!$          colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
+!!$          boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
+!!$          nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
+!!$          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges)
 
   else if(imagetype == 3) then
 
@@ -1755,14 +2107,14 @@
     call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,elastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
 
-    call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
-          it,deltat,coorg,xinterp,zinterp,shape2D_display, &
-          Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
-          numabs,codeabs,anyabs,simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
-          colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
-          boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
-          nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
-          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges)
+!!$    call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
+!!$          it,deltat,coorg,xinterp,zinterp,shape2D_display, &
+!!$          Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
+!!$          numabs,codeabs,anyabs,simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
+!!$          colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
+!!$          boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
+!!$          nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
+!!$          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges)
 
   else if(imagetype == 4) then
 
@@ -1818,25 +2170,71 @@
   endif
 
   image_color_data(:,:) = 0.d0
-  do j = 1,NZ_IMAGE_color
-    do i = 1,NX_IMAGE_color
-      iglob = iglob_image_color(i,j)
-! draw vertical component of field
-! or pressure which is stored in the same array used as temporary storage
-      if(iglob /= -1) image_color_data(i,j) = vector_field_display(2,iglob)
-    enddo
-  enddo
+  
+  do k = 1, nb_pixel_loc
+     j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
+     i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
+     image_color_data(i,j) = vector_field_display(2,iglob_image_color(i,j))
+     
+  end do
+  
+#ifdef USE_MPI  
+  if ( nproc > 1 ) then
+     if ( myrank == 0 ) then
+        
+        do iproc = 1, nproc-1
 
-  call create_color_image(image_color_data,iglob_image_color,NX_IMAGE_color,NZ_IMAGE_color,it,cutsnaps)
+           call MPI_RECV(data_pixel_recv(1),nb_pixel_per_proc(iproc+1), MPI_DOUBLE_PRECISION, &
+                iproc, 43, MPI_COMM_WORLD, request_mpi_status, ier)
+           
+           do k = 1, nb_pixel_per_proc(iproc+1)
+              j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
+              i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
+              image_color_data(i,j) = data_pixel_recv(k)
+              
+           end do
+        end do
+        
+     else
+        do k = 1, nb_pixel_loc
+           j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
+           i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
+           data_pixel_send(k) = vector_field_display(2,iglob_image_color(i,j))
+           
+        end do
+        
+        call MPI_SEND(data_pixel_send(1),nb_pixel_loc,MPI_DOUBLE_PRECISION, 0, 43, MPI_COMM_WORLD, ier)
+        
+     end if
+  end if
+!  call MPI_BARRIER(MPI_COMM_WORLD, ier)
 
-  write(IOUT,*) 'Color image created'
+#endif  
+
+
+!!$  do j = 1,NZ_IMAGE_color
+!!$    do i = 1,NX_IMAGE_color
+!!$      iglob = iglob_image_color(i,j)
+!!$! draw vertical component of field
+!!$! or pressure which is stored in the same array used as temporary storage
+!!$      if(iglob /= -1) image_color_data(i,j) = vector_field_display(2,iglob)
+!!$    enddo
+!!$  enddo
+  if ( myrank == 0 ) then
+     call create_color_image(image_color_data,iglob_image_color,NX_IMAGE_color,NZ_IMAGE_color,it,cutsnaps)
+  
+     write(IOUT,*) 'Color image created'
+  
+  end if
 
   endif
-
+  
 !----  save temporary or final seismograms
-  call write_seismograms(sisux,sisuz,station_name,network_name,NSTEP, &
-         nrec,deltat,seismotype,st_xval,it,t0,buffer_binary_single,buffer_binary_double)
-
+  if ( it == NSTEP ) then
+     call write_seismograms(sisux,sisuz,station_name,network_name,NSTEP, &
+          nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,it,t0)
+  end if
+  
 ! count elapsed wall-clock time
   call date_and_time(datein,timein,zone,time_values)
 ! time_values(3): day of the month
@@ -1942,3 +2340,68 @@
 
   end program specfem2D
 
+
+
+
+subroutine gnuplot_array ( npoin, nspec, filename, array, coord, ibool)
+
+  implicit none
+  include "constants.h"
+
+  integer  :: npoin
+  integer  :: nspec
+  character(len=256)  :: filename
+  double precision, dimension(npoin)  :: array
+  double precision, dimension(NDIM,npoin)  :: coord
+  integer, dimension(NGLLX,NGLLZ,nspec)  :: ibool
+  
+  integer  :: i, j, ispec
+  integer  :: ipoint
+
+  open(unit=90, file=trim(filename), status='unknown', action='write')
+  do ipoint = 1, npoin
+     
+     write(90,*) coord(1,ipoint), coord(2,ipoint), array(ipoint)
+  end do
+  close(90)
+
+
+end subroutine gnuplot_array
+
+
+subroutine is_in_convex_quadrilateral ( elmnt_coords, x_coord, z_coord, is_in)
+  
+  implicit none
+  
+  double precision, dimension(2,4)  :: elmnt_coords
+  double precision, intent(in)  :: x_coord, z_coord 
+  logical, intent(out)  :: is_in
+  
+  real :: x1, x2, x3, x4, z1, z2, z3, z4
+  real  :: normal1, normal2, normal3, normal4
+
+  
+  x1 = elmnt_coords(1,1)
+  x2 = elmnt_coords(1,2)
+  x3 = elmnt_coords(1,3)
+  x4 = elmnt_coords(1,4)
+  z1 = elmnt_coords(2,1)
+  z2 = elmnt_coords(2,2)
+  z3 = elmnt_coords(2,3)
+  z4 = elmnt_coords(2,4)
+
+  normal1 = (z_coord-z1) * (x2-x1) - (x_coord-x1) * (z2-z1)
+  normal2 = (z_coord-z2) * (x3-x2) - (x_coord-x2) * (z3-z2)
+  normal3 = (z_coord-z3) * (x4-x3) - (x_coord-x3) * (z4-z3)
+  normal4 = (z_coord-z4) * (x1-x4) - (x_coord-x4) * (z1-z4)
+
+  if ( (normal1 < 0) .or. (normal2 < 0) .or. (normal3 < 0) .or. (normal4 < 0)  ) then
+     is_in = .false.
+     !print *, 'normal', normal1, normal2, normal3, normal4
+  else
+     is_in = .true.
+  end if
+  
+  
+  
+end subroutine is_in_convex_quadrilateral

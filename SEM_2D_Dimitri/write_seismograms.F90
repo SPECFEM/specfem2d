@@ -14,16 +14,22 @@
 ! write seismograms to text files
 
   subroutine write_seismograms(sisux,sisuz,station_name,network_name, &
-      NSTEP,nrec,deltat,seismotype,st_xval,it,t0,buffer_binary_single,buffer_binary_double)
+      NSTEP,nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,it,t0)
 
   implicit none
 
   include "constants.h"
+#ifdef USE_MPI
+  include "mpif.h"
+#endif
 
   integer nrec,NSTEP,it,seismotype
   double precision t0,deltat
+  
+  integer, intent(in)  ::  nrecloc,myrank
+  integer, dimension(nrec),intent(in)  :: which_proc_receiver
 
-  double precision, dimension(NSTEP,nrec) :: sisux,sisuz
+  double precision, dimension(NSTEP,nrecloc), intent(in)  :: sisux,sisuz
 
   double precision st_xval(nrec)
 
@@ -37,11 +43,17 @@
   character(len=150) sisname
 
 ! to write seismograms in single precision SEP and double precision binary format
-  real(kind=4), dimension(NSTEP*nrec) :: buffer_binary_single
-  double precision, dimension(NSTEP*nrec) :: buffer_binary_double
+  double precision, dimension(:,:), allocatable :: buffer_binary
 
 ! scaling factor for Seismic Unix xsu dislay
   double precision, parameter :: FACTORXSU = 1.d0
+
+  
+  integer  :: irecloc
+  integer  :: ierror
+#ifdef USE_MPI
+  integer, dimension(MPI_STATUS_SIZE)  :: status
+#endif
 
 !----
 
@@ -60,143 +72,172 @@
     stop 'wrong component to save for seismograms'
   endif
 
-  do irec = 1,nrec
 
 ! only one seismogram if pressurs
-    if(seismotype == 4) then
-      number_of_components = 1
-    else
-      number_of_components = NDIM
-    endif
+  if(seismotype == 4) then
+     number_of_components = 1
+  else
+     number_of_components = NDIM
+  endif
 
-    do iorientation = 1,number_of_components
+  allocate(buffer_binary(NSTEP,number_of_components))
 
-      if(iorientation == 1) then
-        chn = 'BHX'
-      else if(iorientation == 2) then
-        chn = 'BHZ'
-      else
-        stop 'incorrect channel value'
-      endif
-
-! in case of pressure, use different abbreviation
-      if(seismotype == 4) chn = 'PRE'
-
-! create the name of the seismogram file for each slice
-! file name includes the name of the station, the network and the component
-      length_station_name = len_trim(station_name(irec))
-      length_network_name = len_trim(network_name(irec))
-
-! check that length conforms to standard
-      if(length_station_name < 1 .or. length_station_name > MAX_LENGTH_STATION_NAME) stop 'wrong length of station name'
-
-      if(length_network_name < 1 .or. length_network_name > MAX_LENGTH_NETWORK_NAME) stop 'wrong length of network name'
-
-      write(sisname,"('OUTPUT_FILES/',a,'.',a,'.',a3,'.sem',a1)") station_name(irec)(1:length_station_name),&
-           network_name(irec)(1:length_network_name),chn,component
-
-! save seismograms in text format with no subsampling.
-! Because we do not subsample the output, this can result in large files
-! if the simulation uses many time steps. However, subsampling the output
-! here would result in a loss of accuracy when one later convolves
-! the results with the source time function
-      open(unit=11,file=sisname(1:len_trim(sisname)),status='unknown')
-
-! make sure we never write more than the maximum number of time steps
-! subtract offset of the source to make sure travel time is correct
-      do isample = 1,min(it,NSTEP)
-        if(iorientation == 1) then
-          write(11,*) sngl(dble(isample-1)*deltat - t0),' ',sngl(sisux(isample,irec))
-        else
-          write(11,*) sngl(dble(isample-1)*deltat - t0),' ',sngl(sisuz(isample,irec))
-        endif
-      enddo
-
-      close(11)
-
-      enddo
-
-  enddo
-
-!----
-
-! write seismograms in single precision SEP binary format
-
-! X component
-
+  
+  if ( myrank == 0 ) then
+     
 ! delete the old files
-  open(unit=11,file='OUTPUT_FILES/Ux_file_single.bin',status='unknown')
-  close(11,status='delete')
+     open(unit=11,file='OUTPUT_FILES/Ux_file_single.bin',status='unknown')
+     close(11,status='delete')
+     
+     open(unit=11,file='OUTPUT_FILES/Ux_file_double.bin',status='unknown')
+     close(11,status='delete')
+     
+     open(unit=11,file='OUTPUT_FILES/pressure_file_single.bin',status='unknown')
+     close(11,status='delete')
+     
+     open(unit=11,file='OUTPUT_FILES/pressure_file_double.bin',status='unknown')
+     close(11,status='delete')
+     
+     open(unit=11,file='OUTPUT_FILES/Uz_file_single.bin',status='unknown')
+     close(11,status='delete')
 
-  open(unit=11,file='OUTPUT_FILES/Ux_file_double.bin',status='unknown')
-  close(11,status='delete')
-
-  open(unit=11,file='OUTPUT_FILES/pressure_file_single.bin',status='unknown')
-  close(11,status='delete')
-
-  open(unit=11,file='OUTPUT_FILES/pressure_file_double.bin',status='unknown')
-  close(11,status='delete')
-
-  irecord = 0
-  do irec=1,nrec
-    do isample=1,NSTEP
-      irecord = irecord + 1
-      buffer_binary_single(irecord) = sngl(sisux(isample,irec))
-      buffer_binary_double(irecord) = sisux(isample,irec)
-    enddo
-  enddo
-
+     open(unit=11,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown')
+     close(11,status='delete')
+     
 ! write the new files
-  if(seismotype == 4) then
-    open(unit=11,file='OUTPUT_FILES/pressure_file_single.bin',status='unknown',access='direct',recl=4*NSTEP*nrec)
-  else
-    open(unit=11,file='OUTPUT_FILES/Ux_file_single.bin',status='unknown',access='direct',recl=4*NSTEP*nrec)
-  endif
-  write(11,rec=1) buffer_binary_single
-  close(11)
+     if(seismotype == 4) then
+        open(unit=12,file='OUTPUT_FILES/pressure_file_single.bin',status='unknown',access='direct',recl=4*NSTEP)
+     else
+        open(unit=12,file='OUTPUT_FILES/Ux_file_single.bin',status='unknown',access='direct',recl=4*NSTEP)
+     endif
 
-  if(seismotype == 4) then
-    open(unit=11,file='OUTPUT_FILES/pressure_file_double.bin',status='unknown',access='direct',recl=8*NSTEP*nrec)
-  else
-    open(unit=11,file='OUTPUT_FILES/Ux_file_double.bin',status='unknown',access='direct',recl=8*NSTEP*nrec)
-  endif
-  write(11,rec=1) buffer_binary_double
-  close(11)
-
-! Z component
-
-! delete the old files
-  open(unit=11,file='OUTPUT_FILES/Uz_file_single.bin',status='unknown')
-  close(11,status='delete')
-
-  open(unit=11,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown')
-  close(11,status='delete')
+     if(seismotype == 4) then
+        open(unit=13,file='OUTPUT_FILES/pressure_file_double.bin',status='unknown',access='direct',recl=8*NSTEP)
+     else
+        open(unit=13,file='OUTPUT_FILES/Ux_file_double.bin',status='unknown',access='direct',recl=8*NSTEP)
+     endif
 
 ! no Z component seismogram if pressurs
-  if(seismotype /= 4) then
+     if(seismotype /= 4) then
+        open(unit=14,file='OUTPUT_FILES/Uz_file_single.bin',status='unknown',access='direct',recl=4*NSTEP)
+        open(unit=15,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown',access='direct',recl=8*NSTEP)
+        
+     end if
+     
+  end if
 
-  irecord = 0
-  do irec=1,nrec
-    do isample=1,NSTEP
-      irecord = irecord + 1
-      buffer_binary_single(irecord) = sngl(sisuz(isample,irec))
-      buffer_binary_double(irecord) = sisuz(isample,irec)
-    enddo
+
+  irecloc = 0
+  do irec = 1,nrec
+     
+     if ( myrank == 0 ) then
+        
+        if ( which_proc_receiver(irec) == myrank ) then
+           irecloc = irecloc + 1
+           buffer_binary(:,1) = sisux(:,irecloc)
+           if ( number_of_components == 2 ) then
+              buffer_binary(:,2) = sisuz(:,irecloc)
+           end if
+           
+#ifdef USE_MPI       
+        else
+           call MPI_RECV(buffer_binary(1,1),NSTEP,MPI_DOUBLE_PRECISION,&
+                which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
+           if ( number_of_components == 2 ) then
+              call MPI_RECV(buffer_binary(1,2),NSTEP,MPI_DOUBLE_PRECISION,&
+                   which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
+           end if
+           
+      
+#endif
+        end if
+        
+! write trace
+        do iorientation = 1,number_of_components
+           
+           if(iorientation == 1) then
+              chn = 'BHX'
+           else if(iorientation == 2) then
+              chn = 'BHZ'
+           else
+              stop 'incorrect channel value'
+           endif
+           
+           ! in case of pressure, use different abbreviation
+           if(seismotype == 4) chn = 'PRE'
+           
+           ! create the name of the seismogram file for each slice
+           ! file name includes the name of the station, the network and the component
+           length_station_name = len_trim(station_name(irec))
+           length_network_name = len_trim(network_name(irec))
+
+           ! check that length conforms to standard
+           if(length_station_name < 1 .or. length_station_name > MAX_LENGTH_STATION_NAME) stop 'wrong length of station name'
+           
+           if(length_network_name < 1 .or. length_network_name > MAX_LENGTH_NETWORK_NAME) stop 'wrong length of network name'
+           
+           write(sisname,"('OUTPUT_FILES/',a,'.',a,'.',a3,'.sem',a1)") station_name(irec)(1:length_station_name),&
+                network_name(irec)(1:length_network_name),chn,component
+           
+           ! save seismograms in text format with no subsampling.
+           ! Because we do not subsample the output, this can result in large files
+           ! if the simulation uses many time steps. However, subsampling the output
+           ! here would result in a loss of accuracy when one later convolves
+           ! the results with the source time function
+           open(unit=11,file=sisname(1:len_trim(sisname)),status='unknown')
+           
+           ! make sure we never write more than the maximum number of time steps
+           ! subtract offset of the source to make sure travel time is correct
+           do isample = 1,min(it,NSTEP)
+              if(iorientation == 1) then
+                 write(11,*) sngl(dble(isample-1)*deltat - t0),' ',sngl(buffer_binary(isample,iorientation))
+              else
+                 write(11,*) sngl(dble(isample-1)*deltat - t0),' ',sngl(buffer_binary(isample,iorientation))
+              endif
+           enddo
+           
+           close(11)
+        end do
+
+! write binary seismogram
+        write(12,rec=irec) sngl(buffer_binary(:,1))
+        write(13,rec=irec) sngl(buffer_binary(:,1))
+        if ( seismotype /= 4 ) then
+           write(14,rec=irec) sngl(buffer_binary(:,2))
+           write(15,rec=irec) sngl(buffer_binary(:,2))
+        end if
+
+#ifdef USE_MPI
+
+     else
+        if ( which_proc_receiver(irec) == myrank ) then
+           irecloc = irecloc + 1
+           call MPI_SEND(sisux(1,irecloc),NSTEP,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ierror)
+           if ( number_of_components == 2 ) then
+              call MPI_SEND(sisuz(1,irecloc),NSTEP,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ierror)
+           end if           
+        end if
+
+#endif
+        
+     end if
+
   enddo
 
-! write the new files
-  open(unit=11,file='OUTPUT_FILES/Uz_file_single.bin',status='unknown',access='direct',recl=4*NSTEP*nrec)
-  write(11,rec=1) buffer_binary_single
-  close(11)
-
-  open(unit=11,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown',access='direct',recl=8*NSTEP*nrec)
-  write(11,rec=1) buffer_binary_double
-  close(11)
-
-  endif
+  close(12)
+  close(13)
+  if ( seismotype /= 4 ) then
+     close(14)
+     close(15)
+  end if
 
 !----
 
+
+
+!----
+   if ( myrank == 0 ) then
+      
 ! ligne de recepteurs pour Xsu
   open(unit=11,file='OUTPUT_FILES/receiver_line_Xsu_XWindow',status='unknown')
 
@@ -241,6 +282,8 @@
   write(11,*) 'sh receiver_line_Xsu_XWindow'
   write(11,*) '/bin/rm -f tempfile tempfile2'
   close(11)
+
+end if
 
 ! formats
   110 format('xwigb@xcur=',f8.2,'@n1=',i6,'@d1=',f15.8,'@f1=',f15.8,'@label1="Time@(s)"@label2="x@(m)"@n2=',i6,'@x2=')

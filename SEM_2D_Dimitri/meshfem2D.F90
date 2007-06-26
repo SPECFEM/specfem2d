@@ -38,8 +38,9 @@
 ! number=2,
 ! pages={368-392}}
 
-  program meshfem2D
+program meshfem2D
 
+  use part_unstruct
   implicit none
 
   include "constants.h"
@@ -54,7 +55,7 @@
 ! to store density and velocity model
   double precision, dimension(:), allocatable :: rho,cp,cs,aniso3,aniso4
   integer, dimension(:), allocatable :: icodemat
-  integer, dimension(:,:), allocatable :: num_material
+  integer, dimension(:), allocatable :: num_material
 
 ! interface data
   integer interface_current,ipoint_current,number_of_interfaces,npoints_interface_bottom,npoints_interface_top
@@ -90,13 +91,13 @@
   double precision, dimension(:), allocatable :: xdeb,zdeb,xfin,zfin
 
   logical interpol,gnuplot,assign_external_model,outputgrid
-  logical abstop,absbottom,absleft,absright
+  logical abstop,absbottom,absleft,absright,any_abs
   logical source_surf,meshvect,initialfield,modelvect,boundvect
   logical TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
 
   logical, dimension(:), allocatable :: enreg_surf
 
-  integer, external :: num
+  integer, external :: num_4, num_9
   double precision, external :: value_spline
 
 ! flag to indicate an anisotropic material
@@ -107,6 +108,67 @@
 
 ! ignore variable name field (junk) at the beginning of each input line
   logical, parameter :: IGNORE_JUNK = .true.,DONT_IGNORE_JUNK = .false.
+
+! parameters for external mesh
+  logical  :: read_external_mesh
+  character(len=256)  :: mesh_file, nodes_coords_file, materials_file, free_surface_file, absorbing_surface_file
+  
+! variables used for storing info about the mesh and partitions    
+  integer, dimension(:), pointer  :: elmnts
+  integer, dimension(:), pointer  :: elmnts_bis
+  double precision, dimension(:,:), pointer  :: nodes_coords
+  integer, dimension(:,:), pointer  :: acoustic_surface
+  integer, dimension(:,:), pointer  :: abs_surface
+  
+  integer, dimension(:), pointer  :: xadj
+  integer, dimension(:), pointer  :: adjncy
+  integer, dimension(:), pointer  :: nnodes_elmnts
+  integer, dimension(:), pointer  :: nodes_elmnts
+  
+  integer, dimension(:), pointer  :: vwgt
+  integer, dimension(:), pointer  :: adjwgt
+  integer, dimension(:), pointer  :: part
+
+  integer, dimension(:), pointer  :: glob2loc_elmnts
+  integer, dimension(:), pointer  :: glob2loc_nodes_nparts
+  integer, dimension(:), pointer  :: glob2loc_nodes_parts
+  integer, dimension(:), pointer  :: glob2loc_nodes
+  integer, dimension(:), pointer  :: tab_size_interfaces, tab_interfaces
+  integer, dimension(:), allocatable  :: my_interfaces
+  integer, dimension(:), allocatable  :: my_nb_interfaces
+    
+  integer  :: nedges_coupled, nedges_coupled_loc
+  integer, dimension(:,:), pointer  :: edges_coupled
+
+  integer  :: num_start
+  integer  :: nelmnts
+  integer  :: num_elmnt
+  integer  :: nnodes
+  integer  :: num_node
+  integer  :: nb_edges
+  integer  ::  ninterfaces
+  integer  :: my_ninterface
+  integer  :: nelem_acoustic_surface_loc, nelemabs_loc
+  logical, dimension(:,:), pointer  :: abs_surface_char
+  integer, dimension(:), pointer  :: abs_surface_merge
+  integer  :: nelemabs_merge
+  integer, dimension(:), pointer  :: ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
+       jbegin_left,jend_left,jbegin_right,jend_right
+
+! variables used for partitionning
+  integer  :: nproc
+  integer  :: partitionning_method
+  character(len=256)  :: partitionning_strategy
+  character(len=256)  :: scotch_strategy
+  integer, dimension(0:4)  :: metis_options
+  character(len=256)  :: prname
+
+  integer  :: edgecut
+  integer  :: iproc
+
+  ! variable de test
+  integer  :: aaa
+
 
 ! ***
 ! *** read the parameter file
@@ -125,83 +187,184 @@
   write(*,*) title
   print *
 
+! read info about external mesh
+  call read_value_logical(IIN,IGNORE_JUNK,read_external_mesh)
+  call read_value_string(IIN,IGNORE_JUNK,mesh_file)
+  call read_value_string(IIN,IGNORE_JUNK,nodes_coords_file)
+  call read_value_string(IIN,IGNORE_JUNK,materials_file)
+  call read_value_string(IIN,IGNORE_JUNK,free_surface_file)
+  call read_value_string(IIN,IGNORE_JUNK,absorbing_surface_file)
+
+! read info about partitionning
+  call read_value_integer(IIN,IGNORE_JUNK,nproc)
+  if ( nproc <= 0 ) then
+     print *, 'Number of processes (nproc) must be greater than or equal to one.' 
+     stop 
+  end if
+  
+#ifndef USE_MPI
+  if ( nproc > 1 ) then
+     print *, 'Number of processes (nproc) must be equal to one when not using MPI.' 
+     print *, 'Please recompile with -DUSE_MPI in order to enable use of MPI.'
+     stop 
+  end if
+  
+#endif
+  
+  call read_value_integer(IIN,IGNORE_JUNK,partitionning_method)
+  call read_value_string(IIN,IGNORE_JUNK,partitionning_strategy)
+  select case(partitionning_method) 
+  case(1)
+  case(2)
+     partitionning_strategy = trim(partitionning_strategy)
+     if ( partitionning_strategy(1:1) == '0' ) then
+        metis_options(0) = 0
+     else
+        do i = 1, 5
+           metis_options = iachar(partitionning_strategy(i:i)) - iachar('0')
+        end do
+     end if
+     
+  case(3)
+     scotch_strategy = trim(partitionning_strategy)
+     
+  case default 
+     print *, 'Invalid partionning method number.'
+     print *, 'Partionning method', partitionning_method, 'was requested, but is not available.'
+     stop
+  end select
+  
+ 
 ! read grid parameters
   call read_value_double_precision(IIN,IGNORE_JUNK,xmin)
   call read_value_double_precision(IIN,IGNORE_JUNK,xmax)
   call read_value_integer(IIN,IGNORE_JUNK,nx)
   call read_value_integer(IIN,IGNORE_JUNK,ngnod)
+  if ( ngnod == 9 .and. read_external_mesh ) then
+     print *, 'Number of control nodes must be equal to four when reading from external mesh.'
+     print *, 'ngnod = 9 is not yet supported.'
+     stop 
+  end if
+  
   call read_value_logical(IIN,IGNORE_JUNK,initialfield)
   call read_value_logical(IIN,IGNORE_JUNK,assign_external_model)
   call read_value_logical(IIN,IGNORE_JUNK,TURN_ANISOTROPY_ON)
   call read_value_logical(IIN,IGNORE_JUNK,TURN_ATTENUATION_ON)
+  
+  print *, 'POYOP'
+  if ( read_external_mesh ) then
+     call read_mesh(mesh_file, nelmnts, elmnts, nnodes, num_start)
+     
+  else
+     ! get interface data from external file to count the spectral elements along Z
+     print *,'Reading interface data from file DATA/',interfacesfile(1:len_trim(interfacesfile)),' to count the spectral elements'
+     open(unit=IIN_INTERFACES,file='DATA/'//interfacesfile,status='old')
+     
+     max_npoints_interface = -1
+     
+     ! read number of interfaces
+     call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,number_of_interfaces)
+     if(number_of_interfaces < 2) stop 'not enough interfaces (minimum is 2)'
 
-! get interface data from external file to count the spectral elements along Z
-  print *,'Reading interface data from file DATA/',interfacesfile(1:len_trim(interfacesfile)),' to count the spectral elements'
-  open(unit=IIN_INTERFACES,file='DATA/'//interfacesfile,status='old')
+     ! loop on all the interfaces
+     do interface_current = 1,number_of_interfaces
+        
+        call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,npoints_interface_bottom)
+        if(npoints_interface_bottom < 2) stop 'not enough interface points (minimum is 2)'
+        max_npoints_interface = max(npoints_interface_bottom,max_npoints_interface)
+        print *,'Reading ',npoints_interface_bottom,' points for interface ',interface_current
+        
+        ! loop on all the points describing this interface
+        do ipoint_current = 1,npoints_interface_bottom
+           call read_two_interface_points(IIN_INTERFACES,DONT_IGNORE_JUNK,xinterface_dummy,zinterface_dummy)
+           if(ipoint_current > 1 .and. xinterface_dummy <= xinterface_dummy_previous) &
+                stop 'interface points must be sorted in increasing X'
+           xinterface_dummy_previous = xinterface_dummy
+        enddo
+        
+     enddo
+     
+     ! define number of layers
+     number_of_layers = number_of_interfaces - 1
+     
+     allocate(nz_layer(number_of_layers))
+     
+     ! loop on all the layers
+     do ilayer = 1,number_of_layers
+        
+        ! read number of spectral elements in vertical direction in this layer
+        call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,nz_layer(ilayer))
+        if(nz_layer(ilayer) < 1) stop 'not enough spectral elements along Z in layer (minimum is 1)'
+        print *,'There are ',nz_layer(ilayer),' spectral elements along Z in layer ',ilayer
+        
+     enddo
 
-  max_npoints_interface = -1
-
-! read number of interfaces
-  call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,number_of_interfaces)
-  if(number_of_interfaces < 2) stop 'not enough interfaces (minimum is 2)'
-
-! loop on all the interfaces
-  do interface_current = 1,number_of_interfaces
-
-    call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,npoints_interface_bottom)
-    if(npoints_interface_bottom < 2) stop 'not enough interface points (minimum is 2)'
-    max_npoints_interface = max(npoints_interface_bottom,max_npoints_interface)
-    print *,'Reading ',npoints_interface_bottom,' points for interface ',interface_current
-
-! loop on all the points describing this interface
-    do ipoint_current = 1,npoints_interface_bottom
-      call read_two_interface_points(IIN_INTERFACES,DONT_IGNORE_JUNK,xinterface_dummy,zinterface_dummy)
-      if(ipoint_current > 1 .and. xinterface_dummy <= xinterface_dummy_previous) &
-        stop 'interface points must be sorted in increasing X'
-      xinterface_dummy_previous = xinterface_dummy
-    enddo
-
-  enddo
-
-! define number of layers
-  number_of_layers = number_of_interfaces - 1
-
-  allocate(nz_layer(number_of_layers))
-
-! loop on all the layers
-  do ilayer = 1,number_of_layers
-
-! read number of spectral elements in vertical direction in this layer
-    call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,nz_layer(ilayer))
-    if(nz_layer(ilayer) < 1) stop 'not enough spectral elements along Z in layer (minimum is 1)'
-    print *,'There are ',nz_layer(ilayer),' spectral elements along Z in layer ',ilayer
-
-  enddo
-
-  close(IIN_INTERFACES)
-
-! compute total number of spectral elements in vertical direction
-  nz = sum(nz_layer)
-
-  print *
-  print *,'Total number of spectral elements along Z = ',nz
-  print *
-
-  nxread = nx
-  nzread = nz
-
-! multiply by 2 if elements have 9 nodes
-  if(ngnod == 9) then
-    nx = nx * 2
-    nz = nz * 2
-    nz_layer(:) = nz_layer(:) * 2
-  endif
+     close(IIN_INTERFACES)
+     
+     ! compute total number of spectral elements in vertical direction
+     nz = sum(nz_layer)
+     
+     print *
+     print *,'Total number of spectral elements along Z = ',nz
+     print *
+     
+     nxread = nx
+     nzread = nz
+     
+     ! multiply by 2 if elements have 9 nodes
+     if(ngnod == 9) then
+        nx = nx * 2
+        nz = nz * 2
+        nz_layer(:) = nz_layer(:) * 2
+     endif
+     
+     nelmnts = nxread * nzread
+     allocate(elmnts(0:ngnod*nelmnts-1))
+     if ( ngnod == 4 ) then
+        num_elmnt = 0
+        do j = 1, nzread
+           do i = 1, nxread
+              elmnts(num_elmnt*ngnod)   = (j-1)*(nxread+1) + (i-1)
+              elmnts(num_elmnt*ngnod+1) = (j-1)*(nxread+1) + (i-1) + 1
+              elmnts(num_elmnt*ngnod+2) = j*(nxread+1) + (i-1) + 1
+              elmnts(num_elmnt*ngnod+3) = j*(nxread+1) + (i-1)
+              num_elmnt = num_elmnt + 1
+           end do
+        end do
+        print *, 'POY', minval(elmnts)
+     else
+        num_elmnt = 0
+        do j = 1, nzread
+           do i = 1, nxread
+              elmnts(num_elmnt*ngnod)   = (j-1)*(nxread+1) + (i-1)
+              elmnts(num_elmnt*ngnod+1) = (j-1)*(nxread+1) + (i-1) + 1
+              elmnts(num_elmnt*ngnod+2) = j*(nxread+1) + (i-1) + 1
+              elmnts(num_elmnt*ngnod+3) = j*(nxread+1) + (i-1) 
+              elmnts(num_elmnt*ngnod+4) = (nxread+1)*(nzread+1) + (j-1)*nxread + (i-1)
+              elmnts(num_elmnt*ngnod+5) = (nxread+1)*(nzread+1) + nxread*(nzread+1) + (j-1)*(nxread*2+1) + (i-1)*2 + 2
+              elmnts(num_elmnt*ngnod+6) = (nxread+1)*(nzread+1) + j*nxread + (i-1)
+              elmnts(num_elmnt*ngnod+7) = (nxread+1)*(nzread+1) + nxread*(nzread+1) + (j-1)*(nxread*2+1) + (i-1)*2
+              elmnts(num_elmnt*ngnod+8) = (nxread+1)*(nzread+1) + nxread*(nzread+1) + (j-1)*(nxread*2+1) + (i-1)*2 + 1
+              num_elmnt = num_elmnt + 1
+           end do
+        end do
+        
+     end if
+     !nnodes = (nx+1) * (nz+1)
+  end if
 
 ! read absorbing boundaries parameters
+  call read_value_logical(IIN,IGNORE_JUNK,any_abs)
   call read_value_logical(IIN,IGNORE_JUNK,absbottom)
   call read_value_logical(IIN,IGNORE_JUNK,absright)
   call read_value_logical(IIN,IGNORE_JUNK,abstop)
   call read_value_logical(IIN,IGNORE_JUNK,absleft)
+  if ( .not. any_abs ) then
+     absbottom = .false.
+     absright = .false.
+     abstop = .false.
+     absleft = .false.
+  end if
 
 ! read time step parameters
   call read_value_integer(IIN,IGNORE_JUNK,nt)
@@ -302,7 +465,7 @@
   allocate(cs(nb_materials))
   allocate(aniso3(nb_materials))
   allocate(aniso4(nb_materials))
-  allocate(num_material(nx,nz))
+  allocate(num_material(nelmnts))
 
   icodemat(:) = 0
   rho(:) = 0.d0
@@ -310,7 +473,7 @@
   cs(:) = 0.d0
   aniso3(:) = 0.d0
   aniso4(:) = 0.d0
-  num_material(:,:) = 0
+  num_material(:) = 0
 
   do imaterial=1,nb_materials
     call read_material_parameters(IIN,DONT_IGNORE_JUNK,i,icodematread,rhoread,cpread,csread,aniso3read,aniso4read)
@@ -325,7 +488,7 @@
     aniso3(i) = aniso3read
     aniso4(i) = aniso4read
   enddo
-
+ 
   print *
   print *, 'Nb of solid or fluid materials = ',nb_materials
   print *
@@ -345,71 +508,70 @@
   print *
   enddo
 
-! read the material numbers for each region
-  call read_value_integer(IIN,IGNORE_JUNK,nbregion)
-
-  if(nbregion <= 0) stop 'Negative number of regions not allowed!'
-
-  print *
-  print *, 'Nb of regions in the mesh = ',nbregion
-  print *
-
-  do iregion = 1,nbregion
-
-    call read_region_coordinates(IIN,DONT_IGNORE_JUNK,ixdebregion,ixfinregion,izdebregion,izfinregion,imaterial_number)
-
-    if(imaterial_number < 1) stop 'Negative material number not allowed!'
-    if(ixdebregion < 1) stop 'Left coordinate of region negative!'
-    if(ixfinregion > nxread) stop 'Right coordinate of region too high!'
-    if(izdebregion < 1) stop 'Bottom coordinate of region negative!'
-    if(izfinregion > nzread) stop 'Top coordinate of region too high!'
-
-    print *,'Region ',iregion
-    print *,'IX from ',ixdebregion,' to ',ixfinregion
-    print *,'IZ from ',izdebregion,' to ',izfinregion
-
-  if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL) then
-    vpregion = cp(imaterial_number)
-    vsregion = cs(imaterial_number)
-    print *,'Material # ',imaterial_number,' isotropic'
-    if(vsregion < TINYVAL) then
-      print *,'Material is fluid'
-    else
-      print *,'Material is solid'
-    endif
-    print *,'vp = ',vpregion
-    print *,'vs = ',vsregion
-    print *,'rho = ',rho(imaterial_number)
-    poisson_ratio = 0.5d0*(vpregion*vpregion-2.d0*vsregion*vsregion) / (vpregion*vpregion-vsregion*vsregion)
-    print *,'Poisson''s ratio = ',poisson_ratio
-    if(poisson_ratio <= -1.00001d0 .or. poisson_ratio >= 0.50001d0) stop 'incorrect value of Poisson''s ratio'
+  
+  if ( read_external_mesh ) then
+     call read_mat(materials_file, nelmnts, num_material)
   else
-    print *,'Material # ',imaterial_number,' anisotropic'
-    print *,'c11 = ',cp(imaterial_number)
-    print *,'c13 = ',cs(imaterial_number)
-    print *,'c33 = ',aniso3(imaterial_number)
-    print *,'c44 = ',aniso4(imaterial_number)
-    print *,'rho = ',rho(imaterial_number)
-  endif
-  print *,' -----'
+     ! read the material numbers for each region
+     call read_value_integer(IIN,IGNORE_JUNK,nbregion)
 
-! store density and velocity model
-   do i = ixdebregion,ixfinregion
-     do j = izdebregion,izfinregion
-       if(ngnod == 4) then
-         num_material(i,j) = imaterial_number
-       else
-         num_material(2*(i-1)+1,2*(j-1)+1) = imaterial_number
-         num_material(2*(i-1)+1,2*(j-1)+2) = imaterial_number
-         num_material(2*(i-1)+2,2*(j-1)+1) = imaterial_number
-         num_material(2*(i-1)+2,2*(j-1)+2) = imaterial_number
-       endif
+     if(nbregion <= 0) stop 'Negative number of regions not allowed!'
+
+     print *
+     print *, 'Nb of regions in the mesh = ',nbregion
+     print *
+
+     do iregion = 1,nbregion
+
+        call read_region_coordinates(IIN,DONT_IGNORE_JUNK,ixdebregion,ixfinregion,izdebregion,izfinregion,imaterial_number)
+
+        if(imaterial_number < 1) stop 'Negative material number not allowed!'
+        if(ixdebregion < 1) stop 'Left coordinate of region negative!'
+        if(ixfinregion > nxread) stop 'Right coordinate of region too high!'
+        if(izdebregion < 1) stop 'Bottom coordinate of region negative!'
+        if(izfinregion > nzread) stop 'Top coordinate of region too high!'
+
+        print *,'Region ',iregion
+        print *,'IX from ',ixdebregion,' to ',ixfinregion
+        print *,'IZ from ',izdebregion,' to ',izfinregion
+
+        if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL) then
+           vpregion = cp(imaterial_number)
+           vsregion = cs(imaterial_number)
+           print *,'Material # ',imaterial_number,' isotropic'
+           if(vsregion < TINYVAL) then
+              print *,'Material is fluid'
+           else
+              print *,'Material is solid'
+           endif
+           print *,'vp = ',vpregion
+           print *,'vs = ',vsregion
+           print *,'rho = ',rho(imaterial_number)
+           poisson_ratio = 0.5d0*(vpregion*vpregion-2.d0*vsregion*vsregion) / (vpregion*vpregion-vsregion*vsregion)
+           print *,'Poisson''s ratio = ',poisson_ratio
+           if(poisson_ratio <= -1.00001d0 .or. poisson_ratio >= 0.50001d0) stop 'incorrect value of Poisson''s ratio'
+        else
+           print *,'Material # ',imaterial_number,' anisotropic'
+           print *,'c11 = ',cp(imaterial_number)
+           print *,'c13 = ',cs(imaterial_number)
+           print *,'c33 = ',aniso3(imaterial_number)
+           print *,'c44 = ',aniso4(imaterial_number)
+           print *,'rho = ',rho(imaterial_number)
+        endif
+        print *,' -----'
+
+        ! store density and velocity model
+        do i = ixdebregion,ixfinregion
+           do j = izdebregion,izfinregion
+              num_material((j-1)*nxread+i) = imaterial_number
+           enddo
+        enddo
+        
      enddo
-   enddo
 
-  enddo
+     if(minval(num_material) <= 0) stop 'Velocity model not entirely set...'
 
-  if(minval(num_material) <= 0) stop 'Velocity model not entirely set...'
+  end if
 
   close(IIN)
 
@@ -421,369 +583,659 @@
   if(ngnod /= 4 .and. ngnod /= 9) stop 'ngnod different from 4 or 9!'
 
   print *
-  if(ngnod == 4) then
-    print *,'The mesh contains ',nx,' x ',nz,' elements'
-  else
-    print *,'The mesh contains ',nx/2,' x ',nz/2,' elements'
-  endif
+  print *,'The mesh contains ',nelmnts,' elements'
   print *
   print *,'Control elements have ',ngnod,' nodes'
   print *
 
 !---
 
-! allocate arrays for the grid
-  allocate(x(0:nx,0:nz))
-  allocate(z(0:nx,0:nz))
+  if ( .not. read_external_mesh ) then
+     ! allocate arrays for the grid
+     allocate(x(0:nx,0:nz))
+     allocate(z(0:nx,0:nz))
 
-  x(:,:) = 0.d0
-  z(:,:) = 0.d0
+     x(:,:) = 0.d0
+     z(:,:) = 0.d0
 
-! get interface data from external file
-  print *,'Reading interface data from file DATA/',interfacesfile(1:len_trim(interfacesfile))
-  open(unit=IIN_INTERFACES,file='DATA/'//interfacesfile,status='old')
+     ! get interface data from external file
+     print *,'Reading interface data from file DATA/',interfacesfile(1:len_trim(interfacesfile))
+     open(unit=IIN_INTERFACES,file='DATA/'//interfacesfile,status='old')
 
-  allocate(xinterface_bottom(max_npoints_interface))
-  allocate(zinterface_bottom(max_npoints_interface))
-  allocate(coefs_interface_bottom(max_npoints_interface))
+     allocate(xinterface_bottom(max_npoints_interface))
+     allocate(zinterface_bottom(max_npoints_interface))
+     allocate(coefs_interface_bottom(max_npoints_interface))
 
-  allocate(xinterface_top(max_npoints_interface))
-  allocate(zinterface_top(max_npoints_interface))
-  allocate(coefs_interface_top(max_npoints_interface))
+     allocate(xinterface_top(max_npoints_interface))
+     allocate(zinterface_top(max_npoints_interface))
+     allocate(coefs_interface_top(max_npoints_interface))
 
-! read number of interfaces
-  call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,number_of_interfaces)
+     ! read number of interfaces
+     call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,number_of_interfaces)
 
-! read bottom interface
-  call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,npoints_interface_bottom)
+     ! read bottom interface
+     call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,npoints_interface_bottom)
 
-! loop on all the points describing this interface
-  do ipoint_current = 1,npoints_interface_bottom
-    call read_two_interface_points(IIN_INTERFACES,DONT_IGNORE_JUNK, &
+     ! loop on all the points describing this interface
+     do ipoint_current = 1,npoints_interface_bottom
+        call read_two_interface_points(IIN_INTERFACES,DONT_IGNORE_JUNK, &
              xinterface_bottom(ipoint_current),zinterface_bottom(ipoint_current))
-  enddo
+     enddo
 
-! loop on all the layers
-  do ilayer = 1,number_of_layers
+     ! loop on all the layers
+     do ilayer = 1,number_of_layers
 
-! read top interface
-  call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,npoints_interface_top)
+        ! read top interface
+        call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,npoints_interface_top)
 
-! loop on all the points describing this interface
-  do ipoint_current = 1,npoints_interface_top
-    call read_two_interface_points(IIN_INTERFACES,DONT_IGNORE_JUNK, &
-             xinterface_top(ipoint_current),zinterface_top(ipoint_current))
-  enddo
+        ! loop on all the points describing this interface
+        do ipoint_current = 1,npoints_interface_top
+           call read_two_interface_points(IIN_INTERFACES,DONT_IGNORE_JUNK, &
+                xinterface_top(ipoint_current),zinterface_top(ipoint_current))
+        enddo
 
-! compute the spline for the bottom interface, impose the tangent on both edges
-  tang1 = (zinterface_bottom(2)-zinterface_bottom(1)) / (xinterface_bottom(2)-xinterface_bottom(1))
-  tangN = (zinterface_bottom(npoints_interface_bottom)-zinterface_bottom(npoints_interface_bottom-1)) / &
-          (xinterface_bottom(npoints_interface_bottom)-xinterface_bottom(npoints_interface_bottom-1))
-  call spline(xinterface_bottom,zinterface_bottom,npoints_interface_bottom,tang1,tangN,coefs_interface_bottom)
+        ! compute the spline for the bottom interface, impose the tangent on both edges
+        tang1 = (zinterface_bottom(2)-zinterface_bottom(1)) / (xinterface_bottom(2)-xinterface_bottom(1))
+        tangN = (zinterface_bottom(npoints_interface_bottom)-zinterface_bottom(npoints_interface_bottom-1)) / &
+             (xinterface_bottom(npoints_interface_bottom)-xinterface_bottom(npoints_interface_bottom-1))
+        call spline(xinterface_bottom,zinterface_bottom,npoints_interface_bottom,tang1,tangN,coefs_interface_bottom)
 
-! compute the spline for the top interface, impose the tangent on both edges
-  tang1 = (zinterface_top(2)-zinterface_top(1)) / (xinterface_top(2)-xinterface_top(1))
-  tangN = (zinterface_top(npoints_interface_top)-zinterface_top(npoints_interface_top-1)) / &
-          (xinterface_top(npoints_interface_top)-xinterface_top(npoints_interface_top-1))
-  call spline(xinterface_top,zinterface_top,npoints_interface_top,tang1,tangN,coefs_interface_top)
+        ! compute the spline for the top interface, impose the tangent on both edges
+        tang1 = (zinterface_top(2)-zinterface_top(1)) / (xinterface_top(2)-xinterface_top(1))
+        tangN = (zinterface_top(npoints_interface_top)-zinterface_top(npoints_interface_top-1)) / &
+             (xinterface_top(npoints_interface_top)-xinterface_top(npoints_interface_top-1))
+        call spline(xinterface_top,zinterface_top,npoints_interface_top,tang1,tangN,coefs_interface_top)
 
-! check if we are in the last layer, which contains topography,
-! and modify the position of the source accordingly if it is located exactly at the surface
-  if(source_surf .and. ilayer == number_of_layers) &
-      zs = value_spline(xs,xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
+        ! check if we are in the last layer, which contains topography,
+        ! and modify the position of the source accordingly if it is located exactly at the surface
+        if(source_surf .and. ilayer == number_of_layers) &
+             zs = value_spline(xs,xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
 
-! compute the offset of this layer in terms of number of spectral elements below along Z
-  if(ilayer > 1) then
-    ioffset = sum(nz_layer(1:ilayer-1))
+        ! compute the offset of this layer in terms of number of spectral elements below along Z
+        if(ilayer > 1) then
+           ioffset = sum(nz_layer(1:ilayer-1))
+        else
+           ioffset = 0
+        endif
+
+        !--- definition of the mesh
+
+        do ix = 0,nx
+
+           ! evenly spaced points along X
+           absx = xmin + (xmax - xmin) * dble(ix) / dble(nx)
+
+           ! value of the bottom and top splines
+           bot0 = value_spline(absx,xinterface_bottom,zinterface_bottom,coefs_interface_bottom,npoints_interface_bottom)
+           top0 = value_spline(absx,xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
+
+           do iz = 0,nz_layer(ilayer)
+
+              ! linear interpolation between bottom and top
+              gamma = dble(iz) / dble(nz_layer(ilayer))
+              a00 = 1.d0 - gamma
+              a01 = gamma
+
+              ! coordinates of the grid points
+              x(ix,iz + ioffset) = absx
+              z(ix,iz + ioffset) = a00*bot0 + a01*top0
+
+           enddo
+
+        enddo
+
+        ! the top interface becomes the bottom interface before switching to the next layer
+        npoints_interface_bottom = npoints_interface_top
+        xinterface_bottom(:) = xinterface_top(:)
+        zinterface_bottom(:) = zinterface_top(:)
+
+     enddo
+
+     close(IIN_INTERFACES)
+     
+     nnodes = (nz+1)*(nx+1)
+     allocate(nodes_coords(2,nnodes))
+     if ( ngnod == 4 ) then
+        do j = 0, nz
+           do i = 0, nx
+              num_node = num_4(i,j,nxread)
+              nodes_coords(1, num_node) = x(i,j)
+              nodes_coords(2, num_node) = z(i,j)
+              
+           end do
+        end do
+        
+     else
+        do j = 0, nz
+           do i = 0, nx
+              num_node = num_9(i,j,nxread,nzread)
+              nodes_coords(1, num_node) = x(i,j)
+              nodes_coords(2, num_node) = z(i,j)
+              
+           end do
+        end do
+        
+     end if
   else
-    ioffset = 0
-  endif
+     call read_nodes_coords(nodes_coords_file, nnodes, nodes_coords)
+  end if
+  
 
-!--- definition of the mesh
-
-    do ix = 0,nx
-
-! evenly spaced points along X
-      absx = xmin + (xmax - xmin) * dble(ix) / dble(nx)
-
-! value of the bottom and top splines
-      bot0 = value_spline(absx,xinterface_bottom,zinterface_bottom,coefs_interface_bottom,npoints_interface_bottom)
-      top0 = value_spline(absx,xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
-
-      do iz = 0,nz_layer(ilayer)
-
-! linear interpolation between bottom and top
-        gamma = dble(iz) / dble(nz_layer(ilayer))
-        a00 = 1.d0 - gamma
-        a01 = gamma
-
-! coordinates of the grid points
-        x(ix,iz + ioffset) = absx
-        z(ix,iz + ioffset) = a00*bot0 + a01*top0
-
-      enddo
-
-    enddo
-
-! the top interface becomes the bottom interface before switching to the next layer
-    npoints_interface_bottom = npoints_interface_top
-    xinterface_bottom(:) = xinterface_top(:)
-    zinterface_bottom(:) = zinterface_top(:)
-
-  enddo
-
-  close(IIN_INTERFACES)
-
+  if ( read_external_mesh ) then
+     call read_acoustic_surface(free_surface_file, nelem_acoustic_surface, acoustic_surface, &
+          nelmnts, num_material, ANISOTROPIC_MATERIAL, nb_materials, icodemat, cs, num_start)
+     
+     if ( any_abs ) then
+        call read_abs_surface(absorbing_surface_file, nelemabs, abs_surface, num_start)
+     end if
+     
+  else
+     ! count the number of acoustic free-surface elements
+     nelem_acoustic_surface = 0
+     j = nzread
+     do i = 1,nxread
+        imaterial_number = num_material((j-1)*nxread+i)
+        if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. cs(imaterial_number) < TINYVAL ) then
+           nelem_acoustic_surface = nelem_acoustic_surface + 1
+        end if
+     enddo
+     
+     allocate(acoustic_surface(4,nelem_acoustic_surface))
+     
+     nelem_acoustic_surface = 0
+     j = nzread
+     do i = 1,nxread
+        imaterial_number = num_material((j-1)*nxread+i)
+        if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. cs(imaterial_number) < TINYVAL ) then
+           nelem_acoustic_surface = nelem_acoustic_surface + 1
+           acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
+           acoustic_surface(2,nelem_acoustic_surface) = 2
+           acoustic_surface(3,nelem_acoustic_surface) = elmnts(3+ngnod*((j-1)*nxread+i-1))
+           acoustic_surface(4,nelem_acoustic_surface) = elmnts(2+ngnod*((j-1)*nxread+i-1))          
+        end if
+     end do
+     
+     !
+     !--- definition of absorbing boundaries
+     !
+     nelemabs = 0
+     if(absbottom) nelemabs = nelemabs + nxread
+     if(abstop) nelemabs = nelemabs + nxread
+     if(absleft) nelemabs = nelemabs + nzread
+     if(absright) nelemabs = nelemabs + nzread
+     
+     allocate(abs_surface(4,nelemabs))
+     
+     ! generate the list of absorbing elements
+     if(nelemabs > 0) then
+        nelemabs = 0
+        do iz = 1,nzread
+           do ix = 1,nxread
+              inumelem = (iz-1)*nxread + ix
+              if(absbottom    .and. iz == 1) then
+                 nelemabs = nelemabs + 1
+                 abs_surface(1,nelemabs) = inumelem-1
+                 abs_surface(2,nelemabs) = 2
+                 abs_surface(3,nelemabs) = elmnts(0+ngnod*(inumelem-1))
+                 abs_surface(4,nelemabs) = elmnts(1+ngnod*(inumelem-1))
+              end if
+              if(absright .and. ix == nxread) then
+                 nelemabs = nelemabs + 1
+                 abs_surface(1,nelemabs) = inumelem-1
+                 abs_surface(2,nelemabs) = 2
+                 abs_surface(3,nelemabs) = elmnts(1+ngnod*(inumelem-1))
+                 abs_surface(4,nelemabs) = elmnts(2+ngnod*(inumelem-1))
+              end if
+              if(abstop   .and. iz == nzread) then
+                 nelemabs = nelemabs + 1
+                 abs_surface(1,nelemabs) = inumelem-1
+                 abs_surface(2,nelemabs) = 2
+                 abs_surface(3,nelemabs) = elmnts(3+ngnod*(inumelem-1)) 
+                 abs_surface(4,nelemabs) = elmnts(2+ngnod*(inumelem-1)) 
+              end if
+              if(absleft .and. ix == 1) then
+                 nelemabs = nelemabs + 1
+                 abs_surface(1,nelemabs) = inumelem-1
+                 abs_surface(2,nelemabs) = 2
+                 abs_surface(3,nelemabs) = elmnts(0+ngnod*(inumelem-1)) 
+                 abs_surface(4,nelemabs) = elmnts(3+ngnod*(inumelem-1)) 
+              end if
+           end do
+        end do
+     end if
+     
+  end if
+  
+  
 ! compute min and max of X and Z in the grid
   print *
-  print *,'Min and max value of X in the grid = ',minval(x),maxval(x)
-  print *,'Min and max value of Z in the grid = ',minval(z),maxval(z)
+  print *,'Min and max value of X in the grid = ',minval(nodes_coords(1,:)),maxval(nodes_coords(1,:))
+  print *,'Min and max value of Z in the grid = ',minval(nodes_coords(2,:)),maxval(nodes_coords(2,:))
   print *
-
+  
+  
 ! ***
 ! *** create a Gnuplot file that displays the grid
 ! ***
 
-  print *
-  print *,'Saving the grid in Gnuplot format...'
+!!$  print *
+!!$  print *,'Saving the grid in Gnuplot format...'
+!!$
+!!$  open(unit=20,file='OUTPUT_FILES/gridfile.gnu',status='unknown')
+!!$
+!!$! draw horizontal lines of the grid
+!!$  print *,'drawing horizontal lines of the grid'
+!!$  istepx = 1
+!!$  if(ngnod == 4) then
+!!$    istepz = 1
+!!$  else
+!!$    istepz = 2
+!!$  endif
+!!$  do ili=0,nz,istepz
+!!$    do icol=0,nx-istepx,istepx
+!!$      write(20,*) sngl(x(icol,ili)),sngl(z(icol,ili))
+!!$      write(20,*) sngl(x(icol+istepx,ili)),sngl(z(icol+istepx,ili))
+!!$      write(20,10)
+!!$    enddo
+!!$  enddo
+!!$
+!!$! draw vertical lines of the grid
+!!$  print *,'drawing vertical lines of the grid'
+!!$  if(ngnod == 4) then
+!!$    istepx = 1
+!!$  else
+!!$    istepx = 2
+!!$  endif
+!!$  istepz = 1
+!!$  do icol=0,nx,istepx
+!!$    do ili=0,nz-istepz,istepz
+!!$      write(20,*) sngl(x(icol,ili)),sngl(z(icol,ili))
+!!$      write(20,*) sngl(x(icol,ili+istepz)),sngl(z(icol,ili+istepz))
+!!$      write(20,10)
+!!$    enddo
+!!$  enddo
+!!$
+!!$ 10 format('')
+!!$
+!!$  close(20)
+!!$
+!!$! create a Gnuplot script to display the grid
+!!$  open(unit=20,file='OUTPUT_FILES/plotgnu',status='unknown')
+!!$  write(20,*) '#set term X11'
+!!$  write(20,*) 'set term postscript landscape monochrome solid "Helvetica" 22'
+!!$  write(20,*) 'set output "grid.ps"'
+!!$  write(20,*) '#set xrange [',sngl(minval(x)),':',sngl(maxval(x)),']'
+!!$  write(20,*) '#set yrange [',sngl(minval(z)),':',sngl(maxval(z)),']'
+!!$! use same unit length on both X and Y axes
+!!$  write(20,*) 'set size ratio -1'
+!!$  write(20,*) 'plot "gridfile.gnu" title "Macrobloc mesh" w l'
+!!$  write(20,*) 'pause -1 "Hit any key..."'
+!!$  close(20)
+!!$
+!!$  print *,'Grid saved in Gnuplot format...'
+!!$  print *
+  
+  
+   
+  !*****************************
+  ! Partitionning
+  !*****************************
+  allocate(part(0:nelmnts-1))
 
-  open(unit=20,file='OUTPUT_FILES/gridfile.gnu',status='unknown')
-
-! draw horizontal lines of the grid
-  print *,'drawing horizontal lines of the grid'
-  istepx = 1
-  if(ngnod == 4) then
-    istepz = 1
+!!$  if ( nproc == 1 ) then
+!!$     ! There is only one process; no need for partitionning
+!!$     call mesh2dual_ncommonnodes(nelmnts, nnodes, elmnts, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
+!!$     part(:) = 0
+!!$     
+!!$  else
+  if ( ngnod == 9 ) then
+     allocate(elmnts_bis(0:ESIZE*nelmnts-1))
+     do i = 0, nelmnts-1
+        elmnts_bis(i*esize:i*esize+esize-1) = elmnts(i*ngnod:i*ngnod+esize-1)
+     end do
+        
+     call mesh2dual_ncommonnodes(nelmnts, (nxread+1)*(nzread+1), elmnts_bis, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
+     
   else
-    istepz = 2
-  endif
-  do ili=0,nz,istepz
-    do icol=0,nx-istepx,istepx
-      write(20,*) sngl(x(icol,ili)),sngl(z(icol,ili))
-      write(20,*) sngl(x(icol+istepx,ili)),sngl(z(icol+istepx,ili))
-      write(20,10)
-    enddo
-  enddo
-
-! draw vertical lines of the grid
-  print *,'drawing vertical lines of the grid'
-  if(ngnod == 4) then
-    istepx = 1
+     call mesh2dual_ncommonnodes(nelmnts, nnodes, elmnts, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
+     
+  end if
+     
+  nb_edges = xadj(nelmnts)
+  
+  call read_weights(nelmnts, vwgt, nb_edges, adjwgt)
+     
+  if ( nproc == 1 ) then
+      part(:) = 0
   else
-    istepx = 2
-  endif
-  istepz = 1
-  do icol=0,nx,istepx
-    do ili=0,nz-istepz,istepz
-      write(20,*) sngl(x(icol,ili)),sngl(z(icol,ili))
-      write(20,*) sngl(x(icol,ili+istepz)),sngl(z(icol,ili+istepz))
-      write(20,10)
-    enddo
-  enddo
 
- 10 format('')
+     select case (partitionning_method)
+     case(1)
+        do iproc = 0, nproc-2
+           part(iproc*floor(real(nelmnts)/real(nproc)):(iproc+1)*floor(real(nelmnts)/real(nproc))-1) = iproc
+        end do
+        part(floor(real(nelmnts)/real(nproc))*(nproc-1):nelmnts-1) = nproc - 1
+!!$        part(0:1659) = 0
+!!$        part(1660:3258) = 1
+!!$        part(3259:4799) = 2
+!!$        print *, 'WWWWWW', nelmnts-1
+        
+     case(2)
+#ifdef USE_METIS
+        call Part_metis(nelmnts, xadj, adjncy, vwgt, adjwgt, nproc, nb_edges, edgecut, part, metis_options)
+#else
+        print *, 'This version of SPECFEM was not compiled with support of METIS.'
+        print *, 'Please recompile with -DUSE_METIS in order to enable use of METIS.'
+        stop
+#endif
+        
+     case(3)
+#ifdef USE_SCOTCH
+        call Part_scotch(nelmnts, xadj, adjncy, vwgt, adjwgt, nproc, nb_edges, edgecut, part, scotch_strategy)
+#else
+        print *, 'This version of SPECFEM was not compiled with support of SCOTCH.'
+        print *, 'Please recompile with -DUSE_SCOTCH in order to enable use of SCOTCH.'
+        stop
+#endif
+        
+     end select
+ 
+  end if
+  
+  ! beware of fluid solid edges
+  if ( ngnod == 9 ) then
+     call acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts_bis, nb_materials, cs, num_material, &
+          nproc, part, nedges_coupled, edges_coupled)
+  else
+     call acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_materials, cs, num_material, &
+          nproc, part, nedges_coupled, edges_coupled)
+  end if
+  
+  call Construct_glob2loc_elmnts(nelmnts, part, nproc, glob2loc_elmnts)
+  
+  if ( ngnod == 9 ) then
+!!$     print *, 'POUMPOUM', nnodes, elmnts(0:8)
+!!$     print *, nodes_coords(1,elmnts(0:8)+1)
+!!$     print *, nodes_coords(2,elmnts(0:8)+1)
+!!$     print *, x(1,0), z(1,0)
+!!$     print *, x(1,1), z(1,1)
+!!$     print *, num_9(2,1,nxread,nzread), x(2,1), z(2,1)
+!!$     print *, num_9(0,1,nxread,nzread),x(0,1), z(0,1)
+    
+     deallocate(nnodes_elmnts)
+     deallocate(nodes_elmnts)
+     allocate(nnodes_elmnts(0:nnodes-1))
+     allocate(nodes_elmnts(0:nsize*nnodes-1))
+     nnodes_elmnts(:) = 0
+     nodes_elmnts(:) = 0
+     do i = 0, ngnod*nelmnts-1
+        nodes_elmnts(elmnts(i)*nsize+nnodes_elmnts(elmnts(i))) = i/ngnod
+        nnodes_elmnts(elmnts(i)) = nnodes_elmnts(elmnts(i)) + 1
+        
+     end do
+  end if
+  
+  call Construct_glob2loc_nodes(nelmnts, nnodes, nnodes_elmnts, nodes_elmnts, part, nproc, &
+       glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes)
 
-  close(20)
-
-! create a Gnuplot script to display the grid
-  open(unit=20,file='OUTPUT_FILES/plotgnu',status='unknown')
-  write(20,*) '#set term X11'
-  write(20,*) 'set term postscript landscape monochrome solid "Helvetica" 22'
-  write(20,*) 'set output "grid.ps"'
-  write(20,*) '#set xrange [',sngl(minval(x)),':',sngl(maxval(x)),']'
-  write(20,*) '#set yrange [',sngl(minval(z)),':',sngl(maxval(z)),']'
-! use same unit length on both X and Y axes
-  write(20,*) 'set size ratio -1'
-  write(20,*) 'plot "gridfile.gnu" title "Macrobloc mesh" w l'
-  write(20,*) 'pause -1 "Hit any key..."'
-  close(20)
-
-  print *,'Grid saved in Gnuplot format...'
-  print *
+  if ( nproc /= 1 ) then
+     if ( ngnod == 9 ) then
+        call Construct_interfaces(nelmnts, nproc, part, elmnts_bis, xadj, adjncy, tab_interfaces, &
+             tab_size_interfaces, ninterfaces, nb_materials, cs, num_material)
+     else
+        call Construct_interfaces(nelmnts, nproc, part, elmnts, xadj, adjncy, tab_interfaces, &
+             tab_size_interfaces, ninterfaces, nb_materials, cs, num_material)
+     end if
+     print *, '04'
+     allocate(my_interfaces(0:ninterfaces-1))
+     allocate(my_nb_interfaces(0:ninterfaces-1))
+     print *, '05'
+  end if
+  
+  if ( any_abs ) then
+     call merge_abs_boundaries(nelemabs, nelemabs_merge, abs_surface, abs_surface_char, abs_surface_merge, &
+          ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
+          jbegin_left,jend_left,jbegin_right,jend_right, &
+          nodes_coords, &
+          nedges_coupled, edges_coupled, nb_materials, cs, num_material, &
+          nelmnts, &
+          elmnts, ngnod)
+     print *, 'nelemabs_merge', nelemabs_merge
+  end if
 
 ! *** generate the database for the solver
 
-  open(unit=15,file='OUTPUT_FILES/Database',status='unknown')
+  do iproc = 0, nproc-1
+     
+     write(prname, "('/Database',i5.5)") iproc
+     open(unit=15,file='./OUTPUT_FILES'//prname,status='unknown')
 
-  write(15,*) '#'
-  write(15,*) '# Database for SPECFEM2D'
-  write(15,*) '# Dimitri Komatitsch, (c) University of Pau, France'
-  write(15,*) '#'
+     write(15,*) '#'
+     write(15,*) '# Database for SPECFEM2D'
+     write(15,*) '# Dimitri Komatitsch, (c) University of Pau, France'
+     write(15,*) '#'
+  
+     write(15,*) 'Title of the simulation'
+     write(15,"(a50)") title
+     
 
-  write(15,*) 'Title of the simulation'
-  write(15,"(a50)") title
+     call write_glob2loc_nodes_database(15, iproc, npgeo, nodes_coords, glob2loc_nodes_nparts, glob2loc_nodes_parts, &
+          glob2loc_nodes, nnodes, 1)
+     
 
-  npgeo = (nx+1)*(nz+1)
-  if(ngnod == 4) then
-    nspec = nx*nz
-  else
-    nspec = nx*nz/4
-  endif
-  write(15,*) 'npgeo'
-  write(15,*) npgeo
+     call write_partition_database(15, iproc, nspec, nelmnts, elmnts, glob2loc_elmnts, glob2loc_nodes_nparts, &
+          glob2loc_nodes_parts, glob2loc_nodes, part, num_material, ngnod, 1)
+     
 
-  write(15,*) 'gnuplot interpol'
-  write(15,*) gnuplot,interpol
+     write(15,*) 'npgeo'
+     write(15,*) npgeo
+     
+     write(15,*) 'gnuplot interpol'
+     write(15,*) gnuplot,interpol
+     
+     write(15,*) 'NTSTEP_BETWEEN_OUTPUT_INFO'
+     write(15,*) NTSTEP_BETWEEN_OUTPUT_INFO
+     
+     write(15,*) 'output_postscript_snapshot output_color_image colors numbers'
+     write(15,*) output_postscript_snapshot,output_color_image,' 1 0'
 
-  write(15,*) 'NTSTEP_BETWEEN_OUTPUT_INFO'
-  write(15,*) NTSTEP_BETWEEN_OUTPUT_INFO
+     write(15,*) 'meshvect modelvect boundvect cutsnaps subsamp sizemax_arrows'
+     write(15,*) meshvect,modelvect,boundvect,cutsnaps,subsamp,sizemax_arrows
+     
+     write(15,*) 'anglerec'
+     write(15,*) anglerec
+     
+     write(15,*) 'initialfield'
+     write(15,*) initialfield
 
-  write(15,*) 'output_postscript_snapshot output_color_image colors numbers'
-  write(15,*) output_postscript_snapshot,output_color_image,' 1 0'
+     write(15,*) 'seismotype imagetype'
+     write(15,*) seismotype,imagetype
 
-  write(15,*) 'meshvect modelvect boundvect cutsnaps subsamp sizemax_arrows'
-  write(15,*) meshvect,modelvect,boundvect,cutsnaps,subsamp,sizemax_arrows
+     write(15,*) 'assign_external_model outputgrid TURN_ANISOTROPY_ON TURN_ATTENUATION_ON'
+     write(15,*) assign_external_model,outputgrid,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
+     
+     write(15,*) 'nt deltat'
+     write(15,*) nt,deltat
 
-  write(15,*) 'anglerec'
-  write(15,*) anglerec
+     write(15,*) 'source'
+     write(15,*) source_type,time_function_type,xs,zs,f0,t0,factor,angleforce,Mxx,Mzz,Mxz
+     
+     write(15,*) 'Coordinates of macrobloc mesh (coorg):'
+     
 
-  write(15,*) 'initialfield'
-  write(15,*) initialfield
+     call write_glob2loc_nodes_database(15, iproc, npgeo, nodes_coords, glob2loc_nodes_nparts, glob2loc_nodes_parts, &
+          glob2loc_nodes, nnodes, 2)
+     
 
-  write(15,*) 'seismotype imagetype'
-  write(15,*) seismotype,imagetype
+     write(15,*) 'numat ngnod nspec pointsdisp plot_lowerleft_corner_only'
+     write(15,*) nb_materials,ngnod,nspec,pointsdisp,plot_lowerleft_corner_only
 
-  write(15,*) 'assign_external_model outputgrid TURN_ANISOTROPY_ON TURN_ATTENUATION_ON'
-  write(15,*) assign_external_model,outputgrid,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
+     
+     !call Write_surface_database(15, nelemabs, abs_surface, nelemabs_loc, &
+     !     nproc, iproc, glob2loc_elmnts, &
+     !    glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes, part, 1)   
+     if ( any_abs ) then
+        call write_abs_merge_database(15, nelemabs_merge, nelemabs_loc, &
+             abs_surface_char, abs_surface_merge, &
+             ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
+             jbegin_left,jend_left,jbegin_right,jend_right, &
+             glob2loc_elmnts, part, iproc, 1)
+     else
+        nelemabs_loc = 0
+     end if
+          
+     call Write_surface_database(15, nelem_acoustic_surface, acoustic_surface, nelem_acoustic_surface_loc, &
+          nproc, iproc, glob2loc_elmnts, &
+          glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes, part, 1)
+     
 
-  write(15,*) 'nt deltat'
-  write(15,*) nt,deltat
+     call write_acoustic_elastic_edges_database(15, nedges_coupled, nedges_coupled_loc, &
+          edges_coupled, glob2loc_elmnts, nelmnts, part, iproc, 1)
+     
+     write(15,*) 'nelemabs nelem_acoustic_surface num_fluid_solid_edges'
+     write(15,*) nelemabs_loc,nelem_acoustic_surface_loc,nedges_coupled_loc
+     
+     
+     write(15,*) 'Material sets (num 1 rho vp vs 0 0) or (num 2 rho c11 c13 c33 c44)'
+     do i=1,nb_materials
+        write(15,*) i,icodemat(i),rho(i),cp(i),cs(i),aniso3(i),aniso4(i)
+     enddo
+  
+     write(15,*) 'Arrays kmato and knods for each bloc:'
 
-  write(15,*) 'source'
-  write(15,*) source_type,time_function_type,xs,zs,f0,t0,factor,angleforce,Mxx,Mzz,Mxz
+     
+     call write_partition_database(15, iproc, nspec, nelmnts, elmnts, glob2loc_elmnts, glob2loc_nodes_nparts, &
+          glob2loc_nodes_parts, glob2loc_nodes, part, num_material, ngnod, 2)
+     
+     if ( nproc /= 1 ) then 
+        call Write_interfaces_database(15, tab_interfaces, tab_size_interfaces, nproc, iproc, ninterfaces, &
+             my_ninterface, my_interfaces, my_nb_interfaces, glob2loc_elmnts, glob2loc_nodes_nparts, glob2loc_nodes_parts, &
+             glob2loc_nodes, 1)
+        
+        write(15,*) 'Interfaces:'
+        write(15,*) my_ninterface, maxval(my_nb_interfaces)
+        
+        call Write_interfaces_database(15, tab_interfaces, tab_size_interfaces, nproc, iproc, ninterfaces, &
+             my_ninterface, my_interfaces, my_nb_interfaces, glob2loc_elmnts, glob2loc_nodes_nparts, glob2loc_nodes_parts, &
+             glob2loc_nodes, 2)
 
-  write(15,*) 'Coordinates of macrobloc mesh (coorg):'
-  do j=0,nz
-    do i=0,nx
-      write(15,*) num(i,j,nx),x(i,j),z(i,j)
-    enddo
-  enddo
+     else
+        write(15,*) 'Interfaces:'
+        write(15,*) 0, 0
+        
+     end if
+     
 
-!
-!--- definition of absorbing boundaries
-!
-  nelemabs = 0
-  if(absbottom) nelemabs = nelemabs + nx
-  if(abstop) nelemabs = nelemabs + nx
-  if(absleft) nelemabs = nelemabs + nz
-  if(absright) nelemabs = nelemabs + nz
+     write(15,*) 'List of absorbing elements (bottom right top left):'
+     !call Write_surface_database(15, nelemabs, abs_surface, nelemabs_loc, &
+     !     nproc, iproc, glob2loc_elmnts, &
+     !     glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes, part, 2)
+     if ( any_abs ) then
+        call write_abs_merge_database(15, nelemabs_merge, nelemabs_loc, &
+             abs_surface_char, abs_surface_merge, &
+             ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
+             jbegin_left,jend_left,jbegin_right,jend_right, &
+             glob2loc_elmnts, part, iproc, 2)
+     end if
+     
+     write(15,*) 'List of acoustic free-surface elements:'
+     call Write_surface_database(15, nelem_acoustic_surface, acoustic_surface, nelem_acoustic_surface_loc, &
+          nproc, iproc, glob2loc_elmnts, &
+          glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes, part, 2)
+     
 
-! we have counted the elements twice if they have nine nodes
-  if(ngnod == 9) nelemabs = nelemabs / 2
+     write(15,*) 'List of acoustic elastic coupled edges:'
+     call write_acoustic_elastic_edges_database(15, nedges_coupled, nedges_coupled_loc, &
+          edges_coupled, glob2loc_elmnts, nelmnts, part, iproc, 2)
+  end do
+  
+  
+!!$
+!!$  open(unit=15,file='OUTPUT_FILES/Database',status='unknown')
+!!$
 
-! also remove the corner elements, which have been counted twice
-  if(absbottom .and. absleft) nelemabs = nelemabs - 1
-  if(absbottom .and. absright) nelemabs = nelemabs - 1
-  if(abstop .and. absleft) nelemabs = nelemabs - 1
-  if(abstop .and. absright) nelemabs = nelemabs - 1
+!!$
+!!$  npgeo = nnodes
+!!$  nspec = nelmnts
+!!$  
 
-! count the number of acoustic free-surface elements
-  nelem_acoustic_surface = 0
-  do j = 1,nzread
-    do i = 1,nxread
-       if(ngnod == 4) then
-         imaterial_number = num_material(i,j)
-       else
-         imaterial_number = num_material(2*(i-1)+1,2*(j-1)+1)
-       endif
-      if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. cs(imaterial_number) < TINYVAL &
-           .and. j == nzread) nelem_acoustic_surface = nelem_acoustic_surface + 1
-    enddo
-  enddo
+!!$  do j=0,nz
+!!$    do i=0,nx
+!!$      write(15,*) num(i,j,nx),x(i,j),z(i,j)
+!!$    enddo
+!!$  enddo
+!!$
+!!$
+!!$
+!!$
+!!$  
 
-  write(15,*) 'numat ngnod nspec pointsdisp plot_lowerleft_corner_only'
-  write(15,*) nb_materials,ngnod,nspec,pointsdisp,plot_lowerleft_corner_only
-  write(15,*) 'nelemabs nelem_acoustic_surface'
-  write(15,*) nelemabs,nelem_acoustic_surface
+!!$
 
-  write(15,*) 'Material sets (num 1 rho vp vs 0 0) or (num 2 rho c11 c13 c33 c44)'
-  do i=1,nb_materials
-    write(15,*) i,icodemat(i),rho(i),cp(i),cs(i),aniso3(i),aniso4(i)
-  enddo
-
-
-  write(15,*) 'Arrays kmato and knods for each bloc:'
-
-  k = 0
-  if(ngnod == 4) then
-    do j=0,nz-1
-      do i=0,nx-1
-        k = k + 1
-        imaterial_number = num_material(i+1,j+1)
-        write(15,*) k,imaterial_number,num(i,j,nx),num(i+1,j,nx),num(i+1,j+1,nx),num(i,j+1,nx)
-      enddo
-    enddo
-  else
-    do j=0,nz-2,2
-      do i=0,nx-2,2
-        k = k + 1
-        imaterial_number = num_material(i+1,j+1)
-        write(15,*) k,imaterial_number,num(i,j,nx),num(i+2,j,nx),num(i+2,j+2,nx),num(i,j+2,nx), &
-                      num(i+1,j,nx),num(i+2,j+1,nx),num(i+1,j+2,nx),num(i,j+1,nx),num(i+1,j+1,nx)
-      enddo
-    enddo
-  endif
-
-!
-!--- save absorbing boundaries
-!
-  print *
-  print *,'There is a total of ',nelemabs,' absorbing elements'
-  print *
-  print *,'Active absorbing boundaries:'
-  print *
-  print *,'Bottom = ',absbottom
-  print *,'Right  = ',absright
-  print *,'Top    = ',abstop
-  print *,'Left   = ',absleft
-  print *
-
-! generate the list of absorbing elements
-  if(nelemabs > 0) then
-  write(15,*) 'List of absorbing elements (bottom right top left):'
-  do iz = 1,nzread
-  do ix = 1,nxread
-    codebottom = .false.
-    coderight = .false.
-    codetop = .false.
-    codeleft = .false.
-    inumelem = (iz-1)*nxread + ix
-    if(absbottom    .and. iz == 1) codebottom = .true.
-    if(absright .and. ix == nxread) coderight = .true.
-    if(abstop   .and. iz == nzread) codetop = .true.
-    if(absleft .and. ix == 1) codeleft = .true.
-    if(codebottom .or. coderight .or. codetop .or. codeleft) write(15,*) inumelem,codebottom,coderight,codetop,codeleft
-  enddo
-  enddo
-  endif
-
-!
-!--- save acoustic free-surface elements
-!
-  print *
-  print *,'There is a total of ',nelem_acoustic_surface,' acoustic free-surface elements'
-  print *
-
-! generate the list of acoustic free-surface elements
-  if(nelem_acoustic_surface > 0) then
-    write(15,*) 'List of acoustic free-surface elements:'
-    do j = 1,nzread
-      do i = 1,nxread
-        inumelem = (j-1)*nxread + i
-        if(ngnod == 4) then
-          imaterial_number = num_material(i,j)
-        else
-          imaterial_number = num_material(2*(i-1)+1,2*(j-1)+1)
-        endif
-! in this simple mesher, it is always the top edge that is at the free surface
-        if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. cs(imaterial_number) < TINYVAL .and. j == nzread) &
-          write(15,*) inumelem,ITOP
-      enddo
-    enddo
-  endif
-
-  close(15)
-
+!!$
+!!$  k = 0
+!!$  if(ngnod == 4) then
+!!$    do j=0,nz-1
+!!$      do i=0,nx-1
+!!$        k = k + 1
+!!$        imaterial_number = num_material(i+1,j+1)
+!!$        write(15,*) k,imaterial_number,num(i,j,nx),num(i+1,j,nx),num(i+1,j+1,nx),num(i,j+1,nx)
+!!$      enddo
+!!$    enddo
+!!$  else
+!!$    do j=0,nz-2,2
+!!$      do i=0,nx-2,2
+!!$        k = k + 1
+!!$        imaterial_number = num_material(i+1,j+1)
+!!$        write(15,*) k,imaterial_number,num(i,j,nx),num(i+2,j,nx),num(i+2,j+2,nx),num(i,j+2,nx), &
+!!$                      num(i+1,j,nx),num(i+2,j+1,nx),num(i+1,j+2,nx),num(i,j+1,nx),num(i+1,j+1,nx)
+!!$      enddo
+!!$    enddo
+!!$  endif
+!!$
+!!$!
+!!$!--- save absorbing boundaries
+!!$!
+!!$  print *
+!!$  print *,'There is a total of ',nelemabs,' absorbing elements'
+!!$  print *
+!!$  print *,'Active absorbing boundaries:'
+!!$  print *
+!!$  print *,'Bottom = ',absbottom
+!!$  print *,'Right  = ',absright
+!!$  print *,'Top    = ',abstop
+!!$  print *,'Left   = ',absleft
+!!$  print *
+!!$
+!!$
+!!$
+!!$!
+!!$!--- save acoustic free-surface elements
+!!$!
+!!$  print *
+!!$  print *,'There is a total of ',nelem_acoustic_surface,' acoustic free-surface elements'
+!!$  print *
+!!$
+!!$! generate the list of acoustic free-surface elements
+!!$  if(nelem_acoustic_surface > 0) then
+!!$    write(15,*) 'List of acoustic free-surface elements:'
+!!$    do j = 1,nzread
+!!$      do i = 1,nxread
+!!$        inumelem = (j-1)*nxread + i
+!!$        if(ngnod == 4) then
+!!$          imaterial_number = num_material(i,j)
+!!$        else
+!!$          imaterial_number = num_material(2*(i-1)+1,2*(j-1)+1)
+!!$        endif
+!!$! in this simple mesher, it is always the top edge that is at the free surface
+!!$        if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. cs(imaterial_number) < TINYVAL .and. j == nzread) &
+!!$          write(15,*) inumelem,ITOP
+!!$      enddo
+!!$    enddo
+!!$  endif
+!!$
+!!$  close(15)
+!!$
 ! print position of the source
   print *
   print *,'Position (x,z) of the source = ',xs,zs
@@ -843,6 +1295,7 @@
   close(15)
 
   print *
+  
 
   end program meshfem2D
 
@@ -850,17 +1303,56 @@
 ! meshing subroutines
 ! *******************
 
+
 !--- global node number
 
   integer function num(i,j,nx)
 
-  implicit none
-
-  integer i,j,nx
-
+    implicit none
+    
+    integer i,j,nx
+    
     num = j*(nx+1) + i + 1
-
+    
   end function num
+  
+
+ !---  global node number (when ngnod==4).
+  integer function num_4(i,j,nx)
+
+    implicit none
+    
+    integer i,j,nx
+    
+    num_4 = j*(nx+1) + i + 1
+    
+  end function num_4
+
+  
+ !---  global node number (when ngnod==9).
+  integer function num_9(i,j,nx,nz)
+    
+    implicit none
+    
+    integer i,j,nx,nz
+    
+    
+    if ( (mod(i,2) == 0) .and. (mod(j,2) == 0) ) then
+       num_9 = j/2 * (nx+1) + i/2 + 1
+    else 
+       if ( mod(j,2) == 0 ) then
+          num_9 = (nx+1)*(nz+1) + j/2 * nx + ceiling(real(i)/real(2))  
+       else 
+          num_9 = (nx+1)*(nz+1) + nx*(nz+1) + floor(real(j)/real(2))*(nx*2+1) + i + 1
+          
+       end if
+    end if
+    
+    
+  end function num_9
+
+  
+
 
 !--- spline to describe the interfaces
 

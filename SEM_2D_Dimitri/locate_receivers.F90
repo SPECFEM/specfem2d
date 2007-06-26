@@ -15,14 +15,19 @@
 !---- locate_receivers finds the correct position of the receivers
 !----
 
-  subroutine locate_receivers(ibool,coord,nspec,npoin,xigll,zigll,nrec,st_xval,st_zval,ispec_selected_rec, &
-                 xi_receiver,gamma_receiver,station_name,network_name,x_source,z_source,coorg,knods,ngnod,npgeo)
+  subroutine locate_receivers(ibool,coord,nspec,npoin,xigll,zigll,nrec,nrecloc,recloc,which_proc_receiver,nproc,myrank, &
+       st_xval,st_zval,ispec_selected_rec, &
+       xi_receiver,gamma_receiver,station_name,network_name,x_source,z_source,coorg,knods,ngnod,npgeo)
 
   implicit none
 
   include "constants.h"
+#ifdef USE_MPI
+  include "mpif.h"
+#endif
 
   integer nrec,nspec,npoin,ngnod,npgeo
+  integer, intent(in)  :: nproc, myrank 
 
   integer knods(ngnod,nspec)
   double precision coorg(NDIM,npgeo)
@@ -34,7 +39,8 @@
 
   integer nrec_dummy,irec,i,j,ispec,iglob,iter_loop,ix_initial_guess,iz_initial_guess
 
-  double precision x_source,z_source,dist,stele,stbur,distance_receiver
+  double precision x_source,z_source,dist,stele,stbur
+  double precision, dimension(nrec)  :: distance_receiver
   double precision xi,gamma,dx,dz,dxi,dgamma
 
 ! Gauss-Lobatto-Legendre points of integration
@@ -44,11 +50,12 @@
   double precision x,z,xix,xiz,gammax,gammaz,jacobian
 
 ! use dynamic allocation
-  double precision distmin
+  double precision distmin, dist_glob
   double precision, dimension(:), allocatable :: final_distance
 
 ! receiver information
-  integer, dimension(nrec) :: ispec_selected_rec
+  integer  :: nrecloc, is_proc_receiver, nb_proc_receiver
+  integer, dimension(nrec) :: ispec_selected_rec, recloc
   double precision, dimension(nrec) :: xi_receiver,gamma_receiver
 
 ! station information for writing the seismograms
@@ -56,6 +63,14 @@
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name
 
   double precision, dimension(nrec) :: st_xval,st_zval
+
+  
+  double precision, dimension(nrec,nproc)  :: gather_final_distance
+  double precision, dimension(nrec,nproc)  :: gather_xi_receiver, gather_gamma_receiver
+  integer, dimension(nrec,nproc)  :: gather_ispec_selected_rec
+  integer, dimension(nrec), intent(inout)  :: which_proc_receiver
+  integer  :: ierror
+  
 
 ! **************
 
@@ -68,7 +83,7 @@
   write(IOUT,*)
 
 ! get number of stations from receiver file
-  open(unit=1,file='DATA/STATIONS',status='old')
+  open(unit=1,file='DATA/STATIONS',status='old',action='read')
   read(1,*) nrec_dummy
 
   if(nrec_dummy /= nrec) stop 'problem with number of receivers'
@@ -88,7 +103,7 @@
     if(abs(stbur) > TINYVAL) stop 'stations with non-zero burial not implemented yet'
 
 ! compute distance between source and receiver
-      distance_receiver = sqrt((st_zval(irec)-z_source)**2 + (st_xval(irec)-x_source)**2)
+      distance_receiver(irec) = sqrt((st_zval(irec)-z_source)**2 + (st_xval(irec)-x_source)**2)
 
       do ispec=1,nspec
 
@@ -113,6 +128,7 @@
 
 ! end of loop on all the spectral elements
       enddo
+
 
 ! ****************************************
 ! find the best (xi,gamma) for each receiver
@@ -163,33 +179,93 @@
 ! compute final distance between asked and found
   final_distance(irec) = sqrt((st_xval(irec)-x)**2 + (st_zval(irec)-z)**2)
 
+enddo
+
+! close receiver file
+close(1)
+
+! elect one process for each receiver.
+#ifdef USE_MPI
+call MPI_GATHER(final_distance(1),nrec,MPI_DOUBLE_PRECISION,&
+     gather_final_distance(1,1),nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierror)
+call MPI_GATHER(xi_receiver(1),nrec,MPI_DOUBLE_PRECISION,&
+     gather_xi_receiver(1,1),nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierror)
+call MPI_GATHER(gamma_receiver(1),nrec,MPI_DOUBLE_PRECISION,&
+     gather_gamma_receiver(1,1),nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierror)
+call MPI_GATHER(ispec_selected_rec(1),nrec,MPI_INTEGER,&
+     gather_ispec_selected_rec(1,1),nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ierror)
+
+if ( myrank == 0 ) then
+   do irec = 1, nrec
+      which_proc_receiver(irec:irec) = minloc(gather_final_distance(irec,:)) - 1
+      
+   end do
+end if
+
+call MPI_BCAST(which_proc_receiver(1),nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ierror)
+
+#else
+print *, 'POY', nproc
+call flush(6)
+gather_final_distance(:,1) = final_distance(:)
+print *, 'POY'
+call flush(6)
+gather_xi_receiver(:,1) = xi_receiver(:)
+gather_gamma_receiver(:,1) = gamma_receiver(:)
+gather_ispec_selected_rec(:,1) = ispec_selected_rec(:)
+
+which_proc_receiver(:) = 0
+
+#endif
+
+nrecloc = 0
+do irec = 1, nrec
+   if ( which_proc_receiver(irec) == myrank ) then
+      nrecloc = nrecloc + 1
+      recloc(nrecloc) = irec
+   end if
+
+end do
+
+
+if ( myrank == 0 ) then
+
+   do irec = 1, nrec
     write(IOUT,*)
     write(IOUT,*) 'Station # ',irec,'    ',station_name(irec),network_name(irec)
 
-    if(final_distance(irec) == HUGEVAL) stop 'error locating receiver'
+    if(gather_final_distance(irec,which_proc_receiver(irec)+1) == HUGEVAL) stop 'error locating receiver'
 
     write(IOUT,*) '            original x: ',sngl(st_xval(irec))
     write(IOUT,*) '            original z: ',sngl(st_zval(irec))
-    write(IOUT,*) '  distance from source: ',sngl(distance_receiver)
-    write(IOUT,*) 'closest estimate found: ',sngl(final_distance(irec)),' m away'
-    write(IOUT,*) ' in element ',ispec_selected_rec(irec)
-    write(IOUT,*) ' at xi,gamma coordinates = ',xi_receiver(irec),gamma_receiver(irec)
+    write(IOUT,*) '  distance from source: ',sngl(distance_receiver(irec))
+    write(IOUT,*) 'closest estimate found: ',sngl(gather_final_distance(irec,which_proc_receiver(irec)+1)),' m away'
+    write(IOUT,*) ' in element ',gather_ispec_selected_rec(irec,which_proc_receiver(irec)+1)
+    write(IOUT,*) ' at process ', which_proc_receiver(irec)
+    write(IOUT,*) ' at xi,gamma coordinates = ',gather_xi_receiver(irec,which_proc_receiver(irec)+1),&
+         gather_gamma_receiver(irec,which_proc_receiver(irec)+1)
     write(IOUT,*)
 
-  enddo
+ end do
 
-! close receiver file
-  close(1)
 
 ! display maximum error for all the receivers
-  write(IOUT,*) 'maximum error in location of all the receivers: ',sngl(maxval(final_distance(:))),' m'
+  !write(IOUT,*) 'maximum error in location of all the receivers: ',sngl(maxval(final_distance(:))),' m'
 
   write(IOUT,*)
   write(IOUT,*) 'end of receiver detection'
   write(IOUT,*)
+  
+end if
+
 
 ! deallocate arrays
   deallocate(final_distance)
+
+#ifdef USE_MPI
+  call MPI_BARRIER(MPI_COMM_WORLD,ierror)
+#endif 
+
 
   end subroutine locate_receivers
 
