@@ -16,11 +16,14 @@
 !----
 
   subroutine locate_source_moment_tensor(ibool,coord,nspec,npoin,xigll,zigll,x_source,z_source, &
-               ispec_selected_source,xi_source,gamma_source,coorg,knods,ngnod,npgeo)
+               ispec_selected_source,is_proc_source,nb_proc_source,nproc,myrank,xi_source,gamma_source,coorg,knods,ngnod,npgeo)
 
   implicit none
 
   include "constants.h"
+#ifdef USE_MPI
+  include "mpif.h"
+#endif
 
   integer nspec,npoin,ngnod,npgeo
 
@@ -42,11 +45,16 @@
   double precision zigll(NGLLZ)
 
   double precision x,z,xix,xiz,gammax,gammaz,jacobian
-  double precision distmin,final_distance
+  double precision distmin,final_distance,dist_glob
 
 ! source information
-  integer ispec_selected_source
+  integer ispec_selected_source,is_proc_source,nb_proc_source
+  integer, intent(in)  :: nproc, myrank
   double precision xi_source,gamma_source
+
+  integer, dimension(1:nproc)  :: allgather_is_proc_source
+  integer, dimension(1)  :: locate_is_proc_source
+  integer  :: ierror
 
 ! **************
 
@@ -59,29 +67,74 @@
 ! set distance to huge initial value
   distmin=HUGEVAL
 
-      do ispec=1,nspec
+  is_proc_source = 0
 
+  do ispec=1,nspec
+     
 ! loop only on points inside the element
 ! exclude edges to ensure this point is not shared with other elements
-        do j=2,NGLLZ-1
-          do i=2,NGLLX-1
+     do j=2,NGLLZ-1
+        do i=2,NGLLX-1
 
-            iglob = ibool(i,j,ispec)
-            dist = sqrt((x_source-dble(coord(1,iglob)))**2 + (z_source-dble(coord(2,iglob)))**2)
-
-!           keep this point if it is closer to the source
-            if(dist < distmin) then
+           iglob = ibool(i,j,ispec)
+           dist = sqrt((x_source-dble(coord(1,iglob)))**2 + (z_source-dble(coord(2,iglob)))**2)
+           
+!          keep this point if it is closer to the source
+           if(dist < distmin) then
               distmin = dist
               ispec_selected_source = ispec
               ix_initial_guess = i
               iz_initial_guess = j
-            endif
-
-          enddo
+           endif
+           
         enddo
+     enddo
 
 ! end of loop on all the spectral elements
-      enddo
+  enddo
+
+  
+#ifdef USE_MPI
+  ! global minimum distance computed over all processes
+  call MPI_ALLREDUCE (distmin, dist_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ierror)
+    
+#else
+  dist_glob = distmin
+
+#endif 
+
+
+  ! check if this process contains the source
+  if ( dist_glob == distmin ) then 
+     is_proc_source = 1
+  end if
+  
+  
+#ifdef USE_MPI
+  ! determining the number of processes that contain the source (useful when the source is located on an interface)
+  call MPI_ALLREDUCE (is_proc_source, nb_proc_source, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD, ierror)
+  
+#else
+  nb_proc_source = is_proc_source
+  
+#endif  
+  
+
+#ifdef USE_MPI
+  ! when several processes contain the source, we elect one of them (minimum rank).
+  if ( nb_proc_source > 1 ) then
+     
+     call MPI_ALLGATHER(is_proc_source, 1, MPI_INTEGER, allgather_is_proc_source(1), 1, MPI_INTEGER, MPI_COMM_WORLD, ierror)
+     locate_is_proc_source = maxloc(allgather_is_proc_source) - 1
+     
+     if ( myrank /= locate_is_proc_source(1) ) then
+        is_proc_source = 0
+     end if
+     nb_proc_source = 1
+     
+  end if
+  
+#endif  
 
 ! ****************************************
 ! find the best (xi,gamma) for each source
@@ -132,21 +185,27 @@
 ! compute final distance between asked and found
   final_distance = sqrt((x_source-x)**2 + (z_source-z)**2)
 
-    write(IOUT,*)
-    write(IOUT,*) 'Moment-tensor source:'
+  if ( is_proc_source == 1 ) then
+     write(IOUT,*)
+     write(IOUT,*) 'Moment-tensor source:'
+     
+     if(final_distance == HUGEVAL) stop 'error locating moment-tensor source'
+     
+     write(IOUT,*) '            original x: ',sngl(x_source)
+     write(IOUT,*) '            original z: ',sngl(z_source)
+     write(IOUT,*) 'closest estimate found: ',sngl(final_distance),' m away'
+     write(IOUT,*) ' in element ',ispec_selected_source
+     write(IOUT,*) ' at xi,gamma coordinates = ',xi_source,gamma_source
+     write(IOUT,*)
 
-    if(final_distance == HUGEVAL) stop 'error locating moment-tensor source'
+     write(IOUT,*)
+     write(IOUT,*) 'end of moment-tensor source detection'
+     write(IOUT,*)
+  end if
 
-    write(IOUT,*) '            original x: ',sngl(x_source)
-    write(IOUT,*) '            original z: ',sngl(z_source)
-    write(IOUT,*) 'closest estimate found: ',sngl(final_distance),' m away'
-    write(IOUT,*) ' in element ',ispec_selected_source
-    write(IOUT,*) ' at xi,gamma coordinates = ',xi_source,gamma_source
-    write(IOUT,*)
-
-  write(IOUT,*)
-  write(IOUT,*) 'end of moment-tensor source detection'
-  write(IOUT,*)
+#ifdef USE_MPI
+  call MPI_BARRIER(MPI_COMM_WORLD,ierror)
+#endif  
 
   end subroutine locate_source_moment_tensor
 

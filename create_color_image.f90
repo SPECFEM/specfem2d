@@ -224,8 +224,8 @@
   close(27)
 
 ! open image file and create system command to convert image to more convenient format
-  write(system_command,"('cd OUTPUT_FILES ; convert image',i6.6,'.pnm image',i6.6,'.gif ; rm image',i6.6,'.pnm')") it,it,it
-
+  write(system_command,"('cd OUTPUT_FILES ; convert image',i6.6,'.pnm image',i6.6,'.gif')") it,it
+ 
 ! call the system to convert image to GIF
   call system(system_command)
 
