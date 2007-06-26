@@ -605,17 +605,13 @@
   read(IIN,"(a80)") datlin
   if(nelem_acoustic_surface > 0) then
      allocate(acoustic_edges(4,nelem_acoustic_surface))
-     print *, 'POYU'
-     do inum = 1,nelem_acoustic_surface
+      do inum = 1,nelem_acoustic_surface
         read(IIN,*) acoustic_edges(1,inum), acoustic_edges(2,inum), acoustic_edges(3,inum), &
              acoustic_edges(4,inum)
      end do
-     print *, 'POYU'
      allocate(acoustic_surface(5,nelem_acoustic_surface))
-     print *, 'POYU'
      call construct_acoustic_surface ( nspec, ngnod, knods, nelem_acoustic_surface, &
           acoustic_edges, acoustic_surface)
-     print *, 'POYU'
 !!$      read(IIN,*) numacoustread,iedgeacoustread
 !!$      if(numacoustread < 1 .or. numacoustread > nspec) call eixt_MPI('Wrong acoustic free surface element number')
 !!$      if(iedgeacoustread < 1 .or. iedgeacoustread > NEDGES) call exit_MPI('Wrong acoustic free surface edge number')
@@ -1016,6 +1012,7 @@
   allocate(buffer_send_faces_vector_elastic(max_ibool_interfaces_size_elastic,ninterface_elastic))
   allocate(buffer_recv_faces_vector_elastic(max_ibool_interfaces_size_elastic,ninterface_elastic))
 
+! creating mpi non-blocking persistent communications for acoustic elements
   call create_MPI_requests_SEND_RECV_acoustic(myrank, &
      ninterface, ninterface_acoustic, &
      nibool_interfaces_acoustic, &
@@ -1027,6 +1024,7 @@
      inum_interfaces_acoustic &
      )
   
+! creating mpi non-blocking persistent communications for elastic elements
   call create_MPI_requests_SEND_RECV_elastic(myrank, &
      ninterface, ninterface_elastic, &
      nibool_interfaces_elastic, &
@@ -1038,6 +1036,7 @@
      inum_interfaces_elastic &
      )
 
+! assembling the mass matrix
   call assemble_MPI_scalar(myrank,rmass_inverse_acoustic, rmass_inverse_elastic,npoin, &
      ninterface, max_interface_size, max_ibool_interfaces_size_acoustic, max_ibool_interfaces_size_elastic, &
      ibool_interfaces_acoustic,ibool_interfaces_elastic, nibool_interfaces_acoustic,nibool_interfaces_elastic, my_neighbours)
@@ -1095,8 +1094,7 @@ end if
 
 ! compute number of pixels in the horizontal direction based on typical number
 ! of spectral elements in a given direction (may give bad results for very elongated models)
-  !NX_IMAGE_color = nint(sqrt(dble(npgeo))) * (NGLLX-1) + 1
-  NX_IMAGE_color = 800
+  NX_IMAGE_color = nint(sqrt(dble(npgeo))) * (NGLLX-1) + 1
 
 ! compute number of pixels in the vertical direction based on ratio of sizes
   NZ_IMAGE_color = nint(NX_IMAGE_color * (zmax_color_image - zmin_color_image) / (xmax_color_image - xmin_color_image))
@@ -1121,7 +1119,7 @@ end if
 
   iglob_image_color(:,:) = -1
 
-  !!!!!!
+! cheking which pixels are inside each elements
   nb_pixel_loc = 0
   do ispec = 1, nspec
      
@@ -1131,6 +1129,7 @@ end if
 
      end do
      
+! avoid working on the whole pixel grid
      min_i = floor(minval((elmnt_coords(1,:) - xmin_color_image))/size_pixel_horizontal) + 1
      max_i = ceiling(maxval((elmnt_coords(1,:) - xmin_color_image))/size_pixel_horizontal) + 1
      min_j = floor(minval((elmnt_coords(2,:) - zmin_color_image))/size_pixel_vertical) + 1
@@ -1140,9 +1139,11 @@ end if
         do i = min_i, max_i
            i_coord = (i-1)*size_pixel_horizontal + xmin_color_image
            j_coord = (j-1)*size_pixel_vertical + zmin_color_image
-           
+          
+! checking if the pixel is inside the element (must be a convex quadrilateral)
            call is_in_convex_quadrilateral( elmnt_coords, i_coord, j_coord, pixel_is_in)
 
+! if inside, getting the nearest point inside the element
            if ( pixel_is_in ) then
               dist_min_pixel = HUGEVAL
               do k = 1, NGLLX
@@ -1169,7 +1170,7 @@ end if
      end do
   end do
 
-  print *, 'POYOP', nb_pixel_loc, myrank
+! creating and filling array num_pixel_loc with the positions of each colored pixel owned by the local process (useful for parallel jobs)
   allocate(num_pixel_loc(nb_pixel_loc))
   
   nb_pixel_loc = 0
@@ -1184,6 +1185,7 @@ end if
      end do
   end do
   
+! filling array iglob_image_color, containing info on which process owns which pixels.
 #ifdef USE_MPI
   allocate(nb_pixel_per_proc(nproc))
   
@@ -1217,94 +1219,6 @@ end if
 
   end if
 #endif
-  
- 
-
-!!$! loop on all the grid points to map them to a pixel in the image
-!!$      do n=1,npoin
-!!$
-!!$! compute the coordinates of this pixel
-!!$      i = nint((coord(1,n) - xmin_color_image) / size_pixel_horizontal + 1)
-!!$      j = nint((coord(2,n) - zmin_color_image) / size_pixel_vertical + 1)
-!!$
-!!$! avoid edge effects
-!!$      if(i < 1) i = 1
-!!$      if(i > NX_IMAGE_color) i = NX_IMAGE_color
-!!$
-!!$      if(j < 1) j = 1
-!!$      if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
-!!$
-!!$! assign this point to this pixel
-!!$      iglob_image_color(i,j) = n
-!!$
-!!$      enddo
-!!$
-!!$! locate missing pixels based on a minimum distance criterion
-!!$! cannot do more than two iterations typically because some pixels must never be found
-!!$! because they do not exist (for instance if they are located above topography)
-!!$  do count_passes = 1,20
-!!$
-!!$  print *,'pass ',count_passes,' to locate the missing pixels of color images'
-!!$
-!!$  copy_iglob_image_color(:,:) = iglob_image_color(:,:)
-!!$
-!!$  do j = 1,NZ_IMAGE_color
-!!$    do i = 1,NX_IMAGE_color
-!!$
-!!$      if(copy_iglob_image_color(i,j) == -1) then
-!!$
-!!$        iplus1 = i + 1
-!!$        iminus1 = i - 1
-!!$
-!!$        jplus1 = j + 1
-!!$        jminus1 = j - 1
-!!$
-!!$! avoid edge effects
-!!$        if(iminus1 < 1) iminus1 = 1
-!!$        if(iplus1 > NX_IMAGE_color) iplus1 = NX_IMAGE_color
-!!$
-!!$        if(jminus1 < 1) jminus1 = 1
-!!$        if(jplus1 > NZ_IMAGE_color) jplus1 = NZ_IMAGE_color
-!!$
-!!$! use neighbors of this pixel to fill the holes
-!!$
-!!$! horizontal
-!!$        if(copy_iglob_image_color(iplus1,j) /= -1) then
-!!$          iglob_image_color(i,j) = copy_iglob_image_color(iplus1,j)
-!!$
-!!$        else if(copy_iglob_image_color(iminus1,j) /= -1) then
-!!$          iglob_image_color(i,j) = copy_iglob_image_color(iminus1,j)
-!!$
-!!$! vertical
-!!$        else if(copy_iglob_image_color(i,jplus1) /= -1) then
-!!$          iglob_image_color(i,j) = copy_iglob_image_color(i,jplus1)
-!!$
-!!$        else if(copy_iglob_image_color(i,jminus1) /= -1) then
-!!$          iglob_image_color(i,j) = copy_iglob_image_color(i,jminus1)
-!!$
-!!$! diagonal
-!!$        else if(copy_iglob_image_color(iminus1,jminus1) /= -1) then
-!!$          iglob_image_color(i,j) = copy_iglob_image_color(iminus1,jminus1)
-!!$
-!!$        else if(copy_iglob_image_color(iplus1,jminus1) /= -1) then
-!!$          iglob_image_color(i,j) = copy_iglob_image_color(iplus1,jminus1)
-!!$
-!!$        else if(copy_iglob_image_color(iminus1,jplus1) /= -1) then
-!!$          iglob_image_color(i,j) = copy_iglob_image_color(iminus1,jplus1)
-!!$
-!!$        else if(copy_iglob_image_color(iplus1,jplus1) /= -1) then
-!!$          iglob_image_color(i,j) = copy_iglob_image_color(iplus1,jplus1)
-!!$
-!!$        endif
-!!$
-!!$      endif
-!!$
-!!$    enddo
-!!$  enddo
-!!$
-!!$  enddo
-!!$
-!!$  deallocate(copy_iglob_image_color)
 
   write(IOUT,*) 'done locating all the pixels of color images'
 
@@ -1422,29 +1336,13 @@ end if
 
  endif
 
-!
-!----  check that no element has both acoustic free surface and top absorbing surface
-!
-!!$  do ispec_acoustic_surface = 1,nelem_acoustic_surface
-!!$     ispec = ispecnum_acoustic_surface(ispec_acoustic_surface)
-!!$    iedge = iedgenum_acoustic_surface(ispec_acoustic_surface)
-!!$    if(elastic(ispec)) then
-!!$      call exit_MPI('elastic element detected in acoustic free surface')
-!!$    else
-!!$      do inum = 1,nelemabs
-!!$        if(numabs(inum) == ispec .and. codeabs(iedge,inum)) &
-!!$          call exit_MPI('acoustic free surface cannot be both absorbing and free')
-!!$      enddo
-!!$    endif
-!!$  enddo
 
 ! determine if coupled fluid-solid simulation
   coupled_acoustic_elastic = any_acoustic .and. any_elastic
 
 ! fluid/solid edge detection
-! very basic algorithm in O(nspec^2), simple double loop on the elements
-! and then loop on the four corners of each of the two elements, could be signficantly improved
-
+! the two elements (fluid and solid) forming an edge are already known (computed in meshfem2D), 
+! the common nodes forming the edge are computed here
   if(coupled_acoustic_elastic) then
     print *
     print *,'Mixed acoustic/elastic simulation'
@@ -1503,7 +1401,6 @@ end if
        ispec_elastic =  fluid_solid_elastic_ispec(inum)
 
 ! one element must be acoustic and the other must be elastic
-! use acoustic element as master to avoid double detection of the same pair (one on each side)
         if(ispec_acoustic /= ispec_elastic .and. .not. elastic(ispec_acoustic) .and. elastic(ispec_elastic)) then
 
 ! loop on the four edges of the two elements
@@ -1768,11 +1665,7 @@ end if
 
    endif
 
-!!$  potential_dot_dot_acoustic = 1
-!!$      write(filename,282)myrank
-!!$282   format('OUTPUT_FILES/acoustic_before',i5.5)
-!!$      call gnuplot_array ( npoin, nspec, filename, potential_dot_dot_acoustic, coord, ibool)
-
+! assembling potential_dot_dot for acoustic elements
 #ifdef USE_MPI
    if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
       call assemble_MPI_vector_acoustic_start(myrank,potential_dot_dot_acoustic,npoin, &
@@ -1795,9 +1688,6 @@ end if
            )      
    end if
 #endif
-!!$      write(filename,283)myrank
-!!$283   format('OUTPUT_FILES/acoustic_after',i5.5)
-!!$      call gnuplot_array ( npoin, nspec, filename, potential_dot_dot_acoustic, coord, ibool)
 
 
 ! ************************************************************************************
@@ -1901,16 +1791,7 @@ end if
 
     endif
 
-    
-!!$    accel_elastic = 1
-!!$      write(filename,280)myrank
-!!$280   format('OUTPUT_FILES/accel_elastic_before',i5.5)
-!!$      call gnuplot_array ( npoin, nspec, filename, accel_elastic(2,:), coord, ibool)
-
-! ************************************************************************************
-! ************* multiply by the inverse of the mass matrix and update velocity
-! ************************************************************************************
-
+! assembling accel_elastic for elastic elements
 #ifdef USE_MPI
  if ( nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
     call assemble_MPI_vector_elastic_start(myrank,accel_elastic,npoin, &
@@ -1934,14 +1815,10 @@ end if
   end if
 #endif
 
-!!$  write(filename,281)myrank
-!!$281 format('OUTPUT_FILES/accel_elastic_after',i5.5)
-!!$  call gnuplot_array ( npoin, nspec, filename, accel_elastic(2,:), coord, ibool)
-!!$#ifdef USE_MPI
-!!$  call MPI_BARRIER(MPI_COMM_WORLD, ier)
-!!$#endif
-!!$
-!!$  call exit_MPI('plop')
+
+! ************************************************************************************
+! ************* multiply by the inverse of the mass matrix and update velocity
+! ************************************************************************************
 
   if(any_elastic) then
     accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic
@@ -2189,6 +2066,7 @@ end if
      
   end do
   
+! assembling array image_color_data on process zero for color output
 #ifdef USE_MPI  
   if ( nproc > 1 ) then
      if ( myrank == 0 ) then
@@ -2223,14 +2101,6 @@ end if
 #endif  
 
 
-!!$  do j = 1,NZ_IMAGE_color
-!!$    do i = 1,NX_IMAGE_color
-!!$      iglob = iglob_image_color(i,j)
-!!$! draw vertical component of field
-!!$! or pressure which is stored in the same array used as temporary storage
-!!$      if(iglob /= -1) image_color_data(i,j) = vector_field_display(2,iglob)
-!!$    enddo
-!!$  enddo
   if ( myrank == 0 ) then
      call create_color_image(image_color_data,iglob_image_color,NX_IMAGE_color,NZ_IMAGE_color,it,cutsnaps)
   
@@ -2349,35 +2219,8 @@ end if
                   'Mzz. . . . . . . . . . . . . . . . . . =',1pe20.10,/5x, &
                   'Mxz. . . . . . . . . . . . . . . . . . =',1pe20.10)
 
-  end program specfem2D
+end program specfem2D
 
-
-
-
-subroutine gnuplot_array ( npoin, nspec, filename, array, coord, ibool)
-
-  implicit none
-  include "constants.h"
-
-  integer  :: npoin
-  integer  :: nspec
-  character(len=256)  :: filename
-  double precision, dimension(npoin)  :: array
-  double precision, dimension(NDIM,npoin)  :: coord
-  integer, dimension(NGLLX,NGLLZ,nspec)  :: ibool
-  
-  integer  :: i, j, ispec
-  integer  :: ipoint
-
-  open(unit=90, file=trim(filename), status='unknown', action='write')
-  do ipoint = 1, npoin
-     
-     write(90,*) coord(1,ipoint), coord(2,ipoint), array(ipoint)
-  end do
-  close(90)
-
-
-end subroutine gnuplot_array
 
 
 subroutine is_in_convex_quadrilateral ( elmnt_coords, x_coord, z_coord, is_in)
