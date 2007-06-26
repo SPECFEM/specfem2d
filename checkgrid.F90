@@ -13,13 +13,16 @@
 
   subroutine checkgrid(vpext,vsext,rhoext,density,elastcoef,ibool,kmato,coord,npoin,vpmin,vpmax, &
                  assign_external_model,nspec,numat,deltat,f0,t0,initialfield,time_function_type, &
-                 coorg,xinterp,zinterp,shapeint,knods,simulation_title,npgeo,pointsdisp,ngnod,any_elastic)
+                 coorg,xinterp,zinterp,shapeint,knods,simulation_title,npgeo,pointsdisp,ngnod,any_elastic,myrank,nproc)
 
 ! check the mesh, stability and number of points per wavelength
 
   implicit none
 
   include "constants.h"
+#ifdef USE_MPI
+  include 'mpif.h'
+#endif
 
   integer i,j,ispec,material,npoin,nspec,numat,time_function_type
 
@@ -49,6 +52,28 @@
 
   double precision :: xmax,zmax,height,usoffset,sizex,sizez,courant_stability_number
   double precision :: x1,z1,x2,z2,ratio_page,xmin,zmin,lambdaS_local,lambdaP_local
+
+  double precision  :: vpmin_glob,vpmax_glob,vsmin_glob,vsmax_glob,densmin_glob,densmax_glob
+  double precision  :: distance_min_glob,distance_max_glob
+  double precision  :: courant_stability_number_max_glob,lambdaPmin_glob,lambdaPmax_glob,lambdaSmin_glob,lambdaSmax_glob
+  double precision  :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
+  logical  :: any_elastic_glob
+  double precision, dimension(2,nspec*5)  :: coorg_send
+  double precision, dimension(:,:), allocatable  :: coorg_recv
+  integer, dimension(nspec)  :: RGB_send
+  integer, dimension(:), allocatable  :: RGB_recv
+  real, dimension(nspec)  :: greyscale_send
+  real, dimension(:), allocatable  :: greyscale_recv
+  integer  :: nspec_recv
+  integer  :: num_ispec
+  integer  :: myrank, iproc, nproc
+  integer  :: ier
+  integer  :: nproc_per_cat, color_cat
+  real  :: RGB_step, R_val, G_val, B_val
+  
+#ifdef USE_MPI
+  integer, dimension(MPI_STATUS_SIZE)  :: request_mpi_status
+#endif
 
   integer knods(ngnod,nspec)
 
@@ -179,6 +204,39 @@
 
   enddo
 
+  any_elastic_glob = any_elastic
+#ifdef USE_MPI 
+  call MPI_ALLREDUCE (vpmin, vpmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (vpmax, vpmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (vsmin, vsmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (vsmax, vsmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (densmin, densmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (densmax, densmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (distance_min, distance_min_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (distance_max, distance_max_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (courant_stability_number_max, courant_stability_number_max_glob, 1, MPI_DOUBLE_PRECISION, &
+       MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (lambdaPmin, lambdaPmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (lambdaPmax, lambdaPmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (lambdaSmin, lambdaSmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (lambdaSmax, lambdaSmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (any_elastic, any_elastic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
+  vpmin = vpmin_glob
+  vpmax = vpmax_glob
+  vsmin = vsmin_glob
+  vsmax = vsmax_glob
+  densmin = densmin_glob
+  densmax = densmax_glob
+  distance_min = distance_min_glob
+  distance_max = distance_max_glob
+  courant_stability_number_max = courant_stability_number_max_glob
+  lambdaPmin = lambdaPmin_glob
+  lambdaPmax = lambdaPmax_glob
+  lambdaSmin = lambdaSmin_glob
+  lambdaSmax = lambdaSmax_glob
+  
+#endif
+
   write(IOUT,*)
   write(IOUT,*) '********'
   write(IOUT,*) 'Model: P velocity min,max = ',vpmin,vpmax
@@ -245,12 +303,25 @@
   xmax = maxval(coord(1,:))
   zmax = maxval(coord(2,:))
 
+#ifdef USE_MPI
+  call MPI_ALLREDUCE (xmin, xmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (xmax, xmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (zmin, zmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (zmax, zmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  xmin = xmin_glob
+  xmax = xmax_glob
+  zmin = zmin_glob
+  zmax = zmax_glob
+  
+#endif
+
 ! ratio of physical page size/size of the domain meshed
   ratio_page = min(rpercentz*sizez/(zmax-zmin),rpercentx*sizex/(xmax-xmin)) / 100.d0
 
   print *
   print *,'Creating PostScript file with stability condition'
 
+  if ( myrank == 0 ) then
 !
 !---- open PostScript file
 !
@@ -354,9 +425,15 @@
   write(24,*) '%'
   write(24,*) '0 setgray'
 
-  do ispec = 1, nspec
+  num_ispec = 0
+  end if
 
-  write(24,*) '% elem ',ispec
+  do ispec = 1, nspec
+     
+     if ( myrank == 0 ) then
+        num_ispec = num_ispec + 1
+        write(24,*) '% elem ',ispec
+     end if
 
   do i=1,pointsdisp
   do j=1,pointsdisp
@@ -376,8 +453,13 @@
   z1 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x1 = x1 * centim
   z1 = z1 * centim
-  write(24,*) 'mark'
-  write(24,681) x1,z1
+  if ( myrank == 0 ) then
+     write(24,*) 'mark'
+     write(24,681) x1,z1
+  else
+     coorg_send(1,(ispec-1)*5+1) = x1
+     coorg_send(2,(ispec-1)*5+1) = z1
+  end if
 
 ! draw straight lines if elements have 4 nodes
 
@@ -386,7 +468,12 @@
   z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x2 = x2 * centim
   z2 = z2 * centim
-  write(24,681) x2,z2
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     coorg_send(1,(ispec-1)*5+2) = x2
+     coorg_send(2,(ispec-1)*5+2) = z2
+  end if
 
   ir=pointsdisp
   is=pointsdisp
@@ -394,7 +481,12 @@
   z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x2 = x2 * centim
   z2 = z2 * centim
-  write(24,681) x2,z2
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     coorg_send(1,(ispec-1)*5+3) = x2
+     coorg_send(2,(ispec-1)*5+3) = z2
+  end if
 
   is=pointsdisp
   ir=1
@@ -402,7 +494,12 @@
   z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x2 = x2 * centim
   z2 = z2 * centim
-  write(24,681) x2,z2
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     coorg_send(1,(ispec-1)*5+4) = x2
+     coorg_send(2,(ispec-1)*5+4) = z2
+  end if
 
   ir=1
   is=2
@@ -410,9 +507,13 @@
   z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x2 = x2 * centim
   z2 = z2 * centim
-  write(24,681) x2,z2
-
-  write(24,*) 'CO'
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+     write(24,*) 'CO'
+  else
+     coorg_send(1,(ispec-1)*5+5) = x2
+     coorg_send(2,(ispec-1)*5+5) = z2
+  end if
 
     material = kmato(ispec)
 
@@ -470,33 +571,83 @@
 
 ! display bad elements that are above 80% of the threshold
   if(courant_stability_number >= 0.80 * courant_stability_number_max) then
-    write(24,*) '1 0 0 RG GF 0 setgray ST'
+     if ( myrank == 0 ) then
+        write(24,*) '1 0 0 RG GF 0 setgray ST'
+     else
+        RGB_send(ispec) = 1
+     end if
   else
 ! do not color the elements if below the threshold
-    write(24,*) 'ST'
+     if ( myrank == 0 ) then
+        write(24,*) 'ST'
+     else
+        RGB_send(ispec) = 0
+     end if
   endif
 
   enddo ! end of loop on all the spectral elements
 
-  write(24,*) '%'
-  write(24,*) 'grestore'
-  write(24,*) 'showpage'
+#ifdef USE_MPI
+  if (myrank == 0 ) then
+        
+     do iproc = 1, nproc-1
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+        allocate(coorg_recv(2,nspec_recv*5))
+        allocate(RGB_recv(nspec_recv))
+        call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+        call MPI_RECV (RGB_recv(1), nspec_recv, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+        
+        do ispec = 1, nspec_recv
+           num_ispec = num_ispec + 1
+           write(24,*) '% elem ',num_ispec
+           write(24,*) 'mark'
+           write(24,681) coorg_recv(1,(ispec-1)*5+1), coorg_recv(2,(ispec-1)*5+1)
+           write(24,681) coorg_recv(1,(ispec-1)*5+2), coorg_recv(2,(ispec-1)*5+2)
+           write(24,681) coorg_recv(1,(ispec-1)*5+3), coorg_recv(2,(ispec-1)*5+3)
+           write(24,681) coorg_recv(1,(ispec-1)*5+4), coorg_recv(2,(ispec-1)*5+4)
+           write(24,681) coorg_recv(1,(ispec-1)*5+5), coorg_recv(2,(ispec-1)*5+5)
+           write(24,*) 'CO'
+           if ( RGB_recv(ispec)  == 1) then
+              write(24,*) '1 0 0 RG GF 0 setgray ST'
+           else
+              write(24,*) 'ST'
+           end if
+        end do
+        deallocate(coorg_recv)
+        deallocate(RGB_recv)
+        
+     end do
+     
+  else
+     call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
+     call MPI_SEND (coorg_send, nspec*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
+     call MPI_SEND (RGB_send, nspec, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
 
-  close(24)
+  end if
+#endif
 
-  print *,'End of creation of PostScript file with stability condition'
+ if ( myrank == 0 ) then
+    write(24,*) '%'
+    write(24,*) 'grestore'
+    write(24,*) 'showpage'
+
+    close(24)
+
+    print *,'End of creation of PostScript file with stability condition'
+ end if
 
 !
 !--------------------------------------------------------------------------------
 !
-
+ 
+if ( myrank == 0 ) then
   print *
   print *,'Creating PostScript file with mesh dispersion'
 
 !
 !---- open PostScript file
 !
-  if(any_elastic) then
+  if(any_elastic_glob) then
     open(unit=24,file='OUTPUT_FILES/mesh_S_wave_dispersion.ps',status='unknown')
   else
     open(unit=24,file='OUTPUT_FILES/mesh_P_wave_dispersion.ps',status='unknown')
@@ -575,7 +726,7 @@
   write(24,*) '24.35 CM 18.9 CM MV'
   write(24,*) usoffset,' CM 2 div neg 0 MR'
   write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  if(any_elastic) then
+  if(any_elastic_glob) then
     write(24,*) '(Mesh elastic S-wave dispersion \(red = good, blue = bad\)) show'
   else
     write(24,*) '(Mesh acoustic P-wave dispersion \(red = good, blue = bad\)) show'
@@ -603,10 +754,15 @@
   write(24,*) '% spectral element mesh'
   write(24,*) '%'
   write(24,*) '0 setgray'
+  
+  num_ispec = 0
+  end if
 
   do ispec = 1, nspec
-
-  write(24,*) '% elem ',ispec
+     if ( myrank == 0 ) then
+        num_ispec = num_ispec + 1
+        write(24,*) '% elem ',ispec
+     end if
 
   do i=1,pointsdisp
   do j=1,pointsdisp
@@ -626,8 +782,13 @@
   z1 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x1 = x1 * centim
   z1 = z1 * centim
-  write(24,*) 'mark'
-  write(24,681) x1,z1
+  if ( myrank == 0 ) then
+     write(24,*) 'mark'
+     write(24,681) x1,z1
+  else
+     coorg_send(1,(ispec-1)*5+1) = x1
+     coorg_send(2,(ispec-1)*5+1) = z1
+  end if
 
 ! draw straight lines if elements have 4 nodes
 
@@ -636,7 +797,12 @@
   z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x2 = x2 * centim
   z2 = z2 * centim
-  write(24,681) x2,z2
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     coorg_send(1,(ispec-1)*5+2) = x2
+     coorg_send(2,(ispec-1)*5+2) = z2
+  end if
 
   ir=pointsdisp
   is=pointsdisp
@@ -644,7 +810,12 @@
   z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x2 = x2 * centim
   z2 = z2 * centim
-  write(24,681) x2,z2
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     coorg_send(1,(ispec-1)*5+3) = x2
+     coorg_send(2,(ispec-1)*5+3) = z2
+  end if
 
   is=pointsdisp
   ir=1
@@ -652,7 +823,12 @@
   z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x2 = x2 * centim
   z2 = z2 * centim
-  write(24,681) x2,z2
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     coorg_send(1,(ispec-1)*5+4) = x2
+     coorg_send(2,(ispec-1)*5+4) = z2
+  end if
 
   ir=1
   is=2
@@ -660,9 +836,15 @@
   z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x2 = x2 * centim
   z2 = z2 * centim
-  write(24,681) x2,z2
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+     write(24,*) 'CO'
+  else
+     coorg_send(1,(ispec-1)*5+5) = x2
+     coorg_send(2,(ispec-1)*5+5) = z2
+  end if
 
-  write(24,*) 'CO'
+ 
 
     material = kmato(ispec)
 
@@ -717,7 +899,7 @@
   distance_max = max(distance_max,distance_max_local)
 
 ! display mesh dispersion for S waves if there is at least one elastic element in the mesh
-  if(any_elastic) then
+  if(any_elastic_glob) then
 
 ! ignore fluid regions with Vs = 0
   if(csloc > 0.0001d0) then
@@ -726,20 +908,36 @@
 
 ! display very good elements that are above 80% of the threshold in red
     if(lambdaS_local >= 0.80 * lambdaSmax) then
-      write(24,*) '1 0 0 RG GF 0 setgray ST'
+       if ( myrank == 0 ) then
+          write(24,*) '1 0 0 RG GF 0 setgray ST'
+       else
+          RGB_send(ispec) = 1
+       end if
 
 ! display bad elements that are below 120% of the threshold in blue
     else if(lambdaS_local <= 1.20 * lambdaSmin) then
-      write(24,*) '0 0 1 RG GF 0 setgray ST'
+       if ( myrank == 0 ) then
+          write(24,*) '0 0 1 RG GF 0 setgray ST'
+       else
+          RGB_send(ispec) = 3
+       end if
 
     else
 ! do not color the elements if not close to the threshold
-      write(24,*) 'ST'
+       if ( myrank == 0 ) then 
+          write(24,*) 'ST'
+       else 
+          RGB_send(ispec) = 0
+       end if
     endif
 
   else
 ! do not color the elements if S-wave velocity undefined
-    write(24,*) 'ST'
+     if ( myrank == 0 ) then
+        write(24,*) 'ST'
+     else
+        RGB_send(ispec) = 0
+     end if
   endif
 
 ! display mesh dispersion for P waves if there is no elastic element in the mesh
@@ -749,33 +947,93 @@
 
 ! display very good elements that are above 80% of the threshold in red
     if(lambdaP_local >= 0.80 * lambdaPmax) then
-      write(24,*) '1 0 0 RG GF 0 setgray ST'
+       if ( myrank == 0 ) then
+          write(24,*) '1 0 0 RG GF 0 setgray ST'
+       else
+          RGB_send(ispec) = 1
+       end if
 
 ! display bad elements that are below 120% of the threshold in blue
     else if(lambdaP_local <= 1.20 * lambdaPmin) then
-      write(24,*) '0 0 1 RG GF 0 setgray ST'
+       if ( myrank == 0 ) then
+          write(24,*) '0 0 1 RG GF 0 setgray ST'
+       else 
+          RGB_send(ispec) = 3
+       end if
 
     else
 ! do not color the elements if not close to the threshold
-      write(24,*) 'ST'
+       if ( myrank == 0 ) then
+          write(24,*) 'ST'
+       else
+          RGB_send(ispec) = 0
+       end if
     endif
 
   endif
 
   enddo ! end of loop on all the spectral elements
 
-  write(24,*) '%'
-  write(24,*) 'grestore'
-  write(24,*) 'showpage'
+#ifdef USE_MPI
+  if (myrank == 0 ) then
+        
+     do iproc = 1, nproc-1
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+        allocate(coorg_recv(2,nspec_recv*5))
+        allocate(RGB_recv(nspec_recv))
+        call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+        call MPI_RECV (RGB_recv(1), nspec_recv, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+        
+        do ispec = 1, nspec_recv
+           num_ispec = num_ispec + 1
+           write(24,*) '% elem ',num_ispec
+           write(24,*) 'mark'
+           write(24,681) coorg_recv(1,(ispec-1)*5+1), coorg_recv(2,(ispec-1)*5+1)
+           write(24,681) coorg_recv(1,(ispec-1)*5+2), coorg_recv(2,(ispec-1)*5+2)
+           write(24,681) coorg_recv(1,(ispec-1)*5+3), coorg_recv(2,(ispec-1)*5+3)
+           write(24,681) coorg_recv(1,(ispec-1)*5+4), coorg_recv(2,(ispec-1)*5+4)
+           write(24,681) coorg_recv(1,(ispec-1)*5+5), coorg_recv(2,(ispec-1)*5+5)
+           write(24,*) 'CO'
+           if ( RGB_recv(ispec)  == 1) then
+              write(24,*) '1 0 0 RG GF 0 setgray ST'
+           end if
+           if ( RGB_recv(ispec)  == 3) then
+              write(24,*) '0 0 1 RG GF 0 setgray ST'
+           end if
+           if ( RGB_recv(ispec)  == 0) then
+              write(24,*) 'ST'
+           end if
+          
+        end do
+        deallocate(coorg_recv)
+        deallocate(RGB_recv)
 
-  close(24)
+     end do
+     
+  else
+     call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
+     call MPI_SEND (coorg_send, nspec*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
+     call MPI_SEND (RGB_send, nspec, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
 
-  print *,'End of creation of PostScript file with mesh dispersion'
+  end if
+#endif
+
+
+  if ( myrank == 0 ) then
+     write(24,*) '%'
+     write(24,*) 'grestore'
+     write(24,*) 'showpage'
+     
+     close(24)
+     
+     print *,'End of creation of PostScript file with mesh dispersion'
+  end if
 
 !
 !--------------------------------------------------------------------------------
 !
 
+  if ( myrank == 0 ) then
   print *
   print *,'Creating PostScript file with velocity model'
 
@@ -882,10 +1140,14 @@
   write(24,*) '%'
   write(24,*) '0 setgray'
 
+  num_ispec = 0
+end if
+ 
   do ispec = 1, nspec
-
-  write(24,*) '% elem ',ispec
-
+     if ( myrank == 0 ) then
+        num_ispec = num_ispec + 1
+        write(24,*) '% elem ',ispec
+     end if
   do i=1,pointsdisp
   do j=1,pointsdisp
   xinterp(i,j) = 0.d0
@@ -904,8 +1166,13 @@
   z1 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x1 = x1 * centim
   z1 = z1 * centim
-  write(24,*) 'mark'
-  write(24,681) x1,z1
+  if ( myrank == 0 ) then
+     write(24,*) 'mark'
+     write(24,681) x1,z1
+  else
+     coorg_send(1,(ispec-1)*5+1) = x1
+     coorg_send(2,(ispec-1)*5+1) = z1
+  end if
 
 ! draw straight lines if elements have 4 nodes
 
@@ -914,15 +1181,25 @@
   z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x2 = x2 * centim
   z2 = z2 * centim
-  write(24,681) x2,z2
-
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     coorg_send(1,(ispec-1)*5+2) = x2
+     coorg_send(2,(ispec-1)*5+2) = z2
+  end if
+  
   ir=pointsdisp
   is=pointsdisp
   x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
   z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x2 = x2 * centim
   z2 = z2 * centim
-  write(24,681) x2,z2
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     coorg_send(1,(ispec-1)*5+3) = x2
+     coorg_send(2,(ispec-1)*5+3) = z2
+  end if
 
   is=pointsdisp
   ir=1
@@ -930,7 +1207,12 @@
   z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x2 = x2 * centim
   z2 = z2 * centim
-  write(24,681) x2,z2
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     coorg_send(1,(ispec-1)*5+4) = x2
+     coorg_send(2,(ispec-1)*5+4) = z2
+  end if
 
   ir=1
   is=2
@@ -938,10 +1220,14 @@
   z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x2 = x2 * centim
   z2 = z2 * centim
-  write(24,681) x2,z2
-
-  write(24,*) 'CO'
-
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+     write(24,*) 'CO'
+  else
+     coorg_send(1,(ispec-1)*5+5) = x2
+     coorg_send(2,(ispec-1)*5+5) = z2
+  end if
+  
   if((vpmax-vpmin)/vpmin > 0.02d0) then
   if(assign_external_model) then
 ! use lower-left corner
@@ -966,17 +1252,330 @@
   x1 = 1.d0 - x1
 
 ! display P-velocity model using gray levels
-      write(24,*) sngl(x1),' setgray GF 0 setgray ST'
-
+  if ( myrank == 0 ) then
+     write(24,*) sngl(x1),' setgray GF 0 setgray ST'
+  else 
+     greyscale_send(ispec) = sngl(x1)
+  end if
   enddo ! end of loop on all the spectral elements
 
+#ifdef USE_MPI
+  if (myrank == 0 ) then
+        
+     do iproc = 1, nproc-1
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+        allocate(coorg_recv(2,nspec_recv*5))
+        allocate(greyscale_recv(nspec_recv))
+        call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+        call MPI_RECV (greyscale_recv(1), nspec_recv, MPI_REAL, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+        
+        do ispec = 1, nspec_recv
+           num_ispec = num_ispec + 1
+           write(24,*) '% elem ',num_ispec
+           write(24,*) 'mark'
+           write(24,681) coorg_recv(1,(ispec-1)*5+1), coorg_recv(2,(ispec-1)*5+1)
+           write(24,681) coorg_recv(1,(ispec-1)*5+2), coorg_recv(2,(ispec-1)*5+2)
+           write(24,681) coorg_recv(1,(ispec-1)*5+3), coorg_recv(2,(ispec-1)*5+3)
+           write(24,681) coorg_recv(1,(ispec-1)*5+4), coorg_recv(2,(ispec-1)*5+4)
+           write(24,681) coorg_recv(1,(ispec-1)*5+5), coorg_recv(2,(ispec-1)*5+5)
+           write(24,*) 'CO'
+           write(24,*) greyscale_recv(ispec), ' setgray GF 0 setgray ST'
+          
+        end do
+        deallocate(coorg_recv)
+        deallocate(greyscale_recv)
+
+     end do
+     
+  else
+     call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
+     call MPI_SEND (coorg_send, nspec*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
+     call MPI_SEND (greyscale_send, nspec, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
+
+  end if
+#endif
+
+  if ( myrank == 0 ) then
+     write(24,*) '%'
+     write(24,*) 'grestore'
+     write(24,*) 'showpage'
+     
+     close(24)
+     
+     print *,'End of creation of PostScript file with velocity model'
+
+  end if
+
+
+  print *
+  print *,'Creating PostScript file with partitioning'
+
+  if ( myrank == 0 ) then
+!
+!---- open PostScript file
+!
+  open(unit=24,file='OUTPUT_FILES/mesh_partition.ps',status='unknown')
+
+!
+!---- write PostScript header
+!
+  write(24,10) simulation_title
+  write(24,*) '/CM {28.5 mul} def'
+  write(24,*) '/LR {rlineto} def'
+  write(24,*) '/LT {lineto} def'
+  write(24,*) '/L {lineto} def'
+  write(24,*) '/MR {rmoveto} def'
+  write(24,*) '/MV {moveto} def'
+  write(24,*) '/M {moveto} def'
+  write(24,*) '/ST {stroke} def'
+  write(24,*) '/CP {closepath} def'
+  write(24,*) '/RG {setrgbcolor} def'
+  write(24,*) '/GF {gsave fill grestore} def'
+  write(24,*) '% different useful symbols'
+  write(24,*) '/Point {2 0 360 arc CP 0 setgray fill} def'
+  write(24,*) '/VDot {-0.75 -1.5 MR 1.5 0 LR 0 3. LR -1.5 0 LR'
+  write(24,*) 'CP fill} def'
+  write(24,*) '/HDot {-1.5 -0.75 MR 3. 0 LR 0 1.5 LR -3. 0 LR'
+  write(24,*) 'CP fill} def'
+  write(24,*) '/Cross {gsave 0.05 CM setlinewidth'
+  write(24,*) 'gsave 3 3 MR -6. -6. LR ST grestore'
+  write(24,*) 'gsave 3 -3 MR -6. 6. LR ST grestore'
+  write(24,*) '0.01 CM setlinewidth} def'
+  write(24,*) '/SmallLine {MV 0.07 CM 0 rlineto} def'
+  write(24,*) '/Diamond {gsave 0.05 CM setlinewidth 0 4.2 MR'
+  write(24,*) '-3 -4.2 LR 3 -4.2 LR 3 4.2 LR CP ST'
+  write(24,*) 'grestore 0.01 CM setlinewidth} def'
   write(24,*) '%'
+  write(24,*) '% macro to draw the contour of the elements'
+  write(24,*) '/CO {M counttomark 2 idiv {L} repeat cleartomark CP} def'
+  write(24,*) '%'
+  write(24,*) '.01 CM setlinewidth'
+  write(24,*) '/Times-Roman findfont'
+  write(24,*) '.35 CM scalefont setfont'
+  write(24,*) '%'
+  write(24,*) '/vshift ',-height/2,' CM def'
+  write(24,*) '/Rshow { currentpoint stroke MV'
+  write(24,*) 'dup stringwidth pop neg vshift MR show } def'
+  write(24,*) '/Cshow { currentpoint stroke MV'
+  write(24,*) 'dup stringwidth pop -2 div vshift MR show } def'
+  write(24,*) '/fN {/Helvetica-Bold findfont ',height,' CM scalefont setfont} def'
+  write(24,*) '%'
+  write(24,*) 'gsave newpath 90 rotate'
+  write(24,*) '0 ',-sizez,' CM translate 1. 1. scale'
+  write(24,*) '%'
+
+!
+!--- write captions of PostScript figure
+!
+  write(24,*) '0 setgray'
+  write(24,*) '/Times-Roman findfont'
+  write(24,*) '.5 CM scalefont setfont'
+
+  write(24,*) '%'
+  write(24,*) '/Times-Roman findfont'
+  write(24,*) '.6 CM scalefont setfont'
+  write(24,*) '.4 .9 .9 setrgbcolor'
+  write(24,*) '11 CM 1.1 CM MV'
+  write(24,*) '(X axis) show'
+  write(24,*) '%'
+  write(24,*) '1.4 CM 9.5 CM MV'
+  write(24,*) 'currentpoint gsave translate 90 rotate 0 0 moveto'
+  write(24,*) '(Y axis) show'
   write(24,*) 'grestore'
-  write(24,*) 'showpage'
+  write(24,*) '%'
+  write(24,*) '/Times-Roman findfont'
+  write(24,*) '.7 CM scalefont setfont'
+  write(24,*) '.8 0 .8 setrgbcolor'
+  write(24,*) '24.35 CM 18.9 CM MV'
+  write(24,*) usoffset,' CM 2 div neg 0 MR'
+  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
+  write(24,*) '(Mesh stability condition \(red = bad\)) show'
+  write(24,*) 'grestore'
+  write(24,*) '25.35 CM 18.9 CM MV'
+  write(24,*) usoffset,' CM 2 div neg 0 MR'
+  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
+  write(24,*) '(',simulation_title,') show'
+  write(24,*) 'grestore'
+  write(24,*) '26.45 CM 18.9 CM MV'
+  write(24,*) usoffset,' CM 2 div neg 0 MR'
+  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
+  write(24,*) '(2D Spectral Element Method) show'
+  write(24,*) 'grestore'
 
-  close(24)
+  write(24,*) '%'
+  write(24,*) '1 1 scale'
+  write(24,*) '%'
 
-  print *,'End of creation of PostScript file with velocity model'
+!
+!---- draw the spectral element mesh
+!
+  write(24,*) '%'
+  write(24,*) '% spectral element mesh'
+  write(24,*) '%'
+  write(24,*) '0 setgray'
+
+  num_ispec = 0
+  end if
+
+  do ispec = 1, nspec
+     
+     if ( myrank == 0 ) then
+        num_ispec = num_ispec + 1
+        write(24,*) '% elem ',ispec
+     end if
+
+  do i=1,pointsdisp
+  do j=1,pointsdisp
+  xinterp(i,j) = 0.d0
+  zinterp(i,j) = 0.d0
+  do in = 1,ngnod
+    nnum = knods(in,ispec)
+      xinterp(i,j) = xinterp(i,j) + shapeint(in,i,j)*coorg(1,nnum)
+      zinterp(i,j) = zinterp(i,j) + shapeint(in,i,j)*coorg(2,nnum)
+  enddo
+  enddo
+  enddo
+
+  is = 1
+  ir = 1
+  x1 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z1 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+  x1 = x1 * centim
+  z1 = z1 * centim
+  if ( myrank == 0 ) then
+     write(24,*) 'mark'
+     write(24,681) x1,z1
+  else
+     coorg_send(1,(ispec-1)*5+1) = x1
+     coorg_send(2,(ispec-1)*5+1) = z1
+  end if
+
+! draw straight lines if elements have 4 nodes
+
+  ir=pointsdisp
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+  x2 = x2 * centim
+  z2 = z2 * centim
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     coorg_send(1,(ispec-1)*5+2) = x2
+     coorg_send(2,(ispec-1)*5+2) = z2
+  end if
+
+  ir=pointsdisp
+  is=pointsdisp
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+  x2 = x2 * centim
+  z2 = z2 * centim
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     coorg_send(1,(ispec-1)*5+3) = x2
+     coorg_send(2,(ispec-1)*5+3) = z2
+  end if
+
+  is=pointsdisp
+  ir=1
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+  x2 = x2 * centim
+  z2 = z2 * centim
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     coorg_send(1,(ispec-1)*5+4) = x2
+     coorg_send(2,(ispec-1)*5+4) = z2
+  end if
+
+  ir=1
+  is=2
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+  x2 = x2 * centim
+  z2 = z2 * centim
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+     write(24,*) 'CO'
+  else
+     coorg_send(1,(ispec-1)*5+5) = x2
+     coorg_send(2,(ispec-1)*5+5) = z2
+  end if
+
+ 
+  if ( myrank == 0 ) then
+        write(24,*) '0.3 0.3 0.4 RG GF 0 setgray ST'
+     end if
+     
+  enddo ! end of loop on all the spectral elements
+
+#ifdef USE_MPI
+  if (myrank == 0 ) then
+     
+     RGB_step = 0.6 / real(nproc_per_cat)
+     nproc_per_cat = ceiling(real(nproc)/real(3))
+     
+     do iproc = 1, nproc-1
+
+        color_cat = ceiling(real(iproc)/real(nproc_per_cat))
+        if ( color_cat == 1 ) then
+           R_val = 0.2 + RGB_step * modulo(iproc,nproc_per_cat)
+           G_val = 1. - R_val
+           B_val = 0
+        end if
+        if ( color_cat == 2 ) then
+           R_val = 0 
+           G_val = 0.2 + RGB_step * modulo(iproc,nproc_per_cat)
+           B_val = 1. - G_val
+        end if
+        if ( color_cat == 3 ) then
+           R_val = 0.2 + RGB_step * modulo(iproc,nproc_per_cat)
+           G_val = 0
+           B_val = 1. - R_val
+        end if
+        
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+        allocate(coorg_recv(2,nspec_recv*5))
+        call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+            
+        do ispec = 1, nspec_recv
+           num_ispec = num_ispec + 1
+           write(24,*) '% elem ',num_ispec
+           write(24,*) 'mark'
+           write(24,681) coorg_recv(1,(ispec-1)*5+1), coorg_recv(2,(ispec-1)*5+1)
+           write(24,681) coorg_recv(1,(ispec-1)*5+2), coorg_recv(2,(ispec-1)*5+2)
+           write(24,681) coorg_recv(1,(ispec-1)*5+3), coorg_recv(2,(ispec-1)*5+3)
+           write(24,681) coorg_recv(1,(ispec-1)*5+4), coorg_recv(2,(ispec-1)*5+4)
+           write(24,681) coorg_recv(1,(ispec-1)*5+5), coorg_recv(2,(ispec-1)*5+5)
+           write(24,*) 'CO'
+           
+           write(24,*) R_val, G_val, B_val, ' RG GF 0 setgray ST'
+        
+        end do
+        deallocate(coorg_recv)
+              
+     end do
+     
+  else
+     call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
+     call MPI_SEND (coorg_send, nspec*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
+    
+  end if
+#endif
+
+ if ( myrank == 0 ) then
+    write(24,*) '%'
+    write(24,*) 'grestore'
+    write(24,*) 'showpage'
+
+    close(24)
+
+    print *,'End of creation of PostScript file with partitioning'
+ end if
+
+
 
  10  format('%!PS-Adobe-2.0',/,'%%',/,'%% Title: ',a50,/,'%% Created by: Specfem2D',/,'%% Author: Dimitri Komatitsch',/,'%%')
 

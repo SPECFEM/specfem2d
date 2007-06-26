@@ -12,7 +12,7 @@
 !========================================================================
 
   subroutine compute_forces_acoustic(npoin,nspec,nelemabs,numat, &
-               iglob_source,ispec_selected_source,source_type,it,NSTEP,anyabs, &
+               iglob_source,ispec_selected_source,is_proc_source,source_type,it,NSTEP,anyabs, &
                assign_external_model,initialfield,ibool,kmato,numabs, &
                elastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
                potential_acoustic,density,elastcoef,xix,xiz,gammax,gammaz,jacobian, &
@@ -27,7 +27,7 @@
 
   include "constants.h"
 
-  integer :: npoin,nspec,nelemabs,numat,iglob_source,ispec_selected_source,source_type,it,NSTEP
+  integer :: npoin,nspec,nelemabs,numat,iglob_source,ispec_selected_source,is_proc_source,source_type,it,NSTEP
 
   logical :: anyabs,assign_external_model,initialfield
 
@@ -334,22 +334,23 @@
 ! --- add the source
   if(.not. initialfield) then
 
+     if (is_proc_source == 1 ) then
 ! collocated force
 ! beware, for acoustic medium, source is a pressure source
-  if(source_type == 1) then
-    if(.not. elastic(ispec_selected_source)) then
-      potential_dot_dot_acoustic(iglob_source) = potential_dot_dot_acoustic(iglob_source) + source_time_function(it)
-    endif
+        if(source_type == 1) then
+           if(.not. elastic(ispec_selected_source)) then
+              potential_dot_dot_acoustic(iglob_source) = potential_dot_dot_acoustic(iglob_source) + source_time_function(it)
+           endif
 
 ! moment tensor
-  else if(source_type == 2) then
+        else if(source_type == 2) then
 
-    if(.not. elastic(ispec_selected_source)) stop 'cannot have moment tensor source in acoustic element'
+           if(.not. elastic(ispec_selected_source)) stop 'cannot have moment tensor source in acoustic element'
 
-  endif
-
+        endif
+     end if
   else
-    stop 'wrong source type'
+     stop 'wrong source type'
   endif
 
   end subroutine compute_forces_acoustic
