@@ -361,8 +361,8 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,*) seismotype,imagetype
-  if(seismotype < 1 .or. seismotype > 4) stop 'Wrong type for seismogram output'
-  if(imagetype < 1 .or. imagetype > 4) stop 'Wrong type for snapshots'
+  if(seismotype < 1 .or. seismotype > 4) call exit_MPI('Wrong type for seismogram output')
+  if(imagetype < 1 .or. imagetype > 4) call exit_MPI('Wrong type for snapshots')
 
   read(IIN,"(a80)") datlin
   read(IIN,*) assign_external_model,outputgrid,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
@@ -394,7 +394,7 @@
    else if(source_type == 2) then
      write(IOUT,222) x_source,z_source,f0,t0,factor,Mxx,Mzz,Mxz
    else
-     stop 'Unknown source type number !'
+     call exit_MPI('Unknown source type number !')
    endif
  endif
 
@@ -414,7 +414,7 @@
   allocate(coorgread(NDIM))
   do ip = 1,npgeo
    read(IIN,*) ipoin,(coorgread(id),id =1,NDIM)
-   if(ipoin<1 .or. ipoin>npgeo) stop 'Wrong control point number'
+   if(ipoin<1 .or. ipoin>npgeo) call exit_MPI('Wrong control point number')
    coorg(:,ipoin) = coorgread
   enddo
   deallocate(coorgread)
@@ -588,7 +588,7 @@
      do inum = 1,nelemabs
       read(IIN,*) numabsread,codeabsread(1),codeabsread(2),codeabsread(3),codeabsread(4), ibegin_bottom(inum), iend_bottom(inum), &
            jbegin_right(inum), jend_right(inum), ibegin_top(inum), iend_top(inum), jbegin_left(inum), jend_left(inum) 
-      if(numabsread < 1 .or. numabsread > nspec) stop 'Wrong absorbing element number'
+      if(numabsread < 1 .or. numabsread > nspec) call exit_MPI('Wrong absorbing element number')
       numabs(inum) = numabsread
       codeabs(IBOTTOM,inum) = codeabsread(1)
       codeabs(IRIGHT,inum) = codeabsread(2)
@@ -617,8 +617,8 @@
           acoustic_edges, acoustic_surface)
      print *, 'POYU'
 !!$      read(IIN,*) numacoustread,iedgeacoustread
-!!$      if(numacoustread < 1 .or. numacoustread > nspec) stop 'Wrong acoustic free surface element number'
-!!$      if(iedgeacoustread < 1 .or. iedgeacoustread > NEDGES) stop 'Wrong acoustic free surface edge number'
+!!$      if(numacoustread < 1 .or. numacoustread > nspec) call eixt_MPI('Wrong acoustic free surface element number')
+!!$      if(iedgeacoustread < 1 .or. iedgeacoustread > NEDGES) call exit_MPI('Wrong acoustic free surface edge number')
 !!$      ispecnum_acoustic_surface(inum) = numacoustread
 !!$      iedgenum_acoustic_surface(inum) = iedgeacoustread
 !!$    enddo
@@ -699,7 +699,7 @@
   write(IOUT,*) 'Total number of receivers = ',nrec
   write(IOUT,*)
 
-  if(nrec < 1) stop 'need at least one receiver'
+  if(nrec < 1) call exit_MPI('need at least one receiver')
 
 
 
@@ -793,7 +793,7 @@
     write(IOUT,*) 'Assigning external velocity and density model...'
     write(IOUT,*)
     if(TURN_ANISOTROPY_ON .or. TURN_ATTENUATION_ON) &
-         stop 'cannot have anisotropy nor attenuation if external model in current version'
+         call exit_MPI('cannot have anisotropy nor attenuation if external model in current version')
     any_acoustic = .false.
     any_elastic = .false.
     do ispec = 1,nspec
@@ -802,12 +802,12 @@
         do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
           call define_external_model(coord(1,iglob),coord(2,iglob),kmato(ispec), &
-                                         rhoext(i,j,ispec),vpext(i,j,ispec),vsext(i,j,ispec))
+                                         rhoext(i,j,ispec),vpext(i,j,ispec),vsext(i,j,ispec),myrank)
 ! stop if the same element is assigned both acoustic and elastic points in external model
           if(.not. (i == 1 .and. j == 1) .and. &
             ((vsext(i,j,ispec) >= TINYVAL .and. previous_vsext < TINYVAL) .or. &
              (vsext(i,j,ispec) < TINYVAL .and. previous_vsext >= TINYVAL)))  &
-                stop 'external velocity model cannot be both fluid and solid inside the same spectral element'
+                call exit_MPI('external velocity model cannot be both fluid and solid inside the same spectral element')
           if(vsext(i,j,ispec) < TINYVAL) then
             elastic(ispec) = .false.
             any_acoustic = .true.
@@ -826,12 +826,13 @@
 !
 
 ! for acoustic
-  if(TURN_ANISOTROPY_ON .and. .not. any_elastic) stop 'cannot have anisotropy if acoustic simulation only'
+  if(TURN_ANISOTROPY_ON .and. .not. any_elastic) call exit_MPI('cannot have anisotropy if acoustic simulation only')
 
-  if(TURN_ATTENUATION_ON .and. .not. any_elastic) stop 'currently cannot have attenuation if acoustic simulation only'
+  if(TURN_ATTENUATION_ON .and. .not. any_elastic) call exit_MPI('currently cannot have attenuation if acoustic simulation only')
 
 ! for attenuation
-  if(TURN_ANISOTROPY_ON .and. TURN_ATTENUATION_ON) stop 'cannot have anisotropy and attenuation both turned on in current version'
+  if(TURN_ANISOTROPY_ON .and. TURN_ATTENUATION_ON) call exit_MPI('cannot have anisotropy and attenuation both &
+      & turned on in current version')
 
 !
 !----   define coefficients of the Newmark time scheme
@@ -854,7 +855,8 @@
                 do i = acoustic_surface(2,ispec_acoustic_surface), acoustic_surface(3,ispec_acoustic_surface)
                    iglob = ibool(i,j,ispec)
                    if ( iglob_source == iglob ) then
-                      stop 'an acoustic source cannot be located exactly on the free surface because pressure is zero there'
+                      call exit_MPI('an acoustic source cannot be located exactly on the free surface &
+                      & because pressure is zero there')
                    end if
                 end do
              end do
@@ -872,7 +874,7 @@
                Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,nspec)
 
   else
-    stop 'incorrect source type'
+    call exit_MPI('incorrect source type')
   endif
 
 
@@ -912,7 +914,8 @@
                 (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
                 gamma_receiver(irec) > 0.99d0 .and. xi_receiver(irec) > 0.99d0) ) then
               if(seismotype == 4) then
-                 stop 'an acoustic pressure receiver cannot be located exactly on the free surface because pressure is zero there'
+                 call exit_MPI('an acoustic pressure receiver cannot be located exactly on the free &
+                 & surface because pressure is zero there')
               else
                  print *, '**********************************************************************'
                  print *, '*** Warning: acoustic receiver located exactly on the free surface ***'
@@ -1155,7 +1158,7 @@ end if
                  end do
               end do
               if ( dist_min_pixel >= HUGEVAL ) then
-                 stop 'Error in detecting pixel for color image'
+                 call exit_MPI('Error in detecting pixel for color image')
                  
               end if
               nb_pixel_loc = nb_pixel_loc + 1
@@ -1332,17 +1335,17 @@ end if
     write(IOUT,*)
     write(IOUT,*) 'Reading initial fields from external file...'
     write(IOUT,*)
-    if(any_acoustic) stop 'initial field currently implemented for purely elastic simulation only'
+    if(any_acoustic) call exit_MPI('initial field currently implemented for purely elastic simulation only')
     open(unit=55,file='OUTPUT_FILES/wavefields.txt',status='unknown')
     read(55,*) nbpoin
-    if(nbpoin /= npoin) stop 'Wrong number of points in input file'
+    if(nbpoin /= npoin) call exit_MPI('Wrong number of points in input file')
     allocate(displread(NDIM))
     allocate(velocread(NDIM))
     allocate(accelread(NDIM))
     do n = 1,npoin
       read(55,*) inump, (displread(i), i=1,NDIM), &
           (velocread(i), i=1,NDIM), (accelread(i), i=1,NDIM)
-      if(inump<1 .or. inump>npoin) stop 'Wrong point number'
+      if(inump<1 .or. inump>npoin) call exit_MPI('Wrong point number')
       displ_elastic(:,inump) = displread
       veloc_elastic(:,inump) = velocread
       accel_elastic(:,inump) = accelread
@@ -1398,7 +1401,7 @@ end if
         source_time_function(it) = factor * 0.5d0*(1.0d0+erf(SOURCE_DECAY_RATE*(time-t0)/hdur_gauss))
 
       else
-        stop 'unknown source time function'
+        call exit_MPI('unknown source time function')
       endif
 
 ! output absolute time in third column, in case user wants to check it as well
@@ -1426,11 +1429,11 @@ end if
 !!$     ispec = ispecnum_acoustic_surface(ispec_acoustic_surface)
 !!$    iedge = iedgenum_acoustic_surface(ispec_acoustic_surface)
 !!$    if(elastic(ispec)) then
-!!$      stop 'elastic element detected in acoustic free surface'
+!!$      call exit_MPI('elastic element detected in acoustic free surface')
 !!$    else
 !!$      do inum = 1,nelemabs
 !!$        if(numabs(inum) == ispec .and. codeabs(iedge,inum)) &
-!!$          stop 'acoustic free surface cannot be both absorbing and free'
+!!$          call exit_MPI('acoustic free surface cannot be both absorbing and free')
 !!$      enddo
 !!$    endif
 !!$  enddo
@@ -1526,7 +1529,7 @@ end if
     enddo
    
 
-    !if(num_fluid_solid_edges /= num_fluid_solid_edges_alloc) stop 'error in creation of arrays for fluid/solid matching'
+    !if(num_fluid_solid_edges /= num_fluid_solid_edges_alloc) call exit_MPI('error in creation of arrays for fluid/solid matching')
 
 ! make sure fluid/solid matching has been perfectly detected: check that the grid points
 ! have the same physical coordinates
@@ -1559,7 +1562,7 @@ end if
 
 ! if distance between the two points is not negligible, there is an error, since it should be zero
         if(sqrt((coord(1,iglob) - coord(1,iglob2))**2 + (coord(2,iglob) - coord(2,iglob2))**2) > TINYVAL) &
-            stop 'error in fluid/solid coupling buffer'
+            call exit_MPI( 'error in fluid/solid coupling buffer')
 
       enddo
 
@@ -1938,7 +1941,7 @@ end if
 !!$  call MPI_BARRIER(MPI_COMM_WORLD, ier)
 !!$#endif
 !!$
-!!$  stop
+!!$  call exit_MPI('plop')
 
   if(any_elastic) then
     accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic
@@ -1961,14 +1964,14 @@ end if
       displnorm_all = maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(2,:)**2))
       write(IOUT,*) 'Max norm of vector field in solid = ',displnorm_all
 ! check stability of the code in solid, exit if unstable
-      if(displnorm_all > STABILITY_THRESHOLD) stop 'code became unstable and blew up in solid'
+      if(displnorm_all > STABILITY_THRESHOLD) call exit_MPI('code became unstable and blew up in solid')
     endif
 
     if(any_acoustic) then
       displnorm_all = maxval(abs(potential_acoustic(:)))
       write(IOUT,*) 'Max absolute value of scalar field in fluid = ',displnorm_all
 ! check stability of the code in fluid, exit if unstable
-      if(displnorm_all > STABILITY_THRESHOLD) stop 'code became unstable and blew up in fluid'
+      if(displnorm_all > STABILITY_THRESHOLD) call exit_MPI('code became unstable and blew up in fluid')
     endif
 
     write(IOUT,*)
@@ -2126,7 +2129,7 @@ end if
     write(IOUT,*) 'cannot draw scalar pressure field as a vector plot, skipping...'
 
   else
-    stop 'wrong type for snapshots'
+    call exit_MPI('wrong type for snapshots')
   endif
 
   if(imagetype /= 4) write(IOUT,*) 'PostScript file written'
@@ -2171,7 +2174,7 @@ end if
          e1_mech2,e11_mech2,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON)
 
   else
-    stop 'wrong type for snapshots'
+    call exit_MPI('wrong type for snapshots')
   endif
 
   image_color_data(:,:) = 0.d0

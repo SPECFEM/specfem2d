@@ -105,7 +105,9 @@
 ! convert to real percentage
   percent_GLL(:) = percent_GLL(:) / 100.d0
 
-  if(NGLLX > NGLLX_MAX_STABILITY) stop 'cannot estimate the stability condition for that degree'
+  if(NGLLX > NGLLX_MAX_STABILITY) then
+    call exit_MPI('cannot estimate the stability condition for that degree')
+  end if
 
 !---- compute parameters for the spectral elements
 
@@ -265,7 +267,7 @@
     write(IOUT,*) ' Fundamental period = ',1.d0/f0
     write(IOUT,*) ' Fundamental frequency = ',f0
     if(t0 <= 1.d0/f0) then
-      stop 'Onset time too small'
+       call exit_MPI('Onset time too small')
     else
       write(IOUT,*) ' --> onset time ok'
     endif

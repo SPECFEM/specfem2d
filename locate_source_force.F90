@@ -119,7 +119,7 @@
 #endif  
   
   if ( nb_proc_source < 1 ) then
-     stop "error locating force source"
+     call exit_MPI('error locating force source')
   end if
   
   if ( is_proc_source == 1 ) then 

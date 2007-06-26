@@ -345,12 +345,13 @@
 ! moment tensor
         else if(source_type == 2) then
 
-           if(.not. elastic(ispec_selected_source)) stop 'cannot have moment tensor source in acoustic element'
-
+           if(.not. elastic(ispec_selected_source)) then
+              call exit_MPI('cannot have moment tensor source in acoustic element')
+           end if
         endif
      end if
   else
-     stop 'wrong source type'
+     call exit_MPI('wrong source type')
   endif
 
   end subroutine compute_forces_acoustic

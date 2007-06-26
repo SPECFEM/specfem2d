@@ -35,7 +35,7 @@
 ! this routine uses routines gcf and gser
   double precision gammcf,gamser,gln
 
-  if(x<0.d0 .or. a <= 0.d0) stop 'bad arguments in gammp'
+  if(x<0.d0 .or. a <= 0.d0) call exit_MPI('bad arguments in gammp')
 
   if(x<a+1.d0)then
     call gser(gamser,a,x,gln)
@@ -86,7 +86,7 @@
     endif
   enddo
 
-  stop 'a too large, ITMAX too small in gcf'
+  call exit_MPI('a too large, ITMAX too small in gcf')
 
   end subroutine gcf
 
@@ -111,7 +111,7 @@
   gln=gammln(a)
 
   if(x <= 0.d0)then
-    if(x<0.d0) stop 'x < 0 in gser'
+    if(x<0.d0) call exit_MPI('x < 0 in gser')
     gamser=0.d0
     return
   endif
@@ -130,7 +130,7 @@
     endif
   enddo
 
-  stop 'a too large, ITMAX too small in gser'
+  call exit_MPI('a too large, ITMAX too small in gser')
 
   end subroutine gser
 

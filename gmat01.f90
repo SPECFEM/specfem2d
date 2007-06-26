@@ -43,7 +43,7 @@
 
    read(iin ,*) n,indic,density,val1,val2,val3,val4
 
-   if(n<1 .or. n>numat) stop 'Wrong material set number'
+   if(n<1 .or. n>numat) call exit_MPI('Wrong material set number')
 
 !---- isotropic material, P and S velocities given
    if(indic == 1) then
@@ -68,7 +68,7 @@
       poisson = half*(3.d0*kappa-two_mu)/(3.d0*kappa+mu)
 
 ! Poisson's ratio must be between -1 and +1/2
-      if (poisson < -1.d0 .or. poisson > 0.5d0) stop 'Poisson''s ratio out of range'
+      if (poisson < -1.d0 .or. poisson > 0.5d0) call exit_MPI('Poisson''s ratio out of range')
 
 !---- anisotropic material, c11, c13, c33 and c44 given in Pascal
    else if (indic == 2) then
@@ -78,7 +78,7 @@
       c44 = val4
 
    else
-     stop 'wrong model flag read'
+     call exit_MPI('wrong model flag read')
 
    endif
 

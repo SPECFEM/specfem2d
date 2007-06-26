@@ -37,6 +37,7 @@
   double precision xmaxval,xminval,ymaxval,yminval,xtol,xtypdist
   double precision xcor,ycor
 
+
 !----  create global mesh numbering
   write(IOUT,*)
   write(IOUT,*)
@@ -195,7 +196,9 @@
   deallocate(iwork)
 
 ! verification de la coherence de la numerotation generee
-  if(minval(ibool) /= 1 .or. maxval(ibool) /= npoin) stop 'Error while generating global numbering'
+  if(minval(ibool) /= 1 .or. maxval(ibool) /= npoin) then
+     call exit_MPI('Error while generating global numbering')
+  end if
 
   write(IOUT,*)
   write(IOUT,*) 'Total number of points of the global mesh: ',npoin
