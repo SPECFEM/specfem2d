@@ -13,7 +13,7 @@ absorbing_surface_file          = ./DATA/unstructured_fluide_solide_test/surface
 
 # parameters concerning partitionning
 nproc                           = 8              # number of processes
-partionning_method              = 2              # ascending order = 1, Metis = 2, Scotch = 3
+partionning_method              = 1              # ascending order = 1, Metis = 2, Scotch = 3
 partitionning_strategy          = 01110 #b{strat=m{asc=g,low=g,rat=1.0,type=h,vert=4}} #01110          # options concerning partitionning strategy.
                                                  
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
