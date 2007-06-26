@@ -42,7 +42,9 @@ contains
   end subroutine read_mesh
 
 
-
+  !-----------------------------------------------
+  ! Read the nodes coordinates and storing it in array 'nodes_coords'
+  !-----------------------------------------------
   subroutine read_nodes_coords(filename, nnodes, nodes_coords)
     
     character(len=256), intent(in)  :: filename
@@ -65,7 +67,9 @@ contains
   end subroutine read_nodes_coords
 
 
-
+  !-----------------------------------------------
+  ! Read the material for each element and storing it in array 'num_materials'
+  !-----------------------------------------------
   subroutine read_mat(filename, nelmnts, num_material)
     
     character(len=256), intent(in)  :: filename
@@ -86,7 +90,12 @@ contains
   end subroutine read_mat
 
 
-
+  !-----------------------------------------------
+  ! Read free surface.
+  ! Edges from elastic elements are discarded.
+  ! 'acoustic_surface' contains 1/ element number, 2/ number of nodes that form the free surface,
+  ! 3/ first node on the free surface, 4/ second node on the free surface, if relevant (if 2/ is equal to 2)
+  !-----------------------------------------------
   subroutine read_acoustic_surface(filename, nelem_acoustic_surface, acoustic_surface, &
        nelmnts, num_material, ANISOTROPIC_MATERIAL, nb_materials, icodemat, cs, num_start)
     
@@ -112,7 +121,6 @@ contains
     
     open(unit=993, file=trim(filename), form='formatted' , status='old', action='read')
     read(993,*) nelmnts_surface
-    print *, 'POY', nelmnts_surface
     
     allocate(acoustic_surface_tmp(4,nelmnts_surface))
     
@@ -150,7 +158,11 @@ contains
   end subroutine read_acoustic_surface
   
   
-  
+  !-----------------------------------------------
+  ! Read absorbing surface.
+  ! 'abs_surface' contains 1/ element number, 2/ number of nodes that form the abs surface,
+  ! 3/ first node on the abs surface, 4/ second node on the abs surface, if relevant (if 2/ is equal to 2)
+  !-----------------------------------------------  
  subroutine read_abs_surface(filename, nelemabs, abs_surface, num_start)
     
     include './constants.h'
@@ -185,12 +197,9 @@ contains
 
 
 
-  !*************************************************************************
-  ! creation du graphe dual (adjacence des elements definie par au moins un noeud commun )
-  !**************************************************************************
-  ! Version qui construit les adjacences en commencant par dresser la liste des elements pour chaque noeud (vertices).
-  ! On passe en plus en argument le tableau alloue qui contiendra la liste des elements par noeud, accompagne de la liste du
-  ! nombre d'elements qui contiennent chaque noeud (c'est pour pouvoir faire l'allocation avant sans connaitre la taille exacte).
+  !-----------------------------------------------
+  ! Creating dual graph (adjacency is defined by 'ncommonnodes' between two elements).
+  !-----------------------------------------------
   subroutine mesh2dual_ncommonnodes(nelmnts, nnodes, elmnts, xadj, adjncy, nnodes_elmnts, nodes_elmnts, ncommonnodes)
 
     integer, intent(in)  :: nelmnts
@@ -220,7 +229,7 @@ contains
 
     nb_edges = 0
 
-    ! remplissage de la liste des elements par noeuds
+    ! list of elements per node
     do i = 0, esize*nelmnts-1
        nodes_elmnts(elmnts(i)*nsize+nnodes_elmnts(elmnts(i))) = i/esize
        nnodes_elmnts(elmnts(i)) = nnodes_elmnts(elmnts(i)) + 1
@@ -228,10 +237,8 @@ contains
     end do
 
     print *, 'nnodes_elmnts'
-    !print *, nnodes_elmnts
 
-    ! pour chaque noeud, remplissage du tableau des adjacences, 
-    ! avec verification qu'un element ne soit pas compte plusieurs fois comme voisins d'un autre.
+    ! checking which elements are neighbours ('ncommonnodes' criteria)
     do j = 0, nnodes-1
        do k = 0, nnodes_elmnts(j)-1
           do l = k+1, nnodes_elmnts(j)-1
@@ -271,8 +278,7 @@ contains
        end do
     end do
 
-    ! maintenant que la liste d'adjacence est contruite, on va refondre les tableaux dadjncy et dxadj pour qu'ils 
-    ! soient au bon format  
+    ! making adjacency arrays compact (to be used for partitioning)
     do i = 0, nelmnts-1
        k = xadj(i)
        xadj(i) = nb_edges
@@ -289,6 +295,9 @@ contains
 
 
 
+  !-----------------------------------------------
+  ! Read the weight for each vertices and edges of the graph (not curretly used)
+  !-----------------------------------------------
   subroutine read_weights(nelmnts, vwgt, nb_edges, adjwgt)
     
     integer, intent(in)  :: nelmnts, nb_edges 
@@ -305,9 +314,9 @@ contains
   
 
 
-  !*************************************************************************
-  ! construction du tableau de correspondance entre numerotation globale et locale (pour les elements)
-  !*************************************************************************/
+  !--------------------------------------------------
+  ! construct local numbering for the elements in each partition
+  !--------------------------------------------------
   subroutine Construct_glob2loc_elmnts(nelmnts, part, nparts, glob2loc_elmnts)
 
     integer, intent(in)  :: nelmnts, nparts
@@ -337,9 +346,9 @@ contains
 
 
 
- !*************************************************************************
-  ! construction du tableau de correspondance entre numerotation globale et locale (pour les noeuds)
-  !*************************************************************************/
+  !--------------------------------------------------
+  ! construct local numbering for the nodes in each partition
+  !--------------------------------------------------
   subroutine Construct_glob2loc_nodes(nelmnts, nnodes, nnodes_elmnts, nodes_elmnts, part, nparts, &
        glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes)
 
@@ -363,9 +372,6 @@ contains
 
     size_glob2loc_nodes = 0
 
-!!$    do num_part = 0, nparts-1
-!!$       parts_node(num_part) = 0
-!!$    end do
     parts_node(:) = 0
 
 
@@ -388,36 +394,23 @@ contains
 
 
     glob2loc_nodes_nparts(nnodes) = size_glob2loc_nodes 
-    !print *, glob2loc_nodes_nparts
-    !print *, glob2loc_nodes_nparts(nnodes)
-
 
     allocate(glob2loc_nodes_parts(0:glob2loc_nodes_nparts(nnodes)-1))
     allocate(glob2loc_nodes(0:glob2loc_nodes_nparts(nnodes)-1))
 
     glob2loc_nodes(0) = 0
 
-!!$    do num_part = 0, nparts-1
-!!$       parts_node(num_part) = 0
-!!$       num_parts(num_part) = 0
-!!$
-!!$    end do
     parts_node(:) = 0
     num_parts(:) = 0
     size_glob2loc_nodes = 0
 
 
     do num_node = 0, nnodes-1
-       !print *, 'num_node', num_node 
        do el = 0, nnodes_elmnts(num_node)-1
-          !print *, 'el_', el
           parts_node(part(nodes_elmnts(el+nsize*num_node))) = 1
 
        end do
-       !print *, 'PPP' 
        do num_part = 0, nparts-1
-          !print *, 'num_part', num_part 
-          !print *, 'parts_nodes(num_part)', parts_node(num_part) 
 
           if ( parts_node(num_part) == 1 ) then
              glob2loc_nodes_parts(size_glob2loc_nodes) = num_part
@@ -426,7 +419,6 @@ contains
              num_parts(num_part) = num_parts(num_part) + 1
              parts_node(num_part) = 0
           end if
-          !print *, 'num_part__', num_part 
 
        end do
     end do
@@ -436,6 +428,13 @@ contains
 
 
 
+  !--------------------------------------------------
+  ! Construct interfaces between each partitions.
+  ! Two adjacent elements in distinct partitions make an entry in array tab_interfaces : 
+  ! 1/ first element, 2/ second element, 3/ number of common nodes, 4/ first node, 
+  ! 5/ second node, if relevant.
+  ! No interface between acoustic and elastic elements.
+  !--------------------------------------------------
   subroutine Construct_interfaces(nelmnts, nparts, part, elmnts, xadj, adjncy, tab_interfaces, &
        tab_size_interfaces, ninterfaces, nb_materials, cs_material, num_material)
 
@@ -458,7 +457,7 @@ contains
     integer  :: i, j
     logical  :: is_acoustic_el, is_acoustic_el_adj
 
-    print *, '00'
+
     ninterfaces = 0
     do  i = 0, nparts-1
        do j = i+1, nparts-1
@@ -469,11 +468,10 @@ contains
     allocate(tab_size_interfaces(0:ninterfaces))
     tab_size_interfaces(:) = 0
 
-    print *, 'num_interface', ninterfaces
+!    print *, 'num_interface', ninterfaces
 
     num_interface = 0
     num_edge = 0
-    print *, '01'
 
     do num_part = 0, nparts-1
        do num_part_bis = num_part+1, nparts-1
@@ -498,24 +496,19 @@ contains
                 end do
              end if
           end do
-          print *, 'num_interface', num_interface
+!          print *, 'num_interface', num_interface
           tab_size_interfaces(num_interface+1) = tab_size_interfaces(num_interface) + num_edge 
           num_edge = 0
           num_interface = num_interface + 1
 
        end do
     end do
-    print *, 'POUM',tab_size_interfaces(num_interface)
 
     num_interface = 0
     num_edge = 0
 
-    print *, '02'
-
-    ! le 5 vient du fait que l'on represente l'interface comme un tableau avec 5 valeurs: element1-element2-valence-noeud1-noeud2
     allocate(tab_interfaces(0:(tab_size_interfaces(ninterfaces)*5-1)))
     tab_interfaces(:) = 0
-    print *, '03'
 
     do num_part = 0, nparts-1
        do num_part_bis = num_part+1, nparts-1
@@ -566,7 +559,9 @@ contains
   end subroutine Construct_interfaces
 
 
-
+  !--------------------------------------------------
+  ! Write nodes (their coordinates) pertaining to iproc partition in the corresponding Database
+  !--------------------------------------------------
   subroutine write_glob2loc_nodes_database(IIN_database, iproc, npgeo, nodes_coords, glob2loc_nodes_nparts, glob2loc_nodes_parts, & 
        glob2loc_nodes, nnodes, num_phase)
     
@@ -590,7 +585,6 @@ contains
                 npgeo = npgeo + 1
                 
              end if
-             !write(992,*) i, glob2loc_nodes_parts(j), glob2loc_nodes(j)
              
           end do
        end do
@@ -608,6 +602,9 @@ contains
 
 
 
+  !--------------------------------------------------
+  ! Write elements (their nodes) pertaining to iproc partition in the corresponding Database
+  !--------------------------------------------------
   subroutine write_partition_database(IIN_database, iproc, nspec, nelmnts, elmnts, glob2loc_elmnts, glob2loc_nodes_nparts, &
      glob2loc_nodes_parts, glob2loc_nodes, part, num_modele, ngnod, num_phase)
 
@@ -659,6 +656,9 @@ contains
 
 
 
+  !--------------------------------------------------
+  ! Write interfaces (element and common nodes) pertaining to iproc partition in the corresponding Database
+  !--------------------------------------------------
   subroutine Write_interfaces_database(IIN_database, tab_interfaces, tab_size_interfaces, nparts, iproc, ninterfaces, &
        my_ninterface, my_interfaces, my_nb_interfaces, glob2loc_elmnts, glob2loc_nodes_nparts, glob2loc_nodes_parts, &
        glob2loc_nodes, num_phase)
@@ -767,6 +767,9 @@ contains
 
 
 
+  !--------------------------------------------------
+  ! Write a surface (elements and nodes on the surface) pertaining to iproc partition in the corresponding Database
+  !--------------------------------------------------
  subroutine Write_surface_database(IIN_database, nsurface, surface, &
       nsurface_loc, nparts, iproc, glob2loc_elmnts, &
       glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes, part, num_phase)
@@ -854,6 +857,12 @@ contains
 
 
 
+  !--------------------------------------------------
+  ! Set absorbing boundaries by elements instead of edges.
+  ! Excludes points that have both absorbing condition and coupled fluid/solid relation (this is the 
+  ! reason arrays ibegin_..., iend_... were included here).
+  ! Under development : exluding points that have two different normal.
+  !--------------------------------------------------
      subroutine merge_abs_boundaries(nelemabs, nelemabs_merge, abs_surface, abs_surface_char, abs_surface_merge, &
           ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
           jbegin_left,jend_left,jbegin_right,jend_right, &
@@ -1226,20 +1235,13 @@ contains
 
         end do
 
-!!$print *, 'AAAAAAAAa'
-!!$        do iedge = 1, nedges_coupled
-!!$           print *, nodes_coords(1,elmnts(ngnod*edges_coupled(1,iedge))+1), &
-!!$                nodes_coords(2,elmnts(ngnod*edges_coupled(1,iedge))+1), 0
-!!$           print *, nodes_coords(1,elmnts(ngnod*edges_coupled(2,iedge))+1), &
-!!$                nodes_coords(2,elmnts(ngnod*edges_coupled(2,iedge))+1), 0
-!!$           
-!!$        end do
-!!$print *, 'AAAAAAAAa'       
 
      end subroutine merge_abs_boundaries
      
      
-     
+  !--------------------------------------------------
+  ! Write abs surface (elements and nodes on the surface) pertaining to iproc partition in the corresponding Database
+  !--------------------------------------------------     
      subroutine write_abs_merge_database(IIN_database, nelemabs_merge, nelemabs_loc, &
           abs_surface_char, abs_surface_merge, &
           ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
@@ -1292,6 +1294,9 @@ contains
     
      
 #ifdef USE_METIS
+  !--------------------------------------------------
+  ! Partitioning using METIS
+  !--------------------------------------------------
      subroutine Part_metis(nelmnts, xadj, adjncy, vwgt, adjwgt, nparts, nb_edges, edgecut, part, metis_options)
 
     integer, intent(in)  :: nelmnts, nparts, nb_edges 
@@ -1323,6 +1328,9 @@ contains
 
 
 #ifdef USE_SCOTCH
+  !--------------------------------------------------
+  ! Partitioning using SCOTCH
+  !--------------------------------------------------
   subroutine Part_scotch(nelmnts, xadj, adjncy, vwgt, adjwgt, nparts, nedges, edgecut, part, scotch_strategy)
     
     include 'scotchf.h'
@@ -1351,18 +1359,7 @@ contains
        STOP
     ENDIF
     
-    !scotch_strategy="b{strat=x}"
-    !scotch_strategy='b{strat=h{pass=10000}}'
-    !scotch_strategy='b{strat=m{asc=b{strat=g{pass=100}},low=g{pass=100},type=h,vert=10}}'
-    !scotch_strategy='b{strat=f{bal=0.0001,move=1000000,pass=-1}}'
-    !scotch_strategy='b{strat=g}'
-    !scotch_strategy='g'
-    !scotch_strategy='b{strat=hf{move=1000}}'
-    !scotch_strategy='b{strat=m{vert=4,asc=h|g,low=f}}'
-    !scotch_strategy='b{strat=m{asc=g,low=g,rat=1.0,type=h,vert=4}}'
-    !scotch_strategy='b{strat=m{asc=g,low=f{bal=0.001,move=10000,pass=500},rat=0.5,type=h,vert=4}}'
     call scotchfstratgraphmap (SCOTCHSTRAT(1), trim(scotch_strategy), IERR)
-    !call scotchfstratgraphbipart (SCOTCHSTRAT(1), trim(scotch_strategy), IERR)
      IF (IERR .NE. 0) THEN
        PRINT *, 'ERROR : MAIN : Cannot build strat'
        STOP
@@ -1415,6 +1412,9 @@ contains
 
 
 
+  !--------------------------------------------------
+  ! Repartitioning : two coupled acoustic/elastic elements are transfered to the same partition
+  !--------------------------------------------------
 subroutine acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_materials, cs_material, num_material, &
      nproc, part, nedges_coupled, edges_coupled)
        
@@ -1454,13 +1454,6 @@ subroutine acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_material
 
 
   call mesh2dual_ncommonnodes(nelmnts, nnodes, elmnts, xadj, adjncy, nnodes_elmnts, nodes_elmnts,2)
-
-!!$  aaa = 1600
-!!$  print *, 'POUM', xadj(aaa), xadj(aaa+1) - 1
-!!$  do i =  xadj(aaa),  xadj(aaa+1) -1
-!!$     print *, i, adjncy(i)
-!!$  end do
-!!$  stop
 
   nedges_coupled = 0
   do el = 0, nelmnts-1
@@ -1515,6 +1508,10 @@ end subroutine acoustic_elastic_repartitioning
   
 
 
+  !--------------------------------------------------
+  ! Write fluid/solid edges (fluid elements and corresponding solid elements) 
+  ! pertaining to iproc partition in the corresponding Database
+  !--------------------------------------------------     
 subroutine write_fluidsolid_edges_database(IIN_database, nedges_coupled, nedges_coupled_loc, &
      edges_coupled, glob2loc_elmnts, nelmnts,part, iproc, num_phase)
        
