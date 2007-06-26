@@ -200,6 +200,7 @@
 
 ! for color images
   integer :: NX_IMAGE_color,NZ_IMAGE_color,iplus1,jplus1,iminus1,jminus1,count_passes
+  integer  :: npgeo_glob
   double precision :: xmin_color_image,xmax_color_image, &
     zmin_color_image,zmax_color_image,size_pixel_horizontal,size_pixel_vertical
   integer, dimension(:,:), allocatable :: iglob_image_color,copy_iglob_image_color
@@ -1076,32 +1077,43 @@ end if
 ! vertical size of the image, slightly increase it to go beyond maximum topography
   zmin_color_image_loc = minval(coord(2,:))
   zmax_color_image_loc = maxval(coord(2,:))
-! 
+
+! global values 
   xmin_color_image = xmin_color_image_loc
   xmax_color_image = xmax_color_image_loc
   zmin_color_image = zmin_color_image_loc
   zmax_color_image = zmax_color_image_loc
+  npgeo_glob = npgeo
 
 #ifdef USE_MPI
   call MPI_ALLREDUCE(xmin_color_image_loc, xmin_color_image, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE(xmax_color_image_loc, xmax_color_image, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE(zmin_color_image_loc, zmin_color_image, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE(zmax_color_image_loc, zmax_color_image, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  
+  call MPI_ALLREDUCE(npgeo, npgeo_glob, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD, ier)
+
 #endif
 
   zmax_color_image = zmin_color_image + 1.05d0 * (zmax_color_image - zmin_color_image)
 
 ! compute number of pixels in the horizontal direction based on typical number
 ! of spectral elements in a given direction (may give bad results for very elongated models)
-  NX_IMAGE_color = nint(sqrt(dble(npgeo))) * (NGLLX-1) + 1
+  NX_IMAGE_color = nint(sqrt(dble(npgeo_glob))) * (NGLLX-1) + 1
 
 ! compute number of pixels in the vertical direction based on ratio of sizes
   NZ_IMAGE_color = nint(NX_IMAGE_color * (zmax_color_image - zmin_color_image) / (xmax_color_image - xmin_color_image))
-
+ 
 ! convert pixel sizes to even numbers because easier to reduce size, create MPEG movies in postprocessing
   NX_IMAGE_color = 2 * (NX_IMAGE_color / 2)
   NZ_IMAGE_color = 2 * (NZ_IMAGE_color / 2)
+
+! check that image size is not too big
+  if ( NX_IMAGE_color > 99999 ) then
+      call exit_MPI('output image too big : NX_IMAGE_color > 99999.')
+  end if 
+  if ( NZ_IMAGE_color > 99999 ) then
+      call exit_MPI('output image too big : NZ_IMAGE_color > 99999.')
+  end if 
 
 ! allocate an array for image data
   allocate(image_color_data(NX_IMAGE_color,NZ_IMAGE_color))
@@ -1185,6 +1197,8 @@ end if
      end do
   end do
   
+
+
 ! filling array iglob_image_color, containing info on which process owns which pixels.
 #ifdef USE_MPI
   allocate(nb_pixel_per_proc(nproc))

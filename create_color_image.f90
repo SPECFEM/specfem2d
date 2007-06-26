@@ -70,24 +70,9 @@
 
     units = remainder
 
-    if(tenthousands > 0) then
-      write(27,rec=4) char(tenthousands + ascii_code_of_zero)
-    else
-      write(27,rec=4) ' '
-    endif
-
-    if(thousands > 0) then
-      write(27,rec=5) char(thousands + ascii_code_of_zero)
-    else
-      write(27,rec=5) ' '
-    endif
-
-    if(hundreds > 0) then
-      write(27,rec=6) char(hundreds + ascii_code_of_zero)
-    else
-      write(27,rec=6) ' '
-    endif
-
+    write(27,rec=4) char(tenthousands + ascii_code_of_zero)
+    write(27,rec=5) char(thousands + ascii_code_of_zero)
+    write(27,rec=6) char(hundreds + ascii_code_of_zero)
     write(27,rec=7) char(tens + ascii_code_of_zero)
     write(27,rec=8) char(units + ascii_code_of_zero)
     write(27,rec=9) ' '
@@ -109,25 +94,9 @@
 
     units = remainder
 
-! write image size
-    if(tenthousands > 0) then
-      write(27,rec=10) char(tenthousands + ascii_code_of_zero)
-    else
-      write(27,rec=10) ' '
-    endif
-
-    if(thousands > 0) then
-      write(27,rec=11) char(thousands + ascii_code_of_zero)
-    else
-      write(27,rec=11) ' '
-    endif
-
-    if(hundreds > 0) then
-      write(27,rec=12) char(hundreds + ascii_code_of_zero)
-    else
-      write(27,rec=12) ' '
-    endif
-
+    write(27,rec=10) char(tenthousands + ascii_code_of_zero)
+    write(27,rec=11) char(thousands + ascii_code_of_zero)
+    write(27,rec=12) char(hundreds + ascii_code_of_zero)
     write(27,rec=13) char(tens + ascii_code_of_zero)
     write(27,rec=14) char(units + ascii_code_of_zero)
     write(27,rec=15) char(ascii_code_of_carriage_return)
