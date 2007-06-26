@@ -52,6 +52,7 @@ factor                          = 1.d10          # amplification factor
 
 # receiver line parameters for seismograms
 seismotype                      = 1              # record 1=displ 2=veloc 3=accel 4=pressure
+generate_STATIONS               = .true.         # creates a STATION file in ./DATA
 nreceiverlines                  = 1              # number of receiver lines
 anglerec                        = 0.d0           # angle to rotate components at receivers
 
