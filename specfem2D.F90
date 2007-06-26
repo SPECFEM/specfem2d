@@ -831,9 +831,9 @@
   if(TURN_ATTENUATION_ON .and. .not. any_elastic) call exit_MPI('currently cannot have attenuation if acoustic simulation only')
 
 ! for attenuation
-  if(TURN_ANISOTROPY_ON .and. TURN_ATTENUATION_ON) call exit_MPI('cannot have anisotropy and attenuation both &
-      & turned on in current version')
-
+  if(TURN_ANISOTROPY_ON .and. TURN_ATTENUATION_ON) then
+    call exit_MPI('cannot have anisotropy and attenuation both turned on in current version')
+  end if 
 !
 !----   define coefficients of the Newmark time scheme
 !
