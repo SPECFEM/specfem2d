@@ -13,3 +13,4 @@
 - manual for unstructured meshes.
 - getting rid of constants_unstruct.h.
 - enabling use of real or double precision.
+- addressing all warnings (particularly with ifort due to symbols that have too many characters).

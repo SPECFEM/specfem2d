@@ -1515,7 +1515,7 @@ end subroutine acoustic_elastic_repartitioning
   
 
 
-subroutine write_acoustic_elastic_edges_database(IIN_database, nedges_coupled, nedges_coupled_loc, &
+subroutine write_fluidsolid_edges_database(IIN_database, nedges_coupled, nedges_coupled_loc, &
      edges_coupled, glob2loc_elmnts, nelmnts,part, iproc, num_phase)
        
   implicit none
@@ -1552,7 +1552,7 @@ subroutine write_acoustic_elastic_edges_database(IIN_database, nedges_coupled, n
   end if
   
   
-end subroutine write_acoustic_elastic_edges_database
+end subroutine write_fluidsolid_edges_database
 
 
 
