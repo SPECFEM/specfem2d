@@ -16,7 +16,8 @@
 # The host of the scp from iplmas014 should be changed according to the user's lab (can be ipigps014 for MIGP).
 # Many unnecessary copies should be disposed of as soon as FS sync issues have been addressed.
 # The call to clean_scratch_UPPA.sh should be replaced when an alternate way to do this becomes available, like "rsh" 
-# or "shmux" for instance (according to OpenMPI manual it can be used, but beware of other MPI libraries, and it is in fact ugly).
+# or "shmux" for instance (according to OpenMPI manual it can be used, but beware of other MPI libraries since it is non-standard, 
+# and it is in fact ugly). It also generates errors when multiple process are running on the same node (except with -f option).
 
 
 
@@ -36,7 +37,8 @@ PeHostfile2MachineFile()
       nslots=`echo $line|cut -f2 -d" "`
       i=1
       
-       scp -r ../$3$4 $host.univ-pau.fr:/scratch/$2
+      scp -r ../$3$4 $host.univ-pau.fr:/scratch/$2
+      scp ../$3$4/clean_scratch_UPPA.sh $host.univ-pau.fr:/scratch/$2/
 
       while [ $i -le $nslots ]; do
          echo $host
@@ -48,7 +50,7 @@ PeHostfile2MachineFile()
 	 else
 	     if [ $j -lt 100 ]
 		 then
-		 scp ../OUTPUT_FILES$3$4/Database000$j $host.univ-pau.fr:/scratch/$2$3$4/OUTPUT_FILES/
+		 scp ../OUTPUT_FILES$3$4/Database000$j $host.univ-pau.fr:/scratch/$2/$3$4/OUTPUT_FILES/
 	     fi  
 	 fi
 
@@ -87,9 +89,9 @@ rm ./OUTPUT_FILES/Database*
 cd /scratch/$USER/$JOB_NAME$JOB_ID
 
 
-LD_LIBRARY_PATH=/opt/openmpi-1.2.1/gfortran64/lib  /opt/openmpi-1.2.1/gfortran64/bin/mpirun -np 8 ./xspecfem2D
+LD_LIBRARY_PATH=/opt/openmpi-1.2.1/gfortran64/lib  /opt/openmpi-1.2.1/gfortran64/bin/mpirun -np $NSLOTS ./xspecfem2D
 
 scp $host0.univ-pau.fr:/scratch/$USER/$JOB_NAME$JOB_ID/OUTPUT_FILES/* $CURRENT_DIR/OUTPUT_FILES/
 
-LD_LIBRARY_PATH=/opt/openmpi-1.2.1/gfortran64/lib  /opt/openmpi-1.2.1/gfortran64/bin/mpirun -np 8 ./clean_scratch_UPPA.sh $USER $JOB_NAME $JOB_ID
+LD_LIBRARY_PATH=/opt/openmpi-1.2.1/gfortran64/lib  /opt/openmpi-1.2.1/gfortran64/bin/mpirun -np $NSLOTS ../clean_scratch_UPPA.sh $USER $JOB_NAME $JOB_ID
 
