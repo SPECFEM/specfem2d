@@ -92,8 +92,8 @@ $O/define_derivation_matrices.o: define_derivation_matrices.f90 constants.h
 $O/plotgll.o: plotgll.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/plotgll.o plotgll.f90
     
-$O/plotpost.o: plotpost.f90 constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/plotpost.o plotpost.f90
+$O/plotpost.o: plotpost.F90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/plotpost.o plotpost.F90
     
 $O/locate_receivers.o: locate_receivers.F90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/locate_receivers.o locate_receivers.F90
