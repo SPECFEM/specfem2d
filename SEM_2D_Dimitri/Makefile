@@ -19,6 +19,7 @@ O = obj
 
 # GNU gfortran
 F90 = gfortran
+#FLAGS_NOCHECK = -O3 -march=opteron -m64 -mfpmath=sse,387
 FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow
 FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
 
@@ -51,11 +52,11 @@ specfem2D: $(OBJS_SPECFEM2D)
 convolve_source_timefunction: $O/convolve_source_timefunction.o
 	${F90} $(FLAGS_CHECK) -o xconvolve_source_timefunction $O/convolve_source_timefunction.o
 
-$O/checkgrid.o: checkgrid.f90 constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/checkgrid.o checkgrid.f90
+$O/checkgrid.o: checkgrid.F90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/checkgrid.o checkgrid.F90
     
-$O/meshfem2D.o: meshfem2D.f90
-	${F90} $(FLAGS_CHECK) -c -o $O/meshfem2D.o meshfem2D.f90
+$O/meshfem2D.o: meshfem2D.F90
+	${F90} $(FLAGS_CHECK) -c -o $O/meshfem2D.o meshfem2D.F90
 
 $O/createnum_fast.o: createnum_fast.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/createnum_fast.o createnum_fast.f90
@@ -90,24 +91,24 @@ $O/plotgll.o: plotgll.f90 constants.h
 $O/plotpost.o: plotpost.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/plotpost.o plotpost.f90
     
-$O/locate_receivers.o: locate_receivers.f90 constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/locate_receivers.o locate_receivers.f90
+$O/locate_receivers.o: locate_receivers.F90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/locate_receivers.o locate_receivers.F90
     
 $O/recompute_jacobian.o: recompute_jacobian.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/recompute_jacobian.o recompute_jacobian.f90
     
-$O/locate_source_force.o: locate_source_force.f90 constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/locate_source_force.o locate_source_force.f90
+$O/locate_source_force.o: locate_source_force.F90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/locate_source_force.o locate_source_force.F90
     
-$O/locate_source_moment_tensor.o: locate_source_moment_tensor.f90 constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/locate_source_moment_tensor.o locate_source_moment_tensor.f90
+$O/locate_source_moment_tensor.o: locate_source_moment_tensor.F90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/locate_source_moment_tensor.o locate_source_moment_tensor.F90
     
 $O/define_shape_functions.o: define_shape_functions.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/define_shape_functions.o define_shape_functions.f90
     
 ### use optimized compilation option for solver only
-$O/specfem2D.o: specfem2D.f90 constants.h
-	${F90} $(FLAGS_NOCHECK) -c -o $O/specfem2D.o specfem2D.f90
+$O/specfem2D.o: specfem2D.F90 constants.h
+	${F90} $(FLAGS_NOCHECK) -c -o $O/specfem2D.o specfem2D.F90
     
 ### use optimized compilation option for solver only
 $O/enforce_acoustic_free_surface.o: enforce_acoustic_free_surface.f90 constants.h
@@ -143,6 +144,6 @@ $O/numerical_recipes.o: numerical_recipes.f90 constants.h
 $O/define_external_model.o: define_external_model.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/define_external_model.o define_external_model.f90
     
-$O/write_seismograms.o: write_seismograms.f90 constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/write_seismograms.o write_seismograms.f90
+$O/write_seismograms.o: write_seismograms.F90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/write_seismograms.o write_seismograms.F90
     
