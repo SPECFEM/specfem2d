@@ -72,7 +72,7 @@ cd $JOB_NAME$JOB_ID
 scp iplmas014.univ-pau.fr:$CURRENT_DIR/OUTPUT_FILES/Database* ./OUTPUT_FILES/
 scp iplmas014.univ-pau.fr:$CURRENT_DIR/DATA/STATIONS ./DATA/
 scp iplmas014.univ-pau.fr:$CURRENT_DIR/xspecfem2D ./
-scp iplmas014.univ-pau.fr:$CURRENT_DIR/clean_scratch.sh ./
+scp iplmas014.univ-pau.fr:$CURRENT_DIR/clean_scratch_UPPA.sh ./
 
 PeHostfile2MachineFile $PE_HOSTFILE $USER $JOB_NAME $JOB_ID
 
