@@ -67,7 +67,7 @@
 
   jacobian = xxi*zgamma - xgamma*zxi
 
-  if(jacobian <= ZERO) stop '2D Jacobian undefined'
+  if(jacobian <= ZERO) call exit_MPI('2D Jacobian undefined')
 
 ! invert the relation
   xix = zgamma / jacobian

@@ -86,7 +86,7 @@
   open(unit=1,file='DATA/STATIONS',status='old',action='read')
   read(1,*) nrec_dummy
 
-  if(nrec_dummy /= nrec) stop 'problem with number of receivers'
+  if(nrec_dummy /= nrec) call exit_MPI('problem with number of receivers')
 
 ! allocate memory for arrays using number of stations
   allocate(final_distance(nrec))
@@ -100,7 +100,7 @@
     read(1,*) station_name(irec),network_name(irec),st_xval(irec),st_zval(irec),stele,stbur
 
 ! check that station is not buried, burial is not implemented in current code
-    if(abs(stbur) > TINYVAL) stop 'stations with non-zero burial not implemented yet'
+    if(abs(stbur) > TINYVAL) call exit_MPI('stations with non-zero burial not implemented yet')
 
 ! compute distance between source and receiver
       distance_receiver(irec) = sqrt((st_zval(irec)-z_source)**2 + (st_xval(irec)-x_source)**2)
@@ -234,7 +234,7 @@ if ( myrank == 0 ) then
     write(IOUT,*)
     write(IOUT,*) 'Station # ',irec,'    ',station_name(irec),network_name(irec)
 
-    if(gather_final_distance(irec,which_proc_receiver(irec)+1) == HUGEVAL) stop 'error locating receiver'
+    if(gather_final_distance(irec,which_proc_receiver(irec)+1) == HUGEVAL) call exit_MPI('error locating receiver')
 
     write(IOUT,*) '            original x: ',sngl(st_xval(irec))
     write(IOUT,*) '            original z: ',sngl(st_zval(irec))
