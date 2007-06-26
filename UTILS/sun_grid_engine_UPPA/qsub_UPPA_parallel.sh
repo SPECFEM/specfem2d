@@ -44,11 +44,11 @@ PeHostfile2MachineFile()
 
 	 if [ $j -lt 10 ] 
 	     then
-	     scp ./OUTPUT_FILES/Database0000$j $host.univ-pau.fr:/scratch/$2/$3$4/OUTPUT_FILES/
+	     scp ../OUTPUT_FILES$3$4/Database0000$j $host.univ-pau.fr:/scratch/$2/$3$4/OUTPUT_FILES/
 	 else
 	     if [ $j -lt 100 ]
 		 then
-		 scp ./OUTPUT_FILES/Database000$j $host.univ-pau.fr:/scratch/$2$3$4/OUTPUT_FILES/
+		 scp ../OUTPUT_FILES$3$4/Database000$j $host.univ-pau.fr:/scratch/$2$3$4/OUTPUT_FILES/
 	     fi  
 	 fi
 
@@ -69,7 +69,8 @@ mkdir $JOB_NAME$JOB_ID/DATA
 
 cd $JOB_NAME$JOB_ID
 
-scp iplmas014.univ-pau.fr:$CURRENT_DIR/OUTPUT_FILES/Database* ./OUTPUT_FILES/
+mkdir ../OUTPUT_FILES$JOB_NAME$JOB_ID
+scp iplmas014.univ-pau.fr:$CURRENT_DIR/OUTPUT_FILES/Database* ../OUTPUT_FILES$JOB_NAME$JOB_ID/
 scp iplmas014.univ-pau.fr:$CURRENT_DIR/DATA/STATIONS ./DATA/
 scp iplmas014.univ-pau.fr:$CURRENT_DIR/xspecfem2D ./
 scp iplmas014.univ-pau.fr:$CURRENT_DIR/clean_scratch_UPPA.sh ./
@@ -79,6 +80,7 @@ PeHostfile2MachineFile $PE_HOSTFILE $USER $JOB_NAME $JOB_ID
 cd $CURRENT_DIR
 
 rm -r $JOB_NAME$JOB_ID/
+rm -r OUTPUT_FILES$JOB_NAME$JOB_ID/
 
 rm ./OUTPUT_FILES/Database*
 

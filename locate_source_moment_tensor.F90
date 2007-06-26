@@ -189,7 +189,7 @@
      write(IOUT,*)
      write(IOUT,*) 'Moment-tensor source:'
      
-     if(final_distance == HUGEVAL) stop 'error locating moment-tensor source'
+     if(final_distance == HUGEVAL) call exit_MPI('error locating moment-tensor source')
      
      write(IOUT,*) '            original x: ',sngl(x_source)
      write(IOUT,*) '            original z: ',sngl(z_source)

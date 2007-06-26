@@ -512,7 +512,7 @@ subroutine assemble_MPI_vector_acoustic_start(myrank,array_val1,npoin, &
   do inum_interface = 1, ninterface_acoustic*2
      call MPI_START(tab_requests_send_recv_acoustic(inum_interface), ier)
      if ( ier /= MPI_SUCCESS ) then
-        call exit_mpi(myrank,'MPI_start unsuccessful in assemble_MPI_vector_start')
+        call exit_mpi('MPI_start unsuccessful in assemble_MPI_vector_start')
      end if
   end do
   
@@ -581,7 +581,7 @@ subroutine assemble_MPI_vector_elastic_start(myrank,array_val2,npoin, &
   do inum_interface = 1, ninterface_elastic*2
      call MPI_START(tab_requests_send_recv_elastic(inum_interface), ier)
      if ( ier /= MPI_SUCCESS ) then
-        call exit_mpi(myrank,'MPI_start unsuccessful in assemble_MPI_vector_start')
+        call exit_mpi('MPI_start unsuccessful in assemble_MPI_vector_start')
      end if
   end do
   
@@ -633,7 +633,7 @@ subroutine assemble_MPI_vector_acoustic_wait(myrank,array_val1,npoin, &
 
   call MPI_Waitall ( ninterface_acoustic*2, tab_requests_send_recv_acoustic(1), tab_statuses_acoustic(1,1), ier )
   if ( ier /= MPI_SUCCESS ) then
-     call exit_mpi(myrank,'MPI_WAITALL unsuccessful in assemble_MPI_vector_wait')
+     call exit_mpi('MPI_WAITALL unsuccessful in assemble_MPI_vector_wait')
   end if
   
   do inum_interface = 1, ninterface_acoustic
@@ -695,7 +695,7 @@ subroutine assemble_MPI_vector_elastic_wait(myrank,array_val2,npoin, &
 
   call MPI_Waitall ( ninterface_elastic*2, tab_requests_send_recv_elastic(1), tab_statuses_elastic(1,1), ier )
   if ( ier /= MPI_SUCCESS ) then
-     call exit_mpi(myrank,'MPI_WAITALL unsuccessful in assemble_MPI_vector_wait')
+     call exit_mpi('MPI_WAITALL unsuccessful in assemble_MPI_vector_wait')
   end if
   
   do inum_interface = 1, ninterface_elastic
@@ -714,15 +714,18 @@ subroutine assemble_MPI_vector_elastic_wait(myrank,array_val2,npoin, &
 
 end subroutine assemble_MPI_vector_elastic_wait
 
+#endif
 
 
-subroutine exit_MPI(myrank,error_msg)
+
+subroutine exit_MPI(error_msg)
 
   implicit none
 
+#ifdef USE_MPI
   ! standard include of the MPI library
   include 'mpif.h'
-
+#endif
 
   ! identifier for error message file
   integer, parameter :: IERROR = 30
@@ -733,28 +736,25 @@ subroutine exit_MPI(myrank,error_msg)
   integer ier
   character(len=80) outputname
 
+
   ! write error message to screen
   write(*,*) error_msg(1:len(error_msg))
-  write(*,*) 'Error detected, aborting MPI... proc ',myrank
-
-  ! write error message to file
-  write(outputname,"('error_message',i6.6,'.txt')") myrank
-  open(unit=IERROR,file=outputname,status='unknown')
-  write(IERROR,*) error_msg(1:len(error_msg))
-  write(IERROR,*) 'Error detected, aborting MPI... proc ',myrank
-  close(IERROR)
-
+  write(*,*) 'Error detected, aborting MPI... proc '
 
   ! stop all the MPI processes, and exit
   ! on some machines, MPI_FINALIZE needs to be called before MPI_ABORT
+#ifdef USE_MPI
+  call MPI_ABORT(MPI_COMM_WORLD,30,ier)
   call MPI_FINALIZE(ier)
-  call MPI_ABORT(ier)
+  
+#endif
   stop 'error, program ended in exit_MPI'
+      
 
 end subroutine exit_MPI
 
 
-#endif
+
 
 
 

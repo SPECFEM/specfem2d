@@ -30,6 +30,7 @@
 
   integer, dimension(NEDGES) :: ngnod_begin,ngnod_end
 
+
 !----  create global mesh numbering
   write(IOUT,*)
   write(IOUT,*) 'Generating global mesh numbering (slow version)...'
@@ -122,7 +123,7 @@
             i2 = 1
             j2 = NGLLZ
           else
-            stop 'bad corner'
+             call exit_MPI('bad corner')
           endif
 
 ! affecter le meme numero
@@ -178,7 +179,7 @@
   if((knods(ngnod_begin(nedgeother),num2) == knods(ngnod_begin(nedgeloc),numelem)) &
        .and. &
     (knods(ngnod_end(nedgeother),num2) == knods(ngnod_end(nedgeloc),numelem))) then
-  stop 'Improper topology of the input mesh detected'
+     call exit_MPI('Improper topology of the input mesh detected')
 
 !--- sinon voir si cette arete a deja ete generee
 
@@ -212,7 +213,7 @@
             jloc = kloc
             ipos = NGLLZ - jloc + 1
             else
-                  stop 'bad nedgeloc'
+               call exit_MPI('bad nedgeloc')
             endif
 
 ! calculer l'abscisse le long de l'arete d'arrivee
@@ -234,14 +235,18 @@
             i2 = 1
             j2 = NGLLZ - ipos2 + 1
             else
-                  stop 'bad nedgeother'
+               call exit_MPI('bad nedgeother')
             endif
 
 ! verifier que le point de depart n'existe pas deja
-      if(ibool(iloc,jloc,numelem) /= 0) stop 'point genere deux fois'
+      if(ibool(iloc,jloc,numelem) /= 0) then
+         call exit_MPI('point genere deux fois')
+      end if
 
 ! verifier que le point d'arrivee existe bien deja
-      if(ibool(i2,j2,num2) == 0) stop 'point inconnu dans le maillage'
+      if(ibool(i2,j2,num2) == 0) then
+         call exit_MPI('point inconnu dans le maillage')
+      end if
 
 ! affecter le meme numero
       ibool(iloc,jloc,numelem) = ibool(i2,j2,num2)
@@ -275,7 +280,9 @@
   enddo
 
 ! verification de la coherence de la numerotation generee
-  if(minval(ibool) /= 1 .or. maxval(ibool) /= npoin) stop 'Error while generating global numbering'
+  if(minval(ibool) /= 1 .or. maxval(ibool) /= npoin) then
+     call exit_MPI('Error while generating global numbering')
+  end if
 
   write(IOUT,*) 'Total number of points of the global mesh: ',npoin
   write(IOUT,*) 'distributed as follows:'

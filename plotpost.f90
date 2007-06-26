@@ -1424,7 +1424,7 @@
   else if(imagetype == 3) then
     write(24,*) '(Acceleration vector field) show'
   else
-    stop 'Bad field code in PostScript display'
+    call exit_MPI('Bad field code in PostScript display')
   endif
   write(24,*) 'grestore'
   write(24,*) '25.35 CM 18.9 CM MV'
@@ -1720,7 +1720,7 @@
     ideb = 2
     ifin = 3
   else
-    stop 'Wrong absorbing boundary code'
+    call exit_MPI('Wrong absorbing boundary code')
   endif
 
   x1 = (coorg(1,knods(ideb,ispec))-xmin)*ratio_page + orig_x
@@ -1780,7 +1780,7 @@
     ideb = 2
     ifin = 3
   else
-    stop 'Wrong fluid-solid coupling edge code'
+    call exit_MPI('Wrong fluid-solid coupling edge code')
   endif
 
   x1 = (coorg(1,knods(ideb,ispec))-xmin)*ratio_page + orig_x
