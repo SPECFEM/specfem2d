@@ -2083,14 +2083,15 @@ end if
     call compute_vector_whole_medium(potential_acoustic,displ_elastic,elastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
 
-!!$    call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
-!!$          it,deltat,coorg,xinterp,zinterp,shape2D_display, &
-!!$          Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
-!!$          numabs,codeabs,anyabs,simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
-!!$          colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
-!!$          boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
-!!$          nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
-!!$          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges)
+    call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
+          it,deltat,coorg,xinterp,zinterp,shape2D_display, &
+          Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
+          numabs,codeabs,anyabs,simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
+          colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
+          boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
+          nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
+          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
+          myrank, nproc)
 
   else if(imagetype == 2) then
 
@@ -2099,14 +2100,15 @@ end if
     call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,elastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
 
-!!$    call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
-!!$          it,deltat,coorg,xinterp,zinterp,shape2D_display, &
-!!$          Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
-!!$          numabs,codeabs,anyabs,simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
-!!$          colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
-!!$          boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
-!!$          nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
-!!$          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges)
+    call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
+          it,deltat,coorg,xinterp,zinterp,shape2D_display, &
+          Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
+          numabs,codeabs,anyabs,simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
+          colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
+          boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
+          nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
+          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
+          myrank, nproc)
 
   else if(imagetype == 3) then
 
@@ -2115,14 +2117,15 @@ end if
     call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,elastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
 
-!!$    call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
-!!$          it,deltat,coorg,xinterp,zinterp,shape2D_display, &
-!!$          Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
-!!$          numabs,codeabs,anyabs,simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
-!!$          colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
-!!$          boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
-!!$          nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
-!!$          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges)
+    call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
+          it,deltat,coorg,xinterp,zinterp,shape2D_display, &
+          Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
+          numabs,codeabs,anyabs,simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
+          colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
+          boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
+          nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
+          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
+          myrank, nproc)
 
   else if(imagetype == 4) then
 

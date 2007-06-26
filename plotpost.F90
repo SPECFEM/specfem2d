@@ -17,7 +17,8 @@
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
-          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges)
+          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
+          myrank, nproc)
 
 !
 ! PostScript display routine
@@ -26,6 +27,9 @@
   implicit none
 
   include "constants.h"
+#ifdef USE_MPI
+  include 'mpif.h'
+#endif
 
 ! color palette
   integer, parameter :: NUM_COLORS = 236
@@ -83,6 +87,30 @@
 
 ! title of the plot
   character(len=60) simulation_title
+
+  
+  double precision  :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
+  double precision  :: dispmax_glob
+  double precision, dimension(:,:), allocatable  :: coorg_send
+  double precision, dimension(:,:), allocatable  :: coorg_recv
+  integer, dimension(:), allocatable  :: color_send
+  integer, dimension(:), allocatable  :: color_recv
+  double precision, dimension(:,:), allocatable  :: RGB_send
+  double precision, dimension(:,:), allocatable  :: RGB_recv
+  integer  :: nspec_recv
+  integer  :: buffer_offset, RGB_offset
+  
+  integer  :: nb_coorg_per_elem, nb_color_per_elem
+  integer  :: iproc, num_spec
+  integer  :: ier
+  logical :: anyabs_glob, coupled_acoustic_elastic_glob
+#ifdef USE_MPI
+  integer, dimension(MPI_STATUS_SIZE)  :: request_mpi_status
+#endif
+  integer  :: myrank, nproc
+
+
+
 
 ! A4 or US letter paper
   if(US_LETTER) then
@@ -1285,19 +1313,40 @@
   zmin = minval(coord(2,:))
   xmax = maxval(coord(1,:))
   zmax = maxval(coord(2,:))
-  write(IOUT,*) 'X min, max = ',xmin,xmax
-  write(IOUT,*) 'Z min, max = ',zmin,zmax
 
+#ifdef USE_MPI
+  call MPI_ALLREDUCE (xmin, xmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (zmin, zmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (xmax, xmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (zmax, zmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  xmin = xmin_glob
+  zmin = zmin_glob
+  xmax = xmax_glob
+  zmax = zmax_glob
+#endif
+
+  if ( myrank == 0 ) then
+     write(IOUT,*) 'X min, max = ',xmin,xmax
+     write(IOUT,*) 'Z min, max = ',zmin,zmax
+  end if
+  
 ! ratio of physical page size/size of the domain meshed
   ratio_page = min(rpercentz*sizez/(zmax-zmin),rpercentx*sizex/(xmax-xmin)) / 100.d0
 
 ! compute the maximum of the norm of the vector
   dispmax = maxval(sqrt(displ(1,:)**2 + displ(2,:)**2))
-  write(IOUT,*) 'Max norm = ',dispmax
+#ifdef USE_MPI
+  call MPI_ALLREDUCE (dispmax, dispmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  dispmax = dispmax_glob
+#endif
+  if ( myrank == 0 ) then
+     write(IOUT,*) 'Max norm = ',dispmax
+  end if
 
 !
 !---- open PostScript file
 !
+  if ( myrank == 0 ) then
   write(file_name,"('OUTPUT_FILES/vect',i6.6,'.ps')") it
   open(unit=24,file=file_name,status='unknown')
 
@@ -1455,6 +1504,8 @@
 !
 
   write(IOUT,*) 'Shape functions based on ',ngnod,' control nodes'
+  end if
+
 
   convert = PI / 180.d0
 
@@ -1462,6 +1513,13 @@
 !----  draw the velocity model in background
 !
   if(modelvect) then
+
+  if ( myrank /= 0 ) then
+     allocate(coorg_send(2,nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4))
+     allocate(RGB_send(1,nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)))
+  end if
+  buffer_offset = 0
+  RGB_offset = 0
 
   do ispec=1,nspec
     do i=1,NGLLX-subsamp,subsamp
@@ -1496,7 +1554,13 @@
   zw = (zw-zmin)*ratio_page + orig_z
   xw = xw * centim
   zw = zw * centim
-  write(24,500) xw,zw
+  if ( myrank == 0 ) then
+     write(24,500) xw,zw
+  else
+     buffer_offset = buffer_offset + 1
+     coorg_send(1,buffer_offset) = xw
+     coorg_send(2,buffer_offset) = zw
+  end if
 
   xw = coord(1,ibool(i+subsamp,j,ispec))
   zw = coord(2,ibool(i+subsamp,j,ispec))
@@ -1504,7 +1568,13 @@
   zw = (zw-zmin)*ratio_page + orig_z
   xw = xw * centim
   zw = zw * centim
-  write(24,499) xw,zw
+  if ( myrank == 0 ) then
+     write(24,499) xw,zw
+  else
+     buffer_offset = buffer_offset + 1
+     coorg_send(1,buffer_offset) = xw
+     coorg_send(2,buffer_offset) = zw 
+  end if
 
   xw = coord(1,ibool(i+subsamp,j+subsamp,ispec))
   zw = coord(2,ibool(i+subsamp,j+subsamp,ispec))
@@ -1512,7 +1582,13 @@
   zw = (zw-zmin)*ratio_page + orig_z
   xw = xw * centim
   zw = zw * centim
-  write(24,499) xw,zw
+  if ( myrank == 0 ) then
+     write(24,499) xw,zw
+  else
+     buffer_offset = buffer_offset + 1
+     coorg_send(1,buffer_offset) = xw
+     coorg_send(2,buffer_offset) = zw 
+  end if
 
   xw = coord(1,ibool(i,j+subsamp,ispec))
   zw = coord(2,ibool(i,j+subsamp,ispec))
@@ -1520,14 +1596,77 @@
   zw = (zw-zmin)*ratio_page + orig_z
   xw = xw * centim
   zw = zw * centim
-  write(24,499) xw,zw
+  if ( myrank == 0 ) then
+     write(24,499) xw,zw
+  else
+     buffer_offset = buffer_offset + 1
+     coorg_send(1,buffer_offset) = xw
+     coorg_send(2,buffer_offset) = zw 
+  end if
 
 ! display P-velocity model using gray levels
-  write(24,604) x1
+  if ( myrank == 0 ) then
+     write(24,604) x1
+  else
+     RGB_offset = RGB_offset + 1
+     RGB_send(1,RGB_offset) = x1
+  end if
 
           enddo
     enddo
   enddo
+
+  
+#ifdef USE_MPI
+  if (myrank == 0 ) then
+        
+     do iproc = 1, nproc-1
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+        allocate(coorg_recv(2,nspec_recv*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4))
+        allocate(RGB_recv(1,nspec_recv*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)))
+        call MPI_RECV (coorg_recv(1,1), 2*nspec_recv*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4, &
+             MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+        call MPI_RECV (RGB_recv(1,1), nspec_recv*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp), &
+             MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+        
+        buffer_offset = 0
+        RGB_offset = 0
+        do ispec = 1, nspec_recv
+           do i=1,NGLLX-subsamp,subsamp
+              do j=1,NGLLX-subsamp,subsamp
+                 buffer_offset = buffer_offset + 1
+                 write(24,500) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+                 buffer_offset = buffer_offset + 1
+                 write(24,499) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+                 buffer_offset = buffer_offset + 1
+                 write(24,499) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+                 buffer_offset = buffer_offset + 1
+                 write(24,499) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+                 RGB_offset = RGB_offset + 1
+                 write(24,604) RGB_recv(1,RGB_offset)
+              end do
+           end do
+        end do
+
+        deallocate(coorg_recv)
+        deallocate(RGB_recv)
+
+     end do
+  else
+     call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
+     call MPI_SEND (coorg_send(1,1), 2*nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4, &
+          MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
+     call MPI_SEND (RGB_send(1,1), nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp), &
+          MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
+     
+     deallocate(coorg_send)
+     deallocate(RGB_send)
+     
+  end if
+  
+
+#endif
+
 
   endif
 
@@ -1535,13 +1674,53 @@
 !---- draw the spectral element mesh
 !
 
-  write(24,*) '%'
-  write(24,*) '% spectral element mesh'
-  write(24,*) '%'
+  if ( myrank == 0 ) then
+     write(24,*) '%'
+     write(24,*) '% spectral element mesh'
+     write(24,*) '%'
+  end if
+  
+  if ( myrank /= 0 ) then
+     
+     if ( ngnod == 4 ) then
+        if ( numbers == 1 ) then
+           allocate(coorg_send(2,nspec*5))
+           if ( colors == 1 ) then
+              allocate(color_send(2*nspec))
+           else
+              allocate(color_send(1*nspec))
+           end if
+        else
+           allocate(coorg_send(2,nspec*6))
+           if ( colors == 1 ) then
+              allocate(color_send(1*nspec))
+           end if
+        end if
+     else
+        if ( numbers == 1 ) then
+           allocate(coorg_send(2,nspec*((pointsdisp-1)*3+max(0,pointsdisp-2)+1+1)))
+           if ( colors == 1 ) then
+              allocate(color_send(2*nspec))
+           else
+              allocate(color_send(1*nspec))
+           end if
+        else
+           allocate(coorg_send(2,nspec*((pointsdisp-1)*3+max(0,pointsdisp-2)+1)))
+           if ( colors == 1 ) then
+              allocate(color_send(1*nspec))
+           end if
+        end if
+     end if
+     
+  end if
+  buffer_offset = 0
+  RGB_offset = 0
 
   do ispec=1,nspec
 
-  write(24,*) '% elem ',ispec
+  if ( myrank == 0 ) then
+     write(24,*) '% elem ',ispec
+  end if
 
   do i=1,pointsdisp
   do j=1,pointsdisp
@@ -1561,8 +1740,14 @@
   z1 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x1 = x1 * centim
   z1 = z1 * centim
-  write(24,*) 'mark'
-  write(24,681) x1,z1
+  if ( myrank == 0 ) then
+     write(24,*) 'mark'
+     write(24,681) x1,z1
+  else
+     buffer_offset = buffer_offset + 1
+     coorg_send(1,buffer_offset) = x1
+     coorg_send(2,buffer_offset) = z1
+  end if
 
   if(ngnod == 4) then
 
@@ -1573,7 +1758,13 @@
   z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x2 = x2 * centim
   z2 = z2 * centim
-  write(24,681) x2,z2
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     buffer_offset = buffer_offset + 1
+     coorg_send(1,buffer_offset) = x2
+     coorg_send(2,buffer_offset) = z2
+  end if
 
   ir=pointsdisp
   is=pointsdisp
@@ -1581,7 +1772,13 @@
   z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x2 = x2 * centim
   z2 = z2 * centim
-  write(24,681) x2,z2
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     buffer_offset = buffer_offset + 1
+     coorg_send(1,buffer_offset) = x2
+     coorg_send(2,buffer_offset) = z2
+  end if
 
   is=pointsdisp
   ir=1
@@ -1589,7 +1786,13 @@
   z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x2 = x2 * centim
   z2 = z2 * centim
-  write(24,681) x2,z2
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     buffer_offset = buffer_offset + 1
+     coorg_send(1,buffer_offset) = x2
+     coorg_send(2,buffer_offset) = z2
+  end if
 
   ir=1
   is=2
@@ -1597,7 +1800,13 @@
   z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
   x2 = x2 * centim
   z2 = z2 * centim
-  write(24,681) x2,z2
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     buffer_offset = buffer_offset + 1
+     coorg_send(1,buffer_offset) = x2
+     coorg_send(2,buffer_offset) = z2
+  end if
 
   else
 
@@ -1607,7 +1816,13 @@
     z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
     x2 = x2 * centim
     z2 = z2 * centim
-    write(24,681) x2,z2
+    if ( myrank == 0 ) then
+       write(24,681) x2,z2
+    else
+       buffer_offset = buffer_offset + 1
+       coorg_send(1,buffer_offset) = x2
+       coorg_send(2,buffer_offset) = z2
+    end if
   enddo
 
   ir=pointsdisp
@@ -1616,7 +1831,13 @@
     z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
     x2 = x2 * centim
     z2 = z2 * centim
-    write(24,681) x2,z2
+    if ( myrank == 0 ) then
+       write(24,681) x2,z2
+    else
+       buffer_offset = buffer_offset + 1
+       coorg_send(1,buffer_offset) = x2
+       coorg_send(2,buffer_offset) = z2
+    end if
   enddo
 
   is=pointsdisp
@@ -1625,7 +1846,13 @@
     z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
     x2 = x2 * centim
     z2 = z2 * centim
-    write(24,681) x2,z2
+    if ( myrank == 0 ) then
+       write(24,681) x2,z2
+    else
+       buffer_offset = buffer_offset + 1
+       coorg_send(1,buffer_offset) = x2
+       coorg_send(2,buffer_offset) = z2
+    end if
   enddo
 
   ir=1
@@ -1634,12 +1861,20 @@
     z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
     x2 = x2 * centim
     z2 = z2 * centim
-    write(24,681) x2,z2
+    if ( myrank == 0 ) then
+       write(24,681) x2,z2
+    else
+       buffer_offset = buffer_offset + 1
+       coorg_send(1,buffer_offset) = x2
+       coorg_send(2,buffer_offset) = z2
+    end if
   enddo
 
   endif
 
-  write(24,*) 'CO'
+  if ( myrank == 0 ) then
+     write(24,*) 'CO'
+  end if
 
   if(colors == 1) then
 
@@ -1647,14 +1882,20 @@
   imat = kmato(ispec)
   icol = mod(imat - 1,NUM_COLORS) + 1
 
+  if (  myrank == 0 ) then
     if(meshvect) then
       write(24,680) red(icol),green(icol),blue(icol)
     else
       write(24,679) red(icol),green(icol),blue(icol)
     endif
-
+  else
+     RGB_offset = RGB_offset + 1
+     color_send(RGB_offset) = icol
+  end if
+ 
   endif
 
+  if ( myrank == 0 ) then
   if(meshvect) then
     if(modelvect) then
       write(24,*) 'Colmesh ST'
@@ -1662,6 +1903,7 @@
       write(24,*) '0 setgray ST'
     endif
   endif
+  end if
 
 ! write the element number, the group number and the material number inside the element
   if(numbers == 1) then
@@ -1672,23 +1914,176 @@
   zw = (zw-zmin)*ratio_page + orig_z
   xw = xw * centim
   zw = zw * centim
+  
+  if ( myrank == 0 ) then
   if(colors == 1) write(24,*) '1 setgray'
+  end if
 
-  write(24,500) xw,zw
+  if ( myrank == 0 ) then
+     write(24,500) xw,zw
+  else
+     buffer_offset = buffer_offset + 1
+     coorg_send(1,buffer_offset) = x2
+     coorg_send(2,buffer_offset) = z2
+  end if
 
 ! write spectral element number
-  write(24,502) ispec
+  if ( myrank == 0 ) then
+     write(24,502) ispec
+  else
+     RGB_offset = RGB_offset + 1
+     color_send(RGB_offset) = ispec
+  end if
 
   endif
 
   enddo
 
+  
+#ifdef USE_MPI
+  if (myrank == 0 ) then
+        
+     do iproc = 1, nproc-1
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 43, MPI_COMM_WORLD, request_mpi_status, ier)
+        nb_coorg_per_elem = 1
+        if ( numbers == 1 ) then
+           nb_coorg_per_elem = nb_coorg_per_elem + 1
+        end if
+        if ( ngnod == 4 ) then
+           nb_coorg_per_elem = nb_coorg_per_elem + 4
+        else
+           nb_coorg_per_elem = nb_coorg_per_elem + 3*(pointsdisp-1)+(pointsdisp-2)
+        end if
+        nb_color_per_elem = 0
+        if ( colors == 1 ) then
+           nb_color_per_elem = nb_color_per_elem + 1
+        end if
+        if ( numbers == 1 ) then
+           nb_color_per_elem = nb_color_per_elem + 1
+        end if
+
+        allocate(coorg_recv(2,nspec_recv*nb_coorg_per_elem))
+        if ( nb_color_per_elem > 0 ) then
+           allocate(color_recv(nspec_recv*nb_color_per_elem))
+        end if
+        call MPI_RECV (coorg_recv(1,1), 2*nspec_recv*nb_coorg_per_elem, &
+             MPI_DOUBLE_PRECISION, iproc, 43, MPI_COMM_WORLD, request_mpi_status, ier)
+        call MPI_RECV (color_recv(1), nspec_recv*nb_coorg_per_elem, &
+             MPI_INTEGER, iproc, 43, MPI_COMM_WORLD, request_mpi_status, ier)
+        
+        buffer_offset = 0
+        RGB_offset = 0
+        num_spec = nspec
+        do ispec = 1, nspec_recv
+           num_spec = num_spec + 1
+           write(24,*) '% elem ',num_spec
+           buffer_offset = buffer_offset + 1
+           write(24,*) 'mark'
+           write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+           if ( ngnod == 4 ) then
+              buffer_offset = buffer_offset + 1
+              write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+              buffer_offset = buffer_offset + 1
+              write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+              buffer_offset = buffer_offset + 1
+              write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+              buffer_offset = buffer_offset + 1
+              write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+
+           else
+              do ir=2,pointsdisp
+                 buffer_offset = buffer_offset + 1
+                 write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+              end do
+              do is=2,pointsdisp
+                 buffer_offset = buffer_offset + 1
+                 write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+              end do
+              do ir=pointsdisp-1,1,-1
+                 buffer_offset = buffer_offset + 1
+                 write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+              end do
+              do is=pointsdisp-1,2,-1
+                 buffer_offset = buffer_offset + 1
+                 write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+              end do
+              
+           end if
+           
+           write(24,*) 'CO'
+           if ( colors == 1 ) then
+              if(meshvect) then
+                 RGB_offset = RGB_offset + 1
+                 write(24,680) red(color_recv(RGB_offset)), green(color_recv(RGB_offset)), blue(color_recv(RGB_offset))
+              else
+                 RGB_offset = RGB_offset + 1
+                 write(24,679) red(color_recv(RGB_offset)), green(color_recv(RGB_offset)), blue(color_recv(RGB_offset))
+              endif
+           end if
+           if(meshvect) then
+              if(modelvect) then
+                 write(24,*) 'Colmesh ST'
+              else
+                 write(24,*) '0 setgray ST'
+              endif
+           endif
+           if(numbers == 1) then
+              if(colors == 1) write(24,*) '1 setgray'
+              buffer_offset = buffer_offset + 1
+              write(24,500) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+              RGB_offset = RGB_offset + 1
+              write(24,502) color_recv(RGB_offset)
+           end if
+
+        end do
+
+        deallocate(coorg_recv)
+        deallocate(color_recv)
+
+     end do
+  else
+     call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 43, MPI_COMM_WORLD, ier)
+     nb_coorg_per_elem = 1
+     if ( numbers == 1 ) then
+        nb_coorg_per_elem = nb_coorg_per_elem + 1
+     end if
+     if ( ngnod == 4 ) then
+        nb_coorg_per_elem = nb_coorg_per_elem + 4
+     else
+        nb_coorg_per_elem = nb_coorg_per_elem + 3*(pointsdisp-1)+(pointsdisp-2)
+     end if
+     nb_color_per_elem = 0
+     if ( colors == 1 ) then
+        nb_color_per_elem = nb_color_per_elem + 1
+     end if
+     if ( numbers == 1 ) then
+        nb_color_per_elem = nb_color_per_elem + 1
+     end if
+     call MPI_SEND (coorg_send(1,1), 2*nspec*nb_coorg_per_elem, &
+          MPI_DOUBLE_PRECISION, 0, 43, MPI_COMM_WORLD, ier)
+     if ( nb_color_per_elem > 0 ) then
+        call MPI_SEND (color_send(1), nspec*nb_color_per_elem, &
+             MPI_INTEGER, 0, 43, MPI_COMM_WORLD, ier)
+     end if
+     
+     deallocate(coorg_send)
+     deallocate(color_send)
+
+  end if
+  
+
+#endif
+
+
 !
 !--- draw absorbing boundaries with a thick color line
 !
+#ifdef USE_MPI
+  call MPI_ALLREDUCE(anyabs, anyabs_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
+#endif
 
-  if(anyabs .and. boundvect) then
-
+  if(anyabs_glob .and. boundvect) then
+  if ( myrank == 0 ) then
   write(24,*) '%'
   write(24,*) '% boundary conditions on the mesh'
   write(24,*) '%'
@@ -1699,7 +2094,14 @@
   write(24,*) '0.10 CM setlinewidth'
   write(24,*) '% uncomment this when zooming on parts of the mesh'
   write(24,*) '% 0.02 CM setlinewidth'
+  end if
 
+  if ( myrank /= 0 .and. anyabs ) then
+     allocate(coorg_send(4,4*nelemabs))
+  end if
+  buffer_offset = 0
+
+  if ( anyabs ) then
   do inum = 1,nelemabs
   ispec = numabs(inum)
 
@@ -1731,24 +2133,72 @@
   z1 = z1 * centim
   x2 = x2 * centim
   z2 = z2 * centim
-  write(24,602) x1,z1,x2,z2
+  if ( myrank == 0 ) then
+     write(24,602) x1,z1,x2,z2
+  else
+     buffer_offset = buffer_offset + 1
+     coorg_send(1,buffer_offset) = x1
+     coorg_send(2,buffer_offset) = z1
+     coorg_send(3,buffer_offset) = x2
+     coorg_send(4,buffer_offset) = z2
+  end if
 
   endif
   enddo
 
   enddo
+  end if
+  
 
+#ifdef USE_MPI
+  if (myrank == 0 ) then
+        
+     do iproc = 1, nproc-1
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 44, MPI_COMM_WORLD, request_mpi_status, ier)
+        if ( nspec_recv > 0 ) then
+        allocate(coorg_recv(4,nspec_recv))
+        call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
+             MPI_DOUBLE_PRECISION, iproc, 44, MPI_COMM_WORLD, request_mpi_status, ier)
+        
+        buffer_offset = 0
+        do ispec = 1, nspec_recv
+           buffer_offset = buffer_offset + 1
+           write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
+                coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
+        end do
+        deallocate(coorg_recv)
+        end if
+     end do
+  else
+     call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 44, MPI_COMM_WORLD, ier)
+     if ( buffer_offset > 0 ) then
+     call MPI_SEND (coorg_send(1,1), 4*buffer_offset, &
+          MPI_DOUBLE_PRECISION, 0, 44, MPI_COMM_WORLD, ier)
+     deallocate(coorg_send)
+     end if
+     
+  end if
+  
+#endif   
+
+
+  if ( myrank == 0 ) then
   write(24,*) '0 setgray'
   write(24,*) '0.01 CM setlinewidth'
+  end if
 
   endif
-
+ 
 !
 !----  draw the fluid-solid coupling edges with a thick color line
 !
+#ifdef USE_MPI
+  call MPI_ALLREDUCE(coupled_acoustic_elastic, coupled_acoustic_elastic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
+#endif
 
-  if(coupled_acoustic_elastic .and. boundvect) then
+  if(coupled_acoustic_elastic_glob .and. boundvect) then
 
+  if ( myrank == 0 ) then
   write(24,*) '%'
   write(24,*) '% fluid-solid coupling edges in the mesh'
   write(24,*) '%'
@@ -1756,6 +2206,12 @@
   write(24,*) '0.10 CM setlinewidth'
   write(24,*) '% uncomment this when zooming on parts of the mesh'
   write(24,*) '% 0.02 CM setlinewidth'
+  end if
+
+  if ( myrank /= 0 .and. num_fluid_solid_edges > 0 ) then
+     allocate(coorg_send(4,num_fluid_solid_edges))
+  end if
+  buffer_offset = 0
 
 ! loop on all the coupling edges
   do inum = 1,num_fluid_solid_edges
@@ -1765,7 +2221,9 @@
    iedge = fluid_solid_acoustic_iedge(inum)
 
 ! use pink color
+  if ( myrank == 0 ) then
   write(24,*) '1 0.75 0.8 RG'
+  end if
 
   if(iedge == ITOP) then
     ideb = 3
@@ -1791,19 +2249,63 @@
   z1 = z1 * centim
   x2 = x2 * centim
   z2 = z2 * centim
-  write(24,602) x1,z1,x2,z2
+  if ( myrank == 0 ) then
+     write(24,602) x1,z1,x2,z2
+  else
+     buffer_offset = buffer_offset + 1
+     coorg_send(1,buffer_offset) = x1
+     coorg_send(2,buffer_offset) = z1
+     coorg_send(3,buffer_offset) = x2
+     coorg_send(4,buffer_offset) = z2
+  end if
 
   enddo
 
+  
+#ifdef USE_MPI
+  if (myrank == 0 ) then
+        
+     do iproc = 1, nproc-1
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, MPI_COMM_WORLD, request_mpi_status, ier)
+        if ( nspec_recv > 0 ) then
+        allocate(coorg_recv(4,nspec_recv))
+        call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
+             MPI_DOUBLE_PRECISION, iproc, 45, MPI_COMM_WORLD, request_mpi_status, ier)
+        
+        buffer_offset = 0
+        do ispec = 1, nspec_recv
+           buffer_offset = buffer_offset + 1
+           write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
+                coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
+        end do
+        deallocate(coorg_recv)
+        end if
+     end do
+  else
+     call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 45, MPI_COMM_WORLD, ier)
+     if ( buffer_offset > 0 ) then
+     call MPI_SEND (coorg_send(1,1), 4*buffer_offset, &
+          MPI_DOUBLE_PRECISION, 0, 45, MPI_COMM_WORLD, ier)
+     deallocate(coorg_send)
+     end if
+  end if
+  
+#endif   
+
+
+  if ( myrank == 0 ) then
   write(24,*) '0 setgray'
   write(24,*) '0.01 CM setlinewidth'
+  end if
 
   endif
+
 
 !
 !----  draw the normalized vector field
 !
 
+  if ( myrank == 0 ) then
 ! return if the maximum vector equals zero (no source)
   if(dispmax == 0.d0) then
     write(IOUT,*) 'null vector: returning!'
@@ -1820,22 +2322,31 @@
   else
         write(24,*) '0 setgray'
   endif
+  end if
 
   if(interpol) then
 
+  if ( myrank == 0 ) then
   write(IOUT,*) 'Interpolating the vector field...'
-
-  do ispec=1,nspec
-
-! interpolation on a uniform grid
-  if(mod(ispec,1000) == 0) write(IOUT,*) 'Interpolation uniform grid element ',ispec
-
+  end if
+  
 ! option to plot only lowerleft corner value to avoid very large files if dense meshes
   if(plot_lowerleft_corner_only) then
     pointsdisp_loop = 1
   else
     pointsdisp_loop = pointsdisp
   endif
+
+  if ( myrank /= 0 ) then
+     allocate(coorg_send(8,nspec*pointsdisp_loop*pointsdisp_loop))
+     
+  end if
+  buffer_offset = 0
+
+  do ispec=1,nspec
+
+! interpolation on a uniform grid
+  if(mod(ispec,1000) == 0) write(IOUT,*) 'Interpolation uniform grid element ',ispec, myrank
 
   do i=1,pointsdisp_loop
   do j=1,pointsdisp_loop
@@ -1896,6 +2407,7 @@
   zb = -d2*sin(thetadown)
   xb = xb * centim
   zb = zb * centim
+  if ( myrank == 0 ) then
   write(postscript_line,700) xb,zb,xa,za,x2,z2,x1,z1
 
 ! suppress useless white spaces to make PostScript file smaller
@@ -1917,15 +2429,87 @@
   enddo
   ch2(index_char) = ch1(line_length)
   write(24,"(100(a1))") (ch2(ii), ii=1,index_char)
-
+  
+  else
+     buffer_offset = buffer_offset + 1
+     coorg_send(1,buffer_offset) = xb
+     coorg_send(2,buffer_offset) = zb
+     coorg_send(3,buffer_offset) = xa
+     coorg_send(4,buffer_offset) = za
+     coorg_send(5,buffer_offset) = x2
+     coorg_send(6,buffer_offset) = z2
+     coorg_send(7,buffer_offset) = x1
+     coorg_send(8,buffer_offset) = z1
+  end if
+  
   endif
 
   enddo
   enddo
   enddo
 
+
+#ifdef USE_MPI
+  if (myrank == 0 ) then
+        
+     do iproc = 1, nproc-1
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 46, MPI_COMM_WORLD, request_mpi_status, ier)
+        if ( nspec_recv > 0 ) then
+        allocate(coorg_recv(8,nspec_recv))
+        call MPI_RECV (coorg_recv(1,1), 8*nspec_recv, &
+             MPI_DOUBLE_PRECISION, iproc, 46, MPI_COMM_WORLD, request_mpi_status, ier)
+        
+        buffer_offset = 0
+        do ispec = 1, nspec_recv
+           buffer_offset = buffer_offset + 1
+             write(postscript_line,700) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
+                  coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset), &
+                  coorg_recv(5,buffer_offset), coorg_recv(6,buffer_offset), &
+                  coorg_recv(7,buffer_offset), coorg_recv(8,buffer_offset)
+             ! suppress useless white spaces to make PostScript file smaller
+
+             ! suppress leading white spaces again, if any
+             postscript_line = adjustl(postscript_line)
+             
+             line_length = len_trim(postscript_line)
+             index_char = 1
+             first = .false.
+             do ii = 1,line_length-1
+                if(ch1(ii) /= ' ' .or. first) then
+                   if(ch1(ii) /= ' ' .or. ch1(ii+1) /= ' ') then
+                      ch2(index_char) = ch1(ii)
+                      index_char = index_char + 1
+                      first = .true.
+                   endif
+                endif
+             enddo
+             ch2(index_char) = ch1(line_length)
+             write(24,"(100(a1))") (ch2(ii), ii=1,index_char)
+          end do
+          deallocate(coorg_recv)
+          end if
+       end do
+    else
+       call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 46, MPI_COMM_WORLD, ier)
+       if ( buffer_offset > 0 ) then
+       call MPI_SEND (coorg_send(1,1), 8*buffer_offset, &
+            MPI_DOUBLE_PRECISION, 0, 46, MPI_COMM_WORLD, ier)
+       deallocate(coorg_send)
+       end if
+     
+  end if
+  
+#endif   
+
+
 ! draw the vectors at the nodes of the mesh if we do not interpolate the display on a regular grid
   else
+
+  if ( myrank /= 0 ) then
+     allocate(coorg_send(8,npoin))
+     
+  end if
+  buffer_offset = 0
 
   do ipoin=1,npoin
 
@@ -1965,6 +2549,7 @@
   zb = -d2*sin(thetadown)
   xb = xb * centim
   zb = zb * centim
+  if ( myrank == 0 ) then
   write(postscript_line,700) xb,zb,xa,za,x2,z2,x1,z1
 
 ! suppress useless white spaces to make PostScript file smaller
@@ -1987,12 +2572,77 @@
   ch2(index_char) = ch1(line_length)
   write(24,"(100(a1))") (ch2(ii), ii=1,index_char)
 
+  else
+     buffer_offset = buffer_offset + 1
+     coorg_send(1,buffer_offset) = xb
+     coorg_send(2,buffer_offset) = zb
+     coorg_send(3,buffer_offset) = xa
+     coorg_send(4,buffer_offset) = za
+     coorg_send(5,buffer_offset) = x2
+     coorg_send(6,buffer_offset) = z2
+     coorg_send(7,buffer_offset) = x1
+     coorg_send(8,buffer_offset) = z1
+  end if
   endif
 
   enddo
 
+
+#ifdef USE_MPI
+  if (myrank == 0 ) then
+        
+     do iproc = 1, nproc-1
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 47, MPI_COMM_WORLD, request_mpi_status, ier)
+        if ( nspec_recv > 0 ) then
+        allocate(coorg_recv(8,nspec_recv))
+        call MPI_RECV (coorg_recv(1,1), 8*nspec_recv, &
+             MPI_DOUBLE_PRECISION, iproc, 47, MPI_COMM_WORLD, request_mpi_status, ier)
+        
+        buffer_offset = 0
+        do ispec = 1, nspec_recv
+           buffer_offset = buffer_offset + 1
+             write(postscript_line,700) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
+                  coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset), &
+                  coorg_recv(5,buffer_offset), coorg_recv(6,buffer_offset), &
+                  coorg_recv(7,buffer_offset), coorg_recv(8,buffer_offset)
+             ! suppress useless white spaces to make PostScript file smaller
+
+             ! suppress leading white spaces again, if any
+             postscript_line = adjustl(postscript_line)
+             
+             line_length = len_trim(postscript_line)
+             index_char = 1
+             first = .false.
+             do ii = 1,line_length-1
+                if(ch1(ii) /= ' ' .or. first) then
+                   if(ch1(ii) /= ' ' .or. ch1(ii+1) /= ' ') then
+                      ch2(index_char) = ch1(ii)
+                      index_char = index_char + 1
+                      first = .true.
+                   endif
+                endif
+             enddo
+             ch2(index_char) = ch1(line_length)
+             write(24,"(100(a1))") (ch2(ii), ii=1,index_char)
+          end do
+          deallocate(coorg_recv)
+          end if
+       end do
+    else
+       call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 47, MPI_COMM_WORLD, ier)
+       if ( buffer_offset > 0 ) then
+       call MPI_SEND (coorg_send(1,1), 8*buffer_offset, &
+            MPI_DOUBLE_PRECISION, 0, 47, MPI_COMM_WORLD, ier)
+       deallocate(coorg_send)
+       end if
+  end if
+  
+#endif   
+
+
   endif
 
+  if ( myrank == 0 ) then
   write(24,*) '0 setgray'
 
 ! sources and receivers in color if velocity model
@@ -2037,6 +2687,7 @@
   write(24,*) 'showpage'
 
   close(24)
+  end if
 
  10  format('%!PS-Adobe-2.0',/,'%%',/,'%% Title: ',a50,/,'%% Created by: Specfem2D',/,'%% Author: Dimitri Komatitsch',/,'%%')
  600 format(f6.3,' neg CM 0 MR (Time =',f8.3,' s) show')
