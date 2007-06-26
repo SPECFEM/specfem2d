@@ -470,7 +470,7 @@
      end if
 
   else
-    stop 'wrong source type'
+     call exit_MPI('wrong source type')
   endif
 
 ! implement attenuation

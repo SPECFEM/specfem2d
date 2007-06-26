@@ -69,7 +69,7 @@
   else if(seismotype == 4) then
     component = 'p'
   else
-    stop 'wrong component to save for seismograms'
+    call exit_MPI('wrong component to save for seismograms')
   endif
 
 
@@ -160,7 +160,7 @@
            else if(iorientation == 2) then
               chn = 'BHZ'
            else
-              stop 'incorrect channel value'
+              call exit_MPI('incorrect channel value')
            endif
            
            ! in case of pressure, use different abbreviation
@@ -172,9 +172,12 @@
            length_network_name = len_trim(network_name(irec))
 
            ! check that length conforms to standard
-           if(length_station_name < 1 .or. length_station_name > MAX_LENGTH_STATION_NAME) stop 'wrong length of station name'
-           
-           if(length_network_name < 1 .or. length_network_name > MAX_LENGTH_NETWORK_NAME) stop 'wrong length of network name'
+           if(length_station_name < 1 .or. length_station_name > MAX_LENGTH_STATION_NAME) then
+             call exit_MPI('wrong length of station name')
+          end if 
+           if(length_network_name < 1 .or. length_network_name > MAX_LENGTH_NETWORK_NAME) then 
+             call exit_MPI('wrong length of network name')
+          end if
            
            write(sisname,"('OUTPUT_FILES/',a,'.',a,'.',a3,'.sem',a1)") station_name(irec)(1:length_station_name),&
                 network_name(irec)(1:length_network_name),chn,component
