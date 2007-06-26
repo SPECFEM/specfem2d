@@ -1,6 +1,5 @@
-- looking for a better way to show mesh partitioning.
 - splitting file part_unstruct.F90 in several files for clarity purpose.
-- improving compiling with SCOTCH (issue with header file scotchf.h which is Fortran77 legal). Having our own scotchf.h file (without the comments) is ugly.
+- improving compiling with SCOTCH (issue with header file scotchf.h which is Fortran77 legal). Having our own scotchf.h file (without the comments) is not wise.
 - comparing the different partitioning methods for METIS and SCOTCH, and finding a good default for SCOTCH.
 - partitioning using weights for load-balancing.
 - choosing a way to use assign_external_model?

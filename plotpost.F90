@@ -2275,6 +2275,7 @@
         buffer_offset = 0
         do ispec = 1, nspec_recv
            buffer_offset = buffer_offset + 1
+           write(24,*) '1 0.75 0.8 RG'
            write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
                 coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
         end do
