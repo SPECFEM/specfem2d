@@ -5,14 +5,14 @@ interfacesfile                  = interfaces_M2_UPPA_curved.dat
 
 # data concerning mesh, when generated using third-party app (more info in README)
 read_external_mesh              = .false.
-mesh_file                       = ./DATA/celine_coupe_eros/mesh          # file containing the mesh
-nodes_coords_file               = ./DATA/celine_coupe_eros/nodes_coords  # file containing the nodes coordinates
-materials_file                  = ./DATA/celine_coupe_eros/mat           # file containing the material number for each element
-free_surface_file               = ./DATA/celine_coupe_eros/surface_free  # file containing the free surface
-absorbing_surface_file          = ./DATA/celine_coupe_eros/surface_abs   # file containing the absorbing surface
+mesh_file                       = ./DATA/unstructured_fluide_solide_test/mesh          # file containing the mesh
+nodes_coords_file               = ./DATA/unstructured_fluide_solide_test/nodes_coords  # file containing the nodes coordinates
+materials_file                  = ./DATA/unstructured_fluide_solide_test/mat           # file containing the material number for each element
+free_surface_file               = ./DATA/unstructured_fluide_solide_test/surface_free  # file containing the free surface
+absorbing_surface_file          = ./DATA/unstructured_fluide_solide_test/surface_abs   # file containing the absorbing surface
 
 # parameters concerning partitionning
-nproc                           = 8              # number of processes
+nproc                           = 1              # number of processes
 partionning_method              = 1              # ascending order = 1, Metis = 2, Scotch = 3
 partitionning_strategy          = 01110 #b{strat=m{asc=g,low=g,rat=1.0,type=h,vert=4}} #01110          # options concerning partitionning strategy.
                                                  

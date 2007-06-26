@@ -18,8 +18,8 @@ O = obj
 #FLAGS_CHECK = $(FLAGS_NOCHECK) -check bounds
 
 # GNU gfortran
-F90 = /opt/openmpi-1.2.1/gfortran64/bin/mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
-#F90 = gfortran
+#F90 = /opt/openmpi-1.2.1/gfortran64/bin/mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
+F90 = gfortran
 #FLAGS_NOCHECK = -O3 -march=opteron -m64 -mfpmath=sse,387
 FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow
 FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
