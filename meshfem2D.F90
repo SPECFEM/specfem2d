@@ -1089,7 +1089,7 @@ program meshfem2D
           glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes, part, 1)
      
 
-     call write_acoustic_elastic_edges_database(15, nedges_coupled, nedges_coupled_loc, &
+     call write_fluidsolid_edges_database(15, nedges_coupled, nedges_coupled_loc, &
           edges_coupled, glob2loc_elmnts, nelmnts, part, iproc, 1)
      
      write(15,*) 'nelemabs nelem_acoustic_surface num_fluid_solid_edges'
@@ -1145,7 +1145,7 @@ program meshfem2D
      
 
      write(15,*) 'List of acoustic elastic coupled edges:'
-     call write_acoustic_elastic_edges_database(15, nedges_coupled, nedges_coupled_loc, &
+     call write_fluidsolid_edges_database(15, nedges_coupled, nedges_coupled_loc, &
           edges_coupled, glob2loc_elmnts, nelmnts, part, iproc, 2)
   end do
   
