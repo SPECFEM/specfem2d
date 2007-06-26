@@ -78,6 +78,7 @@ program meshfem2D
   integer ixdebregion,ixfinregion,izdebregion,izfinregion
   integer iregion,imaterial,nbregion,nb_materials
   integer NTSTEP_BETWEEN_OUTPUT_INFO,pointsdisp,subsamp,seismotype,imagetype
+  logical generate_STATIONS 
   integer ngnod,nt,nx,nz,nxread,nzread,icodematread,ireceiverlines,nreceiverlines
 
   integer, dimension(:), allocatable :: nrec
@@ -408,6 +409,7 @@ program meshfem2D
 
 ! read receiver line parameters
   call read_value_integer(IIN,IGNORE_JUNK,seismotype)
+  call read_value_logical(IIN,IGNORE_JUNK,generate_STATIONS)
   call read_value_integer(IIN,IGNORE_JUNK,nreceiverlines)
   call read_value_double_precision(IIN,IGNORE_JUNK,anglerec)
 
@@ -1243,6 +1245,7 @@ program meshfem2D
 
 !--- compute position of the receivers and write the STATIONS file
 
+  if ( generate_STATIONS ) then
   print *
   print *,'writing the DATA/STATIONS file'
   print *
@@ -1293,6 +1296,7 @@ program meshfem2D
   enddo
 
   close(15)
+  end if
 
   print *
   

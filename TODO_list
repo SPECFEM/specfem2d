@@ -4,7 +4,6 @@
 - partitioning using weights for load-balancing.
 - choosing a way to use assign_external_model?
 - adding comments.
-- adding option to create or not STATIONS file (useful for complex geometries like asteroids).
 - checking for points with different normals for absorbing conditions, when the absorbing edges are not in the same elements (similar to what is done for the corners).
 - scripts for translating GID/CUBIT meshes into files for xmeshfem2D.
 - modifying scripts for UPPA cluster (when FS sync issues are solved and remote commands are available).
