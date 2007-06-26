@@ -167,8 +167,6 @@ program meshfem2D
   integer  :: edgecut
   integer  :: iproc
 
-  ! variable de test
-  integer  :: aaa
 
 
 ! ***
@@ -252,7 +250,6 @@ program meshfem2D
   call read_value_logical(IIN,IGNORE_JUNK,TURN_ANISOTROPY_ON)
   call read_value_logical(IIN,IGNORE_JUNK,TURN_ATTENUATION_ON)
   
-  print *, 'POYOP'
   if ( read_external_mesh ) then
      call read_mesh(mesh_file, nelmnts, elmnts, nnodes, num_start)
      
@@ -332,8 +329,7 @@ program meshfem2D
               num_elmnt = num_elmnt + 1
            end do
         end do
-        print *, 'POY', minval(elmnts)
-     else
+      else
         num_elmnt = 0
         do j = 1, nzread
            do i = 1, nxread
@@ -890,6 +886,9 @@ program meshfem2D
 !!$     part(:) = 0
 !!$     
 !!$  else
+ 
+! if ngnod == 9, we work on a subarray of elmnts, which represents the elements with for nodes only
+! construction of the graph
   if ( ngnod == 9 ) then
      allocate(elmnts_bis(0:ESIZE*nelmnts-1))
      do i = 0, nelmnts-1
@@ -904,23 +903,21 @@ program meshfem2D
   end if
      
   nb_edges = xadj(nelmnts)
-  
+ 
+! giving weight to edges and vertices. Currently not used.
   call read_weights(nelmnts, vwgt, nb_edges, adjwgt)
      
   if ( nproc == 1 ) then
       part(:) = 0
   else
 
+! partitioning
      select case (partitionning_method)
      case(1)
         do iproc = 0, nproc-2
            part(iproc*floor(real(nelmnts)/real(nproc)):(iproc+1)*floor(real(nelmnts)/real(nproc))-1) = iproc
         end do
         part(floor(real(nelmnts)/real(nproc))*(nproc-1):nelmnts-1) = nproc - 1
-!!$        part(0:1659) = 0
-!!$        part(1660:3258) = 1
-!!$        part(3259:4799) = 2
-!!$        print *, 'WWWWWW', nelmnts-1
         
      case(2)
 #ifdef USE_METIS
@@ -944,7 +941,7 @@ program meshfem2D
  
   end if
   
-  ! beware of fluid solid edges
+! beware of fluid solid edges : coupled elements are transfered to the same partition
   if ( ngnod == 9 ) then
      call acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts_bis, nb_materials, cs, num_material, &
           nproc, part, nedges_coupled, edges_coupled)
@@ -953,17 +950,10 @@ program meshfem2D
           nproc, part, nedges_coupled, edges_coupled)
   end if
   
+! local number of each element for each partition
   call Construct_glob2loc_elmnts(nelmnts, part, nproc, glob2loc_elmnts)
   
   if ( ngnod == 9 ) then
-!!$     print *, 'POUMPOUM', nnodes, elmnts(0:8)
-!!$     print *, nodes_coords(1,elmnts(0:8)+1)
-!!$     print *, nodes_coords(2,elmnts(0:8)+1)
-!!$     print *, x(1,0), z(1,0)
-!!$     print *, x(1,1), z(1,1)
-!!$     print *, num_9(2,1,nxread,nzread), x(2,1), z(2,1)
-!!$     print *, num_9(0,1,nxread,nzread),x(0,1), z(0,1)
-    
      deallocate(nnodes_elmnts)
      deallocate(nodes_elmnts)
      allocate(nnodes_elmnts(0:nnodes-1))
@@ -977,9 +967,11 @@ program meshfem2D
      end do
   end if
   
+! local number of each node for each partition
   call Construct_glob2loc_nodes(nelmnts, nnodes, nnodes_elmnts, nodes_elmnts, part, nproc, &
        glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes)
 
+! construct the interfaces between partitions (used for MPI assembly)
   if ( nproc /= 1 ) then
      if ( ngnod == 9 ) then
         call Construct_interfaces(nelmnts, nproc, part, elmnts_bis, xadj, adjncy, tab_interfaces, &
@@ -994,6 +986,7 @@ program meshfem2D
      print *, '05'
   end if
   
+! setting absorbing boundaries by elements instead of edges
   if ( any_abs ) then
      call merge_abs_boundaries(nelemabs, nelemabs_merge, abs_surface, abs_surface_char, abs_surface_merge, &
           ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
@@ -1005,7 +998,7 @@ program meshfem2D
      print *, 'nelemabs_merge', nelemabs_merge
   end if
 
-! *** generate the database for the solver
+! *** generate the databases for the solver
 
   do iproc = 0, nproc-1
      
@@ -1152,92 +1145,6 @@ program meshfem2D
   end do
   
   
-!!$
-!!$  open(unit=15,file='OUTPUT_FILES/Database',status='unknown')
-!!$
-
-!!$
-!!$  npgeo = nnodes
-!!$  nspec = nelmnts
-!!$  
-
-!!$  do j=0,nz
-!!$    do i=0,nx
-!!$      write(15,*) num(i,j,nx),x(i,j),z(i,j)
-!!$    enddo
-!!$  enddo
-!!$
-!!$
-!!$
-!!$
-!!$  
-
-!!$
-
-!!$
-!!$  k = 0
-!!$  if(ngnod == 4) then
-!!$    do j=0,nz-1
-!!$      do i=0,nx-1
-!!$        k = k + 1
-!!$        imaterial_number = num_material(i+1,j+1)
-!!$        write(15,*) k,imaterial_number,num(i,j,nx),num(i+1,j,nx),num(i+1,j+1,nx),num(i,j+1,nx)
-!!$      enddo
-!!$    enddo
-!!$  else
-!!$    do j=0,nz-2,2
-!!$      do i=0,nx-2,2
-!!$        k = k + 1
-!!$        imaterial_number = num_material(i+1,j+1)
-!!$        write(15,*) k,imaterial_number,num(i,j,nx),num(i+2,j,nx),num(i+2,j+2,nx),num(i,j+2,nx), &
-!!$                      num(i+1,j,nx),num(i+2,j+1,nx),num(i+1,j+2,nx),num(i,j+1,nx),num(i+1,j+1,nx)
-!!$      enddo
-!!$    enddo
-!!$  endif
-!!$
-!!$!
-!!$!--- save absorbing boundaries
-!!$!
-!!$  print *
-!!$  print *,'There is a total of ',nelemabs,' absorbing elements'
-!!$  print *
-!!$  print *,'Active absorbing boundaries:'
-!!$  print *
-!!$  print *,'Bottom = ',absbottom
-!!$  print *,'Right  = ',absright
-!!$  print *,'Top    = ',abstop
-!!$  print *,'Left   = ',absleft
-!!$  print *
-!!$
-!!$
-!!$
-!!$!
-!!$!--- save acoustic free-surface elements
-!!$!
-!!$  print *
-!!$  print *,'There is a total of ',nelem_acoustic_surface,' acoustic free-surface elements'
-!!$  print *
-!!$
-!!$! generate the list of acoustic free-surface elements
-!!$  if(nelem_acoustic_surface > 0) then
-!!$    write(15,*) 'List of acoustic free-surface elements:'
-!!$    do j = 1,nzread
-!!$      do i = 1,nxread
-!!$        inumelem = (j-1)*nxread + i
-!!$        if(ngnod == 4) then
-!!$          imaterial_number = num_material(i,j)
-!!$        else
-!!$          imaterial_number = num_material(2*(i-1)+1,2*(j-1)+1)
-!!$        endif
-!!$! in this simple mesher, it is always the top edge that is at the free surface
-!!$        if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. cs(imaterial_number) < TINYVAL .and. j == nzread) &
-!!$          write(15,*) inumelem,ITOP
-!!$      enddo
-!!$    enddo
-!!$  endif
-!!$
-!!$  close(15)
-!!$
 ! print position of the source
   print *
   print *,'Position (x,z) of the source = ',xs,zs
