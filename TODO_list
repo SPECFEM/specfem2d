@@ -1,5 +1,4 @@
 - enabling output of vectxxx.ps files in parallel.
-- enabling output of source.txt file in parallel.
 - looking for a better way to show mesh partitioning.
 - splitting file part_unstruct.F90 in several files for clarity purpose.
 - improving compiling with SCOTCH (issue with header file scotchf.h which is Fortran77 legal). Having our own scotchf.h file (without the comments) is ugly.

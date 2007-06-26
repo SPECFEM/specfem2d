@@ -1366,10 +1366,12 @@ end if
 
     allocate(source_time_function(NSTEP))
 
+      if ( myrank == 0 ) then
     write(IOUT,*)
     write(IOUT,*) 'Saving the source time function in a text file...'
     write(IOUT,*)
     open(unit=55,file='OUTPUT_FILES/source.txt',status='unknown')
+      endif
 
 ! loop on all the time steps
     do it = 1,NSTEP
@@ -1400,12 +1402,15 @@ end if
       endif
 
 ! output absolute time in third column, in case user wants to check it as well
+      if ( myrank == 0 ) then
       write(55,*) sngl(time),sngl(source_time_function(it)),sngl(time-t0)
-
+      endif
    enddo
-
+      
+      if ( myrank == 0 ) then
     close(55)
-    
+      endif
+      
     source_time_function(:) = source_time_function(:) / nb_proc_source
 
   else
