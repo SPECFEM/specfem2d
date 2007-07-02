@@ -1977,7 +1977,9 @@ end if
     call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
           it,deltat,coorg,xinterp,zinterp,shape2D_display, &
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
-          numabs,codeabs,anyabs,simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
+          numabs,codeabs,anyabs, &
+          nelem_acoustic_surface, acoustic_edges, &
+          simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
@@ -1994,7 +1996,9 @@ end if
     call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
           it,deltat,coorg,xinterp,zinterp,shape2D_display, &
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
-          numabs,codeabs,anyabs,simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
+          numabs,codeabs,anyabs, &
+          nelem_acoustic_surface, acoustic_edges, &
+          simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
@@ -2011,7 +2015,9 @@ end if
     call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
           it,deltat,coorg,xinterp,zinterp,shape2D_display, &
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
-          numabs,codeabs,anyabs,simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
+          numabs,codeabs,anyabs, &
+          nelem_acoustic_surface, acoustic_edges, &
+          simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
