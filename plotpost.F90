@@ -13,7 +13,9 @@
 
   subroutine plotpost(displ,coord,vpext,x_source,z_source,st_xval,st_zval,it,dt,coorg, &
           xinterp,zinterp,shapeint,Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
-          numabs,codeabs,anyabs,simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
+          numabs,codeabs,anyabs,&
+          nelem_acoustic_surface, acoustic_edges, &
+          simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
@@ -88,7 +90,10 @@
 ! title of the plot
   character(len=60) simulation_title
 
-  
+! for free surface output
+  integer  :: nelem_acoustic_surface
+  integer, dimension(4,nelem_acoustic_surface)  :: acoustic_edges
+
   double precision  :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
   double precision  :: dispmax_glob
   double precision, dimension(:,:), allocatable  :: coorg_send
@@ -108,7 +113,6 @@
   integer, dimension(MPI_STATUS_SIZE)  :: request_mpi_status
 #endif
   integer  :: myrank, nproc
-
 
 
 
@@ -2188,6 +2192,120 @@
   end if
 
   endif
+
+
+!
+!--- draw free surface with a thick color line
+!
+#ifdef USE_MPI
+!  call MPI_ALLREDUCE(anyabs, anyabs_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
+#endif
+
+  if ( myrank == 0 ) then
+  write(24,*) '%'
+  write(24,*) '% free surface on the mesh'
+  write(24,*) '%'
+
+! use orange color
+  write(24,*) '1 0.66 0 RG'
+
+  write(24,*) '0.10 CM setlinewidth'
+  write(24,*) '% uncomment this when zooming on parts of the mesh'
+  write(24,*) '% 0.02 CM setlinewidth'
+  end if
+
+  if ( myrank /= 0 .and. nelem_acoustic_surface > 0 ) then
+     allocate(coorg_send(4,4*nelem_acoustic_surface))
+  end if
+  buffer_offset = 0
+
+  if ( nelem_acoustic_surface > 0 ) then
+  do inum = 1,nelem_acoustic_surface
+  ispec = acoustic_edges(1,inum)
+
+!!$  do iedge = 1,4
+!!$
+!!$  if(codeabs(iedge,inum) /= 0) then
+!!$
+!!$  if(iedge == ITOP) then
+!!$    ideb = 3
+!!$    ifin = 4
+!!$  else if(iedge == IBOTTOM) then
+!!$    ideb = 1
+!!$    ifin = 2
+!!$  else if(iedge == ILEFT) then
+!!$    ideb = 4
+!!$    ifin = 1
+!!$  else if(iedge == IRIGHT) then
+!!$    ideb = 2
+!!$    ifin = 3
+!!$  else
+!!$    call exit_MPI('Wrong absorbing boundary code')
+!!$  endif
+
+  x1 = (coorg(1,acoustic_edges(3,inum))-xmin)*ratio_page + orig_x
+  z1 = (coorg(2,acoustic_edges(3,inum))-zmin)*ratio_page + orig_z
+  x2 = (coorg(1,acoustic_edges(4,inum))-xmin)*ratio_page + orig_x
+  z2 = (coorg(2,acoustic_edges(4,inum))-zmin)*ratio_page + orig_z
+  x1 = x1 * centim
+  z1 = z1 * centim
+  x2 = x2 * centim
+  z2 = z2 * centim
+  if ( myrank == 0 ) then
+     write(24,602) x1,z1,x2,z2
+  else
+     buffer_offset = buffer_offset + 1
+     coorg_send(1,buffer_offset) = x1
+     coorg_send(2,buffer_offset) = z1
+     coorg_send(3,buffer_offset) = x2
+     coorg_send(4,buffer_offset) = z2
+  end if
+
+!!$  endif
+!!$  enddo
+
+  enddo
+  end if
+  
+
+#ifdef USE_MPI
+  if (myrank == 0 ) then
+        
+     do iproc = 1, nproc-1
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 44, MPI_COMM_WORLD, request_mpi_status, ier)
+        if ( nspec_recv > 0 ) then
+        allocate(coorg_recv(4,nspec_recv))
+        call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
+             MPI_DOUBLE_PRECISION, iproc, 44, MPI_COMM_WORLD, request_mpi_status, ier)
+        
+        buffer_offset = 0
+        do ispec = 1, nspec_recv
+           buffer_offset = buffer_offset + 1
+           write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
+                coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
+        end do
+        deallocate(coorg_recv)
+        end if
+     end do
+  else
+     call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 44, MPI_COMM_WORLD, ier)
+     if ( buffer_offset > 0 ) then
+     call MPI_SEND (coorg_send(1,1), 4*buffer_offset, &
+          MPI_DOUBLE_PRECISION, 0, 44, MPI_COMM_WORLD, ier)
+     deallocate(coorg_send)
+     end if
+     
+  end if
+  
+#endif   
+
+
+  if ( myrank == 0 ) then
+  write(24,*) '0 setgray'
+  write(24,*) '0.01 CM setlinewidth'
+  end if
+
+
  
 !
 !----  draw the fluid-solid coupling edges with a thick color line
