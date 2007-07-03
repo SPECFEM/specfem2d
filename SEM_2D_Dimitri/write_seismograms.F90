@@ -23,13 +23,13 @@
   include "mpif.h"
 #endif
 
-  integer nrec,NSTEP,it,seismotype
-  double precision t0,deltat
+  integer :: nrec,NSTEP,it,seismotype
+  double precision :: t0,deltat
   
-  integer, intent(in)  ::  nrecloc,myrank
-  integer, dimension(nrec),intent(in)  :: which_proc_receiver
+  integer, intent(in) :: nrecloc,myrank
+  integer, dimension(nrec),intent(in) :: which_proc_receiver
 
-  double precision, dimension(NSTEP,nrecloc), intent(in)  :: sisux,sisuz
+  double precision, dimension(NSTEP,nrecloc), intent(in) :: sisux,sisuz
 
   double precision st_xval(nrec)
 

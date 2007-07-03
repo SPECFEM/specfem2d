@@ -244,7 +244,7 @@
   integer, dimension(8) :: time_values
   integer ihours,iminutes,iseconds,int_tCPU
   double precision :: time_start,time_end,tCPU
-  
+
 ! for MPI and partitionning
   integer  :: ier
   integer  :: nproc
@@ -259,7 +259,7 @@
   integer, dimension(:,:,:), allocatable  :: my_interfaces
   integer, dimension(:,:), allocatable  :: ibool_interfaces_acoustic,ibool_interfaces_elastic
   integer, dimension(:), allocatable  :: nibool_interfaces_acoustic,nibool_interfaces_elastic
-  
+
   integer  :: ninterface_acoustic, ninterface_elastic
   integer, dimension(:), allocatable  :: inum_interfaces_acoustic, inum_interfaces_elastic
 
@@ -269,7 +269,7 @@
   double precision, dimension(:,:), allocatable  :: buffer_send_faces_vector_elastic
   double precision, dimension(:,:), allocatable  :: buffer_recv_faces_vector_elastic
   integer, dimension(:), allocatable  :: tab_requests_send_recv_elastic
-  integer  :: max_ibool_interfaces_size_acoustic, max_ibool_interfaces_size_elastic 
+  integer  :: max_ibool_interfaces_size_acoustic, max_ibool_interfaces_size_elastic
 
   integer, dimension(:,:), allocatable  :: acoustic_surface
   integer, dimension(:,:), allocatable  :: acoustic_edges
@@ -282,7 +282,7 @@
 
   integer  :: nrecloc, irecloc
   integer, dimension(:), allocatable :: recloc, which_proc_receiver
-  
+
   character(len=256)  :: filename
 
 !***********************************************************************
@@ -295,19 +295,19 @@
   call MPI_INIT(ier)
   call MPI_COMM_SIZE(MPI_COMM_WORLD,nproc,ier)
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
-  
+
 #else
   nproc = 1
   myrank = 0
-  
+
 #endif
-  
+
   write(prname,230)myrank
 230   format('./OUTPUT_FILES/Database',i5.5)
 
   open(unit=IIN,file=prname,status='old',action='read')
 
-   
+
 ! determine if we write to file instead of standard output
   if(IOUT /= ISTANDARD_OUTPUT) open(IOUT,file='simulation_results.txt',status='unknown')
 
@@ -472,16 +472,6 @@
   allocate(jbegin_right(nelemabs))
   allocate(jend_right(nelemabs))
 
-! --- allocate array for free surface condition in acoustic medium
-!!$  if(nelem_acoustic_surface <= 0) then
-!!$    nelem_acoustic_surface = 0
-!!$    allocate(ispecnum_acoustic_surface(1))
-!!$    allocate(iedgenum_acoustic_surface(1))
-!!$  else
-!!$    allocate(ispecnum_acoustic_surface(nelem_acoustic_surface))
-!!$    allocate(iedgenum_acoustic_surface(nelem_acoustic_surface))
-!!$  endif
-
 !
 !---- print element group main parameters
 !
@@ -556,7 +546,7 @@
      !allocate(my_interfaces(4,1,1))
      !allocate(ibool_interfaces(NGLLX*1,1,1))
      !allocate(nibool_interfaces(1,1))
-     
+
   else
      allocate(my_neighbours(ninterface))
      allocate(my_nelmnts_neighbours(ninterface))
@@ -577,10 +567,10 @@
         end do
      end do
      print *, 'end read the interfaces', myrank
-     
+
   end if
-  
- 
+
+
 !
 !----  read absorbing boundary data
 !
@@ -588,7 +578,7 @@
   if(anyabs) then
      do inum = 1,nelemabs
       read(IIN,*) numabsread,codeabsread(1),codeabsread(2),codeabsread(3),codeabsread(4), ibegin_bottom(inum), iend_bottom(inum), &
-           jbegin_right(inum), jend_right(inum), ibegin_top(inum), iend_top(inum), jbegin_left(inum), jend_left(inum) 
+           jbegin_right(inum), jend_right(inum), ibegin_top(inum), iend_top(inum), jbegin_left(inum), jend_left(inum)
       if(numabsread < 1 .or. numabsread > nspec) call exit_MPI('Wrong absorbing element number')
       numabs(inum) = numabsread
       codeabs(IBOTTOM,inum) = codeabsread(1)
@@ -613,12 +603,6 @@
      allocate(acoustic_surface(5,nelem_acoustic_surface))
      call construct_acoustic_surface ( nspec, ngnod, knods, nelem_acoustic_surface, &
           acoustic_edges, acoustic_surface)
-!!$      read(IIN,*) numacoustread,iedgeacoustread
-!!$      if(numacoustread < 1 .or. numacoustread > nspec) call eixt_MPI('Wrong acoustic free surface element number')
-!!$      if(iedgeacoustread < 1 .or. iedgeacoustread > NEDGES) call exit_MPI('Wrong acoustic free surface edge number')
-!!$      ispecnum_acoustic_surface(inum) = numacoustread
-!!$      iedgenum_acoustic_surface(inum) = iedgeacoustread
-!!$    enddo
     write(IOUT,*)
     write(IOUT,*) 'Number of free surface elements: ',nelem_acoustic_surface
   endif
@@ -640,7 +624,7 @@
      allocate(fluid_solid_acoustic_iedge(1))
      allocate(fluid_solid_elastic_ispec(1))
      allocate(fluid_solid_elastic_iedge(1))
-     
+
   end if
 
 
@@ -830,7 +814,7 @@
 ! for attenuation
   if(TURN_ANISOTROPY_ON .and. TURN_ATTENUATION_ON) then
     call exit_MPI('cannot have anisotropy and attenuation both turned on in current version')
-  end if 
+  end if
 !
 !----   define coefficients of the Newmark time scheme
 !
@@ -860,7 +844,7 @@
           endif
        enddo
     end if
-    
+
   else if(source_type == 2) then
 ! moment-tensor source
      call locate_source_moment_tensor(ibool,coord,nspec,npoin,xigll,zigll,x_source,z_source, &
@@ -994,7 +978,7 @@
   if ( nproc > 1 ) then
 ! preparing for MPI communications
      call prepare_assemble_MPI (myrank,nspec,ibool, &
-          knods, ngnod, & 
+          knods, ngnod, &
           npoin, elastic, &
           ninterface, max_interface_size, &
           my_neighbours, my_nelmnts_neighbours, my_interfaces, &
@@ -1024,7 +1008,7 @@
      tab_requests_send_recv_acoustic, &
      inum_interfaces_acoustic &
      )
-  
+
 ! creating mpi non-blocking persistent communications for elastic elements
   call create_MPI_requests_SEND_RECV_elastic(myrank, &
      ninterface, ninterface_elastic, &
@@ -1078,7 +1062,7 @@ end if
   zmin_color_image_loc = minval(coord(2,:))
   zmax_color_image_loc = maxval(coord(2,:))
 
-! global values 
+! global values
   xmin_color_image = xmin_color_image_loc
   xmax_color_image = xmax_color_image_loc
   zmin_color_image = zmin_color_image_loc
@@ -1102,7 +1086,7 @@ end if
 
 ! compute number of pixels in the vertical direction based on ratio of sizes
   NZ_IMAGE_color = nint(NX_IMAGE_color * (zmax_color_image - zmin_color_image) / (xmax_color_image - xmin_color_image))
- 
+
 ! convert pixel sizes to even numbers because easier to reduce size, create MPEG movies in postprocessing
   NX_IMAGE_color = 2 * (NX_IMAGE_color / 2)
   NZ_IMAGE_color = 2 * (NZ_IMAGE_color / 2)
@@ -1110,10 +1094,10 @@ end if
 ! check that image size is not too big
   if ( NX_IMAGE_color > 99999 ) then
       call exit_MPI('output image too big : NX_IMAGE_color > 99999.')
-  end if 
+  end if
   if ( NZ_IMAGE_color > 99999 ) then
       call exit_MPI('output image too big : NZ_IMAGE_color > 99999.')
-  end if 
+  end if
 
 ! allocate an array for image data
   allocate(image_color_data(NX_IMAGE_color,NZ_IMAGE_color))
@@ -1134,24 +1118,24 @@ end if
 ! cheking which pixels are inside each elements
   nb_pixel_loc = 0
   do ispec = 1, nspec
-     
+
      do k = 1, 4
         elmnt_coords(1,k) = coorg(1,knods(k,ispec))
         elmnt_coords(2,k) = coorg(2,knods(k,ispec))
 
      end do
-     
+
 ! avoid working on the whole pixel grid
      min_i = floor(minval((elmnt_coords(1,:) - xmin_color_image))/size_pixel_horizontal) + 1
      max_i = ceiling(maxval((elmnt_coords(1,:) - xmin_color_image))/size_pixel_horizontal) + 1
      min_j = floor(minval((elmnt_coords(2,:) - zmin_color_image))/size_pixel_vertical) + 1
      max_j = ceiling(maxval((elmnt_coords(2,:) - zmin_color_image))/size_pixel_vertical) + 1
-          
+
      do j = min_j, max_j
         do i = min_i, max_i
            i_coord = (i-1)*size_pixel_horizontal + xmin_color_image
            j_coord = (j-1)*size_pixel_vertical + zmin_color_image
-          
+
 ! checking if the pixel is inside the element (must be a convex quadrilateral)
            call is_in_convex_quadrilateral( elmnt_coords, i_coord, j_coord, pixel_is_in)
 
@@ -1165,46 +1149,46 @@ end if
                     if (dist_pixel < dist_min_pixel) then
                        dist_min_pixel = dist_pixel
                        iglob_image_color(i,j) = iglob
-                       
+
                     end if
-                    
+
                  end do
               end do
               if ( dist_min_pixel >= HUGEVAL ) then
                  call exit_MPI('Error in detecting pixel for color image')
-                 
+
               end if
               nb_pixel_loc = nb_pixel_loc + 1
-              
+
            end if
-           
+
         end do
      end do
   end do
 
 ! creating and filling array num_pixel_loc with the positions of each colored pixel owned by the local process (useful for parallel jobs)
   allocate(num_pixel_loc(nb_pixel_loc))
-  
+
   nb_pixel_loc = 0
   do i = 1, NX_IMAGE_color
      do j = 1, NZ_IMAGE_color
         if ( iglob_image_color(i,j) /= -1 ) then
            nb_pixel_loc = nb_pixel_loc + 1
            num_pixel_loc(nb_pixel_loc) = (j-1)*NX_IMAGE_color + i
-           
+
         end if
-        
+
      end do
   end do
-  
+
 
 
 ! filling array iglob_image_color, containing info on which process owns which pixels.
 #ifdef USE_MPI
   allocate(nb_pixel_per_proc(nproc))
-  
-  call MPI_GATHER( nb_pixel_loc, 1, MPI_INTEGER, nb_pixel_per_proc(1), 1, MPI_INTEGER, 0, MPI_COMM_WORLD, ier) 
-  
+
+  call MPI_GATHER( nb_pixel_loc, 1, MPI_INTEGER, nb_pixel_per_proc(1), 1, MPI_INTEGER, 0, MPI_COMM_WORLD, ier)
+
   if ( myrank == 0 ) then
      allocate(num_pixel_recv(maxval(nb_pixel_per_proc(:)),nproc))
      allocate(data_pixel_recv(maxval(nb_pixel_per_proc(:))))
@@ -1213,7 +1197,7 @@ end if
   allocate(data_pixel_send(nb_pixel_loc))
   if ( nproc > 1 ) then
      if ( myrank == 0 ) then
-        
+
         do iproc = 1, nproc-1
 
            call MPI_RECV(num_pixel_recv(1,iproc+1),nb_pixel_per_proc(iproc+1), MPI_INTEGER, &
@@ -1222,13 +1206,13 @@ end if
               j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
               i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
               iglob_image_color(i,j) = iproc
-              
+
            end do
         end do
-        
+
      else
         call MPI_SEND(num_pixel_loc(1),nb_pixel_loc,MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
-        
+
      end if
 
   end if
@@ -1337,11 +1321,11 @@ end if
       write(55,*) sngl(time),sngl(source_time_function(it)),sngl(time-t0)
       endif
    enddo
-      
+
       if ( myrank == 0 ) then
     close(55)
       endif
-      
+
     source_time_function(:) = source_time_function(:) / nb_proc_source
 
   else
@@ -1355,7 +1339,7 @@ end if
   coupled_acoustic_elastic = any_acoustic .and. any_elastic
 
 ! fluid/solid edge detection
-! the two elements (fluid and solid) forming an edge are already known (computed in meshfem2D), 
+! the two elements (fluid and solid) forming an edge are already known (computed in meshfem2D),
 ! the common nodes forming the edge are computed here
   if(coupled_acoustic_elastic) then
     print *
@@ -1438,7 +1422,7 @@ end if
        endif
 
     enddo
-   
+
 
     !if(num_fluid_solid_edges /= num_fluid_solid_edges_alloc) call exit_MPI('error in creation of arrays for fluid/solid matching')
 
@@ -1487,19 +1471,6 @@ end if
 
 
   endif
-  
-! default values for acoustic absorbing edges
-!!$  ibegin_bottom(:) = 1
-!!$  ibegin_top(:) = 1
-!!$
-!!$  iend_bottom(:) = NGLLX
-!!$  iend_top(:) = NGLLX
-!!$
-!!$  jbegin_left(:) = 1
-!!$  jbegin_right(:) = 1
-!!$
-!!$  jend_left(:) = NGLLZ
-!!$  jend_right(:) = NGLLZ
 
 ! exclude common points between acoustic absorbing edges and acoustic/elastic matching interfaces
   if(coupled_acoustic_elastic .and. anyabs) then
@@ -1520,7 +1491,7 @@ end if
 
 ! if acoustic absorbing element and acoustic/elastic coupled element is the same
         if(ispec_acoustic == ispec) then
-           
+
            if(iedge_acoustic == IBOTTOM) then
             jbegin_left(ispecabs) = 2
             jbegin_right(ispecabs) = 2
@@ -1549,6 +1520,12 @@ end if
 
   endif
 
+#ifdef USE_MPI
+  if(OUTPUT_ELASTIC_ENERGY) stop 'energy calculation only serial right now, should add an MPI_REDUCE in parallel'
+#endif
+! open the file in which we will store the energy curve
+  if(OUTPUT_ELASTIC_ENERGY) open(unit=IENERGY,file='energy.gnu',status='unknown')
+
 !
 !----          s t a r t   t i m e   i t e r a t i o n s
 !
@@ -1575,7 +1552,7 @@ end if
 ! *********************************************************
 
   do it = 1,NSTEP
-     
+
 ! compute current time
     time = (it-1)*deltat
 
@@ -1699,7 +1676,7 @@ end if
            tab_requests_send_recv_acoustic, &
            buffer_send_faces_vector_acoustic, &
            buffer_recv_faces_vector_acoustic &
-           )      
+           )
    end if
 #endif
 
@@ -1718,7 +1695,7 @@ end if
                 potential_acoustic,acoustic_surface, &
                 ibool,nelem_acoustic_surface,npoin,nspec)
   endif
- 
+
 ! *********************************************************
 ! ************* main solver for the elastic elements
 ! *********************************************************
@@ -1825,7 +1802,7 @@ end if
      tab_requests_send_recv_elastic, &
      buffer_send_faces_vector_elastic, &
      buffer_recv_faces_vector_elastic &
-     )    
+     )
   end if
 #endif
 
@@ -1840,6 +1817,13 @@ end if
     veloc_elastic = veloc_elastic + deltatover2*accel_elastic
   endif
 
+!----  compute kinetic and potential energy
+!
+  if(OUTPUT_ELASTIC_ENERGY) &
+     call compute_elastic_energy(displ_elastic,veloc_elastic, &
+         xix,xiz,gammax,gammaz,jacobian,ibool,elastic,hprime_xx,hprime_zz, &
+         nspec,npoin,assign_external_model,it,deltat,t0,kmato,elastcoef,density, &
+         vpext,vsext,rhoext,wxgll,wzgll,numat)
 
 !----  display time step and max of norm of displacement
   if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5) then
@@ -1870,9 +1854,9 @@ end if
 
 ! loop on all the receivers to compute and store the seismograms
   do irecloc = 1,nrecloc
-     
+
      irec = recloc(irecloc)
-     
+
     ispec = ispec_selected_rec(irec)
 
 ! compute pressure in this element if needed
@@ -2078,64 +2062,64 @@ end if
   endif
 
   image_color_data(:,:) = 0.d0
-  
+
   do k = 1, nb_pixel_loc
      j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
      i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
      image_color_data(i,j) = vector_field_display(2,iglob_image_color(i,j))
-     
+
   end do
-  
+
 ! assembling array image_color_data on process zero for color output
-#ifdef USE_MPI  
+#ifdef USE_MPI
   if ( nproc > 1 ) then
      if ( myrank == 0 ) then
-        
+
         do iproc = 1, nproc-1
 
            call MPI_RECV(data_pixel_recv(1),nb_pixel_per_proc(iproc+1), MPI_DOUBLE_PRECISION, &
                 iproc, 43, MPI_COMM_WORLD, request_mpi_status, ier)
-           
+
            do k = 1, nb_pixel_per_proc(iproc+1)
               j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
               i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
               image_color_data(i,j) = data_pixel_recv(k)
-              
+
            end do
         end do
-        
+
      else
         do k = 1, nb_pixel_loc
            j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
            i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
            data_pixel_send(k) = vector_field_display(2,iglob_image_color(i,j))
-           
+
         end do
-        
+
         call MPI_SEND(data_pixel_send(1),nb_pixel_loc,MPI_DOUBLE_PRECISION, 0, 43, MPI_COMM_WORLD, ier)
-        
+
      end if
   end if
 !  call MPI_BARRIER(MPI_COMM_WORLD, ier)
 
-#endif  
+#endif
 
 
   if ( myrank == 0 ) then
      call create_color_image(image_color_data,iglob_image_color,NX_IMAGE_color,NZ_IMAGE_color,it,cutsnaps)
-  
+
      write(IOUT,*) 'Color image created'
-  
+
   end if
 
   endif
-  
+
 !----  save temporary or final seismograms
   if ( it == NSTEP ) then
      call write_seismograms(sisux,sisuz,station_name,network_name,NSTEP, &
           nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,it,t0)
   end if
-  
+
 ! count elapsed wall-clock time
   call date_and_time(datein,timein,zone,time_values)
 ! time_values(3): day of the month
@@ -2161,6 +2145,18 @@ end if
   endif
 
   enddo ! end of the main time loop
+
+!----  close energy file and create a gnuplot script to display it
+  if(OUTPUT_ELASTIC_ENERGY) then
+    close(IENERGY)
+    open(unit=IENERGY,file='plotenergy',status='unknown')
+    write(IENERGY,*) 'set term postscript landscape color solid "Helvetica" 22'
+    write(IENERGY,*) 'set output "energy.ps"'
+    write(IENERGY,*) 'set xlabel "Time (s)"'
+    write(IENERGY,*) 'set ylabel "Energy (J)"'
+    write(IENERGY,*) 'plot "energy.gnu" us 1:4 t ''Total Energy'' w l 1, "energy.gnu" us 1:3 t ''Potential Energy'' w l 2'
+    close(IENERGY)
+  endif
 
 ! print exit banner
   call datim(simulation_title)
@@ -2244,17 +2240,17 @@ end program specfem2D
 
 
 subroutine is_in_convex_quadrilateral ( elmnt_coords, x_coord, z_coord, is_in)
-  
+
   implicit none
-  
+
   double precision, dimension(2,4)  :: elmnt_coords
-  double precision, intent(in)  :: x_coord, z_coord 
+  double precision, intent(in)  :: x_coord, z_coord
   logical, intent(out)  :: is_in
-  
+
   real :: x1, x2, x3, x4, z1, z2, z3, z4
   real  :: normal1, normal2, normal3, normal4
 
-  
+
   x1 = elmnt_coords(1,1)
   x2 = elmnt_coords(1,2)
   x3 = elmnt_coords(1,3)
@@ -2271,11 +2267,10 @@ subroutine is_in_convex_quadrilateral ( elmnt_coords, x_coord, z_coord, is_in)
 
   if ( (normal1 < 0) .or. (normal2 < 0) .or. (normal3 < 0) .or. (normal4 < 0)  ) then
      is_in = .false.
-     !print *, 'normal', normal1, normal2, normal3, normal4
   else
      is_in = .true.
   end if
-  
-  
-  
+
+
+
 end subroutine is_in_convex_quadrilateral

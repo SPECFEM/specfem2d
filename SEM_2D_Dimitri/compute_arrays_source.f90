@@ -22,7 +22,6 @@
   integer nspec
 
   double precision xi_source,gamma_source
-!!!!!!!!!!!!!!!!!  double precision Mxx,Myy,Mzz,Mxy,Mxz,Myz
   double precision Mxx,Mzz,Mxz
 
   double precision, dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
