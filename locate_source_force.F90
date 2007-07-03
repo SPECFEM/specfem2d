@@ -39,7 +39,7 @@
 
   integer  :: ierror
 
-
+  ierror = 0
   is_proc_source = 0
 
   distminmax = -HUGEVAL
