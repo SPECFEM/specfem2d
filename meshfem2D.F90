@@ -75,6 +75,7 @@ program meshfem2D
   integer imaterial_number,inumelem
   integer nelemabs,nelem_acoustic_surface,npgeo,nspec
   integer ix,iz,irec,i,j
+  integer icol, ili, istepx, istepz
   integer ixdebregion,ixfinregion,izdebregion,izfinregion
   integer iregion,imaterial,nbregion,nb_materials
   integer NTSTEP_BETWEEN_OUTPUT_INFO,pointsdisp,subsamp,seismotype,imagetype
@@ -818,64 +819,66 @@ program meshfem2D
 ! *** create a Gnuplot file that displays the grid
 ! ***
 
-!!$  print *
-!!$  print *,'Saving the grid in Gnuplot format...'
-!!$
-!!$  open(unit=20,file='OUTPUT_FILES/gridfile.gnu',status='unknown')
-!!$
-!!$! draw horizontal lines of the grid
-!!$  print *,'drawing horizontal lines of the grid'
-!!$  istepx = 1
-!!$  if(ngnod == 4) then
-!!$    istepz = 1
-!!$  else
-!!$    istepz = 2
-!!$  endif
-!!$  do ili=0,nz,istepz
-!!$    do icol=0,nx-istepx,istepx
-!!$      write(20,*) sngl(x(icol,ili)),sngl(z(icol,ili))
-!!$      write(20,*) sngl(x(icol+istepx,ili)),sngl(z(icol+istepx,ili))
-!!$      write(20,10)
-!!$    enddo
-!!$  enddo
-!!$
-!!$! draw vertical lines of the grid
-!!$  print *,'drawing vertical lines of the grid'
-!!$  if(ngnod == 4) then
-!!$    istepx = 1
-!!$  else
-!!$    istepx = 2
-!!$  endif
-!!$  istepz = 1
-!!$  do icol=0,nx,istepx
-!!$    do ili=0,nz-istepz,istepz
-!!$      write(20,*) sngl(x(icol,ili)),sngl(z(icol,ili))
-!!$      write(20,*) sngl(x(icol,ili+istepz)),sngl(z(icol,ili+istepz))
-!!$      write(20,10)
-!!$    enddo
-!!$  enddo
-!!$
-!!$ 10 format('')
-!!$
-!!$  close(20)
-!!$
-!!$! create a Gnuplot script to display the grid
-!!$  open(unit=20,file='OUTPUT_FILES/plotgnu',status='unknown')
-!!$  write(20,*) '#set term X11'
-!!$  write(20,*) 'set term postscript landscape monochrome solid "Helvetica" 22'
-!!$  write(20,*) 'set output "grid.ps"'
-!!$  write(20,*) '#set xrange [',sngl(minval(x)),':',sngl(maxval(x)),']'
-!!$  write(20,*) '#set yrange [',sngl(minval(z)),':',sngl(maxval(z)),']'
-!!$! use same unit length on both X and Y axes
-!!$  write(20,*) 'set size ratio -1'
-!!$  write(20,*) 'plot "gridfile.gnu" title "Macrobloc mesh" w l'
-!!$  write(20,*) 'pause -1 "Hit any key..."'
-!!$  close(20)
-!!$
-!!$  print *,'Grid saved in Gnuplot format...'
-!!$  print *
-  
-   
+  if ( .not. read_external_mesh ) then
+  print *
+  print *,'Saving the grid in Gnuplot format...'
+
+  open(unit=20,file='OUTPUT_FILES/gridfile.gnu',status='unknown')
+
+! draw horizontal lines of the grid
+  print *,'drawing horizontal lines of the grid'
+  istepx = 1
+  if(ngnod == 4) then
+    istepz = 1
+  else
+    istepz = 2
+  endif
+  do ili=0,nz,istepz
+    do icol=0,nx-istepx,istepx
+      write(20,*) sngl(x(icol,ili)),sngl(z(icol,ili))
+      write(20,*) sngl(x(icol+istepx,ili)),sngl(z(icol+istepx,ili))
+      write(20,10)
+    enddo
+  enddo
+
+! draw vertical lines of the grid
+  print *,'drawing vertical lines of the grid'
+  if(ngnod == 4) then
+    istepx = 1
+  else
+    istepx = 2
+  endif
+  istepz = 1
+  do icol=0,nx,istepx
+    do ili=0,nz-istepz,istepz
+      write(20,*) sngl(x(icol,ili)),sngl(z(icol,ili))
+      write(20,*) sngl(x(icol,ili+istepz)),sngl(z(icol,ili+istepz))
+      write(20,10)
+    enddo
+  enddo
+
+ 10 format('')
+
+  close(20)
+
+! create a Gnuplot script to display the grid
+  open(unit=20,file='OUTPUT_FILES/plotgnu',status='unknown')
+  write(20,*) '#set term X11'
+  write(20,*) 'set term postscript landscape monochrome solid "Helvetica" 22'
+  write(20,*) 'set output "grid.ps"'
+  write(20,*) '#set xrange [',sngl(minval(x)),':',sngl(maxval(x)),']'
+  write(20,*) '#set yrange [',sngl(minval(z)),':',sngl(maxval(z)),']'
+! use same unit length on both X and Y axes
+  write(20,*) 'set size ratio -1'
+  write(20,*) 'plot "gridfile.gnu" title "Macrobloc mesh" w l'
+  write(20,*) 'pause -1 "Hit any key..."'
+  close(20)
+
+  print *,'Grid saved in Gnuplot format...'
+  print *
+  end if
+     
+
   !*****************************
   ! Partitionning
   !*****************************
