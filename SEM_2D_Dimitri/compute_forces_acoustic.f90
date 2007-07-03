@@ -91,8 +91,8 @@
 ! first double loop over GLL points to compute and store gradients
 ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
-            dux_dxi = dux_dxi + potential_acoustic(ibool(k,j,ispec))*hprime_xx(k,i)
-            dux_dgamma = dux_dgamma + potential_acoustic(ibool(i,k,ispec))*hprime_zz(k,j)
+            dux_dxi = dux_dxi + potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
+            dux_dgamma = dux_dgamma + potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
           enddo
 
           xixl = xix(i,j,ispec)
@@ -126,7 +126,7 @@
 ! and assemble the contributions
           do k = 1,NGLLX
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
-                           (tempx1(k,j)*hprimewgll_xx(i,k) + tempx2(i,k)*hprimewgll_zz(j,k))
+                           (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
           enddo
 
         enddo ! second loop over the GLL points
