@@ -50,11 +50,11 @@
   double precision x,z,xix,xiz,gammax,gammaz,jacobian
 
 ! use dynamic allocation
-  double precision distmin, dist_glob
+  double precision distmin
   double precision, dimension(:), allocatable :: final_distance
 
 ! receiver information
-  integer  :: nrecloc, is_proc_receiver, nb_proc_receiver
+  integer  :: nrecloc
   integer, dimension(nrec) :: ispec_selected_rec, recloc
   double precision, dimension(nrec) :: xi_receiver,gamma_receiver
 
@@ -71,6 +71,8 @@
   integer, dimension(nrec), intent(inout)  :: which_proc_receiver
   integer  :: ierror
   
+
+  ierror = 0
 
 ! **************
 

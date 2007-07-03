@@ -35,7 +35,7 @@
 !--- local variables
 !---
 
-  integer :: ispec_acoustic_surface,ispec,iedge,i,j,iglob
+  integer :: ispec_acoustic_surface,ispec,i,j,iglob
   
   do ispec_acoustic_surface = 1, nelem_acoustic_surface
      

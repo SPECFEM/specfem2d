@@ -115,7 +115,7 @@
 ! pressure in an element
   double precision, dimension(NGLLX,NGLLX) :: pressure_element
 
-  integer :: i,j,k,l,it,irec,ipoin,ip,id,nbpoin,inump,n,ispec,iedge,npoin,npgeo,iglob
+  integer :: i,j,k,l,it,irec,ipoin,ip,id,nbpoin,inump,n,ispec,npoin,npgeo,iglob
   logical :: anyabs
   double precision :: dxd,dzd,valux,valuz,hlagrange,rhol,cosrot,sinrot,xi,gamma,x,z
 
@@ -153,7 +153,7 @@
 
   integer, dimension(:,:,:), allocatable :: ibool
   integer, dimension(:,:), allocatable  :: knods
-  integer, dimension(:), allocatable :: kmato,numabs,ispecnum_acoustic_surface,iedgenum_acoustic_surface, &
+  integer, dimension(:), allocatable :: kmato,numabs, &
      ibegin_bottom,iend_bottom,ibegin_top,iend_top,jbegin_left,jend_left,jbegin_right,jend_right
 
   integer ispec_selected_source,iglob_source,ix_source,iz_source,is_proc_source,nb_proc_source
@@ -173,7 +173,7 @@
   double precision :: cutsnaps,sizemax_arrows,anglerec,xirec,gammarec
 
 ! for absorbing and acoustic free surface conditions
-  integer :: ispec_acoustic_surface,inum,numabsread,numacoustread,iedgeacoustread
+  integer :: ispec_acoustic_surface,inum,numabsread
   logical :: codeabsread(4)
   double precision :: nx,nz,weight,xxi,zgamma
 
@@ -193,13 +193,13 @@
   integer, dimension(NGLLX,NEDGES) :: ivalue,jvalue,ivalue_inverse,jvalue_inverse
   integer, dimension(:), allocatable :: fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
                                         fluid_solid_elastic_ispec,fluid_solid_elastic_iedge
-  integer :: num_fluid_solid_edges,num_fluid_solid_edges_alloc,ispec_acoustic,ispec_elastic, &
+  integer :: num_fluid_solid_edges,ispec_acoustic,ispec_elastic, &
              iedge_acoustic,iedge_elastic,ipoin1D,iglob2
   logical :: any_acoustic,any_elastic,coupled_acoustic_elastic
   double precision :: displ_x,displ_z,displ_n,zxi,xgamma,jacobian1D,pressure
 
 ! for color images
-  integer :: NX_IMAGE_color,NZ_IMAGE_color,iplus1,jplus1,iminus1,jminus1,count_passes
+  integer :: NX_IMAGE_color,NZ_IMAGE_color
   integer  :: npgeo_glob
   double precision :: xmin_color_image,xmax_color_image, &
     zmin_color_image,zmax_color_image,size_pixel_horizontal,size_pixel_vertical
@@ -263,13 +263,15 @@
   integer  :: ninterface_acoustic, ninterface_elastic
   integer, dimension(:), allocatable  :: inum_interfaces_acoustic, inum_interfaces_elastic
 
-  double precision, dimension(:,:), allocatable  :: buffer_send_faces_vector_acoustic
-  double precision, dimension(:,:), allocatable  :: buffer_recv_faces_vector_acoustic
+#ifdef USE_MPI
+  double precision, dimension(:,:), allocatable  :: buffer_send_faces_vector_ac
+  double precision, dimension(:,:), allocatable  :: buffer_recv_faces_vector_ac
   integer, dimension(:), allocatable  :: tab_requests_send_recv_acoustic
-  double precision, dimension(:,:), allocatable  :: buffer_send_faces_vector_elastic
-  double precision, dimension(:,:), allocatable  :: buffer_recv_faces_vector_elastic
+  double precision, dimension(:,:), allocatable  :: buffer_send_faces_vector_el
+  double precision, dimension(:,:), allocatable  :: buffer_recv_faces_vector_el
   integer, dimension(:), allocatable  :: tab_requests_send_recv_elastic
-  integer  :: max_ibool_interfaces_size_acoustic, max_ibool_interfaces_size_elastic
+  integer  :: max_ibool_interfaces_size_ac, max_ibool_interfaces_size_el
+#endif
 
   integer, dimension(:,:), allocatable  :: acoustic_surface
   integer, dimension(:,:), allocatable  :: acoustic_edges
@@ -283,7 +285,6 @@
   integer  :: nrecloc, irecloc
   integer, dimension(:), allocatable :: recloc, which_proc_receiver
 
-  character(len=256)  :: filename
 
 !***********************************************************************
 !
@@ -299,6 +300,10 @@
 #else
   nproc = 1
   myrank = 0
+  ier = 0
+  ninterface_acoustic = 0
+  ninterface_elastic = 0
+  iproc = 0
 
 #endif
 
@@ -836,8 +841,7 @@
                 do i = acoustic_surface(2,ispec_acoustic_surface), acoustic_surface(3,ispec_acoustic_surface)
                    iglob = ibool(i,j,ispec)
                    if ( iglob_source == iglob ) then
-                      call exit_MPI('an acoustic source cannot be located exactly on the free surface &
-                      & because pressure is zero there')
+ call exit_MPI('an acoustic source cannot be located exactly on the free surface because pressure is zero there')
                    end if
                 end do
              end do
@@ -895,8 +899,7 @@
                 (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
                 gamma_receiver(irec) > 0.99d0 .and. xi_receiver(irec) > 0.99d0) ) then
               if(seismotype == 4) then
-                 call exit_MPI('an acoustic pressure receiver cannot be located exactly on the free &
-                 & surface because pressure is zero there')
+call exit_MPI('an acoustic pressure receiver cannot be located exactly on the free surface because pressure is zero there')
               else
                  print *, '**********************************************************************'
                  print *, '*** Warning: acoustic receiver located exactly on the free surface ***'
@@ -977,53 +980,53 @@
 #ifdef USE_MPI
   if ( nproc > 1 ) then
 ! preparing for MPI communications
-     call prepare_assemble_MPI (myrank,nspec,ibool, &
+     call prepare_assemble_MPI (nspec,ibool, &
           knods, ngnod, &
           npoin, elastic, &
           ninterface, max_interface_size, &
-          my_neighbours, my_nelmnts_neighbours, my_interfaces, &
+          my_nelmnts_neighbours, my_interfaces, &
           ibool_interfaces_acoustic, ibool_interfaces_elastic, &
           nibool_interfaces_acoustic, nibool_interfaces_elastic, &
           inum_interfaces_acoustic, inum_interfaces_elastic, &
           ninterface_acoustic, ninterface_elastic &
           )
 
-  max_ibool_interfaces_size_acoustic = maxval(nibool_interfaces_acoustic(:))
-  max_ibool_interfaces_size_elastic = NDIM*maxval(nibool_interfaces_elastic(:))
+  max_ibool_interfaces_size_ac = maxval(nibool_interfaces_acoustic(:))
+  max_ibool_interfaces_size_el = NDIM*maxval(nibool_interfaces_elastic(:))
   allocate(tab_requests_send_recv_acoustic(ninterface_acoustic*2))
-  allocate(buffer_send_faces_vector_acoustic(max_ibool_interfaces_size_acoustic,ninterface_acoustic))
-  allocate(buffer_recv_faces_vector_acoustic(max_ibool_interfaces_size_acoustic,ninterface_acoustic))
+  allocate(buffer_send_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic))
+  allocate(buffer_recv_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic))
   allocate(tab_requests_send_recv_elastic(ninterface_elastic*2))
-  allocate(buffer_send_faces_vector_elastic(max_ibool_interfaces_size_elastic,ninterface_elastic))
-  allocate(buffer_recv_faces_vector_elastic(max_ibool_interfaces_size_elastic,ninterface_elastic))
+  allocate(buffer_send_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic))
+  allocate(buffer_recv_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic))
 
 ! creating mpi non-blocking persistent communications for acoustic elements
-  call create_MPI_requests_SEND_RECV_acoustic(myrank, &
+  call create_MPI_requests_SEND_RECV_acoustic( &
      ninterface, ninterface_acoustic, &
      nibool_interfaces_acoustic, &
      my_neighbours, &
-     max_ibool_interfaces_size_acoustic, &
-     buffer_send_faces_vector_acoustic, &
-     buffer_recv_faces_vector_acoustic, &
+     max_ibool_interfaces_size_ac, &
+     buffer_send_faces_vector_ac, &
+     buffer_recv_faces_vector_ac, &
      tab_requests_send_recv_acoustic, &
      inum_interfaces_acoustic &
      )
 
 ! creating mpi non-blocking persistent communications for elastic elements
-  call create_MPI_requests_SEND_RECV_elastic(myrank, &
+  call create_MPI_requests_SEND_RECV_elastic( &
      ninterface, ninterface_elastic, &
      nibool_interfaces_elastic, &
      my_neighbours, &
-     max_ibool_interfaces_size_elastic, &
-     buffer_send_faces_vector_elastic, &
-     buffer_recv_faces_vector_elastic, &
+     max_ibool_interfaces_size_el, &
+     buffer_send_faces_vector_el, &
+     buffer_recv_faces_vector_el, &
      tab_requests_send_recv_elastic, &
      inum_interfaces_elastic &
      )
 
 ! assembling the mass matrix
   call assemble_MPI_scalar(myrank,rmass_inverse_acoustic, rmass_inverse_elastic,npoin, &
-     ninterface, max_interface_size, max_ibool_interfaces_size_acoustic, max_ibool_interfaces_size_elastic, &
+     ninterface, max_interface_size, max_ibool_interfaces_size_ac, max_ibool_interfaces_size_el, &
      ibool_interfaces_acoustic,ibool_interfaces_elastic, nibool_interfaces_acoustic,nibool_interfaces_elastic, my_neighbours)
 end if
 
@@ -1166,7 +1169,8 @@ end if
      end do
   end do
 
-! creating and filling array num_pixel_loc with the positions of each colored pixel owned by the local process (useful for parallel jobs)
+! creating and filling array num_pixel_loc with the positions of each colored 
+! pixel owned by the local process (useful for parallel jobs)
   allocate(num_pixel_loc(nb_pixel_loc))
 
   nb_pixel_loc = 0
@@ -1216,6 +1220,15 @@ end if
      end if
 
   end if
+#else
+   allocate(nb_pixel_per_proc(1))
+   deallocate(nb_pixel_per_proc)
+   allocate(num_pixel_recv(1,1))
+   deallocate(num_pixel_recv)
+   allocate(data_pixel_recv(1))
+   deallocate(data_pixel_recv)
+   allocate(data_pixel_send(1))
+   deallocate(data_pixel_send)
 #endif
 
   write(IOUT,*) 'done locating all the pixels of color images'
@@ -1423,8 +1436,6 @@ end if
 
     enddo
 
-
-    !if(num_fluid_solid_edges /= num_fluid_solid_edges_alloc) call exit_MPI('error in creation of arrays for fluid/solid matching')
 
 ! make sure fluid/solid matching has been perfectly detected: check that the grid points
 ! have the same physical coordinates
@@ -1659,23 +1670,21 @@ end if
 ! assembling potential_dot_dot for acoustic elements
 #ifdef USE_MPI
    if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
-      call assemble_MPI_vector_acoustic_start(myrank,potential_dot_dot_acoustic,npoin, &
+      call assemble_MPI_vector_acoustic_start(potential_dot_dot_acoustic,npoin, &
            ninterface, ninterface_acoustic, &
            inum_interfaces_acoustic, &
-           max_interface_size, max_ibool_interfaces_size_acoustic,&
+           max_interface_size, max_ibool_interfaces_size_ac,&
            ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
            tab_requests_send_recv_acoustic, &
-           buffer_send_faces_vector_acoustic, &
-           buffer_recv_faces_vector_acoustic &
+           buffer_send_faces_vector_ac &
            )
-      call assemble_MPI_vector_acoustic_wait(myrank,potential_dot_dot_acoustic,npoin, &
+      call assemble_MPI_vector_acoustic_wait(potential_dot_dot_acoustic,npoin, &
            ninterface, ninterface_acoustic, &
            inum_interfaces_acoustic, &
-           max_interface_size, max_ibool_interfaces_size_acoustic,&
+           max_interface_size, max_ibool_interfaces_size_ac,&
            ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
            tab_requests_send_recv_acoustic, &
-           buffer_send_faces_vector_acoustic, &
-           buffer_recv_faces_vector_acoustic &
+           buffer_recv_faces_vector_ac &
            )
    end if
 #endif
@@ -1785,23 +1794,21 @@ end if
 ! assembling accel_elastic for elastic elements
 #ifdef USE_MPI
  if ( nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
-    call assemble_MPI_vector_elastic_start(myrank,accel_elastic,npoin, &
+    call assemble_MPI_vector_elastic_start(accel_elastic,npoin, &
      ninterface, ninterface_elastic, &
      inum_interfaces_elastic, &
-     max_interface_size, max_ibool_interfaces_size_elastic,&
+     max_interface_size, max_ibool_interfaces_size_el,&
      ibool_interfaces_elastic, nibool_interfaces_elastic, &
      tab_requests_send_recv_elastic, &
-     buffer_send_faces_vector_elastic, &
-     buffer_recv_faces_vector_elastic &
+     buffer_send_faces_vector_el &
      )
-    call assemble_MPI_vector_elastic_wait(myrank,accel_elastic,npoin, &
+    call assemble_MPI_vector_elastic_wait(accel_elastic,npoin, &
      ninterface, ninterface_elastic, &
      inum_interfaces_elastic, &
-     max_interface_size, max_ibool_interfaces_size_elastic,&
+     max_interface_size, max_ibool_interfaces_size_el,&
      ibool_interfaces_elastic, nibool_interfaces_elastic, &
      tab_requests_send_recv_elastic, &
-     buffer_send_faces_vector_elastic, &
-     buffer_recv_faces_vector_elastic &
+     buffer_recv_faces_vector_el &
      )
   end if
 #endif
