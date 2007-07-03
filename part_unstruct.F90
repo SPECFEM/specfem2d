@@ -468,8 +468,6 @@ contains
     allocate(tab_size_interfaces(0:ninterfaces))
     tab_size_interfaces(:) = 0
 
-!    print *, 'num_interface', ninterfaces
-
     num_interface = 0
     num_edge = 0
 
@@ -489,14 +487,12 @@ contains
                       is_acoustic_el_adj = .false.
                    end if
                    if ( (part(adjncy(el_adj)) == num_part_bis) .and. (is_acoustic_el .eqv. is_acoustic_el_adj) ) then
-                   !if ( (part(adjncy(el_adj)) == num_part_bis) ) then
                       num_edge = num_edge + 1
 
                    end if
                 end do
              end if
           end do
-!          print *, 'num_interface', num_interface
           tab_size_interfaces(num_interface+1) = tab_size_interfaces(num_interface) + num_edge 
           num_edge = 0
           num_interface = num_interface + 1
@@ -526,7 +522,6 @@ contains
                       is_acoustic_el_adj = .false.
                    end if
                    if ( (part(adjncy(el_adj)) == num_part_bis) .and. (is_acoustic_el .eqv. is_acoustic_el_adj) ) then
-                   !if ( (part(adjncy(el_adj)) == num_part_bis) ) then
                       tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+0) = el
                       tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+1) = adjncy(el_adj)
                       ncommon_nodes = 0
@@ -542,7 +537,7 @@ contains
                       if ( ncommon_nodes > 0 ) then
                          tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+2) = ncommon_nodes
                       else 
-                         print *, "Erreur lors de la construction des interfaces!!!", ncommon_nodes
+                         print *, "Error while building interfaces!", ncommon_nodes
                       end if
                       num_edge = num_edge + 1
                    end if
@@ -930,7 +925,6 @@ contains
              nb_elmnts_abs = nb_elmnts_abs + 1
              match = nb_elmnts_abs
           end if
-          !print *, 'match', num_edge,match
 
           abs_surface_merge(match) = abs_surface(1,num_edge)
           
@@ -1018,133 +1012,6 @@ contains
        iend_top(:) = NGLLX
        jend_left(:) = NGLLZ
 
-
-!!$       do num_edge = 1, nedge_bound
-!!$          do num_edge_bis = 1, nedge_bound
-!!$             
-!!$              modified_edge = 0
-!!$              
-!!$              if ( abs_surface(1,num_edge) /= abs_surface(1,num_edge_bis) ) then 
-!!$
-!!$                 vect_product = ( (nodes_coords(1,abs_surface(4,num_edge)+1) - nodes_coords(1,abs_surface(3,num_edge)+1) ) &
-!!$                      * (nodes_coords(2,abs_surface(4,num_edge_bis)+1) - nodes_coords(2,abs_surface(3,num_edge_bis)+1) ) &
-!!$                      - (nodes_coords(2,abs_surface(4,num_edge)+1) - nodes_coords(2,abs_surface(3,num_edge)+1) ) &
-!!$                      * (nodes_coords(1,abs_surface(4,num_edge_bis)+1) - nodes_coords(1,abs_surface(3,num_edge_bis)+1) ) )
-!!$                 if ( abs(vect_product) > TINYVAL*1000000 ) then
-!!$                 !if ( abs(vect_product) > 10 ) then
-!!$                    
-!!$                    if ( abs_surface(3,num_edge) == abs_surface(3,num_edge_bis) ) then
-!!$                       common_node = abs_surface(3,num_edge)
-!!$                       if ( abs_surface(1,num_edge) < abs_surface(1,num_edge_bis) ) then
-!!$                          modified_edge_elmnt = abs_surface(1,num_edge_bis)
-!!$                          other_node = abs_surface(4,num_edge_bis)
-!!$                          modified_edge = num_edge_bis
-!!$                       else
-!!$                          modified_edge_elmnt = abs_surface(1,num_edge)
-!!$                          other_node = abs_surface(4,num_edge)
-!!$                          modified_edge = num_edge
-!!$                       end if
-!!$                    end if
-!!$                    
-!!$                    if ( abs_surface(3,num_edge) == abs_surface(4,num_edge_bis) ) then
-!!$                       common_node = abs_surface(3,num_edge)
-!!$                       if ( abs_surface(1,num_edge) < abs_surface(1,num_edge_bis) ) then
-!!$                          modified_edge_elmnt = abs_surface(1,num_edge_bis)
-!!$                          other_node = abs_surface(3,num_edge_bis)
-!!$                          modified_edge = num_edge_bis
-!!$                       else
-!!$                          modified_edge_elmnt = abs_surface(1,num_edge)
-!!$                          other_node = abs_surface(4,num_edge)
-!!$                          modified_edge = num_edge
-!!$                       end if
-!!$                    end if
-!!$                    
-!!$                    if ( abs_surface(4,num_edge) == abs_surface(3,num_edge_bis) ) then
-!!$                       common_node = abs_surface(4,num_edge)
-!!$                       if ( abs_surface(1,num_edge) < abs_surface(1,num_edge_bis) ) then
-!!$                          modified_edge_elmnt = abs_surface(1,num_edge_bis)
-!!$                          other_node = abs_surface(4,num_edge_bis)
-!!$                          modified_edge = num_edge_bis
-!!$                       else
-!!$                          modified_edge_elmnt = abs_surface(1,num_edge)
-!!$                          other_node = abs_surface(3,num_edge)
-!!$                          modified_edge = num_edge
-!!$                       end if
-!!$                    end if
-!!$                    
-!!$                    if ( abs_surface(4,num_edge) == abs_surface(4,num_edge_bis) ) then
-!!$                       common_node = abs_surface(4,num_edge)
-!!$                       if ( abs_surface(1,num_edge) < abs_surface(1,num_edge_bis) ) then
-!!$                          modified_edge_elmnt = abs_surface(1,num_edge_bis)
-!!$                          other_node = abs_surface(3,num_edge_bis)
-!!$                          modified_edge = num_edge_bis
-!!$                       else
-!!$                          modified_edge_elmnt = abs_surface(1,num_edge)
-!!$                          other_node = abs_surface(3,num_edge)
-!!$                          modified_edge = num_edge
-!!$                       end if
-!!$                       
-!!$                    end if
-!!$                                       
-!!$
-!!$                    if ( modified_edge /= 0 ) then
-!!$                       print *, 'SSSSSSS',  nodes_coords(1,common_node+1), nodes_coords(2,common_node+1), &
-!!$                            common_node, modified_edge, modified_edge_elmnt, other_node
-!!$                       match = 0
-!!$                       do i = 1, nelemabs_merge
-!!$                          if ( abs_surface(1,modified_edge) == abs_surface_merge(i) ) then
-!!$                             match = i
-!!$                             exit
-!!$                          end if
-!!$                       end do
-!!$                       
-!!$                       if ( abs_surface(3,modified_edge) == elmnts(ngnod*abs_surface_merge(match)+0) .and. &
-!!$                            abs_surface(4,modified_edge) == elmnts(ngnod*abs_surface_merge(match)+1) )  then
-!!$                          if ( common_node == abs_surface(3,modified_edge) ) then
-!!$                             ibegin_bottom(match) = 2
-!!$                          else
-!!$                             iend_bottom(match) = NGLLX - 1 
-!!$                          end if
-!!$                       end if
-!!$                       
-!!$                       if ( abs_surface(3,modified_edge) == elmnts(ngnod*abs_surface_merge(match)+1) .and. &
-!!$                            abs_surface(4,modified_edge) == elmnts(ngnod*abs_surface_merge(match)+2) )  then
-!!$                          if ( common_node == abs_surface(3,modified_edge) ) then
-!!$                             jbegin_right(match) = 2
-!!$                          else
-!!$                             jend_right(match) = NGLLZ - 1 
-!!$                          end if
-!!$                       end if
-!!$                       
-!!$                       if ( abs_surface(3,modified_edge) == elmnts(ngnod*abs_surface_merge(match)+3) .and. &
-!!$                            abs_surface(4,modified_edge) == elmnts(ngnod*abs_surface_merge(match)+2) )  then
-!!$                          if ( common_node == abs_surface(3,modified_edge) ) then
-!!$                             ibegin_top(match) = 2
-!!$                          else
-!!$                             iend_top(match) = NGLLX - 1 
-!!$                          end if
-!!$                       end if
-!!$                       
-!!$                       if ( abs_surface(3,modified_edge) == elmnts(ngnod*abs_surface_merge(match)+0) .and. &
-!!$                            abs_surface(4,modified_edge) == elmnts(ngnod*abs_surface_merge(match)+3) )  then
-!!$                          if ( common_node == abs_surface(3,modified_edge) ) then
-!!$                             jbegin_left(match) = 2
-!!$                          else
-!!$                             jend_left(match) = NGLLZ - 1 
-!!$                          end if
-!!$                       end if
-!!$                       
-!!$                    end if
-!!$
-!!$                 end if
-!!$
-!!$              end if
-!!$              
-!!$           end do
-!!$           
-!!$        end do
-
-        
         is_acoustic(:) = .false.
         do i = 1, nb_materials
            if (cs_material(i) < TINYVAL) then
@@ -1375,7 +1242,6 @@ contains
          xadj (0), xadj (0), &
          xadj (0), xadj (0), &
          nedges, &
-       !  adjncy (0), adjncy (0), IERR) 
          adjncy (0), adjwgt (0), IERR) 
     IF (IERR .NE. 0) THEN
        PRINT *, 'ERROR : MAIN : Cannot build graph'

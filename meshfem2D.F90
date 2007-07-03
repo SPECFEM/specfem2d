@@ -347,7 +347,6 @@ program meshfem2D
         end do
         
      end if
-     !nnodes = (nx+1) * (nz+1)
   end if
 
 ! read absorbing boundaries parameters
@@ -873,20 +872,12 @@ program meshfem2D
 !!$  print *,'Grid saved in Gnuplot format...'
 !!$  print *
   
-  
    
   !*****************************
   ! Partitionning
   !*****************************
   allocate(part(0:nelmnts-1))
 
-!!$  if ( nproc == 1 ) then
-!!$     ! There is only one process; no need for partitionning
-!!$     call mesh2dual_ncommonnodes(nelmnts, nnodes, elmnts, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
-!!$     part(:) = 0
-!!$     
-!!$  else
- 
 ! if ngnod == 9, we work on a subarray of elmnts, which represents the elements with for nodes only
 ! construction of the graph
   if ( ngnod == 9 ) then
@@ -1066,9 +1057,6 @@ program meshfem2D
      write(15,*) nb_materials,ngnod,nspec,pointsdisp,plot_lowerleft_corner_only
 
      
-     !call Write_surface_database(15, nelemabs, abs_surface, nelemabs_loc, &
-     !     nproc, iproc, glob2loc_elmnts, &
-     !    glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes, part, 1)   
      if ( any_abs ) then
         call write_abs_merge_database(15, nelemabs_merge, nelemabs_loc, &
              abs_surface_char, abs_surface_merge, &
@@ -1122,9 +1110,6 @@ program meshfem2D
      
 
      write(15,*) 'List of absorbing elements (bottom right top left):'
-     !call Write_surface_database(15, nelemabs, abs_surface, nelemabs_loc, &
-     !     nproc, iproc, glob2loc_elmnts, &
-     !     glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes, part, 2)
      if ( any_abs ) then
         call write_abs_merge_database(15, nelemabs_merge, nelemabs_loc, &
              abs_surface_char, abs_surface_merge, &
