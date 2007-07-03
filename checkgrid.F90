@@ -27,7 +27,10 @@
 ! color palette
   integer, parameter :: NUM_COLORS = 236
   double precision, dimension(NUM_COLORS) :: red,green,blue
+
+#ifdef USE_MPI
   integer  :: icol
+#endif
 
   integer i,j,ispec,material,npoin,nspec,numat,time_function_type
 
@@ -58,10 +61,13 @@
   double precision :: xmax,zmax,height,usoffset,sizex,sizez,courant_stability_number
   double precision :: x1,z1,x2,z2,ratio_page,xmin,zmin,lambdaS_local,lambdaP_local
 
+#ifdef USE_MPI
   double precision  :: vpmin_glob,vpmax_glob,vsmin_glob,vsmax_glob,densmin_glob,densmax_glob
   double precision  :: distance_min_glob,distance_max_glob
-  double precision  :: courant_stability_number_max_glob,lambdaPmin_glob,lambdaPmax_glob,lambdaSmin_glob,lambdaSmax_glob
+  double precision  :: courant_stability_max_glob,lambdaPmin_glob,lambdaPmax_glob,lambdaSmin_glob,lambdaSmax_glob
   double precision  :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
+#endif
+
   logical  :: any_elastic_glob
   double precision, dimension(2,nspec*5)  :: coorg_send
   double precision, dimension(:,:), allocatable  :: coorg_recv
@@ -85,8 +91,22 @@
 
   double precision coorg(NDIM,npgeo)
 
+
 ! title of the plot
   character(len=60) simulation_title
+
+#ifndef USE_MPI
+  allocate(coorg_recv(1,1))
+  allocate(RGB_recv(1))
+  allocate(greyscale_recv(1))
+  nspec_recv = 0
+  ier = 0
+  iproc = nproc
+  deallocate(coorg_recv)
+  deallocate(RGB_recv)
+  deallocate(greyscale_recv)
+#endif
+
 
 ! define percentage of smallest distance between GLL points for NGLLX points
 ! percentages were computed by calling the GLL points routine for each degree
@@ -1402,7 +1422,7 @@
   call MPI_ALLREDUCE (densmax, densmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE (distance_min, distance_min_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE (distance_max, distance_max_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (courant_stability_number_max, courant_stability_number_max_glob, 1, MPI_DOUBLE_PRECISION, &
+  call MPI_ALLREDUCE (courant_stability_number_max, courant_stability_max_glob, 1, MPI_DOUBLE_PRECISION, &
        MPI_MAX, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE (lambdaPmin, lambdaPmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE (lambdaPmax, lambdaPmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
@@ -1417,7 +1437,7 @@
   densmax = densmax_glob
   distance_min = distance_min_glob
   distance_max = distance_max_glob
-  courant_stability_number_max = courant_stability_number_max_glob
+  courant_stability_number_max = courant_stability_max_glob
   lambdaPmin = lambdaPmin_glob
   lambdaPmax = lambdaPmax_glob
   lambdaSmin = lambdaSmin_glob
@@ -1812,6 +1832,7 @@
      call MPI_SEND (RGB_send, nspec, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
 
   end if
+
 #endif
 
  if ( myrank == 0 ) then
