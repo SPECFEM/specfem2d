@@ -766,13 +766,12 @@ contains
   ! Write a surface (elements and nodes on the surface) pertaining to iproc partition in the corresponding Database
   !--------------------------------------------------
  subroutine Write_surface_database(IIN_database, nsurface, surface, &
-      nsurface_loc, nparts, iproc, glob2loc_elmnts, &
+      nsurface_loc, iproc, glob2loc_elmnts, &
       glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes, part, num_phase)
     
     
    integer, intent(in)  :: IIN_database
    integer, intent(in)  :: iproc
-   integer, intent(in)  :: nparts
    integer  :: nsurface
    integer  :: nsurface_loc
    integer, dimension(:,:), pointer  :: surface
@@ -788,9 +787,8 @@ contains
    integer  :: local_elmnt
    integer  :: num_phase
    
-   integer  :: i, j, k, l
-   integer  :: num_surface
-   
+   integer  :: i, l
+
    
    
    if ( num_phase == 1 ) then 
@@ -861,7 +859,6 @@ contains
      subroutine merge_abs_boundaries(nelemabs, nelemabs_merge, abs_surface, abs_surface_char, abs_surface_merge, &
           ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
           jbegin_left,jend_left,jbegin_right,jend_right, &
-          nodes_coords, &
           nedges_coupled, edges_coupled, nb_materials, cs_material, num_material, &
           nelmnts, &
           elmnts, ngnod)
@@ -879,7 +876,6 @@ contains
        integer, intent(in)  :: ngnod
        integer, dimension(:), pointer  :: ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
             jbegin_left,jend_left,jbegin_right,jend_right
-       double precision, dimension(:,:), pointer  :: nodes_coords
        integer  :: nedges_coupled
        integer, dimension(:,:), pointer  :: edges_coupled
        integer  :: nb_materials
@@ -890,15 +886,10 @@ contains
 
        logical, dimension(nb_materials)  :: is_acoustic
        integer  :: num_edge, nedge_bound
-       integer  :: num_edge_bis
        integer  :: match
        integer  :: nb_elmnts_abs
        integer  :: i
        integer  :: temp
-       integer  :: common_node, other_node
-       integer  :: modified_edge_elmnt
-       integer  :: modified_edge
-       double precision  :: vect_product
        integer  :: iedge, inode1, inode2
        
        
@@ -1307,8 +1298,6 @@ subroutine acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_material
   logical  :: is_repartitioned
   
 
-  integer  :: aaa
-
 
   is_acoustic(:) = .false.
   do i = 1, nb_materials
@@ -1379,7 +1368,7 @@ end subroutine acoustic_elastic_repartitioning
   ! pertaining to iproc partition in the corresponding Database
   !--------------------------------------------------     
 subroutine write_fluidsolid_edges_database(IIN_database, nedges_coupled, nedges_coupled_loc, &
-     edges_coupled, glob2loc_elmnts, nelmnts,part, iproc, num_phase)
+     edges_coupled, glob2loc_elmnts, part, iproc, num_phase)
        
   implicit none
   
@@ -1388,7 +1377,6 @@ subroutine write_fluidsolid_edges_database(IIN_database, nedges_coupled, nedges_
   integer, intent(inout)  :: nedges_coupled_loc
   integer, dimension(:,:), pointer  :: edges_coupled
   integer, dimension(:), pointer  :: glob2loc_elmnts
-  integer, intent(in)  :: nelmnts
   integer, dimension(:), pointer  :: part
   integer, intent(in)  :: iproc
   integer, intent(in)  :: num_phase
