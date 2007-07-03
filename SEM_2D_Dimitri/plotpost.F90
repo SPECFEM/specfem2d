@@ -94,8 +94,11 @@
   integer  :: nelem_acoustic_surface
   integer, dimension(4,nelem_acoustic_surface)  :: acoustic_edges
 
+#ifdef USE_MPI
   double precision  :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
   double precision  :: dispmax_glob
+#endif
+
   double precision, dimension(:,:), allocatable  :: coorg_send
   double precision, dimension(:,:), allocatable  :: coorg_recv
   integer, dimension(:), allocatable  :: color_send
@@ -114,7 +117,20 @@
 #endif
   integer  :: myrank, nproc
 
-
+#ifndef USE_MPI
+  allocate(coorg_recv(1,1))
+  allocate(color_recv(1))
+  allocate(RGB_recv(1,1))
+  nspec_recv = 0
+  nb_coorg_per_elem = 0
+  nb_color_per_elem = 0
+  ier = 0
+  num_spec = 0
+  iproc = nproc
+  deallocate(coorg_recv)
+  deallocate(color_recv)
+  deallocate(RGB_recv)
+#endif
 
 ! A4 or US letter paper
   if(US_LETTER) then

@@ -52,17 +52,22 @@
   integer, intent(in)  :: nproc, myrank
   double precision xi_source,gamma_source
 
+#ifdef USE_MPI
   integer, dimension(1:nproc)  :: allgather_is_proc_source
   integer, dimension(1)  :: locate_is_proc_source
   integer  :: ierror
+#endif
+
+
 
 ! **************
-
+  if ( myrank == 0 .or. nproc == 1 ) then
   write(IOUT,*)
   write(IOUT,*) '*******************************'
   write(IOUT,*) ' locating moment-tensor source'
   write(IOUT,*) '*******************************'
   write(IOUT,*)
+  end if 
 
 ! set distance to huge initial value
   distmin=HUGEVAL

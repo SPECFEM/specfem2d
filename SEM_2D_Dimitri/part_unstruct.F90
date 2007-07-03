@@ -1206,11 +1206,10 @@ contains
     character(len=256), intent(in)  :: scotch_strategy
     integer  :: IERR
 
-    integer  :: wgtflag
-    integer, dimension(0:4) :: options
-    integer  :: num_start
-
     
+    edgecut = vwgt(0)
+    edgecut = 0
+
     call scotchfstratinit (SCOTCHSTRAT(1), IERR)
      IF (IERR .NE. 0) THEN
        PRINT *, 'ERROR : MAIN : Cannot initialize strat'

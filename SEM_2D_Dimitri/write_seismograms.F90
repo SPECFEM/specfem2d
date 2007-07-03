@@ -36,7 +36,7 @@
   character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name
 
-  integer irec,irecord,length_station_name,length_network_name,iorientation,isample,number_of_components
+  integer irec,length_station_name,length_network_name,iorientation,isample,number_of_components
 
   character(len=4) chn
   character(len=1) component
@@ -50,8 +50,9 @@
 
   
   integer  :: irecloc
-  integer  :: ierror
+
 #ifdef USE_MPI
+  integer  :: ierror
   integer, dimension(MPI_STATUS_SIZE)  :: status
 #endif
 

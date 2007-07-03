@@ -1,8 +1,8 @@
-subroutine prepare_assemble_MPI (myrank,nspec,ibool, &
+subroutine prepare_assemble_MPI (nspec,ibool, &
      knods, ngnod, & 
      npoin, elastic, &
      ninterface, max_interface_size, &
-     my_neighbours, my_nelmnts_neighbours, my_interfaces, &
+     my_nelmnts_neighbours, my_interfaces, &
      ibool_interfaces_acoustic, ibool_interfaces_elastic, &
      nibool_interfaces_acoustic, nibool_interfaces_elastic, &
      inum_interfaces_acoustic, inum_interfaces_elastic, &
@@ -14,14 +14,13 @@ subroutine prepare_assemble_MPI (myrank,nspec,ibool, &
   include 'constants.h'
   
 
-  integer, intent(in)  :: nspec, myrank, npoin, ngnod
+  integer, intent(in)  :: nspec, npoin, ngnod
   logical, dimension(nspec), intent(in)  :: elastic
   integer, dimension(ngnod,nspec), intent(in)  :: knods
   integer, dimension(NGLLX,NGLLZ,nspec), intent(in)  :: ibool
 
   integer  :: ninterface
   integer  :: max_interface_size
-  integer, dimension(ninterface)  :: my_neighbours
   integer, dimension(ninterface)  :: my_nelmnts_neighbours
   integer, dimension(4,max_interface_size,ninterface)  :: my_interfaces
   integer, dimension(NGLLX*max_interface_size,ninterface)  :: &
@@ -37,7 +36,6 @@ subroutine prepare_assemble_MPI (myrank,nspec,ibool, &
   integer  :: num_interface
   integer  :: ispec_interface
 
-  logical, dimension(nspec)  :: ispec_is_inner
   logical, dimension(npoin)  :: mask_ibool_acoustic
   logical, dimension(npoin)  :: mask_ibool_elastic
 
@@ -53,8 +51,7 @@ subroutine prepare_assemble_MPI (myrank,nspec,ibool, &
   integer  :: npoin_interface_elastic
 
   integer  :: ix,iz
-  integer  :: ier
-
+ 
   integer  :: sens
 
   
@@ -229,7 +226,7 @@ end subroutine get_edge
 
 #ifdef USE_MPI
 
-subroutine create_MPI_requests_SEND_RECV_acoustic(myrank, &
+subroutine create_MPI_requests_SEND_RECV_acoustic( &
      ninterface, ninterface_acoustic, &
      nibool_interfaces_acoustic, &
      my_neighbours, &
@@ -246,7 +243,6 @@ subroutine create_MPI_requests_SEND_RECV_acoustic(myrank, &
   include 'mpif.h'
   
 
-  integer, intent(in)  :: myrank
   integer, intent(in)  :: ninterface, ninterface_acoustic
   integer, dimension(ninterface), intent(in)  :: inum_interfaces_acoustic
   integer, intent(in)  :: max_ibool_interfaces_size_acoustic
@@ -282,7 +278,7 @@ end subroutine create_MPI_requests_SEND_RECV_acoustic
 
 
 
-subroutine create_MPI_requests_SEND_RECV_elastic(myrank, &
+subroutine create_MPI_requests_SEND_RECV_elastic( &
      ninterface, ninterface_elastic, &
      nibool_interfaces_elastic, &
      my_neighbours, &
@@ -299,7 +295,6 @@ subroutine create_MPI_requests_SEND_RECV_elastic(myrank, &
   include 'mpif.h'
   
 
-  integer, intent(in)  :: myrank
   integer, intent(in)  :: ninterface, ninterface_elastic
   integer, dimension(ninterface), intent(in)  :: inum_interfaces_elastic
   integer, intent(in)  :: max_ibool_interfaces_size_elastic
@@ -423,14 +418,13 @@ end subroutine assemble_MPI_scalar
 
 
 
-subroutine assemble_MPI_vector_acoustic_start(myrank,array_val1,npoin, &
+subroutine assemble_MPI_vector_acoustic_start(array_val1,npoin, &
      ninterface, ninterface_acoustic, &
      inum_interfaces_acoustic, &
      max_interface_size, max_ibool_interfaces_size_acoustic,&
      ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
      tab_requests_send_recv_acoustic, &
-     buffer_send_faces_vector_acoustic, &
-     buffer_recv_faces_vector_acoustic &
+     buffer_send_faces_vector_acoustic &
      )
 
   implicit none
@@ -443,7 +437,6 @@ subroutine assemble_MPI_vector_acoustic_start(myrank,array_val1,npoin, &
   double precision, dimension(npoin), intent(in) :: array_val1
 
 
-  integer, intent(in)  :: myrank
   integer, intent(in)  :: npoin
   integer, intent(in)  :: ninterface, ninterface_acoustic
   integer, dimension(ninterface), intent(in)  :: inum_interfaces_acoustic
@@ -453,12 +446,11 @@ subroutine assemble_MPI_vector_acoustic_start(myrank,array_val1,npoin, &
   integer, dimension(ninterface), intent(in)  :: nibool_interfaces_acoustic
   integer, dimension(ninterface_acoustic*2), intent(inout)  :: tab_requests_send_recv_acoustic
   double precision, dimension(max_ibool_interfaces_size_acoustic,ninterface_acoustic), intent(inout)  :: &
-       buffer_send_faces_vector_acoustic, buffer_recv_faces_vector_acoustic
+       buffer_send_faces_vector_acoustic
 
   integer  :: ipoin, num_interface, inum_interface
   integer  :: ier
-  integer, dimension(MPI_STATUS_SIZE,ninterface_acoustic*2)  :: tab_statuses_acoustic
-
+ 
   integer  :: i
 
 
@@ -489,14 +481,13 @@ end subroutine assemble_MPI_vector_acoustic_start
 
 
 
-subroutine assemble_MPI_vector_elastic_start(myrank,array_val2,npoin, &
+subroutine assemble_MPI_vector_elastic_start(array_val2,npoin, &
      ninterface, ninterface_elastic, &
      inum_interfaces_elastic, &
      max_interface_size, max_ibool_interfaces_size_elastic,&
      ibool_interfaces_elastic, nibool_interfaces_elastic, &
      tab_requests_send_recv_elastic, &
-     buffer_send_faces_vector_elastic, &
-     buffer_recv_faces_vector_elastic &
+     buffer_send_faces_vector_elastic &
      )
 
   implicit none
@@ -509,7 +500,6 @@ subroutine assemble_MPI_vector_elastic_start(myrank,array_val2,npoin, &
   double precision, dimension(NDIM,npoin), intent(in) :: array_val2
 
 
-  integer, intent(in)  :: myrank
   integer, intent(in)  :: npoin
   integer, intent(in)  :: ninterface, ninterface_elastic
   integer, dimension(ninterface), intent(in)  :: inum_interfaces_elastic
@@ -519,13 +509,12 @@ subroutine assemble_MPI_vector_elastic_start(myrank,array_val2,npoin, &
   integer, dimension(ninterface), intent(in)  :: nibool_interfaces_elastic
   integer, dimension(ninterface_elastic*2), intent(inout)  :: tab_requests_send_recv_elastic
   double precision, dimension(max_ibool_interfaces_size_elastic,ninterface_elastic), intent(inout)  :: &
-       buffer_send_faces_vector_elastic, buffer_recv_faces_vector_elastic
+       buffer_send_faces_vector_elastic
   
 
 
   integer  :: ipoin, num_interface, inum_interface
   integer  :: ier
-  integer, dimension(MPI_STATUS_SIZE,ninterface_elastic)  :: tab_statuses_elastic
 
   integer  :: i
 
@@ -558,13 +547,12 @@ end subroutine assemble_MPI_vector_elastic_start
 
 
 
-subroutine assemble_MPI_vector_acoustic_wait(myrank,array_val1,npoin, &
+subroutine assemble_MPI_vector_acoustic_wait(array_val1,npoin, &
      ninterface, ninterface_acoustic, &
      inum_interfaces_acoustic, &
      max_interface_size, max_ibool_interfaces_size_acoustic,&
      ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
      tab_requests_send_recv_acoustic, &
-     buffer_send_faces_vector_acoustic, &
      buffer_recv_faces_vector_acoustic &
      )
 
@@ -578,7 +566,6 @@ subroutine assemble_MPI_vector_acoustic_wait(myrank,array_val1,npoin, &
   double precision, dimension(npoin), intent(inout) :: array_val1
 
 
-  integer, intent(in)  :: myrank
   integer, intent(in)  :: npoin
   integer, intent(in)  :: ninterface, ninterface_acoustic
   integer, dimension(ninterface), intent(in)  :: inum_interfaces_acoustic
@@ -588,7 +575,7 @@ subroutine assemble_MPI_vector_acoustic_wait(myrank,array_val1,npoin, &
   integer, dimension(ninterface), intent(in)  :: nibool_interfaces_acoustic
   integer, dimension(ninterface_acoustic*2), intent(inout)  :: tab_requests_send_recv_acoustic
   double precision, dimension(max_ibool_interfaces_size_acoustic,ninterface_acoustic), intent(inout)  :: &
-       buffer_send_faces_vector_acoustic, buffer_recv_faces_vector_acoustic
+       buffer_recv_faces_vector_acoustic
 
   integer  :: ipoin, num_interface, inum_interface
   integer  :: ier
@@ -620,13 +607,12 @@ end subroutine assemble_MPI_vector_acoustic_wait
 
 
 
-subroutine assemble_MPI_vector_elastic_wait(myrank,array_val2,npoin, &
+subroutine assemble_MPI_vector_elastic_wait(array_val2,npoin, &
      ninterface, ninterface_elastic, &
      inum_interfaces_elastic, &
      max_interface_size, max_ibool_interfaces_size_elastic,&
      ibool_interfaces_elastic, nibool_interfaces_elastic, &
      tab_requests_send_recv_elastic, &
-     buffer_send_faces_vector_elastic, &
      buffer_recv_faces_vector_elastic &
      )
 
@@ -640,7 +626,6 @@ subroutine assemble_MPI_vector_elastic_wait(myrank,array_val2,npoin, &
   double precision, dimension(NDIM,npoin), intent(inout) :: array_val2
 
 
-  integer, intent(in)  :: myrank
   integer, intent(in)  :: npoin
   integer, intent(in)  :: ninterface, ninterface_elastic
   integer, dimension(ninterface), intent(in)  :: inum_interfaces_elastic
@@ -650,7 +635,7 @@ subroutine assemble_MPI_vector_elastic_wait(myrank,array_val2,npoin, &
   integer, dimension(ninterface), intent(in)  :: nibool_interfaces_elastic
   integer, dimension(ninterface_elastic*2), intent(inout)  :: tab_requests_send_recv_elastic
   double precision, dimension(max_ibool_interfaces_size_elastic,ninterface_elastic), intent(inout)  :: &
-       buffer_send_faces_vector_elastic, buffer_recv_faces_vector_elastic
+       buffer_recv_faces_vector_elastic
 
   integer  :: ipoin, num_interface, inum_interface
   integer  :: ier
@@ -696,12 +681,11 @@ subroutine exit_MPI(error_msg)
   ! identifier for error message file
   integer, parameter :: IERROR = 30
 
-  integer myrank
   character(len=*) error_msg
 
   integer ier
-  character(len=80) outputname
 
+  ier = 0
 
   ! write error message to screen
   write(*,*) error_msg(1:len(error_msg))
