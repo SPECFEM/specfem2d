@@ -892,21 +892,26 @@ program meshfem2D
         elmnts_bis(i*esize:i*esize+esize-1) = elmnts(i*ngnod:i*ngnod+esize-1)
      end do
         
+     if ( nproc > 1 ) then
      call mesh2dual_ncommonnodes(nelmnts, (nxread+1)*(nzread+1), elmnts_bis, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
+     end if
      
   else
+     if ( nproc > 1 ) then
      call mesh2dual_ncommonnodes(nelmnts, nnodes, elmnts, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
+     end if
      
   end if
      
-  nb_edges = xadj(nelmnts)
- 
-! giving weight to edges and vertices. Currently not used.
-  call read_weights(nelmnts, vwgt, nb_edges, adjwgt)
      
   if ( nproc == 1 ) then
       part(:) = 0
   else
+
+  nb_edges = xadj(nelmnts)
+ 
+! giving weight to edges and vertices. Currently not used.
+  call read_weights(nelmnts, vwgt, nb_edges, adjwgt)
 
 ! partitioning
      select case (partitionning_method)
@@ -951,8 +956,10 @@ program meshfem2D
   call Construct_glob2loc_elmnts(nelmnts, part, nproc, glob2loc_elmnts)
   
   if ( ngnod == 9 ) then
+     if ( nproc > 1 ) then
      deallocate(nnodes_elmnts)
      deallocate(nodes_elmnts)
+     end if 
      allocate(nnodes_elmnts(0:nnodes-1))
      allocate(nodes_elmnts(0:nsize*nnodes-1))
      nnodes_elmnts(:) = 0
@@ -962,7 +969,22 @@ program meshfem2D
         nnodes_elmnts(elmnts(i)) = nnodes_elmnts(elmnts(i)) + 1
         
      end do
+  else
+     if ( nproc < 2 ) then
+     allocate(nnodes_elmnts(0:nnodes-1))
+     allocate(nodes_elmnts(0:nsize*nnodes-1))
+     nnodes_elmnts(:) = 0
+     nodes_elmnts(:) = 0
+     do i = 0, ngnod*nelmnts-1
+        nodes_elmnts(elmnts(i)*nsize+nnodes_elmnts(elmnts(i))) = i/ngnod
+        nnodes_elmnts(elmnts(i)) = nnodes_elmnts(elmnts(i)) + 1
+        
+     end do
+
+     end if 
+
   end if
+  
   
 ! local number of each node for each partition
   call Construct_glob2loc_nodes(nelmnts, nnodes, nnodes_elmnts, nodes_elmnts, part, nproc, &
