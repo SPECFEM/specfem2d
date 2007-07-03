@@ -2197,9 +2197,6 @@
 !
 !--- draw free surface with a thick color line
 !
-#ifdef USE_MPI
-!  call MPI_ALLREDUCE(anyabs, anyabs_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
-#endif
 
   if ( myrank == 0 ) then
   write(24,*) '%'
@@ -2223,26 +2220,6 @@
   do inum = 1,nelem_acoustic_surface
   ispec = acoustic_edges(1,inum)
 
-!!$  do iedge = 1,4
-!!$
-!!$  if(codeabs(iedge,inum) /= 0) then
-!!$
-!!$  if(iedge == ITOP) then
-!!$    ideb = 3
-!!$    ifin = 4
-!!$  else if(iedge == IBOTTOM) then
-!!$    ideb = 1
-!!$    ifin = 2
-!!$  else if(iedge == ILEFT) then
-!!$    ideb = 4
-!!$    ifin = 1
-!!$  else if(iedge == IRIGHT) then
-!!$    ideb = 2
-!!$    ifin = 3
-!!$  else
-!!$    call exit_MPI('Wrong absorbing boundary code')
-!!$  endif
-
   x1 = (coorg(1,acoustic_edges(3,inum))-xmin)*ratio_page + orig_x
   z1 = (coorg(2,acoustic_edges(3,inum))-zmin)*ratio_page + orig_z
   x2 = (coorg(1,acoustic_edges(4,inum))-xmin)*ratio_page + orig_x
@@ -2260,9 +2237,6 @@
      coorg_send(3,buffer_offset) = x2
      coorg_send(4,buffer_offset) = z2
   end if
-
-!!$  endif
-!!$  enddo
 
   enddo
   end if

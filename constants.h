@@ -4,6 +4,11 @@
 ! the code does NOT work if NGLLZ /= NGLLX because it then cannot handle a non-structured mesh
   integer, parameter :: NGLLZ = NGLLX
 
+! compute and output elastic energy (slows down the code significantly)
+  logical, parameter :: OUTPUT_ELASTIC_ENERGY = .false.
+! output file for energy
+  integer, parameter :: IENERGY = 77
+
 ! select fast (Paul Fischer) or slow (topology only) global numbering algorithm
   logical, parameter :: FAST_NUMBERING = .true.
 

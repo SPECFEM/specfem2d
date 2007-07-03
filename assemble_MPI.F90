@@ -19,13 +19,6 @@ subroutine prepare_assemble_MPI (myrank,nspec,ibool, &
   integer, dimension(ngnod,nspec), intent(in)  :: knods
   integer, dimension(NGLLX,NGLLZ,nspec), intent(in)  :: ibool
 
-  !integer, dimension(nspec)  :: inner_to_glob_ispec
-  !integer, dimension(nspec)  :: interface_to_glob_ispec
-
-  !integer, intent(inout)  :: nspec_inner_known
-  !integer, intent(inout)  :: nspec_interface_known
-
-
   integer  :: ninterface
   integer  :: max_interface_size
   integer, dimension(ninterface)  :: my_neighbours
@@ -129,33 +122,6 @@ subroutine prepare_assemble_MPI (myrank,nspec,ibool, &
      end if
   end do
 
-
-!!$  nspec_inner_known = 0
-!!$  do ispec = 1, nspec
-!!$     if ( ispec_is_inner(ispec) ) then
-!!$        nspec_inner_known = nspec_inner_known + 1
-!!$     end if
-!!$  end do
- 
-  !allocate(inner_to_glob_ispec(nspec_inner_known))
-  !allocate(interface_to_glob_ispec(nspec-nspec_inner_known))
-  
-
-
-!!$  nspec_inner_known = 0
-!!$  nspec_interface_known = 0
-!!$  do ispec = 1, nspec
-!!$     if ( ispec_is_inner(ispec) ) then 
-!!$        nspec_inner_known = nspec_inner_known + 1
-!!$        inner_to_glob_ispec(nspec_inner_known) = ispec
-!!$     else
-!!$        nspec_interface_known = nspec_interface_known + 1
-!!$        interface_to_glob_ispec(nspec_interface_known) = ispec
-!!$     end if
-!!$
-!!$  end do
-
-  
 end subroutine prepare_assemble_MPI
 
 
