@@ -121,7 +121,7 @@
 ! derivative along x
         tempx1l = ZERO
         do k = 1,NGLLX
-          hp1 = hprime_xx(k,i)
+          hp1 = hprime_xx(i,k)
           iglob = ibool(k,j,ispec)
           tempx1l = tempx1l + potential_acoustic(iglob)*hp1
         enddo
@@ -129,7 +129,7 @@
 ! derivative along z
         tempx2l = ZERO
         do k = 1,NGLLZ
-          hp2 = hprime_zz(k,j)
+          hp2 = hprime_zz(j,k)
           iglob = ibool(i,k,ispec)
           tempx2l = tempx2l + potential_acoustic(iglob)*hp2
         enddo

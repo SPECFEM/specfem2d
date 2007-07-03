@@ -125,10 +125,10 @@
 ! first double loop over GLL points to compute and store gradients
 ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
-            dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(k,i)
-            duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(k,i)
-            dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(k,j)
-            duz_dgamma = duz_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(k,j)
+            dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
+            duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+            dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
+            duz_dgamma = duz_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
           enddo
 
           xixl = xix(i,j,ispec)
@@ -215,8 +215,8 @@
 ! and assemble the contributions
 ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
-            accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tempx1(k,j)*hprimewgll_xx(i,k) + tempx2(i,k)*hprimewgll_zz(j,k))
-            accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tempz1(k,j)*hprimewgll_xx(i,k) + tempz2(i,k)*hprimewgll_zz(j,k))
+            accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
+            accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tempz1(k,j)*hprimewgll_xx(k,i) + tempz2(i,k)*hprimewgll_zz(k,j))
           enddo
 
         enddo ! second loop over the GLL points
