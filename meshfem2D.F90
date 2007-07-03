@@ -74,7 +74,7 @@ program meshfem2D
 
   integer imaterial_number,inumelem
   integer nelemabs,nelem_acoustic_surface,npgeo,nspec
-  integer k,icol,ili,istepx,istepz,ix,iz,irec,i,j
+  integer ix,iz,irec,i,j
   integer ixdebregion,ixfinregion,izdebregion,izfinregion
   integer iregion,imaterial,nbregion,nb_materials
   integer NTSTEP_BETWEEN_OUTPUT_INFO,pointsdisp,subsamp,seismotype,imagetype
@@ -83,7 +83,7 @@ program meshfem2D
 
   integer, dimension(:), allocatable :: nrec
 
-  logical codetop,codebottom,codeleft,coderight,output_postscript_snapshot,output_color_image,plot_lowerleft_corner_only
+  logical output_postscript_snapshot,output_color_image,plot_lowerleft_corner_only
 
   double precision tang1,tangN,vpregion,vsregion,poisson_ratio
   double precision cutsnaps,sizemax_arrows,anglerec,xmin,xmax,deltat
@@ -164,7 +164,10 @@ program meshfem2D
   integer, dimension(0:4)  :: metis_options
   character(len=256)  :: prname
 
+#if defined USE_METIS || defined USE_SCOTCH
   integer  :: edgecut
+#endif
+
   integer  :: iproc
 
 
@@ -982,7 +985,6 @@ program meshfem2D
      call merge_abs_boundaries(nelemabs, nelemabs_merge, abs_surface, abs_surface_char, abs_surface_merge, &
           ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
           jbegin_left,jend_left,jbegin_right,jend_right, &
-          nodes_coords, &
           nedges_coupled, edges_coupled, nb_materials, cs, num_material, &
           nelmnts, &
           elmnts, ngnod)
@@ -1068,12 +1070,12 @@ program meshfem2D
      end if
           
      call Write_surface_database(15, nelem_acoustic_surface, acoustic_surface, nelem_acoustic_surface_loc, &
-          nproc, iproc, glob2loc_elmnts, &
+          iproc, glob2loc_elmnts, &
           glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes, part, 1)
      
 
      call write_fluidsolid_edges_database(15, nedges_coupled, nedges_coupled_loc, &
-          edges_coupled, glob2loc_elmnts, nelmnts, part, iproc, 1)
+          edges_coupled, glob2loc_elmnts, part, iproc, 1)
      
      write(15,*) 'nelemabs nelem_acoustic_surface num_fluid_solid_edges'
      write(15,*) nelemabs_loc,nelem_acoustic_surface_loc,nedges_coupled_loc
@@ -1120,13 +1122,13 @@ program meshfem2D
      
      write(15,*) 'List of acoustic free-surface elements:'
      call Write_surface_database(15, nelem_acoustic_surface, acoustic_surface, nelem_acoustic_surface_loc, &
-          nproc, iproc, glob2loc_elmnts, &
+          iproc, glob2loc_elmnts, &
           glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes, part, 2)
      
 
      write(15,*) 'List of acoustic elastic coupled edges:'
      call write_fluidsolid_edges_database(15, nedges_coupled, nedges_coupled_loc, &
-          edges_coupled, glob2loc_elmnts, nelmnts, part, iproc, 2)
+          edges_coupled, glob2loc_elmnts, part, iproc, 2)
   end do
   
   
