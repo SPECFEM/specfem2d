@@ -50,10 +50,6 @@
       ilowz = 1
       ihighx = NGLLX
       ihighz = NGLLZ
-!!$       ilowx = 2
-!!$    ilowz = 2
-!!$    ihighx = NGLLX-1
-!!$    ihighz = NGLLZ-1
 
 ! on ne fait la recherche que sur l'interieur de l'element si source explosive
   if(source_type == 2) then
