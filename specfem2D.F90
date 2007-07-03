@@ -1001,7 +1001,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   allocate(buffer_recv_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic))
 
 ! creating mpi non-blocking persistent communications for acoustic elements
-  call create_MPI_requests_SEND_RECV_acoustic( &
+  call create_MPI_req_SEND_RECV_ac( &
      ninterface, ninterface_acoustic, &
      nibool_interfaces_acoustic, &
      my_neighbours, &
@@ -1013,7 +1013,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
      )
 
 ! creating mpi non-blocking persistent communications for elastic elements
-  call create_MPI_requests_SEND_RECV_elastic( &
+  call create_MPI_req_SEND_RECV_el( &
      ninterface, ninterface_elastic, &
      nibool_interfaces_elastic, &
      my_neighbours, &
@@ -1670,7 +1670,7 @@ end if
 ! assembling potential_dot_dot for acoustic elements
 #ifdef USE_MPI
    if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
-      call assemble_MPI_vector_acoustic_start(potential_dot_dot_acoustic,npoin, &
+      call assemble_MPI_vector_ac_start(potential_dot_dot_acoustic,npoin, &
            ninterface, ninterface_acoustic, &
            inum_interfaces_acoustic, &
            max_interface_size, max_ibool_interfaces_size_ac,&
@@ -1678,7 +1678,7 @@ end if
            tab_requests_send_recv_acoustic, &
            buffer_send_faces_vector_ac &
            )
-      call assemble_MPI_vector_acoustic_wait(potential_dot_dot_acoustic,npoin, &
+      call assemble_MPI_vector_ac_wait(potential_dot_dot_acoustic,npoin, &
            ninterface, ninterface_acoustic, &
            inum_interfaces_acoustic, &
            max_interface_size, max_ibool_interfaces_size_ac,&
@@ -1794,7 +1794,7 @@ end if
 ! assembling accel_elastic for elastic elements
 #ifdef USE_MPI
  if ( nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
-    call assemble_MPI_vector_elastic_start(accel_elastic,npoin, &
+    call assemble_MPI_vector_el_start(accel_elastic,npoin, &
      ninterface, ninterface_elastic, &
      inum_interfaces_elastic, &
      max_interface_size, max_ibool_interfaces_size_el,&
@@ -1802,7 +1802,7 @@ end if
      tab_requests_send_recv_elastic, &
      buffer_send_faces_vector_el &
      )
-    call assemble_MPI_vector_elastic_wait(accel_elastic,npoin, &
+    call assemble_MPI_vector_el_wait(accel_elastic,npoin, &
      ninterface, ninterface_elastic, &
      inum_interfaces_elastic, &
      max_interface_size, max_ibool_interfaces_size_el,&
