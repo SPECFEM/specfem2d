@@ -180,10 +180,10 @@
 ! first double loop over GLL points to compute and store gradients
 ! we can merge the two loops because NGLLX == NGLLZ
         do k = 1,NGLLX
-          dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(k,i)
-          duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(k,i)
-          dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(k,j)
-          duz_dgamma = duz_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(k,j)
+          dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
+          duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+          dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
+          duz_dgamma = duz_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
         enddo
 
         xixl = xix(i,j,ispec)
