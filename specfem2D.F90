@@ -276,8 +276,6 @@
   integer, dimension(:,:), allocatable  :: acoustic_surface
   integer, dimension(:,:), allocatable  :: acoustic_edges
 
-
-
   integer  :: ixmin, ixmax, izmin, izmax
 
   integer  :: ie, num_interface
@@ -285,6 +283,10 @@
   integer  :: nrecloc, irecloc
   integer, dimension(:), allocatable :: recloc, which_proc_receiver
 
+! mask to sort ibool
+  integer, dimension(:), allocatable :: mask_ibool
+  integer, dimension(:,:,:), allocatable :: copy_ibool_ori
+  integer :: inumber
 
 !***********************************************************************
 !
@@ -658,7 +660,33 @@
     call createnum_slow(knods,ibool,npoin,nspec,ngnod)
   endif
 
-!---- compute shape functions and their derivatives for regular !interpolated display grid
+! create a new indirect addressing array instead, to reduce cache misses
+! in memory access in the solver
+  allocate(copy_ibool_ori(NGLLX,NGLLZ,nspec))
+  allocate(mask_ibool(npoin))
+  mask_ibool(:) = -1
+  copy_ibool_ori(:,:,:) = ibool(:,:,:)
+
+  inumber = 0
+  do ispec=1,nspec
+    do j=1,NGLLZ
+      do i=1,NGLLX
+        if(mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
+! create a new point
+          inumber = inumber + 1
+          ibool(i,j,ispec) = inumber
+          mask_ibool(copy_ibool_ori(i,j,ispec)) = inumber
+        else
+! use an existing point created previously
+          ibool(i,j,ispec) = mask_ibool(copy_ibool_ori(i,j,ispec))
+        endif
+      enddo
+    enddo
+  enddo
+  deallocate(copy_ibool_ori)
+  deallocate(mask_ibool)
+
+!---- compute shape functions and their derivatives for regular interpolated display grid
   do j = 1,pointsdisp
     do i = 1,pointsdisp
       xirec  = 2.d0*dble(i-1)/dble(pointsdisp-1) - 1.d0
