@@ -1367,7 +1367,7 @@
 !---- open PostScript file
 !
   if ( myrank == 0 ) then
-  write(file_name,"('OUTPUT_FILES/vect',i6.6,'.ps')") it
+  write(file_name,"('OUTPUT_FILES/vect',i7.7,'.ps')") it
   open(unit=24,file=file_name,status='unknown')
 
 !

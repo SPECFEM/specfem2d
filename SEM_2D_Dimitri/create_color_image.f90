@@ -45,7 +45,7 @@
   integer, parameter :: ascii_code_of_zero = 48, ascii_code_of_carriage_return = 10
 
 ! open the image file
-  write(file_name,"('OUTPUT_FILES/image',i6.6,'.pnm')") it
+  write(file_name,"('OUTPUT_FILES/image',i7.7,'.pnm')") it
 
   if(BINARY_FILE) then
 
@@ -214,7 +214,7 @@
   close(27)
 
 ! open image file and create system command to convert image to more convenient format
-  write(system_command,"('cd OUTPUT_FILES ; convert image',i6.6,'.pnm image',i6.6,'.gif')") it,it
+  write(system_command,"('cd OUTPUT_FILES ; convert image',i7.7,'.pnm image',i7.7,'.gif')") it,it
  
 ! call the system to convert image to GIF
   call system(system_command)
