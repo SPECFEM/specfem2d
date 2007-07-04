@@ -4,8 +4,8 @@
 ! the code does NOT work if NGLLZ /= NGLLX because it then cannot handle a non-structured mesh
   integer, parameter :: NGLLZ = NGLLX
 
-! compute and output elastic energy (slows down the code significantly)
-  logical, parameter :: OUTPUT_ELASTIC_ENERGY = .false.
+! compute and output acoustic and elastic energy (slows down the code significantly)
+  logical, parameter :: OUTPUT_ENERGY = .false.
 ! output file for energy
   integer, parameter :: IENERGY = 77
 
