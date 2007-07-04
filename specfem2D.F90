@@ -1885,9 +1885,9 @@ end if
 
     write(IOUT,*)
     if(time >= 1.d-3 .and. time < 1000.d0) then
-      write(IOUT,"('Time step number ',i6,'   t = ',f9.4,' s')") it,time
+      write(IOUT,"('Time step number ',i7,'   t = ',f9.4,' s')") it,time
     else
-      write(IOUT,"('Time step number ',i6,'   t = ',1pe12.6,' s')") it,time
+      write(IOUT,"('Time step number ',i7,'   t = ',1pe12.6,' s')") it,time
     endif
 
     if(any_elastic) then
