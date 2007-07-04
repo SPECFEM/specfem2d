@@ -144,6 +144,8 @@
   double precision, dimension(:), allocatable :: potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
   double precision, dimension(:), allocatable :: rmass_inverse_elastic,rmass_inverse_acoustic,density,displread,velocread,accelread
 
+  double precision, dimension(:), allocatable :: vp_display
+
   double precision, dimension(:,:,:), allocatable :: vpext,vsext,rhoext
   double precision :: previous_vsext
 
@@ -714,8 +716,6 @@
   write(IOUT,*)
 
   if(nrec < 1) call exit_MPI('need at least one receiver')
-
-
 
 ! receiver information
   allocate(ispec_selected_rec(nrec))
@@ -1586,6 +1586,26 @@ end if
   time_start = 86400.d0*time_values(3) + 3600.d0*time_values(5) + &
                60.d0*time_values(6) + time_values(7) + time_values(8) / 1000.d0
 
+! to display the P-velocity model in background on color images
+  allocate(vp_display(npoin))
+  do ispec = 1,nspec
+! get relaxed elastic parameters of current spectral element
+    rhol = density(kmato(ispec))
+    lambdal_relaxed = elastcoef(1,kmato(ispec))
+    mul_relaxed = elastcoef(2,kmato(ispec))
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+!--- if external medium, get elastic parameters of current grid point
+          if(assign_external_model) then
+            vp_display(ibool(i,j,ispec)) = vpext(i,j,ispec)
+          else
+            cpsquare = (lambdal_relaxed + 2.d0*mul_relaxed) / rhol
+            vp_display(ibool(i,j,ispec)) = sqrt(cpsquare)
+          endif
+      enddo
+    enddo
+  enddo
+
 ! *********************************************************
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
 ! *********************************************************
@@ -2135,25 +2155,20 @@ end if
 
      end if
   end if
-!  call MPI_BARRIER(MPI_COMM_WORLD, ier)
 
 #endif
 
 
   if ( myrank == 0 ) then
-     call create_color_image(image_color_data,iglob_image_color,NX_IMAGE_color,NZ_IMAGE_color,it,cutsnaps)
-
+     call create_color_image(image_color_data,iglob_image_color,NX_IMAGE_color,NZ_IMAGE_color,it,cutsnaps,vp_display,npoin)
      write(IOUT,*) 'Color image created'
-
-  end if
+  endif
 
   endif
 
 !----  save temporary or final seismograms
-  if ( it == NSTEP ) then
-     call write_seismograms(sisux,sisuz,station_name,network_name,NSTEP, &
-          nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,it,t0)
-  end if
+  call write_seismograms(sisux,sisuz,station_name,network_name,NSTEP, &
+        nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,it,t0)
 
 ! count elapsed wall-clock time
   call date_and_time(datein,timein,zone,time_values)
