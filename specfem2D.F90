@@ -110,8 +110,10 @@
 
 ! for seismograms
   double precision, dimension(:,:), allocatable :: sisux,sisuz
+
 ! vector field in an element
   double precision, dimension(NDIM,NGLLX,NGLLX) :: vector_field_element
+
 ! pressure in an element
   double precision, dimension(NGLLX,NGLLX) :: pressure_element
 
@@ -1197,7 +1199,7 @@ end if
      end do
   end do
 
-! creating and filling array num_pixel_loc with the positions of each colored 
+! creating and filling array num_pixel_loc with the positions of each colored
 ! pixel owned by the local process (useful for parallel jobs)
   allocate(num_pixel_loc(nb_pixel_loc))
 
@@ -1560,10 +1562,10 @@ end if
   endif
 
 #ifdef USE_MPI
-  if(OUTPUT_ELASTIC_ENERGY) stop 'energy calculation only serial right now, should add an MPI_REDUCE in parallel'
+  if(OUTPUT_ENERGY) stop 'energy calculation only serial right now, should add an MPI_REDUCE in parallel'
 #endif
 ! open the file in which we will store the energy curve
-  if(OUTPUT_ELASTIC_ENERGY) open(unit=IENERGY,file='energy.gnu',status='unknown')
+  if(OUTPUT_ENERGY) open(unit=IENERGY,file='energy.gnu',status='unknown')
 
 !
 !----          s t a r t   t i m e   i t e r a t i o n s
@@ -1874,11 +1876,13 @@ end if
 
 !----  compute kinetic and potential energy
 !
-  if(OUTPUT_ELASTIC_ENERGY) &
-     call compute_elastic_energy(displ_elastic,veloc_elastic, &
+  if(OUTPUT_ENERGY) &
+     call compute_energy(displ_elastic,veloc_elastic, &
          xix,xiz,gammax,gammaz,jacobian,ibool,elastic,hprime_xx,hprime_zz, &
          nspec,npoin,assign_external_model,it,deltat,t0,kmato,elastcoef,density, &
-         vpext,vsext,rhoext,wxgll,wzgll,numat)
+         vpext,vsext,rhoext,wxgll,wzgll,numat, &
+         pressure_element,vector_field_element,e1_mech1,e11_mech1,e1_mech2,e11_mech2, &
+         potential_dot_acoustic,potential_dot_dot_acoustic,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON)
 
 !----  display time step and max of norm of displacement
   if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5) then
@@ -2197,7 +2201,7 @@ end if
   enddo ! end of the main time loop
 
 !----  close energy file and create a gnuplot script to display it
-  if(OUTPUT_ELASTIC_ENERGY) then
+  if(OUTPUT_ENERGY) then
     close(IENERGY)
     open(unit=IENERGY,file='plotenergy',status='unknown')
     write(IENERGY,*) 'set term postscript landscape color solid "Helvetica" 22'
