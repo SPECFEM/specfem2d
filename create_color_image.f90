@@ -11,7 +11,7 @@
 !
 !========================================================================
 
-  subroutine create_color_image(color_image_2D_data,iglob_image_color_2D,NX,NY,it,cutsnaps)
+  subroutine create_color_image(color_image_2D_data,iglob_image_color_2D,NX,NY,it,cutsnaps,vp_display,npoin)
 
 ! display a given field as a red and blue color image
 
@@ -23,19 +23,20 @@
 
   include "constants.h"
 
-  integer NX,NY,it
+  integer :: NX,NY,it,npoin
 
-  double precision cutsnaps
+  double precision :: cutsnaps
 
   integer, dimension(NX,NY) :: iglob_image_color_2D
 
   double precision, dimension(NX,NY) :: color_image_2D_data
+  double precision, dimension(npoin) :: vp_display
 
-  integer ix,iy,R,G,B,tenthousands,thousands,hundreds,tens,units,remainder,current_rec
+  integer :: ix,iy,R,G,B,tenthousands,thousands,hundreds,tens,units,remainder,current_rec
 
-  double precision amplitude_max,normalized_value
+  double precision :: amplitude_max,normalized_value,vpmin,vpmax,x1
 
-  character(len=100) file_name,system_command
+  character(len=100) :: file_name,system_command
 
 ! create temporary image files in binary PNM P6 format (smaller) or ASCII PNM P3 format (easier to edit)
   logical, parameter :: BINARY_FILE = .true.
@@ -121,6 +122,8 @@
 
 ! compute maximum amplitude
   amplitude_max = maxval(abs(color_image_2D_data))
+  vpmin = minval(vp_display)
+  vpmax = maxval(vp_display)
 
 ! in the PNM format, the image starts in the upper-left corner
   do iy=NY,1,-1
@@ -137,10 +140,28 @@
 ! suppress small amplitudes considered as noise
       else if (abs(color_image_2D_data(ix,iy)) < amplitude_max * cutsnaps) then
 
-! use black background where amplitude is negligible
-          R = 0
-          G = 0
-          B = 0
+! use P velocity model as background where amplitude is negligible
+        if((vpmax-vpmin)/vpmin > 0.02d0) then
+          x1 = (vp_display(iglob_image_color_2D(ix,iy))-vpmin)/(vpmax-vpmin)
+        else
+          x1 = 0.5d0
+        endif
+
+! rescale to avoid very dark gray levels
+        x1 = x1*0.7 + 0.2
+        if(x1 > 1.d0) x1=1.d0
+
+! invert scale: white = vpmin, dark gray = vpmax
+        x1 = 1.d0 - x1
+
+! map to [0,255]
+        x1 = x1 * 255.d0
+
+        R = nint(x1)
+        if(R < 0) R = 0
+        if(R > 255) R = 255
+        G = R
+        B = R
 
       else
 
