@@ -38,7 +38,7 @@ OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/enforce_acoustic_free_surface.o\
         $O/specfem2D.o $O/write_seismograms.o $O/define_external_model.o $O/createnum_fast.o $O/createnum_slow.o\
         $O/define_shape_functions.o $O/create_color_image.o $O/compute_vector_field.o $O/compute_pressure.o\
         $O/recompute_jacobian.o $O/compute_arrays_source.o $O/locate_source_moment_tensor.o $O/numerical_recipes.o\
-        $O/construct_acoustic_surface.o $O/assemble_MPI.o $O/compute_elastic_energy.o
+        $O/construct_acoustic_surface.o $O/assemble_MPI.o $O/compute_energy.o
 
 default: clean meshfem2D specfem2D convolve_source_timefunction
 
@@ -131,8 +131,8 @@ $O/compute_forces_elastic.o: compute_forces_elastic.f90 constants.h
 $O/compute_gradient_attenuation.o: compute_gradient_attenuation.f90 constants.h
 	${F90} $(FLAGS_NOCHECK) -c -o $O/compute_gradient_attenuation.o compute_gradient_attenuation.f90
     
-$O/compute_elastic_energy.o: compute_elastic_energy.f90 constants.h
-	${F90} $(FLAGS_NOCHECK) -c -o $O/compute_elastic_energy.o compute_elastic_energy.f90
+$O/compute_energy.o: compute_energy.f90 constants.h
+	${F90} $(FLAGS_NOCHECK) -c -o $O/compute_energy.o compute_energy.f90
     
 $O/compute_vector_field.o: compute_vector_field.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/compute_vector_field.o compute_vector_field.f90
