@@ -30,9 +30,9 @@
 ! pressure in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: pressure_element
 
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: e1_mech1,e11_mech1,e1_mech2,e11_mech2
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: e1_mech1,e11_mech1,e1_mech2,e11_mech2
 
-  double precision, dimension(npoin) :: potential_dot_acoustic,potential_dot_dot_acoustic
+  real(kind=CUSTOM_REAL), dimension(npoin) :: potential_dot_acoustic,potential_dot_dot_acoustic
 
   logical :: TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON
 
@@ -45,7 +45,7 @@
 
   logical, dimension(nspec) :: elastic
 
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
 
   integer, dimension(nspec) :: kmato
 
@@ -55,28 +55,28 @@
   double precision, dimension(4,numat) :: elastcoef
   double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,vsext,rhoext
 
-  double precision, dimension(NDIM,npoin) :: displ_elastic,veloc_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displ_elastic,veloc_elastic
 
 ! Gauss-Lobatto-Legendre points and weights
-  double precision, dimension(NGLLX) :: wxgll
-  double precision, dimension(NGLLZ) :: wzgll
+  real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
+  real(kind=CUSTOM_REAL), dimension(NGLLZ) :: wzgll
 
 ! array with derivatives of Lagrange polynomials
-  double precision, dimension(NGLLX,NGLLX) :: hprime_xx
-  double precision, dimension(NGLLZ,NGLLZ) :: hprime_zz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
+  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
 
 ! local variables
   integer :: i,j,k,ispec
 
 ! spatial derivatives
-  double precision :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
-  double precision :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
+  real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
+  real(kind=CUSTOM_REAL) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
 
 ! jacobian
-  double precision :: xixl,xizl,gammaxl,gammazl,jacobianl
+  real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
 
-  double precision :: kinetic_energy,potential_energy
-  double precision :: cpl,csl,rhol,mul_relaxed,lambdal_relaxed,lambdalplus2mul_relaxed,kappal
+  real(kind=CUSTOM_REAL) :: kinetic_energy,potential_energy
+  real(kind=CUSTOM_REAL) :: cpl,csl,rhol,mul_relaxed,lambdal_relaxed,lambdalplus2mul_relaxed,kappal
 
   kinetic_energy = ZERO
   potential_energy = ZERO
@@ -210,8 +210,8 @@
   enddo
 
 ! save kinetic, potential and total energy for this time step in external file
-  write(IENERGY,*) sngl(dble(it-1)*deltat - t0),sngl(kinetic_energy), &
-                     sngl(potential_energy),sngl(kinetic_energy + potential_energy)
+  write(IENERGY,*) real(dble(it-1)*deltat - t0,4),real(kinetic_energy,4), &
+                     real(potential_energy,4),real(kinetic_energy + potential_energy,4)
 
   end subroutine compute_energy
 
