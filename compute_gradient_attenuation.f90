@@ -26,22 +26,23 @@
 
   logical, dimension(nspec) :: elastic
 
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl,xix,xiz,gammax,gammaz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec)  :: xix,xiz,gammax,gammaz
 
-  double precision, dimension(NDIM,npoin) :: displ_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displ_elastic
 
 ! array with derivatives of Lagrange polynomials
-  double precision, dimension(NGLLX,NGLLX) :: hprime_xx
-  double precision, dimension(NGLLZ,NGLLZ) :: hprime_zz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
+  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
 
 ! local variables
   integer :: i,j,k,ispec
 
 ! spatial derivatives
-  double precision :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
+  real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
 
 ! jacobian
-  double precision :: xixl,xizl,gammaxl,gammazl
+  real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl
 
 ! loop over spectral elements
   do ispec = 1,nspec

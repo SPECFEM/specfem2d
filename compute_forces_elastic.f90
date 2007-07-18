@@ -40,25 +40,25 @@
   logical, dimension(nspec) :: elastic
   logical, dimension(4,nelemabs)  :: codeabs
 
-  double precision, dimension(NDIM,npoin) :: accel_elastic,veloc_elastic,displ_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: accel_elastic,veloc_elastic,displ_elastic
   double precision, dimension(numat) :: density
   double precision, dimension(4,numat) :: elastcoef
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
   double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,vsext,rhoext
-  double precision, dimension(NSTEP) :: source_time_function
-  double precision, dimension(NDIM,NGLLX,NGLLZ) :: sourcearray
+  real(kind=CUSTOM_REAL), dimension(NSTEP) :: source_time_function
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: sourcearray
 
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: &
     e1_mech1,e11_mech1,e13_mech1,e1_mech2,e11_mech2,e13_mech2, &
     dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n,dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1
 
 ! derivatives of Lagrange polynomials
-  double precision, dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
-  double precision, dimension(NGLLZ,NGLLZ) :: hprime_zz,hprimewgll_zz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
+  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz,hprimewgll_zz
 
 ! Gauss-Lobatto-Legendre weights
-  double precision, dimension(NGLLX) :: wxgll
-  double precision, dimension(NGLLZ) :: wzgll
+  real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
+  real(kind=CUSTOM_REAL), dimension(NGLLZ) :: wzgll
 
 !---
 !--- local variables
@@ -67,22 +67,22 @@
   integer :: ispec,i,j,k,iglob,ispecabs,ibegin,iend
 
 ! spatial derivatives
-  double precision :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
-  double precision :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
-  double precision :: sigma_xx,sigma_xz,sigma_zz
-  double precision :: nx,nz,vx,vz,vn,rho_vp,rho_vs,tx,tz,weight,xxi,zxi,xgamma,zgamma,jacobian1D
+  real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
+  real(kind=CUSTOM_REAL) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
+  real(kind=CUSTOM_REAL) :: sigma_xx,sigma_xz,sigma_zz
+  real(kind=CUSTOM_REAL) :: nx,nz,vx,vz,vn,rho_vp,rho_vs,tx,tz,weight,xxi,zxi,xgamma,zgamma,jacobian1D
 
-  double precision, dimension(NGLLX,NGLLZ) :: tempx1,tempx2,tempz1,tempz2
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: tempx1,tempx2,tempz1,tempz2
 
 ! Jacobian matrix and determinant
-  double precision :: xixl,xizl,gammaxl,gammazl,jacobianl
+  real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
 
 ! material properties of the elastic medium
-  double precision :: mul_relaxed,lambdal_relaxed,lambdalplus2mul_relaxed,kappal,cpl,csl,rhol, &
+  real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,lambdalplus2mul_relaxed,kappal,cpl,csl,rhol, &
                       lambdal_unrelaxed,mul_unrelaxed,lambdalplus2mul_unrelaxed
 
 ! for attenuation
-  double precision :: Un,Unp1,tauinv,Sn,Snp1,theta_n,theta_np1,tauinvsquare,tauinvcube,tauinvUn
+  real(kind=CUSTOM_REAL) :: Un,Unp1,tauinv,Sn,Snp1,theta_n,theta_np1,tauinvsquare,tauinvcube,tauinvUn
 
 ! compute Grad(displ_elastic) at time step n for attenuation
   if(TURN_ATTENUATION_ON) call compute_gradient_attenuation(displ_elastic,dux_dxl_n,duz_dxl_n, &
@@ -239,8 +239,8 @@
       lambdal_relaxed = elastcoef(1,kmato(ispec))
       mul_relaxed = elastcoef(2,kmato(ispec))
       rhol  = density(kmato(ispec))
-      kappal  = lambdal_relaxed + TWO*mul_relaxed/3.d0
-      cpl = sqrt((kappal + 4.d0*mul_relaxed/3.d0)/rhol)
+      kappal  = lambdal_relaxed + TWO*mul_relaxed/3._CUSTOM_REAL
+      cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_relaxed/3._CUSTOM_REAL)/rhol)
       csl = sqrt(mul_relaxed/rhol)
 
 !--- left absorbing boundary

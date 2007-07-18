@@ -31,25 +31,26 @@
   double precision, dimension(4,numat) :: elastcoef
   double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext
 
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
 
   logical, dimension(nspec) :: elastic
-  double precision, dimension(npoin) :: potential_dot_dot_acoustic
-  double precision, dimension(NDIM,npoin) :: displ_elastic,vector_field_display
+  real(kind=CUSTOM_REAL), dimension(npoin) :: potential_dot_dot_acoustic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displ_elastic
+  double precision, dimension(NDIM,npoin) :: vector_field_display
 
 ! array with derivatives of Lagrange polynomials
-  double precision, dimension(NGLLX,NGLLX) :: hprime_xx
-  double precision, dimension(NGLLZ,NGLLZ) :: hprime_zz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
+  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
 
   logical :: assign_external_model,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON
 
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: e1_mech1,e11_mech1,e1_mech2,e11_mech2
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: e1_mech1,e11_mech1,e1_mech2,e11_mech2
 
 ! local variables
   integer :: i,j,ispec,iglob
 
 ! pressure in this element
-  double precision, dimension(NGLLX,NGLLX) :: pressure_element
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: pressure_element
 
 ! loop over spectral elements
   do ispec = 1,nspec
@@ -96,38 +97,38 @@
   double precision, dimension(4,numat) :: elastcoef
   double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext
 
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
 
 ! pressure in this element
-  double precision, dimension(NGLLX,NGLLX) :: pressure_element
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: pressure_element
 
   logical, dimension(nspec) :: elastic
-  double precision, dimension(npoin) :: potential_dot_dot_acoustic
-  double precision, dimension(NDIM,npoin) :: displ_elastic
+  real(kind=CUSTOM_REAL), dimension(npoin) :: potential_dot_dot_acoustic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displ_elastic
 
 ! array with derivatives of Lagrange polynomials
-  double precision, dimension(NGLLX,NGLLX) :: hprime_xx
-  double precision, dimension(NGLLZ,NGLLZ) :: hprime_zz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
+  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
 
   logical :: assign_external_model,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON
 
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: e1_mech1,e11_mech1,e1_mech2,e11_mech2
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: e1_mech1,e11_mech1,e1_mech2,e11_mech2
 
 ! local variables
   integer :: i,j,k,iglob
 
 ! jacobian
-  double precision :: xixl,xizl,gammaxl,gammazl
+  real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl
 
 ! spatial derivatives
-  double precision :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
-  double precision :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
-  double precision :: sigma_xx,sigma_zz
+  real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
+  real(kind=CUSTOM_REAL) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
+  real(kind=CUSTOM_REAL) :: sigma_xx,sigma_zz
 
 ! material properties of the elastic medium
   integer :: material
-  double precision :: mul_relaxed,lambdal_relaxed,lambdalplus2mul_relaxed,denst
-  double precision :: mul_unrelaxed,lambdal_unrelaxed,lambdalplus2mul_unrelaxed,cpl,csl
+  real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,lambdalplus2mul_relaxed,denst
+  real(kind=CUSTOM_REAL) :: mul_unrelaxed,lambdal_unrelaxed,lambdalplus2mul_unrelaxed,cpl,csl
 
 ! if elastic element
 !

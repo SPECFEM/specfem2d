@@ -99,7 +99,7 @@
 
   integer :: source_type,time_function_type
   double precision :: x_source,z_source,xi_source,gamma_source,Mxx,Mzz,Mxz,f0,t0,factor,angleforce,hdur,hdur_gauss
-  double precision, dimension(NDIM,NGLLX,NGLLZ) :: sourcearray
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: sourcearray
 
   double precision, dimension(:,:), allocatable :: coorg
   double precision, dimension(:), allocatable :: coorgread
@@ -112,10 +112,10 @@
   double precision, dimension(:,:), allocatable :: sisux,sisuz
 
 ! vector field in an element
-  double precision, dimension(NDIM,NGLLX,NGLLX) :: vector_field_element
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLX) :: vector_field_element
 
 ! pressure in an element
-  double precision, dimension(NGLLX,NGLLX) :: pressure_element
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: pressure_element
 
   integer :: i,j,k,l,it,irec,ipoin,ip,id,nbpoin,inump,n,ispec,npoin,npgeo,iglob
   logical :: anyabs
@@ -126,12 +126,14 @@
   double precision deltatover2,deltatsquareover2,time,deltat
 
 ! Gauss-Lobatto-Legendre points and weights
-  double precision, dimension(NGLLX) :: xigll,wxgll
-  double precision, dimension(NGLLZ) :: zigll,wzgll
+  double precision, dimension(NGLLX) :: xigll
+  real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
+  double precision, dimension(NGLLZ) :: zigll
+  real(kind=CUSTOM_REAL), dimension(NGLLX) :: wzgll
 
 ! derivatives of Lagrange polynomials
-  double precision, dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
-  double precision, dimension(NGLLZ,NGLLZ) :: hprime_zz,hprimewgll_zz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
+  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz,hprimewgll_zz
 
 ! Jacobian matrix and determinant
   double precision :: xixl,xizl,gammaxl,gammazl,jacobianl
@@ -139,19 +141,21 @@
 ! material properties of the elastic medium
   double precision :: mul_relaxed,lambdal_relaxed,cpsquare
 
-  double precision, dimension(:,:), allocatable :: coord,accel_elastic,veloc_elastic,displ_elastic, &
-    flagrange,xinterp,zinterp,Uxinterp,Uzinterp,elastcoef,vector_field_display
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic,veloc_elastic,displ_elastic
+  double precision, dimension(:,:), allocatable :: coord, flagrange,xinterp,zinterp,Uxinterp,Uzinterp,elastcoef,vector_field_display
 
 ! for acoustic medium
-  double precision, dimension(:), allocatable :: potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
-  double precision, dimension(:), allocatable :: rmass_inverse_elastic,rmass_inverse_acoustic,density,displread,velocread,accelread
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_elastic,rmass_inverse_acoustic
+  double precision, dimension(:), allocatable :: density,displread,velocread,accelread
 
   double precision, dimension(:), allocatable :: vp_display
 
   double precision, dimension(:,:,:), allocatable :: vpext,vsext,rhoext
   double precision :: previous_vsext
 
-  double precision, dimension(:,:,:), allocatable :: shape2D,shape2D_display,xix,xiz,gammax,gammaz,jacobian
+  double precision, dimension(:,:,:), allocatable :: shape2D,shape2D_display
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable  :: xix,xiz,gammax,gammaz,jacobian
 
   double precision, dimension(:,:,:,:), allocatable :: dershape2D,dershape2D_display
 
@@ -162,7 +166,7 @@
 
   integer ispec_selected_source,iglob_source,ix_source,iz_source,is_proc_source,nb_proc_source
   double precision a,displnorm_all
-  double precision, dimension(:), allocatable :: source_time_function
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: source_time_function
   double precision, external :: erf
 
   double precision :: vpmin,vpmax
@@ -179,7 +183,7 @@
 ! for absorbing and acoustic free surface conditions
   integer :: ispec_acoustic_surface,inum,numabsread
   logical :: codeabsread(4)
-  double precision :: nx,nz,weight,xxi,zgamma
+  real(kind=CUSTOM_REAL) :: nx,nz,weight,xxi,zgamma
 
   logical, dimension(:,:), allocatable  :: codeabs
 
@@ -187,7 +191,7 @@
   integer nspec_allocate
   double precision :: deltatsquare,deltatcube,deltatfourth,twelvedeltat,fourdeltatsquare
 
-  double precision, dimension(:,:,:), allocatable :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
     e1_mech1,e11_mech1,e13_mech1,e1_mech2,e11_mech2,e13_mech2, &
     dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n,dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1
 
@@ -200,7 +204,7 @@
   integer :: num_fluid_solid_edges,ispec_acoustic,ispec_elastic, &
              iedge_acoustic,iedge_elastic,ipoin1D,iglob2
   logical :: any_acoustic,any_elastic,coupled_acoustic_elastic
-  double precision :: displ_x,displ_z,displ_n,zxi,xgamma,jacobian1D,pressure
+  real(kind=CUSTOM_REAL) :: displ_x,displ_z,displ_n,zxi,xgamma,jacobian1D,pressure
 
 ! for color images
   integer :: NX_IMAGE_color,NZ_IMAGE_color
@@ -268,11 +272,11 @@
   integer, dimension(:), allocatable  :: inum_interfaces_acoustic, inum_interfaces_elastic
 
 #ifdef USE_MPI
-  double precision, dimension(:,:), allocatable  :: buffer_send_faces_vector_ac
-  double precision, dimension(:,:), allocatable  :: buffer_recv_faces_vector_ac
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_send_faces_vector_ac
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_recv_faces_vector_ac
   integer, dimension(:), allocatable  :: tab_requests_send_recv_acoustic
-  double precision, dimension(:,:), allocatable  :: buffer_send_faces_vector_el
-  double precision, dimension(:,:), allocatable  :: buffer_recv_faces_vector_el
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_send_faces_vector_el
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_recv_faces_vector_el
   integer, dimension(:), allocatable  :: tab_requests_send_recv_elastic
   integer  :: max_ibool_interfaces_size_ac, max_ibool_interfaces_size_el
 #endif
@@ -1064,12 +1068,12 @@ end if
 
 
 ! fill mass matrix with fictitious non-zero values to make sure it can be inverted globally
-  if(any_elastic) where(rmass_inverse_elastic <= 0.d0) rmass_inverse_elastic = 1.d0
-  if(any_acoustic) where(rmass_inverse_acoustic <= 0.d0) rmass_inverse_acoustic = 1.d0
+  if(any_elastic) where(rmass_inverse_elastic <= 0._CUSTOM_REAL) rmass_inverse_elastic = 1._CUSTOM_REAL
+  if(any_acoustic) where(rmass_inverse_acoustic <= 0._CUSTOM_REAL) rmass_inverse_acoustic = 1._CUSTOM_REAL
 
 ! compute the inverse of the mass matrix
-  if(any_elastic) rmass_inverse_elastic(:) = 1 / rmass_inverse_elastic(:)
-  if(any_acoustic) rmass_inverse_acoustic(:) = 1 / rmass_inverse_acoustic(:)
+  if(any_elastic) rmass_inverse_elastic(:) = 1._CUSTOM_REAL / rmass_inverse_elastic(:)
+  if(any_acoustic) rmass_inverse_acoustic(:) = 1._CUSTOM_REAL / rmass_inverse_acoustic(:)
 
 ! check the mesh, stability and number of points per wavelength
   call checkgrid(vpext,vsext,rhoext,density,elastcoef,ibool,kmato,coord,npoin,vpmin,vpmax, &
@@ -1361,7 +1365,7 @@ end if
 
 ! output absolute time in third column, in case user wants to check it as well
       if ( myrank == 0 ) then
-      write(55,*) sngl(time),sngl(source_time_function(it)),sngl(time-t0)
+      write(55,*) sngl(time),real(source_time_function(it),4),sngl(time-t0)
       endif
    enddo
 

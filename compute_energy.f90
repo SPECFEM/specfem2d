@@ -25,10 +25,10 @@
   include "constants.h"
 
 ! vector field in an element
-  double precision, dimension(NDIM,NGLLX,NGLLX) :: vector_field_element
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLX) :: vector_field_element
 
 ! pressure in an element
-  double precision, dimension(NGLLX,NGLLX) :: pressure_element
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: pressure_element
 
   double precision, dimension(NGLLX,NGLLZ,nspec) :: e1_mech1,e11_mech1,e1_mech2,e11_mech2
 
@@ -181,8 +181,8 @@
       lambdal_relaxed = elastcoef(1,kmato(ispec))
       mul_relaxed = elastcoef(2,kmato(ispec))
       rhol  = density(kmato(ispec))
-      kappal  = lambdal_relaxed + TWO*mul_relaxed/3.d0
-      cpl = sqrt((kappal + 4.d0*mul_relaxed/3.d0)/rhol)
+      kappal  = lambdal_relaxed + TWO*mul_relaxed/3._CUSTOM_REAL
+      cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_relaxed/3._CUSTOM_REAL)/rhol)
 
 ! double loop over GLL points
       do j = 1,NGLLZ
