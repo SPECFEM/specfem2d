@@ -22,12 +22,12 @@
   double precision, dimension(NGLLZ) :: zigll
 
 ! weights
-  double precision, dimension(NGLLX) :: wxgll
-  double precision, dimension(NGLLZ) :: wzgll
+  real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
+  real(kind=CUSTOM_REAL), dimension(NGLLZ) :: wzgll
 
 ! array with derivatives of Lagrange polynomials
-  double precision, dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
-  double precision, dimension(NGLLZ,NGLLZ) :: hprime_zz,hprimewgll_zz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
+  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz,hprimewgll_zz
 
 ! function for calculating derivatives of Lagrange polynomials
   double precision, external :: lagrange_deriv_GLL

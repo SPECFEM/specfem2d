@@ -241,14 +241,15 @@ subroutine create_MPI_req_SEND_RECV_ac( &
 
   include 'constants.h'
   include 'mpif.h'
+  include 'precision_mpi.h'
   
 
   integer, intent(in)  :: ninterface, ninterface_acoustic
   integer, dimension(ninterface), intent(in)  :: inum_interfaces_acoustic
   integer, intent(in)  :: max_ibool_interfaces_size_ac
-  double precision, dimension(max_ibool_interfaces_size_ac,ninterface_acoustic), intent(in)  :: &
+  real(kind=CUSTOM_REAL), dimension(max_ibool_interfaces_size_ac,ninterface_acoustic), intent(in)  :: &
        buffer_send_faces_vector_ac
-  double precision, dimension(max_ibool_interfaces_size_ac,ninterface_acoustic), intent(in)  :: &
+  real(kind=CUSTOM_REAL), dimension(max_ibool_interfaces_size_ac,ninterface_acoustic), intent(in)  :: &
        buffer_recv_faces_vector_ac
   integer, dimension(ninterface_acoustic*2), intent(inout)  :: tab_requests_send_recv_acoustic
   integer, dimension(ninterface), intent(in)  :: nibool_interfaces_acoustic
@@ -264,11 +265,11 @@ subroutine create_MPI_req_SEND_RECV_ac( &
      num_interface = inum_interfaces_acoustic(inum_interface)
      
         call MPI_Send_init ( buffer_send_faces_vector_ac(1,inum_interface), &
-             nibool_interfaces_acoustic(num_interface), MPI_DOUBLE_PRECISION, &
+             nibool_interfaces_acoustic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_acoustic(inum_interface), ier)
         call MPI_Recv_init ( buffer_recv_faces_vector_ac(1,inum_interface), &
-             nibool_interfaces_acoustic(num_interface), MPI_DOUBLE_PRECISION, &
+             nibool_interfaces_acoustic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_acoustic(ninterface_acoustic+inum_interface), ier)
   end do
@@ -293,14 +294,15 @@ subroutine create_MPI_req_SEND_RECV_el( &
 
   include 'constants.h'
   include 'mpif.h'
-  
+  include 'precision_mpi.h'  
+
 
   integer, intent(in)  :: ninterface, ninterface_elastic
   integer, dimension(ninterface), intent(in)  :: inum_interfaces_elastic
   integer, intent(in)  :: max_ibool_interfaces_size_el
-  double precision, dimension(max_ibool_interfaces_size_el,ninterface_elastic), intent(in)  :: &
+  real(kind=CUSTOM_REAL), dimension(max_ibool_interfaces_size_el,ninterface_elastic), intent(in)  :: &
        buffer_send_faces_vector_el
-  double precision, dimension(max_ibool_interfaces_size_el,ninterface_elastic), intent(in)  :: &
+  real(kind=CUSTOM_REAL), dimension(max_ibool_interfaces_size_el,ninterface_elastic), intent(in)  :: &
        buffer_recv_faces_vector_el
   integer, dimension(ninterface_elastic*2), intent(inout)  :: tab_requests_send_recv_elastic
   integer, dimension(ninterface), intent(in)  :: nibool_interfaces_elastic
@@ -316,11 +318,11 @@ subroutine create_MPI_req_SEND_RECV_el( &
      num_interface = inum_interfaces_elastic(inum_interface)
      
         call MPI_Send_init ( buffer_send_faces_vector_el(1,inum_interface), &
-             NDIM*nibool_interfaces_elastic(num_interface), MPI_DOUBLE_PRECISION, &
+             NDIM*nibool_interfaces_elastic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 13, MPI_COMM_WORLD, &
              tab_requests_send_recv_elastic(inum_interface), ier)
         call MPI_Recv_init ( buffer_recv_faces_vector_el(1,inum_interface), &
-             NDIM*nibool_interfaces_elastic(num_interface), MPI_DOUBLE_PRECISION, &
+             NDIM*nibool_interfaces_elastic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 13, MPI_COMM_WORLD, &
              tab_requests_send_recv_elastic(ninterface_elastic+inum_interface), ier)
   end do
@@ -341,7 +343,7 @@ subroutine assemble_MPI_scalar(myrank,array_val1, array_val2,npoin, &
 
 
   ! array to assemble
-  double precision, dimension(npoin), intent(inout) :: array_val1, array_val2
+  real(kind=CUSTOM_REAL), dimension(npoin), intent(inout) :: array_val1, array_val2
 
   integer, intent(in)  :: myrank
   integer, intent(in)  :: npoin
@@ -434,7 +436,7 @@ subroutine assemble_MPI_vector_ac_start(array_val1,npoin, &
 
 
   ! array to assemble
-  double precision, dimension(npoin), intent(in) :: array_val1
+  real(kind=CUSTOM_REAL), dimension(npoin), intent(in) :: array_val1
 
 
   integer, intent(in)  :: npoin
@@ -445,7 +447,7 @@ subroutine assemble_MPI_vector_ac_start(array_val1,npoin, &
   integer, dimension(NGLLX*max_interface_size,ninterface), intent(in)  :: ibool_interfaces_acoustic
   integer, dimension(ninterface), intent(in)  :: nibool_interfaces_acoustic
   integer, dimension(ninterface_acoustic*2), intent(inout)  :: tab_requests_send_recv_acoustic
-  double precision, dimension(max_ibool_interfaces_size_ac,ninterface_acoustic), intent(inout)  :: &
+  real(kind=CUSTOM_REAL), dimension(max_ibool_interfaces_size_ac,ninterface_acoustic), intent(inout)  :: &
        buffer_send_faces_vector_ac
 
   integer  :: ipoin, num_interface, inum_interface
@@ -497,7 +499,7 @@ subroutine assemble_MPI_vector_el_start(array_val2,npoin, &
 
 
   ! array to assemble
-  double precision, dimension(NDIM,npoin), intent(in) :: array_val2
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin), intent(in) :: array_val2
 
 
   integer, intent(in)  :: npoin
@@ -508,7 +510,7 @@ subroutine assemble_MPI_vector_el_start(array_val2,npoin, &
   integer, dimension(NGLLX*max_interface_size,ninterface), intent(in)  :: ibool_interfaces_elastic
   integer, dimension(ninterface), intent(in)  :: nibool_interfaces_elastic
   integer, dimension(ninterface_elastic*2), intent(inout)  :: tab_requests_send_recv_elastic
-  double precision, dimension(max_ibool_interfaces_size_el,ninterface_elastic), intent(inout)  :: &
+  real(CUSTOM_REAL), dimension(max_ibool_interfaces_size_el,ninterface_elastic), intent(inout)  :: &
        buffer_send_faces_vector_el
   
 
@@ -563,7 +565,7 @@ subroutine assemble_MPI_vector_ac_wait(array_val1,npoin, &
 
 
   ! array to assemble
-  double precision, dimension(npoin), intent(inout) :: array_val1
+  real(kind=CUSTOM_REAL), dimension(npoin), intent(inout) :: array_val1
 
 
   integer, intent(in)  :: npoin
@@ -574,7 +576,7 @@ subroutine assemble_MPI_vector_ac_wait(array_val1,npoin, &
   integer, dimension(NGLLX*max_interface_size,ninterface), intent(in)  :: ibool_interfaces_acoustic
   integer, dimension(ninterface), intent(in)  :: nibool_interfaces_acoustic
   integer, dimension(ninterface_acoustic*2), intent(inout)  :: tab_requests_send_recv_acoustic
-  double precision, dimension(max_ibool_interfaces_size_ac,ninterface_acoustic), intent(inout)  :: &
+  real(kind=CUSTOM_REAL), dimension(max_ibool_interfaces_size_ac,ninterface_acoustic), intent(inout)  :: &
        buffer_recv_faces_vector_ac
 
   integer  :: ipoin, num_interface, inum_interface
@@ -623,7 +625,7 @@ subroutine assemble_MPI_vector_el_wait(array_val2,npoin, &
 
 
   ! array to assemble
-  double precision, dimension(NDIM,npoin), intent(inout) :: array_val2
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin), intent(inout) :: array_val2
 
 
   integer, intent(in)  :: npoin
@@ -634,7 +636,7 @@ subroutine assemble_MPI_vector_el_wait(array_val2,npoin, &
   integer, dimension(NGLLX*max_interface_size,ninterface), intent(in)  :: ibool_interfaces_elastic
   integer, dimension(ninterface), intent(in)  :: nibool_interfaces_elastic
   integer, dimension(ninterface_elastic*2), intent(inout)  :: tab_requests_send_recv_elastic
-  double precision, dimension(max_ibool_interfaces_size_el,ninterface_elastic), intent(inout)  :: &
+  real(kind=CUSTOM_REAL), dimension(max_ibool_interfaces_size_el,ninterface_elastic), intent(inout)  :: &
        buffer_recv_faces_vector_el
 
   integer  :: ipoin, num_interface, inum_interface

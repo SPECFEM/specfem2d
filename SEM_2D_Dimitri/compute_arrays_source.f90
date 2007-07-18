@@ -24,9 +24,9 @@
   double precision xi_source,gamma_source
   double precision Mxx,Mzz,Mxz
 
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
 
-  double precision, dimension(NDIM,NGLLX,NGLLZ) :: sourcearray
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: sourcearray
 
   double precision xixd,xizd,gammaxd,gammazd
 
