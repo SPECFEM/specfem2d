@@ -8,9 +8,10 @@ SHELL=/bin/sh
 O = obj
 
 # Portland
-#F90 = pgf90
-#FLAGS_NOCHECK=-fast -Mnobounds -Minline -Mneginfo -Mdclchk -Knoieee -Minform=warn -fastsse -tp amd64e -Msmart
-#FLAGS_CHECK=-fast -Mbounds -Mneginfo -Mdclchk -Minform=warn
+#F90 = /opt/openmpi-1.2.2/pgi64/bin/mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
+F90 = pgf90
+FLAGS_NOCHECK=-fast -Mnobounds -Minline -Mneginfo -Mdclchk -Knoieee -Minform=warn -fastsse -tp amd64e -Msmart -Mipa=fast,inline
+FLAGS_CHECK=-fast -Mbounds -Mneginfo -Mdclchk -Minform=warn
 
 # Intel
 #F90 = ifort
@@ -19,10 +20,10 @@ O = obj
 
 # GNU gfortran
 #F90 = /opt/openmpi-1.2.1/gfortran64/bin/mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
-F90 = gfortran
+#F90 = gfortran
 #FLAGS_NOCHECK = -O3 -march=opteron -m64 -mfpmath=sse,387
-FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow
-FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
+#FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow
+#FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
 
 LINK = $(F90)
 
@@ -45,7 +46,7 @@ default: clean meshfem2D specfem2D convolve_source_timefunction
 all: default
 
 clean:
-	/bin/rm -r -f xmeshfem2D xmeshfem2D.trace xspecfem2D xspecfem2D.trace $O/*.o *.o $O/*.il *.mod core xconvolve_source_timefunction
+	/bin/rm -r -f xmeshfem2D xmeshfem2D.trace xspecfem2D xspecfem2D.trace $O/*.o *.o $O/*.il *.mod core xconvolve_source_timefunction *.oo *.ipo
 
 meshfem2D: $(OBJS_MESHFEM2D)
 	$(LINK) $(FLAGS_CHECK) -o xmeshfem2D $(OBJS_MESHFEM2D) $(LIB)
