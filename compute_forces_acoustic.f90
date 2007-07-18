@@ -39,20 +39,20 @@
   logical, dimension(nspec) :: elastic
   logical, dimension(4,nelemabs)  :: codeabs
 
-  double precision, dimension(npoin) :: potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
+  real(kind=CUSTOM_REAL), dimension(npoin) :: potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
   double precision, dimension(numat) :: density
   double precision, dimension(4,numat) :: elastcoef
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
   double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,vsext,rhoext
-  double precision, dimension(NSTEP) :: source_time_function
+  real(kind=CUSTOM_REAL), dimension(NSTEP) :: source_time_function
 
 ! derivatives of Lagrange polynomials
-  double precision, dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
-  double precision, dimension(NGLLZ,NGLLZ) :: hprime_zz,hprimewgll_zz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
+  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz,hprimewgll_zz
 
 ! Gauss-Lobatto-Legendre weights
-  double precision, dimension(NGLLX) :: wxgll
-  double precision, dimension(NGLLZ) :: wzgll
+  real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
+  real(kind=CUSTOM_REAL), dimension(NGLLZ) :: wzgll
 
 !---
 !--- local variables
@@ -61,16 +61,16 @@
   integer :: ispec,i,j,k,iglob,ispecabs,ibegin,iend,jbegin,jend
 
 ! spatial derivatives
-  double precision :: dux_dxi,dux_dgamma,dux_dxl,dux_dzl
-  double precision :: nx,nz,rho_vp,rho_vs,weight,xxi,zxi,xgamma,zgamma,jacobian1D
+  real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,dux_dxl,dux_dzl
+  real(kind=CUSTOM_REAL) :: nx,nz,rho_vp,rho_vs,weight,xxi,zxi,xgamma,zgamma,jacobian1D
 
-  double precision, dimension(NGLLX,NGLLZ) :: tempx1,tempx2
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: tempx1,tempx2
 
 ! Jacobian matrix and determinant
-  double precision :: xixl,xizl,gammaxl,gammazl,jacobianl
+  real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
 
 ! material properties of the elastic medium
-  double precision :: mul_relaxed,lambdal_relaxed,kappal,cpl,csl,rhol
+  real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,kappal,cpl,csl,rhol
 
 ! loop over spectral elements
   do ispec = 1,nspec
@@ -149,8 +149,8 @@
       lambdal_relaxed = elastcoef(1,kmato(ispec))
       mul_relaxed = elastcoef(2,kmato(ispec))
       rhol  = density(kmato(ispec))
-      kappal  = lambdal_relaxed + TWO*mul_relaxed/3.d0
-      cpl = sqrt((kappal + 4.d0*mul_relaxed/3.d0)/rhol)
+      kappal  = lambdal_relaxed + TWO*mul_relaxed/3._CUSTOM_REAL
+      cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_relaxed/3._CUSTOM_REAL)/rhol)
       csl = sqrt(mul_relaxed/rhol)
 
 

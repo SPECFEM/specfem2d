@@ -25,21 +25,22 @@
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
 
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
 
   logical, dimension(nspec) :: elastic
-  double precision, dimension(npoin) :: potential_acoustic
-  double precision, dimension(NDIM,npoin) :: veloc_elastic,vector_field_display
+  real(kind=CUSTOM_REAL), dimension(npoin) :: potential_acoustic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: veloc_elastic
+  double precision, dimension(NDIM,npoin) :: vector_field_display
 
 ! array with derivatives of Lagrange polynomials
-  double precision, dimension(NGLLX,NGLLX) :: hprime_xx
-  double precision, dimension(NGLLZ,NGLLZ) :: hprime_zz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
+  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
 
 ! local variables
   integer i,j,ispec,iglob
 
 ! vector field in this element
-  double precision, dimension(NDIM,NGLLX,NGLLX) :: vector_field_element
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLX) :: vector_field_element
 
 ! loop over spectral elements
   do ispec = 1,nspec
@@ -77,28 +78,28 @@
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
 
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
 
 ! vector field in this element
-  double precision, dimension(NDIM,NGLLX,NGLLX) :: vector_field_element
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLX) :: vector_field_element
 
   logical, dimension(nspec) :: elastic
-  double precision, dimension(npoin) :: potential_acoustic
-  double precision, dimension(NDIM,npoin) :: veloc_elastic
+  real(kind=CUSTOM_REAL), dimension(npoin) :: potential_acoustic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: veloc_elastic
 
 ! array with derivatives of Lagrange polynomials
-  double precision, dimension(NGLLX,NGLLX) :: hprime_xx
-  double precision, dimension(NGLLZ,NGLLZ) :: hprime_zz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
+  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
 
 ! local variables
   integer i,j,k,iglob
 
 ! space derivatives
-  double precision tempx1l,tempx2l
-  double precision hp1,hp2
+  real(kind=CUSTOM_REAL) tempx1l,tempx2l
+  real(kind=CUSTOM_REAL) hp1,hp2
 
 ! jacobian
-  double precision xixl,xizl,gammaxl,gammazl
+  real(kind=CUSTOM_REAL) xixl,xizl,gammaxl,gammazl
 
 ! simple copy of existing vector if elastic element
   if(elastic(ispec)) then
