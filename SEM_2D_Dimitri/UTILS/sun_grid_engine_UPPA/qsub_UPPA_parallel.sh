@@ -89,9 +89,9 @@ rm ./OUTPUT_FILES/Database*
 cd /scratch/$USER/$JOB_NAME$JOB_ID
 
 
-LD_LIBRARY_PATH=/opt/openmpi-1.2.1/gfortran64/lib  /opt/openmpi-1.2.1/gfortran64/bin/mpirun -np $NSLOTS ./xspecfem2D
+LD_LIBRARY_PATH=/opt/openmpi-1.2.2/pgi64/lib /opt/openmpi-1.2.2/pgi64/bin/mpirun -np $NSLOTS ./xspecfem2D
 
 scp $host0.univ-pau.fr:/scratch/$USER/$JOB_NAME$JOB_ID/OUTPUT_FILES/* $CURRENT_DIR/OUTPUT_FILES/
 
-LD_LIBRARY_PATH=/opt/openmpi-1.2.1/gfortran64/lib  /opt/openmpi-1.2.1/gfortran64/bin/mpirun -np $NSLOTS ../clean_scratch_UPPA.sh $USER $JOB_NAME $JOB_ID
+LD_LIBRARY_PATH=/opt/openmpi-1.2.2/pgi64/lib /opt/openmpi-1.2.2/pgi64/bin/mpirun -np $NSLOTS ../clean_scratch_UPPA.sh $USER $JOB_NAME $JOB_ID
 
