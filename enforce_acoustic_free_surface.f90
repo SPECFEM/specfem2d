@@ -29,7 +29,7 @@
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
 
-  double precision, dimension(npoin) :: potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
+  real(kind=CUSTOM_REAL), dimension(npoin) :: potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
 
 !---
 !--- local variables

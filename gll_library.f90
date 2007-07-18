@@ -408,11 +408,13 @@
 !=======================================================================
 
   implicit none
+  include 'constants.h'
 
-  double precision, parameter :: zero=0.d0,one=1.d0,two=2.d0
+  !double precision, parameter :: zero=0.d0,one=1.d0,two=2.d0
 
   integer np
-  double precision z(np),w(np)
+  double precision z(np)
+  real(kind=CUSTOM_REAL)  :: w(np)
   double precision alpha,beta
 
   integer n,np1,np2,i
@@ -478,12 +480,15 @@
 !=======================================================================
 
   implicit none
+  include 'constants.h'
 
-  double precision, parameter :: zero=0.d0,one=1.d0,two=2.d0
+
+  !double precision, parameter :: zero=0.d0,one=1.d0,two=2.d0
 
   integer np
   double precision alpha,beta
-  double precision z(np), w(np)
+  double precision z(np) 
+  real(kind=CUSTOM_REAL)  :: w(np)
 
   integer n,nm1,i
   double precision p,pd,pm1,pdm1,pm2,pdm2
