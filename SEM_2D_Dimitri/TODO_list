@@ -9,6 +9,6 @@
 - modifying scripts for UPPA cluster (when FS sync issues are solved and remote commands are available).
 - manual for unstructured meshes.
 - getting rid of constants_unstruct.h.
-- enabling use of real or double precision.
+- checking use of real or double precision. Gain in elapsed time is ok, but now we have to look for memory consumption.
 - checking output on stdout (for data that should be printed only once).
 - compute during the non-blocking persistent MPI calls.
