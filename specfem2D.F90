@@ -1373,6 +1373,10 @@ end if
     close(55)
       endif
 
+! nb_proc_source is the number of processes that own the source (the nearest point). It can be greater 
+! than one if the nearest point is on the interface between several partitions with an explosive source.
+! since source contribution is linear, the source_time_function is cut down by that number (it would have been similar 
+! if we just had elected one of those processes).
     source_time_function(:) = source_time_function(:) / nb_proc_source
 
   else
