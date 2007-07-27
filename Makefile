@@ -10,7 +10,7 @@ O = obj
 # Portland
 #F90 = /opt/openmpi-1.2.2/pgi64/bin/mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
 F90 = pgf90
-FLAGS_NOCHECK=-fast -Mnobounds -Minline -Mneginfo -Mdclchk -Knoieee -Minform=warn -fastsse -tp amd64e -Msmart -Mipa=fast,inline
+FLAGS_NOCHECK=-fast -Mnobounds -Minline -Mneginfo -Mdclchk -Knoieee -Minform=warn -fastsse -tp amd64e -Msmart
 FLAGS_CHECK=-fast -Mbounds -Mneginfo -Mdclchk -Minform=warn
 
 # Intel
