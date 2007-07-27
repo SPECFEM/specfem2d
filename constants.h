@@ -47,8 +47,8 @@
   integer, parameter :: NEDGES = 4
 
 ! a few useful constants
-  real(kind=CUSTOM_REAL), parameter :: ZERO = 0.d0,ONE = 1.d0
-  real(kind=CUSTOM_REAL), parameter :: HALF = 0.5d0,TWO = 2.d0,QUART = 0.25d0
+  double precision, parameter :: ZERO = 0.d0,ONE = 1.d0
+  double precision, parameter :: HALF = 0.5d0,TWO = 2.d0,QUART = 0.25d0
 
 ! pi
   double precision, parameter :: PI = 3.141592653589793d0
@@ -57,7 +57,7 @@
   double precision, parameter :: FOUR_THIRDS = 4.d0/3.d0
 
 ! 1/24
-  real(kind=CUSTOM_REAL), parameter :: ONE_OVER_24 = 1.d0 / 24.d0
+  double precision, parameter :: ONE_OVER_24 = 1.d0 / 24.d0
 
 ! parameters to define the Gauss-Lobatto-Legendre points
   double precision, parameter :: GAUSSALPHA = ZERO,GAUSSBETA = ZERO
@@ -124,26 +124,26 @@
   double precision, parameter :: tau_epsilon_nu1_mech1 = 0.0325305d0
   double precision, parameter :: tau_sigma_nu1_mech1   = 0.0311465d0
   double precision, parameter :: tau_epsilon_nu2_mech1 = 0.0332577d0
-  real(kind=CUSTOM_REAL), parameter :: tau_sigma_nu2_mech1   = 0.0304655d0
+  double precision, parameter :: tau_sigma_nu2_mech1   = 0.0304655d0
 
   double precision, parameter :: tau_epsilon_nu1_mech2 = 0.0032530d0
-  real(kind=CUSTOM_REAL), parameter :: tau_sigma_nu1_mech2   = 0.0031146d0
+  double precision, parameter :: tau_sigma_nu1_mech2   = 0.0031146d0
   double precision, parameter :: tau_epsilon_nu2_mech2 = 0.0033257d0
-  real(kind=CUSTOM_REAL), parameter :: tau_sigma_nu2_mech2   = 0.0030465d0
+  double precision, parameter :: tau_sigma_nu2_mech2   = 0.0030465d0
 
-  real(kind=CUSTOM_REAL), parameter :: inv_tau_sigma_nu1_mech1 = ONE / tau_sigma_nu1_mech1
-  real(kind=CUSTOM_REAL), parameter :: inv_tau_sigma_nu2_mech1 = ONE / tau_sigma_nu2_mech1
-  real(kind=CUSTOM_REAL), parameter :: inv_tau_sigma_nu1_mech2 = ONE / tau_sigma_nu1_mech2
-  real(kind=CUSTOM_REAL), parameter :: inv_tau_sigma_nu2_mech2 = ONE / tau_sigma_nu2_mech2
+  double precision, parameter :: inv_tau_sigma_nu1_mech1 = ONE / tau_sigma_nu1_mech1
+  double precision, parameter :: inv_tau_sigma_nu2_mech1 = ONE / tau_sigma_nu2_mech1
+  double precision, parameter :: inv_tau_sigma_nu1_mech2 = ONE / tau_sigma_nu1_mech2
+  double precision, parameter :: inv_tau_sigma_nu2_mech2 = ONE / tau_sigma_nu2_mech2
 
-  real(kind=CUSTOM_REAL), parameter :: phi_nu1_mech1 = (ONE - tau_epsilon_nu1_mech1/tau_sigma_nu1_mech1) / tau_sigma_nu1_mech1
-  real(kind=CUSTOM_REAL), parameter :: phi_nu2_mech1 = (ONE - tau_epsilon_nu2_mech1/tau_sigma_nu2_mech1) / tau_sigma_nu2_mech1
-  real(kind=CUSTOM_REAL), parameter :: phi_nu1_mech2 = (ONE - tau_epsilon_nu1_mech2/tau_sigma_nu1_mech2) / tau_sigma_nu1_mech2
-  real(kind=CUSTOM_REAL), parameter :: phi_nu2_mech2 = (ONE - tau_epsilon_nu2_mech2/tau_sigma_nu2_mech2) / tau_sigma_nu2_mech2
+  double precision, parameter :: phi_nu1_mech1 = (ONE - tau_epsilon_nu1_mech1/tau_sigma_nu1_mech1) / tau_sigma_nu1_mech1
+  double precision, parameter :: phi_nu2_mech1 = (ONE - tau_epsilon_nu2_mech1/tau_sigma_nu2_mech1) / tau_sigma_nu2_mech1
+  double precision, parameter :: phi_nu1_mech2 = (ONE - tau_epsilon_nu1_mech2/tau_sigma_nu1_mech2) / tau_sigma_nu1_mech2
+  double precision, parameter :: phi_nu2_mech2 = (ONE - tau_epsilon_nu2_mech2/tau_sigma_nu2_mech2) / tau_sigma_nu2_mech2
 
-  real(kind=CUSTOM_REAL), parameter :: Mu_nu1 = ONE - (ONE - tau_epsilon_nu1_mech1/tau_sigma_nu1_mech1) &
+  double precision, parameter :: Mu_nu1 = ONE - (ONE - tau_epsilon_nu1_mech1/tau_sigma_nu1_mech1) &
                                               - (ONE - tau_epsilon_nu1_mech2/tau_sigma_nu1_mech2)
-  real(kind=CUSTOM_REAL), parameter :: Mu_nu2 = ONE - (ONE - tau_epsilon_nu2_mech1/tau_sigma_nu2_mech1) &
+  double precision, parameter :: Mu_nu2 = ONE - (ONE - tau_epsilon_nu2_mech1/tau_sigma_nu2_mech1) &
                                               - (ONE - tau_epsilon_nu2_mech2/tau_sigma_nu2_mech2)
 
 !-----------------------------------------------------------------------
