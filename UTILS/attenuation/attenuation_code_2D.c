@@ -94,7 +94,7 @@ int argc; char **argv;
 
 /* DK DK converted to Fortran90 output */
 
-                  printf("! target constant attenuation factor Q = %20.10fd0\n\n", Q_s);
+                  printf("! target constant attenuation factor Q = %20.10f\n\n", Q_s);
 
                   printf("! tau sigma evenly spaced in log frequency, do not depend on value of Q\n");
                   for (i = 1; i <= n; i++) {
