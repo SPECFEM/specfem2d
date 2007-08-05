@@ -487,7 +487,7 @@
 
   integer np
   double precision alpha,beta
-  double precision z(np) 
+  double precision z(np)
   real(kind=CUSTOM_REAL)  :: w(np)
 
   integer n,nm1,i
