@@ -66,22 +66,12 @@
 
 ! values for Paul Cristini for fluid-solid ocean acoustics simulations
 
-! frequency range: 3.000000 Hz - 20.000000 Hz
-! central frequency in log scale in Hz = 7.745966692414834
-! target constant attenuation factor Q = 136.4376068115
-
-! tau sigma evenly spaced in log frequency, do not depend on value of Q
-! tau_sigma_nu1(1)   = 0.05305164769729849711d0
-! tau_sigma_nu1(2)   = 0.00795774715459477387d0
-
-! tau_epsilon_nu1(1) = 0.05361741010508015715d0
-! tau_epsilon_nu1(2) = 0.00804740719550106794d0
-
+! for N_SLS = 2
 ! frequency range: 1.500000 Hz - 18.000000 Hz
 ! central frequency in log scale in Hz = 5.196152422706633
 ! target constant attenuation factor Q = 136.4376068115
-
 ! tau sigma evenly spaced in log frequency, do not depend on value of Q
+
 ! tau_sigma_nu1(1) = 0.10610329539459699422d0
 ! tau_sigma_nu1(2) = 0.00884194128288308401d0
 
