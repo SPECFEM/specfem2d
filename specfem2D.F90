@@ -191,8 +191,11 @@
   integer nspec_allocate
   double precision :: deltatsquare,deltatcube,deltatfourth,twelvedeltat,fourdeltatsquare
 
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1,e11,e13
+  double precision, dimension(N_SLS) :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
+  double precision :: Mu_nu1,Mu_nu2
+
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
-    e1_mech1,e11_mech1,e13_mech1,e1_mech2,e11_mech2,e13_mech2, &
     dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n,dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1
 
 ! for fluid/solid coupling and edge detection
@@ -533,12 +536,10 @@
   endif
 
 ! allocate memory variables for attenuation
-  allocate(e1_mech1(NGLLX,NGLLZ,nspec_allocate))
-  allocate(e11_mech1(NGLLX,NGLLZ,nspec_allocate))
-  allocate(e13_mech1(NGLLX,NGLLZ,nspec_allocate))
-  allocate(e1_mech2(NGLLX,NGLLZ,nspec_allocate))
-  allocate(e11_mech2(NGLLX,NGLLZ,nspec_allocate))
-  allocate(e13_mech2(NGLLX,NGLLZ,nspec_allocate))
+  allocate(e1(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+  allocate(e11(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+  allocate(e13(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+
   allocate(dux_dxl_n(NGLLX,NGLLZ,nspec_allocate))
   allocate(duz_dzl_n(NGLLX,NGLLZ,nspec_allocate))
   allocate(duz_dxl_n(NGLLX,NGLLZ,nspec_allocate))
@@ -548,6 +549,8 @@
   allocate(duz_dxl_np1(NGLLX,NGLLZ,nspec_allocate))
   allocate(dux_dzl_np1(NGLLX,NGLLZ,nspec_allocate))
 
+! define the attenuation constants
+  call attenuation_model(inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2)
 
 !
 !----  read interfaces data
@@ -1773,10 +1776,10 @@ end if
                initialfield,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,angleforce,deltatcube, &
                deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,elastic,codeabs, &
                accel_elastic,veloc_elastic,displ_elastic,density,elastcoef,xix,xiz,gammax,gammaz, &
-               jacobian,vpext,vsext,rhoext,source_time_function,sourcearray,e1_mech1,e11_mech1, &
-               e13_mech1,e1_mech2,e11_mech2,e13_mech2,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
+               jacobian,vpext,vsext,rhoext,source_time_function,sourcearray, &
+               e1,e11,e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
-               hprime_zz,hprimewgll_zz,wxgll,wzgll)
+               hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2)
 
 ! *********************************************************
 ! ************* add coupling with the acoustic side
@@ -1889,8 +1892,8 @@ end if
          xix,xiz,gammax,gammaz,jacobian,ibool,elastic,hprime_xx,hprime_zz, &
          nspec,npoin,assign_external_model,it,deltat,t0,kmato,elastcoef,density, &
          vpext,vsext,rhoext,wxgll,wzgll,numat, &
-         pressure_element,vector_field_element,e1_mech1,e11_mech1,e1_mech2,e11_mech2, &
-         potential_dot_acoustic,potential_dot_dot_acoustic,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON)
+         pressure_element,vector_field_element,e1,e11, &
+         potential_dot_acoustic,potential_dot_dot_acoustic,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2)
 
 !----  display time step and max of norm of displacement
   if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5) then
@@ -1931,8 +1934,8 @@ end if
 
       call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,elastic, &
             xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-            numat,kmato,density,elastcoef,vpext,vsext,rhoext,ispec,e1_mech1,e11_mech1, &
-            e1_mech2,e11_mech2,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON)
+            numat,kmato,density,elastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
+            TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2)
 
     else if(.not. elastic(ispec)) then
 
@@ -2121,8 +2124,8 @@ end if
 
     call compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,elastic,vector_field_display, &
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-         numat,kmato,density,elastcoef,vpext,vsext,rhoext,e1_mech1,e11_mech1, &
-         e1_mech2,e11_mech2,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON)
+         numat,kmato,density,elastcoef,vpext,vsext,rhoext,e1,e11, &
+         TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2)
 
   else
     call exit_MPI('wrong type for snapshots')

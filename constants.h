@@ -14,6 +14,9 @@
 ! the code does NOT work if NGLLZ /= NGLLX because it then cannot handle a non-structured mesh
   integer, parameter :: NGLLZ = NGLLX
 
+! number of standard linear solids for attenuation
+  integer, parameter :: N_SLS = 2
+
 ! compute and output acoustic and elastic energy (slows down the code significantly)
   logical, parameter :: OUTPUT_ENERGY = .false.
 
@@ -97,92 +100,6 @@
 
 ! size of frame used for Postscript display in percentage of the size of the page
   double precision, parameter :: RPERCENTX = 70.0d0,RPERCENTZ = 77.0d0
-
-!-----------------------------------------------------------------------
-
-! attenuation constants for standard linear solids
-! nu1 is the dilatation mode
-! nu2 is the shear mode
-! mech1 is the first standard linear solid, mech2 is the second
-
-! from J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
-! vol. 58(1), p. 110-120 (1993) for two memory-variable mechanisms (page 112).
-! Beware: these values implement specific values of the quality factors:
-! Qp approximately equal to 13 and Qs approximately equal to 10,
-! which means very high attenuation, see that paper for details.
-! double precision, parameter :: tau_epsilon_nu1_mech1 = 0.0334d0
-! double precision, parameter :: tau_sigma_nu1_mech1   = 0.0303d0
-! double precision, parameter :: tau_epsilon_nu2_mech1 = 0.0352d0
-! double precision, parameter :: tau_sigma_nu2_mech1   = 0.0287d0
-
-! double precision, parameter :: tau_epsilon_nu1_mech2 = 0.0028d0
-! double precision, parameter :: tau_sigma_nu1_mech2   = 0.0025d0
-! double precision, parameter :: tau_epsilon_nu2_mech2 = 0.0029d0
-! double precision, parameter :: tau_sigma_nu2_mech2   = 0.0024d0
-
-! from J. M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation
-! in a linear viscoelastic medium, Geophysical Journal International,
-! vol. 95, p. 597-611 (1988) for two memory-variable mechanisms (page 604).
-! Beware: these values implement specific values of the quality factors:
-! Qp approximately equal to 27 and Qs approximately equal to 20,
-! which means very high attenuation, see that paper for details.
-  double precision, parameter :: tau_epsilon_nu1_mech1 = 0.0325305d0
-  double precision, parameter :: tau_sigma_nu1_mech1   = 0.0311465d0
-  double precision, parameter :: tau_epsilon_nu2_mech1 = 0.0332577d0
-  double precision, parameter :: tau_sigma_nu2_mech1   = 0.0304655d0
-
-  double precision, parameter :: tau_epsilon_nu1_mech2 = 0.0032530d0
-  double precision, parameter :: tau_sigma_nu1_mech2   = 0.0031146d0
-  double precision, parameter :: tau_epsilon_nu2_mech2 = 0.0033257d0
-  double precision, parameter :: tau_sigma_nu2_mech2   = 0.0030465d0
-
-! values for Paul Cristini for fluid-solid ocean acoustics simulations
-
-! frequency range: 3.000000 Hz - 20.000000 Hz
-! central frequency in log scale in Hz = 7.745966692414834
-! target constant attenuation factor Q = 136.4376068115
-
-! tau sigma evenly spaced in log frequency, do not depend on value of Q
-! double precision, parameter :: tau_sigma_nu1_mech1   = 0.05305164769729849711d0
-! double precision, parameter :: tau_sigma_nu1_mech2   = 0.00795774715459477387d0
-
-! double precision, parameter :: tau_epsilon_nu1_mech1 = 0.05361741010508015715d0
-! double precision, parameter :: tau_epsilon_nu1_mech2 = 0.00804740719550106794d0
-
-! frequency range: 1.500000 Hz - 18.000000 Hz
-! central frequency in log scale in Hz = 5.196152422706633
-! target constant attenuation factor Q = 136.4376068115
-
-! tau sigma evenly spaced in log frequency, do not depend on value of Q
-! double precision, parameter :: tau_sigma_nu1_mech1 = 0.10610329539459699422d0
-! double precision, parameter :: tau_sigma_nu1_mech2 = 0.00884194128288308401d0
-
-! double precision, parameter :: tau_epsilon_nu1_mech1 = 0.10754721280605997191d0
-! double precision, parameter :: tau_epsilon_nu1_mech2 = 0.00895488050110176612d0
-
-! double precision, parameter :: tau_epsilon_nu2_mech1 = tau_epsilon_nu1_mech1
-! double precision, parameter :: tau_epsilon_nu2_mech2 = tau_epsilon_nu1_mech2
-! double precision, parameter :: tau_sigma_nu2_mech1   = tau_sigma_nu1_mech1
-! double precision, parameter :: tau_sigma_nu2_mech2   = tau_sigma_nu1_mech2
-
-!
-!--- other constants computed from the parameters above, do not modify
-!
-
-  double precision, parameter :: inv_tau_sigma_nu1_mech1 = ONE / tau_sigma_nu1_mech1
-  double precision, parameter :: inv_tau_sigma_nu2_mech1 = ONE / tau_sigma_nu2_mech1
-  double precision, parameter :: inv_tau_sigma_nu1_mech2 = ONE / tau_sigma_nu1_mech2
-  double precision, parameter :: inv_tau_sigma_nu2_mech2 = ONE / tau_sigma_nu2_mech2
-
-  double precision, parameter :: phi_nu1_mech1 = (ONE - tau_epsilon_nu1_mech1/tau_sigma_nu1_mech1) / tau_sigma_nu1_mech1
-  double precision, parameter :: phi_nu2_mech1 = (ONE - tau_epsilon_nu2_mech1/tau_sigma_nu2_mech1) / tau_sigma_nu2_mech1
-  double precision, parameter :: phi_nu1_mech2 = (ONE - tau_epsilon_nu1_mech2/tau_sigma_nu1_mech2) / tau_sigma_nu1_mech2
-  double precision, parameter :: phi_nu2_mech2 = (ONE - tau_epsilon_nu2_mech2/tau_sigma_nu2_mech2) / tau_sigma_nu2_mech2
-
-  double precision, parameter :: Mu_nu1 = ONE - (ONE - tau_epsilon_nu1_mech1/tau_sigma_nu1_mech1) &
-                                              - (ONE - tau_epsilon_nu1_mech2/tau_sigma_nu1_mech2)
-  double precision, parameter :: Mu_nu2 = ONE - (ONE - tau_epsilon_nu2_mech1/tau_sigma_nu2_mech1) &
-                                              - (ONE - tau_epsilon_nu2_mech2/tau_sigma_nu2_mech2)
 
 !-----------------------------------------------------------------------
 

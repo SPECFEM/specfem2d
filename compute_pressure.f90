@@ -13,8 +13,8 @@
 
   subroutine compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,elastic,vector_field_display, &
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-         numat,kmato,density,elastcoef,vpext,vsext,rhoext,e1_mech1,e11_mech1, &
-         e1_mech2,e11_mech2,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON)
+         numat,kmato,density,elastcoef,vpext,vsext,rhoext,e1,e11, &
+         TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2)
 
 ! compute pressure in acoustic elements and in elastic elements
 
@@ -44,7 +44,8 @@
 
   logical :: assign_external_model,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: e1_mech1,e11_mech1,e1_mech2,e11_mech2
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11
+  double precision :: Mu_nu1,Mu_nu2
 
 ! local variables
   integer :: i,j,ispec,iglob
@@ -58,8 +59,8 @@
 ! compute pressure in this element
     call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,elastic, &
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-         numat,kmato,density,elastcoef,vpext,vsext,rhoext,ispec,e1_mech1,e11_mech1, &
-         e1_mech2,e11_mech2,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON)
+         numat,kmato,density,elastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
+         TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2)
 
 ! use vector_field_display as temporary storage, store pressure in its second component
     do j = 1,NGLLZ
@@ -79,8 +80,8 @@
 
   subroutine compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,elastic, &
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-         numat,kmato,density,elastcoef,vpext,vsext,rhoext,ispec,e1_mech1,e11_mech1, &
-         e1_mech2,e11_mech2,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON)
+         numat,kmato,density,elastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
+         TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2)
 
 ! compute pressure in acoustic elements and in elastic elements
 
@@ -112,7 +113,10 @@
 
   logical :: assign_external_model,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: e1_mech1,e11_mech1,e1_mech2,e11_mech2
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11
+  real(kind=CUSTOM_REAL) :: e1_sum,e11_sum
+  double precision :: Mu_nu1,Mu_nu2
+  integer :: i_sls
 
 ! local variables
   integer :: i,j,k,iglob
@@ -217,10 +221,16 @@
 
 ! add the memory variables using the relaxed parameters (Carcione 1993, page 111)
 ! beware: there is a bug in Carcione's equation (2c) for sigma_zz, we fixed it in the code below
-    sigma_xx = sigma_xx + (lambdal_relaxed + mul_relaxed)* &
-      (e1_mech1(i,j,ispec) + e1_mech2(i,j,ispec)) + TWO * mul_relaxed * (e11_mech1(i,j,ispec) + e11_mech2(i,j,ispec))
-    sigma_zz = sigma_zz + (lambdal_relaxed + mul_relaxed)* &
-      (e1_mech1(i,j,ispec) + e1_mech2(i,j,ispec)) - TWO * mul_relaxed * (e11_mech1(i,j,ispec) + e11_mech2(i,j,ispec))
+    e1_sum = 0._CUSTOM_REAL
+    e11_sum = 0._CUSTOM_REAL
+
+    do i_sls = 1,N_SLS
+      e1_sum = e1_sum + e1(i,j,ispec,i_sls)
+      e11_sum = e11_sum + e11(i,j,ispec,i_sls)
+    enddo
+
+    sigma_xx = sigma_xx + (lambdal_relaxed + mul_relaxed) * e1_sum + TWO * mul_relaxed * e11_sum
+    sigma_zz = sigma_zz + (lambdal_relaxed + mul_relaxed) * e1_sum - TWO * mul_relaxed * e11_sum
 
   else
 

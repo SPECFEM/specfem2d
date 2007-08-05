@@ -36,9 +36,9 @@
 !---
 
   integer :: ispec_acoustic_surface,ispec,i,j,iglob
-  
+
   do ispec_acoustic_surface = 1, nelem_acoustic_surface
-     
+
      ispec = acoustic_surface(1,ispec_acoustic_surface)
      do j = acoustic_surface(4,ispec_acoustic_surface), acoustic_surface(5,ispec_acoustic_surface)
         do i = acoustic_surface(2,ispec_acoustic_surface), acoustic_surface(3,ispec_acoustic_surface)
@@ -46,11 +46,11 @@
            potential_acoustic(iglob) = ZERO
            potential_dot_acoustic(iglob) = ZERO
            potential_dot_dot_acoustic(iglob) = ZERO
-           
+
         end do
      end do
-     
+
   end do
-  
+
   end subroutine enforce_acoustic_free_surface
 
