@@ -1,5 +1,5 @@
 
-! Number of nodes per elements. 
+! Number of nodes per elements.
 integer, parameter  :: ESIZE = 4
 
 ! Max number of neighbours per elements.

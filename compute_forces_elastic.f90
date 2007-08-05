@@ -16,10 +16,10 @@
                initialfield,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,angleforce,deltatcube, &
                deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,elastic,codeabs, &
                accel_elastic,veloc_elastic,displ_elastic,density,elastcoef,xix,xiz,gammax,gammaz, &
-               jacobian,vpext,vsext,rhoext,source_time_function,sourcearray,e1_mech1,e11_mech1, &
-               e13_mech1,e1_mech2,e11_mech2,e13_mech2,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
+               jacobian,vpext,vsext,rhoext,source_time_function,sourcearray,e1,e11, &
+               e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
-               hprime_zz,hprimewgll_zz,wxgll,wzgll)
+               hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2)
 
 ! compute forces for the elastic elements
 
@@ -48,8 +48,13 @@
   real(kind=CUSTOM_REAL), dimension(NSTEP) :: source_time_function
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: sourcearray
 
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11,e13
+  double precision, dimension(N_SLS) :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
+  double precision :: Mu_nu1,Mu_nu2
+  real(kind=CUSTOM_REAL) :: e1_sum,e11_sum,e13_sum
+  integer :: i_sls
+
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: &
-    e1_mech1,e11_mech1,e13_mech1,e1_mech2,e11_mech2,e13_mech2, &
     dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n,dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1
 
 ! derivatives of Lagrange polynomials
@@ -165,11 +170,19 @@
 
 ! add the memory variables using the relaxed parameters (Carcione 1993, page 111)
 ! beware: there is a bug in Carcione's equation (2c) for sigma_zz, we fixed it in the code below
-    sigma_xx = sigma_xx + (lambdal_relaxed + mul_relaxed)* &
-      (e1_mech1(i,j,ispec) + e1_mech2(i,j,ispec)) + TWO * mul_relaxed * (e11_mech1(i,j,ispec) + e11_mech2(i,j,ispec))
-    sigma_xz = sigma_xz + mul_relaxed * (e13_mech1(i,j,ispec) + e13_mech2(i,j,ispec))
-    sigma_zz = sigma_zz + (lambdal_relaxed + mul_relaxed)* &
-      (e1_mech1(i,j,ispec) + e1_mech2(i,j,ispec)) - TWO * mul_relaxed * (e11_mech1(i,j,ispec) + e11_mech2(i,j,ispec))
+    e1_sum = 0._CUSTOM_REAL
+    e11_sum = 0._CUSTOM_REAL
+    e13_sum = 0._CUSTOM_REAL
+
+    do i_sls = 1,N_SLS
+      e1_sum = e1_sum + e1(i,j,ispec,i_sls)
+      e11_sum = e11_sum + e11(i,j,ispec,i_sls)
+      e13_sum = e13_sum + e13(i,j,ispec,i_sls)
+    enddo
+
+    sigma_xx = sigma_xx + (lambdal_relaxed + mul_relaxed) * e1_sum + TWO * mul_relaxed * e11_sum
+    sigma_xz = sigma_xz + mul_relaxed * e13_sum
+    sigma_zz = sigma_zz + (lambdal_relaxed + mul_relaxed) * e1_sum - TWO * mul_relaxed * e11_sum
 
   else
 
@@ -490,89 +503,52 @@
   theta_n   = dux_dxl_n(i,j,ispec) + duz_dzl_n(i,j,ispec)
   theta_np1 = dux_dxl_np1(i,j,ispec) + duz_dzl_np1(i,j,ispec)
 
-! evolution e1_mech1
-  Un = e1_mech1(i,j,ispec)
-  tauinv = - inv_tau_sigma_nu1_mech1
-  tauinvsquare = tauinv * tauinv
-  tauinvcube = tauinvsquare * tauinv
-  tauinvUn = tauinv * Un
-  Sn   = theta_n * phi_nu1_mech1
-  Snp1 = theta_np1 * phi_nu1_mech1
-  Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
-      twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
-      fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
-      deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
-  e1_mech1(i,j,ispec) = Unp1
+! loop on all the standard linear solids
+  do i_sls = 1,N_SLS
 
-! evolution e1_mech2
-  Un = e1_mech2(i,j,ispec)
-  tauinv = - inv_tau_sigma_nu1_mech2
+! evolution e1
+  Un = e1(i,j,ispec,i_sls)
+  tauinv = - inv_tau_sigma_nu1(i_sls)
   tauinvsquare = tauinv * tauinv
   tauinvcube = tauinvsquare * tauinv
   tauinvUn = tauinv * Un
-  Sn   = theta_n * phi_nu1_mech2
-  Snp1 = theta_np1 * phi_nu1_mech2
+  Sn   = theta_n * phi_nu1(i_sls)
+  Snp1 = theta_np1 * phi_nu1(i_sls)
   Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
       twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
       fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
       deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
-  e1_mech2(i,j,ispec) = Unp1
+  e1(i,j,ispec,i_sls) = Unp1
 
-! evolution e11_mech1
-  Un = e11_mech1(i,j,ispec)
-  tauinv = - inv_tau_sigma_nu2_mech1
+! evolution e11
+  Un = e11(i,j,ispec,i_sls)
+  tauinv = - inv_tau_sigma_nu2(i_sls)
   tauinvsquare = tauinv * tauinv
   tauinvcube = tauinvsquare * tauinv
   tauinvUn = tauinv * Un
-  Sn   = (dux_dxl_n(i,j,ispec) - theta_n/TWO) * phi_nu2_mech1
-  Snp1 = (dux_dxl_np1(i,j,ispec) - theta_np1/TWO) * phi_nu2_mech1
+  Sn   = (dux_dxl_n(i,j,ispec) - theta_n/TWO) * phi_nu2(i_sls)
+  Snp1 = (dux_dxl_np1(i,j,ispec) - theta_np1/TWO) * phi_nu2(i_sls)
   Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
       twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
       fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
       deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
-  e11_mech1(i,j,ispec) = Unp1
+  e11(i,j,ispec,i_sls) = Unp1
 
-! evolution e11_mech2
-  Un = e11_mech2(i,j,ispec)
-  tauinv = - inv_tau_sigma_nu2_mech2
+! evolution e13
+  Un = e13(i,j,ispec,i_sls)
+  tauinv = - inv_tau_sigma_nu2(i_sls)
   tauinvsquare = tauinv * tauinv
   tauinvcube = tauinvsquare * tauinv
   tauinvUn = tauinv * Un
-  Sn   = (dux_dxl_n(i,j,ispec) - theta_n/TWO) * phi_nu2_mech2
-  Snp1 = (dux_dxl_np1(i,j,ispec) - theta_np1/TWO) * phi_nu2_mech2
+  Sn   = (dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)) * phi_nu2(i_sls)
+  Snp1 = (dux_dzl_np1(i,j,ispec) + duz_dxl_np1(i,j,ispec)) * phi_nu2(i_sls)
   Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
       twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
       fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
       deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
-  e11_mech2(i,j,ispec) = Unp1
+  e13(i,j,ispec,i_sls) = Unp1
 
-! evolution e13_mech1
-  Un = e13_mech1(i,j,ispec)
-  tauinv = - inv_tau_sigma_nu2_mech1
-  tauinvsquare = tauinv * tauinv
-  tauinvcube = tauinvsquare * tauinv
-  tauinvUn = tauinv * Un
-  Sn   = (dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)) * phi_nu2_mech1
-  Snp1 = (dux_dzl_np1(i,j,ispec) + duz_dxl_np1(i,j,ispec)) * phi_nu2_mech1
-  Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
-      twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
-      fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
-      deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
-  e13_mech1(i,j,ispec) = Unp1
-
-! evolution e13_mech2
-  Un = e13_mech2(i,j,ispec)
-  tauinv = - inv_tau_sigma_nu2_mech2
-  tauinvsquare = tauinv * tauinv
-  tauinvcube = tauinvsquare * tauinv
-  tauinvUn = tauinv * Un
-  Sn   = (dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)) * phi_nu2_mech2
-  Snp1 = (dux_dzl_np1(i,j,ispec) + duz_dxl_np1(i,j,ispec)) * phi_nu2_mech2
-  Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
-      twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
-      fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
-      deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
-  e13_mech2(i,j,ispec) = Unp1
+  enddo
 
   enddo
   enddo

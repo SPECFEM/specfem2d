@@ -2,7 +2,7 @@
 # Makefile for SPECFEM2D version 5.2
 #
 # Dimitri Komatitsch, University of Pau, April 2007
-# 
+#
 SHELL=/bin/sh
 
 O = obj
@@ -37,7 +37,7 @@ OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/enforce_acoustic_free_surface.o\
         $O/lagrange_poly.o $O/gmat01.o $O/gll_library.o $O/plotgll.o $O/define_derivation_matrices.o\
         $O/plotpost.o $O/locate_receivers.o $O/locate_source_force.o $O/compute_gradient_attenuation.o\
         $O/specfem2D.o $O/write_seismograms.o $O/define_external_model.o $O/createnum_fast.o $O/createnum_slow.o\
-        $O/define_shape_functions.o $O/create_color_image.o $O/compute_vector_field.o $O/compute_pressure.o\
+        $O/define_shape_functions.o $O/attenuation_model.o $O/create_color_image.o $O/compute_vector_field.o $O/compute_pressure.o\
         $O/recompute_jacobian.o $O/compute_arrays_source.o $O/locate_source_moment_tensor.o $O/numerical_recipes.o\
         $O/construct_acoustic_surface.o $O/assemble_MPI.o $O/compute_energy.o
 
@@ -111,6 +111,9 @@ $O/locate_source_moment_tensor.o: locate_source_moment_tensor.F90 constants.h
     
 $O/define_shape_functions.o: define_shape_functions.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/define_shape_functions.o define_shape_functions.f90
+    
+$O/attenuation_model.o: attenuation_model.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/attenuation_model.o attenuation_model.f90
     
 ### use optimized compilation option for solver only
 $O/specfem2D.o: specfem2D.F90 constants.h
