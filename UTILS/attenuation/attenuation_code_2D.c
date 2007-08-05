@@ -19,8 +19,8 @@
 main (argc,argv)
 int argc; char **argv;
 {
-  int             xmgr, n, i, j, plot;
-  float           Q_kappa, Q_s, Q_kappa_m, Q_s_m;
+  int             xmgr, n, i, j, plot, nu;
+  double          Q_s, target_Qp, target_Qs;
   double          f1, f2, Q, om0, Omega;
   double          a, b;
   double          kappa, mu, kappa0, mu0, kappaR, muR;
@@ -29,9 +29,13 @@ int argc; char **argv;
   void            constant_Q2_sub(),plot_modulus();
   void            free_dvector();
 
-  printf("value of Q_p or Q_s: ");
-  scanf("%f",&Q_s);
-  printf("%f\n",Q_s);
+  printf("target value of Qp: ");
+  scanf("%lf",&target_Qp);
+  printf("%lf\n",target_Qp);
+
+  printf("target value of Qs: ");
+  scanf("%lf",&target_Qs);
+  printf("%lf\n",target_Qs);
 
   printf("shortest frequency (Hz): ");
   scanf("%lf",&f1);
@@ -51,64 +55,66 @@ int argc; char **argv;
 
   if (f2 < f1) {
     printf("T2 > T1\n");
-    exit;
-  }
-  if (Q < 0.0) {
-    printf("Q < 0\n");
-    exit;
-  }
+    exit; }
+
+  if (target_Qp <= 0.0001) {
+    printf("Qp cannot be negative or null\n");
+    exit; }
+
+  if (target_Qs <= 0.0001) {
+    printf("Qs cannot be negative or null\n");
+    exit; }
+
   if (n < 1) {
     printf("n < 1\n");
-    exit;
-  }
+    exit; }
 
-  tau_s = dvector(1, n);
-  tau_e = dvector(1, n);
-
-  Q_kappa_m = Q_s_m = 0.0;
   om0 = PI2 * pow(10.0, 0.5 * (log10(f1) + log10(f2)));
-/* DK DK  printf("\n\n! central frequency: %25.15f mHz\n\n", 1.0E+03 * om0 / PI2); */
 
-          plot=0;
+  printf("\n! put this in file constants.h\n\n");
 
-/* DK DK removed for Qmu only in the Earth
-    if (Q_kappa != Q_kappa_m) {
-      printf("\ntarget Q_kappa: %6.2f\n\n", Q_kappa);
-      constant_Q2_sub(f1, f2, n, (double) Q_kappa, tau_s, tau_e, xmgr);
-      Q_kappa_m = Q_kappa;
-                  a = 1.0;
-                  b = 0.0;
-                  for (i = 1; i <= n; i++) {
-                    a -= om0 * om0 * tau_e[i] * (tau_e[i] - tau_s[i]) /
-                       (1.0 + om0 * om0 * tau_e[i] * tau_e[i]);
-                    b += om0 * (tau_e[i] - tau_s[i]) /
-                       (1.0 + om0 * om0 * tau_e[i] * tau_e[i]);
-                  }
-                      }
-*/
+  printf("! number of standard linear solids for attenuation\n");
+  printf("  integer, parameter :: N_SLS = %d\n\n",n);
 
-        printf("\n! frequency range: %f Hz - %f Hz\n\n", f1 , f2);
-        printf("! central frequency in log scale in Hz = %20.15f\n",om0 / PI2);
+  printf("! put this in file attenuation_model.f90\n\n");
 
-      constant_Q2_sub(f1, f2, n, (double) Q_s, tau_s, tau_e, xmgr);
+  printf("! frequency range: %lf Hz - %lf Hz\n", f1 , f2);
+  printf("! central frequency in log scale in Hz = %20.15f\n",om0 / PI2);
 
-/* DK DK converted to Fortran90 output */
+  printf("! target constant attenuation factor Qp = %20.10lf\n", target_Qp);
+  printf("! target constant attenuation factor Qs = %20.10lf\n\n", target_Qs);
 
-                  printf("! target constant attenuation factor Q = %20.10f\n\n", Q_s);
+  printf("! tau_sigma evenly spaced in log frequency, do not depend on value of Q\n\n");
 
-                  printf("! tau sigma evenly spaced in log frequency, do not depend on value of Q\n");
-                  for (i = 1; i <= n; i++) {
-                    printf("  double precision, parameter :: tau_sigma_mech%1d = %30.20fd0\n", i, tau_s[i]);
-                  }
-                  printf("\n");
+  plot = 0;
 
-                  for (i = 1; i <= n; i++) {
-                    printf("  double precision, parameter :: tau_epsilon_mech%1d = %30.20fd0\n", i, tau_e[i] );
-                  }
-                  printf("\n");
+/* loop on the Qp dilatation mode (nu = 1) and Qs shear mode (nu = 2) */
+  for (nu = 1; nu <= 2; nu++) {
 
-  free_dvector(tau_s, 1, n);
-  free_dvector(tau_e, 1, n);
+/* assign Qp or Qs to generic variable Q_s which is used for the calculations */
+    if (nu == 1) { Q_s = target_Qp ; }
+    if (nu == 2) { Q_s = target_Qs ; }
+
+    tau_s = dvector(1, n);
+    tau_e = dvector(1, n);
+
+    constant_Q2_sub(f1, f2, n, Q_s, tau_s, tau_e, xmgr);
+
+/* output in Fortran90 format */
+    for (i = 1; i <= n; i++) {
+      printf("  tau_sigma_nu%d(%1d) = %30.20lfd0\n", nu, i, tau_s[i]);
+      }
+      printf("\n");
+
+    for (i = 1; i <= n; i++) {
+      printf("  tau_epsilon_nu%d(%1d) = %30.20lfd0\n", nu, i, tau_e[i]);
+      }
+    printf("\n");
+
+    free_dvector(tau_s, 1, n);
+    free_dvector(tau_e, 1, n);
+
+  }
 
 }
 
@@ -905,7 +911,7 @@ void constant_Q2_sub(f1, f2, n, Q, tau_s, tau_e, xmgr)
   double         *x1, *x2;
   double         *gradient, **hessian;
   double         *dvector(), **dmatrix();
-  void            print_model(), derivatives();
+  void            derivatives();
   void            initialize(), invert();
   void            free_dvector(), free_dmatrix();
 
@@ -942,20 +948,11 @@ void constant_Q2_sub(f1, f2, n, Q, tau_s, tau_e, xmgr)
   free_dvector(gradient, 1, n);
   free_dmatrix(hessian, 1, n, 1, n);
 
-  print_model(f1, f2, n, Q, x1, x2, xmgr);
-
-/* DK DK  printf("! frequency range: %f -- %f mHz\n", f1 * 1.0E+03, f2 * 1.0E+03);
-  printf("! period range: %f -- %f s\n", 1./f2 , 1./f1 );
-  printf("! desired Q: %f\n", Q);
-  printf("! number of relaxation mechanisms: %d\n", n); */
   for (i = 1; i <= n; i++) {
           tau_e[i]=x1[i] + x2[i];
-/* DK DK    printf("tau_e[%d]: %e\n", i, x1[i] + x2[i]);   */
   }
-  printf("\n");
   for (i = 1; i <= n; i++) {
           tau_s[i]=x2[i];
-/* DK DK     printf("tau_s[%d]: %e\n", i, x2[i]);   */
   }
 
   free_dvector(x1, 1, n);
@@ -1002,18 +999,6 @@ for (i = 1; i <= n; i++) {
   x2[i] = tau_s[i];
 }
 
-/* DK DK suppressed verbose output
-printf("initial stress and strain relaxation times: \n\n");
-for (i = 1; i <= n; i++) {
-  printf("tau_e[%d]: %e\n", i, x1[i] + x2[i]);
-}
-printf("\n");
-for (i = 1; i <= n; i++) {
-  printf("tau_s[%d]: %e\n", i, x2[i]);
-}
-printf("\n"); */
-
-
 free_dvector(tau_e, 1, n);
 free_dvector(tau_s, 1, n);
 }
@@ -1053,63 +1038,6 @@ pnlt /= (f2 - f1);
 return pnlt;
 }
 
-void            print_model(f1, f2, n, Q, x1, x2, xmgr)
-  int             n, xmgr;
-  double          f1, f2, Q, *x1, *x2;
-{
-int             pid, i;
-double          exp1, exp2, dexp, expo;
-double          f, omega;
-double          tau_e, tau_s, a, b, Q_omega;
-char            strng[180];
-int             getpid(), system();
-FILE           *fp_q, *fp_q_approx;
-
-pid = getpid();
-sprintf(strng, "q%1d", pid);
-if((fp_q=fopen(strng,"w"))==NULL) {
-  puts("cannot open file\n");
-  exit;
-}
-sprintf(strng, "q_approx%1d", pid);
-if((fp_q_approx=fopen(strng,"w"))==NULL) {
-  puts("cannot open file\n");
-  exit;
-}
-
-exp1 = log10(f1) - 2.0;
-exp2 = log10(f2) + 2.0;
-dexp = (exp2 - exp1) / 100.0;
-for (expo = exp1; expo <= exp2; expo += dexp) {
-  f = pow(10.0, expo);
-  omega = PI2 * f;
-  a = (double) (1 - n);
-  b = 0.0;
-  for (i = 1; i <= n; i++) {
-    tau_e = x1[i] + x2[i];
-    tau_s = x2[i];
-    a += (1.0 + omega * omega * tau_e * tau_s) /
-       (1.0 + omega * omega * tau_s * tau_s);
-    b += omega * (tau_e - tau_s) /
-       (1.0 + omega * omega * tau_s * tau_s);
-  }
-  Q_omega = a / b;
-  if (omega >= PI2 * f1 && omega <= PI2 * f2) {
-    fprintf(fp_q, "%f %f\n", f, Q);
-    fprintf(fp_q_approx, "%f %f\n", f, Q_omega);
-  }
-}
-fclose(fp_q);
-fclose(fp_q_approx);
-
-/* DK DK added option to avoid calling Xmgr */
-if(xmgr == 1) {
-  sprintf(strng, "xmgr q%1d q_approx%1d", pid, pid);
-  system(strng);
-  sprintf(strng, "rm q%1d q_approx%1d", pid, pid, pid);
-  system(strng);
-}
-}
 
 void            derivatives(f1, f2, n, Q, x1, x2, gradient, hessian)
   int             n;

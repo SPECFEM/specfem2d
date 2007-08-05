@@ -15,8 +15,8 @@
          xix,xiz,gammax,gammaz,jacobian,ibool,elastic,hprime_xx,hprime_zz, &
          nspec,npoin,assign_external_model,it,deltat,t0,kmato,elastcoef,density, &
          vpext,vsext,rhoext,wxgll,wzgll,numat, &
-         pressure_element,vector_field_element,e1_mech1,e11_mech1,e1_mech2,e11_mech2, &
-         potential_dot_acoustic,potential_dot_dot_acoustic,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON)
+         pressure_element,vector_field_element,e1,e11, &
+         potential_dot_acoustic,potential_dot_dot_acoustic,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2)
 
 ! compute kinetic and potential energy in the solid (acoustic elements are excluded)
 
@@ -30,7 +30,8 @@
 ! pressure in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: pressure_element
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: e1_mech1,e11_mech1,e1_mech2,e11_mech2
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11
+  double precision :: Mu_nu1,Mu_nu2
 
   real(kind=CUSTOM_REAL), dimension(npoin) :: potential_dot_acoustic,potential_dot_dot_acoustic
 
@@ -170,8 +171,8 @@
 ! compute pressure in this element
     call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,elastic, &
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-         numat,kmato,density,elastcoef,vpext,vsext,rhoext,ispec,e1_mech1,e11_mech1, &
-         e1_mech2,e11_mech2,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON)
+         numat,kmato,density,elastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
+         TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2)
 
 ! compute velocity vector field in this element
     call compute_vector_one_element(vector_field_element,potential_dot_acoustic,veloc_elastic,elastic, &
