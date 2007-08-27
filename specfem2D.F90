@@ -1585,10 +1585,6 @@ end if
   write(IOUT,400)
 
 ! count elapsed wall-clock time
-  datein = ''
-  timein = ''
-  zone = ''
-
   call date_and_time(datein,timein,zone,time_values)
 ! time_values(3): day of the month
 ! time_values(5): hour of the day
