@@ -480,7 +480,7 @@
            endif
 
         endif
-     end if
+     endif
 
   else
      call exit_MPI('wrong source type')

@@ -24,7 +24,7 @@ subroutine construct_acoustic_surface ( nspec, ngnod, knods, nsurface, surface, 
      e2 = surface(4,i)
      do k = 1, ngnod
         n(k) = knods(k,tab_surface(1,i))
-     end do
+     enddo
 
      call get_acoustic_edge ( ngnod, n, type, e1, e2, ixmin, ixmax, izmin, izmax )
 
@@ -34,7 +34,7 @@ subroutine construct_acoustic_surface ( nspec, ngnod, knods, nsurface, surface, 
      tab_surface(5,i) = izmax
 
 
-  end do
+  enddo
 
 
 end subroutine construct_acoustic_surface
@@ -59,25 +59,25 @@ subroutine get_acoustic_edge ( ngnod, n, type, e1, e2, ixmin, ixmax, izmin, izma
         ixmax = 1
         izmin = 1
         izmax = 1
-     end if
+     endif
      if ( e1 == n(2) ) then
         ixmin = NGLLX
         ixmax = NGLLX
         izmin = 1
         izmax = 1
-     end if
+     endif
      if ( e1 == n(3) ) then
         ixmin = NGLLX
         ixmax = NGLLX
         izmin = NGLLZ
         izmax = NGLLZ
-     end if
+     endif
      if ( e1 == n(4) ) then
         ixmin = 1
         ixmax = 1
         izmin = NGLLZ
         izmax = NGLLZ
-     end if
+     endif
 
   else
      if ( e1 ==  n(1) ) then
@@ -87,13 +87,13 @@ subroutine get_acoustic_edge ( ngnod, n, type, e1, e2, ixmin, ixmax, izmin, izma
            ixmax = NGLLX
            izmax = 1
 
-        end if
+        endif
         if ( e2 == n(4) ) then
            ixmax = 1
            izmax = NGLLZ
 
-        end if
-     end if
+        endif
+     endif
      if ( e1 == n(2) ) then
         ixmin = NGLLX
         izmin = 1
@@ -101,14 +101,14 @@ subroutine get_acoustic_edge ( ngnod, n, type, e1, e2, ixmin, ixmax, izmin, izma
            ixmax = NGLLX
            izmax = NGLLZ
 
-        end if
+        endif
         if ( e2 == n(1) ) then
            ixmax = ixmin
            ixmin = 1
            izmax = 1
 
-        end if
-     end if
+        endif
+     endif
      if ( e1 == n(3) ) then
         ixmin = NGLLX
         izmin = NGLLZ
@@ -117,14 +117,14 @@ subroutine get_acoustic_edge ( ngnod, n, type, e1, e2, ixmin, ixmax, izmin, izma
            ixmin = 1
            izmax = NGLLZ
 
-        end if
+        endif
         if ( e2 == n(2) ) then
            ixmax = NGLLX
            izmax = izmin
            izmin = 1
 
-        end if
-     end if
+        endif
+     endif
      if ( e1 == n(4) ) then
         ixmin = 1
         izmin = NGLLZ
@@ -133,14 +133,14 @@ subroutine get_acoustic_edge ( ngnod, n, type, e1, e2, ixmin, ixmax, izmin, izma
            izmax = izmin
            izmin = 1
 
-        end if
+        endif
         if ( e2 == n(3) ) then
            ixmax = NGLLX
            izmax = NGLLZ
 
-        end if
-     end if
-  end if
+        endif
+     endif
+  endif
 
 
 end subroutine get_acoustic_edge

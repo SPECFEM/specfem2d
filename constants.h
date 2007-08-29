@@ -78,8 +78,11 @@
 ! number of iterations to solve the system for xi and eta
   integer, parameter :: NUM_ITER = 4
 
-! error function source decay rate for Heaviside
-  double precision, parameter :: SOURCE_DECAY_RATE = 1.628d0
+! we mimic a triangle of half duration equal to half_duration_triangle
+! using a Gaussian having a very close shape, as explained in Figure 4.2
+! of the manual. This source decay rate to mimic an equivalent triangle
+! was found by trial and error
+  double precision, parameter :: SOURCE_DECAY_MIMIC_TRIANGLE = 1.628d0
 
 ! non linear display to enhance small amplitudes in color images
   double precision, parameter :: POWER_DISPLAY_COLOR = 0.30d0
