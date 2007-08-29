@@ -1318,9 +1318,16 @@
 !---- compute parameters for the spectral elements
 
   vpmin = HUGEVAL
-  vsmin = HUGEVAL
   vpmax = -HUGEVAL
-  vsmax = -HUGEVAL
+
+  if(any_elastic) then
+    vsmin = HUGEVAL
+    vsmax = -HUGEVAL
+  else
+    vsmin = 0
+    vsmax = 0
+  endif
+
   densmin = HUGEVAL
   densmax = -HUGEVAL
 
@@ -1330,9 +1337,15 @@
   courant_stability_number_max = -HUGEVAL
 
   lambdaPmin = HUGEVAL
-  lambdaSmin = HUGEVAL
   lambdaPmax = -HUGEVAL
-  lambdaSmax = -HUGEVAL
+
+  if(any_elastic) then
+    lambdaSmin = HUGEVAL
+    lambdaSmax = -HUGEVAL
+  else
+    lambdaSmin = 0
+    lambdaSmax = 0
+  endif
 
   do ispec=1,nspec
 

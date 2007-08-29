@@ -297,9 +297,9 @@
 
            if(.not. elastic(ispec_selected_source)) then
               call exit_MPI('cannot have moment tensor source in acoustic element')
-           end if
+           endif
         endif
-     end if
+     endif
   else
      call exit_MPI('wrong source type')
   endif
