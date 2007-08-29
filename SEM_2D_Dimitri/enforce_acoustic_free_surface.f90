@@ -47,10 +47,10 @@
            potential_dot_acoustic(iglob) = ZERO
            potential_dot_dot_acoustic(iglob) = ZERO
 
-        end do
-     end do
+        enddo
+     enddo
 
-  end do
+  enddo
 
   end subroutine enforce_acoustic_free_surface
 

@@ -241,12 +241,12 @@
 ! verifier que le point de depart n'existe pas deja
       if(ibool(iloc,jloc,numelem) /= 0) then
          call exit_MPI('point genere deux fois')
-      end if
+      endif
 
 ! verifier que le point d'arrivee existe bien deja
       if(ibool(i2,j2,num2) == 0) then
          call exit_MPI('point inconnu dans le maillage')
-      end if
+      endif
 
 ! affecter le meme numero
       ibool(iloc,jloc,numelem) = ibool(i2,j2,num2)
@@ -282,7 +282,7 @@
 ! verification de la coherence de la numerotation generee
   if(minval(ibool) /= 1 .or. maxval(ibool) /= npoin) then
      call exit_MPI('Error while generating global numbering')
-  end if
+  endif
 
   write(IOUT,*) 'Total number of points of the global mesh: ',npoin
   write(IOUT,*) 'distributed as follows:'
