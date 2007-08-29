@@ -203,14 +203,14 @@ program meshfem2D
   if ( nproc <= 0 ) then
      print *, 'Number of processes (nproc) must be greater than or equal to one.' 
      stop 
-  end if
+  endif
   
 #ifndef USE_MPI
   if ( nproc > 1 ) then
      print *, 'Number of processes (nproc) must be equal to one when not using MPI.' 
      print *, 'Please recompile with -DUSE_MPI in order to enable use of MPI.'
      stop 
-  end if
+  endif
   
 #endif
   
@@ -226,7 +226,7 @@ program meshfem2D
         do i = 1, 5
            metis_options = iachar(partitionning_strategy(i:i)) - iachar('0')
         end do
-     end if
+     endif
      
   case(3)
      scotch_strategy = trim(partitionning_strategy)
@@ -247,7 +247,7 @@ program meshfem2D
      print *, 'Number of control nodes must be equal to four when reading from external mesh.'
      print *, 'ngnod = 9 is not yet supported.'
      stop 
-  end if
+  endif
   
   call read_value_logical(IIN,IGNORE_JUNK,initialfield)
   call read_value_logical(IIN,IGNORE_JUNK,assign_external_model)
@@ -350,8 +350,8 @@ program meshfem2D
            end do
         end do
         
-     end if
-  end if
+     endif
+  endif
 
 ! read absorbing boundaries parameters
   call read_value_logical(IIN,IGNORE_JUNK,any_abs)
@@ -364,7 +364,7 @@ program meshfem2D
      absright = .false.
      abstop = .false.
      absleft = .false.
-  end if
+  endif
 
 ! read time step parameters
   call read_value_integer(IIN,IGNORE_JUNK,nt)
@@ -572,7 +572,7 @@ program meshfem2D
 
      if(minval(num_material) <= 0) stop 'Velocity model not entirely set...'
 
-  end if
+  endif
 
   close(IIN)
 
@@ -716,10 +716,10 @@ program meshfem2D
            end do
         end do
         
-     end if
+     endif
   else
      call read_nodes_coords(nodes_coords_file, nnodes, nodes_coords)
-  end if
+  endif
   
 
   if ( read_external_mesh ) then
@@ -728,17 +728,22 @@ program meshfem2D
      
      if ( any_abs ) then
         call read_abs_surface(absorbing_surface_file, nelemabs, abs_surface, num_start)
-     end if
+     endif
      
   else
+
      ! count the number of acoustic free-surface elements
      nelem_acoustic_surface = 0
+
+! if the top surface is absorbing, it cannot be free at the same time
+     if(.not. abstop) then
+
      j = nzread
      do i = 1,nxread
         imaterial_number = num_material((j-1)*nxread+i)
         if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. cs(imaterial_number) < TINYVAL ) then
            nelem_acoustic_surface = nelem_acoustic_surface + 1
-        end if
+        endif
      enddo
      
      allocate(acoustic_surface(4,nelem_acoustic_surface))
@@ -753,8 +758,10 @@ program meshfem2D
            acoustic_surface(2,nelem_acoustic_surface) = 2
            acoustic_surface(3,nelem_acoustic_surface) = elmnts(3+ngnod*((j-1)*nxread+i-1))
            acoustic_surface(4,nelem_acoustic_surface) = elmnts(2+ngnod*((j-1)*nxread+i-1))          
-        end if
+        endif
      end do
+
+     endif
      
      !
      !--- definition of absorbing boundaries
@@ -779,33 +786,33 @@ program meshfem2D
                  abs_surface(2,nelemabs) = 2
                  abs_surface(3,nelemabs) = elmnts(0+ngnod*(inumelem-1))
                  abs_surface(4,nelemabs) = elmnts(1+ngnod*(inumelem-1))
-              end if
+              endif
               if(absright .and. ix == nxread) then
                  nelemabs = nelemabs + 1
                  abs_surface(1,nelemabs) = inumelem-1
                  abs_surface(2,nelemabs) = 2
                  abs_surface(3,nelemabs) = elmnts(1+ngnod*(inumelem-1))
                  abs_surface(4,nelemabs) = elmnts(2+ngnod*(inumelem-1))
-              end if
+              endif
               if(abstop   .and. iz == nzread) then
                  nelemabs = nelemabs + 1
                  abs_surface(1,nelemabs) = inumelem-1
                  abs_surface(2,nelemabs) = 2
                  abs_surface(3,nelemabs) = elmnts(3+ngnod*(inumelem-1)) 
                  abs_surface(4,nelemabs) = elmnts(2+ngnod*(inumelem-1)) 
-              end if
+              endif
               if(absleft .and. ix == 1) then
                  nelemabs = nelemabs + 1
                  abs_surface(1,nelemabs) = inumelem-1
                  abs_surface(2,nelemabs) = 2
                  abs_surface(3,nelemabs) = elmnts(0+ngnod*(inumelem-1)) 
                  abs_surface(4,nelemabs) = elmnts(3+ngnod*(inumelem-1)) 
-              end if
+              endif
            end do
         end do
-     end if
+     endif
      
-  end if
+  endif
   
   
 ! compute min and max of X and Z in the grid
@@ -876,7 +883,7 @@ program meshfem2D
 
   print *,'Grid saved in Gnuplot format...'
   print *
-  end if
+  endif
      
 
   !*****************************
@@ -894,14 +901,14 @@ program meshfem2D
         
      if ( nproc > 1 ) then
      call mesh2dual_ncommonnodes(nelmnts, (nxread+1)*(nzread+1), elmnts_bis, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
-     end if
+     endif
      
   else
      if ( nproc > 1 ) then
      call mesh2dual_ncommonnodes(nelmnts, nnodes, elmnts, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
-     end if
+     endif
      
-  end if
+  endif
      
      
   if ( nproc == 1 ) then
@@ -941,7 +948,7 @@ program meshfem2D
         
      end select
  
-  end if
+  endif
   
 ! beware of fluid solid edges : coupled elements are transfered to the same partition
   if ( ngnod == 9 ) then
@@ -950,7 +957,7 @@ program meshfem2D
   else
      call acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_materials, cs, num_material, &
           nproc, part, nedges_coupled, edges_coupled)
-  end if
+  endif
   
 ! local number of each element for each partition
   call Construct_glob2loc_elmnts(nelmnts, part, nproc, glob2loc_elmnts)
@@ -959,7 +966,7 @@ program meshfem2D
      if ( nproc > 1 ) then
      deallocate(nnodes_elmnts)
      deallocate(nodes_elmnts)
-     end if 
+     endif 
      allocate(nnodes_elmnts(0:nnodes-1))
      allocate(nodes_elmnts(0:nsize*nnodes-1))
      nnodes_elmnts(:) = 0
@@ -981,9 +988,9 @@ program meshfem2D
         
      end do
 
-     end if 
+     endif 
 
-  end if
+  endif
   
   
 ! local number of each node for each partition
@@ -998,12 +1005,12 @@ program meshfem2D
      else
         call Construct_interfaces(nelmnts, nproc, part, elmnts, xadj, adjncy, tab_interfaces, &
              tab_size_interfaces, ninterfaces, nb_materials, cs, num_material)
-     end if
+     endif
      print *, '04'
      allocate(my_interfaces(0:ninterfaces-1))
      allocate(my_nb_interfaces(0:ninterfaces-1))
      print *, '05'
-  end if
+  endif
   
 ! setting absorbing boundaries by elements instead of edges
   if ( any_abs ) then
@@ -1014,7 +1021,7 @@ program meshfem2D
           nelmnts, &
           elmnts, ngnod)
      print *, 'nelemabs_merge', nelemabs_merge
-  end if
+  endif
 
 ! *** generate the databases for the solver
 
@@ -1092,7 +1099,7 @@ program meshfem2D
              glob2loc_elmnts, part, iproc, 1)
      else
         nelemabs_loc = 0
-     end if
+     endif
           
      call Write_surface_database(15, nelem_acoustic_surface, acoustic_surface, nelem_acoustic_surface_loc, &
           iproc, glob2loc_elmnts, &
@@ -1133,7 +1140,7 @@ program meshfem2D
         write(15,*) 'Interfaces:'
         write(15,*) 0, 0
         
-     end if
+     endif
      
 
      write(15,*) 'List of absorbing elements (bottom right top left):'
@@ -1143,7 +1150,7 @@ program meshfem2D
              ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
              jbegin_left,jend_left,jbegin_right,jend_right, &
              glob2loc_elmnts, part, iproc, 2)
-     end if
+     endif
      
      write(15,*) 'List of acoustic free-surface elements:'
      call Write_surface_database(15, nelem_acoustic_surface, acoustic_surface, nelem_acoustic_surface_loc, &
@@ -1215,7 +1222,7 @@ program meshfem2D
   enddo
 
   close(15)
-  end if
+  endif
 
   print *
   
@@ -1268,13 +1275,10 @@ program meshfem2D
        else 
           num_9 = (nx+1)*(nz+1) + nx*(nz+1) + floor(real(j)/real(2))*(nx*2+1) + i + 1
           
-       end if
-    end if
-    
+       endif
+    endif
     
   end function num_9
-
-  
 
 
 !--- spline to describe the interfaces
