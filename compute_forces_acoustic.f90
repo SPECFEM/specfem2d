@@ -16,7 +16,7 @@
                assign_external_model,initialfield,ibool,kmato,numabs, &
                elastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
                potential_acoustic,density,elastcoef,xix,xiz,gammax,gammaz,jacobian, &
-               vpext,vsext,rhoext,source_time_function,hprime_xx,hprimewgll_xx, &
+               vpext,source_time_function,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
                jbegin_left,jend_left,jbegin_right,jend_right)
@@ -43,7 +43,7 @@
   double precision, dimension(numat) :: density
   double precision, dimension(4,numat) :: elastcoef
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,vsext,rhoext
+  double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext
   real(kind=CUSTOM_REAL), dimension(NSTEP) :: source_time_function
 
 ! derivatives of Lagrange polynomials
@@ -62,7 +62,7 @@
 
 ! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,dux_dxl,dux_dzl
-  real(kind=CUSTOM_REAL) :: nx,nz,rho_vp,rho_vs,weight,xxi,zxi,xgamma,zgamma,jacobian1D
+  real(kind=CUSTOM_REAL) :: weight,xxi,zxi,xgamma,zgamma,jacobian1D
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: tempx1,tempx2
 
@@ -70,7 +70,7 @@
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
 
 ! material properties of the elastic medium
-  real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,kappal,cpl,csl,rhol
+  real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,kappal,cpl
 
 ! loop over spectral elements
   do ispec = 1,nspec
@@ -148,10 +148,8 @@
 ! get elastic parameters of current spectral element
       lambdal_relaxed = elastcoef(1,kmato(ispec))
       mul_relaxed = elastcoef(2,kmato(ispec))
-      rhol  = density(kmato(ispec))
       kappal  = lambdal_relaxed + TWO*mul_relaxed/3._CUSTOM_REAL
-      cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_relaxed/3._CUSTOM_REAL)/rhol)
-      csl = sqrt(mul_relaxed/rhol)
+      cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_relaxed/3._CUSTOM_REAL)/density(kmato(ispec)))
 
 
 !--- left absorbing boundary
@@ -166,30 +164,18 @@
 
           iglob = ibool(i,j,ispec)
 
-          zgamma = xix(i,j,ispec) * jacobian(i,j,ispec)
-
 ! external velocity model
-          if(assign_external_model) then
-            cpl = vpext(i,j,ispec)
-            csl = vsext(i,j,ispec)
-            rhol = rhoext(i,j,ispec)
-          endif
-
-          rho_vp = rhol*cpl
-          rho_vs = rhol*csl
+          if(assign_external_model) cpl = vpext(i,j,ispec)
 
           xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
           zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
           jacobian1D = sqrt(xgamma**2 + zgamma**2)
-          nx = + zgamma / jacobian1D
-          nz = - xgamma / jacobian1D
 
           weight = jacobian1D * wzgll(j)
 
 ! Sommerfeld condition if acoustic
-          if(.not. elastic(ispec)) then
+          if(.not. elastic(ispec)) &
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl
-          endif
 
         enddo
 
@@ -207,30 +193,18 @@
 
           iglob = ibool(i,j,ispec)
 
-          zgamma = xix(i,j,ispec) * jacobian(i,j,ispec)
-
 ! external velocity model
-          if(assign_external_model) then
-            cpl = vpext(i,j,ispec)
-            csl = vsext(i,j,ispec)
-            rhol = rhoext(i,j,ispec)
-          endif
-
-          rho_vp = rhol*cpl
-          rho_vs = rhol*csl
+          if(assign_external_model) cpl = vpext(i,j,ispec)
 
           xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
           zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
           jacobian1D = sqrt(xgamma**2 + zgamma**2)
-          nx = + zgamma / jacobian1D
-          nz = - xgamma / jacobian1D
 
           weight = jacobian1D * wzgll(j)
 
 ! Sommerfeld condition if acoustic
-          if(.not. elastic(ispec)) then
+          if(.not. elastic(ispec)) &
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl
-          endif
 
         enddo
 
@@ -252,30 +226,18 @@
 
           iglob = ibool(i,j,ispec)
 
-          xxi = gammaz(i,j,ispec) * jacobian(i,j,ispec)
-
 ! external velocity model
-          if(assign_external_model) then
-            cpl = vpext(i,j,ispec)
-            csl = vsext(i,j,ispec)
-            rhol = rhoext(i,j,ispec)
-          endif
-
-          rho_vp = rhol*cpl
-          rho_vs = rhol*csl
+          if(assign_external_model) cpl = vpext(i,j,ispec)
 
           xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
           zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
           jacobian1D = sqrt(xxi**2 + zxi**2)
-          nx = + zxi / jacobian1D
-          nz = - xxi / jacobian1D
 
           weight = jacobian1D * wxgll(i)
 
 ! Sommerfeld condition if acoustic
-          if(.not. elastic(ispec)) then
+          if(.not. elastic(ispec)) &
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl
-          endif
 
         enddo
 
@@ -297,30 +259,18 @@
 
           iglob = ibool(i,j,ispec)
 
-          xxi = gammaz(i,j,ispec) * jacobian(i,j,ispec)
-
 ! external velocity model
-          if(assign_external_model) then
-            cpl = vpext(i,j,ispec)
-            csl = vsext(i,j,ispec)
-            rhol = rhoext(i,j,ispec)
-          endif
-
-          rho_vp = rhol*cpl
-          rho_vs = rhol*csl
+          if(assign_external_model) cpl = vpext(i,j,ispec)
 
           xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
           zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
           jacobian1D = sqrt(xxi**2 + zxi**2)
-          nx = + zxi / jacobian1D
-          nz = - xxi / jacobian1D
 
           weight = jacobian1D * wxgll(i)
 
 ! Sommerfeld condition if acoustic
-          if(.not. elastic(ispec)) then
+          if(.not. elastic(ispec)) &
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl
-          endif
 
         enddo
 
