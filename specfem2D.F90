@@ -188,6 +188,9 @@
   logical, dimension(:,:), allocatable  :: codeabs
 
 ! for attenuation
+  double precision  :: Qp_attenuation
+  double precision  :: Qs_attenuation
+  double precision  :: f0_attenuation
   integer nspec_allocate
   double precision :: deltatsquare,deltatcube,deltatfourth,twelvedeltat,fourdeltatsquare
 
@@ -405,6 +408,12 @@
   read(IIN,*) source_type,time_function_type,x_source,z_source,f0,t0,factor,angleforce,Mxx,Mzz,Mxz
 
 !
+!----  read attenuation information
+!
+  read(IIN,"(a80)") datlin
+  read(IIN,*) Qp_attenuation, Qs_attenuation, f0_attenuation
+
+!
 !-----  check the input
 !
  if(.not. initialfield) then
@@ -550,7 +559,8 @@
   allocate(dux_dzl_np1(NGLLX,NGLLZ,nspec_allocate))
 
 ! define the attenuation constants
-  call attenuation_model(inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2)
+  call attenuation_model(Qp_attenuation,Qs_attenuation,f0_attenuation, &
+      inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2)
 
 !
 !----  read interfaces data
