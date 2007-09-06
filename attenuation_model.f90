@@ -11,7 +11,8 @@
 !
 !========================================================================
 
-  subroutine attenuation_model(inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2)
+  subroutine attenuation_model(Qp_attenuation,Qs_attenuation,f0_attenuation, &
+       inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2)
 
 ! define the attenuation constants
 
@@ -19,12 +20,28 @@
 
   include "constants.h"
 
+  double precision :: Qp_attenuation,Qs_attenuation,f0_attenuation
   double precision, dimension(N_SLS) :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
   double precision :: Mu_nu1,Mu_nu2
 
   integer :: i_sls
 
   double precision, dimension(N_SLS) :: tau_epsilon_nu1,tau_sigma_nu1,tau_epsilon_nu2,tau_sigma_nu2
+
+  double precision :: f1_attenuation, f2_attenuation
+  
+  
+! f1 and f2 are computed as : f2/f1=12 and (log(f1)+log(f2))/2 = log(f0)
+  f1_attenuation = exp(log(f0_attenuation)-log(12.d0)/2.d0)
+  f2_attenuation = 12.d0 * f1_attenuation
+
+! Call of C function that computes attenuation parameters (function in file "attenuation_compute_param.c"; 
+! a main can be found in UTILS/attenuation directory).
+! Beware of underscores in this function name; depending on your compiler and compilation options, you will have to add or 
+! delete underscores. Also look in file "attenuation_compute_param.c" for this issue.
+  call attenuation_compute_param(N_SLS, Qp_attenuation, Qs_attenuation, &
+       f1_attenuation,f2_attenuation, &
+       tau_sigma_nu1, tau_sigma_nu2, tau_epsilon_nu1, tau_epsilon_nu2)
 
 ! attenuation constants for standard linear solids
 
@@ -54,15 +71,15 @@
 ! Beware: these values implement specific values of the quality factors:
 ! Qp approximately equal to 27 and Qs approximately equal to 20,
 ! which means very high attenuation, see that paper for details.
-  tau_epsilon_nu1(1) = 0.0325305d0
-  tau_sigma_nu1(1)   = 0.0311465d0
-  tau_epsilon_nu2(1) = 0.0332577d0
-  tau_sigma_nu2(1)   = 0.0304655d0
+!  tau_epsilon_nu1(1) = 0.0325305d0
+!  tau_sigma_nu1(1)   = 0.0311465d0
+!  tau_epsilon_nu2(1) = 0.0332577d0
+!  tau_sigma_nu2(1)   = 0.0304655d0
 
-  tau_epsilon_nu1(2) = 0.0032530d0
-  tau_sigma_nu1(2)   = 0.0031146d0
-  tau_epsilon_nu2(2) = 0.0033257d0
-  tau_sigma_nu2(2)   = 0.0030465d0
+!  tau_epsilon_nu1(2) = 0.0032530d0
+!  tau_sigma_nu1(2)   = 0.0031146d0
+!  tau_epsilon_nu2(2) = 0.0033257d0
+!  tau_sigma_nu2(2)   = 0.0030465d0
 
 ! values for Paul Cristini for fluid-solid ocean acoustics simulations
 

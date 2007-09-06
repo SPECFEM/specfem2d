@@ -165,6 +165,11 @@ program meshfem2D
   integer, dimension(0:4)  :: metis_options
   character(len=256)  :: prname
 
+! variables used for attenuation
+  double precision  :: Qp_attenuation
+  double precision  :: Qs_attenuation
+  double precision  :: f0_attenuation
+
 #if defined USE_METIS || defined USE_SCOTCH
   integer  :: edgecut
 #endif
@@ -405,6 +410,16 @@ program meshfem2D
   print *,'Mzz of the source if moment tensor = ',Mzz
   print *,'Mxz of the source if moment tensor = ',Mxz
   print *,'Multiplying factor = ',factor
+
+! read constants for attenuation 
+  call read_value_double_precision(IIN,IGNORE_JUNK,Qp_attenuation)
+  call read_value_double_precision(IIN,IGNORE_JUNK,Qs_attenuation)
+  call read_value_double_precision(IIN,IGNORE_JUNK,f0_attenuation)
+  
+! if source is not a Dirac or Heavyside then f0_attenuation is f0
+  if(.not. (time_function_type == 4 .or. time_function_type == 5)) then
+     f0_attenuation = f0
+  endif
 
 ! read receiver line parameters
   call read_value_integer(IIN,IGNORE_JUNK,seismotype)
@@ -1080,6 +1095,9 @@ program meshfem2D
      write(15,*) 'source'
      write(15,*) source_type,time_function_type,xs,zs,f0,t0,factor,angleforce,Mxx,Mzz,Mxz
      
+     write(15,*) 'attenuation'
+     write(15,*) Qp_attenuation, Qs_attenuation, f0_attenuation
+
      write(15,*) 'Coordinates of macrobloc mesh (coorg):'
      
 
