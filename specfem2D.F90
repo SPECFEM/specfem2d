@@ -209,7 +209,7 @@
                                         fluid_solid_elastic_ispec,fluid_solid_elastic_iedge
   integer :: num_fluid_solid_edges,ispec_acoustic,ispec_elastic, &
              iedge_acoustic,iedge_elastic,ipoin1D,iglob2
-  logical :: any_acoustic,any_elastic,coupled_acoustic_elastic
+  logical :: any_acoustic,any_elastic,any_elastic_glob,coupled_acoustic_elastic
   real(kind=CUSTOM_REAL) :: displ_x,displ_z,displ_n,zxi,xgamma,jacobian1D,pressure
 
 ! for color images
@@ -857,11 +857,15 @@
 !
 !----  perform basic checks on parameters read
 !
+any_elastic_glob = any_elastic
+#ifdef USE_MPI
+  call MPI_ALLREDUCE(any_elastic, any_elastic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
+#endif
 
 ! for acoustic
-  if(TURN_ANISOTROPY_ON .and. .not. any_elastic) call exit_MPI('cannot have anisotropy if acoustic simulation only')
+  if(TURN_ANISOTROPY_ON .and. .not. any_elastic_glob) call exit_MPI('cannot have anisotropy if acoustic simulation only')
 
-  if(TURN_ATTENUATION_ON .and. .not. any_elastic) call exit_MPI('currently cannot have attenuation if acoustic simulation only')
+  if(TURN_ATTENUATION_ON .and. .not. any_elastic_glob) call exit_MPI('currently cannot have attenuation if acoustic simulation only')
 
 ! for attenuation
   if(TURN_ANISOTROPY_ON .and. TURN_ATTENUATION_ON) then
