@@ -11,7 +11,7 @@
 !
 !========================================================================
 
-  subroutine create_color_image(color_image_2D_data,iglob_image_color_2D,NX,NY,it,cutsnaps,vp_display,npoin)
+  subroutine create_color_image(color_image_2D_data,iglob_image_color_2D,NX,NY,it,cutsnaps,image_color_vp_display)
 
 ! display a given field as a red and blue color image
 
@@ -23,14 +23,14 @@
 
   include "constants.h"
 
-  integer :: NX,NY,it,npoin
+  integer :: NX,NY,it
 
   double precision :: cutsnaps
 
   integer, dimension(NX,NY) :: iglob_image_color_2D
 
   double precision, dimension(NX,NY) :: color_image_2D_data
-  double precision, dimension(npoin) :: vp_display
+  double precision, dimension(NX,NY) :: image_color_vp_display
 
   integer :: ix,iy,R,G,B,tenthousands,thousands,hundreds,tens,units,remainder,current_rec
 
@@ -122,8 +122,8 @@
 
 ! compute maximum amplitude
   amplitude_max = maxval(abs(color_image_2D_data))
-  vpmin = minval(vp_display)
-  vpmax = maxval(vp_display)
+  vpmin = minval(image_color_vp_display)
+  vpmax = maxval(image_color_vp_display)
 
 ! in the PNM format, the image starts in the upper-left corner
   do iy=NY,1,-1
@@ -142,7 +142,7 @@
 
 ! use P velocity model as background where amplitude is negligible
         if((vpmax-vpmin)/vpmin > 0.02d0) then
-          x1 = (vp_display(iglob_image_color_2D(ix,iy))-vpmin)/(vpmax-vpmin)
+          x1 = (image_color_vp_display(ix,iy)-vpmin)/(vpmax-vpmin)
         else
           x1 = 0.5d0
         endif
