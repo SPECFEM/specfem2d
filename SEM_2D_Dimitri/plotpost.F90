@@ -2098,6 +2098,7 @@
 !
 !--- draw absorbing boundaries with a thick color line
 !
+  anyabs_glob = anyabs
 #ifdef USE_MPI
   call MPI_ALLREDUCE(anyabs, anyabs_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
 #endif
@@ -2300,6 +2301,7 @@
 !
 !----  draw the fluid-solid coupling edges with a thick color line
 !
+  coupled_acoustic_elastic_glob = coupled_acoustic_elastic
 #ifdef USE_MPI
   call MPI_ALLREDUCE(coupled_acoustic_elastic, coupled_acoustic_elastic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
 #endif
