@@ -282,6 +282,7 @@ program meshfem2D
         print *,'Reading ',npoints_interface_bottom,' points for interface ',interface_current
         
         ! loop on all the points describing this interface
+        xinterface_dummy_previous = -HUGEVAL
         do ipoint_current = 1,npoints_interface_bottom
            call read_two_interface_points(IIN_INTERFACES,DONT_IGNORE_JUNK,xinterface_dummy,zinterface_dummy)
            if(ipoint_current > 1 .and. xinterface_dummy <= xinterface_dummy_previous) &
