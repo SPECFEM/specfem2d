@@ -7,8 +7,11 @@
 # The path to OpenMPI libs should or should not be specified, depending 
 # on the user environement.
 
-# The allocation rule for parallel jobs is round robin when using "openmpi" PE : 
+# The allocation rule for parallel jobs is round robin when using "openmpi" PE; 
 # specify "openmpi_fillup" to have the fill up allocation rule.
+# "openmpi_fillup" should reduce the communication overhead (more intra-nodal communications) with most MPI libraries. 
+# "openmpi" should leave a few CPUs per node to manage the system without hampering the run. You should try both, and decide depending 
+# on your code and setup.
 
 # BEWARE : by default, old Databases along with new Databases in ./OUTPUT_FILES directory are removed;
 # comment "rm ./OUTPUT_FILES/Database*" in this file and in qsub_openmpi_UPPA.sh if you wish to change this behavior.
