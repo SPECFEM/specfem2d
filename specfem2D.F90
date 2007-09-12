@@ -549,6 +549,9 @@
   allocate(e1(NGLLX,NGLLZ,nspec_allocate,N_SLS))
   allocate(e11(NGLLX,NGLLZ,nspec_allocate,N_SLS))
   allocate(e13(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+  e1(:,:,:,:) = 0._CUSTOM_REAL
+  e11(:,:,:,:) = 0._CUSTOM_REAL
+  e13(:,:,:,:) = 0._CUSTOM_REAL
 
   allocate(dux_dxl_n(NGLLX,NGLLZ,nspec_allocate))
   allocate(duz_dzl_n(NGLLX,NGLLZ,nspec_allocate))
@@ -864,9 +867,11 @@ any_elastic_glob = any_elastic
 #endif
 
 ! for acoustic
-  if(TURN_ANISOTROPY_ON .and. .not. any_elastic_glob) call exit_MPI('cannot have anisotropy if acoustic simulation only')
+  if(TURN_ANISOTROPY_ON .and. .not. any_elastic_glob) &
+    call exit_MPI('cannot have anisotropy if acoustic simulation only')
 
-  if(TURN_ATTENUATION_ON .and. .not. any_elastic_glob) call exit_MPI('currently cannot have attenuation if acoustic simulation only')
+  if(TURN_ATTENUATION_ON .and. .not. any_elastic_glob) &
+    call exit_MPI('currently cannot have attenuation if acoustic simulation only')
 
 ! for attenuation
   if(TURN_ANISOTROPY_ON .and. TURN_ATTENUATION_ON) then
