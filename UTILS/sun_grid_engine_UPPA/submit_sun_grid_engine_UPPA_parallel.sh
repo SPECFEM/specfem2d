@@ -21,5 +21,5 @@ rm ./OUTPUT_FILES/Database*
 
 LD_LIBRARY_PATH=/opt/openmpi-1.2.2/pgi64/lib ./xmeshfem2D
 
-qsub -pe openmpi 8 ./qsub_UPPA_parallel.sh
+qsub -pe openmpi_fillup 8 ./qsub_UPPA_parallel.sh
 
