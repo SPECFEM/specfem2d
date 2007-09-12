@@ -1687,6 +1687,47 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     enddo
   enddo
 
+! getting velocity for each local pixels
+  image_color_vp_display(:,:) = 0.d0
+      
+  do k = 1, nb_pixel_loc
+    j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
+    i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
+    image_color_vp_display(i,j) = vp_display(iglob_image_color(i,j))
+
+  enddo
+
+! assembling array image_color_vp_display on process zero for color output
+#ifdef USE_MPI
+  if ( nproc > 1 ) then
+    if ( myrank == 0 ) then
+      do iproc = 1, nproc-1
+        call MPI_RECV(data_pixel_recv(1),nb_pixel_per_proc(iproc+1), MPI_DOUBLE_PRECISION, &
+                iproc, 43, MPI_COMM_WORLD, request_mpi_status, ier)
+
+        do k = 1, nb_pixel_per_proc(iproc+1)
+          j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
+          i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
+          image_color_vp_display(i,j) = data_pixel_recv(k)
+
+        enddo
+      enddo
+
+    else
+      do k = 1, nb_pixel_loc
+        j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
+        i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
+        data_pixel_send(k) = vp_display(iglob_image_color(i,j))
+
+      enddo
+
+      call MPI_SEND(data_pixel_send(1),nb_pixel_loc,MPI_DOUBLE_PRECISION, 0, 43, MPI_COMM_WORLD, ier)
+
+    endif
+  endif
+
+#endif
+
 ! *********************************************************
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
 ! *********************************************************
@@ -2247,13 +2288,11 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   endif
 
   image_color_data(:,:) = 0.d0
-  image_color_vp_display(:,:) = 0.d0
       
   do k = 1, nb_pixel_loc
      j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
      i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
      image_color_data(i,j) = vector_field_display(2,iglob_image_color(i,j))
-     image_color_vp_display(i,j) = vp_display(iglob_image_color(i,j))
 
   end do
 
@@ -2289,38 +2328,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   end if
 
 #endif
-! assembling array image_color_vp_display on process zero for color output
-#ifdef USE_MPI
-  if ( nproc > 1 ) then
-     if ( myrank == 0 ) then
 
-        do iproc = 1, nproc-1
-
-           call MPI_RECV(data_pixel_recv(1),nb_pixel_per_proc(iproc+1), MPI_DOUBLE_PRECISION, &
-                iproc, 43, MPI_COMM_WORLD, request_mpi_status, ier)
-
-           do k = 1, nb_pixel_per_proc(iproc+1)
-              j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
-              i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
-              image_color_vp_display(i,j) = data_pixel_recv(k)
-
-           end do
-        end do
-
-     else
-        do k = 1, nb_pixel_loc
-           j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
-           i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
-           data_pixel_send(k) = vp_display(iglob_image_color(i,j))
-
-        end do
-
-        call MPI_SEND(data_pixel_send(1),nb_pixel_loc,MPI_DOUBLE_PRECISION, 0, 43, MPI_COMM_WORLD, ier)
-
-     end if
-  end if
-
-#endif
 
   if ( myrank == 0 ) then
      call create_color_image(image_color_data,iglob_image_color,NX_IMAGE_color,NZ_IMAGE_color,it,cutsnaps,image_color_vp_display)
