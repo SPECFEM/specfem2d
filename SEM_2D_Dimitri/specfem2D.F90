@@ -1878,8 +1878,8 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
                jbegin_left,jend_left,jbegin_right,jend_right, &
-	       nspec_inner, ispec_inner_to_glob, .false. &	      
-	       )
+               nspec_inner, ispec_inner_to_glob, .false. &	      
+               )
    endif
 
 ! assembling potential_dot_dot for acoustic elements (receive)
@@ -2026,8 +2026,8 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                e1,e11,e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
-	       nspec_inner, ispec_inner_to_glob, .false. &
-	       )
+               nspec_inner, ispec_inner_to_glob, .false. &
+               )
 
 ! assembling accel_elastic for elastic elements (receive)
 #ifdef USE_MPI
