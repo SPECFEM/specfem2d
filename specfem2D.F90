@@ -288,6 +288,11 @@
   integer  :: max_ibool_interfaces_size_ac, max_ibool_interfaces_size_el
 #endif
 
+! for overlapping MPI communications with computation
+  integer  :: nspec_outer, nspec_inner, num_ispec_outer, num_ispec_inner
+  integer, dimension(:), allocatable  :: ispec_outer_to_glob, ispec_inner_to_glob
+  logical, dimension(:), allocatable  :: mask_ispec_inner_outer
+
   integer, dimension(:,:), allocatable  :: acoustic_surface
   integer, dimension(:,:), allocatable  :: acoustic_edges
 
@@ -1037,7 +1042,10 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 #ifdef USE_MPI
   if ( nproc > 1 ) then
 ! preparing for MPI communications
-     call prepare_assemble_MPI (nspec,ibool, &
+    allocate(mask_ispec_inner_outer(nspec))    
+    mask_ispec_inner_outer(:) = .false.
+
+    call prepare_assemble_MPI (nspec,ibool, &
           knods, ngnod, &
           npoin, elastic, &
           ninterface, max_interface_size, &
@@ -1045,8 +1053,29 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           ibool_interfaces_acoustic, ibool_interfaces_elastic, &
           nibool_interfaces_acoustic, nibool_interfaces_elastic, &
           inum_interfaces_acoustic, inum_interfaces_elastic, &
-          ninterface_acoustic, ninterface_elastic &
+          ninterface_acoustic, ninterface_elastic, &
+          mask_ispec_inner_outer &
           )
+
+    nspec_outer = count(mask_ispec_inner_outer)     
+    nspec_inner = nspec - nspec_outer          
+
+    allocate(ispec_outer_to_glob(nspec_outer))
+    allocate(ispec_inner_to_glob(nspec_inner))
+
+! building of corresponding arrays between inner/outer elements and their global number
+    num_ispec_outer = 0
+    num_ispec_inner = 0
+    do ispec = 1, nspec
+      if ( mask_ispec_inner_outer(ispec) ) then
+        num_ispec_outer = num_ispec_outer + 1
+        ispec_outer_to_glob(num_ispec_outer) = ispec
+      else
+        num_ispec_inner = num_ispec_inner + 1
+        ispec_inner_to_glob(num_ispec_inner) = ispec
+           
+      endif 
+    enddo
 
   max_ibool_interfaces_size_ac = maxval(nibool_interfaces_acoustic(:))
   max_ibool_interfaces_size_el = NDIM*maxval(nibool_interfaces_elastic(:))
@@ -1089,7 +1118,25 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   else 
     ninterface_acoustic = 0
     ninterface_elastic = 0
-  end if
+    
+    nspec_outer = 0
+    nspec_inner = nspec
+     
+    allocate(ispec_inner_to_glob(nspec_inner))
+    do ispec = 1, nspec
+      ispec_inner_to_glob(ispec) = ispec
+    enddo
+
+  end if ! end of test on wether there is more than one process ( nproc>1 )
+
+#else
+  nspec_outer = 0
+  nspec_inner = nspec
+     
+  allocate(ispec_inner_to_glob(nspec_inner))
+  do ispec = 1, nspec
+     ispec_inner_to_glob(ispec) = ispec
+  enddo
 
 #endif
 
@@ -1671,6 +1718,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 ! ************* compute forces for the acoustic elements
 ! *********************************************************
 
+! first call, computation on outer elements, absorbing conditions and source
     call compute_forces_acoustic(npoin,nspec,nelemabs,numat, &
                iglob_source,ispec_selected_source,is_proc_source,source_type,it,NSTEP,anyabs, &
                assign_external_model,initialfield,ibool,kmato,numabs, &
@@ -1679,7 +1727,9 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                vpext,source_time_function,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
-               jbegin_left,jend_left,jbegin_right,jend_right)
+               jbegin_left,jend_left,jbegin_right,jend_right, &
+               nspec_outer, ispec_outer_to_glob, .true. &
+               )
 
  endif ! end of test if any acoustic element
 
@@ -1749,10 +1799,10 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
    endif
 
-! assembling potential_dot_dot for acoustic elements
+! assembling potential_dot_dot for acoustic elements (send)
 #ifdef USE_MPI
-   if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
-      call assemble_MPI_vector_ac_start(potential_dot_dot_acoustic,npoin, &
+  if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
+    call assemble_MPI_vector_ac_start(potential_dot_dot_acoustic,npoin, &
            ninterface, ninterface_acoustic, &
            inum_interfaces_acoustic, &
            max_interface_size, max_ibool_interfaces_size_ac,&
@@ -1760,7 +1810,28 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
            tab_requests_send_recv_acoustic, &
            buffer_send_faces_vector_ac &
            )
-      call assemble_MPI_vector_ac_wait(potential_dot_dot_acoustic,npoin, &
+  endif
+#endif
+
+! second call, computation on inner elements
+  if(any_acoustic) then
+    call compute_forces_acoustic(npoin,nspec,nelemabs,numat, &
+               iglob_source,ispec_selected_source,is_proc_source,source_type,it,NSTEP,anyabs, &
+               assign_external_model,initialfield,ibool,kmato,numabs, &
+               elastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
+               potential_acoustic,density,elastcoef,xix,xiz,gammax,gammaz,jacobian, &
+               vpext,source_time_function,hprime_xx,hprimewgll_xx, &
+               hprime_zz,hprimewgll_zz,wxgll,wzgll, &
+               ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
+               jbegin_left,jend_left,jbegin_right,jend_right, &
+	       nspec_inner, ispec_inner_to_glob, .false. &	      
+	       )
+   endif
+
+! assembling potential_dot_dot for acoustic elements (receive)
+#ifdef USE_MPI
+  if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
+    call assemble_MPI_vector_ac_wait(potential_dot_dot_acoustic,npoin, &
            ninterface, ninterface_acoustic, &
            inum_interfaces_acoustic, &
            max_interface_size, max_ibool_interfaces_size_ac,&
@@ -1768,7 +1839,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
            tab_requests_send_recv_acoustic, &
            buffer_recv_faces_vector_ac &
            )
-   end if
+  endif
 #endif
 
 
@@ -1791,6 +1862,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 ! ************* main solver for the elastic elements
 ! *********************************************************
 
+! first call, computation on outer elements, absorbing conditions and source
  if(any_elastic) &
     call compute_forces_elastic(npoin,nspec,nelemabs,numat,iglob_source, &
                ispec_selected_source,is_proc_source,source_type,it,NSTEP,anyabs,assign_external_model, &
@@ -1800,7 +1872,9 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                jacobian,vpext,vsext,rhoext,source_time_function,sourcearray, &
                e1,e11,e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
-               hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2)
+               hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2, &
+               nspec_outer, ispec_outer_to_glob, .true. &
+               )
 
 ! *********************************************************
 ! ************* add coupling with the acoustic side
@@ -1873,7 +1947,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
     endif
 
-! assembling accel_elastic for elastic elements
+! assembling accel_elastic for elastic elements (send)
 #ifdef USE_MPI
  if ( nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
     call assemble_MPI_vector_el_start(accel_elastic,npoin, &
@@ -1884,6 +1958,26 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
      tab_requests_send_recv_elastic, &
      buffer_send_faces_vector_el &
      )
+  endif
+#endif
+
+! second call, computation on inner elements and update of 
+  if(any_elastic) &
+    call compute_forces_elastic(npoin,nspec,nelemabs,numat,iglob_source, &
+               ispec_selected_source,is_proc_source,source_type,it,NSTEP,anyabs,assign_external_model, &
+               initialfield,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,angleforce,deltatcube, &
+               deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,elastic,codeabs, &
+               accel_elastic,veloc_elastic,displ_elastic,density,elastcoef,xix,xiz,gammax,gammaz, &
+               jacobian,vpext,vsext,rhoext,source_time_function,sourcearray, &
+               e1,e11,e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
+               dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
+               hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2, &
+	       nspec_inner, ispec_inner_to_glob, .false. &
+	       )
+
+! assembling accel_elastic for elastic elements (receive)
+#ifdef USE_MPI
+ if ( nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
     call assemble_MPI_vector_el_wait(accel_elastic,npoin, &
      ninterface, ninterface_elastic, &
      inum_interfaces_elastic, &

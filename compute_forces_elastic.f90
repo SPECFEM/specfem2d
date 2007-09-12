@@ -19,7 +19,9 @@
                jacobian,vpext,vsext,rhoext,source_time_function,sourcearray,e1,e11, &
                e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
-               hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2)
+               hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2, &
+               nspec_inner_outer, ispec_inner_outer_to_glob, num_phase_inner_outer &
+               )
 
 ! compute forces for the elastic elements
 
@@ -65,11 +67,16 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
   real(kind=CUSTOM_REAL), dimension(NGLLZ) :: wzgll
 
+! for overlapping MPI communications with computation
+  integer, intent(in) :: nspec_inner_outer
+  integer, dimension(nspec_inner_outer), intent(in) :: ispec_inner_outer_to_glob
+  logical, intent(in) :: num_phase_inner_outer
+
 !---
 !--- local variables
 !---
 
-  integer :: ispec,i,j,k,iglob,ispecabs,ibegin,iend
+  integer :: ispec,ispec_inner_outer,i,j,k,iglob,ispecabs,ibegin,iend
 
 ! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
@@ -89,12 +96,18 @@
 ! for attenuation
   real(kind=CUSTOM_REAL) :: Un,Unp1,tauinv,Sn,Snp1,theta_n,theta_np1,tauinvsquare,tauinvcube,tauinvUn
 
+! only for the first call to compute_forces_elastic (during computation on outer elements)
+  if ( num_phase_inner_outer ) then
 ! compute Grad(displ_elastic) at time step n for attenuation
   if(TURN_ATTENUATION_ON) call compute_gradient_attenuation(displ_elastic,dux_dxl_n,duz_dxl_n, &
       dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,npoin)
+  endif
 
-!   loop over spectral elements
-    do ispec = 1,nspec
+! loop over spectral elements
+  do ispec_inner_outer = 1,nspec_inner_outer
+ 
+! get global numbering for inner or outer elements
+    ispec = ispec_inner_outer_to_glob(ispec_inner_outer)
 
 !---
 !--- elastic spectral element
@@ -238,6 +251,9 @@
     endif ! end of test if elastic element
 
     enddo ! end of loop over all spectral elements
+
+! only for the first call to compute_forces_elastic (during computation on outer elements)
+  if ( num_phase_inner_outer ) then
 
 !
 !--- absorbing boundaries
@@ -484,6 +500,8 @@
 
   endif ! if not using an initial field
 
+  else
+
 ! implement attenuation
   if(TURN_ATTENUATION_ON) then
 
@@ -551,6 +569,8 @@
   enddo
   enddo
   enddo
+
+  endif ! end of test on attenuation
 
   endif ! end of test on attenuation
 
