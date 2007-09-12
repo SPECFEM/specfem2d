@@ -14,9 +14,6 @@
 ! the code does NOT work if NGLLZ /= NGLLX because it then cannot handle a non-structured mesh
   integer, parameter :: NGLLZ = NGLLX
 
-! number of standard linear solids for attenuation
-  integer, parameter :: N_SLS = 2
-
 ! compute and output acoustic and elastic energy (slows down the code significantly)
   logical, parameter :: OUTPUT_ENERGY = .false.
 

@@ -11,7 +11,7 @@
 !
 !========================================================================
 
-  subroutine attenuation_model(Qp_attenuation,Qs_attenuation,f0_attenuation, &
+  subroutine attenuation_model(N_SLS,Qp_attenuation,Qs_attenuation,f0_attenuation, &
        inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2)
 
 ! define the attenuation constants
@@ -20,6 +20,7 @@
 
   include "constants.h"
 
+  integer :: N_SLS
   double precision :: Qp_attenuation,Qs_attenuation,f0_attenuation
   double precision, dimension(N_SLS) :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
   double precision :: Mu_nu1,Mu_nu2
