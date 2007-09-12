@@ -1124,6 +1124,10 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     ninterface_acoustic = 0
     ninterface_elastic = 0
     
+    num_ispec_outer = 0
+    num_ispec_inner = 0
+    allocate(mask_ispec_inner_outer(1))
+
     nspec_outer = 0
     nspec_inner = nspec
      
@@ -1135,6 +1139,10 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   end if ! end of test on wether there is more than one process ( nproc>1 )
 
 #else
+  num_ispec_outer = 0
+  num_ispec_inner = 0
+  allocate(mask_ispec_inner_outer(1))
+
   nspec_outer = 0
   nspec_inner = nspec
      
