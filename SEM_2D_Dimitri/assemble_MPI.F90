@@ -6,7 +6,8 @@ subroutine prepare_assemble_MPI (nspec,ibool, &
      ibool_interfaces_acoustic, ibool_interfaces_elastic, &
      nibool_interfaces_acoustic, nibool_interfaces_elastic, &
      inum_interfaces_acoustic, inum_interfaces_elastic, &
-     ninterface_acoustic, ninterface_elastic &
+     ninterface_acoustic, ninterface_elastic, &
+     mask_ispec_inner_outer &
      )
 
 
@@ -35,6 +36,8 @@ subroutine prepare_assemble_MPI (nspec,ibool, &
 
   integer  :: num_interface
   integer  :: ispec_interface
+  
+  logical, dimension(nspec), intent(inout)  :: mask_ispec_inner_outer
 
   logical, dimension(npoin)  :: mask_ibool_acoustic
   logical, dimension(npoin)  :: mask_ibool_elastic
@@ -102,7 +105,20 @@ subroutine prepare_assemble_MPI (nspec,ibool, &
      end do
      nibool_interfaces_acoustic(num_interface) = npoin_interface_acoustic
      nibool_interfaces_elastic(num_interface) = npoin_interface_elastic
-   
+  
+     do ispec = 1, nspec
+       do iz = 1, NGLLZ
+         do ix = 1, NGLLX
+           if ( mask_ibool_acoustic(ibool(ix,iz,ispec)) &
+            .or. mask_ibool_elastic(ibool(ix,iz,ispec)) ) then
+               mask_ispec_inner_outer(ispec) = .true.
+            endif
+
+          enddo
+        enddo
+      enddo
+
+ 
   end do
    
 
