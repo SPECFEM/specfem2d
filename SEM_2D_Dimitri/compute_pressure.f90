@@ -14,7 +14,7 @@
   subroutine compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,elastic,vector_field_display, &
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
          numat,kmato,density,elastcoef,vpext,vsext,rhoext,e1,e11, &
-         TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2)
+         TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
 
 ! compute pressure in acoustic elements and in elastic elements
 
@@ -44,6 +44,7 @@
 
   logical :: assign_external_model,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON
 
+  integer :: N_SLS
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11
   double precision :: Mu_nu1,Mu_nu2
 
@@ -60,7 +61,7 @@
     call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,elastic, &
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
          numat,kmato,density,elastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
-         TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2)
+         TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
 
 ! use vector_field_display as temporary storage, store pressure in its second component
     do j = 1,NGLLZ
@@ -81,7 +82,7 @@
   subroutine compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,elastic, &
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
          numat,kmato,density,elastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
-         TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2)
+         TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
 
 ! compute pressure in acoustic elements and in elastic elements
 
@@ -113,6 +114,7 @@
 
   logical :: assign_external_model,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON
 
+  integer :: N_SLS
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11
   real(kind=CUSTOM_REAL) :: e1_sum,e11_sum
   double precision :: Mu_nu1,Mu_nu2

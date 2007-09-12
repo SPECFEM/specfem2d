@@ -166,6 +166,7 @@ program meshfem2D
   character(len=256)  :: prname
 
 ! variables used for attenuation
+  integer  :: N_SLS          
   double precision  :: Qp_attenuation
   double precision  :: Qs_attenuation
   double precision  :: f0_attenuation
@@ -413,6 +414,7 @@ program meshfem2D
   print *,'Multiplying factor = ',factor
 
 ! read constants for attenuation 
+  call read_value_integer(IIN,IGNORE_JUNK,N_SLS)
   call read_value_double_precision(IIN,IGNORE_JUNK,Qp_attenuation)
   call read_value_double_precision(IIN,IGNORE_JUNK,Qs_attenuation)
   call read_value_double_precision(IIN,IGNORE_JUNK,f0_attenuation)
@@ -1097,7 +1099,7 @@ program meshfem2D
      write(15,*) source_type,time_function_type,xs,zs,f0,t0,factor,angleforce,Mxx,Mzz,Mxz
      
      write(15,*) 'attenuation'
-     write(15,*) Qp_attenuation, Qs_attenuation, f0_attenuation
+     write(15,*) N_SLS, Qp_attenuation, Qs_attenuation, f0_attenuation
 
      write(15,*) 'Coordinates of macrobloc mesh (coorg):'
      

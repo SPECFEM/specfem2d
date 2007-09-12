@@ -188,6 +188,7 @@
   logical, dimension(:,:), allocatable  :: codeabs
 
 ! for attenuation
+  integer  :: N_SLS
   double precision  :: Qp_attenuation
   double precision  :: Qs_attenuation
   double precision  :: f0_attenuation
@@ -195,7 +196,7 @@
   double precision :: deltatsquare,deltatcube,deltatfourth,twelvedeltat,fourdeltatsquare
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1,e11,e13
-  double precision, dimension(N_SLS) :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
+  double precision, dimension(:), allocatable :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
   double precision :: Mu_nu1,Mu_nu2
 
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
@@ -417,7 +418,7 @@
 !----  read attenuation information
 !
   read(IIN,"(a80)") datlin
-  read(IIN,*) Qp_attenuation, Qs_attenuation, f0_attenuation
+  read(IIN,*) N_SLS, Qp_attenuation, Qs_attenuation, f0_attenuation
 
 !
 !-----  check the input
@@ -484,6 +485,10 @@
   allocate(knods(ngnod,nspec))
   allocate(ibool(NGLLX,NGLLZ,nspec))
   allocate(elastic(nspec))
+  allocate(inv_tau_sigma_nu1(N_SLS))
+  allocate(inv_tau_sigma_nu2(N_SLS))
+  allocate(phi_nu1(N_SLS))
+  allocate(phi_nu2(N_SLS))
 
 ! --- allocate arrays for absorbing boundary conditions
   if(nelemabs <= 0) then
@@ -568,7 +573,7 @@
   allocate(dux_dzl_np1(NGLLX,NGLLZ,nspec_allocate))
 
 ! define the attenuation constants
-  call attenuation_model(Qp_attenuation,Qs_attenuation,f0_attenuation, &
+  call attenuation_model(N_SLS,Qp_attenuation,Qs_attenuation,f0_attenuation, &
       inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2)
 
 !
@@ -1913,7 +1918,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                jacobian,vpext,vsext,rhoext,source_time_function,sourcearray, &
                e1,e11,e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
-               hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2, &
+               hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
                nspec_outer, ispec_outer_to_glob, .true. &
                )
 
@@ -2012,7 +2017,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                jacobian,vpext,vsext,rhoext,source_time_function,sourcearray, &
                e1,e11,e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
-               hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2, &
+               hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
 	       nspec_inner, ispec_inner_to_glob, .false. &
 	       )
 
@@ -2049,7 +2054,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
          nspec,npoin,assign_external_model,it,deltat,t0,kmato,elastcoef,density, &
          vpext,vsext,rhoext,wxgll,wzgll,numat, &
          pressure_element,vector_field_element,e1,e11, &
-         potential_dot_acoustic,potential_dot_dot_acoustic,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2)
+         potential_dot_acoustic,potential_dot_dot_acoustic,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
 
 !----  display time step and max of norm of displacement
   if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5) then
@@ -2091,7 +2096,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,elastic, &
             xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
             numat,kmato,density,elastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
-            TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2)
+            TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
 
     else if(.not. elastic(ispec)) then
 
@@ -2281,7 +2286,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     call compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,elastic,vector_field_display, &
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
          numat,kmato,density,elastcoef,vpext,vsext,rhoext,e1,e11, &
-         TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2)
+         TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
 
   else
     call exit_MPI('wrong type for snapshots')
