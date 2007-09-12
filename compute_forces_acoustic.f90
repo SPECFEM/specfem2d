@@ -19,7 +19,9 @@
                vpext,source_time_function,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
-               jbegin_left,jend_left,jbegin_right,jend_right)
+               jbegin_left,jend_left,jbegin_right,jend_right, &
+               nspec_inner_outer, ispec_inner_outer_to_glob, num_phase_inner_outer &
+               )
 
 ! compute forces for the acoustic elements
 
@@ -54,11 +56,16 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
   real(kind=CUSTOM_REAL), dimension(NGLLZ) :: wzgll
 
+! for overlapping MPI communications with computation
+  integer, intent(in)  :: nspec_inner_outer
+  integer, dimension(nspec_inner_outer), intent(in)  :: ispec_inner_outer_to_glob
+  logical, intent(in)  :: num_phase_inner_outer
+
 !---
 !--- local variables
 !---
 
-  integer :: ispec,i,j,k,iglob,ispecabs,ibegin,iend,jbegin,jend
+  integer :: ispec,ispec_inner_outer,i,j,k,iglob,ispecabs,ibegin,iend,jbegin,jend
 
 ! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,dux_dxl,dux_dzl
@@ -73,7 +80,9 @@
   real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,kappal,cpl
 
 ! loop over spectral elements
-  do ispec = 1,nspec
+  do ispec_inner_outer = 1,nspec_inner_outer
+
+    ispec = ispec_inner_outer_to_glob(ispec_inner_outer)
 
 !---
 !--- acoustic spectral element
@@ -135,6 +144,9 @@
     endif ! end of test if acoustic element
 
     enddo ! end of loop over all spectral elements
+
+! only for the first call to compute_forces_acoustic (during computation on outer elements)  
+  if ( num_phase_inner_outer ) then
 
 !
 !--- absorbing boundaries
@@ -303,6 +315,8 @@
   else
      call exit_MPI('wrong source type')
   endif
+
+  endif ! end of computation that needs to be done only once, during the first call to compute_forces_acoustic
 
   end subroutine compute_forces_acoustic
 
