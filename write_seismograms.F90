@@ -205,10 +205,10 @@
 
 ! write binary seismogram
         write(12,rec=irec) sngl(buffer_binary(:,1))
-        write(13,rec=irec) sngl(buffer_binary(:,1))
+        write(13,rec=irec) buffer_binary(:,1)
         if ( seismotype /= 4 ) then
            write(14,rec=irec) sngl(buffer_binary(:,2))
-           write(15,rec=irec) sngl(buffer_binary(:,2))
+           write(15,rec=irec) buffer_binary(:,2)
         end if
 
 #ifdef USE_MPI
