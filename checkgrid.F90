@@ -1539,10 +1539,11 @@
 ! ratio of physical page size/size of the domain meshed
   ratio_page = min(rpercentz*sizez/(zmax-zmin),rpercentx*sizex/(xmax-xmin)) / 100.d0
 
+
+  if ( myrank == 0 ) then
   print *
   print *,'Creating PostScript file with stability condition'
 
-  if ( myrank == 0 ) then
 !
 !---- open PostScript file
 !
@@ -1862,7 +1863,7 @@
 !--------------------------------------------------------------------------------
 !
  
-if ( myrank == 0 ) then
+  if ( myrank == 0 ) then
   print *
   print *,'Creating PostScript file with mesh dispersion'
 
@@ -2528,11 +2529,10 @@ end if
 
   end if
 
-
+ 
+  if ( myrank == 0 ) then
   print *
   print *,'Creating PostScript file with partitioning'
-
-  if ( myrank == 0 ) then
 !
 !---- open PostScript file
 !

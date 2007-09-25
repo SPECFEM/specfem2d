@@ -353,7 +353,9 @@
 !
 !---- print the date, time and start-up banner
 !
+  if ( myrank == 0 ) then
   call datim(simulation_title)
+  endif
 
   if ( myrank == 0 ) then
   write(IOUT,*)
