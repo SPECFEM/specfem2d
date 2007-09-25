@@ -1458,6 +1458,7 @@
   
 #endif
 
+  if ( myrank == 0 ) then
   write(IOUT,*)
   write(IOUT,*) '********'
   write(IOUT,*) 'Model: P velocity min,max = ',vpmin,vpmax
@@ -1477,6 +1478,7 @@
   write(IOUT,*)
   write(IOUT,*) '*** Max stability for P wave velocity = ',courant_stability_number_max
   write(IOUT,*)
+  
 
 ! only if time source is not a Dirac or Heaviside (otherwise maximum frequency of spectrum undefined)
 ! and if source is not an initial field, for the same reason
@@ -1497,7 +1499,7 @@
     write(IOUT,*) ' Nb pts / lambdaSmin_fmax max = ',lambdaSmax/(2.5d0*f0)
     write(IOUT,*) ' Nb pts / lambdaSmin_fmax min = ',lambdaSmin/(2.5d0*f0)
     write(IOUT,*) '----'
-
+  endif
   endif
 
 !
