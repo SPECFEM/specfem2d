@@ -375,8 +375,7 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,*) NTSTEP_BETWEEN_OUTPUT_INFO
-  NTSTEP_BETWEEN_OUTPUT_SEISMO = NTSTEP_BETWEEN_OUTPUT_INFO
-
+  
   read(IIN,"(a80)") datlin
   read(IIN,*) output_postscript_snapshot,output_color_image,colors,numbers
 
@@ -409,7 +408,9 @@
   read(IIN,"(a80)") datlin
   read(IIN,*) NSTEP,deltat
   write(IOUT,703) NSTEP,deltat,NSTEP*deltat
-
+  
+  NTSTEP_BETWEEN_OUTPUT_SEISMO = min(NSTEP,NTSTEP_BETWEEN_OUTPUT_INFO)
+  
 !
 !----  read source information
 !
