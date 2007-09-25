@@ -14,7 +14,9 @@
 ! write seismograms to text files
 
   subroutine write_seismograms(sisux,sisuz,station_name,network_name, &
-      NSTEP,nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,it,t0)
+      NSTEP,nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,it,t0, &
+      NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current &
+      )
 
   implicit none
 
@@ -24,12 +26,14 @@
 #endif
 
   integer :: nrec,NSTEP,it,seismotype
+  integer :: NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current 
   double precision :: t0,deltat
+
   
   integer, intent(in) :: nrecloc,myrank
   integer, dimension(nrec),intent(in) :: which_proc_receiver
 
-  double precision, dimension(NSTEP,nrecloc), intent(in) :: sisux,sisuz
+  double precision, dimension(NTSTEP_BETWEEN_OUTPUT_SEISMO,nrecloc), intent(in) :: sisux,sisuz
 
   double precision st_xval(nrec)
 
@@ -81,10 +85,10 @@
      number_of_components = NDIM
   endif
 
-  allocate(buffer_binary(NSTEP,number_of_components))
+  allocate(buffer_binary(NTSTEP_BETWEEN_OUTPUT_SEISMO,number_of_components))
 
   
-  if ( myrank == 0 ) then
+  if ( myrank == 0 .and. seismo_offset == 0 ) then
      
 ! delete the old files
      open(unit=11,file='OUTPUT_FILES/Ux_file_single.bin',status='unknown')
@@ -105,23 +109,27 @@
      open(unit=11,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown')
      close(11,status='delete')
      
+   endif
+
+   if ( myrank == 0 ) then
+
 ! write the new files
      if(seismotype == 4) then
-        open(unit=12,file='OUTPUT_FILES/pressure_file_single.bin',status='unknown',access='direct',recl=4*NSTEP)
+        open(unit=12,file='OUTPUT_FILES/pressure_file_single.bin',status='unknown',access='direct',recl=4)
      else
-        open(unit=12,file='OUTPUT_FILES/Ux_file_single.bin',status='unknown',access='direct',recl=4*NSTEP)
+        open(unit=12,file='OUTPUT_FILES/Ux_file_single.bin',status='unknown',access='direct',recl=4)
      endif
 
      if(seismotype == 4) then
-        open(unit=13,file='OUTPUT_FILES/pressure_file_double.bin',status='unknown',access='direct',recl=8*NSTEP)
+        open(unit=13,file='OUTPUT_FILES/pressure_file_double.bin',status='unknown',access='direct',recl=8)
      else
-        open(unit=13,file='OUTPUT_FILES/Ux_file_double.bin',status='unknown',access='direct',recl=8*NSTEP)
+        open(unit=13,file='OUTPUT_FILES/Ux_file_double.bin',status='unknown',access='direct',recl=8)
      endif
 
 ! no Z component seismogram if pressurs
      if(seismotype /= 4) then
-        open(unit=14,file='OUTPUT_FILES/Uz_file_single.bin',status='unknown',access='direct',recl=4*NSTEP)
-        open(unit=15,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown',access='direct',recl=8*NSTEP)
+        open(unit=14,file='OUTPUT_FILES/Uz_file_single.bin',status='unknown',access='direct',recl=4)
+        open(unit=15,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown',access='direct',recl=8)
         
      end if
      
@@ -142,10 +150,10 @@
            
 #ifdef USE_MPI       
         else
-           call MPI_RECV(buffer_binary(1,1),NSTEP,MPI_DOUBLE_PRECISION,&
+           call MPI_RECV(buffer_binary(1,1),NTSTEP_BETWEEN_OUTPUT_SEISMO,MPI_DOUBLE_PRECISION,&
                 which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
            if ( number_of_components == 2 ) then
-              call MPI_RECV(buffer_binary(1,2),NSTEP,MPI_DOUBLE_PRECISION,&
+              call MPI_RECV(buffer_binary(1,2),NTSTEP_BETWEEN_OUTPUT_SEISMO,MPI_DOUBLE_PRECISION,&
                    which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
            end if
            
@@ -188,15 +196,19 @@
            ! if the simulation uses many time steps. However, subsampling the output
            ! here would result in a loss of accuracy when one later convolves
            ! the results with the source time function
-           open(unit=11,file=sisname(1:len_trim(sisname)),status='unknown')
+           if ( seismo_offset == 0 ) then
+             open(unit=11,file=sisname(1:len_trim(sisname)),status='unknown')
+             close(11,status='delete')
+           endif
+           open(unit=11,file=sisname(1:len_trim(sisname)),status='unknown',position='append')
            
            ! make sure we never write more than the maximum number of time steps
            ! subtract offset of the source to make sure travel time is correct
-           do isample = 1,min(it,NSTEP)
+           do isample = 1,seismo_current
               if(iorientation == 1) then
-                 write(11,*) sngl(dble(isample-1)*deltat - t0),' ',sngl(buffer_binary(isample,iorientation))
+                 write(11,*) sngl(dble(seismo_offset+isample-1)*deltat - t0),' ',sngl(buffer_binary(isample,iorientation))
               else
-                 write(11,*) sngl(dble(isample-1)*deltat - t0),' ',sngl(buffer_binary(isample,iorientation))
+                 write(11,*) sngl(dble(seismo_offset+isample-1)*deltat - t0),' ',sngl(buffer_binary(isample,iorientation))
               endif
            enddo
            
@@ -204,21 +216,22 @@
         end do
 
 ! write binary seismogram
-        write(12,rec=irec) sngl(buffer_binary(:,1))
-        write(13,rec=irec) buffer_binary(:,1)
+        do isample = 1, seismo_current
+           write(12,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,1))
+           write(13,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,1)
         if ( seismotype /= 4 ) then
-           write(14,rec=irec) sngl(buffer_binary(:,2))
-           write(15,rec=irec) buffer_binary(:,2)
+           write(14,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,2))
+           write(15,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,2)
         end if
-
+        enddo
 #ifdef USE_MPI
 
      else
         if ( which_proc_receiver(irec) == myrank ) then
            irecloc = irecloc + 1
-           call MPI_SEND(sisux(1,irecloc),NSTEP,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ierror)
+           call MPI_SEND(sisux(1,irecloc),NTSTEP_BETWEEN_OUTPUT_SEISMO,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ierror)
            if ( number_of_components == 2 ) then
-              call MPI_SEND(sisuz(1,irecloc),NSTEP,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ierror)
+              call MPI_SEND(sisuz(1,irecloc),NTSTEP_BETWEEN_OUTPUT_SEISMO,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ierror)
            end if           
         end if
 

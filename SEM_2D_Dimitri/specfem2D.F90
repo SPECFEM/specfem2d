@@ -110,6 +110,7 @@
 
 ! for seismograms
   double precision, dimension(:,:), allocatable :: sisux,sisuz
+  integer :: seismo_offset, seismo_current
 
 ! vector field in an element
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLX) :: vector_field_element
@@ -171,7 +172,7 @@
 
   double precision :: vpmin,vpmax
 
-  integer :: colors,numbers,subsamp,imagetype,NTSTEP_BETWEEN_OUTPUT_INFO,nrec,seismotype
+  integer :: colors,numbers,subsamp,imagetype,NTSTEP_BETWEEN_OUTPUT_INFO,NTSTEP_BETWEEN_OUTPUT_SEISMO,nrec,seismotype
   integer :: numat,ngnod,nspec,pointsdisp,nelemabs,nelem_acoustic_surface,ispecabs
 
   logical interpol,meshvect,modelvect,boundvect,assign_external_model,initialfield, &
@@ -374,6 +375,7 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,*) NTSTEP_BETWEEN_OUTPUT_INFO
+  NTSTEP_BETWEEN_OUTPUT_SEISMO = NTSTEP_BETWEEN_OUTPUT_INFO
 
   read(IIN,"(a80)") datlin
   read(IIN,*) output_postscript_snapshot,output_color_image,colors,numbers
@@ -936,8 +938,8 @@ any_elastic_glob = any_elastic
        xi_receiver,gamma_receiver,station_name,network_name,x_source,z_source,coorg,knods,ngnod,npgeo)
 
 ! allocate seismogram arrays
-  allocate(sisux(NSTEP,nrecloc))
-  allocate(sisuz(NSTEP,nrecloc))
+  allocate(sisux(NTSTEP_BETWEEN_OUTPUT_SEISMO,nrecloc))
+  allocate(sisuz(NTSTEP_BETWEEN_OUTPUT_SEISMO,nrecloc))
 
 ! check if acoustic receiver is exactly on the free surface because pressure is zero there
   do ispec_acoustic_surface = 1,nelem_acoustic_surface
@@ -1741,11 +1743,19 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
 #endif
 
+! initialize variables for writing seismograms
+  seismo_offset = 0
+  seismo_current = 0
+  
+
 ! *********************************************************
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
 ! *********************************************************
 
   do it = 1,NSTEP
+
+! update position in seismograms
+    seismo_current = seismo_current + 1
 
 ! compute current time
     time = (it-1)*deltat
@@ -2169,11 +2179,11 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
 ! rotate seismogram components if needed, except if recording pressure, which is a scalar
     if(seismotype /= 4) then
-      sisux(it,irecloc) =   cosrot*valux + sinrot*valuz
-      sisuz(it,irecloc) = - sinrot*valux + cosrot*valuz
+      sisux(seismo_current,irecloc) =   cosrot*valux + sinrot*valuz
+      sisuz(seismo_current,irecloc) = - sinrot*valux + cosrot*valuz
     else
-      sisux(it,irecloc) = valux
-      sisuz(it,irecloc) = ZERO
+      sisux(seismo_current,irecloc) = valux
+      sisuz(seismo_current,irecloc) = ZERO
     endif
 
   enddo
@@ -2352,7 +2362,11 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
 !----  save temporary or final seismograms
   call write_seismograms(sisux,sisuz,station_name,network_name,NSTEP, &
-        nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,it,t0)
+        nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,it,t0, &
+        NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current &
+        )
+  seismo_offset = seismo_offset + seismo_current
+  seismo_current = 0
 
 ! count elapsed wall-clock time
   call date_and_time(datein,timein,zone,time_values)
