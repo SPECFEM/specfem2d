@@ -385,8 +385,6 @@ subroutine assemble_MPI_scalar(myrank,array_val1, array_val2,npoin, &
 
   do num_interface = 1, ninterface
    
-     print *, 'QQQQQ', myrank,num_interface,nibool_interfaces_acoustic(num_interface), nibool_interfaces_elastic(num_interface)
-
      ipoin = 0
      do i = 1, nibool_interfaces_acoustic(num_interface)
         ipoin = ipoin + 1
