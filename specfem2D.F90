@@ -355,6 +355,7 @@
 !
   call datim(simulation_title)
 
+  if ( myrank == 0 ) then
   write(IOUT,*)
   write(IOUT,*)
   write(IOUT,*) '*********************'
@@ -362,6 +363,7 @@
   write(IOUT,*) '****  SPECFEM2D  ****'
   write(IOUT,*) '****             ****'
   write(IOUT,*) '*********************'
+  endif
 
 !
 !---- read parameters from input file
@@ -407,8 +409,10 @@
 !---- read time step
   read(IIN,"(a80)") datlin
   read(IIN,*) NSTEP,deltat
+  if ( myrank == 0 ) then
   write(IOUT,703) NSTEP,deltat,NSTEP*deltat
-  
+  endif
+
   NTSTEP_BETWEEN_OUTPUT_SEISMO = min(NSTEP,NTSTEP_BETWEEN_OUTPUT_INFO)
   
 !
@@ -428,9 +432,13 @@
 !
  if(.not. initialfield) then
    if (source_type == 1) then
+     if ( myrank == 0 ) then 
      write(IOUT,212) x_source,z_source,f0,t0,factor,angleforce
+     endif
    else if(source_type == 2) then
+     if ( myrank == 0 ) then
      write(IOUT,222) x_source,z_source,f0,t0,factor,Mxx,Mzz,Mxz
+     endif
    else
      call exit_MPI('Unknown source type number !')
    endif
@@ -747,9 +755,11 @@
   read(IIN,*) nrec
   close(IIN)
 
+  if ( myrank == 0 ) then
   write(IOUT,*)
   write(IOUT,*) 'Total number of receivers = ',nrec
   write(IOUT,*)
+  endif
 
   if(nrec < 1) call exit_MPI('need at least one receiver')
 
@@ -1235,8 +1245,10 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   allocate(copy_iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color))
 
 ! create all the pixels
+  if ( myrank == 0 ) then
   write(IOUT,*)
   write(IOUT,*) 'locating all the pixels of color images'
+  endif
 
   size_pixel_horizontal = (xmax_color_image - xmin_color_image) / dble(NX_IMAGE_color-1)
   size_pixel_vertical = (zmax_color_image - zmin_color_image) / dble(NZ_IMAGE_color-1)
@@ -1356,7 +1368,9 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
    deallocate(data_pixel_send)
 #endif
 
+  if ( myrank == 0 ) then
   write(IOUT,*) 'done locating all the pixels of color images'
+  endif
 
   endif
 
@@ -1484,10 +1498,12 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 ! the two elements (fluid and solid) forming an edge are already known (computed in meshfem2D),
 ! the common nodes forming the edge are computed here
   if(coupled_acoustic_elastic) then
+    if ( myrank == 0 ) then
     print *
     print *,'Mixed acoustic/elastic simulation'
     print *
-    print *,'Beginning of fluid/solid edge detection (slow algorithm for now, will be improved later)'
+    print *,'Beginning of fluid/solid edge detection'
+    endif
 
 ! define the edges of a given element
     i_begin(IBOTTOM) = 1
@@ -1570,7 +1586,9 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 ! have the same physical coordinates
 ! loop on all the coupling edges
 
+    if ( myrank == 0 ) then
     print *,'Checking fluid/solid edge topology...'
+    endif
 
     do inum = 1,num_fluid_solid_edges
 
@@ -1602,9 +1620,11 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       enddo
 
     enddo
-
+    
+    if ( myrank == 0 ) then
     print *,'End of fluid/solid edge detection'
     print *
+    endif
 
   else
 
@@ -1615,7 +1635,9 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 ! exclude common points between acoustic absorbing edges and acoustic/elastic matching interfaces
   if(coupled_acoustic_elastic .and. anyabs) then
 
+    if ( myrank == 0 ) then
     print *,'excluding common points between acoustic absorbing edges and acoustic/elastic matching interfaces, if any'
+    endif
 
 ! loop on all the absorbing elements
     do ispecabs = 1,nelemabs
@@ -1669,8 +1691,9 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 !
 !----          s t a r t   t i m e   i t e r a t i o n s
 !
-
+  if ( myrank == 0 ) then
   write(IOUT,400)
+  endif
 
 ! count elapsed wall-clock time
   call date_and_time(datein,timein,zone,time_values)
@@ -2199,11 +2222,15 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 !
   if(output_postscript_snapshot) then
 
+  if ( myrank == 0 ) then
   write(IOUT,*) 'Writing PostScript file'
+  endif
 
   if(imagetype == 1) then
-
+     
+    if ( myrank == 0 ) then
     write(IOUT,*) 'drawing displacement vector as small arrows...'
+    endif
 
     call compute_vector_whole_medium(potential_acoustic,displ_elastic,elastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
@@ -2222,7 +2249,9 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
   else if(imagetype == 2) then
 
+    if ( myrank == 0 ) then
     write(IOUT,*) 'drawing velocity vector as small arrows...'
+    endif
 
     call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,elastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
@@ -2241,7 +2270,9 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
   else if(imagetype == 3) then
 
+    if ( myrank == 0 ) then
     write(IOUT,*) 'drawing acceleration vector as small arrows...'
+    endif
 
     call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,elastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
@@ -2260,13 +2291,17 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
   else if(imagetype == 4) then
 
+    if ( myrank == 0 ) then
     write(IOUT,*) 'cannot draw scalar pressure field as a vector plot, skipping...'
+    endif
 
   else
     call exit_MPI('wrong type for snapshots')
   endif
 
+  if ( myrank == 0 ) then
   if(imagetype /= 4) write(IOUT,*) 'PostScript file written'
+  endif
 
   endif
 
@@ -2275,32 +2310,42 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 !
   if(output_color_image) then
 
+  if ( myrank == 0 ) then
   write(IOUT,*) 'Creating color image of size ',NX_IMAGE_color,' x ',NZ_IMAGE_color
+  endif
 
   if(imagetype == 1) then
 
+    if ( myrank == 0 ) then
     write(IOUT,*) 'drawing image of vertical component of displacement vector...'
+    endif
 
     call compute_vector_whole_medium(potential_acoustic,displ_elastic,elastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
 
   else if(imagetype == 2) then
 
+    if ( myrank == 0 ) then
     write(IOUT,*) 'drawing image of vertical component of velocity vector...'
+    endif
 
     call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,elastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
 
   else if(imagetype == 3) then
-
+     
+    if ( myrank == 0 ) then
     write(IOUT,*) 'drawing image of vertical component of acceleration vector...'
+    endif
 
     call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,elastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
 
   else if(imagetype == 4) then
 
+    if ( myrank == 0 ) then
     write(IOUT,*) 'drawing image of pressure field...'
+    endif
 
     call compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,elastic,vector_field_display, &
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
@@ -2408,7 +2453,9 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   endif
 
 ! print exit banner
+  if ( myrank == 0 ) then
   call datim(simulation_title)
+  endif
 
 !
 !----  close output file
