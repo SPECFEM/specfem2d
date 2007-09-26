@@ -166,7 +166,7 @@
      ibegin_bottom,iend_bottom,ibegin_top,iend_top,jbegin_left,jend_left,jbegin_right,jend_right
 
   integer ispec_selected_source,iglob_source,ix_source,iz_source,is_proc_source,nb_proc_source
-  double precision a,displnorm_all
+  double precision a,displnorm_all,displnorm_all_glob
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: source_time_function
   double precision, external :: erf
 
@@ -1435,12 +1435,12 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
     allocate(source_time_function(NSTEP))
 
-      if ( myrank == 0 ) then
+    if ( myrank == 0 ) then
     write(IOUT,*)
     write(IOUT,*) 'Saving the source time function in a text file...'
     write(IOUT,*)
     open(unit=55,file='OUTPUT_FILES/source.txt',status='unknown')
-      endif
+    endif
 
 ! loop on all the time steps
     do it = 1,NSTEP
@@ -2103,28 +2103,43 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 !----  display time step and max of norm of displacement
   if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5) then
 
+    if ( myrank == 0 ) then
     write(IOUT,*)
     if(time >= 1.d-3 .and. time < 1000.d0) then
       write(IOUT,"('Time step number ',i7,'   t = ',f9.4,' s')") it,time
     else
       write(IOUT,"('Time step number ',i7,'   t = ',1pe12.6,' s')") it,time
     endif
+    endif
 
     if(any_elastic) then
       displnorm_all = maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(2,:)**2))
-      write(IOUT,*) 'Max norm of vector field in solid = ',displnorm_all
+      displnorm_all_glob = displnorm_all
+#ifdef USE_MPI
+      call MPI_ALLREDUCE (displnorm_all, displnorm_all_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+#endif
+      if ( myrank == 0 ) then
+      write(IOUT,*) 'Max norm of vector field in solid = ',displnorm_all_glob
+      endif
 ! check stability of the code in solid, exit if unstable
-      if(displnorm_all > STABILITY_THRESHOLD) call exit_MPI('code became unstable and blew up in solid')
+      if(displnorm_all_glob > STABILITY_THRESHOLD) call exit_MPI('code became unstable and blew up in solid')
     endif
 
     if(any_acoustic) then
       displnorm_all = maxval(abs(potential_acoustic(:)))
-      write(IOUT,*) 'Max absolute value of scalar field in fluid = ',displnorm_all
+      displnorm_all_glob = displnorm_all
+#ifdef USE_MPI
+      call MPI_ALLREDUCE (displnorm_all, displnorm_all_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+#endif
+      if ( myrank == 0 ) then
+      write(IOUT,*) 'Max absolute value of scalar field in fluid = ',displnorm_all_glob
+      endif
 ! check stability of the code in fluid, exit if unstable
-      if(displnorm_all > STABILITY_THRESHOLD) call exit_MPI('code became unstable and blew up in fluid')
+      if(displnorm_all_glob > STABILITY_THRESHOLD) call exit_MPI('code became unstable and blew up in fluid')
     endif
-
+    if ( myrank == 0 ) then
     write(IOUT,*)
+    endif
   endif
 
 ! loop on all the receivers to compute and store the seismograms
@@ -2433,10 +2448,12 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   ihours = int_tCPU / 3600
   iminutes = (int_tCPU - 3600*ihours) / 60
   iseconds = int_tCPU - 3600*ihours - 60*iminutes
+  if ( myrank == 0 ) then
   write(*,*) 'Elapsed time in seconds = ',tCPU
   write(*,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
   write(*,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
   write(*,*)
+  endif
 
   endif
 
