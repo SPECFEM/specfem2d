@@ -211,7 +211,7 @@
                                         fluid_solid_elastic_ispec,fluid_solid_elastic_iedge
   integer :: num_fluid_solid_edges,ispec_acoustic,ispec_elastic, &
              iedge_acoustic,iedge_elastic,ipoin1D,iglob2
-  logical :: any_acoustic,any_elastic,any_elastic_glob,coupled_acoustic_elastic
+  logical :: any_acoustic,any_acoustic_glob,any_elastic,any_elastic_glob,coupled_acoustic_elastic
   real(kind=CUSTOM_REAL) :: displ_x,displ_z,displ_n,zxi,xgamma,jacobian1D,pressure
 
 ! for color images
@@ -889,6 +889,10 @@
 any_elastic_glob = any_elastic
 #ifdef USE_MPI
   call MPI_ALLREDUCE(any_elastic, any_elastic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
+#endif
+any_acoustic_glob = any_acoustic
+#ifdef USE_MPI
+  call MPI_ALLREDUCE(any_acoustic, any_acoustic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
 #endif
 
 ! for acoustic
@@ -2112,8 +2116,12 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     endif
     endif
 
-    if(any_elastic) then
-      displnorm_all = maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(2,:)**2))
+    if(any_elastic_glob) then
+      if(any_elastic) then
+        displnorm_all = maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(2,:)**2))
+      else
+        displnorm_all = 0.d0
+      endif
       displnorm_all_glob = displnorm_all
 #ifdef USE_MPI
       call MPI_ALLREDUCE (displnorm_all, displnorm_all_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
@@ -2125,8 +2133,12 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       if(displnorm_all_glob > STABILITY_THRESHOLD) call exit_MPI('code became unstable and blew up in solid')
     endif
 
-    if(any_acoustic) then
-      displnorm_all = maxval(abs(potential_acoustic(:)))
+    if(any_acoustic_glob) then
+      if(any_acoustic) then
+        displnorm_all = maxval(abs(potential_acoustic(:)))
+      else
+        displnorm_all = 0.d0
+      endif
       displnorm_all_glob = displnorm_all
 #ifdef USE_MPI
       call MPI_ALLREDUCE (displnorm_all, displnorm_all_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
