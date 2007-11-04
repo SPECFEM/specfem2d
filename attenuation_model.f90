@@ -4,10 +4,10 @@
 !                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
-!                         Dimitri Komatitsch
+!  Main authors: Dimitri Komatitsch, Nicolas Le Goff and Roland Martin
 !                     University of Pau, France
 !
-!                          (c) April 2007
+!                         (c) November 2007
 !
 !========================================================================
 
@@ -30,15 +30,15 @@
   double precision, dimension(N_SLS) :: tau_epsilon_nu1,tau_sigma_nu1,tau_epsilon_nu2,tau_sigma_nu2
 
   double precision :: f1_attenuation, f2_attenuation
-  
-  
+
+
 ! f1 and f2 are computed as : f2/f1=12 and (log(f1)+log(f2))/2 = log(f0)
   f1_attenuation = exp(log(f0_attenuation)-log(12.d0)/2.d0)
   f2_attenuation = 12.d0 * f1_attenuation
 
-! Call of C function that computes attenuation parameters (function in file "attenuation_compute_param.c"; 
+! Call of C function that computes attenuation parameters (function in file "attenuation_compute_param.c";
 ! a main can be found in UTILS/attenuation directory).
-! Beware of underscores in this function name; depending on your compiler and compilation options, you will have to add or 
+! Beware of underscores in this function name; depending on your compiler and compilation options, you will have to add or
 ! delete underscores. Also look in file "attenuation_compute_param.c" for this issue.
   call attenuation_compute_param(N_SLS, Qp_attenuation, Qs_attenuation, &
        f1_attenuation,f2_attenuation, &

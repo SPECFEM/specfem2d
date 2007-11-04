@@ -4,10 +4,10 @@
 !                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
-!                         Dimitri Komatitsch
+!  Main authors: Dimitri Komatitsch, Nicolas Le Goff and Roland Martin
 !                     University of Pau, France
 !
-!                          (c) April 2007
+!                         (c) November 2007
 !
 !========================================================================
 
@@ -379,7 +379,7 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,*) NTSTEP_BETWEEN_OUTPUT_INFO
-  
+
   read(IIN,"(a80)") datlin
   read(IIN,*) output_postscript_snapshot,output_color_image,colors,numbers
 
@@ -416,7 +416,7 @@
   endif
 
   NTSTEP_BETWEEN_OUTPUT_SEISMO = min(NSTEP,NTSTEP_BETWEEN_OUTPUT_INFO)
-  
+
 !
 !----  read source information
 !
@@ -434,7 +434,7 @@
 !
  if(.not. initialfield) then
    if (source_type == 1) then
-     if ( myrank == 0 ) then 
+     if ( myrank == 0 ) then
      write(IOUT,212) x_source,z_source,f0,t0,factor,angleforce
      endif
    else if(source_type == 2) then
@@ -1066,7 +1066,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 #ifdef USE_MPI
   if ( nproc > 1 ) then
 ! preparing for MPI communications
-    allocate(mask_ispec_inner_outer(nspec))    
+    allocate(mask_ispec_inner_outer(nspec))
     mask_ispec_inner_outer(:) = .false.
 
     call prepare_assemble_MPI (nspec,ibool, &
@@ -1081,8 +1081,8 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           mask_ispec_inner_outer &
           )
 
-    nspec_outer = count(mask_ispec_inner_outer)     
-    nspec_inner = nspec - nspec_outer          
+    nspec_outer = count(mask_ispec_inner_outer)
+    nspec_inner = nspec - nspec_outer
 
     allocate(ispec_outer_to_glob(nspec_outer))
     allocate(ispec_inner_to_glob(nspec_inner))
@@ -1097,8 +1097,8 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       else
         num_ispec_inner = num_ispec_inner + 1
         ispec_inner_to_glob(num_ispec_inner) = ispec
-           
-      endif 
+
+      endif
     enddo
 
   max_ibool_interfaces_size_ac = maxval(nibool_interfaces_acoustic(:))
@@ -1139,17 +1139,17 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
      ninterface, max_interface_size, max_ibool_interfaces_size_ac, max_ibool_interfaces_size_el, &
      ibool_interfaces_acoustic,ibool_interfaces_elastic, nibool_interfaces_acoustic,nibool_interfaces_elastic, my_neighbours)
 
-  else 
+  else
     ninterface_acoustic = 0
     ninterface_elastic = 0
-    
+
     num_ispec_outer = 0
     num_ispec_inner = 0
     allocate(mask_ispec_inner_outer(1))
 
     nspec_outer = 0
     nspec_inner = nspec
-     
+
     allocate(ispec_inner_to_glob(nspec_inner))
     do ispec = 1, nspec
       ispec_inner_to_glob(ispec) = ispec
@@ -1164,7 +1164,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
   nspec_outer = 0
   nspec_inner = nspec
-     
+
   allocate(ispec_inner_to_glob(nspec_inner))
   do ispec = 1, nspec
      ispec_inner_to_glob(ispec) = ispec
@@ -1484,9 +1484,9 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     close(55)
       endif
 
-! nb_proc_source is the number of processes that own the source (the nearest point). It can be greater 
+! nb_proc_source is the number of processes that own the source (the nearest point). It can be greater
 ! than one if the nearest point is on the interface between several partitions with an explosive source.
-! since source contribution is linear, the source_time_function is cut down by that number (it would have been similar 
+! since source contribution is linear, the source_time_function is cut down by that number (it would have been similar
 ! if we just had elected one of those processes).
     source_time_function(:) = source_time_function(:) / nb_proc_source
 
@@ -1626,7 +1626,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       enddo
 
     enddo
-    
+
     if ( myrank == 0 ) then
     print *,'End of fluid/solid edge detection'
     print *
@@ -1734,7 +1734,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
 ! getting velocity for each local pixels
   image_color_vp_display(:,:) = 0.d0
-      
+
   do k = 1, nb_pixel_loc
     j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
     i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
@@ -1776,7 +1776,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 ! initialize variables for writing seismograms
   seismo_offset = 0
   seismo_current = 0
-  
+
 
 ! *********************************************************
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
@@ -1918,7 +1918,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
                jbegin_left,jend_left,jbegin_right,jend_right, &
-               nspec_inner, ispec_inner_to_glob, .false. &	      
+               nspec_inner, ispec_inner_to_glob, .false. &
                )
    endif
 
@@ -2055,7 +2055,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   endif
 #endif
 
-! second call, computation on inner elements and update of 
+! second call, computation on inner elements and update of
   if(any_elastic) &
     call compute_forces_elastic(npoin,nspec,nelemabs,numat,iglob_source, &
                ispec_selected_source,is_proc_source,source_type,it,NSTEP,anyabs,assign_external_model, &
@@ -2256,7 +2256,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   endif
 
   if(imagetype == 1) then
-     
+
     if ( myrank == 0 ) then
     write(IOUT,*) 'drawing displacement vector as small arrows...'
     endif
@@ -2362,7 +2362,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
 
   else if(imagetype == 3) then
-     
+
     if ( myrank == 0 ) then
     write(IOUT,*) 'drawing image of vertical component of acceleration vector...'
     endif
@@ -2386,7 +2386,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   endif
 
   image_color_data(:,:) = 0.d0
-      
+
   do k = 1, nb_pixel_loc
      j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
      i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color

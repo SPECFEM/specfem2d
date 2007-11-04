@@ -4,10 +4,10 @@
 !                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
-!                         Dimitri Komatitsch
+!  Main authors: Dimitri Komatitsch, Nicolas Le Goff and Roland Martin
 !                     University of Pau, France
 !
-!                          (c) April 2007
+!                         (c) November 2007
 !
 !========================================================================
 
@@ -79,7 +79,7 @@
   integer  :: num_ispec
   integer  :: myrank, iproc, nproc
   integer  :: ier
-  
+
 #ifdef USE_MPI
   integer, dimension(MPI_STATUS_SIZE)  :: request_mpi_status
 #endif
@@ -1426,7 +1426,7 @@
   enddo
 
   any_elastic_glob = any_elastic
-#ifdef USE_MPI 
+#ifdef USE_MPI
   call MPI_ALLREDUCE (vpmin, vpmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE (vpmax, vpmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE (vsmin, vsmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
@@ -1455,7 +1455,7 @@
   lambdaPmax = lambdaPmax_glob
   lambdaSmin = lambdaSmin_glob
   lambdaSmax = lambdaSmax_glob
-  
+
 #endif
 
   if ( myrank == 0 ) then
@@ -1478,7 +1478,7 @@
   write(IOUT,*)
   write(IOUT,*) '*** Max stability for P wave velocity = ',courant_stability_number_max
   write(IOUT,*)
-  
+
 
 ! only if time source is not a Dirac or Heaviside (otherwise maximum frequency of spectrum undefined)
 ! and if source is not an initial field, for the same reason
@@ -1535,7 +1535,7 @@
   xmax = xmax_glob
   zmin = zmin_glob
   zmax = zmax_glob
-  
+
 #endif
 
 ! ratio of physical page size/size of the domain meshed
@@ -1653,7 +1653,7 @@
   end if
 
   do ispec = 1, nspec
-     
+
      if ( myrank == 0 ) then
         num_ispec = num_ispec + 1
         write(24,*) '% elem ',ispec
@@ -1813,14 +1813,14 @@
 
 #ifdef USE_MPI
   if (myrank == 0 ) then
-        
+
      do iproc = 1, nproc-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
         allocate(coorg_recv(2,nspec_recv*5))
         allocate(RGB_recv(nspec_recv))
         call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
         call MPI_RECV (RGB_recv(1), nspec_recv, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
-        
+
         do ispec = 1, nspec_recv
            num_ispec = num_ispec + 1
            write(24,*) '% elem ',num_ispec
@@ -1839,9 +1839,9 @@
         end do
         deallocate(coorg_recv)
         deallocate(RGB_recv)
-        
+
      end do
-     
+
   else
      call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
      call MPI_SEND (coorg_send, nspec*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
@@ -1864,7 +1864,7 @@
 !
 !--------------------------------------------------------------------------------
 !
- 
+
   if ( myrank == 0 ) then
   print *
   print *,'Creating PostScript file with mesh dispersion'
@@ -1979,7 +1979,7 @@
   write(24,*) '% spectral element mesh'
   write(24,*) '%'
   write(24,*) '0 setgray'
-  
+
   num_ispec = 0
   end if
 
@@ -2069,7 +2069,7 @@
      coorg_send(2,(ispec-1)*5+5) = z2
   end if
 
- 
+
 
     material = kmato(ispec)
 
@@ -2149,9 +2149,9 @@
 
     else
 ! do not color the elements if not close to the threshold
-       if ( myrank == 0 ) then 
+       if ( myrank == 0 ) then
           write(24,*) 'ST'
-       else 
+       else
           RGB_send(ispec) = 0
        end if
     endif
@@ -2182,7 +2182,7 @@
     else if(lambdaP_local <= 1.20 * lambdaPmin) then
        if ( myrank == 0 ) then
           write(24,*) '0 0 1 RG GF 0 setgray ST'
-       else 
+       else
           RGB_send(ispec) = 3
        end if
 
@@ -2201,14 +2201,14 @@
 
 #ifdef USE_MPI
   if (myrank == 0 ) then
-        
+
      do iproc = 1, nproc-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
         allocate(coorg_recv(2,nspec_recv*5))
         allocate(RGB_recv(nspec_recv))
         call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
         call MPI_RECV (RGB_recv(1), nspec_recv, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
-        
+
         do ispec = 1, nspec_recv
            num_ispec = num_ispec + 1
            write(24,*) '% elem ',num_ispec
@@ -2228,13 +2228,13 @@
            if ( RGB_recv(ispec)  == 0) then
               write(24,*) 'ST'
            end if
-          
+
         end do
         deallocate(coorg_recv)
         deallocate(RGB_recv)
 
      end do
-     
+
   else
      call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
      call MPI_SEND (coorg_send, nspec*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
@@ -2248,9 +2248,9 @@
      write(24,*) '%'
      write(24,*) 'grestore'
      write(24,*) 'showpage'
-     
+
      close(24)
-     
+
      print *,'End of creation of PostScript file with mesh dispersion'
   end if
 
@@ -2367,7 +2367,7 @@
 
   num_ispec = 0
 end if
- 
+
   do ispec = 1, nspec
      if ( myrank == 0 ) then
         num_ispec = num_ispec + 1
@@ -2412,7 +2412,7 @@ end if
      coorg_send(1,(ispec-1)*5+2) = x2
      coorg_send(2,(ispec-1)*5+2) = z2
   end if
-  
+
   ir=pointsdisp
   is=pointsdisp
   x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
@@ -2452,7 +2452,7 @@ end if
      coorg_send(1,(ispec-1)*5+5) = x2
      coorg_send(2,(ispec-1)*5+5) = z2
   end if
-  
+
   if((vpmax-vpmin)/vpmin > 0.02d0) then
   if(assign_external_model) then
 ! use lower-left corner
@@ -2479,21 +2479,21 @@ end if
 ! display P-velocity model using gray levels
   if ( myrank == 0 ) then
      write(24,*) sngl(x1),' setgray GF 0 setgray ST'
-  else 
+  else
      greyscale_send(ispec) = sngl(x1)
   end if
   enddo ! end of loop on all the spectral elements
 
 #ifdef USE_MPI
   if (myrank == 0 ) then
-        
+
      do iproc = 1, nproc-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
         allocate(coorg_recv(2,nspec_recv*5))
         allocate(greyscale_recv(nspec_recv))
         call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
         call MPI_RECV (greyscale_recv(1), nspec_recv, MPI_REAL, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
-        
+
         do ispec = 1, nspec_recv
            num_ispec = num_ispec + 1
            write(24,*) '% elem ',num_ispec
@@ -2505,13 +2505,13 @@ end if
            write(24,681) coorg_recv(1,(ispec-1)*5+5), coorg_recv(2,(ispec-1)*5+5)
            write(24,*) 'CO'
            write(24,*) greyscale_recv(ispec), ' setgray GF 0 setgray ST'
-          
+
         end do
         deallocate(coorg_recv)
         deallocate(greyscale_recv)
 
      end do
-     
+
   else
      call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
      call MPI_SEND (coorg_send, nspec*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
@@ -2524,14 +2524,14 @@ end if
      write(24,*) '%'
      write(24,*) 'grestore'
      write(24,*) 'showpage'
-     
+
      close(24)
-     
+
      print *,'End of creation of PostScript file with velocity model'
 
   end if
 
- 
+
   if ( myrank == 0 ) then
   print *
   print *,'Creating PostScript file with partitioning'
@@ -2642,7 +2642,7 @@ end if
   end if
 
   do ispec = 1, nspec
-     
+
      if ( myrank == 0 ) then
         num_ispec = num_ispec + 1
         write(24,*) '% elem ',ispec
@@ -2728,25 +2728,25 @@ end if
      coorg_send(2,(ispec-1)*5+5) = z2
   end if
 
- 
+
   if ( myrank == 0 ) then
         write(24,*) red(1), green(1), blue(1), 'RG GF 0 setgray ST'
      end if
-     
+
   enddo ! end of loop on all the spectral elements
 
 #ifdef USE_MPI
   if (myrank == 0 ) then
-     
+
       do iproc = 1, nproc-1
 
 ! use a different color for each material set
         icol = mod(iproc, NUM_COLORS) + 1
-      
+
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
         allocate(coorg_recv(2,nspec_recv*5))
         call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
-            
+
         do ispec = 1, nspec_recv
            num_ispec = num_ispec + 1
            write(24,*) '% elem ',num_ispec
@@ -2757,18 +2757,18 @@ end if
            write(24,681) coorg_recv(1,(ispec-1)*5+4), coorg_recv(2,(ispec-1)*5+4)
            write(24,681) coorg_recv(1,(ispec-1)*5+5), coorg_recv(2,(ispec-1)*5+5)
            write(24,*) 'CO'
-           
+
            write(24,*) red(icol), green(icol), blue(icol), ' RG GF 0 setgray ST'
-        
+
         end do
         deallocate(coorg_recv)
-              
+
      end do
-     
+
   else
      call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
      call MPI_SEND (coorg_send, nspec*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
-    
+
   end if
 #endif
 

@@ -4,10 +4,10 @@
 !                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
-!                         Dimitri Komatitsch
+!  Main authors: Dimitri Komatitsch, Nicolas Le Goff and Roland Martin
 !                     University of Pau, France
 !
-!                          (c) April 2007
+!                         (c) November 2007
 !
 !========================================================================
 
@@ -98,40 +98,40 @@
 
 #endif
 
-  
+
   ! check if this process contains the source
-  if ( dist_glob == distminmax ) then 
+  if ( dist_glob == distminmax ) then
      is_proc_source = 1
   end if
 
-  
+
 #ifdef USE_MPI
   ! determining the number of processes that contain the source (useful when the source is located on an interface)
   call MPI_ALLREDUCE (is_proc_source, nb_proc_source, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD, ierror)
-  
+
 #else
   nb_proc_source = is_proc_source
-  
-#endif  
-  
+
+#endif
+
   if ( nb_proc_source < 1 ) then
      call exit_MPI('error locating force source')
   end if
-  
-  if ( is_proc_source == 1 ) then 
+
+  if ( is_proc_source == 1 ) then
      write(iout,200)
-     
+
      write(iout,"(1x,f12.3,1x,f12.3,1x,f12.3,1x,f12.3,f12.3,1x,i5.5)") x_source,z_source, &
           coord(1,iglob_source),coord(2,iglob_source),distmin,nb_proc_source
      write(iout,*)
      write(iout,*)
      write(iout,"('Maximum distance between asked and real =',f12.3)") distminmax
-     
+
   end if
 
 #ifdef USE_MPI
   call MPI_BARRIER(MPI_COMM_WORLD,ierror)
-#endif  
+#endif
 
  200 format(//1x,48('=')/,' =  S o u r c e s  ', &
   'r e a l  p o s i t i o n s  ='/1x,48('=')// &

@@ -1,3 +1,16 @@
+
+!========================================================================
+!
+!                   S P E C F E M 2 D  Version 5.2
+!                   ------------------------------
+!
+!  Main authors: Dimitri Komatitsch, Nicolas Le Goff and Roland Martin
+!                     University of Pau, France
+!
+!                         (c) November 2007
+!
+!========================================================================
+
 subroutine construct_acoustic_surface ( nspec, ngnod, knods, nsurface, surface, tab_surface )
 
   implicit none
@@ -33,13 +46,9 @@ subroutine construct_acoustic_surface ( nspec, ngnod, knods, nsurface, surface, 
      tab_surface(4,i) = izmin
      tab_surface(5,i) = izmax
 
-
   enddo
 
-
 end subroutine construct_acoustic_surface
-
-
 
 
 subroutine get_acoustic_edge ( ngnod, n, type, e1, e2, ixmin, ixmax, izmin, izmax )
@@ -142,7 +151,5 @@ subroutine get_acoustic_edge ( ngnod, n, type, e1, e2, ixmin, ixmax, izmin, izma
      endif
   endif
 
-
 end subroutine get_acoustic_edge
-
 

@@ -4,10 +4,10 @@
 !                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
-!                         Dimitri Komatitsch
+!  Main authors: Dimitri Komatitsch, Nicolas Le Goff and Roland Martin
 !                     University of Pau, France
 !
-!                          (c) April 2007
+!                         (c) November 2007
 !
 !========================================================================
 
@@ -145,7 +145,7 @@
 
     enddo ! end of loop over all spectral elements
 
-! only for the first call to compute_forces_acoustic (during computation on outer elements)  
+! only for the first call to compute_forces_acoustic (during computation on outer elements)
   if ( num_phase_inner_outer ) then
 
 !
