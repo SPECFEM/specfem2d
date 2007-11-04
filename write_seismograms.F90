@@ -4,10 +4,10 @@
 !                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
-!                         Dimitri Komatitsch
+!  Main authors: Dimitri Komatitsch, Nicolas Le Goff and Roland Martin
 !                     University of Pau, France
 !
-!                          (c) April 2007
+!                         (c) November 2007
 !
 !========================================================================
 
@@ -26,10 +26,10 @@
 #endif
 
   integer :: nrec,NSTEP,it,seismotype
-  integer :: NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current 
+  integer :: NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current
   double precision :: t0,deltat
 
-  
+
   integer, intent(in) :: nrecloc,myrank
   integer, dimension(nrec),intent(in) :: which_proc_receiver
 
@@ -52,7 +52,7 @@
 ! scaling factor for Seismic Unix xsu dislay
   double precision, parameter :: FACTORXSU = 1.d0
 
-  
+
   integer  :: irecloc
 
 #ifdef USE_MPI
@@ -87,28 +87,28 @@
 
   allocate(buffer_binary(NTSTEP_BETWEEN_OUTPUT_SEISMO,number_of_components))
 
-  
+
   if ( myrank == 0 .and. seismo_offset == 0 ) then
-     
+
 ! delete the old files
      open(unit=11,file='OUTPUT_FILES/Ux_file_single.bin',status='unknown')
      close(11,status='delete')
-     
+
      open(unit=11,file='OUTPUT_FILES/Ux_file_double.bin',status='unknown')
      close(11,status='delete')
-     
+
      open(unit=11,file='OUTPUT_FILES/pressure_file_single.bin',status='unknown')
      close(11,status='delete')
-     
+
      open(unit=11,file='OUTPUT_FILES/pressure_file_double.bin',status='unknown')
      close(11,status='delete')
-     
+
      open(unit=11,file='OUTPUT_FILES/Uz_file_single.bin',status='unknown')
      close(11,status='delete')
 
      open(unit=11,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown')
      close(11,status='delete')
-     
+
    endif
 
    if ( myrank == 0 ) then
@@ -130,25 +130,25 @@
      if(seismotype /= 4) then
         open(unit=14,file='OUTPUT_FILES/Uz_file_single.bin',status='unknown',access='direct',recl=4)
         open(unit=15,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown',access='direct',recl=8)
-        
+
      end if
-     
+
   end if
 
 
   irecloc = 0
   do irec = 1,nrec
-     
+
      if ( myrank == 0 ) then
-        
+
         if ( which_proc_receiver(irec) == myrank ) then
            irecloc = irecloc + 1
            buffer_binary(:,1) = sisux(:,irecloc)
            if ( number_of_components == 2 ) then
               buffer_binary(:,2) = sisuz(:,irecloc)
            end if
-           
-#ifdef USE_MPI       
+
+#ifdef USE_MPI
         else
            call MPI_RECV(buffer_binary(1,1),NTSTEP_BETWEEN_OUTPUT_SEISMO,MPI_DOUBLE_PRECISION,&
                 which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
@@ -156,14 +156,14 @@
               call MPI_RECV(buffer_binary(1,2),NTSTEP_BETWEEN_OUTPUT_SEISMO,MPI_DOUBLE_PRECISION,&
                    which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
            end if
-           
-      
+
+
 #endif
         end if
-        
+
 ! write trace
         do iorientation = 1,number_of_components
-           
+
            if(iorientation == 1) then
               chn = 'BHX'
            else if(iorientation == 2) then
@@ -171,10 +171,10 @@
            else
               call exit_MPI('incorrect channel value')
            endif
-           
+
            ! in case of pressure, use different abbreviation
            if(seismotype == 4) chn = 'PRE'
-           
+
            ! create the name of the seismogram file for each slice
            ! file name includes the name of the station, the network and the component
            length_station_name = len_trim(station_name(irec))
@@ -183,14 +183,14 @@
            ! check that length conforms to standard
            if(length_station_name < 1 .or. length_station_name > MAX_LENGTH_STATION_NAME) then
              call exit_MPI('wrong length of station name')
-          end if 
-           if(length_network_name < 1 .or. length_network_name > MAX_LENGTH_NETWORK_NAME) then 
+          end if
+           if(length_network_name < 1 .or. length_network_name > MAX_LENGTH_NETWORK_NAME) then
              call exit_MPI('wrong length of network name')
           end if
-           
+
            write(sisname,"('OUTPUT_FILES/',a,'.',a,'.',a3,'.sem',a1)") station_name(irec)(1:length_station_name),&
                 network_name(irec)(1:length_network_name),chn,component
-           
+
            ! save seismograms in text format with no subsampling.
            ! Because we do not subsample the output, this can result in large files
            ! if the simulation uses many time steps. However, subsampling the output
@@ -201,7 +201,7 @@
              close(11,status='delete')
            endif
            open(unit=11,file=sisname(1:len_trim(sisname)),status='unknown',position='append')
-           
+
            ! make sure we never write more than the maximum number of time steps
            ! subtract offset of the source to make sure travel time is correct
            do isample = 1,seismo_current
@@ -211,7 +211,7 @@
                  write(11,*) sngl(dble(seismo_offset+isample-1)*deltat - t0),' ',sngl(buffer_binary(isample,iorientation))
               endif
            enddo
-           
+
            close(11)
         end do
 
@@ -232,11 +232,11 @@
            call MPI_SEND(sisux(1,irecloc),NTSTEP_BETWEEN_OUTPUT_SEISMO,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ierror)
            if ( number_of_components == 2 ) then
               call MPI_SEND(sisuz(1,irecloc),NTSTEP_BETWEEN_OUTPUT_SEISMO,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ierror)
-           end if           
+           end if
         end if
 
 #endif
-        
+
      end if
 
   enddo
@@ -254,7 +254,7 @@
 
 !----
    if ( myrank == 0 ) then
-      
+
 ! ligne de recepteurs pour Xsu
   open(unit=11,file='OUTPUT_FILES/receiver_line_Xsu_XWindow',status='unknown')
 

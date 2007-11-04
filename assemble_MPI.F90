@@ -1,5 +1,18 @@
+
+!========================================================================
+!
+!                   S P E C F E M 2 D  Version 5.2
+!                   ------------------------------
+!
+!  Main authors: Dimitri Komatitsch, Nicolas Le Goff and Roland Martin
+!                     University of Pau, France
+!
+!                         (c) November 2007
+!
+!========================================================================
+
 subroutine prepare_assemble_MPI (nspec,ibool, &
-     knods, ngnod, & 
+     knods, ngnod, &
      npoin, elastic, &
      ninterface, max_interface_size, &
      my_nelmnts_neighbours, my_interfaces, &
@@ -10,10 +23,9 @@ subroutine prepare_assemble_MPI (nspec,ibool, &
      mask_ispec_inner_outer &
      )
 
-
   implicit none
+
   include 'constants.h'
-  
 
   integer, intent(in)  :: nspec, npoin, ngnod
   logical, dimension(nspec), intent(in)  :: elastic
@@ -25,18 +37,17 @@ subroutine prepare_assemble_MPI (nspec,ibool, &
   integer, dimension(ninterface)  :: my_nelmnts_neighbours
   integer, dimension(4,max_interface_size,ninterface)  :: my_interfaces
   integer, dimension(NGLLX*max_interface_size,ninterface)  :: &
-       ibool_interfaces_acoustic,ibool_interfaces_elastic 
+       ibool_interfaces_acoustic,ibool_interfaces_elastic
   integer, dimension(ninterface)  :: &
        nibool_interfaces_acoustic,nibool_interfaces_elastic
 
-  
   integer, dimension(ninterface), intent(out)  :: &
        inum_interfaces_acoustic, inum_interfaces_elastic
   integer, intent(out)  :: ninterface_acoustic, ninterface_elastic
 
   integer  :: num_interface
   integer  :: ispec_interface
-  
+
   logical, dimension(nspec), intent(inout)  :: mask_ispec_inner_outer
 
   logical, dimension(npoin)  :: mask_ibool_acoustic
@@ -54,58 +65,57 @@ subroutine prepare_assemble_MPI (nspec,ibool, &
   integer  :: npoin_interface_elastic
 
   integer  :: ix,iz
- 
+
   integer  :: sens
 
-  
   ibool_interfaces_acoustic(:,:) = 0
   nibool_interfaces_acoustic(:) = 0
   ibool_interfaces_elastic(:,:) = 0
   nibool_interfaces_elastic(:) = 0
-  
+
   do num_interface = 1, ninterface
      npoin_interface_acoustic = 0
      npoin_interface_elastic = 0
      mask_ibool_acoustic(:) = .false.
      mask_ibool_elastic(:) = .false.
-     
+
      do ispec_interface = 1, my_nelmnts_neighbours(num_interface)
         ispec = my_interfaces(1,ispec_interface,num_interface)
         type = my_interfaces(2,ispec_interface,num_interface)
         do k = 1, ngnod
-           n(k) = knods(k,ispec)             
+           n(k) = knods(k,ispec)
         end do
         e1 = my_interfaces(3,ispec_interface,num_interface)
         e2 = my_interfaces(4,ispec_interface,num_interface)
 
         call get_edge(ngnod, n, type, e1, e2, ixmin, ixmax, izmin, izmax, sens)
-        
+
         do iz = izmin, izmax, sens
            do ix = ixmin, ixmax, sens
-              
+
               if ( elastic(ispec) ) then
-                 
+
                  if(.not. mask_ibool_elastic(ibool(ix,iz,ispec))) then
                     mask_ibool_elastic(ibool(ix,iz,ispec)) = .true.
-                    npoin_interface_elastic = npoin_interface_elastic + 1 
+                    npoin_interface_elastic = npoin_interface_elastic + 1
                     ibool_interfaces_elastic(npoin_interface_elastic,num_interface)=&
                          ibool(ix,iz,ispec)
                  end if
               else
                  if(.not. mask_ibool_acoustic(ibool(ix,iz,ispec))) then
                     mask_ibool_acoustic(ibool(ix,iz,ispec)) = .true.
-                    npoin_interface_acoustic = npoin_interface_acoustic + 1 
+                    npoin_interface_acoustic = npoin_interface_acoustic + 1
                     ibool_interfaces_acoustic(npoin_interface_acoustic,num_interface)=&
                          ibool(ix,iz,ispec)
                  end if
               end if
            end do
         end do
-               
+
      end do
      nibool_interfaces_acoustic(num_interface) = npoin_interface_acoustic
      nibool_interfaces_elastic(num_interface) = npoin_interface_elastic
-  
+
      do ispec = 1, nspec
        do iz = 1, NGLLZ
          do ix = 1, NGLLX
@@ -118,9 +128,7 @@ subroutine prepare_assemble_MPI (nspec,ibool, &
         enddo
       enddo
 
- 
   end do
-   
 
   ninterface_acoustic = 0
   ninterface_elastic =  0
@@ -138,10 +146,10 @@ subroutine prepare_assemble_MPI (nspec,ibool, &
 end subroutine prepare_assemble_MPI
 
 
-
 subroutine get_edge ( ngnod, n, type, e1, e2, ixmin, ixmax, izmin, izmax, sens )
 
   implicit none
+
   include "constants.h"
 
   integer, intent(in)  :: ngnod
@@ -180,7 +188,7 @@ subroutine get_edge ( ngnod, n, type, e1, e2, ixmin, ixmax, izmin, izmax, sens )
      if ( e1 ==  n(1) ) then
         ixmin = 1
         izmin = 1
-        if ( e2 == n(2) ) then 
+        if ( e2 == n(2) ) then
            ixmax = NGLLX
            izmax = 1
            sens = 1
@@ -234,10 +242,8 @@ subroutine get_edge ( ngnod, n, type, e1, e2, ixmin, ixmax, izmin, izmax, sens )
         end if
      end if
   end if
-  
 
 end subroutine get_edge
-
 
 
 #ifdef USE_MPI
@@ -258,7 +264,6 @@ subroutine create_MPI_req_SEND_RECV_ac( &
   include 'constants.h'
   include 'mpif.h'
   include 'precision_mpi.h'
-  
 
   integer, intent(in)  :: ninterface, ninterface_acoustic
   integer, dimension(ninterface), intent(in)  :: inum_interfaces_acoustic
@@ -271,15 +276,13 @@ subroutine create_MPI_req_SEND_RECV_ac( &
   integer, dimension(ninterface), intent(in)  :: nibool_interfaces_acoustic
   integer, dimension(ninterface), intent(in) :: my_neighbours
 
-
   integer  :: inum_interface,num_interface
   integer  :: ier
-    
 
   do inum_interface = 1, ninterface_acoustic
-     
+
      num_interface = inum_interfaces_acoustic(inum_interface)
-     
+
         call MPI_Send_init ( buffer_send_faces_vector_ac(1,inum_interface), &
              nibool_interfaces_acoustic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
@@ -290,9 +293,7 @@ subroutine create_MPI_req_SEND_RECV_ac( &
              tab_requests_send_recv_acoustic(ninterface_acoustic+inum_interface), ier)
   end do
 
-
 end subroutine create_MPI_req_SEND_RECV_ac
-
 
 
 subroutine create_MPI_req_SEND_RECV_el( &
@@ -310,7 +311,7 @@ subroutine create_MPI_req_SEND_RECV_el( &
 
   include 'constants.h'
   include 'mpif.h'
-  include 'precision_mpi.h'  
+  include 'precision_mpi.h'
 
 
   integer, intent(in)  :: ninterface, ninterface_elastic
@@ -326,13 +327,11 @@ subroutine create_MPI_req_SEND_RECV_el( &
 
   integer  :: inum_interface,num_interface
   integer  :: ier
-  
-  
 
   do inum_interface = 1, ninterface_elastic
-     
+
      num_interface = inum_interfaces_elastic(inum_interface)
-     
+
         call MPI_Send_init ( buffer_send_faces_vector_el(1,inum_interface), &
              NDIM*nibool_interfaces_elastic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 13, MPI_COMM_WORLD, &
@@ -343,9 +342,7 @@ subroutine create_MPI_req_SEND_RECV_el( &
              tab_requests_send_recv_elastic(ninterface_elastic+inum_interface), ier)
   end do
 
-
 end subroutine create_MPI_req_SEND_RECV_el
-
 
 
 subroutine assemble_MPI_scalar(myrank,array_val1, array_val2,npoin, &
@@ -356,7 +353,6 @@ subroutine assemble_MPI_scalar(myrank,array_val1, array_val2,npoin, &
 
   include 'constants.h'
   include 'mpif.h'
-
 
   ! array to assemble
   real(kind=CUSTOM_REAL), dimension(npoin), intent(inout) :: array_val1, array_val2
@@ -371,7 +367,6 @@ subroutine assemble_MPI_scalar(myrank,array_val1, array_val2,npoin, &
   integer, dimension(ninterface), intent(in)  :: nibool_interfaces_acoustic,nibool_interfaces_elastic
   integer, dimension(ninterface), intent(in)  :: my_neighbours
 
-
   double precision, dimension(max_ibool_interfaces_size_ac+max_ibool_interfaces_size_el, ninterface)  :: &
        buffer_send_faces_scalar, &
        buffer_recv_faces_scalar
@@ -379,32 +374,30 @@ subroutine assemble_MPI_scalar(myrank,array_val1, array_val2,npoin, &
   integer, dimension(ninterface)  :: msg_requests
   integer  :: ipoin, num_interface
   integer  :: ier
-  
+
   integer  :: i
 
-
   do num_interface = 1, ninterface
-   
+
      ipoin = 0
      do i = 1, nibool_interfaces_acoustic(num_interface)
         ipoin = ipoin + 1
         buffer_send_faces_scalar(ipoin,num_interface) = &
              array_val1(ibool_interfaces_acoustic(i,num_interface))
      end do
-     
-     do i = 1, nibool_interfaces_elastic(num_interface) 
+
+     do i = 1, nibool_interfaces_elastic(num_interface)
         ipoin = ipoin + 1
         buffer_send_faces_scalar(ipoin,num_interface) = &
              array_val2(ibool_interfaces_elastic(i,num_interface))
      end do
-     
+
      call MPI_isend ( buffer_send_faces_scalar(1,num_interface), &
           nibool_interfaces_acoustic(num_interface)+nibool_interfaces_elastic(num_interface), MPI_DOUBLE_PRECISION, &
           my_neighbours(num_interface), 11, &
           MPI_COMM_WORLD, msg_requests(num_interface), ier)
-          
+
   end do
-  
 
   do num_interface = 1, ninterface
      call MPI_recv ( buffer_recv_faces_scalar(1,num_interface), &
@@ -418,7 +411,7 @@ subroutine assemble_MPI_scalar(myrank,array_val1, array_val2,npoin, &
         array_val1(ibool_interfaces_acoustic(i,num_interface)) = array_val1(ibool_interfaces_acoustic(i,num_interface)) + &
              buffer_recv_faces_scalar(ipoin,num_interface)
      end do
-     
+
      do i = 1, nibool_interfaces_elastic(num_interface)
         ipoin = ipoin + 1
         array_val2(ibool_interfaces_elastic(i,num_interface)) = array_val2(ibool_interfaces_elastic(i,num_interface)) + &
@@ -429,9 +422,7 @@ subroutine assemble_MPI_scalar(myrank,array_val1, array_val2,npoin, &
 
   call MPI_BARRIER(mpi_comm_world,ier)
 
-
 end subroutine assemble_MPI_scalar
-
 
 
 subroutine assemble_MPI_vector_ac_start(array_val1,npoin, &
@@ -448,10 +439,8 @@ subroutine assemble_MPI_vector_ac_start(array_val1,npoin, &
   include 'constants.h'
   include 'mpif.h'
 
-
   ! array to assemble
   real(kind=CUSTOM_REAL), dimension(npoin), intent(in) :: array_val1
-
 
   integer, intent(in)  :: npoin
   integer, intent(in)  :: ninterface, ninterface_acoustic
@@ -466,35 +455,32 @@ subroutine assemble_MPI_vector_ac_start(array_val1,npoin, &
 
   integer  :: ipoin, num_interface, inum_interface
   integer  :: ier
- 
+
   integer  :: i
 
-
   do inum_interface = 1, ninterface_acoustic
-     
+
      num_interface = inum_interfaces_acoustic(inum_interface)
 
      ipoin = 0
      do i = 1, nibool_interfaces_acoustic(num_interface)
-     ipoin = ipoin + 1      
+     ipoin = ipoin + 1
         buffer_send_faces_vector_ac(ipoin,inum_interface) = &
              array_val1(ibool_interfaces_acoustic(i,num_interface))
      end do
-     
+
   end do
-  
+
   do inum_interface = 1, ninterface_acoustic*2
      call MPI_START(tab_requests_send_recv_acoustic(inum_interface), ier)
      if ( ier /= MPI_SUCCESS ) then
         call exit_mpi('MPI_start unsuccessful in assemble_MPI_vector_start')
      end if
   end do
-  
+
 !call MPI_Startall ( ninterface*2, tab_requests_send_recv(1), ier )
 
-
 end subroutine assemble_MPI_vector_ac_start
-
 
 
 subroutine assemble_MPI_vector_el_start(array_val2,npoin, &
@@ -511,10 +497,8 @@ subroutine assemble_MPI_vector_el_start(array_val2,npoin, &
   include 'constants.h'
   include 'mpif.h'
 
-
   ! array to assemble
   real(kind=CUSTOM_REAL), dimension(NDIM,npoin), intent(in) :: array_val2
-
 
   integer, intent(in)  :: npoin
   integer, intent(in)  :: ninterface, ninterface_elastic
@@ -526,7 +510,6 @@ subroutine assemble_MPI_vector_el_start(array_val2,npoin, &
   integer, dimension(ninterface_elastic*2), intent(inout)  :: tab_requests_send_recv_elastic
   real(CUSTOM_REAL), dimension(max_ibool_interfaces_size_el,ninterface_elastic), intent(inout)  :: &
        buffer_send_faces_vector_el
-  
 
 
   integer  :: ipoin, num_interface, inum_interface
@@ -536,7 +519,7 @@ subroutine assemble_MPI_vector_el_start(array_val2,npoin, &
 
 
   do inum_interface = 1, ninterface_elastic
-     
+
      num_interface = inum_interfaces_elastic(inum_interface)
 
      ipoin = 0
@@ -546,21 +529,18 @@ subroutine assemble_MPI_vector_el_start(array_val2,npoin, &
         ipoin = ipoin + 2
      end do
 
-     
   end do
-  
+
   do inum_interface = 1, ninterface_elastic*2
      call MPI_START(tab_requests_send_recv_elastic(inum_interface), ier)
      if ( ier /= MPI_SUCCESS ) then
         call exit_mpi('MPI_start unsuccessful in assemble_MPI_vector_start')
      end if
   end do
-  
+
 !call MPI_Startall ( ninterface*2, tab_requests_send_recv(1), ier )
 
-
 end subroutine assemble_MPI_vector_el_start
-
 
 
 subroutine assemble_MPI_vector_ac_wait(array_val1,npoin, &
@@ -577,10 +557,8 @@ subroutine assemble_MPI_vector_ac_wait(array_val1,npoin, &
   include 'constants.h'
   include 'mpif.h'
 
-
   ! array to assemble
   real(kind=CUSTOM_REAL), dimension(npoin), intent(inout) :: array_val1
-
 
   integer, intent(in)  :: npoin
   integer, intent(in)  :: ninterface, ninterface_acoustic
@@ -599,14 +577,13 @@ subroutine assemble_MPI_vector_ac_wait(array_val1,npoin, &
 
   integer  :: i
 
-
   call MPI_Waitall ( ninterface_acoustic*2, tab_requests_send_recv_acoustic(1), tab_statuses_acoustic(1,1), ier )
   if ( ier /= MPI_SUCCESS ) then
      call exit_mpi('MPI_WAITALL unsuccessful in assemble_MPI_vector_wait')
   end if
-  
+
   do inum_interface = 1, ninterface_acoustic
-     
+
      num_interface = inum_interfaces_acoustic(inum_interface)
 
      ipoin = 0
@@ -615,12 +592,10 @@ subroutine assemble_MPI_vector_ac_wait(array_val1,npoin, &
         array_val1(ibool_interfaces_acoustic(i,num_interface)) = array_val1(ibool_interfaces_acoustic(i,num_interface)) + &
              buffer_recv_faces_vector_ac(ipoin,inum_interface)
      end do
-     
+
   end do
 
-
 end subroutine assemble_MPI_vector_ac_wait
-
 
 
 subroutine assemble_MPI_vector_el_wait(array_val2,npoin, &
@@ -637,10 +612,8 @@ subroutine assemble_MPI_vector_el_wait(array_val2,npoin, &
   include 'constants.h'
   include 'mpif.h'
 
-
   ! array to assemble
   real(kind=CUSTOM_REAL), dimension(NDIM,npoin), intent(inout) :: array_val2
-
 
   integer, intent(in)  :: npoin
   integer, intent(in)  :: ninterface, ninterface_elastic
@@ -659,14 +632,13 @@ subroutine assemble_MPI_vector_el_wait(array_val2,npoin, &
 
   integer  :: i
 
-
   call MPI_Waitall ( ninterface_elastic*2, tab_requests_send_recv_elastic(1), tab_statuses_elastic(1,1), ier )
   if ( ier /= MPI_SUCCESS ) then
      call exit_mpi('MPI_WAITALL unsuccessful in assemble_MPI_vector_wait')
   end if
-  
+
   do inum_interface = 1, ninterface_elastic
-     
+
      num_interface = inum_interfaces_elastic(inum_interface)
 
      ipoin = 0
@@ -675,14 +647,12 @@ subroutine assemble_MPI_vector_el_wait(array_val2,npoin, &
              buffer_recv_faces_vector_el(ipoin+1:ipoin+2,inum_interface)
         ipoin = ipoin + 2
      end do
-     
-  end do
 
+  end do
 
 end subroutine assemble_MPI_vector_el_wait
 
 #endif
-
 
 
 subroutine exit_MPI(error_msg)
@@ -712,15 +682,9 @@ subroutine exit_MPI(error_msg)
 #ifdef USE_MPI
   call MPI_ABORT(MPI_COMM_WORLD,30,ier)
   call MPI_FINALIZE(ier)
-  
+
 #endif
   stop 'error, program ended in exit_MPI'
-      
 
 end subroutine exit_MPI
-
-
-
-
-
 
