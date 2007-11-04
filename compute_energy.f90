@@ -4,10 +4,10 @@
 !                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
-!                         Dimitri Komatitsch
+!  Main authors: Dimitri Komatitsch, Nicolas Le Goff and Roland Martin
 !                     University of Pau, France
 !
-!                          (c) April 2007
+!                         (c) November 2007
 !
 !========================================================================
 
@@ -28,12 +28,12 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLX) :: vector_field_element
 
 ! pressure in an element
-  integer :: N_SLS 
+  integer :: N_SLS
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: pressure_element
-  
+
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11
   double precision :: Mu_nu1,Mu_nu2
-  
+
   real(kind=CUSTOM_REAL), dimension(npoin) :: potential_dot_acoustic,potential_dot_dot_acoustic
 
   logical :: TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON

@@ -4,10 +4,10 @@
 !                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
-!                         Dimitri Komatitsch
+!  Main authors: Dimitri Komatitsch, Nicolas Le Goff and Roland Martin
 !                     University of Pau, France
 !
-!                          (c) April 2007
+!                         (c) November 2007
 !
 !========================================================================
 
@@ -79,7 +79,7 @@ program meshfem2D
   integer ixdebregion,ixfinregion,izdebregion,izfinregion
   integer iregion,imaterial,nbregion,nb_materials
   integer NTSTEP_BETWEEN_OUTPUT_INFO,pointsdisp,subsamp,seismotype,imagetype
-  logical generate_STATIONS 
+  logical generate_STATIONS
   integer ngnod,nt,nx,nz,nxread,nzread,icodematread,ireceiverlines,nreceiverlines
 
   integer, dimension(:), allocatable :: nrec
@@ -114,19 +114,19 @@ program meshfem2D
 ! parameters for external mesh
   logical  :: read_external_mesh
   character(len=256)  :: mesh_file, nodes_coords_file, materials_file, free_surface_file, absorbing_surface_file
-  
-! variables used for storing info about the mesh and partitions    
+
+! variables used for storing info about the mesh and partitions
   integer, dimension(:), pointer  :: elmnts
   integer, dimension(:), pointer  :: elmnts_bis
   double precision, dimension(:,:), pointer  :: nodes_coords
   integer, dimension(:,:), pointer  :: acoustic_surface
   integer, dimension(:,:), pointer  :: abs_surface
-  
+
   integer, dimension(:), pointer  :: xadj
   integer, dimension(:), pointer  :: adjncy
   integer, dimension(:), pointer  :: nnodes_elmnts
   integer, dimension(:), pointer  :: nodes_elmnts
-  
+
   integer, dimension(:), pointer  :: vwgt
   integer, dimension(:), pointer  :: adjwgt
   integer, dimension(:), pointer  :: part
@@ -138,7 +138,7 @@ program meshfem2D
   integer, dimension(:), pointer  :: tab_size_interfaces, tab_interfaces
   integer, dimension(:), allocatable  :: my_interfaces
   integer, dimension(:), allocatable  :: my_nb_interfaces
-    
+
   integer  :: nedges_coupled, nedges_coupled_loc
   integer, dimension(:,:), pointer  :: edges_coupled
 
@@ -166,7 +166,7 @@ program meshfem2D
   character(len=256)  :: prname
 
 ! variables used for attenuation
-  integer  :: N_SLS          
+  integer  :: N_SLS
   double precision  :: Qp_attenuation
   double precision  :: Qs_attenuation
   double precision  :: f0_attenuation
@@ -207,22 +207,22 @@ program meshfem2D
 ! read info about partitionning
   call read_value_integer(IIN,IGNORE_JUNK,nproc)
   if ( nproc <= 0 ) then
-     print *, 'Number of processes (nproc) must be greater than or equal to one.' 
-     stop 
+     print *, 'Number of processes (nproc) must be greater than or equal to one.'
+     stop
   endif
-  
+
 #ifndef USE_MPI
   if ( nproc > 1 ) then
-     print *, 'Number of processes (nproc) must be equal to one when not using MPI.' 
+     print *, 'Number of processes (nproc) must be equal to one when not using MPI.'
      print *, 'Please recompile with -DUSE_MPI in order to enable use of MPI.'
-     stop 
+     stop
   endif
-  
+
 #endif
-  
+
   call read_value_integer(IIN,IGNORE_JUNK,partitionning_method)
   call read_value_string(IIN,IGNORE_JUNK,partitionning_strategy)
-  select case(partitionning_method) 
+  select case(partitionning_method)
   case(1)
   case(2)
      partitionning_strategy = trim(partitionning_strategy)
@@ -233,17 +233,17 @@ program meshfem2D
            metis_options = iachar(partitionning_strategy(i:i)) - iachar('0')
         end do
      endif
-     
+
   case(3)
      scotch_strategy = trim(partitionning_strategy)
-     
-  case default 
+
+  case default
      print *, 'Invalid partionning method number.'
      print *, 'Partionning method', partitionning_method, 'was requested, but is not available.'
      stop
   end select
-  
- 
+
+
 ! read grid parameters
   call read_value_double_precision(IIN,IGNORE_JUNK,xmin)
   call read_value_double_precision(IIN,IGNORE_JUNK,xmax)
@@ -252,36 +252,36 @@ program meshfem2D
   if ( ngnod == 9 .and. read_external_mesh ) then
      print *, 'Number of control nodes must be equal to four when reading from external mesh.'
      print *, 'ngnod = 9 is not yet supported.'
-     stop 
+     stop
   endif
-  
+
   call read_value_logical(IIN,IGNORE_JUNK,initialfield)
   call read_value_logical(IIN,IGNORE_JUNK,assign_external_model)
   call read_value_logical(IIN,IGNORE_JUNK,TURN_ANISOTROPY_ON)
   call read_value_logical(IIN,IGNORE_JUNK,TURN_ATTENUATION_ON)
-  
+
   if ( read_external_mesh ) then
      call read_mesh(mesh_file, nelmnts, elmnts, nnodes, num_start)
-     
+
   else
      ! get interface data from external file to count the spectral elements along Z
      print *,'Reading interface data from file DATA/',interfacesfile(1:len_trim(interfacesfile)),' to count the spectral elements'
      open(unit=IIN_INTERFACES,file='DATA/'//interfacesfile,status='old')
-     
+
      max_npoints_interface = -1
-     
+
      ! read number of interfaces
      call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,number_of_interfaces)
      if(number_of_interfaces < 2) stop 'not enough interfaces (minimum is 2)'
 
      ! loop on all the interfaces
      do interface_current = 1,number_of_interfaces
-        
+
         call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,npoints_interface_bottom)
         if(npoints_interface_bottom < 2) stop 'not enough interface points (minimum is 2)'
         max_npoints_interface = max(npoints_interface_bottom,max_npoints_interface)
         print *,'Reading ',npoints_interface_bottom,' points for interface ',interface_current
-        
+
         ! loop on all the points describing this interface
         xinterface_dummy_previous = -HUGEVAL
         do ipoint_current = 1,npoints_interface_bottom
@@ -290,43 +290,43 @@ program meshfem2D
                 stop 'interface points must be sorted in increasing X'
            xinterface_dummy_previous = xinterface_dummy
         enddo
-        
+
      enddo
-     
+
      ! define number of layers
      number_of_layers = number_of_interfaces - 1
-     
+
      allocate(nz_layer(number_of_layers))
-     
+
      ! loop on all the layers
      do ilayer = 1,number_of_layers
-        
+
         ! read number of spectral elements in vertical direction in this layer
         call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,nz_layer(ilayer))
         if(nz_layer(ilayer) < 1) stop 'not enough spectral elements along Z in layer (minimum is 1)'
         print *,'There are ',nz_layer(ilayer),' spectral elements along Z in layer ',ilayer
-        
+
      enddo
 
      close(IIN_INTERFACES)
-     
+
      ! compute total number of spectral elements in vertical direction
      nz = sum(nz_layer)
-     
+
      print *
      print *,'Total number of spectral elements along Z = ',nz
      print *
-     
+
      nxread = nx
      nzread = nz
-     
+
      ! multiply by 2 if elements have 9 nodes
      if(ngnod == 9) then
         nx = nx * 2
         nz = nz * 2
         nz_layer(:) = nz_layer(:) * 2
      endif
-     
+
      nelmnts = nxread * nzread
      allocate(elmnts(0:ngnod*nelmnts-1))
      if ( ngnod == 4 ) then
@@ -347,7 +347,7 @@ program meshfem2D
               elmnts(num_elmnt*ngnod)   = (j-1)*(nxread+1) + (i-1)
               elmnts(num_elmnt*ngnod+1) = (j-1)*(nxread+1) + (i-1) + 1
               elmnts(num_elmnt*ngnod+2) = j*(nxread+1) + (i-1) + 1
-              elmnts(num_elmnt*ngnod+3) = j*(nxread+1) + (i-1) 
+              elmnts(num_elmnt*ngnod+3) = j*(nxread+1) + (i-1)
               elmnts(num_elmnt*ngnod+4) = (nxread+1)*(nzread+1) + (j-1)*nxread + (i-1)
               elmnts(num_elmnt*ngnod+5) = (nxread+1)*(nzread+1) + nxread*(nzread+1) + (j-1)*(nxread*2+1) + (i-1)*2 + 2
               elmnts(num_elmnt*ngnod+6) = (nxread+1)*(nzread+1) + j*nxread + (i-1)
@@ -356,7 +356,7 @@ program meshfem2D
               num_elmnt = num_elmnt + 1
            end do
         end do
-        
+
      endif
   endif
 
@@ -413,12 +413,12 @@ program meshfem2D
   print *,'Mxz of the source if moment tensor = ',Mxz
   print *,'Multiplying factor = ',factor
 
-! read constants for attenuation 
+! read constants for attenuation
   call read_value_integer(IIN,IGNORE_JUNK,N_SLS)
   call read_value_double_precision(IIN,IGNORE_JUNK,Qp_attenuation)
   call read_value_double_precision(IIN,IGNORE_JUNK,Qs_attenuation)
   call read_value_double_precision(IIN,IGNORE_JUNK,f0_attenuation)
-  
+
 ! if source is not a Dirac or Heavyside then f0_attenuation is f0
   if(.not. (time_function_type == 4 .or. time_function_type == 5)) then
      f0_attenuation = f0
@@ -507,7 +507,7 @@ program meshfem2D
     aniso3(i) = aniso3read
     aniso4(i) = aniso4read
   enddo
- 
+
   print *
   print *, 'Nb of solid or fluid materials = ',nb_materials
   print *
@@ -527,7 +527,7 @@ program meshfem2D
   print *
   enddo
 
-  
+
   if ( read_external_mesh ) then
      call read_mat(materials_file, nelmnts, num_material)
   else
@@ -585,7 +585,7 @@ program meshfem2D
               num_material((j-1)*nxread+i) = imaterial_number
            enddo
         enddo
-        
+
      enddo
 
      if(minval(num_material) <= 0) stop 'Velocity model not entirely set...'
@@ -711,7 +711,7 @@ program meshfem2D
      enddo
 
      close(IIN_INTERFACES)
-     
+
      nnodes = (nz+1)*(nx+1)
      allocate(nodes_coords(2,nnodes))
      if ( ngnod == 4 ) then
@@ -720,34 +720,34 @@ program meshfem2D
               num_node = num_4(i,j,nxread)
               nodes_coords(1, num_node) = x(i,j)
               nodes_coords(2, num_node) = z(i,j)
-              
+
            end do
         end do
-        
+
      else
         do j = 0, nz
            do i = 0, nx
               num_node = num_9(i,j,nxread,nzread)
               nodes_coords(1, num_node) = x(i,j)
               nodes_coords(2, num_node) = z(i,j)
-              
+
            end do
         end do
-        
+
      endif
   else
      call read_nodes_coords(nodes_coords_file, nnodes, nodes_coords)
   endif
-  
+
 
   if ( read_external_mesh ) then
      call read_acoustic_surface(free_surface_file, nelem_acoustic_surface, acoustic_surface, &
           nelmnts, num_material, ANISOTROPIC_MATERIAL, nb_materials, icodemat, cs, num_start)
-     
+
      if ( any_abs ) then
         call read_abs_surface(absorbing_surface_file, nelemabs, abs_surface, num_start)
      endif
-     
+
   else
 
      ! count the number of acoustic free-surface elements
@@ -763,9 +763,9 @@ program meshfem2D
            nelem_acoustic_surface = nelem_acoustic_surface + 1
         endif
      enddo
-     
+
      allocate(acoustic_surface(4,nelem_acoustic_surface))
-     
+
      nelem_acoustic_surface = 0
      j = nzread
      do i = 1,nxread
@@ -775,12 +775,12 @@ program meshfem2D
            acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
            acoustic_surface(2,nelem_acoustic_surface) = 2
            acoustic_surface(3,nelem_acoustic_surface) = elmnts(3+ngnod*((j-1)*nxread+i-1))
-           acoustic_surface(4,nelem_acoustic_surface) = elmnts(2+ngnod*((j-1)*nxread+i-1))          
+           acoustic_surface(4,nelem_acoustic_surface) = elmnts(2+ngnod*((j-1)*nxread+i-1))
         endif
      end do
 
      endif
-     
+
      !
      !--- definition of absorbing boundaries
      !
@@ -789,9 +789,9 @@ program meshfem2D
      if(abstop) nelemabs = nelemabs + nxread
      if(absleft) nelemabs = nelemabs + nzread
      if(absright) nelemabs = nelemabs + nzread
-     
+
      allocate(abs_surface(4,nelemabs))
-     
+
      ! generate the list of absorbing elements
      if(nelemabs > 0) then
         nelemabs = 0
@@ -816,30 +816,30 @@ program meshfem2D
                  nelemabs = nelemabs + 1
                  abs_surface(1,nelemabs) = inumelem-1
                  abs_surface(2,nelemabs) = 2
-                 abs_surface(3,nelemabs) = elmnts(3+ngnod*(inumelem-1)) 
-                 abs_surface(4,nelemabs) = elmnts(2+ngnod*(inumelem-1)) 
+                 abs_surface(3,nelemabs) = elmnts(3+ngnod*(inumelem-1))
+                 abs_surface(4,nelemabs) = elmnts(2+ngnod*(inumelem-1))
               endif
               if(absleft .and. ix == 1) then
                  nelemabs = nelemabs + 1
                  abs_surface(1,nelemabs) = inumelem-1
                  abs_surface(2,nelemabs) = 2
-                 abs_surface(3,nelemabs) = elmnts(0+ngnod*(inumelem-1)) 
-                 abs_surface(4,nelemabs) = elmnts(3+ngnod*(inumelem-1)) 
+                 abs_surface(3,nelemabs) = elmnts(0+ngnod*(inumelem-1))
+                 abs_surface(4,nelemabs) = elmnts(3+ngnod*(inumelem-1))
               endif
            end do
         end do
      endif
-     
+
   endif
-  
-  
+
+
 ! compute min and max of X and Z in the grid
   print *
   print *,'Min and max value of X in the grid = ',minval(nodes_coords(1,:)),maxval(nodes_coords(1,:))
   print *,'Min and max value of Z in the grid = ',minval(nodes_coords(2,:)),maxval(nodes_coords(2,:))
   print *
-  
-  
+
+
 ! ***
 ! *** create a Gnuplot file that displays the grid
 ! ***
@@ -902,7 +902,7 @@ program meshfem2D
   print *,'Grid saved in Gnuplot format...'
   print *
   endif
-     
+
 
   !*****************************
   ! Partitionning
@@ -916,25 +916,25 @@ program meshfem2D
      do i = 0, nelmnts-1
         elmnts_bis(i*esize:i*esize+esize-1) = elmnts(i*ngnod:i*ngnod+esize-1)
      end do
-        
+
      if ( nproc > 1 ) then
      call mesh2dual_ncommonnodes(nelmnts, (nxread+1)*(nzread+1), elmnts_bis, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
      endif
-     
+
   else
      if ( nproc > 1 ) then
      call mesh2dual_ncommonnodes(nelmnts, nnodes, elmnts, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
      endif
-     
+
   endif
-     
-     
+
+
   if ( nproc == 1 ) then
       part(:) = 0
   else
 
   nb_edges = xadj(nelmnts)
- 
+
 ! giving weight to edges and vertices. Currently not used.
   call read_weights(nelmnts, vwgt, nb_edges, adjwgt)
 
@@ -945,7 +945,7 @@ program meshfem2D
            part(iproc*floor(real(nelmnts)/real(nproc)):(iproc+1)*floor(real(nelmnts)/real(nproc))-1) = iproc
         end do
         part(floor(real(nelmnts)/real(nproc))*(nproc-1):nelmnts-1) = nproc - 1
-        
+
      case(2)
 #ifdef USE_METIS
         call Part_metis(nelmnts, xadj, adjncy, vwgt, adjwgt, nproc, nb_edges, edgecut, part, metis_options)
@@ -954,7 +954,7 @@ program meshfem2D
         print *, 'Please recompile with -DUSE_METIS in order to enable use of METIS.'
         stop
 #endif
-        
+
      case(3)
 #ifdef USE_SCOTCH
         call Part_scotch(nelmnts, xadj, adjncy, vwgt, adjwgt, nproc, nb_edges, edgecut, part, scotch_strategy)
@@ -963,11 +963,11 @@ program meshfem2D
         print *, 'Please recompile with -DUSE_SCOTCH in order to enable use of SCOTCH.'
         stop
 #endif
-        
+
      end select
- 
+
   endif
-  
+
 ! beware of fluid solid edges : coupled elements are transfered to the same partition
   if ( ngnod == 9 ) then
      call acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts_bis, nb_materials, cs, num_material, &
@@ -976,15 +976,15 @@ program meshfem2D
      call acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_materials, cs, num_material, &
           nproc, part, nedges_coupled, edges_coupled)
   endif
-  
+
 ! local number of each element for each partition
   call Construct_glob2loc_elmnts(nelmnts, part, nproc, glob2loc_elmnts)
-  
+
   if ( ngnod == 9 ) then
      if ( nproc > 1 ) then
      deallocate(nnodes_elmnts)
      deallocate(nodes_elmnts)
-     endif 
+     endif
      allocate(nnodes_elmnts(0:nnodes-1))
      allocate(nodes_elmnts(0:nsize*nnodes-1))
      nnodes_elmnts(:) = 0
@@ -992,7 +992,7 @@ program meshfem2D
      do i = 0, ngnod*nelmnts-1
         nodes_elmnts(elmnts(i)*nsize+nnodes_elmnts(elmnts(i))) = i/ngnod
         nnodes_elmnts(elmnts(i)) = nnodes_elmnts(elmnts(i)) + 1
-        
+
      end do
   else
      if ( nproc < 2 ) then
@@ -1003,14 +1003,14 @@ program meshfem2D
      do i = 0, ngnod*nelmnts-1
         nodes_elmnts(elmnts(i)*nsize+nnodes_elmnts(elmnts(i))) = i/ngnod
         nnodes_elmnts(elmnts(i)) = nnodes_elmnts(elmnts(i)) + 1
-        
+
      end do
 
-     endif 
+     endif
 
   endif
-  
-  
+
+
 ! local number of each node for each partition
   call Construct_glob2loc_nodes(nelmnts, nnodes, nnodes_elmnts, nodes_elmnts, part, nproc, &
        glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes)
@@ -1029,7 +1029,7 @@ program meshfem2D
      allocate(my_nb_interfaces(0:ninterfaces-1))
      print *, '05'
   endif
-  
+
 ! setting absorbing boundaries by elements instead of edges
   if ( any_abs ) then
      call merge_abs_boundaries(nelemabs, nelemabs_merge, abs_surface, abs_surface_char, abs_surface_merge, &
@@ -1044,7 +1044,7 @@ program meshfem2D
 ! *** generate the databases for the solver
 
   do iproc = 0, nproc-1
-     
+
      write(prname, "('/Database',i5.5)") iproc
      open(unit=15,file='./OUTPUT_FILES'//prname,status='unknown')
 
@@ -1052,37 +1052,37 @@ program meshfem2D
      write(15,*) '# Database for SPECFEM2D'
      write(15,*) '# Dimitri Komatitsch, (c) University of Pau, France'
      write(15,*) '#'
-  
+
      write(15,*) 'Title of the simulation'
      write(15,"(a50)") title
-     
+
 
      call write_glob2loc_nodes_database(15, iproc, npgeo, nodes_coords, glob2loc_nodes_nparts, glob2loc_nodes_parts, &
           glob2loc_nodes, nnodes, 1)
-     
+
 
      call write_partition_database(15, iproc, nspec, nelmnts, elmnts, glob2loc_elmnts, glob2loc_nodes_nparts, &
           glob2loc_nodes_parts, glob2loc_nodes, part, num_material, ngnod, 1)
-     
+
 
      write(15,*) 'npgeo'
      write(15,*) npgeo
-     
+
      write(15,*) 'gnuplot interpol'
      write(15,*) gnuplot,interpol
-     
+
      write(15,*) 'NTSTEP_BETWEEN_OUTPUT_INFO'
      write(15,*) NTSTEP_BETWEEN_OUTPUT_INFO
-     
+
      write(15,*) 'output_postscript_snapshot output_color_image colors numbers'
      write(15,*) output_postscript_snapshot,output_color_image,' 1 0'
 
      write(15,*) 'meshvect modelvect boundvect cutsnaps subsamp sizemax_arrows'
      write(15,*) meshvect,modelvect,boundvect,cutsnaps,subsamp,sizemax_arrows
-     
+
      write(15,*) 'anglerec'
      write(15,*) anglerec
-     
+
      write(15,*) 'initialfield'
      write(15,*) initialfield
 
@@ -1091,27 +1091,27 @@ program meshfem2D
 
      write(15,*) 'assign_external_model outputgrid TURN_ANISOTROPY_ON TURN_ATTENUATION_ON'
      write(15,*) assign_external_model,outputgrid,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
-     
+
      write(15,*) 'nt deltat'
      write(15,*) nt,deltat
 
      write(15,*) 'source'
      write(15,*) source_type,time_function_type,xs,zs,f0,t0,factor,angleforce,Mxx,Mzz,Mxz
-     
+
      write(15,*) 'attenuation'
      write(15,*) N_SLS, Qp_attenuation, Qs_attenuation, f0_attenuation
 
      write(15,*) 'Coordinates of macrobloc mesh (coorg):'
-     
+
 
      call write_glob2loc_nodes_database(15, iproc, npgeo, nodes_coords, glob2loc_nodes_nparts, glob2loc_nodes_parts, &
           glob2loc_nodes, nnodes, 2)
-     
+
 
      write(15,*) 'numat ngnod nspec pointsdisp plot_lowerleft_corner_only'
      write(15,*) nb_materials,ngnod,nspec,pointsdisp,plot_lowerleft_corner_only
 
-     
+
      if ( any_abs ) then
         call write_abs_merge_database(15, nelemabs_merge, nelemabs_loc, &
              abs_surface_char, abs_surface_merge, &
@@ -1121,38 +1121,38 @@ program meshfem2D
      else
         nelemabs_loc = 0
      endif
-          
+
      call Write_surface_database(15, nelem_acoustic_surface, acoustic_surface, nelem_acoustic_surface_loc, &
           iproc, glob2loc_elmnts, &
           glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes, part, 1)
-     
+
 
      call write_fluidsolid_edges_database(15, nedges_coupled, nedges_coupled_loc, &
           edges_coupled, glob2loc_elmnts, part, iproc, 1)
-     
+
      write(15,*) 'nelemabs nelem_acoustic_surface num_fluid_solid_edges'
      write(15,*) nelemabs_loc,nelem_acoustic_surface_loc,nedges_coupled_loc
-     
-     
+
+
      write(15,*) 'Material sets (num 1 rho vp vs 0 0) or (num 2 rho c11 c13 c33 c44)'
      do i=1,nb_materials
         write(15,*) i,icodemat(i),rho(i),cp(i),cs(i),aniso3(i),aniso4(i)
      enddo
-  
+
      write(15,*) 'Arrays kmato and knods for each bloc:'
 
-     
+
      call write_partition_database(15, iproc, nspec, nelmnts, elmnts, glob2loc_elmnts, glob2loc_nodes_nparts, &
           glob2loc_nodes_parts, glob2loc_nodes, part, num_material, ngnod, 2)
-     
-     if ( nproc /= 1 ) then 
+
+     if ( nproc /= 1 ) then
         call Write_interfaces_database(15, tab_interfaces, tab_size_interfaces, nproc, iproc, ninterfaces, &
              my_ninterface, my_interfaces, my_nb_interfaces, glob2loc_elmnts, glob2loc_nodes_nparts, glob2loc_nodes_parts, &
              glob2loc_nodes, 1)
-        
+
         write(15,*) 'Interfaces:'
         write(15,*) my_ninterface, maxval(my_nb_interfaces)
-        
+
         call Write_interfaces_database(15, tab_interfaces, tab_size_interfaces, nproc, iproc, ninterfaces, &
              my_ninterface, my_interfaces, my_nb_interfaces, glob2loc_elmnts, glob2loc_nodes_nparts, glob2loc_nodes_parts, &
              glob2loc_nodes, 2)
@@ -1160,9 +1160,9 @@ program meshfem2D
      else
         write(15,*) 'Interfaces:'
         write(15,*) 0, 0
-        
+
      endif
-     
+
 
      write(15,*) 'List of absorbing elements (bottom right top left):'
      if ( any_abs ) then
@@ -1172,19 +1172,19 @@ program meshfem2D
              jbegin_left,jend_left,jbegin_right,jend_right, &
              glob2loc_elmnts, part, iproc, 2)
      endif
-     
+
      write(15,*) 'List of acoustic free-surface elements:'
      call Write_surface_database(15, nelem_acoustic_surface, acoustic_surface, nelem_acoustic_surface_loc, &
           iproc, glob2loc_elmnts, &
           glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes, part, 2)
-     
+
 
      write(15,*) 'List of acoustic elastic coupled edges:'
      call write_fluidsolid_edges_database(15, nedges_coupled, nedges_coupled_loc, &
           edges_coupled, glob2loc_elmnts, part, iproc, 2)
   end do
-  
-  
+
+
 ! print position of the source
   print *
   print *,'Position (x,z) of the source = ',xs,zs
@@ -1246,7 +1246,7 @@ program meshfem2D
   endif
 
   print *
-  
+
 
   end program meshfem2D
 
@@ -1260,45 +1260,45 @@ program meshfem2D
   integer function num(i,j,nx)
 
     implicit none
-    
+
     integer i,j,nx
-    
+
     num = j*(nx+1) + i + 1
-    
+
   end function num
-  
+
 
  !---  global node number (when ngnod==4).
   integer function num_4(i,j,nx)
 
     implicit none
-    
+
     integer i,j,nx
-    
+
     num_4 = j*(nx+1) + i + 1
-    
+
   end function num_4
 
-  
+
  !---  global node number (when ngnod==9).
   integer function num_9(i,j,nx,nz)
-    
+
     implicit none
-    
+
     integer i,j,nx,nz
-    
-    
+
+
     if ( (mod(i,2) == 0) .and. (mod(j,2) == 0) ) then
        num_9 = j/2 * (nx+1) + i/2 + 1
-    else 
+    else
        if ( mod(j,2) == 0 ) then
-          num_9 = (nx+1)*(nz+1) + j/2 * nx + ceiling(real(i)/real(2))  
-       else 
+          num_9 = (nx+1)*(nz+1) + j/2 * nx + ceiling(real(i)/real(2))
+       else
           num_9 = (nx+1)*(nz+1) + nx*(nz+1) + floor(real(j)/real(2))*(nx*2+1) + i + 1
-          
+
        endif
     endif
-    
+
   end function num_9
 
 

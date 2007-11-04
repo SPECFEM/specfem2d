@@ -4,10 +4,10 @@
 !                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
-!                         Dimitri Komatitsch
+!  Main authors: Dimitri Komatitsch, Nicolas Le Goff and Roland Martin
 !                     University of Pau, France
 !
-!                          (c) April 2007
+!                         (c) November 2007
 !
 !========================================================================
 
@@ -106,7 +106,7 @@
 
 ! loop over spectral elements
   do ispec_inner_outer = 1,nspec_inner_outer
- 
+
 ! get global numbering for inner or outer elements
     ispec = ispec_inner_outer_to_glob(ispec_inner_outer)
 

@@ -4,10 +4,10 @@
 !                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
-!                         Dimitri Komatitsch
+!  Main authors: Dimitri Komatitsch, Nicolas Le Goff and Roland Martin
 !                     University of Pau, France
 !
-!                          (c) April 2007
+!                         (c) November 2007
 !
 !========================================================================
 
@@ -27,7 +27,7 @@
 #endif
 
   integer nrec,nspec,npoin,ngnod,npgeo
-  integer, intent(in)  :: nproc, myrank 
+  integer, intent(in)  :: nproc, myrank
 
   integer knods(ngnod,nspec)
   double precision coorg(NDIM,npgeo)
@@ -64,13 +64,13 @@
 
   double precision, dimension(nrec) :: st_xval,st_zval
 
-  
+
   double precision, dimension(nrec,nproc)  :: gather_final_distance
   double precision, dimension(nrec,nproc)  :: gather_xi_receiver, gather_gamma_receiver
   integer, dimension(nrec,nproc)  :: gather_ispec_selected_rec
   integer, dimension(nrec), intent(inout)  :: which_proc_receiver
   integer  :: ierror
-  
+
 
   ierror = 0
 
@@ -202,7 +202,7 @@ call MPI_GATHER(ispec_selected_rec(1),nrec,MPI_INTEGER,&
 if ( myrank == 0 ) then
    do irec = 1, nrec
       which_proc_receiver(irec:irec) = minloc(gather_final_distance(irec,:)) - 1
-      
+
    end do
 end if
 
@@ -259,7 +259,7 @@ if ( myrank == 0 ) then
   write(IOUT,*)
   write(IOUT,*) 'end of receiver detection'
   write(IOUT,*)
-  
+
 end if
 
 
@@ -268,7 +268,7 @@ end if
 
 #ifdef USE_MPI
   call MPI_BARRIER(MPI_COMM_WORLD,ierror)
-#endif 
+#endif
 
 
   end subroutine locate_receivers
