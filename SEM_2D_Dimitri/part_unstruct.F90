@@ -11,6 +11,13 @@
 !
 !========================================================================
 
+!====================================================================================
+!
+! This module contains subroutines related to unstructured meshes and partitioning of the 
+! corresponding graphs.
+!
+!====================================================================================
+
 module part_unstruct
 
   implicit none
@@ -438,8 +445,7 @@ contains
   ! 5/ second node, if relevant.
   ! No interface between acoustic and elastic elements.
   !--------------------------------------------------
-
-  subroutine Construct_interfaces(nelmnts, nparts, part, elmnts, xadj, adjncy, tab_interfaces, &
+   subroutine Construct_interfaces(nelmnts, nparts, part, elmnts, xadj, adjncy, tab_interfaces, &
        tab_size_interfaces, ninterfaces, nb_materials, cs_material, num_material)
 
     include 'constants.h'
@@ -760,7 +766,6 @@ contains
   !--------------------------------------------------
   ! Write a surface (elements and nodes on the surface) pertaining to iproc partition in the corresponding Database
   !--------------------------------------------------
-
  subroutine Write_surface_database(IIN_database, nsurface, surface, &
       nsurface_loc, iproc, glob2loc_elmnts, &
       glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes, part, num_phase)
@@ -844,7 +849,7 @@ contains
   ! Set absorbing boundaries by elements instead of edges.
   ! Excludes points that have both absorbing condition and coupled fluid/solid relation (this is the
   ! reason arrays ibegin_..., iend_... were included here).
-  ! Under development : exluding points that have two different normal.
+  ! Under development : exluding points that have two different normals in two different elements.
   !--------------------------------------------------
 
      subroutine merge_abs_boundaries(nelemabs, nelemabs_merge, abs_surface, abs_surface_char, abs_surface_merge, &
