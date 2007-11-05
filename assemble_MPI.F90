@@ -11,14 +11,11 @@
 !
 !========================================================================
 
-!====================================================================================
 !
 ! This file contains subroutines related to assembling (of the mass matrix, potential_dot_dot and 
 ! accel_elastic).
-! Those subroutines are for the most part not used in the sequential version.
+! These subroutines are for the most part not used in the sequential version.
 !
-!====================================================================================
-
 
 !-----------------------------------------------
 ! Determines the points that are on the interfaces with other partitions, to help 

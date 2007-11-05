@@ -11,14 +11,13 @@
 !
 !========================================================================
 
- 
-!-----------------------------------------------
+!
 ! From array 'surface' (element, type : node/edge, node(s) ) that describes the 
 ! acoustic free surface, determines the points (ixmin, ixmax, izmin and izmax) on the surface 
 ! for each element.
 ! We chose to have ixmin <= ixmax and izmin <= izmax, so as to be able to have DO loops on it with 
 ! an increment of +1.
-!-----------------------------------------------
+!
 subroutine construct_acoustic_surface ( nspec, ngnod, knods, nsurface, surface, tab_surface )
 
   implicit none
@@ -36,7 +35,6 @@ subroutine construct_acoustic_surface ( nspec, ngnod, knods, nsurface, surface, 
   integer, dimension(ngnod)  :: n
   integer  :: e1, e2
   integer  :: type
-
 
   do i = 1, nsurface
      tab_surface(1,i) = surface(1,i)
