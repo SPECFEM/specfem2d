@@ -11,6 +11,23 @@
 !
 !========================================================================
 
+!====================================================================================
+!
+! This file contains subroutines related to assembling (of the mass matrix, potential_dot_dot and 
+! accel_elastic).
+! Those subroutines are for the most part not used in the sequential version.
+!
+!====================================================================================
+
+
+!-----------------------------------------------
+! Determines the points that are on the interfaces with other partitions, to help 
+! build the communication buffers, and determines which elements are considered 'inner'
+! (no points in common with other partitions) and 'outer' (at least one point in common 
+! with neighbouring partitions). 
+! We have both acoustic and elastic buffers, for coupling between acoustic and elastic elements 
+! led us to have two sets of communications.
+!-----------------------------------------------
 subroutine prepare_assemble_MPI (nspec,ibool, &
      knods, ngnod, &
      npoin, elastic, &
@@ -146,6 +163,10 @@ subroutine prepare_assemble_MPI (nspec,ibool, &
 end subroutine prepare_assemble_MPI
 
 
+!-----------------------------------------------
+! Get the points (ixmin, ixmax, izmin and izmax) on an node/edge for one element.
+! 'sens' is used to have DO loops with increment equal to 'sens' (-/+1).
+!-----------------------------------------------
 subroutine get_edge ( ngnod, n, type, e1, e2, ixmin, ixmax, izmin, izmax, sens )
 
   implicit none
@@ -248,6 +269,12 @@ end subroutine get_edge
 
 #ifdef USE_MPI
 
+
+!-----------------------------------------------
+! Creation of persistent communication requests (send and recv) for acoustic elements.
+! Should be disposed of if using Paraver (with MPItrace), since it does not instrument persistent 
+! communications yet.
+!-----------------------------------------------
 subroutine create_MPI_req_SEND_RECV_ac( &
      ninterface, ninterface_acoustic, &
      nibool_interfaces_acoustic, &
@@ -296,6 +323,11 @@ subroutine create_MPI_req_SEND_RECV_ac( &
 end subroutine create_MPI_req_SEND_RECV_ac
 
 
+!-----------------------------------------------
+! Creation of persistent communication requests (send and recv) for elastic elements.
+! Should be disposed of if using Paraver (with MPItrace), since it does not instrument persistent 
+! communications yet.
+!-----------------------------------------------
 subroutine create_MPI_req_SEND_RECV_el( &
      ninterface, ninterface_elastic, &
      nibool_interfaces_elastic, &
@@ -345,6 +377,9 @@ subroutine create_MPI_req_SEND_RECV_el( &
 end subroutine create_MPI_req_SEND_RECV_el
 
 
+!-----------------------------------------------
+! Assembling the mass matrix.
+!-----------------------------------------------
 subroutine assemble_MPI_scalar(myrank,array_val1, array_val2,npoin, &
      ninterface, max_interface_size, max_ibool_interfaces_size_ac, max_ibool_interfaces_size_el, &
      ibool_interfaces_acoustic,ibool_interfaces_elastic, nibool_interfaces_acoustic,nibool_interfaces_elastic, my_neighbours)
@@ -425,6 +460,11 @@ subroutine assemble_MPI_scalar(myrank,array_val1, array_val2,npoin, &
 end subroutine assemble_MPI_scalar
 
 
+!-----------------------------------------------
+! Assembling potential_dot_dot for acoustic elements : 
+! the buffers are filled, and the send and recv are started here.
+! We use MPI_Start (MPI_Startall is not used, since it causes problems in OpenMPI prior to v1.2).
+!-----------------------------------------------
 subroutine assemble_MPI_vector_ac_start(array_val1,npoin, &
      ninterface, ninterface_acoustic, &
      inum_interfaces_acoustic, &
@@ -483,6 +523,11 @@ subroutine assemble_MPI_vector_ac_start(array_val1,npoin, &
 end subroutine assemble_MPI_vector_ac_start
 
 
+!-----------------------------------------------
+! Assembling accel_elastic for elastic elements : 
+! the buffers are filled, and the send and recv are started here.
+! We use MPI_Start (MPI_Startall is not used, since it causes problems in OpenMPI prior to v1.2).
+!-----------------------------------------------
 subroutine assemble_MPI_vector_el_start(array_val2,npoin, &
      ninterface, ninterface_elastic, &
      inum_interfaces_elastic, &
@@ -543,6 +588,11 @@ subroutine assemble_MPI_vector_el_start(array_val2,npoin, &
 end subroutine assemble_MPI_vector_el_start
 
 
+!-----------------------------------------------
+! Assembling potential_dot_dot for acoustic elements : 
+! We wait for the completion of the communications, and add the contributions received 
+! for the points on the interfaces.
+!-----------------------------------------------
 subroutine assemble_MPI_vector_ac_wait(array_val1,npoin, &
      ninterface, ninterface_acoustic, &
      inum_interfaces_acoustic, &
@@ -598,6 +648,11 @@ subroutine assemble_MPI_vector_ac_wait(array_val1,npoin, &
 end subroutine assemble_MPI_vector_ac_wait
 
 
+!-----------------------------------------------
+! Assembling accel_elastic for elastic elements : 
+! We wait for the completion of the communications, and add the contributions received 
+! for the points on the interfaces.
+!-----------------------------------------------
 subroutine assemble_MPI_vector_el_wait(array_val2,npoin, &
      ninterface, ninterface_elastic, &
      inum_interfaces_elastic, &
@@ -655,6 +710,9 @@ end subroutine assemble_MPI_vector_el_wait
 #endif
 
 
+!-----------------------------------------------
+! Dummy subroutine, to be able to stop the code whether sequential or parallel.
+!-----------------------------------------------
 subroutine exit_MPI(error_msg)
 
   implicit none
