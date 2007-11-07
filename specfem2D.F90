@@ -13,7 +13,8 @@
 
 !====================================================================================
 !
-! An explicit 2D spectral element solver for the anelastic anisotropic wave equation
+!   An explicit 2D parallel MPI spectral element solver
+!   for the anelastic anisotropic wave equation
 !
 !====================================================================================
 
@@ -39,7 +40,9 @@
 ! pages={368-392}}
 
 !
-! version 5.2, Dimitri Komatitsch, April 2007:
+! version 5.2, Dimitri Komatitsch, Nicolas Le Goff and Roland Martin, November 2007:
+!               - MPI implementation of the code based on domain decomposition
+!                 with METIS or SCOTCH
 !               - general fluid/solid implementation with any number, shape and orientation of
 !                 matching edges
 !               - absorbing edges with any normal vector
