@@ -5,17 +5,17 @@
 !                   ------------------------------
 !
 !  Main authors: Dimitri Komatitsch, Nicolas Le Goff and Roland Martin
-!                     University of Pau, France
+!                 University of Pau and CNRS, France
 !
 !                         (c) November 2007
 !
 !========================================================================
 
 !
-! From array 'surface' (element, type : node/edge, node(s) ) that describes the 
-! acoustic free surface, determines the points (ixmin, ixmax, izmin and izmax) on the surface 
+! From array 'surface' (element, type : node/edge, node(s) ) that describes the
+! acoustic free surface, determines the points (ixmin, ixmax, izmin and izmax) on the surface
 ! for each element.
-! We chose to have ixmin <= ixmax and izmin <= izmax, so as to be able to have DO loops on it with 
+! We chose to have ixmin <= ixmax and izmin <= izmax, so as to be able to have DO loops on it with
 ! an increment of +1.
 !
 subroutine construct_acoustic_surface ( nspec, ngnod, knods, nsurface, surface, tab_surface )
