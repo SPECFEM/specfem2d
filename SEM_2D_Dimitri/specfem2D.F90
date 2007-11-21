@@ -171,7 +171,7 @@
   integer ispec_selected_source,iglob_source,ix_source,iz_source,is_proc_source,nb_proc_source
   double precision a,displnorm_all,displnorm_all_glob
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: source_time_function
-  double precision, external :: erf
+  double precision, external :: netlib_specfun_erf
 
   double precision :: vpmin,vpmax
 
