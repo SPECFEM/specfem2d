@@ -657,13 +657,13 @@ program meshfem2D
         tang1 = (zinterface_bottom(2)-zinterface_bottom(1)) / (xinterface_bottom(2)-xinterface_bottom(1))
         tangN = (zinterface_bottom(npoints_interface_bottom)-zinterface_bottom(npoints_interface_bottom-1)) / &
              (xinterface_bottom(npoints_interface_bottom)-xinterface_bottom(npoints_interface_bottom-1))
-        call spline(xinterface_bottom,zinterface_bottom,npoints_interface_bottom,tang1,tangN,coefs_interface_bottom)
+        call spline_construction(xinterface_bottom,zinterface_bottom,npoints_interface_bottom,tang1,tangN,coefs_interface_bottom)
 
         ! compute the spline for the top interface, impose the tangent on both edges
         tang1 = (zinterface_top(2)-zinterface_top(1)) / (xinterface_top(2)-xinterface_top(1))
         tangN = (zinterface_top(npoints_interface_top)-zinterface_top(npoints_interface_top-1)) / &
              (xinterface_top(npoints_interface_top)-xinterface_top(npoints_interface_top-1))
-        call spline(xinterface_top,zinterface_top,npoints_interface_top,tang1,tangN,coefs_interface_top)
+        call spline_construction(xinterface_top,zinterface_top,npoints_interface_top,tang1,tangN,coefs_interface_top)
 
         ! check if we are in the last layer, which contains topography,
         ! and modify the position of the source accordingly if it is located exactly at the surface
@@ -1320,7 +1320,7 @@ program meshfem2D
   if(xp < xinterface(1)) xp = xinterface(1)
   if(xp > xinterface(npoints_interface)) xp = xinterface(npoints_interface)
 
-  call splint(xinterface,zinterface,coefs_interface,npoints_interface,xp,value_spline)
+  call spline_evaluation(xinterface,zinterface,coefs_interface,npoints_interface,xp,value_spline)
 
   end function value_spline
 

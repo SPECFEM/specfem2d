@@ -33,7 +33,7 @@ LINK = $(F90)
 #LIB = /opt/metis-4.0/gcc64/lib/libmetis.a /opt/scotch-4.0/gcc64/lib/libscotch.a  /opt/scotch-4.0/gcc64/lib/libscotcherr.a
 LIB = 
 
-OBJS_MESHFEM2D = $O/part_unstruct.o $O/meshfem2D.o $O/read_value_parameters.o $O/numerical_recipes.o
+OBJS_MESHFEM2D = $O/part_unstruct.o $O/meshfem2D.o $O/read_value_parameters.o $O/spline_routines.o
 
 OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/enforce_acoustic_free_surface.o\
         $O/compute_forces_acoustic.o $O/compute_forces_elastic.o\
@@ -154,8 +154,8 @@ $O/compute_arrays_source.o: compute_arrays_source.f90 constants.h
 $O/create_color_image.o: create_color_image.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/create_color_image.o create_color_image.f90
     
-$O/numerical_recipes.o: numerical_recipes.f90 constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/numerical_recipes.o numerical_recipes.f90
+$O/spline_routines.o: spline_routines.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/spline_routines.o spline_routines.f90
     
 $O/netlib_specfun_erf.o: netlib_specfun_erf.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/netlib_specfun_erf.o netlib_specfun_erf.f90
