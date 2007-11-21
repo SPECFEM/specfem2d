@@ -1471,7 +1471,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       else if(time_function_type == 5) then
         hdur = 1.d0 / f0
         hdur_gauss = hdur * 5.d0 / 3.d0
-        source_time_function(it) = factor * 0.5d0*(1.0d0 + erf(SOURCE_DECAY_MIMIC_TRIANGLE*(time-t0)/hdur_gauss))
+        source_time_function(it) = factor * 0.5d0*(1.0d0 + netlib_specfun_erf(SOURCE_DECAY_MIMIC_TRIANGLE*(time-t0)/hdur_gauss))
 
       else
         call exit_MPI('unknown source time function')
