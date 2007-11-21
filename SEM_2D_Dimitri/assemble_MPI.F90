@@ -5,24 +5,24 @@
 !                   ------------------------------
 !
 !  Main authors: Dimitri Komatitsch, Nicolas Le Goff and Roland Martin
-!                     University of Pau, France
+!                 University of Pau and CNRS, France
 !
 !                         (c) November 2007
 !
 !========================================================================
 
 !
-! This file contains subroutines related to assembling (of the mass matrix, potential_dot_dot and 
+! This file contains subroutines related to assembling (of the mass matrix, potential_dot_dot and
 ! accel_elastic).
 ! These subroutines are for the most part not used in the sequential version.
 !
 
 !-----------------------------------------------
-! Determines the points that are on the interfaces with other partitions, to help 
+! Determines the points that are on the interfaces with other partitions, to help
 ! build the communication buffers, and determines which elements are considered 'inner'
-! (no points in common with other partitions) and 'outer' (at least one point in common 
-! with neighbouring partitions). 
-! We have both acoustic and elastic buffers, for coupling between acoustic and elastic elements 
+! (no points in common with other partitions) and 'outer' (at least one point in common
+! with neighbouring partitions).
+! We have both acoustic and elastic buffers, for coupling between acoustic and elastic elements
 ! led us to have two sets of communications.
 !-----------------------------------------------
 subroutine prepare_assemble_MPI (nspec,ibool, &
@@ -269,7 +269,7 @@ end subroutine get_edge
 
 !-----------------------------------------------
 ! Creation of persistent communication requests (send and recv) for acoustic elements.
-! Should be disposed of if using Paraver (with MPItrace), since it does not instrument persistent 
+! Should be disposed of if using Paraver (with MPItrace), since it does not instrument persistent
 ! communications yet.
 !-----------------------------------------------
 subroutine create_MPI_req_SEND_RECV_ac( &
@@ -322,7 +322,7 @@ end subroutine create_MPI_req_SEND_RECV_ac
 
 !-----------------------------------------------
 ! Creation of persistent communication requests (send and recv) for elastic elements.
-! Should be disposed of if using Paraver (with MPItrace), since it does not instrument persistent 
+! Should be disposed of if using Paraver (with MPItrace), since it does not instrument persistent
 ! communications yet.
 !-----------------------------------------------
 subroutine create_MPI_req_SEND_RECV_el( &
@@ -458,7 +458,7 @@ end subroutine assemble_MPI_scalar
 
 
 !-----------------------------------------------
-! Assembling potential_dot_dot for acoustic elements : 
+! Assembling potential_dot_dot for acoustic elements :
 ! the buffers are filled, and the send and recv are started here.
 ! We use MPI_Start (MPI_Startall is not used, since it causes problems in OpenMPI prior to v1.2).
 !-----------------------------------------------
@@ -521,7 +521,7 @@ end subroutine assemble_MPI_vector_ac_start
 
 
 !-----------------------------------------------
-! Assembling accel_elastic for elastic elements : 
+! Assembling accel_elastic for elastic elements :
 ! the buffers are filled, and the send and recv are started here.
 ! We use MPI_Start (MPI_Startall is not used, since it causes problems in OpenMPI prior to v1.2).
 !-----------------------------------------------
@@ -586,8 +586,8 @@ end subroutine assemble_MPI_vector_el_start
 
 
 !-----------------------------------------------
-! Assembling potential_dot_dot for acoustic elements : 
-! We wait for the completion of the communications, and add the contributions received 
+! Assembling potential_dot_dot for acoustic elements :
+! We wait for the completion of the communications, and add the contributions received
 ! for the points on the interfaces.
 !-----------------------------------------------
 subroutine assemble_MPI_vector_ac_wait(array_val1,npoin, &
@@ -646,8 +646,8 @@ end subroutine assemble_MPI_vector_ac_wait
 
 
 !-----------------------------------------------
-! Assembling accel_elastic for elastic elements : 
-! We wait for the completion of the communications, and add the contributions received 
+! Assembling accel_elastic for elastic elements :
+! We wait for the completion of the communications, and add the contributions received
 ! for the points on the interfaces.
 !-----------------------------------------------
 subroutine assemble_MPI_vector_el_wait(array_val2,npoin, &
