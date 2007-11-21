@@ -1,86 +1,116 @@
 
-!=====================================================================
+!========================================================================
 !
-!  Routines from "Numerical Recipes: the Art of Scientific Computing"
-!  W. H. Press et al., Cambridge University Press
+!                   S P E C F E M 2 D  Version 5.2
+!                   ------------------------------
 !
-!=====================================================================
+!  Main authors: Dimitri Komatitsch, Nicolas Le Goff and Roland Martin
+!                 University of Pau and CNRS, France
+!
+!        (c) University of Pau and CNRS, France, November 2007
+!
+!========================================================================
 
-! --------------------------------------
+! compute spline coefficients
 
-! compute spline coefficients (Numerical Recipes)
-! modified to use dynamic allocation
-
-  subroutine spline_construction(x,y,n,yp1,ypn,y2)
+  subroutine spline_construction(xpoint,ypoint,npoint,tangent_first_point,tangent_last_point,spline_coefficients)
 
   implicit none
 
-  integer n
-  double precision, dimension(n) :: x,y,y2
-  double precision, dimension(:), allocatable :: u
-  double precision yp1,ypn
+! tangent to the spline imposed at the first and last points
+  double precision, intent(in) :: tangent_first_point,tangent_last_point
 
-  integer i,k
-  double precision sig,p,qn,un
+! number of input points and coordinates of the input points
+  integer, intent(in) :: npoint
+  double precision, dimension(npoint), intent(in) :: xpoint,ypoint
 
-  allocate(u(n))
+! spline coefficients output by the routine
+  double precision, dimension(npoint), intent(out) :: spline_coefficients
 
-  y2(1)=-0.5d0
-  u(1)=(3.d0/(x(2)-x(1)))*((y(2)-y(1))/(x(2)-x(1))-yp1)
+  integer :: i
 
-  do i=2,n-1
-    sig=(x(i)-x(i-1))/(x(i+1)-x(i-1))
-    p=sig*y2(i-1)+2.d0
-    y2(i)=(sig-1.d0)/p
-    u(i)=(6.d0*((y(i+1)-y(i))/(x(i+1)-x(i))-(y(i)-y(i-1))/(x(i)-x(i-1)))/(x(i+1)-x(i-1))-sig*u(i-1))/p
+  double precision, dimension(:), allocatable :: temporary_array
+
+  allocate(temporary_array(npoint))
+
+  spline_coefficients(1) = - 1.d0 / 2.d0
+
+  temporary_array(1) = (3.d0/(xpoint(2)-xpoint(1)))*((ypoint(2)-ypoint(1))/(xpoint(2)-xpoint(1))-tangent_first_point)
+
+  do i = 2,npoint-1
+
+    spline_coefficients(i) = ((xpoint(i)-xpoint(i-1))/(xpoint(i+1)-xpoint(i-1))-1.d0) &
+       / ((xpoint(i)-xpoint(i-1))/(xpoint(i+1)-xpoint(i-1))*spline_coefficients(i-1)+2.d0)
+
+    temporary_array(i) = (6.d0*((ypoint(i+1)-ypoint(i))/(xpoint(i+1)-xpoint(i)) &
+       - (ypoint(i)-ypoint(i-1))/(xpoint(i)-xpoint(i-1)))/(xpoint(i+1)-xpoint(i-1)) &
+       - (xpoint(i)-xpoint(i-1))/(xpoint(i+1)-xpoint(i-1))*temporary_array(i-1)) &
+       / ((xpoint(i)-xpoint(i-1))/(xpoint(i+1)-xpoint(i-1))*spline_coefficients(i-1)+2.d0)
+
   enddo
 
-  qn=0.5d0
-  un=(3.d0/(x(n)-x(n-1)))*(ypn-(y(n)-y(n-1))/(x(n)-x(n-1)))
-  y2(n)=(un-qn*u(n-1))/(qn*y2(n-1)+1.d0)
+  spline_coefficients(npoint) = ((3.d0/(xpoint(npoint)-xpoint(npoint-1))) &
+      * (tangent_last_point-(ypoint(npoint)-ypoint(npoint-1))/(xpoint(npoint)-xpoint(npoint-1))) &
+      - 1.d0/2.d0*temporary_array(npoint-1))/(1.d0/2.d0*spline_coefficients(npoint-1)+1.d0)
 
-  do k=n-1,1,-1
-    y2(k)=y2(k)*y2(k+1)+u(k)
+  do i = npoint-1,1,-1
+    spline_coefficients(i) = spline_coefficients(i)*spline_coefficients(i+1) + temporary_array(i)
   enddo
 
-  deallocate(u)
+  deallocate(temporary_array)
 
   end subroutine spline_construction
 
 ! --------------
 
-! evaluate spline (adapted from Numerical Recipes)
+! evaluate a spline
 
-  subroutine spline_evaluation(xa,ya,y2a,n,x,y)
+  subroutine spline_evaluation(xpoint,ypoint,spline_coefficients,npoint,x_evaluate_spline,y_spline_obtained)
 
   implicit none
 
-  integer n
-  double precision, dimension(n) :: XA,YA,Y2A
-  double precision x,y
+! number of input points and coordinates of the input points
+  integer, intent(in) :: npoint
+  double precision, dimension(npoint), intent(in) :: xpoint,ypoint
 
-  integer k,klo,khi
-  double precision h,a,b
+! spline coefficients to use
+  double precision, dimension(npoint), intent(in) :: spline_coefficients
 
-  KLO = 1
-  KHI = N
+! abscissa at which we need to evaluate the value of the spline
+  double precision, intent(in):: x_evaluate_spline
 
-  do while (KHI-KLO > 1)
-    K=(KHI+KLO)/2
-    if(XA(K) > X) then
-      KHI=K
+! ordinate evaluated by the routine for the spline at this abscissa
+  double precision, intent(out):: y_spline_obtained
+
+  integer :: index_loop,index_lower,index_higher
+
+  double precision :: coef1,coef2
+
+! initialize to the whole interval
+  index_lower = 1
+  index_higher = npoint
+
+! determine the right interval to use, by dichotomy
+  do while (index_higher - index_lower > 1)
+! compute the middle of the interval
+    index_loop = (index_higher + index_lower) / 2
+    if(xpoint(index_loop) > x_evaluate_spline) then
+      index_higher = index_loop
     else
-      KLO=K
+      index_lower = index_loop
     endif
   enddo
 
-  H = XA(KHI) - XA(KLO)
-  IF (H == 0.d0) stop 'bad input in spline evaluation'
+! test that the interval obtained does not have a size of zero
+! (this could happen for instance in the case of duplicates in the input list of points)
+  if(xpoint(index_higher) == xpoint(index_lower)) stop 'incorrect interval found in spline evaluation'
 
-  A = (XA(KHI)-X) / H
-  B = (X-XA(KLO)) / H
+  coef1 = (xpoint(index_higher) - x_evaluate_spline) / (xpoint(index_higher) - xpoint(index_lower))
+  coef2 = (x_evaluate_spline - xpoint(index_lower)) / (xpoint(index_higher) - xpoint(index_lower))
 
-  Y = A*YA(KLO) + B*YA(KHI) + ((A**3-A)*Y2A(KLO) + (B**3-B)*Y2A(KHI))*(H**2)/6.d0
+  y_spline_obtained = coef1*ypoint(index_lower) + coef2*ypoint(index_higher) + &
+        ((coef1**3 - coef1)*spline_coefficients(index_lower) + &
+         (coef2**3 - coef2)*spline_coefficients(index_higher))*((xpoint(index_higher) - xpoint(index_lower))**2)/6.d0
 
   end subroutine spline_evaluation
 
