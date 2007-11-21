@@ -5,14 +5,14 @@
 !                   ------------------------------
 !
 !  Main authors: Dimitri Komatitsch, Nicolas Le Goff and Roland Martin
-!                     University of Pau, France
+!                 University of Pau and CNRS, France
 !
 !                         (c) November 2007
 !
 !========================================================================
 
 !
-! This module contains subroutines related to unstructured meshes and partitioning of the 
+! This module contains subroutines related to unstructured meshes and partitioning of the
 ! corresponding graphs.
 !
 

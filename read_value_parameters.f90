@@ -5,7 +5,7 @@
 !                   ------------------------------
 !
 !  Main authors: Dimitri Komatitsch, Nicolas Le Goff and Roland Martin
-!                     University of Pau, France
+!                 University of Pau and CNRS, France
 !
 !                         (c) November 2007
 !
