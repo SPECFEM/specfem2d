@@ -33,7 +33,7 @@ LINK = $(F90)
 #LIB = /opt/metis-4.0/gcc64/lib/libmetis.a /opt/scotch-4.0/gcc64/lib/libscotch.a  /opt/scotch-4.0/gcc64/lib/libscotcherr.a
 LIB = 
 
-OBJS_MESHFEM2D = $O/part_unstruct.o $O/meshfem2D.o $O/read_value_parameters.o
+OBJS_MESHFEM2D = $O/part_unstruct.o $O/meshfem2D.o $O/read_value_parameters.o $O/numerical_recipes.o
 
 OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/enforce_acoustic_free_surface.o\
         $O/compute_forces_acoustic.o $O/compute_forces_elastic.o\
@@ -41,7 +41,7 @@ OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/enforce_acoustic_free_surface.o\
         $O/plotpost.o $O/locate_receivers.o $O/locate_source_force.o $O/compute_gradient_attenuation.o\
         $O/specfem2D.o $O/write_seismograms.o $O/define_external_model.o $O/createnum_fast.o $O/createnum_slow.o\
         $O/define_shape_functions.o $O/attenuation_model.o $O/create_color_image.o $O/compute_vector_field.o $O/compute_pressure.o\
-        $O/recompute_jacobian.o $O/compute_arrays_source.o $O/locate_source_moment_tensor.o $O/numerical_recipes.o\
+        $O/recompute_jacobian.o $O/compute_arrays_source.o $O/locate_source_moment_tensor.o $O/netlib_specfun_erf.o\
         $O/construct_acoustic_surface.o $O/assemble_MPI.o $O/compute_energy.o\
         $O/attenuation_compute_param.o
 
@@ -156,6 +156,9 @@ $O/create_color_image.o: create_color_image.f90 constants.h
     
 $O/numerical_recipes.o: numerical_recipes.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/numerical_recipes.o numerical_recipes.f90
+    
+$O/netlib_specfun_erf.o: netlib_specfun_erf.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/netlib_specfun_erf.o netlib_specfun_erf.f90
     
 $O/define_external_model.o: define_external_model.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/define_external_model.o define_external_model.f90
