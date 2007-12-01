@@ -1,13 +1,46 @@
+
 - splitting file part_unstruct.F90 in several files for clarity purpose.
+
 - improving compiling with SCOTCH (issue with header file scotchf.h which is Fortran77 legal). Having our own scotchf.h file (without the comments) is not wise.
+
 - comparing the different partitioning methods for METIS and SCOTCH, and finding a good default for SCOTCH.
+
 - partitioning using weights for load-balancing.
+
 - choosing a way to use assign_external_model?
+
 - adding comments.
+
 - checking for points with different normals for absorbing conditions, when the absorbing edges are not in the same elements (similar to what is done for the corners).
+
 - scripts for translating GID/CUBIT meshes into files for xmeshfem2D.
+
 - modifying scripts for UPPA cluster (when FS sync issues are solved and remote commands are available).
+
 - manual for unstructured meshes.
+
 - getting rid of constants_unstruct.h.
+
 - checking use of real or double precision. Gain in elapsed time is ok, but now we have to look for memory consumption.
+
 - checking output on stdout (for data that should be printed only once).
+
+- Hi Jeroen, Perfect. I think talking to Jean-Paul Ampuero would be useful
+as well because in Utrecht last year he had told us that
+he had implemented some nice 4th-order symplectic schemes
+in his version of SEM2D. Dimitri.
+Jeroen Tromp wrote:
+> Hi Dimitri:
+> This is one of the first things Tarje and I plan to work on after he arrives.
+> Jeroen
+> Dimitri Komatitsch wrote:
+>> Hi Jeroen,
+>> I think the last important thing that is missing
+>> in SPECFEM3D (and SPECFEM2D) is a fourth-order time scheme.
+>> I think both Jean-Paul Ampuero and Tarje Nissen-Meyer
+>> have worked on this, they will both be at Caltech
+>> soon therefore maybe they could take care of adding it?
+>> This would definitely increase the accuracy of very long
+>> simulations (e.g. multi-orbit surface waves).
+>> Dimitri.
+
