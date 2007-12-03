@@ -25,7 +25,7 @@
 
   integer :: nelem_acoustic_surface,npoin,nspec
 
-  integer, dimension(5,nelem_acoustic_surface) :: acoustic_surface
+  integer, dimension(5,max(1,nelem_acoustic_surface)) :: acoustic_surface
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
 

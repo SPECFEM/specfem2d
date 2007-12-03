@@ -14,7 +14,7 @@
 ! write seismograms to text files
 
   subroutine write_seismograms(sisux,sisuz,station_name,network_name, &
-      NSTEP,nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,it,t0, &
+      NSTEP,nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
       NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current &
       )
 
@@ -25,7 +25,7 @@
   include "mpif.h"
 #endif
 
-  integer :: nrec,NSTEP,it,seismotype
+  integer :: nrec,NSTEP,seismotype
   integer :: NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current
   double precision :: t0,deltat
 
