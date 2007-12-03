@@ -663,6 +663,9 @@
           acoustic_edges, acoustic_surface)
     write(IOUT,*)
     write(IOUT,*) 'Number of free surface elements: ',nelem_acoustic_surface
+  else
+    allocate(acoustic_edges(4,1))
+    allocate(acoustic_surface(5,1))
   endif
 
 !
@@ -1138,7 +1141,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
      )
 
 ! assembling the mass matrix
-  call assemble_MPI_scalar(myrank,rmass_inverse_acoustic, rmass_inverse_elastic,npoin, &
+  call assemble_MPI_scalar(rmass_inverse_acoustic, rmass_inverse_elastic,npoin, &
      ninterface, max_interface_size, max_ibool_interfaces_size_ac, max_ibool_interfaces_size_el, &
      ibool_interfaces_acoustic,ibool_interfaces_elastic, nibool_interfaces_acoustic,nibool_interfaces_elastic, my_neighbours)
 
@@ -1168,6 +1171,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   nspec_outer = 0
   nspec_inner = nspec
 
+  allocate(ispec_outer_to_glob(1))
   allocate(ispec_inner_to_glob(nspec_inner))
   do ispec = 1, nspec
      ispec_inner_to_glob(ispec) = ispec
@@ -1715,6 +1719,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   time_start = 86400.d0*time_values(3) + 3600.d0*time_values(5) + &
                60.d0*time_values(6) + time_values(7) + time_values(8) / 1000.d0
 
+  if(output_color_image) then
 ! to display the P-velocity model in background on color images
   allocate(vp_display(npoin))
   do ispec = 1,nspec
@@ -1775,6 +1780,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   endif
 
 #endif
+  endif
 
 ! initialize variables for writing seismograms
   seismo_offset = 0
@@ -1807,9 +1813,11 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       potential_dot_dot_acoustic = ZERO
 
 ! free surface for an acoustic medium
+      if ( nelem_acoustic_surface > 0 ) then
       call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
            potential_acoustic,acoustic_surface, &
            ibool,nelem_acoustic_surface,npoin,nspec)
+      endif
 
 ! *********************************************************
 ! ************* compute forces for the acoustic elements
@@ -1950,9 +1958,11 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     potential_dot_acoustic = potential_dot_acoustic + deltatover2*potential_dot_dot_acoustic
 
 ! free surface for an acoustic medium
+    if ( nelem_acoustic_surface > 0 ) then
     call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
                 potential_acoustic,acoustic_surface, &
                 ibool,nelem_acoustic_surface,npoin,nspec)
+    endif
   endif
 
 ! *********************************************************
@@ -2440,7 +2450,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
 !----  save temporary or final seismograms
   call write_seismograms(sisux,sisuz,station_name,network_name,NSTEP, &
-        nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,it,t0, &
+        nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
         NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current &
         )
   seismo_offset = seismo_offset + seismo_current
@@ -2495,6 +2505,13 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 !----  close output file
 !
   if(IOUT /= ISTANDARD_OUTPUT) close(IOUT)
+
+!
+!----  end MPI
+!
+#ifdef USE_MPI
+  call MPI_FINALIZE(ier)
+#endif  
 
 !
 !----  formats

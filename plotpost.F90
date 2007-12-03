@@ -92,7 +92,7 @@
 
 ! for free surface output
   integer  :: nelem_acoustic_surface
-  integer, dimension(4,nelem_acoustic_surface)  :: acoustic_edges
+  integer, dimension(4,max(1,nelem_acoustic_surface))  :: acoustic_edges
 
 #ifdef USE_MPI
   double precision  :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
