@@ -377,7 +377,7 @@ end subroutine create_MPI_req_SEND_RECV_el
 !-----------------------------------------------
 ! Assembling the mass matrix.
 !-----------------------------------------------
-subroutine assemble_MPI_scalar(myrank,array_val1, array_val2,npoin, &
+subroutine assemble_MPI_scalar(array_val1, array_val2,npoin, &
      ninterface, max_interface_size, max_ibool_interfaces_size_ac, max_ibool_interfaces_size_el, &
      ibool_interfaces_acoustic,ibool_interfaces_elastic, nibool_interfaces_acoustic,nibool_interfaces_elastic, my_neighbours)
 
@@ -389,7 +389,6 @@ subroutine assemble_MPI_scalar(myrank,array_val1, array_val2,npoin, &
   ! array to assemble
   real(kind=CUSTOM_REAL), dimension(npoin), intent(inout) :: array_val1, array_val2
 
-  integer, intent(in)  :: myrank
   integer, intent(in)  :: npoin
   integer, intent(in)  :: ninterface
   integer, intent(in)  :: max_interface_size

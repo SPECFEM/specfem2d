@@ -70,7 +70,7 @@
 
 ! for overlapping MPI communications with computation
   integer, intent(in) :: nspec_inner_outer
-  integer, dimension(nspec_inner_outer), intent(in) :: ispec_inner_outer_to_glob
+  integer, dimension(max(1,nspec_inner_outer)), intent(in) :: ispec_inner_outer_to_glob
   logical, intent(in) :: num_phase_inner_outer
 
 !---
