@@ -151,9 +151,18 @@
 
 ! compute maximum amplitude
   amplitude_max = maxval(abs(color_image_2D_data))
-  vpmin = minval(image_color_vp_display)
-  vpmax = maxval(image_color_vp_display)
-
+  vpmin = HUGEVAL
+  vpmax = TINYVAL
+  do iy=1,NY
+    do ix=1,NX
+      if ( iglob_image_color_2D(ix,iy) > -1 ) then
+        vpmin = min(vpmin,image_color_vp_display(ix,iy))
+        vpmax = max(vpmax,image_color_vp_display(ix,iy))
+      endif
+      
+    enddo
+  enddo
+  
 ! in the PNM format, the image starts in the upper-left corner
   do iy=NY,1,-1
     do ix=1,NX
