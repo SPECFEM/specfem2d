@@ -198,7 +198,7 @@
      ibegin_bottom,iend_bottom,ibegin_top,iend_top,jbegin_left,jend_left,jbegin_right,jend_right
 
   integer ispec_selected_source,iglob_source,ix_source,iz_source,is_proc_source,nb_proc_source
-  double precision a,displnorm_all,displnorm_all_glob
+  double precision aval,displnorm_all,displnorm_all_glob
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: source_time_function
   double precision, external :: netlib_specfun_erf
 
@@ -209,7 +209,7 @@
 
   logical interpol,meshvect,modelvect,boundvect,assign_external_model,initialfield, &
     outputgrid,gnuplot,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,output_postscript_snapshot,output_color_image, &
-    plot_lowerleft_corner_only
+    plot_lowerleft_corner_only,add_Bielak_conditions
 
   double precision :: cutsnaps,sizemax_arrows,anglerec,xirec,gammarec
 
@@ -342,6 +342,10 @@
   integer, dimension(:,:,:), allocatable :: copy_ibool_ori
   integer :: inumber
 
+! to compute analytical initial plane wave field
+  double precision :: t
+  double precision, external :: ricker_Bielak_displ,ricker_Bielak_veloc,ricker_Bielak_accel
+
 !***********************************************************************
 !
 !             i n i t i a l i z a t i o n    p h a s e
@@ -423,7 +427,8 @@
   read(IIN,*) anglerec
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) initialfield
+  read(IIN,*) initialfield,add_Bielak_conditions
+  if(add_Bielak_conditions .and. .not. initialfield) stop 'need to have an initial field to add Bielak plane wave conditions'
 
   read(IIN,"(a80)") datlin
   read(IIN,*) seismotype,imagetype
@@ -437,7 +442,7 @@
   write(IOUT,200) npgeo,NDIM
   write(IOUT,600) NTSTEP_BETWEEN_OUTPUT_INFO,colors,numbers
   write(IOUT,700) seismotype,anglerec
-  write(IOUT,750) initialfield,assign_external_model,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,outputgrid
+  write(IOUT,750) initialfield,add_Bielak_conditions,assign_external_model,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,outputgrid
   write(IOUT,800) imagetype,100.d0*cutsnaps,subsamp
 
 !---- read time step
@@ -479,7 +484,7 @@
  endif
 
 ! for the source time function
-  a = pi*pi*f0*f0
+  aval = pi*pi*f0*f0
 
 !-----  convert angle from degrees to radians
   angleforce = angleforce * pi / 180.d0
@@ -1442,24 +1447,65 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     write(IOUT,*) 'Reading initial fields from external file...'
     write(IOUT,*)
     if(any_acoustic) call exit_MPI('initial field currently implemented for purely elastic simulation only')
-    open(unit=55,file='OUTPUT_FILES/wavefields.txt',status='unknown')
-    read(55,*) nbpoin
-    if(nbpoin /= npoin) call exit_MPI('Wrong number of points in input file')
-    allocate(displread(NDIM))
-    allocate(velocread(NDIM))
-    allocate(accelread(NDIM))
-    do n = 1,npoin
-      read(55,*) inump, (displread(i), i=1,NDIM), &
-          (velocread(i), i=1,NDIM), (accelread(i), i=1,NDIM)
-      if(inump<1 .or. inump>npoin) call exit_MPI('Wrong point number')
-      displ_elastic(:,inump) = displread
-      veloc_elastic(:,inump) = velocread
-      accel_elastic(:,inump) = accelread
-    enddo
-    deallocate(displread)
-    deallocate(velocread)
-    deallocate(accelread)
-    close(55)
+
+    if(.not. add_Bielak_conditions) then
+
+      open(unit=55,file='OUTPUT_FILES/wavefields.txt',status='unknown')
+      read(55,*) nbpoin
+      if(nbpoin /= npoin) call exit_MPI('Wrong number of points in input file')
+      allocate(displread(NDIM))
+      allocate(velocread(NDIM))
+      allocate(accelread(NDIM))
+      do n = 1,npoin
+        read(55,*) inump, (displread(i), i=1,NDIM), (velocread(i), i=1,NDIM), (accelread(i), i=1,NDIM)
+        if(inump<1 .or. inump>npoin) call exit_MPI('Wrong point number')
+        displ_elastic(:,inump) = displread
+        veloc_elastic(:,inump) = velocread
+        accel_elastic(:,inump) = accelread
+      enddo
+      deallocate(displread)
+      deallocate(velocread)
+      deallocate(accelread)
+      close(55)
+
+    else
+
+! compute analytical initial plane wave field
+      print *,'computing analytical initial plane wave field for SV wave at 30 degrees and Poisson = 0.25'
+
+      do i = 1,npoin
+
+        x = coord(1,i)
+        z = coord(2,i)
+
+! add a time offset in order for the initial field to be inside the medium
+        t = 0.d0 + time_offset
+
+! initial analytical displacement
+        displ_elastic(1,i) = rac3sur2 * ricker_Bielak_displ(t - x/2.d0 + (9 - z) * rac3sur2) &
+          + rac3sur2 * ricker_Bielak_displ(t - x/2.d0 - (9 - z) * rac3sur2) &
+          + rac3 * ricker_Bielak_displ(t - x/2.d0)
+        displ_elastic(2,i) = - HALF * ricker_Bielak_displ(t - x/2.d0 + (9 - z) * rac3sur2) &
+          + HALF * ricker_Bielak_displ(t - x/2.d0 - (9 - z) * rac3sur2)
+
+! initial analytical velocity
+        veloc_elastic(1,i) = rac3sur2 * ricker_Bielak_veloc(t - x/2.d0 + (9 - z) * rac3sur2) &
+          + rac3sur2 * ricker_Bielak_veloc(t - x/2.d0 - (9 - z) * rac3sur2) &
+          + rac3 * ricker_Bielak_veloc(t - x/2.d0)
+        veloc_elastic(2,i) = - HALF * ricker_Bielak_veloc(t - x/2.d0 + (9 - z) * rac3sur2) &
+          + HALF * ricker_Bielak_veloc(t - x/2.d0 - (9 - z) * rac3sur2)
+
+! initial analytical acceleration
+        accel_elastic(1,i) = rac3sur2 * ricker_Bielak_accel(t - x/2.d0 + (9 - z) * rac3sur2) &
+          + rac3sur2 * ricker_Bielak_accel(t - x/2.d0 - (9 - z) * rac3sur2) &
+          + rac3 * ricker_Bielak_accel(t - x/2.d0)
+        accel_elastic(2,i) = - HALF * ricker_Bielak_accel(t - x/2.d0 + (9 - z) * rac3sur2) &
+          + HALF * ricker_Bielak_accel(t - x/2.d0 - (9 - z) * rac3sur2)
+
+      enddo
+
+    endif
+
     write(IOUT,*) 'Max norm of initial elastic displacement = ',maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(2,:)**2))
   endif
 
@@ -1490,15 +1536,15 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
 ! Ricker (second derivative of a Gaussian) source time function
       if(time_function_type == 1) then
-        source_time_function(it) = - factor * (ONE-TWO*a*(time-t0)**2) * exp(-a*(time-t0)**2)
+        source_time_function(it) = - factor * (ONE-TWO*aval*(time-t0)**2) * exp(-aval*(time-t0)**2)
 
 ! first derivative of a Gaussian source time function
       else if(time_function_type == 2) then
-        source_time_function(it) = - factor * TWO*a*(time-t0) * exp(-a*(time-t0)**2)
+        source_time_function(it) = - factor * TWO*aval*(time-t0) * exp(-aval*(time-t0)**2)
 
 ! Gaussian or Dirac (we use a very thin Gaussian instead) source time function
       else if(time_function_type == 3 .or. time_function_type == 4) then
-        source_time_function(it) = factor * exp(-a*(time-t0)**2)
+        source_time_function(it) = factor * exp(-aval*(time-t0)**2)
 
 ! Heaviside source time function (we use a very thin error function instead)
       else if(time_function_type == 5) then
@@ -2009,8 +2055,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                e1,e11,e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
-               nspec_outer, ispec_outer_to_glob, .true. &
-               )
+               nspec_outer, ispec_outer_to_glob,.true.,deltat,coord,add_Bielak_conditions)
 
 ! *********************************************************
 ! ************* add coupling with the acoustic side
@@ -2108,8 +2153,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                e1,e11,e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
-               nspec_inner, ispec_inner_to_glob, .false. &
-               )
+               nspec_inner, ispec_inner_to_glob,.false.,deltat,coord,add_Bielak_conditions)
 
 ! assembling accel_elastic for elastic elements (receive)
 #ifdef USE_MPI
@@ -2567,6 +2611,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
  750 format(//1x,'C o n t r o l',/1x,13('='),//5x, &
   'Read external initial field. . . . . .(initialfield) = ',l6/5x, &
+  'Add Bielak conditions . . . .(add_Bielak_conditions) = ',l6/5x, &
   'Assign external model . . . .(assign_external_model) = ',l6/5x, &
   'Turn anisotropy on or off. . . .(TURN_ANISOTROPY_ON) = ',l6/5x, &
   'Turn attenuation on or off. . .(TURN_ATTENUATION_ON) = ',l6/5x, &

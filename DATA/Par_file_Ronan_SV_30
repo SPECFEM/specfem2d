@@ -1,7 +1,7 @@
 
 # title of job, and file that contains interface data
-title                           = Test for M2 UPPA
-interfacesfile                  = interfaces_M2_UPPA_curved.dat
+title                           = Test for flat canyon Ronan SV 30 degrees
+interfacesfile                  = interfaces_Ronan_SV_30.dat
 
 # data concerning mesh, when generated using third-party app (more info in README)
 read_external_mesh              = .false.
@@ -17,12 +17,12 @@ partionning_method              = 1              # ascending order = 1, Metis = 
 partitionning_strategy          = 01110 #b{strat=m{asc=g,low=g,rat=1.0,type=h,vert=4}} #01110          # options concerning partitionning strategy.
                                                  
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
-xmin                            = 0.d0           # abscissa of left side of the model
-xmax                            = 4000.d0        # abscissa of right side of the model
-nx                              = 80             # number of elements along X
-ngnod                           = 9              # number of control nodes per element (4 or 9)
-initialfield                    = .false.        # use a plane wave as source or not
-add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
+xmin                            = 0.d0         # abscissa of left side of the model
+xmax                            = 19.d0        # abscissa of right side of the model
+nx                              = 70             # number of elements along X
+ngnod                           = 4              # number of control nodes per element (4 or 9)
+initialfield                    = .true.        # use a plane wave as source or not
+add_Bielak_conditions           = .true.        # add Bielak conditions or not if initial plane wave
 assign_external_model           = .false.        # define external earth model or not
 TURN_ANISOTROPY_ON              = .false.        # turn anisotropy on or off for solid medium
 TURN_ATTENUATION_ON             = .false.        # turn attenuation on or off for solid medium
@@ -35,13 +35,13 @@ absorbtop                       = .false.
 absorbleft                      = .true.
 
 # time step parameters
-nt                              = 1600           # total number of time steps
-deltat                          = 1.d-3          # duration of a time step
+nt                              = 20000            # total number of time steps
+deltat                          = 6.25e-4        # duration of a time step
 
 # source parameters
-source_surf                     = .false.        # source inside the medium or at the surface
-xs                              = 2000.          # source location x in meters
-zs                              = 1600.          # source location z in meters
+source_surf                     = .true.        # source inside the medium or at the surface
+xs                              = 0.          # source location x in meters
+zs                              = 0.          # source location z in meters
 source_type                     = 1              # elastic force or acoustic pressure = 1 or moment tensor = 2
 time_function_type              = 1              # Ricker = 1, first derivative = 2, Gaussian = 3, Dirac = 4, Heaviside = 5
 f0                              = 8.0           # dominant source frequency (Hz) if not Dirac or Heaviside
@@ -65,14 +65,14 @@ anglerec                        = 0.d0           # angle to rotate components at
 
 # first receiver line
 nrec                            = 11             # number of receivers
-xdeb                            = 300.           # first receiver x in meters
-zdeb                            = 2200.          # first receiver z in meters
-xfin                            = 3700.          # last receiver x in meters (ignored if onlyone receiver)
-zfin                            = 2200.          # last receiver z in meters (ignored if onlyone receiver)
+xdeb                            = 0.           # first receiver x in meters
+zdeb                            = 0.          # first receiver z in meters
+xfin                            = 10.          # last receiver x in meters (ignored if onlyone receiver)
+zfin                            = 0.          # last receiver z in meters (ignored if onlyone receiver)
 enreg_surf                      = .true.         # receivers inside the medium or at the surface
 
 # display parameters
-NTSTEP_BETWEEN_OUTPUT_INFO      = 100            # display frequency in time steps
+NTSTEP_BETWEEN_OUTPUT_INFO      = 500            # display frequency in time steps
 output_postscript_snapshot      = .true.         # output Postscript snapshot of the results
 output_color_image              = .true.         # output color image of the results
 imagetype                       = 1              # display 1=displ 2=veloc 3=accel 4=pressure
@@ -88,17 +88,11 @@ gnuplot                         = .false.        # generate a GNUPLOT file for t
 outputgrid                      = .false.        # save the grid in a text file or not
 
 # velocity and density models
-nbmodels                        = 4              # nb of different models
+nbmodels                        = 1              # nb of different models
 # define models as (model_number,1,rho,vp,vs,0,0) or (model_number,2,rho,c11,c13,c33,c44)
 # set vs to zero to make a given model acoustic
 # the mesh can contain both acoustic and elastic models simultaneously
-1 1 2700.d0 3000.d0 1732.051d0 0 0
-2 1 2500.d0 2700.d0 0.d0 0 0 #1558.89d0  0 0
-3 1 2200.d0 2500.d0 1443.375d0 0 0
-4 1 2200.d0 2200.d0 1343.375d0 0 0
+1 1 1.d0 2.d0 1.d0 0 0
 # define the different regions of the model in the (nx,nz) spectral element mesh
-nbregions                       = 4              # nb of regions and model number for each
-1 80  1 20 1
-1 80 21 40 2
-1 80 41 60 3
-60 70 21 40 4
+nbregions                       = 1              # nb of regions and model number for each
+1 70  1 28 1

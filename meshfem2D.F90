@@ -123,7 +123,7 @@ program meshfem2D
 
   logical interpol,gnuplot,assign_external_model,outputgrid
   logical abstop,absbottom,absleft,absright,any_abs
-  logical source_surf,meshvect,initialfield,modelvect,boundvect
+  logical source_surf,meshvect,initialfield,modelvect,boundvect,add_Bielak_conditions
   logical TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
 
   logical, dimension(:), allocatable :: enreg_surf
@@ -285,6 +285,7 @@ program meshfem2D
   endif
 
   call read_value_logical(IIN,IGNORE_JUNK,initialfield)
+  call read_value_logical(IIN,IGNORE_JUNK,add_Bielak_conditions)
   call read_value_logical(IIN,IGNORE_JUNK,assign_external_model)
   call read_value_logical(IIN,IGNORE_JUNK,TURN_ANISOTROPY_ON)
   call read_value_logical(IIN,IGNORE_JUNK,TURN_ATTENUATION_ON)
@@ -1112,8 +1113,8 @@ program meshfem2D
      write(15,*) 'anglerec'
      write(15,*) anglerec
 
-     write(15,*) 'initialfield'
-     write(15,*) initialfield
+     write(15,*) 'initialfield add_Bielak_conditions'
+     write(15,*) initialfield,add_Bielak_conditions
 
      write(15,*) 'seismotype imagetype'
      write(15,*) seismotype,imagetype
