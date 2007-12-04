@@ -1,3 +1,5 @@
+
+! size of real and double precision numbers in bytes
   integer, parameter :: SIZE_REAL = 4
   integer, parameter :: SIZE_DOUBLE = 8
 
@@ -80,6 +82,13 @@
 ! of the manual. This source decay rate to mimic an equivalent triangle
 ! was found by trial and error
   double precision, parameter :: SOURCE_DECAY_MIMIC_TRIANGLE = 1.628d0
+
+! for the analytical initial plane wave source for Bielak conditions
+  double precision, parameter :: time_offset = 3.575d0
+  double precision, parameter :: f0_ricker_Bielak = 1.d0
+  double precision, parameter :: a = PI*PI*f0_ricker_Bielak*f0_ricker_Bielak
+  double precision, parameter :: rac3 = 1.7320508075688772935d0
+  double precision, parameter :: rac3sur2 = rac3 / 2.d0
 
 ! non linear display to enhance small amplitudes in color images
   double precision, parameter :: POWER_DISPLAY_COLOR = 0.30d0

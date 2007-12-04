@@ -49,8 +49,7 @@
                e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
-               nspec_inner_outer, ispec_inner_outer_to_glob, num_phase_inner_outer &
-               )
+               nspec_inner_outer,ispec_inner_outer_to_glob,num_phase_inner_outer,deltat,coord,add_Bielak_conditions)
 
 ! compute forces for the elastic elements
 
@@ -60,7 +59,7 @@
 
   integer :: npoin,nspec,nelemabs,numat,iglob_source,ispec_selected_source,is_proc_source,source_type,it,NSTEP
 
-  logical :: anyabs,assign_external_model,initialfield,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON
+  logical :: anyabs,assign_external_model,initialfield,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,add_Bielak_conditions
 
   double precision :: angleforce,deltatcube,deltatfourth,twelvedeltat,fourdeltatsquare
 
@@ -125,6 +124,11 @@
 
 ! for attenuation
   real(kind=CUSTOM_REAL) :: Un,Unp1,tauinv,Sn,Snp1,theta_n,theta_np1,tauinvsquare,tauinvcube,tauinvUn
+
+! for analytical initial plane wave for Bielak's conditions
+  double precision :: veloc_horiz,veloc_vert,dxUx,dzUx,dxUz,dzUz,traction_x_t0,traction_z_t0,deltat
+  double precision, dimension(NDIM,npoin), intent(in) :: coord
+  double precision, external :: rickertest,rickertestvel
 
 ! only for the first call to compute_forces_elastic (during computation on outer elements)
   if ( num_phase_inner_outer ) then
@@ -311,6 +315,19 @@
 
           iglob = ibool(i,j,ispec)
 
+! for analytical initial plane wave for Bielak's conditions
+! left or right edge, horizontal normal vector
+          if(add_Bielak_conditions) then
+            call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert)
+            traction_x_t0 = (lambdal_relaxed+2*mul_relaxed)*dxUx + lambdal_relaxed*dzUz
+            traction_z_t0 = mul_relaxed*(dxUz + dzUx)
+          else
+            veloc_horiz = 0
+            veloc_vert = 0
+            traction_x_t0 = 0
+            traction_z_t0 = 0
+          endif
+
 ! external velocity model
           if(assign_external_model) then
             cpl = vpext(i,j,ispec)
@@ -331,16 +348,16 @@
 
 ! Clayton-Engquist condition if elastic
           if(elastic(ispec)) then
-            vx = veloc_elastic(1,iglob)
-            vz = veloc_elastic(2,iglob)
+            vx = veloc_elastic(1,iglob) - veloc_horiz
+            vz = veloc_elastic(2,iglob) - veloc_vert
 
             vn = nx*vx+nz*vz
 
             tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
             tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
 
-            accel_elastic(1,iglob) = accel_elastic(1,iglob) - tx*weight
-            accel_elastic(2,iglob) = accel_elastic(2,iglob) - tz*weight
+            accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0)*weight
+            accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz + traction_z_t0)*weight
           endif
 
         enddo
@@ -356,6 +373,19 @@
 
           iglob = ibool(i,j,ispec)
 
+! for analytical initial plane wave for Bielak's conditions
+! left or right edge, horizontal normal vector
+          if(add_Bielak_conditions) then
+            call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert)
+            traction_x_t0 = (lambdal_relaxed+2*mul_relaxed)*dxUx + lambdal_relaxed*dzUz
+            traction_z_t0 = mul_relaxed*(dxUz + dzUx)
+          else
+            veloc_horiz = 0
+            veloc_vert = 0
+            traction_x_t0 = 0
+            traction_z_t0 = 0
+          endif
+
 ! external velocity model
           if(assign_external_model) then
             cpl = vpext(i,j,ispec)
@@ -376,16 +406,16 @@
 
 ! Clayton-Engquist condition if elastic
           if(elastic(ispec)) then
-            vx = veloc_elastic(1,iglob)
-            vz = veloc_elastic(2,iglob)
+            vx = veloc_elastic(1,iglob) - veloc_horiz
+            vz = veloc_elastic(2,iglob) - veloc_vert
 
             vn = nx*vx+nz*vz
 
             tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
             tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
 
-            accel_elastic(1,iglob) = accel_elastic(1,iglob) - tx*weight
-            accel_elastic(2,iglob) = accel_elastic(2,iglob) - tz*weight
+            accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx - traction_x_t0)*weight
+            accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz - traction_z_t0)*weight
           endif
 
         enddo
@@ -407,6 +437,19 @@
 
           iglob = ibool(i,j,ispec)
 
+! for analytical initial plane wave for Bielak's conditions
+! top or bottom edge, vertical normal vector
+          if(add_Bielak_conditions) then
+            call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert)
+            traction_x_t0 = mul_relaxed*(dxUz + dzUx)
+            traction_z_t0 = lambdal_relaxed*dxUx + (lambdal_relaxed+2*mul_relaxed)*dzUz
+          else
+            veloc_horiz = 0
+            veloc_vert = 0
+            traction_x_t0 = 0
+            traction_z_t0 = 0
+          endif
+
 ! external velocity model
           if(assign_external_model) then
             cpl = vpext(i,j,ispec)
@@ -427,16 +470,16 @@
 
 ! Clayton-Engquist condition if elastic
           if(elastic(ispec)) then
-            vx = veloc_elastic(1,iglob)
-            vz = veloc_elastic(2,iglob)
+            vx = veloc_elastic(1,iglob) - veloc_horiz
+            vz = veloc_elastic(2,iglob) - veloc_vert
 
             vn = nx*vx+nz*vz
 
             tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
             tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
 
-            accel_elastic(1,iglob) = accel_elastic(1,iglob) - tx*weight
-            accel_elastic(2,iglob) = accel_elastic(2,iglob) - tz*weight
+            accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0)*weight
+            accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz + traction_z_t0)*weight
           endif
 
         enddo
@@ -458,6 +501,19 @@
 
           iglob = ibool(i,j,ispec)
 
+! for analytical initial plane wave for Bielak's conditions
+! top or bottom edge, vertical normal vector
+          if(add_Bielak_conditions) then
+            call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert)
+            traction_x_t0 = mul_relaxed*(dxUz + dzUx)
+            traction_z_t0 = lambdal_relaxed*dxUx + (lambdal_relaxed+2*mul_relaxed)*dzUz
+          else
+            veloc_horiz = 0
+            veloc_vert = 0
+            traction_x_t0 = 0
+            traction_z_t0 = 0
+          endif
+
 ! external velocity model
           if(assign_external_model) then
             cpl = vpext(i,j,ispec)
@@ -478,16 +534,16 @@
 
 ! Clayton-Engquist condition if elastic
           if(elastic(ispec)) then
-            vx = veloc_elastic(1,iglob)
-            vz = veloc_elastic(2,iglob)
+            vx = veloc_elastic(1,iglob) - veloc_horiz
+            vz = veloc_elastic(2,iglob) - veloc_vert
 
             vn = nx*vx+nz*vz
 
             tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
             tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
 
-            accel_elastic(1,iglob) = accel_elastic(1,iglob) - tx*weight
-            accel_elastic(2,iglob) = accel_elastic(2,iglob) - tz*weight
+            accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx - traction_x_t0)*weight
+            accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz - traction_z_t0)*weight
           endif
 
         enddo
