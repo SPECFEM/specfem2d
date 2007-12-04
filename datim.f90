@@ -54,8 +54,8 @@
   character(len=16) dateprint
   character(len=8) timeprint
 
-  datein = ''
-  timein = ''
+  datein = ' '
+  timein = ' '
 
   call date_and_time(datein,timein)
 

@@ -65,6 +65,12 @@ CC = gcc
 FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow
 FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
 
+# IBM
+#F90 = xlf_r
+#CC = xlc -q64
+#FLAGS_NOCHECK = -qextname=attenuation_compute_param -O3 -qsave -qstrict -q64 -qtune=ppc970 -qarch=ppc64v -qcache=auto -qfree=f90 -Q -qsuffix=f=f90 -qhalt=w -qflttrap=en:ov:zero:inv -qfullpath -qsigtrap
+#FLAGS_CHECK = $(FLAGS_NOCHECK) -qddim
+
 LINK = $(F90)
 
 #LIB = /opt/metis-4.0/gcc64/lib/libmetis.a /opt/scotch-4.0/gcc64/lib/libscotch.a  /opt/scotch-4.0/gcc64/lib/libscotcherr.a

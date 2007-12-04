@@ -238,11 +238,9 @@ end if
 call MPI_BCAST(which_proc_receiver(1),nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ierror)
 
 #else
-print *, 'POY', nproc
-call flush(6)
+
 gather_final_distance(:,1) = final_distance(:)
-print *, 'POY'
-call flush(6)
+
 gather_xi_receiver(:,1) = xi_receiver(:)
 gather_gamma_receiver(:,1) = gamma_receiver(:)
 gather_ispec_selected_rec(:,1) = ispec_selected_rec(:)
