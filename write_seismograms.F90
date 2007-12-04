@@ -279,7 +279,7 @@
 
 !----
 
-
+  deallocate(buffer_binary)
 
 !----
    if ( myrank == 0 ) then
