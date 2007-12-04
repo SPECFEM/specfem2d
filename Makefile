@@ -46,24 +46,24 @@ O = obj
 
 # Portland
 #F90 = /opt/openmpi-1.2.2/pgi64/bin/mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
-F90 = pgf90
-CC = pgcc
-FLAGS_NOCHECK=-fast -Mnobounds -Minline -Mneginfo -Mdclchk -Knoieee -Minform=warn -fastsse -tp amd64e -Msmart
-FLAGS_CHECK=-fast -Mbounds -Mneginfo -Mdclchk -Minform=warn
+#F90 = pgf90
+#CC = pgcc
+#FLAGS_NOCHECK=-fast -Mnobounds -Minline -Mneginfo -Mdclchk -Knoieee -Minform=warn -fastsse -tp amd64e -Msmart
+#FLAGS_CHECK=-fast -Mbounds -Mneginfo -Mdclchk -Minform=warn
 
 # Intel
 #F90 = ifort
 #CC = gcc
-#FLAGS_NOCHECK=-O3 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check nobounds
-#FLAGS_CHECK = $(FLAGS_NOCHECK) -check bounds
+#FLAGS_NOCHECK=-O0 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check nobounds
+#FLAGS_CHECK = $(FLAGS_NOCHECK)
 
 # GNU gfortran
 #F90 = /opt/openmpi-1.2.1/gfortran64/bin/mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
-#F90 = gfortran
-#CC = gcc
+F90 = gfortran
+CC = gcc
 #FLAGS_NOCHECK = -O3 -march=opteron -m64 -mfpmath=sse,387
-#FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow
-#FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
+FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow
+FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
 
 LINK = $(F90)
 
@@ -80,7 +80,7 @@ OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/enforce_acoustic_free_surface.o\
         $O/define_shape_functions.o $O/attenuation_model.o $O/create_color_image.o $O/compute_vector_field.o $O/compute_pressure.o\
         $O/recompute_jacobian.o $O/compute_arrays_source.o $O/locate_source_moment_tensor.o $O/netlib_specfun_erf.o\
         $O/construct_acoustic_surface.o $O/assemble_MPI.o $O/compute_energy.o\
-        $O/attenuation_compute_param.o
+        $O/attenuation_compute_param.o $O/compute_Bielak_conditions.o
 
 default: clean meshfem2D specfem2D convolve_source_timefunction
 
@@ -184,6 +184,9 @@ $O/compute_vector_field.o: compute_vector_field.f90 constants.h
     
 $O/compute_pressure.o: compute_pressure.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/compute_pressure.o compute_pressure.f90
+    
+$O/compute_Bielak_conditions.o: compute_Bielak_conditions.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/compute_Bielak_conditions.o compute_Bielak_conditions.f90
     
 $O/compute_arrays_source.o: compute_arrays_source.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/compute_arrays_source.o compute_arrays_source.f90
