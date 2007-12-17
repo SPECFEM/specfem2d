@@ -65,7 +65,6 @@
       z = coord(2,iglob)
 
 ! times for velocity and traction are staggered i.e. separated by deltat/2.d0
-!! DK DK YYYYYYYYYYYYYYYY UGLY il faudra peut-etre ajouter ou enlever deltat ici
       time_veloc = (it-1)*deltat + deltat/2.d0 + time_offset
       time_traction = time_veloc + deltat/2.d0
 
@@ -106,11 +105,11 @@
       t = time_veloc
 
 ! analytical expression of the two components of the velocity vector
-      veloc_horiz = rac3sur2 * ricker_Bielak_veloc(t - x/2.d0 + (9 - z) * rac3sur2) &
-        + rac3sur2 * ricker_Bielak_veloc(t - x/2.d0 - (9 - z) * rac3sur2) &
-        + rac3 * ricker_Bielak_veloc(t - x/2.d0)
-      veloc_vert = - HALF * ricker_Bielak_veloc(t - x/2.d0 + (9 - z) * rac3sur2) &
-        + HALF * ricker_Bielak_veloc(t - x/2.d0 - (9 - z) * rac3sur2)
+      veloc_horiz = (sqrt(3.d0)/2.d0) * ricker_Bielak_veloc(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
+        + (sqrt(3.d0)/2.d0) * ricker_Bielak_veloc(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0)) &
+        + sqrt(3.d0) * ricker_Bielak_veloc(t - x/2.d0)
+      veloc_vert = - HALF * ricker_Bielak_veloc(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
+        + HALF * ricker_Bielak_veloc(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0))
 
   end subroutine compute_Bielak_conditions
 

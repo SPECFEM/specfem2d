@@ -87,8 +87,6 @@
   double precision, parameter :: time_offset = 3.575d0
   double precision, parameter :: f0_ricker_Bielak = 1.d0
   double precision, parameter :: a = PI*PI*f0_ricker_Bielak*f0_ricker_Bielak
-  double precision, parameter :: rac3 = 1.7320508075688772935d0
-  double precision, parameter :: rac3sur2 = rac3 / 2.d0
 
 ! non linear display to enhance small amplitudes in color images
   double precision, parameter :: POWER_DISPLAY_COLOR = 0.30d0

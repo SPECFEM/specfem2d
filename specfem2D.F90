@@ -1471,7 +1471,8 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     else
 
 ! compute analytical initial plane wave field
-      print *,'computing analytical initial plane wave field for SV wave at 30 degrees and Poisson = 0.25'
+! the analytical expression below is specific to an SV wave at 30 degrees and Poisson = 0.3333
+      print *,'computing analytical initial plane wave field for SV wave at 30 degrees and Poisson = 0.3333'
 
       do i = 1,npoin
 
@@ -1482,25 +1483,25 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
         t = 0.d0 + time_offset
 
 ! initial analytical displacement
-        displ_elastic(1,i) = rac3sur2 * ricker_Bielak_displ(t - x/2.d0 + (9 - z) * rac3sur2) &
-          + rac3sur2 * ricker_Bielak_displ(t - x/2.d0 - (9 - z) * rac3sur2) &
-          + rac3 * ricker_Bielak_displ(t - x/2.d0)
-        displ_elastic(2,i) = - HALF * ricker_Bielak_displ(t - x/2.d0 + (9 - z) * rac3sur2) &
-          + HALF * ricker_Bielak_displ(t - x/2.d0 - (9 - z) * rac3sur2)
+        displ_elastic(1,i) = (sqrt(3.d0)/2.d0) * ricker_Bielak_displ(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
+          + (sqrt(3.d0)/2.d0) * ricker_Bielak_displ(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0)) &
+          + sqrt(3.d0) * ricker_Bielak_displ(t - x/2.d0)
+        displ_elastic(2,i) = - HALF * ricker_Bielak_displ(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
+          + HALF * ricker_Bielak_displ(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0))
 
 ! initial analytical velocity
-        veloc_elastic(1,i) = rac3sur2 * ricker_Bielak_veloc(t - x/2.d0 + (9 - z) * rac3sur2) &
-          + rac3sur2 * ricker_Bielak_veloc(t - x/2.d0 - (9 - z) * rac3sur2) &
-          + rac3 * ricker_Bielak_veloc(t - x/2.d0)
-        veloc_elastic(2,i) = - HALF * ricker_Bielak_veloc(t - x/2.d0 + (9 - z) * rac3sur2) &
-          + HALF * ricker_Bielak_veloc(t - x/2.d0 - (9 - z) * rac3sur2)
+        veloc_elastic(1,i) = (sqrt(3.d0)/2.d0) * ricker_Bielak_veloc(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
+          + (sqrt(3.d0)/2.d0) * ricker_Bielak_veloc(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0)) &
+          + sqrt(3.d0) * ricker_Bielak_veloc(t - x/2.d0)
+        veloc_elastic(2,i) = - HALF * ricker_Bielak_veloc(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
+          + HALF * ricker_Bielak_veloc(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0))
 
 ! initial analytical acceleration
-        accel_elastic(1,i) = rac3sur2 * ricker_Bielak_accel(t - x/2.d0 + (9 - z) * rac3sur2) &
-          + rac3sur2 * ricker_Bielak_accel(t - x/2.d0 - (9 - z) * rac3sur2) &
-          + rac3 * ricker_Bielak_accel(t - x/2.d0)
-        accel_elastic(2,i) = - HALF * ricker_Bielak_accel(t - x/2.d0 + (9 - z) * rac3sur2) &
-          + HALF * ricker_Bielak_accel(t - x/2.d0 - (9 - z) * rac3sur2)
+        accel_elastic(1,i) = (sqrt(3.d0)/2.d0) * ricker_Bielak_accel(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
+          + (sqrt(3.d0)/2.d0) * ricker_Bielak_accel(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0)) &
+          + sqrt(3.d0) * ricker_Bielak_accel(t - x/2.d0)
+        accel_elastic(2,i) = - HALF * ricker_Bielak_accel(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
+          + HALF * ricker_Bielak_accel(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0))
 
       enddo
 

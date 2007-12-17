@@ -9,6 +9,7 @@ xmax                            = 10000.d0        # abscissa of right side of th
 nx                              = 134             # number of elements along X
 ngnod                           = 9              # number of control nodes per element (4 or 9)
 initialfield                    = .false.        # use a plane wave as source or not
+add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
 assign_external_model           = .false.        # define external earth model or not
 TURN_ANISOTROPY_ON              = .false.        # turn anisotropy on or off for solid medium
 TURN_ATTENUATION_ON             = .false.        # turn attenuation on or off for solid medium
