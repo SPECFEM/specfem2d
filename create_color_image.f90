@@ -159,10 +159,10 @@
         vpmin = min(vpmin,image_color_vp_display(ix,iy))
         vpmax = max(vpmax,image_color_vp_display(ix,iy))
       endif
-      
+
     enddo
   enddo
-  
+
 ! in the PNM format, the image starts in the upper-left corner
   do iy=NY,1,-1
     do ix=1,NX

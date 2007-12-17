@@ -35,8 +35,8 @@ absorbtop                       = .false.
 absorbleft                      = .true.
 
 # time step parameters
-nt                              = 20000            # total number of time steps
-deltat                          = 6.25e-4        # duration of a time step
+nt                              = 2000             # total number of time steps
+deltat                          = 1.e-2          # duration of a time step
 
 # source parameters
 source_surf                     = .true.        # source inside the medium or at the surface
@@ -72,7 +72,7 @@ zfin                            = 0.          # last receiver z in meters (ignor
 enreg_surf                      = .true.         # receivers inside the medium or at the surface
 
 # display parameters
-NTSTEP_BETWEEN_OUTPUT_INFO      = 500            # display frequency in time steps
+NTSTEP_BETWEEN_OUTPUT_INFO      = 100            # display frequency in time steps
 output_postscript_snapshot      = .true.         # output Postscript snapshot of the results
 output_color_image              = .true.         # output color image of the results
 imagetype                       = 1              # display 1=displ 2=veloc 3=accel 4=pressure
