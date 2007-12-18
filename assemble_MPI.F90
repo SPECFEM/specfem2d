@@ -761,12 +761,10 @@ subroutine exit_MPI(error_msg)
   write(*,*) 'Error detected, aborting MPI... proc '
 
   ! stop all the MPI processes, and exit
-  ! on some machines, MPI_FINALIZE needs to be called before MPI_ABORT
 #ifdef USE_MPI
   call MPI_ABORT(MPI_COMM_WORLD,30,ier)
-  call MPI_FINALIZE(ier)
-
 #endif
+
   stop 'error, program ended in exit_MPI'
 
 end subroutine exit_MPI
