@@ -83,11 +83,6 @@
 ! was found by trial and error
   double precision, parameter :: SOURCE_DECAY_MIMIC_TRIANGLE = 1.628d0
 
-! for the analytical initial plane wave source for Bielak conditions
-  double precision, parameter :: time_offset = 3.575d0
-  double precision, parameter :: f0_ricker_Bielak = 1.d0
-  double precision, parameter :: a = PI*PI*f0_ricker_Bielak*f0_ricker_Bielak
-
 ! non linear display to enhance small amplitudes in color images
   double precision, parameter :: POWER_DISPLAY_COLOR = 0.30d0
 

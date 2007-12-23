@@ -1,7 +1,7 @@
 
 # title of job, and file that contains interface data
-title                           = Test for Abel Balanche UMR 6538 Brest
-interfacesfile                  = interfaces_Abel_Brest_bathymetry.dat
+title                           = Calcul Mexique Alejandro
+interfacesfile                  = interfaces_no_canyon.dat
 
 # data concerning mesh, when generated using third-party app (more info in README)
 read_external_mesh              = .false.
@@ -18,11 +18,11 @@ partitionning_strategy          = 01110 #b{strat=m{asc=g,low=g,rat=1.0,type=h,ve
                                                  
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
-xmax                            = 10000.d0        # abscissa of right side of the model
-nx                              = 134             # number of elements along X
-ngnod                           = 9              # number of control nodes per element (4 or 9)
+xmax                            = 19.d0        # abscissa of right side of the model
+nx                              = 70             # number of elements along X
+ngnod                           = 4              # number of control nodes per element (4 or 9)
 initialfield                    = .false.        # use a plane wave as source or not
-add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
+add_Bielak_conditions           = .true.        # add Bielak conditions or not if initial plane wave
 assign_external_model           = .false.        # define external earth model or not
 TURN_ANISOTROPY_ON              = .false.        # turn anisotropy on or off for solid medium
 TURN_ATTENUATION_ON             = .false.        # turn attenuation on or off for solid medium
@@ -35,17 +35,17 @@ absorbtop                       = .false.
 absorbleft                      = .true.
 
 # time step parameters
-nt                              = 3000           # total number of time steps
-deltat                          = 1.d-3          # duration of a time step
+nt                              = 5000           # total number of time steps
+deltat                          = 2.e-3          # duration of a time step
 
 # source parameters
 source_surf                     = .false.        # source inside the medium or at the surface
-xs                              = 4000.          # source location x in meters
-zs                              = -7000.          # source location z in meters
+xs                              = 2.          # source location x in meters
+zs                              = 3.          # source location z in meters
 source_type                     = 1              # elastic force or acoustic pressure = 1 or moment tensor = 2
 time_function_type              = 1              # Ricker = 1, first derivative = 2, Gaussian = 3, Dirac = 4, Heaviside = 5
-f0                              = 8.0           # dominant source frequency (Hz) if not Dirac or Heaviside
-angleforce                      = 0.             # angle of the source (for a force only)
+f0                              = 1.0           # dominant source frequency (Hz) if not Dirac or Heaviside
+angleforce                      = 30.             # angle of the source (for a force only)
 Mxx                             = 1.             # Mxx component (for a moment tensor source only)
 Mzz                             = 1.             # Mzz component (for a moment tensor source only)
 Mxz                             = 0.             # Mxz component (for a moment tensor source only)
@@ -58,29 +58,21 @@ Qs_attenuation                  = 136.4376068115         # quality factor S for 
 f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, else it is f0
 
 # receiver line parameters for seismograms
-seismotype                      = 4              # record 1=displ 2=veloc 3=accel 4=pressure
+seismotype                      = 1              # record 1=displ 2=veloc 3=accel 4=pressure
 generate_STATIONS               = .true.         # creates a STATION file in ./DATA
-nreceiverlines                  = 2              # number of receiver lines
+nreceiverlines                  = 1              # number of receiver lines
 anglerec                        = 0.d0           # angle to rotate components at receivers
 
-# first receiver line (in the ocean)
-nrec                            = 11             # number of receivers
-xdeb                            = 2000.           # first receiver x in meters
-zdeb                            = -2000.          # first receiver z in meters
-xfin                            = 8000.          # last receiver x in meters (ignored if onlyone receiver)
-zfin                            = -2000.          # last receiver z in meters (ignored if onlyone receiver)
-enreg_surf                      = .false.         # receivers inside the medium or at the surface
-
-# second receiver line (in the solid)
-nrec                            = 11             # number of receivers
-xdeb                            = 2000.           # first receiver x in meters
-zdeb                            = -4500.          # first receiver z in meters
-xfin                            = 8000.          # last receiver x in meters (ignored if onlyone receiver)
-zfin                            = -4500.          # last receiver z in meters (ignored if onlyone receiver)
-enreg_surf                      = .false.         # receivers inside the medium or at the surface
+# first receiver line
+nrec                            = 60             # number of receivers
+xdeb                            = 800.           # first receiver x in meters
+zdeb                            = 900.          # first receiver z in meters
+xfin                            = 800.          # last receiver x in meters (ignored if onlyone receiver)
+zfin                            = 900.          # last receiver z in meters (ignored if onlyone receiver)
+enreg_surf                      = .true.         # receivers inside the medium or at the surface
 
 # display parameters
-NTSTEP_BETWEEN_OUTPUT_INFO      = 300            # display frequency in time steps
+NTSTEP_BETWEEN_OUTPUT_INFO      = 250            # display frequency in time steps
 output_postscript_snapshot      = .true.         # output Postscript snapshot of the results
 output_color_image              = .true.         # output color image of the results
 imagetype                       = 1              # display 1=displ 2=veloc 3=accel 4=pressure
@@ -92,17 +84,17 @@ interpol                        = .true.         # interpolation of the display 
 pointsdisp                      = 6              # points for interpolation of display (set to 1 for lower-left corner only)
 subsamp                         = 1              # subsampling of color snapshots
 sizemax_arrows                  = 1.d0           # maximum size of arrows on vector plots in cm
-gnuplot                         = .false.        # generate a GNUPLOT file for the grid
+gnuplot                         = .true .        # generate a GNUPLOT file for the grid
 outputgrid                      = .false.        # save the grid in a text file or not
 
 # velocity and density models
-nbmodels                        = 2              # nb of different models
+nbmodels                        = 1              # nb of different models
 # define models as (model_number,1,rho,vp,vs,0,0) or (model_number,2,rho,c11,c13,c33,c44)
 # set vs to zero to make a given model acoustic
 # the mesh can contain both acoustic and elastic models simultaneously
-1 1 1020 1500 0 0 0
-2 1 2500 5500 3175.5196 0 0
+#1 1 1.00d0 1.732050807d0 1.0d0 0 0
+1 1 1.d0 2.d0 1.d0 0 0
+
 # define the different regions of the model in the (nx,nz) spectral element mesh
-nbregions                       = 2              # nb of regions and model number for each
-1 134  1 44 2
-1 134 45 84 1
+nbregions                       = 1              # nb of regions and model number for each
+1 70  1 28 1

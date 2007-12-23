@@ -345,6 +345,9 @@
 ! to compute analytical initial plane wave field
   double precision :: t
   double precision, external :: ricker_Bielak_displ,ricker_Bielak_veloc,ricker_Bielak_accel
+  double precision :: angleforce_refl, c_inc, c_refl, cploc, csloc, denst, lambdaplus2mu, mu, p
+  double precision, dimension(2) :: A_plane, B_plane, C_plane
+  double precision :: PP, PS, SP, SS, z0_source, x0_source, xmax, xmin, zmax, zmin, time_offset
 
 !***********************************************************************
 !
@@ -1443,72 +1446,213 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 !----  read initial fields from external file if needed
 !
   if(initialfield) then
-    write(IOUT,*)
-    write(IOUT,*) 'Reading initial fields from external file...'
-    write(IOUT,*)
-    if(any_acoustic) call exit_MPI('initial field currently implemented for purely elastic simulation only')
+     write(IOUT,*)
+     write(IOUT,*) 'Reading initial fields from external file...'
+     write(IOUT,*)
+     if(any_acoustic) call exit_MPI('initial field currently implemented for purely elastic simulation only')
 
-    if(.not. add_Bielak_conditions) then
+     if(.not. add_Bielak_conditions) then
 
-      open(unit=55,file='OUTPUT_FILES/wavefields.txt',status='unknown')
-      read(55,*) nbpoin
-      if(nbpoin /= npoin) call exit_MPI('Wrong number of points in input file')
-      allocate(displread(NDIM))
-      allocate(velocread(NDIM))
-      allocate(accelread(NDIM))
-      do n = 1,npoin
-        read(55,*) inump, (displread(i), i=1,NDIM), (velocread(i), i=1,NDIM), (accelread(i), i=1,NDIM)
-        if(inump<1 .or. inump>npoin) call exit_MPI('Wrong point number')
-        displ_elastic(:,inump) = displread
-        veloc_elastic(:,inump) = velocread
-        accel_elastic(:,inump) = accelread
-      enddo
-      deallocate(displread)
-      deallocate(velocread)
-      deallocate(accelread)
-      close(55)
+        open(unit=55,file='OUTPUT_FILES/wavefields.txt',status='unknown')
+        read(55,*) nbpoin
+        if(nbpoin /= npoin) call exit_MPI('Wrong number of points in input file')
+        allocate(displread(NDIM))
+        allocate(velocread(NDIM))
+        allocate(accelread(NDIM))
+        do n = 1,npoin
+           read(55,*) inump, (displread(i), i=1,NDIM), (velocread(i), i=1,NDIM), (accelread(i), i=1,NDIM)
+           if(inump<1 .or. inump>npoin) call exit_MPI('Wrong point number')
+           displ_elastic(:,inump) = displread
+           veloc_elastic(:,inump) = velocread
+           accel_elastic(:,inump) = accelread
+        enddo
+        deallocate(displread)
+        deallocate(velocread)
+        deallocate(accelread)
+        close(55)
 
-    else
+     else
 
-! compute analytical initial plane wave field
-! the analytical expression below is specific to an SV wave at 30 degrees and Poisson = 0.3333
-      print *,'computing analytical initial plane wave field for SV wave at 30 degrees and Poisson = 0.3333'
+!!$! compute analytical initial plane wave field
+!!$! the analytical expression below is specific to an SV wave at 30 degrees and Poisson = 0.3333
+!!$      print *,'computing analytical initial plane wave field for SV wave at 30 degrees and Poisson = 0.3333'
+!!$
+!!$      do i = 1,npoin
+!!$
+!!$        x = coord(1,i)
+!!$        z = coord(2,i)
+!!$
+!!$! add a time offset in order for the initial field to be inside the medium
+!!$        t = 0.d0 + time_offset
+!!$
+!!$! initial analytical displacement
+!!$        displ_elastic(1,i) = (sqrt(3.d0)/2.d0) * ricker_Bielak_displ(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
+!!$          + (sqrt(3.d0)/2.d0) * ricker_Bielak_displ(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0)) &
+!!$          + sqrt(3.d0) * ricker_Bielak_displ(t - x/2.d0)
+!!$        displ_elastic(2,i) = - HALF * ricker_Bielak_displ(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
+!!$          + HALF * ricker_Bielak_displ(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0))
+!!$
+!!$! initial analytical velocity
+!!$        veloc_elastic(1,i) = (sqrt(3.d0)/2.d0) * ricker_Bielak_veloc(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
+!!$          + (sqrt(3.d0)/2.d0) * ricker_Bielak_veloc(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0)) &
+!!$          + sqrt(3.d0) * ricker_Bielak_veloc(t - x/2.d0)
+!!$        veloc_elastic(2,i) = - HALF * ricker_Bielak_veloc(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
+!!$          + HALF * ricker_Bielak_veloc(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0))
+!!$
+!!$! initial analytical acceleration
+!!$        accel_elastic(1,i) = (sqrt(3.d0)/2.d0) * ricker_Bielak_accel(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
+!!$          + (sqrt(3.d0)/2.d0) * ricker_Bielak_accel(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0)) &
+!!$          + sqrt(3.d0) * ricker_Bielak_accel(t - x/2.d0)
+!!$        accel_elastic(2,i) = - HALF * ricker_Bielak_accel(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
+!!$          + HALF * ricker_Bielak_accel(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0))
+!!$
+!!$      enddo
+
+      !=======================================================================
+      !
+      !     Calculation of the initialfield for planewave
+      !
+      !=======================================================================
+
+      print *,'Number of grid points: ',npoin
+      print *,'*** calculation of initial planewave ***'
+      if (source_type == 1) then
+         print *,'initial P wave of', angleforce*180.d0/pi, 'degrees introduced...'
+      else if (source_type == 2) then
+         print *,'initial SV wave of', angleforce*180.d0/pi, ' degrees introduced...'
+      else
+         call exit_MPI('Not recognized source_type : 1 for P planewaves, 2 for SV planewaves!!!')
+      endif
+
+      !only implemented for homogeneous media so only 1 material supported
+      if (numat==1) then
+
+         mu = elastcoef(2,numat)
+         lambdaplus2mu  = elastcoef(3,numat)
+         denst = density(numat)
+
+         cploc = sqrt(lambdaplus2mu/denst)
+         csloc = sqrt(mu/denst)
+
+         !P case
+         if (source_type == 1) then
+
+            p=sin(angleforce)/cploc
+            c_inc  = cploc
+            c_refl = csloc
+
+            angleforce_refl = asin(p*csloc)
+
+            !from formulas (5.26) (5.27) p140 in Aki & Richards (1980)
+            PP = (- cos(2.d0*angleforce_refl)**2/csloc**3 + 4.d0*p**2*cos(angleforce)*cos(angleforce_refl)/cploc) / &
+                 (  cos(2.d0*angleforce_refl)**2/csloc**3 + 4.d0*p**2*cos(angleforce)*cos(angleforce_refl)/cploc)
+
+            PS = 4.d0*p*cos(angleforce)*cos(2.d0*angleforce_refl) / &
+                 (csloc**2*(cos(2.d0*angleforce_refl)**2/csloc**3 &
+                 +4.d0*p**2*cos(angleforce)*cos(angleforce_refl)/cploc))
+
+            print *,'reflected convert planewave angle: ', angleforce_refl*180.d0/pi, '\n'
+
+            !from Table 5.1 p141 in Aki & Richards (1980)
+            !we put the oposite sign on z coefficients because z axe is oriented from bottom to top
+            A_plane(1) = sin(angleforce);           A_plane(2) = cos(angleforce)
+            B_plane(1) = PP * sin(angleforce);      B_plane(2) = - PP * cos(angleforce)
+            C_plane(1) = PS * cos(angleforce_refl); C_plane(2) = PS * sin(angleforce_refl)
+
+         !SV case
+         else
+
+            p=sin(angleforce)/csloc
+            c_inc  = csloc
+            c_refl = cploc
+
+            !if this coefficient is over 1, we are over the critical SV wave angle, there can't be a converted P wave
+            if (p*cploc<=1.d0) then
+               angleforce_refl = asin(p*cploc)
+
+               !from formulas (5.30) (5.31) p140 in Aki & Richards (1980)
+               SS = (cos(2.d0*angleforce_refl)**2/csloc**3 - 4.d0*p**2*cos(angleforce)*cos(angleforce_refl)/cploc) / &
+                    (cos(2.d0*angleforce_refl)**2/csloc**3 + 4.d0*p**2*cos(angleforce)*cos(angleforce_refl)/cploc)
+               SP = 4.d0*p*cos(angleforce)*cos(2*angleforce) / &
+                    (cploc*csloc*(cos(2.d0*angleforce)**2/csloc**3&
+                    +4.d0*p**2*cos(angleforce_refl)*cos(angleforce)/cploc))
+
+               print *,'reflected convert planewave angle: ', angleforce_refl*180.d0/pi, '\n'
+
+            else
+               call exit_MPI('can t be treated for now: SV angle too high')
+            endif
+
+            !from Table 5.1 p141 in Aki & Richards (1980)
+            !we put the oposite sign on z coefficients because z axe is oriented from bottom to top
+            A_plane(1) = cos(angleforce);           A_plane(2) = - sin(angleforce)
+            B_plane(1) = SS * cos(angleforce);      B_plane(2) = SS * sin(angleforce)
+            C_plane(1) = SP * sin(angleforce_refl); C_plane(2) = - SP * cos(angleforce_refl)
+
+         endif
+
+      else
+         call exit_MPI('yet impossible to have several materials with planewaves')
+      endif
+
+      ! get minimum and maximum values of mesh coordinates
+      xmin = minval(coord(1,:))
+      zmin = minval(coord(2,:))
+      xmax = maxval(coord(1,:))
+      zmax = maxval(coord(2,:))
+
+
+      !initializing of the time offset to put the planewave not to close of the irregularity on the free surface
+      if (abs(angleforce)<20.d0*pi/180.d0) then
+         time_offset=-1.d0*zmax/3.d0/c_inc
+      else
+         time_offset=0.d0
+      endif
+
+      !to center rightly the wave
+      z0_source=zmax
+      x0_source=xmin + 1.d0*(xmax-xmin)/3.d0
 
       do i = 1,npoin
 
-        x = coord(1,i)
-        z = coord(2,i)
+         x = coord(1,i)
+         z = coord(2,i)
 
-! add a time offset in order for the initial field to be inside the medium
-        t = 0.d0 + time_offset
+         !z is from bottom to top so we take -z to make parallele with Aki & Richards
+         z = z0_source - z
+         x = x - x0_source
 
-! initial analytical displacement
-        displ_elastic(1,i) = (sqrt(3.d0)/2.d0) * ricker_Bielak_displ(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
-          + (sqrt(3.d0)/2.d0) * ricker_Bielak_displ(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0)) &
-          + sqrt(3.d0) * ricker_Bielak_displ(t - x/2.d0)
-        displ_elastic(2,i) = - HALF * ricker_Bielak_displ(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
-          + HALF * ricker_Bielak_displ(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0))
+         t = 0.d0 + time_offset
 
-! initial analytical velocity
-        veloc_elastic(1,i) = (sqrt(3.d0)/2.d0) * ricker_Bielak_veloc(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
-          + (sqrt(3.d0)/2.d0) * ricker_Bielak_veloc(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0)) &
-          + sqrt(3.d0) * ricker_Bielak_veloc(t - x/2.d0)
-        veloc_elastic(2,i) = - HALF * ricker_Bielak_veloc(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
-          + HALF * ricker_Bielak_veloc(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0))
+         !formulas of the initial displacement for a planewave from Aki & Richards (1980)
+         displ_elastic(1,i) = A_plane(1) * ricker_Bielak_displ(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
+              + B_plane(1) * ricker_Bielak_displ(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
+              + C_plane(1) * ricker_Bielak_displ(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
+         displ_elastic(2,i) = A_plane(2) * ricker_Bielak_displ(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
+              + B_plane(2) * ricker_Bielak_displ(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
+              + C_plane(2) * ricker_Bielak_displ(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
 
-! initial analytical acceleration
-        accel_elastic(1,i) = (sqrt(3.d0)/2.d0) * ricker_Bielak_accel(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
-          + (sqrt(3.d0)/2.d0) * ricker_Bielak_accel(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0)) &
-          + sqrt(3.d0) * ricker_Bielak_accel(t - x/2.d0)
-        accel_elastic(2,i) = - HALF * ricker_Bielak_accel(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
-          + HALF * ricker_Bielak_accel(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0))
+         !formulas of the initial velocity for a planewave (first derivative in time of the displacement)
+         veloc_elastic(1,i) = A_plane(1) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
+              + B_plane(1) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
+              + C_plane(1) * ricker_Bielak_veloc(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
+         veloc_elastic(2,i) = A_plane(2) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
+              + B_plane(2) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
+              + C_plane(2) * ricker_Bielak_veloc(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
+
+         !formulas of the initial acceleration for a planewave (first derivative in time of the velocity)
+         accel_elastic(1,i) = A_plane(1) * ricker_Bielak_accel(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
+              + B_plane(1) * ricker_Bielak_accel(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
+              + C_plane(1) * ricker_Bielak_accel(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
+         accel_elastic(2,i) = A_plane(2) * ricker_Bielak_accel(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
+              + B_plane(2) * ricker_Bielak_accel(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
+              + C_plane(2) * ricker_Bielak_accel(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
 
       enddo
-
-    endif
+    endif !add_Bielak
 
     write(IOUT,*) 'Max norm of initial elastic displacement = ',maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(2,:)**2))
-  endif
+  endif !initialfield
 
   deltatsquare = deltat * deltat
   deltatcube = deltatsquare * deltat
@@ -2056,7 +2200,8 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                e1,e11,e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
-               nspec_outer, ispec_outer_to_glob,.true.,deltat,coord,add_Bielak_conditions)
+               nspec_outer, ispec_outer_to_glob,.true.,deltat,coord,add_Bielak_conditions, x0_source, z0_source, &
+               A_plane, B_plane, C_plane, angleforce_refl, PP, PS, SP, SS, c_inc, c_refl, time_offset, f0)
 
 ! *********************************************************
 ! ************* add coupling with the acoustic side
@@ -2154,7 +2299,8 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                e1,e11,e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
-               nspec_inner, ispec_inner_to_glob,.false.,deltat,coord,add_Bielak_conditions)
+               nspec_inner, ispec_inner_to_glob,.false.,deltat,coord,add_Bielak_conditions, x0_source, z0_source, &
+               A_plane, B_plane, C_plane, angleforce_refl, PP, PS, SP, SS, c_inc, c_refl, time_offset, f0)
 
 ! assembling accel_elastic for elastic elements (receive)
 #ifdef USE_MPI

@@ -41,15 +41,16 @@
 !========================================================================
 
   subroutine compute_forces_elastic(npoin,nspec,nelemabs,numat,iglob_source, &
-               ispec_selected_source,is_proc_source,source_type,it,NSTEP,anyabs,assign_external_model, &
-               initialfield,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,angleforce,deltatcube, &
-               deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,elastic,codeabs, &
-               accel_elastic,veloc_elastic,displ_elastic,density,elastcoef,xix,xiz,gammax,gammaz, &
-               jacobian,vpext,vsext,rhoext,source_time_function,sourcearray,e1,e11, &
-               e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
-               dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
-               hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
-               nspec_inner_outer,ispec_inner_outer_to_glob,num_phase_inner_outer,deltat,coord,add_Bielak_conditions)
+       ispec_selected_source,is_proc_source,source_type,it,NSTEP,anyabs,assign_external_model, &
+       initialfield,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,angleforce,deltatcube, &
+       deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,elastic,codeabs, &
+       accel_elastic,veloc_elastic,displ_elastic,density,elastcoef,xix,xiz,gammax,gammaz, &
+       jacobian,vpext,vsext,rhoext,source_time_function,sourcearray,e1,e11, &
+       e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
+       dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
+       hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
+       nspec_inner_outer,ispec_inner_outer_to_glob,num_phase_inner_outer,deltat,coord,add_Bielak_conditions, &
+       x0_source, z0_source, A_plane, B_plane, C_plane, angleforce_refl, PP, PS, SP, SS, c_inc, c_refl, time_offset,f0)
 
 ! compute forces for the elastic elements
 
@@ -128,7 +129,8 @@
 ! for analytical initial plane wave for Bielak's conditions
   double precision :: veloc_horiz,veloc_vert,dxUx,dzUx,dxUz,dzUz,traction_x_t0,traction_z_t0,deltat
   double precision, dimension(NDIM,npoin), intent(in) :: coord
-  double precision, external :: rickertest,rickertestvel
+  double precision x0_source, z0_source, angleforce_refl, PP, PS, SP, SS, c_inc, c_refl, time_offset, f0
+  double precision, dimension(NDIM) :: A_plane, B_plane, C_plane
 
 ! only for the first call to compute_forces_elastic (during computation on outer elements)
   if ( num_phase_inner_outer ) then
@@ -317,8 +319,10 @@
 
 ! for analytical initial plane wave for Bielak's conditions
 ! left or right edge, horizontal normal vector
-          if(add_Bielak_conditions) then
-            call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert)
+          if(add_Bielak_conditions .and. initialfield) then
+            call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                 x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, PP, PS, SP, SS, &
+                 c_inc, c_refl, time_offset,f0)
             traction_x_t0 = (lambdal_relaxed+2*mul_relaxed)*dxUx + lambdal_relaxed*dzUz
             traction_z_t0 = mul_relaxed*(dxUz + dzUx)
           else
@@ -375,8 +379,10 @@
 
 ! for analytical initial plane wave for Bielak's conditions
 ! left or right edge, horizontal normal vector
-          if(add_Bielak_conditions) then
-            call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert)
+          if(add_Bielak_conditions .and. initialfield) then
+            call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                 x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, PP, PS, SP, SS, &
+                 c_inc, c_refl, time_offset,f0)
             traction_x_t0 = (lambdal_relaxed+2*mul_relaxed)*dxUx + lambdal_relaxed*dzUz
             traction_z_t0 = mul_relaxed*(dxUz + dzUx)
           else
@@ -439,8 +445,10 @@
 
 ! for analytical initial plane wave for Bielak's conditions
 ! top or bottom edge, vertical normal vector
-          if(add_Bielak_conditions) then
-            call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert)
+          if(add_Bielak_conditions .and. initialfield) then
+            call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                 x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, PP, PS, SP, SS, &
+                 c_inc, c_refl, time_offset,f0)
             traction_x_t0 = mul_relaxed*(dxUz + dzUx)
             traction_z_t0 = lambdal_relaxed*dxUx + (lambdal_relaxed+2*mul_relaxed)*dzUz
           else
@@ -503,8 +511,10 @@
 
 ! for analytical initial plane wave for Bielak's conditions
 ! top or bottom edge, vertical normal vector
-          if(add_Bielak_conditions) then
-            call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert)
+          if(add_Bielak_conditions .and. initialfield) then
+            call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                 x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, PP, PS, SP, SS, &
+                 c_inc, c_refl, time_offset,f0)
             traction_x_t0 = mul_relaxed*(dxUz + dzUx)
             traction_z_t0 = lambdal_relaxed*dxUx + (lambdal_relaxed+2*mul_relaxed)*dzUz
           else
