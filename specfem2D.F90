@@ -1510,21 +1510,21 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
       !=======================================================================
       !
-      !     Calculation of the initialfield for planewave
+      !     Calculation of the initialfield for plane wave
       !
       !=======================================================================
 
       print *,'Number of grid points: ',npoin
-      print *,'*** calculation of initial planewave ***'
+      print *,'*** calculation of initial plane wave ***'
       if (source_type == 1) then
          print *,'initial P wave of', angleforce*180.d0/pi, 'degrees introduced...'
       else if (source_type == 2) then
          print *,'initial SV wave of', angleforce*180.d0/pi, ' degrees introduced...'
       else
-         call exit_MPI('Not recognized source_type : 1 for P planewaves, 2 for SV planewaves!!!')
+         call exit_MPI('Unrecognized source_type: should be 1 for plane P waves, 2 for plane SV waves!')
       endif
 
-      !only implemented for homogeneous media so only 1 material supported
+      ! only implemented for homogeneous media therefore only 1 material supported
       if (numat==1) then
 
          mu = elastcoef(2,numat)
@@ -1534,7 +1534,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
          cploc = sqrt(lambdaplus2mu/denst)
          csloc = sqrt(mu/denst)
 
-         !P case
+         ! P wave case
          if (source_type == 1) then
 
             p=sin(angleforce)/cploc
@@ -1543,7 +1543,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
             angleforce_refl = asin(p*csloc)
 
-            !from formulas (5.26) (5.27) p140 in Aki & Richards (1980)
+            ! from formulas (5.26) and (5.27) p 140 in Aki & Richards (1980)
             PP = (- cos(2.d0*angleforce_refl)**2/csloc**3 + 4.d0*p**2*cos(angleforce)*cos(angleforce_refl)/cploc) / &
                  (  cos(2.d0*angleforce_refl)**2/csloc**3 + 4.d0*p**2*cos(angleforce)*cos(angleforce_refl)/cploc)
 
@@ -1551,40 +1551,40 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                  (csloc**2*(cos(2.d0*angleforce_refl)**2/csloc**3 &
                  +4.d0*p**2*cos(angleforce)*cos(angleforce_refl)/cploc))
 
-            print *,'reflected convert planewave angle: ', angleforce_refl*180.d0/pi, '\n'
+            print *,'reflected convert plane wave angle: ', angleforce_refl*180.d0/pi, '\n'
 
-            !from Table 5.1 p141 in Aki & Richards (1980)
-            !we put the oposite sign on z coefficients because z axe is oriented from bottom to top
+            ! from Table 5.1 p141 in Aki & Richards (1980)
+            ! we put the opposite sign on z coefficients because z axis is oriented from bottom to top
             A_plane(1) = sin(angleforce);           A_plane(2) = cos(angleforce)
             B_plane(1) = PP * sin(angleforce);      B_plane(2) = - PP * cos(angleforce)
             C_plane(1) = PS * cos(angleforce_refl); C_plane(2) = PS * sin(angleforce_refl)
 
-         !SV case
+         ! SV wave case
          else
 
             p=sin(angleforce)/csloc
             c_inc  = csloc
             c_refl = cploc
 
-            !if this coefficient is over 1, we are over the critical SV wave angle, there can't be a converted P wave
+            ! if this coefficient is greater than 1, we are beyond the critical SV wave angle and there cannot be a converted P wave
             if (p*cploc<=1.d0) then
                angleforce_refl = asin(p*cploc)
 
-               !from formulas (5.30) (5.31) p140 in Aki & Richards (1980)
+               ! from formulas (5.30) and (5.31) p 140 in Aki & Richards (1980)
                SS = (cos(2.d0*angleforce_refl)**2/csloc**3 - 4.d0*p**2*cos(angleforce)*cos(angleforce_refl)/cploc) / &
                     (cos(2.d0*angleforce_refl)**2/csloc**3 + 4.d0*p**2*cos(angleforce)*cos(angleforce_refl)/cploc)
                SP = 4.d0*p*cos(angleforce)*cos(2*angleforce) / &
                     (cploc*csloc*(cos(2.d0*angleforce)**2/csloc**3&
                     +4.d0*p**2*cos(angleforce_refl)*cos(angleforce)/cploc))
 
-               print *,'reflected convert planewave angle: ', angleforce_refl*180.d0/pi, '\n'
+               print *,'reflected convert plane wave angle: ', angleforce_refl*180.d0/pi, '\n'
 
             else
-               call exit_MPI('can t be treated for now: SV angle too high')
+               call exit_MPI('cannot be included for now: SV angle too high, beyond critical angle')
             endif
 
-            !from Table 5.1 p141 in Aki & Richards (1980)
-            !we put the oposite sign on z coefficients because z axe is oriented from bottom to top
+            ! from Table 5.1 p141 in Aki & Richards (1980)
+            ! we put the opposite sign on z coefficients because z axis is oriented from bottom to top
             A_plane(1) = cos(angleforce);           A_plane(2) = - sin(angleforce)
             B_plane(1) = SS * cos(angleforce);      B_plane(2) = SS * sin(angleforce)
             C_plane(1) = SP * sin(angleforce_refl); C_plane(2) = - SP * cos(angleforce_refl)
@@ -1592,7 +1592,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
          endif
 
       else
-         call exit_MPI('yet impossible to have several materials with planewaves')
+         call exit_MPI('not possible for now to have several materials with a plane wave (but could be done one day)')
       endif
 
       ! get minimum and maximum values of mesh coordinates
@@ -1601,15 +1601,14 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       xmax = maxval(coord(1,:))
       zmax = maxval(coord(2,:))
 
-
-      !initializing of the time offset to put the planewave not to close of the irregularity on the free surface
+      ! initialize the time offset to put the plane wave not too close to the free surface topography
       if (abs(angleforce)<20.d0*pi/180.d0) then
          time_offset=-1.d0*zmax/3.d0/c_inc
       else
          time_offset=0.d0
       endif
 
-      !to center rightly the wave
+      ! to correctly center the initial plane wave in the mesh
       z0_source=zmax
       x0_source=xmin + 1.d0*(xmax-xmin)/3.d0
 
@@ -1618,13 +1617,13 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
          x = coord(1,i)
          z = coord(2,i)
 
-         !z is from bottom to top so we take -z to make parallele with Aki & Richards
+         ! z is from bottom to top therefore we take -z to make parallel with Aki & Richards
          z = z0_source - z
          x = x - x0_source
 
          t = 0.d0 + time_offset
 
-         !formulas of the initial displacement for a planewave from Aki & Richards (1980)
+         ! formulas for the initial displacement for a plane wave from Aki & Richards (1980)
          displ_elastic(1,i) = A_plane(1) * ricker_Bielak_displ(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
               + B_plane(1) * ricker_Bielak_displ(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
               + C_plane(1) * ricker_Bielak_displ(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
@@ -1632,7 +1631,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
               + B_plane(2) * ricker_Bielak_displ(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
               + C_plane(2) * ricker_Bielak_displ(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
 
-         !formulas of the initial velocity for a planewave (first derivative in time of the displacement)
+         ! formulas for the initial velocity for a plane wave (first derivative in time of the displacement)
          veloc_elastic(1,i) = A_plane(1) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
               + B_plane(1) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
               + C_plane(1) * ricker_Bielak_veloc(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
@@ -1640,7 +1639,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
               + B_plane(2) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
               + C_plane(2) * ricker_Bielak_veloc(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
 
-         !formulas of the initial acceleration for a planewave (first derivative in time of the velocity)
+         ! formulas for the initial acceleration for a plane wave (second derivative in time of the displacement)
          accel_elastic(1,i) = A_plane(1) * ricker_Bielak_accel(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
               + B_plane(1) * ricker_Bielak_accel(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
               + C_plane(1) * ricker_Bielak_accel(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
@@ -1649,10 +1648,10 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
               + C_plane(2) * ricker_Bielak_accel(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
 
       enddo
-    endif !add_Bielak
+    endif ! add_Bielak
 
     write(IOUT,*) 'Max norm of initial elastic displacement = ',maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(2,:)**2))
-  endif !initialfield
+  endif ! initialfield
 
   deltatsquare = deltat * deltat
   deltatcube = deltatsquare * deltat
