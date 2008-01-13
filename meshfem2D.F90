@@ -1222,7 +1222,7 @@ program meshfem2D
 
 !--- compute position of the receivers and write the STATIONS file
 
-  if ( generate_STATIONS ) then
+  if (generate_STATIONS) then
   print *
   print *,'writing the DATA/STATIONS file'
   print *
@@ -1238,7 +1238,6 @@ program meshfem2D
   print *
 
   open(unit=15,file='DATA/STATIONS',status='unknown')
-  write(15,*) nrec_total
 
   irec_global_number = 0
 

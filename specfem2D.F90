@@ -137,8 +137,10 @@
   double precision, dimension(:), allocatable :: coorgread
 
 ! receiver information
+  integer :: nrec,ios
   integer, dimension(:), allocatable :: ispec_selected_rec
   double precision, dimension(:), allocatable :: xi_receiver,gamma_receiver,st_xval,st_zval
+  character(len=150) dummystring
 
 ! for seismograms
   double precision, dimension(:,:), allocatable :: sisux,sisuz
@@ -204,7 +206,7 @@
 
   double precision :: vpmin,vpmax
 
-  integer :: colors,numbers,subsamp,imagetype,NTSTEP_BETWEEN_OUTPUT_INFO,NTSTEP_BETWEEN_OUTPUT_SEISMO,nrec,seismotype
+  integer :: colors,numbers,subsamp,imagetype,NTSTEP_BETWEEN_OUTPUT_INFO,NTSTEP_BETWEEN_OUTPUT_SEISMO,seismotype
   integer :: numat,ngnod,nspec,pointsdisp,nelemabs,nelem_acoustic_surface,ispecabs
 
   logical interpol,meshvect,modelvect,boundvect,assign_external_model,initialfield, &
@@ -795,15 +797,19 @@
     enddo
   enddo
 
-! read total number of receivers
-  open(unit=IIN,file='DATA/STATIONS',status='old')
-  read(IIN,*) nrec
+! get number of stations from receiver file
+  open(unit=IIN,file='DATA/STATIONS',iostat=ios,status='old',action='read')
+  nrec = 0
+  do while(ios == 0)
+    read(IIN,"(a)",iostat=ios) dummystring
+    if(ios == 0) nrec = nrec + 1
+  enddo
   close(IIN)
 
-  if ( myrank == 0 ) then
-  write(IOUT,*)
-  write(IOUT,*) 'Total number of receivers = ',nrec
-  write(IOUT,*)
+  if (myrank == 0) then
+    write(IOUT,*)
+    write(IOUT,*) 'Total number of receivers = ',nrec
+    write(IOUT,*)
   endif
 
   if(nrec < 1) call exit_MPI('need at least one receiver')
