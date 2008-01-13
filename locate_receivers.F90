@@ -105,21 +105,17 @@
 
 ! **************
 
-  if ( myrank == 0 ) then
-  write(IOUT,*)
-  write(IOUT,*) '********************'
-  write(IOUT,*) ' locating receivers'
-  write(IOUT,*) '********************'
-  write(IOUT,*)
-  write(IOUT,*) 'reading receiver information from the DATA/STATIONS file'
-  write(IOUT,*)
+  if (myrank == 0) then
+    write(IOUT,*)
+    write(IOUT,*) '********************'
+    write(IOUT,*) ' locating receivers'
+    write(IOUT,*) '********************'
+    write(IOUT,*)
+    write(IOUT,*) 'reading receiver information from the DATA/STATIONS file'
+    write(IOUT,*)
   endif
 
-! get number of stations from receiver file
   open(unit=1,file='DATA/STATIONS',status='old',action='read')
-  read(1,*) nrec_dummy
-
-  if(nrec_dummy /= nrec) call exit_MPI('problem with number of receivers')
 
 ! allocate memory for arrays using number of stations
   allocate(final_distance(nrec))
