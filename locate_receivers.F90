@@ -66,7 +66,7 @@
 ! array containing coordinates of the points
   double precision coord(NDIM,npoin)
 
-  integer nrec_dummy,irec,i,j,ispec,iglob,iter_loop,ix_initial_guess,iz_initial_guess
+  integer irec,i,j,ispec,iglob,iter_loop,ix_initial_guess,iz_initial_guess
 
   double precision x_source,z_source,dist,stele,stbur
   double precision, dimension(nrec)  :: distance_receiver
