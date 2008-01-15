@@ -2206,7 +2206,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
                nspec_outer, ispec_outer_to_glob,.true.,deltat,coord,add_Bielak_conditions, x0_source, z0_source, &
-               A_plane, B_plane, C_plane, angleforce_refl, PP, PS, SP, SS, c_inc, c_refl, time_offset, f0)
+               A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset, f0)
 
 ! *********************************************************
 ! ************* add coupling with the acoustic side
@@ -2305,7 +2305,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
                nspec_inner, ispec_inner_to_glob,.false.,deltat,coord,add_Bielak_conditions, x0_source, z0_source, &
-               A_plane, B_plane, C_plane, angleforce_refl, PP, PS, SP, SS, c_inc, c_refl, time_offset, f0)
+               A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset, f0)
 
 ! assembling accel_elastic for elastic elements (receive)
 #ifdef USE_MPI

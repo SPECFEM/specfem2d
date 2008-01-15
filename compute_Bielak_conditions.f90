@@ -43,7 +43,7 @@
 ! compute analytical initial plane wave for Bielak's conditions
 
 subroutine compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-     x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, PP, PS, SP, SS, &
+     x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
      c_inc, c_refl, time_offset,f0)
 
   implicit none
@@ -62,7 +62,7 @@ subroutine compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,
 
   double precision, external :: ricker_Bielak_veloc
 
-  double precision x0_source, z0_source, angleforce, angleforce_refl, PP, PS, SP, SS
+  double precision x0_source, z0_source, angleforce, angleforce_refl
   double precision c_inc, c_refl, time_offset, f0
   double precision, dimension(NDIM) :: A_plane, B_plane, C_plane
 
