@@ -32,5 +32,5 @@ To use the code:
 
 - there are a few useful scripts and Fortran routines in directory UTILS
 
-- I have made many modifications in the source code recently, I have carefully tested them but if you find bugs please send me an email and I will fix them and send you the patch
+- if you find bugs please send an email to cig-seismo AT geodynamics.org and the developers will try to fix them and send you an updated version
 
