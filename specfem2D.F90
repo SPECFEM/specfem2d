@@ -296,7 +296,7 @@
   integer ihours,iminutes,iseconds,int_tCPU
   double precision :: time_start,time_end,tCPU
 
-! for MPI and partitionning
+! for MPI and partitioning
   integer  :: ier
   integer  :: nproc
   integer  :: myrank

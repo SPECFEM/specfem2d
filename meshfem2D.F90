@@ -186,10 +186,10 @@ program meshfem2D
   integer, dimension(:), pointer  :: ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
        jbegin_left,jend_left,jbegin_right,jend_right
 
-! variables used for partitionning
+! variables used for partitioning
   integer  :: nproc
-  integer  :: partitionning_method
-  character(len=256)  :: partitionning_strategy
+  integer  :: partitioning_method
+  character(len=256)  :: partitioning_strategy
   character(len=256)  :: scotch_strategy
   integer, dimension(0:4)  :: metis_options
   character(len=256)  :: prname
@@ -233,7 +233,7 @@ program meshfem2D
   call read_value_string(IIN,IGNORE_JUNK,free_surface_file)
   call read_value_string(IIN,IGNORE_JUNK,absorbing_surface_file)
 
-! read info about partitionning
+! read info about partitioning
   call read_value_integer(IIN,IGNORE_JUNK,nproc)
   if ( nproc <= 0 ) then
      print *, 'Number of processes (nproc) must be greater than or equal to one.'
@@ -249,26 +249,26 @@ program meshfem2D
 
 #endif
 
-  call read_value_integer(IIN,IGNORE_JUNK,partitionning_method)
-  call read_value_string(IIN,IGNORE_JUNK,partitionning_strategy)
-  select case(partitionning_method)
+  call read_value_integer(IIN,IGNORE_JUNK,partitioning_method)
+  call read_value_string(IIN,IGNORE_JUNK,partitioning_strategy)
+  select case(partitioning_method)
   case(1)
   case(2)
-     partitionning_strategy = trim(partitionning_strategy)
-     if ( partitionning_strategy(1:1) == '0' ) then
+     partitioning_strategy = trim(partitioning_strategy)
+     if ( partitioning_strategy(1:1) == '0' ) then
         metis_options(0) = 0
      else
         do i = 1, 5
-           metis_options = iachar(partitionning_strategy(i:i)) - iachar('0')
+           metis_options = iachar(partitioning_strategy(i:i)) - iachar('0')
         end do
      endif
 
   case(3)
-     scotch_strategy = trim(partitionning_strategy)
+     scotch_strategy = trim(partitioning_strategy)
 
   case default
      print *, 'Invalid partionning method number.'
-     print *, 'Partionning method', partitionning_method, 'was requested, but is not available.'
+     print *, 'Partionning method', partitioning_method, 'was requested, but is not available.'
      stop
   end select
 
@@ -934,9 +934,9 @@ program meshfem2D
   endif
 
 
-  !*****************************
-  ! Partitionning
-  !*****************************
+!*****************************
+! partitioning
+!*****************************
   allocate(part(0:nelmnts-1))
 
 ! if ngnod == 9, we work on a subarray of elmnts, which represents the elements with for nodes only
@@ -969,7 +969,7 @@ program meshfem2D
   call read_weights(nelmnts, vwgt, nb_edges, adjwgt)
 
 ! partitioning
-     select case (partitionning_method)
+     select case (partitioning_method)
      case(1)
         do iproc = 0, nproc-2
            part(iproc*floor(real(nelmnts)/real(nproc)):(iproc+1)*floor(real(nelmnts)/real(nproc))-1) = iproc
