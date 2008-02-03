@@ -45,7 +45,7 @@
                assign_external_model,initialfield,ibool,kmato,numabs, &
                elastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
                potential_acoustic,density,elastcoef,xix,xiz,gammax,gammaz,jacobian, &
-               vpext,source_time_function,hprime_xx,hprimewgll_xx, &
+               vpext,rhoext,source_time_function,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
                jbegin_left,jend_left,jbegin_right,jend_right, &
@@ -74,7 +74,7 @@
   double precision, dimension(numat) :: density
   double precision, dimension(4,numat) :: elastcoef
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext
+  double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,rhoext
   real(kind=CUSTOM_REAL), dimension(NSTEP) :: source_time_function
 
 ! derivatives of Lagrange polynomials
@@ -106,7 +106,7 @@
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
 
 ! material properties of the elastic medium
-  real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,kappal,cpl
+  real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,kappal,cpl,rhol
 
 ! loop over spectral elements
   do ispec_inner_outer = 1,nspec_inner_outer
@@ -117,6 +117,8 @@
 !--- acoustic spectral element
 !---
     if(.not. elastic(ispec)) then
+
+      rhol = density(kmato(ispec))
 
 ! first double loop over GLL points to compute and store gradients
       do j = 1,NGLLZ
@@ -144,10 +146,13 @@
 
           jacobianl = jacobian(i,j,ispec)
 
+! if external density model
+        if(assign_external_model) rhol = rhoext(i,j,ispec)
+
 ! for acoustic medium
 ! also add GLL integration weights
-          tempx1(i,j) = wzgll(j)*jacobianl*(xixl*dux_dxl + xizl*dux_dzl)
-          tempx2(i,j) = wxgll(i)*jacobianl*(gammaxl*dux_dxl + gammazl*dux_dzl)
+          tempx1(i,j) = wzgll(j)*jacobianl*(xixl*dux_dxl + xizl*dux_dzl) / rhol
+          tempx2(i,j) = wxgll(i)*jacobianl*(gammaxl*dux_dxl + gammazl*dux_dzl) / rhol
 
         enddo
       enddo
@@ -190,8 +195,8 @@
       lambdal_relaxed = elastcoef(1,kmato(ispec))
       mul_relaxed = elastcoef(2,kmato(ispec))
       kappal  = lambdal_relaxed + TWO*mul_relaxed/3._CUSTOM_REAL
-      cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_relaxed/3._CUSTOM_REAL)/density(kmato(ispec)))
-
+      rhol = density(kmato(ispec))
+      cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_relaxed/3._CUSTOM_REAL)/rhol)
 
 !--- left absorbing boundary
       if(codeabs(ILEFT,ispecabs)) then
@@ -206,7 +211,10 @@
           iglob = ibool(i,j,ispec)
 
 ! external velocity model
-          if(assign_external_model) cpl = vpext(i,j,ispec)
+          if(assign_external_model) then
+            cpl = vpext(i,j,ispec)
+            rhol = rhoext(i,j,ispec)
+          endif
 
           xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
           zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
@@ -216,7 +224,7 @@
 
 ! Sommerfeld condition if acoustic
           if(.not. elastic(ispec)) &
-            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl
+            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl/rhol
 
         enddo
 
@@ -235,7 +243,10 @@
           iglob = ibool(i,j,ispec)
 
 ! external velocity model
-          if(assign_external_model) cpl = vpext(i,j,ispec)
+          if(assign_external_model) then
+            cpl = vpext(i,j,ispec)
+            rhol = rhoext(i,j,ispec)
+          endif
 
           xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
           zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
@@ -245,7 +256,7 @@
 
 ! Sommerfeld condition if acoustic
           if(.not. elastic(ispec)) &
-            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl
+            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl/rhol
 
         enddo
 
@@ -268,7 +279,10 @@
           iglob = ibool(i,j,ispec)
 
 ! external velocity model
-          if(assign_external_model) cpl = vpext(i,j,ispec)
+          if(assign_external_model) then
+            cpl = vpext(i,j,ispec)
+            rhol = rhoext(i,j,ispec)
+          endif
 
           xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
           zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
@@ -278,7 +292,7 @@
 
 ! Sommerfeld condition if acoustic
           if(.not. elastic(ispec)) &
-            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl
+            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl/rhol
 
         enddo
 
@@ -301,7 +315,10 @@
           iglob = ibool(i,j,ispec)
 
 ! external velocity model
-          if(assign_external_model) cpl = vpext(i,j,ispec)
+          if(assign_external_model) then
+            cpl = vpext(i,j,ispec)
+            rhol = rhoext(i,j,ispec)
+          endif
 
           xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
           zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
@@ -311,7 +328,7 @@
 
 ! Sommerfeld condition if acoustic
           if(.not. elastic(ispec)) &
-            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl
+            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl/rhol
 
         enddo
 
@@ -328,14 +345,15 @@
      if (is_proc_source == 1 ) then
 ! collocated force
 ! beware, for acoustic medium, source is a pressure source
+! the sign is negative because pressure p = - Chi_dot_dot therefore we need
+! to add minus the source to Chi_dot_dot to get plus the source in pressure
         if(source_type == 1) then
            if(.not. elastic(ispec_selected_source)) then
-              potential_dot_dot_acoustic(iglob_source) = potential_dot_dot_acoustic(iglob_source) + source_time_function(it)
+              potential_dot_dot_acoustic(iglob_source) = potential_dot_dot_acoustic(iglob_source) - source_time_function(it)
            endif
 
 ! moment tensor
         else if(source_type == 2) then
-
            if(.not. elastic(ispec_selected_source)) then
               call exit_MPI('cannot have moment tensor source in acoustic element')
            endif

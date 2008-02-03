@@ -190,23 +190,23 @@
 ! for the definition of potential energy in an acoustic fluid, see for instance
 ! equation (23) of M. Maess et al., Journal of Sound and Vibration 296 (2006) 264-276
 
-! in case of an acoustic medium, a displacement potential Chi is used as in Chaljub and Valette,
+! in case of an acoustic medium, a potential Chi of (density * displacement) is used as in Chaljub and Valette,
 ! Geophysical Journal International, vol. 158, p. 131-141 (2004) and *NOT* a velocity potential
 ! as in Komatitsch and Tromp, Geophysical Journal International, vol. 150, p. 303-318 (2002).
 ! This permits acoustic-elastic coupling based on a non-iterative time scheme.
-! Displacement is then: u = grad(Chi)
-! Velocity is then: v = grad(Chi_dot)       (Chi_dot being the time derivative of Chi)
-! and pressure is: p = - rho * Chi_dot_dot  (Chi_dot_dot being the time second derivative of Chi).
+! Displacement is then: u = grad(Chi) / rho
+! Velocity is then: v = grad(Chi_dot) / rho (Chi_dot being the time derivative of Chi)
+! and pressure is: p = - Chi_dot_dot  (Chi_dot_dot being the time second derivative of Chi).
 
 ! compute pressure in this element
     call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,elastic, &
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-         numat,kmato,density,elastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
+         numat,kmato,elastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
          TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
 
 ! compute velocity vector field in this element
     call compute_vector_one_element(vector_field_element,potential_dot_acoustic,veloc_elastic,elastic, &
-         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,ispec)
+         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,ispec,numat,kmato,density,rhoext,assign_external_model)
 
 ! get density of current spectral element
       lambdal_relaxed = elastcoef(1,kmato(ispec))

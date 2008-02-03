@@ -109,14 +109,21 @@
 ! Institut de Physique du Globe de Paris, France
 !
 
-! in case of an acoustic medium, a displacement potential Chi is used as in Chaljub and Valette,
+! in case of an acoustic medium, a potential Chi of (density * displacement) is used as in Chaljub and Valette,
 ! Geophysical Journal International, vol. 158, p. 131-141 (2004) and *NOT* a velocity potential
 ! as in Komatitsch and Tromp, Geophysical Journal International, vol. 150, p. 303-318 (2002).
 ! This permits acoustic-elastic coupling based on a non-iterative time scheme.
-! Displacement is then: u = grad(Chi)
-! Velocity is then: v = grad(Chi_dot)       (Chi_dot being the time derivative of Chi)
-! and pressure is: p = - rho * Chi_dot_dot  (Chi_dot_dot being the time second derivative of Chi).
+! Displacement is then: u = grad(Chi) / rho
+! Velocity is then: v = grad(Chi_dot) / rho (Chi_dot being the time derivative of Chi)
+! and pressure is: p = - Chi_dot_dot  (Chi_dot_dot being the time second derivative of Chi).
 ! The source in an acoustic element is a pressure source.
+! First-order acoustic-acoustic discontinuities are also handled automatically
+! because pressure is continuous at such an interface, therefore Chi_dot_dot
+! is continuous, therefore Chi is also continuous, which is consistent with
+! the spectral-element basis functions and with the assembling process.
+! This is the reason why a simple displacement potential u = grad(Chi) would
+! not work because it would be discontinuous at such an interface and would
+! therefore not be consistent with the basis functions.
 
   program specfem2D
 
@@ -174,7 +181,7 @@
   double precision :: xixl,xizl,gammaxl,gammazl,jacobianl
 
 ! material properties of the elastic medium
-  double precision :: mul_relaxed,lambdal_relaxed,cpsquare
+  double precision :: mul_relaxed,lambdal_relaxed,kappal
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic,veloc_elastic,displ_elastic
   double precision, dimension(:,:), allocatable :: coord, flagrange,xinterp,zinterp,Uxinterp,Uzinterp,elastcoef,vector_field_display
@@ -634,17 +641,9 @@
 !
 !----  read interfaces data
 !
-  print *, 'read the interfaces', myrank
   read(IIN,"(a80)") datlin
   read(IIN,*) ninterface, max_interface_size
-  if ( ninterface == 0 ) then
-     !allocate(my_neighbours(1))
-     !allocate(my_nelmnts_neighbours(1))
-     !allocate(my_interfaces(4,1,1))
-     !allocate(ibool_interfaces(NGLLX*1,1,1))
-     !allocate(nibool_interfaces(1,1))
-
-  else
+  if ( ninterface > 0 ) then
      allocate(my_neighbours(ninterface))
      allocate(my_nelmnts_neighbours(ninterface))
      allocate(my_interfaces(4,max_interface_size,ninterface))
@@ -661,12 +660,9 @@
            read(IIN,*) my_interfaces(1,ie,num_interface), my_interfaces(2,ie,num_interface), &
                 my_interfaces(3,ie,num_interface), my_interfaces(4,ie,num_interface)
 
-        end do
-     end do
-     print *, 'end read the interfaces', myrank
-
-  end if
-
+        enddo
+     enddo
+  endif
 
 !
 !----  read absorbing boundary data
@@ -1095,18 +1091,20 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 ! if external density model
         if(assign_external_model) then
           rhol = rhoext(i,j,ispec)
-          cpsquare = vpext(i,j,ispec)**2
+          kappal = rhol * vpext(i,j,ispec)**2
         else
           rhol = density(kmato(ispec))
           lambdal_relaxed = elastcoef(1,kmato(ispec))
           mul_relaxed = elastcoef(2,kmato(ispec))
-          cpsquare = (lambdal_relaxed + 2.d0*mul_relaxed) / rhol
+          kappal = lambdal_relaxed + 2.d0*mul_relaxed
         endif
-! for acoustic medium
         if(elastic(ispec)) then
+! for elastic medium
           rmass_inverse_elastic(iglob) = rmass_inverse_elastic(iglob) + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
         else
-          rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / cpsquare
+! for acoustic medium
+          rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) + &
+   wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal
         endif
       enddo
     enddo
@@ -1958,8 +1956,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           if(assign_external_model) then
             vp_display(ibool(i,j,ispec)) = vpext(i,j,ispec)
           else
-            cpsquare = (lambdal_relaxed + 2.d0*mul_relaxed) / rhol
-            vp_display(ibool(i,j,ispec)) = sqrt(cpsquare)
+            vp_display(ibool(i,j,ispec)) = sqrt((lambdal_relaxed + 2.d0*mul_relaxed) / rhol)
           endif
       enddo
     enddo
@@ -2054,12 +2051,11 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                assign_external_model,initialfield,ibool,kmato,numabs, &
                elastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
                potential_acoustic,density,elastcoef,xix,xiz,gammax,gammaz,jacobian, &
-               vpext,source_time_function,hprime_xx,hprimewgll_xx, &
+               vpext,rhoext,source_time_function,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
                jbegin_left,jend_left,jbegin_right,jend_right, &
-               nspec_outer, ispec_outer_to_glob, .true. &
-               )
+               nspec_outer, ispec_outer_to_glob, .true.)
 
  endif ! end of test if any acoustic element
 
@@ -2138,8 +2134,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
            max_interface_size, max_ibool_interfaces_size_ac,&
            ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
            tab_requests_send_recv_acoustic, &
-           buffer_send_faces_vector_ac &
-           )
+           buffer_send_faces_vector_ac)
   endif
 #endif
 
@@ -2150,12 +2145,11 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                assign_external_model,initialfield,ibool,kmato,numabs, &
                elastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
                potential_acoustic,density,elastcoef,xix,xiz,gammax,gammaz,jacobian, &
-               vpext,source_time_function,hprime_xx,hprimewgll_xx, &
+               vpext,rhoext,source_time_function,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
                jbegin_left,jend_left,jbegin_right,jend_right, &
-               nspec_inner, ispec_inner_to_glob, .false. &
-               )
+               nspec_inner, ispec_inner_to_glob, .false.)
    endif
 
 ! assembling potential_dot_dot for acoustic elements (receive)
@@ -2167,8 +2161,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
            max_interface_size, max_ibool_interfaces_size_ac,&
            ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
            tab_requests_send_recv_acoustic, &
-           buffer_recv_faces_vector_ac &
-           )
+           buffer_recv_faces_vector_ac)
   endif
 #endif
 
@@ -2233,15 +2226,8 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           j = jvalue_inverse(ipoin1D,iedge_acoustic)
           iglob = ibool(i,j,ispec_acoustic)
 
-! get density of the fluid, depending if external density model
-          if(assign_external_model) then
-            rhol = rhoext(i,j,ispec_acoustic)
-          else
-            rhol = density(kmato(ispec_acoustic))
-          endif
-
 ! compute pressure on the fluid/solid edge
-          pressure = - rhol * potential_dot_dot_acoustic(iglob)
+          pressure = - potential_dot_dot_acoustic(iglob)
 
 ! get point values for the elastic side
           i = ivalue(ipoin1D,iedge_elastic)
@@ -2368,7 +2354,10 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       write(IOUT,*) 'Max norm of vector field in solid = ',displnorm_all_glob
       endif
 ! check stability of the code in solid, exit if unstable
-      if(displnorm_all_glob > STABILITY_THRESHOLD) call exit_MPI('code became unstable and blew up in solid')
+! negative values can occur with some compilers when the unstable value is greater
+! than the greatest possible floating-point number of the machine
+      if(displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
+        call exit_MPI('code became unstable and blew up in solid')
     endif
 
     if(any_acoustic_glob) then
@@ -2385,7 +2374,10 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       write(IOUT,*) 'Max absolute value of scalar field in fluid = ',displnorm_all_glob
       endif
 ! check stability of the code in fluid, exit if unstable
-      if(displnorm_all_glob > STABILITY_THRESHOLD) call exit_MPI('code became unstable and blew up in fluid')
+! negative values can occur with some compilers when the unstable value is greater
+! than the greatest possible floating-point number of the machine
+      if(displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
+        call exit_MPI('code became unstable and blew up in fluid')
     endif
     if ( myrank == 0 ) then
     write(IOUT,*)
@@ -2404,7 +2396,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
       call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,elastic, &
             xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-            numat,kmato,density,elastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
+            numat,kmato,elastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
             TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
 
     else if(.not. elastic(ispec)) then
@@ -2412,13 +2404,13 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 ! for acoustic medium, compute vector field from gradient of potential for seismograms
       if(seismotype == 1) then
         call compute_vector_one_element(vector_field_element,potential_acoustic,displ_elastic,elastic, &
-               xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,ispec)
+               xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,ispec,numat,kmato,density,rhoext,assign_external_model)
       else if(seismotype == 2) then
         call compute_vector_one_element(vector_field_element,potential_dot_acoustic,veloc_elastic,elastic, &
-               xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,ispec)
+               xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,ispec,numat,kmato,density,rhoext,assign_external_model)
       else if(seismotype == 3) then
         call compute_vector_one_element(vector_field_element,potential_dot_dot_acoustic,accel_elastic,elastic, &
-               xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,ispec)
+               xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,ispec,numat,kmato,density,rhoext,assign_external_model)
       endif
 
     endif
@@ -2500,7 +2492,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     endif
 
     call compute_vector_whole_medium(potential_acoustic,displ_elastic,elastic,vector_field_display, &
-          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
+          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,numat,kmato,density,rhoext,assign_external_model)
 
     call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
           it,deltat,coorg,xinterp,zinterp,shape2D_display, &
@@ -2521,7 +2513,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     endif
 
     call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,elastic,vector_field_display, &
-          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
+          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,numat,kmato,density,rhoext,assign_external_model)
 
     call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
           it,deltat,coorg,xinterp,zinterp,shape2D_display, &
@@ -2542,7 +2534,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     endif
 
     call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,elastic,vector_field_display, &
-          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
+          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,numat,kmato,density,rhoext,assign_external_model)
 
     call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
           it,deltat,coorg,xinterp,zinterp,shape2D_display, &
@@ -2588,7 +2580,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     endif
 
     call compute_vector_whole_medium(potential_acoustic,displ_elastic,elastic,vector_field_display, &
-          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
+          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,numat,kmato,density,rhoext,assign_external_model)
 
   else if(imagetype == 2) then
 
@@ -2597,7 +2589,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     endif
 
     call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,elastic,vector_field_display, &
-          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
+          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,numat,kmato,density,rhoext,assign_external_model)
 
   else if(imagetype == 3) then
 
@@ -2606,7 +2598,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     endif
 
     call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,elastic,vector_field_display, &
-          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
+          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,numat,kmato,density,rhoext,assign_external_model)
 
   else if(imagetype == 4) then
 
@@ -2616,7 +2608,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
     call compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,elastic,vector_field_display, &
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-         numat,kmato,density,elastcoef,vpext,vsext,rhoext,e1,e11, &
+         numat,kmato,elastcoef,vpext,vsext,rhoext,e1,e11, &
          TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
 
   else
