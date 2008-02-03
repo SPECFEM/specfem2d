@@ -41,7 +41,7 @@
 !========================================================================
 
   subroutine compute_vector_whole_medium(potential_acoustic,veloc_elastic,elastic,vector_field_display, &
-         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
+         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,numat,kmato,density,rhoext,assign_external_model)
 
 ! compute Grad(potential) in acoustic elements
 ! and combine with existing velocity vector field in elastic elements
@@ -50,7 +50,15 @@
 
   include "constants.h"
 
-  integer nspec,npoin
+  integer nspec,npoin,numat
+
+  logical :: assign_external_model
+
+  integer, dimension(nspec) :: kmato
+
+  double precision, dimension(NGLLX,NGLLX,nspec) :: rhoext
+
+  double precision, dimension(numat) :: density
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
 
@@ -76,7 +84,7 @@
 
 ! compute vector field in this element
     call compute_vector_one_element(vector_field_element,potential_acoustic,veloc_elastic,elastic, &
-         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,ispec)
+         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,ispec,numat,kmato,density,rhoext,assign_external_model)
 
 ! store the result
     do j = 1,NGLLZ
@@ -95,7 +103,7 @@
 !
 
   subroutine compute_vector_one_element(vector_field_element,potential_acoustic,veloc_elastic,elastic, &
-         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,ispec)
+         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,ispec,numat,kmato,density,rhoext,assign_external_model)
 
 ! compute Grad(potential) if acoustic element or copy existing vector if elastic element
 
@@ -103,7 +111,15 @@
 
   include "constants.h"
 
-  integer nspec,npoin,ispec
+  integer nspec,npoin,ispec,numat
+
+  logical :: assign_external_model
+
+  integer, dimension(nspec) :: kmato
+
+  double precision, dimension(NGLLX,NGLLX,nspec) :: rhoext
+
+  double precision, dimension(numat) :: density
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
 
@@ -130,6 +146,9 @@
 ! jacobian
   real(kind=CUSTOM_REAL) xixl,xizl,gammaxl,gammazl
 
+! material properties of the elastic medium
+  real(kind=CUSTOM_REAL) :: rhol
+
 ! simple copy of existing vector if elastic element
   if(elastic(ispec)) then
 
@@ -142,7 +161,10 @@
     enddo
 
 ! compute gradient of potential to calculate vector if acoustic element
+! we then need to divide by density because the potential is a potential of (density * displacement)
     else
+
+      rhol = density(kmato(ispec))
 
 ! double loop over GLL points to compute and store gradients
     do j = 1,NGLLZ
@@ -169,9 +191,11 @@
         gammaxl = gammax(i,j,ispec)
         gammazl = gammaz(i,j,ispec)
 
+        if(assign_external_model) rhol = rhoext(i,j,ispec)
+
 ! derivatives of potential
-        vector_field_element(1,i,j) = tempx1l*xixl + tempx2l*gammaxl
-        vector_field_element(2,i,j) = tempx1l*xizl + tempx2l*gammazl
+        vector_field_element(1,i,j) = (tempx1l*xixl + tempx2l*gammaxl) / rhol
+        vector_field_element(2,i,j) = (tempx1l*xizl + tempx2l*gammazl) / rhol
 
       enddo
     enddo

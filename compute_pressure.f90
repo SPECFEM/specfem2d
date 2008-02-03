@@ -42,7 +42,7 @@
 
   subroutine compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,elastic,vector_field_display, &
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-         numat,kmato,density,elastcoef,vpext,vsext,rhoext,e1,e11, &
+         numat,kmato,elastcoef,vpext,vsext,rhoext,e1,e11, &
          TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
 
 ! compute pressure in acoustic elements and in elastic elements
@@ -56,7 +56,6 @@
   integer, dimension(nspec) :: kmato
   integer, dimension(NGLLX,NGLLX,nspec) :: ibool
 
-  double precision, dimension(numat) :: density
   double precision, dimension(4,numat) :: elastcoef
   double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext
 
@@ -89,7 +88,7 @@
 ! compute pressure in this element
     call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,elastic, &
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-         numat,kmato,density,elastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
+         numat,kmato,elastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
          TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
 
 ! use vector_field_display as temporary storage, store pressure in its second component
@@ -110,7 +109,7 @@
 
   subroutine compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,elastic, &
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-         numat,kmato,density,elastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
+         numat,kmato,elastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
          TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
 
 ! compute pressure in acoustic elements and in elastic elements
@@ -124,7 +123,6 @@
   integer, dimension(nspec) :: kmato
   integer, dimension(NGLLX,NGLLX,nspec) :: ibool
 
-  double precision, dimension(numat) :: density
   double precision, dimension(4,numat) :: elastcoef
   double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext
 
@@ -161,7 +159,6 @@
   real(kind=CUSTOM_REAL) :: sigma_xx,sigma_zz
 
 ! material properties of the elastic medium
-  integer :: material
   real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,lambdalplus2mul_relaxed,denst
   real(kind=CUSTOM_REAL) :: mul_unrelaxed,lambdal_unrelaxed,lambdalplus2mul_unrelaxed,cpl,csl
 
@@ -286,7 +283,7 @@
       enddo
     enddo
 
-! pressure = - rho * Chi_dot_dot if acoustic element
+! pressure = - Chi_dot_dot if acoustic element
   else
 
     do j = 1,NGLLZ
@@ -294,12 +291,8 @@
 
         iglob = ibool(i,j,ispec)
 
-        material = kmato(ispec)
-        denst = density(material)
-        if(assign_external_model) denst = rhoext(i,j,ispec)
-
 ! store pressure
-        pressure_element(i,j) = - denst * potential_dot_dot_acoustic(iglob)
+        pressure_element(i,j) = - potential_dot_dot_acoustic(iglob)
 
       enddo
     enddo
