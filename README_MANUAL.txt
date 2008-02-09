@@ -1,4 +1,7 @@
 
+How to use SPECFEM2D version 5.2.2:
+-----------------------------------
+
 To use the code:
 
 - edit the Makefile. There are several options available : -DUSE_MPI compiles with use of an MPI library. -DUSE_METIS enables use of graph partitioner METIS, the same goes for -DUSE_SCOTCH for SCOTCH.
