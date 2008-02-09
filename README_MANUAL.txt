@@ -5,7 +5,7 @@ To use the code:
 
 - type "make all"
 
-- edit the input file "DATA/Par_file" which describes the simulation. It contains comments and should be almost self-explanatory, if you need more details we do not have a manual for the 2D version but you can find useful information in the manuals of the 3D versions, since many parameters and the general philosophy is similar. They are available at http://www.univ-pau.fr/~dkomati1/published_papers/manual_SPECFEM3D_GLOBE.pdf and http://www.univ-pau.fr/~dkomati1/published_papers/manual_SPECFEM3D_BASIN.pdf. To create acoustic (fluid) regions, just set the S wave speed to zero and the code will see that these elements are fluid and switch to the right equations there automatically, and automatically match them with the solid regions
+- edit the input file "DATA/Par_file" which describes the simulation. It contains comments and should be almost self-explanatory, if you need more details we do not have a manual for the 2D version but you can find useful information in the manuals of the 3D versions, since many parameters and the general philosophy is similar. They are available at http://geodynamics.org/wsvn/cig/seismo/3D in subdirectories USER_MANUAL. To create acoustic (fluid) regions, just set the S wave speed to zero and the code will see that these elements are fluid and switch to the right equations there automatically, and automatically match them with the solid regions
 
 - if you are using an external mesher (like GID or CUBIT), you should set "read_external_mesh" to true. 
      "mesh_file" is the file describing the mesh : first line is the number of elements, then a list of 4 nodes (quadrilaterals only) forming each elements on each line.
@@ -28,7 +28,7 @@ To use the code:
 
 - you can convolve them with any source time function in postprocessing later using "convolve_source_timefunction.csh" and "convolve_source_timefunction.f90", see the manual of the 3D code for details on how to do this
 
-- we do not have PML absorbing conditions implemented in the fluid/solid code yet. We use (older and less efficient) paraxial Clayton-Engquist or Sommerfeld equations instead. This is only by lack of time, I have a student who is currently implementing PML but the code is not fully ready. I will send it to you when it is. (We already have PML in the purely elastic code, see http://www.univ-pau.fr/~dkomati1/published_papers/pml_2nd_order_GJI_typos_fixed.pdf for details, therefore it is only a matter of cutting/pasting the routines). For now, since the paraxial conditions are less efficient, please use a larger model until we send you the code with PML
+- we do not have PML absorbing conditions implemented in the fluid/solid code yet. We use (older and less efficient) paraxial Clayton-Engquist or Sommerfeld equations instead. This is only by lack of time, we have a developer who is currently implementing PML but the code is not fully ready. For now, since the paraxial conditions are less efficient, please use a larger model
 
 - there are a few useful scripts and Fortran routines in directory UTILS
 
