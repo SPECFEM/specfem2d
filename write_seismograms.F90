@@ -58,7 +58,6 @@
   integer :: NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current
   double precision :: t0,deltat
 
-
   integer, intent(in) :: nrecloc,myrank
   integer, dimension(nrec),intent(in) :: which_proc_receiver
 
