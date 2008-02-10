@@ -194,7 +194,7 @@
   double precision, dimension(:), allocatable :: vp_display
 
   double precision, dimension(:,:,:), allocatable :: vpext,vsext,rhoext
-  double precision :: previous_vsext
+  double precision :: previous_vsext,rho_at_source_location
 
   double precision, dimension(:,:,:), allocatable :: shape2D,shape2D_display
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable  :: xix,xiz,gammax,gammaz,jacobian
@@ -495,6 +495,18 @@
    endif
  endif
 
+! if Dirac source time function, use a very thin Gaussian instead
+! if Heaviside source time function, use a very thin error function instead
+! time delay of the source in seconds, use a 20 % security margin (use 2 / f0 if error function)
+  if(time_function_type == 4 .or. time_function_type == 5) then
+    f0 = 1.d0 / (10.d0 * deltat)
+    if(time_function_type == 5) then
+      t0 = 2.0d0 / f0
+    else
+      t0 = 1.20d0 / f0
+    endif
+  endif
+
 ! for the source time function
   aval = pi*pi*f0*f0
 
@@ -722,7 +734,6 @@
      allocate(fluid_solid_elastic_iedge(1))
 
   end if
-
 
 !
 !---- close input file
@@ -959,12 +970,21 @@ any_acoustic_glob = any_acoustic
 
 !---- define actual location of source and receivers
   if(source_type == 1) then
+
 ! collocated force source
-    call locate_source_force(coord,ibool,npoin,nspec,x_source,z_source,source_type, &
+    call locate_source_force(coord,ibool,npoin,nspec,x_source,z_source, &
       ix_source,iz_source,ispec_selected_source,iglob_source,is_proc_source,nb_proc_source)
 
+! get density at the source in order to implement collocated force with the right
+! amplitude later
+    if(is_proc_source == 1) then
+      rho_at_source_location  = density(kmato(ispec_selected_source))
+! external velocity model
+      if(assign_external_model) rho_at_source_location = rhoext(ix_source,iz_source,ispec_selected_source)
+    endif
+
 ! check that acoustic source is not exactly on the free surface because pressure is zero there
-    if ( is_proc_source == 1 ) then
+    if(is_proc_source == 1) then
        do ispec_acoustic_surface = 1,nelem_acoustic_surface
           ispec = acoustic_surface(1,ispec_acoustic_surface)
           if( .not. elastic(ispec) .and. ispec == ispec_selected_source ) then
@@ -992,7 +1012,6 @@ any_acoustic_glob = any_acoustic
   else
     call exit_MPI('incorrect source type')
   endif
-
 
 ! locate receivers in the mesh
   call locate_receivers(ibool,coord,nspec,npoin,xigll,zigll,nrec,nrecloc,recloc,which_proc_receiver,nproc,myrank,&
@@ -1220,7 +1239,6 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
 #endif
 
-
 ! fill mass matrix with fictitious non-zero values to make sure it can be inverted globally
   if(any_elastic) where(rmass_inverse_elastic <= 0._CUSTOM_REAL) rmass_inverse_elastic = 1._CUSTOM_REAL
   if(any_acoustic) where(rmass_inverse_acoustic <= 0._CUSTOM_REAL) rmass_inverse_acoustic = 1._CUSTOM_REAL
@@ -1236,8 +1254,6 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
 ! convert receiver angle to radians
   anglerec = anglerec * pi / 180.d0
-
-
 
 !
 !---- for color images
@@ -1670,10 +1686,10 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     allocate(source_time_function(NSTEP))
 
     if ( myrank == 0 ) then
-    write(IOUT,*)
-    write(IOUT,*) 'Saving the source time function in a text file...'
-    write(IOUT,*)
-    open(unit=55,file='OUTPUT_FILES/source.txt',status='unknown')
+     write(IOUT,*)
+     write(IOUT,*) 'Saving the source time function in a text file...'
+     write(IOUT,*)
+     open(unit=55,file='OUTPUT_FILES/source.txt',status='unknown')
     endif
 
 ! loop on all the time steps
@@ -1705,14 +1721,10 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       endif
 
 ! output absolute time in third column, in case user wants to check it as well
-      if ( myrank == 0 ) then
-      write(55,*) sngl(time),real(source_time_function(it),4),sngl(time-t0)
-      endif
+      if (myrank == 0) write(55,*) sngl(time),real(source_time_function(it),4),sngl(time-t0)
    enddo
 
-      if ( myrank == 0 ) then
-    close(55)
-      endif
+   if (myrank == 0) close(55)
 
 ! nb_proc_source is the number of processes that own the source (the nearest point). It can be greater
 ! than one if the nearest point is on the interface between several partitions with an explosive source.
@@ -2313,13 +2325,33 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 ! ************************************************************************************
 
   if(any_elastic) then
+
     accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic
     accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic
+
+! --- add the source if it is a collocated force
+    if(.not. initialfield) then
+
+! if this processor carries the source and the source element is elastic
+      if (is_proc_source == 1 .and. elastic(ispec_selected_source)) then
+
+! collocated force
+        if(source_type == 1) then
+          accel_elastic(1,iglob_source) = accel_elastic(1,iglob_source) &
+            - sin(angleforce)*source_time_function(it) / rho_at_source_location
+          accel_elastic(2,iglob_source) = accel_elastic(2,iglob_source) &
+            + cos(angleforce)*source_time_function(it) / rho_at_source_location
+        endif
+
+      endif ! if this processor carries the source and the source element is elastic
+
+    endif ! if not using an initial field
+
     veloc_elastic = veloc_elastic + deltatover2*accel_elastic
+
   endif
 
 !----  compute kinetic and potential energy
-!
   if(OUTPUT_ENERGY) &
      call compute_energy(displ_elastic,veloc_elastic, &
          xix,xiz,gammax,gammaz,jacobian,ibool,elastic,hprime_xx,hprime_zz, &

@@ -564,32 +564,21 @@
 
   endif  ! end of absorbing boundaries
 
-! --- add the source
+! --- add the source if it is a moment tensor
   if(.not. initialfield) then
 
 ! if this processor carries the source and the source element is elastic
      if (is_proc_source == 1 .and. elastic(ispec_selected_source)) then
 
-! collocated force
-! beware, for acoustic medium, source is a potential, therefore source time function
-! gives shape of velocity, not displacement
-        if(source_type == 1) then
-
-          accel_elastic(1,iglob_source) = accel_elastic(1,iglob_source) - sin(angleforce)*source_time_function(it)
-          accel_elastic(2,iglob_source) = accel_elastic(2,iglob_source) + cos(angleforce)*source_time_function(it)
-
 ! moment tensor
-        else if(source_type == 2) then
+        if(source_type == 2) then
 ! add source array
-              do j=1,NGLLZ
-                 do i=1,NGLLX
-                    iglob = ibool(i,j,ispec_selected_source)
-                    accel_elastic(:,iglob) = accel_elastic(:,iglob) + sourcearray(:,i,j)*source_time_function(it)
-                 enddo
-              enddo
-
-        else
-          call exit_MPI('wrong source type in elastic element')
+          do j=1,NGLLZ
+            do i=1,NGLLX
+              iglob = ibool(i,j,ispec_selected_source)
+              accel_elastic(:,iglob) = accel_elastic(:,iglob) + sourcearray(:,i,j)*source_time_function(it)
+            enddo
+          enddo
         endif
 
      endif ! if this processor carries the source and the source element is elastic
