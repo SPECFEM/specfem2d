@@ -4,7 +4,7 @@
 !                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour and CNRS, France.
+! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
@@ -69,11 +69,12 @@
 ! pages={368-392}}
 
 !
-! version 5.2, Dimitri Komatitsch, Nicolas Le Goff and Roland Martin, November 2007:
+! version 5.2, Dimitri Komatitsch, Nicolas Le Goff and Roland Martin, February 2008:
 !               - MPI implementation of the code based on domain decomposition
 !                 with METIS or SCOTCH
 !               - general fluid/solid implementation with any number, shape and orientation of
 !                 matching edges
+!               - fluid potential of density * displacement instead of displacement
 !               - absorbing edges with any normal vector
 !               - general numbering of absorbing and acoustic free surface edges
 !               - cleaned implementation of attenuation as in Carcione (1993)
