@@ -267,8 +267,8 @@ program meshfem2D
      scotch_strategy = trim(partitioning_strategy)
 
   case default
-     print *, 'Invalid partionning method number.'
-     print *, 'Partionning method', partitioning_method, 'was requested, but is not available.'
+     print *, 'Invalid partitioning method number.'
+     print *, 'Partitioning method ',partitioning_method,' was requested, but is not available.'
      stop
   end select
 
