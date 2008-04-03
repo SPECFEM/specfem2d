@@ -151,7 +151,7 @@
   character(len=150) dummystring
 
 ! for seismograms
-  double precision, dimension(:,:), allocatable :: sisux,sisuz
+  double precision, dimension(:,:), allocatable :: sisux,sisuz,siscurl
   integer :: seismo_offset, seismo_current
 
 ! vector field in an element
@@ -160,9 +160,12 @@
 ! pressure in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: pressure_element
 
+! curl in an element
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: curl_element
+
   integer :: i,j,k,l,it,irec,ipoin,ip,id,nbpoin,inump,n,ispec,npoin,npgeo,iglob
   logical :: anyabs
-  double precision :: dxd,dzd,valux,valuz,hlagrange,rhol,cosrot,sinrot,xi,gamma,x,z
+  double precision :: dxd,dzd,dcurld,valux,valuz,valcurl,hlagrange,rhol,cosrot,sinrot,xi,gamma,x,z
 
 ! coefficients of the explicit Newmark time scheme
   integer NSTEP
@@ -359,6 +362,15 @@
   double precision, dimension(2) :: A_plane, B_plane, C_plane
   double precision :: PP, PS, SP, SS, z0_source, x0_source, xmax, xmin, zmax, zmin, time_offset
 
+!over critical angle
+  integer , dimension(:), allocatable :: left_bound,right_bound,bot_bound
+  double precision , dimension(:,:), allocatable :: v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot
+  double precision , dimension(:,:), allocatable :: t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot
+  integer count_left,count_right,count_bot,itime,ibegin,iend
+!!$  double precision :: a1,b1,a2,b2,a3,b3,sin0,cos0,Zr,Zr_dot,Zr_dot_dot,Zi,Zi_dot,Zi_dot_dot,Cte
+  double precision :: X_temp,Z_temp,ignore
+  logical :: over_critical_angle
+
 !***********************************************************************
 !
 !             i n i t i a l i z a t i o n    p h a s e
@@ -445,7 +457,7 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,*) seismotype,imagetype
-  if(seismotype < 1 .or. seismotype > 4) call exit_MPI('Wrong type for seismogram output')
+  if(seismotype < 1 .or. seismotype > 5) call exit_MPI('Wrong type for seismogram output')
   if(imagetype < 1 .or. imagetype > 4) call exit_MPI('Wrong type for snapshots')
 
   read(IIN,"(a80)") datlin
@@ -680,6 +692,7 @@
 !
 !----  read absorbing boundary data
 !
+
   read(IIN,"(a80)") datlin
   if(anyabs) then
      do inum = 1,nelemabs
@@ -888,16 +901,18 @@
 !--- save the grid of points in a file
 !
   if(outputgrid) then
-    write(IOUT,*)
-    write(IOUT,*) 'Saving the grid in a text file...'
-    write(IOUT,*)
-    open(unit=55,file='OUTPUT_FILES/grid_points_and_model.txt',status='unknown')
-    write(55,*) npoin
-    do n = 1,npoin
-      write(55,*) (coord(i,n), i=1,NDIM)
-    enddo
-    close(55)
+     write(IOUT,*)
+     write(IOUT,*) 'Saving the grid in a text file...'
+     write(IOUT,*)
+     open(unit=55,file='OUTPUT_FILES/grid_points_and_model.txt',status='unknown')
+     zmax=maxval(coord(2,:))
+     write(55,*) npoin
+     do n = 1,npoin
+        write(55,*) (coord(i,n), i=1,NDIM)
+     enddo
+     close(55)
   endif
+
 
 !
 !-----   plot the GLL mesh in a Gnuplot file
@@ -1010,7 +1025,7 @@ any_acoustic_glob = any_acoustic
     call compute_arrays_source(ispec_selected_source,xi_source,gamma_source,sourcearray, &
                Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,nspec)
 
-  else
+  else if(.not.initialfield) then
     call exit_MPI('incorrect source type')
   endif
 
@@ -1022,6 +1037,7 @@ any_acoustic_glob = any_acoustic
 ! allocate seismogram arrays
   allocate(sisux(NTSTEP_BETWEEN_OUTPUT_SEISMO,nrecloc))
   allocate(sisuz(NTSTEP_BETWEEN_OUTPUT_SEISMO,nrecloc))
+  allocate(siscurl(NTSTEP_BETWEEN_OUTPUT_SEISMO,nrecloc))
 
 ! check if acoustic receiver is exactly on the free surface because pressure is zero there
   do ispec_acoustic_surface = 1,nelem_acoustic_surface
@@ -1248,6 +1264,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   if(any_elastic) rmass_inverse_elastic(:) = 1._CUSTOM_REAL / rmass_inverse_elastic(:)
   if(any_acoustic) rmass_inverse_acoustic(:) = 1._CUSTOM_REAL / rmass_inverse_acoustic(:)
 
+
 ! check the mesh, stability and number of points per wavelength
   call checkgrid(vpext,vsext,rhoext,density,elastcoef,ibool,kmato,coord,npoin,vpmin,vpmax, &
                  assign_external_model,nspec,numat,deltat,f0,t0,initialfield,time_function_type, &
@@ -1466,33 +1483,16 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 !
 !----  read initial fields from external file if needed
 !
+
+! if we are looking a plane wave over critical angle we use other method
+  over_critical_angle=.false.
+
   if(initialfield) then
      write(IOUT,*)
      write(IOUT,*) 'Reading initial fields from external file...'
      write(IOUT,*)
      if(any_acoustic) call exit_MPI('initial field currently implemented for purely elastic simulation only')
 
-     if(.not. add_Bielak_conditions) then
-
-        open(unit=55,file='OUTPUT_FILES/wavefields.txt',status='unknown')
-        read(55,*) nbpoin
-        if(nbpoin /= npoin) call exit_MPI('Wrong number of points in input file')
-        allocate(displread(NDIM))
-        allocate(velocread(NDIM))
-        allocate(accelread(NDIM))
-        do n = 1,npoin
-           read(55,*) inump, (displread(i), i=1,NDIM), (velocread(i), i=1,NDIM), (accelread(i), i=1,NDIM)
-           if(inump<1 .or. inump>npoin) call exit_MPI('Wrong point number')
-           displ_elastic(:,inump) = displread
-           veloc_elastic(:,inump) = velocread
-           accel_elastic(:,inump) = accelread
-        enddo
-        deallocate(displread)
-        deallocate(velocread)
-        deallocate(accelread)
-        close(55)
-
-     else
 
 !!$! compute analytical initial plane wave field
 !!$! the analytical expression below is specific to an SV wave at 30 degrees and Poisson = 0.3333
@@ -1535,15 +1535,22 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       !
       !=======================================================================
 
-      print *,'Number of grid points: ',npoin
+      print *,'Number of grid points: ',npoin,'\n'
       print *,'*** calculation of initial plane wave ***'
       if (source_type == 1) then
          print *,'initial P wave of', angleforce*180.d0/pi, 'degrees introduced...'
       else if (source_type == 2) then
          print *,'initial SV wave of', angleforce*180.d0/pi, ' degrees introduced...'
+
+      else if (source_type == 3) then
+         print *,'Rayleigh wave introduced...'
       else
          call exit_MPI('Unrecognized source_type: should be 1 for plane P waves, 2 for plane SV waves!')
       endif
+
+      if ((angleforce<0.0d0.or.angleforce>=pi/2.d0).and.source_type/=3) then
+         call exit_MPI("bad angleforce: 0<=angleforce<90")
+      end if
 
       ! only implemented for homogeneous media therefore only 1 material supported
       if (numat==1) then
@@ -1562,7 +1569,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
             c_inc  = cploc
             c_refl = csloc
 
-            angleforce_refl = asin(p*csloc)
+            angleforce_refl = asin(p*c_refl)
 
             ! from formulas (5.26) and (5.27) p 140 in Aki & Richards (1980)
             PP = (- cos(2.d0*angleforce_refl)**2/csloc**3 + 4.d0*p**2*cos(angleforce)*cos(angleforce_refl)/cploc) / &
@@ -1581,15 +1588,15 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
             C_plane(1) = PS * cos(angleforce_refl); C_plane(2) = PS * sin(angleforce_refl)
 
          ! SV wave case
-         else
+         else if (source_type == 2) then
 
             p=sin(angleforce)/csloc
             c_inc  = csloc
             c_refl = cploc
 
             ! if this coefficient is greater than 1, we are beyond the critical SV wave angle and there cannot be a converted P wave
-            if (p*cploc<=1.d0) then
-               angleforce_refl = asin(p*cploc)
+            if (p*c_refl<=1.d0) then
+               angleforce_refl = asin(p*c_refl)
 
                ! from formulas (5.30) and (5.31) p 140 in Aki & Richards (1980)
                SS = (cos(2.d0*angleforce_refl)**2/csloc**3 - 4.d0*p**2*cos(angleforce)*cos(angleforce_refl)/cploc) / &
@@ -1600,8 +1607,16 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
                print *,'reflected convert plane wave angle: ', angleforce_refl*180.d0/pi, '\n'
 
+            !SV45 degree incident plane wave is a particular case
+            else if (angleforce>pi/4.d0-1.0d-11 .and. angleforce<pi/4.d0+1.0d-11) then
+               angleforce_refl = 0.d0
+               SS = -1.0d0
+               SP = 0.d0
             else
-               call exit_MPI('cannot be included for now: SV angle too high, beyond critical angle')
+               over_critical_angle=.true.
+               angleforce_refl = 0.d0
+               SS = 0.0d0
+               SP = 0.d0
             endif
 
             ! from Table 5.1 p141 in Aki & Richards (1980)
@@ -1610,10 +1625,15 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
             B_plane(1) = SS * cos(angleforce);      B_plane(2) = SS * sin(angleforce)
             C_plane(1) = SP * sin(angleforce_refl); C_plane(2) = - SP * cos(angleforce_refl)
 
+         !Rayleigh case
+         else if (source_type == 3) then
+            over_critical_angle=.true.
+            A_plane(1)=0.d0;A_plane(2)=0.d0
+            B_plane(1)=0.d0;B_plane(2)=0.d0
+            C_plane(1)=0.d0;C_plane(2)=0.d0;
          endif
-
       else
-         call exit_MPI('not possible for now to have several materials with a plane wave (but could be done one day)')
+         call exit_MPI('not possible to have several materials with a plane wave')
       endif
 
       ! get minimum and maximum values of mesh coordinates
@@ -1622,54 +1642,154 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       xmax = maxval(coord(1,:))
       zmax = maxval(coord(2,:))
 
-      ! initialize the time offset to put the plane wave not too close to the free surface topography
-      if (abs(angleforce)<20.d0*pi/180.d0) then
-         time_offset=-1.d0*zmax/3.d0/c_inc
+      !initializing of the time offset to put the planewave not to close of the irregularity on the free surface
+      if (abs(angleforce)<10.d0*pi/180.d0 .and. source_type/=3) then
+         time_offset=-1.d0*zmax/2.d0/c_inc
+
+!!$      elseif (abs(angleforce)<31.d0*pi/180.d0 .and. source_type==1) then
+!!$         time_offset=-1.d0*zmax/3.d0/c_inc
+!!$      elseif (abs(angleforce)<29.d0*pi/180.d0 .and. source_type==2) then
+!!$         time_offset=-1.d0*zmax/3.d0/c_inc
+
       else
          time_offset=0.d0
       endif
 
       ! to correctly center the initial plane wave in the mesh
       z0_source=zmax
-      x0_source=xmin + 1.d0*(xmax-xmin)/3.d0
+!!$      if (abs(angleforce)<1.d0*pi/180.d0) then
+!!$         x0_source=xmin + 1.d0*(xmax-xmin)/2.d0
+!!$      else
+!!$         x0_source=xmin + 1.d0*(xmax-xmin)/3.d0
+!!$
+!!$      endif
 
-      do i = 1,npoin
+!!$      x0_source=x_source
+      x0_source=xmin + 1.d0*(xmax-xmin)/4.d0
 
-         x = coord(1,i)
-         z = coord(2,i)
+      if (.not.over_critical_angle) then
 
-         ! z is from bottom to top therefore we take -z to make parallel with Aki & Richards
-         z = z0_source - z
-         x = x - x0_source
+         do i = 1,npoin
 
-         t = 0.d0 + time_offset
+            x = coord(1,i)
+            z = coord(2,i)
 
-         ! formulas for the initial displacement for a plane wave from Aki & Richards (1980)
-         displ_elastic(1,i) = A_plane(1) * ricker_Bielak_displ(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
-              + B_plane(1) * ricker_Bielak_displ(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
-              + C_plane(1) * ricker_Bielak_displ(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
-         displ_elastic(2,i) = A_plane(2) * ricker_Bielak_displ(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
-              + B_plane(2) * ricker_Bielak_displ(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
-              + C_plane(2) * ricker_Bielak_displ(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
+            ! z is from bottom to top therefore we take -z to make parallel with Aki & Richards
+            z = z0_source - z
+            x = x - x0_source
 
-         ! formulas for the initial velocity for a plane wave (first derivative in time of the displacement)
-         veloc_elastic(1,i) = A_plane(1) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
-              + B_plane(1) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
-              + C_plane(1) * ricker_Bielak_veloc(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
-         veloc_elastic(2,i) = A_plane(2) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
-              + B_plane(2) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
-              + C_plane(2) * ricker_Bielak_veloc(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
+            t = 0.d0 + time_offset
 
-         ! formulas for the initial acceleration for a plane wave (second derivative in time of the displacement)
-         accel_elastic(1,i) = A_plane(1) * ricker_Bielak_accel(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
-              + B_plane(1) * ricker_Bielak_accel(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
-              + C_plane(1) * ricker_Bielak_accel(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
-         accel_elastic(2,i) = A_plane(2) * ricker_Bielak_accel(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
-              + B_plane(2) * ricker_Bielak_accel(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
-              + C_plane(2) * ricker_Bielak_accel(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
 
-      enddo
-    endif ! add_Bielak
+            ! formulas for the initial displacement for a plane wave from Aki & Richards (1980)
+            displ_elastic(1,i) = A_plane(1) * ricker_Bielak_displ(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
+                 + B_plane(1) * ricker_Bielak_displ(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
+                 + C_plane(1) * ricker_Bielak_displ(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
+            displ_elastic(2,i) = A_plane(2) * ricker_Bielak_displ(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
+                 + B_plane(2) * ricker_Bielak_displ(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
+                 + C_plane(2) * ricker_Bielak_displ(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
+
+            ! formulas for the initial velocity for a plane wave (first derivative in time of the displacement)
+            veloc_elastic(1,i) = A_plane(1) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
+                 + B_plane(1) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
+                 + C_plane(1) * ricker_Bielak_veloc(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
+            veloc_elastic(2,i) = A_plane(2) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
+                 + B_plane(2) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
+                 + C_plane(2) * ricker_Bielak_veloc(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
+
+            ! formulas for the initial acceleration for a plane wave (second derivative in time of the displacement)
+            accel_elastic(1,i) = A_plane(1) * ricker_Bielak_accel(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
+                 + B_plane(1) * ricker_Bielak_accel(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
+                 + C_plane(1) * ricker_Bielak_accel(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
+            accel_elastic(2,i) = A_plane(2) * ricker_Bielak_accel(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
+                 + B_plane(2) * ricker_Bielak_accel(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
+                 + C_plane(2) * ricker_Bielak_accel(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
+
+         end do
+
+      else !over critical angle
+
+         if (source_type/=3) then
+            print *, '\n You are over critical angle ( > ',asin(c_inc/c_refl)*180d0/pi,')'
+         end if
+
+         print *, '\n *************'
+         print *, 'We have to calcul initial field in the frequency domain'
+         print *, 'and then pass it in the time domain(can be long... be patient...)'
+         print *, '*************\n'
+
+!!$         print *, "if first reflection is not at a good place, change TS and offset in paco_beyond_critical.f90 and recompute\n"
+
+         allocate(left_bound(nelemabs*NGLLX))
+         allocate(right_bound(nelemabs*NGLLX))
+         allocate(bot_bound(nelemabs*NGLLZ))
+
+         count_bot=0
+         count_left=0
+         count_right=0
+         do ispecabs=1,nelemabs
+            ispec=numabs(ispecabs)
+            if(codeabs(ILEFT,ispecabs)) then
+               i = 1
+               do j = 1,NGLLZ
+                  count_left=count_left+1
+                  iglob = ibool(i,j,ispec)
+                  left_bound(count_left)=iglob
+               end do
+            end if
+            if(codeabs(IRIGHT,ispecabs)) then
+               i = NGLLX
+               do j = 1,NGLLZ
+                  count_right=count_right+1
+                  iglob = ibool(i,j,ispec)
+                  right_bound(count_right)=iglob
+               end do
+            end if
+            if(codeabs(IBOTTOM,ispecabs)) then
+               j = 1
+               ! exclude corners to make sure there is no contradiction on the normal
+               ibegin = 1
+               iend = NGLLX
+               if(codeabs(ILEFT,ispecabs)) ibegin = 2
+               if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
+               do i = ibegin,iend
+                  count_bot=count_bot+1
+                  iglob = ibool(i,j,ispec)
+                  bot_bound(count_bot)=iglob
+               end do
+            end if
+         end do
+
+         allocate(v0x_left(count_left,NSTEP))
+         allocate(v0z_left(count_left,NSTEP))
+         allocate(t0x_left(count_left,NSTEP))
+         allocate(t0z_left(count_left,NSTEP))
+
+         allocate(v0x_right(count_right,NSTEP))
+         allocate(v0z_right(count_right,NSTEP))
+         allocate(t0x_right(count_right,NSTEP))
+         allocate(t0z_right(count_right,NSTEP))
+
+         allocate(v0x_bot(count_bot,NSTEP))
+         allocate(v0z_bot(count_bot,NSTEP))
+         allocate(t0x_bot(count_bot,NSTEP))
+         allocate(t0z_bot(count_bot,NSTEP))
+
+         !call paco routine to do calcul in frequency and pass in time by fourier transform
+         call paco_beyond_critical(coord,npoin,deltat,NSTEP,angleforce,&
+              f0,cploc,csloc,TURN_ATTENUATION_ON,Qp_attenuation,source_type,v0x_left,v0z_left,&
+              v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,&
+              t0x_bot,t0z_bot,left_bound(:count_left),right_bound(:count_right),bot_bound(:count_bot)&
+              ,count_left,count_right,count_bot,displ_elastic,veloc_elastic,accel_elastic)
+
+
+
+         print *, '\n ***********'
+         print *, 'initial field calculated, starting propagation'
+         print *, '***********\n\n'
+
+
+      endif !over critical angle
 
     write(IOUT,*) 'Max norm of initial elastic displacement = ',maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(2,:)**2))
   endif ! initialfield
@@ -1903,7 +2023,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 ! if acoustic absorbing element and acoustic/elastic coupled element is the same
         if(ispec_acoustic == ispec) then
 
-           if(iedge_acoustic == IBOTTOM) then
+          if(iedge_acoustic == IBOTTOM) then
             jbegin_left(ispecabs) = 2
             jbegin_right(ispecabs) = 2
           endif
@@ -2212,7 +2332,10 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
                nspec_outer, ispec_outer_to_glob,.true.,deltat,coord,add_Bielak_conditions, x0_source, z0_source, &
-               A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset, f0)
+               A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset, f0,&
+               v0x_left(:,it),v0z_left(:,it),v0x_right(:,it),v0z_right(:,it),v0x_bot(:,it),v0z_bot(:,it), &
+               t0x_left(:,it),t0z_left(:,it),t0x_right(:,it),t0z_right(:,it),t0x_bot(:,it),t0z_bot(:,it), &
+               count_left,count_right,count_bot,over_critical_angle)
 
 ! *********************************************************
 ! ************* add coupling with the acoustic side
@@ -2304,7 +2427,11 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
                nspec_inner, ispec_inner_to_glob,.false.,deltat,coord,add_Bielak_conditions, x0_source, z0_source, &
-               A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset, f0)
+               A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset, f0,&
+               v0x_left(:,it),v0z_left(:,it),v0x_right(:,it),v0z_right(:,it),v0x_bot(:,it),v0z_bot(:,it), &
+               t0x_left(:,it),t0z_left(:,it),t0x_right(:,it),t0z_right(:,it),t0x_bot(:,it),t0z_bot(:,it), &
+               count_left,count_right,count_bot,over_critical_angle)
+
 
 ! assembling accel_elastic for elastic elements (receive)
 #ifdef USE_MPI
@@ -2420,14 +2547,14 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 ! loop on all the receivers to compute and store the seismograms
   do irecloc = 1,nrecloc
 
-     irec = recloc(irecloc)
+    irec = recloc(irecloc)
 
     ispec = ispec_selected_rec(irec)
 
 ! compute pressure in this element if needed
     if(seismotype == 4) then
 
-      call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,elastic, &
+       call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,elastic, &
             xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
             numat,kmato,elastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
             TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
@@ -2435,22 +2562,26 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     else if(.not. elastic(ispec)) then
 
 ! for acoustic medium, compute vector field from gradient of potential for seismograms
-      if(seismotype == 1) then
-        call compute_vector_one_element(vector_field_element,potential_acoustic,displ_elastic,elastic, &
+       if(seismotype == 1) then
+          call compute_vector_one_element(vector_field_element,potential_acoustic,displ_elastic,elastic, &
                xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,ispec,numat,kmato,density,rhoext,assign_external_model)
-      else if(seismotype == 2) then
-        call compute_vector_one_element(vector_field_element,potential_dot_acoustic,veloc_elastic,elastic, &
+       else if(seismotype == 2) then
+          call compute_vector_one_element(vector_field_element,potential_dot_acoustic,veloc_elastic,elastic, &
                xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,ispec,numat,kmato,density,rhoext,assign_external_model)
-      else if(seismotype == 3) then
-        call compute_vector_one_element(vector_field_element,potential_dot_dot_acoustic,accel_elastic,elastic, &
+       else if(seismotype == 3) then
+          call compute_vector_one_element(vector_field_element,potential_dot_dot_acoustic,accel_elastic,elastic, &
                xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,ispec,numat,kmato,density,rhoext,assign_external_model)
-      endif
+       endif
 
+    else if(seismotype == 5) then
+       call compute_curl_one_element(curl_element,displ_elastic,elastic, &
+            xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin, ispec)
     endif
 
 ! perform the general interpolation using Lagrange polynomials
     valux = ZERO
     valuz = ZERO
+    valcurl = ZERO
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
@@ -2458,6 +2589,8 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
         iglob = ibool(i,j,ispec)
 
         hlagrange = hxir_store(irec,i)*hgammar_store(irec,j)
+
+        dcurld=ZERO
 
         if(seismotype == 4) then
 
@@ -2484,11 +2617,18 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           dxd = accel_elastic(1,iglob)
           dzd = accel_elastic(2,iglob)
 
+        else if(seismotype == 5) then
+
+          dxd = displ_elastic(1,iglob)
+          dzd = displ_elastic(2,iglob)
+          dcurld = curl_element(i,j)
+
         endif
 
 ! compute interpolated field
         valux = valux + dxd*hlagrange
         valuz = valuz + dzd*hlagrange
+        valcurl = valcurl + dcurld*hlagrange
 
       enddo
     enddo
@@ -2501,8 +2641,9 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       sisux(seismo_current,irecloc) = valux
       sisuz(seismo_current,irecloc) = ZERO
     endif
+    siscurl(seismo_current,irecloc) = valcurl
 
-  enddo
+ enddo
 
 !
 !----  display results at given time steps
@@ -2699,7 +2840,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   endif
 
 !----  save temporary or final seismograms
-  call write_seismograms(sisux,sisuz,station_name,network_name,NSTEP, &
+  call write_seismograms(sisux,sisuz,siscurl,station_name,network_name,NSTEP, &
         nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
         NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current &
         )
@@ -2733,6 +2874,27 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   endif
 
   enddo ! end of the main time loop
+
+
+  if (over_critical_angle) then
+     deallocate(v0x_left)
+     deallocate(v0z_left)
+     deallocate(t0x_left)
+     deallocate(t0z_left)
+     deallocate(left_bound)
+
+     deallocate(v0x_right)
+     deallocate(v0z_right)
+     deallocate(t0x_right)
+     deallocate(t0z_right)
+     deallocate(right_bound)
+
+     deallocate(v0x_bot)
+     deallocate(v0z_bot)
+     deallocate(t0x_bot)
+     deallocate(t0z_bot)
+     deallocate(bot_bound)
+  end if
 
 !----  close energy file and create a gnuplot script to display it
   if(OUTPUT_ENERGY) then

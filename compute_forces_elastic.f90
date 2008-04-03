@@ -50,7 +50,9 @@
        dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
        hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
        nspec_inner_outer,ispec_inner_outer_to_glob,num_phase_inner_outer,deltat,coord,add_Bielak_conditions, &
-       x0_source, z0_source, A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset,f0)
+       x0_source, z0_source, A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset,f0, &
+       v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot,&
+       nleft,nright,nbot,over_critical_angle)
 
 ! compute forces for the elastic elements
 
@@ -131,6 +133,13 @@
   double precision, dimension(NDIM,npoin), intent(in) :: coord
   double precision x0_source, z0_source, angleforce_refl, c_inc, c_refl, time_offset, f0
   double precision, dimension(NDIM) :: A_plane, B_plane, C_plane
+!over critical angle
+  logical :: over_critical_angle
+  integer :: nleft, nright, nbot
+  double precision, dimension(nleft) :: v0x_left,v0z_left,t0x_left,t0z_left
+  double precision, dimension(nright) :: v0x_right,v0z_right,t0x_right,t0z_right
+  double precision, dimension(nbot) :: v0x_bot,v0z_bot,t0x_bot,t0z_bot
+  integer count_left,count_right,count_bot
 
 ! only for the first call to compute_forces_elastic (during computation on outer elements)
   if ( num_phase_inner_outer ) then
@@ -296,6 +305,10 @@
 !
   if(anyabs) then
 
+    count_left=1
+    count_right=1
+    count_bot=1
+
     do ispecabs = 1,nelemabs
 
       ispec = numabs(ispecabs)
@@ -310,6 +323,7 @@
 
 !--- left absorbing boundary
       if(codeabs(ILEFT,ispecabs)) then
+!!$      if(.false.) then
 
         i = 1
 
@@ -320,11 +334,19 @@
 ! for analytical initial plane wave for Bielak's conditions
 ! left or right edge, horizontal normal vector
           if(add_Bielak_conditions .and. initialfield) then
-            call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                 x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
-                 c_inc, c_refl, time_offset,f0)
-            traction_x_t0 = (lambdal_relaxed+2*mul_relaxed)*dxUx + lambdal_relaxed*dzUz
-            traction_z_t0 = mul_relaxed*(dxUz + dzUx)
+             if (.not.over_critical_angle) then
+               call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                    x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
+                    c_inc, c_refl, time_offset,f0)
+               traction_x_t0 = (lambdal_relaxed+2*mul_relaxed)*dxUx + lambdal_relaxed*dzUz
+               traction_z_t0 = mul_relaxed*(dxUz + dzUx)
+            else
+               veloc_horiz=v0x_left(count_left)
+               veloc_vert=v0z_left(count_left)
+               traction_x_t0=t0x_left(count_left)
+               traction_z_t0=t0z_left(count_left)
+               count_left=count_left+1
+            end if
           else
             veloc_horiz = 0
             veloc_vert = 0
@@ -370,6 +392,7 @@
 
 !--- right absorbing boundary
       if(codeabs(IRIGHT,ispecabs)) then
+!!$      if(.false.) then
 
         i = NGLLX
 
@@ -380,11 +403,19 @@
 ! for analytical initial plane wave for Bielak's conditions
 ! left or right edge, horizontal normal vector
           if(add_Bielak_conditions .and. initialfield) then
-            call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                 x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
-                 c_inc, c_refl, time_offset,f0)
-            traction_x_t0 = (lambdal_relaxed+2*mul_relaxed)*dxUx + lambdal_relaxed*dzUz
-            traction_z_t0 = mul_relaxed*(dxUz + dzUx)
+            if (.not.over_critical_angle) then
+               call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                    x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
+                    c_inc, c_refl, time_offset,f0)
+               traction_x_t0 = (lambdal_relaxed+2*mul_relaxed)*dxUx + lambdal_relaxed*dzUz
+               traction_z_t0 = mul_relaxed*(dxUz + dzUx)
+            else
+               veloc_horiz=v0x_right(count_right)
+               veloc_vert=v0z_right(count_right)
+               traction_x_t0=t0x_right(count_right)
+               traction_z_t0=t0z_right(count_right)
+               count_right=count_right+1
+            end if
           else
             veloc_horiz = 0
             veloc_vert = 0
@@ -446,11 +477,19 @@
 ! for analytical initial plane wave for Bielak's conditions
 ! top or bottom edge, vertical normal vector
           if(add_Bielak_conditions .and. initialfield) then
-            call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                 x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
-                 c_inc, c_refl, time_offset,f0)
-            traction_x_t0 = mul_relaxed*(dxUz + dzUx)
-            traction_z_t0 = lambdal_relaxed*dxUx + (lambdal_relaxed+2*mul_relaxed)*dzUz
+            if (.not.over_critical_angle) then
+               call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                    x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
+                    c_inc, c_refl, time_offset,f0)
+               traction_x_t0 = mul_relaxed*(dxUz + dzUx)
+               traction_z_t0 = lambdal_relaxed*dxUx + (lambdal_relaxed+2*mul_relaxed)*dzUz
+            else
+               veloc_horiz=v0x_bot(count_bot)
+               veloc_vert=v0z_bot(count_bot)
+               traction_x_t0=t0x_bot(count_bot)
+               traction_z_t0=t0z_bot(count_bot)
+               count_bot=count_bot+1
+            end if
           else
             veloc_horiz = 0
             veloc_vert = 0

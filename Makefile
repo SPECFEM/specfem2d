@@ -88,8 +88,9 @@ OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/enforce_acoustic_free_surface.o\
         $O/specfem2D.o $O/write_seismograms.o $O/define_external_model.o $O/createnum_fast.o $O/createnum_slow.o\
         $O/define_shape_functions.o $O/attenuation_model.o $O/create_color_image.o $O/compute_vector_field.o $O/compute_pressure.o\
         $O/recompute_jacobian.o $O/compute_arrays_source.o $O/locate_source_moment_tensor.o $O/netlib_specfun_erf.o\
-        $O/construct_acoustic_surface.o $O/assemble_MPI.o $O/compute_energy.o\
-        $O/attenuation_compute_param.o $O/compute_Bielak_conditions.o
+        $O/construct_acoustic_surface.o $O/assemble_MPI.o $O/compute_energy.o $O/compute_curl_one_element.o\
+        $O/attenuation_compute_param.o $O/compute_Bielak_conditions.o $O/paco_beyond_critical.o\
+	$O/paco_convolve_fft.o
 
 default: clean meshfem2D specfem2D convolve_source_timefunction
 
@@ -194,6 +195,9 @@ $O/compute_vector_field.o: compute_vector_field.f90 constants.h
 $O/compute_pressure.o: compute_pressure.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/compute_pressure.o compute_pressure.f90
     
+$O/compute_curl_one_element.o: compute_curl_one_element.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/compute_curl_one_element.o compute_curl_one_element.f90
+    
 $O/compute_Bielak_conditions.o: compute_Bielak_conditions.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/compute_Bielak_conditions.o compute_Bielak_conditions.f90
     
@@ -226,3 +230,10 @@ $O/assemble_MPI.o: assemble_MPI.F90 constants.h
 
 $O/attenuation_compute_param.o: attenuation_compute_param.c
 	${CC} -c -o $O/attenuation_compute_param.o attenuation_compute_param.c
+
+$O/paco_beyond_critical.o: paco_beyond_critical.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/paco_beyond_critical.o paco_beyond_critical.f90
+
+$O/paco_convolve_fft.o: paco_convolve_fft.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/paco_convolve_fft.o paco_convolve_fft.f90
+
