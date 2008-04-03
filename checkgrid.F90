@@ -120,7 +120,6 @@
 
   double precision coorg(NDIM,npgeo)
 
-
 ! title of the plot
   character(len=60) simulation_title
 
