@@ -1599,8 +1599,8 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                angleforce_refl = asin(p*c_refl)
 
                ! from formulas (5.30) and (5.31) p 140 in Aki & Richards (1980)
-               SS = (cos(2.d0*angleforce_refl)**2/csloc**3 - 4.d0*p**2*cos(angleforce)*cos(angleforce_refl)/cploc) / &
-                    (cos(2.d0*angleforce_refl)**2/csloc**3 + 4.d0*p**2*cos(angleforce)*cos(angleforce_refl)/cploc)
+               SS = (cos(2.d0*angleforce)**2/csloc**3 - 4.d0*p**2*cos(angleforce)*cos(angleforce_refl)/cploc) / &
+                    (cos(2.d0*angleforce)**2/csloc**3 + 4.d0*p**2*cos(angleforce)*cos(angleforce_refl)/cploc)
                SP = 4.d0*p*cos(angleforce)*cos(2*angleforce) / &
                     (cploc*csloc*(cos(2.d0*angleforce)**2/csloc**3&
                     +4.d0*p**2*cos(angleforce_refl)*cos(angleforce)/cploc))
@@ -1642,30 +1642,21 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       xmax = maxval(coord(1,:))
       zmax = maxval(coord(2,:))
 
-      !initializing of the time offset to put the planewave not to close of the irregularity on the free surface
-      if (abs(angleforce)<10.d0*pi/180.d0 .and. source_type/=3) then
+      !initializing of the time offset to put the planewave not too close of the irregularity on the free surface
+      if (abs(angleforce)<1.d0*pi/180.d0 .and. source_type/=3) then
          time_offset=-1.d0*zmax/2.d0/c_inc
-
-!!$      elseif (abs(angleforce)<31.d0*pi/180.d0 .and. source_type==1) then
-!!$         time_offset=-1.d0*zmax/3.d0/c_inc
-!!$      elseif (abs(angleforce)<29.d0*pi/180.d0 .and. source_type==2) then
-!!$         time_offset=-1.d0*zmax/3.d0/c_inc
-
       else
          time_offset=0.d0
       endif
 
       ! to correctly center the initial plane wave in the mesh
       z0_source=zmax
-!!$      if (abs(angleforce)<1.d0*pi/180.d0) then
-!!$         x0_source=xmin + 1.d0*(xmax-xmin)/2.d0
-!!$      else
-!!$         x0_source=xmin + 1.d0*(xmax-xmin)/3.d0
-!!$
-!!$      endif
 
-!!$      x0_source=x_source
-      x0_source=xmin + 1.d0*(xmax-xmin)/4.d0
+      if (abs(angleforce)<20.d0*pi/180.d0) then
+         x0_source=xmin
+      else
+         x0_source=xmin + 1.d0*(xmax-xmin)/4.d0
+      endif
 
       if (.not.over_critical_angle) then
 
