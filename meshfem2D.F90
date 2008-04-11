@@ -66,6 +66,19 @@
 ! volume=88,
 ! number=2,
 ! pages={368-392}}
+!
+! If you use the METIS / SCOTCH / CUBIT non-structured version, please also cite:
+!
+! @INPROCEEDINGS{MaKoBlLe08,
+! author = {Roland Martin and Dimitri Komatitsch and C\'eline Blitz and Nicolas {Le Goff}},
+! title = {Simulation of seismic wave propagation in an asteroid based upon a non-blocking {MPI} spectral-element method},
+! booktitle = {Proceedings of the VECPAR'2008 conference,
+! 8th International Meeting on High Performance Computing for Computational Science},
+! year = {2008},
+! pages = {999998-999999},
+! address = {Toulouse, France},
+! note = {24-27 June 2008},
+! url = {http://vecpar.fe.up.pt/2008}}
 
 program meshfem2D
 
