@@ -71,7 +71,7 @@
 ! If you use the METIS / SCOTCH / CUBIT non-structured version, please also cite:
 !
 ! @INPROCEEDINGS{MaKoBlLe08,
-! author = {Roland Martin and Dimitri Komatitsch and C\'eline Blitz and Nicolas {Le Goff}},
+! author = {R. Martin and D. Komatitsch and C. Blitz and N. {Le Goff}},
 ! title = {Simulation of seismic wave propagation in an asteroid based upon a non-blocking {MPI} spectral-element method},
 ! booktitle = {Proceedings of the VECPAR'2008 conference,
 ! 8th International Meeting on High Performance Computing for Computational Science},
