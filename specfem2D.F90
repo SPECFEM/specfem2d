@@ -72,9 +72,10 @@
 !
 ! @INPROCEEDINGS{MaKoBlLe08,
 ! author = {R. Martin and D. Komatitsch and C. Blitz and N. {Le Goff}},
-! title = {Simulation of seismic wave propagation in an asteroid based upon a non-blocking {MPI} spectral-element method},
-! booktitle = {Proceedings of the VECPAR'2008 conference,
-! 8th International Meeting on High Performance Computing for Computational Science},
+! title = {Simulation of seismic wave propagation in an asteroid based upon
+! an unstructured {MPI} spectral-element method: blocking and non-blocking communication strategies}
+! booktitle = {Proceedings of the VECPAR'2008 8th International Meeting
+! on High Performance Computing for Computational Science},
 ! year = {2008},
 ! pages = {999998-999999},
 ! address = {Toulouse, France},
