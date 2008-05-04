@@ -40,7 +40,7 @@
 !
 !========================================================================
 
-  subroutine compute_forces_elastic(npoin,nspec,nelemabs,numat,iglob_source, &
+  subroutine compute_forces_elastic(npoin,nspec,nelemabs,numat, &
        ispec_selected_source,is_proc_source,source_type,it,NSTEP,anyabs,assign_external_model, &
        initialfield,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,angleforce,deltatcube, &
        deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,elastic,codeabs, &
@@ -60,7 +60,7 @@
 
   include "constants.h"
 
-  integer :: npoin,nspec,nelemabs,numat,iglob_source,ispec_selected_source,is_proc_source,source_type,it,NSTEP
+  integer :: npoin,nspec,nelemabs,numat,ispec_selected_source,is_proc_source,source_type,it,NSTEP
 
   logical :: anyabs,assign_external_model,initialfield,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,add_Bielak_conditions
 
@@ -323,7 +323,6 @@
 
 !--- left absorbing boundary
       if(codeabs(ILEFT,ispecabs)) then
-!!$      if(.false.) then
 
         i = 1
 
@@ -392,7 +391,6 @@
 
 !--- right absorbing boundary
       if(codeabs(IRIGHT,ispecabs)) then
-!!$      if(.false.) then
 
         i = NGLLX
 

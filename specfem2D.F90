@@ -177,7 +177,7 @@
 ! curl in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: curl_element
 
-  integer :: i,j,k,l,it,irec,ipoin,ip,id,nbpoin,inump,n,ispec,npoin,npgeo,iglob
+  integer :: i,j,k,l,it,irec,ipoin,ip,id,n,ispec,npoin,npgeo,iglob
   logical :: anyabs
   double precision :: dxd,dzd,dcurld,valux,valuz,valcurl,hlagrange,rhol,cosrot,sinrot,xi,gamma,x,z
 
@@ -207,7 +207,7 @@
 ! for acoustic medium
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_elastic,rmass_inverse_acoustic
-  double precision, dimension(:), allocatable :: density,displread,velocread,accelread
+  double precision, dimension(:), allocatable :: density
 
   double precision, dimension(:), allocatable :: vp_display
 
@@ -376,13 +376,11 @@
   double precision, dimension(2) :: A_plane, B_plane, C_plane
   double precision :: PP, PS, SP, SS, z0_source, x0_source, xmax, xmin, zmax, zmin, time_offset
 
-!over critical angle
+! over critical angle
   integer , dimension(:), allocatable :: left_bound,right_bound,bot_bound
   double precision , dimension(:,:), allocatable :: v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot
   double precision , dimension(:,:), allocatable :: t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot
-  integer count_left,count_right,count_bot,itime,ibegin,iend
-!!$  double precision :: a1,b1,a2,b2,a3,b3,sin0,cos0,Zr,Zr_dot,Zr_dot_dot,Zi,Zi_dot,Zi_dot_dot,Cte
-  double precision :: X_temp,Z_temp,ignore
+  integer count_left,count_right,count_bot,ibegin,iend
   logical :: over_critical_angle
 
 !***********************************************************************
@@ -2185,11 +2183,10 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
 ! first call, computation on outer elements, absorbing conditions and source
     call compute_forces_acoustic(npoin,nspec,nelemabs,numat, &
-               iglob_source,ispec_selected_source,is_proc_source,source_type,it,NSTEP,anyabs, &
-               assign_external_model,initialfield,ibool,kmato,numabs, &
+               anyabs,assign_external_model,ibool,kmato,numabs, &
                elastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
                potential_acoustic,density,elastcoef,xix,xiz,gammax,gammaz,jacobian, &
-               vpext,rhoext,source_time_function,hprime_xx,hprimewgll_xx, &
+               vpext,rhoext,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
                jbegin_left,jend_left,jbegin_right,jend_right, &
@@ -2279,11 +2276,10 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 ! second call, computation on inner elements
   if(any_acoustic) then
     call compute_forces_acoustic(npoin,nspec,nelemabs,numat, &
-               iglob_source,ispec_selected_source,is_proc_source,source_type,it,NSTEP,anyabs, &
-               assign_external_model,initialfield,ibool,kmato,numabs, &
+               anyabs,assign_external_model,ibool,kmato,numabs, &
                elastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
                potential_acoustic,density,elastcoef,xix,xiz,gammax,gammaz,jacobian, &
-               vpext,rhoext,source_time_function,hprime_xx,hprimewgll_xx, &
+               vpext,rhoext,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
                jbegin_left,jend_left,jbegin_right,jend_right, &
@@ -2311,6 +2307,25 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   if(any_acoustic) then
 
     potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
+
+! --- add the source
+    if(.not. initialfield) then
+! if this processor carries the source and the source element is acoustic
+      if (is_proc_source == 1 .and. .not. elastic(ispec_selected_source)) then
+! collocated force
+! beware, for acoustic medium, source is a pressure source
+! the sign is negative because pressure p = - Chi_dot_dot therefore we need
+! to add minus the source to Chi_dot_dot to get plus the source in pressure
+        if(source_type == 1) then
+          potential_dot_dot_acoustic(iglob_source) = potential_dot_dot_acoustic(iglob_source) - source_time_function(it)
+
+! moment tensor
+        else if(source_type == 2) then
+          call exit_MPI('cannot have moment tensor source in acoustic element')
+        endif
+      endif ! if this processor carries the source and the source element is acoustic
+    endif ! if not using an initial field
+
     potential_dot_acoustic = potential_dot_acoustic + deltatover2*potential_dot_dot_acoustic
 
 ! free surface for an acoustic medium
@@ -2327,7 +2342,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
 ! first call, computation on outer elements, absorbing conditions and source
  if(any_elastic) &
-    call compute_forces_elastic(npoin,nspec,nelemabs,numat,iglob_source, &
+    call compute_forces_elastic(npoin,nspec,nelemabs,numat, &
                ispec_selected_source,is_proc_source,source_type,it,NSTEP,anyabs,assign_external_model, &
                initialfield,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,angleforce,deltatcube, &
                deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,elastic,codeabs, &
@@ -2420,9 +2435,9 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   endif
 #endif
 
-! second call, computation on inner elements and update of
+! second call, computation on inner elements and update
   if(any_elastic) &
-    call compute_forces_elastic(npoin,nspec,nelemabs,numat,iglob_source, &
+    call compute_forces_elastic(npoin,nspec,nelemabs,numat, &
                ispec_selected_source,is_proc_source,source_type,it,NSTEP,anyabs,assign_external_model, &
                initialfield,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,angleforce,deltatcube, &
                deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,elastic,codeabs, &

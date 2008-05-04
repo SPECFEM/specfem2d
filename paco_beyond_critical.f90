@@ -52,12 +52,12 @@ subroutine paco_beyond_critical(coord,npoin,deltat,NSTEP_global,angleforce,&
   double precision :: X, Z, xmin, xmax, zmin, zmax
   integer :: inode
 
-  double complex CAKA,CAQA,UI,UR
-  double complex UX,UZ,SX,SZ,SXZ,A2,B2,AL,AK,AM
+  complex(selected_real_kind(15,300)) :: CAKA,CAQA,UI,UR
+  complex(selected_real_kind(15,300)) :: UX,UZ,SX,SZ,SXZ,A2,B2,AL,AK,AM
 
-  double complex :: TX,TZ
+  complex(selected_real_kind(15,300)) :: TX,TZ
 
-  double complex, dimension(:),allocatable::Field_Ux,Field_Uz,Field_Tx,Field_Tz
+  complex(selected_real_kind(15,300)), dimension(:),allocatable::Field_Ux,Field_Uz,Field_Tx,Field_Tz
 
   double precision :: TS
 
@@ -227,7 +227,7 @@ subroutine paco_beyond_critical(coord,npoin,deltat,NSTEP_global,angleforce,&
 
 
         TOTO=0.0d0
-        CALL DESFXY(TOTO,TOTO,source_type,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM,ANU)
+        CALL DESFXY(TOTO,TOTO,source_type,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM)
 
         !! DK DK write the frequency seismograms
         TX = SX *VNX+SXZ*VNZ
@@ -267,7 +267,7 @@ subroutine paco_beyond_critical(coord,npoin,deltat,NSTEP_global,angleforce,&
            IF (source_type==2) CALL ONDASS(GAMR,AKA,AQA,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
            IF (source_type==3) CALL ONDASR(AQA,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
 
-           CALL DESFXY(X,Z,source_type,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM,ANU)
+           CALL DESFXY(X,Z,source_type,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM)
 
            !! DK DK write the frequency seismograms
            TX = SX *VNX+SXZ*VNZ
@@ -351,37 +351,36 @@ end subroutine paco_beyond_critical
 
 !---
 
-SUBROUTINE DESFXY(X,Z,ICAS,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM,ANU)
+SUBROUTINE DESFXY(X,Z,ICAS,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM)
 
   implicit none
 
-  double precision A1,B1,RLM,ANU,X,Z
+  double precision A1,B1,RLM,X,Z
   integer ICAS
-  double complex UX,UZ,SX,SZ,SXZ,A2,B2,AL,AK,AM
-  double complex UI,FAC
-  double complex AUX1,AUX2,FI1,FI2,PS1,PS2
-
+  complex(selected_real_kind(15,300)) :: UX,UZ,SX,SZ,SXZ,A2,B2,AL,AK,AM
+  complex(selected_real_kind(15,300)) :: UI,FAC
+  complex(selected_real_kind(15,300)) :: AUX1,AUX2,FI1,FI2,PS1,PS2
 
   UI=(0.0d0,1.0d0)
   if (A1/=0.0d0) then
-     AUX1=A1*CDEXP(UI*(AM*Z-AL*X))         !campo P incidente
+     AUX1=A1*EXP(UI*(AM*Z-AL*X))         !campo P incidente
   else
      AUX1=CMPLX(0.0d0)
   end if
   if (A2/=0.0d0) then
-     AUX2=A2*CDEXP(-UI*(AM*Z+AL*X)) *1.0d0      !campo P reflejado
+     AUX2=A2*EXP(-UI*(AM*Z+AL*X)) *1.0d0      !campo P reflejado
   else
      AUX2=CMPLX(0.0d0)
   end if
   FI1=AUX1+AUX2
   FI2=AUX1-AUX2
   if (B1/=0.0d0) then
-     AUX1=B1*CDEXP(UI*(AK*Z-AL*X))            !campo S incidente
+     AUX1=B1*EXP(UI*(AK*Z-AL*X))            !campo S incidente
   else
      AUX1=CMPLX(0.0d0)
   end if
   if (B2/=0.0d0) then
-     AUX2=B2*CDEXP(-UI*(AK*Z+AL*X)) *1.0d0      !campo S reflejado
+     AUX2=B2*EXP(-UI*(AK*Z+AL*X)) *1.0d0      !campo S reflejado
   else
      AUX2=CMPLX(0.0d0)
   end if
@@ -415,7 +414,7 @@ SUBROUTINE FAFB(CA,CB,FA,FB)
   implicit none
 
   double precision CA,CB,A,B
-  double complex FA,FB,ZER,UI
+  complex(selected_real_kind(15,300)) :: FA,FB,ZER,UI
 
   ZER=(0.0d0,0.0d0)
   UI=(0.0d0,1.0d0)
@@ -442,7 +441,7 @@ SUBROUTINE A2B2(FA,FB,A2,B2)
 
   implicit none
 
-  double complex FA,FB,A2,B2,DEN,AUX
+  complex(selected_real_kind(15,300)) :: FA,FB,A2,B2,DEN,AUX
 
   AUX=FB*FB-1.0d0
   DEN=4.0d0*FA*FB+AUX*AUX
@@ -457,7 +456,7 @@ SUBROUTINE ONDASP(GP,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
   implicit none
 
   double precision A1,B1,ANU,CA,CB,GP,AQB,BEALF
-  double complex A2,B2,FA,FB,ZER,AL,AK,AM
+  complex(selected_real_kind(15,300)) :: A2,B2,FA,FB,ZER,AL,AK,AM
 
   ZER=(0.0d0,0.0d0)
   BEALF=SQRT((1.0d0-2.0d0*ANU)/2.0d0/(1.0d0-ANU))
@@ -493,7 +492,7 @@ SUBROUTINE ONDASS(GS,AKB,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
   implicit none
 
   double precision A1,B1,ANU,CA,CB,GS,AQB,BEALF,AKB
-  double complex A2,B2,FA,FB,ZER,AL,AK,AM
+  complex(selected_real_kind(15,300)) :: A2,B2,FA,FB,ZER,AL,AK,AM
 
   ZER=(0.0d0,0.0d0)
   BEALF=SQRT((1.0d0-2.0d0*ANU)/2.0d0/(1.0d0-ANU))
@@ -548,7 +547,7 @@ SUBROUTINE ONDASR(AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
   implicit none
 
   double precision A1,B1,ANU,CA,CB,AQB,BEALF,ba2
-  double complex A2,B2,FA,FB,ZER,AL,AK,AM
+  complex(selected_real_kind(15,300)) :: A2,B2,FA,FB,ZER,AL,AK,AM
 
   double precision, external :: crb
 

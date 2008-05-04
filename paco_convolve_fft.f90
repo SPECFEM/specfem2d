@@ -15,21 +15,17 @@ subroutine paco_convolve_fft(Field,label,NSTEP,dt,NFREC,output_field,tp,ts)
 
   integer :: NFREC,N,NSTEP
 
-  double complex, dimension(NFREC+1) :: Field
+  complex(selected_real_kind(15,300)), dimension(NFREC+1) :: Field
 
-  double complex CR(2*NFREC)
+  complex(selected_real_kind(15,300)) :: CR(2*NFREC)
 
   double precision, dimension(NSTEP) :: output_field
 
-  integer :: J,i,label
+  integer :: J,label
 
-  integer :: beg_UV, end_UV
-
-  double precision :: AN,FUN,RAIZ,X,Z,dt,tp,ts
+  double precision :: AN,FUN,RAIZ,dt,tp,ts
 
   double precision, external :: RIC, deRIC, de2RIC
-
-  integer inode
 
   N=2*NFREC
 
@@ -67,22 +63,21 @@ SUBROUTINE SINTER(V,output_field,NSTEP,CR,RAIZ,NFREC,label,dt)
 
   implicit none
 
-  integer NSTEP, j,jn,nar,N,jstep,jbegin,jend,label,nfrec,mult,delay
+  integer NSTEP, j,jn,N,label,nfrec,mult,delay
 
   double precision :: RAIZ
 
-  double complex VC
+  complex(selected_real_kind(15,300)) :: VC
 
   double precision VT(2*NFREC)
 
-  double precision :: filt,eta,dt
-
+  double precision :: filt,dt
 
   double precision, dimension(NSTEP) :: output_field
 
-  double complex, dimension(NFREC+1) :: V
+  complex(selected_real_kind(15,300)), dimension(NFREC+1) :: V
 
-  double complex CY(2*NFREC),CR(2*NFREC)
+  complex(selected_real_kind(15,300)) :: CY(2*NFREC),CR(2*NFREC)
 
   N=2*NFREC
 
@@ -152,7 +147,7 @@ FUNCTION deRIC(J,tp,ts,dt)
   include "constants.h"
 
   double precision :: A,A_dot,deRIC,tp,ts,dt
-  integer :: label,j
+  integer :: j
 
   A=PI*(dt*(J-1)-ts)/tp
   A=A*A
@@ -197,7 +192,7 @@ SUBROUTINE Transform(LX,CX,SIGNI)
 
   double precision SC
 
-  double complex CX(LX),CARG,CW,CTEMP
+  complex(selected_real_kind(15,300)) :: CX(LX),CARG,CW,CTEMP
 
   double precision SIGNI
 
@@ -222,7 +217,7 @@ SUBROUTINE Transform(LX,CX,SIGNI)
      ISTEP=2*L
      DO  M=1,L
         CARG=(0.0d0,1.0d0)*(PI*SIGNI*(M-1))/L
-        CW=CDEXP(CARG)
+        CW=EXP(CARG)
         DO  I=M,LX,ISTEP
            CTEMP=CW*CX(I+L)
            CX(I+L)=CX(I)-CTEMP

@@ -66,7 +66,7 @@ subroutine compute_curl_one_element(curl_element,displ_elastic,elastic, &
   real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
 
   ! local variables
-  integer :: i,j,k,iglob
+  integer :: i,j,k
 
   ! jacobian
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl
