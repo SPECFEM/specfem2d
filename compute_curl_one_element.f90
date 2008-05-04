@@ -41,7 +41,7 @@
 !========================================================================
 
 subroutine compute_curl_one_element(curl_element,displ_elastic,elastic, &
-     xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin, ispec)
+     xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,ispec)
 
   ! compute curl in elastic elements (for rotational study)
 
@@ -74,7 +74,6 @@ subroutine compute_curl_one_element(curl_element,displ_elastic,elastic, &
   ! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
   real(kind=CUSTOM_REAL) :: duz_dxl,dux_dzl
-
 
   if(elastic(ispec)) then
 
