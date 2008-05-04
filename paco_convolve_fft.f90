@@ -31,18 +31,17 @@ subroutine paco_convolve_fft(Field,label,NSTEP,dt,NFREC,output_field,tp,ts)
 
   AN  = N
 
-  !!!
-  !!!label=1 <=> champ U en entree =>convolution par un ricker pour U
-  !!!label=2 <=> champ U en entree =>convolution par la derivee de ricker pour V
-  !!!label=3 <=> champ U en entree =>convolution par la derivee seconde de ricker pour A
-  !!!label=4 <=> champ T en entree =>convolution par un ricker
-  !!!
-  !!!flag=0 on a besoin de U, V et A (pas T)
-  !!!flag/=0 on a besoin de T et V (pas U ni A)
-  !!!
-  !!!NSTEP==1 <=> FLAG==0 (flags: interior=0, left=1, right=2, bottom=3)
-  !!!
-
+!
+! label=1 <=> champ U en entree =>convolution par un ricker pour U
+! label=2 <=> champ U en entree =>convolution par la derivee de ricker pour V
+! label=3 <=> champ U en entree =>convolution par la derivee seconde de ricker pour A
+! label=4 <=> champ T en entree =>convolution par un ricker
+!
+! flag=0 on a besoin de U, V et A (pas T)
+! flag/=0 on a besoin de T et V (pas U ni A)
+!
+! NSTEP==1 <=> FLAG==0 (flags: interior=0, left=1, right=2, bottom=3)
+!
 
   do j=1,N
      if (label==1 .or. label==4) FUN=ric(j,tp,ts,dt)
@@ -51,7 +50,7 @@ subroutine paco_convolve_fft(Field,label,NSTEP,dt,NFREC,output_field,tp,ts)
      CR(j)=CMPLX(FUN,0.0d0)
   enddo
 
-  CALL Transform(N,CR,-1.0d0)
+  CALL fourier_transform(N,CR,-1.0d0)
 
   RAIZ = SQRT(AN)
 
@@ -91,22 +90,21 @@ SUBROUTINE SINTER(V,output_field,NSTEP,CR,RAIZ,NFREC,label,dt)
      CY(JN)=CONJG(CY(J))
   enddo
 
-  CALL Transform(N,CY,1.0d0)
+  CALL fourier_transform(N,CY,1.0d0)
 
-  if (label==1.or.label==3.or.(label==2.and.NSTEP==1)) then
-     !coefs to take wanted time steps (t=0 : first time step)
+  if (label==1 .or. label==3 .or. (label==2 .and. NSTEP==1)) then
+! coefficients to take time steps needed (t=0: first time step)
      mult=1
      delay=0
-  else if(label==2.and.NSTEP>1) then
-     !coefs to take wanted time steps (t=i*deltat+1/2 : one step on two starting at 1/2)
+  else if(label==2 .and. NSTEP>1) then
+! coefficients to take time steps needed (t=i*deltat+1/2: one step on two starting at 1/2)
      mult=2
      delay=0
   else if(label==4) then
-     !coefs to take wanted time steps (t=i*deltat+1 : one step on two starting at 1)
+! coefficients to take time steps needed (t=i*deltat+1: one step on two starting at 1)
      mult=2
      delay=1
   end if
-
 
   do J=1,NSTEP
      CY(mult*J+delay)=CY(mult*J+delay)/RAIZ/dt
@@ -117,7 +115,7 @@ SUBROUTINE SINTER(V,output_field,NSTEP,CR,RAIZ,NFREC,label,dt)
 END SUBROUTINE SINTER
 
 !
-!! DK DK Ricker time function
+! Ricker time function
 !
 FUNCTION RIC(J,tp,ts,dt)
 
@@ -138,7 +136,7 @@ FUNCTION RIC(J,tp,ts,dt)
 END FUNCTION RIC
 
 !
-!! RM time derivative Ricker time function
+! first time derivative of Ricker time function
 !
 FUNCTION deRIC(J,tp,ts,dt)
 
@@ -159,7 +157,7 @@ FUNCTION deRIC(J,tp,ts,dt)
 END FUNCTION deRIC
 
 !
-!! RM second time derivative Ricker time function
+! second time derivative of Ricker time function
 !
 FUNCTION de2RIC(J,tp,ts,dt)
 
@@ -181,8 +179,8 @@ FUNCTION de2RIC(J,tp,ts,dt)
 END FUNCTION de2RIC
 
 
-!! DK DK Fourier transform
-SUBROUTINE Transform(LX,CX,SIGNI)
+! Fourier transform
+SUBROUTINE fourier_transform(LX,CX,SIGNI)
 
   implicit none
 
@@ -228,5 +226,5 @@ SUBROUTINE Transform(LX,CX,SIGNI)
      L=ISTEP
   end do
 
-END SUBROUTINE Transform
+END SUBROUTINE fourier_transform
 

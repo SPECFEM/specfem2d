@@ -48,7 +48,7 @@ subroutine paco_beyond_critical(coord,npoin,deltat,NSTEP_global,angleforce,&
 
   double precision :: ANU,BEALF,ALFBE,RLM,VNX,VNZ,A1,B1,TOTO,FJ,AKA,AQA,GAMR
 
-!location point
+! location of the point
   double precision :: X, Z, xmin, xmax, zmin, zmax
   integer :: inode
 
@@ -61,31 +61,30 @@ subroutine paco_beyond_critical(coord,npoin,deltat,NSTEP_global,angleforce,&
 
   double precision :: TS
 
-!! move it to move the place where the wave reflects on free surface (offset too)
+! to move the place where the wave reflects on free surface (offset too)
   double precision :: offset
 
-!properties of the model
+! size of the model
   xmin=minval(coord(1,:))
   xmax=maxval(coord(1,:))
   zmin=minval(coord(2,:))
   zmax=maxval(coord(2,:))
 
-!! DK DK offset of the origin of time of the Ricker (equivalent to t0 in SPECFEM2D)
+! offset of the origin of time of the Ricker (equivalent to t0 in SPECFEM2D)
   offset=4.d0*(xmax-xmin)/5.d0
   TS=2.d0/f0
 
-!! DK DK dominant period of the Ricker ((equivalent to 1/f0 in SPECFEM2D)
+! dominant period of the Ricker (equivalent to 1/f0 in SPECFEM2D)
   TP=1.d0/f0
 
-
-!!!find optimal period
-!!!if period is too small, you should see several initial plane wave on your initial field
+! find optimal period
+! if period is too small, you should see several initial plane wave on your initial field
   delta_in_period=2.d0
   do while(delta_in_period<1.5*abs(xmax-xmin)/cs_local)
      delta_in_period=2.d0*delta_in_period
   end do
 
-!!!testing of Deltat compatibility
+! test Deltat compatibility
   DT=256.d0
   do while(DT>deltat)
      DT=DT/2.d0
@@ -117,25 +116,25 @@ subroutine paco_beyond_critical(coord,npoin,deltat,NSTEP_global,angleforce,&
   NFREC1=NFREC+1
 
 
-     !
-     !     FDT:  FUNCION DE TRASFERENCIA
-     !
+!
+!     FDT:  FUNCION DE TRASFERENCIA
+!
 
-!! calcul of Poisson's ratio
+! calculation of Poisson's ratio
   ANU = (cp_local*cp_local-2.d0*cs_local*cs_local)/(2.d0*(cp_local*cp_local-cs_local*cs_local))
   print *,"Poisson's ratio = ",ANU
 
   UI=(0.0d0, 1.0d0)
   UR=(1.0d0, 0.0d0)
 
-!! DK DK convert angle to radians
+! convert angle to radians
   GAMR = angleforce
 
   BEALF=SQRT((1.0d0-2.0d0*ANU)/(2.0d0*(1.0d0-ANU)))
   ALFBE=1.0d0/BEALF
   RLM=ALFBE**2-2.0d0
 
-  !! RM flags: interior=0, left=1, right=2, bottom=3
+! flags: interior=0, left=1, right=2, bottom=3
   do FLAG=0,3
 
      if (FLAG==0) then
@@ -166,8 +165,7 @@ subroutine paco_beyond_critical(coord,npoin,deltat,NSTEP_global,angleforce,&
         NSTEP_local=NSTEP_global
      end if
 
-
-     !to distinguish all model case and boundary case
+! to distinguish all model case and boundary case
      allocate(temp_field(NSTEP_local))
 
      allocate(Field_Ux(NFREC1))
@@ -178,9 +176,9 @@ subroutine paco_beyond_critical(coord,npoin,deltat,NSTEP_global,angleforce,&
 
      if(mod(N,2) /= 0) stop 'N must be a multiple of 2'
 
-!! DK DK normal vector to the edge at this grid point
-!! DK DK therefore corners between two grid edges must be computed twice
-!! DK DK because the normal will change
+! normal vector to the edge at this grid point
+! therefore corners between two grid edges must be computed twice
+! because the normal will change
      if (FLAG==1) then
         VNZ = 0.d0
         VNX = 1.d0
@@ -201,25 +199,24 @@ subroutine paco_beyond_critical(coord,npoin,deltat,NSTEP_global,angleforce,&
         if (FLAG==0) then
            inode=indice
            X=coord(1,indice)-offset
-           !!!specfem is implemented from bottom to top whereas for this code
-           !!!we need from top to bottom
+! specfem coordinate axes are implemented from bottom to top whereas for this code
+! we need from top to bottom
            Z=zmax-coord(2,indice)
         else
            inode=local_pt(indice)
            X=coord(1,inode)-offset
-           !!!specfem is implemented from bottom to top whereas for this code
-           !!!we need from top to bottom
+! specfem coordinate axes are implemented from bottom to top whereas for this code
+! we need from top to bottom
            Z=zmax-coord(2,inode)
-
         end if
 
         if (mod(indice,500)==0) then
            print *, indice, "points have been treated on ",npt," total points"
         end if
 
-        !
-        !! DK DK first handle the particular case of zero frequency
-        !
+!
+! first handle the particular case of zero frequency
+!
         TOTO=0.01d0
         IF (source_type==1) CALL ONDASP(GAMR,0.01d0*BEALF,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
         IF (source_type==2) CALL ONDASS(GAMR,TOTO,0.01d0*BEALF,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
@@ -229,7 +226,7 @@ subroutine paco_beyond_critical(coord,npoin,deltat,NSTEP_global,angleforce,&
         TOTO=0.0d0
         CALL DESFXY(TOTO,TOTO,source_type,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM)
 
-        !! DK DK write the frequency seismograms
+! write the frequency seismograms
         TX = SX *VNX+SXZ*VNZ
         TZ = SXZ*VNX+SZ *VNZ
 
@@ -240,21 +237,20 @@ subroutine paco_beyond_critical(coord,npoin,deltat,NSTEP_global,angleforce,&
            Field_Tz(1)=TZ
         end if
 
-
-        !
-        ! then loop on all the other discrete frequencies
-        !
+!
+! then loop on all the other discrete frequencies
+!
         do J=1,N/2
 
-           !! DK DK compute the value of the frequency (= index * delta in frequency = index * 1/delta in period)
+! compute the value of the frequency (= index * delta in frequency = index * 1/delta in period)
            FJ = dble(J) * 1.d0 / delta_in_period
 
-           !! DK DK pulsation (= 2 * PI * frequency)
+! pulsation (= 2 * PI * frequency)
            AKA=2.0d0*PI*FJ
 
            AQA=AKA*BEALF
 
-           !! DK DK exclude attenuation completely if needed
+! exclude attenuation completely if needed
            if(INCLUDE_ATTENUATION) then
               CAKA=CMPLX(AKA,-AKA/(2.0d0*QD))
               CAQA=CMPLX(AQA,-AQA/(2.0d0*QD))
@@ -269,7 +265,7 @@ subroutine paco_beyond_critical(coord,npoin,deltat,NSTEP_global,angleforce,&
 
            CALL DESFXY(X,Z,source_type,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM)
 
-           !! DK DK write the frequency seismograms
+! write the frequency seismograms
            TX = SX *VNX+SXZ*VNZ
            TZ = SXZ*VNX+SZ *VNZ
 
@@ -282,11 +278,11 @@ subroutine paco_beyond_critical(coord,npoin,deltat,NSTEP_global,angleforce,&
 
         enddo
 
-        !to convert frequency field in time field
-        !(number at the end are unit numbers for writing in the good file,
-        !in the case of the traction we fill only one file per call)
+! to convert frequency field in time field
+! (number at the end are unit numbers for writing in the good file,
+! in the case of the traction we fill only one file per call)
 
-        !global model case for initial field
+! global model case for initial field
         if (FLAG==0) then
            call paco_convolve_fft(Field_Ux,1,NSTEP_local,dt,NFREC,temp_field,TP,TS)
            displ_elastic(1,indice)=temp_field(1)
@@ -301,8 +297,9 @@ subroutine paco_beyond_critical(coord,npoin,deltat,NSTEP_global,angleforce,&
            call paco_convolve_fft(Field_Uz,3,NSTEP_local,dt,NFREC,temp_field,TP,TS)
            accel_elastic(2,indice)=temp_field(1)
 
-        !absorbing boundaries...
-        !left case
+! absorbing boundaries
+
+! left case
         else if (FLAG==1) then
            call paco_convolve_fft(Field_Ux,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
            v0x_left(indice,:)=temp_field(:)
@@ -313,7 +310,7 @@ subroutine paco_beyond_critical(coord,npoin,deltat,NSTEP_global,angleforce,&
            call paco_convolve_fft(Field_Tz,4,NSTEP_local,dt,NFREC,temp_field,TP,TS)
            t0z_left(indice,:)=temp_field(:)
 
-        !right case
+! right case
         else if (FLAG==2) then
            call paco_convolve_fft(Field_Ux,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
            v0x_right(indice,:)=temp_field(:)
@@ -324,7 +321,7 @@ subroutine paco_beyond_critical(coord,npoin,deltat,NSTEP_global,angleforce,&
            call paco_convolve_fft(Field_Tz,4,NSTEP_local,dt,NFREC,temp_field,TP,TS)
            t0z_right(indice,:)=temp_field(:)
 
-        !bottom case
+! bottom case
         else if (FLAG==3) then
            call paco_convolve_fft(Field_Ux,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
            v0x_bot(indice,:)=temp_field(:)
@@ -363,24 +360,24 @@ SUBROUTINE DESFXY(X,Z,ICAS,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM)
 
   UI=(0.0d0,1.0d0)
   if (A1/=0.0d0) then
-     AUX1=A1*EXP(UI*(AM*Z-AL*X))         !campo P incidente
+     AUX1=A1*EXP(UI*(AM*Z-AL*X))         ! campo P incidente
   else
      AUX1=CMPLX(0.0d0)
   end if
   if (A2/=0.0d0) then
-     AUX2=A2*EXP(-UI*(AM*Z+AL*X)) *1.0d0      !campo P reflejado
+     AUX2=A2*EXP(-UI*(AM*Z+AL*X)) *1.0d0      ! campo P reflejado
   else
      AUX2=CMPLX(0.0d0)
   end if
   FI1=AUX1+AUX2
   FI2=AUX1-AUX2
   if (B1/=0.0d0) then
-     AUX1=B1*EXP(UI*(AK*Z-AL*X))            !campo S incidente
+     AUX1=B1*EXP(UI*(AK*Z-AL*X))            ! campo S incidente
   else
      AUX1=CMPLX(0.0d0)
   end if
   if (B2/=0.0d0) then
-     AUX2=B2*EXP(-UI*(AK*Z+AL*X)) *1.0d0      !campo S reflejado
+     AUX2=B2*EXP(-UI*(AK*Z+AL*X)) *1.0d0      ! campo S reflejado
   else
      AUX2=CMPLX(0.0d0)
   end if
@@ -396,7 +393,7 @@ SUBROUTINE DESFXY(X,Z,ICAS,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM)
   UX=(-UI*AL*FI1+UI*AK*PS2)*FAC
 
   UZ=(UI*AM*FI2+UI*AL*PS1)*FAC
-!!!! DK DK Paco's convention is inverted
+! Paco's convention for vertical coordinate axis is inverted
   UZ = - UZ
 
   AUX1=AL*AL+AM*AM
@@ -404,7 +401,7 @@ SUBROUTINE DESFXY(X,Z,ICAS,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM)
   SZ=(-RLM*AUX1*FI1-2.0d0*(AM*AM*FI1+AK*AL*PS2))*FAC
 
   SXZ=(2.0d0*AM*AL*FI2+(AL*AL-AK*AK)*PS1)*FAC
-!!!! DK DK Paco's convention is inverted
+! Paco's convention for vertical coordinate axis is inverted
   SXZ = - SXZ
 
 END SUBROUTINE DESFXY
@@ -433,8 +430,6 @@ SUBROUTINE FAFB(CA,CB,FA,FB)
      FB=CMPLX(SQRT(B),0.0d0)
   end IF
 
-  RETURN
-
 END SUBROUTINE FAFB
 
 SUBROUTINE A2B2(FA,FB,A2,B2)
@@ -450,7 +445,7 @@ SUBROUTINE A2B2(FA,FB,A2,B2)
 
 END SUBROUTINE A2B2
 
-!! DK DK calculation of P waves
+! calculation of P waves
 SUBROUTINE ONDASP(GP,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
 
   implicit none
@@ -464,14 +459,12 @@ SUBROUTINE ONDASP(GP,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
   B1=0.0d0
 
   IF (GP==0.0d0) then
-
      AL=ZER
      AK=ZER
      AM=AQB+ZER
      A2=(-1.0d0+ZER)/AQB
      B2=ZER
      RETURN
-
   end IF
 
   CA=1.0d0/SIN(GP)
@@ -486,7 +479,7 @@ SUBROUTINE ONDASP(GP,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
 
 END SUBROUTINE ONDASP
 
-!! DK DK calculation of S waves
+! calculation of S waves
 SUBROUTINE ONDASS(GS,AKB,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
 
   implicit none
@@ -500,24 +493,21 @@ SUBROUTINE ONDASS(GS,AKB,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
   B1=1.0d0/AKB
 
   IF (GS==0.0d0) then
-
      AL=ZER
      AK=AKB+ZER
      AM=ZER
      A2=ZER
      B2=(-1.0d0+ZER)/AKB
      return
-
   end IF
 
   CB=1.0d0/SIN(GS)
   CA=CB*BEALF
 
 !
-!! DK DK case of the critical angle
+! case of the critical angle
 !
-!! DK DK changed that to be safe    IF (CA==1.0d0)THEN
-  IF (CA==1.d0) then!>= 0.9999d0)THEN
+  IF (CA==1.d0) then
     AL=AQB+ZER
     AM=ZER
     CALL FAFB(CA,CB,FA,FB)
@@ -525,7 +515,7 @@ SUBROUTINE ONDASS(GS,AKB,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
     B2=-B1
     A2=-4.0d0*COS(GS)*B1/(1./BEALF-2.*BEALF)
 
-!! DK DK case of an angle that is not critical
+! case of an angle that is not critical
   ELSE
     AL=AQB/CA+ZER
     CALL FAFB(CA,CB,FA,FB)
@@ -537,11 +527,9 @@ SUBROUTINE ONDASS(GS,AKB,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
     B2=B2/AKB
   endif
 
-  RETURN
-
 END SUBROUTINE ONDASS
 
-!! DK DK calculation of Rayleigh waves
+! calculation of Rayleigh waves
 SUBROUTINE ONDASR(AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
 
   implicit none
@@ -599,7 +587,6 @@ FUNCTION CRB(BEALF)
      end IF
      FACT=F1+F2+8.0d0/3.0d0
      CRB=SQRT(FACT)
-     return
   else
      F1=-27.0d0*Q*Q/(4.0d0*P*P*P)
      F1=SQRT(F1)
@@ -612,7 +599,6 @@ FUNCTION CRB(BEALF)
      F2=SQRT(F2)
      F12=-2.0d0*F1*F2+8.0d0/3.0d0
      CRB=SQRT(F12)
-     RETURN
   end IF
 
 END FUNCTION CRB
