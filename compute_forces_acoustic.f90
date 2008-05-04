@@ -41,16 +41,14 @@
 !========================================================================
 
   subroutine compute_forces_acoustic(npoin,nspec,nelemabs,numat, &
-               iglob_source,ispec_selected_source,is_proc_source,source_type,it,NSTEP,anyabs, &
-               assign_external_model,initialfield,ibool,kmato,numabs, &
+               anyabs,assign_external_model,ibool,kmato,numabs, &
                elastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
                potential_acoustic,density,elastcoef,xix,xiz,gammax,gammaz,jacobian, &
-               vpext,rhoext,source_time_function,hprime_xx,hprimewgll_xx, &
+               vpext,rhoext,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
                jbegin_left,jend_left,jbegin_right,jend_right, &
-               nspec_inner_outer, ispec_inner_outer_to_glob, num_phase_inner_outer &
-               )
+               nspec_inner_outer, ispec_inner_outer_to_glob, num_phase_inner_outer)
 
 ! compute forces for the acoustic elements
 
@@ -58,9 +56,9 @@
 
   include "constants.h"
 
-  integer :: npoin,nspec,nelemabs,numat,iglob_source,ispec_selected_source,is_proc_source,source_type,it,NSTEP
+  integer :: npoin,nspec,nelemabs,numat
 
-  logical :: anyabs,assign_external_model,initialfield
+  logical :: anyabs,assign_external_model
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
   integer, dimension(nspec) :: kmato
@@ -75,7 +73,6 @@
   double precision, dimension(4,numat) :: elastcoef
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
   double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,rhoext
-  real(kind=CUSTOM_REAL), dimension(NSTEP) :: source_time_function
 
 ! derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
@@ -337,31 +334,6 @@
     enddo
 
   endif  ! end of absorbing boundaries
-
-
-! --- add the source
-  if(.not. initialfield) then
-
-     if (is_proc_source == 1 ) then
-! collocated force
-! beware, for acoustic medium, source is a pressure source
-! the sign is negative because pressure p = - Chi_dot_dot therefore we need
-! to add minus the source to Chi_dot_dot to get plus the source in pressure
-        if(source_type == 1) then
-           if(.not. elastic(ispec_selected_source)) then
-              potential_dot_dot_acoustic(iglob_source) = potential_dot_dot_acoustic(iglob_source) - source_time_function(it)
-           endif
-
-! moment tensor
-        else if(source_type == 2) then
-           if(.not. elastic(ispec_selected_source)) then
-              call exit_MPI('cannot have moment tensor source in acoustic element')
-           endif
-        endif
-     endif
-  else
-     call exit_MPI('wrong source type')
-  endif
 
   endif ! end of computation that needs to be done only once, during the first call to compute_forces_acoustic
 
