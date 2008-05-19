@@ -2306,14 +2306,12 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
   if(any_acoustic) then
 
-    potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
-
 ! --- add the source
     if(.not. initialfield) then
 ! if this processor carries the source and the source element is acoustic
       if (is_proc_source == 1 .and. .not. elastic(ispec_selected_source)) then
 ! collocated force
-! beware, for acoustic medium, source is a pressure source
+! beware, for acoustic medium, source is: pressure divided by Kappa of the fluid
 ! the sign is negative because pressure p = - Chi_dot_dot therefore we need
 ! to add minus the source to Chi_dot_dot to get plus the source in pressure
         if(source_type == 1) then
@@ -2326,6 +2324,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       endif ! if this processor carries the source and the source element is acoustic
     endif ! if not using an initial field
 
+    potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
     potential_dot_acoustic = potential_dot_acoustic + deltatover2*potential_dot_dot_acoustic
 
 ! free surface for an acoustic medium
@@ -2474,9 +2473,6 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
   if(any_elastic) then
 
-    accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic
-    accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic
-
 ! --- add the source if it is a collocated force
     if(.not. initialfield) then
 
@@ -2485,15 +2481,16 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
 ! collocated force
         if(source_type == 1) then
-          accel_elastic(1,iglob_source) = accel_elastic(1,iglob_source) &
-            - sin(angleforce)*source_time_function(it) / rho_at_source_location
-          accel_elastic(2,iglob_source) = accel_elastic(2,iglob_source) &
-            + cos(angleforce)*source_time_function(it) / rho_at_source_location
+          accel_elastic(1,iglob_source) = accel_elastic(1,iglob_source) - sin(angleforce)*source_time_function(it)
+          accel_elastic(2,iglob_source) = accel_elastic(2,iglob_source) + cos(angleforce)*source_time_function(it)
         endif
 
       endif ! if this processor carries the source and the source element is elastic
 
     endif ! if not using an initial field
+
+    accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic
+    accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic
 
     veloc_elastic = veloc_elastic + deltatover2*accel_elastic
 
