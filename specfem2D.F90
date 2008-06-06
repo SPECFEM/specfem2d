@@ -376,12 +376,15 @@
   double precision, dimension(2) :: A_plane, B_plane, C_plane
   double precision :: PP, PS, SP, SS, z0_source, x0_source, xmax, xmin, zmax, zmin, time_offset
 
-! over critical angle
+! beyond critical angle
   integer , dimension(:), allocatable :: left_bound,right_bound,bot_bound
   double precision , dimension(:,:), allocatable :: v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot
   double precision , dimension(:,:), allocatable :: t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot
   integer count_left,count_right,count_bot,ibegin,iend
   logical :: over_critical_angle
+
+! further reduce cache misses inner/outer in two passes in the case of an MPI simulation
+  integer :: ipass,ispec_inner,ispec_outer,NUMBER_OF_PASSES
 
 !***********************************************************************
 !
@@ -394,6 +397,12 @@
   call MPI_COMM_SIZE(MPI_COMM_WORLD,nproc,ier)
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
 
+  if(FURTHER_REDUCE_CACHE_MISSES) then
+    NUMBER_OF_PASSES = 2
+  else
+    NUMBER_OF_PASSES = 1
+  endif
+
 #else
   nproc = 1
   myrank = 0
@@ -401,14 +410,15 @@
   ninterface_acoustic = 0
   ninterface_elastic = 0
   iproc = 0
+  ispec_inner = 0
+  ispec_outer = 0
+  NUMBER_OF_PASSES = 1
 
 #endif
 
-  write(prname,230)myrank
-230   format('./OUTPUT_FILES/Database',i5.5)
-
+  write(prname,230) myrank
+ 230 format('./OUTPUT_FILES/Database',i5.5)
   open(unit=IIN,file=prname,status='old',action='read')
-
 
 ! determine if we write to file instead of standard output
   if(IOUT /= ISTANDARD_OUTPUT) open(IOUT,file='simulation_results.txt',status='unknown')
@@ -426,18 +436,16 @@
 !
 !---- print the date, time and start-up banner
 !
-  if ( myrank == 0 ) then
-  call datim(simulation_title)
-  endif
+  if (myrank == 0) call datim(simulation_title)
 
-  if ( myrank == 0 ) then
-  write(IOUT,*)
-  write(IOUT,*)
-  write(IOUT,*) '*********************'
-  write(IOUT,*) '****             ****'
-  write(IOUT,*) '****  SPECFEM2D  ****'
-  write(IOUT,*) '****             ****'
-  write(IOUT,*) '*********************'
+  if (myrank == 0) then
+    write(IOUT,*)
+    write(IOUT,*)
+    write(IOUT,*) '*********************'
+    write(IOUT,*) '****             ****'
+    write(IOUT,*) '****  SPECFEM2D  ****'
+    write(IOUT,*) '****             ****'
+    write(IOUT,*) '*********************'
   endif
 
 !
@@ -485,9 +493,7 @@
 !---- read time step
   read(IIN,"(a80)") datlin
   read(IIN,*) NSTEP,deltat
-  if ( myrank == 0 ) then
-  write(IOUT,703) NSTEP,deltat,NSTEP*deltat
-  endif
+  if (myrank == 0) write(IOUT,703) NSTEP,deltat,NSTEP*deltat
 
   NTSTEP_BETWEEN_OUTPUT_SEISMO = min(NSTEP,NTSTEP_BETWEEN_OUTPUT_INFO)
 
@@ -508,15 +514,11 @@
 !
  if(.not. initialfield) then
    if (source_type == 1) then
-     if ( myrank == 0 ) then
-     write(IOUT,212) x_source,z_source,f0,t0,factor,angleforce
-     endif
+     if (myrank == 0) write(IOUT,212) x_source,z_source,f0,t0,factor,angleforce
    else if(source_type == 2) then
-     if ( myrank == 0 ) then
-     write(IOUT,222) x_source,z_source,f0,t0,factor,Mxx,Mzz,Mxz
-     endif
+     if (myrank == 0) write(IOUT,222) x_source,z_source,f0,t0,factor,Mxx,Mzz,Mxz
    else
-     call exit_MPI('Unknown source type number !')
+     call exit_MPI('Unknown source type number')
    endif
  endif
 
@@ -730,7 +732,7 @@
       do inum = 1,nelem_acoustic_surface
         read(IIN,*) acoustic_edges(1,inum), acoustic_edges(2,inum), acoustic_edges(3,inum), &
              acoustic_edges(4,inum)
-     end do
+     enddo
      allocate(acoustic_surface(5,nelem_acoustic_surface))
      call construct_acoustic_surface ( nspec, ngnod, knods, nelem_acoustic_surface, &
           acoustic_edges, acoustic_surface)
@@ -752,14 +754,14 @@
      allocate(fluid_solid_elastic_iedge(num_fluid_solid_edges))
      do inum = 1, num_fluid_solid_edges
         read(IIN,*) fluid_solid_acoustic_ispec(inum), fluid_solid_elastic_ispec(inum)
-     end do
+     enddo
   else
      allocate(fluid_solid_acoustic_ispec(1))
      allocate(fluid_solid_acoustic_iedge(1))
      allocate(fluid_solid_elastic_ispec(1))
      allocate(fluid_solid_elastic_iedge(1))
 
-  end if
+  endif
 
 !
 !---- close input file
@@ -786,10 +788,15 @@
     call createnum_slow(knods,ibool,npoin,nspec,ngnod)
   endif
 
-! create a new indirect addressing array instead, to reduce cache misses
-! in memory access in the solver
+! reduction of cache misses inner/outer in two passes
+  do ipass = 1,NUMBER_OF_PASSES
+
+! create a new indirect addressing array to reduce cache misses in memory access in the solver
+  if(ipass == 1) then
+
   allocate(copy_ibool_ori(NGLLX,NGLLZ,nspec))
   allocate(mask_ibool(npoin))
+
   mask_ibool(:) = -1
   copy_ibool_ori(:,:,:) = ibool(:,:,:)
 
@@ -809,8 +816,71 @@
       enddo
     enddo
   enddo
+
+  if(NUMBER_OF_PASSES == 1) then
+    deallocate(copy_ibool_ori)
+    deallocate(mask_ibool)
+  endif
+
+  else if(ipass == 2) then
+
+  mask_ibool(:) = -1
+  copy_ibool_ori(:,:,:) = ibool(:,:,:)
+
+  inumber = 0
+
+! first reduce cache misses in outer elements, since they are taken first
+
+! loop over spectral elements
+  do ispec_outer = 1,nspec_outer
+
+! get global numbering for inner or outer elements
+    ispec = ispec_outer_to_glob(ispec_outer)
+
+    do j=1,NGLLZ
+      do i=1,NGLLX
+        if(mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
+! create a new point
+          inumber = inumber + 1
+          ibool(i,j,ispec) = inumber
+          mask_ibool(copy_ibool_ori(i,j,ispec)) = inumber
+        else
+! use an existing point created previously
+          ibool(i,j,ispec) = mask_ibool(copy_ibool_ori(i,j,ispec))
+        endif
+      enddo
+    enddo
+  enddo
+
+! then reduce cache misses in inner elements, since they are taken second
+
+! loop over spectral elements
+  do ispec_inner = 1,nspec_inner
+
+! get global numbering for inner or outer elements
+    ispec = ispec_inner_to_glob(ispec_inner)
+
+    do j=1,NGLLZ
+      do i=1,NGLLX
+        if(mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
+! create a new point
+          inumber = inumber + 1
+          ibool(i,j,ispec) = inumber
+          mask_ibool(copy_ibool_ori(i,j,ispec)) = inumber
+        else
+! use an existing point created previously
+          ibool(i,j,ispec) = mask_ibool(copy_ibool_ori(i,j,ispec))
+        endif
+      enddo
+    enddo
+  enddo
+
   deallocate(copy_ibool_ori)
   deallocate(mask_ibool)
+
+  else
+    stop 'incorrect pass number for reduction of cache misses'
+  endif
 
 !---- compute shape functions and their derivatives for regular interpolated display grid
   do j = 1,pointsdisp
@@ -848,6 +918,8 @@
   if(nrec < 1) call exit_MPI('need at least one receiver')
 
 ! receiver information
+  if(ipass == 1) then
+
   allocate(ispec_selected_rec(nrec))
   allocate(st_xval(nrec))
   allocate(st_zval(nrec))
@@ -882,6 +954,8 @@
     allocate(vpext(1,1,1))
     allocate(vsext(1,1,1))
     allocate(rhoext(1,1,1))
+  endif
+
   endif
 
 !
@@ -970,11 +1044,12 @@
 !
 !----  perform basic checks on parameters read
 !
-any_elastic_glob = any_elastic
+  any_elastic_glob = any_elastic
 #ifdef USE_MPI
   call MPI_ALLREDUCE(any_elastic, any_elastic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
 #endif
-any_acoustic_glob = any_acoustic
+
+  any_acoustic_glob = any_acoustic
 #ifdef USE_MPI
   call MPI_ALLREDUCE(any_acoustic, any_acoustic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
 #endif
@@ -987,9 +1062,9 @@ any_acoustic_glob = any_acoustic
     call exit_MPI('currently cannot have attenuation if acoustic simulation only')
 
 ! for attenuation
-  if(TURN_ANISOTROPY_ON .and. TURN_ATTENUATION_ON) then
+  if(TURN_ANISOTROPY_ON .and. TURN_ATTENUATION_ON) &
     call exit_MPI('cannot have anisotropy and attenuation both turned on in current version')
-  end if
+
 !
 !----   define coefficients of the Newmark time scheme
 !
@@ -1021,12 +1096,12 @@ any_acoustic_glob = any_acoustic
                    iglob = ibool(i,j,ispec)
                    if ( iglob_source == iglob ) then
  call exit_MPI('an acoustic source cannot be located exactly on the free surface because pressure is zero there')
-                   end if
-                end do
-             end do
+                   endif
+                enddo
+             enddo
           endif
        enddo
-    end if
+    endif
 
   else if(source_type == 2) then
 ! moment-tensor source
@@ -1047,9 +1122,11 @@ any_acoustic_glob = any_acoustic
        xi_receiver,gamma_receiver,station_name,network_name,x_source,z_source,coorg,knods,ngnod,npgeo)
 
 ! allocate seismogram arrays
-  allocate(sisux(NTSTEP_BETWEEN_OUTPUT_SEISMO,nrecloc))
-  allocate(sisuz(NTSTEP_BETWEEN_OUTPUT_SEISMO,nrecloc))
-  allocate(siscurl(NTSTEP_BETWEEN_OUTPUT_SEISMO,nrecloc))
+  if(ipass == 1) then
+    allocate(sisux(NTSTEP_BETWEEN_OUTPUT_SEISMO,nrecloc))
+    allocate(sisuz(NTSTEP_BETWEEN_OUTPUT_SEISMO,nrecloc))
+    allocate(siscurl(NTSTEP_BETWEEN_OUTPUT_SEISMO,nrecloc))
+  endif
 
 ! check if acoustic receiver is exactly on the free surface because pressure is zero there
   do ispec_acoustic_surface = 1,nelem_acoustic_surface
@@ -1100,6 +1177,8 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   enddo
 
 ! displacement, velocity, acceleration and inverse of the mass matrix for elastic elements
+  if(ipass == 1) then
+
   if(any_elastic) then
     allocate(displ_elastic(NDIM,npoin))
     allocate(veloc_elastic(NDIM,npoin))
@@ -1127,6 +1206,8 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     allocate(rmass_inverse_acoustic(1))
   endif
 
+  endif
+
 !
 !---- build the global mass matrix and invert it once and for all
 !
@@ -1151,8 +1232,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           rmass_inverse_elastic(iglob) = rmass_inverse_elastic(iglob) + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
         else
 ! for acoustic medium
-          rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) + &
-   wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal
+          rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal
         endif
       enddo
     enddo
@@ -1161,7 +1241,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 #ifdef USE_MPI
   if ( nproc > 1 ) then
 ! preparing for MPI communications
-    allocate(mask_ispec_inner_outer(nspec))
+    if(ipass == 1) allocate(mask_ispec_inner_outer(nspec))
     mask_ispec_inner_outer(:) = .false.
 
     call prepare_assemble_MPI (nspec,ibool, &
@@ -1179,8 +1259,8 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     nspec_outer = count(mask_ispec_inner_outer)
     nspec_inner = nspec - nspec_outer
 
-    allocate(ispec_outer_to_glob(nspec_outer))
-    allocate(ispec_inner_to_glob(nspec_inner))
+    if(ipass == 1) allocate(ispec_outer_to_glob(nspec_outer))
+    if(ipass == 1) allocate(ispec_inner_to_glob(nspec_inner))
 
 ! building of corresponding arrays between inner/outer elements and their global number
     num_ispec_outer = 0
@@ -1198,36 +1278,28 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
   max_ibool_interfaces_size_ac = maxval(nibool_interfaces_acoustic(:))
   max_ibool_interfaces_size_el = NDIM*maxval(nibool_interfaces_elastic(:))
-  allocate(tab_requests_send_recv_acoustic(ninterface_acoustic*2))
-  allocate(buffer_send_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic))
-  allocate(buffer_recv_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic))
-  allocate(tab_requests_send_recv_elastic(ninterface_elastic*2))
-  allocate(buffer_send_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic))
-  allocate(buffer_recv_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic))
+  if(ipass == 1) then
+    allocate(tab_requests_send_recv_acoustic(ninterface_acoustic*2))
+    allocate(buffer_send_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic))
+    allocate(buffer_recv_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic))
+    allocate(tab_requests_send_recv_elastic(ninterface_elastic*2))
+    allocate(buffer_send_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic))
+    allocate(buffer_recv_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic))
+  endif
 
 ! creating mpi non-blocking persistent communications for acoustic elements
-  call create_MPI_req_SEND_RECV_ac( &
-     ninterface, ninterface_acoustic, &
-     nibool_interfaces_acoustic, &
-     my_neighbours, &
+  call create_MPI_req_SEND_RECV_ac(ninterface, ninterface_acoustic, &
+     nibool_interfaces_acoustic,my_neighbours, &
      max_ibool_interfaces_size_ac, &
-     buffer_send_faces_vector_ac, &
-     buffer_recv_faces_vector_ac, &
-     tab_requests_send_recv_acoustic, &
-     inum_interfaces_acoustic &
-     )
+     buffer_send_faces_vector_ac,buffer_recv_faces_vector_ac, &
+     tab_requests_send_recv_acoustic,inum_interfaces_acoustic)
 
 ! creating mpi non-blocking persistent communications for elastic elements
-  call create_MPI_req_SEND_RECV_el( &
-     ninterface, ninterface_elastic, &
-     nibool_interfaces_elastic, &
-     my_neighbours, &
+  call create_MPI_req_SEND_RECV_el(ninterface, ninterface_elastic, &
+     nibool_interfaces_elastic,my_neighbours, &
      max_ibool_interfaces_size_el, &
-     buffer_send_faces_vector_el, &
-     buffer_recv_faces_vector_el, &
-     tab_requests_send_recv_elastic, &
-     inum_interfaces_elastic &
-     )
+     buffer_send_faces_vector_el,buffer_recv_faces_vector_el, &
+     tab_requests_send_recv_elastic,inum_interfaces_elastic)
 
 ! assembling the mass matrix
   call assemble_MPI_scalar(rmass_inverse_acoustic, rmass_inverse_elastic,npoin, &
@@ -1240,33 +1312,37 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
     num_ispec_outer = 0
     num_ispec_inner = 0
-    allocate(mask_ispec_inner_outer(1))
+    if(ipass == 1) allocate(mask_ispec_inner_outer(1))
 
     nspec_outer = 0
     nspec_inner = nspec
 
-    allocate(ispec_inner_to_glob(nspec_inner))
+    if(ipass == 1) allocate(ispec_inner_to_glob(nspec_inner))
     do ispec = 1, nspec
       ispec_inner_to_glob(ispec) = ispec
     enddo
 
-  end if ! end of test on wether there is more than one process ( nproc>1 )
+  endif ! end of test on wether there is more than one process (nproc > 1)
 
 #else
   num_ispec_outer = 0
   num_ispec_inner = 0
-  allocate(mask_ispec_inner_outer(1))
+  if(ipass == 1) allocate(mask_ispec_inner_outer(1))
 
   nspec_outer = 0
   nspec_inner = nspec
 
-  allocate(ispec_outer_to_glob(1))
-  allocate(ispec_inner_to_glob(nspec_inner))
+  if(ipass == 1) then
+    allocate(ispec_outer_to_glob(1))
+    allocate(ispec_inner_to_glob(nspec_inner))
+  endif
   do ispec = 1, nspec
      ispec_inner_to_glob(ispec) = ispec
   enddo
 
 #endif
+
+  enddo ! end of further reduction of cache misses inner/outer in two passes
 
 ! fill mass matrix with fictitious non-zero values to make sure it can be inverted globally
   if(any_elastic) where(rmass_inverse_elastic <= 0._CUSTOM_REAL) rmass_inverse_elastic = 1._CUSTOM_REAL
@@ -1329,12 +1405,8 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   NZ_IMAGE_color = 2 * (NZ_IMAGE_color / 2)
 
 ! check that image size is not too big
-  if ( NX_IMAGE_color > 99999 ) then
-      call exit_MPI('output image too big : NX_IMAGE_color > 99999.')
-  end if
-  if ( NZ_IMAGE_color > 99999 ) then
-      call exit_MPI('output image too big : NZ_IMAGE_color > 99999.')
-  end if
+  if (NX_IMAGE_color > 99999) call exit_MPI('output image too big : NX_IMAGE_color > 99999.')
+  if (NZ_IMAGE_color > 99999) call exit_MPI('output image too big : NZ_IMAGE_color > 99999.')
 
 ! allocate an array for image data
   allocate(image_color_data(NX_IMAGE_color,NZ_IMAGE_color))
@@ -1345,9 +1417,9 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   allocate(copy_iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color))
 
 ! create all the pixels
-  if ( myrank == 0 ) then
-  write(IOUT,*)
-  write(IOUT,*) 'locating all the pixels of color images'
+  if (myrank == 0) then
+    write(IOUT,*)
+    write(IOUT,*) 'locating all the pixels of color images'
   endif
 
   size_pixel_horizontal = (xmax_color_image - xmin_color_image) / dble(NX_IMAGE_color-1)
@@ -1363,7 +1435,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
         elmnt_coords(1,k) = coorg(1,knods(k,ispec))
         elmnt_coords(2,k) = coorg(2,knods(k,ispec))
 
-     end do
+     enddo
 
 ! avoid working on the whole pixel grid
      min_i = floor(minval((elmnt_coords(1,:) - xmin_color_image))/size_pixel_horizontal) + 1
@@ -1390,21 +1462,21 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                        dist_min_pixel = dist_pixel
                        iglob_image_color(i,j) = iglob
 
-                    end if
+                    endif
 
-                 end do
-              end do
+                 enddo
+              enddo
               if ( dist_min_pixel >= HUGEVAL ) then
                  call exit_MPI('Error in detecting pixel for color image')
 
-              end if
+              endif
               nb_pixel_loc = nb_pixel_loc + 1
 
-           end if
+           endif
 
-        end do
-     end do
-  end do
+        enddo
+     enddo
+  enddo
 
 ! creating and filling array num_pixel_loc with the positions of each colored
 ! pixel owned by the local process (useful for parallel jobs)
@@ -1417,11 +1489,10 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
            nb_pixel_loc = nb_pixel_loc + 1
            num_pixel_loc(nb_pixel_loc) = (j-1)*NX_IMAGE_color + i
 
-        end if
+        endif
 
-     end do
-  end do
-
+     enddo
+  enddo
 
 
 ! filling array iglob_image_color, containing info on which process owns which pixels.
@@ -1433,11 +1504,11 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   if ( myrank == 0 ) then
      allocate(num_pixel_recv(maxval(nb_pixel_per_proc(:)),nproc))
      allocate(data_pixel_recv(maxval(nb_pixel_per_proc(:))))
-  end if
+  endif
 
   allocate(data_pixel_send(nb_pixel_loc))
-  if ( nproc > 1 ) then
-     if ( myrank == 0 ) then
+  if (nproc > 1) then
+     if (myrank == 0) then
 
         do iproc = 1, nproc-1
 
@@ -1448,15 +1519,15 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
               i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
               iglob_image_color(i,j) = iproc
 
-           end do
-        end do
+           enddo
+        enddo
 
      else
         call MPI_SEND(num_pixel_loc(1),nb_pixel_loc,MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
 
-     end if
+     endif
 
-  end if
+  endif
 #else
    allocate(nb_pixel_per_proc(1))
    deallocate(nb_pixel_per_proc)
@@ -1468,9 +1539,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
    deallocate(data_pixel_send)
 #endif
 
-  if ( myrank == 0 ) then
-  write(IOUT,*) 'done locating all the pixels of color images'
-  endif
+  if (myrank == 0) write(IOUT,*) 'done locating all the pixels of color images'
 
   endif
 
@@ -1496,50 +1565,14 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 !----  read initial fields from external file if needed
 !
 
-! if we are looking a plane wave over critical angle we use other method
-  over_critical_angle=.false.
+! if we are looking a plane wave beyond critical angle we use other method
+  over_critical_angle = .false.
 
   if(initialfield) then
      write(IOUT,*)
      write(IOUT,*) 'Reading initial fields from external file...'
      write(IOUT,*)
      if(any_acoustic) call exit_MPI('initial field currently implemented for purely elastic simulation only')
-
-
-!!$! compute analytical initial plane wave field
-!!$! the analytical expression below is specific to an SV wave at 30 degrees and Poisson = 0.3333
-!!$      print *,'computing analytical initial plane wave field for SV wave at 30 degrees and Poisson = 0.3333'
-!!$
-!!$      do i = 1,npoin
-!!$
-!!$        x = coord(1,i)
-!!$        z = coord(2,i)
-!!$
-!!$! add a time offset in order for the initial field to be inside the medium
-!!$        t = 0.d0 + time_offset
-!!$
-!!$! initial analytical displacement
-!!$        displ_elastic(1,i) = (sqrt(3.d0)/2.d0) * ricker_Bielak_displ(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
-!!$          + (sqrt(3.d0)/2.d0) * ricker_Bielak_displ(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0)) &
-!!$          + sqrt(3.d0) * ricker_Bielak_displ(t - x/2.d0)
-!!$        displ_elastic(2,i) = - HALF * ricker_Bielak_displ(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
-!!$          + HALF * ricker_Bielak_displ(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0))
-!!$
-!!$! initial analytical velocity
-!!$        veloc_elastic(1,i) = (sqrt(3.d0)/2.d0) * ricker_Bielak_veloc(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
-!!$          + (sqrt(3.d0)/2.d0) * ricker_Bielak_veloc(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0)) &
-!!$          + sqrt(3.d0) * ricker_Bielak_veloc(t - x/2.d0)
-!!$        veloc_elastic(2,i) = - HALF * ricker_Bielak_veloc(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
-!!$          + HALF * ricker_Bielak_veloc(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0))
-!!$
-!!$! initial analytical acceleration
-!!$        accel_elastic(1,i) = (sqrt(3.d0)/2.d0) * ricker_Bielak_accel(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
-!!$          + (sqrt(3.d0)/2.d0) * ricker_Bielak_accel(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0)) &
-!!$          + sqrt(3.d0) * ricker_Bielak_accel(t - x/2.d0)
-!!$        accel_elastic(2,i) = - HALF * ricker_Bielak_accel(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
-!!$          + HALF * ricker_Bielak_accel(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0))
-!!$
-!!$      enddo
 
       !=======================================================================
       !
@@ -1561,8 +1594,8 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       endif
 
       if ((angleforce<0.0d0.or.angleforce>=pi/2.d0).and.source_type/=3) then
-         call exit_MPI("bad angleforce: 0<=angleforce<90")
-      end if
+         call exit_MPI("incorrect angleforce: must have 0<=angleforce<90")
+      endif
 
       ! only implemented for homogeneous media therefore only 1 material supported
       if (numat==1) then
@@ -1619,7 +1652,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
                print *,'reflected convert plane wave angle: ', angleforce_refl*180.d0/pi, '\n'
 
-            !SV45 degree incident plane wave is a particular case
+            ! SV45 degree incident plane wave is a particular case
             else if (angleforce>pi/4.d0-1.0d-11 .and. angleforce<pi/4.d0+1.0d-11) then
                angleforce_refl = 0.d0
                SS = -1.0d0
@@ -1637,12 +1670,12 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
             B_plane(1) = SS * cos(angleforce);      B_plane(2) = SS * sin(angleforce)
             C_plane(1) = SP * sin(angleforce_refl); C_plane(2) = - SP * cos(angleforce_refl)
 
-         !Rayleigh case
+         ! Rayleigh case
          else if (source_type == 3) then
             over_critical_angle=.true.
-            A_plane(1)=0.d0;A_plane(2)=0.d0
-            B_plane(1)=0.d0;B_plane(2)=0.d0
-            C_plane(1)=0.d0;C_plane(2)=0.d0;
+            A_plane(1)=0.d0; A_plane(2)=0.d0
+            B_plane(1)=0.d0; B_plane(2)=0.d0
+            C_plane(1)=0.d0; C_plane(2)=0.d0
          endif
       else
          call exit_MPI('not possible to have several materials with a plane wave')
@@ -1654,7 +1687,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       xmax = maxval(coord(1,:))
       zmax = maxval(coord(2,:))
 
-      !initializing of the time offset to put the planewave not too close of the irregularity on the free surface
+      ! initialize the time offset to put the plane wave not too close to the irregularity on the free surface
       if (abs(angleforce)<1.d0*pi/180.d0 .and. source_type/=3) then
          time_offset=-1.d0*zmax/2.d0/c_inc
       else
@@ -1670,7 +1703,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
          x0_source=xmin + 1.d0*(xmax-xmin)/4.d0
       endif
 
-      if (.not.over_critical_angle) then
+      if (.not. over_critical_angle) then
 
          do i = 1,npoin
 
@@ -1682,7 +1715,6 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
             x = x - x0_source
 
             t = 0.d0 + time_offset
-
 
             ! formulas for the initial displacement for a plane wave from Aki & Richards (1980)
             displ_elastic(1,i) = A_plane(1) * ricker_Bielak_displ(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
@@ -1708,20 +1740,16 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                  + B_plane(2) * ricker_Bielak_accel(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
                  + C_plane(2) * ricker_Bielak_accel(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
 
-         end do
+         enddo
 
-      else !over critical angle
+      else ! beyond critical angle
 
-         if (source_type/=3) then
-            print *, '\n You are over critical angle ( > ',asin(c_inc/c_refl)*180d0/pi,')'
-         end if
+         if (source_type/=3) print *, '\n You are beyond critical angle ( > ',asin(c_inc/c_refl)*180d0/pi,')'
 
          print *, '\n *************'
-         print *, 'We have to calcul initial field in the frequency domain'
-         print *, 'and then pass it in the time domain(can be long... be patient...)'
+         print *, 'We have to compute the initial field in the frequency domain'
+         print *, 'and then convert it to the time domain (can be long... be patient...)'
          print *, '*************\n'
-
-!!$         print *, "if first reflection is not at a good place, change TS and offset in paco_beyond_critical.f90 and recompute\n"
 
          allocate(left_bound(nelemabs*NGLLX))
          allocate(right_bound(nelemabs*NGLLX))
@@ -1738,19 +1766,19 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                   count_left=count_left+1
                   iglob = ibool(i,j,ispec)
                   left_bound(count_left)=iglob
-               end do
-            end if
+               enddo
+            endif
             if(codeabs(IRIGHT,ispecabs)) then
                i = NGLLX
                do j = 1,NGLLZ
                   count_right=count_right+1
                   iglob = ibool(i,j,ispec)
                   right_bound(count_right)=iglob
-               end do
-            end if
+               enddo
+            endif
             if(codeabs(IBOTTOM,ispecabs)) then
                j = 1
-               ! exclude corners to make sure there is no contradiction on the normal
+               ! exclude corners to make sure there is no contradiction regarding the normal
                ibegin = 1
                iend = NGLLX
                if(codeabs(ILEFT,ispecabs)) ibegin = 2
@@ -1759,9 +1787,9 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                   count_bot=count_bot+1
                   iglob = ibool(i,j,ispec)
                   bot_bound(count_bot)=iglob
-               end do
-            end if
-         end do
+               enddo
+            endif
+         enddo
 
          allocate(v0x_left(count_left,NSTEP))
          allocate(v0z_left(count_left,NSTEP))
@@ -1778,21 +1806,22 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
          allocate(t0x_bot(count_bot,NSTEP))
          allocate(t0z_bot(count_bot,NSTEP))
 
-         !call paco routine to do calcul in frequency and pass in time by fourier transform
+! call Paco's routine to compute in frequency and convert to time by Fourier transform
          call paco_beyond_critical(coord,npoin,deltat,NSTEP,angleforce,&
               f0,cploc,csloc,TURN_ATTENUATION_ON,Qp_attenuation,source_type,v0x_left,v0z_left,&
               v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,&
-              t0x_bot,t0z_bot,left_bound(:count_left),right_bound(:count_right),bot_bound(:count_bot)&
+              t0x_bot,t0z_bot,left_bound(1:count_left),right_bound(1:count_right),bot_bound(1:count_bot)&
               ,count_left,count_right,count_bot,displ_elastic,veloc_elastic,accel_elastic)
 
-
+         deallocate(left_bound)
+         deallocate(right_bound)
+         deallocate(bot_bound)
 
          print *, '\n ***********'
          print *, 'initial field calculated, starting propagation'
          print *, '***********\n\n'
 
-
-      endif !over critical angle
+      endif ! beyond critical angle
 
     write(IOUT,*) 'Max norm of initial elastic displacement = ',maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(2,:)**2))
   endif ! initialfield
@@ -1809,11 +1838,11 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
     allocate(source_time_function(NSTEP))
 
-    if ( myrank == 0 ) then
-     write(IOUT,*)
-     write(IOUT,*) 'Saving the source time function in a text file...'
-     write(IOUT,*)
-     open(unit=55,file='OUTPUT_FILES/source.txt',status='unknown')
+    if (myrank == 0) then
+      write(IOUT,*)
+      write(IOUT,*) 'Saving the source time function in a text file...'
+      write(IOUT,*)
+      open(unit=55,file='OUTPUT_FILES/source.txt',status='unknown')
     endif
 
 ! loop on all the time steps
@@ -1870,11 +1899,12 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 ! the two elements (fluid and solid) forming an edge are already known (computed in meshfem2D),
 ! the common nodes forming the edge are computed here
   if(coupled_acoustic_elastic) then
-    if ( myrank == 0 ) then
-    print *
-    print *,'Mixed acoustic/elastic simulation'
-    print *
-    print *,'Beginning of fluid/solid edge detection'
+
+    if (myrank == 0) then
+      print *
+      print *,'Mixed acoustic/elastic simulation'
+      print *
+      print *,'Beginning of fluid/solid edge detection'
     endif
 
 ! define the edges of a given element
@@ -1923,7 +1953,6 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
     enddo
 
-
     do inum = 1, num_fluid_solid_edges
        ispec_acoustic =  fluid_solid_acoustic_ispec(inum)
        ispec_elastic =  fluid_solid_elastic_ispec(inum)
@@ -1958,9 +1987,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 ! have the same physical coordinates
 ! loop on all the coupling edges
 
-    if ( myrank == 0 ) then
-    print *,'Checking fluid/solid edge topology...'
-    endif
+    if(myrank == 0) print *,'Checking fluid/solid edge topology...'
 
     do inum = 1,num_fluid_solid_edges
 
@@ -1993,23 +2020,18 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
     enddo
 
-    if ( myrank == 0 ) then
-    print *,'End of fluid/solid edge detection'
-    print *
+    if (myrank == 0) then
+      print *,'End of fluid/solid edge detection'
+      print *
     endif
-
-  else
-
-
 
   endif
 
 ! exclude common points between acoustic absorbing edges and acoustic/elastic matching interfaces
   if(coupled_acoustic_elastic .and. anyabs) then
 
-    if ( myrank == 0 ) then
-    print *,'excluding common points between acoustic absorbing edges and acoustic/elastic matching interfaces, if any'
-    endif
+    if (myrank == 0) &
+      print *,'excluding common points between acoustic absorbing edges and acoustic/elastic matching interfaces, if any'
 
 ! loop on all the absorbing elements
     do ispecabs = 1,nelemabs
@@ -2063,9 +2085,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 !
 !----          s t a r t   t i m e   i t e r a t i o n s
 !
-  if ( myrank == 0 ) then
-  write(IOUT,400)
-  endif
+  if (myrank == 0) write(IOUT,400)
 
 ! count elapsed wall-clock time
   call date_and_time(datein,timein,zone,time_values)
@@ -2105,13 +2125,12 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
     i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
     image_color_vp_display(i,j) = vp_display(iglob_image_color(i,j))
-
   enddo
 
 ! assembling array image_color_vp_display on process zero for color output
 #ifdef USE_MPI
-  if ( nproc > 1 ) then
-    if ( myrank == 0 ) then
+  if (nproc > 1) then
+    if (myrank == 0) then
       do iproc = 1, nproc-1
         call MPI_RECV(data_pixel_recv(1),nb_pixel_per_proc(iproc+1), MPI_DOUBLE_PRECISION, &
                 iproc, 43, MPI_COMM_WORLD, request_mpi_status, ier)
@@ -2120,7 +2139,6 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
           i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
           image_color_vp_display(i,j) = data_pixel_recv(k)
-
         enddo
       enddo
 
@@ -2129,7 +2147,6 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
         j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
         i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
         data_pixel_send(k) = vp_display(iglob_image_color(i,j))
-
       enddo
 
       call MPI_SEND(data_pixel_send(1),nb_pixel_loc,MPI_DOUBLE_PRECISION, 0, 43, MPI_COMM_WORLD, ier)
@@ -2140,10 +2157,28 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 #endif
   endif
 
+! dummy allocation of plane wave arrays if they are unused (but still need to exist because
+! they are used as arguments to subroutines)
+  if(.not. over_critical_angle) then
+    allocate(v0x_left(1,NSTEP))
+    allocate(v0z_left(1,NSTEP))
+    allocate(t0x_left(1,NSTEP))
+    allocate(t0z_left(1,NSTEP))
+
+    allocate(v0x_right(1,NSTEP))
+    allocate(v0z_right(1,NSTEP))
+    allocate(t0x_right(1,NSTEP))
+    allocate(t0z_right(1,NSTEP))
+
+    allocate(v0x_bot(1,NSTEP))
+    allocate(v0z_bot(1,NSTEP))
+    allocate(t0x_bot(1,NSTEP))
+    allocate(t0z_bot(1,NSTEP))
+  endif
+
 ! initialize variables for writing seismograms
   seismo_offset = 0
   seismo_current = 0
-
 
 ! *********************************************************
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
@@ -2172,9 +2207,8 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
 ! free surface for an acoustic medium
       if ( nelem_acoustic_surface > 0 ) then
-      call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
-           potential_acoustic,acoustic_surface, &
-           ibool,nelem_acoustic_surface,npoin,nspec)
+        call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
+           potential_acoustic,acoustic_surface,ibool,nelem_acoustic_surface,npoin,nspec)
       endif
 
 ! *********************************************************
@@ -2264,12 +2298,10 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 #ifdef USE_MPI
   if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
     call assemble_MPI_vector_ac_start(potential_dot_dot_acoustic,npoin, &
-           ninterface, ninterface_acoustic, &
-           inum_interfaces_acoustic, &
+           ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
            max_interface_size, max_ibool_interfaces_size_ac,&
            ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
-           tab_requests_send_recv_acoustic, &
-           buffer_send_faces_vector_ac)
+           tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac)
   endif
 #endif
 
@@ -2290,12 +2322,10 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 #ifdef USE_MPI
   if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
     call assemble_MPI_vector_ac_wait(potential_dot_dot_acoustic,npoin, &
-           ninterface, ninterface_acoustic, &
-           inum_interfaces_acoustic, &
+           ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
            max_interface_size, max_ibool_interfaces_size_ac,&
            ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
-           tab_requests_send_recv_acoustic, &
-           buffer_recv_faces_vector_ac)
+           tab_requests_send_recv_acoustic,buffer_recv_faces_vector_ac)
   endif
 #endif
 
@@ -2330,8 +2360,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 ! free surface for an acoustic medium
     if ( nelem_acoustic_surface > 0 ) then
     call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                potential_acoustic,acoustic_surface, &
-                ibool,nelem_acoustic_surface,npoin,nspec)
+                potential_acoustic,acoustic_surface,ibool,nelem_acoustic_surface,npoin,nspec)
     endif
   endif
 
@@ -2422,15 +2451,12 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
 ! assembling accel_elastic for elastic elements (send)
 #ifdef USE_MPI
- if ( nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
+  if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
     call assemble_MPI_vector_el_start(accel_elastic,npoin, &
-     ninterface, ninterface_elastic, &
-     inum_interfaces_elastic, &
-     max_interface_size, max_ibool_interfaces_size_el,&
-     ibool_interfaces_elastic, nibool_interfaces_elastic, &
-     tab_requests_send_recv_elastic, &
-     buffer_send_faces_vector_el &
-     )
+      ninterface, ninterface_elastic,inum_interfaces_elastic, &
+      max_interface_size, max_ibool_interfaces_size_el,&
+      ibool_interfaces_elastic, nibool_interfaces_elastic, &
+      tab_requests_send_recv_elastic,buffer_send_faces_vector_el)
   endif
 #endif
 
@@ -2454,16 +2480,13 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
 ! assembling accel_elastic for elastic elements (receive)
 #ifdef USE_MPI
- if ( nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
+  if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
     call assemble_MPI_vector_el_wait(accel_elastic,npoin, &
-     ninterface, ninterface_elastic, &
-     inum_interfaces_elastic, &
-     max_interface_size, max_ibool_interfaces_size_el,&
-     ibool_interfaces_elastic, nibool_interfaces_elastic, &
-     tab_requests_send_recv_elastic, &
-     buffer_recv_faces_vector_el &
-     )
-  end if
+      ninterface, ninterface_elastic,inum_interfaces_elastic, &
+      max_interface_size, max_ibool_interfaces_size_el,&
+      ibool_interfaces_elastic, nibool_interfaces_elastic, &
+      tab_requests_send_recv_elastic,buffer_recv_faces_vector_el)
+  endif
 #endif
 
 
@@ -2508,7 +2531,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 !----  display time step and max of norm of displacement
   if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5) then
 
-    if ( myrank == 0 ) then
+    if (myrank == 0) then
     write(IOUT,*)
     if(time >= 1.d-3 .and. time < 1000.d0) then
       write(IOUT,"('Time step number ',i7,'   t = ',f9.4,' s')") it,time
@@ -2527,9 +2550,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 #ifdef USE_MPI
       call MPI_ALLREDUCE (displnorm_all, displnorm_all_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
 #endif
-      if ( myrank == 0 ) then
-      write(IOUT,*) 'Max norm of vector field in solid = ',displnorm_all_glob
-      endif
+      if (myrank == 0) write(IOUT,*) 'Max norm of vector field in solid = ',displnorm_all_glob
 ! check stability of the code in solid, exit if unstable
 ! negative values can occur with some compilers when the unstable value is greater
 ! than the greatest possible floating-point number of the machine
@@ -2547,18 +2568,14 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 #ifdef USE_MPI
       call MPI_ALLREDUCE (displnorm_all, displnorm_all_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
 #endif
-      if ( myrank == 0 ) then
-      write(IOUT,*) 'Max absolute value of scalar field in fluid = ',displnorm_all_glob
-      endif
+      if (myrank == 0) write(IOUT,*) 'Max absolute value of scalar field in fluid = ',displnorm_all_glob
 ! check stability of the code in fluid, exit if unstable
 ! negative values can occur with some compilers when the unstable value is greater
 ! than the greatest possible floating-point number of the machine
       if(displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
         call exit_MPI('code became unstable and blew up in fluid')
     endif
-    if ( myrank == 0 ) then
-    write(IOUT,*)
-    endif
+    if (myrank == 0) write(IOUT,*)
   endif
 
 ! loop on all the receivers to compute and store the seismograms
@@ -2672,15 +2689,11 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 !
   if(output_postscript_snapshot) then
 
-  if ( myrank == 0 ) then
-  write(IOUT,*) 'Writing PostScript file'
-  endif
+  if (myrank == 0) write(IOUT,*) 'Writing PostScript file'
 
   if(imagetype == 1) then
 
-    if ( myrank == 0 ) then
-    write(IOUT,*) 'drawing displacement vector as small arrows...'
-    endif
+    if (myrank == 0) write(IOUT,*) 'drawing displacement vector as small arrows...'
 
     call compute_vector_whole_medium(potential_acoustic,displ_elastic,elastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,numat,kmato,density,rhoext,assign_external_model)
@@ -2694,14 +2707,11 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
-          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
-          myrank, nproc)
+          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges,myrank,nproc)
 
   else if(imagetype == 2) then
 
-    if ( myrank == 0 ) then
-    write(IOUT,*) 'drawing velocity vector as small arrows...'
-    endif
+    if (myrank == 0) write(IOUT,*) 'drawing velocity vector as small arrows...'
 
     call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,elastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,numat,kmato,density,rhoext,assign_external_model)
@@ -2715,14 +2725,11 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
-          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
-          myrank, nproc)
+          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges,myrank,nproc)
 
   else if(imagetype == 3) then
 
-    if ( myrank == 0 ) then
-    write(IOUT,*) 'drawing acceleration vector as small arrows...'
-    endif
+    if (myrank == 0) write(IOUT,*) 'drawing acceleration vector as small arrows...'
 
     call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,elastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,numat,kmato,density,rhoext,assign_external_model)
@@ -2736,22 +2743,17 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
-          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
-          myrank, nproc)
+          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges,myrank,nproc)
 
   else if(imagetype == 4) then
 
-    if ( myrank == 0 ) then
-    write(IOUT,*) 'cannot draw scalar pressure field as a vector plot, skipping...'
-    endif
+    if (myrank == 0) write(IOUT,*) 'cannot draw scalar pressure field as a vector plot, skipping...'
 
   else
     call exit_MPI('wrong type for snapshots')
   endif
 
-  if ( myrank == 0 ) then
-  if(imagetype /= 4) write(IOUT,*) 'PostScript file written'
-  endif
+  if (myrank == 0 .and. imagetype /= 4) write(IOUT,*) 'PostScript file written'
 
   endif
 
@@ -2760,42 +2762,32 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 !
   if(output_color_image) then
 
-  if ( myrank == 0 ) then
-  write(IOUT,*) 'Creating color image of size ',NX_IMAGE_color,' x ',NZ_IMAGE_color
-  endif
+  if (myrank == 0) write(IOUT,*) 'Creating color image of size ',NX_IMAGE_color,' x ',NZ_IMAGE_color
 
   if(imagetype == 1) then
 
-    if ( myrank == 0 ) then
-    write(IOUT,*) 'drawing image of vertical component of displacement vector...'
-    endif
+    if (myrank == 0) write(IOUT,*) 'drawing image of vertical component of displacement vector...'
 
     call compute_vector_whole_medium(potential_acoustic,displ_elastic,elastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,numat,kmato,density,rhoext,assign_external_model)
 
   else if(imagetype == 2) then
 
-    if ( myrank == 0 ) then
-    write(IOUT,*) 'drawing image of vertical component of velocity vector...'
-    endif
+    if (myrank == 0) write(IOUT,*) 'drawing image of vertical component of velocity vector...'
 
     call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,elastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,numat,kmato,density,rhoext,assign_external_model)
 
   else if(imagetype == 3) then
 
-    if ( myrank == 0 ) then
-    write(IOUT,*) 'drawing image of vertical component of acceleration vector...'
-    endif
+    if (myrank == 0) write(IOUT,*) 'drawing image of vertical component of acceleration vector...'
 
     call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,elastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,numat,kmato,density,rhoext,assign_external_model)
 
   else if(imagetype == 4) then
 
-    if ( myrank == 0 ) then
-    write(IOUT,*) 'drawing image of pressure field...'
-    endif
+    if (myrank == 0) write(IOUT,*) 'drawing image of pressure field...'
 
     call compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,elastic,vector_field_display, &
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
@@ -2812,16 +2804,14 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
      j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
      i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
      image_color_data(i,j) = vector_field_display(2,iglob_image_color(i,j))
-
-  end do
+  enddo
 
 ! assembling array image_color_data on process zero for color output
 #ifdef USE_MPI
-  if ( nproc > 1 ) then
-     if ( myrank == 0 ) then
+  if (nproc > 1) then
+     if (myrank == 0) then
 
         do iproc = 1, nproc-1
-
            call MPI_RECV(data_pixel_recv(1),nb_pixel_per_proc(iproc+1), MPI_DOUBLE_PRECISION, &
                 iproc, 43, MPI_COMM_WORLD, request_mpi_status, ier)
 
@@ -2829,27 +2819,24 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
               j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
               i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
               image_color_data(i,j) = data_pixel_recv(k)
-
-           end do
-        end do
+           enddo
+        enddo
 
      else
         do k = 1, nb_pixel_loc
            j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
            i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
            data_pixel_send(k) = vector_field_display(2,iglob_image_color(i,j))
-
-        end do
+        enddo
 
         call MPI_SEND(data_pixel_send(1),nb_pixel_loc,MPI_DOUBLE_PRECISION, 0, 43, MPI_COMM_WORLD, ier)
 
-     end if
-  end if
+     endif
+  endif
 
 #endif
 
-
-  if ( myrank == 0 ) then
+  if (myrank == 0) then
      call create_color_image(image_color_data,iglob_image_color,NX_IMAGE_color,NZ_IMAGE_color,it,cutsnaps,image_color_vp_display)
      write(IOUT,*) 'Color image created'
   endif
@@ -2859,8 +2846,8 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 !----  save temporary or final seismograms
   call write_seismograms(sisux,sisuz,siscurl,station_name,network_name,NSTEP, &
         nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
-        NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current &
-        )
+        NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current)
+
   seismo_offset = seismo_offset + seismo_current
   seismo_current = 0
 
@@ -2892,26 +2879,20 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
   enddo ! end of the main time loop
 
+  deallocate(v0x_left)
+  deallocate(v0z_left)
+  deallocate(t0x_left)
+  deallocate(t0z_left)
 
-  if (over_critical_angle) then
-     deallocate(v0x_left)
-     deallocate(v0z_left)
-     deallocate(t0x_left)
-     deallocate(t0z_left)
-     deallocate(left_bound)
+  deallocate(v0x_right)
+  deallocate(v0z_right)
+  deallocate(t0x_right)
+  deallocate(t0z_right)
 
-     deallocate(v0x_right)
-     deallocate(v0z_right)
-     deallocate(t0x_right)
-     deallocate(t0z_right)
-     deallocate(right_bound)
-
-     deallocate(v0x_bot)
-     deallocate(v0z_bot)
-     deallocate(t0x_bot)
-     deallocate(t0z_bot)
-     deallocate(bot_bound)
-  end if
+  deallocate(v0x_bot)
+  deallocate(v0z_bot)
+  deallocate(t0x_bot)
+  deallocate(t0z_bot)
 
 !----  close energy file and create a gnuplot script to display it
   if(OUTPUT_ENERGY) then
@@ -2926,9 +2907,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   endif
 
 ! print exit banner
-  if ( myrank == 0 ) then
-  call datim(simulation_title)
-  endif
+  if (myrank == 0) call datim(simulation_title)
 
 !
 !----  close output file
@@ -3014,40 +2993,3 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
 end program specfem2D
 
-
-
-subroutine is_in_convex_quadrilateral ( elmnt_coords, x_coord, z_coord, is_in)
-
-  implicit none
-
-  double precision, dimension(2,4)  :: elmnt_coords
-  double precision, intent(in)  :: x_coord, z_coord
-  logical, intent(out)  :: is_in
-
-  real :: x1, x2, x3, x4, z1, z2, z3, z4
-  real  :: normal1, normal2, normal3, normal4
-
-
-  x1 = elmnt_coords(1,1)
-  x2 = elmnt_coords(1,2)
-  x3 = elmnt_coords(1,3)
-  x4 = elmnt_coords(1,4)
-  z1 = elmnt_coords(2,1)
-  z2 = elmnt_coords(2,2)
-  z3 = elmnt_coords(2,3)
-  z4 = elmnt_coords(2,4)
-
-  normal1 = (z_coord-z1) * (x2-x1) - (x_coord-x1) * (z2-z1)
-  normal2 = (z_coord-z2) * (x3-x2) - (x_coord-x2) * (z3-z2)
-  normal3 = (z_coord-z3) * (x4-x3) - (x_coord-x3) * (z4-z3)
-  normal4 = (z_coord-z4) * (x1-x4) - (x_coord-x4) * (z1-z4)
-
-  if ( (normal1 < 0) .or. (normal2 < 0) .or. (normal3 < 0) .or. (normal4 < 0)  ) then
-     is_in = .false.
-  else
-     is_in = .true.
-  end if
-
-
-
-end subroutine is_in_convex_quadrilateral

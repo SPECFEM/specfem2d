@@ -90,7 +90,7 @@ OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/enforce_acoustic_free_surface.o\
         $O/recompute_jacobian.o $O/compute_arrays_source.o $O/locate_source_moment_tensor.o $O/netlib_specfun_erf.o\
         $O/construct_acoustic_surface.o $O/assemble_MPI.o $O/compute_energy.o $O/compute_curl_one_element.o\
         $O/attenuation_compute_param.o $O/compute_Bielak_conditions.o $O/paco_beyond_critical.o\
-	$O/paco_convolve_fft.o
+        $O/paco_convolve_fft.o $O/is_in_convex_quadrilateral.o
 
 default: clean meshfem2D specfem2D convolve_source_timefunction
 
@@ -236,4 +236,7 @@ $O/paco_beyond_critical.o: paco_beyond_critical.f90 constants.h
 
 $O/paco_convolve_fft.o: paco_convolve_fft.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/paco_convolve_fft.o paco_convolve_fft.f90
+
+$O/is_in_convex_quadrilateral.o: is_in_convex_quadrilateral.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/is_in_convex_quadrilateral.o is_in_convex_quadrilateral.f90
 
