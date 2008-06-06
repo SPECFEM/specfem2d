@@ -25,6 +25,10 @@
 ! select fast (Paul Fischer) or slow (topology only) global numbering algorithm
   logical, parameter :: FAST_NUMBERING = .true.
 
+! further reduce cache misses inner/outer in two passes in the case of an MPI simulation
+! this flag is ignored in the case of a serial simulation
+  logical, parameter :: FURTHER_REDUCE_CACHE_MISSES = .true.
+
 ! mesh tolerance for fast global numbering
   double precision, parameter :: SMALLVALTOL = 0.000001d0
 
