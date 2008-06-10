@@ -2566,7 +2566,7 @@ end if
 !
 !---- open PostScript file
 !
-  open(unit=24,file='OUTPUT_FILES/mesh_partition.ps',status='unknown')
+  open(unit=24,file='OUTPUT_FILES/mesh_partitioning.ps',status='unknown')
 
 !
 !---- write PostScript header
@@ -2641,7 +2641,7 @@ end if
   write(24,*) '24.35 CM 18.9 CM MV'
   write(24,*) usoffset,' CM 2 div neg 0 MR'
   write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  write(24,*) '(Mesh stability condition \(red = bad\)) show'
+  write(24,*) '(Mesh partitioning) show'
   write(24,*) 'grestore'
   write(24,*) '25.35 CM 18.9 CM MV'
   write(24,*) usoffset,' CM 2 div neg 0 MR'
