@@ -1,4 +1,15 @@
 
+- in createnum_fast.f90 we should replace the heuristic computation of the minimum
+threshold distance:
+!
+! compute the minimum typical "size" of an element in the mesh
+  xtypdist = min(xtypdist,xmaxval-xminval)
+  xtypdist = min(xtypdist,ymaxval-yminval)
+!
+with a more general algorithm based on the actual distance (i.e., using sqrt()
+instead of an estimate of the horizontal and vertical sizes only; because otherwise
+very distorted elements may lead to erroneous results)
+
 - splitting file part_unstruct.F90 in several files for clarity purpose.
 
 - improving compiling with SCOTCH (issue with header file scotchf.h which is Fortran77 legal). Having our own scotchf.h file (without the comments) is not wise.
