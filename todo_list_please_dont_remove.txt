@@ -1,4 +1,8 @@
 
+- in the case of MPI runs, Nicolas's code displays a lot of things coming from
+different processors to the screen; this should be fixed, and only the master
+(myrank == 0) should write to the screen
+
 - in createnum_fast.f90 we should replace the heuristic computation of the minimum
 threshold distance:
 !
