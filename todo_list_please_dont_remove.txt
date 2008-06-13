@@ -1,4 +1,6 @@
 
+- in the case of MPI runs, we should add a routine to check that the graph sent to Cuthill-McKee is not disconnected; otherwise the routine fails
+
 - in the case of MPI runs, Nicolas's code displays a lot of things coming from
 different processors to the screen; this should be fixed, and only the master
 (myrank == 0) should write to the screen
