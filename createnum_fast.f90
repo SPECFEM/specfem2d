@@ -147,7 +147,7 @@
   enddo
 
 ! define a tolerance, small with respect to the minimum size
-  xtol=smallvaltol*xtypdist
+  xtol = SMALLVALTOL * xtypdist
 
   ifseg(:) = .false.
   nseg = 1
