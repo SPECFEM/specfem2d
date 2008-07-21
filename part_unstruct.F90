@@ -76,7 +76,7 @@ contains
     do i = 0, nelmnts-1
        read(990,*) elmnts(i*ESIZE), elmnts(i*ESIZE+1), elmnts(i*ESIZE+2), elmnts(i*ESIZE+3)
 
-    end do
+    enddo
     close(990)
 
     num_start = minval(elmnts)
@@ -106,7 +106,7 @@ contains
     do i = 1, nnodes
        read(991,*) nodes_coords(1,i), nodes_coords(2,i)
 
-    end do
+    enddo
     close(991)
 
   end subroutine read_nodes_coords
@@ -129,7 +129,7 @@ contains
     do i = 1, nelmnts
        read(992,*) num_material(i)
 
-    end do
+    enddo
     close(992)
 
   end subroutine read_mat
@@ -172,7 +172,7 @@ contains
     do i = 1, nelmnts_surface
        read(993,*) acoustic_surface_tmp(1,i), acoustic_surface_tmp(2,i), acoustic_surface_tmp(3,i), acoustic_surface_tmp(4,i)
 
-    end do
+    enddo
 
     close(993)
     acoustic_surface_tmp(1,:) = acoustic_surface_tmp(1,:) - num_start
@@ -185,8 +185,8 @@ contains
        if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. cs(imaterial_number) < TINYVAL ) then
           nelem_acoustic_surface = nelem_acoustic_surface + 1
 
-       end if
-    end do
+       endif
+    enddo
 
     allocate(acoustic_surface(4,nelem_acoustic_surface))
 
@@ -196,8 +196,8 @@ contains
        if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. cs(imaterial_number) < TINYVAL ) then
           nelem_acoustic_surface = nelem_acoustic_surface + 1
           acoustic_surface(:,nelem_acoustic_surface) = acoustic_surface_tmp(:,i)
-       end if
-    end do
+       endif
+    enddo
 
 
   end subroutine read_acoustic_surface
@@ -229,7 +229,7 @@ contains
     do i = 1, nelemabs
        read(994,*) abs_surface(1,i), abs_surface(2,i), abs_surface(3,i), abs_surface(4,i)
 
-    end do
+    enddo
 
     close(994)
 
@@ -278,7 +278,7 @@ contains
        nodes_elmnts(elmnts(i)*nsize+nnodes_elmnts(elmnts(i))) = i/esize
        nnodes_elmnts(elmnts(i)) = nnodes_elmnts(elmnts(i)) + 1
 
-    end do
+    enddo
 
     print *, 'nnodes_elmnts'
 
@@ -295,9 +295,9 @@ contains
                 do m = 0, nnodes_elmnts(num_node)-1
                    if ( nodes_elmnts(m+num_node*nsize) == elem_target ) then
                       connectivity = connectivity + 1
-                   end if
-                end do
-             end do
+                   endif
+                enddo
+             enddo
 
              if ( connectivity >=  ncommonnodes) then
 
@@ -308,19 +308,19 @@ contains
                       if ( adjncy(nodes_elmnts(k+j*nsize)*max_neighbour+m) == nodes_elmnts(l+j*nsize) ) then
                          is_neighbour = .true.
 
-                      end if
-                   end if
-                end do
+                      endif
+                   endif
+                enddo
                 if ( .not.is_neighbour ) then
                    adjncy(nodes_elmnts(k+j*nsize)*max_neighbour+xadj(nodes_elmnts(k+j*nsize))) = nodes_elmnts(l+j*nsize)
                    xadj(nodes_elmnts(k+j*nsize)) = xadj(nodes_elmnts(k+j*nsize)) + 1
                    adjncy(nodes_elmnts(l+j*nsize)*max_neighbour+xadj(nodes_elmnts(l+j*nsize))) = nodes_elmnts(k+j*nsize)
                    xadj(nodes_elmnts(l+j*nsize)) = xadj(nodes_elmnts(l+j*nsize)) + 1
-                end if
-             end if
-          end do
-       end do
-    end do
+                endif
+             endif
+          enddo
+       enddo
+    enddo
 
     ! making adjacency arrays compact (to be used for partitioning)
     do i = 0, nelmnts-1
@@ -329,8 +329,8 @@ contains
        do j = 0, k-1
           adjncy(nb_edges) = adjncy(i*max_neighbour+j)
           nb_edges = nb_edges + 1
-       end do
-    end do
+       enddo
+    enddo
 
     xadj(nelmnts) = nb_edges
 
@@ -373,14 +373,14 @@ contains
     do num_part = 0, nparts-1
        num_loc(num_part) = 0
 
-    end do
+    enddo
 
     do num_glob = 0, nelmnts-1
        num_part = part(num_glob)
        glob2loc_elmnts(num_glob) = num_loc(num_part)
        num_loc(num_part) = num_loc(num_part) + 1
 
-    end do
+    enddo
 
 
   end subroutine Construct_glob2loc_elmnts
@@ -419,17 +419,17 @@ contains
        do el = 0, nnodes_elmnts(num_node)-1
           parts_node(part(nodes_elmnts(el+nsize*num_node))) = 1
 
-       end do
+       enddo
 
        do num_part = 0, nparts-1
           if ( parts_node(num_part) == 1 ) then
              size_glob2loc_nodes = size_glob2loc_nodes + 1
              parts_node(num_part) = 0
 
-          end if
-       end do
+          endif
+       enddo
 
-    end do
+    enddo
 
     glob2loc_nodes_nparts(nnodes) = size_glob2loc_nodes
 
@@ -447,7 +447,7 @@ contains
        do el = 0, nnodes_elmnts(num_node)-1
           parts_node(part(nodes_elmnts(el+nsize*num_node))) = 1
 
-       end do
+       enddo
        do num_part = 0, nparts-1
 
           if ( parts_node(num_part) == 1 ) then
@@ -456,10 +456,10 @@ contains
              size_glob2loc_nodes = size_glob2loc_nodes + 1
              num_parts(num_part) = num_parts(num_part) + 1
              parts_node(num_part) = 0
-          end if
+          endif
 
-       end do
-    end do
+       enddo
+    enddo
 
 
   end subroutine Construct_glob2loc_nodes
@@ -498,8 +498,8 @@ contains
     do  i = 0, nparts-1
        do j = i+1, nparts-1
           ninterfaces = ninterfaces + 1
-       end do
-    end do
+       enddo
+    enddo
 
     allocate(tab_size_interfaces(0:ninterfaces))
     tab_size_interfaces(:) = 0
@@ -515,26 +515,26 @@ contains
                    is_acoustic_el = .true.
                 else
                    is_acoustic_el = .false.
-                end if
+                endif
                 do el_adj = xadj(el), xadj(el+1)-1
                    if ( cs_material(num_material(adjncy(el_adj)+1)) < TINYVAL) then
                       is_acoustic_el_adj = .true.
                    else
                       is_acoustic_el_adj = .false.
-                   end if
+                   endif
                    if ( (part(adjncy(el_adj)) == num_part_bis) .and. (is_acoustic_el .eqv. is_acoustic_el_adj) ) then
                       num_edge = num_edge + 1
 
-                   end if
-                end do
-             end if
-          end do
+                   endif
+                enddo
+             endif
+          enddo
           tab_size_interfaces(num_interface+1) = tab_size_interfaces(num_interface) + num_edge
           num_edge = 0
           num_interface = num_interface + 1
 
-       end do
-    end do
+       enddo
+    enddo
 
     num_interface = 0
     num_edge = 0
@@ -550,13 +550,13 @@ contains
                    is_acoustic_el = .true.
                 else
                    is_acoustic_el = .false.
-                end if
+                endif
                 do el_adj = xadj(el), xadj(el+1)-1
                    if ( cs_material(num_material(adjncy(el_adj)+1)) < TINYVAL) then
                       is_acoustic_el_adj = .true.
                    else
                       is_acoustic_el_adj = .false.
-                   end if
+                   endif
                    if ( (part(adjncy(el_adj)) == num_part_bis) .and. (is_acoustic_el .eqv. is_acoustic_el_adj) ) then
                       tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+0) = el
                       tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+1) = adjncy(el_adj)
@@ -567,24 +567,24 @@ contains
                                tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+3+ncommon_nodes) &
                                     = elmnts(el*esize+num_node)
                                ncommon_nodes = ncommon_nodes + 1
-                            end if
-                         end do
-                      end do
+                            endif
+                         enddo
+                      enddo
                       if ( ncommon_nodes > 0 ) then
                          tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+2) = ncommon_nodes
                       else
                          print *, "Error while building interfaces!", ncommon_nodes
-                      end if
+                      endif
                       num_edge = num_edge + 1
-                   end if
-                end do
-             end if
+                   endif
+                enddo
+             endif
 
-          end do
+          enddo
           num_edge = 0
           num_interface = num_interface + 1
-       end do
-    end do
+       enddo
+    enddo
 
 
   end subroutine Construct_interfaces
@@ -615,19 +615,19 @@ contains
              if ( glob2loc_nodes_parts(j) == iproc ) then
                 npgeo = npgeo + 1
 
-             end if
+             endif
 
-          end do
-       end do
+          enddo
+       enddo
     else
        do i = 0, nnodes-1
           do j = glob2loc_nodes_nparts(i), glob2loc_nodes_nparts(i+1)-1
              if ( glob2loc_nodes_parts(j) == iproc ) then
                 write(IIN_database,*) glob2loc_nodes(j)+1, nodes_coords(1,i+1), nodes_coords(2,i+1)
-             end if
-          end do
-       end do
-    end if
+             endif
+          enddo
+       enddo
+    endif
 
   end subroutine Write_glob2loc_nodes_database
 
@@ -651,35 +651,28 @@ contains
     integer  :: i,j,k
     integer, dimension(0:ngnod-1)  :: loc_nodes
 
-    if ( num_phase == 1 ) then
+    if (num_phase == 1) then
+
        nspec = 0
 
        do i = 0, nelmnts-1
-          if ( part(i) == iproc ) then
-             nspec = nspec + 1
-
-          end if
-       end do
+          if (part(i) == iproc) nspec = nspec + 1
+       enddo
 
     else
        do i = 0, nelmnts-1
-          if ( part(i) == iproc ) then
+          if (part(i) == iproc) then
 
              do j = 0, ngnod-1
                 do k = glob2loc_nodes_nparts(elmnts(i*ngnod+j)), glob2loc_nodes_nparts(elmnts(i*ngnod+j)+1)-1
-
-                   if ( glob2loc_nodes_parts(k) == iproc ) then
-                      loc_nodes(j) = glob2loc_nodes(k)
-
-                   end if
-                end do
-
-             end do
+                   if (glob2loc_nodes_parts(k) == iproc) loc_nodes(j) = glob2loc_nodes(k)
+                enddo
+             enddo
              write(IIN_database,*) glob2loc_elmnts(i)+1, num_modele(i+1), (loc_nodes(k)+1, k=0,ngnod-1)
-          end if
-       end do
-    end if
+          endif
+       enddo
 
+    endif
 
   end subroutine write_partition_database
 
@@ -725,10 +718,10 @@ contains
                   (i == iproc .or. j == iproc) ) then
                 my_interfaces(num_interface) = 1
                 my_nb_interfaces(num_interface) = tab_size_interfaces(num_interface+1) - tab_size_interfaces(num_interface)
-             end if
+             endif
              num_interface = num_interface + 1
-          end do
-       end do
+          enddo
+       enddo
        my_ninterface = sum(my_interfaces(:))
 
     else
@@ -740,22 +733,22 @@ contains
                   write(IIN_database,*) j, my_nb_interfaces(num_interface)
                else
                   write(IIN_database,*) i, my_nb_interfaces(num_interface)
-               end if
+               endif
 
                do k = tab_size_interfaces(num_interface), tab_size_interfaces(num_interface+1)-1
                   if ( i == iproc ) then
                      local_elmnt = glob2loc_elmnts(tab_interfaces(k*5+0))+1
                   else
                      local_elmnt = glob2loc_elmnts(tab_interfaces(k*5+1))+1
-                  end if
+                  endif
 
                   if ( tab_interfaces(k*5+2) == 1 ) then
                      do l = glob2loc_nodes_nparts(tab_interfaces(k*5+3)), &
                           glob2loc_nodes_nparts(tab_interfaces(k*5+3)+1)-1
                         if ( glob2loc_nodes_parts(l) == iproc ) then
                            local_nodes(1) = glob2loc_nodes(l)+1
-                        end if
-                     end do
+                        endif
+                     enddo
 
                      write(IIN_database,*) local_elmnt, tab_interfaces(k*5+2), local_nodes(1), -1
                   else
@@ -764,28 +757,28 @@ contains
                              glob2loc_nodes_nparts(tab_interfaces(k*5+3)+1)-1
                            if ( glob2loc_nodes_parts(l) == iproc ) then
                               local_nodes(1) = glob2loc_nodes(l)+1
-                           end if
-                        end do
+                           endif
+                        enddo
                         do l = glob2loc_nodes_nparts(tab_interfaces(k*5+4)), &
                            glob2loc_nodes_nparts(tab_interfaces(k*5+4)+1)-1
                            if ( glob2loc_nodes_parts(l) == iproc ) then
                               local_nodes(2) = glob2loc_nodes(l)+1
-                           end if
-                        end do
+                           endif
+                        enddo
                         write(IIN_database,*) local_elmnt, tab_interfaces(k*5+2), local_nodes(1), local_nodes(2)
                      else
                         write(IIN_database,*) "erreur_write_interface_", tab_interfaces(k*5+2)
-                     end if
-                  end if
-               end do
+                     endif
+                  endif
+               enddo
 
-            end if
+            endif
 
             num_interface = num_interface + 1
-         end do
-      end do
+         enddo
+      enddo
 
-   end if
+   endif
 
  end subroutine Write_interfaces_database
 
@@ -823,8 +816,8 @@ contains
          if ( part(surface(1,i)) == iproc ) then
             nsurface_loc = nsurface_loc + 1
 
-         end if
-      end do
+         endif
+      enddo
 
    else
 
@@ -841,33 +834,33 @@ contains
                         glob2loc_nodes_nparts(surface(3,i)+1)-1
                       if ( glob2loc_nodes_parts(l) == iproc ) then
                          local_nodes(1) = glob2loc_nodes(l)+1
-                      end if
-                   end do
+                      endif
+                   enddo
 
                    write(IIN_database,*) local_elmnt, surface(2,i), local_nodes(1), -1
-                end if
+                endif
                 if ( surface(2,i) == 2 ) then
                    do l = glob2loc_nodes_nparts(surface(3,i)), &
                         glob2loc_nodes_nparts(surface(3,i)+1)-1
                       if ( glob2loc_nodes_parts(l) == iproc ) then
                          local_nodes(1) = glob2loc_nodes(l)+1
-                      end if
-                   end do
+                      endif
+                   enddo
                    do l = glob2loc_nodes_nparts(surface(4,i)), &
                         glob2loc_nodes_nparts(surface(4,i)+1)-1
                       if ( glob2loc_nodes_parts(l) == iproc ) then
                          local_nodes(2) = glob2loc_nodes(l)+1
-                      end if
-                   end do
+                      endif
+                   enddo
 
                    write(IIN_database,*) local_elmnt, surface(2,i), local_nodes(1), local_nodes(2)
-                end if
+                endif
 
-             end if
+             endif
 
-          end do
+          enddo
 
-       end if
+       endif
 
      end subroutine Write_surface_database
 
@@ -930,13 +923,13 @@ contains
              if ( abs_surface(1,num_edge) == abs_surface_merge(i) ) then
                 match = i
                 exit
-             end if
-          end do
+             endif
+          enddo
 
           if ( match == 0 ) then
              nb_elmnts_abs = nb_elmnts_abs + 1
              match = nb_elmnts_abs
-          end if
+          endif
 
           abs_surface_merge(match) = abs_surface(1,num_edge)
 
@@ -945,7 +938,7 @@ contains
                abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+1)) ) then
              abs_surface_char(1,match) = .true.
 
-          end if
+          endif
 
           if ( (abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+0) .and. &
                abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+1)) ) then
@@ -954,13 +947,13 @@ contains
              abs_surface(3,num_edge) = temp
              abs_surface_char(1,match) = .true.
 
-          end if
+          endif
 
           if ( (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+0) .and. &
                abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+3)) ) then
              abs_surface_char(4,match) = .true.
 
-          end if
+          endif
 
           if ( (abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+0) .and. &
                abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+3)) ) then
@@ -969,13 +962,13 @@ contains
              abs_surface(3,num_edge) = temp
              abs_surface_char(4,match) = .true.
 
-          end if
+          endif
 
           if ( (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+1) .and. &
                abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+2)) ) then
              abs_surface_char(2,match) = .true.
 
-          end if
+          endif
 
           if ( (abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+1) .and. &
                abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+2)) ) then
@@ -984,7 +977,7 @@ contains
              abs_surface(3,num_edge) = temp
              abs_surface_char(2,match) = .true.
 
-          end if
+          endif
 
           if ( (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+2) .and. &
                abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+3)) ) then
@@ -993,15 +986,15 @@ contains
              abs_surface(3,num_edge) = temp
              abs_surface_char(3,match) = .true.
 
-          end if
+          endif
 
           if ( (abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+2) .and. &
                abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+3)) ) then
              abs_surface_char(3,match) = .true.
 
-          end if
+          endif
 
-       end do
+       enddo
 
        nelemabs_merge = nb_elmnts_abs
 
@@ -1027,9 +1020,9 @@ contains
         do i = 1, nb_materials
            if (cs_material(i) < TINYVAL) then
               is_acoustic(i) = .true.
-           end if
+           endif
 
-        end do
+        enddo
 
         do num_edge = 1, nedge_bound
 
@@ -1038,8 +1031,8 @@ contains
               if ( abs_surface(1,num_edge) == abs_surface_merge(i) ) then
                  match = i
                  exit
-              end if
-           end do
+              endif
+           enddo
 
            if ( is_acoustic(num_material(abs_surface(1,num_edge)+1)) ) then
 
@@ -1053,27 +1046,27 @@ contains
                                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) )  then
                                 ibegin_bottom(match) = 2
 
-                             end if
+                             endif
                              if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) .and. &
                                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2) )  then
                                 jbegin_right(match) = 2
 
-                             end if
+                             endif
                              if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) .and. &
                                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2) )  then
                                 ibegin_top(match) = 2
 
-                             end if
+                             endif
                              if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
                                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) )  then
                                 jbegin_left(match) = 2
 
-                             end if
+                             endif
 
-                          end if
-                       end do
+                          endif
+                       enddo
 
-                    end if
+                    endif
 
                     if ( abs_surface(4,num_edge) == elmnts(ngnod*edges_coupled(1,iedge)+inode1) ) then
                        do inode2 = 0, 3
@@ -1082,35 +1075,35 @@ contains
                                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) )  then
                                 iend_bottom(match) = NGLLX - 1
 
-                             end if
+                             endif
                              if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) .and. &
                                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2) )  then
                                 jend_right(match) = NGLLZ - 1
 
-                             end if
+                             endif
                              if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) .and. &
                                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2) )  then
                                 iend_top(match) = NGLLX - 1
 
-                             end if
+                             endif
                              if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
                                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) )  then
                                 jend_left(match) = NGLLZ - 1
 
-                             end if
-                          end if
-                       end do
+                             endif
+                          endif
+                       enddo
 
-                    end if
+                    endif
 
-                 end do
+                 enddo
 
 
-              end do
+              enddo
 
-           end if
+           endif
 
-        end do
+        enddo
 
      end subroutine merge_abs_boundaries
 
@@ -1146,8 +1139,8 @@ contains
           do i = 1, nelemabs_merge
              if ( part(abs_surface_merge(i)) == iproc ) then
                 nelemabs_loc = nelemabs_loc + 1
-             end if
-          end do
+             endif
+          enddo
        else
           do i = 1, nelemabs_merge
              if ( part(abs_surface_merge(i)) == iproc ) then
@@ -1159,10 +1152,10 @@ contains
                      ibegin_top(i), iend_top(i), &
                      jbegin_left(i), jend_left(i)
 
-             end if
+             endif
 
-          end do
-       end if
+          enddo
+       endif
 
 
      end subroutine write_abs_merge_database
@@ -1316,9 +1309,9 @@ subroutine acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_material
   do i = 1, nb_materials
      if (cs_material(i) < TINYVAL) then
         is_acoustic(i) = .true.
-     end if
+     endif
 
-  end do
+  enddo
 
   call mesh2dual_ncommonnodes(nelmnts, nnodes, elmnts, xadj, adjncy, nnodes_elmnts, nodes_elmnts,2)
 
@@ -1328,11 +1321,11 @@ subroutine acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_material
         do el_adj = xadj(el), xadj(el+1) - 1
            if ( .not. is_acoustic(num_material(adjncy(el_adj)+1)) ) then
               nedges_coupled = nedges_coupled + 1
-           end if
+           endif
 
-        end do
-     end if
-  end do
+        enddo
+     endif
+  enddo
 
   print *, 'nedges_coupled', nedges_coupled
 
@@ -1346,11 +1339,11 @@ subroutine acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_material
               nedges_coupled = nedges_coupled + 1
               edges_coupled(1,nedges_coupled) = el
               edges_coupled(2,nedges_coupled) = adjncy(el_adj)
-           end if
+           endif
 
-        end do
-     end if
-  end do
+        enddo
+     endif
+  enddo
 
   do i = 1, nedges_coupled*nproc
      is_repartitioned = .false.
@@ -1360,15 +1353,15 @@ subroutine acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_material
               part(edges_coupled(2,num_edge)) = part(edges_coupled(1,num_edge))
            else
               part(edges_coupled(1,num_edge)) = part(edges_coupled(2,num_edge))
-           end if
+           endif
            is_repartitioned = .true.
-        end if
+        endif
 
-     end do
+     enddo
      if ( .not. is_repartitioned ) then
         exit
-     end if
-  end do
+     endif
+  enddo
 
 end subroutine acoustic_elastic_repartitioning
 
@@ -1399,17 +1392,17 @@ subroutine write_fluidsolid_edges_database(IIN_database, nedges_coupled, nedges_
      do i = 1, nedges_coupled
         if ( part(edges_coupled(1,i)) == iproc ) then
            nedges_coupled_loc = nedges_coupled_loc + 1
-        end if
-     end do
+        endif
+     enddo
   else
      do i = 1, nedges_coupled
         if ( part(edges_coupled(1,i)) == iproc ) then
            write(IIN_database,*) glob2loc_elmnts(edges_coupled(1,i))+1, glob2loc_elmnts(edges_coupled(2,i))+1
 
-        end if
+        endif
 
-     end do
-  end if
+     enddo
+  endif
 
 
 end subroutine write_fluidsolid_edges_database
