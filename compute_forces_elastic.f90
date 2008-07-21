@@ -49,7 +49,7 @@
        e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
        dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
        hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
-       nspec_outer,we_are_in_phase_outer,deltat,coord,add_Bielak_conditions, &
+       deltat,coord,add_Bielak_conditions, &
        x0_source, z0_source, A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset,f0, &
        v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot,&
        nleft,nright,nbot,over_critical_angle)
@@ -99,9 +99,6 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
   real(kind=CUSTOM_REAL), dimension(NGLLZ) :: wzgll
 
-! for overlapping MPI communications with computation
-  integer, intent(in) :: nspec_outer
-  logical, intent(in) :: we_are_in_phase_outer
 
 !---
 !--- local variables
@@ -142,20 +139,12 @@
 
   integer :: ifirstelem,ilastelem
 
-! only for the first call to compute_forces_elastic (during computation on outer elements)
-  if ( we_are_in_phase_outer ) then
 ! compute Grad(displ_elastic) at time step n for attenuation
   if(TURN_ATTENUATION_ON) call compute_gradient_attenuation(displ_elastic,dux_dxl_n,duz_dxl_n, &
       dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,npoin)
-  endif
 
-  if(we_are_in_phase_outer) then
-    ifirstelem = 1
-    ilastelem = nspec_outer
-  else
-    ifirstelem = nspec_outer + 1
-    ilastelem = nspec
-  endif
+  ifirstelem = 1
+  ilastelem = nspec
 
 ! loop over spectral elements
   do ispec = ifirstelem,ilastelem
@@ -302,9 +291,6 @@
     endif ! end of test if elastic element
 
     enddo ! end of loop over all spectral elements
-
-! only for the first call to compute_forces_elastic (during computation on outer elements)
-  if ( we_are_in_phase_outer ) then
 
 !
 !--- absorbing boundaries
@@ -628,8 +614,6 @@
 
   endif ! if not using an initial field
 
-  else
-
 ! implement attenuation
   if(TURN_ATTENUATION_ON) then
 
@@ -697,8 +681,6 @@
   enddo
   enddo
   enddo
-
-  endif ! end of test on attenuation
 
   endif ! end of test on attenuation
 

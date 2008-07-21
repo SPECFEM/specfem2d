@@ -47,8 +47,7 @@
                vpext,rhoext,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
-               jbegin_left,jend_left,jbegin_right,jend_right, &
-               nspec_outer, we_are_in_phase_outer)
+               jbegin_left,jend_left,jbegin_right,jend_right)
 
 ! compute forces for the acoustic elements
 
@@ -82,10 +81,6 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
   real(kind=CUSTOM_REAL), dimension(NGLLZ) :: wzgll
 
-! for overlapping MPI communications with computation
-  integer, intent(in)  :: nspec_outer
-  logical, intent(in)  :: we_are_in_phase_outer
-
 !---
 !--- local variables
 !---
@@ -106,13 +101,8 @@
 
   integer :: ifirstelem,ilastelem
 
-  if(we_are_in_phase_outer) then
-    ifirstelem = 1
-    ilastelem = nspec_outer
-  else
-    ifirstelem = nspec_outer + 1
-    ilastelem = nspec
-  endif
+  ifirstelem = 1
+  ilastelem = nspec
 
 ! loop over spectral elements
   do ispec = ifirstelem,ilastelem
@@ -182,9 +172,6 @@
     endif ! end of test if acoustic element
 
     enddo ! end of loop over all spectral elements
-
-! only for the first call to compute_forces_acoustic (during computation on outer elements)
-  if ( we_are_in_phase_outer ) then
 
 !
 !--- absorbing boundaries
@@ -341,8 +328,6 @@
     enddo
 
   endif  ! end of absorbing boundaries
-
-  endif ! end of computation that needs to be done only once, during the first call to compute_forces_acoustic
 
   end subroutine compute_forces_acoustic
 
