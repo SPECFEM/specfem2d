@@ -385,9 +385,7 @@
 
 ! further reduce cache misses inner/outer in two passes in the case of an MPI simulation
   integer :: ipass,ispec_inner,ispec_outer,NUMBER_OF_PASSES,kmato_read,my_interfaces_read
-!!!!!!!!!!!!!!!!!!!  integer :: ioldvalue,inewvalue
   integer :: npoin_outer,npoin_inner
-!!!!!!!!!!!!!!!!!!!  logical :: foundthisvalue
   integer, dimension(:), allocatable :: knods_read
   integer, dimension(:), allocatable :: perm,antecedent_list,check_perm
 
@@ -402,6 +400,8 @@
   call MPI_COMM_SIZE(MPI_COMM_WORLD,nproc,ier)
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
 
+! this is only used in the case of MPI because it distinguishes between inner and outer element
+! in the MPI partitions, which is meaningless in the serial case
   if(FURTHER_REDUCE_CACHE_MISSES) then
     NUMBER_OF_PASSES = 2
   else
@@ -418,7 +418,6 @@
   ispec_inner = 0
   ispec_outer = 0
 
-!! DK DK changed this
   if(PERFORM_CUTHILL_MCKEE) then
     NUMBER_OF_PASSES = 2
   else
@@ -431,7 +430,6 @@
   if(IOUT /= ISTANDARD_OUTPUT) open(IOUT,file='simulation_results.txt',status='unknown')
 
 ! reduction of cache misses inner/outer in two passes
-!! DK DK added this for third pass but included in first for simplicity
   do ipass = 1,NUMBER_OF_PASSES
 
   write(prname,230) myrank
@@ -649,10 +647,8 @@ endif
 !
   n = 0
   read(IIN,"(a80)") datlin
-!! DK DK changed
   allocate(knods_read(ngnod))
   do ispec = 1,nspec
-!! DK DK changed    read(IIN,*) n,kmato(n),(knods(k,n), k=1,ngnod)
     read(IIN,*) n,kmato_read,(knods_read(k), k=1,ngnod)
 if(ipass == 1) then
   kmato(n) = kmato_read
@@ -735,7 +731,6 @@ endif
            read(IIN,*) my_interfaces_read, my_interfaces(2,ie,num_interface), &
                 my_interfaces(3,ie,num_interface), my_interfaces(4,ie,num_interface)
 
-!! DK DK added this
            if(ipass == 1) then
              my_interfaces(1,ie,num_interface) = my_interfaces_read
            else if(ipass == 2) then
@@ -836,52 +831,9 @@ endif
     call createnum_slow(knods,ibool,npoin,nspec,ngnod)
   endif
 
-! reduction of cache misses inner/outer in two passes
-!!!!!!!!!! DK DK moved this above      do ipass = 1,NUMBER_OF_PASSES
-
 ! create a new indirect addressing array to reduce cache misses in memory access in the solver
-  if(ipass == 1) then
+  if(ipass == 2) then
 
-! allocate(copy_ibool_ori(NGLLX,NGLLZ,nspec))
-! allocate(mask_ibool(npoin))
-
-! mask_ibool(:) = -1
-! copy_ibool_ori(:,:,:) = ibool(:,:,:)
-
-! inumber = 0
-! do ispec=1,nspec
-!   do j=1,NGLLZ
-!     do i=1,NGLLX
-!       if(mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
-! create a new point
-!         inumber = inumber + 1
-!         ibool(i,j,ispec) = inumber
-!         mask_ibool(copy_ibool_ori(i,j,ispec)) = inumber
-!       else
-! use an existing point created previously
-!         ibool(i,j,ispec) = mask_ibool(copy_ibool_ori(i,j,ispec))
-!       endif
-!     enddo
-!   enddo
-! enddo
-
-!! DK DK added call to Cuthill-McKee
-!!!!!!!!!  allocate(perm(nspec))
-!!!!!!!!!  call get_perm(ibool,perm,LIMIT_MULTI_CUTHILL,nspec,npoin)
-
-!! DK DK debug perm identite
-! do ispec = 1,nspec
-!   perm(ispec) = ispec
-! enddo
-
-! if(NUMBER_OF_PASSES == 1) then
-!   deallocate(copy_ibool_ori)
-!   deallocate(mask_ibool)
-! endif
-
-  else if(ipass == 2) then
-
-!! DK DK added this
   deallocate(perm)
 
   allocate(copy_ibool_ori(NGLLX,NGLLZ,nspec))
@@ -893,13 +845,7 @@ endif
   inumber = 0
 
 ! first reduce cache misses in outer elements, since they are taken first
-
 ! loop over spectral elements
-!!!!!!!!!!!!!!!  do ispec_outer = 1,nspec_outer
-
-! get global numbering for inner or outer elements
-!!!!!!!!!!!!!!!    ispec = perm(ispec_outer_to_glob(ispec_outer))
-
   do ispec = 1,nspec_outer
     do j=1,NGLLZ
       do i=1,NGLLX
@@ -917,13 +863,7 @@ endif
   enddo
 
 ! then reduce cache misses in inner elements, since they are taken second
-
 ! loop over spectral elements
-!!!!!!!!!!!!!!!!!!  do ispec_inner = 1,nspec_inner
-
-! get global numbering for inner or outer elements
-!!!!!!!!!!!!!!!!!!    ispec = perm(ispec_inner_to_glob(ispec_inner))
-
   do ispec = nspec_outer+1,nspec
     do j=1,NGLLZ
       do i=1,NGLLX
@@ -1063,7 +1003,6 @@ endif
      enddo
      close(55)
   endif
-
 
 !
 !-----   plot the GLL mesh in a Gnuplot file
@@ -1403,9 +1342,6 @@ endif
 
 #endif
 
-!! DK DK added call to Cuthill-McKee
-!! DK DK 3333333333333333333333333333333333333333333333333
-
 if(ipass == 1) then
 
   allocate(antecedent_list(nspec))
@@ -1441,24 +1377,6 @@ if(ipass == 1) then
     ibool_inner(:,:,ispec_inner) = ibool(:,:,ispec)
   enddo
 
-!! DK DK re-add renumbering of new ibool to use consecutive values only for outer
-!! DK DK this too slow, better algorithm below
-! inewvalue = 1
-! do ioldvalue = minval(ibool_outer),maxval(ibool_outer)
-!   foundthisvalue = .false.
-!   do ispec_outer = 1,nspec_outer
-!     do j = 1,NGLLZ
-!       do i = 1,NGLLX
-!         if (ibool_outer(i,j,ispec_outer) == ioldvalue) then
-!           ibool_outer(i,j,ispec_outer) = inewvalue
-!           foundthisvalue = .true.
-!         endif
-!       enddo
-!     enddo
-!   enddo
-!   if(foundthisvalue) inewvalue = inewvalue + 1
-! enddo
-
   allocate(copy_ibool_ori(NGLLX,NGLLZ,nspec_outer))
   allocate(mask_ibool(npoin))
 
@@ -1488,24 +1406,6 @@ if(ipass == 1) then
 
 ! the total number of points without multiples in this region is now known
   npoin_outer = maxval(ibool_outer)
-
-!! DK DK re-add renumbering of new ibool to use consecutive values only for inner
-!! DK DK this too slow, better algorithm below
-! inewvalue = 1
-! do ioldvalue = minval(ibool_inner),maxval(ibool_inner)
-!   foundthisvalue = .false.
-!   do ispec_inner = 1,nspec_inner
-!     do j = 1,NGLLZ
-!       do i = 1,NGLLX
-!         if (ibool_inner(i,j,ispec_inner) == ioldvalue) then
-!           ibool_inner(i,j,ispec_inner) = inewvalue
-!           foundthisvalue = .true.
-!         endif
-!       enddo
-!     enddo
-!   enddo
-!   if(foundthisvalue) inewvalue = inewvalue + 1
-! enddo
 
   allocate(copy_ibool_ori(NGLLX,NGLLZ,nspec_inner))
   allocate(mask_ibool(npoin))
@@ -1537,15 +1437,13 @@ if(ipass == 1) then
 ! the total number of points without multiples in this region is now known
   npoin_inner = maxval(ibool_inner)
 
-!!! 4444444444444444444444444444444444
-
   allocate(perm(nspec))
 
   if(ACTUALLY_IMPLEMENT_PERM_OUT) then
 
   allocate(check_perm(nspec_outer))
   call get_perm(ibool_outer,perm(1:nspec_outer),LIMIT_MULTI_CUTHILL,nspec_outer,npoin_outer)
-!! DK DK check that the permutation obtained is bijective
+! check that the permutation obtained is bijective
   check_perm(:) = -1
   do ispec = 1,nspec_outer
     check_perm(perm(ispec)) = ispec
@@ -1555,8 +1453,8 @@ if(ipass == 1) then
   deallocate(check_perm)
   deallocate(ibool_outer)
 
-!!!!!!!! DK DK 3333333333333333 YYYYYYYYYYY identity perm for now
   else
+! use identity permutation if flag is off
     do ispec = 1,nspec_outer
       perm(ispec) = ispec
     enddo
@@ -1566,7 +1464,7 @@ if(ipass == 1) then
 
   allocate(check_perm(nspec_inner))
   call get_perm(ibool_inner,perm(nspec_outer+1:nspec),LIMIT_MULTI_CUTHILL,nspec_inner,npoin_inner)
-!! DK DK check that the permutation obtained is bijective
+! check that the permutation obtained is bijective
   check_perm(:) = -1
   do ispec = 1,nspec_inner
     check_perm(perm(nspec_outer+ispec)) = ispec
@@ -1574,16 +1472,13 @@ if(ipass == 1) then
   if(minval(check_perm) /= 1) stop 'minval check_perm is incorrect for inner'
   if(maxval(check_perm) /= nspec_inner) stop 'maxval check_perm is incorrect for inner'
   deallocate(check_perm)
-!! DK DK add the right offset
+! add the right offset
   perm(nspec_outer+1:nspec) = perm(nspec_outer+1:nspec) + nspec_outer
 
-!!!!!!!!!!!!! call get_perm(ibool,perm,LIMIT_MULTI_CUTHILL,nspec,npoin)
-
   deallocate(ibool_inner)
-!!!!!!!!!!!!!!!!!!!!!  deallocate(antecedent_list)
 
-!!!!!!!! DK DK 3333333333333333 YYYYYYYYYYY identity perm for now
   else
+! use identity permutation if flag is off
     do ispec = nspec_outer+1,nspec
       perm(ispec) = ispec
     enddo
@@ -2149,7 +2044,6 @@ endif
 
  endif
 
-
 ! determine if coupled fluid-solid simulation
   coupled_acoustic_elastic = any_acoustic .and. any_elastic
 
@@ -2239,7 +2133,6 @@ endif
        endif
 
     enddo
-
 
 ! make sure fluid/solid matching has been perfectly detected: check that the grid points
 ! have the same physical coordinates
@@ -2335,7 +2228,7 @@ endif
   endif
 
 #ifdef USE_MPI
-  if(OUTPUT_ENERGY) stop 'energy calculation only serial right now, should add an MPI_REDUCE in parallel'
+  if(OUTPUT_ENERGY) stop 'energy calculation only currently serial only, should add an MPI_REDUCE in parallel'
 #endif
 ! open the file in which we will store the energy curve
   if(OUTPUT_ENERGY) open(unit=IENERGY,file='energy.gnu',status='unknown')
@@ -2592,7 +2485,6 @@ endif
   endif
 #endif
 
-
 ! ************************************************************************************
 ! ************* multiply by the inverse of the mass matrix and update velocity
 ! ************************************************************************************
@@ -2751,7 +2643,6 @@ endif
       tab_requests_send_recv_elastic,buffer_recv_faces_vector_el)
   endif
 #endif
-
 
 ! ************************************************************************************
 ! ************* multiply by the inverse of the mass matrix and update velocity
