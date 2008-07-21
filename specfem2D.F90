@@ -2357,7 +2357,6 @@ endif
 ! ************* compute forces for the acoustic elements
 ! *********************************************************
 
-! first call, computation on outer elements, absorbing conditions and source
     call compute_forces_acoustic(npoin,nspec,nelemabs,numat, &
                anyabs,assign_external_model,ibool,kmato,numabs, &
                elastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
@@ -2365,8 +2364,7 @@ endif
                vpext,rhoext,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
-               jbegin_left,jend_left,jbegin_right,jend_right, &
-               nspec_outer, .true.)
+               jbegin_left,jend_left,jbegin_right,jend_right)
 
  endif ! end of test if any acoustic element
 
@@ -2436,19 +2434,6 @@ endif
 
    endif
 
-! second call, computation on inner elements
-  if(any_acoustic) then
-    call compute_forces_acoustic(npoin,nspec,nelemabs,numat, &
-               anyabs,assign_external_model,ibool,kmato,numabs, &
-               elastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
-               potential_acoustic,density,elastcoef,xix,xiz,gammax,gammaz,jacobian, &
-               vpext,rhoext,hprime_xx,hprimewgll_xx, &
-               hprime_zz,hprimewgll_zz,wxgll,wzgll, &
-               ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
-               jbegin_left,jend_left,jbegin_right,jend_right, &
-               nspec_outer, .false.)
-   endif
-
 ! assembling potential_dot_dot for acoustic elements
 #ifdef USE_MPI
   if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
@@ -2500,7 +2485,6 @@ endif
 ! ************* main solver for the elastic elements
 ! *********************************************************
 
-! first call, computation on outer elements, absorbing conditions and source
  if(any_elastic) &
     call compute_forces_elastic(npoin,nspec,nelemabs,numat, &
                ispec_selected_source,is_proc_source,source_type,it,NSTEP,anyabs,assign_external_model, &
@@ -2511,7 +2495,7 @@ endif
                e1,e11,e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
-               nspec_outer, .true.,deltat,coord,add_Bielak_conditions, x0_source, z0_source, &
+               deltat,coord,add_Bielak_conditions, x0_source, z0_source, &
                A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset, f0,&
                v0x_left(1,it),v0z_left(1,it),v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
                t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it),t0x_bot(1,it),t0z_bot(1,it), &
@@ -2580,23 +2564,6 @@ endif
       enddo
 
     endif
-
-! second call, computation on inner elements and update
-  if(any_elastic) &
-    call compute_forces_elastic(npoin,nspec,nelemabs,numat, &
-               ispec_selected_source,is_proc_source,source_type,it,NSTEP,anyabs,assign_external_model, &
-               initialfield,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,angleforce,deltatcube, &
-               deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,elastic,codeabs, &
-               accel_elastic,veloc_elastic,displ_elastic,density,elastcoef,xix,xiz,gammax,gammaz, &
-               jacobian,vpext,vsext,rhoext,source_time_function,sourcearray, &
-               e1,e11,e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
-               dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
-               hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
-               nspec_outer,.false.,deltat,coord,add_Bielak_conditions, x0_source, z0_source, &
-               A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset, f0,&
-               v0x_left(1,it),v0z_left(1,it),v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
-               t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it),t0x_bot(1,it),t0z_bot(1,it), &
-               count_left,count_right,count_bot,over_critical_angle)
 
 ! assembling accel_elastic for elastic elements
 #ifdef USE_MPI
