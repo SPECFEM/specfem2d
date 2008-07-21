@@ -71,7 +71,7 @@ F90 = gfortran
 #F90 = /opt/openmpi-1.2.1/gfortran64/bin/mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
 CC = gcc
 #FLAGS_NOCHECK = -O3 -march=opteron -m64 -mfpmath=sse,387
-FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow -fbounds-check
+FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O3 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math # -mcmodel=medium
 FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
 
 # IBM
@@ -231,7 +231,7 @@ $O/define_external_model.o: define_external_model.f90 constants.h
 $O/write_seismograms.o: write_seismograms.F90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/write_seismograms.o write_seismograms.F90
     
-$O/part_unstruct.o: part_unstruct.F90 constants_unstruct.h 
+$O/part_unstruct.o: part_unstruct.F90 constants.h 
 	${F90} $(FLAGS_CHECK) -c -o $O/part_unstruct.o part_unstruct.F90
 
 $O/construct_acoustic_surface.o: construct_acoustic_surface.f90 constants.h

@@ -49,8 +49,6 @@ module part_unstruct
 
   implicit none
 
-  include './constants_unstruct.h'
-
 contains
 
   !-----------------------------------------------
@@ -60,6 +58,8 @@ contains
   !-----------------------------------------------
   subroutine read_mesh(filename, nelmnts, elmnts, nnodes, num_start)
 
+    include "constants.h"
+
     character(len=256), intent(in)  :: filename
     integer, intent(out)  :: nelmnts
     integer, intent(out)  :: nnodes
@@ -67,8 +67,6 @@ contains
     integer, intent(out)  :: num_start
 
     integer  :: i
-
-    print *, trim(filename)
 
     open(unit=990, file=trim(filename), form='formatted' , status='old', action='read')
     read(990,*) nelmnts
@@ -83,9 +81,7 @@ contains
     elmnts(:) = elmnts(:) - num_start
     nnodes = maxval(elmnts) + 1
 
-
   end subroutine read_mesh
-
 
   !-----------------------------------------------
   ! Read the nodes coordinates and storing it in array 'nodes_coords'
@@ -98,14 +94,11 @@ contains
 
     integer  :: i
 
-    print *, trim(filename)
-
     open(unit=991, file=trim(filename), form='formatted' , status='old', action='read')
     read(991,*) nnodes
     allocate(nodes_coords(2,nnodes))
     do i = 1, nnodes
        read(991,*) nodes_coords(1,i), nodes_coords(2,i)
-
     enddo
     close(991)
 
@@ -123,12 +116,9 @@ contains
 
     integer  :: i
 
-    print *, trim(filename)
-
     open(unit=992, file=trim(filename), form='formatted' , status='old', action='read')
     do i = 1, nelmnts
        read(992,*) num_material(i)
-
     enddo
     close(992)
 
@@ -144,7 +134,7 @@ contains
   subroutine read_acoustic_surface(filename, nelem_acoustic_surface, acoustic_surface, &
        nelmnts, num_material, ANISOTROPIC_MATERIAL, nb_materials, icodemat, cs, num_start)
 
-    include './constants.h'
+    include "constants.h"
 
     character(len=256), intent(in)  :: filename
     integer, intent(out)  :: nelem_acoustic_surface
@@ -210,7 +200,7 @@ contains
   !-----------------------------------------------
  subroutine read_abs_surface(filename, nelemabs, abs_surface, num_start)
 
-    include './constants.h'
+    include "constants.h"
 
     character(len=256), intent(in)  :: filename
     integer, intent(out)  :: nelemabs
@@ -246,6 +236,8 @@ contains
   !-----------------------------------------------
   subroutine mesh2dual_ncommonnodes(nelmnts, nnodes, elmnts, xadj, adjncy, nnodes_elmnts, nodes_elmnts, ncommonnodes)
 
+    include "constants.h"
+
     integer, intent(in)  :: nelmnts
     integer, intent(in)  :: nnodes
     integer, dimension(0:esize*nelmnts-1), intent(in)  :: elmnts
@@ -261,10 +253,9 @@ contains
     integer  :: elem_base, elem_target
     integer  :: connectivity
 
-
     allocate(xadj(0:nelmnts))
     xadj(:) = 0
-    allocate(adjncy(0:max_neighbour*nelmnts-1))
+    allocate(adjncy(0:max_neighbor*nelmnts-1))
     adjncy(:) = 0
     allocate(nnodes_elmnts(0:nnodes-1))
     nnodes_elmnts(:) = 0
@@ -279,8 +270,6 @@ contains
        nnodes_elmnts(elmnts(i)) = nnodes_elmnts(elmnts(i)) + 1
 
     enddo
-
-    print *, 'nnodes_elmnts'
 
     ! checking which elements are neighbours ('ncommonnodes' criteria)
     do j = 0, nnodes-1
@@ -305,16 +294,16 @@ contains
 
                 do m = 0, xadj(nodes_elmnts(k+j*nsize))
                    if ( .not.is_neighbour ) then
-                      if ( adjncy(nodes_elmnts(k+j*nsize)*max_neighbour+m) == nodes_elmnts(l+j*nsize) ) then
+                      if ( adjncy(nodes_elmnts(k+j*nsize)*max_neighbor+m) == nodes_elmnts(l+j*nsize) ) then
                          is_neighbour = .true.
 
                       endif
                    endif
                 enddo
                 if ( .not.is_neighbour ) then
-                   adjncy(nodes_elmnts(k+j*nsize)*max_neighbour+xadj(nodes_elmnts(k+j*nsize))) = nodes_elmnts(l+j*nsize)
+                   adjncy(nodes_elmnts(k+j*nsize)*max_neighbor+xadj(nodes_elmnts(k+j*nsize))) = nodes_elmnts(l+j*nsize)
                    xadj(nodes_elmnts(k+j*nsize)) = xadj(nodes_elmnts(k+j*nsize)) + 1
-                   adjncy(nodes_elmnts(l+j*nsize)*max_neighbour+xadj(nodes_elmnts(l+j*nsize))) = nodes_elmnts(k+j*nsize)
+                   adjncy(nodes_elmnts(l+j*nsize)*max_neighbor+xadj(nodes_elmnts(l+j*nsize))) = nodes_elmnts(k+j*nsize)
                    xadj(nodes_elmnts(l+j*nsize)) = xadj(nodes_elmnts(l+j*nsize)) + 1
                 endif
              endif
@@ -327,7 +316,7 @@ contains
        k = xadj(i)
        xadj(i) = nb_edges
        do j = 0, k-1
-          adjncy(nb_edges) = adjncy(i*max_neighbour+j)
+          adjncy(nb_edges) = adjncy(i*max_neighbor+j)
           nb_edges = nb_edges + 1
        enddo
     enddo
@@ -391,6 +380,8 @@ contains
   !--------------------------------------------------
   subroutine Construct_glob2loc_nodes(nelmnts, nnodes, nnodes_elmnts, nodes_elmnts, part, nparts, &
        glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes)
+
+    include "constants.h"
 
     integer, intent(in)  :: nelmnts, nnodes, nparts
     integer, dimension(0:nelmnts-1), intent(in)  :: part
@@ -475,13 +466,13 @@ contains
    subroutine Construct_interfaces(nelmnts, nparts, part, elmnts, xadj, adjncy, tab_interfaces, &
        tab_size_interfaces, ninterfaces, nb_materials, cs_material, num_material)
 
-    include 'constants.h'
+    include "constants.h"
 
     integer, intent(in)  :: nelmnts, nparts
     integer, dimension(0:nelmnts-1), intent(in)  :: part
     integer, dimension(0:esize*nelmnts-1), intent(in)  :: elmnts
     integer, dimension(0:nelmnts), intent(in)  :: xadj
-    integer, dimension(0:max_neighbour*nelmnts-1), intent(in)  :: adjncy
+    integer, dimension(0:max_neighbor*nelmnts-1), intent(in)  :: adjncy
     integer, dimension(:),pointer  :: tab_size_interfaces, tab_interfaces
     integer, intent(out)  :: ninterfaces
     integer, dimension(1:nelmnts), intent(in)  :: num_material
@@ -574,6 +565,7 @@ contains
                          tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+2) = ncommon_nodes
                       else
                          print *, "Error while building interfaces!", ncommon_nodes
+                         stop 'fatal error'
                       endif
                       num_edge = num_edge + 1
                    endif
@@ -585,7 +577,6 @@ contains
           num_interface = num_interface + 1
        enddo
     enddo
-
 
   end subroutine Construct_interfaces
 
@@ -880,7 +871,7 @@ contains
           elmnts, ngnod)
 
        implicit none
-       include 'constants.h'
+       include "constants.h"
 
        integer, intent(inout)  :: nelemabs
        integer, intent(out)  :: nelemabs_merge
@@ -1167,10 +1158,12 @@ contains
   !--------------------------------------------------
      subroutine Part_metis(nelmnts, xadj, adjncy, vwgt, adjwgt, nparts, nb_edges, edgecut, part, metis_options)
 
+    include "constants.h"
+
     integer, intent(in)  :: nelmnts, nparts, nb_edges
     integer, intent(inout)  :: edgecut
     integer, dimension(0:nelmnts), intent(in)  :: xadj
-    integer, dimension(0:max_neighbour*nelmnts-1), intent(in)  :: adjncy
+    integer, dimension(0:max_neighbor*nelmnts-1), intent(in)  :: adjncy
     integer, dimension(0:nelmnts-1), intent(in)  :: vwgt
     integer, dimension(0:nb_edges-1), intent(in)  :: adjwgt
     integer, dimension(:), pointer  :: part
@@ -1182,13 +1175,10 @@ contains
     num_start = 0
     wgtflag = 0
 
-    print *, 'avant', edgecut
     call METIS_PartGraphRecursive(nelmnts, xadj(0), adjncy(0), vwgt(0), adjwgt(0), wgtflag, num_start, nparts, &
          metis_options, edgecut, part(0));
     !call METIS_PartGraphVKway(nelmnts, xadj(0), adjncy(0), vwgt(0), adjwgt(0), wgtflag, num_start, nparts, &
     !     options, edgecut, part(0));
-    print *, 'apres', edgecut
-
 
   end subroutine Part_metis
 #endif
@@ -1200,12 +1190,14 @@ contains
   !--------------------------------------------------
   subroutine Part_scotch(nelmnts, xadj, adjncy, vwgt, adjwgt, nparts, nedges, edgecut, part, scotch_strategy)
 
-    include 'scotchf.h'
+    include "constants.h"
+
+    include "scotchf.h"
 
     integer, intent(in)  :: nelmnts, nparts, nedges
     integer, intent(inout)  :: edgecut
     integer, dimension(0:nelmnts), intent(in)  :: xadj
-    integer, dimension(0:max_neighbour*nelmnts-1), intent(in)  :: adjncy
+    integer, dimension(0:max_neighbor*nelmnts-1), intent(in)  :: adjncy
     integer, dimension(0:nelmnts-1), intent(in)  :: vwgt
     integer, dimension(:), pointer  :: adjwgt
     integer, dimension(:), pointer  :: part
@@ -1284,7 +1276,7 @@ subroutine acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_material
 
   implicit none
 
-  include 'constants.h'
+  include "constants.h"
 
   integer, intent(in)  :: nelmnts, nnodes, nproc, nb_materials
   double precision, dimension(nb_materials), intent(in)  :: cs_material
@@ -1326,8 +1318,6 @@ subroutine acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_material
         enddo
      endif
   enddo
-
-  print *, 'nedges_coupled', nedges_coupled
 
   allocate(edges_coupled(2,nedges_coupled))
 
