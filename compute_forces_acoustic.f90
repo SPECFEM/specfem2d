@@ -48,7 +48,7 @@
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
                jbegin_left,jend_left,jbegin_right,jend_right, &
-               nspec_inner_outer, ispec_inner_outer_to_glob, num_phase_inner_outer)
+               nspec_outer, we_are_in_phase_outer)
 
 ! compute forces for the acoustic elements
 
@@ -83,15 +83,15 @@
   real(kind=CUSTOM_REAL), dimension(NGLLZ) :: wzgll
 
 ! for overlapping MPI communications with computation
-  integer, intent(in)  :: nspec_inner_outer
-  integer, dimension(max(1,nspec_inner_outer)), intent(in)  :: ispec_inner_outer_to_glob
-  logical, intent(in)  :: num_phase_inner_outer
+  integer, intent(in)  :: nspec_outer
+!!!!!!!  integer, dimension(max(1,nspec_outer)), intent(in)  :: ispec_inner_outer_to_glob
+  logical, intent(in)  :: we_are_in_phase_outer
 
 !---
 !--- local variables
 !---
 
-  integer :: ispec,ispec_inner_outer,i,j,k,iglob,ispecabs,ibegin,iend,jbegin,jend
+  integer :: ispec,i,j,k,iglob,ispecabs,ibegin,iend,jbegin,jend
 
 ! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,dux_dxl,dux_dzl
@@ -106,9 +106,21 @@
   real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,kappal,cpl,rhol
 
 ! loop over spectral elements
-  do ispec_inner_outer = 1,nspec_inner_outer
+! do ispec_inner_outer = 1,nspec_outer
 
-    ispec = ispec_inner_outer_to_glob(ispec_inner_outer)
+!   ispec = ispec_inner_outer_to_glob(ispec_inner_outer)
+
+  integer :: ifirstelem,ilastelem
+
+  if(we_are_in_phase_outer) then
+    ifirstelem = 1
+    ilastelem = nspec_outer
+  else
+    ifirstelem = nspec_outer + 1
+    ilastelem = nspec
+  endif
+
+  do ispec = ifirstelem,ilastelem
 
 !---
 !--- acoustic spectral element
@@ -177,7 +189,7 @@
     enddo ! end of loop over all spectral elements
 
 ! only for the first call to compute_forces_acoustic (during computation on outer elements)
-  if ( num_phase_inner_outer ) then
+  if ( we_are_in_phase_outer ) then
 
 !
 !--- absorbing boundaries

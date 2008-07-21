@@ -144,6 +144,10 @@
 
   implicit none
 
+! implement Cuthill-McKee or replace with identity permutation
+  logical, parameter :: ACTUALLY_IMPLEMENT_PERM_OUT = .false.
+  logical, parameter :: ACTUALLY_IMPLEMENT_PERM_INN = .false.
+
   include "constants.h"
 #ifdef USE_MPI
   include "mpif.h"
@@ -219,7 +223,7 @@
 
   double precision, dimension(:,:,:,:), allocatable :: dershape2D,dershape2D_display
 
-  integer, dimension(:,:,:), allocatable :: ibool
+  integer, dimension(:,:,:), allocatable :: ibool,ibool_outer,ibool_inner
   integer, dimension(:,:), allocatable  :: knods
   integer, dimension(:), allocatable :: kmato,numabs, &
      ibegin_bottom,iend_bottom,ibegin_top,iend_top,jbegin_left,jend_left,jbegin_right,jend_right
@@ -384,7 +388,12 @@
   logical :: over_critical_angle
 
 ! further reduce cache misses inner/outer in two passes in the case of an MPI simulation
-  integer :: ipass,ispec_inner,ispec_outer,NUMBER_OF_PASSES
+  integer :: ipass,ispec_inner,ispec_outer,NUMBER_OF_PASSES,kmato_read,my_interfaces_read
+!!!!!!!!!!!!!!!!!!!  integer :: ioldvalue,inewvalue
+  integer :: npoin_outer,npoin_inner
+!!!!!!!!!!!!!!!!!!!  logical :: foundthisvalue
+  integer, dimension(:), allocatable :: knods_read
+  integer, dimension(:), allocatable :: perm,antecedent_list,check_perm
 
 !***********************************************************************
 !
@@ -412,16 +421,26 @@
   iproc = 0
   ispec_inner = 0
   ispec_outer = 0
-  NUMBER_OF_PASSES = 1
+
+!! DK DK changed this
+  if(PERFORM_CUTHILL_MCKEE) then
+    NUMBER_OF_PASSES = 2
+  else
+    NUMBER_OF_PASSES = 1
+  endif
 
 #endif
+
+! determine if we write to file instead of standard output
+  if(IOUT /= ISTANDARD_OUTPUT) open(IOUT,file='simulation_results.txt',status='unknown')
+
+! reduction of cache misses inner/outer in two passes
+!! DK DK added this for third pass but included in first for simplicity
+  do ipass = 1,NUMBER_OF_PASSES
 
   write(prname,230) myrank
  230 format('./OUTPUT_FILES/Database',i5.5)
   open(unit=IIN,file=prname,status='old',action='read')
-
-! determine if we write to file instead of standard output
-  if(IOUT /= ISTANDARD_OUTPUT) open(IOUT,file='simulation_results.txt',status='unknown')
 
 !
 !---  read job title and skip remaining titles of the input file
@@ -543,7 +562,7 @@
 !
 !---- read the spectral macrobloc nodal coordinates
 !
-  allocate(coorg(NDIM,npgeo))
+  if(ipass == 1) allocate(coorg(NDIM,npgeo))
 
   ipoin = 0
   read(IIN,"(a80)") datlin
@@ -566,6 +585,7 @@
 !
 !---- allocate arrays
 !
+if(ipass == 1) then
   allocate(shape2D(ngnod,NGLLX,NGLLZ))
   allocate(dershape2D(NDIM,ngnod,NGLLX,NGLLZ))
   allocate(shape2D_display(ngnod,pointsdisp,pointsdisp))
@@ -590,6 +610,7 @@
   allocate(inv_tau_sigma_nu2(N_SLS))
   allocate(phi_nu1(N_SLS))
   allocate(phi_nu2(N_SLS))
+endif
 
 ! --- allocate arrays for absorbing boundary conditions
   if(nelemabs <= 0) then
@@ -598,6 +619,7 @@
   else
     anyabs = .true.
   endif
+if(ipass == 1) then
   allocate(numabs(nelemabs))
   allocate(codeabs(4,nelemabs))
 
@@ -610,6 +632,7 @@
   allocate(jend_left(nelemabs))
   allocate(jbegin_right(nelemabs))
   allocate(jend_right(nelemabs))
+endif
 
 !
 !---- print element group main parameters
@@ -630,9 +653,22 @@
 !
   n = 0
   read(IIN,"(a80)") datlin
+!! DK DK changed
+  allocate(knods_read(ngnod))
   do ispec = 1,nspec
-    read(IIN,*) n,kmato(n),(knods(k,n), k=1,ngnod)
+!! DK DK changed    read(IIN,*) n,kmato(n),(knods(k,n), k=1,ngnod)
+    read(IIN,*) n,kmato_read,(knods_read(k), k=1,ngnod)
+if(ipass == 1) then
+  kmato(n) = kmato_read
+  knods(:,n)= knods_read(:)
+else if(ipass == 2) then
+  kmato(perm(antecedent_list(n))) = kmato_read
+  knods(:,perm(antecedent_list(n)))= knods_read(:)
+else
+  stop 'error: maximum is 2 passes'
+endif
   enddo
+  deallocate(knods_read)
 
 !
 !----  determine if each spectral element is elastic or acoustic
@@ -657,6 +693,7 @@
   endif
 
 ! allocate memory variables for attenuation
+if(ipass == 1) then
   allocate(e1(NGLLX,NGLLZ,nspec_allocate,N_SLS))
   allocate(e11(NGLLX,NGLLZ,nspec_allocate,N_SLS))
   allocate(e13(NGLLX,NGLLZ,nspec_allocate,N_SLS))
@@ -672,6 +709,7 @@
   allocate(duz_dzl_np1(NGLLX,NGLLZ,nspec_allocate))
   allocate(duz_dxl_np1(NGLLX,NGLLZ,nspec_allocate))
   allocate(dux_dzl_np1(NGLLX,NGLLZ,nspec_allocate))
+endif
 
 ! define the attenuation constants
   call attenuation_model(N_SLS,Qp_attenuation,Qs_attenuation,f0_attenuation, &
@@ -683,6 +721,7 @@
   read(IIN,"(a80)") datlin
   read(IIN,*) ninterface, max_interface_size
   if ( ninterface > 0 ) then
+if(ipass == 1) then
      allocate(my_neighbours(ninterface))
      allocate(my_nelmnts_neighbours(ninterface))
      allocate(my_interfaces(4,max_interface_size,ninterface))
@@ -692,12 +731,22 @@
      allocate(nibool_interfaces_elastic(ninterface))
      allocate(inum_interfaces_acoustic(ninterface))
      allocate(inum_interfaces_elastic(ninterface))
+endif
 
      do num_interface = 1, ninterface
         read(IIN,*) my_neighbours(num_interface), my_nelmnts_neighbours(num_interface)
         do ie = 1, my_nelmnts_neighbours(num_interface)
-           read(IIN,*) my_interfaces(1,ie,num_interface), my_interfaces(2,ie,num_interface), &
+           read(IIN,*) my_interfaces_read, my_interfaces(2,ie,num_interface), &
                 my_interfaces(3,ie,num_interface), my_interfaces(4,ie,num_interface)
+
+!! DK DK added this
+           if(ipass == 1) then
+             my_interfaces(1,ie,num_interface) = my_interfaces_read
+           else if(ipass == 2) then
+             my_interfaces(1,ie,num_interface) = perm(antecedent_list(my_interfaces_read))
+           else
+             stop 'error: maximum number of passes is 2'
+           endif
 
         enddo
      enddo
@@ -728,19 +777,19 @@
 !
   read(IIN,"(a80)") datlin
   if(nelem_acoustic_surface > 0) then
-     allocate(acoustic_edges(4,nelem_acoustic_surface))
+     if(ipass == 1) allocate(acoustic_edges(4,nelem_acoustic_surface))
       do inum = 1,nelem_acoustic_surface
         read(IIN,*) acoustic_edges(1,inum), acoustic_edges(2,inum), acoustic_edges(3,inum), &
              acoustic_edges(4,inum)
      enddo
-     allocate(acoustic_surface(5,nelem_acoustic_surface))
+     if(ipass == 1) allocate(acoustic_surface(5,nelem_acoustic_surface))
      call construct_acoustic_surface ( nspec, ngnod, knods, nelem_acoustic_surface, &
           acoustic_edges, acoustic_surface)
     write(IOUT,*)
     write(IOUT,*) 'Number of free surface elements: ',nelem_acoustic_surface
   else
-    allocate(acoustic_edges(4,1))
-    allocate(acoustic_surface(5,1))
+    if(ipass == 1) allocate(acoustic_edges(4,1))
+    if(ipass == 1) allocate(acoustic_surface(5,1))
   endif
 
 !
@@ -748,19 +797,22 @@
 !
   read(IIN,"(a80)") datlin
   if ( num_fluid_solid_edges > 0 ) then
+if(ipass == 1) then
      allocate(fluid_solid_acoustic_ispec(num_fluid_solid_edges))
      allocate(fluid_solid_acoustic_iedge(num_fluid_solid_edges))
      allocate(fluid_solid_elastic_ispec(num_fluid_solid_edges))
      allocate(fluid_solid_elastic_iedge(num_fluid_solid_edges))
+endif
      do inum = 1, num_fluid_solid_edges
         read(IIN,*) fluid_solid_acoustic_ispec(inum), fluid_solid_elastic_ispec(inum)
      enddo
   else
+if(ipass == 1) then
      allocate(fluid_solid_acoustic_ispec(1))
      allocate(fluid_solid_acoustic_iedge(1))
      allocate(fluid_solid_elastic_ispec(1))
      allocate(fluid_solid_elastic_iedge(1))
-
+endif
   endif
 
 !
@@ -789,40 +841,55 @@
   endif
 
 ! reduction of cache misses inner/outer in two passes
-  do ipass = 1,NUMBER_OF_PASSES
+!!!!!!!!!! DK DK moved this above      do ipass = 1,NUMBER_OF_PASSES
 
 ! create a new indirect addressing array to reduce cache misses in memory access in the solver
   if(ipass == 1) then
 
-  allocate(copy_ibool_ori(NGLLX,NGLLZ,nspec))
-  allocate(mask_ibool(npoin))
+! allocate(copy_ibool_ori(NGLLX,NGLLZ,nspec))
+! allocate(mask_ibool(npoin))
 
-  mask_ibool(:) = -1
-  copy_ibool_ori(:,:,:) = ibool(:,:,:)
+! mask_ibool(:) = -1
+! copy_ibool_ori(:,:,:) = ibool(:,:,:)
 
-  inumber = 0
-  do ispec=1,nspec
-    do j=1,NGLLZ
-      do i=1,NGLLX
-        if(mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
+! inumber = 0
+! do ispec=1,nspec
+!   do j=1,NGLLZ
+!     do i=1,NGLLX
+!       if(mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
 ! create a new point
-          inumber = inumber + 1
-          ibool(i,j,ispec) = inumber
-          mask_ibool(copy_ibool_ori(i,j,ispec)) = inumber
-        else
+!         inumber = inumber + 1
+!         ibool(i,j,ispec) = inumber
+!         mask_ibool(copy_ibool_ori(i,j,ispec)) = inumber
+!       else
 ! use an existing point created previously
-          ibool(i,j,ispec) = mask_ibool(copy_ibool_ori(i,j,ispec))
-        endif
-      enddo
-    enddo
-  enddo
+!         ibool(i,j,ispec) = mask_ibool(copy_ibool_ori(i,j,ispec))
+!       endif
+!     enddo
+!   enddo
+! enddo
 
-  if(NUMBER_OF_PASSES == 1) then
-    deallocate(copy_ibool_ori)
-    deallocate(mask_ibool)
-  endif
+!! DK DK added call to Cuthill-McKee
+!!!!!!!!!  allocate(perm(nspec))
+!!!!!!!!!  call get_perm(ibool,perm,LIMIT_MULTI_CUTHILL,nspec,npoin)
+
+!! DK DK debug perm identite
+! do ispec = 1,nspec
+!   perm(ispec) = ispec
+! enddo
+
+! if(NUMBER_OF_PASSES == 1) then
+!   deallocate(copy_ibool_ori)
+!   deallocate(mask_ibool)
+! endif
 
   else if(ipass == 2) then
+
+!! DK DK added this
+  deallocate(perm)
+
+  allocate(copy_ibool_ori(NGLLX,NGLLZ,nspec))
+  allocate(mask_ibool(npoin))
 
   mask_ibool(:) = -1
   copy_ibool_ori(:,:,:) = ibool(:,:,:)
@@ -832,11 +899,12 @@
 ! first reduce cache misses in outer elements, since they are taken first
 
 ! loop over spectral elements
-  do ispec_outer = 1,nspec_outer
+!!!!!!!!!!!!!!!  do ispec_outer = 1,nspec_outer
 
 ! get global numbering for inner or outer elements
-    ispec = ispec_outer_to_glob(ispec_outer)
+!!!!!!!!!!!!!!!    ispec = perm(ispec_outer_to_glob(ispec_outer))
 
+  do ispec = 1,nspec_outer
     do j=1,NGLLZ
       do i=1,NGLLX
         if(mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
@@ -855,11 +923,12 @@
 ! then reduce cache misses in inner elements, since they are taken second
 
 ! loop over spectral elements
-  do ispec_inner = 1,nspec_inner
+!!!!!!!!!!!!!!!!!!  do ispec_inner = 1,nspec_inner
 
 ! get global numbering for inner or outer elements
-    ispec = ispec_inner_to_glob(ispec_inner)
+!!!!!!!!!!!!!!!!!!    ispec = perm(ispec_inner_to_glob(ispec_inner))
 
+  do ispec = nspec_outer+1,nspec
     do j=1,NGLLZ
       do i=1,NGLLX
         if(mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
@@ -1244,17 +1313,12 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     if(ipass == 1) allocate(mask_ispec_inner_outer(nspec))
     mask_ispec_inner_outer(:) = .false.
 
-    call prepare_assemble_MPI (nspec,ibool, &
-          knods, ngnod, &
-          npoin, elastic, &
-          ninterface, max_interface_size, &
-          my_nelmnts_neighbours, my_interfaces, &
+    call prepare_assemble_MPI (nspec,ibool,knods, ngnod,npoin,elastic, &
+          ninterface, max_interface_size,my_nelmnts_neighbours, my_interfaces, &
           ibool_interfaces_acoustic, ibool_interfaces_elastic, &
           nibool_interfaces_acoustic, nibool_interfaces_elastic, &
           inum_interfaces_acoustic, inum_interfaces_elastic, &
-          ninterface_acoustic, ninterface_elastic, &
-          mask_ispec_inner_outer &
-          )
+          ninterface_acoustic, ninterface_elastic,mask_ispec_inner_outer)
 
     nspec_outer = count(mask_ispec_inner_outer)
     nspec_inner = nspec - nspec_outer
@@ -1263,6 +1327,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     if(ipass == 1) allocate(ispec_inner_to_glob(nspec_inner))
 
 ! building of corresponding arrays between inner/outer elements and their global number
+if(ipass == 1) then
     num_ispec_outer = 0
     num_ispec_inner = 0
     do ispec = 1, nspec
@@ -1272,9 +1337,9 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       else
         num_ispec_inner = num_ispec_inner + 1
         ispec_inner_to_glob(num_ispec_inner) = ispec
-
       endif
     enddo
+endif
 
   max_ibool_interfaces_size_ac = maxval(nibool_interfaces_acoustic(:))
   max_ibool_interfaces_size_el = NDIM*maxval(nibool_interfaces_elastic(:))
@@ -1342,6 +1407,197 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
 #endif
 
+!! DK DK added call to Cuthill-McKee
+!! DK DK 3333333333333333333333333333333333333333333333333
+
+if(ipass == 1) then
+
+  allocate(antecedent_list(nspec))
+
+! loop over spectral elements
+  do ispec_outer = 1,nspec_outer
+! get global numbering for inner or outer elements
+    ispec = ispec_outer_to_glob(ispec_outer)
+    antecedent_list(ispec) = ispec_outer
+  enddo
+
+! loop over spectral elements
+  do ispec_inner = 1,nspec_inner
+! get global numbering for inner or outer elements
+    ispec = ispec_inner_to_glob(ispec_inner)
+    antecedent_list(ispec) = nspec_outer + ispec_inner
+  enddo
+
+  allocate(ibool_outer(NGLLX,NGLLZ,nspec_outer))
+  allocate(ibool_inner(NGLLX,NGLLZ,nspec_inner))
+
+! loop over spectral elements
+  do ispec_outer = 1,nspec_outer
+! get global numbering for inner or outer elements
+    ispec = ispec_outer_to_glob(ispec_outer)
+    ibool_outer(:,:,ispec_outer) = ibool(:,:,ispec)
+  enddo
+
+! loop over spectral elements
+  do ispec_inner = 1,nspec_inner
+! get global numbering for inner or outer elements
+    ispec = ispec_inner_to_glob(ispec_inner)
+    ibool_inner(:,:,ispec_inner) = ibool(:,:,ispec)
+  enddo
+
+!! DK DK re-add renumbering of new ibool to use consecutive values only for outer
+!! DK DK this too slow, better algorithm below
+! inewvalue = 1
+! do ioldvalue = minval(ibool_outer),maxval(ibool_outer)
+!   foundthisvalue = .false.
+!   do ispec_outer = 1,nspec_outer
+!     do j = 1,NGLLZ
+!       do i = 1,NGLLX
+!         if (ibool_outer(i,j,ispec_outer) == ioldvalue) then
+!           ibool_outer(i,j,ispec_outer) = inewvalue
+!           foundthisvalue = .true.
+!         endif
+!       enddo
+!     enddo
+!   enddo
+!   if(foundthisvalue) inewvalue = inewvalue + 1
+! enddo
+
+  allocate(copy_ibool_ori(NGLLX,NGLLZ,nspec_outer))
+  allocate(mask_ibool(npoin))
+
+  mask_ibool(:) = -1
+  copy_ibool_ori(:,:,:) = ibool_outer(:,:,:)
+
+  inumber = 0
+
+  do ispec = 1,nspec_outer
+    do j=1,NGLLZ
+      do i=1,NGLLX
+        if(mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
+! create a new point
+          inumber = inumber + 1
+          ibool_outer(i,j,ispec) = inumber
+          mask_ibool(copy_ibool_ori(i,j,ispec)) = inumber
+        else
+! use an existing point created previously
+          ibool_outer(i,j,ispec) = mask_ibool(copy_ibool_ori(i,j,ispec))
+        endif
+      enddo
+    enddo
+  enddo
+
+  deallocate(copy_ibool_ori)
+  deallocate(mask_ibool)
+
+! the total number of points without multiples in this region is now known
+  npoin_outer = maxval(ibool_outer)
+
+!! DK DK re-add renumbering of new ibool to use consecutive values only for inner
+!! DK DK this too slow, better algorithm below
+! inewvalue = 1
+! do ioldvalue = minval(ibool_inner),maxval(ibool_inner)
+!   foundthisvalue = .false.
+!   do ispec_inner = 1,nspec_inner
+!     do j = 1,NGLLZ
+!       do i = 1,NGLLX
+!         if (ibool_inner(i,j,ispec_inner) == ioldvalue) then
+!           ibool_inner(i,j,ispec_inner) = inewvalue
+!           foundthisvalue = .true.
+!         endif
+!       enddo
+!     enddo
+!   enddo
+!   if(foundthisvalue) inewvalue = inewvalue + 1
+! enddo
+
+  allocate(copy_ibool_ori(NGLLX,NGLLZ,nspec_inner))
+  allocate(mask_ibool(npoin))
+
+  mask_ibool(:) = -1
+  copy_ibool_ori(:,:,:) = ibool_inner(:,:,:)
+
+  inumber = 0
+
+  do ispec = 1,nspec_inner
+    do j=1,NGLLZ
+      do i=1,NGLLX
+        if(mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
+! create a new point
+          inumber = inumber + 1
+          ibool_inner(i,j,ispec) = inumber
+          mask_ibool(copy_ibool_ori(i,j,ispec)) = inumber
+        else
+! use an existing point created previously
+          ibool_inner(i,j,ispec) = mask_ibool(copy_ibool_ori(i,j,ispec))
+        endif
+      enddo
+    enddo
+  enddo
+
+  deallocate(copy_ibool_ori)
+  deallocate(mask_ibool)
+
+! the total number of points without multiples in this region is now known
+  npoin_inner = maxval(ibool_inner)
+
+!!! 4444444444444444444444444444444444
+
+  allocate(perm(nspec))
+
+  if(ACTUALLY_IMPLEMENT_PERM_OUT) then
+
+  allocate(check_perm(nspec_outer))
+  call get_perm(ibool_outer,perm(1:nspec_outer),LIMIT_MULTI_CUTHILL,nspec_outer,npoin_outer)
+!! DK DK check that the permutation obtained is bijective
+  check_perm(:) = -1
+  do ispec = 1,nspec_outer
+    check_perm(perm(ispec)) = ispec
+  enddo
+  if(minval(check_perm) /= 1) stop 'minval check_perm is incorrect for outer'
+  if(maxval(check_perm) /= nspec_outer) stop 'maxval check_perm is incorrect for outer'
+  deallocate(check_perm)
+  deallocate(ibool_outer)
+
+!!!!!!!! DK DK 3333333333333333 YYYYYYYYYYY identity perm for now
+  else
+    do ispec = 1,nspec_outer
+      perm(ispec) = ispec
+    enddo
+  endif
+
+  if(ACTUALLY_IMPLEMENT_PERM_INN) then
+
+  allocate(check_perm(nspec_inner))
+  call get_perm(ibool_inner,perm(nspec_outer+1:nspec),LIMIT_MULTI_CUTHILL,nspec_inner,npoin_inner)
+!! DK DK check that the permutation obtained is bijective
+  check_perm(:) = -1
+  do ispec = 1,nspec_inner
+    check_perm(perm(nspec_outer+ispec)) = ispec
+  enddo
+  if(minval(check_perm) /= 1) stop 'minval check_perm is incorrect for inner'
+  if(maxval(check_perm) /= nspec_inner) stop 'maxval check_perm is incorrect for inner'
+  deallocate(check_perm)
+!! DK DK add the right offset
+  perm(nspec_outer+1:nspec) = perm(nspec_outer+1:nspec) + nspec_outer
+
+!!!!!!!!!!!!! call get_perm(ibool,perm,LIMIT_MULTI_CUTHILL,nspec,npoin)
+
+  deallocate(ibool_inner)
+!!!!!!!!!!!!!!!!!!!!!  deallocate(antecedent_list)
+
+!!!!!!!! DK DK 3333333333333333 YYYYYYYYYYY identity perm for now
+  else
+    do ispec = nspec_outer+1,nspec
+      perm(ispec) = ispec
+    enddo
+  endif
+
+endif
+
+!! DK DK for ParaVer tests
+ call MPI_BARRIER(MPI_COMM_WORLD,ier)
+
   enddo ! end of further reduction of cache misses inner/outer in two passes
 
 ! fill mass matrix with fictitious non-zero values to make sure it can be inverted globally
@@ -1356,7 +1612,8 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 ! check the mesh, stability and number of points per wavelength
   call checkgrid(vpext,vsext,rhoext,density,elastcoef,ibool,kmato,coord,npoin,vpmin,vpmax, &
                  assign_external_model,nspec,numat,deltat,f0,t0,initialfield,time_function_type, &
-                 coorg,xinterp,zinterp,shape2D_display,knods,simulation_title,npgeo,pointsdisp,ngnod,any_elastic,myrank,nproc)
+                 coorg,xinterp,zinterp,shape2D_display,knods,simulation_title,npgeo,pointsdisp,ngnod,any_elastic,myrank,nproc, &
+                 nspec_outer,nspec_inner)
 
 ! convert receiver angle to radians
   anglerec = anglerec * pi / 180.d0
@@ -2184,6 +2441,9 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
 ! *********************************************************
 
+!! DK DK for ParaVer tests
+ call MPI_BARRIER(MPI_COMM_WORLD,ier)
+
   do it = 1,NSTEP
 
 ! update position in seismograms
@@ -2224,7 +2484,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
                jbegin_left,jend_left,jbegin_right,jend_right, &
-               nspec_outer, ispec_outer_to_glob, .true.)
+               nspec_outer, .true.)
 
  endif ! end of test if any acoustic element
 
@@ -2315,7 +2575,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
                jbegin_left,jend_left,jbegin_right,jend_right, &
-               nspec_inner, ispec_inner_to_glob, .false.)
+               nspec_outer, .false.)
    endif
 
 ! assembling potential_dot_dot for acoustic elements (receive)
@@ -2379,10 +2639,10 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                e1,e11,e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
-               nspec_outer, ispec_outer_to_glob,.true.,deltat,coord,add_Bielak_conditions, x0_source, z0_source, &
+               nspec_outer, .true.,deltat,coord,add_Bielak_conditions, x0_source, z0_source, &
                A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset, f0,&
-               v0x_left(:,it),v0z_left(:,it),v0x_right(:,it),v0z_right(:,it),v0x_bot(:,it),v0z_bot(:,it), &
-               t0x_left(:,it),t0z_left(:,it),t0x_right(:,it),t0z_right(:,it),t0x_bot(:,it),t0z_bot(:,it), &
+               v0x_left(1,it),v0z_left(1,it),v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
+               t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it),t0x_bot(1,it),t0z_bot(1,it), &
                count_left,count_right,count_bot,over_critical_angle)
 
 ! *********************************************************
@@ -2471,10 +2731,10 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                e1,e11,e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
-               nspec_inner, ispec_inner_to_glob,.false.,deltat,coord,add_Bielak_conditions, x0_source, z0_source, &
+               nspec_outer,.false.,deltat,coord,add_Bielak_conditions, x0_source, z0_source, &
                A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset, f0,&
-               v0x_left(:,it),v0z_left(:,it),v0x_right(:,it),v0z_right(:,it),v0x_bot(:,it),v0z_bot(:,it), &
-               t0x_left(:,it),t0z_left(:,it),t0x_right(:,it),t0z_right(:,it),t0x_bot(:,it),t0z_bot(:,it), &
+               v0x_left(1,it),v0z_left(1,it),v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
+               t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it),t0x_bot(1,it),t0z_bot(1,it), &
                count_left,count_right,count_bot,over_critical_angle)
 
 
@@ -2707,7 +2967,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
-          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges,myrank,nproc)
+          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges,myrank,nproc,ier)
 
   else if(imagetype == 2) then
 
@@ -2725,7 +2985,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
-          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges,myrank,nproc)
+          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges,myrank,nproc,ier)
 
   else if(imagetype == 3) then
 
@@ -2743,7 +3003,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
-          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges,myrank,nproc)
+          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges,myrank,nproc,ier)
 
   else if(imagetype == 4) then
 
@@ -2876,6 +3136,9 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   endif
 
   endif
+
+!! DK DK for ParaVer tests
+ call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
   enddo ! end of the main time loop
 

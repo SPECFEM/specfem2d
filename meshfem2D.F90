@@ -984,13 +984,16 @@ program meshfem2D
 
 ! partitioning
      select case (partitioning_method)
+
      case(1)
+
         do iproc = 0, nproc-2
            part(iproc*floor(real(nelmnts)/real(nproc)):(iproc+1)*floor(real(nelmnts)/real(nproc))-1) = iproc
         end do
         part(floor(real(nelmnts)/real(nproc))*(nproc-1):nelmnts-1) = nproc - 1
 
      case(2)
+
 #ifdef USE_METIS
         call Part_metis(nelmnts, xadj, adjncy, vwgt, adjwgt, nproc, nb_edges, edgecut, part, metis_options)
 #else
@@ -1000,6 +1003,7 @@ program meshfem2D
 #endif
 
      case(3)
+
 #ifdef USE_SCOTCH
         call Part_scotch(nelmnts, xadj, adjncy, vwgt, adjwgt, nproc, nb_edges, edgecut, part, scotch_strategy)
 #else

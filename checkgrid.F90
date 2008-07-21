@@ -42,7 +42,8 @@
 
   subroutine checkgrid(vpext,vsext,rhoext,density,elastcoef,ibool,kmato,coord,npoin,vpmin,vpmax, &
                  assign_external_model,nspec,numat,deltat,f0,t0,initialfield,time_function_type, &
-                 coorg,xinterp,zinterp,shapeint,knods,simulation_title,npgeo,pointsdisp,ngnod,any_elastic,myrank,nproc)
+                 coorg,xinterp,zinterp,shapeint,knods,simulation_title,npgeo,pointsdisp,ngnod,any_elastic,myrank,nproc, &
+                 nspec_outer,nspec_inner)
 
 ! check the mesh, stability and number of points per wavelength
 
@@ -52,6 +53,9 @@
 #ifdef USE_MPI
   include 'mpif.h'
 #endif
+
+!! DK DK to analyze Cuthill-McKee display
+  integer :: UPPER_LIMIT_DISPLAY,nspec_outer,nspec_inner
 
 ! color palette
   integer, parameter :: NUM_COLORS = 236
@@ -122,6 +126,14 @@
 
 ! title of the plot
   character(len=60) simulation_title
+
+!! DK DK to analyze Cuthill-McKee display
+! UPPER_LIMIT_DISPLAY = nspec
+  UPPER_LIMIT_DISPLAY = nspec_outer
+! UPPER_LIMIT_DISPLAY = nspec_inner
+! UPPER_LIMIT_DISPLAY = 2300
+
+  if(UPPER_LIMIT_DISPLAY > nspec) stop 'cannot have UPPER_LIMIT_DISPLAY > nspec in checkgrid.F90'
 
 #ifndef USE_MPI
   allocate(coorg_recv(1,1))
@@ -1684,7 +1696,7 @@
 
      if ( myrank == 0 ) then
         num_ispec = num_ispec + 1
-        write(24,*) '% elem ',ispec
+        write(24,*) '% elem ',num_ispec
      end if
 
   do i=1,pointsdisp
@@ -2014,7 +2026,7 @@
   do ispec = 1, nspec
      if ( myrank == 0 ) then
         num_ispec = num_ispec + 1
-        write(24,*) '% elem ',ispec
+        write(24,*) '% elem ',num_ispec
      end if
 
   do i=1,pointsdisp
@@ -2396,10 +2408,10 @@
   num_ispec = 0
 end if
 
-  do ispec = 1, nspec
+  do ispec = 1, UPPER_LIMIT_DISPLAY
      if ( myrank == 0 ) then
         num_ispec = num_ispec + 1
-        write(24,*) '% elem ',ispec
+        write(24,*) '% elem ',num_ispec
      end if
   do i=1,pointsdisp
   do j=1,pointsdisp
@@ -2541,10 +2553,9 @@ end if
      end do
 
   else
-     call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
-     call MPI_SEND (coorg_send, nspec*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
-     call MPI_SEND (greyscale_send, nspec, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
-
+     call MPI_SEND (UPPER_LIMIT_DISPLAY, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
+     call MPI_SEND (coorg_send, UPPER_LIMIT_DISPLAY*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
+     call MPI_SEND (greyscale_send, UPPER_LIMIT_DISPLAY, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
   end if
 #endif
 
@@ -2641,7 +2652,7 @@ end if
   write(24,*) '24.35 CM 18.9 CM MV'
   write(24,*) usoffset,' CM 2 div neg 0 MR'
   write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  write(24,*) '(Mesh partitioning) show'
+  write(24,*) '(Mesh stability condition \(red = bad\)) show'
   write(24,*) 'grestore'
   write(24,*) '25.35 CM 18.9 CM MV'
   write(24,*) usoffset,' CM 2 div neg 0 MR'
@@ -2669,11 +2680,11 @@ end if
   num_ispec = 0
   end if
 
-  do ispec = 1, nspec
+  do ispec = 1, UPPER_LIMIT_DISPLAY
 
      if ( myrank == 0 ) then
         num_ispec = num_ispec + 1
-        write(24,*) '% elem ',ispec
+        write(24,*) '% elem ',num_ispec
      end if
 
   do i=1,pointsdisp
@@ -2794,8 +2805,8 @@ end if
      end do
 
   else
-     call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
-     call MPI_SEND (coorg_send, nspec*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
+     call MPI_SEND (UPPER_LIMIT_DISPLAY, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
+     call MPI_SEND (coorg_send, UPPER_LIMIT_DISPLAY*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
 
   end if
 #endif
