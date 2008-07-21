@@ -144,10 +144,6 @@
 
   implicit none
 
-! implement Cuthill-McKee or replace with identity permutation
-  logical, parameter :: ACTUALLY_IMPLEMENT_PERM_OUT = .true.
-  logical, parameter :: ACTUALLY_IMPLEMENT_PERM_INN = .true.
-
   include "constants.h"
 #ifdef USE_MPI
   include "mpif.h"
@@ -236,7 +232,7 @@
   double precision :: vpmin,vpmax
 
   integer :: colors,numbers,subsamp,imagetype,NTSTEP_BETWEEN_OUTPUT_INFO,NTSTEP_BETWEEN_OUTPUT_SEISMO,seismotype
-  integer :: numat,ngnod,nspec,pointsdisp,nelemabs,nelem_acoustic_surface,ispecabs
+  integer :: numat,ngnod,nspec,pointsdisp,nelemabs,nelem_acoustic_surface,ispecabs,UPPER_LIMIT_DISPLAY
 
   logical interpol,meshvect,modelvect,boundvect,assign_external_model,initialfield, &
     outputgrid,gnuplot,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,output_postscript_snapshot,output_color_image, &
@@ -1595,9 +1591,6 @@ if(ipass == 1) then
 
 endif
 
-!! DK DK for ParaVer tests
- call MPI_BARRIER(MPI_COMM_WORLD,ier)
-
   enddo ! end of further reduction of cache misses inner/outer in two passes
 
 ! fill mass matrix with fictitious non-zero values to make sure it can be inverted globally
@@ -1608,12 +1601,21 @@ endif
   if(any_elastic) rmass_inverse_elastic(:) = 1._CUSTOM_REAL / rmass_inverse_elastic(:)
   if(any_acoustic) rmass_inverse_acoustic(:) = 1._CUSTOM_REAL / rmass_inverse_acoustic(:)
 
-
 ! check the mesh, stability and number of points per wavelength
+  if(DISPLAY_SUBSET_OPTION == 1) then
+    UPPER_LIMIT_DISPLAY = nspec
+  else if(DISPLAY_SUBSET_OPTION == 2) then
+    UPPER_LIMIT_DISPLAY = nspec_inner
+  else if(DISPLAY_SUBSET_OPTION == 3) then
+    UPPER_LIMIT_DISPLAY = nspec_outer
+  else if(DISPLAY_SUBSET_OPTION == 4) then
+    UPPER_LIMIT_DISPLAY = NSPEC_DISPLAY_SUBSET
+  else
+    stop 'incorrect value of DISPLAY_SUBSET_OPTION'
+  endif
   call checkgrid(vpext,vsext,rhoext,density,elastcoef,ibool,kmato,coord,npoin,vpmin,vpmax, &
-                 assign_external_model,nspec,numat,deltat,f0,t0,initialfield,time_function_type, &
-                 coorg,xinterp,zinterp,shape2D_display,knods,simulation_title,npgeo,pointsdisp,ngnod,any_elastic,myrank,nproc, &
-                 nspec_outer,nspec_inner)
+                 assign_external_model,nspec,UPPER_LIMIT_DISPLAY,numat,deltat,f0,t0,initialfield,time_function_type, &
+                 coorg,xinterp,zinterp,shape2D_display,knods,simulation_title,npgeo,pointsdisp,ngnod,any_elastic,myrank,nproc)
 
 ! convert receiver angle to radians
   anglerec = anglerec * pi / 180.d0
@@ -1750,7 +1752,6 @@ endif
 
      enddo
   enddo
-
 
 ! filling array iglob_image_color, containing info on which process owns which pixels.
 #ifdef USE_MPI
@@ -2441,8 +2442,10 @@ endif
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
 ! *********************************************************
 
-!! DK DK for ParaVer tests
- call MPI_BARRIER(MPI_COMM_WORLD,ier)
+#ifdef USE_MPI
+! add a barrier if we generate traces of the run for analysis with "ParaVer"
+  if(GENERATE_PARAVER_TRACES) call MPI_BARRIER(MPI_COMM_WORLD,ier)
+#endif
 
   do it = 1,NSTEP
 
@@ -3104,7 +3107,8 @@ endif
   endif
 
 !----  save temporary or final seismograms
-  call write_seismograms(sisux,sisuz,siscurl,station_name,network_name,NSTEP, &
+! suppress seismograms if we generate traces of the run for analysis with "ParaVer", because time consuming
+  if(.not. GENERATE_PARAVER_TRACES) call write_seismograms(sisux,sisuz,siscurl,station_name,network_name,NSTEP, &
         nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
         NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current)
 
@@ -3137,8 +3141,10 @@ endif
 
   endif
 
-!! DK DK for ParaVer tests
- call MPI_BARRIER(MPI_COMM_WORLD,ier)
+#ifdef USE_MPI
+! add a barrier if we generate traces of the run for analysis with "ParaVer"
+  if(GENERATE_PARAVER_TRACES) call MPI_BARRIER(MPI_COMM_WORLD,ier)
+#endif
 
   enddo ! end of the main time loop
 

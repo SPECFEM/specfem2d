@@ -41,9 +41,8 @@
 !========================================================================
 
   subroutine checkgrid(vpext,vsext,rhoext,density,elastcoef,ibool,kmato,coord,npoin,vpmin,vpmax, &
-                 assign_external_model,nspec,numat,deltat,f0,t0,initialfield,time_function_type, &
-                 coorg,xinterp,zinterp,shapeint,knods,simulation_title,npgeo,pointsdisp,ngnod,any_elastic,myrank,nproc, &
-                 nspec_outer,nspec_inner)
+                 assign_external_model,nspec,UPPER_LIMIT_DISPLAY,numat,deltat,f0,t0,initialfield,time_function_type, &
+                 coorg,xinterp,zinterp,shapeint,knods,simulation_title,npgeo,pointsdisp,ngnod,any_elastic,myrank,nproc)
 
 ! check the mesh, stability and number of points per wavelength
 
@@ -54,8 +53,9 @@
   include 'mpif.h'
 #endif
 
-!! DK DK to analyze Cuthill-McKee display
-  integer :: UPPER_LIMIT_DISPLAY,nspec_outer,nspec_inner
+! option to display only part of the mesh and not the whole mesh,
+! for instance to analyze Cuthill-McKee mesh partitioning etc.
+  integer :: UPPER_LIMIT_DISPLAY
 
 ! color palette
   integer, parameter :: NUM_COLORS = 236
@@ -127,12 +127,6 @@
 ! title of the plot
   character(len=60) simulation_title
 
-!! DK DK to analyze Cuthill-McKee display
-! UPPER_LIMIT_DISPLAY = nspec
-  UPPER_LIMIT_DISPLAY = nspec_outer
-! UPPER_LIMIT_DISPLAY = nspec_inner
-! UPPER_LIMIT_DISPLAY = 2300
-
   if(UPPER_LIMIT_DISPLAY > nspec) stop 'cannot have UPPER_LIMIT_DISPLAY > nspec in checkgrid.F90'
 
 #ifndef USE_MPI
@@ -146,7 +140,6 @@
   deallocate(RGB_recv)
   deallocate(greyscale_recv)
 #endif
-
 
 ! define percentage of smallest distance between GLL points for NGLLX points
 ! percentages were computed by calling the GLL points routine for each degree
@@ -2109,8 +2102,6 @@
      coorg_send(2,(ispec-1)*5+5) = z2
   end if
 
-
-
     material = kmato(ispec)
 
     mu = elastcoef(2,material)
@@ -2282,7 +2273,6 @@
 
   end if
 #endif
-
 
   if ( myrank == 0 ) then
      write(24,*) '%'
@@ -2570,10 +2560,9 @@ end if
 
   end if
 
-
   if ( myrank == 0 ) then
   print *
-  print *,'Creating PostScript file with partitioning'
+  print *,'Creating PostScript file with mesh partitioning'
 !
 !---- open PostScript file
 !
@@ -2767,7 +2756,6 @@ end if
      coorg_send(2,(ispec-1)*5+5) = z2
   end if
 
-
   if ( myrank == 0 ) then
         write(24,*) red(1), green(1), blue(1), 'RG GF 0 setgray ST'
      end if
@@ -2820,8 +2808,6 @@ end if
 
     print *,'End of creation of PostScript file with partitioning'
  end if
-
-
 
  10  format('%!PS-Adobe-2.0',/,'%%',/,'%% Title: ',a50,/,'%% Created by: Specfem2D',/,'%% Author: Dimitri Komatitsch',/,'%%')
 

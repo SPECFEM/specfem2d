@@ -101,7 +101,6 @@
 
 ! for overlapping MPI communications with computation
   integer, intent(in) :: nspec_outer
-!!!!!!!!!!!!!!!!!  integer, dimension(max(1,nspec_outer)), intent(in) :: ispec_inner_outer_to_glob
   logical, intent(in) :: we_are_in_phase_outer
 
 !---
@@ -150,12 +149,6 @@
       dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,npoin)
   endif
 
-! loop over spectral elements
-! do ispec_inner_outer = 1,nspec_outer
-
-! get global numbering for inner or outer elements
-!   ispec = ispec_inner_outer_to_glob(ispec_inner_outer)
-
   if(we_are_in_phase_outer) then
     ifirstelem = 1
     ilastelem = nspec_outer
@@ -164,6 +157,7 @@
     ilastelem = nspec
   endif
 
+! loop over spectral elements
   do ispec = ifirstelem,ilastelem
 
 !---

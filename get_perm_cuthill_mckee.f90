@@ -1,29 +1,44 @@
-!=====================================================================
+
+!========================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  4 . 0
-!          --------------------------------------------------
+!                   S P E C F E M 2 D  Version 5.2
+!                   ------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
-!    Seismological Laboratory, California Institute of Technology, USA
-!             and University of Pau / CNRS / INRIA, France
-! (c) California Institute of Technology and University of Pau / CNRS / INRIA
-!                            February 2008
+! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
+! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
+!               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
+!               Roland Martin, roland DOT martin aT univ-pau DOT fr
 !
-! This program is free software; you can redistribute it and/or modify
-! it under the terms of the GNU General Public License as published by
-! the Free Software Foundation; either version 2 of the License, or
-! (at your option) any later version.
+! This software is a computer program whose purpose is to solve
+! the two-dimensional viscoelastic anisotropic wave equation
+! using a spectral-element method (SEM).
 !
-! This program is distributed in the hope that it will be useful,
-! but WITHOUT ANY WARRANTY; without even the implied warranty of
-! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-! GNU General Public License for more details.
+! This software is governed by the CeCILL license under French law and
+! abiding by the rules of distribution of free software. You can use,
+! modify and/or redistribute the software under the terms of the CeCILL
+! license as circulated by CEA, CNRS and INRIA at the following URL
+! "http://www.cecill.info".
 !
-! You should have received a copy of the GNU General Public License along
-! with this program; if not, write to the Free Software Foundation, Inc.,
-! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+! As a counterpart to the access to the source code and rights to copy,
+! modify and redistribute granted by the license, users are provided only
+! with a limited warranty and the software's author, the holder of the
+! economic rights, and the successive licensors have only limited
+! liability.
 !
-!=====================================================================
+! In this respect, the user's attention is drawn to the risks associated
+! with loading, using, modifying and/or developing or reproducing the
+! software by the user in light of its specific status of free software,
+! that may mean that it is complicated to manipulate, and that also
+! therefore means that it is reserved for developers and experienced
+! professionals having in-depth computer knowledge. Users are therefore
+! encouraged to load and test the software's suitability as regards their
+! requirements in conditions enabling the security of their systems and/or
+! data to be ensured and, more generally, to use and operate it in the
+! same conditions as regards security.
+!
+! The full text of the license is available in file "LICENSE".
+!
+!========================================================================
 
 ! implement reverse Cuthill-McKee (1969) ordering, introduced in
 ! E. Cuthill and J. McKee. Reducing the bandwidth of sparse symmetric matrices.
@@ -361,6 +376,12 @@
             nelem = ne(jel)
             if(maskel(nelem)) goto 120
             if (FACE) then
+!! DK DK this below implemented by David Michea in 3D, but not true anymore in 2D: should be
+!! DK DK two corners instead of three. But does not matter because FACE is always .false.
+!! DK DK and therefore this part of the routine is currently never used.
+!! DK DK Let me add a stop statement just in case.
+              stop 'FACE = .true. not implemented, check the above comment in the source code'
+!! DK DK End of the stop statement added.
               ! if 2 elements share at least 3 corners, therefore they share a face
               countel(nelem) = countel(nelem) + 1
               if (countel(nelem)>=3) then

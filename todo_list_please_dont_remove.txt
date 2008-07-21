@@ -1,6 +1,4 @@
 
-- splitting file part_unstruct.F90 in several files for clarity purpose.
-
 - improving compiling with SCOTCH (issue with header file scotchf.h which is Fortran77 legal). Having our own scotchf.h file (without the comments) is not wise.
 
 - comparing the different partitioning methods for METIS and SCOTCH, and finding a good default for SCOTCH.
@@ -9,21 +7,11 @@
 
 - choosing a way to use assign_external_model?
 
-- adding comments.
-
 - checking for points with different normals for absorbing conditions, when the absorbing edges are not in the same elements (similar to what is done for the corners).
 
-- scripts for translating GID/CUBIT meshes into files for xmeshfem2D.
+- scripts to translate GID/CUBIT meshes into files for xmeshfem2D.
 
-- modifying scripts for UPPA cluster (when FS sync issues are solved and remote commands are available).
-
-- manual for unstructured meshes.
-
-- getting rid of constants_unstruct.h.
-
-- checking use of real or double precision. Gain in elapsed time is ok, but now we have to look for memory consumption.
-
-- checking output on stdout (for data that should be printed only once).
+- user manual for unstructured meshes.
 
 - Hi Jeroen, Perfect. I think talking to Jean-Paul Ampuero would be useful
 as well because in Utrecht last year he had told us that

@@ -84,7 +84,6 @@
 
 ! for overlapping MPI communications with computation
   integer, intent(in)  :: nspec_outer
-!!!!!!!  integer, dimension(max(1,nspec_outer)), intent(in)  :: ispec_inner_outer_to_glob
   logical, intent(in)  :: we_are_in_phase_outer
 
 !---
@@ -105,11 +104,6 @@
 ! material properties of the elastic medium
   real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,kappal,cpl,rhol
 
-! loop over spectral elements
-! do ispec_inner_outer = 1,nspec_outer
-
-!   ispec = ispec_inner_outer_to_glob(ispec_inner_outer)
-
   integer :: ifirstelem,ilastelem
 
   if(we_are_in_phase_outer) then
@@ -120,6 +114,7 @@
     ilastelem = nspec
   endif
 
+! loop over spectral elements
   do ispec = ifirstelem,ilastelem
 
 !---

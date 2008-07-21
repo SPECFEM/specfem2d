@@ -16,7 +16,11 @@
 ! the code does NOT work if NGLLZ /= NGLLX because it then cannot handle a non-structured mesh
   integer, parameter :: NGLLZ = NGLLX
 
-! for Cuthill-McKee (1969) permutation
+! further reduce cache misses inner/outer in two passes in the case of an MPI simulation
+! this flag is ignored in the case of a serial simulation
+  logical, parameter :: FURTHER_REDUCE_CACHE_MISSES = .true.
+
+! for inverse Cuthill-McKee (1969) permutation
   logical, parameter :: PERFORM_CUTHILL_MCKEE = .true.
   logical, parameter :: INVERSE = .true.
   logical, parameter :: FACE = .false.
@@ -26,6 +30,37 @@
 ! maximum size if multi-level Cuthill-McKee ordering
   integer, parameter :: LIMIT_MULTI_CUTHILL = 50
 
+! implement Cuthill-McKee or replace with identity permutation
+  logical, parameter :: ACTUALLY_IMPLEMENT_PERM_OUT = .true.
+  logical, parameter :: ACTUALLY_IMPLEMENT_PERM_INN = .true.
+
+! add MPI barriers and suppress seismograms if we generate traces of the run for analysis with "ParaVer"
+  logical, parameter :: GENERATE_PARAVER_TRACES = .false.
+
+! option to display only part of the mesh and not the whole mesh,
+! for instance to analyze Cuthill-McKee mesh partitioning etc.
+! Possible values are:
+!  1: display all the elements (i.e., the whole mesh)
+!  2: display inner elements only
+!  3: display outer elements only
+!  4: display a fixed number of elements (in each partition) only
+  integer, parameter :: DISPLAY_SUBSET_OPTION = 1
+! number of spectral elements to display in each subset when a fixed subset size is used (option 4 above)
+  integer, parameter :: NSPEC_DISPLAY_SUBSET = 2300
+
+!--- beginning of Nicolas Le Goff's constants for an unstructured CUBIT/METIS/SCOTCH mesh
+
+! number of nodes per element
+  integer, parameter :: ESIZE = 4
+
+! maximum number of neighbors per element
+  integer, parameter :: max_neighbor = 30
+
+! maximum number of elements that can contain the same node
+  integer, parameter :: nsize = 20
+
+!--- end of Nicolas Le Goff's constants for an unstructured CUBIT/METIS/SCOTCH mesh
+
 ! compute and output acoustic and elastic energy (slows down the code significantly)
   logical, parameter :: OUTPUT_ENERGY = .false.
 
@@ -34,10 +69,6 @@
 
 ! select fast (Paul Fischer) or slow (topology only) global numbering algorithm
   logical, parameter :: FAST_NUMBERING = .true.
-
-! further reduce cache misses inner/outer in two passes in the case of an MPI simulation
-! this flag is ignored in the case of a serial simulation
-  logical, parameter :: FURTHER_REDUCE_CACHE_MISSES = .true.
 
 ! mesh tolerance for fast global numbering
   double precision, parameter :: SMALLVALTOL = 0.00001d0
