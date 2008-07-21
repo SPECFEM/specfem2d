@@ -31,8 +31,9 @@
   integer, parameter :: LIMIT_MULTI_CUTHILL = 50
 
 ! implement Cuthill-McKee or replace with identity permutation
-  logical, parameter :: ACTUALLY_IMPLEMENT_PERM_OUT = .true.
-  logical, parameter :: ACTUALLY_IMPLEMENT_PERM_INN = .true.
+  logical, parameter :: ACTUALLY_IMPLEMENT_PERM_OUT = .false.
+  logical, parameter :: ACTUALLY_IMPLEMENT_PERM_INN = .false.
+  logical, parameter :: ACTUALLY_IMPLEMENT_PERM_WHOLE = .true.
 
 ! add MPI barriers and suppress seismograms if we generate traces of the run for analysis with "ParaVer"
   logical, parameter :: GENERATE_PARAVER_TRACES = .false.

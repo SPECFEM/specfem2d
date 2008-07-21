@@ -1470,6 +1470,28 @@ if(ipass == 1) then
     enddo
   endif
 
+  if(ACTUALLY_IMPLEMENT_PERM_WHOLE) then
+
+  allocate(check_perm(nspec))
+  call get_perm(ibool,perm(1:nspec),LIMIT_MULTI_CUTHILL,nspec,npoin)
+! check that the permutation obtained is bijective
+  check_perm(:) = -1
+  do ispec = 1,nspec
+    check_perm(perm(ispec)) = ispec
+  enddo
+  if(minval(check_perm) /= 1) stop 'minval check_perm is incorrect for whole'
+  if(maxval(check_perm) /= nspec) stop 'maxval check_perm is incorrect for whole'
+  deallocate(check_perm)
+! add the right offset
+  perm(1:nspec) = perm(1:nspec) + 0
+
+  else
+! use identity permutation if flag is off
+    do ispec = 1,nspec
+      perm(ispec) = ispec
+    enddo
+  endif
+
 endif
 
   enddo ! end of further reduction of cache misses inner/outer in two passes
