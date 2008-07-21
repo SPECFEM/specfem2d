@@ -295,114 +295,6 @@ end subroutine get_edge
 
 #ifdef USE_MPI
 
-
-!-----------------------------------------------
-! Creation of persistent communication requests (send and recv) for acoustic elements.
-! Should be disposed of if using Paraver (with MPItrace), since it does not instrument persistent
-! communications yet.
-!-----------------------------------------------
-subroutine create_MPI_req_SEND_RECV_ac( &
-     ninterface, ninterface_acoustic, &
-     nibool_interfaces_acoustic, &
-     my_neighbours, &
-     max_ibool_interfaces_size_ac, &
-     buffer_send_faces_vector_ac, &
-     buffer_recv_faces_vector_ac, &
-     tab_requests_send_recv_acoustic, &
-     inum_interfaces_acoustic &
-     )
-
-  implicit none
-
-  include 'constants.h'
-  include 'mpif.h'
-  include 'precision_mpi.h'
-
-  integer, intent(in)  :: ninterface, ninterface_acoustic
-  integer, dimension(ninterface), intent(in)  :: inum_interfaces_acoustic
-  integer, intent(in)  :: max_ibool_interfaces_size_ac
-  real(kind=CUSTOM_REAL), dimension(max_ibool_interfaces_size_ac,ninterface_acoustic), intent(in)  :: &
-       buffer_send_faces_vector_ac
-  real(kind=CUSTOM_REAL), dimension(max_ibool_interfaces_size_ac,ninterface_acoustic), intent(in)  :: &
-       buffer_recv_faces_vector_ac
-  integer, dimension(ninterface_acoustic*2), intent(inout)  :: tab_requests_send_recv_acoustic
-  integer, dimension(ninterface), intent(in)  :: nibool_interfaces_acoustic
-  integer, dimension(ninterface), intent(in) :: my_neighbours
-
-  integer  :: inum_interface,num_interface
-  integer  :: ier
-
-  do inum_interface = 1, ninterface_acoustic
-
-     num_interface = inum_interfaces_acoustic(inum_interface)
-
-        call MPI_Send_init ( buffer_send_faces_vector_ac(1,inum_interface), &
-             nibool_interfaces_acoustic(num_interface), CUSTOM_MPI_TYPE, &
-             my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-             tab_requests_send_recv_acoustic(inum_interface), ier)
-        call MPI_Recv_init ( buffer_recv_faces_vector_ac(1,inum_interface), &
-             nibool_interfaces_acoustic(num_interface), CUSTOM_MPI_TYPE, &
-             my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-             tab_requests_send_recv_acoustic(ninterface_acoustic+inum_interface), ier)
-  end do
-
-end subroutine create_MPI_req_SEND_RECV_ac
-
-
-!-----------------------------------------------
-! Creation of persistent communication requests (send and recv) for elastic elements.
-! Should be disposed of if using Paraver (with MPItrace), since it does not instrument persistent
-! communications yet.
-!-----------------------------------------------
-subroutine create_MPI_req_SEND_RECV_el( &
-     ninterface, ninterface_elastic, &
-     nibool_interfaces_elastic, &
-     my_neighbours, &
-     max_ibool_interfaces_size_el, &
-     buffer_send_faces_vector_el, &
-     buffer_recv_faces_vector_el, &
-     tab_requests_send_recv_elastic, &
-     inum_interfaces_elastic &
-     )
-
-  implicit none
-
-  include 'constants.h'
-  include 'mpif.h'
-  include 'precision_mpi.h'
-
-
-  integer, intent(in)  :: ninterface, ninterface_elastic
-  integer, dimension(ninterface), intent(in)  :: inum_interfaces_elastic
-  integer, intent(in)  :: max_ibool_interfaces_size_el
-  real(kind=CUSTOM_REAL), dimension(max_ibool_interfaces_size_el,ninterface_elastic), intent(in)  :: &
-       buffer_send_faces_vector_el
-  real(kind=CUSTOM_REAL), dimension(max_ibool_interfaces_size_el,ninterface_elastic), intent(in)  :: &
-       buffer_recv_faces_vector_el
-  integer, dimension(ninterface_elastic*2), intent(inout)  :: tab_requests_send_recv_elastic
-  integer, dimension(ninterface), intent(in)  :: nibool_interfaces_elastic
-  integer, dimension(ninterface), intent(in) :: my_neighbours
-
-  integer  :: inum_interface,num_interface
-  integer  :: ier
-
-  do inum_interface = 1, ninterface_elastic
-
-     num_interface = inum_interfaces_elastic(inum_interface)
-
-        call MPI_Send_init ( buffer_send_faces_vector_el(1,inum_interface), &
-             NDIM*nibool_interfaces_elastic(num_interface), CUSTOM_MPI_TYPE, &
-             my_neighbours(num_interface), 13, MPI_COMM_WORLD, &
-             tab_requests_send_recv_elastic(inum_interface), ier)
-        call MPI_Recv_init ( buffer_recv_faces_vector_el(1,inum_interface), &
-             NDIM*nibool_interfaces_elastic(num_interface), CUSTOM_MPI_TYPE, &
-             my_neighbours(num_interface), 13, MPI_COMM_WORLD, &
-             tab_requests_send_recv_elastic(ninterface_elastic+inum_interface), ier)
-  end do
-
-end subroutine create_MPI_req_SEND_RECV_el
-
-
 !-----------------------------------------------
 ! Assembling the mass matrix.
 !-----------------------------------------------
@@ -487,25 +379,34 @@ end subroutine assemble_MPI_scalar
 
 !-----------------------------------------------
 ! Assembling potential_dot_dot for acoustic elements :
-! the buffers are filled, and the send and recv are started here.
-! We use MPI_Start (MPI_Startall is not used, since it causes problems in OpenMPI prior to v1.2).
+! the buffers are filled, the Isend and Irecv are started here, then
+! contributions are added.
+! The previous version included communication overlap using persistent
+! communication, but the merging of the outer and inner elements rendered
+! overlap no longer possible, while persistent communications were removed
+! because trace tool MPITrace does not yet instrument those.
+! Particular care should be taken concerning possible optimisations of the
+! communication scheme.
 !-----------------------------------------------
-subroutine assemble_MPI_vector_ac_start(array_val1,npoin, &
+subroutine assemble_MPI_vector_ac(array_val1,npoin, &
      ninterface, ninterface_acoustic, &
      inum_interfaces_acoustic, &
      max_interface_size, max_ibool_interfaces_size_ac,&
      ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
      tab_requests_send_recv_acoustic, &
-     buffer_send_faces_vector_ac &
+     buffer_send_faces_vector_ac, &
+     buffer_recv_faces_vector_ac, &
+     my_neighbours &
      )
 
   implicit none
 
   include 'constants.h'
   include 'mpif.h'
+  include 'precision_mpi.h'
 
   ! array to assemble
-  real(kind=CUSTOM_REAL), dimension(npoin), intent(in) :: array_val1
+  real(kind=CUSTOM_REAL), dimension(npoin), intent(inout) :: array_val1
 
   integer, intent(in)  :: npoin
   integer, intent(in)  :: ninterface, ninterface_acoustic
@@ -517,9 +418,13 @@ subroutine assemble_MPI_vector_ac_start(array_val1,npoin, &
   integer, dimension(ninterface_acoustic*2), intent(inout)  :: tab_requests_send_recv_acoustic
   real(kind=CUSTOM_REAL), dimension(max_ibool_interfaces_size_ac,ninterface_acoustic), intent(inout)  :: &
        buffer_send_faces_vector_ac
+  real(kind=CUSTOM_REAL), dimension(max_ibool_interfaces_size_ac,ninterface_acoustic), intent(inout)  :: &
+       buffer_recv_faces_vector_ac
+  integer, dimension(ninterface), intent(in) :: my_neighbours
 
   integer  :: ipoin, num_interface, inum_interface
   integer  :: ier
+  integer, dimension(MPI_STATUS_SIZE)  :: status_acoustic
 
   integer  :: i
 
@@ -536,39 +441,82 @@ subroutine assemble_MPI_vector_ac_start(array_val1,npoin, &
 
   end do
 
-  do inum_interface = 1, ninterface_acoustic*2
-     call MPI_START(tab_requests_send_recv_acoustic(inum_interface), ier)
-     if ( ier /= MPI_SUCCESS ) then
-        call exit_mpi('MPI_start unsuccessful in assemble_MPI_vector_start')
-     end if
+  do inum_interface = 1, ninterface_acoustic
+
+    num_interface = inum_interfaces_acoustic(inum_interface)
+
+    call MPI_Isend ( buffer_send_faces_vector_ac(1,inum_interface), &
+             nibool_interfaces_acoustic(num_interface), CUSTOM_MPI_TYPE, &
+             my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
+             tab_requests_send_recv_acoustic(inum_interface), ier)
+
+    if ( ier /= MPI_SUCCESS ) then
+      call exit_mpi('MPI_Isend unsuccessful in assemble_MPI_vector_start')
+    end if
+
+    call MPI_Irecv ( buffer_recv_faces_vector_ac(1,inum_interface), &
+             nibool_interfaces_acoustic(num_interface), CUSTOM_MPI_TYPE, &
+             my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
+             tab_requests_send_recv_acoustic(ninterface_acoustic+inum_interface), ier)
+
+    if ( ier /= MPI_SUCCESS ) then
+      call exit_mpi('MPI_Irecv unsuccessful in assemble_MPI_vector')
+    end if
+
   end do
 
-!call MPI_Startall ( ninterface*2, tab_requests_send_recv(1), ier )
+  do inum_interface = 1, ninterface_acoustic*2
+  
+    call MPI_Wait (tab_requests_send_recv_acoustic(inum_interface), status_acoustic, ier)
 
-end subroutine assemble_MPI_vector_ac_start
+  enddo
+
+  do inum_interface = 1, ninterface_acoustic
+
+     num_interface = inum_interfaces_acoustic(inum_interface)
+
+     ipoin = 0
+     do i = 1, nibool_interfaces_acoustic(num_interface)
+        ipoin = ipoin + 1
+        array_val1(ibool_interfaces_acoustic(i,num_interface)) = array_val1(ibool_interfaces_acoustic(i,num_interface)) + &
+             buffer_recv_faces_vector_ac(ipoin,inum_interface)
+     end do
+
+  end do
+
+end subroutine assemble_MPI_vector_ac
 
 
 !-----------------------------------------------
 ! Assembling accel_elastic for elastic elements :
-! the buffers are filled, and the send and recv are started here.
-! We use MPI_Start (MPI_Startall is not used, since it causes problems in OpenMPI prior to v1.2).
+! the buffers are filled, the Isend and Irecv are started here, then
+! contributions are added.
+! The previous version included communication overlap using persistent
+! communication, but the merging of the outer and inner elements rendered
+! overlap no longer possible, while persistent communications were removed
+! because trace tool MPITrace does not yet instrument those.
+! Particular care should be taken concerning possible optimisations of the
+! communication scheme.
 !-----------------------------------------------
-subroutine assemble_MPI_vector_el_start(array_val2,npoin, &
+subroutine assemble_MPI_vector_el(array_val2,npoin, &
      ninterface, ninterface_elastic, &
      inum_interfaces_elastic, &
      max_interface_size, max_ibool_interfaces_size_el,&
      ibool_interfaces_elastic, nibool_interfaces_elastic, &
      tab_requests_send_recv_elastic, &
-     buffer_send_faces_vector_el &
+     buffer_send_faces_vector_el, &
+     buffer_recv_faces_vector_el, &
+     my_neighbours &
      )
 
   implicit none
 
   include 'constants.h'
   include 'mpif.h'
+  include 'precision_mpi.h'
 
   ! array to assemble
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin), intent(in) :: array_val2
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin), intent(inout) :: array_val2
 
   integer, intent(in)  :: npoin
   integer, intent(in)  :: ninterface, ninterface_elastic
@@ -580,10 +528,13 @@ subroutine assemble_MPI_vector_el_start(array_val2,npoin, &
   integer, dimension(ninterface_elastic*2), intent(inout)  :: tab_requests_send_recv_elastic
   real(CUSTOM_REAL), dimension(max_ibool_interfaces_size_el,ninterface_elastic), intent(inout)  :: &
        buffer_send_faces_vector_el
-
+  real(CUSTOM_REAL), dimension(max_ibool_interfaces_size_el,ninterface_elastic), intent(inout)  :: &
+       buffer_recv_faces_vector_el
+ integer, dimension(ninterface), intent(in) :: my_neighbours
 
   integer  :: ipoin, num_interface, inum_interface
   integer  :: ier
+  integer, dimension(MPI_STATUS_SIZE)  :: status_elastic
 
   integer  :: i
 
@@ -601,122 +552,36 @@ subroutine assemble_MPI_vector_el_start(array_val2,npoin, &
 
   end do
 
+  do inum_interface = 1, ninterface_elastic
+
+    num_interface = inum_interfaces_elastic(inum_interface)
+
+    call MPI_Isend ( buffer_send_faces_vector_el(1,inum_interface), &
+             NDIM*nibool_interfaces_elastic(num_interface), CUSTOM_MPI_TYPE, &
+             my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
+             tab_requests_send_recv_elastic(inum_interface), ier)
+
+    if ( ier /= MPI_SUCCESS ) then
+      call exit_mpi('MPI_Isend unsuccessful in assemble_MPI_vector_el')
+    end if
+
+    call MPI_Irecv ( buffer_recv_faces_vector_el(1,inum_interface), &
+             NDIM*nibool_interfaces_elastic(num_interface), CUSTOM_MPI_TYPE, &
+             my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
+             tab_requests_send_recv_elastic(ninterface_elastic+inum_interface), ier)
+
+    if ( ier /= MPI_SUCCESS ) then
+      call exit_mpi('MPI_Irecv unsuccessful in assemble_MPI_vector_el')
+    end if
+    
+  end do
+
   do inum_interface = 1, ninterface_elastic*2
-     call MPI_START(tab_requests_send_recv_elastic(inum_interface), ier)
-     if ( ier /= MPI_SUCCESS ) then
-        call exit_mpi('MPI_start unsuccessful in assemble_MPI_vector_start')
-     end if
-  end do
+  
+    call MPI_Wait (tab_requests_send_recv_elastic(inum_interface), status_elastic, ier)
 
-!call MPI_Startall ( ninterface*2, tab_requests_send_recv(1), ier )
-
-end subroutine assemble_MPI_vector_el_start
-
-
-!-----------------------------------------------
-! Assembling potential_dot_dot for acoustic elements :
-! We wait for the completion of the communications, and add the contributions received
-! for the points on the interfaces.
-!-----------------------------------------------
-subroutine assemble_MPI_vector_ac_wait(array_val1,npoin, &
-     ninterface, ninterface_acoustic, &
-     inum_interfaces_acoustic, &
-     max_interface_size, max_ibool_interfaces_size_ac,&
-     ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
-     tab_requests_send_recv_acoustic, &
-     buffer_recv_faces_vector_ac &
-     )
-
-  implicit none
-
-  include 'constants.h'
-  include 'mpif.h'
-
-  ! array to assemble
-  real(kind=CUSTOM_REAL), dimension(npoin), intent(inout) :: array_val1
-
-  integer, intent(in)  :: npoin
-  integer, intent(in)  :: ninterface, ninterface_acoustic
-  integer, dimension(ninterface), intent(in)  :: inum_interfaces_acoustic
-  integer, intent(in)  :: max_interface_size
-  integer, intent(in)  :: max_ibool_interfaces_size_ac
-  integer, dimension(NGLLX*max_interface_size,ninterface), intent(in)  :: ibool_interfaces_acoustic
-  integer, dimension(ninterface), intent(in)  :: nibool_interfaces_acoustic
-  integer, dimension(ninterface_acoustic*2), intent(inout)  :: tab_requests_send_recv_acoustic
-  real(kind=CUSTOM_REAL), dimension(max_ibool_interfaces_size_ac,ninterface_acoustic), intent(inout)  :: &
-       buffer_recv_faces_vector_ac
-
-  integer  :: ipoin, num_interface, inum_interface
-  integer  :: ier
-  integer, dimension(MPI_STATUS_SIZE,ninterface_acoustic*2)  :: tab_statuses_acoustic
-
-  integer  :: i
-
-  call MPI_Waitall ( ninterface_acoustic*2, tab_requests_send_recv_acoustic(1), tab_statuses_acoustic(1,1), ier )
-  if ( ier /= MPI_SUCCESS ) then
-     call exit_mpi('MPI_WAITALL unsuccessful in assemble_MPI_vector_wait')
-  end if
-
-  do inum_interface = 1, ninterface_acoustic
-
-     num_interface = inum_interfaces_acoustic(inum_interface)
-
-     ipoin = 0
-     do i = 1, nibool_interfaces_acoustic(num_interface)
-        ipoin = ipoin + 1
-        array_val1(ibool_interfaces_acoustic(i,num_interface)) = array_val1(ibool_interfaces_acoustic(i,num_interface)) + &
-             buffer_recv_faces_vector_ac(ipoin,inum_interface)
-     end do
-
-  end do
-
-end subroutine assemble_MPI_vector_ac_wait
-
-
-!-----------------------------------------------
-! Assembling accel_elastic for elastic elements :
-! We wait for the completion of the communications, and add the contributions received
-! for the points on the interfaces.
-!-----------------------------------------------
-subroutine assemble_MPI_vector_el_wait(array_val2,npoin, &
-     ninterface, ninterface_elastic, &
-     inum_interfaces_elastic, &
-     max_interface_size, max_ibool_interfaces_size_el,&
-     ibool_interfaces_elastic, nibool_interfaces_elastic, &
-     tab_requests_send_recv_elastic, &
-     buffer_recv_faces_vector_el &
-     )
-
-  implicit none
-
-  include 'constants.h'
-  include 'mpif.h'
-
-  ! array to assemble
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin), intent(inout) :: array_val2
-
-  integer, intent(in)  :: npoin
-  integer, intent(in)  :: ninterface, ninterface_elastic
-  integer, dimension(ninterface), intent(in)  :: inum_interfaces_elastic
-  integer, intent(in)  :: max_interface_size
-  integer, intent(in)  :: max_ibool_interfaces_size_el
-  integer, dimension(NGLLX*max_interface_size,ninterface), intent(in)  :: ibool_interfaces_elastic
-  integer, dimension(ninterface), intent(in)  :: nibool_interfaces_elastic
-  integer, dimension(ninterface_elastic*2), intent(inout)  :: tab_requests_send_recv_elastic
-  real(kind=CUSTOM_REAL), dimension(max_ibool_interfaces_size_el,ninterface_elastic), intent(inout)  :: &
-       buffer_recv_faces_vector_el
-
-  integer  :: ipoin, num_interface, inum_interface
-  integer  :: ier
-  integer, dimension(MPI_STATUS_SIZE,ninterface_elastic*2)  :: tab_statuses_elastic
-
-  integer  :: i
-
-  call MPI_Waitall ( ninterface_elastic*2, tab_requests_send_recv_elastic(1), tab_statuses_elastic(1,1), ier )
-  if ( ier /= MPI_SUCCESS ) then
-     call exit_mpi('MPI_WAITALL unsuccessful in assemble_MPI_vector_wait')
-  end if
-
+  enddo
+  
   do inum_interface = 1, ninterface_elastic
 
      num_interface = inum_interfaces_elastic(inum_interface)
@@ -730,7 +595,7 @@ subroutine assemble_MPI_vector_el_wait(array_val2,npoin, &
 
   end do
 
-end subroutine assemble_MPI_vector_el_wait
+end subroutine assemble_MPI_vector_el
 
 #endif
 

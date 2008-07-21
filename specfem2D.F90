@@ -1287,20 +1287,6 @@ endif
     allocate(buffer_recv_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic))
   endif
 
-! creating mpi non-blocking persistent communications for acoustic elements
-  call create_MPI_req_SEND_RECV_ac(ninterface, ninterface_acoustic, &
-     nibool_interfaces_acoustic,my_neighbours, &
-     max_ibool_interfaces_size_ac, &
-     buffer_send_faces_vector_ac,buffer_recv_faces_vector_ac, &
-     tab_requests_send_recv_acoustic,inum_interfaces_acoustic)
-
-! creating mpi non-blocking persistent communications for elastic elements
-  call create_MPI_req_SEND_RECV_el(ninterface, ninterface_elastic, &
-     nibool_interfaces_elastic,my_neighbours, &
-     max_ibool_interfaces_size_el, &
-     buffer_send_faces_vector_el,buffer_recv_faces_vector_el, &
-     tab_requests_send_recv_elastic,inum_interfaces_elastic)
-
 ! assembling the mass matrix
   call assemble_MPI_scalar(rmass_inverse_acoustic, rmass_inverse_elastic,npoin, &
      ninterface, max_interface_size, max_ibool_interfaces_size_ac, max_ibool_interfaces_size_el, &
@@ -2450,17 +2436,6 @@ endif
 
    endif
 
-! assembling potential_dot_dot for acoustic elements (send)
-#ifdef USE_MPI
-  if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
-    call assemble_MPI_vector_ac_start(potential_dot_dot_acoustic,npoin, &
-           ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
-           max_interface_size, max_ibool_interfaces_size_ac,&
-           ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
-           tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac)
-  endif
-#endif
-
 ! second call, computation on inner elements
   if(any_acoustic) then
     call compute_forces_acoustic(npoin,nspec,nelemabs,numat, &
@@ -2474,16 +2449,18 @@ endif
                nspec_outer, .false.)
    endif
 
-! assembling potential_dot_dot for acoustic elements (receive)
+! assembling potential_dot_dot for acoustic elements
 #ifdef USE_MPI
   if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
-    call assemble_MPI_vector_ac_wait(potential_dot_dot_acoustic,npoin, &
+    call assemble_MPI_vector_ac(potential_dot_dot_acoustic,npoin, &
            ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
            max_interface_size, max_ibool_interfaces_size_ac,&
            ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
-           tab_requests_send_recv_acoustic,buffer_recv_faces_vector_ac)
+           tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac, &
+           buffer_recv_faces_vector_ac, my_neighbours)
   endif
 #endif
+
 
 ! ************************************************************************************
 ! ************* multiply by the inverse of the mass matrix and update velocity
@@ -2604,17 +2581,6 @@ endif
 
     endif
 
-! assembling accel_elastic for elastic elements (send)
-#ifdef USE_MPI
-  if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
-    call assemble_MPI_vector_el_start(accel_elastic,npoin, &
-      ninterface, ninterface_elastic,inum_interfaces_elastic, &
-      max_interface_size, max_ibool_interfaces_size_el,&
-      ibool_interfaces_elastic, nibool_interfaces_elastic, &
-      tab_requests_send_recv_elastic,buffer_send_faces_vector_el)
-  endif
-#endif
-
 ! second call, computation on inner elements and update
   if(any_elastic) &
     call compute_forces_elastic(npoin,nspec,nelemabs,numat, &
@@ -2632,17 +2598,18 @@ endif
                t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it),t0x_bot(1,it),t0z_bot(1,it), &
                count_left,count_right,count_bot,over_critical_angle)
 
-
-! assembling accel_elastic for elastic elements (receive)
+! assembling accel_elastic for elastic elements
 #ifdef USE_MPI
   if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
-    call assemble_MPI_vector_el_wait(accel_elastic,npoin, &
+    call assemble_MPI_vector_el(accel_elastic,npoin, &
       ninterface, ninterface_elastic,inum_interfaces_elastic, &
       max_interface_size, max_ibool_interfaces_size_el,&
       ibool_interfaces_elastic, nibool_interfaces_elastic, &
-      tab_requests_send_recv_elastic,buffer_recv_faces_vector_el)
+      tab_requests_send_recv_elastic,buffer_send_faces_vector_el, &
+      buffer_recv_faces_vector_el, my_neighbours)
   endif
 #endif
+
 
 ! ************************************************************************************
 ! ************* multiply by the inverse of the mass matrix and update velocity
