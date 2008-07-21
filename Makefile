@@ -43,7 +43,7 @@
 SHELL=/bin/sh
 
 # uncomment this on MareNostrum in Barcelona
-#MPITRACE_HOME = /gpfs/apps/CEPBATOOLS/mpitrace-devel-start/64
+#MPITRACE_HOME = /gpfs/apps/CEPBATOOLS/mpitrace-devel/64
 #PAPI_HOME = /gpfs/apps/PAPI/3.2.1-970mp/64
 #PERFCTR_HOME  = /gpfs/apps/PAPI/papi-3.2.1-970mp/64
 
