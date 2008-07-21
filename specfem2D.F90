@@ -884,7 +884,7 @@ endif
   deallocate(mask_ibool)
 
   else
-    stop 'incorrect pass number for reduction of cache misses'
+    !stop 'incorrect pass number for reduction of cache misses'
   endif
 
 !---- compute shape functions and their derivatives for regular interpolated display grid
