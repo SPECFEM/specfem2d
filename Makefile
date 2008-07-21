@@ -42,11 +42,16 @@
 
 SHELL=/bin/sh
 
+# uncomment this on MareNostrum in Barcelona
+#MPITRACE_HOME = /gpfs/apps/CEPBATOOLS/mpitrace-devel-start/64
+#PAPI_HOME = /gpfs/apps/PAPI/3.2.1-970mp/64
+#PERFCTR_HOME  = /gpfs/apps/PAPI/papi-3.2.1-970mp/64
+
 O = obj
 
 # Portland
-#F90 = /opt/openmpi-1.2.2/pgi64/bin/mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
 #F90 = pgf90
+#F90 = /opt/openmpi-1.2.2/pgi64/bin/mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
 #CC = pgcc
 #FLAGS_NOCHECK=-fast -Mnobounds -Minline -Mneginfo -Mdclchk -Knoieee -Minform=warn -fastsse -tp amd64e -Msmart
 #FLAGS_CHECK=-fast -Mbounds -Mneginfo -Mdclchk -Minform=warn
@@ -61,23 +66,30 @@ O = obj
 #FLAGS_CHECK = $(FLAGS_NOCHECK)
 
 # GNU gfortran
-#F90 = /opt/openmpi-1.2.1/gfortran64/bin/mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
 F90 = gfortran
+#F90 = mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
+#F90 = /opt/openmpi-1.2.1/gfortran64/bin/mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
 CC = gcc
 #FLAGS_NOCHECK = -O3 -march=opteron -m64 -mfpmath=sse,387
-FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow
+FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow -fbounds-check
 FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
 
 # IBM
-#F90 = xlf_r
-#CC = xlc -q64
-#FLAGS_NOCHECK = -qextname=attenuation_compute_param -O3 -qsave -qstrict -q64 -qtune=ppc970 -qarch=ppc64v -qcache=auto -qfree=f90 -Q -qsuffix=f=f90 -qhalt=w -qflttrap=en:ov:zero:inv -qfullpath -qsigtrap
-#FLAGS_CHECK = $(FLAGS_NOCHECK) -qddim
-
-LINK = $(F90)
+#####F90 = xlf_r
+#F90 = mpif90 -WF,-DUSE_MPI,-DUSE_METIS
+#CC = xlc -g -q64
+# uncomment this on MareNostrum in Barcelona
+#FLAGS_NOCHECK_ADD = -L$(MPITRACE_HOME)/lib -lmpitracef -lxml2 -L${PAPI_HOME}/lib -lpapi -lperfctr
+#FLAGS_NOCHECK = $(FLAGS_NOCHECK_ADD) -qextname=attenuation_compute_param -O3 -qstrict -q64 -qtune=ppc970 -qarch=ppc970 -qcache=auto -qfree=f90 -Q -qsuffix=f=f90 -qhalt=w -qflttrap=overflow:zerodivide:invalid:enable -qfullpath  
+#####FLAGS_NOCHECK = $(FLAGS_NOCHECK_ADD) -qextname=attenuation_compute_param -O3 -qstrict -q64 -qtune=ppc970 -qarch=ppc970 -qcache=auto -qfree=f90 -qsuffix=f=f90 -qhalt=w -qflttrap=overflow:zerodivide:invalid:enable -qinitauto=7FBFFFFF -C # -qlanglvl=2003pure
+#####FLAGS_NOCHECK = $(FLAGS_NOCHECK_ADD) -qextname=attenuation_compute_param -O0 -q64 -qtune=ppc970 -qarch=ppc970 -qcache=auto -qfree=f90 -qsuffix=f=f90 -qhalt=w -qflttrap=overflow:zerodivide:invalid:enable -qinitauto=7FBFFFFF -C -g -qfullpath -qlinedebug
+#FLAGS_CHECK = $(FLAGS_NOCHECK)
 
 #LIB = /opt/metis-4.0/gcc64/lib/libmetis.a /opt/scotch-4.0/gcc64/lib/libscotch.a  /opt/scotch-4.0/gcc64/lib/libscotcherr.a
-LIB = 
+# uncomment this on MareNostrum in Barcelona
+#LIB = /home/hpce08/hpce08548/utils/metis-4.0/libmetis.a
+
+LINK = $(F90)
 
 OBJS_MESHFEM2D = $O/part_unstruct.o $O/meshfem2D.o $O/read_value_parameters.o $O/spline_routines.o
 
@@ -90,7 +102,7 @@ OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/enforce_acoustic_free_surface.o\
         $O/recompute_jacobian.o $O/compute_arrays_source.o $O/locate_source_moment_tensor.o $O/netlib_specfun_erf.o\
         $O/construct_acoustic_surface.o $O/assemble_MPI.o $O/compute_energy.o $O/compute_curl_one_element.o\
         $O/attenuation_compute_param.o $O/compute_Bielak_conditions.o $O/paco_beyond_critical.o\
-        $O/paco_convolve_fft.o $O/is_in_convex_quadrilateral.o
+        $O/paco_convolve_fft.o $O/is_in_convex_quadrilateral.o $O/get_perm_cuthill_mckee.o
 
 default: clean meshfem2D specfem2D convolve_source_timefunction
 
@@ -237,6 +249,9 @@ $O/paco_beyond_critical.o: paco_beyond_critical.f90 constants.h
 $O/paco_convolve_fft.o: paco_convolve_fft.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/paco_convolve_fft.o paco_convolve_fft.f90
 
-$O/is_in_convex_quadrilateral.o: is_in_convex_quadrilateral.f90
+$O/is_in_convex_quadrilateral.o: is_in_convex_quadrilateral.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/is_in_convex_quadrilateral.o is_in_convex_quadrilateral.f90
+
+$O/get_perm_cuthill_mckee.o: get_perm_cuthill_mckee.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/get_perm_cuthill_mckee.o get_perm_cuthill_mckee.f90
 

@@ -145,8 +145,8 @@
   implicit none
 
 ! implement Cuthill-McKee or replace with identity permutation
-  logical, parameter :: ACTUALLY_IMPLEMENT_PERM_OUT = .false.
-  logical, parameter :: ACTUALLY_IMPLEMENT_PERM_INN = .false.
+  logical, parameter :: ACTUALLY_IMPLEMENT_PERM_OUT = .true.
+  logical, parameter :: ACTUALLY_IMPLEMENT_PERM_INN = .true.
 
   include "constants.h"
 #ifdef USE_MPI
