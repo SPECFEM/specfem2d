@@ -16,6 +16,16 @@
 ! the code does NOT work if NGLLZ /= NGLLX because it then cannot handle a non-structured mesh
   integer, parameter :: NGLLZ = NGLLX
 
+! for Cuthill-McKee (1969) permutation
+  logical, parameter :: PERFORM_CUTHILL_MCKEE = .true.
+  logical, parameter :: INVERSE = .true.
+  logical, parameter :: FACE = .false.
+  integer, parameter :: NGNOD_QUADRANGLE = 4
+! perform classical or multi-level Cuthill-McKee ordering
+  logical, parameter :: CMcK_MULTI = .false.
+! maximum size if multi-level Cuthill-McKee ordering
+  integer, parameter :: LIMIT_MULTI_CUTHILL = 50
+
 ! compute and output acoustic and elastic energy (slows down the code significantly)
   logical, parameter :: OUTPUT_ENERGY = .false.
 
