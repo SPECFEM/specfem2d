@@ -844,6 +844,8 @@ endif
 
   inumber = 0
 
+  if(.not. ACTUALLY_IMPLEMENT_PERM_WHOLE) then
+
 ! first reduce cache misses in outer elements, since they are taken first
 ! loop over spectral elements
   do ispec = 1,nspec_outer
@@ -880,11 +882,33 @@ endif
     enddo
   enddo
 
+  else ! if ACTUALLY_IMPLEMENT_PERM_WHOLE
+
+! reduce cache misses in all the elements
+! loop over spectral elements
+  do ispec = 1,nspec
+    do j=1,NGLLZ
+      do i=1,NGLLX
+        if(mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
+! create a new point
+          inumber = inumber + 1
+          ibool(i,j,ispec) = inumber
+          mask_ibool(copy_ibool_ori(i,j,ispec)) = inumber
+        else
+! use an existing point created previously
+          ibool(i,j,ispec) = mask_ibool(copy_ibool_ori(i,j,ispec))
+        endif
+      enddo
+    enddo
+  enddo
+
+  endif
+
   deallocate(copy_ibool_ori)
   deallocate(mask_ibool)
 
-  else
-    !stop 'incorrect pass number for reduction of cache misses'
+  else if(ipass /= 1) then
+    stop 'incorrect pass number for reduction of cache misses'
   endif
 
 !---- compute shape functions and their derivatives for regular interpolated display grid
