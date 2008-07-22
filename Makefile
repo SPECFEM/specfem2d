@@ -42,7 +42,7 @@
 
 SHELL=/bin/sh
 
-# uncomment this on MareNostrum in Barcelona
+# uncomment this to generate ParaVer traces on MareNostrum in Barcelona
 #MPITRACE_HOME = /gpfs/apps/CEPBATOOLS/mpitrace-devel/64
 #PAPI_HOME = /gpfs/apps/PAPI/3.2.1-970mp/64
 #PERFCTR_HOME  = /gpfs/apps/PAPI/papi-3.2.1-970mp/64
@@ -78,7 +78,7 @@ FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
 #####F90 = xlf_r
 #F90 = mpif90 -WF,-DUSE_MPI,-DUSE_METIS
 #CC = xlc -g -q64
-# uncomment this on MareNostrum in Barcelona
+# uncomment this to generate ParaVer traces on MareNostrum in Barcelona
 #FLAGS_NOCHECK_ADD = -L$(MPITRACE_HOME)/lib -lmpitracef -lxml2 -L${PAPI_HOME}/lib -lpapi -lperfctr
 #FLAGS_NOCHECK = $(FLAGS_NOCHECK_ADD) -qextname=attenuation_compute_param -O3 -qstrict -q64 -qtune=ppc970 -qarch=ppc970 -qcache=auto -qfree=f90 -Q -qsuffix=f=f90 -qhalt=w -qflttrap=overflow:zerodivide:invalid:enable -qfullpath  
 #####FLAGS_NOCHECK = $(FLAGS_NOCHECK_ADD) -qextname=attenuation_compute_param -O3 -qstrict -q64 -qtune=ppc970 -qarch=ppc970 -qcache=auto -qfree=f90 -qsuffix=f=f90 -qhalt=w -qflttrap=overflow:zerodivide:invalid:enable -qinitauto=7FBFFFFF -C # -qlanglvl=2003pure
@@ -86,7 +86,7 @@ FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
 #FLAGS_CHECK = $(FLAGS_NOCHECK)
 
 #LIB = /opt/metis-4.0/gcc64/lib/libmetis.a /opt/scotch-4.0/gcc64/lib/libscotch.a  /opt/scotch-4.0/gcc64/lib/libscotcherr.a
-# uncomment this on MareNostrum in Barcelona
+# uncomment this to use Metis on MareNostrum in Barcelona
 #LIB = /home/hpce08/hpce08548/utils/metis-4.0/libmetis.a
 
 LINK = $(F90)
