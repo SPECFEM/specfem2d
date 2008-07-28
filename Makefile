@@ -62,7 +62,7 @@ O = obj
 # Another workaround can be to increase your stack size (ulimit -s).
 #F90 = ifort
 #CC = gcc
-#FLAGS_NOCHECK=-O0 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check nobounds
+#FLAGS_NOCHECK=-O3 -xP -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check nobounds
 #FLAGS_CHECK = $(FLAGS_NOCHECK)
 
 # GNU gfortran
