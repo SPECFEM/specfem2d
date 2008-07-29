@@ -42,14 +42,34 @@
 
   subroutine plotpost(displ,coord,vpext,x_source,z_source,st_xval,st_zval,it,dt,coorg, &
           xinterp,zinterp,shapeint,Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
-          numabs,codeabs,anyabs,&
-          nelem_acoustic_surface, acoustic_edges, &
+          numabs,codeabs,anyabs,nelem_acoustic_surface, acoustic_edges, &
           simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
           fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
-          myrank,nproc)
+          myrank,nproc,ier, &
+          d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
+          d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
+          d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model, &
+          d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model, &
+          coorg_send_ps_velocity_model,RGB_send_ps_velocity_model, &
+          coorg_recv_ps_velocity_model,RGB_recv_ps_velocity_model,&
+          d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh, &
+          d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh, &
+          d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh, &
+          coorg_send_ps_element_mesh,color_send_ps_element_mesh, &
+          coorg_recv_ps_element_mesh,color_recv_ps_element_mesh, &
+          d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs, &
+          d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs, &
+          coorg_send_ps_abs,coorg_recv_ps_abs, &
+          d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface, &
+          d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface, &
+          coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
+          d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field, &
+          d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
+          coorg_send_ps_vector_field,coorg_recv_ps_vector_field &
+)
 
 !
 ! PostScript display routine
@@ -145,6 +165,50 @@
   integer, dimension(MPI_STATUS_SIZE)  :: request_mpi_status
 #endif
   integer  :: myrank, nproc
+
+! plotpost arrays for postscript output
+  integer :: d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
+          d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
+          d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model, &
+          d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model
+  double precision, dimension(d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model) :: &
+coorg_send_ps_velocity_model
+  double precision, dimension(d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model) :: &
+coorg_recv_ps_velocity_model
+  double precision, dimension(d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model) :: &
+RGB_send_ps_velocity_model
+  double precision, dimension(d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model) :: &
+RGB_recv_ps_velocity_model
+  integer :: d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh, &
+          d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh, &
+          d1_color_send_ps_element_mesh, &
+          d1_color_recv_ps_element_mesh
+  double precision, dimension(d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh) :: &
+coorg_send_ps_element_mesh
+  double precision, dimension(d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh) :: &
+coorg_recv_ps_element_mesh
+  integer, dimension(d1_color_send_ps_element_mesh) :: &
+color_send_ps_element_mesh
+  integer, dimension(d1_color_recv_ps_element_mesh) :: &
+color_recv_ps_element_mesh
+  integer :: d1_coorg_send_ps_abs, d1_coorg_recv_ps_abs, &
+          d2_coorg_send_ps_abs, d2_coorg_recv_ps_abs
+  double precision, dimension(d1_coorg_send_ps_abs,d2_coorg_send_ps_abs) :: &
+coorg_send_ps_abs
+  double precision, dimension(d1_coorg_recv_ps_abs,d2_coorg_recv_ps_abs) :: &
+coorg_recv_ps_abs
+  integer :: d1_coorg_send_ps_free_surface, d1_coorg_recv_ps_free_surface, &
+          d2_coorg_send_ps_free_surface, d2_coorg_recv_ps_free_surface
+  double precision, dimension(d1_coorg_send_ps_free_surface,d2_coorg_send_ps_free_surface) :: &
+coorg_send_ps_free_surface
+  double precision, dimension(d1_coorg_recv_ps_free_surface,d2_coorg_recv_ps_free_surface) :: &
+coorg_recv_ps_free_surface
+  integer :: d1_coorg_send_ps_vector_field, d1_coorg_recv_ps_vector_field, &
+          d2_coorg_send_ps_vector_field, d2_coorg_recv_ps_vector_field
+  double precision, dimension(d1_coorg_send_ps_vector_field,d2_coorg_send_ps_vector_field) :: &
+coorg_send_ps_vector_field
+  double precision, dimension(d1_coorg_recv_ps_vector_field,d2_coorg_recv_ps_vector_field) :: &
+coorg_recv_ps_vector_field
 
 #ifndef USE_MPI
   allocate(coorg_recv(1,1))
@@ -1563,8 +1627,8 @@
   if(modelvect) then
 
   if ( myrank /= 0 ) then
-     allocate(coorg_send(2,nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4))
-     allocate(RGB_send(1,nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)))
+     !allocate(coorg_send(2,nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4))
+     !allocate(RGB_send(1,nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)))
   endif
   buffer_offset = 0
   RGB_offset = 0
@@ -1606,8 +1670,8 @@
      write(24,500) xw,zw
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = xw
-     coorg_send(2,buffer_offset) = zw
+     coorg_send_ps_velocity_model(1,buffer_offset) = xw
+     coorg_send_ps_velocity_model(2,buffer_offset) = zw
   endif
 
   xw = coord(1,ibool(i+subsamp,j,ispec))
@@ -1620,8 +1684,8 @@
      write(24,499) xw,zw
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = xw
-     coorg_send(2,buffer_offset) = zw
+     coorg_send_ps_velocity_model(1,buffer_offset) = xw
+     coorg_send_ps_velocity_model(2,buffer_offset) = zw
   endif
 
   xw = coord(1,ibool(i+subsamp,j+subsamp,ispec))
@@ -1634,8 +1698,8 @@
      write(24,499) xw,zw
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = xw
-     coorg_send(2,buffer_offset) = zw
+     coorg_send_ps_velocity_model(1,buffer_offset) = xw
+     coorg_send_ps_velocity_model(2,buffer_offset) = zw
   endif
 
   xw = coord(1,ibool(i,j+subsamp,ispec))
@@ -1648,8 +1712,8 @@
      write(24,499) xw,zw
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = xw
-     coorg_send(2,buffer_offset) = zw
+     coorg_send_ps_velocity_model(1,buffer_offset) = xw
+     coorg_send_ps_velocity_model(2,buffer_offset) = zw
   endif
 
 ! display P-velocity model using gray levels
@@ -1657,7 +1721,7 @@
      write(24,604) x1
   else
      RGB_offset = RGB_offset + 1
-     RGB_send(1,RGB_offset) = x1
+     RGB_send_ps_velocity_model(1,RGB_offset) = x1
   endif
 
           enddo
@@ -1669,11 +1733,12 @@
 
      do iproc = 1, nproc-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
-        allocate(coorg_recv(2,nspec_recv*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4))
-        allocate(RGB_recv(1,nspec_recv*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)))
-        call MPI_RECV (coorg_recv(1,1), 2*nspec_recv*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4, &
+        !allocate(coorg_recv(2,nspec_recv*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4))
+        !allocate(RGB_recv(1,nspec_recv*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)))
+        call MPI_RECV (coorg_recv_ps_velocity_model(1,1), &
+             2*nspec_recv*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4, &
              MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
-        call MPI_RECV (RGB_recv(1,1), nspec_recv*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp), &
+        call MPI_RECV (RGB_recv_ps_velocity_model(1,1), nspec_recv*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp), &
              MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
 
         buffer_offset = 0
@@ -1682,32 +1747,36 @@
            do i=1,NGLLX-subsamp,subsamp
               do j=1,NGLLX-subsamp,subsamp
                  buffer_offset = buffer_offset + 1
-                 write(24,500) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+                 write(24,500) coorg_recv_ps_velocity_model(1,buffer_offset), &
+                               coorg_recv_ps_velocity_model(2,buffer_offset)
                  buffer_offset = buffer_offset + 1
-                 write(24,499) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+                 write(24,499) coorg_recv_ps_velocity_model(1,buffer_offset), &
+                               coorg_recv_ps_velocity_model(2,buffer_offset)
                  buffer_offset = buffer_offset + 1
-                 write(24,499) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+                 write(24,499) coorg_recv_ps_velocity_model(1,buffer_offset), &
+                               coorg_recv_ps_velocity_model(2,buffer_offset)
                  buffer_offset = buffer_offset + 1
-                 write(24,499) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+                 write(24,499) coorg_recv_ps_velocity_model(1,buffer_offset), &
+                               coorg_recv_ps_velocity_model(2,buffer_offset)
                  RGB_offset = RGB_offset + 1
-                 write(24,604) RGB_recv(1,RGB_offset)
+                 write(24,604) RGB_recv_ps_velocity_model(1,RGB_offset)
               enddo
            enddo
         enddo
 
-        deallocate(coorg_recv)
-        deallocate(RGB_recv)
+        !deallocate(coorg_recv)
+        !deallocate(RGB_recv)
 
      enddo
   else
      call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
-     call MPI_SEND (coorg_send(1,1), 2*nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4, &
+     call MPI_SEND (coorg_send_ps_velocity_model(1,1), 2*nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4, &
           MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
-     call MPI_SEND (RGB_send(1,1), nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp), &
+     call MPI_SEND (RGB_send_ps_velocity_model(1,1), nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp), &
           MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
 
-     deallocate(coorg_send)
-     deallocate(RGB_send)
+     !deallocate(coorg_send)
+     !deallocate(RGB_send)
 
   endif
 
@@ -1731,30 +1800,30 @@
 
      if ( ngnod == 4 ) then
         if ( numbers == 1 ) then
-           allocate(coorg_send(2,nspec*5))
+           !allocate(coorg_send(2,nspec*5))
            if ( colors == 1 ) then
-              allocate(color_send(2*nspec))
+              !allocate(color_send(2*nspec))
            else
-              allocate(color_send(1*nspec))
+              !allocate(color_send(1*nspec))
            endif
         else
-           allocate(coorg_send(2,nspec*6))
+           !allocate(coorg_send(2,nspec*6))
            if ( colors == 1 ) then
-              allocate(color_send(1*nspec))
+              !allocate(color_send(1*nspec))
            endif
         endif
      else
         if ( numbers == 1 ) then
-           allocate(coorg_send(2,nspec*((pointsdisp-1)*3+max(0,pointsdisp-2)+1+1)))
+           !allocate(coorg_send(2,nspec*((pointsdisp-1)*3+max(0,pointsdisp-2)+1+1)))
            if ( colors == 1 ) then
-              allocate(color_send(2*nspec))
+              !allocate(color_send(2*nspec))
            else
-              allocate(color_send(1*nspec))
+              !allocate(color_send(1*nspec))
            endif
         else
-           allocate(coorg_send(2,nspec*((pointsdisp-1)*3+max(0,pointsdisp-2)+1)))
+           !allocate(coorg_send(2,nspec*((pointsdisp-1)*3+max(0,pointsdisp-2)+1)))
            if ( colors == 1 ) then
-              allocate(color_send(1*nspec))
+              !allocate(color_send(1*nspec))
            endif
         endif
      endif
@@ -1792,8 +1861,8 @@
      write(24,681) x1,z1
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = x1
-     coorg_send(2,buffer_offset) = z1
+     coorg_send_ps_element_mesh(1,buffer_offset) = x1
+     coorg_send_ps_element_mesh(2,buffer_offset) = z1
   endif
 
   if(ngnod == 4) then
@@ -1809,8 +1878,8 @@
      write(24,681) x2,z2
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = x2
-     coorg_send(2,buffer_offset) = z2
+     coorg_send_ps_element_mesh(1,buffer_offset) = x2
+     coorg_send_ps_element_mesh(2,buffer_offset) = z2
   endif
 
   ir=pointsdisp
@@ -1823,8 +1892,8 @@
      write(24,681) x2,z2
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = x2
-     coorg_send(2,buffer_offset) = z2
+     coorg_send_ps_element_mesh(1,buffer_offset) = x2
+     coorg_send_ps_element_mesh(2,buffer_offset) = z2
   endif
 
   is=pointsdisp
@@ -1837,8 +1906,8 @@
      write(24,681) x2,z2
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = x2
-     coorg_send(2,buffer_offset) = z2
+     coorg_send_ps_element_mesh(1,buffer_offset) = x2
+     coorg_send_ps_element_mesh(2,buffer_offset) = z2
   endif
 
   ir=1
@@ -1851,8 +1920,8 @@
      write(24,681) x2,z2
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = x2
-     coorg_send(2,buffer_offset) = z2
+     coorg_send_ps_element_mesh(1,buffer_offset) = x2
+     coorg_send_ps_element_mesh(2,buffer_offset) = z2
   endif
 
   else
@@ -1867,8 +1936,8 @@
        write(24,681) x2,z2
     else
        buffer_offset = buffer_offset + 1
-       coorg_send(1,buffer_offset) = x2
-       coorg_send(2,buffer_offset) = z2
+       coorg_send_ps_element_mesh(1,buffer_offset) = x2
+       coorg_send_ps_element_mesh(2,buffer_offset) = z2
     endif
   enddo
 
@@ -1882,8 +1951,8 @@
        write(24,681) x2,z2
     else
        buffer_offset = buffer_offset + 1
-       coorg_send(1,buffer_offset) = x2
-       coorg_send(2,buffer_offset) = z2
+       coorg_send_ps_element_mesh(1,buffer_offset) = x2
+       coorg_send_ps_element_mesh(2,buffer_offset) = z2
     endif
   enddo
 
@@ -1897,8 +1966,8 @@
        write(24,681) x2,z2
     else
        buffer_offset = buffer_offset + 1
-       coorg_send(1,buffer_offset) = x2
-       coorg_send(2,buffer_offset) = z2
+       coorg_send_ps_element_mesh(1,buffer_offset) = x2
+       coorg_send_ps_element_mesh(2,buffer_offset) = z2
     endif
   enddo
 
@@ -1912,8 +1981,8 @@
        write(24,681) x2,z2
     else
        buffer_offset = buffer_offset + 1
-       coorg_send(1,buffer_offset) = x2
-       coorg_send(2,buffer_offset) = z2
+       coorg_send_ps_element_mesh(1,buffer_offset) = x2
+       coorg_send_ps_element_mesh(2,buffer_offset) = z2
     endif
   enddo
 
@@ -1937,7 +2006,7 @@
     endif
   else
      RGB_offset = RGB_offset + 1
-     color_send(RGB_offset) = icol
+     color_send_ps_element_mesh(RGB_offset) = icol
   endif
 
   endif
@@ -1970,8 +2039,8 @@
      write(24,500) xw,zw
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = x2
-     coorg_send(2,buffer_offset) = z2
+     coorg_send_ps_element_mesh(1,buffer_offset) = x2
+     coorg_send_ps_element_mesh(2,buffer_offset) = z2
   endif
 
 ! write spectral element number
@@ -1979,7 +2048,7 @@
      write(24,502) ispec
   else
      RGB_offset = RGB_offset + 1
-     color_send(RGB_offset) = ispec
+     color_send_ps_element_mesh(RGB_offset) = ispec
   endif
 
   endif
@@ -2008,13 +2077,13 @@
            nb_color_per_elem = nb_color_per_elem + 1
         endif
 
-        allocate(coorg_recv(2,nspec_recv*nb_coorg_per_elem))
+        !allocate(coorg_recv(2,nspec_recv*nb_coorg_per_elem))
         if ( nb_color_per_elem > 0 ) then
-           allocate(color_recv(nspec_recv*nb_color_per_elem))
+           !allocate(color_recv(nspec_recv*nb_color_per_elem))
         endif
-        call MPI_RECV (coorg_recv(1,1), 2*nspec_recv*nb_coorg_per_elem, &
+        call MPI_RECV (coorg_recv_ps_element_mesh(1,1), 2*nspec_recv*nb_coorg_per_elem, &
              MPI_DOUBLE_PRECISION, iproc, 43, MPI_COMM_WORLD, request_mpi_status, ier)
-        call MPI_RECV (color_recv(1), nspec_recv*nb_coorg_per_elem, &
+        call MPI_RECV (color_recv_ps_element_mesh(1), nspec_recv*nb_coorg_per_elem, &
              MPI_INTEGER, iproc, 43, MPI_COMM_WORLD, request_mpi_status, ier)
 
         buffer_offset = 0
@@ -2025,33 +2094,33 @@
            write(24,*) '% elem ',num_spec
            buffer_offset = buffer_offset + 1
            write(24,*) 'mark'
-           write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+           write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
            if ( ngnod == 4 ) then
               buffer_offset = buffer_offset + 1
-              write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+              write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
               buffer_offset = buffer_offset + 1
-              write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+              write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
               buffer_offset = buffer_offset + 1
-              write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+              write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
               buffer_offset = buffer_offset + 1
-              write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+              write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
 
            else
               do ir=2,pointsdisp
                  buffer_offset = buffer_offset + 1
-                 write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+                 write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
               enddo
               do is=2,pointsdisp
                  buffer_offset = buffer_offset + 1
-                 write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+                 write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
               enddo
               do ir=pointsdisp-1,1,-1
                  buffer_offset = buffer_offset + 1
-                 write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+                 write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
               enddo
               do is=pointsdisp-1,2,-1
                  buffer_offset = buffer_offset + 1
-                 write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+                 write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
               enddo
 
            endif
@@ -2060,10 +2129,14 @@
            if ( colors == 1 ) then
               if(meshvect) then
                  RGB_offset = RGB_offset + 1
-                 write(24,680) red(color_recv(RGB_offset)), green(color_recv(RGB_offset)), blue(color_recv(RGB_offset))
+                 write(24,680) red(color_recv_ps_element_mesh(RGB_offset)),&
+                               green(color_recv_ps_element_mesh(RGB_offset)),&
+                               blue(color_recv_ps_element_mesh(RGB_offset))
               else
                  RGB_offset = RGB_offset + 1
-                 write(24,679) red(color_recv(RGB_offset)), green(color_recv(RGB_offset)), blue(color_recv(RGB_offset))
+                 write(24,679) red(color_recv_ps_element_mesh(RGB_offset)),&
+                               green(color_recv_ps_element_mesh(RGB_offset)),& 
+                               blue(color_recv_ps_element_mesh(RGB_offset))
               endif
            endif
            if(meshvect) then
@@ -2076,15 +2149,15 @@
            if(numbers == 1) then
               if(colors == 1) write(24,*) '1 setgray'
               buffer_offset = buffer_offset + 1
-              write(24,500) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+              write(24,500) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
               RGB_offset = RGB_offset + 1
-              write(24,502) color_recv(RGB_offset)
+              write(24,502) color_recv_ps_element_mesh(RGB_offset)
            endif
 
         enddo
 
-        deallocate(coorg_recv)
-        deallocate(color_recv)
+        !deallocate(coorg_recv)
+        !deallocate(color_recv)
 
      enddo
   else
@@ -2105,15 +2178,15 @@
      if ( numbers == 1 ) then
         nb_color_per_elem = nb_color_per_elem + 1
      endif
-     call MPI_SEND (coorg_send(1,1), 2*nspec*nb_coorg_per_elem, &
+     call MPI_SEND (coorg_send_ps_element_mesh(1,1), 2*nspec*nb_coorg_per_elem, &
           MPI_DOUBLE_PRECISION, 0, 43, MPI_COMM_WORLD, ier)
      if ( nb_color_per_elem > 0 ) then
-        call MPI_SEND (color_send(1), nspec*nb_color_per_elem, &
+        call MPI_SEND (color_send_ps_element_mesh(1), nspec*nb_color_per_elem, &
              MPI_INTEGER, 0, 43, MPI_COMM_WORLD, ier)
      endif
 
-     deallocate(coorg_send)
-     deallocate(color_send)
+     !deallocate(coorg_send)
+     !deallocate(color_send)
 
   endif
 
@@ -2142,7 +2215,7 @@
   endif
 
   if ( myrank /= 0 .and. anyabs ) then
-     allocate(coorg_send(4,4*nelemabs))
+     !allocate(coorg_send(4,4*nelemabs))
   endif
   buffer_offset = 0
 
@@ -2182,10 +2255,10 @@
      write(24,602) x1,z1,x2,z2
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = x1
-     coorg_send(2,buffer_offset) = z1
-     coorg_send(3,buffer_offset) = x2
-     coorg_send(4,buffer_offset) = z2
+     coorg_send_ps_abs(1,buffer_offset) = x1
+     coorg_send_ps_abs(2,buffer_offset) = z1
+     coorg_send_ps_abs(3,buffer_offset) = x2
+     coorg_send_ps_abs(4,buffer_offset) = z2
   endif
 
   endif
@@ -2200,25 +2273,25 @@
      do iproc = 1, nproc-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 44, MPI_COMM_WORLD, request_mpi_status, ier)
         if ( nspec_recv > 0 ) then
-        allocate(coorg_recv(4,nspec_recv))
-        call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
+        !allocate(coorg_recv(4,nspec_recv))
+        call MPI_RECV (coorg_recv_ps_abs(1,1), 4*nspec_recv, &
              MPI_DOUBLE_PRECISION, iproc, 44, MPI_COMM_WORLD, request_mpi_status, ier)
 
         buffer_offset = 0
         do ispec = 1, nspec_recv
            buffer_offset = buffer_offset + 1
-           write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
-                coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
+           write(24,602) coorg_recv_ps_abs(1,buffer_offset), coorg_recv_ps_abs(2,buffer_offset), &
+                coorg_recv_ps_abs(3,buffer_offset), coorg_recv_ps_abs(4,buffer_offset)
         enddo
-        deallocate(coorg_recv)
+        !deallocate(coorg_recv)
         endif
      enddo
   else
      call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 44, MPI_COMM_WORLD, ier)
      if ( buffer_offset > 0 ) then
-     call MPI_SEND (coorg_send(1,1), 4*buffer_offset, &
+     call MPI_SEND (coorg_send_ps_abs(1,1), 4*buffer_offset, &
           MPI_DOUBLE_PRECISION, 0, 44, MPI_COMM_WORLD, ier)
-     deallocate(coorg_send)
+     !deallocate(coorg_send)
      endif
 
   endif
@@ -2250,7 +2323,7 @@
   endif
 
   if ( myrank /= 0 .and. nelem_acoustic_surface > 0 ) then
-     allocate(coorg_send(4,4*nelem_acoustic_surface))
+     !allocate(coorg_send(4,4*nelem_acoustic_surface))
   endif
   buffer_offset = 0
 
@@ -2270,10 +2343,10 @@
      write(24,602) x1,z1,x2,z2
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = x1
-     coorg_send(2,buffer_offset) = z1
-     coorg_send(3,buffer_offset) = x2
-     coorg_send(4,buffer_offset) = z2
+     coorg_send_ps_free_surface(1,buffer_offset) = x1
+     coorg_send_ps_free_surface(2,buffer_offset) = z1
+     coorg_send_ps_free_surface(3,buffer_offset) = x2
+     coorg_send_ps_free_surface(4,buffer_offset) = z2
   endif
 
   enddo
@@ -2285,25 +2358,25 @@
      do iproc = 1, nproc-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 44, MPI_COMM_WORLD, request_mpi_status, ier)
         if ( nspec_recv > 0 ) then
-        allocate(coorg_recv(4,nspec_recv))
-        call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
+        !allocate(coorg_recv(4,nspec_recv))
+        call MPI_RECV (coorg_recv_ps_free_surface(1,1), 4*nspec_recv, &
              MPI_DOUBLE_PRECISION, iproc, 44, MPI_COMM_WORLD, request_mpi_status, ier)
 
         buffer_offset = 0
         do ispec = 1, nspec_recv
            buffer_offset = buffer_offset + 1
-           write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
-                coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
+           write(24,602) coorg_recv_ps_free_surface(1,buffer_offset), coorg_recv_ps_free_surface(2,buffer_offset), &
+                coorg_recv_ps_free_surface(3,buffer_offset), coorg_recv_ps_free_surface(4,buffer_offset)
         enddo
-        deallocate(coorg_recv)
+        !deallocate(coorg_recv)
         endif
      enddo
   else
      call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 44, MPI_COMM_WORLD, ier)
      if ( buffer_offset > 0 ) then
-     call MPI_SEND (coorg_send(1,1), 4*buffer_offset, &
+     call MPI_SEND (coorg_send_ps_free_surface(1,1), 4*buffer_offset, &
           MPI_DOUBLE_PRECISION, 0, 44, MPI_COMM_WORLD, ier)
-     deallocate(coorg_send)
+     !deallocate(coorg_send)
      endif
 
   endif
@@ -2459,7 +2532,7 @@
   endif
 
   if ( myrank /= 0 ) then
-     allocate(coorg_send(8,nspec*pointsdisp_loop*pointsdisp_loop))
+     !allocate(coorg_send(8,nspec*pointsdisp_loop*pointsdisp_loop))
 
   endif
   buffer_offset = 0
@@ -2553,14 +2626,14 @@
 
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = xb
-     coorg_send(2,buffer_offset) = zb
-     coorg_send(3,buffer_offset) = xa
-     coorg_send(4,buffer_offset) = za
-     coorg_send(5,buffer_offset) = x2
-     coorg_send(6,buffer_offset) = z2
-     coorg_send(7,buffer_offset) = x1
-     coorg_send(8,buffer_offset) = z1
+     coorg_send_ps_vector_field(1,buffer_offset) = xb
+     coorg_send_ps_vector_field(2,buffer_offset) = zb
+     coorg_send_ps_vector_field(3,buffer_offset) = xa
+     coorg_send_ps_vector_field(4,buffer_offset) = za
+     coorg_send_ps_vector_field(5,buffer_offset) = x2
+     coorg_send_ps_vector_field(6,buffer_offset) = z2
+     coorg_send_ps_vector_field(7,buffer_offset) = x1
+     coorg_send_ps_vector_field(8,buffer_offset) = z1
   endif
 
   endif
@@ -2575,17 +2648,18 @@
      do iproc = 1, nproc-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 46, MPI_COMM_WORLD, request_mpi_status, ier)
         if ( nspec_recv > 0 ) then
-        allocate(coorg_recv(8,nspec_recv))
-        call MPI_RECV (coorg_recv(1,1), 8*nspec_recv, &
+        !allocate(coorg_recv(8,nspec_recv))
+        call MPI_RECV (coorg_recv_ps_vector_field(1,1), 8*nspec_recv, &
              MPI_DOUBLE_PRECISION, iproc, 46, MPI_COMM_WORLD, request_mpi_status, ier)
 
         buffer_offset = 0
         do ispec = 1, nspec_recv
            buffer_offset = buffer_offset + 1
-             write(postscript_line,700) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
-                  coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset), &
-                  coorg_recv(5,buffer_offset), coorg_recv(6,buffer_offset), &
-                  coorg_recv(7,buffer_offset), coorg_recv(8,buffer_offset)
+             write(postscript_line,700) coorg_recv_ps_vector_field(1,buffer_offset), &
+                  coorg_recv_ps_vector_field(2,buffer_offset), &
+                  coorg_recv_ps_vector_field(3,buffer_offset), coorg_recv_ps_vector_field(4,buffer_offset), &
+                  coorg_recv_ps_vector_field(5,buffer_offset), coorg_recv_ps_vector_field(6,buffer_offset), &
+                  coorg_recv_ps_vector_field(7,buffer_offset), coorg_recv_ps_vector_field(8,buffer_offset)
              ! suppress useless white spaces to make PostScript file smaller
 
              ! suppress leading white spaces again, if any
@@ -2606,15 +2680,15 @@
              ch2(index_char) = ch1(line_length)
              write(24,"(100(a1))") (ch2(ii), ii=1,index_char)
           enddo
-          deallocate(coorg_recv)
+          !deallocate(coorg_recv)
           endif
        enddo
     else
        call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 46, MPI_COMM_WORLD, ier)
        if ( buffer_offset > 0 ) then
-       call MPI_SEND (coorg_send(1,1), 8*buffer_offset, &
+       call MPI_SEND (coorg_send_ps_vector_field(1,1), 8*buffer_offset, &
             MPI_DOUBLE_PRECISION, 0, 46, MPI_COMM_WORLD, ier)
-       deallocate(coorg_send)
+       !deallocate(coorg_send)
        endif
 
   endif
@@ -2626,7 +2700,7 @@
   else
 
   if ( myrank /= 0 ) then
-     allocate(coorg_send(8,npoin))
+     !allocate(coorg_send(8,npoin))
 
   endif
   buffer_offset = 0
@@ -2694,14 +2768,14 @@
 
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = xb
-     coorg_send(2,buffer_offset) = zb
-     coorg_send(3,buffer_offset) = xa
-     coorg_send(4,buffer_offset) = za
-     coorg_send(5,buffer_offset) = x2
-     coorg_send(6,buffer_offset) = z2
-     coorg_send(7,buffer_offset) = x1
-     coorg_send(8,buffer_offset) = z1
+     coorg_send_ps_vector_field(1,buffer_offset) = xb
+     coorg_send_ps_vector_field(2,buffer_offset) = zb
+     coorg_send_ps_vector_field(3,buffer_offset) = xa
+     coorg_send_ps_vector_field(4,buffer_offset) = za
+     coorg_send_ps_vector_field(5,buffer_offset) = x2
+     coorg_send_ps_vector_field(6,buffer_offset) = z2
+     coorg_send_ps_vector_field(7,buffer_offset) = x1
+     coorg_send_ps_vector_field(8,buffer_offset) = z1
   endif
   endif
 
@@ -2713,17 +2787,18 @@
      do iproc = 1, nproc-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 47, MPI_COMM_WORLD, request_mpi_status, ier)
         if ( nspec_recv > 0 ) then
-        allocate(coorg_recv(8,nspec_recv))
-        call MPI_RECV (coorg_recv(1,1), 8*nspec_recv, &
+        !allocate(coorg_recv(8,nspec_recv))
+        call MPI_RECV (coorg_recv_ps_vector_field(1,1), 8*nspec_recv, &
              MPI_DOUBLE_PRECISION, iproc, 47, MPI_COMM_WORLD, request_mpi_status, ier)
 
         buffer_offset = 0
         do ispec = 1, nspec_recv
            buffer_offset = buffer_offset + 1
-             write(postscript_line,700) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
-                  coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset), &
-                  coorg_recv(5,buffer_offset), coorg_recv(6,buffer_offset), &
-                  coorg_recv(7,buffer_offset), coorg_recv(8,buffer_offset)
+             write(postscript_line,700) coorg_recv_ps_vector_field(1,buffer_offset), &
+                  coorg_recv_ps_vector_field(2,buffer_offset), &
+                  coorg_recv_ps_vector_field(3,buffer_offset), coorg_recv_ps_vector_field(4,buffer_offset), &
+                  coorg_recv_ps_vector_field(5,buffer_offset), coorg_recv_ps_vector_field(6,buffer_offset), &
+                  coorg_recv_ps_vector_field(7,buffer_offset), coorg_recv_ps_vector_field(8,buffer_offset)
              ! suppress useless white spaces to make PostScript file smaller
 
              ! suppress leading white spaces again, if any
@@ -2744,15 +2819,15 @@
              ch2(index_char) = ch1(line_length)
              write(24,"(100(a1))") (ch2(ii), ii=1,index_char)
           enddo
-          deallocate(coorg_recv)
+          !deallocate(coorg_recv)
           endif
        enddo
     else
        call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 47, MPI_COMM_WORLD, ier)
        if ( buffer_offset > 0 ) then
-       call MPI_SEND (coorg_send(1,1), 8*buffer_offset, &
+       call MPI_SEND (coorg_send_ps_vector_field(1,1), 8*buffer_offset, &
             MPI_DOUBLE_PRECISION, 0, 47, MPI_COMM_WORLD, ier)
-       deallocate(coorg_send)
+       !deallocate(coorg_send)
        endif
   endif
 
