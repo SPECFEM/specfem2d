@@ -466,7 +466,7 @@ subroutine assemble_MPI_vector_ac(array_val1,npoin, &
   end do
 
   do inum_interface = 1, ninterface_acoustic*2
-  
+
     call MPI_Wait (tab_requests_send_recv_acoustic(inum_interface), status_acoustic, ier)
 
   enddo
@@ -573,15 +573,15 @@ subroutine assemble_MPI_vector_el(array_val2,npoin, &
     if ( ier /= MPI_SUCCESS ) then
       call exit_mpi('MPI_Irecv unsuccessful in assemble_MPI_vector_el')
     end if
-    
+
   end do
 
   do inum_interface = 1, ninterface_elastic*2
-  
+
     call MPI_Wait (tab_requests_send_recv_elastic(inum_interface), status_elastic, ier)
 
   enddo
-  
+
   do inum_interface = 1, ninterface_elastic
 
      num_interface = inum_interfaces_elastic(inum_interface)

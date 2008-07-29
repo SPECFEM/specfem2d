@@ -1449,71 +1449,56 @@ if(ipass == 1) then
 
   allocate(perm(nspec))
 
-  if(ACTUALLY_IMPLEMENT_PERM_OUT) then
-
-  allocate(check_perm(nspec_outer))
-  call get_perm(ibool_outer,perm(1:nspec_outer),LIMIT_MULTI_CUTHILL,nspec_outer,npoin_outer)
-! check that the permutation obtained is bijective
-  check_perm(:) = -1
-  do ispec = 1,nspec_outer
-    check_perm(perm(ispec)) = ispec
+! use identity permutation by default
+  do ispec = 1,nspec
+    perm(ispec) = ispec
   enddo
-  if(minval(check_perm) /= 1) stop 'minval check_perm is incorrect for outer'
-  if(maxval(check_perm) /= nspec_outer) stop 'maxval check_perm is incorrect for outer'
-  deallocate(check_perm)
-  deallocate(ibool_outer)
-
-  else
-! use identity permutation if flag is off
-    do ispec = 1,nspec_outer
-      perm(ispec) = ispec
-    enddo
-  endif
-
-  if(ACTUALLY_IMPLEMENT_PERM_INN) then
-
-  allocate(check_perm(nspec_inner))
-  call get_perm(ibool_inner,perm(nspec_outer+1:nspec),LIMIT_MULTI_CUTHILL,nspec_inner,npoin_inner)
-! check that the permutation obtained is bijective
-  check_perm(:) = -1
-  do ispec = 1,nspec_inner
-    check_perm(perm(nspec_outer+ispec)) = ispec
-  enddo
-  if(minval(check_perm) /= 1) stop 'minval check_perm is incorrect for inner'
-  if(maxval(check_perm) /= nspec_inner) stop 'maxval check_perm is incorrect for inner'
-  deallocate(check_perm)
-! add the right offset
-  perm(nspec_outer+1:nspec) = perm(nspec_outer+1:nspec) + nspec_outer
-
-  deallocate(ibool_inner)
-
-  else
-! use identity permutation if flag is off
-    do ispec = nspec_outer+1,nspec
-      perm(ispec) = ispec
-    enddo
-  endif
 
   if(ACTUALLY_IMPLEMENT_PERM_WHOLE) then
 
-  allocate(check_perm(nspec))
-  call get_perm(ibool,perm(1:nspec),LIMIT_MULTI_CUTHILL,nspec,npoin)
+    allocate(check_perm(nspec))
+    call get_perm(ibool,perm,LIMIT_MULTI_CUTHILL,nspec,npoin)
 ! check that the permutation obtained is bijective
-  check_perm(:) = -1
-  do ispec = 1,nspec
-    check_perm(perm(ispec)) = ispec
-  enddo
-  if(minval(check_perm) /= 1) stop 'minval check_perm is incorrect for whole'
-  if(maxval(check_perm) /= nspec) stop 'maxval check_perm is incorrect for whole'
-  deallocate(check_perm)
-! add the right offset
-  perm(1:nspec) = perm(1:nspec) + 0
+    check_perm(:) = -1
+    do ispec = 1,nspec
+      check_perm(perm(ispec)) = ispec
+    enddo
+    if(minval(check_perm) /= 1) stop 'minval check_perm is incorrect for whole'
+    if(maxval(check_perm) /= nspec) stop 'maxval check_perm is incorrect for whole'
+    deallocate(check_perm)
 
   else
-! use identity permutation if flag is off
-    do ispec = 1,nspec
-      perm(ispec) = ispec
+
+  if(ACTUALLY_IMPLEMENT_PERM_OUT) then
+    allocate(check_perm(nspec_outer))
+    call get_perm(ibool_outer,perm(1:nspec_outer),LIMIT_MULTI_CUTHILL,nspec_outer,npoin_outer)
+! check that the permutation obtained is bijective
+    check_perm(:) = -1
+    do ispec = 1,nspec_outer
+      check_perm(perm(ispec)) = ispec
     enddo
+    if(minval(check_perm) /= 1) stop 'minval check_perm is incorrect for outer'
+    if(maxval(check_perm) /= nspec_outer) stop 'maxval check_perm is incorrect for outer'
+    deallocate(check_perm)
+    deallocate(ibool_outer)
+  endif
+
+  if(ACTUALLY_IMPLEMENT_PERM_INN) then
+    allocate(check_perm(nspec_inner))
+    call get_perm(ibool_inner,perm(nspec_outer+1:nspec),LIMIT_MULTI_CUTHILL,nspec_inner,npoin_inner)
+! check that the permutation obtained is bijective
+    check_perm(:) = -1
+    do ispec = 1,nspec_inner
+      check_perm(perm(nspec_outer+ispec)) = ispec
+    enddo
+    if(minval(check_perm) /= 1) stop 'minval check_perm is incorrect for inner'
+    if(maxval(check_perm) /= nspec_inner) stop 'maxval check_perm is incorrect for inner'
+    deallocate(check_perm)
+! add the right offset
+    perm(nspec_outer+1:nspec) = perm(nspec_outer+1:nspec) + nspec_outer
+    deallocate(ibool_inner)
+  endif
+
   endif
 
 endif
