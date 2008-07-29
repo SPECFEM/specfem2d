@@ -783,7 +783,13 @@ endif
       read(IIN,*) numabsread,codeabsread(1),codeabsread(2),codeabsread(3),codeabsread(4), ibegin_bottom(inum), iend_bottom(inum), &
            jbegin_right(inum), jend_right(inum), ibegin_top(inum), iend_top(inum), jbegin_left(inum), jend_left(inum)
       if(numabsread < 1 .or. numabsread > nspec) call exit_MPI('Wrong absorbing element number')
-      numabs(inum) = numabsread
+      if(ipass == 1) then
+        numabs(inum) = numabsread
+      else if(ipass == 2) then
+        numabs(inum) = perm(antecedent_list(numabsread))
+      else
+        call exit_MPI('error: maximum number of passes is 2')
+      endif
       codeabs(IBOTTOM,inum) = codeabsread(1)
       codeabs(IRIGHT,inum) = codeabsread(2)
       codeabs(ITOP,inum) = codeabsread(3)
