@@ -61,6 +61,7 @@ O = obj
 # Use of option -heap-arrays <size> can be required, depending on the size of the simulation. 
 # Another workaround can be to increase your stack size (ulimit -s).
 #F90 = ifort
+#F90 = mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
 #CC = gcc
 #FLAGS_NOCHECK=-O3 -xP -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check nobounds
 #FLAGS_CHECK = $(FLAGS_NOCHECK)
