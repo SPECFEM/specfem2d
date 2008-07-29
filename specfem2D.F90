@@ -389,6 +389,36 @@
   integer, dimension(:), allocatable :: knods_read
   integer, dimension(:), allocatable :: perm,antecedent_list,check_perm
 
+! arrays for plotpost
+  integer :: d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
+          d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
+          d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model, &
+          d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model
+  double precision, dimension(:,:), allocatable  :: coorg_send_ps_velocity_model
+  double precision, dimension(:,:), allocatable  :: coorg_recv_ps_velocity_model
+  double precision, dimension(:,:), allocatable  :: RGB_send_ps_velocity_model
+  double precision, dimension(:,:), allocatable  :: RGB_recv_ps_velocity_model
+  integer :: d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh, &
+          d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh, &
+          d1_color_send_ps_element_mesh, &
+          d1_color_recv_ps_element_mesh
+  double precision, dimension(:,:), allocatable  :: coorg_send_ps_element_mesh
+  double precision, dimension(:,:), allocatable  :: coorg_recv_ps_element_mesh
+  integer, dimension(:), allocatable  :: color_send_ps_element_mesh
+  integer, dimension(:), allocatable  :: color_recv_ps_element_mesh
+  integer :: d1_coorg_send_ps_abs, d2_coorg_send_ps_abs, &
+           d1_coorg_recv_ps_abs, d2_coorg_recv_ps_abs
+  double precision, dimension(:,:), allocatable  :: coorg_send_ps_abs
+  double precision, dimension(:,:), allocatable  :: coorg_recv_ps_abs
+  integer :: d1_coorg_send_ps_free_surface, d2_coorg_send_ps_free_surface, &
+           d1_coorg_recv_ps_free_surface, d2_coorg_recv_ps_free_surface
+  double precision, dimension(:,:), allocatable  :: coorg_send_ps_free_surface
+  double precision, dimension(:,:), allocatable  :: coorg_recv_ps_free_surface
+  integer :: d1_coorg_send_ps_vector_field, d2_coorg_send_ps_vector_field, &
+           d1_coorg_recv_ps_vector_field, d2_coorg_recv_ps_vector_field
+  double precision, dimension(:,:), allocatable  :: coorg_send_ps_vector_field
+  double precision, dimension(:,:), allocatable  :: coorg_recv_ps_vector_field
+
 !***********************************************************************
 !
 !             i n i t i a l i z a t i o n    p h a s e
@@ -2348,6 +2378,134 @@ endif
   seismo_offset = 0
   seismo_current = 0
 
+! allocate arrays for postscript output
+#ifdef USE_MPI
+  if(modelvect) then
+  d1_coorg_recv_ps_velocity_model=2
+  call mpi_allreduce(nspec,d2_coorg_recv_ps_velocity_model,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+  d2_coorg_recv_ps_velocity_model=d2_coorg_recv_ps_velocity_model*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4
+  d1_RGB_recv_ps_velocity_model=1
+  call mpi_allreduce(nspec,d2_RGB_recv_ps_velocity_model,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+  d2_RGB_recv_ps_velocity_model=d2_RGB_recv_ps_velocity_model*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4
+  else
+  d1_coorg_recv_ps_velocity_model=1
+  d2_coorg_recv_ps_velocity_model=1
+  d1_RGB_recv_ps_velocity_model=1
+  d2_RGB_recv_ps_velocity_model=1
+  endif
+
+  d1_coorg_send_ps_element_mesh=2
+  if ( ngnod == 4 ) then
+    if ( numbers == 1 ) then
+      d2_coorg_send_ps_element_mesh=nspec*5
+      if ( colors == 1 ) then
+        d1_color_send_ps_element_mesh=2*nspec
+      else
+        d1_color_send_ps_element_mesh=1*nspec
+      endif
+    else
+      d2_coorg_send_ps_element_mesh=nspec*6
+      if ( colors == 1 ) then
+        d1_color_send_ps_element_mesh=1*nspec
+      endif
+    endif
+  else
+    if ( numbers == 1 ) then
+      d2_coorg_send_ps_element_mesh=nspec*((pointsdisp-1)*3+max(0,pointsdisp-2)+1+1)
+      if ( colors == 1 ) then
+        d1_color_send_ps_element_mesh=2*nspec
+      else
+        d1_color_send_ps_element_mesh=1*nspec
+      endif
+    else
+      d2_coorg_send_ps_element_mesh=nspec*((pointsdisp-1)*3+max(0,pointsdisp-2)+1)
+      if ( colors == 1 ) then
+        d1_color_send_ps_element_mesh=1*nspec
+      endif
+    endif
+  endif
+
+call mpi_allreduce(d1_coorg_send_ps_element_mesh,d1_coorg_recv_ps_element_mesh,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+call mpi_allreduce(d2_coorg_send_ps_element_mesh,d2_coorg_recv_ps_element_mesh,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+call mpi_allreduce(d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+
+  d1_coorg_send_ps_abs=4
+  d2_coorg_send_ps_abs=4*nelemabs
+call mpi_allreduce(d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+call mpi_allreduce(d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+
+  d1_coorg_send_ps_free_surface=4
+  d2_coorg_send_ps_free_surface=4*nelem_acoustic_surface
+call mpi_allreduce(d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+call mpi_allreduce(d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+
+  d1_coorg_send_ps_vector_field=8
+  if(interpol) then
+    if(plot_lowerleft_corner_only) then
+      d2_coorg_send_ps_vector_field=nspec*1*1
+    else
+      d2_coorg_send_ps_vector_field=nspec*pointsdisp*pointsdisp
+    endif
+  else
+    d2_coorg_send_ps_vector_field=npoin
+  endif
+call mpi_allreduce(d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+
+
+#else
+  d1_coorg_recv_ps_velocity_model=1
+  d2_coorg_recv_ps_velocity_model=1
+  d1_RGB_recv_ps_velocity_model=1
+  d2_RGB_recv_ps_velocity_model=1
+
+  d1_coorg_send_ps_element_mesh=1
+  d2_coorg_send_ps_element_mesh=1
+  d1_coorg_recv_ps_element_mesh=1
+  d2_coorg_recv_ps_element_mesh=1
+  d1_color_send_ps_element_mesh=1
+  d1_color_recv_ps_element_mesh=1
+
+  d1_coorg_send_ps_abs=1
+  d2_coorg_send_ps_abs=1
+  d1_coorg_recv_ps_abs=1
+  d2_coorg_recv_ps_abs=1
+  d1_coorg_send_ps_free_surface=1
+  d2_coorg_send_ps_free_surface=1
+  d1_coorg_recv_ps_free_surface=1
+  d2_coorg_recv_ps_free_surface=1
+
+  d1_coorg_send_ps_vector_field=1
+  d2_coorg_send_ps_vector_field=1
+  d1_coorg_recv_ps_vector_field=1
+  d2_coorg_recv_ps_vector_field=1
+
+#endif
+  d1_coorg_send_ps_velocity_model=2
+  d2_coorg_send_ps_velocity_model=nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4
+  d1_RGB_send_ps_velocity_model=1
+  d2_RGB_send_ps_velocity_model=nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)
+ 
+  allocate(coorg_send_ps_velocity_model(d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model))
+  allocate(RGB_send_ps_velocity_model(d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model))
+
+  allocate(coorg_recv_ps_velocity_model(d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model))
+  allocate(RGB_recv_ps_velocity_model(d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model))
+
+  allocate(coorg_send_ps_element_mesh(d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh))
+  allocate(coorg_recv_ps_element_mesh(d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh))
+  allocate(color_send_ps_element_mesh(d1_color_send_ps_element_mesh))
+  allocate(color_recv_ps_element_mesh(d1_color_recv_ps_element_mesh))
+
+  allocate(coorg_send_ps_abs(d1_coorg_send_ps_abs,d2_coorg_send_ps_abs))
+  allocate(coorg_recv_ps_abs(d1_coorg_recv_ps_abs,d2_coorg_recv_ps_abs))
+
+  allocate(coorg_send_ps_free_surface(d1_coorg_send_ps_free_surface,d2_coorg_send_ps_free_surface))
+  allocate(coorg_recv_ps_free_surface(d1_coorg_recv_ps_free_surface,d2_coorg_recv_ps_free_surface))
+
+  allocate(coorg_send_ps_vector_field(d1_coorg_send_ps_vector_field,d2_coorg_send_ps_vector_field))
+  allocate(coorg_recv_ps_vector_field(d1_coorg_recv_ps_vector_field,d2_coorg_recv_ps_vector_field))
+
 ! *********************************************************
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
 ! *********************************************************
@@ -2820,13 +2978,25 @@ endif
     call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
           it,deltat,coorg,xinterp,zinterp,shape2D_display, &
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
-          numabs,codeabs,anyabs, &
-          nelem_acoustic_surface, acoustic_edges, &
+          numabs,codeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
           simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
-          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges,myrank,nproc,ier)
+          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges,myrank,nproc,ier,&
+          d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
+          d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
+          d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model,d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model, &
+          coorg_send_ps_velocity_model,RGB_send_ps_velocity_model,coorg_recv_ps_velocity_model,RGB_recv_ps_velocity_model, &
+          d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh,d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh, &
+          d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh, &
+          coorg_send_ps_element_mesh,color_send_ps_element_mesh,coorg_recv_ps_element_mesh,color_recv_ps_element_mesh, &
+          d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs,d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs, &
+          coorg_send_ps_abs,coorg_recv_ps_abs, &
+          d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface,d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface, &
+          coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
+          d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field,d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
+          coorg_send_ps_vector_field,coorg_recv_ps_vector_field)
 
   else if(imagetype == 2) then
 
@@ -2838,13 +3008,25 @@ endif
     call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
           it,deltat,coorg,xinterp,zinterp,shape2D_display, &
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
-          numabs,codeabs,anyabs, &
-          nelem_acoustic_surface, acoustic_edges, &
+          numabs,codeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
           simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
-          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges,myrank,nproc,ier)
+          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges,myrank,nproc,ier,&
+          d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
+          d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
+          d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model,d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model, &
+          coorg_send_ps_velocity_model,RGB_send_ps_velocity_model,coorg_recv_ps_velocity_model,RGB_recv_ps_velocity_model, &
+          d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh,d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh, &
+          d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh, &
+          coorg_send_ps_element_mesh,color_send_ps_element_mesh,coorg_recv_ps_element_mesh,color_recv_ps_element_mesh, &
+          d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs,d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs, &
+          coorg_send_ps_abs,coorg_recv_ps_abs, &
+          d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface,d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface, &
+          coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
+          d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field,d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
+          coorg_send_ps_vector_field,coorg_recv_ps_vector_field)
 
   else if(imagetype == 3) then
 
@@ -2856,13 +3038,25 @@ endif
     call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
           it,deltat,coorg,xinterp,zinterp,shape2D_display, &
           Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
-          numabs,codeabs,anyabs, &
-          nelem_acoustic_surface, acoustic_edges, &
+          numabs,codeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
           simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
-          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges,myrank,nproc,ier)
+          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges,myrank,nproc,ier,&
+          d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
+          d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
+          d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model,d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model, &
+          coorg_send_ps_velocity_model,RGB_send_ps_velocity_model,coorg_recv_ps_velocity_model,RGB_recv_ps_velocity_model, &
+          d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh,d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh, &
+          d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh, &
+          coorg_send_ps_element_mesh,color_send_ps_element_mesh,coorg_recv_ps_element_mesh,color_recv_ps_element_mesh, &
+          d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs,d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs, &
+          coorg_send_ps_abs,coorg_recv_ps_abs, &
+          d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface,d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface, &
+          coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
+          d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field,d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
+          coorg_send_ps_vector_field,coorg_recv_ps_vector_field)
 
   else if(imagetype == 4) then
 
