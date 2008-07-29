@@ -1188,13 +1188,13 @@ contains
   !--------------------------------------------------
   ! Partitioning using SCOTCH
   !--------------------------------------------------
-  subroutine Part_scotch(nelmnts, xadj, adjncy, vwgt, adjwgt, nparts, nedges, edgecut, part, scotch_strategy)
+  subroutine Part_scotch(nelmnts, xadj, adjncy, vwgt, adjwgt, nparts, nb_edges, edgecut, part, scotch_strategy)
 
     include "constants.h"
 
     include "scotchf.h"
 
-    integer, intent(in)  :: nelmnts, nparts, nedges
+    integer, intent(in)  :: nelmnts, nparts, nb_edges
     integer, intent(inout)  :: edgecut
     integer, dimension(0:nelmnts), intent(in)  :: xadj
     integer, dimension(0:max_neighbor*nelmnts-1), intent(in)  :: adjncy
@@ -1231,7 +1231,7 @@ contains
     CALL SCOTCHFGRAPHBUILD (SCOTCHGRAPH (1), 0, nelmnts, &
          xadj (0), xadj (0), &
          xadj (0), xadj (0), &
-         nedges, &
+         nb_edges, &
          adjncy (0), adjwgt (0), IERR)
     IF (IERR .NE. 0) THEN
        PRINT *, 'ERROR : MAIN : Cannot build graph'
