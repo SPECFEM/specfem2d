@@ -68,8 +68,7 @@
           coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
           d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field, &
           d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
-          coorg_send_ps_vector_field,coorg_recv_ps_vector_field &
-)
+          coorg_send_ps_vector_field,coorg_recv_ps_vector_field)
 
 !
 ! PostScript display routine
@@ -150,10 +149,6 @@
 
   double precision, dimension(:,:), allocatable  :: coorg_send
   double precision, dimension(:,:), allocatable  :: coorg_recv
-  integer, dimension(:), allocatable  :: color_send
-  integer, dimension(:), allocatable  :: color_recv
-  double precision, dimension(:,:), allocatable  :: RGB_send
-  double precision, dimension(:,:), allocatable  :: RGB_recv
   integer  :: nspec_recv
   integer  :: buffer_offset, RGB_offset
 
@@ -1626,10 +1621,6 @@ coorg_recv_ps_vector_field
 !
   if(modelvect) then
 
-  if ( myrank /= 0 ) then
-     !allocate(coorg_send(2,nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4))
-     !allocate(RGB_send(1,nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)))
-  endif
   buffer_offset = 0
   RGB_offset = 0
 
@@ -1733,8 +1724,6 @@ coorg_recv_ps_vector_field
 
      do iproc = 1, nproc-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
-        !allocate(coorg_recv(2,nspec_recv*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4))
-        !allocate(RGB_recv(1,nspec_recv*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)))
         call MPI_RECV (coorg_recv_ps_velocity_model(1,1), &
              2*nspec_recv*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4, &
              MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
@@ -1764,9 +1753,6 @@ coorg_recv_ps_vector_field
            enddo
         enddo
 
-        !deallocate(coorg_recv)
-        !deallocate(RGB_recv)
-
      enddo
   else
      call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
@@ -1774,10 +1760,6 @@ coorg_recv_ps_vector_field
           MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
      call MPI_SEND (RGB_send_ps_velocity_model(1,1), nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp), &
           MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
-
-     !deallocate(coorg_send)
-     !deallocate(RGB_send)
-
   endif
 
 
@@ -1796,47 +1778,12 @@ coorg_recv_ps_vector_field
      write(24,*) '%'
   endif
 
-  if ( myrank /= 0 ) then
-
-     if ( ngnod == 4 ) then
-        if ( numbers == 1 ) then
-           !allocate(coorg_send(2,nspec*5))
-           if ( colors == 1 ) then
-              !allocate(color_send(2*nspec))
-           else
-              !allocate(color_send(1*nspec))
-           endif
-        else
-           !allocate(coorg_send(2,nspec*6))
-           if ( colors == 1 ) then
-              !allocate(color_send(1*nspec))
-           endif
-        endif
-     else
-        if ( numbers == 1 ) then
-           !allocate(coorg_send(2,nspec*((pointsdisp-1)*3+max(0,pointsdisp-2)+1+1)))
-           if ( colors == 1 ) then
-              !allocate(color_send(2*nspec))
-           else
-              !allocate(color_send(1*nspec))
-           endif
-        else
-           !allocate(coorg_send(2,nspec*((pointsdisp-1)*3+max(0,pointsdisp-2)+1)))
-           if ( colors == 1 ) then
-              !allocate(color_send(1*nspec))
-           endif
-        endif
-     endif
-
-  endif
   buffer_offset = 0
   RGB_offset = 0
 
   do ispec=1,nspec
 
-  if ( myrank == 0 ) then
-     write(24,*) '% elem ',ispec
-  endif
+  if ( myrank == 0 ) write(24,*) '% elem ',ispec
 
   do i=1,pointsdisp
   do j=1,pointsdisp
@@ -2077,10 +2024,6 @@ coorg_recv_ps_vector_field
            nb_color_per_elem = nb_color_per_elem + 1
         endif
 
-        !allocate(coorg_recv(2,nspec_recv*nb_coorg_per_elem))
-        if ( nb_color_per_elem > 0 ) then
-           !allocate(color_recv(nspec_recv*nb_color_per_elem))
-        endif
         call MPI_RECV (coorg_recv_ps_element_mesh(1,1), 2*nspec_recv*nb_coorg_per_elem, &
              MPI_DOUBLE_PRECISION, iproc, 43, MPI_COMM_WORLD, request_mpi_status, ier)
         call MPI_RECV (color_recv_ps_element_mesh(1), nspec_recv*nb_coorg_per_elem, &
@@ -2135,7 +2078,7 @@ coorg_recv_ps_vector_field
               else
                  RGB_offset = RGB_offset + 1
                  write(24,679) red(color_recv_ps_element_mesh(RGB_offset)),&
-                               green(color_recv_ps_element_mesh(RGB_offset)),& 
+                               green(color_recv_ps_element_mesh(RGB_offset)),&
                                blue(color_recv_ps_element_mesh(RGB_offset))
               endif
            endif
@@ -2155,9 +2098,6 @@ coorg_recv_ps_vector_field
            endif
 
         enddo
-
-        !deallocate(coorg_recv)
-        !deallocate(color_recv)
 
      enddo
   else
@@ -2185,9 +2125,6 @@ coorg_recv_ps_vector_field
              MPI_INTEGER, 0, 43, MPI_COMM_WORLD, ier)
      endif
 
-     !deallocate(coorg_send)
-     !deallocate(color_send)
-
   endif
 
 #endif
@@ -2214,9 +2151,6 @@ coorg_recv_ps_vector_field
   write(24,*) '% 0.02 CM setlinewidth'
   endif
 
-  if ( myrank /= 0 .and. anyabs ) then
-     !allocate(coorg_send(4,4*nelemabs))
-  endif
   buffer_offset = 0
 
   if ( anyabs ) then
@@ -2273,7 +2207,6 @@ coorg_recv_ps_vector_field
      do iproc = 1, nproc-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 44, MPI_COMM_WORLD, request_mpi_status, ier)
         if ( nspec_recv > 0 ) then
-        !allocate(coorg_recv(4,nspec_recv))
         call MPI_RECV (coorg_recv_ps_abs(1,1), 4*nspec_recv, &
              MPI_DOUBLE_PRECISION, iproc, 44, MPI_COMM_WORLD, request_mpi_status, ier)
 
@@ -2283,7 +2216,6 @@ coorg_recv_ps_vector_field
            write(24,602) coorg_recv_ps_abs(1,buffer_offset), coorg_recv_ps_abs(2,buffer_offset), &
                 coorg_recv_ps_abs(3,buffer_offset), coorg_recv_ps_abs(4,buffer_offset)
         enddo
-        !deallocate(coorg_recv)
         endif
      enddo
   else
@@ -2291,7 +2223,6 @@ coorg_recv_ps_vector_field
      if ( buffer_offset > 0 ) then
      call MPI_SEND (coorg_send_ps_abs(1,1), 4*buffer_offset, &
           MPI_DOUBLE_PRECISION, 0, 44, MPI_COMM_WORLD, ier)
-     !deallocate(coorg_send)
      endif
 
   endif
@@ -2299,8 +2230,8 @@ coorg_recv_ps_vector_field
 #endif
 
   if ( myrank == 0 ) then
-  write(24,*) '0 setgray'
-  write(24,*) '0.01 CM setlinewidth'
+    write(24,*) '0 setgray'
+    write(24,*) '0.01 CM setlinewidth'
   endif
 
   endif
@@ -2322,9 +2253,6 @@ coorg_recv_ps_vector_field
   write(24,*) '% 0.02 CM setlinewidth'
   endif
 
-  if ( myrank /= 0 .and. nelem_acoustic_surface > 0 ) then
-     !allocate(coorg_send(4,4*nelem_acoustic_surface))
-  endif
   buffer_offset = 0
 
   if ( nelem_acoustic_surface > 0 ) then
@@ -2358,7 +2286,6 @@ coorg_recv_ps_vector_field
      do iproc = 1, nproc-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 44, MPI_COMM_WORLD, request_mpi_status, ier)
         if ( nspec_recv > 0 ) then
-        !allocate(coorg_recv(4,nspec_recv))
         call MPI_RECV (coorg_recv_ps_free_surface(1,1), 4*nspec_recv, &
              MPI_DOUBLE_PRECISION, iproc, 44, MPI_COMM_WORLD, request_mpi_status, ier)
 
@@ -2368,7 +2295,6 @@ coorg_recv_ps_vector_field
            write(24,602) coorg_recv_ps_free_surface(1,buffer_offset), coorg_recv_ps_free_surface(2,buffer_offset), &
                 coorg_recv_ps_free_surface(3,buffer_offset), coorg_recv_ps_free_surface(4,buffer_offset)
         enddo
-        !deallocate(coorg_recv)
         endif
      enddo
   else
@@ -2376,7 +2302,6 @@ coorg_recv_ps_vector_field
      if ( buffer_offset > 0 ) then
      call MPI_SEND (coorg_send_ps_free_surface(1,1), 4*buffer_offset, &
           MPI_DOUBLE_PRECISION, 0, 44, MPI_COMM_WORLD, ier)
-     !deallocate(coorg_send)
      endif
 
   endif
@@ -2419,9 +2344,7 @@ coorg_recv_ps_vector_field
    iedge = fluid_solid_acoustic_iedge(inum)
 
 ! use pink color
-  if ( myrank == 0 ) then
-  write(24,*) '1 0.75 0.8 RG'
-  endif
+  if ( myrank == 0 ) write(24,*) '1 0.75 0.8 RG'
 
   if(iedge == ITOP) then
     ideb = 3
@@ -2531,16 +2454,16 @@ coorg_recv_ps_vector_field
     pointsdisp_loop = pointsdisp
   endif
 
-  if ( myrank /= 0 ) then
-     !allocate(coorg_send(8,nspec*pointsdisp_loop*pointsdisp_loop))
-
-  endif
   buffer_offset = 0
 
   do ispec=1,nspec
 
 ! interpolation on a uniform grid
-  if(mod(ispec,1000) == 0) write(IOUT,*) 'Interpolation uniform grid element ',ispec, myrank
+#ifdef USE_MPI
+  if(myrank == 0 .and. mod(ispec,1000) == 0) write(IOUT,*) 'Interpolation uniform grid element ',ispec,' on processor 0'
+#else
+  if(mod(ispec,1000) == 0) write(IOUT,*) 'Interpolation uniform grid element ',ispec
+#endif
 
   do i=1,pointsdisp_loop
   do j=1,pointsdisp_loop
@@ -2605,7 +2528,6 @@ coorg_recv_ps_vector_field
   write(postscript_line,700) xb,zb,xa,za,x2,z2,x1,z1
 
 ! suppress useless white spaces to make PostScript file smaller
-
 ! suppress leading white spaces again, if any
   postscript_line = adjustl(postscript_line)
 
@@ -2648,7 +2570,6 @@ coorg_recv_ps_vector_field
      do iproc = 1, nproc-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 46, MPI_COMM_WORLD, request_mpi_status, ier)
         if ( nspec_recv > 0 ) then
-        !allocate(coorg_recv(8,nspec_recv))
         call MPI_RECV (coorg_recv_ps_vector_field(1,1), 8*nspec_recv, &
              MPI_DOUBLE_PRECISION, iproc, 46, MPI_COMM_WORLD, request_mpi_status, ier)
 
@@ -2660,8 +2581,8 @@ coorg_recv_ps_vector_field
                   coorg_recv_ps_vector_field(3,buffer_offset), coorg_recv_ps_vector_field(4,buffer_offset), &
                   coorg_recv_ps_vector_field(5,buffer_offset), coorg_recv_ps_vector_field(6,buffer_offset), &
                   coorg_recv_ps_vector_field(7,buffer_offset), coorg_recv_ps_vector_field(8,buffer_offset)
-             ! suppress useless white spaces to make PostScript file smaller
 
+             ! suppress useless white spaces to make PostScript file smaller
              ! suppress leading white spaces again, if any
              postscript_line = adjustl(postscript_line)
 
@@ -2680,7 +2601,6 @@ coorg_recv_ps_vector_field
              ch2(index_char) = ch1(line_length)
              write(24,"(100(a1))") (ch2(ii), ii=1,index_char)
           enddo
-          !deallocate(coorg_recv)
           endif
        enddo
     else
@@ -2688,7 +2608,6 @@ coorg_recv_ps_vector_field
        if ( buffer_offset > 0 ) then
        call MPI_SEND (coorg_send_ps_vector_field(1,1), 8*buffer_offset, &
             MPI_DOUBLE_PRECISION, 0, 46, MPI_COMM_WORLD, ier)
-       !deallocate(coorg_send)
        endif
 
   endif
@@ -2699,10 +2618,6 @@ coorg_recv_ps_vector_field
 ! draw the vectors at the nodes of the mesh if we do not interpolate the display on a regular grid
   else
 
-  if ( myrank /= 0 ) then
-     !allocate(coorg_send(8,npoin))
-
-  endif
   buffer_offset = 0
 
   do ipoin=1,npoin
@@ -2747,7 +2662,6 @@ coorg_recv_ps_vector_field
   write(postscript_line,700) xb,zb,xa,za,x2,z2,x1,z1
 
 ! suppress useless white spaces to make PostScript file smaller
-
 ! suppress leading white spaces again, if any
   postscript_line = adjustl(postscript_line)
 
@@ -2787,7 +2701,6 @@ coorg_recv_ps_vector_field
      do iproc = 1, nproc-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 47, MPI_COMM_WORLD, request_mpi_status, ier)
         if ( nspec_recv > 0 ) then
-        !allocate(coorg_recv(8,nspec_recv))
         call MPI_RECV (coorg_recv_ps_vector_field(1,1), 8*nspec_recv, &
              MPI_DOUBLE_PRECISION, iproc, 47, MPI_COMM_WORLD, request_mpi_status, ier)
 
@@ -2799,8 +2712,8 @@ coorg_recv_ps_vector_field
                   coorg_recv_ps_vector_field(3,buffer_offset), coorg_recv_ps_vector_field(4,buffer_offset), &
                   coorg_recv_ps_vector_field(5,buffer_offset), coorg_recv_ps_vector_field(6,buffer_offset), &
                   coorg_recv_ps_vector_field(7,buffer_offset), coorg_recv_ps_vector_field(8,buffer_offset)
-             ! suppress useless white spaces to make PostScript file smaller
 
+             ! suppress useless white spaces to make PostScript file smaller
              ! suppress leading white spaces again, if any
              postscript_line = adjustl(postscript_line)
 
@@ -2819,7 +2732,6 @@ coorg_recv_ps_vector_field
              ch2(index_char) = ch1(line_length)
              write(24,"(100(a1))") (ch2(ii), ii=1,index_char)
           enddo
-          !deallocate(coorg_recv)
           endif
        enddo
     else
@@ -2827,12 +2739,10 @@ coorg_recv_ps_vector_field
        if ( buffer_offset > 0 ) then
        call MPI_SEND (coorg_send_ps_vector_field(1,1), 8*buffer_offset, &
             MPI_DOUBLE_PRECISION, 0, 47, MPI_COMM_WORLD, ier)
-       !deallocate(coorg_send)
        endif
   endif
 
 #endif
-
 
   endif
 

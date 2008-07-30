@@ -46,7 +46,7 @@
 
   subroutine locate_receivers(ibool,coord,nspec,npoin,xigll,zigll,nrec,nrecloc,recloc,which_proc_receiver,nproc,myrank, &
        st_xval,st_zval,ispec_selected_rec, &
-       xi_receiver,gamma_receiver,station_name,network_name,x_source,z_source,coorg,knods,ngnod,npgeo)
+       xi_receiver,gamma_receiver,station_name,network_name,x_source,z_source,coorg,knods,ngnod,npgeo,ipass)
 
   implicit none
 
@@ -55,7 +55,7 @@
   include "mpif.h"
 #endif
 
-  integer nrec,nspec,npoin,ngnod,npgeo
+  integer nrec,nspec,npoin,ngnod,npgeo,ipass
   integer, intent(in)  :: nproc, myrank
 
   integer knods(ngnod,nspec)
@@ -105,7 +105,7 @@
 
 ! **************
 
-  if (myrank == 0) then
+  if (myrank == 0 .and. ipass == 1) then
     write(IOUT,*)
     write(IOUT,*) '********************'
     write(IOUT,*) ' locating receivers'
@@ -228,8 +228,8 @@ if ( myrank == 0 ) then
    do irec = 1, nrec
       which_proc_receiver(irec:irec) = minloc(gather_final_distance(irec,:)) - 1
 
-   end do
-end if
+   enddo
+endif
 
 call MPI_BCAST(which_proc_receiver(1),nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ierror)
 
@@ -250,12 +250,10 @@ do irec = 1, nrec
    if ( which_proc_receiver(irec) == myrank ) then
       nrecloc = nrecloc + 1
       recloc(nrecloc) = irec
-   end if
+   endif
+enddo
 
-end do
-
-
-if ( myrank == 0 ) then
+if (myrank == 0 .and. ipass == 1) then
 
    do irec = 1, nrec
     write(IOUT,*)
@@ -273,18 +271,13 @@ if ( myrank == 0 ) then
          gather_gamma_receiver(irec,which_proc_receiver(irec)+1)
     write(IOUT,*)
 
- end do
-
-
-! display maximum error for all the receivers
-  !write(IOUT,*) 'maximum error in location of all the receivers: ',sngl(maxval(final_distance(:))),' m'
+  enddo
 
   write(IOUT,*)
   write(IOUT,*) 'end of receiver detection'
   write(IOUT,*)
 
-end if
-
+endif
 
 ! deallocate arrays
   deallocate(final_distance)
@@ -292,7 +285,6 @@ end if
 #ifdef USE_MPI
   call MPI_BARRIER(MPI_COMM_WORLD,ierror)
 #endif
-
 
   end subroutine locate_receivers
 

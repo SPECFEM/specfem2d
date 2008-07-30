@@ -41,7 +41,7 @@
 !========================================================================
 
   subroutine locate_source_force(coord,ibool,npoin,nspec,x_source,z_source,ix_source,iz_source, &
-     ispec_source,iglob_source,is_proc_source,nb_proc_source)
+     ispec_source,iglob_source,is_proc_source,nb_proc_source,ipass)
 
 !
 !----- calculer la position reelle de la source
@@ -54,7 +54,7 @@
   include "mpif.h"
 #endif
 
-  integer npoin,nspec
+  integer npoin,nspec,ipass
   integer ibool(NGLLX,NGLLZ,nspec)
 
   double precision x_source,z_source
@@ -121,7 +121,7 @@
 #endif
 
 ! check if this process contains the source
-  if ( dist_glob == distminmax ) is_proc_source = 1
+  if (dist_glob == distminmax) is_proc_source = 1
 
 #ifdef USE_MPI
 ! determining the number of processes that contain the source (useful when the source is located on an interface)
@@ -129,23 +129,18 @@
 
 #else
   nb_proc_source = is_proc_source
-
 #endif
 
-  if ( nb_proc_source < 1 ) then
-     call exit_MPI('error locating force source')
-  end if
+  if (nb_proc_source < 1) call exit_MPI('error locating force source')
 
-  if ( is_proc_source == 1 ) then
-     write(iout,200)
-
-     write(iout,"(1x,f12.3,1x,f12.3,1x,f12.3,1x,f12.3,f12.3,1x,i5.5)") x_source,z_source, &
+  if (is_proc_source == 1 .and. ipass == 1) then
+     write(IOUT,200)
+     write(IOUT,"(1x,f12.3,1x,f12.3,1x,f12.3,1x,f12.3,f12.3,1x,i5.5)") x_source,z_source, &
           coord(1,iglob_source),coord(2,iglob_source),distmin,nb_proc_source
-     write(iout,*)
-     write(iout,*)
-     write(iout,"('Maximum distance between asked and real =',f12.3)") distminmax
-
-  end if
+     write(IOUT,*)
+     write(IOUT,*)
+     write(IOUT,"('Maximum distance between asked and real =',f12.3)") distminmax
+  endif
 
 #ifdef USE_MPI
   call MPI_BARRIER(MPI_COMM_WORLD,ierror)

@@ -454,11 +454,18 @@
   else
     NUMBER_OF_PASSES = 1
   endif
-
 #endif
 
 ! determine if we write to file instead of standard output
-  if(IOUT /= ISTANDARD_OUTPUT) open(IOUT,file='simulation_results.txt',status='unknown')
+  if(IOUT /= ISTANDARD_OUTPUT) then
+#ifdef USE_MPI
+    write(prname,240) myrank
+ 240 format('simulation_results',i5.5,'.txt')
+#else
+    prname = 'simulation_results.txt'
+#endif
+    open(IOUT,file=prname,status='unknown',action='write')
+  endif
 
 ! reduction of cache misses inner/outer in two passes
   do ipass = 1,NUMBER_OF_PASSES
@@ -480,9 +487,9 @@
 !
 !---- print the date, time and start-up banner
 !
-  if (myrank == 0) call datim(simulation_title)
+  if (myrank == 0 .and. ipass == 1) call datim(simulation_title)
 
-  if (myrank == 0) then
+  if (myrank == 0 .and. ipass == 1) then
     write(IOUT,*)
     write(IOUT,*)
     write(IOUT,*) '*********************'
@@ -528,16 +535,18 @@
   read(IIN,*) assign_external_model,outputgrid,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
 
 !---- check parameters read
-  write(IOUT,200) npgeo,NDIM
-  write(IOUT,600) NTSTEP_BETWEEN_OUTPUT_INFO,colors,numbers
-  write(IOUT,700) seismotype,anglerec
-  write(IOUT,750) initialfield,add_Bielak_conditions,assign_external_model,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,outputgrid
-  write(IOUT,800) imagetype,100.d0*cutsnaps,subsamp
+  if (myrank == 0 .and. ipass == 1) then
+    write(IOUT,200) npgeo,NDIM
+    write(IOUT,600) NTSTEP_BETWEEN_OUTPUT_INFO,colors,numbers
+    write(IOUT,700) seismotype,anglerec
+    write(IOUT,750) initialfield,add_Bielak_conditions,assign_external_model,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,outputgrid
+    write(IOUT,800) imagetype,100.d0*cutsnaps,subsamp
+  endif
 
 !---- read time step
   read(IIN,"(a80)") datlin
   read(IIN,*) NSTEP,deltat
-  if (myrank == 0) write(IOUT,703) NSTEP,deltat,NSTEP*deltat
+  if (myrank == 0 .and. ipass == 1) write(IOUT,703) NSTEP,deltat,NSTEP*deltat
 
   NTSTEP_BETWEEN_OUTPUT_SEISMO = min(NSTEP,NTSTEP_BETWEEN_OUTPUT_INFO)
 
@@ -662,8 +671,10 @@ endif
 !
 !---- print element group main parameters
 !
-  write(IOUT,107)
-  write(IOUT,207) nspec,ngnod,NGLLX,NGLLZ,NGLLX*NGLLZ,pointsdisp,numat,nelemabs
+  if (myrank == 0 .and. ipass == 1) then
+    write(IOUT,107)
+    write(IOUT,207) nspec,ngnod,NGLLX,NGLLZ,NGLLX*NGLLZ,pointsdisp,numat,nelemabs
+  endif
 
 ! set up Gauss-Lobatto-Legendre derivation matrices
   call define_derivation_matrices(xigll,zigll,wxgll,wzgll,hprime_xx,hprime_zz,hprimewgll_xx,hprimewgll_zz)
@@ -671,7 +682,7 @@ endif
 !
 !---- read the material properties
 !
-  call gmat01(density,elastcoef,numat)
+  call gmat01(density,elastcoef,numat,myrank,ipass)
 
 !
 !----  read spectral macrobloc data
@@ -777,7 +788,6 @@ endif
 !
 !----  read absorbing boundary data
 !
-
   read(IIN,"(a80)") datlin
   if(anyabs) then
      do inum = 1,nelemabs
@@ -796,8 +806,10 @@ endif
       codeabs(ITOP,inum) = codeabsread(3)
       codeabs(ILEFT,inum) = codeabsread(4)
     enddo
-    write(IOUT,*)
-    write(IOUT,*) 'Number of absorbing elements: ',nelemabs
+    if (myrank == 0 .and. ipass == 1) then
+      write(IOUT,*)
+      write(IOUT,*) 'Number of absorbing elements: ',nelemabs
+    endif
   endif
 
 !
@@ -813,11 +825,15 @@ endif
      if(ipass == 1) allocate(acoustic_surface(5,nelem_acoustic_surface))
      call construct_acoustic_surface ( nspec, ngnod, knods, nelem_acoustic_surface, &
           acoustic_edges, acoustic_surface)
-    write(IOUT,*)
-    write(IOUT,*) 'Number of free surface elements: ',nelem_acoustic_surface
+    if (myrank == 0 .and. ipass == 1) then
+      write(IOUT,*)
+      write(IOUT,*) 'Number of free surface elements: ',nelem_acoustic_surface
+    endif
   else
-    if(ipass == 1) allocate(acoustic_edges(4,1))
-    if(ipass == 1) allocate(acoustic_surface(5,1))
+    if(ipass == 1) then
+      allocate(acoustic_edges(4,1))
+      allocate(acoustic_surface(5,1))
+    endif
   endif
 
 !
@@ -872,9 +888,9 @@ endif
 
 ! "slow and clean" or "quick and dirty" version
   if(FAST_NUMBERING) then
-    call createnum_fast(knods,ibool,shape2D,coorg,npoin,npgeo,nspec,ngnod)
+    call createnum_fast(knods,ibool,shape2D,coorg,npoin,npgeo,nspec,ngnod,myrank,ipass)
   else
-    call createnum_slow(knods,ibool,npoin,nspec,ngnod)
+    call createnum_slow(knods,ibool,npoin,nspec,ngnod,myrank,ipass)
   endif
 
 ! create a new indirect addressing array to reduce cache misses in memory access in the solver
@@ -984,7 +1000,7 @@ endif
   enddo
   close(IIN)
 
-  if (myrank == 0) then
+  if (myrank == 0 .and. ipass == 1) then
     write(IOUT,*)
     write(IOUT,*) 'Total number of receivers = ',nrec
     write(IOUT,*)
@@ -1061,7 +1077,7 @@ endif
 !
 !--- save the grid of points in a file
 !
-  if(outputgrid) then
+  if(outputgrid .and. myrank == 0 .and. ipass == 1) then
      write(IOUT,*)
      write(IOUT,*) 'Saving the grid in a text file...'
      write(IOUT,*)
@@ -1077,15 +1093,17 @@ endif
 !
 !-----   plot the GLL mesh in a Gnuplot file
 !
-  if(gnuplot) call plotgll(knods,ibool,coorg,coord,npoin,npgeo,ngnod,nspec)
+  if(gnuplot .and. myrank == 0 .and. ipass == 1) call plotgll(knods,ibool,coorg,coord,npoin,npgeo,ngnod,nspec)
 
 !
 !----  assign external velocity and density model if needed
 !
   if(assign_external_model) then
-    write(IOUT,*)
-    write(IOUT,*) 'Assigning external velocity and density model...'
-    write(IOUT,*)
+    if (myrank == 0 .and. ipass == 1) then
+      write(IOUT,*)
+      write(IOUT,*) 'Assigning external velocity and density model...'
+      write(IOUT,*)
+    endif
     if(TURN_ANISOTROPY_ON .or. TURN_ATTENUATION_ON) &
          call exit_MPI('cannot have anisotropy nor attenuation if external model in current version')
     any_acoustic = .false.
@@ -1150,7 +1168,7 @@ endif
 
 ! collocated force source
     call locate_source_force(coord,ibool,npoin,nspec,x_source,z_source, &
-      ix_source,iz_source,ispec_selected_source,iglob_source,is_proc_source,nb_proc_source)
+      ix_source,iz_source,ispec_selected_source,iglob_source,is_proc_source,nb_proc_source,ipass)
 
 ! get density at the source in order to implement collocated force with the right
 ! amplitude later
@@ -1180,7 +1198,7 @@ endif
   else if(source_type == 2) then
 ! moment-tensor source
      call locate_source_moment_tensor(ibool,coord,nspec,npoin,xigll,zigll,x_source,z_source, &
-          ispec_selected_source,is_proc_source,nb_proc_source,nproc,myrank,xi_source,gamma_source,coorg,knods,ngnod,npgeo)
+          ispec_selected_source,is_proc_source,nb_proc_source,nproc,myrank,xi_source,gamma_source,coorg,knods,ngnod,npgeo,ipass)
 
 ! compute source array for moment-tensor source
     call compute_arrays_source(ispec_selected_source,xi_source,gamma_source,sourcearray, &
@@ -1193,7 +1211,7 @@ endif
 ! locate receivers in the mesh
   call locate_receivers(ibool,coord,nspec,npoin,xigll,zigll,nrec,nrecloc,recloc,which_proc_receiver,nproc,myrank,&
        st_xval,st_zval,ispec_selected_rec, &
-       xi_receiver,gamma_receiver,station_name,network_name,x_source,z_source,coorg,knods,ngnod,npgeo)
+       xi_receiver,gamma_receiver,station_name,network_name,x_source,z_source,coorg,knods,ngnod,npgeo,ipass)
 
 ! allocate seismogram arrays
   if(ipass == 1) then
@@ -1328,8 +1346,10 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     nspec_outer = count(mask_ispec_inner_outer)
     nspec_inner = nspec - nspec_outer
 
-    if(ipass == 1) allocate(ispec_outer_to_glob(nspec_outer))
-    if(ipass == 1) allocate(ispec_inner_to_glob(nspec_inner))
+    if(ipass == 1) then
+      allocate(ispec_outer_to_glob(nspec_outer))
+      allocate(ispec_inner_to_glob(nspec_inner))
+    endif
 
 ! building of corresponding arrays between inner/outer elements and their global number
 if(ipass == 1) then
@@ -1550,6 +1570,10 @@ if(ipass == 1) then
 endif
 
   enddo ! end of further reduction of cache misses inner/outer in two passes
+
+!---
+!---  end of section performed in two passes
+!---
 
 ! fill mass matrix with fictitious non-zero values to make sure it can be inverted globally
   if(any_elastic) where(rmass_inverse_elastic <= 0._CUSTOM_REAL) rmass_inverse_elastic = 1._CUSTOM_REAL
@@ -2501,7 +2525,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
   d2_coorg_send_ps_velocity_model=nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4
   d1_RGB_send_ps_velocity_model=1
   d2_RGB_send_ps_velocity_model=nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)
- 
+
   allocate(coorg_send_ps_velocity_model(d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model))
   allocate(RGB_send_ps_velocity_model(d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model))
 
@@ -3198,11 +3222,11 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
   ihours = int_tCPU / 3600
   iminutes = (int_tCPU - 3600*ihours) / 60
   iseconds = int_tCPU - 3600*ihours - 60*iminutes
-  if ( myrank == 0 ) then
-  write(*,*) 'Elapsed time in seconds = ',tCPU
-  write(*,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
-  write(*,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
-  write(*,*)
+  if (myrank == 0) then
+    write(IOUT,*) 'Elapsed time in seconds = ',tCPU
+    write(IOUT,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+    write(IOUT,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
+    write(IOUT,*)
   endif
 
   endif
@@ -3230,7 +3254,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
   deallocate(t0z_bot)
 
 !----  close energy file and create a gnuplot script to display it
-  if(OUTPUT_ENERGY) then
+  if(OUTPUT_ENERGY .and. myrank == 0) then
     close(IENERGY)
     open(unit=IENERGY,file='plotenergy',status='unknown')
     write(IENERGY,*) 'set term postscript landscape color solid "Helvetica" 22'
@@ -3326,5 +3350,5 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
                   'Mzz. . . . . . . . . . . . . . . . . . =',1pe20.10,/5x, &
                   'Mxz. . . . . . . . . . . . . . . . . . =',1pe20.10)
 
-end program specfem2D
+  end program specfem2D
 

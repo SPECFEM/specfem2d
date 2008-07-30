@@ -40,7 +40,7 @@
 !
 !========================================================================
 
-  subroutine createnum_fast(knods,ibool,shape,coorg,npoin,npgeo,nspec,ngnod)
+  subroutine createnum_fast(knods,ibool,shape,coorg,npoin,npgeo,nspec,ngnod,myrank,ipass)
 
 ! equivalent de la routine "createnum_slow" mais algorithme plus rapide
 
@@ -48,7 +48,7 @@
 
   include "constants.h"
 
-  integer npoin,npgeo,nspec,ngnod
+  integer npoin,npgeo,nspec,ngnod,myrank,ipass
   integer knods(ngnod,nspec),ibool(NGLLX,NGLLZ,nspec)
   double precision shape(ngnod,NGLLX,NGLLX)
   double precision coorg(NDIM,npgeo)
@@ -68,10 +68,12 @@
 
 
 !----  create global mesh numbering
-  write(IOUT,*)
-  write(IOUT,*)
-  write(IOUT,*) 'Generating global mesh numbering (fast version)...'
-  write(IOUT,*)
+  if(myrank == 0 .and. ipass == 1) then
+    write(IOUT,*)
+    write(IOUT,*)
+    write(IOUT,*) 'Generating global mesh numbering (fast version)...'
+    write(IOUT,*)
+  endif
 
   nxyz = NGLLX*NGLLZ
   ntot = nxyz*nspec
@@ -202,7 +204,7 @@
 
 ! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-! recuperer resultat a mon format
+! get result in my format
   do ispec=1,nspec
    ieoff = nxyz*(ispec - 1)
    ilocnum = 0
@@ -224,14 +226,14 @@
   deallocate(work)
   deallocate(iwork)
 
-! verification de la coherence de la numerotation generee
-  if(minval(ibool) /= 1 .or. maxval(ibool) /= npoin) then
-     call exit_MPI('Error while generating global numbering')
-  endif
+! check the numbering obtained
+  if(minval(ibool) /= 1 .or. maxval(ibool) /= npoin) call exit_MPI('Error while generating global numbering')
 
-  write(IOUT,*)
-  write(IOUT,*) 'Total number of points of the global mesh: ',npoin
-  write(IOUT,*)
+  if(myrank == 0 .and. ipass == 1) then
+    write(IOUT,*)
+    write(IOUT,*) 'Total number of points of the global mesh: ',npoin
+    write(IOUT,*)
+  endif
 
   end subroutine createnum_fast
 

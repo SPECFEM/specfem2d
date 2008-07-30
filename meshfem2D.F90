@@ -274,7 +274,7 @@ program meshfem2D
      else
         do i = 1, 5
            metis_options = iachar(partitioning_strategy(i:i)) - iachar('0')
-        end do
+        enddo
      endif
 
   case(3)
@@ -382,8 +382,8 @@ program meshfem2D
               elmnts(num_elmnt*ngnod+2) = j*(nxread+1) + (i-1) + 1
               elmnts(num_elmnt*ngnod+3) = j*(nxread+1) + (i-1)
               num_elmnt = num_elmnt + 1
-           end do
-        end do
+           enddo
+        enddo
       else
         num_elmnt = 0
         do j = 1, nzread
@@ -398,8 +398,8 @@ program meshfem2D
               elmnts(num_elmnt*ngnod+7) = (nxread+1)*(nzread+1) + nxread*(nzread+1) + (j-1)*(nxread*2+1) + (i-1)*2
               elmnts(num_elmnt*ngnod+8) = (nxread+1)*(nzread+1) + nxread*(nzread+1) + (j-1)*(nxread*2+1) + (i-1)*2 + 1
               num_elmnt = num_elmnt + 1
-           end do
-        end do
+           enddo
+        enddo
 
      endif
   endif
@@ -765,8 +765,8 @@ program meshfem2D
               nodes_coords(1, num_node) = x(i,j)
               nodes_coords(2, num_node) = z(i,j)
 
-           end do
-        end do
+           enddo
+        enddo
 
      else
         do j = 0, nz
@@ -775,8 +775,8 @@ program meshfem2D
               nodes_coords(1, num_node) = x(i,j)
               nodes_coords(2, num_node) = z(i,j)
 
-           end do
-        end do
+           enddo
+        enddo
 
      endif
   else
@@ -821,7 +821,7 @@ program meshfem2D
            acoustic_surface(3,nelem_acoustic_surface) = elmnts(3+ngnod*((j-1)*nxread+i-1))
            acoustic_surface(4,nelem_acoustic_surface) = elmnts(2+ngnod*((j-1)*nxread+i-1))
         endif
-     end do
+     enddo
 
      endif
 
@@ -870,8 +870,8 @@ program meshfem2D
                  abs_surface(3,nelemabs) = elmnts(0+ngnod*(inumelem-1))
                  abs_surface(4,nelemabs) = elmnts(3+ngnod*(inumelem-1))
               endif
-           end do
-        end do
+           enddo
+        enddo
      endif
 
   endif
@@ -959,7 +959,7 @@ program meshfem2D
      allocate(elmnts_bis(0:ESIZE*nelmnts-1))
      do i = 0, nelmnts-1
         elmnts_bis(i*esize:i*esize+esize-1) = elmnts(i*ngnod:i*ngnod+esize-1)
-     end do
+     enddo
 
      if ( nproc > 1 ) then
      call mesh2dual_ncommonnodes(nelmnts, (nxread+1)*(nzread+1), elmnts_bis, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
@@ -989,7 +989,7 @@ program meshfem2D
 
         do iproc = 0, nproc-2
            part(iproc*floor(real(nelmnts)/real(nproc)):(iproc+1)*floor(real(nelmnts)/real(nproc))-1) = iproc
-        end do
+        enddo
         part(floor(real(nelmnts)/real(nproc))*(nproc-1):nelmnts-1) = nproc - 1
 
      case(2)
@@ -1041,7 +1041,7 @@ program meshfem2D
         nodes_elmnts(elmnts(i)*nsize+nnodes_elmnts(elmnts(i))) = i/ngnod
         nnodes_elmnts(elmnts(i)) = nnodes_elmnts(elmnts(i)) + 1
 
-     end do
+     enddo
   else
      if ( nproc < 2 ) then
      allocate(nnodes_elmnts(0:nnodes-1))
@@ -1052,12 +1052,11 @@ program meshfem2D
         nodes_elmnts(elmnts(i)*nsize+nnodes_elmnts(elmnts(i))) = i/ngnod
         nnodes_elmnts(elmnts(i)) = nnodes_elmnts(elmnts(i)) + 1
 
-     end do
+     enddo
 
      endif
 
   endif
-
 
 ! local number of each node for each partition
   call Construct_glob2loc_nodes(nelmnts, nnodes, nnodes_elmnts, nodes_elmnts, part, nproc, &
@@ -1072,10 +1071,8 @@ program meshfem2D
         call Construct_interfaces(nelmnts, nproc, part, elmnts, xadj, adjncy, tab_interfaces, &
              tab_size_interfaces, ninterfaces, nb_materials, cs, num_material)
      endif
-     print *, '04'
      allocate(my_interfaces(0:ninterfaces-1))
      allocate(my_nb_interfaces(0:ninterfaces-1))
-     print *, '05'
   endif
 
 ! setting absorbing boundaries by elements instead of edges
@@ -1086,7 +1083,6 @@ program meshfem2D
           nedges_coupled, edges_coupled, nb_materials, cs, num_material, &
           nelmnts, &
           elmnts, ngnod)
-     print *, 'nelemabs_merge', nelemabs_merge
   endif
 
 ! *** generate the databases for the solver
@@ -1208,7 +1204,6 @@ program meshfem2D
      else
         write(15,*) 'Interfaces:'
         write(15,*) 0, 0
-
      endif
 
 
@@ -1230,7 +1225,7 @@ program meshfem2D
      write(15,*) 'List of acoustic elastic coupled edges:'
      call write_fluidsolid_edges_database(15, nedges_coupled, nedges_coupled_loc, &
           edges_coupled, glob2loc_elmnts, part, iproc, 2)
-  end do
+  enddo
 
 
 ! print position of the source
@@ -1290,10 +1285,16 @@ program meshfem2D
   enddo
 
   close(15)
+
   endif
 
   print *
-
+  if (nproc == 1) then
+    print *,'This will be a serial simulation'
+  else
+    print *,'This will be a parallel simulation on ',nproc,' processors'
+  endif
+  print *
 
   end program meshfem2D
 
