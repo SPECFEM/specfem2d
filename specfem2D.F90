@@ -268,6 +268,7 @@
   integer, dimension(NGLLX,NEDGES) :: ivalue,jvalue,ivalue_inverse,jvalue_inverse
   integer, dimension(:), allocatable :: fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
                                         fluid_solid_elastic_ispec,fluid_solid_elastic_iedge
+  integer :: fluid_solid_acoustic_ispec_read, fluid_solid_elastic_ispec_read
   integer :: num_fluid_solid_edges,ispec_acoustic,ispec_elastic, &
              iedge_acoustic,iedge_elastic,ipoin1D,iglob2
   logical :: any_acoustic,any_acoustic_glob,any_elastic,any_elastic_glob,coupled_acoustic_elastic
@@ -831,7 +832,16 @@ if(ipass == 1) then
      allocate(fluid_solid_elastic_iedge(num_fluid_solid_edges))
 endif
      do inum = 1, num_fluid_solid_edges
-        read(IIN,*) fluid_solid_acoustic_ispec(inum), fluid_solid_elastic_ispec(inum)
+        read(IIN,*) fluid_solid_acoustic_ispec_read, fluid_solid_elastic_ispec_read
+        if(ipass == 1) then
+          fluid_solid_acoustic_ispec(inum) = fluid_solid_acoustic_ispec_read
+          fluid_solid_elastic_ispec(inum) = fluid_solid_elastic_ispec_read
+        else if(ipass == 2) then
+          fluid_solid_acoustic_ispec(inum) = perm(antecedent_list(fluid_solid_acoustic_ispec_read))
+          fluid_solid_elastic_ispec(inum) = perm(antecedent_list(fluid_solid_elastic_ispec_read))
+        else
+          call exit_MPI('error: maximum number of passes is 2')
+        endif
      enddo
   else
 if(ipass == 1) then
