@@ -832,7 +832,7 @@ if(ipass == 1) then
      allocate(fluid_solid_elastic_iedge(num_fluid_solid_edges))
 endif
      do inum = 1, num_fluid_solid_edges
-        read(IIN,*) fluid_solid_acoustic_ispec_read, fluid_solid_elastic_ispec_read
+        read(IIN,*) fluid_solid_acoustic_ispec_read,fluid_solid_elastic_ispec_read
         if(ipass == 1) then
           fluid_solid_acoustic_ispec(inum) = fluid_solid_acoustic_ispec_read
           fluid_solid_elastic_ispec(inum) = fluid_solid_elastic_ispec_read
