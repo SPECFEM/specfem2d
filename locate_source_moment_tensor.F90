@@ -45,7 +45,8 @@
 !----
 
   subroutine locate_source_moment_tensor(ibool,coord,nspec,npoin,xigll,zigll,x_source,z_source, &
-               ispec_selected_source,is_proc_source,nb_proc_source,nproc,myrank,xi_source,gamma_source,coorg,knods,ngnod,npgeo,ipass)
+               ispec_selected_source,is_proc_source,nb_proc_source,nproc,myrank, &
+               xi_source,gamma_source,coorg,knods,ngnod,npgeo,ipass)
 
   implicit none
 
