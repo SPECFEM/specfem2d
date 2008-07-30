@@ -163,7 +163,7 @@
 
   if(NGLLX > NGLLX_MAX_STABILITY) then
     call exit_MPI('cannot estimate the stability condition for that degree')
-  end if
+  endif
 
 ! define color palette in random order
 
@@ -1575,9 +1575,10 @@
   ratio_page = min(rpercentz*sizez/(zmax-zmin),rpercentx*sizex/(xmax-xmin)) / 100.d0
 
 
-  if ( myrank == 0 ) then
-  print *
-  print *,'Creating PostScript file with stability condition'
+  if (myrank == 0) then
+
+    write(IOUT,*)
+    write(IOUT,*) 'Creating PostScript file with stability condition'
 
 !
 !---- open PostScript file
@@ -1683,14 +1684,14 @@
   write(24,*) '0 setgray'
 
   num_ispec = 0
-  end if
+  endif
 
   do ispec = 1, nspec
 
      if ( myrank == 0 ) then
         num_ispec = num_ispec + 1
         write(24,*) '% elem ',num_ispec
-     end if
+     endif
 
   do i=1,pointsdisp
   do j=1,pointsdisp
@@ -1716,7 +1717,7 @@
   else
      coorg_send(1,(ispec-1)*5+1) = x1
      coorg_send(2,(ispec-1)*5+1) = z1
-  end if
+  endif
 
 ! draw straight lines if elements have 4 nodes
 
@@ -1730,7 +1731,7 @@
   else
      coorg_send(1,(ispec-1)*5+2) = x2
      coorg_send(2,(ispec-1)*5+2) = z2
-  end if
+  endif
 
   ir=pointsdisp
   is=pointsdisp
@@ -1743,7 +1744,7 @@
   else
      coorg_send(1,(ispec-1)*5+3) = x2
      coorg_send(2,(ispec-1)*5+3) = z2
-  end if
+  endif
 
   is=pointsdisp
   ir=1
@@ -1756,7 +1757,7 @@
   else
      coorg_send(1,(ispec-1)*5+4) = x2
      coorg_send(2,(ispec-1)*5+4) = z2
-  end if
+  endif
 
   ir=1
   is=2
@@ -1770,7 +1771,7 @@
   else
      coorg_send(1,(ispec-1)*5+5) = x2
      coorg_send(2,(ispec-1)*5+5) = z2
-  end if
+  endif
 
     material = kmato(ispec)
 
@@ -1832,14 +1833,14 @@
         write(24,*) '1 0 0 RG GF 0 setgray ST'
      else
         RGB_send(ispec) = 1
-     end if
+     endif
   else
 ! do not color the elements if below the threshold
      if ( myrank == 0 ) then
         write(24,*) 'ST'
      else
         RGB_send(ispec) = 0
-     end if
+     endif
   endif
 
   enddo ! end of loop on all the spectral elements
@@ -1868,19 +1869,19 @@
               write(24,*) '1 0 0 RG GF 0 setgray ST'
            else
               write(24,*) 'ST'
-           end if
-        end do
+           endif
+        enddo
         deallocate(coorg_recv)
         deallocate(RGB_recv)
 
-     end do
+     enddo
 
   else
      call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
      call MPI_SEND (coorg_send, nspec*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
      call MPI_SEND (RGB_send, nspec, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
 
-  end if
+  endif
 
 #endif
 
@@ -1891,16 +1892,17 @@
 
     close(24)
 
-    print *,'End of creation of PostScript file with stability condition'
- end if
+    write(IOUT,*) 'End of creation of PostScript file with stability condition'
+ endif
 
 !
 !--------------------------------------------------------------------------------
 !
 
-  if ( myrank == 0 ) then
-  print *
-  print *,'Creating PostScript file with mesh dispersion'
+  if (myrank == 0) then
+
+    write(IOUT,*)
+    write(IOUT,*) 'Creating PostScript file with mesh dispersion'
 
 !
 !---- open PostScript file
@@ -2014,13 +2016,13 @@
   write(24,*) '0 setgray'
 
   num_ispec = 0
-  end if
+  endif
 
   do ispec = 1, nspec
      if ( myrank == 0 ) then
         num_ispec = num_ispec + 1
         write(24,*) '% elem ',num_ispec
-     end if
+     endif
 
   do i=1,pointsdisp
   do j=1,pointsdisp
@@ -2046,7 +2048,7 @@
   else
      coorg_send(1,(ispec-1)*5+1) = x1
      coorg_send(2,(ispec-1)*5+1) = z1
-  end if
+  endif
 
 ! draw straight lines if elements have 4 nodes
 
@@ -2060,7 +2062,7 @@
   else
      coorg_send(1,(ispec-1)*5+2) = x2
      coorg_send(2,(ispec-1)*5+2) = z2
-  end if
+  endif
 
   ir=pointsdisp
   is=pointsdisp
@@ -2073,7 +2075,7 @@
   else
      coorg_send(1,(ispec-1)*5+3) = x2
      coorg_send(2,(ispec-1)*5+3) = z2
-  end if
+  endif
 
   is=pointsdisp
   ir=1
@@ -2086,7 +2088,7 @@
   else
      coorg_send(1,(ispec-1)*5+4) = x2
      coorg_send(2,(ispec-1)*5+4) = z2
-  end if
+  endif
 
   ir=1
   is=2
@@ -2100,7 +2102,7 @@
   else
      coorg_send(1,(ispec-1)*5+5) = x2
      coorg_send(2,(ispec-1)*5+5) = z2
-  end if
+  endif
 
     material = kmato(ispec)
 
@@ -2168,7 +2170,7 @@
           write(24,*) '1 0 0 RG GF 0 setgray ST'
        else
           RGB_send(ispec) = 1
-       end if
+       endif
 
 ! display bad elements that are below 120% of the threshold in blue
     else if(lambdaS_local <= 1.20 * lambdaSmin) then
@@ -2176,7 +2178,7 @@
           write(24,*) '0 0 1 RG GF 0 setgray ST'
        else
           RGB_send(ispec) = 3
-       end if
+       endif
 
     else
 ! do not color the elements if not close to the threshold
@@ -2184,7 +2186,7 @@
           write(24,*) 'ST'
        else
           RGB_send(ispec) = 0
-       end if
+       endif
     endif
 
   else
@@ -2193,7 +2195,7 @@
         write(24,*) 'ST'
      else
         RGB_send(ispec) = 0
-     end if
+     endif
   endif
 
 ! display mesh dispersion for P waves if there is no elastic element in the mesh
@@ -2207,7 +2209,7 @@
           write(24,*) '1 0 0 RG GF 0 setgray ST'
        else
           RGB_send(ispec) = 1
-       end if
+       endif
 
 ! display bad elements that are below 120% of the threshold in blue
     else if(lambdaP_local <= 1.20 * lambdaPmin) then
@@ -2215,7 +2217,7 @@
           write(24,*) '0 0 1 RG GF 0 setgray ST'
        else
           RGB_send(ispec) = 3
-       end if
+       endif
 
     else
 ! do not color the elements if not close to the threshold
@@ -2223,7 +2225,7 @@
           write(24,*) 'ST'
        else
           RGB_send(ispec) = 0
-       end if
+       endif
     endif
 
   endif
@@ -2252,26 +2254,26 @@
            write(24,*) 'CO'
            if ( RGB_recv(ispec)  == 1) then
               write(24,*) '1 0 0 RG GF 0 setgray ST'
-           end if
+           endif
            if ( RGB_recv(ispec)  == 3) then
               write(24,*) '0 0 1 RG GF 0 setgray ST'
-           end if
+           endif
            if ( RGB_recv(ispec)  == 0) then
               write(24,*) 'ST'
-           end if
+           endif
 
-        end do
+        enddo
         deallocate(coorg_recv)
         deallocate(RGB_recv)
 
-     end do
+     enddo
 
   else
      call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
      call MPI_SEND (coorg_send, nspec*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
      call MPI_SEND (RGB_send, nspec, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
 
-  end if
+  endif
 #endif
 
   if ( myrank == 0 ) then
@@ -2281,16 +2283,18 @@
 
      close(24)
 
-     print *,'End of creation of PostScript file with mesh dispersion'
-  end if
+     write(IOUT,*) 'End of creation of PostScript file with mesh dispersion'
+
+  endif
 
 !
 !--------------------------------------------------------------------------------
 !
 
-  if ( myrank == 0 ) then
-  print *
-  print *,'Creating PostScript file with velocity model'
+  if (myrank == 0) then
+
+    write(IOUT,*)
+    write(IOUT,*) 'Creating PostScript file with velocity model'
 
 !
 !---- open PostScript file
@@ -2396,13 +2400,13 @@
   write(24,*) '0 setgray'
 
   num_ispec = 0
-end if
+endif
 
   do ispec = 1, UPPER_LIMIT_DISPLAY
      if ( myrank == 0 ) then
         num_ispec = num_ispec + 1
         write(24,*) '% elem ',num_ispec
-     end if
+     endif
   do i=1,pointsdisp
   do j=1,pointsdisp
   xinterp(i,j) = 0.d0
@@ -2427,7 +2431,7 @@ end if
   else
      coorg_send(1,(ispec-1)*5+1) = x1
      coorg_send(2,(ispec-1)*5+1) = z1
-  end if
+  endif
 
 ! draw straight lines if elements have 4 nodes
 
@@ -2441,7 +2445,7 @@ end if
   else
      coorg_send(1,(ispec-1)*5+2) = x2
      coorg_send(2,(ispec-1)*5+2) = z2
-  end if
+  endif
 
   ir=pointsdisp
   is=pointsdisp
@@ -2454,7 +2458,7 @@ end if
   else
      coorg_send(1,(ispec-1)*5+3) = x2
      coorg_send(2,(ispec-1)*5+3) = z2
-  end if
+  endif
 
   is=pointsdisp
   ir=1
@@ -2467,7 +2471,7 @@ end if
   else
      coorg_send(1,(ispec-1)*5+4) = x2
      coorg_send(2,(ispec-1)*5+4) = z2
-  end if
+  endif
 
   ir=1
   is=2
@@ -2481,7 +2485,7 @@ end if
   else
      coorg_send(1,(ispec-1)*5+5) = x2
      coorg_send(2,(ispec-1)*5+5) = z2
-  end if
+  endif
 
   if((vpmax-vpmin)/vpmin > 0.02d0) then
   if(assign_external_model) then
@@ -2511,7 +2515,7 @@ end if
      write(24,*) sngl(x1),' setgray GF 0 setgray ST'
   else
      greyscale_send(ispec) = sngl(x1)
-  end if
+  endif
   enddo ! end of loop on all the spectral elements
 
 #ifdef USE_MPI
@@ -2536,33 +2540,36 @@ end if
            write(24,*) 'CO'
            write(24,*) greyscale_recv(ispec), ' setgray GF 0 setgray ST'
 
-        end do
+        enddo
         deallocate(coorg_recv)
         deallocate(greyscale_recv)
 
-     end do
+     enddo
 
   else
      call MPI_SEND (UPPER_LIMIT_DISPLAY, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
      call MPI_SEND (coorg_send, UPPER_LIMIT_DISPLAY*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
      call MPI_SEND (greyscale_send, UPPER_LIMIT_DISPLAY, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
-  end if
+  endif
 #endif
 
-  if ( myrank == 0 ) then
+  if (myrank == 0) then
+
      write(24,*) '%'
      write(24,*) 'grestore'
      write(24,*) 'showpage'
 
      close(24)
 
-     print *,'End of creation of PostScript file with velocity model'
+     write(IOUT,*) 'End of creation of PostScript file with velocity model'
 
-  end if
+  endif
 
-  if ( myrank == 0 ) then
-  print *
-  print *,'Creating PostScript file with mesh partitioning'
+  if (myrank == 0) then
+
+    write(IOUT,*)
+    write(IOUT,*) 'Creating PostScript file with mesh partitioning'
+
 !
 !---- open PostScript file
 !
@@ -2641,7 +2648,7 @@ end if
   write(24,*) '24.35 CM 18.9 CM MV'
   write(24,*) usoffset,' CM 2 div neg 0 MR'
   write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  write(24,*) '(Mesh stability condition \(red = bad\)) show'
+  write(24,*) '(Mesh partitioning) show'
   write(24,*) 'grestore'
   write(24,*) '25.35 CM 18.9 CM MV'
   write(24,*) usoffset,' CM 2 div neg 0 MR'
@@ -2667,14 +2674,14 @@ end if
   write(24,*) '0 setgray'
 
   num_ispec = 0
-  end if
+  endif
 
   do ispec = 1, UPPER_LIMIT_DISPLAY
 
      if ( myrank == 0 ) then
         num_ispec = num_ispec + 1
         write(24,*) '% elem ',num_ispec
-     end if
+     endif
 
   do i=1,pointsdisp
   do j=1,pointsdisp
@@ -2700,7 +2707,7 @@ end if
   else
      coorg_send(1,(ispec-1)*5+1) = x1
      coorg_send(2,(ispec-1)*5+1) = z1
-  end if
+  endif
 
 ! draw straight lines if elements have 4 nodes
 
@@ -2714,7 +2721,7 @@ end if
   else
      coorg_send(1,(ispec-1)*5+2) = x2
      coorg_send(2,(ispec-1)*5+2) = z2
-  end if
+  endif
 
   ir=pointsdisp
   is=pointsdisp
@@ -2727,7 +2734,7 @@ end if
   else
      coorg_send(1,(ispec-1)*5+3) = x2
      coorg_send(2,(ispec-1)*5+3) = z2
-  end if
+  endif
 
   is=pointsdisp
   ir=1
@@ -2740,7 +2747,7 @@ end if
   else
      coorg_send(1,(ispec-1)*5+4) = x2
      coorg_send(2,(ispec-1)*5+4) = z2
-  end if
+  endif
 
   ir=1
   is=2
@@ -2754,11 +2761,11 @@ end if
   else
      coorg_send(1,(ispec-1)*5+5) = x2
      coorg_send(2,(ispec-1)*5+5) = z2
-  end if
+  endif
 
   if ( myrank == 0 ) then
         write(24,*) red(1), green(1), blue(1), 'RG GF 0 setgray ST'
-     end if
+     endif
 
   enddo ! end of loop on all the spectral elements
 
@@ -2787,27 +2794,28 @@ end if
 
            write(24,*) red(icol), green(icol), blue(icol), ' RG GF 0 setgray ST'
 
-        end do
+        enddo
         deallocate(coorg_recv)
 
-     end do
+     enddo
 
   else
      call MPI_SEND (UPPER_LIMIT_DISPLAY, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
      call MPI_SEND (coorg_send, UPPER_LIMIT_DISPLAY*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
 
-  end if
+  endif
 #endif
 
- if ( myrank == 0 ) then
-    write(24,*) '%'
-    write(24,*) 'grestore'
-    write(24,*) 'showpage'
+ if (myrank == 0) then
+   write(24,*) '%'
+   write(24,*) 'grestore'
+   write(24,*) 'showpage'
 
-    close(24)
+   close(24)
 
-    print *,'End of creation of PostScript file with partitioning'
- end if
+   write(IOUT,*) 'End of creation of PostScript file with partitioning'
+   write(IOUT,*)
+ endif
 
  10  format('%!PS-Adobe-2.0',/,'%%',/,'%% Title: ',a50,/,'%% Created by: Specfem2D',/,'%% Author: Dimitri Komatitsch',/,'%%')
 

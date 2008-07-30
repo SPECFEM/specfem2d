@@ -45,7 +45,7 @@
 !----
 
   subroutine locate_source_moment_tensor(ibool,coord,nspec,npoin,xigll,zigll,x_source,z_source, &
-               ispec_selected_source,is_proc_source,nb_proc_source,nproc,myrank,xi_source,gamma_source,coorg,knods,ngnod,npgeo)
+               ispec_selected_source,is_proc_source,nb_proc_source,nproc,myrank,xi_source,gamma_source,coorg,knods,ngnod,npgeo,ipass)
 
   implicit none
 
@@ -54,7 +54,7 @@
   include "mpif.h"
 #endif
 
-  integer nspec,npoin,ngnod,npgeo
+  integer nspec,npoin,ngnod,npgeo,ipass
 
   integer knods(ngnod,nspec)
   double precision coorg(NDIM,npgeo)
@@ -90,13 +90,13 @@
 
 
 ! **************
-  if ( myrank == 0 .or. nproc == 1 ) then
+  if ((myrank == 0 .or. nproc == 1) .and. ipass == 1) then
     write(IOUT,*)
     write(IOUT,*) '*******************************'
     write(IOUT,*) ' locating moment-tensor source'
     write(IOUT,*) '*******************************'
     write(IOUT,*)
-  end if
+  endif
 
 ! set distance to huge initial value
   distmin = HUGEVAL
@@ -158,10 +158,10 @@
 
      if ( myrank /= locate_is_proc_source(1) ) then
         is_proc_source = 0
-     end if
+     endif
      nb_proc_source = 1
 
-  end if
+  endif
 
 #endif
 
@@ -214,7 +214,7 @@
 ! compute final distance between asked and found
   final_distance = sqrt((x_source-x)**2 + (z_source-z)**2)
 
-  if ( is_proc_source == 1 ) then
+  if (is_proc_source == 1 .and. ipass == 1) then
      write(IOUT,*)
      write(IOUT,*) 'Moment-tensor source:'
 
@@ -230,7 +230,7 @@
      write(IOUT,*)
      write(IOUT,*) 'end of moment-tensor source detection'
      write(IOUT,*)
-  end if
+  endif
 
 #ifdef USE_MPI
   call MPI_BARRIER(MPI_COMM_WORLD,ierror)

@@ -9,7 +9,7 @@
 ! DO NOT forget to change precision_mpi.h accordingly
 !
   integer, parameter :: CUSTOM_REAL = SIZE_DOUBLE
-!  integer, parameter :: CUSTOM_REAL = SIZE_REAL
+! integer, parameter :: CUSTOM_REAL = SIZE_REAL
 
 ! polynomial degree
   integer, parameter :: NGLLX = 5

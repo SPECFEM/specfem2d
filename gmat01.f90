@@ -40,7 +40,7 @@
 !
 !========================================================================
 
-  subroutine gmat01(density_array,elastcoef,numat)
+  subroutine gmat01(density_array,elastcoef,numat,myrank,ipass)
 
 ! read properties of a 2D isotropic or anisotropic linear elastic element
 
@@ -51,7 +51,7 @@
   character(len=80) datlin
   double precision lambdaplus2mu,kappa
 
-  integer numat
+  integer numat,myrank,ipass
   double precision density_array(numat),elastcoef(4,numat)
 
   integer in,n,indic
@@ -65,12 +65,12 @@
   density_array(:) = zero
   elastcoef(:,:) = zero
 
-  write(iout,100) numat
+  if(myrank == 0 .and. ipass == 1) write(IOUT,100) numat
 
-  read(iin ,"(a80)") datlin
+  read(IIN,"(a80)") datlin
   do in = 1,numat
 
-   read(iin ,*) n,indic,density,val1,val2,val3,val4
+   read(IIN,*) n,indic,density,val1,val2,val3,val4
 
    if(n<1 .or. n>numat) call exit_MPI('Wrong material set number')
 
@@ -132,17 +132,19 @@
   density_array(n) = density
 
 !
-!----    check the input
+!----    check what has been read
 !
+  if(myrank == 0 .and. ipass == 1) then
   if(indic == 1) then
 ! material can be acoustic (fluid) or elastic (solid)
     if(elastcoef(2,n) > TINYVAL) then
-      write(iout,200) n,cp,cs,density,poisson,lambda,mu,kappa,young
+      write(IOUT,200) n,cp,cs,density,poisson,lambda,mu,kappa,young
     else
-      write(iout,300) n,cp,density,kappa
+      write(IOUT,300) n,cp,density,kappa
     endif
   else
-    write(iout,400) n,c11,c13,c33,c44,density,sqrt(c33/density),sqrt(c11/density),sqrt(c44/density),sqrt(c44/density)
+    write(IOUT,400) n,c11,c13,c33,c44,density,sqrt(c33/density),sqrt(c11/density),sqrt(c44/density),sqrt(c44/density)
+  endif
   endif
 
   enddo

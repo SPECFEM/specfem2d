@@ -40,7 +40,7 @@
 !
 !========================================================================
 
-  subroutine createnum_slow(knods,ibool,npoin,nspec,ngnod)
+  subroutine createnum_slow(knods,ibool,npoin,nspec,ngnod,myrank,ipass)
 
 ! generate the global numbering
 
@@ -48,7 +48,7 @@
 
   include "constants.h"
 
-  integer npoin,nspec,ngnod
+  integer npoin,nspec,ngnod,myrank,ipass
 
   integer knods(ngnod,nspec),ibool(NGLLX,NGLLZ,nspec)
 
@@ -61,9 +61,11 @@
 
 
 !----  create global mesh numbering
-  write(IOUT,*)
-  write(IOUT,*) 'Generating global mesh numbering (slow version)...'
-  write(IOUT,*)
+  if(myrank == 0 .and. ipass == 1) then
+    write(IOUT,*)
+    write(IOUT,*) 'Generating global mesh numbering (slow version)...'
+    write(IOUT,*)
+  endif
 
   npoin = 0
   npedge = 0
@@ -268,14 +270,10 @@
             endif
 
 ! verifier que le point de depart n'existe pas deja
-      if(ibool(iloc,jloc,numelem) /= 0) then
-         call exit_MPI('point genere deux fois')
-      endif
+      if(ibool(iloc,jloc,numelem) /= 0) call exit_MPI('point generated twice')
 
 ! verifier que le point d'arrivee existe bien deja
-      if(ibool(i2,j2,num2) == 0) then
-         call exit_MPI('point inconnu dans le maillage')
-      endif
+      if(ibool(i2,j2,num2) == 0) call exit_MPI('unknown point in the mesh')
 
 ! affecter le meme numero
       ibool(iloc,jloc,numelem) = ibool(i2,j2,num2)
@@ -309,17 +307,16 @@
   enddo
 
 ! verification de la coherence de la numerotation generee
-  if(minval(ibool) /= 1 .or. maxval(ibool) /= npoin) then
-     call exit_MPI('Error while generating global numbering')
-  endif
+  if(minval(ibool) /= 1 .or. maxval(ibool) /= npoin) call exit_MPI('Error while generating global numbering')
 
-  write(IOUT,*) 'Total number of points of the global mesh: ',npoin
-  write(IOUT,*) 'distributed as follows:'
-  write(IOUT,*)
-  write(IOUT,*) 'Number of interior points: ',npoin-npedge-npcorn
-  write(IOUT,*) 'Number of edge points (without corners): ',npedge
-  write(IOUT,*) 'Number of corner points: ',npcorn
-  write(IOUT,*)
+  if(myrank == 0 .and. ipass == 1) then
+    write(IOUT,*) 'Total number of points of the global mesh: ',npoin,' distributed as follows:'
+    write(IOUT,*)
+    write(IOUT,*) 'Number of interior points: ',npoin-npedge-npcorn
+    write(IOUT,*) 'Number of edge points (without corners): ',npedge
+    write(IOUT,*) 'Number of corner points: ',npcorn
+    write(IOUT,*)
+  endif
 
   end subroutine createnum_slow
 
