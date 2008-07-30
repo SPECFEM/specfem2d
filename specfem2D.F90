@@ -356,6 +356,7 @@
   logical, dimension(:), allocatable  :: mask_ispec_inner_outer
 
   integer, dimension(:,:), allocatable  :: acoustic_surface
+  integer :: acoustic_edges_read
   integer, dimension(:,:), allocatable  :: acoustic_edges
 
   integer  :: ixmin, ixmax, izmin, izmax
@@ -819,8 +820,16 @@ endif
   if(nelem_acoustic_surface > 0) then
      if(ipass == 1) allocate(acoustic_edges(4,nelem_acoustic_surface))
       do inum = 1,nelem_acoustic_surface
-        read(IIN,*) acoustic_edges(1,inum), acoustic_edges(2,inum), acoustic_edges(3,inum), &
+        read(IIN,*) acoustic_edges_read, acoustic_edges(2,inum), acoustic_edges(3,inum), &
              acoustic_edges(4,inum)
+        if(ipass == 1) then
+          acoustic_edges(1,inum) = acoustic_edges_read
+        else if(ipass == 2) then
+          acoustic_edges(1,inum) = perm(antecedent_list(acoustic_edges_read))
+        else
+          call exit_MPI('error: maximum number of passes is 2')
+        endif
+
      enddo
      if(ipass == 1) allocate(acoustic_surface(5,nelem_acoustic_surface))
      call construct_acoustic_surface ( nspec, ngnod, knods, nelem_acoustic_surface, &
