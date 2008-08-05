@@ -63,7 +63,7 @@ O = obj
 #F90 = ifort
 #F90 = mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
 #CC = gcc
-#FLAGS_NOCHECK=-O3 -xP -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check nobounds -fpe3 -ftz
+#FLAGS_NOCHECK=-O3 -xP -diag-disable vec -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check nobounds -fpe3 -ftz
 #FLAGS_CHECK = $(FLAGS_NOCHECK)
 
 # GNU gfortran
