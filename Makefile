@@ -56,14 +56,14 @@ O = obj
 #FLAGS_NOCHECK=-fast -Mnobounds -Minline -Mneginfo -Mdclchk -Knoieee -Minform=warn -fastsse -tp amd64e -Msmart
 #FLAGS_CHECK=-fast -Mbounds -Mneginfo -Mdclchk -Minform=warn
 
-# Intel
+# Intel (leave option -ftz, which is *critical* for performance)
 # NOTE FOR USERS OF IFORT 10.0 AND ABOVE :
 # Use of option -heap-arrays <size> can be required, depending on the size of the simulation. 
 # Another workaround can be to increase your stack size (ulimit -s).
 #F90 = ifort
 #F90 = mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
 #CC = gcc
-#FLAGS_NOCHECK=-O3 -xP -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check nobounds
+#FLAGS_NOCHECK=-O3 -xP -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check nobounds -fpe3 -ftz
 #FLAGS_CHECK = $(FLAGS_NOCHECK)
 
 # GNU gfortran
