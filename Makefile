@@ -63,7 +63,7 @@ O = obj
 #F90 = ifort
 #F90 = mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
 #CC = gcc
-#FLAGS_NOCHECK=-O3 -xP -vec-report0 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check nobounds -fpe3 -ftz
+#FLAGS_NOCHECK=-O3 -xP -vec-report0 -e03 -std03 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -fpe3 -ftz
 #FLAGS_CHECK = $(FLAGS_NOCHECK)
 
 # GNU gfortran
@@ -72,7 +72,7 @@ F90 = gfortran
 #F90 = /opt/openmpi-1.2.1/gfortran64/bin/mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
 CC = gcc
 #FLAGS_NOCHECK = -O3 -march=opteron -m64 -mfpmath=sse,387
-FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O3 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math # -mcmodel=medium
+FLAGS_NOCHECK = -std=f2003 -fimplicit-none -frange-check -O3 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math # -mcmodel=medium
 FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
 
 # IBM
