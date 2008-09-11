@@ -4,7 +4,7 @@
 !                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
+! Copyright Universite de Pau et des Pays de l'Adour and CNRS, France.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
@@ -91,24 +91,24 @@
 
 ! **************
   if ( myrank == 0 .or. nproc == 1 ) then
-    write(IOUT,*)
-    write(IOUT,*) '*******************************'
-    write(IOUT,*) ' locating moment-tensor source'
-    write(IOUT,*) '*******************************'
-    write(IOUT,*)
+  write(IOUT,*)
+  write(IOUT,*) '*******************************'
+  write(IOUT,*) ' locating moment-tensor source'
+  write(IOUT,*) '*******************************'
+  write(IOUT,*)
   end if
 
 ! set distance to huge initial value
-  distmin = HUGEVAL
+  distmin=HUGEVAL
 
   is_proc_source = 0
 
-  do ispec = 1,nspec
+  do ispec=1,nspec
 
 ! loop only on points inside the element
 ! exclude edges to ensure this point is not shared with other elements
-     do j = 2,NGLLZ-1
-        do i = 2,NGLLX-1
+     do j=2,NGLLZ-1
+        do i=2,NGLLX-1
 
            iglob = ibool(i,j,ispec)
            dist = sqrt((x_source-dble(coord(1,iglob)))**2 + (z_source-dble(coord(2,iglob)))**2)
@@ -127,6 +127,7 @@
 ! end of loop on all the spectral elements
   enddo
 
+
 #ifdef USE_MPI
   ! global minimum distance computed over all processes
   call MPI_ALLREDUCE (distmin, dist_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ierror)
@@ -136,8 +137,12 @@
 
 #endif
 
-! check if this process contains the source
-  if ( dist_glob == distmin ) is_proc_source = 1
+
+  ! check if this process contains the source
+  if ( dist_glob == distmin ) then
+     is_proc_source = 1
+  end if
+
 
 #ifdef USE_MPI
   ! determining the number of processes that contain the source (useful when the source is located on an interface)
@@ -170,8 +175,8 @@
 ! ****************************************
 
 ! use initial guess in xi and gamma
-  xi = xigll(ix_initial_guess)
-  gamma = zigll(iz_initial_guess)
+        xi = xigll(ix_initial_guess)
+        gamma = zigll(iz_initial_guess)
 
 ! iterate to solve the non linear system
   do iter_loop = 1,NUM_ITER

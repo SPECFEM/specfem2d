@@ -1,13 +1,15 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.2
+!                   S P E C F E M 2 D  Version 6.3
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
+! Copyright Universite de Pau et des Pays de l'Adour and CNRS, France.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
+!               Christina Morency, cmorency aT gps DOT caltech DOT edu
+!               Jeroen Tromp, jtromp aT gps DOT caltech DOT edu
 !
 ! This software is a computer program whose purpose is to solve
 ! the two-dimensional viscoelastic anisotropic wave equation
@@ -40,19 +42,22 @@
 !
 !========================================================================
 
-  subroutine compute_forces_elastic(npoin,nspec,nelemabs,numat, &
-       ispec_selected_source,is_proc_source,source_type,it,NSTEP,anyabs,assign_external_model, &
+  subroutine compute_forces_elastic(npoin,nspec,myrank,nelemabs,numat,iglob_source, &
+       ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
+       source_type,it,NSTEP,anyabs,assign_external_model, &
        initialfield,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,angleforce,deltatcube, &
-       deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,elastic,codeabs, &
-       accel_elastic,veloc_elastic,displ_elastic,density,elastcoef,xix,xiz,gammax,gammaz, &
-       jacobian,vpext,vsext,rhoext,source_time_function,sourcearray,e1,e11, &
+       deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,elastic, &
+       accel_elastic,veloc_elastic,displ_elastic,b_accel_elastic,b_displ_elastic,&
+       density,elastcoef,xix,xiz,gammax,gammaz, &
+       jacobian,vpext,vsext,rhoext,source_time_function,sourcearray,adj_sourcearrays,e1,e11, &
        e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
        dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
        hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
        nspec_inner_outer,ispec_inner_outer_to_glob,num_phase_inner_outer,deltat,coord,add_Bielak_conditions, &
-       x0_source, z0_source, A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset,f0, &
-       v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot,&
-       nleft,nright,nbot,over_critical_angle)
+       x0_source, z0_source, A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset,f0,&
+       nrec,isolver,save_forward,b_absorb_elastic_left,&
+       b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top,nspec_xmin,nspec_xmax,&
+       nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,mu_k,kappa_k)
 
 ! compute forces for the elastic elements
 
@@ -60,26 +65,40 @@
 
   include "constants.h"
 
-  integer :: npoin,nspec,nelemabs,numat,ispec_selected_source,is_proc_source,source_type,it,NSTEP
+  integer :: npoin,nspec,myrank,nelemabs,numat,iglob_source,ispec_selected_source,&
+             is_proc_source,source_type,it,NSTEP
+  integer :: nrec,isolver
+  integer, dimension(nrec) :: ispec_selected_rec,which_proc_receiver
+  integer :: nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax
+  integer, dimension(nspec_xmin) :: ib_xmin
+  integer, dimension(nspec_xmax) :: ib_xmax
+  integer, dimension(nspec_zmin) :: ib_zmin
+  integer, dimension(nspec_zmax) :: ib_zmax
 
   logical :: anyabs,assign_external_model,initialfield,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,add_Bielak_conditions
+  logical :: save_forward
 
   double precision :: angleforce,deltatcube,deltatfourth,twelvedeltat,fourdeltatsquare
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
   integer, dimension(nspec) :: kmato
-  integer, dimension(nelemabs) :: numabs
 
   logical, dimension(nspec) :: elastic
-  logical, dimension(4,nelemabs)  :: codeabs
 
   real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: accel_elastic,veloc_elastic,displ_elastic
-  double precision, dimension(numat) :: density
-  double precision, dimension(4,numat) :: elastcoef
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: b_accel_elastic,b_displ_elastic
+  double precision, dimension(2,numat) :: density
+  double precision, dimension(4,3,numat) :: elastcoef
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
   double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,vsext,rhoext
   real(kind=CUSTOM_REAL), dimension(NSTEP) :: source_time_function
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: sourcearray
+  real(kind=CUSTOM_REAL), dimension(nrec,NSTEP,NDIM,NGLLX,NGLLZ) :: adj_sourcearrays
+  real(kind=CUSTOM_REAL), dimension(npoin) :: mu_k,kappa_k
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLZ,nspec_xmin,NSTEP) :: b_absorb_elastic_left
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLZ,nspec_xmax,NSTEP) :: b_absorb_elastic_right
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,nspec_zmax,NSTEP) :: b_absorb_elastic_top
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,nspec_zmin,NSTEP) :: b_absorb_elastic_bottom
 
   integer :: N_SLS
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11,e13
@@ -108,15 +127,21 @@
 !--- local variables
 !---
 
-  integer :: ispec,ispec_inner_outer,i,j,k,iglob,ispecabs,ibegin,iend
+  integer :: ispec,ispec_inner_outer,i,j,k,iglob,ispecabs,ibegin,iend,irec_local,irec
 
 ! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
   real(kind=CUSTOM_REAL) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
+  real(kind=CUSTOM_REAL) :: b_dux_dxi,b_dux_dgamma,b_duz_dxi,b_duz_dgamma
+  real(kind=CUSTOM_REAL) :: b_dux_dxl,b_duz_dxl,b_dux_dzl,b_duz_dzl
+  real(kind=CUSTOM_REAL) :: dsxx,dsxz,dszz
+  real(kind=CUSTOM_REAL) :: b_dsxx,b_dsxz,b_dszz
   real(kind=CUSTOM_REAL) :: sigma_xx,sigma_xz,sigma_zz
+  real(kind=CUSTOM_REAL) :: b_sigma_xx,b_sigma_xz,b_sigma_zz
   real(kind=CUSTOM_REAL) :: nx,nz,vx,vz,vn,rho_vp,rho_vs,tx,tz,weight,xxi,zxi,xgamma,zgamma,jacobian1D
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: tempx1,tempx2,tempz1,tempz2
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: b_tempx1,b_tempx2,b_tempz1,b_tempz2
 
 ! Jacobian matrix and determinant
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
@@ -133,13 +158,6 @@
   double precision, dimension(NDIM,npoin), intent(in) :: coord
   double precision x0_source, z0_source, angleforce_refl, c_inc, c_refl, time_offset, f0
   double precision, dimension(NDIM) :: A_plane, B_plane, C_plane
-!over critical angle
-  logical :: over_critical_angle
-  integer :: nleft, nright, nbot
-  double precision, dimension(nleft) :: v0x_left,v0z_left,t0x_left,t0z_left
-  double precision, dimension(nright) :: v0x_right,v0z_right,t0x_right,t0z_right
-  double precision, dimension(nbot) :: v0x_bot,v0z_bot,t0x_bot,t0z_bot
-  integer count_left,count_right,count_bot
 
 ! only for the first call to compute_forces_elastic (during computation on outer elements)
   if ( num_phase_inner_outer ) then
@@ -160,9 +178,9 @@
     if(elastic(ispec)) then
 
 ! get relaxed elastic parameters of current spectral element
-      lambdal_relaxed = elastcoef(1,kmato(ispec))
-      mul_relaxed = elastcoef(2,kmato(ispec))
-      lambdalplus2mul_relaxed = elastcoef(3,kmato(ispec))
+      lambdal_relaxed = elastcoef(1,1,kmato(ispec))
+      mul_relaxed = elastcoef(2,1,kmato(ispec))
+      lambdalplus2mul_relaxed = elastcoef(3,1,kmato(ispec))
 
 ! first double loop over GLL points to compute and store gradients
       do j = 1,NGLLZ
@@ -185,6 +203,14 @@
           dux_dgamma = ZERO
           duz_dgamma = ZERO
 
+          if(isolver == 2) then ! backward wavefield
+          b_dux_dxi = ZERO
+          b_duz_dxi = ZERO
+
+          b_dux_dgamma = ZERO
+          b_duz_dgamma = ZERO
+          endif
+
 ! first double loop over GLL points to compute and store gradients
 ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
@@ -192,6 +218,12 @@
             duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
             dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
             duz_dgamma = duz_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
+          if(isolver == 2) then ! backward wavefield
+            b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
+            b_duz_dxi = b_duz_dxi + b_displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+            b_dux_dgamma = b_dux_dgamma + b_displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
+            b_duz_dgamma = b_duz_dgamma + b_displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
+          endif  
           enddo
 
           xixl = xix(i,j,ispec)
@@ -205,6 +237,14 @@
 
           duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
           duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
+
+          if(isolver == 2) then ! backward wavefield
+          b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
+          b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
+
+          b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
+          b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
+          endif
 
 ! compute stress tensor (include attenuation or anisotropy if needed)
 
@@ -249,6 +289,12 @@
     sigma_xz = mul_relaxed*(duz_dxl + dux_dzl)
     sigma_zz = lambdalplus2mul_relaxed*duz_dzl + lambdal_relaxed*dux_dxl
 
+          if(isolver == 2) then ! backward wavefield
+    b_sigma_xx = lambdalplus2mul_relaxed*b_dux_dxl + lambdal_relaxed*b_duz_dzl
+    b_sigma_xz = mul_relaxed*(b_duz_dxl + b_dux_dzl)
+    b_sigma_zz = lambdalplus2mul_relaxed*b_duz_dzl + lambdal_relaxed*b_dux_dxl
+          endif
+
   endif
 
 ! full anisotropy
@@ -261,6 +307,22 @@
 
   endif
 
+! kernels calculation
+   if(isolver == 2) then
+          iglob = ibool(i,j,ispec)
+            dsxx =  dux_dxl
+            dsxz = HALF * (duz_dxl + dux_dzl)
+            dszz =  duz_dzl
+
+            b_dsxx =  b_dux_dxl
+            b_dsxz = HALF * (b_duz_dxl + b_dux_dzl)
+            b_dszz =  b_duz_dzl
+
+            kappa_k(iglob) = (dux_dxl + duz_dzl) *  (b_dux_dxl + b_duz_dzl)
+            mu_k(iglob) = dsxx * b_dsxx + dszz * b_dszz + &
+                  2._CUSTOM_REAL * dsxz * b_dsxz - 1._CUSTOM_REAL/3._CUSTOM_REAL * kappa_k(iglob)
+   endif
+
           jacobianl = jacobian(i,j,ispec)
 
 ! weak formulation term based on stress tensor (non-symmetric form)
@@ -270,6 +332,14 @@
 
           tempx2(i,j) = wxgll(i)*jacobianl*(sigma_xx*gammaxl+sigma_xz*gammazl)
           tempz2(i,j) = wxgll(i)*jacobianl*(sigma_xz*gammaxl+sigma_zz*gammazl)
+
+          if(isolver == 2) then ! backward wavefield
+          b_tempx1(i,j) = wzgll(j)*jacobianl*(b_sigma_xx*xixl+b_sigma_xz*xizl)
+          b_tempz1(i,j) = wzgll(j)*jacobianl*(b_sigma_xz*xixl+b_sigma_zz*xizl)
+
+          b_tempx2(i,j) = wxgll(i)*jacobianl*(b_sigma_xx*gammaxl+b_sigma_xz*gammazl)
+          b_tempz2(i,j) = wxgll(i)*jacobianl*(b_sigma_xz*gammaxl+b_sigma_zz*gammazl)
+          endif
 
         enddo
       enddo
@@ -288,6 +358,14 @@
           do k = 1,NGLLX
             accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
             accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tempz1(k,j)*hprimewgll_xx(k,i) + tempz2(i,k)*hprimewgll_zz(k,j))
+
+          if(isolver == 2) then ! backward wavefield
+            b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - &
+                         (b_tempx1(k,j)*hprimewgll_xx(k,i) + b_tempx2(i,k)*hprimewgll_zz(k,j))
+            b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - &
+                         (b_tempz1(k,j)*hprimewgll_xx(k,i) + b_tempz2(i,k)*hprimewgll_zz(k,j))
+          endif
+
           enddo
 
         enddo ! second loop over the GLL points
@@ -305,24 +383,20 @@
 !
   if(anyabs) then
 
-    count_left=1
-    count_right=1
-    count_bot=1
+!--- left absorbing boundary
+      if( nspec_xmin > 0 ) then
 
-    do ispecabs = 1,nelemabs
+      do ispecabs = 1, nspec_xmin
 
-      ispec = numabs(ispecabs)
+      ispec = ib_xmin(ispecabs)
 
 ! get elastic parameters of current spectral element
-      lambdal_relaxed = elastcoef(1,kmato(ispec))
-      mul_relaxed = elastcoef(2,kmato(ispec))
-      rhol  = density(kmato(ispec))
+      lambdal_relaxed = elastcoef(1,1,kmato(ispec))
+      mul_relaxed = elastcoef(2,1,kmato(ispec))
+      rhol  = density(1,kmato(ispec))
       kappal  = lambdal_relaxed + TWO*mul_relaxed/3._CUSTOM_REAL
       cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_relaxed/3._CUSTOM_REAL)/rhol)
       csl = sqrt(mul_relaxed/rhol)
-
-!--- left absorbing boundary
-      if(codeabs(ILEFT,ispecabs)) then
 
         i = 1
 
@@ -333,19 +407,11 @@
 ! for analytical initial plane wave for Bielak's conditions
 ! left or right edge, horizontal normal vector
           if(add_Bielak_conditions .and. initialfield) then
-             if (.not.over_critical_angle) then
-               call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                    x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
-                    c_inc, c_refl, time_offset,f0)
-               traction_x_t0 = (lambdal_relaxed+2*mul_relaxed)*dxUx + lambdal_relaxed*dzUz
-               traction_z_t0 = mul_relaxed*(dxUz + dzUx)
-            else
-               veloc_horiz=v0x_left(count_left)
-               veloc_vert=v0z_left(count_left)
-               traction_x_t0=t0x_left(count_left)
-               traction_z_t0=t0z_left(count_left)
-               count_left=count_left+1
-            end if
+            call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                 x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
+                 c_inc, c_refl, time_offset,f0)
+            traction_x_t0 = (lambdal_relaxed+2*mul_relaxed)*dxUx + lambdal_relaxed*dzUz
+            traction_z_t0 = mul_relaxed*(dxUz + dzUx)
           else
             veloc_horiz = 0
             veloc_vert = 0
@@ -383,14 +449,36 @@
 
             accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0)*weight
             accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz + traction_z_t0)*weight
-          endif
+
+            if(save_forward .and. isolver ==1) then
+              b_absorb_elastic_left(1,j,ispecabs,it) = tx*weight
+              b_absorb_elastic_left(2,j,ispecabs,it) = tz*weight
+            elseif(isolver == 2) then
+              b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_left(1,j,ispecabs,NSTEP-it+1) 
+              b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - b_absorb_elastic_left(2,j,ispecabs,NSTEP-it+1) 
+            endif
+           endif
+
+          enddo
 
         enddo
 
       endif  !  end of left absorbing boundary
 
 !--- right absorbing boundary
-      if(codeabs(IRIGHT,ispecabs)) then
+      if( nspec_xmax > 0 ) then
+
+      do ispecabs = 1, nspec_xmax
+
+      ispec = ib_xmax(ispecabs)
+
+! get elastic parameters of current spectral element
+      lambdal_relaxed = elastcoef(1,1,kmato(ispec))
+      mul_relaxed = elastcoef(2,1,kmato(ispec))
+      rhol  = density(1,kmato(ispec))
+      kappal  = lambdal_relaxed + TWO*mul_relaxed/3._CUSTOM_REAL
+      cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_relaxed/3._CUSTOM_REAL)/rhol)
+      csl = sqrt(mul_relaxed/rhol)
 
         i = NGLLX
 
@@ -401,19 +489,11 @@
 ! for analytical initial plane wave for Bielak's conditions
 ! left or right edge, horizontal normal vector
           if(add_Bielak_conditions .and. initialfield) then
-            if (.not.over_critical_angle) then
-               call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                    x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
-                    c_inc, c_refl, time_offset,f0)
-               traction_x_t0 = (lambdal_relaxed+2*mul_relaxed)*dxUx + lambdal_relaxed*dzUz
-               traction_z_t0 = mul_relaxed*(dxUz + dzUx)
-            else
-               veloc_horiz=v0x_right(count_right)
-               veloc_vert=v0z_right(count_right)
-               traction_x_t0=t0x_right(count_right)
-               traction_z_t0=t0z_right(count_right)
-               count_right=count_right+1
-            end if
+            call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                 x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
+                 c_inc, c_refl, time_offset,f0)
+            traction_x_t0 = (lambdal_relaxed+2*mul_relaxed)*dxUx + lambdal_relaxed*dzUz
+            traction_z_t0 = mul_relaxed*(dxUz + dzUx)
           else
             veloc_horiz = 0
             veloc_vert = 0
@@ -451,22 +531,44 @@
 
             accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx - traction_x_t0)*weight
             accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz - traction_z_t0)*weight
-          endif
+
+            if(save_forward .and. isolver ==1) then
+              b_absorb_elastic_right(1,j,ispecabs,it) = tx*weight
+              b_absorb_elastic_right(2,j,ispecabs,it) = tz*weight
+            elseif(isolver == 2) then
+              b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_right(1,j,ispecabs,NSTEP-it+1) 
+              b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - b_absorb_elastic_right(2,j,ispecabs,NSTEP-it+1) 
+            endif
+           endif
+
+          enddo
 
         enddo
 
       endif  !  end of right absorbing boundary
 
 !--- bottom absorbing boundary
-      if(codeabs(IBOTTOM,ispecabs)) then
+      if( nspec_zmin > 0 ) then
+
+      do ispecabs = 1, nspec_zmin
+
+      ispec = ib_zmin(ispecabs)
+
+! get elastic parameters of current spectral element
+      lambdal_relaxed = elastcoef(1,1,kmato(ispec))
+      mul_relaxed = elastcoef(2,1,kmato(ispec))
+      rhol  = density(1,kmato(ispec))
+      kappal  = lambdal_relaxed + TWO*mul_relaxed/3._CUSTOM_REAL
+      cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_relaxed/3._CUSTOM_REAL)/rhol)
+      csl = sqrt(mul_relaxed/rhol)
 
         j = 1
 
 ! exclude corners to make sure there is no contradiction on the normal
         ibegin = 1
         iend = NGLLX
-        if(codeabs(ILEFT,ispecabs)) ibegin = 2
-        if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
+        if( nspec_xmin > 0) ibegin = 2
+        if( nspec_xmax > 0) iend = NGLLX-1
 
         do i = ibegin,iend
 
@@ -475,19 +577,11 @@
 ! for analytical initial plane wave for Bielak's conditions
 ! top or bottom edge, vertical normal vector
           if(add_Bielak_conditions .and. initialfield) then
-            if (.not.over_critical_angle) then
-               call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                    x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
-                    c_inc, c_refl, time_offset,f0)
-               traction_x_t0 = mul_relaxed*(dxUz + dzUx)
-               traction_z_t0 = lambdal_relaxed*dxUx + (lambdal_relaxed+2*mul_relaxed)*dzUz
-            else
-               veloc_horiz=v0x_bot(count_bot)
-               veloc_vert=v0z_bot(count_bot)
-               traction_x_t0=t0x_bot(count_bot)
-               traction_z_t0=t0z_bot(count_bot)
-               count_bot=count_bot+1
-            end if
+            call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                 x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
+                 c_inc, c_refl, time_offset,f0)
+            traction_x_t0 = mul_relaxed*(dxUz + dzUx)
+            traction_z_t0 = lambdal_relaxed*dxUx + (lambdal_relaxed+2*mul_relaxed)*dzUz
           else
             veloc_horiz = 0
             veloc_vert = 0
@@ -525,22 +619,44 @@
 
             accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0)*weight
             accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz + traction_z_t0)*weight
-          endif
+
+            if(save_forward .and. isolver ==1) then
+              b_absorb_elastic_bottom(1,i,ispecabs,it) = tx*weight
+              b_absorb_elastic_bottom(2,i,ispecabs,it) = tz*weight
+            elseif(isolver == 2) then
+              b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_bottom(1,i,ispecabs,NSTEP-it+1) 
+              b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - b_absorb_elastic_bottom(2,i,ispecabs,NSTEP-it+1) 
+            endif
+           endif
+
+          enddo
 
         enddo
 
       endif  !  end of bottom absorbing boundary
 
 !--- top absorbing boundary
-      if(codeabs(ITOP,ispecabs)) then
+      if( nspec_zmax > 0 ) then
+
+      do ispecabs = 1, nspec_zmax
+
+      ispec = ib_zmax(ispecabs)
+
+! get elastic parameters of current spectral element
+      lambdal_relaxed = elastcoef(1,1,kmato(ispec))
+      mul_relaxed = elastcoef(2,1,kmato(ispec))
+      rhol  = density(1,kmato(ispec))
+      kappal  = lambdal_relaxed + TWO*mul_relaxed/3._CUSTOM_REAL
+      cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_relaxed/3._CUSTOM_REAL)/rhol)
+      csl = sqrt(mul_relaxed/rhol)
 
         j = NGLLZ
 
 ! exclude corners to make sure there is no contradiction on the normal
         ibegin = 1
         iend = NGLLX
-        if(codeabs(ILEFT,ispecabs)) ibegin = 2
-        if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
+        if( nspec_xmin > 0) ibegin = 2
+        if( nspec_xmax > 0) iend = NGLLX-1
 
         do i = ibegin,iend
 
@@ -591,34 +707,89 @@
 
             accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx - traction_x_t0)*weight
             accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz - traction_z_t0)*weight
-          endif
+
+            if(save_forward .and. isolver ==1) then
+              b_absorb_elastic_top(1,i,ispecabs,it) = tx*weight
+              b_absorb_elastic_top(2,i,ispecabs,it) = tz*weight
+            elseif(isolver == 2) then
+              b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_top(1,i,ispecabs,NSTEP-it+1) 
+              b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - b_absorb_elastic_top(2,i,ispecabs,NSTEP-it+1) 
+            endif
+           endif
+
+          enddo
 
         enddo
 
       endif  !  end of top absorbing boundary
 
-    enddo
-
   endif  ! end of absorbing boundaries
 
-! --- add the source if it is a moment tensor
+! --- add the source
   if(.not. initialfield) then
 
 ! if this processor carries the source and the source element is elastic
      if (is_proc_source == 1 .and. elastic(ispec_selected_source)) then
 
+! collocated force
+! beware, for acoustic medium, source is a potential, therefore source time function
+! gives shape of velocity, not displacement
+        if(source_type == 1) then
+
+       if(isolver == 1) then  ! forward wavefield
+      accel_elastic(1,iglob_source) = accel_elastic(1,iglob_source) - sin(angleforce)*source_time_function(it)
+      accel_elastic(2,iglob_source) = accel_elastic(2,iglob_source) + cos(angleforce)*source_time_function(it)
+       else                   ! backward wavefield
+      b_accel_elastic(1,iglob_source) = b_accel_elastic(1,iglob_source) - sin(angleforce)*source_time_function(NSTEP-it+1)
+      b_accel_elastic(2,iglob_source) = b_accel_elastic(2,iglob_source) + cos(angleforce)*source_time_function(NSTEP-it+1)
+       endif  !endif isolver == 1
+
 ! moment tensor
-        if(source_type == 2) then
+        else if(source_type == 2) then
+
+       if(isolver == 1) then  ! forward wavefield
 ! add source array
-          do j=1,NGLLZ
-            do i=1,NGLLX
-              iglob = ibool(i,j,ispec_selected_source)
-              accel_elastic(:,iglob) = accel_elastic(:,iglob) + sourcearray(:,i,j)*source_time_function(it)
-            enddo
-          enddo
+      do j=1,NGLLZ
+        do i=1,NGLLX
+          iglob = ibool(i,j,ispec_selected_source)
+          accel_elastic(:,iglob) = accel_elastic(:,iglob) + sourcearray(:,i,j)*source_time_function(it)
+        enddo
+      enddo
+       else                   ! backward wavefield
+      do j=1,NGLLZ
+        do i=1,NGLLX
+          iglob = ibool(i,j,ispec_selected_source)
+          b_accel_elastic(:,iglob) = b_accel_elastic(:,iglob) + sourcearray(:,i,j)*source_time_function(NSTEP-it+1)
+        enddo
+      enddo
+       endif  !endif isolver == 1
+
+        else
+          call exit_MPI('wrong source type in elastic element')
         endif
 
      endif ! if this processor carries the source and the source element is elastic
+
+    if(isolver == 2) then   ! adjoint wavefield
+      
+      irec_local = 0
+      do irec = 1,nrec
+!   add the source (only if this proc carries the source)
+      if(myrank == which_proc_receiver(irec) .and. elastic(ispec_selected_rec(irec))) then
+
+      irec_local = irec_local + 1
+! add source array
+      do j=1,NGLLZ
+        do i=1,NGLLX
+          iglob = ibool(i,j,ispec_selected_rec(irec))
+          accel_elastic(:,iglob) = accel_elastic(:,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,:,i,j)
+        enddo
+      enddo
+
+     endif ! if this processor carries the adjoint source and the source element is elastic
+      enddo ! irec = 1,nrec
+
+    endif ! if isolver == 2 adjoint wavefield
 
   endif ! if not using an initial field
 
@@ -694,7 +865,7 @@
 
   endif ! end of test on attenuation
 
-  endif ! end of test on attenuation
+  endif ! if ( num_phase_inner_outer )
 
   end subroutine compute_forces_elastic
 

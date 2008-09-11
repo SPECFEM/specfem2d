@@ -1,13 +1,15 @@
 
 #========================================================================
 #
-#                   S P E C F E M 2 D  Version 5.2
+#                   S P E C F E M 2 D  Version 6.3
 #                   ------------------------------
 #
-# Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
+# Copyright Universite de Pau et des Pays de l'Adour and CNRS, France.
 # Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 #               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 #               Roland Martin, roland DOT martin aT univ-pau DOT fr
+#               Christina Morency, cmorency aT gps DOT caltech DOT edu
+#               Jeroen Tromp, jtromp aT gps DOT caltech DOT edu
 #
 # This software is a computer program whose purpose is to solve
 # the two-dimensional viscoelastic anisotropic wave equation
@@ -52,9 +54,6 @@ O = obj
 #FLAGS_CHECK=-fast -Mbounds -Mneginfo -Mdclchk -Minform=warn
 
 # Intel
-# NOTE FOR USERS OF IFORT 10.0 AND ABOVE :
-# Use of option -heap-arrays <size> can be required, depending on the size of the simulation. 
-# Another workaround can be to increase your stack size (ulimit -s).
 #F90 = ifort
 #CC = gcc
 #FLAGS_NOCHECK=-O0 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check nobounds
@@ -82,15 +81,14 @@ LIB =
 OBJS_MESHFEM2D = $O/part_unstruct.o $O/meshfem2D.o $O/read_value_parameters.o $O/spline_routines.o
 
 OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/enforce_acoustic_free_surface.o\
-        $O/compute_forces_acoustic.o $O/compute_forces_elastic.o\
+        $O/compute_forces_acoustic.o $O/compute_forces_elastic.o $O/compute_forces_solid.o $O/compute_forces_fluid.o\
         $O/lagrange_poly.o $O/gmat01.o $O/gll_library.o $O/plotgll.o $O/define_derivation_matrices.o\
         $O/plotpost.o $O/locate_receivers.o $O/locate_source_force.o $O/compute_gradient_attenuation.o\
         $O/specfem2D.o $O/write_seismograms.o $O/define_external_model.o $O/createnum_fast.o $O/createnum_slow.o\
         $O/define_shape_functions.o $O/attenuation_model.o $O/create_color_image.o $O/compute_vector_field.o $O/compute_pressure.o\
         $O/recompute_jacobian.o $O/compute_arrays_source.o $O/locate_source_moment_tensor.o $O/netlib_specfun_erf.o\
-        $O/construct_acoustic_surface.o $O/assemble_MPI.o $O/compute_energy.o $O/compute_curl_one_element.o\
-        $O/attenuation_compute_param.o $O/compute_Bielak_conditions.o $O/paco_beyond_critical.o\
-        $O/paco_convolve_fft.o $O/is_in_convex_quadrilateral.o
+        $O/construct_acoustic_surface.o $O/assemble_MPI.o $O/compute_energy.o\
+        $O/attenuation_compute_param.o $O/compute_Bielak_conditions.o
 
 default: clean meshfem2D specfem2D convolve_source_timefunction
 
@@ -181,6 +179,14 @@ $O/compute_forces_acoustic.o: compute_forces_acoustic.f90 constants.h
 ### use optimized compilation option for solver only
 $O/compute_forces_elastic.o: compute_forces_elastic.f90 constants.h
 	${F90} $(FLAGS_NOCHECK) -c -o $O/compute_forces_elastic.o compute_forces_elastic.f90
+
+### use optimized compilation option for solver only
+$O/compute_forces_solid.o: compute_forces_solid.f90 constants.h
+	${F90} $(FLAGS_NOCHECK) -c -o $O/compute_forces_solid.o compute_forces_solid.f90
+
+### use optimized compilation option for solver only
+$O/compute_forces_fluid.o: compute_forces_fluid.f90 constants.h
+	${F90} $(FLAGS_NOCHECK) -c -o $O/compute_forces_fluid.o compute_forces_fluid.f90
     
 ### use optimized compilation option for solver only
 $O/compute_gradient_attenuation.o: compute_gradient_attenuation.f90 constants.h
@@ -195,9 +201,6 @@ $O/compute_vector_field.o: compute_vector_field.f90 constants.h
 $O/compute_pressure.o: compute_pressure.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/compute_pressure.o compute_pressure.f90
     
-$O/compute_curl_one_element.o: compute_curl_one_element.f90 constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/compute_curl_one_element.o compute_curl_one_element.f90
-    
 $O/compute_Bielak_conditions.o: compute_Bielak_conditions.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/compute_Bielak_conditions.o compute_Bielak_conditions.f90
     
@@ -206,7 +209,7 @@ $O/compute_arrays_source.o: compute_arrays_source.f90 constants.h
     
 $O/create_color_image.o: create_color_image.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/create_color_image.o create_color_image.f90
-    
+   
 $O/spline_routines.o: spline_routines.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/spline_routines.o spline_routines.f90
     
@@ -230,13 +233,3 @@ $O/assemble_MPI.o: assemble_MPI.F90 constants.h
 
 $O/attenuation_compute_param.o: attenuation_compute_param.c
 	${CC} -c -o $O/attenuation_compute_param.o attenuation_compute_param.c
-
-$O/paco_beyond_critical.o: paco_beyond_critical.f90 constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/paco_beyond_critical.o paco_beyond_critical.f90
-
-$O/paco_convolve_fft.o: paco_convolve_fft.f90 constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/paco_convolve_fft.o paco_convolve_fft.f90
-
-$O/is_in_convex_quadrilateral.o: is_in_convex_quadrilateral.f90
-	${F90} $(FLAGS_CHECK) -c -o $O/is_in_convex_quadrilateral.o is_in_convex_quadrilateral.f90
-

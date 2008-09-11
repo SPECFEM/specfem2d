@@ -4,10 +4,12 @@
 !                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
+! Copyright Universite de Pau et des Pays de l'Adour and CNRS, France.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
+!               Christina Morency, cmorency aT gps DOT caltech DOT edu
+!               Jeroen Tromp, jtromp aT gps DOT caltech DOT edu
 !
 ! This software is a computer program whose purpose is to solve
 ! the two-dimensional viscoelastic anisotropic wave equation
@@ -41,7 +43,8 @@
 !========================================================================
 
   subroutine plotpost(displ,coord,vpext,x_source,z_source,st_xval,st_zval,it,dt,coorg, &
-          xinterp,zinterp,shapeint,Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
+          xinterp,zinterp,shapeint,Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
+          poroelastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,&
           nelem_acoustic_surface, acoustic_edges, &
           simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
@@ -77,7 +80,7 @@
   double precision Uxinterp(pointsdisp,pointsdisp)
   double precision Uzinterp(pointsdisp,pointsdisp)
   double precision flagrange(NGLLX,pointsdisp)
-  double precision density(numat),elastcoef(4,numat)
+  double precision density(2,numat),poroelastcoef(4,3,numat),porosity(numat),tortuosity(numat)
 
   double precision dt,timeval,x_source,z_source
   double precision displ(NDIM,npoin),coord(NDIM,npoin)
@@ -104,8 +107,15 @@
   equivalence (postscript_line,ch1)
   logical :: first
 
-  double precision convert,x1,rlamda,rmu,denst,rKvol,cploc,xa,za,xb,zb
+  double precision convert,x1,cpIloc,xa,za,xb,zb
+!  double precision convert,x1,rlamda,rmu,denst,rKvol,cploc,xa,za,xb,zb
   double precision z1,x2,z2,d,d1,d2,dummy,theta,thetaup,thetadown
+
+  double precision :: mul_s,kappal_s,rhol_s
+  double precision :: kappal_f,rhol_f
+  double precision :: mul_fr,kappal_fr,phil,tortl
+  double precision :: afactor,bfactor,cfactor,D_biot,H_biot,C_biot,M_biot,rhol_bar
+  double precision :: cpIsquare
 
   integer k,j,ispec,material,is,ir,imat,icol,l,line_length
   integer index_char,ii,ipoin,in,nnum,inum,ideb,ifin,iedge
@@ -1579,12 +1589,32 @@
     x1 = (vpext(i,j,ispec)-vpmin) / (vpmax-vpmin)
   else
     material = kmato(ispec)
-    rlamda = elastcoef(1,material)
-    rmu    = elastcoef(2,material)
-    denst  = density(material)
-    rKvol  = rlamda + 2.d0*rmu/3.d0
-    cploc = sqrt((rKvol + 4.d0*rmu/3.d0)/denst)
-    x1 = (cploc-vpmin)/(vpmax-vpmin)
+! get elastic parameters of current spectral element
+    phil = porosity(kmato(ispec))
+    tortl = tortuosity(kmato(ispec))
+!solid properties
+    mul_s = poroelastcoef(2,1,kmato(ispec))
+    kappal_s = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS*mul_s
+    rhol_s = density(1,kmato(ispec))
+!fluid properties
+    kappal_f = poroelastcoef(1,2,kmato(ispec)) 
+    rhol_f = density(2,kmato(ispec))
+!frame properties
+    mul_fr = poroelastcoef(2,3,kmato(ispec))
+    kappal_fr = poroelastcoef(3,3,kmato(ispec)) - FOUR_THIRDS*mul_fr
+    rhol_bar =  (1.d0 - phil)*rhol_s + phil*rhol_f
+!Biot coefficients for the input phi
+      D_biot = kappal_s*(1.d0 + phil*(kappal_s/kappal_f - 1.d0))
+      H_biot = (kappal_s - kappal_fr)*(kappal_s - kappal_fr)/(D_biot - kappal_fr) + kappal_fr + FOUR_THIRDS*mul_fr
+      C_biot = kappal_s*(kappal_s - kappal_fr)/(D_biot - kappal_fr)
+      M_biot = kappal_s*kappal_s/(D_biot - kappal_fr)
+! Approximated velocities (no viscous dissipation)
+      afactor = rhol_bar - phil/tortl*rhol_f
+      bfactor = H_biot + phil*rhol_bar/(tortl*rhol_f)*M_biot - 2.d0*phil/tortl*C_biot
+      cfactor = phil/(tortl*rhol_f)*(H_biot*M_biot - C_biot*C_biot)
+      cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
+      cpIloc = sqrt(cpIsquare)
+    x1 = (cpIloc-vpmin)/(vpmax-vpmin)
   endif
   else
     x1 = 0.5d0

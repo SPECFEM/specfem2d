@@ -4,7 +4,7 @@
 !                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
+! Copyright Universite de Pau et des Pays de l'Adour and CNRS, France.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
@@ -139,18 +139,21 @@
 
 !--------------------
 
-  subroutine read_material_parameters(iin,ignore_junk,i,icodematread,rhoread,cpread,csread,aniso3read,aniso4read)
+  subroutine read_material_parameters(iin,ignore_junk,i,icodematread,rhosread,rhofread,phiread,tortuosityread,&
+            permxxread,permxzread,permzzread,kappasread,kappafread,kappafrread,musread,etafread,mufrread)
 
   implicit none
 
   integer iin
   logical ignore_junk
   integer i,icodematread
-  double precision rhoread,cpread,csread,aniso3read,aniso4read
+  double precision rhosread,rhofread,phiread,tortuosityread,permxxread,permxzread,permzzread
+  double precision kappasread,kappafread,kappafrread,musread,etafread,mufrread
   character(len=100) string_read
 
   call read_next_line(iin,ignore_junk,string_read)
-  read(string_read,*) i,icodematread,rhoread,cpread,csread,aniso3read,aniso4read
+  read(string_read,*) i,icodematread,rhosread,rhofread,phiread,tortuosityread,permxxread,permxzread,&
+                       permzzread,kappasread,kappafread,kappafrread,musread,etafread,mufrread
 
   end subroutine read_material_parameters
 

@@ -4,7 +4,7 @@
 !                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
+! Copyright Universite de Pau et des Pays de l'Adour and CNRS, France.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
@@ -42,7 +42,7 @@
 
 ! write seismograms to text files
 
-  subroutine write_seismograms(sisux,sisuz,siscurl,station_name,network_name, &
+  subroutine write_seismograms(sisux,sisuz,station_name,network_name, &
       NSTEP,nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
       NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current &
       )
@@ -58,10 +58,11 @@
   integer :: NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current
   double precision :: t0,deltat
 
+
   integer, intent(in) :: nrecloc,myrank
   integer, dimension(nrec),intent(in) :: which_proc_receiver
 
-  double precision, dimension(NTSTEP_BETWEEN_OUTPUT_SEISMO,nrecloc), intent(in) :: sisux,sisuz,siscurl
+  double precision, dimension(NTSTEP_BETWEEN_OUTPUT_SEISMO,nrecloc), intent(in) :: sisux,sisuz
 
   double precision st_xval(nrec)
 
@@ -101,8 +102,6 @@
     component = 'a'
   else if(seismotype == 4) then
     component = 'p'
-  else if(seismotype == 5) then
-    component = 'c'
   else
     call exit_MPI('wrong component to save for seismograms')
   endif
@@ -111,8 +110,6 @@
 ! only one seismogram if pressurs
   if(seismotype == 4) then
      number_of_components = 1
-  else if(seismotype == 5) then
-     number_of_components = NDIM+1
   else
      number_of_components = NDIM
   endif
@@ -141,12 +138,6 @@
      open(unit=11,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown')
      close(11,status='delete')
 
-     open(unit=11,file='OUTPUT_FILES/Curl_file_single.bin',status='unknown')
-     close(11,status='delete')
-
-     open(unit=11,file='OUTPUT_FILES/Curl_file_double.bin',status='unknown')
-     close(11,status='delete')
-
    endif
 
    if ( myrank == 0 ) then
@@ -164,17 +155,10 @@
         open(unit=13,file='OUTPUT_FILES/Ux_file_double.bin',status='unknown',access='direct',recl=8)
      endif
 
-! no Z component seismogram if pressure
+! no Z component seismogram if pressurs
      if(seismotype /= 4) then
         open(unit=14,file='OUTPUT_FILES/Uz_file_single.bin',status='unknown',access='direct',recl=4)
         open(unit=15,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown',access='direct',recl=8)
-
-     end if
-
-! curl output
-     if(seismotype == 5) then
-        open(unit=16,file='OUTPUT_FILES/Curl_file_single.bin',status='unknown',access='direct',recl=4)
-        open(unit=17,file='OUTPUT_FILES/Curl_file_double.bin',status='unknown',access='direct',recl=8)
 
      end if
 
@@ -191,9 +175,6 @@
            buffer_binary(:,1) = sisux(:,irecloc)
            if ( number_of_components == 2 ) then
               buffer_binary(:,2) = sisuz(:,irecloc)
-           else if ( number_of_components == 3 ) then
-              buffer_binary(:,2) = sisuz(:,irecloc)
-              buffer_binary(:,3) = siscurl(:,irecloc)
            end if
 
 #ifdef USE_MPI
@@ -202,12 +183,6 @@
                 which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
            if ( number_of_components == 2 ) then
               call MPI_RECV(buffer_binary(1,2),NTSTEP_BETWEEN_OUTPUT_SEISMO,MPI_DOUBLE_PRECISION,&
-                   which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
-           end if
-           if ( number_of_components == 3 ) then
-              call MPI_RECV(buffer_binary(1,2),NTSTEP_BETWEEN_OUTPUT_SEISMO,MPI_DOUBLE_PRECISION,&
-                   which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
-              call MPI_RECV(buffer_binary(1,3),NTSTEP_BETWEEN_OUTPUT_SEISMO,MPI_DOUBLE_PRECISION,&
                    which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
            end if
 
@@ -222,8 +197,6 @@
               chn = 'BHX'
            else if(iorientation == 2) then
               chn = 'BHZ'
-           else if(iorientation == 3) then
-              chn = 'cur'
            else
               call exit_MPI('incorrect channel value')
            endif
@@ -279,10 +252,6 @@
            write(14,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,2))
            write(15,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,2)
         end if
-        if ( seismotype == 5 ) then
-           write(16,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,3))
-           write(17,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,3)
-        end if
         enddo
 #ifdef USE_MPI
 
@@ -290,11 +259,8 @@
         if ( which_proc_receiver(irec) == myrank ) then
            irecloc = irecloc + 1
            call MPI_SEND(sisux(1,irecloc),NTSTEP_BETWEEN_OUTPUT_SEISMO,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ierror)
-           if ( number_of_components >= 2 ) then
+           if ( number_of_components == 2 ) then
               call MPI_SEND(sisuz(1,irecloc),NTSTEP_BETWEEN_OUTPUT_SEISMO,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ierror)
-           end if
-           if ( number_of_components == 3 ) then
-              call MPI_SEND(siscurl(1,irecloc),NTSTEP_BETWEEN_OUTPUT_SEISMO,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ierror)
            end if
         end if
 
@@ -309,10 +275,6 @@
   if ( seismotype /= 4 ) then
      close(14)
      close(15)
-  end if
-  if ( seismotype == 5 ) then
-     close(16)
-     close(17)
   end if
 
 !----

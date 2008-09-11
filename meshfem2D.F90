@@ -1,13 +1,15 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.2
+!                   S P E C F E M 2 D  Version 6.3
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
+! Copyright Universite de Pau et des Pays de l'Adour and CNRS, France.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
+!               Christina Morency, cmorency aT gps DOT caltech DOT edu
+!               Jeroen Tromp, jtromp aT gps DOT caltech DOT edu
 !
 ! This software is a computer program whose purpose is to solve
 ! the two-dimensional viscoelastic anisotropic wave equation
@@ -66,20 +68,6 @@
 ! volume=88,
 ! number=2,
 ! pages={368-392}}
-!
-! If you use the METIS / SCOTCH / CUBIT non-structured version, please also cite:
-!
-! @INPROCEEDINGS{MaKoBlLe08,
-! author = {R. Martin and D. Komatitsch and C. Blitz and N. {Le Goff}},
-! title = {Simulation of seismic wave propagation in an asteroid based upon
-! an unstructured {MPI} spectral-element method: blocking and non-blocking communication strategies}
-! booktitle = {Proceedings of the VECPAR'2008 8th International Meeting
-! on High Performance Computing for Computational Science},
-! year = {2008},
-! pages = {999998-999999},
-! address = {Toulouse, France},
-! note = {24-27 June 2008},
-! url = {http://vecpar.fe.up.pt/2008}}
 
 program meshfem2D
 
@@ -95,8 +83,9 @@ program meshfem2D
   integer :: ioffset
   double precision :: gamma,absx,a00,a01,bot0,top0
 
-! to store density and velocity model
-  double precision, dimension(:), allocatable :: rho,cp,cs,aniso3,aniso4
+! to store model properties
+  double precision, dimension(:), allocatable :: rho_s,rho_f,phi,tortuosity,permxx,permxz,&
+                                 permzz,kappa_s,kappa_f,kappa_fr,mu_s,eta_f,mu_fr
   integer, dimension(:), allocatable :: icodemat
   integer, dimension(:), allocatable :: num_material
 
@@ -131,7 +120,9 @@ program meshfem2D
 
   double precision tang1,tangN,vpregion,vsregion,poisson_ratio
   double precision cutsnaps,sizemax_arrows,anglerec,xmin,xmax,deltat
-  double precision rhoread,cpread,csread,aniso3read,aniso4read
+!  double precision rhoread,cpread,csread,aniso3read,aniso4read
+  double precision rhosread,rhofread,phiread,tortuosityread,kappasread,kappafread,kappafrread,musread,etafread,mufrread
+  double precision permxxread,permxzread,permzzread
 
   double precision, dimension(:), allocatable :: xdeb,zdeb,xfin,zfin
 
@@ -144,6 +135,10 @@ program meshfem2D
 
   integer, external :: num_4, num_9
   double precision, external :: value_spline
+
+! flag to save the last frame for kernels calculation purpose and type of solver
+  logical :: save_forward
+  integer :: isolver
 
 ! flag to indicate an anisotropic material
   integer, parameter :: ANISOTROPIC_MATERIAL = 2
@@ -182,8 +177,15 @@ program meshfem2D
   integer, dimension(:), allocatable  :: my_interfaces
   integer, dimension(:), allocatable  :: my_nb_interfaces
 
+! for acoustic/elastic coupled elements 
   integer  :: nedges_coupled, nedges_coupled_loc
   integer, dimension(:,:), pointer  :: edges_coupled
+! for acoustic/poroelastic coupled elements 
+  integer  :: nedges_acporo_coupled, nedges_acporo_coupled_loc
+  integer, dimension(:,:), pointer  :: edges_acporo_coupled
+! for poroelastic/elastic coupled elements 
+  integer  :: nedges_elporo_coupled, nedges_elporo_coupled_loc
+  integer, dimension(:,:), pointer  :: edges_elporo_coupled
 
   integer  :: num_start
   integer  :: nelmnts
@@ -200,10 +202,10 @@ program meshfem2D
   integer, dimension(:), pointer  :: ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
        jbegin_left,jend_left,jbegin_right,jend_right
 
-! variables used for partitioning
+! variables used for partitionning
   integer  :: nproc
-  integer  :: partitioning_method
-  character(len=256)  :: partitioning_strategy
+  integer  :: partitionning_method
+  character(len=256)  :: partitionning_strategy
   character(len=256)  :: scotch_strategy
   integer, dimension(0:4)  :: metis_options
   character(len=256)  :: prname
@@ -247,7 +249,7 @@ program meshfem2D
   call read_value_string(IIN,IGNORE_JUNK,free_surface_file)
   call read_value_string(IIN,IGNORE_JUNK,absorbing_surface_file)
 
-! read info about partitioning
+! read info about partitionning
   call read_value_integer(IIN,IGNORE_JUNK,nproc)
   if ( nproc <= 0 ) then
      print *, 'Number of processes (nproc) must be greater than or equal to one.'
@@ -263,26 +265,26 @@ program meshfem2D
 
 #endif
 
-  call read_value_integer(IIN,IGNORE_JUNK,partitioning_method)
-  call read_value_string(IIN,IGNORE_JUNK,partitioning_strategy)
-  select case(partitioning_method)
+  call read_value_integer(IIN,IGNORE_JUNK,partitionning_method)
+  call read_value_string(IIN,IGNORE_JUNK,partitionning_strategy)
+  select case(partitionning_method)
   case(1)
   case(2)
-     partitioning_strategy = trim(partitioning_strategy)
-     if ( partitioning_strategy(1:1) == '0' ) then
+     partitionning_strategy = trim(partitionning_strategy)
+     if ( partitionning_strategy(1:1) == '0' ) then
         metis_options(0) = 0
      else
         do i = 1, 5
-           metis_options = iachar(partitioning_strategy(i:i)) - iachar('0')
+           metis_options = iachar(partitionning_strategy(i:i)) - iachar('0')
         end do
      endif
 
   case(3)
-     scotch_strategy = trim(partitioning_strategy)
+     scotch_strategy = trim(partitionning_strategy)
 
   case default
-     print *, 'Invalid partitioning method number.'
-     print *, 'Partitioning method ',partitioning_method,' was requested, but is not available.'
+     print *, 'Invalid partionning method number.'
+     print *, 'Partionning method', partitionning_method, 'was requested, but is not available.'
      stop
   end select
 
@@ -420,6 +422,7 @@ program meshfem2D
 ! read time step parameters
   call read_value_integer(IIN,IGNORE_JUNK,nt)
   call read_value_double_precision(IIN,IGNORE_JUNK,deltat)
+  call read_value_integer(IIN,IGNORE_JUNK,isolver)
 
 ! read source parameters
   call read_value_logical(IIN,IGNORE_JUNK,source_surf)
@@ -470,6 +473,7 @@ program meshfem2D
 
 ! read receiver line parameters
   call read_value_integer(IIN,IGNORE_JUNK,seismotype)
+  call read_value_logical(IIN,IGNORE_JUNK,save_forward)
   call read_value_logical(IIN,IGNORE_JUNK,generate_STATIONS)
   call read_value_integer(IIN,IGNORE_JUNK,nreceiverlines)
   call read_value_double_precision(IIN,IGNORE_JUNK,anglerec)
@@ -523,54 +527,84 @@ program meshfem2D
   if(nb_materials <= 0) stop 'Negative number of materials not allowed!'
 
   allocate(icodemat(nb_materials))
-  allocate(rho(nb_materials))
-  allocate(cp(nb_materials))
-  allocate(cs(nb_materials))
-  allocate(aniso3(nb_materials))
-  allocate(aniso4(nb_materials))
+  allocate(rho_s(nb_materials))
+  allocate(rho_f(nb_materials))
+  allocate(phi(nb_materials))
+  allocate(tortuosity(nb_materials))
+  allocate(permxx(nb_materials))
+  allocate(permxz(nb_materials))
+  allocate(permzz(nb_materials))
+  allocate(kappa_s(nb_materials))
+  allocate(kappa_f(nb_materials))
+  allocate(kappa_fr(nb_materials))
+  allocate(mu_s(nb_materials))
+  allocate(eta_f(nb_materials))
+  allocate(mu_fr(nb_materials))
   allocate(num_material(nelmnts))
 
   icodemat(:) = 0
-  rho(:) = 0.d0
-  cp(:) = 0.d0
-  cs(:) = 0.d0
-  aniso3(:) = 0.d0
-  aniso4(:) = 0.d0
+  rho_s(:) = 0.d0
+  rho_f(:) = 0.d0
+  phi(:) = 0.d0
+  tortuosity(:) = 0.d0
+  permxx(:) = 0.d0
+  permxz(:) = 0.d0
+  permzz(:) = 0.d0
+  kappa_s(:) = 0.d0
+  kappa_f(:) = 0.d0
+  kappa_fr(:) = 0.d0
+  mu_s(:) = 0.d0
+  eta_f(:) = 0.d0
+  mu_fr(:) = 0.d0
   num_material(:) = 0
 
   do imaterial=1,nb_materials
-    call read_material_parameters(IIN,DONT_IGNORE_JUNK,i,icodematread,rhoread,cpread,csread,aniso3read,aniso4read)
+    call read_material_parameters(IIN,DONT_IGNORE_JUNK,i,icodematread,rhosread,rhofread,phiread, &
+                 tortuosityread,permxxread,permxzread,permzzread,kappasread,kappafread,&
+                 kappafrread,musread,etafread,mufrread)
     if(i < 1 .or. i > nb_materials) stop 'Wrong material number!'
     icodemat(i) = icodematread
-    rho(i) = rhoread
-    cp(i) = cpread
-    cs(i) = csread
+    rho_s(i) = rhosread
+    rho_f(i) = rhofread
+    phi(i) = phiread
+    tortuosity(i) = tortuosityread
+    permxx(i) = permxxread
+    permxz(i) = permxzread
+    permzz(i) = permzzread
+    kappa_s(i) = kappasread
+    kappa_f(i) = kappafread
+    kappa_fr(i) = kappafrread
+    mu_s(i) = musread
+    eta_f(i) = etafread
+    mu_fr(i) = mufrread
 
-    if(rho(i) <= 0.d0 .or. cp(i) <= 0.d0 .or. cs(i) < 0.d0) stop 'negative value of velocity or density'
-
-    aniso3(i) = aniso3read
-    aniso4(i) = aniso4read
   enddo
 
   print *
-  print *, 'Nb of solid or fluid materials = ',nb_materials
+  print *, 'Nb of solid, fluid or porous materials = ',nb_materials
   print *
   do i=1,nb_materials
     if(icodemat(i) /= ANISOTROPIC_MATERIAL) then
       print *,'Material #',i,' isotropic'
-      print *,'rho,cp,cs = ',rho(i),cp(i),cs(i)
-      if(cs(i) < TINYVAL) then
+      print *,'rho_s, kappa_s, mu_s= ',rho_s(i),kappa_s(i),mu_s(i)
+      print *,'rho_f, kappa_f, eta_f= ',rho_f(i),kappa_f(i),eta_f(i)
+      print *,'phi, tortuosity, permxx, permxz, permzz= ',phi(i),tortuosity(i),permxx(i),permxz(i),permzz(i)
+      print *,'kappa_fr, mu_fr= ',kappa_fr(i),mu_fr(i)
+!      if(cs(i) < TINYVAL) then
+      if(phi(i) >= 1.d0) then ! acoustic domain
         print *,'Material is fluid'
-      else
+      elseif(phi(i) < TINYVAL) then ! elastic domain
         print *,'Material is solid'
+      else ! poroelastic domain
+        print *,'Material is porous'
       endif
     else
       print *,'Material #',i,' anisotropic'
-      print *,'rho,c11,c13,c33,c44 = ',rho(i),cp(i),cs(i),aniso3(i),aniso4(i)
+      print *,'ATTENTION: to be defined'
+!      print *,'rho,c11,c13,c33,c44 = ',rho(i),cp(i),cs(i),aniso3(i),aniso4(i)
     endif
   print *
   enddo
-
 
   if ( read_external_mesh ) then
      call read_mat(materials_file, nelmnts, num_material)
@@ -598,32 +632,32 @@ program meshfem2D
         print *,'IX from ',ixdebregion,' to ',ixfinregion
         print *,'IZ from ',izdebregion,' to ',izfinregion
 
-        if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL) then
-           vpregion = cp(imaterial_number)
-           vsregion = cs(imaterial_number)
-           print *,'Material # ',imaterial_number,' isotropic'
-           if(vsregion < TINYVAL) then
-              print *,'Material is fluid'
-           else
-              print *,'Material is solid'
-           endif
-           print *,'vp = ',vpregion
-           print *,'vs = ',vsregion
-           print *,'rho = ',rho(imaterial_number)
-           poisson_ratio = 0.5d0*(vpregion*vpregion-2.d0*vsregion*vsregion) / (vpregion*vpregion-vsregion*vsregion)
-           print *,'Poisson''s ratio = ',poisson_ratio
-           if(poisson_ratio <= -1.00001d0 .or. poisson_ratio >= 0.50001d0) stop 'incorrect value of Poisson''s ratio'
-        else
-           print *,'Material # ',imaterial_number,' anisotropic'
-           print *,'c11 = ',cp(imaterial_number)
-           print *,'c13 = ',cs(imaterial_number)
-           print *,'c33 = ',aniso3(imaterial_number)
-           print *,'c44 = ',aniso4(imaterial_number)
-           print *,'rho = ',rho(imaterial_number)
-        endif
-        print *,' -----'
+!        if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL) then
+!           vpregion = cp(imaterial_number)
+!           vsregion = cs(imaterial_number)
+!           print *,'Material # ',imaterial_number,' isotropic'
+!           if(vsregion < TINYVAL) then
+!              print *,'Material is fluid'
+!           else
+!              print *,'Material is solid'
+!           endif
+!           print *,'vp = ',vpregion
+!           print *,'vs = ',vsregion
+!           print *,'rho = ',rho(imaterial_number)
+!           poisson_ratio = 0.5d0*(vpregion*vpregion-2.d0*vsregion*vsregion) / (vpregion*vpregion-vsregion*vsregion)
+!           print *,'Poisson''s ratio = ',poisson_ratio
+!           if(poisson_ratio <= -1.00001d0 .or. poisson_ratio >= 0.50001d0) stop 'incorrect value of Poisson''s ratio'
+!        else
+!           print *,'Material # ',imaterial_number,' anisotropic'
+!           print *,'c11 = ',cp(imaterial_number)
+!           print *,'c13 = ',cs(imaterial_number)
+!           print *,'c33 = ',aniso3(imaterial_number)
+!           print *,'c44 = ',aniso4(imaterial_number)
+!           print *,'rho = ',rho(imaterial_number)
+!        endif
+!        print *,' -----'
 
-        ! store density and velocity model
+        ! store model properties
         do i = ixdebregion,ixfinregion
            do j = izdebregion,izfinregion
               num_material((j-1)*nxread+i) = imaterial_number
@@ -632,7 +666,7 @@ program meshfem2D
 
      enddo
 
-     if(minval(num_material) <= 0) stop 'Velocity model not entirely set...'
+     if(minval(num_material) <= 0) stop 'Model properties not entirely set...'
 
   endif
 
@@ -786,7 +820,7 @@ program meshfem2D
 
   if ( read_external_mesh ) then
      call read_acoustic_surface(free_surface_file, nelem_acoustic_surface, acoustic_surface, &
-          nelmnts, num_material, ANISOTROPIC_MATERIAL, nb_materials, icodemat, cs, num_start)
+          nelmnts, num_material, ANISOTROPIC_MATERIAL, nb_materials, icodemat, phi, num_start)
 
      if ( any_abs ) then
         call read_abs_surface(absorbing_surface_file, nelemabs, abs_surface, num_start)
@@ -803,7 +837,7 @@ program meshfem2D
      j = nzread
      do i = 1,nxread
         imaterial_number = num_material((j-1)*nxread+i)
-        if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. cs(imaterial_number) < TINYVAL ) then
+        if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0 ) then
            nelem_acoustic_surface = nelem_acoustic_surface + 1
         endif
      enddo
@@ -814,7 +848,7 @@ program meshfem2D
      j = nzread
      do i = 1,nxread
         imaterial_number = num_material((j-1)*nxread+i)
-        if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. cs(imaterial_number) < TINYVAL ) then
+        if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0 ) then
            nelem_acoustic_surface = nelem_acoustic_surface + 1
            acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
            acoustic_surface(2,nelem_acoustic_surface) = 2
@@ -948,9 +982,9 @@ program meshfem2D
   endif
 
 
-!*****************************
-! partitioning
-!*****************************
+  !*****************************
+  ! Partitionning
+  !*****************************
   allocate(part(0:nelmnts-1))
 
 ! if ngnod == 9, we work on a subarray of elmnts, which represents the elements with for nodes only
@@ -983,7 +1017,7 @@ program meshfem2D
   call read_weights(nelmnts, vwgt, nb_edges, adjwgt)
 
 ! partitioning
-     select case (partitioning_method)
+     select case (partitionning_method)
      case(1)
         do iproc = 0, nproc-2
            part(iproc*floor(real(nelmnts)/real(nproc)):(iproc+1)*floor(real(nelmnts)/real(nproc))-1) = iproc
@@ -1014,11 +1048,27 @@ program meshfem2D
 
 ! beware of fluid solid edges : coupled elements are transfered to the same partition
   if ( ngnod == 9 ) then
-     call acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts_bis, nb_materials, cs, num_material, &
+     call acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts_bis, nb_materials, phi, num_material, &
           nproc, part, nedges_coupled, edges_coupled)
   else
-     call acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_materials, cs, num_material, &
+     call acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_materials, phi, num_material, &
           nproc, part, nedges_coupled, edges_coupled)
+  endif
+! beware of fluid porous edges : coupled elements are transfered to the same partition
+  if ( ngnod == 9 ) then
+     call acoustic_poroelastic_repartitioning (nelmnts, nnodes, elmnts_bis, nb_materials, phi, num_material, &
+          nproc, part, nedges_acporo_coupled, edges_acporo_coupled)
+  else
+     call acoustic_poroelastic_repartitioning (nelmnts, nnodes, elmnts, nb_materials, phi, num_material, &
+          nproc, part, nedges_acporo_coupled, edges_acporo_coupled)
+  endif
+! beware of porous solid edges : coupled elements are transfered to the same partition
+  if ( ngnod == 9 ) then
+     call poroelastic_elastic_repartitioning (nelmnts, nnodes, elmnts_bis, nb_materials, phi, num_material, &
+          nproc, part, nedges_elporo_coupled, edges_elporo_coupled)
+  else
+     call poroelastic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_materials, phi, num_material, &
+          nproc, part, nedges_elporo_coupled, edges_elporo_coupled)
   endif
 
 ! local number of each element for each partition
@@ -1063,10 +1113,10 @@ program meshfem2D
   if ( nproc /= 1 ) then
      if ( ngnod == 9 ) then
         call Construct_interfaces(nelmnts, nproc, part, elmnts_bis, xadj, adjncy, tab_interfaces, &
-             tab_size_interfaces, ninterfaces, nb_materials, cs, num_material)
+             tab_size_interfaces, ninterfaces, nb_materials, phi, num_material)
      else
         call Construct_interfaces(nelmnts, nproc, part, elmnts, xadj, adjncy, tab_interfaces, &
-             tab_size_interfaces, ninterfaces, nb_materials, cs, num_material)
+             tab_size_interfaces, ninterfaces, nb_materials, phi, num_material)
      endif
      print *, '04'
      allocate(my_interfaces(0:ninterfaces-1))
@@ -1079,7 +1129,8 @@ program meshfem2D
      call merge_abs_boundaries(nelemabs, nelemabs_merge, abs_surface, abs_surface_char, abs_surface_merge, &
           ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
           jbegin_left,jend_left,jbegin_right,jend_right, &
-          nedges_coupled, edges_coupled, nb_materials, cs, num_material, &
+          nedges_coupled, edges_coupled, nedges_acporo_coupled, edges_acporo_coupled, nedges_elporo_coupled, &
+          edges_elporo_coupled,nb_materials, phi, num_material, &
           nelmnts, &
           elmnts, ngnod)
      print *, 'nelemabs_merge', nelemabs_merge
@@ -1094,7 +1145,7 @@ program meshfem2D
 
      write(15,*) '#'
      write(15,*) '# Database for SPECFEM2D'
-     write(15,*) '# Dimitri Komatitsch, (c) University of Pau, France'
+     write(15,*) '# (c) University of Pau, France and Caltech, Pasadena'
      write(15,*) '#'
 
      write(15,*) 'Title of the simulation'
@@ -1130,14 +1181,14 @@ program meshfem2D
      write(15,*) 'initialfield add_Bielak_conditions'
      write(15,*) initialfield,add_Bielak_conditions
 
-     write(15,*) 'seismotype imagetype'
-     write(15,*) seismotype,imagetype
+     write(15,*) 'seismotype imagetype save_forward'
+     write(15,*) seismotype,imagetype,save_forward
 
      write(15,*) 'assign_external_model outputgrid TURN_ANISOTROPY_ON TURN_ATTENUATION_ON'
      write(15,*) assign_external_model,outputgrid,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
 
-     write(15,*) 'nt deltat'
-     write(15,*) nt,deltat
+     write(15,*) 'nt deltat isolver'
+     write(15,*) nt,deltat,isolver
 
      write(15,*) 'source'
      write(15,*) source_type,time_function_type,xs,zs,f0,t0,factor,angleforce,Mxx,Mzz,Mxz
@@ -1173,14 +1224,21 @@ program meshfem2D
 
      call write_fluidsolid_edges_database(15, nedges_coupled, nedges_coupled_loc, &
           edges_coupled, glob2loc_elmnts, part, iproc, 1)
+     call write_fluidsolid_edges_database(15, nedges_acporo_coupled, nedges_acporo_coupled_loc, &
+          edges_acporo_coupled, glob2loc_elmnts, part, iproc, 1)
+     call write_fluidsolid_edges_database(15, nedges_elporo_coupled, nedges_elporo_coupled_loc, &
+          edges_elporo_coupled, glob2loc_elmnts, part, iproc, 1)
 
-     write(15,*) 'nelemabs nelem_acoustic_surface num_fluid_solid_edges'
-     write(15,*) nelemabs_loc,nelem_acoustic_surface_loc,nedges_coupled_loc
+     write(15,*) 'nelemabs nelem_acoustic_surface num_fluid_solid_edges num_fluid_poro_edges num_solid_poro_edges'
+     write(15,*) nelemabs_loc,nelem_acoustic_surface_loc,nedges_coupled_loc,nedges_acporo_coupled_loc,nedges_elporo_coupled_loc
 
+     write(15,*) 'nxread, nzread'
+     write(15,*) nxread,nzread
 
-     write(15,*) 'Material sets (num 1 rho vp vs 0 0) or (num 2 rho c11 c13 c33 c44)'
+     write(15,*) 'Material sets Isotropic (Anisotropic: to be defined)'
      do i=1,nb_materials
-        write(15,*) i,icodemat(i),rho(i),cp(i),cs(i),aniso3(i),aniso4(i)
+    write(15,*) i,icodemat(i),rho_s(i),rho_f(i),phi(i),tortuosity(i),permxx(i),permxz(i),permzz(i),kappa_s(i),&
+        kappa_f(i),kappa_fr(i),mu_s(i),eta_f(i),mu_fr(i)
      enddo
 
      write(15,*) 'Arrays kmato and knods for each bloc:'
@@ -1226,6 +1284,15 @@ program meshfem2D
      write(15,*) 'List of acoustic elastic coupled edges:'
      call write_fluidsolid_edges_database(15, nedges_coupled, nedges_coupled_loc, &
           edges_coupled, glob2loc_elmnts, part, iproc, 2)
+
+     write(15,*) 'List of acoustic poroelastic coupled edges:'
+     call write_fluidsolid_edges_database(15, nedges_acporo_coupled, nedges_acporo_coupled_loc, &
+          edges_acporo_coupled, glob2loc_elmnts, part, iproc, 2)
+
+     write(15,*) 'List of poroelastic elastic coupled edges:'
+     call write_fluidsolid_edges_database(15, nedges_elporo_coupled, nedges_elporo_coupled_loc, &
+          edges_elporo_coupled, glob2loc_elmnts, part, iproc, 2)
+
   end do
 
 

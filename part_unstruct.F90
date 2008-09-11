@@ -1,13 +1,15 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.2
+!                   S P E C F E M 2 D  Version 6.3
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
+! Copyright Universite de Pau et des Pays de l'Adour and CNRS, France.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
+!               Christina Morency, cmorency aT gps DOT caltech DOT edu
+!               Jeroen Tromp, jtromp aT gps DOT caltech DOT edu
 !
 ! This software is a computer program whose purpose is to solve
 ! the two-dimensional viscoelastic anisotropic wave equation
@@ -43,6 +45,7 @@
 !
 ! This module contains subroutines related to unstructured meshes and partitioning of the
 ! corresponding graphs.
+! This module has been modified from the fluid/solid initial version to account for porous media.
 !
 
 module part_unstruct
@@ -142,7 +145,7 @@ contains
   ! 3/ first node on the free surface, 4/ second node on the free surface, if relevant (if 2/ is equal to 2)
   !-----------------------------------------------
   subroutine read_acoustic_surface(filename, nelem_acoustic_surface, acoustic_surface, &
-       nelmnts, num_material, ANISOTROPIC_MATERIAL, nb_materials, icodemat, cs, num_start)
+       nelmnts, num_material, ANISOTROPIC_MATERIAL, nb_materials, icodemat, phi, num_start)
 
     include './constants.h'
 
@@ -154,7 +157,7 @@ contains
     integer, intent(in)  :: ANISOTROPIC_MATERIAL
     integer, intent(in)  :: nb_materials
     integer, dimension(1:nb_materials), intent(in)  :: icodemat
-    double precision, dimension(1:nb_materials), intent(in)  :: cs
+    double precision, dimension(1:nb_materials), intent(in)  :: phi
     integer, intent(in)  :: num_start
 
 
@@ -182,7 +185,7 @@ contains
     nelem_acoustic_surface = 0
     do i = 1, nelmnts_surface
        imaterial_number = num_material(acoustic_surface_tmp(1,i))
-       if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. cs(imaterial_number) < TINYVAL ) then
+       if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0 ) then
           nelem_acoustic_surface = nelem_acoustic_surface + 1
 
        end if
@@ -193,7 +196,7 @@ contains
     nelem_acoustic_surface = 0
     do i = 1, nelmnts_surface
        imaterial_number = num_material(acoustic_surface_tmp(1,i))
-       if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. cs(imaterial_number) < TINYVAL ) then
+       if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0 ) then
           nelem_acoustic_surface = nelem_acoustic_surface + 1
           acoustic_surface(:,nelem_acoustic_surface) = acoustic_surface_tmp(:,i)
        end if
@@ -473,7 +476,7 @@ contains
   ! No interface between acoustic and elastic elements.
   !--------------------------------------------------
    subroutine Construct_interfaces(nelmnts, nparts, part, elmnts, xadj, adjncy, tab_interfaces, &
-       tab_size_interfaces, ninterfaces, nb_materials, cs_material, num_material)
+       tab_size_interfaces, ninterfaces, nb_materials, phi_material, num_material)
 
     include 'constants.h'
 
@@ -485,14 +488,14 @@ contains
     integer, dimension(:),pointer  :: tab_size_interfaces, tab_interfaces
     integer, intent(out)  :: ninterfaces
     integer, dimension(1:nelmnts), intent(in)  :: num_material
-    double precision, dimension(1:nb_materials), intent(in)  :: cs_material
+    double precision, dimension(1:nb_materials), intent(in)  :: phi_material
     integer, intent(in)  :: nb_materials
 
 
     integer  :: num_part, num_part_bis, el, el_adj, num_interface, num_edge, ncommon_nodes, &
          num_node, num_node_bis
     integer  :: i, j
-    logical  :: is_acoustic_el, is_acoustic_el_adj
+    logical  :: is_acoustic_el, is_acoustic_el_adj, is_elastic_el, is_elastic_el_adj
 
     ninterfaces = 0
     do  i = 0, nparts-1
@@ -511,20 +514,33 @@ contains
        do num_part_bis = num_part+1, nparts-1
           do el = 0, nelmnts-1
              if ( part(el) == num_part ) then
-                if ( cs_material(num_material(el+1)) < TINYVAL) then
+                if ( phi_material(num_material(el+1)) >= 1.d0 ) then
                    is_acoustic_el = .true.
                 else
                    is_acoustic_el = .false.
                 end if
+                if ( phi_material(num_material(el+1)) < TINYVAL ) then
+                   is_elastic_el = .true.
+                else
+                   is_elastic_el = .false.
+                end if
+
                 do el_adj = xadj(el), xadj(el+1)-1
-                   if ( cs_material(num_material(adjncy(el_adj)+1)) < TINYVAL) then
+                   if ( phi_material(num_material(adjncy(el_adj)+1)) >= 1.d0 ) then
                       is_acoustic_el_adj = .true.
                    else
                       is_acoustic_el_adj = .false.
                    end if
-                   if ( (part(adjncy(el_adj)) == num_part_bis) .and. (is_acoustic_el .eqv. is_acoustic_el_adj) ) then
-                      num_edge = num_edge + 1
+                   if ( phi_material(num_material(adjncy(el_adj)+1)) < TINYVAL ) then
+                      is_elastic_el_adj = .true.
+                   else
+                      is_elastic_el_adj = .false.
+                   end if
 
+                   if(part(adjncy(el_adj)) == num_part_bis) then
+             if((is_acoustic_el.eqv.is_acoustic_el_adj).and.(is_elastic_el.eqv.is_elastic_el_adj))then
+                      num_edge = num_edge + 1
+             end if
                    end if
                 end do
              end if
@@ -546,18 +562,31 @@ contains
        do num_part_bis = num_part+1, nparts-1
           do el = 0, nelmnts-1
              if ( part(el) == num_part ) then
-                if ( cs_material(num_material(el+1)) < TINYVAL) then
+                if ( phi_material(num_material(el+1)) >= 1.d0 ) then
                    is_acoustic_el = .true.
                 else
                    is_acoustic_el = .false.
                 end if
+                if ( phi_material(num_material(el+1)) < TINYVAL ) then
+                   is_elastic_el = .true.
+                else
+                   is_elastic_el = .false.
+                end if
+
                 do el_adj = xadj(el), xadj(el+1)-1
-                   if ( cs_material(num_material(adjncy(el_adj)+1)) < TINYVAL) then
+                   if ( phi_material(num_material(adjncy(el_adj)+1)) >= 1.d0 ) then
                       is_acoustic_el_adj = .true.
                    else
                       is_acoustic_el_adj = .false.
                    end if
-                   if ( (part(adjncy(el_adj)) == num_part_bis) .and. (is_acoustic_el .eqv. is_acoustic_el_adj) ) then
+                   if ( phi_material(num_material(adjncy(el_adj)+1)) < TINYVAL ) then
+                      is_elastic_el_adj = .true.
+                   else
+                      is_elastic_el_adj = .false.
+                   end if
+
+                   if(part(adjncy(el_adj))==num_part_bis) then
+            if((is_acoustic_el.eqv.is_acoustic_el_adj).and.(is_elastic_el.eqv.is_elastic_el_adj))then
                       tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+0) = el
                       tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+1) = adjncy(el_adj)
                       ncommon_nodes = 0
@@ -577,6 +606,7 @@ contains
                       end if
                       num_edge = num_edge + 1
                    end if
+            end if
                 end do
              end if
 
@@ -874,7 +904,8 @@ contains
 
   !--------------------------------------------------
   ! Set absorbing boundaries by elements instead of edges.
-  ! Excludes points that have both absorbing condition and coupled fluid/solid relation (this is the
+  ! Excludes points that have both absorbing condition and coupled fluid/solid fluid/poro poro/solid
+  ! relation (this is the
   ! reason arrays ibegin_..., iend_... were included here).
   ! Under development : exluding points that have two different normals in two different elements.
   !--------------------------------------------------
@@ -882,7 +913,8 @@ contains
      subroutine merge_abs_boundaries(nelemabs, nelemabs_merge, abs_surface, abs_surface_char, abs_surface_merge, &
           ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
           jbegin_left,jend_left,jbegin_right,jend_right, &
-          nedges_coupled, edges_coupled, nb_materials, cs_material, num_material, &
+          nedges_coupled, edges_coupled, nedges_acporo_coupled, edges_acporo_coupled, nedges_elporo_coupled, &
+          edges_elporo_coupled, nb_materials, phi_material, num_material, &
           nelmnts, &
           elmnts, ngnod)
 
@@ -898,15 +930,15 @@ contains
        integer, intent(in)  :: ngnod
        integer, dimension(:), pointer  :: ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
             jbegin_left,jend_left,jbegin_right,jend_right
-       integer  :: nedges_coupled
-       integer, dimension(:,:), pointer  :: edges_coupled
+       integer  :: nedges_coupled,nedges_acporo_coupled,nedges_elporo_coupled
+       integer, dimension(:,:), pointer  :: edges_coupled,edges_acporo_coupled,edges_elporo_coupled
        integer  :: nb_materials
-       double precision, dimension(nb_materials), intent(in)  :: cs_material
+       double precision, dimension(nb_materials), intent(in)  :: phi_material
        integer, dimension(1:nelmnts), intent(in)  :: num_material
        integer  :: nelmnts
 
 
-       logical, dimension(nb_materials)  :: is_acoustic
+       logical, dimension(nb_materials)  :: is_acoustic,is_poroelastic
        integer  :: num_edge, nedge_bound
        integer  :: match
        integer  :: nb_elmnts_abs
@@ -1024,11 +1056,14 @@ contains
        jend_left(:) = NGLLZ
 
         is_acoustic(:) = .false.
+        is_poroelastic(:) = .false.
         do i = 1, nb_materials
-           if (cs_material(i) < TINYVAL) then
+           if (phi_material(i) >=1.d0) then
               is_acoustic(i) = .true.
            end if
-
+           if (phi_material(i) > TINYVAL .and. phi_material(i) <1.d0) then
+              is_poroelastic(i) = .true.
+           end if
         end do
 
         do num_edge = 1, nedge_bound
@@ -1078,6 +1113,146 @@ contains
                     if ( abs_surface(4,num_edge) == elmnts(ngnod*edges_coupled(1,iedge)+inode1) ) then
                        do inode2 = 0, 3
                           if ( abs_surface(4,num_edge) == elmnts(ngnod*edges_coupled(2,iedge)+inode2) ) then
+                             if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
+                                  abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) )  then
+                                iend_bottom(match) = NGLLX - 1
+
+                             end if
+                             if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) .and. &
+                                  abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2) )  then
+                                jend_right(match) = NGLLZ - 1
+
+                             end if
+                             if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) .and. &
+                                  abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2) )  then
+                                iend_top(match) = NGLLX - 1
+
+                             end if
+                             if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
+                                  abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) )  then
+                                jend_left(match) = NGLLZ - 1
+
+                             end if
+                          end if
+                       end do
+
+                    end if
+
+                 end do
+
+
+              end do
+
+           end if
+
+
+           if ( is_acoustic(num_material(abs_surface(1,num_edge)+1)) ) then
+
+              do iedge = 1, nedges_acporo_coupled
+
+                 do inode1 = 0, 3
+                    if ( abs_surface(3,num_edge) == elmnts(ngnod*edges_acporo_coupled(1,iedge)+inode1) ) then
+                       do inode2 = 0, 3
+                          if ( abs_surface(3,num_edge) == elmnts(ngnod*edges_acporo_coupled(2,iedge)+inode2) ) then
+                             if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
+                                  abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) )  then
+                                ibegin_bottom(match) = 2
+
+                             end if
+                             if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) .and. &
+                                  abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2) )  then
+                                jbegin_right(match) = 2
+
+                             end if
+                             if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) .and. &
+                                  abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2) )  then
+                                ibegin_top(match) = 2
+
+                             end if
+                             if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
+                                  abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) )  then
+                                jbegin_left(match) = 2
+
+                             end if
+
+                          end if
+                       end do
+
+                    end if
+
+                    if ( abs_surface(4,num_edge) == elmnts(ngnod*edges_acporo_coupled(1,iedge)+inode1) ) then
+                       do inode2 = 0, 3
+                          if ( abs_surface(4,num_edge) == elmnts(ngnod*edges_acporo_coupled(2,iedge)+inode2) ) then
+                             if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
+                                  abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) )  then
+                                iend_bottom(match) = NGLLX - 1
+
+                             end if
+                             if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) .and. &
+                                  abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2) )  then
+                                jend_right(match) = NGLLZ - 1
+
+                             end if
+                             if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) .and. &
+                                  abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2) )  then
+                                iend_top(match) = NGLLX - 1
+
+                             end if
+                             if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
+                                  abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) )  then
+                                jend_left(match) = NGLLZ - 1
+
+                             end if
+                          end if
+                       end do
+
+                    end if
+
+                 end do
+
+
+              end do
+
+           end if
+
+
+           if ( is_poroelastic(num_material(abs_surface(1,num_edge)+1)) ) then
+
+              do iedge = 1, nedges_elporo_coupled
+
+                 do inode1 = 0, 3
+                    if ( abs_surface(3,num_edge) == elmnts(ngnod*edges_elporo_coupled(1,iedge)+inode1) ) then
+                       do inode2 = 0, 3
+                          if ( abs_surface(3,num_edge) == elmnts(ngnod*edges_elporo_coupled(2,iedge)+inode2) ) then
+                             if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
+                                  abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) )  then
+                                ibegin_bottom(match) = 2
+
+                             end if
+                             if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) .and. &
+                                  abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2) )  then
+                                jbegin_right(match) = 2
+
+                             end if
+                             if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) .and. &
+                                  abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2) )  then
+                                ibegin_top(match) = 2
+
+                             end if
+                             if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
+                                  abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) )  then
+                                jbegin_left(match) = 2
+
+                             end if
+
+                          end if
+                       end do
+
+                    end if
+
+                    if ( abs_surface(4,num_edge) == elmnts(ngnod*edges_elporo_coupled(1,iedge)+inode1) ) then
+                       do inode2 = 0, 3
+                          if ( abs_surface(4,num_edge) == elmnts(ngnod*edges_elporo_coupled(2,iedge)+inode2) ) then
                              if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
                                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) )  then
                                 iend_bottom(match) = NGLLX - 1
@@ -1286,7 +1461,7 @@ contains
   ! Repartitioning : two coupled acoustic/elastic elements are transfered to the same partition
   !--------------------------------------------------
 
-subroutine acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_materials, cs_material, num_material, &
+subroutine acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_materials, phi_material, num_material, &
      nproc, part, nedges_coupled, edges_coupled)
 
   implicit none
@@ -1294,7 +1469,7 @@ subroutine acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_material
   include 'constants.h'
 
   integer, intent(in)  :: nelmnts, nnodes, nproc, nb_materials
-  double precision, dimension(nb_materials), intent(in)  :: cs_material
+  double precision, dimension(nb_materials), intent(in)  :: phi_material
   integer, dimension(1:nelmnts), intent(in)  :: num_material
   integer, dimension(:), pointer  :: elmnts
   integer, dimension(:), pointer :: part
@@ -1302,7 +1477,7 @@ subroutine acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_material
   integer, dimension(:,:), pointer  :: edges_coupled
 
 
-  logical, dimension(nb_materials)  :: is_acoustic
+  logical, dimension(nb_materials)  :: is_acoustic, is_elastic
   integer, dimension(:), pointer  :: xadj
   integer, dimension(:), pointer  :: adjncy
   integer, dimension(:), pointer  :: nodes_elmnts
@@ -1313,11 +1488,14 @@ subroutine acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_material
   logical  :: is_repartitioned
 
   is_acoustic(:) = .false.
+  is_elastic(:) = .false.
   do i = 1, nb_materials
-     if (cs_material(i) < TINYVAL) then
+     if (phi_material(i) >=1.d0) then
         is_acoustic(i) = .true.
      end if
-
+     if (phi_material(i) < TINYVAL) then
+        is_elastic(i) = .true.
+     end if
   end do
 
   call mesh2dual_ncommonnodes(nelmnts, nnodes, elmnts, xadj, adjncy, nnodes_elmnts, nodes_elmnts,2)
@@ -1326,7 +1504,7 @@ subroutine acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_material
   do el = 0, nelmnts-1
      if ( is_acoustic(num_material(el+1)) ) then
         do el_adj = xadj(el), xadj(el+1) - 1
-           if ( .not. is_acoustic(num_material(adjncy(el_adj)+1)) ) then
+           if ( is_elastic(num_material(adjncy(el_adj)+1)) ) then
               nedges_coupled = nedges_coupled + 1
            end if
 
@@ -1334,7 +1512,7 @@ subroutine acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_material
      end if
   end do
 
-  print *, 'nedges_coupled', nedges_coupled
+  print *, 'nedges_coupled (acoustic/elastic)', nedges_coupled
 
   allocate(edges_coupled(2,nedges_coupled))
 
@@ -1342,7 +1520,7 @@ subroutine acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_material
   do el = 0, nelmnts-1
      if ( is_acoustic(num_material(el+1)) ) then
         do el_adj = xadj(el), xadj(el+1) - 1
-           if ( .not. is_acoustic(num_material(adjncy(el_adj)+1)) ) then
+           if ( is_elastic(num_material(adjncy(el_adj)+1)) ) then
               nedges_coupled = nedges_coupled + 1
               edges_coupled(1,nedges_coupled) = el
               edges_coupled(2,nedges_coupled) = adjncy(el_adj)
@@ -1372,9 +1550,195 @@ subroutine acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_material
 
 end subroutine acoustic_elastic_repartitioning
 
+  !--------------------------------------------------
+  ! Repartitioning : two coupled acoustic/poroelastic elements are transfered to the same partition
+  !--------------------------------------------------
+
+subroutine acoustic_poroelastic_repartitioning (nelmnts, nnodes, elmnts, nb_materials, phi_material, num_material, &
+     nproc, part, nedges_acporo_coupled, edges_acporo_coupled)
+
+  implicit none
+
+  include 'constants.h'
+
+  integer, intent(in)  :: nelmnts, nnodes, nproc, nb_materials
+  double precision, dimension(nb_materials), intent(in)  :: phi_material
+  integer, dimension(1:nelmnts), intent(in)  :: num_material
+  integer, dimension(:), pointer  :: elmnts
+  integer, dimension(:), pointer :: part
+  integer, intent(out)  :: nedges_acporo_coupled
+  integer, dimension(:,:), pointer  :: edges_acporo_coupled
+
+
+  logical, dimension(nb_materials)  :: is_acoustic,is_poroelastic
+  integer, dimension(:), pointer  :: xadj
+  integer, dimension(:), pointer  :: adjncy
+  integer, dimension(:), pointer  :: nodes_elmnts
+  integer, dimension(:), pointer  :: nnodes_elmnts
+
+  integer  :: i, num_edge
+  integer  :: el, el_adj
+  logical  :: is_repartitioned
+
+  is_acoustic(:) = .false.
+  is_poroelastic(:) = .false.
+  do i = 1, nb_materials
+     if (phi_material(i) >=1.d0) then
+        is_acoustic(i) = .true.
+     end if
+     if (phi_material(i) <1.d0 .and. phi_material(i) > TINYVAL) then
+        is_poroelastic(i) = .true.
+     end if
+  end do
+
+  call mesh2dual_ncommonnodes(nelmnts, nnodes, elmnts, xadj, adjncy, nnodes_elmnts, nodes_elmnts,2)
+
+  nedges_acporo_coupled = 0
+  do el = 0, nelmnts-1
+     if ( is_acoustic(num_material(el+1)) ) then
+        do el_adj = xadj(el), xadj(el+1) - 1
+           if ( is_poroelastic(num_material(adjncy(el_adj)+1)) ) then
+              nedges_acporo_coupled = nedges_acporo_coupled + 1
+           end if
+
+        end do
+     end if
+  end do
+
+  print *, 'nedges_coupled (acoustic/poroelastic)', nedges_acporo_coupled
+
+  allocate(edges_acporo_coupled(2,nedges_acporo_coupled))
+
+  nedges_acporo_coupled = 0
+  do el = 0, nelmnts-1
+     if ( is_acoustic(num_material(el+1)) ) then
+        do el_adj = xadj(el), xadj(el+1) - 1
+           if ( is_poroelastic(num_material(adjncy(el_adj)+1)) ) then
+              nedges_acporo_coupled = nedges_acporo_coupled + 1
+              edges_acporo_coupled(1,nedges_acporo_coupled) = el
+              edges_acporo_coupled(2,nedges_acporo_coupled) = adjncy(el_adj)
+           end if
+
+        end do
+     end if
+  end do
+
+  do i = 1, nedges_acporo_coupled*nproc
+     is_repartitioned = .false.
+     do num_edge = 1, nedges_acporo_coupled
+        if ( part(edges_acporo_coupled(1,num_edge)) /= part(edges_acporo_coupled(2,num_edge)) ) then
+           if ( part(edges_acporo_coupled(1,num_edge)) < part(edges_acporo_coupled(2,num_edge)) ) then
+              part(edges_acporo_coupled(2,num_edge)) = part(edges_acporo_coupled(1,num_edge))
+           else
+              part(edges_acporo_coupled(1,num_edge)) = part(edges_acporo_coupled(2,num_edge))
+           end if
+           is_repartitioned = .true.
+        end if
+
+     end do
+     if ( .not. is_repartitioned ) then
+        exit
+     end if
+  end do
+
+end subroutine acoustic_poroelastic_repartitioning
 
   !--------------------------------------------------
-  ! Write fluid/solid edges (fluid elements and corresponding solid elements)
+  ! Repartitioning : two coupled poroelastic/elastic elements are transfered to the same partition
+  !--------------------------------------------------
+
+subroutine poroelastic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_materials, phi_material, num_material, &
+     nproc, part, nedges_elporo_coupled, edges_elporo_coupled)
+
+  implicit none
+
+  include 'constants.h'
+
+  integer, intent(in)  :: nelmnts, nnodes, nproc, nb_materials
+  double precision, dimension(nb_materials), intent(in)  :: phi_material
+  integer, dimension(1:nelmnts), intent(in)  :: num_material
+  integer, dimension(:), pointer  :: elmnts
+  integer, dimension(:), pointer :: part
+  integer, intent(out)  :: nedges_elporo_coupled
+  integer, dimension(:,:), pointer  :: edges_elporo_coupled
+
+
+  logical, dimension(nb_materials)  :: is_elastic,is_poroelastic
+  integer, dimension(:), pointer  :: xadj
+  integer, dimension(:), pointer  :: adjncy
+  integer, dimension(:), pointer  :: nodes_elmnts
+  integer, dimension(:), pointer  :: nnodes_elmnts
+
+  integer  :: i, num_edge
+  integer  :: el, el_adj
+  logical  :: is_repartitioned
+
+  is_elastic(:) = .false.
+  is_poroelastic(:) = .false.
+  do i = 1, nb_materials
+     if (phi_material(i) < TINYVAL) then
+        is_elastic(i) = .true.
+     end if
+     if (phi_material(i) <1.d0 .and. phi_material(i) > TINYVAL) then
+        is_poroelastic(i) = .true.
+     end if
+  end do
+
+  call mesh2dual_ncommonnodes(nelmnts, nnodes, elmnts, xadj, adjncy, nnodes_elmnts, nodes_elmnts,2)
+
+  nedges_elporo_coupled = 0
+  do el = 0, nelmnts-1
+     if ( is_poroelastic(num_material(el+1)) ) then
+        do el_adj = xadj(el), xadj(el+1) - 1
+           if ( is_elastic(num_material(adjncy(el_adj)+1)) ) then
+              nedges_elporo_coupled = nedges_elporo_coupled + 1
+           end if
+
+        end do
+     end if
+  end do
+
+  print *, 'nedges_coupled (poroelastic/elastic)', nedges_elporo_coupled
+
+  allocate(edges_elporo_coupled(2,nedges_elporo_coupled))
+
+  nedges_elporo_coupled = 0
+  do el = 0, nelmnts-1
+     if ( is_poroelastic(num_material(el+1)) ) then
+        do el_adj = xadj(el), xadj(el+1) - 1
+           if ( is_elastic(num_material(adjncy(el_adj)+1)) ) then
+              nedges_elporo_coupled = nedges_elporo_coupled + 1
+              edges_elporo_coupled(1,nedges_elporo_coupled) = el
+              edges_elporo_coupled(2,nedges_elporo_coupled) = adjncy(el_adj)
+           end if
+
+        end do
+     end if
+  end do
+
+  do i = 1, nedges_elporo_coupled*nproc
+     is_repartitioned = .false.
+     do num_edge = 1, nedges_elporo_coupled
+        if ( part(edges_elporo_coupled(1,num_edge)) /= part(edges_elporo_coupled(2,num_edge)) ) then
+           if ( part(edges_elporo_coupled(1,num_edge)) < part(edges_elporo_coupled(2,num_edge)) ) then
+              part(edges_elporo_coupled(2,num_edge)) = part(edges_elporo_coupled(1,num_edge))
+           else
+              part(edges_elporo_coupled(1,num_edge)) = part(edges_elporo_coupled(2,num_edge))
+           end if
+           is_repartitioned = .true.
+        end if
+
+     end do
+     if ( .not. is_repartitioned ) then
+        exit
+     end if
+  end do
+
+end subroutine poroelastic_elastic_repartitioning
+
+
+  !--------------------------------------------------
+  ! Write fluid/solid edges (fluid (or porous) elements and corresponding solid (or porous) elements)
   ! pertaining to iproc partition in the corresponding Database
   !--------------------------------------------------
 
