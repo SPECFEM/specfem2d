@@ -113,7 +113,12 @@
       cfactor = phi/(tortuosity*density(2))*(H_biot*M_biot - C_biot*C_biot)
       cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
       cpIIsquare = (bfactor - sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
+      
+      if(phi <= 0.d0) then
+      cssquare = mu_s/afactor
+      else
       cssquare = mu_fr/afactor
+      endif 
 
 ! Young modulus for the solid phase 
       young_s = 9.d0*kappa_s*mu_s/(3.d0*kappa_s + mu_s)

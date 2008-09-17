@@ -322,6 +322,10 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhol_global, mul_global, kappal_global
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: mu_k, kappa_k,rho_k
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhop_kl, beta_kl, alpha_kl
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rho_ac_kl, kappa_ac_kl
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhol_ac_global, kappal_ac_global
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: kappa_ac_k,rho_ac_k
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhop_ac_kl, alpha_ac_kl
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhot_kl, rhof_kl, sm_kl, eta_kl, mufr_kl, B_kl, &
     C_kl, M_kl, rhob_kl, rhofb_kl, phi_kl, Bb_kl, Cb_kl, Mb_kl, mufrb_kl, &
     rhobb_kl, rhofbb_kl, phib_kl, cpI_kl, cpII_kl, cs_kl, r_kl 
@@ -1524,11 +1528,27 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     allocate(b_potential_acoustic(npoin))
     allocate(b_potential_dot_acoustic(npoin))
     allocate(b_potential_dot_dot_acoustic(npoin))
+    allocate(rho_ac_kl(npoin))
+    allocate(rho_ac_k(npoin))
+    allocate(rhol_ac_global(npoin))
+    allocate(kappa_ac_kl(npoin))
+    allocate(kappa_ac_k(npoin))
+    allocate(kappal_ac_global(npoin))
+    allocate(rhop_ac_kl(npoin))
+    allocate(alpha_ac_kl(npoin))
   else
 ! allocate unused arrays with fictitious size
     allocate(b_potential_acoustic(1))
     allocate(b_potential_dot_acoustic(1))
     allocate(b_potential_dot_dot_acoustic(1))
+    allocate(rho_ac_kl(1))
+    allocate(rho_ac_k(1))
+    allocate(rhol_ac_global(1))
+    allocate(kappa_ac_kl(1))
+    allocate(kappa_ac_k(1))
+    allocate(kappal_ac_global(1))
+    allocate(rhop_ac_kl(1))
+    allocate(alpha_ac_kl(1))
   endif
 
 !
@@ -2340,6 +2360,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
        enddo
     close(55)
     close(56)
+
   rhot_kl(:) = ZERO
   rhof_kl(:) = ZERO
   eta_kl(:) = ZERO
@@ -2359,6 +2380,8 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
        enddo
     close(55)
 
+  rho_ac_kl(:) = ZERO
+  kappa_ac_kl(:) = ZERO
    endif
 
   endif ! if(isover == 2)
@@ -3503,7 +3526,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                nrec,isolver,save_forward,b_absorb_acoustic_left,&
                b_absorb_acoustic_right,b_absorb_acoustic_bottom,&
                b_absorb_acoustic_top,nspec_xmin,nspec_xmax,&
-               nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax)
+               nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,kappa_ac_k)
 
     if(anyabs .and. save_forward .and. isolver == 1) then
 
@@ -3737,7 +3760,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                nrec,isolver,save_forward,b_absorb_acoustic_left,&
                b_absorb_acoustic_right,b_absorb_acoustic_bottom,&
                b_absorb_acoustic_top,nspec_xmin,nspec_xmax,&
-               nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax)
+               nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,kappa_ac_k)
    endif
 
 ! assembling potential_dot_dot for acoustic elements (receive)
@@ -3774,6 +3797,12 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                 potential_acoustic,acoustic_surface, &
                 ibool,nelem_acoustic_surface,npoin,nspec)
     endif
+  endif
+
+  if(any_acoustic .and. isolver == 2) then ! kernels calculation
+      do iglob = 1,npoin
+            rho_ac_k(iglob) = potential_dot_dot_acoustic(iglob)*b_potential_acoustic(iglob) 
+      enddo
   endif
 
 ! ****************************************************************************************
@@ -4841,6 +4870,29 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 ! kernels output
   if(isolver == 2) then
 
+   if(any_acoustic) then
+
+    do ispec = 1, nspec
+     if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
+      do k = 1, NGLLZ
+          do i = 1, NGLLX
+            iglob = ibool(i,k,ispec)
+    kappal_ac_global(iglob) = poroelastcoef(1,2,kmato(ispec)) 
+    rhol_ac_global(iglob) = density(2,kmato(ispec))
+          enddo
+      enddo
+     endif
+    enddo
+
+          do iglob =1,npoin
+            rho_ac_kl(iglob) = rho_ac_kl(iglob) - rhol_ac_global(iglob)  * rho_ac_k(iglob) * deltat
+            kappa_ac_kl(iglob) = kappa_ac_kl(iglob) - kappal_ac_global(iglob) * kappa_ac_k(iglob) * deltat
+!
+            rhop_ac_kl(iglob) = rho_ac_kl(iglob) + kappa_ac_kl(iglob) 
+            alpha_ac_kl(iglob) = TWO *  kappa_ac_kl(iglob)
+          enddo
+    endif !if(any_acoustic)
+
    if(any_elastic) then
     rhopmin = 99999
     rhopmax = -99999
@@ -4850,6 +4902,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     betamax = -99999
 
     do ispec = 1, nspec
+     if(elastic(ispec)) then
       do k = 1, NGLLZ
           do i = 1, NGLLX
             iglob = ibool(i,k,ispec)
@@ -4858,6 +4911,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     rhol_global(iglob) = density(1,kmato(ispec))
           enddo
       enddo
+     endif
     enddo
 
 !      do k = 1, NGLLZ
@@ -4891,6 +4945,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   if(any_poroelastic) then
 
     do ispec = 1, nspec
+     if(poroelastic(ispec)) then
       do k = 1, NGLLZ
           do i = 1, NGLLX
             iglob = ibool(i,k,ispec)
@@ -4906,6 +4961,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     permlzz_global(iglob) = permeability(3,kmato(ispec))
           enddo
        enddo
+     endif
     enddo
 
 !      do k = 1, NGLLZ
@@ -5011,6 +5067,25 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   if ( myrank == 0 ) then
   write(IOUT,*) 'Writing Kernels file'
   endif
+
+    if(any_acoustic) then
+        write(filename,'(a,i7.7)') 'OUTPUT_FILES/snapshot_rho_kappa',it
+        write(filename2,'(a,i7.7)') 'OUTPUT_FILES/snapshot_rhop_c',it
+
+        open(unit = 97, file = trim(filename),status = 'unknown',iostat=ios)
+        if (ios /= 0) stop 'Error writing snapshot to disk'
+        open(unit = 98, file = trim(filename2),status = 'unknown',iostat=ios)
+        if (ios /= 0) stop 'Error writing snapshot to disk'
+
+     do iglob =1,npoin
+        xx = coord(1,iglob)/maxval(coord(1,:))
+        zz = coord(2,iglob)/maxval(coord(1,:))
+         write(97,'(5e12.3)')xx,zz,rho_ac_kl(iglob),kappa_ac_kl(iglob)
+         write(98,'(5e12.3)')xx,zz,rhop_ac_kl(iglob),alpha_ac_kl(iglob)
+     enddo
+    close(97)
+    close(98)
+    endif
 
     if(any_elastic) then
         write(filename,'(a,i7.7)') 'OUTPUT_FILES/snapshot_rho_kappa_mu',it
