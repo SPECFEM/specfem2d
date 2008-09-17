@@ -38,7 +38,7 @@ absorbleft                      = .true.
 # time step parameters
 nt                              = 3000           # total number of time steps
 deltat                          = 2d-4         # duration of a time step
-isolver                         = 2              # type of simulation 1=forward 2=adjoint + kernels
+isolver                         = 1              # type of simulation 1=forward 2=adjoint + kernels
 
 # source parameters
 source_surf                     = .false.        # source inside the medium or at the surface
@@ -61,7 +61,7 @@ f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if
 
 # receiver line parameters for seismograms
 seismotype                      = 1              # record 1=displ 2=veloc 3=accel 4=pressure
-save_forward                    = .false.        # save the last frame 
+save_forward                    = .true.        # save the last frame 
 generate_STATIONS               = .true.         # creates a STATION file in ./DATA
 nreceiverlines                  = 1              # number of receiver lines
 anglerec                        = 0.d0           # angle to rotate components at receivers
@@ -95,7 +95,7 @@ nbmodels                        = 1              # nb of different models
 # define models as (model_number,1,rho_s,rho_f,phi,tort,permxx,permxz,permzz,kappa_s,kappa_f,kappa_fr,mu_s,eta_f,mu_fr) or (Anisotropic: to be defined - in the code already, just need to modify the Par_file)
 # set the porosity phi to 1 to make a given model acoustic, and to 0 to make it elastic
 # the mesh can contain acoustic, elastic and poroelastic models simultaneously
-1 1 2650.d0 880.d0 0.0d0 2.0 1d-11 0.d0 1d-11 12.2d9 2.5d9 9.6d9 5.1d9 0.0d-3 5.1d9
+1 1 2650.d0 880.d0 1.0d0 2.0 1d-11 0.d0 1d-11 12.2d9 2.5d9 9.6d9 5.1d9 0.0d-3 5.1d9
 # define the different regions of the model in the (nx,nz) spectral element mesh
 nbregions                       = 1              # nb of regions and model number for each
 1 100 1 80 1

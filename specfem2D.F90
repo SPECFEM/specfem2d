@@ -5445,6 +5445,21 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     close(56)
   endif
 
+  if(save_forward .and. isolver ==1 .and. any_acoustic) then
+  if ( myrank == 0 ) then
+    write(IOUT,*)
+    write(IOUT,*) 'Saving acoustic last frame...'
+    write(IOUT,*)
+  endif
+    open(unit=55,file='OUTPUT_FILES/lastframe_acoustic.bin',status='unknown',form='unformatted')
+       do j=1,npoin
+      write(55) potential_acoustic(j),&
+               potential_dot_acoustic(j),&
+               potential_dot_dot_acoustic(j)
+       enddo
+    close(55)
+  endif
+
 !----  close energy file and create a gnuplot script to display it
   if(OUTPUT_ENERGY) then
     close(IENERGY)
