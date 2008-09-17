@@ -1594,9 +1594,8 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           cpsquare = vpext(i,j,ispec)**2
         else
           rhol = density(2,kmato(ispec))
-          lambdal_relaxed = poroelastcoef(1,2,kmato(ispec))
-          mul_relaxed = poroelastcoef(2,2,kmato(ispec))
-          cpsquare = (lambdal_relaxed + 2._CUSTOM_REAL*mul_relaxed) / rhol
+          kappal = poroelastcoef(1,2,kmato(ispec))
+          cpsquare = kappal / rhol
         endif
           rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / cpsquare
         endif
