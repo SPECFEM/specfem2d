@@ -344,7 +344,7 @@ subroutine assemble_MPI_scalar(array_val1, array_val2,npoin, &
              array_val2(ibool_interfaces_elastic(i,num_interface))
      end do
 
-     call MPI_isend ( buffer_send_faces_scalar(1,num_interface), &
+     call MPI_ISSEND( buffer_send_faces_scalar(1,num_interface), &
           nibool_interfaces_acoustic(num_interface)+nibool_interfaces_elastic(num_interface), MPI_DOUBLE_PRECISION, &
           my_neighbours(num_interface), 11, &
           MPI_COMM_WORLD, msg_requests(num_interface), ier)
@@ -445,13 +445,13 @@ subroutine assemble_MPI_vector_ac(array_val1,npoin, &
 
     num_interface = inum_interfaces_acoustic(inum_interface)
 
-    call MPI_Isend ( buffer_send_faces_vector_ac(1,inum_interface), &
+    call MPI_ISSEND( buffer_send_faces_vector_ac(1,inum_interface), &
              nibool_interfaces_acoustic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_acoustic(inum_interface), ier)
 
     if ( ier /= MPI_SUCCESS ) then
-      call exit_mpi('MPI_Isend unsuccessful in assemble_MPI_vector_start')
+      call exit_mpi('MPI_ISSEND unsuccessful in assemble_MPI_vector_start')
     end if
 
     call MPI_Irecv ( buffer_recv_faces_vector_ac(1,inum_interface), &
@@ -556,13 +556,13 @@ subroutine assemble_MPI_vector_el(array_val2,npoin, &
 
     num_interface = inum_interfaces_elastic(inum_interface)
 
-    call MPI_Isend ( buffer_send_faces_vector_el(1,inum_interface), &
+    call MPI_ISSEND( buffer_send_faces_vector_el(1,inum_interface), &
              NDIM*nibool_interfaces_elastic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_elastic(inum_interface), ier)
 
     if ( ier /= MPI_SUCCESS ) then
-      call exit_mpi('MPI_Isend unsuccessful in assemble_MPI_vector_el')
+      call exit_mpi('MPI_ISSEND unsuccessful in assemble_MPI_vector_el')
     end if
 
     call MPI_Irecv ( buffer_recv_faces_vector_el(1,inum_interface), &
