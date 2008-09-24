@@ -54,18 +54,18 @@ O = obj
 #FLAGS_CHECK=-fast -Mbounds -Mneginfo -Mdclchk -Minform=warn
 
 # Intel
-#F90 = ifort
-#CC = gcc
-#FLAGS_NOCHECK=-O0 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check nobounds
-#FLAGS_CHECK = $(FLAGS_NOCHECK)
+F90 = ifort
+CC = gcc
+FLAGS_NOCHECK=-O0 -implicitnone -warn stderrors -warn truncated_source -warn argument_checking -warn unused -warn declarations -std95 -assume byterecl -check nobounds
+FLAGS_CHECK = $(FLAGS_NOCHECK)
 
 # GNU gfortran
 #F90 = /opt/openmpi-1.2.1/gfortran64/bin/mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
-F90 = gfortran
-CC = gcc
+#F90 = gfortran
+#CC = gcc
 #FLAGS_NOCHECK = -O3 -march=opteron -m64 -mfpmath=sse,387
-FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow
-FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
+#FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow
+#FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
 
 # IBM
 #F90 = xlf_r

@@ -1554,7 +1554,7 @@ end subroutine acoustic_elastic_repartitioning
   ! Repartitioning : two coupled acoustic/poroelastic elements are transfered to the same partition
   !--------------------------------------------------
 
-subroutine acoustic_poroelastic_repartitioning (nelmnts, nnodes, elmnts, nb_materials, phi_material, num_material, &
+subroutine acoustic_poro_repartitioning (nelmnts, nnodes, elmnts, nb_materials, phi_material, num_material, &
      nproc, part, nedges_acporo_coupled, edges_acporo_coupled)
 
   implicit none
@@ -1641,13 +1641,13 @@ subroutine acoustic_poroelastic_repartitioning (nelmnts, nnodes, elmnts, nb_mate
      end if
   end do
 
-end subroutine acoustic_poroelastic_repartitioning
+end subroutine acoustic_poro_repartitioning
 
   !--------------------------------------------------
   ! Repartitioning : two coupled poroelastic/elastic elements are transfered to the same partition
   !--------------------------------------------------
 
-subroutine poroelastic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_materials, phi_material, num_material, &
+subroutine poro_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_materials, phi_material, num_material, &
      nproc, part, nedges_elporo_coupled, edges_elporo_coupled)
 
   implicit none
@@ -1734,7 +1734,7 @@ subroutine poroelastic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_mater
      end if
   end do
 
-end subroutine poroelastic_elastic_repartitioning
+end subroutine poro_elastic_repartitioning
 
 
   !--------------------------------------------------
