@@ -514,16 +514,8 @@
       do j=1,NGLLZ
         do i=1,NGLLX
       iglob = ibool(i,j,ispec_selected_rec(irec))
-          xxi = + gammaz(i,j,ispec_selected_rec(irec)) * jacobian(i,j,ispec_selected_rec(irec))
-          zxi = - gammax(i,j,ispec_selected_rec(irec)) * jacobian(i,j,ispec_selected_rec(irec))
-          jacobian1D = sqrt(xxi**2 + zxi**2)
-          nx = - zxi / jacobian1D
-          nz = + xxi / jacobian1D
-
-          weight = jacobian1D * wxgll(i)
-
-      potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*&
-          (nx*adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j) + nz*adj_sourcearrays(irec_local,NSTEP-it+1,2,i,j))
+      potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + &
+          adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
         enddo
       enddo
             endif
