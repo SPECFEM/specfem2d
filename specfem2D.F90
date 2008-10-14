@@ -4813,6 +4813,12 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           dxd = vector_field_element(1,i,j)
           dzd = vector_field_element(2,i,j)
 
+        else if(.not. elastic(ispec) .and. .not. poroelastic(ispec) &
+                           .and. save_forward) then
+
+          dxd = potential_acoustic(iglob)
+          dzd = ZERO
+
         else if(seismotype == 1) then
 
              if(poroelastic(ispec)) then
