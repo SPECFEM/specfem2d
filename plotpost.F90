@@ -206,18 +206,23 @@ coorg_send_ps_vector_field
 coorg_recv_ps_vector_field
 
 #ifndef USE_MPI
-  allocate(coorg_recv(1,1))
-  allocate(color_recv(1))
-  allocate(RGB_recv(1,1))
+! this to avoid warnings by the compiler about unused variables in the case
+! of a serial code, therefore use them once and do nothing: just set them to zero
   nspec_recv = 0
   nb_coorg_per_elem = 0
   nb_color_per_elem = 0
   ier = 0
   num_spec = 0
   iproc = nproc
+  coorg_recv_ps_velocity_model = 0
+  RGB_recv_ps_velocity_model = 0
+  coorg_recv_ps_element_mesh = 0
+  color_recv_ps_element_mesh = 0
+  coorg_recv_ps_abs = 0
+  coorg_recv_ps_free_surface = 0
+  coorg_recv_ps_vector_field = 0
+  allocate(coorg_recv(1,1))
   deallocate(coorg_recv)
-  deallocate(color_recv)
-  deallocate(RGB_recv)
 #endif
 
 ! A4 or US letter paper
