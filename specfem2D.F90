@@ -2855,15 +2855,16 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
          potential_dot_acoustic,potential_dot_dot_acoustic,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
 
 !----  display time step and max of norm of displacement
-  if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5) then
+  if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
 
     if (myrank == 0) then
-    write(IOUT,*)
-    if(time >= 1.d-3 .and. time < 1000.d0) then
-      write(IOUT,"('Time step number ',i7,'   t = ',f9.4,' s')") it,time
-    else
-      write(IOUT,"('Time step number ',i7,'   t = ',1pe12.6,' s')") it,time
-    endif
+      write(IOUT,*)
+      if(time >= 1.d-3 .and. time < 1000.d0) then
+        write(IOUT,"('Time step number ',i7,'   t = ',f9.4,' s out of ',i7)") it,time,NSTEP
+      else
+        write(IOUT,"('Time step number ',i7,'   t = ',1pe12.6,' s out of ',i7)") it,time,NSTEP
+      endif
+      write(IOUT,*) 'We have done ',sngl(100.d0*dble(it-1)/dble(NSTEP-1)),'% of the total'
     endif
 
     if(any_elastic_glob) then
