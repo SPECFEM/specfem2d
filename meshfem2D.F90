@@ -214,6 +214,12 @@ program meshfem2D
   double precision  :: Qs_attenuation
   double precision  :: f0_attenuation
 
+! variables used for tangential detection
+  logical :: force_normal_to_surface,rec_normal_to_surface
+  character(len=256)  :: tangential_detection_curve_file
+  integer ::  nnodes_tangential_curve
+  double precision, dimension(:,:), allocatable  :: nodes_tangential_curve
+
 #if defined USE_METIS || defined USE_SCOTCH
   integer  :: edgecut
 #endif
@@ -246,6 +252,7 @@ program meshfem2D
   call read_value_string(IIN,IGNORE_JUNK,materials_file)
   call read_value_string(IIN,IGNORE_JUNK,free_surface_file)
   call read_value_string(IIN,IGNORE_JUNK,absorbing_surface_file)
+  call read_value_string(IIN,IGNORE_JUNK,tangential_detection_curve_file)
 
 ! read info about partitioning
   call read_value_integer(IIN,IGNORE_JUNK,nproc)
@@ -433,6 +440,7 @@ program meshfem2D
   call read_value_double_precision(IIN,IGNORE_JUNK,Mzz)
   call read_value_double_precision(IIN,IGNORE_JUNK,Mxz)
   call read_value_double_precision(IIN,IGNORE_JUNK,factor)
+  call read_value_logical(IIN,IGNORE_JUNK,force_normal_to_surface)
 
 ! if Dirac source time function, use a very thin Gaussian instead
 ! if Heaviside source time function, use a very thin error function instead
@@ -473,6 +481,7 @@ program meshfem2D
   call read_value_logical(IIN,IGNORE_JUNK,generate_STATIONS)
   call read_value_integer(IIN,IGNORE_JUNK,nreceiverlines)
   call read_value_double_precision(IIN,IGNORE_JUNK,anglerec)
+  call read_value_logical(IIN,IGNORE_JUNK,rec_normal_to_surface)
 
   if(nreceiverlines < 1) stop 'number of receiver lines must be greater than 1'
 
@@ -571,6 +580,19 @@ program meshfem2D
   print *
   enddo
 
+! tangential detection
+  if (force_normal_to_surface .or. rec_normal_to_surface) then
+    open(unit=IIN,file=tangential_detection_curve_file,status='old',action='read')
+    read(IIN,*) nnodes_tangential_curve
+    allocate(nodes_tangential_curve(2,nnodes_tangential_curve))
+    do i = 1, nnodes_tangential_curve
+      read(IIN,*) nodes_tangential_curve(1,i), nodes_tangential_curve(2,i)
+    enddo
+    close(IIN)
+  else
+    nnodes_tangential_curve = 0
+    allocate(nodes_tangential_curve(2,1))
+  endif
 
   if ( read_external_mesh ) then
      call read_mat(materials_file, nelmnts, num_material)
@@ -1174,8 +1196,8 @@ program meshfem2D
      call write_fluidsolid_edges_database(15, nedges_coupled, nedges_coupled_loc, &
           edges_coupled, glob2loc_elmnts, part, iproc, 1)
 
-     write(15,*) 'nelemabs nelem_acoustic_surface num_fluid_solid_edges'
-     write(15,*) nelemabs_loc,nelem_acoustic_surface_loc,nedges_coupled_loc
+     write(15,*) 'nelemabs nelem_acoustic_surface num_fluid_solid_edges nnodes_tangential_curve'
+     write(15,*) nelemabs_loc,nelem_acoustic_surface_loc,nedges_coupled_loc,nnodes_tangential_curve
 
 
      write(15,*) 'Material sets (num 1 rho vp vs 0 0) or (num 2 rho c11 c13 c33 c44)'
@@ -1225,6 +1247,13 @@ program meshfem2D
      write(15,*) 'List of acoustic elastic coupled edges:'
      call write_fluidsolid_edges_database(15, nedges_coupled, nedges_coupled_loc, &
           edges_coupled, glob2loc_elmnts, part, iproc, 2)
+
+     write(15,*) 'List of tangential detection curve nodes:'
+     !write(15,*) nnodes_tangential_curve
+     write(15,*) force_normal_to_surface,rec_normal_to_surface
+     do i = 1, nnodes_tangential_curve
+       write(15,*) nodes_tangential_curve(1,i),nodes_tangential_curve(2,i)
+     enddo
   enddo
 
 

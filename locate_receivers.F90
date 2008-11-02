@@ -46,7 +46,8 @@
 
   subroutine locate_receivers(ibool,coord,nspec,npoin,xigll,zigll,nrec,nrecloc,recloc,which_proc_receiver,nproc,myrank, &
        st_xval,st_zval,ispec_selected_rec, &
-       xi_receiver,gamma_receiver,station_name,network_name,x_source,z_source,coorg,knods,ngnod,npgeo,ipass)
+       xi_receiver,gamma_receiver,station_name,network_name,x_source,z_source,coorg,knods,ngnod,npgeo,ipass, &
+       x_final_receiver, z_final_receiver)
 
   implicit none
 
@@ -93,6 +94,8 @@
 
   double precision, dimension(nrec) :: st_xval,st_zval
 
+! tangential detection
+  double precision, dimension(nrec)  :: x_final_receiver, z_final_receiver
 
   double precision, dimension(nrec,nproc)  :: gather_final_distance
   double precision, dimension(nrec,nproc)  :: gather_xi_receiver, gather_gamma_receiver
@@ -207,6 +210,9 @@
 
 ! compute final distance between asked and found
   final_distance(irec) = sqrt((st_xval(irec)-x)**2 + (st_zval(irec)-z)**2)
+
+  x_final_receiver(irec) = x
+  z_final_receiver(irec) = z
 
 enddo
 

@@ -10,6 +10,7 @@ nodes_coords_file               = ./DATA/Mesh_canyon/canyon_nodes_coords_file   
 materials_file                  = ./DATA/Mesh_canyon/canyon_materials_file   # file containing the material number for each element
 free_surface_file               = ./DATA/Mesh_canyon/canyon_free_surface_file   # file containing the free surface
 absorbing_surface_file          = ./DATA/Mesh_canyon/canyon_absorbing_surface_file   # file containing the absorbing surface
+tangential_detection_curve_file = ./DATA/courbe_eros_nodes # file containing the curve delimiting the velocity model
 
 # parameters concerning partitioning
 nproc                           = 1              # number of processes
@@ -51,6 +52,7 @@ Mxx                             = 1.             # Mxx component (for a moment t
 Mzz                             = 1.             # Mzz component (for a moment tensor source only)
 Mxz                             = 0.             # Mxz component (for a moment tensor source only)
 factor                          = 1.d10          # amplification factor
+force_normal_to_surface         = .false.        # angleforce normal to surface (external mesh and curve file needed)
 
 # constants for attenuation
 N_SLS                           = 2                      # number of standard linear solids for attenuation 
@@ -63,6 +65,7 @@ seismotype                      = 1              # record 1=displ 2=veloc 3=acce
 generate_STATIONS               = .true.         # creates a STATION file in ./DATA
 nreceiverlines                  = 1              # number of receiver lines
 anglerec                        = 0.d0           # angle to rotate components at receivers
+rec_normal_to_surface           = .false.        # base anglerec normal to surface (external mesh and curve file needed)
 
 # first receiver line
 nrec                            = 11             # number of receivers
