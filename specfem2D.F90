@@ -421,6 +421,20 @@
   double precision, dimension(:,:), allocatable  :: coorg_send_ps_vector_field
   double precision, dimension(:,:), allocatable  :: coorg_recv_ps_vector_field
 
+! tangential detection
+  double precision, dimension(:), allocatable :: anglerec_irec
+  double precision, dimension(:), allocatable :: cosrot_irec, sinrot_irec
+  double precision, dimension(:), allocatable :: x_final_receiver, z_final_receiver
+  logical :: force_normal_to_surface,rec_normal_to_surface
+  integer  :: nnodes_tangential_curve, source_courbe_eros
+  double precision, dimension(:,:), allocatable  :: nodes_tangential_curve
+  integer  :: n1_tangential_detection_curve
+  integer, dimension(4)  :: n_tangential_detection_curve
+  integer, dimension(:), allocatable  :: rec_tangential_detection_curve
+  double precision :: distmin, dist_current, angleforce_recv
+  double precision, dimension(:), allocatable :: dist_tangential_detection_curve
+  double precision :: x_final_receiver_dummy, z_final_receiver_dummy
+
 !***********************************************************************
 !
 !             i n i t i a l i z a t i o n    p h a s e
@@ -615,7 +629,7 @@
   read(IIN,"(a80)") datlin
   read(IIN,*) numat,ngnod,nspec,pointsdisp,plot_lowerleft_corner_only
   read(IIN,"(a80)") datlin
-  read(IIN,*) nelemabs,nelem_acoustic_surface,num_fluid_solid_edges
+  read(IIN,*) nelemabs,nelem_acoustic_surface,num_fluid_solid_edges,nnodes_tangential_curve
 
 !
 !---- allocate arrays
@@ -878,6 +892,29 @@ endif
   endif
 
 !
+!---- read tangential detection curve
+!
+  read(IIN,"(a80)") datlin
+  read(IIN,*), force_normal_to_surface,rec_normal_to_surface
+  if (nnodes_tangential_curve > 0) then
+if (ipass == 1) then
+    allocate(nodes_tangential_curve(2,nnodes_tangential_curve))
+    allocate(dist_tangential_detection_curve(nnodes_tangential_curve))
+endif
+    do i = 1, nnodes_tangential_curve
+      read(IIN,*) nodes_tangential_curve(1,i),nodes_tangential_curve(2,i)
+    enddo
+  else
+    force_normal_to_surface = .false.
+    rec_normal_to_surface = .false.
+    nnodes_tangential_curve = 0
+if (ipass == 1) then
+    allocate(nodes_tangential_curve(2,1))
+    allocate(dist_tangential_detection_curve(1))
+endif
+  endif
+
+!
 !---- close input file
 !
   close(IIN)
@@ -1029,6 +1066,8 @@ endif
   allocate(network_name(nrec))
   allocate(recloc(nrec))
   allocate(which_proc_receiver(nrec))
+  allocate(x_final_receiver(nrec))
+  allocate(z_final_receiver(nrec))
 
 ! allocate 1-D Lagrange interpolators and derivatives
   allocate(hxir(NGLLX))
@@ -1220,7 +1259,204 @@ endif
 ! locate receivers in the mesh
   call locate_receivers(ibool,coord,nspec,npoin,xigll,zigll,nrec,nrecloc,recloc,which_proc_receiver,nproc,myrank,&
        st_xval,st_zval,ispec_selected_rec, &
-       xi_receiver,gamma_receiver,station_name,network_name,x_source,z_source,coorg,knods,ngnod,npgeo,ipass)
+       xi_receiver,gamma_receiver,station_name,network_name,x_source,z_source,coorg,knods,ngnod,npgeo,ipass, &
+       x_final_receiver, z_final_receiver)
+
+if (ipass == 1) then
+  if (nrecloc > 0) then
+    allocate(anglerec_irec(nrecloc))
+    allocate(cosrot_irec(nrecloc))
+    allocate(sinrot_irec(nrecloc))
+    allocate(rec_tangential_detection_curve(nrecloc))
+  else
+    allocate(anglerec_irec(1))
+    allocate(cosrot_irec(1))
+    allocate(sinrot_irec(1))
+    allocate(rec_tangential_detection_curve(1))
+  endif
+  anglerec_irec(:) = anglerec * pi / 180.d0
+  cosrot_irec(:) = cos(anglerec)
+  sinrot_irec(:) = sin(anglerec)
+endif
+
+!
+!--- tangential computation
+!
+if (ipass == NUMBER_OF_PASSES) then
+! for receivers
+  if (rec_normal_to_surface) then
+    irecloc = 0
+    do irec = 1, nrec
+      if (which_proc_receiver(irec) == myrank) then
+        irecloc = irecloc + 1
+        distmin = HUGEVAL
+        do i = 1, nnodes_tangential_curve
+          dist_current = sqrt((x_final_receiver(irec)-nodes_tangential_curve(1,i))**2 + &
+             (z_final_receiver(irec)-nodes_tangential_curve(2,i))**2)
+          if ( dist_current < distmin ) then
+            n1_tangential_detection_curve = i
+            distmin = dist_current
+          endif
+       enddo
+
+       rec_tangential_detection_curve(irecloc) = n1_tangential_detection_curve
+       call tri_quad(n_tangential_detection_curve, n1_tangential_detection_curve, nnodes_tangential_curve)
+
+       call calcul_normale( anglerec_irec(irecloc), nodes_tangential_curve(1,n_tangential_detection_curve(1)), &
+         nodes_tangential_curve(1,n_tangential_detection_curve(2)), &
+         nodes_tangential_curve(1,n_tangential_detection_curve(3)), &
+         nodes_tangential_curve(1,n_tangential_detection_curve(4)), &
+         nodes_tangential_curve(2,n_tangential_detection_curve(1)), &
+         nodes_tangential_curve(2,n_tangential_detection_curve(2)), &
+         nodes_tangential_curve(2,n_tangential_detection_curve(3)), &
+         nodes_tangential_curve(2,n_tangential_detection_curve(4)) )
+     endif
+
+    enddo
+    cosrot_irec(:) = cos(anglerec_irec(:))
+    sinrot_irec(:) = sin(anglerec_irec(:))
+  endif
+
+! for the source
+  if (force_normal_to_surface) then
+    distmin = HUGEVAL
+    do i = 1, nnodes_tangential_curve
+      dist_current = sqrt((coord(1,iglob_source)-nodes_tangential_curve(1,i))**2 + &
+          (coord(2,iglob_source)-nodes_tangential_curve(2,i))**2)
+      if ( dist_current < distmin ) then
+        n1_tangential_detection_curve = i
+        distmin = dist_current
+        
+      endif
+    enddo
+
+    call tri_quad(n_tangential_detection_curve, n1_tangential_detection_curve, nnodes_tangential_curve)
+
+    call calcul_normale( angleforce, nodes_tangential_curve(1,n_tangential_detection_curve(1)), &
+      nodes_tangential_curve(1,n_tangential_detection_curve(2)), &
+      nodes_tangential_curve(1,n_tangential_detection_curve(3)), &
+      nodes_tangential_curve(1,n_tangential_detection_curve(4)), &
+      nodes_tangential_curve(2,n_tangential_detection_curve(1)), &
+      nodes_tangential_curve(2,n_tangential_detection_curve(2)), &
+      nodes_tangential_curve(2,n_tangential_detection_curve(3)), &
+      nodes_tangential_curve(2,n_tangential_detection_curve(4)) )
+
+    source_courbe_eros = n1_tangential_detection_curve
+    if ( myrank == 0 .and. is_proc_source == 1 .and. nb_proc_source == 1 ) then
+      source_courbe_eros = n1_tangential_detection_curve
+      angleforce_recv = angleforce
+#ifdef USE_MPI
+    else if ( myrank == 0 ) then
+      do i = 1, nb_proc_source - is_proc_source
+        call MPI_recv(source_courbe_eros,1,MPI_INTEGER,MPI_ANY_SOURCE,42,MPI_COMM_WORLD,request_mpi_status,ier)
+        call MPI_recv(angleforce_recv,1,MPI_DOUBLE_PRECISION,MPI_ANY_SOURCE,43,MPI_COMM_WORLD,request_mpi_status,ier)
+      end do
+    else if ( is_proc_source == 1 ) then
+      call MPI_send(n1_tangential_detection_curve,1,MPI_INTEGER,0,42,MPI_COMM_WORLD,ier)
+      call MPI_send(angleforce,1,MPI_DOUBLE_PRECISION,0,43,MPI_COMM_WORLD,ier)
+#endif
+    end if
+  
+#ifdef USE_MPI
+    call MPI_bcast(angleforce_recv,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+    angleforce = angleforce_recv
+#endif 
+  endif
+
+! compute distance from source to receivers following the curve
+  if (force_normal_to_surface .and. rec_normal_to_surface) then
+    dist_tangential_detection_curve(source_courbe_eros) = 0
+    do i = source_courbe_eros+1, nnodes_tangential_curve
+      dist_tangential_detection_curve(i) = dist_tangential_detection_curve(i-1) + &
+          sqrt((nodes_tangential_curve(1,i)-nodes_tangential_curve(1,i-1))**2 + &
+          (nodes_tangential_curve(2,i)-nodes_tangential_curve(2,i-1))**2)
+    enddo
+    dist_tangential_detection_curve(1) = dist_tangential_detection_curve(nnodes_tangential_curve) + &
+         sqrt((nodes_tangential_curve(1,1)-nodes_tangential_curve(1,nnodes_tangential_curve))**2 + &
+         (nodes_tangential_curve(2,1)-nodes_tangential_curve(2,nnodes_tangential_curve))**2)
+    do i = 2, source_courbe_eros-1
+      dist_tangential_detection_curve(i) = dist_tangential_detection_curve(i-1) + &
+          sqrt((nodes_tangential_curve(1,i)-nodes_tangential_curve(1,i-1))**2 + &
+          (nodes_tangential_curve(2,i)-nodes_tangential_curve(2,i-1))**2)
+    enddo
+    do i = source_courbe_eros-1, 1, -1
+      dist_current = dist_tangential_detection_curve(i+1) + &
+          sqrt((nodes_tangential_curve(1,i)-nodes_tangential_curve(1,i+1))**2 + &
+          (nodes_tangential_curve(2,i)-nodes_tangential_curve(2,i+1))**2)
+      if ( dist_current < dist_tangential_detection_curve(i) ) then
+        dist_tangential_detection_curve(i) = dist_current
+      endif
+    enddo
+    dist_current = dist_tangential_detection_curve(1) + &
+       sqrt((nodes_tangential_curve(1,1)-nodes_tangential_curve(1,nnodes_tangential_curve))**2 + &
+       (nodes_tangential_curve(2,1)-nodes_tangential_curve(2,nnodes_tangential_curve))**2)
+    if ( dist_current < dist_tangential_detection_curve(nnodes_tangential_curve) ) then
+      dist_tangential_detection_curve(nnodes_tangential_curve) = dist_current
+    endif
+    do i = nnodes_tangential_curve-1, source_courbe_eros+1, -1
+      dist_current = dist_tangential_detection_curve(i+1) + &
+          sqrt((nodes_tangential_curve(1,i)-nodes_tangential_curve(1,i+1))**2 + &
+          (nodes_tangential_curve(2,i)-nodes_tangential_curve(2,i+1))**2)
+      if ( dist_current < dist_tangential_detection_curve(i) ) then
+        dist_tangential_detection_curve(i) = dist_current
+      endif
+    enddo
+
+    if ( myrank == 0 ) then
+      open(unit=11,file='OUTPUT_FILES/dist_rec_tangential_detection_curve', form='formatted', status='unknown')
+    end if 
+      irecloc = 0
+    do irec = 1,nrec
+     
+      if ( myrank == 0 ) then
+        if ( which_proc_receiver(irec) == myrank ) then
+          irecloc = irecloc + 1
+          n1_tangential_detection_curve = rec_tangential_detection_curve(irecloc)
+          x_final_receiver_dummy = x_final_receiver(irec)
+          z_final_receiver_dummy = z_final_receiver(irec)
+#ifdef USE_MPI       
+        else
+           
+          call MPI_RECV(n1_tangential_detection_curve,1,MPI_INTEGER,&
+             which_proc_receiver(irec),irec,MPI_COMM_WORLD,request_mpi_status,ier)
+          call MPI_RECV(x_final_receiver_dummy,1,MPI_DOUBLE_PRECISION,&
+             which_proc_receiver(irec),irec,MPI_COMM_WORLD,request_mpi_status,ier)
+          call MPI_RECV(z_final_receiver_dummy,1,MPI_DOUBLE_PRECISION,&
+             which_proc_receiver(irec),irec,MPI_COMM_WORLD,request_mpi_status,ier)
+
+#endif
+        end if
+
+#ifdef USE_MPI
+      else
+        if ( which_proc_receiver(irec) == myrank ) then
+          irecloc = irecloc + 1
+          call MPI_SEND(rec_tangential_detection_curve(irecloc),1,MPI_INTEGER,0,irec,MPI_COMM_WORLD,ier)
+          call MPI_SEND(x_final_receiver(irec),1,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ier)
+          call MPI_SEND(z_final_receiver(irec),1,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ier)
+        end if
+#endif
+        
+      end if
+      if ( myrank == 0 ) then
+        write(11,*) dist_tangential_detection_curve(n1_tangential_detection_curve)
+        write(12,*) x_final_receiver_dummy
+        write(13,*) z_final_receiver_dummy
+      end if
+    enddo
+
+    if ( myrank == 0 ) then
+      close(11)
+      close(12)
+      close(13)
+    end if
+
+  endif
+endif
+
+!
+!---
+!
 
 ! allocate seismogram arrays
   if(ipass == 1) then
@@ -2996,8 +3232,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
 ! rotate seismogram components if needed, except if recording pressure, which is a scalar
     if(seismotype /= 4) then
-      sisux(seismo_current,irecloc) =   cosrot*valux + sinrot*valuz
-      sisuz(seismo_current,irecloc) = - sinrot*valux + cosrot*valuz
+      sisux(seismo_current,irecloc) =   cosrot_irec(irecloc)*valux + sinrot_irec(irecloc)*valuz
+      sisuz(seismo_current,irecloc) = - sinrot_irec(irecloc)*valux + cosrot_irec(irecloc)*valuz
     else
       sisux(seismo_current,irecloc) = valux
       sisuz(seismo_current,irecloc) = ZERO
@@ -3362,3 +3598,73 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
   end program specfem2D
 
+
+subroutine tri_quad(n, n1, nnodes)
+      
+      implicit none
+
+      integer  :: n1, n2, n3, n4, nnodes
+      integer, dimension(4)  :: n
+
+         
+      n(2) = n1
+      
+      if ( n1 == 1 ) then
+         n(1) = nnodes
+      else
+         n(1) = n1-1
+      endif 
+      
+      if ( n1 == nnodes ) then
+         n(3) = 1
+      else
+         n(3) = n1+1
+      endif
+   
+      if ( n(3) == nnodes ) then
+         n(4) = 1
+      else
+         n(4) = n(3)+1
+      endif
+
+
+end subroutine tri_quad
+
+
+subroutine calcul_normale( angle, n1_x, n2_x, n3_x, n4_x, n1_z, n2_z, n3_z, n4_z )
+      
+      implicit none
+      
+      include 'constants.h'
+
+      double precision :: angle
+      double precision :: n1_x, n2_x, n3_x, n4_x, n1_z, n2_z, n3_z, n4_z
+      
+      double precision  :: theta1, theta2, theta3 
+      double precision  :: costheta1, costheta2, costheta3
+
+      if ( abs(n2_z - n1_z) < TINYVAL ) then
+         costheta1 = 0
+      else
+         costheta1 = (n2_z - n1_z) / sqrt((n2_x - n1_x)**2 + (n2_z - n1_z)**2)
+      endif
+      if ( abs(n3_z - n2_z) < TINYVAL ) then
+         costheta2 = 0
+      else
+         costheta2 = (n3_z - n2_z) / sqrt((n3_x - n2_x)**2 + (n3_z - n2_z)**2)
+      endif
+      if ( abs(n4_z - n3_z) < TINYVAL ) then
+         costheta3 = 0
+      else
+        costheta3 = (n4_z - n3_z) / sqrt((n4_x - n3_x)**2 + (n4_z - n3_z)**2)
+      endif
+      
+      theta1 = - sign(1.d0,n2_x - n1_x) * acos(costheta1)
+      theta2 = - sign(1.d0,n3_x - n2_x) * acos(costheta2)
+      theta3 = - sign(1.d0,n4_x - n3_x) * acos(costheta3)
+      
+      
+      angle = angle + ( theta1 + theta2 + theta3 ) / 3.d0 + PI/2.d0
+      !angle = theta2
+
+end subroutine calcul_normale
