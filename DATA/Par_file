@@ -5,11 +5,12 @@ interfacesfile                  = interfaces_acoustic.dat
 
 # data concerning mesh, when generated using third-party app (more info in README)
 read_external_mesh              = .false.
-mesh_file                       = ./DATA/Mesh_canyon/canyon_mesh_file   # file containing the mesh
-nodes_coords_file               = ./DATA/Mesh_canyon/canyon_nodes_coords_file   # file containing the nodes coordinates
-materials_file                  = ./DATA/Mesh_canyon/canyon_materials_file   # file containing the material number for each element
-free_surface_file               = ./DATA/Mesh_canyon/canyon_free_surface_file   # file containing the free surface
-absorbing_surface_file          = ./DATA/Mesh_canyon/canyon_absorbing_surface_file   # file containing the absorbing surface
+mesh_file                       = ./DATA/yangluo_mesh_overthrust/mesh_file   # file containing the mesh
+nodes_coords_file               = ./DATA/yangluo_mesh_overthrust/nodes_coords_file   # file containing the nodes coordinates
+materials_file                  = ./DATA/yangluo_mesh_overthrust/materials_file   # file containing the material number for each element
+free_surface_file               = ./DATA/yangluo_mesh_overthrust/free_surface_file   # file containing the free surface
+absorbing_surface_file          = ./DATA/yangluo_mesh_overthrust/absorbing_surface_file   # file containing the absorbing surface
+receivers_file                  = ./DATA/yangluo_mesh_overthrust/receivers_file   # file containing the absorbing surface
 
 # parameters concerning partitionning
 nproc                           = 1              # number of processes

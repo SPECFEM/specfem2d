@@ -243,6 +243,46 @@ contains
 
   end subroutine read_abs_surface
 
+  !-----------------------------------------------
+  ! Read receivers.
+  ! 'receivers_file' contains
+  ! first line:         number of receivers
+  ! following lines:    xrec zrec
+  !-----------------------------------------------
+ subroutine read_receivers(filename,xs,zs)
+
+    character(len=256), intent(in)  :: filename
+    integer :: nrec, irec_global_number
+    double precision :: xrec,zrec,xs,zs
+    integer  :: i
+
+    open(unit=996,file='DATA/STATIONS',status='unknown')
+    open(unit=997,file='OUTPUT_FILES/receivers_file',status='unknown')
+    open(unit=995, file=trim(filename), form='formatted' , status='old', action='read')
+    print *, 'reading receivers_file', trim(filename)
+    read(995,*) nrec
+    print *
+    print *,'writing the DATA/STATIONS file'
+    print *
+    print *
+    print *,'There are ',nrec,' receivers'
+    print *
+    print *,'Position (x,z) of the ',nrec,' receivers'
+    print *
+
+
+    write(997,"(f20.7,1x,f20.7)") xs,zs
+    do i = 1, nrec
+       read(995,*) xrec,zrec
+       write(996,"('S',i4.4,'    AA ',f20.7,1x,f20.7,'       0.0         0.0')") i,xrec,zrec
+       write(997,"(f20.7,1x,f20.7)") xrec,zrec
+    end do
+
+    close(995)
+    close(996)
+    close(997)
+
+  end subroutine read_receivers
 
   !-----------------------------------------------
   ! Creating dual graph (adjacency is defined by 'ncommonnodes' between two elements).

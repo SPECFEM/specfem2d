@@ -155,7 +155,7 @@ program meshfem2D
 
 ! parameters for external mesh
   logical  :: read_external_mesh
-  character(len=256)  :: mesh_file, nodes_coords_file, materials_file, free_surface_file, absorbing_surface_file
+  character(len=256)  :: mesh_file, nodes_coords_file, materials_file, free_surface_file, absorbing_surface_file,receivers_file
 
 ! variables used for storing info about the mesh and partitions
   integer, dimension(:), pointer  :: elmnts
@@ -252,6 +252,7 @@ program meshfem2D
   call read_value_string(IIN,IGNORE_JUNK,materials_file)
   call read_value_string(IIN,IGNORE_JUNK,free_surface_file)
   call read_value_string(IIN,IGNORE_JUNK,absorbing_surface_file)
+  call read_value_string(IIN,IGNORE_JUNK,receivers_file)
 
 ! read info about partitionning
   call read_value_integer(IIN,IGNORE_JUNK,nproc)
@@ -1326,7 +1327,9 @@ program meshfem2D
      print *
   enddo
 !--- compute position of the receivers and write the STATIONS file
-
+   if (read_external_mesh) then
+     call read_receivers(receivers_file,xs,zs)
+   else
   if (generate_STATIONS) then
   print *
   print *,'writing the DATA/STATIONS file'
@@ -1380,7 +1383,7 @@ program meshfem2D
   endif
 
   print *
-
+   endif !(if(external_mesh...
 
   end program meshfem2D
 
