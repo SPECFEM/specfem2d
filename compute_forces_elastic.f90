@@ -57,16 +57,17 @@
        x0_source, z0_source, A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset,f0,&
        nrec,isolver,save_forward,b_absorb_elastic_left,&
        b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top,nspec_xmin,nspec_xmax,&
-       nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,mu_k,kappa_k)
+       nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,mu_k,kappa_k,NSOURCE)
 
 ! compute forces for the elastic elements
 
   implicit none
 
   include "constants.h"
-
-  integer :: npoin,nspec,myrank,nelemabs,numat,iglob_source,ispec_selected_source,&
-             is_proc_source,source_type,it,NSTEP
+  integer :: NSOURCE, i_source
+  integer :: npoin,nspec,myrank,nelemabs,numat,it,NSTEP
+  integer, dimension(NSOURCE) ::iglob_source,ispec_selected_source, is_proc_source,source_type
+  real, dimension(NSOURCE) :: angleforce
   integer :: nrec,isolver
   integer, dimension(nrec) :: ispec_selected_rec,which_proc_receiver
   integer :: nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax
@@ -78,7 +79,7 @@
   logical :: anyabs,assign_external_model,initialfield,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,add_Bielak_conditions
   logical :: save_forward
 
-  double precision :: angleforce,deltatcube,deltatfourth,twelvedeltat,fourdeltatsquare
+  double precision :: deltatcube,deltatfourth,twelvedeltat,fourdeltatsquare
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
   integer, dimension(nspec) :: kmato
@@ -91,8 +92,8 @@
   double precision, dimension(4,3,numat) :: elastcoef
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
   double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,vsext,rhoext
-  real(kind=CUSTOM_REAL), dimension(NSTEP) :: source_time_function
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: sourcearray
+  real(kind=CUSTOM_REAL), dimension(NSOURCE,NSTEP) :: source_time_function
+  real(kind=CUSTOM_REAL), dimension(NSOURCE,NDIM,NGLLX,NGLLZ) :: sourcearray
   real(kind=CUSTOM_REAL), dimension(nrec,NSTEP,NDIM,NGLLX,NGLLZ) :: adj_sourcearrays
   real(kind=CUSTOM_REAL), dimension(npoin) :: mu_k,kappa_k
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLZ,nspec_xmin,NSTEP) :: b_absorb_elastic_left
@@ -408,7 +409,7 @@
 ! left or right edge, horizontal normal vector
           if(add_Bielak_conditions .and. initialfield) then
             call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                 x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
+                 x0_source, z0_source, A_plane, B_plane, C_plane, angleforce(1), angleforce_refl, &
                  c_inc, c_refl, time_offset,f0)
             traction_x_t0 = (lambdal_relaxed+2*mul_relaxed)*dxUx + lambdal_relaxed*dzUz
             traction_z_t0 = mul_relaxed*(dxUz + dzUx)
@@ -490,7 +491,7 @@
 ! left or right edge, horizontal normal vector
           if(add_Bielak_conditions .and. initialfield) then
             call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                 x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
+                 x0_source, z0_source, A_plane, B_plane, C_plane, angleforce(1), angleforce_refl, &
                  c_inc, c_refl, time_offset,f0)
             traction_x_t0 = (lambdal_relaxed+2*mul_relaxed)*dxUx + lambdal_relaxed*dzUz
             traction_z_t0 = mul_relaxed*(dxUz + dzUx)
@@ -578,7 +579,7 @@
 ! top or bottom edge, vertical normal vector
           if(add_Bielak_conditions .and. initialfield) then
             call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                 x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
+                 x0_source, z0_source, A_plane, B_plane, C_plane, angleforce(1), angleforce_refl, &
                  c_inc, c_refl, time_offset,f0)
             traction_x_t0 = mul_relaxed*(dxUz + dzUx)
             traction_z_t0 = lambdal_relaxed*dxUx + (lambdal_relaxed+2*mul_relaxed)*dzUz
@@ -666,7 +667,7 @@
 ! top or bottom edge, vertical normal vector
           if(add_Bielak_conditions .and. initialfield) then
             call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                 x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
+                 x0_source, z0_source, A_plane, B_plane, C_plane, angleforce(1), angleforce_refl, &
                  c_inc, c_refl, time_offset,f0)
             traction_x_t0 = mul_relaxed*(dxUz + dzUx)
             traction_z_t0 = lambdal_relaxed*dxUx + (lambdal_relaxed+2*mul_relaxed)*dzUz
@@ -726,40 +727,48 @@
   endif  ! end of absorbing boundaries
 
 ! --- add the source
+
   if(.not. initialfield) then
+do i_source=1,NSOURCE
 
 ! if this processor carries the source and the source element is elastic
-     if (is_proc_source == 1 .and. elastic(ispec_selected_source)) then
+     if (is_proc_source(i_source) == 1 .and. elastic(ispec_selected_source(i_source))) then
 
 ! collocated force
 ! beware, for acoustic medium, source is a potential, therefore source time function
 ! gives shape of velocity, not displacement
-        if(source_type == 1) then
+        if(source_type(i_source) == 1) then
 
        if(isolver == 1) then  ! forward wavefield
-      accel_elastic(1,iglob_source) = accel_elastic(1,iglob_source) - sin(angleforce)*source_time_function(it)
-      accel_elastic(2,iglob_source) = accel_elastic(2,iglob_source) + cos(angleforce)*source_time_function(it)
+      accel_elastic(1,iglob_source(i_source)) = accel_elastic(1,iglob_source(i_source)) - &
+                                                sin(angleforce(i_source))*source_time_function(i_source,it)
+      accel_elastic(2,iglob_source(i_source)) = accel_elastic(2,iglob_source(i_source)) + &
+                                                cos(angleforce(i_source))*source_time_function(i_source,it)
        else                   ! backward wavefield
-      b_accel_elastic(1,iglob_source) = b_accel_elastic(1,iglob_source) - sin(angleforce)*source_time_function(NSTEP-it+1)
-      b_accel_elastic(2,iglob_source) = b_accel_elastic(2,iglob_source) + cos(angleforce)*source_time_function(NSTEP-it+1)
+      b_accel_elastic(1,iglob_source(i_source)) = b_accel_elastic(1,iglob_source(i_source)) - &
+                                                  sin(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
+      b_accel_elastic(2,iglob_source(i_source)) = b_accel_elastic(2,iglob_source(i_source)) + &
+                                                  cos(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
        endif  !endif isolver == 1
 
 ! moment tensor
-        else if(source_type == 2) then
+        else if(source_type(i_source) == 2) then
 
        if(isolver == 1) then  ! forward wavefield
 ! add source array
       do j=1,NGLLZ
         do i=1,NGLLX
-          iglob = ibool(i,j,ispec_selected_source)
-          accel_elastic(:,iglob) = accel_elastic(:,iglob) + sourcearray(:,i,j)*source_time_function(it)
+          iglob = ibool(i,j,ispec_selected_source(i_source))
+          accel_elastic(:,iglob) = accel_elastic(:,iglob) + &
+                                   sourcearray(i_source,:,i,j)*source_time_function(i_source,it)
         enddo
       enddo
        else                   ! backward wavefield
       do j=1,NGLLZ
         do i=1,NGLLX
-          iglob = ibool(i,j,ispec_selected_source)
-          b_accel_elastic(:,iglob) = b_accel_elastic(:,iglob) + sourcearray(:,i,j)*source_time_function(NSTEP-it+1)
+          iglob = ibool(i,j,ispec_selected_source(i_source))
+          b_accel_elastic(:,iglob) = b_accel_elastic(:,iglob) + &
+                                     sourcearray(i_source,:,i,j)*source_time_function(i_source,NSTEP-it+1)
         enddo
       enddo
        endif  !endif isolver == 1
@@ -769,7 +778,7 @@
         endif
 
      endif ! if this processor carries the source and the source element is elastic
-
+enddo
     if(isolver == 2) then   ! adjoint wavefield
       
       irec_local = 0

@@ -57,15 +57,16 @@
                nrec,isolver,save_forward,b_absorb_acoustic_left,&
                b_absorb_acoustic_right,b_absorb_acoustic_bottom,&
                b_absorb_acoustic_top,nspec_xmin,nspec_xmax,&
-               nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,kappa_ac_k)
+               nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,kappa_ac_k,NSOURCE)
 
 ! compute forces for the acoustic elements
 
   implicit none
 
   include "constants.h"
-
-  integer :: npoin,nspec,myrank,numat,iglob_source,ispec_selected_source,is_proc_source,source_type,it,NSTEP
+  integer ::  NSOURCE, i_source
+  integer :: npoin,nspec,myrank,numat,it,NSTEP
+  integer, dimension(NSOURCE) ::iglob_source,ispec_selected_source,is_proc_source,source_type
   integer :: nrec,isolver
   integer, dimension(nrec) :: ispec_selected_rec,which_proc_receiver
   integer :: nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax
@@ -88,7 +89,7 @@
   double precision, dimension(4,3,numat) :: poroelastcoef
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
   double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext
-  real(kind=CUSTOM_REAL), dimension(NSTEP) :: source_time_function
+  real(kind=CUSTOM_REAL), dimension(NSOURCE,NSTEP) :: source_time_function
 
   real(kind=CUSTOM_REAL), dimension(nrec,NSTEP,NDIM,NGLLX,NGLLZ) :: adj_sourcearrays
   real(kind=CUSTOM_REAL), dimension(npoin) :: kappa_ac_k
@@ -479,29 +480,33 @@
 
 ! --- add the source
   if(.not. initialfield) then
+do i_source=1,NSOURCE
 
-     if (is_proc_source == 1 ) then
+     if (is_proc_source(i_source) == 1 ) then
 ! collocated force
 ! beware, for acoustic medium, source is a pressure source
-        if(source_type == 1) then
-           if(.not. elastic(ispec_selected_source) .and. .not. poroelastic(ispec_selected_source)) then
+        if(source_type(i_source) == 1) then
+           if(.not. elastic(ispec_selected_source(i_source)) .and. .not. poroelastic(ispec_selected_source(i_source))) then
 
       if(isolver == 1) then  ! forward wavefield
-      potential_dot_dot_acoustic(iglob_source) = potential_dot_dot_acoustic(iglob_source) + source_time_function(it)
+      potential_dot_dot_acoustic(iglob_source(i_source)) = potential_dot_dot_acoustic(iglob_source(i_source)) + &
+                                                           source_time_function(i_source,it)
       else                   ! backward wavefield
-      b_potential_dot_dot_acoustic(iglob_source) = b_potential_dot_dot_acoustic(iglob_source) + source_time_function(NSTEP-it+1)
+      b_potential_dot_dot_acoustic(iglob_source(i_source)) = b_potential_dot_dot_acoustic(iglob_source(i_source)) +&
+                                                             source_time_function(i_source,NSTEP-it+1)
       endif
 
            endif
 
 ! moment tensor
-        else if(source_type == 2) then
+        else if(source_type(i_source) == 2) then
 
-           if(.not. elastic(ispec_selected_source) .and. .not. poroelastic(ispec_selected_source)) then
+           if(.not. elastic(ispec_selected_source(i_source)) .and. .not. poroelastic(ispec_selected_source(i_source))) then
               call exit_MPI('cannot have moment tensor source in acoustic element')
            endif
         endif
      endif
+enddo
 
     if(isolver == 2) then   ! adjoint wavefield
       irec_local = 0

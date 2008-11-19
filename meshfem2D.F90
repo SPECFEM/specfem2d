@@ -99,8 +99,12 @@ program meshfem2D
          xinterface_top,zinterface_top,coefs_interface_top
 
 ! for the source and receivers
-  integer source_type,time_function_type,nrec_total,irec_global_number
-  double precision xs,zs,f0,t0,angleforce,Mxx,Mzz,Mxz,factor,xrec,zrec
+  integer, dimension(:), allocatable ::  source_type,time_function_type !yang
+  integer nrec_total,irec_global_number
+  double precision, dimension(:),allocatable :: xs,zs,f0,t0,angleforce,Mxx,Mzz,Mxz,factor !yang
+  integer NSOURCE, i_source  !yang
+  logical, dimension(:),allocatable ::  source_surf
+  double precision xrec,zrec
 
   character(len=50) interfacesfile,title
 
@@ -128,7 +132,7 @@ program meshfem2D
 
   logical interpol,gnuplot,assign_external_model,outputgrid
   logical abstop,absbottom,absleft,absright,any_abs
-  logical source_surf,meshvect,initialfield,modelvect,boundvect,add_Bielak_conditions
+  logical meshvect,initialfield,modelvect,boundvect,add_Bielak_conditions
   logical TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
 
   logical, dimension(:), allocatable :: enreg_surf
@@ -425,41 +429,56 @@ program meshfem2D
   call read_value_integer(IIN,IGNORE_JUNK,isolver)
 
 ! read source parameters
-  call read_value_logical(IIN,IGNORE_JUNK,source_surf)
-  call read_value_double_precision(IIN,IGNORE_JUNK,xs)
-  call read_value_double_precision(IIN,IGNORE_JUNK,zs)
-  call read_value_integer(IIN,IGNORE_JUNK,source_type)
-  call read_value_integer(IIN,IGNORE_JUNK,time_function_type)
-  call read_value_double_precision(IIN,IGNORE_JUNK,f0)
-  call read_value_double_precision(IIN,IGNORE_JUNK,angleforce)
-  call read_value_double_precision(IIN,IGNORE_JUNK,Mxx)
-  call read_value_double_precision(IIN,IGNORE_JUNK,Mzz)
-  call read_value_double_precision(IIN,IGNORE_JUNK,Mxz)
-  call read_value_double_precision(IIN,IGNORE_JUNK,factor)
-
-! if Dirac source time function, use a very thin Gaussian instead
-! if Heaviside source time function, use a very thin error function instead
-  if(time_function_type == 4 .or. time_function_type == 5) f0 = 1.d0 / (10.d0 * deltat)
-
-! time delay of the source in seconds, use a 20 % security margin (use 2 / f0 if error function)
-  if(time_function_type == 5) then
-    t0 = 2.0d0 / f0
-  else
-    t0 = 1.20d0 / f0
-  endif
-
-  print *
-  print *,'Source:'
-  print *,'Position xs, zs = ',xs,zs
-  print *,'Frequency, delay = ',f0,t0
-  print *,'Source type (1=force, 2=explosion): ',source_type
-  print *,'Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside): ',time_function_type
-  print *,'Angle of the source if force = ',angleforce
-  print *,'Mxx of the source if moment tensor = ',Mxx
-  print *,'Mzz of the source if moment tensor = ',Mzz
-  print *,'Mxz of the source if moment tensor = ',Mxz
-  print *,'Multiplying factor = ',factor
-
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  call read_value_integer(IIN,IGNORE_JUNK,NSOURCE) !yang
+  allocate(source_surf(NSOURCE)) 
+  allocate(xs(NSOURCE)) 
+  allocate(zs(NSOURCE)) 
+  allocate(source_type(NSOURCE)) 
+  allocate(time_function_type(NSOURCE)) 
+  allocate(f0(NSOURCE)) 
+  allocate(t0(NSOURCE)) 
+  allocate(angleforce(NSOURCE)) 
+  allocate(Mxx(NSOURCE)) 
+  allocate(Mxz(NSOURCE)) 
+  allocate(Mzz(NSOURCE)) 
+  allocate(factor(NSOURCE)) 
+  do  i_source=1,NSOURCE  
+     call read_value_logical(IIN,IGNORE_JUNK,source_surf(i_source))
+     call read_value_double_precision(IIN,IGNORE_JUNK,xs(i_source))
+     call read_value_double_precision(IIN,IGNORE_JUNK,zs(i_source))
+     call read_value_integer(IIN,IGNORE_JUNK,source_type(i_source))
+     call read_value_integer(IIN,IGNORE_JUNK,time_function_type(i_source))
+     call read_value_double_precision(IIN,IGNORE_JUNK,f0(i_source))
+     call read_value_double_precision(IIN,IGNORE_JUNK,t0(i_source))
+     call read_value_double_precision(IIN,IGNORE_JUNK,angleforce(i_source))
+     call read_value_double_precision(IIN,IGNORE_JUNK,Mxx(i_source))
+     call read_value_double_precision(IIN,IGNORE_JUNK,Mzz(i_source))
+     call read_value_double_precision(IIN,IGNORE_JUNK,Mxz(i_source))
+     call read_value_double_precision(IIN,IGNORE_JUNK,factor(i_source))
+   ! if Dirac source time function, use a very thin Gaussian instead
+   ! if Heaviside source time function, use a very thin error function instead
+     if(time_function_type(i_source) == 4 .or. time_function_type(i_source) == 5) f0(i_source) = 1.d0 / (10.d0 * deltat)
+   
+   ! time delay of the source in seconds, use a 20 % security margin (use 2 / f0 if error function)
+     if(time_function_type(i_source)== 5) then
+       t0(i_source) = 2.0d0 / f0(i_source)+t0(i_source) 
+     else
+       t0(i_source) = 1.20d0 / f0(i_source)+t0(i_source)
+     endif
+   
+     print *
+     print *,'Source', i_source
+     print *,'Position xs, zs = ',xs(i_source),zs(i_source)
+     print *,'Frequency, delay = ',f0(i_source),t0(i_source)
+     print *,'Source type (1=force, 2=explosion): ',source_type(i_source)
+     print *,'Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside): ',time_function_type(i_source)
+     print *,'Angle of the source if force = ',angleforce(i_source)
+     print *,'Mxx of the source if moment tensor = ',Mxx(i_source)
+     print *,'Mzz of the source if moment tensor = ',Mzz(i_source)
+     print *,'Mxz of the source if moment tensor = ',Mxz(i_source)
+     print *,'Multiplying factor = ',factor(i_source)
+  enddo
 ! read constants for attenuation
   call read_value_integer(IIN,IGNORE_JUNK,N_SLS)
   call read_value_double_precision(IIN,IGNORE_JUNK,Qp_attenuation)
@@ -467,8 +486,8 @@ program meshfem2D
   call read_value_double_precision(IIN,IGNORE_JUNK,f0_attenuation)
 
 ! if source is not a Dirac or Heavyside then f0_attenuation is f0
-  if(.not. (time_function_type == 4 .or. time_function_type == 5)) then
-     f0_attenuation = f0
+  if(.not. (time_function_type(1) == 4 .or. time_function_type(1) == 5)) then !yang use parameter of the first source
+     f0_attenuation = f0(1)
   endif
 
 ! read receiver line parameters
@@ -745,8 +764,8 @@ program meshfem2D
 
         ! check if we are in the last layer, which contains topography,
         ! and modify the position of the source accordingly if it is located exactly at the surface
-        if(source_surf .and. ilayer == number_of_layers) &
-             zs = value_spline(xs,xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
+        if(source_surf(1) .and. ilayer == number_of_layers) & !yang use first source
+             zs = value_spline(xs(1),xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
 
         ! compute the offset of this layer in terms of number of spectral elements below along Z
         if(ilayer > 1) then
@@ -1189,10 +1208,14 @@ program meshfem2D
 
      write(15,*) 'nt deltat isolver'
      write(15,*) nt,deltat,isolver
+     write(15,*) 'NSOURCE'
+     write(15,*) NSOURCE
 
-     write(15,*) 'source'
-     write(15,*) source_type,time_function_type,xs,zs,f0,t0,factor,angleforce,Mxx,Mzz,Mxz
-
+     do i_source=1,NSOURCE
+         write(15,*) 'source', i_source
+         write(15,*) source_type(i_source),time_function_type(i_source),xs(i_source),zs(i_source),f0(i_source),t0(i_source), &
+                     factor(i_source),angleforce(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
+     enddo
      write(15,*) 'attenuation'
      write(15,*) N_SLS, Qp_attenuation, Qs_attenuation, f0_attenuation
 
@@ -1232,8 +1255,8 @@ program meshfem2D
      write(15,*) 'nelemabs nelem_acoustic_surface num_fluid_solid_edges num_fluid_poro_edges num_solid_poro_edges'
      write(15,*) nelemabs_loc,nelem_acoustic_surface_loc,nedges_coupled_loc,nedges_acporo_coupled_loc,nedges_elporo_coupled_loc
 
-!     write(15,*) 'nxread, nzread'
-!     write(15,*) nxread,nzread
+     write(15,*) 'nxread, nzread'
+     write(15,*) nxread,nzread
 
      write(15,*) 'Material sets Isotropic (Anisotropic: to be defined)'
      do i=1,nb_materials
@@ -1297,10 +1320,11 @@ program meshfem2D
 
 
 ! print position of the source
-  print *
-  print *,'Position (x,z) of the source = ',xs,zs
-  print *
-
+  do i_source=1,NSOURCE
+     print *
+     print *,'Position (x,z) of the source = ',xs(i_source),zs(i_source)
+     print *
+  enddo
 !--- compute position of the receivers and write the STATIONS file
 
   if (generate_STATIONS) then

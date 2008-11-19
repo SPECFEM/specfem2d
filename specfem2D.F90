@@ -144,10 +144,11 @@
 #endif
 
   character(len=80) datlin
-
-  integer :: source_type,time_function_type
-  double precision :: x_source,z_source,xi_source,gamma_source,Mxx,Mzz,Mxz,f0,t0,factor,angleforce,hdur,hdur_gauss
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: sourcearray
+  integer NSOURCE,i_source
+  integer, dimension(:), allocatable :: source_type,time_function_type
+  double precision, dimension(:), allocatable :: x_source,z_source,xi_source,gamma_source, aval
+  double precision, dimension(:), allocatable :: Mxx,Mzz,Mxz,f0,t0,factor,angleforce,hdur,hdur_gauss
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sourcearray
 
   double precision, dimension(:,:), allocatable :: coorg
   double precision, dimension(:), allocatable :: coorgread
@@ -194,10 +195,13 @@
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic,veloc_elastic,displ_elastic
   double precision, dimension(:,:), allocatable :: coord, flagrange,xinterp,zinterp,Uxinterp,Uzinterp,vector_field_display
+  double precision, dimension(:,:), allocatable :: vector_field_display1
 
 ! material properties of the poroelastic medium (solid phase:s and fluid phase [defined as w=phi(u_f-u_s)]: w)
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accels_poroelastic,velocs_poroelastic,displs_poroelastic
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accelw_poroelastic,velocw_poroelastic,displw_poroelastic
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: velocs_poroelastic_smooth,displs_poroelastic_smooth
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: velocw_poroelastic_smooth,displw_poroelastic_smooth
   double precision, dimension(:), allocatable :: porosity,tortuosity
   double precision, dimension(:,:), allocatable :: density,permeability
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic
@@ -236,9 +240,9 @@
   integer, dimension(:), allocatable :: ibegin_bottom,iend_bottom,ibegin_top,iend_top,jbegin_left,&
                        jend_left,jbegin_right,jend_right
 
-  integer ispec_selected_source,iglob_source,ix_source,iz_source,is_proc_source,nb_proc_source
-  double precision aval,displnorm_all,displnorm_all_glob,displnormw_all,displnormw_all_glob
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: source_time_function
+  integer, dimension(:), allocatable ::  ispec_selected_source,iglob_source,ix_source,iz_source,is_proc_source,nb_proc_source
+  double precision displnorm_all,displnorm_all_glob,displnormw_all,displnormw_all_glob
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: source_time_function
   double precision, external :: netlib_specfun_erf
 
   double precision :: vpImin,vpImax,vpIImin,vpIImax
@@ -253,8 +257,7 @@
   double precision :: cutsnaps,sizemax_arrows,anglerec,xirec,gammarec
 
 ! for absorbing and acoustic free surface conditions
-  integer :: ispec_acoustic_surface,inum,numabsread
-!,nxread,nzread
+  integer :: ispec_acoustic_surface,inum,numabsread,nxread,nzread
   logical :: codeabsread(4)
   real(kind=CUSTOM_REAL) :: nx,nz,weight,xxi,zgamma
 
@@ -356,7 +359,7 @@
   double precision :: xmin_color_image,xmax_color_image, &
     zmin_color_image,zmax_color_image,size_pixel_horizontal,size_pixel_vertical
   integer, dimension(:,:), allocatable :: iglob_image_color,copy_iglob_image_color
-  double precision, dimension(:,:), allocatable :: image_color_data
+  double precision, dimension(:,:), allocatable :: image_color_data, image_color_data1
   double precision, dimension(:,:), allocatable :: image_color_vp_display
 
   double precision  :: xmin_color_image_loc, xmax_color_image_loc, zmin_color_image_loc, &
@@ -592,8 +595,36 @@
 !
 !----  read source information
 !
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!yang
   read(IIN,"(a80)") datlin
-  read(IIN,*) source_type,time_function_type,x_source,z_source,f0,t0,factor,angleforce,Mxx,Mzz,Mxz
+  read(IIN,*) NSOURCE
+  allocate( source_type(NSOURCE) )
+  allocate( time_function_type(NSOURCE) )
+  allocate( x_source(NSOURCE) )
+  allocate( z_source(NSOURCE) )
+  allocate( f0(NSOURCE) )
+  allocate( t0(NSOURCE) )
+  allocate( factor(NSOURCE) )
+  allocate( angleforce(NSOURCE) )
+  allocate( Mxx(NSOURCE) )
+  allocate( Mxz(NSOURCE) )
+  allocate( Mzz(NSOURCE) )
+  allocate( aval(NSOURCE) )
+  allocate( ispec_selected_source(NSOURCE) )
+  allocate( iglob_source(NSOURCE) )
+  allocate( ix_source(NSOURCE) )
+  allocate( iz_source(NSOURCE) )
+  allocate( xi_source(NSOURCE) )
+  allocate( gamma_source(NSOURCE) )
+  allocate( is_proc_source(NSOURCE) )
+  allocate( nb_proc_source(NSOURCE) )
+  allocate( sourcearray(NSOURCE,NDIM,NGLLX,NGLLZ) )
+  do i_source=1,NSOURCE
+     read(IIN,"(a80)") datlin
+     read(IIN,*) source_type(i_source),time_function_type(i_source),x_source(i_source),z_source(i_source), &
+                 f0(i_source),t0(i_source), &
+                 factor(i_source),angleforce(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
+  enddo
 
 !
 !----  read attenuation information
@@ -604,14 +635,17 @@
 !
 !-----  check the input
 !
+do i_source=1,NSOURCE
  if(.not. initialfield) then
-   if (source_type == 1) then
+   if (source_type(i_source) == 1) then
      if ( myrank == 0 ) then
-     write(IOUT,212) x_source,z_source,f0,t0,factor,angleforce
+     write(IOUT,212) x_source(i_source),z_source(i_source),f0(i_source),t0(i_source), &
+                     factor(i_source),angleforce(i_source)
      endif
-   else if(source_type == 2) then
+   else if(source_type(i_source) == 2) then
      if ( myrank == 0 ) then
-     write(IOUT,222) x_source,z_source,f0,t0,factor,Mxx,Mzz,Mxz
+     write(IOUT,222) x_source(i_source),z_source(i_source),f0(i_source),t0(i_source), &
+                     factor(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
      endif
    else
      call exit_MPI('Unknown source type number !')
@@ -619,11 +653,11 @@
  endif
 
 ! for the source time function
-  aval = pi*pi*f0*f0
+  aval(i_source) = pi*pi*f0(i_source)*f0(i_source)
 
 !-----  convert angle from degrees to radians
-  angleforce = angleforce * pi / 180.d0
-
+  angleforce(i_source) = angleforce(i_source) * pi / 180.d0
+enddo
 !
 !---- read the spectral macrobloc nodal coordinates
 !
@@ -646,8 +680,8 @@
   read(IIN,*) numat,ngnod,nspec,pointsdisp,plot_lowerleft_corner_only
   read(IIN,"(a80)") datlin
   read(IIN,*) nelemabs,nelem_acoustic_surface,num_fluid_solid_edges,num_fluid_poro_edges,num_solid_poro_edges
-!  read(IIN,"(a80)") datlin
-!  read(IIN,*) nxread,nzread
+  read(IIN,"(a80)") datlin
+  read(IIN,*) nxread,nzread
 !
 !---- allocate arrays
 !
@@ -690,26 +724,25 @@
   allocate(numabs(nelemabs))
   allocate(codeabs(4,nelemabs))
 
-!  allocate(ibegin_bottom(nxread))
-  allocate(ibegin_bottom(nelemabs))
-  allocate(iend_bottom(nelemabs))
-  allocate(ibegin_top(nelemabs))
-  allocate(iend_top(nelemabs))
+  allocate(ibegin_bottom(nxread))
+  allocate(iend_bottom(nxread))
+  allocate(ibegin_top(nxread))
+  allocate(iend_top(nxread))
 
-  allocate(jbegin_left(nelemabs))
-  allocate(jend_left(nelemabs))
-  allocate(jbegin_right(nelemabs))
-  allocate(jend_right(nelemabs))
+  allocate(jbegin_left(nzread))
+  allocate(jend_left(nzread))
+  allocate(jbegin_right(nzread))
+  allocate(jend_right(nzread))
 
-  allocate(ibegin_bottom_poro(nelemabs))
-  allocate(iend_bottom_poro(nelemabs))
-  allocate(ibegin_top_poro(nelemabs))
-  allocate(iend_top_poro(nelemabs))
+  allocate(ibegin_bottom_poro(nxread))
+  allocate(iend_bottom_poro(nxread))
+  allocate(ibegin_top_poro(nxread))
+  allocate(iend_top_poro(nxread))
 
-  allocate(jbegin_left_poro(nelemabs))
-  allocate(jend_left_poro(nelemabs))
-  allocate(jbegin_right_poro(nelemabs))
-  allocate(jend_right_poro(nelemabs))
+  allocate(jbegin_left_poro(nzread))
+  allocate(jend_left_poro(nzread))
+  allocate(jbegin_right_poro(nzread))
+  allocate(jend_right_poro(nzread))
 
 !
 !---- print element group main parameters
@@ -848,10 +881,10 @@
     nspec_xmax = ZERO
     nspec_zmin = ZERO
     nspec_zmax = ZERO
-    allocate(ib_xmin(nelemabs))
-    allocate(ib_xmax(nelemabs))
-    allocate(ib_zmin(nelemabs))
-    allocate(ib_zmax(nelemabs))
+    allocate(ib_xmin(nzread))
+    allocate(ib_xmax(nzread))
+    allocate(ib_zmin(nxread))
+    allocate(ib_zmax(nxread))
     do inum = 1,nelemabs
        if (codeabs(IBOTTOM,inum)) then
          nspec_zmin = nspec_zmin + 1
@@ -1094,6 +1127,7 @@
 
 ! to display acoustic elements
   allocate(vector_field_display(NDIM,npoin))
+  allocate(vector_field_display1(NDIM,npoin))
 
   if(assign_external_model) then
     allocate(vpext(NGLLX,NGLLZ,nspec))
@@ -1230,20 +1264,22 @@ any_acoustic_glob = any_acoustic
   endif
 
 !---- define actual location of source and receivers
-  if(source_type == 1) then
+do i_source=1,NSOURCE  !yang
+  if(source_type(i_source) == 1) then
 ! collocated force source
-    call locate_source_force(coord,ibool,npoin,nspec,x_source,z_source,source_type, &
-      ix_source,iz_source,ispec_selected_source,iglob_source,is_proc_source,nb_proc_source)
+    call locate_source_force(coord,ibool,npoin,nspec,x_source(i_source),z_source(i_source),source_type(i_source), &
+         ix_source(i_source),iz_source(i_source),ispec_selected_source(i_source),iglob_source(i_source),&
+         is_proc_source(i_source),nb_proc_source(i_source))
 
 ! check that acoustic source is not exactly on the free surface because pressure is zero there
-    if ( is_proc_source == 1 ) then
+    if ( is_proc_source(i_source) == 1 ) then
        do ispec_acoustic_surface = 1,nelem_acoustic_surface
           ispec = acoustic_surface(1,ispec_acoustic_surface)
-          if( .not. elastic(ispec) .and. .not. poroelastic(ispec) .and. ispec == ispec_selected_source ) then
+          if( .not. elastic(ispec) .and. .not. poroelastic(ispec) .and. ispec == ispec_selected_source(i_source) ) then
              do j = acoustic_surface(4,ispec_acoustic_surface), acoustic_surface(5,ispec_acoustic_surface)
                 do i = acoustic_surface(2,ispec_acoustic_surface), acoustic_surface(3,ispec_acoustic_surface)
                    iglob = ibool(i,j,ispec)
-                   if ( iglob_source == iglob ) then
+                   if ( iglob_source(i_source) == iglob ) then
  call exit_MPI('an acoustic source cannot be located exactly on the free surface because pressure is zero there')
                    end if
                 end do
@@ -1252,19 +1288,21 @@ any_acoustic_glob = any_acoustic
        enddo
     end if
 
-  else if(source_type == 2) then
+  else if(source_type(i_source)== 2) then
 ! moment-tensor source
-     call locate_source_moment_tensor(ibool,coord,nspec,npoin,xigll,zigll,x_source,z_source, &
-          ispec_selected_source,is_proc_source,nb_proc_source,nproc,myrank,xi_source,gamma_source,coorg,knods,ngnod,npgeo)
+     call locate_source_moment_tensor(ibool,coord,nspec,npoin,xigll,zigll,x_source(i_source),z_source(i_source), &
+          ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source),nproc,myrank,xi_source(i_source),&
+          gamma_source(i_source),coorg,knods,ngnod,npgeo)
 
 ! compute source array for moment-tensor source
-    call compute_arrays_source(ispec_selected_source,xi_source,gamma_source,sourcearray, &
-               Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,nspec)
+    call compute_arrays_source(ispec_selected_source(i_source),xi_source(i_source),gamma_source(i_source),&
+               sourcearray(i_source,:,:,:), &
+               Mxx(i_source),Mzz(i_source),Mxz(i_source),xix,xiz,gammax,gammaz,xigll,zigll,nspec)
 
   else
     call exit_MPI('incorrect source type')
   endif
-
+enddo
 
 ! locate receivers in the mesh
   call locate_receivers(ibool,coord,nspec,npoin,xigll,zigll,nrec,nrecloc,recloc,which_proc_receiver,nproc,myrank,&
@@ -1407,6 +1445,10 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     allocate(velocw_poroelastic(NDIM,npoin))
     allocate(accelw_poroelastic(NDIM,npoin))
     allocate(rmass_w_inverse_poroelastic(npoin))
+    allocate(displs_poroelastic_smooth(NDIM,npoin))
+    allocate(velocs_poroelastic_smooth(NDIM,npoin))
+    allocate(displw_poroelastic_smooth(NDIM,npoin))
+    allocate(velocw_poroelastic_smooth(NDIM,npoin))
   else
 ! allocate unused arrays with fictitious size
     allocate(displs_poroelastic(1,1))
@@ -1814,6 +1856,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
 ! allocate an array for image data
   allocate(image_color_data(NX_IMAGE_color,NZ_IMAGE_color))
+  allocate(image_color_data1(NX_IMAGE_color,NZ_IMAGE_color))
   allocate(image_color_vp_display(NX_IMAGE_color,NZ_IMAGE_color))
 
 ! allocate an array for the grid point that corresponds to a given image data point
@@ -2461,9 +2504,9 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
       print *,'Number of grid points: ',npoin
       print *,'*** calculation of initial plane wave ***'
-      if (source_type == 1) then
+      if (source_type(1) == 1) then
          print *,'initial P wave of', angleforce*180.d0/pi, 'degrees introduced...'
-      else if (source_type == 2) then
+      else if (source_type(1)== 2) then
          print *,'initial SV wave of', angleforce*180.d0/pi, ' degrees introduced...'
       else
          call exit_MPI('Unrecognized source_type: should be 1 for plane P waves, 2 for plane SV waves!')
@@ -2480,34 +2523,34 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
          csloc = sqrt(mu/denst)
 
          ! P wave case
-         if (source_type == 1) then
+         if (source_type(1) == 1) then
 
-            p=sin(angleforce)/cploc
+            p=sin(angleforce(1))/cploc
             c_inc  = cploc
             c_refl = csloc
 
             angleforce_refl = asin(p*csloc)
 
             ! from formulas (5.26) and (5.27) p 140 in Aki & Richards (1980)
-            PP = (- cos(2.d0*angleforce_refl)**2/csloc**3 + 4.d0*p**2*cos(angleforce)*cos(angleforce_refl)/cploc) / &
-                 (  cos(2.d0*angleforce_refl)**2/csloc**3 + 4.d0*p**2*cos(angleforce)*cos(angleforce_refl)/cploc)
+            PP = (- cos(2.d0*angleforce_refl)**2/csloc**3 + 4.d0*p**2*cos(angleforce(1))*cos(angleforce_refl)/cploc) / &
+                 (  cos(2.d0*angleforce_refl)**2/csloc**3 + 4.d0*p**2*cos(angleforce(1))*cos(angleforce_refl)/cploc)
 
-            PS = 4.d0*p*cos(angleforce)*cos(2.d0*angleforce_refl) / &
+            PS = 4.d0*p*cos(angleforce(1))*cos(2.d0*angleforce_refl) / &
                  (csloc**2*(cos(2.d0*angleforce_refl)**2/csloc**3 &
-                 +4.d0*p**2*cos(angleforce)*cos(angleforce_refl)/cploc))
+                 +4.d0*p**2*cos(angleforce(1))*cos(angleforce_refl)/cploc))
 
             print *,'reflected convert plane wave angle: ', angleforce_refl*180.d0/pi, '\n'
 
             ! from Table 5.1 p141 in Aki & Richards (1980)
             ! we put the opposite sign on z coefficients because z axis is oriented from bottom to top
-            A_plane(1) = sin(angleforce);           A_plane(2) = cos(angleforce)
-            B_plane(1) = PP * sin(angleforce);      B_plane(2) = - PP * cos(angleforce)
+            A_plane(1) = sin(angleforce(1));           A_plane(2) = cos(angleforce(1))
+            B_plane(1) = PP * sin(angleforce(1));      B_plane(2) = - PP * cos(angleforce(1))
             C_plane(1) = PS * cos(angleforce_refl); C_plane(2) = PS * sin(angleforce_refl)
 
          ! SV wave case
          else
 
-            p=sin(angleforce)/csloc
+            p=sin(angleforce(1))/csloc
             c_inc  = csloc
             c_refl = cploc
 
@@ -2516,11 +2559,11 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                angleforce_refl = asin(p*cploc)
 
                ! from formulas (5.30) and (5.31) p 140 in Aki & Richards (1980)
-               SS = (cos(2.d0*angleforce_refl)**2/csloc**3 - 4.d0*p**2*cos(angleforce)*cos(angleforce_refl)/cploc) / &
-                    (cos(2.d0*angleforce_refl)**2/csloc**3 + 4.d0*p**2*cos(angleforce)*cos(angleforce_refl)/cploc)
-               SP = 4.d0*p*cos(angleforce)*cos(2*angleforce) / &
-                    (cploc*csloc*(cos(2.d0*angleforce)**2/csloc**3&
-                    +4.d0*p**2*cos(angleforce_refl)*cos(angleforce)/cploc))
+               SS = (cos(2.d0*angleforce_refl)**2/csloc**3 - 4.d0*p**2*cos(angleforce(1))*cos(angleforce_refl)/cploc) / &
+                    (cos(2.d0*angleforce_refl)**2/csloc**3 + 4.d0*p**2*cos(angleforce(1))*cos(angleforce_refl)/cploc)
+               SP = 4.d0*p*cos(angleforce(1))*cos(2*angleforce(1)) / &
+                    (cploc*csloc*(cos(2.d0*angleforce(1))**2/csloc**3&
+                    +4.d0*p**2*cos(angleforce_refl)*cos(angleforce(1))/cploc))
 
                print *,'reflected convert plane wave angle: ', angleforce_refl*180.d0/pi, '\n'
 
@@ -2530,8 +2573,8 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
             ! from Table 5.1 p141 in Aki & Richards (1980)
             ! we put the opposite sign on z coefficients because z axis is oriented from bottom to top
-            A_plane(1) = cos(angleforce);           A_plane(2) = - sin(angleforce)
-            B_plane(1) = SS * cos(angleforce);      B_plane(2) = SS * sin(angleforce)
+            A_plane(1) = cos(angleforce(1));           A_plane(2) = - sin(angleforce(1))
+            B_plane(1) = SS * cos(angleforce(1));      B_plane(2) = SS * sin(angleforce(1))
             C_plane(1) = SP * sin(angleforce_refl); C_plane(2) = - SP * cos(angleforce_refl)
 
          endif
@@ -2547,7 +2590,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       zmax = maxval(coord(2,:))
 
       ! initialize the time offset to put the plane wave not too close to the free surface topography
-      if (abs(angleforce)<20.d0*pi/180.d0) then
+      if (abs(angleforce(1))<20.d0*pi/180.d0) then
          time_offset=-1.d0*zmax/3.d0/c_inc
       else
          time_offset=0.d0
@@ -2569,27 +2612,27 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
          t = 0.d0 + time_offset
 
          ! formulas for the initial displacement for a plane wave from Aki & Richards (1980)
-         displ_elastic(1,i) = A_plane(1) * ricker_Bielak_displ(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
-              + B_plane(1) * ricker_Bielak_displ(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
+         displ_elastic(1,i) = A_plane(1) * ricker_Bielak_displ(t - sin(angleforce(1))*x/c_inc + cos(angleforce(1))*z/c_inc,f0) &
+              + B_plane(1) * ricker_Bielak_displ(t - sin(angleforce(1))*x/c_inc - cos(angleforce(1))*z/c_inc,f0) &
               + C_plane(1) * ricker_Bielak_displ(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
-         displ_elastic(2,i) = A_plane(2) * ricker_Bielak_displ(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
-              + B_plane(2) * ricker_Bielak_displ(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
+         displ_elastic(2,i) = A_plane(2) * ricker_Bielak_displ(t - sin(angleforce(1))*x/c_inc + cos(angleforce(1))*z/c_inc,f0) &
+              + B_plane(2) * ricker_Bielak_displ(t - sin(angleforce(1))*x/c_inc - cos(angleforce(1))*z/c_inc,f0) &
               + C_plane(2) * ricker_Bielak_displ(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
 
          ! formulas for the initial velocity for a plane wave (first derivative in time of the displacement)
-         veloc_elastic(1,i) = A_plane(1) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
-              + B_plane(1) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
+         veloc_elastic(1,i) = A_plane(1) * ricker_Bielak_veloc(t - sin(angleforce(1))*x/c_inc + cos(angleforce(1))*z/c_inc,f0) &
+              + B_plane(1) * ricker_Bielak_veloc(t - sin(angleforce(1))*x/c_inc - cos(angleforce(1))*z/c_inc,f0) &
               + C_plane(1) * ricker_Bielak_veloc(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
-         veloc_elastic(2,i) = A_plane(2) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
-              + B_plane(2) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
+         veloc_elastic(2,i) = A_plane(2) * ricker_Bielak_veloc(t - sin(angleforce(1))*x/c_inc + cos(angleforce(1))*z/c_inc,f0) &
+              + B_plane(2) * ricker_Bielak_veloc(t - sin(angleforce(1))*x/c_inc - cos(angleforce(1))*z/c_inc,f0) &
               + C_plane(2) * ricker_Bielak_veloc(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
 
          ! formulas for the initial acceleration for a plane wave (second derivative in time of the displacement)
-         accel_elastic(1,i) = A_plane(1) * ricker_Bielak_accel(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
-              + B_plane(1) * ricker_Bielak_accel(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
+         accel_elastic(1,i) = A_plane(1) * ricker_Bielak_accel(t - sin(angleforce(1))*x/c_inc + cos(angleforce(1))*z/c_inc,f0) &
+              + B_plane(1) * ricker_Bielak_accel(t - sin(angleforce(1))*x/c_inc - cos(angleforce(1))*z/c_inc,f0) &
               + C_plane(1) * ricker_Bielak_accel(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
-         accel_elastic(2,i) = A_plane(2) * ricker_Bielak_accel(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
-              + B_plane(2) * ricker_Bielak_accel(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
+         accel_elastic(2,i) = A_plane(2) * ricker_Bielak_accel(t - sin(angleforce(1))*x/c_inc + cos(angleforce(1))*z/c_inc,f0) &
+              + B_plane(2) * ricker_Bielak_accel(t - sin(angleforce(1))*x/c_inc - cos(angleforce(1))*z/c_inc,f0) &
               + C_plane(2) * ricker_Bielak_accel(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
 
       enddo
@@ -2608,7 +2651,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 ! compute the source time function and store it in a text file
   if(.not. initialfield) then
 
-    allocate(source_time_function(NSTEP))
+    allocate(source_time_function(NSOURCE,NSTEP))
 
     if ( myrank == 0 ) then
     write(IOUT,*)
@@ -2616,7 +2659,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     write(IOUT,*)
     open(unit=55,file='OUTPUT_FILES/source.txt',status='unknown')
     endif
-
+do i_source=1,NSOURCE !yang
 ! loop on all the time steps
     do it = 1,NSTEP
 
@@ -2624,34 +2667,46 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       time = (it-1)*deltat
 
 ! Ricker (second derivative of a Gaussian) source time function
-      if(time_function_type == 1) then
+      if(time_function_type(i_source) == 1) then
 !        source_time_function(it) = - factor * (ONE-TWO*aval*(time-t0)**2) * exp(-aval*(time-t0)**2)
-        source_time_function(it) = - factor * TWO*aval*sqrt(aval)*(time-t0)/pi * exp(-aval*(time-t0)**2)
+        source_time_function(i_source,it) = - factor(i_source) * TWO*aval(i_source)*sqrt(aval(i_source))*&
+                                            (time-t0(i_source))/pi * exp(-aval(i_source)*(time-t0(i_source))**2)
 
 ! first derivative of a Gaussian source time function
-      else if(time_function_type == 2) then
-        source_time_function(it) = - factor * TWO*aval*(time-t0) * exp(-aval*(time-t0)**2)
+      else if(time_function_type(i_source) == 2) then
+        source_time_function(i_source,it) = - factor(i_source) * TWO*aval(i_source)*(time-t0(i_source)) *&
+                                             exp(-aval(i_source)*(time-t0(i_source))**2)
 
 ! Gaussian or Dirac (we use a very thin Gaussian instead) source time function
-      else if(time_function_type == 3 .or. time_function_type == 4) then
-        source_time_function(it) = factor * exp(-aval*(time-t0)**2)
+      else if(time_function_type(i_source) == 3 .or. time_function_type(i_source) == 4) then
+        source_time_function(i_source,it) = factor(i_source) * exp(-aval(i_source)*(time-t0(i_source))**2)
 
 ! Heaviside source time function (we use a very thin error function instead)
-      else if(time_function_type == 5) then
-        hdur = 1.d0 / f0
-        hdur_gauss = hdur * 5.d0 / 3.d0
-        source_time_function(it) = factor * 0.5d0*(1.0d0 + netlib_specfun_erf(SOURCE_DECAY_MIMIC_TRIANGLE*(time-t0)/hdur_gauss))
+      else if(time_function_type(i_source) == 5) then
+        hdur(i_source) = 1.d0 / f0(i_source)
+        hdur_gauss(i_source) = hdur(i_source) * 5.d0 / 3.d0
+        source_time_function(i_source,it) = factor(i_source) * 0.5d0*(1.0d0 + &
+                        netlib_specfun_erf(SOURCE_DECAY_MIMIC_TRIANGLE*(time-t0(i_source))/hdur_gauss(i_source)))
 
       else
         call exit_MPI('unknown source time function')
       endif
+!!!!!!!!!!!!!!!!!!!!!!yang!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!for comparison with J. Tromp et al(2005)
+!        source_time_function(it) = - factor * TWO*(2.0*2.628/4.0)**3*(time-8.0)/pi * exp(-(2.0*2.628/4.0)**2*(time-8.0)**2)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! output absolute time in third column, in case user wants to check it as well
-      if ( myrank == 0 ) then
-      write(55,*) sngl(time),real(source_time_function(it),4),sngl(time-t0)
+
+!!!!!!!!!!!yang!!!!!!!!!!!!!!!!!!!
+      if ( myrank == 0 .and. i_source == 1) then
+         write(55,*) sngl(time),real(source_time_function(i_source,it),4),sngl(time-t0(i_source))
       endif
    enddo
-
+      write(*,*) '!!!!saving source time function in a text file has been omitted!!!!!',i_source
+enddo ! i_source=1,NSOURCE !yang
       if ( myrank == 0 ) then
     close(55)
       endif
@@ -2660,11 +2715,12 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 ! than one if the nearest point is on the interface between several partitions with an explosive source.
 ! since source contribution is linear, the source_time_function is cut down by that number (it would have been similar
 ! if we just had elected one of those processes).
-    source_time_function(:) = source_time_function(:) / nb_proc_source
-
+    do i_source=1,NSOURCE
+       source_time_function(i_source,:) = source_time_function(i_source,:) / nb_proc_source(i_source)
+    enddo
   else
 
-    allocate(source_time_function(1))
+    allocate(source_time_function(1,1))
 
  endif
 
@@ -3476,6 +3532,59 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       displw_poroelastic = displw_poroelastic + deltat*velocw_poroelastic + deltatsquareover2*accelw_poroelastic
       velocw_poroelastic = velocw_poroelastic + deltatover2*accelw_poroelastic
       accelw_poroelastic = ZERO
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!yang!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!! add Gaussian filter to deal with the source noises !!!!!!!!!!!!!!!!!!
+!   write(*,*) 'timestep=',it
+!if (it < yang_SourceTimeStep) then
+!            displs_poroelastic_smooth = displs_poroelastic
+!            velocs_poroelastic_smooth = velocs_poroelastic
+!            displw_poroelastic_smooth = displw_poroelastic
+!            velocw_poroelastic_smooth = velocw_poroelastic
+!   do yang_l=1,NGLLX
+!      do yang_m=1,NGLLZ
+!         yang_iglob1=ibool(yang_l,yang_m,ispec_selected_source)
+!!         write(*,*) 'iglob1=',yang_iglob1
+!         yang_x1=coord(1,yang_iglob1)
+!         yang_z1=coord(2,yang_iglob1)
+!         yang_r1=(yang_x1-x_source)**2+(yang_z1-z_source)**2
+!!         if (yang_r1 <= yang_smooth_region**2) then
+!            displs_poroelastic_smooth(:,yang_iglob1) = 0.0
+!            velocs_poroelastic_smooth(:,yang_iglob1) = 0.0
+!            displw_poroelastic_smooth(:,yang_iglob1) = 0.0
+!            velocw_poroelastic_smooth(:,yang_iglob1) = 0.0
+!            do yang_iglob2 =1,npoin
+!               yang_x2=coord(1,yang_iglob2)
+!               yang_z2=coord(2,yang_iglob2)
+!               yang_r2=(yang_x1-yang_x2)**2+(yang_z1-yang_z2)**2
+!!               if (yang_r2 <= yang_gaussian_region**2) then                 
+!                  displs_poroelastic_smooth(:,yang_iglob1) = displs_poroelastic_smooth(:,yang_iglob1) + &
+!                                                  displs_poroelastic(:,yang_iglob2)*exp(-yang_r2/yang_gaussian_region**2/2)
+!                  displw_poroelastic_smooth(:,yang_iglob1) = displw_poroelastic_smooth(:,yang_iglob1) + &
+!                                                  displw_poroelastic(:,yang_iglob2)*exp(-yang_r2/yang_gaussian_region**2/2)
+!                  velocs_poroelastic_smooth(:,yang_iglob1) = velocs_poroelastic_smooth(:,yang_iglob1) + &
+!                                                  velocs_poroelastic(:,yang_iglob2)*exp(-yang_r2/yang_gaussian_region**2/2)
+!                  velocw_poroelastic_smooth(:,yang_iglob1) = velocw_poroelastic_smooth(:,yang_iglob1) + &
+!                                                  velocw_poroelastic(:,yang_iglob2)*exp(-yang_r2/yang_gaussian_region**2/2)
+!!               endif
+!            enddo
+!!         else
+!!            displs_poroelastic_smooth(:,yang_iglob1) = displs_poroelastic(:,yang_iglob1)
+!!            velocs_poroelastic_smooth(:,yang_iglob1) = velocs_poroelastic(:,yang_iglob1)
+!!            displw_poroelastic_smooth(:,yang_iglob1) = displw_poroelastic(:,yang_iglob1)
+!!            velocw_poroelastic_smooth(:,yang_iglob1) = velocw_poroelastic(:,yang_iglob1)
+!!         endif        
+!      enddo 
+!   enddo
+!   displs_poroelastic = displs_poroelastic_smooth
+!   velocs_poroelastic = velocs_poroelastic_smooth
+!   displw_poroelastic = displw_poroelastic_smooth
+!   velocw_poroelastic = velocw_poroelastic_smooth
+!!   write(*,*) 'it=',it,'wave_field smoothed!'
+!endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
      if(isolver == 2) then
 !for the solid
       b_displs_poroelastic = b_displs_poroelastic + b_deltat*b_velocs_poroelastic + b_deltatsquareover2*b_accels_poroelastic
@@ -3527,7 +3636,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                nrec,isolver,save_forward,b_absorb_acoustic_left,&
                b_absorb_acoustic_right,b_absorb_acoustic_bottom,&
                b_absorb_acoustic_top,nspec_xmin,nspec_xmax,&
-               nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,kappa_ac_k)
+               nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,kappa_ac_k,NSOURCE)
 
     if(anyabs .and. save_forward .and. isolver == 1) then
 
@@ -3761,7 +3870,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                nrec,isolver,save_forward,b_absorb_acoustic_left,&
                b_absorb_acoustic_right,b_absorb_acoustic_bottom,&
                b_absorb_acoustic_top,nspec_xmin,nspec_xmax,&
-               nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,kappa_ac_k)
+               nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,kappa_ac_k,NSOURCE)
    endif
 
 ! assembling potential_dot_dot for acoustic elements (receive)
@@ -3882,7 +3991,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset, f0,&
                nrec,isolver,save_forward,b_absorb_elastic_left,&
                b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top,nspec_xmin,nspec_xmax,&
-               nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,mu_k,kappa_k)
+               nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,mu_k,kappa_k,NSOURCE)
 
     if(anyabs .and. save_forward .and. isolver == 1) then
 !--- left absorbing boundary
@@ -4196,7 +4305,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset, f0,&
                nrec,isolver,save_forward,b_absorb_elastic_left,&
                b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top,nspec_xmin,nspec_xmax,&
-               nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,mu_k,kappa_k)
+               nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,mu_k,kappa_k,NSOURCE)
 
 ! assembling accel_elastic for elastic elements (receive)
 #ifdef USE_MPI
@@ -4261,7 +4370,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                nspec_outer, ispec_outer_to_glob,.true.,nrec,isolver,save_forward,&
                b_absorb_poro_s_left,b_absorb_poro_s_right,b_absorb_poro_s_bottom,b_absorb_poro_s_top,&
                nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,&
-               mufr_k,B_k)
+               mufr_k,B_k,NSOURCE)
      
 
 
@@ -4283,7 +4392,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                nspec_outer, ispec_outer_to_glob,.true.,nrec,isolver,save_forward,&
                b_absorb_poro_w_left,b_absorb_poro_w_right,b_absorb_poro_w_bottom,b_absorb_poro_w_top,&
                nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,&
-               C_k,M_k)
+               C_k,M_k,NSOURCE)
 
 
     if(anyabs .and. save_forward .and. isolver == 1) then
@@ -4599,7 +4708,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                nspec_inner, ispec_inner_to_glob,.false.,nrec,isolver,save_forward,&
                b_absorb_poro_s_left,b_absorb_poro_s_right,b_absorb_poro_s_bottom,b_absorb_poro_s_top,&
                nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,&
-               mufr_k,B_k)
+               mufr_k,B_k,NSOURCE)
 
     call compute_forces_fluid(npoin,nspec,myrank,numat,iglob_source, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
@@ -4619,7 +4728,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                nspec_inner, ispec_inner_to_glob,.false.,nrec,isolver,save_forward,&
                b_absorb_poro_w_left,b_absorb_poro_w_right,b_absorb_poro_w_bottom,b_absorb_poro_w_top,&
                nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,&
-               C_k,M_k)
+               C_k,M_k,NSOURCE)
   
   endif ! if(any_poroelastic)
 
@@ -5133,12 +5242,15 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
         write(filename2,'(a,i7.7)') 'OUTPUT_FILES/snapshot_rhobb_rhofbb_',it
 
-!        write(filename3,'(a,i7.7)') 'OUTPUT_FILES/snapshot_phi_eta_',it
+        write(filename3,'(a,i7.7)') 'OUTPUT_FILES/snapshot_phi_rhob_rhofb_',it
 
         open(unit = 17, file = trim(filename),status = 'unknown',iostat=ios)
         if (ios /= 0) stop 'Error writing snapshot to disk'
 
         open(unit = 18, file = trim(filename2),status = 'unknown',iostat=ios)
+        if (ios /= 0) stop 'Error writing snapshot to disk'
+
+        open(unit = 19, file = trim(filename3),status = 'unknown',iostat=ios)
         if (ios /= 0) stop 'Error writing snapshot to disk'
 
      do iglob =1,npoin
@@ -5152,13 +5264,14 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 !         write(19,'(5e12.3)')xx,zz,phi_kl(iglob),eta_kl(iglob)
          write(17,'(5e12.3)')xx,zz,cpI_kl(iglob),cpII_kl(iglob),cs_kl(iglob)
          write(18,'(5e12.3)')xx,zz,rhobb_kl(iglob),rhofbb_kl(iglob)
+         write(19,'(5e12.3)')xx,zz,phi_kl(iglob),rhob_kl(iglob),rhofb_kl(iglob)
      enddo 
     close(97)
     close(98)
     close(99)
     close(17)
     close(18)
-!    close(19)
+    close(19)
     endif
 
     endif
@@ -5182,7 +5295,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           elastic,poroelastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
 
-    call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
+    call plotpost(vector_field_display,coord,vpext,x_source(1),z_source(1),st_xval,st_zval, &
           it,deltat,coorg,xinterp,zinterp,shape2D_display, &
           Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,poroelastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs, &
@@ -5204,7 +5317,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           elastic,poroelastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
 
-    call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
+    call plotpost(vector_field_display,coord,vpext,x_source(1),z_source(1),st_xval,st_zval, &
           it,deltat,coorg,xinterp,zinterp,shape2D_display, &
           Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,poroelastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs, &
@@ -5226,7 +5339,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           elastic,poroelastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
 
-    call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
+    call plotpost(vector_field_display,coord,vpext,x_source(1),z_source(1),st_xval,st_zval, &
           it,deltat,coorg,xinterp,zinterp,shape2D_display, &
           Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,poroelastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs, &
@@ -5268,9 +5381,12 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     if ( myrank == 0 ) then
     write(IOUT,*) 'drawing image of vertical component of displacement vector...'
     endif
-
+!!!!!!!!!!!!!!!!!!!!!!!!yang!!!!!!!!!!!!!!!!!!!!!!!
     call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic,&
           elastic,poroelastic,vector_field_display, &
+          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
+    call compute_vector_whole_medium(potential_acoustic,displ_elastic,displw_poroelastic,&
+          elastic,poroelastic,vector_field_display1, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
 
   else if(imagetype == 2) then
@@ -5315,7 +5431,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
      j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
      i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
      image_color_data(i,j) = vector_field_display(2,iglob_image_color(i,j))
-
+     image_color_data1(i,j) = vector_field_display1(2,iglob_image_color(i,j))
   end do
 
 ! assembling array image_color_data on process zero for color output
@@ -5354,6 +5470,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
   if ( myrank == 0 ) then
      call create_color_image(image_color_data,iglob_image_color,NX_IMAGE_color,NZ_IMAGE_color,it,cutsnaps,image_color_vp_display)
+     call create_color_image1(image_color_data1,iglob_image_color,NX_IMAGE_color,NZ_IMAGE_color,it,cutsnaps,image_color_vp_display)
      write(IOUT,*) 'Color image created'
   endif
 

@@ -60,16 +60,16 @@
                nspec_inner_outer,ispec_inner_outer_to_glob,num_phase_inner_outer,nrec,isolver,save_forward,&
                b_absorb_poro_s_left,b_absorb_poro_s_right,b_absorb_poro_s_bottom,b_absorb_poro_s_top,&
                nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,&
-               mufr_k,B_k)
+               mufr_k,B_k,NSOURCE)
 
 ! compute forces for the solid poroelastic part
 
   implicit none
 
   include "constants.h"
-
-  integer :: npoin,nspec,myrank,numat,iglob_source,ispec_selected_source,&
-             source_type,it,NSTEP,is_proc_source
+  integer :: NSOURCE, i_source
+  integer, dimension(NSOURCE) :: iglob_source,ispec_selected_source,source_type,is_proc_source
+  integer :: npoin,nspec,myrank,numat,it,NSTEP
   integer :: nrec,isolver
   integer, dimension(nrec) :: ispec_selected_rec,which_proc_receiver
   integer :: nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax
@@ -97,8 +97,8 @@
   double precision, dimension(4,3,numat) :: poroelastcoef
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
   double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,vsext,rhoext
-  real(kind=CUSTOM_REAL), dimension(NSTEP) :: source_time_function
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: sourcearray
+  real(kind=CUSTOM_REAL), dimension(NSOURCE,NSTEP) :: source_time_function
+  real(kind=CUSTOM_REAL), dimension(NSOURCE,NDIM,NGLLX,NGLLZ) :: sourcearray
   real(kind=CUSTOM_REAL), dimension(nrec,NSTEP,NDIM,NGLLX,NGLLZ) :: adj_sourcearrays
   real(kind=CUSTOM_REAL), dimension(npoin) :: mufr_k,B_k
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLZ,nspec_xmin,NSTEP) :: b_absorb_poro_s_left
@@ -956,48 +956,49 @@
 
 ! --- add the source
   if(.not. initialfield) then
+do i_source=1,NSOURCE
 
 ! if this processor carries the source and the source element is poroelastic
-     if (is_proc_source == 1 .and. poroelastic(ispec_selected_source)) then
+     if (is_proc_source(i_source) == 1 .and. poroelastic(ispec_selected_source(i_source))) then
 
-    phil = porosity(kmato(ispec_selected_source))
-    tortl = tortuosity(kmato(ispec_selected_source))
+    phil = porosity(kmato(ispec_selected_source(i_source)))
+    tortl = tortuosity(kmato(ispec_selected_source(i_source)))
 
 ! collocated force
 ! beware, for acoustic medium, source is a potential, therefore source time function
 ! gives shape of velocity, not displacement
-  if(source_type == 1) then
+  if(source_type(i_source) == 1) then
 
         if(isolver == 1) then  ! forward wavefield
-      accels_poroelastic(1,iglob_source) = accels_poroelastic(1,iglob_source) - &
-                               (1._CUSTOM_REAL - phil/tortl)*sin(angleforce)*source_time_function(it)
-      accels_poroelastic(2,iglob_source) = accels_poroelastic(2,iglob_source) + &
-                               (1._CUSTOM_REAL - phil/tortl)*cos(angleforce)*source_time_function(it)
+      accels_poroelastic(1,iglob_source(i_source)) = accels_poroelastic(1,iglob_source(i_source)) - &
+                               (1._CUSTOM_REAL - phil/tortl)*sin(angleforce(i_source))*source_time_function(i_source,it)
+      accels_poroelastic(2,iglob_source(i_source)) = accels_poroelastic(2,iglob_source(i_source)) + &
+                               (1._CUSTOM_REAL - phil/tortl)*cos(angleforce(i_source))*source_time_function(i_source,it)
        else                   ! backward wavefield
-      b_accels_poroelastic(1,iglob_source) = b_accels_poroelastic(1,iglob_source) - &
-                               (1._CUSTOM_REAL - phil/tortl)*sin(angleforce)*source_time_function(NSTEP-it+1)
-      b_accels_poroelastic(2,iglob_source) = b_accels_poroelastic(2,iglob_source) + &
-                               (1._CUSTOM_REAL - phil/tortl)*cos(angleforce)*source_time_function(NSTEP-it+1)
+      b_accels_poroelastic(1,iglob_source(i_source)) = b_accels_poroelastic(1,iglob_source(i_source)) - &
+                               (1._CUSTOM_REAL - phil/tortl)*sin(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
+      b_accels_poroelastic(2,iglob_source(i_source)) = b_accels_poroelastic(2,iglob_source(i_source)) + &
+                               (1._CUSTOM_REAL - phil/tortl)*cos(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
        endif !endif isolver == 1
 
 ! moment tensor
-  else if(source_type == 2) then
+  else if(source_type(i_source) == 2) then
 
 ! add source array
        if(isolver == 1) then  ! forward wavefield
       do j=1,NGLLZ
         do i=1,NGLLX
-          iglob = ibool(i,j,ispec_selected_source)
+          iglob = ibool(i,j,ispec_selected_source(i_source))
           accels_poroelastic(:,iglob) = accels_poroelastic(:,iglob) + &
-          (1._CUSTOM_REAL - phil/tortl)*sourcearray(:,i,j)*source_time_function(it)
+          (1._CUSTOM_REAL - phil/tortl)*sourcearray(i_source,:,i,j)*source_time_function(i_source,it)
         enddo
       enddo
        else                   ! backward wavefield
       do j=1,NGLLZ
         do i=1,NGLLX
-          iglob = ibool(i,j,ispec_selected_source)
+          iglob = ibool(i,j,ispec_selected_source(i_source))
           b_accels_poroelastic(:,iglob) = b_accels_poroelastic(:,iglob) + &
-          (1._CUSTOM_REAL - phil/tortl)*sourcearray(:,i,j)*source_time_function(NSTEP-it+1)
+          (1._CUSTOM_REAL - phil/tortl)*sourcearray(i_source,:,i,j)*source_time_function(i_source,NSTEP-it+1)
         enddo
       enddo
        endif  !endif isolver == 1
@@ -1007,7 +1008,7 @@
   endif
 
      endif ! if this processor carries the source and the source element is poroelastic
-
+enddo
     if(isolver == 2) then   ! adjoint wavefield
       irec_local = 0
       do irec = 1,nrec
