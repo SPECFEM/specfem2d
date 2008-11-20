@@ -195,7 +195,6 @@
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic,veloc_elastic,displ_elastic
   double precision, dimension(:,:), allocatable :: coord, flagrange,xinterp,zinterp,Uxinterp,Uzinterp,vector_field_display
-  double precision, dimension(:,:), allocatable :: vector_field_display1
 
 ! material properties of the poroelastic medium (solid phase:s and fluid phase [defined as w=phi(u_f-u_s)]: w)
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accels_poroelastic,velocs_poroelastic,displs_poroelastic
@@ -359,7 +358,7 @@
   double precision :: xmin_color_image,xmax_color_image, &
     zmin_color_image,zmax_color_image,size_pixel_horizontal,size_pixel_vertical
   integer, dimension(:,:), allocatable :: iglob_image_color,copy_iglob_image_color
-  double precision, dimension(:,:), allocatable :: image_color_data, image_color_data1
+  double precision, dimension(:,:), allocatable :: image_color_data
   double precision, dimension(:,:), allocatable :: image_color_vp_display
 
   double precision  :: xmin_color_image_loc, xmax_color_image_loc, zmin_color_image_loc, &
@@ -1127,7 +1126,6 @@ enddo
 
 ! to display acoustic elements
   allocate(vector_field_display(NDIM,npoin))
-  allocate(vector_field_display1(NDIM,npoin))
 
   if(assign_external_model) then
     allocate(vpext(NGLLX,NGLLZ,nspec))
@@ -1856,7 +1854,6 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
 ! allocate an array for image data
   allocate(image_color_data(NX_IMAGE_color,NZ_IMAGE_color))
-  allocate(image_color_data1(NX_IMAGE_color,NZ_IMAGE_color))
   allocate(image_color_vp_display(NX_IMAGE_color,NZ_IMAGE_color))
 
 ! allocate an array for the grid point that corresponds to a given image data point
@@ -2659,7 +2656,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     write(IOUT,*)
     open(unit=55,file='OUTPUT_FILES/source.txt',status='unknown')
     endif
-do i_source=1,NSOURCE !yang
+  do i_source=1,NSOURCE !yang
 ! loop on all the time steps
     do it = 1,NSTEP
 
@@ -2705,8 +2702,7 @@ do i_source=1,NSOURCE !yang
          write(55,*) sngl(time),real(source_time_function(i_source,it),4),sngl(time-t0(i_source))
       endif
    enddo
-      write(*,*) '!!!!saving source time function in a text file has been omitted!!!!!',i_source
-enddo ! i_source=1,NSOURCE !yang
+ enddo ! i_source=1,NSOURCE !yang
       if ( myrank == 0 ) then
     close(55)
       endif
@@ -5381,12 +5377,9 @@ enddo ! i_source=1,NSOURCE !yang
     if ( myrank == 0 ) then
     write(IOUT,*) 'drawing image of vertical component of displacement vector...'
     endif
-!!!!!!!!!!!!!!!!!!!!!!!!yang!!!!!!!!!!!!!!!!!!!!!!!
+
     call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic,&
           elastic,poroelastic,vector_field_display, &
-          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
-    call compute_vector_whole_medium(potential_acoustic,displ_elastic,displw_poroelastic,&
-          elastic,poroelastic,vector_field_display1, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
 
   else if(imagetype == 2) then
@@ -5431,7 +5424,6 @@ enddo ! i_source=1,NSOURCE !yang
      j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
      i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
      image_color_data(i,j) = vector_field_display(2,iglob_image_color(i,j))
-     image_color_data1(i,j) = vector_field_display1(2,iglob_image_color(i,j))
   end do
 
 ! assembling array image_color_data on process zero for color output
@@ -5470,7 +5462,6 @@ enddo ! i_source=1,NSOURCE !yang
 
   if ( myrank == 0 ) then
      call create_color_image(image_color_data,iglob_image_color,NX_IMAGE_color,NZ_IMAGE_color,it,cutsnaps,image_color_vp_display)
-     call create_color_image1(image_color_data1,iglob_image_color,NX_IMAGE_color,NZ_IMAGE_color,it,cutsnaps,image_color_vp_display)
      write(IOUT,*) 'Color image created'
   endif
 

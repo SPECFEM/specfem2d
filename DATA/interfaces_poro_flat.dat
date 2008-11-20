@@ -10,13 +10,13 @@
 #
  2
  0 0
- 1000 0
+ 4800 0
 #
 # interface number 4 (topography, top of the mesh)
 #
  2
-    0 1000
- 1000 1000
+    0 4800
+ 4800 4800
 #
 # for each layer, we give the number of spectral elements in the vertical direction
 #

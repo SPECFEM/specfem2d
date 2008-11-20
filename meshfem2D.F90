@@ -430,7 +430,6 @@ program meshfem2D
   call read_value_integer(IIN,IGNORE_JUNK,isolver)
 
 ! read source parameters
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   call read_value_integer(IIN,IGNORE_JUNK,NSOURCE) !yang
   allocate(source_surf(NSOURCE)) 
   allocate(xs(NSOURCE)) 
@@ -444,6 +443,7 @@ program meshfem2D
   allocate(Mxz(NSOURCE)) 
   allocate(Mzz(NSOURCE)) 
   allocate(factor(NSOURCE)) 
+
   do  i_source=1,NSOURCE  
      call read_value_logical(IIN,IGNORE_JUNK,source_surf(i_source))
      call read_value_double_precision(IIN,IGNORE_JUNK,xs(i_source))
@@ -480,6 +480,7 @@ program meshfem2D
      print *,'Mxz of the source if moment tensor = ',Mxz(i_source)
      print *,'Multiplying factor = ',factor(i_source)
   enddo
+
 ! read constants for attenuation
   call read_value_integer(IIN,IGNORE_JUNK,N_SLS)
   call read_value_double_precision(IIN,IGNORE_JUNK,Qp_attenuation)
@@ -1328,7 +1329,9 @@ program meshfem2D
   enddo
 !--- compute position of the receivers and write the STATIONS file
    if (read_external_mesh) then
-     call read_receivers(receivers_file,xs,zs)
+
+     call read_receivers(receivers_file,xs,zs,NSOURCE)
+
    else
   if (generate_STATIONS) then
   print *

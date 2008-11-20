@@ -1,7 +1,7 @@
 
 # title of job, and file that contains interface data
 title                           = Test for 2 layers: acoustic/poroelastic
-interfacesfile                  = interfaces_acoustic.dat
+interfacesfile                  = interfaces_poro_flat.dat
 
 # data concerning mesh, when generated using third-party app (more info in README)
 read_external_mesh              = .false.
@@ -28,7 +28,6 @@ assign_external_model           = .false.        # define external earth model o
 TURN_ANISOTROPY_ON              = .false.        # turn anisotropy on or off for solid medium
 TURN_ATTENUATION_ON             = .false.        # turn attenuation on or off for solid medium
 
-
 # absorbing boundaries parameters
 absorbing_conditions            = .true.	 # absorbing boundary active or not
 absorbbottom                    = .true.
@@ -41,13 +40,17 @@ nt                              = 5000           # total number of time steps
 deltat                          = 3d-4         # duration of a time step
 isolver                         = 1              # type of simulation 1=forward 2=adjoint + kernels
 
-# source parameters
+#source parameters
+NSOURCE                         = 1              # number of sources
+
+#source 1
 source_surf                     = .false.        # source inside the medium or at the surface
 xs                              = 1600.          # source location x in meters
 zs                              = 2900.          # source location z in meters
 source_type                     = 1              # elastic force or acoustic pressure = 1 or moment tensor = 2
 time_function_type              = 1              # Ricker = 1, first derivative = 2, Gaussian = 3, Dirac = 4, Heaviside = 5
 f0                              = 15.0           # dominant source frequency (Hz) if not Dirac or Heaviside
+t0                              = 0.0            # time shift when multi sources (if one source, must be zero)
 angleforce                      = 0.             # angle of the source (for a force only)
 Mxx                             = 1.             # Mxx component (for a moment tensor source only)
 Mzz                             = 1.             # Mzz component (for a moment tensor source only)
@@ -100,13 +103,11 @@ gnuplot                         = .false.        # generate a GNUPLOT file for t
 outputgrid                      = .false.        # save the grid in a text file or not
 
 # velocity and density models
-nbmodels                        = 2              # nb of different models
+nbmodels                        = 1              # nb of different models
 # define models as (model_number,1,rho_s,rho_f,phi,tort,permx,permz,kappa_s,kappa_f,kappa_fr,mu_s,eta_f,mu_fr) or (Anisotropic: to be defined)
 # set the porosity phi to 1 to make a given model acoustic, and to 0 to make it elastic
 # the mesh can contain acoustic, elastic and poroelastic models simultaneously
-1 1 2500.d0 1020.d0 0.4d0 2.0 1d-11 0.d0 1d-11 1.60554d10 2.295d9 1.0d10 9.63342d9 0.0d-4 9.63342d9
-2 1 2650.d0 1020.d0 1.10d0 2.0 1d-11 0.d0 1d-11 1.60554d10 2.295d9 0.0d9 0.0d9 0.0d-3 0.0d9
+1 1 2500.d0 1020.d0 0.0d0 2.0 1d-11 0.d0 1d-11 1.60554d10 2.295d9 1.0d10 9.63342d9 0.0d-4 9.63342d9
 # define the different regions of the model in the (nx,nz) spectral element mesh
-nbregions                       = 2              # nb of regions and model number for each
-1 260 1 110 1
-1 260 111 220 2
+nbregions                       = 1              # nb of regions and model number for each
+1 260 1 160 1

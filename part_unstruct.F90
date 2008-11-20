@@ -249,12 +249,13 @@ contains
   ! first line:         number of receivers
   ! following lines:    xrec zrec
   !-----------------------------------------------
- subroutine read_receivers(filename,xs,zs)
+ subroutine read_receivers(filename,xs,zs,NSOURCE)
 
     character(len=256), intent(in)  :: filename
-    integer :: nrec, irec_global_number
-    double precision :: xrec,zrec,xs,zs
-    integer  :: i
+    integer :: nrec, irec_global_number,NSOURCE
+    double precision :: xrec,zrec
+    double precision :: xs(NSOURCE),zs(NSOURCE)
+    integer  :: i,i_source
 
     open(unit=996,file='DATA/STATIONS',status='unknown')
     open(unit=997,file='OUTPUT_FILES/receivers_file',status='unknown')
@@ -270,8 +271,9 @@ contains
     print *,'Position (x,z) of the ',nrec,' receivers'
     print *
 
-
-    write(997,"(f20.7,1x,f20.7)") xs,zs
+    do i_source = 1,NSOURCE
+      write(997,"(f20.7,1x,f20.7)") xs(i_source),zs(i_source)
+    enddo
     do i = 1, nrec
        read(995,*) xrec,zrec
        write(996,"('S',i4.4,'    AA ',f20.7,1x,f20.7,'       0.0         0.0')") i,xrec,zrec
