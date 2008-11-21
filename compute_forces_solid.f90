@@ -81,7 +81,8 @@
   logical :: anyabs,assign_external_model,initialfield,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON
   logical :: save_forward
 
-  double precision :: angleforce,deltatcube,deltatfourth,twelvedeltat,fourdeltatsquare
+  double precision :: deltatcube,deltatfourth,twelvedeltat,fourdeltatsquare
+  double precision, dimension(NSOURCE) :: angleforce
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
   integer, dimension(nspec) :: kmato
