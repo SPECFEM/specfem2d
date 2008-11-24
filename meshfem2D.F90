@@ -1257,9 +1257,6 @@ program meshfem2D
      write(15,*) 'nelemabs nelem_acoustic_surface num_fluid_solid_edges num_fluid_poro_edges num_solid_poro_edges'
      write(15,*) nelemabs_loc,nelem_acoustic_surface_loc,nedges_coupled_loc,nedges_acporo_coupled_loc,nedges_elporo_coupled_loc
 
-     write(15,*) 'nxread, nzread'
-     write(15,*) nxread,nzread
-
      write(15,*) 'Material sets Isotropic (Anisotropic: to be defined)'
      do i=1,nb_materials
     write(15,*) i,icodemat(i),rho_s(i),rho_f(i),phi(i),tortuosity(i),permxx(i),permxz(i),permzz(i),kappa_s(i),&

@@ -256,7 +256,7 @@
   double precision :: cutsnaps,sizemax_arrows,anglerec,xirec,gammarec
 
 ! for absorbing and acoustic free surface conditions
-  integer :: ispec_acoustic_surface,inum,numabsread,nxread,nzread
+  integer :: ispec_acoustic_surface,inum,numabsread
   logical :: codeabsread(4)
   real(kind=CUSTOM_REAL) :: nx,nz,weight,xxi,zgamma
 
@@ -679,8 +679,6 @@ enddo
   read(IIN,*) numat,ngnod,nspec,pointsdisp,plot_lowerleft_corner_only
   read(IIN,"(a80)") datlin
   read(IIN,*) nelemabs,nelem_acoustic_surface,num_fluid_solid_edges,num_fluid_poro_edges,num_solid_poro_edges
-  read(IIN,"(a80)") datlin
-  read(IIN,*) nxread,nzread
 !
 !---- allocate arrays
 !
@@ -723,25 +721,25 @@ enddo
   allocate(numabs(nelemabs))
   allocate(codeabs(4,nelemabs))
 
-  allocate(ibegin_bottom(nxread))
-  allocate(iend_bottom(nxread))
-  allocate(ibegin_top(nxread))
-  allocate(iend_top(nxread))
+  allocate(ibegin_bottom(nelemabs))
+  allocate(iend_bottom(nelemabs))
+  allocate(ibegin_top(nelemabs))
+  allocate(iend_top(nelemabs))
 
-  allocate(jbegin_left(nzread))
-  allocate(jend_left(nzread))
-  allocate(jbegin_right(nzread))
-  allocate(jend_right(nzread))
+  allocate(jbegin_left(nelemabs))
+  allocate(jend_left(nelemabs))
+  allocate(jbegin_right(nelemabs))
+  allocate(jend_right(nelemabs))
 
-  allocate(ibegin_bottom_poro(nxread))
-  allocate(iend_bottom_poro(nxread))
-  allocate(ibegin_top_poro(nxread))
-  allocate(iend_top_poro(nxread))
+  allocate(ibegin_bottom_poro(nelemabs))
+  allocate(iend_bottom_poro(nelemabs))
+  allocate(ibegin_top_poro(nelemabs))
+  allocate(iend_top_poro(nelemabs))
 
-  allocate(jbegin_left_poro(nzread))
-  allocate(jend_left_poro(nzread))
-  allocate(jbegin_right_poro(nzread))
-  allocate(jend_right_poro(nzread))
+  allocate(jbegin_left_poro(nelemabs))
+  allocate(jend_left_poro(nelemabs))
+  allocate(jbegin_right_poro(nelemabs))
+  allocate(jend_right_poro(nelemabs))
 
 !
 !---- print element group main parameters
@@ -880,10 +878,10 @@ enddo
     nspec_xmax = ZERO
     nspec_zmin = ZERO
     nspec_zmax = ZERO
-    allocate(ib_xmin(nzread))
-    allocate(ib_xmax(nzread))
-    allocate(ib_zmin(nxread))
-    allocate(ib_zmax(nxread))
+    allocate(ib_xmin(nelemabs))
+    allocate(ib_xmax(nelemabs))
+    allocate(ib_zmin(nelemabs))
+    allocate(ib_zmax(nelemabs))
     do inum = 1,nelemabs
        if (codeabs(IBOTTOM,inum)) then
          nspec_zmin = nspec_zmin + 1
