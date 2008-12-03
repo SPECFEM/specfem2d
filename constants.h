@@ -39,6 +39,9 @@
 ! uncomment this to write to file instead
 ! integer, parameter :: IOUT = 41
 
+! number of lines per source in CMTSOLUTION file
+  integer, parameter :: NLINES_PER_CMTSOLUTION_SOURCE = 13
+
 ! flags for absorbing boundaries
   integer, parameter :: IBOTTOM = 1
   integer, parameter :: IRIGHT = 2

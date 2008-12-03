@@ -102,9 +102,12 @@ program meshfem2D
   integer, dimension(:), allocatable ::  source_type,time_function_type !yang
   integer nrec_total,irec_global_number
   double precision, dimension(:),allocatable :: xs,zs,f0,t0,angleforce,Mxx,Mzz,Mxz,factor !yang
-  integer NSOURCE, i_source  !yang
+  integer NSOURCE, NSOURCES, i_source, icounter, ios  !yang
   logical, dimension(:),allocatable ::  source_surf
   double precision xrec,zrec
+! file number for source file
+  integer, parameter :: IIN_SOURCE = 22 
+  character(len=150) dummystring
 
   character(len=50) interfacesfile,title
 
@@ -444,19 +447,36 @@ program meshfem2D
   allocate(Mzz(NSOURCE)) 
   allocate(factor(NSOURCE)) 
 
+!chris
+  open(unit=IIN_SOURCE,file='DATA/CMTSOLUTION',iostat=ios,status='old',action='read')
+  if(ios /= 0) stop 'error opening CMTSOLUTION file'
+  icounter = 0
+  do while(ios == 0)
+    read(IIN_SOURCE,"(a)",iostat=ios) dummystring
+    if(ios == 0) icounter = icounter + 1
+  enddo
+  close(IIN_SOURCE)
+  if(mod(icounter,NLINES_PER_CMTSOLUTION_SOURCE) /= 0) &
+    stop 'total number of lines in CMTSOLUTION file should be a multiple of NLINES_PER_CMTSOLUTION_SOURCE'
+  NSOURCES = icounter / NLINES_PER_CMTSOLUTION_SOURCE
+  if(NSOURCES < 1) stop 'need at least one source in CMTSOLUTION file'
+  if(NSOURCES /= NSOURCE) &
+    stop 'total number of sources read is different than declared in Par_file'
+
+  open(unit=IIN_SOURCE,file='DATA/CMTSOLUTION',status='old',action='read')
   do  i_source=1,NSOURCE  
-     call read_value_logical(IIN,IGNORE_JUNK,source_surf(i_source))
-     call read_value_double_precision(IIN,IGNORE_JUNK,xs(i_source))
-     call read_value_double_precision(IIN,IGNORE_JUNK,zs(i_source))
-     call read_value_integer(IIN,IGNORE_JUNK,source_type(i_source))
-     call read_value_integer(IIN,IGNORE_JUNK,time_function_type(i_source))
-     call read_value_double_precision(IIN,IGNORE_JUNK,f0(i_source))
-     call read_value_double_precision(IIN,IGNORE_JUNK,t0(i_source))
-     call read_value_double_precision(IIN,IGNORE_JUNK,angleforce(i_source))
-     call read_value_double_precision(IIN,IGNORE_JUNK,Mxx(i_source))
-     call read_value_double_precision(IIN,IGNORE_JUNK,Mzz(i_source))
-     call read_value_double_precision(IIN,IGNORE_JUNK,Mxz(i_source))
-     call read_value_double_precision(IIN,IGNORE_JUNK,factor(i_source))
+     call read_value_logical(IIN_SOURCE,IGNORE_JUNK,source_surf(i_source))
+     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,xs(i_source))
+     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,zs(i_source))
+     call read_value_integer(IIN_SOURCE,IGNORE_JUNK,source_type(i_source))
+     call read_value_integer(IIN_SOURCE,IGNORE_JUNK,time_function_type(i_source))
+     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,f0(i_source))
+     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,t0(i_source))
+     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,angleforce(i_source))
+     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mxx(i_source))
+     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mzz(i_source))
+     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mxz(i_source))
+     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,factor(i_source))
    ! if Dirac source time function, use a very thin Gaussian instead
    ! if Heaviside source time function, use a very thin error function instead
      if(time_function_type(i_source) == 4 .or. time_function_type(i_source) == 5) f0(i_source) = 1.d0 / (10.d0 * deltat)
@@ -479,7 +499,8 @@ program meshfem2D
      print *,'Mzz of the source if moment tensor = ',Mzz(i_source)
      print *,'Mxz of the source if moment tensor = ',Mxz(i_source)
      print *,'Multiplying factor = ',factor(i_source)
-  enddo
+  enddo ! do i_source=1,NSOURCE
+  close(IIN_SOURCE)
 
 ! read constants for attenuation
   call read_value_integer(IIN,IGNORE_JUNK,N_SLS)
