@@ -70,8 +70,9 @@
 ! number=2,
 ! pages={368-392}}
 
-! version 6.3, Christina Morency, February 2008
+! version 6.3, Christina Morency & Yang Luo 2008
 !              - adjoint method: attenuation is not taken into account yet
+!              - multiple sources
 !
 ! version 6.2, Christina Morency, October 2007
 !              - domain decomposition to solve for acoustic/poroelastic/elastic problems
