@@ -302,6 +302,10 @@
   double precision :: dwx_dxi,dwx_dgamma,dwz_dxi,dwz_dgamma
   double precision :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
   double precision :: dwx_dxl,dwz_dxl,dwx_dzl,dwz_dzl
+  double precision :: b_dux_dxi,b_dux_dgamma,b_duz_dxi,b_duz_dgamma
+  double precision :: b_dwx_dxi,b_dwx_dgamma,b_dwz_dxi,b_dwz_dgamma
+  double precision :: b_dux_dxl,b_duz_dxl,b_dux_dzl,b_duz_dzl
+  double precision :: b_dwx_dxl,b_dwz_dxl,b_dwx_dzl,b_dwz_dzl
 
 ! for solid/porous medium coupling and edge detection
   integer, dimension(:), allocatable :: solid_poro_elastic_ispec,solid_poro_elastic_iedge, &
@@ -310,7 +314,8 @@
   logical :: coupled_elastic_poroelastic
   double precision, dimension(2) :: displ
   double precision, dimension(2) :: veloc 
-  double precision :: sigma_xx,sigma_xz,sigma_zz,sigmap,kappal
+  double precision :: sigma_xx,sigma_xz,sigma_zz,kappal
+  double precision :: b_sigma_xx,b_sigma_xz,b_sigma_zz
   integer, dimension(:), allocatable :: ibegin_bottom_poro,iend_bottom_poro,ibegin_top_poro,&
             iend_top_poro,jbegin_left_poro,jend_left_poro,jbegin_right_poro,jend_right_poro
 
@@ -549,13 +554,14 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,*) seismotype,imagetype,save_forward
-  if(seismotype < 1 .or. seismotype > 4) call exit_MPI('Wrong type for seismogram output')
+  if(seismotype < 1 .or. seismotype > 5) call exit_MPI('Wrong type for seismogram output')
   if(imagetype < 1 .or. imagetype > 4) call exit_MPI('Wrong type for snapshots')
-  if(save_forward .and. seismotype /= 1) then
-  seismotype = 1
+  if(save_forward .and. (seismotype /= 1 .and. seismotype /= 5)) then
   print*, '***** WARNING *****'
-  print*, 'Save forward wavefield => seismogram must be in displacement'
-  print*, 'seismotype has been changed to 1'
+  print*, 'seismotype =',seismotype
+  print*, 'Save forward wavefield => seismogram must be in displacement or potential'
+  print*, 'Seismotype must be changed to 1 (elastic/poroelastic adjoint source) or 5 (acoustic iadjoint source)'
+  stop
   endif
 
   read(IIN,"(a80)") datlin
@@ -3718,25 +3724,38 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 ! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
 ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
 ! Blackwell Science, page 110, equation (4.60).
-          if(iedge_acoustic == IBOTTOM .or. iedge_acoustic == ITOP) then
+          if(iedge_acoustic == ITOP)then
+            xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+            zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+            jacobian1D = sqrt(xxi**2 + zxi**2)
+            nx = - zxi / jacobian1D
+            nz = + xxi / jacobian1D
+          weight = jacobian1D * wxgll(i)
+          elseif(iedge_acoustic == IBOTTOM)then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = + zxi / jacobian1D
             nz = - xxi / jacobian1D
-          else
+          weight = jacobian1D * wxgll(i)
+          elseif(iedge_acoustic ==ILEFT)then
+            xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+            zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+            jacobian1D = sqrt(xgamma**2 + zgamma**2)
+            nx = - zgamma / jacobian1D
+            nz = + xgamma / jacobian1D
+          weight = jacobian1D * wzgll(j)
+          elseif(iedge_acoustic ==IRIGHT)then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = + zgamma / jacobian1D
             nz = - xgamma / jacobian1D
+          weight = jacobian1D * wzgll(j)
           endif
 
 ! compute dot product
           displ_n = displ_x*nx + displ_z*nz
-
-! formulation with generalized potential
-          weight = jacobian1D * wxgll(i)
 
           potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
 
@@ -3801,25 +3820,38 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 ! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
 ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
 ! Blackwell Science, page 110, equation (4.60).
-          if(iedge_acoustic == IBOTTOM .or. iedge_acoustic == ITOP) then
+          if(iedge_acoustic == ITOP)then
+            xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+            zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+            jacobian1D = sqrt(xxi**2 + zxi**2)
+            nx = - zxi / jacobian1D
+            nz = + xxi / jacobian1D
+          weight = jacobian1D * wxgll(i)
+          elseif(iedge_acoustic == IBOTTOM)then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = + zxi / jacobian1D
             nz = - xxi / jacobian1D
-          else
+          weight = jacobian1D * wxgll(i)
+          elseif(iedge_acoustic ==ILEFT)then
+            xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+            zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+            jacobian1D = sqrt(xgamma**2 + zgamma**2)
+            nx = - zgamma / jacobian1D
+            nz = + xgamma / jacobian1D
+          weight = jacobian1D * wzgll(j)
+          elseif(iedge_acoustic ==IRIGHT)then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = + zgamma / jacobian1D
             nz = - xgamma / jacobian1D
+          weight = jacobian1D * wzgll(j)
           endif
 
 ! compute dot product [u_s + w]*n
           displ_n = (displ_x + displw_x)*nx + (displ_z + displw_z)*nz
-
-! formulation with generalized potential
-          weight = jacobian1D * wxgll(i)
 
           potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
 
@@ -4098,6 +4130,20 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           dwx_dgamma = ZERO
           dwz_dgamma = ZERO
 
+          if(isolver == 2) then
+          b_dux_dxi = ZERO
+          b_duz_dxi = ZERO
+
+          b_dux_dgamma = ZERO
+          b_duz_dgamma = ZERO
+
+          b_dwx_dxi = ZERO
+          b_dwz_dxi = ZERO
+
+          b_dwx_dgamma = ZERO
+          b_dwz_dgamma = ZERO
+          endif
+
 ! first double loop over GLL points to compute and store gradients
 ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
@@ -4110,6 +4156,17 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
             dwz_dxi = dwz_dxi + displw_poroelastic(2,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
             dwx_dgamma = dwx_dgamma + displw_poroelastic(1,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
             dwz_dgamma = dwz_dgamma + displw_poroelastic(2,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
+            if(isolver == 2) then
+            b_dux_dxi = b_dux_dxi + b_displs_poroelastic(1,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
+            b_duz_dxi = b_duz_dxi + b_displs_poroelastic(2,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
+            b_dux_dgamma = b_dux_dgamma + b_displs_poroelastic(1,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
+            b_duz_dgamma = b_duz_dgamma + b_displs_poroelastic(2,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
+
+            b_dwx_dxi = b_dwx_dxi + b_displw_poroelastic(1,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
+            b_dwz_dxi = b_dwz_dxi + b_displw_poroelastic(2,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
+            b_dwx_dgamma = b_dwx_dgamma + b_displw_poroelastic(1,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
+            b_dwz_dgamma = b_dwz_dgamma + b_displw_poroelastic(2,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
+            endif
           enddo
 
           xixl = xix(i,j,ispec_poroelastic)
@@ -4130,6 +4187,19 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           dwz_dxl = dwz_dxi*xixl + dwz_dgamma*gammaxl
           dwz_dzl = dwz_dxi*xizl + dwz_dgamma*gammazl
 
+          if(isolver == 2) then
+          b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
+          b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
+
+          b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
+          b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
+
+          b_dwx_dxl = b_dwx_dxi*xixl + b_dwx_dgamma*gammaxl
+          b_dwx_dzl = b_dwx_dxi*xizl + b_dwx_dgamma*gammazl
+
+          b_dwz_dxl = b_dwz_dxi*xixl + b_dwz_dgamma*gammaxl
+          b_dwz_dzl = b_dwz_dxi*xizl + b_dwz_dgamma*gammazl
+          endif
 ! compute stress tensor (include attenuation or anisotropy if needed)
 
 ! no attenuation
@@ -4137,9 +4207,11 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     sigma_xz = mul_G*(duz_dxl + dux_dzl)
     sigma_zz = lambdalplus2mul_G*duz_dzl + lambdal_G*dux_dxl + C_biot*(dwx_dxl + dwz_dzl)
 
-    sigmap = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl + dwz_dzl)
-
-
+    if(isolver == 2) then
+    b_sigma_xx = lambdalplus2mul_G*b_dux_dxl + lambdal_G*b_duz_dzl + C_biot*(b_dwx_dxl + b_dwz_dzl)
+    b_sigma_xz = mul_G*(b_duz_dxl + b_dux_dzl)
+    b_sigma_zz = lambdalplus2mul_G*b_duz_dzl + lambdal_G*b_dux_dxl + C_biot*(b_dwx_dxl + b_dwz_dzl)
+    endif
 ! get point values for the elastic domain, which matches our side in the inverse direction
           i = ivalue(ipoin1D,iedge_elastic)
           j = jvalue(ipoin1D,iedge_elastic)
@@ -4189,6 +4261,13 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           accel_elastic(2,iglob) = accel_elastic(2,iglob) - weight*( &
                 sigma_xz*nx + sigma_zz*nz)
 
+          if(isolver == 2) then
+          b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - weight*( &
+                b_sigma_xx*nx + b_sigma_xz*nz)
+
+          b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - weight*( &
+                b_sigma_xz*nx + b_sigma_zz*nz)
+          endif
         enddo
  
       enddo
@@ -4243,26 +4322,43 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 ! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
 ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
 ! Blackwell Science, page 110, equation (4.60).
-          if(iedge_acoustic == IBOTTOM .or. iedge_acoustic == ITOP) then
+          if(iedge_acoustic == ITOP)then
+            xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+            zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+            jacobian1D = sqrt(xxi**2 + zxi**2)
+            nx = - zxi / jacobian1D
+            nz = + xxi / jacobian1D
+          weight = jacobian1D * wxgll(i)
+          elseif(iedge_acoustic == IBOTTOM)then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = + zxi / jacobian1D
             nz = - xxi / jacobian1D
-          else
+          weight = jacobian1D * wxgll(i)
+          elseif(iedge_acoustic ==ILEFT)then
+            xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+            zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+            jacobian1D = sqrt(xgamma**2 + zgamma**2)
+            nx = - zgamma / jacobian1D
+            nz = + xgamma / jacobian1D
+          weight = jacobian1D * wzgll(j)
+          elseif(iedge_acoustic ==IRIGHT)then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = + zgamma / jacobian1D
             nz = - xgamma / jacobian1D
+          weight = jacobian1D * wzgll(j)
           endif
-
-! formulation with generalized potential
-          weight = jacobian1D * wxgll(i)
 
           accel_elastic(1,iglob) = accel_elastic(1,iglob) + weight*nx*pressure
           accel_elastic(2,iglob) = accel_elastic(2,iglob) + weight*nz*pressure
 
+          if(isolver == 2) then
+          b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) + weight*nx*b_pressure
+          b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) + weight*nz*b_pressure
+          endif
         enddo
 
       enddo
@@ -4489,6 +4585,14 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           dux_dgamma = ZERO
           duz_dgamma = ZERO
 
+          if(isolver == 2) then
+          b_dux_dxi = ZERO
+          b_duz_dxi = ZERO
+
+          b_dux_dgamma = ZERO
+          b_duz_dgamma = ZERO
+          endif
+
 ! first double loop over GLL points to compute and store gradients
 ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
@@ -4496,6 +4600,12 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
             duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec_elastic))*hprime_xx(i,k)
             dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
             duz_dgamma = duz_dgamma + displ_elastic(2,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
+            if(isolver == 2) then
+            b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,j,ispec_elastic))*hprime_xx(i,k)
+            b_duz_dxi = b_duz_dxi + b_displ_elastic(2,ibool(k,j,ispec_elastic))*hprime_xx(i,k)
+            b_dux_dgamma = b_dux_dgamma + b_displ_elastic(1,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
+            b_duz_dgamma = b_duz_dgamma + b_displ_elastic(2,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
+            endif
           enddo
 
           xixl = xix(i,j,ispec_elastic)
@@ -4509,16 +4619,24 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
           duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
           duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
+          if(isolver == 2) then
+          b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
+          b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
 
+          b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
+          b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
+          endif
 ! compute stress tensor 
 
 ! no attenuation
     sigma_xx = lambdalplus2mul_relaxed*dux_dxl + lambdal_relaxed*duz_dzl
     sigma_xz = mul_relaxed*(duz_dxl + dux_dzl)
     sigma_zz = lambdalplus2mul_relaxed*duz_dzl + lambdal_relaxed*dux_dxl
-
-    sigmap = kappal*(dux_dxl + duz_dzl)
-
+    if(isolver == 2) then
+    b_sigma_xx = lambdalplus2mul_relaxed*b_dux_dxl + lambdal_relaxed*b_duz_dzl
+    b_sigma_xz = mul_relaxed*(b_duz_dxl + b_dux_dzl)
+    b_sigma_zz = lambdalplus2mul_relaxed*b_duz_dzl + lambdal_relaxed*b_dux_dxl
+    endif
 ! get point values for the poroelastic side
           i = ivalue(ipoin1D,iedge_poroelastic)
           j = jvalue(ipoin1D,iedge_poroelastic)
@@ -4578,7 +4696,24 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - &
                 weight*(rhol_f/rhol_bar - 1._CUSTOM_REAL)*(sigma_xz*nx + sigma_zz*nz)
 
+          if(isolver == 2) then
+! contribution to the solid phase
 
+          b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) + &
+                weight*(b_sigma_xx*nx + b_sigma_xz*nz)*(1._CUSTOM_REAL - phil/tortl)
+
+
+          b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) + &
+                weight*(b_sigma_xz*nx + b_sigma_zz*nz)*(1._CUSTOM_REAL - phil/tortl)
+
+! contribution to the fluid phase
+
+          b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob)  - &
+                weight*(rhol_f/rhol_bar - 1._CUSTOM_REAL)*(b_sigma_xx*nx + b_sigma_xz*nz)
+
+          b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) - &
+                weight*(rhol_f/rhol_bar - 1._CUSTOM_REAL)*(b_sigma_xz*nx + b_sigma_zz*nz)
+          endif
         enddo
  
       enddo
@@ -4638,22 +4773,35 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 ! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
 ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
 ! Blackwell Science, page 110, equation (4.60).
-          if(iedge_acoustic == IBOTTOM .or. iedge_acoustic == ITOP) then
+          if(iedge_acoustic == ITOP)then
+            xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+            zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+            jacobian1D = sqrt(xxi**2 + zxi**2)
+            nx = - zxi / jacobian1D
+            nz = + xxi / jacobian1D
+          weight = jacobian1D * wxgll(i)
+          elseif(iedge_acoustic == IBOTTOM)then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = + zxi / jacobian1D
             nz = - xxi / jacobian1D
-          else
+          weight = jacobian1D * wxgll(i)
+          elseif(iedge_acoustic ==ILEFT)then
+            xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+            zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+            jacobian1D = sqrt(xgamma**2 + zgamma**2)
+            nx = - zgamma / jacobian1D
+            nz = + xgamma / jacobian1D
+          weight = jacobian1D * wzgll(j)
+          elseif(iedge_acoustic ==IRIGHT)then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = + zgamma / jacobian1D
             nz = - xgamma / jacobian1D
+          weight = jacobian1D * wzgll(j)
           endif
-
-! formulation with generalized potential
-          weight = jacobian1D * wxgll(i)
 
 ! contribution to the solid phase
           accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) + weight*nx*pressure*(1._CUSTOM_REAL-phil/tortl)
@@ -4663,6 +4811,15 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) + weight*nx*pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)
           accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) + weight*nz*pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)
 
+          if(isolver == 2) then
+! contribution to the solid phase
+          b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) + weight*nx*b_pressure*(1._CUSTOM_REAL-phil/tortl)
+          b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) + weight*nz*b_pressure*(1._CUSTOM_REAL-phil/tortl)
+
+! contribution to the fluid phase
+          b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) + weight*nx*b_pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)
+          b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) + weight*nz*b_pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)
+          endif
         enddo
 
       enddo
@@ -4914,13 +5071,14 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           dxd = pressure_element(i,j)
           dzd = ZERO
 
-        else if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
+        else if(.not. elastic(ispec) .and. .not. poroelastic(ispec) .and. seismotype /= 5) then
 
           dxd = vector_field_element(1,i,j)
           dzd = vector_field_element(2,i,j)
 
-        else if(.not. elastic(ispec) .and. .not. poroelastic(ispec) &
-                           .and. save_forward) then
+!        else if(.not. elastic(ispec) .and. .not. poroelastic(ispec) &
+!                           .and. save_forward) then
+        else if(seismotype == 5) then
 
           dxd = potential_acoustic(iglob)
           dzd = ZERO
@@ -4930,7 +5088,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
              if(poroelastic(ispec)) then
           dxd = displs_poroelastic(1,iglob)
           dzd = displs_poroelastic(2,iglob)
-             else
+             elseif(elastic(ispec)) then
           dxd = displ_elastic(1,iglob)
           dzd = displ_elastic(2,iglob)
              endif
@@ -4940,7 +5098,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
              if(poroelastic(ispec)) then
           dxd = velocs_poroelastic(1,iglob)
           dzd = velocs_poroelastic(2,iglob)
-             else
+             elseif(elastic(ispec)) then
           dxd = veloc_elastic(1,iglob)
           dzd = veloc_elastic(2,iglob)
              endif
@@ -4950,7 +5108,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
              if(poroelastic(ispec)) then
           dxd = accels_poroelastic(1,iglob)
           dzd = accels_poroelastic(2,iglob)
-             else 
+             elseif(elastic(ispec)) then
           dxd = accel_elastic(1,iglob)
           dzd = accel_elastic(2,iglob)
              endif
@@ -4965,7 +5123,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     enddo
 
 ! rotate seismogram components if needed, except if recording pressure, which is a scalar
-    if(seismotype /= 4) then
+    if(seismotype /= 4 .and. seismotype /= 5) then
       sisux(seismo_current,irecloc) =   cosrot*valux + sinrot*valuz
       sisuz(seismo_current,irecloc) = - sinrot*valux + cosrot*valuz
     else
@@ -5233,11 +5391,16 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
         open(unit = 99, file = trim(filename3),status = 'unknown',iostat=ios)
         if (ios /= 0) stop 'Error writing snapshot to disk'
 !
-       write(filename,'(a,i7.7)') 'OUTPUT_FILES/snapshot_cpI_cpII_cs_',it
+!       write(filename,'(a,i7.7)') 'OUTPUT_FILES/snapshot_cpI_cpII_cs_',it
 
-        write(filename2,'(a,i7.7)') 'OUTPUT_FILES/snapshot_rhobb_rhofbb_',it
+!        write(filename2,'(a,i7.7)') 'OUTPUT_FILES/snapshot_rhobb_rhofbb_',it
 
-        write(filename3,'(a,i7.7)') 'OUTPUT_FILES/snapshot_phi_rhob_rhofb_',it
+!        write(filename3,'(a,i7.7)') 'OUTPUT_FILES/snapshot_phi_rhob_rhofb_',it
+       write(filename,'(a,i7.7)') 'OUTPUT_FILES/snapshot_mub_Bb_Cb_',it
+
+        write(filename2,'(a,i7.7)') 'OUTPUT_FILES/snapshot_Mb_rhob_rhofb_',it
+
+        write(filename3,'(a,i7.7)') 'OUTPUT_FILES/snapshot_mb_etab_',it
 
         open(unit = 17, file = trim(filename),status = 'unknown',iostat=ios)
         if (ios /= 0) stop 'Error writing snapshot to disk'
@@ -5254,12 +5417,12 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
          write(97,'(5e12.3)')xx,zz,mufr_kl(iglob),B_kl(iglob),C_kl(iglob)
          write(98,'(5e12.3)')xx,zz,M_kl(iglob),rhot_kl(iglob),rhof_kl(iglob)
          write(99,'(5e12.3)')xx,zz,sm_kl(iglob),eta_kl(iglob)
-!         write(17,'(5e12.3)')xx,zz,mufrb_kl(iglob),Bb_kl(iglob),Cb_kl(iglob)
-!         write(18,'(5e12.3)')xx,zz,Mb_kl(iglob),rhob_kl(iglob),rhofb_kl(iglob)
-!         write(19,'(5e12.3)')xx,zz,phi_kl(iglob),eta_kl(iglob)
-         write(17,'(5e12.3)')xx,zz,cpI_kl(iglob),cpII_kl(iglob),cs_kl(iglob)
-         write(18,'(5e12.3)')xx,zz,rhobb_kl(iglob),rhofbb_kl(iglob)
-         write(19,'(5e12.3)')xx,zz,phi_kl(iglob),rhob_kl(iglob),rhofb_kl(iglob)
+         write(17,'(5e12.3)')xx,zz,mufrb_kl(iglob),Bb_kl(iglob),Cb_kl(iglob)
+         write(18,'(5e12.3)')xx,zz,Mb_kl(iglob),rhob_kl(iglob),rhofb_kl(iglob)
+         write(19,'(5e12.3)')xx,zz,phi_kl(iglob),eta_kl(iglob)
+!         write(17,'(5e12.3)')xx,zz,cpI_kl(iglob),cpII_kl(iglob),cs_kl(iglob)
+!         write(18,'(5e12.3)')xx,zz,rhobb_kl(iglob),rhofbb_kl(iglob)
+!         write(19,'(5e12.3)')xx,zz,phi_kl(iglob),rhob_kl(iglob),rhofb_kl(iglob)
      enddo 
     close(97)
     close(98)
@@ -5290,12 +5453,12 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           elastic,poroelastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
 
-    call plotpost(vector_field_display,coord,vpext,x_source(1),z_source(1),st_xval,st_zval, &
+    call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
           it,deltat,coorg,xinterp,zinterp,shape2D_display, &
           Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,poroelastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs, &
           nelem_acoustic_surface, acoustic_edges, &
-          simulation_title,npoin,npgeo,vpImin,vpImax,nrec, &
+          simulation_title,npoin,npgeo,vpImin,vpImax,nrec,NSOURCE, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
@@ -5312,12 +5475,12 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           elastic,poroelastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
 
-    call plotpost(vector_field_display,coord,vpext,x_source(1),z_source(1),st_xval,st_zval, &
+    call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
           it,deltat,coorg,xinterp,zinterp,shape2D_display, &
           Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,poroelastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs, &
           nelem_acoustic_surface, acoustic_edges, &
-          simulation_title,npoin,npgeo,vpImin,vpImax,nrec, &
+          simulation_title,npoin,npgeo,vpImin,vpImax,nrec,NSOURCE, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
@@ -5334,12 +5497,12 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           elastic,poroelastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
 
-    call plotpost(vector_field_display,coord,vpext,x_source(1),z_source(1),st_xval,st_zval, &
+    call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
           it,deltat,coorg,xinterp,zinterp,shape2D_display, &
           Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,poroelastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs, &
           nelem_acoustic_surface, acoustic_edges, &
-          simulation_title,npoin,npgeo,vpImin,vpImax,nrec, &
+          simulation_title,npoin,npgeo,vpImin,vpImax,nrec,NSOURCE, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
@@ -5377,7 +5540,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     write(IOUT,*) 'drawing image of vertical component of displacement vector...'
     endif
 
-    call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic,&
+    call compute_vector_whole_medium(b_potential_acoustic,b_displ_elastic,b_displs_poroelastic,&
           elastic,poroelastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
 

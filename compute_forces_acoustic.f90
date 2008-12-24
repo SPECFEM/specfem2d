@@ -158,8 +158,8 @@
             dux_dgamma = dux_dgamma + potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
 
             if(isolver == 2) then
-            b_dux_dxi = b_dux_dxi + b_potential_acoustic(ibool(k,j,ispec))*hprime_xx(k,i)
-            b_dux_dgamma = b_dux_dgamma + b_potential_acoustic(ibool(i,k,ispec))*hprime_zz(k,j)
+            b_dux_dxi = b_dux_dxi + b_potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
+            b_dux_dgamma = b_dux_dgamma + b_potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
             endif
 
           enddo
@@ -214,7 +214,7 @@
                            (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
             if(isolver == 2) then
             b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
-                           (b_tempx1(k,j)*hprimewgll_xx(i,k) + b_tempx2(i,k)*hprimewgll_zz(j,k))
+                           (b_tempx1(k,j)*hprimewgll_xx(k,i) + b_tempx2(i,k)*hprimewgll_zz(k,j))
             endif
           enddo
 
@@ -519,8 +519,20 @@ enddo
       do j=1,NGLLZ
         do i=1,NGLLX
       iglob = ibool(i,j,ispec_selected_rec(irec))
+!          xxi = + gammaz(i,j,ispec_selected_rec(irec)) * jacobian(i,j,ispec_selected_rec(irec))
+!          zxi = - gammax(i,j,ispec_selected_rec(irec)) * jacobian(i,j,ispec_selected_rec(irec))
+!          jacobian1D = sqrt(xxi**2 + zxi**2)
+!          nx = - zxi / jacobian1D
+!          nz = + xxi / jacobian1D
+!
+!          weight = jacobian1D * wxgll(i)
+!
+!      potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*&
+!          (nx*adj_sourcearrays(irec,NSTEP-it+1,1,i,j) + nz*adj_sourcearrays(irec,NSTEP-it+1,2,i,j))
+
       potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + &
           adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
+
         enddo
       enddo
             endif
