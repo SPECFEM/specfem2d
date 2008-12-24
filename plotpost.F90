@@ -47,7 +47,7 @@
           poroelastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,&
           nelem_acoustic_surface, acoustic_edges, &
-          simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
+          simulation_title,npoin,npgeo,vpmin,vpmax,nrec,NSOURCE, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
@@ -70,7 +70,7 @@
   double precision, dimension(NUM_COLORS) :: red,green,blue
 
   integer it,nrec,nelemabs,numat,pointsdisp,pointsdisp_loop,nspec
-  integer i,npoin,npgeo,ngnod
+  integer i,npoin,npgeo,ngnod,NSOURCE
 
   integer kmato(nspec),knods(ngnod,nspec)
   integer ibool(NGLLX,NGLLZ,nspec)
@@ -82,7 +82,8 @@
   double precision flagrange(NGLLX,pointsdisp)
   double precision density(2,numat),poroelastcoef(4,3,numat),porosity(numat),tortuosity(numat)
 
-  double precision dt,timeval,x_source,z_source
+  double precision dt,timeval
+  double precision, dimension(NSOURCE) :: x_source,z_source
   double precision displ(NDIM,npoin),coord(NDIM,npoin)
   double precision vpext(NGLLX,NGLLZ,nspec)
 
@@ -2825,14 +2826,18 @@
 !
 !----  write position of the source
 !
-  xw = x_source
-  zw = z_source
+  do i=1,NSOURCE
+    if(i == 1) write(24,*) '% beginning of source line'
+    if(i == NSOURCE) write(24,*) '% end of source line'
+  xw = x_source(i)
+  zw = z_source(i)
   xw = (xw-xmin)*ratio_page + orig_x
   zw = (zw-zmin)*ratio_page + orig_z
   xw = xw * centim
   zw = zw * centim
   write(24,500) xw,zw
   write(24,*) 'Cross'
+  enddo
 
 !
 !----  write position of the receivers
