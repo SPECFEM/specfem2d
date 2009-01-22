@@ -787,8 +787,11 @@ program meshfem2D
 
         ! check if we are in the last layer, which contains topography,
         ! and modify the position of the source accordingly if it is located exactly at the surface
-        if(source_surf(1) .and. ilayer == number_of_layers) & !yang use first source
-             zs = value_spline(xs(1),xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
+        do i_source =1,NSOURCE
+        if(source_surf(i_source) .and. ilayer == number_of_layers) then 
+             zs(i_source) = value_spline(xs(i_source),xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
+        endif
+        enddo
 
         ! compute the offset of this layer in terms of number of spectral elements below along Z
         if(ilayer > 1) then

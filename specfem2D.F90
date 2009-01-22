@@ -5540,7 +5540,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     write(IOUT,*) 'drawing image of vertical component of displacement vector...'
     endif
 
-    call compute_vector_whole_medium(b_potential_acoustic,b_displ_elastic,b_displs_poroelastic,&
+    call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic,&
           elastic,poroelastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin)
 

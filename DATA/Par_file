@@ -10,7 +10,7 @@ nodes_coords_file               = ./DATA/yangluo_mesh_overthrust/nodes_coords_fi
 materials_file                  = ./DATA/yangluo_mesh_overthrust/materials_file   # file containing the material number for each element
 free_surface_file               = ./DATA/yangluo_mesh_overthrust/free_surface_file   # file containing the free surface
 absorbing_surface_file          = ./DATA/yangluo_mesh_overthrust/absorbing_surface_file   # file containing the absorbing surface
-receivers_file                  = ./DATA/yangluo_mesh_overthrust/receivers_file   # file containing the absorbing surface
+receivers_file                  = ./DATA/yangluo_mesh_overthrust/receivers_file   # file containing the receivers coordinates 
 
 # parameters concerning partitionning
 nproc                           = 1              # number of processes
