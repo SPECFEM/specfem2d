@@ -216,7 +216,7 @@
 !  double precision :: etal_f
   real(kind=CUSTOM_REAL) :: mul_fr,kappal_fr
 !  double precision :: permlxx,permlxz,permlzz
-  real(kind=CUSTOM_REAL) :: afactor,bfactor,cfactor,D_biot,H_biot,C_biot,M_biot,B_biot,cpIsquare,cpIIsquare
+  real(kind=CUSTOM_REAL) :: afactor,bfactor,cfactor,D_biot,H_biot,C_biot,M_biot,B_biot,cpIsquare,cpIIsquare,cssquare
   real(kind=CUSTOM_REAL) :: gamma1,gamma2,gamma3,gamma4,ratio,dd1
 
 ! for acoustic medium
@@ -337,7 +337,7 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhop_ac_kl, alpha_ac_kl
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhot_kl, rhof_kl, sm_kl, eta_kl, mufr_kl, B_kl, &
     C_kl, M_kl, rhob_kl, rhofb_kl, phi_kl, Bb_kl, Cb_kl, Mb_kl, mufrb_kl, &
-    rhobb_kl, rhofbb_kl, phib_kl, cpI_kl, cpII_kl, cs_kl, r_kl 
+    rhobb_kl, rhofbb_kl, phib_kl, cpI_kl, cpII_kl, cs_kl, ratio_kl 
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhot_k, rhof_k, sm_k, eta_k, mufr_k, B_k, &
     C_k, M_k
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: phil_global,etal_f_global,rhol_s_global,rhol_f_global,rhol_bar_global, &
@@ -1500,7 +1500,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     allocate(cpI_kl(npoin))
     allocate(cpII_kl(npoin))
     allocate(cs_kl(npoin))
-    allocate(r_kl(npoin))
+    allocate(ratio_kl(npoin))
     allocate(phil_global(npoin))
     allocate(etal_f_global(npoin))
     allocate(rhol_s_global(npoin))
@@ -1546,7 +1546,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     allocate(cpI_kl(1))
     allocate(cpII_kl(1))
     allocate(cs_kl(1))
-    allocate(r_kl(1))
+    allocate(ratio_kl(1))
     allocate(phil_global(1))
     allocate(etal_f_global(1))
     allocate(rhol_s_global(1))
@@ -2391,6 +2391,10 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   rho_kl(:) = ZERO
   mu_kl(:) = ZERO
   kappa_kl(:) = ZERO
+!
+  rhop_kl(:) = ZERO
+  beta_kl(:) = ZERO
+  alpha_kl(:) = ZERO
    endif
 
    if(any_poroelastic) then
@@ -2415,6 +2419,22 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   B_kl(:) = ZERO
   C_kl(:) = ZERO
   M_kl(:) = ZERO
+!
+  rhob_kl(:) = ZERO
+  rhofb_kl(:) = ZERO
+  phi_kl(:) = ZERO
+  mufrb_kl(:) = ZERO
+  Bb_kl(:) = ZERO
+  Cb_kl(:) = ZERO
+  Mb_kl(:) = ZERO
+!
+  rhobb_kl(:) = ZERO
+  rhofbb_kl(:) = ZERO
+  phib_kl(:) = ZERO
+  cs_kl(:) = ZERO
+  cpI_kl(:) = ZERO
+  cpII_kl(:) = ZERO
+  ratio_kl(:) = ZERO
    endif
 
    if(any_acoustic) then
@@ -2428,6 +2448,9 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
 
   rho_ac_kl(:) = ZERO
   kappa_ac_kl(:) = ZERO
+!
+  rhop_ac_kl(:) = ZERO
+  alpha_ac_kl(:) = ZERO
    endif
 
   endif ! if(isover == 2)
@@ -3429,6 +3452,12 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       cfactor = phil/(tortl*rhol_f)*(H_biot*M_biot - C_biot*C_biot)
       cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4._CUSTOM_REAL*afactor*cfactor))/(2._CUSTOM_REAL*afactor)
       cpIIsquare = (bfactor - sqrt(bfactor*bfactor - 4._CUSTOM_REAL*afactor*cfactor))/(2._CUSTOM_REAL*afactor)
+
+     if(phil <= 0.d0) then
+      cssquare = mul_s/afactor
+     else
+      cssquare = mul_fr/afactor
+     endif
 
 ! Approximated ratio r = amplitude "w" field/amplitude "s" field (no viscous dissipation)
 ! used later for kernels calculation
@@ -5228,6 +5257,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     permlxx_global(iglob) = permeability(1,kmato(ispec))
     permlxz_global(iglob) = permeability(2,kmato(ispec))
     permlzz_global(iglob) = permeability(3,kmato(ispec))
+    mul_global(iglob) = poroelastcoef(2,1,kmato(ispec))
           enddo
        enddo
      endif
@@ -5248,71 +5278,112 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
             mufr_kl(iglob) = mufr_kl(iglob) - TWO * deltat * mufr_k(iglob)
 ! density kernels
             rholb = rhol_bar_global(iglob) - phil_global(iglob)*rhol_f_global(iglob)/tortl_global(iglob)
-            rhob_kl(iglob) = rholb/rhol_bar_global(iglob)*rhot_kl(iglob) + B_kl(iglob) + C_kl(iglob) +&
-                              M_kl(iglob) + mufr_kl(iglob)
-            rhofb_kl(iglob) = rhof_kl(iglob) + phil_global(iglob)/tortl_global(iglob)*rhol_f_global(iglob)/&
-                              rhol_bar_global(iglob)*rhot_kl(iglob) + sm_kl(iglob)
+            rhob_kl(iglob) = rhot_kl(iglob) + B_kl(iglob) + mufr_kl(iglob)
+            rhofb_kl(iglob) = rhof_kl(iglob) + C_kl(iglob) + M_kl(iglob) + sm_kl(iglob)
             Bb_kl(iglob) = B_kl(iglob)
             Cb_kl(iglob) = C_kl(iglob)
             Mb_kl(iglob) = M_kl(iglob)
             mufrb_kl(iglob) = mufr_kl(iglob)
-            phi_kl(iglob) = phil_global(iglob)/tortl_global(iglob)*rhol_f_global(iglob)/&
-                              rhol_bar_global(iglob)*rhot_kl(iglob) - sm_kl(iglob)
+            phi_kl(iglob) = - sm_kl(iglob) - M_kl(iglob)
 ! wave speed kernels
             dd1 = (1._CUSTOM_REAL+rholb/rhol_f_global(iglob))*ratio**2 + 2._CUSTOM_REAL*ratio +& 
                 tortl_global(iglob)/phil_global(iglob)
             rhobb_kl(iglob) = rhob_kl(iglob) - &
                 phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*B_biot) * &
-                   (cpIsquare + (cpIsquare - cpIIsquare)*ratio**2*( (phil_global(iglob)/&
-                   tortl_global(iglob)-1._CUSTOM_REAL)/dd1 + rholb/rhol_f_global(iglob)*( (phil_global(iglob)/tortl_global(iglob) -&
-                   1._CUSTOM_REAL)*ratio**2 -rholb*tortl_global(iglob)**2/(rhol_f_global(iglob)*phil_global(iglob)**2) )/dd1**2 ))*&
+                   (cpIIsquare + (cpIsquare - cpIIsquare)*( (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1+&
+                   (rhol_bar_global(iglob)**2*ratio**2/rhol_f_global(iglob)**2*(phil_global(iglob)/tortl_global(iglob)*&
+                   ratio+1)*(phil_global(iglob)/tortl_global(iglob)*ratio+phil_global(iglob)/tortl_global(iglob)*&
+                   (1+rhol_f_global(iglob)/rhol_bar_global(iglob))-1) )/dd1**2 )- FOUR_THIRDS*cssquare )*&
                    Bb_kl(iglob) - &
-                rhol_f_global(iglob)*tortl_global(iglob)/(phil_global(iglob)*M_biot) * (cpIsquare + &
-                   (cpIsquare - cpIIsquare)*ratio**2*( (phil_global(iglob)/tortl_global(iglob) - rholb/rhol_f_global(iglob)-&
-                   1._CUSTOM_REAL)/dd1 + rholb/rhol_f_global(iglob)*(phil_global(iglob)/&
-                   tortl_global(iglob)*ratio**2 + 2._CUSTOM_REAL*ratio +&
-                   tortl_global(iglob)/phil_global(iglob))/dd1**2))*Mb_kl(iglob) - &
-                rhol_f_global(iglob)/C_biot * (cpIsquare +&
-                   (cpIsquare - cpIIsquare)*ratio**2*( (phil_global(iglob)/tortl_global(iglob)-1._CUSTOM_REAL)/dd1 + rholb/&
-                   rhol_f_global(iglob)*((phil_global(iglob)/tortl_global(iglob)-1._CUSTOM_REAL)*&
-                   ratio**2 + rholb*tortl_global(iglob)/&
-                   (rhol_f_global(iglob)*phil_global(iglob))*ratio) ))*Cb_kl(iglob)
+                rhol_bar_global(iglob)*ratio**2/M_biot * (cpIsquare - cpIIsquare)* &
+                   (phil_global(iglob)/tortl_global(iglob)*ratio + 1._CUSTOM_REAL)**2/dd1**2*Mb_kl(iglob) + &
+                rhol_bar_global(iglob)*ratio/C_biot * (cpIsquare - cpIIsquare)* (&
+                   (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1 - &
+                   phil_global(iglob)*ratio/tortl_global(iglob)*(phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*&
+                   (1+rhol_bar_global(iglob)*ratio/rhol_f_global(iglob))/dd1**2)*Cb_kl(iglob)+ &
+                phil_global(iglob)*rhol_f_global(iglob)*cssquare/(tortl_global(iglob)*mul_global(iglob))*mufrb_kl(iglob)
            rhofbb_kl(iglob) = rhofb_kl(iglob) + &
-                rhol_f_global(iglob)*phil_global(iglob)/(tortl_global(iglob)*B_biot) * &
-                   (cpIsquare + (cpIsquare - cpIIsquare)*ratio**2*( (phil_global(iglob)/&
-                   tortl_global(iglob)-1._CUSTOM_REAL)/dd1 + rholb/rhol_f_global(iglob)*&
-                   ( (phil_global(iglob)/tortl_global(iglob) -&
-                   1._CUSTOM_REAL)*ratio**2 -rholb*tortl_global(iglob)**2/(rhol_f_global(iglob)*phil_global(iglob)**2) )/dd1**2 ))*&
+                phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*B_biot) * &
+                   (cpIIsquare + (cpIsquare - cpIIsquare)*( (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1+&
+                   (rhol_bar_global(iglob)**2*ratio**2/rhol_f_global(iglob)**2*(phil_global(iglob)/tortl_global(iglob)*&
+                   ratio+1)*(phil_global(iglob)/tortl_global(iglob)*ratio+phil_global(iglob)/tortl_global(iglob)*&
+                   (1+rhol_f_global(iglob)/rhol_bar_global(iglob))-1) )/dd1**2 )- FOUR_THIRDS*cssquare )*&
                    Bb_kl(iglob) + &
-                rhol_f_global(iglob)*tortl_global(iglob)/(phil_global(iglob)*M_biot) * (cpIsquare + &
-                   (cpIsquare - cpIIsquare)*ratio**2*( (phil_global(iglob)/tortl_global(iglob) - rholb/rhol_f_global(iglob)-&
-                   1._CUSTOM_REAL)/dd1 + rholb/rhol_f_global(iglob)*(phil_global(iglob)/&
-                   tortl_global(iglob)*ratio**2 + 2._CUSTOM_REAL*ratio +&
-                   tortl_global(iglob)/phil_global(iglob))/dd1**2))*Mb_kl(iglob) + &
-                rhol_f_global(iglob)/C_biot * (cpIsquare +&
-                   (cpIsquare - cpIIsquare)*ratio**2*( (phil_global(iglob)/tortl_global(iglob)-1._CUSTOM_REAL)/dd1 + rholb/&
-                   rhol_f_global(iglob)*((phil_global(iglob)/tortl_global(iglob)-1._CUSTOM_REAL)*ratio**2 + &
-                   rholb*tortl_global(iglob)/&
-                   (rhol_f_global(iglob)*phil_global(iglob))*ratio) ))*Cb_kl(iglob)
-           cpI_kl(iglob) = 2._CUSTOM_REAL*cpIsquare/B_biot * (rhol_bar_global(iglob) + (phil_global(iglob)*rhol_f_global(iglob)/&
-                   (rholb*tortl_global(iglob))*(phil_global(iglob)/tortl_global(iglob)-1._CUSTOM_REAL)*ratio**2 -&
-                   tortl_global(iglob)/phil_global(iglob))/dd1) * Bb_kl(iglob) +&
-                   2._CUSTOM_REAL*cpIsquare/M_biot * rhol_f_global(iglob)*tortl_global(iglob)/phil_global(iglob) * &
-                   (1._CUSTOM_REAL + (phil_global(iglob)/tortl_global(iglob)-&
-                   rholb/rhol_f_global(iglob)-1._CUSTOM_REAL)*ratio**2/dd1)*Mb_kl(iglob)+&
-                   2._CUSTOM_REAL*cpIsquare*rhol_f_global(iglob)/C_biot * &
-                   (1._CUSTOM_REAL + ((phil_global(iglob)/tortl_global(iglob)-1._CUSTOM_REAL)*ratio**2+&
-                   rholb*tortl_global(iglob)/(rhol_f_global(iglob)*phil_global(iglob))*ratio)/dd1)*Cb_kl(iglob)
-           cpII_kl(iglob) = -2._CUSTOM_REAL*cpIIsquare*rholb/B_biot * (phil_global(iglob)*rhol_f_global(iglob)/&
-                   (rholb*tortl_global(iglob))*(phil_global(iglob)/tortl_global(iglob)-1._CUSTOM_REAL)*ratio**2 -&
-                   tortl_global(iglob)/phil_global(iglob))/dd1 * Bb_kl(iglob) -&
-                   2._CUSTOM_REAL*cpIIsquare*rhol_f_global(iglob)*tortl_global(iglob)/(phil_global(iglob)*M_biot) * &
-                   (phil_global(iglob)/tortl_global(iglob)-rholb/rhol_f_global(iglob)-1._CUSTOM_REAL)*ratio**2/dd1*Mb_kl(iglob) - &
-                   2._CUSTOM_REAL*cpIIsquare*rhol_f_global(iglob)/C_biot * &
-                   ((phil_global(iglob)/tortl_global(iglob)-1._CUSTOM_REAL)*ratio**2+&
-                   rholb*tortl_global(iglob)/(rhol_f_global(iglob)*phil_global(iglob))*ratio)/dd1*Cb_kl(iglob)
-           cs_kl(iglob) = 2._CUSTOM_REAL*mufrb_kl(iglob)
-
+                rhol_bar_global(iglob)*ratio**2/M_biot * (cpIsquare - cpIIsquare)* &
+                   (phil_global(iglob)/tortl_global(iglob)*ratio + 1._CUSTOM_REAL)**2/dd1**2*Mb_kl(iglob) - &
+                rhol_bar_global(iglob)*ratio/C_biot * (cpIsquare - cpIIsquare)* (&
+                   (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1 - &
+                   phil_global(iglob)*ratio/tortl_global(iglob)*(phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*&
+                   (1+rhol_bar_global(iglob)*ratio/rhol_f_global(iglob))/dd1**2)*Cb_kl(iglob)- &
+                phil_global(iglob)*rhol_f_global(iglob)*cssquare/(tortl_global(iglob)*mul_global(iglob))*mufrb_kl(iglob)
+           phib_kl(iglob) = phi_kl(iglob) - &
+                phil_global(iglob)*rhol_bar_global(iglob)/(tortl_global(iglob)*B_biot) * ( cpIsquare - rhol_f_global(iglob)/&
+                   rhol_bar_global(iglob)*cpIIsquare- &
+                   (cpIsquare-cpIIsquare)*( (TWO*ratio**2*phil_global(iglob)/tortl_global(iglob) + (1._CUSTOM_REAL+&
+                   rhol_f_global(iglob)/rhol_bar_global(iglob))*(TWO*ratio*phil_global(iglob)/tortl_global(iglob)+&
+                   1._CUSTOM_REAL))/dd1 + (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*(phil_global(iglob)*&
+                   ratio/tortl_global(iglob)+phil_global(iglob)/tortl_global(iglob)*(1._CUSTOM_REAL+rhol_f_global(iglob)/&
+                   rhol_bar_global(iglob))-1._CUSTOM_REAL)*((1._CUSTOM_REAL+rhol_bar_global(iglob)/rhol_f_global(iglob)-&
+                   TWO*phil_global(iglob)/tortl_global(iglob))*ratio**2+TWO*ratio)/dd1**2 ) - &
+                   FOUR_THIRDS*rhol_f_global(iglob)*cssquare/rhol_bar_global(iglob) )*Bb_kl(iglob) + &
+                rhol_f_global(iglob)/M_biot * (cpIsquare-cpIIsquare)*(&
+                   TWO*ratio*(phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1 - &
+                   (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)**2*((1._CUSTOM_REAL+rhol_bar_global(iglob)/&
+                   rhol_f_global(iglob)-TWO*phil_global(iglob)/tortl_global(iglob))*ratio**2+TWO*ratio)/dd1**2&
+                   )*Mb_kl(iglob) + &
+                phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*C_biot)*(cpIsquare-cpIIsquare)*ratio* (&
+                   (1._CUSTOM_REAL+rhol_f_global(iglob)/rhol_bar_global(iglob)*ratio)/dd1 - &
+                   (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*(1._CUSTOM_REAL+rhol_bar_global(iglob)/&
+                   rhol_f_global(iglob)*ratio)*((1._CUSTOM_REAL+rhol_bar_global(iglob)/rhol_f_global(iglob)-TWO*&
+                   phil_global(iglob)/tortl_global(iglob))*ratio+TWO)/dd1**2&
+                    )*Cb_kl(iglob) -&
+                phil_global(iglob)*rhol_f_global(iglob)*cssquare/(tortl_global(iglob)*mul_global(iglob))*mufrb_kl(iglob) 
+           cpI_kl(iglob) = 2._CUSTOM_REAL*cpIsquare/B_biot*rhol_bar_global(iglob)*( &
+                   1._CUSTOM_REAL-phil_global(iglob)/tortl_global(iglob) + &
+                   (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*(phil_global(iglob)/tortl_global(iglob)*&
+                   ratio+phil_global(iglob)/tortl_global(iglob)*(1._CUSTOM_REAL+rhol_f_global(iglob)/rhol_bar_global(iglob))-&
+                   1._CUSTOM_REAL)/dd1 &
+                    )* Bb_kl(iglob) +&
+                2._CUSTOM_REAL*cpIsquare*rhol_f_global(iglob)*tortl_global(iglob)/(phil_global(iglob)*M_biot) *&
+                   (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)**2/dd1*Mb_kl(iglob)+&
+                2._CUSTOM_REAL*cpIsquare*rhol_f_global(iglob)/C_biot * &
+                   (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*(1._CUSTOM_REAL+rhol_bar_global(iglob)/&
+                   rhol_f_global(iglob)*ratio)/dd1*Cb_kl(iglob)
+           cpII_kl(iglob) = 2._CUSTOM_REAL*cpIIsquare*rhol_bar_global(iglob)/B_biot * (&
+                   phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*rhol_bar_global(iglob)) - &
+                   (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*(phil_global(iglob)/tortl_global(iglob)*&
+                   ratio+phil_global(iglob)/tortl_global(iglob)*(1._CUSTOM_REAL+rhol_f_global(iglob)/rhol_bar_global(iglob))-&
+                   1._CUSTOM_REAL)/dd1  ) * Bb_kl(iglob) +&
+                2._CUSTOM_REAL*cpIIsquare*rhol_f_global(iglob)*tortl_global(iglob)/(phil_global(iglob)*M_biot) * (&
+                   1._CUSTOM_REAL - (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)**2/dd1  )*Mb_kl(iglob) + &
+                2._CUSTOM_REAL*cpIIsquare*rhol_f_global(iglob)/C_biot * (&
+                   1._CUSTOM_REAL - (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*(1._CUSTOM_REAL+&
+                   rhol_bar_global(iglob)/rhol_f_global(iglob)*ratio)/dd1  )*Cb_kl(iglob)
+           cs_kl(iglob) = - 8._CUSTOM_REAL/3._CUSTOM_REAL*cssquare*rhol_bar_global(iglob)/B_biot*(1._CUSTOM_REAL-&
+                   phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*rhol_bar_global(iglob)))*Bb_kl(iglob) + & 
+                2._CUSTOM_REAL*(rhol_bar_global(iglob)-rhol_f_global(iglob)*phil_global(iglob)/tortl_global(iglob))/&
+                   mul_global(iglob)*mufrb_kl(iglob)
+           ratio_kl(iglob) = ratio*rhol_bar_global(iglob)*phil_global(iglob)/(tortl_global(iglob)*B_biot) * &
+                   (cpIsquare-cpIIsquare) * ( &
+                   phil_global(iglob)/tortl_global(iglob)*(2._CUSTOM_REAL*ratio+1._CUSTOM_REAL+rhol_f_global(iglob)/ &
+                   rhol_bar_global(iglob))/dd1 - (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*&
+                   (phil_global(iglob)/tortl_global(iglob)*ratio+phil_global(iglob)/tortl_global(iglob)*(&
+                   1._CUSTOM_REAL+rhol_f_global(iglob)/rhol_bar_global(iglob))-1._CUSTOM_REAL)*(2._CUSTOM_REAL*ratio*(&
+                   1._CUSTOM_REAL+rhol_bar_global(iglob)/rhol_f_global(iglob)-phil_global(iglob)/tortl_global(iglob)) +&
+                   2._CUSTOM_REAL)/dd1**2  )*Bb_kl(iglob) + &
+                ratio*rhol_f_global(iglob)*tortl_global(iglob)/(phil_global(iglob)*M_biot)*(cpIsquare-cpIIsquare) * &
+                   2._CUSTOM_REAL*phil_global(iglob)/tortl_global(iglob) * (&
+                   (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1 - &
+                   (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)**2*((1._CUSTOM_REAL+rhol_bar_global(iglob)/&
+                   rhol_f_global(iglob)-phil_global(iglob)/tortl_global(iglob))*ratio+1._CUSTOM_REAL)/dd1**2 )*Mb_kl(iglob) +&
+                ratio*rhol_f_global(iglob)/C_biot*(cpIsquare-cpIIsquare) * (&
+                   (2._CUSTOM_REAL*phil_global(iglob)*rhol_bar_global(iglob)*ratio/(tortl_global(iglob)*rhol_f_global(iglob))+&
+                   phil_global(iglob)/tortl_global(iglob)+rhol_bar_global(iglob)/rhol_f_global(iglob))/dd1 - &
+                   2._CUSTOM_REAL*phil_global(iglob)/tortl_global(iglob)*(phil_global(iglob)/tortl_global(iglob)*ratio+&
+                   1._CUSTOM_REAL)*(1._CUSTOM_REAL+rhol_bar_global(iglob)/rhol_f_global(iglob)*ratio)*((1._CUSTOM_REAL+&
+                   rhol_bar_global(iglob)/rhol_f_global(iglob)-phil_global(iglob)/tortl_global(iglob))*ratio+1._CUSTOM_REAL)/&
+                   dd1**2 )*Cb_kl(iglob) 
+             
       enddo
 
 !          enddo
@@ -5376,31 +5447,33 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     endif
 
     if(any_poroelastic) then
-       write(filename,'(a,i7.7)') 'OUTPUT_FILES/snapshot_mu_B_C_',it
+!primary kernels
+!       write(filename,'(a,i7.7)') 'OUTPUT_FILES/snapshot_mu_B_C_',it
 
-        write(filename2,'(a,i7.7)') 'OUTPUT_FILES/snapshot_M_rho_rhof_',it
+!        write(filename2,'(a,i7.7)') 'OUTPUT_FILES/snapshot_M_rho_rhof_',it
 
-        write(filename3,'(a,i7.7)') 'OUTPUT_FILES/snapshot_m_eta_',it
+!        write(filename3,'(a,i7.7)') 'OUTPUT_FILES/snapshot_m_eta_',it
 
-        open(unit = 97, file = trim(filename),status = 'unknown',iostat=ios)
-        if (ios /= 0) stop 'Error writing snapshot to disk'
+!        open(unit = 97, file = trim(filename),status = 'unknown',iostat=ios)
+!        if (ios /= 0) stop 'Error writing snapshot to disk'
 
-        open(unit = 98, file = trim(filename2),status = 'unknown',iostat=ios)
-        if (ios /= 0) stop 'Error writing snapshot to disk'
+!        open(unit = 98, file = trim(filename2),status = 'unknown',iostat=ios)
+!        if (ios /= 0) stop 'Error writing snapshot to disk'
 
-        open(unit = 99, file = trim(filename3),status = 'unknown',iostat=ios)
-        if (ios /= 0) stop 'Error writing snapshot to disk'
-!
-!       write(filename,'(a,i7.7)') 'OUTPUT_FILES/snapshot_cpI_cpII_cs_',it
+!        open(unit = 99, file = trim(filename3),status = 'unknown',iostat=ios)
+!        if (ios /= 0) stop 'Error writing snapshot to disk'
+!wave-speed kernels
+        write(filename,'(a,i7.7)') 'OUTPUT_FILES/snapshot_cpI_cpII_cs_',it
 
-!        write(filename2,'(a,i7.7)') 'OUTPUT_FILES/snapshot_rhobb_rhofbb_',it
+        write(filename2,'(a,i7.7)') 'OUTPUT_FILES/snapshot_rhobb_rhofbb_ratio_',it
 
-!        write(filename3,'(a,i7.7)') 'OUTPUT_FILES/snapshot_phi_rhob_rhofb_',it
-       write(filename,'(a,i7.7)') 'OUTPUT_FILES/snapshot_mub_Bb_Cb_',it
+        write(filename3,'(a,i7.7)') 'OUTPUT_FILES/snapshot_phib_eta_',it
+!density-normalized kernels
+!       write(filename,'(a,i7.7)') 'OUTPUT_FILES/snapshot_mub_Bb_Cb_',it
 
-        write(filename2,'(a,i7.7)') 'OUTPUT_FILES/snapshot_Mb_rhob_rhofb_',it
+!        write(filename2,'(a,i7.7)') 'OUTPUT_FILES/snapshot_Mb_rhob_rhofb_',it
 
-        write(filename3,'(a,i7.7)') 'OUTPUT_FILES/snapshot_mb_etab_',it
+!        write(filename3,'(a,i7.7)') 'OUTPUT_FILES/snapshot_mb_etab_',it
 
         open(unit = 17, file = trim(filename),status = 'unknown',iostat=ios)
         if (ios /= 0) stop 'Error writing snapshot to disk'
@@ -5414,19 +5487,19 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
      do iglob =1,npoin
         xx = coord(1,iglob)/maxval(coord(1,:)) 
         zz = coord(2,iglob)/maxval(coord(1,:)) 
-         write(97,'(5e12.3)')xx,zz,mufr_kl(iglob),B_kl(iglob),C_kl(iglob)
-         write(98,'(5e12.3)')xx,zz,M_kl(iglob),rhot_kl(iglob),rhof_kl(iglob)
-         write(99,'(5e12.3)')xx,zz,sm_kl(iglob),eta_kl(iglob)
-         write(17,'(5e12.3)')xx,zz,mufrb_kl(iglob),Bb_kl(iglob),Cb_kl(iglob)
-         write(18,'(5e12.3)')xx,zz,Mb_kl(iglob),rhob_kl(iglob),rhofb_kl(iglob)
-         write(19,'(5e12.3)')xx,zz,phi_kl(iglob),eta_kl(iglob)
-!         write(17,'(5e12.3)')xx,zz,cpI_kl(iglob),cpII_kl(iglob),cs_kl(iglob)
-!         write(18,'(5e12.3)')xx,zz,rhobb_kl(iglob),rhofbb_kl(iglob)
-!         write(19,'(5e12.3)')xx,zz,phi_kl(iglob),rhob_kl(iglob),rhofb_kl(iglob)
+!         write(97,'(5e12.3)')xx,zz,mufr_kl(iglob),B_kl(iglob),C_kl(iglob)
+!         write(98,'(5e12.3)')xx,zz,M_kl(iglob),rhot_kl(iglob),rhof_kl(iglob)
+!         write(99,'(5e12.3)')xx,zz,sm_kl(iglob),eta_kl(iglob)
+!         write(17,'(5e12.3)')xx,zz,mufrb_kl(iglob),Bb_kl(iglob),Cb_kl(iglob)
+!         write(18,'(5e12.3)')xx,zz,Mb_kl(iglob),rhob_kl(iglob),rhofb_kl(iglob)
+!         write(19,'(5e12.3)')xx,zz,phi_kl(iglob),eta_kl(iglob)
+         write(17,'(5e12.3)')xx,zz,cpI_kl(iglob),cpII_kl(iglob),cs_kl(iglob)
+         write(18,'(5e12.3)')xx,zz,rhobb_kl(iglob),rhofbb_kl(iglob),ratio_kl(iglob)
+         write(19,'(5e12.3)')xx,zz,phib_kl(iglob),eta_kl(iglob)
      enddo 
-    close(97)
-    close(98)
-    close(99)
+!    close(97)
+!    close(98)
+!    close(99)
     close(17)
     close(18)
     close(19)
