@@ -341,7 +341,7 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhot_k, rhof_k, sm_k, eta_k, mufr_k, B_k, &
     C_k, M_k
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: phil_global,etal_f_global,rhol_s_global,rhol_f_global,rhol_bar_global, &
-    tortl_global
+    tortl_global,mulfr_global
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: permlxx_global,permlxz_global,permlzz_global
   character(len=150) :: adj_source_file,filename,filename2,filename3
   integer :: irec_local,nadj_rec_local
@@ -1502,6 +1502,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     allocate(cs_kl(npoin))
     allocate(ratio_kl(npoin))
     allocate(phil_global(npoin))
+    allocate(mulfr_global(npoin))
     allocate(etal_f_global(npoin))
     allocate(rhol_s_global(npoin))
     allocate(rhol_f_global(npoin))
@@ -1548,6 +1549,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     allocate(cs_kl(1))
     allocate(ratio_kl(1))
     allocate(phil_global(1))
+    allocate(mulfr_global(1))
     allocate(etal_f_global(1))
     allocate(rhol_s_global(1))
     allocate(rhol_f_global(1))
@@ -5257,7 +5259,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     permlxx_global(iglob) = permeability(1,kmato(ispec))
     permlxz_global(iglob) = permeability(2,kmato(ispec))
     permlzz_global(iglob) = permeability(3,kmato(ispec))
-    mul_global(iglob) = poroelastcoef(2,1,kmato(ispec))
+    mulfr_global(iglob) = poroelastcoef(2,3,kmato(ispec))
           enddo
        enddo
      endif
@@ -5286,7 +5288,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
             mufrb_kl(iglob) = mufr_kl(iglob)
             phi_kl(iglob) = - sm_kl(iglob) - M_kl(iglob)
 ! wave speed kernels
-            dd1 = (1._CUSTOM_REAL+rholb/rhol_f_global(iglob))*ratio**2 + 2._CUSTOM_REAL*ratio +& 
+            dd1 = (1._CUSTOM_REAL+rholb/rhol_f_global(iglob))*ratio**2 + 2._CUSTOM_REAL*ratio +&
                 tortl_global(iglob)/phil_global(iglob)
             rhobb_kl(iglob) = rhob_kl(iglob) - &
                 phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*B_biot) * &
@@ -5301,7 +5303,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                    (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1 - &
                    phil_global(iglob)*ratio/tortl_global(iglob)*(phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*&
                    (1+rhol_bar_global(iglob)*ratio/rhol_f_global(iglob))/dd1**2)*Cb_kl(iglob)+ &
-                phil_global(iglob)*rhol_f_global(iglob)*cssquare/(tortl_global(iglob)*mul_global(iglob))*mufrb_kl(iglob)
+                phil_global(iglob)*rhol_f_global(iglob)*cssquare/(tortl_global(iglob)*mulfr_global(iglob))*mufrb_kl(iglob)
            rhofbb_kl(iglob) = rhofb_kl(iglob) + &
                 phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*B_biot) * &
                    (cpIIsquare + (cpIsquare - cpIIsquare)*( (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1+&
@@ -5315,7 +5317,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                    (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1 - &
                    phil_global(iglob)*ratio/tortl_global(iglob)*(phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*&
                    (1+rhol_bar_global(iglob)*ratio/rhol_f_global(iglob))/dd1**2)*Cb_kl(iglob)- &
-                phil_global(iglob)*rhol_f_global(iglob)*cssquare/(tortl_global(iglob)*mul_global(iglob))*mufrb_kl(iglob)
+                phil_global(iglob)*rhol_f_global(iglob)*cssquare/(tortl_global(iglob)*mulfr_global(iglob))*mufrb_kl(iglob)
            phib_kl(iglob) = phi_kl(iglob) - &
                 phil_global(iglob)*rhol_bar_global(iglob)/(tortl_global(iglob)*B_biot) * ( cpIsquare - rhol_f_global(iglob)/&
                    rhol_bar_global(iglob)*cpIIsquare- &
@@ -5337,7 +5339,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                    rhol_f_global(iglob)*ratio)*((1._CUSTOM_REAL+rhol_bar_global(iglob)/rhol_f_global(iglob)-TWO*&
                    phil_global(iglob)/tortl_global(iglob))*ratio+TWO)/dd1**2&
                     )*Cb_kl(iglob) -&
-                phil_global(iglob)*rhol_f_global(iglob)*cssquare/(tortl_global(iglob)*mul_global(iglob))*mufrb_kl(iglob) 
+                phil_global(iglob)*rhol_f_global(iglob)*cssquare/(tortl_global(iglob)*mulfr_global(iglob))*mufrb_kl(iglob)
            cpI_kl(iglob) = 2._CUSTOM_REAL*cpIsquare/B_biot*rhol_bar_global(iglob)*( &
                    1._CUSTOM_REAL-phil_global(iglob)/tortl_global(iglob) + &
                    (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*(phil_global(iglob)/tortl_global(iglob)*&
@@ -5360,9 +5362,9 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                    1._CUSTOM_REAL - (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*(1._CUSTOM_REAL+&
                    rhol_bar_global(iglob)/rhol_f_global(iglob)*ratio)/dd1  )*Cb_kl(iglob)
            cs_kl(iglob) = - 8._CUSTOM_REAL/3._CUSTOM_REAL*cssquare*rhol_bar_global(iglob)/B_biot*(1._CUSTOM_REAL-&
-                   phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*rhol_bar_global(iglob)))*Bb_kl(iglob) + & 
+                   phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*rhol_bar_global(iglob)))*Bb_kl(iglob) + &
                 2._CUSTOM_REAL*(rhol_bar_global(iglob)-rhol_f_global(iglob)*phil_global(iglob)/tortl_global(iglob))/&
-                   mul_global(iglob)*mufrb_kl(iglob)
+                   mulfr_global(iglob)*mufrb_kl(iglob)
            ratio_kl(iglob) = ratio*rhol_bar_global(iglob)*phil_global(iglob)/(tortl_global(iglob)*B_biot) * &
                    (cpIsquare-cpIIsquare) * ( &
                    phil_global(iglob)/tortl_global(iglob)*(2._CUSTOM_REAL*ratio+1._CUSTOM_REAL+rhol_f_global(iglob)/ &
@@ -5382,8 +5384,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
                    2._CUSTOM_REAL*phil_global(iglob)/tortl_global(iglob)*(phil_global(iglob)/tortl_global(iglob)*ratio+&
                    1._CUSTOM_REAL)*(1._CUSTOM_REAL+rhol_bar_global(iglob)/rhol_f_global(iglob)*ratio)*((1._CUSTOM_REAL+&
                    rhol_bar_global(iglob)/rhol_f_global(iglob)-phil_global(iglob)/tortl_global(iglob))*ratio+1._CUSTOM_REAL)/&
-                   dd1**2 )*Cb_kl(iglob) 
-             
+                   dd1**2 )*Cb_kl(iglob)
       enddo
 
 !          enddo
@@ -5447,33 +5448,31 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     endif
 
     if(any_poroelastic) then
-!primary kernels
-!       write(filename,'(a,i7.7)') 'OUTPUT_FILES/snapshot_mu_B_C_',it
+       write(filename,'(a,i7.7)') 'OUTPUT_FILES/snapshot_mu_B_C_',it
 
-!        write(filename2,'(a,i7.7)') 'OUTPUT_FILES/snapshot_M_rho_rhof_',it
+        write(filename2,'(a,i7.7)') 'OUTPUT_FILES/snapshot_M_rho_rhof_',it
 
-!        write(filename3,'(a,i7.7)') 'OUTPUT_FILES/snapshot_m_eta_',it
+        write(filename3,'(a,i7.7)') 'OUTPUT_FILES/snapshot_m_eta_',it
 
-!        open(unit = 97, file = trim(filename),status = 'unknown',iostat=ios)
-!        if (ios /= 0) stop 'Error writing snapshot to disk'
+        open(unit = 97, file = trim(filename),status = 'unknown',iostat=ios)
+        if (ios /= 0) stop 'Error writing snapshot to disk'
 
-!        open(unit = 98, file = trim(filename2),status = 'unknown',iostat=ios)
-!        if (ios /= 0) stop 'Error writing snapshot to disk'
+        open(unit = 98, file = trim(filename2),status = 'unknown',iostat=ios)
+        if (ios /= 0) stop 'Error writing snapshot to disk'
 
-!        open(unit = 99, file = trim(filename3),status = 'unknown',iostat=ios)
-!        if (ios /= 0) stop 'Error writing snapshot to disk'
-!wave-speed kernels
-        write(filename,'(a,i7.7)') 'OUTPUT_FILES/snapshot_cpI_cpII_cs_',it
+        open(unit = 99, file = trim(filename3),status = 'unknown',iostat=ios)
+        if (ios /= 0) stop 'Error writing snapshot to disk'
+!
+!       write(filename,'(a,i7.7)') 'OUTPUT_FILES/snapshot_cpI_cpII_cs_',it
 
-        write(filename2,'(a,i7.7)') 'OUTPUT_FILES/snapshot_rhobb_rhofbb_ratio_',it
+!        write(filename2,'(a,i7.7)') 'OUTPUT_FILES/snapshot_rhobb_rhofbb_ratio_',it
 
-        write(filename3,'(a,i7.7)') 'OUTPUT_FILES/snapshot_phib_eta_',it
-!density-normalized kernels
-!       write(filename,'(a,i7.7)') 'OUTPUT_FILES/snapshot_mub_Bb_Cb_',it
+!        write(filename3,'(a,i7.7)') 'OUTPUT_FILES/snapshot_phib_eta_',it
+       write(filename,'(a,i7.7)') 'OUTPUT_FILES/snapshot_mub_Bb_Cb_',it
 
-!        write(filename2,'(a,i7.7)') 'OUTPUT_FILES/snapshot_Mb_rhob_rhofb_',it
+        write(filename2,'(a,i7.7)') 'OUTPUT_FILES/snapshot_Mb_rhob_rhofb_',it
 
-!        write(filename3,'(a,i7.7)') 'OUTPUT_FILES/snapshot_mb_etab_',it
+        write(filename3,'(a,i7.7)') 'OUTPUT_FILES/snapshot_mb_etab_',it
 
         open(unit = 17, file = trim(filename),status = 'unknown',iostat=ios)
         if (ios /= 0) stop 'Error writing snapshot to disk'
@@ -5487,19 +5486,19 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
      do iglob =1,npoin
         xx = coord(1,iglob)/maxval(coord(1,:)) 
         zz = coord(2,iglob)/maxval(coord(1,:)) 
-!         write(97,'(5e12.3)')xx,zz,mufr_kl(iglob),B_kl(iglob),C_kl(iglob)
-!         write(98,'(5e12.3)')xx,zz,M_kl(iglob),rhot_kl(iglob),rhof_kl(iglob)
-!         write(99,'(5e12.3)')xx,zz,sm_kl(iglob),eta_kl(iglob)
-!         write(17,'(5e12.3)')xx,zz,mufrb_kl(iglob),Bb_kl(iglob),Cb_kl(iglob)
-!         write(18,'(5e12.3)')xx,zz,Mb_kl(iglob),rhob_kl(iglob),rhofb_kl(iglob)
-!         write(19,'(5e12.3)')xx,zz,phi_kl(iglob),eta_kl(iglob)
-         write(17,'(5e12.3)')xx,zz,cpI_kl(iglob),cpII_kl(iglob),cs_kl(iglob)
-         write(18,'(5e12.3)')xx,zz,rhobb_kl(iglob),rhofbb_kl(iglob),ratio_kl(iglob)
-         write(19,'(5e12.3)')xx,zz,phib_kl(iglob),eta_kl(iglob)
+         write(97,'(5e12.3)')xx,zz,mufr_kl(iglob),B_kl(iglob),C_kl(iglob)
+         write(98,'(5e12.3)')xx,zz,M_kl(iglob),rhot_kl(iglob),rhof_kl(iglob)
+         write(99,'(5e12.3)')xx,zz,sm_kl(iglob),eta_kl(iglob)
+         write(17,'(5e12.3)')xx,zz,mufrb_kl(iglob),Bb_kl(iglob),Cb_kl(iglob)
+         write(18,'(5e12.3)')xx,zz,Mb_kl(iglob),rhob_kl(iglob),rhofb_kl(iglob)
+         write(19,'(5e12.3)')xx,zz,phi_kl(iglob),eta_kl(iglob)
+!         write(17,'(5e12.3)')xx,zz,cpI_kl(iglob),cpII_kl(iglob),cs_kl(iglob)
+!         write(18,'(5e12.3)')xx,zz,rhobb_kl(iglob),rhofbb_kl(iglob),ratio_kl(iglob)
+!         write(19,'(5e12.3)')xx,zz,phib_kl(iglob),eta_kl(iglob)
      enddo 
-!    close(97)
-!    close(98)
-!    close(99)
+    close(97)
+    close(98)
+    close(99)
     close(17)
     close(18)
     close(19)
