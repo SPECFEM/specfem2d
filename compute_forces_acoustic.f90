@@ -400,10 +400,10 @@
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl
 
              if(save_forward .and. isolver ==1) then
-            b_absorb_acoustic_bottom(j,ispecabs,it) = potential_dot_acoustic(iglob)*weight/cpl
+            b_absorb_acoustic_bottom(i,ispecabs,it) = potential_dot_acoustic(iglob)*weight/cpl
              elseif(isolver == 2) then
             b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
-                                               b_absorb_acoustic_bottom(j,ispecabs,NSTEP-it+1)
+                                               b_absorb_acoustic_bottom(i,ispecabs,NSTEP-it+1)
              endif
 
           endif
@@ -463,9 +463,9 @@
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl
 
              if(save_forward .and. isolver ==1) then
-            b_absorb_acoustic_top(j,ispecabs,it) = potential_dot_acoustic(iglob)*weight/cpl
+            b_absorb_acoustic_top(i,ispecabs,it) = potential_dot_acoustic(iglob)*weight/cpl
              elseif(isolver == 2) then
-            b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - b_absorb_acoustic_top(j,ispecabs,NSTEP-it+1)
+            b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - b_absorb_acoustic_top(i,ispecabs,NSTEP-it+1)
              endif
 
           endif
