@@ -3646,6 +3646,11 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
            potential_acoustic,acoustic_surface, &
            ibool,nelem_acoustic_surface,npoin,nspec)
+   if(isolver == 2) then
+    call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
+                b_potential_acoustic,acoustic_surface, &
+                ibool,nelem_acoustic_surface,npoin,nspec)
+   endif
       endif
 
 ! *********************************************************
@@ -3964,6 +3969,11 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
                 potential_acoustic,acoustic_surface, &
                 ibool,nelem_acoustic_surface,npoin,nspec)
+   if(isolver == 2) then
+    call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
+                b_potential_acoustic,acoustic_surface, &
+                ibool,nelem_acoustic_surface,npoin,nspec)
+   endif
     endif
   endif
 
