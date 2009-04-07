@@ -10,7 +10,7 @@ To use the code:
 
 - edit the input file "DATA/Par_file" which describes the simulation. It contains comments and should be almost self-explanatory, if you need more details we do not have a manual for the 2D version but you can find useful information in the manuals of the 3D versions, since many parameters and the general philosophy is similar. They are available at http://geodynamics.org/wsvn/cig/seismo/3D in subdirectories USER_MANUAL. To create acoustic (fluid) regions, just set the S wave speed to zero and the code will see that these elements are fluid and switch to the right equations there automatically, and automatically match them with the solid regions
 
-- if you are using an external mesher (like GID or CUBIT), you should set "read_external_mesh" to true. 
+- if you are using an external mesher (like GID or CUBIT), you should set "read_external_mesh" to true.
      "mesh_file" is the file describing the mesh : first line is the number of elements, then a list of 4 nodes (quadrilaterals only) forming each elements on each line.
      "nodes_coords_file" is the file containing the coordinates (x and z) of each nodes : number of nodes on the first line, then coordinates x and z on each line.
      "materials_file" is the number of the material for every elements : an integer ranging from 1 to nbmodels on each line.
@@ -37,4 +37,42 @@ To use the code:
 - there are a few useful scripts and Fortran routines in directory UTILS
 
 - if you find bugs (or if you have comments or suggestions) please send an email to cig-seismo AT geodynamics.org and the developers will try to fix them and send you an updated version
+
+--------------------------
+
+Regarding the structure of some of the database files:
+
+Question: Can anyone tell me what the columns of the SPECFEM2D-5.2.2 boundary
+condition files in SPECFEM2D-5.2.2/DATA/Mesh_canyon are?
+
+SPECFEM2D-5.2.2/DATA/Mesh_canyoncanyon_absorbing_surface_file
+SPECFEM2D-5.2.2/DATA/Mesh_canyoncanyon_free_surface_file
+
+Answer: "canyon_absorbing_surface_file" refers to parameters related to the
+absorbing conditions:
+The first number (180) is the number of absorbing elements (nelemabs in the
+code).
+Then the columns are:
+column 1 = the element number
+column 2 = the number of nodes of this element that form the absorbing surface
+column 3 =  the first node
+column 4 = the second node
+
+"canyon_free_surface_file" refers to the elements of the free surface
+(relevant for enforcing free surface condition for acoustic media):
+The first number (160) is the number of  elements of the free surface.
+Then the columns are (similar to the absorbing case):
+column 1 = the element number
+column 2 = the number of nodes of this element that form the absorbing surface
+column 3 =  the first node
+column 4 = the second node
+
+Concerning the free surface description file, nodes/edges pertaining to
+elastic elements are discarded when the file is read (if for whatever
+reason it was simpler to include all the nodes/edges on one side of a
+studied area and that there are among them some elements that are
+elastic elements, only the nodes/edges of acoustic elements are kept).
+
+These files are opened and read in meshfem2D.F90 using subroutines
+read_abs_surface & read_acoustic_surface, which are in part_unstruct.F90
 
