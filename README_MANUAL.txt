@@ -2,6 +2,8 @@
 How to use SPECFEM2D version 5.2.2:
 -----------------------------------
 
+See file "todo_list_please_dont_remove.txt" to see a list of known bugs, problems, or missing options.
+
 To use the code:
 
 - edit the Makefile. There are several options available : -DUSE_MPI compiles with use of an MPI library. -DUSE_METIS enables use of graph partitioner METIS, the same goes for -DUSE_SCOTCH for SCOTCH.
@@ -29,6 +31,8 @@ To use the code:
 - the seismograms OUTPUT_FILES/*.sem* are simple ASCII files with two columns: time in the first colum and amplitude in the second, therefore they can be visualized with any tool you like, for instance "gnuplot"
 
 - if you set flag "assign_external_model" to .true. in DATA/Par_file, the velocity and density model that is given at the end of DATA/Par_file is then ignored and overwritten by the external velocity and density model that you define yourself in define_external_model.f90
+
+- when compiling with Intel ifort, use " -assume byterecl " option to create binary PNM images displaying the wave field
 
 - you can convolve them with any source time function in postprocessing later using "convolve_source_timefunction.csh" and "convolve_source_timefunction.f90", see the manual of the 3D code for details on how to do this
 
