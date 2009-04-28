@@ -501,6 +501,9 @@ program meshfem2D
     call read_value_double_precision(IIN,IGNORE_JUNK,xfin(ireceiverlines))
     call read_value_double_precision(IIN,IGNORE_JUNK,zfin(ireceiverlines))
     call read_value_logical(IIN,IGNORE_JUNK,enreg_surf(ireceiverlines))
+    if (read_external_mesh .and. enreg_surf(ireceiverlines)) then
+      stop 'Cannot use enreg_surf with external meshes!' 
+    endif
   enddo
 
 ! read display parameters
