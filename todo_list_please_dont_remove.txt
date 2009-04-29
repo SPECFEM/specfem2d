@@ -48,7 +48,7 @@ Jeroen Tromp wrote:
 
 SOMETHING THAT COULD BE MADE MORE GENERAL:
 
-at line 769 of specfem2D.F90:
+at line 770 of specfem2D.F90:
 !! DK DK if needed in the future, here the quality factor could be different for each point
 
 i.e. they could be given at each (i,j,ispec) instead of at each (ispec) only
