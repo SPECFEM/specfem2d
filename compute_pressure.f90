@@ -74,7 +74,7 @@
 
   integer :: N_SLS
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11
-  double precision :: Mu_nu1,Mu_nu2
+  double precision, dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
 
 ! local variables
   integer :: i,j,ispec,iglob
@@ -144,7 +144,7 @@
   integer :: N_SLS
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11
   real(kind=CUSTOM_REAL) :: e1_sum,e11_sum
-  double precision :: Mu_nu1,Mu_nu2
+  double precision, dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
   integer :: i_sls
 
 ! local variables
@@ -239,8 +239,8 @@
 ! viscoelastic medium, Geophysical Journal International, vol. 95, p. 597-611 (1988).
 
 ! compute unrelaxed elastic coefficients from formulas in Carcione 1993 page 111
-    lambdal_unrelaxed = (lambdal_relaxed + mul_relaxed) * Mu_nu1 - mul_relaxed * Mu_nu2
-    mul_unrelaxed = mul_relaxed * Mu_nu2
+    lambdal_unrelaxed = (lambdal_relaxed + mul_relaxed) * Mu_nu1(i,j,ispec) - mul_relaxed * Mu_nu2(i,j,ispec)
+    mul_unrelaxed = mul_relaxed * Mu_nu2(i,j,ispec)
     lambdalplus2mul_unrelaxed = lambdal_unrelaxed + TWO*mul_unrelaxed
 
 ! compute the stress using the unrelaxed Lame parameters (Carcione 1993, page 111)

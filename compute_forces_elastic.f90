@@ -83,8 +83,8 @@
 
   integer :: N_SLS
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11,e13
-  double precision, dimension(N_SLS) :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
-  double precision :: Mu_nu1,Mu_nu2
+  double precision, dimension(NGLLX,NGLLZ,nspec,N_SLS) :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
+  double precision, dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
   real(kind=CUSTOM_REAL) :: e1_sum,e11_sum,e13_sum
   integer :: i_sls
 
@@ -212,8 +212,8 @@
 ! viscoelastic medium, Geophysical Journal International, vol. 95, p. 597-611 (1988).
 
 ! compute unrelaxed elastic coefficients from formulas in Carcione 1993 page 111
-    lambdal_unrelaxed = (lambdal_relaxed + mul_relaxed) * Mu_nu1 - mul_relaxed * Mu_nu2
-    mul_unrelaxed = mul_relaxed * Mu_nu2
+    lambdal_unrelaxed = (lambdal_relaxed + mul_relaxed) * Mu_nu1(i,j,ispec) - mul_relaxed * Mu_nu2(i,j,ispec)
+    mul_unrelaxed = mul_relaxed * Mu_nu2(i,j,ispec)
     lambdalplus2mul_unrelaxed = lambdal_unrelaxed + TWO*mul_unrelaxed
 
 ! compute the stress using the unrelaxed Lame parameters (Carcione 1993, page 111)
@@ -636,12 +636,12 @@
 
 ! evolution e1
   Un = e1(i,j,ispec,i_sls)
-  tauinv = - inv_tau_sigma_nu1(i_sls)
+  tauinv = - inv_tau_sigma_nu1(i,j,ispec,i_sls)
   tauinvsquare = tauinv * tauinv
   tauinvcube = tauinvsquare * tauinv
   tauinvUn = tauinv * Un
-  Sn   = theta_n * phi_nu1(i_sls)
-  Snp1 = theta_np1 * phi_nu1(i_sls)
+  Sn   = theta_n * phi_nu1(i,j,ispec,i_sls)
+  Snp1 = theta_np1 * phi_nu1(i,j,ispec,i_sls)
   Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
       twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
       fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
@@ -650,12 +650,12 @@
 
 ! evolution e11
   Un = e11(i,j,ispec,i_sls)
-  tauinv = - inv_tau_sigma_nu2(i_sls)
+  tauinv = - inv_tau_sigma_nu2(i,j,ispec,i_sls)
   tauinvsquare = tauinv * tauinv
   tauinvcube = tauinvsquare * tauinv
   tauinvUn = tauinv * Un
-  Sn   = (dux_dxl_n(i,j,ispec) - theta_n/TWO) * phi_nu2(i_sls)
-  Snp1 = (dux_dxl_np1(i,j,ispec) - theta_np1/TWO) * phi_nu2(i_sls)
+  Sn   = (dux_dxl_n(i,j,ispec) - theta_n/TWO) * phi_nu2(i,j,ispec,i_sls)
+  Snp1 = (dux_dxl_np1(i,j,ispec) - theta_np1/TWO) * phi_nu2(i,j,ispec,i_sls)
   Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
       twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
       fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
@@ -664,12 +664,12 @@
 
 ! evolution e13
   Un = e13(i,j,ispec,i_sls)
-  tauinv = - inv_tau_sigma_nu2(i_sls)
+  tauinv = - inv_tau_sigma_nu2(i,j,ispec,i_sls)
   tauinvsquare = tauinv * tauinv
   tauinvcube = tauinvsquare * tauinv
   tauinvUn = tauinv * Un
-  Sn   = (dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)) * phi_nu2(i_sls)
-  Snp1 = (dux_dzl_np1(i,j,ispec) + duz_dxl_np1(i,j,ispec)) * phi_nu2(i_sls)
+  Sn   = (dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)) * phi_nu2(i,j,ispec,i_sls)
+  Snp1 = (dux_dzl_np1(i,j,ispec) + duz_dxl_np1(i,j,ispec)) * phi_nu2(i,j,ispec,i_sls)
   Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
       twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
       fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &

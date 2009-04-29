@@ -249,15 +249,15 @@
 
 ! for attenuation
   integer  :: N_SLS
-  double precision  :: Qp_attenuation
-  double precision  :: Qs_attenuation
+  double precision, dimension(:), allocatable  :: Qp_attenuation
+  double precision, dimension(:), allocatable  :: Qs_attenuation
   double precision  :: f0_attenuation
   integer nspec_allocate
   double precision :: deltatsquare,deltatcube,deltatfourth,twelvedeltat,fourdeltatsquare
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1,e11,e13
-  double precision, dimension(:), allocatable :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
-  double precision :: Mu_nu1,Mu_nu2
+  double precision, dimension(:,:,:,:), allocatable :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
+  double precision, dimension(:,:,:) , allocatable :: Mu_nu1,Mu_nu2
 
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
     dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n,dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1
@@ -575,7 +575,7 @@
 !----  read attenuation information
 !
   read(IIN,"(a80)") datlin
-  read(IIN,*) N_SLS, Qp_attenuation, Qs_attenuation, f0_attenuation
+  read(IIN,*) N_SLS, f0_attenuation
 
 !
 !-----  check the input
@@ -651,14 +651,16 @@ if(ipass == 1) then
   allocate(Uzinterp(pointsdisp,pointsdisp))
   allocate(density(numat))
   allocate(elastcoef(4,numat))
+  allocate(Qp_attenuation(numat))
+  allocate(Qs_attenuation(numat))
   allocate(kmato(nspec))
   allocate(knods(ngnod,nspec))
   allocate(ibool(NGLLX,NGLLZ,nspec))
   allocate(elastic(nspec))
-  allocate(inv_tau_sigma_nu1(N_SLS))
-  allocate(inv_tau_sigma_nu2(N_SLS))
-  allocate(phi_nu1(N_SLS))
-  allocate(phi_nu2(N_SLS))
+  allocate(inv_tau_sigma_nu1(NGLLX,NGLLZ,nspec,N_SLS))
+  allocate(inv_tau_sigma_nu2(NGLLX,NGLLZ,nspec,N_SLS))
+  allocate(phi_nu1(NGLLX,NGLLZ,nspec,N_SLS))
+  allocate(phi_nu2(NGLLX,NGLLZ,nspec,N_SLS))
 endif
 
 ! --- allocate arrays for absorbing boundary conditions
@@ -697,7 +699,7 @@ endif
 !
 !---- read the material properties
 !
-  call gmat01(density,elastcoef,numat,myrank,ipass)
+  call gmat01(density,elastcoef,numat,myrank,ipass,Qp_attenuation,Qs_attenuation)
 
 !
 !----  read spectral macrobloc data
@@ -758,11 +760,22 @@ if(ipass == 1) then
   allocate(duz_dzl_np1(NGLLX,NGLLZ,nspec_allocate))
   allocate(duz_dxl_np1(NGLLX,NGLLZ,nspec_allocate))
   allocate(dux_dzl_np1(NGLLX,NGLLZ,nspec_allocate))
+  allocate(Mu_nu1(NGLLX,NGLLZ,nspec))
+  allocate(Mu_nu2(NGLLX,NGLLZ,nspec))
 endif
 
-! define the attenuation constants
-  call attenuation_model(N_SLS,Qp_attenuation,Qs_attenuation,f0_attenuation, &
-      inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2)
+! define the attenuation quality factors.
+! they can be different for each element.
+!! DK DK if needed in the future, here the quality factor could be different for each point
+  do ispec = 1,nspec
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+        call attenuation_model(N_SLS,Qp_attenuation(kmato(ispec)),Qs_attenuation(kmato(ispec)), &
+                f0_attenuation,inv_tau_sigma_nu1(i,j,ispec,:),phi_nu1(i,j,ispec,:), &
+                inv_tau_sigma_nu2(i,j,ispec,:),phi_nu2(i,j,ispec,:),Mu_nu1(i,j,ispec),Mu_nu2(i,j,ispec))
+      enddo
+    enddo
+  enddo
 
 !
 !----  read interfaces data
@@ -1326,7 +1339,7 @@ if (ipass == NUMBER_OF_PASSES) then
       if ( dist_current < distmin ) then
         n1_tangential_detection_curve = i
         distmin = dist_current
-        
+
       endif
     enddo
 
@@ -1356,11 +1369,11 @@ if (ipass == NUMBER_OF_PASSES) then
       call MPI_send(angleforce,1,MPI_DOUBLE_PRECISION,0,43,MPI_COMM_WORLD,ier)
 #endif
     end if
-  
+
 #ifdef USE_MPI
     call MPI_bcast(angleforce_recv,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
     angleforce = angleforce_recv
-#endif 
+#endif
   endif
 
 ! compute distance from source to receivers following the curve
@@ -1404,19 +1417,19 @@ if (ipass == NUMBER_OF_PASSES) then
 
     if ( myrank == 0 ) then
       open(unit=11,file='OUTPUT_FILES/dist_rec_tangential_detection_curve', form='formatted', status='unknown')
-    end if 
+    end if
       irecloc = 0
     do irec = 1,nrec
-     
+
       if ( myrank == 0 ) then
         if ( which_proc_receiver(irec) == myrank ) then
           irecloc = irecloc + 1
           n1_tangential_detection_curve = rec_tangential_detection_curve(irecloc)
           x_final_receiver_dummy = x_final_receiver(irec)
           z_final_receiver_dummy = z_final_receiver(irec)
-#ifdef USE_MPI       
+#ifdef USE_MPI
         else
-           
+
           call MPI_RECV(n1_tangential_detection_curve,1,MPI_INTEGER,&
              which_proc_receiver(irec),irec,MPI_COMM_WORLD,request_mpi_status,ier)
           call MPI_RECV(x_final_receiver_dummy,1,MPI_DOUBLE_PRECISION,&
@@ -1436,7 +1449,7 @@ if (ipass == NUMBER_OF_PASSES) then
           call MPI_SEND(z_final_receiver(irec),1,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ier)
         end if
 #endif
-        
+
       end if
       if ( myrank == 0 ) then
         write(11,*) dist_tangential_detection_curve(n1_tangential_detection_curve)
@@ -3600,27 +3613,27 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
 
 subroutine tri_quad(n, n1, nnodes)
-      
+
       implicit none
 
       integer  :: n1, n2, n3, n4, nnodes
       integer, dimension(4)  :: n
 
-         
+
       n(2) = n1
-      
+
       if ( n1 == 1 ) then
          n(1) = nnodes
       else
          n(1) = n1-1
-      endif 
-      
+      endif
+
       if ( n1 == nnodes ) then
          n(3) = 1
       else
          n(3) = n1+1
       endif
-   
+
       if ( n(3) == nnodes ) then
          n(4) = 1
       else
@@ -3632,15 +3645,15 @@ end subroutine tri_quad
 
 
 subroutine calcul_normale( angle, n1_x, n2_x, n3_x, n4_x, n1_z, n2_z, n3_z, n4_z )
-      
+
       implicit none
-      
+
       include 'constants.h'
 
       double precision :: angle
       double precision :: n1_x, n2_x, n3_x, n4_x, n1_z, n2_z, n3_z, n4_z
-      
-      double precision  :: theta1, theta2, theta3 
+
+      double precision  :: theta1, theta2, theta3
       double precision  :: costheta1, costheta2, costheta3
 
       if ( abs(n2_z - n1_z) < TINYVAL ) then
@@ -3658,12 +3671,12 @@ subroutine calcul_normale( angle, n1_x, n2_x, n3_x, n4_x, n1_z, n2_z, n3_z, n4_z
       else
         costheta3 = (n4_z - n3_z) / sqrt((n4_x - n3_x)**2 + (n4_z - n3_z)**2)
       endif
-      
+
       theta1 = - sign(1.d0,n2_x - n1_x) * acos(costheta1)
       theta2 = - sign(1.d0,n3_x - n2_x) * acos(costheta2)
       theta3 = - sign(1.d0,n4_x - n3_x) * acos(costheta3)
-      
-      
+
+
       angle = angle + ( theta1 + theta2 + theta3 ) / 3.d0 + PI/2.d0
       !angle = theta2
 

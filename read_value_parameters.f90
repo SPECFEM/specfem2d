@@ -139,18 +139,18 @@
 
 !--------------------
 
-  subroutine read_material_parameters(iin,ignore_junk,i,icodematread,rhoread,cpread,csread,aniso3read,aniso4read)
+  subroutine read_material_parameters(iin,ignore_junk,i,icodematread,rhoread,Qpread,Qsread,cpread,csread,aniso3read,aniso4read)
 
   implicit none
 
   integer iin
   logical ignore_junk
   integer i,icodematread
-  double precision rhoread,cpread,csread,aniso3read,aniso4read
+  double precision rhoread,Qpread,Qsread,cpread,csread,aniso3read,aniso4read
   character(len=100) string_read
 
   call read_next_line(iin,ignore_junk,string_read)
-  read(string_read,*) i,icodematread,rhoread,cpread,csread,aniso3read,aniso4read
+  read(string_read,*) i,icodematread,rhoread,Qpread,Qsread,cpread,csread,aniso3read,aniso4read
 
   end subroutine read_material_parameters
 

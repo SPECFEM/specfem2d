@@ -16,7 +16,7 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes # file containing the
 nproc                           = 1              # number of processes
 partitioning_method             = 1              # ascending order = 1, Metis = 2, Scotch = 3
 partitioning_strategy          = 01110 #b{strat=m{asc=g,low=g,rat=1.0,type=h,vert=4}} #01110          # options concerning partitioning strategy.
-                                                 
+
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
 xmax                            = 4000.d0        # abscissa of right side of the model
@@ -30,7 +30,7 @@ TURN_ATTENUATION_ON             = .false.        # turn attenuation on or off fo
 
 
 # absorbing boundaries parameters
-absorbing_conditions            = .true.	 # absorbing boundary active or not
+absorbing_conditions            = .true.   # absorbing boundary active or not
 absorbbottom                    = .true.
 absorbright                     = .true.
 absorbtop                       = .false.
@@ -55,9 +55,11 @@ factor                          = 1.d10          # amplification factor
 force_normal_to_surface         = .false.        # angleforce normal to surface (external mesh and curve file needed)
 
 # constants for attenuation
-N_SLS                           = 2                      # number of standard linear solids for attenuation 
-Qp_attenuation                  = 136.4376068115         # quality factor P for attenuation
-Qs_attenuation                  = 136.4376068115         # quality factor S for attenuation
+N_SLS                           = 2                      # number of standard linear solids for attenuation
+## DK DK Qp and Qs can now vary in each spectral element and are therefore given in the same list
+## DK DK list as rho, Vp and Vs at the end of this file
+#Qp_attenuation                  = 136.4376068115         # quality factor P for attenuation
+#Qs_attenuation                  = 136.4376068115         # quality factor S for attenuation
 f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, else it is f0
 
 # receiver line parameters for seismograms
@@ -93,13 +95,13 @@ outputgrid                      = .false.        # save the grid in a text file 
 
 # velocity and density models
 nbmodels                        = 4              # nb of different models
-# define models as (model_number,1,rho,vp,vs,0,0) or (model_number,2,rho,c11,c13,c33,c44)
-# set vs to zero to make a given model acoustic
+# define models as (model_number,1,rho,Vp,Vs,0,0,Qp,Qs) or (model_number,2,rho,c11,c13,c33,c44,Qp,Qs)
+# set Vs to zero to make a given model acoustic
 # the mesh can contain both acoustic and elastic models simultaneously
-1 1 2700.d0 3000.d0 1732.051d0 0 0
-2 1 2500.d0 2700.d0 0 0 0 #1558.89d0  0 0
-3 1 2200.d0 2500.d0 1443.375d0 0 0
-4 1 2200.d0 2200.d0 1343.375d0 0 0
+1 1 2700.d0 3000.d0 1732.051d0 0 0 10.d0 10.d0
+2 1 2500.d0 2700.d0 0 0 0 136.d0 136.d0 #1558.89d0  0 0 136.d0 136.d0
+3 1 2200.d0 2500.d0 1443.375d0 0 0 136.d0 136.d0
+4 1 2200.d0 2200.d0 1343.375d0 0 0 136.d0 136.d0
 # define the different regions of the model in the (nx,nz) spectral element mesh
 nbregions                       = 4              # nb of regions and model number for each
 1 80  1 20 1
