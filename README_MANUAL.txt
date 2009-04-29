@@ -1,8 +1,8 @@
 
-How to use SPECFEM2D version 5.2.2:
------------------------------------
+How to use SPECFEM2D:
+---------------------
 
-See file "todo_list_please_dont_remove.txt" to see a list of known bugs, problems, or missing options.
+See file "todo_list_please_dont_remove.txt" for a list of known bugs, problems, or missing options.
 
 To use the code:
 
@@ -78,5 +78,5 @@ studied area and that there are among them some elements that are
 elastic elements, only the nodes/edges of acoustic elements are kept).
 
 These files are opened and read in meshfem2D.F90 using subroutines
-read_abs_surface & read_acoustic_surface, which are in part_unstruct.F90
+read_abs_surface and read_acoustic_surface, which are in part_unstruct.F90
 
