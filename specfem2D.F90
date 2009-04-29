@@ -257,7 +257,9 @@
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1,e11,e13
   double precision, dimension(:,:,:,:), allocatable :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
+  double precision, dimension(:), allocatable :: inv_tau_sigma_nu1_sent,phi_nu1_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent
   double precision, dimension(:,:,:) , allocatable :: Mu_nu1,Mu_nu2
+  double precision :: Mu_nu1_sent,Mu_nu2_sent
 
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
     dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n,dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1
@@ -661,6 +663,10 @@ if(ipass == 1) then
   allocate(inv_tau_sigma_nu2(NGLLX,NGLLZ,nspec,N_SLS))
   allocate(phi_nu1(NGLLX,NGLLZ,nspec,N_SLS))
   allocate(phi_nu2(NGLLX,NGLLZ,nspec,N_SLS))
+  allocate(inv_tau_sigma_nu1_sent(N_SLS))
+  allocate(inv_tau_sigma_nu2_sent(N_SLS))
+  allocate(phi_nu1_sent(N_SLS))
+  allocate(phi_nu2_sent(N_SLS))
 endif
 
 ! --- allocate arrays for absorbing boundary conditions
@@ -768,11 +774,16 @@ endif
 ! they can be different for each element.
 !! DK DK if needed in the future, here the quality factor could be different for each point
   do ispec = 1,nspec
+    call attenuation_model(N_SLS,Qp_attenuation(kmato(ispec)),Qs_attenuation(kmato(ispec)), &
+            f0_attenuation,inv_tau_sigma_nu1_sent,phi_nu1_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent)
     do j = 1,NGLLZ
       do i = 1,NGLLX
-        call attenuation_model(N_SLS,Qp_attenuation(kmato(ispec)),Qs_attenuation(kmato(ispec)), &
-                f0_attenuation,inv_tau_sigma_nu1(i,j,ispec,:),phi_nu1(i,j,ispec,:), &
-                inv_tau_sigma_nu2(i,j,ispec,:),phi_nu2(i,j,ispec,:),Mu_nu1(i,j,ispec),Mu_nu2(i,j,ispec))
+        inv_tau_sigma_nu1(i,j,ispec,:) = inv_tau_sigma_nu1_sent(:)
+        phi_nu1(i,j,ispec,:) = phi_nu1_sent(:)
+        inv_tau_sigma_nu2(i,j,ispec,:) = inv_tau_sigma_nu2_sent(:)
+        phi_nu2(i,j,ispec,:) = phi_nu2_sent(:)
+        Mu_nu1(i,j,ispec) = Mu_nu1_sent
+        Mu_nu2(i,j,ispec) = Mu_nu2_sent
       enddo
     enddo
   enddo
@@ -908,7 +919,7 @@ endif
 !---- read tangential detection curve
 !
   read(IIN,"(a80)") datlin
-  read(IIN,*), force_normal_to_surface,rec_normal_to_surface
+  read(IIN,*) force_normal_to_surface,rec_normal_to_surface
   if (nnodes_tangential_curve > 0) then
 if (ipass == 1) then
     allocate(nodes_tangential_curve(2,nnodes_tangential_curve))
@@ -3616,7 +3627,7 @@ subroutine tri_quad(n, n1, nnodes)
 
       implicit none
 
-      integer  :: n1, n2, n3, n4, nnodes
+      integer  :: n1, nnodes
       integer, dimension(4)  :: n
 
 

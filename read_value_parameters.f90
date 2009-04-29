@@ -150,7 +150,7 @@
   character(len=100) string_read
 
   call read_next_line(iin,ignore_junk,string_read)
-  read(string_read,*) i,icodematread,rhoread,Qpread,Qsread,cpread,csread,aniso3read,aniso4read
+  read(string_read,*) i,icodematread,rhoread,cpread,csread,aniso3read,aniso4read,Qpread,Qsread
 
   end subroutine read_material_parameters
 
