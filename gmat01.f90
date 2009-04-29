@@ -40,7 +40,7 @@
 !
 !========================================================================
 
-  subroutine gmat01(density_array,elastcoef,numat,myrank,ipass)
+  subroutine gmat01(density_array,elastcoef,numat,myrank,ipass,Qp_array,Qs_array)
 
 ! read properties of a 2D isotropic or anisotropic linear elastic element
 
@@ -52,11 +52,11 @@
   double precision lambdaplus2mu,kappa
 
   integer numat,myrank,ipass
-  double precision density_array(numat),elastcoef(4,numat)
+  double precision density_array(numat),elastcoef(4,numat),Qp_array(numat),Qs_array(numat)
 
   integer in,n,indic
-  double precision young,poisson,density,cp,cs,mu,two_mu,lambda
-  double precision val1,val2,val3,val4
+  double precision young,poisson,density,cp,cs,mu,two_mu,lambda,Qp,Qs
+  double precision val1,val2,val3,val4,val5,val6
   double precision c11,c13,c33,c44
 
 !
@@ -64,13 +64,15 @@
 !
   density_array(:) = zero
   elastcoef(:,:) = zero
+  Qp_array(:) = zero
+  Qs_array(:) = zero
 
   if(myrank == 0 .and. ipass == 1) write(IOUT,100) numat
 
   read(IIN,"(a80)") datlin
   do in = 1,numat
 
-   read(IIN,*) n,indic,density,val1,val2,val3,val4
+   read(IIN,*) n,indic,density,val1,val2,val3,val4,val5,val6
 
    if(n<1 .or. n>numat) call exit_MPI('Wrong material set number')
 
@@ -80,6 +82,10 @@
 ! P and S velocity
       cp = val1
       cs = val2
+
+! Qp and Qs values
+      Qp = val5
+      Qs = val6
 
 ! Lam'e parameters
       lambdaplus2mu = density*cp*cp
@@ -130,6 +136,8 @@
   endif
 
   density_array(n) = density
+  Qp_array(n) = Qp
+  Qs_array(n) = Qs
 
 !
 !----    check what has been read
@@ -138,12 +146,12 @@
   if(indic == 1) then
 ! material can be acoustic (fluid) or elastic (solid)
     if(elastcoef(2,n) > TINYVAL) then
-      write(IOUT,200) n,cp,cs,density,poisson,lambda,mu,kappa,young
+      write(IOUT,200) n,cp,cs,density,poisson,lambda,mu,kappa,young,Qp,Qs
     else
-      write(IOUT,300) n,cp,density,kappa
+      write(IOUT,300) n,cp,density,kappa,Qp,Qs
     endif
   else
-    write(IOUT,400) n,c11,c13,c33,c44,density,sqrt(c33/density),sqrt(c11/density),sqrt(c44/density),sqrt(c44/density)
+    write(IOUT,400) n,c11,c13,c33,c44,density,sqrt(c33/density),sqrt(c11/density),sqrt(c44/density),sqrt(c44/density),Qp,Qs
   endif
   endif
 
@@ -167,7 +175,9 @@
          'First Lame parameter Lambda. . . (lambda) =',1pe15.8,/5x, &
          'Second Lame parameter Mu. . . . . . .(mu) =',1pe15.8,/5x, &
          'Bulk modulus Kappa . . . . . . . .(kappa) =',1pe15.8,/5x, &
-         'Young''s modulus E. . . . . . . . .(young) =',1pe15.8)
+         'Young''s modulus E. . . . . . . . .(young) =',1pe15.8,/5x, &
+         'Qp_attenuation. . . . . . . . . . . .(Qp) =',1pe15.8,/5x, &
+         'Qs_attenuation. . . . . . . . . . . .(Qs) =',1pe15.8)
 
   300   format(//5x,'-------------------------------',/5x, &
          '-- Acoustic (fluid) material --',/5x, &
@@ -175,7 +185,9 @@
          'Material set number. . . . . . . . (jmat) =',i6,/5x, &
          'P-wave velocity. . . . . . . . . . . (cp) =',1pe15.8,/5x, &
          'Mass density. . . . . . . . . . (density) =',1pe15.8,/5x, &
-         'Bulk modulus Kappa . . . . . . . .(kappa) =',1pe15.8)
+         'Bulk modulus Kappa . . . . . . . .(kappa) =',1pe15.8,/5x, &
+         'Qp_attenuation. . . . . . . . . . . .(Qp) =',1pe15.8,/5x, &
+         'Qs_attenuation. . . . . . . . . . . .(Qs) =',1pe15.8)
 
   400   format(//5x,'-------------------------------------',/5x, &
          '-- Transverse anisotropic material --',/5x, &
@@ -189,7 +201,9 @@
          'Velocity of qP along vertical axis. . . . =',1pe15.8,/5x, &
          'Velocity of qP along horizontal axis. . . =',1pe15.8,/5x, &
          'Velocity of qSV along vertical axis . . . =',1pe15.8,/5x, &
-         'Velocity of qSV along horizontal axis . . =',1pe15.8)
+         'Velocity of qSV along horizontal axis . . =',1pe15.8,/5x, &
+         'Qp_attenuation. . . . . . . . . . . .(Qp) =',1pe15.8,/5x, &
+         'Qs_attenuation. . . . . . . . . . . .(Qs) =',1pe15.8)
 
   end subroutine gmat01
 

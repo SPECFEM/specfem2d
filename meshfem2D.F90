@@ -96,7 +96,7 @@ program meshfem2D
   double precision :: gamma,absx,a00,a01,bot0,top0
 
 ! to store density and velocity model
-  double precision, dimension(:), allocatable :: rho,cp,cs,aniso3,aniso4
+  double precision, dimension(:), allocatable :: rho,cp,cs,aniso3,aniso4,Qp,Qs
   integer, dimension(:), allocatable :: icodemat
   integer, dimension(:), allocatable :: num_material
 
@@ -131,7 +131,7 @@ program meshfem2D
 
   double precision tang1,tangN,vpregion,vsregion,poisson_ratio
   double precision cutsnaps,sizemax_arrows,anglerec,xmin,xmax,deltat
-  double precision rhoread,cpread,csread,aniso3read,aniso4read
+  double precision rhoread,cpread,csread,aniso3read,aniso4read,Qpread,Qsread
 
   double precision, dimension(:), allocatable :: xdeb,zdeb,xfin,zfin
 
@@ -210,8 +210,6 @@ program meshfem2D
 
 ! variables used for attenuation
   integer  :: N_SLS
-  double precision  :: Qp_attenuation
-  double precision  :: Qs_attenuation
   double precision  :: f0_attenuation
 
 ! variables used for tangential detection
@@ -467,8 +465,6 @@ program meshfem2D
 
 ! read constants for attenuation
   call read_value_integer(IIN,IGNORE_JUNK,N_SLS)
-  call read_value_double_precision(IIN,IGNORE_JUNK,Qp_attenuation)
-  call read_value_double_precision(IIN,IGNORE_JUNK,Qs_attenuation)
   call read_value_double_precision(IIN,IGNORE_JUNK,f0_attenuation)
 
 ! if source is not a Dirac or Heavyside then f0_attenuation is f0
@@ -502,7 +498,7 @@ program meshfem2D
     call read_value_double_precision(IIN,IGNORE_JUNK,zfin(ireceiverlines))
     call read_value_logical(IIN,IGNORE_JUNK,enreg_surf(ireceiverlines))
     if (read_external_mesh .and. enreg_surf(ireceiverlines)) then
-      stop 'Cannot use enreg_surf with external meshes!' 
+      stop 'Cannot use enreg_surf with external meshes!'
     endif
   enddo
 
@@ -540,6 +536,8 @@ program meshfem2D
   allocate(cs(nb_materials))
   allocate(aniso3(nb_materials))
   allocate(aniso4(nb_materials))
+  allocate(Qp(nb_materials))
+  allocate(Qs(nb_materials))
   allocate(num_material(nelmnts))
 
   icodemat(:) = 0
@@ -548,17 +546,22 @@ program meshfem2D
   cs(:) = 0.d0
   aniso3(:) = 0.d0
   aniso4(:) = 0.d0
+  Qp(:) = 0.d0
+  Qs(:) = 0.d0
   num_material(:) = 0
 
   do imaterial=1,nb_materials
-    call read_material_parameters(IIN,DONT_IGNORE_JUNK,i,icodematread,rhoread,cpread,csread,aniso3read,aniso4read)
+    call read_material_parameters(IIN,DONT_IGNORE_JUNK,i,icodematread,rhoread,Qpread,Qsread,cpread,csread,aniso3read,aniso4read)
     if(i < 1 .or. i > nb_materials) stop 'Wrong material number!'
     icodemat(i) = icodematread
     rho(i) = rhoread
     cp(i) = cpread
     cs(i) = csread
+    Qp(i) = Qpread
+    Qs(i) = Qsread
 
     if(rho(i) <= 0.d0 .or. cp(i) <= 0.d0 .or. cs(i) < 0.d0) stop 'negative value of velocity or density'
+    if(Qp(i) <= 0.d0 .or. Qs(i) <= 0.d0) stop 'negative value of Qp or Qs'
 
     aniso3(i) = aniso3read
     aniso4(i) = aniso4read
@@ -570,7 +573,7 @@ program meshfem2D
   do i=1,nb_materials
     if(icodemat(i) /= ANISOTROPIC_MATERIAL) then
       print *,'Material #',i,' isotropic'
-      print *,'rho,cp,cs = ',rho(i),cp(i),cs(i)
+      print *,'rho,cp,cs = ',rho(i),cp(i),cs(i),Qp(i),Qs(i)
       if(cs(i) < TINYVAL) then
         print *,'Material is fluid'
       else
@@ -578,7 +581,7 @@ program meshfem2D
       endif
     else
       print *,'Material #',i,' anisotropic'
-      print *,'rho,c11,c13,c33,c44 = ',rho(i),cp(i),cs(i),aniso3(i),aniso4(i)
+      print *,'rho,c11,c13,c33,c44 = ',rho(i),cp(i),cs(i),aniso3(i),aniso4(i),Qp(i),Qs(i)
     endif
   print *
   enddo
@@ -638,6 +641,8 @@ program meshfem2D
            poisson_ratio = 0.5d0*(vpregion*vpregion-2.d0*vsregion*vsregion) / (vpregion*vpregion-vsregion*vsregion)
            print *,'Poisson''s ratio = ',poisson_ratio
            if(poisson_ratio <= -1.00001d0 .or. poisson_ratio >= 0.50001d0) stop 'incorrect value of Poisson''s ratio'
+           print *,'Qp = ',Qp(imaterial_number)
+           print *,'Qs = ',Qs(imaterial_number)
         else
            print *,'Material # ',imaterial_number,' anisotropic'
            print *,'c11 = ',cp(imaterial_number)
@@ -645,6 +650,8 @@ program meshfem2D
            print *,'c33 = ',aniso3(imaterial_number)
            print *,'c44 = ',aniso4(imaterial_number)
            print *,'rho = ',rho(imaterial_number)
+           print *,'Qp = ',Qp(imaterial_number)
+           print *,'Qs = ',Qs(imaterial_number)
         endif
         print *,' -----'
 
@@ -1168,20 +1175,17 @@ program meshfem2D
      write(15,*) source_type,time_function_type,xs,zs,f0,t0,factor,angleforce,Mxx,Mzz,Mxz
 
      write(15,*) 'attenuation'
-     write(15,*) N_SLS, Qp_attenuation, Qs_attenuation, f0_attenuation
+     write(15,*) N_SLS, f0_attenuation
 
      write(15,*) 'Coordinates of macrobloc mesh (coorg):'
-
 
      call write_glob2loc_nodes_database(15, iproc, npgeo, nodes_coords, glob2loc_nodes_nparts, glob2loc_nodes_parts, &
           glob2loc_nodes, nnodes, 2)
 
-
      write(15,*) 'numat ngnod nspec pointsdisp plot_lowerleft_corner_only'
      write(15,*) nb_materials,ngnod,nspec,pointsdisp,plot_lowerleft_corner_only
 
-
-     if ( any_abs ) then
+     if (any_abs) then
         call write_abs_merge_database(15, nelemabs_merge, nelemabs_loc, &
              abs_surface_char, abs_surface_merge, &
              ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
@@ -1191,10 +1195,9 @@ program meshfem2D
         nelemabs_loc = 0
      endif
 
-     call Write_surface_database(15, nelem_acoustic_surface, acoustic_surface, nelem_acoustic_surface_loc, &
+     call write_surface_database(15, nelem_acoustic_surface, acoustic_surface, nelem_acoustic_surface_loc, &
           iproc, glob2loc_elmnts, &
           glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes, part, 1)
-
 
      call write_fluidsolid_edges_database(15, nedges_coupled, nedges_coupled_loc, &
           edges_coupled, glob2loc_elmnts, part, iproc, 1)
@@ -1202,27 +1205,25 @@ program meshfem2D
      write(15,*) 'nelemabs nelem_acoustic_surface num_fluid_solid_edges nnodes_tangential_curve'
      write(15,*) nelemabs_loc,nelem_acoustic_surface_loc,nedges_coupled_loc,nnodes_tangential_curve
 
-
-     write(15,*) 'Material sets (num 1 rho vp vs 0 0) or (num 2 rho c11 c13 c33 c44)'
+     write(15,*) 'Material sets (num 1 rho vp vs 0 0 Qp Qs) or (num 2 rho c11 c13 c33 c44 Qp Qs)'
      do i=1,nb_materials
-        write(15,*) i,icodemat(i),rho(i),cp(i),cs(i),aniso3(i),aniso4(i)
+       write(15,*) i,icodemat(i),rho(i),cp(i),cs(i),aniso3(i),aniso4(i),Qp(i),Qs(i)
      enddo
 
      write(15,*) 'Arrays kmato and knods for each bloc:'
-
 
      call write_partition_database(15, iproc, nspec, nelmnts, elmnts, glob2loc_elmnts, glob2loc_nodes_nparts, &
           glob2loc_nodes_parts, glob2loc_nodes, part, num_material, ngnod, 2)
 
      if ( nproc /= 1 ) then
-        call Write_interfaces_database(15, tab_interfaces, tab_size_interfaces, nproc, iproc, ninterfaces, &
+        call write_interfaces_database(15, tab_interfaces, tab_size_interfaces, nproc, iproc, ninterfaces, &
              my_ninterface, my_interfaces, my_nb_interfaces, glob2loc_elmnts, glob2loc_nodes_nparts, glob2loc_nodes_parts, &
              glob2loc_nodes, 1)
 
         write(15,*) 'Interfaces:'
         write(15,*) my_ninterface, maxval(my_nb_interfaces)
 
-        call Write_interfaces_database(15, tab_interfaces, tab_size_interfaces, nproc, iproc, ninterfaces, &
+        call write_interfaces_database(15, tab_interfaces, tab_size_interfaces, nproc, iproc, ninterfaces, &
              my_ninterface, my_interfaces, my_nb_interfaces, glob2loc_elmnts, glob2loc_nodes_nparts, glob2loc_nodes_parts, &
              glob2loc_nodes, 2)
 
@@ -1242,7 +1243,7 @@ program meshfem2D
      endif
 
      write(15,*) 'List of acoustic free-surface elements:'
-     call Write_surface_database(15, nelem_acoustic_surface, acoustic_surface, nelem_acoustic_surface_loc, &
+     call write_surface_database(15, nelem_acoustic_surface, acoustic_surface, nelem_acoustic_surface_loc, &
           iproc, glob2loc_elmnts, &
           glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes, part, 2)
 
