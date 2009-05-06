@@ -612,6 +612,8 @@
   allocate( t0(NSOURCE) )
   allocate( factor(NSOURCE) )
   allocate( angleforce(NSOURCE) )
+  allocate( hdur(NSOURCE) )
+  allocate( hdur_gauss(NSOURCE) )
   allocate( Mxx(NSOURCE) )
   allocate( Mxz(NSOURCE) )
   allocate( Mzz(NSOURCE) )
