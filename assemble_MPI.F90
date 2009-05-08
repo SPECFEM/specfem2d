@@ -601,7 +601,7 @@ end subroutine assemble_MPI_vector_el
 
 
 !-----------------------------------------------
-! Dummy subroutine, to be able to stop the code whether sequential or parallel.
+! subroutine to stop the code whether sequential or parallel.
 !-----------------------------------------------
 subroutine exit_MPI(error_msg)
 

@@ -2079,9 +2079,14 @@ endif
 
   if(initialfield) then
      write(IOUT,*)
-     write(IOUT,*) 'Reading initial fields from external file...'
+!! DK DK reading of an initial field from an external file has been suppressed
+!! DK DK and replaced with the implementation of an analytical plane wave
+!! DK DK     write(IOUT,*) 'Reading initial fields from external file...'
+     write(IOUT,*) 'Implementing an analytical initial plane wave...'
      write(IOUT,*)
      if(any_acoustic) call exit_MPI('initial field currently implemented for purely elastic simulation only')
+!! DK DK for now there is a bug in the initial plane wave when MPI is used
+     if(nproc > 1) call exit_MPI('for now there is a bug in the initial plane wave when MPI is used')
 
       !=======================================================================
       !
