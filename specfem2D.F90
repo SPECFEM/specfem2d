@@ -378,7 +378,8 @@
   double precision, external :: ricker_Bielak_displ,ricker_Bielak_veloc,ricker_Bielak_accel
   double precision :: angleforce_refl, c_inc, c_refl, cploc, csloc, denst, lambdaplus2mu, mu, p
   double precision, dimension(2) :: A_plane, B_plane, C_plane
-  double precision :: PP, PS, SP, SS, z0_source, x0_source, xmax, xmin, zmax, zmin, time_offset
+  double precision :: PP, PS, SP, SS, z0_source, x0_source, xmax, xmin, zmax, zmin, &
+       time_offset, xmax_glob, xmin_glob, zmax_glob, zmin_glob
 
 ! beyond critical angle
   integer , dimension(:), allocatable :: left_bound,right_bound,bot_bound
@@ -1374,12 +1375,12 @@ if (ipass == NUMBER_OF_PASSES) then
       do i = 1, nb_proc_source - is_proc_source
         call MPI_recv(source_courbe_eros,1,MPI_INTEGER,MPI_ANY_SOURCE,42,MPI_COMM_WORLD,request_mpi_status,ier)
         call MPI_recv(angleforce_recv,1,MPI_DOUBLE_PRECISION,MPI_ANY_SOURCE,43,MPI_COMM_WORLD,request_mpi_status,ier)
-      end do
+      enddo
     else if ( is_proc_source == 1 ) then
       call MPI_send(n1_tangential_detection_curve,1,MPI_INTEGER,0,42,MPI_COMM_WORLD,ier)
       call MPI_send(angleforce,1,MPI_DOUBLE_PRECISION,0,43,MPI_COMM_WORLD,ier)
 #endif
-    end if
+    endif
 
 #ifdef USE_MPI
     call MPI_bcast(angleforce_recv,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
@@ -1428,7 +1429,7 @@ if (ipass == NUMBER_OF_PASSES) then
 
     if ( myrank == 0 ) then
       open(unit=11,file='OUTPUT_FILES/dist_rec_tangential_detection_curve', form='formatted', status='unknown')
-    end if
+    endif
       irecloc = 0
     do irec = 1,nrec
 
@@ -1449,7 +1450,7 @@ if (ipass == NUMBER_OF_PASSES) then
              which_proc_receiver(irec),irec,MPI_COMM_WORLD,request_mpi_status,ier)
 
 #endif
-        end if
+        endif
 
 #ifdef USE_MPI
       else
@@ -1458,22 +1459,22 @@ if (ipass == NUMBER_OF_PASSES) then
           call MPI_SEND(rec_tangential_detection_curve(irecloc),1,MPI_INTEGER,0,irec,MPI_COMM_WORLD,ier)
           call MPI_SEND(x_final_receiver(irec),1,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ier)
           call MPI_SEND(z_final_receiver(irec),1,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ier)
-        end if
+        endif
 #endif
 
-      end if
+      endif
       if ( myrank == 0 ) then
         write(11,*) dist_tangential_detection_curve(n1_tangential_detection_curve)
         write(12,*) x_final_receiver_dummy
         write(13,*) z_final_receiver_dummy
-      end if
+      endif
     enddo
 
     if ( myrank == 0 ) then
       close(11)
       close(12)
       close(13)
-    end if
+    endif
 
   endif
 endif
@@ -2078,39 +2079,46 @@ endif
   over_critical_angle = .false.
 
   if(initialfield) then
-     write(IOUT,*)
+      if (myrank == 0) then
+         write(IOUT,*)
 !! DK DK reading of an initial field from an external file has been suppressed
 !! DK DK and replaced with the implementation of an analytical plane wave
 !! DK DK     write(IOUT,*) 'Reading initial fields from external file...'
-     write(IOUT,*) 'Implementing an analytical initial plane wave...'
-     write(IOUT,*)
-     if(any_acoustic) call exit_MPI('initial field currently implemented for purely elastic simulation only')
-!! DK DK for now there is a bug in the initial plane wave when MPI is used
-     if(nproc > 1) call exit_MPI('for now there is a bug in the initial plane wave when MPI is used')
+         write(IOUT,*) 'Implementing an analytical initial plane wave...'
+         write(IOUT,*)
+      endif
+      if(any_acoustic) call exit_MPI('initial field currently implemented for purely elastic simulation only')
 
       !=======================================================================
       !
-      !     Calculation of the initialfield for plane wave
+      !     Calculation of the initial field for a plane wave
       !
       !=======================================================================
 
-      print *,'Number of grid points: ',npoin,'\n'
-      print *,'*** calculation of initial plane wave ***'
-      if (source_type == 1) then
-         print *,'initial P wave of', angleforce*180.d0/pi, 'degrees introduced...'
-      else if (source_type == 2) then
-         print *,'initial SV wave of', angleforce*180.d0/pi, ' degrees introduced...'
+      if (myrank == 0) then
+         write(IOUT,*) 'Number of grid points: ',npoin
+         write(IOUT,*)
+         write(IOUT,*) '*** calculation of the initial plane wave ***'
+         write(IOUT,*)
+         write(IOUT,*)  'To change the initial plane wave, change source_type in DATA/Par_file'
+         write(IOUT,*)  'and use 1 for a plane P wave, 2 for a plane SV wave, 3 for a Rayleigh wave'
+         write(IOUT,*)
 
-      else if (source_type == 3) then
-         print *,'Rayleigh wave introduced...'
-      else
-         call exit_MPI('Unrecognized source_type: should be 1 for plane P waves, 2 for plane SV waves!')
+         if (source_type == 1) then
+            write(IOUT,*) 'initial P wave of', angleforce*180.d0/pi, 'degrees introduced.'
+         else if (source_type == 2) then
+            write(IOUT,*) 'initial SV wave of', angleforce*180.d0/pi, ' degrees introduced.'
+
+         else if (source_type == 3) then
+            write(IOUT,*) 'Rayleigh wave introduced.'
+         else
+            call exit_MPI('Unrecognized source_type: should be 1 for plane P waves, 2 for plane SV waves, 3 for Rayleigh wave')
+         endif
+
+         if ((angleforce < 0.0d0 .or. angleforce >= pi/2.d0) .and. source_type /= 3) then
+            call exit_MPI("incorrect angleforce: must have 0 <= angleforce < 90")
+         endif
       endif
-
-      if ((angleforce<0.0d0.or.angleforce>=pi/2.d0).and.source_type/=3) then
-         call exit_MPI("incorrect angleforce: must have 0<=angleforce<90")
-      endif
-
       ! only implemented for homogeneous media therefore only 1 material supported
       if (numat==1) then
 
@@ -2138,7 +2146,9 @@ endif
                  (csloc**2*(cos(2.d0*angleforce_refl)**2/csloc**3 &
                  +4.d0*p**2*cos(angleforce)*cos(angleforce_refl)/cploc))
 
-            print *,'reflected convert plane wave angle: ', angleforce_refl*180.d0/pi, '\n'
+             if (myrank == 0) then
+                write(IOUT,*) 'reflected convert plane wave angle: ', angleforce_refl*180.d0/pi
+             endif
 
             ! from Table 5.1 p141 in Aki & Richards (1980)
             ! we put the opposite sign on z coefficients because z axis is oriented from bottom to top
@@ -2164,7 +2174,9 @@ endif
                     (cploc*csloc*(cos(2.d0*angleforce)**2/csloc**3&
                     +4.d0*p**2*cos(angleforce_refl)*cos(angleforce)/cploc))
 
-               print *,'reflected convert plane wave angle: ', angleforce_refl*180.d0/pi, '\n'
+               if (myrank == 0) then
+                  write(IOUT,*) 'reflected convert plane wave angle: ', angleforce_refl*180.d0/pi
+               endif
 
             ! SV45 degree incident plane wave is a particular case
             else if (angleforce>pi/4.d0-1.0d-11 .and. angleforce<pi/4.d0+1.0d-11) then
@@ -2201,20 +2213,33 @@ endif
       xmax = maxval(coord(1,:))
       zmax = maxval(coord(2,:))
 
+#ifdef USE_MPI
+      call MPI_ALLREDUCE (xmin, xmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+      call MPI_ALLREDUCE (zmin, zmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+      call MPI_ALLREDUCE (xmax, xmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+      call MPI_ALLREDUCE (zmax, zmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+      xmin = xmin_glob
+      zmin = zmin_glob
+      xmax = xmax_glob
+      zmax = zmax_glob
+#endif
+
       ! initialize the time offset to put the plane wave not too close to the irregularity on the free surface
       if (abs(angleforce)<1.d0*pi/180.d0 .and. source_type/=3) then
-         time_offset=-1.d0*zmax/2.d0/c_inc
+         time_offset=-1.d0*(zmax-zmin)/2.d0/c_inc
       else
          time_offset=0.d0
       endif
 
       ! to correctly center the initial plane wave in the mesh
-      z0_source=zmax
+      x0_source=x_source
+      z0_source=z_source
 
-      if (abs(angleforce)<20.d0*pi/180.d0) then
-         x0_source=xmin
-      else
-         x0_source=xmin + 1.d0*(xmax-xmin)/4.d0
+      if (myrank == 0) then
+         write(IOUT,*)
+         write(IOUT,*) 'You can modify the location of the initial plane wave by changing xs and zs in DATA/Par_File.'
+         write(IOUT,*) '   for instance: xs=',x_source,'   zs=',z_source, ' (zs must be the height of the free surface)'
+         write(IOUT,*)
       endif
 
       if (.not. over_critical_angle) then
@@ -2258,12 +2283,14 @@ endif
 
       else ! beyond critical angle
 
-         if (source_type/=3) print *, '\n You are beyond critical angle ( > ',asin(c_inc/c_refl)*180d0/pi,')'
+         if (myrank == 0) then
+            if (source_type/=3) write(IOUT,*) 'You are beyond the critical angle ( > ',asin(c_inc/c_refl)*180d0/pi,')'
 
-         print *, '\n *************'
-         print *, 'We have to compute the initial field in the frequency domain'
-         print *, 'and then convert it to the time domain (can be long... be patient...)'
-         print *, '*************\n'
+            write(IOUT,*)  '*************'
+            write(IOUT,*)  'We have to compute the initial field in the frequency domain'
+            write(IOUT,*)  'and then convert it to the time domain (can be long... be patient...)'
+            write(IOUT,*)  '*************'
+         endif
 
          allocate(left_bound(nelemabs*NGLLX))
          allocate(right_bound(nelemabs*NGLLX))
@@ -2331,9 +2358,11 @@ endif
          deallocate(right_bound)
          deallocate(bot_bound)
 
-         print *, '\n ***********'
-         print *, 'initial field calculated, starting propagation'
-         print *, '***********\n\n'
+         if (myrank == 0) then
+            write(IOUT,*)  '***********'
+            write(IOUT,*)  'done calculating the initial wave field'
+            write(IOUT,*)  '***********'
+         endif
 
       endif ! beyond critical angle
 
