@@ -378,8 +378,10 @@
   double precision, external :: ricker_Bielak_displ,ricker_Bielak_veloc,ricker_Bielak_accel
   double precision :: angleforce_refl, c_inc, c_refl, cploc, csloc, denst, lambdaplus2mu, mu, p
   double precision, dimension(2) :: A_plane, B_plane, C_plane
-  double precision :: PP, PS, SP, SS, z0_source, x0_source, xmax, xmin, zmax, zmin, &
-       time_offset, xmax_glob, xmin_glob, zmax_glob, zmin_glob
+  double precision :: PP, PS, SP, SS, z0_source, x0_source, xmax, xmin, zmax, zmin, time_offset
+#ifdef USE_MPI
+  double precision :: xmax_glob, xmin_glob, zmax_glob, zmin_glob
+#endif
 
 ! beyond critical angle
   integer , dimension(:), allocatable :: left_bound,right_bound,bot_bound
