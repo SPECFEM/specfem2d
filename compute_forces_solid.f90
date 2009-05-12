@@ -45,16 +45,18 @@
   subroutine compute_forces_solid(npoin,nspec,myrank,numat,iglob_source, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                source_type,it,NSTEP,anyabs,assign_external_model, &
-               initialfield,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,angleforce,deltatcube, &
+               initialfield,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,TURN_VISCATTENUATION_ON,angleforce,deltatcube, &
                deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,poroelastic, &
                accels_poroelastic,velocs_poroelastic,velocw_poroelastic,displs_poroelastic,displw_poroelastic,&
-               b_accels_poroelastic,b_displs_poroelastic,b_displw_poroelastic,&
+               b_accels_poroelastic,b_displs_poroelastic,b_velocw_poroelastic,b_displw_poroelastic,&
                density,porosity,tortuosity,permeability,poroelastcoef,xix,xiz,gammax,gammaz, &
                jacobian,vpext,vsext,rhoext,source_time_function,sourcearray,adj_sourcearrays,e1,e11, &
                e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,&
                phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
+               rx_viscous,rz_viscous,theta_e,theta_s,&
+               b_viscodampx,b_viscodampz,&
                ibegin_bottom_poro,iend_bottom_poro,ibegin_top_poro,iend_top_poro, &
                jbegin_left_poro,jend_left_poro,jbegin_right_poro,jend_right_poro,&
                nspec_inner_outer,ispec_inner_outer_to_glob,num_phase_inner_outer,nrec,isolver,save_forward,&
@@ -91,7 +93,8 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: accels_poroelastic,velocs_poroelastic,displs_poroelastic
   real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: velocw_poroelastic,displw_poroelastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: b_accels_poroelastic,b_displs_poroelastic,b_displw_poroelastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: b_accels_poroelastic,b_displs_poroelastic,b_displw_poroelastic,&
+                                                   b_velocw_poroelastic
   double precision, dimension(2,numat) :: density
   double precision, dimension(3,numat) :: permeability
   double precision, dimension(numat) :: porosity,tortuosity
@@ -106,6 +109,7 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLZ,nspec_xmax,NSTEP) :: b_absorb_poro_s_right
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,nspec_zmax,NSTEP) :: b_absorb_poro_s_top
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,nspec_zmin,NSTEP) :: b_absorb_poro_s_bottom
+  real(kind=CUSTOM_REAL), dimension(npoin) :: b_viscodampx,b_viscodampz
 
   integer :: N_SLS
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11,e13
@@ -116,6 +120,13 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: &
     dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n,dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1
+
+! viscous attenuation (poroelastic media)
+  double precision, dimension(NGLLX,NGLLZ,nspec) :: rx_viscous,b_rx_viscous
+  double precision, dimension(NGLLX,NGLLZ,nspec) :: rz_viscous,b_rz_viscous
+  double precision :: theta_e,theta_s
+  logical TURN_VISCATTENUATION_ON
+  double precision, dimension(3):: bl_unrelaxed,bl_relaxed
 
 ! derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
@@ -213,14 +224,15 @@
     rhol_bar =  (1._CUSTOM_REAL - phil)*rhol_s + phil*rhol_f
 !Biot coefficients for the input phi
       D_biot = kappal_s*(1._CUSTOM_REAL + phil*(kappal_s/kappal_f - 1._CUSTOM_REAL))
-      H_biot = (kappal_s - kappal_fr)*(kappal_s - kappal_fr)/(D_biot - kappal_fr) + kappal_fr + 4._CUSTOM_REAL*mul_fr/3._CUSTOM_REAL
+      H_biot = (kappal_s - kappal_fr)*(kappal_s - kappal_fr)/(D_biot - kappal_fr) + &
+                kappal_fr + 4._CUSTOM_REAL*mul_fr/3._CUSTOM_REAL
       C_biot = kappal_s*(kappal_s - kappal_fr)/(D_biot - kappal_fr)
       M_biot = kappal_s*kappal_s/(D_biot - kappal_fr)
 !The RHS has the form : div T -phi/c div T_f + phi/ceta_fk^-1.partial t w
 !where T = G:grad u_s + C_biot div w I
 !and T_f = C_biot div u_s I + M_biot div w I
       mul_G = mul_fr
-      lambdal_G = H_biot - TWO*mul_fr
+      lambdal_G = H_biot - 2._CUSTOM_REAL*mul_fr
       lambdalplus2mul_G = lambdal_G + TWO*mul_G
 
 ! first double loop over GLL points to compute and store gradients
@@ -493,12 +505,12 @@
 
 ! get global numbering for inner or outer elements
     ispec = ispec_inner_outer_to_glob(ispec_inner_outer)
+    etal_f = poroelastcoef(2,2,kmato(ispec)) 
 
-      if(poroelastic(ispec)) then 
+      if(poroelastic(ispec) .and. etal_f >0.d0) then 
 
     phil = porosity(kmato(ispec))
     tortl = tortuosity(kmato(ispec))
-    etal_f = poroelastcoef(2,2,kmato(ispec)) 
     permlxx = permeability(1,kmato(ispec))
     permlxz = permeability(2,kmato(ispec))
     permlzz = permeability(3,kmato(ispec))
@@ -514,18 +526,44 @@
       stop 'Permeability matrix is not inversible'
     endif
 
+! relaxed viscous coef
+          bl_relaxed(1) = etal_f*invpermlxx
+          bl_relaxed(2) = etal_f*invpermlxz
+          bl_relaxed(3) = etal_f*invpermlzz
+
+    if(TURN_VISCATTENUATION_ON) then
+          bl_unrelaxed(1) = etal_f*invpermlxx*theta_e/theta_s
+          bl_unrelaxed(2) = etal_f*invpermlxz*theta_e/theta_s
+          bl_unrelaxed(3) = etal_f*invpermlzz*theta_e/theta_s
+    endif
+
       do j = 1,NGLLZ
         do i = 1,NGLLX
 
           iglob = ibool(i,j,ispec)
-            viscodampx = velocw_poroelastic(1,iglob)*invpermlxx + velocw_poroelastic(2,iglob)*invpermlxz
-            viscodampz = velocw_poroelastic(1,iglob)*invpermlxz + velocw_poroelastic(2,iglob)*invpermlzz
 
-            accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) + phil/tortl*etal_f*wxgll(i)*wzgll(j)*jacobian(i,j,ispec)*&
+     if(TURN_VISCATTENUATION_ON) then
+! compute the viscous damping term with the unrelaxed viscous coef and add memory variable
+      viscodampx = velocw_poroelastic(1,iglob)*bl_unrelaxed(1) + velocw_poroelastic(2,iglob)*bl_unrelaxed(2)&
+                  - rx_viscous(i,j,ispec)
+      viscodampz = velocw_poroelastic(1,iglob)*bl_unrelaxed(2) + velocw_poroelastic(2,iglob)*bl_unrelaxed(3)&
+                  - rz_viscous(i,j,ispec)
+     else
+! no viscous attenuation
+      viscodampx = velocw_poroelastic(1,iglob)*bl_relaxed(1) + velocw_poroelastic(2,iglob)*bl_relaxed(2)
+      viscodampz = velocw_poroelastic(1,iglob)*bl_relaxed(2) + velocw_poroelastic(2,iglob)*bl_relaxed(3)
+     endif
+
+     accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) + phil/tortl*wxgll(i)*wzgll(j)*jacobian(i,j,ispec)*&
               viscodampx
-            accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + phil/tortl*etal_f*wxgll(i)*wzgll(j)*jacobian(i,j,ispec)*&
+     accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + phil/tortl*wxgll(i)*wzgll(j)*jacobian(i,j,ispec)*&
               viscodampz
-      
+
+          if(isolver == 2) then ! kernels calculation      
+        b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) + phil/tortl*b_viscodampx(iglob)
+        b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) + phil/tortl*b_viscodampz(iglob)
+          endif
+
         enddo 
       enddo
 
@@ -604,8 +642,6 @@
           xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
           zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
           jacobian1D = sqrt(xgamma**2 + zgamma**2)
-!          nx = - zgamma / jacobian1D
-!          nz = + xgamma / jacobian1D
           nx = + zgamma / jacobian1D
           nz = - xgamma / jacobian1D
 
@@ -908,8 +944,6 @@
           xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
           zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
           jacobian1D = sqrt(xxi**2 + zxi**2)
-!          nx = - zxi / jacobian1D
-!          nz = + xxi / jacobian1D
           nx = + zxi / jacobian1D
           nz = - xxi / jacobian1D
 

@@ -27,6 +27,9 @@ add_Bielak_conditions           = .false.        # add Bielak conditions or not 
 assign_external_model           = .false.        # define external earth model or not
 TURN_ANISOTROPY_ON              = .false.        # turn anisotropy on or off for solid medium
 TURN_ATTENUATION_ON             = .false.        # turn attenuation on or off for solid medium
+TURN_VISCATTENUATION_ON         = .false.        # turn viscous attenuation on or off 
+Q0                              =  1         # quality factor for viscous attenuation
+freq0                           =  10         # frequency for viscous attenuation
 
 # absorbing boundaries parameters
 absorbing_conditions            = .true.	 # absorbing boundary active or not

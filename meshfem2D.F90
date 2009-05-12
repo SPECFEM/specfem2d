@@ -136,7 +136,9 @@ program meshfem2D
   logical interpol,gnuplot,assign_external_model,outputgrid
   logical abstop,absbottom,absleft,absright,any_abs
   logical meshvect,initialfield,modelvect,boundvect,add_Bielak_conditions
-  logical TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
+  logical TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,TURN_VISCATTENUATION_ON
+
+  double precision :: Q0,freq0
 
   logical, dimension(:), allocatable :: enreg_surf
 
@@ -313,6 +315,11 @@ program meshfem2D
   call read_value_logical(IIN,IGNORE_JUNK,assign_external_model)
   call read_value_logical(IIN,IGNORE_JUNK,TURN_ANISOTROPY_ON)
   call read_value_logical(IIN,IGNORE_JUNK,TURN_ATTENUATION_ON)
+
+! read viscous attenuation parameters (poroelastic media)
+  call read_value_logical(IIN,IGNORE_JUNK,TURN_VISCATTENUATION_ON)
+  call read_value_double_precision(IIN,IGNORE_JUNK,Q0)
+  call read_value_double_precision(IIN,IGNORE_JUNK,freq0)
 
   if ( read_external_mesh ) then
      call read_mesh(mesh_file, nelmnts, elmnts, nnodes, num_start)
@@ -787,11 +794,8 @@ program meshfem2D
 
         ! check if we are in the last layer, which contains topography,
         ! and modify the position of the source accordingly if it is located exactly at the surface
-        do i_source =1,NSOURCE
-        if(source_surf(i_source) .and. ilayer == number_of_layers) then 
-             zs(i_source) = value_spline(xs(i_source),xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
-        endif
-        enddo
+        if(source_surf(1) .and. ilayer == number_of_layers) & !yang use first source
+             zs = value_spline(xs(1),xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
 
         ! compute the offset of this layer in terms of number of spectral elements below along Z
         if(ilayer > 1) then
@@ -1231,6 +1235,9 @@ program meshfem2D
 
      write(15,*) 'assign_external_model outputgrid TURN_ANISOTROPY_ON TURN_ATTENUATION_ON'
      write(15,*) assign_external_model,outputgrid,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
+
+     write(15,*) 'TURN_VISCATTENUATION_ON Q0 freq0'
+     write(15,*) TURN_VISCATTENUATION_ON,Q0,freq0
 
      write(15,*) 'nt deltat isolver'
      write(15,*) nt,deltat,isolver
