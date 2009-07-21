@@ -40,7 +40,7 @@
 !
 !========================================================================
 
-  subroutine define_external_model(x,y,iflag_element,rho,vp,vs,myrank)
+  subroutine define_external_model(x,y,iflag_element,myrank,rho,vp,vs)
 
   implicit none
 
