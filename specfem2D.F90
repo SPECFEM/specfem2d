@@ -1188,8 +1188,8 @@ endif
       do j = 1,NGLLZ
         do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
-          call define_external_model(coord(1,iglob),coord(2,iglob),kmato(ispec), &
-                                         rhoext(i,j,ispec),vpext(i,j,ispec),vsext(i,j,ispec),myrank)
+          call define_external_model(coord(1,iglob),coord(2,iglob),kmato(ispec),myrank, &
+                                         rhoext(i,j,ispec),vpext(i,j,ispec),vsext(i,j,ispec))
 ! stop if the same element is assigned both acoustic and elastic points in external model
           if(.not. (i == 1 .and. j == 1) .and. &
             ((vsext(i,j,ispec) >= TINYVAL .and. previous_vsext < TINYVAL) .or. &
