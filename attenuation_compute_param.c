@@ -17,12 +17,12 @@
 #define PI2 6.28318530717958
 
 /* Underscores should or should not follow this function name, depending on the compiler and its options.
-   It is called in "attenuation_model.f90".    
+   It is called in "attenuation_model.f90".
 */
-int attenuation_compute_param_(int *nmech_in, double *Qp_in, double *Qs_in, double *f1_in, double *f2_in, 
-			       double *tau_sigma_nu1, double *tau_sigma_nu2,
-			       double *tau_epsilon_nu1, double *tau_epsilon_nu2
-			       )
+int attenuation_compute_param_(int *nmech_in, double *Qp_in, double *Qs_in, double *f1_in, double *f2_in,
+             double *tau_sigma_nu1, double *tau_sigma_nu2,
+             double *tau_epsilon_nu1, double *tau_epsilon_nu2
+             )
 
 {
   int             xmgr, n, i, j, plot, nu;
@@ -120,35 +120,35 @@ int attenuation_compute_param_(int *nmech_in, double *Qp_in, double *Qs_in, doub
 
 /* output in Fortran90 format */
     for (i = 1; i <= n; i++) {
-      /* 
+      /*
       printf("  tau_sigma_nu%d(%1d) = %30.20lfd0\n", nu, i, tau_s[i]);
       */
       /* We put the results in tau_sigma_nu to get them in fortran. */
       if ( nu == 1 ) {
-	tau_sigma_nu1[i-1] = tau_s[i];
+  tau_sigma_nu1[i-1] = tau_s[i];
       }
       if ( nu == 2 ) {
-	tau_sigma_nu2[i-1] = tau_s[i];
+  tau_sigma_nu2[i-1] = tau_s[i];
       }
-      
-    }	
+
+    }
     //printf("\n");
-    
+
     for (i = 1; i <= n; i++) {
       /*
-	printf("  tau_epsilon_nu%d(%1d) = %30.20lfd0\n", nu, i, tau_e[i]);
+  printf("  tau_epsilon_nu%d(%1d) = %30.20lfd0\n", nu, i, tau_e[i]);
       */
        /* We put the results in tau_epsilon_nu to get them in fortran. */
       if ( nu == 1 ) {
-	tau_epsilon_nu1[i-1] = tau_e[i];
+  tau_epsilon_nu1[i-1] = tau_e[i];
       }
       if ( nu == 2 ) {
-	tau_epsilon_nu2[i-1] = tau_e[i];
+  tau_epsilon_nu2[i-1] = tau_e[i];
       }
-      
+
     }
     //printf("\n");
-    
+
     free_dvector(tau_s, 1, n);
     free_dvector(tau_e, 1, n);
 

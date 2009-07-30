@@ -4,12 +4,10 @@
 !                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour and CNRS, France.
+! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
-!               Christina Morency, cmorency aT gps DOT caltech DOT edu
-!               Jeroen Tromp, jtromp aT gps DOT caltech DOT edu
 !
 ! This software is a computer program whose purpose is to solve
 ! the two-dimensional viscoelastic anisotropic wave equation
@@ -42,17 +40,16 @@
 !
 !========================================================================
 
-  subroutine compute_energy(displ_elastic,veloc_elastic, &
-         displs_poroelastic,velocs_poroelastic,displw_poroelastic,velocw_poroelastic, &
-         xix,xiz,gammax,gammaz,jacobian,ibool,elastic,hprime_xx,hprime_zz, &
-         nspec,npoin,assign_external_model,it,deltat,t0,kmato,poroelastcoef,density, &
-         porosity,tortuosity,&
+  subroutine compute_energy(displ_elastic,veloc_elastic,displs_poroelastic,velocs_poroelastic, &
+         displw_poroelastic,velocw_poroelastic, &
+         xix,xiz,gammax,gammaz,jacobian,ibool,elastic,poroelastic,hprime_xx,hprime_zz, &
+         nspec,npoin,assign_external_model,it,deltat,t0,kmato,elastcoef,density, &
+         porosity,tortuosity, &
          vpext,vsext,rhoext,wxgll,wzgll,numat, &
          pressure_element,vector_field_element,e1,e11, &
          potential_dot_acoustic,potential_dot_dot_acoustic,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
 
-
-! compute kinetic and potential energy for elastic/acoustic/poroelastic
+! compute kinetic and potential energy in the solid (acoustic elements are excluded)
 
   implicit none
 
@@ -66,7 +63,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: pressure_element
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11
-  double precision :: Mu_nu1,Mu_nu2
+  double precision, dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
 
   real(kind=CUSTOM_REAL), dimension(npoin) :: potential_dot_acoustic,potential_dot_dot_acoustic
 
@@ -89,7 +86,7 @@
 
   double precision, dimension(2,numat) :: density
   double precision, dimension(numat) :: porosity,tortuosity
-  double precision, dimension(4,3,numat) :: poroelastcoef
+  double precision, dimension(4,3,numat) :: elastcoef
   double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,vsext,rhoext
 
   real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displ_elastic,veloc_elastic
@@ -136,9 +133,9 @@
     if(elastic(ispec)) then
 
 ! get relaxed elastic parameters of current spectral element
-      lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
-      mul_relaxed = poroelastcoef(2,1,kmato(ispec))
-      lambdalplus2mul_relaxed = poroelastcoef(3,1,kmato(ispec))
+      lambdal_relaxed = elastcoef(1,1,kmato(ispec))
+      mul_relaxed = elastcoef(2,1,kmato(ispec))
+      lambdalplus2mul_relaxed = elastcoef(3,1,kmato(ispec))
       rhol  = density(1,kmato(ispec))
 
 ! double loop over GLL points
@@ -207,15 +204,15 @@
     phil = porosity(kmato(ispec))
     tortl = tortuosity(kmato(ispec))
 !solid properties
-    mul_s = poroelastcoef(2,1,kmato(ispec))
-    kappal_s = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS*mul_s
+    mul_s = elastcoef(2,1,kmato(ispec))
+    kappal_s = elastcoef(3,1,kmato(ispec)) - FOUR_THIRDS*mul_s
     rhol_s = density(1,kmato(ispec))
 !fluid properties
-    kappal_f = poroelastcoef(1,2,kmato(ispec)) 
+    kappal_f = elastcoef(1,2,kmato(ispec))
     rhol_f = density(2,kmato(ispec))
 !frame properties
-    mul_fr = poroelastcoef(2,3,kmato(ispec))
-    kappal_fr = poroelastcoef(3,3,kmato(ispec)) - FOUR_THIRDS*mul_fr
+    mul_fr = elastcoef(2,3,kmato(ispec))
+    kappal_fr = elastcoef(3,3,kmato(ispec)) - FOUR_THIRDS*mul_fr
     rhol_bar =  (1.d0 - phil)*rhol_s + phil*rhol_f
 !Biot coefficients for the input phi
       D_biot = kappal_s*(1.d0 + phil*(kappal_s/kappal_f - 1.d0))
@@ -229,12 +226,6 @@
       mul_G = mul_fr
       lambdal_G = H_biot - TWO*mul_fr
       lambdalplus2mul_G = lambdal_G + TWO*mul_G
-      mul_C = ZERO
-      lambdal_C = C_biot - 2.d0/3.d0*mul_C
-      lambdalplus2mul_C = lambdal_C + TWO*mul_C
-      mul_M = ZERO
-      lambdal_M = M_biot - 2.d0/3.d0*mul_M    
-      lambdalplus2mul_M = lambdal_M + TWO*mul_M
 
 ! first double loop over GLL points to compute and store gradients
       do j = 1,NGLLZ
@@ -256,16 +247,16 @@
 ! first double loop over GLL points to compute and store gradients
 ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
-            dux_dxi = dux_dxi + displs_poroelastic(1,ibool(k,j,ispec))*hprime_xx(k,i)
-            duz_dxi = duz_dxi + displs_poroelastic(2,ibool(k,j,ispec))*hprime_xx(k,i)
-            dux_dgamma = dux_dgamma + displs_poroelastic(1,ibool(i,k,ispec))*hprime_zz(k,j)
-            duz_dgamma = duz_dgamma + displs_poroelastic(2,ibool(i,k,ispec))*hprime_zz(k,j)
+            dux_dxi = dux_dxi + displs_poroelastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
+            duz_dxi = duz_dxi + displs_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+            dux_dgamma = dux_dgamma + displs_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
+            duz_dgamma = duz_dgamma + displs_poroelastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
 
 
-            dwx_dxi = dwx_dxi + displw_poroelastic(1,ibool(k,j,ispec))*hprime_xx(k,i)
-            dwz_dxi = dwz_dxi + displw_poroelastic(2,ibool(k,j,ispec))*hprime_xx(k,i)
-            dwx_dgamma = dwx_dgamma + displw_poroelastic(1,ibool(i,k,ispec))*hprime_zz(k,j)
-            dwz_dgamma = dwz_dgamma + displw_poroelastic(2,ibool(i,k,ispec))*hprime_zz(k,j)
+            dwx_dxi = dwx_dxi + displw_poroelastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
+            dwz_dxi = dwz_dxi + displw_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+            dwx_dgamma = dwx_dgamma + displw_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
+            dwz_dgamma = dwz_dgamma + displw_poroelastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
           enddo
 
           xixl = xix(i,j,ispec)
@@ -291,11 +282,10 @@
           potential_energy = potential_energy + ( lambdalplus2mul_G*dux_dxl**2 &
               + lambdalplus2mul_G*duz_dzl**2 &
               + two*lambdal_G*dux_dxl*duz_dzl + mul_G*(dux_dzl + duz_dxl)**2 &
-              + two*lambdal_C*dwx_dxl*dux_dxl + two*lambdal_C*dwz_dzl*duz_dzl &
-              + two*lambdal_C*(dwx_dxl*duz_dzl + dwz_dzl*dux_dxl) &
-              + lambdal_M*dwx_dxl**2 + lambdal_M*dwz_dzl**2 &
-              + two*lambdal_M*dwx_dxl*dwz_dzl )*wxgll(i)*wzgll(j)*jacobianl / TWO
-
+              + two*C_biot*dwx_dxl*dux_dxl + two*C_biot*dwz_dzl*duz_dzl &
+              + two*C_biot*(dwx_dxl*duz_dzl + dwz_dzl*dux_dxl) &
+              + M_biot*dwx_dxl**2 + M_biot*dwz_dzl**2 &
+              + two*M_biot*dwx_dxl*dwz_dzl )*wxgll(i)*wzgll(j)*jacobianl / TWO
 
 ! compute kinetic energy
          if(phil > 0.0d0) then
@@ -321,30 +311,30 @@
 ! for the definition of potential energy in an acoustic fluid, see for instance
 ! equation (23) of M. Maess et al., Journal of Sound and Vibration 296 (2006) 264-276
 
-! in case of an acoustic medium, a displacement potential Chi is used as in Chaljub and Valette,
+! in case of an acoustic medium, a potential Chi of (density * displacement) is used as in Chaljub and Valette,
 ! Geophysical Journal International, vol. 158, p. 131-141 (2004) and *NOT* a velocity potential
 ! as in Komatitsch and Tromp, Geophysical Journal International, vol. 150, p. 303-318 (2002).
 ! This permits acoustic-elastic coupling based on a non-iterative time scheme.
-! Displacement is then: u = grad(Chi)
-! Velocity is then: v = grad(Chi_dot)       (Chi_dot being the time derivative of Chi)
-! and pressure is: p = - rho * Chi_dot_dot  (Chi_dot_dot being the time second derivative of Chi).
+! Displacement is then: u = grad(Chi) / rho
+! Velocity is then: v = grad(Chi_dot) / rho (Chi_dot being the time derivative of Chi)
+! and pressure is: p = - Chi_dot_dot  (Chi_dot_dot being the time second derivative of Chi).
 
 ! compute pressure in this element
-    call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,&
-         displs_poroelastic,displw_poroelastic,elastic,poroelastic,&
+    call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,elastic, &
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
+         numat,kmato,elastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
          TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
 
 ! compute velocity vector field in this element
-    call compute_vector_one_element(vector_field_element,potential_dot_acoustic,veloc_elastic,&
-         velocs_poroelastic,elastic,poroelastic, &
-         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,ispec)
+    call compute_vector_one_element(vector_field_element,potential_dot_acoustic,veloc_elastic,elastic, &
+         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,ispec,numat,kmato,density,rhoext,assign_external_model)
 
-!fluid properties
-    kappal_f = poroelastcoef(1,2,kmato(ispec)) 
-    rhol_f = density(2,kmato(ispec))
-    cpl = sqrt(kappal_f/rhol_f)
+! get density of current spectral element
+      lambdal_relaxed = elastcoef(1,1,kmato(ispec))
+      mul_relaxed = elastcoef(2,1,kmato(ispec))
+      rhol  = density(1,kmato(ispec))
+      kappal  = lambdal_relaxed + TWO*mul_relaxed/3._CUSTOM_REAL
+      cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_relaxed/3._CUSTOM_REAL)/rhol)
 
 ! double loop over GLL points
       do j = 1,NGLLZ
@@ -353,16 +343,16 @@
 !--- if external medium, get density of current grid point
           if(assign_external_model) then
             cpl = vpext(i,j,ispec)
-            rhol_f = rhoext(i,j,ispec)
+            rhol = rhoext(i,j,ispec)
           endif
 
 ! compute kinetic energy
           kinetic_energy = kinetic_energy + &
-              rhol_f*(vector_field_element(1,i,j)**2 + &
+              rhol*(vector_field_element(1,i,j)**2 + &
                     vector_field_element(2,i,j)**2) *wxgll(i)*wzgll(j)*jacobianl / TWO
 
 ! compute potential energy
-          potential_energy = potential_energy + (pressure_element(i,j)**2)*wxgll(i)*wzgll(j)*jacobianl / (TWO * rhol_f * cpl**2)
+          potential_energy = potential_energy + (pressure_element(i,j)**2)*wxgll(i)*wzgll(j)*jacobianl / (TWO * rhol * cpl**2)
 
         enddo
       enddo

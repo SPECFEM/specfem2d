@@ -4,12 +4,10 @@
 !                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour and CNRS, France.
+! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
-!               Christina Morency, cmorency aT gps DOT caltech DOT edu
-!               Jeroen Tromp, jtromp aT gps DOT caltech DOT edu
 !
 ! This software is a computer program whose purpose is to solve
 ! the two-dimensional viscoelastic anisotropic wave equation
@@ -45,14 +43,36 @@
   subroutine plotpost(displ,coord,vpext,x_source,z_source,st_xval,st_zval,it,dt,coorg, &
           xinterp,zinterp,shapeint,Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
           poroelastcoef,knods,kmato,ibool, &
-          numabs,codeabs,anyabs,&
-          nelem_acoustic_surface, acoustic_edges, &
+          numabs,codeabs,anyabs,nelem_acoustic_surface, acoustic_edges, &
           simulation_title,npoin,npgeo,vpmin,vpmax,nrec,NSOURCE, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
-          nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
+          nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poroelastic,coupled_elastic_poroelastic, &
+          any_acoustic,any_poroelastic,plot_lowerleft_corner_only, &
           fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
-          myrank, nproc)
+          fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
+          solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,num_solid_poro_edges, &
+          myrank,nproc,ier, &
+          d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
+          d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
+          d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model, &
+          d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model, &
+          coorg_send_ps_velocity_model,RGB_send_ps_velocity_model, &
+          coorg_recv_ps_velocity_model,RGB_recv_ps_velocity_model,&
+          d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh, &
+          d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh, &
+          d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh, &
+          coorg_send_ps_element_mesh,color_send_ps_element_mesh, &
+          coorg_recv_ps_element_mesh,color_recv_ps_element_mesh, &
+          d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs, &
+          d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs, &
+          coorg_send_ps_abs,coorg_recv_ps_abs, &
+          d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface, &
+          d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface, &
+          coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
+          d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field, &
+          d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
+          coorg_send_ps_vector_field,coorg_recv_ps_vector_field)
 
 !
 ! PostScript display routine
@@ -91,11 +111,14 @@
   double precision, dimension(nrec) :: st_xval,st_zval
 
   integer numabs(nelemabs),codeabs(4,nelemabs)
-  logical anyabs,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only
+  logical anyabs,coupled_acoustic_elastic,coupled_acoustic_poroelastic,coupled_elastic_poroelastic, &
+          any_acoustic,any_poroelastic,plot_lowerleft_corner_only
 
 ! for fluid/solid edge detection
-  integer :: num_fluid_solid_edges
+  integer :: num_fluid_solid_edges,num_fluid_poro_edges,num_solid_poro_edges
   integer, dimension(num_fluid_solid_edges) :: fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge
+  integer, dimension(num_fluid_poro_edges) :: fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge
+  integer, dimension(num_solid_poro_edges) :: solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge
 
   double precision xmax,zmax,height,xw,zw,usoffset,sizex,sizez,vpmin,vpmax
 
@@ -108,8 +131,7 @@
   equivalence (postscript_line,ch1)
   logical :: first
 
-  double precision convert,x1,cpIloc,xa,za,xb,zb
-!  double precision convert,x1,rlamda,rmu,denst,rKvol,cploc,xa,za,xb,zb
+  double precision convert,x1,rlamda,rmu,denst,rKvol,cpIloc,xa,za,xb,zb
   double precision z1,x2,z2,d,d1,d2,dummy,theta,thetaup,thetadown
 
   double precision :: mul_s,kappal_s,rhol_s
@@ -141,35 +163,81 @@
 
   double precision, dimension(:,:), allocatable  :: coorg_send
   double precision, dimension(:,:), allocatable  :: coorg_recv
-  integer, dimension(:), allocatable  :: color_send
-  integer, dimension(:), allocatable  :: color_recv
-  double precision, dimension(:,:), allocatable  :: RGB_send
-  double precision, dimension(:,:), allocatable  :: RGB_recv
   integer  :: nspec_recv
   integer  :: buffer_offset, RGB_offset
 
   integer  :: nb_coorg_per_elem, nb_color_per_elem
   integer  :: iproc, num_spec
   integer  :: ier
-  logical :: anyabs_glob, coupled_acoustic_elastic_glob
+  logical :: anyabs_glob, coupled_acoustic_elastic_glob, coupled_acoustic_poroelastic_glob, &
+             coupled_elastic_poroelastic_glob
 #ifdef USE_MPI
   integer, dimension(MPI_STATUS_SIZE)  :: request_mpi_status
 #endif
   integer  :: myrank, nproc
 
+! plotpost arrays for postscript output
+  integer :: d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
+          d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
+          d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model, &
+          d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model
+  double precision, dimension(d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model) :: &
+coorg_send_ps_velocity_model
+  double precision, dimension(d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model) :: &
+coorg_recv_ps_velocity_model
+  double precision, dimension(d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model) :: &
+RGB_send_ps_velocity_model
+  double precision, dimension(d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model) :: &
+RGB_recv_ps_velocity_model
+  integer :: d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh, &
+          d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh, &
+          d1_color_send_ps_element_mesh, &
+          d1_color_recv_ps_element_mesh
+  double precision, dimension(d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh) :: &
+coorg_send_ps_element_mesh
+  double precision, dimension(d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh) :: &
+coorg_recv_ps_element_mesh
+  integer, dimension(d1_color_send_ps_element_mesh) :: &
+color_send_ps_element_mesh
+  integer, dimension(d1_color_recv_ps_element_mesh) :: &
+color_recv_ps_element_mesh
+  integer :: d1_coorg_send_ps_abs, d1_coorg_recv_ps_abs, &
+          d2_coorg_send_ps_abs, d2_coorg_recv_ps_abs
+  double precision, dimension(d1_coorg_send_ps_abs,d2_coorg_send_ps_abs) :: &
+coorg_send_ps_abs
+  double precision, dimension(d1_coorg_recv_ps_abs,d2_coorg_recv_ps_abs) :: &
+coorg_recv_ps_abs
+  integer :: d1_coorg_send_ps_free_surface, d1_coorg_recv_ps_free_surface, &
+          d2_coorg_send_ps_free_surface, d2_coorg_recv_ps_free_surface
+  double precision, dimension(d1_coorg_send_ps_free_surface,d2_coorg_send_ps_free_surface) :: &
+coorg_send_ps_free_surface
+  double precision, dimension(d1_coorg_recv_ps_free_surface,d2_coorg_recv_ps_free_surface) :: &
+coorg_recv_ps_free_surface
+  integer :: d1_coorg_send_ps_vector_field, d1_coorg_recv_ps_vector_field, &
+          d2_coorg_send_ps_vector_field, d2_coorg_recv_ps_vector_field
+  double precision, dimension(d1_coorg_send_ps_vector_field,d2_coorg_send_ps_vector_field) :: &
+coorg_send_ps_vector_field
+  double precision, dimension(d1_coorg_recv_ps_vector_field,d2_coorg_recv_ps_vector_field) :: &
+coorg_recv_ps_vector_field
+
 #ifndef USE_MPI
-  allocate(coorg_recv(1,1))
-  allocate(color_recv(1))
-  allocate(RGB_recv(1,1))
+! this to avoid warnings by the compiler about unused variables in the case
+! of a serial code, therefore use them once and do nothing: just set them to zero
   nspec_recv = 0
   nb_coorg_per_elem = 0
   nb_color_per_elem = 0
   ier = 0
   num_spec = 0
   iproc = nproc
+  coorg_recv_ps_velocity_model = 0
+  RGB_recv_ps_velocity_model = 0
+  coorg_recv_ps_element_mesh = 0
+  color_recv_ps_element_mesh = 0
+  coorg_recv_ps_abs = 0
+  coorg_recv_ps_free_surface = 0
+  coorg_recv_ps_vector_field = 0
+  allocate(coorg_recv(1,1))
   deallocate(coorg_recv)
-  deallocate(color_recv)
-  deallocate(RGB_recv)
 #endif
 
 ! A4 or US letter paper
@@ -1388,7 +1456,7 @@
   if ( myrank == 0 ) then
      write(IOUT,*) 'X min, max = ',xmin,xmax
      write(IOUT,*) 'Z min, max = ',zmin,zmax
-  end if
+  endif
 
 ! ratio of physical page size/size of the domain meshed
   ratio_page = min(rpercentz*sizez/(zmax-zmin),rpercentx*sizex/(xmax-xmin)) / 100.d0
@@ -1401,7 +1469,7 @@
 #endif
   if ( myrank == 0 ) then
      write(IOUT,*) 'Max norm = ',dispmax
-  end if
+  endif
 
 !
 !---- open PostScript file
@@ -1547,8 +1615,14 @@
 
   if(coupled_acoustic_elastic) then
     write(24,*) '(Coupled Acoustic/Elastic Wave 2D - SEM) show'
+  else if(coupled_acoustic_poroelastic) then
+    write(24,*) '(Coupled Acoustic/Poroelastic Wave 2D - SEM) show'
+  else if(coupled_elastic_poroelastic) then
+    write(24,*) '(Coupled Elastic/Poroelastic Wave 2D - SEM) show'
   else if(any_acoustic) then
     write(24,*) '(Acoustic Wave 2D - Spectral Element Method) show'
+  else if(any_poroelastic) then
+    write(24,*) '(Poroelastic Wave 2D - Spectral Element Method) show'
   else
     write(24,*) '(Elastic Wave 2D - Spectral Element Method) show'
   endif
@@ -1563,8 +1637,7 @@
 !---- print the spectral elements mesh in PostScript
 !
 
-  write(IOUT,*) 'Shape functions based on ',ngnod,' control nodes'
-  end if
+  endif
 
 
   convert = PI / 180.d0
@@ -1574,10 +1647,6 @@
 !
   if(modelvect) then
 
-  if ( myrank /= 0 ) then
-     allocate(coorg_send(2,nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4))
-     allocate(RGB_send(1,nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)))
-  end if
   buffer_offset = 0
   RGB_offset = 0
 
@@ -1598,7 +1667,7 @@
     kappal_s = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS*mul_s
     rhol_s = density(1,kmato(ispec))
 !fluid properties
-    kappal_f = poroelastcoef(1,2,kmato(ispec)) 
+    kappal_f = poroelastcoef(1,2,kmato(ispec))
     rhol_f = density(2,kmato(ispec))
 !frame properties
     mul_fr = poroelastcoef(2,3,kmato(ispec))
@@ -1638,9 +1707,9 @@
      write(24,500) xw,zw
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = xw
-     coorg_send(2,buffer_offset) = zw
-  end if
+     coorg_send_ps_velocity_model(1,buffer_offset) = xw
+     coorg_send_ps_velocity_model(2,buffer_offset) = zw
+  endif
 
   xw = coord(1,ibool(i+subsamp,j,ispec))
   zw = coord(2,ibool(i+subsamp,j,ispec))
@@ -1652,9 +1721,9 @@
      write(24,499) xw,zw
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = xw
-     coorg_send(2,buffer_offset) = zw
-  end if
+     coorg_send_ps_velocity_model(1,buffer_offset) = xw
+     coorg_send_ps_velocity_model(2,buffer_offset) = zw
+  endif
 
   xw = coord(1,ibool(i+subsamp,j+subsamp,ispec))
   zw = coord(2,ibool(i+subsamp,j+subsamp,ispec))
@@ -1666,9 +1735,9 @@
      write(24,499) xw,zw
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = xw
-     coorg_send(2,buffer_offset) = zw
-  end if
+     coorg_send_ps_velocity_model(1,buffer_offset) = xw
+     coorg_send_ps_velocity_model(2,buffer_offset) = zw
+  endif
 
   xw = coord(1,ibool(i,j+subsamp,ispec))
   zw = coord(2,ibool(i,j+subsamp,ispec))
@@ -1680,33 +1749,31 @@
      write(24,499) xw,zw
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = xw
-     coorg_send(2,buffer_offset) = zw
-  end if
+     coorg_send_ps_velocity_model(1,buffer_offset) = xw
+     coorg_send_ps_velocity_model(2,buffer_offset) = zw
+  endif
 
 ! display P-velocity model using gray levels
   if ( myrank == 0 ) then
      write(24,604) x1
   else
      RGB_offset = RGB_offset + 1
-     RGB_send(1,RGB_offset) = x1
-  end if
+     RGB_send_ps_velocity_model(1,RGB_offset) = x1
+  endif
 
           enddo
     enddo
   enddo
-
 
 #ifdef USE_MPI
   if (myrank == 0 ) then
 
      do iproc = 1, nproc-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
-        allocate(coorg_recv(2,nspec_recv*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4))
-        allocate(RGB_recv(1,nspec_recv*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)))
-        call MPI_RECV (coorg_recv(1,1), 2*nspec_recv*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4, &
+        call MPI_RECV (coorg_recv_ps_velocity_model(1,1), &
+             2*nspec_recv*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4, &
              MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
-        call MPI_RECV (RGB_recv(1,1), nspec_recv*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp), &
+        call MPI_RECV (RGB_recv_ps_velocity_model(1,1), nspec_recv*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp), &
              MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
 
         buffer_offset = 0
@@ -1715,34 +1782,31 @@
            do i=1,NGLLX-subsamp,subsamp
               do j=1,NGLLX-subsamp,subsamp
                  buffer_offset = buffer_offset + 1
-                 write(24,500) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+                 write(24,500) coorg_recv_ps_velocity_model(1,buffer_offset), &
+                               coorg_recv_ps_velocity_model(2,buffer_offset)
                  buffer_offset = buffer_offset + 1
-                 write(24,499) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+                 write(24,499) coorg_recv_ps_velocity_model(1,buffer_offset), &
+                               coorg_recv_ps_velocity_model(2,buffer_offset)
                  buffer_offset = buffer_offset + 1
-                 write(24,499) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+                 write(24,499) coorg_recv_ps_velocity_model(1,buffer_offset), &
+                               coorg_recv_ps_velocity_model(2,buffer_offset)
                  buffer_offset = buffer_offset + 1
-                 write(24,499) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+                 write(24,499) coorg_recv_ps_velocity_model(1,buffer_offset), &
+                               coorg_recv_ps_velocity_model(2,buffer_offset)
                  RGB_offset = RGB_offset + 1
-                 write(24,604) RGB_recv(1,RGB_offset)
-              end do
-           end do
-        end do
+                 write(24,604) RGB_recv_ps_velocity_model(1,RGB_offset)
+              enddo
+           enddo
+        enddo
 
-        deallocate(coorg_recv)
-        deallocate(RGB_recv)
-
-     end do
+     enddo
   else
      call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
-     call MPI_SEND (coorg_send(1,1), 2*nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4, &
+     call MPI_SEND (coorg_send_ps_velocity_model(1,1), 2*nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4, &
           MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
-     call MPI_SEND (RGB_send(1,1), nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp), &
+     call MPI_SEND (RGB_send_ps_velocity_model(1,1), nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp), &
           MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
-
-     deallocate(coorg_send)
-     deallocate(RGB_send)
-
-  end if
+  endif
 
 
 #endif
@@ -1758,49 +1822,14 @@
      write(24,*) '%'
      write(24,*) '% spectral element mesh'
      write(24,*) '%'
-  end if
+  endif
 
-  if ( myrank /= 0 ) then
-
-     if ( ngnod == 4 ) then
-        if ( numbers == 1 ) then
-           allocate(coorg_send(2,nspec*5))
-           if ( colors == 1 ) then
-              allocate(color_send(2*nspec))
-           else
-              allocate(color_send(1*nspec))
-           end if
-        else
-           allocate(coorg_send(2,nspec*6))
-           if ( colors == 1 ) then
-              allocate(color_send(1*nspec))
-           end if
-        end if
-     else
-        if ( numbers == 1 ) then
-           allocate(coorg_send(2,nspec*((pointsdisp-1)*3+max(0,pointsdisp-2)+1+1)))
-           if ( colors == 1 ) then
-              allocate(color_send(2*nspec))
-           else
-              allocate(color_send(1*nspec))
-           end if
-        else
-           allocate(coorg_send(2,nspec*((pointsdisp-1)*3+max(0,pointsdisp-2)+1)))
-           if ( colors == 1 ) then
-              allocate(color_send(1*nspec))
-           end if
-        end if
-     end if
-
-  end if
   buffer_offset = 0
   RGB_offset = 0
 
   do ispec=1,nspec
 
-  if ( myrank == 0 ) then
-     write(24,*) '% elem ',ispec
-  end if
+  if ( myrank == 0 ) write(24,*) '% elem ',ispec
 
   do i=1,pointsdisp
   do j=1,pointsdisp
@@ -1825,9 +1854,9 @@
      write(24,681) x1,z1
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = x1
-     coorg_send(2,buffer_offset) = z1
-  end if
+     coorg_send_ps_element_mesh(1,buffer_offset) = x1
+     coorg_send_ps_element_mesh(2,buffer_offset) = z1
+  endif
 
   if(ngnod == 4) then
 
@@ -1842,9 +1871,9 @@
      write(24,681) x2,z2
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = x2
-     coorg_send(2,buffer_offset) = z2
-  end if
+     coorg_send_ps_element_mesh(1,buffer_offset) = x2
+     coorg_send_ps_element_mesh(2,buffer_offset) = z2
+  endif
 
   ir=pointsdisp
   is=pointsdisp
@@ -1856,9 +1885,9 @@
      write(24,681) x2,z2
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = x2
-     coorg_send(2,buffer_offset) = z2
-  end if
+     coorg_send_ps_element_mesh(1,buffer_offset) = x2
+     coorg_send_ps_element_mesh(2,buffer_offset) = z2
+  endif
 
   is=pointsdisp
   ir=1
@@ -1870,9 +1899,9 @@
      write(24,681) x2,z2
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = x2
-     coorg_send(2,buffer_offset) = z2
-  end if
+     coorg_send_ps_element_mesh(1,buffer_offset) = x2
+     coorg_send_ps_element_mesh(2,buffer_offset) = z2
+  endif
 
   ir=1
   is=2
@@ -1884,9 +1913,9 @@
      write(24,681) x2,z2
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = x2
-     coorg_send(2,buffer_offset) = z2
-  end if
+     coorg_send_ps_element_mesh(1,buffer_offset) = x2
+     coorg_send_ps_element_mesh(2,buffer_offset) = z2
+  endif
 
   else
 
@@ -1900,9 +1929,9 @@
        write(24,681) x2,z2
     else
        buffer_offset = buffer_offset + 1
-       coorg_send(1,buffer_offset) = x2
-       coorg_send(2,buffer_offset) = z2
-    end if
+       coorg_send_ps_element_mesh(1,buffer_offset) = x2
+       coorg_send_ps_element_mesh(2,buffer_offset) = z2
+    endif
   enddo
 
   ir=pointsdisp
@@ -1915,9 +1944,9 @@
        write(24,681) x2,z2
     else
        buffer_offset = buffer_offset + 1
-       coorg_send(1,buffer_offset) = x2
-       coorg_send(2,buffer_offset) = z2
-    end if
+       coorg_send_ps_element_mesh(1,buffer_offset) = x2
+       coorg_send_ps_element_mesh(2,buffer_offset) = z2
+    endif
   enddo
 
   is=pointsdisp
@@ -1930,9 +1959,9 @@
        write(24,681) x2,z2
     else
        buffer_offset = buffer_offset + 1
-       coorg_send(1,buffer_offset) = x2
-       coorg_send(2,buffer_offset) = z2
-    end if
+       coorg_send_ps_element_mesh(1,buffer_offset) = x2
+       coorg_send_ps_element_mesh(2,buffer_offset) = z2
+    endif
   enddo
 
   ir=1
@@ -1945,16 +1974,16 @@
        write(24,681) x2,z2
     else
        buffer_offset = buffer_offset + 1
-       coorg_send(1,buffer_offset) = x2
-       coorg_send(2,buffer_offset) = z2
-    end if
+       coorg_send_ps_element_mesh(1,buffer_offset) = x2
+       coorg_send_ps_element_mesh(2,buffer_offset) = z2
+    endif
   enddo
 
   endif
 
   if ( myrank == 0 ) then
      write(24,*) 'CO'
-  end if
+  endif
 
   if(colors == 1) then
 
@@ -1970,8 +1999,8 @@
     endif
   else
      RGB_offset = RGB_offset + 1
-     color_send(RGB_offset) = icol
-  end if
+     color_send_ps_element_mesh(RGB_offset) = icol
+  endif
 
   endif
 
@@ -1983,7 +2012,7 @@
       write(24,*) '0 setgray ST'
     endif
   endif
-  end if
+  endif
 
 ! write the element number, the group number and the material number inside the element
   if(numbers == 1) then
@@ -1997,28 +2026,27 @@
 
   if ( myrank == 0 ) then
   if(colors == 1) write(24,*) '1 setgray'
-  end if
+  endif
 
   if ( myrank == 0 ) then
      write(24,500) xw,zw
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = x2
-     coorg_send(2,buffer_offset) = z2
-  end if
+     coorg_send_ps_element_mesh(1,buffer_offset) = x2
+     coorg_send_ps_element_mesh(2,buffer_offset) = z2
+  endif
 
 ! write spectral element number
   if ( myrank == 0 ) then
      write(24,502) ispec
   else
      RGB_offset = RGB_offset + 1
-     color_send(RGB_offset) = ispec
-  end if
+     color_send_ps_element_mesh(RGB_offset) = ispec
+  endif
 
   endif
 
   enddo
-
 
 #ifdef USE_MPI
   if (myrank == 0 ) then
@@ -2028,27 +2056,23 @@
         nb_coorg_per_elem = 1
         if ( numbers == 1 ) then
            nb_coorg_per_elem = nb_coorg_per_elem + 1
-        end if
+        endif
         if ( ngnod == 4 ) then
            nb_coorg_per_elem = nb_coorg_per_elem + 4
         else
            nb_coorg_per_elem = nb_coorg_per_elem + 3*(pointsdisp-1)+(pointsdisp-2)
-        end if
+        endif
         nb_color_per_elem = 0
         if ( colors == 1 ) then
            nb_color_per_elem = nb_color_per_elem + 1
-        end if
+        endif
         if ( numbers == 1 ) then
            nb_color_per_elem = nb_color_per_elem + 1
-        end if
+        endif
 
-        allocate(coorg_recv(2,nspec_recv*nb_coorg_per_elem))
-        if ( nb_color_per_elem > 0 ) then
-           allocate(color_recv(nspec_recv*nb_color_per_elem))
-        end if
-        call MPI_RECV (coorg_recv(1,1), 2*nspec_recv*nb_coorg_per_elem, &
+        call MPI_RECV (coorg_recv_ps_element_mesh(1,1), 2*nspec_recv*nb_coorg_per_elem, &
              MPI_DOUBLE_PRECISION, iproc, 43, MPI_COMM_WORLD, request_mpi_status, ier)
-        call MPI_RECV (color_recv(1), nspec_recv*nb_coorg_per_elem, &
+        call MPI_RECV (color_recv_ps_element_mesh(1), nspec_recv*nb_coorg_per_elem, &
              MPI_INTEGER, iproc, 43, MPI_COMM_WORLD, request_mpi_status, ier)
 
         buffer_offset = 0
@@ -2059,47 +2083,51 @@
            write(24,*) '% elem ',num_spec
            buffer_offset = buffer_offset + 1
            write(24,*) 'mark'
-           write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+           write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
            if ( ngnod == 4 ) then
               buffer_offset = buffer_offset + 1
-              write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+              write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
               buffer_offset = buffer_offset + 1
-              write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+              write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
               buffer_offset = buffer_offset + 1
-              write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+              write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
               buffer_offset = buffer_offset + 1
-              write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+              write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
 
            else
               do ir=2,pointsdisp
                  buffer_offset = buffer_offset + 1
-                 write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
-              end do
+                 write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
+              enddo
               do is=2,pointsdisp
                  buffer_offset = buffer_offset + 1
-                 write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
-              end do
+                 write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
+              enddo
               do ir=pointsdisp-1,1,-1
                  buffer_offset = buffer_offset + 1
-                 write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
-              end do
+                 write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
+              enddo
               do is=pointsdisp-1,2,-1
                  buffer_offset = buffer_offset + 1
-                 write(24,681) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
-              end do
+                 write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
+              enddo
 
-           end if
+           endif
 
            write(24,*) 'CO'
            if ( colors == 1 ) then
               if(meshvect) then
                  RGB_offset = RGB_offset + 1
-                 write(24,680) red(color_recv(RGB_offset)), green(color_recv(RGB_offset)), blue(color_recv(RGB_offset))
+                 write(24,680) red(color_recv_ps_element_mesh(RGB_offset)),&
+                               green(color_recv_ps_element_mesh(RGB_offset)),&
+                               blue(color_recv_ps_element_mesh(RGB_offset))
               else
                  RGB_offset = RGB_offset + 1
-                 write(24,679) red(color_recv(RGB_offset)), green(color_recv(RGB_offset)), blue(color_recv(RGB_offset))
+                 write(24,679) red(color_recv_ps_element_mesh(RGB_offset)),&
+                               green(color_recv_ps_element_mesh(RGB_offset)),&
+                               blue(color_recv_ps_element_mesh(RGB_offset))
               endif
-           end if
+           endif
            if(meshvect) then
               if(modelvect) then
                  write(24,*) 'Colmesh ST'
@@ -2110,50 +2138,42 @@
            if(numbers == 1) then
               if(colors == 1) write(24,*) '1 setgray'
               buffer_offset = buffer_offset + 1
-              write(24,500) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset)
+              write(24,500) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
               RGB_offset = RGB_offset + 1
-              write(24,502) color_recv(RGB_offset)
-           end if
+              write(24,502) color_recv_ps_element_mesh(RGB_offset)
+           endif
 
-        end do
+        enddo
 
-        deallocate(coorg_recv)
-        deallocate(color_recv)
-
-     end do
+     enddo
   else
      call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 43, MPI_COMM_WORLD, ier)
      nb_coorg_per_elem = 1
      if ( numbers == 1 ) then
         nb_coorg_per_elem = nb_coorg_per_elem + 1
-     end if
+     endif
      if ( ngnod == 4 ) then
         nb_coorg_per_elem = nb_coorg_per_elem + 4
      else
         nb_coorg_per_elem = nb_coorg_per_elem + 3*(pointsdisp-1)+(pointsdisp-2)
-     end if
+     endif
      nb_color_per_elem = 0
      if ( colors == 1 ) then
         nb_color_per_elem = nb_color_per_elem + 1
-     end if
+     endif
      if ( numbers == 1 ) then
         nb_color_per_elem = nb_color_per_elem + 1
-     end if
-     call MPI_SEND (coorg_send(1,1), 2*nspec*nb_coorg_per_elem, &
+     endif
+     call MPI_SEND (coorg_send_ps_element_mesh(1,1), 2*nspec*nb_coorg_per_elem, &
           MPI_DOUBLE_PRECISION, 0, 43, MPI_COMM_WORLD, ier)
      if ( nb_color_per_elem > 0 ) then
-        call MPI_SEND (color_send(1), nspec*nb_color_per_elem, &
+        call MPI_SEND (color_send_ps_element_mesh(1), nspec*nb_color_per_elem, &
              MPI_INTEGER, 0, 43, MPI_COMM_WORLD, ier)
-     end if
+     endif
 
-     deallocate(coorg_send)
-     deallocate(color_send)
-
-  end if
-
+  endif
 
 #endif
-
 
 !
 !--- draw absorbing boundaries with a thick color line
@@ -2175,11 +2195,8 @@
   write(24,*) '0.10 CM setlinewidth'
   write(24,*) '% uncomment this when zooming on parts of the mesh'
   write(24,*) '% 0.02 CM setlinewidth'
-  end if
+  endif
 
-  if ( myrank /= 0 .and. anyabs ) then
-     allocate(coorg_send(4,4*nelemabs))
-  end if
   buffer_offset = 0
 
   if ( anyabs ) then
@@ -2218,18 +2235,17 @@
      write(24,602) x1,z1,x2,z2
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = x1
-     coorg_send(2,buffer_offset) = z1
-     coorg_send(3,buffer_offset) = x2
-     coorg_send(4,buffer_offset) = z2
-  end if
+     coorg_send_ps_abs(1,buffer_offset) = x1
+     coorg_send_ps_abs(2,buffer_offset) = z1
+     coorg_send_ps_abs(3,buffer_offset) = x2
+     coorg_send_ps_abs(4,buffer_offset) = z2
+  endif
 
   endif
   enddo
 
   enddo
-  end if
-
+  endif
 
 #ifdef USE_MPI
   if (myrank == 0 ) then
@@ -2237,39 +2253,34 @@
      do iproc = 1, nproc-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 44, MPI_COMM_WORLD, request_mpi_status, ier)
         if ( nspec_recv > 0 ) then
-        allocate(coorg_recv(4,nspec_recv))
-        call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
+        call MPI_RECV (coorg_recv_ps_abs(1,1), 4*nspec_recv, &
              MPI_DOUBLE_PRECISION, iproc, 44, MPI_COMM_WORLD, request_mpi_status, ier)
 
         buffer_offset = 0
         do ispec = 1, nspec_recv
            buffer_offset = buffer_offset + 1
-           write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
-                coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
-        end do
-        deallocate(coorg_recv)
-        end if
-     end do
+           write(24,602) coorg_recv_ps_abs(1,buffer_offset), coorg_recv_ps_abs(2,buffer_offset), &
+                coorg_recv_ps_abs(3,buffer_offset), coorg_recv_ps_abs(4,buffer_offset)
+        enddo
+        endif
+     enddo
   else
      call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 44, MPI_COMM_WORLD, ier)
      if ( buffer_offset > 0 ) then
-     call MPI_SEND (coorg_send(1,1), 4*buffer_offset, &
+     call MPI_SEND (coorg_send_ps_abs(1,1), 4*buffer_offset, &
           MPI_DOUBLE_PRECISION, 0, 44, MPI_COMM_WORLD, ier)
-     deallocate(coorg_send)
-     end if
-
-  end if
-
-#endif
-
-
-  if ( myrank == 0 ) then
-  write(24,*) '0 setgray'
-  write(24,*) '0.01 CM setlinewidth'
-  end if
+     endif
 
   endif
 
+#endif
+
+  if ( myrank == 0 ) then
+    write(24,*) '0 setgray'
+    write(24,*) '0.01 CM setlinewidth'
+  endif
+
+  endif
 
 !
 !--- draw free surface with a thick color line
@@ -2286,11 +2297,8 @@
   write(24,*) '0.10 CM setlinewidth'
   write(24,*) '% uncomment this when zooming on parts of the mesh'
   write(24,*) '% 0.02 CM setlinewidth'
-  end if
+  endif
 
-  if ( myrank /= 0 .and. nelem_acoustic_surface > 0 ) then
-     allocate(coorg_send(4,4*nelem_acoustic_surface))
-  end if
   buffer_offset = 0
 
   if ( nelem_acoustic_surface > 0 ) then
@@ -2309,15 +2317,14 @@
      write(24,602) x1,z1,x2,z2
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = x1
-     coorg_send(2,buffer_offset) = z1
-     coorg_send(3,buffer_offset) = x2
-     coorg_send(4,buffer_offset) = z2
-  end if
+     coorg_send_ps_free_surface(1,buffer_offset) = x1
+     coorg_send_ps_free_surface(2,buffer_offset) = z1
+     coorg_send_ps_free_surface(3,buffer_offset) = x2
+     coorg_send_ps_free_surface(4,buffer_offset) = z2
+  endif
 
   enddo
-  end if
-
+  endif
 
 #ifdef USE_MPI
   if (myrank == 0 ) then
@@ -2325,38 +2332,32 @@
      do iproc = 1, nproc-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 44, MPI_COMM_WORLD, request_mpi_status, ier)
         if ( nspec_recv > 0 ) then
-        allocate(coorg_recv(4,nspec_recv))
-        call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
+        call MPI_RECV (coorg_recv_ps_free_surface(1,1), 4*nspec_recv, &
              MPI_DOUBLE_PRECISION, iproc, 44, MPI_COMM_WORLD, request_mpi_status, ier)
 
         buffer_offset = 0
         do ispec = 1, nspec_recv
            buffer_offset = buffer_offset + 1
-           write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
-                coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
-        end do
-        deallocate(coorg_recv)
-        end if
-     end do
+           write(24,602) coorg_recv_ps_free_surface(1,buffer_offset), coorg_recv_ps_free_surface(2,buffer_offset), &
+                coorg_recv_ps_free_surface(3,buffer_offset), coorg_recv_ps_free_surface(4,buffer_offset)
+        enddo
+        endif
+     enddo
   else
      call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 44, MPI_COMM_WORLD, ier)
      if ( buffer_offset > 0 ) then
-     call MPI_SEND (coorg_send(1,1), 4*buffer_offset, &
+     call MPI_SEND (coorg_send_ps_free_surface(1,1), 4*buffer_offset, &
           MPI_DOUBLE_PRECISION, 0, 44, MPI_COMM_WORLD, ier)
-     deallocate(coorg_send)
-     end if
+     endif
 
-  end if
+  endif
 
 #endif
 
-
   if ( myrank == 0 ) then
-  write(24,*) '0 setgray'
-  write(24,*) '0.01 CM setlinewidth'
-  end if
-
-
+    write(24,*) '0 setgray'
+    write(24,*) '0.01 CM setlinewidth'
+  endif
 
 !
 !----  draw the fluid-solid coupling edges with a thick color line
@@ -2376,11 +2377,9 @@
   write(24,*) '0.10 CM setlinewidth'
   write(24,*) '% uncomment this when zooming on parts of the mesh'
   write(24,*) '% 0.02 CM setlinewidth'
-  end if
+  endif
 
-  if ( myrank /= 0 .and. num_fluid_solid_edges > 0 ) then
-     allocate(coorg_send(4,num_fluid_solid_edges))
-  end if
+  if ( myrank /= 0 .and. num_fluid_solid_edges > 0 ) allocate(coorg_send(4,num_fluid_solid_edges))
   buffer_offset = 0
 
 ! loop on all the coupling edges
@@ -2391,9 +2390,7 @@
    iedge = fluid_solid_acoustic_iedge(inum)
 
 ! use pink color
-  if ( myrank == 0 ) then
-  write(24,*) '1 0.75 0.8 RG'
-  end if
+  if ( myrank == 0 ) write(24,*) '1 0.75 0.8 RG'
 
   if(iedge == ITOP) then
     ideb = 3
@@ -2427,10 +2424,9 @@
      coorg_send(2,buffer_offset) = z1
      coorg_send(3,buffer_offset) = x2
      coorg_send(4,buffer_offset) = z2
-  end if
+  endif
 
   enddo
-
 
 #ifdef USE_MPI
   if (myrank == 0 ) then
@@ -2448,29 +2444,241 @@
            write(24,*) '1 0.75 0.8 RG'
            write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
                 coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
-        end do
+        enddo
         deallocate(coorg_recv)
-        end if
-     end do
+        endif
+     enddo
   else
      call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 45, MPI_COMM_WORLD, ier)
      if ( buffer_offset > 0 ) then
      call MPI_SEND (coorg_send(1,1), 4*buffer_offset, &
           MPI_DOUBLE_PRECISION, 0, 45, MPI_COMM_WORLD, ier)
      deallocate(coorg_send)
-     end if
-  end if
+     endif
+  endif
 
 #endif
 
-
   if ( myrank == 0 ) then
-  write(24,*) '0 setgray'
-  write(24,*) '0.01 CM setlinewidth'
-  end if
+    write(24,*) '0 setgray'
+    write(24,*) '0.01 CM setlinewidth'
+  endif
 
   endif
 
+!
+!----  draw the fluid-porous coupling edges with a thick color line
+!
+  coupled_acoustic_poroelastic_glob = coupled_acoustic_poroelastic
+#ifdef USE_MPI
+  call MPI_ALLREDUCE(coupled_acoustic_poroelastic, coupled_acoustic_poroelastic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
+#endif
+
+  if(coupled_acoustic_poroelastic_glob .and. boundvect) then
+
+  if ( myrank == 0 ) then
+  write(24,*) '%'
+  write(24,*) '% fluid-porous coupling edges in the mesh'
+  write(24,*) '%'
+
+  write(24,*) '0.10 CM setlinewidth'
+  write(24,*) '% uncomment this when zooming on parts of the mesh'
+  write(24,*) '% 0.02 CM setlinewidth'
+  endif
+
+  if ( myrank /= 0 .and. num_fluid_poro_edges > 0 ) allocate(coorg_send(4,num_fluid_poro_edges))
+  buffer_offset = 0
+
+! loop on all the coupling edges
+  do inum = 1,num_fluid_poro_edges
+
+! get the edge of the acoustic element
+   ispec = fluid_poro_acoustic_ispec(inum)
+   iedge = fluid_poro_acoustic_iedge(inum)
+
+! use pink color
+  if ( myrank == 0 ) write(24,*) '1 0.75 0.8 RG'
+
+  if(iedge == ITOP) then
+    ideb = 3
+    ifin = 4
+  else if(iedge == IBOTTOM) then
+    ideb = 1
+    ifin = 2
+  else if(iedge == ILEFT) then
+    ideb = 4
+    ifin = 1
+  else if(iedge == IRIGHT) then
+    ideb = 2
+    ifin = 3
+  else
+    call exit_MPI('Wrong fluid-solid coupling edge code')
+  endif
+
+  x1 = (coorg(1,knods(ideb,ispec))-xmin)*ratio_page + orig_x
+  z1 = (coorg(2,knods(ideb,ispec))-zmin)*ratio_page + orig_z
+  x2 = (coorg(1,knods(ifin,ispec))-xmin)*ratio_page + orig_x
+  z2 = (coorg(2,knods(ifin,ispec))-zmin)*ratio_page + orig_z
+  x1 = x1 * centim
+  z1 = z1 * centim
+  x2 = x2 * centim
+  z2 = z2 * centim
+  if ( myrank == 0 ) then
+     write(24,602) x1,z1,x2,z2
+  else
+     buffer_offset = buffer_offset + 1
+     coorg_send(1,buffer_offset) = x1
+     coorg_send(2,buffer_offset) = z1
+     coorg_send(3,buffer_offset) = x2
+     coorg_send(4,buffer_offset) = z2
+  endif
+
+  enddo
+
+#ifdef USE_MPI
+  if (myrank == 0 ) then
+
+     do iproc = 1, nproc-1
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, MPI_COMM_WORLD, request_mpi_status, ier)
+        if ( nspec_recv > 0 ) then
+        allocate(coorg_recv(4,nspec_recv))
+        call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
+             MPI_DOUBLE_PRECISION, iproc, 45, MPI_COMM_WORLD, request_mpi_status, ier)
+
+        buffer_offset = 0
+        do ispec = 1, nspec_recv
+           buffer_offset = buffer_offset + 1
+           write(24,*) '1 0.75 0.8 RG'
+           write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
+                coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
+        enddo
+        deallocate(coorg_recv)
+        endif
+     enddo
+  else
+     call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 45, MPI_COMM_WORLD, ier)
+     if ( buffer_offset > 0 ) then
+     call MPI_SEND (coorg_send(1,1), 4*buffer_offset, &
+          MPI_DOUBLE_PRECISION, 0, 45, MPI_COMM_WORLD, ier)
+     deallocate(coorg_send)
+     endif
+  endif
+
+#endif
+
+  if ( myrank == 0 ) then
+    write(24,*) '0 setgray'
+    write(24,*) '0.01 CM setlinewidth'
+  endif
+
+  endif
+
+!
+!----  draw the solid-porous coupling edges with a thick color line
+!
+  coupled_elastic_poroelastic_glob = coupled_elastic_poroelastic
+#ifdef USE_MPI
+  call MPI_ALLREDUCE(coupled_elastic_poroelastic, coupled_elastic_poroelastic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
+#endif
+
+  if(coupled_elastic_poroelastic_glob .and. boundvect) then
+
+  if ( myrank == 0 ) then
+  write(24,*) '%'
+  write(24,*) '% solid-porous coupling edges in the mesh'
+  write(24,*) '%'
+
+  write(24,*) '0.10 CM setlinewidth'
+  write(24,*) '% uncomment this when zooming on parts of the mesh'
+  write(24,*) '% 0.02 CM setlinewidth'
+  endif
+
+  if ( myrank /= 0 .and. num_solid_poro_edges > 0 ) allocate(coorg_send(4,num_solid_poro_edges))
+  buffer_offset = 0
+
+! loop on all the coupling edges
+  do inum = 1,num_solid_poro_edges
+
+! get the edge of the poroelastic element
+   ispec = solid_poro_poroelastic_ispec(inum)
+   iedge = solid_poro_poroelastic_iedge(inum)
+
+! use pink color
+  if ( myrank == 0 ) write(24,*) '1 0.75 0.8 RG'
+
+  if(iedge == ITOP) then
+    ideb = 3
+    ifin = 4
+  else if(iedge == IBOTTOM) then
+    ideb = 1
+    ifin = 2
+  else if(iedge == ILEFT) then
+    ideb = 4
+    ifin = 1
+  else if(iedge == IRIGHT) then
+    ideb = 2
+    ifin = 3
+  else
+    call exit_MPI('Wrong fluid-solid coupling edge code')
+  endif
+
+  x1 = (coorg(1,knods(ideb,ispec))-xmin)*ratio_page + orig_x
+  z1 = (coorg(2,knods(ideb,ispec))-zmin)*ratio_page + orig_z
+  x2 = (coorg(1,knods(ifin,ispec))-xmin)*ratio_page + orig_x
+  z2 = (coorg(2,knods(ifin,ispec))-zmin)*ratio_page + orig_z
+  x1 = x1 * centim
+  z1 = z1 * centim
+  x2 = x2 * centim
+  z2 = z2 * centim
+  if ( myrank == 0 ) then
+     write(24,602) x1,z1,x2,z2
+  else
+     buffer_offset = buffer_offset + 1
+     coorg_send(1,buffer_offset) = x1
+     coorg_send(2,buffer_offset) = z1
+     coorg_send(3,buffer_offset) = x2
+     coorg_send(4,buffer_offset) = z2
+  endif
+
+  enddo
+
+#ifdef USE_MPI
+  if (myrank == 0 ) then
+
+     do iproc = 1, nproc-1
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, MPI_COMM_WORLD, request_mpi_status, ier)
+        if ( nspec_recv > 0 ) then
+        allocate(coorg_recv(4,nspec_recv))
+        call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
+             MPI_DOUBLE_PRECISION, iproc, 45, MPI_COMM_WORLD, request_mpi_status, ier)
+
+        buffer_offset = 0
+        do ispec = 1, nspec_recv
+           buffer_offset = buffer_offset + 1
+           write(24,*) '1 0.75 0.8 RG'
+           write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
+                coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
+        enddo
+        deallocate(coorg_recv)
+        endif
+     enddo
+  else
+     call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 45, MPI_COMM_WORLD, ier)
+     if ( buffer_offset > 0 ) then
+     call MPI_SEND (coorg_send(1,1), 4*buffer_offset, &
+          MPI_DOUBLE_PRECISION, 0, 45, MPI_COMM_WORLD, ier)
+     deallocate(coorg_send)
+     endif
+  endif
+
+#endif
+
+  if ( myrank == 0 ) then
+    write(24,*) '0 setgray'
+    write(24,*) '0.01 CM setlinewidth'
+  endif
+
+  endif
 
 !
 !----  draw the normalized vector field
@@ -2493,13 +2701,11 @@
   else
         write(24,*) '0 setgray'
   endif
-  end if
+  endif
 
   if(interpol) then
 
-  if ( myrank == 0 ) then
-  write(IOUT,*) 'Interpolating the vector field...'
-  end if
+  if (myrank == 0) write(IOUT,*) 'Interpolating the vector field...'
 
 ! option to plot only lowerleft corner value to avoid very large files if dense meshes
   if(plot_lowerleft_corner_only) then
@@ -2508,16 +2714,16 @@
     pointsdisp_loop = pointsdisp
   endif
 
-  if ( myrank /= 0 ) then
-     allocate(coorg_send(8,nspec*pointsdisp_loop*pointsdisp_loop))
-
-  end if
   buffer_offset = 0
 
   do ispec=1,nspec
 
 ! interpolation on a uniform grid
-  if(mod(ispec,1000) == 0) write(IOUT,*) 'Interpolation uniform grid element ',ispec, myrank
+#ifdef USE_MPI
+  if(myrank == 0 .and. mod(ispec,1000) == 0) write(IOUT,*) 'Interpolation uniform grid element ',ispec,' on processor 0'
+#else
+  if(mod(ispec,1000) == 0) write(IOUT,*) 'Interpolation uniform grid element ',ispec
+#endif
 
   do i=1,pointsdisp_loop
   do j=1,pointsdisp_loop
@@ -2582,7 +2788,6 @@
   write(postscript_line,700) xb,zb,xa,za,x2,z2,x1,z1
 
 ! suppress useless white spaces to make PostScript file smaller
-
 ! suppress leading white spaces again, if any
   postscript_line = adjustl(postscript_line)
 
@@ -2603,15 +2808,15 @@
 
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = xb
-     coorg_send(2,buffer_offset) = zb
-     coorg_send(3,buffer_offset) = xa
-     coorg_send(4,buffer_offset) = za
-     coorg_send(5,buffer_offset) = x2
-     coorg_send(6,buffer_offset) = z2
-     coorg_send(7,buffer_offset) = x1
-     coorg_send(8,buffer_offset) = z1
-  end if
+     coorg_send_ps_vector_field(1,buffer_offset) = xb
+     coorg_send_ps_vector_field(2,buffer_offset) = zb
+     coorg_send_ps_vector_field(3,buffer_offset) = xa
+     coorg_send_ps_vector_field(4,buffer_offset) = za
+     coorg_send_ps_vector_field(5,buffer_offset) = x2
+     coorg_send_ps_vector_field(6,buffer_offset) = z2
+     coorg_send_ps_vector_field(7,buffer_offset) = x1
+     coorg_send_ps_vector_field(8,buffer_offset) = z1
+  endif
 
   endif
 
@@ -2619,26 +2824,25 @@
   enddo
   enddo
 
-
 #ifdef USE_MPI
   if (myrank == 0 ) then
 
      do iproc = 1, nproc-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 46, MPI_COMM_WORLD, request_mpi_status, ier)
         if ( nspec_recv > 0 ) then
-        allocate(coorg_recv(8,nspec_recv))
-        call MPI_RECV (coorg_recv(1,1), 8*nspec_recv, &
+        call MPI_RECV (coorg_recv_ps_vector_field(1,1), 8*nspec_recv, &
              MPI_DOUBLE_PRECISION, iproc, 46, MPI_COMM_WORLD, request_mpi_status, ier)
 
         buffer_offset = 0
         do ispec = 1, nspec_recv
            buffer_offset = buffer_offset + 1
-             write(postscript_line,700) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
-                  coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset), &
-                  coorg_recv(5,buffer_offset), coorg_recv(6,buffer_offset), &
-                  coorg_recv(7,buffer_offset), coorg_recv(8,buffer_offset)
-             ! suppress useless white spaces to make PostScript file smaller
+             write(postscript_line,700) coorg_recv_ps_vector_field(1,buffer_offset), &
+                  coorg_recv_ps_vector_field(2,buffer_offset), &
+                  coorg_recv_ps_vector_field(3,buffer_offset), coorg_recv_ps_vector_field(4,buffer_offset), &
+                  coorg_recv_ps_vector_field(5,buffer_offset), coorg_recv_ps_vector_field(6,buffer_offset), &
+                  coorg_recv_ps_vector_field(7,buffer_offset), coorg_recv_ps_vector_field(8,buffer_offset)
 
+             ! suppress useless white spaces to make PostScript file smaller
              ! suppress leading white spaces again, if any
              postscript_line = adjustl(postscript_line)
 
@@ -2656,19 +2860,17 @@
              enddo
              ch2(index_char) = ch1(line_length)
              write(24,"(100(a1))") (ch2(ii), ii=1,index_char)
-          end do
-          deallocate(coorg_recv)
-          end if
-       end do
+          enddo
+          endif
+       enddo
     else
        call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 46, MPI_COMM_WORLD, ier)
        if ( buffer_offset > 0 ) then
-       call MPI_SEND (coorg_send(1,1), 8*buffer_offset, &
+       call MPI_SEND (coorg_send_ps_vector_field(1,1), 8*buffer_offset, &
             MPI_DOUBLE_PRECISION, 0, 46, MPI_COMM_WORLD, ier)
-       deallocate(coorg_send)
-       end if
+       endif
 
-  end if
+  endif
 
 #endif
 
@@ -2676,10 +2878,6 @@
 ! draw the vectors at the nodes of the mesh if we do not interpolate the display on a regular grid
   else
 
-  if ( myrank /= 0 ) then
-     allocate(coorg_send(8,npoin))
-
-  end if
   buffer_offset = 0
 
   do ipoin=1,npoin
@@ -2724,7 +2922,6 @@
   write(postscript_line,700) xb,zb,xa,za,x2,z2,x1,z1
 
 ! suppress useless white spaces to make PostScript file smaller
-
 ! suppress leading white spaces again, if any
   postscript_line = adjustl(postscript_line)
 
@@ -2745,19 +2942,18 @@
 
   else
      buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = xb
-     coorg_send(2,buffer_offset) = zb
-     coorg_send(3,buffer_offset) = xa
-     coorg_send(4,buffer_offset) = za
-     coorg_send(5,buffer_offset) = x2
-     coorg_send(6,buffer_offset) = z2
-     coorg_send(7,buffer_offset) = x1
-     coorg_send(8,buffer_offset) = z1
-  end if
+     coorg_send_ps_vector_field(1,buffer_offset) = xb
+     coorg_send_ps_vector_field(2,buffer_offset) = zb
+     coorg_send_ps_vector_field(3,buffer_offset) = xa
+     coorg_send_ps_vector_field(4,buffer_offset) = za
+     coorg_send_ps_vector_field(5,buffer_offset) = x2
+     coorg_send_ps_vector_field(6,buffer_offset) = z2
+     coorg_send_ps_vector_field(7,buffer_offset) = x1
+     coorg_send_ps_vector_field(8,buffer_offset) = z1
+  endif
   endif
 
   enddo
-
 
 #ifdef USE_MPI
   if (myrank == 0 ) then
@@ -2765,19 +2961,19 @@
      do iproc = 1, nproc-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 47, MPI_COMM_WORLD, request_mpi_status, ier)
         if ( nspec_recv > 0 ) then
-        allocate(coorg_recv(8,nspec_recv))
-        call MPI_RECV (coorg_recv(1,1), 8*nspec_recv, &
+        call MPI_RECV (coorg_recv_ps_vector_field(1,1), 8*nspec_recv, &
              MPI_DOUBLE_PRECISION, iproc, 47, MPI_COMM_WORLD, request_mpi_status, ier)
 
         buffer_offset = 0
         do ispec = 1, nspec_recv
            buffer_offset = buffer_offset + 1
-             write(postscript_line,700) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
-                  coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset), &
-                  coorg_recv(5,buffer_offset), coorg_recv(6,buffer_offset), &
-                  coorg_recv(7,buffer_offset), coorg_recv(8,buffer_offset)
-             ! suppress useless white spaces to make PostScript file smaller
+             write(postscript_line,700) coorg_recv_ps_vector_field(1,buffer_offset), &
+                  coorg_recv_ps_vector_field(2,buffer_offset), &
+                  coorg_recv_ps_vector_field(3,buffer_offset), coorg_recv_ps_vector_field(4,buffer_offset), &
+                  coorg_recv_ps_vector_field(5,buffer_offset), coorg_recv_ps_vector_field(6,buffer_offset), &
+                  coorg_recv_ps_vector_field(7,buffer_offset), coorg_recv_ps_vector_field(8,buffer_offset)
 
+             ! suppress useless white spaces to make PostScript file smaller
              ! suppress leading white spaces again, if any
              postscript_line = adjustl(postscript_line)
 
@@ -2795,21 +2991,18 @@
              enddo
              ch2(index_char) = ch1(line_length)
              write(24,"(100(a1))") (ch2(ii), ii=1,index_char)
-          end do
-          deallocate(coorg_recv)
-          end if
-       end do
+          enddo
+          endif
+       enddo
     else
        call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 47, MPI_COMM_WORLD, ier)
        if ( buffer_offset > 0 ) then
-       call MPI_SEND (coorg_send(1,1), 8*buffer_offset, &
+       call MPI_SEND (coorg_send_ps_vector_field(1,1), 8*buffer_offset, &
             MPI_DOUBLE_PRECISION, 0, 47, MPI_COMM_WORLD, ier)
-       deallocate(coorg_send)
-       end if
-  end if
+       endif
+  endif
 
 #endif
-
 
   endif
 
@@ -2862,7 +3055,7 @@
   write(24,*) 'showpage'
 
   close(24)
-  end if
+  endif
 
  10  format('%!PS-Adobe-2.0',/,'%%',/,'%% Title: ',a50,/,'%% Created by: Specfem2D',/,'%% Author: Dimitri Komatitsch',/,'%%')
  600 format(f6.3,' neg CM 0 MR (Time =',f8.3,' s) show')

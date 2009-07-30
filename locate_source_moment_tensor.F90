@@ -4,7 +4,7 @@
 !                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour and CNRS, France.
+! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
@@ -45,7 +45,8 @@
 !----
 
   subroutine locate_source_moment_tensor(ibool,coord,nspec,npoin,xigll,zigll,x_source,z_source, &
-               ispec_selected_source,is_proc_source,nb_proc_source,nproc,myrank,xi_source,gamma_source,coorg,knods,ngnod,npgeo)
+               ispec_selected_source,is_proc_source,nb_proc_source,nproc,myrank, &
+               xi_source,gamma_source,coorg,knods,ngnod,npgeo,ipass)
 
   implicit none
 
@@ -54,7 +55,7 @@
   include "mpif.h"
 #endif
 
-  integer nspec,npoin,ngnod,npgeo
+  integer nspec,npoin,ngnod,npgeo,ipass
 
   integer knods(ngnod,nspec)
   double precision coorg(NDIM,npgeo)
@@ -90,25 +91,25 @@
 
 
 ! **************
-  if ( myrank == 0 .or. nproc == 1 ) then
-  write(IOUT,*)
-  write(IOUT,*) '*******************************'
-  write(IOUT,*) ' locating moment-tensor source'
-  write(IOUT,*) '*******************************'
-  write(IOUT,*)
-  end if
+  if ((myrank == 0 .or. nproc == 1) .and. ipass == 1) then
+    write(IOUT,*)
+    write(IOUT,*) '*******************************'
+    write(IOUT,*) ' locating moment-tensor source'
+    write(IOUT,*) '*******************************'
+    write(IOUT,*)
+  endif
 
 ! set distance to huge initial value
-  distmin=HUGEVAL
+  distmin = HUGEVAL
 
   is_proc_source = 0
 
-  do ispec=1,nspec
+  do ispec = 1,nspec
 
 ! loop only on points inside the element
 ! exclude edges to ensure this point is not shared with other elements
-     do j=2,NGLLZ-1
-        do i=2,NGLLX-1
+     do j = 2,NGLLZ-1
+        do i = 2,NGLLX-1
 
            iglob = ibool(i,j,ispec)
            dist = sqrt((x_source-dble(coord(1,iglob)))**2 + (z_source-dble(coord(2,iglob)))**2)
@@ -127,7 +128,6 @@
 ! end of loop on all the spectral elements
   enddo
 
-
 #ifdef USE_MPI
   ! global minimum distance computed over all processes
   call MPI_ALLREDUCE (distmin, dist_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ierror)
@@ -137,12 +137,8 @@
 
 #endif
 
-
-  ! check if this process contains the source
-  if ( dist_glob == distmin ) then
-     is_proc_source = 1
-  end if
-
+! check if this process contains the source
+  if ( dist_glob == distmin ) is_proc_source = 1
 
 #ifdef USE_MPI
   ! determining the number of processes that contain the source (useful when the source is located on an interface)
@@ -163,10 +159,10 @@
 
      if ( myrank /= locate_is_proc_source(1) ) then
         is_proc_source = 0
-     end if
+     endif
      nb_proc_source = 1
 
-  end if
+  endif
 
 #endif
 
@@ -175,8 +171,8 @@
 ! ****************************************
 
 ! use initial guess in xi and gamma
-        xi = xigll(ix_initial_guess)
-        gamma = zigll(iz_initial_guess)
+  xi = xigll(ix_initial_guess)
+  gamma = zigll(iz_initial_guess)
 
 ! iterate to solve the non linear system
   do iter_loop = 1,NUM_ITER
@@ -219,7 +215,7 @@
 ! compute final distance between asked and found
   final_distance = sqrt((x_source-x)**2 + (z_source-z)**2)
 
-  if ( is_proc_source == 1 ) then
+  if (is_proc_source == 1 .and. ipass == 1) then
      write(IOUT,*)
      write(IOUT,*) 'Moment-tensor source:'
 
@@ -235,7 +231,7 @@
      write(IOUT,*)
      write(IOUT,*) 'end of moment-tensor source detection'
      write(IOUT,*)
-  end if
+  endif
 
 #ifdef USE_MPI
   call MPI_BARRIER(MPI_COMM_WORLD,ierror)

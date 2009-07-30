@@ -4,7 +4,7 @@
 !                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour and CNRS, France.
+! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
@@ -252,8 +252,6 @@
   close(27)
 
 ! open image file and create system command to convert image to more convenient format
-!  write(system_command,"('cd OUTPUT_FILES ; convert image',i7.7,'.pnm image',i7.7,'.gif ; rm -f image',i7.7,'.pnm')") it,it,it
-! for cluster
   write(system_command,"('cd OUTPUT_FILES ; convert image',i7.7,'.pnm image',i7.7,'.gif')") it,it
 
 ! call the system to convert image to GIF

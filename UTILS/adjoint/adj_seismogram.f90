@@ -4,12 +4,14 @@
 ! into the adjoint source for generating banana-dougnut kernels
 
       implicit none
-
-      integer, parameter :: NSTEP = 3000
+!
+! user edit
+      integer, parameter :: NSTEP = 6000
       integer, parameter :: nrec = 1
-      double precision, parameter :: t0 = 6d-2
-      double precision, parameter :: deltat = 2d-4
+      double precision, parameter :: t0 = 0.4
+      double precision, parameter :: deltat = 1d-3
       double precision, parameter :: EPS = 1.d-40
+!
       integer :: itime,icomp,istart,iend,nlen,irec
       double precision :: time,tstart(nrec),tend(nrec)
       character(len=150), dimension(nrec) :: station_name
@@ -21,9 +23,11 @@
 
       include 'constants.h'
 
+! user edit
       station_name(1) = 'S0001'
-      tstart(1) = 0.031d0 + t0
-      tend(1) = 0.121d0 + t0
+      tstart(1) = 3.5d0 + t0
+      tend(1) = 4.3d0 + t0
+!
 
       comp = (/"BHX","BHZ"/)
      
@@ -90,10 +94,10 @@
       ft_bar(:) = 0.d0
       endif
 
+! user edit: which component
        do itime =1,NSTEP
         if(icomp == 1) then
       write(11,*) (itime-1)*deltat - t0, ft_bar(itime)
-!      write(12,*) (itime-1)*deltat - t0, seism_veloc(itime)
         else
       write(11,*) (itime-1)*deltat - t0, 0.d0
         endif
@@ -101,7 +105,6 @@
 
         enddo
       close(11)
-!      close(12)
 
       enddo
 

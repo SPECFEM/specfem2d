@@ -4,12 +4,10 @@
 !                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour and CNRS, France.
+! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
-!               Christina Morency, cmorency aT gps DOT caltech DOT edu
-!               Jeroen Tromp, jtromp aT gps DOT caltech DOT edu
 !
 ! This software is a computer program whose purpose is to solve
 ! the two-dimensional viscoelastic anisotropic wave equation
@@ -45,7 +43,7 @@
   subroutine compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,&
          displs_poroelastic,displw_poroelastic,elastic,poroelastic,vector_field_display, &
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext,e1,e11, &
+         numat,kmato,density,porosity,tortuosity,elastcoef,vpext,vsext,rhoext,e1,e11, &
          TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
 
 ! compute pressure in acoustic elements and in elastic elements
@@ -61,7 +59,7 @@
 
   double precision, dimension(2,numat) :: density
   double precision, dimension(numat) :: porosity,tortuosity
-  double precision, dimension(4,3,numat) :: poroelastcoef
+  double precision, dimension(4,3,numat) :: elastcoef
   double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
@@ -79,7 +77,7 @@
 
   integer :: N_SLS
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11
-  double precision :: Mu_nu1,Mu_nu2
+  double precision, dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
 
 ! local variables
   integer :: i,j,ispec,iglob
@@ -94,7 +92,7 @@
     call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,&
          displs_poroelastic,displw_poroelastic,elastic,poroelastic,&
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
+         numat,kmato,density,porosity,tortuosity,elastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
          TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
 
 ! use vector_field_display as temporary storage, store pressure in its second component
@@ -116,10 +114,10 @@
   subroutine compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,&
          displs_poroelastic,displw_poroelastic,elastic,poroelastic,&
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
+         numat,kmato,density,porosity,tortuosity,elastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
          TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
 
-! compute pressure in acoustic elements and in (poro)elastic elements
+! compute pressure in acoustic elements and in elastic elements
 
   implicit none
 
@@ -132,7 +130,7 @@
 
   double precision, dimension(2,numat) :: density
   double precision, dimension(numat) :: porosity,tortuosity
-  double precision, dimension(4,3,numat) :: poroelastcoef
+  double precision, dimension(4,3,numat) :: elastcoef
   double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
@@ -153,7 +151,7 @@
   integer :: N_SLS
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11
   real(kind=CUSTOM_REAL) :: e1_sum,e11_sum
-  double precision :: Mu_nu1,Mu_nu2
+  double precision, dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
   integer :: i_sls
 
 ! local variables
@@ -169,8 +167,7 @@
   real(kind=CUSTOM_REAL) :: dwx_dxi,dwx_dgamma,dwz_dxi,dwz_dgamma
   real(kind=CUSTOM_REAL) :: dwx_dxl,dwz_dzl
 
-! material properties of the (poro)elastic medium
-  integer :: material
+! material properties of the elastic medium
   real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,lambdalplus2mul_relaxed,denst
   real(kind=CUSTOM_REAL) :: mul_unrelaxed,lambdal_unrelaxed,lambdalplus2mul_unrelaxed,cpl,csl
 
@@ -205,9 +202,9 @@
   if(elastic(ispec)) then
 
 ! get relaxed elastic parameters of current spectral element
-    lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
-    mul_relaxed = poroelastcoef(2,1,kmato(ispec))
-    lambdalplus2mul_relaxed = poroelastcoef(3,1,kmato(ispec))
+    lambdal_relaxed = elastcoef(1,1,kmato(ispec))
+    mul_relaxed = elastcoef(2,1,kmato(ispec))
+    lambdalplus2mul_relaxed = elastcoef(3,1,kmato(ispec))
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
@@ -257,8 +254,8 @@
 ! viscoelastic medium, Geophysical Journal International, vol. 95, p. 597-611 (1988).
 
 ! compute unrelaxed elastic coefficients from formulas in Carcione 1993 page 111
-    lambdal_unrelaxed = (lambdal_relaxed + mul_relaxed) * Mu_nu1 - mul_relaxed * Mu_nu2
-    mul_unrelaxed = mul_relaxed * Mu_nu2
+    lambdal_unrelaxed = (lambdal_relaxed + mul_relaxed) * Mu_nu1(i,j,ispec) - mul_relaxed * Mu_nu2(i,j,ispec)
+    mul_unrelaxed = mul_relaxed * Mu_nu2(i,j,ispec)
     lambdalplus2mul_unrelaxed = lambdal_unrelaxed + TWO*mul_unrelaxed
 
 ! compute the stress using the unrelaxed Lame parameters (Carcione 1993, page 111)
@@ -307,15 +304,15 @@
     phil = porosity(kmato(ispec))
     tortl = tortuosity(kmato(ispec))
 !solid properties
-    mul_s = poroelastcoef(2,1,kmato(ispec))
-    kappal_s = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS*mul_s
+    mul_s = elastcoef(2,1,kmato(ispec))
+    kappal_s = elastcoef(3,1,kmato(ispec)) - FOUR_THIRDS*mul_s
     rhol_s = density(1,kmato(ispec))
 !fluid properties
-    kappal_f = poroelastcoef(1,2,kmato(ispec)) 
+    kappal_f = elastcoef(1,2,kmato(ispec))
     rhol_f = density(2,kmato(ispec))
 !frame properties
-    mul_fr = poroelastcoef(2,3,kmato(ispec))
-    kappal_fr = poroelastcoef(3,3,kmato(ispec)) - FOUR_THIRDS*mul_fr
+    mul_fr = elastcoef(2,3,kmato(ispec))
+    kappal_fr = elastcoef(3,3,kmato(ispec)) - FOUR_THIRDS*mul_fr
     rhol_bar =  (1.d0 - phil)*rhol_s + phil*rhol_f
 !Biot coefficients for the input phi
       D_biot = kappal_s*(1.d0 + phil*(kappal_s/kappal_f - 1.d0))
@@ -331,15 +328,6 @@
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
-
-!--- if external medium, get elastic parameters of current grid point
-        if(assign_external_model) then
-          cpl = vpext(i,j,ispec)
-          csl = vsext(i,j,ispec)
-          denst = rhoext(i,j,ispec)
-!          mul_relaxed = denst*csl*csl
-!          lambdal_relaxed = denst*cpl*cpl - TWO*mul_relaxed
-        endif
 
 ! derivative along x and along z
         dux_dxi = ZERO
@@ -381,7 +369,7 @@
         dwx_dxl = dwx_dxi*xixl + dwx_dgamma*gammaxl
         dwz_dzl = dwz_dxi*xizl + dwz_dgamma*gammazl
 
-! compute diagonal components of the stress tensor (include attenuation or anisotropy if needed)
+! compute diagonal components of the stress tensor (include attenuation if needed)
 
   if(TURN_ATTENUATION_ON) then
 !-------------------- ATTENTION TO BE DEFINED ------------------------------!
@@ -393,8 +381,8 @@
 ! viscoelastic medium, Geophysical Journal International, vol. 95, p. 597-611 (1988).
 
 ! compute unrelaxed elastic coefficients from formulas in Carcione 1993 page 111
-    lambdal_unrelaxed = (lambdal_relaxed + mul_relaxed) * Mu_nu1 - mul_relaxed * Mu_nu2
-    mul_unrelaxed = mul_relaxed * Mu_nu2
+    lambdal_unrelaxed = (lambdal_relaxed + mul_relaxed) * Mu_nu1(i,j,ispec) - mul_relaxed * Mu_nu2(i,j,ispec)
+    mul_unrelaxed = mul_relaxed * Mu_nu2(i,j,ispec)
     lambdalplus2mul_unrelaxed = lambdal_unrelaxed + TWO*mul_unrelaxed
 
 ! compute the stress using the unrelaxed Lame parameters (Carcione 1993, page 111)
@@ -424,35 +412,22 @@
 
   endif
 
-! full anisotropy
-  if(TURN_ANISOTROPY_ON) then
-!-------------------- ATTENTION TO BE DEFINED ------------------------------!
-
-! implement anisotropy in 2D
-     sigma_xx = c11val*dux_dxl + c15val*(duz_dxl + dux_dzl) + c13val*duz_dzl
-     sigma_zz = c13val*dux_dxl + c35val*(duz_dxl + dux_dzl) + c33val*duz_dzl
-
-  endif
-
 ! store pressure
         pressure_element(i,j) = - (sigma_xx + sigma_zz) / 2.d0
 !        pressure_element2(i,j) = - sigmap
       enddo
     enddo
 
-  else ! pressure = - rho * Chi_dot_dot if acoustic element
+! pressure = - Chi_dot_dot if acoustic element
+  else
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
 
         iglob = ibool(i,j,ispec)
 
-        material = kmato(ispec)
-        denst = density(2,material)
-        if(assign_external_model) denst = rhoext(i,j,ispec)
-
 ! store pressure
-        pressure_element(i,j) = - denst * potential_dot_dot_acoustic(iglob)
+        pressure_element(i,j) = - potential_dot_dot_acoustic(iglob)
 
       enddo
     enddo

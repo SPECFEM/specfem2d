@@ -4,7 +4,7 @@
 !                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour and CNRS, France.
+! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
@@ -40,8 +40,8 @@
 !
 !========================================================================
 
-  subroutine locate_source_force(coord,ibool,npoin,nspec,x_source,z_source,source_type,ix_source,iz_source, &
-                                         ispec_source,iglob_source,is_proc_source,nb_proc_source)
+  subroutine locate_source_force(coord,ibool,npoin,nspec,x_source,z_source,ix_source,iz_source, &
+     ispec_source,iglob_source,is_proc_source,nb_proc_source,ipass)
 
 !
 !----- calculer la position reelle de la source
@@ -54,7 +54,7 @@
   include "mpif.h"
 #endif
 
-  integer npoin,nspec,source_type
+  integer npoin,nspec,ipass
   integer ibool(NGLLX,NGLLZ,nspec)
 
   double precision x_source,z_source
@@ -80,29 +80,22 @@
       ihighx = NGLLX
       ihighz = NGLLZ
 
-! on ne fait la recherche que sur l'interieur de l'element si source explosive
-  if(source_type == 2) then
-    ilowx = 2
-    ilowz = 2
-    ihighx = NGLLX-1
-    ihighz = NGLLZ-1
-  endif
+! look for the closest grid point
+      do numelem = 1,nspec
 
-! recherche du point de grille le plus proche
-      do numelem=1,nspec
-      do ix=ilowx,ihighx
-      do iz=ilowz,ihighz
+      do ix = ilowx,ihighx
+      do iz = ilowz,ihighz
 
-! numero global du point
-        ip=ibool(ix,iz,numelem)
+! global point number
+        ip = ibool(ix,iz,numelem)
 
-! coordonnees du point de grille
+! coordinates of this grid point
             xp = coord(1,ip)
             zp = coord(2,ip)
 
             dist = sqrt((xp-x_source)**2 + (zp-z_source)**2)
 
-! retenir le point pour lequel l'ecart est minimal
+! keep the point for which distance is minimum
             if(dist < distmin) then
               distmin = dist
               iglob_source = ip
@@ -113,13 +106,13 @@
 
       enddo
       enddo
+
       enddo
 
   distminmax = max(distmin,distminmax)
 
-
 #ifdef USE_MPI
-  ! global minimum distance computed over all processes
+! global minimum distance computed over all processes
   call MPI_ALLREDUCE (distminmax, dist_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ierror)
 
 #else
@@ -127,36 +120,27 @@
 
 #endif
 
-
-  ! check if this process contains the source
-  if ( dist_glob == distminmax ) then
-     is_proc_source = 1
-  end if
-
+! check if this process contains the source
+  if (dist_glob == distminmax) is_proc_source = 1
 
 #ifdef USE_MPI
-  ! determining the number of processes that contain the source (useful when the source is located on an interface)
+! determining the number of processes that contain the source (useful when the source is located on an interface)
   call MPI_ALLREDUCE (is_proc_source, nb_proc_source, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD, ierror)
 
 #else
   nb_proc_source = is_proc_source
-
 #endif
 
-  if ( nb_proc_source < 1 ) then
-     call exit_MPI('error locating force source')
-  end if
+  if (nb_proc_source < 1) call exit_MPI('error locating force source')
 
-  if ( is_proc_source == 1 ) then
-     write(iout,200)
-
-     write(iout,"(1x,f12.3,1x,f12.3,1x,f12.3,1x,f12.3,f12.3,1x,i5.5)") x_source,z_source, &
+  if (is_proc_source == 1 .and. ipass == 1) then
+     write(IOUT,200)
+     write(IOUT,"(1x,f12.3,1x,f12.3,1x,f12.3,1x,f12.3,f12.3,1x,i5.5)") x_source,z_source, &
           coord(1,iglob_source),coord(2,iglob_source),distmin,nb_proc_source
-     write(iout,*)
-     write(iout,*)
-     write(iout,"('Maximum distance between asked and real =',f12.3)") distminmax
-
-  end if
+     write(IOUT,*)
+     write(IOUT,*)
+     write(IOUT,"('Maximum distance between asked and real =',f12.3)") distminmax
+  endif
 
 #ifdef USE_MPI
   call MPI_BARRIER(MPI_COMM_WORLD,ierror)

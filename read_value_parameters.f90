@@ -4,7 +4,7 @@
 !                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour and CNRS, France.
+! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
@@ -139,21 +139,24 @@
 
 !--------------------
 
-  subroutine read_material_parameters(iin,ignore_junk,i,icodematread,rhosread,rhofread,phiread,tortuosityread,&
-            permxxread,permxzread,permzzread,kappasread,kappafread,kappafrread,musread,etafread,mufrread)
+  subroutine read_material_parameters(iin,ignore_junk,i,icodematread,val0read,val1read,val2read,val3read, &
+                         val4read,val5read,val6read,val7read,val8read,val9read,val10read,val11read,val12read)
+
 
   implicit none
 
   integer iin
   logical ignore_junk
   integer i,icodematread
-  double precision rhosread,rhofread,phiread,tortuosityread,permxxread,permxzread,permzzread
-  double precision kappasread,kappafread,kappafrread,musread,etafread,mufrread
+  double precision val0read,val1read,val2read,val3read,val4read,val5read,val6read,val7read,&
+                   val8read,val9read,val10read,val11read,val12read
+
   character(len=100) string_read
 
   call read_next_line(iin,ignore_junk,string_read)
-  read(string_read,*) i,icodematread,rhosread,rhofread,phiread,tortuosityread,permxxread,permxzread,&
-                       permzzread,kappasread,kappafread,kappafrread,musread,etafread,mufrread
+  read(string_read,*) i,icodematread,val0read,val1read,val2read,val3read,val4read,val5read,&
+                      val6read,val7read,val8read,val9read,val10read,val11read,val12read
+
 
   end subroutine read_material_parameters
 

@@ -1,15 +1,13 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 6.3
+!                   S P E C F E M 2 D  Version 5.2
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour and CNRS, France.
+! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
-!               Christina Morency, cmorency aT gps DOT caltech DOT edu
-!               Jeroen Tromp, jtromp aT gps DOT caltech DOT edu
 !
 ! This software is a computer program whose purpose is to solve
 ! the two-dimensional viscoelastic anisotropic wave equation
@@ -130,10 +128,8 @@
 ! ------------------------------------------------------------------------------------------------------
 
 
-    subroutine compute_arrays_adj_source(myrank,adj_source_file, &
-      xi_receiver,gamma_receiver, adj_sourcearray, &
-      xigll,zigll,NSTEP)
-
+    subroutine compute_arrays_adj_source(myrank,adj_source_file,xi_receiver,gamma_receiver,adj_sourcearray, &
+                  xigll,zigll,NSTEP)
 
   implicit none
 
@@ -190,5 +186,3 @@
 
 
 end subroutine compute_arrays_adj_source
-
-
