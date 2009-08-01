@@ -1529,7 +1529,7 @@ endif
       do j = 1,NGLLZ
         do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
-          call define_external_model(coord(1,iglob),coord(2,iglob),kmato(ispec), &
+          call define_external_model(coord(1,iglob),coord(2,iglob),kmato(ispec),myrank,  &
                                          rhoext(i,j,ispec),vpext(i,j,ispec),vsext(i,j,ispec),myrank)
 ! stop if the same element is assigned both acoustic and elastic points in external model
           if(.not. (i == 1 .and. j == 1) .and. &
@@ -1654,7 +1654,7 @@ endif
   enddo ! do i_source=1,NSOURCE
 
 ! compute source array for adjoint source
-  if(isolver == 2 .and. ipass == 1) then  ! adjoint calculation
+  if(isolver == 2) then  ! adjoint calculation
     nadj_rec_local = 0
     do irec = 1,nrec
       if(myrank == which_proc_receiver(irec))then
@@ -1664,8 +1664,8 @@ endif
         nadj_rec_local = nadj_rec_local + 1
       endif
     enddo
-  allocate(adj_sourcearray(NSTEP,NDIM,NGLLX,NGLLZ))
-  if (nadj_rec_local > 0)  allocate(adj_sourcearrays(nadj_rec_local,NSTEP,NDIM,NGLLX,NGLLZ))
+  if(ipass == 1) allocate(adj_sourcearray(NSTEP,NDIM,NGLLX,NGLLZ))
+  if (nadj_rec_local > 0 .and. ipass == 1)  allocate(adj_sourcearrays(nadj_rec_local,NSTEP,NDIM,NGLLX,NGLLZ))
     irec_local = 0
     do irec = 1, nrec
 !   compute only adjoint source arrays in the local proc
@@ -4005,6 +4005,24 @@ endif
 
   endif
 
+! initiation
+ if(any_poroelastic .and. anyabs) then
+! loop on all the absorbing elements
+    do ispecabs = 1,nelemabs
+            jbegin_left_poro(ispecabs) = 1
+            jbegin_right_poro(ispecabs) = 1
+
+            jend_left_poro(ispecabs) = NGLLZ 
+            jend_right_poro(ispecabs) = NGLLZ 
+
+            ibegin_bottom_poro(ispecabs) = 1
+            ibegin_top_poro(ispecabs) = 1
+
+            iend_bottom_poro(ispecabs) = NGLLX
+            iend_top_poro(ispecabs) = NGLLX
+    enddo
+ endif
+
 ! exclude common points between poroelastic absorbing edges and elastic/poroelastic matching interfaces
   if(coupled_elastic_poroelastic .and. anyabs) then
 
@@ -4759,6 +4777,15 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
            tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac, &
            buffer_recv_faces_vector_ac, my_neighbours)
   endif
+
+    if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0 .and. isolver == 2) then
+    call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic,npoin, &
+           ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
+           max_interface_size, max_ibool_interfaces_size_ac,&
+           ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
+           tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac, &
+           buffer_recv_faces_vector_ac, my_neighbours)
+  endif
 #endif
 
 
@@ -5289,6 +5316,15 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
       tab_requests_send_recv_elastic,buffer_send_faces_vector_el, &
       buffer_recv_faces_vector_el, my_neighbours)
   endif
+
+  if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0 .and. isolver == 2) then
+    call assemble_MPI_vector_el(b_accel_elastic,npoin, &
+      ninterface, ninterface_elastic,inum_interfaces_elastic, &
+      max_interface_size, max_ibool_interfaces_size_el,&
+      ibool_interfaces_elastic, nibool_interfaces_elastic, &
+      tab_requests_send_recv_elastic,buffer_send_faces_vector_el, &
+      buffer_recv_faces_vector_el, my_neighbours)
+  endif
 #endif
 
 
@@ -5764,6 +5800,16 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
       buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
       my_neighbours)
   endif
+
+  if (nproc > 1 .and. any_poroelastic .and. ninterface_poroelastic > 0 .and. isolver == 2) then
+    call assemble_MPI_vector_po(b_accels_poroelastic,b_accelw_poroelastic,npoin, &
+      ninterface, ninterface_poroelastic,inum_interfaces_poroelastic, &
+      max_interface_size, max_ibool_interfaces_size_po,&
+      ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
+      tab_requests_send_recv_poroelastic,buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
+      buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
+      my_neighbours)
+   endif
 #endif
 
 

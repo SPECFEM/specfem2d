@@ -340,11 +340,11 @@ subroutine assemble_MPI_scalar(array_val1, array_val2, array_val3, array_val4,np
   integer, intent(in)  :: max_ibool_interfaces_size_ac,max_ibool_interfaces_size_el,max_ibool_interfaces_size_po
   integer, dimension(NGLLX*max_interface_size,ninterface), intent(in)  :: &
        ibool_interfaces_acoustic,ibool_interfaces_elastic,ibool_interfaces_poroelastic
-  integer, dimension(ninterface), intent(in)  :: nibool_interfaces_acoustic,nibool_interfaces_elastic &
+  integer, dimension(ninterface), intent(in)  :: nibool_interfaces_acoustic,nibool_interfaces_elastic, &
                         nibool_interfaces_poroelastic
   integer, dimension(ninterface), intent(in)  :: my_neighbours
 
-  double precision, dimension(max_ibool_interfaces_size_ac+max_ibool_interfaces_size_el, ninterface)  :: &
+  double precision, dimension(max_ibool_interfaces_size_ac+max_ibool_interfaces_size_el+2*max_ibool_interfaces_size_po, ninterface)  :: &
        buffer_send_faces_scalar, &
        buffer_recv_faces_scalar
   integer  :: msg_status(MPI_STATUS_SIZE)
@@ -687,7 +687,7 @@ subroutine assemble_MPI_vector_po(array_val3,array_val4,npoin, &
   integer, intent(in)  :: max_ibool_interfaces_size_po
   integer, dimension(NGLLX*max_interface_size,ninterface), intent(in)  :: ibool_interfaces_poroelastic
   integer, dimension(ninterface), intent(in)  :: nibool_interfaces_poroelastic
-  integer, dimension(ninterface_elastic*2), intent(inout)  :: tab_requests_send_recv_poroelastic
+  integer, dimension(ninterface_poroelastic*4), intent(inout)  :: tab_requests_send_recv_poroelastic
   real(CUSTOM_REAL), dimension(max_ibool_interfaces_size_po,ninterface_poroelastic), intent(inout)  :: &
        buffer_send_faces_vector_pos,buffer_send_faces_vector_pow
   real(CUSTOM_REAL), dimension(max_ibool_interfaces_size_po,ninterface_poroelastic), intent(inout)  :: &
@@ -765,7 +765,7 @@ subroutine assemble_MPI_vector_po(array_val3,array_val4,npoin, &
 
   do inum_interface = 1, ninterface_poroelastic*4
 
-    call MPI_Wait (tab_requests_send_recv_elastic(inum_interface), status_poroelastic, ier)
+    call MPI_Wait (tab_requests_send_recv_poroelastic(inum_interface), status_poroelastic, ier)
 
   enddo
 

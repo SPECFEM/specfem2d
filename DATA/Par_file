@@ -1,7 +1,7 @@
 
 # title of job, and file that contains interface data
 title                           = Test for M2 UPPA
-interfacesfile                  = interfaces_1layer.dat
+interfacesfile                  = interfaces_reg2layers.dat
 
 # data concerning mesh, when generated using third-party app (more info in README)
 read_external_mesh              = .false.
@@ -19,8 +19,8 @@ partitioning_strategy          = 01110 #b{strat=m{asc=g,low=g,rat=1.0,type=h,ver
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
-xmax                            = 10.d3        # abscissa of right side of the model
-nx                              = 100             # number of elements along X
+xmax                            = 4800.d0        # abscissa of right side of the model
+nx                              = 200             # number of elements along X
 ngnod                           = 9              # number of control nodes per element (4 or 9)
 initialfield                    = .false.        # use a plane wave as source or not
 add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
@@ -39,9 +39,9 @@ absorbtop                       = .false.
 absorbleft                      = .true.
 
 # time step parameters
-nt                              = 6000           # total number of time steps
-deltat                          = 1d-3          # duration of a time step
-isolver                         = 2              # type of simulation 1=forward 2=adjoint + kernels
+nt                              = 2600           # total number of time steps
+deltat                          = 0.5d-3          # duration of a time step
+isolver                         = 1              # type of simulation 1=forward 2=adjoint + kernels
 
 # source parameters
 NSOURCE                         = 1              # number of sources [source info read in CMTSOLUTION file]
@@ -56,24 +56,32 @@ N_SLS                           = 2                      # number of standard li
 f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, else it is f0
 
 # receiver line parameters for seismograms
-seismotype                      = 1              # record 1=displ 2=veloc 3=accel 4=pressure 5=curl 6=potential
+seismotype                      = 2              # record 1=displ 2=veloc 3=accel 4=pressure 5=curl 6=potential
 save_forward                    = .false.        # save the last frame, needed for adjoint simulation
 generate_STATIONS               = .true.         # creates a STATION file in ./DATA
-nreceiverlines                  = 1              # number of receiver lines
+nreceiverlines                  = 2              # number of receiver lines
 anglerec                        = 0.d0           # angle to rotate components at receivers
 rec_normal_to_surface           = .false.        # base anglerec normal to surface (external mesh and curve file needed)
 
 # first receiver line
 nrec                            = 1             # number of receivers
-xdeb                            = 7500.           # first receiver x in meters
-zdeb                            = 2500.          # first receiver z in meters
+xdeb                            = 2000.           # first receiver x in meters
+zdeb                            = 2933.33          # first receiver z in meters
+xfin                            = 3777.          # last receiver x in meters (ignored if onlyone receiver)
+zfin                            = 1866.67          # last receiver z in meters (ignored if onlyone receiver)
+enreg_surf                      = .false.         # receivers inside the medium or at the surface
+
+# second receiver line
+nrec                            = 1             # number of receivers
+xdeb                            = 2000.           # first receiver x in meters
+zdeb                            = 1866.67          # first receiver z in meters
 xfin                            = 3777.          # last receiver x in meters (ignored if onlyone receiver)
 zfin                            = 1866.67          # last receiver z in meters (ignored if onlyone receiver)
 enreg_surf                      = .false.         # receivers inside the medium or at the surface
 
 # display parameters
 NTSTEP_BETWEEN_OUTPUT_INFO      = 200            # display frequency in time steps
-output_postscript_snapshot      = .false.         # output Postscript snapshot of the results
+output_postscript_snapshot      = .true.         # output Postscript snapshot of the results
 output_color_image              = .true.         # output color image of the results
 imagetype                       = 1              # display 1=displ 2=veloc 3=accel 4=pressure
 cutsnaps                        = 1.             # minimum amplitude in % for snapshots
@@ -88,11 +96,13 @@ gnuplot                         = .false.        # generate a GNUPLOT file for t
 outputgrid                      = .false.        # save the grid in a text file or not
 
 # velocity and density models
-nbmodels                        = 1              # nb of different models
+nbmodels                        = 2              # nb of different models
 # define models as I: (model_number,1,rho,Vp,Vs,0,0,Qp,Qs) or II: (model_number,2,rho,c11,c13,c33,c44,Qp,Qs) or III: (model_number,3,rhos,rhof,phi,c,kxx,kxz,kzz,Ks,Kf,Kfr,etaf,mufr,Qs).
 # For istropic elastic/acoustic material use I and set Vs to zero to make a given model acoustic, for anisotropic elastic use II, 
 # and for isotropic poroelastic material use III. The mesh can contain acoustic, elastic, & poroelastic models simultaneously
-1 1 2500.d0 3000.d0 1800.d0 0 0 10.d0 10.d0 0 0 0 0 0 0 #1558.89d0  0 0 136.d0 136.d0 0 0 0 0 0 0
+1 3 2200.d0 1040.d0 0.4d0 2.0 1d-11 0.d0 1d-11 6.9d9 4.0d9 6.7d9 0.0d-3 3.d9 10.d0 # 2700.d0 3000.d0 1732.051d0 0 0 10.d0 10.d0 0 0 0 0 0 0
+2 1 2500.d0 3000.d0 2000.d0 0 0 10.d0 10.d0 0 0 0 0 0 0 #1558.89d0  0 0 136.d0 136.d0 0 0 0 0 0 0
 # define the different regions of the model in the (nx,nz) spectral element mesh
-nbregions                       = 1              # nb of regions and model number for each
-1 100 1 80 1
+nbregions                       = 2              # nb of regions and model number for each
+1 200 1 70 2
+1 200 71 140 1

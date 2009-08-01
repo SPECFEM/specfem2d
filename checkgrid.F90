@@ -107,7 +107,6 @@
 #ifdef USE_MPI
   double precision  :: vpImin_glob,vpImax_glob,vsmin_glob,vsmax_glob,densmin_glob,densmax_glob
   double precision  :: vpIImin_glob,vpIImax_glob
-  double precision  :: densmin_glob,densmax_glob
   double precision  :: distance_min_glob,distance_max_glob
   double precision  :: courant_stability_max_glob,lambdaPImin_glob,lambdaPImax_glob,&
                        lambdaPIImin_glob,lambdaPIImax_glob,lambdaSmin_glob,lambdaSmax_glob
