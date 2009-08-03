@@ -6706,7 +6706,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 !----  save temporary or final seismograms
 ! suppress seismograms if we generate traces of the run for analysis with "ParaVer", because time consuming
   if(.not. GENERATE_PARAVER_TRACES) call write_seismograms(sisux,sisuz,siscurl,station_name,network_name,NSTEP, &
-        nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
+        nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0(1), &
         NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current)
 
   seismo_offset = seismo_offset + seismo_current
