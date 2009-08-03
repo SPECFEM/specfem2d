@@ -41,13 +41,17 @@
 !========================================================================
 
   subroutine plotpost(displ,coord,vpext,x_source,z_source,st_xval,st_zval,it,dt,coorg, &
-          xinterp,zinterp,shapeint,Uxinterp,Uzinterp,flagrange,density,elastcoef,knods,kmato,ibool, &
+          xinterp,zinterp,shapeint,Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
+          poroelastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,nelem_acoustic_surface, acoustic_edges, &
-          simulation_title,npoin,npgeo,vpmin,vpmax,nrec, &
+          simulation_title,npoin,npgeo,vpmin,vpmax,nrec,NSOURCE, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
-          nspec,ngnod,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only, &
+          nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poroelastic,coupled_elastic_poroelastic, &
+          any_acoustic,any_poroelastic,plot_lowerleft_corner_only, &
           fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
+          fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
+          solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,num_solid_poro_edges, &
           myrank,nproc,ier, &
           d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
           d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
@@ -86,7 +90,7 @@
   double precision, dimension(NUM_COLORS) :: red,green,blue
 
   integer it,nrec,nelemabs,numat,pointsdisp,pointsdisp_loop,nspec
-  integer i,npoin,npgeo,ngnod
+  integer i,npoin,npgeo,ngnod,NSOURCE
 
   integer kmato(nspec),knods(ngnod,nspec)
   integer ibool(NGLLX,NGLLZ,nspec)
@@ -96,9 +100,10 @@
   double precision Uxinterp(pointsdisp,pointsdisp)
   double precision Uzinterp(pointsdisp,pointsdisp)
   double precision flagrange(NGLLX,pointsdisp)
-  double precision density(numat),elastcoef(4,numat)
+  double precision density(2,numat),poroelastcoef(4,3,numat),porosity(numat),tortuosity(numat)
 
-  double precision dt,timeval,x_source,z_source
+  double precision dt,timeval
+  double precision, dimension(NSOURCE) :: x_source,z_source
   double precision displ(NDIM,npoin),coord(NDIM,npoin)
   double precision vpext(NGLLX,NGLLZ,nspec)
 
@@ -106,11 +111,14 @@
   double precision, dimension(nrec) :: st_xval,st_zval
 
   integer numabs(nelemabs),codeabs(4,nelemabs)
-  logical anyabs,coupled_acoustic_elastic,any_acoustic,plot_lowerleft_corner_only
+  logical anyabs,coupled_acoustic_elastic,coupled_acoustic_poroelastic,coupled_elastic_poroelastic, &
+          any_acoustic,any_poroelastic,plot_lowerleft_corner_only
 
 ! for fluid/solid edge detection
-  integer :: num_fluid_solid_edges
+  integer :: num_fluid_solid_edges,num_fluid_poro_edges,num_solid_poro_edges
   integer, dimension(num_fluid_solid_edges) :: fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge
+  integer, dimension(num_fluid_poro_edges) :: fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge
+  integer, dimension(num_solid_poro_edges) :: solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge
 
   double precision xmax,zmax,height,xw,zw,usoffset,sizex,sizez,vpmin,vpmax
 
@@ -123,8 +131,14 @@
   equivalence (postscript_line,ch1)
   logical :: first
 
-  double precision convert,x1,rlamda,rmu,denst,rKvol,cploc,xa,za,xb,zb
+  double precision convert,x1,rlamda,rmu,denst,rKvol,cpIloc,xa,za,xb,zb
   double precision z1,x2,z2,d,d1,d2,dummy,theta,thetaup,thetadown
+
+  double precision :: mul_s,kappal_s,rhol_s
+  double precision :: kappal_f,rhol_f
+  double precision :: mul_fr,kappal_fr,phil,tortl
+  double precision :: afactor,bfactor,cfactor,D_biot,H_biot,C_biot,M_biot,rhol_bar
+  double precision :: cpIsquare
 
   integer k,j,ispec,material,is,ir,imat,icol,l,line_length
   integer index_char,ii,ipoin,in,nnum,inum,ideb,ifin,iedge
@@ -155,7 +169,8 @@
   integer  :: nb_coorg_per_elem, nb_color_per_elem
   integer  :: iproc, num_spec
   integer  :: ier
-  logical :: anyabs_glob, coupled_acoustic_elastic_glob
+  logical :: anyabs_glob, coupled_acoustic_elastic_glob, coupled_acoustic_poroelastic_glob, &
+             coupled_elastic_poroelastic_glob
 #ifdef USE_MPI
   integer, dimension(MPI_STATUS_SIZE)  :: request_mpi_status
 #endif
@@ -1600,8 +1615,14 @@ coorg_recv_ps_vector_field
 
   if(coupled_acoustic_elastic) then
     write(24,*) '(Coupled Acoustic/Elastic Wave 2D - SEM) show'
+  else if(coupled_acoustic_poroelastic) then
+    write(24,*) '(Coupled Acoustic/Poroelastic Wave 2D - SEM) show'
+  else if(coupled_elastic_poroelastic) then
+    write(24,*) '(Coupled Elastic/Poroelastic Wave 2D - SEM) show'
   else if(any_acoustic) then
     write(24,*) '(Acoustic Wave 2D - Spectral Element Method) show'
+  else if(any_poroelastic) then
+    write(24,*) '(Poroelastic Wave 2D - Spectral Element Method) show'
   else
     write(24,*) '(Elastic Wave 2D - Spectral Element Method) show'
   endif
@@ -1638,12 +1659,32 @@ coorg_recv_ps_vector_field
     x1 = (vpext(i,j,ispec)-vpmin) / (vpmax-vpmin)
   else
     material = kmato(ispec)
-    rlamda = elastcoef(1,material)
-    rmu    = elastcoef(2,material)
-    denst  = density(material)
-    rKvol  = rlamda + 2.d0*rmu/3.d0
-    cploc = sqrt((rKvol + 4.d0*rmu/3.d0)/denst)
-    x1 = (cploc-vpmin)/(vpmax-vpmin)
+! get elastic parameters of current spectral element
+    phil = porosity(kmato(ispec))
+    tortl = tortuosity(kmato(ispec))
+!solid properties
+    mul_s = poroelastcoef(2,1,kmato(ispec))
+    kappal_s = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS*mul_s
+    rhol_s = density(1,kmato(ispec))
+!fluid properties
+    kappal_f = poroelastcoef(1,2,kmato(ispec))
+    rhol_f = density(2,kmato(ispec))
+!frame properties
+    mul_fr = poroelastcoef(2,3,kmato(ispec))
+    kappal_fr = poroelastcoef(3,3,kmato(ispec)) - FOUR_THIRDS*mul_fr
+    rhol_bar =  (1.d0 - phil)*rhol_s + phil*rhol_f
+!Biot coefficients for the input phi
+      D_biot = kappal_s*(1.d0 + phil*(kappal_s/kappal_f - 1.d0))
+      H_biot = (kappal_s - kappal_fr)*(kappal_s - kappal_fr)/(D_biot - kappal_fr) + kappal_fr + FOUR_THIRDS*mul_fr
+      C_biot = kappal_s*(kappal_s - kappal_fr)/(D_biot - kappal_fr)
+      M_biot = kappal_s*kappal_s/(D_biot - kappal_fr)
+! Approximated velocities (no viscous dissipation)
+      afactor = rhol_bar - phil/tortl*rhol_f
+      bfactor = H_biot + phil*rhol_bar/(tortl*rhol_f)*M_biot - 2.d0*phil/tortl*C_biot
+      cfactor = phil/(tortl*rhol_f)*(H_biot*M_biot - C_biot*C_biot)
+      cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
+      cpIloc = sqrt(cpIsquare)
+    x1 = (cpIloc-vpmin)/(vpmax-vpmin)
   endif
   else
     x1 = 0.5d0
@@ -2426,6 +2467,220 @@ coorg_recv_ps_vector_field
   endif
 
 !
+!----  draw the fluid-porous coupling edges with a thick color line
+!
+  coupled_acoustic_poroelastic_glob = coupled_acoustic_poroelastic
+#ifdef USE_MPI
+  call MPI_ALLREDUCE(coupled_acoustic_poroelastic, coupled_acoustic_poroelastic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
+#endif
+
+  if(coupled_acoustic_poroelastic_glob .and. boundvect) then
+
+  if ( myrank == 0 ) then
+  write(24,*) '%'
+  write(24,*) '% fluid-porous coupling edges in the mesh'
+  write(24,*) '%'
+
+  write(24,*) '0.10 CM setlinewidth'
+  write(24,*) '% uncomment this when zooming on parts of the mesh'
+  write(24,*) '% 0.02 CM setlinewidth'
+  endif
+
+  if ( myrank /= 0 .and. num_fluid_poro_edges > 0 ) allocate(coorg_send(4,num_fluid_poro_edges))
+  buffer_offset = 0
+
+! loop on all the coupling edges
+  do inum = 1,num_fluid_poro_edges
+
+! get the edge of the acoustic element
+   ispec = fluid_poro_acoustic_ispec(inum)
+   iedge = fluid_poro_acoustic_iedge(inum)
+
+! use pink color
+  if ( myrank == 0 ) write(24,*) '1 0.75 0.8 RG'
+
+  if(iedge == ITOP) then
+    ideb = 3
+    ifin = 4
+  else if(iedge == IBOTTOM) then
+    ideb = 1
+    ifin = 2
+  else if(iedge == ILEFT) then
+    ideb = 4
+    ifin = 1
+  else if(iedge == IRIGHT) then
+    ideb = 2
+    ifin = 3
+  else
+    call exit_MPI('Wrong fluid-solid coupling edge code')
+  endif
+
+  x1 = (coorg(1,knods(ideb,ispec))-xmin)*ratio_page + orig_x
+  z1 = (coorg(2,knods(ideb,ispec))-zmin)*ratio_page + orig_z
+  x2 = (coorg(1,knods(ifin,ispec))-xmin)*ratio_page + orig_x
+  z2 = (coorg(2,knods(ifin,ispec))-zmin)*ratio_page + orig_z
+  x1 = x1 * centim
+  z1 = z1 * centim
+  x2 = x2 * centim
+  z2 = z2 * centim
+  if ( myrank == 0 ) then
+     write(24,602) x1,z1,x2,z2
+  else
+     buffer_offset = buffer_offset + 1
+     coorg_send(1,buffer_offset) = x1
+     coorg_send(2,buffer_offset) = z1
+     coorg_send(3,buffer_offset) = x2
+     coorg_send(4,buffer_offset) = z2
+  endif
+
+  enddo
+
+#ifdef USE_MPI
+  if (myrank == 0 ) then
+
+     do iproc = 1, nproc-1
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, MPI_COMM_WORLD, request_mpi_status, ier)
+        if ( nspec_recv > 0 ) then
+        allocate(coorg_recv(4,nspec_recv))
+        call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
+             MPI_DOUBLE_PRECISION, iproc, 45, MPI_COMM_WORLD, request_mpi_status, ier)
+
+        buffer_offset = 0
+        do ispec = 1, nspec_recv
+           buffer_offset = buffer_offset + 1
+           write(24,*) '1 0.75 0.8 RG'
+           write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
+                coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
+        enddo
+        deallocate(coorg_recv)
+        endif
+     enddo
+  else
+     call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 45, MPI_COMM_WORLD, ier)
+     if ( buffer_offset > 0 ) then
+     call MPI_SEND (coorg_send(1,1), 4*buffer_offset, &
+          MPI_DOUBLE_PRECISION, 0, 45, MPI_COMM_WORLD, ier)
+     deallocate(coorg_send)
+     endif
+  endif
+
+#endif
+
+  if ( myrank == 0 ) then
+    write(24,*) '0 setgray'
+    write(24,*) '0.01 CM setlinewidth'
+  endif
+
+  endif
+
+!
+!----  draw the solid-porous coupling edges with a thick color line
+!
+  coupled_elastic_poroelastic_glob = coupled_elastic_poroelastic
+#ifdef USE_MPI
+  call MPI_ALLREDUCE(coupled_elastic_poroelastic, coupled_elastic_poroelastic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
+#endif
+
+  if(coupled_elastic_poroelastic_glob .and. boundvect) then
+
+  if ( myrank == 0 ) then
+  write(24,*) '%'
+  write(24,*) '% solid-porous coupling edges in the mesh'
+  write(24,*) '%'
+
+  write(24,*) '0.10 CM setlinewidth'
+  write(24,*) '% uncomment this when zooming on parts of the mesh'
+  write(24,*) '% 0.02 CM setlinewidth'
+  endif
+
+  if ( myrank /= 0 .and. num_solid_poro_edges > 0 ) allocate(coorg_send(4,num_solid_poro_edges))
+  buffer_offset = 0
+
+! loop on all the coupling edges
+  do inum = 1,num_solid_poro_edges
+
+! get the edge of the poroelastic element
+   ispec = solid_poro_poroelastic_ispec(inum)
+   iedge = solid_poro_poroelastic_iedge(inum)
+
+! use pink color
+  if ( myrank == 0 ) write(24,*) '1 0.75 0.8 RG'
+
+  if(iedge == ITOP) then
+    ideb = 3
+    ifin = 4
+  else if(iedge == IBOTTOM) then
+    ideb = 1
+    ifin = 2
+  else if(iedge == ILEFT) then
+    ideb = 4
+    ifin = 1
+  else if(iedge == IRIGHT) then
+    ideb = 2
+    ifin = 3
+  else
+    call exit_MPI('Wrong fluid-solid coupling edge code')
+  endif
+
+  x1 = (coorg(1,knods(ideb,ispec))-xmin)*ratio_page + orig_x
+  z1 = (coorg(2,knods(ideb,ispec))-zmin)*ratio_page + orig_z
+  x2 = (coorg(1,knods(ifin,ispec))-xmin)*ratio_page + orig_x
+  z2 = (coorg(2,knods(ifin,ispec))-zmin)*ratio_page + orig_z
+  x1 = x1 * centim
+  z1 = z1 * centim
+  x2 = x2 * centim
+  z2 = z2 * centim
+  if ( myrank == 0 ) then
+     write(24,602) x1,z1,x2,z2
+  else
+     buffer_offset = buffer_offset + 1
+     coorg_send(1,buffer_offset) = x1
+     coorg_send(2,buffer_offset) = z1
+     coorg_send(3,buffer_offset) = x2
+     coorg_send(4,buffer_offset) = z2
+  endif
+
+  enddo
+
+#ifdef USE_MPI
+  if (myrank == 0 ) then
+
+     do iproc = 1, nproc-1
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, MPI_COMM_WORLD, request_mpi_status, ier)
+        if ( nspec_recv > 0 ) then
+        allocate(coorg_recv(4,nspec_recv))
+        call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
+             MPI_DOUBLE_PRECISION, iproc, 45, MPI_COMM_WORLD, request_mpi_status, ier)
+
+        buffer_offset = 0
+        do ispec = 1, nspec_recv
+           buffer_offset = buffer_offset + 1
+           write(24,*) '1 0.75 0.8 RG'
+           write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
+                coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
+        enddo
+        deallocate(coorg_recv)
+        endif
+     enddo
+  else
+     call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 45, MPI_COMM_WORLD, ier)
+     if ( buffer_offset > 0 ) then
+     call MPI_SEND (coorg_send(1,1), 4*buffer_offset, &
+          MPI_DOUBLE_PRECISION, 0, 45, MPI_COMM_WORLD, ier)
+     deallocate(coorg_send)
+     endif
+  endif
+
+#endif
+
+  if ( myrank == 0 ) then
+    write(24,*) '0 setgray'
+    write(24,*) '0.01 CM setlinewidth'
+  endif
+
+  endif
+
+!
 !----  draw the normalized vector field
 !
 
@@ -2764,14 +3019,18 @@ coorg_recv_ps_vector_field
 !
 !----  write position of the source
 !
-  xw = x_source
-  zw = z_source
+  do i=1,NSOURCE
+    if(i == 1) write(24,*) '% beginning of source line'
+    if(i == NSOURCE) write(24,*) '% end of source line'
+  xw = x_source(i)
+  zw = z_source(i)
   xw = (xw-xmin)*ratio_page + orig_x
   zw = (zw-zmin)*ratio_page + orig_z
   xw = xw * centim
   zw = zw * centim
   write(24,500) xw,zw
   write(24,*) 'Cross'
+  enddo
 
 !
 !----  write position of the receivers

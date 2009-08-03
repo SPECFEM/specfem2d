@@ -42,7 +42,7 @@
 
 !
 ! This file contains subroutines related to assembling (of the mass matrix, potential_dot_dot and
-! accel_elastic).
+! accel_elastic, accels_poroelastic, accelw_poroelastic).
 ! These subroutines are for the most part not used in the sequential version.
 !
 
@@ -51,18 +51,18 @@
 ! build the communication buffers, and determines which elements are considered 'inner'
 ! (no points in common with other partitions) and 'outer' (at least one point in common
 ! with neighbouring partitions).
-! We have both acoustic and elastic buffers, for coupling between acoustic and elastic elements
+! We have both acoustic and (poro)elastic buffers, for coupling between acoustic and (poro)elastic elements
 ! led us to have two sets of communications.
 !-----------------------------------------------
 subroutine prepare_assemble_MPI (nspec,ibool, &
      knods, ngnod, &
-     npoin, elastic, &
+     npoin, elastic, poroelastic, &
      ninterface, max_interface_size, &
      my_nelmnts_neighbours, my_interfaces, &
-     ibool_interfaces_acoustic, ibool_interfaces_elastic, &
-     nibool_interfaces_acoustic, nibool_interfaces_elastic, &
-     inum_interfaces_acoustic, inum_interfaces_elastic, &
-     ninterface_acoustic, ninterface_elastic, &
+     ibool_interfaces_acoustic, ibool_interfaces_elastic, ibool_interfaces_poroelastic, &
+     nibool_interfaces_acoustic, nibool_interfaces_elastic, nibool_interfaces_poroelastic, &
+     inum_interfaces_acoustic, inum_interfaces_elastic, inum_interfaces_poroelastic, &
+     ninterface_acoustic, ninterface_elastic, ninterface_poroelastic, &
      mask_ispec_inner_outer &
      )
 
@@ -71,7 +71,7 @@ subroutine prepare_assemble_MPI (nspec,ibool, &
   include 'constants.h'
 
   integer, intent(in)  :: nspec, npoin, ngnod
-  logical, dimension(nspec), intent(in)  :: elastic
+  logical, dimension(nspec), intent(in)  :: elastic, poroelastic
   integer, dimension(ngnod,nspec), intent(in)  :: knods
   integer, dimension(NGLLX,NGLLZ,nspec), intent(in)  :: ibool
 
@@ -80,13 +80,13 @@ subroutine prepare_assemble_MPI (nspec,ibool, &
   integer, dimension(ninterface)  :: my_nelmnts_neighbours
   integer, dimension(4,max_interface_size,ninterface)  :: my_interfaces
   integer, dimension(NGLLX*max_interface_size,ninterface)  :: &
-       ibool_interfaces_acoustic,ibool_interfaces_elastic
+       ibool_interfaces_acoustic,ibool_interfaces_elastic,ibool_interfaces_poroelastic
   integer, dimension(ninterface)  :: &
-       nibool_interfaces_acoustic,nibool_interfaces_elastic
+       nibool_interfaces_acoustic,nibool_interfaces_elastic,nibool_interfaces_poroelastic
 
   integer, dimension(ninterface), intent(out)  :: &
-       inum_interfaces_acoustic, inum_interfaces_elastic
-  integer, intent(out)  :: ninterface_acoustic, ninterface_elastic
+       inum_interfaces_acoustic, inum_interfaces_elastic, inum_interfaces_poroelastic
+  integer, intent(out)  :: ninterface_acoustic, ninterface_elastic, ninterface_poroelastic
 
   integer  :: num_interface
   integer  :: ispec_interface
@@ -95,6 +95,7 @@ subroutine prepare_assemble_MPI (nspec,ibool, &
 
   logical, dimension(npoin)  :: mask_ibool_acoustic
   logical, dimension(npoin)  :: mask_ibool_elastic
+  logical, dimension(npoin)  :: mask_ibool_poroelastic
 
   integer  :: ixmin, ixmax
   integer  :: izmin, izmax
@@ -106,6 +107,7 @@ subroutine prepare_assemble_MPI (nspec,ibool, &
   integer  :: k
   integer  :: npoin_interface_acoustic
   integer  :: npoin_interface_elastic
+  integer  :: npoin_interface_poroelastic
 
   integer  :: ix,iz
 
@@ -115,12 +117,16 @@ subroutine prepare_assemble_MPI (nspec,ibool, &
   nibool_interfaces_acoustic(:) = 0
   ibool_interfaces_elastic(:,:) = 0
   nibool_interfaces_elastic(:) = 0
+  ibool_interfaces_poroelastic(:,:) = 0
+  nibool_interfaces_poroelastic(:) = 0
 
   do num_interface = 1, ninterface
      npoin_interface_acoustic = 0
      npoin_interface_elastic = 0
+     npoin_interface_poroelastic = 0
      mask_ibool_acoustic(:) = .false.
      mask_ibool_elastic(:) = .false.
+     mask_ibool_poroelastic(:) = .false.
 
      do ispec_interface = 1, my_nelmnts_neighbours(num_interface)
         ispec = my_interfaces(1,ispec_interface,num_interface)
@@ -144,7 +150,16 @@ subroutine prepare_assemble_MPI (nspec,ibool, &
                     ibool_interfaces_elastic(npoin_interface_elastic,num_interface)=&
                          ibool(ix,iz,ispec)
                  end if
+              else if ( poroelastic(ispec) ) then
+
+                 if(.not. mask_ibool_poroelastic(ibool(ix,iz,ispec))) then
+                    mask_ibool_poroelastic(ibool(ix,iz,ispec)) = .true.
+                    npoin_interface_poroelastic = npoin_interface_poroelastic + 1
+                    ibool_interfaces_poroelastic(npoin_interface_poroelastic,num_interface)=&
+                         ibool(ix,iz,ispec)
+                 end if
               else
+
                  if(.not. mask_ibool_acoustic(ibool(ix,iz,ispec))) then
                     mask_ibool_acoustic(ibool(ix,iz,ispec)) = .true.
                     npoin_interface_acoustic = npoin_interface_acoustic + 1
@@ -158,12 +173,14 @@ subroutine prepare_assemble_MPI (nspec,ibool, &
      end do
      nibool_interfaces_acoustic(num_interface) = npoin_interface_acoustic
      nibool_interfaces_elastic(num_interface) = npoin_interface_elastic
+     nibool_interfaces_poroelastic(num_interface) = npoin_interface_poroelastic
 
      do ispec = 1, nspec
        do iz = 1, NGLLZ
          do ix = 1, NGLLX
            if ( mask_ibool_acoustic(ibool(ix,iz,ispec)) &
-            .or. mask_ibool_elastic(ibool(ix,iz,ispec)) ) then
+            .or. mask_ibool_elastic(ibool(ix,iz,ispec)) &
+            .or. mask_ibool_poroelastic(ibool(ix,iz,ispec)) ) then
                mask_ispec_inner_outer(ispec) = .true.
             endif
 
@@ -175,6 +192,7 @@ subroutine prepare_assemble_MPI (nspec,ibool, &
 
   ninterface_acoustic = 0
   ninterface_elastic =  0
+  ninterface_poroelastic =  0
   do num_interface = 1, ninterface
      if ( nibool_interfaces_acoustic(num_interface) > 0 ) then
         ninterface_acoustic = ninterface_acoustic + 1
@@ -183,6 +201,10 @@ subroutine prepare_assemble_MPI (nspec,ibool, &
      if ( nibool_interfaces_elastic(num_interface) > 0 ) then
         ninterface_elastic = ninterface_elastic + 1
         inum_interfaces_elastic(ninterface_elastic) = num_interface
+     end if
+     if ( nibool_interfaces_poroelastic(num_interface) > 0 ) then
+        ninterface_poroelastic = ninterface_poroelastic + 1
+        inum_interfaces_poroelastic(ninterface_poroelastic) = num_interface
      end if
   end do
 
@@ -298,9 +320,11 @@ end subroutine get_edge
 !-----------------------------------------------
 ! Assembling the mass matrix.
 !-----------------------------------------------
-subroutine assemble_MPI_scalar(array_val1, array_val2,npoin, &
+subroutine assemble_MPI_scalar(array_val1, array_val2, array_val3, array_val4,npoin, &
      ninterface, max_interface_size, max_ibool_interfaces_size_ac, max_ibool_interfaces_size_el, &
-     ibool_interfaces_acoustic,ibool_interfaces_elastic, nibool_interfaces_acoustic,nibool_interfaces_elastic, my_neighbours)
+     max_ibool_interfaces_size_po, &
+     ibool_interfaces_acoustic,ibool_interfaces_elastic, ibool_interfaces_poroelastic, &
+     nibool_interfaces_acoustic,nibool_interfaces_elastic,nibool_interfaces_poroelastic,my_neighbours)
 
   implicit none
 
@@ -308,18 +332,19 @@ subroutine assemble_MPI_scalar(array_val1, array_val2,npoin, &
   include 'mpif.h'
 
   ! array to assemble
-  real(kind=CUSTOM_REAL), dimension(npoin), intent(inout) :: array_val1, array_val2
+  real(kind=CUSTOM_REAL), dimension(npoin), intent(inout) :: array_val1,array_val2,array_val3,array_val4
 
   integer, intent(in)  :: npoin
   integer, intent(in)  :: ninterface
   integer, intent(in)  :: max_interface_size
-  integer, intent(in)  :: max_ibool_interfaces_size_ac, max_ibool_interfaces_size_el
+  integer, intent(in)  :: max_ibool_interfaces_size_ac,max_ibool_interfaces_size_el,max_ibool_interfaces_size_po
   integer, dimension(NGLLX*max_interface_size,ninterface), intent(in)  :: &
-       ibool_interfaces_acoustic,ibool_interfaces_elastic
-  integer, dimension(ninterface), intent(in)  :: nibool_interfaces_acoustic,nibool_interfaces_elastic
+       ibool_interfaces_acoustic,ibool_interfaces_elastic,ibool_interfaces_poroelastic
+  integer, dimension(ninterface), intent(in)  :: nibool_interfaces_acoustic,nibool_interfaces_elastic, &
+                        nibool_interfaces_poroelastic
   integer, dimension(ninterface), intent(in)  :: my_neighbours
 
-  double precision, dimension(max_ibool_interfaces_size_ac+max_ibool_interfaces_size_el, ninterface)  :: &
+  double precision, dimension(max_ibool_interfaces_size_ac+max_ibool_interfaces_size_el+2*max_ibool_interfaces_size_po, ninterface)  :: &
        buffer_send_faces_scalar, &
        buffer_recv_faces_scalar
   integer  :: msg_status(MPI_STATUS_SIZE)
@@ -344,8 +369,21 @@ subroutine assemble_MPI_scalar(array_val1, array_val2,npoin, &
              array_val2(ibool_interfaces_elastic(i,num_interface))
      end do
 
+     do i = 1, nibool_interfaces_poroelastic(num_interface)
+        ipoin = ipoin + 1
+        buffer_send_faces_scalar(ipoin,num_interface) = &
+             array_val3(ibool_interfaces_poroelastic(i,num_interface))
+     end do
+     do i = 1, nibool_interfaces_poroelastic(num_interface)
+        ipoin = ipoin + 1
+        buffer_send_faces_scalar(ipoin,num_interface) = &
+             array_val4(ibool_interfaces_poroelastic(i,num_interface))
+     end do
+
      call MPI_ISSEND( buffer_send_faces_scalar(1,num_interface), &
-          nibool_interfaces_acoustic(num_interface)+nibool_interfaces_elastic(num_interface), MPI_DOUBLE_PRECISION, &
+          nibool_interfaces_acoustic(num_interface)+nibool_interfaces_elastic(num_interface)+&
+          nibool_interfaces_poroelastic(num_interface)+nibool_interfaces_poroelastic(num_interface), &
+          MPI_DOUBLE_PRECISION, &
           my_neighbours(num_interface), 11, &
           MPI_COMM_WORLD, msg_requests(num_interface), ier)
 
@@ -353,7 +391,9 @@ subroutine assemble_MPI_scalar(array_val1, array_val2,npoin, &
 
   do num_interface = 1, ninterface
      call MPI_recv ( buffer_recv_faces_scalar(1,num_interface), &
-          nibool_interfaces_acoustic(num_interface)+nibool_interfaces_elastic(num_interface), MPI_DOUBLE_PRECISION, &
+          nibool_interfaces_acoustic(num_interface)+nibool_interfaces_elastic(num_interface)+&
+          nibool_interfaces_poroelastic(num_interface)+nibool_interfaces_poroelastic(num_interface), &
+          MPI_DOUBLE_PRECISION, &
           my_neighbours(num_interface), 11, &
           MPI_COMM_WORLD, msg_status(1), ier)
 
@@ -367,6 +407,17 @@ subroutine assemble_MPI_scalar(array_val1, array_val2,npoin, &
      do i = 1, nibool_interfaces_elastic(num_interface)
         ipoin = ipoin + 1
         array_val2(ibool_interfaces_elastic(i,num_interface)) = array_val2(ibool_interfaces_elastic(i,num_interface)) + &
+             buffer_recv_faces_scalar(ipoin,num_interface)
+     end do
+
+     do i = 1, nibool_interfaces_poroelastic(num_interface)
+        ipoin = ipoin + 1
+        array_val3(ibool_interfaces_poroelastic(i,num_interface)) = array_val3(ibool_interfaces_poroelastic(i,num_interface)) + &
+             buffer_recv_faces_scalar(ipoin,num_interface)
+     end do
+     do i = 1, nibool_interfaces_poroelastic(num_interface)
+        ipoin = ipoin + 1
+        array_val4(ibool_interfaces_poroelastic(i,num_interface)) = array_val4(ibool_interfaces_poroelastic(i,num_interface)) + &
              buffer_recv_faces_scalar(ipoin,num_interface)
      end do
 
@@ -596,6 +647,149 @@ subroutine assemble_MPI_vector_el(array_val2,npoin, &
   end do
 
 end subroutine assemble_MPI_vector_el
+
+
+!-----------------------------------------------
+! Assembling accel_elastic for elastic elements :
+! the buffers are filled, the Isend and Irecv are started here, then
+! contributions are added.
+! The previous version included communication overlap using persistent
+! communication, but the merging of the outer and inner elements rendered
+! overlap no longer possible, while persistent communications were removed
+! because trace tool MPITrace does not yet instrument those.
+! Particular care should be taken concerning possible optimisations of the
+! communication scheme.
+!-----------------------------------------------
+subroutine assemble_MPI_vector_po(array_val3,array_val4,npoin, &
+     ninterface, ninterface_poroelastic, &
+     inum_interfaces_poroelastic, &
+     max_interface_size, max_ibool_interfaces_size_po,&
+     ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
+     tab_requests_send_recv_poroelastic, &
+     buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
+     buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
+     my_neighbours &
+     )
+
+  implicit none
+
+  include 'constants.h'
+  include 'mpif.h'
+  include 'precision_mpi.h'
+
+  ! array to assemble
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin), intent(inout) :: array_val3,array_val4
+
+  integer, intent(in)  :: npoin
+  integer, intent(in)  :: ninterface, ninterface_poroelastic
+  integer, dimension(ninterface), intent(in)  :: inum_interfaces_poroelastic
+  integer, intent(in)  :: max_interface_size
+  integer, intent(in)  :: max_ibool_interfaces_size_po
+  integer, dimension(NGLLX*max_interface_size,ninterface), intent(in)  :: ibool_interfaces_poroelastic
+  integer, dimension(ninterface), intent(in)  :: nibool_interfaces_poroelastic
+  integer, dimension(ninterface_poroelastic*4), intent(inout)  :: tab_requests_send_recv_poroelastic
+  real(CUSTOM_REAL), dimension(max_ibool_interfaces_size_po,ninterface_poroelastic), intent(inout)  :: &
+       buffer_send_faces_vector_pos,buffer_send_faces_vector_pow
+  real(CUSTOM_REAL), dimension(max_ibool_interfaces_size_po,ninterface_poroelastic), intent(inout)  :: &
+       buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow
+ integer, dimension(ninterface), intent(in) :: my_neighbours
+
+  integer  :: ipoin, num_interface, inum_interface
+  integer  :: ier
+  integer, dimension(MPI_STATUS_SIZE)  :: status_poroelastic
+
+  integer  :: i
+
+
+  do inum_interface = 1, ninterface_poroelastic
+
+     num_interface = inum_interfaces_poroelastic(inum_interface)
+
+     ipoin = 0
+     do i = 1, nibool_interfaces_poroelastic(num_interface)
+        buffer_send_faces_vector_pos(ipoin+1:ipoin+2,inum_interface) = &
+             array_val3(:,ibool_interfaces_poroelastic(i,num_interface))
+        ipoin = ipoin + 2
+     end do
+
+     ipoin = 0
+     do i = 1, nibool_interfaces_poroelastic(num_interface)
+        buffer_send_faces_vector_pow(ipoin+1:ipoin+2,inum_interface) = &
+             array_val4(:,ibool_interfaces_poroelastic(i,num_interface))
+        ipoin = ipoin + 2
+     end do
+
+  end do
+
+  do inum_interface = 1, ninterface_poroelastic
+
+    num_interface = inum_interfaces_poroelastic(inum_interface)
+
+    call MPI_ISSEND( buffer_send_faces_vector_pos(1,inum_interface), &
+             NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
+             my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
+             tab_requests_send_recv_poroelastic(inum_interface), ier)
+
+    if ( ier /= MPI_SUCCESS ) then
+      call exit_mpi('MPI_ISSEND unsuccessful in assemble_MPI_vector_pos')
+    end if
+
+    call MPI_Irecv ( buffer_recv_faces_vector_pos(1,inum_interface), &
+             NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
+             my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
+             tab_requests_send_recv_poroelastic(ninterface_poroelastic+inum_interface), ier)
+
+    if ( ier /= MPI_SUCCESS ) then
+      call exit_mpi('MPI_Irecv unsuccessful in assemble_MPI_vector_pos')
+    end if
+
+    call MPI_ISSEND( buffer_send_faces_vector_pow(1,inum_interface), &
+             NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
+             my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
+             tab_requests_send_recv_poroelastic(ninterface_poroelastic*2+inum_interface), ier)
+
+    if ( ier /= MPI_SUCCESS ) then
+      call exit_mpi('MPI_ISSEND unsuccessful in assemble_MPI_vector_pow')
+    end if
+
+    call MPI_Irecv ( buffer_recv_faces_vector_pow(1,inum_interface), &
+             NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
+             my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
+             tab_requests_send_recv_poroelastic(ninterface_poroelastic*3+inum_interface), ier)
+
+    if ( ier /= MPI_SUCCESS ) then
+      call exit_mpi('MPI_Irecv unsuccessful in assemble_MPI_vector_pow')
+    end if
+
+  end do
+
+  do inum_interface = 1, ninterface_poroelastic*4
+
+    call MPI_Wait (tab_requests_send_recv_poroelastic(inum_interface), status_poroelastic, ier)
+
+  enddo
+
+  do inum_interface = 1, ninterface_poroelastic
+
+     num_interface = inum_interfaces_poroelastic(inum_interface)
+
+     ipoin = 0
+     do i = 1, nibool_interfaces_poroelastic(num_interface)
+        array_val3(:,ibool_interfaces_poroelastic(i,num_interface)) = array_val3(:,ibool_interfaces_poroelastic(i,num_interface)) + &
+             buffer_recv_faces_vector_pos(ipoin+1:ipoin+2,inum_interface)
+        ipoin = ipoin + 2
+     end do
+
+     ipoin = 0
+     do i = 1, nibool_interfaces_poroelastic(num_interface)
+        array_val4(:,ibool_interfaces_poroelastic(i,num_interface)) = array_val4(:,ibool_interfaces_poroelastic(i,num_interface)) + &
+             buffer_recv_faces_vector_pow(ipoin+1:ipoin+2,inum_interface)
+        ipoin = ipoin + 2
+     end do
+
+  end do
+
+end subroutine assemble_MPI_vector_po
 
 #endif
 

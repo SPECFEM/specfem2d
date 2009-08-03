@@ -40,9 +40,11 @@
 !
 !========================================================================
 
-  subroutine compute_energy(displ_elastic,veloc_elastic, &
-         xix,xiz,gammax,gammaz,jacobian,ibool,elastic,hprime_xx,hprime_zz, &
+  subroutine compute_energy(displ_elastic,veloc_elastic,displs_poroelastic,velocs_poroelastic, &
+         displw_poroelastic,velocw_poroelastic, &
+         xix,xiz,gammax,gammaz,jacobian,ibool,elastic,poroelastic,hprime_xx,hprime_zz, &
          nspec,npoin,assign_external_model,it,deltat,t0,kmato,elastcoef,density, &
+         porosity,tortuosity, &
          vpext,vsext,rhoext,wxgll,wzgll,numat, &
          pressure_element,vector_field_element,e1,e11, &
          potential_dot_acoustic,potential_dot_dot_acoustic,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
@@ -74,7 +76,7 @@
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
 
-  logical, dimension(nspec) :: elastic
+  logical, dimension(nspec) :: elastic,poroelastic
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
 
@@ -82,11 +84,14 @@
 
   logical :: assign_external_model
 
-  double precision, dimension(numat) :: density
-  double precision, dimension(4,numat) :: elastcoef
+  double precision, dimension(2,numat) :: density
+  double precision, dimension(numat) :: porosity,tortuosity
+  double precision, dimension(4,3,numat) :: elastcoef
   double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,vsext,rhoext
 
   real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displ_elastic,veloc_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displs_poroelastic,velocs_poroelastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displw_poroelastic,velocw_poroelastic
 
 ! Gauss-Lobatto-Legendre points and weights
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
@@ -102,12 +107,19 @@
 ! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
   real(kind=CUSTOM_REAL) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
+  real(kind=CUSTOM_REAL) :: dwx_dxi,dwx_dgamma,dwz_dxi,dwz_dgamma
+  real(kind=CUSTOM_REAL) :: dwx_dxl,dwz_dxl,dwx_dzl,dwz_dzl
 
 ! jacobian
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
 
   real(kind=CUSTOM_REAL) :: kinetic_energy,potential_energy
   real(kind=CUSTOM_REAL) :: cpl,csl,rhol,mul_relaxed,lambdal_relaxed,lambdalplus2mul_relaxed,kappal
+  real(kind=CUSTOM_REAL) :: mul_s,kappal_s,rhol_s
+  real(kind=CUSTOM_REAL) :: kappal_f,rhol_f
+  real(kind=CUSTOM_REAL) :: mul_fr,kappal_fr,phil,tortl
+  real(kind=CUSTOM_REAL) :: D_biot,H_biot,C_biot,M_biot,rhol_bar
+  real(kind=CUSTOM_REAL) :: mul_G,lambdal_G,lambdalplus2mul_G,mul_C,lambdal_C,lambdalplus2mul_C,mul_M,lambdal_M,lambdalplus2mul_M
 
   kinetic_energy = ZERO
   potential_energy = ZERO
@@ -121,10 +133,10 @@
     if(elastic(ispec)) then
 
 ! get relaxed elastic parameters of current spectral element
-      lambdal_relaxed = elastcoef(1,kmato(ispec))
-      mul_relaxed = elastcoef(2,kmato(ispec))
-      lambdalplus2mul_relaxed = elastcoef(3,kmato(ispec))
-      rhol  = density(kmato(ispec))
+      lambdal_relaxed = elastcoef(1,1,kmato(ispec))
+      mul_relaxed = elastcoef(2,1,kmato(ispec))
+      lambdalplus2mul_relaxed = elastcoef(3,1,kmato(ispec))
+      rhol  = density(1,kmato(ispec))
 
 ! double loop over GLL points
       do j = 1,NGLLZ
@@ -183,6 +195,115 @@
       enddo
 
 !---
+!--- poroelastic spectral element
+!---
+    elseif(poroelastic(ispec)) then
+
+! get relaxed elastic parameters of current spectral element
+!for now replaced by solid, fluid, and frame parameters of current spectral element
+    phil = porosity(kmato(ispec))
+    tortl = tortuosity(kmato(ispec))
+!solid properties
+    mul_s = elastcoef(2,1,kmato(ispec))
+    kappal_s = elastcoef(3,1,kmato(ispec)) - FOUR_THIRDS*mul_s
+    rhol_s = density(1,kmato(ispec))
+!fluid properties
+    kappal_f = elastcoef(1,2,kmato(ispec))
+    rhol_f = density(2,kmato(ispec))
+!frame properties
+    mul_fr = elastcoef(2,3,kmato(ispec))
+    kappal_fr = elastcoef(3,3,kmato(ispec)) - FOUR_THIRDS*mul_fr
+    rhol_bar =  (1.d0 - phil)*rhol_s + phil*rhol_f
+!Biot coefficients for the input phi
+      D_biot = kappal_s*(1.d0 + phil*(kappal_s/kappal_f - 1.d0))
+      H_biot = (kappal_s - kappal_fr)*(kappal_s - kappal_fr)/(D_biot - kappal_fr) + kappal_fr + FOUR_THIRDS*mul_fr
+      C_biot = kappal_s*(kappal_s - kappal_fr)/(D_biot - kappal_fr)
+      M_biot = kappal_s*kappal_s/(D_biot - kappal_fr)
+!The RHS has the form : div T -phi/c div T_f + phi/ceta_fk^-1.partial t w
+!where T = G:grad u_s + C div w I
+!and T_f = C div u_s I + M div w I
+!we are expressing lambdaplus2mu, lambda, and mu for G, C, and M
+      mul_G = mul_fr
+      lambdal_G = H_biot - TWO*mul_fr
+      lambdalplus2mul_G = lambdal_G + TWO*mul_G
+
+! first double loop over GLL points to compute and store gradients
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+
+! derivative along x and along z
+          dux_dxi = ZERO
+          duz_dxi = ZERO
+
+          dux_dgamma = ZERO
+          duz_dgamma = ZERO
+
+          dwx_dxi = ZERO
+          dwz_dxi = ZERO
+
+          dwx_dgamma = ZERO
+          dwz_dgamma = ZERO
+
+! first double loop over GLL points to compute and store gradients
+! we can merge the two loops because NGLLX == NGLLZ
+          do k = 1,NGLLX
+            dux_dxi = dux_dxi + displs_poroelastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
+            duz_dxi = duz_dxi + displs_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+            dux_dgamma = dux_dgamma + displs_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
+            duz_dgamma = duz_dgamma + displs_poroelastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
+
+
+            dwx_dxi = dwx_dxi + displw_poroelastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
+            dwz_dxi = dwz_dxi + displw_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+            dwx_dgamma = dwx_dgamma + displw_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
+            dwz_dgamma = dwz_dgamma + displw_poroelastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
+          enddo
+
+          xixl = xix(i,j,ispec)
+          xizl = xiz(i,j,ispec)
+          gammaxl = gammax(i,j,ispec)
+          gammazl = gammaz(i,j,ispec)
+          jacobianl = jacobian(i,j,ispec)
+
+! derivatives of displacement
+          dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
+          dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
+
+          duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
+          duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
+
+          dwx_dxl = dwx_dxi*xixl + dwx_dgamma*gammaxl
+          dwx_dzl = dwx_dxi*xizl + dwx_dgamma*gammazl
+
+          dwz_dxl = dwz_dxi*xixl + dwz_dgamma*gammaxl
+          dwz_dzl = dwz_dxi*xizl + dwz_dgamma*gammazl
+
+! compute potential energy
+          potential_energy = potential_energy + ( lambdalplus2mul_G*dux_dxl**2 &
+              + lambdalplus2mul_G*duz_dzl**2 &
+              + two*lambdal_G*dux_dxl*duz_dzl + mul_G*(dux_dzl + duz_dxl)**2 &
+              + two*C_biot*dwx_dxl*dux_dxl + two*C_biot*dwz_dzl*duz_dzl &
+              + two*C_biot*(dwx_dxl*duz_dzl + dwz_dzl*dux_dxl) &
+              + M_biot*dwx_dxl**2 + M_biot*dwz_dzl**2 &
+              + two*M_biot*dwx_dxl*dwz_dzl )*wxgll(i)*wzgll(j)*jacobianl / TWO
+
+! compute kinetic energy
+         if(phil > 0.0d0) then
+          kinetic_energy = kinetic_energy + ( &
+              rhol_bar*(velocs_poroelastic(1,ibool(i,j,ispec))**2 + velocs_poroelastic(2,ibool(i,j,ispec))**2) &
+              + rhol_f*tortl/phil*(velocw_poroelastic(1,ibool(i,j,ispec))**2 + velocw_poroelastic(2,ibool(i,j,ispec))**2) &
+              + rhol_f*(velocs_poroelastic(1,ibool(i,j,ispec))*velocw_poroelastic(1,ibool(i,j,ispec)) &
+              + velocs_poroelastic(2,ibool(i,j,ispec))*velocw_poroelastic(2,ibool(i,j,ispec))) &
+                 )*wxgll(i)*wzgll(j)*jacobianl / TWO
+         else
+                   kinetic_energy = kinetic_energy +  &
+              rhol_s*(velocs_poroelastic(1,ibool(i,j,ispec))**2 + velocs_poroelastic(2,ibool(i,j,ispec))**2) &
+                 *wxgll(i)*wzgll(j)*jacobianl / TWO
+         endif
+        enddo
+      enddo
+
+!---
 !--- acoustic spectral element
 !---
     else
@@ -209,9 +330,9 @@
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,ispec,numat,kmato,density,rhoext,assign_external_model)
 
 ! get density of current spectral element
-      lambdal_relaxed = elastcoef(1,kmato(ispec))
-      mul_relaxed = elastcoef(2,kmato(ispec))
-      rhol  = density(kmato(ispec))
+      lambdal_relaxed = elastcoef(1,1,kmato(ispec))
+      mul_relaxed = elastcoef(2,1,kmato(ispec))
+      rhol  = density(1,kmato(ispec))
       kappal  = lambdal_relaxed + TWO*mul_relaxed/3._CUSTOM_REAL
       cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_relaxed/3._CUSTOM_REAL)/rhol)
 

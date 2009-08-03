@@ -40,9 +40,10 @@
 !
 !========================================================================
 
-  subroutine checkgrid(vpext,vsext,rhoext,density,elastcoef,ibool,kmato,coord,npoin,vpmin,vpmax, &
-                 assign_external_model,nspec,UPPER_LIMIT_DISPLAY,numat,deltat,f0,t0,initialfield,time_function_type, &
-                 coorg,xinterp,zinterp,shapeint,knods,simulation_title,npgeo,pointsdisp,ngnod,any_elastic,myrank,nproc)
+  subroutine checkgrid(vpext,vsext,rhoext,density,poroelastcoef,porosity,tortuosity,ibool,kmato,coord,npoin, &
+                 vpImin,vpImax,vpIImin,vpIImax,assign_external_model,nspec,UPPER_LIMIT_DISPLAY,numat,deltat, &
+                 f0,t0,initialfield,time_function_type,coorg,xinterp,zinterp,shapeint,knods,simulation_title, &
+                 npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,myrank,nproc,NSOURCE,poroelastic)
 
 ! check the mesh, stability and number of points per wavelength
 
@@ -65,24 +66,33 @@
   integer  :: icol
 #endif
 
-  integer i,j,ispec,material,npoin,nspec,numat,time_function_type
+  integer i,j,ispec,material,npoin,nspec,numat,NSOURCE
+
+  integer, dimension(NSOURCE) :: time_function_type
 
   integer, dimension(nspec) :: kmato
+  logical, dimension(nspec) :: poroelastic
   integer, dimension(NGLLX,NGLLX,nspec) :: ibool
 
-  double precision, dimension(numat) :: density
-  double precision, dimension(4,numat) :: elastcoef
+  double precision, dimension(2,numat) :: density
+  double precision, dimension(4,3,numat) :: poroelastcoef
+  double precision, dimension(numat) :: porosity,tortuosity
   double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext
 
   double precision coord(NDIM,npoin)
 
-  double precision vpmin,vpmax,vsmin,vsmax,densmin,densmax,vpmax_local,vpmin_local,vsmin_local
-  double precision lambdaplus2mu,mu,denst,cploc,csloc
+  double precision vpImin,vpImax,vsmin,vsmax,densmin,densmax,vpImax_local,vpImin_local,vsmin_local
+  double precision vpIImin,vpIImax,vpIImax_local,vpIImin_local
+  double precision kappa_s,kappa_f,kappa_fr,mu_s,mu_fr,denst_s,denst_f,denst,phi,tort,cpIloc,cpIIloc,csloc
+  double precision afactor,bfactor,cfactor,D_biot,H_biot,C_biot,M_biot,cpIsquare,cpIIsquare,cssquare
+  double precision f0min,f0max
+  double precision lambdaplus2mu,mu
   double precision distance_min,distance_max,distance_min_local,distance_max_local
-  double precision courant_stability_number_max,lambdaPmin,lambdaPmax,lambdaSmin,lambdaSmax
-  double precision f0,t0,deltat,distance_1,distance_2,distance_3,distance_4
-
-  logical assign_external_model,initialfield,any_elastic
+  double precision courant_stability_number_max,lambdaPImin,lambdaPImax,lambdaPIImin,lambdaPIImax, &
+                   lambdaSmin,lambdaSmax
+  double precision deltat,distance_1,distance_2,distance_3,distance_4
+  double precision, dimension(NSOURCE) :: f0,t0
+  logical assign_external_model,initialfield,any_elastic,any_poroelastic
 
 ! for the stability condition
 ! maximum polynomial degree for which we can compute the stability condition
@@ -92,16 +102,18 @@
   integer pointsdisp,npgeo,ngnod,is,ir,in,nnum
 
   double precision :: xmax,zmax,height,usoffset,sizex,sizez,courant_stability_number
-  double precision :: x1,z1,x2,z2,ratio_page,xmin,zmin,lambdaS_local,lambdaP_local
+  double precision :: x1,z1,x2,z2,ratio_page,xmin,zmin,lambdaS_local,lambdaPI_local
 
 #ifdef USE_MPI
-  double precision  :: vpmin_glob,vpmax_glob,vsmin_glob,vsmax_glob,densmin_glob,densmax_glob
+  double precision  :: vpImin_glob,vpImax_glob,vsmin_glob,vsmax_glob,densmin_glob,densmax_glob
+  double precision  :: vpIImin_glob,vpIImax_glob
   double precision  :: distance_min_glob,distance_max_glob
-  double precision  :: courant_stability_max_glob,lambdaPmin_glob,lambdaPmax_glob,lambdaSmin_glob,lambdaSmax_glob
+  double precision  :: courant_stability_max_glob,lambdaPImin_glob,lambdaPImax_glob,&
+                       lambdaPIImin_glob,lambdaPIImax_glob,lambdaSmin_glob,lambdaSmax_glob
   double precision  :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
 #endif
 
-  logical  :: any_elastic_glob
+  logical  :: any_elastic_glob,any_poroelastic_glob
   double precision, dimension(2,nspec*5)  :: coorg_send
   double precision, dimension(:,:), allocatable  :: coorg_recv
   integer, dimension(nspec)  :: RGB_send
@@ -1350,15 +1362,23 @@
 
 !---- compute parameters for the spectral elements
 
-  vpmin = HUGEVAL
-  vpmax = -HUGEVAL
+  vpImin = HUGEVAL
+  vpImax = -HUGEVAL
 
-  if(any_elastic) then
+  if(any_elastic .or. any_poroelastic) then
     vsmin = HUGEVAL
     vsmax = -HUGEVAL
   else
     vsmin = 0
     vsmax = 0
+  endif
+
+  if(any_poroelastic) then
+    vpIImin = HUGEVAL
+    vpIImax = -HUGEVAL
+  else
+    vpIImin = 0
+    vpIImax = 0
   endif
 
   densmin = HUGEVAL
@@ -1369,10 +1389,10 @@
 
   courant_stability_number_max = -HUGEVAL
 
-  lambdaPmin = HUGEVAL
-  lambdaPmax = -HUGEVAL
+  lambdaPImin = HUGEVAL
+  lambdaPImax = -HUGEVAL
 
-  if(any_elastic) then
+  if(any_elastic .or. any_poroelastic) then
     lambdaSmin = HUGEVAL
     lambdaSmax = -HUGEVAL
   else
@@ -1380,19 +1400,62 @@
     lambdaSmax = 0
   endif
 
+  if(any_poroelastic) then
+    lambdaPIImin = HUGEVAL
+    lambdaPIImax = -HUGEVAL
+  else
+    lambdaPIImin = 0
+    lambdaPIImax = 0
+  endif
+
   do ispec=1,nspec
 
     material = kmato(ispec)
+   
+   if(poroelastic(ispec)) then
+    phi = porosity(material)
+    tort = tortuosity(material)
+!solid properties
+    mu_s = poroelastcoef(2,1,material)
+    kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
+    denst_s = density(1,material)
+!fluid properties
+    kappa_f = poroelastcoef(1,2,material)
+    denst_f = density(2,material)
+!frame properties
+    mu_fr = poroelastcoef(2,3,material)
+    kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
+    denst =  (1.d0 - phi)*denst_s + phi*denst_f
+!Biot coefficients for the input phi
+      D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
+      H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
+      C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
+      M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
+! Approximated velocities (no viscous dissipation)
+      afactor = denst - phi/tort*denst_f
+      bfactor = H_biot + phi*denst/(tort*denst_f)*M_biot - 2.d0*phi/tort*C_biot
+      cfactor = phi/(tort*denst_f)*(H_biot*M_biot - C_biot*C_biot)
+      cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
+      cpIIsquare = (bfactor - sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
+      cssquare = mu_fr/afactor
 
-    mu = elastcoef(2,material)
-    lambdaplus2mu  = elastcoef(3,material)
-    denst = density(material)
+    cpIloc = sqrt(cpIsquare)
+    cpIIloc = sqrt(cpIIsquare)
+    csloc = sqrt(cssquare)
+   else
+    mu = poroelastcoef(2,1,material)
+    lambdaplus2mu  = poroelastcoef(3,1,material)
+    denst = density(1,material)
 
-    cploc = sqrt(lambdaplus2mu/denst)
+    cpIloc = sqrt(lambdaplus2mu/denst)
+    cpIIloc = 0.d0
     csloc = sqrt(mu/denst)
+   endif
 
-  vpmax_local = -HUGEVAL
-  vpmin_local = HUGEVAL
+  vpImax_local = -HUGEVAL
+  vpImin_local = HUGEVAL
+  vpIImax_local = -HUGEVAL
+  vpIImin_local = HUGEVAL
   vsmin_local = HUGEVAL
 
   distance_min_local = HUGEVAL
@@ -1403,14 +1466,18 @@
 
 !--- if heterogeneous formulation with external velocity model
     if(assign_external_model) then
-      cploc = vpext(i,j,ispec)
+      cpIloc = vpext(i,j,ispec)
       csloc = vsext(i,j,ispec)
       denst = rhoext(i,j,ispec)
     endif
 
 !--- compute min and max of velocity and density models
-    vpmin = min(vpmin,cploc)
-    vpmax = max(vpmax,cploc)
+    vpImin = min(vpImin,cpIloc)
+    vpImax = max(vpImax,cpIloc)
+
+! ignore acoustic and elastic regions with cpII = 0
+    if(cpIIloc > 0.0001d0) vpIImin = min(vpIImin,cpIIloc)
+    vpIImax = max(vpIImax,cpIIloc)
 
 ! ignore fluid regions with Vs = 0
     if(csloc > 0.0001d0) vsmin = min(vsmin,csloc)
@@ -1419,9 +1486,11 @@
     densmin = min(densmin,denst)
     densmax = max(densmax,denst)
 
-    vpmax_local = max(vpmax_local,cploc)
-    vpmin_local = min(vpmin_local,cploc)
-    vsmin_local = min(vsmin_local,csloc)
+    vpImax_local = max(vpImax_local,vpImax)
+    vpImin_local = min(vpImin_local,vpImin)
+    vpIImax_local = max(vpIImax_local,vpIImax)
+    vpIImin_local = min(vpIImin_local,vpIImin)
+    vsmin_local = min(vsmin_local,vsmin)
 
     enddo
   enddo
@@ -1445,7 +1514,7 @@
   distance_min = min(distance_min,distance_min_local)
   distance_max = max(distance_max,distance_max_local)
 
-  courant_stability_number_max = max(courant_stability_number_max,vpmax_local * deltat / (distance_min_local * percent_GLL(NGLLX)))
+  courant_stability_number_max = max(courant_stability_number_max,vpImax_local * deltat / (distance_min_local * percent_GLL(NGLLX)))
 
 ! ignore fluid regions with Vs = 0
   if(csloc > 0.0001d0) then
@@ -1453,15 +1522,23 @@
     lambdaSmax = max(lambdaSmax,vsmin_local / (distance_max_local / (NGLLX - 1)))
   endif
 
-  lambdaPmin = min(lambdaPmin,vpmin_local / (distance_max_local / (NGLLX - 1)))
-  lambdaPmax = max(lambdaPmax,vpmin_local / (distance_max_local / (NGLLX - 1)))
+  lambdaPImin = min(lambdaPImin,vpImin_local / (distance_max_local / (NGLLX - 1)))
+  lambdaPImax = max(lambdaPImax,vpImin_local / (distance_max_local / (NGLLX - 1)))
+
+  if(cpIIloc > 0.0001d0) then
+  lambdaPIImin = min(lambdaPIImin,vpIImin_local / (distance_max_local / (NGLLX - 1)))
+  lambdaPIImax = max(lambdaPIImax,vpIImin_local / (distance_max_local / (NGLLX - 1)))
+  endif
 
   enddo
 
   any_elastic_glob = any_elastic
+  any_poroelastic_glob = any_poroelastic
 #ifdef USE_MPI
-  call MPI_ALLREDUCE (vpmin, vpmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (vpmax, vpmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (vpImin, vpImin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (vpImax, vpImax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (vpIImin, vpIImin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (vpIImax, vpIImax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE (vsmin, vsmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE (vsmax, vsmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE (densmin, densmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
@@ -1470,13 +1547,18 @@
   call MPI_ALLREDUCE (distance_max, distance_max_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE (courant_stability_number_max, courant_stability_max_glob, 1, MPI_DOUBLE_PRECISION, &
        MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (lambdaPmin, lambdaPmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (lambdaPmax, lambdaPmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (lambdaPImin, lambdaPImin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (lambdaPImax, lambdaPImax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (lambdaPIImin, lambdaPIImin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (lambdaPIImax, lambdaPIImax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE (lambdaSmin, lambdaSmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE (lambdaSmax, lambdaSmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE (any_elastic, any_elastic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
-  vpmin = vpmin_glob
-  vpmax = vpmax_glob
+  call MPI_ALLREDUCE (any_poroelastic, any_poroelastic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
+  vpImin = vpImin_glob
+  vpImax = vpImax_glob
+  vpIImin = vpIImin_glob
+  vpIImax = vpIImax_glob
   vsmin = vsmin_glob
   vsmax = vsmax_glob
   densmin = densmin_glob
@@ -1484,8 +1566,10 @@
   distance_min = distance_min_glob
   distance_max = distance_max_glob
   courant_stability_number_max = courant_stability_max_glob
-  lambdaPmin = lambdaPmin_glob
-  lambdaPmax = lambdaPmax_glob
+  lambdaPImin = lambdaPImin_glob
+  lambdaPImax = lambdaPImax_glob
+  lambdaPIImin = lambdaPIImin_glob
+  lambdaPIImax = lambdaPIImax_glob
   lambdaSmin = lambdaSmin_glob
   lambdaSmax = lambdaSmax_glob
 
@@ -1494,7 +1578,8 @@
   if ( myrank == 0 ) then
   write(IOUT,*)
   write(IOUT,*) '********'
-  write(IOUT,*) 'Model: P velocity min,max = ',vpmin,vpmax
+  write(IOUT,*) 'Model: P (or PI) velocity min,max = ',vpImin,vpImax
+  write(IOUT,*) 'Model: PII velocity min,max = ',vpIImin,vpIImax
   write(IOUT,*) 'Model: S velocity min,max = ',vsmin,vsmax
   write(IOUT,*) 'Model: density min,max = ',densmin,densmax
   write(IOUT,*) '********'
@@ -1515,23 +1600,38 @@
 
 ! only if time source is not a Dirac or Heaviside (otherwise maximum frequency of spectrum undefined)
 ! and if source is not an initial field, for the same reason
-  if(.not. initialfield .and. time_function_type /= 4 .and. time_function_type /= 5) then
+  if(.not. initialfield) then
+   f0max = -HUGEVAL   
+   f0min = HUGEVAL   
+   do i = 1,NSOURCE
+    if(time_function_type(i) /= 4 .and. time_function_type(i) /= 5) then
 
-    write(IOUT,*) ' Onset time = ',t0
-    write(IOUT,*) ' Fundamental period = ',1.d0/f0
-    write(IOUT,*) ' Fundamental frequency = ',f0
-    if(t0 <= 1.d0/f0) then
+    write(IOUT,*) ' Onset time = ',t0(i)
+    write(IOUT,*) ' Fundamental period = ',1.d0/f0(i)
+    write(IOUT,*) ' Fundamental frequency = ',f0(i)
+    if(f0(i) > f0max) f0max = f0(i)
+    if(f0(i) < f0min) f0min = f0(i)
+    if(t0(i) <= 1.d0/f0(i)) then
        call exit_MPI('Onset time too small')
     else
       write(IOUT,*) ' --> onset time ok'
     endif
+    
+    if(i==NSOURCE)then
     write(IOUT,*) '----'
-    write(IOUT,*) ' Nb pts / lambdaPmin_fmax max = ',lambdaPmax/(2.5d0*f0)
-    write(IOUT,*) ' Nb pts / lambdaPmin_fmax min = ',lambdaPmin/(2.5d0*f0)
+    write(IOUT,*) ' Nb pts / lambdaPImin_fmax max = ',lambdaPImax/(2.5d0*f0min)
+    write(IOUT,*) ' Nb pts / lambdaPImin_fmax min = ',lambdaPImin/(2.5d0*f0max)
     write(IOUT,*) '----'
-    write(IOUT,*) ' Nb pts / lambdaSmin_fmax max = ',lambdaSmax/(2.5d0*f0)
-    write(IOUT,*) ' Nb pts / lambdaSmin_fmax min = ',lambdaSmin/(2.5d0*f0)
+    write(IOUT,*) ' Nb pts / lambdaPIImin_fmax max = ',lambdaPIImax/(2.5d0*f0min)
+    write(IOUT,*) ' Nb pts / lambdaPIImin_fmax min = ',lambdaPIImin/(2.5d0*f0max)
     write(IOUT,*) '----'
+    write(IOUT,*) ' Nb pts / lambdaSmin_fmax max = ',lambdaSmax/(2.5d0*f0min)
+    write(IOUT,*) ' Nb pts / lambdaSmin_fmax min = ',lambdaSmin/(2.5d0*f0max)
+    write(IOUT,*) '----'
+    endif
+
+    endif
+   enddo
   endif
   endif
 
@@ -1775,16 +1875,40 @@
 
     material = kmato(ispec)
 
-    mu = elastcoef(2,material)
-    lambdaplus2mu  = elastcoef(3,material)
-    denst = density(material)
+   if(poroelastic(ispec)) then
+    phi=porosity(material)
+    tort=tortuosity(material)
+!solid properties
+    mu_s = poroelastcoef(2,1,material)
+    kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
+    denst_s = density(1,material)
+!fluid properties
+    kappa_f = poroelastcoef(1,2,material)
+    denst_f = density(2,material)
+!frame properties
+    mu_fr = poroelastcoef(2,3,material)
+    kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
+    denst =  (1.d0 - phi)*denst_s + phi*denst_f
+!Biot coefficients for the input phi
+      D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
+      H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
+      C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
+      M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
+! Approximated velocities (no viscous dissipation)
+      afactor = denst - phi/tort*denst_f
+      bfactor = H_biot + phi*denst/(tort*denst_f)*M_biot - 2.d0*phi/tort*C_biot
+      cfactor = phi/(tort*denst_f)*(H_biot*M_biot - C_biot*C_biot)
+      cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
 
-    cploc = sqrt(lambdaplus2mu/denst)
-    csloc = sqrt(mu/denst)
+    cpIloc = sqrt(cpIsquare)
+   else
+    lambdaplus2mu  = poroelastcoef(3,1,material)
+    denst = density(1,material)
 
-  vpmax_local = -HUGEVAL
-  vpmin_local = HUGEVAL
-  vsmin_local = HUGEVAL
+    cpIloc = sqrt(lambdaplus2mu/denst)
+   endif
+
+  vpImax_local = -HUGEVAL
 
   distance_min_local = HUGEVAL
   distance_max_local = -HUGEVAL
@@ -1794,14 +1918,11 @@
 
 !--- if heterogeneous formulation with external velocity model
     if(assign_external_model) then
-      cploc = vpext(i,j,ispec)
-      csloc = vsext(i,j,ispec)
+      cpIloc = vpext(i,j,ispec)
       denst = rhoext(i,j,ispec)
     endif
 
-    vpmax_local = max(vpmax_local,cploc)
-    vpmin_local = min(vpmin_local,cploc)
-    vsmin_local = min(vsmin_local,csloc)
+    vpImax_local = max(vpImax_local,cpIloc)
 
     enddo
   enddo
@@ -1825,7 +1946,7 @@
   distance_min = min(distance_min,distance_min_local)
   distance_max = max(distance_max,distance_max_local)
 
-  courant_stability_number = vpmax_local * deltat / (distance_min_local * percent_GLL(NGLLX))
+  courant_stability_number = vpImax_local * deltat / (distance_min_local * percent_GLL(NGLLX))
 
 ! display bad elements that are above 80% of the threshold
   if(courant_stability_number >= 0.80 * courant_stability_number_max) then
@@ -1907,7 +2028,7 @@
 !
 !---- open PostScript file
 !
-  if(any_elastic_glob) then
+  if(any_elastic_glob .or. any_poroelastic) then
     open(unit=24,file='OUTPUT_FILES/mesh_S_wave_dispersion.ps',status='unknown')
   else
     open(unit=24,file='OUTPUT_FILES/mesh_P_wave_dispersion.ps',status='unknown')
@@ -2105,16 +2226,47 @@
   endif
 
     material = kmato(ispec)
+  
+   if(poroelastic(ispec)) then
+    phi = porosity(material)
+    tort = tortuosity(material)
+!solid properties
+    mu_s = poroelastcoef(2,1,material)
+    kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
+    denst_s = density(1,material)
+!fluid properties
+    kappa_f = poroelastcoef(1,2,material)
+    denst_f = density(2,material)
+!frame properties
+    mu_fr = poroelastcoef(2,3,material)
+    kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
+    denst =  (1.d0 - phi)*denst_s + phi*denst_f
+!Biot coefficients for the input phi
+      D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
+      H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
+      C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
+      M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
+! Approximated velocities (no viscous dissipation)
+      afactor = denst - phi/tort*denst_f
+      bfactor = H_biot + phi*denst/(tort*denst_f)*M_biot - 2.d0*phi/tort*C_biot
+      cfactor = phi/(tort*denst_f)*(H_biot*M_biot - C_biot*C_biot)
+      cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
+      cpIIsquare = (bfactor - sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
+      cssquare = mu_fr/afactor
 
-    mu = elastcoef(2,material)
-    lambdaplus2mu  = elastcoef(3,material)
-    denst = density(material)
+    cpIloc = sqrt(cpIsquare)
+    csloc = sqrt(cssquare)
+   else
+    mu = poroelastcoef(2,1,material)
+    lambdaplus2mu  = poroelastcoef(3,1,material)
+    denst = density(1,material)
 
-    cploc = sqrt(lambdaplus2mu/denst)
+    cpIloc = sqrt(lambdaplus2mu/denst)
     csloc = sqrt(mu/denst)
+   endif
 
-  vpmax_local = -HUGEVAL
-  vpmin_local = HUGEVAL
+  vpImax_local = -HUGEVAL
+  vpImin_local = HUGEVAL
   vsmin_local = HUGEVAL
 
   distance_min_local = HUGEVAL
@@ -2125,13 +2277,13 @@
 
 !--- if heterogeneous formulation with external velocity model
     if(assign_external_model) then
-      cploc = vpext(i,j,ispec)
+      cpIloc = vpext(i,j,ispec)
       csloc = vsext(i,j,ispec)
       denst = rhoext(i,j,ispec)
     endif
 
-    vpmax_local = max(vpmax_local,cploc)
-    vpmin_local = min(vpmin_local,cploc)
+    vpImax_local = max(vpImax_local,cpIloc)
+    vpImin_local = min(vpImin_local,cpIloc)
     vsmin_local = min(vsmin_local,csloc)
 
     enddo
@@ -2157,7 +2309,7 @@
   distance_max = max(distance_max,distance_max_local)
 
 ! display mesh dispersion for S waves if there is at least one elastic element in the mesh
-  if(any_elastic_glob) then
+  if(any_elastic_glob .or. any_poroelastic_glob) then
 
 ! ignore fluid regions with Vs = 0
   if(csloc > 0.0001d0) then
@@ -2201,10 +2353,10 @@
 ! display mesh dispersion for P waves if there is no elastic element in the mesh
   else
 
-    lambdaP_local = vpmin_local / (distance_max_local / (NGLLX - 1))
+    lambdaPI_local = vpImin_local / (distance_max_local / (NGLLX - 1))
 
 ! display very good elements that are above 80% of the threshold in red
-    if(lambdaP_local >= 0.80 * lambdaPmax) then
+    if(lambdaPI_local >= 0.80 * lambdaPImax) then
        if ( myrank == 0 ) then
           write(24,*) '1 0 0 RG GF 0 setgray ST'
        else
@@ -2212,7 +2364,7 @@
        endif
 
 ! display bad elements that are below 120% of the threshold in blue
-    else if(lambdaP_local <= 1.20 * lambdaPmin) then
+    else if(lambdaPI_local <= 1.20 * lambdaPImin) then
        if ( myrank == 0 ) then
           write(24,*) '0 0 1 RG GF 0 setgray ST'
        else
@@ -2487,17 +2639,43 @@ endif
      coorg_send(2,(ispec-1)*5+5) = z2
   endif
 
-  if((vpmax-vpmin)/vpmin > 0.02d0) then
+  if((vpImax-vpImin)/vpImin > 0.02d0) then
   if(assign_external_model) then
 ! use lower-left corner
-    x1 = (vpext(1,1,ispec)-vpmin) / (vpmax-vpmin)
+    x1 = (vpext(1,1,ispec)-vpImin) / (vpImax-vpImin)
   else
     material = kmato(ispec)
-    mu = elastcoef(2,material)
-    lambdaplus2mu  = elastcoef(3,material)
-    denst = density(material)
-    cploc = sqrt(lambdaplus2mu/denst)
-    x1 = (cploc-vpmin)/(vpmax-vpmin)
+   if(poroelastic(ispec)) then
+    phi = porosity(material)
+    tort = tortuosity(material)
+!solid properties
+    mu_s = poroelastcoef(2,1,material)
+    kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
+    denst_s = density(1,material)
+!fluid properties
+    kappa_f = poroelastcoef(1,2,material)
+    denst_f = density(2,material)
+!frame properties
+    mu_fr = poroelastcoef(2,3,material)
+    kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
+    denst =  (1.d0 - phi)*denst_s + phi*denst_f
+!Biot coefficients for the input phi
+      D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
+      H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
+      C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
+      M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
+! Approximated velocities (no viscous dissipation)
+      afactor = denst - phi/tort*denst_f
+      bfactor = H_biot + phi*denst/(tort*denst_f)*M_biot - 2.d0*phi/tort*C_biot
+      cfactor = phi/(tort*denst_f)*(H_biot*M_biot - C_biot*C_biot)
+      cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
+    cpIloc = sqrt(cpIsquare)
+   else
+    lambdaplus2mu  = poroelastcoef(3,1,material)
+    denst = density(1,material)
+    cpIloc = sqrt(lambdaplus2mu/denst)
+   endif
+    x1 = (cpIloc-vpImin)/(vpImax-vpImin)
   endif
   else
     x1 = 0.5d0

@@ -125,3 +125,64 @@
 
   end subroutine compute_arrays_source
 
+! ------------------------------------------------------------------------------------------------------
+
+
+    subroutine compute_arrays_adj_source(myrank,adj_source_file,xi_receiver,gamma_receiver,adj_sourcearray, &
+                  xigll,zigll,NSTEP)
+
+  implicit none
+
+  include 'constants.h'
+
+! input
+  integer myrank, NSTEP
+
+  double precision xi_receiver, gamma_receiver
+
+  character(len=*) adj_source_file
+
+! output
+    real(kind=CUSTOM_REAL), dimension(NSTEP,NDIM,NGLLX,NGLLZ) :: adj_sourcearray
+
+! Gauss-Lobatto-Legendre points of integration and weights
+  double precision, dimension(NGLLX) :: xigll
+  double precision, dimension(NGLLZ) :: zigll
+
+
+  double precision :: hxir(NGLLX), hpxir(NGLLX), hgammar(NGLLZ), hpgammar(NGLLZ)
+  real(kind=CUSTOM_REAL) :: adj_src_s(NSTEP,NDIM)
+
+  integer icomp, itime, i, k, ios
+  double precision :: junk
+  character(len=3) :: comp(2)
+  character(len=150) :: filename
+
+  call lagrange_any(xi_receiver,NGLLX,xigll,hxir,hpxir)
+  call lagrange_any(gamma_receiver,NGLLZ,zigll,hgammar,hpgammar)
+
+  adj_sourcearray(:,:,:,:) = 0.
+
+  comp = (/"BHX","BHZ"/)
+
+  do icomp = 1, NDIM
+
+    filename = 'OUTPUT_FILES/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
+    open(unit = IIN, file = trim(filename), iostat = ios)
+    if (ios /= 0) call exit_MPI(myrank, ' file '//trim(filename)//'does not exist')
+
+    do itime = 1, NSTEP
+      read(IIN,*) junk, adj_src_s(itime,icomp)
+    enddo
+    close(IIN)
+
+  enddo
+
+  do k = 1, NGLLZ
+      do i = 1, NGLLX
+        adj_sourcearray(:,:,i,k) = hxir(i) * hgammar(k) * adj_src_s(:,:)
+      enddo
+  enddo
+
+
+end subroutine compute_arrays_adj_source
