@@ -139,18 +139,24 @@
 
 !--------------------
 
-  subroutine read_material_parameters(iin,ignore_junk,i,icodematread,rhoread,Qpread,Qsread,cpread,csread,aniso3read,aniso4read)
+  subroutine read_material_parameters(iin,ignore_junk,i,icodematread,val0read,val1read,val2read,val3read, &
+                         val4read,val5read,val6read,val7read,val8read,val9read,val10read,val11read,val12read)
+
 
   implicit none
 
   integer iin
   logical ignore_junk
   integer i,icodematread
-  double precision rhoread,Qpread,Qsread,cpread,csread,aniso3read,aniso4read
+  double precision val0read,val1read,val2read,val3read,val4read,val5read,val6read,val7read,&
+                   val8read,val9read,val10read,val11read,val12read
+
   character(len=100) string_read
 
   call read_next_line(iin,ignore_junk,string_read)
-  read(string_read,*) i,icodematread,rhoread,cpread,csread,aniso3read,aniso4read,Qpread,Qsread
+  read(string_read,*) i,icodematread,val0read,val1read,val2read,val3read,val4read,val5read,&
+                      val6read,val7read,val8read,val9read,val10read,val11read,val12read
+
 
   end subroutine read_material_parameters
 

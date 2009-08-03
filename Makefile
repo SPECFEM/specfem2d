@@ -67,12 +67,19 @@ O = obj
 #FLAGS_CHECK = $(FLAGS_NOCHECK)
 
 # GNU gfortran
-F90 = gfortran
+#F90 = gfortran
 #F90 = mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
 #F90 = /opt/openmpi-1.2.1/gfortran64/bin/mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
+#CC = gcc
+##FLAGS_NOCHECK = -O3 -march=opteron -m64 -mfpmath=sse,387
+#FLAGS_NOCHECK = -std=f95 -fimplicit-none -frange-check -O3 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math # -mcmodel=medium
+#FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
+
+# GNU gfortran (yucca)
+#F90 = /opt/openmpi-1.2.1/gfortran64/bin/mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
+F90 = gfortran
 CC = gcc
-#FLAGS_NOCHECK = -O3 -march=opteron -m64 -mfpmath=sse,387
-FLAGS_NOCHECK = -std=f95 -fimplicit-none -frange-check -O3 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math # -mcmodel=medium
+FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow
 FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
 
 # IBM
@@ -96,6 +103,7 @@ OBJS_MESHFEM2D = $O/part_unstruct.o $O/meshfem2D.o $O/read_value_parameters.o $O
 
 OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/enforce_acoustic_free_surface.o\
         $O/compute_forces_acoustic.o $O/compute_forces_elastic.o\
+        $O/compute_forces_solid.o $O/compute_forces_fluid.o\
         $O/lagrange_poly.o $O/gmat01.o $O/gll_library.o $O/plotgll.o $O/define_derivation_matrices.o\
         $O/plotpost.o $O/locate_receivers.o $O/locate_source_force.o $O/compute_gradient_attenuation.o\
         $O/specfem2D.o $O/write_seismograms.o $O/define_external_model.o $O/createnum_fast.o $O/createnum_slow.o\
@@ -195,6 +203,14 @@ $O/compute_forces_acoustic.o: compute_forces_acoustic.f90 constants.h
 $O/compute_forces_elastic.o: compute_forces_elastic.f90 constants.h
 	${F90} $(FLAGS_NOCHECK) -c -o $O/compute_forces_elastic.o compute_forces_elastic.f90
     
+### use optimized compilation option for solver only
+$O/compute_forces_solid.o: compute_forces_solid.f90 constants.h
+	${F90} $(FLAGS_NOCHECK) -c -o $O/compute_forces_solid.o compute_forces_solid.f90
+
+### use optimized compilation option for solver only
+$O/compute_forces_fluid.o: compute_forces_fluid.f90 constants.h
+	${F90} $(FLAGS_NOCHECK) -c -o $O/compute_forces_fluid.o compute_forces_fluid.f90
+
 ### use optimized compilation option for solver only
 $O/compute_gradient_attenuation.o: compute_gradient_attenuation.f90 constants.h
 	${F90} $(FLAGS_NOCHECK) -c -o $O/compute_gradient_attenuation.o compute_gradient_attenuation.f90

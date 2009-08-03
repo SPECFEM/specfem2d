@@ -40,9 +40,10 @@
 !
 !========================================================================
 
-  subroutine compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,elastic,vector_field_display, &
+  subroutine compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,&
+         displs_poroelastic,displw_poroelastic,elastic,poroelastic,vector_field_display, &
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-         numat,kmato,elastcoef,vpext,vsext,rhoext,e1,e11, &
+         numat,kmato,density,porosity,tortuosity,elastcoef,vpext,vsext,rhoext,e1,e11, &
          TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
 
 ! compute pressure in acoustic elements and in elastic elements
@@ -56,14 +57,16 @@
   integer, dimension(nspec) :: kmato
   integer, dimension(NGLLX,NGLLX,nspec) :: ibool
 
-  double precision, dimension(4,numat) :: elastcoef
+  double precision, dimension(2,numat) :: density
+  double precision, dimension(numat) :: porosity,tortuosity
+  double precision, dimension(4,3,numat) :: elastcoef
   double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
 
-  logical, dimension(nspec) :: elastic
+  logical, dimension(nspec) :: elastic,poroelastic
   real(kind=CUSTOM_REAL), dimension(npoin) :: potential_dot_dot_acoustic
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displ_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displ_elastic,displs_poroelastic,displw_poroelastic
   double precision, dimension(NDIM,npoin) :: vector_field_display
 
 ! array with derivatives of Lagrange polynomials
@@ -86,9 +89,10 @@
   do ispec = 1,nspec
 
 ! compute pressure in this element
-    call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,elastic, &
+    call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,&
+         displs_poroelastic,displw_poroelastic,elastic,poroelastic,&
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-         numat,kmato,elastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
+         numat,kmato,density,porosity,tortuosity,elastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
          TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
 
 ! use vector_field_display as temporary storage, store pressure in its second component
@@ -107,9 +111,10 @@
 !=====================================================================
 !
 
-  subroutine compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,elastic, &
+  subroutine compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,&
+         displs_poroelastic,displw_poroelastic,elastic,poroelastic,&
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-         numat,kmato,elastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
+         numat,kmato,density,porosity,tortuosity,elastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
          TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
 
 ! compute pressure in acoustic elements and in elastic elements
@@ -123,7 +128,9 @@
   integer, dimension(nspec) :: kmato
   integer, dimension(NGLLX,NGLLX,nspec) :: ibool
 
-  double precision, dimension(4,numat) :: elastcoef
+  double precision, dimension(2,numat) :: density
+  double precision, dimension(numat) :: porosity,tortuosity
+  double precision, dimension(4,3,numat) :: elastcoef
   double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
@@ -131,9 +138,9 @@
 ! pressure in this element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: pressure_element
 
-  logical, dimension(nspec) :: elastic
+  logical, dimension(nspec) :: elastic,poroelastic
   real(kind=CUSTOM_REAL), dimension(npoin) :: potential_dot_dot_acoustic
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displ_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displ_elastic,displs_poroelastic,displw_poroelastic
 
 ! array with derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
@@ -156,11 +163,19 @@
 ! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
   real(kind=CUSTOM_REAL) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
-  real(kind=CUSTOM_REAL) :: sigma_xx,sigma_zz
+  real(kind=CUSTOM_REAL) :: sigma_xx,sigma_zz,sigmap
+  real(kind=CUSTOM_REAL) :: dwx_dxi,dwx_dgamma,dwz_dxi,dwz_dgamma
+  real(kind=CUSTOM_REAL) :: dwx_dxl,dwz_dzl
 
 ! material properties of the elastic medium
   real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,lambdalplus2mul_relaxed,denst
   real(kind=CUSTOM_REAL) :: mul_unrelaxed,lambdal_unrelaxed,lambdalplus2mul_unrelaxed,cpl,csl
+
+  real(kind=CUSTOM_REAL) :: mul_s,kappal_s,rhol_s
+  real(kind=CUSTOM_REAL) :: kappal_f,rhol_f
+  real(kind=CUSTOM_REAL) :: mul_fr,kappal_fr,phil,tortl
+  real(kind=CUSTOM_REAL) :: D_biot,H_biot,C_biot,M_biot,rhol_bar
+  real(kind=CUSTOM_REAL) :: mul_G,lambdal_G,lambdalplus2mul_G
 
 ! if elastic element
 !
@@ -187,9 +202,9 @@
   if(elastic(ispec)) then
 
 ! get relaxed elastic parameters of current spectral element
-    lambdal_relaxed = elastcoef(1,kmato(ispec))
-    mul_relaxed = elastcoef(2,kmato(ispec))
-    lambdalplus2mul_relaxed = elastcoef(3,kmato(ispec))
+    lambdal_relaxed = elastcoef(1,1,kmato(ispec))
+    mul_relaxed = elastcoef(2,1,kmato(ispec))
+    lambdalplus2mul_relaxed = elastcoef(3,1,kmato(ispec))
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
@@ -280,6 +295,126 @@
 ! store pressure
         pressure_element(i,j) = - (sigma_xx + sigma_zz) / 2.d0
 
+      enddo
+    enddo
+
+  elseif(poroelastic(ispec)) then
+
+! get poroelastic parameters of current spectral element
+    phil = porosity(kmato(ispec))
+    tortl = tortuosity(kmato(ispec))
+!solid properties
+    mul_s = elastcoef(2,1,kmato(ispec))
+    kappal_s = elastcoef(3,1,kmato(ispec)) - FOUR_THIRDS*mul_s
+    rhol_s = density(1,kmato(ispec))
+!fluid properties
+    kappal_f = elastcoef(1,2,kmato(ispec))
+    rhol_f = density(2,kmato(ispec))
+!frame properties
+    mul_fr = elastcoef(2,3,kmato(ispec))
+    kappal_fr = elastcoef(3,3,kmato(ispec)) - FOUR_THIRDS*mul_fr
+    rhol_bar =  (1.d0 - phil)*rhol_s + phil*rhol_f
+!Biot coefficients for the input phi
+      D_biot = kappal_s*(1.d0 + phil*(kappal_s/kappal_f - 1.d0))
+      H_biot = (kappal_s - kappal_fr)*(kappal_s - kappal_fr)/(D_biot - kappal_fr) + kappal_fr + FOUR_THIRDS*mul_fr
+      C_biot = kappal_s*(kappal_s - kappal_fr)/(D_biot - kappal_fr)
+      M_biot = kappal_s*kappal_s/(D_biot - kappal_fr)
+!where T = G:grad u_s + C div w I
+!and T_f = C div u_s I + M div w I
+!we are expressing lambdaplus2mu, lambda, and mu for G, C, and M
+      mul_G = mul_fr
+      lambdal_G = H_biot - TWO*mul_fr
+      lambdalplus2mul_G = lambdal_G + TWO*mul_G
+
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+
+! derivative along x and along z
+        dux_dxi = ZERO
+        duz_dxi = ZERO
+
+        dux_dgamma = ZERO
+        duz_dgamma = ZERO
+
+        dwx_dxi = ZERO
+        dwz_dxi = ZERO
+
+        dwx_dgamma = ZERO
+        dwz_dgamma = ZERO
+
+! first double loop over GLL points to compute and store gradients
+! we can merge the two loops because NGLLX == NGLLZ
+        do k = 1,NGLLX
+          dux_dxi = dux_dxi + displs_poroelastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
+          duz_dxi = duz_dxi + displs_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+          dux_dgamma = dux_dgamma + displs_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
+          duz_dgamma = duz_dgamma + displs_poroelastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
+
+          dwx_dxi = dwx_dxi + displw_poroelastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
+          dwz_dxi = dwz_dxi + displw_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+          dwx_dgamma = dwx_dgamma + displw_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
+          dwz_dgamma = dwz_dgamma + displw_poroelastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
+
+        enddo
+
+        xixl = xix(i,j,ispec)
+        xizl = xiz(i,j,ispec)
+        gammaxl = gammax(i,j,ispec)
+        gammazl = gammaz(i,j,ispec)
+
+! derivatives of displacement
+        dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
+        duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
+
+        dwx_dxl = dwx_dxi*xixl + dwx_dgamma*gammaxl
+        dwz_dzl = dwz_dxi*xizl + dwz_dgamma*gammazl
+
+! compute diagonal components of the stress tensor (include attenuation if needed)
+
+  if(TURN_ATTENUATION_ON) then
+!-------------------- ATTENTION TO BE DEFINED ------------------------------!
+
+! attenuation is implemented following the memory variable formulation of
+! J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
+! vol. 58(1), p. 110-120 (1993). More details can be found in
+! J. M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation in a linear
+! viscoelastic medium, Geophysical Journal International, vol. 95, p. 597-611 (1988).
+
+! compute unrelaxed elastic coefficients from formulas in Carcione 1993 page 111
+    lambdal_unrelaxed = (lambdal_relaxed + mul_relaxed) * Mu_nu1(i,j,ispec) - mul_relaxed * Mu_nu2(i,j,ispec)
+    mul_unrelaxed = mul_relaxed * Mu_nu2(i,j,ispec)
+    lambdalplus2mul_unrelaxed = lambdal_unrelaxed + TWO*mul_unrelaxed
+
+! compute the stress using the unrelaxed Lame parameters (Carcione 1993, page 111)
+    sigma_xx = lambdalplus2mul_unrelaxed*dux_dxl + lambdal_unrelaxed*duz_dzl
+    sigma_zz = lambdalplus2mul_unrelaxed*duz_dzl + lambdal_unrelaxed*dux_dxl
+
+! add the memory variables using the relaxed parameters (Carcione 1993, page 111)
+! beware: there is a bug in Carcione's equation (2c) for sigma_zz, we fixed it in the code below
+    e1_sum = 0._CUSTOM_REAL
+    e11_sum = 0._CUSTOM_REAL
+
+    do i_sls = 1,N_SLS
+      e1_sum = e1_sum + e1(i,j,ispec,i_sls)
+      e11_sum = e11_sum + e11(i,j,ispec,i_sls)
+    enddo
+
+    sigma_xx = sigma_xx + (lambdal_relaxed + mul_relaxed) * e1_sum + TWO * mul_relaxed * e11_sum
+    sigma_zz = sigma_zz + (lambdal_relaxed + mul_relaxed) * e1_sum - TWO * mul_relaxed * e11_sum
+
+  else
+
+! no attenuation
+    sigma_xx = lambdalplus2mul_G*dux_dxl + lambdal_G*duz_dzl + C_biot*(dwx_dxl + dwz_dzl)
+    sigma_zz = lambdalplus2mul_G*duz_dzl + lambdal_G*dux_dxl + C_biot*(dwx_dxl + dwz_dzl)
+
+    sigmap = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl + dwz_dzl)
+
+  endif
+
+! store pressure
+        pressure_element(i,j) = - (sigma_xx + sigma_zz) / 2.d0
+!        pressure_element2(i,j) = - sigmap
       enddo
     enddo
 

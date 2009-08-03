@@ -40,14 +40,18 @@
 !
 !========================================================================
 
-  subroutine compute_forces_acoustic(npoin,nspec,nelemabs,numat, &
+  subroutine compute_forces_acoustic(npoin,nspec,nelemabs,numat,it,NSTEP, &
                anyabs,assign_external_model,ibool,kmato,numabs, &
-               elastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
-               potential_acoustic,density,elastcoef,xix,xiz,gammax,gammaz,jacobian, &
+               elastic,poroelastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
+               potential_acoustic,b_potential_dot_dot_acoustic,b_potential_acoustic, &
+               density,elastcoef,xix,xiz,gammax,gammaz,jacobian, &
                vpext,rhoext,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
-               jbegin_left,jend_left,jbegin_right,jend_right)
+               jbegin_left,jend_left,jbegin_right,jend_right,isolver,save_forward,b_absorb_acoustic_left,&
+               b_absorb_acoustic_right,b_absorb_acoustic_bottom,&
+               b_absorb_acoustic_top,nspec_xmin,nspec_xmax,&
+               nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,kappa_ac_k)
 
 ! compute forces for the acoustic elements
 
@@ -55,23 +59,37 @@
 
   include "constants.h"
 
-  integer :: npoin,nspec,nelemabs,numat
+  integer :: npoin,nspec,nelemabs,numat,it,NSTEP,isolver
+
+  integer :: nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax
+  integer, dimension(nspec_xmin) :: ib_xmin
+  integer, dimension(nspec_xmax) :: ib_xmax
+  integer, dimension(nspec_zmin) :: ib_zmin
+  integer, dimension(nspec_zmax) :: ib_zmax
 
   logical :: anyabs,assign_external_model
+  logical :: save_forward
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
   integer, dimension(nspec) :: kmato
   integer, dimension(nelemabs) :: numabs,ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
                jbegin_left,jend_left,jbegin_right,jend_right
 
-  logical, dimension(nspec) :: elastic
+  logical, dimension(nspec) :: elastic,poroelastic
   logical, dimension(4,nelemabs)  :: codeabs
 
   real(kind=CUSTOM_REAL), dimension(npoin) :: potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
-  double precision, dimension(numat) :: density
-  double precision, dimension(4,numat) :: elastcoef
+  real(kind=CUSTOM_REAL), dimension(npoin) :: b_potential_dot_dot_acoustic,b_potential_acoustic
+  double precision, dimension(2,numat) :: density
+  double precision, dimension(4,3,numat) :: elastcoef
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
   double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,rhoext
+
+  real(kind=CUSTOM_REAL), dimension(npoin) :: kappa_ac_k
+  double precision, dimension(NGLLZ,nspec_xmin,NSTEP) :: b_absorb_acoustic_left
+  double precision, dimension(NGLLZ,nspec_xmax,NSTEP) :: b_absorb_acoustic_right
+  double precision, dimension(NGLLX,nspec_zmax,NSTEP) :: b_absorb_acoustic_top
+  double precision, dimension(NGLLX,nspec_zmin,NSTEP) :: b_absorb_acoustic_bottom
 
 ! derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
@@ -89,9 +107,11 @@
 
 ! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,dux_dxl,dux_dzl
+  real(kind=CUSTOM_REAL) :: b_dux_dxi,b_dux_dgamma,b_dux_dxl,b_dux_dzl
   real(kind=CUSTOM_REAL) :: weight,xxi,zxi,xgamma,zgamma,jacobian1D
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: tempx1,tempx2
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: b_tempx1,b_tempx2
 
 ! Jacobian matrix and determinant
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
@@ -110,9 +130,9 @@
 !---
 !--- acoustic spectral element
 !---
-    if(.not. elastic(ispec)) then
+    if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
 
-      rhol = density(kmato(ispec))
+      rhol = density(1,kmato(ispec))
 
 ! first double loop over GLL points to compute and store gradients
       do j = 1,NGLLZ
@@ -122,11 +142,21 @@
           dux_dxi = ZERO
           dux_dgamma = ZERO
 
+            if(isolver == 2) then
+          b_dux_dxi = ZERO
+          b_dux_dgamma = ZERO
+            endif
+
 ! first double loop over GLL points to compute and store gradients
 ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
             dux_dxi = dux_dxi + potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
             dux_dgamma = dux_dgamma + potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
+
+            if(isolver == 2) then
+            b_dux_dxi = b_dux_dxi + b_potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
+            b_dux_dgamma = b_dux_dgamma + b_potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
+            endif
           enddo
 
           xixl = xix(i,j,ispec)
@@ -138,6 +168,15 @@
           dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
           dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
 
+            if(isolver == 2) then
+          b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
+          b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
+
+! kernels calculation
+          iglob = ibool(i,j,ispec)
+          kappa_ac_k(iglob) = dux_dxl *  b_dux_dxl + dux_dzl *  b_dux_dzl
+            endif
+
           jacobianl = jacobian(i,j,ispec)
 
 ! if external density model
@@ -147,6 +186,11 @@
 ! also add GLL integration weights
           tempx1(i,j) = wzgll(j)*jacobianl*(xixl*dux_dxl + xizl*dux_dzl) / rhol
           tempx2(i,j) = wxgll(i)*jacobianl*(gammaxl*dux_dxl + gammazl*dux_dzl) / rhol
+
+            if(isolver == 2) then
+          b_tempx1(i,j) = wzgll(j)*jacobianl*(xixl*b_dux_dxl + xizl*b_dux_dzl) /rhol
+          b_tempx2(i,j) = wxgll(i)*jacobianl*(gammaxl*b_dux_dxl + gammazl*b_dux_dzl) /rhol
+            endif
 
         enddo
       enddo
@@ -164,6 +208,11 @@
           do k = 1,NGLLX
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
                            (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
+
+            if(isolver == 2) then
+            b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
+                           (b_tempx1(k,j)*hprimewgll_xx(k,i) + b_tempx2(i,k)*hprimewgll_zz(k,j))
+            endif
           enddo
 
         enddo ! second loop over the GLL points
@@ -183,11 +232,12 @@
       ispec = numabs(ispecabs)
 
 ! get elastic parameters of current spectral element
-      lambdal_relaxed = elastcoef(1,kmato(ispec))
-      mul_relaxed = elastcoef(2,kmato(ispec))
+      lambdal_relaxed = elastcoef(1,1,kmato(ispec))
+      mul_relaxed = elastcoef(2,1,kmato(ispec))
       kappal  = lambdal_relaxed + TWO*mul_relaxed/3._CUSTOM_REAL
-      rhol = density(kmato(ispec))
-      cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_relaxed/3._CUSTOM_REAL)/rhol)
+      rhol = density(1,kmato(ispec))
+
+      cpl = sqrt(kappal/rhol)
 
 !--- left absorbing boundary
       if(codeabs(ILEFT,ispecabs)) then
@@ -214,8 +264,16 @@
           weight = jacobian1D * wzgll(j)
 
 ! Sommerfeld condition if acoustic
-          if(.not. elastic(ispec)) &
+          if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl/rhol
+
+             if(save_forward .and. isolver ==1) then
+            b_absorb_acoustic_left(j,ib_xmin(ispecabs),it) = potential_dot_acoustic(iglob)*weight/cpl/rhol
+             elseif(isolver == 2) then
+            b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
+                                               b_absorb_acoustic_left(j,ib_xmin(ispecabs),NSTEP-it+1)
+             endif
+          endif
 
         enddo
 
@@ -246,8 +304,17 @@
           weight = jacobian1D * wzgll(j)
 
 ! Sommerfeld condition if acoustic
-          if(.not. elastic(ispec)) &
+          if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl/rhol
+
+
+             if(save_forward .and. isolver ==1) then
+            b_absorb_acoustic_right(j,ib_xmax(ispecabs),it) = potential_dot_acoustic(iglob)*weight/cpl/rhol
+             elseif(isolver == 2) then
+            b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
+                                              b_absorb_acoustic_right(j,ib_xmax(ispecabs),NSTEP-it+1)
+             endif    
+          endif
 
         enddo
 
@@ -282,8 +349,16 @@
           weight = jacobian1D * wxgll(i)
 
 ! Sommerfeld condition if acoustic
-          if(.not. elastic(ispec)) &
+          if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl/rhol
+
+             if(save_forward .and. isolver ==1) then
+            b_absorb_acoustic_bottom(i,ib_zmin(ispecabs),it) = potential_dot_acoustic(iglob)*weight/cpl/rhol
+             elseif(isolver == 2) then
+            b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
+                                               b_absorb_acoustic_bottom(i,ib_zmin(ispecabs),NSTEP-it+1)
+             endif
+          endif
 
         enddo
 
@@ -318,8 +393,16 @@
           weight = jacobian1D * wxgll(i)
 
 ! Sommerfeld condition if acoustic
-          if(.not. elastic(ispec)) &
+          if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl/rhol
+
+             if(save_forward .and. isolver ==1) then
+            b_absorb_acoustic_top(i,ib_zmax(ispecabs),it) = potential_dot_acoustic(iglob)*weight/cpl/rhol
+             elseif(isolver == 2) then
+            b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
+                                               b_absorb_acoustic_top(i,ib_zmax(ispecabs),NSTEP-it+1)
+             endif
+          endif
 
         enddo
 

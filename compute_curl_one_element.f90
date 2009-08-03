@@ -40,10 +40,10 @@
 !
 !========================================================================
 
-subroutine compute_curl_one_element(curl_element,displ_elastic,elastic, &
+subroutine compute_curl_one_element(curl_element,displ_elastic,displs_poroelastic,elastic,poroelastic, &
      xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,ispec)
 
-  ! compute curl in elastic elements (for rotational study)
+  ! compute curl in (poro)elastic elements (for rotational study)
 
   implicit none
 
@@ -58,8 +58,8 @@ subroutine compute_curl_one_element(curl_element,displ_elastic,elastic, &
   ! curl in this element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: curl_element
 
-  logical, dimension(nspec) :: elastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displ_elastic
+  logical, dimension(nspec) :: elastic,poroelastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displ_elastic,displs_poroelastic
 
   ! array with derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
@@ -94,6 +94,42 @@ subroutine compute_curl_one_element(curl_element,displ_elastic,elastic, &
               duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
               dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
               duz_dgamma = duz_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
+           enddo
+
+           xixl = xix(i,j,ispec)
+           xizl = xiz(i,j,ispec)
+           gammaxl = gammax(i,j,ispec)
+           gammazl = gammaz(i,j,ispec)
+
+           ! derivatives of displacement
+           dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
+           duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
+
+           ! store pressure
+           curl_element(i,j) = - 0.5d0 * (dux_dzl - duz_dxl)
+
+        enddo
+     enddo
+
+  elseif(poroelastic(ispec)) then
+
+     do j = 1,NGLLZ
+        do i = 1,NGLLX
+
+           ! derivative along x and along z
+           dux_dxi = ZERO
+           duz_dxi = ZERO
+
+           dux_dgamma = ZERO
+           duz_dgamma = ZERO
+
+           ! first double loop over GLL points to compute and store gradients
+           ! we can merge the two loops because NGLLX == NGLLZ
+           do k = 1,NGLLX
+              dux_dxi = dux_dxi + displs_poroelastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
+              duz_dxi = duz_dxi + displs_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+              dux_dgamma = dux_dgamma + displs_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
+              duz_dgamma = duz_dgamma + displs_poroelastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
            enddo
 
            xixl = xix(i,j,ispec)
