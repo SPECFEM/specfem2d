@@ -56,8 +56,8 @@ N_SLS                           = 2                      # number of standard li
 f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, else it is f0
 
 # receiver line parameters for seismograms
-seismotype                      = 2              # record 1=displ 2=veloc 3=accel 4=pressure 5=curl 6=potential
-save_forward                    = .false.        # save the last frame, needed for adjoint simulation
+seismotype                      = 1              # record 1=displ 2=veloc 3=accel 4=pressure 5=curl 6=potential
+save_forward                    = .true.        # save the last frame, needed for adjoint simulation
 generate_STATIONS               = .true.         # creates a STATION file in ./DATA
 nreceiverlines                  = 2              # number of receiver lines
 anglerec                        = 0.d0           # angle to rotate components at receivers

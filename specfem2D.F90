@@ -439,6 +439,7 @@
   integer  :: myrank
   integer  :: iproc
   character(len=256)  :: prname
+  character(len=150) :: outputname,outputname2
 
   integer  :: ninterface
   integer  :: max_interface_size
@@ -2695,6 +2696,33 @@ endif
   potential_dot_dot_acoustic = ZERO
 
 !
+!----- Files where viscous damping are saved during forward wavefield calculation
+!
+  if(any_poroelastic .and. (save_forward .or. isolver .eq. 2)) then
+    allocate(b_viscodampx(npoin))
+    allocate(b_viscodampz(npoin))
+          write(outputname,'(a,i6.6,a)') 'viscodampingx',myrank,'.bin'
+          write(outputname2,'(a,i6.6,a)') 'viscodampingz',myrank,'.bin'
+        if(isolver == 2) then
+          reclen = CUSTOM_REAL * npoin
+          open(unit=23,file='OUTPUT_FILES/'//outputname,status='old',&
+                  action='read',form='unformatted',access='direct',&
+                recl=reclen)
+           open(unit=24,file='OUTPUT_FILES/'//outputname2,status='old',&
+                  action='read',form='unformatted',access='direct',&
+                recl=reclen)
+        else
+          reclen = CUSTOM_REAL * npoin
+          open(unit=23,file='OUTPUT_FILES/'//outputname,status='unknown',&
+                  form='unformatted',access='direct',&
+                recl=reclen)
+          open(unit=24,file='OUTPUT_FILES/'//outputname2,status='unknown',&
+                  form='unformatted',access='direct',&
+                recl=reclen)
+        endif
+  endif
+
+!
 !----- Files where absorbing signal are saved during forward wavefield calculation
 !
 
@@ -2704,11 +2732,12 @@ endif
 
 !--- left absorbing boundary
       if( nspec_xmin >0 ) then
+          write(outputname,'(a,i6.6,a)') 'absorb_elastic_left',myrank,'.bin'
         if(isolver == 2) then
-          open(unit=35,file='OUTPUT_FILES/absorb_elastic_left.bin',status='old',&
+          open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',&
                 form='unformatted')
         else
-          open(unit=35,file='OUTPUT_FILES/absorb_elastic_left.bin',status='unknown',&
+          open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',&
                 form='unformatted')
         endif
 
@@ -2716,11 +2745,12 @@ endif
 
 !--- right absorbing boundary
       if( nspec_xmax >0 ) then
+          write(outputname,'(a,i6.6,a)') 'absorb_elastic_right',myrank,'.bin'
         if(isolver == 2) then
-          open(unit=36,file='OUTPUT_FILES/absorb_elastic_right.bin',status='old',&
+          open(unit=36,file='OUTPUT_FILES/'//outputname,status='old',&
                 form='unformatted')
         else
-          open(unit=36,file='OUTPUT_FILES/absorb_elastic_right.bin',status='unknown',&
+          open(unit=36,file='OUTPUT_FILES/'//outputname,status='unknown',&
                 form='unformatted')
         endif
 
@@ -2728,11 +2758,12 @@ endif
 
 !--- bottom absorbing boundary
       if( nspec_zmin >0 ) then
+          write(outputname,'(a,i6.6,a)') 'absorb_elastic_bottom',myrank,'.bin'
         if(isolver == 2) then
-          open(unit=37,file='OUTPUT_FILES/absorb_elastic_bottom.bin',status='old',&
+          open(unit=37,file='OUTPUT_FILES/'//outputname,status='old',&
                 form='unformatted')
         else
-          open(unit=37,file='OUTPUT_FILES/absorb_elastic_bottom.bin',status='unknown',&
+          open(unit=37,file='OUTPUT_FILES/'//outputname,status='unknown',&
                 form='unformatted')
         endif
 
@@ -2740,11 +2771,12 @@ endif
 
 !--- top absorbing boundary
       if( nspec_zmax >0 ) then
+          write(outputname,'(a,i6.6,a)') 'absorb_elastic_top',myrank,'.bin'
         if(isolver == 2) then
-          open(unit=38,file='OUTPUT_FILES/absorb_elastic_top.bin',status='old',&
+          open(unit=38,file='OUTPUT_FILES/'//outputname,status='old',&
                 form='unformatted')
         else
-          open(unit=38,file='OUTPUT_FILES/absorb_elastic_top.bin',status='unknown',&
+          open(unit=38,file='OUTPUT_FILES/'//outputname,status='unknown',&
                 form='unformatted')
         endif
 
@@ -2756,15 +2788,17 @@ endif
 
 !--- left absorbing boundary
       if( nspec_xmin >0 ) then
+          write(outputname,'(a,i6.6,a)') 'absorb_poro_s_left',myrank,'.bin'
+          write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_left',myrank,'.bin'
         if(isolver == 2) then
-          open(unit=45,file='OUTPUT_FILES/absorb_poro_s_left.bin',status='old',&
+          open(unit=45,file='OUTPUT_FILES/'//outputname,status='old',&
                 form='unformatted')
-          open(unit=25,file='OUTPUT_FILES/absorb_poro_w_left.bin',status='old',&
+          open(unit=25,file='OUTPUT_FILES/'//outputname2,status='old',&
                 form='unformatted')
         else
-          open(unit=45,file='OUTPUT_FILES/absorb_poro_s_left.bin',status='unknown',&
+          open(unit=45,file='OUTPUT_FILES/'//outputname,status='unknown',&
                 form='unformatted')
-          open(unit=25,file='OUTPUT_FILES/absorb_poro_w_left.bin',status='unknown',&
+          open(unit=25,file='OUTPUT_FILES/'//outputname2,status='unknown',&
                 form='unformatted')
         endif
 
@@ -2772,15 +2806,17 @@ endif
 
 !--- right absorbing boundary
       if( nspec_xmax >0 ) then
+          write(outputname,'(a,i6.6,a)') 'absorb_poro_s_right',myrank,'.bin'
+          write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_right',myrank,'.bin'
         if(isolver == 2) then
-          open(unit=46,file='OUTPUT_FILES/absorb_poro_s_right.bin',status='old',&
+          open(unit=46,file='OUTPUT_FILES/'//outputname,status='old',&
                 form='unformatted')
-          open(unit=26,file='OUTPUT_FILES/absorb_poro_w_right.bin',status='old',&
+          open(unit=26,file='OUTPUT_FILES/'//outputname2,status='old',&
                 form='unformatted')
         else
-          open(unit=46,file='OUTPUT_FILES/absorb_poro_s_right.bin',status='unknown',&
+          open(unit=46,file='OUTPUT_FILES/'//outputname,status='unknown',&
                 form='unformatted')
-          open(unit=26,file='OUTPUT_FILES/absorb_poro_w_right.bin',status='unknown',&
+          open(unit=26,file='OUTPUT_FILES/'//outputname2,status='unknown',&
                 form='unformatted')
         endif
 
@@ -2788,15 +2824,17 @@ endif
 
 !--- bottom absorbing boundary
       if( nspec_zmin >0 ) then
+          write(outputname,'(a,i6.6,a)') 'absorb_poro_s_bottom',myrank,'.bin'
+          write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_bottom',myrank,'.bin'
         if(isolver == 2) then
-          open(unit=47,file='OUTPUT_FILES/absorb_poro_s_bottom.bin',status='old',&
+          open(unit=47,file='OUTPUT_FILES/'//outputname,status='old',&
                 form='unformatted')
-          open(unit=29,file='OUTPUT_FILES/absorb_poro_w_bottom.bin',status='old',&
+          open(unit=29,file='OUTPUT_FILES/'//outputname2,status='old',&
                 form='unformatted')
         else
-          open(unit=47,file='OUTPUT_FILES/absorb_poro_s_bottom.bin',status='unknown',&
+          open(unit=47,file='OUTPUT_FILES/'//outputname,status='unknown',&
                 form='unformatted')
-          open(unit=29,file='OUTPUT_FILES/absorb_poro_w_bottom.bin',status='unknown',&
+          open(unit=29,file='OUTPUT_FILES/'//outputname2,status='unknown',&
                 form='unformatted')
         endif
 
@@ -2804,15 +2842,17 @@ endif
 
 !--- top absorbing boundary
       if( nspec_zmax >0 ) then
+          write(outputname,'(a,i6.6,a)') 'absorb_poro_s_top',myrank,'.bin'
+          write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_top',myrank,'.bin'
         if(isolver == 2) then
-          open(unit=48,file='OUTPUT_FILES/absorb_poro_s_top.bin',status='old',&
+          open(unit=48,file='OUTPUT_FILES/'//outputname,status='old',&
                 form='unformatted')
-          open(unit=28,file='OUTPUT_FILES/absorb_poro_w_top.bin',status='old',&
+          open(unit=28,file='OUTPUT_FILES/'//outputname2,status='old',&
                 form='unformatted')
         else
-          open(unit=48,file='OUTPUT_FILES/absorb_poro_s_top.bin',status='unknown',&
+          open(unit=48,file='OUTPUT_FILES/'//outputname,status='unknown',&
                 form='unformatted')
-          open(unit=28,file='OUTPUT_FILES/absorb_poro_w_top.bin',status='unknown',&
+          open(unit=28,file='OUTPUT_FILES/'//outputname2,status='unknown',&
                 form='unformatted')
         endif
 
@@ -2824,12 +2864,12 @@ endif
 
 !--- left absorbing boundary
       if( nspec_xmin >0 ) then
-        print*,'Opening absorb_acoustic_left.bin....'
+          write(outputname,'(a,i6.6,a)') 'absorb_acoustic_left',myrank,'.bin'
         if(isolver == 2) then
-          open(unit=65,file='OUTPUT_FILES/absorb_acoustic_left.bin',status='old',&
+          open(unit=65,file='OUTPUT_FILES/'//outputname,status='old',&
                 form='unformatted')
         else
-          open(unit=65,file='OUTPUT_FILES/absorb_acoustic_left.bin',status='unknown',&
+          open(unit=65,file='OUTPUT_FILES/'//outputname,status='unknown',&
                 form='unformatted')
         endif
 
@@ -2837,12 +2877,12 @@ endif
 
 !--- right absorbing boundary
       if( nspec_xmax >0 ) then
-        print*,'Opening absorb_acoustic_right.bin....'
+          write(outputname,'(a,i6.6,a)') 'absorb_acoustic_right',myrank,'.bin'
         if(isolver == 2) then
-          open(unit=66,file='OUTPUT_FILES/absorb_acoustic_right.bin',status='old',&
+          open(unit=66,file='OUTPUT_FILES/'//outputname,status='old',&
                 form='unformatted')
         else
-          open(unit=66,file='OUTPUT_FILES/absorb_acoustic_right.bin',status='unknown',&
+          open(unit=66,file='OUTPUT_FILES/'//outputname,status='unknown',&
                 form='unformatted')
         endif
 
@@ -2850,12 +2890,12 @@ endif
 
 !--- bottom absorbing boundary
       if( nspec_zmin >0 ) then
-        print*,'Opening absorb_acoustic_bottom.bin....'
+          write(outputname,'(a,i6.6,a)') 'absorb_acoustic_bottom',myrank,'.bin'
         if(isolver == 2) then
-          open(unit=67,file='OUTPUT_FILES/absorb_acoustic_bottom.bin',status='old',&
+          open(unit=67,file='OUTPUT_FILES/'//outputname,status='old',&
                 form='unformatted')
         else
-          open(unit=67,file='OUTPUT_FILES/absorb_acoustic_bottom.bin',status='unknown',&
+          open(unit=67,file='OUTPUT_FILES/'//outputname,status='unknown',&
                 form='unformatted')
         endif
 
@@ -2863,12 +2903,12 @@ endif
 
 !--- top absorbing boundary
       if( nspec_zmax >0 ) then
-        print*,'Opening absorb_acoustic_top.bin....'
+          write(outputname,'(a,i6.6,a)') 'absorb_acoustic_top',myrank,'.bin'
         if(isolver == 2) then
-          open(unit=68,file='OUTPUT_FILES/absorb_acoustic_top.bin',status='old',&
+          open(unit=68,file='OUTPUT_FILES/'//outputname,status='old',&
                 form='unformatted')
         else
-          open(unit=68,file='OUTPUT_FILES/absorb_acoustic_top.bin',status='unknown',&
+          open(unit=68,file='OUTPUT_FILES/'//outputname,status='unknown',&
                 form='unformatted')
         endif
 
@@ -3048,13 +3088,21 @@ endif
   if(isolver == 2) then
 
    if(any_elastic) then
-    open(unit=55,file='OUTPUT_FILES/lastframe_elastic.bin',status='old',action='read',form='unformatted')
+    write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
+    open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
        do j=1,npoin
       read(55) (b_displ_elastic(i,j), i=1,NDIM), &
                   (b_veloc_elastic(i,j), i=1,NDIM), &
                   (b_accel_elastic(i,j), i=1,NDIM)
        enddo
     close(55)
+
+    write(outputname,'(a,i6.6,a)') 'snapshot_rho_kappa_mu_',myrank
+        open(unit = 97, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        if (ios /= 0) stop 'Error writing snapshot to disk'
+    write(outputname,'(a,i6.6,a)') 'snapshot_rhop_alpha_beta_',myrank
+        open(unit = 98, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        if (ios /= 0) stop 'Error writing snapshot to disk'
 
   rho_kl(:) = ZERO
   mu_kl(:) = ZERO
@@ -3066,8 +3114,10 @@ endif
    endif
 
    if(any_poroelastic) then
-    open(unit=55,file='OUTPUT_FILES/lastframe_poroelastic_s.bin',status='old',action='read',form='unformatted')
-    open(unit=56,file='OUTPUT_FILES/lastframe_poroelastic_w.bin',status='old',action='read',form='unformatted')
+    write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_s',myrank,'.bin'
+    open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
+    write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_s',myrank,'.bin'
+    open(unit=56,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
        do j=1,npoin
       read(55) (b_displs_poroelastic(i,j), i=1,NDIM), &
                   (b_velocs_poroelastic(i,j), i=1,NDIM), &
@@ -3078,6 +3128,37 @@ endif
        enddo
     close(55)
     close(56)
+
+! Primary kernels
+    write(outputname,'(a,i6.6,a)') 'snapshot_mu_B_C_',myrank
+        open(unit = 14, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        if (ios /= 0) stop 'Error writing snapshot to disk'
+    write(outputname,'(a,i6.6,a)') 'snapshot_M_rho_rhof_',myrank
+        open(unit = 15, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        if (ios /= 0) stop 'Error writing snapshot to disk'
+    write(outputname,'(a,i6.6,a)') 'snapshot_m_eta_',myrank
+        open(unit = 16, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        if (ios /= 0) stop 'Error writing snapshot to disk'
+! Wavespeed kernels
+    write(outputname,'(a,i6.6,a)') 'snapshot_cpI_cpII_cs_',myrank
+        open(unit = 17, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        if (ios /= 0) stop 'Error writing snapshot to disk'
+    write(outputname,'(a,i6.6,a)') 'snapshot_rhobb_rhofbb_ratio_',myrank
+        open(unit = 18, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        if (ios /= 0) stop 'Error writing snapshot to disk'
+    write(outputname,'(a,i6.6,a)') 'snapshot_phib_eta_',myrank
+        open(unit = 19, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        if (ios /= 0) stop 'Error writing snapshot to disk'
+! Density normalized kernels
+   write(outputname,'(a,i6.6,a)') 'snapshot_mub_Bb_Cb_',myrank
+        open(unit = 20, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        if (ios /= 0) stop 'Error writing snapshot to disk'
+    write(outputname,'(a,i6.6,a)') 'snapshot_Mb_rhob_rhofb_',myrank
+        open(unit = 21, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        if (ios /= 0) stop 'Error writing snapshot to disk'
+    write(outputname,'(a,i6.6,a)') 'snapshot_mb_etab_',myrank
+        open(unit = 22, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        if (ios /= 0) stop 'Error writing snapshot to disk'
 
   rhot_kl(:) = ZERO
   rhof_kl(:) = ZERO
@@ -3106,13 +3187,21 @@ endif
    endif
 
    if(any_acoustic) then
-    open(unit=55,file='OUTPUT_FILES/lastframe_acoustic.bin',status='old',action='read',form='unformatted')
+    write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
+    open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
        do j=1,npoin
       read(55) b_potential_acoustic(j),&
                b_potential_dot_acoustic(j),&
                b_potential_dot_dot_acoustic(j)
        enddo
     close(55)
+
+    write(outputname,'(a,i6.6,a)') 'snapshot_rho_kappa_',myrank
+        open(unit = 95, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        if (ios /= 0) stop 'Error writing snapshot to disk'
+    write(outputname,'(a,i6.6,a)') 'snapshot_rhop_c_',myrank
+        open(unit = 96, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        if (ios /= 0) stop 'Error writing snapshot to disk'
 
   rho_ac_kl(:) = ZERO
   kappa_ac_kl(:) = ZERO
@@ -5390,10 +5479,10 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
     if(isolver == 2) then
 ! if inviscid fluid, comment the reading and uncomment the zeroing
-     read(23,rec=NSTEP-it+1) b_viscodampx
-     read(24,rec=NSTEP-it+1) b_viscodampz
-!     b_viscodampx(:) = ZERO
-!     b_viscodampz(:) = ZERO
+!     read(23,rec=NSTEP-it+1) b_viscodampx
+!     read(24,rec=NSTEP-it+1) b_viscodampz
+     b_viscodampx(:) = ZERO
+     b_viscodampz(:) = ZERO
     endif
 
     call compute_forces_solid(npoin,nspec,myrank,nelemabs,numat,iglob_source, &
@@ -5443,8 +5532,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
     if(save_forward .and. isolver == 1) then
 ! if inviscid fluid, comment
-     write(23,rec=it) b_viscodampx
-     write(24,rec=it) b_viscodampz
+!     write(23,rec=it) b_viscodampx
+!     write(24,rec=it) b_viscodampz
     endif
 
     if(anyabs .and. save_forward .and. isolver == 1) then
@@ -6349,36 +6438,20 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
   endif
 
     if(any_acoustic) then
-        write(filename,'(a,i7.7)') 'OUTPUT_FILES/snapshot_rho_kappa_',it
-        write(filename2,'(a,i7.7)') 'OUTPUT_FILES/snapshot_rhop_c_',it
-
-        open(unit = 97, file = trim(filename),status = 'unknown',iostat=ios)
-        if (ios /= 0) stop 'Error writing snapshot to disk'
-        open(unit = 98, file = trim(filename2),status = 'unknown',iostat=ios)
-        if (ios /= 0) stop 'Error writing snapshot to disk'
-
      do iglob =1,npoin
-        xx = coord(1,iglob)/maxval(coord(1,:))
-        zz = coord(2,iglob)/maxval(coord(1,:))
-         write(97,'(5e12.3)')xx,zz,rho_ac_kl(iglob),kappa_ac_kl(iglob)
-         write(98,'(5e12.3)')xx,zz,rhop_ac_kl(iglob),alpha_ac_kl(iglob)
+        xx = coord(1,iglob)
+        zz = coord(2,iglob)
+         write(95,'(5e12.3)')xx,zz,rho_ac_kl(iglob),kappa_ac_kl(iglob)
+         write(96,'(5e12.3)')xx,zz,rhop_ac_kl(iglob),alpha_ac_kl(iglob)
      enddo
-    close(97)
-    close(98)
+    close(95)
+    close(96)
     endif
 
     if(any_elastic) then
-        write(filename,'(a,i7.7)') 'OUTPUT_FILES/snapshot_rho_kappa_mu_',it
-        write(filename2,'(a,i7.7)') 'OUTPUT_FILES/snapshot_rhop_alpha_beta_',it
-
-        open(unit = 97, file = trim(filename),status = 'unknown',iostat=ios)
-        if (ios /= 0) stop 'Error writing snapshot to disk'
-        open(unit = 98, file = trim(filename2),status = 'unknown',iostat=ios)
-        if (ios /= 0) stop 'Error writing snapshot to disk'
-
      do iglob =1,npoin
-        xx = coord(1,iglob)/maxval(coord(1,:))
-        zz = coord(2,iglob)/maxval(coord(1,:))
+        xx = coord(1,iglob)
+        zz = coord(2,iglob)
          write(97,'(5e12.3)')xx,zz,rho_kl(iglob),kappa_kl(iglob),mu_kl(iglob)
          write(98,'(5e12.3)')xx,zz,rhop_kl(iglob),alpha_kl(iglob),beta_kl(iglob)
      enddo
@@ -6387,56 +6460,28 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     endif
 
     if(any_poroelastic) then
-! Primary kernels
-        write(filename,'(a,i7.7)') 'OUTPUT_FILES/snapshot_mu_B_C_',it
-        write(filename2,'(a,i7.7)') 'OUTPUT_FILES/snapshot_M_rho_rhof_',it
-        write(filename3,'(a,i7.7)') 'OUTPUT_FILES/snapshot_m_eta_',it
-
-        open(unit = 97, file = trim(filename),status = 'unknown',iostat=ios)
-        if (ios /= 0) stop 'Error writing snapshot to disk'
-
-        open(unit = 98, file = trim(filename2),status = 'unknown',iostat=ios)
-        if (ios /= 0) stop 'Error writing snapshot to disk'
-
-        open(unit = 99, file = trim(filename3),status = 'unknown',iostat=ios)
-        if (ios /= 0) stop 'Error writing snapshot to disk'
-! Wavespeed kernels
-!        write(filename,'(a,i7.7)') 'OUTPUT_FILES/snapshot_cpI_cpII_cs_',it
-!        write(filename2,'(a,i7.7)') 'OUTPUT_FILES/snapshot_rhobb_rhofbb_ratio_',it
-!        write(filename3,'(a,i7.7)') 'OUTPUT_FILES/snapshot_phib_eta_',it
-! Density normalized kernels
-        write(filename,'(a,i7.7)') 'OUTPUT_FILES/snapshot_mub_Bb_Cb_',it
-        write(filename2,'(a,i7.7)') 'OUTPUT_FILES/snapshot_Mb_rhob_rhofb_',it
-        write(filename3,'(a,i7.7)') 'OUTPUT_FILES/snapshot_mb_etab_',it
-
-        open(unit = 17, file = trim(filename),status = 'unknown',iostat=ios)
-        if (ios /= 0) stop 'Error writing snapshot to disk'
-
-        open(unit = 18, file = trim(filename2),status = 'unknown',iostat=ios)
-        if (ios /= 0) stop 'Error writing snapshot to disk'
-
-        open(unit = 19, file = trim(filename3),status = 'unknown',iostat=ios)
-        if (ios /= 0) stop 'Error writing snapshot to disk'
-
      do iglob =1,npoin
-        xx = coord(1,iglob)/maxval(coord(1,:))
-        zz = coord(2,iglob)/maxval(coord(1,:))
-         write(97,'(5e12.3)')xx,zz,mufr_kl(iglob),B_kl(iglob),C_kl(iglob)
-         write(98,'(5e12.3)')xx,zz,M_kl(iglob),rhot_kl(iglob),rhof_kl(iglob)
-         write(99,'(5e12.3)')xx,zz,sm_kl(iglob),eta_kl(iglob)
+        xx = coord(1,iglob)
+        zz = coord(2,iglob)
+         write(14,'(5e12.3)')xx,zz,mufr_kl(iglob),B_kl(iglob),C_kl(iglob)
+         write(15,'(5e12.3)')xx,zz,M_kl(iglob),rhot_kl(iglob),rhof_kl(iglob)
+         write(16,'(5e12.3)')xx,zz,sm_kl(iglob),eta_kl(iglob)
          write(17,'(5e12.3)')xx,zz,mufrb_kl(iglob),Bb_kl(iglob),Cb_kl(iglob)
          write(18,'(5e12.3)')xx,zz,Mb_kl(iglob),rhob_kl(iglob),rhofb_kl(iglob)
          write(19,'(5e12.3)')xx,zz,phi_kl(iglob),eta_kl(iglob)
-!         write(17,'(5e12.3)')xx,zz,cpI_kl(iglob),cpII_kl(iglob),cs_kl(iglob)
-!         write(18,'(5e12.3)')xx,zz,rhobb_kl(iglob),rhofbb_kl(iglob),ratio_kl(iglob)
-!         write(19,'(5e12.3)')xx,zz,phib_kl(iglob),eta_kl(iglob)
+         write(20,'(5e12.3)')xx,zz,cpI_kl(iglob),cpII_kl(iglob),cs_kl(iglob)
+         write(21,'(5e12.3)')xx,zz,rhobb_kl(iglob),rhofbb_kl(iglob),ratio_kl(iglob)
+         write(22,'(5e12.3)')xx,zz,phib_kl(iglob),eta_kl(iglob)
      enddo
-    close(97)
-    close(98)
-    close(99)
+    close(14)
+    close(15)
+    close(16)
     close(17)
     close(18)
     close(19)
+    close(20)
+    close(21)
+    close(22)
     endif
 
     endif
@@ -6452,7 +6497,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
     if (myrank == 0) write(IOUT,*) 'drawing displacement vector as small arrows...'
 
-    call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic,&
+    call compute_vector_whole_medium(potential_acoustic,b_displ_elastic,displs_poroelastic,&
           elastic,poroelastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,numat,kmato,density,rhoext,assign_external_model)
 
@@ -6734,7 +6779,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     write(IOUT,*) 'Saving elastic last frame...'
     write(IOUT,*)
   endif
-    open(unit=55,file='OUTPUT_FILES/lastframe_elastic.bin',status='unknown',form='unformatted')
+    write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
+    open(unit=55,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
        do j=1,npoin
       write(55) (displ_elastic(i,j), i=1,NDIM), &
                   (veloc_elastic(i,j), i=1,NDIM), &
@@ -6749,8 +6795,10 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     write(IOUT,*) 'Saving poroelastic last frame...'
     write(IOUT,*)
   endif
-    open(unit=55,file='OUTPUT_FILES/lastframe_poroelastic_s.bin',status='unknown',form='unformatted')
-    open(unit=56,file='OUTPUT_FILES/lastframe_poroelastic_w.bin',status='unknown',form='unformatted')
+    write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_s',myrank,'.bin'
+    open(unit=55,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
+    write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
+    open(unit=56,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
        do j=1,npoin
       write(55) (displs_poroelastic(i,j), i=1,NDIM), &
                   (velocs_poroelastic(i,j), i=1,NDIM), &
@@ -6769,7 +6817,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     write(IOUT,*) 'Saving acoustic last frame...'
     write(IOUT,*)
   endif
-    open(unit=55,file='OUTPUT_FILES/lastframe_acoustic.bin',status='unknown',form='unformatted')
+    write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
+    open(unit=55,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
        do j=1,npoin
       write(55) potential_acoustic(j),&
                potential_dot_acoustic(j),&

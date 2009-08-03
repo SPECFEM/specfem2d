@@ -62,11 +62,11 @@ isolver/save_forward combination and a warning message appears in the ouput
 file)
 
 Important output files (for example, for the elastic case)
-absorb_elastic_bottom.bin
-absorb_elastic_left.bin
-absorb_elastic_right.bin
-absorb_elastic_top.bin
-lastframe_elastic.bin
+absorb_elastic_bottom*****.bin
+absorb_elastic_left*****.bin
+absorb_elastic_right*****.bin
+absorb_elastic_top*****.bin
+lastframe_elastic*****.bin
 S****.AA.BHX.semd
 S****.AA.BHZ.semd
 
@@ -89,8 +89,6 @@ Output_files (for example for the elastic case)
 snapshot_rho_kappa_mu*****
 snapshot_rhop_alpha_beta*****
 which are the primary moduli kernels and the phase velocities kernels respectively.
-Edit and use plot_snapshot.csh located in UTILS/adjoint to generate kernels
-plot.
 
 Note: At the moment, adjoint simulations do not support anisotropy, attenuation, and viscous damping.
 
