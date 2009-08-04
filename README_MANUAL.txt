@@ -42,6 +42,17 @@ To use the code:
 
 - if you find bugs (or if you have comments or suggestions) please send an email to cig-seismo AT geodynamics.org and the developers will try to fix them and send you an updated version
 
+- you can find a Fortran code to compute the analytical solution for simple media that we use as a reference in benchmarks in many of our articles at http://www.spice-rtn.org/library/software/EX2DDIR . That code is described in:
+
+@INCOLLECTION{BeIfNiSk94,
+  author = {P. Berg and F. If and P. Nielsen and O. Skovegaard},
+  title = {Analytic reference solutions},
+  booktitle = {Modeling the Earth for oil exploration, Final report of the CEC's GEOSCIENCE~I Program 1990-1993},
+  publisher = {Pergamon Press, Oxford, United Kingdom},
+  year = {1994},
+  editor = {K. Helbig},
+  pages = {421-427}}
+
 --------------------------
 
 Regarding the structure of some of the database files:
