@@ -152,6 +152,8 @@
       lambda_s = lambdaplus2mu_s - 2.d0*mu_s
       lambdaplus2mu_fr = kappa_fr + FOUR_THIRDS*mu_fr
       lambda_fr = lambdaplus2mu_fr - 2.d0*mu_fr
+      phi = val2
+      tortuosity = val3
 
 ! Biot coefficients for the input phi
       D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
