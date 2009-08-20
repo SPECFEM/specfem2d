@@ -40,7 +40,7 @@ absorbleft                      = .true.
 
 # time step parameters
 nt                              = 30000           # total number of time steps
-deltat                          = 3d-4          # duration of a time step
+deltat                          = 4d-4          # duration of a time step
 isolver                         = 1              # type of simulation 1=forward 2=adjoint + kernels
 
 # source parameters
@@ -113,7 +113,8 @@ nbmodels                        = 22              # nb of different models
 19 1 1946.8d0 2100.d0   1212.27d0 0 0 10.d0 10.d0 0 0 0 0 0 0
 20 1 1857.9d0 1900.d0   1096.80d0 0 0 10.d0 10.d0 0 0 0 0 0 0
 21 1 2087.6d0 2500.d0   1443.35d0 0 0 10.d0 10.d0 0 0 0 0 0 0
-22 3 2200.d0 786.3d0  0.4 2.0 1d-11 0.0 1d-11 5.341d9 2d9 3d9 0.0d-4 3.204d9 10.d0
+22 3 1986.3 1040.3 0.2 2.0 1d-11 0.0 1d-11 5.341d9 5.341d8 5.341d8 0.0d-4 3.204d9 10.d0
+#22 3 2200.d0 786.3d0  0.4 2.0 1d-11 0.0 1d-11 5.341d9 2d9 3d9 0.0d-4 3.204d9 10.d0
 #22 1 1634.52d0 2272.89d0   1472.71d0 0 0 10.d0 10.d0 0 0 0 0 0 0
 # define the different regions of the model in the (nx,nz) spectral element mesh
 nbregions                       = 1              # nb of regions and model number for each
