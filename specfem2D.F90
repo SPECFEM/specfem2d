@@ -4820,7 +4820,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
        else
           potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + &
-                                         weight*displ_n*valence_acoustic(iglob)/2._CUSTOM_REAL
+                                         weight*displ_n*valence_acoustic(iglob)
        endif
 
           if(isolver == 2) then
@@ -4829,7 +4829,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
                       weight*(b_displ_x*nx + b_displ_z*nz)
        else
           b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) + &
-                      weight*(b_displ_x*nx + b_displ_z*nz)*valence_acoustic(iglob)/2._CUSTOM_REAL
+                      weight*(b_displ_x*nx + b_displ_z*nz)*valence_acoustic(iglob)
        endif
           endif !if(isolver == 2) then
 
@@ -4927,7 +4927,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
        else
           potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + &
-                                         weight*displ_n*valence_acoustic(iglob)/2._CUSTOM_REAL
+                                         weight*displ_n*valence_acoustic(iglob)
        endif
 
           if(isolver == 2) then
@@ -4937,7 +4937,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
        else
           b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) + &
                     weight*((b_displ_x + b_displw_x)*nx + (b_displ_z + b_displw_z)*nz)* &
-                    valence_acoustic(iglob)/2._CUSTOM_REAL
+                    valence_acoustic(iglob)
        endif
           endif !if(isolver == 2) then
 
@@ -5278,9 +5278,9 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           accel_elastic(2,iglob) = accel_elastic(2,iglob) + weight*nz*pressure
         else
           accel_elastic(1,iglob) = accel_elastic(1,iglob) + weight*nx*pressure*&
-              valence_elastic(iglob)/2._CUSTOM_REAL
+              valence_elastic(iglob)
           accel_elastic(2,iglob) = accel_elastic(2,iglob) + weight*nz*pressure*&
-              valence_elastic(iglob)/2._CUSTOM_REAL
+              valence_elastic(iglob)
         endif
 
           if(isolver == 2) then
@@ -5289,9 +5289,9 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) + weight*nz*b_pressure
         else
           b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) + weight*nx*b_pressure*&
-              valence_elastic(iglob)/2._CUSTOM_REAL
+              valence_elastic(iglob)
           b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) + weight*nz*b_pressure*&
-              valence_elastic(iglob)/2._CUSTOM_REAL
+              valence_elastic(iglob)
         endif
           endif !if(isolver == 2) then
 
@@ -5570,10 +5570,10 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
                 (sigma_xz*nx + sigma_zz*nz +phil*sigmap*nz)/3.d0
         else
           accel_elastic(1,iglob) = accel_elastic(1,iglob) - weight* &
-                (sigma_xx*nx + sigma_xz*nz +phil*sigmap*nx)/3.d0/2.d0*valence_elastic(iglob)
+                (sigma_xx*nx + sigma_xz*nz +phil*sigmap*nx)/3.d0*valence_elastic(iglob)
 
           accel_elastic(2,iglob) = accel_elastic(2,iglob) - weight* &
-                (sigma_xz*nx + sigma_zz*nz +phil*sigmap*nz)/3.d0/2.d0*valence_elastic(iglob)
+                (sigma_xz*nx + sigma_zz*nz +phil*sigmap*nz)/3.d0*valence_elastic(iglob)
         endif
 
           if(isolver == 2) then
@@ -5585,10 +5585,10 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
                 (b_sigma_xz*nx + b_sigma_zz*nz +phil*b_sigmap*nz)/3.d0
         else
           b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - weight* &
-                (b_sigma_xx*nx + b_sigma_xz*nz +phil*b_sigmap*nx)/3.d0/2.d0*valence_elastic(iglob)
+                (b_sigma_xx*nx + b_sigma_xz*nz +phil*b_sigmap*nx)/3.d0*valence_elastic(iglob)
 
           b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - weight* &
-                (b_sigma_xz*nx + b_sigma_zz*nz +phil*b_sigmap*nz)/3.d0/2.d0*valence_elastic(iglob)
+                (b_sigma_xz*nx + b_sigma_zz*nz +phil*b_sigmap*nz)/3.d0*valence_elastic(iglob)
         endif
           endif !if(isolver == 2) then
 
@@ -5883,15 +5883,15 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
         else
 ! contribution to the solid phase
           accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) + weight*nx*pressure*(1._CUSTOM_REAL-phil/tortl)*&
-                                       valence_poroelastic(iglob)/2._CUSTOM_REAL
+                                       valence_poroelastic(iglob)
           accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + weight*nz*pressure*(1._CUSTOM_REAL-phil/tortl)*&
-                                       valence_poroelastic(iglob)/2._CUSTOM_REAL
+                                       valence_poroelastic(iglob)
 
 ! contribution to the fluid phase
           accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) + weight*nx*pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)*&
-                                       valence_poroelastic(iglob)/2._CUSTOM_REAL
+                                       valence_poroelastic(iglob)
           accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) + weight*nz*pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)*&
-                                       valence_poroelastic(iglob)/2._CUSTOM_REAL
+                                       valence_poroelastic(iglob)
         endif
  
           if(isolver == 2) then
@@ -5906,15 +5906,15 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
         else
 ! contribution to the solid phase
           b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) + weight*nx*b_pressure*(1._CUSTOM_REAL-phil/tortl)*&
-                                       valence_poroelastic(iglob)/2._CUSTOM_REAL
+                                       valence_poroelastic(iglob)
           b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) + weight*nz*b_pressure*(1._CUSTOM_REAL-phil/tortl)*&
-                                       valence_poroelastic(iglob)/2._CUSTOM_REAL
+                                       valence_poroelastic(iglob)
 
 ! contribution to the fluid phase
           b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) + weight*nx*b_pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)*&
-                                       valence_poroelastic(iglob)/2._CUSTOM_REAL
+                                       valence_poroelastic(iglob)
           b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) + weight*nz*b_pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)*&
-                                       valence_poroelastic(iglob)/2._CUSTOM_REAL
+                                       valence_poroelastic(iglob)
         endif
           endif !if(isolver == 2) then
 
@@ -6202,11 +6202,11 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! contribution to the solid phase
           accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) + &
                 weight*((sigma_xx+phil*sigmap)*nx + sigma_xz*nz)/3.d0*(1.d0 -1.d0/tortl)&
-                /2.d0*valence_poroelastic(iglob)
+                *valence_poroelastic(iglob)
 
           accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + &
                 weight*(sigma_xz*nx + (sigma_zz+phil*sigmap)*nz)/3.d0*(1.d0 -1.d0/tortl)&
-                /2.d0*valence_poroelastic(iglob)
+                *valence_poroelastic(iglob)
 
 ! contribution to the fluid phase
 ! w = 0
@@ -6227,11 +6227,11 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! contribution to the solid phase
           b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) + &
                 weight*((b_sigma_xx+phil*b_sigmap)*nx + b_sigma_xz*nz)/3.d0*(1.d0 -1.d0/tortl)&
-                /2.d0*valence_poroelastic(iglob)
+                *valence_poroelastic(iglob)
 
           b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) + &
                 weight*(b_sigma_xz*nx + (b_sigma_zz+phil*b_sigmap)*nz)/3.d0*(1.d0 -1.d0/tortl)&
-                /2.d0*valence_poroelastic(iglob)
+                *valence_poroelastic(iglob)
 
 ! contribution to the fluid phase
 ! w = 0
