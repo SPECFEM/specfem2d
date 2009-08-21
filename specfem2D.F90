@@ -5078,19 +5078,15 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
      if(iglob /= iglob2) &
             call exit_MPI( 'error in solid/porous iglob detection')
 
-           displ(1,iglob)=(valence_poroelastic(iglob)*displs_poroelastic(1,iglob)&
-                              +valence_elastic(iglob)*displ_elastic(1,iglob))/ &
-                          (valence_poroelastic(iglob)+valence_elastic(iglob))
-           displ(2,iglob)=(valence_poroelastic(iglob)*displs_poroelastic(2,iglob) &
-                              +valence_elastic(iglob)*displ_elastic(2,iglob))/ &
-                          (valence_poroelastic(iglob)+valence_elastic(iglob))
+           displ(1,iglob)=(2.d0*displs_poroelastic(1,iglob) + &
+                          displ_elastic(1,iglob2))/3.d0
+           displ(2,iglob)=(displs_poroelastic(2,iglob)  + &
+                          displ_elastic(2,iglob2))/3.d0
 
-           veloc(1,iglob)=(valence_poroelastic(iglob)*velocs_poroelastic(1,iglob) &
-                              +valence_elastic(iglob)*veloc_elastic(1,iglob))/ &
-                          (valence_poroelastic(iglob)+valence_elastic(iglob))
-           veloc(2,iglob)=(valence_poroelastic(iglob)*velocs_poroelastic(2,iglob) &
-                              +valence_elastic(iglob)*veloc_elastic(2,iglob))/ &
-                          (valence_poroelastic(iglob)+valence_elastic(iglob))
+           veloc(1,iglob)=(2.d0*velocs_poroelastic(1,iglob)  +&
+                          veloc_elastic(1,iglob2))/3.d0
+           veloc(2,iglob)=(2.d0*velocs_poroelastic(2,iglob)  +&
+                          veloc_elastic(2,iglob2))/3.d0
 
         enddo
       enddo
