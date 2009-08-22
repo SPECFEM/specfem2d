@@ -5080,7 +5080,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
            displ(1,iglob)=(2.d0*displs_poroelastic(1,iglob) + &
                           displ_elastic(1,iglob2))/3.d0
-           displ(2,iglob)=(displs_poroelastic(2,iglob)  + &
+           displ(2,iglob)=(2.d0*displs_poroelastic(2,iglob)  + &
                           displ_elastic(2,iglob2))/3.d0
 
            veloc(1,iglob)=(2.d0*velocs_poroelastic(1,iglob)  +&
