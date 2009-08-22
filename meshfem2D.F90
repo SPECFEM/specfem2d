@@ -1,16 +1,18 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.2
+!                   S P E C F E M 2 D  Version 6.0
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
+! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France,
+! and Princeton University, USA.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
+!               Christina Morency, cmorency aT princeton DOT edu
 !
 ! This software is a computer program whose purpose is to solve
-! the two-dimensional viscoelastic anisotropic wave equation
+! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
 ! This software is governed by the CeCILL license under French law and
@@ -112,10 +114,10 @@ program meshfem2D
          xinterface_top,zinterface_top,coefs_interface_top
 
 ! for the source and receivers
-  integer, dimension(:), allocatable ::  source_type,time_function_type 
+  integer, dimension(:), allocatable ::  source_type,time_function_type
   integer nrec_total,irec_global_number
-  double precision, dimension(:),allocatable :: xs,zs,f0,t0,angleforce,Mxx,Mzz,Mxz,factor 
-  integer NSOURCE, NSOURCES, i_source, icounter, ios  
+  double precision, dimension(:),allocatable :: xs,zs,f0,t0,angleforce,Mxx,Mzz,Mxz,factor
+  integer NSOURCE, NSOURCES, i_source, icounter, ios
   logical, dimension(:),allocatable ::  source_surf
   double precision xrec,zrec
 ! file number for source file
@@ -201,13 +203,13 @@ program meshfem2D
   integer, dimension(:), allocatable  :: my_interfaces
   integer, dimension(:), allocatable  :: my_nb_interfaces
 
-! for acoustic/elastic coupled elements 
+! for acoustic/elastic coupled elements
   integer  :: nedges_coupled, nedges_coupled_loc
   integer, dimension(:,:), pointer  :: edges_coupled
-! for acoustic/poroelastic coupled elements 
+! for acoustic/poroelastic coupled elements
   integer  :: nedges_acporo_coupled, nedges_acporo_coupled_loc
   integer, dimension(:,:), pointer  :: edges_acporo_coupled
-! for poroelastic/elastic coupled elements 
+! for poroelastic/elastic coupled elements
   integer  :: nedges_elporo_coupled, nedges_elporo_coupled_loc
   integer, dimension(:,:), pointer  :: edges_elporo_coupled
 
@@ -459,7 +461,7 @@ program meshfem2D
   call read_value_integer(IIN,IGNORE_JUNK,isolver)
 
 ! read source parameters
-  call read_value_integer(IIN,IGNORE_JUNK,NSOURCE) 
+  call read_value_integer(IIN,IGNORE_JUNK,NSOURCE)
   allocate(source_surf(NSOURCE))
   allocate(xs(NSOURCE))
   allocate(zs(NSOURCE))
@@ -1365,7 +1367,7 @@ program meshfem2D
      write(15,*) nelemabs_loc,nelem_acoustic_surface_loc,nedges_coupled_loc,nedges_acporo_coupled_loc,&
                  nedges_elporo_coupled_loc,nnodes_tangential_curve
 
-     write(15,*) 'Material sets (num 1 rho vp vs 0 0 Qp Qs 0 0 0 0 0 0) or ' 
+     write(15,*) 'Material sets (num 1 rho vp vs 0 0 Qp Qs 0 0 0 0 0 0) or '
      write(15,*) '(num 2 rho c11 c13 c33 c44 Qp Qs 0 0 0 0 0 0) or '
      write(15,*) '(num 3 rhos rhof phi c k_xx k_xz k_zz Ks Kf Kfr etaf mufr Qs)'
      do i=1,nb_materials

@@ -1,16 +1,18 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.2
+!                   S P E C F E M 2 D  Version 6.0
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
+! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France,
+! and Princeton University, USA.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
+!               Christina Morency, cmorency aT princeton DOT edu
 !
 ! This software is a computer program whose purpose is to solve
-! the two-dimensional viscoelastic anisotropic wave equation
+! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
 ! This software is governed by the CeCILL license under French law and
@@ -313,7 +315,7 @@
              elseif(isolver == 2) then
             b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
                                               b_absorb_acoustic_right(j,ib_xmax(ispecabs),NSTEP-it+1)
-             endif    
+             endif
           endif
 
         enddo

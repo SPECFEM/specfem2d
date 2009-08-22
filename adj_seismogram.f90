@@ -30,7 +30,7 @@
 !
 
       comp = (/"BHX","BHZ"/)
-     
+
       do irec =1,nrec
 
         do icomp = 1, NDIM
@@ -41,7 +41,7 @@
          do itime = 1,NSTEP
         read(10,*) time , seism(itime,icomp)
          enddo
- 
+
         enddo
 
       close(10)
@@ -53,7 +53,7 @@
          print*,'tstart =',istart*deltat, 'tend =', iend*deltat
          if(istart >= iend) stop 'check istart,iend'
          nlen = iend - istart +1
-         
+
        do icomp = 1, NDIM
 
       filename = 'OUTPUT_FILES/'//trim(station_name(irec))//'.AA.'// comp(icomp) // '.adj'
@@ -65,8 +65,8 @@
         seism_accel(:) = 0.d0
 
         do itime =istart,iend
-!        time_window(itime) = 1.d0 - cos(pi*(itime-1)/NSTEP+1)**10   ! cosine window         
-        time_window(itime) = 1.d0 - (2* (dble(itime) - istart)/(iend-istart) -1.d0)**2  ! Welch window         
+!        time_window(itime) = 1.d0 - cos(pi*(itime-1)/NSTEP+1)**10   ! cosine window
+        time_window(itime) = 1.d0 - (2* (dble(itime) - istart)/(iend-istart) -1.d0)**2  ! Welch window
         enddo
 
          do itime = 2,NSTEP-1
@@ -74,7 +74,7 @@
          enddo
       seism_veloc(1) = (seism_win(2) - seism_win(1))/deltat
       seism_veloc(NSTEP) = (seism_win(NSTEP) - seism_win(NSTEP-1))/deltat
- 
+
          do itime = 2,NSTEP-1
       seism_accel(itime) = (seism_veloc(itime+1) - seism_veloc(itime-1))/(2*deltat)
          enddo

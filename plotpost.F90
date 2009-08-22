@@ -1,16 +1,18 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.2
+!                   S P E C F E M 2 D  Version 6.0
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
+! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France,
+! and Princeton University, USA.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
+!               Christina Morency, cmorency aT princeton DOT edu
 !
 ! This software is a computer program whose purpose is to solve
-! the two-dimensional viscoelastic anisotropic wave equation
+! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
 ! This software is governed by the CeCILL license under French law and
@@ -47,7 +49,7 @@
           simulation_title,npoin,npgeo,vpmin,vpmax,nrec,NSOURCE, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
-          nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poroelastic,coupled_elastic_poroelastic, &
+          nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
           any_acoustic,any_poroelastic,plot_lowerleft_corner_only, &
           fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
           fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
@@ -111,7 +113,7 @@
   double precision, dimension(nrec) :: st_xval,st_zval
 
   integer numabs(nelemabs),codeabs(4,nelemabs)
-  logical anyabs,coupled_acoustic_elastic,coupled_acoustic_poroelastic,coupled_elastic_poroelastic, &
+  logical anyabs,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
           any_acoustic,any_poroelastic,plot_lowerleft_corner_only
 
 ! for fluid/solid edge detection
@@ -169,8 +171,8 @@
   integer  :: nb_coorg_per_elem, nb_color_per_elem
   integer  :: iproc, num_spec
   integer  :: ier
-  logical :: anyabs_glob, coupled_acoustic_elastic_glob, coupled_acoustic_poroelastic_glob, &
-             coupled_elastic_poroelastic_glob
+  logical :: anyabs_glob, coupled_acoustic_elastic_glob, coupled_acoustic_poro_glob, &
+             coupled_elastic_poro_glob
 #ifdef USE_MPI
   integer, dimension(MPI_STATUS_SIZE)  :: request_mpi_status
 #endif
@@ -1615,9 +1617,9 @@ coorg_recv_ps_vector_field
 
   if(coupled_acoustic_elastic) then
     write(24,*) '(Coupled Acoustic/Elastic Wave 2D - SEM) show'
-  else if(coupled_acoustic_poroelastic) then
+  else if(coupled_acoustic_poro) then
     write(24,*) '(Coupled Acoustic/Poroelastic Wave 2D - SEM) show'
-  else if(coupled_elastic_poroelastic) then
+  else if(coupled_elastic_poro) then
     write(24,*) '(Coupled Elastic/Poroelastic Wave 2D - SEM) show'
   else if(any_acoustic) then
     write(24,*) '(Acoustic Wave 2D - Spectral Element Method) show'
@@ -2469,12 +2471,12 @@ coorg_recv_ps_vector_field
 !
 !----  draw the fluid-porous coupling edges with a thick color line
 !
-  coupled_acoustic_poroelastic_glob = coupled_acoustic_poroelastic
+  coupled_acoustic_poro_glob = coupled_acoustic_poro
 #ifdef USE_MPI
-  call MPI_ALLREDUCE(coupled_acoustic_poroelastic, coupled_acoustic_poroelastic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE(coupled_acoustic_poro, coupled_acoustic_poro_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
 #endif
 
-  if(coupled_acoustic_poroelastic_glob .and. boundvect) then
+  if(coupled_acoustic_poro_glob .and. boundvect) then
 
   if ( myrank == 0 ) then
   write(24,*) '%'
@@ -2576,12 +2578,12 @@ coorg_recv_ps_vector_field
 !
 !----  draw the solid-porous coupling edges with a thick color line
 !
-  coupled_elastic_poroelastic_glob = coupled_elastic_poroelastic
+  coupled_elastic_poro_glob = coupled_elastic_poro
 #ifdef USE_MPI
-  call MPI_ALLREDUCE(coupled_elastic_poroelastic, coupled_elastic_poroelastic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE(coupled_elastic_poro, coupled_elastic_poro_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
 #endif
 
-  if(coupled_elastic_poroelastic_glob .and. boundvect) then
+  if(coupled_elastic_poro_glob .and. boundvect) then
 
   if ( myrank == 0 ) then
   write(24,*) '%'

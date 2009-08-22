@@ -1,9 +1,10 @@
 
-The main developers of SPECFEM2D are:
+The main developers of SPECFEM2D version 6.0 are:
 
  Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
  Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
  Roland Martin, roland DOT martin aT univ-pau DOT fr
+ Christina Morency, cmorency aT princeton DOT edu
 
 For more details on how to use this code, users can also refer to the manuals
 of the 3D versions (SPECFEM3D_SESAME and SPECFEM3D_GLOBE), which contain far
@@ -23,17 +24,22 @@ Dimitri Komatitsch, April 28, 2009.
 
 ---------------------------
 
+IMPORTANT KNOWN PROBLEM: the poroelastic solver only works for regular (non
+distorted) meshes, i.e., meshes composed of rectangles aligned with the X and
+Y axes. If the mesh is distorted the solver fails. You can contact
+Christina Morency <cmorency aT princeton DOT edu> for more details.
+
+Dimitri Komatitsch, August 22, 2009.
+
+---------------------------
+
 - improving compiling with SCOTCH (issue with header file scotchf.h which is Fortran77 legal). Having our own scotchf.h file (without the comments) is not wise.
 
 - comparing the different partitioning methods for METIS and SCOTCH, and finding a good default for SCOTCH.
 
 - partitioning using weights for load-balancing.
 
-- choosing a way to use assign_external_model?
-
 - checking for points with different normals for absorbing conditions, when the absorbing edges are not in the same elements (similar to what is done for the corners).
-
-- scripts to translate GID/CUBIT meshes into files for xmeshfem2D.
 
 - user manual for unstructured meshes.
 

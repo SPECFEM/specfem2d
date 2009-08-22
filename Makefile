@@ -1,16 +1,18 @@
 
 #========================================================================
 #
-#                   S P E C F E M 2 D  Version 5.2
+#                   S P E C F E M 2 D  Version 6.0
 #                   ------------------------------
 #
-# Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
+# Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France,
+# and Princeton University, USA.
 # Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 #               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 #               Roland Martin, roland DOT martin aT univ-pau DOT fr
+#               Christina Morency, cmorency aT princeton DOT edu
 #
 # This software is a computer program whose purpose is to solve
-# the two-dimensional viscoelastic anisotropic wave equation
+# the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 # using a spectral-element method (SEM).
 #
 # This software is governed by the CeCILL license under French law and
@@ -67,19 +69,11 @@ O = obj
 #FLAGS_CHECK = $(FLAGS_NOCHECK)
 
 # GNU gfortran
-#F90 = gfortran
-#F90 = mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
-#F90 = /opt/openmpi-1.2.1/gfortran64/bin/mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
-#CC = gcc
-##FLAGS_NOCHECK = -O3 -march=opteron -m64 -mfpmath=sse,387
-#FLAGS_NOCHECK = -std=f95 -fimplicit-none -frange-check -O3 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math # -mcmodel=medium
-#FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
-
-# GNU gfortran (yucca)
-#F90 = /opt/openmpi-1.2.1/gfortran64/bin/mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
 F90 = gfortran
+#F90 = mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
 CC = gcc
-FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow
+##FLAGS_NOCHECK = -O3 -march=opteron -m64 -mfpmath=sse,387
+FLAGS_NOCHECK = -std=f95 -fimplicit-none -frange-check -O3 -fmax-errors=10 -pedantic -pedantic-errors -Wunused -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math # -mcmodel=medium
 FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
 
 # IBM

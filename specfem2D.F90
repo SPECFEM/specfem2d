@@ -1,16 +1,18 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.2
+!                   S P E C F E M 2 D  Version 6.0
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
+! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France,
+! and Princeton University, USA.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
+!               Christina Morency, cmorency aT princeton DOT edu
 !
 ! This software is a computer program whose purpose is to solve
-! the two-dimensional viscoelastic anisotropic wave equation
+! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
 ! This software is governed by the CeCILL license under French law and
@@ -43,11 +45,12 @@
 !====================================================================================
 !
 !   An explicit 2D parallel MPI spectral element solver
-!   for the anelastic anisotropic wave equation
+!   for the anelastic anisotropic or poroelastic wave equation.
 !
 !====================================================================================
 
-! If you use this code for your own research, please cite:
+! If you use this code for your own research, please cite at least one article
+! written by the developers of the package, for instance:
 !
 ! @ARTICLE{KoTr99,
 ! author={D. Komatitsch and J. Tromp},
@@ -68,27 +71,27 @@
 ! number=2,
 ! pages={368-392}}
 !
-!@ARTICLE{MoTr08,
-!      author={C. Morency and J. Tromp},
-!      year=2008,
-!      title={Spectral-element simulations of wave propagation in poroelastic media},
-!      journal={Geophys. J. Int.},
-!      volume=175,
-!      pages={301--345}}
+! @ARTICLE{MoTr08,
+! author={C. Morency and J. Tromp},
+! title={Spectral-element simulations of wave propagation in poroelastic media},
+! journal={Geophys. J. Int.},
+! year=2008,
+! volume=175,
+! pages={301-345}}
+!
+! and/or another article from http://web.univ-pau.fr/~dkomati1/publications.html
 !
 ! If you use the METIS / SCOTCH / CUBIT non-structured version, please also cite:
 !
-! @INPROCEEDINGS{MaKoBlLe08,
+! @ARTICLE{MaKoBlLe08,
 ! author = {R. Martin and D. Komatitsch and C. Blitz and N. {Le Goff}},
 ! title = {Simulation of seismic wave propagation in an asteroid based upon
-! an unstructured {MPI} spectral-element method: blocking and non-blocking communication strategies}
-! booktitle = {Proceedings of the VECPAR'2008 8th International Meeting
-! on High Performance Computing for Computational Science},
+! an unstructured {MPI} spectral-element method: blocking and non-blocking
+! communication strategies},
+! journal = {Lecture Notes in Computer Science},
 ! year = {2008},
-! pages = {999998-999999},
-! address = {Toulouse, France},
-! note = {24-27 June 2008},
-! url = {http://vecpar.fe.up.pt/2008}}
+! volume = {5336},
+! pages = {350-363}}
 !
 ! If you use the kernel capabilities of the code, please cite
 !
@@ -102,14 +105,15 @@
 ! pages={2383-2397},
 ! doi={10.1785/0120060041}}
 !
-!@ARTICLE{MoLuTr09,
-!     author={C. Morency and Y. Luo and J. Tromp},
-!     year=2009,
-!     title={Finite-frequency kernels for wave propagation in porous media based upon adjoint methods},
-!     journal=gji,
-!     doi={10.1111/j.1365-246X.2009.04332}}
+! @ARTICLE{MoLuTr09,
+! author={C. Morency and Y. Luo and J. Tromp},
+! title={Finite-frequency kernels for wave propagation in porous media based upon adjoint methods},
+! year=2009,
+! journal={Geophys. J. Int.},
+! doi={10.1111/j.1365-246X.2009.04332}}
 !
-!
+! version 6.0, Christina Morency, August 2009:
+!               - support for poroelastic media (for regular meshes only for now).
 !
 ! version 5.2, Dimitri Komatitsch, Nicolas Le Goff and Roland Martin, February 2008:
 !               - MPI implementation of the code based on domain decomposition
@@ -240,13 +244,13 @@
   double precision, dimension(:), allocatable :: porosity,tortuosity
   double precision, dimension(:,:), allocatable :: density,permeability
 
-! poroelastic and elastic coefficients 
+! poroelastic and elastic coefficients
   double precision, dimension(:,:,:), allocatable :: poroelastcoef
 
 ! for acoustic medium
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
 
-! inverse mass matrices 
+! inverse mass matrices
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_elastic,rmass_inverse_acoustic
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic
 
@@ -349,9 +353,9 @@
   logical :: any_poroelastic,any_poroelastic_glob
   integer, dimension(:), allocatable :: fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge, &
                                         fluid_poro_poroelastic_ispec,fluid_poro_poroelastic_iedge
-  integer :: fluid_poro_acoustic_ispec_read, fluid_poro_poroelastic_ispec_read
+  integer :: fluid_poro_acoustic_ispec_read, fluid_poro_poro_ispec_read
   integer :: num_fluid_poro_edges,num_fluid_poro_edges_alloc,iedge_poroelastic
-  logical :: coupled_acoustic_poroelastic
+  logical :: coupled_acoustic_poro
   double precision :: mul_G,lambdal_G,lambdalplus2mul_G
   double precision :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
   double precision :: dwx_dxi,dwx_dgamma,dwz_dxi,dwz_dgamma
@@ -365,9 +369,9 @@
 ! for solid/porous medium coupling and edge detection
   integer, dimension(:), allocatable :: solid_poro_elastic_ispec,solid_poro_elastic_iedge, &
                                         solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge
-  integer :: solid_poro_elastic_ispec_read, solid_poro_poroelastic_ispec_read
+  integer :: solid_poro_elastic_ispec_read, solid_poro_poro_ispec_read
   integer :: num_solid_poro_edges,num_solid_poro_edges_alloc,ispec_poroelastic,ii2,jj2
-  logical :: coupled_elastic_poroelastic
+  logical :: coupled_elastic_poro
   double precision, dimension(:,:), allocatable :: displ,veloc
   double precision :: sigma_xx,sigma_xz,sigma_zz,sigmap
   double precision :: b_sigma_xx,b_sigma_xz,b_sigma_zz,b_sigmap
@@ -728,7 +732,7 @@
   if(isolver == 1 .and. save_forward .and. (TURN_ANISOTROPY_ON .or. TURN_ATTENUATION_ON .or. TURN_VISCATTENUATION_ON)) then
   print*, '*************** WARNING ***************'
   print*, 'Anisotropy & Attenuation & Viscous damping are not presently implemented for adjoint calculations'
-  stop 
+  stop
   endif
 
   NTSTEP_BETWEEN_OUTPUT_SEISMO = min(NSTEP,NTSTEP_BETWEEN_OUTPUT_INFO)
@@ -1239,13 +1243,13 @@ if(ipass == 1) then
      allocate(fluid_poro_poroelastic_iedge(num_fluid_poro_edges))
 endif
      do inum = 1, num_fluid_poro_edges
-        read(IIN,*) fluid_poro_acoustic_ispec_read,fluid_poro_poroelastic_ispec_read
+        read(IIN,*) fluid_poro_acoustic_ispec_read,fluid_poro_poro_ispec_read
         if(ipass == 1) then
           fluid_poro_acoustic_ispec(inum) = fluid_poro_acoustic_ispec_read
-          fluid_poro_poroelastic_ispec(inum) = fluid_poro_poroelastic_ispec_read
+          fluid_poro_poroelastic_ispec(inum) = fluid_poro_poro_ispec_read
         else if(ipass == 2) then
           fluid_poro_acoustic_ispec(inum) = perm(antecedent_list(fluid_poro_acoustic_ispec_read))
-          fluid_poro_poroelastic_ispec(inum) = perm(antecedent_list(fluid_poro_poroelastic_ispec_read))
+          fluid_poro_poroelastic_ispec(inum) = perm(antecedent_list(fluid_poro_poro_ispec_read))
         else
           call exit_MPI('error: maximum number of passes is 2')
         endif
@@ -1271,13 +1275,13 @@ if(ipass == 1) then
      allocate(solid_poro_poroelastic_iedge(num_solid_poro_edges))
 endif
      do inum = 1, num_solid_poro_edges
-        read(IIN,*) solid_poro_poroelastic_ispec_read,solid_poro_elastic_ispec_read
+        read(IIN,*) solid_poro_poro_ispec_read,solid_poro_elastic_ispec_read
         if(ipass == 1) then
           solid_poro_elastic_ispec(inum) = solid_poro_elastic_ispec_read
-          solid_poro_poroelastic_ispec(inum) = solid_poro_poroelastic_ispec_read
+          solid_poro_poroelastic_ispec(inum) = solid_poro_poro_ispec_read
         else if(ipass == 2) then
           solid_poro_elastic_ispec(inum) = perm(antecedent_list(solid_poro_elastic_ispec_read))
-          solid_poro_poroelastic_ispec(inum) = perm(antecedent_list(solid_poro_poroelastic_ispec_read))
+          solid_poro_poroelastic_ispec(inum) = perm(antecedent_list(solid_poro_poro_ispec_read))
         else
           call exit_MPI('error: maximum number of passes is 2')
         endif
@@ -1794,7 +1798,7 @@ if (ipass == NUMBER_OF_PASSES) then
       nodes_tangential_curve(2,n_tangential_detection_curve(2)), &
       nodes_tangential_curve(2,n_tangential_detection_curve(3)), &
       nodes_tangential_curve(2,n_tangential_detection_curve(4)) )
-   
+
     source_courbe_eros(i_source) = n1_tangential_detection_curve
     if ( myrank == 0 .and. is_proc_source(i_source) == 1 .and. nb_proc_source(i_source) == 1 ) then
       source_courbe_eros(i_source) = n1_tangential_detection_curve
@@ -3302,7 +3306,7 @@ endif
 
          cploc = sqrt(lambdaplus2mu/denst)
          csloc = sqrt(mu/denst)
-      
+
          ! P wave case
          if (source_type(1) == 1) then
 
@@ -3601,7 +3605,7 @@ endif
 ! output absolute time in third column, in case user wants to check it as well
       if (myrank == 0 .and. i_source==1 ) write(55,*) sngl(time),real(source_time_function(1,it),4),sngl(time-t0(1))
    enddo
-   enddo ! i_source=1,NSOURCE 
+   enddo ! i_source=1,NSOURCE
 
    if (myrank == 0) close(55)
 
@@ -3621,7 +3625,7 @@ endif
 
 ! determine if coupled fluid-solid simulation
   coupled_acoustic_elastic = any_acoustic .and. any_elastic
-  coupled_acoustic_poroelastic = any_acoustic .and. any_poroelastic
+  coupled_acoustic_poro = any_acoustic .and. any_poroelastic
 
 ! fluid/solid (elastic) edge detection
 ! the two elements (fluid and solid) forming an edge are already known (computed in meshfem2D),
@@ -3758,7 +3762,7 @@ endif
 ! fluid/solid (poroelastic) edge detection
 ! the two elements (fluid and solid) forming an edge are already known (computed in meshfem2D),
 ! the common nodes forming the edge are computed here
-  if(coupled_acoustic_poroelastic) then
+  if(coupled_acoustic_poro) then
     if ( myrank == 0 ) then
     print *
     print *,'Mixed acoustic/poroelastic simulation'
@@ -3937,7 +3941,7 @@ endif
   endif
 
 ! exclude common points between acoustic absorbing edges and acoustic/poroelastic matching interfaces
-  if(coupled_acoustic_poroelastic .and. anyabs) then
+  if(coupled_acoustic_poro .and. anyabs) then
 
     if (myrank == 0) &
       print *,'excluding common points between acoustic absorbing edges and acoustic/poroelastic matching interfaces, if any'
@@ -3987,12 +3991,12 @@ endif
 
 
 ! determine if coupled elastic-poroelastic simulation
-  coupled_elastic_poroelastic = any_elastic .and. any_poroelastic
+  coupled_elastic_poro = any_elastic .and. any_poroelastic
 
 ! solid/porous edge detection
 ! the two elements forming an edge are already known (computed in meshfem2D),
 ! the common nodes forming the edge are computed here
-  if(coupled_elastic_poroelastic) then
+  if(coupled_elastic_poro) then
 
     if(TURN_ATTENUATION_ON .or. TURN_VISCATTENUATION_ON) &
                    stop 'Attenuation not supported for mixed elastic/poroelastic simulations'
@@ -4132,8 +4136,8 @@ endif
             jbegin_left_poro(ispecabs) = 1
             jbegin_right_poro(ispecabs) = 1
 
-            jend_left_poro(ispecabs) = NGLLZ 
-            jend_right_poro(ispecabs) = NGLLZ 
+            jend_left_poro(ispecabs) = NGLLZ
+            jend_right_poro(ispecabs) = NGLLZ
 
             ibegin_bottom_poro(ispecabs) = 1
             ibegin_top_poro(ispecabs) = 1
@@ -4144,7 +4148,7 @@ endif
  endif
 
 ! exclude common points between poroelastic absorbing edges and elastic/poroelastic matching interfaces
-  if(coupled_elastic_poroelastic .and. anyabs) then
+  if(coupled_elastic_poro .and. anyabs) then
 
     if (myrank == 0) &
       print *,'excluding common points between poroelastic absorbing edges and elastic/poroelastic matching interfaces, if any'
@@ -4194,7 +4198,7 @@ endif
 
 ! detecting poroelastic, elastic and acoustic global points valence
 
-  if(coupled_acoustic_elastic .or. coupled_acoustic_poroelastic .or. coupled_elastic_poroelastic)then
+  if(coupled_acoustic_elastic .or. coupled_acoustic_poro .or. coupled_elastic_poro)then
 
   allocate(valence_elastic(npoin))
   allocate(valence_poroelastic(npoin))
@@ -4234,7 +4238,7 @@ endif
   allocate(valence_poroelastic(1))
   allocate(valence_acoustic(1))
 
-  endif !(coupled_acoustic_elastic .or. coupled_acoustic_poroelastic .or. coupled_elastic_poroelastic)
+  endif !(coupled_acoustic_elastic .or. coupled_acoustic_poro .or. coupled_elastic_poro)
 
 #ifdef USE_MPI
   if(OUTPUT_ENERGY) stop 'energy calculation only currently serial only, should add an MPI_REDUCE in parallel'
@@ -4576,7 +4580,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
       displs_poroelastic = displs_poroelastic + deltat*velocs_poroelastic + deltatsquareover2*accels_poroelastic
       velocs_poroelastic = velocs_poroelastic + deltatover2*accels_poroelastic
       accels_poroelastic = ZERO
-!for the fluid 
+!for the fluid
       displw_poroelastic = displw_poroelastic + deltat*velocw_poroelastic + deltatsquareover2*accelw_poroelastic
       velocw_poroelastic = velocw_poroelastic + deltatover2*accelw_poroelastic
       accelw_poroelastic = ZERO
@@ -4586,7 +4590,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
       b_displs_poroelastic = b_displs_poroelastic + b_deltat*b_velocs_poroelastic + b_deltatsquareover2*b_accels_poroelastic
       b_velocs_poroelastic = b_velocs_poroelastic + b_deltatover2*b_accels_poroelastic
       b_accels_poroelastic = ZERO
-!for the fluid 
+!for the fluid
       b_displw_poroelastic = b_displw_poroelastic + b_deltat*b_velocw_poroelastic + b_deltatsquareover2*b_accelw_poroelastic
       b_velocw_poroelastic = b_velocw_poroelastic + b_deltatover2*b_accelw_poroelastic
       b_accelw_poroelastic = ZERO
@@ -4843,7 +4847,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! ************* add coupling with the poroelastic side
 ! *********************************************************
 
-    if(coupled_acoustic_poroelastic) then
+    if(coupled_acoustic_poro) then
 
 ! loop on all the coupling edges
       do inum = 1,num_fluid_poro_edges
@@ -5049,7 +5053,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! ****************************************************************************************
 !   If coupling elastic/poroelastic domain, average some arrays at the interface first
 ! ****************************************************************************************
-    if(coupled_elastic_poroelastic) then
+    if(coupled_elastic_poro) then
 
 ! loop on all the coupling edges
       do inum = 1,num_solid_poro_edges
@@ -5300,7 +5304,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! ****************************************************************************
 ! ************* add coupling with the poroelastic side
 ! ****************************************************************************
-    if(coupled_elastic_poroelastic) then
+    if(coupled_elastic_poro) then
 
 ! loop on all the coupling edges
       do inum = 1,num_solid_poro_edges
@@ -5503,7 +5507,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
           b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
           endif
-! compute stress tensor 
+! compute stress tensor
 ! full anisotropy
   if(TURN_ANISOTROPY_ON) then
 ! implement anisotropy in 2D
@@ -5794,7 +5798,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! ************* add coupling with the acoustic side
 ! *********************************************************
 
-    if(coupled_acoustic_poroelastic) then
+    if(coupled_acoustic_poro) then
 
 ! loop on all the coupling edges
       do inum = 1,num_fluid_poro_edges
@@ -5889,7 +5893,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) + weight*nz*pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)*&
                                        valence_poroelastic(iglob)
         endif
- 
+
           if(isolver == 2) then
         if(valence_acoustic(iglob) == valence_poroelastic(iglob)) then
 ! contribution to the solid phase
@@ -5918,13 +5922,13 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
       enddo ! do inum = 1,num_fluid_poro_edges
 
-    endif ! if(coupled_acoustic_poroelastic)
+    endif ! if(coupled_acoustic_poro)
 
 ! ****************************************************************************
 ! ************* add coupling with the elastic side
 ! ****************************************************************************
 
-    if(coupled_elastic_poroelastic) then
+    if(coupled_elastic_poro) then
 
 ! loop on all the coupling edges
       do inum = 1,num_solid_poro_edges
@@ -6238,7 +6242,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
       enddo
 
-    endif ! if(coupled_elastic_poroelastic)
+    endif ! if(coupled_elastic_poro)
 
 
 ! assembling accels_proelastic & accelw_poroelastic for poroelastic elements
@@ -6872,7 +6876,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           simulation_title,npoin,npgeo,vpImin,vpImax,nrec,NSOURCE, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
-          nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poroelastic,coupled_elastic_poroelastic, &
+          nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
           any_acoustic,any_poroelastic,plot_lowerleft_corner_only, &
           fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges,&
           fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
@@ -6908,7 +6912,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           simulation_title,npoin,npgeo,vpImin,vpImax,nrec,NSOURCE, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
-          nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poroelastic,coupled_elastic_poroelastic, &
+          nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
           any_acoustic,any_poroelastic,plot_lowerleft_corner_only, &
           fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges,&
           fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
@@ -6944,7 +6948,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           simulation_title,npoin,npgeo,vpImin,vpImax,nrec,NSOURCE, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
-          nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poroelastic,coupled_elastic_poroelastic, &
+          nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
           any_acoustic,any_poroelastic,plot_lowerleft_corner_only, &
           fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
           fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
@@ -7134,7 +7138,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
   endif
 
 !
-!--- save last frame 
+!--- save last frame
 !
   if(save_forward .and. isolver ==1 .and. any_elastic) then
   if ( myrank == 0 ) then

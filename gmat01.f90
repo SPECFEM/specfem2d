@@ -1,16 +1,18 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.2
+!                   S P E C F E M 2 D  Version 6.0
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
+! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France,
+! and Princeton University, USA.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
+!               Christina Morency, cmorency aT princeton DOT edu
 !
 ! This software is a computer program whose purpose is to solve
-! the two-dimensional viscoelastic anisotropic wave equation
+! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
 ! This software is governed by the CeCILL license under French law and
@@ -138,13 +140,13 @@
       density(1) =val0
       density(2) =val1
 
-! Solid properties 
+! Solid properties
       kappa_s = val7
       mu_s = val11
-! Fluid properties 
+! Fluid properties
       kappa_f = val8
       eta_f = val10
-! Frame properties 
+! Frame properties
       kappa_fr = val9
       mu_fr = val11
 ! Lam'e parameters for the solid phase and the frame
@@ -175,10 +177,10 @@
   permeability(2,n) = val5
   permeability(3,n) = val6
 
-! Young modulus for the solid phase 
+! Young modulus for the solid phase
       young_s = 9.d0*kappa_s*mu_s/(3.d0*kappa_s + mu_s)
 
-! Poisson's ratio for the solid phase 
+! Poisson's ratio for the solid phase
       poisson_s = HALF*(3.d0*kappa_s- 2.d0*mu_s)/(3.d0*kappa_s+mu_s)
 
 ! Poisson's ratio must be between -1 and +1/2
