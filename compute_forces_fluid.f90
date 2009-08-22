@@ -8,11 +8,12 @@
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
+!               Christina Morency, cmorency aT princeton DOT edu
 !               Christina Morency, cmorency aT gps DOT caltech DOT edu
 !               Jeroen Tromp, jtromp aT gps DOT caltech DOT edu
 !
 ! This software is a computer program whose purpose is to solve
-! the two-dimensional viscoelastic anisotropic wave equation
+! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
 ! This software is governed by the CeCILL license under French law and
@@ -144,7 +145,7 @@
 
   integer :: ispec,i,j,k,iglob,ispecabs,ibegin,iend,jbegin,jend,irec,irec_local
 
-! spatial derivatives 
+! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
   real(kind=CUSTOM_REAL) :: dwx_dxi,dwx_dgamma,dwz_dxi,dwz_dgamma
   real(kind=CUSTOM_REAL) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
@@ -207,7 +208,7 @@
     kappal_s = poroelastcoef(3,1,kmato(ispec)) -4._CUSTOM_REAL*mul_s/3._CUSTOM_REAL
     rhol_s = density(1,kmato(ispec))
 !fluid properties
-    kappal_f = poroelastcoef(1,2,kmato(ispec)) 
+    kappal_f = poroelastcoef(1,2,kmato(ispec))
     rhol_f = density(2,kmato(ispec))
 !frame properties
     mul_fr = poroelastcoef(2,3,kmato(ispec))
@@ -455,7 +456,7 @@
 ! loop over spectral elements
   do ispec = 1,nspec
 
-    etal_f = poroelastcoef(2,2,kmato(ispec)) 
+    etal_f = poroelastcoef(2,2,kmato(ispec))
 
     if(poroelastic(ispec) .and. etal_f > 0.d0) then
 
@@ -507,7 +508,7 @@
             accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - wxgll(i)*wzgll(j)*jacobian(i,j,ispec)*&
               viscodampz
 
-          if(isolver == 1 .and. save_forward)  then 
+          if(isolver == 1 .and. save_forward)  then
             b_viscodampx(iglob) = wxgll(i)*wzgll(j)*jacobian(i,j,ispec) * viscodampx
             b_viscodampz(iglob) = wxgll(i)*wzgll(j)*jacobian(i,j,ispec) * viscodampz
           elseif(isolver == 2) then ! kernels calculation
@@ -515,7 +516,7 @@
             b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) - b_viscodampz(iglob)
           endif
 
-        enddo 
+        enddo
       enddo
 
     endif ! end of test if poroelastic element
@@ -596,8 +597,8 @@
             vn = nx*vx+nz*vz
             vnf = nx*vxf+nz*vzf
 
-            tx = rho_vpII*vnf*nx - rho_vs*(vx-vn*nx) 
-            tz = rho_vpII*vnf*nz - rho_vs*(vz-vn*nz) 
+            tx = rho_vpII*vnf*nx - rho_vs*(vx-vn*nx)
+            tz = rho_vpII*vnf*nz - rho_vs*(vz-vn*nz)
 
             accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - tx*weight
             accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - tz*weight
@@ -607,9 +608,9 @@
               b_absorb_poro_w_left(2,j,ib_xmin(ispecabs),it) = tz*weight
             elseif(isolver == 2) then
               b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) - &
-                                              b_absorb_poro_w_left(1,j,ib_xmin(ispecabs),NSTEP-it+1) 
+                                              b_absorb_poro_w_left(1,j,ib_xmin(ispecabs),NSTEP-it+1)
               b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) - &
-                                              b_absorb_poro_w_left(2,j,ib_xmin(ispecabs),NSTEP-it+1) 
+                                              b_absorb_poro_w_left(2,j,ib_xmin(ispecabs),NSTEP-it+1)
             endif
 
           endif
@@ -652,8 +653,8 @@
             vn = nx*vx+nz*vz
             vnf = nx*vxf+nz*vzf
 
-            tx = rho_vpII*vnf*nx - rho_vs*(vx-vn*nx) 
-            tz = rho_vpII*vnf*nz - rho_vs*(vz-vn*nz) 
+            tx = rho_vpII*vnf*nx - rho_vs*(vx-vn*nx)
+            tz = rho_vpII*vnf*nz - rho_vs*(vz-vn*nz)
 
             accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - tx*weight
             accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - tz*weight
@@ -663,9 +664,9 @@
               b_absorb_poro_w_right(2,j,ib_xmax(ispecabs),it) = tz*weight
             elseif(isolver == 2) then
               b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) - &
-                                              b_absorb_poro_w_right(1,j,ib_xmax(ispecabs),NSTEP-it+1) 
+                                              b_absorb_poro_w_right(1,j,ib_xmax(ispecabs),NSTEP-it+1)
               b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) - &
-                                              b_absorb_poro_w_right(2,j,ib_xmax(ispecabs),NSTEP-it+1) 
+                                              b_absorb_poro_w_right(2,j,ib_xmax(ispecabs),NSTEP-it+1)
             endif
 
           endif
@@ -712,8 +713,8 @@
             vn = nx*vx+nz*vz
             vnf = nx*vxf+nz*vzf
 
-            tx = rho_vpII*vnf*nx - rho_vs*(vx-vn*nx) 
-            tz = rho_vpII*vnf*nz - rho_vs*(vz-vn*nz) 
+            tx = rho_vpII*vnf*nx - rho_vs*(vx-vn*nx)
+            tz = rho_vpII*vnf*nz - rho_vs*(vz-vn*nz)
 
             accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - tx*weight
             accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - tz*weight
@@ -723,9 +724,9 @@
               b_absorb_poro_w_bottom(2,i,ib_zmin(ispecabs),it) = tz*weight
             elseif(isolver == 2) then
               b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) - &
-                                              b_absorb_poro_w_bottom(1,i,ib_zmin(ispecabs),NSTEP-it+1) 
+                                              b_absorb_poro_w_bottom(1,i,ib_zmin(ispecabs),NSTEP-it+1)
               b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) - &
-                                              b_absorb_poro_w_bottom(2,i,ib_zmin(ispecabs),NSTEP-it+1) 
+                                              b_absorb_poro_w_bottom(2,i,ib_zmin(ispecabs),NSTEP-it+1)
             endif
 
           endif
@@ -772,8 +773,8 @@
             vn = nx*vx+nz*vz
             vnf = nx*vxf+nz*vzf
 
-            tx = rho_vpII*vnf*nx - rho_vs*(vx-vn*nx) 
-            tz = rho_vpII*vnf*nz - rho_vs*(vz-vn*nz) 
+            tx = rho_vpII*vnf*nx - rho_vs*(vx-vn*nx)
+            tz = rho_vpII*vnf*nz - rho_vs*(vz-vn*nz)
 
             accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - tx*weight
             accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - tz*weight
@@ -783,9 +784,9 @@
               b_absorb_poro_w_top(2,i,ib_zmax(ispecabs),it) = tz*weight
             elseif(isolver == 2) then
               b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) - &
-                                              b_absorb_poro_w_top(1,i,ib_zmax(ispecabs),NSTEP-it+1) 
+                                              b_absorb_poro_w_top(1,i,ib_zmax(ispecabs),NSTEP-it+1)
               b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) - &
-                                              b_absorb_poro_w_top(2,i,ib_zmax(ispecabs),NSTEP-it+1) 
+                                              b_absorb_poro_w_top(2,i,ib_zmax(ispecabs),NSTEP-it+1)
             endif
 
           endif
@@ -806,9 +807,9 @@
      if (is_proc_source(i_source) == 1 .and. poroelastic(ispec_selected_source(i_source))) then
 
     phil = porosity(kmato(ispec_selected_source(i_source)))
-    rhol_s = density(1,kmato(ispec_selected_source(i_source))) 
-    rhol_f = density(2,kmato(ispec_selected_source(i_source))) 
-    rhol_bar = (1._CUSTOM_REAL - phil)*rhol_s + phil*rhol_f 
+    rhol_s = density(1,kmato(ispec_selected_source(i_source)))
+    rhol_f = density(2,kmato(ispec_selected_source(i_source)))
+    rhol_bar = (1._CUSTOM_REAL - phil)*rhol_s + phil*rhol_f
 
 ! moment tensor
   if(source_type(i_source) == 2) then
@@ -853,7 +854,7 @@
         do i=1,NGLLX
           iglob = ibool(i,j,ispec_selected_rec(irec))
           accelw_poroelastic(:,iglob) = accelw_poroelastic(:,iglob) - &
-               rhol_f/rhol_bar*adj_sourcearrays(irec_local,NSTEP-it+1,:,i,j) 
+               rhol_f/rhol_bar*adj_sourcearrays(irec_local,NSTEP-it+1,:,i,j)
        enddo
       enddo
 

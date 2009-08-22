@@ -1,16 +1,18 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.2
+!                   S P E C F E M 2 D  Version 6.0
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France.
+! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France,
+! and Princeton University, USA.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
+!               Christina Morency, cmorency aT princeton DOT edu
 !
 ! This software is a computer program whose purpose is to solve
-! the two-dimensional viscoelastic anisotropic wave equation
+! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
 ! This software is governed by the CeCILL license under French law and
@@ -1411,7 +1413,7 @@
   do ispec=1,nspec
 
     material = kmato(ispec)
-   
+
    if(poroelastic(ispec)) then
     phi = porosity(material)
     tort = tortuosity(material)
@@ -1601,8 +1603,8 @@
 ! only if time source is not a Dirac or Heaviside (otherwise maximum frequency of spectrum undefined)
 ! and if source is not an initial field, for the same reason
   if(.not. initialfield) then
-   f0max = -HUGEVAL   
-   f0min = HUGEVAL   
+   f0max = -HUGEVAL
+   f0min = HUGEVAL
    do i = 1,NSOURCE
     if(time_function_type(i) /= 4 .and. time_function_type(i) /= 5) then
 
@@ -1616,7 +1618,7 @@
     else
       write(IOUT,*) ' --> onset time ok'
     endif
-    
+
     if(i==NSOURCE)then
     write(IOUT,*) '----'
     write(IOUT,*) ' Nb pts / lambdaPImin_fmax max = ',lambdaPImax/(2.5d0*f0min)
@@ -2226,7 +2228,7 @@
   endif
 
     material = kmato(ispec)
-  
+
    if(poroelastic(ispec)) then
     phi = porosity(material)
     tort = tortuosity(material)
