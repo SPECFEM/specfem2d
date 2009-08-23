@@ -62,7 +62,7 @@
   integer in,n,indic
   double precision young,poisson,cp,cs,mu,two_mu,lambda,Qp,Qs
   double precision lambdaplus2mu_s,lambdaplus2mu_fr,kappa_s,kappa_f,kappa_fr
-  double precision young_s,poisson_s,density(2),phi,tortuosity,permxx,permzz,permxz
+  double precision young_s,poisson_s,density(2),phi,tortuosity
   double precision cpIsquare,cpIIsquare,cssquare,mu_s,mu_fr,eta_f,lambda_s,lambda_fr
   double precision val1,val2,val3,val4,val5,val6
   double precision val7,val8,val9,val10,val11,val12,val0

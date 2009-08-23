@@ -24,15 +24,6 @@ Dimitri Komatitsch, April 28, 2009.
 
 ---------------------------
 
-IMPORTANT KNOWN PROBLEM: the poroelastic solver only works for regular (non
-distorted) meshes, i.e., meshes composed of rectangles aligned with the X and
-Y axes. If the mesh is distorted the solver fails. You can contact
-Christina Morency <cmorency aT princeton DOT edu> for more details.
-
-Dimitri Komatitsch, August 22, 2009.
-
----------------------------
-
 - improving compiling with SCOTCH (issue with header file scotchf.h which is Fortran77 legal). Having our own scotchf.h file (without the comments) is not wise.
 
 - comparing the different partitioning methods for METIS and SCOTCH, and finding a good default for SCOTCH.

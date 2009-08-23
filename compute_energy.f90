@@ -121,7 +121,7 @@
   real(kind=CUSTOM_REAL) :: kappal_f,rhol_f
   real(kind=CUSTOM_REAL) :: mul_fr,kappal_fr,phil,tortl
   real(kind=CUSTOM_REAL) :: D_biot,H_biot,C_biot,M_biot,rhol_bar
-  real(kind=CUSTOM_REAL) :: mul_G,lambdal_G,lambdalplus2mul_G,mul_C,lambdal_C,lambdalplus2mul_C,mul_M,lambdal_M,lambdalplus2mul_M
+  real(kind=CUSTOM_REAL) :: mul_G,lambdal_G,lambdalplus2mul_G
 
   kinetic_energy = ZERO
   potential_energy = ZERO

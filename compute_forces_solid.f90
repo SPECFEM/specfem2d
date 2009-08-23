@@ -43,13 +43,13 @@
 !
 !========================================================================
 
-  subroutine compute_forces_solid(npoin,nspec,myrank,nelemabs,numat,iglob_source, &
+  subroutine compute_forces_solid(npoin,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                source_type,it,NSTEP,anyabs, &
-               initialfield,TURN_ATTENUATION_ON,TURN_VISCATTENUATION_ON,angleforce,deltatcube, &
+               initialfield,TURN_ATTENUATION_ON,TURN_VISCATTENUATION_ON,deltatcube, &
                deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,poroelastic,codeabs, &
                accels_poroelastic,velocs_poroelastic,velocw_poroelastic,displs_poroelastic,displw_poroelastic,&
-               b_accels_poroelastic,b_displs_poroelastic,b_velocw_poroelastic,b_displw_poroelastic,&
+               b_accels_poroelastic,b_displs_poroelastic,b_displw_poroelastic,&
                density,porosity,tortuosity,permeability,poroelastcoef,xix,xiz,gammax,gammaz, &
                jacobian,source_time_function,sourcearray,adj_sourcearrays,e11, &
                e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
@@ -70,7 +70,7 @@
 
   include "constants.h"
   integer :: NSOURCE, i_source
-  integer, dimension(NSOURCE) :: iglob_source,ispec_selected_source,source_type,is_proc_source
+  integer, dimension(NSOURCE) :: ispec_selected_source,source_type,is_proc_source
   integer :: npoin,nspec,nelemabs,numat,it,NSTEP
   integer :: nrec,isolver,myrank
   integer, dimension(nrec) :: ispec_selected_rec,which_proc_receiver
@@ -84,7 +84,6 @@
   logical :: save_forward
 
   double precision :: deltatcube,deltatfourth,twelvedeltat,fourdeltatsquare
-  double precision, dimension(NSOURCE) :: angleforce
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
   integer, dimension(nspec) :: kmato
@@ -96,8 +95,7 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: accels_poroelastic,velocs_poroelastic,displs_poroelastic
   real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: velocw_poroelastic,displw_poroelastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: b_accels_poroelastic,b_displs_poroelastic,b_displw_poroelastic,&
-                                                   b_velocw_poroelastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: b_accels_poroelastic,b_displs_poroelastic,b_displw_poroelastic
   double precision, dimension(2,numat) :: density
   double precision, dimension(3,numat) :: permeability
   double precision, dimension(numat) :: porosity,tortuosity
@@ -124,8 +122,8 @@
     dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n,dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1
 
 ! viscous attenuation (poroelastic media)
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: rx_viscous,b_rx_viscous
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: rz_viscous,b_rz_viscous
+  double precision, dimension(NGLLX,NGLLZ,nspec) :: rx_viscous
+  double precision, dimension(NGLLX,NGLLZ,nspec) :: rz_viscous
   double precision :: theta_e,theta_s
   logical TURN_VISCATTENUATION_ON
   double precision, dimension(3):: bl_unrelaxed,bl_relaxed
