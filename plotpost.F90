@@ -133,7 +133,7 @@
   equivalence (postscript_line,ch1)
   logical :: first
 
-  double precision convert,x1,rlamda,rmu,denst,rKvol,cpIloc,xa,za,xb,zb
+  double precision convert,x1,cpIloc,xa,za,xb,zb
   double precision z1,x2,z2,d,d1,d2,dummy,theta,thetaup,thetadown
 
   double precision :: mul_s,kappal_s,rhol_s

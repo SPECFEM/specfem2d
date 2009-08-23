@@ -1,8 +1,8 @@
 #source 1
-source_surf                     = .true.        # source inside the medium or at the surface
-xs                              = 2000 #4000. #2000.          # source location x in meters
-zs                              = 00 #2000. #00.          # source location z in meters
-source_type                     = 2              # elastic force or acoustic pressure = 1 or moment tensor = 2
+source_surf                     = .false.        # source inside the medium or at the surface
+xs                              = 0.             # source location x in meters
+zs                              = -100.          # source location z in meters
+source_type                     = 1              # elastic force or acoustic pressure = 1 or moment tensor = 2
 time_function_type              = 1              # Ricker = 1, first derivative = 2, Gaussian = 3, Dirac = 4, Heaviside = 5
 f0                              = 5.0           # dominant source frequency (Hz) if not Dirac or Heaviside
 t0                              = 0.0            # time shift when multi sources (if one source, must be zero)
