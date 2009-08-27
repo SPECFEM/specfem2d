@@ -48,7 +48,31 @@
 !
 !========================================================================
 
-! If you use this code for your own research, please cite:
+! If you use this code for your own research, please cite at least one article
+! written by the developers of the package, for instance:
+!
+! @ARTICLE{TrKoLi08,
+! author = {Jeroen Tromp and Dimitri Komatitsch and Qinya Liu},
+! title = {Spectral-Element and Adjoint Methods in Seismology},
+! journal = {Communications in Computational Physics},
+! year = {2008},
+! volume = {3},
+! pages = {1-32},
+! number = {1}}
+!
+! or
+!
+! @INCOLLECTION{ChKoViCaVaFe07,
+! author = {Emmanuel Chaljub and Dimitri Komatitsch and Jean-Pierre Vilotte and
+! Yann Capdeville and Bernard Valette and Gaetano Festa},
+! title = {Spectral Element Analysis in Seismology},
+! booktitle = {Advances in Wave Propagation in Heterogeneous Media},
+! publisher = {Elsevier - Academic Press},
+! year = {2007},
+! editor = {Ru-Shan Wu and Val\'erie Maupin},
+! volume = {48},
+! series = {Advances in Geophysics},
+! pages = {365-419}}
 !
 ! @ARTICLE{KoTr99,
 ! author={D. Komatitsch and J. Tromp},
@@ -69,19 +93,119 @@
 ! number=2,
 ! pages={368-392}}
 !
-! If you use the METIS / SCOTCH / CUBIT non-structured version, please also cite:
+! @ARTICLE{MoTr08,
+! author={C. Morency and J. Tromp},
+! title={Spectral-element simulations of wave propagation in poroelastic media},
+! journal={Geophys. J. Int.},
+! year=2008,
+! volume=175,
+! pages={301-345}}
 !
-! @INPROCEEDINGS{MaKoBlLe08,
+! and/or another article from http://web.univ-pau.fr/~dkomati1/publications.html
+!
+! If you use the kernel capabilities of the code, please cite at least one article
+! written by the developers of the package, for instance:
+!
+! @ARTICLE{TrKoLi08,
+! author = {Jeroen Tromp and Dimitri Komatitsch and Qinya Liu},
+! title = {Spectral-Element and Adjoint Methods in Seismology},
+! journal = {Communications in Computational Physics},
+! year = {2008},
+! volume = {3},
+! pages = {1-32},
+! number = {1}}
+!
+! or
+!
+! @ARTICLE{LiTr06,
+! author={Qinya Liu and Jeroen Tromp},
+! title={Finite-frequency kernels based on adjoint methods},
+! journal={Bull. Seismol. Soc. Am.},
+! year=2006,
+! volume=96,
+! number=6,
+! pages={2383-2397},
+! doi={10.1785/0120060041}}
+!
+! @ARTICLE{MoLuTr09,
+! author={C. Morency and Y. Luo and J. Tromp},
+! title={Finite-frequency kernels for wave propagation in porous media based upon adjoint methods},
+! year=2009,
+! journal={Geophys. J. Int.},
+! doi={10.1111/j.1365-246X.2009.04332}}
+!
+! If you use the METIS / SCOTCH / CUBIT non-structured capabilities, please also cite:
+!
+! @ARTICLE{MaKoBlLe08,
 ! author = {R. Martin and D. Komatitsch and C. Blitz and N. {Le Goff}},
 ! title = {Simulation of seismic wave propagation in an asteroid based upon
-! an unstructured {MPI} spectral-element method: blocking and non-blocking communication strategies}
-! booktitle = {Proceedings of the VECPAR'2008 8th International Meeting
-! on High Performance Computing for Computational Science},
+! an unstructured {MPI} spectral-element method: blocking and non-blocking
+! communication strategies},
+! journal = {Lecture Notes in Computer Science},
 ! year = {2008},
-! pages = {999998-999999},
-! address = {Toulouse, France},
-! note = {24-27 June 2008},
-! url = {http://vecpar.fe.up.pt/2008}}
+! volume = {5336},
+! pages = {350-363}}
+!
+! version 6.0, Christina Morency and Yang Luo, August 2009:
+!               - support for poroelastic media
+!               - adjoint method for acoustic/elastic/poroelastic
+!
+! version 5.2, Dimitri Komatitsch, Nicolas Le Goff and Roland Martin, February 2008:
+!               - MPI implementation of the code based on domain decomposition
+!                 with METIS or SCOTCH
+!               - general fluid/solid implementation with any number, shape and orientation of
+!                 matching edges
+!               - fluid potential of density * displacement instead of displacement
+!               - absorbing edges with any normal vector
+!               - general numbering of absorbing and acoustic free surface edges
+!               - cleaned implementation of attenuation as in Carcione (1993)
+!               - merged loops in the solver for efficiency
+!               - simplified input of external model
+!               - added CPU time information
+!               - translated many comments from French to English
+!
+! version 5.1, Dimitri Komatitsch, January 2005:
+!               - more general mesher with any number of curved layers
+!               - Dirac and Gaussian time sources and corresponding convolution routine
+!               - option for acoustic medium instead of elastic
+!               - receivers at any location, not only grid points
+!               - moment-tensor source at any location, not only a grid point
+!               - color snapshots
+!               - more flexible DATA/Par_file with any number of comment lines
+!               - Xsu scripts for seismograms
+!               - subtract t0 from seismograms
+!               - seismograms and snapshots in pressure in addition to vector field
+!
+! version 5.0, Dimitri Komatitsch, May 2004:
+!               - got rid of useless routines, suppressed commons etc.
+!               - weak formulation based explicitly on stress tensor
+!               - implementation of full anisotropy
+!               - implementation of attenuation based on memory variables
+!
+! based on SPECFEM2D version 4.2, June 1998
+! (c) by Dimitri Komatitsch, Harvard University, USA
+! and Jean-Pierre Vilotte, Institut de Physique du Globe de Paris, France
+!
+! itself based on SPECFEM2D version 1.0, 1995
+! (c) by Dimitri Komatitsch and Jean-Pierre Vilotte,
+! Institut de Physique du Globe de Paris, France
+!
+
+! in case of an acoustic medium, a potential Chi of (density * displacement) is used as in Chaljub and Valette,
+! Geophysical Journal International, vol. 158, p. 131-141 (2004) and *NOT* a velocity potential
+! as in Komatitsch and Tromp, Geophysical Journal International, vol. 150, p. 303-318 (2002).
+! This permits acoustic-elastic coupling based on a non-iterative time scheme.
+! Displacement is then: u = grad(Chi) / rho
+! Velocity is then: v = grad(Chi_dot) / rho (Chi_dot being the time derivative of Chi)
+! and pressure is: p = - Chi_dot_dot  (Chi_dot_dot being the time second derivative of Chi).
+! The source in an acoustic element is a pressure source.
+! First-order acoustic-acoustic discontinuities are also handled automatically
+! because pressure is continuous at such an interface, therefore Chi_dot_dot
+! is continuous, therefore Chi is also continuous, which is consistent with
+! the spectral-element basis functions and with the assembling process.
+! This is the reason why a simple displacement potential u = grad(Chi) would
+! not work because it would be discontinuous at such an interface and would
+! therefore not be consistent with the basis functions.
 
 program meshfem2D
 

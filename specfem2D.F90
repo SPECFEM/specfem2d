@@ -52,6 +52,29 @@
 ! If you use this code for your own research, please cite at least one article
 ! written by the developers of the package, for instance:
 !
+! @ARTICLE{TrKoLi08,
+! author = {Jeroen Tromp and Dimitri Komatitsch and Qinya Liu},
+! title = {Spectral-Element and Adjoint Methods in Seismology},
+! journal = {Communications in Computational Physics},
+! year = {2008},
+! volume = {3},
+! pages = {1-32},
+! number = {1}}
+!
+! or
+!
+! @INCOLLECTION{ChKoViCaVaFe07,
+! author = {Emmanuel Chaljub and Dimitri Komatitsch and Jean-Pierre Vilotte and
+! Yann Capdeville and Bernard Valette and Gaetano Festa},
+! title = {Spectral Element Analysis in Seismology},
+! booktitle = {Advances in Wave Propagation in Heterogeneous Media},
+! publisher = {Elsevier - Academic Press},
+! year = {2007},
+! editor = {Ru-Shan Wu and Val\'erie Maupin},
+! volume = {48},
+! series = {Advances in Geophysics},
+! pages = {365-419}}
+!
 ! @ARTICLE{KoTr99,
 ! author={D. Komatitsch and J. Tromp},
 ! title={Introduction to the spectral-element method for 3-{D} seismic wave propagation},
@@ -81,19 +104,19 @@
 !
 ! and/or another article from http://web.univ-pau.fr/~dkomati1/publications.html
 !
-! If you use the METIS / SCOTCH / CUBIT non-structured version, please also cite:
+! If you use the kernel capabilities of the code, please cite at least one article
+! written by the developers of the package, for instance:
 !
-! @ARTICLE{MaKoBlLe08,
-! author = {R. Martin and D. Komatitsch and C. Blitz and N. {Le Goff}},
-! title = {Simulation of seismic wave propagation in an asteroid based upon
-! an unstructured {MPI} spectral-element method: blocking and non-blocking
-! communication strategies},
-! journal = {Lecture Notes in Computer Science},
+! @ARTICLE{TrKoLi08,
+! author = {Jeroen Tromp and Dimitri Komatitsch and Qinya Liu},
+! title = {Spectral-Element and Adjoint Methods in Seismology},
+! journal = {Communications in Computational Physics},
 ! year = {2008},
-! volume = {5336},
-! pages = {350-363}}
+! volume = {3},
+! pages = {1-32},
+! number = {1}}
 !
-! If you use the kernel capabilities of the code, please cite
+! or
 !
 ! @ARTICLE{LiTr06,
 ! author={Qinya Liu and Jeroen Tromp},
@@ -112,8 +135,20 @@
 ! journal={Geophys. J. Int.},
 ! doi={10.1111/j.1365-246X.2009.04332}}
 !
+! If you use the METIS / SCOTCH / CUBIT non-structured capabilities, please also cite:
+!
+! @ARTICLE{MaKoBlLe08,
+! author = {R. Martin and D. Komatitsch and C. Blitz and N. {Le Goff}},
+! title = {Simulation of seismic wave propagation in an asteroid based upon
+! an unstructured {MPI} spectral-element method: blocking and non-blocking
+! communication strategies},
+! journal = {Lecture Notes in Computer Science},
+! year = {2008},
+! volume = {5336},
+! pages = {350-363}}
+!
 ! version 6.0, Christina Morency and Yang Luo, August 2009:
-!               - support for poroelastic media 
+!               - support for poroelastic media
 !               - adjoint method for acoustic/elastic/poroelastic
 !
 ! version 5.2, Dimitri Komatitsch, Nicolas Le Goff and Roland Martin, February 2008:
@@ -6121,7 +6156,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
    enddo
   endif
 
-!assembling the displacements on the elastic-poro boundaries 
+!assembling the displacements on the elastic-poro boundaries
     if(coupled_elastic_poro) then
      icount(:)=ZERO
 
