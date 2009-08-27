@@ -1,4 +1,15 @@
 
+SPECFEM2D 6.0: SPECFEM2D facilitates 2D simulations of
+        acoustic, (an)elastic, and poroelastic seismic wave propagation.
+        With version 6.0, the 2D spectral-element solver accommodates
+        regular and unstructured meshes, generated for example by Cubit
+        (cubit.sandia.gov). The solver has adjoint capabilities and can
+        calculate finite-frequency sensitivity kernels for acoustic,
+        (an)elastic, and poroelastic media. Finally, the solver can run
+        both in serial and in parallel. See SPECFEM2D
+        <http://www.geodynamics.org/cig/software/packages/seismo/specfem2d>
+        for the source code.
+
 How to use SPECFEM2D:
 ---------------------
 
@@ -65,7 +76,7 @@ Q0 is the quality factor set at the central frequency FREQ0. For more details
 see Morency & Tromp, GJI 2008.
 
 In section "# time step parameters":
-ISOLVER defines the type of simulations 
+ISOLVER defines the type of simulations
 (1) forward simulation
 (2) adjoint method and kernels calculation
 
@@ -147,7 +158,7 @@ which are the primary moduli kernels and the phase velocities kernels respective
 Note: At the moment, adjoint simulations do not support anisotropy, attenuation, and viscous damping.
 
 --------------------------------------------------
-               COUPLED SIMULATIONS 
+               COUPLED SIMULATIONS
 --------------------------------------------------
 
 The code support acoustic/elastic, acoustic/poroelastic, elastic/poroelastic,
