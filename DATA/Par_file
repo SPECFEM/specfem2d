@@ -73,7 +73,7 @@ enreg_surf                      = .false.         # receivers inside the medium 
 
 # display parameters
 NTSTEP_BETWEEN_OUTPUT_INFO      = 2000            # display frequency in time steps
-output_postscript_snapshot      = .false.         # output Postscript snapshot of the results
+output_postscript_snapshot      = .true.         # output Postscript snapshot of the results
 output_color_image              = .true.         # output color image of the results
 imagetype                       = 1              # display 1=displ 2=veloc 3=accel 4=pressure
 cutsnaps                        = 1.             # minimum amplitude in % for snapshots
