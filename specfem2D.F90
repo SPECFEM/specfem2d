@@ -6719,7 +6719,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
     if (myrank == 0) write(IOUT,*) 'drawing displacement vector as small arrows...'
 
-    call compute_vector_whole_medium(potential_acoustic,b_displ_elastic,displs_poroelastic,&
+    call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic,&
           elastic,poroelastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,numat,kmato,density,rhoext,assign_external_model)
 
