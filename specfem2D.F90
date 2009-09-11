@@ -6452,8 +6452,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
       do k = 1, NGLLZ
           do i = 1, NGLLX
             iglob = ibool(i,k,ispec)
-    kappal_ac_global(iglob) = poroelastcoef(1,2,kmato(ispec))
-    rhol_ac_global(iglob) = density(2,kmato(ispec))
+    kappal_ac_global(iglob) = poroelastcoef(3,1,kmato(ispec))
+    rhol_ac_global(iglob) = density(1,kmato(ispec))
           enddo
       enddo
      endif
