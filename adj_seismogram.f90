@@ -85,8 +85,8 @@
 !      Nnorm = deltat * sum(time_window(:) * seism_veloc(:) * seism_veloc(:))
 ! cross-correlation traveltime adjoint source
       if(abs(Nnorm) > EPS) then
-!      ft_bar(:) = - seism_veloc(:) * time_window(:) / Nnorm
-      ft_bar(:) = seism_veloc(:) * time_window(:) / Nnorm
+      ft_bar(:) = - seism_veloc(:) * time_window(:) / Nnorm
+!      ft_bar(:) = seism_veloc(:) * time_window(:) / Nnorm
       print*,'Norm =', Nnorm
       else
       print *, 'norm < EPS for file '
