@@ -279,7 +279,7 @@ program meshfem2D
 
   double precision :: Q0,freq0
 
-  logical :: body_waves
+  logical :: p_sv 
 
   logical, dimension(:), allocatable :: enreg_surf
 
@@ -470,7 +470,7 @@ program meshfem2D
   call read_value_double_precision(IIN,IGNORE_JUNK,freq0)
 
 ! determine if body or surface (membrane) waves calculation
-  call read_value_logical(IIN,IGNORE_JUNK,body_waves)
+  call read_value_logical(IIN,IGNORE_JUNK,p_sv)
 
   if ( read_external_mesh ) then
      call read_mesh(mesh_file, nelmnts, elmnts, nnodes, num_start)
@@ -1449,8 +1449,8 @@ program meshfem2D
      write(15,*) 'TURN_VISCATTENUATION_ON Q0 freq0'
      write(15,*) TURN_VISCATTENUATION_ON,Q0,freq0
 
-     write(15,*) 'body_waves'
-     write(15,*) body_waves
+     write(15,*) 'p_sv'
+     write(15,*) p_sv
 
      write(15,*) 'nt deltat isolver'
      write(15,*) nt,deltat,isolver

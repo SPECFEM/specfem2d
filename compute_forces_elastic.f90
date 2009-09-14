@@ -42,7 +42,7 @@
 !
 !========================================================================
 
-  subroutine compute_forces_elastic(body_waves,npoin,nspec,myrank,nelemabs,numat, &
+  subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
        ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
        source_type,it,NSTEP,anyabs,assign_external_model, &
        initialfield,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,angleforce,deltatcube, &
@@ -66,7 +66,7 @@
 
   include "constants.h"
 
-  logical :: body_waves
+  logical :: p_sv
   integer :: NSOURCE, i_source
   integer :: npoin,nspec,myrank,nelemabs,numat,it,NSTEP
   integer, dimension(NSOURCE) :: ispec_selected_source,is_proc_source,source_type
@@ -360,7 +360,7 @@
 ! Pre-kernels calculation
    if(isolver == 2) then
           iglob = ibool(i,j,ispec)
-      if(body_waves)then !P-SV waves
+      if(p_sv)then !P-SV waves
             dsxx =  dux_dxl
             dsxz = HALF * (duz_dxl + dux_dzl)
             dszz =  duz_dzl
@@ -523,14 +523,14 @@
             accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0)*weight
 
             if(save_forward .and. isolver ==1) then
-             if(body_waves)then !P-SV waves
+             if(p_sv)then !P-SV waves
               b_absorb_elastic_left(1,j,ib_xmin(ispecabs),it) = tx*weight
               b_absorb_elastic_left(3,j,ib_xmin(ispecabs),it) = tz*weight
              else !SH (membrane) waves
               b_absorb_elastic_left(2,j,ib_xmin(ispecabs),it) = ty*weight
              endif
             elseif(isolver == 2) then
-             if(body_waves)then !P-SV waves
+             if(p_sv)then !P-SV waves
               b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_left(1,j,ib_xmin(ispecabs),NSTEP-it+1)
               b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_left(3,j,ib_xmin(ispecabs),NSTEP-it+1)
              else !SH (membrane) waves
@@ -611,14 +611,14 @@
             accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz - traction_z_t0)*weight
 
             if(save_forward .and. isolver ==1) then
-             if(body_waves)then !P-SV waves
+             if(p_sv)then !P-SV waves
               b_absorb_elastic_right(1,j,ib_xmax(ispecabs),it) = tx*weight
               b_absorb_elastic_right(3,j,ib_xmax(ispecabs),it) = tz*weight
              else! SH (membrane) waves
               b_absorb_elastic_right(2,j,ib_xmax(ispecabs),it) = ty*weight
              endif
             elseif(isolver == 2) then
-             if(body_waves)then !P-SV waves
+             if(p_sv)then !P-SV waves
               b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_right(1,j,ib_xmax(ispecabs),NSTEP-it+1)
               b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_right(3,j,ib_xmax(ispecabs),NSTEP-it+1)
              else! SH (membrane) waves
@@ -705,14 +705,14 @@
             accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0)*weight
 
             if(save_forward .and. isolver ==1) then
-             if(body_waves)then !P-SV waves
+             if(p_sv)then !P-SV waves
               b_absorb_elastic_bottom(1,i,ib_zmin(ispecabs),it) = tx*weight
               b_absorb_elastic_bottom(3,i,ib_zmin(ispecabs),it) = tz*weight
              else!SH (membrane) waves
               b_absorb_elastic_bottom(2,i,ib_zmin(ispecabs),it) = ty*weight
              endif
             elseif(isolver == 2) then
-             if(body_waves)then !P-SV waves
+             if(p_sv)then !P-SV waves
               b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_bottom(1,i,ib_zmin(ispecabs),NSTEP-it+1)
               b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_bottom(3,i,ib_zmin(ispecabs),NSTEP-it+1)
              else!SH (membrane) waves
@@ -791,14 +791,14 @@
             accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz - traction_z_t0)*weight
 
             if(save_forward .and. isolver ==1) then
-             if(body_waves)then !P-SV waves
+             if(p_sv)then !P-SV waves
               b_absorb_elastic_top(1,i,ib_zmax(ispecabs),it) = tx*weight
               b_absorb_elastic_top(3,i,ib_zmax(ispecabs),it) = tz*weight
              else!SH (membrane) waves
               b_absorb_elastic_top(2,i,ib_zmax(ispecabs),it) = ty*weight
              endif
             elseif(isolver == 2) then
-             if(body_waves)then !P-SV waves
+             if(p_sv)then !P-SV waves
               b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_top(1,i,ib_zmax(ispecabs),NSTEP-it+1)
               b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_top(3,i,ib_zmax(ispecabs),NSTEP-it+1)
              else!SH (membrane) waves
@@ -826,7 +826,7 @@
 ! moment tensor
         if(source_type(i_source) == 2) then
 
-       if(.not.body_waves)  call exit_MPI('cannot have moment tensor source in SH (membrane) waves calculation')  
+       if(.not.p_sv)  call exit_MPI('cannot have moment tensor source in SH (membrane) waves calculation')  
 
        if(isolver == 1) then  ! forward wavefield
 ! add source array
@@ -868,7 +868,7 @@
       do j=1,NGLLZ
         do i=1,NGLLX
           iglob = ibool(i,j,ispec_selected_rec(irec))
-         if(body_waves)then !P-SH waves
+         if(p_sv)then !P-SH waves
           accel_elastic(1,iglob) = accel_elastic(1,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
           accel_elastic(3,iglob) = accel_elastic(3,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,3,i,j)
          else !SH (membrane) waves

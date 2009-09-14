@@ -232,8 +232,8 @@
   double precision, dimension(:,:), allocatable :: coorg
   double precision, dimension(:), allocatable :: coorgread
 
-! for body or surface (membrane) waves calculation
-  logical :: body_waves
+! for P-SV or SH (membrane) waves calculation
+  logical :: p_sv
 
 ! receiver information
   integer :: nrec,ios
@@ -756,7 +756,7 @@
   read(IIN,*) TURN_VISCATTENUATION_ON,Q0,freq0
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) body_waves
+  read(IIN,*) p_sv
 
 !---- check parameters read
   if (myrank == 0 .and. ipass == 1) then
@@ -1024,13 +1024,13 @@ endif
   enddo !do ispec = 1,nspec
 
 
-  if(.not. body_waves .and. .not. any_elastic) then
+  if(.not. p_sv .and. .not. any_elastic) then
   print*, '*************** WARNING ***************'
   print*, 'Surface (membrane) waves calculation needs an elastic medium'
   print*, '*************** WARNING ***************'
   stop
   endif
-  if(body_waves .and. (TURN_ATTENUATION_ON .or. TURN_ANISOTROPY_ON)) then
+  if(p_sv .and. (TURN_ATTENUATION_ON .or. TURN_ANISOTROPY_ON)) then
   print*, '*************** WARNING ***************'
   print*, 'Attenuation and anisotropy are not implemented for surface (membrane) waves calculation'
   print*, '*************** WARNING ***************'
@@ -3019,7 +3019,7 @@ endif
       if(nspec_xmin >0) then
       do ispec = 1,nspec_xmin
 
-     if(body_waves)then!P-SV waves
+     if(p_sv)then!P-SV waves
        do id =1,2
          do i=1,NGLLZ
      read(35) b_absorb_elastic_left(id,i,ispec,it)
@@ -3042,7 +3042,7 @@ endif
       if(nspec_xmax >0) then
       do ispec = 1,nspec_xmax
 
-     if(body_waves)then!P-SV waves
+     if(p_sv)then!P-SV waves
        do id =1,2
          do i=1,NGLLZ
      read(36) b_absorb_elastic_right(id,i,ispec,it)
@@ -3065,7 +3065,7 @@ endif
       if(nspec_zmin >0) then
       do ispec = 1,nspec_zmin
 
-     if(body_waves)then!P-SV waves
+     if(p_sv)then!P-SV waves
        do id =1,2
          do i=1,NGLLX
      read(37) b_absorb_elastic_bottom(id,i,ispec,it)
@@ -3088,7 +3088,7 @@ endif
       if(nspec_zmax >0) then
       do ispec = 1,nspec_zmax
 
-     if(body_waves)then!P-SV waves
+     if(p_sv)then!P-SV waves
        do id =1,2
          do i=1,NGLLX
      read(38) b_absorb_elastic_top(id,i,ispec,it)
@@ -3228,7 +3228,7 @@ endif
    if(any_elastic) then
     write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
     open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
-      if(body_waves)then !P-SV waves
+      if(p_sv)then !P-SV waves
        do j=1,npoin
       read(55) (b_displ_elastic(i,j), i=1,NDIM), &
                   (b_veloc_elastic(i,j), i=1,NDIM), &
@@ -5127,7 +5127,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! *********************************************************
 
  if(any_elastic) then
-    call compute_forces_elastic(body_waves,npoin,nspec,myrank,nelemabs,numat, &
+    call compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
                source_type,it,NSTEP,anyabs,assign_external_model, &
                initialfield,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,angleforce,deltatcube, &
@@ -5151,7 +5151,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
       if(nspec_xmin >0) then
       do ispec = 1,nspec_xmin
       
-      if(body_waves)then!P-SV waves
+      if(p_sv)then!P-SV waves
          do i=1,NGLLZ
      write(35) b_absorb_elastic_left(1,i,ispec,it)
          enddo
@@ -5172,7 +5172,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
       do ispec = 1,nspec_xmax
 
 
-      if(body_waves)then!P-SV waves
+      if(p_sv)then!P-SV waves
          do i=1,NGLLZ
      write(36) b_absorb_elastic_right(1,i,ispec,it)
          enddo
@@ -5192,7 +5192,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
       if(nspec_zmin >0) then
       do ispec = 1,nspec_zmin
 
-      if(body_waves)then!P-SV waves
+      if(p_sv)then!P-SV waves
          do i=1,NGLLX
      write(37) b_absorb_elastic_bottom(1,i,ispec,it)
          enddo
@@ -5212,7 +5212,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
       if(nspec_zmax >0) then
       do ispec = 1,nspec_zmax
 
-      if(body_waves)then!P-SV waves
+      if(p_sv)then!P-SV waves
          do i=1,NGLLX
      write(38) b_absorb_elastic_top(1,i,ispec,it)
          enddo
@@ -5637,7 +5637,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
         if(source_type(i_source) == 1) then
        if(isolver == 1) then  ! forward wavefield
 
-          if(body_waves) then ! P-SV calculation
+          if(p_sv) then ! P-SV calculation
           accel_elastic(1,iglob_source(i_source)) = accel_elastic(1,iglob_source(i_source)) &
                             - sin(angleforce(i_source))*source_time_function(i_source,it)
           accel_elastic(3,iglob_source(i_source)) = accel_elastic(3,iglob_source(i_source)) &
@@ -5649,7 +5649,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
        else                   ! backward wavefield
 
-          if(body_waves) then ! P-SV calculation
+          if(p_sv) then ! P-SV calculation
       b_accel_elastic(1,iglob_source(i_source)) = b_accel_elastic(1,iglob_source(i_source)) &
                             - sin(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
       b_accel_elastic(3,iglob_source(i_source)) = b_accel_elastic(3,iglob_source(i_source)) &
@@ -6595,7 +6595,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
 ! rotate seismogram components if needed, except if recording pressure, which is a scalar
     if(seismotype /= 4 .and. seismotype /= 6) then
-      if(body_waves) then
+      if(p_sv) then
       sisux(seismo_current,irecloc) =   cosrot_irec(irecloc)*valux + sinrot_irec(irecloc)*valuz
       sisuz(seismo_current,irecloc) = - sinrot_irec(irecloc)*valux + cosrot_irec(irecloc)*valuz
       else
@@ -6920,7 +6920,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
   if (myrank == 0) write(IOUT,*) 'Writing PostScript file'
 
-  if(imagetype == 1 .and. body_waves) then
+  if(imagetype == 1 .and. p_sv) then
 
     if (myrank == 0) write(IOUT,*) 'drawing displacement vector as small arrows...'
 
@@ -6956,7 +6956,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field,d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
           coorg_send_ps_vector_field,coorg_recv_ps_vector_field)
 
-  else if(imagetype == 2 .and. body_waves) then
+  else if(imagetype == 2 .and. p_sv) then
 
     if (myrank == 0) write(IOUT,*) 'drawing velocity vector as small arrows...'
 
@@ -6992,7 +6992,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field,d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
           coorg_send_ps_vector_field,coorg_recv_ps_vector_field)
 
-  else if(imagetype == 3 .and. body_waves) then
+  else if(imagetype == 3 .and. p_sv) then
 
     if (myrank == 0) write(IOUT,*) 'drawing acceleration vector as small arrows...'
 
@@ -7028,7 +7028,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field,d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
           coorg_send_ps_vector_field,coorg_recv_ps_vector_field)
 
-  else if(imagetype == 4 .or. .not. body_waves) then
+  else if(imagetype == 4 .or. .not. p_sv) then
 
     if (myrank == 0) write(IOUT,*) 'cannot draw scalar pressure field or y-component field as a vector plot, skipping...'
 
@@ -7036,7 +7036,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     call exit_MPI('wrong type for snapshots')
   endif
 
-  if (myrank == 0 .and. imagetype /= 4 .and. body_waves) write(IOUT,*) 'PostScript file written'
+  if (myrank == 0 .and. imagetype /= 4 .and. p_sv) write(IOUT,*) 'PostScript file written'
 
   endif
 
@@ -7071,7 +7071,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           elastic,poroelastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,numat,kmato,density,rhoext,assign_external_model)
 
-  else if(imagetype == 4 .and. body_waves) then
+  else if(imagetype == 4 .and. p_sv) then
 
     if (myrank == 0) write(IOUT,*) 'drawing image of pressure field...'
 
@@ -7081,7 +7081,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
          numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext,e1,e11, &
          TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
 
-  else if(imagetype == 4 .and. .not. body_waves) then
+  else if(imagetype == 4 .and. .not. p_sv) then
     call exit_MPI('cannot draw pressure field for SH (membrane) waves')
   else
     call exit_MPI('wrong type for snapshots')
@@ -7092,7 +7092,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
   do k = 1, nb_pixel_loc
      j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
      i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
-    if(body_waves) then !P-SH waves, plot vertical component or pressure
+    if(p_sv) then !P-SH waves, plot vertical component or pressure
      image_color_data(i,j) = vector_field_display(3,iglob_image_color(i,j))
     else !SH (membrane) waves, plot y-component
      image_color_data(i,j) = vector_field_display(2,iglob_image_color(i,j))
@@ -7119,7 +7119,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
         do k = 1, nb_pixel_loc
            j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
            i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
-    if(body_waves) then !P-SH waves, plot vertical component or pressure
+    if(p_sv) then !P-SH waves, plot vertical component or pressure
            data_pixel_send(k) = vector_field_display(3,iglob_image_color(i,j))
     else !SH (membrane) waves, plot y-component
            data_pixel_send(k) = vector_field_display(2,iglob_image_color(i,j))
@@ -7144,7 +7144,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! suppress seismograms if we generate traces of the run for analysis with "ParaVer", because time consuming
   if(.not. GENERATE_PARAVER_TRACES) call write_seismograms(sisux,sisuz,siscurl,station_name,network_name,NSTEP, &
         nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0(1), &
-        NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current,body_waves)
+        NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current,p_sv)
 
   seismo_offset = seismo_offset + seismo_current
   seismo_current = 0
@@ -7218,7 +7218,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
   endif
     write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
     open(unit=55,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
-      if(body_waves)then !P-SV waves
+      if(p_sv)then !P-SV waves
        do j=1,npoin
       write(55) displ_elastic(1,j), displ_elastic(3,j), &
                   veloc_elastic(1,j), veloc_elastic(3,j), &

@@ -179,9 +179,9 @@ elastic material.
 How to run P-SV or SH (membrane) waves simulation :
 ---------------------------------------------------
 To run a P-SV waves calculation propagating in the x-z plane, 
-set body_waves = .true. in the Par_file.
+set p_sv = .true. in the Par_file.
 To run a SH (membrane) waves calculation traveling in the x-z plane with a
-y-component of motion, set body_waves = .false.
+y-component of motion, set p_sv = .false.
 
 This feature is only implemented for elastic materials and sensitivity kernels
 can be calculated (see Tape, Liu & Tromp, GJI 2006 for details on membrane
