@@ -103,7 +103,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
   real(kind=CUSTOM_REAL), dimension(NSOURCE,NSTEP) :: source_time_function
   real(kind=CUSTOM_REAL), dimension(NSOURCE,NDIM,NGLLX,NGLLZ) :: sourcearray
-  real(kind=CUSTOM_REAL), dimension(nrec,NSTEP,NDIM,NGLLX,NGLLZ) :: adj_sourcearrays
+  real(kind=CUSTOM_REAL), dimension(nrec,NSTEP,3,NGLLX,NGLLZ) :: adj_sourcearrays
   real(kind=CUSTOM_REAL), dimension(npoin) :: C_k,M_k
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLZ,nspec_xmin,NSTEP) :: b_absorb_poro_w_left
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLZ,nspec_xmax,NSTEP) :: b_absorb_poro_w_right
@@ -847,8 +847,10 @@
       do j=1,NGLLZ
         do i=1,NGLLX
           iglob = ibool(i,j,ispec_selected_rec(irec))
-          accelw_poroelastic(:,iglob) = accelw_poroelastic(:,iglob) - &
-               rhol_f/rhol_bar*adj_sourcearrays(irec_local,NSTEP-it+1,:,i,j)
+          accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - &
+               rhol_f/rhol_bar*adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
+          accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - &
+               rhol_f/rhol_bar*adj_sourcearrays(irec_local,NSTEP-it+1,3,i,j)
        enddo
       enddo
 

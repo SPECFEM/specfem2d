@@ -68,8 +68,9 @@
 
   logical, dimension(nspec) :: elastic,poroelastic
   real(kind=CUSTOM_REAL), dimension(npoin) :: potential_dot_dot_acoustic
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displ_elastic,displs_poroelastic,displw_poroelastic
-  double precision, dimension(NDIM,npoin) :: vector_field_display
+  real(kind=CUSTOM_REAL), dimension(3,npoin) :: displ_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displs_poroelastic,displw_poroelastic
+  double precision, dimension(3,npoin) :: vector_field_display
 
 ! array with derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
@@ -101,7 +102,7 @@
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
-        vector_field_display(2,iglob) = pressure_element(i,j)
+        vector_field_display(3,iglob) = pressure_element(i,j)
       enddo
     enddo
 
@@ -142,7 +143,8 @@
 
   logical, dimension(nspec) :: elastic,poroelastic
   real(kind=CUSTOM_REAL), dimension(npoin) :: potential_dot_dot_acoustic
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displ_elastic,displs_poroelastic,displw_poroelastic
+  real(kind=CUSTOM_REAL), dimension(3,npoin) :: displ_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displs_poroelastic,displw_poroelastic
 
 ! array with derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
@@ -231,9 +233,9 @@
 ! we can merge the two loops because NGLLX == NGLLZ
         do k = 1,NGLLX
           dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-          duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+          duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
           dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-          duz_dgamma = duz_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
+          duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
         enddo
 
         xixl = xix(i,j,ispec)

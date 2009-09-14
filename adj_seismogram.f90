@@ -5,37 +5,45 @@
 
       implicit none
 !
-! user edit
-      integer, parameter :: NSTEP = 6000
+!!!!  user edit
+      integer, parameter :: NSTEP = 26000
       integer, parameter :: nrec = 1
-      double precision, parameter :: t0 = 0.4
-      double precision, parameter :: deltat = 1d-3
+      double precision, parameter :: t0 = 8
+      double precision, parameter :: deltat = 0.25d-2
       double precision, parameter :: EPS = 1.d-40
-!
-      integer :: itime,icomp,istart,iend,nlen,irec
+!!!!
+      integer :: itime,icomp,istart,iend,nlen,irec,NDIM,NDIMr,adj_comp
       double precision :: time,tstart(nrec),tend(nrec)
       character(len=150), dimension(nrec) :: station_name
       double precision, dimension(NSTEP) :: time_window
-      double precision :: seism(NSTEP,2),Nnorm,seism_win(NSTEP)
+      double precision :: seism(NSTEP,3),Nnorm,seism_win(NSTEP)
       double precision :: seism_veloc(NSTEP),seism_accel(NSTEP),ft_bar(NSTEP)
-      character(len=3) :: comp(2)
+      character(len=3) :: compr(2),comp(3)
       character(len=150) :: filename,filename2
 
-      include 'constants.h'
+      NDIM=3
+      comp = (/"BHX","BHY","BHZ"/)
 
-! user edit
+!!!! user edit
+! which calculation: P-SV (use (1)) or SH (membrane) (use (2)) waves
+!      NDIMr=2  !(1)
+      NDIMr=1  !(2)
+! list of stations
       station_name(1) = 'S0001'
-      tstart(1) = 3.5d0 + t0
-      tend(1) = 4.3d0 + t0
-!
-
-      comp = (/"BHX","BHZ"/)
+      tstart(1) = 39.7d0 + t0
+      tend(1) = 41d0 + t0
+! which calculation: P-SV (use (1)) or SH (membrane) (use (2)) waves
+!      compr = (/"BHX","BHZ"/)    !(1)
+      compr = (/"BHY","dummy"/)  !(2)
+! chose the component for the adjoint source (adj_comp = 1: X, 2:Y, 3:Z)
+      adj_comp = 2
+!!!!
 
       do irec =1,nrec
 
-        do icomp = 1, NDIM
+        do icomp = 1, NDIMr
 
-      filename = 'OUTPUT_FILES/'//trim(station_name(irec))//'.AA.'// comp(icomp) // '.semd'
+      filename = 'OUTPUT_FILES/'//trim(station_name(irec))//'.AA.'// compr(icomp) // '.semd'
       open(unit = 10, file = trim(filename))
 
          do itime = 1,NSTEP
@@ -44,8 +52,17 @@
 
         enddo
 
-      close(10)
+          if(NDIMr==2)then
+           seism(:,3) = seism(:,2)
+           seism(:,2) = 0.d0
+          else
+           seism(:,2) = seism(:,1)
+           seism(:,1) = 0.d0
+           seism(:,3) = 0.d0
+          endif
 
+      close(10)
+       
 
          istart = max(floor(tstart(irec)/deltat),1)
          iend = min(floor(tend(irec)/deltat),NSTEP)
@@ -55,6 +72,8 @@
          nlen = iend - istart +1
 
        do icomp = 1, NDIM
+
+      print*,comp(icomp)
 
       filename = 'OUTPUT_FILES/'//trim(station_name(irec))//'.AA.'// comp(icomp) // '.adj'
       open(unit = 11, file = trim(filename))
@@ -85,8 +104,8 @@
 !      Nnorm = deltat * sum(time_window(:) * seism_veloc(:) * seism_veloc(:))
 ! cross-correlation traveltime adjoint source
       if(abs(Nnorm) > EPS) then
-      ft_bar(:) = - seism_veloc(:) * time_window(:) / Nnorm
-!      ft_bar(:) = seism_veloc(:) * time_window(:) / Nnorm
+!      ft_bar(:) = - seism_veloc(:) * time_window(:) / Nnorm
+      ft_bar(:) = seism_veloc(:) * time_window(:) / Nnorm
       print*,'Norm =', Nnorm
       else
       print *, 'norm < EPS for file '
@@ -94,9 +113,8 @@
       ft_bar(:) = 0.d0
       endif
 
-! user edit: which component
        do itime =1,NSTEP
-        if(icomp == 1) then
+        if(icomp == adj_comp) then
       write(11,*) (itime-1)*deltat - t0, ft_bar(itime)
         else
       write(11,*) (itime-1)*deltat - t0, 0.d0
@@ -107,6 +125,8 @@
       close(11)
 
       enddo
-
+      print*,'*************************' 
+      print*,'The input files (S****.AA.BHX/BHY/BHZ.adj) needed to run the adjoint simulation are in OUTPUT_FILES' 
+      print*,'*************************' 
 
       end program adj_seismogram

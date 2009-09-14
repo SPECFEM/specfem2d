@@ -126,7 +126,7 @@ adjoint source. Note: if the user forgets it, the program corrects it when readi
 isolver/save_forward combination and a warning message appears in the ouput
 file)
 
-Important output files (for example, for the elastic case)
+Important output files (for example, for the elastic case, P-SV waves)
 absorb_elastic_bottom*****.bin
 absorb_elastic_left*****.bin
 absorb_elastic_right*****.bin
@@ -136,13 +136,15 @@ S****.AA.BHX.semd
 S****.AA.BHZ.semd
 
 Second: define the adjoint source
-Use adj_seismogram.f90 which is in UTILS/adjoint.
+Use adj_seismogram.f90 
 Edit to update NSTEP, nrec, t0, deltat, and the position of the cut to pic
 any given phase if needed (tstart,tend), add the right number of stations, and
 put one component of the source to zero if needed.
-The ouput files of adj_seismogram.f90 are S****.AA.BHX.adj and S****.AA.BHZ.adj. They need to be
-kept in the OUTPUT_FILES directory together with the absorb_elastic_****.bin
-and lastframe_elastic.bin files to be read when running the adjoint simulation.
+The ouput files of adj_seismogram.f90 are S****.AA.BHX.adj and S****.AA.BHZ.adj, for P-SV waves (and 
+S****.AA.BHY.adj, for SH (membrane) waves). Note that you will need these three
+files (S****.AA.BHX.adj, S****.AA.BHY.adj and S****.AA.BHZ.adj) to be present in the OUTPUT_FILES directory 
+together with the absorb_elastic_****.bin and lastframe_elastic.bin files to be read 
+when running the adjoint simulation.
 
 Third: run the adjoint simulation
 Make sure that the adjoint source files absorbing boundaries and last frame files are
@@ -155,7 +157,13 @@ snapshot_rho_kappa_mu*****
 snapshot_rhop_alpha_beta*****
 which are the primary moduli kernels and the phase velocities kernels respectively.
 
-Note: At the moment, adjoint simulations do not support anisotropy, attenuation, and viscous damping.
+Note1: At the moment, adjoint simulations do not support anisotropy, attenuation, and viscous damping.
+Note2: You will need S****.AA.BHX.adj, S****.AA.BHY.adj and S****.AA.BHZ.adj
+to be present in OUTPUT_FILES even if you are just running an acoustic or
+poroelastic adjoint simulation. 
+S****.AA.BHX.adj is the only relevant component for an acoustic case. 
+S****.AA.BHX.adj and S****.AA.BHZ.adj are the only relevant components for a
+poroelastic case.
 
 --------------------------------------------------
                COUPLED SIMULATIONS
@@ -166,6 +174,19 @@ and acoustic,elastic/poroelastic simulations.
 
 Elastic/poroelastic coupling supports anisotropy, but not attenuation for the
 elastic material.
+
+
+How to run P-SV or SH (membrane) waves simulation :
+---------------------------------------------------
+To run a P-SV waves calculation propagating in the x-z plane, 
+set body_waves = .true. in the Par_file.
+To run a SH (membrane) waves calculation traveling in the x-z plane with a
+y-component of motion, set body_waves = .false.
+
+This feature is only implemented for elastic materials and sensitivity kernels
+can be calculated (see Tape, Liu & Tromp, GJI 2006 for details on membrane
+surface waves).
+
 
 --------------------------
 --------------------------

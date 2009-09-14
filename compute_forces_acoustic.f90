@@ -53,7 +53,7 @@
                jbegin_left,jend_left,jbegin_right,jend_right,isolver,save_forward,b_absorb_acoustic_left,&
                b_absorb_acoustic_right,b_absorb_acoustic_bottom,&
                b_absorb_acoustic_top,nspec_xmin,nspec_xmax,&
-               nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,kappa_ac_k)
+               nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax)
 
 ! compute forces for the acoustic elements
 
@@ -87,7 +87,6 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
   double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,rhoext
 
-  real(kind=CUSTOM_REAL), dimension(npoin) :: kappa_ac_k
   double precision, dimension(NGLLZ,nspec_xmin,NSTEP) :: b_absorb_acoustic_left
   double precision, dimension(NGLLZ,nspec_xmax,NSTEP) :: b_absorb_acoustic_right
   double precision, dimension(NGLLX,nspec_zmax,NSTEP) :: b_absorb_acoustic_top
@@ -170,14 +169,10 @@
           dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
           dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
 
-            if(isolver == 2) then
+          if(isolver == 2) then
           b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
           b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
-
-! kernels calculation
-          iglob = ibool(i,j,ispec)
-          kappa_ac_k(iglob) = dux_dxl *  b_dux_dxl + dux_dzl *  b_dux_dzl
-            endif
+          endif
 
           jacobianl = jacobian(i,j,ispec)
 

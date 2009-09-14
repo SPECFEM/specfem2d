@@ -106,7 +106,7 @@
 
   double precision dt,timeval
   double precision, dimension(NSOURCE) :: x_source,z_source
-  double precision displ(NDIM,npoin),coord(NDIM,npoin)
+  double precision displ(3,npoin),coord(NDIM,npoin)
   double precision vpext(NGLLX,NGLLZ,nspec)
 
   double precision coorg(NDIM,npgeo)
@@ -1464,7 +1464,7 @@ coorg_recv_ps_vector_field
   ratio_page = min(rpercentz*sizez/(zmax-zmin),rpercentx*sizex/(xmax-xmin)) / 100.d0
 
 ! compute the maximum of the norm of the vector
-  dispmax = maxval(sqrt(displ(1,:)**2 + displ(2,:)**2))
+  dispmax = maxval(sqrt(displ(1,:)**2 + displ(3,:)**2))
 #ifdef USE_MPI
   call MPI_ALLREDUCE (dispmax, dispmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
   dispmax = dispmax_glob
@@ -2745,7 +2745,7 @@ coorg_recv_ps_vector_field
   do l=1,NGLLX
 
   Uxinterp(i,j) = Uxinterp(i,j) + displ(1,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
-  Uzinterp(i,j) = Uzinterp(i,j) + displ(2,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
+  Uzinterp(i,j) = Uzinterp(i,j) + displ(3,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
 
   enddo
   enddo
@@ -2888,7 +2888,7 @@ coorg_recv_ps_vector_field
   z1 =(coord(2,ipoin)-zmin)*ratio_page
 
   x2 = displ(1,ipoin)*sizemax_arrows/dispmax
-  z2 = displ(2,ipoin)*sizemax_arrows/dispmax
+  z2 = displ(3,ipoin)*sizemax_arrows/dispmax
 
   d = sqrt(x2**2 + z2**2)
 

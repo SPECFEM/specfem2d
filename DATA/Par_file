@@ -30,6 +30,7 @@ TURN_ATTENUATION_ON             = .false.        # turn attenuation on or off fo
 TURN_VISCATTENUATION_ON         = .false.        # turn viscous attenuation on or off 
 Q0                              =  1             # quality factor for viscous attenuation
 freq0                           =  10            # frequency for viscous attenuation
+body_waves                      = .true.         # set the type of calculation (P-SV or SH/membrane waves)
 
 # absorbing boundaries parameters
 absorbing_conditions            = .true.	 # absorbing boundary active or not
