@@ -46,7 +46,7 @@
 
   subroutine write_seismograms(sisux,sisuz,siscurl,station_name,network_name, &
       NSTEP,nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
-      NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current &
+      NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current,body_waves &
       )
 
   implicit none
@@ -59,6 +59,8 @@
   integer :: nrec,NSTEP,seismotype
   integer :: NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current
   double precision :: t0,deltat
+
+  logical :: body_waves
 
   integer, intent(in) :: nrecloc,myrank
   integer, dimension(nrec),intent(in) :: which_proc_receiver
@@ -110,8 +112,8 @@
   endif
 
 
-! only one seismogram if pressurs
-  if(seismotype == 4 .or. seismotype == 6) then
+! only one seismogram if pressures or SH (membrane) waves
+  if(seismotype == 4 .or. seismotype == 6 .or. .not. body_waves) then
      number_of_components = 1
   else if(seismotype == 5) then
      number_of_components = NDIM+1
@@ -156,18 +158,22 @@
 ! write the new files
      if(seismotype == 4 .or. seismotype == 6) then
         open(unit=12,file='OUTPUT_FILES/pressure_file_single.bin',status='unknown',access='direct',recl=4)
+     elseif(.not.body_waves) then
+        open(unit=12,file='OUTPUT_FILES/Uy_file_single.bin',status='unknown',access='direct',recl=4)
      else
         open(unit=12,file='OUTPUT_FILES/Ux_file_single.bin',status='unknown',access='direct',recl=4)
      endif
 
      if(seismotype == 4 .or. seismotype == 6) then
         open(unit=13,file='OUTPUT_FILES/pressure_file_double.bin',status='unknown',access='direct',recl=8)
+     elseif(.not.body_waves) then
+        open(unit=13,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown',access='direct',recl=8)
      else
         open(unit=13,file='OUTPUT_FILES/Ux_file_double.bin',status='unknown',access='direct',recl=8)
      endif
 
 ! no Z component seismogram if pressure
-     if(seismotype /= 4 .and. seismotype /= 6) then
+     if(seismotype /= 4 .and. seismotype /= 6 .and. body_waves) then
         open(unit=14,file='OUTPUT_FILES/Uz_file_single.bin',status='unknown',access='direct',recl=4)
         open(unit=15,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown',access='direct',recl=8)
 
@@ -232,6 +238,8 @@
 
            ! in case of pressure, use different abbreviation
            if(seismotype == 4 .or. seismotype == 6) chn = 'PRE'
+           ! in case of SH (membrane) waves, use different abbreviation
+           if(.not.body_waves) chn = 'BHY'
 
            ! create the name of the seismogram file for each slice
            ! file name includes the name of the station, the network and the component
@@ -277,7 +285,7 @@
         do isample = 1, seismo_current
            write(12,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,1))
            write(13,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,1)
-        if ( seismotype /= 4 .and. seismotype /= 6) then
+        if ( seismotype /= 4 .and. seismotype /= 6 .and. body_waves) then
            write(14,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,2))
            write(15,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,2)
         end if
@@ -308,7 +316,7 @@
 
   close(12)
   close(13)
-  if ( seismotype /= 4 .and. seismotype /= 6) then
+  if ( seismotype /= 4 .and. seismotype /= 6 .and. body_waves) then
      close(14)
      close(15)
   end if

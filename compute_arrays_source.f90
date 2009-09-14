@@ -145,7 +145,7 @@
   character(len=*) adj_source_file
 
 ! output
-    real(kind=CUSTOM_REAL), dimension(NSTEP,NDIM,NGLLX,NGLLZ) :: adj_sourcearray
+    real(kind=CUSTOM_REAL), dimension(NSTEP,3,NGLLX,NGLLZ) :: adj_sourcearray
 
 ! Gauss-Lobatto-Legendre points of integration and weights
   double precision, dimension(NGLLX) :: xigll
@@ -153,11 +153,11 @@
 
 
   double precision :: hxir(NGLLX), hpxir(NGLLX), hgammar(NGLLZ), hpgammar(NGLLZ)
-  real(kind=CUSTOM_REAL) :: adj_src_s(NSTEP,NDIM)
+  real(kind=CUSTOM_REAL) :: adj_src_s(NSTEP,3)
 
   integer icomp, itime, i, k, ios
   double precision :: junk
-  character(len=3) :: comp(2)
+  character(len=3) :: comp(3)
   character(len=150) :: filename
 
   call lagrange_any(xi_receiver,NGLLX,xigll,hxir,hpxir)
@@ -165,9 +165,9 @@
 
   adj_sourcearray(:,:,:,:) = 0.
 
-  comp = (/"BHX","BHZ"/)
+  comp = (/"BHX","BHY","BHZ"/)
 
-  do icomp = 1, NDIM
+  do icomp = 1,3 
 
     filename = 'OUTPUT_FILES/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
     open(unit = IIN, file = trim(filename), iostat = ios)

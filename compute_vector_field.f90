@@ -69,8 +69,9 @@
 
   logical, dimension(nspec) :: elastic,poroelastic
   real(kind=CUSTOM_REAL), dimension(npoin) :: potential_acoustic
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: veloc_elastic,velocs_poroelastic
-  double precision, dimension(NDIM,npoin) :: vector_field_display
+  real(kind=CUSTOM_REAL), dimension(3,npoin) :: veloc_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: velocs_poroelastic
+  double precision, dimension(3,npoin) :: vector_field_display
 
 ! array with derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
@@ -80,7 +81,7 @@
   integer i,j,ispec,iglob
 
 ! vector field in this element
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLX) :: vector_field_element
+  real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLX) :: vector_field_element
 
 ! loop over spectral elements
   do ispec = 1,nspec
@@ -131,11 +132,12 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
 
 ! vector field in this element
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLX) :: vector_field_element
+  real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLX) :: vector_field_element
 
   logical, dimension(nspec) :: elastic,poroelastic
   real(kind=CUSTOM_REAL), dimension(npoin) :: potential_acoustic
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: veloc_elastic,velocs_poroelastic
+  real(kind=CUSTOM_REAL), dimension(3,npoin) :: veloc_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: velocs_poroelastic
 
 ! array with derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
@@ -162,6 +164,7 @@
         iglob = ibool(i,j,ispec)
         vector_field_element(1,i,j) = veloc_elastic(1,iglob)
         vector_field_element(2,i,j) = veloc_elastic(2,iglob)
+        vector_field_element(3,i,j) = veloc_elastic(3,iglob)
       enddo
     enddo
 
@@ -170,7 +173,8 @@
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
         vector_field_element(1,i,j) = velocs_poroelastic(1,iglob)
-        vector_field_element(2,i,j) = velocs_poroelastic(2,iglob)
+        vector_field_element(2,i,j) = ZERO
+        vector_field_element(3,i,j) = velocs_poroelastic(2,iglob)
       enddo
     enddo
 
@@ -209,7 +213,8 @@
 
 ! derivatives of potential
         vector_field_element(1,i,j) = (tempx1l*xixl + tempx2l*gammaxl) / rhol
-        vector_field_element(2,i,j) = (tempx1l*xizl + tempx2l*gammazl) / rhol
+        vector_field_element(2,i,j) = ZERO
+        vector_field_element(3,i,j) = (tempx1l*xizl + tempx2l*gammazl) / rhol
 
       enddo
     enddo

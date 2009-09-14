@@ -148,7 +148,10 @@
 ! volume = {5336},
 ! pages = {350-363}}
 !
-! version 6.0, Christina Morency and Yang Luo, August 2009:
+! version 6.0.1, Christina Morency, September 2009:
+!               - added SH (membrane) waves calculation for elastic media
+!               - fixed some bugs on acoustic kernels
+! version 6.0.0, Christina Morency and Yang Luo, August 2009:
 !               - support for poroelastic media
 !               - adjoint method for acoustic/elastic/poroelastic
 !
@@ -229,6 +232,9 @@
   double precision, dimension(:,:), allocatable :: coorg
   double precision, dimension(:), allocatable :: coorgread
 
+! for body or surface (membrane) waves calculation
+  logical :: body_waves
+
 ! receiver information
   integer :: nrec,ios
   integer, dimension(:), allocatable :: ispec_selected_rec
@@ -240,7 +246,7 @@
   integer :: seismo_offset, seismo_current
 
 ! vector field in an element
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLX) :: vector_field_element
+  real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLX) :: vector_field_element
 
 ! pressure in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: pressure_element
@@ -250,7 +256,7 @@
 
   integer :: i,j,k,l,it,irec,ipoin,ip,id,n,ispec,npoin,npgeo,iglob
   logical :: anyabs
-  double precision :: dxd,dzd,dcurld,valux,valuz,valcurl,hlagrange,rhol,cosrot,sinrot,xi,gamma,x,z
+  double precision :: dxd,dyd,dzd,dcurld,valux,valuy,valuz,valcurl,hlagrange,rhol,cosrot,sinrot,xi,gamma,x,z
 
 ! coefficients of the explicit Newmark time scheme
   integer NSTEP
@@ -423,13 +429,13 @@
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_accelw_poroelastic,b_velocw_poroelastic,b_displw_poroelastic
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_accel_elastic,b_veloc_elastic,b_displ_elastic
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_ac,b_displ_ac
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rho_kl, mu_kl, kappa_kl
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhol_global, mul_global, kappal_global
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: mu_k, kappa_k,rho_k
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhop_kl, beta_kl, alpha_kl
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rho_ac_kl, kappa_ac_kl
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhol_ac_global, kappal_ac_global
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: kappa_ac_k,rho_ac_k
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhop_ac_kl, alpha_ac_kl
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhot_kl, rhof_kl, sm_kl, eta_kl, mufr_kl, B_kl, &
     C_kl, M_kl, rhob_kl, rhofb_kl, phi_kl, Bb_kl, Cb_kl, Mb_kl, mufrb_kl, &
@@ -441,7 +447,7 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: permlxx_global,permlxz_global,permlzz_global
   character(len=150) :: adj_source_file
   integer :: irec_local,nadj_rec_local
-  double precision :: xx,zz,rholb
+  double precision :: xx,zz,rholb,tempx1l,tempx2l,b_tempx1l,b_tempx2l
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: adj_sourcearray
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: adj_sourcearrays
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: b_absorb_elastic_left,b_absorb_poro_s_left,b_absorb_poro_w_left
@@ -568,6 +574,7 @@
   integer , dimension(:), allocatable :: left_bound,right_bound,bot_bound
   double precision , dimension(:,:), allocatable :: v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot
   double precision , dimension(:,:), allocatable :: t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_paco,veloc_paco,displ_paco
   integer count_left,count_right,count_bot,ibegin,iend
   logical :: over_critical_angle
 
@@ -747,6 +754,9 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,*) TURN_VISCATTENUATION_ON,Q0,freq0
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) body_waves
 
 !---- check parameters read
   if (myrank == 0 .and. ipass == 1) then
@@ -1013,6 +1023,20 @@ endif
 
   enddo !do ispec = 1,nspec
 
+
+  if(.not. body_waves .and. .not. any_elastic) then
+  print*, '*************** WARNING ***************'
+  print*, 'Surface (membrane) waves calculation needs an elastic medium'
+  print*, '*************** WARNING ***************'
+  stop
+  endif
+  if(body_waves .and. (TURN_ATTENUATION_ON .or. TURN_ANISOTROPY_ON)) then
+  print*, '*************** WARNING ***************'
+  print*, 'Attenuation and anisotropy are not implemented for surface (membrane) waves calculation'
+  print*, '*************** WARNING ***************'
+  stop
+  endif
+
   if(TURN_ATTENUATION_ON) then
     nspec_allocate = nspec
   else
@@ -1170,10 +1194,10 @@ endif
 ! Files to save absorbed waves needed to reconstruct backward wavefield for adjoint method
    if(ipass == 1) then
      if(any_elastic .and. (save_forward .or. isolver == 2)) then
-   allocate(b_absorb_elastic_left(NDIM,NGLLZ,nspec_xmin,NSTEP))
-   allocate(b_absorb_elastic_right(NDIM,NGLLZ,nspec_xmax,NSTEP))
-   allocate(b_absorb_elastic_bottom(NDIM,NGLLX,nspec_zmin,NSTEP))
-   allocate(b_absorb_elastic_top(NDIM,NGLLX,nspec_zmax,NSTEP))
+   allocate(b_absorb_elastic_left(3,NGLLZ,nspec_xmin,NSTEP))
+   allocate(b_absorb_elastic_right(3,NGLLZ,nspec_xmax,NSTEP))
+   allocate(b_absorb_elastic_bottom(3,NGLLX,nspec_zmin,NSTEP))
+   allocate(b_absorb_elastic_top(3,NGLLX,nspec_zmax,NSTEP))
      endif
      if(any_poroelastic .and. (save_forward .or. isolver == 2)) then
    allocate(b_absorb_poro_s_left(NDIM,NGLLZ,nspec_xmin,NSTEP))
@@ -1520,7 +1544,7 @@ endif
   allocate(coord(NDIM,npoin))
 
 ! to display acoustic elements
-  allocate(vector_field_display(NDIM,npoin))
+  allocate(vector_field_display(3,npoin))
 
   if(assign_external_model) then
     allocate(vpext(NGLLX,NGLLZ,nspec))
@@ -1733,8 +1757,8 @@ endif
         nadj_rec_local = nadj_rec_local + 1
       endif
     enddo
-  if(ipass == 1) allocate(adj_sourcearray(NSTEP,NDIM,NGLLX,NGLLZ))
-  if (nadj_rec_local > 0 .and. ipass == 1)  allocate(adj_sourcearrays(nadj_rec_local,NSTEP,NDIM,NGLLX,NGLLZ))
+  if(ipass == 1) allocate(adj_sourcearray(NSTEP,3,NGLLX,NGLLZ))
+  if (nadj_rec_local > 0 .and. ipass == 1)  allocate(adj_sourcearrays(nadj_rec_local,NSTEP,3,NGLLX,NGLLZ))
     irec_local = 0
     do irec = 1, nrec
 !   compute only adjoint source arrays in the local proc
@@ -2011,9 +2035,9 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   if(ipass == 1) then
 
   if(any_elastic) then
-    allocate(displ_elastic(NDIM,npoin))
-    allocate(veloc_elastic(NDIM,npoin))
-    allocate(accel_elastic(NDIM,npoin))
+    allocate(displ_elastic(3,npoin))
+    allocate(veloc_elastic(3,npoin))
+    allocate(accel_elastic(3,npoin))
     allocate(rmass_inverse_elastic(npoin))
   else
 ! allocate unused arrays with fictitious size
@@ -2024,9 +2048,9 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
   endif
 ! extra array if adjoint and kernels calculation
   if(isolver == 2 .and. any_elastic) then
-    allocate(b_displ_elastic(NDIM,npoin))
-    allocate(b_veloc_elastic(NDIM,npoin))
-    allocate(b_accel_elastic(NDIM,npoin))
+    allocate(b_displ_elastic(3,npoin))
+    allocate(b_veloc_elastic(3,npoin))
+    allocate(b_accel_elastic(3,npoin))
     allocate(rho_kl(npoin))
     allocate(rho_k(npoin))
     allocate(rhol_global(npoin))
@@ -2197,11 +2221,11 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     allocate(b_potential_acoustic(npoin))
     allocate(b_potential_dot_acoustic(npoin))
     allocate(b_potential_dot_dot_acoustic(npoin))
+    allocate(b_displ_ac(2,npoin))
+    allocate(accel_ac(2,npoin))
     allocate(rho_ac_kl(npoin))
-    allocate(rho_ac_k(npoin))
     allocate(rhol_ac_global(npoin))
     allocate(kappa_ac_kl(npoin))
-    allocate(kappa_ac_k(npoin))
     allocate(kappal_ac_global(npoin))
     allocate(rhop_ac_kl(npoin))
     allocate(alpha_ac_kl(npoin))
@@ -2210,11 +2234,11 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     allocate(b_potential_acoustic(1))
     allocate(b_potential_dot_acoustic(1))
     allocate(b_potential_dot_dot_acoustic(1))
+    allocate(b_displ_ac(1,1))
+    allocate(accel_ac(1,1))
     allocate(rho_ac_kl(1))
-    allocate(rho_ac_k(1))
     allocate(rhol_ac_global(1))
     allocate(kappa_ac_kl(1))
-    allocate(kappa_ac_k(1))
     allocate(kappal_ac_global(1))
     allocate(rhop_ac_kl(1))
     allocate(alpha_ac_kl(1))
@@ -2994,44 +3018,92 @@ endif
 !--- left absorbing boundary
       if(nspec_xmin >0) then
       do ispec = 1,nspec_xmin
+
+     if(body_waves)then!P-SV waves
        do id =1,2
          do i=1,NGLLZ
      read(35) b_absorb_elastic_left(id,i,ispec,it)
          enddo
        enddo
+       b_absorb_elastic_left(3,:,ispec,it) = b_absorb_elastic_left(2,:,ispec,it)
+       b_absorb_elastic_left(2,:,ispec,it) = ZERO
+     else!SH (membrane) waves
+         do i=1,NGLLZ
+     read(35) b_absorb_elastic_left(2,i,ispec,it)
+         enddo
+       b_absorb_elastic_left(1,:,ispec,it) = ZERO
+       b_absorb_elastic_left(3,:,ispec,it) = ZERO
+     endif
+
       enddo
       endif
 
 !--- right absorbing boundary
       if(nspec_xmax >0) then
       do ispec = 1,nspec_xmax
+
+     if(body_waves)then!P-SV waves
        do id =1,2
          do i=1,NGLLZ
      read(36) b_absorb_elastic_right(id,i,ispec,it)
          enddo
        enddo
+       b_absorb_elastic_right(3,:,ispec,it) = b_absorb_elastic_right(2,:,ispec,it)
+       b_absorb_elastic_right(2,:,ispec,it) = ZERO
+     else!SH (membrane) waves
+         do i=1,NGLLZ
+     read(36) b_absorb_elastic_right(2,i,ispec,it)
+         enddo
+       b_absorb_elastic_right(1,:,ispec,it) = ZERO
+       b_absorb_elastic_right(3,:,ispec,it) = ZERO
+     endif
+
       enddo
       endif
 
 !--- bottom absorbing boundary
       if(nspec_zmin >0) then
       do ispec = 1,nspec_zmin
+
+     if(body_waves)then!P-SV waves
        do id =1,2
          do i=1,NGLLX
      read(37) b_absorb_elastic_bottom(id,i,ispec,it)
          enddo
        enddo
+       b_absorb_elastic_bottom(3,:,ispec,it) = b_absorb_elastic_bottom(2,:,ispec,it)
+       b_absorb_elastic_bottom(2,:,ispec,it) = ZERO
+     else!SH (membrane) waves
+         do i=1,NGLLZ
+     read(37) b_absorb_elastic_bottom(2,i,ispec,it)
+         enddo
+       b_absorb_elastic_bottom(1,:,ispec,it) = ZERO
+       b_absorb_elastic_bottom(3,:,ispec,it) = ZERO
+     endif
+
       enddo
       endif
 
 !--- top absorbing boundary
       if(nspec_zmax >0) then
       do ispec = 1,nspec_zmax
+
+     if(body_waves)then!P-SV waves
        do id =1,2
          do i=1,NGLLX
      read(38) b_absorb_elastic_top(id,i,ispec,it)
          enddo
        enddo
+       b_absorb_elastic_top(3,:,ispec,it) = b_absorb_elastic_top(2,:,ispec,it)
+       b_absorb_elastic_top(2,:,ispec,it) = ZERO
+     else!SH (membrane) waves
+         do i=1,NGLLZ
+     read(38) b_absorb_elastic_top(2,i,ispec,it)
+         enddo
+       b_absorb_elastic_top(1,:,ispec,it) = ZERO
+       b_absorb_elastic_top(3,:,ispec,it) = ZERO
+     endif
+
       enddo
       endif
 
@@ -3156,11 +3228,31 @@ endif
    if(any_elastic) then
     write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
     open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
+      if(body_waves)then !P-SV waves
        do j=1,npoin
       read(55) (b_displ_elastic(i,j), i=1,NDIM), &
                   (b_veloc_elastic(i,j), i=1,NDIM), &
                   (b_accel_elastic(i,j), i=1,NDIM)
        enddo
+       b_displ_elastic(3,:) = b_displ_elastic(2,:)
+       b_displ_elastic(2,:) = ZERO
+       b_veloc_elastic(3,:) = b_veloc_elastic(2,:)
+       b_veloc_elastic(2,:) = ZERO
+       b_accel_elastic(3,:) = b_accel_elastic(2,:)
+       b_accel_elastic(2,:) = ZERO
+      else !SH (membrane) waves
+       do j=1,npoin
+      read(55) b_displ_elastic(2,j), &
+                  b_veloc_elastic(2,j), &
+                  b_accel_elastic(2,j)
+       enddo
+       b_displ_elastic(1,:) = ZERO
+       b_displ_elastic(3,:) = ZERO
+       b_veloc_elastic(1,:) = ZERO
+       b_veloc_elastic(3,:) = ZERO
+       b_accel_elastic(1,:) = ZERO
+       b_accel_elastic(3,:) = ZERO
+      endif
     close(55)
 
     write(outputname,'(a,i6.6,a)') 'snapshot_rho_kappa_mu_',myrank
@@ -3468,7 +3560,7 @@ endif
        displ_elastic(1,i) = A_plane(1) * ricker_Bielak_displ(t - sin(angleforce(1))*x/c_inc + cos(angleforce(1))*z/c_inc,f0(1)) &
                  + B_plane(1) * ricker_Bielak_displ(t - sin(angleforce(1))*x/c_inc - cos(angleforce(1))*z/c_inc,f0(1)) &
                  + C_plane(1) * ricker_Bielak_displ(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0(1))
-       displ_elastic(2,i) = A_plane(2) * ricker_Bielak_displ(t - sin(angleforce(1))*x/c_inc + cos(angleforce(1))*z/c_inc,f0(1)) &
+       displ_elastic(3,i) = A_plane(2) * ricker_Bielak_displ(t - sin(angleforce(1))*x/c_inc + cos(angleforce(1))*z/c_inc,f0(1)) &
                  + B_plane(2) * ricker_Bielak_displ(t - sin(angleforce(1))*x/c_inc - cos(angleforce(1))*z/c_inc,f0(1)) &
                  + C_plane(2) * ricker_Bielak_displ(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0(1))
 
@@ -3476,7 +3568,7 @@ endif
        veloc_elastic(1,i) = A_plane(1) * ricker_Bielak_veloc(t - sin(angleforce(1))*x/c_inc + cos(angleforce(1))*z/c_inc,f0(1)) &
                  + B_plane(1) * ricker_Bielak_veloc(t - sin(angleforce(1))*x/c_inc - cos(angleforce(1))*z/c_inc,f0(1)) &
                  + C_plane(1) * ricker_Bielak_veloc(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0(1))
-       veloc_elastic(2,i) = A_plane(2) * ricker_Bielak_veloc(t - sin(angleforce(1))*x/c_inc + cos(angleforce(1))*z/c_inc,f0(1)) &
+       veloc_elastic(3,i) = A_plane(2) * ricker_Bielak_veloc(t - sin(angleforce(1))*x/c_inc + cos(angleforce(1))*z/c_inc,f0(1)) &
                  + B_plane(2) * ricker_Bielak_veloc(t - sin(angleforce(1))*x/c_inc - cos(angleforce(1))*z/c_inc,f0(1)) &
                  + C_plane(2) * ricker_Bielak_veloc(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0(1))
 
@@ -3484,7 +3576,7 @@ endif
        accel_elastic(1,i) = A_plane(1) * ricker_Bielak_accel(t - sin(angleforce(1))*x/c_inc + cos(angleforce(1))*z/c_inc,f0(1)) &
                  + B_plane(1) * ricker_Bielak_accel(t - sin(angleforce(1))*x/c_inc - cos(angleforce(1))*z/c_inc,f0(1)) &
                  + C_plane(1) * ricker_Bielak_accel(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0(1))
-       accel_elastic(2,i) = A_plane(2) * ricker_Bielak_accel(t - sin(angleforce(1))*x/c_inc + cos(angleforce(1))*z/c_inc,f0(1)) &
+       accel_elastic(3,i) = A_plane(2) * ricker_Bielak_accel(t - sin(angleforce(1))*x/c_inc + cos(angleforce(1))*z/c_inc,f0(1)) &
                  + B_plane(2) * ricker_Bielak_accel(t - sin(angleforce(1))*x/c_inc - cos(angleforce(1))*z/c_inc,f0(1)) &
                  + C_plane(2) * ricker_Bielak_accel(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0(1))
 
@@ -3556,16 +3648,31 @@ endif
          allocate(t0x_bot(count_bot,NSTEP))
          allocate(t0z_bot(count_bot,NSTEP))
 
+    allocate(displ_paco(NDIM,npoin))
+    allocate(veloc_paco(NDIM,npoin))
+    allocate(accel_paco(NDIM,npoin))
+
 ! call Paco's routine to compute in frequency and convert to time by Fourier transform
          call paco_beyond_critical(coord,npoin,deltat,NSTEP,angleforce(1),&
               f0(1),cploc,csloc,TURN_ATTENUATION_ON,Qp_attenuation,source_type(1),v0x_left,v0z_left,&
               v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,&
               t0x_bot,t0z_bot,left_bound(1:count_left),right_bound(1:count_right),bot_bound(1:count_bot)&
-              ,count_left,count_right,count_bot,displ_elastic,veloc_elastic,accel_elastic)
+              ,count_left,count_right,count_bot,displ_paco,veloc_paco,accel_paco)
+
+         displ_elastic(1,:) = displ_paco(1,:)
+         displ_elastic(3,:) = displ_paco(2,:)
+         veloc_elastic(1,:) = veloc_paco(1,:)
+         veloc_elastic(3,:) = veloc_paco(2,:)
+         accel_elastic(1,:) = accel_paco(1,:)
+         accel_elastic(3,:) = accel_paco(2,:)
 
          deallocate(left_bound)
          deallocate(right_bound)
          deallocate(bot_bound)
+
+    deallocate(displ_paco)
+    deallocate(veloc_paco)
+    deallocate(accel_paco)
 
          if (myrank == 0) then
             write(IOUT,*)  '***********'
@@ -3575,7 +3682,7 @@ endif
 
       endif ! beyond critical angle
 
-    write(IOUT,*) 'Max norm of initial elastic displacement = ',maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(2,:)**2))
+    write(IOUT,*) 'Max norm of initial elastic displacement = ',maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(3,:)**2))
   endif ! initialfield
 
   deltatsquare = deltat * deltat
@@ -3608,10 +3715,10 @@ endif
 
 ! Ricker (second derivative of a Gaussian) source time function
       if(time_function_type(i_source) == 1) then
-        source_time_function(i_source,it) = - factor(i_source) * (ONE-TWO*aval(i_source)*(time-t0(i_source))**2) * &
-                                           exp(-aval(i_source)*(time-t0(i_source))**2)
-!        source_time_function(i_source,it) = - factor(i_source) * TWO*aval(i_source)*sqrt(aval(i_source))*&
-!                                            (time-t0(i_source))/pi * exp(-aval(i_source)*(time-t0(i_source))**2)
+!        source_time_function(i_source,it) = - factor(i_source) * (ONE-TWO*aval(i_source)*(time-t0(i_source))**2) * &
+!                                           exp(-aval(i_source)*(time-t0(i_source))**2)
+        source_time_function(i_source,it) = - factor(i_source) * TWO*aval(i_source)*sqrt(aval(i_source))*&
+                                            (time-t0(i_source))/pi * exp(-aval(i_source)*(time-t0(i_source))**2)
 
 ! first derivative of a Gaussian source time function
       else if(time_function_type(i_source) == 2) then
@@ -4687,7 +4794,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
                jbegin_left,jend_left,jbegin_right,jend_right,isolver,save_forward,b_absorb_acoustic_left,&
                b_absorb_acoustic_right,b_absorb_acoustic_bottom,&
                b_absorb_acoustic_top,nspec_xmin,nspec_xmax,&
-               nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,kappa_ac_k)
+               nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax)
 
     if(anyabs .and. save_forward .and. isolver == 1) then
 
@@ -4757,11 +4864,11 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           iglob = ibool(i,j,ispec_elastic)
 
           displ_x = displ_elastic(1,iglob)
-          displ_z = displ_elastic(2,iglob)
+          displ_z = displ_elastic(3,iglob)
 
           if(isolver == 2) then
           b_displ_x = b_displ_elastic(1,iglob)
-          b_displ_z = b_displ_elastic(2,iglob)
+          b_displ_z = b_displ_elastic(3,iglob)
           endif
 
 ! get point values for the acoustic side
@@ -5009,19 +5116,13 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     endif
   endif
 
-  if(any_acoustic .and. isolver == 2) then ! kernels calculation
-      do iglob = 1,npoin
-            rho_ac_k(iglob) = potential_dot_dot_acoustic(iglob)*b_potential_acoustic(iglob)
-      enddo
-  endif
-
 
 ! *********************************************************
 ! ************* main solver for the elastic elements
 ! *********************************************************
 
  if(any_elastic) then
-    call compute_forces_elastic(npoin,nspec,myrank,nelemabs,numat, &
+    call compute_forces_elastic(body_waves,npoin,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
                source_type,it,NSTEP,anyabs,assign_external_model, &
                initialfield,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,angleforce,deltatcube, &
@@ -5044,44 +5145,81 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 !--- left absorbing boundary
       if(nspec_xmin >0) then
       do ispec = 1,nspec_xmin
-       do id =1,2
+      
+      if(body_waves)then!P-SV waves
          do i=1,NGLLZ
-     write(35) b_absorb_elastic_left(id,i,ispec,it)
+     write(35) b_absorb_elastic_left(1,i,ispec,it)
          enddo
-       enddo
+         do i=1,NGLLZ
+     write(35) b_absorb_elastic_left(3,i,ispec,it)
+         enddo
+      else!SH (membrane) waves
+         do i=1,NGLLZ
+     write(35) b_absorb_elastic_left(2,i,ispec,it)
+         enddo
+      endif
+
       enddo
       endif
 
 !--- right absorbing boundary
       if(nspec_xmax >0) then
       do ispec = 1,nspec_xmax
-       do id =1,2
+
+
+      if(body_waves)then!P-SV waves
          do i=1,NGLLZ
-     write(36) b_absorb_elastic_right(id,i,ispec,it)
+     write(36) b_absorb_elastic_right(1,i,ispec,it)
          enddo
-       enddo
+         do i=1,NGLLZ
+     write(36) b_absorb_elastic_right(3,i,ispec,it)
+         enddo
+      else!SH (membrane) waves
+         do i=1,NGLLZ
+     write(36) b_absorb_elastic_right(2,i,ispec,it)
+         enddo
+      endif
+
       enddo
       endif
 
 !--- bottom absorbing boundary
       if(nspec_zmin >0) then
       do ispec = 1,nspec_zmin
-       do id =1,2
+
+      if(body_waves)then!P-SV waves
          do i=1,NGLLX
-     write(37) b_absorb_elastic_bottom(id,i,ispec,it)
+     write(37) b_absorb_elastic_bottom(1,i,ispec,it)
          enddo
-       enddo
+         do i=1,NGLLX
+     write(37) b_absorb_elastic_bottom(3,i,ispec,it)
+         enddo
+      else!SH (membrane) waves
+         do i=1,NGLLX
+     write(37) b_absorb_elastic_bottom(2,i,ispec,it)
+         enddo
+      endif
+
       enddo
       endif
 
 !--- top absorbing boundary
       if(nspec_zmax >0) then
       do ispec = 1,nspec_zmax
-       do id =1,2
+
+      if(body_waves)then!P-SV waves
          do i=1,NGLLX
-     write(38) b_absorb_elastic_top(id,i,ispec,it)
+     write(38) b_absorb_elastic_top(1,i,ispec,it)
          enddo
-       enddo
+         do i=1,NGLLX
+     write(38) b_absorb_elastic_top(3,i,ispec,it)
+         enddo
+      else!SH (membrane) waves
+         do i=1,NGLLX
+     write(38) b_absorb_elastic_top(2,i,ispec,it)
+         enddo
+      endif
+
       enddo
       endif
 
@@ -5160,11 +5298,11 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           endif
 
           accel_elastic(1,iglob) = accel_elastic(1,iglob) + weight*nx*pressure
-          accel_elastic(2,iglob) = accel_elastic(2,iglob) + weight*nz*pressure
+          accel_elastic(3,iglob) = accel_elastic(3,iglob) + weight*nz*pressure
 
           if(isolver == 2) then
           b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) + weight*nx*b_pressure
-          b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) + weight*nz*b_pressure
+          b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) + weight*nz*b_pressure
           endif !if(isolver == 2) then
 
         enddo
@@ -5348,15 +5486,15 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
             dux_dxi = dux_dxi + displ_elastic(1,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
-            duz_dxi = duz_dxi + displ_elastic(2,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
+            duz_dxi = duz_dxi + displ_elastic(3,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
             dux_dgamma = dux_dgamma + displ_elastic(1,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
-            duz_dgamma = duz_dgamma + displ_elastic(2,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
+            duz_dgamma = duz_dgamma + displ_elastic(3,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
 
             if(isolver == 2) then
             b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
-            b_duz_dxi = b_duz_dxi + b_displ_elastic(2,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
+            b_duz_dxi = b_duz_dxi + b_displ_elastic(3,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
             b_dux_dgamma = b_dux_dgamma + b_displ_elastic(1,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
-            b_duz_dgamma = b_duz_dgamma + b_displ_elastic(2,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
+            b_duz_dgamma = b_duz_dgamma + b_displ_elastic(3,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
             endif
           enddo
 
@@ -5437,14 +5575,14 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           accel_elastic(1,iglob) = accel_elastic(1,iglob) - weight* &
                 (sigma_xx*nx + sigma_xz*nz +sigmap*nx)/3.d0
 
-          accel_elastic(2,iglob) = accel_elastic(2,iglob) - weight* &
+          accel_elastic(3,iglob) = accel_elastic(3,iglob) - weight* &
                 (sigma_xz*nx + sigma_zz*nz +sigmap*nz)/3.d0
 
           if(isolver == 2) then
           b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - weight* &
                 (b_sigma_xx*nx + b_sigma_xz*nz +b_sigmap*nx)/3.d0
 
-          b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - weight* &
+          b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - weight* &
                 (b_sigma_xz*nx + b_sigma_zz*nz +b_sigmap*nz)/3.d0
           endif !if(isolver == 2) then
 
@@ -5493,15 +5631,29 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! collocated force
         if(source_type(i_source) == 1) then
        if(isolver == 1) then  ! forward wavefield
+
+          if(body_waves) then ! P-SV calculation
           accel_elastic(1,iglob_source(i_source)) = accel_elastic(1,iglob_source(i_source)) &
                             - sin(angleforce(i_source))*source_time_function(i_source,it)
-          accel_elastic(2,iglob_source(i_source)) = accel_elastic(2,iglob_source(i_source)) &
+          accel_elastic(3,iglob_source(i_source)) = accel_elastic(3,iglob_source(i_source)) &
                             + cos(angleforce(i_source))*source_time_function(i_source,it)
+          else    ! SH (membrane) calculation
+          accel_elastic(2,iglob_source(i_source)) = accel_elastic(2,iglob_source(i_source)) &
+                            + source_time_function(i_source,it)
+          endif
+
        else                   ! backward wavefield
+
+          if(body_waves) then ! P-SV calculation
       b_accel_elastic(1,iglob_source(i_source)) = b_accel_elastic(1,iglob_source(i_source)) &
                             - sin(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
-      b_accel_elastic(2,iglob_source(i_source)) = b_accel_elastic(2,iglob_source(i_source)) &
+      b_accel_elastic(3,iglob_source(i_source)) = b_accel_elastic(3,iglob_source(i_source)) &
                             + cos(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
+          else    ! SH (membrane) calculation
+      b_accel_elastic(2,iglob_source(i_source)) = b_accel_elastic(2,iglob_source(i_source)) &
+                            + source_time_function(i_source,NSTEP-it+1)
+          endif
+
        endif  !endif isolver == 1
         endif
 
@@ -5512,24 +5664,20 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
     accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic
     accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic
+    accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic
 
     veloc_elastic = veloc_elastic + deltatover2*accel_elastic
 
    if(isolver == 2) then
     b_accel_elastic(1,:) = b_accel_elastic(1,:) * rmass_inverse_elastic(:)
     b_accel_elastic(2,:) = b_accel_elastic(2,:) * rmass_inverse_elastic(:)
+    b_accel_elastic(3,:) = b_accel_elastic(3,:) * rmass_inverse_elastic(:)
 
     b_veloc_elastic = b_veloc_elastic + b_deltatover2*b_accel_elastic
    endif
 
   endif
 
-  if(any_elastic .and. isolver == 2) then ! kernels calculation
-      do iglob = 1,npoin
-            rho_k(iglob) =  accel_elastic(1,iglob)*b_displ_elastic(1,iglob) +&
-                            accel_elastic(2,iglob)*b_displ_elastic(2,iglob)
-      enddo
-  endif
 
 ! ******************************************************************************************************************
 ! ************* main solver for the poroelastic elements: first the solid (u_s) than the fluid (w)
@@ -5801,15 +5949,15 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
             dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec_elastic))*hprime_xx(i,k)
-            duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec_elastic))*hprime_xx(i,k)
+            duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec_elastic))*hprime_xx(i,k)
             dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
-            duz_dgamma = duz_dgamma + displ_elastic(2,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
+            duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
 
             if(isolver == 2) then
             b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,j,ispec_elastic))*hprime_xx(i,k)
-            b_duz_dxi = b_duz_dxi + b_displ_elastic(2,ibool(k,j,ispec_elastic))*hprime_xx(i,k)
+            b_duz_dxi = b_duz_dxi + b_displ_elastic(3,ibool(k,j,ispec_elastic))*hprime_xx(i,k)
             b_dux_dgamma = b_dux_dgamma + b_displ_elastic(1,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
-            b_duz_dgamma = b_duz_dgamma + b_displ_elastic(2,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
+            b_duz_dgamma = b_duz_dgamma + b_displ_elastic(3,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
             endif
           enddo
 
@@ -6142,20 +6290,6 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
   endif
 
-  if(any_poroelastic .and. isolver ==2) then
-   do iglob =1,npoin
-            rhot_k(iglob) = accels_poroelastic(1,iglob) * b_displs_poroelastic(1,iglob) + &
-                  accels_poroelastic(2,iglob) * b_displs_poroelastic(2,iglob)
-            rhof_k(iglob) = accelw_poroelastic(1,iglob) * b_displs_poroelastic(1,iglob) + &
-                  accelw_poroelastic(2,iglob) * b_displs_poroelastic(2,iglob) + &
-                  accels_poroelastic(1,iglob) * b_displw_poroelastic(1,iglob) + &
-                  accels_poroelastic(2,iglob) * b_displw_poroelastic(2,iglob)
-            sm_k(iglob) =  accelw_poroelastic(1,iglob) * b_displw_poroelastic(1,iglob) + &
-                  accelw_poroelastic(2,iglob) * b_displw_poroelastic(2,iglob)
-            eta_k(iglob) = velocw_poroelastic(1,iglob) * b_displw_poroelastic(1,iglob) + &
-                  velocw_poroelastic(2,iglob) * b_displw_poroelastic(2,iglob)
-   enddo
-  endif
 
 !assembling the displacements on the elastic-poro boundaries
     if(coupled_elastic_poro) then
@@ -6179,9 +6313,9 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
         if(icount(iglob) ==1)then
           veloc_elastic(1,iglob) = veloc_elastic(1,iglob) - deltatover2*accel_elastic(1,iglob)
-          veloc_elastic(2,iglob) = veloc_elastic(2,iglob) - deltatover2*accel_elastic(2,iglob)
+          veloc_elastic(3,iglob) = veloc_elastic(3,iglob) - deltatover2*accel_elastic(3,iglob)
           accel_elastic(1,iglob) = accel_elastic(1,iglob) / rmass_inverse_elastic(iglob)
-          accel_elastic(2,iglob) = accel_elastic(2,iglob) / rmass_inverse_elastic(iglob)
+          accel_elastic(3,iglob) = accel_elastic(3,iglob) / rmass_inverse_elastic(iglob)
 ! recovering original velocities and accelerations on boundaries (poro side)
           velocs_poroelastic(1,iglob) = velocs_poroelastic(1,iglob) - deltatover2*accels_poroelastic(1,iglob)
           velocs_poroelastic(2,iglob) = velocs_poroelastic(2,iglob) - deltatover2*accels_poroelastic(2,iglob)
@@ -6190,15 +6324,15 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! assembling accelerations
           accel_elastic(1,iglob) = ( accel_elastic(1,iglob) + accels_poroelastic(1,iglob) ) / &
                                    ( 1.0/rmass_inverse_elastic(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
-          accel_elastic(2,iglob) = ( accel_elastic(2,iglob) + accels_poroelastic(2,iglob) ) / &
+          accel_elastic(3,iglob) = ( accel_elastic(3,iglob) + accels_poroelastic(2,iglob) ) / &
                                    ( 1.0/rmass_inverse_elastic(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
           accels_poroelastic(1,iglob) = accel_elastic(1,iglob)
-          accels_poroelastic(2,iglob) = accel_elastic(2,iglob)
+          accels_poroelastic(2,iglob) = accel_elastic(3,iglob)
 ! updating velocities
           velocs_poroelastic(1,iglob) = velocs_poroelastic(1,iglob) + deltatover2*accels_poroelastic(1,iglob)
           velocs_poroelastic(2,iglob) = velocs_poroelastic(2,iglob) + deltatover2*accels_poroelastic(2,iglob)
           veloc_elastic(1,iglob) = veloc_elastic(1,iglob) + deltatover2*accel_elastic(1,iglob)
-          veloc_elastic(2,iglob) = veloc_elastic(2,iglob) + deltatover2*accel_elastic(2,iglob)
+          veloc_elastic(3,iglob) = veloc_elastic(3,iglob) + deltatover2*accel_elastic(3,iglob)
 ! zeros w
           accelw_poroelastic(1,iglob) = ZERO
           accelw_poroelastic(2,iglob) = ZERO
@@ -6211,6 +6345,29 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
       enddo
     endif
 
+! kernels calculation
+  if(any_elastic .and. isolver == 2) then ! kernels calculation
+      do iglob = 1,npoin
+            rho_k(iglob) =  accel_elastic(1,iglob)*b_displ_elastic(1,iglob) +&
+                            accel_elastic(2,iglob)*b_displ_elastic(2,iglob) +&
+                            accel_elastic(3,iglob)*b_displ_elastic(3,iglob)
+      enddo
+  endif
+
+  if(any_poroelastic .and. isolver ==2) then
+   do iglob =1,npoin
+            rhot_k(iglob) = accels_poroelastic(1,iglob) * b_displs_poroelastic(1,iglob) + &
+                  accels_poroelastic(2,iglob) * b_displs_poroelastic(2,iglob)
+            rhof_k(iglob) = accelw_poroelastic(1,iglob) * b_displs_poroelastic(1,iglob) + &
+                  accelw_poroelastic(2,iglob) * b_displs_poroelastic(2,iglob) + &
+                  accels_poroelastic(1,iglob) * b_displw_poroelastic(1,iglob) + &
+                  accels_poroelastic(2,iglob) * b_displw_poroelastic(2,iglob)
+            sm_k(iglob) =  accelw_poroelastic(1,iglob) * b_displw_poroelastic(1,iglob) + &
+                  accelw_poroelastic(2,iglob) * b_displw_poroelastic(2,iglob)
+            eta_k(iglob) = velocw_poroelastic(1,iglob) * b_displw_poroelastic(1,iglob) + &
+                  velocw_poroelastic(2,iglob) * b_displw_poroelastic(2,iglob)
+   enddo
+  endif
 
 !----  compute kinetic and potential energy
   if(OUTPUT_ENERGY) &
@@ -6238,7 +6395,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
     if(any_elastic_glob) then
       if(any_elastic) then
-        displnorm_all = maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(2,:)**2))
+        displnorm_all = maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(2,:)**2 + displ_elastic(3,:)**2))
       else
         displnorm_all = 0.d0
       endif
@@ -6348,6 +6505,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
 ! perform the general interpolation using Lagrange polynomials
     valux = ZERO
+    valuy = ZERO
     valuz = ZERO
     valcurl = ZERO
 
@@ -6382,7 +6540,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           dzd = displs_poroelastic(2,iglob)
              elseif(elastic(ispec)) then
           dxd = displ_elastic(1,iglob)
-          dzd = displ_elastic(2,iglob)
+          dyd = displ_elastic(2,iglob)
+          dzd = displ_elastic(3,iglob)
              endif
 
         else if(seismotype == 2) then
@@ -6392,7 +6551,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           dzd = velocs_poroelastic(2,iglob)
              elseif(elastic(ispec)) then
           dxd = veloc_elastic(1,iglob)
-          dzd = veloc_elastic(2,iglob)
+          dyd = veloc_elastic(2,iglob)
+          dzd = veloc_elastic(3,iglob)
              endif
 
         else if(seismotype == 3) then
@@ -6402,7 +6562,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           dzd = accels_poroelastic(2,iglob)
              elseif(elastic(ispec)) then
           dxd = accel_elastic(1,iglob)
-          dzd = accel_elastic(2,iglob)
+          dyd = accel_elastic(2,iglob)
+          dzd = accel_elastic(3,iglob)
              endif
 
         else if(seismotype == 5) then
@@ -6420,6 +6581,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
 ! compute interpolated field
         valux = valux + dxd*hlagrange
+        valuy = valuy + dyd*hlagrange
         valuz = valuz + dzd*hlagrange
         valcurl = valcurl + dcurld*hlagrange
 
@@ -6428,8 +6590,13 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
 ! rotate seismogram components if needed, except if recording pressure, which is a scalar
     if(seismotype /= 4 .and. seismotype /= 6) then
+      if(body_waves) then
       sisux(seismo_current,irecloc) =   cosrot_irec(irecloc)*valux + sinrot_irec(irecloc)*valuz
       sisuz(seismo_current,irecloc) = - sinrot_irec(irecloc)*valux + cosrot_irec(irecloc)*valuz
+      else
+      sisux(seismo_current,irecloc) = valuy
+      sisuz(seismo_current,irecloc) = ZERO
+      endif
     else
       sisux(seismo_current,irecloc) = valux
       sisuz(seismo_current,irecloc) = ZERO
@@ -6449,19 +6616,52 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
     do ispec = 1, nspec
      if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
-      do k = 1, NGLLZ
+      do j = 1, NGLLZ
           do i = 1, NGLLX
-            iglob = ibool(i,k,ispec)
+            iglob = ibool(i,j,ispec)
     kappal_ac_global(iglob) = poroelastcoef(3,1,kmato(ispec))
     rhol_ac_global(iglob) = density(1,kmato(ispec))
-          enddo
-      enddo
+
+! calcul the displacement by computing the gradient of potential / rho
+! and calcul the acceleration by computing the gradient of potential_dot_dot / rho
+        tempx1l = ZERO
+        tempx2l = ZERO
+        b_tempx1l = ZERO
+        b_tempx2l = ZERO
+        do k = 1,NGLLX
+! derivative along x
+          tempx1l = tempx1l + potential_dot_dot_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
+          b_tempx1l = b_tempx1l + b_potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
+! derivative along z
+          tempx2l = tempx2l + potential_dot_dot_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
+          b_tempx2l = b_tempx2l + b_potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
+        enddo
+
+        xixl = xix(i,j,ispec)
+        xizl = xiz(i,j,ispec)
+        gammaxl = gammax(i,j,ispec)
+        gammazl = gammaz(i,j,ispec)
+
+        if(assign_external_model) rhol_ac_global(iglob) = rhoext(i,j,ispec)
+
+! derivatives of potential
+        accel_ac(1,iglob) = (tempx1l*xixl + tempx2l*gammaxl) / rhol_ac_global(iglob)
+        accel_ac(2,iglob) = (tempx1l*xizl + tempx2l*gammazl) / rhol_ac_global(iglob)
+        b_displ_ac(1,iglob) = (b_tempx1l*xixl + b_tempx2l*gammaxl) / rhol_ac_global(iglob)
+        b_displ_ac(2,iglob) = (b_tempx1l*xizl + b_tempx2l*gammazl) / rhol_ac_global(iglob)
+
+          enddo !i = 1, NGLLX
+      enddo !j = 1, NGLLZ
      endif
     enddo
 
           do iglob =1,npoin
-            rho_ac_kl(iglob) = rho_ac_kl(iglob) - rhol_ac_global(iglob)  * rho_ac_k(iglob) * deltat
-            kappa_ac_kl(iglob) = kappa_ac_kl(iglob) - kappal_ac_global(iglob) * kappa_ac_k(iglob) * deltat
+            rho_ac_kl(iglob) = rho_ac_kl(iglob) - rhol_ac_global(iglob)  * &
+                           dot_product(accel_ac(:,iglob),b_displ_ac(:,iglob)) * deltat
+            kappa_ac_kl(iglob) = kappa_ac_kl(iglob) - kappal_ac_global(iglob) * &
+                           potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob) * &
+                           b_potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob)&
+                           * deltat
 !
             rhop_ac_kl(iglob) = rho_ac_kl(iglob) + kappa_ac_kl(iglob)
             alpha_ac_kl(iglob) = TWO *  kappa_ac_kl(iglob)
@@ -6715,7 +6915,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
   if (myrank == 0) write(IOUT,*) 'Writing PostScript file'
 
-  if(imagetype == 1) then
+  if(imagetype == 1 .and. body_waves) then
 
     if (myrank == 0) write(IOUT,*) 'drawing displacement vector as small arrows...'
 
@@ -6751,7 +6951,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field,d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
           coorg_send_ps_vector_field,coorg_recv_ps_vector_field)
 
-  else if(imagetype == 2) then
+  else if(imagetype == 2 .and. body_waves) then
 
     if (myrank == 0) write(IOUT,*) 'drawing velocity vector as small arrows...'
 
@@ -6787,7 +6987,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field,d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
           coorg_send_ps_vector_field,coorg_recv_ps_vector_field)
 
-  else if(imagetype == 3) then
+  else if(imagetype == 3 .and. body_waves) then
 
     if (myrank == 0) write(IOUT,*) 'drawing acceleration vector as small arrows...'
 
@@ -6823,15 +7023,15 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field,d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
           coorg_send_ps_vector_field,coorg_recv_ps_vector_field)
 
-  else if(imagetype == 4) then
+  else if(imagetype == 4 .or. .not. body_waves) then
 
-    if (myrank == 0) write(IOUT,*) 'cannot draw scalar pressure field as a vector plot, skipping...'
+    if (myrank == 0) write(IOUT,*) 'cannot draw scalar pressure field or y-component field as a vector plot, skipping...'
 
   else
     call exit_MPI('wrong type for snapshots')
   endif
 
-  if (myrank == 0 .and. imagetype /= 4) write(IOUT,*) 'PostScript file written'
+  if (myrank == 0 .and. imagetype /= 4 .and. body_waves) write(IOUT,*) 'PostScript file written'
 
   endif
 
@@ -6844,7 +7044,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
   if(imagetype == 1) then
 
-    if (myrank == 0) write(IOUT,*) 'drawing image of vertical component of displacement vector...'
+    if (myrank == 0) write(IOUT,*) 'drawing image of z (if P-SV) or y (if SH) component of displacement vector...'
 
     call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic,&
           elastic,poroelastic,vector_field_display, &
@@ -6852,7 +7052,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
   else if(imagetype == 2) then
 
-    if (myrank == 0) write(IOUT,*) 'drawing image of vertical component of velocity vector...'
+    if (myrank == 0) write(IOUT,*) 'drawing image of z (if P-SV) or y (if SH) component of velocity vector...'
 
     call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,velocs_poroelastic,&
           elastic,poroelastic,vector_field_display, &
@@ -6860,13 +7060,13 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
   else if(imagetype == 3) then
 
-    if (myrank == 0) write(IOUT,*) 'drawing image of vertical component of acceleration vector...'
+    if (myrank == 0) write(IOUT,*) 'drawing image of z (if P-SV) or y (if SH) component of acceleration vector...'
 
     call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,accels_poroelastic,&
           elastic,poroelastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,numat,kmato,density,rhoext,assign_external_model)
 
-  else if(imagetype == 4) then
+  else if(imagetype == 4 .and. body_waves) then
 
     if (myrank == 0) write(IOUT,*) 'drawing image of pressure field...'
 
@@ -6876,6 +7076,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
          numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext,e1,e11, &
          TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
 
+  else if(imagetype == 4 .and. .not. body_waves) then
+    call exit_MPI('cannot draw pressure field for SH (membrane) waves')
   else
     call exit_MPI('wrong type for snapshots')
   endif
@@ -6885,7 +7087,11 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
   do k = 1, nb_pixel_loc
      j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
      i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
+    if(body_waves) then !P-SH waves, plot vertical component or pressure
+     image_color_data(i,j) = vector_field_display(3,iglob_image_color(i,j))
+    else !SH (membrane) waves, plot y-component
      image_color_data(i,j) = vector_field_display(2,iglob_image_color(i,j))
+    endif
   enddo
 
 ! assembling array image_color_data on process zero for color output
@@ -6908,7 +7114,11 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
         do k = 1, nb_pixel_loc
            j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
            i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
+    if(body_waves) then !P-SH waves, plot vertical component or pressure
+           data_pixel_send(k) = vector_field_display(3,iglob_image_color(i,j))
+    else !SH (membrane) waves, plot y-component
            data_pixel_send(k) = vector_field_display(2,iglob_image_color(i,j))
+    endif
         enddo
 
         call MPI_SEND(data_pixel_send(1),nb_pixel_loc,MPI_DOUBLE_PRECISION, 0, 43, MPI_COMM_WORLD, ier)
@@ -6929,7 +7139,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! suppress seismograms if we generate traces of the run for analysis with "ParaVer", because time consuming
   if(.not. GENERATE_PARAVER_TRACES) call write_seismograms(sisux,sisuz,siscurl,station_name,network_name,NSTEP, &
         nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0(1), &
-        NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current)
+        NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current,body_waves)
 
   seismo_offset = seismo_offset + seismo_current
   seismo_current = 0
@@ -7003,11 +7213,19 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
   endif
     write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
     open(unit=55,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
+      if(body_waves)then !P-SV waves
        do j=1,npoin
-      write(55) (displ_elastic(i,j), i=1,NDIM), &
-                  (veloc_elastic(i,j), i=1,NDIM), &
-                  (accel_elastic(i,j), i=1,NDIM)
+      write(55) displ_elastic(1,j), displ_elastic(3,j), &
+                  veloc_elastic(1,j), veloc_elastic(3,j), &
+                  accel_elastic(1,j), accel_elastic(3,j)
        enddo
+      else !SH (membrane) waves
+       do j=1,npoin
+      write(55) displ_elastic(2,j), &
+                  veloc_elastic(2,j), &
+                  accel_elastic(2,j)
+       enddo
+      endif
     close(55)
   endif
 

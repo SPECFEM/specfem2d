@@ -42,7 +42,7 @@
 !
 !========================================================================
 
-  subroutine compute_forces_elastic(npoin,nspec,myrank,nelemabs,numat, &
+  subroutine compute_forces_elastic(body_waves,npoin,nspec,myrank,nelemabs,numat, &
        ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
        source_type,it,NSTEP,anyabs,assign_external_model, &
        initialfield,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,angleforce,deltatcube, &
@@ -66,6 +66,7 @@
 
   include "constants.h"
 
+  logical :: body_waves
   integer :: NSOURCE, i_source
   integer :: npoin,nspec,myrank,nelemabs,numat,it,NSTEP
   integer, dimension(NSOURCE) :: ispec_selected_source,is_proc_source,source_type
@@ -92,7 +93,8 @@
   logical, dimension(nspec) :: elastic
   logical, dimension(4,nelemabs)  :: codeabs
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: accel_elastic,veloc_elastic,displ_elastic
+  real(kind=CUSTOM_REAL), dimension(3,npoin) :: accel_elastic,veloc_elastic,displ_elastic
+  real(kind=CUSTOM_REAL), dimension(2,npoin) :: displ_att
   double precision, dimension(2,numat) :: density
   double precision, dimension(4,3,numat) :: elastcoef
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
@@ -100,13 +102,13 @@
   real(kind=CUSTOM_REAL), dimension(NSOURCE,NSTEP) :: source_time_function
   real(kind=CUSTOM_REAL), dimension(NSOURCE,NDIM,NGLLX,NGLLZ) :: sourcearray
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: b_accel_elastic,b_displ_elastic
-  real(kind=CUSTOM_REAL), dimension(nrec,NSTEP,NDIM,NGLLX,NGLLZ) :: adj_sourcearrays
+  real(kind=CUSTOM_REAL), dimension(3,npoin) :: b_accel_elastic,b_displ_elastic
+  real(kind=CUSTOM_REAL), dimension(nrec,NSTEP,3,NGLLX,NGLLZ) :: adj_sourcearrays
   real(kind=CUSTOM_REAL), dimension(npoin) :: mu_k,kappa_k
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLZ,nspec_xmin,NSTEP) :: b_absorb_elastic_left
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLZ,nspec_xmax,NSTEP) :: b_absorb_elastic_right
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,nspec_zmax,NSTEP) :: b_absorb_elastic_top
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,nspec_zmin,NSTEP) :: b_absorb_elastic_bottom
+  real(kind=CUSTOM_REAL), dimension(3,NGLLZ,nspec_xmin,NSTEP) :: b_absorb_elastic_left
+  real(kind=CUSTOM_REAL), dimension(3,NGLLZ,nspec_xmax,NSTEP) :: b_absorb_elastic_right
+  real(kind=CUSTOM_REAL), dimension(3,NGLLX,nspec_zmax,NSTEP) :: b_absorb_elastic_top
+  real(kind=CUSTOM_REAL), dimension(3,NGLLX,nspec_zmin,NSTEP) :: b_absorb_elastic_bottom
 
   integer :: N_SLS
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11,e13
@@ -134,18 +136,18 @@
   integer :: ispec,i,j,k,iglob,ispecabs,ibegin,iend,irec,irec_local
 
 ! spatial derivatives
-  real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
-  real(kind=CUSTOM_REAL) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
-  real(kind=CUSTOM_REAL) :: b_dux_dxi,b_dux_dgamma,b_duz_dxi,b_duz_dgamma
-  real(kind=CUSTOM_REAL) :: b_dux_dxl,b_duz_dxl,b_dux_dzl,b_duz_dzl
+  real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duy_dxi,duy_dgamma,duz_dxi,duz_dgamma
+  real(kind=CUSTOM_REAL) :: dux_dxl,duy_dxl,duz_dxl,dux_dzl,duy_dzl,duz_dzl
+  real(kind=CUSTOM_REAL) :: b_dux_dxi,b_dux_dgamma,b_duy_dxi,b_duy_dgamma,b_duz_dxi,b_duz_dgamma
+  real(kind=CUSTOM_REAL) :: b_dux_dxl,b_duy_dxl,b_duz_dxl,b_dux_dzl,b_duy_dzl,b_duz_dzl
   real(kind=CUSTOM_REAL) :: dsxx,dsxz,dszz
   real(kind=CUSTOM_REAL) :: b_dsxx,b_dsxz,b_dszz
-  real(kind=CUSTOM_REAL) :: sigma_xx,sigma_xz,sigma_zz
-  real(kind=CUSTOM_REAL) :: b_sigma_xx,b_sigma_xz,b_sigma_zz
-  real(kind=CUSTOM_REAL) :: nx,nz,vx,vz,vn,rho_vp,rho_vs,tx,tz,weight,xxi,zxi,xgamma,zgamma,jacobian1D
+  real(kind=CUSTOM_REAL) :: sigma_xx,sigma_xy,sigma_xz,sigma_zy,sigma_zz
+  real(kind=CUSTOM_REAL) :: b_sigma_xx,b_sigma_xy,b_sigma_xz,b_sigma_zy,b_sigma_zz
+  real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,rho_vp,rho_vs,tx,ty,tz,weight,xxi,zxi,xgamma,zgamma,jacobian1D
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: tempx1,tempx2,tempz1,tempz2
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: b_tempx1,b_tempx2,b_tempz1,b_tempz2
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: tempx1,tempx2,tempy1,tempy2,tempz1,tempz2
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: b_tempx1,b_tempx2,b_tempy1,b_tempy2,b_tempz1,b_tempz2
 
 ! Jacobian matrix and determinant
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
@@ -173,14 +175,33 @@
   integer :: ifirstelem,ilastelem
 
 ! compute Grad(displ_elastic) at time step n for attenuation
-  if(TURN_ATTENUATION_ON) call compute_gradient_attenuation(displ_elastic,dux_dxl_n,duz_dxl_n, &
+  if(TURN_ATTENUATION_ON) then
+      displ_att(1,:) = displ_elastic(1,:)
+      displ_att(2,:) = displ_elastic(3,:)
+       call compute_gradient_attenuation(displ_att,dux_dxl_n,duz_dxl_n, &
       dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,npoin)
+  endif
 
   ifirstelem = 1
   ilastelem = nspec
 
 ! loop over spectral elements
   do ispec = ifirstelem,ilastelem
+
+ tempx1(:,:) = ZERO
+ tempy1(:,:) = ZERO
+ tempz1(:,:) = ZERO
+ tempx2(:,:) = ZERO
+ tempy2(:,:) = ZERO
+ tempz2(:,:) = ZERO
+  if(isolver ==2)then
+ b_tempx1(:,:) = ZERO
+ b_tempy1(:,:) = ZERO
+ b_tempz1(:,:) = ZERO
+ b_tempx2(:,:) = ZERO
+ b_tempy2(:,:) = ZERO
+ b_tempz2(:,:) = ZERO
+  endif
 
 !---
 !--- elastic spectral element
@@ -208,16 +229,20 @@
 
 ! derivative along x and along z
           dux_dxi = ZERO
+          duy_dxi = ZERO
           duz_dxi = ZERO
 
           dux_dgamma = ZERO
+          duy_dgamma = ZERO
           duz_dgamma = ZERO
 
           if(isolver == 2) then ! Adjoint calculation, backward wavefield
           b_dux_dxi = ZERO
+          b_duy_dxi = ZERO
           b_duz_dxi = ZERO
 
           b_dux_dgamma = ZERO
+          b_duy_dgamma = ZERO
           b_duz_dgamma = ZERO
           endif
 
@@ -225,15 +250,19 @@
 ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
             dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-            duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+            duy_dxi = duy_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+            duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
             dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-            duz_dgamma = duz_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
+            duy_dgamma = duy_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
+            duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
 
           if(isolver == 2) then ! Adjoint calculation, backward wavefield
             b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-            b_duz_dxi = b_duz_dxi + b_displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+            b_duy_dxi = b_duy_dxi + b_displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+            b_duz_dxi = b_duz_dxi + b_displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
             b_dux_dgamma = b_dux_dgamma + b_displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-            b_duz_dgamma = b_duz_dgamma + b_displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
+            b_duy_dgamma = b_duy_dgamma + b_displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
+            b_duz_dgamma = b_duz_dgamma + b_displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
           endif
           enddo
 
@@ -246,12 +275,18 @@
           dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
           dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
 
+          duy_dxl = duy_dxi*xixl + duy_dgamma*gammaxl
+          duy_dzl = duy_dxi*xizl + duy_dgamma*gammazl
+
           duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
           duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
           if(isolver == 2) then ! Adjoint calculation, backward wavefield
           b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
           b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
+
+          b_duy_dxl = b_duy_dxi*xixl + b_duy_dgamma*gammaxl
+          b_duy_dzl = b_duy_dxi*xizl + b_duy_dgamma*gammazl
 
           b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
           b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
@@ -297,12 +332,16 @@
 
 ! no attenuation
     sigma_xx = lambdalplus2mul_relaxed*dux_dxl + lambdal_relaxed*duz_dzl
+    sigma_xy = mul_relaxed*duy_dxl
     sigma_xz = mul_relaxed*(duz_dxl + dux_dzl)
+    sigma_zy = mul_relaxed*duy_dzl
     sigma_zz = lambdalplus2mul_relaxed*duz_dzl + lambdal_relaxed*dux_dxl
 
           if(isolver == 2) then ! Adjoint calculation, backward wavefield
     b_sigma_xx = lambdalplus2mul_relaxed*b_dux_dxl + lambdal_relaxed*b_duz_dzl
+    b_sigma_xy = mul_relaxed*b_duy_dxl
     b_sigma_xz = mul_relaxed*(b_duz_dxl + b_dux_dzl)
+    b_sigma_zy = mul_relaxed*b_duy_dzl
     b_sigma_zz = lambdalplus2mul_relaxed*b_duz_dzl + lambdal_relaxed*b_dux_dxl
           endif
 
@@ -321,6 +360,7 @@
 ! Pre-kernels calculation
    if(isolver == 2) then
           iglob = ibool(i,j,ispec)
+      if(body_waves)then !P-SV waves
             dsxx =  dux_dxl
             dsxz = HALF * (duz_dxl + dux_dzl)
             dszz =  duz_dzl
@@ -332,6 +372,9 @@
             kappa_k(iglob) = (dux_dxl + duz_dzl) *  (b_dux_dxl + b_duz_dzl)
             mu_k(iglob) = dsxx * b_dsxx + dszz * b_dszz + &
                   2._CUSTOM_REAL * dsxz * b_dsxz - 1._CUSTOM_REAL/3._CUSTOM_REAL * kappa_k(iglob)
+      else !SH (membrane) waves
+            mu_k(iglob) = duy_dxl * b_duy_dxl + duy_dzl * b_duy_dzl
+      endif
    endif
 
           jacobianl = jacobian(i,j,ispec)
@@ -339,16 +382,20 @@
 ! weak formulation term based on stress tensor (non-symmetric form)
 ! also add GLL integration weights
           tempx1(i,j) = wzgll(j)*jacobianl*(sigma_xx*xixl+sigma_xz*xizl)
+          tempy1(i,j) = wzgll(j)*jacobianl*(sigma_xy*xixl+sigma_zy*xizl)
           tempz1(i,j) = wzgll(j)*jacobianl*(sigma_xz*xixl+sigma_zz*xizl)
 
           tempx2(i,j) = wxgll(i)*jacobianl*(sigma_xx*gammaxl+sigma_xz*gammazl)
+          tempy2(i,j) = wxgll(i)*jacobianl*(sigma_xy*gammaxl+sigma_zy*gammazl)
           tempz2(i,j) = wxgll(i)*jacobianl*(sigma_xz*gammaxl+sigma_zz*gammazl)
 
           if(isolver == 2) then ! Adjoint calculation, backward wavefield
           b_tempx1(i,j) = wzgll(j)*jacobianl*(b_sigma_xx*xixl+b_sigma_xz*xizl)
+          b_tempy1(i,j) = wzgll(j)*jacobianl*(b_sigma_xy*xixl+b_sigma_zy*xizl)
           b_tempz1(i,j) = wzgll(j)*jacobianl*(b_sigma_xz*xixl+b_sigma_zz*xizl)
 
           b_tempx2(i,j) = wxgll(i)*jacobianl*(b_sigma_xx*gammaxl+b_sigma_xz*gammazl)
+          b_tempy2(i,j) = wxgll(i)*jacobianl*(b_sigma_xy*gammaxl+b_sigma_zy*gammazl)
           b_tempz2(i,j) = wxgll(i)*jacobianl*(b_sigma_xz*gammaxl+b_sigma_zz*gammazl)
           endif
 
@@ -368,12 +415,15 @@
 ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
             accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
-            accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tempz1(k,j)*hprimewgll_xx(k,i) + tempz2(i,k)*hprimewgll_zz(k,j))
+            accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tempy1(k,j)*hprimewgll_xx(k,i) + tempy2(i,k)*hprimewgll_zz(k,j))
+            accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tempz1(k,j)*hprimewgll_xx(k,i) + tempz2(i,k)*hprimewgll_zz(k,j))
 
           if(isolver == 2) then ! Adjoint calculation, backward wavefield
             b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - &
                          (b_tempx1(k,j)*hprimewgll_xx(k,i) + b_tempx2(i,k)*hprimewgll_zz(k,j))
             b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - &
+                         (b_tempy1(k,j)*hprimewgll_xx(k,i) + b_tempy2(i,k)*hprimewgll_zz(k,j))
+            b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - &
                          (b_tempz1(k,j)*hprimewgll_xx(k,i) + b_tempz2(i,k)*hprimewgll_zz(k,j))
           endif
           enddo
@@ -459,22 +509,33 @@
 ! Clayton-Engquist condition if elastic
           if(elastic(ispec)) then
             vx = veloc_elastic(1,iglob) - veloc_horiz
-            vz = veloc_elastic(2,iglob) - veloc_vert
+            vy = veloc_elastic(2,iglob) 
+            vz = veloc_elastic(3,iglob) - veloc_vert
 
             vn = nx*vx+nz*vz
 
             tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
+            ty = rho_vs*vy
             tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
 
             accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0)*weight
-            accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz + traction_z_t0)*weight
+            accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
+            accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0)*weight
 
             if(save_forward .and. isolver ==1) then
+             if(body_waves)then !P-SV waves
               b_absorb_elastic_left(1,j,ib_xmin(ispecabs),it) = tx*weight
-              b_absorb_elastic_left(2,j,ib_xmin(ispecabs),it) = tz*weight
+              b_absorb_elastic_left(3,j,ib_xmin(ispecabs),it) = tz*weight
+             else !SH (membrane) waves
+              b_absorb_elastic_left(2,j,ib_xmin(ispecabs),it) = ty*weight
+             endif
             elseif(isolver == 2) then
+             if(body_waves)then !P-SV waves
               b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_left(1,j,ib_xmin(ispecabs),NSTEP-it+1)
+              b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_left(3,j,ib_xmin(ispecabs),NSTEP-it+1)
+             else !SH (membrane) waves
               b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - b_absorb_elastic_left(2,j,ib_xmin(ispecabs),NSTEP-it+1)
+             endif
             endif
 
           endif
@@ -536,23 +597,33 @@
 ! Clayton-Engquist condition if elastic
           if(elastic(ispec)) then
             vx = veloc_elastic(1,iglob) - veloc_horiz
-            vz = veloc_elastic(2,iglob) - veloc_vert
+            vy = veloc_elastic(2,iglob) 
+            vz = veloc_elastic(3,iglob) - veloc_vert
 
             vn = nx*vx+nz*vz
 
             tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
+            ty = rho_vs*vy
             tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
 
             accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx - traction_x_t0)*weight
-            accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz - traction_z_t0)*weight
-
+            accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
+            accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz - traction_z_t0)*weight
 
             if(save_forward .and. isolver ==1) then
+             if(body_waves)then !P-SV waves
               b_absorb_elastic_right(1,j,ib_xmax(ispecabs),it) = tx*weight
-              b_absorb_elastic_right(2,j,ib_xmax(ispecabs),it) = tz*weight
+              b_absorb_elastic_right(3,j,ib_xmax(ispecabs),it) = tz*weight
+             else! SH (membrane) waves
+              b_absorb_elastic_right(2,j,ib_xmax(ispecabs),it) = ty*weight
+             endif
             elseif(isolver == 2) then
+             if(body_waves)then !P-SV waves
               b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_right(1,j,ib_xmax(ispecabs),NSTEP-it+1)
+              b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_right(3,j,ib_xmax(ispecabs),NSTEP-it+1)
+             else! SH (membrane) waves
               b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - b_absorb_elastic_right(2,j,ib_xmax(ispecabs),NSTEP-it+1)
+             endif
             endif
 
           endif
@@ -620,22 +691,33 @@
 ! Clayton-Engquist condition if elastic
           if(elastic(ispec)) then
             vx = veloc_elastic(1,iglob) - veloc_horiz
-            vz = veloc_elastic(2,iglob) - veloc_vert
+            vy = veloc_elastic(2,iglob) 
+            vz = veloc_elastic(3,iglob) - veloc_vert
 
             vn = nx*vx+nz*vz
 
             tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
+            ty = rho_vs*vy
             tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
 
             accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0)*weight
-            accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz + traction_z_t0)*weight
+            accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
+            accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0)*weight
 
             if(save_forward .and. isolver ==1) then
+             if(body_waves)then !P-SV waves
               b_absorb_elastic_bottom(1,i,ib_zmin(ispecabs),it) = tx*weight
-              b_absorb_elastic_bottom(2,i,ib_zmin(ispecabs),it) = tz*weight
+              b_absorb_elastic_bottom(3,i,ib_zmin(ispecabs),it) = tz*weight
+             else!SH (membrane) waves
+              b_absorb_elastic_bottom(2,i,ib_zmin(ispecabs),it) = ty*weight
+             endif
             elseif(isolver == 2) then
+             if(body_waves)then !P-SV waves
               b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_bottom(1,i,ib_zmin(ispecabs),NSTEP-it+1)
+              b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_bottom(3,i,ib_zmin(ispecabs),NSTEP-it+1)
+             else!SH (membrane) waves
               b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - b_absorb_elastic_bottom(2,i,ib_zmin(ispecabs),NSTEP-it+1)
+             endif
             endif
 
           endif
@@ -695,22 +777,33 @@
 ! Clayton-Engquist condition if elastic
           if(elastic(ispec)) then
             vx = veloc_elastic(1,iglob) - veloc_horiz
-            vz = veloc_elastic(2,iglob) - veloc_vert
+            vy = veloc_elastic(2,iglob) 
+            vz = veloc_elastic(3,iglob) - veloc_vert
 
             vn = nx*vx+nz*vz
 
             tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
+            ty = rho_vs*vy
             tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
 
             accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx - traction_x_t0)*weight
-            accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz - traction_z_t0)*weight
+            accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
+            accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz - traction_z_t0)*weight
 
             if(save_forward .and. isolver ==1) then
+             if(body_waves)then !P-SV waves
               b_absorb_elastic_top(1,i,ib_zmax(ispecabs),it) = tx*weight
-              b_absorb_elastic_top(2,i,ib_zmax(ispecabs),it) = tz*weight
+              b_absorb_elastic_top(3,i,ib_zmax(ispecabs),it) = tz*weight
+             else!SH (membrane) waves
+              b_absorb_elastic_top(2,i,ib_zmax(ispecabs),it) = ty*weight
+             endif
             elseif(isolver == 2) then
+             if(body_waves)then !P-SV waves
               b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_top(1,i,ib_zmax(ispecabs),NSTEP-it+1)
+              b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_top(3,i,ib_zmax(ispecabs),NSTEP-it+1)
+             else!SH (membrane) waves
               b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - b_absorb_elastic_top(2,i,ib_zmax(ispecabs),NSTEP-it+1)
+             endif
             endif
 
           endif
@@ -733,26 +826,32 @@
 ! moment tensor
         if(source_type(i_source) == 2) then
 
+       if(.not.body_waves)  call exit_MPI('cannot have moment tensor source in SH (membrane) waves calculation')  
+
        if(isolver == 1) then  ! forward wavefield
 ! add source array
           do j=1,NGLLZ
             do i=1,NGLLX
               iglob = ibool(i,j,ispec_selected_source(i_source))
-              accel_elastic(:,iglob) = accel_elastic(:,iglob) + &
-                                       sourcearray(i_source,:,i,j)*source_time_function(i_source,it)
+              accel_elastic(1,iglob) = accel_elastic(1,iglob) + &
+                                       sourcearray(i_source,1,i,j)*source_time_function(i_source,it)
+              accel_elastic(3,iglob) = accel_elastic(3,iglob) + &
+                                       sourcearray(i_source,2,i,j)*source_time_function(i_source,it)
             enddo
           enddo
        else                   ! backward wavefield
       do j=1,NGLLZ
         do i=1,NGLLX
           iglob = ibool(i,j,ispec_selected_source(i_source))
-          b_accel_elastic(:,iglob) = b_accel_elastic(:,iglob) + &
-                                     sourcearray(i_source,:,i,j)*source_time_function(i_source,NSTEP-it+1)
+          b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) + &
+                                     sourcearray(i_source,1,i,j)*source_time_function(i_source,NSTEP-it+1)
+          b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) + &
+                                     sourcearray(i_source,2,i,j)*source_time_function(i_source,NSTEP-it+1)
         enddo
       enddo
        endif  !endif isolver == 1
 
-        endif
+        endif !if(source_type(i_source) == 2)
 
      endif ! if this processor carries the source and the source element is elastic
   enddo ! do i_source=1,NSOURCE
@@ -769,7 +868,12 @@
       do j=1,NGLLZ
         do i=1,NGLLX
           iglob = ibool(i,j,ispec_selected_rec(irec))
-          accel_elastic(:,iglob) = accel_elastic(:,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,:,i,j)
+         if(body_waves)then !P-SH waves
+          accel_elastic(1,iglob) = accel_elastic(1,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
+          accel_elastic(3,iglob) = accel_elastic(3,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,3,i,j)
+         else !SH (membrane) waves
+          accel_elastic(2,iglob) = accel_elastic(2,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,2,i,j)
+         endif
         enddo
       enddo
 
@@ -784,7 +888,7 @@
   if(TURN_ATTENUATION_ON) then
 
 ! compute Grad(displ_elastic) at time step n+1 for attenuation
-    call compute_gradient_attenuation(displ_elastic,dux_dxl_np1,duz_dxl_np1, &
+    call compute_gradient_attenuation(displ_att,dux_dxl_np1,duz_dxl_np1, &
       dux_dzl_np1,duz_dzl_np1,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,npoin)
 
 ! update memory variables with fourth-order Runge-Kutta time scheme for attenuation
