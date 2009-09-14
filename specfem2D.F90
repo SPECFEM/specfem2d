@@ -5103,6 +5103,11 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
     potential_dot_acoustic = potential_dot_acoustic + deltatover2*potential_dot_dot_acoustic
 
+    if(isolver ==2)then
+    b_potential_dot_dot_acoustic = b_potential_dot_dot_acoustic * rmass_inverse_acoustic
+    b_potential_dot_acoustic = b_potential_dot_acoustic + b_deltatover2*b_potential_dot_dot_acoustic
+    endif
+
 ! free surface for an acoustic medium
     if ( nelem_acoustic_surface > 0 ) then
     call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
