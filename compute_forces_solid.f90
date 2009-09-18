@@ -9,8 +9,6 @@
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
 !               Christina Morency, cmorency aT princeton DOT edu
-!               Christina Morency, cmorency aT gps DOT caltech DOT edu
-!               Jeroen Tromp, jtromp aT gps DOT caltech DOT edu
 !
 ! This software is a computer program whose purpose is to solve
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
@@ -593,8 +591,8 @@
           xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
           zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
           jacobian1D = sqrt(xgamma**2 + zgamma**2)
-          nx = + zgamma / jacobian1D
-          nz = - xgamma / jacobian1D
+          nx = - zgamma / jacobian1D
+          nz = + xgamma / jacobian1D
 
 
           weight = jacobian1D * wzgll(j)
@@ -770,8 +768,8 @@
           xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
           zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
           jacobian1D = sqrt(xxi**2 + zxi**2)
-          nx = + zxi / jacobian1D
-          nz = - xxi / jacobian1D
+          nx = - zxi / jacobian1D
+          nz = + xxi / jacobian1D
 
           weight = jacobian1D * wxgll(i)
 
