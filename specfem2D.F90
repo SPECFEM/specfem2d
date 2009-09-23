@@ -2329,7 +2329,7 @@ if(ipass == 1) then
 endif
 
   max_ibool_interfaces_size_ac = maxval(nibool_interfaces_acoustic(:))
-  max_ibool_interfaces_size_el = NDIM*maxval(nibool_interfaces_elastic(:))
+  max_ibool_interfaces_size_el = 3*maxval(nibool_interfaces_elastic(:))
   max_ibool_interfaces_size_po = NDIM*maxval(nibool_interfaces_poroelastic(:))
   if(ipass == 1) then
     allocate(tab_requests_send_recv_acoustic(ninterface_acoustic*2))
