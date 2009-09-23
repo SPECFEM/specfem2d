@@ -569,7 +569,7 @@ subroutine assemble_MPI_vector_el(array_val2,npoin, &
   include 'precision_mpi.h'
 
   ! array to assemble
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin), intent(inout) :: array_val2
+  real(kind=CUSTOM_REAL), dimension(3,npoin), intent(inout) :: array_val2
 
   integer, intent(in)  :: npoin
   integer, intent(in)  :: ninterface, ninterface_elastic
@@ -598,9 +598,9 @@ subroutine assemble_MPI_vector_el(array_val2,npoin, &
 
      ipoin = 0
      do i = 1, nibool_interfaces_elastic(num_interface)
-        buffer_send_faces_vector_el(ipoin+1:ipoin+2,inum_interface) = &
+        buffer_send_faces_vector_el(ipoin+1:ipoin+3,inum_interface) = &
              array_val2(:,ibool_interfaces_elastic(i,num_interface))
-        ipoin = ipoin + 2
+        ipoin = ipoin + 3
      end do
 
   end do
@@ -610,7 +610,7 @@ subroutine assemble_MPI_vector_el(array_val2,npoin, &
     num_interface = inum_interfaces_elastic(inum_interface)
 
     call MPI_ISSEND( buffer_send_faces_vector_el(1,inum_interface), &
-             NDIM*nibool_interfaces_elastic(num_interface), CUSTOM_MPI_TYPE, &
+             3*nibool_interfaces_elastic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_elastic(inum_interface), ier)
 
@@ -619,7 +619,7 @@ subroutine assemble_MPI_vector_el(array_val2,npoin, &
     end if
 
     call MPI_Irecv ( buffer_recv_faces_vector_el(1,inum_interface), &
-             NDIM*nibool_interfaces_elastic(num_interface), CUSTOM_MPI_TYPE, &
+             3*nibool_interfaces_elastic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_elastic(ninterface_elastic+inum_interface), ier)
 
@@ -642,8 +642,8 @@ subroutine assemble_MPI_vector_el(array_val2,npoin, &
      ipoin = 0
      do i = 1, nibool_interfaces_elastic(num_interface)
         array_val2(:,ibool_interfaces_elastic(i,num_interface)) = array_val2(:,ibool_interfaces_elastic(i,num_interface)) + &
-             buffer_recv_faces_vector_el(ipoin+1:ipoin+2,inum_interface)
-        ipoin = ipoin + 2
+             buffer_recv_faces_vector_el(ipoin+1:ipoin+3,inum_interface)
+        ipoin = ipoin + 3
      end do
 
   end do
