@@ -5454,13 +5454,10 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     sigma_xz = mul_G*(duz_dxl + dux_dzl)
     sigma_zz = lambdalplus2mul_G*duz_dzl + lambdal_G*dux_dxl + C_biot*(dwx_dxl + dwz_dzl)
 
-    sigmap = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl + dwz_dzl)
-
     if(isolver == 2) then
     b_sigma_xx = lambdalplus2mul_G*b_dux_dxl + lambdal_G*b_duz_dzl + C_biot*(b_dwx_dxl + b_dwz_dzl)
     b_sigma_xz = mul_G*(b_duz_dxl + b_dux_dzl)
     b_sigma_zz = lambdalplus2mul_G*b_duz_dzl + lambdal_G*b_dux_dxl + C_biot*(b_dwx_dxl + b_dwz_dzl)
-    b_sigmap = C_biot*(b_dux_dxl + b_duz_dzl) + M_biot*(b_dwx_dxl + b_dwz_dzl)
     endif
 ! get point values for the elastic domain, which matches our side in the inverse direction
           ii2 = ivalue(ipoin1D,iedge_elastic)
@@ -5578,17 +5575,17 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           endif
 
           accel_elastic(1,iglob) = accel_elastic(1,iglob) - weight* &
-                (sigma_xx*nx + sigma_xz*nz +sigmap*nx)/3.d0
+                (sigma_xx*nx + sigma_xz*nz)/2.d0
 
           accel_elastic(3,iglob) = accel_elastic(3,iglob) - weight* &
-                (sigma_xz*nx + sigma_zz*nz +sigmap*nz)/3.d0
+                (sigma_xz*nx + sigma_zz*nz)/2.d0
 
           if(isolver == 2) then
           b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - weight* &
-                (b_sigma_xx*nx + b_sigma_xz*nz +b_sigmap*nx)/3.d0
+                (b_sigma_xx*nx + b_sigma_xz*nz)/2.d0
 
           b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - weight* &
-                (b_sigma_xz*nx + b_sigma_zz*nz +b_sigmap*nz)/3.d0
+                (b_sigma_xz*nx + b_sigma_zz*nz)/2.d0
           endif !if(isolver == 2) then
 
         enddo
@@ -6171,10 +6168,10 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
 ! contribution to the solid phase
           accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) + &
-                weight*(sigma_xx*nx + sigma_xz*nz + sigmap*nx)/3.d0*(1.d0 -phil/tortl)
+                weight*((sigma_xx*nx + sigma_xz*nz)/2.d0 -phil/tortl*sigmap*nx)
 
           accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + &
-                weight*(sigma_xz*nx + sigma_zz*nz + sigmap*nz)/3.d0*(1.d0 -phil/tortl)
+                weight*((sigma_xz*nx + sigma_zz*nz)/2.d0 -phil/tortl*sigmap*nz)
 
 ! contribution to the fluid phase
 ! w = 0
@@ -6182,10 +6179,10 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           if(isolver == 2) then
 ! contribution to the solid phase
           b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) + &
-                weight*(b_sigma_xx*nx + b_sigma_xz*nz + b_sigmap*nx)/3.d0*(1.d0 -phil/tortl)
+                weight*((b_sigma_xx*nx + b_sigma_xz*nz)/2.d0 -phil/tortl*b_sigmap*nx)
 
           b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) + &
-                weight*(b_sigma_xz*nx + b_sigma_zz*nz + b_sigmap*nz)/3.d0*(1.d0 -phil/tortl)
+                weight*((b_sigma_xz*nx + b_sigma_zz*nz)/2.d0 -phil/tortl*b_sigmap*nz)
 
 ! contribution to the fluid phase
 ! w = 0
@@ -6311,9 +6308,9 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
         do ipoin1D = 1,NGLLX
 ! recovering original velocities and accelerations on boundaries (elastic side)
-          i = ivalue_inverse(ipoin1D,iedge_elastic)
-          j = jvalue_inverse(ipoin1D,iedge_elastic)
-          iglob = ibool(i,j,ispec_elastic)
+          i = ivalue(ipoin1D,iedge_poroelastic)
+          j = jvalue(ipoin1D,iedge_poroelastic)
+          iglob = ibool(i,j,ispec_poroelastic)
           icount(iglob) = icount(iglob) + 1
 
         if(icount(iglob) ==1)then
@@ -6343,7 +6340,37 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           accelw_poroelastic(2,iglob) = ZERO
           velocw_poroelastic(1,iglob) = ZERO
           velocw_poroelastic(2,iglob) = ZERO
-        endif
+
+         if(isolver == 2) then
+          b_veloc_elastic(1,iglob) = b_veloc_elastic(1,iglob) - b_deltatover2*b_accel_elastic(1,iglob)
+          b_veloc_elastic(3,iglob) = b_veloc_elastic(3,iglob) - b_deltatover2*b_accel_elastic(3,iglob)
+          b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) / rmass_inverse_elastic(iglob)
+          b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) / rmass_inverse_elastic(iglob)
+! recovering original velocities and accelerations on boundaries (poro side)
+          b_velocs_poroelastic(1,iglob) = b_velocs_poroelastic(1,iglob) - b_deltatover2*b_accels_poroelastic(1,iglob)
+          b_velocs_poroelastic(2,iglob) = b_velocs_poroelastic(2,iglob) - b_deltatover2*b_accels_poroelastic(2,iglob)
+          b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) / rmass_s_inverse_poroelastic(iglob)
+          b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) / rmass_s_inverse_poroelastic(iglob)
+! assembling accelerations
+          b_accel_elastic(1,iglob) = ( b_accel_elastic(1,iglob) + b_accels_poroelastic(1,iglob) ) / &
+                                   ( 1.0/rmass_inverse_elastic(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
+          b_accel_elastic(3,iglob) = ( b_accel_elastic(3,iglob) + b_accels_poroelastic(2,iglob) ) / &
+                                   ( 1.0/rmass_inverse_elastic(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
+          b_accels_poroelastic(1,iglob) = b_accel_elastic(1,iglob)
+          b_accels_poroelastic(2,iglob) = b_accel_elastic(3,iglob)
+! updating velocities
+          b_velocs_poroelastic(1,iglob) = b_velocs_poroelastic(1,iglob) + b_deltatover2*b_accels_poroelastic(1,iglob)
+          b_velocs_poroelastic(2,iglob) = b_velocs_poroelastic(2,iglob) + b_deltatover2*b_accels_poroelastic(2,iglob)
+          b_veloc_elastic(1,iglob) = b_veloc_elastic(1,iglob) + b_deltatover2*b_accel_elastic(1,iglob)
+          b_veloc_elastic(3,iglob) = b_veloc_elastic(3,iglob) + b_deltatover2*b_accel_elastic(3,iglob)
+! zeros w
+          b_accelw_poroelastic(1,iglob) = ZERO
+          b_accelw_poroelastic(2,iglob) = ZERO
+          b_velocw_poroelastic(1,iglob) = ZERO
+          b_velocw_poroelastic(2,iglob) = ZERO
+         endif !if(isolver == 2)
+
+        endif !if(icount(iglob) ==1)
 
         enddo
 
