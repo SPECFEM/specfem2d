@@ -3020,12 +3020,12 @@ endif
       do ispec = 1,nspec_xmin
 
      if(p_sv)then!P-SV waves
-       do id =1,2
          do i=1,NGLLZ
-     read(35) b_absorb_elastic_left(id,i,ispec,it)
+     read(35) b_absorb_elastic_left(1,i,ispec,it)
          enddo
-       enddo
-       b_absorb_elastic_left(3,:,ispec,it) = b_absorb_elastic_left(2,:,ispec,it)
+         do i=1,NGLLZ
+     read(35) b_absorb_elastic_left(3,i,ispec,it)
+         enddo
        b_absorb_elastic_left(2,:,ispec,it) = ZERO
      else!SH (membrane) waves
          do i=1,NGLLZ
@@ -3043,12 +3043,12 @@ endif
       do ispec = 1,nspec_xmax
 
      if(p_sv)then!P-SV waves
-       do id =1,2
          do i=1,NGLLZ
-     read(36) b_absorb_elastic_right(id,i,ispec,it)
+     read(36) b_absorb_elastic_right(1,i,ispec,it)
          enddo
-       enddo
-       b_absorb_elastic_right(3,:,ispec,it) = b_absorb_elastic_right(2,:,ispec,it)
+         do i=1,NGLLZ
+     read(36) b_absorb_elastic_right(3,i,ispec,it)
+         enddo
        b_absorb_elastic_right(2,:,ispec,it) = ZERO
      else!SH (membrane) waves
          do i=1,NGLLZ
@@ -3066,12 +3066,12 @@ endif
       do ispec = 1,nspec_zmin
 
      if(p_sv)then!P-SV waves
-       do id =1,2
          do i=1,NGLLX
-     read(37) b_absorb_elastic_bottom(id,i,ispec,it)
+     read(37) b_absorb_elastic_bottom(1,i,ispec,it)
          enddo
-       enddo
-       b_absorb_elastic_bottom(3,:,ispec,it) = b_absorb_elastic_bottom(2,:,ispec,it)
+         do i=1,NGLLX
+     read(37) b_absorb_elastic_bottom(3,i,ispec,it)
+         enddo
        b_absorb_elastic_bottom(2,:,ispec,it) = ZERO
      else!SH (membrane) waves
          do i=1,NGLLZ
@@ -3089,12 +3089,12 @@ endif
       do ispec = 1,nspec_zmax
 
      if(p_sv)then!P-SV waves
-       do id =1,2
          do i=1,NGLLX
-     read(38) b_absorb_elastic_top(id,i,ispec,it)
+     read(38) b_absorb_elastic_top(1,i,ispec,it)
          enddo
-       enddo
-       b_absorb_elastic_top(3,:,ispec,it) = b_absorb_elastic_top(2,:,ispec,it)
+         do i=1,NGLLX
+     read(38) b_absorb_elastic_top(3,i,ispec,it)
+         enddo
        b_absorb_elastic_top(2,:,ispec,it) = ZERO
      else!SH (membrane) waves
          do i=1,NGLLZ
@@ -3274,7 +3274,7 @@ endif
    if(any_poroelastic) then
     write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_s',myrank,'.bin'
     open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
-    write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_s',myrank,'.bin'
+    write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
     open(unit=56,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
        do j=1,npoin
       read(55) (b_displs_poroelastic(i,j), i=1,NDIM), &
