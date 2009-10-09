@@ -3289,33 +3289,33 @@ endif
 
 ! Primary kernels
     write(outputname,'(a,i6.6,a)') 'snapshot_mu_B_C_',myrank
-        open(unit = 14, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        open(unit = 144, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
         if (ios /= 0) stop 'Error writing snapshot to disk'
     write(outputname,'(a,i6.6,a)') 'snapshot_M_rho_rhof_',myrank
-        open(unit = 15, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        open(unit = 155, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
         if (ios /= 0) stop 'Error writing snapshot to disk'
     write(outputname,'(a,i6.6,a)') 'snapshot_m_eta_',myrank
         open(unit = 16, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
         if (ios /= 0) stop 'Error writing snapshot to disk'
 ! Wavespeed kernels
     write(outputname,'(a,i6.6,a)') 'snapshot_cpI_cpII_cs_',myrank
-        open(unit = 17, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        open(unit = 20, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
         if (ios /= 0) stop 'Error writing snapshot to disk'
     write(outputname,'(a,i6.6,a)') 'snapshot_rhobb_rhofbb_ratio_',myrank
-        open(unit = 18, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        open(unit = 21, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
         if (ios /= 0) stop 'Error writing snapshot to disk'
     write(outputname,'(a,i6.6,a)') 'snapshot_phib_eta_',myrank
-        open(unit = 19, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        open(unit = 22, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
         if (ios /= 0) stop 'Error writing snapshot to disk'
 ! Density normalized kernels
    write(outputname,'(a,i6.6,a)') 'snapshot_mub_Bb_Cb_',myrank
-        open(unit = 20, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        open(unit = 17, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
         if (ios /= 0) stop 'Error writing snapshot to disk'
     write(outputname,'(a,i6.6,a)') 'snapshot_Mb_rhob_rhofb_',myrank
-        open(unit = 21, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        open(unit = 18, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
         if (ios /= 0) stop 'Error writing snapshot to disk'
     write(outputname,'(a,i6.6,a)') 'snapshot_mb_etab_',myrank
-        open(unit = 22, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        open(unit = 19, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
         if (ios /= 0) stop 'Error writing snapshot to disk'
 
   rhot_kl(:) = ZERO
@@ -6917,8 +6917,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
      do iglob =1,npoin
         xx = coord(1,iglob)
         zz = coord(2,iglob)
-         write(14,'(5e12.3)')xx,zz,mufr_kl(iglob),B_kl(iglob),C_kl(iglob)
-         write(15,'(5e12.3)')xx,zz,M_kl(iglob),rhot_kl(iglob),rhof_kl(iglob)
+         write(144,'(5e12.3)')xx,zz,mufr_kl(iglob),B_kl(iglob),C_kl(iglob)
+         write(155,'(5e12.3)')xx,zz,M_kl(iglob),rhot_kl(iglob),rhof_kl(iglob)
          write(16,'(5e12.3)')xx,zz,sm_kl(iglob),eta_kl(iglob)
          write(17,'(5e12.3)')xx,zz,mufrb_kl(iglob),Bb_kl(iglob),Cb_kl(iglob)
          write(18,'(5e12.3)')xx,zz,Mb_kl(iglob),rhob_kl(iglob),rhofb_kl(iglob)
@@ -6927,8 +6927,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
          write(21,'(5e12.3)')xx,zz,rhobb_kl(iglob),rhofbb_kl(iglob),ratio_kl(iglob)
          write(22,'(5e12.3)')xx,zz,phib_kl(iglob),eta_kl(iglob)
      enddo
-    close(14)
-    close(15)
+    close(144)
+    close(155)
     close(16)
     close(17)
     close(18)
