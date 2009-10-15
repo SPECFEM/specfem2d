@@ -5083,9 +5083,11 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
       irec_local = 0
       do irec = 1,nrec
 !   add the source (only if this proc carries the source)
-      if (myrank == which_proc_receiver(irec) .and. .not. elastic(ispec_selected_rec(irec)) .and. &
-         .not. poroelastic(ispec_selected_rec(irec))) then
+      if (myrank == which_proc_receiver(irec)) then
+
       irec_local = irec_local + 1
+      if (.not. elastic(ispec_selected_rec(irec)) .and. &
+         .not. poroelastic(ispec_selected_rec(irec))) then
 ! add source array
       do j=1,NGLLZ
         do i=1,NGLLX
@@ -5094,6 +5096,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
         enddo
       enddo
+      endif ! if element acoustic 
+
       endif ! if this processor carries the adjoint source
       enddo ! irec = 1,nrec
     endif ! isolver == 2 adjoint wavefield
@@ -7078,7 +7082,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
     if (myrank == 0) write(IOUT,*) 'drawing image of z (if P-SV) or y (if SH) component of displacement vector...'
 
-    call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic,&
+    call compute_vector_whole_medium(potential_acoustic,b_displ_elastic,b_displs_poroelastic,&
           elastic,poroelastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,numat,kmato,density,rhoext,assign_external_model)
 
