@@ -429,7 +429,7 @@
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_accelw_poroelastic,b_velocw_poroelastic,b_displw_poroelastic
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_accel_elastic,b_veloc_elastic,b_displ_elastic
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_ac,b_displ_ac
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_ac,b_displ_ac,b_accel_ac
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rho_kl, mu_kl, kappa_kl
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhol_global, mul_global, kappal_global
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: mu_k, kappa_k,rho_k
@@ -447,7 +447,7 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: permlxx_global,permlxz_global,permlzz_global
   character(len=150) :: adj_source_file
   integer :: irec_local,nadj_rec_local
-  double precision :: xx,zz,rholb,tempx1l,tempx2l,b_tempx1l,b_tempx2l
+  double precision :: xx,zz,rholb,tempx1l,tempx2l,b_tempx1l,b_tempx2l,bb_tempx1l,bb_tempx2l
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: adj_sourcearray
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: adj_sourcearrays
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: b_absorb_elastic_left,b_absorb_poro_s_left,b_absorb_poro_w_left
@@ -628,6 +628,16 @@
   double precision :: distmin, dist_current, angleforce_recv
   double precision, dimension(:), allocatable :: dist_tangential_detection_curve
   double precision :: x_final_receiver_dummy, z_final_receiver_dummy
+!!!!!!!!!!
+  double precision, dimension(:,:,:),allocatable:: rho_local,vp_local,vs_local
+  double precision :: tmp1, tmp2,tmp3
+!!!! hessian
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhorho_el_hessian_final1, rhorho_el_hessian_temp1
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhorho_el_hessian_final2, rhorho_el_hessian_temp2
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhorho_ac_hessian_final1, rhorho_ac_hessian_final2
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: weight_line_x, weight_line_z, weight_surface,weight_jacobian
+  integer, dimension(:), allocatable :: weight_gll
+  real(kind=CUSTOM_REAL) :: zmin_yang, zmax_yang, xmin_yang, xmax_yang
 
 !***********************************************************************
 !
@@ -978,7 +988,6 @@ endif
 !
   call gmat01(density,porosity,tortuosity,permeability,poroelastcoef,numat,&
               myrank,ipass,Qp_attenuation,Qs_attenuation)
-
 !
 !----  read spectral macrobloc data
 !
@@ -1583,6 +1592,51 @@ endif
     enddo
   enddo
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! yang  output weights for line, surface integrals !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!define_derivation_matrices(xigll(NGLLX),zigll(NGLLZ),wxgll(NGLLX),wzgll(NGLLZ),hprime_xx(NGLLX,NGLLX),hprime_zz(NGLLZ,NGLLZ),&
+!                           hprimewgll_xx(NGLLX,NGLLX),hprimewgll_zz(NGLLZ,NGLLZ))
+!xix(NGLLX,NGLLZ,nspec),xiz,gammax,gammaz,jacobian
+!recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl,jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo)
+allocate(weight_line_x(npoin))
+allocate(weight_line_z(npoin))
+allocate(weight_surface(npoin))
+allocate(weight_jacobian(npoin))
+allocate(weight_gll(npoin))
+weight_line_x=0.0
+weight_line_z=0.0
+weight_surface=0.0
+            zmin_yang=minval(coord(2,:))
+            xmin_yang=minval(coord(1,:))
+            zmax_yang=maxval(coord(2,:))
+            xmax_yang=maxval(coord(1,:))
+  do ispec = 1,nspec
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+            iglob=ibool(i,j,ispec)
+            z=coord(2,ibool(i,j,ispec))
+            xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+            zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
+            if ((j==1 .OR. j==NGLLZ) .AND. ( (abs(z-zmin_yang).GE.1) .AND. (abs(z-zmax_yang)).GE.1) )    xxi=xxi/2.0
+            if ((i==1 .OR. i==NGLLZ) .AND. ( (abs(x-xmin_yang).GE.1) .AND. (abs(x-xmax_yang)).GE.1) )    zgamma=zgamma/2.0
+            weight_line_x(iglob) =  weight_line_x(iglob) + xxi * wxgll(i)
+            weight_line_z(iglob) =  weight_line_z(iglob) + zgamma * wzgll(j)
+            weight_surface(iglob) = weight_surface(iglob) + wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
+            weight_jacobian(iglob) = jacobian(i,j,ispec)
+            weight_gll(iglob) = 10*j+i
+      enddo
+    enddo
+  enddo
+    open(unit=55,file='OUTPUT_FILES/x_z_weightLineX_weightLineZ_weightSurface',status='unknown')
+    do n = 1,npoin
+      write(55,*) coord(1,n), coord(2,n), weight_line_x(n), weight_line_z(n), weight_surface(n),weight_jacobian(n),weight_gll(n)
+    enddo
+    close(55)
+deallocate(weight_line_x)
+deallocate(weight_line_z)
+deallocate(weight_surface)
+deallocate(weight_jacobian)
+deallocate(weight_gll)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !--- save the grid of points in a file
 !
@@ -1604,45 +1658,52 @@ endif
 !
   if(gnuplot .and. myrank == 0 .and. ipass == 1) call plotgll(knods,ibool,coorg,coord,npoin,npgeo,ngnod,nspec)
 
-!
-!----  assign external velocity and density model if needed
-!
-  if(assign_external_model) then
-    if (myrank == 0 .and. ipass == 1) then
-      write(IOUT,*)
-      write(IOUT,*) 'Assigning external velocity and density model...'
-      write(IOUT,*)
-    endif
-    if(TURN_ANISOTROPY_ON .or. TURN_ATTENUATION_ON) &
-         call exit_MPI('cannot have anisotropy nor attenuation if external model in current version')
-    any_acoustic = .false.
-    any_elastic = .false.
-    do ispec = 1,nspec
-      previous_vsext = -1.d0
-      do j = 1,NGLLZ
-        do i = 1,NGLLX
-          iglob = ibool(i,j,ispec)
-          call define_external_model(coord(1,iglob),coord(2,iglob),kmato(ispec),myrank,  &
-                                         rhoext(i,j,ispec),vpext(i,j,ispec),vsext(i,j,ispec),myrank)
-! stop if the same element is assigned both acoustic and elastic points in external model
-          if(.not. (i == 1 .and. j == 1) .and. &
-            ((vsext(i,j,ispec) >= TINYVAL .and. previous_vsext < TINYVAL) .or. &
-             (vsext(i,j,ispec) < TINYVAL .and. previous_vsext >= TINYVAL)))  &
-                call exit_MPI('external velocity model cannot be both fluid and solid inside the same spectral element')
-          if(vsext(i,j,ispec) < TINYVAL) then
-            elastic(ispec) = .false.
-            poroelastic(ispec) = .false.
-            any_acoustic = .true.
-          else
-            elastic(ispec) = .true.
-            poroelastic(ispec) = .false.
-            any_elastic = .true.
-          endif
-          previous_vsext = vsext(i,j,ispec)
-        enddo
-      enddo
-    enddo
-  endif
+        write(IOUT,*) 'assign_external_model = ', assign_external_model
+if ( assign_external_model .and. ipass == 1) then
+        write(IOUT,*)
+        write(IOUT,*) '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+        write(IOUT,*) 'Assigning external velocity and density model (elastic and/or acoustic)...'
+        write(IOUT,*) 'Read outside SEG model...'
+        write(IOUT,*) '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+        if(TURN_ANISOTROPY_ON .or. TURN_ATTENUATION_ON) &
+          call exit_MPI('cannot have anisotropy nor attenuation if external model in current version')
+          any_acoustic = .false.
+          any_elastic = .false.
+          any_poroelastic = .false.
+          open(unit=1001,file='DATA/model_velocity.dat_input',status='unknown')
+         do ispec = 1,nspec
+                 do j = 1,NGLLZ
+                 do i = 1,NGLLX
+                        iglob = ibool(i,j,ispec)
+                        read(1001,*) tmp1,tmp2,tmp3,rhoext(i,j,ispec),vpext(i,j,ispec),vsext(i,j,ispec)
+!                        vsext(i,j,ispec)=0.0
+                 end do
+                 end do
+         end do
+          close(1001)
+          do ispec = 1,nspec
+                 previous_vsext = -1.d0
+                 do j = 1,NGLLZ
+                 do i = 1,NGLLX
+                        iglob = ibool(i,j,ispec)
+                        if(.not. (i == 1 .and. j == 1) .and. &
+                        ((vsext(i,j,ispec) >= TINYVAL .and. previous_vsext < TINYVAL) .or. &
+                        (vsext(i,j,ispec) < TINYVAL .and. previous_vsext >= TINYVAL)))  &
+                        call exit_MPI('external velocity model cannot be both fluid and solid inside the same spectral element')
+                        if(vsext(i,j,ispec) < TINYVAL) then
+                                elastic(ispec) = .false.
+                                poroelastic(ispec) = .false.
+                                any_acoustic = .true.
+                        else
+                                poroelastic(ispec) = .false.
+                                elastic(ispec) = .true.
+                                any_elastic = .true.
+                        endif
+                        previous_vsext = vsext(i,j,ispec)
+                  enddo
+                  enddo
+           enddo
+endif
 
 !
 !----  perform basic checks on parameters read
@@ -2063,6 +2124,10 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     allocate(rhop_kl(npoin))
     allocate(alpha_kl(npoin))
     allocate(beta_kl(npoin))
+    allocate(rhorho_el_hessian_final2(npoin))
+    allocate(rhorho_el_hessian_temp2(npoin))
+    allocate(rhorho_el_hessian_final1(npoin))
+    allocate(rhorho_el_hessian_temp1(npoin))
   else
     allocate(b_displ_elastic(1,1))
     allocate(b_veloc_elastic(1,1))
@@ -2079,6 +2144,10 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     allocate(rhop_kl(1))
     allocate(alpha_kl(1))
     allocate(beta_kl(1))
+    allocate(rhorho_el_hessian_final2(1))
+    allocate(rhorho_el_hessian_temp2(1))
+    allocate(rhorho_el_hessian_final1(1))
+    allocate(rhorho_el_hessian_temp1(1))
   endif
 
   if(any_poroelastic) then
@@ -2222,6 +2291,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     allocate(b_potential_dot_acoustic(npoin))
     allocate(b_potential_dot_dot_acoustic(npoin))
     allocate(b_displ_ac(2,npoin))
+    allocate(b_accel_ac(2,npoin))
     allocate(accel_ac(2,npoin))
     allocate(rho_ac_kl(npoin))
     allocate(rhol_ac_global(npoin))
@@ -2229,12 +2299,15 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     allocate(kappal_ac_global(npoin))
     allocate(rhop_ac_kl(npoin))
     allocate(alpha_ac_kl(npoin))
+    allocate(rhorho_ac_hessian_final2(npoin))
+    allocate(rhorho_ac_hessian_final1(npoin))
   else
 ! allocate unused arrays with fictitious size
     allocate(b_potential_acoustic(1))
     allocate(b_potential_dot_acoustic(1))
     allocate(b_potential_dot_dot_acoustic(1))
     allocate(b_displ_ac(1,1))
+    allocate(b_accel_ac(1,1))
     allocate(accel_ac(1,1))
     allocate(rho_ac_kl(1))
     allocate(rhol_ac_global(1))
@@ -2242,6 +2315,8 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     allocate(kappal_ac_global(1))
     allocate(rhop_ac_kl(1))
     allocate(alpha_ac_kl(1))
+    allocate(rhorho_ac_hessian_final2(1))
+    allocate(rhorho_ac_hessian_final1(1))
   endif
 
   endif
@@ -3269,6 +3344,10 @@ endif
   rhop_kl(:) = ZERO
   beta_kl(:) = ZERO
   alpha_kl(:) = ZERO
+    rhorho_el_hessian_final2(:) = ZERO
+    rhorho_el_hessian_temp2(:) = ZERO
+    rhorho_el_hessian_final1(:) = ZERO
+    rhorho_el_hessian_temp1(:) = ZERO
    endif
 
    if(any_poroelastic) then
@@ -3366,6 +3445,8 @@ endif
 !
   rhop_ac_kl(:) = ZERO
   alpha_ac_kl(:) = ZERO
+  rhorho_ac_hessian_final2(:) = ZERO
+  rhorho_ac_hessian_final1(:) = ZERO
    endif
 
   endif ! if(isover == 2)
@@ -4754,7 +4835,6 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
   endif ! end of viscous attenuation for porous media
 
 !-----------------------------------------
-
     if(any_acoustic) then
 
       potential_acoustic = potential_acoustic + deltat*potential_dot_acoustic + deltatsquareover2*potential_dot_dot_acoustic
@@ -6387,6 +6467,12 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
             rho_k(iglob) =  accel_elastic(1,iglob)*b_displ_elastic(1,iglob) +&
                             accel_elastic(2,iglob)*b_displ_elastic(2,iglob) +&
                             accel_elastic(3,iglob)*b_displ_elastic(3,iglob)
+            rhorho_el_hessian_temp1(iglob) = accel_elastic(1,iglob)*accel_elastic(1,iglob) +&
+                                            accel_elastic(2,iglob)*accel_elastic(2,iglob)  +&
+                                            accel_elastic(3,iglob)*accel_elastic(3,iglob)
+            rhorho_el_hessian_temp2(iglob) = accel_elastic(1,iglob)*b_accel_elastic(1,iglob) +&
+                                            accel_elastic(2,iglob)*b_accel_elastic(2,iglob)  +&
+                                            accel_elastic(3,iglob)*b_accel_elastic(3,iglob)
       enddo
   endif
 
@@ -6668,9 +6754,11 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! derivative along x
           tempx1l = tempx1l + potential_dot_dot_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
           b_tempx1l = b_tempx1l + b_potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
+          bb_tempx1l = bb_tempx1l + b_potential_dot_dot_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
 ! derivative along z
           tempx2l = tempx2l + potential_dot_dot_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
           b_tempx2l = b_tempx2l + b_potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
+          bb_tempx2l = bb_tempx2l + b_potential_dot_dot_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
         enddo
 
         xixl = xix(i,j,ispec)
@@ -6685,6 +6773,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
         accel_ac(2,iglob) = (tempx1l*xizl + tempx2l*gammazl) / rhol_ac_global(iglob)
         b_displ_ac(1,iglob) = (b_tempx1l*xixl + b_tempx2l*gammaxl) / rhol_ac_global(iglob)
         b_displ_ac(2,iglob) = (b_tempx1l*xizl + b_tempx2l*gammazl) / rhol_ac_global(iglob)
+        b_accel_ac(1,iglob) = (bb_tempx1l*xixl + bb_tempx2l*gammaxl) / rhol_ac_global(iglob)
+        b_accel_ac(2,iglob) = (bb_tempx1l*xizl + bb_tempx2l*gammazl) / rhol_ac_global(iglob)
 
           enddo !i = 1, NGLLX
       enddo !j = 1, NGLLZ
@@ -6701,6 +6791,10 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 !
             rhop_ac_kl(iglob) = rho_ac_kl(iglob) + kappa_ac_kl(iglob)
             alpha_ac_kl(iglob) = TWO *  kappa_ac_kl(iglob)
+            rhorho_ac_hessian_final1(iglob) = rhorho_ac_hessian_final1(iglob) + &
+                             dot_product(accel_ac(:,iglob),accel_ac(:,iglob)) * deltat
+            rhorho_ac_hessian_final2(iglob) = rhorho_ac_hessian_final2(iglob) + &
+                             dot_product(accel_ac(:,iglob),b_accel_ac(:,iglob)) * deltat
           enddo
 
     endif !if(any_acoustic)
@@ -6730,6 +6824,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
                   / (3._CUSTOM_REAL * kappal_global(iglob)) * kappa_kl(iglob))
             alpha_kl(iglob) = TWO * (1._CUSTOM_REAL + 4._CUSTOM_REAL * mul_global(iglob)/&
                    (3._CUSTOM_REAL * kappal_global(iglob))) * kappa_kl(iglob)
+            rhorho_el_hessian_final1(iglob) = rhorho_el_hessian_final1(iglob) + rhorho_el_hessian_temp1(iglob) * deltat
+            rhorho_el_hessian_final2(iglob) = rhorho_el_hessian_final2(iglob) + rhorho_el_hessian_temp2(iglob) * deltat
           enddo
 
    endif !if(any_elastic)
@@ -6900,7 +6996,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
         xx = coord(1,iglob)
         zz = coord(2,iglob)
          write(95,'(5e12.3)')xx,zz,rho_ac_kl(iglob),kappa_ac_kl(iglob)
-         write(96,'(5e12.3)')xx,zz,rhop_ac_kl(iglob),alpha_ac_kl(iglob)
+         write(96,'(5e12.3)')rhorho_ac_hessian_final1(iglob), rhorho_ac_hessian_final2(iglob),&
+                             rhop_ac_kl(iglob),alpha_ac_kl(iglob)
      enddo
     close(95)
     close(96)
@@ -6911,7 +7008,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
         xx = coord(1,iglob)
         zz = coord(2,iglob)
          write(97,'(5e12.3)')xx,zz,rho_kl(iglob),kappa_kl(iglob),mu_kl(iglob)
-         write(98,'(5e12.3)')xx,zz,rhop_kl(iglob),alpha_kl(iglob),beta_kl(iglob)
+         write(98,'(5e12.3)')rhorho_el_hessian_final1(iglob), rhorho_el_hessian_final2(iglob),&
+                             rhop_kl(iglob),alpha_kl(iglob),beta_kl(iglob)     
      enddo
     close(97)
     close(98)
@@ -7330,6 +7428,48 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     write(IENERGY,*) 'plot "energy.gnu" us 1:4 t ''Total Energy'' w l 1, "energy.gnu" us 1:3 t ''Potential Energy'' w l 2'
     close(IENERGY)
   endif
+ 
+   if (.not. any_poroelastic) then
+open(unit=1001,file='DATA/model_velocity.dat_output',status='unknown')
+   if ( .NOT. assign_external_model) then
+         print *, 'writing model_output as external_model == .false.!!!!!!!!!!!!!!!!!!!!!!!'
+allocate(rho_local(ngllx,ngllz,nspec)); rho_local=0.
+allocate(vp_local(ngllx,ngllz,nspec)); vp_local=0.
+allocate(vs_local(ngllx,ngllz,nspec)); vs_local=0.
+!!      write(1001,*) npoin 
+!!      do iglob = 1,npoin
+!!         write(1001,*) coord(1,iglob),coord(2,iglob),rho_global(iglob),vp_global(iglob),vs_global(iglob)
+!!      end do
+    do ispec = 1,nspec
+       do j = 1,NGLLZ
+       do i = 1,NGLLX
+          iglob = ibool(i,j,ispec)
+          rho_local(i,j,ispec) = density(1,kmato(ispec))
+          vp_local(i,j,ispec) = sqrt(poroelastcoef(3,1,kmato(ispec))/density(1,kmato(ispec)))
+          vs_local(i,j,ispec) = sqrt(poroelastcoef(2,1,kmato(ispec))/density(1,kmato(ispec)))
+          write(1001,'(I10, 5F10.4)') iglob, coord(1,iglob),coord(2,iglob),&
+                                      rho_local(i,j,ispec),vp_local(i,j,ispec),vs_local(i,j,ispec)
+       end do
+       end do
+    end do
+   else
+     print *, 'writing model_output as external_model == .true.!!!!!!!!!!!!!!!!!!!!!!!!'
+!!     write(1001,*) npoin 
+!!  do iglob = 1,npoin
+!!     write(1001,*) coord(1,iglob),coord(2,iglob),rhoext_global(iglob),vpext_global(iglob),vsext_global(iglob)
+!!  end do
+     do ispec = 1,nspec
+        do j = 1,NGLLZ
+        do i = 1,NGLLX
+           iglob = ibool(i,j,ispec)
+           write(1001,'(I10, 5F10.4)') iglob, coord(1,iglob),coord(2,iglob),&
+                                       rhoext(i,j,ispec),vpext(i,j,ispec),vsext(i,j,ispec)
+        end do
+        end do
+     end do
+   endif
+close(1001)
+   endif
 
 ! print exit banner
   if (myrank == 0) call datim(simulation_title)
