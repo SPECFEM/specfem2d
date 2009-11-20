@@ -1039,7 +1039,7 @@ endif
   print*, '*************** WARNING ***************'
   stop
   endif
-  if(p_sv .and. (TURN_ATTENUATION_ON .or. TURN_ANISOTROPY_ON)) then
+  if(.not. p_sv .and. (TURN_ATTENUATION_ON .or. TURN_ANISOTROPY_ON)) then
   print*, '*************** WARNING ***************'
   print*, 'Attenuation and anisotropy are not implemented for surface (membrane) waves calculation'
   print*, '*************** WARNING ***************'
@@ -3796,10 +3796,10 @@ endif
 
 ! Ricker (second derivative of a Gaussian) source time function
       if(time_function_type(i_source) == 1) then
-!        source_time_function(i_source,it) = - factor(i_source) * (ONE-TWO*aval(i_source)*(time-t0(i_source))**2) * &
-!                                           exp(-aval(i_source)*(time-t0(i_source))**2)
-        source_time_function(i_source,it) = - factor(i_source) * TWO*aval(i_source)*sqrt(aval(i_source))*&
-                                            (time-t0(i_source))/pi * exp(-aval(i_source)*(time-t0(i_source))**2)
+        source_time_function(i_source,it) = - factor(i_source) * (ONE-TWO*aval(i_source)*(time-t0(i_source))**2) * &
+                                           exp(-aval(i_source)*(time-t0(i_source))**2)
+!        source_time_function(i_source,it) = - factor(i_source) * TWO*aval(i_source)*sqrt(aval(i_source))*&
+!                                            (time-t0(i_source))/pi * exp(-aval(i_source)*(time-t0(i_source))**2)
 
 ! first derivative of a Gaussian source time function
       else if(time_function_type(i_source) == 2) then
