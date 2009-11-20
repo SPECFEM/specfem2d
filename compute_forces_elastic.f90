@@ -94,7 +94,6 @@
   logical, dimension(4,nelemabs)  :: codeabs
 
   real(kind=CUSTOM_REAL), dimension(3,npoin) :: accel_elastic,veloc_elastic,displ_elastic
-  real(kind=CUSTOM_REAL), dimension(2,npoin) :: displ_att
   double precision, dimension(2,numat) :: density
   double precision, dimension(4,3,numat) :: elastcoef
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
@@ -176,9 +175,7 @@
 
 ! compute Grad(displ_elastic) at time step n for attenuation
   if(TURN_ATTENUATION_ON) then
-      displ_att(1,:) = displ_elastic(1,:)
-      displ_att(2,:) = displ_elastic(3,:)
-       call compute_gradient_attenuation(displ_att,dux_dxl_n,duz_dxl_n, &
+       call compute_gradient_attenuation(displ_elastic,dux_dxl_n,duz_dxl_n, &
       dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,npoin)
   endif
 
@@ -861,9 +858,10 @@
       irec_local = 0
       do irec = 1,nrec
 !   add the source (only if this proc carries the source)
-      if(myrank == which_proc_receiver(irec) .and. elastic(ispec_selected_rec(irec))) then
+      if(myrank == which_proc_receiver(irec)) then
 
       irec_local = irec_local + 1
+      if(elastic(ispec_selected_rec(irec))) then
 ! add source array
       do j=1,NGLLZ
         do i=1,NGLLX
@@ -876,6 +874,7 @@
          endif
         enddo
       enddo
+     endif ! if element is elastic
 
      endif ! if this processor carries the adjoint source and the source element is elastic
       enddo ! irec = 1,nrec
@@ -888,7 +887,7 @@
   if(TURN_ATTENUATION_ON) then
 
 ! compute Grad(displ_elastic) at time step n+1 for attenuation
-    call compute_gradient_attenuation(displ_att,dux_dxl_np1,duz_dxl_np1, &
+    call compute_gradient_attenuation(displ_elastic,dux_dxl_np1,duz_dxl_np1, &
       dux_dzl_np1,duz_dzl_np1,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,npoin)
 
 ! update memory variables with fourth-order Runge-Kutta time scheme for attenuation
