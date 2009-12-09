@@ -834,9 +834,10 @@
       irec_local = 0
       do irec = 1,nrec
 !   add the source (only if this proc carries the source)
-      if(myrank == which_proc_receiver(irec) .and. poroelastic(ispec_selected_rec(irec))) then
+      if(myrank == which_proc_receiver(irec)) then
 
       irec_local = irec_local + 1
+      if(poroelastic(ispec_selected_rec(irec))) then
     phil = porosity(kmato(ispec_selected_rec(irec)))
     rhol_s = density(1,kmato(ispec_selected_rec(irec)))
     rhol_f = density(2,kmato(ispec_selected_rec(irec)))
@@ -851,6 +852,7 @@
                rhol_f/rhol_bar*adj_sourcearrays(irec_local,NSTEP-it+1,3,i,j)
        enddo
       enddo
+      endif ! if element is poroelastic
 
       endif ! if this processor carries the adjoint source and the source element is poroelastic
       enddo ! irec = 1,nrec
