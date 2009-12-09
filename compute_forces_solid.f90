@@ -855,9 +855,10 @@
       irec_local = 0
       do irec = 1,nrec
 !   add the source (only if this proc carries the source)
-      if(myrank == which_proc_receiver(irec) .and. poroelastic(ispec_selected_rec(irec))) then
+      if(myrank == which_proc_receiver(irec)) then
 
       irec_local = irec_local + 1
+      if(poroelastic(ispec_selected_rec(irec))) then
 ! add source array
       do j=1,NGLLZ
         do i=1,NGLLX
@@ -866,6 +867,7 @@
           accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,3,i,j)
         enddo
       enddo
+      endif ! if element is poroelastic
 
       endif ! if this processor carries the adjoint source and the source element is poroelastic
       enddo ! irec = 1,nrec
