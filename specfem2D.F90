@@ -1203,26 +1203,45 @@ endif
 ! Files to save absorbed waves needed to reconstruct backward wavefield for adjoint method
    if(ipass == 1) then
      if(any_elastic .and. (save_forward .or. isolver == 2)) then
-   allocate(b_absorb_elastic_left(3,NGLLZ,nspec_xmin,NSTEP))
-   allocate(b_absorb_elastic_right(3,NGLLZ,nspec_xmax,NSTEP))
-   allocate(b_absorb_elastic_bottom(3,NGLLX,nspec_zmin,NSTEP))
-   allocate(b_absorb_elastic_top(3,NGLLX,nspec_zmax,NSTEP))
+       allocate(b_absorb_elastic_left(3,NGLLZ,nspec_xmin,NSTEP))
+       allocate(b_absorb_elastic_right(3,NGLLZ,nspec_xmax,NSTEP))
+       allocate(b_absorb_elastic_bottom(3,NGLLX,nspec_zmin,NSTEP))
+       allocate(b_absorb_elastic_top(3,NGLLX,nspec_zmax,NSTEP))
+     else
+       allocate(b_absorb_elastic_left(1,1,1,1))
+       allocate(b_absorb_elastic_right(1,1,1,1))
+       allocate(b_absorb_elastic_bottom(1,1,1,1))
+       allocate(b_absorb_elastic_top(1,1,1,1)) 
      endif
      if(any_poroelastic .and. (save_forward .or. isolver == 2)) then
-   allocate(b_absorb_poro_s_left(NDIM,NGLLZ,nspec_xmin,NSTEP))
-   allocate(b_absorb_poro_s_right(NDIM,NGLLZ,nspec_xmax,NSTEP))
-   allocate(b_absorb_poro_s_bottom(NDIM,NGLLX,nspec_zmin,NSTEP))
-   allocate(b_absorb_poro_s_top(NDIM,NGLLX,nspec_zmax,NSTEP))
-   allocate(b_absorb_poro_w_left(NDIM,NGLLZ,nspec_xmin,NSTEP))
-   allocate(b_absorb_poro_w_right(NDIM,NGLLZ,nspec_xmax,NSTEP))
-   allocate(b_absorb_poro_w_bottom(NDIM,NGLLX,nspec_zmin,NSTEP))
-   allocate(b_absorb_poro_w_top(NDIM,NGLLX,nspec_zmax,NSTEP))
+       allocate(b_absorb_poro_s_left(NDIM,NGLLZ,nspec_xmin,NSTEP))
+       allocate(b_absorb_poro_s_right(NDIM,NGLLZ,nspec_xmax,NSTEP))
+       allocate(b_absorb_poro_s_bottom(NDIM,NGLLX,nspec_zmin,NSTEP))
+       allocate(b_absorb_poro_s_top(NDIM,NGLLX,nspec_zmax,NSTEP))
+       allocate(b_absorb_poro_w_left(NDIM,NGLLZ,nspec_xmin,NSTEP))
+       allocate(b_absorb_poro_w_right(NDIM,NGLLZ,nspec_xmax,NSTEP))
+       allocate(b_absorb_poro_w_bottom(NDIM,NGLLX,nspec_zmin,NSTEP))
+       allocate(b_absorb_poro_w_top(NDIM,NGLLX,nspec_zmax,NSTEP))
+     else
+       allocate(b_absorb_poro_s_left(1,1,1,1))
+       allocate(b_absorb_poro_s_right(1,1,1,1))
+       allocate(b_absorb_poro_s_bottom(1,1,1,1))
+       allocate(b_absorb_poro_s_top(1,1,1,1))
+       allocate(b_absorb_poro_w_left(1,1,1,1))
+       allocate(b_absorb_poro_w_right(1,1,1,1))
+       allocate(b_absorb_poro_w_bottom(1,1,1,1))
+       allocate(b_absorb_poro_w_top(1,1,1,1))      
      endif
      if(any_acoustic .and. (save_forward .or. isolver == 2)) then
-   allocate(b_absorb_acoustic_left(NGLLZ,nspec_xmin,NSTEP))
-   allocate(b_absorb_acoustic_right(NGLLZ,nspec_xmax,NSTEP))
-   allocate(b_absorb_acoustic_bottom(NGLLX,nspec_zmin,NSTEP))
-   allocate(b_absorb_acoustic_top(NGLLX,nspec_zmax,NSTEP))
+       allocate(b_absorb_acoustic_left(NGLLZ,nspec_xmin,NSTEP))
+       allocate(b_absorb_acoustic_right(NGLLZ,nspec_xmax,NSTEP))
+       allocate(b_absorb_acoustic_bottom(NGLLX,nspec_zmin,NSTEP))
+       allocate(b_absorb_acoustic_top(NGLLX,nspec_zmax,NSTEP))
+     else
+       allocate(b_absorb_acoustic_left(1,1,1))
+       allocate(b_absorb_acoustic_right(1,1,1))
+       allocate(b_absorb_acoustic_bottom(1,1,1))
+       allocate(b_absorb_acoustic_top(1,1,1))
      endif
    endif
 
@@ -1819,7 +1838,11 @@ endif
       endif
     enddo
   if(ipass == 1) allocate(adj_sourcearray(NSTEP,3,NGLLX,NGLLZ))
-  if (nadj_rec_local > 0 .and. ipass == 1)  allocate(adj_sourcearrays(nadj_rec_local,NSTEP,3,NGLLX,NGLLZ))
+  if (nadj_rec_local > 0 .and. ipass == 1)  then
+    allocate(adj_sourcearrays(nadj_rec_local,NSTEP,3,NGLLX,NGLLZ))
+  else if (ipass == 1) then
+    allocate(adj_sourcearrays(1,1,1,1,1))
+  endif
     irec_local = 0
     do irec = 1, nrec
 !   compute only adjoint source arrays in the local proc
@@ -1832,6 +1855,8 @@ endif
         adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
       endif
     enddo
+   else if (ipass == 1) then
+     allocate(adj_sourcearrays(1,1,1,1,1))
   endif
 
 
@@ -6703,7 +6728,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
 ! compute interpolated field
         valux = valux + dxd*hlagrange
-        valuy = valuy + dyd*hlagrange
+        if(elastic(ispec))  valuy = valuy + dyd*hlagrange
         valuz = valuz + dzd*hlagrange
         valcurl = valcurl + dcurld*hlagrange
 
@@ -6728,7 +6753,6 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
  enddo
 
 
-!
 !----- ecriture des kernels
 !
 ! kernels output
@@ -7447,7 +7471,7 @@ allocate(vs_local(ngllx,ngllz,nspec)); vs_local=0.
           rho_local(i,j,ispec) = density(1,kmato(ispec))
           vp_local(i,j,ispec) = sqrt(poroelastcoef(3,1,kmato(ispec))/density(1,kmato(ispec)))
           vs_local(i,j,ispec) = sqrt(poroelastcoef(2,1,kmato(ispec))/density(1,kmato(ispec)))
-          write(1001,'(I10, 5F10.4)') iglob, coord(1,iglob),coord(2,iglob),&
+          write(1001,'(I10, 5F13.4)') iglob, coord(1,iglob),coord(2,iglob),&
                                       rho_local(i,j,ispec),vp_local(i,j,ispec),vs_local(i,j,ispec)
        end do
        end do
@@ -7462,7 +7486,7 @@ allocate(vs_local(ngllx,ngllz,nspec)); vs_local=0.
         do j = 1,NGLLZ
         do i = 1,NGLLX
            iglob = ibool(i,j,ispec)
-           write(1001,'(I10, 5F10.4)') iglob, coord(1,iglob),coord(2,iglob),&
+           write(1001,'(I10,5F13.4)') iglob, coord(1,iglob),coord(2,iglob),&
                                        rhoext(i,j,ispec),vpext(i,j,ispec),vsext(i,j,ispec)
         end do
         end do
