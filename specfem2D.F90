@@ -256,7 +256,7 @@
 
   integer :: i,j,k,l,it,irec,ipoin,ip,id,n,ispec,npoin,npgeo,iglob
   logical :: anyabs
-  double precision :: dxd,dyd,dzd,dcurld,valux,valuy,valuz,valcurl,hlagrange,rhol,cosrot,sinrot,xi,gamma,x,z
+  double precision :: dxd,dyd,dzd,dcurld,valux,valuy,valuz,valcurl,hlagrange,rhol,xi,gamma,x,z
 
 ! coefficients of the explicit Newmark time scheme
   integer NSTEP
@@ -1901,7 +1901,7 @@ if (ipass == NUMBER_OF_PASSES) then
        rec_tangential_detection_curve(irecloc) = n1_tangential_detection_curve
        call tri_quad(n_tangential_detection_curve, n1_tangential_detection_curve, nnodes_tangential_curve)
 
-       call calcul_normale( anglerec_irec(irecloc), nodes_tangential_curve(1,n_tangential_detection_curve(1)), &
+       call compute_normal_vector( anglerec_irec(irecloc), nodes_tangential_curve(1,n_tangential_detection_curve(1)), &
          nodes_tangential_curve(1,n_tangential_detection_curve(2)), &
          nodes_tangential_curve(1,n_tangential_detection_curve(3)), &
          nodes_tangential_curve(1,n_tangential_detection_curve(4)), &
@@ -1915,6 +1915,7 @@ if (ipass == NUMBER_OF_PASSES) then
     cosrot_irec(:) = cos(anglerec_irec(:))
     sinrot_irec(:) = sin(anglerec_irec(:))
   endif
+
 ! for the source
   if (force_normal_to_surface) then
 
@@ -1933,7 +1934,7 @@ if (ipass == NUMBER_OF_PASSES) then
 
     call tri_quad(n_tangential_detection_curve, n1_tangential_detection_curve, nnodes_tangential_curve)
 
-    call calcul_normale( angleforce(i_source), nodes_tangential_curve(1,n_tangential_detection_curve(1)), &
+    call compute_normal_vector( angleforce(i_source), nodes_tangential_curve(1,n_tangential_detection_curve(1)), &
       nodes_tangential_curve(1,n_tangential_detection_curve(2)), &
       nodes_tangential_curve(1,n_tangential_detection_curve(3)), &
       nodes_tangential_curve(1,n_tangential_detection_curve(4)), &
@@ -2865,9 +2866,6 @@ endif
 !
   sisux = ZERO
   sisuz = ZERO
-
-  cosrot = cos(anglerec)
-  sinrot = sin(anglerec)
 
 ! initialize arrays to zero
   displ_elastic = ZERO
@@ -6738,11 +6736,11 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! rotate seismogram components if needed, except if recording pressure, which is a scalar
     if(seismotype /= 4 .and. seismotype /= 6) then
       if(p_sv) then
-      sisux(seismo_current,irecloc) =   cosrot_irec(irecloc)*valux + sinrot_irec(irecloc)*valuz
-      sisuz(seismo_current,irecloc) = - sinrot_irec(irecloc)*valux + cosrot_irec(irecloc)*valuz
+        sisux(seismo_current,irecloc) =   cosrot_irec(irecloc)*valux + sinrot_irec(irecloc)*valuz
+        sisuz(seismo_current,irecloc) = - sinrot_irec(irecloc)*valux + cosrot_irec(irecloc)*valuz
       else
-      sisux(seismo_current,irecloc) = valuy
-      sisuz(seismo_current,irecloc) = ZERO
+        sisux(seismo_current,irecloc) = valuy
+        sisuz(seismo_current,irecloc) = ZERO
       endif
     else
       sisux(seismo_current,irecloc) = valux
@@ -7615,7 +7613,7 @@ subroutine tri_quad(n, n1, nnodes)
 end subroutine tri_quad
 
 
-subroutine calcul_normale( angle, n1_x, n2_x, n3_x, n4_x, n1_z, n2_z, n3_z, n4_z )
+subroutine compute_normal_vector( angle, n1_x, n2_x, n3_x, n4_x, n1_z, n2_z, n3_z, n4_z )
 
       implicit none
 
@@ -7647,8 +7645,7 @@ subroutine calcul_normale( angle, n1_x, n2_x, n3_x, n4_x, n1_z, n2_z, n3_z, n4_z
       theta2 = - sign(1.d0,n3_x - n2_x) * acos(costheta2)
       theta3 = - sign(1.d0,n4_x - n3_x) * acos(costheta3)
 
+      angle = (theta1 + theta2 + theta3) / 3.d0 + PI/2.d0
 
-      angle = angle + ( theta1 + theta2 + theta3 ) / 3.d0 + PI/2.d0
-      !angle = theta2
+end subroutine compute_normal_vector
 
-end subroutine calcul_normale
