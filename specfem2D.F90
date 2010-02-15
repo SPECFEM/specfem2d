@@ -1859,7 +1859,6 @@ endif
      allocate(adj_sourcearrays(1,1,1,1,1))
   endif
 
-
 if (ipass == 1) then
   if (nrecloc > 0) then
     allocate(anglerec_irec(nrecloc))
@@ -1872,6 +1871,10 @@ if (ipass == 1) then
     allocate(sinrot_irec(1))
     allocate(rec_tangential_detection_curve(1))
   endif
+
+  if (rec_normal_to_surface .and. abs(anglerec) > 1.d-6) &
+    stop 'anglerec should be zero when receivers are normal to the topography'
+
   anglerec_irec(:) = anglerec * pi / 180.d0
   cosrot_irec(:) = cos(anglerec)
   sinrot_irec(:) = sin(anglerec)
@@ -1934,6 +1937,10 @@ if (ipass == NUMBER_OF_PASSES) then
 
     call tri_quad(n_tangential_detection_curve, n1_tangential_detection_curve, nnodes_tangential_curve)
 
+! in the case of a source force vector
+! users can give an angle with respect to the normal to the topography surface,
+! in which case we must compute the normal to the topography
+! and add it the existing rotation angle
     call compute_normal_vector( angleforce(i_source), nodes_tangential_curve(1,n_tangential_detection_curve(1)), &
       nodes_tangential_curve(1,n_tangential_detection_curve(2)), &
       nodes_tangential_curve(1,n_tangential_detection_curve(3)), &
@@ -7645,7 +7652,11 @@ subroutine compute_normal_vector( angle, n1_x, n2_x, n3_x, n4_x, n1_z, n2_z, n3_
       theta2 = - sign(1.d0,n3_x - n2_x) * acos(costheta2)
       theta3 = - sign(1.d0,n4_x - n3_x) * acos(costheta3)
 
-      angle = (theta1 + theta2 + theta3) / 3.d0 + PI/2.d0
+! a sum is needed here because in the case of a source force vector
+! users can give an angle with respect to the normal to the topography surface,
+! in which case we must compute the normal to the topography
+! and add it the existing rotation angle
+      angle = angle + (theta1 + theta2 + theta3) / 3.d0 + PI/2.d0
 
 end subroutine compute_normal_vector
 
