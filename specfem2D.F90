@@ -1876,8 +1876,8 @@ if (ipass == 1) then
     stop 'anglerec should be zero when receivers are normal to the topography'
 
   anglerec_irec(:) = anglerec * pi / 180.d0
-  cosrot_irec(:) = cos(anglerec)
-  sinrot_irec(:) = sin(anglerec)
+  cosrot_irec(:) = cos(anglerec_irec(:))
+  sinrot_irec(:) = sin(anglerec_irec(:))
 endif
 
 !
