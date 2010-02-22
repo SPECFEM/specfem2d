@@ -10,6 +10,155 @@ SPECFEM2D 6.0: SPECFEM2D facilitates 2D simulations of
         <http://www.geodynamics.org/cig/software/packages/seismo/specfem2d>
         for the source code.
 
+!========================================================================
+!
+!                   S P E C F E M 2 D  Version 6.0
+!                   ------------------------------
+!
+! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France,
+! and Princeton University, USA.
+! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
+!               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
+!               Roland Martin, roland DOT martin aT univ-pau DOT fr
+!               Christina Morency, cmorency aT princeton DOT edu
+!
+! This software is a computer program whose purpose is to solve
+! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
+! using a spectral-element method (SEM).
+!
+! This software is governed by the CeCILL license under French law and
+! abiding by the rules of distribution of free software. You can use,
+! modify and/or redistribute the software under the terms of the CeCILL
+! license as circulated by CEA, CNRS and INRIA at the following URL
+! "http://www.cecill.info".
+!
+! As a counterpart to the access to the source code and rights to copy,
+! modify and redistribute granted by the license, users are provided only
+! with a limited warranty and the software's author, the holder of the
+! economic rights, and the successive licensors have only limited
+! liability.
+!
+! In this respect, the user's attention is drawn to the risks associated
+! with loading, using, modifying and/or developing or reproducing the
+! software by the user in light of its specific status of free software,
+! that may mean that it is complicated to manipulate, and that also
+! therefore means that it is reserved for developers and experienced
+! professionals having in-depth computer knowledge. Users are therefore
+! encouraged to load and test the software's suitability as regards their
+! requirements in conditions enabling the security of their systems and/or
+! data to be ensured and, more generally, to use and operate it in the
+! same conditions as regards security.
+!
+! The full text of the license is available in file "LICENSE".
+!
+!========================================================================
+
+!====================================================================================
+!
+!   An explicit 2D parallel MPI spectral element solver
+!   for the anelastic anisotropic or poroelastic wave equation.
+!
+!====================================================================================
+
+! If you use this code for your own research, please cite at least one article
+! written by the developers of the package, for instance:
+!
+! @ARTICLE{TrKoLi08,
+! author = {Jeroen Tromp and Dimitri Komatitsch and Qinya Liu},
+! title = {Spectral-Element and Adjoint Methods in Seismology},
+! journal = {Communications in Computational Physics},
+! year = {2008},
+! volume = {3},
+! pages = {1-32},
+! number = {1}}
+!
+! or
+!
+! @INCOLLECTION{ChKoViCaVaFe07,
+! author = {Emmanuel Chaljub and Dimitri Komatitsch and Jean-Pierre Vilotte and
+! Yann Capdeville and Bernard Valette and Gaetano Festa},
+! title = {Spectral Element Analysis in Seismology},
+! booktitle = {Advances in Wave Propagation in Heterogeneous Media},
+! publisher = {Elsevier - Academic Press},
+! year = {2007},
+! editor = {Ru-Shan Wu and Val\'erie Maupin},
+! volume = {48},
+! series = {Advances in Geophysics},
+! pages = {365-419}}
+!
+! @ARTICLE{KoTr99,
+! author={D. Komatitsch and J. Tromp},
+! title={Introduction to the spectral-element method for 3-{D} seismic wave propagation},
+! journal={Geophys. J. Int.},
+! year=1999,
+! volume=139,
+! number=3,
+! pages={806-822},
+! doi={10.1046/j.1365-246x.1999.00967.x}}
+!
+! @ARTICLE{KoVi98,
+! author={D. Komatitsch and J. P. Vilotte},
+! title={The spectral-element method: an efficient tool to simulate the seismic response of 2{D} and 3{D} geological structures},
+! journal={Bull. Seismol. Soc. Am.},
+! year=1998,
+! volume=88,
+! number=2,
+! pages={368-392}}
+!
+! @ARTICLE{MoTr08,
+! author={C. Morency and J. Tromp},
+! title={Spectral-element simulations of wave propagation in poroelastic media},
+! journal={Geophys. J. Int.},
+! year=2008,
+! volume=175,
+! pages={301-345}}
+!
+! and/or other articles from http://web.univ-pau.fr/~dkomati1/publications.html
+!
+! If you use the kernel capabilities of the code, please cite at least one article
+! written by the developers of the package, for instance:
+!
+! @ARTICLE{TrKoLi08,
+! author = {Jeroen Tromp and Dimitri Komatitsch and Qinya Liu},
+! title = {Spectral-Element and Adjoint Methods in Seismology},
+! journal = {Communications in Computational Physics},
+! year = {2008},
+! volume = {3},
+! pages = {1-32},
+! number = {1}}
+!
+! or
+!
+! @ARTICLE{LiTr06,
+! author={Qinya Liu and Jeroen Tromp},
+! title={Finite-frequency kernels based on adjoint methods},
+! journal={Bull. Seismol. Soc. Am.},
+! year=2006,
+! volume=96,
+! number=6,
+! pages={2383-2397},
+! doi={10.1785/0120060041}}
+!
+! @ARTICLE{MoLuTr09,
+! author={C. Morency and Y. Luo and J. Tromp},
+! title={Finite-frequency kernels for wave propagation in porous media based upon adjoint methods},
+! year=2009,
+! journal={Geophys. J. Int.},
+! doi={10.1111/j.1365-246X.2009.04332}}
+!
+! If you use the METIS / SCOTCH / CUBIT non-structured capabilities, please also cite:
+!
+! @ARTICLE{MaKoBlLe08,
+! author = {R. Martin and D. Komatitsch and C. Blitz and N. {Le Goff}},
+! title = {Simulation of seismic wave propagation in an asteroid based upon
+! an unstructured {MPI} spectral-element method: blocking and non-blocking
+! communication strategies},
+! journal = {Lecture Notes in Computer Science},
+! year = {2008},
+! volume = {5336},
+! pages = {350-363}}
+!
+
 How to use SPECFEM2D:
 ---------------------
 
