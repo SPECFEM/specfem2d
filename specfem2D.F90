@@ -102,8 +102,7 @@
 ! volume=175,
 ! pages={301-345}}
 !
-! and/or another article from http://web.univ-pau.fr/~dkomati1/publications.html
-!
+! and/or other articles from http://web.univ-pau.fr/~dkomati1/publications.html
 !
 ! If you use the kernel capabilities of the code, please cite at least one article
 ! written by the developers of the package, for instance:
