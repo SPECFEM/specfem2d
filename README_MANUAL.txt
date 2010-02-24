@@ -159,6 +159,14 @@ SPECFEM2D 6.0: SPECFEM2D facilitates 2D simulations of
 ! pages = {350-363}}
 !
 
+Caution:
+--------
+
+The units for the components of a moment tensor source are different
+in SPECFEM2D and in SPECFEM3D_SESAME:
+ - in SPECFEM3D_SESAME the moment tensor components are in dyne*cm
+ - in SPECFEM2D the moment tensor components are in N*m
+
 How to use SPECFEM2D:
 ---------------------
 
