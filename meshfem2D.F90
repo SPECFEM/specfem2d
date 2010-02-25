@@ -604,22 +604,22 @@ program meshfem2D
   allocate(Mzz(NSOURCE))
   allocate(factor(NSOURCE))
 
-  open(unit=IIN_SOURCE,file='DATA/CMTSOLUTION',iostat=ios,status='old',action='read')
-  if(ios /= 0) stop 'error opening CMTSOLUTION file'
+  open(unit=IIN_SOURCE,file='DATA/SOURCE',iostat=ios,status='old',action='read')
+  if(ios /= 0) stop 'error opening SOURCE file'
   icounter = 0
   do while(ios == 0)
     read(IIN_SOURCE,"(a)",iostat=ios) dummystring
     if(ios == 0) icounter = icounter + 1
   enddo
   close(IIN_SOURCE)
-  if(mod(icounter,NLINES_PER_CMTSOLUTION_SOURCE) /= 0) &
-    stop 'total number of lines in CMTSOLUTION file should be a multiple of NLINES_PER_CMTSOLUTION_SOURCE'
-  NSOURCES = icounter / NLINES_PER_CMTSOLUTION_SOURCE
-  if(NSOURCES < 1) stop 'need at least one source in CMTSOLUTION file'
+  if(mod(icounter,NLINES_PER_SOURCE) /= 0) &
+    stop 'total number of lines in SOURCE file should be a multiple of NLINES_PER_SOURCE'
+  NSOURCES = icounter / NLINES_PER_SOURCE
+  if(NSOURCES < 1) stop 'need at least one source in SOURCE file'
   if(NSOURCES /= NSOURCE) &
     stop 'total number of sources read is different than declared in Par_file'
 
-  open(unit=IIN_SOURCE,file='DATA/CMTSOLUTION',status='old',action='read')
+  open(unit=IIN_SOURCE,file='DATA/SOURCE',status='old',action='read')
   do  i_source=1,NSOURCE
      call read_value_logical(IIN_SOURCE,IGNORE_JUNK,source_surf(i_source))
      call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,xs(i_source))
