@@ -45,7 +45,7 @@
   subroutine checkgrid(vpext,vsext,rhoext,density,poroelastcoef,porosity,tortuosity,ibool,kmato,coord,npoin, &
                  vpImin,vpImax,vpIImin,vpIImax,assign_external_model,nspec,UPPER_LIMIT_DISPLAY,numat,deltat, &
                  f0,t0,initialfield,time_function_type,coorg,xinterp,zinterp,shapeint,knods,simulation_title, &
-                 npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,myrank,nproc,NSOURCE,poroelastic)
+                 npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic,myrank,nproc,NSOURCE,poroelastic)
 
 ! check the mesh, stability and number of points per wavelength
 
@@ -94,7 +94,7 @@
                    lambdaSmin,lambdaSmax
   double precision deltat,distance_1,distance_2,distance_3,distance_4
   double precision, dimension(NSOURCE) :: f0,t0
-  logical assign_external_model,initialfield,any_elastic,any_poroelastic
+  logical assign_external_model,initialfield,any_elastic,any_poroelastic,all_anisotropic
 
 ! for the stability condition
 ! maximum polynomial degree for which we can compute the stability condition
@@ -140,6 +140,7 @@
 
 ! title of the plot
   character(len=60) simulation_title
+
 
   if(UPPER_LIMIT_DISPLAY > nspec) stop 'cannot have UPPER_LIMIT_DISPLAY > nspec in checkgrid.F90'
 
@@ -1359,8 +1360,7 @@
 ! Bisque
   red(236) = 1.00000000000000
   green(236) = 0.894117647058824
-  blue(236) = 0.768627450980392
-
+  blue(236) = 0.768627450980392 
 
 !---- compute parameters for the spectral elements
 
@@ -1578,27 +1578,28 @@
 #endif
 
   if ( myrank == 0 ) then
-  write(IOUT,*)
-  write(IOUT,*) '********'
-  write(IOUT,*) 'Model: P (or PI) velocity min,max = ',vpImin,vpImax
-  write(IOUT,*) 'Model: PII velocity min,max = ',vpIImin,vpIImax
-  write(IOUT,*) 'Model: S velocity min,max = ',vsmin,vsmax
-  write(IOUT,*) 'Model: density min,max = ',densmin,densmax
-  write(IOUT,*) '********'
-  write(IOUT,*)
+     if(.not. all_anisotropic) then
+        write(IOUT,*)
+        write(IOUT,*) '********'
+        write(IOUT,*) 'Model: P (or PI) velocity min,max = ',vpImin,vpImax
+        write(IOUT,*) 'Model: PII velocity min,max = ',vpIImin,vpIImax
+        write(IOUT,*) 'Model: S velocity min,max = ',vsmin,vsmax
+        write(IOUT,*) 'Model: density min,max = ',densmin,densmax
+        write(IOUT,*) '********'
+        write(IOUT,*)
 
-  write(IOUT,*)
-  write(IOUT,*) '*********************************************'
-  write(IOUT,*) '*** Verification of simulation parameters ***'
-  write(IOUT,*) '*********************************************'
-  write(IOUT,*)
-  write(IOUT,*) '*** Max grid size = ',distance_max
-  write(IOUT,*) '*** Min grid size = ',distance_min
-  write(IOUT,*) '*** Max/min ratio = ',distance_max/distance_min
-  write(IOUT,*)
-  write(IOUT,*) '*** Max stability for P wave velocity = ',courant_stability_number_max
-  write(IOUT,*)
-
+        write(IOUT,*)
+        write(IOUT,*) '*********************************************'
+        write(IOUT,*) '*** Verification of simulation parameters ***'
+        write(IOUT,*) '*********************************************'
+        write(IOUT,*)
+        write(IOUT,*) '*** Max grid size = ',distance_max
+        write(IOUT,*) '*** Min grid size = ',distance_min
+        write(IOUT,*) '*** Max/min ratio = ',distance_max/distance_min
+        write(IOUT,*)
+        write(IOUT,*) '*** Max stability for P wave velocity = ',courant_stability_number_max
+        write(IOUT,*)
+     end if
 
 ! only if time source is not a Dirac or Heaviside (otherwise maximum frequency of spectrum undefined)
 ! and if source is not an initial field, for the same reason
@@ -1690,7 +1691,7 @@
 !
 !---- write PostScript header
 !
-  write(24,10) simulation_title
+  write(24,*) simulation_title
   write(24,*) '/CM {28.5 mul} def'
   write(24,*) '/LR {rlineto} def'
   write(24,*) '/LT {lineto} def'
@@ -1805,7 +1806,7 @@
       zinterp(i,j) = zinterp(i,j) + shapeint(in,i,j)*coorg(2,nnum)
   enddo
   enddo
-  enddo
+  enddo 
 
   is = 1
   ir = 1
@@ -2681,7 +2682,7 @@ endif
   endif
   else
     x1 = 0.5d0
-  endif
+ endif
 
 ! rescale to avoid very dark gray levels
   x1 = x1*0.7 + 0.2
@@ -3002,4 +3003,5 @@ endif
  681 format(f6.2,1x,f6.2)
 
   end subroutine checkgrid
+
 

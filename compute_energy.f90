@@ -47,9 +47,9 @@
          xix,xiz,gammax,gammaz,jacobian,ibool,elastic,poroelastic,hprime_xx,hprime_zz, &
          nspec,npoin,assign_external_model,it,deltat,t0,kmato,elastcoef,density, &
          porosity,tortuosity, &
-         vpext,vsext,rhoext,wxgll,wzgll,numat, &
+         vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,wxgll,wzgll,numat, &
          pressure_element,vector_field_element,e1,e11, &
-         potential_dot_acoustic,potential_dot_dot_acoustic,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
+         potential_dot_acoustic,potential_dot_dot_acoustic,TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
 
 ! compute kinetic and potential energy in the solid (acoustic elements are excluded)
 
@@ -69,7 +69,7 @@
 
   real(kind=CUSTOM_REAL), dimension(npoin) :: potential_dot_acoustic,potential_dot_dot_acoustic
 
-  logical :: TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON
+  logical :: TURN_ATTENUATION_ON
 
   integer :: nspec,npoin,numat
 
@@ -78,7 +78,7 @@
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
 
-  logical, dimension(nspec) :: elastic,poroelastic
+  logical, dimension(nspec) :: elastic,poroelastic,anisotropic
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
 
@@ -88,8 +88,10 @@
 
   double precision, dimension(2,numat) :: density
   double precision, dimension(numat) :: porosity,tortuosity
+  double precision, dimension(6,numat) :: anisotropy
   double precision, dimension(4,3,numat) :: elastcoef
   double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,vsext,rhoext
+  double precision, dimension(NGLLX,NGLLZ,nspec) ::  c11ext,c15ext,c13ext,c33ext,c35ext,c55ext
 
   real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displ_elastic,veloc_elastic
   real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displs_poroelastic,velocs_poroelastic
@@ -324,8 +326,9 @@
 ! compute pressure in this element
     call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,elastic, &
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-         numat,kmato,elastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
-         TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
+         numat,kmato,elastcoef,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy, &
+         ispec,e1,e11, &
+         TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
 
 ! compute velocity vector field in this element
     call compute_vector_one_element(vector_field_element,potential_dot_acoustic,veloc_elastic,elastic, &

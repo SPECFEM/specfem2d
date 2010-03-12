@@ -251,7 +251,7 @@ In section "# define models....":
 Three types of models:
 I: (model_number,1,rho,Vp,Vs,0,0,Qp,Qs,0,0,0,0,0,0), for isotropic elastic/acoustic
 material
-or II: (model_number,2,rho,c11,c13,c33,c44,Qp,Qs,0,0,0,0,0,0), for anisotropic material
+or II: (model_number,2,rho,Vp,Vs,c11,c13,c15,c33,c35,c55,Qp,Qs,0,0), for anisotropic material
 or III: (model_number,3,rhos,rhof,phi,c,kxx,kxz,kzz,Ks,Kf,Kfr,etaf,mufr,Qs),
 for isotropic poroelastic material
 

@@ -156,6 +156,7 @@
   character(len=100) string_read
 
   call read_next_line(iin,ignore_junk,string_read)
+  print*,string_read
   read(string_read,*) i,icodematread,val0read,val1read,val2read,val3read,val4read,val5read,&
                       val6read,val7read,val8read,val9read,val10read,val11read,val12read
 

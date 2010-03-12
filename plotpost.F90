@@ -3066,8 +3066,8 @@ coorg_recv_ps_vector_field
  620 format(f6.3,' neg CM 0 MR (Cut =',f5.2,' \%) show')
  640 format(f6.3,' neg CM 0 MR (Max norm =',1pe12.3,') show')
 
- 499 format(f6.2,1x,f6.2,' L')
- 500 format(f6.2,1x,f6.2,' M')
+ 499 format(f8.3,1x,f8.3,' L')
+ 500 format(f8.3,1x,f8.3,' M')
  502 format('fN (',i4,') Cshow')
  679 format(f12.6,1x,f12.6,1x,f12.6,' RG fill stroke')
  680 format(f12.6,1x,f12.6,1x,f12.6,' RG GF')

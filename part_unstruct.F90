@@ -1032,6 +1032,7 @@ contains
        jend_left(:) = NGLLZ
 
         is_acoustic(:) = .false.
+ 
         do i = 1, nb_materials
            if (phi_material(i) >= 1.d0) then
               is_acoustic(i) = .true.

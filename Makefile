@@ -65,7 +65,7 @@ O = obj
 F90 = ifort
 #F90 = mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
 CC = gcc
-FLAGS_NOCHECK=-O3 -xP -vec-report0 -e95 -std95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -fpe3 -ftz
+FLAGS_NOCHECK=-O3 -xP -override-limits -vec-report0 -e95 -std95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -fpe3 -ftz
 FLAGS_CHECK = $(FLAGS_NOCHECK)
 
 # GNU gfortran
@@ -92,6 +92,7 @@ FLAGS_CHECK = $(FLAGS_NOCHECK)
 # uncomment this to use Metis on MareNostrum in Barcelona
 #LIB = /home/hpce08/hpce08548/utils/metis-4.0/libmetis.a
 
+
 LINK = $(F90)
 
 OBJS_MESHFEM2D = $O/part_unstruct.o $O/meshfem2D.o $O/read_value_parameters.o $O/spline_routines.o
@@ -100,15 +101,16 @@ OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/enforce_acoustic_free_surface.o\
         $O/compute_forces_acoustic.o $O/compute_forces_elastic.o\
         $O/compute_forces_solid.o $O/compute_forces_fluid.o\
         $O/lagrange_poly.o $O/gmat01.o $O/gll_library.o $O/plotgll.o $O/define_derivation_matrices.o\
-        $O/plotpost.o $O/locate_receivers.o $O/locate_source_force.o $O/compute_gradient_attenuation.o\
+        $O/plotpost.o $O/locate_receivers.o $O/locate_source_force.o $O/compute_gradient_attenuation.o $O/setup_sources_receivers.o\
         $O/specfem2D.o $O/write_seismograms.o $O/define_external_model.o $O/createnum_fast.o $O/createnum_slow.o\
         $O/define_shape_functions.o $O/attenuation_model.o $O/create_color_image.o $O/compute_vector_field.o $O/compute_pressure.o\
         $O/recompute_jacobian.o $O/compute_arrays_source.o $O/locate_source_moment_tensor.o $O/netlib_specfun_erf.o\
         $O/construct_acoustic_surface.o $O/assemble_MPI.o $O/compute_energy.o $O/compute_curl_one_element.o\
         $O/attenuation_compute_param.o $O/compute_Bielak_conditions.o $O/paco_beyond_critical.o\
-        $O/paco_convolve_fft.o $O/is_in_convex_quadrilateral.o $O/get_perm_cuthill_mckee.o
+        $O/paco_convolve_fft.o $O/is_in_convex_quadrilateral.o $O/get_perm_cuthill_mckee.o\
+	$O/read_external_model.o $O/invert_mass_matrix.o
 
-default: clean meshfem2D specfem2D convolve_source_timefunction
+default:  clean meshfem2D specfem2D convolve_source_timefunction
 
 all: default
 
@@ -267,3 +269,11 @@ $O/is_in_convex_quadrilateral.o: is_in_convex_quadrilateral.f90 constants.h
 $O/get_perm_cuthill_mckee.o: get_perm_cuthill_mckee.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/get_perm_cuthill_mckee.o get_perm_cuthill_mckee.f90
 
+$O/read_external_model.o: read_external_model.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/read_external_model.o read_external_model.f90
+
+$O/setup_sources_receivers.o: setup_sources_receivers.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/setup_sources_receivers.o setup_sources_receivers.f90
+
+$O/invert_mass_matrix.o: invert_mass_matrix.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/invert_mass_matrix.o invert_mass_matrix.f90
