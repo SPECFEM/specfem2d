@@ -130,26 +130,50 @@
      open(unit=11,file='OUTPUT_FILES/Ux_file_single.bin',status='unknown')
      close(11,status='delete')
 
+!      print*,'apres 1'
+!      call flush(6)
+
      open(unit=11,file='OUTPUT_FILES/Ux_file_double.bin',status='unknown')
      close(11,status='delete')
+
+!      print*,'apres 2'
+!      call flush(6)
 
      open(unit=11,file='OUTPUT_FILES/pressure_file_single.bin',status='unknown')
      close(11,status='delete')
 
+!      print*,'apres 3'
+!      call flush(6)
+
      open(unit=11,file='OUTPUT_FILES/pressure_file_double.bin',status='unknown')
      close(11,status='delete')
+
+          print*,'apres 4'
+     call flush(6)
 
      open(unit=11,file='OUTPUT_FILES/Uz_file_single.bin',status='unknown')
      close(11,status='delete')
 
+!           print*,'apres 5'
+!      call flush(6)
+
      open(unit=11,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown')
      close(11,status='delete')
+
+!           print*,'apres 6'
+!      call flush(6)
 
      open(unit=11,file='OUTPUT_FILES/Curl_file_single.bin',status='unknown')
      close(11,status='delete')
 
+ !          print*,'apres 7'
+!      call flush(6)
+
      open(unit=11,file='OUTPUT_FILES/Curl_file_double.bin',status='unknown')
      close(11,status='delete')
+
+!      print*,'apres 8'
+!      call flush(6)
 
    endif
 

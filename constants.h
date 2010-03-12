@@ -62,6 +62,9 @@
 
 !--- end of Nicolas Le Goff's constants for an unstructured CUBIT/METIS/SCOTCH mesh
 
+! Read external model from file DATA/model_velocity.dat_input or use routine
+  logical, parameter :: READ_EXTERNAL_MODEL_FILE = .false.
+
 ! compute and output acoustic and elastic energy (slows down the code significantly)
   logical, parameter :: OUTPUT_ENERGY = .false.
 

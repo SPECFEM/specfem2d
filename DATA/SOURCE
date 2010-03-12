@@ -1,4 +1,4 @@
-#source 1
+#source 1.  The components of a moment tensor source must be given in N.m, not in dyne.cm as in the DATA/CMTSOLUTION source file of the 3D version of the code.
 source_surf                     = .false.        # source inside the medium or at the surface
 xs                              = 0.             # source location x in meters
 zs                              = -100.          # source location z in meters
@@ -11,7 +11,3 @@ Mxx                             = 1.             # Mxx component (for a moment t
 Mzz                             = 1.             # Mzz component (for a moment tensor source only)
 Mxz                             = 0.             # Mxz component (for a moment tensor source only)
 factor                          = 1.d10          # amplification factor
-
-# The components of a moment tensor source must be given in N.m,
-# not in dyne.cm as in the DATA/CMTSOLUTION source file of the 3D version of the code.
-

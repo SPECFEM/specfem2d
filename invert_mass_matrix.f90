@@ -10,6 +10,7 @@
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
 !               Christina Morency, cmorency aT princeton DOT edu
+!               Pieyre Le Loher, pieyre DOT le-loher aT inria.fr
 !
 ! This software is a computer program whose purpose is to solve
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
@@ -41,51 +42,33 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
- 
 
-  subroutine define_external_model(x,y,iflag_element,myrank,rho,vp,vs,Qp_attenuation,&
-       Qs_attenuation,c11,c13,c15,c33,c35,c55 )
+
+subroutine invert_mass_matrix(any_elastic,any_acoustic,any_poroelastic,npoin,rmass_inverse_elastic,&
+     rmass_inverse_acoustic,rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic)
 
   implicit none
+  include 'constants.h'
 
-  include "constants.h"
+  logical any_elastic,any_acoustic,any_poroelastic
 
-! user can modify this routine to assign any different external Earth model (rho, vp, vs)
-! based on the x and y coordinates of that grid point and the flag of the region it belongs to
+  integer npoin
 
-  integer, intent(in) :: iflag_element,myrank
+! inverse mass matrices
+  real(kind=CUSTOM_REAL), dimension(npoin) :: rmass_inverse_elastic,rmass_inverse_acoustic
+  real(kind=CUSTOM_REAL), dimension(npoin) :: rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic
 
-  double precision, intent(in) :: x,y
 
-  double precision, intent(out) :: rho,vp,vs
-  double precision, intent(out) :: Qp_attenuation,Qs_attenuation
-  double precision, intent(out) :: c11,c15,c13,c33,c35,c55 
+! fill mass matrix with fictitious non-zero values to make sure it can be inverted globally
+  if(any_elastic) where(rmass_inverse_elastic <= 0._CUSTOM_REAL) rmass_inverse_elastic = 1._CUSTOM_REAL
+  if(any_poroelastic) where(rmass_s_inverse_poroelastic <= 0._CUSTOM_REAL) rmass_s_inverse_poroelastic = 1._CUSTOM_REAL
+  if(any_poroelastic) where(rmass_w_inverse_poroelastic <= 0._CUSTOM_REAL) rmass_w_inverse_poroelastic = 1._CUSTOM_REAL
+  if(any_acoustic) where(rmass_inverse_acoustic <= 0._CUSTOM_REAL) rmass_inverse_acoustic = 1._CUSTOM_REAL
 
-! dummy routine here, just to demonstrate how the model can be assigned
-   if(myrank == 0 .and. iflag_element == 1 .or. x < 1700.d0 .or. y >= 2300.d0) then
-     rho = 2000.d0
-     vp = 3000.d0
-     vs = vp / sqrt(3.d0)
-     Qp_attenuation = 0
-     Qs_attenuation = 0
-     c11 = 169.d9
-     c13 = 122.d9
-     c15 = 0.d0
-     c33 = c11
-     c35 = 0.d0
-     c55 = 75.3d9 
-   else
-     rho = 2500.d0
-     vp = 3600.d0
-     vs = vp / 2.d0
-     Qp_attenuation = 60
-     Qs_attenuation = 60
-     c11 = 0.d0
-     c13 = 0.d0
-     c15 = 0.d0
-     c33 = 0.d0
-     c35 = 0.d0
-     c55 = 0.d0 
-   endif
+! compute the inverse of the mass matrix
+  if(any_elastic) rmass_inverse_elastic(:) = 1._CUSTOM_REAL / rmass_inverse_elastic(:)
+  if(any_poroelastic) rmass_s_inverse_poroelastic(:) = 1._CUSTOM_REAL / rmass_s_inverse_poroelastic(:)
+  if(any_poroelastic) rmass_w_inverse_poroelastic(:) = 1._CUSTOM_REAL / rmass_w_inverse_poroelastic(:)
+  if(any_acoustic) rmass_inverse_acoustic(:) = 1._CUSTOM_REAL / rmass_inverse_acoustic(:)
 
-  end subroutine define_external_model
+end subroutine invert_mass_matrix

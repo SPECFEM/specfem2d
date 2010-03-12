@@ -210,6 +210,7 @@
 ! This is the reason why a simple displacement potential u = grad(Chi) would
 ! not work because it would be discontinuous at such an interface and would
 ! therefore not be consistent with the basis functions.
+  
 
   program specfem2D
 
@@ -289,6 +290,12 @@
 ! poroelastic and elastic coefficients
   double precision, dimension(:,:,:), allocatable :: poroelastcoef
 
+! anisotropy parameters
+  logical :: all_anisotropic
+  double precision ::  c11,c13,c15,c33,c35,c55 
+  logical, dimension(:), allocatable :: anisotropic
+  double precision, dimension(:,:), allocatable :: anisotropy
+
 ! for acoustic medium
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
 
@@ -308,8 +315,10 @@
 
   double precision, dimension(:), allocatable :: vp_display
 
-  double precision, dimension(:,:,:), allocatable :: vpext,vsext,rhoext
-  double precision :: previous_vsext,rho_at_source_location
+  double precision, dimension(:,:,:), allocatable :: vpext,vsext,rhoext     
+  double precision :: rho_at_source_location
+  double precision, dimension(:,:,:), allocatable :: Qp_attenuationext,Qs_attenuationext      
+  double precision, dimension(:,:,:), allocatable :: c11ext,c13ext,c15ext,c33ext,c35ext,c55ext    
 
   double precision, dimension(:,:,:), allocatable :: shape2D,shape2D_display
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable  :: xix,xiz,gammax,gammaz,jacobian
@@ -334,7 +343,7 @@
   integer :: numat,ngnod,nspec,pointsdisp,nelemabs,nelem_acoustic_surface,ispecabs,UPPER_LIMIT_DISPLAY
 
   logical interpol,meshvect,modelvect,boundvect,assign_external_model,initialfield, &
-    outputgrid,gnuplot,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,output_postscript_snapshot,output_color_image, &
+    outputgrid,gnuplot,TURN_ATTENUATION_ON,output_postscript_snapshot,output_color_image, &
     plot_lowerleft_corner_only,add_Bielak_conditions
 
   double precision :: cutsnaps,sizemax_arrows,anglerec,xirec,gammarec
@@ -629,7 +638,6 @@
   double precision :: x_final_receiver_dummy, z_final_receiver_dummy
 !!!!!!!!!!
   double precision, dimension(:,:,:),allocatable:: rho_local,vp_local,vs_local
-  double precision :: tmp1, tmp2,tmp3
 !!!! hessian
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhorho_el_hessian_final1, rhorho_el_hessian_temp1
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhorho_el_hessian_final2, rhorho_el_hessian_temp2
@@ -759,7 +767,7 @@
   endif
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) assign_external_model,outputgrid,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
+  read(IIN,*) assign_external_model,outputgrid,TURN_ATTENUATION_ON
 
   read(IIN,"(a80)") datlin
   read(IIN,*) TURN_VISCATTENUATION_ON,Q0,freq0
@@ -772,7 +780,7 @@
     write(IOUT,200) npgeo,NDIM
     write(IOUT,600) NTSTEP_BETWEEN_OUTPUT_INFO,colors,numbers
     write(IOUT,700) seismotype,anglerec
-    write(IOUT,750) initialfield,add_Bielak_conditions,assign_external_model,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,outputgrid
+    write(IOUT,750) initialfield,add_Bielak_conditions,assign_external_model,TURN_ATTENUATION_ON,outputgrid
     write(IOUT,800) imagetype,100.d0*cutsnaps,subsamp
   endif
 
@@ -781,7 +789,7 @@
   read(IIN,*) NSTEP,deltat,isolver
   if (myrank == 0 .and. ipass == 1) write(IOUT,703) NSTEP,deltat,NSTEP*deltat
 
-  if(isolver == 1 .and. save_forward .and. (TURN_ANISOTROPY_ON .or. TURN_ATTENUATION_ON .or. TURN_VISCATTENUATION_ON)) then
+  if(isolver == 1 .and. save_forward .and. (TURN_ATTENUATION_ON .or. TURN_VISCATTENUATION_ON)) then
   print*, '*************** WARNING ***************'
   print*, 'Anisotropy & Attenuation & Viscous damping are not presently implemented for adjoint calculations'
   stop
@@ -881,7 +889,7 @@
 
   ipoin = 0
   read(IIN,"(a80)") datlin
-  allocate(coorgread(NDIM))
+      allocate(coorgread(NDIM))
   do ip = 1,npgeo
    read(IIN,*) ipoin,(coorgread(id),id =1,NDIM)
    if(ipoin<1 .or. ipoin>npgeo) call exit_MPI('Wrong control point number')
@@ -918,6 +926,7 @@ if(ipass == 1) then
   allocate(Uxinterp(pointsdisp,pointsdisp))
   allocate(Uzinterp(pointsdisp,pointsdisp))
   allocate(density(2,numat))
+  allocate(anisotropy(6,numat))
   allocate(porosity(numat))
   allocate(tortuosity(numat))
   allocate(permeability(3,numat))
@@ -929,6 +938,7 @@ if(ipass == 1) then
   allocate(ibool(NGLLX,NGLLZ,nspec))
   allocate(elastic(nspec))
   allocate(poroelastic(nspec))
+  allocate(anisotropic(nspec))
   allocate(inv_tau_sigma_nu1(NGLLX,NGLLZ,nspec,N_SLS))
   allocate(inv_tau_sigma_nu2(NGLLX,NGLLZ,nspec,N_SLS))
   allocate(phi_nu1(NGLLX,NGLLZ,nspec,N_SLS))
@@ -940,12 +950,14 @@ if(ipass == 1) then
 endif
 
 ! --- allocate arrays for absorbing boundary conditions
+
   if(nelemabs <= 0) then
     nelemabs = 1
     anyabs = .false.
-  else
+ else
     anyabs = .true.
   endif
+
 if(ipass == 1) then
   allocate(numabs(nelemabs))
   allocate(codeabs(4,nelemabs))
@@ -985,7 +997,7 @@ endif
 !
 !---- read the material properties
 !
-  call gmat01(density,porosity,tortuosity,permeability,poroelastcoef,numat,&
+  call gmat01(density,porosity,tortuosity,anisotropy,permeability,poroelastcoef,numat,&
               myrank,ipass,Qp_attenuation,Qs_attenuation)
 !
 !----  read spectral macrobloc data
@@ -1013,6 +1025,7 @@ endif
   any_acoustic = .false.
   any_elastic = .false.
   any_poroelastic = .false.
+  anisotropic(:) = .false.
   do ispec = 1,nspec
 
     if(porosity(kmato(ispec)) == 1.d0) then  ! acoustic domain
@@ -1023,6 +1036,9 @@ endif
       elastic(ispec) = .true.
       poroelastic(ispec) = .false.
       any_elastic = .true.
+      if(any(anisotropy(:,kmato(ispec)) /= 0)) then
+         anisotropic(ispec) = .true.
+      end if
     else                                       ! poroelastic domain
       elastic(ispec) = .false.
       poroelastic(ispec) = .true.
@@ -1038,12 +1054,13 @@ endif
   print*, '*************** WARNING ***************'
   stop
   endif
-  if(.not. p_sv .and. (TURN_ATTENUATION_ON .or. TURN_ANISOTROPY_ON)) then
+  if(.not. p_sv .and. (TURN_ATTENUATION_ON)) then
   print*, '*************** WARNING ***************'
   print*, 'Attenuation and anisotropy are not implemented for surface (membrane) waves calculation'
   print*, '*************** WARNING ***************'
   stop
   endif
+  
 
   if(TURN_ATTENUATION_ON) then
     nspec_allocate = nspec
@@ -1088,7 +1105,7 @@ endif
         Mu_nu2(i,j,ispec) = Mu_nu2_sent
       enddo
     enddo
-  enddo
+ enddo
 
 ! allocate memory variables for viscous attenuation (poroelastic media)
   if(ipass == 1) then
@@ -1169,7 +1186,7 @@ endif
     if (myrank == 0 .and. ipass == 1) then
       write(IOUT,*)
       write(IOUT,*) 'Number of absorbing elements: ',nelemabs
-    endif
+   endif
 
     nspec_xmin = ZERO
     nspec_xmax = ZERO
@@ -1250,7 +1267,29 @@ endif
     write(IOUT,*) 'nspec_zmin = ',nspec_zmin
     write(IOUT,*) 'nspec_zmax = ',nspec_zmax
 
-  endif
+ elseif(ipass == 1) then
+    allocate(ib_xmin(1))
+    allocate(ib_xmax(1))
+    allocate(ib_zmin(1))
+    allocate(ib_zmax(1))
+    allocate(b_absorb_elastic_left(1,1,1,1))
+    allocate(b_absorb_elastic_right(1,1,1,1))
+    allocate(b_absorb_elastic_bottom(1,1,1,1))
+    allocate(b_absorb_elastic_top(1,1,1,1)) 
+    allocate(b_absorb_poro_s_left(1,1,1,1))
+    allocate(b_absorb_poro_s_right(1,1,1,1))
+    allocate(b_absorb_poro_s_bottom(1,1,1,1))
+    allocate(b_absorb_poro_s_top(1,1,1,1))
+    allocate(b_absorb_poro_w_left(1,1,1,1))
+    allocate(b_absorb_poro_w_right(1,1,1,1))
+    allocate(b_absorb_poro_w_bottom(1,1,1,1))
+    allocate(b_absorb_poro_w_top(1,1,1,1))   
+    allocate(b_absorb_acoustic_left(1,1,1))
+    allocate(b_absorb_acoustic_right(1,1,1))
+    allocate(b_absorb_acoustic_bottom(1,1,1))
+    allocate(b_absorb_acoustic_top(1,1,1))
+
+ endif
 !
 !----  read acoustic free surface data
 !
@@ -1577,10 +1616,24 @@ endif
     allocate(vpext(NGLLX,NGLLZ,nspec))
     allocate(vsext(NGLLX,NGLLZ,nspec))
     allocate(rhoext(NGLLX,NGLLZ,nspec))
+    allocate(Qp_attenuationext(NGLLX,NGLLZ,nspec))
+    allocate(Qs_attenuationext(NGLLX,NGLLZ,nspec))
+    allocate(c11ext(NGLLX,NGLLZ,nspec))
+    allocate(c13ext(NGLLX,NGLLZ,nspec))
+    allocate(c15ext(NGLLX,NGLLZ,nspec))
+    allocate(c33ext(NGLLX,NGLLZ,nspec))
+    allocate(c35ext(NGLLX,NGLLZ,nspec))
+    allocate(c55ext(NGLLX,NGLLZ,nspec))
   else
     allocate(vpext(1,1,1))
     allocate(vsext(1,1,1))
     allocate(rhoext(1,1,1))
+    allocate(c11ext(1,1,1))
+    allocate(c13ext(1,1,1))
+    allocate(c15ext(1,1,1))
+    allocate(c33ext(1,1,1))
+    allocate(c35ext(1,1,1))
+    allocate(c55ext(1,1,1))
   endif
 
   endif
@@ -1676,53 +1729,24 @@ deallocate(weight_gll)
 !
   if(gnuplot .and. myrank == 0 .and. ipass == 1) call plotgll(knods,ibool,coorg,coord,npoin,npgeo,ngnod,nspec)
 
-        write(IOUT,*) 'assign_external_model = ', assign_external_model
-if ( assign_external_model .and. ipass == 1) then
-        write(IOUT,*)
-        write(IOUT,*) '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-        write(IOUT,*) 'Assigning external velocity and density model (elastic and/or acoustic)...'
-        write(IOUT,*) 'Read outside SEG model...'
-        write(IOUT,*) '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-        if(TURN_ANISOTROPY_ON .or. TURN_ATTENUATION_ON) &
-          call exit_MPI('cannot have anisotropy nor attenuation if external model in current version')
-          any_acoustic = .false.
-          any_elastic = .false.
-          any_poroelastic = .false.
-          open(unit=1001,file='DATA/model_velocity.dat_input',status='unknown')
-         do ispec = 1,nspec
-                 do j = 1,NGLLZ
-                 do i = 1,NGLLX
-                        iglob = ibool(i,j,ispec)
-                        read(1001,*) tmp1,tmp2,tmp3,rhoext(i,j,ispec),vpext(i,j,ispec),vsext(i,j,ispec)
-!                        vsext(i,j,ispec)=0.0
-                 end do
-                 end do
-         end do
-          close(1001)
-          do ispec = 1,nspec
-                 previous_vsext = -1.d0
-                 do j = 1,NGLLZ
-                 do i = 1,NGLLX
-                        iglob = ibool(i,j,ispec)
-                        if(.not. (i == 1 .and. j == 1) .and. &
-                        ((vsext(i,j,ispec) >= TINYVAL .and. previous_vsext < TINYVAL) .or. &
-                        (vsext(i,j,ispec) < TINYVAL .and. previous_vsext >= TINYVAL)))  &
-                        call exit_MPI('external velocity model cannot be both fluid and solid inside the same spectral element')
-                        if(vsext(i,j,ispec) < TINYVAL) then
-                                elastic(ispec) = .false.
-                                poroelastic(ispec) = .false.
-                                any_acoustic = .true.
-                        else
-                                poroelastic(ispec) = .false.
-                                elastic(ispec) = .true.
-                                any_elastic = .true.
-                        endif
-                        previous_vsext = vsext(i,j,ispec)
-                  enddo
-                  enddo
-           enddo
-endif
+  if(myrank == 0 .and. ipass == 1) write(IOUT,*) 'assign_external_model = ', assign_external_model
+!if ( assign_external_model .and. ipass == 1) then
+        if ( assign_external_model) then
+           call read_external_model(any_acoustic,any_elastic,any_poroelastic, &
+                elastic,poroelastic,anisotropic,nspec,npoin,N_SLS,ibool, &
+                f0_attenuation,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
+                inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent, &
+                inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,& 
+                coord,kmato,myrank,rhoext,vpext,vsext, &
+                Qp_attenuationext,Qs_attenuationext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext)
+        end if
 
+    if(count(anisotropic(:) .eqv. .true.) == nspec) all_anisotropic = .true.
+    if(all_anisotropic .and. anyabs) stop 'Cannot put absorbing boundaries if anisotropic materials along edges' 
+    if(TURN_ATTENUATION_ON .and. all_anisotropic) then
+       stop 'Cannot turn attenuation on in anisotropic materials'   
+    end if
+ 
 !
 !----  perform basic checks on parameters read
 !
@@ -1742,15 +1766,8 @@ endif
 #endif
 
 ! for acoustic
-  if(TURN_ANISOTROPY_ON .and. .not. any_elastic_glob) &
-    call exit_MPI('cannot have anisotropy if acoustic/poroelastic simulation only')
-
   if(TURN_ATTENUATION_ON .and. .not. any_elastic_glob) &
     call exit_MPI('currently cannot have attenuation if acoustic/poroelastic simulation only')
-
-! for attenuation
-  if(TURN_ANISOTROPY_ON .and. TURN_ATTENUATION_ON) &
-    call exit_MPI('cannot have anisotropy and attenuation both turned on in current version')
 
 !
 !----   define coefficients of the Newmark time scheme
@@ -1766,64 +1783,15 @@ endif
   endif
 
 !---- define actual location of source and receivers
-  do i_source=1,NSOURCE
 
-  if(source_type(i_source) == 1) then
-
-! collocated force source
-    call locate_source_force(coord,ibool,npoin,nspec,x_source(i_source),z_source(i_source), &
-      ix_source(i_source),iz_source(i_source),ispec_selected_source(i_source),iglob_source(i_source), &
-      is_proc_source(i_source),nb_proc_source(i_source),ipass)
-
-! get density at the source in order to implement collocated force with the right
-! amplitude later
-    if(is_proc_source(i_source) == 1) then
-      rho_at_source_location  = density(1,kmato(ispec_selected_source(i_source)))
-! external velocity model
-      if(assign_external_model) rho_at_source_location = &
-          rhoext(ix_source(i_source),iz_source(i_source),ispec_selected_source(i_source))
-    endif
-
-! check that acoustic source is not exactly on the free surface because pressure is zero there
-    if(is_proc_source(i_source) == 1) then
-       do ispec_acoustic_surface = 1,nelem_acoustic_surface
-          ispec = acoustic_surface(1,ispec_acoustic_surface)
-          if( .not. elastic(ispec) .and. .not. poroelastic(ispec) .and. ispec == ispec_selected_source(i_source) ) then
-             do j = acoustic_surface(4,ispec_acoustic_surface), acoustic_surface(5,ispec_acoustic_surface)
-                do i = acoustic_surface(2,ispec_acoustic_surface), acoustic_surface(3,ispec_acoustic_surface)
-                   iglob = ibool(i,j,ispec)
-                   if ( iglob_source(i_source) == iglob ) then
- call exit_MPI('an acoustic source cannot be located exactly on the free surface because pressure is zero there')
-                   endif
-                enddo
-             enddo
-          endif
-       enddo
-    endif
-
-  else if(source_type(i_source) == 2) then
-! moment-tensor source
-     call locate_source_moment_tensor(ibool,coord,nspec,npoin,xigll,zigll,x_source(i_source),z_source(i_source), &
-          ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source),&
-          nproc,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo,ipass)
-
-! compute source array for moment-tensor source
-    call compute_arrays_source(ispec_selected_source(i_source),xi_source(i_source),gamma_source(i_source),&
-         sourcearray(i_source,:,:,:), &
-         Mxx(i_source),Mzz(i_source),Mxz(i_source),xix,xiz,gammax,gammaz,xigll,zigll,nspec)
-
-  else if(.not.initialfield) then
-    call exit_MPI('incorrect source type')
-  endif
-
-
-! locate receivers in the mesh
-  call locate_receivers(ibool,coord,nspec,npoin,xigll,zigll,nrec,nrecloc,recloc,which_proc_receiver,nproc,myrank,&
-       st_xval,st_zval,ispec_selected_rec, &
-       xi_receiver,gamma_receiver,station_name,network_name,x_source(i_source),z_source(i_source),coorg,knods,ngnod,npgeo,ipass, &
-       x_final_receiver, z_final_receiver)
-
-  enddo ! do i_source=1,NSOURCE
+call setup_sources_receivers(NSOURCE,assign_external_model,initialfield,numat,source_type,&
+     coord,ibool,kmato,npoin,nspec,nelem_acoustic_surface,acoustic_surface,elastic,poroelastic, &
+     x_source,z_source,ix_source,iz_source,ispec_selected_source,ispec_selected_rec,iglob_source, &
+     is_proc_source,nb_proc_source,rho_at_source_location,ipass,&
+     sourcearray,Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,npgeo,density,rhoext,&
+     nproc,myrank,xi_source,gamma_source,coorg,knods,ngnod, &
+     nrec,nrecloc,recloc,which_proc_receiver,st_xval,st_zval, &
+     xi_receiver,gamma_receiver,station_name,network_name,x_final_receiver,z_final_receiver)
 
 ! compute source array for adjoint source
   if(isolver == 2) then  ! adjoint calculation
@@ -2390,7 +2358,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
       wxgll(i)*wzgll(j)*jacobian(i,j,ispec)*(rhol_bar*rhol_f*tortl - &
        phil*rhol_f*rhol_f)/(rhol_bar*phil)
         elseif(elastic(ispec)) then    ! for elastic medium
-          rmass_inverse_elastic(iglob) = rmass_inverse_elastic(iglob) + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
+           rmass_inverse_elastic(iglob) = rmass_inverse_elastic(iglob) + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
         else                           ! for acoustic medium
           rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal
         endif
@@ -2653,17 +2621,8 @@ endif
 !---  end of section performed in two passes
 !---
 
-! fill mass matrix with fictitious non-zero values to make sure it can be inverted globally
-  if(any_elastic) where(rmass_inverse_elastic <= 0._CUSTOM_REAL) rmass_inverse_elastic = 1._CUSTOM_REAL
-  if(any_poroelastic) where(rmass_s_inverse_poroelastic <= 0._CUSTOM_REAL) rmass_s_inverse_poroelastic = 1._CUSTOM_REAL
-  if(any_poroelastic) where(rmass_w_inverse_poroelastic <= 0._CUSTOM_REAL) rmass_w_inverse_poroelastic = 1._CUSTOM_REAL
-  if(any_acoustic) where(rmass_inverse_acoustic <= 0._CUSTOM_REAL) rmass_inverse_acoustic = 1._CUSTOM_REAL
-
-! compute the inverse of the mass matrix
-  if(any_elastic) rmass_inverse_elastic(:) = 1._CUSTOM_REAL / rmass_inverse_elastic(:)
-  if(any_poroelastic) rmass_s_inverse_poroelastic(:) = 1._CUSTOM_REAL / rmass_s_inverse_poroelastic(:)
-  if(any_poroelastic) rmass_w_inverse_poroelastic(:) = 1._CUSTOM_REAL / rmass_w_inverse_poroelastic(:)
-  if(any_acoustic) rmass_inverse_acoustic(:) = 1._CUSTOM_REAL / rmass_inverse_acoustic(:)
+call invert_mass_matrix(any_elastic,any_acoustic,any_poroelastic,npoin,rmass_inverse_elastic,&
+     rmass_inverse_acoustic,rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic)
 
 ! check the mesh, stability and number of points per wavelength
   if(DISPLAY_SUBSET_OPTION == 1) then
@@ -2677,11 +2636,12 @@ endif
   else
     stop 'incorrect value of DISPLAY_SUBSET_OPTION'
   endif
+
   call checkgrid(vpext,vsext,rhoext,density,poroelastcoef,porosity,tortuosity,ibool,kmato, &
                  coord,npoin,vpImin,vpImax,vpIImin,vpIImax, &
                  assign_external_model,nspec,UPPER_LIMIT_DISPLAY,numat,deltat,f0,t0,initialfield, &
                  time_function_type,coorg,xinterp,zinterp,shape2D_display,knods,simulation_title, &
-                 npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,myrank,nproc,NSOURCE,poroelastic)
+                 npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic,myrank,nproc,NSOURCE,poroelastic)
 
 ! convert receiver angle to radians
   anglerec = anglerec * pi / 180.d0
@@ -2753,6 +2713,7 @@ endif
   iglob_image_color(:,:) = -1
 
 ! cheking which pixels are inside each elements
+
   nb_pixel_loc = 0
   do ispec = 1, nspec
 
@@ -2865,7 +2826,7 @@ endif
 
   if (myrank == 0) write(IOUT,*) 'done locating all the pixels of color images'
 
-  endif
+endif
 
 !
 !---- initialize seismograms
@@ -5243,11 +5204,12 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     call compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
                source_type,it,NSTEP,anyabs,assign_external_model, &
-               initialfield,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,angleforce,deltatcube, &
+               initialfield,TURN_ATTENUATION_ON,angleforce,deltatcube, &
                deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,elastic,codeabs, &
                accel_elastic,veloc_elastic,displ_elastic,b_accel_elastic,b_displ_elastic, &
                density,poroelastcoef,xix,xiz,gammax,gammaz, &
-               jacobian,vpext,vsext,rhoext,source_time_function,sourcearray,adj_sourcearrays, &
+               jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy, & 
+               source_time_function,sourcearray,adj_sourcearrays, &
                e1,e11,e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
@@ -5634,11 +5596,27 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           endif
 ! compute stress tensor
 ! full anisotropy
-  if(TURN_ANISOTROPY_ON) then
+  if(kmato(ispec_elastic) == 2) then
 ! implement anisotropy in 2D
-     sigma_xx = sigma_xx + c11val*dux_dxl + c15val*(duz_dxl + dux_dzl) + c13val*duz_dzl
-     sigma_zz = sigma_zz + c13val*dux_dxl + c35val*(duz_dxl + dux_dzl) + c33val*duz_dzl
-     sigma_xz = sigma_xz + c15val*dux_dxl + c55val*(duz_dxl + dux_dzl) + c35val*duz_dzl
+      if(assign_external_model) then
+         c11 = c11ext(ii2,jj2,ispec_elastic)
+         c13 = c13ext(ii2,jj2,ispec_elastic)
+         c15 = c15ext(ii2,jj2,ispec_elastic)
+         c33 = c33ext(ii2,jj2,ispec_elastic)
+         c35 = c35ext(ii2,jj2,ispec_elastic)
+         c55 = c55ext(ii2,jj2,ispec_elastic)
+      else
+         c11 = anisotropy(1,kmato(ispec_elastic))
+         c13 = anisotropy(2,kmato(ispec_elastic))
+         c15 = anisotropy(3,kmato(ispec_elastic))
+         c33 = anisotropy(4,kmato(ispec_elastic))
+         c35 = anisotropy(5,kmato(ispec_elastic))
+         c55 = anisotropy(6,kmato(ispec_elastic))
+      end if
+
+     sigma_xx = sigma_xx + c11*dux_dxl + c15*(duz_dxl + dux_dzl) + c13*duz_dzl
+     sigma_zz = sigma_zz + c13*dux_dxl + c35*(duz_dxl + dux_dzl) + c33*duz_dzl
+     sigma_xz = sigma_xz + c15*dux_dxl + c55*(duz_dxl + dux_dzl) + c35*duz_dzl
   else
 ! no attenuation
     sigma_xx = sigma_xx + lambdalplus2mul_relaxed*dux_dxl + lambdal_relaxed*duz_dzl
@@ -6103,11 +6081,26 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     sigma_zz = lambdalplus2mul_relaxed*duz_dzl + lambdal_relaxed*dux_dxl
 
 ! full anisotropy
-  if(TURN_ANISOTROPY_ON) then
+  if(anisotropic(ispec_elastic)) then
 ! implement anisotropy in 2D
-     sigma_xx = c11val*dux_dxl + c15val*(duz_dxl + dux_dzl) + c13val*duz_dzl
-     sigma_zz = c13val*dux_dxl + c35val*(duz_dxl + dux_dzl) + c33val*duz_dzl
-     sigma_xz = c15val*dux_dxl + c55val*(duz_dxl + dux_dzl) + c35val*duz_dzl
+      if(assign_external_model) then
+         c11 = c11ext(i,j,ispec_elastic)
+         c13 = c13ext(i,j,ispec_elastic)
+         c15 = c15ext(i,j,ispec_elastic)
+         c33 = c33ext(i,j,ispec_elastic)
+         c35 = c35ext(i,j,ispec_elastic)
+         c55 = c55ext(i,j,ispec_elastic)
+      else
+         c11 = anisotropy(1,kmato(ispec_elastic))
+         c13 = anisotropy(2,kmato(ispec_elastic))
+         c15 = anisotropy(3,kmato(ispec_elastic))
+         c33 = anisotropy(4,kmato(ispec_elastic))
+         c35 = anisotropy(5,kmato(ispec_elastic))
+         c55 = anisotropy(6,kmato(ispec_elastic))
+      end if
+     sigma_xx = c11*dux_dxl + c15*(duz_dxl + dux_dzl) + c13*duz_dzl
+     sigma_zz = c13*dux_dxl + c35*(duz_dxl + dux_dzl) + c33*duz_dzl
+     sigma_xz = c15*dux_dxl + c55*(duz_dxl + dux_dzl) + c35*duz_dzl
   endif
 
     if(isolver == 2) then
@@ -6527,9 +6520,9 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
          xix,xiz,gammax,gammaz,jacobian,ibool,elastic,poroelastic,hprime_xx,hprime_zz, &
          nspec,npoin,assign_external_model,it,deltat,t0(1),kmato,poroelastcoef,density, &
          porosity,tortuosity, &
-         vpext,vsext,rhoext,wxgll,wzgll,numat, &
+         vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,wxgll,wzgll,numat, &
          pressure_element,vector_field_element,e1,e11, &
-         potential_dot_acoustic,potential_dot_dot_acoustic,TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
+         potential_dot_acoustic,potential_dot_dot_acoustic,TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
 
 !----  display time step and max of norm of displacement
   if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
@@ -6629,8 +6622,9 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
        call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,&
             displs_poroelastic,displw_poroelastic,elastic,poroelastic,&
             xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-            numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext,ispec,e1,e11, &
-            TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
+            numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
+            c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,ispec,e1,e11, &
+            TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
 
     else if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
 
@@ -6737,7 +6731,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
         valcurl = valcurl + dcurld*hlagrange
 
       enddo
-    enddo
+   enddo
 
 ! rotate seismogram components if needed, except if recording pressure, which is a scalar
     if(seismotype /= 4 .and. seismotype /= 6) then
@@ -7235,8 +7229,9 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     call compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,&
          displs_poroelastic,displw_poroelastic,elastic,poroelastic,vector_field_display, &
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext,e1,e11, &
-         TURN_ATTENUATION_ON,TURN_ANISOTROPY_ON,Mu_nu1,Mu_nu2,N_SLS)
+         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, & 
+         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,e1,e11, &
+         TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
 
   else if(imagetype == 4 .and. .not. p_sv) then
     call exit_MPI('cannot draw pressure field for SH (membrane) waves')
@@ -7541,7 +7536,6 @@ close(1001)
   'Read external initial field. . . . . .(initialfield) = ',l6/5x, &
   'Add Bielak conditions . . . .(add_Bielak_conditions) = ',l6/5x, &
   'Assign external model . . . .(assign_external_model) = ',l6/5x, &
-  'Turn anisotropy on or off. . . .(TURN_ANISOTROPY_ON) = ',l6/5x, &
   'Turn attenuation on or off. . .(TURN_ATTENUATION_ON) = ',l6/5x, &
   'Save grid in external file or not. . . .(outputgrid) = ',l6)
 

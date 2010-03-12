@@ -214,37 +214,37 @@ program meshfem2D
 
   include "constants.h"
 
-! coordinates of the grid points of the mesh
+  ! coordinates of the grid points of the mesh
   double precision, dimension(:,:), allocatable :: x,z
 
-! to compute the coordinate transformation
+  ! to compute the coordinate transformation
   integer :: ioffset
   double precision :: gamma,absx,a00,a01,bot0,top0
 
-! to store density and velocity model
-  double precision, dimension(:), allocatable :: rho_s,cp,cs,aniso3,aniso4,Qp,Qs
+  ! to store density and velocity model
+  double precision, dimension(:), allocatable :: rho_s,cp,cs,aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,Qp,Qs
   double precision, dimension(:), allocatable :: rho_f,phi,tortuosity,permxx,permxz,&
-                                 permzz,kappa_s,kappa_f,kappa_fr,eta_f,mu_fr
+       permzz,kappa_s,kappa_f,kappa_fr,eta_f,mu_fr
   integer, dimension(:), allocatable :: icodemat
   integer, dimension(:), allocatable :: num_material
 
-! interface data
+  ! interface data
   integer interface_current,ipoint_current,number_of_interfaces,npoints_interface_bottom,npoints_interface_top
   integer ilayer,number_of_layers,max_npoints_interface
   double precision xinterface_dummy,zinterface_dummy,xinterface_dummy_previous
   integer, dimension(:), allocatable :: nz_layer
   double precision, dimension(:), allocatable :: &
-         xinterface_bottom,zinterface_bottom,coefs_interface_bottom, &
-         xinterface_top,zinterface_top,coefs_interface_top
+       xinterface_bottom,zinterface_bottom,coefs_interface_bottom, &
+       xinterface_top,zinterface_top,coefs_interface_top
 
-! for the source and receivers
+  ! for the source and receivers
   integer, dimension(:), allocatable ::  source_type,time_function_type
   integer nrec_total,irec_global_number
   double precision, dimension(:),allocatable :: xs,zs,f0,t0,angleforce,Mxx,Mzz,Mxz,factor
   integer NSOURCE, NSOURCES, i_source, icounter, ios
   logical, dimension(:),allocatable ::  source_surf
   double precision xrec,zrec
-! file number for source file
+  ! file number for source file
   integer, parameter :: IIN_SOURCE = 22
   character(len=150) dummystring
 
@@ -267,14 +267,14 @@ program meshfem2D
   double precision tang1,tangN,vpregion,vsregion,poisson_ratio
   double precision cutsnaps,sizemax_arrows,anglerec,xmin,xmax,deltat
   double precision val0read,val1read,val2read,val3read,val4read,val5read,val6read,val7read,&
-                   val8read,val9read,val10read,val11read,val12read
+       val8read,val9read,val10read,val11read,val12read
 
   double precision, dimension(:), allocatable :: xdeb,zdeb,xfin,zfin
 
   logical interpol,gnuplot,assign_external_model,outputgrid
   logical abstop,absbottom,absleft,absright,any_abs
   logical meshvect,initialfield,modelvect,boundvect,add_Bielak_conditions
-  logical TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON,TURN_VISCATTENUATION_ON
+  logical TURN_ATTENUATION_ON,TURN_VISCATTENUATION_ON
 
   double precision :: Q0,freq0
 
@@ -285,27 +285,30 @@ program meshfem2D
   integer, external :: num_4, num_9
   double precision, external :: value_spline
 
-! flag to save the last frame for kernels calculation purpose and type of simulation
+  ! flag to save the last frame for kernels calculation purpose and type of simulation
   logical :: save_forward
   integer :: isolver
 
-! flag to indicate an anisotropic material
+  ! flag to indicate an isotropic elastic/acoustic material
+  integer, parameter :: ISOTROPIC_MATERIAL = 1
+
+  ! flag to indicate an anisotropic material
   integer, parameter :: ANISOTROPIC_MATERIAL = 2
 
-! flag to indicate a poroelastic material
+  ! flag to indicate a poroelastic material
   integer, parameter :: POROELASTIC_MATERIAL = 3
 
-! file number for interface file
+  ! file number for interface file
   integer, parameter :: IIN_INTERFACES = 15
 
-! ignore variable name field (junk) at the beginning of each input line
+  ! ignore variable name field (junk) at the beginning of each input line
   logical, parameter :: IGNORE_JUNK = .true.,DONT_IGNORE_JUNK = .false.
 
-! parameters for external mesh
+  ! parameters for external mesh
   logical  :: read_external_mesh
   character(len=256)  :: mesh_file, nodes_coords_file, materials_file, free_surface_file, absorbing_surface_file
 
-! variables used for storing info about the mesh and partitions
+  ! variables used for storing info about the mesh and partitions
   integer, dimension(:), pointer  :: elmnts
   integer, dimension(:), pointer  :: elmnts_bis
   double precision, dimension(:,:), pointer  :: nodes_coords
@@ -329,13 +332,13 @@ program meshfem2D
   integer, dimension(:), allocatable  :: my_interfaces
   integer, dimension(:), allocatable  :: my_nb_interfaces
 
-! for acoustic/elastic coupled elements
+  ! for acoustic/elastic coupled elements
   integer  :: nedges_coupled, nedges_coupled_loc
   integer, dimension(:,:), pointer  :: edges_coupled
-! for acoustic/poroelastic coupled elements
+  ! for acoustic/poroelastic coupled elements
   integer  :: nedges_acporo_coupled, nedges_acporo_coupled_loc
   integer, dimension(:,:), pointer  :: edges_acporo_coupled
-! for poroelastic/elastic coupled elements
+  ! for poroelastic/elastic coupled elements
   integer  :: nedges_elporo_coupled, nedges_elporo_coupled_loc
   integer, dimension(:,:), pointer  :: edges_elporo_coupled
 
@@ -354,7 +357,7 @@ program meshfem2D
   integer, dimension(:), pointer  :: ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
        jbegin_left,jend_left,jbegin_right,jend_right
 
-! variables used for partitioning
+  ! variables used for partitioning
   integer  :: nproc
   integer  :: partitioning_method
   character(len=256)  :: partitioning_strategy
@@ -362,11 +365,11 @@ program meshfem2D
   integer, dimension(0:4)  :: metis_options
   character(len=256)  :: prname
 
-! variables used for attenuation
+  ! variables used for attenuation
   integer  :: N_SLS
   double precision  :: f0_attenuation
 
-! variables used for tangential detection
+  ! variables used for tangential detection
   logical :: force_normal_to_surface,rec_normal_to_surface
   character(len=256)  :: tangential_detection_curve_file
   integer ::  nnodes_tangential_curve
@@ -380,16 +383,16 @@ program meshfem2D
 
 
 
-! ***
-! *** read the parameter file
-! ***
+  ! ***
+  ! *** read the parameter file
+  ! ***
 
   print *,'Reading the parameter file ... '
   print *
 
   open(unit=IIN,file='DATA/Par_file',status='old')
 
-! read file names and path for output
+  ! read file names and path for output
   call read_value_string(IIN,IGNORE_JUNK,title)
   call read_value_string(IIN,IGNORE_JUNK,interfacesfile)
 
@@ -397,7 +400,7 @@ program meshfem2D
   write(*,*) title
   print *
 
-! read info about external mesh
+  ! read info about external mesh
   call read_value_logical(IIN,IGNORE_JUNK,read_external_mesh)
   call read_value_string(IIN,IGNORE_JUNK,mesh_file)
   call read_value_string(IIN,IGNORE_JUNK,nodes_coords_file)
@@ -406,7 +409,7 @@ program meshfem2D
   call read_value_string(IIN,IGNORE_JUNK,absorbing_surface_file)
   call read_value_string(IIN,IGNORE_JUNK,tangential_detection_curve_file)
 
-! read info about partitioning
+  ! read info about partitioning
   call read_value_integer(IIN,IGNORE_JUNK,nproc)
   if ( nproc <= 0 ) then
      print *, 'Number of processes (nproc) must be greater than or equal to one.'
@@ -446,7 +449,7 @@ program meshfem2D
   end select
 
 
-! read grid parameters
+  ! read grid parameters
   call read_value_double_precision(IIN,IGNORE_JUNK,xmin)
   call read_value_double_precision(IIN,IGNORE_JUNK,xmax)
   call read_value_integer(IIN,IGNORE_JUNK,nx)
@@ -460,15 +463,14 @@ program meshfem2D
   call read_value_logical(IIN,IGNORE_JUNK,initialfield)
   call read_value_logical(IIN,IGNORE_JUNK,add_Bielak_conditions)
   call read_value_logical(IIN,IGNORE_JUNK,assign_external_model)
-  call read_value_logical(IIN,IGNORE_JUNK,TURN_ANISOTROPY_ON)
   call read_value_logical(IIN,IGNORE_JUNK,TURN_ATTENUATION_ON)
 
-! read viscous attenuation parameters (poroelastic media)
+  ! read viscous attenuation parameters (poroelastic media)
   call read_value_logical(IIN,IGNORE_JUNK,TURN_VISCATTENUATION_ON)
   call read_value_double_precision(IIN,IGNORE_JUNK,Q0)
   call read_value_double_precision(IIN,IGNORE_JUNK,freq0)
 
-! determine if body or surface (membrane) waves calculation
+  ! determine if body or surface (membrane) waves calculation
   call read_value_logical(IIN,IGNORE_JUNK,p_sv)
 
   if ( read_external_mesh ) then
@@ -551,7 +553,7 @@ program meshfem2D
               num_elmnt = num_elmnt + 1
            enddo
         enddo
-      else
+     else
         num_elmnt = 0
         do j = 1, nzread
            do i = 1, nxread
@@ -571,7 +573,7 @@ program meshfem2D
      endif
   endif
 
-! read absorbing boundaries parameters
+  ! read absorbing boundaries parameters
   call read_value_logical(IIN,IGNORE_JUNK,any_abs)
   call read_value_logical(IIN,IGNORE_JUNK,absbottom)
   call read_value_logical(IIN,IGNORE_JUNK,absright)
@@ -584,12 +586,12 @@ program meshfem2D
      absleft = .false.
   endif
 
-! read time step parameters
+  ! read time step parameters
   call read_value_integer(IIN,IGNORE_JUNK,nt)
   call read_value_double_precision(IIN,IGNORE_JUNK,deltat)
   call read_value_integer(IIN,IGNORE_JUNK,isolver)
 
-! read source parameters
+  ! read source parameters
   call read_value_integer(IIN,IGNORE_JUNK,NSOURCE)
   allocate(source_surf(NSOURCE))
   allocate(xs(NSOURCE))
@@ -608,8 +610,8 @@ program meshfem2D
   if(ios /= 0) stop 'error opening SOURCE file'
   icounter = 0
   do while(ios == 0)
-    read(IIN_SOURCE,"(a)",iostat=ios) dummystring
-    if(ios == 0) icounter = icounter + 1
+     read(IIN_SOURCE,"(a)",iostat=ios) dummystring
+     if(ios == 0) icounter = icounter + 1
   enddo
   close(IIN_SOURCE)
   if(mod(icounter,NLINES_PER_SOURCE) /= 0) &
@@ -617,7 +619,7 @@ program meshfem2D
   NSOURCES = icounter / NLINES_PER_SOURCE
   if(NSOURCES < 1) stop 'need at least one source in SOURCE file'
   if(NSOURCES /= NSOURCE) &
-    stop 'total number of sources read is different than declared in Par_file'
+       stop 'total number of sources read is different than declared in Par_file'
 
   open(unit=IIN_SOURCE,file='DATA/SOURCE',status='old',action='read')
   do  i_source=1,NSOURCE
@@ -634,15 +636,15 @@ program meshfem2D
      call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mxz(i_source))
      call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,factor(i_source))
 
-! if Dirac source time function, use a very thin Gaussian instead
-! if Heaviside source time function, use a very thin error function instead
-  if(time_function_type(i_source) == 4 .or. time_function_type(i_source) == 5) f0(i_source) = 1.d0 / (10.d0 * deltat)
+     ! if Dirac source time function, use a very thin Gaussian instead
+     ! if Heaviside source time function, use a very thin error function instead
+     if(time_function_type(i_source) == 4 .or. time_function_type(i_source) == 5) f0(i_source) = 1.d0 / (10.d0 * deltat)
 
-   ! time delay of the source in seconds, use a 20 % security margin (use 2 / f0 if error function)
+     ! time delay of the source in seconds, use a 20 % security margin (use 2 / f0 if error function)
      if(time_function_type(i_source)== 5) then
-       t0(i_source) = 2.0d0 / f0(i_source)+t0(i_source)
+        t0(i_source) = 2.0d0 / f0(i_source)+t0(i_source)
      else
-       t0(i_source) = 1.20d0 / f0(i_source)+t0(i_source)
+        t0(i_source) = 1.20d0 / f0(i_source)+t0(i_source)
      endif
 
      print *
@@ -661,16 +663,16 @@ program meshfem2D
 
   call read_value_logical(IIN,IGNORE_JUNK,force_normal_to_surface)
 
-! read constants for attenuation
+  ! read constants for attenuation
   call read_value_integer(IIN,IGNORE_JUNK,N_SLS)
   call read_value_double_precision(IIN,IGNORE_JUNK,f0_attenuation)
 
-! if source is not a Dirac or Heavyside then f0_attenuation is f0 of the first source
+  ! if source is not a Dirac or Heavyside then f0_attenuation is f0 of the first source
   if(.not. (time_function_type(1) == 4 .or. time_function_type(1) == 5)) then
      f0_attenuation = f0(1)
   endif
 
-! read receiver line parameters
+  ! read receiver line parameters
   call read_value_integer(IIN,IGNORE_JUNK,seismotype)
   call read_value_logical(IIN,IGNORE_JUNK,save_forward)
   call read_value_logical(IIN,IGNORE_JUNK,generate_STATIONS)
@@ -680,7 +682,7 @@ program meshfem2D
 
   if(nreceiverlines < 1) stop 'number of receiver lines must be greater than 1'
 
-! allocate receiver line arrays
+  ! allocate receiver line arrays
   allocate(nrec(nreceiverlines))
   allocate(xdeb(nreceiverlines))
   allocate(zdeb(nreceiverlines))
@@ -688,20 +690,20 @@ program meshfem2D
   allocate(zfin(nreceiverlines))
   allocate(enreg_surf(nreceiverlines))
 
-! loop on all the receiver lines
+  ! loop on all the receiver lines
   do ireceiverlines = 1,nreceiverlines
-    call read_value_integer(IIN,IGNORE_JUNK,nrec(ireceiverlines))
-    call read_value_double_precision(IIN,IGNORE_JUNK,xdeb(ireceiverlines))
-    call read_value_double_precision(IIN,IGNORE_JUNK,zdeb(ireceiverlines))
-    call read_value_double_precision(IIN,IGNORE_JUNK,xfin(ireceiverlines))
-    call read_value_double_precision(IIN,IGNORE_JUNK,zfin(ireceiverlines))
-    call read_value_logical(IIN,IGNORE_JUNK,enreg_surf(ireceiverlines))
-    if (read_external_mesh .and. enreg_surf(ireceiverlines)) then
-      stop 'Cannot use enreg_surf with external meshes!'
-    endif
+     call read_value_integer(IIN,IGNORE_JUNK,nrec(ireceiverlines))
+     call read_value_double_precision(IIN,IGNORE_JUNK,xdeb(ireceiverlines))
+     call read_value_double_precision(IIN,IGNORE_JUNK,zdeb(ireceiverlines))
+     call read_value_double_precision(IIN,IGNORE_JUNK,xfin(ireceiverlines))
+     call read_value_double_precision(IIN,IGNORE_JUNK,zfin(ireceiverlines))
+     call read_value_logical(IIN,IGNORE_JUNK,enreg_surf(ireceiverlines))
+     if (read_external_mesh .and. enreg_surf(ireceiverlines)) then
+        stop 'Cannot use enreg_surf with external meshes!'
+     endif
   enddo
 
-! read display parameters
+  ! read display parameters
   call read_value_integer(IIN,IGNORE_JUNK,NTSTEP_BETWEEN_OUTPUT_INFO)
   call read_value_logical(IIN,IGNORE_JUNK,output_postscript_snapshot)
   call read_value_logical(IIN,IGNORE_JUNK,output_color_image)
@@ -717,15 +719,15 @@ program meshfem2D
   call read_value_logical(IIN,IGNORE_JUNK,gnuplot)
   call read_value_logical(IIN,IGNORE_JUNK,outputgrid)
 
-! can use only one point to display lower-left corner only for interpolated snapshot
+  ! can use only one point to display lower-left corner only for interpolated snapshot
   if(pointsdisp < 3) then
-    pointsdisp = 3
-    plot_lowerleft_corner_only = .true.
+     pointsdisp = 3
+     plot_lowerleft_corner_only = .true.
   else
-    plot_lowerleft_corner_only = .false.
+     plot_lowerleft_corner_only = .false.
   endif
 
-! read the different material materials
+  ! read the different material materials
   call read_value_integer(IIN,IGNORE_JUNK,nb_materials)
   if(nb_materials <= 0) stop 'Negative number of materials not allowed!'
 
@@ -734,6 +736,10 @@ program meshfem2D
   allocate(cs(nb_materials))
   allocate(aniso3(nb_materials))
   allocate(aniso4(nb_materials))
+  allocate(aniso5(nb_materials))
+  allocate(aniso6(nb_materials))
+  allocate(aniso7(nb_materials))
+  allocate(aniso8(nb_materials))  
   allocate(Qp(nb_materials))
   allocate(Qs(nb_materials))
   allocate(rho_s(nb_materials))
@@ -755,6 +761,10 @@ program meshfem2D
   cs(:) = 0.d0
   aniso3(:) = 0.d0
   aniso4(:) = 0.d0
+  aniso5(:) = 0.d0
+  aniso6(:) = 0.d0
+  aniso7(:) = 0.d0
+  aniso8(:) = 0.d0
   Qp(:) = 0.d0
   Qs(:) = 0.d0
   rho_s(:) = 0.d0
@@ -772,88 +782,104 @@ program meshfem2D
   num_material(:) = 0
 
   do imaterial=1,nb_materials
-    call read_material_parameters(IIN,DONT_IGNORE_JUNK,i,icodematread,val0read,val1read,val2read,val3read, &
-                         val4read,val5read,val6read,val7read,val8read,val9read,val10read,val11read,val12read)
-    if(i < 1 .or. i > nb_materials) stop 'Wrong material number!'
-    icodemat(i) = icodematread
+     call read_material_parameters(IIN,DONT_IGNORE_JUNK,i,icodematread,val0read,val1read,val2read,val3read, &
+          val4read,val5read,val6read,val7read,val8read,val9read,val10read,val11read,val12read)
+     if(i < 1 .or. i > nb_materials) stop 'Wrong material number!'
+     icodemat(i) = icodematread
 
-      if(icodemat(i) /= POROELASTIC_MATERIAL) then
-    rho_s(i) = val0read
-    cp(i) = val1read
-    cs(i) = val2read
-    Qp(i) = val5read
-    Qs(i) = val6read
+     if(icodemat(i) == ISOTROPIC_MATERIAL) then
+        rho_s(i) = val0read
+        cp(i) = val1read
+        cs(i) = val2read
+        Qp(i) = val5read
+        Qs(i) = val6read
 
-    if(rho_s(i) <= 0.d0 .or. cp(i) <= 0.d0 .or. cs(i) < 0.d0) stop 'negative value of velocity or density'
-    if(Qp(i) <= 0.d0 .or. Qs(i) <= 0.d0) stop 'negative value of Qp or Qs'
+        if(rho_s(i) <= 0.d0 .or. cp(i) <= 0.d0 .or. cs(i) < 0.d0) stop 'negative value of velocity or density'
+        if(Qp(i) <= 0.d0 .or. Qs(i) <= 0.d0) stop 'negative value of Qp or Qs'
 
-    aniso3(i) = val3read
-    aniso4(i) = val4read
-    if(cs(i) /= 0.d0) then
-    phi(i) = 0.d0           ! elastic
-    else
-    phi(i) = 1.d0           ! acoustic
-    endif
-       else                 ! poroelastic
-    rho_s(i) = val0read
-    rho_f(i) = val1read
-    phi(i) = val2read
-    tortuosity(i) = val3read
-    permxx(i) = val4read
-    permxz(i) = val5read
-    permzz(i) = val6read
-    kappa_s(i) = val7read
-    kappa_f(i) = val8read
-    kappa_fr(i) = val9read
-    eta_f(i) = val10read
-    mu_fr(i) = val11read
-    Qs(i) = val12read
+        aniso3(i) = val3read
+        aniso4(i) = val4read
+        if(cs(i) /= 0.d0) then
+           phi(i) = 0.d0           ! elastic
+        else
+           phi(i) = 1.d0           ! acoustic
+        endif
+     elseif (icodemat(i) == ANISOTROPIC_MATERIAL) then
+        rho_s(i) = val0read
+        cp(i) = val1read
+        cs(i) = val2read
+        aniso3(i) = val3read
+        aniso4(i) = val4read
+        aniso5(i) = val5read
+        aniso6(i) = val6read      
+        aniso7(i) = val7read
+        aniso8(i) = val8read 
+        Qp(i) = val9read
+        Qs(i) = val10read
+     else                 ! poroelastic
+        rho_s(i) = val0read
+        rho_f(i) = val1read
+        phi(i) = val2read
+        tortuosity(i) = val3read
+        permxx(i) = val4read
+        permxz(i) = val5read
+        permzz(i) = val6read
+        kappa_s(i) = val7read
+        kappa_f(i) = val8read
+        kappa_fr(i) = val9read
+        eta_f(i) = val10read
+        mu_fr(i) = val11read
+        Qs(i) = val12read
 
-    if(rho_s(i) <= 0.d0 .or. rho_f(i) <= 0.d0) stop 'negative value of density'
-    if(phi(i) <= 0.d0 .or. tortuosity(i) <= 0.d0) stop 'negative value of porosity or tortuosity'
-    if(kappa_s(i) <= 0.d0 .or. kappa_f(i) <= 0.d0 .or. kappa_fr(i) <= 0.d0 .or. mu_fr(i) <= 0.d0) stop 'negative value of modulus'
-    if(Qs(i) <= 0.d0) stop 'negative value of Qs'
-       endif
+        if(rho_s(i) <= 0.d0 .or. rho_f(i) <= 0.d0) stop 'negative value of density'
+        if(phi(i) <= 0.d0 .or. tortuosity(i) <= 0.d0) stop 'negative value of porosity or tortuosity'
+        if(kappa_s(i) <= 0.d0 .or. kappa_f(i) <= 0.d0 .or. kappa_fr(i) <= 0.d0 .or. mu_fr(i) <= 0.d0) then
+           stop 'negative value of modulus'
+        end if
+        if(Qs(i) <= 0.d0) stop 'negative value of Qs'
+     endif
   enddo
 
   print *
   print *, 'Nb of solid, fluid or porous materials = ',nb_materials
   print *
   do i=1,nb_materials
-    if(icodemat(i) /= ANISOTROPIC_MATERIAL .and. icodemat(i) /= POROELASTIC_MATERIAL) then
-      print *,'Material #',i,' isotropic'
-      print *,'rho,cp,cs = ',rho_s(i),cp(i),cs(i),Qp(i),Qs(i)
-      if(cs(i) < TINYVAL) then
-        print *,'Material is fluid'
-      else
-        print *,'Material is solid'
-      endif
-    elseif(icodemat(i) == POROELASTIC_MATERIAL) then
-      print *,'Material #',i,' isotropic'
-      print *,'rho_s, kappa_s= ',rho_s(i),kappa_s(i)
-      print *,'rho_f, kappa_f, eta_f= ',rho_f(i),kappa_f(i),eta_f(i)
-      print *,'phi, tortuosity, permxx, permxz, permzz= ',phi(i),tortuosity(i),permxx(i),permxz(i),permzz(i)
-      print *,'kappa_fr, mu_fr, Qs= ',kappa_fr(i),mu_fr(i),Qs(i)
-      print *,'Material is porous'
-    else
-      print *,'Material #',i,' anisotropic'
-      print *,'rho,c11,c13,c33,c44 = ',rho_s(i),cp(i),cs(i),aniso3(i),aniso4(i),Qp(i),Qs(i)
-    endif
-  print *
+     if(icodemat(i) /= ANISOTROPIC_MATERIAL .and. icodemat(i) /= POROELASTIC_MATERIAL) then
+        print *,'Material #',i,' isotropic'
+        print *,'rho,cp,cs = ',rho_s(i),cp(i),cs(i),Qp(i),Qs(i)
+        if(cs(i) < TINYVAL) then
+           print *,'Material is fluid'
+        else
+           print *,'Material is solid'
+        endif
+     elseif(icodemat(i) == POROELASTIC_MATERIAL) then
+        print *,'Material #',i,' isotropic'
+        print *,'rho_s, kappa_s= ',rho_s(i),kappa_s(i)
+        print *,'rho_f, kappa_f, eta_f= ',rho_f(i),kappa_f(i),eta_f(i)
+        print *,'phi, tortuosity, permxx, permxz, permzz= ',phi(i),tortuosity(i),permxx(i),permxz(i),permzz(i)
+        print *,'kappa_fr, mu_fr, Qs= ',kappa_fr(i),mu_fr(i),Qs(i)
+        print *,'Material is porous'
+     else
+        print *,'Material #',i,' anisotropic'
+        print *,'rho,cp,cs = ',rho_s(i),cp(i),cs(i)
+        print*,'c11,c13,c15,c33,c35,c55 = ',aniso3(i),aniso4(i),aniso5(i),aniso6(i),aniso7(i),aniso8(i)
+        print *,'Qp,Qs = ',Qp(i),Qs(i)
+     endif
+     print *
   enddo
 
-! tangential detection
+  ! tangential detection
   if (force_normal_to_surface .or. rec_normal_to_surface) then
-    open(unit=IIN,file=tangential_detection_curve_file,status='old',action='read')
-    read(IIN,*) nnodes_tangential_curve
-    allocate(nodes_tangential_curve(2,nnodes_tangential_curve))
-    do i = 1, nnodes_tangential_curve
-      read(IIN,*) nodes_tangential_curve(1,i), nodes_tangential_curve(2,i)
-    enddo
-    close(IIN)
+     open(unit=IIN,file=tangential_detection_curve_file,status='old',action='read')
+     read(IIN,*) nnodes_tangential_curve
+     allocate(nodes_tangential_curve(2,nnodes_tangential_curve))
+     do i = 1, nnodes_tangential_curve
+        read(IIN,*) nodes_tangential_curve(1,i), nodes_tangential_curve(2,i)
+     enddo
+     close(IIN)
   else
-    nnodes_tangential_curve = 0
-    allocate(nodes_tangential_curve(2,1))
+     nnodes_tangential_curve = 0
+     allocate(nodes_tangential_curve(2,1))
   endif
 
   if ( read_external_mesh ) then
@@ -901,13 +927,17 @@ program meshfem2D
            print *,'Qs = ',Qs(imaterial_number)
         elseif(icodemat(imaterial_number) == POROELASTIC_MATERIAL) then
            print *,'Material # ',imaterial_number,' isotropic'
-              print *,'Material is poroelastic'
+           print *,'Material is poroelastic'
         else
            print *,'Material # ',imaterial_number,' anisotropic'
-           print *,'c11 = ',cp(imaterial_number)
-           print *,'c13 = ',cs(imaterial_number)
-           print *,'c33 = ',aniso3(imaterial_number)
-           print *,'c44 = ',aniso4(imaterial_number)
+           print *,'cp = ',cp(imaterial_number)
+           print *,'cs = ',cs(imaterial_number)
+           print *,'c11 = ',aniso3(imaterial_number)
+           print *,'c13 = ',aniso4(imaterial_number)
+           print *,'c15 = ',aniso5(imaterial_number)
+           print *,'c33 = ',aniso6(imaterial_number)           
+           print *,'c35 = ',aniso7(imaterial_number)
+           print *,'c55 = ',aniso8(imaterial_number)         
            print *,'rho = ',rho_s(imaterial_number)
            print *,'Qp = ',Qp(imaterial_number)
            print *,'Qs = ',Qs(imaterial_number)
@@ -932,7 +962,7 @@ program meshfem2D
   print *
   print *,'Parameter file successfully read... '
 
-!---
+  !---
 
   if(ngnod /= 4 .and. ngnod /= 9) stop 'ngnod different from 4 or 9!'
 
@@ -942,7 +972,7 @@ program meshfem2D
   print *,'Control elements have ',ngnod,' nodes'
   print *
 
-!---
+  !---
 
   if ( .not. read_external_mesh ) then
      ! allocate arrays for the grid
@@ -1002,10 +1032,10 @@ program meshfem2D
 
         ! check if we are in the last layer, which contains topography,
         ! and modify the position of the source accordingly if it is located exactly at the surface
-       do i_source=1,NSOURCE
-        if(source_surf(i_source) .and. ilayer == number_of_layers) &
-             zs(i_source) = value_spline(xs(i_source),xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
-       enddo
+        do i_source=1,NSOURCE
+           if(source_surf(i_source) .and. ilayer == number_of_layers) &
+                zs(i_source) = value_spline(xs(i_source),xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
+        enddo
 
         ! compute the offset of this layer in terms of number of spectral elements below along Z
         if(ilayer > 1) then
@@ -1090,42 +1120,42 @@ program meshfem2D
      ! count the number of acoustic free-surface elements
      nelem_acoustic_surface = 0
 
-! if the surface is absorbing, it cannot be free at the same time
+     ! if the surface is absorbing, it cannot be free at the same time
      if(.not. abstop) then
-     j = nzread
-     do i = 1,nxread
-        imaterial_number = num_material((j-1)*nxread+i)
-        if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0 ) then
-           nelem_acoustic_surface = nelem_acoustic_surface + 1
-        endif
-     enddo
+        j = nzread
+        do i = 1,nxread
+           imaterial_number = num_material((j-1)*nxread+i)
+           if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0 ) then
+              nelem_acoustic_surface = nelem_acoustic_surface + 1
+           endif
+        enddo
      endif
      if(.not. absbottom) then
-     j = 1
-     do i = 1,nxread
-        imaterial_number = num_material((j-1)*nxread+i)
-        if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0 ) then
-           nelem_acoustic_surface = nelem_acoustic_surface + 1
-        endif
-     enddo
+        j = 1
+        do i = 1,nxread
+           imaterial_number = num_material((j-1)*nxread+i)
+           if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0 ) then
+              nelem_acoustic_surface = nelem_acoustic_surface + 1
+           endif
+        enddo
      endif
      if(.not. absleft) then
-     i = 1
-     do j = 1,nzread
-        imaterial_number = num_material((j-1)*nxread+i)
-        if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0 ) then
-           nelem_acoustic_surface = nelem_acoustic_surface + 1
-        endif
-     enddo
+        i = 1
+        do j = 1,nzread
+           imaterial_number = num_material((j-1)*nxread+i)
+           if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0 ) then
+              nelem_acoustic_surface = nelem_acoustic_surface + 1
+           endif
+        enddo
      endif
      if(.not. absright) then
-     i = nxread
-     do j = 1,nzread
-        imaterial_number = num_material((j-1)*nxread+i)
-        if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0 ) then
-           nelem_acoustic_surface = nelem_acoustic_surface + 1
-        endif
-     enddo
+        i = nxread
+        do j = 1,nzread
+           imaterial_number = num_material((j-1)*nxread+i)
+           if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0 ) then
+              nelem_acoustic_surface = nelem_acoustic_surface + 1
+           endif
+        enddo
      endif
 
 
@@ -1134,56 +1164,56 @@ program meshfem2D
      nelem_acoustic_surface = 0
 
      if(.not. abstop) then
-     j = nzread
-     do i = 1,nxread
-        imaterial_number = num_material((j-1)*nxread+i)
-        if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >=1.d0 ) then
-           nelem_acoustic_surface = nelem_acoustic_surface + 1
-           acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
-           acoustic_surface(2,nelem_acoustic_surface) = 2
-           acoustic_surface(3,nelem_acoustic_surface) = elmnts(3+ngnod*((j-1)*nxread+i-1))
-           acoustic_surface(4,nelem_acoustic_surface) = elmnts(2+ngnod*((j-1)*nxread+i-1))
-        endif
-     enddo
+        j = nzread
+        do i = 1,nxread
+           imaterial_number = num_material((j-1)*nxread+i)
+           if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >=1.d0 ) then
+              nelem_acoustic_surface = nelem_acoustic_surface + 1
+              acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
+              acoustic_surface(2,nelem_acoustic_surface) = 2
+              acoustic_surface(3,nelem_acoustic_surface) = elmnts(3+ngnod*((j-1)*nxread+i-1))
+              acoustic_surface(4,nelem_acoustic_surface) = elmnts(2+ngnod*((j-1)*nxread+i-1))
+           endif
+        enddo
      endif
      if(.not. absbottom) then
-     j = 1
-     do i = 1,nxread
-        imaterial_number = num_material((j-1)*nxread+i)
-        if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >=1.d0 ) then
-           nelem_acoustic_surface = nelem_acoustic_surface + 1
-           acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
-           acoustic_surface(2,nelem_acoustic_surface) = 2
-           acoustic_surface(3,nelem_acoustic_surface) = elmnts(0+ngnod*((j-1)*nxread+i-1))
-           acoustic_surface(4,nelem_acoustic_surface) = elmnts(1+ngnod*((j-1)*nxread+i-1))
-        endif
-     enddo
+        j = 1
+        do i = 1,nxread
+           imaterial_number = num_material((j-1)*nxread+i)
+           if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >=1.d0 ) then
+              nelem_acoustic_surface = nelem_acoustic_surface + 1
+              acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
+              acoustic_surface(2,nelem_acoustic_surface) = 2
+              acoustic_surface(3,nelem_acoustic_surface) = elmnts(0+ngnod*((j-1)*nxread+i-1))
+              acoustic_surface(4,nelem_acoustic_surface) = elmnts(1+ngnod*((j-1)*nxread+i-1))
+           endif
+        enddo
      endif
      if(.not. absleft) then
-     i = 1
-     do j = 1,nzread
-        imaterial_number = num_material((j-1)*nxread+i)
-        if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >=1.d0 ) then
-           nelem_acoustic_surface = nelem_acoustic_surface + 1
-           acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
-           acoustic_surface(2,nelem_acoustic_surface) = 2
-           acoustic_surface(3,nelem_acoustic_surface) = elmnts(0+ngnod*((j-1)*nxread+i-1))
-           acoustic_surface(4,nelem_acoustic_surface) = elmnts(3+ngnod*((j-1)*nxread+i-1))
-        endif
-     enddo
+        i = 1
+        do j = 1,nzread
+           imaterial_number = num_material((j-1)*nxread+i)
+           if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >=1.d0 ) then
+              nelem_acoustic_surface = nelem_acoustic_surface + 1
+              acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
+              acoustic_surface(2,nelem_acoustic_surface) = 2
+              acoustic_surface(3,nelem_acoustic_surface) = elmnts(0+ngnod*((j-1)*nxread+i-1))
+              acoustic_surface(4,nelem_acoustic_surface) = elmnts(3+ngnod*((j-1)*nxread+i-1))
+           endif
+        enddo
      endif
      if(.not. absright) then
-     i = nxread
-     do j = 1,nzread
-        imaterial_number = num_material((j-1)*nxread+i)
-        if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >=1.d0 ) then
-           nelem_acoustic_surface = nelem_acoustic_surface + 1
-           acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
-           acoustic_surface(2,nelem_acoustic_surface) = 2
-           acoustic_surface(3,nelem_acoustic_surface) = elmnts(1+ngnod*((j-1)*nxread+i-1))
-           acoustic_surface(4,nelem_acoustic_surface) = elmnts(2+ngnod*((j-1)*nxread+i-1))
-        endif
-     enddo
+        i = nxread
+        do j = 1,nzread
+           imaterial_number = num_material((j-1)*nxread+i)
+           if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >=1.d0 ) then
+              nelem_acoustic_surface = nelem_acoustic_surface + 1
+              acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
+              acoustic_surface(2,nelem_acoustic_surface) = 2
+              acoustic_surface(3,nelem_acoustic_surface) = elmnts(1+ngnod*((j-1)*nxread+i-1))
+              acoustic_surface(4,nelem_acoustic_surface) = elmnts(2+ngnod*((j-1)*nxread+i-1))
+           endif
+        enddo
      endif
 
      !
@@ -1238,84 +1268,84 @@ program meshfem2D
   endif
 
 
-! compute min and max of X and Z in the grid
+  ! compute min and max of X and Z in the grid
   print *
   print *,'Min and max value of X in the grid = ',minval(nodes_coords(1,:)),maxval(nodes_coords(1,:))
   print *,'Min and max value of Z in the grid = ',minval(nodes_coords(2,:)),maxval(nodes_coords(2,:))
   print *
 
 
-! ***
-! *** create a Gnuplot file that displays the grid
-! ***
+  ! ***
+  ! *** create a Gnuplot file that displays the grid
+  ! ***
 
   if ( .not. read_external_mesh ) then
-  print *
-  print *,'Saving the grid in Gnuplot format...'
+     print *
+     print *,'Saving the grid in Gnuplot format...'
 
-  open(unit=20,file='OUTPUT_FILES/gridfile.gnu',status='unknown')
+     open(unit=20,file='OUTPUT_FILES/gridfile.gnu',status='unknown')
 
-! draw horizontal lines of the grid
-  print *,'drawing horizontal lines of the grid'
-  istepx = 1
-  if(ngnod == 4) then
-    istepz = 1
-  else
-    istepz = 2
+     ! draw horizontal lines of the grid
+     print *,'drawing horizontal lines of the grid'
+     istepx = 1
+     if(ngnod == 4) then
+        istepz = 1
+     else
+        istepz = 2
+     endif
+     do ili=0,nz,istepz
+        do icol=0,nx-istepx,istepx
+           write(20,*) sngl(x(icol,ili)),sngl(z(icol,ili))
+           write(20,*) sngl(x(icol+istepx,ili)),sngl(z(icol+istepx,ili))
+           write(20,10)
+        enddo
+     enddo
+
+     ! draw vertical lines of the grid
+     print *,'drawing vertical lines of the grid'
+     if(ngnod == 4) then
+        istepx = 1
+     else
+        istepx = 2
+     endif
+     istepz = 1
+     do icol=0,nx,istepx
+        do ili=0,nz-istepz,istepz
+           write(20,*) sngl(x(icol,ili)),sngl(z(icol,ili))
+           write(20,*) sngl(x(icol,ili+istepz)),sngl(z(icol,ili+istepz))
+           write(20,10)
+        enddo
+     enddo
+
+10   format('')
+
+     close(20)
+
+     ! create a Gnuplot script to display the grid
+     open(unit=20,file='OUTPUT_FILES/plotgnu',status='unknown')
+     write(20,*) '#set term X11'
+     write(20,*) 'set term postscript landscape monochrome solid "Helvetica" 22'
+     write(20,*) 'set output "grid.ps"'
+     write(20,*) '#set xrange [',sngl(minval(x)),':',sngl(maxval(x)),']'
+     write(20,*) '#set yrange [',sngl(minval(z)),':',sngl(maxval(z)),']'
+     ! use same unit length on both X and Y axes
+     write(20,*) 'set size ratio -1'
+     write(20,*) 'plot "gridfile.gnu" title "Macrobloc mesh" w l'
+     write(20,*) 'pause -1 "Hit any key..."'
+     close(20)
+
+     print *,'Grid saved in Gnuplot format...'
+     print *
   endif
-  do ili=0,nz,istepz
-    do icol=0,nx-istepx,istepx
-      write(20,*) sngl(x(icol,ili)),sngl(z(icol,ili))
-      write(20,*) sngl(x(icol+istepx,ili)),sngl(z(icol+istepx,ili))
-      write(20,10)
-    enddo
-  enddo
-
-! draw vertical lines of the grid
-  print *,'drawing vertical lines of the grid'
-  if(ngnod == 4) then
-    istepx = 1
-  else
-    istepx = 2
-  endif
-  istepz = 1
-  do icol=0,nx,istepx
-    do ili=0,nz-istepz,istepz
-      write(20,*) sngl(x(icol,ili)),sngl(z(icol,ili))
-      write(20,*) sngl(x(icol,ili+istepz)),sngl(z(icol,ili+istepz))
-      write(20,10)
-    enddo
-  enddo
-
- 10 format('')
-
-  close(20)
-
-! create a Gnuplot script to display the grid
-  open(unit=20,file='OUTPUT_FILES/plotgnu',status='unknown')
-  write(20,*) '#set term X11'
-  write(20,*) 'set term postscript landscape monochrome solid "Helvetica" 22'
-  write(20,*) 'set output "grid.ps"'
-  write(20,*) '#set xrange [',sngl(minval(x)),':',sngl(maxval(x)),']'
-  write(20,*) '#set yrange [',sngl(minval(z)),':',sngl(maxval(z)),']'
-! use same unit length on both X and Y axes
-  write(20,*) 'set size ratio -1'
-  write(20,*) 'plot "gridfile.gnu" title "Macrobloc mesh" w l'
-  write(20,*) 'pause -1 "Hit any key..."'
-  close(20)
-
-  print *,'Grid saved in Gnuplot format...'
-  print *
-  endif
 
 
-!*****************************
-! partitioning
-!*****************************
+  !*****************************
+  ! partitioning
+  !*****************************
   allocate(part(0:nelmnts-1))
 
-! if ngnod == 9, we work on a subarray of elmnts, which represents the elements with for nodes only
-! construction of the graph
+  ! if ngnod == 9, we work on a subarray of elmnts, which represents the elements with for nodes only
+  ! construction of the graph
   if ( ngnod == 9 ) then
      allocate(elmnts_bis(0:ESIZE*nelmnts-1))
      do i = 0, nelmnts-1
@@ -1323,27 +1353,27 @@ program meshfem2D
      enddo
 
      if ( nproc > 1 ) then
-     call mesh2dual_ncommonnodes(nelmnts, (nxread+1)*(nzread+1), elmnts_bis, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
+        call mesh2dual_ncommonnodes(nelmnts, (nxread+1)*(nzread+1), elmnts_bis, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
      endif
 
   else
      if ( nproc > 1 ) then
-     call mesh2dual_ncommonnodes(nelmnts, nnodes, elmnts, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
+        call mesh2dual_ncommonnodes(nelmnts, nnodes, elmnts, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
      endif
 
   endif
 
 
   if ( nproc == 1 ) then
-      part(:) = 0
+     part(:) = 0
   else
 
-  nb_edges = xadj(nelmnts)
+     nb_edges = xadj(nelmnts)
 
-! giving weight to edges and vertices. Currently not used.
-  call read_weights(nelmnts, vwgt, nb_edges, adjwgt)
+     ! giving weight to edges and vertices. Currently not used.
+     call read_weights(nelmnts, vwgt, nb_edges, adjwgt)
 
-! partitioning
+     ! partitioning
      select case (partitioning_method)
 
      case(1)
@@ -1377,7 +1407,7 @@ program meshfem2D
 
   endif
 
-! beware of fluid solid edges : coupled elements are transfered to the same partition
+  ! beware of fluid solid edges : coupled elements are transfered to the same partition
   if ( ngnod == 9 ) then
      call acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts_bis, nb_materials, phi, num_material, &
           nproc, part, nedges_coupled, edges_coupled)
@@ -1385,7 +1415,7 @@ program meshfem2D
      call acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_materials, phi, num_material, &
           nproc, part, nedges_coupled, edges_coupled)
   endif
-! beware of fluid porous edges : coupled elements are transfered to the same partition
+  ! beware of fluid porous edges : coupled elements are transfered to the same partition
   if ( ngnod == 9 ) then
      call acoustic_poro_repartitioning (nelmnts, nnodes, elmnts_bis, nb_materials, phi, num_material, &
           nproc, part, nedges_acporo_coupled, edges_acporo_coupled)
@@ -1393,7 +1423,7 @@ program meshfem2D
      call acoustic_poro_repartitioning (nelmnts, nnodes, elmnts, nb_materials, phi, num_material, &
           nproc, part, nedges_acporo_coupled, edges_acporo_coupled)
   endif
-! beware of porous solid edges : coupled elements are transfered to the same partition
+  ! beware of porous solid edges : coupled elements are transfered to the same partition
   if ( ngnod == 9 ) then
      call poro_elastic_repartitioning (nelmnts, nnodes, elmnts_bis, nb_materials, phi, num_material, &
           nproc, part, nedges_elporo_coupled, edges_elporo_coupled)
@@ -1402,13 +1432,13 @@ program meshfem2D
           nproc, part, nedges_elporo_coupled, edges_elporo_coupled)
   endif
 
-! local number of each element for each partition
+  ! local number of each element for each partition
   call Construct_glob2loc_elmnts(nelmnts, part, nproc, glob2loc_elmnts)
 
   if ( ngnod == 9 ) then
      if ( nproc > 1 ) then
-     deallocate(nnodes_elmnts)
-     deallocate(nodes_elmnts)
+        deallocate(nnodes_elmnts)
+        deallocate(nodes_elmnts)
      endif
      allocate(nnodes_elmnts(0:nnodes-1))
      allocate(nodes_elmnts(0:nsize*nnodes-1))
@@ -1421,25 +1451,25 @@ program meshfem2D
      enddo
   else
      if ( nproc < 2 ) then
-     allocate(nnodes_elmnts(0:nnodes-1))
-     allocate(nodes_elmnts(0:nsize*nnodes-1))
-     nnodes_elmnts(:) = 0
-     nodes_elmnts(:) = 0
-     do i = 0, ngnod*nelmnts-1
-        nodes_elmnts(elmnts(i)*nsize+nnodes_elmnts(elmnts(i))) = i/ngnod
-        nnodes_elmnts(elmnts(i)) = nnodes_elmnts(elmnts(i)) + 1
+        allocate(nnodes_elmnts(0:nnodes-1))
+        allocate(nodes_elmnts(0:nsize*nnodes-1))
+        nnodes_elmnts(:) = 0
+        nodes_elmnts(:) = 0
+        do i = 0, ngnod*nelmnts-1
+           nodes_elmnts(elmnts(i)*nsize+nnodes_elmnts(elmnts(i))) = i/ngnod
+           nnodes_elmnts(elmnts(i)) = nnodes_elmnts(elmnts(i)) + 1
 
-     enddo
+        enddo
 
      endif
 
   endif
 
-! local number of each node for each partition
+  ! local number of each node for each partition
   call Construct_glob2loc_nodes(nelmnts, nnodes, nnodes_elmnts, nodes_elmnts, part, nproc, &
        glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes)
 
-! construct the interfaces between partitions (used for MPI assembly)
+  ! construct the interfaces between partitions (used for MPI assembly)
   if ( nproc /= 1 ) then
      if ( ngnod == 9 ) then
         call Construct_interfaces(nelmnts, nproc, part, elmnts_bis, xadj, adjncy, tab_interfaces, &
@@ -1452,7 +1482,7 @@ program meshfem2D
      allocate(my_nb_interfaces(0:ninterfaces-1))
   endif
 
-! setting absorbing boundaries by elements instead of edges
+  ! setting absorbing boundaries by elements instead of edges
   if ( any_abs ) then
      call merge_abs_boundaries(nelemabs, nelemabs_merge, abs_surface, abs_surface_char, abs_surface_merge, &
           ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
@@ -1462,7 +1492,7 @@ program meshfem2D
           elmnts, ngnod)
   endif
 
-! *** generate the databases for the solver
+  ! *** generate the databases for the solver
 
   do iproc = 0, nproc-1
 
@@ -1510,8 +1540,8 @@ program meshfem2D
      write(15,*) 'seismotype imagetype save_forward'
      write(15,*) seismotype,imagetype,save_forward
 
-     write(15,*) 'assign_external_model outputgrid TURN_ANISOTROPY_ON TURN_ATTENUATION_ON'
-     write(15,*) assign_external_model,outputgrid,TURN_ANISOTROPY_ON,TURN_ATTENUATION_ON
+     write(15,*) 'assign_external_model outputgrid TURN_ATTENUATION_ON'
+     write(15,*) assign_external_model,outputgrid,TURN_ATTENUATION_ON
 
      write(15,*) 'TURN_VISCATTENUATION_ON Q0 freq0'
      write(15,*) TURN_VISCATTENUATION_ON,Q0,freq0
@@ -1525,9 +1555,9 @@ program meshfem2D
      write(15,*) NSOURCE
 
      do i_source=1,NSOURCE
-         write(15,*) 'source', i_source
-         write(15,*) source_type(i_source),time_function_type(i_source),xs(i_source),zs(i_source),f0(i_source),t0(i_source), &
-                     factor(i_source),angleforce(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
+        write(15,*) 'source', i_source
+        write(15,*) source_type(i_source),time_function_type(i_source),xs(i_source),zs(i_source),f0(i_source),t0(i_source), &
+             factor(i_source),angleforce(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
      enddo
 
      write(15,*) 'attenuation'
@@ -1565,18 +1595,21 @@ program meshfem2D
      write(15,*) 'nelemabs nelem_acoustic_surface num_fluid_solid_edges num_fluid_poro_edges'
      write(15,*) 'num_solid_poro_edges nnodes_tangential_curve'
      write(15,*) nelemabs_loc,nelem_acoustic_surface_loc,nedges_coupled_loc,nedges_acporo_coupled_loc,&
-                 nedges_elporo_coupled_loc,nnodes_tangential_curve
+          nedges_elporo_coupled_loc,nnodes_tangential_curve
 
      write(15,*) 'Material sets (num 1 rho vp vs 0 0 Qp Qs 0 0 0 0 0 0) or '
      write(15,*) '(num 2 rho c11 c13 c33 c44 Qp Qs 0 0 0 0 0 0) or '
      write(15,*) '(num 3 rhos rhof phi c k_xx k_xz k_zz Ks Kf Kfr etaf mufr Qs)'
      do i=1,nb_materials
-       if (icodemat(i) /= POROELASTIC_MATERIAL)then
-       write(15,*) i,icodemat(i),rho_s(i),cp(i),cs(i),aniso3(i),aniso4(i),Qp(i),Qs(i),0,0,0,0,0,0
-       else
-       write(15,*) i,icodemat(i),rho_s(i),rho_f(i),phi(i),tortuosity(i),permxx(i),permxz(i),permzz(i),kappa_s(i),&
-        kappa_f(i),kappa_fr(i),eta_f(i),mu_fr(i),Qs(i)
-       endif
+        if (icodemat(i) == ISOTROPIC_MATERIAL) then
+           write(15,*) i,icodemat(i),rho_s(i),cp(i),cs(i),0,0,Qp(i),Qs(i),0,0,0,0,0,0
+        elseif(icodemat(i) == POROELASTIC_MATERIAL) then
+           write(15,*) i,icodemat(i),rho_s(i),rho_f(i),phi(i),tortuosity(i),permxx(i),permxz(i),permzz(i),kappa_s(i),&
+                kappa_f(i),kappa_fr(i),eta_f(i),mu_fr(i),Qs(i)
+        else
+           write(15,*) i,icodemat(i),rho_s(i),cp(i),cs(i),aniso3(i),aniso4(i),aniso5(i),aniso6(i),&
+                aniso7(i),aniso8(i),Qp(i),Qs(i),0,0
+        endif
      enddo
 
      write(15,*) 'Arrays kmato and knods for each bloc:'
@@ -1633,82 +1666,82 @@ program meshfem2D
      !write(15,*) nnodes_tangential_curve
      write(15,*) force_normal_to_surface,rec_normal_to_surface
      do i = 1, nnodes_tangential_curve
-       write(15,*) nodes_tangential_curve(1,i),nodes_tangential_curve(2,i)
+        write(15,*) nodes_tangential_curve(1,i),nodes_tangential_curve(2,i)
      enddo
   enddo
 
 
-! print position of the source
+  ! print position of the source
   do i_source=1,NSOURCE
      print *
      print *,'Position (x,z) of the source = ',xs(i_source),zs(i_source)
      print *
   enddo
 
-!--- compute position of the receivers and write the STATIONS file
+  !--- compute position of the receivers and write the STATIONS file
 
   if (generate_STATIONS) then
-  print *
-  print *,'writing the DATA/STATIONS file'
-  print *
+     print *
+     print *,'writing the DATA/STATIONS file'
+     print *
 
-! total number of receivers in all the receiver lines
-  nrec_total = sum(nrec)
+     ! total number of receivers in all the receiver lines
+     nrec_total = sum(nrec)
 
-  print *
-  print *,'There are ',nrec_total,' receivers'
+     print *
+     print *,'There are ',nrec_total,' receivers'
 
-  print *
-  print *,'Position (x,z) of the ',nrec_total,' receivers'
-  print *
+     print *
+     print *,'Position (x,z) of the ',nrec_total,' receivers'
+     print *
 
-  open(unit=15,file='DATA/STATIONS',status='unknown')
+     open(unit=15,file='DATA/STATIONS',status='unknown')
 
-  irec_global_number = 0
+     irec_global_number = 0
 
-! loop on all the receiver lines
-  do ireceiverlines = 1,nreceiverlines
+     ! loop on all the receiver lines
+     do ireceiverlines = 1,nreceiverlines
 
-! loop on all the receivers of this receiver line
-    do irec = 1,nrec(ireceiverlines)
+        ! loop on all the receivers of this receiver line
+        do irec = 1,nrec(ireceiverlines)
 
-! compute global receiver number
-      irec_global_number = irec_global_number + 1
+           ! compute global receiver number
+           irec_global_number = irec_global_number + 1
 
-! compute coordinates of the receiver
-      if(nrec(ireceiverlines) > 1) then
-        xrec = xdeb(ireceiverlines) + dble(irec-1)*(xfin(ireceiverlines)-xdeb(ireceiverlines))/dble(nrec(ireceiverlines)-1)
-        zrec = zdeb(ireceiverlines) + dble(irec-1)*(zfin(ireceiverlines)-zdeb(ireceiverlines))/dble(nrec(ireceiverlines)-1)
-      else
-        xrec = xdeb(ireceiverlines)
-        zrec = zdeb(ireceiverlines)
-      endif
+           ! compute coordinates of the receiver
+           if(nrec(ireceiverlines) > 1) then
+              xrec = xdeb(ireceiverlines) + dble(irec-1)*(xfin(ireceiverlines)-xdeb(ireceiverlines))/dble(nrec(ireceiverlines)-1)
+              zrec = zdeb(ireceiverlines) + dble(irec-1)*(zfin(ireceiverlines)-zdeb(ireceiverlines))/dble(nrec(ireceiverlines)-1)
+           else
+              xrec = xdeb(ireceiverlines)
+              zrec = zdeb(ireceiverlines)
+           endif
 
-! modify position of receiver if we must record exactly at the surface
-      if(enreg_surf(ireceiverlines)) &
-        zrec = value_spline(xrec,xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
+           ! modify position of receiver if we must record exactly at the surface
+           if(enreg_surf(ireceiverlines)) &
+                zrec = value_spline(xrec,xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
 
-! display position of the receiver
-      print *,'Receiver ',irec_global_number,' = ',xrec,zrec
+           ! display position of the receiver
+           print *,'Receiver ',irec_global_number,' = ',xrec,zrec
 
-      write(15,"('S',i4.4,'    AA ',f20.7,1x,f20.7,'       0.0         0.0')") irec_global_number,xrec,zrec
+           write(15,"('S',i4.4,'    AA ',f20.7,1x,f20.7,'       0.0         0.0')") irec_global_number,xrec,zrec
 
-    enddo
-  enddo
+        enddo
+     enddo
 
-  close(15)
+     close(15)
 
   endif
 
   print *
   if (nproc == 1) then
-    print *,'This will be a serial simulation'
+     print *,'This will be a serial simulation'
   else
-    print *,'This will be a parallel simulation on ',nproc,' processors'
+     print *,'This will be a parallel simulation on ',nproc,' processors'
   endif
   print *
 
-  end program meshfem2D
+end program meshfem2D
 
 ! *******************
 ! meshing subroutines
@@ -1717,54 +1750,54 @@ program meshfem2D
 
 !--- global node number
 
-  integer function num(i,j,nx)
+integer function num(i,j,nx)
 
-    implicit none
+  implicit none
 
-    integer i,j,nx
+  integer i,j,nx
 
-    num = j*(nx+1) + i + 1
+  num = j*(nx+1) + i + 1
 
-  end function num
-
-
- !---  global node number (when ngnod==4).
-  integer function num_4(i,j,nx)
-
-    implicit none
-
-    integer i,j,nx
-
-    num_4 = j*(nx+1) + i + 1
-
-  end function num_4
+end function num
 
 
- !---  global node number (when ngnod==9).
-  integer function num_9(i,j,nx,nz)
+!---  global node number (when ngnod==4).
+integer function num_4(i,j,nx)
 
-    implicit none
+  implicit none
 
-    integer i,j,nx,nz
+  integer i,j,nx
+
+  num_4 = j*(nx+1) + i + 1
+
+end function num_4
 
 
-    if ( (mod(i,2) == 0) .and. (mod(j,2) == 0) ) then
-       num_9 = j/2 * (nx+1) + i/2 + 1
-    else
-       if ( mod(j,2) == 0 ) then
-          num_9 = (nx+1)*(nz+1) + j/2 * nx + ceiling(real(i)/real(2))
-       else
-          num_9 = (nx+1)*(nz+1) + nx*(nz+1) + floor(real(j)/real(2))*(nx*2+1) + i + 1
+!---  global node number (when ngnod==9).
+integer function num_9(i,j,nx,nz)
 
-       endif
-    endif
+  implicit none
 
-  end function num_9
+  integer i,j,nx,nz
+
+
+  if ( (mod(i,2) == 0) .and. (mod(j,2) == 0) ) then
+     num_9 = j/2 * (nx+1) + i/2 + 1
+  else
+     if ( mod(j,2) == 0 ) then
+        num_9 = (nx+1)*(nz+1) + j/2 * nx + ceiling(real(i)/real(2))
+     else
+        num_9 = (nx+1)*(nz+1) + nx*(nz+1) + floor(real(j)/real(2))*(nx*2+1) + i + 1
+
+     endif
+  endif
+
+end function num_9
 
 
 !--- spline to describe the interfaces
 
-  double precision function value_spline(x,xinterface,zinterface,coefs_interface,npoints_interface)
+double precision function value_spline(x,xinterface,zinterface,coefs_interface,npoints_interface)
 
   implicit none
 
@@ -1776,11 +1809,11 @@ program meshfem2D
 
   xp = x
 
-! assign the value on the edge if point is outside the model
+  ! assign the value on the edge if point is outside the model
   if(xp < xinterface(1)) xp = xinterface(1)
   if(xp > xinterface(npoints_interface)) xp = xinterface(npoints_interface)
 
   call spline_evaluation(xinterface,zinterface,coefs_interface,npoints_interface,xp,value_spline)
 
-  end function value_spline
+end function value_spline
 
