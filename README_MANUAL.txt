@@ -1,23 +1,11 @@
 
-SPECFEM2D 6.0: SPECFEM2D facilitates 2D simulations of
-        acoustic, (an)elastic, and poroelastic seismic wave propagation.
-        With version 6.0, the 2D spectral-element solver accommodates
-        regular and unstructured meshes, generated for example by Cubit
-        (cubit.sandia.gov). The solver has adjoint capabilities and can
-        calculate finite-frequency sensitivity kernels for acoustic,
-        (an)elastic, and poroelastic media. The package also considers 2D SH 
-        and P-SV wave propagation. Finally, the solver can run
-        both in serial and in parallel. See SPECFEM2D
-        <http://www.geodynamics.org/cig/software/packages/seismo/specfem2d>
-        for the source code.
-
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 6.0
+!                   S P E C F E M 2 D  Version 6.1
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France,
-! and Princeton University, USA.
+! Copyright Universite de Pau, CNRS and INRIA, France,
+! and Princeton University / California Institute of Technology, USA.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
@@ -159,6 +147,18 @@ SPECFEM2D 6.0: SPECFEM2D facilitates 2D simulations of
 ! volume = {5336},
 ! pages = {350-363}}
 !
+
+SPECFEM2D 6.1: SPECFEM2D facilitates 2D simulations of
+        acoustic, (an)elastic, and poroelastic seismic wave propagation.
+        With version 6.1, the 2D spectral-element solver accommodates
+        regular and unstructured meshes, generated for example by Cubit
+        (cubit.sandia.gov). The solver has adjoint capabilities and can
+        calculate finite-frequency sensitivity kernels for acoustic,
+        (an)elastic, and poroelastic media. The package also considers 2D SH
+        and P-SV wave propagation. Finally, the solver can run
+        both in serial and in parallel. See SPECFEM2D
+        <http://www.geodynamics.org/cig/software/packages/seismo/specfem2d>
+        for the source code.
 
 Caution:
 --------
