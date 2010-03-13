@@ -301,14 +301,14 @@ S****.AA.BHX.semd
 S****.AA.BHZ.semd
 
 Second: define the adjoint source
-Use adj_seismogram.f90 
+Use adj_seismogram.f90
 Edit to update NSTEP, nrec, t0, deltat, and the position of the cut to pic
 any given phase if needed (tstart,tend), add the right number of stations, and
 put one component of the source to zero if needed.
-The ouput files of adj_seismogram.f90 are S****.AA.BHX.adj and S****.AA.BHZ.adj, for P-SV waves (and 
+The ouput files of adj_seismogram.f90 are S****.AA.BHX.adj and S****.AA.BHZ.adj, for P-SV waves (and
 S****.AA.BHY.adj, for SH (membrane) waves). Note that you will need these three
-files (S****.AA.BHX.adj, S****.AA.BHY.adj and S****.AA.BHZ.adj) to be present in the OUTPUT_FILES directory 
-together with the absorb_elastic_****.bin and lastframe_elastic.bin files to be read 
+files (S****.AA.BHX.adj, S****.AA.BHY.adj and S****.AA.BHZ.adj) to be present in the OUTPUT_FILES directory
+together with the absorb_elastic_****.bin and lastframe_elastic.bin files to be read
 when running the adjoint simulation.
 
 Third: run the adjoint simulation
@@ -320,14 +320,14 @@ in the OUTPUT_FILES directory.
 Output_files (for example for the elastic case)
 snapshot_rho_kappa_mu*****
 snapshot_rhop_alpha_beta*****
-which are the primary moduli kernels and the phase velocities kernels respectively, in ascii format 
+which are the primary moduli kernels and the phase velocities kernels respectively, in ascii format
 and at the local level, that is as "kernels(i,j,ispec)".
 
 Note1: At the moment, adjoint simulations do not support anisotropy, attenuation, and viscous damping.
 Note2: You will need S****.AA.BHX.adj, S****.AA.BHY.adj and S****.AA.BHZ.adj
 to be present in OUTPUT_FILES even if you are just running an acoustic or
-poroelastic adjoint simulation. 
-S****.AA.BHX.adj is the only relevant component for an acoustic case. 
+poroelastic adjoint simulation.
+S****.AA.BHX.adj is the only relevant component for an acoustic case.
 S****.AA.BHX.adj and S****.AA.BHZ.adj are the only relevant components for a
 poroelastic case.
 
@@ -344,7 +344,7 @@ elastic material.
 
 How to run P-SV or SH (membrane) waves simulation :
 ---------------------------------------------------
-To run a P-SV waves calculation propagating in the x-z plane, 
+To run a P-SV waves calculation propagating in the x-z plane,
 set p_sv = .true. in the Par_file.
 To run a SH (membrane) waves calculation traveling in the x-z plane with a
 y-component of motion, set p_sv = .false.

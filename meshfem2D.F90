@@ -1,11 +1,11 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 6.0
+!                   S P E C F E M 2 D  Version 6.1
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France,
-! and Princeton University, USA.
+! Copyright Universite de Pau, CNRS and INRIA, France,
+! and Princeton University / California Institute of Technology, USA.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
@@ -278,7 +278,7 @@ program meshfem2D
 
   double precision :: Q0,freq0
 
-  logical :: p_sv 
+  logical :: p_sv
 
   logical, dimension(:), allocatable :: enreg_surf
 
@@ -739,7 +739,7 @@ program meshfem2D
   allocate(aniso5(nb_materials))
   allocate(aniso6(nb_materials))
   allocate(aniso7(nb_materials))
-  allocate(aniso8(nb_materials))  
+  allocate(aniso8(nb_materials))
   allocate(Qp(nb_materials))
   allocate(Qs(nb_materials))
   allocate(rho_s(nb_materials))
@@ -811,9 +811,9 @@ program meshfem2D
         aniso3(i) = val3read
         aniso4(i) = val4read
         aniso5(i) = val5read
-        aniso6(i) = val6read      
+        aniso6(i) = val6read
         aniso7(i) = val7read
-        aniso8(i) = val8read 
+        aniso8(i) = val8read
         Qp(i) = val9read
         Qs(i) = val10read
      else                 ! poroelastic
@@ -935,9 +935,9 @@ program meshfem2D
            print *,'c11 = ',aniso3(imaterial_number)
            print *,'c13 = ',aniso4(imaterial_number)
            print *,'c15 = ',aniso5(imaterial_number)
-           print *,'c33 = ',aniso6(imaterial_number)           
+           print *,'c33 = ',aniso6(imaterial_number)
            print *,'c35 = ',aniso7(imaterial_number)
-           print *,'c55 = ',aniso8(imaterial_number)         
+           print *,'c55 = ',aniso8(imaterial_number)
            print *,'rho = ',rho_s(imaterial_number)
            print *,'Qp = ',Qp(imaterial_number)
            print *,'Qs = ',Qs(imaterial_number)

@@ -1,11 +1,11 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 6.0
+!                   S P E C F E M 2 D  Version 6.1
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France,
-! and Princeton University, USA.
+! Copyright Universite de Pau, CNRS and INRIA, France,
+! and Princeton University / California Institute of Technology, USA.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
@@ -48,7 +48,7 @@ subroutine read_external_model(any_acoustic,any_elastic,any_poroelastic, &
                 elastic,poroelastic,anisotropic,nspec,npoin,N_SLS,ibool, &
                 f0_attenuation,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
                 inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent, &
-                inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,& 
+                inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,&
                 coord,kmato,myrank,rhoext,vpext,vsext, &
                 Qp_attenuationext,Qs_attenuationext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext)
 
@@ -58,7 +58,7 @@ subroutine read_external_model(any_acoustic,any_elastic,any_poroelastic, &
 integer :: nspec,myrank,npoin
 double precision  :: f0_attenuation
 
-! Mesh 
+! Mesh
 integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
 double precision, dimension(NDIM,npoin) :: coord
 

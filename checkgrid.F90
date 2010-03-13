@@ -1,11 +1,11 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 6.0
+!                   S P E C F E M 2 D  Version 6.1
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France,
-! and Princeton University, USA.
+! Copyright Universite de Pau, CNRS and INRIA, France,
+! and Princeton University / California Institute of Technology, USA.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
@@ -1363,7 +1363,7 @@
 ! Bisque
   red(236) = 1.00000000000000
   green(236) = 0.894117647058824
-  blue(236) = 0.768627450980392 
+  blue(236) = 0.768627450980392
 
 !---- compute parameters for the spectral elements
 
@@ -1806,7 +1806,7 @@
       zinterp(i,j) = zinterp(i,j) + shapeint(in,i,j)*coorg(2,nnum)
   enddo
   enddo
-  enddo 
+  enddo
 
   is = 1
   ir = 1

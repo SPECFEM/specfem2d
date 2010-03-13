@@ -1,11 +1,11 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 6.0
+!                   S P E C F E M 2 D  Version 6.1
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France,
-! and Princeton University, USA.
+! Copyright Universite de Pau, CNRS and INRIA, France,
+! and Princeton University / California Institute of Technology, USA.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
@@ -1032,7 +1032,7 @@ contains
        jend_left(:) = NGLLZ
 
         is_acoustic(:) = .false.
- 
+
         do i = 1, nb_materials
            if (phi_material(i) >= 1.d0) then
               is_acoustic(i) = .true.

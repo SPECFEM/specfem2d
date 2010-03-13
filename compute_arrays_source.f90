@@ -1,11 +1,11 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 6.0
+!                   S P E C F E M 2 D  Version 6.1
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France,
-! and Princeton University, USA.
+! Copyright Universite de Pau, CNRS and INRIA, France,
+! and Princeton University / California Institute of Technology, USA.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
@@ -167,7 +167,7 @@
 
   comp = (/"BHX","BHY","BHZ"/)
 
-  do icomp = 1,3 
+  do icomp = 1,3
 
     filename = 'OUTPUT_FILES/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
     open(unit = IIN, file = trim(filename), iostat = ios)

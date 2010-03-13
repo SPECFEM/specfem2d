@@ -1,10 +1,10 @@
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 6.0
+!                   S P E C F E M 2 D  Version 6.1
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France,
-! and Princeton University, USA.
+! Copyright Universite de Pau, CNRS and INRIA, France,
+! and Princeton University / California Institute of Technology, USA.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
@@ -62,32 +62,32 @@
   double precision :: a_r,a_i,b_r,b_i,cc,alpha,aa1,aa2
   double precision :: xx,yy, gXI, gYI,gXII,gYII,w_c,f_c
   double precision :: wi,fi,taus,taue,Q0,bbr,bbi
-  
-  double precision :: gA,gB,sa,sb,xxs,yys  
+
+  double precision :: gA,gB,sa,sb,xxs,yys
   logical :: TURN_VISCATTENUATION_ON
 
     rhol_bar =  (1.d0 - phil)*rhol_s + phil*rhol_f
 
     w_c = etal_f*phil/(tortl*rhol_f*perm)
-    f_c = w_c/(2*pi) 
+    f_c = w_c/(2*pi)
 
-    wi=2.d0*pi*fi                                                        
+    wi=2.d0*pi*fi
 
     alpha=10.d0**dlog10(wi)
     w0il =  2.d0*pi*f0
     taue = (sqrt(Q0*Q0+1) +1)/(w0il*Q0)
     taus = (sqrt(Q0*Q0+1) -1)/(w0il*Q0)
 
-     if(TURN_VISCATTENUATION_ON) then              
+     if(TURN_VISCATTENUATION_ON) then
 ! high frequency, with memory variables
     bbr = etal_f/perm*(1.d0+alpha*alpha*taus*taue)/(1.d0 + alpha*alpha*taus*taus)
     bbi = etal_f/perm*alpha*(taue-taus)/(1.d0 + alpha*alpha*taus*taus)
      else
-! low frequency   
+! low frequency
     bbr = etal_f/perm
     bbi = 0.d0
      endif
- 
+
 ! cs
      gA = (rhol_f*tortl*rhol_bar-phil*rhol_f**2)**2/(phil*rhol_bar)**2 - (bbr**2-bbi**2)/alpha**2*&
           (phil*rhol_f/(rhol_bar*tortl) -1.d0) - bbi/alpha*phil*rhol_f/(rhol_bar*tortl)*&
@@ -100,7 +100,7 @@
 !
      xxs = sa*gA + sb*gB
      yys = gA*sb - sa*gB
-    
+
      cssquare = mul_fr/(rhol_bar-phil*rhol_f/tortl) * 2.d0*(gA**2+gB**2)/(sqrt(xxs**2+yys**2)+xxs)
 
 
