@@ -1,11 +1,11 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 6.0
+!                   S P E C F E M 2 D  Version 6.1
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France,
-! and Princeton University, USA.
+! Copyright Universite de Pau, CNRS and INRIA, France,
+! and Princeton University / California Institute of Technology, USA.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
@@ -100,7 +100,7 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
   double precision, dimension(6,numat) :: anisotropy
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
   double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,vsext,rhoext
-  double precision, dimension(NGLLX,NGLLZ,nspec) ::  c11ext,c15ext,c13ext,c33ext,c35ext,c55ext 
+  double precision, dimension(NGLLX,NGLLZ,nspec) ::  c11ext,c15ext,c13ext,c33ext,c35ext,c55ext
 
   real(kind=CUSTOM_REAL), dimension(NSOURCE,NSTEP) :: source_time_function
   real(kind=CUSTOM_REAL), dimension(NSOURCE,NDIM,NGLLX,NGLLZ) :: sourcearray
@@ -163,7 +163,7 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL) :: Un,Unp1,tauinv,Sn,Snp1,theta_n,theta_np1,tauinvsquare,tauinvcube,tauinvUn
 
   ! for anisotropy
-  double precision ::  c11,c15,c13,c33,c35,c55 
+  double precision ::  c11,c15,c13,c33,c35,c55
 
   ! for analytical initial plane wave for Bielak's conditions
   double precision :: veloc_horiz,veloc_vert,dxUx,dzUx,dxUz,dzUz,traction_x_t0,traction_z_t0,deltat
@@ -368,7 +368,7 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
                     c35 = anisotropy(5,kmato(ispec))
                     c55 = anisotropy(6,kmato(ispec))
                  end if
-                 
+
                  ! implement anisotropy in 2D
                  sigma_xx = c11*dux_dxl + c15*(duz_dxl + dux_dzl) + c13*duz_dzl
                  sigma_zz = c13*dux_dxl + c35*(duz_dxl + dux_dzl) + c33*duz_dzl
@@ -528,7 +528,7 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
               ! Clayton-Engquist condition if elastic
               if(elastic(ispec)) then
                  vx = veloc_elastic(1,iglob) - veloc_horiz
-                 !          vy = veloc_elastic(2,iglob) 
+                 !          vy = veloc_elastic(2,iglob)
                  vz = veloc_elastic(3,iglob) - veloc_vert
 
                  vn = nx*vx+nz*vz
@@ -619,7 +619,7 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
               ! Clayton-Engquist condition if elastic
               if(elastic(ispec)) then
                  vx = veloc_elastic(1,iglob) - veloc_horiz
-                 vy = veloc_elastic(2,iglob) 
+                 vy = veloc_elastic(2,iglob)
                  vz = veloc_elastic(3,iglob) - veloc_vert
 
                  vn = nx*vx+nz*vz
@@ -716,7 +716,7 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
               ! Clayton-Engquist condition if elastic
               if(elastic(ispec)) then
                  vx = veloc_elastic(1,iglob) - veloc_horiz
-                 vy = veloc_elastic(2,iglob) 
+                 vy = veloc_elastic(2,iglob)
                  vz = veloc_elastic(3,iglob) - veloc_vert
 
                  vn = nx*vx+nz*vz
@@ -805,7 +805,7 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
               ! Clayton-Engquist condition if elastic
               if(elastic(ispec)) then
                  vx = veloc_elastic(1,iglob) - veloc_horiz
-                 vy = veloc_elastic(2,iglob) 
+                 vy = veloc_elastic(2,iglob)
                  vz = veloc_elastic(3,iglob) - veloc_vert
 
                  vn = nx*vx+nz*vz
@@ -854,7 +854,7 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
            ! moment tensor
            if(source_type(i_source) == 2) then
 
-              if(.not.p_sv)  call exit_MPI('cannot have moment tensor source in SH (membrane) waves calculation')  
+              if(.not.p_sv)  call exit_MPI('cannot have moment tensor source in SH (membrane) waves calculation')
 
               if(isolver == 1) then  ! forward wavefield
                  ! add source array

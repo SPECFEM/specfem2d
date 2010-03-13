@@ -1,11 +1,11 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 6.0
+!                   S P E C F E M 2 D  Version 6.1
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France,
-! and Princeton University, USA.
+! Copyright Universite de Pau, CNRS and INRIA, France,
+! and Princeton University / California Institute of Technology, USA.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
@@ -61,11 +61,11 @@ subroutine setup_sources_receivers(NSOURCE,initialfield,source_type,&
   integer :: npgeo,ngnod,myrank,ipass,nproc
   integer :: npoin,nspec,nelem_acoustic_surface
 
-  ! Gauss-Lobatto-Legendre points 
+  ! Gauss-Lobatto-Legendre points
   double precision, dimension(NGLLX) :: xigll
   double precision, dimension(NGLLZ) :: zigll
 
-  ! for receivers 
+  ! for receivers
   integer  :: nrec,nrecloc
   integer, dimension(nrec) :: recloc, which_proc_receiver
   integer, dimension(nrec) :: ispec_selected_rec
@@ -78,7 +78,7 @@ subroutine setup_sources_receivers(NSOURCE,initialfield,source_type,&
 
   ! for sources
   integer, dimension(NSOURCE) :: source_type
-  integer, dimension(NSOURCE) :: ispec_selected_source,is_proc_source,nb_proc_source  
+  integer, dimension(NSOURCE) :: ispec_selected_source,is_proc_source,nb_proc_source
   real(kind=CUSTOM_REAL), dimension(NSOURCE,NDIM,NGLLX,NGLLZ) :: sourcearray
   double precision, dimension(NSOURCE) :: x_source,z_source,xi_source,gamma_source,Mxx,Mzz,Mxz
 

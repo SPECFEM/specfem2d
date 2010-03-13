@@ -1,11 +1,11 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 6.0
+!                   S P E C F E M 2 D  Version 6.1
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France,
-! and Princeton University, USA.
+! Copyright Universite de Pau, CNRS and INRIA, France,
+! and Princeton University / California Institute of Technology, USA.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
@@ -66,7 +66,7 @@
   double precision cpIsquare,cpIIsquare,cssquare,mu_s,mu_fr,eta_f,lambda_s,lambda_fr
   double precision val1,val2,val3,val4,val5,val6
   double precision val7,val8,val9,val10,val11,val12,val0
-  double precision ::  c11,c13,c15,c33,c35,c55 
+  double precision ::  c11,c13,c15,c33,c35,c55
   double precision D_biot,H_biot,C_biot,M_biot
   double precision f0,Q0,freq0,w_c
   logical  TURN_VISCATTENUATION_ON
@@ -159,7 +159,7 @@
         young = 9.d0*kappa*mu/(3.d0*kappa + mu)
 
         ! Poisson's ratio
-        poisson = half*(3.d0*kappa-two_mu)/(3.d0*kappa+mu)      
+        poisson = half*(3.d0*kappa-two_mu)/(3.d0*kappa+mu)
 
         !---- isotropic material, moduli are given, allows for declaration of poroelastic material
         !---- poroelastic (<0phi<1)
@@ -242,7 +242,7 @@
         poroelastcoef(2,1,n) = mu
         poroelastcoef(3,1,n) = lambdaplus2mu
         poroelastcoef(4,1,n) = zero
-        aniso_array(1,n) = c11  
+        aniso_array(1,n) = c11
         aniso_array(2,n) = c13
         aniso_array(3,n) = c15
         aniso_array(4,n) = c33

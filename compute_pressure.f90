@@ -1,11 +1,11 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 6.0
+!                   S P E C F E M 2 D  Version 6.1
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France,
-! and Princeton University, USA.
+! Copyright Universite de Pau, CNRS and INRIA, France,
+! and Princeton University / California Institute of Technology, USA.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
@@ -190,7 +190,7 @@
   real(kind=CUSTOM_REAL) :: mul_G,lambdal_G,lambdalplus2mul_G
 
 ! for anisotropy
-  double precision ::  c11,c15,c13,c33,c35,c55 
+  double precision ::  c11,c15,c13,c33,c35,c55
 
 ! if elastic element
 !

@@ -1,11 +1,11 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 6.0
+!                   S P E C F E M 2 D  Version 6.1
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France,
-! and Princeton University, USA.
+! Copyright Universite de Pau, CNRS and INRIA, France,
+! and Princeton University / California Institute of Technology, USA.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
@@ -41,7 +41,7 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
- 
+
 
   subroutine define_external_model(x,y,iflag_element,myrank,rho,vp,vs,Qp_attenuation,&
        Qs_attenuation,c11,c13,c15,c33,c35,c55 )
@@ -59,7 +59,7 @@
 
   double precision, intent(out) :: rho,vp,vs
   double precision, intent(out) :: Qp_attenuation,Qs_attenuation
-  double precision, intent(out) :: c11,c15,c13,c33,c35,c55 
+  double precision, intent(out) :: c11,c15,c13,c33,c35,c55
 
 ! dummy routine here, just to demonstrate how the model can be assigned
    if(myrank == 0 .and. iflag_element == 1 .or. x < 1700.d0 .or. y >= 2300.d0) then
@@ -73,7 +73,7 @@
      c15 = 0.d0
      c33 = c11
      c35 = 0.d0
-     c55 = 75.3d9 
+     c55 = 75.3d9
    else
      rho = 2500.d0
      vp = 3600.d0
@@ -85,7 +85,7 @@
      c15 = 0.d0
      c33 = 0.d0
      c35 = 0.d0
-     c55 = 0.d0 
+     c55 = 0.d0
    endif
 
   end subroutine define_external_model

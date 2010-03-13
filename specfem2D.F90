@@ -1,11 +1,11 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 6.0
+!                   S P E C F E M 2 D  Version 6.1
 !                   ------------------------------
 !
-! Copyright Universite de Pau et des Pays de l'Adour, CNRS and INRIA, France,
-! and Princeton University, USA.
+! Copyright Universite de Pau, CNRS and INRIA, France,
+! and Princeton University / California Institute of Technology, USA.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
@@ -213,7 +213,7 @@
 ! This is the reason why a simple displacement potential u = grad(Chi) would
 ! not work because it would be discontinuous at such an interface and would
 ! therefore not be consistent with the basis functions.
-  
+
 
   program specfem2D
 
@@ -295,7 +295,7 @@
 
 ! anisotropy parameters
   logical :: all_anisotropic
-  double precision ::  c11,c13,c15,c33,c35,c55 
+  double precision ::  c11,c13,c15,c33,c35,c55
   logical, dimension(:), allocatable :: anisotropic
   double precision, dimension(:,:), allocatable :: anisotropy
 
@@ -318,9 +318,9 @@
 
   double precision, dimension(:), allocatable :: vp_display
 
-  double precision, dimension(:,:,:), allocatable :: vpext,vsext,rhoext     
-  double precision, dimension(:,:,:), allocatable :: Qp_attenuationext,Qs_attenuationext      
-  double precision, dimension(:,:,:), allocatable :: c11ext,c13ext,c15ext,c33ext,c35ext,c55ext    
+  double precision, dimension(:,:,:), allocatable :: vpext,vsext,rhoext
+  double precision, dimension(:,:,:), allocatable :: Qp_attenuationext,Qs_attenuationext
+  double precision, dimension(:,:,:), allocatable :: c11ext,c13ext,c15ext,c33ext,c35ext,c55ext
 
   double precision, dimension(:,:,:), allocatable :: shape2D,shape2D_display
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable  :: xix,xiz,gammax,gammaz,jacobian
@@ -1064,7 +1064,7 @@ endif
   print*, '*************** WARNING ***************'
   stop
   endif
-  
+
 
   if(TURN_ATTENUATION_ON) then
     nspec_allocate = nspec
@@ -1231,7 +1231,7 @@ endif
        allocate(b_absorb_elastic_left(1,1,1,1))
        allocate(b_absorb_elastic_right(1,1,1,1))
        allocate(b_absorb_elastic_bottom(1,1,1,1))
-       allocate(b_absorb_elastic_top(1,1,1,1)) 
+       allocate(b_absorb_elastic_top(1,1,1,1))
      endif
      if(any_poroelastic .and. (save_forward .or. isolver == 2)) then
        allocate(b_absorb_poro_s_left(NDIM,NGLLZ,nspec_xmin,NSTEP))
@@ -1250,7 +1250,7 @@ endif
        allocate(b_absorb_poro_w_left(1,1,1,1))
        allocate(b_absorb_poro_w_right(1,1,1,1))
        allocate(b_absorb_poro_w_bottom(1,1,1,1))
-       allocate(b_absorb_poro_w_top(1,1,1,1))      
+       allocate(b_absorb_poro_w_top(1,1,1,1))
      endif
      if(any_acoustic .and. (save_forward .or. isolver == 2)) then
        allocate(b_absorb_acoustic_left(NGLLZ,nspec_xmin,NSTEP))
@@ -1279,7 +1279,7 @@ endif
     allocate(b_absorb_elastic_left(1,1,1,1))
     allocate(b_absorb_elastic_right(1,1,1,1))
     allocate(b_absorb_elastic_bottom(1,1,1,1))
-    allocate(b_absorb_elastic_top(1,1,1,1)) 
+    allocate(b_absorb_elastic_top(1,1,1,1))
     allocate(b_absorb_poro_s_left(1,1,1,1))
     allocate(b_absorb_poro_s_right(1,1,1,1))
     allocate(b_absorb_poro_s_bottom(1,1,1,1))
@@ -1287,7 +1287,7 @@ endif
     allocate(b_absorb_poro_w_left(1,1,1,1))
     allocate(b_absorb_poro_w_right(1,1,1,1))
     allocate(b_absorb_poro_w_bottom(1,1,1,1))
-    allocate(b_absorb_poro_w_top(1,1,1,1))   
+    allocate(b_absorb_poro_w_top(1,1,1,1))
     allocate(b_absorb_acoustic_left(1,1,1))
     allocate(b_absorb_acoustic_right(1,1,1))
     allocate(b_absorb_acoustic_bottom(1,1,1))
@@ -1748,17 +1748,17 @@ deallocate(weight_gll)
                 elastic,poroelastic,anisotropic,nspec,npoin,N_SLS,ibool, &
                 f0_attenuation,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
                 inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent, &
-                inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,& 
+                inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,&
                 coord,kmato,myrank,rhoext,vpext,vsext, &
                 Qp_attenuationext,Qs_attenuationext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext)
         end if
 
     if(count(anisotropic(:) .eqv. .true.) == nspec) all_anisotropic = .true.
-    if(all_anisotropic .and. anyabs) stop 'Cannot put absorbing boundaries if anisotropic materials along edges' 
+    if(all_anisotropic .and. anyabs) stop 'Cannot put absorbing boundaries if anisotropic materials along edges'
     if(TURN_ATTENUATION_ON .and. all_anisotropic) then
-       stop 'Cannot turn attenuation on in anisotropic materials'   
+       stop 'Cannot turn attenuation on in anisotropic materials'
     end if
- 
+
 !
 !----  perform basic checks on parameters read
 !
@@ -4430,7 +4430,7 @@ endif
       cssquare = mul_fr/afactor
 
 ! Approximated ratio r = amplitude "w" field/amplitude "s" field (no viscous dissipation)
-! used later for wavespeed kernels calculation, which are presently implemented for inviscid case, 
+! used later for wavespeed kernels calculation, which are presently implemented for inviscid case,
 ! contrary to primary and density-normalized kernels, which are consistent with viscous fluid case.
       gamma1 = H_biot - phil/tortl*C_biot
       gamma2 = C_biot - phil/tortl*M_biot
@@ -5150,7 +5150,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
         enddo
       enddo
-      endif ! if element acoustic 
+      endif ! if element acoustic
 
       endif ! if this processor carries the adjoint source
       enddo ! irec = 1,nrec
@@ -5194,7 +5194,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
                deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,elastic,codeabs, &
                accel_elastic,veloc_elastic,displ_elastic,b_accel_elastic,b_displ_elastic, &
                density,poroelastcoef,xix,xiz,gammax,gammaz, &
-               jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy, & 
+               jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy, &
                source_time_function,sourcearray,adj_sourcearrays, &
                e1,e11,e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
@@ -5211,7 +5211,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 !--- left absorbing boundary
       if(nspec_xmin >0) then
       do ispec = 1,nspec_xmin
-      
+
       if(p_sv)then!P-SV waves
          do i=1,NGLLZ
      write(35) b_absorb_elastic_left(1,i,ispec,it)
@@ -7145,7 +7145,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
         zz = coord(2,iglob)
          write(97,'(5e11.3)')xx,zz,rho_kl(i,j,ispec),kappa_kl(i,j,ispec),mu_kl(i,j,ispec)
          write(98,'(5e11.3)')rhorho_el_hessian_final1(i,j,ispec), rhorho_el_hessian_final2(i,j,ispec),&
-                             rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)     
+                             rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
           enddo
       enddo
     enddo
@@ -7350,7 +7350,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     call compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,&
          displs_poroelastic,displw_poroelastic,elastic,poroelastic,vector_field_display, &
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, & 
+         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,e1,e11, &
          TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
 
@@ -7572,7 +7572,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     write(IENERGY,*) 'plot "energy.gnu" us 1:4 t ''Total Energy'' w l 1, "energy.gnu" us 1:3 t ''Potential Energy'' w l 2'
     close(IENERGY)
   endif
- 
+
    if (.not. any_poroelastic) then
 open(unit=1001,file='DATA/model_velocity.dat_output',status='unknown')
    if ( .NOT. assign_external_model) then
@@ -7580,7 +7580,7 @@ open(unit=1001,file='DATA/model_velocity.dat_output',status='unknown')
 allocate(rho_local(ngllx,ngllz,nspec)); rho_local=0.
 allocate(vp_local(ngllx,ngllz,nspec)); vp_local=0.
 allocate(vs_local(ngllx,ngllz,nspec)); vs_local=0.
-!!      write(1001,*) npoin 
+!!      write(1001,*) npoin
 !!      do iglob = 1,npoin
 !!         write(1001,*) coord(1,iglob),coord(2,iglob),rho_global(iglob),vp_global(iglob),vs_global(iglob)
 !!      end do
@@ -7598,7 +7598,7 @@ allocate(vs_local(ngllx,ngllz,nspec)); vs_local=0.
     end do
    else
      print *, 'writing model_output as external_model == .true.!!!!!!!!!!!!!!!!!!!!!!!!'
-!!     write(1001,*) npoin 
+!!     write(1001,*) npoin
 !!  do iglob = 1,npoin
 !!     write(1001,*) coord(1,iglob),coord(2,iglob),rhoext_global(iglob),vpext_global(iglob),vsext_global(iglob)
 !!  end do
