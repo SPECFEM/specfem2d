@@ -6,10 +6,10 @@
       implicit none
 !
 !!!!  user edit
-      integer, parameter :: NSTEP = 26000
+      integer, parameter :: NSTEP = 3000
       integer, parameter :: nrec = 1
-      double precision, parameter :: t0 = 8
-      double precision, parameter :: deltat = 0.25d-2
+      double precision, parameter :: t0 = 12
+      double precision, parameter :: deltat = 6d-2
       double precision, parameter :: EPS = 1.d-40
 !!!!
       integer :: itime,icomp,istart,iend,nlen,irec,NDIM,NDIMr,adj_comp
@@ -26,17 +26,17 @@
 
 !!!! user edit
 ! which calculation: P-SV (use (1)) or SH (membrane) (use (2)) waves
-!      NDIMr=2  !(1)
-      NDIMr=1  !(2)
+      NDIMr=2  !(1)
+!      NDIMr=1  !(2)
 ! list of stations
       station_name(1) = 'S0001'
-      tstart(1) = 39.7d0 + t0
-      tend(1) = 41d0 + t0
+      tstart(1) = 100d0 + t0
+      tend(1) = 120d0 + t0
 ! which calculation: P-SV (use (1)) or SH (membrane) (use (2)) waves
-!      compr = (/"BHX","BHZ"/)    !(1)
-      compr = (/"BHY","dummy"/)  !(2)
+      compr = (/"BHX","BHZ"/)    !(1)
+!      compr = (/"BHY","dummy"/)  !(2)
 ! chose the component for the adjoint source (adj_comp = 1: X, 2:Y, 3:Z)
-      adj_comp = 2
+      adj_comp = 1
 !!!!
 
       do irec =1,nrec

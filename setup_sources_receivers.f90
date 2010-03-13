@@ -43,11 +43,11 @@
 !
 !========================================================================
 
-subroutine setup_sources_receivers(NSOURCE,assign_external_model,initialfield,numat,source_type,&
-     coord,ibool,kmato,npoin,nspec,nelem_acoustic_surface,acoustic_surface,elastic,poroelastic, &
-     x_source,z_source,ix_source,iz_source,ispec_selected_source,ispec_selected_rec,iglob_source, &
-     is_proc_source,nb_proc_source,rho_at_source_location,ipass,&
-     sourcearray,Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,npgeo,density,rhoext,&
+subroutine setup_sources_receivers(NSOURCE,initialfield,source_type,&
+     coord,ibool,npoin,nspec,nelem_acoustic_surface,acoustic_surface,elastic,poroelastic, &
+     x_source,z_source,ispec_selected_source,ispec_selected_rec, &
+     is_proc_source,nb_proc_source,ipass,&
+     sourcearray,Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,npgeo,&
      nproc,myrank,xi_source,gamma_source,coorg,knods,ngnod, &
      nrec,nrecloc,recloc,which_proc_receiver,st_xval,st_zval, &
      xi_receiver,gamma_receiver,station_name,network_name,x_final_receiver,z_final_receiver)
@@ -56,8 +56,8 @@ subroutine setup_sources_receivers(NSOURCE,assign_external_model,initialfield,nu
 
   include "constants.h"
 
-  logical :: assign_external_model,initialfield
-  integer :: NSOURCE, numat
+  logical :: initialfield
+  integer :: NSOURCE
   integer :: npgeo,ngnod,myrank,ipass,nproc
   integer :: npoin,nspec,nelem_acoustic_surface
 
@@ -77,62 +77,63 @@ subroutine setup_sources_receivers(NSOURCE,assign_external_model,initialfield,nu
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name
 
   ! for sources
-  double precision :: rho_at_source_location
   integer, dimension(NSOURCE) :: source_type
-  integer, dimension(NSOURCE) :: ispec_selected_source,iglob_source,ix_source,iz_source,is_proc_source,nb_proc_source  
+  integer, dimension(NSOURCE) :: ispec_selected_source,is_proc_source,nb_proc_source  
   real(kind=CUSTOM_REAL), dimension(NSOURCE,NDIM,NGLLX,NGLLZ) :: sourcearray
   double precision, dimension(NSOURCE) :: x_source,z_source,xi_source,gamma_source,Mxx,Mzz,Mxz
 
   logical, dimension(nspec) :: elastic,poroelastic
-  integer, dimension(nspec) :: kmato
   integer, dimension(ngnod,nspec) :: knods
   integer, dimension(5,nelem_acoustic_surface) :: acoustic_surface
   integer, dimension(NGLLX,NGLLZ,nspec)  :: ibool
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec)  :: xix,xiz,gammax,gammaz
   double precision, dimension(NDIM,npgeo) :: coorg
-  double precision, dimension(2,numat) :: density
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: rhoext
   double precision, dimension(NDIM,npoin) :: coord
 
+  integer  :: ixmin, ixmax, izmin, izmax
+
   ! Local variables
-  integer i_source,ispec,ispec_acoustic_surface,i,j,iglob
+  integer i_source,ispec,ispec_acoustic_surface
 
   do i_source=1,NSOURCE
 
      if(source_type(i_source) == 1) then
 
         ! collocated force source
-        call locate_source_force(coord,ibool,npoin,nspec,x_source(i_source),z_source(i_source), &
-             ix_source(i_source),iz_source(i_source),ispec_selected_source(i_source),iglob_source(i_source), &
-             is_proc_source(i_source),nb_proc_source(i_source),ipass)
+     call locate_source_force(ibool,coord,nspec,npoin,xigll,zigll,x_source(i_source),z_source(i_source), &
+          ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source),&
+          nproc,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo,ipass)
 
-        ! get density at the source in order to implement collocated force with the right
-        ! amplitude later
-        if(is_proc_source(i_source) == 1) then
-           rho_at_source_location  = density(1,kmato(ispec_selected_source(i_source)))
-           ! external velocity model
-           if(assign_external_model) rho_at_source_location = &
-                rhoext(ix_source(i_source),iz_source(i_source),ispec_selected_source(i_source))
-        endif
-
-        ! check that acoustic source is not exactly on the free surface because pressure is zero there
-        if(is_proc_source(i_source) == 1) then
-           do ispec_acoustic_surface = 1,nelem_acoustic_surface
-              ispec = acoustic_surface(1,ispec_acoustic_surface)
-              if( .not. elastic(ispec) .and. .not. poroelastic(ispec) .and. ispec == ispec_selected_source(i_source) ) then
-                 do j = acoustic_surface(4,ispec_acoustic_surface), acoustic_surface(5,ispec_acoustic_surface)
-                    do i = acoustic_surface(2,ispec_acoustic_surface), acoustic_surface(3,ispec_acoustic_surface)
-                       iglob = ibool(i,j,ispec)
-                       if ( iglob_source(i_source) == iglob ) then
-
-            call exit_MPI('an acoustic source cannot be located exactly on the free surface because pressure is zero there')
-
-                       endif
-                    enddo
-                 enddo
-              endif
-           enddo
-        endif
+! check that acoustic source is not exactly on the free surface because pressure is zero there
+    if(is_proc_source(i_source) == 1) then
+  do ispec_acoustic_surface = 1,nelem_acoustic_surface
+     ispec = acoustic_surface(1,ispec_acoustic_surface)
+     ixmin = acoustic_surface(2,ispec_acoustic_surface)
+     ixmax = acoustic_surface(3,ispec_acoustic_surface)
+     izmin = acoustic_surface(4,ispec_acoustic_surface)
+     izmax = acoustic_surface(5,ispec_acoustic_surface)
+          if( .not. elastic(ispec) .and. .not. poroelastic(ispec) .and. ispec == ispec_selected_source(i_source) ) then
+          if ( (izmin==1 .and. izmax==1 .and. ixmin==1 .and. ixmax==NGLLX .and. &
+                gamma_source(i_source) < -0.99d0) .or.&
+                (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==NGLLX .and. &
+                gamma_source(i_source) > 0.99d0) .or.&
+                (izmin==1 .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==1 .and. &
+                xi_source(i_source) < -0.99d0) .or.&
+                (izmin==1 .and. izmax==NGLLZ .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
+                xi_source(i_source) > 0.99d0) .or.&
+                (izmin==1 .and. izmax==1 .and. ixmin==1 .and. ixmax==1 .and. &
+                gamma_source(i_source) < -0.99d0 .and. xi_source(i_source) < -0.99d0) .or.&
+                (izmin==1 .and. izmax==1 .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
+                gamma_source(i_source) < -0.99d0 .and. xi_source(i_source) > 0.99d0) .or.&
+                (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==1 .and. &
+                gamma_source(i_source) > 0.99d0 .and. xi_source(i_source) < -0.99d0) .or.&
+                (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
+                gamma_source(i_source) > 0.99d0 .and. xi_source(i_source) > 0.99d0) ) then
+ call exit_MPI('an acoustic source cannot be located exactly on the free surface because pressure is zero there')
+          endif
+          endif
+   enddo
+    endif
 
      else if(source_type(i_source) == 2) then
         ! moment-tensor source

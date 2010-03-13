@@ -316,7 +316,6 @@
   double precision, dimension(:), allocatable :: vp_display
 
   double precision, dimension(:,:,:), allocatable :: vpext,vsext,rhoext     
-  double precision :: rho_at_source_location
   double precision, dimension(:,:,:), allocatable :: Qp_attenuationext,Qs_attenuationext      
   double precision, dimension(:,:,:), allocatable :: c11ext,c13ext,c15ext,c33ext,c35ext,c55ext    
 
@@ -330,7 +329,7 @@
   integer, dimension(:), allocatable :: kmato,numabs, &
      ibegin_bottom,iend_bottom,ibegin_top,iend_top,jbegin_left,jend_left,jbegin_right,jend_right
 
-  integer, dimension(:), allocatable :: ispec_selected_source,iglob_source,ix_source,iz_source,&
+  integer, dimension(:), allocatable :: ispec_selected_source,iglob_source,&
                                         is_proc_source,nb_proc_source
   double precision displnorm_all,displnorm_all_glob
   double precision, dimension(:), allocatable :: aval
@@ -438,14 +437,14 @@
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_accel_elastic,b_veloc_elastic,b_displ_elastic
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_ac,b_displ_ac,b_accel_ac
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rho_kl, mu_kl, kappa_kl
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rho_kl, mu_kl, kappa_kl
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhol_global, mul_global, kappal_global
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: mu_k, kappa_k,rho_k
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhop_kl, beta_kl, alpha_kl
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rho_ac_kl, kappa_ac_kl
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhop_kl, beta_kl, alpha_kl
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rho_ac_kl, kappa_ac_kl
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhol_ac_global, kappal_ac_global
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhop_ac_kl, alpha_ac_kl
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhot_kl, rhof_kl, sm_kl, eta_kl, mufr_kl, B_kl, &
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhop_ac_kl, alpha_ac_kl
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhot_kl, rhof_kl, sm_kl, eta_kl, mufr_kl, B_kl, &
     C_kl, M_kl, rhob_kl, rhofb_kl, phi_kl, Bb_kl, Cb_kl, Mb_kl, mufrb_kl, &
     rhobb_kl, rhofbb_kl, phib_kl, cpI_kl, cpII_kl, cs_kl, ratio_kl
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhot_k, rhof_k, sm_k, eta_k, mufr_k, B_k, &
@@ -503,6 +502,10 @@
 ! Lagrange interpolators at receivers
   double precision, dimension(:), allocatable :: hxir,hgammar,hpxir,hpgammar
   double precision, dimension(:,:), allocatable :: hxir_store,hgammar_store
+
+! Lagrange interpolators at sources
+  double precision, dimension(:), allocatable :: hxis,hgammas,hpxis,hpgammas
+  double precision, dimension(:,:), allocatable :: hxis_store,hgammas_store
 
 ! for Lagrange interpolants
   double precision, external :: hgll
@@ -639,9 +642,9 @@
 !!!!!!!!!!
   double precision, dimension(:,:,:),allocatable:: rho_local,vp_local,vs_local
 !!!! hessian
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhorho_el_hessian_final1, rhorho_el_hessian_temp1
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhorho_el_hessian_final2, rhorho_el_hessian_temp2
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhorho_ac_hessian_final1, rhorho_ac_hessian_final2
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhorho_el_hessian_final1, rhorho_el_hessian_final2
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhorho_el_hessian_temp1, rhorho_el_hessian_temp2
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhorho_ac_hessian_final1, rhorho_ac_hessian_final2
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: weight_line_x, weight_line_z, weight_surface,weight_jacobian
   integer, dimension(:), allocatable :: weight_gll
   real(kind=CUSTOM_REAL) :: zmin_yang, zmax_yang, xmin_yang, xmax_yang
@@ -820,8 +823,6 @@
   allocate( ispec_selected_source(NSOURCE) )
   allocate( iglob_source(NSOURCE) )
   allocate( source_courbe_eros(NSOURCE) )
-  allocate( ix_source(NSOURCE) )
-  allocate( iz_source(NSOURCE) )
   allocate( xi_source(NSOURCE) )
   allocate( gamma_source(NSOURCE) )
   allocate( is_proc_source(NSOURCE) )
@@ -998,7 +999,7 @@ endif
 !---- read the material properties
 !
   call gmat01(density,porosity,tortuosity,anisotropy,permeability,poroelastcoef,numat,&
-              myrank,ipass,Qp_attenuation,Qs_attenuation)
+              myrank,ipass,Qp_attenuation,Qs_attenuation,freq0,Q0,f0(1),TURN_VISCATTENUATION_ON)
 !
 !----  read spectral macrobloc data
 !
@@ -1598,13 +1599,21 @@ endif
 
 ! allocate 1-D Lagrange interpolators and derivatives
   allocate(hxir(NGLLX))
+  allocate(hxis(NGLLX))
   allocate(hpxir(NGLLX))
+  allocate(hpxis(NGLLX))
   allocate(hgammar(NGLLZ))
+  allocate(hgammas(NGLLZ))
   allocate(hpgammar(NGLLZ))
+  allocate(hpgammas(NGLLZ))
 
 ! allocate Lagrange interpolators for receivers
   allocate(hxir_store(nrec,NGLLX))
   allocate(hgammar_store(nrec,NGLLZ))
+
+! allocate Lagrange interpolators for sources
+  allocate(hxis_store(NSOURCE,NGLLX))
+  allocate(hgammas_store(NSOURCE,NGLLZ))
 
 ! allocate other global arrays
   allocate(coord(NDIM,npoin))
@@ -1784,11 +1793,11 @@ deallocate(weight_gll)
 
 !---- define actual location of source and receivers
 
-call setup_sources_receivers(NSOURCE,assign_external_model,initialfield,numat,source_type,&
-     coord,ibool,kmato,npoin,nspec,nelem_acoustic_surface,acoustic_surface,elastic,poroelastic, &
-     x_source,z_source,ix_source,iz_source,ispec_selected_source,ispec_selected_rec,iglob_source, &
-     is_proc_source,nb_proc_source,rho_at_source_location,ipass,&
-     sourcearray,Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,npgeo,density,rhoext,&
+call setup_sources_receivers(NSOURCE,initialfield,source_type,&
+     coord,ibool,npoin,nspec,nelem_acoustic_surface,acoustic_surface,elastic,poroelastic, &
+     x_source,z_source,ispec_selected_source,ispec_selected_rec, &
+     is_proc_source,nb_proc_source,ipass,&
+     sourcearray,Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,npgeo,&
      nproc,myrank,xi_source,gamma_source,coorg,knods,ngnod, &
      nrec,nrecloc,recloc,which_proc_receiver,st_xval,st_zval, &
      xi_receiver,gamma_receiver,station_name,network_name,x_final_receiver,z_final_receiver)
@@ -2092,6 +2101,14 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     hgammar_store(irec,:) = hgammar(:)
   enddo
 
+! define and store Lagrange interpolators at all the sources
+  do i = 1,NSOURCE
+    call lagrange_any(xi_source(i),NGLLX,xigll,hxis,hpxis)
+    call lagrange_any(gamma_source(i),NGLLZ,zigll,hgammas,hpgammas)
+    hxis_store(i,:) = hxis(:)
+    hgammas_store(i,:) = hgammas(:)
+  enddo
+
 ! displacement, velocity, acceleration and inverse of the mass matrix for elastic elements
   if(ipass == 1) then
 
@@ -2112,41 +2129,41 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     allocate(b_displ_elastic(3,npoin))
     allocate(b_veloc_elastic(3,npoin))
     allocate(b_accel_elastic(3,npoin))
-    allocate(rho_kl(npoin))
+    allocate(rho_kl(NGLLX,NGLLZ,nspec))
     allocate(rho_k(npoin))
     allocate(rhol_global(npoin))
-    allocate(mu_kl(npoin))
+    allocate(mu_kl(NGLLX,NGLLZ,nspec))
     allocate(mu_k(npoin))
     allocate(mul_global(npoin))
-    allocate(kappa_kl(npoin))
+    allocate(kappa_kl(NGLLX,NGLLZ,nspec))
     allocate(kappa_k(npoin))
     allocate(kappal_global(npoin))
-    allocate(rhop_kl(npoin))
-    allocate(alpha_kl(npoin))
-    allocate(beta_kl(npoin))
-    allocate(rhorho_el_hessian_final2(npoin))
+    allocate(rhop_kl(NGLLX,NGLLZ,nspec))
+    allocate(alpha_kl(NGLLX,NGLLZ,nspec))
+    allocate(beta_kl(NGLLX,NGLLZ,nspec))
+    allocate(rhorho_el_hessian_final2(NGLLX,NGLLZ,nspec))
     allocate(rhorho_el_hessian_temp2(npoin))
-    allocate(rhorho_el_hessian_final1(npoin))
+    allocate(rhorho_el_hessian_final1(NGLLX,NGLLZ,nspec))
     allocate(rhorho_el_hessian_temp1(npoin))
   else
     allocate(b_displ_elastic(1,1))
     allocate(b_veloc_elastic(1,1))
     allocate(b_accel_elastic(1,1))
-    allocate(rho_kl(1))
+    allocate(rho_kl(1,1,1))
     allocate(rho_k(1))
     allocate(rhol_global(1))
-    allocate(mu_kl(1))
+    allocate(mu_kl(1,1,1))
     allocate(mu_k(1))
     allocate(mul_global(1))
-    allocate(kappa_kl(1))
+    allocate(kappa_kl(1,1,1))
     allocate(kappa_k(1))
     allocate(kappal_global(1))
-    allocate(rhop_kl(1))
-    allocate(alpha_kl(1))
-    allocate(beta_kl(1))
-    allocate(rhorho_el_hessian_final2(1))
+    allocate(rhop_kl(1,1,1))
+    allocate(alpha_kl(1,1,1))
+    allocate(beta_kl(1,1,1))
+    allocate(rhorho_el_hessian_final2(1,1,1))
     allocate(rhorho_el_hessian_temp2(1))
-    allocate(rhorho_el_hessian_final1(1))
+    allocate(rhorho_el_hessian_final1(1,1,1))
     allocate(rhorho_el_hessian_temp1(1))
   endif
 
@@ -2178,36 +2195,36 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     allocate(b_displw_poroelastic(NDIM,npoin))
     allocate(b_velocw_poroelastic(NDIM,npoin))
     allocate(b_accelw_poroelastic(NDIM,npoin))
-    allocate(rhot_kl(npoin))
+    allocate(rhot_kl(NGLLX,NGLLZ,nspec))
     allocate(rhot_k(npoin))
-    allocate(rhof_kl(npoin))
+    allocate(rhof_kl(NGLLX,NGLLZ,nspec))
     allocate(rhof_k(npoin))
-    allocate(sm_kl(npoin))
+    allocate(sm_kl(NGLLX,NGLLZ,nspec))
     allocate(sm_k(npoin))
-    allocate(eta_kl(npoin))
+    allocate(eta_kl(NGLLX,NGLLZ,nspec))
     allocate(eta_k(npoin))
-    allocate(mufr_kl(npoin))
+    allocate(mufr_kl(NGLLX,NGLLZ,nspec))
     allocate(mufr_k(npoin))
-    allocate(B_kl(npoin))
+    allocate(B_kl(NGLLX,NGLLZ,nspec))
     allocate(B_k(npoin))
-    allocate(C_kl(npoin))
+    allocate(C_kl(NGLLX,NGLLZ,nspec))
     allocate(C_k(npoin))
-    allocate(M_kl(npoin))
+    allocate(M_kl(NGLLX,NGLLZ,nspec))
     allocate(M_k(npoin))
-    allocate(rhob_kl(npoin))
-    allocate(rhofb_kl(npoin))
-    allocate(phi_kl(npoin))
-    allocate(Bb_kl(npoin))
-    allocate(Cb_kl(npoin))
-    allocate(Mb_kl(npoin))
-    allocate(mufrb_kl(npoin))
-    allocate(rhobb_kl(npoin))
-    allocate(rhofbb_kl(npoin))
-    allocate(phib_kl(npoin))
-    allocate(cpI_kl(npoin))
-    allocate(cpII_kl(npoin))
-    allocate(cs_kl(npoin))
-    allocate(ratio_kl(npoin))
+    allocate(rhob_kl(NGLLX,NGLLZ,nspec))
+    allocate(rhofb_kl(NGLLX,NGLLZ,nspec))
+    allocate(phi_kl(NGLLX,NGLLZ,nspec))
+    allocate(Bb_kl(NGLLX,NGLLZ,nspec))
+    allocate(Cb_kl(NGLLX,NGLLZ,nspec))
+    allocate(Mb_kl(NGLLX,NGLLZ,nspec))
+    allocate(mufrb_kl(NGLLX,NGLLZ,nspec))
+    allocate(rhobb_kl(NGLLX,NGLLZ,nspec))
+    allocate(rhofbb_kl(NGLLX,NGLLZ,nspec))
+    allocate(phib_kl(NGLLX,NGLLZ,nspec))
+    allocate(cpI_kl(NGLLX,NGLLZ,nspec))
+    allocate(cpII_kl(NGLLX,NGLLZ,nspec))
+    allocate(cs_kl(NGLLX,NGLLZ,nspec))
+    allocate(ratio_kl(NGLLX,NGLLZ,nspec))
     allocate(phil_global(npoin))
     allocate(mulfr_global(npoin))
     allocate(etal_f_global(npoin))
@@ -2225,36 +2242,36 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     allocate(b_displw_poroelastic(1,1))
     allocate(b_velocw_poroelastic(1,1))
     allocate(b_accelw_poroelastic(1,1))
-    allocate(rhot_kl(1))
+    allocate(rhot_kl(1,1,1))
     allocate(rhot_k(1))
-    allocate(rhof_kl(1))
+    allocate(rhof_kl(1,1,1))
     allocate(rhof_k(1))
-    allocate(sm_kl(1))
+    allocate(sm_kl(1,1,1))
     allocate(sm_k(1))
-    allocate(eta_kl(1))
+    allocate(eta_kl(1,1,1))
     allocate(eta_k(1))
-    allocate(mufr_kl(1))
+    allocate(mufr_kl(1,1,1))
     allocate(mufr_k(1))
-    allocate(B_kl(1))
+    allocate(B_kl(1,1,1))
     allocate(B_k(1))
-    allocate(C_kl(1))
+    allocate(C_kl(1,1,1))
     allocate(C_k(1))
-    allocate(M_kl(1))
+    allocate(M_kl(1,1,1))
     allocate(M_k(1))
-    allocate(rhob_kl(1))
-    allocate(rhofb_kl(1))
-    allocate(phi_kl(1))
-    allocate(Bb_kl(1))
-    allocate(Cb_kl(1))
-    allocate(Mb_kl(1))
-    allocate(mufrb_kl(1))
-    allocate(rhobb_kl(1))
-    allocate(rhofbb_kl(1))
-    allocate(phib_kl(1))
-    allocate(cpI_kl(1))
-    allocate(cpII_kl(1))
-    allocate(cs_kl(1))
-    allocate(ratio_kl(1))
+    allocate(rhob_kl(1,1,1))
+    allocate(rhofb_kl(1,1,1))
+    allocate(phi_kl(1,1,1))
+    allocate(Bb_kl(1,1,1))
+    allocate(Cb_kl(1,1,1))
+    allocate(Mb_kl(1,1,1))
+    allocate(mufrb_kl(1,1,1))
+    allocate(rhobb_kl(1,1,1))
+    allocate(rhofbb_kl(1,1,1))
+    allocate(phib_kl(1,1,1))
+    allocate(cpI_kl(1,1,1))
+    allocate(cpII_kl(1,1,1))
+    allocate(cs_kl(1,1,1))
+    allocate(ratio_kl(1,1,1))
     allocate(phil_global(1))
     allocate(mulfr_global(1))
     allocate(etal_f_global(1))
@@ -2293,14 +2310,14 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     allocate(b_displ_ac(2,npoin))
     allocate(b_accel_ac(2,npoin))
     allocate(accel_ac(2,npoin))
-    allocate(rho_ac_kl(npoin))
+    allocate(rho_ac_kl(NGLLX,NGLLZ,nspec))
     allocate(rhol_ac_global(npoin))
-    allocate(kappa_ac_kl(npoin))
+    allocate(kappa_ac_kl(NGLLX,NGLLZ,nspec))
     allocate(kappal_ac_global(npoin))
-    allocate(rhop_ac_kl(npoin))
-    allocate(alpha_ac_kl(npoin))
-    allocate(rhorho_ac_hessian_final2(npoin))
-    allocate(rhorho_ac_hessian_final1(npoin))
+    allocate(rhop_ac_kl(NGLLX,NGLLZ,nspec))
+    allocate(alpha_ac_kl(NGLLX,NGLLZ,nspec))
+    allocate(rhorho_ac_hessian_final2(NGLLX,NGLLZ,nspec))
+    allocate(rhorho_ac_hessian_final1(NGLLX,NGLLZ,nspec))
   else
 ! allocate unused arrays with fictitious size
     allocate(b_potential_acoustic(1))
@@ -2309,14 +2326,14 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
     allocate(b_displ_ac(1,1))
     allocate(b_accel_ac(1,1))
     allocate(accel_ac(1,1))
-    allocate(rho_ac_kl(1))
+    allocate(rho_ac_kl(1,1,1))
     allocate(rhol_ac_global(1))
-    allocate(kappa_ac_kl(1))
+    allocate(kappa_ac_kl(1,1,1))
     allocate(kappal_ac_global(1))
-    allocate(rhop_ac_kl(1))
-    allocate(alpha_ac_kl(1))
-    allocate(rhorho_ac_hessian_final2(1))
-    allocate(rhorho_ac_hessian_final1(1))
+    allocate(rhop_ac_kl(1,1,1))
+    allocate(alpha_ac_kl(1,1,1))
+    allocate(rhorho_ac_hessian_final2(1,1,1))
+    allocate(rhorho_ac_hessian_final1(1,1,1))
   endif
 
   endif
@@ -2636,12 +2653,12 @@ call invert_mass_matrix(any_elastic,any_acoustic,any_poroelastic,npoin,rmass_inv
   else
     stop 'incorrect value of DISPLAY_SUBSET_OPTION'
   endif
-
-  call checkgrid(vpext,vsext,rhoext,density,poroelastcoef,porosity,tortuosity,ibool,kmato, &
+  call checkgrid(vpext,vsext,rhoext,density,poroelastcoef,porosity,tortuosity,permeability,ibool,kmato, &
                  coord,npoin,vpImin,vpImax,vpIImin,vpIImax, &
                  assign_external_model,nspec,UPPER_LIMIT_DISPLAY,numat,deltat,f0,t0,initialfield, &
                  time_function_type,coorg,xinterp,zinterp,shape2D_display,knods,simulation_title, &
-                 npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic,myrank,nproc,NSOURCE,poroelastic)
+                 npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic,myrank,nproc,NSOURCE,poroelastic, &
+                 freq0,Q0,TURN_VISCATTENUATION_ON)
 
 ! convert receiver angle to radians
   anglerec = anglerec * pi / 180.d0
@@ -3291,35 +3308,6 @@ endif
   if(isolver == 2) then
 
    if(any_elastic) then
-    write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
-    open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
-      if(p_sv)then !P-SV waves
-       do j=1,npoin
-      read(55) (b_displ_elastic(i,j), i=1,NDIM), &
-                  (b_veloc_elastic(i,j), i=1,NDIM), &
-                  (b_accel_elastic(i,j), i=1,NDIM)
-       enddo
-       b_displ_elastic(3,:) = b_displ_elastic(2,:)
-       b_displ_elastic(2,:) = ZERO
-       b_veloc_elastic(3,:) = b_veloc_elastic(2,:)
-       b_veloc_elastic(2,:) = ZERO
-       b_accel_elastic(3,:) = b_accel_elastic(2,:)
-       b_accel_elastic(2,:) = ZERO
-      else !SH (membrane) waves
-       do j=1,npoin
-      read(55) b_displ_elastic(2,j), &
-                  b_veloc_elastic(2,j), &
-                  b_accel_elastic(2,j)
-       enddo
-       b_displ_elastic(1,:) = ZERO
-       b_displ_elastic(3,:) = ZERO
-       b_veloc_elastic(1,:) = ZERO
-       b_veloc_elastic(3,:) = ZERO
-       b_accel_elastic(1,:) = ZERO
-       b_accel_elastic(3,:) = ZERO
-      endif
-    close(55)
-
     write(outputname,'(a,i6.6,a)') 'snapshot_rho_kappa_mu_',myrank
         open(unit = 97, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
         if (ios /= 0) stop 'Error writing snapshot to disk'
@@ -3327,34 +3315,20 @@ endif
         open(unit = 98, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
         if (ios /= 0) stop 'Error writing snapshot to disk'
 
-  rho_kl(:) = ZERO
-  mu_kl(:) = ZERO
-  kappa_kl(:) = ZERO
+  rho_kl(:,:,:) = ZERO
+  mu_kl(:,:,:) = ZERO
+  kappa_kl(:,:,:) = ZERO
 !
-  rhop_kl(:) = ZERO
-  beta_kl(:) = ZERO
-  alpha_kl(:) = ZERO
-    rhorho_el_hessian_final2(:) = ZERO
+  rhop_kl(:,:,:) = ZERO
+  beta_kl(:,:,:) = ZERO
+  alpha_kl(:,:,:) = ZERO
+    rhorho_el_hessian_final2(:,:,:) = ZERO
     rhorho_el_hessian_temp2(:) = ZERO
-    rhorho_el_hessian_final1(:) = ZERO
+    rhorho_el_hessian_final1(:,:,:) = ZERO
     rhorho_el_hessian_temp1(:) = ZERO
    endif
 
    if(any_poroelastic) then
-    write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_s',myrank,'.bin'
-    open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
-    write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
-    open(unit=56,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
-       do j=1,npoin
-      read(55) (b_displs_poroelastic(i,j), i=1,NDIM), &
-                  (b_velocs_poroelastic(i,j), i=1,NDIM), &
-                  (b_accels_poroelastic(i,j), i=1,NDIM)
-      read(56) (b_displw_poroelastic(i,j), i=1,NDIM), &
-                  (b_velocw_poroelastic(i,j), i=1,NDIM), &
-                  (b_accelw_poroelastic(i,j), i=1,NDIM)
-       enddo
-    close(55)
-    close(56)
 
 ! Primary kernels
     write(outputname,'(a,i6.6,a)') 'snapshot_mu_B_C_',myrank
@@ -3387,42 +3361,33 @@ endif
         open(unit = 19, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
         if (ios /= 0) stop 'Error writing snapshot to disk'
 
-  rhot_kl(:) = ZERO
-  rhof_kl(:) = ZERO
-  eta_kl(:) = ZERO
-  sm_kl(:) = ZERO
-  mufr_kl(:) = ZERO
-  B_kl(:) = ZERO
-  C_kl(:) = ZERO
-  M_kl(:) = ZERO
+  rhot_kl(:,:,:) = ZERO
+  rhof_kl(:,:,:) = ZERO
+  eta_kl(:,:,:) = ZERO
+  sm_kl(:,:,:) = ZERO
+  mufr_kl(:,:,:) = ZERO
+  B_kl(:,:,:) = ZERO
+  C_kl(:,:,:) = ZERO
+  M_kl(:,:,:) = ZERO
 !
-  rhob_kl(:) = ZERO
-  rhofb_kl(:) = ZERO
-  phi_kl(:) = ZERO
-  mufrb_kl(:) = ZERO
-  Bb_kl(:) = ZERO
-  Cb_kl(:) = ZERO
-  Mb_kl(:) = ZERO
+  rhob_kl(:,:,:) = ZERO
+  rhofb_kl(:,:,:) = ZERO
+  phi_kl(:,:,:) = ZERO
+  mufrb_kl(:,:,:) = ZERO
+  Bb_kl(:,:,:) = ZERO
+  Cb_kl(:,:,:) = ZERO
+  Mb_kl(:,:,:) = ZERO
 !
-  rhobb_kl(:) = ZERO
-  rhofbb_kl(:) = ZERO
-  phib_kl(:) = ZERO
-  cs_kl(:) = ZERO
-  cpI_kl(:) = ZERO
-  cpII_kl(:) = ZERO
-  ratio_kl(:) = ZERO
+  rhobb_kl(:,:,:) = ZERO
+  rhofbb_kl(:,:,:) = ZERO
+  phib_kl(:,:,:) = ZERO
+  cs_kl(:,:,:) = ZERO
+  cpI_kl(:,:,:) = ZERO
+  cpII_kl(:,:,:) = ZERO
+  ratio_kl(:,:,:) = ZERO
    endif
 
    if(any_acoustic) then
-    write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
-    open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
-       do j=1,npoin
-      read(55) b_potential_acoustic(j),&
-               b_potential_dot_acoustic(j),&
-               b_potential_dot_dot_acoustic(j)
-       enddo
-    close(55)
-
     write(outputname,'(a,i6.6,a)') 'snapshot_rho_kappa_',myrank
         open(unit = 95, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
         if (ios /= 0) stop 'Error writing snapshot to disk'
@@ -3430,13 +3395,13 @@ endif
         open(unit = 96, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
         if (ios /= 0) stop 'Error writing snapshot to disk'
 
-  rho_ac_kl(:) = ZERO
-  kappa_ac_kl(:) = ZERO
+  rho_ac_kl(:,:,:) = ZERO
+  kappa_ac_kl(:,:,:) = ZERO
 !
-  rhop_ac_kl(:) = ZERO
-  alpha_ac_kl(:) = ZERO
-  rhorho_ac_hessian_final2(:) = ZERO
-  rhorho_ac_hessian_final1(:) = ZERO
+  rhop_ac_kl(:,:,:) = ZERO
+  alpha_ac_kl(:,:,:) = ZERO
+  rhorho_ac_hessian_final2(:,:,:) = ZERO
+  rhorho_ac_hessian_final1(:,:,:) = ZERO
    endif
 
   endif ! if(isover == 2)
@@ -3786,10 +3751,10 @@ endif
 
 ! Ricker (second derivative of a Gaussian) source time function
       if(time_function_type(i_source) == 1) then
-        source_time_function(i_source,it) = - factor(i_source) * (ONE-TWO*aval(i_source)*(time-t0(i_source))**2) * &
-                                           exp(-aval(i_source)*(time-t0(i_source))**2)
-!        source_time_function(i_source,it) = - factor(i_source) * TWO*aval(i_source)*sqrt(aval(i_source))*&
-!                                            (time-t0(i_source))/pi * exp(-aval(i_source)*(time-t0(i_source))**2)
+!        source_time_function(i_source,it) = - factor(i_source) * (ONE-TWO*aval(i_source)*(time-t0(i_source))**2) * &
+!                                           exp(-aval(i_source)*(time-t0(i_source))**2)
+        source_time_function(i_source,it) = - factor(i_source) * TWO*aval(i_source)*sqrt(aval(i_source))*&
+                                            (time-t0(i_source))/pi * exp(-aval(i_source)*(time-t0(i_source))**2)
 
 ! first derivative of a Gaussian source time function
       else if(time_function_type(i_source) == 2) then
@@ -4462,7 +4427,8 @@ endif
       cssquare = mul_fr/afactor
 
 ! Approximated ratio r = amplitude "w" field/amplitude "s" field (no viscous dissipation)
-! used later for kernels calculation
+! used later for wavespeed kernels calculation, which are presently implemented for inviscid case, 
+! contrary to primary and density-normalized kernels, which are consistent with viscous fluid case.
       gamma1 = H_biot - phil/tortl*C_biot
       gamma2 = C_biot - phil/tortl*M_biot
       gamma3 = phil/tortl*( M_biot*(afactor/rhol_f + phil/tortl) - C_biot)
@@ -5135,16 +5101,31 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! the sign is negative because pressure p = - Chi_dot_dot therefore we need
 ! to add minus the source to Chi_dot_dot to get plus the source in pressure
         if(source_type(i_source) == 1) then
+
       if(isolver == 1) then  ! forward wavefield
-          potential_dot_dot_acoustic(iglob_source(i_source)) = potential_dot_dot_acoustic(iglob_source(i_source)) &
-                 - source_time_function(i_source,it)
+          do j = 1,NGLLZ
+           do i = 1,NGLLX
+             iglob = ibool(i,j,ispec_selected_source(i_source))
+             hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
+                 - source_time_function(i_source,it)*hlagrange
+           enddo
+          enddo
       else                   ! backward wavefield
-      b_potential_dot_dot_acoustic(iglob_source(i_source)) = b_potential_dot_dot_acoustic(iglob_source(i_source)) &
-                 - source_time_function(i_source,NSTEP-it+1)
+          do j = 1,NGLLZ
+           do i = 1,NGLLX
+             iglob = ibool(i,j,ispec_selected_source(i_source))
+             hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+      b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) &
+                 - source_time_function(i_source,NSTEP-it+1)*hlagrange
+           enddo
+          enddo
       endif
+
 ! moment tensor
         else if(source_type(i_source) == 2) then
           call exit_MPI('cannot have moment tensor source in acoustic element')
+
         endif
       endif ! if this processor carries the source and the source element is acoustic
     enddo ! do i_source=1,NSOURCE
@@ -5182,6 +5163,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     b_potential_dot_acoustic = b_potential_dot_acoustic + b_deltatover2*b_potential_dot_dot_acoustic
     endif
 
+
 ! free surface for an acoustic medium
     if ( nelem_acoustic_surface > 0 ) then
     call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
@@ -5193,7 +5175,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
    endif
 
     endif
-  endif
+
+  endif !if(any_acoustic)
 
 
 ! *********************************************************
@@ -5726,25 +5709,52 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
        if(isolver == 1) then  ! forward wavefield
 
           if(p_sv) then ! P-SV calculation
-          accel_elastic(1,iglob_source(i_source)) = accel_elastic(1,iglob_source(i_source)) &
-                            - sin(angleforce(i_source))*source_time_function(i_source,it)
-          accel_elastic(3,iglob_source(i_source)) = accel_elastic(3,iglob_source(i_source)) &
-                            + cos(angleforce(i_source))*source_time_function(i_source,it)
+          do j = 1,NGLLZ
+           do i = 1,NGLLX
+             iglob = ibool(i,j,ispec_selected_source(i_source))
+             hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+          accel_elastic(1,iglob) = accel_elastic(1,iglob) &
+              - sin(angleforce(i_source))*source_time_function(i_source,it)*hlagrange
+          accel_elastic(3,iglob) = accel_elastic(3,iglob) &
+              + cos(angleforce(i_source))*source_time_function(i_source,it)*hlagrange
+           enddo
+          enddo
           else    ! SH (membrane) calculation
-          accel_elastic(2,iglob_source(i_source)) = accel_elastic(2,iglob_source(i_source)) &
-                            + source_time_function(i_source,it)
+          do j = 1,NGLLZ
+           do i = 1,NGLLX
+             iglob = ibool(i,j,ispec_selected_source(i_source))
+             hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+          accel_elastic(2,iglob) = accel_elastic(2,iglob) &
+                            + source_time_function(i_source,it)*hlagrange
+           enddo
+          enddo
           endif
 
        else                   ! backward wavefield
 
           if(p_sv) then ! P-SV calculation
-      b_accel_elastic(1,iglob_source(i_source)) = b_accel_elastic(1,iglob_source(i_source)) &
-                            - sin(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
-      b_accel_elastic(3,iglob_source(i_source)) = b_accel_elastic(3,iglob_source(i_source)) &
-                            + cos(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
+          do j = 1,NGLLZ
+           do i = 1,NGLLX
+             iglob = ibool(i,j,ispec_selected_source(i_source))
+             hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+      b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) &
+            - sin(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1) &
+            *hlagrange
+      b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) &
+            + cos(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1) &
+            *hlagrange
+           enddo
+          enddo
           else    ! SH (membrane) calculation
-      b_accel_elastic(2,iglob_source(i_source)) = b_accel_elastic(2,iglob_source(i_source)) &
-                            + source_time_function(i_source,NSTEP-it+1)
+          do j = 1,NGLLZ
+           do i = 1,NGLLX
+             iglob = ibool(i,j,ispec_selected_source(i_source))
+             hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+      b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) &
+                            + source_time_function(i_source,NSTEP-it+1)*hlagrange
+           enddo
+          enddo
+
           endif
 
        endif  !endif isolver == 1
@@ -5769,7 +5779,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     b_veloc_elastic = b_veloc_elastic + b_deltatover2*b_accel_elastic
    endif
 
-  endif
+  endif !if(any_elastic)
 
 
 ! ******************************************************************************************************************
@@ -5805,7 +5815,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
                jbegin_left_poro,jend_left_poro,jbegin_right_poro,jend_right_poro,&
                mufr_k,B_k,NSOURCE,nrec,isolver,save_forward,&
                b_absorb_poro_s_left,b_absorb_poro_s_right,b_absorb_poro_s_bottom,b_absorb_poro_s_top,&
-               nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax)
+               nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,f0(1),freq0,Q0)
 
 
 
@@ -5828,7 +5838,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
                jbegin_left_poro,jend_left_poro,jbegin_right_poro,jend_right_poro,&
                C_k,M_k,NSOURCE,nrec,isolver,save_forward,&
                b_absorb_poro_w_left,b_absorb_poro_w_right,b_absorb_poro_w_bottom,b_absorb_poro_w_top,&
-               nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax)
+               nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,f0(1),freq0,Q0)
 
 
     if(save_forward .and. isolver == 1) then
@@ -6348,28 +6358,39 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! collocated force
         if(source_type(i_source) == 1) then
        if(isolver == 1) then  ! forward wavefield
+          do j = 1,NGLLZ
+           do i = 1,NGLLX
+             iglob = ibool(i,j,ispec_selected_source(i_source))
+             hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
 ! s
-      accels_poroelastic(1,iglob_source(i_source)) = accels_poroelastic(1,iglob_source(i_source)) - &
+      accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) - hlagrange * &
                                (1._CUSTOM_REAL - phil/tortl)*sin(angleforce(i_source))*source_time_function(i_source,it)
-      accels_poroelastic(2,iglob_source(i_source)) = accels_poroelastic(2,iglob_source(i_source)) + &
+      accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + hlagrange * &
                                (1._CUSTOM_REAL - phil/tortl)*cos(angleforce(i_source))*source_time_function(i_source,it)
 ! w
-      accelw_poroelastic(1,iglob_source(i_source)) = accelw_poroelastic(1,iglob_source(i_source)) - &
+      accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - hlagrange * &
          (1._CUSTOM_REAL - rhol_f/rhol_bar)*sin(angleforce(i_source))*source_time_function(i_source,it)
-      accelw_poroelastic(2,iglob_source(i_source)) = accelw_poroelastic(2,iglob_source(i_source)) + &
+      accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) + hlagrange * &
          (1._CUSTOM_REAL - rhol_f/rhol_bar)*cos(angleforce(i_source))*source_time_function(i_source,it)
-
+           enddo
+          enddo
        else                   ! backward wavefield
+          do j = 1,NGLLZ
+           do i = 1,NGLLX
+             iglob = ibool(i,j,ispec_selected_source(i_source))
+             hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
 ! b_s
-      b_accels_poroelastic(1,iglob_source(i_source)) = b_accels_poroelastic(1,iglob_source(i_source)) - &
+      b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - hlagrange * &
                                (1._CUSTOM_REAL - phil/tortl)*sin(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
-      b_accels_poroelastic(2,iglob_source(i_source)) = b_accels_poroelastic(2,iglob_source(i_source)) + &
+      b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) + hlagrange * &
                                (1._CUSTOM_REAL - phil/tortl)*cos(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
 !b_w
-      b_accelw_poroelastic(1,iglob_source(i_source)) = b_accelw_poroelastic(1,iglob_source(i_source)) - &
+      b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) - hlagrange * &
          (1._CUSTOM_REAL - rhol_f/rhol_bar)*sin(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
-      b_accelw_poroelastic(2,iglob_source(i_source)) = b_accelw_poroelastic(2,iglob_source(i_source)) + &
+      b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) + hlagrange * &
          (1._CUSTOM_REAL - rhol_f/rhol_bar)*cos(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
+           enddo
+          enddo
        endif !endif isolver == 1
         endif
 
@@ -6396,7 +6417,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     b_velocw_poroelastic = b_velocw_poroelastic + b_deltatover2*b_accelw_poroelastic
    endif
 
-  endif
+  endif !if(any_poroelastic)
 
 
 !assembling the displacements on the elastic-poro boundaries
@@ -6483,7 +6504,84 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
       enddo
     endif
 
-! kernels calculation
+! ********************************************************************************************
+!                       reading lastframe for adjoint/kernels calculation
+! ********************************************************************************************
+   if(it == 1 .and. isolver == 2) then
+
+! acoustic medium
+    if(any_acoustic) then
+    write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
+    open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
+       do j=1,npoin
+      read(55) b_potential_acoustic(j),&
+               b_potential_dot_acoustic(j),&
+               b_potential_dot_dot_acoustic(j)
+       enddo
+    close(55)
+
+! free surface for an acoustic medium
+    if ( nelem_acoustic_surface > 0 ) then
+    call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
+                b_potential_acoustic,acoustic_surface,ibool,nelem_acoustic_surface,npoin,nspec)
+    endif
+    endif
+
+! elastic medium
+    if(any_elastic) then
+    write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
+    open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
+      if(p_sv)then !P-SV waves
+       do j=1,npoin
+      read(55) (b_displ_elastic(i,j), i=1,NDIM), &
+                  (b_veloc_elastic(i,j), i=1,NDIM), &
+                  (b_accel_elastic(i,j), i=1,NDIM)
+       enddo
+       b_displ_elastic(3,:) = b_displ_elastic(2,:)
+       b_displ_elastic(2,:) = ZERO
+       b_veloc_elastic(3,:) = b_veloc_elastic(2,:)
+       b_veloc_elastic(2,:) = ZERO
+       b_accel_elastic(3,:) = b_accel_elastic(2,:)
+       b_accel_elastic(2,:) = ZERO
+      else !SH (membrane) waves
+       do j=1,npoin
+      read(55) b_displ_elastic(2,j), &
+                  b_veloc_elastic(2,j), &
+                  b_accel_elastic(2,j)
+       enddo
+       b_displ_elastic(1,:) = ZERO
+       b_displ_elastic(3,:) = ZERO
+       b_veloc_elastic(1,:) = ZERO
+       b_veloc_elastic(3,:) = ZERO
+       b_accel_elastic(1,:) = ZERO
+       b_accel_elastic(3,:) = ZERO
+      endif
+    close(55)
+    endif
+
+! poroelastic medium
+    if(any_poroelastic) then
+    write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_s',myrank,'.bin'
+    open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
+    write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
+    open(unit=56,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
+       do j=1,npoin
+      read(55) (b_displs_poroelastic(i,j), i=1,NDIM), &
+                  (b_velocs_poroelastic(i,j), i=1,NDIM), &
+                  (b_accels_poroelastic(i,j), i=1,NDIM)
+      read(56) (b_displw_poroelastic(i,j), i=1,NDIM), &
+                  (b_velocw_poroelastic(i,j), i=1,NDIM), &
+                  (b_accelw_poroelastic(i,j), i=1,NDIM)
+       enddo
+    close(55)
+    close(56)
+    endif
+
+  endif ! if(it == 1 .and. isolver == 2)
+
+! ********************************************************************************************
+!                                      kernels calculation
+! ********************************************************************************************
   if(any_elastic .and. isolver == 2) then ! kernels calculation
       do iglob = 1,npoin
             rho_k(iglob) =  accel_elastic(1,iglob)*b_displ_elastic(1,iglob) +&
@@ -6803,20 +6901,27 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
      endif
     enddo
 
-          do iglob =1,npoin
-            rho_ac_kl(iglob) = rho_ac_kl(iglob) - rhol_ac_global(iglob)  * &
+          do ispec = 1,nspec
+     if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
+      do j = 1, NGLLZ
+          do i = 1, NGLLX
+            iglob = ibool(i,j,ispec)
+            rho_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) - rhol_ac_global(iglob)  * &
                            dot_product(accel_ac(:,iglob),b_displ_ac(:,iglob)) * deltat
-            kappa_ac_kl(iglob) = kappa_ac_kl(iglob) - kappal_ac_global(iglob) * &
+            kappa_ac_kl(i,j,ispec) = kappa_ac_kl(i,j,ispec) - kappal_ac_global(iglob) * &
                            potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob) * &
                            b_potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob)&
                            * deltat
 !
-            rhop_ac_kl(iglob) = rho_ac_kl(iglob) + kappa_ac_kl(iglob)
-            alpha_ac_kl(iglob) = TWO *  kappa_ac_kl(iglob)
-            rhorho_ac_hessian_final1(iglob) = rhorho_ac_hessian_final1(iglob) + &
+            rhop_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) + kappa_ac_kl(i,j,ispec)
+            alpha_ac_kl(i,j,ispec) = TWO *  kappa_ac_kl(i,j,ispec)
+            rhorho_ac_hessian_final1(i,j,ispec) =  rhorho_ac_hessian_final1(i,j,ispec) + &
                              dot_product(accel_ac(:,iglob),accel_ac(:,iglob)) * deltat
-            rhorho_ac_hessian_final2(iglob) = rhorho_ac_hessian_final2(iglob) + &
+            rhorho_ac_hessian_final2(i,j,ispec) =  rhorho_ac_hessian_final2(i,j,ispec) + &
                              dot_product(accel_ac(:,iglob),b_accel_ac(:,iglob)) * deltat
+         enddo
+       enddo
+      endif
           enddo
 
     endif !if(any_acoustic)
@@ -6825,30 +6930,29 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
     do ispec = 1, nspec
      if(elastic(ispec)) then
-      do k = 1, NGLLZ
+      do j = 1, NGLLZ
           do i = 1, NGLLX
-            iglob = ibool(i,k,ispec)
+            iglob = ibool(i,j,ispec)
     mul_global(iglob) = poroelastcoef(2,1,kmato(ispec))
     kappal_global(iglob) = poroelastcoef(3,1,kmato(ispec)) - 4._CUSTOM_REAL*mul_global(iglob)/3._CUSTOM_REAL
     rhol_global(iglob) = density(1,kmato(ispec))
+
+            rho_kl(i,j,ispec) = rho_kl(i,j,ispec) - rhol_global(iglob)  * rho_k(iglob) * deltat
+            mu_kl(i,j,ispec) =  mu_kl(i,j,ispec) - TWO * mul_global(iglob) * mu_k(iglob) * deltat
+            kappa_kl(i,j,ispec) = kappa_kl(i,j,ispec) - kappal_global(iglob) * kappa_k(iglob) * deltat
+!
+            rhop_kl(i,j,ispec) = rho_kl(i,j,ispec) + kappa_kl(i,j,ispec) + mu_kl(i,j,ispec)
+            beta_kl(i,j,ispec) = TWO * (mu_kl(i,j,ispec) - 4._CUSTOM_REAL * mul_global(iglob) &
+                  / (3._CUSTOM_REAL * kappal_global(iglob)) * kappa_kl(i,j,ispec))
+            alpha_kl(i,j,ispec) = TWO * (1._CUSTOM_REAL + 4._CUSTOM_REAL * mul_global(iglob)/&
+                   (3._CUSTOM_REAL * kappal_global(iglob))) * kappa_kl(i,j,ispec)
+            rhorho_el_hessian_final1(i,j,ispec) = rhorho_el_hessian_final1(i,j,ispec) + rhorho_el_hessian_temp1(iglob) * deltat
+            rhorho_el_hessian_final2(i,j,ispec) = rhorho_el_hessian_final2(i,j,ispec) + rhorho_el_hessian_temp2(iglob) * deltat
+
           enddo
       enddo
      endif
     enddo
-
-          do iglob =1,npoin
-            rho_kl(iglob) = rho_kl(iglob) - rhol_global(iglob)  * rho_k(iglob) * deltat
-            mu_kl(iglob) = mu_kl(iglob) - TWO * mul_global(iglob) * mu_k(iglob) * deltat
-            kappa_kl(iglob) = kappa_kl(iglob) - kappal_global(iglob) * kappa_k(iglob) * deltat
-!
-            rhop_kl(iglob) = rho_kl(iglob) + kappa_kl(iglob) + mu_kl(iglob)
-            beta_kl(iglob) = TWO * (mu_kl(iglob) - 4._CUSTOM_REAL * mul_global(iglob) &
-                  / (3._CUSTOM_REAL * kappal_global(iglob)) * kappa_kl(iglob))
-            alpha_kl(iglob) = TWO * (1._CUSTOM_REAL + 4._CUSTOM_REAL * mul_global(iglob)/&
-                   (3._CUSTOM_REAL * kappal_global(iglob))) * kappa_kl(iglob)
-            rhorho_el_hessian_final1(iglob) = rhorho_el_hessian_final1(iglob) + rhorho_el_hessian_temp1(iglob) * deltat
-            rhorho_el_hessian_final2(iglob) = rhorho_el_hessian_final2(iglob) + rhorho_el_hessian_temp2(iglob) * deltat
-          enddo
 
    endif !if(any_elastic)
 
@@ -6856,9 +6960,9 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
     do ispec = 1, nspec
      if(poroelastic(ispec)) then
-      do k = 1, NGLLZ
+      do j = 1, NGLLZ
           do i = 1, NGLLX
-            iglob = ibool(i,k,ispec)
+            iglob = ibool(i,j,ispec)
     phil_global(iglob) = porosity(kmato(ispec))
     tortl_global(iglob) = tortuosity(kmato(ispec))
     rhol_s_global(iglob) = density(1,kmato(ispec))
@@ -6870,62 +6974,57 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     permlxz_global(iglob) = permeability(2,kmato(ispec))
     permlzz_global(iglob) = permeability(3,kmato(ispec))
     mulfr_global(iglob) = poroelastcoef(2,3,kmato(ispec))
-          enddo
-       enddo
-     endif
-    enddo
 
-      do iglob =1,npoin
-            rhot_kl(iglob) = rhot_kl(iglob) - deltat * rhol_bar_global(iglob) * rhot_k(iglob)
-            rhof_kl(iglob) = rhof_kl(iglob) - deltat * rhol_f_global(iglob) * rhof_k(iglob)
-            sm_kl(iglob) = sm_kl(iglob) - deltat * rhol_f_global(iglob)*tortl_global(iglob)/phil_global(iglob) * sm_k(iglob)
+            rhot_kl(i,j,ispec) = rhot_kl(i,j,ispec) - deltat * rhol_bar_global(iglob) * rhot_k(iglob)
+            rhof_kl(i,j,ispec) = rhof_kl(i,j,ispec) - deltat * rhol_f_global(iglob) * rhof_k(iglob)
+            sm_kl(i,j,ispec) = sm_kl(i,j,ispec) - deltat * rhol_f_global(iglob)*tortl_global(iglob)/phil_global(iglob) * sm_k(iglob)
 !at the moment works with constant permeability
-            eta_kl(iglob) = eta_kl(iglob) - deltat * etal_f_global(iglob)/permlxx_global(iglob) * eta_k(iglob)
-            B_kl(iglob) = B_kl(iglob) - deltat * B_k(iglob)
-            C_kl(iglob) = C_kl(iglob) - deltat * C_k(iglob)
-            M_kl(iglob) = M_kl(iglob) - deltat * M_k(iglob)
-            mufr_kl(iglob) = mufr_kl(iglob) - TWO * deltat * mufr_k(iglob)
+            eta_kl(i,j,ispec) = eta_kl(i,j,ispec) - deltat * etal_f_global(iglob)/permlxx_global(iglob) * eta_k(iglob)
+            B_kl(i,j,ispec) = B_kl(i,j,ispec) - deltat * B_k(iglob)
+            C_kl(i,j,ispec) = C_kl(i,j,ispec) - deltat * C_k(iglob)
+            M_kl(i,j,ispec) = M_kl(i,j,ispec) - deltat * M_k(iglob)
+            mufr_kl(i,j,ispec) = mufr_kl(i,j,ispec) - TWO * deltat * mufr_k(iglob)
 ! density kernels
             rholb = rhol_bar_global(iglob) - phil_global(iglob)*rhol_f_global(iglob)/tortl_global(iglob)
-            rhob_kl(iglob) = rhot_kl(iglob) + B_kl(iglob) + mufr_kl(iglob)
-            rhofb_kl(iglob) = rhof_kl(iglob) + C_kl(iglob) + M_kl(iglob) + sm_kl(iglob)
-            Bb_kl(iglob) = B_kl(iglob)
-            Cb_kl(iglob) = C_kl(iglob)
-            Mb_kl(iglob) = M_kl(iglob)
-            mufrb_kl(iglob) = mufr_kl(iglob)
-            phi_kl(iglob) = - sm_kl(iglob) - M_kl(iglob)
+            rhob_kl(i,j,ispec) = rhot_kl(i,j,ispec) + B_kl(i,j,ispec) + mufr_kl(i,j,ispec)
+            rhofb_kl(i,j,ispec) = rhof_kl(i,j,ispec) + C_kl(i,j,ispec) + M_kl(i,j,ispec) + sm_kl(i,j,ispec)
+            Bb_kl(i,j,ispec) = B_kl(i,j,ispec)
+            Cb_kl(i,j,ispec) = C_kl(i,j,ispec)
+            Mb_kl(i,j,ispec) = M_kl(i,j,ispec)
+            mufrb_kl(i,j,ispec) = mufr_kl(i,j,ispec)
+            phi_kl(i,j,ispec) = - sm_kl(i,j,ispec) - M_kl(i,j,ispec)
 ! wave speed kernels
             dd1 = (1._CUSTOM_REAL+rholb/rhol_f_global(iglob))*ratio**2 + 2._CUSTOM_REAL*ratio +&
                 tortl_global(iglob)/phil_global(iglob)
-            rhobb_kl(iglob) = rhob_kl(iglob) - &
+            rhobb_kl(i,j,ispec) = rhob_kl(i,j,ispec) - &
                 phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*B_biot) * &
                    (cpIIsquare + (cpIsquare - cpIIsquare)*( (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1+&
                    (rhol_bar_global(iglob)**2*ratio**2/rhol_f_global(iglob)**2*(phil_global(iglob)/tortl_global(iglob)*&
                    ratio+1)*(phil_global(iglob)/tortl_global(iglob)*ratio+phil_global(iglob)/tortl_global(iglob)*&
                    (1+rhol_f_global(iglob)/rhol_bar_global(iglob))-1) )/dd1**2 )- FOUR_THIRDS*cssquare )*&
-                   Bb_kl(iglob) - &
+                   Bb_kl(i,j,ispec) - &
                 rhol_bar_global(iglob)*ratio**2/M_biot * (cpIsquare - cpIIsquare)* &
-                   (phil_global(iglob)/tortl_global(iglob)*ratio + 1._CUSTOM_REAL)**2/dd1**2*Mb_kl(iglob) + &
+                   (phil_global(iglob)/tortl_global(iglob)*ratio + 1._CUSTOM_REAL)**2/dd1**2*Mb_kl(i,j,ispec) + &
                 rhol_bar_global(iglob)*ratio/C_biot * (cpIsquare - cpIIsquare)* (&
                    (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1 - &
                    phil_global(iglob)*ratio/tortl_global(iglob)*(phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*&
-                   (1+rhol_bar_global(iglob)*ratio/rhol_f_global(iglob))/dd1**2)*Cb_kl(iglob)+ &
-                phil_global(iglob)*rhol_f_global(iglob)*cssquare/(tortl_global(iglob)*mulfr_global(iglob))*mufrb_kl(iglob)
-           rhofbb_kl(iglob) = rhofb_kl(iglob) + &
+                   (1+rhol_bar_global(iglob)*ratio/rhol_f_global(iglob))/dd1**2)*Cb_kl(i,j,ispec)+ &
+                phil_global(iglob)*rhol_f_global(iglob)*cssquare/(tortl_global(iglob)*mulfr_global(iglob))*mufrb_kl(i,j,ispec)
+           rhofbb_kl(i,j,ispec) = rhofb_kl(i,j,ispec) + &
                 phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*B_biot) * &
                    (cpIIsquare + (cpIsquare - cpIIsquare)*( (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1+&
                    (rhol_bar_global(iglob)**2*ratio**2/rhol_f_global(iglob)**2*(phil_global(iglob)/tortl_global(iglob)*&
                    ratio+1)*(phil_global(iglob)/tortl_global(iglob)*ratio+phil_global(iglob)/tortl_global(iglob)*&
                    (1+rhol_f_global(iglob)/rhol_bar_global(iglob))-1) )/dd1**2 )- FOUR_THIRDS*cssquare )*&
-                   Bb_kl(iglob) + &
+                   Bb_kl(i,j,ispec) + &
                 rhol_bar_global(iglob)*ratio**2/M_biot * (cpIsquare - cpIIsquare)* &
-                   (phil_global(iglob)/tortl_global(iglob)*ratio + 1._CUSTOM_REAL)**2/dd1**2*Mb_kl(iglob) - &
+                   (phil_global(iglob)/tortl_global(iglob)*ratio + 1._CUSTOM_REAL)**2/dd1**2*Mb_kl(i,j,ispec) - &
                 rhol_bar_global(iglob)*ratio/C_biot * (cpIsquare - cpIIsquare)* (&
                    (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1 - &
                    phil_global(iglob)*ratio/tortl_global(iglob)*(phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*&
-                   (1+rhol_bar_global(iglob)*ratio/rhol_f_global(iglob))/dd1**2)*Cb_kl(iglob)- &
-                phil_global(iglob)*rhol_f_global(iglob)*cssquare/(tortl_global(iglob)*mulfr_global(iglob))*mufrb_kl(iglob)
-           phib_kl(iglob) = phi_kl(iglob) - &
+                   (1+rhol_bar_global(iglob)*ratio/rhol_f_global(iglob))/dd1**2)*Cb_kl(i,j,ispec)- &
+                phil_global(iglob)*rhol_f_global(iglob)*cssquare/(tortl_global(iglob)*mulfr_global(iglob))*mufrb_kl(i,j,ispec)
+           phib_kl(i,j,ispec) = phi_kl(i,j,ispec) - &
                 phil_global(iglob)*rhol_bar_global(iglob)/(tortl_global(iglob)*B_biot) * ( cpIsquare - rhol_f_global(iglob)/&
                    rhol_bar_global(iglob)*cpIIsquare- &
                    (cpIsquare-cpIIsquare)*( (TWO*ratio**2*phil_global(iglob)/tortl_global(iglob) + (1._CUSTOM_REAL+&
@@ -6934,65 +7033,69 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
                    ratio/tortl_global(iglob)+phil_global(iglob)/tortl_global(iglob)*(1._CUSTOM_REAL+rhol_f_global(iglob)/&
                    rhol_bar_global(iglob))-1._CUSTOM_REAL)*((1._CUSTOM_REAL+rhol_bar_global(iglob)/rhol_f_global(iglob)-&
                    TWO*phil_global(iglob)/tortl_global(iglob))*ratio**2+TWO*ratio)/dd1**2 ) - &
-                   FOUR_THIRDS*rhol_f_global(iglob)*cssquare/rhol_bar_global(iglob) )*Bb_kl(iglob) + &
+                   FOUR_THIRDS*rhol_f_global(iglob)*cssquare/rhol_bar_global(iglob) )*Bb_kl(i,j,ispec) + &
                 rhol_f_global(iglob)/M_biot * (cpIsquare-cpIIsquare)*(&
                    TWO*ratio*(phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1 - &
                    (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)**2*((1._CUSTOM_REAL+rhol_bar_global(iglob)/&
                    rhol_f_global(iglob)-TWO*phil_global(iglob)/tortl_global(iglob))*ratio**2+TWO*ratio)/dd1**2&
-                   )*Mb_kl(iglob) + &
+                   )*Mb_kl(i,j,ispec) + &
                 phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*C_biot)*(cpIsquare-cpIIsquare)*ratio* (&
                    (1._CUSTOM_REAL+rhol_f_global(iglob)/rhol_bar_global(iglob)*ratio)/dd1 - &
                    (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*(1._CUSTOM_REAL+rhol_bar_global(iglob)/&
                    rhol_f_global(iglob)*ratio)*((1._CUSTOM_REAL+rhol_bar_global(iglob)/rhol_f_global(iglob)-TWO*&
                    phil_global(iglob)/tortl_global(iglob))*ratio+TWO)/dd1**2&
-                    )*Cb_kl(iglob) -&
-                phil_global(iglob)*rhol_f_global(iglob)*cssquare/(tortl_global(iglob)*mulfr_global(iglob))*mufrb_kl(iglob)
-           cpI_kl(iglob) = 2._CUSTOM_REAL*cpIsquare/B_biot*rhol_bar_global(iglob)*( &
+                    )*Cb_kl(i,j,ispec) -&
+                phil_global(iglob)*rhol_f_global(iglob)*cssquare/(tortl_global(iglob)*mulfr_global(iglob))*mufrb_kl(i,j,ispec)
+           cpI_kl(i,j,ispec) = 2._CUSTOM_REAL*cpIsquare/B_biot*rhol_bar_global(iglob)*( &
                    1._CUSTOM_REAL-phil_global(iglob)/tortl_global(iglob) + &
                    (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*(phil_global(iglob)/tortl_global(iglob)*&
                    ratio+phil_global(iglob)/tortl_global(iglob)*(1._CUSTOM_REAL+rhol_f_global(iglob)/rhol_bar_global(iglob))-&
                    1._CUSTOM_REAL)/dd1 &
-                    )* Bb_kl(iglob) +&
+                    )* Bb_kl(i,j,ispec) +&
                 2._CUSTOM_REAL*cpIsquare*rhol_f_global(iglob)*tortl_global(iglob)/(phil_global(iglob)*M_biot) *&
-                   (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)**2/dd1*Mb_kl(iglob)+&
+                   (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)**2/dd1*Mb_kl(i,j,ispec)+&
                 2._CUSTOM_REAL*cpIsquare*rhol_f_global(iglob)/C_biot * &
                    (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*(1._CUSTOM_REAL+rhol_bar_global(iglob)/&
-                   rhol_f_global(iglob)*ratio)/dd1*Cb_kl(iglob)
-           cpII_kl(iglob) = 2._CUSTOM_REAL*cpIIsquare*rhol_bar_global(iglob)/B_biot * (&
+                   rhol_f_global(iglob)*ratio)/dd1*Cb_kl(i,j,ispec)
+           cpII_kl(i,j,ispec) = 2._CUSTOM_REAL*cpIIsquare*rhol_bar_global(iglob)/B_biot * (&
                    phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*rhol_bar_global(iglob)) - &
                    (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*(phil_global(iglob)/tortl_global(iglob)*&
                    ratio+phil_global(iglob)/tortl_global(iglob)*(1._CUSTOM_REAL+rhol_f_global(iglob)/rhol_bar_global(iglob))-&
-                   1._CUSTOM_REAL)/dd1  ) * Bb_kl(iglob) +&
+                   1._CUSTOM_REAL)/dd1  ) * Bb_kl(i,j,ispec) +&
                 2._CUSTOM_REAL*cpIIsquare*rhol_f_global(iglob)*tortl_global(iglob)/(phil_global(iglob)*M_biot) * (&
-                   1._CUSTOM_REAL - (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)**2/dd1  )*Mb_kl(iglob) + &
+                   1._CUSTOM_REAL - (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)**2/dd1  )*Mb_kl(i,j,ispec) + &
                 2._CUSTOM_REAL*cpIIsquare*rhol_f_global(iglob)/C_biot * (&
                    1._CUSTOM_REAL - (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*(1._CUSTOM_REAL+&
-                   rhol_bar_global(iglob)/rhol_f_global(iglob)*ratio)/dd1  )*Cb_kl(iglob)
-           cs_kl(iglob) = - 8._CUSTOM_REAL/3._CUSTOM_REAL*cssquare*rhol_bar_global(iglob)/B_biot*(1._CUSTOM_REAL-&
-                   phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*rhol_bar_global(iglob)))*Bb_kl(iglob) + &
+                   rhol_bar_global(iglob)/rhol_f_global(iglob)*ratio)/dd1  )*Cb_kl(i,j,ispec)
+           cs_kl(i,j,ispec) = - 8._CUSTOM_REAL/3._CUSTOM_REAL*cssquare*rhol_bar_global(iglob)/B_biot*(1._CUSTOM_REAL-&
+                   phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*rhol_bar_global(iglob)))*Bb_kl(i,j,ispec) + &
                 2._CUSTOM_REAL*(rhol_bar_global(iglob)-rhol_f_global(iglob)*phil_global(iglob)/tortl_global(iglob))/&
-                   mulfr_global(iglob)*cssquare*mufrb_kl(iglob)
-           ratio_kl(iglob) = ratio*rhol_bar_global(iglob)*phil_global(iglob)/(tortl_global(iglob)*B_biot) * &
+                   mulfr_global(iglob)*cssquare*mufrb_kl(i,j,ispec)
+           ratio_kl(i,j,ispec) = ratio*rhol_bar_global(iglob)*phil_global(iglob)/(tortl_global(iglob)*B_biot) * &
                    (cpIsquare-cpIIsquare) * ( &
                    phil_global(iglob)/tortl_global(iglob)*(2._CUSTOM_REAL*ratio+1._CUSTOM_REAL+rhol_f_global(iglob)/ &
                    rhol_bar_global(iglob))/dd1 - (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*&
                    (phil_global(iglob)/tortl_global(iglob)*ratio+phil_global(iglob)/tortl_global(iglob)*(&
                    1._CUSTOM_REAL+rhol_f_global(iglob)/rhol_bar_global(iglob))-1._CUSTOM_REAL)*(2._CUSTOM_REAL*ratio*(&
                    1._CUSTOM_REAL+rhol_bar_global(iglob)/rhol_f_global(iglob)-phil_global(iglob)/tortl_global(iglob)) +&
-                   2._CUSTOM_REAL)/dd1**2  )*Bb_kl(iglob) + &
+                   2._CUSTOM_REAL)/dd1**2  )*Bb_kl(i,j,ispec) + &
                 ratio*rhol_f_global(iglob)*tortl_global(iglob)/(phil_global(iglob)*M_biot)*(cpIsquare-cpIIsquare) * &
                    2._CUSTOM_REAL*phil_global(iglob)/tortl_global(iglob) * (&
                    (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1 - &
                    (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)**2*((1._CUSTOM_REAL+rhol_bar_global(iglob)/&
-                   rhol_f_global(iglob)-phil_global(iglob)/tortl_global(iglob))*ratio+1._CUSTOM_REAL)/dd1**2 )*Mb_kl(iglob) +&
+                   rhol_f_global(iglob)-phil_global(iglob)/tortl_global(iglob))*ratio+1._CUSTOM_REAL)/dd1**2 )*Mb_kl(i,j,ispec) +&
                 ratio*rhol_f_global(iglob)/C_biot*(cpIsquare-cpIIsquare) * (&
                    (2._CUSTOM_REAL*phil_global(iglob)*rhol_bar_global(iglob)*ratio/(tortl_global(iglob)*rhol_f_global(iglob))+&
                    phil_global(iglob)/tortl_global(iglob)+rhol_bar_global(iglob)/rhol_f_global(iglob))/dd1 - &
                    2._CUSTOM_REAL*phil_global(iglob)/tortl_global(iglob)*(phil_global(iglob)/tortl_global(iglob)*ratio+&
                    1._CUSTOM_REAL)*(1._CUSTOM_REAL+rhol_bar_global(iglob)/rhol_f_global(iglob)*ratio)*((1._CUSTOM_REAL+&
                    rhol_bar_global(iglob)/rhol_f_global(iglob)-phil_global(iglob)/tortl_global(iglob))*ratio+1._CUSTOM_REAL)/&
-                   dd1**2 )*Cb_kl(iglob)
-      enddo
+                   dd1**2 )*Cb_kl(i,j,ispec)
+
+          enddo
+       enddo
+     endif
+    enddo
 
    endif ! if(any_poroelastic)
 
@@ -7014,43 +7117,58 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
   endif
 
     if(any_acoustic) then
-     do iglob =1,npoin
+    do ispec = 1, nspec
+      do j = 1, NGLLZ
+          do i = 1, NGLLX
+            iglob = ibool(i,j,ispec)
         xx = coord(1,iglob)
         zz = coord(2,iglob)
-         write(95,'(5e12.3)')xx,zz,rho_ac_kl(iglob),kappa_ac_kl(iglob)
-         write(96,'(5e12.3)')rhorho_ac_hessian_final1(iglob), rhorho_ac_hessian_final2(iglob),&
-                             rhop_ac_kl(iglob),alpha_ac_kl(iglob)
-     enddo
+         write(95,'(5e11.3)')xx,zz,rho_ac_kl(i,j,ispec),kappa_ac_kl(i,j,ispec)
+         write(96,'(5e11.3)')rhorho_ac_hessian_final1(i,j,ispec), rhorho_ac_hessian_final2(i,j,ispec),&
+                             rhop_ac_kl(i,j,ispec),alpha_ac_kl(i,j,ispec)
+          enddo
+      enddo
+    enddo
     close(95)
     close(96)
     endif
 
     if(any_elastic) then
-     do iglob =1,npoin
+    do ispec = 1, nspec
+      do j = 1, NGLLZ
+          do i = 1, NGLLX
+            iglob = ibool(i,j,ispec)
         xx = coord(1,iglob)
         zz = coord(2,iglob)
-         write(97,'(5e12.3)')xx,zz,rho_kl(iglob),kappa_kl(iglob),mu_kl(iglob)
-         write(98,'(5e12.3)')rhorho_el_hessian_final1(iglob), rhorho_el_hessian_final2(iglob),&
-                             rhop_kl(iglob),alpha_kl(iglob),beta_kl(iglob)     
-     enddo
+         write(97,'(5e11.3)')xx,zz,rho_kl(i,j,ispec),kappa_kl(i,j,ispec),mu_kl(i,j,ispec)
+         write(98,'(5e11.3)')rhorho_el_hessian_final1(i,j,ispec), rhorho_el_hessian_final2(i,j,ispec),&
+                             rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)     
+          enddo
+      enddo
+    enddo
     close(97)
     close(98)
     endif
 
     if(any_poroelastic) then
-     do iglob =1,npoin
+    do ispec = 1, nspec
+      do j = 1, NGLLZ
+          do i = 1, NGLLX
+            iglob = ibool(i,j,ispec)
         xx = coord(1,iglob)
         zz = coord(2,iglob)
-         write(144,'(5e12.3)')xx,zz,mufr_kl(iglob),B_kl(iglob),C_kl(iglob)
-         write(155,'(5e12.3)')xx,zz,M_kl(iglob),rhot_kl(iglob),rhof_kl(iglob)
-         write(16,'(5e12.3)')xx,zz,sm_kl(iglob),eta_kl(iglob)
-         write(17,'(5e12.3)')xx,zz,mufrb_kl(iglob),Bb_kl(iglob),Cb_kl(iglob)
-         write(18,'(5e12.3)')xx,zz,Mb_kl(iglob),rhob_kl(iglob),rhofb_kl(iglob)
-         write(19,'(5e12.3)')xx,zz,phi_kl(iglob),eta_kl(iglob)
-         write(20,'(5e12.3)')xx,zz,cpI_kl(iglob),cpII_kl(iglob),cs_kl(iglob)
-         write(21,'(5e12.3)')xx,zz,rhobb_kl(iglob),rhofbb_kl(iglob),ratio_kl(iglob)
-         write(22,'(5e12.3)')xx,zz,phib_kl(iglob),eta_kl(iglob)
-     enddo
+         write(144,'(5e11.3)')xx,zz,mufr_kl(i,j,ispec),B_kl(i,j,ispec),C_kl(i,j,ispec)
+         write(155,'(5e11.3)')xx,zz,M_kl(i,j,ispec),rhot_kl(i,j,ispec),rhof_kl(i,j,ispec)
+         write(16,'(5e11.3)')xx,zz,sm_kl(i,j,ispec),eta_kl(i,j,ispec)
+         write(17,'(5e11.3)')xx,zz,mufrb_kl(i,j,ispec),Bb_kl(i,j,ispec),Cb_kl(i,j,ispec)
+         write(18,'(5e11.3)')xx,zz,Mb_kl(i,j,ispec),rhob_kl(i,j,ispec),rhofb_kl(i,j,ispec)
+         write(19,'(5e11.3)')xx,zz,phi_kl(i,j,ispec),eta_kl(i,j,ispec)
+         write(20,'(5e11.3)')xx,zz,cpI_kl(i,j,ispec),cpII_kl(i,j,ispec),cs_kl(i,j,ispec)
+         write(21,'(5e11.3)')xx,zz,rhobb_kl(i,j,ispec),rhofbb_kl(i,j,ispec),ratio_kl(i,j,ispec)
+         write(22,'(5e11.3)')xx,zz,phib_kl(i,j,ispec),eta_kl(i,j,ispec)
+          enddo
+      enddo
+    enddo
     close(144)
     close(155)
     close(16)

@@ -42,10 +42,11 @@
 !
 !========================================================================
 
-  subroutine checkgrid(vpext,vsext,rhoext,density,poroelastcoef,porosity,tortuosity,ibool,kmato,coord,npoin, &
+  subroutine checkgrid(vpext,vsext,rhoext,density,poroelastcoef,porosity,tortuosity,permeability,ibool,kmato,coord,npoin, &
                  vpImin,vpImax,vpIImin,vpIImax,assign_external_model,nspec,UPPER_LIMIT_DISPLAY,numat,deltat, &
                  f0,t0,initialfield,time_function_type,coorg,xinterp,zinterp,shapeint,knods,simulation_title, &
-                 npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic,myrank,nproc,NSOURCE,poroelastic)
+                 npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic,myrank,nproc,NSOURCE,poroelastic, &
+                 freq0,Q0,TURN_VISCATTENUATION_ON)
 
 ! check the mesh, stability and number of points per wavelength
 
@@ -79,6 +80,7 @@
   double precision, dimension(2,numat) :: density
   double precision, dimension(4,3,numat) :: poroelastcoef
   double precision, dimension(numat) :: porosity,tortuosity
+  double precision, dimension(3,numat) :: permeability
   double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext
 
   double precision coord(NDIM,npoin)
@@ -86,15 +88,16 @@
   double precision vpImin,vpImax,vsmin,vsmax,densmin,densmax,vpImax_local,vpImin_local,vsmin_local
   double precision vpIImin,vpIImax,vpIImax_local,vpIImin_local
   double precision kappa_s,kappa_f,kappa_fr,mu_s,mu_fr,denst_s,denst_f,denst,phi,tort,cpIloc,cpIIloc,csloc
-  double precision afactor,bfactor,cfactor,D_biot,H_biot,C_biot,M_biot,cpIsquare,cpIIsquare,cssquare
-  double precision f0min,f0max
+  double precision D_biot,H_biot,C_biot,M_biot,cpIsquare,cpIIsquare,cssquare
+  double precision f0min,f0max,freq0,Q0,w_c,eta_f,perm
   double precision lambdaplus2mu,mu
   double precision distance_min,distance_max,distance_min_local,distance_max_local
   double precision courant_stability_number_max,lambdaPImin,lambdaPImax,lambdaPIImin,lambdaPIImax, &
                    lambdaSmin,lambdaSmax
   double precision deltat,distance_1,distance_2,distance_3,distance_4
   double precision, dimension(NSOURCE) :: f0,t0
-  logical assign_external_model,initialfield,any_elastic,any_poroelastic,all_anisotropic
+  logical assign_external_model,initialfield,any_elastic,any_poroelastic,all_anisotropic, &
+          TURN_VISCATTENUATION_ON
 
 ! for the stability condition
 ! maximum polynomial degree for which we can compute the stability condition
@@ -1417,6 +1420,7 @@
    if(poroelastic(ispec)) then
     phi = porosity(material)
     tort = tortuosity(material)
+    perm = permeability(1,material)
 !solid properties
     mu_s = poroelastcoef(2,1,material)
     kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
@@ -1424,22 +1428,18 @@
 !fluid properties
     kappa_f = poroelastcoef(1,2,material)
     denst_f = density(2,material)
+    eta_f = poroelastcoef(2,2,material)
 !frame properties
     mu_fr = poroelastcoef(2,3,material)
     kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
-    denst =  (1.d0 - phi)*denst_s + phi*denst_f
 !Biot coefficients for the input phi
       D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
       H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
       C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
       M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
-! Approximated velocities (no viscous dissipation)
-      afactor = denst - phi/tort*denst_f
-      bfactor = H_biot + phi*denst/(tort*denst_f)*M_biot - 2.d0*phi/tort*C_biot
-      cfactor = phi/(tort*denst_f)*(H_biot*M_biot - C_biot*C_biot)
-      cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
-      cpIIsquare = (bfactor - sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
-      cssquare = mu_fr/afactor
+
+    call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
+             tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,TURN_VISCATTENUATION_ON)
 
     cpIloc = sqrt(cpIsquare)
     cpIIloc = sqrt(cpIIsquare)
@@ -1881,6 +1881,7 @@
    if(poroelastic(ispec)) then
     phi=porosity(material)
     tort=tortuosity(material)
+    perm=permeability(1,material)
 !solid properties
     mu_s = poroelastcoef(2,1,material)
     kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
@@ -1888,20 +1889,18 @@
 !fluid properties
     kappa_f = poroelastcoef(1,2,material)
     denst_f = density(2,material)
+    eta_f = poroelastcoef(2,2,material)
 !frame properties
     mu_fr = poroelastcoef(2,3,material)
     kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
-    denst =  (1.d0 - phi)*denst_s + phi*denst_f
 !Biot coefficients for the input phi
       D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
       H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
       C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
       M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
-! Approximated velocities (no viscous dissipation)
-      afactor = denst - phi/tort*denst_f
-      bfactor = H_biot + phi*denst/(tort*denst_f)*M_biot - 2.d0*phi/tort*C_biot
-      cfactor = phi/(tort*denst_f)*(H_biot*M_biot - C_biot*C_biot)
-      cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
+
+    call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
+             tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,TURN_VISCATTENUATION_ON)
 
     cpIloc = sqrt(cpIsquare)
    else
@@ -2233,6 +2232,7 @@
    if(poroelastic(ispec)) then
     phi = porosity(material)
     tort = tortuosity(material)
+    perm = permeability(1,material)
 !solid properties
     mu_s = poroelastcoef(2,1,material)
     kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
@@ -2240,22 +2240,18 @@
 !fluid properties
     kappa_f = poroelastcoef(1,2,material)
     denst_f = density(2,material)
+    eta_f = poroelastcoef(2,2,material)
 !frame properties
     mu_fr = poroelastcoef(2,3,material)
     kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
-    denst =  (1.d0 - phi)*denst_s + phi*denst_f
 !Biot coefficients for the input phi
       D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
       H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
       C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
       M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
-! Approximated velocities (no viscous dissipation)
-      afactor = denst - phi/tort*denst_f
-      bfactor = H_biot + phi*denst/(tort*denst_f)*M_biot - 2.d0*phi/tort*C_biot
-      cfactor = phi/(tort*denst_f)*(H_biot*M_biot - C_biot*C_biot)
-      cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
-      cpIIsquare = (bfactor - sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
-      cssquare = mu_fr/afactor
+
+    call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
+             tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,TURN_VISCATTENUATION_ON)
 
     cpIloc = sqrt(cpIsquare)
     csloc = sqrt(cssquare)
@@ -2651,6 +2647,7 @@ endif
    if(poroelastic(ispec)) then
     phi = porosity(material)
     tort = tortuosity(material)
+    perm = permeability(1,material)
 !solid properties
     mu_s = poroelastcoef(2,1,material)
     kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
@@ -2658,20 +2655,19 @@ endif
 !fluid properties
     kappa_f = poroelastcoef(1,2,material)
     denst_f = density(2,material)
+    eta_f = poroelastcoef(2,2,material)
 !frame properties
     mu_fr = poroelastcoef(2,3,material)
     kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
-    denst =  (1.d0 - phi)*denst_s + phi*denst_f
 !Biot coefficients for the input phi
       D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
       H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
       C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
       M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
-! Approximated velocities (no viscous dissipation)
-      afactor = denst - phi/tort*denst_f
-      bfactor = H_biot + phi*denst/(tort*denst_f)*M_biot - 2.d0*phi/tort*C_biot
-      cfactor = phi/(tort*denst_f)*(H_biot*M_biot - C_biot*C_biot)
-      cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
+
+    call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
+             tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,TURN_VISCATTENUATION_ON)
+
     cpIloc = sqrt(cpIsquare)
    else
     lambdaplus2mu  = poroelastcoef(3,1,material)
