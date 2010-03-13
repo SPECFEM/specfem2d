@@ -32,7 +32,7 @@ freq0                           =  10            # frequency for viscous attenua
 p_sv                            = .true.         # set the type of calculation (P-SV or SH/membrane waves)
 
 # absorbing boundaries parameters
-absorbing_conditions            = .true.	 # absorbing boundary active or not
+absorbing_conditions            = .false.	 # absorbing boundary active or not
 absorbbottom                    = .true.         
 absorbright                     = .true.
 absorbtop                       = .false.

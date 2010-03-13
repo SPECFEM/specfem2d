@@ -42,8 +42,8 @@
 !
 !========================================================================
 
-subroutine gmat01(density_array,porosity_array,tortuosity_array,aniso_array,permeability,poroelastcoef,&
-     numat,myrank,ipass,Qp_array,Qs_array)
+  subroutine gmat01(density_array,porosity_array,tortuosity_array,aniso_array,permeability,poroelastcoef,&
+                    numat,myrank,ipass,Qp_array,Qs_array,freq0,Q0,f0,TURN_VISCATTENUATION_ON)
 
   ! read properties of a 2D isotropic or anisotropic linear elastic element
 
@@ -67,7 +67,9 @@ subroutine gmat01(density_array,porosity_array,tortuosity_array,aniso_array,perm
   double precision val1,val2,val3,val4,val5,val6
   double precision val7,val8,val9,val10,val11,val12,val0
   double precision ::  c11,c13,c15,c33,c35,c55 
-  double precision afactor,bfactor,cfactor,D_biot,H_biot,C_biot,M_biot,density_bar
+  double precision D_biot,H_biot,C_biot,M_biot
+  double precision f0,Q0,freq0,w_c
+  logical  TURN_VISCATTENUATION_ON
 
   !
   !---- loop over the different material sets
@@ -190,14 +192,9 @@ subroutine gmat01(density_array,porosity_array,tortuosity_array,aniso_array,perm
         H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
         C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
         M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
-        ! Approximated velocities (no viscous dissipation)
-        density_bar = (1.d0 - phi)*density(1) + phi*density(2)
-        afactor = density_bar - phi/tortuosity*density(2)
-        bfactor = H_biot + phi*density_bar/(tortuosity*density(2))*M_biot - 2.d0*phi/tortuosity*C_biot
-        cfactor = phi/(tortuosity*density(2))*(H_biot*M_biot - C_biot*C_biot)
-        cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
-        cpIIsquare = (bfactor - sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
-        cssquare = val11/afactor
+
+      call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
+             tortuosity,density(1),density(2),eta_f,val4,f0,freq0,Q0,w_c,TURN_VISCATTENUATION_ON)
 
         porosity_array(n) = val2
         tortuosity_array(n) = val3
@@ -296,7 +293,7 @@ subroutine gmat01(density_array,porosity_array,tortuosity_array,aniso_array,perm
            write(iout,700) density(2),kappa_f,eta_f
            write(iout,800) lambda_fr,mu_fr,kappa_fr,porosity_array(n),tortuosity_array(n),&
                 permeability(1,n),permeability(2,n),permeability(3,n),Qs
-           write(iout,900) D_biot,H_biot,C_biot,M_biot
+           write(iout,900) D_biot,H_biot,C_biot,M_biot,w_c
         endif
      endif
 
@@ -381,13 +378,14 @@ subroutine gmat01(density_array,porosity_array,tortuosity_array,aniso_array,perm
        'Permeability zz component. . . . . . . . . . =',1pe15.8,/5x,&
        'Qs_attenuation. . . . . . . . . . . .(Qs) =',1pe15.8)
 
-900 format(//5x,'-------------------------------',/5x, &
-       '-- Biot coefficients --',/5x, &
-       '-------------------------------',/5x, &
-       'D. . . . . . . . =',1pe15.8,/5x, &
-       'H. . . . . . . . =',1pe15.8,/5x, &
-       'C. . . . . . . . =',1pe15.8,/5x, &
-       'M. . . . . . . . =',1pe15.8)
+900   format(//5x,'-------------------------------',/5x, &
+         '-- Biot coefficients --',/5x, &
+         '-------------------------------',/5x, &
+         'D. . . . . . . . =',1pe15.8,/5x, &
+         'H. . . . . . . . =',1pe15.8,/5x, &
+         'C. . . . . . . . =',1pe15.8,/5x, &
+         'M. . . . . . . . =',1pe15.8,/5x, &
+         'characteristic freq =',1pe15.8)
 
 end subroutine gmat01
 

@@ -70,7 +70,7 @@ FLAGS_CHECK = $(FLAGS_NOCHECK)
 
 # GNU gfortran
 #F90 = gfortran
-#F90 = mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
+##F90 = mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
 #CC = gcc
 ##FLAGS_NOCHECK = -O3 -march=opteron -m64 -mfpmath=sse,387
 #FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O3 -pedantic -pedantic-errors -Wunused -Waliasing -Wampersand -Wline-truncation -Wsurprising -Wunderflow -fno-trapping-math # -mcmodel=medium
@@ -99,7 +99,7 @@ OBJS_MESHFEM2D = $O/part_unstruct.o $O/meshfem2D.o $O/read_value_parameters.o $O
 
 OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/enforce_acoustic_free_surface.o\
         $O/compute_forces_acoustic.o $O/compute_forces_elastic.o\
-        $O/compute_forces_solid.o $O/compute_forces_fluid.o\
+        $O/compute_forces_solid.o $O/compute_forces_fluid.o $O/get_poroelastic_velocities.o\
         $O/lagrange_poly.o $O/gmat01.o $O/gll_library.o $O/plotgll.o $O/define_derivation_matrices.o\
         $O/plotpost.o $O/locate_receivers.o $O/locate_source_force.o $O/compute_gradient_attenuation.o $O/setup_sources_receivers.o\
         $O/specfem2D.o $O/write_seismograms.o $O/define_external_model.o $O/createnum_fast.o $O/createnum_slow.o\
@@ -183,6 +183,9 @@ $O/define_shape_functions.o: define_shape_functions.f90 constants.h
     
 $O/attenuation_model.o: attenuation_model.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/attenuation_model.o attenuation_model.f90
+
+$O/get_poroelastic_velocities.o: get_poroelastic_velocities.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/get_poroelastic_velocities.o get_poroelastic_velocities.f90
     
 ### use optimized compilation option for solver only
 $O/specfem2D.o: specfem2D.F90 constants.h

@@ -5,7 +5,8 @@ SPECFEM2D 6.0: SPECFEM2D facilitates 2D simulations of
         regular and unstructured meshes, generated for example by Cubit
         (cubit.sandia.gov). The solver has adjoint capabilities and can
         calculate finite-frequency sensitivity kernels for acoustic,
-        (an)elastic, and poroelastic media. Finally, the solver can run
+        (an)elastic, and poroelastic media. The package also considers 2D SH 
+        and P-SV wave propagation. Finally, the solver can run
         both in serial and in parallel. See SPECFEM2D
         <http://www.geodynamics.org/cig/software/packages/seismo/specfem2d>
         for the source code.
@@ -272,6 +273,12 @@ Qs = shear quality factor
 Note: for the poroelastic case, mu_s is irrelevant.
 For details on the poroelastic theory see Morency and Tromp, GJI 2008.
 
+get_poroelastic_velocities.f90 allows to compute cpI, cpII, and cs function of
+the source dominant frequency. Notice that for this calculation we use permxx
+and the dominant frequency of the first source , f0(1). Caution if you use
+several sources with different frequencies and if you consider anistropic
+permeability.
+
 --------------------------------------------------
      HOW TO OBTAIN FINITE SENSITIVITY KERNELS
 --------------------------------------------------
@@ -313,7 +320,8 @@ in the OUTPUT_FILES directory.
 Output_files (for example for the elastic case)
 snapshot_rho_kappa_mu*****
 snapshot_rhop_alpha_beta*****
-which are the primary moduli kernels and the phase velocities kernels respectively.
+which are the primary moduli kernels and the phase velocities kernels respectively, in ascii format 
+and at the local level, that is as "kernels(i,j,ispec)".
 
 Note1: At the moment, adjoint simulations do not support anisotropy, attenuation, and viscous damping.
 Note2: You will need S****.AA.BHX.adj, S****.AA.BHY.adj and S****.AA.BHZ.adj

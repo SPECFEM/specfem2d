@@ -60,7 +60,7 @@
                jbegin_left_poro,jend_left_poro,jbegin_right_poro,jend_right_poro,&
                C_k,M_k,NSOURCE,nrec,isolver,save_forward,&
                b_absorb_poro_w_left,b_absorb_poro_w_right,b_absorb_poro_w_bottom,b_absorb_poro_w_top,&
-               nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax)
+               nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,f0,freq0,Q0)
 
 ! compute forces for the fluid poroelastic part
 
@@ -134,6 +134,9 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
   real(kind=CUSTOM_REAL), dimension(NGLLZ) :: wzgll
 
+!
+  double precision :: f0,freq0,Q0,w_c
+
 
 !---
 !--- local variables
@@ -171,7 +174,7 @@
   real(kind=CUSTOM_REAL) :: etal_f,kappal_f,rhol_f
   real(kind=CUSTOM_REAL) :: mul_fr,kappal_fr,phil,tortl,viscodampx,viscodampz
   real(kind=CUSTOM_REAL) :: permlxx,permlxz,permlzz,invpermlxx,invpermlxz,invpermlzz,detk
-  real(kind=CUSTOM_REAL) :: afactor,bfactor,cfactor,D_biot,H_biot,C_biot,M_biot,rhol_bar
+  real(kind=CUSTOM_REAL) :: D_biot,H_biot,C_biot,M_biot,rhol_bar
 
   real(kind=CUSTOM_REAL) :: mul_G,lambdal_G,lambdalplus2mul_G
   real(kind=CUSTOM_REAL) :: cpIsquare,cpIIsquare,cssquare,cpIl,cpIIl,csl
@@ -528,6 +531,7 @@
 ! get poroelastic parameters of current spectral element
     phil = porosity(kmato(ispec))
     tortl = tortuosity(kmato(ispec))
+    permlxx = permeability(1,kmato(ispec))
 !solid properties
     mul_s = poroelastcoef(2,1,kmato(ispec))
     kappal_s = poroelastcoef(3,1,kmato(ispec)) - 4._CUSTOM_REAL*mul_s/3._CUSTOM_REAL
@@ -535,6 +539,7 @@
 !fluid properties
     kappal_f = poroelastcoef(1,2,kmato(ispec))
     rhol_f = density(2,kmato(ispec))
+    etal_f = poroelastcoef(2,2,kmato(ispec))
 !frame properties
     mul_fr = poroelastcoef(2,3,kmato(ispec))
     kappal_fr = poroelastcoef(3,3,kmato(ispec)) - 4._CUSTOM_REAL*mul_fr/3._CUSTOM_REAL
@@ -544,13 +549,9 @@
       H_biot = (kappal_s - kappal_fr)*(kappal_s - kappal_fr)/(D_biot - kappal_fr) + kappal_fr + 4._CUSTOM_REAL*mul_fr/3._CUSTOM_REAL
       C_biot = kappal_s*(kappal_s - kappal_fr)/(D_biot - kappal_fr)
       M_biot = kappal_s*kappal_s/(D_biot - kappal_fr)
-! Approximated velocities (no viscous dissipation)
-      afactor = rhol_bar - phil/tortl*rhol_f
-      bfactor = H_biot + phil*rhol_bar/(tortl*rhol_f)*M_biot - TWO*phil/tortl*C_biot
-      cfactor = phil/(tortl*rhol_f)*(H_biot*M_biot - C_biot*C_biot)
-      cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4._CUSTOM_REAL*afactor*cfactor))/(TWO*afactor)
-      cpIIsquare = (bfactor - sqrt(bfactor*bfactor - 4._CUSTOM_REAL*afactor*cfactor))/(TWO*afactor)
-      cssquare = mul_fr/afactor
+
+    call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mul_fr,phil, &
+             tortl,rhol_s,rhol_f,etal_f,permlxx,f0,freq0,Q0,w_c,TURN_VISCATTENUATION_ON)
 
       cpIl = sqrt(cpIsquare)
       cpIIl = sqrt(cpIIsquare)
