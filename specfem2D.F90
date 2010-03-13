@@ -147,14 +147,17 @@
 ! volume = {5336},
 ! pages = {350-363}}
 !
-! version 6.0.1, Christina Morency, September 2009:
+! version 6.1, Christina Morency and Pieyre Le Loher, March 2010:
 !               - added SH (membrane) waves calculation for elastic media
-!               - fixed some bugs on acoustic kernels
-! version 6.0.0, Christina Morency and Yang Luo, August 2009:
+!               - added support for external fully anisotropic media
+!               - fixed some bugs in acoustic kernels
+!
+! version 6.0, Christina Morency and Yang Luo, August 2009:
 !               - support for poroelastic media
 !               - adjoint method for acoustic/elastic/poroelastic
 !
 ! version 5.2, Dimitri Komatitsch, Nicolas Le Goff and Roland Martin, February 2008:
+!               - support for CUBIT and GiD meshes
 !               - MPI implementation of the code based on domain decomposition
 !                 with METIS or SCOTCH
 !               - general fluid/solid implementation with any number, shape and orientation of
