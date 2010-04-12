@@ -1029,6 +1029,7 @@ endif
   any_acoustic = .false.
   any_elastic = .false.
   any_poroelastic = .false.
+  all_anisotropic = .false.
   anisotropic(:) = .false.
   do ispec = 1,nspec
 
@@ -6772,7 +6773,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
         else if(.not. elastic(ispec) .and. .not. poroelastic(ispec) .and.  seismotype /= 6) then
 
           dxd = vector_field_element(1,i,j)
-          dzd = vector_field_element(2,i,j)
+          dzd = vector_field_element(3,i,j)
 
         else if(seismotype == 6) then
 
