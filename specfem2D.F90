@@ -5065,30 +5065,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     endif
 
 
-! assembling potential_dot_dot for acoustic elements
-#ifdef USE_MPI
-  if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
-    call assemble_MPI_vector_ac(potential_dot_dot_acoustic,npoin, &
-           ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
-           max_interface_size, max_ibool_interfaces_size_ac,&
-           ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
-           tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac, &
-           buffer_recv_faces_vector_ac, my_neighbours)
-  endif
-
-    if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0 .and. isolver == 2) then
-    call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic,npoin, &
-           ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
-           max_interface_size, max_ibool_interfaces_size_ac,&
-           ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
-           tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac, &
-           buffer_recv_faces_vector_ac, my_neighbours)
-  endif
-#endif
-
-
 ! ************************************************************************************
-! ************* multiply by the inverse of the mass matrix and update velocity
+! ************************************ add force source 
 ! ************************************************************************************
 
   if(any_acoustic) then
@@ -5158,6 +5136,35 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     endif ! isolver == 2 adjoint wavefield
 
     endif ! if not using an initial field
+  endif !if(any_acoustic)
+
+
+! assembling potential_dot_dot for acoustic elements
+#ifdef USE_MPI
+  if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
+    call assemble_MPI_vector_ac(potential_dot_dot_acoustic,npoin, &
+           ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
+           max_interface_size, max_ibool_interfaces_size_ac,&
+           ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
+           tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac, &
+           buffer_recv_faces_vector_ac, my_neighbours)
+  endif
+
+    if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0 .and. isolver == 2) then
+    call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic,npoin, &
+           ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
+           max_interface_size, max_ibool_interfaces_size_ac,&
+           ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
+           tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac, &
+           buffer_recv_faces_vector_ac, my_neighbours)
+  endif
+#endif
+
+! ************************************************************************************
+! ************* multiply by the inverse of the mass matrix and update velocity
+! ************************************************************************************
+
+  if(any_acoustic) then
 
     potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
     potential_dot_acoustic = potential_dot_acoustic + deltatover2*potential_dot_dot_acoustic
@@ -5673,30 +5680,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     endif
 
 
-! assembling accel_elastic for elastic elements
-#ifdef USE_MPI
-  if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
-    call assemble_MPI_vector_el(accel_elastic,npoin, &
-      ninterface, ninterface_elastic,inum_interfaces_elastic, &
-      max_interface_size, max_ibool_interfaces_size_el,&
-      ibool_interfaces_elastic, nibool_interfaces_elastic, &
-      tab_requests_send_recv_elastic,buffer_send_faces_vector_el, &
-      buffer_recv_faces_vector_el, my_neighbours)
-  endif
-
-  if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0 .and. isolver == 2) then
-    call assemble_MPI_vector_el(b_accel_elastic,npoin, &
-      ninterface, ninterface_elastic,inum_interfaces_elastic, &
-      max_interface_size, max_ibool_interfaces_size_el,&
-      ibool_interfaces_elastic, nibool_interfaces_elastic, &
-      tab_requests_send_recv_elastic,buffer_send_faces_vector_el, &
-      buffer_recv_faces_vector_el, my_neighbours)
-  endif
-#endif
-
-
 ! ************************************************************************************
-! ************* multiply by the inverse of the mass matrix and update velocity
+! ************************************ add force source 
 ! ************************************************************************************
 
   if(any_elastic) then
@@ -5768,7 +5753,35 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     enddo ! do i_source=1,NSOURCE
 
     endif ! if not using an initial field
+  endif !if(any_elastic)
 
+! assembling accel_elastic for elastic elements
+#ifdef USE_MPI
+  if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
+    call assemble_MPI_vector_el(accel_elastic,npoin, &
+      ninterface, ninterface_elastic,inum_interfaces_elastic, &
+      max_interface_size, max_ibool_interfaces_size_el,&
+      ibool_interfaces_elastic, nibool_interfaces_elastic, &
+      tab_requests_send_recv_elastic,buffer_send_faces_vector_el, &
+      buffer_recv_faces_vector_el, my_neighbours)
+  endif
+
+  if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0 .and. isolver == 2) then
+    call assemble_MPI_vector_el(b_accel_elastic,npoin, &
+      ninterface, ninterface_elastic,inum_interfaces_elastic, &
+      max_interface_size, max_ibool_interfaces_size_el,&
+      ibool_interfaces_elastic, nibool_interfaces_elastic, &
+      tab_requests_send_recv_elastic,buffer_send_faces_vector_el, &
+      buffer_recv_faces_vector_el, my_neighbours)
+  endif
+#endif
+
+
+! ************************************************************************************
+! ************* multiply by the inverse of the mass matrix and update velocity
+! ************************************************************************************
+
+  if(any_elastic) then
     accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic
     accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic
     accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic
@@ -6315,32 +6328,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     endif ! if(coupled_elastic_poro)
 
 
-! assembling accels_proelastic & accelw_poroelastic for poroelastic elements
-#ifdef USE_MPI
-  if (nproc > 1 .and. any_poroelastic .and. ninterface_poroelastic > 0) then
-    call assemble_MPI_vector_po(accels_poroelastic,accelw_poroelastic,npoin, &
-      ninterface, ninterface_poroelastic,inum_interfaces_poroelastic, &
-      max_interface_size, max_ibool_interfaces_size_po,&
-      ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
-      tab_requests_send_recv_poroelastic,buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
-      buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
-      my_neighbours)
-  endif
-
-  if (nproc > 1 .and. any_poroelastic .and. ninterface_poroelastic > 0 .and. isolver == 2) then
-    call assemble_MPI_vector_po(b_accels_poroelastic,b_accelw_poroelastic,npoin, &
-      ninterface, ninterface_poroelastic,inum_interfaces_poroelastic, &
-      max_interface_size, max_ibool_interfaces_size_po,&
-      ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
-      tab_requests_send_recv_poroelastic,buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
-      buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
-      my_neighbours)
-   endif
-#endif
-
-
 ! ************************************************************************************
-! ************* multiply by the inverse of the mass matrix and update velocity
+! ******************************** add force source
 ! ************************************************************************************
 
  if(any_poroelastic) then
@@ -6402,7 +6391,37 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     enddo ! do i_source=1,NSOURCE
 
     endif ! if not using an initial field
+  endif !if(any_poroelastic)
 
+! assembling accels_proelastic & accelw_poroelastic for poroelastic elements
+#ifdef USE_MPI
+  if (nproc > 1 .and. any_poroelastic .and. ninterface_poroelastic > 0) then
+    call assemble_MPI_vector_po(accels_poroelastic,accelw_poroelastic,npoin, &
+      ninterface, ninterface_poroelastic,inum_interfaces_poroelastic, &
+      max_interface_size, max_ibool_interfaces_size_po,&
+      ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
+      tab_requests_send_recv_poroelastic,buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
+      buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
+      my_neighbours)
+  endif
+
+  if (nproc > 1 .and. any_poroelastic .and. ninterface_poroelastic > 0 .and. isolver == 2) then
+    call assemble_MPI_vector_po(b_accels_poroelastic,b_accelw_poroelastic,npoin, &
+      ninterface, ninterface_poroelastic,inum_interfaces_poroelastic, &
+      max_interface_size, max_ibool_interfaces_size_po,&
+      ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
+      tab_requests_send_recv_poroelastic,buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
+      buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
+      my_neighbours)
+   endif
+#endif
+
+
+! ************************************************************************************
+! ************* multiply by the inverse of the mass matrix and update velocity
+! ************************************************************************************
+
+ if(any_poroelastic) then
     accels_poroelastic(1,:) = accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
     accels_poroelastic(2,:) = accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
     velocs_poroelastic = velocs_poroelastic + deltatover2*accels_poroelastic
@@ -6423,8 +6442,9 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
   endif !if(any_poroelastic)
 
-
-!assembling the displacements on the elastic-poro boundaries
+!*******************************************************************************
+!         assembling the displacements on the elastic-poro boundaries
+!*******************************************************************************
     if(coupled_elastic_poro) then
      icount(:)=ZERO
 
