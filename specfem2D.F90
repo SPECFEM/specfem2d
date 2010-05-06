@@ -7372,7 +7372,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
          displs_poroelastic,displw_poroelastic,elastic,poroelastic,vector_field_display, &
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
          numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
-         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,e1,e11, &
+         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,e1,e11, &
          TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
 
   else if(imagetype == 4 .and. .not. p_sv) then
