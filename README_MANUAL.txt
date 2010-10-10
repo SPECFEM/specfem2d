@@ -163,9 +163,11 @@ SPECFEM2D 6.1: SPECFEM2D facilitates 2D simulations of
 Caution:
 --------
 
-The units for the components of a moment tensor source are different
-in SPECFEM2D and in SPECFEM3D_SESAME:
- - in SPECFEM3D_SESAME the moment tensor components are in dyne*cm
+- simulations in poroelastic media are stable in the case of regular meshes composed of quadrangles, but some instabilities have been reported in the case of non regular meshes (i.e., deformed elements); this issue is currently under investigation (note from Dimitri: see remarks made by Abdelaaziz Ezziani about this in 2007)
+
+- the units for the components of a moment tensor source are different
+in SPECFEM2D and in SPECFEM3D:
+ - in SPECFEM3D the moment tensor components are in dyne*cm
  - in SPECFEM2D the moment tensor components are in N*m
 
 How to use SPECFEM2D:
