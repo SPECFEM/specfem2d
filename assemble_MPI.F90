@@ -333,9 +333,6 @@ subroutine assemble_MPI_scalar(array_val1, array_val2, array_val3, array_val4,np
   include 'constants.h'
   include 'mpif.h'
 
-  ! array to assemble
-  real(kind=CUSTOM_REAL), dimension(npoin), intent(inout) :: array_val1,array_val2,array_val3,array_val4
-
   integer, intent(in)  :: npoin
   integer, intent(in)  :: ninterface
   integer, intent(in)  :: max_interface_size
@@ -345,16 +342,19 @@ subroutine assemble_MPI_scalar(array_val1, array_val2, array_val3, array_val4,np
   integer, dimension(ninterface), intent(in)  :: nibool_interfaces_acoustic,nibool_interfaces_elastic, &
                         nibool_interfaces_poroelastic
   integer, dimension(ninterface), intent(in)  :: my_neighbours
+  ! array to assemble
+  real(kind=CUSTOM_REAL), dimension(npoin), intent(inout) :: array_val1,array_val2,array_val3,array_val4
 
-  double precision, dimension(max_ibool_interfaces_size_ac+max_ibool_interfaces_size_el+2*max_ibool_interfaces_size_po, ninterface)  :: &
+  integer  :: ipoin, num_interface
+  integer  :: ier
+  integer  :: i
+  double precision, dimension(max_ibool_interfaces_size_ac+max_ibool_interfaces_size_el+&
+       2*max_ibool_interfaces_size_po, ninterface)  :: &
        buffer_send_faces_scalar, &
        buffer_recv_faces_scalar
   integer  :: msg_status(MPI_STATUS_SIZE)
   integer, dimension(ninterface)  :: msg_requests
-  integer  :: ipoin, num_interface
-  integer  :: ier
 
-  integer  :: i
 
   do num_interface = 1, ninterface
 
@@ -458,9 +458,6 @@ subroutine assemble_MPI_vector_ac(array_val1,npoin, &
   include 'mpif.h'
   include 'precision_mpi.h'
 
-  ! array to assemble
-  real(kind=CUSTOM_REAL), dimension(npoin), intent(inout) :: array_val1
-
   integer, intent(in)  :: npoin
   integer, intent(in)  :: ninterface, ninterface_acoustic
   integer, dimension(ninterface), intent(in)  :: inum_interfaces_acoustic
@@ -473,13 +470,15 @@ subroutine assemble_MPI_vector_ac(array_val1,npoin, &
        buffer_send_faces_vector_ac
   real(kind=CUSTOM_REAL), dimension(max_ibool_interfaces_size_ac,ninterface_acoustic), intent(inout)  :: &
        buffer_recv_faces_vector_ac
+   ! array to assemble
+  real(kind=CUSTOM_REAL), dimension(npoin), intent(inout) :: array_val1
   integer, dimension(ninterface), intent(in) :: my_neighbours
 
   integer  :: ipoin, num_interface, inum_interface
   integer  :: ier
+  integer  :: i
   integer, dimension(MPI_STATUS_SIZE)  :: status_acoustic
 
-  integer  :: i
 
   do inum_interface = 1, ninterface_acoustic
 
@@ -568,9 +567,6 @@ subroutine assemble_MPI_vector_el(array_val2,npoin, &
   include 'mpif.h'
   include 'precision_mpi.h'
 
-  ! array to assemble
-  real(kind=CUSTOM_REAL), dimension(3,npoin), intent(inout) :: array_val2
-
   integer, intent(in)  :: npoin
   integer, intent(in)  :: ninterface, ninterface_elastic
   integer, dimension(ninterface), intent(in)  :: inum_interfaces_elastic
@@ -583,7 +579,9 @@ subroutine assemble_MPI_vector_el(array_val2,npoin, &
        buffer_send_faces_vector_el
   real(CUSTOM_REAL), dimension(max_ibool_interfaces_size_el,ninterface_elastic), intent(inout)  :: &
        buffer_recv_faces_vector_el
- integer, dimension(ninterface), intent(in) :: my_neighbours
+ ! array to assemble
+  real(kind=CUSTOM_REAL), dimension(3,npoin), intent(inout) :: array_val2
+  integer, dimension(ninterface), intent(in) :: my_neighbours
 
   integer  :: ipoin, num_interface, inum_interface
   integer  :: ier
@@ -679,9 +677,6 @@ subroutine assemble_MPI_vector_po(array_val3,array_val4,npoin, &
   include 'mpif.h'
   include 'precision_mpi.h'
 
-  ! array to assemble
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin), intent(inout) :: array_val3,array_val4
-
   integer, intent(in)  :: npoin
   integer, intent(in)  :: ninterface, ninterface_poroelastic
   integer, dimension(ninterface), intent(in)  :: inum_interfaces_poroelastic
@@ -694,7 +689,9 @@ subroutine assemble_MPI_vector_po(array_val3,array_val4,npoin, &
        buffer_send_faces_vector_pos,buffer_send_faces_vector_pow
   real(CUSTOM_REAL), dimension(max_ibool_interfaces_size_po,ninterface_poroelastic), intent(inout)  :: &
        buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow
- integer, dimension(ninterface), intent(in) :: my_neighbours
+! array to assemble
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin), intent(inout) :: array_val3,array_val4
+  integer, dimension(ninterface), intent(in) :: my_neighbours
 
   integer  :: ipoin, num_interface, inum_interface
   integer  :: ier
@@ -777,14 +774,16 @@ subroutine assemble_MPI_vector_po(array_val3,array_val4,npoin, &
 
      ipoin = 0
      do i = 1, nibool_interfaces_poroelastic(num_interface)
-        array_val3(:,ibool_interfaces_poroelastic(i,num_interface)) = array_val3(:,ibool_interfaces_poroelastic(i,num_interface)) + &
+        array_val3(:,ibool_interfaces_poroelastic(i,num_interface)) = &
+             array_val3(:,ibool_interfaces_poroelastic(i,num_interface)) + &
              buffer_recv_faces_vector_pos(ipoin+1:ipoin+2,inum_interface)
         ipoin = ipoin + 2
      end do
 
      ipoin = 0
      do i = 1, nibool_interfaces_poroelastic(num_interface)
-        array_val4(:,ibool_interfaces_poroelastic(i,num_interface)) = array_val4(:,ibool_interfaces_poroelastic(i,num_interface)) + &
+        array_val4(:,ibool_interfaces_poroelastic(i,num_interface)) = &
+             array_val4(:,ibool_interfaces_poroelastic(i,num_interface)) + &
              buffer_recv_faces_vector_pow(ipoin+1:ipoin+2,inum_interface)
         ipoin = ipoin + 2
      end do
