@@ -1,10 +1,14 @@
 
 # title of job, and file that contains interface data
 title                           = Test for M2 UPPA
-interfacesfile                  = interfaces_M2_UPPA_curved.dat
+interfacesfile                  = interfaces_reg1layers.dat
+
+# forward or adjoint simulation
+SIMULATION_TYPE                 = 1   # 1 = forward, 2 = adjoint + kernels
+SAVE_FORWARD                    = .false.  # save the last frame, needed for adjoint simulation
 
 # data concerning mesh, when generated using third-party app (more info in README)
-read_external_mesh              = .true.
+read_external_mesh              = .false.
 mesh_file                       = ./DATA/unstructured_fluide_solide_test/mesh          # file containing the mesh
 nodes_coords_file               = ./DATA/unstructured_fluide_solide_test/nodes_coords  # file containing the nodes coordinates
 materials_file                  = ./DATA/unstructured_fluide_solide_test/mat           # file containing the material number for each element
@@ -19,8 +23,8 @@ partitioning_strategy          = 01110 #b{strat=m{asc=g,low=g,rat=1.0,type=h,ver
                                                  
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
-xmax                            = 4000.d0        # abscissa of right side of the model
-nx                              = 80             # number of elements along X
+xmax                            = 10.d3        # abscissa of right side of the model
+nx                              = 100             # number of elements along X
 ngnod                           = 4              # number of control nodes per element (4 or 9)
 initialfield                    = .false.        # use a plane wave as source or not
 add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
@@ -32,16 +36,15 @@ freq0                           =  10            # frequency for viscous attenua
 p_sv                            = .true.         # set the type of calculation (P-SV or SH/membrane waves)
 
 # absorbing boundaries parameters
-absorbing_conditions            = .false.	 # absorbing boundary active or not
+absorbing_conditions            = .true.	 # absorbing boundary active or not
 absorbbottom                    = .true.         
 absorbright                     = .true.
 absorbtop                       = .false.
 absorbleft                      = .true.
 
 # time step parameters
-nt                              = 18000           # total number of time steps
-deltat                          = 0.25d-3          # duration of a time step
-isolver                         = 1              # type of simulation 1=forward 2=adjoint + kernels
+nt                              = 4000           # total number of time steps
+deltat                          = 1d-3          # duration of a time step
 
 # source parameters
 NSOURCE                         = 1              # number of sources [source info read in CMTSOLUTION file]
@@ -57,23 +60,22 @@ f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if
 
 # receiver line parameters for seismograms
 seismotype                      = 1              # record 1=displ 2=veloc 3=accel 4=pressure
-save_forward                    = .false.        # save the last frame, needed for adjoint simulation
 generate_STATIONS               = .true.         # creates a STATION file in ./DATA
 nreceiverlines                  = 1              # number of receiver lines
 anglerec                        = 0.d0           # angle to rotate components at receivers
 rec_normal_to_surface           = .false.        # replace anglerec with the normal to the surface (external mesh and curve file needed, anglerec above ignored)
 
 # first receiver line
-nrec                            = 100             # number of receivers
-xdeb                            = 0.           # first receiver x in meters
-zdeb                            = -30.          # first receiver z in meters
+nrec                            = 1             # number of receivers
+xdeb                            = 7500.           # first receiver x in meters
+zdeb                            = 2500.          # first receiver z in meters
 xfin                            = 13000.          # last receiver x in meters (ignored if onlyone receiver)
 zfin                            = -30.          # last receiver z in meters (ignored if onlyone receiver)
 enreg_surf                      = .false.         # receivers inside the medium or at the surface
 
 # display parameters
-NTSTEP_BETWEEN_OUTPUT_INFO      = 2000            # display frequency in time steps
-output_postscript_snapshot      = .true.         # output Postscript snapshot of the results
+NTSTEP_BETWEEN_OUTPUT_INFO      = 200            # display frequency in time steps
+output_postscript_snapshot      = .false.         # output Postscript snapshot of the results
 output_color_image              = .true.         # output color image of the results
 imagetype                       = 1              # display 1=displ 2=veloc 3=accel 4=pressure
 cutsnaps                        = 1.             # minimum amplitude in % for snapshots
@@ -88,21 +90,11 @@ gnuplot                         = .false.        # generate a GNUPLOT file for t
 outputgrid                      = .false.        # save the grid in a text file or not
 
 # velocity and density models
-nbmodels                        = 5              # nb of different models
+nbmodels                        = 1              # nb of different models
 # define models as I: (model_number,1,rho,Vp,Vs,0,0,Qp,Qs) or II: (model_number,2,rho,c11,c13,c15,c33,c35,c55) or III: (model_number,3,rhos,rhof,phi,c,kxx,kxz,kzz,Ks,Kf,Kfr,etaf,mufr,Qs).
 # For istropic elastic/acoustic material use I and set Vs to zero to make a given model acoustic, for anisotropic elastic use II, 
 # and for isotropic poroelastic material use III. The mesh can contain acoustic, elastic, & poroelastic models simultaneously
-1 1 1000.d0 1500.d0 0.0d0 0 0 10.d0 10.d0 0 0 0 0 0 0
-2 1 2500.d0 5000.d0 2500.0d0  0 0 10.d0 10.d0 0 0 0 0 0 0
-3 1 2200.d0 2500.d0 1443.375d0 0 0 10.d0 10.d0 0 0 0 0 0 0
-4 3 2200.d0 786.3d0  0.4 2.0 1d-11 0.0 1d-11 5.341d9 2d9 3d9 0.0d-4 3.204d9 10.d0
-5 2 2500.d0 169.d9 122.d9 0.d0 169.d9 0.d0 75.3d9 0 0 0 0 0 0
-#4 1 2200.d0 2200.d0 1343.375d0 0 0 10.d0 10.d0 0 0 0 0 0 0
+1 1 2500.d0 3500.d0 2400.d0 0 0 10.d0 10.d0 0 0 0 0 0 0
 # define the different regions of the model in the (nx,nz) spectral element mesh
-nbregions                       = 6              # nb of regions and model number for each
-1 80  1 20 1
-1 80 21 40 4
-1 80 41 60 3
-60 80 21 40 4
-30 40 50 60 2
-35 40 50 60 5
+nbregions                       = 1              # nb of regions and model number for each
+1 100  1 80 1

@@ -286,8 +286,8 @@ program meshfem2D
   double precision, external :: value_spline
 
   ! flag to save the last frame for kernels calculation purpose and type of simulation
-  logical :: save_forward
-  integer :: isolver
+  logical :: SAVE_FORWARD
+  integer :: SIMULATION_TYPE
 
   ! flag to indicate an isotropic elastic/acoustic material
   integer, parameter :: ISOTROPIC_MATERIAL = 1
@@ -400,6 +400,10 @@ program meshfem2D
   write(*,*) title
   print *
 
+  ! read type of simulation
+  call read_value_integer(IIN,IGNORE_JUNK,SIMULATION_TYPE)
+  call read_value_logical(IIN,IGNORE_JUNK,SAVE_FORWARD)
+  
   ! read info about external mesh
   call read_value_logical(IIN,IGNORE_JUNK,read_external_mesh)
   call read_value_string(IIN,IGNORE_JUNK,mesh_file)
@@ -589,7 +593,6 @@ program meshfem2D
   ! read time step parameters
   call read_value_integer(IIN,IGNORE_JUNK,nt)
   call read_value_double_precision(IIN,IGNORE_JUNK,deltat)
-  call read_value_integer(IIN,IGNORE_JUNK,isolver)
 
   ! read source parameters
   call read_value_integer(IIN,IGNORE_JUNK,NSOURCE)
@@ -674,7 +677,6 @@ program meshfem2D
 
   ! read receiver line parameters
   call read_value_integer(IIN,IGNORE_JUNK,seismotype)
-  call read_value_logical(IIN,IGNORE_JUNK,save_forward)
   call read_value_logical(IIN,IGNORE_JUNK,generate_STATIONS)
   call read_value_integer(IIN,IGNORE_JUNK,nreceiverlines)
   call read_value_double_precision(IIN,IGNORE_JUNK,anglerec)
@@ -1507,7 +1509,9 @@ program meshfem2D
      write(15,*) 'Title of the simulation'
      write(15,"(a50)") title
 
-
+     write(15,*) 'Type of simulation'
+     write(15,*) SIMULATION_TYPE, SAVE_FORWARD
+  
      call write_glob2loc_nodes_database(15, iproc, npgeo, nodes_coords, glob2loc_nodes_nparts, glob2loc_nodes_parts, &
           glob2loc_nodes, nnodes, 1)
 
@@ -1537,8 +1541,8 @@ program meshfem2D
      write(15,*) 'initialfield add_Bielak_conditions'
      write(15,*) initialfield,add_Bielak_conditions
 
-     write(15,*) 'seismotype imagetype save_forward'
-     write(15,*) seismotype,imagetype,save_forward
+     write(15,*) 'seismotype imagetype'
+     write(15,*) seismotype,imagetype
 
      write(15,*) 'assign_external_model outputgrid TURN_ATTENUATION_ON'
      write(15,*) assign_external_model,outputgrid,TURN_ATTENUATION_ON
@@ -1549,8 +1553,8 @@ program meshfem2D
      write(15,*) 'p_sv'
      write(15,*) p_sv
 
-     write(15,*) 'nt deltat isolver'
-     write(15,*) nt,deltat,isolver
+     write(15,*) 'nt deltat'
+     write(15,*) nt,deltat
      write(15,*) 'NSOURCE'
      write(15,*) NSOURCE
 

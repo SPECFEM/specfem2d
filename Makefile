@@ -62,20 +62,20 @@ O = obj
 # NOTE FOR USERS OF IFORT 10.0 AND ABOVE :
 # Use of option -heap-arrays <size> can be required, depending on the size of the simulation. 
 # Another workaround can be to increase your stack size (ulimit -s).
-F90 = ifort
-#F90 = mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
-CC = gcc
-FLAGS_NOCHECK=-O3 -xP -override-limits -vec-report0 -e95 -std95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -fpe3 -ftz
-FLAGS_CHECK = $(FLAGS_NOCHECK)
-
-# GNU gfortran
-#F90 = gfortran
+#F90 = ifort
 ##F90 = mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
 #CC = gcc
+#FLAGS_NOCHECK=-O3 -xP -override-limits -vec-report0 -e95 -std95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -fpe3 -ftz
+#FLAGS_CHECK = $(FLAGS_NOCHECK)
+
+# GNU gfortran
+F90 = gfortran
+##F90 = mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
+CC = gcc
 ##FLAGS_NOCHECK = -O3 -march=opteron -m64 -mfpmath=sse,387
-#FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O3 -pedantic -pedantic-errors -Wunused -Waliasing -Wampersand -Wline-truncation -Wsurprising -Wunderflow -fno-trapping-math # -mcmodel=medium
+FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O3 -pedantic -pedantic-errors -Wunused -Waliasing -Wampersand -Wline-truncation -Wsurprising -Wunderflow -fno-trapping-math # -mcmodel=medium
 ##FLAGS_NOCHECK = -std=f95 -fimplicit-none -frange-check -O3 -fmax-errors=10 -pedantic -pedantic-errors -Wunused -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math # -mcmodel=medium
-#FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
+FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
 
 # IBM
 #####F90 = xlf_r

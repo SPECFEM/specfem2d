@@ -57,7 +57,7 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
      deltat,coord,add_Bielak_conditions, &
      x0_source, z0_source, A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset,f0, &
      v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot,&
-     nleft,nright,nbot,over_critical_angle,NSOURCE,nrec,isolver,save_forward,b_absorb_elastic_left,&
+     nleft,nright,nbot,over_critical_angle,NSOURCE,nrec,SIMULATION_TYPE,SAVE_FORWARD,b_absorb_elastic_left,&
      b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top,nspec_xmin,nspec_xmax,&
      nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,mu_k,kappa_k)
 
@@ -72,7 +72,7 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
   integer :: npoin,nspec,myrank,nelemabs,numat,it,NSTEP
   integer, dimension(NSOURCE) :: ispec_selected_source,is_proc_source,source_type
 
-  integer :: nrec,isolver
+  integer :: nrec,SIMULATION_TYPE
   integer, dimension(nrec) :: ispec_selected_rec,which_proc_receiver
   integer :: nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax
   integer, dimension(nspec_xmin) :: ib_xmin
@@ -82,7 +82,7 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
 
   logical :: anyabs,assign_external_model,initialfield,TURN_ATTENUATION_ON,add_Bielak_conditions
 
-  logical :: save_forward
+  logical :: SAVE_FORWARD
 
   double precision :: deltatcube,deltatfourth,twelvedeltat,fourdeltatsquare
   double precision, dimension(NSOURCE) :: angleforce
@@ -198,7 +198,7 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
      tempx2(:,:) = ZERO
      tempy2(:,:) = ZERO
      tempz2(:,:) = ZERO
-     if(isolver ==2)then
+     if(SIMULATION_TYPE ==2)then
         b_tempx1(:,:) = ZERO
         b_tempy1(:,:) = ZERO
         b_tempz1(:,:) = ZERO
@@ -240,7 +240,7 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
               duy_dgamma = ZERO
               duz_dgamma = ZERO
 
-              if(isolver == 2) then ! Adjoint calculation, backward wavefield
+              if(SIMULATION_TYPE == 2) then ! Adjoint calculation, backward wavefield
                  b_dux_dxi = ZERO
                  b_duy_dxi = ZERO
                  b_duz_dxi = ZERO
@@ -260,7 +260,7 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
                  duy_dgamma = duy_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
                  duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
 
-                 if(isolver == 2) then ! Adjoint calculation, backward wavefield
+                 if(SIMULATION_TYPE == 2) then ! Adjoint calculation, backward wavefield
                     b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
                     b_duy_dxi = b_duy_dxi + b_displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
                     b_duz_dxi = b_duz_dxi + b_displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
@@ -285,7 +285,7 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
               duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
               duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
-              if(isolver == 2) then ! Adjoint calculation, backward wavefield
+              if(SIMULATION_TYPE == 2) then ! Adjoint calculation, backward wavefield
                  b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
                  b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
 
@@ -341,7 +341,7 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
                  sigma_zy = mul_relaxed*duy_dzl
                  sigma_zz = lambdalplus2mul_relaxed*duz_dzl + lambdal_relaxed*dux_dxl
 
-                 if(isolver == 2) then ! Adjoint calculation, backward wavefield
+                 if(SIMULATION_TYPE == 2) then ! Adjoint calculation, backward wavefield
                     b_sigma_xx = lambdalplus2mul_relaxed*b_dux_dxl + lambdal_relaxed*b_duz_dzl
                     b_sigma_xy = mul_relaxed*b_duy_dxl
                     b_sigma_xz = mul_relaxed*(b_duz_dxl + b_dux_dzl)
@@ -377,7 +377,7 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
               endif
 
               ! Pre-kernels calculation
-              if(isolver == 2) then
+              if(SIMULATION_TYPE == 2) then
                  iglob = ibool(i,j,ispec)
                  if(p_sv)then !P-SV waves
                     dsxx =  dux_dxl
@@ -408,7 +408,7 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
               !tempy2(i,j) = wxgll(i)*jacobianl*(sigma_xy*gammaxl+sigma_zy*gammazl)
               tempz2(i,j) = wxgll(i)*jacobianl*(sigma_xz*gammaxl+sigma_zz*gammazl)
 
-              if(isolver == 2) then ! Adjoint calculation, backward wavefield
+              if(SIMULATION_TYPE == 2) then ! Adjoint calculation, backward wavefield
                  b_tempx1(i,j) = wzgll(j)*jacobianl*(b_sigma_xx*xixl+b_sigma_xz*xizl)
                  !b_tempy1(i,j) = wzgll(j)*jacobianl*(b_sigma_xy*xixl+b_sigma_zy*xizl)
                  b_tempz1(i,j) = wzgll(j)*jacobianl*(b_sigma_xz*xixl+b_sigma_zz*xizl)
@@ -437,7 +437,7 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
            ! accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tempy1(k,j)*hprimewgll_xx(k,i) + tempy2(i,k)*hprimewgll_zz(k,j))
                  accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tempz1(k,j)*hprimewgll_xx(k,i) + tempz2(i,k)*hprimewgll_zz(k,j))
 
-                 if(isolver == 2) then ! Adjoint calculation, backward wavefield
+                 if(SIMULATION_TYPE == 2) then ! Adjoint calculation, backward wavefield
                     b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - &
                          (b_tempx1(k,j)*hprimewgll_xx(k,i) + b_tempx2(i,k)*hprimewgll_zz(k,j))
                     b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - &
@@ -541,14 +541,14 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
                  !           accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
                  accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0)*weight
 
-                 if(save_forward .and. isolver ==1) then
+                 if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
                     if(p_sv)then !P-SV waves
                        b_absorb_elastic_left(1,j,ib_xmin(ispecabs),it) = tx*weight
                        b_absorb_elastic_left(3,j,ib_xmin(ispecabs),it) = tz*weight
                     else !SH (membrane) waves
                        b_absorb_elastic_left(2,j,ib_xmin(ispecabs),it) = ty*weight
                     endif
-                 elseif(isolver == 2) then
+                 elseif(SIMULATION_TYPE == 2) then
                     if(p_sv)then !P-SV waves
                        b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - &
                             b_absorb_elastic_left(1,j,ib_xmin(ispecabs),NSTEP-it+1)
@@ -632,14 +632,14 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
                  accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
                  accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz - traction_z_t0)*weight
 
-                 if(save_forward .and. isolver ==1) then
+                 if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
                     if(p_sv)then !P-SV waves
                        b_absorb_elastic_right(1,j,ib_xmax(ispecabs),it) = tx*weight
                        b_absorb_elastic_right(3,j,ib_xmax(ispecabs),it) = tz*weight
                     else! SH (membrane) waves
                        b_absorb_elastic_right(2,j,ib_xmax(ispecabs),it) = ty*weight
                     endif
-                 elseif(isolver == 2) then
+                 elseif(SIMULATION_TYPE == 2) then
                     if(p_sv)then !P-SV waves
                        b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - &
                             b_absorb_elastic_right(1,j,ib_xmax(ispecabs),NSTEP-it+1)
@@ -729,14 +729,14 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
                  accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
                  accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0)*weight
 
-                 if(save_forward .and. isolver ==1) then
+                 if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
                     if(p_sv)then !P-SV waves
                        b_absorb_elastic_bottom(1,i,ib_zmin(ispecabs),it) = tx*weight
                        b_absorb_elastic_bottom(3,i,ib_zmin(ispecabs),it) = tz*weight
                     else!SH (membrane) waves
                        b_absorb_elastic_bottom(2,i,ib_zmin(ispecabs),it) = ty*weight
                     endif
-                 elseif(isolver == 2) then
+                 elseif(SIMULATION_TYPE == 2) then
                     if(p_sv)then !P-SV waves
                        b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - &
                             b_absorb_elastic_bottom(1,i,ib_zmin(ispecabs),NSTEP-it+1)
@@ -818,14 +818,14 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
                  accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
                  accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz - traction_z_t0)*weight
 
-                 if(save_forward .and. isolver ==1) then
+                 if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
                     if(p_sv)then !P-SV waves
                        b_absorb_elastic_top(1,i,ib_zmax(ispecabs),it) = tx*weight
                        b_absorb_elastic_top(3,i,ib_zmax(ispecabs),it) = tz*weight
                     else!SH (membrane) waves
                        b_absorb_elastic_top(2,i,ib_zmax(ispecabs),it) = ty*weight
                     endif
-                 elseif(isolver == 2) then
+                 elseif(SIMULATION_TYPE == 2) then
                     if(p_sv)then !P-SV waves
                        b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_top(1,i,ib_zmax(ispecabs),NSTEP-it+1)
                        b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_top(3,i,ib_zmax(ispecabs),NSTEP-it+1)
@@ -856,7 +856,7 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
 
               if(.not.p_sv)  call exit_MPI('cannot have moment tensor source in SH (membrane) waves calculation')
 
-              if(isolver == 1) then  ! forward wavefield
+              if(SIMULATION_TYPE == 1) then  ! forward wavefield
                  ! add source array
                  do j=1,NGLLZ
                     do i=1,NGLLX
@@ -877,14 +877,14 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
                             sourcearray(i_source,2,i,j)*source_time_function(i_source,NSTEP-it+1)
                     enddo
                  enddo
-              endif  !endif isolver == 1
+              endif  !endif SIMULATION_TYPE == 1
 
            endif !if(source_type(i_source) == 2)
 
         endif ! if this processor carries the source and the source element is elastic
      enddo ! do i_source=1,NSOURCE
 
-     if(isolver == 2) then   ! adjoint wavefield
+     if(SIMULATION_TYPE == 2) then   ! adjoint wavefield
 
         irec_local = 0
         do irec = 1,nrec
@@ -910,7 +910,7 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
            endif ! if this processor carries the adjoint source and the source element is elastic
         enddo ! irec = 1,nrec
 
-     endif ! if isolver == 2 adjoint wavefield
+     endif ! if SIMULATION_TYPE == 2 adjoint wavefield
 
   endif ! if not using an initial field
 

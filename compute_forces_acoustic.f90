@@ -50,7 +50,7 @@
                vpext,rhoext,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
-               jbegin_left,jend_left,jbegin_right,jend_right,isolver,save_forward,b_absorb_acoustic_left,&
+               jbegin_left,jend_left,jbegin_right,jend_right,SIMULATION_TYPE,SAVE_FORWARD,b_absorb_acoustic_left,&
                b_absorb_acoustic_right,b_absorb_acoustic_bottom,&
                b_absorb_acoustic_top,nspec_xmin,nspec_xmax,&
                nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax)
@@ -61,7 +61,7 @@
 
   include "constants.h"
 
-  integer :: npoin,nspec,nelemabs,numat,it,NSTEP,isolver
+  integer :: npoin,nspec,nelemabs,numat,it,NSTEP,SIMULATION_TYPE
 
   integer :: nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax
   integer, dimension(nspec_xmin) :: ib_xmin
@@ -70,7 +70,7 @@
   integer, dimension(nspec_zmax) :: ib_zmax
 
   logical :: anyabs,assign_external_model
-  logical :: save_forward
+  logical :: SAVE_FORWARD
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
   integer, dimension(nspec) :: kmato
@@ -143,7 +143,7 @@
           dux_dxi = ZERO
           dux_dgamma = ZERO
 
-            if(isolver == 2) then
+            if(SIMULATION_TYPE == 2) then
           b_dux_dxi = ZERO
           b_dux_dgamma = ZERO
             endif
@@ -154,7 +154,7 @@
             dux_dxi = dux_dxi + potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
             dux_dgamma = dux_dgamma + potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
 
-            if(isolver == 2) then
+            if(SIMULATION_TYPE == 2) then
             b_dux_dxi = b_dux_dxi + b_potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
             b_dux_dgamma = b_dux_dgamma + b_potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
             endif
@@ -169,7 +169,7 @@
           dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
           dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
 
-          if(isolver == 2) then
+          if(SIMULATION_TYPE == 2) then
           b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
           b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
           endif
@@ -184,7 +184,7 @@
           tempx1(i,j) = wzgll(j)*jacobianl*(xixl*dux_dxl + xizl*dux_dzl) / rhol
           tempx2(i,j) = wxgll(i)*jacobianl*(gammaxl*dux_dxl + gammazl*dux_dzl) / rhol
 
-            if(isolver == 2) then
+            if(SIMULATION_TYPE == 2) then
           b_tempx1(i,j) = wzgll(j)*jacobianl*(xixl*b_dux_dxl + xizl*b_dux_dzl) /rhol
           b_tempx2(i,j) = wxgll(i)*jacobianl*(gammaxl*b_dux_dxl + gammazl*b_dux_dzl) /rhol
             endif
@@ -206,7 +206,7 @@
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
                            (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
 
-            if(isolver == 2) then
+            if(SIMULATION_TYPE == 2) then
             b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
                            (b_tempx1(k,j)*hprimewgll_xx(k,i) + b_tempx2(i,k)*hprimewgll_zz(k,j))
             endif
@@ -264,9 +264,9 @@
           if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl/rhol
 
-             if(save_forward .and. isolver ==1) then
+             if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
             b_absorb_acoustic_left(j,ib_xmin(ispecabs),it) = potential_dot_acoustic(iglob)*weight/cpl/rhol
-             elseif(isolver == 2) then
+             elseif(SIMULATION_TYPE == 2) then
             b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
                                                b_absorb_acoustic_left(j,ib_xmin(ispecabs),NSTEP-it+1)
              endif
@@ -305,9 +305,9 @@
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl/rhol
 
 
-             if(save_forward .and. isolver ==1) then
+             if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
             b_absorb_acoustic_right(j,ib_xmax(ispecabs),it) = potential_dot_acoustic(iglob)*weight/cpl/rhol
-             elseif(isolver == 2) then
+             elseif(SIMULATION_TYPE == 2) then
             b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
                                               b_absorb_acoustic_right(j,ib_xmax(ispecabs),NSTEP-it+1)
              endif
@@ -349,9 +349,9 @@
           if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl/rhol
 
-             if(save_forward .and. isolver ==1) then
+             if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
             b_absorb_acoustic_bottom(i,ib_zmin(ispecabs),it) = potential_dot_acoustic(iglob)*weight/cpl/rhol
-             elseif(isolver == 2) then
+             elseif(SIMULATION_TYPE == 2) then
             b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
                                                b_absorb_acoustic_bottom(i,ib_zmin(ispecabs),NSTEP-it+1)
              endif
@@ -393,9 +393,9 @@
           if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl/rhol
 
-             if(save_forward .and. isolver ==1) then
+             if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
             b_absorb_acoustic_top(i,ib_zmax(ispecabs),it) = potential_dot_acoustic(iglob)*weight/cpl/rhol
-             elseif(isolver == 2) then
+             elseif(SIMULATION_TYPE == 2) then
             b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
                                                b_absorb_acoustic_top(i,ib_zmax(ispecabs),NSTEP-it+1)
              endif
