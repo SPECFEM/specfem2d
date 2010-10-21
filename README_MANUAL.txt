@@ -236,7 +236,7 @@ Q0 is the quality factor set at the central frequency FREQ0. For more details
 see Morency & Tromp, GJI 2008.
 
 In section "# time step parameters":
-ISOLVER defines the type of simulations
+SIMULATION_TYPE defines the type of simulations
 (1) forward simulation
 (2) adjoint method and kernels calculation
 
@@ -286,11 +286,11 @@ permeability.
 --------------------------------------------------
 
 First: run a forward simulation
-=> isolver = 1
-=> save_forward = .true.
+=> SIMULATION_TYPE = 1
+=> SAVE_FORWARD = .true.
 => seismotype = 1 (we need to save the displacement fields to later on derive the
 adjoint source. Note: if the user forgets it, the program corrects it when reading the proper
-isolver/save_forward combination and a warning message appears in the ouput
+SIMULATION_TYPE/SAVE_FORWARD combination and a warning message appears in the ouput
 file)
 
 Important output files (for example, for the elastic case, P-SV waves)
@@ -316,8 +316,8 @@ when running the adjoint simulation.
 Third: run the adjoint simulation
 Make sure that the adjoint source files absorbing boundaries and last frame files are
 in the OUTPUT_FILES directory.
-=> isolver = 2
-=> save_forward = .false.
+=> SIMULATION_TYPE = 2
+=> SAVE_FORWARD = .false.
 
 Output_files (for example for the elastic case)
 snapshot_rho_kappa_mu*****
