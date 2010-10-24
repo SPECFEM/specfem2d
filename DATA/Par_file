@@ -29,6 +29,7 @@ ngnod                           = 4              # number of control nodes per e
 initialfield                    = .false.        # use a plane wave as source or not
 add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
 assign_external_model           = .false.        # define external earth model or not
+READ_EXTERNAL_SEP_FILE          = .false.        # Read external SEP file from DATA/model_velocity.dat_input, or use routine
 TURN_ATTENUATION_ON             = .false.        # turn attenuation on or off for solid medium
 TURN_VISCATTENUATION_ON         = .false.        # turn viscous attenuation on or off 
 Q0                              =  1             # quality factor for viscous attenuation
@@ -75,7 +76,7 @@ enreg_surf                      = .false.         # receivers inside the medium 
 
 # display parameters
 NTSTEP_BETWEEN_OUTPUT_INFO      = 200            # display frequency in time steps
-output_postscript_snapshot      = .false.         # output Postscript snapshot of the results
+output_postscript_snapshot      = .false.        # output Postscript snapshot of the results
 output_color_image              = .true.         # output color image of the results
 imagetype                       = 1              # display 1=displ 2=veloc 3=accel 4=pressure
 cutsnaps                        = 1.             # minimum amplitude in % for snapshots
@@ -88,6 +89,7 @@ subsamp                         = 1              # subsampling of color snapshot
 sizemax_arrows                  = 1.d0           # maximum size of arrows on vector plots in cm
 gnuplot                         = .false.        # generate a GNUPLOT file for the grid
 outputgrid                      = .false.        # save the grid in a text file or not
+OUTPUT_ENERGY                   = .false.        # compute and output acoustic and elastic energy (slows down the code significantly)
 
 # velocity and density models
 nbmodels                        = 1              # nb of different models
