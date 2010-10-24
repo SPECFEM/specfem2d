@@ -44,7 +44,7 @@
 
   subroutine createnum_fast(knods,ibool,shape,coorg,npoin,npgeo,nspec,ngnod,myrank,ipass)
 
-! equivalent de la routine "createnum_slow" mais algorithme plus rapide
+! same as subroutine "createnum_slow" but with a faster algorithm
 
   implicit none
 
@@ -57,7 +57,7 @@
 
   integer i,j
 
-! tableaux supplementaires pour cette version rapide
+! additional arrays needed for this fast version
   integer, dimension(:), allocatable :: loc,ind,ninseg,iglob,iwork
   logical, dimension(:), allocatable :: ifseg
   double precision, dimension(:), allocatable :: xp,yp,work
