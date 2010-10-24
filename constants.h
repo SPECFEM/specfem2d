@@ -51,9 +51,6 @@
 
 !--- beginning of Nicolas Le Goff's constants for an unstructured CUBIT/METIS/SCOTCH mesh
 
-! number of nodes per element
-  integer, parameter :: ESIZE = 4
-
 ! maximum number of neighbors per element
   integer, parameter :: max_neighbors = 40
 
@@ -91,8 +88,9 @@
   integer, parameter :: ITOP = 3
   integer, parameter :: ILEFT = 4
 
-! number of edges of each element
+! number of edges and corners of each element
   integer, parameter :: NEDGES = 4
+  integer, parameter :: NCORNERS = 4
 
 ! a few useful constants
   double precision, parameter :: ZERO = 0.d0,ONE = 1.d0

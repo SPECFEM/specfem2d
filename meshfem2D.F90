@@ -479,7 +479,7 @@ program meshfem2D
   call read_value_logical(IIN,IGNORE_JUNK,p_sv)
 
   if ( read_external_mesh ) then
-     call read_mesh(mesh_file, nelmnts, elmnts, nnodes, num_start)
+     call read_external_mesh_file(mesh_file, nelmnts, elmnts, nnodes, num_start, ngnod)
 
   else
      ! get interface data from external file to count the spectral elements along Z
@@ -1346,14 +1346,17 @@ program meshfem2D
   !*****************************
   ! partitioning
   !*****************************
+
   allocate(part(0:nelmnts-1))
 
-  ! if ngnod == 9, we work on a subarray of elmnts, which represents the elements with for nodes only
   ! construction of the graph
+
+  ! if ngnod == 9, we work on a subarray of elements that represents the elements with four nodes (four corners) only
+  ! because the adjacency of the mesh elements can be entirely determined from the knowledge of the four corners only
   if ( ngnod == 9 ) then
-     allocate(elmnts_bis(0:ESIZE*nelmnts-1))
+     allocate(elmnts_bis(0:NCORNERS*nelmnts-1))
      do i = 0, nelmnts-1
-        elmnts_bis(i*esize:i*esize+esize-1) = elmnts(i*ngnod:i*ngnod+esize-1)
+        elmnts_bis(i*NCORNERS:i*NCORNERS+NCORNERS-1) = elmnts(i*ngnod:i*ngnod+NCORNERS-1)
      enddo
 
      if ( nproc > 1 ) then
