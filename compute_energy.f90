@@ -57,6 +57,8 @@
 
   include "constants.h"
 
+  integer :: nspec,npoin,numat
+
 ! vector field in an element
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLX) :: vector_field_element
 
@@ -70,8 +72,6 @@
   real(kind=CUSTOM_REAL), dimension(npoin) :: potential_dot_acoustic,potential_dot_dot_acoustic
 
   logical :: TURN_ATTENUATION_ON
-
-  integer :: nspec,npoin,numat
 
   integer :: it
   double precision :: t0,deltat

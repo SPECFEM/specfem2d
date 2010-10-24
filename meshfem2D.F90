@@ -403,7 +403,7 @@ program meshfem2D
   ! read type of simulation
   call read_value_integer(IIN,IGNORE_JUNK,SIMULATION_TYPE)
   call read_value_logical(IIN,IGNORE_JUNK,SAVE_FORWARD)
-  
+
   ! read info about external mesh
   call read_value_logical(IIN,IGNORE_JUNK,read_external_mesh)
   call read_value_string(IIN,IGNORE_JUNK,mesh_file)
@@ -1511,7 +1511,7 @@ program meshfem2D
 
      write(15,*) 'Type of simulation'
      write(15,*) SIMULATION_TYPE, SAVE_FORWARD
-  
+
      call write_glob2loc_nodes_database(15, iproc, npgeo, nodes_coords, glob2loc_nodes_nparts, glob2loc_nodes_parts, &
           glob2loc_nodes, nnodes, 1)
 
