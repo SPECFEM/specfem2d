@@ -50,7 +50,7 @@ subroutine read_external_model(any_acoustic,any_elastic,any_poroelastic, &
                 inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent, &
                 inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,&
                 coord,kmato,myrank,rhoext,vpext,vsext, &
-                Qp_attenuationext,Qs_attenuationext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext)
+                Qp_attenuationext,Qs_attenuationext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,READ_EXTERNAL_SEP_FILE)
 
   implicit none
   include "constants.h"
@@ -63,7 +63,7 @@ integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
 double precision, dimension(NDIM,npoin) :: coord
 
 ! Material properties
-logical :: any_acoustic,any_elastic,any_poroelastic
+logical :: any_acoustic,any_elastic,any_poroelastic,READ_EXTERNAL_SEP_FILE
 integer, dimension(nspec) :: kmato
 logical, dimension(nspec) :: elastic,poroelastic
 double precision, dimension(NGLLX,NGLLZ,nspec) :: rhoext,vpext,vsext
@@ -85,7 +85,7 @@ integer :: i,j,ispec,iglob
 double precision :: previous_vsext
 double precision :: tmp1, tmp2,tmp3
 
-if(READ_EXTERNAL_MODEL_FILE) then
+if(READ_EXTERNAL_SEP_FILE) then
         write(IOUT,*)
         write(IOUT,*) '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
         write(IOUT,*) 'Assigning external velocity and density model (elastic and/or acoustic)...'

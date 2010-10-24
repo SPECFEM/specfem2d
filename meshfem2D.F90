@@ -271,7 +271,7 @@ program meshfem2D
 
   double precision, dimension(:), allocatable :: xdeb,zdeb,xfin,zfin
 
-  logical interpol,gnuplot,assign_external_model,outputgrid
+  logical interpol,gnuplot,assign_external_model,outputgrid,OUTPUT_ENERGY,READ_EXTERNAL_SEP_FILE
   logical abstop,absbottom,absleft,absright,any_abs
   logical meshvect,initialfield,modelvect,boundvect,add_Bielak_conditions
   logical TURN_ATTENUATION_ON,TURN_VISCATTENUATION_ON
@@ -467,6 +467,7 @@ program meshfem2D
   call read_value_logical(IIN,IGNORE_JUNK,initialfield)
   call read_value_logical(IIN,IGNORE_JUNK,add_Bielak_conditions)
   call read_value_logical(IIN,IGNORE_JUNK,assign_external_model)
+  call read_value_logical(IIN,IGNORE_JUNK,READ_EXTERNAL_SEP_FILE)
   call read_value_logical(IIN,IGNORE_JUNK,TURN_ATTENUATION_ON)
 
   ! read viscous attenuation parameters (poroelastic media)
@@ -720,6 +721,7 @@ program meshfem2D
   call read_value_double_precision(IIN,IGNORE_JUNK,sizemax_arrows)
   call read_value_logical(IIN,IGNORE_JUNK,gnuplot)
   call read_value_logical(IIN,IGNORE_JUNK,outputgrid)
+  call read_value_logical(IIN,IGNORE_JUNK,OUTPUT_ENERGY)
 
   ! can use only one point to display lower-left corner only for interpolated snapshot
   if(pointsdisp < 3) then
@@ -1544,8 +1546,11 @@ program meshfem2D
      write(15,*) 'seismotype imagetype'
      write(15,*) seismotype,imagetype
 
-     write(15,*) 'assign_external_model outputgrid TURN_ATTENUATION_ON'
-     write(15,*) assign_external_model,outputgrid,TURN_ATTENUATION_ON
+     write(15,*) 'assign_external_model READ_EXTERNAL_SEP_FILE'
+     write(15,*) assign_external_model,READ_EXTERNAL_SEP_FILE
+
+     write(15,*) 'outputgrid OUTPUT_ENERGY TURN_ATTENUATION_ON'
+     write(15,*) outputgrid,OUTPUT_ENERGY,TURN_ATTENUATION_ON
 
      write(15,*) 'TURN_VISCATTENUATION_ON Q0 freq0'
      write(15,*) TURN_VISCATTENUATION_ON,Q0,freq0

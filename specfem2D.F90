@@ -346,7 +346,7 @@
 
   logical interpol,meshvect,modelvect,boundvect,assign_external_model,initialfield, &
     outputgrid,gnuplot,TURN_ATTENUATION_ON,output_postscript_snapshot,output_color_image, &
-    plot_lowerleft_corner_only,add_Bielak_conditions
+    plot_lowerleft_corner_only,add_Bielak_conditions,OUTPUT_ENERGY,READ_EXTERNAL_SEP_FILE
 
   double precision :: cutsnaps,sizemax_arrows,anglerec,xirec,gammarec
 
@@ -776,7 +776,10 @@
   endif
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) assign_external_model,outputgrid,TURN_ATTENUATION_ON
+  read(IIN,*) assign_external_model,READ_EXTERNAL_SEP_FILE
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) outputgrid,OUTPUT_ENERGY,TURN_ATTENUATION_ON
 
   read(IIN,"(a80)") datlin
   read(IIN,*) TURN_VISCATTENUATION_ON,Q0,freq0
@@ -789,7 +792,8 @@
     write(IOUT,200) npgeo,NDIM
     write(IOUT,600) NTSTEP_BETWEEN_OUTPUT_INFO,colors,numbers
     write(IOUT,700) seismotype,anglerec
-    write(IOUT,750) initialfield,add_Bielak_conditions,assign_external_model,TURN_ATTENUATION_ON,outputgrid
+    write(IOUT,750) initialfield,add_Bielak_conditions,assign_external_model,READ_EXTERNAL_SEP_FILE,TURN_ATTENUATION_ON, &
+                        outputgrid,OUTPUT_ENERGY
     write(IOUT,800) imagetype,100.d0*cutsnaps,subsamp
   endif
 
@@ -1754,7 +1758,7 @@ deallocate(weight_gll)
                 inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent, &
                 inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,&
                 coord,kmato,myrank,rhoext,vpext,vsext, &
-                Qp_attenuationext,Qs_attenuationext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext)
+                Qp_attenuationext,Qs_attenuationext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,READ_EXTERNAL_SEP_FILE)
         end if
 
     if(count(anisotropic(:) .eqv. .true.) == nspec) all_anisotropic = .true.
@@ -7681,8 +7685,10 @@ close(1001)
   'Read external initial field. . . . . .(initialfield) = ',l6/5x, &
   'Add Bielak conditions . . . .(add_Bielak_conditions) = ',l6/5x, &
   'Assign external model . . . .(assign_external_model) = ',l6/5x, &
+  'Read external SEP file . . .(READ_EXTERNAL_SEP_FILE) = ',l6/5x, &
   'Turn attenuation on or off. . .(TURN_ATTENUATION_ON) = ',l6/5x, &
-  'Save grid in external file or not. . . .(outputgrid) = ',l6)
+  'Save grid in external file or not. . . .(outputgrid) = ',l6/5x, &
+  'Save a file with total energy or not.(OUTPUT_ENERGY) = ',l6)
 
  800 format(//1x,'C o n t r o l',/1x,13('='),//5x, &
   'Vector display type . . . . . . . . . . .(imagetype) = ',i6/5x, &
