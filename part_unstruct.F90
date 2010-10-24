@@ -257,7 +257,7 @@ contains
 
     allocate(xadj(0:nelmnts))
     xadj(:) = 0
-    allocate(adjncy(0:max_neighbor*nelmnts-1))
+    allocate(adjncy(0:max_neighbors*nelmnts-1))
     adjncy(:) = 0
     allocate(nnodes_elmnts(0:nnodes-1))
     nnodes_elmnts(:) = 0
@@ -296,16 +296,16 @@ contains
 
                 do m = 0, xadj(nodes_elmnts(k+j*nsize))
                    if ( .not.is_neighbour ) then
-                      if ( adjncy(nodes_elmnts(k+j*nsize)*max_neighbor+m) == nodes_elmnts(l+j*nsize) ) then
+                      if ( adjncy(nodes_elmnts(k+j*nsize)*max_neighbors+m) == nodes_elmnts(l+j*nsize) ) then
                          is_neighbour = .true.
 
                       endif
                    endif
                 enddo
                 if ( .not.is_neighbour ) then
-                   adjncy(nodes_elmnts(k+j*nsize)*max_neighbor+xadj(nodes_elmnts(k+j*nsize))) = nodes_elmnts(l+j*nsize)
+                   adjncy(nodes_elmnts(k+j*nsize)*max_neighbors+xadj(nodes_elmnts(k+j*nsize))) = nodes_elmnts(l+j*nsize)
                    xadj(nodes_elmnts(k+j*nsize)) = xadj(nodes_elmnts(k+j*nsize)) + 1
-                   adjncy(nodes_elmnts(l+j*nsize)*max_neighbor+xadj(nodes_elmnts(l+j*nsize))) = nodes_elmnts(k+j*nsize)
+                   adjncy(nodes_elmnts(l+j*nsize)*max_neighbors+xadj(nodes_elmnts(l+j*nsize))) = nodes_elmnts(k+j*nsize)
                    xadj(nodes_elmnts(l+j*nsize)) = xadj(nodes_elmnts(l+j*nsize)) + 1
                 endif
              endif
@@ -318,7 +318,7 @@ contains
        k = xadj(i)
        xadj(i) = nb_edges
        do j = 0, k-1
-          adjncy(nb_edges) = adjncy(i*max_neighbor+j)
+          adjncy(nb_edges) = adjncy(i*max_neighbors+j)
           nb_edges = nb_edges + 1
        enddo
     enddo
@@ -474,7 +474,7 @@ contains
     integer, dimension(0:nelmnts-1), intent(in)  :: part
     integer, dimension(0:esize*nelmnts-1), intent(in)  :: elmnts
     integer, dimension(0:nelmnts), intent(in)  :: xadj
-    integer, dimension(0:max_neighbor*nelmnts-1), intent(in)  :: adjncy
+    integer, dimension(0:max_neighbors*nelmnts-1), intent(in)  :: adjncy
     integer, dimension(:),pointer  :: tab_size_interfaces, tab_interfaces
     integer, intent(out)  :: ninterfaces
     integer, dimension(1:nelmnts), intent(in)  :: num_material
@@ -1184,7 +1184,7 @@ contains
     integer, intent(in)  :: nelmnts, nparts, nb_edges
     integer, intent(inout)  :: edgecut
     integer, dimension(0:nelmnts), intent(in)  :: xadj
-    integer, dimension(0:max_neighbor*nelmnts-1), intent(in)  :: adjncy
+    integer, dimension(0:max_neighbors*nelmnts-1), intent(in)  :: adjncy
     integer, dimension(0:nelmnts-1), intent(in)  :: vwgt
     integer, dimension(0:nb_edges-1), intent(in)  :: adjwgt
     integer, dimension(:), pointer  :: part
@@ -1218,7 +1218,7 @@ contains
     integer, intent(in)  :: nelmnts, nparts, nb_edges
     integer, intent(inout)  :: edgecut
     integer, dimension(0:nelmnts), intent(in)  :: xadj
-    integer, dimension(0:max_neighbor*nelmnts-1), intent(in)  :: adjncy
+    integer, dimension(0:max_neighbors*nelmnts-1), intent(in)  :: adjncy
     integer, dimension(0:nelmnts-1), intent(in)  :: vwgt
     integer, dimension(:), pointer  :: adjwgt
     integer, dimension(:), pointer  :: part
