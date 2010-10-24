@@ -58,7 +58,7 @@ contains
   ! 'num_start' is used to have the numbering of the nodes starting at '0'.
   ! 'nelmnts' is the number of elements, 'nnodes' is the number of nodes in the mesh.
   !-----------------------------------------------
-  subroutine read_mesh(filename, nelmnts, elmnts, nnodes, num_start)
+  subroutine read_external_mesh_file(filename, nelmnts, elmnts, nnodes, num_start, ngnod)
 
     include "constants.h"
 
@@ -67,23 +67,34 @@ contains
     integer, intent(out)  :: nnodes
     integer, dimension(:), pointer  :: elmnts
     integer, intent(out)  :: num_start
+    integer, intent(in)  :: ngnod
 
     integer  :: i
 
     open(unit=990, file=trim(filename), form='formatted' , status='old', action='read')
-    read(990,*) nelmnts
-    allocate(elmnts(0:ESIZE*nelmnts-1))
-    do i = 0, nelmnts-1
-       read(990,*) elmnts(i*ESIZE), elmnts(i*ESIZE+1), elmnts(i*ESIZE+2), elmnts(i*ESIZE+3)
 
+    read(990,*) nelmnts
+
+    allocate(elmnts(0:ngnod*nelmnts-1))
+
+    do i = 0, nelmnts-1
+      if(ngnod == 4) then
+        read(990,*) elmnts(i*ngnod), elmnts(i*ngnod+1), elmnts(i*ngnod+2), elmnts(i*ngnod+3)
+      else if(ngnod == 9) then
+        read(990,*) elmnts(i*ngnod), elmnts(i*ngnod+1), elmnts(i*ngnod+2), elmnts(i*ngnod+3), &
+                    elmnts(i*ngnod+4), elmnts(i*ngnod+5), elmnts(i*ngnod+6), elmnts(i*ngnod+7), elmnts(i*ngnod+8)
+      else
+        stop 'error, ngnod should be either 4 or 9 for external meshes'
+      endif
     enddo
+
     close(990)
 
     num_start = minval(elmnts)
     elmnts(:) = elmnts(:) - num_start
     nnodes = maxval(elmnts) + 1
 
-  end subroutine read_mesh
+  end subroutine read_external_mesh_file
 
   !-----------------------------------------------
   ! Read the nodes coordinates and storing it in array 'nodes_coords'
@@ -242,7 +253,7 @@ contains
 
     integer, intent(in)  :: nelmnts
     integer, intent(in)  :: nnodes
-    integer, dimension(0:esize*nelmnts-1), intent(in)  :: elmnts
+    integer, dimension(0:NCORNERS*nelmnts-1), intent(in)  :: elmnts
     integer, dimension(:), pointer  :: xadj
     integer, dimension(:), pointer  :: adjncy
     integer, dimension(:), pointer  :: nnodes_elmnts
@@ -267,8 +278,8 @@ contains
     nb_edges = 0
 
     ! list of elements per node
-    do i = 0, esize*nelmnts-1
-       nodes_elmnts(elmnts(i)*nsize+nnodes_elmnts(elmnts(i))) = i/esize
+    do i = 0, NCORNERS*nelmnts-1
+       nodes_elmnts(elmnts(i)*nsize+nnodes_elmnts(elmnts(i))) = i/NCORNERS
        nnodes_elmnts(elmnts(i)) = nnodes_elmnts(elmnts(i)) + 1
 
     enddo
@@ -281,8 +292,8 @@ contains
              connectivity = 0
              elem_base = nodes_elmnts(k+j*nsize)
              elem_target = nodes_elmnts(l+j*nsize)
-             do n = 1, esize
-                num_node = elmnts(esize*elem_base+n-1)
+             do n = 1, NCORNERS
+                num_node = elmnts(NCORNERS*elem_base+n-1)
                 do m = 0, nnodes_elmnts(num_node)-1
                    if ( nodes_elmnts(m+num_node*nsize) == elem_target ) then
                       connectivity = connectivity + 1
@@ -472,7 +483,7 @@ contains
 
     integer, intent(in)  :: nelmnts, nparts
     integer, dimension(0:nelmnts-1), intent(in)  :: part
-    integer, dimension(0:esize*nelmnts-1), intent(in)  :: elmnts
+    integer, dimension(0:NCORNERS*nelmnts-1), intent(in)  :: elmnts
     integer, dimension(0:nelmnts), intent(in)  :: xadj
     integer, dimension(0:max_neighbors*nelmnts-1), intent(in)  :: adjncy
     integer, dimension(:),pointer  :: tab_size_interfaces, tab_interfaces
@@ -577,9 +588,9 @@ contains
                       ncommon_nodes = 0
                       do num_node = 0, 4-1
                          do num_node_bis = 0, 4-1
-                            if ( elmnts(el*esize+num_node) == elmnts(adjncy(el_adj)*esize+num_node_bis) ) then
+                            if ( elmnts(el*NCORNERS+num_node) == elmnts(adjncy(el_adj)*NCORNERS+num_node_bis) ) then
                                tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+3+ncommon_nodes) &
-                                    = elmnts(el*esize+num_node)
+                                    = elmnts(el*NCORNERS+num_node)
                                ncommon_nodes = ncommon_nodes + 1
                             endif
                          enddo
