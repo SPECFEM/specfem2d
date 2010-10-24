@@ -55,18 +55,12 @@
   integer, parameter :: ESIZE = 4
 
 ! maximum number of neighbors per element
-  integer, parameter :: max_neighbor = 30
+  integer, parameter :: max_neighbors = 40
 
 ! maximum number of elements that can contain the same node
-  integer, parameter :: nsize = 20
+  integer, parameter :: nsize = 40
 
 !--- end of Nicolas Le Goff's constants for an unstructured CUBIT/METIS/SCOTCH mesh
-
-! Read external model from file DATA/model_velocity.dat_input or use routine
-  logical, parameter :: READ_EXTERNAL_MODEL_FILE = .false.
-
-! compute and output acoustic and elastic energy (slows down the code significantly)
-  logical, parameter :: OUTPUT_ENERGY = .false.
 
 ! output file for energy
   integer, parameter :: IOUT_ENERGY = 77
