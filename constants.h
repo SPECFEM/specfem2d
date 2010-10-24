@@ -69,7 +69,7 @@
   logical, parameter :: OUTPUT_ENERGY = .false.
 
 ! output file for energy
-  integer, parameter :: IENERGY = 77
+  integer, parameter :: IOUT_ENERGY = 77
 
 ! select fast (Paul Fischer) or slow (topology only) global numbering algorithm
   logical, parameter :: FAST_NUMBERING = .true.

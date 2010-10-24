@@ -367,7 +367,7 @@
   enddo
 
 ! save kinetic, potential and total energy for this time step in external file
-  write(IENERGY,*) real(dble(it-1)*deltat - t0,4),real(kinetic_energy,4), &
+  write(IOUT_ENERGY,*) real(dble(it-1)*deltat - t0,4),real(kinetic_energy,4), &
                      real(potential_energy,4),real(kinetic_energy + potential_energy,4)
 
   end subroutine compute_energy

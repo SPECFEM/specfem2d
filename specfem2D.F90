@@ -4381,7 +4381,7 @@ endif
   if(OUTPUT_ENERGY) stop 'energy calculation only currently serial only, should add an MPI_REDUCE in parallel'
 #endif
 ! open the file in which we will store the energy curve
-  if(OUTPUT_ENERGY) open(unit=IENERGY,file='energy.gnu',status='unknown')
+  if(OUTPUT_ENERGY) open(unit=IOUT_ENERGY,file='energy.gnu',status='unknown')
 
 !
 !----          s t a r t   t i m e   i t e r a t i o n s
@@ -7587,14 +7587,14 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
 !----  close energy file and create a gnuplot script to display it
   if(OUTPUT_ENERGY .and. myrank == 0) then
-    close(IENERGY)
-    open(unit=IENERGY,file='plotenergy',status='unknown')
-    write(IENERGY,*) 'set term postscript landscape color solid "Helvetica" 22'
-    write(IENERGY,*) 'set output "energy.ps"'
-    write(IENERGY,*) 'set xlabel "Time (s)"'
-    write(IENERGY,*) 'set ylabel "Energy (J)"'
-    write(IENERGY,*) 'plot "energy.gnu" us 1:4 t ''Total Energy'' w l 1, "energy.gnu" us 1:3 t ''Potential Energy'' w l 2'
-    close(IENERGY)
+    close(IOUT_ENERGY)
+    open(unit=IOUT_ENERGY,file='plotenergy',status='unknown')
+    write(IOUT_ENERGY,*) 'set term postscript landscape color solid "Helvetica" 22'
+    write(IOUT_ENERGY,*) 'set output "energy.ps"'
+    write(IOUT_ENERGY,*) 'set xlabel "Time (s)"'
+    write(IOUT_ENERGY,*) 'set ylabel "Energy (J)"'
+    write(IOUT_ENERGY,*) 'plot "energy.gnu" us 1:4 t ''Total Energy'' w l 1, "energy.gnu" us 1:3 t ''Potential Energy'' w l 2'
+    close(IOUT_ENERGY)
   endif
 
    if (.not. any_poroelastic) then
