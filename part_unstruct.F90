@@ -478,9 +478,8 @@ contains
     integer, dimension(:),pointer  :: tab_size_interfaces, tab_interfaces
     integer, intent(out)  :: ninterfaces
     integer, dimension(1:nelmnts), intent(in)  :: num_material
-    double precision, dimension(1:nb_materials), intent(in)  :: phi_material
     integer, intent(in)  :: nb_materials
-
+    double precision, dimension(1:nb_materials), intent(in)  :: phi_material
 
     integer  :: num_part, num_part_bis, el, el_adj, num_interface, num_edge, ncommon_nodes, &
          num_node, num_node_bis
@@ -910,9 +909,8 @@ contains
        integer, dimension(:,:), pointer  :: edges_coupled
        integer  :: nb_materials
        double precision, dimension(nb_materials), intent(in)  :: phi_material
-       integer, dimension(1:nelmnts), intent(in)  :: num_material
        integer  :: nelmnts
-
+       integer, dimension(1:nelmnts), intent(in)  :: num_material
 
        logical, dimension(nb_materials)  :: is_acoustic
        integer  :: num_edge, nedge_bound
@@ -921,7 +919,6 @@ contains
        integer  :: i
        integer  :: temp
        integer  :: iedge, inode1, inode2
-
 
        allocate(abs_surface_char(4,nelemabs))
        allocate(abs_surface_merge(nelemabs))

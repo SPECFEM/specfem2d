@@ -54,17 +54,18 @@
 
   include "constants.h"
 
+! local variables
+  integer nspec,nglob_GLL_full
+  integer nglob_four_corners_only,nglob
+
+! maximum number of neighbors of a spectral element (in principle, it could be any value)
+  integer, parameter :: MAX_NUMBER_OF_NEIGHBORS = 50
+
 ! input
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
 
 ! output
   integer, dimension(nspec) :: perm
-
-! local variables
-  integer nspec,nglob_GLL_full
-
-! maximum number of neighbors of a spectral element (in principle, it could be any value)
-  integer, parameter :: MAX_NUMBER_OF_NEIGHBORS = 50
 
 ! global corner numbers that need to be created
   integer, dimension(nglob) :: global_corner_number
@@ -79,8 +80,6 @@
   logical maskel(nspec)
 
   integer i,istart,istop,number_of_neighbors
-
-  integer nglob_four_corners_only,nglob
 
 ! only count the total size of the array that will be created, or actually create it
   logical count_only
@@ -347,14 +346,14 @@
 
   integer nglob_four_corners_only
 
+  integer nspec,iad,ispec,istart,istop,ino,node,jstart,jstop,nelem,jel
+
   integer, intent(in) :: mn(nspec*NGNOD_QUADRANGLE),mp(nspec+1),ne(total_size_ne),np(nglob_four_corners_only+1)
 
   integer, intent(out) :: adj(total_size_adj),xadj(nspec+1)
 
   logical maskel(nspec)
   integer countel(nspec)
-
-  integer nspec,iad,ispec,istart,istop,ino,node,jstart,jstop,nelem,jel
 
   xadj(1) = 1
   iad = 1
