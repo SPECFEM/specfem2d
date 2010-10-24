@@ -155,37 +155,3 @@
 ! size of frame used for Postscript display in percentage of the size of the page
   double precision, parameter :: RPERCENTX = 70.0d0,RPERCENTZ = 77.0d0
 
-!-----------------------------------------------------------------------
-
-!
-! anisotropic copper crystal (cubic symmetry)
-!
-
-! regular c_ijkl with no rotation
-  double precision, parameter :: c11val = 169.d9
-  double precision, parameter :: c12val = 122.d9
-  double precision, parameter :: c13val = c12val
-  double precision, parameter :: c14val = 0.d0
-  double precision, parameter :: c15val = 0.d0
-  double precision, parameter :: c16val = 0.d0
-
-  double precision, parameter :: c22val = c11val
-  double precision, parameter :: c23val = c12val
-  double precision, parameter :: c24val = 0.d0
-  double precision, parameter :: c25val = 0.d0
-  double precision, parameter :: c26val = 0.d0
-
-  double precision, parameter :: c33val = c11val
-  double precision, parameter :: c34val = 0.d0
-  double precision, parameter :: c35val = 0.d0
-  double precision, parameter :: c36val = 0.d0
-
-  double precision, parameter :: c44val = 75.3d9
-  double precision, parameter :: c45val = 0.d0
-  double precision, parameter :: c46val = 0.d0
-
-  double precision, parameter :: c55val = c44val
-  double precision, parameter :: c56val = 0.d0
-
-  double precision, parameter :: c66val = c44val
-
