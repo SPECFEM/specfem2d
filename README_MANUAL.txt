@@ -447,15 +447,16 @@ poroelastic case.
                COUPLED SIMULATIONS
 --------------------------------------------------
 
-The code support acoustic/elastic, acoustic/poroelastic, elastic/poroelastic,
+The code supports acoustic/elastic, acoustic/poroelastic, elastic/poroelastic,
 and acoustic,elastic/poroelastic simulations.
 
 Elastic/poroelastic coupling supports anisotropy, but not attenuation for the
 elastic material.
 
 
-How to run P-SV or SH (membrane) waves simulation :
+How to run P-SV or SH (membrane) wave simulations :
 ---------------------------------------------------
+
 To run a P-SV waves calculation propagating in the x-z plane,
 set p_sv = .true. in the Par_file.
 To run a SH (membrane) waves calculation traveling in the x-z plane with a
