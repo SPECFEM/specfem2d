@@ -152,13 +152,20 @@ SPECFEM2D 6.1: SPECFEM2D facilitates 2D simulations of
         acoustic, (an)elastic, and poroelastic seismic wave propagation.
         With version 6.1, the 2D spectral-element solver accommodates
         regular and unstructured meshes, generated for example by Cubit
-        (cubit.sandia.gov). The solver has adjoint capabilities and can
+        (http://cubit.sandia.gov) or by Gmsh (http://geuz.org/gmsh).
+        The solver has adjoint capabilities and can
         calculate finite-frequency sensitivity kernels for acoustic,
         (an)elastic, and poroelastic media. The package also considers 2D SH
         and P-SV wave propagation. Finally, the solver can run
         both in serial and in parallel. See SPECFEM2D
         <http://www.geodynamics.org/cig/software/packages/seismo/specfem2d>
         for the source code.
+
+The SEM is a continuous Galerkin technique, which can easily be made discontinous;
+it is then a particular case of the discontinuous Galerkin technique,
+with optimized efficiency because of its tensorized basis functions.
+Note that in many (most?) geological models in the context of seismic wave propagation studies
+a discontinous mesh is not needed because material property contrasts are not drastic and thus a continuous formulation is sufficient.
 
 Caution:
 --------
