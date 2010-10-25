@@ -256,7 +256,8 @@ SPECFEM2D 6.1: SPECFEM2D facilitates 2D simulations of
         acoustic, (an)elastic, and poroelastic seismic wave propagation.
         With version 6.1, the 2D spectral-element solver accommodates
         regular and unstructured meshes, generated for example by Cubit
-        (http://cubit.sandia.gov) or by Gmsh (http://geuz.org/gmsh).
+        (http://cubit.sandia.gov), Gmsh (http://geuz.org/gmsh)
+        or GiD (http://www.gid.cimne.upc.es).
         The solver has adjoint capabilities and can
         calculate finite-frequency sensitivity kernels for acoustic,
         (an)elastic, and poroelastic media. The package also considers 2D SH
