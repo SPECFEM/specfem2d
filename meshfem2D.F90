@@ -567,11 +567,6 @@ program meshfem2D
   call read_value_double_precision(IIN,IGNORE_JUNK,xmax)
   call read_value_integer(IIN,IGNORE_JUNK,nx)
   call read_value_integer(IIN,IGNORE_JUNK,ngnod)
-  if ( ngnod == 9 .and. read_external_mesh ) then
-     print *, 'Number of control nodes must be equal to four when reading from external mesh.'
-     print *, 'ngnod = 9 is not yet supported.'
-     stop
-  endif
 
   call read_value_logical(IIN,IGNORE_JUNK,initialfield)
   call read_value_logical(IIN,IGNORE_JUNK,add_Bielak_conditions)
