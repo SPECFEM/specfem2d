@@ -303,7 +303,7 @@ To use the code:
      "absorbing_surface_file" is the file describing the edges forming the absorbing boundaries : the format is the same as the "free_surface_file".
      "tangential_detection_curve_file" contains points describing the envelope, used for source_normal_to_surface and rec_normal_to_surface. Should be fine grained, and ordained clockwise. Number of points on the first line, then (x,z) coordinates on each line.
 
-- if you have compiled with MPI, you can specify the number of processes, and the partitioning method used to dispatch the elements on the processes. See the manual of METIS and SCOTCH for more informations on the partitioning strategies.
+- if you have compiled with MPI, you must specify the number of processes.
 
 - then type xmeshfem2D to create the mesh (which will be stored in directory OUTPUT_FILES). xmeshfem2D is serial; it will output several files called Databasexxxxx, one for each process.
 
