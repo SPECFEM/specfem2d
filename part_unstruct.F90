@@ -1184,36 +1184,37 @@ contains
      end subroutine write_abs_merge_database
 
 
-#ifdef USE_METIS
-  !--------------------------------------------------
-  ! Partitioning using METIS
-  !--------------------------------------------------
-     subroutine Part_metis(nelmnts, xadj, adjncy, vwgt, adjwgt, nparts, nb_edges, edgecut, part, metis_options)
-
-    include "constants.h"
-
-    integer, intent(in)  :: nelmnts, nparts, nb_edges
-    integer, intent(inout)  :: edgecut
-    integer, dimension(0:nelmnts), intent(in)  :: xadj
-    integer, dimension(0:max_neighbors*nelmnts-1), intent(in)  :: adjncy
-    integer, dimension(0:nelmnts-1), intent(in)  :: vwgt
-    integer, dimension(0:nb_edges-1), intent(in)  :: adjwgt
-    integer, dimension(:), pointer  :: part
-    integer, dimension(0:4)  :: metis_options
-
-    integer  :: wgtflag
-    integer  :: num_start
-
-    num_start = 0
-    wgtflag = 0
-
-    call METIS_PartGraphRecursive(nelmnts, xadj(0), adjncy(0), vwgt(0), adjwgt(0), wgtflag, num_start, nparts, &
-         metis_options, edgecut, part(0));
-    !call METIS_PartGraphVKway(nelmnts, xadj(0), adjncy(0), vwgt(0), adjwgt(0), wgtflag, num_start, nparts, &
-    !     options, edgecut, part(0));
-
-  end subroutine Part_metis
-#endif
+!! DK DK support for METIS now removed, we use SCOTCH instead
+!#ifdef USE_METIS
+! !--------------------------------------------------
+! ! Partitioning using METIS
+! !--------------------------------------------------
+!    subroutine Part_metis(nelmnts, xadj, adjncy, vwgt, adjwgt, nparts, nb_edges, edgecut, part, metis_options)
+!
+!   include "constants.h"
+!
+!   integer, intent(in)  :: nelmnts, nparts, nb_edges
+!   integer, intent(inout)  :: edgecut
+!   integer, dimension(0:nelmnts), intent(in)  :: xadj
+!   integer, dimension(0:max_neighbors*nelmnts-1), intent(in)  :: adjncy
+!   integer, dimension(0:nelmnts-1), intent(in)  :: vwgt
+!   integer, dimension(0:nb_edges-1), intent(in)  :: adjwgt
+!   integer, dimension(:), pointer  :: part
+!   integer, dimension(0:4)  :: metis_options
+!
+!   integer  :: wgtflag
+!   integer  :: num_start
+!
+!   num_start = 0
+!   wgtflag = 0
+!
+!   call METIS_PartGraphRecursive(nelmnts, xadj(0), adjncy(0), vwgt(0), adjwgt(0), wgtflag, num_start, nparts, &
+!        metis_options, edgecut, part(0));
+!   !call METIS_PartGraphVKway(nelmnts, xadj(0), adjncy(0), vwgt(0), adjwgt(0), wgtflag, num_start, nparts, &
+!   !     options, edgecut, part(0));
+!
+! end subroutine Part_metis
+!#endif
 
 
 #ifdef USE_SCOTCH

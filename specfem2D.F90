@@ -651,7 +651,7 @@
   integer, dimension(:), allocatable  :: tab_requests_send_recv_elastic
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_send_faces_vector_pos,buffer_send_faces_vector_pow
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow
-  integer, dimension(:), allocatable  :: tab_requests_send_recv_poroelastic
+  integer, dimension(:), allocatable  :: tab_requests_send_recv_poro
   integer  :: max_ibool_interfaces_size_ac, max_ibool_interfaces_size_el, max_ibool_interfaces_size_po
 #endif
 
@@ -2543,7 +2543,7 @@ endif
     allocate(tab_requests_send_recv_elastic(ninterface_elastic*2))
     allocate(buffer_send_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic))
     allocate(buffer_recv_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic))
-    allocate(tab_requests_send_recv_poroelastic(ninterface_poroelastic*4))
+    allocate(tab_requests_send_recv_poro(ninterface_poroelastic*4))
     allocate(buffer_send_faces_vector_pos(max_ibool_interfaces_size_po,ninterface_poroelastic))
     allocate(buffer_recv_faces_vector_pos(max_ibool_interfaces_size_po,ninterface_poroelastic))
     allocate(buffer_send_faces_vector_pow(max_ibool_interfaces_size_po,ninterface_poroelastic))
@@ -6509,7 +6509,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
       ninterface, ninterface_poroelastic,inum_interfaces_poroelastic, &
       max_interface_size, max_ibool_interfaces_size_po,&
       ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
-      tab_requests_send_recv_poroelastic,buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
+      tab_requests_send_recv_poro,buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
       buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
       my_neighbours)
   endif
@@ -6519,7 +6519,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
       ninterface, ninterface_poroelastic,inum_interfaces_poroelastic, &
       max_interface_size, max_ibool_interfaces_size_po,&
       ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
-      tab_requests_send_recv_poroelastic,buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
+      tab_requests_send_recv_poro,buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
       buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
       my_neighbours)
    endif

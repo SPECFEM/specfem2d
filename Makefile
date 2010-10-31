@@ -44,6 +44,9 @@
 
 SHELL=/bin/sh
 
+# uncomment this to use more than one processor core, in which case the SCOTCH graph partitioner is needed
+LIB = scotch_5.1.10b/lib/libscotch.a scotch_5.1.10b/lib/libscotcherr.a
+
 # uncomment this to generate ParaVer traces on MareNostrum in Barcelona
 #MPITRACE_HOME = /gpfs/apps/CEPBATOOLS/mpitrace-devel/64
 #PAPI_HOME = /gpfs/apps/PAPI/3.2.1-970mp/64
@@ -53,7 +56,7 @@ O = obj
 
 # Portland
 #F90 = pgf90
-#F90 = /opt/openmpi-1.2.2/pgi64/bin/mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
+#F90 = /opt/openmpi-1.2.2/pgi64/bin/mpif90 -DUSE_MPI -DUSE_SCOTCH
 #CC = pgcc
 #FLAGS_NOCHECK=-fast -Mnobounds -Minline -Mneginfo -Mdclchk -Knoieee -Minform=warn -fastsse -tp amd64e -Msmart
 #FLAGS_CHECK=-fast -Mbounds -Mneginfo -Mdclchk -Minform=warn
@@ -63,14 +66,14 @@ O = obj
 # Use of option -heap-arrays <size> can be required, depending on the size of the simulation. 
 # Another workaround can be to increase your stack size (ulimit -s).
 #F90 = ifort
-##F90 = mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
+##F90 = mpif90 -DUSE_MPI -DUSE_SCOTCH
 #CC = gcc
-#FLAGS_NOCHECK=-O3 -xP -vec-report0 -e95 -std95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -fpe3 -ftz
-#FLAGS_CHECK = $(FLAGS_NOCHECK)
+#FLAGS_NOCHECK=-O3 -xP -vec-report0 -e95 -std95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -fpe0 -ftz
+#FLAGS_CHECK = $(FLAGS_NOCHECK) -traceback -ftrapuv -check all
 
 # GNU gfortran
 F90 = gfortran
-##F90 = mpif90 -DUSE_MPI -DUSE_METIS -DUSE_SCOTCH
+#F90 = mpif90 -DUSE_MPI -DUSE_SCOTCH
 CC = gcc
 ##FLAGS_NOCHECK = -O3 -march=opteron -m64 -mfpmath=sse,387
 FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O3 -pedantic -pedantic-errors -Wunused -Waliasing -Wampersand -Wline-truncation -Wsurprising -Wunderflow -fno-trapping-math # -mcmodel=medium
@@ -79,7 +82,7 @@ FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
 
 # IBM
 #####F90 = xlf_r
-#F90 = mpif90 -WF,-DUSE_MPI,-DUSE_METIS
+#F90 = mpif90 -WF,-DUSE_MPI,-DUSE_SCOTCH
 #CC = xlc -g -q64
 # uncomment this to generate ParaVer traces on MareNostrum in Barcelona
 #FLAGS_NOCHECK_ADD = -L$(MPITRACE_HOME)/lib -lmpitracef -lxml2 -L${PAPI_HOME}/lib -lpapi -lperfctr
@@ -87,11 +90,6 @@ FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
 #####FLAGS_NOCHECK = $(FLAGS_NOCHECK_ADD) -qextname=attenuation_compute_param -O3 -qstrict -q64 -qtune=ppc970 -qarch=ppc970 -qcache=auto -qfree=f90 -qsuffix=f=f90 -qhalt=w -qflttrap=overflow:zerodivide:invalid:enable -qinitauto=7FBFFFFF -C # -qlanglvl=2003pure
 #####FLAGS_NOCHECK = $(FLAGS_NOCHECK_ADD) -qextname=attenuation_compute_param -O0 -q64 -qtune=ppc970 -qarch=ppc970 -qcache=auto -qfree=f90 -qsuffix=f=f90 -qhalt=w -qflttrap=overflow:zerodivide:invalid:enable -qinitauto=7FBFFFFF -C -g -qfullpath -qlinedebug
 #FLAGS_CHECK = $(FLAGS_NOCHECK)
-
-#LIB = /opt/metis-4.0/gcc64/lib/libmetis.a /opt/scotch-4.0/gcc64/lib/libscotch.a  /opt/scotch-4.0/gcc64/lib/libscotcherr.a
-# uncomment this to use Metis on MareNostrum in Barcelona
-#LIB = /home/hpce08/hpce08548/utils/metis-4.0/libmetis.a
-
 
 LINK = $(F90)
 

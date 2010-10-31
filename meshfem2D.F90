@@ -484,12 +484,11 @@ program meshfem2D
   integer ::  nnodes_tangential_curve
   double precision, dimension(:,:), allocatable  :: nodes_tangential_curve
 
-#if defined USE_METIS || defined USE_SCOTCH
+#ifdef USE_SCOTCH
   integer  :: edgecut
 #endif
 
   integer  :: iproc
-
 
 
   ! ***
@@ -1464,7 +1463,12 @@ program meshfem2D
      enddo
 
      if ( nproc > 1 ) then
-        call mesh2dual_ncommonnodes(nelmnts, (nxread+1)*(nzread+1), elmnts_bis, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
+
+!! DK DK fixed problem in the previous implementation by Nicolas Le Goff:
+!! DK DK (nxread+1)*(nzread+1) is OK for a regular internal mesh only, not for non structured external meshes
+!! DK DK      call mesh2dual_ncommonnodes(nelmnts, (nxread+1)*(nzread+1), elmnts_bis, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
+!! DK DK the subset of element corners is not renumbered therefore we must still use the nnodes computed for 9 nodes here
+        call mesh2dual_ncommonnodes(nelmnts, nnodes, elmnts_bis, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
      endif
 
   else
@@ -1496,13 +1500,14 @@ program meshfem2D
 
      case(2)
 
-#ifdef USE_METIS
-        call Part_metis(nelmnts, xadj, adjncy, vwgt, adjwgt, nproc, nb_edges, edgecut, part, metis_options)
-#else
-        print *, 'This version of SPECFEM was not compiled with support of METIS.'
-        print *, 'Please recompile with -DUSE_METIS in order to enable use of METIS.'
-        stop
-#endif
+!#ifdef USE_METIS
+!       call Part_metis(nelmnts, xadj, adjncy, vwgt, adjwgt, nproc, nb_edges, edgecut, part, metis_options)
+!#else
+!       print *, 'This version of SPECFEM was not compiled with support of METIS.'
+!       print *, 'Please recompile with -DUSE_METIS in order to enable use of METIS.'
+!       stop
+!#endif
+       stop 'support for the METIS graph partitioner has been discontinued, please use SCOTCH (option 3) instead'
 
      case(3)
 
