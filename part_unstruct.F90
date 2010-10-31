@@ -1221,7 +1221,7 @@ contains
   !--------------------------------------------------
   ! Partitioning using SCOTCH
   !--------------------------------------------------
-  subroutine Part_scotch(nelmnts, xadj, adjncy, vwgt, adjwgt, nparts, nb_edges, edgecut, part, scotch_strategy)
+  subroutine Part_scotch(nelmnts, xadj, adjncy, vwgt, adjwgt, nparts, nb_edges, edgecut, part)
 
     include "constants.h"
 
@@ -1237,7 +1237,6 @@ contains
 
     double precision, dimension(SCOTCH_GRAPHDIM)  :: SCOTCHGRAPH
     double precision, dimension(SCOTCH_STRATDIM)  :: SCOTCHSTRAT
-    character(len=256), intent(in)  :: scotch_strategy
     integer  :: IERR
 
     edgecut = vwgt(0)
@@ -1246,12 +1245,6 @@ contains
     call scotchfstratinit (SCOTCHSTRAT(1), IERR)
      IF (IERR .NE. 0) THEN
        PRINT *, 'ERROR : MAIN : Cannot initialize strat'
-       STOP
-    ENDIF
-
-    call scotchfstratgraphmap (SCOTCHSTRAT(1), trim(scotch_strategy), IERR)
-     IF (IERR .NE. 0) THEN
-       PRINT *, 'ERROR : MAIN : Cannot build strat'
        STOP
     ENDIF
 
