@@ -1691,7 +1691,7 @@
 !
 !---- write PostScript header
 !
-  write(24,*) simulation_title
+  write(24,10) simulation_title
   write(24,*) '/CM {28.5 mul} def'
   write(24,*) '/LR {rlineto} def'
   write(24,*) '/LT {lineto} def'

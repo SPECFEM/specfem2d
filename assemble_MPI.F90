@@ -665,7 +665,7 @@ subroutine assemble_MPI_vector_po(array_val3,array_val4,npoin, &
      inum_interfaces_poroelastic, &
      max_interface_size, max_ibool_interfaces_size_po,&
      ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
-     tab_requests_send_recv_poroelastic, &
+     tab_requests_send_recv_poro, &
      buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
      buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
      my_neighbours &
@@ -684,7 +684,7 @@ subroutine assemble_MPI_vector_po(array_val3,array_val4,npoin, &
   integer, intent(in)  :: max_ibool_interfaces_size_po
   integer, dimension(NGLLX*max_interface_size,ninterface), intent(in)  :: ibool_interfaces_poroelastic
   integer, dimension(ninterface), intent(in)  :: nibool_interfaces_poroelastic
-  integer, dimension(ninterface_poroelastic*4), intent(inout)  :: tab_requests_send_recv_poroelastic
+  integer, dimension(ninterface_poroelastic*4), intent(inout)  :: tab_requests_send_recv_poro
   real(CUSTOM_REAL), dimension(max_ibool_interfaces_size_po,ninterface_poroelastic), intent(inout)  :: &
        buffer_send_faces_vector_pos,buffer_send_faces_vector_pow
   real(CUSTOM_REAL), dimension(max_ibool_interfaces_size_po,ninterface_poroelastic), intent(inout)  :: &
@@ -727,7 +727,7 @@ subroutine assemble_MPI_vector_po(array_val3,array_val4,npoin, &
     call MPI_ISSEND( buffer_send_faces_vector_pos(1,inum_interface), &
              NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-             tab_requests_send_recv_poroelastic(inum_interface), ier)
+             tab_requests_send_recv_poro(inum_interface), ier)
 
     if ( ier /= MPI_SUCCESS ) then
       call exit_mpi('MPI_ISSEND unsuccessful in assemble_MPI_vector_pos')
@@ -736,7 +736,7 @@ subroutine assemble_MPI_vector_po(array_val3,array_val4,npoin, &
     call MPI_Irecv ( buffer_recv_faces_vector_pos(1,inum_interface), &
              NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-             tab_requests_send_recv_poroelastic(ninterface_poroelastic+inum_interface), ier)
+             tab_requests_send_recv_poro(ninterface_poroelastic+inum_interface), ier)
 
     if ( ier /= MPI_SUCCESS ) then
       call exit_mpi('MPI_Irecv unsuccessful in assemble_MPI_vector_pos')
@@ -745,7 +745,7 @@ subroutine assemble_MPI_vector_po(array_val3,array_val4,npoin, &
     call MPI_ISSEND( buffer_send_faces_vector_pow(1,inum_interface), &
              NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-             tab_requests_send_recv_poroelastic(ninterface_poroelastic*2+inum_interface), ier)
+             tab_requests_send_recv_poro(ninterface_poroelastic*2+inum_interface), ier)
 
     if ( ier /= MPI_SUCCESS ) then
       call exit_mpi('MPI_ISSEND unsuccessful in assemble_MPI_vector_pow')
@@ -754,7 +754,7 @@ subroutine assemble_MPI_vector_po(array_val3,array_val4,npoin, &
     call MPI_Irecv ( buffer_recv_faces_vector_pow(1,inum_interface), &
              NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-             tab_requests_send_recv_poroelastic(ninterface_poroelastic*3+inum_interface), ier)
+             tab_requests_send_recv_poro(ninterface_poroelastic*3+inum_interface), ier)
 
     if ( ier /= MPI_SUCCESS ) then
       call exit_mpi('MPI_Irecv unsuccessful in assemble_MPI_vector_pow')
@@ -764,7 +764,7 @@ subroutine assemble_MPI_vector_po(array_val3,array_val4,npoin, &
 
   do inum_interface = 1, ninterface_poroelastic*4
 
-    call MPI_Wait (tab_requests_send_recv_poroelastic(inum_interface), status_poroelastic, ier)
+    call MPI_Wait (tab_requests_send_recv_poro(inum_interface), status_poroelastic, ier)
 
   enddo
 

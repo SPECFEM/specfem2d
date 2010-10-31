@@ -238,7 +238,7 @@
 ! journal={Geophys. J. Int.},
 ! doi={10.1111/j.1365-246X.2009.04332}}
 !
-! If you use the METIS / SCOTCH / CUBIT non-structured capabilities, please also cite:
+! If you use the SCOTCH / CUBIT non-structured capabilities, please also cite:
 !
 ! @ARTICLE{MaKoBlLe08,
 ! author = {R. Martin and D. Komatitsch and C. Blitz and N. {Le Goff}},
@@ -287,9 +287,11 @@ See file "todo_list_please_dont_remove.txt" for a list of known bugs, problems, 
 
 To use the code:
 
-- edit the Makefile. There are several options available : -DUSE_MPI compiles with use of an MPI library. -DUSE_METIS enables use of graph partitioner METIS, the same goes for -DUSE_SCOTCH for SCOTCH.
+- edit the Makefile. There are several options available : -DUSE_MPI compiles with use of an MPI library. -DUSE_SCOTCH enables use of graph partitioner SCOTCH.
 
-- type "make all"
+- if you want to run in parallel, i.e., using more than one processor core, then compiling the SCOTCH graph partitioner is needed. Go to subdirectory scotch_5.1.10b and read INSTALL.txt. You may want to download more recent versions of SCOTCH in the future from http://www.labri.fr/perso/pelegrin/scotch/scotch_en.html . Support for the METIS graph partitioner has been discontinued because SCOTCH is more recent and performs better.
+
+- then go back to the main directory of SPECFEM2D and type "make all"
 
 - edit the input file "DATA/Par_file" which describes the simulation. It contains comments and should be almost self-explanatory, if you need more details we do not have a manual for the 2D version but you can find useful information in the manuals of the 3D versions, since many parameters and the general philosophy is similar. They are available at http://geodynamics.org/wsvn/cig/seismo/3D in subdirectories USER_MANUAL. To create acoustic (fluid) regions, just set the S wave speed to zero and the code will see that these elements are fluid and switch to the right equations there automatically, and automatically match them with the solid regions
 

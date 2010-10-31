@@ -59,7 +59,7 @@
   double precision :: etal_f,rhol_f,rhol_s,rhol_bar,perm
   double precision :: mul_fr,phil,tortl
 
-  double precision :: a_r,a_i,b_r,b_i,cc,alpha,aa1,aa2
+  double precision :: a_r,a_i,b_r,b_i,cc,alpha
   double precision :: xx,yy, gXI, gYI,gXII,gYII,w_c,f_c
   double precision :: wi,fi,taus,taue,Q0,bbr,bbi
 
@@ -147,9 +147,5 @@
                sqrt((b_r - sqrt(0.5)*sqrt(sqrt(xx**2+yy**2)+xx))**2+&
                    (b_i/alpha - sign(1.d0,yy)*sqrt(0.5)*sqrt(sqrt(xx**2+yy**2)-xx))**2)
 
-
-! quality factors
-        aa1 = -gXI/gYI
-        aa2 = -gXII/gYII
-
    end subroutine get_poroelastic_velocities
+
