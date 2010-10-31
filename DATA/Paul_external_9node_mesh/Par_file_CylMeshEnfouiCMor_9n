@@ -1,0 +1,113 @@
+# title of job, and file that contains interface data
+title                           = Test Cylindre enfoui en milieu poreux
+interfacesfile                  = interfaces_M2_UPPA_curved.dat
+
+# forward or adjoint simulation
+SIMULATION_TYPE                 = 1   # 1 = forward, 2 = adjoint + kernels
+SAVE_FORWARD                    = .false.  # save the last frame, needed for adjoint simulation
+
+# data concerning mesh, when generated using third-party app (more info in README)
+read_external_mesh              = .true.
+mesh_file                       = DATA/Mesh_CylMeshEnfouiCMor_9n   # file containing the mesh
+nodes_coords_file               = DATA/Nodes_CylMeshEnfouiCMor_9n    # file containing the nodes coordinates
+materials_file                  = DATA/Milieu_CylMeshEnfouiCMor_9n  # file containing the material number for each element
+free_surface_file               = DATA/Surf_free_CylMeshEnfouiCMor_9n   # file containing the free surface
+absorbing_surface_file          = DATA/Surf_abs_CylMeshEnfouiCMor_9n   # file containing the absorbing surface
+tangential_detection_curve_file = ./DATA/courbe_eros_nodes # file containing the curve delimiting the velocity model
+
+# parameters concerning partitioning
+nproc                           = 7             # number of processes
+partitioning_method             = 3              # ascending order = 1, Metis = 2, Scotch = 3
+partitioning_strategy          = 01110 #b{strat=m{asc=g,low=g,rat=1.0,type=h,vert=4}} #01110          # options concerning partitioning strategy.
+                                                 
+# geometry of the model (origin lower-left corner = 0,0) and mesh description
+xmin                            = 0.d0           # abscissa of left side of the model
+xmax                            = 4000.d0        # abscissa of right side of the model
+nx                              = 80             # number of elements along X
+ngnod                           = 9              # number of control nodes per element (4 or 9)
+initialfield                    = .false.        # use a plane wave as source or not
+add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
+assign_external_model           = .false.        # define external earth model or not
+READ_EXTERNAL_SEP_FILE          = .false.        # Read external SEP file from DATA/model_velocity.dat_input, or use routine
+TURN_ATTENUATION_ON             = .false.        # turn attenuation on or off for solid medium
+TURN_VISCATTENUATION_ON         = .false.        # turn viscous attenuation on or off 
+Q0                              =  1             # quality factor for viscous attenuation
+freq0                           =  10            # frequency for viscous attenuation
+p_sv                            = .true.         # set the type of calculation (P-SV or SH/membrane waves)
+
+# absorbing boundaries parameters
+absorbing_conditions            = .true.	 # absorbing boundary active or not
+absorbbottom                    = .true.         
+absorbright                     = .true.
+absorbtop                       = .false.
+absorbleft                      = .true.
+
+# time step parameters
+nt                              = 20000           # total number of time steps
+deltat                          = 1.d-4          # duration of a time step
+
+# source parameters
+NSOURCE                         = 1              # number of sources [source info read in CMTSOLUTION file]
+force_normal_to_surface         = .false.        # angleforce normal to surface (external mesh and curve file needed)
+
+# constants for attenuation 
+N_SLS                           = 2                      # number of standard linear solids for attenuation
+## DK DK Qp and Qs can now vary in each spectral element and are therefore given in the same list
+## DK DK list as rho, Vp and Vs at the end of this file
+#Qp_attenuation                  = 136.4376068115         # quality factor P for attenuation
+#Qs_attenuation                  = 136.4376068115         # quality factor S for attenuation
+f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, else it is f0
+
+# receiver line parameters for seismograms
+seismotype                      = 1              # record 1=displ 2=veloc 3=accel 4=pressure
+generate_STATIONS               = .true.         # creates a STATION file in ./DATA
+nreceiverlines                  = 1              # number of receiver lines
+anglerec                        = 0.d0           # angle to rotate components at receivers
+rec_normal_to_surface           = .false.        # replace anglerec with the normal to the surface (external mesh and curve file needed, anglerec above ignored)
+
+# first receiver line
+nrec                            = 11             # number of receivers
+xdeb                            = -2800.           # first receiver x in meters
+zdeb                            = 400.          # first receiver z in meters
+xfin                            = 2800.          # last receiver x in meters (ignored if onlyone receiver)
+zfin                            = 400.          # last receiver z in meters (ignored if onlyone receiver)
+enreg_surf                      = .false.         # receivers inside the medium or at the surface
+
+# display parameters
+NTSTEP_BETWEEN_OUTPUT_INFO      = 1000            # display frequency in time steps
+output_postscript_snapshot      = .false.         # output Postscript snapshot of the results
+output_color_image              = .true.         # output color image of the results
+imagetype                       = 1              # display 1=displ 2=veloc 3=accel 4=pressure
+cutsnaps                        = 1.             # minimum amplitude in % for snapshots
+meshvect                        = .true.         # display mesh on vector plots or not
+modelvect                       = .false.        # display velocity model on vector plots
+boundvect                       = .true.         # display boundary conditions on plots
+interpol                        = .true.         # interpolation of the display or not
+pointsdisp                      = 6              # points for interpolation of display (set to 1 for lower-left corner only)
+subsamp                         = 1              # subsampling of color snapshots
+sizemax_arrows                  = 1.d0           # maximum size of arrows on vector plots in cm
+gnuplot                         = .false.        # generate a GNUPLOT file for the grid
+outputgrid                      = .false.        # save the grid in a text file or not
+OUTPUT_ENERGY                   = .false.        # compute and output acoustic and elastic energy (slows down the code significantly)
+
+# velocity and density models
+nbmodels                        = 3              # nb of different models
+# define models as I: (model_number,1,rho,Vp,Vs,0,0,Qp,Qs) or II: (model_number,2,rho,c11,c13,c15,c33,c35,c55) or III: (model_number,3,rhos,rhof,phi,c,kxx,kxz,kzz,Ks,Kf,Kfr,etaf,mufr,Qs).
+# For istropic elastic/acoustic material use I and set Vs to zero to make a given model acoustic, for anisotropic elastic use II, 
+# and for isotropic poroelastic material use III. The mesh can contain acoustic, elastic, & poroelastic models simultaneously
+1 1 1000.d0 1500.d0 0.0d0 0 0 10.d0 10.d0 0 0 0 0 0 0
+2 1 2400.d0 5000.d0 2000.0d0 0 0 10.d0 10.d0 0 0 0 0 0 0
+3 1 2400.d0 5000.d0 2000.0d0 0 0 10.d0 10.d0 0 0 0 0 0 0
+#3 1 1990.d0 2343.d0 1385.0d0  0 0 10.d0 10.d0 0 0 0 0 0 0
+#4 3 2200.d0 786.3d0  0.4 2.0 1d-11 0.0 1d-11 5.341d9 2d9 3d9 0.0d-4 3.204d9 10.d0
+#5 2 2500.d0 169.d9 122.d9 0.d0 169.d9 0.d0 75.3d9 0 0 0 0 0 0
+#4 1 2200.d0 2200.d0 1343.375d0 0 0 10.d0 10.d0 0 0 0 0 0 0
+# define the different regions of the model in the (nx,nz) spectral element mesh
+nbregions                       = 1              # nb of regions and model number for each
+1 80  1 20 1
+#1 80 21 40 4
+#1 80 41 60 3
+#60 80 21 40 4
+#30 40 50 60 2
+#35 40 50 60 5
+
