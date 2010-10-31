@@ -45,7 +45,7 @@
 SHELL=/bin/sh
 
 # uncomment this to use more than one processor core, in which case the SCOTCH graph partitioner is needed
-LIB = scotch_5.1.10b/lib/libscotch.a scotch_5.1.10b/lib/libscotcherr.a
+#LIB = scotch_5.1.10b/lib/libscotch.a scotch_5.1.10b/lib/libscotcherr.a
 
 # uncomment this to generate ParaVer traces on MareNostrum in Barcelona
 #MPITRACE_HOME = /gpfs/apps/CEPBATOOLS/mpitrace-devel/64
