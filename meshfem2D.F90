@@ -469,9 +469,7 @@ program meshfem2D
   ! variables used for partitioning
   integer  :: nproc
   integer  :: partitioning_method
-  character(len=256)  :: partitioning_strategy
-  character(len=256)  :: scotch_strategy
-  integer, dimension(0:4)  :: metis_options
+!!!!!!!  integer, dimension(0:4)  :: metis_options
   character(len=256)  :: prname
 
   ! variables used for attenuation
@@ -538,28 +536,12 @@ program meshfem2D
 #endif
 
   call read_value_integer(IIN,IGNORE_JUNK,partitioning_method)
-  call read_value_string(IIN,IGNORE_JUNK,partitioning_strategy)
-  select case(partitioning_method)
-  case(1)
-  case(2)
-     partitioning_strategy = trim(partitioning_strategy)
-     if ( partitioning_strategy(1:1) == '0' ) then
-        metis_options(0) = 0
-     else
-        do i = 1, 5
-           metis_options = iachar(partitioning_strategy(i:i)) - iachar('0')
-        enddo
-     endif
-
-  case(3)
-     scotch_strategy = trim(partitioning_strategy)
-
-  case default
+  if(partitioning_method /= 1 .and. partitioning_method /= 3) then
      print *, 'Invalid partitioning method number.'
      print *, 'Partitioning method ',partitioning_method,' was requested, but is not available.'
+     print *, 'Support for the METIS graph partitioner has been discontinued, please use SCOTCH (option 3) instead.'
      stop
-  end select
-
+  endif
 
   ! read grid parameters
   call read_value_double_precision(IIN,IGNORE_JUNK,xmin)
@@ -1512,7 +1494,7 @@ program meshfem2D
      case(3)
 
 #ifdef USE_SCOTCH
-        call Part_scotch(nelmnts, xadj, adjncy, vwgt, adjwgt, nproc, nb_edges, edgecut, part, scotch_strategy)
+        call Part_scotch(nelmnts, xadj, adjncy, vwgt, adjwgt, nproc, nb_edges, edgecut, part)
 #else
         print *, 'This version of SPECFEM was not compiled with support of SCOTCH.'
         print *, 'Please recompile with -DUSE_SCOTCH in order to enable use of SCOTCH.'
