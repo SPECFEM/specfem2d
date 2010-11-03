@@ -50,7 +50,7 @@ subroutine setup_sources_receivers(NSOURCE,initialfield,source_type,&
      sourcearray,Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,npgeo,&
      nproc,myrank,xi_source,gamma_source,coorg,knods,ngnod, &
      nrec,nrecloc,recloc,which_proc_receiver,st_xval,st_zval, &
-     xi_receiver,gamma_receiver,station_name,network_name,x_final_receiver,z_final_receiver)
+     xi_receiver,gamma_receiver,station_name,network_name,x_final_receiver,z_final_receiver,iglob_source)
 
   implicit none
 
@@ -78,7 +78,7 @@ subroutine setup_sources_receivers(NSOURCE,initialfield,source_type,&
 
   ! for sources
   integer, dimension(NSOURCE) :: source_type
-  integer, dimension(NSOURCE) :: ispec_selected_source,is_proc_source,nb_proc_source
+  integer, dimension(NSOURCE) :: ispec_selected_source,is_proc_source,nb_proc_source,iglob_source
   real(kind=CUSTOM_REAL), dimension(NSOURCE,NDIM,NGLLX,NGLLZ) :: sourcearray
   double precision, dimension(NSOURCE) :: x_source,z_source,xi_source,gamma_source,Mxx,Mzz,Mxz
 
@@ -102,7 +102,8 @@ subroutine setup_sources_receivers(NSOURCE,initialfield,source_type,&
         ! collocated force source
      call locate_source_force(ibool,coord,nspec,npoin,xigll,zigll,x_source(i_source),z_source(i_source), &
           ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source),&
-          nproc,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo,ipass)
+          nproc,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo,ipass,&
+          iglob_source(i_source))
 
 ! check that acoustic source is not exactly on the free surface because pressure is zero there
     if(is_proc_source(i_source) == 1) then

@@ -48,7 +48,7 @@
 
   subroutine locate_source_force(ibool,coord,nspec,npoin,xigll,zigll,x_source,z_source, &
                ispec_selected_source,is_proc_source,nb_proc_source,nproc,myrank, &
-               xi_source,gamma_source,coorg,knods,ngnod,npgeo,ipass)
+               xi_source,gamma_source,coorg,knods,ngnod,npgeo,ipass,iglob_source)
 
   implicit none
 
@@ -80,7 +80,7 @@
   double precision distmin,final_distance,dist_glob
 
 ! source information
-  integer ispec_selected_source,is_proc_source,nb_proc_source
+  integer ispec_selected_source,is_proc_source,nb_proc_source,iglob_source
   integer, intent(in)  :: nproc, myrank
   double precision xi_source,gamma_source
 
@@ -118,6 +118,7 @@
 
 !          keep this point if it is closer to the source
            if(dist < distmin) then
+              iglob_source = iglob
               distmin = dist
               ispec_selected_source = ispec
               ix_initial_guess = i
