@@ -1381,28 +1381,6 @@ endif
     write(IOUT,*) 'nspec_zmin = ',nspec_zmin
     write(IOUT,*) 'nspec_zmax = ',nspec_zmax
 
- elseif(ipass == 1) then
-    allocate(ib_xmin(1))
-    allocate(ib_xmax(1))
-    allocate(ib_zmin(1))
-    allocate(ib_zmax(1))
-    allocate(b_absorb_elastic_left(1,1,1,1))
-    allocate(b_absorb_elastic_right(1,1,1,1))
-    allocate(b_absorb_elastic_bottom(1,1,1,1))
-    allocate(b_absorb_elastic_top(1,1,1,1))
-    allocate(b_absorb_poro_s_left(1,1,1,1))
-    allocate(b_absorb_poro_s_right(1,1,1,1))
-    allocate(b_absorb_poro_s_bottom(1,1,1,1))
-    allocate(b_absorb_poro_s_top(1,1,1,1))
-    allocate(b_absorb_poro_w_left(1,1,1,1))
-    allocate(b_absorb_poro_w_right(1,1,1,1))
-    allocate(b_absorb_poro_w_bottom(1,1,1,1))
-    allocate(b_absorb_poro_w_top(1,1,1,1))
-    allocate(b_absorb_acoustic_left(1,1,1))
-    allocate(b_absorb_acoustic_right(1,1,1))
-    allocate(b_absorb_acoustic_bottom(1,1,1))
-    allocate(b_absorb_acoustic_top(1,1,1))
-
  endif
 !
 !----  read acoustic free surface data
@@ -1913,7 +1891,7 @@ call setup_sources_receivers(NSOURCE,initialfield,source_type,&
      sourcearray,Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,npgeo,&
      nproc,myrank,xi_source,gamma_source,coorg,knods,ngnod, &
      nrec,nrecloc,recloc,which_proc_receiver,st_xval,st_zval, &
-     xi_receiver,gamma_receiver,station_name,network_name,x_final_receiver,z_final_receiver)
+     xi_receiver,gamma_receiver,station_name,network_name,x_final_receiver,z_final_receiver,iglob_source)
 
 ! compute source array for adjoint source
   if(SIMULATION_TYPE == 2) then  ! adjoint calculation
@@ -2471,7 +2449,7 @@ call exit_MPI('an acoustic pressure receiver cannot be located exactly on the fr
           rhol = density(1,kmato(ispec))
           lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
           mul_relaxed = poroelastcoef(2,1,kmato(ispec))
-          kappal = lambdal_relaxed + 2.d0*mul_relaxed
+          kappal = lambdal_relaxed + 2.d0/3.d0*mul_relaxed
         endif
 
         if(poroelastic(ispec)) then     ! material is poroelastic
@@ -3005,6 +2983,9 @@ endif
                   form='unformatted',access='direct',&
                 recl=reclen)
         endif
+  else
+    allocate(b_viscodampx(1))
+    allocate(b_viscodampz(1))
   endif
 
 !
@@ -6210,14 +6191,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
           endif
 ! compute stress tensor
-
-! no attenuation
-    sigma_xx = lambdalplus2mul_relaxed*dux_dxl + lambdal_relaxed*duz_dzl
-    sigma_xz = mul_relaxed*(duz_dxl + dux_dzl)
-    sigma_zz = lambdalplus2mul_relaxed*duz_dzl + lambdal_relaxed*dux_dxl
-
 ! full anisotropy
-  if(anisotropic(ispec_elastic)) then
+  if(kmato(ispec_elastic) == 2) then
 ! implement anisotropy in 2D
       if(assign_external_model) then
          c11 = c11ext(i,j,ispec_elastic)
@@ -6237,6 +6212,11 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
      sigma_xx = c11*dux_dxl + c15*(duz_dxl + dux_dzl) + c13*duz_dzl
      sigma_zz = c13*dux_dxl + c35*(duz_dxl + dux_dzl) + c33*duz_dzl
      sigma_xz = c15*dux_dxl + c55*(duz_dxl + dux_dzl) + c35*duz_dzl
+  else
+! no attenuation
+    sigma_xx = lambdalplus2mul_relaxed*dux_dxl + lambdal_relaxed*duz_dzl
+    sigma_xz = mul_relaxed*(duz_dxl + dux_dzl)
+    sigma_zz = lambdalplus2mul_relaxed*duz_dzl + lambdal_relaxed*dux_dxl
   endif
 
     if(SIMULATION_TYPE == 2) then

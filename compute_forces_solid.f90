@@ -546,6 +546,8 @@
 
       ispec = numabs(ispecabs)
 
+   if (poroelastic(ispec)) then
+
 ! get poroelastic parameters of current spectral element
     phil = porosity(kmato(ispec))
     tortl = tortuosity(kmato(ispec))
@@ -809,6 +811,8 @@
 
       endif  !  end of top absorbing boundary
 
+    endif ! if poroelastic(ispec)
+
     enddo
 
   endif  ! end of absorbing boundaries
@@ -886,6 +890,8 @@
 ! loop over spectral elements
   do ispec = 1,nspec
 
+  if (poroelastic(ispec)) then
+
   do j=1,NGLLZ
   do i=1,NGLLX
 
@@ -941,6 +947,7 @@
 
   enddo
   enddo
+  endif 
   enddo
 
   endif ! end of test on attenuation
