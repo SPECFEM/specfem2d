@@ -151,7 +151,5 @@
         aa1 = -gYI/gXI
         aa2 = -gYII/gXII
 
-
-  print*,'chris check',aa1,aa2,att_I,att_II
    end subroutine get_poroelastic_velocities
 
