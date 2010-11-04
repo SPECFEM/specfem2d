@@ -269,7 +269,7 @@ SPECFEM2D 6.1: SPECFEM2D facilitates 2D simulations of
 The SEM is a continuous Galerkin technique, which can easily be made discontinous;
 it is then a particular case of the discontinuous Galerkin technique,
 with optimized efficiency because of its tensorized basis functions.
-Note that in many (most?) geological models in the context of seismic wave propagation studies
+Note that in many (most?) geological models in the context of seismic wave propagation studies (except for fault dynamic rupture studies)
 a discontinous mesh is not needed because material property contrasts are not drastic and thus a continuous formulation is sufficient.
 
 Caution:
@@ -508,4 +508,11 @@ elastic elements, only the nodes/edges of acoustic elements are kept).
 
 These files are opened and read in meshfem2D.F90 using subroutines
 read_abs_surface and read_acoustic_surface, which are in part_unstruct.F90
+
+--------------------------------------------------
+               ACKNOWLEDGEMENTS
+--------------------------------------------------
+
+We thank Paul Cristini from Laboratoire de Mecanique et d'Acoustique of Marseille, France, for very carefully testing version 6.1
+of the package and helping us locate and fix several important bugs.
 
