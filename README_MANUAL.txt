@@ -289,7 +289,7 @@ To use the code:
 
 - edit the Makefile. There are several options available : -DUSE_MPI compiles with use of an MPI library. -DUSE_SCOTCH enables use of graph partitioner SCOTCH.
 
-- if you want to run in parallel, i.e., using more than one processor core, then compiling the SCOTCH graph partitioner is needed. Go to subdirectory scotch_5.1.10b and read INSTALL.txt. You may want to download more recent versions of SCOTCH in the future from http://www.labri.fr/perso/pelegrin/scotch/scotch_en.html . Support for the METIS graph partitioner has been discontinued because SCOTCH is more recent and performs better.
+- if you want to run in parallel, i.e., using more than one processor core, then you need to compile the SCOTCH graph partitioner. Go to subdirectory scotch_5.1.10b and read INSTALL.txt. You may want to download more recent versions of SCOTCH in the future from http://www.labri.fr/perso/pelegrin/scotch/scotch_en.html . Support for the METIS graph partitioner has been discontinued because SCOTCH is more recent and performs better.
 
 - then go back to the main directory of SPECFEM2D and type "make all"
 
