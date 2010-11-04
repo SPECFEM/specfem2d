@@ -6,7 +6,8 @@
 !
 ! Copyright Universite de Pau, CNRS and INRIA, France,
 ! and Princeton University / California Institute of Technology, USA.
-! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
+! Main contributors:
+!               Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
 !               Christina Morency, cmorency aT princeton DOT edu
@@ -271,6 +272,9 @@ it is then a particular case of the discontinuous Galerkin technique,
 with optimized efficiency because of its tensorized basis functions.
 Note that in many (most?) geological models in the context of seismic wave propagation studies (except for fault dynamic rupture studies)
 a discontinous mesh is not needed because material property contrasts are not drastic and thus a continuous formulation is sufficient.
+
+The SPECFEM2D package was first developed by Dimitri Komatitsch and Jean-Pierre Vilotte at IPG in Paris, France from 1994 to 1997 and then by Dimitri Komatitsch from 1998 to 2005. Since then it has been developed and maintained by a development team: in alphabetical order, Celine Blitz, Emiljana Jorgji, Dimitri Komatitsch, Nicolas Le Goff, Pieyre Le Loher, Roland Martin, Christina Morency, David Michea, Carl Tape, Jeroen Tromp... (add other developers here in the future, several are currently missing).
+
 
 Caution:
 --------
