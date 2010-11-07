@@ -472,6 +472,11 @@ This feature is only implemented for elastic materials and sensitivity kernels
 can be calculated (see Tape, Liu & Tromp, GJI 2006 for details on membrane
 surface waves).
 
+---------------------------------------------------
+
+A useful Python script called SEM_save_dir.py, written by Paul Cristini from
+Laboratoire de Mecanique et d'Acoustique, CNRS, Marseille, France, is provided.
+It allows one to automatically save all the parameters and results of a given simulation.
 
 --------------------------
 --------------------------
