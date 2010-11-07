@@ -616,12 +616,24 @@
   double precision, external :: hgll
 
 ! timer to count elapsed time
+  double precision :: time_start,time_end
+  integer :: year_start,year_end,month_start,month_end
+
+  double precision :: tCPU,t_remain,t_total
+  integer :: ihours,iminutes,iseconds,int_tCPU, &
+             ihours_remain,iminutes_remain,iseconds_remain,int_t_remain, &
+             ihours_total,iminutes_total,iseconds_total,int_t_total
+  ! to determine date and time at which the run will finish
   character(len=8) datein
   character(len=10) timein
   character(len=5)  :: zone
   integer, dimension(8) :: time_values
-  integer ihours,iminutes,iseconds,int_tCPU
-  double precision :: time_start,time_end,tCPU
+  character(len=3), dimension(12) :: month_name
+  character(len=3), dimension(0:6) :: weekday_name
+  data month_name /'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'/
+  data weekday_name /'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'/
+  integer :: year,mon,day,hr,minutes,timestamp,julian_day_number,day_of_week
+  integer, external :: idaywk
 
 ! for MPI and partitioning
   integer  :: ier
@@ -2820,7 +2832,7 @@ call invert_mass_matrix(any_elastic,any_acoustic,any_poroelastic,npoin,rmass_inv
 
   iglob_image_color(:,:) = -1
 
-! cheking which pixels are inside each elements
+! checking which pixels are inside each elements
 
   nb_pixel_loc = 0
   do ispec = 1, nspec
@@ -4477,6 +4489,8 @@ endif
 
 ! count elapsed wall-clock time
   call date_and_time(datein,timein,zone,time_values)
+! time_values(1): year
+! time_values(2): month of the year
 ! time_values(3): day of the month
 ! time_values(5): hour of the day
 ! time_values(6): minutes of the hour
@@ -4485,6 +4499,8 @@ endif
 ! this fails if we cross the end of the month
   time_start = 86400.d0*time_values(3) + 3600.d0*time_values(5) + &
                60.d0*time_values(6) + time_values(7) + time_values(8) / 1000.d0
+  month_start = time_values(2)
+  year_start = time_values(1)
 
   if(output_color_image) then
 ! to display the P-velocity model in background on color images
@@ -6817,6 +6833,92 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
       if(displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
         call exit_MPI('code became unstable and blew up in fluid')
     endif
+
+! count elapsed wall-clock time
+  call date_and_time(datein,timein,zone,time_values)
+! time_values(1): year
+! time_values(2): month of the year
+! time_values(3): day of the month
+! time_values(5): hour of the day
+! time_values(6): minutes of the hour
+! time_values(7): seconds of the minute
+! time_values(8): milliseconds of the second
+! this fails if we cross the end of the month
+  time_end = 86400.d0*time_values(3) + 3600.d0*time_values(5) + &
+             60.d0*time_values(6) + time_values(7) + time_values(8) / 1000.d0
+  month_end = time_values(2)
+  year_end = time_values(1)
+
+! elapsed time since beginning of the simulation
+  if (myrank == 0) then
+    if(month_end == month_start .and. year_end == year_start) then
+      tCPU = time_end - time_start
+      int_tCPU = int(tCPU)
+      ihours = int_tCPU / 3600
+      iminutes = (int_tCPU - 3600*ihours) / 60
+      iseconds = int_tCPU - 3600*ihours - 60*iminutes
+      write(IOUT,*) 'Elapsed time in seconds = ',tCPU
+      write(IOUT,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+      write(IOUT,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
+
+    ! compute estimated remaining simulation time
+    t_remain = (NSTEP - it) * (tCPU/dble(it))
+    int_t_remain = int(t_remain)
+    ihours_remain = int_t_remain / 3600
+    iminutes_remain = (int_t_remain - 3600*ihours_remain) / 60
+    iseconds_remain = int_t_remain - 3600*ihours_remain - 60*iminutes_remain
+    write(IOUT,*) 'Time steps remaining = ',NSTEP - it
+    write(IOUT,*) 'Estimated remaining time in seconds = ',t_remain
+    write(IOUT,"(' Estimated remaining time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+             ihours_remain,iminutes_remain,iseconds_remain
+
+    ! compute estimated total simulation time
+    t_total = t_remain + tCPU
+    int_t_total = int(t_total)
+    ihours_total = int_t_total / 3600
+    iminutes_total = (int_t_total - 3600*ihours_total) / 60
+    iseconds_total = int_t_total - 3600*ihours_total - 60*iminutes_total
+    write(IOUT,*) 'Estimated total run time in seconds = ',t_total
+    write(IOUT,"(' Estimated total run time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+             ihours_total,iminutes_total,iseconds_total
+
+    if(it < NSTEP) then
+
+      ! compute date and time at which the run should finish (useful for long runs); for simplicity only minutes
+      ! are considered, seconds are ignored; in any case the prediction is not
+      ! accurate down to seconds because of system and network fluctuations
+      year = time_values(1)
+      mon = time_values(2)
+      day = time_values(3)
+      hr = time_values(5)
+      minutes = time_values(6)
+
+      ! get timestamp in minutes of current date and time
+      call convtime(timestamp,year,mon,day,hr,minutes)
+
+      ! add remaining minutes
+      timestamp = timestamp + nint(t_remain / 60.d0)
+
+      ! get date and time of that future timestamp in minutes
+      call invtime(timestamp,year,mon,day,hr,minutes)
+
+      ! convert to Julian day to get day of the week
+      call calndr(day,mon,year,julian_day_number)
+      day_of_week = idaywk(julian_day_number)
+
+      write(IOUT,"(' The run will finish approximately on: ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
+          weekday_name(day_of_week),month_name(mon),day,year,hr,minutes
+
+    endif
+
+      write(IOUT,*)
+    else
+      write(IOUT,*) 'The calendar has crossed the end of the month during the simulation,'
+      write(IOUT,*) 'cannot produce accurate CPU time estimates any more.'
+      write(IOUT,*)
+    endif
+  endif
+
     if (myrank == 0) write(IOUT,*)
   endif
 
@@ -7531,30 +7633,6 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
   seismo_offset = seismo_offset + seismo_current
   seismo_current = 0
-
-! count elapsed wall-clock time
-  call date_and_time(datein,timein,zone,time_values)
-! time_values(3): day of the month
-! time_values(5): hour of the day
-! time_values(6): minutes of the hour
-! time_values(7): seconds of the minute
-! time_values(8): milliseconds of the second
-! this fails if we cross the end of the month
-  time_end = 86400.d0*time_values(3) + 3600.d0*time_values(5) + &
-             60.d0*time_values(6) + time_values(7) + time_values(8) / 1000.d0
-
-! elapsed time since beginning of the simulation
-  tCPU = time_end - time_start
-  int_tCPU = int(tCPU)
-  ihours = int_tCPU / 3600
-  iminutes = (int_tCPU - 3600*ihours) / 60
-  iseconds = int_tCPU - 3600*ihours - 60*iminutes
-  if (myrank == 0) then
-    write(IOUT,*) 'Elapsed time in seconds = ',tCPU
-    write(IOUT,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
-    write(IOUT,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
-    write(IOUT,*)
-  endif
 
   endif
 

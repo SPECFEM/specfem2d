@@ -367,12 +367,14 @@ In section "# receiver line parameters for seismograms":
 SAVE_FORWARD determines if the last frame of a forward simulation is saved (.true.) or not (.false)
 
 In section "# define models....":
-Three types of models:
-I: (model_number,1,rho,Vp,Vs,0,0,Qp,Qs,0,0,0,0,0,0), for isotropic elastic/acoustic
-material
-or II: (model_number,2,rho,Vp,Vs,c11,c13,c15,c33,c35,c55,Qp,Qs,0,0), for anisotropic material
-or III: (model_number,3,rhos,rhof,phi,c,kxx,kxz,kzz,Ks,Kf,Kfr,etaf,mufr,Qs),
-for isotropic poroelastic material
+There are three possible types of models:
+
+ I:   (model_number 1 rho Vp Vs 0 0 Qp Qs 0 0 0 0 0 0) or
+ II:  (model_number 2 rho c11 c13 c15 c33 c35 c55 0 0 0 0 0 0) or
+ III: (model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qs).
+
+For istropic elastic/acoustic material use I and set Vs to zero to make a given model acoustic, for anisotropic elastic use II, 
+and for isotropic poroelastic material use III. The mesh can contain acoustic, elastic, and poroelastic models simultaneously.
 
 rho_s = solid density
 rho_f = fluid density
