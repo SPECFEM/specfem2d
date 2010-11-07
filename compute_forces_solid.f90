@@ -947,7 +947,7 @@
 
   enddo
   enddo
-  endif 
+  endif
   enddo
 
   endif ! end of test on attenuation

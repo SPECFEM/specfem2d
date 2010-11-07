@@ -68,7 +68,7 @@ O = obj
 F90 = ifort
 ##F90 = mpif90 -DUSE_MPI -DUSE_SCOTCH
 CC = gcc
-FLAGS_NOCHECK=-O3 -xP -vec-report0 -e95 -std95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -fpe0 -ftz -ftrapuv -check all -traceback
+FLAGS_NOCHECK=FLAGS_NOCHECK=-O3 -xP -vec-report0 -e95 -std95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -fpe0 -ftz
 FLAGS_CHECK = $(FLAGS_NOCHECK) -traceback -fpe0 -ftrapuv -check all
 
 # GNU gfortran
@@ -76,8 +76,7 @@ FLAGS_CHECK = $(FLAGS_NOCHECK) -traceback -fpe0 -ftrapuv -check all
 ##F90 = mpif90 -DUSE_MPI -DUSE_SCOTCH
 #CC = gcc
 ##FLAGS_NOCHECK = -O3 -march=opteron -m64 -mfpmath=sse,387
-#FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O3 -pedantic -pedantic-errors -Wunused -Waliasing -Wampersand -Wline-truncation -Wsurprising -Wunderflow -fno-trapping-math # -mcmodel=medium
-##FLAGS_NOCHECK = -std=f95 -fimplicit-none -frange-check -O3 -fmax-errors=10 -pedantic -pedantic-errors -Wunused -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math # -mcmodel=medium
+##FLAGS_NOCHECK = -std=gnu -fimplicit-none -frange-check -O3 -fmax-errors=10 -pedantic -pedantic-errors -Wunused -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -fno-trapping-math # -mcmodel=medium
 #FLAGS_CHECK = $(FLAGS_NOCHECK) -fbounds-check
 
 # IBM
@@ -106,7 +105,7 @@ OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/enforce_acoustic_free_surface.o\
         $O/construct_acoustic_surface.o $O/assemble_MPI.o $O/compute_energy.o $O/compute_curl_one_element.o\
         $O/attenuation_compute_param.o $O/compute_Bielak_conditions.o $O/paco_beyond_critical.o\
         $O/paco_convolve_fft.o $O/is_in_convex_quadrilateral.o $O/get_perm_cuthill_mckee.o\
-	$O/read_external_model.o $O/invert_mass_matrix.o
+	$O/read_external_model.o $O/invert_mass_matrix.o $O/calendar.o $O/convert_time.o
 
 default:  clean meshfem2D specfem2D convolve_source_timefunction
 
@@ -212,6 +211,12 @@ $O/compute_forces_fluid.o: compute_forces_fluid.f90 constants.h
 ### use optimized compilation option for solver only
 $O/compute_gradient_attenuation.o: compute_gradient_attenuation.f90 constants.h
 	${F90} $(FLAGS_NOCHECK) -c -o $O/compute_gradient_attenuation.o compute_gradient_attenuation.f90
+    
+$O/calendar.o: calendar.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/calendar.o calendar.f90
+    
+$O/convert_time.o: convert_time.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/convert_time.o convert_time.f90
     
 $O/compute_energy.o: compute_energy.f90 constants.h
 	${F90} $(FLAGS_NOCHECK) -c -o $O/compute_energy.o compute_energy.f90
