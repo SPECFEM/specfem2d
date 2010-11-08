@@ -258,7 +258,8 @@ SPECFEM2D 6.1: SPECFEM2D facilitates 2D simulations of
         With version 6.1, the 2D spectral-element solver accommodates
         regular and unstructured meshes, generated for example by Cubit
         (http://cubit.sandia.gov), Gmsh (http://geuz.org/gmsh)
-        or GiD (http://www.gid.cimne.upc.es).
+        or GiD (http://www.gid.cimne.upc.es). Even mesh creation packages that generate triangles, for instance Delaunay-Voronoi triangulation codes, can be used because each triangle can then easily be decomposed into three quadrangles by linking the barycenter to the center of each edge; while this approach does not generate quadrangles of optimal quality, it can ease mesh creation in some situations and it has been shown that the spectral-element method can very accurately handle distorted mesh elements.
+
         The solver has adjoint capabilities and can
         calculate finite-frequency sensitivity kernels for acoustic,
         (an)elastic, and poroelastic media. The package also considers 2D SH
@@ -270,6 +271,7 @@ SPECFEM2D 6.1: SPECFEM2D facilitates 2D simulations of
 The SEM is a continuous Galerkin technique, which can easily be made discontinous;
 it is then a particular case of the discontinuous Galerkin technique,
 with optimized efficiency because of its tensorized basis functions.
+In particular, it can accurately handle very distorted mesh elements.
 Note that in many (most?) geological models in the context of seismic wave propagation studies (except for fault dynamic rupture studies)
 a discontinous mesh is not needed because material property contrasts are not drastic and thus a continuous formulation is sufficient.
 
