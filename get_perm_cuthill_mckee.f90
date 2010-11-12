@@ -438,7 +438,7 @@
 
   do while(total_ordered_elts < nspec)
     ! creation of a sublist of sorted elements which fit in the cache (the criterion of size is limit)
-    ! limit = nb of element that can fit in the L2 cache
+    ! limit = nb of elements that can fit in the L2 cache
     call Cut_McK( root, nspec, total_size_adj, xadj, adj, mask, gsize, invperm_sub, limit, nspec_sub, next_root)
       ! add the sublist in the main permutation list
       invperm_all(total_ordered_elts+1:total_ordered_elts+nspec_sub) = invperm_sub(1:nspec_sub)
