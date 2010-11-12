@@ -1255,7 +1255,7 @@ endif
   read(IIN,"(a80)") datlin
   read(IIN,*) ninterface, max_interface_size
   if ( ninterface > 0 ) then
-if(ipass == 1) then
+  if(ipass == 1) then
      allocate(my_neighbours(ninterface))
      allocate(my_nelmnts_neighbours(ninterface))
      allocate(my_interfaces(4,max_interface_size,ninterface))
@@ -1268,7 +1268,7 @@ if(ipass == 1) then
      allocate(inum_interfaces_acoustic(ninterface))
      allocate(inum_interfaces_elastic(ninterface))
      allocate(inum_interfaces_poroelastic(ninterface))
-endif
+  endif
 
      do num_interface = 1, ninterface
         read(IIN,*) my_neighbours(num_interface), my_nelmnts_neighbours(num_interface)
@@ -1342,6 +1342,7 @@ endif
          ib_xmin(inum) =  nspec_xmin
        endif
     enddo
+
 ! Files to save absorbed waves needed to reconstruct backward wavefield for adjoint method
    if(ipass == 1) then
      if(any_elastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 2)) then
@@ -1393,7 +1394,42 @@ endif
     write(IOUT,*) 'nspec_zmin = ',nspec_zmin
     write(IOUT,*) 'nspec_zmax = ',nspec_zmax
 
+ else
+
+     if(.not. allocated(ib_xmin)) then
+       allocate(ib_xmin(1))
+       allocate(ib_xmax(1))
+       allocate(ib_zmin(1))
+       allocate(ib_zmax(1))
+     endif
+
+     if(.not. allocated(b_absorb_elastic_left)) then
+       allocate(b_absorb_elastic_left(1,1,1,1))
+       allocate(b_absorb_elastic_right(1,1,1,1))
+       allocate(b_absorb_elastic_bottom(1,1,1,1))
+       allocate(b_absorb_elastic_top(1,1,1,1))
+     endif
+
+     if(.not. allocated(b_absorb_poro_s_left)) then
+       allocate(b_absorb_poro_s_left(1,1,1,1))
+       allocate(b_absorb_poro_s_right(1,1,1,1))
+       allocate(b_absorb_poro_s_bottom(1,1,1,1))
+       allocate(b_absorb_poro_s_top(1,1,1,1))
+       allocate(b_absorb_poro_w_left(1,1,1,1))
+       allocate(b_absorb_poro_w_right(1,1,1,1))
+       allocate(b_absorb_poro_w_bottom(1,1,1,1))
+       allocate(b_absorb_poro_w_top(1,1,1,1))
+     endif
+
+     if(.not. allocated(b_absorb_acoustic_left)) then
+       allocate(b_absorb_acoustic_left(1,1,1))
+       allocate(b_absorb_acoustic_right(1,1,1))
+       allocate(b_absorb_acoustic_bottom(1,1,1))
+       allocate(b_absorb_acoustic_top(1,1,1))
+     endif
+
  endif
+
 !
 !----  read acoustic free surface data
 !
@@ -3208,17 +3244,17 @@ endif
       do ispec = 1,nspec_xmin
 
      if(p_sv)then!P-SV waves
-         do i=1,NGLLZ
-     read(35) b_absorb_elastic_left(1,i,ispec,it)
-         enddo
-         do i=1,NGLLZ
-     read(35) b_absorb_elastic_left(3,i,ispec,it)
-         enddo
+       do i=1,NGLLZ
+         read(35) b_absorb_elastic_left(1,i,ispec,it)
+       enddo
+       do i=1,NGLLZ
+         read(35) b_absorb_elastic_left(3,i,ispec,it)
+       enddo
        b_absorb_elastic_left(2,:,ispec,it) = ZERO
      else!SH (membrane) waves
-         do i=1,NGLLZ
-     read(35) b_absorb_elastic_left(2,i,ispec,it)
-         enddo
+       do i=1,NGLLZ
+         read(35) b_absorb_elastic_left(2,i,ispec,it)
+       enddo
        b_absorb_elastic_left(1,:,ispec,it) = ZERO
        b_absorb_elastic_left(3,:,ispec,it) = ZERO
      endif
@@ -5327,16 +5363,16 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
       do ispec = 1,nspec_xmin
 
       if(p_sv)then!P-SV waves
-         do i=1,NGLLZ
-     write(35) b_absorb_elastic_left(1,i,ispec,it)
-         enddo
-         do i=1,NGLLZ
-     write(35) b_absorb_elastic_left(3,i,ispec,it)
-         enddo
+        do i=1,NGLLZ
+          write(35) b_absorb_elastic_left(1,i,ispec,it)
+        enddo
+        do i=1,NGLLZ
+          write(35) b_absorb_elastic_left(3,i,ispec,it)
+        enddo
       else!SH (membrane) waves
-         do i=1,NGLLZ
-     write(35) b_absorb_elastic_left(2,i,ispec,it)
-         enddo
+        do i=1,NGLLZ
+          write(35) b_absorb_elastic_left(2,i,ispec,it)
+        enddo
       endif
 
       enddo
