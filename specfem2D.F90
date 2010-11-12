@@ -7800,7 +7800,6 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
    if (.not. any_poroelastic) then
 open(unit=1001,file='DATA/model_velocity.dat_output',status='unknown')
    if ( .NOT. assign_external_model) then
-         print *, 'writing model_output as external_model == .false.!!!!!!!!!!!!!!!!!!!!!!!'
 allocate(rho_local(ngllx,ngllz,nspec)); rho_local=0.
 allocate(vp_local(ngllx,ngllz,nspec)); vp_local=0.
 allocate(vs_local(ngllx,ngllz,nspec)); vs_local=0.
@@ -7821,7 +7820,6 @@ allocate(vs_local(ngllx,ngllz,nspec)); vs_local=0.
        end do
     end do
    else
-     print *, 'writing model_output as external_model == .true.!!!!!!!!!!!!!!!!!!!!!!!!'
 !!     write(1001,*) npoin
 !!  do iglob = 1,npoin
 !!     write(1001,*) coord(1,iglob),coord(2,iglob),rhoext_global(iglob),vpext_global(iglob),vsext_global(iglob)
