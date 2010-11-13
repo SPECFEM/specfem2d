@@ -96,7 +96,7 @@ OBJS_MESHFEM2D = $O/part_unstruct.o $O/meshfem2D.o $O/read_value_parameters.o $O
 
 OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/enforce_acoustic_free_surface.o\
         $O/compute_forces_acoustic.o $O/compute_forces_elastic.o\
-        $O/compute_forces_solid.o $O/compute_forces_fluid.o $O/get_poroelastic_velocities.o\
+        $O/compute_forces_poro_solid.o $O/compute_forces_poro_fluid.o $O/get_poroelastic_velocities.o\
         $O/lagrange_poly.o $O/gmat01.o $O/gll_library.o $O/plotgll.o $O/define_derivation_matrices.o\
         $O/plotpost.o $O/locate_receivers.o $O/locate_source_force.o $O/compute_gradient_attenuation.o $O/setup_sources_receivers.o\
         $O/specfem2D.o $O/write_seismograms.o $O/define_external_model.o $O/createnum_fast.o $O/createnum_slow.o\
@@ -201,12 +201,12 @@ $O/compute_forces_elastic.o: compute_forces_elastic.f90 constants.h
 	${F90} $(FLAGS_NOCHECK) -c -o $O/compute_forces_elastic.o compute_forces_elastic.f90
     
 ### use optimized compilation option for solver only
-$O/compute_forces_solid.o: compute_forces_solid.f90 constants.h
-	${F90} $(FLAGS_NOCHECK) -c -o $O/compute_forces_solid.o compute_forces_solid.f90
+$O/compute_forces_poro_solid.o: compute_forces_poro_solid.f90 constants.h
+	${F90} $(FLAGS_NOCHECK) -c -o $O/compute_forces_poro_solid.o compute_forces_poro_solid.f90
 
 ### use optimized compilation option for solver only
-$O/compute_forces_fluid.o: compute_forces_fluid.f90 constants.h
-	${F90} $(FLAGS_NOCHECK) -c -o $O/compute_forces_fluid.o compute_forces_fluid.f90
+$O/compute_forces_poro_fluid.o: compute_forces_poro_fluid.f90 constants.h
+	${F90} $(FLAGS_NOCHECK) -c -o $O/compute_forces_poro_fluid.o compute_forces_poro_fluid.f90
 
 ### use optimized compilation option for solver only
 $O/compute_gradient_attenuation.o: compute_gradient_attenuation.f90 constants.h
