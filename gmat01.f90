@@ -162,7 +162,7 @@
         poisson = half*(3.d0*kappa-two_mu)/(3.d0*kappa+mu)
 
         !---- isotropic material, moduli are given, allows for declaration of poroelastic material
-        !---- poroelastic (<0phi<1)
+        !---- poroelastic (0<phi<1)
      else if (indic == 3) then
         ! Qs values
         Qs = val12

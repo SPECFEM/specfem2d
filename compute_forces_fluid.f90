@@ -467,7 +467,7 @@
      invpermlxz = -permlxz/detk
      invpermlzz = permlxx/detk
     else
-      stop 'Permeability matrix is not inversible'
+      stop 'Permeability matrix is not invertible'
     endif
 
 ! relaxed viscous coef
