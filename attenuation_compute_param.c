@@ -1,5 +1,5 @@
 
-/* See Liu, Anderson & Kanamori (GJRAS, 47, 41-58, 1976) for details */
+/* See Liu, Anderson & Kanamori (Geophysical Journal of the Royal Astronomical Society, vol. 47, p. 41-58, 1976) for details */
 
 /* cleaned by Dimitri Komatitsch, University of Pau, France, July 2007 */
 
@@ -125,10 +125,10 @@ int attenuation_compute_param_(int *nmech_in, double *Qp_in, double *Qs_in, doub
       */
       /* We put the results in tau_sigma_nu to get them in fortran. */
       if ( nu == 1 ) {
-  tau_sigma_nu1[i-1] = tau_s[i];
+        tau_sigma_nu1[i-1] = tau_s[i];
       }
       if ( nu == 2 ) {
-  tau_sigma_nu2[i-1] = tau_s[i];
+        tau_sigma_nu2[i-1] = tau_s[i];
       }
 
     }
@@ -140,10 +140,10 @@ int attenuation_compute_param_(int *nmech_in, double *Qp_in, double *Qs_in, doub
       */
        /* We put the results in tau_epsilon_nu to get them in fortran. */
       if ( nu == 1 ) {
-  tau_epsilon_nu1[i-1] = tau_e[i];
+        tau_epsilon_nu1[i-1] = tau_e[i];
       }
       if ( nu == 2 ) {
-  tau_epsilon_nu2[i-1] = tau_e[i];
+        tau_epsilon_nu2[i-1] = tau_e[i];
       }
 
     }

@@ -358,13 +358,13 @@
 
     sigmap = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl + dwz_dzl)
 
-          if(SIMULATION_TYPE == 2) then ! kernels calculation
-    b_sigma_xx = lambdalplus2mul_G*b_dux_dxl + lambdal_G*b_duz_dzl + C_biot*(b_dwx_dxl + b_dwz_dzl)
-    b_sigma_xz = mul_G*(b_duz_dxl + b_dux_dzl)
-    b_sigma_zz = lambdalplus2mul_G*b_duz_dzl + lambdal_G*b_dux_dxl + C_biot*(b_dwx_dxl + b_dwz_dzl)
+    if(SIMULATION_TYPE == 2) then ! kernels calculation
+      b_sigma_xx = lambdalplus2mul_G*b_dux_dxl + lambdal_G*b_duz_dzl + C_biot*(b_dwx_dxl + b_dwz_dzl)
+      b_sigma_xz = mul_G*(b_duz_dxl + b_dux_dzl)
+      b_sigma_zz = lambdalplus2mul_G*b_duz_dzl + lambdal_G*b_dux_dxl + C_biot*(b_dwx_dxl + b_dwz_dzl)
 
-    b_sigmap = C_biot*(b_dux_dxl + b_duz_dzl) + M_biot*(b_dwx_dxl + b_dwz_dzl)
-          endif
+      b_sigmap = C_biot*(b_dux_dxl + b_duz_dzl) + M_biot*(b_dwx_dxl + b_dwz_dzl)
+    endif
   endif
 
 ! kernels calculation
@@ -487,7 +487,7 @@
      invpermlxz = -permlxz/detk
      invpermlzz = permlxx/detk
     else
-      stop 'Permeability matrix is not inversible'
+      stop 'Permeability matrix is not invertible'
     endif
 
 ! relaxed viscous coef

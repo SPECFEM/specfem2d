@@ -4897,7 +4897,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
      invpermlxz = -permlxz/detk
      invpermlzz = permlxx/detk
     else
-      stop 'Permeability matrix is not inversible'
+      stop 'Permeability matrix is not invertible'
     endif
 
 ! relaxed viscous coef
