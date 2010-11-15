@@ -5337,7 +5337,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! *********************************************************
 
  if(any_elastic) then
-    call compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
+    call compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
                source_type,it,NSTEP,anyabs,assign_external_model, &
                initialfield,TURN_ATTENUATION_ON,angleforce,deltatcube, &
