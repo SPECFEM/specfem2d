@@ -12,7 +12,7 @@ more detailed descriptions of the spectral-element method.
 
 ---------------------------
 
-IMPORTANT KNOWN BUG: in compute_forces_elastic.f90 the calculation of
+IMPORTANT KNOWN BUG: in compute_forces_viscoelastic.f90 the calculation of
 attenuation (viscoelasticity) is slightly incorrect because the gradients
 are computed twice but *at the same time step* instead of at different
 (staggered) time steps (t_{n-1} and t_n or something like that).
