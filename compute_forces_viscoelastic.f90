@@ -42,7 +42,7 @@
 !
 !========================================================================
 
-subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
+subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
      ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
      source_type,it,NSTEP,anyabs,assign_external_model, &
      initialfield,TURN_ATTENUATION_ON,angleforce,deltatcube, &
@@ -984,5 +984,5 @@ subroutine compute_forces_elastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
 
   endif ! end of test on attenuation
 
-end subroutine compute_forces_elastic
+end subroutine compute_forces_viscoelastic
 

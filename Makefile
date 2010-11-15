@@ -95,7 +95,7 @@ LINK = $(F90)
 OBJS_MESHFEM2D = $O/part_unstruct.o $O/meshfem2D.o $O/read_value_parameters.o $O/spline_routines.o
 
 OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/enforce_acoustic_free_surface.o\
-        $O/compute_forces_acoustic.o $O/compute_forces_elastic.o\
+        $O/compute_forces_acoustic.o $O/compute_forces_viscoelastic.o\
         $O/compute_forces_poro_solid.o $O/compute_forces_poro_fluid.o $O/get_poroelastic_velocities.o\
         $O/lagrange_poly.o $O/gmat01.o $O/gll_library.o $O/plotgll.o $O/define_derivation_matrices.o\
         $O/plotpost.o $O/locate_receivers.o $O/locate_source_force.o $O/compute_gradient_attenuation.o $O/setup_sources_receivers.o\
@@ -197,8 +197,8 @@ $O/compute_forces_acoustic.o: compute_forces_acoustic.f90 constants.h
 	${F90} $(FLAGS_NOCHECK) -c -o $O/compute_forces_acoustic.o compute_forces_acoustic.f90
     
 ### use optimized compilation option for solver only
-$O/compute_forces_elastic.o: compute_forces_elastic.f90 constants.h
-	${F90} $(FLAGS_NOCHECK) -c -o $O/compute_forces_elastic.o compute_forces_elastic.f90
+$O/compute_forces_viscoelastic.o: compute_forces_viscoelastic.f90 constants.h
+	${F90} $(FLAGS_NOCHECK) -c -o $O/compute_forces_viscoelastic.o compute_forces_viscoelastic.f90
     
 ### use optimized compilation option for solver only
 $O/compute_forces_poro_solid.o: compute_forces_poro_solid.f90 constants.h
