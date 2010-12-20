@@ -254,6 +254,7 @@
   close(27)
 
 ! open image file and create system command to convert image to more convenient format
+! use the "convert" command from ImageMagick http://www.imagemagick.org
   write(system_command,"('cd OUTPUT_FILES ; convert image',i7.7,'.pnm image',i7.7,'.gif ; rm -f image',i7.7,'.pnm')") it,it,it
 
 ! call the system to convert image to GIF
