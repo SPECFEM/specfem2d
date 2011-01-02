@@ -401,20 +401,20 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
               ! weak formulation term based on stress tensor (non-symmetric form)
               ! also add GLL integration weights
               tempx1(i,j) = wzgll(j)*jacobianl*(sigma_xx*xixl+sigma_xz*xizl)
-              !tempy1(i,j) = wzgll(j)*jacobianl*(sigma_xy*xixl+sigma_zy*xizl)
+              tempy1(i,j) = wzgll(j)*jacobianl*(sigma_xy*xixl+sigma_zy*xizl)
               tempz1(i,j) = wzgll(j)*jacobianl*(sigma_xz*xixl+sigma_zz*xizl)
 
               tempx2(i,j) = wxgll(i)*jacobianl*(sigma_xx*gammaxl+sigma_xz*gammazl)
-              !tempy2(i,j) = wxgll(i)*jacobianl*(sigma_xy*gammaxl+sigma_zy*gammazl)
+              tempy2(i,j) = wxgll(i)*jacobianl*(sigma_xy*gammaxl+sigma_zy*gammazl)
               tempz2(i,j) = wxgll(i)*jacobianl*(sigma_xz*gammaxl+sigma_zz*gammazl)
 
               if(SIMULATION_TYPE == 2) then ! Adjoint calculation, backward wavefield
                  b_tempx1(i,j) = wzgll(j)*jacobianl*(b_sigma_xx*xixl+b_sigma_xz*xizl)
-                 !b_tempy1(i,j) = wzgll(j)*jacobianl*(b_sigma_xy*xixl+b_sigma_zy*xizl)
+                 b_tempy1(i,j) = wzgll(j)*jacobianl*(b_sigma_xy*xixl+b_sigma_zy*xizl)
                  b_tempz1(i,j) = wzgll(j)*jacobianl*(b_sigma_xz*xixl+b_sigma_zz*xizl)
 
                  b_tempx2(i,j) = wxgll(i)*jacobianl*(b_sigma_xx*gammaxl+b_sigma_xz*gammazl)
-                 !b_tempy2(i,j) = wxgll(i)*jacobianl*(b_sigma_xy*gammaxl+b_sigma_zy*gammazl)
+                 b_tempy2(i,j) = wxgll(i)*jacobianl*(b_sigma_xy*gammaxl+b_sigma_zy*gammazl)
                  b_tempz2(i,j) = wxgll(i)*jacobianl*(b_sigma_xz*gammaxl+b_sigma_zz*gammazl)
               endif
 
@@ -434,7 +434,7 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
               ! we can merge the two loops because NGLLX == NGLLZ
               do k = 1,NGLLX
                  accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
-           ! accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tempy1(k,j)*hprimewgll_xx(k,i) + tempy2(i,k)*hprimewgll_zz(k,j))
+                 accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tempy1(k,j)*hprimewgll_xx(k,i) + tempy2(i,k)*hprimewgll_zz(k,j))
                  accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tempz1(k,j)*hprimewgll_xx(k,i) + tempz2(i,k)*hprimewgll_zz(k,j))
 
                  if(SIMULATION_TYPE == 2) then ! Adjoint calculation, backward wavefield
@@ -528,17 +528,17 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
               ! Clayton-Engquist condition if elastic
               if(elastic(ispec)) then
                  vx = veloc_elastic(1,iglob) - veloc_horiz
-                 !          vy = veloc_elastic(2,iglob)
+                 vy = veloc_elastic(2,iglob)
                  vz = veloc_elastic(3,iglob) - veloc_vert
 
                  vn = nx*vx+nz*vz
 
                  tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
-                 !         ty = rho_vs*vy
+                 ty = rho_vs*vy
                  tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
 
                  accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0)*weight
-                 !           accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
+                 accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
                  accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0)*weight
 
                  if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
