@@ -3,7 +3,7 @@
 #
  4
 #
-# for each interface below, we give the number of points and then x,y for each point
+# for each interface below, we give the number of points and then x,z for each point
 #
 #
 # interface number 1 (bottom of the mesh)
