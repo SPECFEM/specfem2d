@@ -1705,7 +1705,7 @@ endif
   enddo
 
 ! get number of stations from receiver file
-  open(unit=IIN,file='DATA/STATIONS',iostat=ios,status='old',action='read')
+  open(unit=IIN,file='DATA/STATIONS_target',iostat=ios,status='old',action='read')
   nrec = 0
   do while(ios == 0)
     read(IIN,"(a)",iostat=ios) dummystring
@@ -3918,8 +3918,8 @@ endif
         call exit_MPI('unknown source time function')
       endif
 
-! output absolute time in third column, in case user wants to check it as well
-      if (myrank == 0 .and. i_source==1 ) write(55,*) sngl(time),real(source_time_function(1,it),4),sngl(time-t0(1))
+! output relative time in third column, in case user wants to check it as well
+      if (myrank == 0 .and. i_source==1 ) write(55,*) sngl(time-t0(1)),real(source_time_function(1,it),4),sngl(time)
    enddo
    enddo ! i_source=1,NSOURCE
 
@@ -7392,8 +7392,9 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
         xx = coord(1,iglob)
         zz = coord(2,iglob)
          write(97,'(5e11.3)')xx,zz,rho_kl(i,j,ispec),kappa_kl(i,j,ispec),mu_kl(i,j,ispec)
-         write(98,'(5e11.3)')rhorho_el_hessian_final1(i,j,ispec), rhorho_el_hessian_final2(i,j,ispec),&
-                             rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
+         write(98,'(5e11.3)')xx,zz,rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
+         !write(98,'(5e11.3)')rhorho_el_hessian_final1(i,j,ispec), rhorho_el_hessian_final2(i,j,ispec),&
+         !                    rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
           enddo
       enddo
     enddo
@@ -7448,7 +7449,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           elastic,poroelastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,numat,kmato,density,rhoext,assign_external_model)
 
-    call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
+    call plotpost(vector_field_display,coord,vpext,x_source,z_source,x_final_receiver,z_final_receiver, &
           it,deltat,coorg,xinterp,zinterp,shape2D_display, &
           Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
           poroelastcoef,knods,kmato,ibool, &
@@ -7484,7 +7485,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           elastic,poroelastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,numat,kmato,density,rhoext,assign_external_model)
 
-    call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
+    call plotpost(vector_field_display,coord,vpext,x_source,z_source,x_final_receiver,z_final_receiver, &
           it,deltat,coorg,xinterp,zinterp,shape2D_display, &
           Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
           poroelastcoef,knods,kmato,ibool, &
@@ -7520,7 +7521,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           elastic,poroelastic,vector_field_display, &
           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,numat,kmato,density,rhoext,assign_external_model)
 
-    call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
+    call plotpost(vector_field_display,coord,vpext,x_source,z_source,x_final_receiver,z_final_receiver, &
           it,deltat,coorg,xinterp,zinterp,shape2D_display, &
           Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
           poroelastcoef,knods,kmato,ibool, &

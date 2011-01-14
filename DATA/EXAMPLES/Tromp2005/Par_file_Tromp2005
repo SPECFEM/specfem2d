@@ -1,7 +1,7 @@
 
 # title of job, and file that contains interface data
-title                           = Test for M2 UPPA
-interfacesfile                  = EXAMPLES/M2_UPPA/interfaces_M2_UPPA_curved.dat
+title                           = Tromp-Tape-Liu (GJI 2005)
+interfacesfile                  = EXAMPLES/Tromp2005/interfaces_Tromp2005.dat
 
 # forward or adjoint simulation
 SIMULATION_TYPE                 = 1   # 1 = forward, 2 = adjoint + kernels
@@ -9,22 +9,22 @@ SAVE_FORWARD                    = .false.  # save the last frame, needed for adj
 
 # data concerning mesh, when generated using third-party app (more info in README)
 read_external_mesh              = .false.
-mesh_file                       = ./DATA/Mesh_canyon/canyon_mesh_file   # file containing the mesh
-nodes_coords_file               = ./DATA/Mesh_canyon/canyon_nodes_coords_file   # file containing the nodes coordinates
-materials_file                  = ./DATA/Mesh_canyon/canyon_materials_file   # file containing the material number for each element
-free_surface_file               = ./DATA/Mesh_canyon/canyon_free_surface_file   # file containing the free surface
-absorbing_surface_file          = ./DATA/Mesh_canyon/canyon_absorbing_surface_file   # file containing the absorbing surface
+mesh_file                       = ./DATA/ice_water_rock_1D/ice_water_rock_1D_elements       # file containing elements
+nodes_coords_file               = ./DATA/ice_water_rock_1D/ice_water_rock_1D_nodes          # file containing node coordinates
+materials_file                  = ./DATA/ice_water_rock_1D/ice_water_rock_1D_material       # file containing material index for each element
+free_surface_file               = ./DATA/ice_water_rock_1D/ice_water_rock_1D_surface_free   # file containing free surface
+absorbing_surface_file          = ./DATA/ice_water_rock_1D/ice_water_rock_1D_surface_absorb # file containing absorbing surface
 tangential_detection_curve_file = ./DATA/courbe_eros_nodes # file containing the curve delimiting the velocity model
 
 # parameters concerning partitioning
 nproc                           = 1              # number of processes
-partitioning_method             = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
+partitioning_method             = 1              # SCOTCH = 3, ascending order (very bad idea) = 1
                                                  
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
-xmax                            = 4000.d0        # abscissa of right side of the model
+xmax                            = 200000.d0      # abscissa of right side of the model
 nx                              = 80             # number of elements along X
-ngnod                           = 9              # number of control nodes per element (4 or 9)
+ngnod                           = 4              # number of control nodes per element (4 or 9)
 initialfield                    = .false.        # use a plane wave as source or not
 add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
 assign_external_model           = .false.        # define external earth model or not
@@ -37,20 +37,20 @@ p_sv                            = .true.         # set the type of calculation (
 
 # absorbing boundary parameters
 absorbing_conditions            = .true.	 # absorbing boundary active or not
-absorbbottom                    = .true.
+absorbbottom                    = .true.         
 absorbright                     = .true.
 absorbtop                       = .false.
 absorbleft                      = .true.
 
 # time step parameters
-nt                              = 1600           # total number of time steps
-deltat                          = 1.d-3          # duration of a time step
+nt                              = 3000           # total number of time steps
+deltat                          = 2.0d-2         # duration of a time step
 
 # source parameters
 NSOURCE                         = 1              # number of sources [source info read in CMTSOLUTION file]
 force_normal_to_surface         = .false.        # angleforce normal to surface (external mesh and curve file needed)
 
-# constants for attenuation
+# constants for attenuation 
 N_SLS                           = 2                      # number of standard linear solids for attenuation 
 f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, else it is f0
 
@@ -62,15 +62,15 @@ anglerec                        = 0.d0           # angle to rotate components at
 rec_normal_to_surface           = .false.        # base anglerec normal to surface (external mesh and curve file needed)
 
 # first receiver line
-nrec                            = 11             # number of receivers
-xdeb                            = 300.           # first receiver x in meters
-zdeb                            = 2200.          # first receiver z in meters
-xfin                            = 3700.          # last receiver x in meters (ignored if onlyone receiver)
-zfin                            = 2200.          # last receiver z in meters (ignored if onlyone receiver)
-enreg_surf                      = .true.         # receivers inside the medium or at the surface
+nrec                            = 1              # number of receivers
+xdeb                            = 150000.        # first receiver x in meters
+zdeb                            = 40000.         # first receiver z in meters
+xfin                            = 70000.         # last receiver x in meters (ignored if onlyone receiver)
+zfin                            = 0.             # last receiver z in meters (ignored if onlyone receiver)
+enreg_surf                      = .false.        # receivers inside the medium or at the surface
 
 # display parameters
-NTSTEP_BETWEEN_OUTPUT_INFO      = 100            # display frequency in time steps
+NTSTEP_BETWEEN_OUTPUT_INFO      = 400            # display frequency in time steps
 output_postscript_snapshot      = .true.         # output Postscript snapshot of the results
 output_color_image              = .true.         # output color image of the results
 imagetype                       = 1              # display 1=displ 2=veloc 3=accel 4=pressure
@@ -87,20 +87,14 @@ outputgrid                      = .false.        # save the grid in a text file 
 OUTPUT_ENERGY                   = .false.        # compute and output acoustic and elastic energy (slows down the code significantly)
 
 # velocity and density models
-nbmodels                        = 4              # nb of different models
+nbmodels                        = 1              # nb of different models
 # define models as 
 # I:   (model_number 1 rho Vp Vs 0 0 Qp Qs 0 0 0 0 0 0) or
 # II:  (model_number 2 rho c11 c13 c15 c33 c35 c55 0 0 0 0 0 0) or
 # III: (model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qs).
 # For istropic elastic/acoustic material use I and set Vs to zero to make a given model acoustic, for anisotropic elastic use II,
 # and for isotropic poroelastic material use III. The mesh can contain acoustic, elastic, and poroelastic models simultaneously.
-1 1 2700.d0 3000.d0 1732.051d0 0 0 9999 9999 0 0 0 0 0 0
-2 1 2500.d0 2700.d0 0 0 0 9999 9999 0 0 0 0 0 0
-3 1 2200.d0 2500.d0 1443.375d0 0 0 9999 9999 0 0 0 0 0 0
-4 1 2200.d0 2200.d0 1343.375d0 0 0 9999 9999 0 0 0 0 0 0
+1 1 2600.d0 5800.d0 3198.6d0 0 0 10.d0 10.d0 0 0 0 0 0 0
 # define the different regions of the model in the (nx,nz) spectral element mesh
-nbregions                       = 4              # nb of regions and model number for each
-1 80  1 20 1
-1 80 21 40 2
-1 80 41 60 3
-60 70 21 40 4
+nbregions                       = 1              # nb of regions and model number for each
+1 80  1 32 1

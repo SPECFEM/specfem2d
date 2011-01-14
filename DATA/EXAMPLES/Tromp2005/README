@@ -1,0 +1,8 @@
+Examples for Tromp-Tape-Liu (GJI 2005)
+
+The subscript s100 is the same set of simulations but scaled down in size by a factor of 100. This requires increasing the source frequency content and decreasing the time step.
+
+In Tromp2005 there is a time shift of 8 s before the source starts.
+This is not yet implemented.
+
+---------------------------
