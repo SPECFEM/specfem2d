@@ -1785,7 +1785,7 @@ program meshfem2D
 
   if (generate_STATIONS) then
      print *
-     print *,'writing the DATA/STATIONS file'
+     print *,'writing the DATA/STATIONS_target file'
      print *
 
      ! total number of receivers in all the receiver lines
@@ -1798,7 +1798,7 @@ program meshfem2D
      print *,'Position (x,z) of the ',nrec_total,' receivers'
      print *
 
-     open(unit=15,file='DATA/STATIONS',status='unknown')
+     open(unit=15,file='DATA/STATIONS_target',status='unknown')
 
      irec_global_number = 0
 

@@ -1587,7 +1587,7 @@ coorg_recv_ps_vector_field
   write(24,*) '%'
   write(24,*) '1.4 CM 9.5 CM MV'
   write(24,*) 'currentpoint gsave translate 90 rotate 0 0 moveto'
-  write(24,*) '(Y axis) show'
+  write(24,*) '(Z axis) show'
   write(24,*) 'grestore'
   write(24,*) '%'
   write(24,*) '/Times-Roman findfont'
