@@ -766,6 +766,13 @@
   integer, dimension(:), allocatable :: weight_gll
   real(kind=CUSTOM_REAL) :: zmin_yang, zmax_yang, xmin_yang, xmax_yang
 
+! to help locate elements with a negative Jacobian using OpenDX
+  logical :: found_a_negative_jacobian,found_a_problem_in_this_element
+  integer :: ia,nnum,ipoint_number,total_of_negative_elements
+  double precision :: xelm,zelm
+  integer, dimension(:), allocatable :: ibool_OpenDX
+  logical, dimension(:), allocatable :: mask_point
+
 !***********************************************************************
 !
 !             i n i t i a l i z a t i o n    p h a s e
@@ -1796,7 +1803,10 @@ endif
         xi = xigll(i)
         gamma = zigll(j)
 
-        call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl,jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo)
+        call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl,jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo, &
+           .false.)
+
+        if(jacobianl <= ZERO) found_a_negative_jacobian = .true.
 
         coord(1,ibool(i,j,ispec)) = x
         coord(2,ibool(i,j,ispec)) = z
@@ -1811,11 +1821,119 @@ endif
     enddo
   enddo
 
+! create an OpenDX file containing all the negative elements displayed in red, if any
+! this allows users to locate problems in a mesh based on the OpenDX file created at the second iteration
+! do not create OpenDX files if no negative Jacobian has been found, or if we are running in parallel
+! (because writing OpenDX routines is much easier in serial)
+  if(found_a_negative_jacobian .and. nproc == 1) then
+
+! create an OpenDX file to visualize this element
+  open(unit=11,file='DX_all_elements_with_negative_jacobian_in_red.dx',status='unknown')
+
+! output all the points (i.e. all the control points of the mesh)
+! the mesh is flat therefore the third coordinate is zero
+  write(11,*) 'object 1 class array type float rank 1 shape 3 items ',npgeo,' data follows'
+  ipoint_number = 0
+  allocate(mask_point(npgeo))
+  allocate(ibool_OpenDX(npgeo))
+  mask_point(:) = .false.
+  do ispec = 1,nspec
+    do ia=1,ngnod
+      nnum = knods(ia,ispec)
+      xelm = coorg(1,nnum)
+      zelm = coorg(2,nnum)
+      if(.not. mask_point(knods(ia,ispec))) then
+        mask_point(knods(ia,ispec)) = .true.
+        ibool_OpenDX(knods(ia,ispec)) = ipoint_number
+        write(11,*) xelm,zelm,' 0'
+        ipoint_number = ipoint_number + 1
+      endif
+    enddo
+  enddo
+  deallocate(mask_point)
+
+! output all the elements of the mesh (use their four corners only in OpenDX
+  write(11,*) 'object 2 class array type int rank 1 shape 4 items ',nspec,' data follows'
+! point order in OpenDX is 1,4,2,3 *not* 1,2,3,4 as in AVS
+  do ispec = 1,nspec
+    write(11,*) ibool_OpenDX(knods(1,ispec)),ibool_OpenDX(knods(4,ispec)),ibool_OpenDX(knods(2,ispec)),ibool_OpenDX(knods(3,ispec))
+  enddo
+  deallocate(ibool_OpenDX)
+
+! output element data
+  write(11,*) 'attribute "element type" string "quads"'
+  write(11,*) 'attribute "ref" string "positions"'
+  write(11,*) 'object 3 class array type float rank 0 items ',nspec,' data follows'
+
+! output all the element data (value = 1 if positive Jacobian, = 2 if negative Jacobian)
+  total_of_negative_elements = 0
+  do ispec = 1,nspec
+
+! check if this element has a negative Jacobian at any of its points
+    found_a_problem_in_this_element = .false.
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+        xi = xigll(i)
+        gamma = zigll(j)
+
+        call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl,jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo, &
+           .false.)
+
+        if(jacobianl <= ZERO) found_a_problem_in_this_element = .true.
+      enddo
+    enddo
+
+! output data value
+    if(found_a_problem_in_this_element) then
+      write(11,*) '2'
+      total_of_negative_elements = total_of_negative_elements + 1
+    else
+      write(11,*) '1'
+    endif
+
+  enddo
+
+! define OpenDX field
+  write(11,*) 'attribute "dep" string "connections"'
+  write(11,*) 'object "irregular positions irregular connections" class field'
+  write(11,*) 'component "positions" value 1'
+  write(11,*) 'component "connections" value 2'
+  write(11,*) 'component "data" value 3'
+  write(11,*) 'end'
+
+! close OpenDX file
+  close(11)
+
+  print *,total_of_negative_elements,' elements have a negative Jacobian, out of ',nspec
+  print *,'i.e., ',sngl(100.d0 * dble(total_of_negative_elements)/dble(nspec)),'%'
+
+  endif
+
+! stop the code at the first negative element found, because such a mesh cannot be computed
+  if(found_a_negative_jacobian) then
+
+  do ispec = 1,nspec
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+
+        xi = xigll(i)
+        gamma = zigll(j)
+
+        call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl,jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo, &
+           .true.)
+
+      enddo
+    enddo
+  enddo
+
+  endif
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! yang  output weights for line, surface integrals !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !define_derivation_matrices(xigll(NGLLX),zigll(NGLLZ),wxgll(NGLLX),wzgll(NGLLZ),hprime_xx(NGLLX,NGLLX),hprime_zz(NGLLZ,NGLLZ),&
 !                           hprimewgll_xx(NGLLX,NGLLX),hprimewgll_zz(NGLLZ,NGLLZ))
 !xix(NGLLX,NGLLZ,nspec),xiz,gammax,gammaz,jacobian
-!recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl,jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo)
+!recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl,jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo, &
+!          .true.)
 allocate(weight_line_x(npoin))
 allocate(weight_line_z(npoin))
 allocate(weight_surface(npoin))

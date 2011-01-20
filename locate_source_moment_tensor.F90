@@ -180,7 +180,8 @@
   do iter_loop = 1,NUM_ITER
 
 ! recompute jacobian for the new point
-    call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian,coorg,knods,ispec_selected_source,ngnod,nspec,npgeo)
+    call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian,coorg,knods,ispec_selected_source,ngnod,nspec,npgeo, &
+           .true.)
 
 ! compute distance to target location
   dx = - (x - x_source)
@@ -208,7 +209,8 @@
   enddo
 
 ! compute final coordinates of point found
-    call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian,coorg,knods,ispec_selected_source,ngnod,nspec,npgeo)
+    call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian,coorg,knods,ispec_selected_source,ngnod,nspec,npgeo, &
+           .true.)
 
 ! store xi,gamma of point found
   xi_source = xi
