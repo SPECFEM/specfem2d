@@ -101,6 +101,10 @@
   ! ignore variable name field (junk) at the beginning of each input line
   logical, parameter :: IGNORE_JUNK = .true.
 
+  integer :: NPOIN_unique_needed
+  integer, dimension(:), allocatable :: ibool_reduced
+  logical, dimension(:), allocatable :: mask_ibool
+
   if(NGNOD /= 4) stop 'NGNOD must be 4'
 
   ! ***
@@ -168,6 +172,7 @@
   if(iformat == 1) then
 
 ! read range of skewness used for elements
+  print *
   print *,'enter minimum skewness for OpenDX (between 0. and 0.99):'
   read(5,*) skewness_AVS_DX_min
   if(skewness_AVS_DX_min < 0.d0) skewness_AVS_DX_min = 0.d0
@@ -274,7 +279,7 @@
   print *
   print *,'max deviation angle from a right angle (90 degrees) is therefore = ',90.*equiangle_skewness_max
   print *
-  print *,'worst angle in the mesh is therefore ',90.*(1. - equiangle_skewness_max)
+  print *,'worst angle in the mesh is therefore either ',90.*(1. - equiangle_skewness_max)
   print *,'or ',180. - 90.*(1. - equiangle_skewness_max),' degrees'
   print *
   print *,'max edge aspect ratio = ',edge_aspect_ratio_max
@@ -400,15 +405,124 @@
 
   open(unit=11,file='DX_mesh_quality.dx',status='unknown')
 
+! generate the subset of points that are needed
+
+! count the number of unique points
+  NPOIN_unique_needed = 0
+  allocate(mask_ibool(NPOIN))
+  mask_ibool(:) = .false.
+
+! loop on all the elements
+  if(iformat == 1) then
+    ispec_begin = 1
+    ispec_end = NSPEC
+  else
+    ispec_begin = ispec_to_output
+    ispec_end = ispec_to_output
+  endif
+
+  do ispec = ispec_begin,ispec_end
+
+      call create_mesh_quality_data_2D(x,y,z,ibool,ispec,NSPEC,NPOIN,NGNOD, &
+               equiangle_skewness,edge_aspect_ratio,diagonal_aspect_ratio,distmin,distmax)
+
+! check if element needs to be output
+    if(iformat == 2 .or. (iformat == 1 .and. &
+       equiangle_skewness >= skewness_AVS_DX_min .and. equiangle_skewness <= skewness_AVS_DX_max)) then
+! create point for first corner of the element
+       if(.not. mask_ibool(ibool(1,ispec))) then
+         mask_ibool(ibool(1,ispec)) = .true.
+         NPOIN_unique_needed = NPOIN_unique_needed + 1
+       endif
+
+! create point for second corner of the element
+       if(.not. mask_ibool(ibool(2,ispec))) then
+         mask_ibool(ibool(2,ispec)) = .true.
+         NPOIN_unique_needed = NPOIN_unique_needed + 1
+       endif
+
+! create point for third corner of the element
+       if(.not. mask_ibool(ibool(3,ispec))) then
+         mask_ibool(ibool(3,ispec)) = .true.
+         NPOIN_unique_needed = NPOIN_unique_needed + 1
+       endif
+
+! create point for fourth corner of the element
+       if(.not. mask_ibool(ibool(4,ispec))) then
+         mask_ibool(ibool(4,ispec)) = .true.
+         NPOIN_unique_needed = NPOIN_unique_needed + 1
+       endif
+
+    endif
+
+  enddo
+
+
 ! ************* generate points ******************
 
 ! write OpenDX header
-  write(11,*) 'object 1 class array type float rank 1 shape 3 items ',NPOIN,' data follows'
+  write(11,*) 'object 1 class array type float rank 1 shape 3 items ',NPOIN_unique_needed,' data follows'
 
-! write all the points
-  do i = 1,NPOIN
-    write(11,*) sngl(x(i)),sngl(y(i)),sngl(z(i))
+  allocate(ibool_reduced(NPOIN))
+
+! count the number of unique points
+  NPOIN_unique_needed = 0
+  mask_ibool(:) = .false.
+
+! loop on all the elements
+  if(iformat == 1) then
+    ispec_begin = 1
+    ispec_end = NSPEC
+  else
+    ispec_begin = ispec_to_output
+    ispec_end = ispec_to_output
+  endif
+
+  do ispec = ispec_begin,ispec_end
+
+      call create_mesh_quality_data_2D(x,y,z,ibool,ispec,NSPEC,NPOIN,NGNOD, &
+               equiangle_skewness,edge_aspect_ratio,diagonal_aspect_ratio,distmin,distmax)
+
+! check if element needs to be output
+    if(iformat == 2 .or. (iformat == 1 .and. &
+       equiangle_skewness >= skewness_AVS_DX_min .and. equiangle_skewness <= skewness_AVS_DX_max)) then
+! create point for first corner of the element
+       if(.not. mask_ibool(ibool(1,ispec))) then
+         mask_ibool(ibool(1,ispec)) = .true.
+         ibool_reduced(ibool(1,ispec)) = NPOIN_unique_needed
+         write(11,*) sngl(x(ibool(1,ispec))),sngl(y(ibool(1,ispec))),sngl(z(ibool(1,ispec)))
+         NPOIN_unique_needed = NPOIN_unique_needed + 1
+       endif
+
+! create point for second corner of the element
+       if(.not. mask_ibool(ibool(2,ispec))) then
+         mask_ibool(ibool(2,ispec)) = .true.
+         ibool_reduced(ibool(2,ispec)) = NPOIN_unique_needed
+         write(11,*) sngl(x(ibool(2,ispec))),sngl(y(ibool(2,ispec))),sngl(z(ibool(2,ispec)))
+         NPOIN_unique_needed = NPOIN_unique_needed + 1
+       endif
+
+! create point for third corner of the element
+       if(.not. mask_ibool(ibool(3,ispec))) then
+         mask_ibool(ibool(3,ispec)) = .true.
+         ibool_reduced(ibool(3,ispec)) = NPOIN_unique_needed
+         write(11,*) sngl(x(ibool(3,ispec))),sngl(y(ibool(3,ispec))),sngl(z(ibool(3,ispec)))
+         NPOIN_unique_needed = NPOIN_unique_needed + 1
+       endif
+
+! create point for fourth corner of the element
+       if(.not. mask_ibool(ibool(4,ispec))) then
+         mask_ibool(ibool(4,ispec)) = .true.
+         ibool_reduced(ibool(4,ispec)) = NPOIN_unique_needed
+         write(11,*) sngl(x(ibool(4,ispec))),sngl(y(ibool(4,ispec))),sngl(z(ibool(4,ispec)))
+         NPOIN_unique_needed = NPOIN_unique_needed + 1
+       endif
+
+    endif
+
   enddo
+
+  deallocate(mask_ibool)
 
 ! ************* generate elements ******************
 
@@ -435,7 +549,8 @@
 ! point order in OpenDX in 3D is 4,1,8,5,3,2,7,6, *not* 1,2,3,4,5,6,7,8 as in AVS
 ! in the case of OpenDX, node numbers start at zero
       write(11,"(i9,1x,i9,1x,i9,1x,i9,1x,i9,1x,i9,1x,i9,1x,i9)") &
-            ibool(1,ispec)-1, ibool(4,ispec)-1, ibool(2,ispec)-1, ibool(3,ispec)-1
+            ibool_reduced(ibool(1,ispec)), ibool_reduced(ibool(4,ispec)), &
+            ibool_reduced(ibool(2,ispec)), ibool_reduced(ibool(3,ispec))
       if(iformat == 1) print *,'element ',ispec,' belongs to the range and has skewness = ',sngl(equiangle_skewness)
     endif
 
