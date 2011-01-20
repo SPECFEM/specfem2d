@@ -122,6 +122,7 @@
 
   ! read info about external mesh
   call read_value_logical(IIN,IGNORE_JUNK,read_external_mesh)
+  if(.not. read_external_mesh) stop 'this program is designed for read_external_mesh = .true.'
   call read_value_string(IIN,IGNORE_JUNK,mesh_file)
   call read_value_string(IIN,IGNORE_JUNK,nodes_coords_file)
 
