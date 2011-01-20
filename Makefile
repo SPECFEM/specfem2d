@@ -107,12 +107,12 @@ OBJS_SPECFEM2D = $O/checkgrid.o $O/datim.o $O/enforce_acoustic_free_surface.o\
         $O/paco_convolve_fft.o $O/is_in_convex_quadrilateral.o $O/get_perm_cuthill_mckee.o\
 	$O/read_external_model.o $O/invert_mass_matrix.o $O/calendar.o $O/convert_time.o
 
-default:  clean meshfem2D specfem2D convolve_source_timefunction
+default:  clean meshfem2D specfem2D convolve_source_timefunction check_mesh_quality_Gmsh
 
 all: default
 
 clean:
-	/bin/rm -r -f xmeshfem2D xmeshfem2D.trace xspecfem2D xspecfem2D.trace $O/*.o *.o $O/*.il *.mod core xconvolve_source_timefunction *.oo *.ipo
+	/bin/rm -r -f xmeshfem2D xmeshfem2D.trace xspecfem2D xspecfem2D.trace $O/*.o *.o $O/*.il *.mod core xconvolve_source_timefunction xcheck_mesh_quality_Gmsh *.oo *.ipo
 
 meshfem2D: $(OBJS_MESHFEM2D)
 	$(LINK) $(FLAGS_CHECK) -o xmeshfem2D $(OBJS_MESHFEM2D) $(LIB)
@@ -123,6 +123,9 @@ specfem2D: $(OBJS_SPECFEM2D)
 
 convolve_source_timefunction: $O/convolve_source_timefunction.o
 	${F90} $(FLAGS_CHECK) -o xconvolve_source_timefunction $O/convolve_source_timefunction.o
+
+check_mesh_quality_Gmsh: $O/check_mesh_quality_Gmsh.o $O/read_value_parameters.o
+	${F90} $(FLAGS_CHECK) -o xcheck_mesh_quality_Gmsh $O/check_mesh_quality_Gmsh.o $O/read_value_parameters.o
 
 $O/checkgrid.o: checkgrid.F90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/checkgrid.o checkgrid.F90
@@ -138,6 +141,9 @@ $O/createnum_slow.o: createnum_slow.f90 constants.h
     
 $O/convolve_source_timefunction.o: convolve_source_timefunction.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/convolve_source_timefunction.o convolve_source_timefunction.f90
+
+$O/check_mesh_quality_Gmsh.o: check_mesh_quality_Gmsh.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/check_mesh_quality_Gmsh.o check_mesh_quality_Gmsh.f90
 
 $O/read_value_parameters.o: read_value_parameters.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/read_value_parameters.o read_value_parameters.f90
