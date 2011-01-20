@@ -43,7 +43,7 @@
 !
 !========================================================================
 
-! read a 2D Gmsh mesh file and display statistics about mesh quality;
+! read an external 2D mesh file and display statistics about mesh quality;
 ! and create an OpenDX file showing a given range of elements or a single element
 
 ! Dimitri Komatitsch, University of Toulouse, France, January 2011.
@@ -53,7 +53,7 @@
 !! DK DK this routine could be improved by computing the mean in addition to min and max of ratios
 !! DK DK
 
-  program check_mesh_quality_Gmsh
+  program check_quality_external_mesh
 
   implicit none
 
@@ -144,14 +144,14 @@
 
 ! read the nodes
   print *
-  print *,'start reading the Gmsh node file: ',nodes_coords_file(1:len_trim(nodes_coords_file))
+  print *,'start reading the external node file: ',nodes_coords_file(1:len_trim(nodes_coords_file))
   open(unit=10,file=nodes_coords_file,status='unknown',action='read')
 
 ! read the header
   read(10,*) NPOIN
 
 ! read the mesh
-  print *,'start reading the Gmsh mesh file: ',mesh_file(1:len_trim(mesh_file))
+  print *,'start reading the external mesh file: ',mesh_file(1:len_trim(mesh_file))
   open(unit=11,file=mesh_file,status='unknown',action='read')
 
 ! read the header
@@ -205,7 +205,7 @@
   enddo
   close(11)
 
-  print *,'done reading the Gmsh files'
+  print *,'done reading the external files'
   print *
 
   print *,'start computing the minimum and maximum edge size'
@@ -474,7 +474,7 @@
 
   endif
 
-  end program check_mesh_quality_Gmsh
+  end program check_quality_external_mesh
 
 !
 !=====================================================================
