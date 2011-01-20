@@ -44,7 +44,8 @@
 
 ! recompute 2D jacobian at a given point in a 4-node or 9-node element
 
-  subroutine recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian,coorg,knods,ispec,ngnod,nspec,npgeo)
+  subroutine recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian,coorg,knods,ispec,ngnod,nspec,npgeo, &
+                      stop_if_negative_jacobian)
 
   implicit none
 
@@ -64,6 +65,11 @@
   double precision xxi,zxi,xgamma,zgamma,xelm,zelm
 
   integer ia,nnum
+
+  logical stop_if_negative_jacobian
+
+! only one problematic element is output to OpenDX for now in case of elements with a negative Jacobian
+  integer, parameter :: ntotspecAVS_DX = 1
 
 ! recompute jacobian for any (xi,gamma) point, not necessarily a GLL point
 
@@ -98,9 +104,58 @@
 
   jacobian = xxi*zgamma - xgamma*zxi
 
-  if(jacobian <= ZERO) then
-      print *, 'ispec = ', ispec
-      call exit_MPI('2D Jacobian undefined')
+! the Jacobian is negative, so far this means that there is an error in the mesh
+! therefore print the coordinates of the mesh points of this element
+! and also create an OpenDX file to visualize it
+  if(jacobian <= ZERO .and. stop_if_negative_jacobian) then
+
+! print the coordinates of the mesh points of this element
+    print *, 'ispec = ', ispec
+    print *, 'ngnod = ', ngnod
+    do ia=1,ngnod
+      nnum = knods(ia,ispec)
+      xelm = coorg(1,nnum)
+      zelm = coorg(2,nnum)
+      print *,'node ', ia,' x,y = ',xelm,zelm
+    enddo
+
+! create an OpenDX file to visualize this element
+    open(unit=11,file='DX_first_element_with_negative_jacobian.dx',status='unknown')
+
+! output the points (the mesh is flat therefore the third coordinate is zero)
+    write(11,*) 'object 1 class array type float rank 1 shape 3 items ',ngnod,' data follows'
+    do ia=1,ngnod
+      nnum = knods(ia,ispec)
+      xelm = coorg(1,nnum)
+      zelm = coorg(2,nnum)
+      write(11,*) xelm,zelm,' 0'
+    enddo
+
+! output the element (use its four corners only for now)
+    write(11,*) 'object 2 class array type int rank 1 shape 4 items ',ntotspecAVS_DX,' data follows'
+! point order in OpenDX is 1,4,2,3 *not* 1,2,3,4 as in AVS
+    write(11,*) '0 3 1 2'
+
+! output element data
+    write(11,*) 'attribute "element type" string "quads"'
+    write(11,*) 'attribute "ref" string "positions"'
+    write(11,*) 'object 3 class array type float rank 0 items ',ntotspecAVS_DX,' data follows'
+
+! output dummy data value
+    write(11,*) '1'
+
+! define OpenDX field
+    write(11,*) 'attribute "dep" string "connections"'
+    write(11,*) 'object "irregular positions irregular connections" class field'
+    write(11,*) 'component "positions" value 1'
+    write(11,*) 'component "connections" value 2'
+    write(11,*) 'component "data" value 3'
+    write(11,*) 'end'
+
+! close OpenDX file
+    close(11)
+
+    call exit_MPI('negative 2D Jacobian, element saved in DX_first_element_with_negative_jacobian.dx')
   endif
 
 ! invert the relation
