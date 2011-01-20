@@ -1886,6 +1886,7 @@ endif
 ! output data value
     if(found_a_problem_in_this_element) then
       write(11,*) '2'
+      print *,'element ',ispec,' has a negative Jacobian'
       total_of_negative_elements = total_of_negative_elements + 1
     else
       write(11,*) '1'
@@ -1904,8 +1905,10 @@ endif
 ! close OpenDX file
   close(11)
 
+  print *
   print *,total_of_negative_elements,' elements have a negative Jacobian, out of ',nspec
   print *,'i.e., ',sngl(100.d0 * dble(total_of_negative_elements)/dble(nspec)),'%'
+  print *
 
   endif
 
