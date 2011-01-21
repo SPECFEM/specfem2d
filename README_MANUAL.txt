@@ -342,6 +342,25 @@ To use the code:
   editor = {K. Helbig},
   pages = {421-427}}
 
+Controlling the quality of an external mesh:
+--------------------------------------------
+
+(README partly in French for now, cut and paste it in Google Translate at http://www.google.com/language_tools?hl=en if you do not understand French)
+
+Type
+
+./xcheck_quality_external_mesh
+
+(and answer "3" to the first question asked).
+
+Ce code vous dit quel est l'élément de tout le maillage qui a la plus mauvaise qualité (maximum skewness, i.e. déformation maximale des angles de l'élément) et il suffit d'aller modifier cet élément-là dans le logiciel de maillage externe utilisé, et de répéter l'opération jusqu'à ce que le maximum skewness de tout le maillage soit inférieur ou égal à environ 0.75 (au delà c'est dangereux : de 0.75 à 0.80 ça peut encore aller "à peu près", mais s'il y a un seul élément au delà de 0.80 alors le maillage est à améliorer a priori).
+
+Le code affiche aussi un histogramme de 20 classes de skewness qui dit combien d'éléments sont au delà de skewness = 0.75, et quel pourcentage du total cela fait. Pour voir cet histogramme à l'écran il faut ensuite taper :
+
+gnuplot plot_mesh_quality_histogram.gnu
+
+Cet outil est pratique pour estimer la qualité du maillage et la voir évoluer dans le bon sens au fur et à mesure des corrections successives.
+
 How to use poroelasticity:
 --------------------------
 
