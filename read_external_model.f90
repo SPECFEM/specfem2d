@@ -88,7 +88,7 @@ double precision :: tmp1, tmp2,tmp3
 if(READ_EXTERNAL_SEP_FILE) then
         write(IOUT,*)
         write(IOUT,*) '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-        write(IOUT,*) 'Assigning external velocity and density model (elastic and/or acoustic)...'
+        write(IOUT,*) 'Assigning external velocity and density model (elastic (no attenuation) and/or acoustic)...'
         write(IOUT,*) 'Read outside SEG model...'
         write(IOUT,*) '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
 
@@ -99,6 +99,10 @@ if(READ_EXTERNAL_SEP_FILE) then
                  iglob = ibool(i,j,ispec)
                  read(1001,*) tmp1,tmp2,tmp3,rhoext(i,j,ispec),vpext(i,j,ispec),vsext(i,j,ispec)
 !     vsext(i,j,ispec)=0.0
+                   ! Qp, Qs : dummy values. If attenuation needed than the "read" line and model_velocity.dat_input
+                   ! need to be modified to provide Qp & Qs values
+                 Qp_attenuationext(i,j,ispec) = 10.d0
+                 Qs_attenuationext(i,j,ispec) = 10.d0
               end do
            end do
         end do
