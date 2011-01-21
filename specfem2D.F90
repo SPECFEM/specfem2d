@@ -4635,7 +4635,7 @@ endif
   endif
 
 #ifdef USE_MPI
-  if(OUTPUT_ENERGY) stop 'energy calculation only currently serial only, should add an MPI_REDUCE in parallel'
+  if(OUTPUT_ENERGY) stop 'energy calculation currently serial only, should add an MPI_REDUCE in parallel'
 #endif
 ! open the file in which we will store the energy curve
   if(OUTPUT_ENERGY) open(unit=IOUT_ENERGY,file='energy.gnu',status='unknown')
