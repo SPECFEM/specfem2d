@@ -1796,6 +1796,7 @@ endif
 !
 !----  set the coordinates of the points of the global grid
 !
+  found_a_negative_jacobian = .false.
   do ispec = 1,nspec
     do j = 1,NGLLZ
       do i = 1,NGLLX
