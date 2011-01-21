@@ -1516,14 +1516,14 @@ coorg_recv_ps_vector_field
   write(24,*) '%/BK {pop 1 setgray fill} def'
   write(24,*) '%'
   write(24,*) '% magenta for vectors'
-  write(24,*) '/Colvects {0.01 CM setlinewidth 1. 0. 1. RG} def'
+  write(24,*) '/Colvects {0 setlinewidth 1. 0. 1. RG} def'
   write(24,*) '% black and white version'
-  write(24,*) '%/Colvects {0.01 CM setlinewidth 0. setgray} def'
+  write(24,*) '%/Colvects {0 setlinewidth 0. setgray} def'
   write(24,*) '%'
   write(24,*) '% chartreuse for macrobloc mesh'
-  write(24,*) '/Colmesh {0.02 CM setlinewidth 0.5 1. 0. RG} def'
+  write(24,*) '/Colmesh {0 setlinewidth 0.5 1. 0. RG} def'
   write(24,*) '% black and white version'
-  write(24,*) '%/Colmesh {0.02 CM setlinewidth 0. setgray} def'
+  write(24,*) '%/Colmesh {0 setlinewidth 0. setgray} def'
   write(24,*) '%'
   write(24,*) '% cyan for sources and receivers'
   write(24,*) '/Colreceiv {0. 1. 1. RG} def'
@@ -1535,7 +1535,7 @@ coorg_recv_ps_vector_field
   write(24,*) '% macro to draw the contour of the elements'
   write(24,*) '/CO {M counttomark 2 idiv {L} repeat cleartomark CP} def'
   write(24,*) '%'
-  write(24,*) '.01 CM setlinewidth'
+  write(24,*) '0 setlinewidth'
   write(24,*) '/Times-Roman findfont'
   write(24,*) '.35 CM scalefont setfont'
   write(24,*) '%'
@@ -2194,9 +2194,7 @@ coorg_recv_ps_vector_field
 ! use green color
   write(24,*) '0 1 0 RG'
 
-  write(24,*) '0.10 CM setlinewidth'
-  write(24,*) '% uncomment this when zooming on parts of the mesh'
-  write(24,*) '% 0.02 CM setlinewidth'
+  write(24,*) '0.02 CM setlinewidth'
   endif
 
   buffer_offset = 0
@@ -2279,7 +2277,7 @@ coorg_recv_ps_vector_field
 
   if ( myrank == 0 ) then
     write(24,*) '0 setgray'
-    write(24,*) '0.01 CM setlinewidth'
+    write(24,*) '0 setlinewidth'
   endif
 
   endif
@@ -2296,9 +2294,7 @@ coorg_recv_ps_vector_field
 ! use orange color
   write(24,*) '1 0.66 0 RG'
 
-  write(24,*) '0.10 CM setlinewidth'
-  write(24,*) '% uncomment this when zooming on parts of the mesh'
-  write(24,*) '% 0.02 CM setlinewidth'
+  write(24,*) '0.02 CM setlinewidth'
   endif
 
   buffer_offset = 0
@@ -2358,7 +2354,7 @@ coorg_recv_ps_vector_field
 
   if ( myrank == 0 ) then
     write(24,*) '0 setgray'
-    write(24,*) '0.01 CM setlinewidth'
+    write(24,*) '0 setlinewidth'
   endif
 
 !
@@ -2376,9 +2372,7 @@ coorg_recv_ps_vector_field
   write(24,*) '% fluid-solid coupling edges in the mesh'
   write(24,*) '%'
 
-  write(24,*) '0.10 CM setlinewidth'
-  write(24,*) '% uncomment this when zooming on parts of the mesh'
-  write(24,*) '% 0.02 CM setlinewidth'
+  write(24,*) '0.02 CM setlinewidth'
   endif
 
   if ( myrank /= 0 .and. num_fluid_solid_edges > 0 ) allocate(coorg_send(4,num_fluid_solid_edges))
@@ -2463,7 +2457,7 @@ coorg_recv_ps_vector_field
 
   if ( myrank == 0 ) then
     write(24,*) '0 setgray'
-    write(24,*) '0.01 CM setlinewidth'
+    write(24,*) '0 setlinewidth'
   endif
 
   endif
@@ -2483,9 +2477,7 @@ coorg_recv_ps_vector_field
   write(24,*) '% fluid-porous coupling edges in the mesh'
   write(24,*) '%'
 
-  write(24,*) '0.10 CM setlinewidth'
-  write(24,*) '% uncomment this when zooming on parts of the mesh'
-  write(24,*) '% 0.02 CM setlinewidth'
+  write(24,*) '0.02 CM setlinewidth'
   endif
 
   if ( myrank /= 0 .and. num_fluid_poro_edges > 0 ) allocate(coorg_send(4,num_fluid_poro_edges))
@@ -2570,7 +2562,7 @@ coorg_recv_ps_vector_field
 
   if ( myrank == 0 ) then
     write(24,*) '0 setgray'
-    write(24,*) '0.01 CM setlinewidth'
+    write(24,*) '0 setlinewidth'
   endif
 
   endif
@@ -2590,9 +2582,7 @@ coorg_recv_ps_vector_field
   write(24,*) '% solid-porous coupling edges in the mesh'
   write(24,*) '%'
 
-  write(24,*) '0.10 CM setlinewidth'
-  write(24,*) '% uncomment this when zooming on parts of the mesh'
-  write(24,*) '% 0.02 CM setlinewidth'
+  write(24,*) '0.02 CM setlinewidth'
   endif
 
   if ( myrank /= 0 .and. num_solid_poro_edges > 0 ) allocate(coorg_send(4,num_solid_poro_edges))
@@ -2677,7 +2667,7 @@ coorg_recv_ps_vector_field
 
   if ( myrank == 0 ) then
     write(24,*) '0 setgray'
-    write(24,*) '0.01 CM setlinewidth'
+    write(24,*) '0 setlinewidth'
   endif
 
   endif
