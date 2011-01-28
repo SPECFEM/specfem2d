@@ -260,12 +260,12 @@
 
   print *
   print *,'------------'
-  print *,'mesh quality parameter definitions'
+  print *,'mesh quality parameter definitions:'
   print *
-  print *,'equiangle skewness: 0. perfect  1. bad'
-  print *,'skewness max deviation angle: 0. perfect  90. bad'
-  print *,'edge aspect ratio: 1. perfect  above 1. gives stretching factor'
-  print *,'diagonal aspect ratio: 1. perfect  above 1. gives stretching factor'
+  print *,'equiangle skewness: 0. perfect,  1. bad'
+  print *,'skewness max deviation angle: 0. perfect,  90. bad'
+  print *,'edge aspect ratio: 1. perfect,  above 1. gives stretching factor'
+  print *,'diagonal aspect ratio: 1. perfect,  above 1. gives stretching factor'
   print *,'------------'
 
   print *
