@@ -937,34 +937,34 @@
   read(IIN,"(a80)") datlin
   read(IIN,*) NSOURCE
   if(ipass == 1) then
-  allocate( source_type(NSOURCE) )
-  allocate( time_function_type(NSOURCE) )
-  allocate( x_source(NSOURCE) )
-  allocate( z_source(NSOURCE) )
-  allocate( f0(NSOURCE) )
-  allocate( t0(NSOURCE) )
-  allocate( factor(NSOURCE) )
-  allocate( angleforce(NSOURCE) )
-  allocate( hdur(NSOURCE) )
-  allocate( hdur_gauss(NSOURCE) )
-  allocate( Mxx(NSOURCE) )
-  allocate( Mxz(NSOURCE) )
-  allocate( Mzz(NSOURCE) )
-  allocate( aval(NSOURCE) )
-  allocate( ispec_selected_source(NSOURCE) )
-  allocate( iglob_source(NSOURCE) )
-  allocate( source_courbe_eros(NSOURCE) )
-  allocate( xi_source(NSOURCE) )
-  allocate( gamma_source(NSOURCE) )
-  allocate( is_proc_source(NSOURCE) )
-  allocate( nb_proc_source(NSOURCE) )
-  allocate( sourcearray(NSOURCE,NDIM,NGLLX,NGLLZ) )
+    allocate( source_type(NSOURCE) )
+    allocate( time_function_type(NSOURCE) )
+    allocate( x_source(NSOURCE) )
+    allocate( z_source(NSOURCE) )
+    allocate( f0(NSOURCE) )
+    allocate( t0(NSOURCE) )
+    allocate( factor(NSOURCE) )
+    allocate( angleforce(NSOURCE) )
+    allocate( hdur(NSOURCE) )
+    allocate( hdur_gauss(NSOURCE) )
+    allocate( Mxx(NSOURCE) )
+    allocate( Mxz(NSOURCE) )
+    allocate( Mzz(NSOURCE) )
+    allocate( aval(NSOURCE) )
+    allocate( ispec_selected_source(NSOURCE) )
+    allocate( iglob_source(NSOURCE) )
+    allocate( source_courbe_eros(NSOURCE) )
+    allocate( xi_source(NSOURCE) )
+    allocate( gamma_source(NSOURCE) )
+    allocate( is_proc_source(NSOURCE) )
+    allocate( nb_proc_source(NSOURCE) )
+    allocate( sourcearray(NSOURCE,NDIM,NGLLX,NGLLZ) )
   endif
 
   do i_source=1,NSOURCE
      read(IIN,"(a80)") datlin
-     read(IIN,*) source_type(i_source),time_function_type(i_source),x_source(i_source),z_source(i_source), &
-                 f0(i_source),t0(i_source), &
+     read(IIN,*) source_type(i_source),time_function_type(i_source), &
+                 x_source(i_source),z_source(i_source),f0(i_source),t0(i_source), &
                  factor(i_source),angleforce(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
   enddo
 
@@ -977,42 +977,61 @@
 !
 !-----  check the input
 !
- do i_source=1,NSOURCE
+  do i_source=1,NSOURCE
 
- if(.not. initialfield) then
-   if (source_type(i_source) == 1) then
-     if ( myrank == 0 ) then
-     write(IOUT,212) x_source(i_source),z_source(i_source),f0(i_source),t0(i_source), &
-                     factor(i_source),angleforce(i_source)
-     endif
-   else if(source_type(i_source) == 2) then
-     if ( myrank == 0 ) then
-     write(IOUT,222) x_source(i_source),z_source(i_source),f0(i_source),t0(i_source), &
-                     factor(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
-     endif
-   else
-     call exit_MPI('Unknown source type number !')
-   endif
- endif
+    ! checks source type
+    if(.not. initialfield) then
+      if (source_type(i_source) == 1) then
+        if ( myrank == 0 ) then
+          write(IOUT,212) x_source(i_source),z_source(i_source),f0(i_source),t0(i_source), &
+                       factor(i_source),angleforce(i_source)
+        endif
+      else if(source_type(i_source) == 2) then
+        if ( myrank == 0 ) then
+          write(IOUT,222) x_source(i_source),z_source(i_source),f0(i_source),t0(i_source), &
+                       factor(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
+        endif
+      else
+        call exit_MPI('Unknown source type number !')
+      endif
+    endif
+
+!daniel
+!original
 ! if Dirac source time function, use a very thin Gaussian instead
 ! if Heaviside source time function, use a very thin error function instead
 ! time delay of the source in seconds, use a 20 % security margin (use 2 / f0 if error function)
-  if(time_function_type(i_source) == 4 .or. time_function_type(i_source) == 5) then
-    f0(i_source) = 1.d0 / (10.d0 * deltat)
-    if(time_function_type(i_source) == 5) then
-      t0(i_source) = 2.0d0 / f0(i_source)
-    else
-      t0(i_source) = 1.20d0 / f0(i_source)
+    if(time_function_type(i_source) == 4 .or. time_function_type(i_source) == 5) then
+      f0(i_source) = 1.d0 / (10.d0 * deltat)
+      if(time_function_type(i_source) == 5) then
+        t0(i_source) = 2.0d0 / f0(i_source)
+      else
+        t0(i_source) = 1.20d0 / f0(i_source)
+      endif
     endif
-  endif
+! daniel check:
+!this is done already from meshfem2D.f90:
+     ! if Dirac source time function, use a very thin Gaussian instead
+     ! if Heaviside source time function, use a very thin error function instead
+     !if(time_function_type(i_source) == 4 .or. time_function_type(i_source) == 5) &
+     !  f0(i_source) = 1.d0 / (10.d0 * deltat)
 
-! for the source time function
-  aval(i_source) = pi*pi*f0(i_source)*f0(i_source)
+     ! time delay of the source in seconds, use a 20 % security margin (use 2 / f0 if error function)
+     !if(time_function_type(i_source)== 5) then
+     !   t0(i_source) = 2.0d0 / f0(i_source)+t0(i_source)
+     !else
+     !   t0(i_source) = 1.20d0 / f0(i_source)+t0(i_source)
+     !endif
+! maybe the code above is not needed... check.
+!>daniel
+
+    ! for the source time function
+    aval(i_source) = pi*pi*f0(i_source)*f0(i_source)
 
 !-----  convert angle from degrees to radians
-  angleforce(i_source) = angleforce(i_source) * pi / 180.d0
+    angleforce(i_source) = angleforce(i_source) * pi / 180.d0
 
- enddo ! do i_source=1,NSOURCE
+  enddo ! do i_source=1,NSOURCE
 
 !
 !---- read the spectral macrobloc nodal coordinates
@@ -1021,11 +1040,11 @@
 
   ipoin = 0
   read(IIN,"(a80)") datlin
-      allocate(coorgread(NDIM))
+  allocate(coorgread(NDIM))
   do ip = 1,npgeo
-   read(IIN,*) ipoin,(coorgread(id),id =1,NDIM)
-   if(ipoin<1 .or. ipoin>npgeo) call exit_MPI('Wrong control point number')
-   coorg(:,ipoin) = coorgread
+    read(IIN,*) ipoin,(coorgread(id),id =1,NDIM)
+    if(ipoin<1 .or. ipoin>npgeo) call exit_MPI('Wrong control point number')
+    coorg(:,ipoin) = coorgread
   enddo
   deallocate(coorgread)
 
@@ -1042,78 +1061,78 @@
 !
 !---- allocate arrays
 !
-if(ipass == 1) then
-  allocate(shape2D(ngnod,NGLLX,NGLLZ))
-  allocate(dershape2D(NDIM,ngnod,NGLLX,NGLLZ))
-  allocate(shape2D_display(ngnod,pointsdisp,pointsdisp))
-  allocate(dershape2D_display(NDIM,ngnod,pointsdisp,pointsdisp))
-  allocate(xix(NGLLX,NGLLZ,nspec))
-  allocate(xiz(NGLLX,NGLLZ,nspec))
-  allocate(gammax(NGLLX,NGLLZ,nspec))
-  allocate(gammaz(NGLLX,NGLLZ,nspec))
-  allocate(jacobian(NGLLX,NGLLZ,nspec))
-  allocate(flagrange(NGLLX,pointsdisp))
-  allocate(xinterp(pointsdisp,pointsdisp))
-  allocate(zinterp(pointsdisp,pointsdisp))
-  allocate(Uxinterp(pointsdisp,pointsdisp))
-  allocate(Uzinterp(pointsdisp,pointsdisp))
-  allocate(density(2,numat))
-  allocate(anisotropy(6,numat))
-  allocate(porosity(numat))
-  allocate(tortuosity(numat))
-  allocate(permeability(3,numat))
-  allocate(poroelastcoef(4,3,numat))
-  allocate(Qp_attenuation(numat))
-  allocate(Qs_attenuation(numat))
-  allocate(kmato(nspec))
-  allocate(knods(ngnod,nspec))
-  allocate(ibool(NGLLX,NGLLZ,nspec))
-  allocate(elastic(nspec))
-  allocate(poroelastic(nspec))
-  allocate(anisotropic(nspec))
-  allocate(inv_tau_sigma_nu1(NGLLX,NGLLZ,nspec,N_SLS))
-  allocate(inv_tau_sigma_nu2(NGLLX,NGLLZ,nspec,N_SLS))
-  allocate(phi_nu1(NGLLX,NGLLZ,nspec,N_SLS))
-  allocate(phi_nu2(NGLLX,NGLLZ,nspec,N_SLS))
-  allocate(inv_tau_sigma_nu1_sent(N_SLS))
-  allocate(inv_tau_sigma_nu2_sent(N_SLS))
-  allocate(phi_nu1_sent(N_SLS))
-  allocate(phi_nu2_sent(N_SLS))
-endif
+  if(ipass == 1) then
+    allocate(shape2D(ngnod,NGLLX,NGLLZ))
+    allocate(dershape2D(NDIM,ngnod,NGLLX,NGLLZ))
+    allocate(shape2D_display(ngnod,pointsdisp,pointsdisp))
+    allocate(dershape2D_display(NDIM,ngnod,pointsdisp,pointsdisp))
+    allocate(xix(NGLLX,NGLLZ,nspec))
+    allocate(xiz(NGLLX,NGLLZ,nspec))
+    allocate(gammax(NGLLX,NGLLZ,nspec))
+    allocate(gammaz(NGLLX,NGLLZ,nspec))
+    allocate(jacobian(NGLLX,NGLLZ,nspec))
+    allocate(flagrange(NGLLX,pointsdisp))
+    allocate(xinterp(pointsdisp,pointsdisp))
+    allocate(zinterp(pointsdisp,pointsdisp))
+    allocate(Uxinterp(pointsdisp,pointsdisp))
+    allocate(Uzinterp(pointsdisp,pointsdisp))
+    allocate(density(2,numat))
+    allocate(anisotropy(6,numat))
+    allocate(porosity(numat))
+    allocate(tortuosity(numat))
+    allocate(permeability(3,numat))
+    allocate(poroelastcoef(4,3,numat))
+    allocate(Qp_attenuation(numat))
+    allocate(Qs_attenuation(numat))
+    allocate(kmato(nspec))
+    allocate(knods(ngnod,nspec))
+    allocate(ibool(NGLLX,NGLLZ,nspec))
+    allocate(elastic(nspec))
+    allocate(poroelastic(nspec))
+    allocate(anisotropic(nspec))
+    allocate(inv_tau_sigma_nu1(NGLLX,NGLLZ,nspec,N_SLS))
+    allocate(inv_tau_sigma_nu2(NGLLX,NGLLZ,nspec,N_SLS))
+    allocate(phi_nu1(NGLLX,NGLLZ,nspec,N_SLS))
+    allocate(phi_nu2(NGLLX,NGLLZ,nspec,N_SLS))
+    allocate(inv_tau_sigma_nu1_sent(N_SLS))
+    allocate(inv_tau_sigma_nu2_sent(N_SLS))
+    allocate(phi_nu1_sent(N_SLS))
+    allocate(phi_nu2_sent(N_SLS))
+  endif
 
 ! --- allocate arrays for absorbing boundary conditions
 
   if(nelemabs <= 0) then
     nelemabs = 1
     anyabs = .false.
- else
+  else
     anyabs = .true.
   endif
 
-if(ipass == 1) then
-  allocate(numabs(nelemabs))
-  allocate(codeabs(4,nelemabs))
+  if(ipass == 1) then
+    allocate(numabs(nelemabs))
+    allocate(codeabs(4,nelemabs))
 
-  allocate(ibegin_bottom(nelemabs))
-  allocate(iend_bottom(nelemabs))
-  allocate(ibegin_top(nelemabs))
-  allocate(iend_top(nelemabs))
+    allocate(ibegin_bottom(nelemabs))
+    allocate(iend_bottom(nelemabs))
+    allocate(ibegin_top(nelemabs))
+    allocate(iend_top(nelemabs))
 
-  allocate(jbegin_left(nelemabs))
-  allocate(jend_left(nelemabs))
-  allocate(jbegin_right(nelemabs))
-  allocate(jend_right(nelemabs))
+    allocate(jbegin_left(nelemabs))
+    allocate(jend_left(nelemabs))
+    allocate(jbegin_right(nelemabs))
+    allocate(jend_right(nelemabs))
 
-  allocate(ibegin_bottom_poro(nelemabs))
-  allocate(iend_bottom_poro(nelemabs))
-  allocate(ibegin_top_poro(nelemabs))
-  allocate(iend_top_poro(nelemabs))
+    allocate(ibegin_bottom_poro(nelemabs))
+    allocate(iend_bottom_poro(nelemabs))
+    allocate(ibegin_top_poro(nelemabs))
+    allocate(iend_top_poro(nelemabs))
 
-  allocate(jbegin_left_poro(nelemabs))
-  allocate(jend_left_poro(nelemabs))
-  allocate(jbegin_right_poro(nelemabs))
-  allocate(jend_right_poro(nelemabs))
-endif
+    allocate(jbegin_left_poro(nelemabs))
+    allocate(jend_left_poro(nelemabs))
+    allocate(jbegin_right_poro(nelemabs))
+    allocate(jend_right_poro(nelemabs))
+  endif
 
 !
 !---- print element group main parameters
@@ -1139,15 +1158,15 @@ endif
   allocate(knods_read(ngnod))
   do ispec = 1,nspec
     read(IIN,*) n,kmato_read,(knods_read(k), k=1,ngnod)
-if(ipass == 1) then
-  kmato(n) = kmato_read
-  knods(:,n)= knods_read(:)
-else if(ipass == 2) then
-  kmato(perm(antecedent_list(n))) = kmato_read
-  knods(:,perm(antecedent_list(n)))= knods_read(:)
-else
-  stop 'error: maximum is 2 passes'
-endif
+    if(ipass == 1) then
+      kmato(n) = kmato_read
+      knods(:,n)= knods_read(:)
+    else if(ipass == 2) then
+      kmato(perm(antecedent_list(n))) = kmato_read
+      knods(:,perm(antecedent_list(n)))= knods_read(:)
+    else
+      stop 'error: maximum is 2 passes'
+    endif
   enddo
   deallocate(knods_read)
 
@@ -2047,14 +2066,14 @@ deallocate(weight_gll)
 
   if(SIMULATION_TYPE == 2) then
 !  define coefficients of the Newmark time scheme for the backward wavefield
-  b_deltat = - deltat
-  b_deltatover2 = HALF*b_deltat
-  b_deltatsquareover2 = HALF*b_deltat*b_deltat
+    b_deltat = - deltat
+    b_deltatover2 = HALF*b_deltat
+    b_deltatsquareover2 = HALF*b_deltat*b_deltat
   endif
 
 !---- define actual location of source and receivers
 
-call setup_sources_receivers(NSOURCE,initialfield,source_type,&
+  call setup_sources_receivers(NSOURCE,initialfield,source_type,&
      coord,ibool,npoin,nspec,nelem_acoustic_surface,acoustic_surface,elastic,poroelastic, &
      x_source,z_source,ispec_selected_source,ispec_selected_rec, &
      is_proc_source,nb_proc_source,ipass,&
@@ -2074,48 +2093,49 @@ call setup_sources_receivers(NSOURCE,initialfield,source_type,&
         nadj_rec_local = nadj_rec_local + 1
       endif
     enddo
-  if(ipass == 1) allocate(adj_sourcearray(NSTEP,3,NGLLX,NGLLZ))
-  if (nadj_rec_local > 0 .and. ipass == 1)  then
-    allocate(adj_sourcearrays(nadj_rec_local,NSTEP,3,NGLLX,NGLLZ))
-  else if (ipass == 1) then
-    allocate(adj_sourcearrays(1,1,1,1,1))
-  endif
+    if(ipass == 1) allocate(adj_sourcearray(NSTEP,3,NGLLX,NGLLZ))
+    if (nadj_rec_local > 0 .and. ipass == 1)  then
+      allocate(adj_sourcearrays(nadj_rec_local,NSTEP,3,NGLLX,NGLLZ))
+    else if (ipass == 1) then
+      allocate(adj_sourcearrays(1,1,1,1,1))
+    endif
+
     irec_local = 0
     do irec = 1, nrec
 !   compute only adjoint source arrays in the local proc
       if(myrank == which_proc_receiver(irec))then
         irec_local = irec_local + 1
-  adj_source_file = trim(station_name(irec))//'.'//trim(network_name(irec))
-  call compute_arrays_adj_source(myrank,adj_source_file, &
+        adj_source_file = trim(station_name(irec))//'.'//trim(network_name(irec))
+        call compute_arrays_adj_source(myrank,adj_source_file, &
               xi_receiver(irec), gamma_receiver(irec), &
               adj_sourcearray, xigll,zigll,NSTEP)
         adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
       endif
     enddo
-   else if (ipass == 1) then
+  else if (ipass == 1) then
      allocate(adj_sourcearrays(1,1,1,1,1))
   endif
 
-if (ipass == 1) then
-  if (nrecloc > 0) then
-    allocate(anglerec_irec(nrecloc))
-    allocate(cosrot_irec(nrecloc))
-    allocate(sinrot_irec(nrecloc))
-    allocate(rec_tangential_detection_curve(nrecloc))
-  else
-    allocate(anglerec_irec(1))
-    allocate(cosrot_irec(1))
-    allocate(sinrot_irec(1))
-    allocate(rec_tangential_detection_curve(1))
+  if (ipass == 1) then
+    if (nrecloc > 0) then
+      allocate(anglerec_irec(nrecloc))
+      allocate(cosrot_irec(nrecloc))
+      allocate(sinrot_irec(nrecloc))
+      allocate(rec_tangential_detection_curve(nrecloc))
+    else
+      allocate(anglerec_irec(1))
+      allocate(cosrot_irec(1))
+      allocate(sinrot_irec(1))
+      allocate(rec_tangential_detection_curve(1))
+    endif
+
+    if (rec_normal_to_surface .and. abs(anglerec) > 1.d-6) &
+      stop 'anglerec should be zero when receivers are normal to the topography'
+
+    anglerec_irec(:) = anglerec * pi / 180.d0
+    cosrot_irec(:) = cos(anglerec_irec(:))
+    sinrot_irec(:) = sin(anglerec_irec(:))
   endif
-
-  if (rec_normal_to_surface .and. abs(anglerec) > 1.d-6) &
-    stop 'anglerec should be zero when receivers are normal to the topography'
-
-  anglerec_irec(:) = anglerec * pi / 180.d0
-  cosrot_irec(:) = cos(anglerec_irec(:))
-  sinrot_irec(:) = sin(anglerec_irec(:))
-endif
 
 !
 !--- tangential computation
@@ -2160,55 +2180,55 @@ if (ipass == NUMBER_OF_PASSES) then
   if (force_normal_to_surface) then
 
     do i_source=1,NSOURCE
-     if (is_proc_source(i_source) == 1) then
-    distmin = HUGEVAL
-    do i = 1, nnodes_tangential_curve
-      dist_current = sqrt((coord(1,iglob_source(i_source))-nodes_tangential_curve(1,i))**2 + &
-          (coord(2,iglob_source(i_source))-nodes_tangential_curve(2,i))**2)
-      if ( dist_current < distmin ) then
-        n1_tangential_detection_curve = i
-        distmin = dist_current
+      if (is_proc_source(i_source) == 1) then
+        distmin = HUGEVAL
+        do i = 1, nnodes_tangential_curve
+          dist_current = sqrt((coord(1,iglob_source(i_source))-nodes_tangential_curve(1,i))**2 + &
+                              (coord(2,iglob_source(i_source))-nodes_tangential_curve(2,i))**2)
+          if ( dist_current < distmin ) then
+            n1_tangential_detection_curve = i
+            distmin = dist_current
 
-      endif
-    enddo
+          endif
+        enddo
 
-    call tri_quad(n_tangential_detection_curve, n1_tangential_detection_curve, nnodes_tangential_curve)
+        call tri_quad(n_tangential_detection_curve, n1_tangential_detection_curve, nnodes_tangential_curve)
 
 ! in the case of a source force vector
 ! users can give an angle with respect to the normal to the topography surface,
 ! in which case we must compute the normal to the topography
 ! and add it the existing rotation angle
-    call compute_normal_vector( angleforce(i_source), nodes_tangential_curve(1,n_tangential_detection_curve(1)), &
-      nodes_tangential_curve(1,n_tangential_detection_curve(2)), &
-      nodes_tangential_curve(1,n_tangential_detection_curve(3)), &
-      nodes_tangential_curve(1,n_tangential_detection_curve(4)), &
-      nodes_tangential_curve(2,n_tangential_detection_curve(1)), &
-      nodes_tangential_curve(2,n_tangential_detection_curve(2)), &
-      nodes_tangential_curve(2,n_tangential_detection_curve(3)), &
-      nodes_tangential_curve(2,n_tangential_detection_curve(4)) )
+        call compute_normal_vector( angleforce(i_source), nodes_tangential_curve(1,n_tangential_detection_curve(1)), &
+                          nodes_tangential_curve(1,n_tangential_detection_curve(2)), &
+                          nodes_tangential_curve(1,n_tangential_detection_curve(3)), &
+                          nodes_tangential_curve(1,n_tangential_detection_curve(4)), &
+                          nodes_tangential_curve(2,n_tangential_detection_curve(1)), &
+                          nodes_tangential_curve(2,n_tangential_detection_curve(2)), &
+                          nodes_tangential_curve(2,n_tangential_detection_curve(3)), &
+                          nodes_tangential_curve(2,n_tangential_detection_curve(4)) )
 
-    source_courbe_eros(i_source) = n1_tangential_detection_curve
-    if ( myrank == 0 .and. is_proc_source(i_source) == 1 .and. nb_proc_source(i_source) == 1 ) then
-      source_courbe_eros(i_source) = n1_tangential_detection_curve
-      angleforce_recv = angleforce(i_source)
+        source_courbe_eros(i_source) = n1_tangential_detection_curve
+        if ( myrank == 0 .and. is_proc_source(i_source) == 1 .and. nb_proc_source(i_source) == 1 ) then
+          source_courbe_eros(i_source) = n1_tangential_detection_curve
+          angleforce_recv = angleforce(i_source)
 #ifdef USE_MPI
-    else if ( myrank == 0 ) then
-      do i = 1, nb_proc_source(i_source) - is_proc_source(i_source)
-        call MPI_recv(source_courbe_eros(i_source),1,MPI_INTEGER,MPI_ANY_SOURCE,42,MPI_COMM_WORLD,request_mpi_status,ier)
-        call MPI_recv(angleforce_recv,1,MPI_DOUBLE_PRECISION,MPI_ANY_SOURCE,43,MPI_COMM_WORLD,request_mpi_status,ier)
-      enddo
-    else if ( is_proc_source(i_source) == 1 ) then
-      call MPI_send(n1_tangential_detection_curve,1,MPI_INTEGER,0,42,MPI_COMM_WORLD,ier)
-      call MPI_send(angleforce(i_source),1,MPI_DOUBLE_PRECISION,0,43,MPI_COMM_WORLD,ier)
+        else if ( myrank == 0 ) then
+          do i = 1, nb_proc_source(i_source) - is_proc_source(i_source)
+            call MPI_recv(source_courbe_eros(i_source),1,MPI_INTEGER,MPI_ANY_SOURCE,42,MPI_COMM_WORLD,request_mpi_status,ier)
+            call MPI_recv(angleforce_recv,1,MPI_DOUBLE_PRECISION,MPI_ANY_SOURCE,43,MPI_COMM_WORLD,request_mpi_status,ier)
+          enddo
+        else if ( is_proc_source(i_source) == 1 ) then
+          call MPI_send(n1_tangential_detection_curve,1,MPI_INTEGER,0,42,MPI_COMM_WORLD,ier)
+          call MPI_send(angleforce(i_source),1,MPI_DOUBLE_PRECISION,0,43,MPI_COMM_WORLD,ier)
 #endif
-    endif
+        endif
 
 #ifdef USE_MPI
-    call MPI_bcast(angleforce_recv,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-    angleforce(i_source) = angleforce_recv
+        call MPI_bcast(angleforce_recv,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+        angleforce(i_source) = angleforce_recv
 #endif
       endif !  if (is_proc_source(i_source) == 1)
-     enddo ! do i_source=1,NSOURCE
+    enddo ! do i_source=1,NSOURCE
   endif !  if (force_normal_to_surface)
 
 ! CHRIS --- how to deal with multiple source. Use first source now. ---
@@ -2254,7 +2274,7 @@ if (ipass == NUMBER_OF_PASSES) then
     if ( myrank == 0 ) then
       open(unit=11,file='OUTPUT_FILES/dist_rec_tangential_detection_curve', form='formatted', status='unknown')
     endif
-      irecloc = 0
+    irecloc = 0
     do irec = 1,nrec
 
       if ( myrank == 0 ) then
@@ -4004,59 +4024,76 @@ endif
       open(unit=55,file='OUTPUT_FILES/source.txt',status='unknown')
     endif
 
-! loop on all the sources
+    ! loop on all the sources
     do i_source=1,NSOURCE
 
-! loop on all the time steps
-    do it = 1,NSTEP
+      ! loop on all the time steps
+      do it = 1,NSTEP
 
-! compute current time
-      time = (it-1)*deltat
+        ! compute current time
+        time = (it-1)*deltat
 
-! Ricker (second derivative of a Gaussian) source time function
-      if(time_function_type(i_source) == 1) then
-        source_time_function(i_source,it) = - factor(i_source) * (ONE-TWO*aval(i_source)*(time-t0(i_source))**2) * &
-                                           exp(-aval(i_source)*(time-t0(i_source))**2)
-!        source_time_function(i_source,it) = - factor(i_source) * TWO*aval(i_source)*sqrt(aval(i_source))*&
-!                                            (time-t0(i_source))/pi * exp(-aval(i_source)*(time-t0(i_source))**2)
+!daniel
+!original
+        ! Ricker (second derivative of a Gaussian) source time function
+        if(time_function_type(i_source) == 1) then
+          source_time_function(i_source,it) = - factor(i_source) * (ONE-TWO*aval(i_source)*(time-t0(i_source))**2) * &
+                                             exp(-aval(i_source)*(time-t0(i_source))**2)
+        !        source_time_function(i_source,it) = - factor(i_source) * TWO*aval(i_source)*sqrt(aval(i_source))*&
+        !                                            (time-t0(i_source))/pi * exp(-aval(i_source)*(time-t0(i_source))**2)
 
-! first derivative of a Gaussian source time function
-      else if(time_function_type(i_source) == 2) then
-        source_time_function(i_source,it) = - factor(i_source) * TWO*aval(i_source)*(time-t0(i_source)) * &
-                                           exp(-aval(i_source)*(time-t0(i_source))**2)
+        ! first derivative of a Gaussian source time function
+        else if(time_function_type(i_source) == 2) then
+          source_time_function(i_source,it) = - factor(i_source) * TWO*aval(i_source)*(time-t0(i_source)) * &
+                                             exp(-aval(i_source)*(time-t0(i_source))**2)
 
-! Gaussian or Dirac (we use a very thin Gaussian instead) source time function
-      else if(time_function_type(i_source) == 3 .or. time_function_type(i_source) == 4) then
-        source_time_function(i_source,it) = factor(i_source) * exp(-aval(i_source)*(time-t0(i_source))**2)
+        ! Gaussian or Dirac (we use a very thin Gaussian instead) source time function
+        else if(time_function_type(i_source) == 3 .or. time_function_type(i_source) == 4) then
+          source_time_function(i_source,it) = factor(i_source) * exp(-aval(i_source)*(time-t0(i_source))**2)
 
-! Heaviside source time function (we use a very thin error function instead)
-      else if(time_function_type(i_source) == 5) then
-        hdur(i_source) = 1.d0 / f0(i_source)
-        hdur_gauss(i_source) = hdur(i_source) * 5.d0 / 3.d0
-        source_time_function(i_source,it) = factor(i_source) * 0.5d0*(1.0d0 + &
-                                           netlib_specfun_erf(SOURCE_DECAY_MIMIC_TRIANGLE*(time-t0(i_source))/hdur_gauss(i_source)))
+        ! Heaviside source time function (we use a very thin error function instead)
+        else if(time_function_type(i_source) == 5) then
+          hdur(i_source) = 1.d0 / f0(i_source)
+          hdur_gauss(i_source) = hdur(i_source) * 5.d0 / 3.d0
+          source_time_function(i_source,it) = factor(i_source) * 0.5d0*(1.0d0 + &
+              netlib_specfun_erf(SOURCE_DECAY_MIMIC_TRIANGLE*(time-t0(i_source))/hdur_gauss(i_source)))
 
-      else
-        call exit_MPI('unknown source time function')
-      endif
+        else
+          call exit_MPI('unknown source time function')
+        endif
 
 ! output relative time in third column, in case user wants to check it as well
       if (myrank == 0 .and. i_source==1 ) write(55,*) sngl(time-t0(1)),real(source_time_function(1,it),4),sngl(time)
-   enddo
-   enddo ! i_source=1,NSOURCE
 
-   if (myrank == 0) close(55)
+! check that t0 is different for each source but simulation should start with
+! a t0 same for all sources. t0 is defined as a positive time shift of each source given.
+! try:
+!   t0_start = maxval(t0)
+! earliest start time of the simulation then is: (it-1)*deltat - t0_start
+! each source is acting with a time shift (must be zero or positive):
+!   t_shift(1:NSOURCE) = t0_start - t0(1:NSOURCE)
+! time then becomes:
+!   time - t0_start + t_shift = time - t0_start + t0_start - t0(i_source)
+!                                        = time - t0(i_source)
+!
+!>daniel
+
+      enddo
+    enddo ! i_source=1,NSOURCE
+
+    if (myrank == 0) close(55)
 
 ! nb_proc_source is the number of processes that own the source (the nearest point). It can be greater
 ! than one if the nearest point is on the interface between several partitions with an explosive source.
 ! since source contribution is linear, the source_time_function is cut down by that number (it would have been similar
 ! if we just had elected one of those processes).
-   do i_source=1,NSOURCE
-    source_time_function(i_source,:) = source_time_function(i_source,:) / nb_proc_source(i_source)
-   enddo
+    do i_source=1,NSOURCE
+      source_time_function(i_source,:) = source_time_function(i_source,:) / nb_proc_source(i_source)
+    enddo
 
   else
-
+    ! uses an initialfield
+    ! dummy allocation
     allocate(source_time_function(1,1))
 
   endif

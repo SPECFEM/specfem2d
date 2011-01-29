@@ -725,9 +725,12 @@ program meshfem2D
      call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mxz(i_source))
      call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,factor(i_source))
 
+!daniel
+! original: check if this makes sense here..
      ! if Dirac source time function, use a very thin Gaussian instead
      ! if Heaviside source time function, use a very thin error function instead
-     if(time_function_type(i_source) == 4 .or. time_function_type(i_source) == 5) f0(i_source) = 1.d0 / (10.d0 * deltat)
+     if(time_function_type(i_source) == 4 .or. time_function_type(i_source) == 5) &
+       f0(i_source) = 1.d0 / (10.d0 * deltat)
 
      ! time delay of the source in seconds, use a 20 % security margin (use 2 / f0 if error function)
      if(time_function_type(i_source)== 5) then
@@ -735,6 +738,7 @@ program meshfem2D
      else
         t0(i_source) = 1.20d0 / f0(i_source)+t0(i_source)
      endif
+!>daniel
 
      print *
      print *,'Source', i_source
@@ -1659,8 +1663,9 @@ program meshfem2D
 
      do i_source=1,NSOURCE
         write(15,*) 'source', i_source
-        write(15,*) source_type(i_source),time_function_type(i_source),xs(i_source),zs(i_source),f0(i_source),t0(i_source), &
-             factor(i_source),angleforce(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
+        write(15,*) source_type(i_source),time_function_type(i_source), &
+                    xs(i_source),zs(i_source),f0(i_source),t0(i_source), &
+                    factor(i_source),angleforce(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
      enddo
 
      write(15,*) 'attenuation'
