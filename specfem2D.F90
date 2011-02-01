@@ -703,7 +703,7 @@
   double precision , dimension(:,:), allocatable :: v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot
   double precision , dimension(:,:), allocatable :: t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_paco,veloc_paco,displ_paco
-  integer count_left,count_right,count_bot,ibegin,iend
+  integer count_left,count_right,count_bottom,ibegin,iend
   logical :: over_critical_angle
 
 ! further reduce cache misses inner/outer in two passes in the case of an MPI simulation
@@ -3688,7 +3688,7 @@ endif
   rhorho_ac_hessian_final1(:,:,:) = ZERO
    endif
 
-  endif ! if(isover == 2)
+  endif ! if(SIMULATION_TYPE == 2)
 
 !
 !----  read initial fields from external file if needed
@@ -3917,7 +3917,7 @@ endif
          allocate(right_bound(nelemabs*NGLLX))
          allocate(bot_bound(nelemabs*NGLLZ))
 
-         count_bot=0
+         count_bottom=0
          count_left=0
          count_right=0
          do ispecabs=1,nelemabs
@@ -3946,9 +3946,9 @@ endif
                if(codeabs(ILEFT,ispecabs)) ibegin = 2
                if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
                do i = ibegin,iend
-                  count_bot=count_bot+1
+                  count_bottom=count_bottom+1
                   iglob = ibool(i,j,ispec)
-                  bot_bound(count_bot)=iglob
+                  bot_bound(count_bottom)=iglob
                enddo
             endif
          enddo
@@ -3963,10 +3963,10 @@ endif
          allocate(t0x_right(count_right,NSTEP))
          allocate(t0z_right(count_right,NSTEP))
 
-         allocate(v0x_bot(count_bot,NSTEP))
-         allocate(v0z_bot(count_bot,NSTEP))
-         allocate(t0x_bot(count_bot,NSTEP))
-         allocate(t0z_bot(count_bot,NSTEP))
+         allocate(v0x_bot(count_bottom,NSTEP))
+         allocate(v0z_bot(count_bottom,NSTEP))
+         allocate(t0x_bot(count_bottom,NSTEP))
+         allocate(t0z_bot(count_bottom,NSTEP))
 
     allocate(displ_paco(NDIM,npoin))
     allocate(veloc_paco(NDIM,npoin))
@@ -3976,8 +3976,8 @@ endif
          call paco_beyond_critical(coord,npoin,deltat,NSTEP,angleforce(1),&
               f0(1),cploc,csloc,TURN_ATTENUATION_ON,Qp_attenuation,source_type(1),v0x_left,v0z_left,&
               v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,&
-              t0x_bot,t0z_bot,left_bound(1:count_left),right_bound(1:count_right),bot_bound(1:count_bot)&
-              ,count_left,count_right,count_bot,displ_paco,veloc_paco,accel_paco)
+              t0x_bot,t0z_bot,left_bound(1:count_left),right_bound(1:count_right),bot_bound(1:count_bottom)&
+              ,count_left,count_right,count_bottom,displ_paco,veloc_paco,accel_paco)
 
          displ_elastic(1,:) = displ_paco(1,:)
          displ_elastic(3,:) = displ_paco(2,:)
@@ -5512,7 +5512,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
                A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset, f0(1),&
                v0x_left(1,it),v0z_left(1,it),v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
                t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it),t0x_bot(1,it),t0z_bot(1,it), &
-               count_left,count_right,count_bot,over_critical_angle,NSOURCE,nrec,SIMULATION_TYPE,SAVE_FORWARD, &
+               count_left,count_right,count_bottom,over_critical_angle,NSOURCE,nrec,SIMULATION_TYPE,SAVE_FORWARD, &
                b_absorb_elastic_left,b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top, &
                nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,mu_k,kappa_k)
 

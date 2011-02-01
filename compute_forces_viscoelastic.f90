@@ -176,7 +176,7 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
   double precision, dimension(nleft) :: v0x_left,v0z_left,t0x_left,t0z_left
   double precision, dimension(nright) :: v0x_right,v0z_right,t0x_right,t0z_right
   double precision, dimension(nbot) :: v0x_bot,v0z_bot,t0x_bot,t0z_bot
-  integer count_left,count_right,count_bot
+  integer count_left,count_right,count_bottom
 
   integer :: ifirstelem,ilastelem
 
@@ -461,7 +461,7 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
 
      count_left=1
      count_right=1
-     count_bot=1
+     count_bottom=1
 
      do ispecabs = 1,nelemabs
 
@@ -682,11 +682,11 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
                     traction_x_t0 = mul_relaxed*(dxUz + dzUx)
                     traction_z_t0 = lambdal_relaxed*dxUx + (lambdal_relaxed+2*mul_relaxed)*dzUz
                  else
-                    veloc_horiz=v0x_bot(count_bot)
-                    veloc_vert=v0z_bot(count_bot)
-                    traction_x_t0=t0x_bot(count_bot)
-                    traction_z_t0=t0z_bot(count_bot)
-                    count_bot=count_bot+1
+                    veloc_horiz=v0x_bot(count_bottom)
+                    veloc_vert=v0z_bot(count_bottom)
+                    traction_x_t0=t0x_bot(count_bottom)
+                    traction_z_t0=t0z_bot(count_bottom)
+                    count_bottom=count_bottom+1
                  end if
               else
                  veloc_horiz = 0
