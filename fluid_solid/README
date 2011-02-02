@@ -1,0 +1,13 @@
+----------------------------------------------------------------------
+README
+----------------------------------------------------------------------
+
+This example creates and external mesh, with fluid and solid domains,
+and topography.
+
+
+To run the examples, type:
+
+  ./process.sh
+
+in this current directory.

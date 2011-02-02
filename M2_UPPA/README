@@ -1,0 +1,12 @@
+----------------------------------------------------------------------
+README
+----------------------------------------------------------------------
+
+This default example creates an internal mesh with smooth topographic interfaces.
+
+
+To run the examples, type:
+
+  ./process.sh
+
+in this current directory.
