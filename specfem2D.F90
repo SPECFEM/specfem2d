@@ -440,6 +440,7 @@
   double precision, dimension(:), allocatable :: aval
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: source_time_function
   double precision, external :: netlib_specfun_erf
+  real :: stf_used
 
   double precision :: vpImin,vpImax,vpIImin,vpIImax
 
@@ -1221,25 +1222,25 @@
   endif
 
 ! allocate memory variables for attenuation
-if(ipass == 1) then
-  allocate(e1(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-  allocate(e11(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-  allocate(e13(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-  e1(:,:,:,:) = 0._CUSTOM_REAL
-  e11(:,:,:,:) = 0._CUSTOM_REAL
-  e13(:,:,:,:) = 0._CUSTOM_REAL
+  if(ipass == 1) then
+    allocate(e1(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+    allocate(e11(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+    allocate(e13(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+    e1(:,:,:,:) = 0._CUSTOM_REAL
+    e11(:,:,:,:) = 0._CUSTOM_REAL
+    e13(:,:,:,:) = 0._CUSTOM_REAL
 
-  allocate(dux_dxl_n(NGLLX,NGLLZ,nspec_allocate))
-  allocate(duz_dzl_n(NGLLX,NGLLZ,nspec_allocate))
-  allocate(duz_dxl_n(NGLLX,NGLLZ,nspec_allocate))
-  allocate(dux_dzl_n(NGLLX,NGLLZ,nspec_allocate))
-  allocate(dux_dxl_np1(NGLLX,NGLLZ,nspec_allocate))
-  allocate(duz_dzl_np1(NGLLX,NGLLZ,nspec_allocate))
-  allocate(duz_dxl_np1(NGLLX,NGLLZ,nspec_allocate))
-  allocate(dux_dzl_np1(NGLLX,NGLLZ,nspec_allocate))
-  allocate(Mu_nu1(NGLLX,NGLLZ,nspec))
-  allocate(Mu_nu2(NGLLX,NGLLZ,nspec))
-endif
+    allocate(dux_dxl_n(NGLLX,NGLLZ,nspec_allocate))
+    allocate(duz_dzl_n(NGLLX,NGLLZ,nspec_allocate))
+    allocate(duz_dxl_n(NGLLX,NGLLZ,nspec_allocate))
+    allocate(dux_dzl_n(NGLLX,NGLLZ,nspec_allocate))
+    allocate(dux_dxl_np1(NGLLX,NGLLZ,nspec_allocate))
+    allocate(duz_dzl_np1(NGLLX,NGLLZ,nspec_allocate))
+    allocate(duz_dxl_np1(NGLLX,NGLLZ,nspec_allocate))
+    allocate(dux_dzl_np1(NGLLX,NGLLZ,nspec_allocate))
+    allocate(Mu_nu1(NGLLX,NGLLZ,nspec))
+    allocate(Mu_nu2(NGLLX,NGLLZ,nspec))
+  endif
 
 ! define the attenuation quality factors.
 ! they can be different for each element.
@@ -1261,17 +1262,17 @@ endif
 
 ! allocate memory variables for viscous attenuation (poroelastic media)
   if(ipass == 1) then
-  if(TURN_VISCATTENUATION_ON) then
-  allocate(rx_viscous(NGLLX,NGLLZ,nspec))
-  allocate(rz_viscous(NGLLX,NGLLZ,nspec))
-  allocate(viscox(NGLLX,NGLLZ,nspec))
-  allocate(viscoz(NGLLX,NGLLZ,nspec))
-  else
-  allocate(rx_viscous(NGLLX,NGLLZ,1))
-  allocate(rz_viscous(NGLLX,NGLLZ,1))
-  allocate(viscox(NGLLX,NGLLZ,1))
-  allocate(viscoz(NGLLX,NGLLZ,1))
-  endif
+    if(TURN_VISCATTENUATION_ON) then
+      allocate(rx_viscous(NGLLX,NGLLZ,nspec))
+      allocate(rz_viscous(NGLLX,NGLLZ,nspec))
+      allocate(viscox(NGLLX,NGLLZ,nspec))
+      allocate(viscoz(NGLLX,NGLLZ,nspec))
+    else
+      allocate(rx_viscous(NGLLX,NGLLZ,1))
+      allocate(rz_viscous(NGLLX,NGLLZ,1))
+      allocate(viscox(NGLLX,NGLLZ,1))
+      allocate(viscoz(NGLLX,NGLLZ,1))
+    endif
   endif
 
 !
@@ -1281,37 +1282,37 @@ endif
   read(IIN,"(a80)") datlin
   read(IIN,*) ninterface, max_interface_size
   if ( ninterface > 0 ) then
-  if(ipass == 1) then
-     allocate(my_neighbours(ninterface))
-     allocate(my_nelmnts_neighbours(ninterface))
-     allocate(my_interfaces(4,max_interface_size,ninterface))
-     allocate(ibool_interfaces_acoustic(NGLLX*max_interface_size,ninterface))
-     allocate(ibool_interfaces_elastic(NGLLX*max_interface_size,ninterface))
-     allocate(ibool_interfaces_poroelastic(NGLLX*max_interface_size,ninterface))
-     allocate(nibool_interfaces_acoustic(ninterface))
-     allocate(nibool_interfaces_elastic(ninterface))
-     allocate(nibool_interfaces_poroelastic(ninterface))
-     allocate(inum_interfaces_acoustic(ninterface))
-     allocate(inum_interfaces_elastic(ninterface))
-     allocate(inum_interfaces_poroelastic(ninterface))
-  endif
+    if(ipass == 1) then
+       allocate(my_neighbours(ninterface))
+       allocate(my_nelmnts_neighbours(ninterface))
+       allocate(my_interfaces(4,max_interface_size,ninterface))
+       allocate(ibool_interfaces_acoustic(NGLLX*max_interface_size,ninterface))
+       allocate(ibool_interfaces_elastic(NGLLX*max_interface_size,ninterface))
+       allocate(ibool_interfaces_poroelastic(NGLLX*max_interface_size,ninterface))
+       allocate(nibool_interfaces_acoustic(ninterface))
+       allocate(nibool_interfaces_elastic(ninterface))
+       allocate(nibool_interfaces_poroelastic(ninterface))
+       allocate(inum_interfaces_acoustic(ninterface))
+       allocate(inum_interfaces_elastic(ninterface))
+       allocate(inum_interfaces_poroelastic(ninterface))
+    endif
 
-     do num_interface = 1, ninterface
-        read(IIN,*) my_neighbours(num_interface), my_nelmnts_neighbours(num_interface)
-        do ie = 1, my_nelmnts_neighbours(num_interface)
-           read(IIN,*) my_interfaces_read, my_interfaces(2,ie,num_interface), &
+    do num_interface = 1, ninterface
+      read(IIN,*) my_neighbours(num_interface), my_nelmnts_neighbours(num_interface)
+      do ie = 1, my_nelmnts_neighbours(num_interface)
+        read(IIN,*) my_interfaces_read, my_interfaces(2,ie,num_interface), &
                 my_interfaces(3,ie,num_interface), my_interfaces(4,ie,num_interface)
 
-           if(ipass == 1) then
-             my_interfaces(1,ie,num_interface) = my_interfaces_read
-           else if(ipass == 2) then
-             my_interfaces(1,ie,num_interface) = perm(antecedent_list(my_interfaces_read))
-           else
-             stop 'error: maximum number of passes is 2'
-           endif
+        if(ipass == 1) then
+          my_interfaces(1,ie,num_interface) = my_interfaces_read
+        else if(ipass == 2) then
+          my_interfaces(1,ie,num_interface) = perm(antecedent_list(my_interfaces_read))
+        else
+          stop 'error: maximum number of passes is 2'
+        endif
 
-        enddo
-     enddo
+      enddo
+    enddo
   endif
 
 !
@@ -1319,9 +1320,11 @@ endif
 !
   read(IIN,"(a80)") datlin
   if(anyabs) then
-     do inum = 1,nelemabs
-      read(IIN,*) numabsread,codeabsread(1),codeabsread(2),codeabsread(3),codeabsread(4), ibegin_bottom(inum), iend_bottom(inum), &
-           jbegin_right(inum), jend_right(inum), ibegin_top(inum), iend_top(inum), jbegin_left(inum), jend_left(inum)
+    do inum = 1,nelemabs
+      read(IIN,*) numabsread,codeabsread(1),codeabsread(2),codeabsread(3),&
+                  codeabsread(4), ibegin_bottom(inum), iend_bottom(inum), &
+                  jbegin_right(inum), jend_right(inum), ibegin_top(inum), &
+                  iend_top(inum), jbegin_left(inum), jend_left(inum)
       if(numabsread < 1 .or. numabsread > nspec) call exit_MPI('Wrong absorbing element number')
       if(ipass == 1) then
         numabs(inum) = numabsread
@@ -1338,7 +1341,7 @@ endif
     if (myrank == 0 .and. ipass == 1) then
       write(IOUT,*)
       write(IOUT,*) 'Number of absorbing elements: ',nelemabs
-   endif
+    endif
 
     nspec_xmin = ZERO
     nspec_xmax = ZERO
@@ -1351,22 +1354,22 @@ endif
     allocate(ib_zmax(nelemabs))
     endif
     do inum = 1,nelemabs
-       if (codeabs(IBOTTOM,inum)) then
-         nspec_zmin = nspec_zmin + 1
-         ib_zmin(inum) =  nspec_zmin
-       endif
-       if (codeabs(IRIGHT,inum)) then
-         nspec_xmax = nspec_xmax + 1
-         ib_xmax(inum) =  nspec_xmax
-       endif
-       if (codeabs(ITOP,inum)) then
-         nspec_zmax = nspec_zmax + 1
-         ib_zmax(inum) = nspec_zmax
-       endif
-       if (codeabs(ILEFT,inum)) then
-         nspec_xmin = nspec_xmin + 1
-         ib_xmin(inum) =  nspec_xmin
-       endif
+      if (codeabs(IBOTTOM,inum)) then
+        nspec_zmin = nspec_zmin + 1
+        ib_zmin(inum) =  nspec_zmin
+      endif
+      if (codeabs(IRIGHT,inum)) then
+        nspec_xmax = nspec_xmax + 1
+        ib_xmax(inum) =  nspec_xmax
+      endif
+      if (codeabs(ITOP,inum)) then
+        nspec_zmax = nspec_zmax + 1
+        ib_zmax(inum) = nspec_zmax
+      endif
+      if (codeabs(ILEFT,inum)) then
+        nspec_xmin = nspec_xmin + 1
+        ib_xmin(inum) =  nspec_xmin
+      endif
     enddo
 
 ! Files to save absorbed waves needed to reconstruct backward wavefield for adjoint method
@@ -4024,14 +4027,19 @@ endif
       open(unit=55,file='OUTPUT_FILES/source.txt',status='unknown')
     endif
 
-    ! loop on all the sources
-    do i_source=1,NSOURCE
+!    ! loop on all the sources
+!    do i_source=1,NSOURCE
 
-      ! loop on all the time steps
-      do it = 1,NSTEP
+    ! loop on all the time steps
+    do it = 1,NSTEP
 
-        ! compute current time
-        time = (it-1)*deltat
+      ! compute current time
+      time = (it-1)*deltat
+
+      stf_used = 0.0
+
+      ! loop on all the sources
+      do i_source=1,NSOURCE
 
 !daniel
 !original
@@ -4062,8 +4070,9 @@ endif
           call exit_MPI('unknown source time function')
         endif
 
-! output relative time in third column, in case user wants to check it as well
-      if (myrank == 0 .and. i_source==1 ) write(55,*) sngl(time-t0(1)),real(source_time_function(1,it),4),sngl(time)
+        stf_used = stf_used + source_time_function(i_source,it)
+
+      enddo
 
 ! check that t0 is different for each source but simulation should start with
 ! a t0 same for all sources. t0 is defined as a positive time shift of each source given.
@@ -4078,8 +4087,15 @@ endif
 !
 !>daniel
 
-      enddo
-    enddo ! i_source=1,NSOURCE
+! output relative time in third column, in case user wants to check it as well
+!      if (myrank == 0 .and. i_source==1 ) write(55,*) sngl(time-t0(1)),real(source_time_function(1,it),4),sngl(time)
+
+      if (myrank == 0 ) then
+          write(55,*) sngl(time-t0(1)),stf_used,sngl(time)
+      endif
+
+      !enddo
+    enddo
 
     if (myrank == 0) close(55)
 
