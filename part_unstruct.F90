@@ -69,9 +69,13 @@ contains
     integer, intent(out)  :: num_start
     integer, intent(in)  :: ngnod
 
-    integer  :: i
+    integer  :: i,ier
 
-    open(unit=990, file=trim(filename), form='formatted' , status='old', action='read')
+    open(unit=990, file=trim(filename), form='formatted' , status='old', action='read',iostat=ier)
+    if( ier /= 0 ) then
+      print*,'error opening file: ',trim(filename)
+      stop 'error read external mesh file'
+    endif
 
     read(990,*) nelmnts
 
@@ -105,9 +109,14 @@ contains
     integer, intent(out)  :: nnodes
     double precision, dimension(:,:), pointer  :: nodes_coords
 
-    integer  :: i
+    integer  :: i,ier
 
-    open(unit=991, file=trim(filename), form='formatted' , status='old', action='read')
+    open(unit=991, file=trim(filename), form='formatted' , status='old', action='read', iostat=ier)
+    if( ier /= 0 ) then
+      print*,'error opening file: ',trim(filename)
+      stop 'error read external nodes coords file'
+    endif
+
     read(991,*) nnodes
     allocate(nodes_coords(2,nnodes))
     do i = 1, nnodes
@@ -127,9 +136,14 @@ contains
     integer, intent(in)  :: nelmnts
     integer, dimension(1:nelmnts), intent(out)  :: num_material
 
-    integer  :: i
+    integer  :: i,ier
 
-    open(unit=992, file=trim(filename), form='formatted' , status='old', action='read')
+    open(unit=992, file=trim(filename), form='formatted' , status='old', action='read',iostat=ier)
+    if( ier /= 0 ) then
+      print*,'error opening file: ',trim(filename)
+      stop 'error read external mat file'
+    endif
+
     do i = 1, nelmnts
        read(992,*) num_material(i)
     enddo
@@ -163,11 +177,16 @@ contains
 
     integer, dimension(:,:), allocatable  :: acoustic_surface_tmp
     integer  :: nelmnts_surface
-    integer  :: i
+    integer  :: i,ier
     integer  :: imaterial_number
 
 
-    open(unit=993, file=trim(filename), form='formatted' , status='old', action='read')
+    open(unit=993, file=trim(filename), form='formatted' , status='old', action='read', iostat=ier)
+    if( ier /= 0 ) then
+      print*,'error opening file: ',trim(filename)
+      stop 'error read acoustic surface file'
+    endif
+
     read(993,*) nelmnts_surface
 
     allocate(acoustic_surface_tmp(4,nelmnts_surface))
@@ -221,10 +240,14 @@ contains
     integer, intent(in)  :: num_start
 
 
-    integer  :: i
+    integer  :: i,ier
 
+    open(unit=994, file=trim(filename), form='formatted' , status='old', action='read', iostat=ier)
+    if( ier /= 0 ) then
+      print*,'error opening file: ',trim(filename)
+      stop 'error read absorbing surface file'
+    endif
 
-    open(unit=994, file=trim(filename), form='formatted' , status='old', action='read')
     read(994,*) nelemabs
 
     allocate(abs_surface(4,nelemabs))

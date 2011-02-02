@@ -80,7 +80,7 @@ RANLIB = ranlib
 @COND_MPI_TRUE@LIB = -L"@SCOTCH_LIBDIR@" -lscotch -lscotcherr
 @COND_MPI_FALSE@LIB =
 
-# uncomment this to use more than one processor core, in which case the SCOTCH graph partitioner is needed
+# optional: uncomment this to use more than one processor core, in which case the SCOTCH graph partitioner is needed
 #LIB = scotch_5.1.10b/lib/libscotch.a scotch_5.1.10b/lib/libscotcherr.a
 
 LINK = $(F90)

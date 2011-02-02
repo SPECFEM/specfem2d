@@ -5047,6 +5047,7 @@ test -n "$YACC" || YACC="yacc"
  # scotch only needed with mpi support
  if test "$want_mpi" = yes; then
 
+ #daniel: scotch bundle
  # uses bundled scotch: version 5.1.11
  USE_BUNDLED_SCOTCH=1
  SCOTCH_DIR="scotch_5.1.11" # "${ac_scotch_dir}"
@@ -5056,15 +5057,20 @@ test -n "$YACC" || YACC="yacc"
  # the following modifies the default scotch Makefile such that the package
  # will only be compiled once (no recompilation) when calling make
  #
- # src/scotch/
- cp scotch_5.1.11/src/scotch/Makefile scotch_5.1.11/src/scotch/Makefile.org
- # src/libscotch/
- cp scotch_5.1.11/src/libscotch/Makefile scotch_5.1.11/src/libscotch/Makefile.org
- # src/libscotchmetis/
- cp scotch_5.1.11/src/libscotchmetis/Makefile scotch_5.1.11/src/libscotchmetis/Makefile.org
+ if test ! -f "scotch_5.1.11/src/scotch/Makefile.org"; then
+  # no Makefile backup files yet
+  # modifies Makefiles once
 
- # replacement text in the default scotch Makefiles
- cat > conftmp.scotch.cmd <<_ACEOF
+  # creates backup copies of original Makefiles
+  # src/scotch/
+  cp scotch_5.1.11/src/scotch/Makefile scotch_5.1.11/src/scotch/Makefile.org
+  # src/libscotch/
+  cp scotch_5.1.11/src/libscotch/Makefile scotch_5.1.11/src/libscotch/Makefile.org
+  # src/libscotchmetis/
+  cp scotch_5.1.11/src/libscotchmetis/Makefile scotch_5.1.11/src/libscotchmetis/Makefile.org
+
+  # replacement text in the default scotch Makefiles
+  cat > conftmp.scotch.cmd <<_ACEOF
 # scotch replacement text for install line
 \$(bindir)/acpl\$(EXE): acpl\$(EXE)
 	-\$(CP) acpl\$(EXE) \$(bindir)/acpl\$(EXE)
@@ -5142,15 +5148,14 @@ install				: \$(bindir)/acpl\$(EXE) \$(bindir)/amk_ccc\$(EXE) \\
 
 _ACEOF
 
- # avoids lines between 98 to 101, containig install lines, and replaces them
- awk '{if(NR<98)print $0}' scotch_5.1.11/src/scotch/Makefile.org > scotch_5.1.11/src/scotch/Makefile
- cat conftmp.scotch.cmd >> scotch_5.1.11/src/scotch/Makefile
- awk '{if(NR>101)print $0}' scotch_5.1.11/src/scotch/Makefile.org >> scotch_5.1.11/src/scotch/Makefile
- rm -f conftmp.scotch.cmd
+  # avoids lines between 98 to 101, containig install lines, and replaces them
+  awk '{if(NR<98)print $0}' scotch_5.1.11/src/scotch/Makefile.org > scotch_5.1.11/src/scotch/Makefile
+  cat conftmp.scotch.cmd >> scotch_5.1.11/src/scotch/Makefile
+  awk '{if(NR>101)print $0}' scotch_5.1.11/src/scotch/Makefile.org >> scotch_5.1.11/src/scotch/Makefile
+  rm -f conftmp.scotch.cmd
 
-
- # replacement text in the default libscotch Makefile
- cat > conftmp.libscotch.cmd <<_ACEOF
+  # replacement text in the default libscotch Makefile
+  cat > conftmp.libscotch.cmd <<_ACEOF
 # libscotch replacement text for install line
 \$(libdir)/libscotch\$(LIB): libscotch\$(LIB)
 	-\$(CP) libscotch\$(LIB) \$(libdir)
@@ -5169,19 +5174,21 @@ install				: \$(libdir)/libscotch\$(LIB) \$(libdir)/libscotcherr\$(LIB) \\
 
 _ACEOF
 
- # avoids lines between 71 to 73, containig install lines, and replaces them
- awk '{if(NR<71)print $0}' scotch_5.1.11/src/libscotch/Makefile.org > scotch_5.1.11/src/libscotch/Makefile
- cat conftmp.libscotch.cmd >> scotch_5.1.11/src/libscotch/Makefile
- awk '{if(NR>73)print $0}' scotch_5.1.11/src/libscotch/Makefile.org >> scotch_5.1.11/src/libscotch/Makefile
- rm -f conftmp.libscotch.cmd
+  # avoids lines between 71 to 73, containig install lines, and replaces them
+  awk '{if(NR<71)print $0}' scotch_5.1.11/src/libscotch/Makefile.org > scotch_5.1.11/src/libscotch/Makefile
+  cat conftmp.libscotch.cmd >> scotch_5.1.11/src/libscotch/Makefile
+  awk '{if(NR>73)print $0}' scotch_5.1.11/src/libscotch/Makefile.org >> scotch_5.1.11/src/libscotch/Makefile
+  rm -f conftmp.libscotch.cmd
 
- # replaces single scotch line in Makefiles
- # src/scotch/
- sed -i "s/^scotch.*clean/scotch     : /" scotch_5.1.11/src/scotch/Makefile
- # src/libscotch/
- sed -i "s/^scotch.*clean/scotch     : /" scotch_5.1.11/src/libscotch/Makefile
- # src/libscotchmetis/
- sed -i "s/^scotch.*clean/scotch     : /" scotch_5.1.11/src/libscotchmetis/Makefile
+  # replaces single scotch line in Makefiles
+  # src/scotch/
+  sed -i "s/^scotch.*clean/scotch     : /" scotch_5.1.11/src/scotch/Makefile
+  # src/libscotch/
+  sed -i "s/^scotch.*clean/scotch     : /" scotch_5.1.11/src/libscotch/Makefile
+  # src/libscotchmetis/
+  sed -i "s/^scotch.*clean/scotch     : /" scotch_5.1.11/src/libscotchmetis/Makefile
+
+  fi # scotch Makefile modification
 
  else
 

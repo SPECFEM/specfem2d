@@ -496,7 +496,8 @@ program meshfem2D
   print *,'Reading the parameter file ... '
   print *
 
-  open(unit=IIN,file='DATA/Par_file',status='old')
+  open(unit=IIN,file='DATA/Par_file',status='old',iostat=ios)
+  if( ios /= 0 ) stop 'error opening DATA/Par_file file'
 
   ! read file names and path for output
   call read_value_string(IIN,IGNORE_JUNK,title)
@@ -569,7 +570,11 @@ program meshfem2D
   else
      ! get interface data from external file to count the spectral elements along Z
      print *,'Reading interface data from file DATA/',interfacesfile(1:len_trim(interfacesfile)),' to count the spectral elements'
-     open(unit=IIN_INTERFACES,file='DATA/'//interfacesfile,status='old')
+     open(unit=IIN_INTERFACES,file='DATA/'//interfacesfile,status='old',iostat=ios)
+      if( ios /= 0 ) then
+        print*,'error opening file: ',trim('DATA/'//interfacesfile)
+        stop 'error read interface file in meshfem2D'
+      endif
 
      max_npoints_interface = -1
 
@@ -696,7 +701,7 @@ program meshfem2D
   allocate(factor(NSOURCE))
 
   open(unit=IIN_SOURCE,file='DATA/SOURCE',iostat=ios,status='old',action='read')
-  if(ios /= 0) stop 'error opening SOURCE file'
+  if(ios /= 0) stop 'error opening DATA/SOURCE file'
   icounter = 0
   do while(ios == 0)
      read(IIN_SOURCE,"(a)",iostat=ios) dummystring
