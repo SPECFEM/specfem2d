@@ -6990,7 +6990,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! negative values can occur with some compilers when the unstable value is greater
 ! than the greatest possible floating-point number of the machine
       if(displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
-        call exit_MPI('code became unstable and blew up in solid')
+        call exit_MPI('code became unstable and blew up in solid (elastic)')
     endif
 
     if(any_poroelastic_glob) then
@@ -7042,7 +7042,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! negative values can occur with some compilers when the unstable value is greater
 ! than the greatest possible floating-point number of the machine
       if(displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
-        call exit_MPI('code became unstable and blew up in fluid')
+        call exit_MPI('code became unstable and blew up in fluid (acoustic)')
     endif
 
 ! count elapsed wall-clock time
@@ -7275,7 +7275,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
  enddo
 
 
-!----- ecriture des kernels
+!----- writing the kernels
 !
 ! kernels output
   if(SIMULATION_TYPE == 2) then
@@ -7741,7 +7741,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 !
   if(output_color_image) then
 
-  if (myrank == 0) write(IOUT,*) 'Creating color image of size ',NX_IMAGE_color,' x ',NZ_IMAGE_color
+  if (myrank == 0) write(IOUT,*) 'Creating color image of size ',NX_IMAGE_color,' x ',NZ_IMAGE_color,' for time step ',it
 
   if(imagetype == 1) then
 
