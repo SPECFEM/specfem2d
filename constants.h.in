@@ -24,9 +24,10 @@
 
 !----------- parameters that can be changed by the user -----------
 
-! polynomial degree
+! number of Gauss-Lobatto-Legendre (GLL) points (i.e., polynomial degree + 1)
   integer, parameter :: NGLLX = 5
 ! the code does NOT work if NGLLZ /= NGLLX because it then cannot handle a non-structured mesh
+! due to non matching polynomial degrees along common edges
   integer, parameter :: NGLLZ = NGLLX
 
 ! further reduce cache misses inner/outer in two passes in the case of an MPI simulation
