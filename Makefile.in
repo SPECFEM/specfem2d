@@ -230,7 +230,7 @@ xcheck_quality_external_mesh: required $O/check_quality_external_mesh.o $O/read_
 $O/checkgrid.o: checkgrid.F90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/checkgrid.o checkgrid.F90
 
-$O/meshfem2D.o: meshfem2D.F90
+$O/meshfem2D.o: meshfem2D.F90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/meshfem2D.o meshfem2D.F90
 
 $O/createnum_fast.o: createnum_fast.f90 constants.h

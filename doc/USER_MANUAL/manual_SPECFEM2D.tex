@@ -464,9 +464,9 @@ used.}
 \end{figure}
 %%
 
-\item[t0] For single sources, set the time shift parameter \texttt{t0} equal to $0.0$ (the solver
-will not run otherwise.) The time shift parameter would simply apply
-an overall time shift to the synthetics, something that can be done
+\item[t0] For single sources, we recommend to set the time shift parameter \texttt{t0} equal to $0.0$. 
+The time shift parameter would simply apply
+an overall time shift to the synthetics (according to the time shift of the first source), something that can be done
 in the post-processing. This time shift parameter can be non-zero when using multiple sources.
 
 \item[angleforce] Angle of the source (for a force only)
@@ -485,7 +485,10 @@ Note, the zero time of the simulation corresponds to the center of the triangle/
 or the centroid time of the earthquake. The start time of the simulation
 is $t=-1.2*\texttt{half duration} + \texttt{t0}$ (the factor 1.2 is to make sure the moment
 rate function is very close to zero when starting the simulation; Heaviside functions use a factor 2.0),
-the half duration is obtained by 1/f0.
+the half duration is obtained by 1/f0. 
+If you prefer, you can fix this start time by setting the parameter \texttt{USER\_T0} in the \texttt{constants.h} file
+to a positive, non-zero value. The simulation in that case would start at a starting time equal to \texttt{-USER\_T0}.
+
 
 
 

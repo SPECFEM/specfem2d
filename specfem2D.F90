@@ -333,7 +333,8 @@
   double precision, dimension(:), allocatable :: x_source,z_source,xi_source,gamma_source,&
                   Mxx,Mzz,Mxz,f0,t0,factor,angleforce,hdur,hdur_gauss
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sourcearray
-
+  double precision :: t0_start
+  
   double precision, dimension(:,:), allocatable :: coorg
   double precision, dimension(:), allocatable :: coorgread
 
@@ -983,12 +984,12 @@
     ! checks source type
     if(.not. initialfield) then
       if (source_type(i_source) == 1) then
-        if ( myrank == 0 ) then
+        if ( myrank == 0 .and. ipass == 1 ) then
           write(IOUT,212) x_source(i_source),z_source(i_source),f0(i_source),t0(i_source), &
                        factor(i_source),angleforce(i_source)
         endif
       else if(source_type(i_source) == 2) then
-        if ( myrank == 0 ) then
+        if ( myrank == 0 .and. ipass == 1 ) then
           write(IOUT,222) x_source(i_source),z_source(i_source),f0(i_source),t0(i_source), &
                        factor(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
         endif
@@ -997,35 +998,23 @@
       endif
     endif
 
-!daniel
-!original
-! if Dirac source time function, use a very thin Gaussian instead
-! if Heaviside source time function, use a very thin error function instead
-! time delay of the source in seconds, use a 20 % security margin (use 2 / f0 if error function)
+    ! note: this is slightly different than in meshfem2D.f90,
+    !          t0 will only be set within this if statement, i.e. only for type 4 or 5 sources
+    !          (since we set f0 to a new values for these two types of sources)
+    
+    ! if Dirac source time function, use a very thin Gaussian instead
+    ! if Heaviside source time function, use a very thin error function instead
     if(time_function_type(i_source) == 4 .or. time_function_type(i_source) == 5) then
       f0(i_source) = 1.d0 / (10.d0 * deltat)
-      if(time_function_type(i_source) == 5) then
-        t0(i_source) = 2.0d0 / f0(i_source)
+
+      ! time delay of the source in seconds, use a 20 % security margin (use 2 / f0 if error function)
+      if(time_function_type(i_source)== 5) then
+        t0(i_source) = 2.0d0 / f0(i_source)+t0(i_source)
       else
-        t0(i_source) = 1.20d0 / f0(i_source)
+        t0(i_source) = 1.20d0 / f0(i_source)+t0(i_source)
       endif
     endif
-! daniel check:
-!this is done already from meshfem2D.f90:
-     ! if Dirac source time function, use a very thin Gaussian instead
-     ! if Heaviside source time function, use a very thin error function instead
-     !if(time_function_type(i_source) == 4 .or. time_function_type(i_source) == 5) &
-     !  f0(i_source) = 1.d0 / (10.d0 * deltat)
-
-     ! time delay of the source in seconds, use a 20 % security margin (use 2 / f0 if error function)
-     !if(time_function_type(i_source)== 5) then
-     !   t0(i_source) = 2.0d0 / f0(i_source)+t0(i_source)
-     !else
-     !   t0(i_source) = 1.20d0 / f0(i_source)+t0(i_source)
-     !endif
-! maybe the code above is not needed... check.
-!>daniel
-
+    
     ! for the source time function
     aval(i_source) = pi*pi*f0(i_source)*f0(i_source)
 
@@ -1033,6 +1022,74 @@
     angleforce(i_source) = angleforce(i_source) * pi / 180.d0
 
   enddo ! do i_source=1,NSOURCE
+
+  ! initializes simulation start time
+  t0_start = t0(1)
+
+  ! checks if user set USER_T0 to fix simulation start time
+  ! note: USER_T0 has to be positive
+  if( USER_T0 > 0.d0 ) then
+    ! user cares about origin time and time shifts of the CMTSOLUTION
+    ! and wants to fix simulation start time to a constant start time
+    ! time 0 on time axis will correspond to given origin time
+
+    ! notifies user
+    if( myrank == 0 .and. ipass == 1) then
+      write(IOUT,*)
+      write(IOUT,*) '    USER_T0: ',USER_T0,'initial t0_start: ',t0_start
+    endif
+
+    ! checks if automatically set t0 is too small
+    ! note: times in seismograms are shifted by t0(1) 
+    if( t0_start <= USER_T0 ) then
+      ! sets new simulation start time such that
+      ! simulation starts at t = - t0 = - USER_T0
+      t0_start = USER_T0
+
+      ! notifies user
+      if( myrank == 0 .and. ipass == 1) then
+        write(IOUT,*) '    fix new simulation start time. . . . . = ', - t0_start
+        write(IOUT,*)
+      endif
+      
+      ! loops over all sources
+      do i_source=1,NSOURCE
+        ! gets the given, initial time shifts
+        if( time_function_type(i_source) == 5 ) then
+          t0(i_source) = t0(i_source) - 2.0d0 / f0(i_source) 
+        else
+          t0(i_source) = t0(i_source) - 1.20d0 / f0(i_source) 
+        endif
+      
+        ! sets new t0 according to simulation start time,
+        ! using absolute time shifts for each source such that
+        ! a zero time shift would have the maximum gaussian at time t = (it-1)*DT - t0_start = 0
+        t0(i_source) = USER_T0 + t0(i_source)
+        
+        if( myrank == 0 .and. ipass == 1) then
+          write(IOUT,*) '    source ',i_source,'uses t0. . . . . . = ',t0(i_source)
+        endif
+        
+      enddo
+
+    else
+      ! start time needs to be at least t0 for numerical stability
+      ! notifies user
+      if( myrank == 0 .and. ipass == 1) then
+        write(IOUT,*) 'error: USER_T0 is too small'
+        write(IOUT,*) '       must make one of three adjustements:'
+        write(IOUT,*) '       - increase USER_T0 to be at least: ',t0_start
+        write(IOUT,*) '       - decrease time shift t0 in SOURCE file'
+        write(IOUT,*) '       - increase frequency f0 in SOURCE file'
+      endif
+      call exit_mpi(myrank,'error USER_T0 is set but too small')
+    endif
+  else if( USER_T0 < 0.d0 ) then
+    if( myrank == 0 .and. ipass == 1 ) then
+      write(IOUT,*) 'error: USER_T0 is negative, must be set zero or positive!'
+    endif
+    call exit_mpi(myrank,'error negative USER_T0 parameter in constants.h')
+  endif
 
 !
 !---- read the spectral macrobloc nodal coordinates
@@ -2922,8 +2979,8 @@ endif
 !---  end of section performed in two passes
 !---
 
-call invert_mass_matrix(any_elastic,any_acoustic,any_poroelastic,npoin,rmass_inverse_elastic,&
-     rmass_inverse_acoustic,rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic)
+  call invert_mass_matrix(any_elastic,any_acoustic,any_poroelastic,npoin,rmass_inverse_elastic,&
+              rmass_inverse_acoustic,rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic)
 
 ! check the mesh, stability and number of points per wavelength
   if(DISPLAY_SUBSET_OPTION == 1) then
@@ -2939,9 +2996,11 @@ call invert_mass_matrix(any_elastic,any_acoustic,any_poroelastic,npoin,rmass_inv
   endif
   call checkgrid(vpext,vsext,rhoext,density,poroelastcoef,porosity,tortuosity,permeability,ibool,kmato, &
                  coord,npoin,vpImin,vpImax,vpIImin,vpIImax, &
-                 assign_external_model,nspec,UPPER_LIMIT_DISPLAY,numat,deltat,f0,t0,initialfield, &
-                 time_function_type,coorg,xinterp,zinterp,shape2D_display,knods,simulation_title, &
-                 npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic,myrank,nproc,NSOURCE,poroelastic, &
+                 assign_external_model,nspec,UPPER_LIMIT_DISPLAY,numat,deltat, &
+                 f0,t0,initialfield,time_function_type, &
+                 coorg,xinterp,zinterp,shape2D_display,knods,simulation_title, &
+                 npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic, &
+                 myrank,nproc,NSOURCE,poroelastic, &
                  freq0,Q0,TURN_VISCATTENUATION_ON)
 
 ! convert receiver angle to radians
@@ -3971,9 +4030,9 @@ endif
          allocate(t0x_bot(count_bottom,NSTEP))
          allocate(t0z_bot(count_bottom,NSTEP))
 
-    allocate(displ_paco(NDIM,npoin))
-    allocate(veloc_paco(NDIM,npoin))
-    allocate(accel_paco(NDIM,npoin))
+         allocate(displ_paco(NDIM,npoin))
+         allocate(veloc_paco(NDIM,npoin))
+         allocate(accel_paco(NDIM,npoin))
 
 ! call Paco's routine to compute in frequency and convert to time by Fourier transform
          call paco_beyond_critical(coord,npoin,deltat,NSTEP,angleforce(1),&
@@ -3993,11 +4052,11 @@ endif
          deallocate(right_bound)
          deallocate(bot_bound)
 
-    deallocate(displ_paco)
-    deallocate(veloc_paco)
-    deallocate(accel_paco)
+         deallocate(displ_paco)
+         deallocate(veloc_paco)
+         deallocate(accel_paco)
 
-         if (myrank == 0) then
+          if (myrank == 0) then
             write(IOUT,*)  '***********'
             write(IOUT,*)  'done calculating the initial wave field'
             write(IOUT,*)  '***********'
@@ -4041,8 +4100,6 @@ endif
       ! loop on all the sources
       do i_source=1,NSOURCE
 
-!daniel
-!original
         ! Ricker (second derivative of a Gaussian) source time function
         if(time_function_type(i_source) == 1) then
           source_time_function(i_source,it) = - factor(i_source) * (ONE-TWO*aval(i_source)*(time-t0(i_source))**2) * &
@@ -4074,24 +4131,11 @@ endif
 
       enddo
 
-! check that t0 is different for each source but simulation should start with
-! a t0 same for all sources. t0 is defined as a positive time shift of each source given.
-! try:
-!   t0_start = maxval(t0)
-! earliest start time of the simulation then is: (it-1)*deltat - t0_start
-! each source is acting with a time shift (must be zero or positive):
-!   t_shift(1:NSOURCE) = t0_start - t0(1:NSOURCE)
-! time then becomes:
-!   time - t0_start + t_shift = time - t0_start + t0_start - t0(i_source)
-!                                        = time - t0(i_source)
-!
-!>daniel
-
-! output relative time in third column, in case user wants to check it as well
-!      if (myrank == 0 .and. i_source==1 ) write(55,*) sngl(time-t0(1)),real(source_time_function(1,it),4),sngl(time)
-
+      ! output relative time in third column, in case user wants to check it as well
+      ! if (myrank == 0 .and. i_source==1 ) write(55,*) sngl(time-t0(1)),real(source_time_function(1,it),4),sngl(time)
       if (myrank == 0 ) then
-          write(55,*) sngl(time-t0(1)),stf_used,sngl(time)
+          ! note: earliest start time of the simulation is: (it-1)*deltat - t0_start
+          write(55,*) sngl(time-t0_start),stf_used,sngl(time)
       endif
 
       !enddo
@@ -6956,7 +7000,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
      call compute_energy(displ_elastic,veloc_elastic,displs_poroelastic,velocs_poroelastic, &
          displw_poroelastic,velocw_poroelastic, &
          xix,xiz,gammax,gammaz,jacobian,ibool,elastic,poroelastic,hprime_xx,hprime_zz, &
-         nspec,npoin,assign_external_model,it,deltat,t0(1),kmato,poroelastcoef,density, &
+         nspec,npoin,assign_external_model,it,deltat,t0_start,kmato,poroelastcoef,density, &
          porosity,tortuosity, &
          vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,wxgll,wzgll,numat, &
          pressure_element,vector_field_element,e1,e11, &
@@ -7840,7 +7884,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 !----  save temporary or final seismograms
 ! suppress seismograms if we generate traces of the run for analysis with "ParaVer", because time consuming
   if(.not. GENERATE_PARAVER_TRACES) call write_seismograms(sisux,sisuz,siscurl,station_name,network_name,NSTEP, &
-        nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0(1), &
+        nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0_start, &
         NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current,p_sv)
 
   seismo_offset = seismo_offset + seismo_current

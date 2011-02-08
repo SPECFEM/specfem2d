@@ -63,6 +63,11 @@
 ! number of spectral elements to display in each subset when a fixed subset size is used (option 4 above)
   integer, parameter :: NSPEC_DISPLAY_SUBSET = 2300
 
+! use this t0 as earliest starting time rather than the automatically calculated one
+! (must be positive and bigger than the automatically one to be effective;
+!  simulation will start at t = - t0)
+  double precision, parameter :: USER_T0 = 0.0d0
+
 !--- beginning of Nicolas Le Goff's constants for an unstructured CUBIT/METIS/SCOTCH mesh
 
 ! maximum number of neighbors per element
