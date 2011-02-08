@@ -717,45 +717,47 @@ program meshfem2D
 
   open(unit=IIN_SOURCE,file='DATA/SOURCE',status='old',action='read')
   do  i_source=1,NSOURCE
-     call read_value_logical(IIN_SOURCE,IGNORE_JUNK,source_surf(i_source))
-     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,xs(i_source))
-     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,zs(i_source))
-     call read_value_integer(IIN_SOURCE,IGNORE_JUNK,source_type(i_source))
-     call read_value_integer(IIN_SOURCE,IGNORE_JUNK,time_function_type(i_source))
-     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,f0(i_source))
-     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,t0(i_source))
-     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,angleforce(i_source))
-     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mxx(i_source))
-     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mzz(i_source))
-     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mxz(i_source))
-     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,factor(i_source))
+    call read_value_logical(IIN_SOURCE,IGNORE_JUNK,source_surf(i_source))
+    call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,xs(i_source))
+    call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,zs(i_source))
+    call read_value_integer(IIN_SOURCE,IGNORE_JUNK,source_type(i_source))
+    call read_value_integer(IIN_SOURCE,IGNORE_JUNK,time_function_type(i_source))
+    call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,f0(i_source))
+    call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,t0(i_source))
+    call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,angleforce(i_source))
+    call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mxx(i_source))
+    call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mzz(i_source))
+    call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mxz(i_source))
+    call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,factor(i_source))
 
-!daniel
-! original: check if this makes sense here..
-     ! if Dirac source time function, use a very thin Gaussian instead
-     ! if Heaviside source time function, use a very thin error function instead
-     if(time_function_type(i_source) == 4 .or. time_function_type(i_source) == 5) &
-       f0(i_source) = 1.d0 / (10.d0 * deltat)
+    ! note: this is slightly different than in specfem2D.f90,
+    !          t0 will be set outside of this next if statement, i.e. it will be set for all sources
+    !          regardless of their type (it just makes a distinction between type 5 sources and the rest)
+    
+    ! if Dirac source time function, use a very thin Gaussian instead
+    ! if Heaviside source time function, use a very thin error function instead
+    if(time_function_type(i_source) == 4 .or. time_function_type(i_source) == 5) then
+      f0(i_source) = 1.d0 / (10.d0 * deltat)
+    endif
+    
+    ! time delay of the source in seconds, use a 20 % security margin (use 2 / f0 if error function)
+    if(time_function_type(i_source)== 5) then
+      t0(i_source) = 2.0d0 / f0(i_source) + t0(i_source)
+    else
+      t0(i_source) = 1.20d0 / f0(i_source) + t0(i_source)
+    endif
 
-     ! time delay of the source in seconds, use a 20 % security margin (use 2 / f0 if error function)
-     if(time_function_type(i_source)== 5) then
-        t0(i_source) = 2.0d0 / f0(i_source)+t0(i_source)
-     else
-        t0(i_source) = 1.20d0 / f0(i_source)+t0(i_source)
-     endif
-!>daniel
-
-     print *
-     print *,'Source', i_source
-     print *,'Position xs, zs = ',xs(i_source),zs(i_source)
-     print *,'Frequency, delay = ',f0(i_source),t0(i_source)
-     print *,'Source type (1=force, 2=explosion): ',source_type(i_source)
-     print *,'Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside): ',time_function_type(i_source)
-     print *,'Angle of the source if force = ',angleforce(i_source)
-     print *,'Mxx of the source if moment tensor = ',Mxx(i_source)
-     print *,'Mzz of the source if moment tensor = ',Mzz(i_source)
-     print *,'Mxz of the source if moment tensor = ',Mxz(i_source)
-     print *,'Multiplying factor = ',factor(i_source)
+    print *
+    print *,'Source', i_source
+    print *,'Position xs, zs = ',xs(i_source),zs(i_source)
+    print *,'Frequency, delay = ',f0(i_source),t0(i_source)
+    print *,'Source type (1=force, 2=explosion): ',source_type(i_source)
+    print *,'Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside): ',time_function_type(i_source)
+    print *,'Angle of the source if force = ',angleforce(i_source)
+    print *,'Mxx of the source if moment tensor = ',Mxx(i_source)
+    print *,'Mzz of the source if moment tensor = ',Mzz(i_source)
+    print *,'Mxz of the source if moment tensor = ',Mxz(i_source)
+    print *,'Multiplying factor = ',factor(i_source)
   enddo ! do i_source=1,NSOURCE
   close(IIN_SOURCE)
 

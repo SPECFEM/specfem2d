@@ -42,10 +42,13 @@
 !
 !========================================================================
 
-  subroutine checkgrid(vpext,vsext,rhoext,density,poroelastcoef,porosity,tortuosity,permeability,ibool,kmato,coord,npoin, &
-                 vpImin,vpImax,vpIImin,vpIImax,assign_external_model,nspec,UPPER_LIMIT_DISPLAY,numat,deltat, &
-                 f0,t0,initialfield,time_function_type,coorg,xinterp,zinterp,shapeint,knods,simulation_title, &
-                 npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic,myrank,nproc,NSOURCE,poroelastic, &
+  subroutine checkgrid(vpext,vsext,rhoext,density,poroelastcoef,porosity,tortuosity,permeability,ibool,kmato, &
+                 coord,npoin,vpImin,vpImax,vpIImin,vpIImax, &
+                 assign_external_model,nspec,UPPER_LIMIT_DISPLAY,numat,deltat, &
+                 f0,t0,initialfield,time_function_type, &
+                 coorg,xinterp,zinterp,shapeint,knods,simulation_title, &
+                 npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic, &
+                 myrank,nproc,NSOURCE,poroelastic, &
                  freq0,Q0,TURN_VISCATTENUATION_ON)
 
 ! check the mesh, stability and number of points per wavelength
