@@ -441,7 +441,7 @@
   double precision, dimension(:), allocatable :: aval
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: source_time_function
   double precision, external :: netlib_specfun_erf
-  real :: stf_used
+  real(kind=CUSTOM_REAL) :: stf_used
 
   double precision :: vpImin,vpImax,vpIImin,vpIImax
 
@@ -3245,6 +3245,13 @@ endif
      min_j = floor(minval((elmnt_coords(2,:) - zmin_color_image))/size_pixel_vertical) + 1
      max_j = ceiling(maxval((elmnt_coords(2,:) - zmin_color_image))/size_pixel_vertical) + 1
 
+! avoid edge effects
+    if(min_i < 1) min_i = 1
+    if(min_j < 1) min_j = 1
+
+    if(max_i > NX_IMAGE_color) max_i = NX_IMAGE_color
+    if(max_j > NZ_IMAGE_color) max_j = NZ_IMAGE_color
+
      do j = min_j, max_j
         do i = min_i, max_i
            i_coord = (i-1)*size_pixel_horizontal + xmin_color_image
@@ -4291,7 +4298,7 @@ endif
       ! if (myrank == 0 .and. i_source==1 ) write(55,*) sngl(time-t0(1)),real(source_time_function(1,it),4),sngl(time)
       if (myrank == 0 ) then
           ! note: earliest start time of the simulation is: (it-1)*deltat - t0_start
-          write(55,*) sngl(time-t0_start),stf_used,sngl(time)
+          write(55,*) sngl(time-t0_start),sngl(stf_used),sngl(time)
       endif
 
       !enddo
