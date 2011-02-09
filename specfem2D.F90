@@ -775,6 +775,30 @@
   integer, dimension(:), allocatable :: ibool_OpenDX
   logical, dimension(:), allocatable :: mask_point
 
+!! DK DK Feb 2010 for periodic conditions: detect common points between left and right edges
+  logical, parameter :: ADD_PERIODIC_CONDITIONS = .false.
+
+!! DK DK the periodic conditions below are currently specific to a Gmsh model designed by Paul Cristini
+
+!! DK DK the horizontal periodicity distance is:
+  double precision, parameter :: PERIODIC_horiz_dist =   0.3597d0
+
+!! DK DK the length of an edge is about 1d-003, thus use e.g. 1/300 of that
+  double precision, parameter :: PERIODIC_DETECT_TOL = 1d-003 / 300.d0
+
+  integer, parameter :: NSPEC_PERIO = 670 / 2
+
+  integer, dimension(NSPEC_PERIO) :: numperio_left
+  integer, dimension(NSPEC_PERIO) :: numperio_right
+
+  logical, dimension(4,NSPEC_PERIO) :: codeabs_perio_left
+  logical, dimension(4,NSPEC_PERIO) :: codeabs_perio_right
+
+  integer :: idummy1, idummy2, idummy3, idummy4, idummy5, idummy6, idummy7, idummy8
+  integer :: ispecperio, ispecperio2, ispec2, i2, j2
+
+!! DK DK Feb 2010 for periodic conditions: detect common points between left and right edges
+
 !***********************************************************************
 !
 !             i n i t i a l i z a t i o n    p h a s e
@@ -1699,6 +1723,135 @@ endif
 
   allocate(copy_ibool_ori(NGLLX,NGLLZ,nspec))
   allocate(mask_ibool(npoin))
+
+  print *
+  print *,'Xmin,Xmax of the whole mesh = ',minval(coord(1,:)),maxval(coord(1,:))
+  print *,'Zmin,Zmax of the whole mesh = ',minval(coord(2,:)),maxval(coord(2,:))
+  print *
+
+!! DK DK Feb 2010 for periodic conditions: detect common points between left and right edges
+
+  if(ADD_PERIODIC_CONDITIONS) then
+
+#ifdef USE_MPI
+  stop 'periodic conditions currently implemented for a serial simulation only (due e.g. to mass matrix rebuilding)'
+#endif
+
+  if(any_poroelastic .or. any_acoustic) stop 'periodic conditions currently implemented for purely elastic models only'
+
+print *
+open(unit=123,file='Database00000_left_edge_only',status='old')
+do ispecperio = 1,NSPEC_PERIO
+  read(123,*) numperio_left(ispecperio), &
+     codeabs_perio_left(IBOTTOM,ispecperio), &
+     codeabs_perio_left(IRIGHT,ispecperio), &
+     codeabs_perio_left(ITOP,ispecperio), &
+     codeabs_perio_left(ILEFT,ispecperio), &
+     idummy1, idummy2, idummy3, idummy4, idummy5, idummy6, idummy7, idummy8
+enddo
+close(123)
+print *,'read ',NSPEC_PERIO,' elements for left periodic edge'
+
+open(unit=123,file='Database00000_right_edge_only',status='old')
+do ispecperio = 1,NSPEC_PERIO
+  read(123,*) numperio_right(ispecperio), &
+     codeabs_perio_right(IBOTTOM,ispecperio), &
+     codeabs_perio_right(IRIGHT,ispecperio), &
+     codeabs_perio_right(ITOP,ispecperio), &
+     codeabs_perio_right(ILEFT,ispecperio), &
+     idummy1, idummy2, idummy3, idummy4, idummy5, idummy6, idummy7, idummy8
+enddo
+close(123)
+print *,'read ',NSPEC_PERIO,' elements for right periodic edge'
+
+!---------------------------------------------------------------------------
+
+         do ispecperio = 1,NSPEC_PERIO
+
+            ispec = numperio_left(ispecperio)
+
+! print *,'dist of edge is ',sqrt((coord(2,ibool(1,1,ispec)) - coord(2,ibool(1,NGLLZ,ispec))) ** 2 + &
+!                                 (coord(1,ibool(1,1,ispec)) - coord(1,ibool(1,NGLLZ,ispec))) ** 2)
+
+            if(codeabs_perio_left(ILEFT,ispecperio)) then
+               i = 1
+               do j = 1,NGLLZ
+                  iglob = ibool(i,j,ispec)
+!----------------------------------------------------------------------
+                  include "include_for_periodic_conditions.f90"
+!----------------------------------------------------------------------
+               enddo
+            endif
+
+            if(codeabs_perio_left(IRIGHT,ispecperio)) then
+               i = NGLLX
+               do j = 1,NGLLZ
+                  iglob = ibool(i,j,ispec)
+!----------------------------------------------------------------------
+                  include "include_for_periodic_conditions.f90"
+!----------------------------------------------------------------------
+               enddo
+            endif
+
+            if(codeabs_perio_left(IBOTTOM,ispecperio)) then
+               j = 1
+               do i = 1,NGLLX
+                  iglob = ibool(i,j,ispec)
+!----------------------------------------------------------------------
+                  include "include_for_periodic_conditions.f90"
+!----------------------------------------------------------------------
+               enddo
+            endif
+
+            if(codeabs_perio_left(ITOP,ispecperio)) then
+               j = NGLLZ
+               do i = 1,NGLLX
+                  iglob = ibool(i,j,ispec)
+!----------------------------------------------------------------------
+                  include "include_for_periodic_conditions.f90"
+!----------------------------------------------------------------------
+               enddo
+            endif
+
+         enddo
+
+! rebuild the mass matrix based on this new numbering
+!
+!---- build the global mass matrix and invert it once and for all
+!
+  rmass_inverse_elastic(:) = ZERO
+  do ispec = 1,nspec
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+        iglob = ibool(i,j,ispec)
+
+! if external density model (elastic or acoustic)
+        if(assign_external_model) then
+          rhol = rhoext(i,j,ispec)
+          kappal = rhol * vpext(i,j,ispec)**2
+        else
+          rhol = density(1,kmato(ispec))
+          lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
+          mul_relaxed = poroelastcoef(2,1,kmato(ispec))
+          kappal = lambdal_relaxed + 2.d0/3.d0*mul_relaxed
+        endif
+
+         rmass_inverse_elastic(iglob) = rmass_inverse_elastic(iglob) + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
+
+      enddo
+    enddo
+  enddo ! do ispec = 1,nspec
+
+! invert the mass matrix once and for all
+! set entries that are equal to zero to something else, e.g. 1, to avoid division by zero
+! these degrees of freedom correspond to points that have been replaced with their periodic counterpart
+! and thus are not used any more
+  where(rmass_inverse_elastic == ZERO) rmass_inverse_elastic = 1._CUSTOM_REAL
+  rmass_inverse_elastic(:) = 1._CUSTOM_REAL / rmass_inverse_elastic(:)
+
+  endif ! of if(ADD_PERIODIC_CONDITIONS)
+
+!! DK DK Feb 2010 for periodic conditions: detect common points between left and right edges
 
   mask_ibool(:) = -1
   copy_ibool_ori(:,:,:) = ibool(:,:,:)
