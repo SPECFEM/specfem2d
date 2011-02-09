@@ -1739,6 +1739,9 @@ endif
 
   if(any_poroelastic .or. any_acoustic) stop 'periodic conditions currently implemented for purely elastic models only'
 
+  if(ACTUALLY_IMPLEMENT_PERM_OUT .or. ACTUALLY_IMPLEMENT_PERM_INN .or. ACTUALLY_IMPLEMENT_PERM_WHOLE) &
+    stop 'currently, all permutations should be off for periodic conditions'
+
 print *
 open(unit=123,file='Database00000_left_edge_only',status='old')
 do ispecperio = 1,NSPEC_PERIO
