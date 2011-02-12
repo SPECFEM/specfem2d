@@ -4241,6 +4241,7 @@ endif
   if(.not. initialfield) then
 
     allocate(source_time_function(NSOURCE,NSTEP))
+    source_time_function(:,:) = 0.0_CUSTOM_REAL
 
     if (myrank == 0) then
       write(IOUT,*)
@@ -8038,7 +8039,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 #endif
 
   if (myrank == 0) then
-     call create_color_image(image_color_data,iglob_image_color,NX_IMAGE_color,NZ_IMAGE_color,it,cutsnaps,image_color_vp_display)
+     call create_color_image(image_color_data,iglob_image_color, &
+                NX_IMAGE_color,NZ_IMAGE_color,it,cutsnaps,image_color_vp_display)
      write(IOUT,*) 'Color image created'
   endif
 

@@ -3049,7 +3049,7 @@ coorg_recv_ps_vector_field
   close(24)
   endif
 
- 10  format('%!PS-Adobe-2.0',/,'%%',/,'%% Title: ',a50,/,'%% Created by: Specfem2D',/,'%% Author: Dimitri Komatitsch',/,'%%')
+ 10  format('%!PS-Adobe-2.0',/,'%%',/,'%% Title: ',a100,/,'%% Created by: Specfem2D',/,'%% Author: Dimitri Komatitsch',/,'%%')
  600 format(f6.3,' neg CM 0 MR (Time =',f8.3,' s) show')
  601 format(f6.3,' neg CM 0 MR (Time =',1pe12.3,' s) show')
  610 format(f6.3,' neg CM 0 MR (Time step = ',i7,') show')

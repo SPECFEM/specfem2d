@@ -57,24 +57,27 @@ O = obj
 
 FC = @FC@
 FCFLAGS = #@FCFLAGS@
+
 MPIFC = @MPIFC@
 MPILIBS = @MPILIBS@
+
 FLAGS_CHECK = @FLAGS_CHECK@
 FLAGS_NO_CHECK = @FLAGS_NO_CHECK@
-FCFLAGS_f90 = @FCFLAGS_f90@
+
+#FCFLAGS_f90 = @FCFLAGS_f90@
 
 
 CC = @CC@
 CFLAGS = @CFLAGS@ $(CPPFLAGS)
 CPPFLAGS = @CPPFLAGS@ $(COND_MPI_CPPFLAGS)
 
-AR = ar
-ARFLAGS = cru
-RANLIB = ranlib
+#AR = ar
+#ARFLAGS = cru
+#RANLIB = ranlib
 
 ## serial or parallel
-@COND_MPI_TRUE@F90 = $(MPIFC) -DUSE_MPI -DUSE_SCOTCH -I"@SCOTCH_INCLUDEDIR@"
-@COND_MPI_FALSE@F90 = $(FC)
+@COND_MPI_TRUE@F90 = $(MPIFC) $(FCFLAGS) -DUSE_MPI -DUSE_SCOTCH -I"@SCOTCH_INCLUDEDIR@" $(MPILIBS)
+@COND_MPI_FALSE@F90 = $(FC) $(FCFLAGS)
 
 ## scotch libraries
 @COND_MPI_TRUE@LIB = -L"@SCOTCH_LIBDIR@" -lscotch -lscotcherr
@@ -101,57 +104,67 @@ LINK = $(F90)
 
 
 
-OBJS_MESHFEM2D = $O/part_unstruct.o \
-	$O/meshfem2D.o \
+OBJS_MESHFEM2D = \
+	$O/get_node_number.o \
+	$O/part_unstruct.o \
+	$O/read_interfaces_file.o \
+	$O/read_materials.o \
+	$O/read_parameter_file.o \
+	$O/read_regions.o \
+	$O/read_source_file.o \
 	$O/read_value_parameters.o \
-	$O/spline_routines.o
+	$O/save_gnuplot_file.o \
+	$O/spline_routines.o \
+	$O/meshfem2D.o 
 
-OBJS_SPECFEM2D = $O/checkgrid.o \
-	$O/datim.o \
-	$O/enforce_acoustic_free_surface.o \
+OBJS_SPECFEM2D = \
+	$O/assemble_MPI.o \
+	$O/attenuation_model.o \
+	$O/attenuation_compute_param.o \
+	$O/calendar.o \
+	$O/checkgrid.o \
+	$O/compute_arrays_source.o \
+	$O/compute_Bielak_conditions.o \
+	$O/compute_curl_one_element.o \
+	$O/compute_energy.o \
 	$O/compute_forces_acoustic.o \
 	$O/compute_forces_viscoelastic.o \
 	$O/compute_forces_poro_solid.o \
 	$O/compute_forces_poro_fluid.o \
-	$O/get_poroelastic_velocities.o \
-	$O/lagrange_poly.o \
-	$O/gmat01.o \
-	$O/gll_library.o \
-	$O/plotgll.o \
-	$O/define_derivation_matrices.o \
-	$O/plotpost.o \
-	$O/locate_receivers.o \
-	$O/locate_source_force.o \
 	$O/compute_gradient_attenuation.o \
-	$O/setup_sources_receivers.o \
-	$O/specfem2D.o \
-	$O/write_seismograms.o \
-	$O/define_external_model.o \
+	$O/compute_pressure.o \
+	$O/compute_vector_field.o \
+	$O/construct_acoustic_surface.o \
+	$O/convert_time.o \
+	$O/create_color_image.o \
 	$O/createnum_fast.o \
 	$O/createnum_slow.o \
+	$O/datim.o \
+	$O/define_derivation_matrices.o \
+	$O/define_external_model.o \
 	$O/define_shape_functions.o \
-	$O/attenuation_model.o \
-	$O/create_color_image.o \
-	$O/compute_vector_field.o \
-	$O/compute_pressure.o \
-	$O/recompute_jacobian.o \
-	$O/compute_arrays_source.o \
+	$O/enforce_acoustic_free_surface.o \
+	$O/exit_mpi.o \
+	$O/get_perm_cuthill_mckee.o \
+	$O/get_poroelastic_velocities.o \
+	$O/gll_library.o \
+	$O/gmat01.o \
+	$O/invert_mass_matrix.o \
+	$O/is_in_convex_quadrilateral.o \
+	$O/lagrange_poly.o \
+	$O/locate_receivers.o \
+	$O/locate_source_force.o \
 	$O/locate_source_moment_tensor.o \
 	$O/netlib_specfun_erf.o \
-	$O/construct_acoustic_surface.o \
-	$O/assemble_MPI.o \
-	$O/compute_energy.o \
-	$O/compute_curl_one_element.o \
-	$O/attenuation_compute_param.o \
-	$O/compute_Bielak_conditions.o \
 	$O/paco_beyond_critical.o \
 	$O/paco_convolve_fft.o \
-	$O/is_in_convex_quadrilateral.o \
-	$O/get_perm_cuthill_mckee.o \
+	$O/plotgll.o \
+	$O/plotpost.o \
 	$O/read_external_model.o \
-	$O/invert_mass_matrix.o \
-	$O/calendar.o \
-	$O/convert_time.o
+	$O/recompute_jacobian.o \
+	$O/setup_sources_receivers.o \
+	$O/write_seismograms.o \
+	$O/specfem2D.o 
 
 
 
@@ -232,6 +245,24 @@ $O/checkgrid.o: checkgrid.F90 constants.h
 
 $O/meshfem2D.o: meshfem2D.F90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/meshfem2D.o meshfem2D.F90
+
+$O/read_interfaces_file.o: read_interfaces_file.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/read_interfaces_file.o read_interfaces_file.f90
+
+$O/read_materials.o: read_materials.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/read_materials.o read_materials.f90
+
+$O/read_parameter_file.o: read_parameter_file.F90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/read_parameter_file.o read_parameter_file.F90
+
+$O/read_regions.o: read_regions.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/read_regions.o read_regions.f90
+
+$O/read_source_file.o: read_source_file.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/read_source_file.o read_source_file.f90
+
+$O/get_node_number.o: get_node_number.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/get_node_number.o get_node_number.f90
 
 $O/createnum_fast.o: createnum_fast.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/createnum_fast.o createnum_fast.f90
@@ -345,6 +376,9 @@ $O/compute_arrays_source.o: compute_arrays_source.f90 constants.h
 $O/create_color_image.o: create_color_image.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/create_color_image.o create_color_image.f90
 
+$O/save_gnuplot_file.o: save_gnuplot_file.f90 
+	${F90} $(FLAGS_CHECK) -c -o $O/save_gnuplot_file.o save_gnuplot_file.f90
+
 $O/spline_routines.o: spline_routines.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/spline_routines.o spline_routines.f90
 
@@ -366,8 +400,11 @@ $O/construct_acoustic_surface.o: construct_acoustic_surface.f90 constants.h
 $O/assemble_MPI.o: assemble_MPI.F90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/assemble_MPI.o assemble_MPI.F90
 
+$O/exit_mpi.o: exit_mpi.F90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/exit_mpi.o exit_mpi.F90
+
 $O/attenuation_compute_param.o: attenuation_compute_param.c
-	${CC} -c -o $O/attenuation_compute_param.o attenuation_compute_param.c
+	${CC} $(CFLAGS) -c -o $O/attenuation_compute_param.o attenuation_compute_param.c
 
 $O/paco_beyond_critical.o: paco_beyond_critical.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/paco_beyond_critical.o paco_beyond_critical.f90
