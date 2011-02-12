@@ -339,7 +339,9 @@
   write(11,110) FACTORXSU,NSTEP,deltat,-t0,nrec
 
   do irec=1,nrec
-    write(11,"(f12.5)") st_xval(irec)
+    !daniel
+    !write(11,"(f12.5)") st_xval(irec)
+    write(11,*) st_xval(irec)
     if(irec < nrec) write(11,*) ','
   enddo
 

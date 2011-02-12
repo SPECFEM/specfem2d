@@ -88,7 +88,7 @@
   integer :: ntotspecAVS_DX
   logical :: USE_OPENDX
 
-  character(len=50) interfacesfile,title
+  character(len=100) interfacesfile,title
 
   ! flag to save the last frame for kernels calculation purpose and type of simulation
   logical :: SAVE_FORWARD
@@ -99,7 +99,7 @@
   character(len=256)  :: mesh_file, nodes_coords_file
 
   ! ignore variable name field (junk) at the beginning of each input line
-  logical, parameter :: IGNORE_JUNK = .true.
+  !logical, parameter :: IGNORE_JUNK = .true.
 
   integer :: NPOIN_unique_needed
   integer, dimension(:), allocatable :: ibool_reduced

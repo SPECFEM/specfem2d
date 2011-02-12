@@ -166,3 +166,18 @@
 ! size of frame used for Postscript display in percentage of the size of the page
   double precision, parameter :: RPERCENTX = 70.0d0,RPERCENTZ = 77.0d0
 
+! flag to indicate an isotropic elastic/acoustic material
+  integer, parameter :: ISOTROPIC_MATERIAL = 1
+
+! flag to indicate an anisotropic material
+  integer, parameter :: ANISOTROPIC_MATERIAL = 2
+
+! flag to indicate a poroelastic material
+  integer, parameter :: POROELASTIC_MATERIAL = 3
+
+! file number for interface file
+  integer, parameter :: IIN_INTERFACES = 15
+
+! ignore variable name field (junk) at the beginning of each input line
+  logical, parameter :: IGNORE_JUNK = .true.,DONT_IGNORE_JUNK = .false.
+

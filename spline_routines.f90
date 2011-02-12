@@ -92,7 +92,9 @@
 
   end subroutine spline_construction
 
-! --------------
+!
+! ------------------------------------------------------------------------------------------------
+!
 
 ! evaluate a spline
 
@@ -145,3 +147,28 @@
 
   end subroutine spline_evaluation
 
+!
+! ------------------------------------------------------------------------------------------------
+!
+
+!--- spline to describe the interfaces
+
+double precision function value_spline(x,xinterface,zinterface,coefs_interface,npoints_interface)
+
+  implicit none
+
+  integer npoints_interface
+  double precision x,xp
+  double precision, dimension(npoints_interface) :: xinterface,zinterface,coefs_interface
+
+  value_spline = 0.d0
+
+  xp = x
+
+  ! assign the value on the edge if point is outside the model
+  if(xp < xinterface(1)) xp = xinterface(1)
+  if(xp > xinterface(npoints_interface)) xp = xinterface(npoints_interface)
+
+  call spline_evaluation(xinterface,zinterface,coefs_interface,npoints_interface,xp,value_spline)
+
+end function value_spline
