@@ -71,9 +71,7 @@
   character(len=100) :: file_name,system_command
 
 ! create temporary image files in binary PNM P6 format (smaller) or ASCII PNM P3 format (easier to edit)
-!daniel
   logical, parameter :: BINARY_FILE = .true.
-  !logical, parameter :: BINARY_FILE = .false.
 
 ! ASCII code of character '0' and of carriage return character
   integer, parameter :: ascii_code_of_zero = 48, ascii_code_of_carriage_return = 10
@@ -258,9 +256,7 @@
 
 ! open image file and create system command to convert image to more convenient format
 ! use the "convert" command from ImageMagick http://www.imagemagick.org
-!daniel
   write(system_command,"('cd OUTPUT_FILES ; convert image',i7.7,'.pnm image',i7.7,'.gif ; rm -f image',i7.7,'.pnm')") it,it,it
-  !write(system_command,"('cd OUTPUT_FILES ; convert image',i7.7,'.pnm image',i7.7,'.gif ; ls -h image',i7.7,'.pnm')") it,it,it
 
 ! call the system to convert image to GIF
 ! this line can be safely commented out if your compiler does not implement "system()" for system calls;

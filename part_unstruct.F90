@@ -51,6 +51,57 @@ module part_unstruct
 
   implicit none
 
+  integer :: nelmnts
+  integer, dimension(:), pointer  :: elmnts
+  integer, dimension(:), pointer  :: elmnts_bis
+  integer, dimension(:), pointer  :: xadj
+  integer, dimension(:), pointer  :: vwgt
+  integer, dimension(:), pointer  :: glob2loc_elmnts
+  integer, dimension(:), pointer  :: part
+
+  integer :: nb_edges
+  integer, dimension(:), pointer  :: adjwgt
+
+  integer, dimension(:), pointer  :: adjncy
+  
+  integer :: nnodes
+  double precision, dimension(:,:), pointer  :: nodes_coords
+  integer, dimension(:), pointer  :: nnodes_elmnts
+  integer, dimension(:), pointer  :: nodes_elmnts
+  integer, dimension(:), pointer  :: glob2loc_nodes_nparts
+  integer, dimension(:), pointer  :: glob2loc_nodes_parts
+  integer, dimension(:), pointer  :: glob2loc_nodes
+
+  ! interface data
+  integer :: ninterfaces
+  integer, dimension(:), pointer  :: tab_size_interfaces, tab_interfaces
+  
+  integer :: nelem_acoustic_surface
+  integer, dimension(:,:), pointer  :: acoustic_surface
+  integer :: nelem_acoustic_surface_loc
+  
+  integer :: nelemabs
+  integer, dimension(:,:), pointer  :: abs_surface
+  logical, dimension(:,:), pointer  :: abs_surface_char
+  integer, dimension(:), pointer  :: abs_surface_merge
+  integer :: nelemabs_loc
+  
+  integer :: nelemabs_merge
+  integer, dimension(:), pointer  :: ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
+       jbegin_left,jend_left,jbegin_right,jend_right
+  
+  ! for acoustic/elastic coupled elements
+  integer :: nedges_coupled
+  integer, dimension(:,:), pointer  :: edges_coupled
+  
+  ! for acoustic/poroelastic coupled elements
+  integer :: nedges_acporo_coupled
+  integer, dimension(:,:), pointer  :: edges_acporo_coupled
+  
+  ! for poroelastic/elastic coupled elements
+  integer :: nedges_elporo_coupled
+  integer, dimension(:,:), pointer  :: edges_elporo_coupled
+
 contains
 
   !-----------------------------------------------
@@ -58,15 +109,12 @@ contains
   ! 'num_start' is used to have the numbering of the nodes starting at '0'.
   ! 'nelmnts' is the number of elements, 'nnodes' is the number of nodes in the mesh.
   !-----------------------------------------------
-  subroutine read_external_mesh_file(filename, nelmnts, elmnts, nnodes, num_start, ngnod)
+  subroutine read_external_mesh_file(filename, num_start, ngnod)
 
   implicit none
   !include "constants.h"
 
   character(len=256), intent(in)  :: filename
-  integer, intent(out)  :: nelmnts
-  integer, intent(out)  :: nnodes
-  integer, dimension(:), pointer  :: elmnts
   integer, intent(out)  :: num_start
   integer, intent(in)  :: ngnod
 
@@ -104,13 +152,11 @@ contains
   !-----------------------------------------------
   ! Read the nodes coordinates and storing it in array 'nodes_coords'
   !-----------------------------------------------
-  subroutine read_nodes_coords(filename, nnodes, nodes_coords)
+  subroutine read_nodes_coords(filename)
 
   implicit none
 
   character(len=256), intent(in)  :: filename
-  integer, intent(out)  :: nnodes
-  double precision, dimension(:,:), pointer  :: nodes_coords
 
   integer  :: i,ier
 
@@ -133,12 +179,11 @@ contains
   !-----------------------------------------------
   ! Read the material for each element and storing it in array 'num_materials'
   !-----------------------------------------------
-  subroutine read_mat(filename, nelmnts, num_material)
+  subroutine read_mat(filename, num_material)
 
   implicit none
 
   character(len=256), intent(in)  :: filename
-  integer, intent(in)  :: nelmnts
   integer, dimension(1:nelmnts), intent(out)  :: num_material
 
   integer  :: i,ier
@@ -163,17 +208,14 @@ contains
   ! 'acoustic_surface' contains 1/ element number, 2/ number of nodes that form the free surface,
   ! 3/ first node on the free surface, 4/ second node on the free surface, if relevant (if 2/ is equal to 2)
   !-----------------------------------------------
-  subroutine read_acoustic_surface(filename, nelem_acoustic_surface, acoustic_surface, &
-       nelmnts, num_material, ANISOTROPIC_MATERIAL, nb_materials, icodemat, phi, num_start)
+  subroutine read_acoustic_surface(filename, num_material, &
+                ANISOTROPIC_MATERIAL, nb_materials, icodemat, phi, num_start)
 
   implicit none
 
   !include "constants.h"
 
   character(len=256), intent(in)  :: filename
-  integer, intent(out)  :: nelem_acoustic_surface
-  integer, dimension(:,:), pointer  :: acoustic_surface
-  integer, intent(in)  :: nelmnts
   integer, dimension(0:nelmnts-1)  :: num_material
   integer, intent(in)  :: ANISOTROPIC_MATERIAL
   integer, intent(in)  :: nb_materials
@@ -236,14 +278,12 @@ contains
   ! 'abs_surface' contains 1/ element number, 2/ number of nodes that form the abs surface,
   ! 3/ first node on the abs surface, 4/ second node on the abs surface, if relevant (if 2/ is equal to 2)
   !-----------------------------------------------
-  subroutine read_abs_surface(filename, nelemabs, abs_surface, num_start)
+  subroutine read_abs_surface(filename, num_start)
 
   implicit none
   !include "constants.h"
 
   character(len=256), intent(in)  :: filename
-  integer, intent(out)  :: nelemabs
-  integer, dimension(:,:), pointer  :: abs_surface
   integer, intent(in)  :: num_start
 
 
@@ -276,18 +316,12 @@ contains
   !-----------------------------------------------
   ! Creating dual graph (adjacency is defined by 'ncommonnodes' between two elements).
   !-----------------------------------------------
-  subroutine mesh2dual_ncommonnodes(nelmnts, nnodes, elmnts, xadj, adjncy, nnodes_elmnts, nodes_elmnts, ncommonnodes)
+  subroutine mesh2dual_ncommonnodes(elmnts_l,ncommonnodes)
 
   implicit none
   include "constants.h"
 
-  integer, intent(in)  :: nelmnts
-  integer, intent(in)  :: nnodes
-  integer, dimension(0:NCORNERS*nelmnts-1), intent(in)  :: elmnts
-  integer, dimension(:), pointer  :: xadj
-  integer, dimension(:), pointer  :: adjncy
-  integer, dimension(:), pointer  :: nnodes_elmnts
-  integer, dimension(:), pointer  :: nodes_elmnts
+  integer, dimension(0:NCORNERS*nelmnts-1), intent(in)  :: elmnts_l
   integer, intent(in)  :: ncommonnodes
 
   integer  :: i, j, k, l, m, nb_edges
@@ -298,7 +332,7 @@ contains
 
   allocate(xadj(0:nelmnts))
   xadj(:) = 0
-  allocate(adjncy(0:max_neighbors*nelmnts-1))
+  allocate(adjncy(0:MAX_NEIGHBORS*nelmnts-1))
   adjncy(:) = 0
   allocate(nnodes_elmnts(0:nnodes-1))
   nnodes_elmnts(:) = 0
@@ -309,9 +343,8 @@ contains
 
   ! list of elements per node
   do i = 0, NCORNERS*nelmnts-1
-     nodes_elmnts(elmnts(i)*nsize+nnodes_elmnts(elmnts(i))) = i/NCORNERS
-     nnodes_elmnts(elmnts(i)) = nnodes_elmnts(elmnts(i)) + 1
-
+    nodes_elmnts(elmnts_l(i)*nsize+nnodes_elmnts(elmnts_l(i))) = i/NCORNERS
+    nnodes_elmnts(elmnts_l(i)) = nnodes_elmnts(elmnts_l(i)) + 1
   enddo
 
   ! checking which elements are neighbours ('ncommonnodes' criteria)
@@ -323,7 +356,7 @@ contains
            elem_base = nodes_elmnts(k+j*nsize)
            elem_target = nodes_elmnts(l+j*nsize)
            do n = 1, NCORNERS
-              num_node = elmnts(NCORNERS*elem_base+n-1)
+              num_node = elmnts_l(NCORNERS*elem_base+n-1)
               do m = 0, nnodes_elmnts(num_node)-1
                  if ( nodes_elmnts(m+num_node*nsize) == elem_target ) then
                     connectivity = connectivity + 1
@@ -337,16 +370,16 @@ contains
 
               do m = 0, xadj(nodes_elmnts(k+j*nsize))
                  if ( .not.is_neighbour ) then
-                    if ( adjncy(nodes_elmnts(k+j*nsize)*max_neighbors+m) == nodes_elmnts(l+j*nsize) ) then
+                    if ( adjncy(nodes_elmnts(k+j*nsize)*MAX_NEIGHBORS+m) == nodes_elmnts(l+j*nsize) ) then
                        is_neighbour = .true.
 
                     endif
                  endif
               enddo
               if ( .not.is_neighbour ) then
-                 adjncy(nodes_elmnts(k+j*nsize)*max_neighbors+xadj(nodes_elmnts(k+j*nsize))) = nodes_elmnts(l+j*nsize)
+                 adjncy(nodes_elmnts(k+j*nsize)*MAX_NEIGHBORS+xadj(nodes_elmnts(k+j*nsize))) = nodes_elmnts(l+j*nsize)
                  xadj(nodes_elmnts(k+j*nsize)) = xadj(nodes_elmnts(k+j*nsize)) + 1
-                 adjncy(nodes_elmnts(l+j*nsize)*max_neighbors+xadj(nodes_elmnts(l+j*nsize))) = nodes_elmnts(k+j*nsize)
+                 adjncy(nodes_elmnts(l+j*nsize)*MAX_NEIGHBORS+xadj(nodes_elmnts(l+j*nsize))) = nodes_elmnts(k+j*nsize)
                  xadj(nodes_elmnts(l+j*nsize)) = xadj(nodes_elmnts(l+j*nsize)) + 1
               endif
            endif
@@ -359,7 +392,7 @@ contains
      k = xadj(i)
      xadj(i) = nb_edges
      do j = 0, k-1
-        adjncy(nb_edges) = adjncy(i*max_neighbors+j)
+        adjncy(nb_edges) = adjncy(i*MAX_NEIGHBORS+j)
         nb_edges = nb_edges + 1
      enddo
   enddo
@@ -372,12 +405,9 @@ contains
   !-----------------------------------------------
   ! Read the weight for each vertices and edges of the graph (not curretly used)
   !-----------------------------------------------
-  subroutine read_weights(nelmnts, vwgt, nb_edges, adjwgt)
+  subroutine read_weights()
 
   implicit none
-
-  integer, intent(in)  :: nelmnts, nb_edges
-  integer, dimension(:), pointer  :: vwgt, adjwgt
 
   allocate(vwgt(0:nelmnts-1))
   allocate(adjwgt(0:nb_edges-1))
@@ -391,12 +421,10 @@ contains
   !--------------------------------------------------
   ! construct local numbering for the elements in each partition
   !--------------------------------------------------
-  subroutine Construct_glob2loc_elmnts(nelmnts, part, nparts, glob2loc_elmnts)
+  subroutine Construct_glob2loc_elmnts(nparts)
 
   implicit none
-  integer, intent(in)  :: nelmnts, nparts
-  integer, dimension(0:nelmnts-1), intent(in)  :: part
-  integer, dimension(:), pointer  :: glob2loc_elmnts
+  integer, intent(in)  :: nparts
 
   integer  :: num_glob, num_part
   integer, dimension(0:nparts-1)  :: num_loc
@@ -422,19 +450,12 @@ contains
   !--------------------------------------------------
   ! construct local numbering for the nodes in each partition
   !--------------------------------------------------
-  subroutine Construct_glob2loc_nodes(nelmnts, nnodes, nnodes_elmnts, nodes_elmnts, part, nparts, &
-       glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes)
+  subroutine Construct_glob2loc_nodes(nparts)
 
   implicit none
   include "constants.h"
 
-  integer, intent(in)  :: nelmnts, nnodes, nparts
-  integer, dimension(0:nelmnts-1), intent(in)  :: part
-  integer, dimension(0:nnodes-1), intent(in)  :: nnodes_elmnts
-  integer, dimension(0:nsize*nnodes-1), intent(in)  :: nodes_elmnts
-  integer, dimension(:), pointer  :: glob2loc_nodes_nparts
-  integer, dimension(:), pointer  :: glob2loc_nodes_parts
-  integer, dimension(:), pointer  :: glob2loc_nodes
+  integer, intent(in)  :: nparts
 
   integer  :: num_node
   integer  :: el
@@ -507,19 +528,14 @@ contains
   ! 5/ second node, if relevant.
   ! No interface between acoustic, elastic, and poroelastic elements.
   !--------------------------------------------------
-  subroutine Construct_interfaces(nelmnts, nparts, part, elmnts, xadj, adjncy, tab_interfaces, &
-       tab_size_interfaces, ninterfaces, nb_materials, phi_material, num_material)
+  subroutine Construct_interfaces(nparts, elmnts_l,  &
+                                nb_materials, phi_material, num_material)
 
   implicit none
   include "constants.h"
 
-  integer, intent(in)  :: nelmnts, nparts
-  integer, dimension(0:nelmnts-1), intent(in)  :: part
-  integer, dimension(0:NCORNERS*nelmnts-1), intent(in)  :: elmnts
-  integer, dimension(0:nelmnts), intent(in)  :: xadj
-  integer, dimension(0:max_neighbors*nelmnts-1), intent(in)  :: adjncy
-  integer, dimension(:),pointer  :: tab_size_interfaces, tab_interfaces
-  integer, intent(out)  :: ninterfaces
+  integer, intent(in)  :: nparts
+  integer, dimension(0:NCORNERS*nelmnts-1), intent(in)  :: elmnts_l
   integer, dimension(1:nelmnts), intent(in)  :: num_material
   integer, intent(in)  :: nb_materials
   double precision, dimension(1:nb_materials), intent(in)  :: phi_material
@@ -620,9 +636,9 @@ contains
                     ncommon_nodes = 0
                     do num_node = 0, 4-1
                        do num_node_bis = 0, 4-1
-                          if ( elmnts(el*NCORNERS+num_node) == elmnts(adjncy(el_adj)*NCORNERS+num_node_bis) ) then
+                          if ( elmnts_l(el*NCORNERS+num_node) == elmnts_l(adjncy(el_adj)*NCORNERS+num_node_bis) ) then
                              tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+3+ncommon_nodes) &
-                                  = elmnts(el*NCORNERS+num_node)
+                                  = elmnts_l(el*NCORNERS+num_node)
                              ncommon_nodes = ncommon_nodes + 1
                           endif
                        enddo
@@ -650,19 +666,13 @@ contains
   !--------------------------------------------------
   ! Write nodes (their coordinates) pertaining to iproc partition in the corresponding Database
   !--------------------------------------------------
-  subroutine write_glob2loc_nodes_database(IIN_database, iproc, npgeo, nodes_coords, glob2loc_nodes_nparts, glob2loc_nodes_parts, &
-       glob2loc_nodes, nnodes, num_phase)
+  subroutine write_glob2loc_nodes_database(IIN_database, iproc, npgeo, num_phase)
 
   implicit none
 
   integer, intent(in)  :: IIN_database
-  integer, intent(in)  :: nnodes, iproc, num_phase
+  integer, intent(in)  :: iproc, num_phase
   integer, intent(inout)  :: npgeo
-
-  double precision, dimension(2,nnodes)  :: nodes_coords
-  integer, dimension(:), pointer  :: glob2loc_nodes_nparts
-  integer, dimension(:), pointer  :: glob2loc_nodes_parts
-  integer, dimension(:), pointer  :: glob2loc_nodes
 
   integer  :: i, j
 
@@ -694,19 +704,15 @@ contains
   !--------------------------------------------------
   ! Write elements (their nodes) pertaining to iproc partition in the corresponding Database
   !--------------------------------------------------
-  subroutine write_partition_database(IIN_database, iproc, nspec, nelmnts, elmnts, glob2loc_elmnts, glob2loc_nodes_nparts, &
-     glob2loc_nodes_parts, glob2loc_nodes, part, num_modele, ngnod, num_phase)
+  subroutine write_partition_database(IIN_database, iproc, nspec, &
+                                      num_modele, ngnod, num_phase)
 
   implicit none
 
   integer, intent(in)  :: IIN_database
-  integer, intent(in)  :: nelmnts, num_phase, iproc
+  integer, intent(in)  :: num_phase, iproc
   integer, intent(inout)  :: nspec
-  integer, dimension(:), pointer  :: part, elmnts, glob2loc_elmnts
   integer, dimension(:)  :: num_modele
-  integer, dimension(:), pointer  :: glob2loc_nodes_nparts
-  integer, dimension(:), pointer  :: glob2loc_nodes_parts
-  integer, dimension(:), pointer  :: glob2loc_nodes
   integer, intent(in)  :: ngnod
 
   integer  :: i,j,k
@@ -741,25 +747,17 @@ contains
   !--------------------------------------------------
   ! Write interfaces (element and common nodes) pertaining to iproc partition in the corresponding Database
   !--------------------------------------------------
-  subroutine Write_interfaces_database(IIN_database, tab_interfaces, tab_size_interfaces, nparts, iproc, ninterfaces, &
-       my_ninterface, my_interfaces, my_nb_interfaces, glob2loc_elmnts, glob2loc_nodes_nparts, glob2loc_nodes_parts, &
-       glob2loc_nodes, num_phase)
+  subroutine Write_interfaces_database(IIN_database, nparts, iproc, &
+                        my_ninterface, my_interfaces, my_nb_interfaces, num_phase)
 
   implicit none
 
   integer, intent(in)  :: IIN_database
   integer, intent(in)  :: iproc
   integer, intent(in)  :: nparts
-  integer, intent(in)  :: ninterfaces
   integer, intent(inout)  :: my_ninterface
-  integer, dimension(:), pointer  :: tab_size_interfaces
-  integer, dimension(:), pointer  :: tab_interfaces
   integer, dimension(0:ninterfaces-1), intent(inout)  :: my_interfaces
   integer, dimension(0:ninterfaces-1), intent(inout)  :: my_nb_interfaces
-  integer, dimension(:), pointer  :: glob2loc_elmnts
-  integer, dimension(:), pointer  :: glob2loc_nodes_nparts
-  integer, dimension(:), pointer  :: glob2loc_nodes_parts
-  integer, dimension(:), pointer  :: glob2loc_nodes
 
   integer, dimension(2)  :: local_nodes
   integer  :: local_elmnt
@@ -850,8 +848,7 @@ contains
   ! Write a surface (elements and nodes on the surface) pertaining to iproc partition in the corresponding Database
   !--------------------------------------------------
   subroutine Write_surface_database(IIN_database, nsurface, surface, &
-      nsurface_loc, iproc, glob2loc_elmnts, &
-      glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes, part, num_phase)
+                                nsurface_loc, iproc, num_phase)
 
   implicit none
   integer, intent(in)  :: IIN_database
@@ -859,12 +856,6 @@ contains
   integer  :: nsurface
   integer  :: nsurface_loc
   integer, dimension(:,:), pointer  :: surface
-
-  integer, dimension(:), pointer  :: glob2loc_elmnts
-  integer, dimension(:), pointer  :: glob2loc_nodes_nparts
-  integer, dimension(:), pointer  :: glob2loc_nodes_parts
-  integer, dimension(:), pointer  :: glob2loc_nodes
-  integer, dimension(:), pointer  :: part
 
   integer, dimension(2)  :: local_nodes
   integer  :: local_elmnt
@@ -936,30 +927,14 @@ contains
   ! Under development : exluding points that have two different normals in two different elements.
   !--------------------------------------------------
 
-  subroutine merge_abs_boundaries(nelemabs, nelemabs_merge, abs_surface, abs_surface_char, abs_surface_merge, &
-          ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
-          jbegin_left,jend_left,jbegin_right,jend_right, &
-          nedges_coupled, edges_coupled, nb_materials, phi_material, num_material, &
-          nelmnts, &
-          elmnts, ngnod)
+  subroutine merge_abs_boundaries(nb_materials, phi_material, num_material, ngnod)
 
   implicit none
   include "constants.h"
 
-  integer, intent(inout)  :: nelemabs
-  integer, intent(out)  :: nelemabs_merge
-  integer, dimension(:,:), pointer  :: abs_surface
-  logical, dimension(:,:), pointer  :: abs_surface_char
-  integer, dimension(:), pointer  :: abs_surface_merge
-  integer, dimension(:), pointer  :: elmnts
   integer, intent(in)  :: ngnod
-  integer, dimension(:), pointer  :: ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
-      jbegin_left,jend_left,jbegin_right,jend_right
-  integer  :: nedges_coupled
-  integer, dimension(:,:), pointer  :: edges_coupled
   integer  :: nb_materials
   double precision, dimension(nb_materials), intent(in)  :: phi_material
-  integer  :: nelmnts
   integer, dimension(1:nelmnts), intent(in)  :: num_material
 
   logical, dimension(nb_materials)  :: is_acoustic
@@ -1174,25 +1149,13 @@ contains
   ! Write abs surface (elements and nodes on the surface) pertaining to iproc partition in the corresponding Database
   !--------------------------------------------------
 
-  subroutine write_abs_merge_database(IIN_database, nelemabs_merge, nelemabs_loc, &
-          abs_surface_char, abs_surface_merge, &
-          ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
-          jbegin_left,jend_left,jbegin_right,jend_right, &
-          glob2loc_elmnts, part, iproc, num_phase)
+  subroutine write_abs_merge_database(IIN_database, iproc, num_phase)
 
   implicit none
 
   integer, intent(in)  :: IIN_database
-  integer, intent(in)  :: nelemabs_merge
-  integer, intent(inout)  :: nelemabs_loc
-  logical, dimension(:,:), pointer  :: abs_surface_char
-  integer, dimension(:), pointer  :: abs_surface_merge
-  integer, dimension(:), pointer  :: glob2loc_elmnts
-  integer, dimension(:), pointer  :: part
   integer, intent(in)  :: iproc
   integer, intent(in)  :: num_phase
-  integer, dimension(:), pointer  :: ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
-      jbegin_left,jend_left,jbegin_right,jend_right
 
   integer  :: i
 
@@ -1234,7 +1197,7 @@ contains
 !   integer, intent(in)  :: nelmnts, nparts, nb_edges
 !   integer, intent(inout)  :: edgecut
 !   integer, dimension(0:nelmnts), intent(in)  :: xadj
-!   integer, dimension(0:max_neighbors*nelmnts-1), intent(in)  :: adjncy
+!   integer, dimension(0:MAX_NEIGHBORS*nelmnts-1), intent(in)  :: adjncy
 !   integer, dimension(0:nelmnts-1), intent(in)  :: vwgt
 !   integer, dimension(0:nb_edges-1), intent(in)  :: adjwgt
 !   integer, dimension(:), pointer  :: part
@@ -1259,20 +1222,15 @@ contains
   !--------------------------------------------------
   ! Partitioning using SCOTCH
   !--------------------------------------------------
-  subroutine Part_scotch(nelmnts, xadj, adjncy, vwgt, adjwgt, nparts, nb_edges, edgecut, part)
+  subroutine Part_scotch(nparts, edgecut)
 
   implicit none
   include "constants.h"
 
   include "scotchf.h"
 
-  integer, intent(in)  :: nelmnts, nparts, nb_edges
+  integer, intent(in)  :: nparts
   integer, intent(inout)  :: edgecut
-  integer, dimension(0:nelmnts), intent(in)  :: xadj
-  integer, dimension(0:max_neighbors*nelmnts-1), intent(in)  :: adjncy
-  integer, dimension(0:nelmnts-1), intent(in)  :: vwgt
-  integer, dimension(:), pointer  :: adjwgt
-  integer, dimension(:), pointer  :: part
 
   double precision, dimension(SCOTCH_GRAPHDIM)  :: SCOTCHGRAPH
   double precision, dimension(SCOTCH_STRATDIM)  :: SCOTCHSTRAT
@@ -1335,26 +1293,19 @@ contains
   ! Repartitioning : two coupled acoustic/elastic elements are transfered to the same partition
   !--------------------------------------------------
 
-  subroutine acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_materials, phi_material, num_material, &
-     nproc, part, nedges_coupled, edges_coupled)
+  subroutine acoustic_elastic_repartitioning (elmnts_l, nb_materials, &
+                                          phi_material, num_material, nproc)
 
   implicit none
   include "constants.h"
 
-  integer, intent(in)  :: nelmnts, nnodes, nproc, nb_materials
+  integer, dimension(0:NCORNERS*nelmnts-1), intent(in)  :: elmnts_l
+  integer, intent(in)  :: nproc, nb_materials
   double precision, dimension(nb_materials), intent(in)  :: phi_material
   integer, dimension(1:nelmnts), intent(in)  :: num_material
-  integer, dimension(:), pointer  :: elmnts
-  integer, dimension(:), pointer :: part
-  integer, intent(out)  :: nedges_coupled
-  integer, dimension(:,:), pointer  :: edges_coupled
 
 
   logical, dimension(nb_materials)  :: is_acoustic, is_elastic
-  integer, dimension(:), pointer  :: xadj
-  integer, dimension(:), pointer  :: adjncy
-  integer, dimension(:), pointer  :: nodes_elmnts
-  integer, dimension(:), pointer  :: nnodes_elmnts
 
   integer  :: i, num_edge
   integer  :: el, el_adj
@@ -1371,7 +1322,7 @@ contains
      endif
   enddo
 
-  call mesh2dual_ncommonnodes(nelmnts, nnodes, elmnts, xadj, adjncy, nnodes_elmnts, nodes_elmnts,2)
+  call mesh2dual_ncommonnodes(elmnts_l, 2)
 
   nedges_coupled = 0
   do el = 0, nelmnts-1
@@ -1426,26 +1377,19 @@ contains
   ! Repartitioning : two coupled acoustic/poroelastic elements are transfered to the same partition
   !--------------------------------------------------
 
-  subroutine acoustic_poro_repartitioning (nelmnts, nnodes, elmnts, nb_materials, phi_material, num_material, &
-     nproc, part, nedges_acporo_coupled, edges_acporo_coupled)
+  subroutine acoustic_poro_repartitioning (elmnts_l, nb_materials, &
+                                        phi_material, num_material, nproc)
 
   implicit none
   include "constants.h"
 
-  integer, intent(in)  :: nelmnts, nnodes, nproc, nb_materials
+  integer, dimension(0:NCORNERS*nelmnts-1), intent(in)  :: elmnts_l
+  integer, intent(in)  :: nproc, nb_materials
   double precision, dimension(nb_materials), intent(in)  :: phi_material
   integer, dimension(1:nelmnts), intent(in)  :: num_material
-  integer, dimension(:), pointer  :: elmnts
-  integer, dimension(:), pointer :: part
-  integer, intent(out)  :: nedges_acporo_coupled
-  integer, dimension(:,:), pointer  :: edges_acporo_coupled
 
 
   logical, dimension(nb_materials)  :: is_acoustic,is_poroelastic
-  integer, dimension(:), pointer  :: xadj
-  integer, dimension(:), pointer  :: adjncy
-  integer, dimension(:), pointer  :: nodes_elmnts
-  integer, dimension(:), pointer  :: nnodes_elmnts
 
   integer  :: i, num_edge
   integer  :: el, el_adj
@@ -1462,7 +1406,7 @@ contains
      endif
   enddo
 
-  call mesh2dual_ncommonnodes(nelmnts, nnodes, elmnts, xadj, adjncy, nnodes_elmnts, nodes_elmnts,2)
+  call mesh2dual_ncommonnodes(elmnts_l, 2)
 
   nedges_acporo_coupled = 0
   do el = 0, nelmnts-1
@@ -1519,26 +1463,18 @@ contains
   ! Repartitioning : two coupled poroelastic/elastic elements are transfered to the same partition
   !--------------------------------------------------
 
-  subroutine poro_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_materials, phi_material, num_material, &
-     nproc, part, nedges_elporo_coupled, edges_elporo_coupled)
+  subroutine poro_elastic_repartitioning (elmnts_l, nb_materials, &
+                                        phi_material, num_material, nproc)
 
   implicit none
   include "constants.h"
 
-  integer, intent(in)  :: nelmnts, nnodes, nproc, nb_materials
+  integer, dimension(0:NCORNERS*nelmnts-1), intent(in)  :: elmnts_l
+  integer, intent(in)  :: nproc, nb_materials
   double precision, dimension(nb_materials), intent(in)  :: phi_material
   integer, dimension(1:nelmnts), intent(in)  :: num_material
-  integer, dimension(:), pointer  :: elmnts
-  integer, dimension(:), pointer :: part
-  integer, intent(out)  :: nedges_elporo_coupled
-  integer, dimension(:,:), pointer  :: edges_elporo_coupled
-
 
   logical, dimension(nb_materials)  :: is_elastic,is_poroelastic
-  integer, dimension(:), pointer  :: xadj
-  integer, dimension(:), pointer  :: adjncy
-  integer, dimension(:), pointer  :: nodes_elmnts
-  integer, dimension(:), pointer  :: nnodes_elmnts
 
   integer  :: i, num_edge
   integer  :: el, el_adj
@@ -1555,7 +1491,7 @@ contains
      endif
   enddo
 
-  call mesh2dual_ncommonnodes(nelmnts, nnodes, elmnts, xadj, adjncy, nnodes_elmnts, nodes_elmnts,2)
+  call mesh2dual_ncommonnodes(elmnts_l, 2)
 
   nedges_elporo_coupled = 0
   do el = 0, nelmnts-1
@@ -1613,39 +1549,35 @@ contains
   ! pertaining to iproc partition in the corresponding Database
   !--------------------------------------------------
 
-  subroutine write_fluidsolid_edges_database(IIN_database, nedges_coupled, nedges_coupled_loc, &
-     edges_coupled, glob2loc_elmnts, part, iproc, num_phase)
+ subroutine write_fluidsolid_edges_database(IIN_database, nedges_coupled_bis, nedges_coupled_loc_bis, &
+                                            edges_coupled_bis, iproc, num_phase)
 
   implicit none
 
   integer, intent(in)  :: IIN_database
-  integer, intent(in)  :: nedges_coupled
-  integer, intent(inout)  :: nedges_coupled_loc
-  integer, dimension(:,:), pointer  :: edges_coupled
-  integer, dimension(:), pointer  :: glob2loc_elmnts
-  integer, dimension(:), pointer  :: part
+  integer, intent(in)  :: nedges_coupled_bis
+  integer, intent(inout)  :: nedges_coupled_loc_bis
+  integer, dimension(:,:), pointer  :: edges_coupled_bis
   integer, intent(in)  :: iproc
   integer, intent(in)  :: num_phase
 
   integer  :: i
 
   if ( num_phase == 1 ) then
-     nedges_coupled_loc = 0
-     do i = 1, nedges_coupled
-        if ( part(edges_coupled(1,i)) == iproc ) then
-           nedges_coupled_loc = nedges_coupled_loc + 1
+     nedges_coupled_loc_bis = 0
+     do i = 1, nedges_coupled_bis
+        if ( part(edges_coupled_bis(1,i)) == iproc ) then
+           nedges_coupled_loc_bis = nedges_coupled_loc_bis + 1
         endif
      enddo
   else
-     do i = 1, nedges_coupled
-        if ( part(edges_coupled(1,i)) == iproc ) then
-           write(IIN_database,*) glob2loc_elmnts(edges_coupled(1,i))+1, glob2loc_elmnts(edges_coupled(2,i))+1
-
+     do i = 1, nedges_coupled_bis
+        if ( part(edges_coupled_bis(1,i)) == iproc ) then
+           write(IIN_database,*) glob2loc_elmnts(edges_coupled_bis(1,i))+1, glob2loc_elmnts(edges_coupled_bis(2,i))+1
         endif
-
      enddo
   endif
 
   end subroutine write_fluidsolid_edges_database
-
+  
 end module part_unstruct

@@ -113,7 +113,9 @@ OBJS_MESHFEM2D = \
 	$O/read_regions.o \
 	$O/read_source_file.o \
 	$O/read_value_parameters.o \
+	$O/save_databases.o \
 	$O/save_gnuplot_file.o \
+	$O/save_stations_file.o \
 	$O/spline_routines.o \
 	$O/meshfem2D.o 
 
@@ -376,8 +378,14 @@ $O/compute_arrays_source.o: compute_arrays_source.f90 constants.h
 $O/create_color_image.o: create_color_image.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/create_color_image.o create_color_image.f90
 
+$O/save_databases.o: save_databases.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/save_databases.o save_databases.f90
+
 $O/save_gnuplot_file.o: save_gnuplot_file.f90 
 	${F90} $(FLAGS_CHECK) -c -o $O/save_gnuplot_file.o save_gnuplot_file.f90
+
+$O/save_stations_file.o: save_stations_file.f90 
+	${F90} $(FLAGS_CHECK) -c -o $O/save_stations_file.o save_stations_file.f90
 
 $O/spline_routines.o: spline_routines.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/spline_routines.o spline_routines.f90

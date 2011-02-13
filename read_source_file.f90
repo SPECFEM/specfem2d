@@ -45,12 +45,16 @@
 module source_file
   
   implicit none
+
+  ! source parameters
+  integer, dimension(:),pointer ::  source_type,time_function_type  
+  double precision, dimension(:),pointer :: xs,zs,f0,t0,angleforce, &
+    Mxx,Mzz,Mxz,factor  
+  logical, dimension(:),pointer ::  source_surf
     
 contains
 
-  subroutine read_source_file(NSOURCE,source_surf,xs,zs,source_type, &
-                          time_function_type,f0,t0,angleforce, &
-                          Mxx,Mzz,Mxz,factor,deltat,f0_attenuation)
+  subroutine read_source_file(NSOURCE,deltat,f0_attenuation)
 
 ! reads in source file DATA/SOURCE
 
@@ -58,10 +62,6 @@ contains
   include "constants.h"
   
   integer :: NSOURCE
-  logical, dimension(:),pointer ::  source_surf
-  double precision, dimension(:),pointer :: xs,zs,f0,t0,angleforce, &
-    Mxx,Mzz,Mxz,factor  
-  integer, dimension(:),pointer ::  source_type,time_function_type  
   double precision :: deltat,f0_attenuation
 
   ! local parameters
@@ -147,6 +147,7 @@ contains
     print *,'Mzz of the source if moment tensor = ',Mzz(i_source)
     print *,'Mxz of the source if moment tensor = ',Mxz(i_source)
     print *,'Multiplying factor = ',factor(i_source)
+    print *
   enddo ! do i_source=1,NSOURCE
   close(IIN_SOURCE)
 

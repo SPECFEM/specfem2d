@@ -334,139 +334,35 @@ program meshfem2D
   double precision :: gamma,absx,a00,a01,bot0,top0
 
   ! to store density and velocity model
-  double precision, dimension(:),pointer :: rho_s,cp,cs, &
-    aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,Qp,Qs
-  double precision, dimension(:),pointer :: rho_f,phi,tortuosity,permxx,permxz,&
-       permzz,kappa_s,kappa_f,kappa_fr,eta_f,mu_fr
-  integer, dimension(:),pointer :: icodemat
-
   integer, dimension(:), allocatable :: num_material
 
   ! interface data
   integer :: max_npoints_interface,number_of_interfaces,npoints_interface_bottom, &
     npoints_interface_top
-  integer :: number_of_layers,nx,nz,nxread,nzread,ngnod
-  integer :: nelmnts
+  integer :: number_of_layers
+  integer :: nz,nxread,nzread
   
-  integer :: ilayer,ipoint_current,ireceiverlines
+  integer :: ilayer,ipoint_current 
   integer, dimension(:), pointer :: nz_layer
   double precision, dimension(:), allocatable :: &
        xinterface_bottom,zinterface_bottom,coefs_interface_bottom, &
        xinterface_top,zinterface_top,coefs_interface_top
 
-  ! for the source and receivers
-  integer NSOURCE 
-  integer, dimension(:),pointer ::  source_type,time_function_type  
-  double precision, dimension(:),pointer :: xs,zs,f0,t0,angleforce, &
-    Mxx,Mzz,Mxz,factor  
-  logical, dimension(:),pointer ::  source_surf
-  integer i_source,ios
-
-  double precision xrec,zrec
-  integer nrec_total,irec_global_number
+  integer :: nspec 
+  integer :: nbregion 
   
-  character(len=100) interfacesfile,title
-
-  integer imaterial_number,inumelem
-  integer nelemabs,nelem_acoustic_surface,npgeo,nspec
-  integer ix,iz,irec,i,j
-  integer nbregion,nb_materials
-  integer NTSTEP_BETWEEN_OUTPUT_INFO,pointsdisp,subsamp,seismotype,imagetype
-  logical generate_STATIONS
-  integer nt,nreceiverlines
-
-  integer, dimension(:), pointer :: nrec
-
-  logical output_postscript_snapshot,output_color_image,plot_lowerleft_corner_only
-
-  double precision tang1,tangN
-  double precision cutsnaps,sizemax_arrows,anglerec,xmin,xmax,deltat
-
-  double precision, dimension(:), pointer :: xdeb,zdeb,xfin,zfin
-
-  logical interpol,gnuplot,assign_external_model,outputgrid,OUTPUT_ENERGY,READ_EXTERNAL_SEP_FILE
-  logical abstop,absbottom,absleft,absright,any_abs
-  logical meshvect,initialfield,modelvect,boundvect,add_Bielak_conditions
-  logical TURN_ATTENUATION_ON,TURN_VISCATTENUATION_ON
-
-  double precision :: Q0,freq0
-
-  logical :: p_sv
-
-  logical, dimension(:), pointer :: enreg_surf
-
   ! external functions
   integer, external :: num_4, num_9
   double precision, external :: value_spline
 
-  ! flag to save the last frame for kernels calculation purpose and type of simulation
-  logical :: SAVE_FORWARD
-  integer :: SIMULATION_TYPE
-
-  ! parameters for external mesh
-  logical  :: read_external_mesh
-  character(len=256)  :: mesh_file, nodes_coords_file, materials_file, free_surface_file, absorbing_surface_file
-
   ! variables used for storing info about the mesh and partitions
-  integer, dimension(:), pointer  :: elmnts
-  integer, dimension(:), pointer  :: elmnts_bis
-  double precision, dimension(:,:), pointer  :: nodes_coords
-  integer, dimension(:,:), pointer  :: acoustic_surface
-  integer, dimension(:,:), pointer  :: abs_surface
-
-  integer, dimension(:), pointer  :: xadj
-  integer, dimension(:), pointer  :: adjncy
-  integer, dimension(:), pointer  :: nnodes_elmnts
-  integer, dimension(:), pointer  :: nodes_elmnts
-
-  integer, dimension(:), pointer  :: vwgt
-  integer, dimension(:), pointer  :: adjwgt
-  integer, dimension(:), pointer  :: part
-
-  integer, dimension(:), pointer  :: glob2loc_elmnts
-  integer, dimension(:), pointer  :: glob2loc_nodes_nparts
-  integer, dimension(:), pointer  :: glob2loc_nodes_parts
-  integer, dimension(:), pointer  :: glob2loc_nodes
-  integer, dimension(:), pointer  :: tab_size_interfaces, tab_interfaces
   integer, dimension(:), allocatable  :: my_interfaces
   integer, dimension(:), allocatable  :: my_nb_interfaces
 
-  ! for acoustic/elastic coupled elements
-  integer  :: nedges_coupled, nedges_coupled_loc
-  integer, dimension(:,:), pointer  :: edges_coupled
-  ! for acoustic/poroelastic coupled elements
-  integer  :: nedges_acporo_coupled, nedges_acporo_coupled_loc
-  integer, dimension(:,:), pointer  :: edges_acporo_coupled
-  ! for poroelastic/elastic coupled elements
-  integer  :: nedges_elporo_coupled, nedges_elporo_coupled_loc
-  integer, dimension(:,:), pointer  :: edges_elporo_coupled
-
   integer  :: num_start
-  integer  :: nnodes
   integer  :: num_node
-  integer  :: nb_edges
-  integer  ::  ninterfaces
-  integer  :: my_ninterface
-  integer  :: nelem_acoustic_surface_loc, nelemabs_loc
-  logical, dimension(:,:), pointer  :: abs_surface_char
-  integer, dimension(:), pointer  :: abs_surface_merge
-  integer  :: nelemabs_merge
-  integer, dimension(:), pointer  :: ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
-       jbegin_left,jend_left,jbegin_right,jend_right
-
-  ! variables used for partitioning
-  integer  :: nproc
-  integer  :: partitioning_method
-!!!!!!!  integer, dimension(0:4)  :: metis_options
-  character(len=256)  :: prname
-
-  ! variables used for attenuation
-  integer  :: N_SLS
-  double precision  :: f0_attenuation
 
   ! variables used for tangential detection
-  logical :: force_normal_to_surface,rec_normal_to_surface
-  character(len=256)  :: tangential_detection_curve_file
   integer ::  nnodes_tangential_curve
   double precision, dimension(:,:), allocatable  :: nodes_tangential_curve
 
@@ -474,7 +370,11 @@ program meshfem2D
   integer  :: edgecut
 #endif
 
-  integer  :: iproc
+  integer :: iproc
+  integer :: ix,iz,i,j
+  integer :: imaterial_number,inumelem
+  integer :: i_source,ios
+  double precision :: tang1,tangN
 
   ! ***
   ! *** read the parameter file
@@ -487,31 +387,11 @@ program meshfem2D
   if( ios /= 0 ) stop 'error opening DATA/Par_file file'
 
   ! reads in parameters in DATA/Par_file
-  call read_parameter_file(title,interfacesfile, &
-                  SIMULATION_TYPE,SAVE_FORWARD,read_external_mesh, &
-                  mesh_file,nodes_coords_file,materials_file, &
-                  free_surface_file,absorbing_surface_file,tangential_detection_curve_file, &
-                  nproc,partitioning_method,xmin,xmax,nx,ngnod, &
-                  initialfield,add_Bielak_conditions,assign_external_model, &
-                  READ_EXTERNAL_SEP_FILE,TURN_ATTENUATION_ON,TURN_VISCATTENUATION_ON, &
-                  Q0,freq0,p_sv,any_abs,absbottom,absright,abstop,absleft, &
-                  nt,deltat,NSOURCE,force_normal_to_surface, &
-                  N_SLS,f0_attenuation,seismotype,generate_STATIONS, &
-                  nreceiverlines,anglerec,rec_normal_to_surface, &
-                  nrec,xdeb,zdeb,xfin,zfin,enreg_surf, &
-                  NTSTEP_BETWEEN_OUTPUT_INFO,output_postscript_snapshot,output_color_image, &
-                  imagetype,cutsnaps,meshvect,modelvect,boundvect, &
-                  interpol,pointsdisp,subsamp,sizemax_arrows,gnuplot, &
-                  outputgrid,OUTPUT_ENERGY,plot_lowerleft_corner_only, &
-                  nb_materials,icodemat,cp,cs, &
-                  aniso3,aniso4,aniso5,aniso6,aniso7,aniso8, &
-                  Qp,Qs,rho_s,rho_f,phi,tortuosity, &
-                  permxx,permxz,permzz,kappa_s,kappa_f,kappa_fr, &
-                  eta_f,mu_fr)  
+  call read_parameter_file()  
 
   ! reads in mesh elements
   if ( read_external_mesh ) then
-     call read_external_mesh_file(mesh_file, nelmnts, elmnts, nnodes, num_start, ngnod)
+     call read_external_mesh_file(mesh_file, num_start, ngnod)
 
   else  
      call read_interfaces_file(interfacesfile,max_npoints_interface, &
@@ -525,7 +405,7 @@ program meshfem2D
   
   ! assigns materials to mesh elements
   if ( read_external_mesh ) then
-     call read_mat(materials_file, nelmnts, num_material)
+     call read_mat(materials_file, num_material)
   else  
      call read_regions(nbregion,nb_materials,icodemat,cp,cs, &
                       rho_s,Qp,Qs,aniso3,aniso4,aniso5,aniso6,aniso7,aniso8, &
@@ -538,9 +418,7 @@ program meshfem2D
   print *,'Parameter file successfully read... '
 
   ! reads in source descriptions
-  call read_source_file(NSOURCE,source_surf,xs,zs,source_type, &
-                          time_function_type,f0,t0,angleforce, &
-                          Mxx,Mzz,Mxz,factor,deltat,f0_attenuation)
+  call read_source_file(NSOURCE,deltat,f0_attenuation)
 
   ! reads in tangential detection
   if (force_normal_to_surface .or. rec_normal_to_surface) then
@@ -552,7 +430,7 @@ program meshfem2D
      enddo
      close(IIN)
   else
-     nnodes_tangential_curve = 0
+     nnodes_tangential_curve = 1 ! dummy values instead of 0
      allocate(nodes_tangential_curve(2,1))
   endif
 
@@ -692,22 +570,21 @@ program meshfem2D
               num_node = num_9(i,j,nxread,nzread)
               nodes_coords(1, num_node) = x(i,j)
               nodes_coords(2, num_node) = z(i,j)
-
            enddo
         enddo
 
      endif
   else
-     call read_nodes_coords(nodes_coords_file, nnodes, nodes_coords)
+     call read_nodes_coords(nodes_coords_file)
   endif
 
 
   if ( read_external_mesh ) then
-     call read_acoustic_surface(free_surface_file, nelem_acoustic_surface, acoustic_surface, &
-          nelmnts, num_material, ANISOTROPIC_MATERIAL, nb_materials, icodemat, phi, num_start)
+     call read_acoustic_surface(free_surface_file, num_material, &
+                        ANISOTROPIC_MATERIAL, nb_materials, icodemat, phi, num_start)
 
      if ( any_abs ) then
-        call read_abs_surface(absorbing_surface_file, nelemabs, abs_surface, num_start)
+        call read_abs_surface(absorbing_surface_file, num_start)
      endif
 
   else
@@ -891,7 +768,7 @@ program meshfem2D
   if ( ngnod == 9 ) then
      allocate(elmnts_bis(0:NCORNERS*nelmnts-1))
      do i = 0, nelmnts-1
-        elmnts_bis(i*NCORNERS:i*NCORNERS+NCORNERS-1) = elmnts(i*ngnod:i*ngnod+NCORNERS-1)
+       elmnts_bis(i*NCORNERS:i*NCORNERS+NCORNERS-1) = elmnts(i*ngnod:i*ngnod+NCORNERS-1)
      enddo
 
      if ( nproc > 1 ) then
@@ -900,12 +777,12 @@ program meshfem2D
 !! DK DK (nxread+1)*(nzread+1) is OK for a regular internal mesh only, not for non structured external meshes
 !! DK DK      call mesh2dual_ncommonnodes(nelmnts, (nxread+1)*(nzread+1), elmnts_bis, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
 !! DK DK the subset of element corners is not renumbered therefore we must still use the nnodes computed for 9 nodes here
-        call mesh2dual_ncommonnodes(nelmnts, nnodes, elmnts_bis, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
+        call mesh2dual_ncommonnodes(elmnts_bis,1)
      endif
 
   else
      if ( nproc > 1 ) then
-        call mesh2dual_ncommonnodes(nelmnts, nnodes, elmnts, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
+        call mesh2dual_ncommonnodes(elmnts,1)
      endif
 
   endif
@@ -918,7 +795,7 @@ program meshfem2D
      nb_edges = xadj(nelmnts)
 
      ! giving weight to edges and vertices. Currently not used.
-     call read_weights(nelmnts, vwgt, nb_edges, adjwgt)
+     call read_weights()
 
      ! partitioning
      select case (partitioning_method)
@@ -944,7 +821,7 @@ program meshfem2D
      case(3)
 
 #ifdef USE_SCOTCH
-        call Part_scotch(nelmnts, xadj, adjncy, vwgt, adjwgt, nproc, nb_edges, edgecut, part)
+        call Part_scotch(nproc, edgecut)
 #else
         print *, 'This version of SPECFEM was not compiled with support of SCOTCH.'
         print *, 'Please recompile with -DUSE_SCOTCH in order to enable use of SCOTCH.'
@@ -957,31 +834,25 @@ program meshfem2D
 
   ! beware of fluid solid edges : coupled elements are transfered to the same partition
   if ( ngnod == 9 ) then
-     call acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts_bis, nb_materials, phi, num_material, &
-          nproc, part, nedges_coupled, edges_coupled)
+     call acoustic_elastic_repartitioning (elmnts_bis, nb_materials, phi, num_material, nproc)
   else
-     call acoustic_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_materials, phi, num_material, &
-          nproc, part, nedges_coupled, edges_coupled)
+     call acoustic_elastic_repartitioning (elmnts, nb_materials, phi, num_material, nproc)
   endif
   ! beware of fluid porous edges : coupled elements are transfered to the same partition
   if ( ngnod == 9 ) then
-     call acoustic_poro_repartitioning (nelmnts, nnodes, elmnts_bis, nb_materials, phi, num_material, &
-          nproc, part, nedges_acporo_coupled, edges_acporo_coupled)
+     call acoustic_poro_repartitioning (elmnts_bis, nb_materials, phi, num_material, nproc)
   else
-     call acoustic_poro_repartitioning (nelmnts, nnodes, elmnts, nb_materials, phi, num_material, &
-          nproc, part, nedges_acporo_coupled, edges_acporo_coupled)
+     call acoustic_poro_repartitioning (elmnts, nb_materials, phi, num_material, nproc)
   endif
   ! beware of porous solid edges : coupled elements are transfered to the same partition
   if ( ngnod == 9 ) then
-     call poro_elastic_repartitioning (nelmnts, nnodes, elmnts_bis, nb_materials, phi, num_material, &
-          nproc, part, nedges_elporo_coupled, edges_elporo_coupled)
+     call poro_elastic_repartitioning (elmnts_bis, nb_materials, phi, num_material, nproc)
   else
-     call poro_elastic_repartitioning (nelmnts, nnodes, elmnts, nb_materials, phi, num_material, &
-          nproc, part, nedges_elporo_coupled, edges_elporo_coupled)
+     call poro_elastic_repartitioning (elmnts, nb_materials, phi, num_material, nproc)
   endif
 
   ! local number of each element for each partition
-  call Construct_glob2loc_elmnts(nelmnts, part, nproc, glob2loc_elmnts)
+  call Construct_glob2loc_elmnts(nproc)
 
   if ( ngnod == 9 ) then
      if ( nproc > 1 ) then
@@ -1014,17 +885,16 @@ program meshfem2D
   endif
 
   ! local number of each node for each partition
-  call Construct_glob2loc_nodes(nelmnts, nnodes, nnodes_elmnts, nodes_elmnts, part, nproc, &
-       glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes)
+  call Construct_glob2loc_nodes(nproc)
 
   ! construct the interfaces between partitions (used for MPI assembly)
   if ( nproc /= 1 ) then
      if ( ngnod == 9 ) then
-        call Construct_interfaces(nelmnts, nproc, part, elmnts_bis, xadj, adjncy, tab_interfaces, &
-             tab_size_interfaces, ninterfaces, nb_materials, phi, num_material)
+        call Construct_interfaces(nproc, elmnts_bis, &
+                                  nb_materials, phi, num_material)
      else
-        call Construct_interfaces(nelmnts, nproc, part, elmnts, xadj, adjncy, tab_interfaces, &
-             tab_size_interfaces, ninterfaces, nb_materials, phi, num_material)
+        call Construct_interfaces(nproc, elmnts, &
+                                  nb_materials, phi, num_material)
      endif
      allocate(my_interfaces(0:ninterfaces-1))
      allocate(my_nb_interfaces(0:ninterfaces-1))
@@ -1032,198 +902,13 @@ program meshfem2D
 
   ! setting absorbing boundaries by elements instead of edges
   if ( any_abs ) then
-     call merge_abs_boundaries(nelemabs, nelemabs_merge, abs_surface, abs_surface_char, abs_surface_merge, &
-          ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
-          jbegin_left,jend_left,jbegin_right,jend_right, &
-          nedges_coupled, edges_coupled, nb_materials, phi, num_material, &
-          nelmnts, &
-          elmnts, ngnod)
+     call merge_abs_boundaries(nb_materials, phi, num_material, ngnod)
   endif
 
   ! *** generate the databases for the solver
-
-  do iproc = 0, nproc-1
-
-     write(prname, "('/Database',i5.5)") iproc
-     open(unit=15,file='./OUTPUT_FILES'//prname,status='unknown')
-
-     write(15,*) '#'
-     write(15,*) '# Database for SPECFEM2D'
-     write(15,*) '# Dimitri Komatitsch, (c) University of Pau, France'
-     write(15,*) '#'
-
-     write(15,*) 'Title of the simulation'
-     write(15,"(a100)") title
-
-     write(15,*) 'Type of simulation'
-     write(15,*) SIMULATION_TYPE, SAVE_FORWARD
-
-     call write_glob2loc_nodes_database(15, iproc, npgeo, nodes_coords, glob2loc_nodes_nparts, glob2loc_nodes_parts, &
-          glob2loc_nodes, nnodes, 1)
-
-
-     call write_partition_database(15, iproc, nspec, nelmnts, elmnts, glob2loc_elmnts, glob2loc_nodes_nparts, &
-          glob2loc_nodes_parts, glob2loc_nodes, part, num_material, ngnod, 1)
-
-
-     write(15,*) 'npgeo'
-     write(15,*) npgeo
-
-     write(15,*) 'gnuplot interpol'
-     write(15,*) gnuplot,interpol
-
-     write(15,*) 'NTSTEP_BETWEEN_OUTPUT_INFO'
-     write(15,*) NTSTEP_BETWEEN_OUTPUT_INFO
-
-     write(15,*) 'output_postscript_snapshot output_color_image colors numbers'
-     write(15,*) output_postscript_snapshot,output_color_image,' 1 0'
-
-     write(15,*) 'meshvect modelvect boundvect cutsnaps subsamp sizemax_arrows'
-     write(15,*) meshvect,modelvect,boundvect,cutsnaps,subsamp,sizemax_arrows
-
-     write(15,*) 'anglerec'
-     write(15,*) anglerec
-
-     write(15,*) 'initialfield add_Bielak_conditions'
-     write(15,*) initialfield,add_Bielak_conditions
-
-     write(15,*) 'seismotype imagetype'
-     write(15,*) seismotype,imagetype
-
-     write(15,*) 'assign_external_model READ_EXTERNAL_SEP_FILE'
-     write(15,*) assign_external_model,READ_EXTERNAL_SEP_FILE
-
-     write(15,*) 'outputgrid OUTPUT_ENERGY TURN_ATTENUATION_ON'
-     write(15,*) outputgrid,OUTPUT_ENERGY,TURN_ATTENUATION_ON
-
-     write(15,*) 'TURN_VISCATTENUATION_ON Q0 freq0'
-     write(15,*) TURN_VISCATTENUATION_ON,Q0,freq0
-
-     write(15,*) 'p_sv'
-     write(15,*) p_sv
-
-     write(15,*) 'nt deltat'
-     write(15,*) nt,deltat
-     write(15,*) 'NSOURCE'
-     write(15,*) NSOURCE
-
-     do i_source=1,NSOURCE
-        write(15,*) 'source', i_source
-        write(15,*) source_type(i_source),time_function_type(i_source), &
-                    xs(i_source),zs(i_source),f0(i_source),t0(i_source), &
-                    factor(i_source),angleforce(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
-     enddo
-
-     write(15,*) 'attenuation'
-     write(15,*) N_SLS, f0_attenuation
-
-     write(15,*) 'Coordinates of macrobloc mesh (coorg):'
-
-     call write_glob2loc_nodes_database(15, iproc, npgeo, nodes_coords, glob2loc_nodes_nparts, glob2loc_nodes_parts, &
-          glob2loc_nodes, nnodes, 2)
-
-     write(15,*) 'numat ngnod nspec pointsdisp plot_lowerleft_corner_only'
-     write(15,*) nb_materials,ngnod,nspec,pointsdisp,plot_lowerleft_corner_only
-
-     if (any_abs) then
-        call write_abs_merge_database(15, nelemabs_merge, nelemabs_loc, &
-             abs_surface_char, abs_surface_merge, &
-             ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
-             jbegin_left,jend_left,jbegin_right,jend_right, &
-             glob2loc_elmnts, part, iproc, 1)
-     else
-        nelemabs_loc = 0
-     endif
-
-     call write_surface_database(15, nelem_acoustic_surface, acoustic_surface, nelem_acoustic_surface_loc, &
-          iproc, glob2loc_elmnts, &
-          glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes, part, 1)
-
-     call write_fluidsolid_edges_database(15, nedges_coupled, nedges_coupled_loc, &
-          edges_coupled, glob2loc_elmnts, part, iproc, 1)
-     call write_fluidsolid_edges_database(15, nedges_acporo_coupled, nedges_acporo_coupled_loc, &
-          edges_acporo_coupled, glob2loc_elmnts, part, iproc, 1)
-     call write_fluidsolid_edges_database(15, nedges_elporo_coupled, nedges_elporo_coupled_loc, &
-          edges_elporo_coupled, glob2loc_elmnts, part, iproc, 1)
-
-     write(15,*) 'nelemabs nelem_acoustic_surface num_fluid_solid_edges num_fluid_poro_edges'
-     write(15,*) 'num_solid_poro_edges nnodes_tangential_curve'
-     write(15,*) nelemabs_loc,nelem_acoustic_surface_loc,nedges_coupled_loc,nedges_acporo_coupled_loc,&
-          nedges_elporo_coupled_loc,nnodes_tangential_curve
-
-     write(15,*) 'Material sets (num 1 rho vp vs 0 0 Qp Qs 0 0 0 0 0 0) or '
-     write(15,*) '(num 2 rho c11 c13 c33 c44 Qp Qs 0 0 0 0 0 0) or '
-     write(15,*) '(num 3 rhos rhof phi c k_xx k_xz k_zz Ks Kf Kfr etaf mufr Qs)'
-     do i=1,nb_materials
-        if (icodemat(i) == ISOTROPIC_MATERIAL) then
-           write(15,*) i,icodemat(i),rho_s(i),cp(i),cs(i),0,0,Qp(i),Qs(i),0,0,0,0,0,0
-        elseif(icodemat(i) == POROELASTIC_MATERIAL) then
-           write(15,*) i,icodemat(i),rho_s(i),rho_f(i),phi(i),tortuosity(i),permxx(i),permxz(i),permzz(i),kappa_s(i),&
-                kappa_f(i),kappa_fr(i),eta_f(i),mu_fr(i),Qs(i)
-        else
-           write(15,*) i,icodemat(i),rho_s(i),cp(i),cs(i),aniso3(i),aniso4(i),aniso5(i),aniso6(i),&
-                aniso7(i),aniso8(i),Qp(i),Qs(i),0,0
-        endif
-     enddo
-
-     write(15,*) 'Arrays kmato and knods for each bloc:'
-
-     call write_partition_database(15, iproc, nspec, nelmnts, elmnts, glob2loc_elmnts, glob2loc_nodes_nparts, &
-          glob2loc_nodes_parts, glob2loc_nodes, part, num_material, ngnod, 2)
-
-     if ( nproc /= 1 ) then
-        call write_interfaces_database(15, tab_interfaces, tab_size_interfaces, nproc, iproc, ninterfaces, &
-             my_ninterface, my_interfaces, my_nb_interfaces, glob2loc_elmnts, glob2loc_nodes_nparts, glob2loc_nodes_parts, &
-             glob2loc_nodes, 1)
-
-        write(15,*) 'Interfaces:'
-        write(15,*) my_ninterface, maxval(my_nb_interfaces)
-
-        call write_interfaces_database(15, tab_interfaces, tab_size_interfaces, nproc, iproc, ninterfaces, &
-             my_ninterface, my_interfaces, my_nb_interfaces, glob2loc_elmnts, glob2loc_nodes_nparts, glob2loc_nodes_parts, &
-             glob2loc_nodes, 2)
-
-     else
-        write(15,*) 'Interfaces:'
-        write(15,*) 0, 0
-     endif
-
-
-     write(15,*) 'List of absorbing elements (bottom right top left):'
-     if ( any_abs ) then
-        call write_abs_merge_database(15, nelemabs_merge, nelemabs_loc, &
-             abs_surface_char, abs_surface_merge, &
-             ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
-             jbegin_left,jend_left,jbegin_right,jend_right, &
-             glob2loc_elmnts, part, iproc, 2)
-     endif
-
-     write(15,*) 'List of acoustic free-surface elements:'
-     call write_surface_database(15, nelem_acoustic_surface, acoustic_surface, nelem_acoustic_surface_loc, &
-          iproc, glob2loc_elmnts, &
-          glob2loc_nodes_nparts, glob2loc_nodes_parts, glob2loc_nodes, part, 2)
-
-
-     write(15,*) 'List of acoustic elastic coupled edges:'
-     call write_fluidsolid_edges_database(15, nedges_coupled, nedges_coupled_loc, &
-          edges_coupled, glob2loc_elmnts, part, iproc, 2)
-
-     write(15,*) 'List of acoustic poroelastic coupled edges:'
-     call write_fluidsolid_edges_database(15, nedges_acporo_coupled, nedges_acporo_coupled_loc, &
-          edges_acporo_coupled, glob2loc_elmnts, part, iproc, 2)
-
-     write(15,*) 'List of poroelastic elastic coupled edges:'
-     call write_fluidsolid_edges_database(15, nedges_elporo_coupled, nedges_elporo_coupled_loc, &
-          edges_elporo_coupled, glob2loc_elmnts, part, iproc, 2)
-
-     write(15,*) 'List of tangential detection curve nodes:'
-     !write(15,*) nnodes_tangential_curve
-     write(15,*) force_normal_to_surface,rec_normal_to_surface
-     do i = 1, nnodes_tangential_curve
-        write(15,*) nodes_tangential_curve(1,i),nodes_tangential_curve(2,i)
-     enddo
-  enddo
-
+  call save_databases(nspec,num_material, &
+                      my_interfaces,my_nb_interfaces, &
+                      nnodes_tangential_curve,nodes_tangential_curve)  
 
   ! print position of the source
   do i_source=1,NSOURCE
@@ -1235,56 +920,9 @@ program meshfem2D
   !--- compute position of the receivers and write the STATIONS file
 
   if (generate_STATIONS) then
-     print *
-     print *,'writing the DATA/STATIONS_target file'
-     print *
-
-     ! total number of receivers in all the receiver lines
-     nrec_total = sum(nrec)
-
-     print *
-     print *,'There are ',nrec_total,' receivers'
-
-     print *
-     print *,'Position (x,z) of the ',nrec_total,' receivers'
-     print *
-
-     open(unit=15,file='DATA/STATIONS_target',status='unknown')
-
-     irec_global_number = 0
-
-     ! loop on all the receiver lines
-     do ireceiverlines = 1,nreceiverlines
-
-        ! loop on all the receivers of this receiver line
-        do irec = 1,nrec(ireceiverlines)
-
-           ! compute global receiver number
-           irec_global_number = irec_global_number + 1
-
-           ! compute coordinates of the receiver
-           if(nrec(ireceiverlines) > 1) then
-              xrec = xdeb(ireceiverlines) + dble(irec-1)*(xfin(ireceiverlines)-xdeb(ireceiverlines))/dble(nrec(ireceiverlines)-1)
-              zrec = zdeb(ireceiverlines) + dble(irec-1)*(zfin(ireceiverlines)-zdeb(ireceiverlines))/dble(nrec(ireceiverlines)-1)
-           else
-              xrec = xdeb(ireceiverlines)
-              zrec = zdeb(ireceiverlines)
-           endif
-
-           ! modify position of receiver if we must record exactly at the surface
-           if(enreg_surf(ireceiverlines)) &
-                zrec = value_spline(xrec,xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
-
-           ! display position of the receiver
-           print *,'Receiver ',irec_global_number,' = ',xrec,zrec
-
-           write(15,"('S',i4.4,'    AA ',f20.7,1x,f20.7,'       0.0         0.0')") irec_global_number,xrec,zrec
-
-        enddo
-     enddo
-
-     close(15)
-
+    call save_stations_file(nreceiverlines,nrec,xdeb,zdeb,xfin,zfin,enreg_surf, &
+                            xinterface_top,zinterface_top,coefs_interface_top, &
+                            npoints_interface_top,max_npoints_interface)    
   endif
 
   print *
