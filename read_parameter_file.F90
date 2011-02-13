@@ -52,36 +52,6 @@ module parameter_file
   !            (like #ifndef USE_MPI) working properly
   
   implicit none
-
-contains
-
-  subroutine read_parameter_file(title,interfacesfile, &
-                  SIMULATION_TYPE,SAVE_FORWARD,read_external_mesh, &
-                  mesh_file,nodes_coords_file,materials_file, &
-                  free_surface_file,absorbing_surface_file,tangential_detection_curve_file, &
-                  nproc,partitioning_method,xmin,xmax,nx,ngnod, &
-                  initialfield,add_Bielak_conditions,assign_external_model, &
-                  READ_EXTERNAL_SEP_FILE,TURN_ATTENUATION_ON,TURN_VISCATTENUATION_ON, &
-                  Q0,freq0,p_sv,any_abs,absbottom,absright,abstop,absleft, &
-                  nt,deltat,NSOURCE,force_normal_to_surface, &
-                  N_SLS,f0_attenuation,seismotype,generate_STATIONS, &
-                  nreceiverlines,anglerec,rec_normal_to_surface, &
-                  nrec,xdeb,zdeb,xfin,zfin,enreg_surf, &
-                  NTSTEP_BETWEEN_OUTPUT_INFO,output_postscript_snapshot,output_color_image, &
-                  imagetype,cutsnaps,meshvect,modelvect,boundvect, &
-                  interpol,pointsdisp,subsamp,sizemax_arrows,gnuplot, &
-                  outputgrid,OUTPUT_ENERGY,plot_lowerleft_corner_only, &
-                  nb_materials,icodemat,cp,cs, &
-                  aniso3,aniso4,aniso5,aniso6,aniso7,aniso8, &
-                  Qp,Qs,rho_s,rho_f,phi,tortuosity, &
-                  permxx,permxz,permzz,kappa_s,kappa_f,kappa_fr, &
-                  eta_f,mu_fr)
-  
-! reads in DATA/Par_file
-  
-  implicit none
-  include "constants.h"
-
   character(len=100) :: interfacesfile,title
   
   integer :: SIMULATION_TYPE
@@ -91,7 +61,9 @@ contains
                         free_surface_file, absorbing_surface_file
   character(len=256)  :: tangential_detection_curve_file
 
+  ! variables used for partitioning
   integer :: nproc,partitioning_method
+
   double precision :: xmin,xmax
   integer :: nx,ngnod
 
@@ -100,7 +72,8 @@ contains
 
   double precision :: Q0,freq0
 
-  logical :: p_sv,any_abs,absbottom,absright,abstop,absleft
+  logical :: p_sv
+  logical :: any_abs,absbottom,absright,abstop,absleft
   
   integer :: nt
   double precision :: deltat
@@ -108,6 +81,7 @@ contains
   integer :: NSOURCE
   logical :: force_normal_to_surface
 
+  ! variables used for attenuation
   integer  :: N_SLS
   double precision  :: f0_attenuation
 
@@ -132,12 +106,22 @@ contains
   logical :: gnuplot,outputgrid,OUTPUT_ENERGY
   logical :: plot_lowerleft_corner_only
 
+  ! to store density and velocity model
   integer :: nb_materials
   integer, dimension(:),pointer :: icodemat
   double precision, dimension(:),pointer :: rho_s,cp,cs, &
     aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,Qp,Qs
   double precision, dimension(:),pointer :: rho_f,phi,tortuosity,permxx,permxz,&
        permzz,kappa_s,kappa_f,kappa_fr,eta_f,mu_fr
+
+contains
+
+  subroutine read_parameter_file()
+  
+! reads in DATA/Par_file
+  
+  implicit none
+  include "constants.h"
   
   ! local parameters
   integer :: ios,ireceiverlines
@@ -287,6 +271,19 @@ contains
                       eta_f,mu_fr)
   
 
+  ! checks input parameters
+  call check_parameters()
+    
+  end subroutine read_parameter_file
+  
+!
+!-------------------------------------------------------------------------------------------------
+!
+  
+  subroutine check_parameters()
+  
+  implicit none
+  
   ! checks partitioning
   if ( nproc <= 0 ) then
      print *, 'Number of processes (nproc) must be greater than or equal to one.'
@@ -324,7 +321,7 @@ contains
      plot_lowerleft_corner_only = .false.
   endif
   
-  end subroutine read_parameter_file
+  end subroutine check_parameters
   
 end module parameter_file
   

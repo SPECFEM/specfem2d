@@ -71,7 +71,7 @@
 !--- beginning of Nicolas Le Goff's constants for an unstructured CUBIT/METIS/SCOTCH mesh
 
 ! maximum number of neighbors per element
-  integer, parameter :: max_neighbors = 40
+  integer, parameter :: MAX_NEIGHBORS = 40
 
 ! maximum number of elements that can contain the same node
   integer, parameter :: nsize = 40

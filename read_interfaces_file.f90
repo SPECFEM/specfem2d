@@ -142,6 +142,7 @@ contains
 
   nelmnts = nxread * nzread
   allocate(elmnts(0:ngnod*nelmnts-1))
+  
   if ( ngnod == 4 ) then
     num_elmnt = 0
     do j = 1, nzread
