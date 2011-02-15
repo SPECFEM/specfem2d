@@ -47,13 +47,13 @@ module parameter_file
   ! note: we use this module definition only to be able to allocate
   !          arrays for receiverlines and materials in this subroutine rather than in the main
   !          routine in meshfem2D.F90
-  
-  ! note 2: the filename ending is .F90 to have pre-compilation with pragmas 
+
+  ! note 2: the filename ending is .F90 to have pre-compilation with pragmas
   !            (like #ifndef USE_MPI) working properly
-  
+
   implicit none
   character(len=100) :: interfacesfile,title
-  
+
   integer :: SIMULATION_TYPE
   logical :: SAVE_FORWARD,read_external_mesh
 
@@ -74,7 +74,7 @@ module parameter_file
 
   logical :: p_sv
   logical :: any_abs,absbottom,absright,abstop,absleft
-  
+
   integer :: nt
   double precision :: deltat
 
@@ -87,15 +87,15 @@ module parameter_file
 
   integer :: seismotype
   logical :: generate_STATIONS
-  
+
   integer :: nreceiverlines
-  double precision :: anglerec  
+  double precision :: anglerec
   logical :: rec_normal_to_surface
 
   integer, dimension(:), pointer :: nrec
   double precision, dimension(:), pointer :: xdeb,zdeb,xfin,zfin
   logical, dimension(:), pointer :: enreg_surf
-  
+
   integer :: NTSTEP_BETWEEN_OUTPUT_INFO
   logical :: output_postscript_snapshot,output_color_image
   integer :: imagetype
@@ -117,12 +117,12 @@ module parameter_file
 contains
 
   subroutine read_parameter_file()
-  
+
 ! reads in DATA/Par_file
-  
+
   implicit none
   include "constants.h"
-  
+
   ! local parameters
   integer :: ios,ireceiverlines
 
@@ -178,7 +178,7 @@ contains
   ! read time step parameters
   call read_value_integer(IIN,IGNORE_JUNK,nt)
   call read_value_double_precision(IIN,IGNORE_JUNK,deltat)
-  
+
   ! read source infos
   call read_value_integer(IIN,IGNORE_JUNK,NSOURCE)
   call read_value_logical(IIN,IGNORE_JUNK,force_normal_to_surface)
@@ -269,21 +269,21 @@ contains
                       Qp,Qs,rho_s,rho_f,phi,tortuosity, &
                       permxx,permxz,permzz,kappa_s,kappa_f,kappa_fr, &
                       eta_f,mu_fr)
-  
+
 
   ! checks input parameters
   call check_parameters()
-    
+
   end subroutine read_parameter_file
-  
+
 !
 !-------------------------------------------------------------------------------------------------
 !
-  
+
   subroutine check_parameters()
-  
+
   implicit none
-  
+
   ! checks partitioning
   if ( nproc <= 0 ) then
      print *, 'Number of processes (nproc) must be greater than or equal to one.'
@@ -320,8 +320,8 @@ contains
   else
      plot_lowerleft_corner_only = .false.
   endif
-  
+
   end subroutine check_parameters
-  
+
 end module parameter_file
-  
+

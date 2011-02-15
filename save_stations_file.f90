@@ -45,7 +45,7 @@
   subroutine save_stations_file(nreceiverlines,nrec,xdeb,zdeb,xfin,zfin,enreg_surf, &
                             xinterface_top,zinterface_top,coefs_interface_top, &
                             npoints_interface_top,max_npoints_interface)
-  
+
   implicit none
 
   integer :: nreceiverlines
@@ -57,13 +57,13 @@
   double precision, dimension(max_npoints_interface) :: xinterface_top, &
     zinterface_top,coefs_interface_top
   integer :: npoints_interface_top
-  
+
   !local parameters
   integer :: ireceiverlines,irec,irec_global_number,ios
   integer :: nrec_total
   double precision :: xrec,zrec
   double precision, external :: value_spline
-  
+
   print *
   print *,'writing the DATA/STATIONS_target file'
   print *
@@ -80,7 +80,7 @@
 
   open(unit=15,file='DATA/STATIONS_target',status='unknown',iostat=ios)
   if( ios /= 0 ) stop 'error saving STATIONS file'
-  
+
   irec_global_number = 0
 
   ! loop on all the receiver lines
@@ -119,4 +119,4 @@
   close(15)
 
   end subroutine save_stations_file
-  
+

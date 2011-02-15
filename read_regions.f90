@@ -55,7 +55,7 @@
   integer, dimension(nb_materials) :: icodemat
   double precision, dimension(nb_materials) :: rho_s,cp,cs, &
     aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,Qp,Qs
-    
+
   integer :: nelmnts
   integer,dimension(nelmnts) :: num_material
   integer :: nxread,nzread
@@ -64,7 +64,7 @@
   integer :: iregion,ixdebregion,ixfinregion,izdebregion,izfinregion,imaterial_number
   integer :: i,j
   double precision :: vpregion,vsregion,poisson_ratio
-  
+
   ! read the material numbers for each region
   call read_value_integer(IIN,IGNORE_JUNK,nbregion)
 
@@ -90,8 +90,8 @@
     print *,'IZ from ',izdebregion,' to ',izfinregion
 
     if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. icodemat(imaterial_number) /= POROELASTIC_MATERIAL) then
-    
-       ! isotropic material 
+
+       ! isotropic material
        vpregion = cp(imaterial_number)
        vsregion = cs(imaterial_number)
        print *,'Material # ',imaterial_number,' isotropic'
@@ -110,7 +110,7 @@
        print *,'Qs = ',Qs(imaterial_number)
     elseif(icodemat(imaterial_number) == POROELASTIC_MATERIAL) then
 
-       ! poroelastic material 
+       ! poroelastic material
        print *,'Material # ',imaterial_number,' isotropic'
        print *,'Material is poroelastic'
     else
@@ -140,6 +140,6 @@
 
   enddo
 
-  if(minval(num_material) <= 0) stop 'Velocity model not entirely set...'  
-  
+  if(minval(num_material) <= 0) stop 'Velocity model not entirely set...'
+
   end subroutine read_regions

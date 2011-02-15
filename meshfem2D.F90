@@ -341,16 +341,16 @@ program meshfem2D
     npoints_interface_top
   integer :: number_of_layers
   integer :: nz,nxread,nzread
-  
-  integer :: ilayer,ipoint_current 
+
+  integer :: ilayer,ipoint_current
   integer, dimension(:), pointer :: nz_layer
   double precision, dimension(:), allocatable :: &
        xinterface_bottom,zinterface_bottom,coefs_interface_bottom, &
        xinterface_top,zinterface_top,coefs_interface_top
 
-  integer :: nspec 
-  integer :: nbregion 
-  
+  integer :: nspec
+  integer :: nbregion
+
   ! external functions
   integer, external :: num_4, num_9
   double precision, external :: value_spline
@@ -387,29 +387,29 @@ program meshfem2D
   if( ios /= 0 ) stop 'error opening DATA/Par_file file'
 
   ! reads in parameters in DATA/Par_file
-  call read_parameter_file()  
+  call read_parameter_file()
 
   ! reads in mesh elements
   if ( read_external_mesh ) then
      call read_external_mesh_file(mesh_file, num_start, ngnod)
 
-  else  
+  else
      call read_interfaces_file(interfacesfile,max_npoints_interface, &
                                 number_of_interfaces,npoints_interface_bottom, &
                                 number_of_layers,nz_layer,nx,nz,nxread,nzread,ngnod, &
-                                nelmnts,elmnts)     
+                                nelmnts,elmnts)
   endif
 
   allocate(num_material(nelmnts))
   num_material(:) = 0
-  
+
   ! assigns materials to mesh elements
   if ( read_external_mesh ) then
      call read_mat(materials_file, num_material)
-  else  
+  else
      call read_regions(nbregion,nb_materials,icodemat,cp,cs, &
                       rho_s,Qp,Qs,aniso3,aniso4,aniso5,aniso6,aniso7,aniso8, &
-                      nelmnts,num_material,nxread,nzread)  
+                      nelmnts,num_material,nxread,nzread)
   endif
 
   close(IIN)
@@ -908,7 +908,7 @@ program meshfem2D
   ! *** generate the databases for the solver
   call save_databases(nspec,num_material, &
                       my_interfaces,my_nb_interfaces, &
-                      nnodes_tangential_curve,nodes_tangential_curve)  
+                      nnodes_tangential_curve,nodes_tangential_curve)
 
   ! print position of the source
   do i_source=1,NSOURCE
@@ -922,7 +922,7 @@ program meshfem2D
   if (generate_STATIONS) then
     call save_stations_file(nreceiverlines,nrec,xdeb,zdeb,xfin,zfin,enreg_surf, &
                             xinterface_top,zinterface_top,coefs_interface_top, &
-                            npoints_interface_top,max_npoints_interface)    
+                            npoints_interface_top,max_npoints_interface)
   endif
 
   print *

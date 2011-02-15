@@ -100,7 +100,7 @@
   logical ignore_junk
   character(len=*) value_to_read
   character(len=100) string_read
-  
+
   call read_next_line(iin,ignore_junk,string_read)
   value_to_read = string_read
 

@@ -48,10 +48,10 @@
 ! creates a Gnuplot file that displays the grid
 
   implicit none
-  
+
   integer :: ngnod,nx,nz
   double precision, dimension(0:nx,0:nz) :: x,z
-    
+
   ! local parameters
   integer :: ios,istepx,istepz,ili,icol
 
@@ -60,7 +60,7 @@
 
   open(unit=20,file='OUTPUT_FILES/gridfile.gnu',status='unknown',iostat=ios)
   if( ios /= 0 ) stop 'error saving gnuplot file'
-  
+
   ! draw horizontal lines of the grid
   print *,'drawing horizontal lines of the grid'
   istepx = 1
@@ -100,7 +100,7 @@
   ! create a Gnuplot script to display the grid
   open(unit=20,file='OUTPUT_FILES/plotgnu',status='unknown',iostat=ios)
   if( ios /= 0 ) stop 'error saving plotgnu file'
-  
+
   write(20,*) '#set term X11'
   write(20,*) 'set term postscript landscape monochrome solid "Helvetica" 22'
   write(20,*) 'set output "grid.ps"'
@@ -114,5 +114,5 @@
 
   print *,'Grid saved in Gnuplot format...'
   print *
-  
+
   end subroutine save_gnuplot_file
