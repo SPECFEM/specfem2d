@@ -47,10 +47,10 @@ module interfaces_file
   ! note: we use this module definition only to be able to allocate
   !          arrays for receiverlines and materials in this subroutine rather than in the main
   !          routine in meshfem2D.F90
-  
-  ! note 2: the filename ending is .F90 to have pre-compilation with pragmas 
+
+  ! note 2: the filename ending is .F90 to have pre-compilation with pragmas
   !            (like #ifndef USE_MPI) working properly
-  
+
   implicit none
 
 contains
@@ -61,7 +61,7 @@ contains
                                 nelmnts,elmnts)
   implicit none
   include "constants.h"
-  
+
   character(len=100) :: interfacesfile
 
   integer :: max_npoints_interface,number_of_interfaces,npoints_interface_bottom
@@ -142,7 +142,7 @@ contains
 
   nelmnts = nxread * nzread
   allocate(elmnts(0:ngnod*nelmnts-1))
-  
+
   if ( ngnod == 4 ) then
     num_elmnt = 0
     do j = 1, nzread
@@ -174,6 +174,6 @@ contains
   endif
 
 
-  end subroutine read_interfaces_file 
-  
+  end subroutine read_interfaces_file
+
 end module interfaces_file

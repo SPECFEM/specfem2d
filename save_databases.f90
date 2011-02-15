@@ -46,7 +46,7 @@
   subroutine save_databases(nspec,num_material, &
                             my_interfaces,my_nb_interfaces, &
                             nnodes_tangential_curve,nodes_tangential_curve )
-                            
+
 
 ! generates the databases for the solver
 
@@ -55,7 +55,7 @@
   use source_file
   implicit none
   include "constants.h"
-  
+
   integer :: nspec
   integer, dimension(nelmnts) :: num_material
 
@@ -64,7 +64,7 @@
 
   integer ::  nnodes_tangential_curve
   double precision, dimension(2,nnodes_tangential_curve) :: nodes_tangential_curve
-  
+
   ! local parameters
   integer :: iproc,i_source,i,ios
   integer :: npgeo
@@ -72,17 +72,17 @@
   integer :: nedges_coupled_loc
   integer :: nedges_acporo_coupled_loc
   integer :: nedges_elporo_coupled_loc
-  
+
   character(len=256) :: prname
-  
-  
+
+
   do iproc = 0, nproc-1
 
     ! opens Database file
     write(prname, "('./OUTPUT_FILES/Database',i5.5)") iproc
     open(unit=15,file=trim(prname),status='unknown',iostat=ios)
     if( ios /= 0 ) stop 'error saving databases'
-    
+
     write(15,*) '#'
     write(15,*) '# Database for SPECFEM2D'
     write(15,*) '# Dimitri Komatitsch, (c) University of Pau, France'
@@ -246,18 +246,18 @@
 
     write(15,*) 'List of tangential detection curve nodes:'
     !write(15,*) nnodes_tangential_curve
-    write(15,*) force_normal_to_surface,rec_normal_to_surface    
+    write(15,*) force_normal_to_surface,rec_normal_to_surface
 
     if (force_normal_to_surface .or. rec_normal_to_surface) then
       do i = 1, nnodes_tangential_curve
         write(15,*) nodes_tangential_curve(1,i),nodes_tangential_curve(2,i)
       enddo
     endif
-    
+
     ! closes Database file
     close(15)
-    
+
   enddo
 
   end subroutine save_databases
-  
+

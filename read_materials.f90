@@ -52,9 +52,9 @@
 
   implicit none
   include "constants.h"
-  
+
   integer :: nb_materials
-  
+
   integer, dimension(nb_materials) :: icodemat
 
   double precision, dimension(nb_materials) :: rho_s,cp,cs, &
@@ -66,7 +66,7 @@
   integer :: imaterial,i,icodematread
   double precision :: val0read,val1read,val2read,val3read,val4read, &
        val5read,val6read,val7read,val8read,val9read,val10read,val11read,val12read
-  
+
   ! initializes material properties
   icodemat(:) = 0
   cp(:) = 0.d0
@@ -99,16 +99,16 @@
                               val4read,val5read,val6read,val7read, &
                               val8read,val9read,val10read,val11read,val12read)
 
-     ! checks material id 
+     ! checks material id
      if(i < 1 .or. i > nb_materials) stop 'Wrong material number!'
      icodemat(i) = icodematread
 
 
      ! sets material properties
      if(icodemat(i) == ISOTROPIC_MATERIAL) then
-      
+
         ! isotropic materials
-        
+
         rho_s(i) = val0read
         cp(i) = val1read
         cs(i) = val2read
@@ -126,9 +126,9 @@
            phi(i) = 1.d0           ! acoustic
         endif
      elseif (icodemat(i) == ANISOTROPIC_MATERIAL) then
-     
+
         ! anisotropic materials
-        
+
         rho_s(i) = val0read
         cp(i) = val1read
         cs(i) = val2read
@@ -140,10 +140,10 @@
         aniso8(i) = val8read
         Qp(i) = val9read
         Qs(i) = val10read
-     else                 
-     
+     else
+
         ! poroelastic materials
-        
+
         rho_s(i) = val0read
         rho_f(i) = val1read
         phi(i) = val2read
@@ -195,5 +195,5 @@
      endif
      print *
   enddo
-  
+
   end subroutine read_materials

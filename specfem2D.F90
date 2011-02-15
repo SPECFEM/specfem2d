@@ -334,7 +334,7 @@
                   Mxx,Mzz,Mxz,f0,t0,factor,angleforce,hdur,hdur_gauss
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sourcearray
   double precision :: t0_start
-  
+
   double precision, dimension(:,:), allocatable :: coorg
   double precision, dimension(:), allocatable :: coorgread
 
@@ -446,7 +446,7 @@
   double precision :: vpImin,vpImax,vpIImin,vpIImax
 
   integer :: colors,numbers,subsamp,imagetype,NTSTEP_BETWEEN_OUTPUT_INFO,NTSTEP_BETWEEN_OUTPUT_SEISMO,seismotype
-  integer :: numat,ngnod,nspec,pointsdisp,nelemabs,nelem_acoustic_surface,ispecabs,UPPER_LIMIT_DISPLAY
+  integer :: numat,numat_local,ngnod,nspec,pointsdisp,nelemabs,nelem_acoustic_surface,ispecabs,UPPER_LIMIT_DISPLAY
 
   logical interpol,meshvect,modelvect,boundvect,assign_external_model,initialfield, &
     outputgrid,gnuplot,TURN_ATTENUATION_ON,output_postscript_snapshot,output_color_image, &
@@ -786,7 +786,7 @@
 !! DK DK the length of an edge is about 1d-003, thus use e.g. 1/300 of that
   double precision, parameter :: PERIODIC_DETECT_TOL = 1d-003 / 300.d0
 
-  integer, parameter :: NSPEC_PERIO = 670 / 2
+  integer, parameter :: NSPEC_PERIO = 384 / 2  !  670 / 2
 
   integer, dimension(NSPEC_PERIO) :: numperio_left
   integer, dimension(NSPEC_PERIO) :: numperio_right
@@ -796,6 +796,7 @@
 
   integer :: idummy1, idummy2, idummy3, idummy4, idummy5, idummy6, idummy7, idummy8
   integer :: ispecperio, ispecperio2, ispec2, i2, j2
+  integer :: iglob_target_to_replace, ispec3, i3, j3
 
 !! DK DK Feb 2010 for periodic conditions: detect common points between left and right edges
 
@@ -1025,7 +1026,7 @@
     ! note: this is slightly different than in meshfem2D.f90,
     !          t0 will only be set within this if statement, i.e. only for type 4 or 5 sources
     !          (since we set f0 to a new values for these two types of sources)
-    
+
     ! if Dirac source time function, use a very thin Gaussian instead
     ! if Heaviside source time function, use a very thin error function instead
     if(time_function_type(i_source) == 4 .or. time_function_type(i_source) == 5) then
@@ -1038,7 +1039,7 @@
         t0(i_source) = 1.20d0 / f0(i_source)+t0(i_source)
       endif
     endif
-    
+
     ! for the source time function
     aval(i_source) = pi*pi*f0(i_source)*f0(i_source)
 
@@ -1064,7 +1065,7 @@
     endif
 
     ! checks if automatically set t0 is too small
-    ! note: times in seismograms are shifted by t0(1) 
+    ! note: times in seismograms are shifted by t0(1)
     if( t0_start <= USER_T0 ) then
       ! sets new simulation start time such that
       ! simulation starts at t = - t0 = - USER_T0
@@ -1075,25 +1076,25 @@
         write(IOUT,*) '    fix new simulation start time. . . . . = ', - t0_start
         write(IOUT,*)
       endif
-      
+
       ! loops over all sources
       do i_source=1,NSOURCE
         ! gets the given, initial time shifts
         if( time_function_type(i_source) == 5 ) then
-          t0(i_source) = t0(i_source) - 2.0d0 / f0(i_source) 
+          t0(i_source) = t0(i_source) - 2.0d0 / f0(i_source)
         else
-          t0(i_source) = t0(i_source) - 1.20d0 / f0(i_source) 
+          t0(i_source) = t0(i_source) - 1.20d0 / f0(i_source)
         endif
-      
+
         ! sets new t0 according to simulation start time,
         ! using absolute time shifts for each source such that
         ! a zero time shift would have the maximum gaussian at time t = (it-1)*DT - t0_start = 0
         t0(i_source) = USER_T0 + t0(i_source)
-        
+
         if( myrank == 0 .and. ipass == 1) then
           write(IOUT,*) '    source ',i_source,'uses t0. . . . . . = ',t0(i_source)
         endif
-        
+
       enddo
 
     else
@@ -1766,6 +1767,10 @@ do ispecperio = 1,NSPEC_PERIO
 enddo
 close(123)
 print *,'read ',NSPEC_PERIO,' elements for right periodic edge'
+print *
+
+print *,'because of periodic conditions, values computed by checkgrid() are not reliable'
+print *
 
 !---------------------------------------------------------------------------
 
@@ -3944,7 +3949,7 @@ endif
          write(IOUT,*)
          write(IOUT,*) '*** calculation of the initial plane wave ***'
          write(IOUT,*)
-         write(IOUT,*)  'To change the initial plane wave, change source_type in DATA/Par_file'
+         write(IOUT,*)  'To change the initial plane wave, change source_type in DATA/SOURCE'
          write(IOUT,*)  'and use 1 for a plane P wave, 2 for a plane SV wave, 3 for a Rayleigh wave'
          write(IOUT,*)
 
@@ -3966,11 +3971,15 @@ endif
          endif
       endif
       ! only implemented for homogeneous media therefore only 1 material supported
-      if (numat==1) then
+      numat_local = numat
+      if (numat /= 1) then
+        if (myrank == 0) write(IOUT,*) 'not possible to have several materials with a plane wave, using the first material'
+        numat_local = 1
+      endif
 
-         mu = poroelastcoef(2,1,numat)
-         lambdaplus2mu  = poroelastcoef(3,1,numat)
-         denst = density(1,numat)
+         mu = poroelastcoef(2,1,numat_local)
+         lambdaplus2mu  = poroelastcoef(3,1,numat_local)
+         denst = density(1,numat_local)
 
          cploc = sqrt(lambdaplus2mu/denst)
          csloc = sqrt(mu/denst)
@@ -4049,9 +4058,6 @@ endif
             B_plane(1)=0.d0; B_plane(2)=0.d0
             C_plane(1)=0.d0; C_plane(2)=0.d0
          endif
-      else
-         call exit_MPI('not possible to have several materials with a plane wave')
-      endif
 
       ! get minimum and maximum values of mesh coordinates
       xmin = minval(coord(1,:))
@@ -4259,7 +4265,7 @@ endif
       ! compute current time
       time = (it-1)*deltat
 
-      stf_used = 0.0
+      stf_used = 0._CUSTOM_REAL
 
       ! loop on all the sources
       do i_source=1,NSOURCE

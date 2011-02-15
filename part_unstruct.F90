@@ -63,7 +63,7 @@ module part_unstruct
   integer, dimension(:), pointer  :: adjwgt
 
   integer, dimension(:), pointer  :: adjncy
-  
+
   integer :: nnodes
   double precision, dimension(:,:), pointer  :: nodes_coords
   integer, dimension(:), pointer  :: nnodes_elmnts
@@ -75,29 +75,29 @@ module part_unstruct
   ! interface data
   integer :: ninterfaces
   integer, dimension(:), pointer  :: tab_size_interfaces, tab_interfaces
-  
+
   integer :: nelem_acoustic_surface
   integer, dimension(:,:), pointer  :: acoustic_surface
   integer :: nelem_acoustic_surface_loc
-  
+
   integer :: nelemabs
   integer, dimension(:,:), pointer  :: abs_surface
   logical, dimension(:,:), pointer  :: abs_surface_char
   integer, dimension(:), pointer  :: abs_surface_merge
   integer :: nelemabs_loc
-  
+
   integer :: nelemabs_merge
   integer, dimension(:), pointer  :: ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
        jbegin_left,jend_left,jbegin_right,jend_right
-  
+
   ! for acoustic/elastic coupled elements
   integer :: nedges_coupled
   integer, dimension(:,:), pointer  :: edges_coupled
-  
+
   ! for acoustic/poroelastic coupled elements
   integer :: nedges_acporo_coupled
   integer, dimension(:,:), pointer  :: edges_acporo_coupled
-  
+
   ! for poroelastic/elastic coupled elements
   integer :: nedges_elporo_coupled
   integer, dimension(:,:), pointer  :: edges_elporo_coupled
@@ -893,7 +893,7 @@ contains
 
           write(IIN_database,*) local_elmnt, surface(2,i), local_nodes(1), -1
         endif
-        
+
         if ( surface(2,i) == 2 ) then
           do l = glob2loc_nodes_nparts(surface(3,i)), &
                   glob2loc_nodes_nparts(surface(3,i)+1)-1
@@ -1579,5 +1579,5 @@ contains
   endif
 
   end subroutine write_fluidsolid_edges_database
-  
+
 end module part_unstruct

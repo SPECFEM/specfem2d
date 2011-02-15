@@ -43,15 +43,15 @@
 !========================================================================
 
 module source_file
-  
+
   implicit none
 
   ! source parameters
-  integer, dimension(:),pointer ::  source_type,time_function_type  
+  integer, dimension(:),pointer ::  source_type,time_function_type
   double precision, dimension(:),pointer :: xs,zs,f0,t0,angleforce, &
-    Mxx,Mzz,Mxz,factor  
+    Mxx,Mzz,Mxz,factor
   logical, dimension(:),pointer ::  source_surf
-    
+
 contains
 
   subroutine read_source_file(NSOURCE,deltat,f0_attenuation)
@@ -60,7 +60,7 @@ contains
 
   implicit none
   include "constants.h"
-  
+
   integer :: NSOURCE
   double precision :: deltat,f0_attenuation
 
@@ -83,22 +83,22 @@ contains
   allocate(Mzz(NSOURCE))
   allocate(factor(NSOURCE))
 
-  ! counts lines  
+  ! counts lines
   open(unit=IIN_SOURCE,file='DATA/SOURCE',iostat=ios,status='old',action='read')
   if(ios /= 0) stop 'error opening DATA/SOURCE file'
-  
+
   icounter = 0
   do while(ios == 0)
      read(IIN_SOURCE,"(a)",iostat=ios) dummystring
      if(ios == 0) icounter = icounter + 1
   enddo
   close(IIN_SOURCE)
-  
+
   if(mod(icounter,NLINES_PER_SOURCE) /= 0) &
     stop 'total number of lines in SOURCE file should be a multiple of NLINES_PER_SOURCE'
 
   nsources = icounter / NLINES_PER_SOURCE
-  
+
   if(nsources < 1) stop 'need at least one source in SOURCE file'
   if(nsources /= NSOURCE) &
        stop 'total number of sources read is different than declared in Par_file'
@@ -122,13 +122,13 @@ contains
     ! note: this is slightly different than in specfem2D.f90,
     !          t0 will be set outside of this next if statement, i.e. it will be set for all sources
     !          regardless of their type (it just makes a distinction between type 5 sources and the rest)
-    
+
     ! if Dirac source time function, use a very thin Gaussian instead
     ! if Heaviside source time function, use a very thin error function instead
     if(time_function_type(i_source) == 4 .or. time_function_type(i_source) == 5) then
       f0(i_source) = 1.d0 / (10.d0 * deltat)
     endif
-    
+
     ! time delay of the source in seconds, use a 20 % security margin (use 2 / f0 if error function)
     if(time_function_type(i_source)== 5) then
       t0(i_source) = 2.0d0 / f0(i_source) + t0(i_source)
@@ -160,4 +160,4 @@ contains
   end subroutine read_source_file
 
 end module source_file
-  
+
