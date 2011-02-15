@@ -1609,6 +1609,7 @@
   if(.not. initialfield) then
    f0max = -HUGEVAL
    f0min = HUGEVAL
+   write(IOUT,*) ' USER_T0 = ',USER_T0
    do i = 1,NSOURCE
     if(time_function_type(i) /= 4 .and. time_function_type(i) /= 5) then
 
