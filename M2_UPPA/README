@@ -4,9 +4,19 @@ README
 
 This default example creates an internal mesh with smooth topographic interfaces.
 
+TO RUN:
 
-To run the examples, type:
+0. Read the user manual in SPECFEM2D/doc/manual_SPECFEM2D.pdf
 
-  ./process.sh
+1. in SPECFEM2D root directory, configure, e.g., 
+   ./configure FC=gfortran
 
-in this current directory.
+2. compile:
+   make all
+
+3. cd EXAMPLES/M2_UPPA/
+
+4. execute script to run mesher and solver for the PSV case:
+   ./process.sh
+
+5. check out the output files in the local directory OUTPUT_FILES

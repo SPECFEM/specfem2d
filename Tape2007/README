@@ -2,9 +2,7 @@
 README
 ----------------------------------------------------------------------
 
-Carl Tape, 05-Jan-2010
-
-Examples for Tape-Liu-Tromp (GJI 2007)
+Example for Tape-Liu-Tromp (GJI 2007)
 
 Par_file_Tape2007_onerec
 1 source, 1 receiver
@@ -16,13 +14,27 @@ Par_file_Tape2007_132rec
 Source index: 5
 Receiver index: 1-132
 
-In Tromp2005 there is a time shift of 48 s before the source starts.
-This is not yet implemented.
-
 ---------------------------
 
-To run the examples, type:
+The examples in Tape-Liu-Tromp (GJI 2007) assume a simulation start time of t=0, and a source start time of t = t0 = 48 s. SPECFEM2D assumes that the simulation starts at t = -t0 and the source start time is t = 0. In order to generate the same time series as in Tape2007, the user must first modify USER_T0 in constants.h
 
-  ./process.sh
+TO RUN:
 
-in this current directory.
+0. Read the user manual in SPECFEM2D/doc/manual_SPECFEM2D.pdf
+
+1. in SPECFEM2D root directory, configure, e.g., 
+   ./configure FC=gfortran
+
+2. modify constants.h file, setting USER_TO = 48 s
+
+3. compile:
+   make all
+
+4. cd EXAMPLES/Tape2007/
+
+5. execute script to run mesher and solver for the SH/membrane case:
+   ./process.sh
+
+6. check out the output files in the local directory OUTPUT_FILES
+
+---------------------------

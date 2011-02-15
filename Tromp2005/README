@@ -2,19 +2,48 @@
 README
 ----------------------------------------------------------------------
 
-Examples for Tromp-Tape-Liu (GJI 2005)
+Example for Tromp-Tape-Liu (GJI 2005)
 
-The subscript s100 is the same set of simulations but scaled down in size
-by a factor of 100. This requires increasing the source frequency content
-and decreasing the time step.
+The example currently only generates the (synthetic) seismograms associated with the PSV example in Figure 7b and the SH example in Figure 2b.
 
-In Tromp2005 there is a time shift of 8 s before the source starts.
-This is not yet implemented.
+Demonstration of the kernel calculation is not yet added here.
+
+(The subscript s100 for the input files corresponds to the same set of simulations but scaled down in size by a factor of 100. This requires increasing the source frequency content and decreasing the time step; these changes are shown in the alternative files.)
 
 ---------------------------
 
-To run the examples, type:
+The examples in Tromp-Tape-Liu (GJI 2005) assume a simulation start time of t=0, and a source start time of t = t0 = 8.0 s. SPECFEM2D assumes that the simulation starts at t = -t0 and the source start time is t = 0. In order to generate the same time series as in Tromp2005, the user must first modify USER_T0 in constants.h
 
-  ./process.sh
+TO RUN:
 
-in this current directory.
+0. Read the user manual in SPECFEM2D/doc/manual_SPECFEM2D.pdf
+
+1. in SPECFEM2D root directory, configure, e.g., 
+   ./configure FC=gfortran
+
+2. modify constants.h file, setting USER_TO = 8.0 s
+
+3. compile:
+   make all
+
+4. cd EXAMPLES/Tromp2005/
+
+5. execute script to run mesher and solver for the PSV case:
+   ./process.sh
+
+6. check out the output files in the local directory OUTPUT_FILES
+
+   The seismograms (S0001.AA.BHX.semd,S0001.AA.BHZ.semd) will be similar to those in Tromp2005, Figure 7b, but with an 8-second time shift due to the difference in origin time convention.
+
+7. mv OUTPUT_FILES OUTPUT_FILES_PSV
+
+8. set p_sv = .false. in Par_file_Tromp2005 
+
+9. execute script to run mesher and solver for the SH case:
+   ./process.sh
+
+10. check out the output files in the local directory OUTPUT_FILES
+
+   The seismogram (S0001.AA.BHY.semd) will be similar to those in Tromp2005, Figure 2b, but with an 8-second time shift due to the difference in origin time convention.
+
+---------------------------
