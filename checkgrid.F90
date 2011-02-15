@@ -162,8 +162,1693 @@
   deallocate(greyscale_recv)
 #endif
 
+
 ! define percentage of smallest distance between GLL points for NGLLX points
 ! percentages were computed by calling the GLL points routine for each degree
+  call checkgrid_setup_GLLper(percent_GLL,NGLLX_MAX_STABILITY)
+
+! define color palette in random order
+  call checkgrid_setup_colorp(red,green,blue,NUM_COLORS)
+
+!---- compute parameters for the spectral elements
+
+  vpImin = HUGEVAL
+  vpImax = -HUGEVAL
+
+  if(any_elastic .or. any_poroelastic) then
+    vsmin = HUGEVAL
+    vsmax = -HUGEVAL
+  else
+    vsmin = 0
+    vsmax = 0
+  endif
+
+  if(any_poroelastic) then
+    vpIImin = HUGEVAL
+    vpIImax = -HUGEVAL
+  else
+    vpIImin = 0
+    vpIImax = 0
+  endif
+
+  densmin = HUGEVAL
+  densmax = -HUGEVAL
+
+  distance_min = HUGEVAL
+  distance_max = -HUGEVAL
+
+  courant_stability_number_max = -HUGEVAL
+
+  lambdaPImin = HUGEVAL
+  lambdaPImax = -HUGEVAL
+
+  if(any_elastic .or. any_poroelastic) then
+    lambdaSmin = HUGEVAL
+    lambdaSmax = -HUGEVAL
+  else
+    lambdaSmin = 0
+    lambdaSmax = 0
+  endif
+
+  if(any_poroelastic) then
+    lambdaPIImin = HUGEVAL
+    lambdaPIImax = -HUGEVAL
+  else
+    lambdaPIImin = 0
+    lambdaPIImax = 0
+  endif
+
+  do ispec=1,nspec
+
+    material = kmato(ispec)
+
+    if(poroelastic(ispec)) then
+
+      ! poroelastic material
+
+      phi = porosity(material)
+      tort = tortuosity(material)
+      perm = permeability(1,material)
+      ! solid properties
+      mu_s = poroelastcoef(2,1,material)
+      kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
+      denst_s = density(1,material)
+      denst = denst_s
+      ! fluid properties
+      kappa_f = poroelastcoef(1,2,material)
+      denst_f = density(2,material)
+      eta_f = poroelastcoef(2,2,material)
+      ! frame properties
+      mu_fr = poroelastcoef(2,3,material)
+      kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
+      ! Biot coefficients for the input phi
+      D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
+      H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
+      C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
+      M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
+
+      call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
+             tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,TURN_VISCATTENUATION_ON)
+
+      cpIloc = sqrt(cpIsquare)
+      cpIIloc = sqrt(cpIIsquare)
+      csloc = sqrt(cssquare)
+    else
+      mu = poroelastcoef(2,1,material)
+      lambdaplus2mu  = poroelastcoef(3,1,material)
+      denst = density(1,material)
+
+      cpIloc = sqrt(lambdaplus2mu/denst)
+      cpIIloc = 0.d0
+      csloc = sqrt(mu/denst)
+    endif
+
+    vpImax_local = -HUGEVAL
+    vpImin_local = HUGEVAL
+    vpIImax_local = -HUGEVAL
+    vpIImin_local = HUGEVAL
+    vsmin_local = HUGEVAL
+
+    distance_min_local = HUGEVAL
+    distance_max_local = -HUGEVAL
+
+    do j=1,NGLLZ
+      do i=1,NGLLX
+
+!--- if heterogeneous formulation with external velocity model
+        if(assign_external_model) then
+          cpIloc = vpext(i,j,ispec)
+          csloc = vsext(i,j,ispec)
+          denst = rhoext(i,j,ispec)
+        endif
+
+!--- compute min and max of velocity and density models
+        vpImin = min(vpImin,cpIloc)
+        vpImax = max(vpImax,cpIloc)
+
+! ignore acoustic and elastic regions with cpII = 0
+        if(cpIIloc > 0.0001d0) vpIImin = min(vpIImin,cpIIloc)
+        vpIImax = max(vpIImax,cpIIloc)
+
+! ignore fluid regions with Vs = 0
+        if(csloc > 0.0001d0) vsmin = min(vsmin,csloc)
+        vsmax = max(vsmax,csloc)
+
+        densmin = min(densmin,denst)
+        densmax = max(densmax,denst)
+
+        vpImax_local = max(vpImax_local,vpImax)
+        vpImin_local = min(vpImin_local,vpImin)
+        vpIImax_local = max(vpIImax_local,vpIImax)
+        vpIImin_local = min(vpIImin_local,vpIImin)
+        vsmin_local = min(vsmin_local,vsmin)
+
+      enddo
+    enddo
+
+! compute minimum and maximum size of edges of this grid cell
+    distance_1 = sqrt((coord(1,ibool(1,1,ispec)) - coord(1,ibool(NGLLX,1,ispec)))**2 + &
+               (coord(2,ibool(1,1,ispec)) - coord(2,ibool(NGLLX,1,ispec)))**2)
+
+    distance_2 = sqrt((coord(1,ibool(NGLLX,1,ispec)) - coord(1,ibool(NGLLX,NGLLZ,ispec)))**2 + &
+               (coord(2,ibool(NGLLX,1,ispec)) - coord(2,ibool(NGLLX,NGLLZ,ispec)))**2)
+
+    distance_3 = sqrt((coord(1,ibool(NGLLX,NGLLZ,ispec)) - coord(1,ibool(1,NGLLZ,ispec)))**2 + &
+               (coord(2,ibool(NGLLX,NGLLZ,ispec)) - coord(2,ibool(1,NGLLZ,ispec)))**2)
+
+    distance_4 = sqrt((coord(1,ibool(1,NGLLZ,ispec)) - coord(1,ibool(1,1,ispec)))**2 + &
+               (coord(2,ibool(1,NGLLZ,ispec)) - coord(2,ibool(1,1,ispec)))**2)
+
+    distance_min_local = min(distance_1,distance_2,distance_3,distance_4)
+    distance_max_local = max(distance_1,distance_2,distance_3,distance_4)
+
+    distance_min = min(distance_min,distance_min_local)
+    distance_max = max(distance_max,distance_max_local)
+
+    courant_stability_number_max = max(courant_stability_number_max, &
+                vpImax_local * deltat / (distance_min_local * percent_GLL(NGLLX)))
+
+! ignore fluid regions with Vs = 0
+    if(csloc > 0.0001d0) then
+      lambdaSmin = min(lambdaSmin,vsmin_local / (distance_max_local / (NGLLX - 1)))
+      lambdaSmax = max(lambdaSmax,vsmin_local / (distance_max_local / (NGLLX - 1)))
+    endif
+
+    lambdaPImin = min(lambdaPImin,vpImin_local / (distance_max_local / (NGLLX - 1)))
+    lambdaPImax = max(lambdaPImax,vpImin_local / (distance_max_local / (NGLLX - 1)))
+
+    if(cpIIloc > 0.0001d0) then
+      lambdaPIImin = min(lambdaPIImin,vpIImin_local / (distance_max_local / (NGLLX - 1)))
+      lambdaPIImax = max(lambdaPIImax,vpIImin_local / (distance_max_local / (NGLLX - 1)))
+    endif
+
+  enddo
+
+  any_elastic_glob = any_elastic
+  any_poroelastic_glob = any_poroelastic
+#ifdef USE_MPI
+  call MPI_ALLREDUCE (vpImin, vpImin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (vpImax, vpImax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (vpIImin, vpIImin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (vpIImax, vpIImax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (vsmin, vsmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (vsmax, vsmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (densmin, densmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (densmax, densmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (distance_min, distance_min_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (distance_max, distance_max_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (courant_stability_number_max, courant_stability_max_glob, 1, MPI_DOUBLE_PRECISION, &
+       MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (lambdaPImin, lambdaPImin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (lambdaPImax, lambdaPImax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (lambdaPIImin, lambdaPIImin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (lambdaPIImax, lambdaPIImax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (lambdaSmin, lambdaSmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (lambdaSmax, lambdaSmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (any_elastic, any_elastic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (any_poroelastic, any_poroelastic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
+  vpImin = vpImin_glob
+  vpImax = vpImax_glob
+  vpIImin = vpIImin_glob
+  vpIImax = vpIImax_glob
+  vsmin = vsmin_glob
+  vsmax = vsmax_glob
+  densmin = densmin_glob
+  densmax = densmax_glob
+  distance_min = distance_min_glob
+  distance_max = distance_max_glob
+  courant_stability_number_max = courant_stability_max_glob
+  lambdaPImin = lambdaPImin_glob
+  lambdaPImax = lambdaPImax_glob
+  lambdaPIImin = lambdaPIImin_glob
+  lambdaPIImax = lambdaPIImax_glob
+  lambdaSmin = lambdaSmin_glob
+  lambdaSmax = lambdaSmax_glob
+
+#endif
+
+  if ( myrank == 0 ) then
+    if(.not. all_anisotropic) then
+      write(IOUT,*)
+      write(IOUT,*) '********'
+      write(IOUT,*) 'Model: P (or PI) velocity min,max = ',vpImin,vpImax
+      write(IOUT,*) 'Model: PII velocity min,max = ',vpIImin,vpIImax
+      write(IOUT,*) 'Model: S velocity min,max = ',vsmin,vsmax
+      write(IOUT,*) 'Model: density min,max = ',densmin,densmax
+      write(IOUT,*) '********'
+      write(IOUT,*)
+
+      write(IOUT,*)
+      write(IOUT,*) '*********************************************'
+      write(IOUT,*) '*** Verification of simulation parameters ***'
+      write(IOUT,*) '*********************************************'
+      write(IOUT,*)
+      write(IOUT,*) '*** Max grid size = ',distance_max
+      write(IOUT,*) '*** Min grid size = ',distance_min
+      write(IOUT,*) '*** Max/min ratio = ',distance_max/distance_min
+      write(IOUT,*)
+      write(IOUT,*) '*** Max stability for P wave velocity = ',courant_stability_number_max
+      write(IOUT,*)
+    end if
+
+! only if time source is not a Dirac or Heaviside (otherwise maximum frequency of spectrum undefined)
+! and if source is not an initial field, for the same reason
+    if(.not. initialfield) then
+      f0max = -HUGEVAL
+      f0min = HUGEVAL
+      write(IOUT,*) ' USER_T0 = ',USER_T0
+      do i = 1,NSOURCE
+        if(time_function_type(i) /= 4 .and. time_function_type(i) /= 5) then
+          write(IOUT,*) ' Onset time = ',t0(i)
+          write(IOUT,*) ' Fundamental period = ',1.d0/f0(i)
+          write(IOUT,*) ' Fundamental frequency = ',f0(i)
+          ! sets min/max frequency
+          if(f0(i) > f0max) f0max = f0(i)
+          if(f0(i) < f0min) f0min = f0(i)
+          ! checks source onset time
+          if(t0(i) <= 1.d0/f0(i)) then
+            call exit_MPI('Onset time too small')
+          else
+            write(IOUT,*) ' --> onset time ok'
+          endif
+
+          if( i == NSOURCE ) then
+            write(IOUT,*) '----'
+            write(IOUT,*) ' Nb pts / lambdaPImin_fmax max = ',lambdaPImax/(2.5d0*f0min)
+            write(IOUT,*) ' Nb pts / lambdaPImin_fmax min = ',lambdaPImin/(2.5d0*f0max)
+            write(IOUT,*) '----'
+            write(IOUT,*) ' Nb pts / lambdaPIImin_fmax max = ',lambdaPIImax/(2.5d0*f0min)
+            write(IOUT,*) ' Nb pts / lambdaPIImin_fmax min = ',lambdaPIImin/(2.5d0*f0max)
+            write(IOUT,*) '----'
+            write(IOUT,*) ' Nb pts / lambdaSmin_fmax max = ',lambdaSmax/(2.5d0*f0min)
+            write(IOUT,*) ' Nb pts / lambdaSmin_fmax min = ',lambdaSmin/(2.5d0*f0max)
+            write(IOUT,*) '----'
+          endif
+
+        endif
+      enddo
+    endif
+  endif
+
+!
+!--------------------------------------------------------------------------------
+!
+
+! A4 or US letter paper
+  if(US_LETTER) then
+    usoffset = 1.75d0
+    sizex = 27.94d0
+    sizez = 21.59d0
+  else
+    usoffset = 0.d0
+    sizex = 29.7d0
+    sizez = 21.d0
+  endif
+
+! height of domain numbers in centimeters
+  height = 0.25d0
+
+! get minimum and maximum values of mesh coordinates
+  xmin = minval(coord(1,:))
+  zmin = minval(coord(2,:))
+  xmax = maxval(coord(1,:))
+  zmax = maxval(coord(2,:))
+
+#ifdef USE_MPI
+  call MPI_ALLREDUCE (xmin, xmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (xmax, xmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (zmin, zmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (zmax, zmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  xmin = xmin_glob
+  xmax = xmax_glob
+  zmin = zmin_glob
+  zmax = zmax_glob
+
+#endif
+
+! ratio of physical page size/size of the domain meshed
+  ratio_page = min(rpercentz*sizez/(zmax-zmin),rpercentx*sizex/(xmax-xmin)) / 100.d0
+
+
+  if (myrank == 0) then
+
+    write(IOUT,*)
+    write(IOUT,*) 'Creating PostScript file with stability condition'
+
+!
+!---- open PostScript file
+!
+    open(unit=24,file='OUTPUT_FILES/mesh_stability.ps',status='unknown')
+
+!
+!---- write PostScript header
+!
+    write(24,10) simulation_title
+    write(24,*) '/CM {28.5 mul} def'
+    write(24,*) '/LR {rlineto} def'
+    write(24,*) '/LT {lineto} def'
+    write(24,*) '/L {lineto} def'
+    write(24,*) '/MR {rmoveto} def'
+    write(24,*) '/MV {moveto} def'
+    write(24,*) '/M {moveto} def'
+    write(24,*) '/ST {stroke} def'
+    write(24,*) '/CP {closepath} def'
+    write(24,*) '/RG {setrgbcolor} def'
+    write(24,*) '/GF {gsave fill grestore} def'
+    write(24,*) '% different useful symbols'
+    write(24,*) '/Point {2 0 360 arc CP 0 setgray fill} def'
+    write(24,*) '/VDot {-0.75 -1.5 MR 1.5 0 LR 0 3. LR -1.5 0 LR'
+    write(24,*) 'CP fill} def'
+    write(24,*) '/HDot {-1.5 -0.75 MR 3. 0 LR 0 1.5 LR -3. 0 LR'
+    write(24,*) 'CP fill} def'
+    write(24,*) '/Cross {gsave 0.05 CM setlinewidth'
+    write(24,*) 'gsave 3 3 MR -6. -6. LR ST grestore'
+    write(24,*) 'gsave 3 -3 MR -6. 6. LR ST grestore'
+    write(24,*) '0.01 CM setlinewidth} def'
+    write(24,*) '/SmallLine {MV 0.07 CM 0 rlineto} def'
+    write(24,*) '/Diamond {gsave 0.05 CM setlinewidth 0 4.2 MR'
+    write(24,*) '-3 -4.2 LR 3 -4.2 LR 3 4.2 LR CP ST'
+    write(24,*) 'grestore 0.01 CM setlinewidth} def'
+    write(24,*) '%'
+    write(24,*) '% macro to draw the contour of the elements'
+    write(24,*) '/CO {M counttomark 2 idiv {L} repeat cleartomark CP} def'
+    write(24,*) '%'
+    write(24,*) '.01 CM setlinewidth'
+    write(24,*) '/Times-Roman findfont'
+    write(24,*) '.35 CM scalefont setfont'
+    write(24,*) '%'
+    write(24,*) '/vshift ',-height/2,' CM def'
+    write(24,*) '/Rshow { currentpoint stroke MV'
+    write(24,*) 'dup stringwidth pop neg vshift MR show } def'
+    write(24,*) '/Cshow { currentpoint stroke MV'
+    write(24,*) 'dup stringwidth pop -2 div vshift MR show } def'
+    write(24,*) '/fN {/Helvetica-Bold findfont ',height,' CM scalefont setfont} def'
+    write(24,*) '%'
+    write(24,*) 'gsave newpath 90 rotate'
+    write(24,*) '0 ',-sizez,' CM translate 1. 1. scale'
+    write(24,*) '%'
+
+    !
+    !--- write captions of PostScript figure
+    !
+    write(24,*) '0 setgray'
+    write(24,*) '/Times-Roman findfont'
+    write(24,*) '.5 CM scalefont setfont'
+
+    write(24,*) '%'
+    write(24,*) '/Times-Roman findfont'
+    write(24,*) '.6 CM scalefont setfont'
+    write(24,*) '.4 .9 .9 setrgbcolor'
+    write(24,*) '11 CM 1.1 CM MV'
+    write(24,*) '(X axis) show'
+    write(24,*) '%'
+    write(24,*) '1.4 CM 9.5 CM MV'
+    write(24,*) 'currentpoint gsave translate 90 rotate 0 0 moveto'
+    write(24,*) '(Z axis) show'
+    write(24,*) 'grestore'
+    write(24,*) '%'
+    write(24,*) '/Times-Roman findfont'
+    write(24,*) '.7 CM scalefont setfont'
+    write(24,*) '.8 0 .8 setrgbcolor'
+    write(24,*) '24.35 CM 18.9 CM MV'
+    write(24,*) usoffset,' CM 2 div neg 0 MR'
+    write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
+    write(24,*) '(Mesh stability condition \(red = bad\)) show'
+    write(24,*) 'grestore'
+    write(24,*) '25.35 CM 18.9 CM MV'
+    write(24,*) usoffset,' CM 2 div neg 0 MR'
+    write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
+    write(24,*) '(',simulation_title,') show'
+    write(24,*) 'grestore'
+    write(24,*) '26.45 CM 18.9 CM MV'
+    write(24,*) usoffset,' CM 2 div neg 0 MR'
+    write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
+    write(24,*) '(2D Spectral Element Method) show'
+    write(24,*) 'grestore'
+
+    write(24,*) '%'
+    write(24,*) '1 1 scale'
+    write(24,*) '%'
+
+    !
+    !---- draw the spectral element mesh
+    !
+    write(24,*) '%'
+    write(24,*) '% spectral element mesh'
+    write(24,*) '%'
+    write(24,*) '0 setgray'
+
+    num_ispec = 0
+  endif
+
+  do ispec = 1, nspec
+    if ( myrank == 0 ) then
+      num_ispec = num_ispec + 1
+      write(24,*) '% elem ',num_ispec
+    endif
+
+    do i=1,pointsdisp
+      do j=1,pointsdisp
+        xinterp(i,j) = 0.d0
+        zinterp(i,j) = 0.d0
+        do in = 1,ngnod
+          nnum = knods(in,ispec)
+          xinterp(i,j) = xinterp(i,j) + shapeint(in,i,j)*coorg(1,nnum)
+          zinterp(i,j) = zinterp(i,j) + shapeint(in,i,j)*coorg(2,nnum)
+        enddo
+      enddo
+    enddo
+
+    is = 1
+    ir = 1
+    x1 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+    z1 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+    x1 = x1 * centim
+    z1 = z1 * centim
+    if ( myrank == 0 ) then
+      write(24,*) 'mark'
+      write(24,681) x1,z1
+    else
+      coorg_send(1,(ispec-1)*5+1) = x1
+      coorg_send(2,(ispec-1)*5+1) = z1
+    endif
+
+    ! draw straight lines if elements have 4 nodes
+
+    ir=pointsdisp
+    x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+    z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+    x2 = x2 * centim
+    z2 = z2 * centim
+    if ( myrank == 0 ) then
+      write(24,681) x2,z2
+    else
+      coorg_send(1,(ispec-1)*5+2) = x2
+      coorg_send(2,(ispec-1)*5+2) = z2
+    endif
+
+    ir=pointsdisp
+    is=pointsdisp
+    x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+    z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+    x2 = x2 * centim
+    z2 = z2 * centim
+    if ( myrank == 0 ) then
+      write(24,681) x2,z2
+    else
+      coorg_send(1,(ispec-1)*5+3) = x2
+      coorg_send(2,(ispec-1)*5+3) = z2
+    endif
+
+    is=pointsdisp
+    ir=1
+    x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+    z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+    x2 = x2 * centim
+    z2 = z2 * centim
+    if ( myrank == 0 ) then
+      write(24,681) x2,z2
+    else
+      coorg_send(1,(ispec-1)*5+4) = x2
+      coorg_send(2,(ispec-1)*5+4) = z2
+    endif
+
+    ir=1
+    is=2
+    x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+    z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+    x2 = x2 * centim
+    z2 = z2 * centim
+    if ( myrank == 0 ) then
+      write(24,681) x2,z2
+      write(24,*) 'CO'
+    else
+      coorg_send(1,(ispec-1)*5+5) = x2
+      coorg_send(2,(ispec-1)*5+5) = z2
+    endif
+
+    material = kmato(ispec)
+
+    if(poroelastic(ispec)) then
+    
+      ! poroelastic material
+      
+      phi=porosity(material)
+      tort=tortuosity(material)
+      perm=permeability(1,material)
+      ! solid properties
+      mu_s = poroelastcoef(2,1,material)
+      kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
+      denst_s = density(1,material)
+      denst = denst_s
+      ! fluid properties
+      kappa_f = poroelastcoef(1,2,material)
+      denst_f = density(2,material)
+      eta_f = poroelastcoef(2,2,material)
+      ! frame properties
+      mu_fr = poroelastcoef(2,3,material)
+      kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
+      ! Biot coefficients for the input phi
+      D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
+      H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
+      C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
+      M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
+
+      call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
+           tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,TURN_VISCATTENUATION_ON)
+
+      cpIloc = sqrt(cpIsquare)
+    else
+      lambdaplus2mu  = poroelastcoef(3,1,material)
+      denst = density(1,material)
+
+      cpIloc = sqrt(lambdaplus2mu/denst)
+    endif
+
+    vpImax_local = -HUGEVAL
+
+    distance_min_local = HUGEVAL
+    distance_max_local = -HUGEVAL
+
+    do j=1,NGLLZ
+      do i=1,NGLLX
+
+        !--- if heterogeneous formulation with external velocity model
+        if(assign_external_model) then
+          cpIloc = vpext(i,j,ispec)
+          denst = rhoext(i,j,ispec)
+        endif
+
+        vpImax_local = max(vpImax_local,cpIloc)
+
+      enddo
+    enddo
+
+! compute minimum and maximum size of edges of this grid cell
+    distance_1 = sqrt((coord(1,ibool(1,1,ispec)) - coord(1,ibool(NGLLX,1,ispec)))**2 + &
+             (coord(2,ibool(1,1,ispec)) - coord(2,ibool(NGLLX,1,ispec)))**2)
+
+    distance_2 = sqrt((coord(1,ibool(NGLLX,1,ispec)) - coord(1,ibool(NGLLX,NGLLZ,ispec)))**2 + &
+             (coord(2,ibool(NGLLX,1,ispec)) - coord(2,ibool(NGLLX,NGLLZ,ispec)))**2)
+
+    distance_3 = sqrt((coord(1,ibool(NGLLX,NGLLZ,ispec)) - coord(1,ibool(1,NGLLZ,ispec)))**2 + &
+             (coord(2,ibool(NGLLX,NGLLZ,ispec)) - coord(2,ibool(1,NGLLZ,ispec)))**2)
+
+    distance_4 = sqrt((coord(1,ibool(1,NGLLZ,ispec)) - coord(1,ibool(1,1,ispec)))**2 + &
+             (coord(2,ibool(1,NGLLZ,ispec)) - coord(2,ibool(1,1,ispec)))**2)
+
+    distance_min_local = min(distance_1,distance_2,distance_3,distance_4)
+    distance_max_local = max(distance_1,distance_2,distance_3,distance_4)
+
+    distance_min = min(distance_min,distance_min_local)
+    distance_max = max(distance_max,distance_max_local)
+
+    courant_stability_number = vpImax_local * deltat / (distance_min_local * percent_GLL(NGLLX))
+
+! display bad elements that are above 80% of the threshold
+    if(courant_stability_number >= 0.80 * courant_stability_number_max) then
+      if ( myrank == 0 ) then
+        write(24,*) '1 0 0 RG GF 0 setgray ST'
+      else
+        RGB_send(ispec) = 1
+      endif
+    else
+! do not color the elements if below the threshold
+      if ( myrank == 0 ) then
+        write(24,*) 'ST'
+      else
+        RGB_send(ispec) = 0
+      endif
+    endif
+
+  enddo ! end of loop on all the spectral elements
+
+#ifdef USE_MPI
+  if (myrank == 0 ) then
+
+    do iproc = 1, nproc-1
+      call MPI_RECV (nspec_recv, 1, MPI_INTEGER, &
+              iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+      allocate(coorg_recv(2,nspec_recv*5))
+      allocate(RGB_recv(nspec_recv))
+      call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, &
+              iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+      call MPI_RECV (RGB_recv(1), nspec_recv, MPI_INTEGER, &
+              iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+
+      do ispec = 1, nspec_recv
+        num_ispec = num_ispec + 1
+        write(24,*) '% elem ',num_ispec
+        write(24,*) 'mark'
+        write(24,681) coorg_recv(1,(ispec-1)*5+1), coorg_recv(2,(ispec-1)*5+1)
+        write(24,681) coorg_recv(1,(ispec-1)*5+2), coorg_recv(2,(ispec-1)*5+2)
+        write(24,681) coorg_recv(1,(ispec-1)*5+3), coorg_recv(2,(ispec-1)*5+3)
+        write(24,681) coorg_recv(1,(ispec-1)*5+4), coorg_recv(2,(ispec-1)*5+4)
+        write(24,681) coorg_recv(1,(ispec-1)*5+5), coorg_recv(2,(ispec-1)*5+5)
+        write(24,*) 'CO'
+        if ( RGB_recv(ispec)  == 1) then
+          write(24,*) '1 0 0 RG GF 0 setgray ST'
+        else
+          write(24,*) 'ST'
+        endif
+      enddo
+      deallocate(coorg_recv)
+      deallocate(RGB_recv)
+
+    enddo
+
+  else
+    call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
+    call MPI_SEND (coorg_send, nspec*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
+    call MPI_SEND (RGB_send, nspec, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
+  endif
+
+#endif
+
+  if ( myrank == 0 ) then
+    write(24,*) '%'
+    write(24,*) 'grestore'
+    write(24,*) 'showpage'
+
+    close(24)
+
+    write(IOUT,*) 'End of creation of PostScript file with stability condition'
+  endif
+
+!
+!--------------------------------------------------------------------------------
+!
+
+  if (myrank == 0) then
+
+    write(IOUT,*)
+    write(IOUT,*) 'Creating PostScript file with mesh dispersion'
+
+!
+!---- open PostScript file
+!
+    if(any_elastic_glob .or. any_poroelastic) then
+      open(unit=24,file='OUTPUT_FILES/mesh_S_wave_dispersion.ps',status='unknown')
+    else
+      open(unit=24,file='OUTPUT_FILES/mesh_P_wave_dispersion.ps',status='unknown')
+    endif
+
+!
+!---- write PostScript header
+!
+  write(24,10) simulation_title
+  write(24,*) '/CM {28.5 mul} def'
+  write(24,*) '/LR {rlineto} def'
+  write(24,*) '/LT {lineto} def'
+  write(24,*) '/L {lineto} def'
+  write(24,*) '/MR {rmoveto} def'
+  write(24,*) '/MV {moveto} def'
+  write(24,*) '/M {moveto} def'
+  write(24,*) '/ST {stroke} def'
+  write(24,*) '/CP {closepath} def'
+  write(24,*) '/RG {setrgbcolor} def'
+  write(24,*) '/GF {gsave fill grestore} def'
+  write(24,*) '% different useful symbols'
+  write(24,*) '/Point {2 0 360 arc CP 0 setgray fill} def'
+  write(24,*) '/VDot {-0.75 -1.5 MR 1.5 0 LR 0 3. LR -1.5 0 LR'
+  write(24,*) 'CP fill} def'
+  write(24,*) '/HDot {-1.5 -0.75 MR 3. 0 LR 0 1.5 LR -3. 0 LR'
+  write(24,*) 'CP fill} def'
+  write(24,*) '/Cross {gsave 0.05 CM setlinewidth'
+  write(24,*) 'gsave 3 3 MR -6. -6. LR ST grestore'
+  write(24,*) 'gsave 3 -3 MR -6. 6. LR ST grestore'
+  write(24,*) '0.01 CM setlinewidth} def'
+  write(24,*) '/SmallLine {MV 0.07 CM 0 rlineto} def'
+  write(24,*) '/Diamond {gsave 0.05 CM setlinewidth 0 4.2 MR'
+  write(24,*) '-3 -4.2 LR 3 -4.2 LR 3 4.2 LR CP ST'
+  write(24,*) 'grestore 0.01 CM setlinewidth} def'
+  write(24,*) '%'
+  write(24,*) '% macro to draw the contour of the elements'
+  write(24,*) '/CO {M counttomark 2 idiv {L} repeat cleartomark CP} def'
+  write(24,*) '%'
+  write(24,*) '.01 CM setlinewidth'
+  write(24,*) '/Times-Roman findfont'
+  write(24,*) '.35 CM scalefont setfont'
+  write(24,*) '%'
+  write(24,*) '/vshift ',-height/2,' CM def'
+  write(24,*) '/Rshow { currentpoint stroke MV'
+  write(24,*) 'dup stringwidth pop neg vshift MR show } def'
+  write(24,*) '/Cshow { currentpoint stroke MV'
+  write(24,*) 'dup stringwidth pop -2 div vshift MR show } def'
+  write(24,*) '/fN {/Helvetica-Bold findfont ',height,' CM scalefont setfont} def'
+  write(24,*) '%'
+  write(24,*) 'gsave newpath 90 rotate'
+  write(24,*) '0 ',-sizez,' CM translate 1. 1. scale'
+  write(24,*) '%'
+
+!
+!--- write captions of PostScript figure
+!
+  write(24,*) '0 setgray'
+  write(24,*) '/Times-Roman findfont'
+  write(24,*) '.5 CM scalefont setfont'
+
+  write(24,*) '%'
+  write(24,*) '/Times-Roman findfont'
+  write(24,*) '.6 CM scalefont setfont'
+  write(24,*) '.4 .9 .9 setrgbcolor'
+  write(24,*) '11 CM 1.1 CM MV'
+  write(24,*) '(X axis) show'
+  write(24,*) '%'
+  write(24,*) '1.4 CM 9.5 CM MV'
+  write(24,*) 'currentpoint gsave translate 90 rotate 0 0 moveto'
+  write(24,*) '(Z axis) show'
+  write(24,*) 'grestore'
+  write(24,*) '%'
+  write(24,*) '/Times-Roman findfont'
+  write(24,*) '.7 CM scalefont setfont'
+  write(24,*) '.8 0 .8 setrgbcolor'
+  write(24,*) '24.35 CM 18.9 CM MV'
+  write(24,*) usoffset,' CM 2 div neg 0 MR'
+  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
+  if(any_elastic_glob) then
+    write(24,*) '(Mesh elastic S-wave dispersion \(red = good, blue = bad\)) show'
+  else
+    write(24,*) '(Mesh acoustic P-wave dispersion \(red = good, blue = bad\)) show'
+  endif
+  write(24,*) 'grestore'
+  write(24,*) '25.35 CM 18.9 CM MV'
+  write(24,*) usoffset,' CM 2 div neg 0 MR'
+  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
+  write(24,*) '(',simulation_title,') show'
+  write(24,*) 'grestore'
+  write(24,*) '26.45 CM 18.9 CM MV'
+  write(24,*) usoffset,' CM 2 div neg 0 MR'
+  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
+  write(24,*) '(2D Spectral Element Method) show'
+  write(24,*) 'grestore'
+
+  write(24,*) '%'
+  write(24,*) '1 1 scale'
+  write(24,*) '%'
+
+!
+!---- draw the spectral element mesh
+!
+  write(24,*) '%'
+  write(24,*) '% spectral element mesh'
+  write(24,*) '%'
+  write(24,*) '0 setgray'
+
+  num_ispec = 0
+  endif
+
+  do ispec = 1, nspec
+     if ( myrank == 0 ) then
+        num_ispec = num_ispec + 1
+        write(24,*) '% elem ',num_ispec
+     endif
+
+  do i=1,pointsdisp
+  do j=1,pointsdisp
+  xinterp(i,j) = 0.d0
+  zinterp(i,j) = 0.d0
+  do in = 1,ngnod
+    nnum = knods(in,ispec)
+      xinterp(i,j) = xinterp(i,j) + shapeint(in,i,j)*coorg(1,nnum)
+      zinterp(i,j) = zinterp(i,j) + shapeint(in,i,j)*coorg(2,nnum)
+  enddo
+  enddo
+  enddo
+
+  is = 1
+  ir = 1
+  x1 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z1 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+  x1 = x1 * centim
+  z1 = z1 * centim
+  if ( myrank == 0 ) then
+     write(24,*) 'mark'
+     write(24,681) x1,z1
+  else
+     coorg_send(1,(ispec-1)*5+1) = x1
+     coorg_send(2,(ispec-1)*5+1) = z1
+  endif
+
+! draw straight lines if elements have 4 nodes
+
+  ir=pointsdisp
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+  x2 = x2 * centim
+  z2 = z2 * centim
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     coorg_send(1,(ispec-1)*5+2) = x2
+     coorg_send(2,(ispec-1)*5+2) = z2
+  endif
+
+  ir=pointsdisp
+  is=pointsdisp
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+  x2 = x2 * centim
+  z2 = z2 * centim
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     coorg_send(1,(ispec-1)*5+3) = x2
+     coorg_send(2,(ispec-1)*5+3) = z2
+  endif
+
+  is=pointsdisp
+  ir=1
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+  x2 = x2 * centim
+  z2 = z2 * centim
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     coorg_send(1,(ispec-1)*5+4) = x2
+     coorg_send(2,(ispec-1)*5+4) = z2
+  endif
+
+  ir=1
+  is=2
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+  x2 = x2 * centim
+  z2 = z2 * centim
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+     write(24,*) 'CO'
+  else
+     coorg_send(1,(ispec-1)*5+5) = x2
+     coorg_send(2,(ispec-1)*5+5) = z2
+  endif
+
+    material = kmato(ispec)
+
+   if(poroelastic(ispec)) then
+    phi = porosity(material)
+    tort = tortuosity(material)
+    perm = permeability(1,material)
+!solid properties
+    mu_s = poroelastcoef(2,1,material)
+    kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
+    denst_s = density(1,material)
+    denst = denst_s
+!fluid properties
+    kappa_f = poroelastcoef(1,2,material)
+    denst_f = density(2,material)
+    eta_f = poroelastcoef(2,2,material)
+!frame properties
+    mu_fr = poroelastcoef(2,3,material)
+    kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
+!Biot coefficients for the input phi
+      D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
+      H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
+      C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
+      M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
+
+    call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
+             tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,TURN_VISCATTENUATION_ON)
+
+    cpIloc = sqrt(cpIsquare)
+    csloc = sqrt(cssquare)
+   else
+    mu = poroelastcoef(2,1,material)
+    lambdaplus2mu  = poroelastcoef(3,1,material)
+    denst = density(1,material)
+
+    cpIloc = sqrt(lambdaplus2mu/denst)
+    csloc = sqrt(mu/denst)
+   endif
+
+  vpImax_local = -HUGEVAL
+  vpImin_local = HUGEVAL
+  vsmin_local = HUGEVAL
+
+  distance_min_local = HUGEVAL
+  distance_max_local = -HUGEVAL
+
+  do j=1,NGLLZ
+    do i=1,NGLLX
+
+!--- if heterogeneous formulation with external velocity model
+    if(assign_external_model) then
+      cpIloc = vpext(i,j,ispec)
+      csloc = vsext(i,j,ispec)
+      denst = rhoext(i,j,ispec)
+    endif
+
+    vpImax_local = max(vpImax_local,cpIloc)
+    vpImin_local = min(vpImin_local,cpIloc)
+    vsmin_local = min(vsmin_local,csloc)
+
+    enddo
+  enddo
+
+! compute minimum and maximum size of edges of this grid cell
+  distance_1 = sqrt((coord(1,ibool(1,1,ispec)) - coord(1,ibool(NGLLX,1,ispec)))**2 + &
+               (coord(2,ibool(1,1,ispec)) - coord(2,ibool(NGLLX,1,ispec)))**2)
+
+  distance_2 = sqrt((coord(1,ibool(NGLLX,1,ispec)) - coord(1,ibool(NGLLX,NGLLZ,ispec)))**2 + &
+               (coord(2,ibool(NGLLX,1,ispec)) - coord(2,ibool(NGLLX,NGLLZ,ispec)))**2)
+
+  distance_3 = sqrt((coord(1,ibool(NGLLX,NGLLZ,ispec)) - coord(1,ibool(1,NGLLZ,ispec)))**2 + &
+               (coord(2,ibool(NGLLX,NGLLZ,ispec)) - coord(2,ibool(1,NGLLZ,ispec)))**2)
+
+  distance_4 = sqrt((coord(1,ibool(1,NGLLZ,ispec)) - coord(1,ibool(1,1,ispec)))**2 + &
+               (coord(2,ibool(1,NGLLZ,ispec)) - coord(2,ibool(1,1,ispec)))**2)
+
+  distance_min_local = min(distance_1,distance_2,distance_3,distance_4)
+  distance_max_local = max(distance_1,distance_2,distance_3,distance_4)
+
+  distance_min = min(distance_min,distance_min_local)
+  distance_max = max(distance_max,distance_max_local)
+
+! display mesh dispersion for S waves if there is at least one elastic element in the mesh
+  if(any_elastic_glob .or. any_poroelastic_glob) then
+
+! ignore fluid regions with Vs = 0
+  if(csloc > 0.0001d0) then
+
+    lambdaS_local = vsmin_local / (distance_max_local / (NGLLX - 1))
+
+! display very good elements that are above 80% of the threshold in red
+    if(lambdaS_local >= 0.80 * lambdaSmax) then
+       if ( myrank == 0 ) then
+          write(24,*) '1 0 0 RG GF 0 setgray ST'
+       else
+          RGB_send(ispec) = 1
+       endif
+
+! display bad elements that are below 120% of the threshold in blue
+    else if(lambdaS_local <= 1.20 * lambdaSmin) then
+       if ( myrank == 0 ) then
+          write(24,*) '0 0 1 RG GF 0 setgray ST'
+       else
+          RGB_send(ispec) = 3
+       endif
+
+    else
+! do not color the elements if not close to the threshold
+       if ( myrank == 0 ) then
+          write(24,*) 'ST'
+       else
+          RGB_send(ispec) = 0
+       endif
+    endif
+
+  else
+! do not color the elements if S-wave velocity undefined
+     if ( myrank == 0 ) then
+        write(24,*) 'ST'
+     else
+        RGB_send(ispec) = 0
+     endif
+  endif
+
+! display mesh dispersion for P waves if there is no elastic element in the mesh
+  else
+
+    lambdaPI_local = vpImin_local / (distance_max_local / (NGLLX - 1))
+
+! display very good elements that are above 80% of the threshold in red
+    if(lambdaPI_local >= 0.80 * lambdaPImax) then
+       if ( myrank == 0 ) then
+          write(24,*) '1 0 0 RG GF 0 setgray ST'
+       else
+          RGB_send(ispec) = 1
+       endif
+
+! display bad elements that are below 120% of the threshold in blue
+    else if(lambdaPI_local <= 1.20 * lambdaPImin) then
+       if ( myrank == 0 ) then
+          write(24,*) '0 0 1 RG GF 0 setgray ST'
+       else
+          RGB_send(ispec) = 3
+       endif
+
+    else
+! do not color the elements if not close to the threshold
+       if ( myrank == 0 ) then
+          write(24,*) 'ST'
+       else
+          RGB_send(ispec) = 0
+       endif
+    endif
+
+  endif
+
+  enddo ! end of loop on all the spectral elements
+
+#ifdef USE_MPI
+  if (myrank == 0 ) then
+
+     do iproc = 1, nproc-1
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, &
+            iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+        allocate(coorg_recv(2,nspec_recv*5))
+        allocate(RGB_recv(nspec_recv))
+        call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, &
+            iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+        call MPI_RECV (RGB_recv(1), nspec_recv, MPI_INTEGER, &
+            iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+
+        do ispec = 1, nspec_recv
+           num_ispec = num_ispec + 1
+           write(24,*) '% elem ',num_ispec
+           write(24,*) 'mark'
+           write(24,681) coorg_recv(1,(ispec-1)*5+1), coorg_recv(2,(ispec-1)*5+1)
+           write(24,681) coorg_recv(1,(ispec-1)*5+2), coorg_recv(2,(ispec-1)*5+2)
+           write(24,681) coorg_recv(1,(ispec-1)*5+3), coorg_recv(2,(ispec-1)*5+3)
+           write(24,681) coorg_recv(1,(ispec-1)*5+4), coorg_recv(2,(ispec-1)*5+4)
+           write(24,681) coorg_recv(1,(ispec-1)*5+5), coorg_recv(2,(ispec-1)*5+5)
+           write(24,*) 'CO'
+           if ( RGB_recv(ispec)  == 1) then
+              write(24,*) '1 0 0 RG GF 0 setgray ST'
+           endif
+           if ( RGB_recv(ispec)  == 3) then
+              write(24,*) '0 0 1 RG GF 0 setgray ST'
+           endif
+           if ( RGB_recv(ispec)  == 0) then
+              write(24,*) 'ST'
+           endif
+
+        enddo
+        deallocate(coorg_recv)
+        deallocate(RGB_recv)
+
+     enddo
+
+  else
+     call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
+     call MPI_SEND (coorg_send, nspec*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
+     call MPI_SEND (RGB_send, nspec, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
+
+  endif
+#endif
+
+  if ( myrank == 0 ) then
+     write(24,*) '%'
+     write(24,*) 'grestore'
+     write(24,*) 'showpage'
+
+     close(24)
+
+     write(IOUT,*) 'End of creation of PostScript file with mesh dispersion'
+
+  endif
+
+!
+!--------------------------------------------------------------------------------
+!
+
+  if (myrank == 0) then
+
+    write(IOUT,*)
+    write(IOUT,*) 'Creating PostScript file with velocity model'
+
+!
+!---- open PostScript file
+!
+  open(unit=24,file='OUTPUT_FILES/P_velocity_model.ps',status='unknown')
+
+!
+!---- write PostScript header
+!
+  write(24,10) simulation_title
+  write(24,*) '/CM {28.5 mul} def'
+  write(24,*) '/LR {rlineto} def'
+  write(24,*) '/LT {lineto} def'
+  write(24,*) '/L {lineto} def'
+  write(24,*) '/MR {rmoveto} def'
+  write(24,*) '/MV {moveto} def'
+  write(24,*) '/M {moveto} def'
+  write(24,*) '/ST {stroke} def'
+  write(24,*) '/CP {closepath} def'
+  write(24,*) '/RG {setrgbcolor} def'
+  write(24,*) '/GF {gsave fill grestore} def'
+  write(24,*) '% different useful symbols'
+  write(24,*) '/Point {2 0 360 arc CP 0 setgray fill} def'
+  write(24,*) '/VDot {-0.75 -1.5 MR 1.5 0 LR 0 3. LR -1.5 0 LR'
+  write(24,*) 'CP fill} def'
+  write(24,*) '/HDot {-1.5 -0.75 MR 3. 0 LR 0 1.5 LR -3. 0 LR'
+  write(24,*) 'CP fill} def'
+  write(24,*) '/Cross {gsave 0.05 CM setlinewidth'
+  write(24,*) 'gsave 3 3 MR -6. -6. LR ST grestore'
+  write(24,*) 'gsave 3 -3 MR -6. 6. LR ST grestore'
+  write(24,*) '0.01 CM setlinewidth} def'
+  write(24,*) '/SmallLine {MV 0.07 CM 0 rlineto} def'
+  write(24,*) '/Diamond {gsave 0.05 CM setlinewidth 0 4.2 MR'
+  write(24,*) '-3 -4.2 LR 3 -4.2 LR 3 4.2 LR CP ST'
+  write(24,*) 'grestore 0.01 CM setlinewidth} def'
+  write(24,*) '%'
+  write(24,*) '% macro to draw the contour of the elements'
+  write(24,*) '/CO {M counttomark 2 idiv {L} repeat cleartomark CP} def'
+  write(24,*) '%'
+  write(24,*) '.01 CM setlinewidth'
+  write(24,*) '/Times-Roman findfont'
+  write(24,*) '.35 CM scalefont setfont'
+  write(24,*) '%'
+  write(24,*) '/vshift ',-height/2,' CM def'
+  write(24,*) '/Rshow { currentpoint stroke MV'
+  write(24,*) 'dup stringwidth pop neg vshift MR show } def'
+  write(24,*) '/Cshow { currentpoint stroke MV'
+  write(24,*) 'dup stringwidth pop -2 div vshift MR show } def'
+  write(24,*) '/fN {/Helvetica-Bold findfont ',height,' CM scalefont setfont} def'
+  write(24,*) '%'
+  write(24,*) 'gsave newpath 90 rotate'
+  write(24,*) '0 ',-sizez,' CM translate 1. 1. scale'
+  write(24,*) '%'
+
+!
+!--- write captions of PostScript figure
+!
+  write(24,*) '0 setgray'
+  write(24,*) '/Times-Roman findfont'
+  write(24,*) '.5 CM scalefont setfont'
+
+  write(24,*) '%'
+  write(24,*) '/Times-Roman findfont'
+  write(24,*) '.6 CM scalefont setfont'
+  write(24,*) '.4 .9 .9 setrgbcolor'
+  write(24,*) '11 CM 1.1 CM MV'
+  write(24,*) '(X axis) show'
+  write(24,*) '%'
+  write(24,*) '1.4 CM 9.5 CM MV'
+  write(24,*) 'currentpoint gsave translate 90 rotate 0 0 moveto'
+  write(24,*) '(Z axis) show'
+  write(24,*) 'grestore'
+  write(24,*) '%'
+  write(24,*) '/Times-Roman findfont'
+  write(24,*) '.7 CM scalefont setfont'
+  write(24,*) '.8 0 .8 setrgbcolor'
+  write(24,*) '24.35 CM 18.9 CM MV'
+  write(24,*) usoffset,' CM 2 div neg 0 MR'
+  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
+  write(24,*) '(P-velocity model \(dark = fast, light = slow\)) show'
+  write(24,*) 'grestore'
+  write(24,*) '25.35 CM 18.9 CM MV'
+  write(24,*) usoffset,' CM 2 div neg 0 MR'
+  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
+  write(24,*) '(',simulation_title,') show'
+  write(24,*) 'grestore'
+  write(24,*) '26.45 CM 18.9 CM MV'
+  write(24,*) usoffset,' CM 2 div neg 0 MR'
+  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
+  write(24,*) '(2D Spectral Element Method) show'
+  write(24,*) 'grestore'
+
+  write(24,*) '%'
+  write(24,*) '1 1 scale'
+  write(24,*) '%'
+
+!
+!---- draw the spectral element mesh
+!
+  write(24,*) '%'
+  write(24,*) '% spectral element mesh'
+  write(24,*) '%'
+  write(24,*) '0 setgray'
+
+  num_ispec = 0
+endif
+
+  do ispec = 1, UPPER_LIMIT_DISPLAY
+     if ( myrank == 0 ) then
+        num_ispec = num_ispec + 1
+        write(24,*) '% elem ',num_ispec
+     endif
+  do i=1,pointsdisp
+  do j=1,pointsdisp
+  xinterp(i,j) = 0.d0
+  zinterp(i,j) = 0.d0
+  do in = 1,ngnod
+    nnum = knods(in,ispec)
+      xinterp(i,j) = xinterp(i,j) + shapeint(in,i,j)*coorg(1,nnum)
+      zinterp(i,j) = zinterp(i,j) + shapeint(in,i,j)*coorg(2,nnum)
+  enddo
+  enddo
+  enddo
+
+  is = 1
+  ir = 1
+  x1 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z1 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+  x1 = x1 * centim
+  z1 = z1 * centim
+  if ( myrank == 0 ) then
+     write(24,*) 'mark'
+     write(24,681) x1,z1
+  else
+     coorg_send(1,(ispec-1)*5+1) = x1
+     coorg_send(2,(ispec-1)*5+1) = z1
+  endif
+
+! draw straight lines if elements have 4 nodes
+
+  ir=pointsdisp
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+  x2 = x2 * centim
+  z2 = z2 * centim
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     coorg_send(1,(ispec-1)*5+2) = x2
+     coorg_send(2,(ispec-1)*5+2) = z2
+  endif
+
+  ir=pointsdisp
+  is=pointsdisp
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+  x2 = x2 * centim
+  z2 = z2 * centim
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     coorg_send(1,(ispec-1)*5+3) = x2
+     coorg_send(2,(ispec-1)*5+3) = z2
+  endif
+
+  is=pointsdisp
+  ir=1
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+  x2 = x2 * centim
+  z2 = z2 * centim
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     coorg_send(1,(ispec-1)*5+4) = x2
+     coorg_send(2,(ispec-1)*5+4) = z2
+  endif
+
+  ir=1
+  is=2
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+  x2 = x2 * centim
+  z2 = z2 * centim
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+     write(24,*) 'CO'
+  else
+     coorg_send(1,(ispec-1)*5+5) = x2
+     coorg_send(2,(ispec-1)*5+5) = z2
+  endif
+
+  if((vpImax-vpImin)/vpImin > 0.02d0) then
+  if(assign_external_model) then
+! use lower-left corner
+    x1 = (vpext(1,1,ispec)-vpImin) / (vpImax-vpImin)
+  else
+    material = kmato(ispec)
+   if(poroelastic(ispec)) then
+    phi = porosity(material)
+    tort = tortuosity(material)
+    perm = permeability(1,material)
+!solid properties
+    mu_s = poroelastcoef(2,1,material)
+    kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
+    denst_s = density(1,material)
+!fluid properties
+    kappa_f = poroelastcoef(1,2,material)
+    denst_f = density(2,material)
+    eta_f = poroelastcoef(2,2,material)
+!frame properties
+    mu_fr = poroelastcoef(2,3,material)
+    kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
+!Biot coefficients for the input phi
+      D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
+      H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
+      C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
+      M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
+
+    call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
+             tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,TURN_VISCATTENUATION_ON)
+
+    cpIloc = sqrt(cpIsquare)
+   else
+    lambdaplus2mu  = poroelastcoef(3,1,material)
+    denst = density(1,material)
+    cpIloc = sqrt(lambdaplus2mu/denst)
+   endif
+    x1 = (cpIloc-vpImin)/(vpImax-vpImin)
+  endif
+  else
+    x1 = 0.5d0
+ endif
+
+! rescale to avoid very dark gray levels
+  x1 = x1*0.7 + 0.2
+  if(x1 > 1.d0) x1=1.d0
+
+! invert scale: white = vpmin, dark gray = vpmax
+  x1 = 1.d0 - x1
+
+! display P-velocity model using gray levels
+  if ( myrank == 0 ) then
+     write(24,*) sngl(x1),' setgray GF 0 setgray ST'
+  else
+     greyscale_send(ispec) = sngl(x1)
+  endif
+  enddo ! end of loop on all the spectral elements
+
+#ifdef USE_MPI
+  if (myrank == 0 ) then
+
+     do iproc = 1, nproc-1
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, &
+            iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+        allocate(coorg_recv(2,nspec_recv*5))
+        allocate(greyscale_recv(nspec_recv))
+        call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, &
+            iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+        call MPI_RECV (greyscale_recv(1), nspec_recv, MPI_REAL, &
+            iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+
+        do ispec = 1, nspec_recv
+           num_ispec = num_ispec + 1
+           write(24,*) '% elem ',num_ispec
+           write(24,*) 'mark'
+           write(24,681) coorg_recv(1,(ispec-1)*5+1), coorg_recv(2,(ispec-1)*5+1)
+           write(24,681) coorg_recv(1,(ispec-1)*5+2), coorg_recv(2,(ispec-1)*5+2)
+           write(24,681) coorg_recv(1,(ispec-1)*5+3), coorg_recv(2,(ispec-1)*5+3)
+           write(24,681) coorg_recv(1,(ispec-1)*5+4), coorg_recv(2,(ispec-1)*5+4)
+           write(24,681) coorg_recv(1,(ispec-1)*5+5), coorg_recv(2,(ispec-1)*5+5)
+           write(24,*) 'CO'
+           write(24,*) greyscale_recv(ispec), ' setgray GF 0 setgray ST'
+
+        enddo
+        deallocate(coorg_recv)
+        deallocate(greyscale_recv)
+
+     enddo
+
+  else
+     call MPI_SEND (UPPER_LIMIT_DISPLAY, 1, MPI_INTEGER, &
+        0, 42, MPI_COMM_WORLD, ier)
+     call MPI_SEND (coorg_send, UPPER_LIMIT_DISPLAY*5*2, MPI_DOUBLE_PRECISION, &
+        0, 42, MPI_COMM_WORLD, ier)
+     call MPI_SEND (greyscale_send, UPPER_LIMIT_DISPLAY, MPI_INTEGER, &
+        0, 42, MPI_COMM_WORLD, ier)
+  endif
+#endif
+
+  if (myrank == 0) then
+
+     write(24,*) '%'
+     write(24,*) 'grestore'
+     write(24,*) 'showpage'
+
+     close(24)
+
+     write(IOUT,*) 'End of creation of PostScript file with velocity model'
+
+  endif
+
+  if (myrank == 0) then
+
+    write(IOUT,*)
+    write(IOUT,*) 'Creating PostScript file with mesh partitioning'
+
+!
+!---- open PostScript file
+!
+  open(unit=24,file='OUTPUT_FILES/mesh_partitioning.ps',status='unknown')
+
+!
+!---- write PostScript header
+!
+  write(24,10) simulation_title
+  write(24,*) '/CM {28.5 mul} def'
+  write(24,*) '/LR {rlineto} def'
+  write(24,*) '/LT {lineto} def'
+  write(24,*) '/L {lineto} def'
+  write(24,*) '/MR {rmoveto} def'
+  write(24,*) '/MV {moveto} def'
+  write(24,*) '/M {moveto} def'
+  write(24,*) '/ST {stroke} def'
+  write(24,*) '/CP {closepath} def'
+  write(24,*) '/RG {setrgbcolor} def'
+  write(24,*) '/GF {gsave fill grestore} def'
+  write(24,*) '% different useful symbols'
+  write(24,*) '/Point {2 0 360 arc CP 0 setgray fill} def'
+  write(24,*) '/VDot {-0.75 -1.5 MR 1.5 0 LR 0 3. LR -1.5 0 LR'
+  write(24,*) 'CP fill} def'
+  write(24,*) '/HDot {-1.5 -0.75 MR 3. 0 LR 0 1.5 LR -3. 0 LR'
+  write(24,*) 'CP fill} def'
+  write(24,*) '/Cross {gsave 0.05 CM setlinewidth'
+  write(24,*) 'gsave 3 3 MR -6. -6. LR ST grestore'
+  write(24,*) 'gsave 3 -3 MR -6. 6. LR ST grestore'
+  write(24,*) '0.01 CM setlinewidth} def'
+  write(24,*) '/SmallLine {MV 0.07 CM 0 rlineto} def'
+  write(24,*) '/Diamond {gsave 0.05 CM setlinewidth 0 4.2 MR'
+  write(24,*) '-3 -4.2 LR 3 -4.2 LR 3 4.2 LR CP ST'
+  write(24,*) 'grestore 0.01 CM setlinewidth} def'
+  write(24,*) '%'
+  write(24,*) '% macro to draw the contour of the elements'
+  write(24,*) '/CO {M counttomark 2 idiv {L} repeat cleartomark CP} def'
+  write(24,*) '%'
+  write(24,*) '.01 CM setlinewidth'
+  write(24,*) '/Times-Roman findfont'
+  write(24,*) '.35 CM scalefont setfont'
+  write(24,*) '%'
+  write(24,*) '/vshift ',-height/2,' CM def'
+  write(24,*) '/Rshow { currentpoint stroke MV'
+  write(24,*) 'dup stringwidth pop neg vshift MR show } def'
+  write(24,*) '/Cshow { currentpoint stroke MV'
+  write(24,*) 'dup stringwidth pop -2 div vshift MR show } def'
+  write(24,*) '/fN {/Helvetica-Bold findfont ',height,' CM scalefont setfont} def'
+  write(24,*) '%'
+  write(24,*) 'gsave newpath 90 rotate'
+  write(24,*) '0 ',-sizez,' CM translate 1. 1. scale'
+  write(24,*) '%'
+
+!
+!--- write captions of PostScript figure
+!
+  write(24,*) '0 setgray'
+  write(24,*) '/Times-Roman findfont'
+  write(24,*) '.5 CM scalefont setfont'
+
+  write(24,*) '%'
+  write(24,*) '/Times-Roman findfont'
+  write(24,*) '.6 CM scalefont setfont'
+  write(24,*) '.4 .9 .9 setrgbcolor'
+  write(24,*) '11 CM 1.1 CM MV'
+  write(24,*) '(X axis) show'
+  write(24,*) '%'
+  write(24,*) '1.4 CM 9.5 CM MV'
+  write(24,*) 'currentpoint gsave translate 90 rotate 0 0 moveto'
+  write(24,*) '(Z axis) show'
+  write(24,*) 'grestore'
+  write(24,*) '%'
+  write(24,*) '/Times-Roman findfont'
+  write(24,*) '.7 CM scalefont setfont'
+  write(24,*) '.8 0 .8 setrgbcolor'
+  write(24,*) '24.35 CM 18.9 CM MV'
+  write(24,*) usoffset,' CM 2 div neg 0 MR'
+  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
+  write(24,*) '(Mesh partitioning) show'
+  write(24,*) 'grestore'
+  write(24,*) '25.35 CM 18.9 CM MV'
+  write(24,*) usoffset,' CM 2 div neg 0 MR'
+  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
+  write(24,*) '(',simulation_title,') show'
+  write(24,*) 'grestore'
+  write(24,*) '26.45 CM 18.9 CM MV'
+  write(24,*) usoffset,' CM 2 div neg 0 MR'
+  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
+  write(24,*) '(2D Spectral Element Method) show'
+  write(24,*) 'grestore'
+
+  write(24,*) '%'
+  write(24,*) '1 1 scale'
+  write(24,*) '%'
+
+!
+!---- draw the spectral element mesh
+!
+  write(24,*) '%'
+  write(24,*) '% spectral element mesh'
+  write(24,*) '%'
+  write(24,*) '0 setgray'
+
+  num_ispec = 0
+  endif
+
+  do ispec = 1, UPPER_LIMIT_DISPLAY
+
+     if ( myrank == 0 ) then
+        num_ispec = num_ispec + 1
+        write(24,*) '% elem ',num_ispec
+     endif
+
+  do i=1,pointsdisp
+  do j=1,pointsdisp
+  xinterp(i,j) = 0.d0
+  zinterp(i,j) = 0.d0
+  do in = 1,ngnod
+    nnum = knods(in,ispec)
+      xinterp(i,j) = xinterp(i,j) + shapeint(in,i,j)*coorg(1,nnum)
+      zinterp(i,j) = zinterp(i,j) + shapeint(in,i,j)*coorg(2,nnum)
+  enddo
+  enddo
+  enddo
+
+  is = 1
+  ir = 1
+  x1 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z1 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+  x1 = x1 * centim
+  z1 = z1 * centim
+  if ( myrank == 0 ) then
+     write(24,*) 'mark'
+     write(24,681) x1,z1
+  else
+     coorg_send(1,(ispec-1)*5+1) = x1
+     coorg_send(2,(ispec-1)*5+1) = z1
+  endif
+
+! draw straight lines if elements have 4 nodes
+
+  ir=pointsdisp
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+  x2 = x2 * centim
+  z2 = z2 * centim
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     coorg_send(1,(ispec-1)*5+2) = x2
+     coorg_send(2,(ispec-1)*5+2) = z2
+  endif
+
+  ir=pointsdisp
+  is=pointsdisp
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+  x2 = x2 * centim
+  z2 = z2 * centim
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     coorg_send(1,(ispec-1)*5+3) = x2
+     coorg_send(2,(ispec-1)*5+3) = z2
+  endif
+
+  is=pointsdisp
+  ir=1
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+  x2 = x2 * centim
+  z2 = z2 * centim
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+  else
+     coorg_send(1,(ispec-1)*5+4) = x2
+     coorg_send(2,(ispec-1)*5+4) = z2
+  endif
+
+  ir=1
+  is=2
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+  x2 = x2 * centim
+  z2 = z2 * centim
+  if ( myrank == 0 ) then
+     write(24,681) x2,z2
+     write(24,*) 'CO'
+  else
+     coorg_send(1,(ispec-1)*5+5) = x2
+     coorg_send(2,(ispec-1)*5+5) = z2
+  endif
+
+  if ( myrank == 0 ) then
+        write(24,*) red(1), green(1), blue(1), 'RG GF 0 setgray ST'
+     endif
+
+  enddo ! end of loop on all the spectral elements
+
+#ifdef USE_MPI
+  if (myrank == 0 ) then
+
+      do iproc = 1, nproc-1
+
+! use a different color for each material set
+        icol = mod(iproc, NUM_COLORS) + 1
+
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, &
+            iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+        allocate(coorg_recv(2,nspec_recv*5))
+        call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, &
+            iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+
+        do ispec = 1, nspec_recv
+           num_ispec = num_ispec + 1
+           write(24,*) '% elem ',num_ispec
+           write(24,*) 'mark'
+           write(24,681) coorg_recv(1,(ispec-1)*5+1), coorg_recv(2,(ispec-1)*5+1)
+           write(24,681) coorg_recv(1,(ispec-1)*5+2), coorg_recv(2,(ispec-1)*5+2)
+           write(24,681) coorg_recv(1,(ispec-1)*5+3), coorg_recv(2,(ispec-1)*5+3)
+           write(24,681) coorg_recv(1,(ispec-1)*5+4), coorg_recv(2,(ispec-1)*5+4)
+           write(24,681) coorg_recv(1,(ispec-1)*5+5), coorg_recv(2,(ispec-1)*5+5)
+           write(24,*) 'CO'
+
+           write(24,*) red(icol), green(icol), blue(icol), ' RG GF 0 setgray ST'
+
+        enddo
+        deallocate(coorg_recv)
+
+     enddo
+
+  else
+     call MPI_SEND (UPPER_LIMIT_DISPLAY, 1, MPI_INTEGER, &
+        0, 42, MPI_COMM_WORLD, ier)
+     call MPI_SEND (coorg_send, UPPER_LIMIT_DISPLAY*5*2, MPI_DOUBLE_PRECISION, &
+        0, 42, MPI_COMM_WORLD, ier)
+
+  endif
+#endif
+
+ if (myrank == 0) then
+   write(24,*) '%'
+   write(24,*) 'grestore'
+   write(24,*) 'showpage'
+
+   close(24)
+
+   write(IOUT,*) 'End of creation of PostScript file with partitioning'
+   write(IOUT,*)
+ endif
+
+ 10  format('%!PS-Adobe-2.0',/,'%%',/,'%% Title: ',a100,/,'%% Created by: Specfem2D',/,'%% Author: Dimitri Komatitsch',/,'%%')
+
+ 681 format(f6.2,1x,f6.2)
+
+  end subroutine checkgrid
+  
+  
+!
+!-------------------------------------------------------------------------------------------------
+!  
+
+  subroutine checkgrid_setup_GLLper(percent_GLL,NGLLX_MAX_STABILITY)
+
+  implicit none
+  include "constants.h"
+
+  integer :: NGLLX_MAX_STABILITY 
+  double precision :: percent_GLL(NGLLX_MAX_STABILITY)
+
+  if( NGLLX_MAX_STABILITY /= 15 ) call exit_MPI('check NGLLX_MAX_STABILITY in checkgrid.f90')
+  
+! define percentage of smallest distance between GLL points for NGLLX points
+! percentages were computed by calling the GLL points routine for each degree
+
   percent_GLL(2) = 100.d0
   percent_GLL(3) = 50.d0
   percent_GLL(4) = 27.639320225002102d0
@@ -186,8 +1871,23 @@
     call exit_MPI('cannot estimate the stability condition for that degree')
   endif
 
-! define color palette in random order
+  end subroutine checkgrid_setup_GLLper
+  
+  
+!
+!-------------------------------------------------------------------------------------------------
+!  
+  
+  subroutine checkgrid_setup_colorp(red,green,blue,NUM_COLORS)
 
+! color palette
+
+  implicit none
+  integer :: NUM_COLORS
+  double precision, dimension(NUM_COLORS) :: red,green,blue
+
+  if( NUM_COLORS /= 236 ) call exit_MPI('check NUM_COLORS in checkgrid.f90')
+  
 ! red
   red(1) = 1.00000000000000
   green(1) = 0.000000000000000E+000
@@ -1367,1641 +3067,5 @@
   red(236) = 1.00000000000000
   green(236) = 0.894117647058824
   blue(236) = 0.768627450980392
-
-!---- compute parameters for the spectral elements
-
-  vpImin = HUGEVAL
-  vpImax = -HUGEVAL
-
-  if(any_elastic .or. any_poroelastic) then
-    vsmin = HUGEVAL
-    vsmax = -HUGEVAL
-  else
-    vsmin = 0
-    vsmax = 0
-  endif
-
-  if(any_poroelastic) then
-    vpIImin = HUGEVAL
-    vpIImax = -HUGEVAL
-  else
-    vpIImin = 0
-    vpIImax = 0
-  endif
-
-  densmin = HUGEVAL
-  densmax = -HUGEVAL
-
-  distance_min = HUGEVAL
-  distance_max = -HUGEVAL
-
-  courant_stability_number_max = -HUGEVAL
-
-  lambdaPImin = HUGEVAL
-  lambdaPImax = -HUGEVAL
-
-  if(any_elastic .or. any_poroelastic) then
-    lambdaSmin = HUGEVAL
-    lambdaSmax = -HUGEVAL
-  else
-    lambdaSmin = 0
-    lambdaSmax = 0
-  endif
-
-  if(any_poroelastic) then
-    lambdaPIImin = HUGEVAL
-    lambdaPIImax = -HUGEVAL
-  else
-    lambdaPIImin = 0
-    lambdaPIImax = 0
-  endif
-
-  do ispec=1,nspec
-
-    material = kmato(ispec)
-
-   if(poroelastic(ispec)) then
-    phi = porosity(material)
-    tort = tortuosity(material)
-    perm = permeability(1,material)
-!solid properties
-    mu_s = poroelastcoef(2,1,material)
-    kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
-    denst_s = density(1,material)
-!fluid properties
-    kappa_f = poroelastcoef(1,2,material)
-    denst_f = density(2,material)
-    eta_f = poroelastcoef(2,2,material)
-!frame properties
-    mu_fr = poroelastcoef(2,3,material)
-    kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
-!Biot coefficients for the input phi
-      D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
-      H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
-      C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
-      M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
-
-    call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-             tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,TURN_VISCATTENUATION_ON)
-
-    cpIloc = sqrt(cpIsquare)
-    cpIIloc = sqrt(cpIIsquare)
-    csloc = sqrt(cssquare)
-   else
-    mu = poroelastcoef(2,1,material)
-    lambdaplus2mu  = poroelastcoef(3,1,material)
-    denst = density(1,material)
-
-    cpIloc = sqrt(lambdaplus2mu/denst)
-    cpIIloc = 0.d0
-    csloc = sqrt(mu/denst)
-   endif
-
-  vpImax_local = -HUGEVAL
-  vpImin_local = HUGEVAL
-  vpIImax_local = -HUGEVAL
-  vpIImin_local = HUGEVAL
-  vsmin_local = HUGEVAL
-
-  distance_min_local = HUGEVAL
-  distance_max_local = -HUGEVAL
-
-  do j=1,NGLLZ
-    do i=1,NGLLX
-
-!--- if heterogeneous formulation with external velocity model
-    if(assign_external_model) then
-      cpIloc = vpext(i,j,ispec)
-      csloc = vsext(i,j,ispec)
-      denst = rhoext(i,j,ispec)
-    endif
-
-!--- compute min and max of velocity and density models
-    vpImin = min(vpImin,cpIloc)
-    vpImax = max(vpImax,cpIloc)
-
-! ignore acoustic and elastic regions with cpII = 0
-    if(cpIIloc > 0.0001d0) vpIImin = min(vpIImin,cpIIloc)
-    vpIImax = max(vpIImax,cpIIloc)
-
-! ignore fluid regions with Vs = 0
-    if(csloc > 0.0001d0) vsmin = min(vsmin,csloc)
-    vsmax = max(vsmax,csloc)
-
-    densmin = min(densmin,denst)
-    densmax = max(densmax,denst)
-
-    vpImax_local = max(vpImax_local,vpImax)
-    vpImin_local = min(vpImin_local,vpImin)
-    vpIImax_local = max(vpIImax_local,vpIImax)
-    vpIImin_local = min(vpIImin_local,vpIImin)
-    vsmin_local = min(vsmin_local,vsmin)
-
-    enddo
-  enddo
-
-! compute minimum and maximum size of edges of this grid cell
-  distance_1 = sqrt((coord(1,ibool(1,1,ispec)) - coord(1,ibool(NGLLX,1,ispec)))**2 + &
-               (coord(2,ibool(1,1,ispec)) - coord(2,ibool(NGLLX,1,ispec)))**2)
-
-  distance_2 = sqrt((coord(1,ibool(NGLLX,1,ispec)) - coord(1,ibool(NGLLX,NGLLZ,ispec)))**2 + &
-               (coord(2,ibool(NGLLX,1,ispec)) - coord(2,ibool(NGLLX,NGLLZ,ispec)))**2)
-
-  distance_3 = sqrt((coord(1,ibool(NGLLX,NGLLZ,ispec)) - coord(1,ibool(1,NGLLZ,ispec)))**2 + &
-               (coord(2,ibool(NGLLX,NGLLZ,ispec)) - coord(2,ibool(1,NGLLZ,ispec)))**2)
-
-  distance_4 = sqrt((coord(1,ibool(1,NGLLZ,ispec)) - coord(1,ibool(1,1,ispec)))**2 + &
-               (coord(2,ibool(1,NGLLZ,ispec)) - coord(2,ibool(1,1,ispec)))**2)
-
-  distance_min_local = min(distance_1,distance_2,distance_3,distance_4)
-  distance_max_local = max(distance_1,distance_2,distance_3,distance_4)
-
-  distance_min = min(distance_min,distance_min_local)
-  distance_max = max(distance_max,distance_max_local)
-
-  courant_stability_number_max = max(courant_stability_number_max,vpImax_local * deltat / (distance_min_local * percent_GLL(NGLLX)))
-
-! ignore fluid regions with Vs = 0
-  if(csloc > 0.0001d0) then
-    lambdaSmin = min(lambdaSmin,vsmin_local / (distance_max_local / (NGLLX - 1)))
-    lambdaSmax = max(lambdaSmax,vsmin_local / (distance_max_local / (NGLLX - 1)))
-  endif
-
-  lambdaPImin = min(lambdaPImin,vpImin_local / (distance_max_local / (NGLLX - 1)))
-  lambdaPImax = max(lambdaPImax,vpImin_local / (distance_max_local / (NGLLX - 1)))
-
-  if(cpIIloc > 0.0001d0) then
-  lambdaPIImin = min(lambdaPIImin,vpIImin_local / (distance_max_local / (NGLLX - 1)))
-  lambdaPIImax = max(lambdaPIImax,vpIImin_local / (distance_max_local / (NGLLX - 1)))
-  endif
-
-  enddo
-
-  any_elastic_glob = any_elastic
-  any_poroelastic_glob = any_poroelastic
-#ifdef USE_MPI
-  call MPI_ALLREDUCE (vpImin, vpImin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (vpImax, vpImax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (vpIImin, vpIImin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (vpIImax, vpIImax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (vsmin, vsmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (vsmax, vsmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (densmin, densmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (densmax, densmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (distance_min, distance_min_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (distance_max, distance_max_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (courant_stability_number_max, courant_stability_max_glob, 1, MPI_DOUBLE_PRECISION, &
-       MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (lambdaPImin, lambdaPImin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (lambdaPImax, lambdaPImax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (lambdaPIImin, lambdaPIImin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (lambdaPIImax, lambdaPIImax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (lambdaSmin, lambdaSmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (lambdaSmax, lambdaSmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (any_elastic, any_elastic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (any_poroelastic, any_poroelastic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
-  vpImin = vpImin_glob
-  vpImax = vpImax_glob
-  vpIImin = vpIImin_glob
-  vpIImax = vpIImax_glob
-  vsmin = vsmin_glob
-  vsmax = vsmax_glob
-  densmin = densmin_glob
-  densmax = densmax_glob
-  distance_min = distance_min_glob
-  distance_max = distance_max_glob
-  courant_stability_number_max = courant_stability_max_glob
-  lambdaPImin = lambdaPImin_glob
-  lambdaPImax = lambdaPImax_glob
-  lambdaPIImin = lambdaPIImin_glob
-  lambdaPIImax = lambdaPIImax_glob
-  lambdaSmin = lambdaSmin_glob
-  lambdaSmax = lambdaSmax_glob
-
-#endif
-
-  if ( myrank == 0 ) then
-     if(.not. all_anisotropic) then
-        write(IOUT,*)
-        write(IOUT,*) '********'
-        write(IOUT,*) 'Model: P (or PI) velocity min,max = ',vpImin,vpImax
-        write(IOUT,*) 'Model: PII velocity min,max = ',vpIImin,vpIImax
-        write(IOUT,*) 'Model: S velocity min,max = ',vsmin,vsmax
-        write(IOUT,*) 'Model: density min,max = ',densmin,densmax
-        write(IOUT,*) '********'
-        write(IOUT,*)
-
-        write(IOUT,*)
-        write(IOUT,*) '*********************************************'
-        write(IOUT,*) '*** Verification of simulation parameters ***'
-        write(IOUT,*) '*********************************************'
-        write(IOUT,*)
-        write(IOUT,*) '*** Max grid size = ',distance_max
-        write(IOUT,*) '*** Min grid size = ',distance_min
-        write(IOUT,*) '*** Max/min ratio = ',distance_max/distance_min
-        write(IOUT,*)
-        write(IOUT,*) '*** Max stability for P wave velocity = ',courant_stability_number_max
-        write(IOUT,*)
-     end if
-
-! only if time source is not a Dirac or Heaviside (otherwise maximum frequency of spectrum undefined)
-! and if source is not an initial field, for the same reason
-  if(.not. initialfield) then
-   f0max = -HUGEVAL
-   f0min = HUGEVAL
-   write(IOUT,*) ' USER_T0 = ',USER_T0
-   do i = 1,NSOURCE
-    if(time_function_type(i) /= 4 .and. time_function_type(i) /= 5) then
-
-    write(IOUT,*) ' Onset time = ',t0(i)
-    write(IOUT,*) ' Fundamental period = ',1.d0/f0(i)
-    write(IOUT,*) ' Fundamental frequency = ',f0(i)
-    if(f0(i) > f0max) f0max = f0(i)
-    if(f0(i) < f0min) f0min = f0(i)
-    if(t0(i) <= 1.d0/f0(i)) then
-       call exit_MPI('Onset time too small')
-    else
-      write(IOUT,*) ' --> onset time ok'
-    endif
-
-    if(i==NSOURCE)then
-    write(IOUT,*) '----'
-    write(IOUT,*) ' Nb pts / lambdaPImin_fmax max = ',lambdaPImax/(2.5d0*f0min)
-    write(IOUT,*) ' Nb pts / lambdaPImin_fmax min = ',lambdaPImin/(2.5d0*f0max)
-    write(IOUT,*) '----'
-    write(IOUT,*) ' Nb pts / lambdaPIImin_fmax max = ',lambdaPIImax/(2.5d0*f0min)
-    write(IOUT,*) ' Nb pts / lambdaPIImin_fmax min = ',lambdaPIImin/(2.5d0*f0max)
-    write(IOUT,*) '----'
-    write(IOUT,*) ' Nb pts / lambdaSmin_fmax max = ',lambdaSmax/(2.5d0*f0min)
-    write(IOUT,*) ' Nb pts / lambdaSmin_fmax min = ',lambdaSmin/(2.5d0*f0max)
-    write(IOUT,*) '----'
-    endif
-
-    endif
-   enddo
-  endif
-  endif
-
-!
-!--------------------------------------------------------------------------------
-!
-
-! A4 or US letter paper
-  if(US_LETTER) then
-    usoffset = 1.75d0
-    sizex = 27.94d0
-    sizez = 21.59d0
-  else
-    usoffset = 0.d0
-    sizex = 29.7d0
-    sizez = 21.d0
-  endif
-
-! height of domain numbers in centimeters
-  height = 0.25d0
-
-! get minimum and maximum values of mesh coordinates
-  xmin = minval(coord(1,:))
-  zmin = minval(coord(2,:))
-  xmax = maxval(coord(1,:))
-  zmax = maxval(coord(2,:))
-
-#ifdef USE_MPI
-  call MPI_ALLREDUCE (xmin, xmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (xmax, xmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (zmin, zmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (zmax, zmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  xmin = xmin_glob
-  xmax = xmax_glob
-  zmin = zmin_glob
-  zmax = zmax_glob
-
-#endif
-
-! ratio of physical page size/size of the domain meshed
-  ratio_page = min(rpercentz*sizez/(zmax-zmin),rpercentx*sizex/(xmax-xmin)) / 100.d0
-
-
-  if (myrank == 0) then
-
-    write(IOUT,*)
-    write(IOUT,*) 'Creating PostScript file with stability condition'
-
-!
-!---- open PostScript file
-!
-  open(unit=24,file='OUTPUT_FILES/mesh_stability.ps',status='unknown')
-
-!
-!---- write PostScript header
-!
-  write(24,10) simulation_title
-  write(24,*) '/CM {28.5 mul} def'
-  write(24,*) '/LR {rlineto} def'
-  write(24,*) '/LT {lineto} def'
-  write(24,*) '/L {lineto} def'
-  write(24,*) '/MR {rmoveto} def'
-  write(24,*) '/MV {moveto} def'
-  write(24,*) '/M {moveto} def'
-  write(24,*) '/ST {stroke} def'
-  write(24,*) '/CP {closepath} def'
-  write(24,*) '/RG {setrgbcolor} def'
-  write(24,*) '/GF {gsave fill grestore} def'
-  write(24,*) '% different useful symbols'
-  write(24,*) '/Point {2 0 360 arc CP 0 setgray fill} def'
-  write(24,*) '/VDot {-0.75 -1.5 MR 1.5 0 LR 0 3. LR -1.5 0 LR'
-  write(24,*) 'CP fill} def'
-  write(24,*) '/HDot {-1.5 -0.75 MR 3. 0 LR 0 1.5 LR -3. 0 LR'
-  write(24,*) 'CP fill} def'
-  write(24,*) '/Cross {gsave 0.05 CM setlinewidth'
-  write(24,*) 'gsave 3 3 MR -6. -6. LR ST grestore'
-  write(24,*) 'gsave 3 -3 MR -6. 6. LR ST grestore'
-  write(24,*) '0.01 CM setlinewidth} def'
-  write(24,*) '/SmallLine {MV 0.07 CM 0 rlineto} def'
-  write(24,*) '/Diamond {gsave 0.05 CM setlinewidth 0 4.2 MR'
-  write(24,*) '-3 -4.2 LR 3 -4.2 LR 3 4.2 LR CP ST'
-  write(24,*) 'grestore 0.01 CM setlinewidth} def'
-  write(24,*) '%'
-  write(24,*) '% macro to draw the contour of the elements'
-  write(24,*) '/CO {M counttomark 2 idiv {L} repeat cleartomark CP} def'
-  write(24,*) '%'
-  write(24,*) '.01 CM setlinewidth'
-  write(24,*) '/Times-Roman findfont'
-  write(24,*) '.35 CM scalefont setfont'
-  write(24,*) '%'
-  write(24,*) '/vshift ',-height/2,' CM def'
-  write(24,*) '/Rshow { currentpoint stroke MV'
-  write(24,*) 'dup stringwidth pop neg vshift MR show } def'
-  write(24,*) '/Cshow { currentpoint stroke MV'
-  write(24,*) 'dup stringwidth pop -2 div vshift MR show } def'
-  write(24,*) '/fN {/Helvetica-Bold findfont ',height,' CM scalefont setfont} def'
-  write(24,*) '%'
-  write(24,*) 'gsave newpath 90 rotate'
-  write(24,*) '0 ',-sizez,' CM translate 1. 1. scale'
-  write(24,*) '%'
-
-!
-!--- write captions of PostScript figure
-!
-  write(24,*) '0 setgray'
-  write(24,*) '/Times-Roman findfont'
-  write(24,*) '.5 CM scalefont setfont'
-
-  write(24,*) '%'
-  write(24,*) '/Times-Roman findfont'
-  write(24,*) '.6 CM scalefont setfont'
-  write(24,*) '.4 .9 .9 setrgbcolor'
-  write(24,*) '11 CM 1.1 CM MV'
-  write(24,*) '(X axis) show'
-  write(24,*) '%'
-  write(24,*) '1.4 CM 9.5 CM MV'
-  write(24,*) 'currentpoint gsave translate 90 rotate 0 0 moveto'
-  write(24,*) '(Z axis) show'
-  write(24,*) 'grestore'
-  write(24,*) '%'
-  write(24,*) '/Times-Roman findfont'
-  write(24,*) '.7 CM scalefont setfont'
-  write(24,*) '.8 0 .8 setrgbcolor'
-  write(24,*) '24.35 CM 18.9 CM MV'
-  write(24,*) usoffset,' CM 2 div neg 0 MR'
-  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  write(24,*) '(Mesh stability condition \(red = bad\)) show'
-  write(24,*) 'grestore'
-  write(24,*) '25.35 CM 18.9 CM MV'
-  write(24,*) usoffset,' CM 2 div neg 0 MR'
-  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  write(24,*) '(',simulation_title,') show'
-  write(24,*) 'grestore'
-  write(24,*) '26.45 CM 18.9 CM MV'
-  write(24,*) usoffset,' CM 2 div neg 0 MR'
-  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  write(24,*) '(2D Spectral Element Method) show'
-  write(24,*) 'grestore'
-
-  write(24,*) '%'
-  write(24,*) '1 1 scale'
-  write(24,*) '%'
-
-!
-!---- draw the spectral element mesh
-!
-  write(24,*) '%'
-  write(24,*) '% spectral element mesh'
-  write(24,*) '%'
-  write(24,*) '0 setgray'
-
-  num_ispec = 0
-  endif
-
-  do ispec = 1, nspec
-
-     if ( myrank == 0 ) then
-        num_ispec = num_ispec + 1
-        write(24,*) '% elem ',num_ispec
-     endif
-
-  do i=1,pointsdisp
-  do j=1,pointsdisp
-  xinterp(i,j) = 0.d0
-  zinterp(i,j) = 0.d0
-  do in = 1,ngnod
-    nnum = knods(in,ispec)
-      xinterp(i,j) = xinterp(i,j) + shapeint(in,i,j)*coorg(1,nnum)
-      zinterp(i,j) = zinterp(i,j) + shapeint(in,i,j)*coorg(2,nnum)
-  enddo
-  enddo
-  enddo
-
-  is = 1
-  ir = 1
-  x1 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z1 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x1 = x1 * centim
-  z1 = z1 * centim
-  if ( myrank == 0 ) then
-     write(24,*) 'mark'
-     write(24,681) x1,z1
-  else
-     coorg_send(1,(ispec-1)*5+1) = x1
-     coorg_send(2,(ispec-1)*5+1) = z1
-  endif
-
-! draw straight lines if elements have 4 nodes
-
-  ir=pointsdisp
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if ( myrank == 0 ) then
-     write(24,681) x2,z2
-  else
-     coorg_send(1,(ispec-1)*5+2) = x2
-     coorg_send(2,(ispec-1)*5+2) = z2
-  endif
-
-  ir=pointsdisp
-  is=pointsdisp
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if ( myrank == 0 ) then
-     write(24,681) x2,z2
-  else
-     coorg_send(1,(ispec-1)*5+3) = x2
-     coorg_send(2,(ispec-1)*5+3) = z2
-  endif
-
-  is=pointsdisp
-  ir=1
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if ( myrank == 0 ) then
-     write(24,681) x2,z2
-  else
-     coorg_send(1,(ispec-1)*5+4) = x2
-     coorg_send(2,(ispec-1)*5+4) = z2
-  endif
-
-  ir=1
-  is=2
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if ( myrank == 0 ) then
-     write(24,681) x2,z2
-     write(24,*) 'CO'
-  else
-     coorg_send(1,(ispec-1)*5+5) = x2
-     coorg_send(2,(ispec-1)*5+5) = z2
-  endif
-
-    material = kmato(ispec)
-
-   if(poroelastic(ispec)) then
-    phi=porosity(material)
-    tort=tortuosity(material)
-    perm=permeability(1,material)
-!solid properties
-    mu_s = poroelastcoef(2,1,material)
-    kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
-    denst_s = density(1,material)
-!fluid properties
-    kappa_f = poroelastcoef(1,2,material)
-    denst_f = density(2,material)
-    eta_f = poroelastcoef(2,2,material)
-!frame properties
-    mu_fr = poroelastcoef(2,3,material)
-    kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
-!Biot coefficients for the input phi
-      D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
-      H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
-      C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
-      M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
-
-    call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-             tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,TURN_VISCATTENUATION_ON)
-
-    cpIloc = sqrt(cpIsquare)
-   else
-    lambdaplus2mu  = poroelastcoef(3,1,material)
-    denst = density(1,material)
-
-    cpIloc = sqrt(lambdaplus2mu/denst)
-   endif
-
-  vpImax_local = -HUGEVAL
-
-  distance_min_local = HUGEVAL
-  distance_max_local = -HUGEVAL
-
-  do j=1,NGLLZ
-    do i=1,NGLLX
-
-!--- if heterogeneous formulation with external velocity model
-    if(assign_external_model) then
-      cpIloc = vpext(i,j,ispec)
-      denst = rhoext(i,j,ispec)
-    endif
-
-    vpImax_local = max(vpImax_local,cpIloc)
-
-    enddo
-  enddo
-
-! compute minimum and maximum size of edges of this grid cell
-  distance_1 = sqrt((coord(1,ibool(1,1,ispec)) - coord(1,ibool(NGLLX,1,ispec)))**2 + &
-               (coord(2,ibool(1,1,ispec)) - coord(2,ibool(NGLLX,1,ispec)))**2)
-
-  distance_2 = sqrt((coord(1,ibool(NGLLX,1,ispec)) - coord(1,ibool(NGLLX,NGLLZ,ispec)))**2 + &
-               (coord(2,ibool(NGLLX,1,ispec)) - coord(2,ibool(NGLLX,NGLLZ,ispec)))**2)
-
-  distance_3 = sqrt((coord(1,ibool(NGLLX,NGLLZ,ispec)) - coord(1,ibool(1,NGLLZ,ispec)))**2 + &
-               (coord(2,ibool(NGLLX,NGLLZ,ispec)) - coord(2,ibool(1,NGLLZ,ispec)))**2)
-
-  distance_4 = sqrt((coord(1,ibool(1,NGLLZ,ispec)) - coord(1,ibool(1,1,ispec)))**2 + &
-               (coord(2,ibool(1,NGLLZ,ispec)) - coord(2,ibool(1,1,ispec)))**2)
-
-  distance_min_local = min(distance_1,distance_2,distance_3,distance_4)
-  distance_max_local = max(distance_1,distance_2,distance_3,distance_4)
-
-  distance_min = min(distance_min,distance_min_local)
-  distance_max = max(distance_max,distance_max_local)
-
-  courant_stability_number = vpImax_local * deltat / (distance_min_local * percent_GLL(NGLLX))
-
-! display bad elements that are above 80% of the threshold
-  if(courant_stability_number >= 0.80 * courant_stability_number_max) then
-     if ( myrank == 0 ) then
-        write(24,*) '1 0 0 RG GF 0 setgray ST'
-     else
-        RGB_send(ispec) = 1
-     endif
-  else
-! do not color the elements if below the threshold
-     if ( myrank == 0 ) then
-        write(24,*) 'ST'
-     else
-        RGB_send(ispec) = 0
-     endif
-  endif
-
-  enddo ! end of loop on all the spectral elements
-
-#ifdef USE_MPI
-  if (myrank == 0 ) then
-
-     do iproc = 1, nproc-1
-        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
-        allocate(coorg_recv(2,nspec_recv*5))
-        allocate(RGB_recv(nspec_recv))
-        call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
-        call MPI_RECV (RGB_recv(1), nspec_recv, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
-
-        do ispec = 1, nspec_recv
-           num_ispec = num_ispec + 1
-           write(24,*) '% elem ',num_ispec
-           write(24,*) 'mark'
-           write(24,681) coorg_recv(1,(ispec-1)*5+1), coorg_recv(2,(ispec-1)*5+1)
-           write(24,681) coorg_recv(1,(ispec-1)*5+2), coorg_recv(2,(ispec-1)*5+2)
-           write(24,681) coorg_recv(1,(ispec-1)*5+3), coorg_recv(2,(ispec-1)*5+3)
-           write(24,681) coorg_recv(1,(ispec-1)*5+4), coorg_recv(2,(ispec-1)*5+4)
-           write(24,681) coorg_recv(1,(ispec-1)*5+5), coorg_recv(2,(ispec-1)*5+5)
-           write(24,*) 'CO'
-           if ( RGB_recv(ispec)  == 1) then
-              write(24,*) '1 0 0 RG GF 0 setgray ST'
-           else
-              write(24,*) 'ST'
-           endif
-        enddo
-        deallocate(coorg_recv)
-        deallocate(RGB_recv)
-
-     enddo
-
-  else
-     call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
-     call MPI_SEND (coorg_send, nspec*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
-     call MPI_SEND (RGB_send, nspec, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
-
-  endif
-
-#endif
-
- if ( myrank == 0 ) then
-    write(24,*) '%'
-    write(24,*) 'grestore'
-    write(24,*) 'showpage'
-
-    close(24)
-
-    write(IOUT,*) 'End of creation of PostScript file with stability condition'
- endif
-
-!
-!--------------------------------------------------------------------------------
-!
-
-  if (myrank == 0) then
-
-    write(IOUT,*)
-    write(IOUT,*) 'Creating PostScript file with mesh dispersion'
-
-!
-!---- open PostScript file
-!
-  if(any_elastic_glob .or. any_poroelastic) then
-    open(unit=24,file='OUTPUT_FILES/mesh_S_wave_dispersion.ps',status='unknown')
-  else
-    open(unit=24,file='OUTPUT_FILES/mesh_P_wave_dispersion.ps',status='unknown')
-  endif
-
-!
-!---- write PostScript header
-!
-  write(24,10) simulation_title
-  write(24,*) '/CM {28.5 mul} def'
-  write(24,*) '/LR {rlineto} def'
-  write(24,*) '/LT {lineto} def'
-  write(24,*) '/L {lineto} def'
-  write(24,*) '/MR {rmoveto} def'
-  write(24,*) '/MV {moveto} def'
-  write(24,*) '/M {moveto} def'
-  write(24,*) '/ST {stroke} def'
-  write(24,*) '/CP {closepath} def'
-  write(24,*) '/RG {setrgbcolor} def'
-  write(24,*) '/GF {gsave fill grestore} def'
-  write(24,*) '% different useful symbols'
-  write(24,*) '/Point {2 0 360 arc CP 0 setgray fill} def'
-  write(24,*) '/VDot {-0.75 -1.5 MR 1.5 0 LR 0 3. LR -1.5 0 LR'
-  write(24,*) 'CP fill} def'
-  write(24,*) '/HDot {-1.5 -0.75 MR 3. 0 LR 0 1.5 LR -3. 0 LR'
-  write(24,*) 'CP fill} def'
-  write(24,*) '/Cross {gsave 0.05 CM setlinewidth'
-  write(24,*) 'gsave 3 3 MR -6. -6. LR ST grestore'
-  write(24,*) 'gsave 3 -3 MR -6. 6. LR ST grestore'
-  write(24,*) '0.01 CM setlinewidth} def'
-  write(24,*) '/SmallLine {MV 0.07 CM 0 rlineto} def'
-  write(24,*) '/Diamond {gsave 0.05 CM setlinewidth 0 4.2 MR'
-  write(24,*) '-3 -4.2 LR 3 -4.2 LR 3 4.2 LR CP ST'
-  write(24,*) 'grestore 0.01 CM setlinewidth} def'
-  write(24,*) '%'
-  write(24,*) '% macro to draw the contour of the elements'
-  write(24,*) '/CO {M counttomark 2 idiv {L} repeat cleartomark CP} def'
-  write(24,*) '%'
-  write(24,*) '.01 CM setlinewidth'
-  write(24,*) '/Times-Roman findfont'
-  write(24,*) '.35 CM scalefont setfont'
-  write(24,*) '%'
-  write(24,*) '/vshift ',-height/2,' CM def'
-  write(24,*) '/Rshow { currentpoint stroke MV'
-  write(24,*) 'dup stringwidth pop neg vshift MR show } def'
-  write(24,*) '/Cshow { currentpoint stroke MV'
-  write(24,*) 'dup stringwidth pop -2 div vshift MR show } def'
-  write(24,*) '/fN {/Helvetica-Bold findfont ',height,' CM scalefont setfont} def'
-  write(24,*) '%'
-  write(24,*) 'gsave newpath 90 rotate'
-  write(24,*) '0 ',-sizez,' CM translate 1. 1. scale'
-  write(24,*) '%'
-
-!
-!--- write captions of PostScript figure
-!
-  write(24,*) '0 setgray'
-  write(24,*) '/Times-Roman findfont'
-  write(24,*) '.5 CM scalefont setfont'
-
-  write(24,*) '%'
-  write(24,*) '/Times-Roman findfont'
-  write(24,*) '.6 CM scalefont setfont'
-  write(24,*) '.4 .9 .9 setrgbcolor'
-  write(24,*) '11 CM 1.1 CM MV'
-  write(24,*) '(X axis) show'
-  write(24,*) '%'
-  write(24,*) '1.4 CM 9.5 CM MV'
-  write(24,*) 'currentpoint gsave translate 90 rotate 0 0 moveto'
-  write(24,*) '(Z axis) show'
-  write(24,*) 'grestore'
-  write(24,*) '%'
-  write(24,*) '/Times-Roman findfont'
-  write(24,*) '.7 CM scalefont setfont'
-  write(24,*) '.8 0 .8 setrgbcolor'
-  write(24,*) '24.35 CM 18.9 CM MV'
-  write(24,*) usoffset,' CM 2 div neg 0 MR'
-  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  if(any_elastic_glob) then
-    write(24,*) '(Mesh elastic S-wave dispersion \(red = good, blue = bad\)) show'
-  else
-    write(24,*) '(Mesh acoustic P-wave dispersion \(red = good, blue = bad\)) show'
-  endif
-  write(24,*) 'grestore'
-  write(24,*) '25.35 CM 18.9 CM MV'
-  write(24,*) usoffset,' CM 2 div neg 0 MR'
-  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  write(24,*) '(',simulation_title,') show'
-  write(24,*) 'grestore'
-  write(24,*) '26.45 CM 18.9 CM MV'
-  write(24,*) usoffset,' CM 2 div neg 0 MR'
-  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  write(24,*) '(2D Spectral Element Method) show'
-  write(24,*) 'grestore'
-
-  write(24,*) '%'
-  write(24,*) '1 1 scale'
-  write(24,*) '%'
-
-!
-!---- draw the spectral element mesh
-!
-  write(24,*) '%'
-  write(24,*) '% spectral element mesh'
-  write(24,*) '%'
-  write(24,*) '0 setgray'
-
-  num_ispec = 0
-  endif
-
-  do ispec = 1, nspec
-     if ( myrank == 0 ) then
-        num_ispec = num_ispec + 1
-        write(24,*) '% elem ',num_ispec
-     endif
-
-  do i=1,pointsdisp
-  do j=1,pointsdisp
-  xinterp(i,j) = 0.d0
-  zinterp(i,j) = 0.d0
-  do in = 1,ngnod
-    nnum = knods(in,ispec)
-      xinterp(i,j) = xinterp(i,j) + shapeint(in,i,j)*coorg(1,nnum)
-      zinterp(i,j) = zinterp(i,j) + shapeint(in,i,j)*coorg(2,nnum)
-  enddo
-  enddo
-  enddo
-
-  is = 1
-  ir = 1
-  x1 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z1 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x1 = x1 * centim
-  z1 = z1 * centim
-  if ( myrank == 0 ) then
-     write(24,*) 'mark'
-     write(24,681) x1,z1
-  else
-     coorg_send(1,(ispec-1)*5+1) = x1
-     coorg_send(2,(ispec-1)*5+1) = z1
-  endif
-
-! draw straight lines if elements have 4 nodes
-
-  ir=pointsdisp
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if ( myrank == 0 ) then
-     write(24,681) x2,z2
-  else
-     coorg_send(1,(ispec-1)*5+2) = x2
-     coorg_send(2,(ispec-1)*5+2) = z2
-  endif
-
-  ir=pointsdisp
-  is=pointsdisp
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if ( myrank == 0 ) then
-     write(24,681) x2,z2
-  else
-     coorg_send(1,(ispec-1)*5+3) = x2
-     coorg_send(2,(ispec-1)*5+3) = z2
-  endif
-
-  is=pointsdisp
-  ir=1
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if ( myrank == 0 ) then
-     write(24,681) x2,z2
-  else
-     coorg_send(1,(ispec-1)*5+4) = x2
-     coorg_send(2,(ispec-1)*5+4) = z2
-  endif
-
-  ir=1
-  is=2
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if ( myrank == 0 ) then
-     write(24,681) x2,z2
-     write(24,*) 'CO'
-  else
-     coorg_send(1,(ispec-1)*5+5) = x2
-     coorg_send(2,(ispec-1)*5+5) = z2
-  endif
-
-    material = kmato(ispec)
-
-   if(poroelastic(ispec)) then
-    phi = porosity(material)
-    tort = tortuosity(material)
-    perm = permeability(1,material)
-!solid properties
-    mu_s = poroelastcoef(2,1,material)
-    kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
-    denst_s = density(1,material)
-!fluid properties
-    kappa_f = poroelastcoef(1,2,material)
-    denst_f = density(2,material)
-    eta_f = poroelastcoef(2,2,material)
-!frame properties
-    mu_fr = poroelastcoef(2,3,material)
-    kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
-!Biot coefficients for the input phi
-      D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
-      H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
-      C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
-      M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
-
-    call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-             tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,TURN_VISCATTENUATION_ON)
-
-    cpIloc = sqrt(cpIsquare)
-    csloc = sqrt(cssquare)
-   else
-    mu = poroelastcoef(2,1,material)
-    lambdaplus2mu  = poroelastcoef(3,1,material)
-    denst = density(1,material)
-
-    cpIloc = sqrt(lambdaplus2mu/denst)
-    csloc = sqrt(mu/denst)
-   endif
-
-  vpImax_local = -HUGEVAL
-  vpImin_local = HUGEVAL
-  vsmin_local = HUGEVAL
-
-  distance_min_local = HUGEVAL
-  distance_max_local = -HUGEVAL
-
-  do j=1,NGLLZ
-    do i=1,NGLLX
-
-!--- if heterogeneous formulation with external velocity model
-    if(assign_external_model) then
-      cpIloc = vpext(i,j,ispec)
-      csloc = vsext(i,j,ispec)
-      denst = rhoext(i,j,ispec)
-    endif
-
-    vpImax_local = max(vpImax_local,cpIloc)
-    vpImin_local = min(vpImin_local,cpIloc)
-    vsmin_local = min(vsmin_local,csloc)
-
-    enddo
-  enddo
-
-! compute minimum and maximum size of edges of this grid cell
-  distance_1 = sqrt((coord(1,ibool(1,1,ispec)) - coord(1,ibool(NGLLX,1,ispec)))**2 + &
-               (coord(2,ibool(1,1,ispec)) - coord(2,ibool(NGLLX,1,ispec)))**2)
-
-  distance_2 = sqrt((coord(1,ibool(NGLLX,1,ispec)) - coord(1,ibool(NGLLX,NGLLZ,ispec)))**2 + &
-               (coord(2,ibool(NGLLX,1,ispec)) - coord(2,ibool(NGLLX,NGLLZ,ispec)))**2)
-
-  distance_3 = sqrt((coord(1,ibool(NGLLX,NGLLZ,ispec)) - coord(1,ibool(1,NGLLZ,ispec)))**2 + &
-               (coord(2,ibool(NGLLX,NGLLZ,ispec)) - coord(2,ibool(1,NGLLZ,ispec)))**2)
-
-  distance_4 = sqrt((coord(1,ibool(1,NGLLZ,ispec)) - coord(1,ibool(1,1,ispec)))**2 + &
-               (coord(2,ibool(1,NGLLZ,ispec)) - coord(2,ibool(1,1,ispec)))**2)
-
-  distance_min_local = min(distance_1,distance_2,distance_3,distance_4)
-  distance_max_local = max(distance_1,distance_2,distance_3,distance_4)
-
-  distance_min = min(distance_min,distance_min_local)
-  distance_max = max(distance_max,distance_max_local)
-
-! display mesh dispersion for S waves if there is at least one elastic element in the mesh
-  if(any_elastic_glob .or. any_poroelastic_glob) then
-
-! ignore fluid regions with Vs = 0
-  if(csloc > 0.0001d0) then
-
-    lambdaS_local = vsmin_local / (distance_max_local / (NGLLX - 1))
-
-! display very good elements that are above 80% of the threshold in red
-    if(lambdaS_local >= 0.80 * lambdaSmax) then
-       if ( myrank == 0 ) then
-          write(24,*) '1 0 0 RG GF 0 setgray ST'
-       else
-          RGB_send(ispec) = 1
-       endif
-
-! display bad elements that are below 120% of the threshold in blue
-    else if(lambdaS_local <= 1.20 * lambdaSmin) then
-       if ( myrank == 0 ) then
-          write(24,*) '0 0 1 RG GF 0 setgray ST'
-       else
-          RGB_send(ispec) = 3
-       endif
-
-    else
-! do not color the elements if not close to the threshold
-       if ( myrank == 0 ) then
-          write(24,*) 'ST'
-       else
-          RGB_send(ispec) = 0
-       endif
-    endif
-
-  else
-! do not color the elements if S-wave velocity undefined
-     if ( myrank == 0 ) then
-        write(24,*) 'ST'
-     else
-        RGB_send(ispec) = 0
-     endif
-  endif
-
-! display mesh dispersion for P waves if there is no elastic element in the mesh
-  else
-
-    lambdaPI_local = vpImin_local / (distance_max_local / (NGLLX - 1))
-
-! display very good elements that are above 80% of the threshold in red
-    if(lambdaPI_local >= 0.80 * lambdaPImax) then
-       if ( myrank == 0 ) then
-          write(24,*) '1 0 0 RG GF 0 setgray ST'
-       else
-          RGB_send(ispec) = 1
-       endif
-
-! display bad elements that are below 120% of the threshold in blue
-    else if(lambdaPI_local <= 1.20 * lambdaPImin) then
-       if ( myrank == 0 ) then
-          write(24,*) '0 0 1 RG GF 0 setgray ST'
-       else
-          RGB_send(ispec) = 3
-       endif
-
-    else
-! do not color the elements if not close to the threshold
-       if ( myrank == 0 ) then
-          write(24,*) 'ST'
-       else
-          RGB_send(ispec) = 0
-       endif
-    endif
-
-  endif
-
-  enddo ! end of loop on all the spectral elements
-
-#ifdef USE_MPI
-  if (myrank == 0 ) then
-
-     do iproc = 1, nproc-1
-        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
-        allocate(coorg_recv(2,nspec_recv*5))
-        allocate(RGB_recv(nspec_recv))
-        call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
-        call MPI_RECV (RGB_recv(1), nspec_recv, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
-
-        do ispec = 1, nspec_recv
-           num_ispec = num_ispec + 1
-           write(24,*) '% elem ',num_ispec
-           write(24,*) 'mark'
-           write(24,681) coorg_recv(1,(ispec-1)*5+1), coorg_recv(2,(ispec-1)*5+1)
-           write(24,681) coorg_recv(1,(ispec-1)*5+2), coorg_recv(2,(ispec-1)*5+2)
-           write(24,681) coorg_recv(1,(ispec-1)*5+3), coorg_recv(2,(ispec-1)*5+3)
-           write(24,681) coorg_recv(1,(ispec-1)*5+4), coorg_recv(2,(ispec-1)*5+4)
-           write(24,681) coorg_recv(1,(ispec-1)*5+5), coorg_recv(2,(ispec-1)*5+5)
-           write(24,*) 'CO'
-           if ( RGB_recv(ispec)  == 1) then
-              write(24,*) '1 0 0 RG GF 0 setgray ST'
-           endif
-           if ( RGB_recv(ispec)  == 3) then
-              write(24,*) '0 0 1 RG GF 0 setgray ST'
-           endif
-           if ( RGB_recv(ispec)  == 0) then
-              write(24,*) 'ST'
-           endif
-
-        enddo
-        deallocate(coorg_recv)
-        deallocate(RGB_recv)
-
-     enddo
-
-  else
-     call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
-     call MPI_SEND (coorg_send, nspec*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
-     call MPI_SEND (RGB_send, nspec, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
-
-  endif
-#endif
-
-  if ( myrank == 0 ) then
-     write(24,*) '%'
-     write(24,*) 'grestore'
-     write(24,*) 'showpage'
-
-     close(24)
-
-     write(IOUT,*) 'End of creation of PostScript file with mesh dispersion'
-
-  endif
-
-!
-!--------------------------------------------------------------------------------
-!
-
-  if (myrank == 0) then
-
-    write(IOUT,*)
-    write(IOUT,*) 'Creating PostScript file with velocity model'
-
-!
-!---- open PostScript file
-!
-  open(unit=24,file='OUTPUT_FILES/P_velocity_model.ps',status='unknown')
-
-!
-!---- write PostScript header
-!
-  write(24,10) simulation_title
-  write(24,*) '/CM {28.5 mul} def'
-  write(24,*) '/LR {rlineto} def'
-  write(24,*) '/LT {lineto} def'
-  write(24,*) '/L {lineto} def'
-  write(24,*) '/MR {rmoveto} def'
-  write(24,*) '/MV {moveto} def'
-  write(24,*) '/M {moveto} def'
-  write(24,*) '/ST {stroke} def'
-  write(24,*) '/CP {closepath} def'
-  write(24,*) '/RG {setrgbcolor} def'
-  write(24,*) '/GF {gsave fill grestore} def'
-  write(24,*) '% different useful symbols'
-  write(24,*) '/Point {2 0 360 arc CP 0 setgray fill} def'
-  write(24,*) '/VDot {-0.75 -1.5 MR 1.5 0 LR 0 3. LR -1.5 0 LR'
-  write(24,*) 'CP fill} def'
-  write(24,*) '/HDot {-1.5 -0.75 MR 3. 0 LR 0 1.5 LR -3. 0 LR'
-  write(24,*) 'CP fill} def'
-  write(24,*) '/Cross {gsave 0.05 CM setlinewidth'
-  write(24,*) 'gsave 3 3 MR -6. -6. LR ST grestore'
-  write(24,*) 'gsave 3 -3 MR -6. 6. LR ST grestore'
-  write(24,*) '0.01 CM setlinewidth} def'
-  write(24,*) '/SmallLine {MV 0.07 CM 0 rlineto} def'
-  write(24,*) '/Diamond {gsave 0.05 CM setlinewidth 0 4.2 MR'
-  write(24,*) '-3 -4.2 LR 3 -4.2 LR 3 4.2 LR CP ST'
-  write(24,*) 'grestore 0.01 CM setlinewidth} def'
-  write(24,*) '%'
-  write(24,*) '% macro to draw the contour of the elements'
-  write(24,*) '/CO {M counttomark 2 idiv {L} repeat cleartomark CP} def'
-  write(24,*) '%'
-  write(24,*) '.01 CM setlinewidth'
-  write(24,*) '/Times-Roman findfont'
-  write(24,*) '.35 CM scalefont setfont'
-  write(24,*) '%'
-  write(24,*) '/vshift ',-height/2,' CM def'
-  write(24,*) '/Rshow { currentpoint stroke MV'
-  write(24,*) 'dup stringwidth pop neg vshift MR show } def'
-  write(24,*) '/Cshow { currentpoint stroke MV'
-  write(24,*) 'dup stringwidth pop -2 div vshift MR show } def'
-  write(24,*) '/fN {/Helvetica-Bold findfont ',height,' CM scalefont setfont} def'
-  write(24,*) '%'
-  write(24,*) 'gsave newpath 90 rotate'
-  write(24,*) '0 ',-sizez,' CM translate 1. 1. scale'
-  write(24,*) '%'
-
-!
-!--- write captions of PostScript figure
-!
-  write(24,*) '0 setgray'
-  write(24,*) '/Times-Roman findfont'
-  write(24,*) '.5 CM scalefont setfont'
-
-  write(24,*) '%'
-  write(24,*) '/Times-Roman findfont'
-  write(24,*) '.6 CM scalefont setfont'
-  write(24,*) '.4 .9 .9 setrgbcolor'
-  write(24,*) '11 CM 1.1 CM MV'
-  write(24,*) '(X axis) show'
-  write(24,*) '%'
-  write(24,*) '1.4 CM 9.5 CM MV'
-  write(24,*) 'currentpoint gsave translate 90 rotate 0 0 moveto'
-  write(24,*) '(Z axis) show'
-  write(24,*) 'grestore'
-  write(24,*) '%'
-  write(24,*) '/Times-Roman findfont'
-  write(24,*) '.7 CM scalefont setfont'
-  write(24,*) '.8 0 .8 setrgbcolor'
-  write(24,*) '24.35 CM 18.9 CM MV'
-  write(24,*) usoffset,' CM 2 div neg 0 MR'
-  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  write(24,*) '(P-velocity model \(dark = fast, light = slow\)) show'
-  write(24,*) 'grestore'
-  write(24,*) '25.35 CM 18.9 CM MV'
-  write(24,*) usoffset,' CM 2 div neg 0 MR'
-  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  write(24,*) '(',simulation_title,') show'
-  write(24,*) 'grestore'
-  write(24,*) '26.45 CM 18.9 CM MV'
-  write(24,*) usoffset,' CM 2 div neg 0 MR'
-  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  write(24,*) '(2D Spectral Element Method) show'
-  write(24,*) 'grestore'
-
-  write(24,*) '%'
-  write(24,*) '1 1 scale'
-  write(24,*) '%'
-
-!
-!---- draw the spectral element mesh
-!
-  write(24,*) '%'
-  write(24,*) '% spectral element mesh'
-  write(24,*) '%'
-  write(24,*) '0 setgray'
-
-  num_ispec = 0
-endif
-
-  do ispec = 1, UPPER_LIMIT_DISPLAY
-     if ( myrank == 0 ) then
-        num_ispec = num_ispec + 1
-        write(24,*) '% elem ',num_ispec
-     endif
-  do i=1,pointsdisp
-  do j=1,pointsdisp
-  xinterp(i,j) = 0.d0
-  zinterp(i,j) = 0.d0
-  do in = 1,ngnod
-    nnum = knods(in,ispec)
-      xinterp(i,j) = xinterp(i,j) + shapeint(in,i,j)*coorg(1,nnum)
-      zinterp(i,j) = zinterp(i,j) + shapeint(in,i,j)*coorg(2,nnum)
-  enddo
-  enddo
-  enddo
-
-  is = 1
-  ir = 1
-  x1 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z1 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x1 = x1 * centim
-  z1 = z1 * centim
-  if ( myrank == 0 ) then
-     write(24,*) 'mark'
-     write(24,681) x1,z1
-  else
-     coorg_send(1,(ispec-1)*5+1) = x1
-     coorg_send(2,(ispec-1)*5+1) = z1
-  endif
-
-! draw straight lines if elements have 4 nodes
-
-  ir=pointsdisp
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if ( myrank == 0 ) then
-     write(24,681) x2,z2
-  else
-     coorg_send(1,(ispec-1)*5+2) = x2
-     coorg_send(2,(ispec-1)*5+2) = z2
-  endif
-
-  ir=pointsdisp
-  is=pointsdisp
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if ( myrank == 0 ) then
-     write(24,681) x2,z2
-  else
-     coorg_send(1,(ispec-1)*5+3) = x2
-     coorg_send(2,(ispec-1)*5+3) = z2
-  endif
-
-  is=pointsdisp
-  ir=1
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if ( myrank == 0 ) then
-     write(24,681) x2,z2
-  else
-     coorg_send(1,(ispec-1)*5+4) = x2
-     coorg_send(2,(ispec-1)*5+4) = z2
-  endif
-
-  ir=1
-  is=2
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if ( myrank == 0 ) then
-     write(24,681) x2,z2
-     write(24,*) 'CO'
-  else
-     coorg_send(1,(ispec-1)*5+5) = x2
-     coorg_send(2,(ispec-1)*5+5) = z2
-  endif
-
-  if((vpImax-vpImin)/vpImin > 0.02d0) then
-  if(assign_external_model) then
-! use lower-left corner
-    x1 = (vpext(1,1,ispec)-vpImin) / (vpImax-vpImin)
-  else
-    material = kmato(ispec)
-   if(poroelastic(ispec)) then
-    phi = porosity(material)
-    tort = tortuosity(material)
-    perm = permeability(1,material)
-!solid properties
-    mu_s = poroelastcoef(2,1,material)
-    kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
-    denst_s = density(1,material)
-!fluid properties
-    kappa_f = poroelastcoef(1,2,material)
-    denst_f = density(2,material)
-    eta_f = poroelastcoef(2,2,material)
-!frame properties
-    mu_fr = poroelastcoef(2,3,material)
-    kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
-!Biot coefficients for the input phi
-      D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
-      H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
-      C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
-      M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
-
-    call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-             tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,TURN_VISCATTENUATION_ON)
-
-    cpIloc = sqrt(cpIsquare)
-   else
-    lambdaplus2mu  = poroelastcoef(3,1,material)
-    denst = density(1,material)
-    cpIloc = sqrt(lambdaplus2mu/denst)
-   endif
-    x1 = (cpIloc-vpImin)/(vpImax-vpImin)
-  endif
-  else
-    x1 = 0.5d0
- endif
-
-! rescale to avoid very dark gray levels
-  x1 = x1*0.7 + 0.2
-  if(x1 > 1.d0) x1=1.d0
-
-! invert scale: white = vpmin, dark gray = vpmax
-  x1 = 1.d0 - x1
-
-! display P-velocity model using gray levels
-  if ( myrank == 0 ) then
-     write(24,*) sngl(x1),' setgray GF 0 setgray ST'
-  else
-     greyscale_send(ispec) = sngl(x1)
-  endif
-  enddo ! end of loop on all the spectral elements
-
-#ifdef USE_MPI
-  if (myrank == 0 ) then
-
-     do iproc = 1, nproc-1
-        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
-        allocate(coorg_recv(2,nspec_recv*5))
-        allocate(greyscale_recv(nspec_recv))
-        call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
-        call MPI_RECV (greyscale_recv(1), nspec_recv, MPI_REAL, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
-
-        do ispec = 1, nspec_recv
-           num_ispec = num_ispec + 1
-           write(24,*) '% elem ',num_ispec
-           write(24,*) 'mark'
-           write(24,681) coorg_recv(1,(ispec-1)*5+1), coorg_recv(2,(ispec-1)*5+1)
-           write(24,681) coorg_recv(1,(ispec-1)*5+2), coorg_recv(2,(ispec-1)*5+2)
-           write(24,681) coorg_recv(1,(ispec-1)*5+3), coorg_recv(2,(ispec-1)*5+3)
-           write(24,681) coorg_recv(1,(ispec-1)*5+4), coorg_recv(2,(ispec-1)*5+4)
-           write(24,681) coorg_recv(1,(ispec-1)*5+5), coorg_recv(2,(ispec-1)*5+5)
-           write(24,*) 'CO'
-           write(24,*) greyscale_recv(ispec), ' setgray GF 0 setgray ST'
-
-        enddo
-        deallocate(coorg_recv)
-        deallocate(greyscale_recv)
-
-     enddo
-
-  else
-     call MPI_SEND (UPPER_LIMIT_DISPLAY, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
-     call MPI_SEND (coorg_send, UPPER_LIMIT_DISPLAY*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
-     call MPI_SEND (greyscale_send, UPPER_LIMIT_DISPLAY, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
-  endif
-#endif
-
-  if (myrank == 0) then
-
-     write(24,*) '%'
-     write(24,*) 'grestore'
-     write(24,*) 'showpage'
-
-     close(24)
-
-     write(IOUT,*) 'End of creation of PostScript file with velocity model'
-
-  endif
-
-  if (myrank == 0) then
-
-    write(IOUT,*)
-    write(IOUT,*) 'Creating PostScript file with mesh partitioning'
-
-!
-!---- open PostScript file
-!
-  open(unit=24,file='OUTPUT_FILES/mesh_partitioning.ps',status='unknown')
-
-!
-!---- write PostScript header
-!
-  write(24,10) simulation_title
-  write(24,*) '/CM {28.5 mul} def'
-  write(24,*) '/LR {rlineto} def'
-  write(24,*) '/LT {lineto} def'
-  write(24,*) '/L {lineto} def'
-  write(24,*) '/MR {rmoveto} def'
-  write(24,*) '/MV {moveto} def'
-  write(24,*) '/M {moveto} def'
-  write(24,*) '/ST {stroke} def'
-  write(24,*) '/CP {closepath} def'
-  write(24,*) '/RG {setrgbcolor} def'
-  write(24,*) '/GF {gsave fill grestore} def'
-  write(24,*) '% different useful symbols'
-  write(24,*) '/Point {2 0 360 arc CP 0 setgray fill} def'
-  write(24,*) '/VDot {-0.75 -1.5 MR 1.5 0 LR 0 3. LR -1.5 0 LR'
-  write(24,*) 'CP fill} def'
-  write(24,*) '/HDot {-1.5 -0.75 MR 3. 0 LR 0 1.5 LR -3. 0 LR'
-  write(24,*) 'CP fill} def'
-  write(24,*) '/Cross {gsave 0.05 CM setlinewidth'
-  write(24,*) 'gsave 3 3 MR -6. -6. LR ST grestore'
-  write(24,*) 'gsave 3 -3 MR -6. 6. LR ST grestore'
-  write(24,*) '0.01 CM setlinewidth} def'
-  write(24,*) '/SmallLine {MV 0.07 CM 0 rlineto} def'
-  write(24,*) '/Diamond {gsave 0.05 CM setlinewidth 0 4.2 MR'
-  write(24,*) '-3 -4.2 LR 3 -4.2 LR 3 4.2 LR CP ST'
-  write(24,*) 'grestore 0.01 CM setlinewidth} def'
-  write(24,*) '%'
-  write(24,*) '% macro to draw the contour of the elements'
-  write(24,*) '/CO {M counttomark 2 idiv {L} repeat cleartomark CP} def'
-  write(24,*) '%'
-  write(24,*) '.01 CM setlinewidth'
-  write(24,*) '/Times-Roman findfont'
-  write(24,*) '.35 CM scalefont setfont'
-  write(24,*) '%'
-  write(24,*) '/vshift ',-height/2,' CM def'
-  write(24,*) '/Rshow { currentpoint stroke MV'
-  write(24,*) 'dup stringwidth pop neg vshift MR show } def'
-  write(24,*) '/Cshow { currentpoint stroke MV'
-  write(24,*) 'dup stringwidth pop -2 div vshift MR show } def'
-  write(24,*) '/fN {/Helvetica-Bold findfont ',height,' CM scalefont setfont} def'
-  write(24,*) '%'
-  write(24,*) 'gsave newpath 90 rotate'
-  write(24,*) '0 ',-sizez,' CM translate 1. 1. scale'
-  write(24,*) '%'
-
-!
-!--- write captions of PostScript figure
-!
-  write(24,*) '0 setgray'
-  write(24,*) '/Times-Roman findfont'
-  write(24,*) '.5 CM scalefont setfont'
-
-  write(24,*) '%'
-  write(24,*) '/Times-Roman findfont'
-  write(24,*) '.6 CM scalefont setfont'
-  write(24,*) '.4 .9 .9 setrgbcolor'
-  write(24,*) '11 CM 1.1 CM MV'
-  write(24,*) '(X axis) show'
-  write(24,*) '%'
-  write(24,*) '1.4 CM 9.5 CM MV'
-  write(24,*) 'currentpoint gsave translate 90 rotate 0 0 moveto'
-  write(24,*) '(Z axis) show'
-  write(24,*) 'grestore'
-  write(24,*) '%'
-  write(24,*) '/Times-Roman findfont'
-  write(24,*) '.7 CM scalefont setfont'
-  write(24,*) '.8 0 .8 setrgbcolor'
-  write(24,*) '24.35 CM 18.9 CM MV'
-  write(24,*) usoffset,' CM 2 div neg 0 MR'
-  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  write(24,*) '(Mesh partitioning) show'
-  write(24,*) 'grestore'
-  write(24,*) '25.35 CM 18.9 CM MV'
-  write(24,*) usoffset,' CM 2 div neg 0 MR'
-  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  write(24,*) '(',simulation_title,') show'
-  write(24,*) 'grestore'
-  write(24,*) '26.45 CM 18.9 CM MV'
-  write(24,*) usoffset,' CM 2 div neg 0 MR'
-  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  write(24,*) '(2D Spectral Element Method) show'
-  write(24,*) 'grestore'
-
-  write(24,*) '%'
-  write(24,*) '1 1 scale'
-  write(24,*) '%'
-
-!
-!---- draw the spectral element mesh
-!
-  write(24,*) '%'
-  write(24,*) '% spectral element mesh'
-  write(24,*) '%'
-  write(24,*) '0 setgray'
-
-  num_ispec = 0
-  endif
-
-  do ispec = 1, UPPER_LIMIT_DISPLAY
-
-     if ( myrank == 0 ) then
-        num_ispec = num_ispec + 1
-        write(24,*) '% elem ',num_ispec
-     endif
-
-  do i=1,pointsdisp
-  do j=1,pointsdisp
-  xinterp(i,j) = 0.d0
-  zinterp(i,j) = 0.d0
-  do in = 1,ngnod
-    nnum = knods(in,ispec)
-      xinterp(i,j) = xinterp(i,j) + shapeint(in,i,j)*coorg(1,nnum)
-      zinterp(i,j) = zinterp(i,j) + shapeint(in,i,j)*coorg(2,nnum)
-  enddo
-  enddo
-  enddo
-
-  is = 1
-  ir = 1
-  x1 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z1 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x1 = x1 * centim
-  z1 = z1 * centim
-  if ( myrank == 0 ) then
-     write(24,*) 'mark'
-     write(24,681) x1,z1
-  else
-     coorg_send(1,(ispec-1)*5+1) = x1
-     coorg_send(2,(ispec-1)*5+1) = z1
-  endif
-
-! draw straight lines if elements have 4 nodes
-
-  ir=pointsdisp
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if ( myrank == 0 ) then
-     write(24,681) x2,z2
-  else
-     coorg_send(1,(ispec-1)*5+2) = x2
-     coorg_send(2,(ispec-1)*5+2) = z2
-  endif
-
-  ir=pointsdisp
-  is=pointsdisp
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if ( myrank == 0 ) then
-     write(24,681) x2,z2
-  else
-     coorg_send(1,(ispec-1)*5+3) = x2
-     coorg_send(2,(ispec-1)*5+3) = z2
-  endif
-
-  is=pointsdisp
-  ir=1
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if ( myrank == 0 ) then
-     write(24,681) x2,z2
-  else
-     coorg_send(1,(ispec-1)*5+4) = x2
-     coorg_send(2,(ispec-1)*5+4) = z2
-  endif
-
-  ir=1
-  is=2
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if ( myrank == 0 ) then
-     write(24,681) x2,z2
-     write(24,*) 'CO'
-  else
-     coorg_send(1,(ispec-1)*5+5) = x2
-     coorg_send(2,(ispec-1)*5+5) = z2
-  endif
-
-  if ( myrank == 0 ) then
-        write(24,*) red(1), green(1), blue(1), 'RG GF 0 setgray ST'
-     endif
-
-  enddo ! end of loop on all the spectral elements
-
-#ifdef USE_MPI
-  if (myrank == 0 ) then
-
-      do iproc = 1, nproc-1
-
-! use a different color for each material set
-        icol = mod(iproc, NUM_COLORS) + 1
-
-        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
-        allocate(coorg_recv(2,nspec_recv*5))
-        call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
-
-        do ispec = 1, nspec_recv
-           num_ispec = num_ispec + 1
-           write(24,*) '% elem ',num_ispec
-           write(24,*) 'mark'
-           write(24,681) coorg_recv(1,(ispec-1)*5+1), coorg_recv(2,(ispec-1)*5+1)
-           write(24,681) coorg_recv(1,(ispec-1)*5+2), coorg_recv(2,(ispec-1)*5+2)
-           write(24,681) coorg_recv(1,(ispec-1)*5+3), coorg_recv(2,(ispec-1)*5+3)
-           write(24,681) coorg_recv(1,(ispec-1)*5+4), coorg_recv(2,(ispec-1)*5+4)
-           write(24,681) coorg_recv(1,(ispec-1)*5+5), coorg_recv(2,(ispec-1)*5+5)
-           write(24,*) 'CO'
-
-           write(24,*) red(icol), green(icol), blue(icol), ' RG GF 0 setgray ST'
-
-        enddo
-        deallocate(coorg_recv)
-
-     enddo
-
-  else
-     call MPI_SEND (UPPER_LIMIT_DISPLAY, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
-     call MPI_SEND (coorg_send, UPPER_LIMIT_DISPLAY*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
-
-  endif
-#endif
-
- if (myrank == 0) then
-   write(24,*) '%'
-   write(24,*) 'grestore'
-   write(24,*) 'showpage'
-
-   close(24)
-
-   write(IOUT,*) 'End of creation of PostScript file with partitioning'
-   write(IOUT,*)
- endif
-
- 10  format('%!PS-Adobe-2.0',/,'%%',/,'%% Title: ',a100,/,'%% Created by: Specfem2D',/,'%% Author: Dimitri Komatitsch',/,'%%')
-
- 681 format(f6.2,1x,f6.2)
-
-  end subroutine checkgrid
-
-
+  
+  end subroutine checkgrid_setup_colorp
