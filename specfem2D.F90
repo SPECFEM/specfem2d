@@ -1107,13 +1107,13 @@
         write(IOUT,*) '       - decrease time shift t0 in SOURCE file'
         write(IOUT,*) '       - increase frequency f0 in SOURCE file'
       endif
-      call exit_mpi(myrank,'error USER_T0 is set but too small')
+      call exit_MPI('error USER_T0 is set but too small')
     endif
   else if( USER_T0 < 0.d0 ) then
     if( myrank == 0 .and. ipass == 1 ) then
       write(IOUT,*) 'error: USER_T0 is negative, must be set zero or positive!'
     endif
-    call exit_mpi(myrank,'error negative USER_T0 parameter in constants.h')
+    call exit_MPI('error negative USER_T0 parameter in constants.h')
   endif
 
 !
@@ -2310,7 +2310,7 @@ deallocate(weight_gll)
       if(myrank == which_proc_receiver(irec))then
 !   check that the source proc number is okay
         if(which_proc_receiver(irec) < 0 .or. which_proc_receiver(irec) > NPROC-1) &
-              call exit_MPI(myrank,'something is wrong with the source proc number in adjoint simulation')
+              call exit_MPI('something is wrong with the source proc number in adjoint simulation')
         nadj_rec_local = nadj_rec_local + 1
       endif
     enddo
@@ -2327,9 +2327,9 @@ deallocate(weight_gll)
       if(myrank == which_proc_receiver(irec))then
         irec_local = irec_local + 1
         adj_source_file = trim(station_name(irec))//'.'//trim(network_name(irec))
-        call compute_arrays_adj_source(myrank,adj_source_file, &
-              xi_receiver(irec), gamma_receiver(irec), &
-              adj_sourcearray, xigll,zigll,NSTEP)
+        call compute_arrays_adj_source(adj_source_file, &
+                            xi_receiver(irec), gamma_receiver(irec), &
+                            adj_sourcearray, xigll,zigll,NSTEP)
         adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
       endif
     enddo

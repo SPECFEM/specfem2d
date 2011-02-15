@@ -130,15 +130,15 @@
 ! ------------------------------------------------------------------------------------------------------
 
 
-    subroutine compute_arrays_adj_source(myrank,adj_source_file,xi_receiver,gamma_receiver,adj_sourcearray, &
-                  xigll,zigll,NSTEP)
+  subroutine compute_arrays_adj_source(adj_source_file,xi_receiver,gamma_receiver,adj_sourcearray, &
+                                      xigll,zigll,NSTEP)
 
   implicit none
 
   include 'constants.h'
 
 ! input
-  integer myrank, NSTEP
+  integer NSTEP
 
   double precision xi_receiver, gamma_receiver
 
@@ -171,7 +171,7 @@
 
     filename = 'OUTPUT_FILES/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
     open(unit = IIN, file = trim(filename), iostat = ios)
-    if (ios /= 0) call exit_MPI(myrank, ' file '//trim(filename)//'does not exist')
+    if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
 
     do itime = 1, NSTEP
       read(IIN,*) junk, adj_src_s(itime,icomp)
