@@ -303,8 +303,9 @@ contains
     read(994,*) abs_surface(1,i), abs_surface(2,i), abs_surface(3,i), abs_surface(4,i)
     if (abs_surface(2,i) /= 2) then
       print *,'The input format is currently limited: only two nodes per element can be listed.'
-      print *,'If one of your elements has more than one edge along a given absorbing contour (e.g., if that contour has a corner)'
-      print *,'then list it twice, putting the first edge on the first line and the second edge on the second line.'
+      print *,'If one of your elements has more than one edge along a given absorbing contour'
+      print *,'(e.g., if that contour has a corner) then list it twice,'
+      print *,'putting the first edge on the first line and the second edge on the second line.'
       print *,'if one of your elements has a single point along the absording contour rather than a full edge, do NOT list it'
       print *,'(it would have no weight in the contour integral anyway because it would consist of a single point).'
       print *,'If you are using 9-node elements, list only the first and last points of the edge and not the intermediate point'
