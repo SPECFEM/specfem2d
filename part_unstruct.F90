@@ -307,7 +307,7 @@ contains
       print *,'then list it twice, putting the first edge on the first line and the second edge on the second line.'
       print *,'if one of your elements has a single point along the absording contour rather than a full edge, do NOT list it'
       print *,'(it would have no weight in the contour integral anyway because it would consist of a single point).'
-      print *,'If you are using 9-node elements, list only the first and last point of the edge and not the intermediate point'
+      print *,'If you are using 9-node elements, list only the first and last points of the edge and not the intermediate point'
       print *,'located around the middle of the edge; the right 9-node curvature will be restored automatically by the code.'
       stop 'only two nodes per element should be listed for absorbing edges'
     endif
