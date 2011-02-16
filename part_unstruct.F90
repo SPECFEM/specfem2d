@@ -291,7 +291,7 @@ contains
 
   open(unit=994, file=trim(filename), form='formatted' , status='old', action='read', iostat=ier)
   if( ier /= 0 ) then
-    print*,'error opening file: ',trim(filename)
+    print *,'error opening file: ',trim(filename)
     stop 'error read absorbing surface file'
   endif
 
@@ -300,15 +300,17 @@ contains
   allocate(abs_surface(4,nelemabs))
 
   do i = 1, nelemabs
-     read(994,*) abs_surface(1,i), abs_surface(2,i), abs_surface(3,i), abs_surface(4,i)
-! The input format is currently limited: only two nodes per element can be listed.
-! If one of your elements has more than one edge along a given absorbing contour (e.g., if that contour has a corner)
-! then list it twice, putting the first edge on the first line and the second edge on the second line.
-! if one of your elements has a single point along the absording contour rather than a full edge, do NOT list it
-! (it would have no weight in the contour integral anyway because it would consist of a single point).
-! If you are using 9-node elements, list only the first and last point of the edge and not the intermediate point
-! located around the middle of the edge; the right 9-node curvature will be restored automatically by the code.
-     if (abs_surface(2,i) /= 2) stop 'only two nodes per element should be listed for absorbing edges'
+    read(994,*) abs_surface(1,i), abs_surface(2,i), abs_surface(3,i), abs_surface(4,i)
+    if (abs_surface(2,i) /= 2) then
+      print *,'The input format is currently limited: only two nodes per element can be listed.'
+      print *,'If one of your elements has more than one edge along a given absorbing contour (e.g., if that contour has a corner)'
+      print *,'then list it twice, putting the first edge on the first line and the second edge on the second line.'
+      print *,'if one of your elements has a single point along the absording contour rather than a full edge, do NOT list it'
+      print *,'(it would have no weight in the contour integral anyway because it would consist of a single point).'
+      print *,'If you are using 9-node elements, list only the first and last point of the edge and not the intermediate point'
+      print *,'located around the middle of the edge; the right 9-node curvature will be restored automatically by the code.'
+      stop 'only two nodes per element should be listed for absorbing edges'
+    endif
   enddo
 
   close(994)
