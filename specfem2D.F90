@@ -441,7 +441,7 @@
   double precision, dimension(:), allocatable :: aval
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: source_time_function
   double precision, external :: netlib_specfun_erf
-  real(kind=CUSTOM_REAL) :: stf_used
+  double precision :: stf_used
 
   double precision :: vpImin,vpImax,vpIImin,vpIImax
 
@@ -786,7 +786,7 @@
 !! DK DK the length of an edge is about 1d-003, thus use e.g. 1/300 of that
   double precision, parameter :: PERIODIC_DETECT_TOL = 1d-003 / 300.d0
 
-  integer, parameter :: NSPEC_PERIO = 384 / 2  !  670 / 2
+  integer, parameter :: NSPEC_PERIO = 670 / 2  ! 414 / 2
 
   integer, dimension(NSPEC_PERIO) :: numperio_left
   integer, dimension(NSPEC_PERIO) :: numperio_right
@@ -4265,7 +4265,7 @@ endif
       ! compute current time
       time = (it-1)*deltat
 
-      stf_used = 0._CUSTOM_REAL
+      stf_used = 0.d0
 
       ! loop on all the sources
       do i_source=1,NSOURCE
@@ -4303,7 +4303,7 @@ endif
 
       ! output relative time in third column, in case user wants to check it as well
       ! if (myrank == 0 .and. i_source==1 ) write(55,*) sngl(time-t0(1)),real(source_time_function(1,it),4),sngl(time)
-      if (myrank == 0 ) then
+      if (myrank == 0) then
           ! note: earliest start time of the simulation is: (it-1)*deltat - t0_start
           write(55,*) sngl(time-t0_start),sngl(stf_used),sngl(time)
       endif
