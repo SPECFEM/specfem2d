@@ -1,3 +1,4 @@
+
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 6.1
@@ -9,6 +10,7 @@
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
 !               Christina Morency, cmorency aT princeton DOT edu
+!               Pieyre Le Loher, pieyre DOT le-loher aT inria.fr
 !
 ! This software is a computer program whose purpose is to solve
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
@@ -41,35 +43,78 @@
 !
 !========================================================================
 
-!-----------------------------------------------
-! subroutine to stop the code whether sequential or parallel.
-!-----------------------------------------------
-subroutine exit_MPI(error_msg)
+
+  subroutine initialize_simulation(nproc,myrank,NUMBER_OF_PASSES, &
+                  ninterface_acoustic,ninterface_elastic,ninterface_poroelastic)
 
   implicit none
+  include "constants.h"
 #ifdef USE_MPI
-  ! standard include of the MPI library
   include "mpif.h"
 #endif
 
-  ! identifier for error message file
-  integer, parameter :: IERROR = 30
+  integer :: nproc,myrank,NUMBER_OF_PASSES
+  integer :: ninterface_acoustic, ninterface_elastic,ninterface_poroelastic
 
-  character(len=*) error_msg
+  ! local parameters
+  integer :: ier
+  character(len=256)  :: prname
 
-  integer ier
+!***********************************************************************
+!
+!             i n i t i a l i z a t i o n    p h a s e
+!
+!***********************************************************************
 
-  ier = 0
-
-  ! write error message to screen
-  write(*,*) error_msg(1:len(error_msg))
-  write(*,*) 'Error detected, aborting MPI... proc '
-
-  ! stop all the MPI processes, and exit
 #ifdef USE_MPI
-  call MPI_ABORT(MPI_COMM_WORLD,30,ier)
+  call MPI_INIT(ier)
+  call MPI_COMM_SIZE(MPI_COMM_WORLD,nproc,ier)
+  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
+  if( ier /= 0 ) call exit_MPI('error MPI initialization')
+  
+  ! this is only used in the case of MPI because it distinguishes between inner and outer element
+  ! in the MPI partitions, which is meaningless in the serial case
+  if(FURTHER_REDUCE_CACHE_MISSES) then
+    NUMBER_OF_PASSES = 2
+  else
+    NUMBER_OF_PASSES = 1
+  endif
+
+#else
+  nproc = 1
+  myrank = 0
+  !ier = 0
+  !ninterface_acoustic = 0
+  !ninterface_elastic = 0
+  !ninterface_poroelastic = 0
+  !iproc = 0
+  !ispec_inner = 0
+  !ispec_outer = 0
+
+  if(PERFORM_CUTHILL_MCKEE) then
+    NUMBER_OF_PASSES = 2
+  else
+    NUMBER_OF_PASSES = 1
+  endif
 #endif
 
-  stop 'error, program ended in exit_MPI'
+  ninterface_acoustic = 0
+  ninterface_elastic = 0
+  ninterface_poroelastic = 0
 
-end subroutine exit_MPI
+  ! determine if we write to file instead of standard output
+  if(IOUT /= ISTANDARD_OUTPUT) then
+
+#ifdef USE_MPI
+    write(prname,240) myrank
+ 240 format('simulation_results',i5.5,'.txt')
+#else
+    prname = 'simulation_results.txt'
+#endif
+
+    open(IOUT,file=prname,status='unknown',action='write',iostat=ier)
+    if( ier /= 0 ) call exit_MPI('error opening file simulation_results***.txt')
+    
+  endif
+
+  end subroutine initialize_simulation

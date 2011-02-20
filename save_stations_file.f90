@@ -42,7 +42,7 @@
 !
 !========================================================================
 
-  subroutine save_stations_file(nreceiverlines,nrec,xdeb,zdeb,xfin,zfin,enreg_surf, &
+  subroutine save_stations_file(nreceiverlines,nrec,xdeb,zdeb,xfin,zfin,enreg_surf_same_vertical, &
                             xinterface_top,zinterface_top,coefs_interface_top, &
                             npoints_interface_top,max_npoints_interface)
 
@@ -51,7 +51,7 @@
   integer :: nreceiverlines
   integer, dimension(nreceiverlines) :: nrec
   double precision, dimension(nreceiverlines) :: xdeb,zdeb,xfin,zfin
-  logical, dimension(nreceiverlines) :: enreg_surf
+  logical, dimension(nreceiverlines) :: enreg_surf_same_vertical
 
   integer :: max_npoints_interface
   double precision, dimension(max_npoints_interface) :: xinterface_top, &
@@ -104,7 +104,7 @@
        endif
 
        ! modify position of receiver if we must record exactly at the surface
-       if(enreg_surf(ireceiverlines)) &
+       if(enreg_surf_same_vertical(ireceiverlines)) &
             zrec = value_spline(xrec,xinterface_top,zinterface_top, &
                             coefs_interface_top,npoints_interface_top)
 

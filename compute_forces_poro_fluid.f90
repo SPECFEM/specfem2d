@@ -60,7 +60,7 @@
                jbegin_left_poro,jend_left_poro,jbegin_right_poro,jend_right_poro,&
                C_k,M_k,NSOURCE,nrec,SIMULATION_TYPE,SAVE_FORWARD,&
                b_absorb_poro_w_left,b_absorb_poro_w_right,b_absorb_poro_w_bottom,b_absorb_poro_w_top,&
-               nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,f0,freq0,Q0)
+               nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,ib_left,ib_right,ib_bottom,ib_top,f0,freq0,Q0)
 
 ! compute forces for the fluid poroelastic part
 
@@ -73,10 +73,10 @@
   integer :: nrec,SIMULATION_TYPE,myrank
   integer, dimension(nrec) :: ispec_selected_rec,which_proc_receiver
   integer :: nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax
-  integer, dimension(nspec_xmin) :: ib_xmin
-  integer, dimension(nspec_xmax) :: ib_xmax
-  integer, dimension(nspec_zmin) :: ib_zmin
-  integer, dimension(nspec_zmax) :: ib_zmax
+  integer, dimension(nspec_xmin) :: ib_left
+  integer, dimension(nspec_xmax) :: ib_right
+  integer, dimension(nspec_zmin) :: ib_bottom
+  integer, dimension(nspec_zmax) :: ib_top
 
   logical :: anyabs,initialfield,TURN_ATTENUATION_ON
   logical :: SAVE_FORWARD
@@ -598,13 +598,13 @@
             accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - tz*weight
 
             if(SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-              b_absorb_poro_w_left(1,j,ib_xmin(ispecabs),it) = tx*weight
-              b_absorb_poro_w_left(2,j,ib_xmin(ispecabs),it) = tz*weight
+              b_absorb_poro_w_left(1,j,ib_left(ispecabs),it) = tx*weight
+              b_absorb_poro_w_left(2,j,ib_left(ispecabs),it) = tz*weight
             elseif(SIMULATION_TYPE == 2) then
               b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) - &
-                                              b_absorb_poro_w_left(1,j,ib_xmin(ispecabs),NSTEP-it+1)
+                                              b_absorb_poro_w_left(1,j,ib_left(ispecabs),NSTEP-it+1)
               b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) - &
-                                              b_absorb_poro_w_left(2,j,ib_xmin(ispecabs),NSTEP-it+1)
+                                              b_absorb_poro_w_left(2,j,ib_left(ispecabs),NSTEP-it+1)
             endif
 
           endif
@@ -654,13 +654,13 @@
             accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - tz*weight
 
             if(SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-              b_absorb_poro_w_right(1,j,ib_xmax(ispecabs),it) = tx*weight
-              b_absorb_poro_w_right(2,j,ib_xmax(ispecabs),it) = tz*weight
+              b_absorb_poro_w_right(1,j,ib_right(ispecabs),it) = tx*weight
+              b_absorb_poro_w_right(2,j,ib_right(ispecabs),it) = tz*weight
             elseif(SIMULATION_TYPE == 2) then
               b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) - &
-                                              b_absorb_poro_w_right(1,j,ib_xmax(ispecabs),NSTEP-it+1)
+                                              b_absorb_poro_w_right(1,j,ib_right(ispecabs),NSTEP-it+1)
               b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) - &
-                                              b_absorb_poro_w_right(2,j,ib_xmax(ispecabs),NSTEP-it+1)
+                                              b_absorb_poro_w_right(2,j,ib_right(ispecabs),NSTEP-it+1)
             endif
 
           endif
@@ -714,13 +714,13 @@
             accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - tz*weight
 
             if(SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-              b_absorb_poro_w_bottom(1,i,ib_zmin(ispecabs),it) = tx*weight
-              b_absorb_poro_w_bottom(2,i,ib_zmin(ispecabs),it) = tz*weight
+              b_absorb_poro_w_bottom(1,i,ib_bottom(ispecabs),it) = tx*weight
+              b_absorb_poro_w_bottom(2,i,ib_bottom(ispecabs),it) = tz*weight
             elseif(SIMULATION_TYPE == 2) then
               b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) - &
-                                              b_absorb_poro_w_bottom(1,i,ib_zmin(ispecabs),NSTEP-it+1)
+                                              b_absorb_poro_w_bottom(1,i,ib_bottom(ispecabs),NSTEP-it+1)
               b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) - &
-                                              b_absorb_poro_w_bottom(2,i,ib_zmin(ispecabs),NSTEP-it+1)
+                                              b_absorb_poro_w_bottom(2,i,ib_bottom(ispecabs),NSTEP-it+1)
             endif
 
           endif
@@ -774,13 +774,13 @@
             accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - tz*weight
 
             if(SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-              b_absorb_poro_w_top(1,i,ib_zmax(ispecabs),it) = tx*weight
-              b_absorb_poro_w_top(2,i,ib_zmax(ispecabs),it) = tz*weight
+              b_absorb_poro_w_top(1,i,ib_top(ispecabs),it) = tx*weight
+              b_absorb_poro_w_top(2,i,ib_top(ispecabs),it) = tz*weight
             elseif(SIMULATION_TYPE == 2) then
               b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) - &
-                                              b_absorb_poro_w_top(1,i,ib_zmax(ispecabs),NSTEP-it+1)
+                                              b_absorb_poro_w_top(1,i,ib_top(ispecabs),NSTEP-it+1)
               b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) - &
-                                              b_absorb_poro_w_top(2,i,ib_zmax(ispecabs),NSTEP-it+1)
+                                              b_absorb_poro_w_top(2,i,ib_top(ispecabs),NSTEP-it+1)
             endif
 
           endif

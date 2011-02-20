@@ -272,9 +272,11 @@
            ! subtract offset of the source to make sure travel time is correct
            do isample = 1,seismo_current
               if(iorientation == 1) then
-                 write(11,*) sngl(dble(seismo_offset+isample-1)*deltat - t0),' ',sngl(buffer_binary(isample,iorientation))
+                 write(11,*) sngl(dble(seismo_offset+isample-1)*deltat - t0),' ', &
+                              sngl(buffer_binary(isample,iorientation))
               else
-                 write(11,*) sngl(dble(seismo_offset+isample-1)*deltat - t0),' ',sngl(buffer_binary(isample,iorientation))
+                 write(11,*) sngl(dble(seismo_offset+isample-1)*deltat - t0),' ', &
+                              sngl(buffer_binary(isample,iorientation))
               endif
            enddo
 

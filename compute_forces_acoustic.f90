@@ -53,7 +53,7 @@
                jbegin_left,jend_left,jbegin_right,jend_right,SIMULATION_TYPE,SAVE_FORWARD,b_absorb_acoustic_left,&
                b_absorb_acoustic_right,b_absorb_acoustic_bottom,&
                b_absorb_acoustic_top,nspec_xmin,nspec_xmax,&
-               nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax)
+               nspec_zmin,nspec_zmax,ib_left,ib_right,ib_bottom,ib_top)
 
 ! compute forces for the acoustic elements
 
@@ -64,10 +64,10 @@
   integer :: npoin,nspec,nelemabs,numat,it,NSTEP,SIMULATION_TYPE
 
   integer :: nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax
-  integer, dimension(nspec_xmin) :: ib_xmin
-  integer, dimension(nspec_xmax) :: ib_xmax
-  integer, dimension(nspec_zmin) :: ib_zmin
-  integer, dimension(nspec_zmax) :: ib_zmax
+  integer, dimension(nspec_xmin) :: ib_left
+  integer, dimension(nspec_xmax) :: ib_right
+  integer, dimension(nspec_zmin) :: ib_bottom
+  integer, dimension(nspec_zmax) :: ib_top
 
   logical :: anyabs,assign_external_model
   logical :: SAVE_FORWARD
@@ -265,10 +265,10 @@
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl/rhol
 
              if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
-            b_absorb_acoustic_left(j,ib_xmin(ispecabs),it) = potential_dot_acoustic(iglob)*weight/cpl/rhol
+            b_absorb_acoustic_left(j,ib_left(ispecabs),it) = potential_dot_acoustic(iglob)*weight/cpl/rhol
              elseif(SIMULATION_TYPE == 2) then
             b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
-                                               b_absorb_acoustic_left(j,ib_xmin(ispecabs),NSTEP-it+1)
+                                               b_absorb_acoustic_left(j,ib_left(ispecabs),NSTEP-it+1)
              endif
           endif
 
@@ -306,10 +306,10 @@
 
 
              if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
-            b_absorb_acoustic_right(j,ib_xmax(ispecabs),it) = potential_dot_acoustic(iglob)*weight/cpl/rhol
+            b_absorb_acoustic_right(j,ib_right(ispecabs),it) = potential_dot_acoustic(iglob)*weight/cpl/rhol
              elseif(SIMULATION_TYPE == 2) then
             b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
-                                              b_absorb_acoustic_right(j,ib_xmax(ispecabs),NSTEP-it+1)
+                                              b_absorb_acoustic_right(j,ib_right(ispecabs),NSTEP-it+1)
              endif
           endif
 
@@ -350,10 +350,10 @@
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl/rhol
 
              if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
-            b_absorb_acoustic_bottom(i,ib_zmin(ispecabs),it) = potential_dot_acoustic(iglob)*weight/cpl/rhol
+            b_absorb_acoustic_bottom(i,ib_bottom(ispecabs),it) = potential_dot_acoustic(iglob)*weight/cpl/rhol
              elseif(SIMULATION_TYPE == 2) then
             b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
-                                               b_absorb_acoustic_bottom(i,ib_zmin(ispecabs),NSTEP-it+1)
+                                               b_absorb_acoustic_bottom(i,ib_bottom(ispecabs),NSTEP-it+1)
              endif
           endif
 
@@ -394,10 +394,10 @@
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl/rhol
 
              if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
-            b_absorb_acoustic_top(i,ib_zmax(ispecabs),it) = potential_dot_acoustic(iglob)*weight/cpl/rhol
+            b_absorb_acoustic_top(i,ib_top(ispecabs),it) = potential_dot_acoustic(iglob)*weight/cpl/rhol
              elseif(SIMULATION_TYPE == 2) then
             b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
-                                               b_absorb_acoustic_top(i,ib_zmax(ispecabs),NSTEP-it+1)
+                                               b_absorb_acoustic_top(i,ib_top(ispecabs),NSTEP-it+1)
              endif
           endif
 

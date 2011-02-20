@@ -67,7 +67,7 @@ xdeb          =1400.d0
 zdeb          =1500.d0      
 xfin          =1500.d0     
 zfin          =1500.d0    
-enreg_surf                      = .false.         # receivers inside the medium or at the surface
+enreg_surf_same_vertical        = .false.         # receivers inside the medium or at the surface
 
 # display parameters
 NTSTEP_BETWEEN_OUTPUT_INFO      = 100            # display frequency in time steps

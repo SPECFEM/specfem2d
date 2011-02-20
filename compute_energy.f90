@@ -43,13 +43,15 @@
 !========================================================================
 
   subroutine compute_energy(displ_elastic,veloc_elastic,displs_poroelastic,velocs_poroelastic, &
-         displw_poroelastic,velocw_poroelastic, &
-         xix,xiz,gammax,gammaz,jacobian,ibool,elastic,poroelastic,hprime_xx,hprime_zz, &
-         nspec,npoin,assign_external_model,it,deltat,t0,kmato,elastcoef,density, &
-         porosity,tortuosity, &
-         vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,wxgll,wzgll,numat, &
-         pressure_element,vector_field_element,e1,e11, &
-         potential_dot_acoustic,potential_dot_dot_acoustic,TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
+                            displw_poroelastic,velocw_poroelastic, &
+                            xix,xiz,gammax,gammaz,jacobian,ibool,elastic,poroelastic,hprime_xx,hprime_zz, &
+                            nspec,npoin,assign_external_model,it,deltat,t0,kmato,elastcoef,density, &
+                            porosity,tortuosity, &
+                            vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext, &
+                            anisotropic,anisotropy,wxgll,wzgll,numat, &
+                            pressure_element,vector_field_element,e1,e11, &
+                            potential_dot_acoustic,potential_dot_dot_acoustic, &
+                            TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
 
 ! compute kinetic and potential energy in the solid (acoustic elements are excluded)
 

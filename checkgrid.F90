@@ -45,7 +45,7 @@
   subroutine checkgrid(vpext,vsext,rhoext,density,poroelastcoef,porosity,tortuosity,permeability,ibool,kmato, &
                  coord,npoin,vpImin,vpImax,vpIImin,vpIImax, &
                  assign_external_model,nspec,UPPER_LIMIT_DISPLAY,numat,deltat, &
-                 f0,t0,initialfield,time_function_type, &
+                 f0,tshift_src,initialfield,time_function_type, &
                  coorg,xinterp,zinterp,shapeint,knods,simulation_title, &
                  npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic, &
                  myrank,nproc,NSOURCE,poroelastic, &
@@ -98,7 +98,7 @@
   double precision courant_stability_number_max,lambdaPImin,lambdaPImax,lambdaPIImin,lambdaPIImax, &
                    lambdaSmin,lambdaSmax
   double precision deltat,distance_1,distance_2,distance_3,distance_4
-  double precision, dimension(NSOURCE) :: f0,t0
+  double precision, dimension(NSOURCE) :: f0,tshift_src
   logical assign_external_model,initialfield,any_elastic,any_poroelastic,all_anisotropic, &
           TURN_VISCATTENUATION_ON
 
@@ -419,14 +419,14 @@
       write(IOUT,*) ' USER_T0 = ',USER_T0
       do i = 1,NSOURCE
         if(time_function_type(i) /= 4 .and. time_function_type(i) /= 5) then
-          write(IOUT,*) ' Onset time = ',t0(i)
+          write(IOUT,*) ' Onset time = ',tshift_src(i)
           write(IOUT,*) ' Fundamental period = ',1.d0/f0(i)
           write(IOUT,*) ' Fundamental frequency = ',f0(i)
           ! sets min/max frequency
           if(f0(i) > f0max) f0max = f0(i)
           if(f0(i) < f0min) f0min = f0(i)
           ! checks source onset time
-          if(t0(i) <= 1.d0/f0(i)) then
+          if(tshift_src(i) <= 1.d0/f0(i)) then
             call exit_MPI('Onset time too small')
           else
             write(IOUT,*) ' --> onset time ok'

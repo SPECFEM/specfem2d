@@ -42,35 +42,38 @@
 !
 !========================================================================
 
-  subroutine gmat01(density_array,porosity_array,tortuosity_array,aniso_array,permeability,poroelastcoef,&
-                    numat,myrank,ipass,Qp_array,Qs_array,freq0,Q0,f0,TURN_VISCATTENUATION_ON)
+  subroutine gmat01(density_array,porosity_array,tortuosity_array, &
+                    aniso_array,permeability,poroelastcoef, &
+                    numat,myrank,ipass,Qp_array,Qs_array, &
+                    freq0,Q0,f0,TURN_VISCATTENUATION_ON)
 
-  ! read properties of a 2D isotropic or anisotropic linear elastic element
+! reads properties of a 2D isotropic or anisotropic linear elastic element
 
   implicit none
-
   include "constants.h"
 
-  character(len=80) datlin
-  double precision lambdaplus2mu,kappa
+  integer :: numat,myrank,ipass
+  double precision :: density_array(2,numat),poroelastcoef(4,3,numat),porosity_array(numat)
+  double precision :: aniso_array(6,numat),tortuosity_array(numat),permeability(3,numat)
+  double precision :: Qp_array(numat),Qs_array(numat)
+  double precision :: f0,Q0,freq0
+  logical :: TURN_VISCATTENUATION_ON
 
-  integer numat,myrank,ipass
-  double precision density_array(2,numat),poroelastcoef(4,3,numat),porosity_array(numat)
-  double precision aniso_array(6,numat),tortuosity_array(numat),permeability(3,numat)
-  double precision Qp_array(numat),Qs_array(numat)
-
-  integer in,n,indic
-  double precision young,poisson,cp,cs,mu,two_mu,lambda,Qp,Qs
-  double precision lambdaplus2mu_s,lambdaplus2mu_fr,kappa_s,kappa_f,kappa_fr
-  double precision young_s,poisson_s,density(2),phi,tortuosity
-  double precision cpIsquare,cpIIsquare,cssquare,mu_s,mu_fr,eta_f,lambda_s,lambda_fr
-  double precision val1,val2,val3,val4,val5,val6
-  double precision val7,val8,val9,val10,val11,val12,val0
+  ! local parameters
+  double precision :: lambdaplus2mu,kappa
+  double precision :: young,poisson,cp,cs,mu,two_mu,lambda,Qp,Qs
+  double precision :: lambdaplus2mu_s,lambdaplus2mu_fr,kappa_s,kappa_f,kappa_fr
+  double precision :: young_s,poisson_s,density(2),phi,tortuosity
+  double precision :: cpIsquare,cpIIsquare,cssquare,mu_s,mu_fr,eta_f,lambda_s,lambda_fr
+  double precision :: val1,val2,val3,val4,val5,val6
+  double precision :: val7,val8,val9,val10,val11,val12,val0
   double precision ::  c11,c13,c15,c33,c35,c55
-  double precision D_biot,H_biot,C_biot,M_biot
-  double precision f0,Q0,freq0,w_c
-  logical  TURN_VISCATTENUATION_ON
-
+  double precision :: D_biot,H_biot,C_biot,M_biot
+  double precision :: w_c
+  integer in,n,indic
+  character(len=80) datlin
+  
+  
   !
   !---- loop over the different material sets
   !
@@ -387,5 +390,5 @@
          'M. . . . . . . . =',1pe15.8,/5x, &
          'characteristic freq =',1pe15.8)
 
-end subroutine gmat01
+  end subroutine gmat01
 

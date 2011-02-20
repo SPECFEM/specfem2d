@@ -141,7 +141,7 @@
 #endif
 
 ! check if this process contains the source
-  if ( dist_glob == distmin ) is_proc_source = 1
+  if ( abs(dist_glob - distmin) < TINYVAL ) is_proc_source = 1
 
 #ifdef USE_MPI
   ! determining the number of processes that contain the source (useful when the source is located on an interface)

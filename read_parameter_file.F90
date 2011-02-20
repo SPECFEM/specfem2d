@@ -94,7 +94,7 @@ module parameter_file
 
   integer, dimension(:), pointer :: nrec
   double precision, dimension(:), pointer :: xdeb,zdeb,xfin,zfin
-  logical, dimension(:), pointer :: enreg_surf
+  logical, dimension(:), pointer :: enreg_surf_same_vertical
 
   integer :: NTSTEP_BETWEEN_OUTPUT_INFO
   logical :: output_postscript_snapshot,output_color_image
@@ -202,7 +202,7 @@ contains
   allocate(zdeb(nreceiverlines))
   allocate(xfin(nreceiverlines))
   allocate(zfin(nreceiverlines))
-  allocate(enreg_surf(nreceiverlines),stat=ios)
+  allocate(enreg_surf_same_vertical(nreceiverlines),stat=ios)
   if( ios /= 0 ) stop 'error allocating receiver lines'
 
   ! loop on all the receiver lines
@@ -212,9 +212,9 @@ contains
      call read_value_double_precision(IIN,IGNORE_JUNK,zdeb(ireceiverlines))
      call read_value_double_precision(IIN,IGNORE_JUNK,xfin(ireceiverlines))
      call read_value_double_precision(IIN,IGNORE_JUNK,zfin(ireceiverlines))
-     call read_value_logical(IIN,IGNORE_JUNK,enreg_surf(ireceiverlines))
-     if (read_external_mesh .and. enreg_surf(ireceiverlines)) then
-        stop 'Cannot use enreg_surf with external meshes!'
+     call read_value_logical(IIN,IGNORE_JUNK,enreg_surf_same_vertical(ireceiverlines))
+     if (read_external_mesh .and. enreg_surf_same_vertical(ireceiverlines)) then
+        stop 'Cannot use enreg_surf_same_vertical with external meshes!'
      endif
   enddo
 
