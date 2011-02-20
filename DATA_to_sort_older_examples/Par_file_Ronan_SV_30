@@ -71,7 +71,7 @@ xdeb                            = 0.           # first receiver x in meters
 zdeb                            = 0.          # first receiver z in meters
 xfin                            = 10.          # last receiver x in meters (ignored if onlyone receiver)
 zfin                            = 0.          # last receiver z in meters (ignored if onlyone receiver)
-enreg_surf                      = .true.         # receivers inside the medium or at the surface
+enreg_surf_same_vertical        = .true.         # receivers inside the medium or at the surface
 
 # display parameters
 NTSTEP_BETWEEN_OUTPUT_INFO      = 100            # display frequency in time steps

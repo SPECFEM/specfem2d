@@ -67,7 +67,7 @@ xdeb                            = 180081.41      # first receiver x in meters
 zdeb                            = 388768.71      # first receiver z in meters
 xfin                            = 450000.        # last receiver x in meters (ignored if only one receiver)
 zfin                            = 10000.         # last receiver z in meters (ignored if only one receiver)
-enreg_surf                      = .false.        # receivers inside the medium or at the surface
+enreg_surf_same_vertical        = .false.        # receivers inside the medium or at the surface
 
 
 # display parameters
