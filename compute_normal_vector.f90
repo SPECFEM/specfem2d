@@ -1,3 +1,4 @@
+
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 6.1
@@ -9,6 +10,7 @@
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
 !               Roland Martin, roland DOT martin aT univ-pau DOT fr
 !               Christina Morency, cmorency aT princeton DOT edu
+!               Pieyre Le Loher, pieyre DOT le-loher aT inria.fr
 !
 ! This software is a computer program whose purpose is to solve
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
@@ -41,35 +43,80 @@
 !
 !========================================================================
 
-!-----------------------------------------------
-! subroutine to stop the code whether sequential or parallel.
-!-----------------------------------------------
-subroutine exit_MPI(error_msg)
+
+  subroutine compute_normal_vector( angle, n1_x, n2_x, n3_x, n4_x, n1_z, n2_z, n3_z, n4_z )
 
   implicit none
-#ifdef USE_MPI
-  ! standard include of the MPI library
-  include "mpif.h"
-#endif
 
-  ! identifier for error message file
-  integer, parameter :: IERROR = 30
+  include 'constants.h'
 
-  character(len=*) error_msg
+  double precision :: angle
+  double precision :: n1_x, n2_x, n3_x, n4_x, n1_z, n2_z, n3_z, n4_z
 
-  integer ier
+  double precision  :: theta1, theta2, theta3
+  double precision  :: costheta1, costheta2, costheta3
 
-  ier = 0
+  if ( abs(n2_z - n1_z) < TINYVAL ) then
+     costheta1 = 0
+  else
+     costheta1 = (n2_z - n1_z) / sqrt((n2_x - n1_x)**2 + (n2_z - n1_z)**2)
+  endif
+  if ( abs(n3_z - n2_z) < TINYVAL ) then
+     costheta2 = 0
+  else
+     costheta2 = (n3_z - n2_z) / sqrt((n3_x - n2_x)**2 + (n3_z - n2_z)**2)
+  endif
+  if ( abs(n4_z - n3_z) < TINYVAL ) then
+     costheta3 = 0
+  else
+    costheta3 = (n4_z - n3_z) / sqrt((n4_x - n3_x)**2 + (n4_z - n3_z)**2)
+  endif
 
-  ! write error message to screen
-  write(*,*) error_msg(1:len(error_msg))
-  write(*,*) 'Error detected, aborting MPI... proc '
+  theta1 = - sign(1.d0,n2_x - n1_x) * acos(costheta1)
+  theta2 = - sign(1.d0,n3_x - n2_x) * acos(costheta2)
+  theta3 = - sign(1.d0,n4_x - n3_x) * acos(costheta3)
 
-  ! stop all the MPI processes, and exit
-#ifdef USE_MPI
-  call MPI_ABORT(MPI_COMM_WORLD,30,ier)
-#endif
+  ! a sum is needed here because in the case of a source force vector
+  ! users can give an angle with respect to the normal to the topography surface,
+  ! in which case we must compute the normal to the topography
+  ! and add it the existing rotation angle
+  angle = angle + (theta1 + theta2 + theta3) / 3.d0 + PI/2.d0
 
-  stop 'error, program ended in exit_MPI'
+  end subroutine compute_normal_vector
 
-end subroutine exit_MPI
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine tri_quad(n, n1, nnodes)
+
+  implicit none
+
+  integer  :: n1, nnodes
+  integer, dimension(4)  :: n
+
+
+  n(2) = n1
+
+  if ( n1 == 1 ) then
+     n(1) = nnodes
+  else
+     n(1) = n1-1
+  endif
+
+  if ( n1 == nnodes ) then
+     n(3) = 1
+  else
+     n(3) = n1+1
+  endif
+
+  if ( n(3) == nnodes ) then
+     n(4) = 1
+  else
+     n(4) = n(3)+1
+  endif
+
+
+  end subroutine tri_quad
+

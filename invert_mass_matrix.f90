@@ -43,9 +43,122 @@
 !
 !========================================================================
 
+  subroutine invert_mass_matrix_init(any_elastic,any_acoustic,any_poroelastic,npoin, &
+                                rmass_inverse_elastic,&
+                                rmass_inverse_acoustic, &
+                                rmass_s_inverse_poroelastic, &
+                                rmass_w_inverse_poroelastic, &
+                                nspec,ibool,kmato,wxgll,wzgll,jacobian, &
+                                elastic,poroelastic, &
+                                assign_external_model,numat, &
+                                density,poroelastcoef,porosity,tortuosity, &
+                                vpext,rhoext)
 
-subroutine invert_mass_matrix(any_elastic,any_acoustic,any_poroelastic,npoin,rmass_inverse_elastic,&
-     rmass_inverse_acoustic,rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic)
+!  builds the global mass matrix 
+
+  implicit none
+  include 'constants.h'
+
+  logical any_elastic,any_acoustic,any_poroelastic
+  integer npoin
+
+  ! inverse mass matrices
+  real(kind=CUSTOM_REAL), dimension(npoin) :: rmass_inverse_elastic,rmass_inverse_acoustic
+  real(kind=CUSTOM_REAL), dimension(npoin) :: rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic
+  
+  integer :: nspec
+  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
+  integer, dimension(nspec) :: kmato
+  real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
+  real(kind=CUSTOM_REAL), dimension(NGLLX) :: wzgll
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: jacobian  
+
+  logical,dimension(nspec) :: elastic,poroelastic
+  
+  logical :: assign_external_model
+  integer :: numat
+  double precision, dimension(2,numat) :: density
+  double precision, dimension(4,3,numat) :: poroelastcoef
+  double precision, dimension(numat) :: porosity,tortuosity
+  double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,rhoext
+  
+  ! local parameters
+  integer :: ispec,i,j,iglob  
+  double precision :: rhol,kappal,mul_relaxed,lambdal_relaxed
+  double precision :: rhol_s,rhol_f,rhol_bar,phil,tortl
+  
+  ! initializes mass matrix
+  if(any_elastic) rmass_inverse_elastic(:) = ZERO
+  if(any_poroelastic) rmass_s_inverse_poroelastic(:) = ZERO
+  if(any_poroelastic) rmass_w_inverse_poroelastic(:) = ZERO
+  if(any_acoustic) rmass_inverse_acoustic(:) = ZERO
+  
+  do ispec = 1,nspec
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+        iglob = ibool(i,j,ispec)
+
+        ! if external density model (elastic or acoustic)
+        if(assign_external_model) then
+          rhol = rhoext(i,j,ispec)
+          kappal = rhol * vpext(i,j,ispec)**2
+        else
+          rhol = density(1,kmato(ispec))
+          lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
+          mul_relaxed = poroelastcoef(2,1,kmato(ispec))
+          kappal = lambdal_relaxed + 2.d0/3.d0*mul_relaxed
+        endif
+
+        if( poroelastic(ispec) ) then     
+          
+          ! material is poroelastic
+          
+          rhol_s = density(1,kmato(ispec))
+          rhol_f = density(2,kmato(ispec))
+          phil = porosity(kmato(ispec))
+          tortl = tortuosity(kmato(ispec))
+          rhol_bar = (1.d0-phil)*rhol_s + phil*rhol_f
+
+          ! for the solid mass matrix
+          rmass_s_inverse_poroelastic(iglob) = rmass_s_inverse_poroelastic(iglob)  &
+                  + wxgll(i)*wzgll(j)*jacobian(i,j,ispec)*(rhol_bar - phil*rhol_f/tortl)
+          ! for the fluid mass matrix
+          rmass_w_inverse_poroelastic(iglob) = rmass_w_inverse_poroelastic(iglob) &
+                  + wxgll(i)*wzgll(j)*jacobian(i,j,ispec)*(rhol_bar*rhol_f*tortl  &
+                  - phil*rhol_f*rhol_f)/(rhol_bar*phil)
+          
+        elseif( elastic(ispec) ) then    
+
+          ! for elastic medium
+          
+          rmass_inverse_elastic(iglob) = rmass_inverse_elastic(iglob)  &
+                  + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
+                  
+        else                  
+                 
+          ! for acoustic medium
+          
+          rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
+                  + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal
+                  
+        endif
+
+      enddo
+    enddo
+  enddo ! do ispec = 1,nspec
+
+  end subroutine invert_mass_matrix_init
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine invert_mass_matrix(any_elastic,any_acoustic,any_poroelastic,npoin, &
+                                rmass_inverse_elastic,&
+                                rmass_inverse_acoustic, &
+                                rmass_s_inverse_poroelastic, &
+                                rmass_w_inverse_poroelastic)
+
+! inverts the global mass matrix
 
   implicit none
   include 'constants.h'
@@ -71,4 +184,4 @@ subroutine invert_mass_matrix(any_elastic,any_acoustic,any_poroelastic,npoin,rma
   if(any_poroelastic) rmass_w_inverse_poroelastic(:) = 1._CUSTOM_REAL / rmass_w_inverse_poroelastic(:)
   if(any_acoustic) rmass_inverse_acoustic(:) = 1._CUSTOM_REAL / rmass_inverse_acoustic(:)
 
-end subroutine invert_mass_matrix
+  end subroutine invert_mass_matrix

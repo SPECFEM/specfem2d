@@ -48,7 +48,7 @@ module source_file
 
   ! source parameters
   integer, dimension(:),pointer ::  source_type,time_function_type
-  double precision, dimension(:),pointer :: xs,zs,f0,t0,angleforce, &
+  double precision, dimension(:),pointer :: xs,zs,f0,tshift_src,angleforce, &
     Mxx,Mzz,Mxz,factor
   logical, dimension(:),pointer ::  source_surf
 
@@ -76,7 +76,7 @@ contains
   allocate(source_type(NSOURCE))
   allocate(time_function_type(NSOURCE))
   allocate(f0(NSOURCE))
-  allocate(t0(NSOURCE))
+  allocate(tshift_src(NSOURCE))
   allocate(angleforce(NSOURCE))
   allocate(Mxx(NSOURCE))
   allocate(Mxz(NSOURCE))
@@ -112,7 +112,7 @@ contains
     call read_value_integer(IIN_SOURCE,IGNORE_JUNK,source_type(i_source))
     call read_value_integer(IIN_SOURCE,IGNORE_JUNK,time_function_type(i_source))
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,f0(i_source))
-    call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,t0(i_source))
+    call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,tshift_src(i_source))
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,angleforce(i_source))
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mxx(i_source))
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mzz(i_source))
@@ -120,7 +120,7 @@ contains
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,factor(i_source))
 
     ! note: this is slightly different than in specfem2D.f90,
-    !          t0 will be set outside of this next if statement, i.e. it will be set for all sources
+    !          tshift_src will be set outside of this next if statement, i.e. it will be set for all sources
     !          regardless of their type (it just makes a distinction between type 5 sources and the rest)
 
     ! if Dirac source time function, use a very thin Gaussian instead
@@ -131,15 +131,15 @@ contains
 
     ! time delay of the source in seconds, use a 20 % security margin (use 2 / f0 if error function)
     if(time_function_type(i_source)== 5) then
-      t0(i_source) = 2.0d0 / f0(i_source) + t0(i_source)
+      tshift_src(i_source) = 2.0d0 / f0(i_source) + tshift_src(i_source)
     else
-      t0(i_source) = 1.20d0 / f0(i_source) + t0(i_source)
+      tshift_src(i_source) = 1.20d0 / f0(i_source) + tshift_src(i_source)
     endif
 
     print *
     print *,'Source', i_source
     print *,'Position xs, zs = ',xs(i_source),zs(i_source)
-    print *,'Frequency, delay = ',f0(i_source),t0(i_source)
+    print *,'Frequency, delay = ',f0(i_source),tshift_src(i_source)
     print *,'Source type (1=force, 2=explosion): ',source_type(i_source)
     print *,'Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside): ',time_function_type(i_source)
     print *,'Angle of the source if force = ',angleforce(i_source)

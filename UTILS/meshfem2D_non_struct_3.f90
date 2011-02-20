@@ -38,7 +38,7 @@
   double precision, allocatable :: xtopo(:),ztopo(:),coefs_topo(:)
 
 ! arrays for the source
-  double precision, allocatable :: xs(:),zs(:),f0(:),t0(:),angle(:),factor(:)
+  double precision, allocatable :: xs(:),zs(:),f0(:),tshift_src(:),angle(:),factor(:)
   integer, allocatable :: isource_type(:),itimetype(:)
 
 ! arrays for the receivers
@@ -209,7 +209,7 @@
   allocate(xs(nbsources))
   allocate(zs(nbsources))
   allocate(f0(nbsources))
-  allocate(t0(nbsources))
+  allocate(tshift_src(nbsources))
   allocate(isource_type(nbsources))
   allocate(itimetype(nbsources))
   allocate(angle(nbsources))
@@ -220,7 +220,7 @@
       read(10,1)junk,xs(i)
       read(10,1)junk,zs(i)
       read(10,1)junk,f0(i)
-      read(10,1)junk,t0(i)
+      read(10,1)junk,tshift_src(i)
       read(10,2)junk,isource_type(i)
       read(10,2)junk,itimetype(i)
       read(10,1)junk,angle(i)
@@ -229,7 +229,7 @@
       print *
       print *,' Source #',i
       print *,'Position xs, zs = ',xs(i),zs(i)
-      print *,'Frequency, delay = ',f0(i),t0(i)
+      print *,'Frequency, delay = ',f0(i),tshift_src(i)
       print *,'Source type (1=force 2=explo) : ', &
                     isource_type(i)
       print *,'Angle of the source if force = ',angle(i)
@@ -627,7 +627,7 @@
   do i=1,nbsources
       write(15,*) itimetype(i),isource_type(i), &
          xs(i)-xmin ,zs(i), &
-        f0(i),t0(i),factor(i),angle(i),0
+        f0(i),tshift_src(i),factor(i),angle(i),0
   enddo
 
   write(15,*) 'Receivers positions:'

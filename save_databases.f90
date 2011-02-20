@@ -144,7 +144,7 @@
     do i_source=1,NSOURCE
       write(15,*) 'source', i_source
       write(15,*) source_type(i_source),time_function_type(i_source), &
-                  xs(i_source),zs(i_source),f0(i_source),t0(i_source), &
+                  xs(i_source),zs(i_source),f0(i_source),tshift_src(i_source), &
                   factor(i_source),angleforce(i_source), &
                   Mxx(i_source),Mzz(i_source),Mxz(i_source)
     enddo

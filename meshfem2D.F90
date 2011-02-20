@@ -920,7 +920,7 @@ program meshfem2D
   !--- compute position of the receivers and write the STATIONS file
 
   if (generate_STATIONS) then
-    call save_stations_file(nreceiverlines,nrec,xdeb,zdeb,xfin,zfin,enreg_surf, &
+    call save_stations_file(nreceiverlines,nrec,xdeb,zdeb,xfin,zfin,enreg_surf_same_vertical, &
                             xinterface_top,zinterface_top,coefs_interface_top, &
                             npoints_interface_top,max_npoints_interface)
   endif

@@ -117,7 +117,7 @@ OBJS_MESHFEM2D = \
 	$O/save_gnuplot_file.o \
 	$O/save_stations_file.o \
 	$O/spline_routines.o \
-	$O/meshfem2D.o 
+	$O/meshfem2D.o
 
 OBJS_SPECFEM2D = \
 	$O/assemble_MPI.o \
@@ -134,6 +134,7 @@ OBJS_SPECFEM2D = \
 	$O/compute_forces_poro_solid.o \
 	$O/compute_forces_poro_fluid.o \
 	$O/compute_gradient_attenuation.o \
+	$O/compute_normal_vector.o \
 	$O/compute_pressure.o \
 	$O/compute_vector_field.o \
 	$O/construct_acoustic_surface.o \
@@ -151,6 +152,7 @@ OBJS_SPECFEM2D = \
 	$O/get_poroelastic_velocities.o \
 	$O/gll_library.o \
 	$O/gmat01.o \
+	$O/initialize_simulation.o \
 	$O/invert_mass_matrix.o \
 	$O/is_in_convex_quadrilateral.o \
 	$O/lagrange_poly.o \
@@ -162,11 +164,18 @@ OBJS_SPECFEM2D = \
 	$O/paco_convolve_fft.o \
 	$O/plotgll.o \
 	$O/plotpost.o \
+	$O/prepare_absorb.o \
+	$O/prepare_color_image.o \
+	$O/prepare_initialfield.o \
+	$O/prepare_source_time_function.o \
+	$O/read_databases.o \
 	$O/read_external_model.o \
 	$O/recompute_jacobian.o \
+	$O/save_openDX_jacobian.o \
+	$O/set_sources.o \
 	$O/setup_sources_receivers.o \
 	$O/write_seismograms.o \
-	$O/specfem2D.o 
+	$O/specfem2D.o
 
 
 
@@ -381,10 +390,10 @@ $O/create_color_image.o: create_color_image.f90 constants.h
 $O/save_databases.o: save_databases.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/save_databases.o save_databases.f90
 
-$O/save_gnuplot_file.o: save_gnuplot_file.f90 
+$O/save_gnuplot_file.o: save_gnuplot_file.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/save_gnuplot_file.o save_gnuplot_file.f90
 
-$O/save_stations_file.o: save_stations_file.f90 
+$O/save_stations_file.o: save_stations_file.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/save_stations_file.o save_stations_file.f90
 
 $O/spline_routines.o: spline_routines.f90 constants.h
@@ -420,6 +429,18 @@ $O/paco_beyond_critical.o: paco_beyond_critical.f90 constants.h
 $O/paco_convolve_fft.o: paco_convolve_fft.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/paco_convolve_fft.o paco_convolve_fft.f90
 
+$O/prepare_absorb.o: prepare_absorb.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/prepare_absorb.o prepare_absorb.f90
+
+$O/prepare_color_image.o: prepare_color_image.F90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/prepare_color_image.o prepare_color_image.F90
+
+$O/prepare_initialfield.o: prepare_initialfield.F90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/prepare_initialfield.o prepare_initialfield.F90
+
+$O/prepare_source_time_function.o: prepare_source_time_function.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/prepare_source_time_function.o prepare_source_time_function.f90
+
 $O/is_in_convex_quadrilateral.o: is_in_convex_quadrilateral.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/is_in_convex_quadrilateral.o is_in_convex_quadrilateral.f90
 
@@ -434,3 +455,18 @@ $O/setup_sources_receivers.o: setup_sources_receivers.f90 constants.h
 
 $O/invert_mass_matrix.o: invert_mass_matrix.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/invert_mass_matrix.o invert_mass_matrix.f90
+
+$O/initialize_simulation.o: initialize_simulation.F90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/initialize_simulation.o initialize_simulation.F90
+
+$O/set_sources.o: set_sources.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/set_sources.o set_sources.f90
+
+$O/save_openDX_jacobian.o: save_openDX_jacobian.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/save_openDX_jacobian.o save_openDX_jacobian.f90
+
+$O/compute_normal_vector.o: compute_normal_vector.f90 constants.h
+	${F90} $(FLAGS_NO_CHECK) -c -o $O/compute_normal_vector.o compute_normal_vector.f90
+
+$O/read_databases.o: read_databases.f90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/read_databases.o read_databases.f90

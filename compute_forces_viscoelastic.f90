@@ -59,7 +59,7 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
      v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot,&
      nleft,nright,nbot,over_critical_angle,NSOURCE,nrec,SIMULATION_TYPE,SAVE_FORWARD,b_absorb_elastic_left,&
      b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top,nspec_xmin,nspec_xmax,&
-     nspec_zmin,nspec_zmax,ib_xmin,ib_xmax,ib_zmin,ib_zmax,mu_k,kappa_k)
+     nspec_zmin,nspec_zmax,ib_left,ib_right,ib_bottom,ib_top,mu_k,kappa_k)
 
   ! compute forces for the elastic elements
 
@@ -75,10 +75,10 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
   integer :: nrec,SIMULATION_TYPE
   integer, dimension(nrec) :: ispec_selected_rec,which_proc_receiver
   integer :: nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax
-  integer, dimension(nspec_xmin) :: ib_xmin
-  integer, dimension(nspec_xmax) :: ib_xmax
-  integer, dimension(nspec_zmin) :: ib_zmin
-  integer, dimension(nspec_zmax) :: ib_zmax
+  integer, dimension(nspec_xmin) :: ib_left
+  integer, dimension(nspec_xmax) :: ib_right
+  integer, dimension(nspec_zmin) :: ib_bottom
+  integer, dimension(nspec_zmax) :: ib_top
 
   logical :: anyabs,assign_external_model,initialfield,TURN_ATTENUATION_ON,add_Bielak_conditions
 
@@ -543,20 +543,20 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
 
                  if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
                     if(p_sv)then !P-SV waves
-                       b_absorb_elastic_left(1,j,ib_xmin(ispecabs),it) = tx*weight
-                       b_absorb_elastic_left(3,j,ib_xmin(ispecabs),it) = tz*weight
+                       b_absorb_elastic_left(1,j,ib_left(ispecabs),it) = tx*weight
+                       b_absorb_elastic_left(3,j,ib_left(ispecabs),it) = tz*weight
                     else !SH (membrane) waves
-                       b_absorb_elastic_left(2,j,ib_xmin(ispecabs),it) = ty*weight
+                       b_absorb_elastic_left(2,j,ib_left(ispecabs),it) = ty*weight
                     endif
                  elseif(SIMULATION_TYPE == 2) then
                     if(p_sv)then !P-SV waves
                        b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - &
-                            b_absorb_elastic_left(1,j,ib_xmin(ispecabs),NSTEP-it+1)
+                            b_absorb_elastic_left(1,j,ib_left(ispecabs),NSTEP-it+1)
                        b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - &
-                            b_absorb_elastic_left(3,j,ib_xmin(ispecabs),NSTEP-it+1)
+                            b_absorb_elastic_left(3,j,ib_left(ispecabs),NSTEP-it+1)
                     else !SH (membrane) waves
                        b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - &
-                            b_absorb_elastic_left(2,j,ib_xmin(ispecabs),NSTEP-it+1)
+                            b_absorb_elastic_left(2,j,ib_left(ispecabs),NSTEP-it+1)
                     endif
                  endif
 
@@ -634,20 +634,20 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
 
                  if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
                     if(p_sv)then !P-SV waves
-                       b_absorb_elastic_right(1,j,ib_xmax(ispecabs),it) = tx*weight
-                       b_absorb_elastic_right(3,j,ib_xmax(ispecabs),it) = tz*weight
+                       b_absorb_elastic_right(1,j,ib_right(ispecabs),it) = tx*weight
+                       b_absorb_elastic_right(3,j,ib_right(ispecabs),it) = tz*weight
                     else! SH (membrane) waves
-                       b_absorb_elastic_right(2,j,ib_xmax(ispecabs),it) = ty*weight
+                       b_absorb_elastic_right(2,j,ib_right(ispecabs),it) = ty*weight
                     endif
                  elseif(SIMULATION_TYPE == 2) then
                     if(p_sv)then !P-SV waves
                        b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - &
-                            b_absorb_elastic_right(1,j,ib_xmax(ispecabs),NSTEP-it+1)
+                            b_absorb_elastic_right(1,j,ib_right(ispecabs),NSTEP-it+1)
                        b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - &
-                            b_absorb_elastic_right(3,j,ib_xmax(ispecabs),NSTEP-it+1)
+                            b_absorb_elastic_right(3,j,ib_right(ispecabs),NSTEP-it+1)
                     else! SH (membrane) waves
                        b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - &
-                            b_absorb_elastic_right(2,j,ib_xmax(ispecabs),NSTEP-it+1)
+                            b_absorb_elastic_right(2,j,ib_right(ispecabs),NSTEP-it+1)
                     endif
                  endif
 
@@ -731,20 +731,20 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
 
                  if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
                     if(p_sv)then !P-SV waves
-                       b_absorb_elastic_bottom(1,i,ib_zmin(ispecabs),it) = tx*weight
-                       b_absorb_elastic_bottom(3,i,ib_zmin(ispecabs),it) = tz*weight
+                       b_absorb_elastic_bottom(1,i,ib_bottom(ispecabs),it) = tx*weight
+                       b_absorb_elastic_bottom(3,i,ib_bottom(ispecabs),it) = tz*weight
                     else!SH (membrane) waves
-                       b_absorb_elastic_bottom(2,i,ib_zmin(ispecabs),it) = ty*weight
+                       b_absorb_elastic_bottom(2,i,ib_bottom(ispecabs),it) = ty*weight
                     endif
                  elseif(SIMULATION_TYPE == 2) then
                     if(p_sv)then !P-SV waves
                        b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - &
-                            b_absorb_elastic_bottom(1,i,ib_zmin(ispecabs),NSTEP-it+1)
+                            b_absorb_elastic_bottom(1,i,ib_bottom(ispecabs),NSTEP-it+1)
                        b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - &
-                            b_absorb_elastic_bottom(3,i,ib_zmin(ispecabs),NSTEP-it+1)
+                            b_absorb_elastic_bottom(3,i,ib_bottom(ispecabs),NSTEP-it+1)
                     else!SH (membrane) waves
                        b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - &
-                            b_absorb_elastic_bottom(2,i,ib_zmin(ispecabs),NSTEP-it+1)
+                            b_absorb_elastic_bottom(2,i,ib_bottom(ispecabs),NSTEP-it+1)
                     endif
                  endif
 
@@ -820,17 +820,17 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
 
                  if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
                     if(p_sv)then !P-SV waves
-                       b_absorb_elastic_top(1,i,ib_zmax(ispecabs),it) = tx*weight
-                       b_absorb_elastic_top(3,i,ib_zmax(ispecabs),it) = tz*weight
+                       b_absorb_elastic_top(1,i,ib_top(ispecabs),it) = tx*weight
+                       b_absorb_elastic_top(3,i,ib_top(ispecabs),it) = tz*weight
                     else!SH (membrane) waves
-                       b_absorb_elastic_top(2,i,ib_zmax(ispecabs),it) = ty*weight
+                       b_absorb_elastic_top(2,i,ib_top(ispecabs),it) = ty*weight
                     endif
                  elseif(SIMULATION_TYPE == 2) then
                     if(p_sv)then !P-SV waves
-                       b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_top(1,i,ib_zmax(ispecabs),NSTEP-it+1)
-                       b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_top(3,i,ib_zmax(ispecabs),NSTEP-it+1)
+                       b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_top(1,i,ib_top(ispecabs),NSTEP-it+1)
+                       b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_top(3,i,ib_top(ispecabs),NSTEP-it+1)
                     else!SH (membrane) waves
-                       b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - b_absorb_elastic_top(2,i,ib_zmax(ispecabs),NSTEP-it+1)
+                       b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - b_absorb_elastic_top(2,i,ib_top(ispecabs),NSTEP-it+1)
                     endif
                  endif
 
