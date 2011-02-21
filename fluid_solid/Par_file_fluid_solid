@@ -47,7 +47,7 @@ nt                              = 18000           # total number of time steps
 deltat                          = 0.25d-3          # duration of a time step
 
 # source parameters
-NSOURCE                         = 1              # number of sources [source info read in CMTSOLUTION file]
+NSOURCES                        = 1              # number of sources [source info read in CMTSOLUTION file]
 force_normal_to_surface         = .false.        # angleforce normal to surface (external mesh and curve file needed)
 
 # constants for attenuation
