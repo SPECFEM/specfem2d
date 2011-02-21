@@ -54,34 +54,33 @@ module source_file
 
 contains
 
-  subroutine read_source_file(NSOURCE,deltat,f0_attenuation)
+  subroutine read_source_file(NSOURCES)
 
 ! reads in source file DATA/SOURCE
 
   implicit none
   include "constants.h"
 
-  integer :: NSOURCE
-  double precision :: deltat,f0_attenuation
+  integer :: NSOURCES
 
   ! local parameters
-  integer :: ios,icounter,i_source,nsources
+  integer :: ios,icounter,i_source,num_sources
   character(len=150) dummystring
   integer, parameter :: IIN_SOURCE = 22
 
   ! allocates memory arrays
-  allocate(source_surf(NSOURCE))
-  allocate(xs(NSOURCE))
-  allocate(zs(NSOURCE))
-  allocate(source_type(NSOURCE))
-  allocate(time_function_type(NSOURCE))
-  allocate(f0(NSOURCE))
-  allocate(tshift_src(NSOURCE))
-  allocate(angleforce(NSOURCE))
-  allocate(Mxx(NSOURCE))
-  allocate(Mxz(NSOURCE))
-  allocate(Mzz(NSOURCE))
-  allocate(factor(NSOURCE))
+  allocate(source_surf(NSOURCES))
+  allocate(xs(NSOURCES))
+  allocate(zs(NSOURCES))
+  allocate(source_type(NSOURCES))
+  allocate(time_function_type(NSOURCES))
+  allocate(f0(NSOURCES))
+  allocate(tshift_src(NSOURCES))
+  allocate(angleforce(NSOURCES))
+  allocate(Mxx(NSOURCES))
+  allocate(Mxz(NSOURCES))
+  allocate(Mzz(NSOURCES))
+  allocate(factor(NSOURCES))
 
   ! counts lines
   open(unit=IIN_SOURCE,file='DATA/SOURCE',iostat=ios,status='old',action='read')
@@ -94,18 +93,20 @@ contains
   enddo
   close(IIN_SOURCE)
 
+  ! checks counter
   if(mod(icounter,NLINES_PER_SOURCE) /= 0) &
     stop 'total number of lines in SOURCE file should be a multiple of NLINES_PER_SOURCE'
 
-  nsources = icounter / NLINES_PER_SOURCE
+  ! total number of sources
+  num_sources = icounter / NLINES_PER_SOURCE
 
-  if(nsources < 1) stop 'need at least one source in SOURCE file'
-  if(nsources /= NSOURCE) &
+  if(num_sources < 1) stop 'need at least one source in SOURCE file'
+  if(num_sources /= NSOURCES) &
        stop 'total number of sources read is different than declared in Par_file'
 
   ! reads in source parameters
   open(unit=IIN_SOURCE,file='DATA/SOURCE',status='old',action='read')
-  do  i_source=1,NSOURCE
+  do  i_source=1,NSOURCES
     call read_value_logical(IIN_SOURCE,IGNORE_JUNK,source_surf(i_source))
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,xs(i_source))
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,zs(i_source))
@@ -119,22 +120,8 @@ contains
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mxz(i_source))
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,factor(i_source))
 
-    ! note: this is slightly different than in specfem2D.f90,
-    !          tshift_src will be set outside of this next if statement, i.e. it will be set for all sources
-    !          regardless of their type (it just makes a distinction between type 5 sources and the rest)
-
-    ! if Dirac source time function, use a very thin Gaussian instead
-    ! if Heaviside source time function, use a very thin error function instead
-    if(time_function_type(i_source) == 4 .or. time_function_type(i_source) == 5) then
-      f0(i_source) = 1.d0 / (10.d0 * deltat)
-    endif
-
-    ! time delay of the source in seconds, use a 20 % security margin (use 2 / f0 if error function)
-    if(time_function_type(i_source)== 5) then
-      tshift_src(i_source) = 2.0d0 / f0(i_source) + tshift_src(i_source)
-    else
-      tshift_src(i_source) = 1.20d0 / f0(i_source) + tshift_src(i_source)
-    endif
+    ! note: we will further process source info in solver, 
+    !         here we just read in the given specifics and show them
 
     print *
     print *,'Source', i_source
@@ -148,14 +135,8 @@ contains
     print *,'Mxz of the source if moment tensor = ',Mxz(i_source)
     print *,'Multiplying factor = ',factor(i_source)
     print *
-  enddo ! do i_source=1,NSOURCE
+  enddo ! do i_source=1,NSOURCES
   close(IIN_SOURCE)
-
-
-  ! if source is not a Dirac or Heavyside then f0_attenuation is f0 of the first source
-  if(.not. (time_function_type(1) == 4 .or. time_function_type(1) == 5)) then
-     f0_attenuation = f0(1)
-  endif
 
   end subroutine read_source_file
 

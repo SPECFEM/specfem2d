@@ -328,7 +328,7 @@
 
 !  character(len=80) datlin
 
-  integer NSOURCE,i_source
+  integer NSOURCES,i_source
   integer, dimension(:), allocatable :: source_type,time_function_type
   double precision, dimension(:), allocatable :: x_source,z_source,xi_source,gamma_source,&
                   Mxx,Mzz,Mxz,f0,tshift_src,factor,angleforce 
@@ -385,11 +385,14 @@
   double precision :: mul_relaxed,lambdal_relaxed,lambdalplus2mul_relaxed,kappal
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic,veloc_elastic,displ_elastic
-  double precision, dimension(:,:), allocatable :: coord, flagrange,xinterp,zinterp,Uxinterp,Uzinterp,vector_field_display
+  double precision, dimension(:,:), allocatable :: &
+    coord, flagrange,xinterp,zinterp,Uxinterp,Uzinterp,vector_field_display
 
 ! material properties of the poroelastic medium (solid phase:s and fluid phase [defined as w=phi(u_f-u_s)]: w)
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accels_poroelastic,velocs_poroelastic,displs_poroelastic
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accelw_poroelastic,velocw_poroelastic,displw_poroelastic
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
+    accels_poroelastic,velocs_poroelastic,displs_poroelastic
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
+    accelw_poroelastic,velocw_poroelastic,displw_poroelastic
   double precision, dimension(:), allocatable :: porosity,tortuosity
   double precision, dimension(:,:), allocatable :: density,permeability
 
@@ -403,20 +406,21 @@
   double precision, dimension(:,:), allocatable :: anisotropy
 
 ! for acoustic medium
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
+    potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
 
 ! inverse mass matrices
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_elastic,rmass_inverse_acoustic
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
+    rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic
 
 ! to evaluate cpI, cpII, and cs, and rI (poroelastic medium)
   real(kind=CUSTOM_REAL) :: rhol_s,rhol_f,rhol_bar,phil,tortl
   real(kind=CUSTOM_REAL) :: mul_s,kappal_s
   real(kind=CUSTOM_REAL) :: kappal_f
-!  double precision :: etal_f
   real(kind=CUSTOM_REAL) :: mul_fr,kappal_fr
   real(kind=CUSTOM_REAL) :: D_biot,H_biot,C_biot,M_biot,B_biot,cpIsquare,cpIIsquare,cssquare
-  real(kind=CUSTOM_REAL) :: ratio,dd1 !gamma1,gamma2,gamma3,gamma4,afactor,bfactor,cfactor
+  real(kind=CUSTOM_REAL) :: ratio,dd1 
 
   double precision, dimension(:,:,:), allocatable :: vpext,vsext,rhoext
   double precision, dimension(:,:,:), allocatable :: Qp_attenuationext,Qs_attenuationext
@@ -434,7 +438,6 @@
 
   integer, dimension(:), allocatable :: ispec_selected_source,iglob_source,&
                                         is_proc_source,nb_proc_source
-  double precision displnorm_all,displnorm_all_glob
   double precision, dimension(:), allocatable :: aval
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: source_time_function
   double precision, external :: netlib_specfun_erf
@@ -608,24 +611,14 @@
   double precision, external :: hgll
 
 ! timer to count elapsed time
-  double precision :: time_start,time_end
-  integer :: year_start,year_end,month_start,month_end
+  double precision :: time_start 
+  integer :: year_start,month_start 
 
-  double precision :: tCPU,t_remain,t_total
-  integer :: ihours,iminutes,iseconds,int_tCPU, &
-             ihours_remain,iminutes_remain,iseconds_remain,int_t_remain, &
-             ihours_total,iminutes_total,iseconds_total,int_t_total
   ! to determine date and time at which the run will finish
   character(len=8) datein
   character(len=10) timein
   character(len=5)  :: zone
   integer, dimension(8) :: time_values
-  character(len=3), dimension(12) :: month_name
-  character(len=3), dimension(0:6) :: weekday_name
-  data month_name /'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'/
-  data weekday_name /'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'/
-  integer :: year,mon,day,hr,minutes,timestamp,julian_day_number,day_of_week
-  integer, external :: idaywk
 
 ! for MPI and partitioning
   integer  :: ier
@@ -803,40 +796,40 @@
                   seismotype,imagetype,assign_external_model,READ_EXTERNAL_SEP_FILE, &
                   outputgrid,OUTPUT_ENERGY,TURN_ATTENUATION_ON, &
                   TURN_VISCATTENUATION_ON,Q0,freq0,p_sv, &
-                  NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCE)
+                  NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCES)
 
   !
   !--- source information
   !
   if(ipass == 1) then
-    allocate( source_type(NSOURCE) )
-    allocate( time_function_type(NSOURCE) )
-    allocate( x_source(NSOURCE) )
-    allocate( z_source(NSOURCE) )
-    allocate( f0(NSOURCE) )
-    allocate( tshift_src(NSOURCE) )
-    allocate( factor(NSOURCE) )
-    allocate( angleforce(NSOURCE) )
-    allocate( Mxx(NSOURCE) )
-    allocate( Mxz(NSOURCE) )
-    allocate( Mzz(NSOURCE) )
-    allocate( aval(NSOURCE) )
-    allocate( ispec_selected_source(NSOURCE) )
-    allocate( iglob_source(NSOURCE) )
-    allocate( source_courbe_eros(NSOURCE) )
-    allocate( xi_source(NSOURCE) )
-    allocate( gamma_source(NSOURCE) )
-    allocate( is_proc_source(NSOURCE) )
-    allocate( nb_proc_source(NSOURCE) )
-    allocate( sourcearray(NSOURCE,NDIM,NGLLX,NGLLZ) )
+    allocate( source_type(NSOURCES) )
+    allocate( time_function_type(NSOURCES) )
+    allocate( x_source(NSOURCES) )
+    allocate( z_source(NSOURCES) )
+    allocate( f0(NSOURCES) )
+    allocate( tshift_src(NSOURCES) )
+    allocate( factor(NSOURCES) )
+    allocate( angleforce(NSOURCES) )
+    allocate( Mxx(NSOURCES) )
+    allocate( Mxz(NSOURCES) )
+    allocate( Mzz(NSOURCES) )
+    allocate( aval(NSOURCES) )
+    allocate( ispec_selected_source(NSOURCES) )
+    allocate( iglob_source(NSOURCES) )
+    allocate( source_courbe_eros(NSOURCES) )
+    allocate( xi_source(NSOURCES) )
+    allocate( gamma_source(NSOURCES) )
+    allocate( is_proc_source(NSOURCES) )
+    allocate( nb_proc_source(NSOURCES) )
+    allocate( sourcearray(NSOURCES,NDIM,NGLLX,NGLLZ) )
   endif
 
   ! reads in source infos
-  call read_databases_sources(NSOURCE,source_type,time_function_type, &
+  call read_databases_sources(NSOURCES,source_type,time_function_type, &
                       x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,angleforce)
 
   ! sets source parameters
-  call set_sources(myrank,NSOURCE,source_type,time_function_type, &
+  call set_sources(myrank,NSOURCES,source_type,time_function_type, &
                       x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,angleforce,aval, &
                       t0,initialfield,ipass,deltat)
 
@@ -844,6 +837,11 @@
   !----  read attenuation information
   !
   call read_databases_atten(N_SLS,f0_attenuation)
+  
+  ! if source is not a Dirac or Heavyside then f0_attenuation is f0 of the first source
+  if(.not. (time_function_type(1) == 4 .or. time_function_type(1) == 5)) then
+    f0_attenuation = f0(1)
+  endif
 
 
   !
@@ -1081,6 +1079,12 @@
     allocate(jend_left_poro(nelemabs))
     allocate(jbegin_right_poro(nelemabs))
     allocate(jend_right_poro(nelemabs))
+
+    allocate(ib_left(nelemabs))
+    allocate(ib_right(nelemabs))
+    allocate(ib_bottom(nelemabs))
+    allocate(ib_top(nelemabs))
+    
   endif
 
   !
@@ -1093,16 +1097,16 @@
   
   if( anyabs ) then
 
-    nspec_xmin = ZERO
-    nspec_xmax = ZERO
-    nspec_zmin = ZERO
-    nspec_zmax = ZERO
-    if(ipass == 1) then
-      allocate(ib_left(nelemabs))
-      allocate(ib_right(nelemabs))
-      allocate(ib_bottom(nelemabs))
-      allocate(ib_top(nelemabs))
-    endif
+    nspec_xmin = 0
+    nspec_xmax = 0
+    nspec_zmin = 0
+    nspec_zmax = 0
+!    if(ipass == 1) then
+!      allocate(ib_left(nelemabs))
+!      allocate(ib_right(nelemabs))
+!      allocate(ib_bottom(nelemabs))
+!      allocate(ib_top(nelemabs))
+!    endif
     do inum = 1,nelemabs
       if (codeabs(IBOTTOM,inum)) then
         nspec_zmin = nspec_zmin + 1
@@ -1177,12 +1181,12 @@
     
   else
 
-    if(.not. allocated(ib_left)) then
-      allocate(ib_left(1))
-      allocate(ib_right(1))
-      allocate(ib_bottom(1))
-      allocate(ib_top(1))
-    endif
+!    if(.not. allocated(ib_left)) then
+!      allocate(ib_left(1))
+!      allocate(ib_right(1))
+!      allocate(ib_bottom(1))
+!      allocate(ib_top(1))
+!    endif
 
     if(.not. allocated(b_absorb_elastic_left)) then
       allocate(b_absorb_elastic_left(1,1,1,1))
@@ -1622,8 +1626,8 @@ print *
     allocate(hgammar_store(nrec,NGLLZ))
 
 ! allocate Lagrange interpolators for sources
-    allocate(hxis_store(NSOURCE,NGLLX))
-    allocate(hgammas_store(NSOURCE,NGLLZ))
+    allocate(hxis_store(NSOURCES,NGLLX))
+    allocate(hgammas_store(NSOURCES,NGLLZ))
 
 ! allocate other global arrays
     allocate(coord(NDIM,npoin))
@@ -1843,7 +1847,7 @@ print *
 
 !---- define actual location of source and receivers
 
-  call setup_sources_receivers(NSOURCE,initialfield,source_type,&
+  call setup_sources_receivers(NSOURCES,initialfield,source_type,&
      coord,ibool,npoin,nspec,nelem_acoustic_surface,acoustic_surface,elastic,poroelastic, &
      x_source,z_source,ispec_selected_source,ispec_selected_rec, &
      is_proc_source,nb_proc_source,ipass,&
@@ -1951,7 +1955,7 @@ print *
 ! for the source
     if (force_normal_to_surface) then
 
-      do i_source=1,NSOURCE
+      do i_source=1,NSOURCES
         if (is_proc_source(i_source) == 1) then
           distmin = HUGEVAL
           do i = 1, nnodes_tangential_curve
@@ -2004,7 +2008,7 @@ print *
           angleforce(i_source) = angleforce_recv
 #endif
         endif !  if (is_proc_source(i_source) == 1)
-      enddo ! do i_source=1,NSOURCE
+      enddo ! do i_source=1,NSOURCES
     endif !  if (force_normal_to_surface)
 
 ! CHRIS --- how to deal with multiple source. Use first source now. ---
@@ -2162,7 +2166,7 @@ print *
   enddo
 
 ! define and store Lagrange interpolators at all the sources
-  do i = 1,NSOURCE
+  do i = 1,NSOURCES
     call lagrange_any(xi_source(i),NGLLX,xigll,hxis,hpxis)
     call lagrange_any(gamma_source(i),NGLLZ,zigll,hgammas,hpgammas)
     hxis_store(i,:) = hxis(:)
@@ -2689,13 +2693,14 @@ print *
   else
     stop 'incorrect value of DISPLAY_SUBSET_OPTION'
   endif
-  call checkgrid(vpext,vsext,rhoext,density,poroelastcoef,porosity,tortuosity,permeability,ibool,kmato, &
+  call checkgrid(vpext,vsext,rhoext,density,poroelastcoef, &
+                 porosity,tortuosity,permeability,ibool,kmato, &
                  coord,npoin,vpImin,vpImax,vpIImin,vpIImax, &
                  assign_external_model,nspec,UPPER_LIMIT_DISPLAY,numat,deltat, &
-                 f0,tshift_src,initialfield,time_function_type, &
+                 f0,initialfield,time_function_type, &
                  coorg,xinterp,zinterp,shape2D_display,knods,simulation_title, &
                  npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic, &
-                 myrank,nproc,NSOURCE,poroelastic, &
+                 myrank,nproc,NSOURCES,poroelastic, &
                  freq0,Q0,TURN_VISCATTENUATION_ON)
 
 ! convert receiver angle to radians
@@ -2988,7 +2993,7 @@ print *
   
     ! Calculation of the initial field for a plane wave
     call prepare_initialfield(myrank,any_acoustic,any_poroelastic,over_critical_angle, &
-                        NSOURCE,source_type,angleforce,x_source,z_source,f0, &
+                        NSOURCES,source_type,angleforce,x_source,z_source,f0, &
                         npoin,numat,poroelastcoef,density,coord, &
                         angleforce_refl,c_inc,c_refl,cploc,csloc,time_offset, &
                         A_plane, B_plane, C_plane, &
@@ -3002,7 +3007,7 @@ print *
 
       call prepare_initialfield_paco(myrank,nelemabs,left_bound,right_bound,bot_bound, &
                                     numabs,codeabs,ibool,nspec, &
-                                    source_type,NSOURCE,c_inc,c_refl, &
+                                    source_type,NSOURCES,c_inc,c_refl, &
                                     count_bottom,count_left,count_right)
 
       allocate(v0x_left(count_left,NSTEP))
@@ -3069,11 +3074,11 @@ print *
 ! compute the source time function and store it in a text file
   if(.not. initialfield) then
 
-    allocate(source_time_function(NSOURCE,NSTEP))
+    allocate(source_time_function(NSOURCES,NSTEP))
     source_time_function(:,:) = 0.0_CUSTOM_REAL
 
     ! computes source time function array
-    call prepare_source_time_function(myrank,NSTEP,NSOURCE,source_time_function, &
+    call prepare_source_time_function(myrank,NSTEP,NSOURCES,source_time_function, &
                           time_function_type,f0,tshift_src,factor,aval, &
                           t0,nb_proc_source,deltat)
   else
@@ -3666,16 +3671,16 @@ print *
 !
   if (myrank == 0) write(IOUT,400)
 
-! count elapsed wall-clock time
+  ! count elapsed wall-clock time
   call date_and_time(datein,timein,zone,time_values)
-! time_values(1): year
-! time_values(2): month of the year
-! time_values(3): day of the month
-! time_values(5): hour of the day
-! time_values(6): minutes of the hour
-! time_values(7): seconds of the minute
-! time_values(8): milliseconds of the second
-! this fails if we cross the end of the month
+  ! time_values(1): year
+  ! time_values(2): month of the year
+  ! time_values(3): day of the month
+  ! time_values(5): hour of the day
+  ! time_values(6): minutes of the hour
+  ! time_values(7): seconds of the minute
+  ! time_values(8): milliseconds of the second
+  ! this fails if we cross the end of the month
   time_start = 86400.d0*time_values(3) + 3600.d0*time_values(5) + &
                60.d0*time_values(6) + time_values(7) + time_values(8) / 1000.d0
   month_start = time_values(2)
@@ -3986,55 +3991,95 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 !-----------------------------------------
     if(any_acoustic) then
 
-      potential_acoustic = potential_acoustic + deltat*potential_dot_acoustic + deltatsquareover2*potential_dot_dot_acoustic
-      potential_dot_acoustic = potential_dot_acoustic + deltatover2*potential_dot_dot_acoustic
+      potential_acoustic = potential_acoustic &
+                          + deltat*potential_dot_acoustic &
+                          + deltatsquareover2*potential_dot_dot_acoustic
+      potential_dot_acoustic = potential_dot_acoustic &
+                              + deltatover2*potential_dot_dot_acoustic
       potential_dot_dot_acoustic = ZERO
 
-    if(SIMULATION_TYPE == 2) then ! Adjoint calculation
-      b_potential_acoustic = b_potential_acoustic + b_deltat*b_potential_dot_acoustic + &
-                             b_deltatsquareover2*b_potential_dot_dot_acoustic
-      b_potential_dot_acoustic = b_potential_dot_acoustic + b_deltatover2*b_potential_dot_dot_acoustic
-      b_potential_dot_dot_acoustic = ZERO
-    endif
+      if(SIMULATION_TYPE == 2) then ! Adjoint calculation
+        b_potential_acoustic = b_potential_acoustic &
+                            + b_deltat*b_potential_dot_acoustic &
+                            + b_deltatsquareover2*b_potential_dot_dot_acoustic
+        b_potential_dot_acoustic = b_potential_dot_acoustic &
+                                  + b_deltatover2*b_potential_dot_dot_acoustic
+        b_potential_dot_dot_acoustic = ZERO
+      endif
 
 ! free surface for an acoustic medium
       if ( nelem_acoustic_surface > 0 ) then
         call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
-           potential_acoustic,acoustic_surface,ibool,nelem_acoustic_surface,npoin,nspec)
+                                          potential_acoustic,acoustic_surface, &
+                                          ibool,nelem_acoustic_surface,npoin,nspec)
 
-   if(SIMULATION_TYPE == 2) then ! Adjoint calculation
-    call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                b_potential_acoustic,acoustic_surface,ibool,nelem_acoustic_surface,npoin,nspec)
-   endif
+        if(SIMULATION_TYPE == 2) then ! Adjoint calculation
+          call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
+                                            b_potential_acoustic,acoustic_surface, &
+                                            ibool,nelem_acoustic_surface,npoin,nspec)
+        endif
       endif
 
 ! *********************************************************
 ! ************* compute forces for the acoustic elements
 ! *********************************************************
 
-    call compute_forces_acoustic(npoin,nspec,nelemabs,numat,it,NSTEP, &
+!      call compute_forces_acoustic(npoin,nspec,nelemabs,numat,it,NSTEP, &
+!               anyabs,assign_external_model,ibool,kmato,numabs, &
+!               elastic,poroelastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
+!               potential_acoustic,b_potential_dot_dot_acoustic,b_potential_acoustic, &
+!               density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
+!               vpext,rhoext,hprime_xx,hprimewgll_xx, &
+!               hprime_zz,hprimewgll_zz,wxgll,wzgll, &
+!               ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
+!               jbegin_left,jend_left,jbegin_right,jend_right, &
+!               SIMULATION_TYPE,SAVE_FORWARD,b_absorb_acoustic_left,&
+!               b_absorb_acoustic_right,b_absorb_acoustic_bottom,&
+!               b_absorb_acoustic_top,nspec_xmin,nspec_xmax,&
+!               nspec_zmin,nspec_zmax,ib_left,ib_right,ib_bottom,ib_top)
+
+
+      call compute_forces_acoustic_2(npoin,nspec,nelemabs,numat,it,NSTEP, &
                anyabs,assign_external_model,ibool,kmato,numabs, &
                elastic,poroelastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
-               potential_acoustic,b_potential_dot_dot_acoustic,b_potential_acoustic, &
+               potential_acoustic, &
                density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                vpext,rhoext,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
-               jbegin_left,jend_left,jbegin_right,jend_right,SIMULATION_TYPE,SAVE_FORWARD,b_absorb_acoustic_left,&
-               b_absorb_acoustic_right,b_absorb_acoustic_bottom,&
-               b_absorb_acoustic_top,nspec_xmin,nspec_xmax,&
-               nspec_zmin,nspec_zmax,ib_left,ib_right,ib_bottom,ib_top)
+               jbegin_left,jend_left,jbegin_right,jend_right, &
+               SIMULATION_TYPE,SAVE_FORWARD,nspec_xmin,nspec_xmax,&
+               nspec_zmin,nspec_zmax,ib_left,ib_right,ib_bottom,ib_top, &
+               b_absorb_acoustic_left,b_absorb_acoustic_right, &
+               b_absorb_acoustic_bottom,b_absorb_acoustic_top)
+      if( SIMULATION_TYPE == 2 ) then
+        call compute_forces_acoustic_2(npoin,nspec,nelemabs,numat,it,NSTEP, &
+               anyabs,assign_external_model,ibool,kmato,numabs, &
+               elastic,poroelastic,codeabs,b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
+               b_potential_acoustic, &
+               density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
+               vpext,rhoext,hprime_xx,hprimewgll_xx, &
+               hprime_zz,hprimewgll_zz,wxgll,wzgll, &
+               ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
+               jbegin_left,jend_left,jbegin_right,jend_right, &
+               SIMULATION_TYPE,SAVE_FORWARD,nspec_xmin,nspec_xmax,&
+               nspec_zmin,nspec_zmax,ib_left,ib_right,ib_bottom,ib_top, &
+               b_absorb_acoustic_left,b_absorb_acoustic_right, &
+               b_absorb_acoustic_bottom,b_absorb_acoustic_top)          
+      endif
 
-    if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
+
+
+      if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
 
 !--- left absorbing boundary
-      if(nspec_xmin >0) then
-      do ispec = 1,nspec_xmin
-         do i=1,NGLLZ
-     write(65) b_absorb_acoustic_left(i,ispec,it)
-         enddo
-      enddo
-      endif
+        if(nspec_xmin >0) then
+          do ispec = 1,nspec_xmin
+            do i=1,NGLLZ
+              write(65) b_absorb_acoustic_left(i,ispec,it)
+            enddo
+          enddo
+        endif
 
 !--- right absorbing boundary
       if(nspec_xmax >0) then
@@ -4263,7 +4308,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! --- add the source
     if(.not. initialfield) then
 
-    do i_source=1,NSOURCE
+    do i_source=1,NSOURCES
 ! if this processor carries the source and the source element is acoustic
       if (is_proc_source(i_source) == 1 .and. .not. elastic(ispec_selected_source(i_source)) .and. &
         .not. poroelastic(ispec_selected_source(i_source))) then
@@ -4299,7 +4344,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
         endif
       endif ! if this processor carries the source and the source element is acoustic
-    enddo ! do i_source=1,NSOURCE
+    enddo ! do i_source=1,NSOURCES
 
     if(SIMULATION_TYPE == 2) then   ! adjoint wavefield
       irec_local = 0
@@ -4366,13 +4411,15 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
 ! free surface for an acoustic medium
     if ( nelem_acoustic_surface > 0 ) then
-    call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                potential_acoustic,acoustic_surface,ibool,nelem_acoustic_surface,npoin,nspec)
+      call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
+                                        potential_acoustic,acoustic_surface, &
+                                        ibool,nelem_acoustic_surface,npoin,nspec)
 
-   if(SIMULATION_TYPE == 2) then
-    call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                b_potential_acoustic,acoustic_surface,ibool,nelem_acoustic_surface,npoin,nspec)
-   endif
+      if(SIMULATION_TYPE == 2) then
+        call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
+                                          b_potential_acoustic,acoustic_surface, &
+                                          ibool,nelem_acoustic_surface,npoin,nspec)
+      endif
 
     endif
 
@@ -4400,7 +4447,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
                A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset, f0(1),&
                v0x_left(1,it),v0z_left(1,it),v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
                t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it),t0x_bot(1,it),t0z_bot(1,it), &
-               count_left,count_right,count_bottom,over_critical_angle,NSOURCE,nrec,SIMULATION_TYPE,SAVE_FORWARD, &
+               count_left,count_right,count_bottom,over_critical_angle,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD, &
                b_absorb_elastic_left,b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top, &
                nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,ib_left,ib_right,ib_bottom,ib_top,mu_k,kappa_k)
 
@@ -4878,7 +4925,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! --- add the source if it is a collocated force
     if(.not. initialfield) then
 
-    do i_source=1,NSOURCE
+    do i_source=1,NSOURCES
 ! if this processor carries the source and the source element is elastic
       if (is_proc_source(i_source) == 1 .and. elastic(ispec_selected_source(i_source))) then
 
@@ -4939,7 +4986,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
         endif
 
       endif ! if this processor carries the source and the source element is elastic
-    enddo ! do i_source=1,NSOURCE
+    enddo ! do i_source=1,NSOURCES
 
     endif ! if not using an initial field
   endif !if(any_elastic)
@@ -5019,7 +5066,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
                b_viscodampx,b_viscodampz,&
                ibegin_bottom_poro,iend_bottom_poro,ibegin_top_poro,iend_top_poro, &
                jbegin_left_poro,jend_left_poro,jbegin_right_poro,jend_right_poro,&
-               mufr_k,B_k,NSOURCE,nrec,SIMULATION_TYPE,SAVE_FORWARD,&
+               mufr_k,B_k,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,&
                b_absorb_poro_s_left,b_absorb_poro_s_right,b_absorb_poro_s_bottom,b_absorb_poro_s_top,&
                nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,ib_left,ib_right,ib_bottom,ib_top,f0(1),freq0,Q0)
 
@@ -5042,7 +5089,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
                b_viscodampx,b_viscodampz,&
                ibegin_bottom_poro,iend_bottom_poro,ibegin_top_poro,iend_top_poro, &
                jbegin_left_poro,jend_left_poro,jbegin_right_poro,jend_right_poro,&
-               C_k,M_k,NSOURCE,nrec,SIMULATION_TYPE,SAVE_FORWARD,&
+               C_k,M_k,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,&
                b_absorb_poro_w_left,b_absorb_poro_w_right,b_absorb_poro_w_bottom,b_absorb_poro_w_top,&
                nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,ib_left,ib_right,ib_bottom,ib_top,f0(1),freq0,Q0)
 
@@ -5526,7 +5573,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! --- add the source if it is a collocated force
     if(.not. initialfield) then
 
-    do i_source=1,NSOURCE
+    do i_source=1,NSOURCES
 ! if this processor carries the source and the source element is elastic
       if (is_proc_source(i_source) == 1 .and. poroelastic(ispec_selected_source(i_source))) then
 
@@ -5576,7 +5623,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
         endif
 
       endif ! if this processor carries the source and the source element is elastic
-    enddo ! do i_source=1,NSOURCE
+    enddo ! do i_source=1,NSOURCES
 
     endif ! if not using an initial field
   endif !if(any_poroelastic)
@@ -5723,20 +5770,21 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
 ! acoustic medium
     if(any_acoustic) then
-    write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
-    open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
-       do j=1,npoin
-      read(55) b_potential_acoustic(j),&
-               b_potential_dot_acoustic(j),&
-               b_potential_dot_dot_acoustic(j)
-       enddo
-    close(55)
+      write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
+      open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
+      do j=1,npoin
+        read(55) b_potential_acoustic(j),&
+                b_potential_dot_acoustic(j),&
+                b_potential_dot_dot_acoustic(j)
+        enddo
+      close(55)
 
 ! free surface for an acoustic medium
-    if ( nelem_acoustic_surface > 0 ) then
-    call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                b_potential_acoustic,acoustic_surface,ibool,nelem_acoustic_surface,npoin,nspec)
-    endif
+      if ( nelem_acoustic_surface > 0 ) then
+        call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
+                                          b_potential_acoustic,acoustic_surface, &
+                                          ibool,nelem_acoustic_surface,npoin,nspec)
+      endif
     endif
 
 ! elastic medium
@@ -5838,173 +5886,12 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
 !----  display time step and max of norm of displacement
   if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
-
-    if (myrank == 0) then
-      write(IOUT,*)
-      if(time >= 1.d-3 .and. time < 1000.d0) then
-        write(IOUT,"('Time step number ',i7,'   t = ',f9.4,' s out of ',i7)") it,time,NSTEP
-      else
-        write(IOUT,"('Time step number ',i7,'   t = ',1pe12.6,' s out of ',i7)") it,time,NSTEP
-      endif
-      write(IOUT,*) 'We have done ',sngl(100.d0*dble(it-1)/dble(NSTEP-1)),'% of the total'
-    endif
-
-    if(any_elastic_glob) then
-      if(any_elastic) then
-        displnorm_all = maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(2,:)**2 + displ_elastic(3,:)**2))
-      else
-        displnorm_all = 0.d0
-      endif
-      displnorm_all_glob = displnorm_all
-#ifdef USE_MPI
-      call MPI_ALLREDUCE (displnorm_all, displnorm_all_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-#endif
-      if (myrank == 0) write(IOUT,*) 'Max norm of vector field in solid (elastic) = ',displnorm_all_glob
-! check stability of the code in solid, exit if unstable
-! negative values can occur with some compilers when the unstable value is greater
-! than the greatest possible floating-point number of the machine
-      if(displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
-        call exit_MPI('code became unstable and blew up in solid (elastic)')
-    endif
-
-    if(any_poroelastic_glob) then
-      if(any_poroelastic) then
-        displnorm_all = maxval(sqrt(displs_poroelastic(1,:)**2 + displs_poroelastic(2,:)**2))
-      else
-        displnorm_all = 0.d0
-      endif
-      displnorm_all_glob = displnorm_all
-#ifdef USE_MPI
-      call MPI_ALLREDUCE (displnorm_all, displnorm_all_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-#endif
-      if (myrank == 0) write(IOUT,*) 'Max norm of vector field in solid (poroelastic) = ',displnorm_all_glob
-! check stability of the code in solid, exit if unstable
-! negative values can occur with some compilers when the unstable value is greater
-! than the greatest possible floating-point number of the machine
-      if(displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
-        call exit_MPI('code became unstable and blew up in solid (poroelastic)')
-
-      if(any_poroelastic) then
-        displnorm_all = maxval(sqrt(displw_poroelastic(1,:)**2 + displw_poroelastic(2,:)**2))
-      else
-        displnorm_all = 0.d0
-      endif
-      displnorm_all_glob = displnorm_all
-#ifdef USE_MPI
-      call MPI_ALLREDUCE (displnorm_all, displnorm_all_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-#endif
-      if (myrank == 0) write(IOUT,*) 'Max norm of vector field in fluid (poroelastic) = ',displnorm_all_glob
-! check stability of the code in solid, exit if unstable
-! negative values can occur with some compilers when the unstable value is greater
-! than the greatest possible floating-point number of the machine
-      if(displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
-        call exit_MPI('code became unstable and blew up in fluid (poroelastic)')
-    endif
-
-    if(any_acoustic_glob) then
-      if(any_acoustic) then
-        displnorm_all = maxval(abs(potential_acoustic(:)))
-      else
-        displnorm_all = 0.d0
-      endif
-      displnorm_all_glob = displnorm_all
-#ifdef USE_MPI
-      call MPI_ALLREDUCE (displnorm_all, displnorm_all_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-#endif
-      if (myrank == 0) write(IOUT,*) 'Max absolute value of scalar field in fluid (acoustic) = ',displnorm_all_glob
-! check stability of the code in fluid, exit if unstable
-! negative values can occur with some compilers when the unstable value is greater
-! than the greatest possible floating-point number of the machine
-      if(displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
-        call exit_MPI('code became unstable and blew up in fluid (acoustic)')
-    endif
-
-! count elapsed wall-clock time
-  call date_and_time(datein,timein,zone,time_values)
-! time_values(1): year
-! time_values(2): month of the year
-! time_values(3): day of the month
-! time_values(5): hour of the day
-! time_values(6): minutes of the hour
-! time_values(7): seconds of the minute
-! time_values(8): milliseconds of the second
-! this fails if we cross the end of the month
-  time_end = 86400.d0*time_values(3) + 3600.d0*time_values(5) + &
-             60.d0*time_values(6) + time_values(7) + time_values(8) / 1000.d0
-  month_end = time_values(2)
-  year_end = time_values(1)
-
-! elapsed time since beginning of the simulation
-  if (myrank == 0) then
-    if(month_end == month_start .and. year_end == year_start) then
-      tCPU = time_end - time_start
-      int_tCPU = int(tCPU)
-      ihours = int_tCPU / 3600
-      iminutes = (int_tCPU - 3600*ihours) / 60
-      iseconds = int_tCPU - 3600*ihours - 60*iminutes
-      write(IOUT,*) 'Elapsed time in seconds = ',tCPU
-      write(IOUT,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
-      write(IOUT,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
-
-    ! compute estimated remaining simulation time
-    t_remain = (NSTEP - it) * (tCPU/dble(it))
-    int_t_remain = int(t_remain)
-    ihours_remain = int_t_remain / 3600
-    iminutes_remain = (int_t_remain - 3600*ihours_remain) / 60
-    iseconds_remain = int_t_remain - 3600*ihours_remain - 60*iminutes_remain
-    write(IOUT,*) 'Time steps remaining = ',NSTEP - it
-    write(IOUT,*) 'Estimated remaining time in seconds = ',t_remain
-    write(IOUT,"(' Estimated remaining time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
-             ihours_remain,iminutes_remain,iseconds_remain
-
-    ! compute estimated total simulation time
-    t_total = t_remain + tCPU
-    int_t_total = int(t_total)
-    ihours_total = int_t_total / 3600
-    iminutes_total = (int_t_total - 3600*ihours_total) / 60
-    iseconds_total = int_t_total - 3600*ihours_total - 60*iminutes_total
-    write(IOUT,*) 'Estimated total run time in seconds = ',t_total
-    write(IOUT,"(' Estimated total run time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
-             ihours_total,iminutes_total,iseconds_total
-
-    if(it < NSTEP) then
-
-      ! compute date and time at which the run should finish (useful for long runs); for simplicity only minutes
-      ! are considered, seconds are ignored; in any case the prediction is not
-      ! accurate down to seconds because of system and network fluctuations
-      year = time_values(1)
-      mon = time_values(2)
-      day = time_values(3)
-      hr = time_values(5)
-      minutes = time_values(6)
-
-      ! get timestamp in minutes of current date and time
-      call convtime(timestamp,year,mon,day,hr,minutes)
-
-      ! add remaining minutes
-      timestamp = timestamp + nint(t_remain / 60.d0)
-
-      ! get date and time of that future timestamp in minutes
-      call invtime(timestamp,year,mon,day,hr,minutes)
-
-      ! convert to Julian day to get day of the week
-      call calndr(day,mon,year,julian_day_number)
-      day_of_week = idaywk(julian_day_number)
-
-      write(IOUT,"(' The run will finish approximately on: ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
-          weekday_name(day_of_week),month_name(mon),day,year,hr,minutes
-
-    endif
-
-      write(IOUT,*)
-    else
-      write(IOUT,*) 'The calendar has crossed the end of the month during the simulation,'
-      write(IOUT,*) 'cannot produce accurate CPU time estimates any more.'
-      write(IOUT,*)
-    endif
-  endif
-
-    if (myrank == 0) write(IOUT,*)
+    call check_stability(myrank,time,it,NSTEP,npoin, &
+                        any_elastic_glob,any_elastic,displ_elastic, &
+                        any_poroelastic_glob,any_poroelastic, &
+                        displs_poroelastic,displw_poroelastic, &
+                        any_acoustic_glob,any_acoustic,potential_acoustic, &
+                        year_start,month_start,time_start)
   endif
 
 ! loop on all the receivers to compute and store the seismograms
@@ -6503,7 +6390,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
           poroelastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
-          simulation_title,npoin,npgeo,vpImin,vpImax,nrec,NSOURCE, &
+          simulation_title,npoin,npgeo,vpImin,vpImax,nrec,NSOURCES, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
@@ -6539,7 +6426,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
           poroelastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
-          simulation_title,npoin,npgeo,vpImin,vpImax,nrec,NSOURCE, &
+          simulation_title,npoin,npgeo,vpImin,vpImax,nrec,NSOURCES, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
@@ -6575,7 +6462,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
           poroelastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
-          simulation_title,npoin,npgeo,vpImin,vpImax,nrec,NSOURCE, &
+          simulation_title,npoin,npgeo,vpImin,vpImax,nrec,NSOURCES, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &

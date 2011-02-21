@@ -42,14 +42,15 @@
 !
 !========================================================================
 
-  subroutine checkgrid(vpext,vsext,rhoext,density,poroelastcoef,porosity,tortuosity,permeability,ibool,kmato, &
-                 coord,npoin,vpImin,vpImax,vpIImin,vpIImax, &
-                 assign_external_model,nspec,UPPER_LIMIT_DISPLAY,numat,deltat, &
-                 f0,tshift_src,initialfield,time_function_type, &
-                 coorg,xinterp,zinterp,shapeint,knods,simulation_title, &
-                 npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic, &
-                 myrank,nproc,NSOURCE,poroelastic, &
-                 freq0,Q0,TURN_VISCATTENUATION_ON)
+  subroutine checkgrid(vpext,vsext,rhoext,density,poroelastcoef, &
+                      porosity,tortuosity,permeability,ibool,kmato, &
+                      coord,npoin,vpImin,vpImax,vpIImin,vpIImax, &
+                      assign_external_model,nspec,UPPER_LIMIT_DISPLAY,numat,deltat, &
+                      f0,initialfield,time_function_type, &
+                      coorg,xinterp,zinterp,shapeint,knods,simulation_title, &
+                      npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic, &
+                      myrank,nproc,NSOURCES,poroelastic, &
+                      freq0,Q0,TURN_VISCATTENUATION_ON)
 
 ! check the mesh, stability and number of points per wavelength
 
@@ -64,18 +65,7 @@
 ! for instance to analyze Cuthill-McKee mesh partitioning etc.
   integer :: UPPER_LIMIT_DISPLAY
 
-! color palette
-  integer, parameter :: NUM_COLORS = 236
-  double precision, dimension(NUM_COLORS) :: red,green,blue
-
-#ifdef USE_MPI
-  integer  :: icol
-#endif
-
-  integer i,j,ispec,material,npoin,nspec,numat,NSOURCE
-
-  integer, dimension(NSOURCE) :: time_function_type
-
+  integer :: npoin,nspec,numat  
   integer, dimension(nspec) :: kmato
   logical, dimension(nspec) :: poroelastic
   integer, dimension(NGLLX,NGLLX,nspec) :: ibool
@@ -88,8 +78,34 @@
 
   double precision coord(NDIM,npoin)
 
-  double precision vpImin,vpImax,vsmin,vsmax,densmin,densmax,vpImax_local,vpImin_local,vsmin_local
-  double precision vpIImin,vpIImax,vpIImax_local,vpIImin_local
+  integer :: NSOURCES
+  integer, dimension(NSOURCES) :: time_function_type
+  double precision, dimension(NSOURCES) :: f0
+
+  integer :: pointsdisp,npgeo,ngnod
+
+  integer :: knods(ngnod,nspec)
+
+  double precision :: xinterp(pointsdisp,pointsdisp),zinterp(pointsdisp,pointsdisp)
+  double precision :: shapeint(ngnod,pointsdisp,pointsdisp)
+
+  double precision :: coorg(NDIM,npgeo)
+
+! title of the plot
+  character(len=60) :: simulation_title
+
+  double precision :: vpImin,vpImax
+  double precision :: vpIImin,vpIImax
+  double precision :: deltat
+
+  logical :: assign_external_model,initialfield,any_elastic,any_poroelastic,all_anisotropic, &
+          TURN_VISCATTENUATION_ON
+
+  integer :: myrank,nproc
+  
+  ! local parameters
+  double precision vpIImax_local,vpIImin_local
+  double precision vsmin,vsmax,densmin,densmax,vpImax_local,vpImin_local,vsmin_local
   double precision kappa_s,kappa_f,kappa_fr,mu_s,mu_fr,denst_s,denst_f,denst,phi,tort,cpIloc,cpIIloc,csloc
   double precision D_biot,H_biot,C_biot,M_biot,cpIsquare,cpIIsquare,cssquare
   double precision f0min,f0max,freq0,Q0,w_c,eta_f,perm
@@ -97,22 +113,22 @@
   double precision distance_min,distance_max,distance_min_local,distance_max_local
   double precision courant_stability_number_max,lambdaPImin,lambdaPImax,lambdaPIImin,lambdaPIImax, &
                    lambdaSmin,lambdaSmax
-  double precision deltat,distance_1,distance_2,distance_3,distance_4
-  double precision, dimension(NSOURCE) :: f0,tshift_src
-  logical assign_external_model,initialfield,any_elastic,any_poroelastic,all_anisotropic, &
-          TURN_VISCATTENUATION_ON
+  double precision distance_1,distance_2,distance_3,distance_4
 
 ! for the stability condition
 ! maximum polynomial degree for which we can compute the stability condition
   integer, parameter :: NGLLX_MAX_STABILITY = 15
   double precision :: percent_GLL(NGLLX_MAX_STABILITY)
 
-  integer pointsdisp,npgeo,ngnod,is,ir,in,nnum
+! color palette
+  integer, parameter :: NUM_COLORS = 236
+  double precision, dimension(NUM_COLORS) :: red,green,blue
 
   double precision :: xmax,zmax,height,usoffset,sizex,sizez,courant_stability_number
   double precision :: x1,z1,x2,z2,ratio_page,xmin,zmin,lambdaS_local,lambdaPI_local
 
 #ifdef USE_MPI
+  integer  :: icol
   double precision  :: vpImin_glob,vpImax_glob,vsmin_glob,vsmax_glob,densmin_glob,densmax_glob
   double precision  :: vpIImin_glob,vpIImax_glob
   double precision  :: distance_min_glob,distance_max_glob
@@ -128,27 +144,20 @@
   integer, dimension(:), allocatable  :: RGB_recv
   real, dimension(nspec)  :: greyscale_send
   real, dimension(:), allocatable  :: greyscale_recv
-  integer  :: nspec_recv
-  integer  :: num_ispec
-  integer  :: myrank, iproc, nproc
-  integer  :: ier
+  integer :: nspec_recv
+  integer :: num_ispec
+  integer :: iproc
+  integer :: ier
+  integer :: i,j,ispec,material
+  integer :: is,ir,in,nnum
 
 #ifdef USE_MPI
   integer, dimension(MPI_STATUS_SIZE)  :: request_mpi_status
 #endif
 
-  integer knods(ngnod,nspec)
-
-  double precision xinterp(pointsdisp,pointsdisp),zinterp(pointsdisp,pointsdisp)
-  double precision shapeint(ngnod,pointsdisp,pointsdisp)
-
-  double precision coorg(NDIM,npgeo)
-
-! title of the plot
-  character(len=60) simulation_title
-
-
-  if(UPPER_LIMIT_DISPLAY > nspec) stop 'cannot have UPPER_LIMIT_DISPLAY > nspec in checkgrid.F90'
+  ! check
+  if(UPPER_LIMIT_DISPLAY > nspec) &
+    call exit_MPI('cannot have UPPER_LIMIT_DISPLAY > nspec in checkgrid.F90')
 
 #ifndef USE_MPI
   allocate(coorg_recv(1,1))
@@ -347,26 +356,44 @@
   any_elastic_glob = any_elastic
   any_poroelastic_glob = any_poroelastic
 #ifdef USE_MPI
-  call MPI_ALLREDUCE (vpImin, vpImin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (vpImax, vpImax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (vpIImin, vpIImin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (vpIImax, vpIImax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (vsmin, vsmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (vsmax, vsmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (densmin, densmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (densmax, densmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (distance_min, distance_min_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (distance_max, distance_max_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (vpImin, vpImin_glob, 1, MPI_DOUBLE_PRECISION, &
+                    MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (vpImax, vpImax_glob, 1, MPI_DOUBLE_PRECISION, &
+                    MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (vpIImin, vpIImin_glob, 1, MPI_DOUBLE_PRECISION, &
+                    MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (vpIImax, vpIImax_glob, 1, MPI_DOUBLE_PRECISION, &
+                    MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (vsmin, vsmin_glob, 1, MPI_DOUBLE_PRECISION, &
+                    MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (vsmax, vsmax_glob, 1, MPI_DOUBLE_PRECISION, &
+                    MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (densmin, densmin_glob, 1, MPI_DOUBLE_PRECISION, &
+                    MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (densmax, densmax_glob, 1, MPI_DOUBLE_PRECISION, &
+                    MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (distance_min, distance_min_glob, 1, MPI_DOUBLE_PRECISION, &
+                    MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (distance_max, distance_max_glob, 1, MPI_DOUBLE_PRECISION, &
+                    MPI_MAX, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE (courant_stability_number_max, courant_stability_max_glob, 1, MPI_DOUBLE_PRECISION, &
-       MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (lambdaPImin, lambdaPImin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (lambdaPImax, lambdaPImax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (lambdaPIImin, lambdaPIImin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (lambdaPIImax, lambdaPIImax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (lambdaSmin, lambdaSmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (lambdaSmax, lambdaSmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (any_elastic, any_elastic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (any_poroelastic, any_poroelastic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
+                    MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (lambdaPImin, lambdaPImin_glob, 1, MPI_DOUBLE_PRECISION, &
+                    MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (lambdaPImax, lambdaPImax_glob, 1, MPI_DOUBLE_PRECISION, &
+                    MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (lambdaPIImin, lambdaPIImin_glob, 1, MPI_DOUBLE_PRECISION, &
+                    MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (lambdaPIImax, lambdaPIImax_glob, 1, MPI_DOUBLE_PRECISION, &
+                    MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (lambdaSmin, lambdaSmin_glob, 1, MPI_DOUBLE_PRECISION, &
+                    MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (lambdaSmax, lambdaSmax_glob, 1, MPI_DOUBLE_PRECISION, &
+                    MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (any_elastic, any_elastic_glob, 1, MPI_LOGICAL, &
+                    MPI_LOR, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (any_poroelastic, any_poroelastic_glob, 1, MPI_LOGICAL, &
+                    MPI_LOR, MPI_COMM_WORLD, ier)
   vpImin = vpImin_glob
   vpImax = vpImax_glob
   vpIImin = vpIImin_glob
@@ -416,23 +443,27 @@
     if(.not. initialfield) then
       f0max = -HUGEVAL
       f0min = HUGEVAL
-      write(IOUT,*) ' USER_T0 = ',USER_T0
-      do i = 1,NSOURCE
+!      write(IOUT,*) ' USER_T0 = ',USER_T0
+
+      do i = 1,NSOURCES
+
+        ! excludes Dirac and Heaviside sources  
         if(time_function_type(i) /= 4 .and. time_function_type(i) /= 5) then
-          write(IOUT,*) ' Onset time = ',tshift_src(i)
-          write(IOUT,*) ' Fundamental period = ',1.d0/f0(i)
-          write(IOUT,*) ' Fundamental frequency = ',f0(i)
+!          write(IOUT,*) ' Onset time = ',t0+tshift_src(i)
+!          write(IOUT,*) ' Fundamental period = ',1.d0/f0(i)
+!          write(IOUT,*) ' Fundamental frequency = ',f0(i)
+!          ! checks source onset time
+!          if( t0+tshift_src(i) <= 1.d0/f0(i)) then
+!            call exit_MPI('Onset time too small')
+!          else
+!            write(IOUT,*) ' --> onset time ok'
+!          endif
+
           ! sets min/max frequency
           if(f0(i) > f0max) f0max = f0(i)
           if(f0(i) < f0min) f0min = f0(i)
-          ! checks source onset time
-          if(tshift_src(i) <= 1.d0/f0(i)) then
-            call exit_MPI('Onset time too small')
-          else
-            write(IOUT,*) ' --> onset time ok'
-          endif
 
-          if( i == NSOURCE ) then
+          if( i == NSOURCES ) then
             write(IOUT,*) '----'
             write(IOUT,*) ' Nb pts / lambdaPImin_fmax max = ',lambdaPImax/(2.5d0*f0min)
             write(IOUT,*) ' Nb pts / lambdaPImin_fmax min = ',lambdaPImin/(2.5d0*f0max)

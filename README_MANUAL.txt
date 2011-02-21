@@ -379,7 +379,7 @@ SIMULATION_TYPE defines the type of simulations
 
 In section "# source parameters":
 The code now support multi sources.
-NSOURCE is the number of source.
+NSOURCES is the number of source.
 Parameters of the sources are displayed in the file SOURCE, which must be
 in the directory DATA. The components of a moment tensor source must be given in N.m,
 not in dyne.cm as in the DATA/CMTSOLUTION source file of the 3D version of the code.

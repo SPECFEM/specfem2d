@@ -44,7 +44,7 @@
 !========================================================================
 
 
-  subroutine set_sources(myrank,NSOURCE,source_type,time_function_type, &
+  subroutine set_sources(myrank,NSOURCES,source_type,time_function_type, &
                       x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,angleforce,aval, &
                       t0,initialfield,ipass,deltat)
 
@@ -54,11 +54,11 @@
   include "constants.h"
 
   integer :: myrank
-  integer :: NSOURCE
-  integer, dimension(NSOURCE) :: source_type,time_function_type
-  double precision, dimension(NSOURCE) :: x_source,z_source, &
+  integer :: NSOURCES
+  integer, dimension(NSOURCES) :: source_type,time_function_type
+  double precision, dimension(NSOURCES) :: x_source,z_source, &
     Mxx,Mzz,Mxz,f0,tshift_src,factor,angleforce
-  double precision, dimension(NSOURCE) :: aval
+  double precision, dimension(NSOURCES) :: aval
   double precision :: t0
   double precision :: deltat
   integer :: ipass
@@ -66,46 +66,49 @@
 
   ! local parameters
   integer :: i_source
-
+  double precision, dimension(NSOURCES) :: t0_source,hdur
+  double precision :: min_tshift_src_original
+  
   ! checks the input
-  do i_source=1,NSOURCE
+  do i_source=1,NSOURCES
 
     ! checks source type
     if(.not. initialfield) then
       if (source_type(i_source) == 1) then
         if ( myrank == 0 .and. ipass == 1 ) then
-
+          ! user output
           write(IOUT,212) x_source(i_source),z_source(i_source),f0(i_source),tshift_src(i_source), &
                        factor(i_source),angleforce(i_source)
-
         endif
       else if(source_type(i_source) == 2) then
         if ( myrank == 0 .and. ipass == 1 ) then
-
+          ! user output
           write(IOUT,222) x_source(i_source),z_source(i_source),f0(i_source),tshift_src(i_source), &
                        factor(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
-
         endif
       else
         call exit_MPI('Unknown source type number !')
       endif
     endif
 
-    ! note: this is slightly different than in meshfem2D.f90,
-    !          t0 will only be set within this if statement, i.e. only for type 4 or 5 sources
-    !          (since we set f0 to a new values for these two types of sources)
-
     ! if Dirac source time function, use a very thin Gaussian instead
     ! if Heaviside source time function, use a very thin error function instead
-    if(time_function_type(i_source) == 4 .or. time_function_type(i_source) == 5) then
+    if(time_function_type(i_source) == 4 .or. time_function_type(i_source) == 5) &
       f0(i_source) = 1.d0 / (10.d0 * deltat)
 
-      ! time delay of the source in seconds, use a 20 % security margin (use 2 / f0 if error function)
-      if(time_function_type(i_source)== 5) then
-        tshift_src(i_source) = 2.0d0 / f0(i_source) + tshift_src(i_source)
-      else
-        tshift_src(i_source) = 1.20d0 / f0(i_source) + tshift_src(i_source)
-      endif
+    ! checks source frequency
+    if( abs(f0(i_source)) < TINYVAL ) then
+      call exit_MPI('Error source frequency is zero')
+    endif
+    
+    ! half-duration of source
+    hdur(i_source) = 1.d0 / f0(i_source)
+
+    ! sets source start times, shifted by the given (non-zero) time-shift
+    if(time_function_type(i_source)== 5) then
+      t0_source(i_source) = 2.0d0 * hdur(i_source) + tshift_src(i_source)
+    else
+      t0_source(i_source) = 1.20d0 * hdur(i_source) + tshift_src(i_source)
     endif
 
     ! for the source time function
@@ -113,12 +116,24 @@
 
     ! convert angle from degrees to radians
     angleforce(i_source) = angleforce(i_source) * PI / 180.d0
-
-  enddo ! do i_source=1,NSOURCE
+    
+  enddo ! do i_source=1,NSOURCES
 
   ! initializes simulation start time
-  t0 = tshift_src(1)
-
+  if( NSOURCES == 1 ) then
+    ! simulation start time
+    t0 = t0_source(1)
+    ! sets source time shift relative to simulation start time
+    min_tshift_src_original = tshift_src(1)
+    tshift_src(1) = 0.d0
+  else
+    ! starts with earliest start time
+    t0 = minval( t0_source(:) )
+    ! sets source time shifts relative to simulation start time
+    min_tshift_src_original = minval( tshift_src(:) )
+    tshift_src(:) = t0_source(:) - t0
+  endif
+  
   ! checks if user set USER_T0 to fix simulation start time
   ! note: USER_T0 has to be positive
   if( USER_T0 > 0.d0 ) then
@@ -129,41 +144,42 @@
     ! notifies user
     if( myrank == 0 .and. ipass == 1) then
       write(IOUT,*)
-      write(IOUT,*) '    USER_T0: ',USER_T0,'initial t0_start: ',t0
+      write(IOUT,*) '    using USER_T0 . . . . . . . . . = ',USER_T0
+      write(IOUT,*) '      original t0 . . . . . . . . . = ',t0
+      write(IOUT,*) '      min_tshift_src_original . . . = ',min_tshift_src_original
+      write(IOUT,*)      
     endif
 
     ! checks if automatically set t0 is too small
     ! note: times in seismograms are shifted by t0(1)
-    if( t0 <= USER_T0 ) then
+    if( t0 <= USER_T0 + min_tshift_src_original ) then
+        
       ! sets new simulation start time such that
       ! simulation starts at t = - t0 = - USER_T0
       t0 = USER_T0
 
       ! notifies user
       if( myrank == 0 .and. ipass == 1) then
-        write(IOUT,*) '    fix new simulation start time. . . . . = ', - t0
-        write(IOUT,*)
+        write(IOUT,*) '    fix new simulation start time . = ', - t0
       endif
 
       ! loops over all sources
-      do i_source=1,NSOURCE
-        ! gets the given, initial time shifts
+      do i_source=1,NSOURCES
+        ! sets the given, initial time shifts
         if( time_function_type(i_source) == 5 ) then
-          tshift_src(i_source) = tshift_src(i_source) - 2.0d0 / f0(i_source)
+          tshift_src(i_source) = t0_source(i_source) - 2.0d0 * hdur(i_source)
         else
-          tshift_src(i_source) = tshift_src(i_source) - 1.20d0 / f0(i_source)
+          tshift_src(i_source) = t0_source(i_source) - 1.20d0 * hdur(i_source)
         endif
-
-        ! sets new t0 according to simulation start time,
-        ! using absolute time shifts for each source such that
-        ! a zero time shift would have the maximum gaussian at time t = (it-1)*DT - t0_start = 0
-        tshift_src(i_source) = USER_T0 + tshift_src(i_source)
-
+        ! user output  
         if( myrank == 0 .and. ipass == 1) then
-          write(IOUT,*) '    source ',i_source,'uses tshift . . . . . = ',tshift_src(i_source)
+          write(IOUT,*) '    source ',i_source,'uses tshift = ',tshift_src(i_source)
         endif
-
       enddo
+      ! user output  
+      if( myrank == 0 .and. ipass == 1) then
+        write(IOUT,*) 
+      endif
 
     else
       ! start time needs to be at least t0 for numerical stability
@@ -183,6 +199,36 @@
     endif
     call exit_MPI('error negative USER_T0 parameter in constants.h')
   endif
+
+  ! checks onset times
+  if(.not. initialfield) then
+
+    ! loops over sources
+    do i_source = 1,NSOURCES
+    
+      ! excludes Dirac and Heaviside sources
+      if(time_function_type(i_source) /= 4 .and. time_function_type(i_source) /= 5) then
+  
+        ! user output
+        if( myrank == 0 .and. ipass == 1 ) then
+          write(IOUT,*) '    Onset time. . . . . . = ',t0+tshift_src(i_source)
+          write(IOUT,*) '    Fundamental period. . = ',1.d0/f0(i_source)
+          write(IOUT,*) '    Fundamental frequency = ',f0(i_source)
+        endif
+        
+        ! checks source onset time
+        if( t0+tshift_src(i_source) <= 1.d0/f0(i_source)) then
+          call exit_MPI('Onset time too small')
+        else
+          if( myrank == 0 .and. ipass == 1 ) then
+            write(IOUT,*) '    --> onset time ok'
+          endif
+        endif
+      endif
+    enddo
+
+  endif
+  
 
   ! output formats
 212 format(//,5x,'Source Type. . . . . . . . . . . . . . = Collocated Force',/5x, &

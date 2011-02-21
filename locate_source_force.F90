@@ -114,7 +114,8 @@
         do i = 2,NGLLX-1
 
            iglob = ibool(i,j,ispec)
-           dist = sqrt((x_source-dble(coord(1,iglob)))**2 + (z_source-dble(coord(2,iglob)))**2)
+           dist = sqrt((x_source-dble(coord(1,iglob)))**2 &
+                     + (z_source-dble(coord(2,iglob)))**2)
 
 !          keep this point if it is closer to the source
            if(dist < distmin) then
@@ -133,7 +134,8 @@
 
 #ifdef USE_MPI
   ! global minimum distance computed over all processes
-  call MPI_ALLREDUCE (distmin, dist_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ierror)
+  call MPI_ALLREDUCE (distmin, dist_glob, 1, MPI_DOUBLE_PRECISION, &
+                      MPI_MIN, MPI_COMM_WORLD, ierror)
 
 #else
   dist_glob = distmin
@@ -144,10 +146,13 @@
   if ( abs(dist_glob - distmin) < TINYVAL ) is_proc_source = 1
 
 #ifdef USE_MPI
-  ! determining the number of processes that contain the source (useful when the source is located on an interface)
-  call MPI_ALLREDUCE (is_proc_source, nb_proc_source, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD, ierror)
+  ! determining the number of processes that contain the source 
+  ! (useful when the source is located on an interface)
+  call MPI_ALLREDUCE (is_proc_source, nb_proc_source, 1, MPI_INTEGER, &
+                      MPI_SUM, MPI_COMM_WORLD, ierror)
 
 #else
+
   nb_proc_source = is_proc_source
 
 #endif
@@ -157,7 +162,8 @@
   ! when several processes contain the source, we elect one of them (minimum rank).
   if ( nb_proc_source > 1 ) then
 
-     call MPI_ALLGATHER(is_proc_source, 1, MPI_INTEGER, allgather_is_proc_source(1), 1, MPI_INTEGER, MPI_COMM_WORLD, ierror)
+     call MPI_ALLGATHER(is_proc_source, 1, MPI_INTEGER, allgather_is_proc_source(1), &
+                        1, MPI_INTEGER, MPI_COMM_WORLD, ierror)
      locate_is_proc_source = maxloc(allgather_is_proc_source) - 1
 
      if ( myrank /= locate_is_proc_source(1) ) then
@@ -181,37 +187,39 @@
   do iter_loop = 1,NUM_ITER
 
 ! recompute jacobian for the new point
-    call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian,coorg,knods,ispec_selected_source,ngnod,nspec,npgeo, &
-           .true.)
+    call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
+                  coorg,knods,ispec_selected_source,ngnod,nspec,npgeo, &
+                  .true.)
 
 ! compute distance to target location
-  dx = - (x - x_source)
-  dz = - (z - z_source)
+    dx = - (x - x_source)
+    dz = - (z - z_source)
 
 ! compute increments
-  dxi  = xix*dx + xiz*dz
-  dgamma = gammax*dx + gammaz*dz
+    dxi  = xix*dx + xiz*dz
+    dgamma = gammax*dx + gammaz*dz
 
 ! update values
-  xi = xi + dxi
-  gamma = gamma + dgamma
+    xi = xi + dxi
+    gamma = gamma + dgamma
 
 ! impose that we stay in that element
 ! (useful if user gives a source outside the mesh for instance)
 ! we can go slightly outside the [1,1] segment since with finite elements
 ! the polynomial solution is defined everywhere
 ! this can be useful for convergence of itertive scheme with distorted elements
-  if (xi > 1.10d0) xi = 1.10d0
-  if (xi < -1.10d0) xi = -1.10d0
-  if (gamma > 1.10d0) gamma = 1.10d0
-  if (gamma < -1.10d0) gamma = -1.10d0
+    if (xi > 1.10d0) xi = 1.10d0
+    if (xi < -1.10d0) xi = -1.10d0
+    if (gamma > 1.10d0) gamma = 1.10d0
+    if (gamma < -1.10d0) gamma = -1.10d0
 
 ! end of non linear iterations
   enddo
 
 ! compute final coordinates of point found
-    call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian,coorg,knods,ispec_selected_source,ngnod,nspec,npgeo, &
-           .true.)
+  call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
+                    coorg,knods,ispec_selected_source,ngnod,nspec,npgeo, &
+                    .true.)
 
 ! store xi,gamma of point found
   xi_source = xi
@@ -229,6 +237,9 @@
      write(IOUT,*) '            original x: ',sngl(x_source)
      write(IOUT,*) '            original z: ',sngl(z_source)
      write(IOUT,*) 'closest estimate found: ',sngl(final_distance),' m away'
+#ifdef USE_MPI
+     write(IOUT,*) ' in rank ',myrank
+#endif
      write(IOUT,*) ' in element ',ispec_selected_source
      write(IOUT,*) ' at xi,gamma coordinates = ',xi_source,gamma_source
      write(IOUT,*)

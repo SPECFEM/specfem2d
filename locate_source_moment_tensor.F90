@@ -46,7 +46,8 @@
 !---- locate_source_moment_tensor finds the correct position of the moment-tensor source
 !----
 
-  subroutine locate_source_moment_tensor(ibool,coord,nspec,npoin,xigll,zigll,x_source,z_source, &
+  subroutine locate_source_moment_tensor(ibool,coord,nspec,npoin, &
+               xigll,zigll,x_source,z_source, &
                ispec_selected_source,is_proc_source,nb_proc_source,nproc,myrank, &
                xi_source,gamma_source,coorg,knods,ngnod,npgeo,ipass)
 
@@ -114,7 +115,8 @@
         do i = 2,NGLLX-1
 
            iglob = ibool(i,j,ispec)
-           dist = sqrt((x_source-dble(coord(1,iglob)))**2 + (z_source-dble(coord(2,iglob)))**2)
+           dist = sqrt((x_source-dble(coord(1,iglob)))**2 &
+                     + (z_source-dble(coord(2,iglob)))**2)
 
 !          keep this point if it is closer to the source
            if(dist < distmin) then
@@ -132,7 +134,8 @@
 
 #ifdef USE_MPI
   ! global minimum distance computed over all processes
-  call MPI_ALLREDUCE (distmin, dist_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ierror)
+  call MPI_ALLREDUCE (distmin, dist_glob, 1, MPI_DOUBLE_PRECISION, &
+                      MPI_MIN, MPI_COMM_WORLD, ierror)
 
 #else
   dist_glob = distmin
@@ -143,8 +146,10 @@
   if ( dist_glob == distmin ) is_proc_source = 1
 
 #ifdef USE_MPI
-  ! determining the number of processes that contain the source (useful when the source is located on an interface)
-  call MPI_ALLREDUCE (is_proc_source, nb_proc_source, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD, ierror)
+  ! determining the number of processes that contain the source 
+  ! (useful when the source is located on an interface)
+  call MPI_ALLREDUCE (is_proc_source, nb_proc_source, 1, MPI_INTEGER, &
+                      MPI_SUM, MPI_COMM_WORLD, ierror)
 
 #else
   nb_proc_source = is_proc_source
@@ -156,7 +161,8 @@
   ! when several processes contain the source, we elect one of them (minimum rank).
   if ( nb_proc_source > 1 ) then
 
-     call MPI_ALLGATHER(is_proc_source, 1, MPI_INTEGER, allgather_is_proc_source(1), 1, MPI_INTEGER, MPI_COMM_WORLD, ierror)
+     call MPI_ALLGATHER(is_proc_source, 1, MPI_INTEGER, allgather_is_proc_source(1), &
+                        1, MPI_INTEGER, MPI_COMM_WORLD, ierror)
      locate_is_proc_source = maxloc(allgather_is_proc_source) - 1
 
      if ( myrank /= locate_is_proc_source(1) ) then
@@ -180,8 +186,9 @@
   do iter_loop = 1,NUM_ITER
 
 ! recompute jacobian for the new point
-    call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian,coorg,knods,ispec_selected_source,ngnod,nspec,npgeo, &
-           .true.)
+    call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
+                    coorg,knods,ispec_selected_source,ngnod,nspec,npgeo, &
+                    .true.)
 
 ! compute distance to target location
   dx = - (x - x_source)
@@ -209,8 +216,9 @@
   enddo
 
 ! compute final coordinates of point found
-    call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian,coorg,knods,ispec_selected_source,ngnod,nspec,npgeo, &
-           .true.)
+    call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
+                    coorg,knods,ispec_selected_source,ngnod,nspec,npgeo, &
+                    .true.)
 
 ! store xi,gamma of point found
   xi_source = xi
@@ -228,6 +236,9 @@
      write(IOUT,*) '            original x: ',sngl(x_source)
      write(IOUT,*) '            original z: ',sngl(z_source)
      write(IOUT,*) 'closest estimate found: ',sngl(final_distance),' m away'
+#ifdef USE_MPI
+     write(IOUT,*) ' in rank ',myrank
+#endif
      write(IOUT,*) ' in element ',ispec_selected_source
      write(IOUT,*) ' at xi,gamma coordinates = ',xi_source,gamma_source
      write(IOUT,*)

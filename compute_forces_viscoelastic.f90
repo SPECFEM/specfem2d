@@ -57,7 +57,7 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
      deltat,coord,add_Bielak_conditions, &
      x0_source, z0_source, A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset,f0, &
      v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot,&
-     nleft,nright,nbot,over_critical_angle,NSOURCE,nrec,SIMULATION_TYPE,SAVE_FORWARD,b_absorb_elastic_left,&
+     nleft,nright,nbot,over_critical_angle,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,b_absorb_elastic_left,&
      b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top,nspec_xmin,nspec_xmax,&
      nspec_zmin,nspec_zmax,ib_left,ib_right,ib_bottom,ib_top,mu_k,kappa_k)
 
@@ -68,24 +68,24 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
   include "constants.h"
 
   logical :: p_sv
-  integer :: NSOURCE, i_source
+  integer :: NSOURCES, i_source
   integer :: npoin,nspec,myrank,nelemabs,numat,it,NSTEP
-  integer, dimension(NSOURCE) :: ispec_selected_source,is_proc_source,source_type
+  integer, dimension(NSOURCES) :: ispec_selected_source,is_proc_source,source_type
 
   integer :: nrec,SIMULATION_TYPE
   integer, dimension(nrec) :: ispec_selected_rec,which_proc_receiver
   integer :: nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax
-  integer, dimension(nspec_xmin) :: ib_left
-  integer, dimension(nspec_xmax) :: ib_right
-  integer, dimension(nspec_zmin) :: ib_bottom
-  integer, dimension(nspec_zmax) :: ib_top
+  integer, dimension(nelemabs) :: ib_left
+  integer, dimension(nelemabs) :: ib_right
+  integer, dimension(nelemabs) :: ib_bottom
+  integer, dimension(nelemabs) :: ib_top
 
   logical :: anyabs,assign_external_model,initialfield,TURN_ATTENUATION_ON,add_Bielak_conditions
 
   logical :: SAVE_FORWARD
 
   double precision :: deltatcube,deltatfourth,twelvedeltat,fourdeltatsquare
-  double precision, dimension(NSOURCE) :: angleforce
+  double precision, dimension(NSOURCES) :: angleforce
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
   integer, dimension(nspec) :: kmato
@@ -102,8 +102,8 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
   double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,vsext,rhoext
   double precision, dimension(NGLLX,NGLLZ,nspec) ::  c11ext,c15ext,c13ext,c33ext,c35ext,c55ext
 
-  real(kind=CUSTOM_REAL), dimension(NSOURCE,NSTEP) :: source_time_function
-  real(kind=CUSTOM_REAL), dimension(NSOURCE,NDIM,NGLLX,NGLLZ) :: sourcearray
+  real(kind=CUSTOM_REAL), dimension(NSOURCES,NSTEP) :: source_time_function
+  real(kind=CUSTOM_REAL), dimension(NSOURCES,NDIM,NGLLX,NGLLZ) :: sourcearray
 
   real(kind=CUSTOM_REAL), dimension(3,npoin) :: b_accel_elastic,b_displ_elastic
   real(kind=CUSTOM_REAL), dimension(nrec,NSTEP,3,NGLLX,NGLLZ) :: adj_sourcearrays
@@ -847,7 +847,7 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
   ! --- add the source if it is a moment tensor
   if(.not. initialfield) then
 
-     do i_source=1,NSOURCE
+     do i_source=1,NSOURCES
         ! if this processor carries the source and the source element is elastic
         if (is_proc_source(i_source) == 1 .and. elastic(ispec_selected_source(i_source))) then
 
@@ -882,7 +882,7 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
            endif !if(source_type(i_source) == 2)
 
         endif ! if this processor carries the source and the source element is elastic
-     enddo ! do i_source=1,NSOURCE
+     enddo ! do i_source=1,NSOURCES
 
      if(SIMULATION_TYPE == 2) then   ! adjoint wavefield
 

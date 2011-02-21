@@ -58,7 +58,7 @@
                b_viscodampx,b_viscodampz,&
                ibegin_bottom_poro,iend_bottom_poro,ibegin_top_poro,iend_top_poro, &
                jbegin_left_poro,jend_left_poro,jbegin_right_poro,jend_right_poro,&
-               C_k,M_k,NSOURCE,nrec,SIMULATION_TYPE,SAVE_FORWARD,&
+               C_k,M_k,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,&
                b_absorb_poro_w_left,b_absorb_poro_w_right,b_absorb_poro_w_bottom,b_absorb_poro_w_top,&
                nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,ib_left,ib_right,ib_bottom,ib_top,f0,freq0,Q0)
 
@@ -67,16 +67,16 @@
   implicit none
 
   include "constants.h"
-  integer :: NSOURCE, i_source
-  integer, dimension(NSOURCE) ::ispec_selected_source,source_type,is_proc_source
+  integer :: NSOURCES, i_source
+  integer, dimension(NSOURCES) ::ispec_selected_source,source_type,is_proc_source
   integer :: npoin,nspec,nelemabs,numat,it,NSTEP
   integer :: nrec,SIMULATION_TYPE,myrank
   integer, dimension(nrec) :: ispec_selected_rec,which_proc_receiver
   integer :: nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax
-  integer, dimension(nspec_xmin) :: ib_left
-  integer, dimension(nspec_xmax) :: ib_right
-  integer, dimension(nspec_zmin) :: ib_bottom
-  integer, dimension(nspec_zmax) :: ib_top
+  integer, dimension(nelemabs) :: ib_left
+  integer, dimension(nelemabs) :: ib_right
+  integer, dimension(nelemabs) :: ib_bottom
+  integer, dimension(nelemabs) :: ib_top
 
   logical :: anyabs,initialfield,TURN_ATTENUATION_ON
   logical :: SAVE_FORWARD
@@ -99,8 +99,8 @@
   double precision, dimension(numat) :: porosity,tortuosity
   double precision, dimension(4,3,numat) :: poroelastcoef
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
-  real(kind=CUSTOM_REAL), dimension(NSOURCE,NSTEP) :: source_time_function
-  real(kind=CUSTOM_REAL), dimension(NSOURCE,NDIM,NGLLX,NGLLZ) :: sourcearray
+  real(kind=CUSTOM_REAL), dimension(NSOURCES,NSTEP) :: source_time_function
+  real(kind=CUSTOM_REAL), dimension(NSOURCES,NDIM,NGLLX,NGLLZ) :: sourcearray
   real(kind=CUSTOM_REAL), dimension(nrec,NSTEP,3,NGLLX,NGLLZ) :: adj_sourcearrays
   real(kind=CUSTOM_REAL), dimension(npoin) :: C_k,M_k
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLZ,nspec_xmin,NSTEP) :: b_absorb_poro_w_left
@@ -797,7 +797,7 @@
 
 ! --- add the source
   if(.not. initialfield) then
-    do i_source=1,NSOURCE
+    do i_source=1,NSOURCES
 ! if this processor carries the source and the source element is poroelastic
      if (is_proc_source(i_source) == 1 .and. poroelastic(ispec_selected_source(i_source))) then
 
