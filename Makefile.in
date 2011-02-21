@@ -125,6 +125,7 @@ OBJS_SPECFEM2D = \
 	$O/attenuation_compute_param.o \
 	$O/calendar.o \
 	$O/checkgrid.o \
+	$O/check_stability.o \
 	$O/compute_arrays_source.o \
 	$O/compute_Bielak_conditions.o \
 	$O/compute_curl_one_element.o \
@@ -359,6 +360,9 @@ $O/compute_forces_poro_fluid.o: compute_forces_poro_fluid.f90 constants.h
 ### use optimized compilation option for solver only
 $O/compute_gradient_attenuation.o: compute_gradient_attenuation.f90 constants.h
 	${F90} $(FLAGS_NO_CHECK) -c -o $O/compute_gradient_attenuation.o compute_gradient_attenuation.f90
+
+$O/check_stability.o: check_stability.F90 constants.h
+	${F90} $(FLAGS_NO_CHECK) -c -o $O/check_stability.o check_stability.F90
 
 $O/calendar.o: calendar.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/calendar.o calendar.f90

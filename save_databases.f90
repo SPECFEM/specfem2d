@@ -138,10 +138,10 @@
 
     write(15,*) 'nt deltat'
     write(15,*) nt,deltat
-    write(15,*) 'NSOURCE'
-    write(15,*) NSOURCE
+    write(15,*) 'NSOURCES'
+    write(15,*) NSOURCES
 
-    do i_source=1,NSOURCE
+    do i_source=1,NSOURCES
       write(15,*) 'source', i_source
       write(15,*) source_type(i_source),time_function_type(i_source), &
                   xs(i_source),zs(i_source),f0(i_source),tshift_src(i_source), &

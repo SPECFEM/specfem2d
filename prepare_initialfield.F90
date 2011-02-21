@@ -45,7 +45,7 @@
 
 
   subroutine prepare_initialfield(myrank,any_acoustic,any_poroelastic,over_critical_angle, &
-                        NSOURCE,source_type,angleforce,x_source,z_source,f0, &
+                        NSOURCES,source_type,angleforce,x_source,z_source,f0, &
                         npoin,numat,poroelastcoef,density,coord, &
                         angleforce_refl,c_inc,c_refl,cploc,csloc,time_offset, &
                         A_plane, B_plane, C_plane, &
@@ -60,9 +60,9 @@
   integer :: myrank
   logical :: any_acoustic,any_poroelastic
   
-  integer :: NSOURCE
-  integer, dimension(NSOURCE) :: source_type
-  double precision, dimension(NSOURCE) :: angleforce,x_source,z_source,f0
+  integer :: NSOURCES
+  integer, dimension(NSOURCES) :: source_type
+  double precision, dimension(NSOURCES) :: angleforce,x_source,z_source,f0
   
   integer :: npoin,numat
   double precision, dimension(4,3,numat) :: poroelastcoef
@@ -117,7 +117,7 @@
     write(IOUT,*)
 
   ! only implemented for one source
-    if(NSOURCE > 1) call exit_MPI('calculation of the initial wave is only implemented for one source')
+    if(NSOURCES > 1) call exit_MPI('calculation of the initial wave is only implemented for one source')
     if (source_type(1) == 1) then
       write(IOUT,*) 'initial P wave of', angleforce(1)*180.d0/pi, 'degrees introduced.'
     else if (source_type(1) == 2) then
@@ -317,7 +317,7 @@
 
   subroutine prepare_initialfield_paco(myrank,nelemabs,left_bound,right_bound,bot_bound, &
                                     numabs,codeabs,ibool,nspec, &
-                                    source_type,NSOURCE,c_inc,c_refl, &
+                                    source_type,NSOURCES,c_inc,c_refl, &
                                     count_bottom,count_left,count_right)
   
   implicit none
@@ -335,8 +335,8 @@
   integer :: nspec
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
 
-  integer :: NSOURCE
-  integer :: source_type(NSOURCE)
+  integer :: NSOURCES
+  integer :: source_type(NSOURCES)
   
   double precision :: c_inc,c_refl
 

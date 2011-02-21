@@ -44,7 +44,7 @@
 !========================================================================
 
 
-  subroutine prepare_source_time_function(myrank,NSTEP,NSOURCE,source_time_function, &
+  subroutine prepare_source_time_function(myrank,NSTEP,NSOURCES,source_time_function, &
                           time_function_type,f0,tshift_src,factor,aval, &
                           t0,nb_proc_source,deltat)
 
@@ -55,19 +55,19 @@
 
   integer :: myrank,NSTEP
 
-  integer :: NSOURCE
-  integer, dimension(NSOURCE) :: time_function_type
-  double precision, dimension(NSOURCE) :: f0,tshift_src,factor
-  double precision, dimension(NSOURCE) :: aval
+  integer :: NSOURCES
+  integer, dimension(NSOURCES) :: time_function_type
+  double precision, dimension(NSOURCES) :: f0,tshift_src,factor
+  double precision, dimension(NSOURCES) :: aval
   double precision :: t0
-  integer,dimension(NSOURCE) :: nb_proc_source
+  integer,dimension(NSOURCES) :: nb_proc_source
   double precision :: deltat
 
-  real(kind=CUSTOM_REAL),dimension(NSOURCE,NSTEP) :: source_time_function
+  real(kind=CUSTOM_REAL),dimension(NSOURCES,NSTEP) :: source_time_function
 
   ! local parameters
   double precision :: stf_used,time
-  double precision, dimension(NSOURCE) :: hdur,hdur_gauss
+  double precision, dimension(NSOURCES) :: hdur,hdur_gauss
   double precision, external :: netlib_specfun_erf
   integer :: it,i_source
 
@@ -81,42 +81,45 @@
   endif
 
   !    ! loop on all the sources
-  !    do i_source=1,NSOURCE
+  !    do i_source=1,NSOURCES
 
   ! loop on all the time steps
   do it = 1,NSTEP
 
+    ! note: t0 is the simulation start time, tshift_src is the time shift of the source
+    !          relative to this start time
+    
     ! compute current time
     time = (it-1)*deltat
 
     stf_used = 0.d0
 
     ! loop on all the sources
-    do i_source=1,NSOURCE
+    do i_source=1,NSOURCES
 
       if( time_function_type(i_source) == 1 ) then
 
         ! Ricker (second derivative of a Gaussian) source time function
         source_time_function(i_source,it) = - factor(i_source) * &
-                  (ONE-TWO*aval(i_source)*(time-tshift_src(i_source))**2) * &
-                  exp(-aval(i_source)*(time-tshift_src(i_source))**2)
+                  (ONE-TWO*aval(i_source)*(time-t0-tshift_src(i_source))**2) * &
+                  exp(-aval(i_source)*(time-t0-tshift_src(i_source))**2)
 
         ! source_time_function(i_source,it) = - factor(i_source) *  &
         !               TWO*aval(i_source)*sqrt(aval(i_source))*&
-        !               (time-tshift_src(i_source))/pi * exp(-aval(i_source)*(time-tshift_src(i_source))**2)
+        !               (time-t0-tshift_src(i_source))/pi * exp(-aval(i_source)*(time-t0-tshift_src(i_source))**2)
 
       else if( time_function_type(i_source) == 2 ) then
 
         ! first derivative of a Gaussian source time function
         source_time_function(i_source,it) = - factor(i_source) * &
-                  TWO*aval(i_source)*(time-tshift_src(i_source)) * &
-                  exp(-aval(i_source)*(time-tshift_src(i_source))**2)
+                  TWO*aval(i_source)*(time-t0-tshift_src(i_source)) * &
+                  exp(-aval(i_source)*(time-t0-tshift_src(i_source))**2)
 
       else if(time_function_type(i_source) == 3 .or. time_function_type(i_source) == 4) then
 
         ! Gaussian or Dirac (we use a very thin Gaussian instead) source time function
         source_time_function(i_source,it) = factor(i_source) * &
-                  exp(-aval(i_source)*(time-tshift_src(i_source))**2)
+                  exp(-aval(i_source)*(time-t0-tshift_src(i_source))**2)
 
       else if(time_function_type(i_source) == 5) then
 
@@ -124,7 +127,7 @@
         hdur(i_source) = 1.d0 / f0(i_source)
         hdur_gauss(i_source) = hdur(i_source) * 5.d0 / 3.d0
         source_time_function(i_source,it) = factor(i_source) * 0.5d0*(1.0d0 + &
-            netlib_specfun_erf(SOURCE_DECAY_MIMIC_TRIANGLE*(time-tshift_src(i_source))/hdur_gauss(i_source)))
+            netlib_specfun_erf(SOURCE_DECAY_MIMIC_TRIANGLE*(time-t0-tshift_src(i_source))/hdur_gauss(i_source)))
 
       else
         call exit_MPI('unknown source time function')
@@ -135,7 +138,7 @@
     enddo
 
     ! output relative time in third column, in case user wants to check it as well
-    ! if (myrank == 0 .and. i_source==1 ) write(55,*) sngl(time-tshift_src(1)),real(source_time_function(1,it),4),sngl(time)
+    ! if (myrank == 0 .and. i_source==1 ) write(55,*) sngl(time-t0-tshift_src(1)),real(source_time_function(1,it),4),sngl(time)
     if (myrank == 0) then
         ! note: earliest start time of the simulation is: (it-1)*deltat - t0
         write(55,*) sngl(time-t0),sngl(stf_used),sngl(time)
@@ -150,10 +153,8 @@
   ! than one if the nearest point is on the interface between several partitions with an explosive source.
   ! since source contribution is linear, the source_time_function is cut down by that number (it would have been similar
   ! if we just had elected one of those processes).
-  do i_source=1,NSOURCE
-
+  do i_source=1,NSOURCES
     source_time_function(i_source,:) = source_time_function(i_source,:) / nb_proc_source(i_source)
-
   enddo
 
   end subroutine prepare_source_time_function

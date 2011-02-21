@@ -53,7 +53,7 @@
                   seismotype,imagetype,assign_external_model,READ_EXTERNAL_SEP_FILE, &
                   outputgrid,OUTPUT_ENERGY,TURN_ATTENUATION_ON, &
                   TURN_VISCATTENUATION_ON,Q0,freq0,p_sv, &
-                  NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCE)
+                  NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCES)
 
 ! starts reading in parameters from input Database file
 
@@ -75,7 +75,7 @@
   double precision :: Q0,freq0
   double precision :: deltat
 
-  integer :: NSTEP,NSOURCE
+  integer :: NSTEP,NSOURCES
   integer :: NTSTEP_BETWEEN_OUTPUT_INFO,NTSTEP_BETWEEN_OUTPUT_SEISMO
 
   ! local parameters
@@ -189,7 +189,7 @@
 
   !----  read source information
   read(IIN,"(a80)") datlin
-  read(IIN,*) NSOURCE
+  read(IIN,*) NSOURCES
 
   ! output formats
 230 format('./OUTPUT_FILES/Database',i5.5)
@@ -236,7 +236,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_databases_sources(NSOURCE,source_type,time_function_type, &
+  subroutine read_databases_sources(NSOURCES,source_type,time_function_type, &
                       x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,angleforce)
 
 ! reads source parameters
@@ -244,17 +244,30 @@
   implicit none
   include "constants.h"
 
-  integer :: NSOURCE
-  integer, dimension(NSOURCE) :: source_type,time_function_type
-  double precision, dimension(NSOURCE) :: x_source,z_source, &
+  integer :: NSOURCES
+  integer, dimension(NSOURCES) :: source_type,time_function_type
+  double precision, dimension(NSOURCES) :: x_source,z_source, &
     Mxx,Mzz,Mxz,f0,tshift_src,factor,angleforce
 
   ! local parameters
   integer :: i_source
   character(len=80) :: datlin
 
+  ! initializes
+  source_type(:) = 0
+  time_function_type(:) = 0
+  x_source(:) = 0.d0
+  z_source(:) = 0.d0
+  Mxx(:) = 0.d0
+  Mzz(:) = 0.d0
+  Mxz(:) = 0.d0
+  f0(:) = 0.d0
+  tshift_src(:) = 0.d0
+  factor(:) = 0.d0
+  angleforce(:) = 0.d0
+  
   ! reads in source info from Database file
-  do i_source=1,NSOURCE
+  do i_source=1,NSOURCES
      read(IIN,"(a80)") datlin
      read(IIN,*) source_type(i_source),time_function_type(i_source), &
                  x_source(i_source),z_source(i_source),f0(i_source),tshift_src(i_source), &
@@ -315,10 +328,14 @@
   double precision, dimension(:), allocatable :: coorgread
   character(len=80) :: datlin
 
+  ! initializes
+  coorg(:,:) = 0.d0
+
   ! reads the spectral macrobloc nodal coordinates
-  ipoin = 0
   read(IIN,"(a80)") datlin
 
+  ! reads in values
+  ipoin = 0
   allocate(coorgread(NDIM))
   do ip = 1,npgeo
     ! reads coordinates
@@ -385,10 +402,16 @@
   integer, dimension(:), allocatable :: knods_read  
   character(len=80) :: datlin
 
+  ! initializes
+  kmato(:) = 0
+  knods(:,:) = 0
+
   ! reads spectral macrobloc data
-  n = 0
   read(IIN,"(a80)") datlin
+  
+  ! reads in values
   allocate(knods_read(ngnod))
+  n = 0
   do ispec = 1,nspec
     read(IIN,*) n,kmato_read,(knods_read(k), k=1,ngnod)
     if(ipass == 1) then
@@ -450,6 +473,11 @@
   ! local parameters
   integer :: num_interface,ie,my_interfaces_read
 
+  ! initializes
+  my_neighbours(:) = 0
+  my_nelmnts_neighbours(:) = 0
+  my_interfaces(:,:,:) = 0
+
   ! reads in interfaces
   do num_interface = 1, ninterface
     read(IIN,*) my_neighbours(num_interface), my_nelmnts_neighbours(num_interface)
@@ -498,9 +526,21 @@
   logical :: codeabsread(4)
   character(len=80) :: datlin
 
+  ! initializes
+  codeabs(:,:) = .false.
+  ibegin_bottom(:) = 0
+  iend_bottom(:) = 0
+  ibegin_top(:) = 0
+  iend_top(:) = 0
+  jbegin_left(:) = 0
+  jend_left(:) = 0
+  jbegin_right(:) = 0
+  jend_right(:) = 0
+
   ! reads in absorbing edges
   read(IIN,"(a80)") datlin
-
+  
+  ! reads in values
   if( anyabs ) then
     do inum = 1,nelemabs
       read(IIN,*) numabsread,codeabsread(1),codeabsread(2),codeabsread(3),&
@@ -556,6 +596,9 @@
   ! local parameters
   integer :: inum,acoustic_edges_read
   character(len=80) :: datlin
+
+  ! initializes
+  acoustic_edges(:,:) = 0
 
   ! reads in any possible free surface edges
   read(IIN,"(a80)") datlin
@@ -621,6 +664,14 @@
     solid_poro_poro_ispec_read,solid_poro_elastic_ispec_read
   character(len=80) :: datlin
 
+  ! initializes
+  fluid_solid_acoustic_ispec(:) = 0
+  fluid_solid_elastic_ispec(:) = 0
+  fluid_poro_acoustic_ispec(:) = 0
+  fluid_poro_poroelastic_ispec(:) = 0
+  solid_poro_elastic_ispec(:) = 0
+  solid_poro_poroelastic_ispec(:) = 0
+  
   ! reads acoustic elastic coupled edges
   read(IIN,"(a80)") datlin
   
@@ -704,6 +755,9 @@
   integer :: i
   character(len=80) :: datlin
 
+  ! initializes
+  nodes_tangential_curve(:,:) = 0.d0
+  
   ! reads tangential detection curve
   read(IIN,"(a80)") datlin
   read(IIN,*) force_normal_to_surface,rec_normal_to_surface

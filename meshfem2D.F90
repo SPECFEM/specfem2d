@@ -418,7 +418,7 @@ program meshfem2D
   print *,'Parameter file successfully read... '
 
   ! reads in source descriptions
-  call read_source_file(NSOURCE,deltat,f0_attenuation)
+  call read_source_file(NSOURCES)
 
   ! reads in tangential detection
   if (force_normal_to_surface .or. rec_normal_to_surface) then
@@ -505,7 +505,7 @@ program meshfem2D
 
         ! check if we are in the last layer, which contains topography,
         ! and modify the position of the source accordingly if it is located exactly at the surface
-        do i_source=1,NSOURCE
+        do i_source=1,NSOURCES
            if(source_surf(i_source) .and. ilayer == number_of_layers) &
                 zs(i_source) = value_spline(xs(i_source),xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
         enddo
@@ -911,7 +911,7 @@ program meshfem2D
                       nnodes_tangential_curve,nodes_tangential_curve)
 
   ! print position of the source
-  do i_source=1,NSOURCE
+  do i_source=1,NSOURCES
      print *
      print *,'Position (x,z) of the source = ',xs(i_source),zs(i_source)
      print *

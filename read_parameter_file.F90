@@ -78,7 +78,7 @@ module parameter_file
   integer :: nt
   double precision :: deltat
 
-  integer :: NSOURCE
+  integer :: NSOURCES
   logical :: force_normal_to_surface
 
   ! variables used for attenuation
@@ -180,7 +180,7 @@ contains
   call read_value_double_precision(IIN,IGNORE_JUNK,deltat)
 
   ! read source infos
-  call read_value_integer(IIN,IGNORE_JUNK,NSOURCE)
+  call read_value_integer(IIN,IGNORE_JUNK,NSOURCES)
   call read_value_logical(IIN,IGNORE_JUNK,force_normal_to_surface)
 
   ! read constants for attenuation

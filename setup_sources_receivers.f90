@@ -43,7 +43,7 @@
 !
 !========================================================================
 
-subroutine setup_sources_receivers(NSOURCE,initialfield,source_type,&
+  subroutine setup_sources_receivers(NSOURCES,initialfield,source_type,&
      coord,ibool,npoin,nspec,nelem_acoustic_surface,acoustic_surface,elastic,poroelastic, &
      x_source,z_source,ispec_selected_source,ispec_selected_rec, &
      is_proc_source,nb_proc_source,ipass,&
@@ -57,7 +57,7 @@ subroutine setup_sources_receivers(NSOURCE,initialfield,source_type,&
   include "constants.h"
 
   logical :: initialfield
-  integer :: NSOURCE
+  integer :: NSOURCES
   integer :: npgeo,ngnod,myrank,ipass,nproc
   integer :: npoin,nspec,nelem_acoustic_surface
 
@@ -77,10 +77,10 @@ subroutine setup_sources_receivers(NSOURCE,initialfield,source_type,&
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name
 
   ! for sources
-  integer, dimension(NSOURCE) :: source_type
-  integer, dimension(NSOURCE) :: ispec_selected_source,is_proc_source,nb_proc_source,iglob_source
-  real(kind=CUSTOM_REAL), dimension(NSOURCE,NDIM,NGLLX,NGLLZ) :: sourcearray
-  double precision, dimension(NSOURCE) :: x_source,z_source,xi_source,gamma_source,Mxx,Mzz,Mxz
+  integer, dimension(NSOURCES) :: source_type
+  integer, dimension(NSOURCES) :: ispec_selected_source,is_proc_source,nb_proc_source,iglob_source
+  real(kind=CUSTOM_REAL), dimension(NSOURCES,NDIM,NGLLX,NGLLZ) :: sourcearray
+  double precision, dimension(NSOURCES) :: x_source,z_source,xi_source,gamma_source,Mxx,Mzz,Mxz
 
   logical, dimension(nspec) :: elastic,poroelastic
   integer, dimension(ngnod,nspec) :: knods
@@ -95,26 +95,27 @@ subroutine setup_sources_receivers(NSOURCE,initialfield,source_type,&
   ! Local variables
   integer i_source,ispec,ispec_acoustic_surface
 
-  do i_source=1,NSOURCE
+  do i_source=1,NSOURCES
 
-     if(source_type(i_source) == 1) then
+    if(source_type(i_source) == 1) then
 
-        ! collocated force source
-     call locate_source_force(ibool,coord,nspec,npoin,xigll,zigll,x_source(i_source),z_source(i_source), &
+      ! collocated force source
+      call locate_source_force(ibool,coord,nspec,npoin,xigll,zigll,x_source(i_source),z_source(i_source), &
           ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source),&
           nproc,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo,ipass,&
           iglob_source(i_source))
 
-! check that acoustic source is not exactly on the free surface because pressure is zero there
-    if(is_proc_source(i_source) == 1) then
-  do ispec_acoustic_surface = 1,nelem_acoustic_surface
-     ispec = acoustic_surface(1,ispec_acoustic_surface)
-     ixmin = acoustic_surface(2,ispec_acoustic_surface)
-     ixmax = acoustic_surface(3,ispec_acoustic_surface)
-     izmin = acoustic_surface(4,ispec_acoustic_surface)
-     izmax = acoustic_surface(5,ispec_acoustic_surface)
-          if( .not. elastic(ispec) .and. .not. poroelastic(ispec) .and. ispec == ispec_selected_source(i_source) ) then
-          if ( (izmin==1 .and. izmax==1 .and. ixmin==1 .and. ixmax==NGLLX .and. &
+      ! check that acoustic source is not exactly on the free surface because pressure is zero there
+      if(is_proc_source(i_source) == 1) then
+        do ispec_acoustic_surface = 1,nelem_acoustic_surface
+          ispec = acoustic_surface(1,ispec_acoustic_surface)
+          ixmin = acoustic_surface(2,ispec_acoustic_surface)
+          ixmax = acoustic_surface(3,ispec_acoustic_surface)
+          izmin = acoustic_surface(4,ispec_acoustic_surface)
+          izmax = acoustic_surface(5,ispec_acoustic_surface)
+          if( .not. elastic(ispec) .and. .not. poroelastic(ispec) .and. &
+            ispec == ispec_selected_source(i_source) ) then
+            if ( (izmin==1 .and. izmax==1 .and. ixmin==1 .and. ixmax==NGLLX .and. &
                 gamma_source(i_source) < -0.99d0) .or.&
                 (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==NGLLX .and. &
                 gamma_source(i_source) > 0.99d0) .or.&
@@ -130,37 +131,40 @@ subroutine setup_sources_receivers(NSOURCE,initialfield,source_type,&
                 gamma_source(i_source) > 0.99d0 .and. xi_source(i_source) < -0.99d0) .or.&
                 (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
                 gamma_source(i_source) > 0.99d0 .and. xi_source(i_source) > 0.99d0) ) then
- call exit_MPI('an acoustic source cannot be located exactly on the free surface because pressure is zero there')
+              call exit_MPI('an acoustic source cannot be located exactly '// &
+                            'on the free surface because pressure is zero there')
+            endif
           endif
-          endif
-   enddo
-    endif
+        enddo
+      endif
 
-     else if(source_type(i_source) == 2) then
-        ! moment-tensor source
-        call locate_source_moment_tensor(ibool,coord,nspec,npoin,xigll,zigll,x_source(i_source),z_source(i_source), &
+    else if(source_type(i_source) == 2) then
+      ! moment-tensor source
+      call locate_source_moment_tensor(ibool,coord,nspec,npoin,xigll,zigll,x_source(i_source),z_source(i_source), &
              ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source),&
              nproc,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo,ipass)
 
-        ! compute source array for moment-tensor source
-        call compute_arrays_source(ispec_selected_source(i_source),xi_source(i_source),gamma_source(i_source),&
+      ! compute source array for moment-tensor source
+      call compute_arrays_source(ispec_selected_source(i_source),xi_source(i_source),gamma_source(i_source),&
              sourcearray(i_source,:,:,:), &
              Mxx(i_source),Mzz(i_source),Mxz(i_source),xix,xiz,gammax,gammaz,xigll,zigll,nspec)
 
-     else if(.not.initialfield) then
-        call exit_MPI('incorrect source type')
-     endif
+    else if(.not.initialfield) then
+    
+      call exit_MPI('incorrect source type')
+      
+    endif
 
 
-     ! locate receivers in the mesh
-     call locate_receivers(ibool,coord,nspec,npoin,xigll,zigll,nrec,nrecloc,recloc,which_proc_receiver,nproc,myrank,&
+    ! locate receivers in the mesh
+    call locate_receivers(ibool,coord,nspec,npoin,xigll,zigll,nrec,nrecloc,recloc,which_proc_receiver,nproc,myrank,&
           st_xval,st_zval,ispec_selected_rec, &
           xi_receiver,gamma_receiver,station_name,network_name,x_source(i_source),z_source(i_source),&
           coorg,knods,ngnod,npgeo,ipass, &
           x_final_receiver, z_final_receiver)
 
-  enddo ! do i_source=1,NSOURCE
+  enddo ! do i_source=1,NSOURCES
 
 
-end subroutine setup_sources_receivers
+  end subroutine setup_sources_receivers
 
