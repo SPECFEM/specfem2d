@@ -788,7 +788,8 @@ contains
            if ( (tab_size_interfaces(num_interface) < tab_size_interfaces(num_interface+1)) .and. &
                 (i == iproc .or. j == iproc) ) then
               my_interfaces(num_interface) = 1
-              my_nb_interfaces(num_interface) = tab_size_interfaces(num_interface+1) - tab_size_interfaces(num_interface)
+              my_nb_interfaces(num_interface) = tab_size_interfaces(num_interface+1) &
+                                              - tab_size_interfaces(num_interface)
            endif
            num_interface = num_interface + 1
         enddo
@@ -798,55 +799,62 @@ contains
   else
 
     do i = 0, nparts-1
-       do j = i+1, nparts-1
-          if ( my_interfaces(num_interface) == 1 ) then
-             if ( i == iproc ) then
-                write(IIN_database,*) j, my_nb_interfaces(num_interface)
-             else
-                write(IIN_database,*) i, my_nb_interfaces(num_interface)
-             endif
-
-             do k = tab_size_interfaces(num_interface), tab_size_interfaces(num_interface+1)-1
-                if ( i == iproc ) then
-                   local_elmnt = glob2loc_elmnts(tab_interfaces(k*5+0))+1
-                else
-                   local_elmnt = glob2loc_elmnts(tab_interfaces(k*5+1))+1
-                endif
-
-                if ( tab_interfaces(k*5+2) == 1 ) then
-                   do l = glob2loc_nodes_nparts(tab_interfaces(k*5+3)), &
-                        glob2loc_nodes_nparts(tab_interfaces(k*5+3)+1)-1
-                      if ( glob2loc_nodes_parts(l) == iproc ) then
-                         local_nodes(1) = glob2loc_nodes(l)+1
-                      endif
-                   enddo
-
-                   write(IIN_database,*) local_elmnt, tab_interfaces(k*5+2), local_nodes(1), -1
-                else
-                   if ( tab_interfaces(k*5+2) == 2 ) then
-                      do l = glob2loc_nodes_nparts(tab_interfaces(k*5+3)), &
-                           glob2loc_nodes_nparts(tab_interfaces(k*5+3)+1)-1
-                         if ( glob2loc_nodes_parts(l) == iproc ) then
-                            local_nodes(1) = glob2loc_nodes(l)+1
-                         endif
-                      enddo
-                      do l = glob2loc_nodes_nparts(tab_interfaces(k*5+4)), &
-                         glob2loc_nodes_nparts(tab_interfaces(k*5+4)+1)-1
-                         if ( glob2loc_nodes_parts(l) == iproc ) then
-                            local_nodes(2) = glob2loc_nodes(l)+1
-                         endif
-                      enddo
-                      write(IIN_database,*) local_elmnt, tab_interfaces(k*5+2), local_nodes(1), local_nodes(2)
-                   else
-                      write(IIN_database,*) "erreur_write_interface_", tab_interfaces(k*5+2)
-                   endif
-                endif
-             enddo
-
+      do j = i+1, nparts-1
+        if ( my_interfaces(num_interface) == 1 ) then
+          if ( i == iproc ) then
+            write(IIN_database,*) j, my_nb_interfaces(num_interface)
+          else
+            write(IIN_database,*) i, my_nb_interfaces(num_interface)
           endif
 
-          num_interface = num_interface + 1
-       enddo
+          do k = tab_size_interfaces(num_interface), tab_size_interfaces(num_interface+1)-1
+            if ( i == iproc ) then
+              local_elmnt = glob2loc_elmnts(tab_interfaces(k*5+0))+1
+            else
+              local_elmnt = glob2loc_elmnts(tab_interfaces(k*5+1))+1
+            endif
+
+            if ( tab_interfaces(k*5+2) == 1 ) then
+              ! common node (single point)
+              do l = glob2loc_nodes_nparts(tab_interfaces(k*5+3)), &
+                        glob2loc_nodes_nparts(tab_interfaces(k*5+3)+1)-1
+                if ( glob2loc_nodes_parts(l) == iproc ) then
+                  local_nodes(1) = glob2loc_nodes(l)+1
+                endif
+              enddo
+
+              write(IIN_database,*) local_elmnt, tab_interfaces(k*5+2), &
+                                        local_nodes(1), -1
+            else
+              if ( tab_interfaces(k*5+2) == 2 ) then
+                ! common edge (two nodes)
+                ! first node
+                do l = glob2loc_nodes_nparts(tab_interfaces(k*5+3)), &
+                           glob2loc_nodes_nparts(tab_interfaces(k*5+3)+1)-1
+                  if ( glob2loc_nodes_parts(l) == iproc ) then
+                    local_nodes(1) = glob2loc_nodes(l)+1
+                  endif
+                enddo
+                ! second node
+                do l = glob2loc_nodes_nparts(tab_interfaces(k*5+4)), &
+                         glob2loc_nodes_nparts(tab_interfaces(k*5+4)+1)-1
+                  if ( glob2loc_nodes_parts(l) == iproc ) then
+                    local_nodes(2) = glob2loc_nodes(l)+1
+                  endif
+                enddo
+
+                write(IIN_database,*) local_elmnt, tab_interfaces(k*5+2), &
+                                           local_nodes(1), local_nodes(2)
+              else
+                write(IIN_database,*) "erreur_write_interface_", tab_interfaces(k*5+2)
+              endif
+            endif
+          enddo
+
+        endif
+
+        num_interface = num_interface + 1
+      enddo
     enddo
 
   endif

@@ -218,7 +218,7 @@
 
   if(elastic(ispec)) then
 
-! get relaxed elastic parameters of current spectral element
+    ! get relaxed elastic parameters of current spectral element
     lambdal_relaxed = elastcoef(1,1,kmato(ispec))
     mul_relaxed = elastcoef(2,1,kmato(ispec))
     lambdalplus2mul_relaxed = elastcoef(3,1,kmato(ispec))
@@ -226,24 +226,24 @@
     do j = 1,NGLLZ
       do i = 1,NGLLX
 
-!--- if external medium, get elastic parameters of current grid point
+        !--- if external medium, get elastic parameters of current grid point
         if(assign_external_model) then
           cpl = vpext(i,j,ispec)
           csl = vsext(i,j,ispec)
           denst = rhoext(i,j,ispec)
           mul_relaxed = denst*csl*csl
           lambdal_relaxed = denst*cpl*cpl - TWO*mul_relaxed
-       endif
+        endif
 
-! derivative along x and along z
+        ! derivative along x and along z
         dux_dxi = ZERO
         duz_dxi = ZERO
 
         dux_dgamma = ZERO
         duz_dgamma = ZERO
 
-! first double loop over GLL points to compute and store gradients
-! we can merge the two loops because NGLLX == NGLLZ
+        ! first double loop over GLL points to compute and store gradients
+        ! we can merge the two loops because NGLLX == NGLLZ
         do k = 1,NGLLX
           dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
           duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
@@ -256,13 +256,13 @@
         gammaxl = gammax(i,j,ispec)
         gammazl = gammaz(i,j,ispec)
 
-! derivatives of displacement
+        ! derivatives of displacement
         dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
         duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
 ! compute diagonal components of the stress tensor (include attenuation or anisotropy if needed)
 
-  if(TURN_ATTENUATION_ON) then
+        if(TURN_ATTENUATION_ON) then
 
 ! attenuation is implemented following the memory variable formulation of
 ! J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
@@ -270,61 +270,67 @@
 ! J. M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation in a linear
 ! viscoelastic medium, Geophysical Journal International, vol. 95, p. 597-611 (1988).
 
-! compute unrelaxed elastic coefficients from formulas in Carcione 1993 page 111
-    lambdal_unrelaxed = (lambdal_relaxed + mul_relaxed) * Mu_nu1(i,j,ispec) - mul_relaxed * Mu_nu2(i,j,ispec)
-    mul_unrelaxed = mul_relaxed * Mu_nu2(i,j,ispec)
-    lambdalplus2mul_unrelaxed = lambdal_unrelaxed + TWO*mul_unrelaxed
+          ! compute unrelaxed elastic coefficients from formulas in Carcione 1993 page 111
+          lambdal_unrelaxed = (lambdal_relaxed + mul_relaxed) * Mu_nu1(i,j,ispec) &
+                            - mul_relaxed * Mu_nu2(i,j,ispec)
+          mul_unrelaxed = mul_relaxed * Mu_nu2(i,j,ispec)
+          lambdalplus2mul_unrelaxed = lambdal_unrelaxed + TWO*mul_unrelaxed
 
-! compute the stress using the unrelaxed Lame parameters (Carcione 1993, page 111)
-    sigma_xx = lambdalplus2mul_unrelaxed*dux_dxl + lambdal_unrelaxed*duz_dzl
-    sigma_zz = lambdalplus2mul_unrelaxed*duz_dzl + lambdal_unrelaxed*dux_dxl
+          ! compute the stress using the unrelaxed Lame parameters (Carcione 1993, page 111)
+          sigma_xx = lambdalplus2mul_unrelaxed*dux_dxl + lambdal_unrelaxed*duz_dzl
+          sigma_zz = lambdalplus2mul_unrelaxed*duz_dzl + lambdal_unrelaxed*dux_dxl
 
-! add the memory variables using the relaxed parameters (Carcione 1993, page 111)
-! beware: there is a bug in Carcione's equation (2c) for sigma_zz, we fixed it in the code below
-    e1_sum = 0._CUSTOM_REAL
-    e11_sum = 0._CUSTOM_REAL
+          ! add the memory variables using the relaxed parameters (Carcione 1993, page 111)
+          ! beware: there is a bug in Carcione's equation (2c) for sigma_zz, we fixed it in the code below
+          e1_sum = 0._CUSTOM_REAL
+          e11_sum = 0._CUSTOM_REAL
 
-    do i_sls = 1,N_SLS
-      e1_sum = e1_sum + e1(i,j,ispec,i_sls)
-      e11_sum = e11_sum + e11(i,j,ispec,i_sls)
-    enddo
+          do i_sls = 1,N_SLS
+            e1_sum = e1_sum + e1(i,j,ispec,i_sls)
+            e11_sum = e11_sum + e11(i,j,ispec,i_sls)
+          enddo
 
-    sigma_xx = sigma_xx + (lambdal_relaxed + mul_relaxed) * e1_sum + TWO * mul_relaxed * e11_sum
-    sigma_zz = sigma_zz + (lambdal_relaxed + mul_relaxed) * e1_sum - TWO * mul_relaxed * e11_sum
+          sigma_xx = sigma_xx + (lambdal_relaxed + mul_relaxed) * e1_sum &
+                      + TWO * mul_relaxed * e11_sum
+          sigma_zz = sigma_zz + (lambdal_relaxed + mul_relaxed) * e1_sum &
+                      - TWO * mul_relaxed * e11_sum
 
-  else
+        else
 
-! no attenuation
-    sigma_xx = lambdalplus2mul_relaxed*dux_dxl + lambdal_relaxed*duz_dzl
-    sigma_zz = lambdalplus2mul_relaxed*duz_dzl + lambdal_relaxed*dux_dxl
+          ! no attenuation
+          sigma_xx = lambdalplus2mul_relaxed*dux_dxl + lambdal_relaxed*duz_dzl
+          sigma_zz = lambdalplus2mul_relaxed*duz_dzl + lambdal_relaxed*dux_dxl
 
-  endif
+        endif
 
-! full anisotropy
-  if(anisotropic(ispec)) then
-     if(assign_external_model) then
-        c11 = c11ext(i,j,ispec)
-        c15 = c15ext(i,j,ispec)
-        c13 = c13ext(i,j,ispec)
-        c33 = c33ext(i,j,ispec)
-        c35 = c35ext(i,j,ispec)
-        c55 = c55ext(i,j,ispec)
-     else
-        c11 = anisotropy(1,kmato(ispec))
-        c13 = anisotropy(2,kmato(ispec))
-        c15 = anisotropy(3,kmato(ispec))
-        c33 = anisotropy(4,kmato(ispec))
-        c35 = anisotropy(5,kmato(ispec))
-        c55 = anisotropy(6,kmato(ispec))
-     endif
+        ! full anisotropy
+        if(anisotropic(ispec)) then
+          if(assign_external_model) then
+            c11 = c11ext(i,j,ispec)
+            c15 = c15ext(i,j,ispec)
+            c13 = c13ext(i,j,ispec)
+            c33 = c33ext(i,j,ispec)
+            c35 = c35ext(i,j,ispec)
+            c55 = c55ext(i,j,ispec)
+          else
+            c11 = anisotropy(1,kmato(ispec))
+            c13 = anisotropy(2,kmato(ispec))
+            c15 = anisotropy(3,kmato(ispec))
+            c33 = anisotropy(4,kmato(ispec))
+            c35 = anisotropy(5,kmato(ispec))
+            c55 = anisotropy(6,kmato(ispec))
+          endif
 
-! implement anisotropy in 2D
-     sigma_xx = c11*dux_dxl + c15*(duz_dxl + dux_dzl) + c13*duz_dzl
-     sigma_zz = c13*dux_dxl + c35*(duz_dxl + dux_dzl) + c33*duz_dzl
+          duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
+          dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
 
-  endif
+          ! implement anisotropy in 2D
+          sigma_xx = c11*dux_dxl + c15*(duz_dxl + dux_dzl) + c13*duz_dzl
+          sigma_zz = c13*dux_dxl + c35*(duz_dxl + dux_dzl) + c33*duz_dzl
 
-! store pressure
+        endif
+
+        ! store pressure
         pressure_element(i,j) = - (sigma_xx + sigma_zz) / 2.d0
 
       enddo
@@ -332,36 +338,40 @@
 
   elseif(poroelastic(ispec)) then
 
-! get poroelastic parameters of current spectral element
+    lambdal_relaxed = elastcoef(1,1,kmato(ispec))
+    mul_relaxed = elastcoef(2,1,kmato(ispec))
+
+    ! get poroelastic parameters of current spectral element
     phil = porosity(kmato(ispec))
     tortl = tortuosity(kmato(ispec))
-!solid properties
+    !solid properties
     mul_s = elastcoef(2,1,kmato(ispec))
     kappal_s = elastcoef(3,1,kmato(ispec)) - FOUR_THIRDS*mul_s
     rhol_s = density(1,kmato(ispec))
-!fluid properties
+    !fluid properties
     kappal_f = elastcoef(1,2,kmato(ispec))
     rhol_f = density(2,kmato(ispec))
-!frame properties
+    !frame properties
     mul_fr = elastcoef(2,3,kmato(ispec))
     kappal_fr = elastcoef(3,3,kmato(ispec)) - FOUR_THIRDS*mul_fr
     rhol_bar =  (1.d0 - phil)*rhol_s + phil*rhol_f
-!Biot coefficients for the input phi
-      D_biot = kappal_s*(1.d0 + phil*(kappal_s/kappal_f - 1.d0))
-      H_biot = (kappal_s - kappal_fr)*(kappal_s - kappal_fr)/(D_biot - kappal_fr) + kappal_fr + FOUR_THIRDS*mul_fr
-      C_biot = kappal_s*(kappal_s - kappal_fr)/(D_biot - kappal_fr)
-      M_biot = kappal_s*kappal_s/(D_biot - kappal_fr)
-!where T = G:grad u_s + C div w I
-!and T_f = C div u_s I + M div w I
-!we are expressing lambdaplus2mu, lambda, and mu for G, C, and M
-      mul_G = mul_fr
-      lambdal_G = H_biot - TWO*mul_fr
-      lambdalplus2mul_G = lambdal_G + TWO*mul_G
+    !Biot coefficients for the input phi
+    D_biot = kappal_s*(1.d0 + phil*(kappal_s/kappal_f - 1.d0))
+    H_biot = (kappal_s - kappal_fr)*(kappal_s - kappal_fr)/(D_biot - kappal_fr) &
+            + kappal_fr + FOUR_THIRDS*mul_fr
+    C_biot = kappal_s*(kappal_s - kappal_fr)/(D_biot - kappal_fr)
+    M_biot = kappal_s*kappal_s/(D_biot - kappal_fr)
+    !where T = G:grad u_s + C div w I
+    !and T_f = C div u_s I + M div w I
+    !we are expressing lambdaplus2mu, lambda, and mu for G, C, and M
+    mul_G = mul_fr
+    lambdal_G = H_biot - TWO*mul_fr
+    lambdalplus2mul_G = lambdal_G + TWO*mul_G
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
 
-! derivative along x and along z
+        ! derivative along x and along z
         dux_dxi = ZERO
         duz_dxi = ZERO
 
@@ -374,8 +384,8 @@
         dwx_dgamma = ZERO
         dwz_dgamma = ZERO
 
-! first double loop over GLL points to compute and store gradients
-! we can merge the two loops because NGLLX == NGLLZ
+        ! first double loop over GLL points to compute and store gradients
+        ! we can merge the two loops because NGLLX == NGLLZ
         do k = 1,NGLLX
           dux_dxi = dux_dxi + displs_poroelastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
           duz_dxi = duz_dxi + displs_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
@@ -394,7 +404,7 @@
         gammaxl = gammax(i,j,ispec)
         gammazl = gammaz(i,j,ispec)
 
-! derivatives of displacement
+        ! derivatives of displacement
         dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
         duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
@@ -403,7 +413,7 @@
 
 ! compute diagonal components of the stress tensor (include attenuation if needed)
 
-  if(TURN_ATTENUATION_ON) then
+        if(TURN_ATTENUATION_ON) then
 !-------------------- ATTENTION TO BE DEFINED ------------------------------!
 
 ! attenuation is implemented following the memory variable formulation of
@@ -412,39 +422,42 @@
 ! J. M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation in a linear
 ! viscoelastic medium, Geophysical Journal International, vol. 95, p. 597-611 (1988).
 
-! compute unrelaxed elastic coefficients from formulas in Carcione 1993 page 111
-    lambdal_unrelaxed = (lambdal_relaxed + mul_relaxed) * Mu_nu1(i,j,ispec) - mul_relaxed * Mu_nu2(i,j,ispec)
-    mul_unrelaxed = mul_relaxed * Mu_nu2(i,j,ispec)
-    lambdalplus2mul_unrelaxed = lambdal_unrelaxed + TWO*mul_unrelaxed
+          ! compute unrelaxed elastic coefficients from formulas in Carcione 1993 page 111
+          lambdal_unrelaxed = (lambdal_relaxed + mul_relaxed) * Mu_nu1(i,j,ispec) &
+                            - mul_relaxed * Mu_nu2(i,j,ispec)
+          mul_unrelaxed = mul_relaxed * Mu_nu2(i,j,ispec)
+          lambdalplus2mul_unrelaxed = lambdal_unrelaxed + TWO*mul_unrelaxed
 
-! compute the stress using the unrelaxed Lame parameters (Carcione 1993, page 111)
-    sigma_xx = lambdalplus2mul_unrelaxed*dux_dxl + lambdal_unrelaxed*duz_dzl
-    sigma_zz = lambdalplus2mul_unrelaxed*duz_dzl + lambdal_unrelaxed*dux_dxl
+          ! compute the stress using the unrelaxed Lame parameters (Carcione 1993, page 111)
+          sigma_xx = lambdalplus2mul_unrelaxed*dux_dxl + lambdal_unrelaxed*duz_dzl
+          sigma_zz = lambdalplus2mul_unrelaxed*duz_dzl + lambdal_unrelaxed*dux_dxl
 
-! add the memory variables using the relaxed parameters (Carcione 1993, page 111)
-! beware: there is a bug in Carcione's equation (2c) for sigma_zz, we fixed it in the code below
-    e1_sum = 0._CUSTOM_REAL
-    e11_sum = 0._CUSTOM_REAL
+          ! add the memory variables using the relaxed parameters (Carcione 1993, page 111)
+          ! beware: there is a bug in Carcione's equation (2c) for sigma_zz, we fixed it in the code below
+          e1_sum = 0._CUSTOM_REAL
+          e11_sum = 0._CUSTOM_REAL
 
-    do i_sls = 1,N_SLS
-      e1_sum = e1_sum + e1(i,j,ispec,i_sls)
-      e11_sum = e11_sum + e11(i,j,ispec,i_sls)
-    enddo
+          do i_sls = 1,N_SLS
+            e1_sum = e1_sum + e1(i,j,ispec,i_sls)
+            e11_sum = e11_sum + e11(i,j,ispec,i_sls)
+          enddo
 
-    sigma_xx = sigma_xx + (lambdal_relaxed + mul_relaxed) * e1_sum + TWO * mul_relaxed * e11_sum
-    sigma_zz = sigma_zz + (lambdal_relaxed + mul_relaxed) * e1_sum - TWO * mul_relaxed * e11_sum
+          sigma_xx = sigma_xx + (lambdal_relaxed + mul_relaxed) * e1_sum &
+                    + TWO * mul_relaxed * e11_sum
+          sigma_zz = sigma_zz + (lambdal_relaxed + mul_relaxed) * e1_sum &
+                    - TWO * mul_relaxed * e11_sum
 
-  else
+        else
 
-! no attenuation
-    sigma_xx = lambdalplus2mul_G*dux_dxl + lambdal_G*duz_dzl + C_biot*(dwx_dxl + dwz_dzl)
-    sigma_zz = lambdalplus2mul_G*duz_dzl + lambdal_G*dux_dxl + C_biot*(dwx_dxl + dwz_dzl)
+          ! no attenuation
+          sigma_xx = lambdalplus2mul_G*dux_dxl + lambdal_G*duz_dzl + C_biot*(dwx_dxl + dwz_dzl)
+          sigma_zz = lambdalplus2mul_G*duz_dzl + lambdal_G*dux_dxl + C_biot*(dwx_dxl + dwz_dzl)
 
-    sigmap = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl + dwz_dzl)
+          sigmap = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl + dwz_dzl)
 
-  endif
+        endif
 
-! store pressure
+        ! store pressure
         pressure_element(i,j) = - (sigma_xx + sigma_zz) / 2.d0
 !        pressure_element2(i,j) = - sigmap
       enddo
@@ -458,7 +471,7 @@
 
         iglob = ibool(i,j,ispec)
 
-! store pressure
+        ! store pressure
         pressure_element(i,j) = - potential_dot_dot_acoustic(iglob)
 
       enddo

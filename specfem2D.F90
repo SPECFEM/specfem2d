@@ -919,25 +919,33 @@
 !-------------------------------------------------------------------------------
 !----  determine if each spectral element is elastic, poroelastic, or acoustic
 !-------------------------------------------------------------------------------
+  ! initializes
   any_acoustic = .false.
   any_elastic = .false.
   any_poroelastic = .false.
-  all_anisotropic = .false.
+  
   anisotropic(:) = .false.
+  elastic(:) = .false.
+  poroelastic(:) = .false.
+
+  ! loops over all elements
   do ispec = 1,nspec
 
-    if(porosity(kmato(ispec)) == 1.d0) then  ! acoustic domain
+    if( nint(porosity(kmato(ispec))) == 1 ) then  
+      ! acoustic domain
       elastic(ispec) = .false.
       poroelastic(ispec) = .false.
       any_acoustic = .true.
-    elseif(porosity(kmato(ispec)) < TINYVAL) then  ! elastic domain
+    elseif( porosity(kmato(ispec)) < TINYVAL) then  
+      ! elastic domain
       elastic(ispec) = .true.
       poroelastic(ispec) = .false.
       any_elastic = .true.
       if(any(anisotropy(:,kmato(ispec)) /= 0)) then
          anisotropic(ispec) = .true.
       end if
-    else                                       ! poroelastic domain
+    else                                       
+      ! poroelastic domain
       elastic(ispec) = .false.
       poroelastic(ispec) = .true.
       any_poroelastic = .true.
@@ -1093,38 +1101,42 @@
   call read_databases_absorbing(myrank,ipass,nelemabs,nspec,anyabs, &
                             ibegin_bottom,iend_bottom,jbegin_right,jend_right, &
                             ibegin_top,iend_top,jbegin_left,jend_left, &
-                            numabs,codeabs,perm,antecedent_list)
+                            numabs,codeabs,perm,antecedent_list, &
+                            nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax, &
+                            ib_right,ib_left,ib_bottom,ib_top)
+
   
   if( anyabs ) then
 
-    nspec_xmin = 0
-    nspec_xmax = 0
-    nspec_zmin = 0
-    nspec_zmax = 0
+!    nspec_xmin = 0
+!    nspec_xmax = 0
+!    nspec_zmin = 0
+!    nspec_zmax = 0
 !    if(ipass == 1) then
 !      allocate(ib_left(nelemabs))
 !      allocate(ib_right(nelemabs))
 !      allocate(ib_bottom(nelemabs))
 !      allocate(ib_top(nelemabs))
 !    endif
-    do inum = 1,nelemabs
-      if (codeabs(IBOTTOM,inum)) then
-        nspec_zmin = nspec_zmin + 1
-        ib_bottom(inum) =  nspec_zmin
-      endif
-      if (codeabs(IRIGHT,inum)) then
-        nspec_xmax = nspec_xmax + 1
-        ib_right(inum) =  nspec_xmax
-      endif
-      if (codeabs(ITOP,inum)) then
-        nspec_zmax = nspec_zmax + 1
-        ib_top(inum) = nspec_zmax
-      endif
-      if (codeabs(ILEFT,inum)) then
-        nspec_xmin = nspec_xmin + 1
-        ib_left(inum) =  nspec_xmin
-      endif
-    enddo
+    
+!    do inum = 1,nelemabs
+!      if (codeabs(IBOTTOM,inum)) then
+!        nspec_zmin = nspec_zmin + 1
+!        ib_bottom(inum) =  nspec_zmin
+!      endif
+!      if (codeabs(IRIGHT,inum)) then
+!        nspec_xmax = nspec_xmax + 1
+!        ib_right(inum) =  nspec_xmax
+!      endif
+!      if (codeabs(ITOP,inum)) then
+!        nspec_zmax = nspec_zmax + 1
+!        ib_top(inum) = nspec_zmax
+!      endif
+!      if (codeabs(ILEFT,inum)) then
+!        nspec_xmin = nspec_xmin + 1
+!        ib_left(inum) =  nspec_xmin
+!      endif
+!    enddo
 
 ! Files to save absorbed waves needed to reconstruct backward wavefield for adjoint method
     if(ipass == 1) then
@@ -1171,13 +1183,13 @@
       endif
     endif
 
-    if (myrank == 0 ) then
-      write(IOUT,*)
-      write(IOUT,*) 'nspec_xmin = ',nspec_xmin
-      write(IOUT,*) 'nspec_xmax = ',nspec_xmax
-      write(IOUT,*) 'nspec_zmin = ',nspec_zmin
-      write(IOUT,*) 'nspec_zmax = ',nspec_zmax
-    endif
+!    if (myrank == 0 ) then
+!      write(IOUT,*)
+!      write(IOUT,*) 'nspec_xmin = ',nspec_xmin
+!      write(IOUT,*) 'nspec_xmax = ',nspec_xmax
+!      write(IOUT,*) 'nspec_zmin = ',nspec_zmin
+!      write(IOUT,*) 'nspec_zmax = ',nspec_zmax
+!    endif
     
   else
 
@@ -1803,32 +1815,39 @@ print *
                 c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,READ_EXTERNAL_SEP_FILE)
   end if
 
-  if(count(anisotropic(:) .eqv. .true.) == nspec) all_anisotropic = .true.
-  if(all_anisotropic .and. anyabs) &
-    stop 'Cannot put absorbing boundaries if anisotropic materials along edges'
-  if(TURN_ATTENUATION_ON .and. all_anisotropic) then
-    stop 'Cannot turn attenuation on in anisotropic materials'
-  end if
-
 !
 !----  perform basic checks on parameters read
 !
+  all_anisotropic = .false.
+  if(count(anisotropic(:) .eqv. .true.) == nspec) all_anisotropic = .true.
+  
+  if(all_anisotropic .and. anyabs) &
+    call exit_MPI('Cannot put absorbing boundaries if anisotropic materials along edges')
+    
+  if(TURN_ATTENUATION_ON .and. all_anisotropic) then
+    call exit_MPI('Cannot turn attenuation on in anisotropic materials')
+  end if
+
+  ! global domain flags
   any_elastic_glob = any_elastic
 #ifdef USE_MPI
-  call MPI_ALLREDUCE(any_elastic, any_elastic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE(any_elastic, any_elastic_glob, 1, MPI_LOGICAL, &
+                    MPI_LOR, MPI_COMM_WORLD, ier)
 #endif
 
   any_poroelastic_glob = any_poroelastic
 #ifdef USE_MPI
-  call MPI_ALLREDUCE(any_poroelastic, any_poroelastic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE(any_poroelastic, any_poroelastic_glob, 1, MPI_LOGICAL, &
+                    MPI_LOR, MPI_COMM_WORLD, ier)
 #endif
 
   any_acoustic_glob = any_acoustic
 #ifdef USE_MPI
-  call MPI_ALLREDUCE(any_acoustic, any_acoustic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE(any_acoustic, any_acoustic_glob, 1, MPI_LOGICAL, &
+                    MPI_LOR, MPI_COMM_WORLD, ier)
 #endif
 
-! for acoustic
+  ! for acoustic
   if(TURN_ATTENUATION_ON .and. .not. any_elastic_glob) &
     call exit_MPI('currently cannot have attenuation if acoustic/poroelastic simulation only')
 
@@ -2420,16 +2439,24 @@ print *
 
 #ifdef USE_MPI
   if ( nproc > 1 ) then
-! preparing for MPI communications
+
+    ! preparing for MPI communications
     if(ipass == 1) allocate(mask_ispec_inner_outer(nspec))
     mask_ispec_inner_outer(:) = .false.
 
-    call prepare_assemble_MPI (nspec,ibool,knods,ngnod,npoin,elastic,poroelastic, &
-          ninterface, max_interface_size,my_nelmnts_neighbours, my_interfaces, &
-          ibool_interfaces_acoustic, ibool_interfaces_elastic, ibool_interfaces_poroelastic, &
-          nibool_interfaces_acoustic, nibool_interfaces_elastic, nibool_interfaces_poroelastic, &
-          inum_interfaces_acoustic, inum_interfaces_elastic, inum_interfaces_poroelastic, &
-          ninterface_acoustic, ninterface_elastic, ninterface_poroelastic,mask_ispec_inner_outer)
+    call get_MPI(nspec,ibool,knods,ngnod,npoin,elastic,poroelastic, &
+                    ninterface, max_interface_size, &
+                    my_nelmnts_neighbours,my_interfaces,my_neighbours, &
+                    ibool_interfaces_acoustic, ibool_interfaces_elastic, &
+                    ibool_interfaces_poroelastic, &
+                    nibool_interfaces_acoustic, nibool_interfaces_elastic, &
+                    nibool_interfaces_poroelastic, &
+                    inum_interfaces_acoustic, inum_interfaces_elastic, &
+                    inum_interfaces_poroelastic, &
+                    ninterface_acoustic, ninterface_elastic, ninterface_poroelastic, &
+                    mask_ispec_inner_outer, &
+                    myrank,ipass,coord)
+
 
     nspec_outer = count(mask_ispec_inner_outer)
     nspec_inner = nspec - nspec_outer
@@ -2439,7 +2466,7 @@ print *
       allocate(ispec_inner_to_glob(nspec_inner))
     endif
 
-! building of corresponding arrays between inner/outer elements and their global number
+    ! building of corresponding arrays between inner/outer elements and their global number
     if(ipass == 1) then
       num_ispec_outer = 0
       num_ispec_inner = 0
@@ -2454,6 +2481,7 @@ print *
       enddo
     endif
 
+    ! buffers for MPI communications
     max_ibool_interfaces_size_ac = maxval(nibool_interfaces_acoustic(:))
     max_ibool_interfaces_size_el = 3*maxval(nibool_interfaces_elastic(:))
     max_ibool_interfaces_size_po = NDIM*maxval(nibool_interfaces_poroelastic(:))
@@ -2472,12 +2500,17 @@ print *
     endif
 
 ! assembling the mass matrix
-    call assemble_MPI_scalar(rmass_inverse_acoustic,rmass_inverse_elastic,rmass_s_inverse_poroelastic, &
-       rmass_w_inverse_poroelastic,npoin, &
-       ninterface, max_interface_size, max_ibool_interfaces_size_ac, max_ibool_interfaces_size_el, &
-       max_ibool_interfaces_size_po, &
-       ibool_interfaces_acoustic,ibool_interfaces_elastic,ibool_interfaces_poroelastic, &
-       nibool_interfaces_acoustic,nibool_interfaces_elastic,nibool_interfaces_poroelastic,my_neighbours)
+    call assemble_MPI_scalar(rmass_inverse_acoustic, &
+                            rmass_inverse_elastic, &
+                            rmass_s_inverse_poroelastic, &
+                            rmass_w_inverse_poroelastic,npoin, &
+                            ninterface, max_interface_size, max_ibool_interfaces_size_ac, &
+                            max_ibool_interfaces_size_el, &
+                            max_ibool_interfaces_size_po, &
+                            ibool_interfaces_acoustic,ibool_interfaces_elastic, &
+                            ibool_interfaces_poroelastic, &
+                            nibool_interfaces_acoustic,nibool_interfaces_elastic, &
+                            nibool_interfaces_poroelastic,my_neighbours)
 
   else
     ninterface_acoustic = 0
@@ -3893,104 +3926,119 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
 ! update displacement using finite-difference time scheme (Newmark)
     if(any_elastic) then
-      displ_elastic = displ_elastic + deltat*veloc_elastic + deltatsquareover2*accel_elastic
+      displ_elastic = displ_elastic &
+                    + deltat*veloc_elastic &
+                    + deltatsquareover2*accel_elastic
       veloc_elastic = veloc_elastic + deltatover2*accel_elastic
       accel_elastic = ZERO
 
-     if(SIMULATION_TYPE == 2) then ! Adjoint calculation
-      b_displ_elastic = b_displ_elastic + b_deltat*b_veloc_elastic + b_deltatsquareover2*b_accel_elastic
-      b_veloc_elastic = b_veloc_elastic + b_deltatover2*b_accel_elastic
-      b_accel_elastic = ZERO
-     endif
+      if(SIMULATION_TYPE == 2) then ! Adjoint calculation
+        b_displ_elastic = b_displ_elastic &
+                        + b_deltat*b_veloc_elastic &
+                        + b_deltatsquareover2*b_accel_elastic
+        b_veloc_elastic = b_veloc_elastic + b_deltatover2*b_accel_elastic
+        b_accel_elastic = ZERO
+      endif
     endif
 
     if(any_poroelastic) then
-!for the solid
-      displs_poroelastic = displs_poroelastic + deltat*velocs_poroelastic + deltatsquareover2*accels_poroelastic
+      !for the solid
+      displs_poroelastic = displs_poroelastic &
+                         + deltat*velocs_poroelastic &
+                         + deltatsquareover2*accels_poroelastic
       velocs_poroelastic = velocs_poroelastic + deltatover2*accels_poroelastic
       accels_poroelastic = ZERO
-!for the fluid
-      displw_poroelastic = displw_poroelastic + deltat*velocw_poroelastic + deltatsquareover2*accelw_poroelastic
+      !for the fluid
+      displw_poroelastic = displw_poroelastic &
+                         + deltat*velocw_poroelastic &
+                         + deltatsquareover2*accelw_poroelastic
       velocw_poroelastic = velocw_poroelastic + deltatover2*accelw_poroelastic
       accelw_poroelastic = ZERO
 
-     if(SIMULATION_TYPE == 2) then ! Adjoint calculation
-!for the solid
-      b_displs_poroelastic = b_displs_poroelastic + b_deltat*b_velocs_poroelastic + b_deltatsquareover2*b_accels_poroelastic
-      b_velocs_poroelastic = b_velocs_poroelastic + b_deltatover2*b_accels_poroelastic
-      b_accels_poroelastic = ZERO
-!for the fluid
-      b_displw_poroelastic = b_displw_poroelastic + b_deltat*b_velocw_poroelastic + b_deltatsquareover2*b_accelw_poroelastic
-      b_velocw_poroelastic = b_velocw_poroelastic + b_deltatover2*b_accelw_poroelastic
-      b_accelw_poroelastic = ZERO
-     endif
+      if(SIMULATION_TYPE == 2) then ! Adjoint calculation
+        !for the solid
+        b_displs_poroelastic = b_displs_poroelastic &
+                             + b_deltat*b_velocs_poroelastic &
+                             + b_deltatsquareover2*b_accels_poroelastic
+        b_velocs_poroelastic = b_velocs_poroelastic + b_deltatover2*b_accels_poroelastic
+        b_accels_poroelastic = ZERO
+        !for the fluid
+        b_displw_poroelastic = b_displw_poroelastic &
+                             + b_deltat*b_velocw_poroelastic &
+                             + b_deltatsquareover2*b_accelw_poroelastic
+        b_velocw_poroelastic = b_velocw_poroelastic + b_deltatover2*b_accelw_poroelastic
+        b_accelw_poroelastic = ZERO
+      endif
     endif
 
 !--------------------------------------------------------------------------------------------
 ! implement viscous attenuation for poroelastic media
 !
-  if(TURN_VISCATTENUATION_ON .and. any_poroelastic) then
+    if(TURN_VISCATTENUATION_ON .and. any_poroelastic) then
 ! update memory variables with fourth-order Runge-Kutta time scheme for attenuation
 ! loop over spectral elements
 
-  do ispec = 1,nspec
+      do ispec = 1,nspec
 
-    etal_f = poroelastcoef(2,2,kmato(ispec))
-    permlxx = permeability(1,kmato(ispec))
-    permlxz = permeability(2,kmato(ispec))
-    permlzz = permeability(3,kmato(ispec))
+        etal_f = poroelastcoef(2,2,kmato(ispec))
+        permlxx = permeability(1,kmato(ispec))
+        permlxz = permeability(2,kmato(ispec))
+        permlzz = permeability(3,kmato(ispec))
 
- ! calcul of the inverse of k
+        ! calcul of the inverse of k
 
-    detk = permlxx*permlzz - permlxz*permlxz
+        detk = permlxx*permlzz - permlxz*permlxz
 
-    if(detk /= ZERO) then
-     invpermlxx = permlzz/detk
-     invpermlxz = -permlxz/detk
-     invpermlzz = permlxx/detk
-    else
-      stop 'Permeability matrix is not invertible'
-    endif
+        if(detk /= ZERO) then
+          invpermlxx = permlzz/detk
+          invpermlxz = -permlxz/detk
+          invpermlzz = permlxx/detk
+        else
+          stop 'Permeability matrix is not invertible'
+        endif
 
-! relaxed viscous coef
-          bl_relaxed(1) = etal_f*invpermlxx
-          bl_relaxed(2) = etal_f*invpermlxz
-          bl_relaxed(3) = etal_f*invpermlzz
+        ! relaxed viscous coef
+        bl_relaxed(1) = etal_f*invpermlxx
+        bl_relaxed(2) = etal_f*invpermlxz
+        bl_relaxed(3) = etal_f*invpermlzz
 
-  do j=1,NGLLZ
-  do i=1,NGLLX
+        do j=1,NGLLZ
+          do i=1,NGLLX
 
-    iglob = ibool(i,j,ispec)
+            iglob = ibool(i,j,ispec)
 
-   viscox_loc(i,j) = velocw_poroelastic(1,iglob)*bl_relaxed(1) + &
+            viscox_loc(i,j) = velocw_poroelastic(1,iglob)*bl_relaxed(1) + &
                                velocw_poroelastic(2,iglob)*bl_relaxed(2)
-   viscoz_loc(i,j) = velocw_poroelastic(1,iglob)*bl_relaxed(2) + &
+            viscoz_loc(i,j) = velocw_poroelastic(1,iglob)*bl_relaxed(2) + &
                                velocw_poroelastic(2,iglob)*bl_relaxed(3)
 
-! evolution rx_viscous
-  Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
-  Snp1 = - (1.d0 - theta_e/theta_s)/theta_s*viscox_loc(i,j)
-  rx_viscous(i,j,ispec) = alphaval * rx_viscous(i,j,ispec) + betaval * Sn + gammaval * Snp1
+            ! evolution rx_viscous
+            Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
+            Snp1 = - (1.d0 - theta_e/theta_s)/theta_s*viscox_loc(i,j)
+            rx_viscous(i,j,ispec) = alphaval * rx_viscous(i,j,ispec) &
+                                  + betaval * Sn + gammaval * Snp1
 
-! evolution rz_viscous
-  Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
-  Snp1 = - (1.d0 - theta_e/theta_s)/theta_s*viscoz_loc(i,j)
-  rz_viscous(i,j,ispec) = alphaval * rz_viscous(i,j,ispec) + betaval * Sn + gammaval * Snp1
+            ! evolution rz_viscous
+            Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
+            Snp1 = - (1.d0 - theta_e/theta_s)/theta_s*viscoz_loc(i,j)
+            rz_viscous(i,j,ispec) = alphaval * rz_viscous(i,j,ispec) &
+                                  + betaval * Sn + gammaval * Snp1
 
 
-  enddo
-  enddo
+          enddo
+        enddo
 
-! save visco for Runge-Kutta scheme
-     viscox(:,:,ispec) = viscox_loc(:,:)
-     viscoz(:,:,ispec) = viscoz_loc(:,:)
+        ! save visco for Runge-Kutta scheme
+        viscox(:,:,ispec) = viscox_loc(:,:)
+        viscoz(:,:,ispec) = viscoz_loc(:,:)
 
-  enddo   ! end of spectral element loop
-  endif ! end of viscous attenuation for porous media
+      enddo   ! end of spectral element loop
+    endif ! end of viscous attenuation for porous media
 
 !-----------------------------------------
     if(any_acoustic) then
 
+      ! Newmark time scheme
       potential_acoustic = potential_acoustic &
                           + deltat*potential_dot_acoustic &
                           + deltatsquareover2*potential_dot_dot_acoustic
@@ -4007,7 +4055,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
         b_potential_dot_dot_acoustic = ZERO
       endif
 
-! free surface for an acoustic medium
+      ! free surface for an acoustic medium
       if ( nelem_acoustic_surface > 0 ) then
         call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
                                           potential_acoustic,acoustic_surface, &
@@ -4069,10 +4117,9 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
       endif
 
 
-
+      ! stores absorbing boundary contributions into files
       if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
-
-!--- left absorbing boundary
+        !--- left absorbing boundary
         if(nspec_xmin >0) then
           do ispec = 1,nspec_xmin
             do i=1,NGLLZ
@@ -4080,43 +4127,39 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
             enddo
           enddo
         endif
+        !--- right absorbing boundary
+        if(nspec_xmax >0) then
+          do ispec = 1,nspec_xmax
+            do i=1,NGLLZ
+              write(66) b_absorb_acoustic_right(i,ispec,it)
+            enddo
+          enddo
+        endif
+        !--- bottom absorbing boundary
+        if(nspec_zmin >0) then
+          do ispec = 1,nspec_zmin
+            do i=1,NGLLX
+              write(67) b_absorb_acoustic_bottom(i,ispec,it)
+            enddo
+          enddo
+        endif
+        !--- top absorbing boundary
+        if(nspec_zmax >0) then
+          do ispec = 1,nspec_zmax
+            do i=1,NGLLX
+              write(68) b_absorb_acoustic_top(i,ispec,it)
+            enddo
+          enddo
+        endif
+      endif ! if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)
 
-!--- right absorbing boundary
-      if(nspec_xmax >0) then
-      do ispec = 1,nspec_xmax
-         do i=1,NGLLZ
-     write(66) b_absorb_acoustic_right(i,ispec,it)
-         enddo
-      enddo
-      endif
-
-!--- bottom absorbing boundary
-      if(nspec_zmin >0) then
-      do ispec = 1,nspec_zmin
-         do i=1,NGLLX
-     write(67) b_absorb_acoustic_bottom(i,ispec,it)
-         enddo
-      enddo
-      endif
-
-!--- top absorbing boundary
-      if(nspec_zmax >0) then
-      do ispec = 1,nspec_zmax
-         do i=1,NGLLX
-     write(68) b_absorb_acoustic_top(i,ispec,it)
-         enddo
-      enddo
-      endif
-
-    endif ! if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)
-
- endif ! end of test if any acoustic element
+    endif ! end of test if any acoustic element
 
 ! *********************************************************
 ! ************* add coupling with the elastic side
 ! *********************************************************
 
-  if(coupled_acoustic_elastic) then
+    if(coupled_acoustic_elastic) then
 
 ! loop on all the coupling edges
       do inum = 1,num_fluid_solid_edges
@@ -4141,8 +4184,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           displ_z = displ_elastic(3,iglob)
 
           if(SIMULATION_TYPE == 2) then
-          b_displ_x = b_displ_elastic(1,iglob)
-          b_displ_z = b_displ_elastic(3,iglob)
+            b_displ_x = b_displ_elastic(1,iglob)
+            b_displ_z = b_displ_elastic(3,iglob)
           endif
 
 ! get point values for the acoustic side
@@ -4161,28 +4204,28 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = - zxi / jacobian1D
             nz = + xxi / jacobian1D
-          weight = jacobian1D * wxgll(i)
+            weight = jacobian1D * wxgll(i)
           elseif(iedge_acoustic == IBOTTOM)then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = + zxi / jacobian1D
             nz = - xxi / jacobian1D
-          weight = jacobian1D * wxgll(i)
+            weight = jacobian1D * wxgll(i)
           elseif(iedge_acoustic ==ILEFT)then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = - zgamma / jacobian1D
             nz = + xgamma / jacobian1D
-          weight = jacobian1D * wzgll(j)
+            weight = jacobian1D * wzgll(j)
           elseif(iedge_acoustic ==IRIGHT)then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = + zgamma / jacobian1D
             nz = - xgamma / jacobian1D
-          weight = jacobian1D * wzgll(j)
+            weight = jacobian1D * wzgll(j)
           endif
 
 ! compute dot product
@@ -4199,7 +4242,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
       enddo
 
-   endif
+    endif
 
 ! *********************************************************
 ! ************* add coupling with the poroelastic side
@@ -4234,11 +4277,11 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           displw_z = displw_poroelastic(2,iglob)
 
           if(SIMULATION_TYPE == 2) then
-          b_displ_x = b_displs_poroelastic(1,iglob)
-          b_displ_z = b_displs_poroelastic(2,iglob)
+            b_displ_x = b_displs_poroelastic(1,iglob)
+            b_displ_z = b_displs_poroelastic(2,iglob)
 
-          b_displw_x = b_displw_poroelastic(1,iglob)
-          b_displw_z = b_displw_poroelastic(2,iglob)
+            b_displw_x = b_displw_poroelastic(1,iglob)
+            b_displw_z = b_displw_poroelastic(2,iglob)
           endif
 
 ! get point values for the acoustic side
@@ -4258,28 +4301,28 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = - zxi / jacobian1D
             nz = + xxi / jacobian1D
-          weight = jacobian1D * wxgll(i)
+            weight = jacobian1D * wxgll(i)
           elseif(iedge_acoustic == IBOTTOM)then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = + zxi / jacobian1D
             nz = - xxi / jacobian1D
-          weight = jacobian1D * wxgll(i)
+            weight = jacobian1D * wxgll(i)
           elseif(iedge_acoustic ==ILEFT)then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = - zgamma / jacobian1D
             nz = + xgamma / jacobian1D
-          weight = jacobian1D * wzgll(j)
+            weight = jacobian1D * wzgll(j)
           elseif(iedge_acoustic ==IRIGHT)then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = + zgamma / jacobian1D
             nz = - xgamma / jacobian1D
-          weight = jacobian1D * wzgll(j)
+            weight = jacobian1D * wzgll(j)
           endif
 
 ! compute dot product [u_s + w]*n
@@ -4288,9 +4331,9 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
 
           if(SIMULATION_TYPE == 2) then
-          b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) +&
-                    weight*((b_displ_x + b_displw_x)*nx + (b_displ_z + b_displw_z)*nz)
-          endif !if(SIMULATION_TYPE == 2) then
+            b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) &
+                   + weight*((b_displ_x + b_displw_x)*nx + (b_displ_z + b_displw_z)*nz)
+          endif 
 
         enddo
 
@@ -4303,95 +4346,111 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! ************************************ add force source
 ! ************************************************************************************
 
-  if(any_acoustic) then
+    if(any_acoustic) then
 
 ! --- add the source
-    if(.not. initialfield) then
+      if(.not. initialfield) then
 
-    do i_source=1,NSOURCES
-! if this processor carries the source and the source element is acoustic
-      if (is_proc_source(i_source) == 1 .and. .not. elastic(ispec_selected_source(i_source)) .and. &
-        .not. poroelastic(ispec_selected_source(i_source))) then
+        do i_source=1,NSOURCES
+          ! if this processor carries the source and the source element is acoustic
+          if (is_proc_source(i_source) == 1 .and. &
+            .not. elastic(ispec_selected_source(i_source)) .and. &
+            .not. poroelastic(ispec_selected_source(i_source))) then
+            
 ! collocated force
 ! beware, for acoustic medium, source is: pressure divided by Kappa of the fluid
 ! the sign is negative because pressure p = - Chi_dot_dot therefore we need
 ! to add minus the source to Chi_dot_dot to get plus the source in pressure
-        if(source_type(i_source) == 1) then
+            if(source_type(i_source) == 1) then
 
-      if(SIMULATION_TYPE == 1) then  ! forward wavefield
-          do j = 1,NGLLZ
-           do i = 1,NGLLX
-             iglob = ibool(i,j,ispec_selected_source(i_source))
-             hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
-                 - source_time_function(i_source,it)*hlagrange
-           enddo
-          enddo
-      else                   ! backward wavefield
-          do j = 1,NGLLZ
-           do i = 1,NGLLX
-             iglob = ibool(i,j,ispec_selected_source(i_source))
-             hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-      b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) &
-                 - source_time_function(i_source,NSTEP-it+1)*hlagrange
-           enddo
-          enddo
-      endif
+              if(SIMULATION_TYPE == 1) then  
+                ! forward wavefield
+                do j = 1,NGLLZ
+                  do i = 1,NGLLX
+                    iglob = ibool(i,j,ispec_selected_source(i_source))
+                    hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+                    potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
+                                            - source_time_function(i_source,it)*hlagrange
+                  enddo
+                enddo
+              else                   
+                ! backward wavefield
+                do j = 1,NGLLZ
+                  do i = 1,NGLLX
+                    iglob = ibool(i,j,ispec_selected_source(i_source))
+                    hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+                    b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) &
+                                          - source_time_function(i_source,NSTEP-it+1)*hlagrange
+                  enddo
+                enddo
+              endif
 
-! moment tensor
-        else if(source_type(i_source) == 2) then
-          call exit_MPI('cannot have moment tensor source in acoustic element')
+            ! moment tensor
+            else if(source_type(i_source) == 2) then
+              call exit_MPI('cannot have moment tensor source in acoustic element')
 
-        endif
-      endif ! if this processor carries the source and the source element is acoustic
-    enddo ! do i_source=1,NSOURCES
+            endif
+          endif ! if this processor carries the source and the source element is acoustic
+        enddo ! do i_source=1,NSOURCES
 
-    if(SIMULATION_TYPE == 2) then   ! adjoint wavefield
-      irec_local = 0
-      do irec = 1,nrec
-!   add the source (only if this proc carries the source)
-      if (myrank == which_proc_receiver(irec)) then
+        if(SIMULATION_TYPE == 2) then   ! adjoint wavefield
+          irec_local = 0
+          do irec = 1,nrec
+            !   add the source (only if this proc carries the source)
+            if (myrank == which_proc_receiver(irec)) then
 
-      irec_local = irec_local + 1
-      if (.not. elastic(ispec_selected_rec(irec)) .and. &
-         .not. poroelastic(ispec_selected_rec(irec))) then
-! add source array
-      do j=1,NGLLZ
-        do i=1,NGLLX
-      iglob = ibool(i,j,ispec_selected_rec(irec))
-      potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
-          adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
-        enddo
-      enddo
-      endif ! if element acoustic
+              irec_local = irec_local + 1
+              if (.not. elastic(ispec_selected_rec(irec)) .and. &
+                 .not. poroelastic(ispec_selected_rec(irec))) then
+                ! add source array
+                do j=1,NGLLZ
+                  do i=1,NGLLX
+                    iglob = ibool(i,j,ispec_selected_rec(irec))
+                    potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
+                                  - adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
+                  enddo
+                enddo
+              endif ! if element acoustic
 
-      endif ! if this processor carries the adjoint source
-      enddo ! irec = 1,nrec
-    endif ! SIMULATION_TYPE == 2 adjoint wavefield
+            endif ! if this processor carries the adjoint source
+          enddo ! irec = 1,nrec
+        endif ! SIMULATION_TYPE == 2 adjoint wavefield
 
-    endif ! if not using an initial field
-  endif !if(any_acoustic)
+      endif ! if not using an initial field
+      
+    endif !if(any_acoustic)
 
 
 ! assembling potential_dot_dot for acoustic elements
 #ifdef USE_MPI
   if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
     call assemble_MPI_vector_ac(potential_dot_dot_acoustic,npoin, &
-           ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
-           max_interface_size, max_ibool_interfaces_size_ac,&
-           ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
-           tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac, &
-           buffer_recv_faces_vector_ac, my_neighbours)
+                    ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
+                    max_interface_size, max_ibool_interfaces_size_ac,&
+                    ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
+                    tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac, &
+                    buffer_recv_faces_vector_ac, my_neighbours)
+           
+    if ( SIMULATION_TYPE == 2) then
+      call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic,npoin, &
+                     ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
+                     max_interface_size, max_ibool_interfaces_size_ac,&
+                     ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
+                     tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac, &
+                     buffer_recv_faces_vector_ac, my_neighbours)
+          
+    endif
+           
   endif
 
-    if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0 .and. SIMULATION_TYPE == 2) then
-    call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic,npoin, &
-           ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
-           max_interface_size, max_ibool_interfaces_size_ac,&
-           ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
-           tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac, &
-           buffer_recv_faces_vector_ac, my_neighbours)
-  endif
+!  if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0 .and. SIMULATION_TYPE == 2) then
+!    call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic,npoin, &
+!           ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
+!           max_interface_size, max_ibool_interfaces_size_ac,&
+!           ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
+!           tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac, &
+!           buffer_recv_faces_vector_ac, my_neighbours)
+!  endif
 #endif
 
 ! ************************************************************************************

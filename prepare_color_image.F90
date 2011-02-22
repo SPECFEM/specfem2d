@@ -273,14 +273,16 @@
   double precision :: afactor,bfactor,cfactor,D_biot,H_biot,C_biot,&
     M_biot,B_biot,cpIsquare,cpIIsquare,cssquare
   double precision :: gamma1,gamma2,gamma3,gamma4,ratio
-  integer  :: i,j,ispec  
+  integer  :: i,j,k,ispec
 #ifdef USE_MPI
   double precision, dimension(:), allocatable  :: data_pixel_recv
   double precision, dimension(:), allocatable  :: data_pixel_send
   integer, dimension(:,:), allocatable  :: num_pixel_recv
   integer, dimension(:), allocatable  :: nb_pixel_per_proc
   integer, dimension(MPI_STATUS_SIZE)  :: request_mpi_status  
-  integer :: ier,k,iproc
+  integer :: ier,iproc
+#else
+  integer :: dummy    
 #endif
 
   ! to display the P-velocity model in background on color images
@@ -425,8 +427,10 @@
     deallocate(num_pixel_recv)
     deallocate(data_pixel_recv)
   endif
-
+#else
+  ! to avoid compiler warnings
+  dummy = myrank
+  dummy = nproc
 #endif
-  
-  
+    
   end subroutine prepare_color_image_vp
