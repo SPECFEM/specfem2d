@@ -413,9 +413,12 @@
   allocate(knods_read(ngnod))
   n = 0
   do ispec = 1,nspec
+    ! format: #element_id  #material_id #node_id1 #node_id2 #...
     read(IIN,*) n,kmato_read,(knods_read(k), k=1,ngnod)
     if(ipass == 1) then
+      ! material association 
       kmato(n) = kmato_read
+      ! element control node indices
       knods(:,n)= knods_read(:)
     else if(ipass == 2) then
       kmato(perm(antecedent_list(n))) = kmato_read
@@ -474,14 +477,25 @@
   integer :: num_interface,ie,my_interfaces_read
 
   ! initializes
-  my_neighbours(:) = 0
+  my_neighbours(:) = -1
   my_nelmnts_neighbours(:) = 0
-  my_interfaces(:,:,:) = 0
+  my_interfaces(:,:,:) = -1
 
   ! reads in interfaces
   do num_interface = 1, ninterface
+    ! format: #process_interface_id  #number_of_elements_on_interface
+    ! where
+    !     process_interface_id = rank of (neighbor) process to share MPI interface with
+    !     number_of_elements_on_interface = number of interface elements  
     read(IIN,*) my_neighbours(num_interface), my_nelmnts_neighbours(num_interface)
+    
+    ! loops over interface elements
     do ie = 1, my_nelmnts_neighbours(num_interface)
+      ! format: #(1)spectral_element_id  #(2)interface_type  #(3)node_id1  #(4)node_id2 
+      !
+      ! interface types:
+      !     1  -  corner point only
+      !     2  -  element edge
       read(IIN,*) my_interfaces_read, my_interfaces(2,ie,num_interface), &
               my_interfaces(3,ie,num_interface), my_interfaces(4,ie,num_interface)
 
@@ -506,7 +520,9 @@
   subroutine read_databases_absorbing(myrank,ipass,nelemabs,nspec,anyabs, &
                             ibegin_bottom,iend_bottom,jbegin_right,jend_right, &
                             ibegin_top,iend_top,jbegin_left,jend_left, &
-                            numabs,codeabs,perm,antecedent_list)
+                            numabs,codeabs,perm,antecedent_list, &
+                            nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax, &
+                            ib_right,ib_left,ib_bottom,ib_top)
 
 ! reads in absorbing edges
 
@@ -520,7 +536,10 @@
   logical, dimension(4,nelemabs) :: codeabs
   logical :: anyabs
   integer, dimension(nspec) :: perm,antecedent_list
+  integer :: nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax
 
+  integer, dimension(nelemabs) :: ib_right,ib_left,ib_bottom,ib_top
+  
   ! local parameters
   integer :: inum,numabsread
   logical :: codeabsread(4)
@@ -528,20 +547,33 @@
 
   ! initializes
   codeabs(:,:) = .false.
+
   ibegin_bottom(:) = 0
   iend_bottom(:) = 0
   ibegin_top(:) = 0
   iend_top(:) = 0
+
   jbegin_left(:) = 0
   jend_left(:) = 0
   jbegin_right(:) = 0
   jend_right(:) = 0
+
+  nspec_xmin = 0
+  nspec_xmax = 0
+  nspec_zmin = 0
+  nspec_zmax = 0
+
+  ib_right(:) = 0
+  ib_left(:) = 0
+  ib_bottom(:) = 0
+  ib_top(:) = 0
 
   ! reads in absorbing edges
   read(IIN,"(a80)") datlin
   
   ! reads in values
   if( anyabs ) then
+    ! reads absorbing boundaries
     do inum = 1,nelemabs
       read(IIN,*) numabsread,codeabsread(1),codeabsread(2),codeabsread(3),&
                   codeabsread(4), ibegin_bottom(inum), iend_bottom(inum), &
@@ -565,9 +597,34 @@
       codeabs(ILEFT,inum) = codeabsread(4)
     enddo
 
+    ! boundary element numbering
+    do inum = 1,nelemabs
+      if (codeabs(IBOTTOM,inum)) then
+        nspec_zmin = nspec_zmin + 1
+        ib_bottom(inum) =  nspec_zmin
+      endif
+      if (codeabs(IRIGHT,inum)) then
+        nspec_xmax = nspec_xmax + 1
+        ib_right(inum) =  nspec_xmax
+      endif
+      if (codeabs(ITOP,inum)) then
+        nspec_zmax = nspec_zmax + 1
+        ib_top(inum) = nspec_zmax
+      endif
+      if (codeabs(ILEFT,inum)) then
+        nspec_xmin = nspec_xmin + 1
+        ib_left(inum) =  nspec_xmin
+      endif
+    enddo
+
     if (myrank == 0 .and. ipass == 1) then
       write(IOUT,*)
       write(IOUT,*) 'Number of absorbing elements: ',nelemabs
+      write(IOUT,*) '  nspec_xmin = ',nspec_xmin
+      write(IOUT,*) '  nspec_xmax = ',nspec_xmax
+      write(IOUT,*) '  nspec_zmin = ',nspec_zmin
+      write(IOUT,*) '  nspec_zmax = ',nspec_zmax
+      write(IOUT,*)      
     endif
 
   endif

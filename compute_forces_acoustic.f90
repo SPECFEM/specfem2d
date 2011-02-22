@@ -157,8 +157,8 @@
             dux_dgamma = dux_dgamma + potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
 
             if(SIMULATION_TYPE == 2) then
-            b_dux_dxi = b_dux_dxi + b_potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
-            b_dux_dgamma = b_dux_dgamma + b_potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
+              b_dux_dxi = b_dux_dxi + b_potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
+              b_dux_dgamma = b_dux_dgamma + b_potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
             endif
           enddo
 
@@ -172,24 +172,24 @@
           dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
 
           if(SIMULATION_TYPE == 2) then
-          b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
-          b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
+            b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
+            b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
           endif
 
           jacobianl = jacobian(i,j,ispec)
 
 ! if external density model
-        if(assign_external_model) rhol = rhoext(i,j,ispec)
+          if(assign_external_model) rhol = rhoext(i,j,ispec)
 
 ! for acoustic medium
 ! also add GLL integration weights
           tempx1(i,j) = wzgll(j)*jacobianl*(xixl*dux_dxl + xizl*dux_dzl) / rhol
           tempx2(i,j) = wxgll(i)*jacobianl*(gammaxl*dux_dxl + gammazl*dux_dzl) / rhol
 
-            if(SIMULATION_TYPE == 2) then
-          b_tempx1(i,j) = wzgll(j)*jacobianl*(xixl*b_dux_dxl + xizl*b_dux_dzl) /rhol
-          b_tempx2(i,j) = wxgll(i)*jacobianl*(gammaxl*b_dux_dxl + gammazl*b_dux_dzl) /rhol
-            endif
+          if(SIMULATION_TYPE == 2) then
+            b_tempx1(i,j) = wzgll(j)*jacobianl*(xixl*b_dux_dxl + xizl*b_dux_dzl) /rhol
+            b_tempx2(i,j) = wxgll(i)*jacobianl*(gammaxl*b_dux_dxl + gammazl*b_dux_dzl) /rhol
+          endif
 
         enddo
       enddo
@@ -264,13 +264,16 @@
 
 ! Sommerfeld condition if acoustic
           if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
-            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl/rhol
+            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
+                - potential_dot_acoustic(iglob)*weight/cpl/rhol
 
              if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
-            b_absorb_acoustic_left(j,ib_left(ispecabs),it) = potential_dot_acoustic(iglob)*weight/cpl/rhol
+              b_absorb_acoustic_left(j,ib_left(ispecabs),it) = &
+                potential_dot_acoustic(iglob)*weight/cpl/rhol
              elseif(SIMULATION_TYPE == 2) then
-            b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
-                                               b_absorb_acoustic_left(j,ib_left(ispecabs),NSTEP-it+1)
+              b_potential_dot_dot_acoustic(iglob) = &
+                b_potential_dot_dot_acoustic(iglob) - &
+                          b_absorb_acoustic_left(j,ib_left(ispecabs),NSTEP-it+1)
              endif
           endif
 
@@ -304,14 +307,17 @@
 
 ! Sommerfeld condition if acoustic
           if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
-            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl/rhol
+            potential_dot_dot_acoustic(iglob) = &
+              potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl/rhol
 
 
              if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
-            b_absorb_acoustic_right(j,ib_right(ispecabs),it) = potential_dot_acoustic(iglob)*weight/cpl/rhol
+                b_absorb_acoustic_right(j,ib_right(ispecabs),it) = &
+                  potential_dot_acoustic(iglob)*weight/cpl/rhol
              elseif(SIMULATION_TYPE == 2) then
-            b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
-                                              b_absorb_acoustic_right(j,ib_right(ispecabs),NSTEP-it+1)
+                b_potential_dot_dot_acoustic(iglob) = &
+                  b_potential_dot_dot_acoustic(iglob) - &
+                      b_absorb_acoustic_right(j,ib_right(ispecabs),NSTEP-it+1)
              endif
           endif
 
@@ -349,13 +355,16 @@
 
 ! Sommerfeld condition if acoustic
           if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
-            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl/rhol
+            potential_dot_dot_acoustic(iglob) = &
+              potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl/rhol
 
              if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
-            b_absorb_acoustic_bottom(i,ib_bottom(ispecabs),it) = potential_dot_acoustic(iglob)*weight/cpl/rhol
+              b_absorb_acoustic_bottom(i,ib_bottom(ispecabs),it) = &
+                potential_dot_acoustic(iglob)*weight/cpl/rhol
              elseif(SIMULATION_TYPE == 2) then
-            b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
-                                               b_absorb_acoustic_bottom(i,ib_bottom(ispecabs),NSTEP-it+1)
+              b_potential_dot_dot_acoustic(iglob) = &
+                b_potential_dot_dot_acoustic(iglob) - &
+                  b_absorb_acoustic_bottom(i,ib_bottom(ispecabs),NSTEP-it+1)
              endif
           endif
 
@@ -393,13 +402,16 @@
 
 ! Sommerfeld condition if acoustic
           if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
-            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl/rhol
+            potential_dot_dot_acoustic(iglob) = &
+              potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob)*weight/cpl/rhol
 
              if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
-            b_absorb_acoustic_top(i,ib_top(ispecabs),it) = potential_dot_acoustic(iglob)*weight/cpl/rhol
+              b_absorb_acoustic_top(i,ib_top(ispecabs),it) = &
+                potential_dot_acoustic(iglob)*weight/cpl/rhol
              elseif(SIMULATION_TYPE == 2) then
-            b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
-                                               b_absorb_acoustic_top(i,ib_top(ispecabs),NSTEP-it+1)
+              b_potential_dot_dot_acoustic(iglob) = &
+                b_potential_dot_dot_acoustic(iglob) - &
+                  b_absorb_acoustic_top(i,ib_top(ispecabs),NSTEP-it+1)
              endif
           endif
 

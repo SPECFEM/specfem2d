@@ -149,6 +149,7 @@ OBJS_SPECFEM2D = \
 	$O/define_shape_functions.o \
 	$O/enforce_acoustic_free_surface.o \
 	$O/exit_mpi.o \
+	$O/get_MPI.o \
 	$O/get_perm_cuthill_mckee.o \
 	$O/get_poroelastic_velocities.o \
 	$O/gll_library.o \
@@ -166,6 +167,7 @@ OBJS_SPECFEM2D = \
 	$O/plotgll.o \
 	$O/plotpost.o \
 	$O/prepare_absorb.o \
+	$O/prepare_assemble_MPI.o \
 	$O/prepare_color_image.o \
 	$O/prepare_initialfield.o \
 	$O/prepare_source_time_function.o \
@@ -175,6 +177,7 @@ OBJS_SPECFEM2D = \
 	$O/save_openDX_jacobian.o \
 	$O/set_sources.o \
 	$O/setup_sources_receivers.o \
+	$O/sort_array_coordinates.o \
 	$O/write_seismograms.o \
 	$O/specfem2D.o
 
@@ -474,3 +477,13 @@ $O/compute_normal_vector.o: compute_normal_vector.f90 constants.h
 
 $O/read_databases.o: read_databases.f90 constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/read_databases.o read_databases.f90
+
+$O/prepare_assemble_MPI.o: prepare_assemble_MPI.F90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/prepare_assemble_MPI.o prepare_assemble_MPI.F90
+
+$O/get_MPI.o: get_MPI.F90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/get_MPI.o get_MPI.F90
+
+$O/sort_array_coordinates.o: sort_array_coordinates.F90 constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/sort_array_coordinates.o sort_array_coordinates.F90
+

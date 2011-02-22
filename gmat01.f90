@@ -196,8 +196,10 @@
         C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
         M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
 
-      call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-             tortuosity,density(1),density(2),eta_f,val4,f0,freq0,Q0,w_c,TURN_VISCATTENUATION_ON)
+        call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare, &
+                                  H_biot,C_biot,M_biot,mu_fr,phi, &
+                                  tortuosity,density(1),density(2),eta_f, &
+                                  val4,f0,freq0,Q0,w_c,TURN_VISCATTENUATION_ON)
 
         porosity_array(n) = val2
         tortuosity_array(n) = val3
@@ -238,7 +240,7 @@
         else
            porosity_array(n) = 1.d0
         endif
-     elseif(indic == 2) then
+     elseif (indic == 2) then
         density_array(1,n) = density(1)
 ! dummy poroelastcoef values, trick to avoid floating invalid
         poroelastcoef(1,1,n) = lambda
@@ -255,7 +257,7 @@
         Qp_array(n) = 15
         Qs_array(n) = 15
         porosity_array(n) = 0.d0
-     else
+     elseif (indic == 3) then
         density_array(1,n) = density(1)
         density_array(2,n) = density(2)
         poroelastcoef(1,1,n) = lambda_s
@@ -289,7 +291,7 @@
            endif
         elseif(indic == 2) then                      ! elastic (anisotropic)
            write(IOUT,400) n,density(1),c11,c13,c15,c33,c35,c55
-        else
+        elseif(indic == 3) then
            ! material is poroelastic (solid/fluid)
            write(iout,500) n,sqrt(cpIsquare),sqrt(cpIIsquare),sqrt(cssquare)
            write(iout,600) density(1),poisson_s,lambda_s,mu_s,kappa_s,young_s
