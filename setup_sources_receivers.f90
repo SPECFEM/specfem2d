@@ -155,16 +155,16 @@
       
     endif
 
-
-    ! locate receivers in the mesh
-    call locate_receivers(ibool,coord,nspec,npoin,xigll,zigll,nrec,nrecloc,recloc,which_proc_receiver,nproc,myrank,&
-          st_xval,st_zval,ispec_selected_rec, &
-          xi_receiver,gamma_receiver,station_name,network_name,x_source(i_source),z_source(i_source),&
-          coorg,knods,ngnod,npgeo,ipass, &
-          x_final_receiver, z_final_receiver)
-
   enddo ! do i_source=1,NSOURCES
 
+  ! locate receivers in the mesh
+  call locate_receivers(ibool,coord,nspec,npoin,xigll,zigll, &
+                      nrec,nrecloc,recloc,which_proc_receiver,nproc,myrank, &
+                      st_xval,st_zval,ispec_selected_rec, &
+                      xi_receiver,gamma_receiver,station_name,network_name, &
+                      x_source(1),z_source(1), &
+                      coorg,knods,ngnod,npgeo,ipass, &
+                      x_final_receiver,z_final_receiver)
 
   end subroutine setup_sources_receivers
 

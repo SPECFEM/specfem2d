@@ -43,8 +43,10 @@
 !========================================================================
 
   subroutine compute_vector_whole_medium(potential_acoustic,veloc_elastic,velocs_poroelastic,&
-          elastic,poroelastic,vector_field_display, &
-         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,numat,kmato,density,rhoext,assign_external_model)
+                            elastic,poroelastic,vector_field_display, &
+                            xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
+                            nspec,npoin,npoin_acoustic,npoin_elastic,npoin_poroelastic, &
+                            numat,kmato,density,rhoext,assign_external_model)
 
 ! compute Grad(potential) in acoustic elements
 ! and combine with existing velocity vector field in elastic elements
@@ -56,21 +58,20 @@
   integer nspec,npoin,numat
 
   logical :: assign_external_model
-
   integer, dimension(nspec) :: kmato
-
   double precision, dimension(NGLLX,NGLLX,nspec) :: rhoext
-
   double precision, dimension(2,numat) :: density
-
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
-
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
 
   logical, dimension(nspec) :: elastic,poroelastic
-  real(kind=CUSTOM_REAL), dimension(npoin) :: potential_acoustic
-  real(kind=CUSTOM_REAL), dimension(3,npoin) :: veloc_elastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: velocs_poroelastic
+  integer :: npoin_acoustic
+  real(kind=CUSTOM_REAL), dimension(npoin_acoustic) :: potential_acoustic  
+  integer :: npoin_elastic
+  real(kind=CUSTOM_REAL), dimension(3,npoin_elastic) :: veloc_elastic
+  integer :: npoin_poroelastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin_poroelastic) :: velocs_poroelastic
+  
   double precision, dimension(3,npoin) :: vector_field_display
 
 ! array with derivatives of Lagrange polynomials
@@ -87,9 +88,12 @@
   do ispec = 1,nspec
 
 ! compute vector field in this element
-    call compute_vector_one_element(vector_field_element,potential_acoustic,veloc_elastic,velocs_poroelastic,&
-         elastic,poroelastic,xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,ispec,numat,kmato,&
-         density,rhoext,assign_external_model)
+    call compute_vector_one_element(vector_field_element,potential_acoustic, &
+                                veloc_elastic,velocs_poroelastic, &
+                                elastic,poroelastic,xix,xiz,gammax,gammaz, &
+                                ibool,hprime_xx,hprime_zz, &
+                                nspec,npoin_acoustic,npoin_elastic,npoin_poroelastic, &
+                                ispec,numat,kmato,density,rhoext,assign_external_model)
 
 ! store the result
     do j = 1,NGLLZ
@@ -107,9 +111,12 @@
 !=====================================================================
 !
 
-  subroutine compute_vector_one_element(vector_field_element,potential_acoustic,veloc_elastic,velocs_poroelastic,&
-          elastic,poroelastic,xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,ispec,numat,kmato,&
-          density,rhoext,assign_external_model)
+  subroutine compute_vector_one_element(vector_field_element,potential_acoustic, &
+                                    veloc_elastic,velocs_poroelastic,&
+                                    elastic,poroelastic,xix,xiz,gammax,gammaz, &
+                                    ibool,hprime_xx,hprime_zz, &
+                                    nspec,npoin_acoustic,npoin_elastic,npoin_poroelastic, &
+                                    ispec,numat,kmato,density,rhoext,assign_external_model)
 
 ! compute Grad(potential) if acoustic element or copy existing vector if elastic element
 
@@ -117,7 +124,7 @@
 
   include "constants.h"
 
-  integer nspec,npoin,ispec,numat
+  integer nspec,ispec,numat
 
   logical :: assign_external_model
 
@@ -135,9 +142,12 @@
   real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLX) :: vector_field_element
 
   logical, dimension(nspec) :: elastic,poroelastic
-  real(kind=CUSTOM_REAL), dimension(npoin) :: potential_acoustic
-  real(kind=CUSTOM_REAL), dimension(3,npoin) :: veloc_elastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: velocs_poroelastic
+  integer :: npoin_acoustic
+  real(kind=CUSTOM_REAL), dimension(npoin_acoustic) :: potential_acoustic  
+  integer :: npoin_elastic
+  real(kind=CUSTOM_REAL), dimension(3,npoin_elastic) :: veloc_elastic
+  integer :: npoin_poroelastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin_poroelastic) :: velocs_poroelastic
 
 ! array with derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
@@ -173,7 +183,7 @@
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
         vector_field_element(1,i,j) = velocs_poroelastic(1,iglob)
-        vector_field_element(2,i,j) = ZERO
+        vector_field_element(2,i,j) = 0._CUSTOM_REAL
         vector_field_element(3,i,j) = velocs_poroelastic(2,iglob)
       enddo
     enddo
@@ -189,7 +199,7 @@
       do i = 1,NGLLX
 
 ! derivative along x
-        tempx1l = ZERO
+        tempx1l = 0._CUSTOM_REAL
         do k = 1,NGLLX
           hp1 = hprime_xx(i,k)
           iglob = ibool(k,j,ispec)
@@ -197,7 +207,7 @@
         enddo
 
 ! derivative along z
-        tempx2l = ZERO
+        tempx2l = 0._CUSTOM_REAL
         do k = 1,NGLLZ
           hp2 = hprime_zz(j,k)
           iglob = ibool(i,k,ispec)
@@ -213,7 +223,7 @@
 
 ! derivatives of potential
         vector_field_element(1,i,j) = (tempx1l*xixl + tempx2l*gammaxl) / rhol
-        vector_field_element(2,i,j) = ZERO
+        vector_field_element(2,i,j) = 0._CUSTOM_REAL
         vector_field_element(3,i,j) = (tempx1l*xizl + tempx2l*gammazl) / rhol
 
       enddo

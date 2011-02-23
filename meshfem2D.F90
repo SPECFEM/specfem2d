@@ -758,11 +758,20 @@ program meshfem2D
   !*****************************
   ! partitioning
   !*****************************
-
+  
+  ! allocates & initializes partioning of elements
   allocate(part(0:nelmnts-1))
+  part(:) = -1
+  
+  if( nproc > 1 ) then
+    allocate(xadj_g(0:nelmnts))
+    allocate(adjncy_g(0:MAX_NEIGHBORS*nelmnts-1))  
+    xadj_g(:) = 0
+    adjncy_g(:) = -1
+  endif
 
   ! construction of the graph
-
+  
   ! if ngnod == 9, we work on a subarray of elements that represents the elements with four nodes (four corners) only
   ! because the adjacency of the mesh elements can be entirely determined from the knowledge of the four corners only
   if ( ngnod == 9 ) then
@@ -777,22 +786,25 @@ program meshfem2D
 !! DK DK (nxread+1)*(nzread+1) is OK for a regular internal mesh only, not for non structured external meshes
 !! DK DK      call mesh2dual_ncommonnodes(nelmnts, (nxread+1)*(nzread+1), elmnts_bis, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
 !! DK DK the subset of element corners is not renumbered therefore we must still use the nnodes computed for 9 nodes here
-        call mesh2dual_ncommonnodes(elmnts_bis,1)
+        ! determines maximum neighbors based on 1 common node
+        call mesh2dual_ncommonnodes(elmnts_bis,1,xadj_g,adjncy_g)
      endif
 
   else
      if ( nproc > 1 ) then
-        call mesh2dual_ncommonnodes(elmnts,1)
+        ! determines maximum neighbors based on 1 common node
+        call mesh2dual_ncommonnodes(elmnts,1,xadj_g,adjncy_g)
      endif
 
   endif
 
 
   if ( nproc == 1 ) then
-     part(:) = 0
+     part(:) = 0 ! single process has rank 0
   else
 
-     nb_edges = xadj(nelmnts)
+     ! number of common edges
+     nb_edges = xadj_g(nelmnts)
 
      ! giving weight to edges and vertices. Currently not used.
      call read_weights()
@@ -855,33 +867,27 @@ program meshfem2D
   call Construct_glob2loc_elmnts(nproc)
 
   if ( ngnod == 9 ) then
-     if ( nproc > 1 ) then
-        deallocate(nnodes_elmnts)
-        deallocate(nodes_elmnts)
-     endif
-     allocate(nnodes_elmnts(0:nnodes-1))
-     allocate(nodes_elmnts(0:nsize*nnodes-1))
-     nnodes_elmnts(:) = 0
-     nodes_elmnts(:) = 0
-     do i = 0, ngnod*nelmnts-1
+    if( allocated(nnodes_elmnts) ) deallocate(nnodes_elmnts)
+    if( allocated(nodes_elmnts) ) deallocate(nodes_elmnts)
+    allocate(nnodes_elmnts(0:nnodes-1))
+    allocate(nodes_elmnts(0:nsize*nnodes-1))
+    nnodes_elmnts(:) = 0
+    nodes_elmnts(:) = 0
+    do i = 0, ngnod*nelmnts-1
+      nodes_elmnts(elmnts(i)*nsize+nnodes_elmnts(elmnts(i))) = i/ngnod
+      nnodes_elmnts(elmnts(i)) = nnodes_elmnts(elmnts(i)) + 1
+    enddo
+  else
+    if ( nproc < 2 ) then
+      if( .not. allocated(nnodes_elmnts) ) allocate(nnodes_elmnts(0:nnodes-1))
+      if( .not. allocated(nodes_elmnts) ) allocate(nodes_elmnts(0:nsize*nnodes-1))
+      nnodes_elmnts(:) = 0
+      nodes_elmnts(:) = 0
+      do i = 0, ngnod*nelmnts-1
         nodes_elmnts(elmnts(i)*nsize+nnodes_elmnts(elmnts(i))) = i/ngnod
         nnodes_elmnts(elmnts(i)) = nnodes_elmnts(elmnts(i)) + 1
-
-     enddo
-  else
-     if ( nproc < 2 ) then
-        allocate(nnodes_elmnts(0:nnodes-1))
-        allocate(nodes_elmnts(0:nsize*nnodes-1))
-        nnodes_elmnts(:) = 0
-        nodes_elmnts(:) = 0
-        do i = 0, ngnod*nelmnts-1
-           nodes_elmnts(elmnts(i)*nsize+nnodes_elmnts(elmnts(i))) = i/ngnod
-           nnodes_elmnts(elmnts(i)) = nnodes_elmnts(elmnts(i)) + 1
-
-        enddo
-
-     endif
-
+      enddo
+    endif
   endif
 
   ! local number of each node for each partition

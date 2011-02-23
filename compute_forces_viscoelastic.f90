@@ -48,7 +48,7 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
      initialfield,TURN_ATTENUATION_ON,angleforce,deltatcube, &
      deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,elastic,codeabs, &
      accel_elastic,veloc_elastic,displ_elastic,b_accel_elastic,b_displ_elastic, &
-     density,elastcoef,xix,xiz,gammax,gammaz, &
+     density,poroelastcoef,xix,xiz,gammax,gammaz, &
      jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy, &
      source_time_function,sourcearray,adj_sourcearrays,e1,e11, &
      e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
@@ -96,7 +96,7 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
 
   real(kind=CUSTOM_REAL), dimension(3,npoin) :: accel_elastic,veloc_elastic,displ_elastic
   double precision, dimension(2,numat) :: density
-  double precision, dimension(4,3,numat) :: elastcoef
+  double precision, dimension(4,3,numat) :: poroelastcoef
   double precision, dimension(6,numat) :: anisotropy
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
   double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,vsext,rhoext
@@ -213,9 +213,9 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
      if(elastic(ispec)) then
 
         ! get relaxed elastic parameters of current spectral element
-        lambdal_relaxed = elastcoef(1,1,kmato(ispec))
-        mul_relaxed = elastcoef(2,1,kmato(ispec))
-        lambdalplus2mul_relaxed = elastcoef(3,1,kmato(ispec))
+        lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
+        mul_relaxed = poroelastcoef(2,1,kmato(ispec))
+        lambdalplus2mul_relaxed = poroelastcoef(3,1,kmato(ispec))
 
         ! first double loop over GLL points to compute and store gradients
         do j = 1,NGLLZ
@@ -468,8 +468,8 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
         ispec = numabs(ispecabs)
 
         ! get elastic parameters of current spectral element
-        lambdal_relaxed = elastcoef(1,1,kmato(ispec))
-        mul_relaxed = elastcoef(2,1,kmato(ispec))
+        lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
+        mul_relaxed = poroelastcoef(2,1,kmato(ispec))
         rhol  = density(1,kmato(ispec))
         kappal  = lambdal_relaxed + TWO*mul_relaxed/3._CUSTOM_REAL
         cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_relaxed/3._CUSTOM_REAL)/rhol)

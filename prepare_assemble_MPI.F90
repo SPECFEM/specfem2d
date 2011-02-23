@@ -116,6 +116,7 @@
   nibool_interfaces_poroelastic(:) = 0
 
   do num_interface = 1, ninterface
+    ! initializes interface point counters
     npoin_interface_acoustic = 0
     npoin_interface_elastic = 0
     npoin_interface_poroelastic = 0
@@ -197,8 +198,9 @@
   ninterface_elastic =  0
   ninterface_poroelastic =  0
   
+  ! loops over all MPI interfaces
   do num_interface = 1, ninterface
-    ! acoustic
+    ! sets acoustic MPI interface (local) indices in range [1,ninterface_acoustic]
     if ( nibool_interfaces_acoustic(num_interface) > 0 ) then
       ninterface_acoustic = ninterface_acoustic + 1
       inum_interfaces_acoustic(ninterface_acoustic) = num_interface
