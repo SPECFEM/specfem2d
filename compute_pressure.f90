@@ -43,11 +43,12 @@
 !========================================================================
 
   subroutine compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,&
-         displs_poroelastic,displw_poroelastic,elastic,poroelastic,vector_field_display, &
-         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-         numat,kmato,density,porosity,tortuosity,elastcoef,vpext,vsext,rhoext, &
-         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,e1,e11, &
-         TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
+                  displs_poroelastic,displw_poroelastic,elastic,poroelastic,vector_field_display, &
+                  xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
+                  npoin,npoin_acoustic,npoin_elastic,npoin_poroelastic,assign_external_model, &
+                  numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
+                  c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,e1,e11, &
+                  TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
 
 ! compute pressure in acoustic elements and in elastic elements
 
@@ -63,7 +64,7 @@
 
   double precision, dimension(2,numat) :: density
   double precision, dimension(numat) :: porosity,tortuosity
-  double precision, dimension(4,3,numat) :: elastcoef
+  double precision, dimension(4,3,numat) :: poroelastcoef
   double precision, dimension(6,numat) :: anisotropy
   double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext
   double precision, dimension(NGLLX,NGLLZ,nspec) ::  c11ext,c15ext,c13ext,c33ext,c35ext,c55ext
@@ -71,9 +72,13 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
 
   logical, dimension(nspec) :: elastic,poroelastic,anisotropic
-  real(kind=CUSTOM_REAL), dimension(npoin) :: potential_dot_dot_acoustic
-  real(kind=CUSTOM_REAL), dimension(3,npoin) :: displ_elastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displs_poroelastic,displw_poroelastic
+  integer :: npoin_acoustic
+  real(kind=CUSTOM_REAL), dimension(npoin_acoustic) :: potential_dot_dot_acoustic
+  integer :: npoin_elastic
+  real(kind=CUSTOM_REAL), dimension(3,npoin_elastic) :: displ_elastic
+  integer :: npoin_poroelastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin_poroelastic) :: displs_poroelastic,displw_poroelastic
+  
   double precision, dimension(3,npoin) :: vector_field_display
 
 ! array with derivatives of Lagrange polynomials
@@ -98,8 +103,9 @@
 ! compute pressure in this element
     call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,&
          displs_poroelastic,displw_poroelastic,elastic,poroelastic,&
-         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-         numat,kmato,density,porosity,tortuosity,elastcoef,vpext,vsext,rhoext, &
+         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
+         npoin_acoustic,npoin_elastic,npoin_poroelastic,assign_external_model, &
+         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,ispec,e1,e11, &
          TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
 
@@ -121,8 +127,9 @@
 
   subroutine compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,&
          displs_poroelastic,displw_poroelastic,elastic,poroelastic,&
-         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,assign_external_model, &
-         numat,kmato,density,porosity,tortuosity,elastcoef,vpext,vsext,rhoext, &
+         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
+         npoin_acoustic,npoin_elastic,npoin_poroelastic,assign_external_model, &
+         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,ispec,e1,e11, &
          TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
 
@@ -132,14 +139,14 @@
 
   include "constants.h"
 
-  integer nspec,npoin,numat,ispec
+  integer nspec,numat,ispec
 
   integer, dimension(nspec) :: kmato
   integer, dimension(NGLLX,NGLLX,nspec) :: ibool
 
   double precision, dimension(2,numat) :: density
   double precision, dimension(numat) :: porosity,tortuosity
-  double precision, dimension(4,3,numat) :: elastcoef
+  double precision, dimension(4,3,numat) :: poroelastcoef
   double precision, dimension(6,numat) :: anisotropy
   double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext
   double precision, dimension(NGLLX,NGLLZ,nspec) ::  c11ext,c15ext,c13ext,c33ext,c35ext,c55ext
@@ -150,9 +157,12 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: pressure_element
 
   logical, dimension(nspec) :: elastic,poroelastic,anisotropic
-  real(kind=CUSTOM_REAL), dimension(npoin) :: potential_dot_dot_acoustic
-  real(kind=CUSTOM_REAL), dimension(3,npoin) :: displ_elastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displs_poroelastic,displw_poroelastic
+  integer :: npoin_acoustic
+  real(kind=CUSTOM_REAL), dimension(npoin_acoustic) :: potential_dot_dot_acoustic  
+  integer :: npoin_elastic
+  real(kind=CUSTOM_REAL), dimension(3,npoin_elastic) :: displ_elastic
+  integer :: npoin_poroelastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin_poroelastic) :: displs_poroelastic,displw_poroelastic
 
 ! array with derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
@@ -219,9 +229,9 @@
   if(elastic(ispec)) then
 
     ! get relaxed elastic parameters of current spectral element
-    lambdal_relaxed = elastcoef(1,1,kmato(ispec))
-    mul_relaxed = elastcoef(2,1,kmato(ispec))
-    lambdalplus2mul_relaxed = elastcoef(3,1,kmato(ispec))
+    lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
+    mul_relaxed = poroelastcoef(2,1,kmato(ispec))
+    lambdalplus2mul_relaxed = poroelastcoef(3,1,kmato(ispec))
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
@@ -338,22 +348,22 @@
 
   elseif(poroelastic(ispec)) then
 
-    lambdal_relaxed = elastcoef(1,1,kmato(ispec))
-    mul_relaxed = elastcoef(2,1,kmato(ispec))
+    lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
+    mul_relaxed = poroelastcoef(2,1,kmato(ispec))
 
     ! get poroelastic parameters of current spectral element
     phil = porosity(kmato(ispec))
     tortl = tortuosity(kmato(ispec))
     !solid properties
-    mul_s = elastcoef(2,1,kmato(ispec))
-    kappal_s = elastcoef(3,1,kmato(ispec)) - FOUR_THIRDS*mul_s
+    mul_s = poroelastcoef(2,1,kmato(ispec))
+    kappal_s = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS*mul_s
     rhol_s = density(1,kmato(ispec))
     !fluid properties
-    kappal_f = elastcoef(1,2,kmato(ispec))
+    kappal_f = poroelastcoef(1,2,kmato(ispec))
     rhol_f = density(2,kmato(ispec))
     !frame properties
-    mul_fr = elastcoef(2,3,kmato(ispec))
-    kappal_fr = elastcoef(3,3,kmato(ispec)) - FOUR_THIRDS*mul_fr
+    mul_fr = poroelastcoef(2,3,kmato(ispec))
+    kappal_fr = poroelastcoef(3,3,kmato(ispec)) - FOUR_THIRDS*mul_fr
     rhol_bar =  (1.d0 - phil)*rhol_s + phil*rhol_f
     !Biot coefficients for the input phi
     D_biot = kappal_s*(1.d0 + phil*(kappal_s/kappal_f - 1.d0))

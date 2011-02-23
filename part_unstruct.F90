@@ -53,41 +53,41 @@ module part_unstruct
 
   integer :: nelmnts
   integer, dimension(:), pointer  :: elmnts
-  integer, dimension(:), pointer  :: elmnts_bis
-  integer, dimension(:), pointer  :: xadj
-  integer, dimension(:), pointer  :: vwgt
-  integer, dimension(:), pointer  :: glob2loc_elmnts
-  integer, dimension(:), pointer  :: part
+  integer, dimension(:), allocatable  :: elmnts_bis
+  integer, dimension(:), allocatable  :: vwgt
+  integer, dimension(:), allocatable  :: glob2loc_elmnts
+  integer, dimension(:), allocatable  :: part
 
   integer :: nb_edges
-  integer, dimension(:), pointer  :: adjwgt
+  integer, dimension(:), allocatable  :: adjwgt
 
-  integer, dimension(:), pointer  :: adjncy
+  integer, dimension(:), allocatable  :: xadj_g
+  integer, dimension(:), allocatable  :: adjncy_g
 
   integer :: nnodes
-  double precision, dimension(:,:), pointer  :: nodes_coords
-  integer, dimension(:), pointer  :: nnodes_elmnts
-  integer, dimension(:), pointer  :: nodes_elmnts
-  integer, dimension(:), pointer  :: glob2loc_nodes_nparts
-  integer, dimension(:), pointer  :: glob2loc_nodes_parts
-  integer, dimension(:), pointer  :: glob2loc_nodes
+  double precision, dimension(:,:), allocatable  :: nodes_coords
+  integer, dimension(:), allocatable  :: nnodes_elmnts
+  integer, dimension(:), allocatable  :: nodes_elmnts
+  integer, dimension(:), allocatable  :: glob2loc_nodes_nparts
+  integer, dimension(:), allocatable  :: glob2loc_nodes_parts
+  integer, dimension(:), allocatable  :: glob2loc_nodes
 
   ! interface data
   integer :: ninterfaces
-  integer, dimension(:), pointer  :: tab_size_interfaces, tab_interfaces
+  integer, dimension(:), allocatable  :: tab_size_interfaces, tab_interfaces
 
   integer :: nelem_acoustic_surface
   integer, dimension(:,:), pointer  :: acoustic_surface
   integer :: nelem_acoustic_surface_loc
 
   integer :: nelemabs
-  integer, dimension(:,:), pointer  :: abs_surface
-  logical, dimension(:,:), pointer  :: abs_surface_char
-  integer, dimension(:), pointer  :: abs_surface_merge
+  integer, dimension(:,:), allocatable  :: abs_surface
+  logical, dimension(:,:), allocatable  :: abs_surface_char
+  integer, dimension(:), allocatable  :: abs_surface_merge
   integer :: nelemabs_loc
 
   integer :: nelemabs_merge
-  integer, dimension(:), pointer  :: ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
+  integer, dimension(:), allocatable  :: ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
        jbegin_left,jend_left,jbegin_right,jend_right
 
   ! for acoustic/elastic coupled elements
@@ -326,88 +326,102 @@ contains
   !-----------------------------------------------
   ! Creating dual graph (adjacency is defined by 'ncommonnodes' between two elements).
   !-----------------------------------------------
-  subroutine mesh2dual_ncommonnodes(elmnts_l,ncommonnodes)
+  subroutine mesh2dual_ncommonnodes(elmnts_l,ncommonnodes,xadj,adjncy)
 
   implicit none
   include "constants.h"
 
   integer, dimension(0:NCORNERS*nelmnts-1), intent(in)  :: elmnts_l
   integer, intent(in)  :: ncommonnodes
+  integer, dimension(0:nelmnts),intent(out)  :: xadj
+  integer, dimension(0:MAX_NEIGHBORS*nelmnts-1),intent(out) :: adjncy
 
-  integer  :: i, j, k, l, m, nb_edges
+  ! local parameters
+  integer  :: i, j, k, l, m, num_edges
   logical  ::  is_neighbour
   integer  :: num_node, n
   integer  :: elem_base, elem_target
   integer  :: connectivity
 
-  allocate(xadj(0:nelmnts))
+  ! allocates memory for arrays
+  if( .not. allocated(nnodes_elmnts) ) allocate(nnodes_elmnts(0:nnodes-1))
+  if( .not. allocated(nodes_elmnts) ) allocate(nodes_elmnts(0:nsize*nnodes-1))
+  
+  ! initializes
   xadj(:) = 0
-  allocate(adjncy(0:MAX_NEIGHBORS*nelmnts-1))
   adjncy(:) = 0
-  allocate(nnodes_elmnts(0:nnodes-1))
   nnodes_elmnts(:) = 0
-  allocate(nodes_elmnts(0:nsize*nnodes-1))
   nodes_elmnts(:) = 0
-
-  nb_edges = 0
+  num_edges = 0
 
   ! list of elements per node
   do i = 0, NCORNERS*nelmnts-1
-    nodes_elmnts(elmnts_l(i)*nsize+nnodes_elmnts(elmnts_l(i))) = i/NCORNERS
+    nodes_elmnts(elmnts_l(i)*nsize + nnodes_elmnts(elmnts_l(i))) = i/NCORNERS
     nnodes_elmnts(elmnts_l(i)) = nnodes_elmnts(elmnts_l(i)) + 1
   enddo
 
   ! checking which elements are neighbours ('ncommonnodes' criteria)
   do j = 0, nnodes-1
-     do k = 0, nnodes_elmnts(j)-1
-        do l = k+1, nnodes_elmnts(j)-1
+    do k = 0, nnodes_elmnts(j)-1
+      do l = k+1, nnodes_elmnts(j)-1
 
-           connectivity = 0
-           elem_base = nodes_elmnts(k+j*nsize)
-           elem_target = nodes_elmnts(l+j*nsize)
-           do n = 1, NCORNERS
-              num_node = elmnts_l(NCORNERS*elem_base+n-1)
-              do m = 0, nnodes_elmnts(num_node)-1
-                 if ( nodes_elmnts(m+num_node*nsize) == elem_target ) then
-                    connectivity = connectivity + 1
-                 endif
-              enddo
-           enddo
-
-           if ( connectivity >=  ncommonnodes) then
-
-              is_neighbour = .false.
-
-              do m = 0, xadj(nodes_elmnts(k+j*nsize))
-                 if ( .not.is_neighbour ) then
-                    if ( adjncy(nodes_elmnts(k+j*nsize)*MAX_NEIGHBORS+m) == nodes_elmnts(l+j*nsize) ) then
-                       is_neighbour = .true.
-
-                    endif
-                 endif
-              enddo
-              if ( .not.is_neighbour ) then
-                 adjncy(nodes_elmnts(k+j*nsize)*MAX_NEIGHBORS+xadj(nodes_elmnts(k+j*nsize))) = nodes_elmnts(l+j*nsize)
-                 xadj(nodes_elmnts(k+j*nsize)) = xadj(nodes_elmnts(k+j*nsize)) + 1
-                 adjncy(nodes_elmnts(l+j*nsize)*MAX_NEIGHBORS+xadj(nodes_elmnts(l+j*nsize))) = nodes_elmnts(k+j*nsize)
-                 xadj(nodes_elmnts(l+j*nsize)) = xadj(nodes_elmnts(l+j*nsize)) + 1
-              endif
-           endif
+        connectivity = 0
+        elem_base = nodes_elmnts(k+j*nsize)
+        elem_target = nodes_elmnts(l+j*nsize)
+        do n = 1, NCORNERS
+          num_node = elmnts_l(NCORNERS*elem_base+n-1)
+          do m = 0, nnodes_elmnts(num_node)-1
+            if ( nodes_elmnts(m+num_node*nsize) == elem_target ) then
+              connectivity = connectivity + 1
+            endif
+          enddo
         enddo
-     enddo
+
+        ! sets adjacency (adjncy) and number of neighbors (xadj) 
+        ! according to ncommonnodes criteria  
+        if ( connectivity >=  ncommonnodes) then
+
+          is_neighbour = .false.
+
+          do m = 0, xadj(nodes_elmnts(k+j*nsize))
+            if ( .not.is_neighbour ) then
+              if ( adjncy(nodes_elmnts(k+j*nsize)*MAX_NEIGHBORS+m) == nodes_elmnts(l+j*nsize) ) then
+                is_neighbour = .true.
+              endif
+            endif
+          enddo
+          if ( .not.is_neighbour ) then
+            adjncy(nodes_elmnts(k+j*nsize)*MAX_NEIGHBORS &
+                   + xadj(nodes_elmnts(k+j*nsize))) = nodes_elmnts(l+j*nsize)
+
+            xadj(nodes_elmnts(k+j*nsize)) = xadj(nodes_elmnts(k+j*nsize)) + 1
+            if (xadj(nodes_elmnts(k+j*nsize)) > MAX_NEIGHBORS) &
+              stop 'ERROR : too much neighbours per element, modify the mesh.'
+            
+            adjncy(nodes_elmnts(l+j*nsize)*MAX_NEIGHBORS &
+                   + xadj(nodes_elmnts(l+j*nsize))) = nodes_elmnts(k+j*nsize)
+                   
+            xadj(nodes_elmnts(l+j*nsize)) = xadj(nodes_elmnts(l+j*nsize)) + 1
+            if (xadj(nodes_elmnts(l+j*nsize))>MAX_NEIGHBORS) &
+              stop 'ERROR : too much neighbours per element, modify the mesh.'
+            
+          endif
+        endif
+      enddo
+    enddo
   enddo
 
   ! making adjacency arrays compact (to be used for partitioning)
   do i = 0, nelmnts-1
-     k = xadj(i)
-     xadj(i) = nb_edges
-     do j = 0, k-1
-        adjncy(nb_edges) = adjncy(i*MAX_NEIGHBORS+j)
-        nb_edges = nb_edges + 1
-     enddo
+    k = xadj(i)
+    xadj(i) = num_edges
+    do j = 0, k-1
+      adjncy(num_edges) = adjncy(i*MAX_NEIGHBORS+j)
+      num_edges = num_edges + 1
+    enddo
   enddo
 
-  xadj(nelmnts) = nb_edges
+  xadj(nelmnts) = num_edges
 
   end subroutine mesh2dual_ncommonnodes
 
@@ -442,16 +456,16 @@ contains
 
   allocate(glob2loc_elmnts(0:nelmnts-1))
 
+  ! initializes number of local elements per partition
   do num_part = 0, nparts-1
-     num_loc(num_part) = 0
-
+    num_loc(num_part) = 0
   enddo
 
+  ! local numbering
   do num_glob = 0, nelmnts-1
-     num_part = part(num_glob)
-     glob2loc_elmnts(num_glob) = num_loc(num_part)
-     num_loc(num_part) = num_loc(num_part) + 1
-
+    num_part = part(num_glob)
+    glob2loc_elmnts(num_glob) = num_loc(num_part)
+    num_loc(num_part) = num_loc(num_part) + 1
   enddo
 
   end subroutine Construct_glob2loc_elmnts
@@ -485,14 +499,12 @@ contains
      glob2loc_nodes_nparts(num_node) = size_glob2loc_nodes
      do el = 0, nnodes_elmnts(num_node)-1
         parts_node(part(nodes_elmnts(el+nsize*num_node))) = 1
-
      enddo
 
      do num_part = 0, nparts-1
         if ( parts_node(num_part) == 1 ) then
            size_glob2loc_nodes = size_glob2loc_nodes + 1
            parts_node(num_part) = 0
-
         endif
      enddo
 
@@ -513,7 +525,6 @@ contains
   do num_node = 0, nnodes-1
      do el = 0, nnodes_elmnts(num_node)-1
         parts_node(part(nodes_elmnts(el+nsize*num_node))) = 1
-
      enddo
      do num_part = 0, nparts-1
 
@@ -572,42 +583,53 @@ contains
      do num_part_bis = num_part+1, nparts-1
         do el = 0, nelmnts-1
            if ( part(el) == num_part ) then
+              ! sets material flag
               if ( phi_material(num_material(el+1)) < TINYVAL) then
-                 is_acoustic_el = .false.
-                 is_elastic_el = .true.
+                ! elastic element
+                is_acoustic_el = .false.
+                is_elastic_el = .true.
               elseif ( phi_material(num_material(el+1)) >= 1.d0) then
-                 is_acoustic_el = .true.
-                 is_elastic_el = .false.
+                ! acoustic element
+                is_acoustic_el = .true.
+                is_elastic_el = .false.
               else
-                 is_acoustic_el = .false.
-                 is_elastic_el = .false.
+                ! poroelastic element
+                is_acoustic_el = .false.
+                is_elastic_el = .false.
               endif
-              do el_adj = xadj(el), xadj(el+1)-1
-                 if ( phi_material(num_material(adjncy(el_adj)+1)) < TINYVAL) then
-                    is_acoustic_el_adj = .false.
-                    is_elastic_el_adj = .true.
-                 elseif ( phi_material(num_material(adjncy(el_adj)+1)) >= 1.d0) then
-                    is_acoustic_el_adj = .true.
-                    is_elastic_el_adj = .false.
-                 else
-                    is_acoustic_el_adj = .false.
-                    is_elastic_el_adj = .false.
-                 endif
-                 if ( (part(adjncy(el_adj)) == num_part_bis) .and. (is_acoustic_el .eqv. is_acoustic_el_adj) &
-                       .and. (is_elastic_el .eqv. is_elastic_el_adj) ) then
-                    num_edge = num_edge + 1
 
-                 endif
+              ! looks at all neighbor elements              
+              do el_adj = xadj_g(el), xadj_g(el+1)-1
+                ! sets neighbor material flag
+                if ( phi_material(num_material(adjncy_g(el_adj)+1)) < TINYVAL) then
+                  is_acoustic_el_adj = .false.
+                  is_elastic_el_adj = .true.
+                elseif ( phi_material(num_material(adjncy_g(el_adj)+1)) >= 1.d0) then
+                  is_acoustic_el_adj = .true.
+                  is_elastic_el_adj = .false.
+                else
+                  is_acoustic_el_adj = .false.
+                  is_elastic_el_adj = .false.
+                endif
+                ! adds element if neighbor element lies in next parition 
+                ! and belongs to same material
+                if ( (part(adjncy_g(el_adj)) == num_part_bis) .and. &
+                     (is_acoustic_el .eqv. is_acoustic_el_adj) .and. &
+                     (is_elastic_el .eqv. is_elastic_el_adj) ) then
+                    num_edge = num_edge + 1
+                endif
               enddo
            endif
         enddo
+        ! stores number of elements at interface
         tab_size_interfaces(num_interface+1) = tab_size_interfaces(num_interface) + num_edge
         num_edge = 0
         num_interface = num_interface + 1
 
      enddo
   enddo
-
+  
+  ! stores element indices for elements from above search at each interface
   num_interface = 0
   num_edge = 0
 
@@ -615,59 +637,61 @@ contains
   tab_interfaces(:) = 0
 
   do num_part = 0, nparts-1
-     do num_part_bis = num_part+1, nparts-1
-        do el = 0, nelmnts-1
-           if ( part(el) == num_part ) then
-              if ( phi_material(num_material(el+1)) < TINYVAL) then
-                 is_acoustic_el = .false.
-                 is_elastic_el = .true.
-              elseif ( phi_material(num_material(el+1)) >= 1.d0) then
-                 is_acoustic_el = .true.
-                 is_elastic_el = .false.
-              else
-                 is_acoustic_el = .false.
-                 is_elastic_el = .false.
-              endif
-              do el_adj = xadj(el), xadj(el+1)-1
-                 if ( phi_material(num_material(adjncy(el_adj)+1)) < TINYVAL) then
-                    is_acoustic_el_adj = .false.
-                    is_elastic_el_adj = .true.
-                 elseif ( phi_material(num_material(adjncy(el_adj)+1)) >= 1.d0) then
-                    is_acoustic_el_adj = .true.
-                    is_elastic_el_adj = .false.
-                 else
-                    is_acoustic_el_adj = .false.
-                    is_elastic_el_adj = .false.
-                 endif
-                 if ( (part(adjncy(el_adj)) == num_part_bis) .and. (is_acoustic_el .eqv. is_acoustic_el_adj) &
-                       .and. (is_elastic_el .eqv. is_elastic_el_adj) ) then
-                    tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+0) = el
-                    tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+1) = adjncy(el_adj)
-                    ncommon_nodes = 0
-                    do num_node = 0, 4-1
-                       do num_node_bis = 0, 4-1
-                          if ( elmnts_l(el*NCORNERS+num_node) == elmnts_l(adjncy(el_adj)*NCORNERS+num_node_bis) ) then
-                             tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+3+ncommon_nodes) &
-                                  = elmnts_l(el*NCORNERS+num_node)
-                             ncommon_nodes = ncommon_nodes + 1
-                          endif
-                       enddo
-                    enddo
-                    if ( ncommon_nodes > 0 ) then
-                       tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+2) = ncommon_nodes
-                    else
-                       print *, "Error while building interfaces!", ncommon_nodes
-                       stop 'fatal error'
-                    endif
-                    num_edge = num_edge + 1
-                 endif
+    do num_part_bis = num_part+1, nparts-1
+      do el = 0, nelmnts-1
+        if ( part(el) == num_part ) then
+          if ( phi_material(num_material(el+1)) < TINYVAL) then
+            is_acoustic_el = .false.
+            is_elastic_el = .true.
+          elseif ( phi_material(num_material(el+1)) >= 1.d0) then
+            is_acoustic_el = .true.
+            is_elastic_el = .false.
+          else
+            is_acoustic_el = .false.
+            is_elastic_el = .false.
+          endif
+          do el_adj = xadj_g(el), xadj_g(el+1)-1
+            if ( phi_material(num_material(adjncy_g(el_adj)+1)) < TINYVAL) then
+              is_acoustic_el_adj = .false.
+              is_elastic_el_adj = .true.
+            elseif ( phi_material(num_material(adjncy_g(el_adj)+1)) >= 1.d0) then
+              is_acoustic_el_adj = .true.
+              is_elastic_el_adj = .false.
+            else
+              is_acoustic_el_adj = .false.
+              is_elastic_el_adj = .false.
+            endif
+            if ( (part(adjncy_g(el_adj)) == num_part_bis) .and. &
+                (is_acoustic_el .eqv. is_acoustic_el_adj) .and. &
+                (is_elastic_el .eqv. is_elastic_el_adj) ) then
+              tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+0) = el
+              tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+1) = adjncy_g(el_adj)
+              ncommon_nodes = 0
+              do num_node = 0, 4-1
+                do num_node_bis = 0, 4-1
+                  if ( elmnts_l(el*NCORNERS+num_node) == &
+                      elmnts_l(adjncy_g(el_adj)*NCORNERS+num_node_bis) ) then
+                    tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+3+ncommon_nodes) &
+                                = elmnts_l(el*NCORNERS+num_node)
+                    ncommon_nodes = ncommon_nodes + 1
+                  endif
+                enddo
               enddo
-           endif
+              if ( ncommon_nodes > 0 ) then
+                tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+2) = ncommon_nodes
+              else
+                print *, "Error while building interfaces!", ncommon_nodes
+                stop 'fatal error'
+              endif
+              num_edge = num_edge + 1
+            endif
+          enddo
+        endif
 
-        enddo
-        num_edge = 0
-        num_interface = num_interface + 1
-     enddo
+      enddo
+      num_edge = 0
+      num_interface = num_interface + 1
+    enddo
   enddo
 
   end subroutine Construct_interfaces
@@ -693,9 +717,7 @@ contains
         do j = glob2loc_nodes_nparts(i), glob2loc_nodes_nparts(i+1)-1
            if ( glob2loc_nodes_parts(j) == iproc ) then
               npgeo = npgeo + 1
-
            endif
-
         enddo
      enddo
   else
@@ -1257,6 +1279,7 @@ contains
   edgecut = vwgt(0)
   edgecut = 0
 
+  ! we use default strategy for partitioning, thus omit specifing explicit strategy .
   call scotchfstratinit (SCOTCHSTRAT(1), IERR)
    IF (IERR .NE. 0) THEN
      PRINT *, 'ERROR : MAIN : Cannot initialize strat'
@@ -1269,11 +1292,17 @@ contains
      STOP
   ENDIF
 
+  ! fills graph structure : see user manual (scotch_user5.1.pdf, page 72/73)
+  ! arguments: #(1) graph_structure       #(2) baseval(either 0/1)    #(3) number_of_vertices
+  !                    #(4) adjacency_index_array         #(5) adjacency_end_index_array (optional)
+  !                    #(6) vertex_load_array (optional) #(7) vertex_label_array
+  !                    #(7) number_of_arcs                    #(8) adjacency_array
+  !                    #(9) arc_load_array (optional)      #(10) ierror
   CALL SCOTCHFGRAPHBUILD (SCOTCHGRAPH (1), 0, nelmnts, &
-       xadj (0), xadj (0), &
-       xadj (0), xadj (0), &
-       nb_edges, &
-       adjncy (0), adjwgt (0), IERR)
+                          xadj_g(0), xadj_g(0), &
+                          xadj_g(0), xadj_g(0), &
+                          nb_edges, &
+                          adjncy_g(0), adjwgt (0), IERR)
   IF (IERR .NE. 0) THEN
      PRINT *, 'ERROR : MAIN : Cannot build graph'
      STOP
@@ -1322,15 +1351,20 @@ contains
   double precision, dimension(nb_materials), intent(in)  :: phi_material
   integer, dimension(1:nelmnts), intent(in)  :: num_material
 
-
+  ! local parameters
+  integer, dimension(:), allocatable  :: xadj_l
+  integer, dimension(:), allocatable  :: adjncy_l
   logical, dimension(nb_materials)  :: is_acoustic, is_elastic
-
   integer  :: i, num_edge
   integer  :: el, el_adj
   logical  :: is_repartitioned
 
+  allocate(xadj_l(0:nelmnts))
+  allocate(adjncy_l(0:MAX_NEIGHBORS*nelmnts-1))
+  
   is_acoustic(:) = .false.
   is_elastic(:) = .false.
+  
   do i = 1, nb_materials
      if (phi_material(i) >= 1.d0) then
         is_acoustic(i) = .true.
@@ -1340,16 +1374,16 @@ contains
      endif
   enddo
 
-  call mesh2dual_ncommonnodes(elmnts_l, 2)
+  ! determines maximum neighbors based on 2 common nodes (common edge)
+  call mesh2dual_ncommonnodes(elmnts_l, 2, xadj_l, adjncy_l)
 
   nedges_coupled = 0
   do el = 0, nelmnts-1
      if ( is_acoustic(num_material(el+1)) ) then
-        do el_adj = xadj(el), xadj(el+1) - 1
-           if ( is_elastic(num_material(adjncy(el_adj)+1)) ) then
+        do el_adj = xadj_l(el), xadj_l(el+1) - 1
+           if ( is_elastic(num_material(adjncy_l(el_adj)+1)) ) then
               nedges_coupled = nedges_coupled + 1
            endif
-
         enddo
      endif
   enddo
@@ -1359,11 +1393,11 @@ contains
   nedges_coupled = 0
   do el = 0, nelmnts-1
      if ( is_acoustic(num_material(el+1)) ) then
-        do el_adj = xadj(el), xadj(el+1) - 1
-           if ( is_elastic(num_material(adjncy(el_adj)+1)) ) then
+        do el_adj = xadj_l(el), xadj_l(el+1) - 1
+           if ( is_elastic(num_material(adjncy_l(el_adj)+1)) ) then
               nedges_coupled = nedges_coupled + 1
               edges_coupled(1,nedges_coupled) = el
-              edges_coupled(2,nedges_coupled) = adjncy(el_adj)
+              edges_coupled(2,nedges_coupled) = adjncy_l(el_adj)
            endif
 
         enddo
@@ -1388,6 +1422,8 @@ contains
      endif
   enddo
 
+  deallocate(xadj_l,adjncy_l)
+
   end subroutine acoustic_elastic_repartitioning
 
 
@@ -1406,15 +1442,20 @@ contains
   double precision, dimension(nb_materials), intent(in)  :: phi_material
   integer, dimension(1:nelmnts), intent(in)  :: num_material
 
-
+  ! local parameters
+  integer, dimension(:), allocatable  :: xadj_l
+  integer, dimension(:), allocatable  :: adjncy_l
   logical, dimension(nb_materials)  :: is_acoustic,is_poroelastic
-
   integer  :: i, num_edge
   integer  :: el, el_adj
   logical  :: is_repartitioned
 
+  allocate(xadj_l(0:nelmnts))
+  allocate(adjncy_l(0:MAX_NEIGHBORS*nelmnts-1))
+
   is_acoustic(:) = .false.
   is_poroelastic(:) = .false.
+  
   do i = 1, nb_materials
      if (phi_material(i) >=1.d0) then
         is_acoustic(i) = .true.
@@ -1424,13 +1465,14 @@ contains
      endif
   enddo
 
-  call mesh2dual_ncommonnodes(elmnts_l, 2)
+  ! determines maximum neighbors based on 2 common nodes (common edge)
+  call mesh2dual_ncommonnodes(elmnts_l, 2, xadj_l, adjncy_l)
 
   nedges_acporo_coupled = 0
   do el = 0, nelmnts-1
      if ( is_acoustic(num_material(el+1)) ) then
-        do el_adj = xadj(el), xadj(el+1) - 1
-           if ( is_poroelastic(num_material(adjncy(el_adj)+1)) ) then
+        do el_adj = xadj_l(el), xadj_l(el+1) - 1
+           if ( is_poroelastic(num_material(adjncy_l(el_adj)+1)) ) then
               nedges_acporo_coupled = nedges_acporo_coupled + 1
            endif
 
@@ -1445,11 +1487,11 @@ contains
   nedges_acporo_coupled = 0
   do el = 0, nelmnts-1
      if ( is_acoustic(num_material(el+1)) ) then
-        do el_adj = xadj(el), xadj(el+1) - 1
-           if ( is_poroelastic(num_material(adjncy(el_adj)+1)) ) then
+        do el_adj = xadj_l(el), xadj_l(el+1) - 1
+           if ( is_poroelastic(num_material(adjncy_l(el_adj)+1)) ) then
               nedges_acporo_coupled = nedges_acporo_coupled + 1
               edges_acporo_coupled(1,nedges_acporo_coupled) = el
-              edges_acporo_coupled(2,nedges_acporo_coupled) = adjncy(el_adj)
+              edges_acporo_coupled(2,nedges_acporo_coupled) = adjncy_l(el_adj)
            endif
 
         enddo
@@ -1474,6 +1516,8 @@ contains
      endif
   enddo
 
+  deallocate(xadj_l,adjncy_l)
+
   end subroutine acoustic_poro_repartitioning
 
 
@@ -1492,14 +1536,20 @@ contains
   double precision, dimension(nb_materials), intent(in)  :: phi_material
   integer, dimension(1:nelmnts), intent(in)  :: num_material
 
+  ! local parameters
+  integer, dimension(:), allocatable  :: xadj_l
+  integer, dimension(:), allocatable  :: adjncy_l
   logical, dimension(nb_materials)  :: is_elastic,is_poroelastic
-
   integer  :: i, num_edge
   integer  :: el, el_adj
   logical  :: is_repartitioned
 
+  allocate(xadj_l(0:nelmnts))
+  allocate(adjncy_l(0:MAX_NEIGHBORS*nelmnts-1))
+
   is_elastic(:) = .false.
   is_poroelastic(:) = .false.
+
   do i = 1, nb_materials
      if (phi_material(i) < TINYVAL) then
         is_elastic(i) = .true.
@@ -1509,13 +1559,14 @@ contains
      endif
   enddo
 
-  call mesh2dual_ncommonnodes(elmnts_l, 2)
+  ! determines maximum neighbors based on 2 common nodes (common edge)
+  call mesh2dual_ncommonnodes(elmnts_l, 2, xadj_l, adjncy_l)
 
   nedges_elporo_coupled = 0
   do el = 0, nelmnts-1
      if ( is_poroelastic(num_material(el+1)) ) then
-        do el_adj = xadj(el), xadj(el+1) - 1
-           if ( is_elastic(num_material(adjncy(el_adj)+1)) ) then
+        do el_adj = xadj_l(el), xadj_l(el+1) - 1
+           if ( is_elastic(num_material(adjncy_l(el_adj)+1)) ) then
               nedges_elporo_coupled = nedges_elporo_coupled + 1
            endif
 
@@ -1530,11 +1581,11 @@ contains
   nedges_elporo_coupled = 0
   do el = 0, nelmnts-1
      if ( is_poroelastic(num_material(el+1)) ) then
-        do el_adj = xadj(el), xadj(el+1) - 1
-           if ( is_elastic(num_material(adjncy(el_adj)+1)) ) then
+        do el_adj = xadj_l(el), xadj_l(el+1) - 1
+           if ( is_elastic(num_material(adjncy_l(el_adj)+1)) ) then
               nedges_elporo_coupled = nedges_elporo_coupled + 1
               edges_elporo_coupled(1,nedges_elporo_coupled) = el
-              edges_elporo_coupled(2,nedges_elporo_coupled) = adjncy(el_adj)
+              edges_elporo_coupled(2,nedges_elporo_coupled) = adjncy_l(el_adj)
            endif
 
         enddo
@@ -1559,6 +1610,8 @@ contains
      endif
   enddo
 
+  deallocate(xadj_l,adjncy_l)
+  
   end subroutine poro_elastic_repartitioning
 
 

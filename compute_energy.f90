@@ -42,18 +42,19 @@
 !
 !========================================================================
 
-  subroutine compute_energy(displ_elastic,veloc_elastic,displs_poroelastic,velocs_poroelastic, &
+  subroutine compute_energy(displ_elastic,veloc_elastic, &
+                            displs_poroelastic,velocs_poroelastic, &
                             displw_poroelastic,velocw_poroelastic, &
                             xix,xiz,gammax,gammaz,jacobian,ibool, &
                             elastic,poroelastic,hprime_xx,hprime_zz, &
-                            nspec,npoin,assign_external_model,it,deltat, &
-                            t0,kmato,elastcoef,density, &
+                            nspec,npoin_acoustic,npoin_elastic,npoin_poroelastic, &
+                            assign_external_model,it,deltat,t0,kmato,poroelastcoef,density, &
                             porosity,tortuosity, &
                             vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext, &
                             anisotropic,anisotropy,wxgll,wzgll,numat, &
                             pressure_element,vector_field_element,e1,e11, &
                             potential_dot_acoustic,potential_dot_dot_acoustic, &
-                            TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
+                            TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS,p_sv)
 
 ! compute kinetic and potential energy in the solid (acoustic elements are excluded)
 
@@ -61,7 +62,7 @@
 
   include "constants.h"
 
-  integer :: nspec,npoin,numat
+  integer :: nspec,numat
 
 ! vector field in an element
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLX) :: vector_field_element
@@ -73,10 +74,11 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11
   double precision, dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
 
-  real(kind=CUSTOM_REAL), dimension(npoin) :: &
+  integer :: npoin_acoustic
+  real(kind=CUSTOM_REAL), dimension(npoin_acoustic) :: &
     potential_dot_acoustic,potential_dot_dot_acoustic
 
-  logical :: TURN_ATTENUATION_ON
+  logical :: TURN_ATTENUATION_ON,p_sv
 
   integer :: it
   double precision :: t0,deltat
@@ -86,22 +88,22 @@
   logical, dimension(nspec) :: elastic,poroelastic,anisotropic
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
-
   integer, dimension(nspec) :: kmato
-
   logical :: assign_external_model
-
   double precision, dimension(2,numat) :: density
   double precision, dimension(numat) :: porosity,tortuosity
   double precision, dimension(6,numat) :: anisotropy
-  double precision, dimension(4,3,numat) :: elastcoef
+  double precision, dimension(4,3,numat) :: poroelastcoef
   double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,vsext,rhoext
   double precision, dimension(NGLLX,NGLLZ,nspec) ::  c11ext,c15ext,c13ext, &
     c33ext,c35ext,c55ext
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displ_elastic,veloc_elastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displs_poroelastic,velocs_poroelastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displw_poroelastic,velocw_poroelastic
+  integer :: npoin_elastic
+  real(kind=CUSTOM_REAL), dimension(3,npoin_elastic) :: displ_elastic,veloc_elastic
+  
+  integer :: npoin_poroelastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin_poroelastic) :: displs_poroelastic,velocs_poroelastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin_poroelastic) :: displw_poroelastic,velocw_poroelastic
 
 ! Gauss-Lobatto-Legendre points and weights
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
@@ -143,10 +145,15 @@
     !---
     if(elastic(ispec)) then
 
+      ! checks wave type
+      if( .not. p_sv ) then
+        call exit_MPI('output energy for SH waves not implemented yet')
+      endif
+
       ! get relaxed elastic parameters of current spectral element
-      lambdal_relaxed = elastcoef(1,1,kmato(ispec))
-      mul_relaxed = elastcoef(2,1,kmato(ispec))
-      lambdalplus2mul_relaxed = elastcoef(3,1,kmato(ispec))
+      lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
+      mul_relaxed = poroelastcoef(2,1,kmato(ispec))
+      lambdalplus2mul_relaxed = poroelastcoef(3,1,kmato(ispec))
       rhol  = density(1,kmato(ispec))
 
       ! double loop over GLL points
@@ -164,19 +171,19 @@
           endif
 
           ! derivative along x and along z
-          dux_dxi = ZERO
-          duz_dxi = ZERO
+          dux_dxi = 0._CUSTOM_REAL
+          duz_dxi = 0._CUSTOM_REAL
 
-          dux_dgamma = ZERO
-          duz_dgamma = ZERO
+          dux_dgamma = 0._CUSTOM_REAL
+          duz_dgamma = 0._CUSTOM_REAL
 
           ! first double loop over GLL points to compute and store gradients
           ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
             dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-            duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+            duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
             dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-            duz_dgamma = duz_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
+            duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
           enddo
 
           xixl = xix(i,j,ispec)
@@ -195,7 +202,7 @@
           ! compute kinetic energy
           kinetic_energy = kinetic_energy  &
               + rhol*(veloc_elastic(1,ibool(i,j,ispec))**2  &
-              + veloc_elastic(2,ibool(i,j,ispec))**2) *wxgll(i)*wzgll(j)*jacobianl / TWO
+              + veloc_elastic(3,ibool(i,j,ispec))**2) *wxgll(i)*wzgll(j)*jacobianl / TWO
 
           ! compute potential energy
           potential_energy = potential_energy &
@@ -217,15 +224,15 @@
       phil = porosity(kmato(ispec))
       tortl = tortuosity(kmato(ispec))
       !solid properties
-      mul_s = elastcoef(2,1,kmato(ispec))
-      kappal_s = elastcoef(3,1,kmato(ispec)) - FOUR_THIRDS*mul_s
+      mul_s = poroelastcoef(2,1,kmato(ispec))
+      kappal_s = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS*mul_s
       rhol_s = density(1,kmato(ispec))
       !fluid properties
-      kappal_f = elastcoef(1,2,kmato(ispec))
+      kappal_f = poroelastcoef(1,2,kmato(ispec))
       rhol_f = density(2,kmato(ispec))
       !frame properties
-      mul_fr = elastcoef(2,3,kmato(ispec))
-      kappal_fr = elastcoef(3,3,kmato(ispec)) - FOUR_THIRDS*mul_fr
+      mul_fr = poroelastcoef(2,3,kmato(ispec))
+      kappal_fr = poroelastcoef(3,3,kmato(ispec)) - FOUR_THIRDS*mul_fr
       rhol_bar =  (1.d0 - phil)*rhol_s + phil*rhol_f
       !Biot coefficients for the input phi
       D_biot = kappal_s*(1.d0 + phil*(kappal_s/kappal_f - 1.d0))
@@ -337,24 +344,25 @@
       ! and pressure is: p = - Chi_dot_dot  (Chi_dot_dot being the time second derivative of Chi).
 
       ! compute pressure in this element
-      call compute_pressure_one_element(pressure_element, &
-                  potential_dot_dot_acoustic,displ_elastic,elastic, &
-                  xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                  nspec,npoin,assign_external_model, &
-                  numat,kmato,elastcoef,vpext,vsext,rhoext, &
-                  c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy, &
-                  ispec,e1,e11, &
+      call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic, &
+                  displs_poroelastic,displw_poroelastic,elastic,poroelastic, &
+                  xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
+                  npoin_acoustic,npoin_elastic,npoin_poroelastic,assign_external_model, &
+                  numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
+                  c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,ispec,e1,e11, &
                   TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
 
       ! compute velocity vector field in this element
-      call compute_vector_one_element(vector_field_element, &
-                  potential_dot_acoustic,veloc_elastic,elastic, &
-                  xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                  nspec,npoin,ispec,numat,kmato,density,rhoext,assign_external_model)
+      call compute_vector_one_element(vector_field_element,potential_dot_acoustic, &
+                  veloc_elastic,velocs_poroelastic, &
+                  elastic,poroelastic,xix,xiz,gammax,gammaz, &
+                  ibool,hprime_xx,hprime_zz, &
+                  nspec,npoin_acoustic,npoin_elastic,npoin_poroelastic, &
+                  ispec,numat,kmato,density,rhoext,assign_external_model)
 
       ! get density of current spectral element
-      lambdal_relaxed = elastcoef(1,1,kmato(ispec))
-      mul_relaxed = elastcoef(2,1,kmato(ispec))
+      lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
+      mul_relaxed = poroelastcoef(2,1,kmato(ispec))
       rhol  = density(1,kmato(ispec))
       kappal  = lambdal_relaxed + TWO*mul_relaxed/3._CUSTOM_REAL
       cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_relaxed/3._CUSTOM_REAL)/rhol)

@@ -41,8 +41,10 @@
 !
 !========================================================================
 
-subroutine compute_curl_one_element(curl_element,displ_elastic,displs_poroelastic,elastic,poroelastic, &
-     xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec,npoin,ispec)
+  subroutine compute_curl_one_element(curl_element,displ_elastic, &
+                              displs_poroelastic,elastic,poroelastic, &
+                              xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
+                              nspec,npoin_elastic,npoin_poroelastic,ispec)
 
   ! compute curl in (poro)elastic elements (for rotational study)
 
@@ -50,7 +52,7 @@ subroutine compute_curl_one_element(curl_element,displ_elastic,displs_poroelasti
 
   include "constants.h"
 
-  integer nspec,npoin,ispec
+  integer nspec,ispec
 
   integer, dimension(NGLLX,NGLLX,nspec) :: ibool
 
@@ -60,7 +62,11 @@ subroutine compute_curl_one_element(curl_element,displ_elastic,displs_poroelasti
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: curl_element
 
   logical, dimension(nspec) :: elastic,poroelastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displ_elastic,displs_poroelastic
+
+  integer :: npoin_elastic
+  real(kind=CUSTOM_REAL), dimension(3,npoin_elastic) :: displ_elastic
+  integer :: npoin_poroelastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin_poroelastic) :: displs_poroelastic
 
   ! array with derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
@@ -92,9 +98,9 @@ subroutine compute_curl_one_element(curl_element,displ_elastic,displs_poroelasti
            ! we can merge the two loops because NGLLX == NGLLZ
            do k = 1,NGLLX
               dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-              duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+              duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
               dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-              duz_dgamma = duz_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
+              duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
            enddo
 
            xixl = xix(i,j,ispec)

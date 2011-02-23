@@ -43,11 +43,11 @@
 !
 !========================================================================
 
-  subroutine invert_mass_matrix_init(any_elastic,any_acoustic,any_poroelastic,npoin, &
-                                rmass_inverse_elastic,&
-                                rmass_inverse_acoustic, &
+  subroutine invert_mass_matrix_init(any_elastic,any_acoustic,any_poroelastic, &
+                                rmass_inverse_elastic,npoin_elastic, &
+                                rmass_inverse_acoustic,npoin_acoustic, &
                                 rmass_s_inverse_poroelastic, &
-                                rmass_w_inverse_poroelastic, &
+                                rmass_w_inverse_poroelastic,npoin_poroelastic, &
                                 nspec,ibool,kmato,wxgll,wzgll,jacobian, &
                                 elastic,poroelastic, &
                                 assign_external_model,numat, &
@@ -60,11 +60,17 @@
   include 'constants.h'
 
   logical any_elastic,any_acoustic,any_poroelastic
-  integer npoin
 
   ! inverse mass matrices
-  real(kind=CUSTOM_REAL), dimension(npoin) :: rmass_inverse_elastic,rmass_inverse_acoustic
-  real(kind=CUSTOM_REAL), dimension(npoin) :: rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic
+  integer :: npoin_elastic
+  real(kind=CUSTOM_REAL), dimension(npoin_elastic) :: rmass_inverse_elastic
+  
+  integer :: npoin_acoustic
+  real(kind=CUSTOM_REAL), dimension(npoin_acoustic) :: rmass_inverse_acoustic
+  
+  integer :: npoin_poroelastic
+  real(kind=CUSTOM_REAL), dimension(npoin_poroelastic) :: &
+    rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic
   
   integer :: nspec
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
@@ -88,10 +94,10 @@
   double precision :: rhol_s,rhol_f,rhol_bar,phil,tortl
   
   ! initializes mass matrix
-  if(any_elastic) rmass_inverse_elastic(:) = ZERO
-  if(any_poroelastic) rmass_s_inverse_poroelastic(:) = ZERO
-  if(any_poroelastic) rmass_w_inverse_poroelastic(:) = ZERO
-  if(any_acoustic) rmass_inverse_acoustic(:) = ZERO
+  if(any_elastic) rmass_inverse_elastic(:) = 0._CUSTOM_REAL
+  if(any_poroelastic) rmass_s_inverse_poroelastic(:) = 0._CUSTOM_REAL
+  if(any_poroelastic) rmass_w_inverse_poroelastic(:) = 0._CUSTOM_REAL
+  if(any_acoustic) rmass_inverse_acoustic(:) = 0._CUSTOM_REAL
   
   do ispec = 1,nspec
     do j = 1,NGLLZ
@@ -152,11 +158,11 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine invert_mass_matrix(any_elastic,any_acoustic,any_poroelastic,npoin, &
-                                rmass_inverse_elastic,&
-                                rmass_inverse_acoustic, &
+  subroutine invert_mass_matrix(any_elastic,any_acoustic,any_poroelastic, &
+                                rmass_inverse_elastic,npoin_elastic, &
+                                rmass_inverse_acoustic,npoin_acoustic, &
                                 rmass_s_inverse_poroelastic, &
-                                rmass_w_inverse_poroelastic)
+                                rmass_w_inverse_poroelastic,npoin_poroelastic)
 
 ! inverts the global mass matrix
 
@@ -165,23 +171,36 @@
 
   logical any_elastic,any_acoustic,any_poroelastic
 
-  integer npoin
-
 ! inverse mass matrices
-  real(kind=CUSTOM_REAL), dimension(npoin) :: rmass_inverse_elastic,rmass_inverse_acoustic
-  real(kind=CUSTOM_REAL), dimension(npoin) :: rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic
+  integer :: npoin_elastic
+  real(kind=CUSTOM_REAL), dimension(npoin_elastic) :: rmass_inverse_elastic
+
+  integer :: npoin_acoustic
+  real(kind=CUSTOM_REAL), dimension(npoin_acoustic) :: rmass_inverse_acoustic
+  
+  integer :: npoin_poroelastic
+  real(kind=CUSTOM_REAL), dimension(npoin_poroelastic) :: &
+    rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic
 
 
 ! fill mass matrix with fictitious non-zero values to make sure it can be inverted globally
-  if(any_elastic) where(rmass_inverse_elastic <= 0._CUSTOM_REAL) rmass_inverse_elastic = 1._CUSTOM_REAL
-  if(any_poroelastic) where(rmass_s_inverse_poroelastic <= 0._CUSTOM_REAL) rmass_s_inverse_poroelastic = 1._CUSTOM_REAL
-  if(any_poroelastic) where(rmass_w_inverse_poroelastic <= 0._CUSTOM_REAL) rmass_w_inverse_poroelastic = 1._CUSTOM_REAL
-  if(any_acoustic) where(rmass_inverse_acoustic <= 0._CUSTOM_REAL) rmass_inverse_acoustic = 1._CUSTOM_REAL
+  if(any_elastic) &
+    where(rmass_inverse_elastic <= 0._CUSTOM_REAL) rmass_inverse_elastic = 1._CUSTOM_REAL
+  if(any_poroelastic) &
+    where(rmass_s_inverse_poroelastic <= 0._CUSTOM_REAL) rmass_s_inverse_poroelastic = 1._CUSTOM_REAL
+  if(any_poroelastic) &
+    where(rmass_w_inverse_poroelastic <= 0._CUSTOM_REAL) rmass_w_inverse_poroelastic = 1._CUSTOM_REAL
+  if(any_acoustic) &
+    where(rmass_inverse_acoustic <= 0._CUSTOM_REAL) rmass_inverse_acoustic = 1._CUSTOM_REAL
 
 ! compute the inverse of the mass matrix
-  if(any_elastic) rmass_inverse_elastic(:) = 1._CUSTOM_REAL / rmass_inverse_elastic(:)
-  if(any_poroelastic) rmass_s_inverse_poroelastic(:) = 1._CUSTOM_REAL / rmass_s_inverse_poroelastic(:)
-  if(any_poroelastic) rmass_w_inverse_poroelastic(:) = 1._CUSTOM_REAL / rmass_w_inverse_poroelastic(:)
-  if(any_acoustic) rmass_inverse_acoustic(:) = 1._CUSTOM_REAL / rmass_inverse_acoustic(:)
+  if(any_elastic) &
+    rmass_inverse_elastic(:) = 1._CUSTOM_REAL / rmass_inverse_elastic(:)
+  if(any_poroelastic) &
+    rmass_s_inverse_poroelastic(:) = 1._CUSTOM_REAL / rmass_s_inverse_poroelastic(:)
+  if(any_poroelastic) &
+    rmass_w_inverse_poroelastic(:) = 1._CUSTOM_REAL / rmass_w_inverse_poroelastic(:)
+  if(any_acoustic) &
+    rmass_inverse_acoustic(:) = 1._CUSTOM_REAL / rmass_inverse_acoustic(:)
 
   end subroutine invert_mass_matrix

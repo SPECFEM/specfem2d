@@ -54,7 +54,9 @@
 !-----------------------------------------------
 ! Assembling the mass matrix.
 !-----------------------------------------------
-  subroutine assemble_MPI_scalar(array_val1, array_val2, array_val3, array_val4,npoin, &
+  subroutine assemble_MPI_scalar(array_val1,npoin_val1, &
+                              array_val2,npoin_val2, &
+                              array_val3,array_val4,npoin_val3, &
                               ninterface, max_interface_size, max_ibool_interfaces_size_ac, &
                               max_ibool_interfaces_size_el, &
                               max_ibool_interfaces_size_po, &
@@ -68,7 +70,6 @@
   include 'constants.h'
   include 'mpif.h'
 
-  integer, intent(in)  :: npoin
   integer, intent(in)  :: ninterface
   integer, intent(in)  :: max_interface_size
   integer, intent(in)  :: max_ibool_interfaces_size_ac,max_ibool_interfaces_size_el, &
@@ -79,7 +80,15 @@
     nibool_interfaces_poroelastic
   integer, dimension(ninterface), intent(in)  :: my_neighbours
   ! array to assemble
-  real(kind=CUSTOM_REAL), dimension(npoin), intent(inout) :: array_val1,array_val2,array_val3,array_val4
+  ! acoustic
+  integer :: npoin_val1
+  real(kind=CUSTOM_REAL), dimension(npoin_val1), intent(inout) :: array_val1
+  ! elastic
+  integer :: npoin_val2
+  real(kind=CUSTOM_REAL), dimension(npoin_val2), intent(inout) :: array_val2
+  ! poroelastic
+  integer :: npoin_val3
+  real(kind=CUSTOM_REAL), dimension(npoin_val3), intent(inout) :: array_val3,array_val4
 
   integer  :: ipoin, num_interface
   integer  :: ier
@@ -88,7 +97,7 @@
        2*max_ibool_interfaces_size_po, ninterface)  :: &
        buffer_send_faces_scalar, &
        buffer_recv_faces_scalar
-  integer  :: msg_status(MPI_STATUS_SIZE)
+  integer, dimension(MPI_STATUS_SIZE) :: msg_status
   integer, dimension(ninterface)  :: msg_requests
 
   buffer_send_faces_scalar(:,:) = 0.d0
@@ -120,6 +129,7 @@
              array_val4(ibool_interfaces_poroelastic(i,num_interface))
      end do
 
+     ! non-blocking synchronous send request
      call MPI_ISSEND( buffer_send_faces_scalar(1,num_interface), &
           nibool_interfaces_acoustic(num_interface)+nibool_interfaces_elastic(num_interface)+&
           nibool_interfaces_poroelastic(num_interface)+nibool_interfaces_poroelastic(num_interface), &
@@ -130,6 +140,8 @@
   end do
 
   do num_interface = 1, ninterface
+     
+     ! starts a blocking receive  
      call MPI_recv ( buffer_recv_faces_scalar(1,num_interface), &
           nibool_interfaces_acoustic(num_interface)+nibool_interfaces_elastic(num_interface)+&
           nibool_interfaces_poroelastic(num_interface)+nibool_interfaces_poroelastic(num_interface), &
@@ -167,6 +179,7 @@
 
   end do
 
+  ! synchronizes MPI processes
   call MPI_BARRIER(mpi_comm_world,ier)
 
   end subroutine assemble_MPI_scalar
@@ -216,45 +229,50 @@
   integer, dimension(ninterface), intent(in) :: my_neighbours
 
   ! local parameters
-  integer  :: ipoin, num_interface, inum_interface
-  integer  :: ier
-  integer  :: i
+  integer  :: ipoin, num_interface,iinterface,ier,iglob
   integer, dimension(MPI_STATUS_SIZE)  :: status_acoustic
 
   ! initializes buffers
   buffer_send_faces_vector_ac(:,:) = 0._CUSTOM_REAL
   buffer_recv_faces_vector_ac(:,:) = 0._CUSTOM_REAL
+  tab_requests_send_recv_acoustic(:) = 0
   
-  do inum_interface = 1, ninterface_acoustic
+  ! loops over acoustic interfaces only
+  do iinterface = 1, ninterface_acoustic
 
-     num_interface = inum_interfaces_acoustic(inum_interface)
+    ! gets interface index in the range of all interfaces [1,ninterface]
+    num_interface = inum_interfaces_acoustic(iinterface)
 
-     ipoin = 0
-     do i = 1, nibool_interfaces_acoustic(num_interface)
-     ipoin = ipoin + 1
-        buffer_send_faces_vector_ac(ipoin,inum_interface) = &
-             array_val1(ibool_interfaces_acoustic(i,num_interface))
-     end do
+    ! loops over all interface points
+    do ipoin = 1, nibool_interfaces_acoustic(num_interface)
+      iglob = ibool_interfaces_acoustic(ipoin,num_interface)
+
+      ! copies array values to buffer
+      buffer_send_faces_vector_ac(ipoin,iinterface) = array_val1(iglob)
+    end do
 
   end do
 
-  do inum_interface = 1, ninterface_acoustic
+  do iinterface = 1, ninterface_acoustic
 
-    num_interface = inum_interfaces_acoustic(inum_interface)
+    ! gets global interface index
+    num_interface = inum_interfaces_acoustic(iinterface)
 
-    call MPI_ISSEND( buffer_send_faces_vector_ac(1,inum_interface), &
+    ! non-blocking synchronous send
+    call MPI_ISSEND( buffer_send_faces_vector_ac(1,iinterface), &
              nibool_interfaces_acoustic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-             tab_requests_send_recv_acoustic(inum_interface), ier)
+             tab_requests_send_recv_acoustic(iinterface), ier)
 
     if ( ier /= MPI_SUCCESS ) then
       call exit_mpi('MPI_ISSEND unsuccessful in assemble_MPI_vector_start')
     end if
 
-    call MPI_Irecv ( buffer_recv_faces_vector_ac(1,inum_interface), &
+    ! starts a non-blocking receive
+    call MPI_Irecv ( buffer_recv_faces_vector_ac(1,iinterface), &
              nibool_interfaces_acoustic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-             tab_requests_send_recv_acoustic(ninterface_acoustic+inum_interface), ier)
+             tab_requests_send_recv_acoustic(ninterface_acoustic+iinterface), ier)
 
     if ( ier /= MPI_SUCCESS ) then
       call exit_mpi('MPI_Irecv unsuccessful in assemble_MPI_vector')
@@ -262,25 +280,36 @@
 
   end do
 
-  do inum_interface = 1, ninterface_acoustic*2
-
-    call MPI_Wait (tab_requests_send_recv_acoustic(inum_interface), status_acoustic, ier)
-
+  
+  ! waits for MPI requests to complete (recv)
+  ! each wait returns once the specified MPI request completed
+  do iinterface = 1, ninterface_acoustic
+    call MPI_Wait (tab_requests_send_recv_acoustic(ninterface_acoustic+iinterface), &
+                  status_acoustic, ier)
   enddo
 
-  do inum_interface = 1, ninterface_acoustic
+  ! assembles the array values
+  do iinterface = 1, ninterface_acoustic
 
-     num_interface = inum_interfaces_acoustic(inum_interface)
+    ! gets global interface index 
+    num_interface = inum_interfaces_acoustic(iinterface)
 
-     ipoin = 0
-     do i = 1, nibool_interfaces_acoustic(num_interface)
-        ipoin = ipoin + 1
-        array_val1(ibool_interfaces_acoustic(i,num_interface)) = &
-              array_val1(ibool_interfaces_acoustic(i,num_interface)) &
-              + buffer_recv_faces_vector_ac(ipoin,inum_interface)
-     end do
+    ! loops over all interface points
+    do ipoin = 1, nibool_interfaces_acoustic(num_interface)
+      iglob = ibool_interfaces_acoustic(ipoin,num_interface)
+      ! adds buffer contribution
+      array_val1(iglob) = array_val1(iglob) + buffer_recv_faces_vector_ac(ipoin,iinterface)
+    end do
 
   end do
+
+
+  ! waits for MPI requests to complete (send)
+  ! just to make sure that all sending is done
+  do iinterface = 1, ninterface_acoustic
+    call MPI_Wait (tab_requests_send_recv_acoustic(iinterface), status_acoustic, ier)
+  enddo
+
 
   end subroutine assemble_MPI_vector_ac
 
@@ -297,15 +326,14 @@
 ! communication scheme.
 !-----------------------------------------------
   subroutine assemble_MPI_vector_el(array_val2,npoin, &
-     ninterface, ninterface_elastic, &
-     inum_interfaces_elastic, &
-     max_interface_size, max_ibool_interfaces_size_el,&
-     ibool_interfaces_elastic, nibool_interfaces_elastic, &
-     tab_requests_send_recv_elastic, &
-     buffer_send_faces_vector_el, &
-     buffer_recv_faces_vector_el, &
-     my_neighbours &
-     )
+                                   ninterface, ninterface_elastic, &
+                                   inum_interfaces_elastic, &
+                                   max_interface_size, max_ibool_interfaces_size_el,&
+                                   ibool_interfaces_elastic, nibool_interfaces_elastic, &
+                                   tab_requests_send_recv_elastic, &
+                                   buffer_send_faces_vector_el, &
+                                   buffer_recv_faces_vector_el, &
+                                   my_neighbours)
 
   implicit none
 
@@ -329,43 +357,40 @@
   real(kind=CUSTOM_REAL), dimension(3,npoin), intent(inout) :: array_val2
   integer, dimension(ninterface), intent(in) :: my_neighbours
 
-  integer  :: ipoin, num_interface, inum_interface
-  integer  :: ier
+  integer  :: ipoin, num_interface, iinterface, ier, i
   integer, dimension(MPI_STATUS_SIZE)  :: status_elastic
 
-  integer  :: i
 
+  do iinterface = 1, ninterface_elastic
 
-  do inum_interface = 1, ninterface_elastic
-
-     num_interface = inum_interfaces_elastic(inum_interface)
+     num_interface = inum_interfaces_elastic(iinterface)
 
      ipoin = 0
      do i = 1, nibool_interfaces_elastic(num_interface)
-        buffer_send_faces_vector_el(ipoin+1:ipoin+3,inum_interface) = &
+        buffer_send_faces_vector_el(ipoin+1:ipoin+3,iinterface) = &
              array_val2(:,ibool_interfaces_elastic(i,num_interface))
         ipoin = ipoin + 3
      end do
 
   end do
 
-  do inum_interface = 1, ninterface_elastic
+  do iinterface = 1, ninterface_elastic
 
-    num_interface = inum_interfaces_elastic(inum_interface)
+    num_interface = inum_interfaces_elastic(iinterface)
 
-    call MPI_ISSEND( buffer_send_faces_vector_el(1,inum_interface), &
+    call MPI_ISSEND( buffer_send_faces_vector_el(1,iinterface), &
              3*nibool_interfaces_elastic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-             tab_requests_send_recv_elastic(inum_interface), ier)
+             tab_requests_send_recv_elastic(iinterface), ier)
 
     if ( ier /= MPI_SUCCESS ) then
       call exit_mpi('MPI_ISSEND unsuccessful in assemble_MPI_vector_el')
     end if
 
-    call MPI_Irecv ( buffer_recv_faces_vector_el(1,inum_interface), &
+    call MPI_Irecv ( buffer_recv_faces_vector_el(1,iinterface), &
              3*nibool_interfaces_elastic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-             tab_requests_send_recv_elastic(ninterface_elastic+inum_interface), ier)
+             tab_requests_send_recv_elastic(ninterface_elastic+iinterface), ier)
 
     if ( ier /= MPI_SUCCESS ) then
       call exit_mpi('MPI_Irecv unsuccessful in assemble_MPI_vector_el')
@@ -373,21 +398,21 @@
 
   end do
 
-  do inum_interface = 1, ninterface_elastic*2
+  do iinterface = 1, ninterface_elastic*2
 
-    call MPI_Wait (tab_requests_send_recv_elastic(inum_interface), status_elastic, ier)
+    call MPI_Wait (tab_requests_send_recv_elastic(iinterface), status_elastic, ier)
 
   enddo
 
-  do inum_interface = 1, ninterface_elastic
+  do iinterface = 1, ninterface_elastic
 
-     num_interface = inum_interfaces_elastic(inum_interface)
+     num_interface = inum_interfaces_elastic(iinterface)
 
      ipoin = 0
      do i = 1, nibool_interfaces_elastic(num_interface)
         array_val2(:,ibool_interfaces_elastic(i,num_interface)) = &
             array_val2(:,ibool_interfaces_elastic(i,num_interface))  &
-            + buffer_recv_faces_vector_el(ipoin+1:ipoin+3,inum_interface)
+            + buffer_recv_faces_vector_el(ipoin+1:ipoin+3,iinterface)
         ipoin = ipoin + 3
      end do
 
@@ -408,15 +433,14 @@
 ! communication scheme.
 !-----------------------------------------------
   subroutine assemble_MPI_vector_po(array_val3,array_val4,npoin, &
-     ninterface, ninterface_poroelastic, &
-     inum_interfaces_poroelastic, &
-     max_interface_size, max_ibool_interfaces_size_po,&
-     ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
-     tab_requests_send_recv_poro, &
-     buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
-     buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
-     my_neighbours &
-     )
+                           ninterface, ninterface_poroelastic, &
+                           inum_interfaces_poroelastic, &
+                           max_interface_size, max_ibool_interfaces_size_po,&
+                           ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
+                           tab_requests_send_recv_poro, &
+                           buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
+                           buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
+                           my_neighbours)
 
   implicit none
 
@@ -440,68 +464,65 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,npoin), intent(inout) :: array_val3,array_val4
   integer, dimension(ninterface), intent(in) :: my_neighbours
 
-  integer  :: ipoin, num_interface, inum_interface
-  integer  :: ier
+  integer  :: ipoin, num_interface, iinterface, ier, i
   integer, dimension(MPI_STATUS_SIZE)  :: status_poroelastic
 
-  integer  :: i
 
+  do iinterface = 1, ninterface_poroelastic
 
-  do inum_interface = 1, ninterface_poroelastic
-
-     num_interface = inum_interfaces_poroelastic(inum_interface)
+     num_interface = inum_interfaces_poroelastic(iinterface)
 
      ipoin = 0
      do i = 1, nibool_interfaces_poroelastic(num_interface)
-        buffer_send_faces_vector_pos(ipoin+1:ipoin+2,inum_interface) = &
+        buffer_send_faces_vector_pos(ipoin+1:ipoin+2,iinterface) = &
              array_val3(:,ibool_interfaces_poroelastic(i,num_interface))
         ipoin = ipoin + 2
      end do
 
      ipoin = 0
      do i = 1, nibool_interfaces_poroelastic(num_interface)
-        buffer_send_faces_vector_pow(ipoin+1:ipoin+2,inum_interface) = &
+        buffer_send_faces_vector_pow(ipoin+1:ipoin+2,iinterface) = &
              array_val4(:,ibool_interfaces_poroelastic(i,num_interface))
         ipoin = ipoin + 2
      end do
 
   end do
 
-  do inum_interface = 1, ninterface_poroelastic
+  do iinterface = 1, ninterface_poroelastic
 
-    num_interface = inum_interfaces_poroelastic(inum_interface)
+    num_interface = inum_interfaces_poroelastic(iinterface)
 
-    call MPI_ISSEND( buffer_send_faces_vector_pos(1,inum_interface), &
+    call MPI_ISSEND( buffer_send_faces_vector_pos(1,iinterface), &
              NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-             tab_requests_send_recv_poro(inum_interface), ier)
+             tab_requests_send_recv_poro(iinterface), ier)
 
     if ( ier /= MPI_SUCCESS ) then
       call exit_mpi('MPI_ISSEND unsuccessful in assemble_MPI_vector_pos')
     end if
 
-    call MPI_Irecv ( buffer_recv_faces_vector_pos(1,inum_interface), &
+    call MPI_Irecv ( buffer_recv_faces_vector_pos(1,iinterface), &
              NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-             tab_requests_send_recv_poro(ninterface_poroelastic+inum_interface), ier)
+             tab_requests_send_recv_poro(ninterface_poroelastic+iinterface), ier)
 
     if ( ier /= MPI_SUCCESS ) then
       call exit_mpi('MPI_Irecv unsuccessful in assemble_MPI_vector_pos')
     end if
 
-    call MPI_ISSEND( buffer_send_faces_vector_pow(1,inum_interface), &
+    call MPI_ISSEND( buffer_send_faces_vector_pow(1,iinterface), &
              NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-             tab_requests_send_recv_poro(ninterface_poroelastic*2+inum_interface), ier)
+             tab_requests_send_recv_poro(ninterface_poroelastic*2+iinterface), ier)
 
     if ( ier /= MPI_SUCCESS ) then
       call exit_mpi('MPI_ISSEND unsuccessful in assemble_MPI_vector_pow')
     end if
 
-    call MPI_Irecv ( buffer_recv_faces_vector_pow(1,inum_interface), &
+    call MPI_Irecv ( buffer_recv_faces_vector_pow(1,iinterface), &
              NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-             tab_requests_send_recv_poro(ninterface_poroelastic*3+inum_interface), ier)
+             tab_requests_send_recv_poro(ninterface_poroelastic*3+iinterface), ier)
 
     if ( ier /= MPI_SUCCESS ) then
       call exit_mpi('MPI_Irecv unsuccessful in assemble_MPI_vector_pow')
@@ -509,21 +530,21 @@
 
   end do
 
-  do inum_interface = 1, ninterface_poroelastic*4
+  do iinterface = 1, ninterface_poroelastic*4
 
-    call MPI_Wait (tab_requests_send_recv_poro(inum_interface), status_poroelastic, ier)
+    call MPI_Wait (tab_requests_send_recv_poro(iinterface), status_poroelastic, ier)
 
   enddo
 
-  do inum_interface = 1, ninterface_poroelastic
+  do iinterface = 1, ninterface_poroelastic
 
-     num_interface = inum_interfaces_poroelastic(inum_interface)
+     num_interface = inum_interfaces_poroelastic(iinterface)
 
      ipoin = 0
      do i = 1, nibool_interfaces_poroelastic(num_interface)
         array_val3(:,ibool_interfaces_poroelastic(i,num_interface)) = &
              array_val3(:,ibool_interfaces_poroelastic(i,num_interface)) + &
-             buffer_recv_faces_vector_pos(ipoin+1:ipoin+2,inum_interface)
+             buffer_recv_faces_vector_pos(ipoin+1:ipoin+2,iinterface)
         ipoin = ipoin + 2
      end do
 
@@ -531,7 +552,7 @@
      do i = 1, nibool_interfaces_poroelastic(num_interface)
         array_val4(:,ibool_interfaces_poroelastic(i,num_interface)) = &
              array_val4(:,ibool_interfaces_poroelastic(i,num_interface)) + &
-             buffer_recv_faces_vector_pow(ipoin+1:ipoin+2,inum_interface)
+             buffer_recv_faces_vector_pow(ipoin+1:ipoin+2,iinterface)
         ipoin = ipoin + 2
      end do
 

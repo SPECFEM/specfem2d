@@ -46,10 +46,13 @@
 !---- locate_receivers finds the correct position of the receivers
 !----
 
-  subroutine locate_receivers(ibool,coord,nspec,npoin,xigll,zigll,nrec,nrecloc,recloc,which_proc_receiver,nproc,myrank, &
-       st_xval,st_zval,ispec_selected_rec, &
-       xi_receiver,gamma_receiver,station_name,network_name,x_source,z_source,coorg,knods,ngnod,npgeo,ipass, &
-       x_final_receiver, z_final_receiver)
+  subroutine locate_receivers(ibool,coord,nspec,npoin,xigll,zigll, &
+                          nrec,nrecloc,recloc,which_proc_receiver,nproc,myrank, &
+                          st_xval,st_zval,ispec_selected_rec, &
+                          xi_receiver,gamma_receiver,station_name,network_name, &
+                          x_source,z_source, &
+                          coorg,knods,ngnod,npgeo,ipass, &
+                          x_final_receiver, z_final_receiver)
 
   implicit none
 
@@ -107,6 +110,9 @@
 
 
   ierror = 0
+#ifdef USE_MPI
+  call MPI_BARRIER(MPI_COMM_WORLD,ierror)
+#endif
 
 ! **************
 
@@ -128,177 +134,179 @@
 ! loop on all the stations
   do irec=1,nrec
 
-! set distance to huge initial value
-  distmin=HUGEVAL
+    ! set distance to huge initial value
+    distmin=HUGEVAL
 
     read(1,*) station_name(irec),network_name(irec),st_xval(irec),st_zval(irec),stele,stbur
 
-! check that station is not buried, burial is not implemented in current code
+    ! check that station is not buried, burial is not implemented in current code
     if(abs(stbur) > TINYVAL) call exit_MPI('stations with non-zero burial not implemented yet')
 
-! compute distance between source and receiver
-      distance_receiver(irec) = sqrt((st_zval(irec)-z_source)**2 + (st_xval(irec)-x_source)**2)
+    ! compute distance between source and receiver
+    distance_receiver(irec) = sqrt((st_zval(irec)-z_source)**2 + (st_xval(irec)-x_source)**2)
 
-      do ispec=1,nspec
+    do ispec=1,nspec
 
-! loop only on points inside the element
-! exclude edges to ensure this point is not shared with other elements
-        do j=2,NGLLZ-1
-          do i=2,NGLLX-1
+      ! loop only on points inside the element
+      ! exclude edges to ensure this point is not shared with other elements
+      do j=2,NGLLZ-1
+        do i=2,NGLLX-1
 
-            iglob = ibool(i,j,ispec)
-            dist = sqrt((st_xval(irec)-dble(coord(1,iglob)))**2 + (st_zval(irec)-dble(coord(2,iglob)))**2)
+          iglob = ibool(i,j,ispec)
+          dist = sqrt((st_xval(irec)-dble(coord(1,iglob)))**2 + (st_zval(irec)-dble(coord(2,iglob)))**2)
 
-!           keep this point if it is closer to the receiver
-            if(dist < distmin) then
-              distmin = dist
-              ispec_selected_rec(irec) = ispec
-              ix_initial_guess = i
-              iz_initial_guess = j
-            endif
+          ! keep this point if it is closer to the receiver
+          if(dist < distmin) then
+            distmin = dist
+            ispec_selected_rec(irec) = ispec
+            ix_initial_guess = i
+            iz_initial_guess = j
+          endif
 
-          enddo
         enddo
-
-! end of loop on all the spectral elements
       enddo
+
+    ! end of loop on all the spectral elements
+    enddo
 
 
 ! ****************************************
 ! find the best (xi,gamma) for each receiver
 ! ****************************************
 
-! use initial guess in xi and gamma
-        xi = xigll(ix_initial_guess)
-        gamma = zigll(iz_initial_guess)
+    ! use initial guess in xi and gamma
+    xi = xigll(ix_initial_guess)
+    gamma = zigll(iz_initial_guess)
 
-! iterate to solve the non linear system
-  do iter_loop = 1,NUM_ITER
+    ! iterate to solve the non linear system
+    do iter_loop = 1,NUM_ITER
 
-! recompute jacobian for the new point
-    call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian,coorg,knods,ispec_selected_rec(irec),ngnod,nspec,npgeo, &
-           .true.)
+      ! recompute jacobian for the new point
+      call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
+                  coorg,knods,ispec_selected_rec(irec),ngnod,nspec,npgeo, &
+                  .true.)
 
-! compute distance to target location
-  dx = - (x - st_xval(irec))
-  dz = - (z - st_zval(irec))
+      ! compute distance to target location
+      dx = - (x - st_xval(irec))
+      dz = - (z - st_zval(irec))
 
-! compute increments
-  dxi  = xix*dx + xiz*dz
-  dgamma = gammax*dx + gammaz*dz
+      ! compute increments
+      dxi  = xix*dx + xiz*dz
+      dgamma = gammax*dx + gammaz*dz
 
-! update values
-  xi = xi + dxi
-  gamma = gamma + dgamma
+      ! update values
+      xi = xi + dxi
+      gamma = gamma + dgamma
 
-! impose that we stay in that element
-! (useful if user gives a receiver outside the mesh for instance)
-! we can go slightly outside the [1,1] segment since with finite elements
-! the polynomial solution is defined everywhere
-! this can be useful for convergence of itertive scheme with distorted elements
-  if (xi > 1.10d0) xi = 1.10d0
-  if (xi < -1.10d0) xi = -1.10d0
-  if (gamma > 1.10d0) gamma = 1.10d0
-  if (gamma < -1.10d0) gamma = -1.10d0
+      ! impose that we stay in that element
+      ! (useful if user gives a receiver outside the mesh for instance)
+      ! we can go slightly outside the [1,1] segment since with finite elements
+      ! the polynomial solution is defined everywhere
+      ! this can be useful for convergence of itertive scheme with distorted elements
+      if (xi > 1.10d0) xi = 1.10d0
+      if (xi < -1.10d0) xi = -1.10d0
+      if (gamma > 1.10d0) gamma = 1.10d0
+      if (gamma < -1.10d0) gamma = -1.10d0
 
-! end of non linear iterations
+    ! end of non linear iterations
+    enddo
+
+    ! compute final coordinates of point found
+    call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
+                coorg,knods,ispec_selected_rec(irec),ngnod,nspec,npgeo, &
+                .true.)
+
+    ! store xi,gamma of point found
+    xi_receiver(irec) = xi
+    gamma_receiver(irec) = gamma
+
+    ! compute final distance between asked and found
+    final_distance(irec) = sqrt((st_xval(irec)-x)**2 + (st_zval(irec)-z)**2)
+
+    x_final_receiver(irec) = x
+    z_final_receiver(irec) = z
+
   enddo
 
-! compute final coordinates of point found
-    call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian,coorg,knods,ispec_selected_rec(irec),ngnod,nspec,npgeo, &
-           .true.)
-
-! store xi,gamma of point found
-  xi_receiver(irec) = xi
-  gamma_receiver(irec) = gamma
-
-! compute final distance between asked and found
-  final_distance(irec) = sqrt((st_xval(irec)-x)**2 + (st_zval(irec)-z)**2)
-
-  x_final_receiver(irec) = x
-  z_final_receiver(irec) = z
-
-enddo
-
-! close receiver file
-close(1)
+  ! close receiver file
+  close(1)
 
 ! elect one process for each receiver.
 #ifdef USE_MPI
-call MPI_GATHER(final_distance(1),nrec,MPI_DOUBLE_PRECISION,&
-     gather_final_distance(1,1),nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierror)
-call MPI_GATHER(xi_receiver(1),nrec,MPI_DOUBLE_PRECISION,&
-     gather_xi_receiver(1,1),nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierror)
-call MPI_GATHER(gamma_receiver(1),nrec,MPI_DOUBLE_PRECISION,&
-     gather_gamma_receiver(1,1),nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierror)
-call MPI_GATHER(ispec_selected_rec(1),nrec,MPI_INTEGER,&
-     gather_ispec_selected_rec(1,1),nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ierror)
+  call MPI_GATHER(final_distance(1),nrec,MPI_DOUBLE_PRECISION,&
+        gather_final_distance(1,1),nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierror)
+  call MPI_GATHER(xi_receiver(1),nrec,MPI_DOUBLE_PRECISION,&
+        gather_xi_receiver(1,1),nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierror)
+  call MPI_GATHER(gamma_receiver(1),nrec,MPI_DOUBLE_PRECISION,&
+        gather_gamma_receiver(1,1),nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierror)
+  call MPI_GATHER(ispec_selected_rec(1),nrec,MPI_INTEGER,&
+        gather_ispec_selected_rec(1,1),nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ierror)
 
-if ( myrank == 0 ) then
-   do irec = 1, nrec
+  if ( myrank == 0 ) then
+    do irec = 1, nrec
       which_proc_receiver(irec:irec) = minloc(gather_final_distance(irec,:)) - 1
+    enddo
+  endif
 
-   enddo
-endif
-
-call MPI_BCAST(which_proc_receiver(1),nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ierror)
+  call MPI_BCAST(which_proc_receiver(1),nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ierror)
 
 #else
 
-gather_final_distance(:,1) = final_distance(:)
+  gather_final_distance(:,1) = final_distance(:)
 
-gather_xi_receiver(:,1) = xi_receiver(:)
-gather_gamma_receiver(:,1) = gamma_receiver(:)
-gather_ispec_selected_rec(:,1) = ispec_selected_rec(:)
+  gather_xi_receiver(:,1) = xi_receiver(:)
+  gather_gamma_receiver(:,1) = gamma_receiver(:)
+  gather_ispec_selected_rec(:,1) = ispec_selected_rec(:)
 
-which_proc_receiver(:) = 0
+  which_proc_receiver(:) = 0
 
 #endif
 
-nrecloc = 0
-do irec = 1, nrec
-   if ( which_proc_receiver(irec) == myrank ) then
+  nrecloc = 0
+  do irec = 1, nrec
+    if ( which_proc_receiver(irec) == myrank ) then
       nrecloc = nrecloc + 1
       recloc(nrecloc) = irec
-   endif
-enddo
-
-if (myrank == 0 .and. ipass == 1) then
-
-   do irec = 1, nrec
-    write(IOUT,*)
-    write(IOUT,*) 'Station # ',irec,'    ',station_name(irec),network_name(irec)
-
-    if(gather_final_distance(irec,which_proc_receiver(irec)+1) == HUGEVAL) call exit_MPI('error locating receiver')
-
-    write(IOUT,*) '            original x: ',sngl(st_xval(irec))
-    write(IOUT,*) '            original z: ',sngl(st_zval(irec))
-    write(IOUT,*) '  distance from source: ',sngl(distance_receiver(irec))
-    write(IOUT,*) 'closest estimate found: ',sngl(gather_final_distance(irec,which_proc_receiver(irec)+1)),' m away'
-    write(IOUT,*) ' in element ',gather_ispec_selected_rec(irec,which_proc_receiver(irec)+1)
-    write(IOUT,*) ' at process ', which_proc_receiver(irec)
-    write(IOUT,*) ' at xi,gamma coordinates = ',gather_xi_receiver(irec,which_proc_receiver(irec)+1),&
-         gather_gamma_receiver(irec,which_proc_receiver(irec)+1)
-    write(IOUT,*)
-
+    endif
   enddo
 
-  write(IOUT,*)
-  write(IOUT,*) 'end of receiver detection'
-  write(IOUT,*)
+  if (myrank == 0 .and. ipass == 1) then
 
-  ! write out actual station locations (compare with STATIONS_target from meshfem2D)
-  ! NOTE: this will be written out even if generate_STATIONS = .false.
-  open(unit=15,file='DATA/STATIONS',status='unknown')
-  do irec = 1,nrec
-     write(15,"('S',i4.4,'    AA ',f20.7,1x,f20.7,'       0.0         0.0')") &
+    do irec = 1, nrec
+      write(IOUT,*)
+      write(IOUT,*) 'Station # ',irec,'    ',station_name(irec),network_name(irec)
+
+      if(gather_final_distance(irec,which_proc_receiver(irec)+1) == HUGEVAL) &
+        call exit_MPI('error locating receiver')
+
+      write(IOUT,*) '            original x: ',sngl(st_xval(irec))
+      write(IOUT,*) '            original z: ',sngl(st_zval(irec))
+      write(IOUT,*) '  distance from source: ',sngl(distance_receiver(irec))
+      write(IOUT,*) 'closest estimate found: ',sngl(gather_final_distance(irec,which_proc_receiver(irec)+1)), &
+                    ' m away'
+      write(IOUT,*) ' in element ',gather_ispec_selected_rec(irec,which_proc_receiver(irec)+1)
+      write(IOUT,*) ' at process ', which_proc_receiver(irec)
+      write(IOUT,*) ' at xi,gamma coordinates = ',gather_xi_receiver(irec,which_proc_receiver(irec)+1),&
+                                  gather_gamma_receiver(irec,which_proc_receiver(irec)+1)
+      write(IOUT,*)
+    enddo
+
+    write(IOUT,*)
+    write(IOUT,*) 'end of receiver detection'
+    write(IOUT,*)
+
+    ! write out actual station locations (compare with STATIONS_target from meshfem2D)
+    ! NOTE: this will be written out even if generate_STATIONS = .false.
+    open(unit=15,file='DATA/STATIONS',status='unknown')
+    do irec = 1,nrec
+      write(15,"('S',i4.4,'    AA ',f20.7,1x,f20.7,'       0.0         0.0')") &
           irec,x_final_receiver(irec),z_final_receiver(irec)
-  enddo
-  close(15)
+    enddo
+    close(15)
 
-endif
+  endif
 
-! deallocate arrays
+  ! deallocate arrays
   deallocate(final_distance)
 
 #ifdef USE_MPI

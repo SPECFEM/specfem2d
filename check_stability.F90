@@ -43,7 +43,8 @@
 !========================================================================
 
   
-  subroutine check_stability(myrank,time,it,NSTEP,npoin, &
+  subroutine check_stability(myrank,time,it,NSTEP, &
+                        npoin_acoustic,npoin_elastic,npoin_poroelastic, &
                         any_elastic_glob,any_elastic,displ_elastic, &
                         any_poroelastic_glob,any_poroelastic, &
                         displs_poroelastic,displw_poroelastic, &
@@ -59,18 +60,20 @@
 #endif
   
   integer :: myrank,it,NSTEP
-  integer :: npoin
 
   double precision :: time
   
   logical :: any_elastic_glob,any_elastic
-  real(kind=CUSTOM_REAL), dimension(3,npoin) :: displ_elastic
+  integer :: npoin_elastic
+  real(kind=CUSTOM_REAL), dimension(3,npoin_elastic) :: displ_elastic
     
   logical :: any_poroelastic_glob,any_poroelastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: displs_poroelastic,displw_poroelastic
+  integer :: npoin_poroelastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin_poroelastic) :: displs_poroelastic,displw_poroelastic
   
   logical :: any_acoustic_glob,any_acoustic
-  real(kind=CUSTOM_REAL), dimension(npoin) :: potential_acoustic
+  integer :: npoin_acoustic
+  real(kind=CUSTOM_REAL), dimension(npoin_acoustic) :: potential_acoustic
 
   double precision :: time_start
   integer :: year_start,month_start
