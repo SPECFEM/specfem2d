@@ -9,7 +9,7 @@
 
   subroutine convtime(timestamp,yr,mon,day,hr,min)
 
-! Originally written by Shawn Smith (smith AT coaps.fsu.edu)
+! Originally written by Shawn Smith (ssmith AT coaps.fsu.edu)
 ! Updated Spring 1999 for Y2K compliance by Anthony Arguez (anthony AT coaps.fsu.edu).
 
 ! This subroutine will convert a given year, month, day, hour, and
