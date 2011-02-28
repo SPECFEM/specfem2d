@@ -1943,7 +1943,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-ac_config_headers="$ac_config_headers config.h"
+ac_config_headers="$ac_config_headers setup/config.h"
 
 
 
@@ -5541,7 +5541,7 @@ fi
 # Checks for library functions.
 
 
-ac_config_files="$ac_config_files Makefile DATA/Par_file DATA/SOURCE constants.h precision_mpi.h scotch_5.1.11/src/Makefile.inc"
+ac_config_files="$ac_config_files Makefile DATA/Par_file DATA/SOURCE setup/constants.h setup/precision_mpi.h scotch_5.1.11/src/Makefile.inc"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -6240,12 +6240,12 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
 for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
-    "config.h") CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
+    "setup/config.h") CONFIG_HEADERS="$CONFIG_HEADERS setup/config.h" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "DATA/Par_file") CONFIG_FILES="$CONFIG_FILES DATA/Par_file" ;;
     "DATA/SOURCE") CONFIG_FILES="$CONFIG_FILES DATA/SOURCE" ;;
-    "constants.h") CONFIG_FILES="$CONFIG_FILES constants.h" ;;
-    "precision_mpi.h") CONFIG_FILES="$CONFIG_FILES precision_mpi.h" ;;
+    "setup/constants.h") CONFIG_FILES="$CONFIG_FILES setup/constants.h" ;;
+    "setup/precision_mpi.h") CONFIG_FILES="$CONFIG_FILES setup/precision_mpi.h" ;;
     "scotch_5.1.11/src/Makefile.inc") CONFIG_FILES="$CONFIG_FILES scotch_5.1.11/src/Makefile.inc" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5 ;;
