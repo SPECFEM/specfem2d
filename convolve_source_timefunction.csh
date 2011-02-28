@@ -17,7 +17,7 @@ echo ".false." >> input_convolve_code.txt
 
 echo convolving $file with half_duration_triangle = $half_duration_triangle using lines $nlines 
 
-./xconvolve_source_timefunction < $file > ${file}.convolved
+./bin/xconvolve_source_timefunction < $file > ${file}.convolved
 
 rm input_convolve_code.txt
 

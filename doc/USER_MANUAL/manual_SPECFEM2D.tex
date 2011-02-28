@@ -286,7 +286,7 @@ After these steps, go back to the main directory of SPECFEM2D/ and type
 \begin{lyxcode}
 make
 \end{lyxcode}
-to create all executables.
+to create all executables which will be placed into the folder \texttt{./bin/}. 
 
 
 
@@ -340,7 +340,7 @@ To run the mesher, please follow these steps:
 \end{itemize}
 Then type
 \begin{lyxcode}
-./xmeshfem2D
+./bin/xmeshfem2D
 \end{lyxcode}
 to create the mesh (which will be stored in directory \texttt{OUTPUT\_FILES/}). \texttt{xmeshfem2D} is serial; it will output several files called \texttt{Database??????}, one for each process.
 
@@ -361,7 +361,7 @@ to create the mesh (which will be stored in directory \texttt{OUTPUT\_FILES/}). 
 
 To examine the quality of the elements in your externally build mesh, type
 \begin{lyxcode}
-./xcheck\_quality\_external\_mesh
+./bin/xcheck\_quality\_external\_mesh
 \end{lyxcode}
 (and answer "3" to the first question asked).
 This code will tell you which element in the whole mesh has the worst quality (maximum skewness, i.e. maximum deformation of the element angles) and it should be enough to modify this element with the external software package used for the meshing, and
@@ -384,7 +384,7 @@ This tool is useful to estimate the mesh quality and to see it evolve along the 
 
 To run the solver, type:
 \begin{lyxcode}
-./xspecfem2D
+./bin/xspecfem2D
 \end{lyxcode}
 to run the main solver (use \texttt{mpirun} or equivalent if you compiled with parallel support). This will output the seismograms and snapshots of the wave fronts at different time steps in directory \texttt{OUTPUT\_FILES/}. To visualize them, type "\texttt{gs OUTPUT\_FILES/vect*.ps}" to see the Postscript files (in which the wave field is represented with small arrows, fluid/solid matching interfaces with a thick pink line, and absorbing edges with a thick green line) and "\texttt{gimp OUTPUT\_FILES/image*.gif}" to see the color snapshot showing a pixelized image of one of the two components of the wave field (or pressure, depending on what you have selected for the output in \texttt{DATA/Par\_file}).
 
