@@ -1,0 +1,430 @@
+
+#========================================================================
+#
+#                   S P E C F E M 2 D  Version 6.1
+#                   ------------------------------
+#
+# Copyright Universite de Pau, CNRS and INRIA, France,
+# and Princeton University / California Institute of Technology, USA.
+# Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
+#               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
+#               Roland Martin, roland DOT martin aT univ-pau DOT fr
+#               Christina Morency, cmorency aT princeton DOT edu
+#
+# This software is a computer program whose purpose is to solve
+# the two-dimensional viscoelastic anisotropic or poroelastic wave equation
+# using a spectral-element method (SEM).
+#
+# This software is governed by the CeCILL license under French law and
+# abiding by the rules of distribution of free software. You can use,
+# modify and/or redistribute the software under the terms of the CeCILL
+# license as circulated by CEA, CNRS and INRIA at the following URL
+# "http://www.cecill.info".
+#
+# As a counterpart to the access to the source code and rights to copy,
+# modify and redistribute granted by the license, users are provided only
+# with a limited warranty and the software's author, the holder of the
+# economic rights, and the successive licensors have only limited
+# liability.
+#
+# In this respect, the user's attention is drawn to the risks associated
+# with loading, using, modifying and/or developing or reproducing the
+# software by the user in light of its specific status of free software,
+# that may mean that it is complicated to manipulate, and that also
+# therefore means that it is reserved for developers and experienced
+# professionals having in-depth computer knowledge. Users are therefore
+# encouraged to load and test the software's suitability as regards their
+# requirements in conditions enabling the security of their systems and/or
+# data to be ensured and, more generally, to use and operate it in the
+# same conditions as regards security.
+#
+# The full text of the license is available in file "LICENSE".
+#
+#========================================================================
+
+# uncomment this to generate ParaVer traces on MareNostrum in Barcelona
+#MPITRACE_HOME = /gpfs/apps/CEPBATOOLS/mpitrace-devel/64
+#PAPI_HOME = /gpfs/apps/PAPI/3.2.1-970mp/64
+#PERFCTR_HOME  = /gpfs/apps/PAPI/papi-3.2.1-970mp/64
+
+# @configure_input@
+
+FC = @FC@
+FCFLAGS = #@FCFLAGS@
+
+MPIFC = @MPIFC@
+MPILIBS = @MPILIBS@
+
+FLAGS_CHECK = @FLAGS_CHECK@ -I../../setup
+FLAGS_NO_CHECK = @FLAGS_NO_CHECK@ -I../../setup
+
+CC = @CC@
+CPPFLAGS = @CPPFLAGS@ $(COND_MPI_CPPFLAGS)
+CFLAGS = @CFLAGS@ $(CPPFLAGS) -I../../setup
+
+## serial or parallel
+@COND_MPI_TRUE@F90 = $(MPIFC) $(FCFLAGS) -DUSE_MPI -DUSE_SCOTCH -I"@SCOTCH_INCLUDEDIR@" $(MPILIBS)
+@COND_MPI_FALSE@F90 = $(FC) $(FCFLAGS)
+
+
+LINK = $(F90)
+
+## compilation directories
+# E : executables directory
+E = ../../bin
+# O : objects directory
+O = ../../obj
+# SHARED : shared directoy
+SHARED = ../shared
+# S : source file directory
+S = .
+## setup file directory
+SETUP = ../../setup
+
+
+##.PHONY: clean default all backup bak generate_databases specfem3D meshfem3D
+
+####
+#### targets
+####
+
+# default targets for the pure Fortran version
+@COND_PYRE_FALSE@DEFAULT = \
+@COND_PYRE_FALSE@	specfem2D \
+@COND_PYRE_FALSE@	convolve_source_timefunction \
+@COND_PYRE_FALSE@	$(EMPTY_MACRO)
+
+
+OBJS_SPECFEM2D = \
+	$O/assemble_MPI.o \
+	$O/attenuation_model.o \
+	$O/attenuation_compute_param.o \
+	$O/calendar.o \
+	$O/checkgrid.o \
+	$O/check_stability.o \
+	$O/compute_arrays_source.o \
+	$O/compute_Bielak_conditions.o \
+	$O/compute_curl_one_element.o \
+	$O/compute_energy.o \
+	$O/compute_forces_acoustic.o \
+	$O/compute_forces_viscoelastic.o \
+	$O/compute_forces_poro_solid.o \
+	$O/compute_forces_poro_fluid.o \
+	$O/compute_gradient_attenuation.o \
+	$O/compute_normal_vector.o \
+	$O/compute_pressure.o \
+	$O/compute_vector_field.o \
+	$O/construct_acoustic_surface.o \
+	$O/convert_time.o \
+	$O/create_color_image.o \
+	$O/createnum_fast.o \
+	$O/createnum_slow.o \
+	$O/datim.o \
+	$O/define_derivation_matrices.o \
+	$O/define_external_model.o \
+	$O/define_shape_functions.o \
+	$O/enforce_acoustic_free_surface.o \
+	$O/exit_mpi.o \
+	$O/get_MPI.o \
+	$O/get_perm_cuthill_mckee.o \
+	$O/get_poroelastic_velocities.o \
+	$O/gll_library.o \
+	$O/gmat01.o \
+	$O/initialize_simulation.o \
+	$O/invert_mass_matrix.o \
+	$O/is_in_convex_quadrilateral.o \
+	$O/lagrange_poly.o \
+	$O/locate_receivers.o \
+	$O/locate_source_force.o \
+	$O/locate_source_moment_tensor.o \
+	$O/netlib_specfun_erf.o \
+	$O/paco_beyond_critical.o \
+	$O/paco_convolve_fft.o \
+	$O/plotgll.o \
+	$O/plotpost.o \
+	$O/prepare_absorb.o \
+	$O/prepare_assemble_MPI.o \
+	$O/prepare_color_image.o \
+	$O/prepare_initialfield.o \
+	$O/prepare_source_time_function.o \
+	$O/read_databases.o \
+	$O/read_external_model.o \
+	$O/recompute_jacobian.o \
+	$O/save_openDX_jacobian.o \
+	$O/set_sources.o \
+	$O/setup_sources_receivers.o \
+	$O/sort_array_coordinates.o \
+	$O/write_seismograms.o \
+	$O/specfem2D.o
+
+
+
+default: $(DEFAULT)
+
+all: default
+
+spec : specfem2D
+specfem2D: xspecfem2D
+convolve_source_timefunction: xconvolve_source_timefunction
+
+
+clean:
+	(rm -rf $O/*.o $E/xspecfem2D $E/xspecfem2D.trace \
+	$O/*.o $O/*.il *.mod core \
+	$E/xconvolve_source_timefunction \
+	*.oo *.ipo)
+
+
+help:
+	@echo "usage: make [executable]"
+	@echo ""
+	@echo "supported executables:"
+	@echo "    xspecfem3D"
+	@echo "    xconvolve_source_timefunction"
+	@echo "    xadj_seismogram"
+	@echo ""
+
+
+##
+## solver
+##
+### use optimized compilation option for solver only
+xspecfem2D: $(OBJS_SPECFEM2D)
+	$(LINK) $(FLAGS_NO_CHECK) -o ${E}/xspecfem2D $(OBJS_SPECFEM2D)
+
+##
+## convolve_source_timefunction
+##
+xconvolve_source_timefunction: $O/convolve_source_timefunction.o
+	${F90} $(FLAGS_CHECK) -o ${E}/xconvolve_source_timefunction $O/convolve_source_timefunction.o
+
+##
+## adj_seismogram
+##
+xadj_seismogram: $O/adj_seismogram.o
+	${F90} $(FLAGS_CHECK) -o ${E}/xadj_seismogram $O/adj_seismogram.o
+
+
+##
+## object files
+##
+
+##
+## convolve_source_timefunction
+##
+$O/convolve_source_timefunction.o: ${SHARED}/convolve_source_timefunction.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/convolve_source_timefunction.o ${SHARED}/convolve_source_timefunction.f90
+
+##
+## adj_seismogram
+##
+$O/adj_seismogram.o: ${SHARED}/adj_seismogram.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/adj_seismogram.o ${SHARED}/adj_seismogram.f90
+
+##
+## specfem2D
+##
+$O/assemble_MPI.o: ${S}/assemble_MPI.F90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/assemble_MPI.o ${S}/assemble_MPI.F90
+
+$O/attenuation_compute_param.o: ${S}/attenuation_compute_param.c
+	${CC} $(CFLAGS) -c -o $O/attenuation_compute_param.o ${S}/attenuation_compute_param.c
+
+$O/attenuation_model.o: ${S}/attenuation_model.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/attenuation_model.o ${S}/attenuation_model.f90
+
+$O/calendar.o: ${S}/calendar.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/calendar.o ${S}/calendar.f90
+
+$O/checkgrid.o: ${S}/checkgrid.F90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/checkgrid.o ${S}/checkgrid.F90
+
+$O/compute_arrays_source.o: ${S}/compute_arrays_source.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/compute_arrays_source.o ${S}/compute_arrays_source.f90
+
+$O/compute_Bielak_conditions.o: ${S}/compute_Bielak_conditions.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/compute_Bielak_conditions.o ${S}/compute_Bielak_conditions.f90
+
+$O/compute_curl_one_element.o: ${S}/compute_curl_one_element.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/compute_curl_one_element.o ${S}/compute_curl_one_element.f90
+
+$O/compute_vector_field.o: ${S}/compute_vector_field.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/compute_vector_field.o ${S}/compute_vector_field.f90
+
+$O/compute_pressure.o: ${S}/compute_pressure.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/compute_pressure.o ${S}/compute_pressure.f90
+
+$O/construct_acoustic_surface.o: ${S}/construct_acoustic_surface.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/construct_acoustic_surface.o ${S}/construct_acoustic_surface.f90
+
+$O/convert_time.o: ${S}/convert_time.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/convert_time.o ${S}/convert_time.f90
+
+$O/create_color_image.o: ${S}/create_color_image.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/create_color_image.o ${S}/create_color_image.f90
+
+$O/createnum_fast.o: ${S}/createnum_fast.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/createnum_fast.o ${S}/createnum_fast.f90
+
+$O/createnum_slow.o: ${S}/createnum_slow.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/createnum_slow.o ${S}/createnum_slow.f90
+
+$O/datim.o: ${S}/datim.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/datim.o ${S}/datim.f90
+
+$O/define_derivation_matrices.o: ${S}/define_derivation_matrices.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/define_derivation_matrices.o ${S}/define_derivation_matrices.f90
+
+$O/define_external_model.o: ${S}/define_external_model.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/define_external_model.o ${S}/define_external_model.f90
+
+$O/define_shape_functions.o: ${S}/define_shape_functions.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/define_shape_functions.o ${S}/define_shape_functions.f90
+
+$O/exit_mpi.o: ${S}/exit_mpi.F90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/exit_mpi.o ${S}/exit_mpi.F90
+
+$O/get_MPI.o: ${S}/get_MPI.F90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/get_MPI.o ${S}/get_MPI.F90
+
+$O/get_perm_cuthill_mckee.o: ${S}/get_perm_cuthill_mckee.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/get_perm_cuthill_mckee.o ${S}/get_perm_cuthill_mckee.f90
+
+$O/get_poroelastic_velocities.o: ${S}/get_poroelastic_velocities.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/get_poroelastic_velocities.o ${S}/get_poroelastic_velocities.f90
+
+$O/gll_library.o: ${S}/gll_library.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/gll_library.o ${S}/gll_library.f90
+
+$O/gmat01.o: ${S}/gmat01.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/gmat01.o ${S}/gmat01.f90
+
+$O/invert_mass_matrix.o: ${S}/invert_mass_matrix.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/invert_mass_matrix.o ${S}/invert_mass_matrix.f90
+
+$O/initialize_simulation.o: ${S}/initialize_simulation.F90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/initialize_simulation.o ${S}/initialize_simulation.F90
+
+$O/is_in_convex_quadrilateral.o: ${S}/is_in_convex_quadrilateral.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/is_in_convex_quadrilateral.o ${S}/is_in_convex_quadrilateral.f90
+
+$O/lagrange_poly.o: ${S}/lagrange_poly.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/lagrange_poly.o ${S}/lagrange_poly.f90
+
+$O/locate_receivers.o: ${S}/locate_receivers.F90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/locate_receivers.o ${S}/locate_receivers.F90
+
+$O/locate_source_force.o: ${S}/locate_source_force.F90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/locate_source_force.o ${S}/locate_source_force.F90
+
+$O/locate_source_moment_tensor.o: ${S}/locate_source_moment_tensor.F90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/locate_source_moment_tensor.o ${S}/locate_source_moment_tensor.F90
+
+$O/netlib_specfun_erf.o: ${S}/netlib_specfun_erf.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/netlib_specfun_erf.o ${S}/netlib_specfun_erf.f90
+
+$O/paco_beyond_critical.o: ${S}/paco_beyond_critical.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/paco_beyond_critical.o ${S}/paco_beyond_critical.f90
+
+$O/paco_convolve_fft.o: ${S}/paco_convolve_fft.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/paco_convolve_fft.o ${S}/paco_convolve_fft.f90
+
+$O/plotgll.o: ${S}/plotgll.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/plotgll.o ${S}/plotgll.f90
+
+$O/plotpost.o: ${S}/plotpost.F90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/plotpost.o ${S}/plotpost.F90
+
+$O/prepare_absorb.o: ${S}/prepare_absorb.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/prepare_absorb.o ${S}/prepare_absorb.f90
+
+$O/prepare_assemble_MPI.o: ${S}/prepare_assemble_MPI.F90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/prepare_assemble_MPI.o ${S}/prepare_assemble_MPI.F90
+
+$O/prepare_color_image.o: ${S}/prepare_color_image.F90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/prepare_color_image.o ${S}/prepare_color_image.F90
+
+$O/prepare_initialfield.o: ${S}/prepare_initialfield.F90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/prepare_initialfield.o ${S}/prepare_initialfield.F90
+
+$O/prepare_source_time_function.o: ${S}/prepare_source_time_function.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/prepare_source_time_function.o ${S}/prepare_source_time_function.f90
+
+$O/read_databases.o: ${S}/read_databases.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/read_databases.o ${S}/read_databases.f90
+
+$O/read_external_model.o: ${S}/read_external_model.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/read_external_model.o ${S}/read_external_model.f90
+
+$O/recompute_jacobian.o: ${S}/recompute_jacobian.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/recompute_jacobian.o ${S}/recompute_jacobian.f90
+
+$O/save_databases.o: ${S}/save_databases.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/save_databases.o ${S}/save_databases.f90
+
+$O/save_gnuplot_file.o: ${S}/save_gnuplot_file.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/save_gnuplot_file.o ${S}/save_gnuplot_file.f90
+
+$O/save_openDX_jacobian.o: ${S}/save_openDX_jacobian.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/save_openDX_jacobian.o ${S}/save_openDX_jacobian.f90
+
+$O/save_stations_file.o: ${S}/save_stations_file.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/save_stations_file.o ${S}/save_stations_file.f90
+
+$O/set_sources.o: ${S}/set_sources.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/set_sources.o ${S}/set_sources.f90
+
+$O/setup_sources_receivers.o: ${S}/setup_sources_receivers.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/setup_sources_receivers.o ${S}/setup_sources_receivers.f90
+
+$O/spline_routines.o: ${S}/spline_routines.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/spline_routines.o ${S}/spline_routines.f90
+
+$O/sort_array_coordinates.o: ${S}/sort_array_coordinates.F90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/sort_array_coordinates.o ${S}/sort_array_coordinates.F90
+
+$O/write_seismograms.o: ${S}/write_seismograms.F90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/write_seismograms.o ${S}/write_seismograms.F90
+
+##
+## use optimized compilation option for solver only
+##
+$O/check_stability.o: ${S}/check_stability.F90 ${SETUP}/constants.h
+	${F90} $(FLAGS_NO_CHECK) -c -o $O/check_stability.o ${S}/check_stability.F90
+
+$O/compute_energy.o: ${S}/compute_energy.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_NO_CHECK) -c -o $O/compute_energy.o ${S}/compute_energy.f90
+
+$O/compute_forces_acoustic.o: ${S}/compute_forces_acoustic.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_NO_CHECK) -c -o $O/compute_forces_acoustic.o ${S}/compute_forces_acoustic.f90
+
+$O/compute_forces_poro_fluid.o: ${S}/compute_forces_poro_fluid.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_NO_CHECK) -c -o $O/compute_forces_poro_fluid.o ${S}/compute_forces_poro_fluid.f90
+
+$O/compute_forces_poro_solid.o: ${S}/compute_forces_poro_solid.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_NO_CHECK) -c -o $O/compute_forces_poro_solid.o ${S}/compute_forces_poro_solid.f90
+
+$O/compute_forces_viscoelastic.o: ${S}/compute_forces_viscoelastic.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_NO_CHECK) -c -o $O/compute_forces_viscoelastic.o ${S}/compute_forces_viscoelastic.f90
+
+$O/compute_gradient_attenuation.o: ${S}/compute_gradient_attenuation.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_NO_CHECK) -c -o $O/compute_gradient_attenuation.o ${S}/compute_gradient_attenuation.f90
+
+$O/compute_normal_vector.o: ${S}/compute_normal_vector.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_NO_CHECK) -c -o $O/compute_normal_vector.o ${S}/compute_normal_vector.f90
+
+$O/enforce_acoustic_free_surface.o: ${S}/enforce_acoustic_free_surface.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_NO_CHECK) -c -o $O/enforce_acoustic_free_surface.o ${S}/enforce_acoustic_free_surface.f90
+
+$O/specfem2D.o: ${S}/specfem2D.F90 ${SETUP}/constants.h
+	${F90} $(FLAGS_NO_CHECK) -c -o $O/specfem2D.o ${S}/specfem2D.F90
+
+
+##
+## shared
+## 
+$O/read_value_parameters.o: ${SHARED}/read_value_parameters.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/read_value_parameters.o ${SHARED}/read_value_parameters.f90
+
+
+

@@ -5541,7 +5541,7 @@ fi
 # Checks for library functions.
 
 
-ac_config_files="$ac_config_files Makefile DATA/Par_file DATA/SOURCE setup/constants.h setup/precision_mpi.h scotch_5.1.11/src/Makefile.inc"
+ac_config_files="$ac_config_files Makefile src/specfem2D/Makefile src/meshfem2D/Makefile DATA/Par_file DATA/SOURCE setup/constants.h setup/precision_mpi.h scotch_5.1.11/src/Makefile.inc"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -6242,6 +6242,8 @@ do
   case $ac_config_target in
     "setup/config.h") CONFIG_HEADERS="$CONFIG_HEADERS setup/config.h" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
+    "src/meshfem2D/Makefile") CONFIG_FILES="$CONFIG_FILES src/meshfem2D/Makefile" ;;
+    "src/specfem2D/Makefile") CONFIG_FILES="$CONFIG_FILES src/specfem2D/Makefile" ;;
     "DATA/Par_file") CONFIG_FILES="$CONFIG_FILES DATA/Par_file" ;;
     "DATA/SOURCE") CONFIG_FILES="$CONFIG_FILES DATA/SOURCE" ;;
     "setup/constants.h") CONFIG_FILES="$CONFIG_FILES setup/constants.h" ;;
