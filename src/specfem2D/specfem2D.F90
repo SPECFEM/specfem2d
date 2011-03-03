@@ -588,6 +588,9 @@
   integer  :: nb_pixel_loc
   integer, dimension(:), allocatable  :: num_pixel_loc
 
+!!$! CHT
+!!$  character(len=150) :: wavefield_file
+
 #ifdef USE_MPI
   integer, dimension(MPI_STATUS_SIZE)  :: request_mpi_status
   integer, dimension(:), allocatable  :: nb_pixel_per_proc
@@ -746,9 +749,9 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhorho_el_hessian_final1, rhorho_el_hessian_final2
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhorho_el_hessian_temp1, rhorho_el_hessian_temp2
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhorho_ac_hessian_final1, rhorho_ac_hessian_final2
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: weight_line_x, weight_line_z, weight_surface,weight_jacobian
-  integer, dimension(:), allocatable :: weight_gll
-  real(kind=CUSTOM_REAL) :: zmin_yang, zmax_yang, xmin_yang, xmax_yang
+!!$  real(kind=CUSTOM_REAL), dimension(:), allocatable :: weight_line_x, weight_line_z, weight_surface,weight_jacobian
+!!$  integer, dimension(:), allocatable :: weight_gll
+!!$  real(kind=CUSTOM_REAL) :: zmin_yang, zmax_yang, xmin_yang, xmax_yang
 
 ! to help locate elements with a negative Jacobian using OpenDX
   logical :: found_a_negative_jacobian
@@ -1691,52 +1694,52 @@ print *
 
   endif
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! yang  output weights for line, surface integrals !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!define_derivation_matrices(xigll(NGLLX),zigll(NGLLZ),wxgll(NGLLX),wzgll(NGLLZ),hprime_xx(NGLLX,NGLLX),hprime_zz(NGLLZ,NGLLZ),&
-!                           hprimewgll_xx(NGLLX,NGLLX),hprimewgll_zz(NGLLZ,NGLLZ))
-!xix(NGLLX,NGLLZ,nspec),xiz,gammax,gammaz,jacobian
-!recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl,jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo, &
-!          .true.)
-  allocate(weight_line_x(npoin))
-  allocate(weight_line_z(npoin))
-  allocate(weight_surface(npoin))
-  allocate(weight_jacobian(npoin))
-  allocate(weight_gll(npoin))
-  weight_line_x=0.0
-  weight_line_z=0.0
-  weight_surface=0.0
-  zmin_yang=minval(coord(2,:))
-  xmin_yang=minval(coord(1,:))
-  zmax_yang=maxval(coord(2,:))
-  xmax_yang=maxval(coord(1,:))
-  do ispec = 1,nspec
-    do j = 1,NGLLZ
-      do i = 1,NGLLX
-            iglob=ibool(i,j,ispec)
-            z=coord(2,ibool(i,j,ispec))
-            xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-            zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-            if ((j==1 .OR. j==NGLLZ) .AND. ( (abs(z-zmin_yang).GE.1) .AND. (abs(z-zmax_yang)).GE.1) )    xxi=xxi/2.0
-            if ((i==1 .OR. i==NGLLZ) .AND. ( (abs(x-xmin_yang).GE.1) .AND. (abs(x-xmax_yang)).GE.1) )    zgamma=zgamma/2.0
-            weight_line_x(iglob) =  weight_line_x(iglob) + xxi * wxgll(i)
-            weight_line_z(iglob) =  weight_line_z(iglob) + zgamma * wzgll(j)
-            weight_surface(iglob) = weight_surface(iglob) + wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
-            weight_jacobian(iglob) = jacobian(i,j,ispec)
-            weight_gll(iglob) = 10*j+i
-      enddo
-    enddo
-  enddo
-  open(unit=55,file='OUTPUT_FILES/x_z_weightLineX_weightLineZ_weightSurface',status='unknown')
-  do n = 1,npoin
-    write(55,*) coord(1,n), coord(2,n), weight_line_x(n), weight_line_z(n), weight_surface(n),weight_jacobian(n),weight_gll(n)
-  enddo
-  close(55)
-  deallocate(weight_line_x)
-  deallocate(weight_line_z)
-  deallocate(weight_surface)
-  deallocate(weight_jacobian)
-  deallocate(weight_gll)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!$!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! yang  output weights for line, surface integrals !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!$!define_derivation_matrices(xigll(NGLLX),zigll(NGLLZ),wxgll(NGLLX),wzgll(NGLLZ),hprime_xx(NGLLX,NGLLX),hprime_zz(NGLLZ,NGLLZ),&
+!!$!                           hprimewgll_xx(NGLLX,NGLLX),hprimewgll_zz(NGLLZ,NGLLZ))
+!!$!xix(NGLLX,NGLLZ,nspec),xiz,gammax,gammaz,jacobian
+!!$!recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl,jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo, &
+!!$!          .true.)
+!!$  allocate(weight_line_x(npoin))
+!!$  allocate(weight_line_z(npoin))
+!!$  allocate(weight_surface(npoin))
+!!$  allocate(weight_jacobian(npoin))
+!!$  allocate(weight_gll(npoin))
+!!$  weight_line_x=0.0
+!!$  weight_line_z=0.0
+!!$  weight_surface=0.0
+!!$  zmin_yang=minval(coord(2,:))
+!!$  xmin_yang=minval(coord(1,:))
+!!$  zmax_yang=maxval(coord(2,:))
+!!$  xmax_yang=maxval(coord(1,:))
+!!$  do ispec = 1,nspec
+!!$    do j = 1,NGLLZ
+!!$      do i = 1,NGLLX
+!!$            iglob=ibool(i,j,ispec)
+!!$            z=coord(2,ibool(i,j,ispec))
+!!$            xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+!!$            zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
+!!$            if ((j==1 .OR. j==NGLLZ) .AND. ( (abs(z-zmin_yang).GE.1) .AND. (abs(z-zmax_yang)).GE.1) )    xxi=xxi/2.0
+!!$            if ((i==1 .OR. i==NGLLZ) .AND. ( (abs(x-xmin_yang).GE.1) .AND. (abs(x-xmax_yang)).GE.1) )    zgamma=zgamma/2.0
+!!$            weight_line_x(iglob) =  weight_line_x(iglob) + xxi * wxgll(i)
+!!$            weight_line_z(iglob) =  weight_line_z(iglob) + zgamma * wzgll(j)
+!!$            weight_surface(iglob) = weight_surface(iglob) + wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
+!!$            weight_jacobian(iglob) = jacobian(i,j,ispec)
+!!$            weight_gll(iglob) = 10*j+i
+!!$      enddo
+!!$    enddo
+!!$  enddo
+!!$  open(unit=55,file='OUTPUT_FILES/x_z_weightLineX_weightLineZ_weightSurface',status='unknown')
+!!$  do n = 1,npoin
+!!$    write(55,*) coord(1,n), coord(2,n), weight_line_x(n), weight_line_z(n), weight_surface(n),weight_jacobian(n),weight_gll(n)
+!!$  enddo
+!!$  close(55)
+!!$  deallocate(weight_line_x)
+!!$  deallocate(weight_line_z)
+!!$  deallocate(weight_surface)
+!!$  deallocate(weight_jacobian)
+!!$  deallocate(weight_gll)
+!!$!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !--- save the grid of points in a file
 !
@@ -6551,6 +6554,24 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
   if (myrank == 0 .and. imagetype /= 4 .and. p_sv) write(IOUT,*) 'PostScript file written'
 
   endif
+
+!!$!----------------------------------------------
+!!$! CHT: write the full (local) wavefield to file as three components (Uy = 0 for PSV; Ux,Uz = 0 for SH)
+!!$
+!!$  write(wavefield_file,"('OUTPUT_FILES/wavefield',i7.7,'_',i2.2,'.txt')") it,SIMULATION_TYPE
+!!$  open(unit=27,file=wavefield_file,status='unknown')
+!!$  do ispec = 1,nspec
+!!$     do j = 1,NGLLZ
+!!$        do i = 1,NGLLX
+!!$           iglob = ibool(i,j,ispec)
+!!$           write(27,*) sngl(coord(1,iglob)),sngl(coord(2,iglob)),&
+!!$             sngl(vector_field_display(1,iglob)), &
+!!$             sngl(vector_field_display(2,iglob)), &
+!!$             sngl(vector_field_display(3,iglob))
+!!$        enddo
+!!$     enddo
+!!$  enddo
+!!$  close(27)
 
 !
 !----  display color image
