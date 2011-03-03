@@ -34,7 +34,7 @@ case $FC in
 
         fi
         if test x"$FLAGS_CHECK" = x; then
-            FLAGS_CHECK="\$(FLAGS_NO_CHECK) -traceback -ftrapuv -check all"
+            FLAGS_CHECK="-O1 -vec-report0 -std95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check all -align sequence -assume byterecl -fpe0 -ftz -traceback -ftrapuv"
             #FLAGS_CHECK="-O3 -assume byterecl -traceback -ftrapuv -ftz"
 
 
