@@ -93,7 +93,7 @@
   integer  :: ixmin, ixmax, izmin, izmax
 
   ! Local variables
-  integer i_source,ispec,ispec_acoustic_surface
+  integer irec,i_source,ispec,ispec_acoustic_surface
 
   do i_source=1,NSOURCES
 
@@ -165,6 +165,28 @@
                       x_source(1),z_source(1), &
                       coorg,knods,ngnod,npgeo,ipass, &
                       x_final_receiver,z_final_receiver)
+
+  if (myrank == 0 .and. ipass == 1) then
+
+     ! write actual source locations to file
+     ! note that these may differ from input values, especially if source_surf = .true. in SOURCE
+     ! note that the exact source locations are determined from (ispec,xi,gamma) values
+     open(unit=14,file='DATA/SOURCE_xz.dat',status='unknown')
+     do i_source=1,NSOURCES
+        write(14,*) x_source(i_source), z_source(i_source)
+     enddo
+     close(14)
+
+     ! write out actual station locations (compare with STATIONS_target from meshfem2D)
+     ! NOTE: this will be written out even if generate_STATIONS = .false.
+     open(unit=15,file='DATA/STATIONS',status='unknown')
+     do irec = 1,nrec
+        write(15,"('S',i4.4,'    AA ',f20.7,1x,f20.7,'       0.0         0.0')") &
+             irec,x_final_receiver(irec),z_final_receiver(irec)
+     enddo
+     close(15)
+
+  endif
 
   end subroutine setup_sources_receivers
 
