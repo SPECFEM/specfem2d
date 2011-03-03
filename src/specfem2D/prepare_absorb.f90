@@ -45,23 +45,23 @@
 
 
   subroutine prepare_absorb_files(myrank,any_elastic,any_poroelastic,any_acoustic, &
-                      nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,SIMULATION_TYPE)
-  
+                      nspec_left,nspec_right,nspec_bottom,nspec_top,SIMULATION_TYPE)
+
   implicit none
   include "constants.h"
-  
+
   integer :: myrank,SIMULATION_TYPE
-  integer :: nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax
+  integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
   logical :: any_elastic,any_poroelastic,any_acoustic
-  
-  ! local parameters  
+
+  ! local parameters
   character(len=150) :: outputname,outputname2
-  
-  
+
+
   if(any_elastic) then
 
     !--- left absorbing boundary
-    if( nspec_xmin >0 ) then
+    if( nspec_left >0 ) then
       write(outputname,'(a,i6.6,a)') 'absorb_elastic_left',myrank,'.bin'
       if(SIMULATION_TYPE == 2) then
         open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',&
@@ -74,7 +74,7 @@
     endif  !  end of left absorbing boundary
 
     !--- right absorbing boundary
-    if( nspec_xmax >0 ) then
+    if( nspec_right >0 ) then
       write(outputname,'(a,i6.6,a)') 'absorb_elastic_right',myrank,'.bin'
       if(SIMULATION_TYPE == 2) then
         open(unit=36,file='OUTPUT_FILES/'//outputname,status='old',&
@@ -87,7 +87,7 @@
     endif  !  end of right absorbing boundary
 
     !--- bottom absorbing boundary
-    if( nspec_zmin >0 ) then
+    if( nspec_bottom >0 ) then
       write(outputname,'(a,i6.6,a)') 'absorb_elastic_bottom',myrank,'.bin'
       if(SIMULATION_TYPE == 2) then
         open(unit=37,file='OUTPUT_FILES/'//outputname,status='old',&
@@ -100,7 +100,7 @@
     endif  !  end of bottom absorbing boundary
 
     !--- top absorbing boundary
-    if( nspec_zmax >0 ) then
+    if( nspec_top >0 ) then
         write(outputname,'(a,i6.6,a)') 'absorb_elastic_top',myrank,'.bin'
       if(SIMULATION_TYPE == 2) then
         open(unit=38,file='OUTPUT_FILES/'//outputname,status='old',&
@@ -117,7 +117,7 @@
   if(any_poroelastic) then
 
     !--- left absorbing boundary
-    if( nspec_xmin >0 ) then
+    if( nspec_left >0 ) then
       write(outputname,'(a,i6.6,a)') 'absorb_poro_s_left',myrank,'.bin'
       write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_left',myrank,'.bin'
       if(SIMULATION_TYPE == 2) then
@@ -135,7 +135,7 @@
     endif  !  end of left absorbing boundary
 
     !--- right absorbing boundary
-    if( nspec_xmax >0 ) then
+    if( nspec_right >0 ) then
       write(outputname,'(a,i6.6,a)') 'absorb_poro_s_right',myrank,'.bin'
       write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_right',myrank,'.bin'
       if(SIMULATION_TYPE == 2) then
@@ -153,7 +153,7 @@
     endif  !  end of right absorbing boundary
 
     !--- bottom absorbing boundary
-    if( nspec_zmin >0 ) then
+    if( nspec_bottom >0 ) then
       write(outputname,'(a,i6.6,a)') 'absorb_poro_s_bottom',myrank,'.bin'
       write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_bottom',myrank,'.bin'
       if(SIMULATION_TYPE == 2) then
@@ -171,7 +171,7 @@
     endif  !  end of bottom absorbing boundary
 
     !--- top absorbing boundary
-    if( nspec_zmax >0 ) then
+    if( nspec_top >0 ) then
       write(outputname,'(a,i6.6,a)') 'absorb_poro_s_top',myrank,'.bin'
       write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_top',myrank,'.bin'
       if(SIMULATION_TYPE == 2) then
@@ -193,7 +193,7 @@
   if(any_acoustic) then
 
     !--- left absorbing boundary
-    if( nspec_xmin >0 ) then
+    if( nspec_left >0 ) then
       write(outputname,'(a,i6.6,a)') 'absorb_acoustic_left',myrank,'.bin'
       if(SIMULATION_TYPE == 2) then
         open(unit=65,file='OUTPUT_FILES/'//outputname,status='old',&
@@ -206,7 +206,7 @@
     endif  !  end of left absorbing boundary
 
     !--- right absorbing boundary
-    if( nspec_xmax >0 ) then
+    if( nspec_right >0 ) then
       write(outputname,'(a,i6.6,a)') 'absorb_acoustic_right',myrank,'.bin'
       if(SIMULATION_TYPE == 2) then
         open(unit=66,file='OUTPUT_FILES/'//outputname,status='old',&
@@ -219,7 +219,7 @@
     endif  !  end of right absorbing boundary
 
     !--- bottom absorbing boundary
-    if( nspec_zmin >0 ) then
+    if( nspec_bottom >0 ) then
       write(outputname,'(a,i6.6,a)') 'absorb_acoustic_bottom',myrank,'.bin'
       if(SIMULATION_TYPE == 2) then
         open(unit=67,file='OUTPUT_FILES/'//outputname,status='old',&
@@ -232,7 +232,7 @@
     endif  !  end of bottom absorbing boundary
 
     !--- top absorbing boundary
-    if( nspec_zmax >0 ) then
+    if( nspec_top >0 ) then
       write(outputname,'(a,i6.6,a)') 'absorb_acoustic_top',myrank,'.bin'
       if(SIMULATION_TYPE == 2) then
         open(unit=68,file='OUTPUT_FILES/'//outputname,status='old',&
@@ -247,37 +247,37 @@
   endif !any_acoustic
 
 
-  end subroutine prepare_absorb_files  
-  
-  
+  end subroutine prepare_absorb_files
+
+
 !
 !-------------------------------------------------------------------------------------------------
 !
-  
+
   subroutine prepare_absorb_elastic(NSTEP,p_sv, &
-                      nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax, &
+                      nspec_left,nspec_right,nspec_bottom,nspec_top, &
                       b_absorb_elastic_left,b_absorb_elastic_right, &
                       b_absorb_elastic_bottom,b_absorb_elastic_top)
-  
+
   implicit none
   include "constants.h"
-  
+
   logical :: p_sv
-  integer :: nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax
+  integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
   integer :: NSTEP
-  real(kind=CUSTOM_REAL) :: b_absorb_elastic_left(3,NGLLZ,nspec_xmin,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_elastic_right(3,NGLLZ,nspec_xmax,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_elastic_bottom(3,NGLLX,nspec_zmin,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_elastic_top(3,NGLLX,nspec_zmax,NSTEP)
-  
-  ! local parameters  
+  real(kind=CUSTOM_REAL) :: b_absorb_elastic_left(3,NGLLZ,nspec_left,NSTEP)
+  real(kind=CUSTOM_REAL) :: b_absorb_elastic_right(3,NGLLZ,nspec_right,NSTEP)
+  real(kind=CUSTOM_REAL) :: b_absorb_elastic_bottom(3,NGLLX,nspec_bottom,NSTEP)
+  real(kind=CUSTOM_REAL) :: b_absorb_elastic_top(3,NGLLX,nspec_top,NSTEP)
+
+  ! local parameters
   integer :: ispec,i,it
-  
+
   do it =1, NSTEP
 
     !--- left absorbing boundary
-    if(nspec_xmin >0) then
-      do ispec = 1,nspec_xmin
+    if(nspec_left >0) then
+      do ispec = 1,nspec_left
 
         if(p_sv)then!P-SV waves
           do i=1,NGLLZ
@@ -299,8 +299,8 @@
     endif
 
     !--- right absorbing boundary
-    if(nspec_xmax >0) then
-      do ispec = 1,nspec_xmax
+    if(nspec_right >0) then
+      do ispec = 1,nspec_right
 
         if(p_sv)then!P-SV waves
           do i=1,NGLLZ
@@ -322,8 +322,8 @@
     endif
 
     !--- bottom absorbing boundary
-    if(nspec_zmin >0) then
-      do ispec = 1,nspec_zmin
+    if(nspec_bottom >0) then
+      do ispec = 1,nspec_bottom
 
         if(p_sv)then!P-SV waves
           do i=1,NGLLX
@@ -345,8 +345,8 @@
     endif
 
     !--- top absorbing boundary
-    if(nspec_zmax >0) then
-      do ispec = 1,nspec_zmax
+    if(nspec_top >0) then
+      do ispec = 1,nspec_top
 
         if(p_sv)then!P-SV waves
           do i=1,NGLLX
@@ -374,37 +374,37 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-  
+
   subroutine prepare_absorb_poroelastic(NSTEP, &
-                      nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax, &
+                      nspec_left,nspec_right,nspec_bottom,nspec_top, &
                       b_absorb_poro_s_left,b_absorb_poro_w_left, &
                       b_absorb_poro_s_right,b_absorb_poro_w_right, &
                       b_absorb_poro_s_bottom,b_absorb_poro_w_bottom, &
                       b_absorb_poro_s_top,b_absorb_poro_w_top)
-  
+
   implicit none
   include "constants.h"
-  
-  integer :: nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax
+
+  integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
 
   integer :: NSTEP
-  real(kind=CUSTOM_REAL) :: b_absorb_poro_s_left(NDIM,NGLLZ,nspec_xmin,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_poro_s_right(NDIM,NGLLZ,nspec_xmax,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_poro_s_bottom(NDIM,NGLLX,nspec_zmin,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_poro_s_top(NDIM,NGLLX,nspec_zmax,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_poro_w_left(NDIM,NGLLZ,nspec_xmin,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_poro_w_right(NDIM,NGLLZ,nspec_xmax,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_poro_w_bottom(NDIM,NGLLX,nspec_zmin,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_poro_w_top(NDIM,NGLLX,nspec_zmax,NSTEP)
-  
-  ! local parameters  
+  real(kind=CUSTOM_REAL) :: b_absorb_poro_s_left(NDIM,NGLLZ,nspec_left,NSTEP)
+  real(kind=CUSTOM_REAL) :: b_absorb_poro_s_right(NDIM,NGLLZ,nspec_right,NSTEP)
+  real(kind=CUSTOM_REAL) :: b_absorb_poro_s_bottom(NDIM,NGLLX,nspec_bottom,NSTEP)
+  real(kind=CUSTOM_REAL) :: b_absorb_poro_s_top(NDIM,NGLLX,nspec_top,NSTEP)
+  real(kind=CUSTOM_REAL) :: b_absorb_poro_w_left(NDIM,NGLLZ,nspec_left,NSTEP)
+  real(kind=CUSTOM_REAL) :: b_absorb_poro_w_right(NDIM,NGLLZ,nspec_right,NSTEP)
+  real(kind=CUSTOM_REAL) :: b_absorb_poro_w_bottom(NDIM,NGLLX,nspec_bottom,NSTEP)
+  real(kind=CUSTOM_REAL) :: b_absorb_poro_w_top(NDIM,NGLLX,nspec_top,NSTEP)
+
+  ! local parameters
   integer :: ispec,i,it,id
 
   do it =1, NSTEP
 
     !--- left absorbing boundary
-    if(nspec_xmin >0) then
-      do ispec = 1,nspec_xmin
+    if(nspec_left >0) then
+      do ispec = 1,nspec_left
        do id =1,2
          do i=1,NGLLZ
           read(45) b_absorb_poro_s_left(id,i,ispec,it)
@@ -415,8 +415,8 @@
     endif
 
     !--- right absorbing boundary
-    if(nspec_xmax >0) then
-      do ispec = 1,nspec_xmax
+    if(nspec_right >0) then
+      do ispec = 1,nspec_right
        do id =1,2
          do i=1,NGLLZ
           read(46) b_absorb_poro_s_right(id,i,ispec,it)
@@ -427,8 +427,8 @@
     endif
 
     !--- bottom absorbing boundary
-    if(nspec_zmin >0) then
-      do ispec = 1,nspec_zmin
+    if(nspec_bottom >0) then
+      do ispec = 1,nspec_bottom
        do id =1,2
          do i=1,NGLLX
           read(47) b_absorb_poro_s_bottom(id,i,ispec,it)
@@ -439,8 +439,8 @@
     endif
 
     !--- top absorbing boundary
-    if(nspec_zmax >0) then
-      do ispec = 1,nspec_zmax
+    if(nspec_top >0) then
+      do ispec = 1,nspec_top
        do id =1,2
          do i=1,NGLLX
           read(48) b_absorb_poro_s_top(id,i,ispec,it)
@@ -457,32 +457,32 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-  
+
   subroutine prepare_absorb_acoustic(NSTEP, &
-                      nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax, &
+                      nspec_left,nspec_right,nspec_bottom,nspec_top, &
                       b_absorb_acoustic_left,b_absorb_acoustic_right, &
                       b_absorb_acoustic_bottom,b_absorb_acoustic_top)
-  
+
   implicit none
   include "constants.h"
-  
-  integer :: nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax
+
+  integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
 
   integer :: NSTEP
-  real(kind=CUSTOM_REAL) :: b_absorb_acoustic_left(NGLLZ,nspec_xmin,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_acoustic_right(NGLLZ,nspec_xmax,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_acoustic_bottom(NGLLX,nspec_zmin,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_acoustic_top(NGLLX,nspec_zmax,NSTEP)
-  
-  
-  ! local parameters  
+  real(kind=CUSTOM_REAL) :: b_absorb_acoustic_left(NGLLZ,nspec_left,NSTEP)
+  real(kind=CUSTOM_REAL) :: b_absorb_acoustic_right(NGLLZ,nspec_right,NSTEP)
+  real(kind=CUSTOM_REAL) :: b_absorb_acoustic_bottom(NGLLX,nspec_bottom,NSTEP)
+  real(kind=CUSTOM_REAL) :: b_absorb_acoustic_top(NGLLX,nspec_top,NSTEP)
+
+
+  ! local parameters
   integer :: ispec,i,it
 
   do it =1, NSTEP
 
     !--- left absorbing boundary
-    if(nspec_xmin >0) then
-      do ispec = 1,nspec_xmin
+    if(nspec_left >0) then
+      do ispec = 1,nspec_left
          do i=1,NGLLZ
           read(65) b_absorb_acoustic_left(i,ispec,it)
          enddo
@@ -490,8 +490,8 @@
     endif
 
     !--- right absorbing boundary
-    if(nspec_xmax >0) then
-      do ispec = 1,nspec_xmax
+    if(nspec_right >0) then
+      do ispec = 1,nspec_right
          do i=1,NGLLZ
           read(66) b_absorb_acoustic_right(i,ispec,it)
          enddo
@@ -499,8 +499,8 @@
     endif
 
     !--- bottom absorbing boundary
-    if(nspec_zmin >0) then
-      do ispec = 1,nspec_zmin
+    if(nspec_bottom >0) then
+      do ispec = 1,nspec_bottom
          do i=1,NGLLX
           read(67) b_absorb_acoustic_bottom(i,ispec,it)
          enddo
@@ -508,8 +508,8 @@
     endif
 
     !--- top absorbing boundary
-    if(nspec_zmax >0) then
-      do ispec = 1,nspec_zmax
+    if(nspec_top >0) then
+      do ispec = 1,nspec_top
          do i=1,NGLLX
           read(68) b_absorb_acoustic_top(i,ispec,it)
          enddo
@@ -519,4 +519,4 @@
   enddo
 
   end subroutine prepare_absorb_acoustic
-  
+

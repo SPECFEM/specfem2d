@@ -331,7 +331,7 @@
   integer NSOURCES,i_source
   integer, dimension(:), allocatable :: source_type,time_function_type
   double precision, dimension(:), allocatable :: x_source,z_source,xi_source,gamma_source,&
-                  Mxx,Mzz,Mxz,f0,tshift_src,factor,angleforce 
+                  Mxx,Mzz,Mxz,f0,tshift_src,factor,angleforce
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sourcearray
   double precision :: t0
 
@@ -359,7 +359,7 @@
 ! curl in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: curl_element
 
-  integer :: i,j,k,it,irec,id,n,ispec,npoin,npgeo,iglob 
+  integer :: i,j,k,it,irec,id,n,ispec,npoin,npgeo,iglob
   integer :: npoin_acoustic
   integer :: npoin_elastic
   integer :: npoin_poroelastic
@@ -424,7 +424,7 @@
   real(kind=CUSTOM_REAL) :: kappal_f
   real(kind=CUSTOM_REAL) :: mul_fr,kappal_fr
   real(kind=CUSTOM_REAL) :: D_biot,H_biot,C_biot,M_biot,B_biot,cpIsquare,cpIIsquare,cssquare
-  real(kind=CUSTOM_REAL) :: ratio,dd1 
+  real(kind=CUSTOM_REAL) :: ratio,dd1
 
   double precision, dimension(:,:,:), allocatable :: vpext,vsext,rhoext
   double precision, dimension(:,:,:), allocatable :: Qp_attenuationext,Qs_attenuationext
@@ -460,7 +460,7 @@
   double precision :: cutsnaps,sizemax_arrows,anglerec,xirec,gammarec
 
 ! for absorbing and acoustic free surface conditions
-  integer :: ispec_acoustic_surface,inum 
+  integer :: ispec_acoustic_surface,inum
   real(kind=CUSTOM_REAL) :: nx,nz,weight,xxi,zgamma
 
   logical, dimension(:,:), allocatable  :: codeabs
@@ -539,7 +539,7 @@
   integer, dimension(:), allocatable :: ibegin_bottom_poro,iend_bottom_poro,ibegin_top_poro,&
             iend_top_poro,jbegin_left_poro,jend_left_poro,jbegin_right_poro,jend_right_poro
   logical :: any_solid_poro_edges
-  
+
 ! for adjoint method
   logical :: SAVE_FORWARD ! whether or not the last frame is saved to reconstruct the forward field
   integer :: SIMULATION_TYPE      ! 1 = forward wavefield, 2 = backward and adjoint wavefields and kernels
@@ -575,13 +575,13 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: b_absorb_elastic_top,b_absorb_poro_s_top,b_absorb_poro_w_top
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable ::  b_absorb_acoustic_left,b_absorb_acoustic_right,&
                       b_absorb_acoustic_bottom, b_absorb_acoustic_top
-  integer :: nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax
+  integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
   integer, dimension(:), allocatable :: ib_left,ib_right,ib_bottom,ib_top
 
 ! for color images
   integer :: NX_IMAGE_color,NZ_IMAGE_color
   double precision :: xmin_color_image,xmax_color_image, &
-    zmin_color_image,zmax_color_image 
+    zmin_color_image,zmax_color_image
   integer, dimension(:,:), allocatable :: iglob_image_color,copy_iglob_image_color
   double precision, dimension(:,:), allocatable :: image_color_data
   double precision, dimension(:,:), allocatable :: image_color_vp_display
@@ -615,8 +615,8 @@
   double precision, external :: hgll
 
 ! timer to count elapsed time
-  double precision :: time_start 
-  integer :: year_start,month_start 
+  double precision :: time_start
+  integer :: year_start,month_start
 
   ! to determine date and time at which the run will finish
   character(len=8) datein
@@ -663,7 +663,7 @@
   integer, dimension(:,:), allocatable  :: acoustic_surface
   integer, dimension(:,:), allocatable  :: acoustic_edges
   logical :: any_acoustic_edges
-  
+
   integer  :: ixmin, ixmax, izmin, izmax
 
   integer  :: nrecloc, irecloc
@@ -675,16 +675,16 @@
   integer :: inumber
 
 ! to compute analytical initial plane wave field
-  double precision :: angleforce_refl, c_inc, c_refl, cploc, csloc 
+  double precision :: angleforce_refl, c_inc, c_refl, cploc, csloc
   double precision, dimension(2) :: A_plane, B_plane, C_plane
-  double precision :: z0_source, x0_source, time_offset 
+  double precision :: z0_source, x0_source, time_offset
 
 ! beyond critical angle
   integer , dimension(:), allocatable :: left_bound,right_bound,bot_bound
   double precision , dimension(:,:), allocatable :: v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot
   double precision , dimension(:,:), allocatable :: t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_paco,veloc_paco,displ_paco
-  integer count_left,count_right,count_bottom 
+  integer count_left,count_right,count_bottom
   logical :: over_critical_angle
 
 ! further reduce cache misses inner/outer in two passes in the case of an MPI simulation
@@ -841,7 +841,7 @@
   !----  read attenuation information
   !
   call read_databases_atten(N_SLS,f0_attenuation)
-  
+
   ! if source is not a Dirac or Heavyside then f0_attenuation is f0 of the first source
   if(.not. (time_function_type(1) == 4 .or. time_function_type(1) == 5)) then
     f0_attenuation = f0(1)
@@ -914,11 +914,11 @@
   !
   if(ipass == 1) then
     allocate(antecedent_list(nspec))
-    allocate(perm(nspec))    
-  endif  
+    allocate(perm(nspec))
+  endif
   call read_databases_mato(ipass,nspec,ngnod,kmato,knods, &
                                 perm,antecedent_list)
-  
+
 
 !-------------------------------------------------------------------------------
 !----  determine if each spectral element is elastic, poroelastic, or acoustic
@@ -927,7 +927,7 @@
   any_acoustic = .false.
   any_elastic = .false.
   any_poroelastic = .false.
-  
+
   anisotropic(:) = .false.
   elastic(:) = .false.
   poroelastic(:) = .false.
@@ -935,12 +935,12 @@
   ! loops over all elements
   do ispec = 1,nspec
 
-    if( nint(porosity(kmato(ispec))) == 1 ) then  
+    if( nint(porosity(kmato(ispec))) == 1 ) then
       ! acoustic domain
       elastic(ispec) = .false.
       poroelastic(ispec) = .false.
       any_acoustic = .true.
-    elseif( porosity(kmato(ispec)) < TINYVAL) then  
+    elseif( porosity(kmato(ispec)) < TINYVAL) then
       ! elastic domain
       elastic(ispec) = .true.
       poroelastic(ispec) = .false.
@@ -948,7 +948,7 @@
       if(any(anisotropy(:,kmato(ispec)) /= 0)) then
          anisotropic(ispec) = .true.
       end if
-    else                                       
+    else
       ! poroelastic domain
       elastic(ispec) = .false.
       poroelastic(ispec) = .true.
@@ -1036,7 +1036,7 @@
   !
   !----  read interfaces data
   !
-  call read_databases_ninterface(ninterface,max_interface_size)    
+  call read_databases_ninterface(ninterface,max_interface_size)
   if ( ninterface > 0 ) then
     if(ipass == 1) then
        allocate(my_neighbours(ninterface))
@@ -1053,8 +1053,8 @@
        allocate(inum_interfaces_poroelastic(ninterface))
     endif
    call read_databases_interfaces(ipass,ninterface,nspec,max_interface_size, &
-                              my_neighbours,my_nelmnts_neighbours,my_interfaces, &                              
-                              perm,antecedent_list)  
+                              my_neighbours,my_nelmnts_neighbours,my_interfaces, &
+                              perm,antecedent_list)
 
   endif
 
@@ -1096,7 +1096,7 @@
     allocate(ib_right(nelemabs))
     allocate(ib_bottom(nelemabs))
     allocate(ib_top(nelemabs))
-    
+
   endif
 
   !
@@ -1106,18 +1106,18 @@
                             ibegin_bottom,iend_bottom,jbegin_right,jend_right, &
                             ibegin_top,iend_top,jbegin_left,jend_left, &
                             numabs,codeabs,perm,antecedent_list, &
-                            nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax, &
+                            nspec_left,nspec_right,nspec_bottom,nspec_top, &
                             ib_right,ib_left,ib_bottom,ib_top)
 
-  
+
   if( anyabs ) then
     ! Files to save absorbed waves needed to reconstruct backward wavefield for adjoint method
     if(ipass == 1) then
       if(any_elastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 2)) then
-        allocate(b_absorb_elastic_left(3,NGLLZ,nspec_xmin,NSTEP))
-        allocate(b_absorb_elastic_right(3,NGLLZ,nspec_xmax,NSTEP))
-        allocate(b_absorb_elastic_bottom(3,NGLLX,nspec_zmin,NSTEP))
-        allocate(b_absorb_elastic_top(3,NGLLX,nspec_zmax,NSTEP))
+        allocate(b_absorb_elastic_left(3,NGLLZ,nspec_left,NSTEP))
+        allocate(b_absorb_elastic_right(3,NGLLZ,nspec_right,NSTEP))
+        allocate(b_absorb_elastic_bottom(3,NGLLX,nspec_bottom,NSTEP))
+        allocate(b_absorb_elastic_top(3,NGLLX,nspec_top,NSTEP))
       else
         allocate(b_absorb_elastic_left(1,1,1,1))
         allocate(b_absorb_elastic_right(1,1,1,1))
@@ -1125,14 +1125,14 @@
         allocate(b_absorb_elastic_top(1,1,1,1))
       endif
       if(any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 2)) then
-        allocate(b_absorb_poro_s_left(NDIM,NGLLZ,nspec_xmin,NSTEP))
-        allocate(b_absorb_poro_s_right(NDIM,NGLLZ,nspec_xmax,NSTEP))
-        allocate(b_absorb_poro_s_bottom(NDIM,NGLLX,nspec_zmin,NSTEP))
-        allocate(b_absorb_poro_s_top(NDIM,NGLLX,nspec_zmax,NSTEP))
-        allocate(b_absorb_poro_w_left(NDIM,NGLLZ,nspec_xmin,NSTEP))
-        allocate(b_absorb_poro_w_right(NDIM,NGLLZ,nspec_xmax,NSTEP))
-        allocate(b_absorb_poro_w_bottom(NDIM,NGLLX,nspec_zmin,NSTEP))
-        allocate(b_absorb_poro_w_top(NDIM,NGLLX,nspec_zmax,NSTEP))
+        allocate(b_absorb_poro_s_left(NDIM,NGLLZ,nspec_left,NSTEP))
+        allocate(b_absorb_poro_s_right(NDIM,NGLLZ,nspec_right,NSTEP))
+        allocate(b_absorb_poro_s_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
+        allocate(b_absorb_poro_s_top(NDIM,NGLLX,nspec_top,NSTEP))
+        allocate(b_absorb_poro_w_left(NDIM,NGLLZ,nspec_left,NSTEP))
+        allocate(b_absorb_poro_w_right(NDIM,NGLLZ,nspec_right,NSTEP))
+        allocate(b_absorb_poro_w_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
+        allocate(b_absorb_poro_w_top(NDIM,NGLLX,nspec_top,NSTEP))
       else
         allocate(b_absorb_poro_s_left(1,1,1,1))
         allocate(b_absorb_poro_s_right(1,1,1,1))
@@ -1144,10 +1144,10 @@
         allocate(b_absorb_poro_w_top(1,1,1,1))
       endif
       if(any_acoustic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 2)) then
-        allocate(b_absorb_acoustic_left(NGLLZ,nspec_xmin,NSTEP))
-        allocate(b_absorb_acoustic_right(NGLLZ,nspec_xmax,NSTEP))
-        allocate(b_absorb_acoustic_bottom(NGLLX,nspec_zmin,NSTEP))
-        allocate(b_absorb_acoustic_top(NGLLX,nspec_zmax,NSTEP))
+        allocate(b_absorb_acoustic_left(NGLLZ,nspec_left,NSTEP))
+        allocate(b_absorb_acoustic_right(NGLLZ,nspec_right,NSTEP))
+        allocate(b_absorb_acoustic_bottom(NGLLX,nspec_bottom,NSTEP))
+        allocate(b_absorb_acoustic_top(NGLLX,nspec_top,NSTEP))
       else
         allocate(b_absorb_acoustic_left(1,1,1))
         allocate(b_absorb_acoustic_right(1,1,1))
@@ -1206,7 +1206,7 @@
   ! constructs acoustic surface
   if(nelem_acoustic_surface > 0) then
     call construct_acoustic_surface ( nspec, ngnod, knods, nelem_acoustic_surface, &
-                                     acoustic_edges, acoustic_surface)        
+                                     acoustic_edges, acoustic_surface)
     if (myrank == 0 .and. ipass == 1) then
       write(IOUT,*)
       write(IOUT,*) 'Number of free surface elements: ',nelem_acoustic_surface
@@ -1229,7 +1229,7 @@
     allocate(fluid_solid_elastic_ispec(num_fluid_solid_edges))
     allocate(fluid_solid_elastic_iedge(num_fluid_solid_edges))
   endif
-  if( num_fluid_poro_edges > 0 ) then  
+  if( num_fluid_poro_edges > 0 ) then
     any_fluid_poro_edges = .true.
   else
     any_fluid_poro_edges = .false.
@@ -1241,7 +1241,7 @@
     allocate(fluid_poro_poroelastic_ispec(num_fluid_poro_edges))
     allocate(fluid_poro_poroelastic_iedge(num_fluid_poro_edges))
   endif
-  if ( num_solid_poro_edges > 0 ) then  
+  if ( num_solid_poro_edges > 0 ) then
     any_solid_poro_edges = .true.
   else
     any_solid_poro_edges = .false.
@@ -1253,21 +1253,21 @@
     allocate(solid_poro_poroelastic_ispec(num_solid_poro_edges))
     allocate(solid_poro_poroelastic_iedge(num_solid_poro_edges))
   endif
-  
+
   call read_databases_coupled(ipass,nspec,num_fluid_solid_edges,any_fluid_solid_edges, &
                             fluid_solid_acoustic_ispec,fluid_solid_elastic_ispec, &
                             num_fluid_poro_edges,any_fluid_poro_edges, &
                             fluid_poro_acoustic_ispec,fluid_poro_poroelastic_ispec, &
                             num_solid_poro_edges,any_solid_poro_edges, &
                             solid_poro_elastic_ispec,solid_poro_poroelastic_ispec, &
-                            perm,antecedent_list)  
-  
+                            perm,antecedent_list)
+
   ! resets counters
   if( any_fluid_solid_edges .eqv. .false. ) num_fluid_solid_edges = 0
   if( any_fluid_poro_edges .eqv. .false. ) num_fluid_poro_edges = 0
   if( any_solid_poro_edges .eqv. .false. ) num_solid_poro_edges = 0
 
-  
+
   !
   !---- read tangential detection curve
   !      and close Database file
@@ -1277,17 +1277,17 @@
   else
     any_tangential_curve = .false.
     nnodes_tangential_curve = 1
-  endif  
+  endif
   if (ipass == 1) then
     allocate(nodes_tangential_curve(2,nnodes_tangential_curve))
     allocate(dist_tangential_detection_curve(nnodes_tangential_curve))
   endif
   call read_databases_final(nnodes_tangential_curve,nodes_tangential_curve, &
                                 force_normal_to_surface,rec_normal_to_surface, &
-                                any_tangential_curve)                                
+                                any_tangential_curve)
   ! resets nnode_tangential_curve
   if( any_tangential_curve .eqv. .false. ) nnodes_tangential_curve = 0
-  
+
 !
 !---- compute shape functions and their derivatives for SEM grid
 !
@@ -1778,10 +1778,10 @@ print *
 !
   all_anisotropic = .false.
   if(count(anisotropic(:) .eqv. .true.) == nspec) all_anisotropic = .true.
-  
+
   if(all_anisotropic .and. anyabs) &
     call exit_MPI('Cannot put absorbing boundaries if anisotropic materials along edges')
-    
+
   if(TURN_ATTENUATION_ON .and. all_anisotropic) then
     call exit_MPI('Cannot turn attenuation on in anisotropic materials')
   end if
@@ -2079,7 +2079,7 @@ print *
       endif
 
     endif ! force_normal_to_surface
-    
+
   endif ! ipass
 
 !
@@ -2373,7 +2373,7 @@ print *
   endif ! ipass == 1
 
   !
-  !---- build the global mass matrix 
+  !---- build the global mass matrix
   !
   call invert_mass_matrix_init(any_elastic,any_acoustic,any_poroelastic, &
                                 rmass_inverse_elastic,npoin_elastic, &
@@ -2385,7 +2385,7 @@ print *
                                 assign_external_model,numat, &
                                 density,poroelastcoef,porosity,tortuosity, &
                                 vpext,rhoext)
-  
+
 
 
 #ifdef USE_MPI
@@ -2717,7 +2717,7 @@ print *
                             zmin_color_image,zmax_color_image, &
                             coord,npoin,coorg,npgeo,nspec,ngnod,knods,ibool, &
                             nb_pixel_loc,iglob_image_color)
-  
+
 
     ! creating and filling array num_pixel_loc with the positions of each colored
     ! pixel owned by the local process (useful for parallel jobs)
@@ -2830,34 +2830,34 @@ print *
   if( ((SAVE_FORWARD .and. SIMULATION_TYPE ==1) .or. SIMULATION_TYPE == 2) .and. anyabs ) then
     ! opens files for absorbing boundary data
     call prepare_absorb_files(myrank,any_elastic,any_poroelastic,any_acoustic, &
-                      nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,SIMULATION_TYPE)
-  endif 
+                      nspec_left,nspec_right,nspec_bottom,nspec_top,SIMULATION_TYPE)
+  endif
 
   if(anyabs .and. SIMULATION_TYPE == 2) then
 
     ! reads in absorbing bounday data
     if(any_elastic) then
       call prepare_absorb_elastic(NSTEP,p_sv, &
-                      nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax, &
+                      nspec_left,nspec_right,nspec_bottom,nspec_top, &
                       b_absorb_elastic_left,b_absorb_elastic_right, &
                       b_absorb_elastic_bottom,b_absorb_elastic_top)
 
-    endif 
+    endif
     if(any_poroelastic) then
       call prepare_absorb_poroelastic(NSTEP, &
-                      nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax, &
+                      nspec_left,nspec_right,nspec_bottom,nspec_top, &
                       b_absorb_poro_s_left,b_absorb_poro_w_left, &
                       b_absorb_poro_s_right,b_absorb_poro_w_right, &
                       b_absorb_poro_s_bottom,b_absorb_poro_w_bottom, &
                       b_absorb_poro_s_top,b_absorb_poro_w_top)
 
-    endif 
+    endif
     if(any_acoustic) then
       call prepare_absorb_acoustic(NSTEP, &
-                      nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax, &
+                      nspec_left,nspec_right,nspec_bottom,nspec_top, &
                       b_absorb_acoustic_left,b_absorb_acoustic_right, &
                       b_absorb_acoustic_bottom,b_absorb_acoustic_top)
-    endif 
+    endif
 
   endif ! if(anyabs .and. SIMULATION_TYPE == 2)
 
@@ -2976,7 +2976,7 @@ print *
   over_critical_angle = .false.
 
   if(initialfield) then
-  
+
     ! Calculation of the initial field for a plane wave
     if( any_elastic ) then
       call prepare_initialfield(myrank,any_acoustic,any_poroelastic,over_critical_angle, &
@@ -2986,9 +2986,9 @@ print *
                         A_plane, B_plane, C_plane, &
                         accel_elastic,veloc_elastic,displ_elastic)
     endif
-    
+
     if( over_critical_angle ) then
-    
+
       allocate(left_bound(nelemabs*NGLLX))
       allocate(right_bound(nelemabs*NGLLX))
       allocate(bot_bound(nelemabs*NGLLZ))
@@ -4038,8 +4038,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 !               jbegin_left,jend_left,jbegin_right,jend_right, &
 !               SIMULATION_TYPE,SAVE_FORWARD,b_absorb_acoustic_left,&
 !               b_absorb_acoustic_right,b_absorb_acoustic_bottom,&
-!               b_absorb_acoustic_top,nspec_xmin,nspec_xmax,&
-!               nspec_zmin,nspec_zmax,ib_left,ib_right,ib_bottom,ib_top)
+!               b_absorb_acoustic_top,nspec_left,nspec_right,&
+!               nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top)
 
 
       call compute_forces_acoustic_2(npoin,nspec,nelemabs,numat,it,NSTEP, &
@@ -4051,8 +4051,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
                jbegin_left,jend_left,jbegin_right,jend_right, &
-               SIMULATION_TYPE,SAVE_FORWARD,nspec_xmin,nspec_xmax,&
-               nspec_zmin,nspec_zmax,ib_left,ib_right,ib_bottom,ib_top, &
+               SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right,&
+               nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
                b_absorb_acoustic_bottom,b_absorb_acoustic_top)
       if( SIMULATION_TYPE == 2 ) then
@@ -4065,42 +4065,42 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
                jbegin_left,jend_left,jbegin_right,jend_right, &
-               SIMULATION_TYPE,SAVE_FORWARD,nspec_xmin,nspec_xmax,&
-               nspec_zmin,nspec_zmax,ib_left,ib_right,ib_bottom,ib_top, &
+               SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right,&
+               nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
-               b_absorb_acoustic_bottom,b_absorb_acoustic_top)          
+               b_absorb_acoustic_bottom,b_absorb_acoustic_top)
       endif
 
 
       ! stores absorbing boundary contributions into files
       if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
         !--- left absorbing boundary
-        if(nspec_xmin >0) then
-          do ispec = 1,nspec_xmin
+        if(nspec_left >0) then
+          do ispec = 1,nspec_left
             do i=1,NGLLZ
               write(65) b_absorb_acoustic_left(i,ispec,it)
             enddo
           enddo
         endif
         !--- right absorbing boundary
-        if(nspec_xmax >0) then
-          do ispec = 1,nspec_xmax
+        if(nspec_right >0) then
+          do ispec = 1,nspec_right
             do i=1,NGLLZ
               write(66) b_absorb_acoustic_right(i,ispec,it)
             enddo
           enddo
         endif
         !--- bottom absorbing boundary
-        if(nspec_zmin >0) then
-          do ispec = 1,nspec_zmin
+        if(nspec_bottom >0) then
+          do ispec = 1,nspec_bottom
             do i=1,NGLLX
               write(67) b_absorb_acoustic_bottom(i,ispec,it)
             enddo
           enddo
         endif
         !--- top absorbing boundary
-        if(nspec_zmax >0) then
-          do ispec = 1,nspec_zmax
+        if(nspec_top >0) then
+          do ispec = 1,nspec_top
             do i=1,NGLLX
               write(68) b_absorb_acoustic_top(i,ispec,it)
             enddo
@@ -4288,7 +4288,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           if(SIMULATION_TYPE == 2) then
             b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) &
                    + weight*((b_displ_x + b_displw_x)*nx + (b_displ_z + b_displw_z)*nz)
-          endif 
+          endif
 
         enddo
 
@@ -4311,14 +4311,14 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
           if (is_proc_source(i_source) == 1 .and. &
             .not. elastic(ispec_selected_source(i_source)) .and. &
             .not. poroelastic(ispec_selected_source(i_source))) then
-            
+
 ! collocated force
 ! beware, for acoustic medium, source is: pressure divided by Kappa of the fluid
 ! the sign is negative because pressure p = - Chi_dot_dot therefore we need
 ! to add minus the source to Chi_dot_dot to get plus the source in pressure
             if(source_type(i_source) == 1) then
 
-              if(SIMULATION_TYPE == 1) then  
+              if(SIMULATION_TYPE == 1) then
                 ! forward wavefield
                 do j = 1,NGLLZ
                   do i = 1,NGLLX
@@ -4328,7 +4328,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
                                             - source_time_function(i_source,it)*hlagrange
                   enddo
                 enddo
-              else                   
+              else
                 ! backward wavefield
                 do j = 1,NGLLZ
                   do i = 1,NGLLX
@@ -4372,7 +4372,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
         endif ! SIMULATION_TYPE == 2 adjoint wavefield
 
       endif ! if not using an initial field
-      
+
     endif !if(any_acoustic)
 
 
@@ -4385,7 +4385,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
                     ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
                     tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac, &
                     buffer_recv_faces_vector_ac, my_neighbours)
-           
+
     if ( SIMULATION_TYPE == 2) then
       call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic,npoin, &
                      ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
@@ -4393,9 +4393,9 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
                      ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
                      tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac, &
                      buffer_recv_faces_vector_ac, my_neighbours)
-          
+
     endif
-           
+
   endif
 
 !  if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0 .and. SIMULATION_TYPE == 2) then
@@ -4465,12 +4465,12 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
                count_left,count_right,count_bottom,over_critical_angle, &
                NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD, &
                b_absorb_elastic_left,b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top, &
-               nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,ib_left,ib_right,ib_bottom,ib_top,mu_k,kappa_k)
+               nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,mu_k,kappa_k)
 
     if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
 !--- left absorbing boundary
-      if(nspec_xmin >0) then
-      do ispec = 1,nspec_xmin
+      if(nspec_left >0) then
+      do ispec = 1,nspec_left
 
       if(p_sv)then!P-SV waves
         do i=1,NGLLZ
@@ -4489,8 +4489,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
       endif
 
 !--- right absorbing boundary
-      if(nspec_xmax >0) then
-      do ispec = 1,nspec_xmax
+      if(nspec_right >0) then
+      do ispec = 1,nspec_right
 
 
       if(p_sv)then!P-SV waves
@@ -4510,8 +4510,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
       endif
 
 !--- bottom absorbing boundary
-      if(nspec_zmin >0) then
-      do ispec = 1,nspec_zmin
+      if(nspec_bottom >0) then
+      do ispec = 1,nspec_bottom
 
       if(p_sv)then!P-SV waves
          do i=1,NGLLX
@@ -4530,8 +4530,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
       endif
 
 !--- top absorbing boundary
-      if(nspec_zmax >0) then
-      do ispec = 1,nspec_zmax
+      if(nspec_top >0) then
+      do ispec = 1,nspec_top
 
       if(p_sv)then!P-SV waves
          do i=1,NGLLX
@@ -5084,7 +5084,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
                jbegin_left_poro,jend_left_poro,jbegin_right_poro,jend_right_poro,&
                mufr_k,B_k,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,&
                b_absorb_poro_s_left,b_absorb_poro_s_right,b_absorb_poro_s_bottom,b_absorb_poro_s_top,&
-               nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,ib_left,ib_right,ib_bottom,ib_top,f0(1),freq0,Q0)
+               nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,f0(1),freq0,Q0)
 
 
 
@@ -5107,7 +5107,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
                jbegin_left_poro,jend_left_poro,jbegin_right_poro,jend_right_poro,&
                C_k,M_k,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,&
                b_absorb_poro_w_left,b_absorb_poro_w_right,b_absorb_poro_w_bottom,b_absorb_poro_w_top,&
-               nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,ib_left,ib_right,ib_bottom,ib_top,f0(1),freq0,Q0)
+               nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,f0(1),freq0,Q0)
 
 
     if(SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
@@ -5119,8 +5119,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
     if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
 
 !--- left absorbing boundary
-      if(nspec_xmin >0) then
-      do ispec = 1,nspec_xmin
+      if(nspec_left >0) then
+      do ispec = 1,nspec_left
        do id =1,2
          do i=1,NGLLZ
      write(45) b_absorb_poro_s_left(id,i,ispec,it)
@@ -5131,8 +5131,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
       endif
 
 !--- right absorbing boundary
-      if(nspec_xmax >0) then
-      do ispec = 1,nspec_xmax
+      if(nspec_right >0) then
+      do ispec = 1,nspec_right
        do id =1,2
          do i=1,NGLLZ
      write(46) b_absorb_poro_s_right(id,i,ispec,it)
@@ -5143,8 +5143,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
       endif
 
 !--- bottom absorbing boundary
-      if(nspec_zmin >0) then
-      do ispec = 1,nspec_zmin
+      if(nspec_bottom >0) then
+      do ispec = 1,nspec_bottom
        do id =1,2
          do i=1,NGLLX
      write(47) b_absorb_poro_s_bottom(id,i,ispec,it)
@@ -5155,8 +5155,8 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
       endif
 
 !--- top absorbing boundary
-      if(nspec_zmax >0) then
-      do ispec = 1,nspec_zmax
+      if(nspec_top >0) then
+      do ispec = 1,nspec_top
        do id =1,2
          do i=1,NGLLX
      write(48) b_absorb_poro_s_top(id,i,ispec,it)

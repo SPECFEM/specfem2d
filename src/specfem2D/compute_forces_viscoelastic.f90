@@ -58,8 +58,8 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
      x0_source, z0_source, A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset,f0, &
      v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot,&
      nleft,nright,nbot,over_critical_angle,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,b_absorb_elastic_left,&
-     b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top,nspec_xmin,nspec_xmax,&
-     nspec_zmin,nspec_zmax,ib_left,ib_right,ib_bottom,ib_top,mu_k,kappa_k)
+     b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top,nspec_left,nspec_right,&
+     nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,mu_k,kappa_k)
 
   ! compute forces for the elastic elements
 
@@ -74,7 +74,7 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
 
   integer :: nrec,SIMULATION_TYPE
   integer, dimension(nrec) :: ispec_selected_rec,which_proc_receiver
-  integer :: nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax
+  integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
   integer, dimension(nelemabs) :: ib_left
   integer, dimension(nelemabs) :: ib_right
   integer, dimension(nelemabs) :: ib_bottom
@@ -108,10 +108,10 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL), dimension(3,npoin) :: b_accel_elastic,b_displ_elastic
   real(kind=CUSTOM_REAL), dimension(nrec,NSTEP,3,NGLLX,NGLLZ) :: adj_sourcearrays
   real(kind=CUSTOM_REAL), dimension(npoin) :: mu_k,kappa_k
-  real(kind=CUSTOM_REAL), dimension(3,NGLLZ,nspec_xmin,NSTEP) :: b_absorb_elastic_left
-  real(kind=CUSTOM_REAL), dimension(3,NGLLZ,nspec_xmax,NSTEP) :: b_absorb_elastic_right
-  real(kind=CUSTOM_REAL), dimension(3,NGLLX,nspec_zmax,NSTEP) :: b_absorb_elastic_top
-  real(kind=CUSTOM_REAL), dimension(3,NGLLX,nspec_zmin,NSTEP) :: b_absorb_elastic_bottom
+  real(kind=CUSTOM_REAL), dimension(3,NGLLZ,nspec_left,NSTEP) :: b_absorb_elastic_left
+  real(kind=CUSTOM_REAL), dimension(3,NGLLZ,nspec_right,NSTEP) :: b_absorb_elastic_right
+  real(kind=CUSTOM_REAL), dimension(3,NGLLX,nspec_top,NSTEP) :: b_absorb_elastic_top
+  real(kind=CUSTOM_REAL), dimension(3,NGLLX,nspec_bottom,NSTEP) :: b_absorb_elastic_bottom
 
   integer :: N_SLS
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11,e13

@@ -52,8 +52,8 @@
                ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
                jbegin_left,jend_left,jbegin_right,jend_right,SIMULATION_TYPE,SAVE_FORWARD,b_absorb_acoustic_left,&
                b_absorb_acoustic_right,b_absorb_acoustic_bottom,&
-               b_absorb_acoustic_top,nspec_xmin,nspec_xmax,&
-               nspec_zmin,nspec_zmax,ib_left,ib_right,ib_bottom,ib_top)
+               b_absorb_acoustic_top,nspec_left,nspec_right,&
+               nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top)
 
 ! compute forces for the acoustic elements
 
@@ -63,7 +63,7 @@
 
   integer :: npoin,nspec,nelemabs,numat,it,NSTEP,SIMULATION_TYPE
 
-  integer :: nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax
+  integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
   integer, dimension(nelemabs) :: ib_left
   integer, dimension(nelemabs) :: ib_right
   integer, dimension(nelemabs) :: ib_bottom
@@ -89,10 +89,10 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
   double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,rhoext
 
-  double precision, dimension(NGLLZ,nspec_xmin,NSTEP) :: b_absorb_acoustic_left
-  double precision, dimension(NGLLZ,nspec_xmax,NSTEP) :: b_absorb_acoustic_right
-  double precision, dimension(NGLLX,nspec_zmax,NSTEP) :: b_absorb_acoustic_top
-  double precision, dimension(NGLLX,nspec_zmin,NSTEP) :: b_absorb_acoustic_bottom
+  double precision, dimension(NGLLZ,nspec_left,NSTEP) :: b_absorb_acoustic_left
+  double precision, dimension(NGLLZ,nspec_right,NSTEP) :: b_absorb_acoustic_right
+  double precision, dimension(NGLLX,nspec_top,NSTEP) :: b_absorb_acoustic_top
+  double precision, dimension(NGLLX,nspec_bottom,NSTEP) :: b_absorb_acoustic_bottom
 
 ! derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
@@ -441,8 +441,8 @@
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
                jbegin_left,jend_left,jbegin_right,jend_right, &
-               SIMULATION_TYPE,SAVE_FORWARD,nspec_xmin,nspec_xmax,&
-               nspec_zmin,nspec_zmax,ib_left,ib_right,ib_bottom,ib_top, &
+               SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right,&
+               nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
                b_absorb_acoustic_bottom,b_absorb_acoustic_top)
 
@@ -481,16 +481,16 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
   real(kind=CUSTOM_REAL), dimension(NGLLZ) :: wzgll
 
-  integer :: nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax
+  integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
   integer, dimension(nelemabs) :: ib_left
   integer, dimension(nelemabs) :: ib_right
   integer, dimension(nelemabs) :: ib_bottom
   integer, dimension(nelemabs) :: ib_top
 
-  double precision, dimension(NGLLZ,nspec_xmin,NSTEP) :: b_absorb_acoustic_left
-  double precision, dimension(NGLLZ,nspec_xmax,NSTEP) :: b_absorb_acoustic_right
-  double precision, dimension(NGLLX,nspec_zmax,NSTEP) :: b_absorb_acoustic_top
-  double precision, dimension(NGLLX,nspec_zmin,NSTEP) :: b_absorb_acoustic_bottom
+  double precision, dimension(NGLLZ,nspec_left,NSTEP) :: b_absorb_acoustic_left
+  double precision, dimension(NGLLZ,nspec_right,NSTEP) :: b_absorb_acoustic_right
+  double precision, dimension(NGLLX,nspec_top,NSTEP) :: b_absorb_acoustic_top
+  double precision, dimension(NGLLX,nspec_bottom,NSTEP) :: b_absorb_acoustic_bottom
 
 !---
 !--- local variables
@@ -617,7 +617,7 @@
             zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             weight = jacobian1D * wzgll(j)
-          
+
             if( SIMULATION_TYPE == 1 ) then
               ! adds absorbing boundary contribution
               potential_dot_dot_acoustic(iglob) = &
@@ -645,7 +645,7 @@
           i = NGLLX
           jbegin = jbegin_right(ispecabs)
           jend = jend_right(ispecabs)
-          do j = jbegin,jend  
+          do j = jbegin,jend
             iglob = ibool(i,j,ispec)
             ! external velocity model
             if(assign_external_model) then
@@ -658,7 +658,7 @@
             weight = jacobian1D * wzgll(j)
 
             if( SIMULATION_TYPE == 1 ) then
-              ! adds absorbing boundary contribution          
+              ! adds absorbing boundary contribution
               potential_dot_dot_acoustic(iglob) = &
                   potential_dot_dot_acoustic(iglob) &
                   - potential_dot_acoustic(iglob)*weight/cpl/rhol
@@ -667,7 +667,7 @@
                   potential_dot_dot_acoustic(iglob) &
                   - b_absorb_acoustic_right(j,ib_right(ispecabs),NSTEP-it+1)
             endif
-            
+
             if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
               ! saves contribution
               b_absorb_acoustic_right(j,ib_right(ispecabs),it) = &
@@ -695,9 +695,9 @@
             zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             weight = jacobian1D * wxgll(i)
-            
+
             if( SIMULATION_TYPE == 1 ) then
-              ! adds absorbing boundary contribution          
+              ! adds absorbing boundary contribution
               potential_dot_dot_acoustic(iglob) = &
                   potential_dot_dot_acoustic(iglob) &
                   - potential_dot_acoustic(iglob)*weight/cpl/rhol
@@ -736,7 +736,7 @@
             weight = jacobian1D * wxgll(i)
 
             if( SIMULATION_TYPE == 1 ) then
-              ! adds absorbing boundary contribution          
+              ! adds absorbing boundary contribution
               potential_dot_dot_acoustic(iglob) = &
                   potential_dot_dot_acoustic(iglob) &
                   - potential_dot_acoustic(iglob)*weight/cpl/rhol
@@ -747,14 +747,14 @@
             endif
 
             if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
-              ! saves contribution            
+              ! saves contribution
               b_absorb_acoustic_top(i,ib_top(ispecabs),it) = &
                   potential_dot_acoustic(iglob)*weight/cpl/rhol
             endif
           enddo
         endif  !  end of top absorbing boundary
-    
-      endif ! acoustic ispec  
+
+      endif ! acoustic ispec
     enddo
   endif  ! end of absorbing boundaries
 
