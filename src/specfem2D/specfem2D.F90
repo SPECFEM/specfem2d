@@ -1339,7 +1339,7 @@
     stop 'currently, all permutations should be off for periodic conditions'
 
 print *
-open(unit=123,file='Database00000_left_edge_only',status='old')
+open(unit=123,file='DATA/Database00000_left_edge_only',status='old')
 do ispecperio = 1,NSPEC_PERIO
   read(123,*) numperio_left(ispecperio), &
      codeabs_perio_left(IBOTTOM,ispecperio), &
@@ -1351,7 +1351,7 @@ enddo
 close(123)
 print *,'read ',NSPEC_PERIO,' elements for left periodic edge'
 
-open(unit=123,file='Database00000_right_edge_only',status='old')
+open(unit=123,file='DATA/Database00000_right_edge_only',status='old')
 do ispecperio = 1,NSPEC_PERIO
   read(123,*) numperio_right(ispecperio), &
      codeabs_perio_right(IBOTTOM,ispecperio), &
