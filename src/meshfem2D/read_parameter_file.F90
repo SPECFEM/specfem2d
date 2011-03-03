@@ -128,7 +128,6 @@ contains
 
   ! read file names and path for output
   call read_value_string(IIN,IGNORE_JUNK,title)
-  call read_value_string(IIN,IGNORE_JUNK,interfacesfile)
 
   write(*,*) 'Title of the simulation'
   write(*,*) title
@@ -138,23 +137,10 @@ contains
   call read_value_integer(IIN,IGNORE_JUNK,SIMULATION_TYPE)
   call read_value_logical(IIN,IGNORE_JUNK,SAVE_FORWARD)
 
-  ! read info about external mesh
-  call read_value_logical(IIN,IGNORE_JUNK,read_external_mesh)
-  call read_value_string(IIN,IGNORE_JUNK,mesh_file)
-  call read_value_string(IIN,IGNORE_JUNK,nodes_coords_file)
-  call read_value_string(IIN,IGNORE_JUNK,materials_file)
-  call read_value_string(IIN,IGNORE_JUNK,free_surface_file)
-  call read_value_string(IIN,IGNORE_JUNK,absorbing_surface_file)
-  call read_value_string(IIN,IGNORE_JUNK,tangential_detection_curve_file)
-
   ! read info about partitioning
   call read_value_integer(IIN,IGNORE_JUNK,nproc)
   call read_value_integer(IIN,IGNORE_JUNK,partitioning_method)
 
-  ! read grid parameters
-  call read_value_double_precision(IIN,IGNORE_JUNK,xmin)
-  call read_value_double_precision(IIN,IGNORE_JUNK,xmax)
-  call read_value_integer(IIN,IGNORE_JUNK,nx)
   call read_value_integer(IIN,IGNORE_JUNK,ngnod)
   call read_value_logical(IIN,IGNORE_JUNK,initialfield)
   call read_value_logical(IIN,IGNORE_JUNK,add_Bielak_conditions)
@@ -167,13 +153,6 @@ contains
   call read_value_double_precision(IIN,IGNORE_JUNK,freq0)
   ! determine if body or surface (membrane) waves calculation
   call read_value_logical(IIN,IGNORE_JUNK,p_sv)
-
-  ! read absorbing boundaries parameters
-  call read_value_logical(IIN,IGNORE_JUNK,any_abs)
-  call read_value_logical(IIN,IGNORE_JUNK,absbottom)
-  call read_value_logical(IIN,IGNORE_JUNK,absright)
-  call read_value_logical(IIN,IGNORE_JUNK,abstop)
-  call read_value_logical(IIN,IGNORE_JUNK,absleft)
 
   ! read time step parameters
   call read_value_integer(IIN,IGNORE_JUNK,nt)
@@ -235,7 +214,6 @@ contains
   call read_value_logical(IIN,IGNORE_JUNK,outputgrid)
   call read_value_logical(IIN,IGNORE_JUNK,OUTPUT_ENERGY)
 
-
   ! read the different material materials
   call read_value_integer(IIN,IGNORE_JUNK,nb_materials)
   if(nb_materials <= 0) stop 'Negative number of materials not allowed!'
@@ -270,6 +248,41 @@ contains
                       permxx,permxz,permzz,kappa_s,kappa_f,kappa_fr, &
                       eta_f,mu_fr)
 
+  ! boolean defining whether internal or external mesh
+  call read_value_logical(IIN,IGNORE_JUNK,read_external_mesh)
+
+  ! boolean defining whether to use any absorbing boundaries
+  call read_value_logical(IIN,IGNORE_JUNK,any_abs)
+
+  !-----------------
+  ! external mesh parameters
+
+  ! read info about external mesh
+  call read_value_string(IIN,IGNORE_JUNK,mesh_file)
+  call read_value_string(IIN,IGNORE_JUNK,nodes_coords_file)
+  call read_value_string(IIN,IGNORE_JUNK,materials_file)
+  call read_value_string(IIN,IGNORE_JUNK,free_surface_file)
+  call read_value_string(IIN,IGNORE_JUNK,absorbing_surface_file)
+  call read_value_string(IIN,IGNORE_JUNK,tangential_detection_curve_file)
+
+  !-----------------
+  ! internal mesh parameters
+
+  ! interfaces file
+  call read_value_string(IIN,IGNORE_JUNK,interfacesfile)
+
+  ! read grid parameters
+  call read_value_double_precision(IIN,IGNORE_JUNK,xmin)
+  call read_value_double_precision(IIN,IGNORE_JUNK,xmax)
+  call read_value_integer(IIN,IGNORE_JUNK,nx)
+
+  ! read absorbing boundary parameters
+  call read_value_logical(IIN,IGNORE_JUNK,absbottom)
+  call read_value_logical(IIN,IGNORE_JUNK,absright)
+  call read_value_logical(IIN,IGNORE_JUNK,abstop)
+  call read_value_logical(IIN,IGNORE_JUNK,absleft)
+
+  ! note: if internal mesh, then regions will be read in by read_regions (from meshfem2D)
 
   ! checks input parameters
   call check_parameters()
