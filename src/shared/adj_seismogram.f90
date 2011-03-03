@@ -48,14 +48,13 @@
 ! into the adjoint source for generating banana-dougnut kernels
 
       implicit none
-!
-!!!!  user edit
+
       integer, parameter :: NSTEP = 3000
       integer, parameter :: nrec = 1
       double precision, parameter :: t0 = 12
       double precision, parameter :: deltat = 6d-2
       double precision, parameter :: EPS = 1.d-40
-!!!!
+
       integer :: itime,icomp,istart,iend,nlen,irec,NDIM,NDIMr,adj_comp
       double precision :: time,tstart(nrec),tend(nrec)
       character(len=150), dimension(nrec) :: station_name
@@ -63,12 +62,11 @@
       double precision :: seism(NSTEP,3),Nnorm,seism_win(NSTEP)
       double precision :: seism_veloc(NSTEP),seism_accel(NSTEP),ft_bar(NSTEP)
       character(len=3) :: compr(2),comp(3)
-      character(len=150) :: filename,filename2
+      character(len=150) :: filename
 
       NDIM=3
       comp = (/"BHX","BHY","BHZ"/)
 
-!!!! user edit
 ! which calculation: P-SV (use (1)) or SH (membrane) (use (2)) waves
       NDIMr=2  !(1)
 !      NDIMr=1  !(2)
