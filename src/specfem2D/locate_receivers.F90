@@ -295,15 +295,6 @@
     write(IOUT,*) 'end of receiver detection'
     write(IOUT,*)
 
-    ! write out actual station locations (compare with STATIONS_target from meshfem2D)
-    ! NOTE: this will be written out even if generate_STATIONS = .false.
-    open(unit=15,file='DATA/STATIONS',status='unknown')
-    do irec = 1,nrec
-      write(15,"('S',i4.4,'    AA ',f20.7,1x,f20.7,'       0.0         0.0')") &
-          irec,x_final_receiver(irec),z_final_receiver(irec)
-    enddo
-    close(15)
-
   endif
 
   ! deallocate arrays

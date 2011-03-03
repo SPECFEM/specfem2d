@@ -75,7 +75,7 @@
   print *,'There are ',nrec_total,' receivers'
 
   print *
-  print *,'Position (x,z) of the ',nrec_total,' receivers'
+  print *,'Target positions (x,z) of the ',nrec_total,' receivers'
   print *
 
   open(unit=15,file='DATA/STATIONS_target',status='unknown',iostat=ios)
