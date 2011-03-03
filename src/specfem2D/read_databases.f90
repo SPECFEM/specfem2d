@@ -87,7 +87,7 @@
   write(prname,230) myrank
   open(unit=IIN,file=prname,status='old',action='read',iostat=ier)
   if( ier /= 0 ) call exit_MPI('error opening file OUTPUT/Database***')
-  
+
   !---  read job title and skip remaining titles of the input file
   read(IIN,"(a80)") datlin
   read(IIN,"(a80)") datlin
@@ -193,7 +193,7 @@
 
   ! output formats
 230 format('./OUTPUT_FILES/Database',i5.5)
-  
+
 200 format(//1x,'C o n t r o l',/1x,13('='),//5x,&
   'Number of spectral element control nodes. . .(npgeo) =',i8/5x, &
   'Number of space dimensions. . . . . . . . . . (NDIM) =',i8)
@@ -265,7 +265,7 @@
   tshift_src(:) = 0.d0
   factor(:) = 0.d0
   angleforce(:) = 0.d0
-  
+
   ! reads in source info from Database file
   do i_source=1,NSOURCES
      read(IIN,"(a80)") datlin
@@ -394,12 +394,12 @@
   integer :: ipass,ngnod,nspec
   integer, dimension(nspec) :: kmato
   integer, dimension(ngnod,nspec) :: knods
-  
+
   integer, dimension(nspec) :: perm,antecedent_list
 
   ! local parameters
   integer :: n,k,ispec,kmato_read
-  integer, dimension(:), allocatable :: knods_read  
+  integer, dimension(:), allocatable :: knods_read
   character(len=80) :: datlin
 
   ! initializes
@@ -408,7 +408,7 @@
 
   ! reads spectral macrobloc data
   read(IIN,"(a80)") datlin
-  
+
   ! reads in values
   allocate(knods_read(ngnod))
   n = 0
@@ -416,7 +416,7 @@
     ! format: #element_id  #material_id #node_id1 #node_id2 #...
     read(IIN,*) n,kmato_read,(knods_read(k), k=1,ngnod)
     if(ipass == 1) then
-      ! material association 
+      ! material association
       kmato(n) = kmato_read
       ! element control node indices
       knods(:,n)= knods_read(:)
@@ -458,7 +458,7 @@
 !
 
   subroutine read_databases_interfaces(ipass,ninterface,nspec,max_interface_size, &
-                              my_neighbours,my_nelmnts_neighbours,my_interfaces, &                              
+                              my_neighbours,my_nelmnts_neighbours,my_interfaces, &
                               perm,antecedent_list)
 
 ! reads in interfaces
@@ -486,12 +486,12 @@
     ! format: #process_interface_id  #number_of_elements_on_interface
     ! where
     !     process_interface_id = rank of (neighbor) process to share MPI interface with
-    !     number_of_elements_on_interface = number of interface elements  
+    !     number_of_elements_on_interface = number of interface elements
     read(IIN,*) my_neighbours(num_interface), my_nelmnts_neighbours(num_interface)
-    
+
     ! loops over interface elements
     do ie = 1, my_nelmnts_neighbours(num_interface)
-      ! format: #(1)spectral_element_id  #(2)interface_type  #(3)node_id1  #(4)node_id2 
+      ! format: #(1)spectral_element_id  #(2)interface_type  #(3)node_id1  #(4)node_id2
       !
       ! interface types:
       !     1  -  corner point only
@@ -521,7 +521,7 @@
                             ibegin_bottom,iend_bottom,jbegin_right,jend_right, &
                             ibegin_top,iend_top,jbegin_left,jend_left, &
                             numabs,codeabs,perm,antecedent_list, &
-                            nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax, &
+                            nspec_left,nspec_right,nspec_bottom,nspec_top, &
                             ib_right,ib_left,ib_bottom,ib_top)
 
 ! reads in absorbing edges
@@ -536,10 +536,10 @@
   logical, dimension(4,nelemabs) :: codeabs
   logical :: anyabs
   integer, dimension(nspec) :: perm,antecedent_list
-  integer :: nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax
+  integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
 
   integer, dimension(nelemabs) :: ib_right,ib_left,ib_bottom,ib_top
-  
+
   ! local parameters
   integer :: inum,numabsread
   logical :: codeabsread(4)
@@ -558,10 +558,10 @@
   jbegin_right(:) = 0
   jend_right(:) = 0
 
-  nspec_xmin = 0
-  nspec_xmax = 0
-  nspec_zmin = 0
-  nspec_zmax = 0
+  nspec_left = 0
+  nspec_right = 0
+  nspec_bottom = 0
+  nspec_top = 0
 
   ib_right(:) = 0
   ib_left(:) = 0
@@ -570,7 +570,7 @@
 
   ! reads in absorbing edges
   read(IIN,"(a80)") datlin
-  
+
   ! reads in values
   if( anyabs ) then
     ! reads absorbing boundaries
@@ -600,31 +600,31 @@
     ! boundary element numbering
     do inum = 1,nelemabs
       if (codeabs(IBOTTOM,inum)) then
-        nspec_zmin = nspec_zmin + 1
-        ib_bottom(inum) =  nspec_zmin
+        nspec_bottom = nspec_bottom + 1
+        ib_bottom(inum) =  nspec_bottom
       endif
       if (codeabs(IRIGHT,inum)) then
-        nspec_xmax = nspec_xmax + 1
-        ib_right(inum) =  nspec_xmax
+        nspec_right = nspec_right + 1
+        ib_right(inum) =  nspec_right
       endif
       if (codeabs(ITOP,inum)) then
-        nspec_zmax = nspec_zmax + 1
-        ib_top(inum) = nspec_zmax
+        nspec_top = nspec_top + 1
+        ib_top(inum) = nspec_top
       endif
       if (codeabs(ILEFT,inum)) then
-        nspec_xmin = nspec_xmin + 1
-        ib_left(inum) =  nspec_xmin
+        nspec_left = nspec_left + 1
+        ib_left(inum) =  nspec_left
       endif
     enddo
 
     if (myrank == 0 .and. ipass == 1) then
       write(IOUT,*)
       write(IOUT,*) 'Number of absorbing elements: ',nelemabs
-      write(IOUT,*) '  nspec_xmin = ',nspec_xmin
-      write(IOUT,*) '  nspec_xmax = ',nspec_xmax
-      write(IOUT,*) '  nspec_zmin = ',nspec_zmin
-      write(IOUT,*) '  nspec_zmax = ',nspec_zmax
-      write(IOUT,*)      
+      write(IOUT,*) '  nspec_left = ',nspec_left
+      write(IOUT,*) '  nspec_right = ',nspec_right
+      write(IOUT,*) '  nspec_bottom = ',nspec_bottom
+      write(IOUT,*) '  nspec_top = ',nspec_top
+      write(IOUT,*)
     endif
 
   endif
@@ -659,12 +659,12 @@
 
   ! reads in any possible free surface edges
   read(IIN,"(a80)") datlin
-  
-  if( any_acoustic_edges ) then    
+
+  if( any_acoustic_edges ) then
     do inum = 1,nelem_acoustic_surface
       read(IIN,*) acoustic_edges_read, acoustic_edges(2,inum), acoustic_edges(3,inum), &
            acoustic_edges(4,inum)
-           
+
       if(ipass == 1) then
         acoustic_edges(1,inum) = acoustic_edges_read
       else if(ipass == 2) then
@@ -676,9 +676,9 @@
     enddo
 
   endif
-  
+
   end subroutine read_databases_free_surf
-  
+
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -703,7 +703,7 @@
   integer :: num_fluid_solid_edges
   logical :: any_fluid_solid_edges
   integer, dimension(num_fluid_solid_edges) :: fluid_solid_acoustic_ispec,fluid_solid_elastic_ispec
-  
+
   integer :: num_fluid_poro_edges
   logical :: any_fluid_poro_edges
   integer, dimension(num_fluid_poro_edges) :: fluid_poro_acoustic_ispec,fluid_poro_poroelastic_ispec
@@ -711,7 +711,7 @@
   integer :: num_solid_poro_edges
   logical :: any_solid_poro_edges
   integer, dimension(num_solid_poro_edges) :: solid_poro_elastic_ispec,solid_poro_poroelastic_ispec
-    
+
   integer, dimension(nspec) :: perm,antecedent_list
 
   ! local parameters
@@ -728,10 +728,10 @@
   fluid_poro_poroelastic_ispec(:) = 0
   solid_poro_elastic_ispec(:) = 0
   solid_poro_poroelastic_ispec(:) = 0
-  
+
   ! reads acoustic elastic coupled edges
   read(IIN,"(a80)") datlin
-  
+
   if ( any_fluid_solid_edges ) then
     do inum = 1, num_fluid_solid_edges
       read(IIN,*) fluid_solid_acoustic_ispec_read,fluid_solid_elastic_ispec_read
@@ -805,20 +805,20 @@
   integer :: nnodes_tangential_curve
   logical :: any_tangential_curve
   double precision, dimension(2,nnodes_tangential_curve) :: nodes_tangential_curve
-  
+
   logical :: force_normal_to_surface,rec_normal_to_surface
-  
+
   ! local parameters
   integer :: i
   character(len=80) :: datlin
 
   ! initializes
   nodes_tangential_curve(:,:) = 0.d0
-  
+
   ! reads tangential detection curve
   read(IIN,"(a80)") datlin
   read(IIN,*) force_normal_to_surface,rec_normal_to_surface
-  
+
   if( any_tangential_curve ) then
     do i = 1, nnodes_tangential_curve
       read(IIN,*) nodes_tangential_curve(1,i),nodes_tangential_curve(2,i)
@@ -831,6 +831,6 @@
   ! closes input Database file
   close(IIN)
 
-  end subroutine read_databases_final  
+  end subroutine read_databases_final
 
-  
+

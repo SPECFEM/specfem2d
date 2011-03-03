@@ -60,7 +60,7 @@
                jbegin_left_poro,jend_left_poro,jbegin_right_poro,jend_right_poro,&
                C_k,M_k,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,&
                b_absorb_poro_w_left,b_absorb_poro_w_right,b_absorb_poro_w_bottom,b_absorb_poro_w_top,&
-               nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,ib_left,ib_right,ib_bottom,ib_top,f0,freq0,Q0)
+               nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,f0,freq0,Q0)
 
 ! compute forces for the fluid poroelastic part
 
@@ -72,7 +72,7 @@
   integer :: npoin,nspec,nelemabs,numat,it,NSTEP
   integer :: nrec,SIMULATION_TYPE,myrank
   integer, dimension(nrec) :: ispec_selected_rec,which_proc_receiver
-  integer :: nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax
+  integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
   integer, dimension(nelemabs) :: ib_left
   integer, dimension(nelemabs) :: ib_right
   integer, dimension(nelemabs) :: ib_bottom
@@ -103,10 +103,10 @@
   real(kind=CUSTOM_REAL), dimension(NSOURCES,NDIM,NGLLX,NGLLZ) :: sourcearray
   real(kind=CUSTOM_REAL), dimension(nrec,NSTEP,3,NGLLX,NGLLZ) :: adj_sourcearrays
   real(kind=CUSTOM_REAL), dimension(npoin) :: C_k,M_k
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLZ,nspec_xmin,NSTEP) :: b_absorb_poro_w_left
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLZ,nspec_xmax,NSTEP) :: b_absorb_poro_w_right
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,nspec_zmax,NSTEP) :: b_absorb_poro_w_top
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,nspec_zmin,NSTEP) :: b_absorb_poro_w_bottom
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLZ,nspec_left,NSTEP) :: b_absorb_poro_w_left
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLZ,nspec_right,NSTEP) :: b_absorb_poro_w_right
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,nspec_top,NSTEP) :: b_absorb_poro_w_top
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,nspec_bottom,NSTEP) :: b_absorb_poro_w_bottom
   real(kind=CUSTOM_REAL), dimension(npoin) :: b_viscodampx,b_viscodampz
 
   integer :: N_SLS
