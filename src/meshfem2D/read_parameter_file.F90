@@ -103,7 +103,7 @@ module parameter_file
   logical :: meshvect,modelvect,boundvect,interpol
   integer :: pointsdisp,subsamp
   double precision :: sizemax_arrows
-  logical :: gnuplot,outputgrid,OUTPUT_ENERGY
+  logical :: gnuplot,output_grid,output_energy,output_wavefield_snapshot
   logical :: plot_lowerleft_corner_only
 
   ! to store density and velocity model
@@ -211,8 +211,9 @@ contains
   call read_value_integer(IIN,IGNORE_JUNK,subsamp)
   call read_value_double_precision(IIN,IGNORE_JUNK,sizemax_arrows)
   call read_value_logical(IIN,IGNORE_JUNK,gnuplot)
-  call read_value_logical(IIN,IGNORE_JUNK,outputgrid)
-  call read_value_logical(IIN,IGNORE_JUNK,OUTPUT_ENERGY)
+  call read_value_logical(IIN,IGNORE_JUNK,output_grid)
+  call read_value_logical(IIN,IGNORE_JUNK,output_energy)
+  call read_value_logical(IIN,IGNORE_JUNK,output_wavefield_snapshot)
 
   ! read the different material materials
   call read_value_integer(IIN,IGNORE_JUNK,nb_materials)

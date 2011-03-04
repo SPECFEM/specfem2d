@@ -454,8 +454,9 @@
     nelemabs,nelem_acoustic_surface,ispecabs,UPPER_LIMIT_DISPLAY
 
   logical interpol,meshvect,modelvect,boundvect,assign_external_model,initialfield, &
-    outputgrid,gnuplot,TURN_ATTENUATION_ON,output_postscript_snapshot,output_color_image, &
-    plot_lowerleft_corner_only,add_Bielak_conditions,OUTPUT_ENERGY,READ_EXTERNAL_SEP_FILE
+    output_grid,gnuplot,TURN_ATTENUATION_ON,output_postscript_snapshot,output_color_image, &
+    plot_lowerleft_corner_only,add_Bielak_conditions,output_energy,READ_EXTERNAL_SEP_FILE, &
+    output_wavefield_snapshot
 
   double precision :: cutsnaps,sizemax_arrows,anglerec,xirec,gammarec
 
@@ -588,8 +589,8 @@
   integer  :: nb_pixel_loc
   integer, dimension(:), allocatable  :: num_pixel_loc
 
-!!$! CHT
-!!$  character(len=150) :: wavefield_file
+! wavefield snapshot
+  character(len=150) :: wavefield_file
 
 #ifdef USE_MPI
   integer, dimension(MPI_STATUS_SIZE)  :: request_mpi_status
@@ -801,7 +802,7 @@
                   meshvect,modelvect,boundvect,cutsnaps,subsamp,sizemax_arrows, &
                   anglerec,initialfield,add_Bielak_conditions, &
                   seismotype,imagetype,assign_external_model,READ_EXTERNAL_SEP_FILE, &
-                  outputgrid,OUTPUT_ENERGY,TURN_ATTENUATION_ON, &
+                  output_grid,output_energy,output_wavefield_snapshot,TURN_ATTENUATION_ON, &
                   TURN_VISCATTENUATION_ON,Q0,freq0,p_sv, &
                   NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCES)
 
@@ -1743,7 +1744,7 @@ print *
 !
 !--- save the grid of points in a file
 !
-  if(outputgrid .and. myrank == 0 .and. ipass == 1) then
+  if(output_grid .and. myrank == 0 .and. ipass == 1) then
      write(IOUT,*)
      write(IOUT,*) 'Saving the grid in a text file...'
      write(IOUT,*)
@@ -3652,10 +3653,10 @@ print *
   endif
 
 #ifdef USE_MPI
-  if(OUTPUT_ENERGY) stop 'energy calculation currently serial only, should add an MPI_REDUCE in parallel'
+  if(output_energy) stop 'energy calculation currently serial only, should add an MPI_REDUCE in parallel'
 #endif
 ! open the file in which we will store the energy curve
-  if(OUTPUT_ENERGY) open(unit=IOUT_ENERGY,file='energy.gnu',status='unknown')
+  if(output_energy) open(unit=IOUT_ENERGY,file='energy.gnu',status='unknown')
 
 !
 !----          s t a r t   t i m e   i t e r a t i o n s
@@ -5891,7 +5892,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
   endif
 
 !----  compute kinetic and potential energy
-  if(OUTPUT_ENERGY) &
+  if(output_energy) &
      call compute_energy(displ_elastic,veloc_elastic, &
                         displs_poroelastic,velocs_poroelastic, &
                         displw_poroelastic,velocw_poroelastic, &
@@ -6555,23 +6556,25 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
   endif
 
-!!$!----------------------------------------------
-!!$! CHT: write the full (local) wavefield to file as three components (Uy = 0 for PSV; Ux,Uz = 0 for SH)
-!!$
-!!$  write(wavefield_file,"('OUTPUT_FILES/wavefield',i7.7,'_',i2.2,'.txt')") it,SIMULATION_TYPE
-!!$  open(unit=27,file=wavefield_file,status='unknown')
-!!$  do ispec = 1,nspec
-!!$     do j = 1,NGLLZ
-!!$        do i = 1,NGLLX
-!!$           iglob = ibool(i,j,ispec)
-!!$           write(27,*) sngl(coord(1,iglob)),sngl(coord(2,iglob)),&
-!!$             sngl(vector_field_display(1,iglob)), &
-!!$             sngl(vector_field_display(2,iglob)), &
-!!$             sngl(vector_field_display(3,iglob))
-!!$        enddo
-!!$     enddo
-!!$  enddo
-!!$  close(27)
+!----------------------------------------------
+! write the full (local) wavefield to file as three components (Uy = 0 for PSV; Ux,Uz = 0 for SH)
+
+if (output_wavefield_snapshot) then
+  write(wavefield_file,"('OUTPUT_FILES/wavefield',i7.7,'_',i2.2,'_',i3.3,'.txt')") it,SIMULATION_TYPE,myrank
+  open(unit=27,file=wavefield_file,status='unknown')
+  do ispec = 1,nspec
+     do j = 1,NGLLZ
+        do i = 1,NGLLX
+           iglob = ibool(i,j,ispec)
+           write(27,'(5e16.6)') coord(1,iglob), coord(2,iglob), &
+             vector_field_display(1,iglob), &
+             vector_field_display(2,iglob), &
+             vector_field_display(3,iglob)
+        enddo
+     enddo
+  enddo
+  close(27)
+endif
 
 !
 !----  display color image
@@ -6808,7 +6811,7 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
   deallocate(t0z_bot)
 
 !----  close energy file and create a gnuplot script to display it
-  if(OUTPUT_ENERGY .and. myrank == 0) then
+  if(output_energy .and. myrank == 0) then
     close(IOUT_ENERGY)
     open(unit=IOUT_ENERGY,file='plotenergy',status='unknown')
     write(IOUT_ENERGY,*) 'set term postscript landscape color solid "Helvetica" 22'

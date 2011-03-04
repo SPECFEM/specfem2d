@@ -127,8 +127,8 @@
     write(15,*) 'assign_external_model READ_EXTERNAL_SEP_FILE'
     write(15,*) assign_external_model,READ_EXTERNAL_SEP_FILE
 
-    write(15,*) 'outputgrid OUTPUT_ENERGY TURN_ATTENUATION_ON'
-    write(15,*) outputgrid,OUTPUT_ENERGY,TURN_ATTENUATION_ON
+    write(15,*) 'output_grid output_energy output_wavefield_snapshot TURN_ATTENUATION_ON'
+    write(15,*) output_grid,output_energy,output_wavefield_snapshot,TURN_ATTENUATION_ON
 
     write(15,*) 'TURN_VISCATTENUATION_ON Q0 freq0'
     write(15,*) TURN_VISCATTENUATION_ON,Q0,freq0

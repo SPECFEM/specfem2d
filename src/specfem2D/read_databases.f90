@@ -51,7 +51,7 @@
                   meshvect,modelvect,boundvect,cutsnaps,subsamp,sizemax_arrows, &
                   anglerec,initialfield,add_Bielak_conditions, &
                   seismotype,imagetype,assign_external_model,READ_EXTERNAL_SEP_FILE, &
-                  outputgrid,OUTPUT_ENERGY,TURN_ATTENUATION_ON, &
+                  output_grid,output_energy,output_wavefield_snapshot,TURN_ATTENUATION_ON, &
                   TURN_VISCATTENUATION_ON,Q0,freq0,p_sv, &
                   NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCES)
 
@@ -68,7 +68,7 @@
     output_color_image
   logical :: meshvect,modelvect,boundvect,initialfield,add_Bielak_conditions, &
     assign_external_model,READ_EXTERNAL_SEP_FILE, &
-    outputgrid,OUTPUT_ENERGY,p_sv
+    output_grid,output_energy,output_wavefield_snapshot,p_sv
   logical :: TURN_ATTENUATION_ON,TURN_VISCATTENUATION_ON
 
   double precision :: cutsnaps,sizemax_arrows,anglerec
@@ -154,7 +154,7 @@
   read(IIN,*) assign_external_model,READ_EXTERNAL_SEP_FILE
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) outputgrid,OUTPUT_ENERGY,TURN_ATTENUATION_ON
+  read(IIN,*) output_grid,output_energy,output_wavefield_snapshot,TURN_ATTENUATION_ON
 
   read(IIN,"(a80)") datlin
   read(IIN,*) TURN_VISCATTENUATION_ON,Q0,freq0
@@ -169,7 +169,7 @@
     write(IOUT,700) seismotype,anglerec
     write(IOUT,750) initialfield,add_Bielak_conditions,assign_external_model,&
                     READ_EXTERNAL_SEP_FILE,TURN_ATTENUATION_ON, &
-                    outputgrid,OUTPUT_ENERGY
+                    output_grid,output_energy
     write(IOUT,800) imagetype,100.d0*cutsnaps,subsamp
   endif
 
@@ -217,8 +217,8 @@
   'Assign external model . . . .(assign_external_model) = ',l6/5x, &
   'Read external SEP file . . .(READ_EXTERNAL_SEP_FILE) = ',l6/5x, &
   'Turn attenuation on or off. . .(TURN_ATTENUATION_ON) = ',l6/5x, &
-  'Save grid in external file or not. . . .(outputgrid) = ',l6/5x, &
-  'Save a file with total energy or not.(OUTPUT_ENERGY) = ',l6)
+  'Save grid in external file or not. . . (output_grid) = ',l6/5x, &
+  'Save a file with total energy or not.(output_energy) = ',l6)
 
 800 format(//1x,'C o n t r o l',/1x,13('='),//5x, &
   'Vector display type . . . . . . . . . . .(imagetype) = ',i6/5x, &
