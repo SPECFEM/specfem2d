@@ -112,13 +112,17 @@ AC_HELP_STRING([--with-scotch-libdir],[define the path to the Scotch libraries (
 
 if test "${USE_BUNDLED_SCOTCH}" != "1"; then
 
-   if test -z "${ac_scotch_lib_dir}"; then
-      if test -n "${ac_scotch_dir}"; then
-         ac_scotch_lib_dir="${ac_scotch_dir}/lib";
-      else
+#daniel: scotch will be needed in directory src/meshfem2D/
+  builddir=`pwd`
+  cd src/meshfem2D/
+
+  if test -z "${ac_scotch_lib_dir}"; then
+    if test -n "${ac_scotch_dir}"; then
+        ac_scotch_lib_dir="${ac_scotch_dir}/lib";
+    else
         ac_scotch_lib_dir="/usr/lib";
-      fi
-   fi
+    fi
+  fi
 
   if test -z "${ac_scotch_include_dir}"; then
     if test -n "${ac_scotch_dir}"; then
@@ -137,9 +141,10 @@ if test "${USE_BUNDLED_SCOTCH}" != "1"; then
 
   scotch_include=""
   ac_save_cppflags=${CPPFLAGS}
-  if test -n "${ac_scotch_include_dir}"; then
-    CPPFLAGS="${CPPFLAGS} -I${ac_scotch_include_dir}";
-  fi
+  # scotch only needed for fortran code  
+  #if test -n "${ac_scotch_include_dir}"; then
+  #  CPPFLAGS="${CPPFLAGS} -I${ac_scotch_include_dir}";
+  #fi
 
 dnl This does not work because we are in Fortran mode, which does not
 dnl handle headers.
@@ -147,6 +152,9 @@ dnl
 dnl AC_CHECK_HEADER(scotchf.h,[scotch_include="yes";],[scotch_include="no";CPPFLAGS=${ac_save_cppflags}])
 
   scotch_usable="${scotch_lib}"
+
+  # back to root directory
+  cd $builddir
 
 fi
 
@@ -185,6 +193,7 @@ else
  # will only be compiled once (no recompilation) when calling make
  #
  builddir=`pwd`
+ cd src/meshfem2D/
 
  if test ! -f "${SCOTCH_DIR}/src/scotch/Makefile.org"; then
 
@@ -426,7 +435,7 @@ fi
 # Checks for library functions.
 
 
-AC_CONFIG_FILES([Makefile DATA/Par_file DATA/SOURCE src/meshfem2D/Makefile src/specfem2D/Makefile setup/constants.h setup/precision_mpi.h scotch_5.1.11/src/Makefile.inc])
+AC_CONFIG_FILES([Makefile DATA/Par_file DATA/SOURCE src/meshfem2D/Makefile src/specfem2D/Makefile setup/constants.h setup/precision_mpi.h src/meshfem2D/scotch_5.1.11/src/Makefile.inc])
 AC_OUTPUT
 
 
