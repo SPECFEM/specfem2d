@@ -62,8 +62,9 @@ pointsdisp                      = 6              # points for interpolation of d
 subsamp                         = 1              # subsampling of color snapshots
 sizemax_arrows                  = 1.d0           # maximum size of arrows on vector plots in cm
 gnuplot                         = .false.        # generate a GNUPLOT file for the grid
-outputgrid                      = .false.        # save the grid in a text file or not
-OUTPUT_ENERGY                   = .false.        # compute and output acoustic and elastic energy (slows down the code significantly)
+output_grid                     = .false.        # save the grid in a text file or not
+output_energy                   = .false.        # compute and output acoustic and elastic energy (slows down the code significantly)
+output_wavefield_snapshot       = .true.         # output Ux,Uy,Uz text file for each output time (big files)
 
 # velocity and density models
 nbmodels                        = 4              # nb of different models
