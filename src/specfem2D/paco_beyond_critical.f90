@@ -117,7 +117,7 @@ subroutine paco_beyond_critical(coord,npoin,deltat,NSTEP_global,angleforce,&
 
 
 !
-!     FDT:  FUNCION DE TRASFERENCIA
+!     FDT:  FUNCION DE TRANSFERENCIA
 !
 
 ! calculation of Poisson's ratio
