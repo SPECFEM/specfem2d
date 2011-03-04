@@ -1458,7 +1458,7 @@ print *
 
     endif ! of if(ADD_PERIODIC_CONDITIONS)
 
-!! DK DK Feb 2010 for periodic conditions: detect common points between left and right edges
+!! DK DK Feb 2010 end of periodic conditions: detect common points between left and right edges
 
     mask_ibool(:) = -1
     copy_ibool_ori(:,:,:) = ibool(:,:,:)
