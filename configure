@@ -4759,13 +4759,17 @@ fi
 
 if test "${USE_BUNDLED_SCOTCH}" != "1"; then
 
-   if test -z "${ac_scotch_lib_dir}"; then
-      if test -n "${ac_scotch_dir}"; then
-         ac_scotch_lib_dir="${ac_scotch_dir}/lib";
-      else
-        ac_scotch_lib_dir="/usr/lib";
-      fi
-   fi
+#daniel: scotch will be needed in directory src/meshfem2D/
+  builddir=`pwd`
+  cd src/meshfem2D/
+  
+  if test -z "${ac_scotch_lib_dir}"; then
+    if test -n "${ac_scotch_dir}"; then
+      ac_scotch_lib_dir="${ac_scotch_dir}/lib";
+    else
+      ac_scotch_lib_dir="/usr/lib";
+    fi
+  fi
 
   if test -z "${ac_scotch_include_dir}"; then
     if test -n "${ac_scotch_dir}"; then
@@ -4782,42 +4786,45 @@ if test "${USE_BUNDLED_SCOTCH}" != "1"; then
   fi
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for scotchfarchinit  in -lscotch" >&5
 $as_echo_n "checking for scotchfarchinit  in -lscotch... " >&6; }
-if test "${ac_cv_lib_scotch_scotchfarchinit_+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lscotch -lscotcherr $LIBS"
-cat > conftest.$ac_ext <<_ACEOF
+  if test "${ac_cv_lib_scotch_scotchfarchinit_+set}" = set; then :
+    $as_echo_n "(cached) " >&6
+  else
+    ac_check_lib_save_LIBS=$LIBS
+    LIBS="-lscotch -lscotcherr $LIBS"
+    cat > conftest.$ac_ext <<_ACEOF
       program main
       call scotchfarchinit
       end
 _ACEOF
-if ac_fn_fc_try_link "$LINENO"; then :
-  ac_cv_lib_scotch_scotchfarchinit_=yes
-else
-  ac_cv_lib_scotch_scotchfarchinit_=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
+    if ac_fn_fc_try_link "$LINENO"; then :
+      ac_cv_lib_scotch_scotchfarchinit_=yes
+    else
+      ac_cv_lib_scotch_scotchfarchinit_=no
+    fi
+    rm -f core conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+    LIBS=$ac_check_lib_save_LIBS
+  fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_scotch_scotchfarchinit_" >&5
 $as_echo "$ac_cv_lib_scotch_scotchfarchinit_" >&6; }
-if test "x$ac_cv_lib_scotch_scotchfarchinit_" = x""yes; then :
-  scotch_lib="yes";
-else
-  scotch_lib="no";LDFLAGS=${ac_save_ldflags}
-fi
+  if test "x$ac_cv_lib_scotch_scotchfarchinit_" = x""yes; then :
+    scotch_lib="yes";
+  else
+    scotch_lib="no";LDFLAGS=${ac_save_ldflags}
+  fi
 
 
   scotch_include=""
   ac_save_cppflags=${CPPFLAGS}
-  if test -n "${ac_scotch_include_dir}"; then
-    CPPFLAGS="${CPPFLAGS} -I${ac_scotch_include_dir}";
-  fi
-
+  # scotch only needed for fortran code
+  #if test -n "${ac_scotch_include_dir}"; then
+  #  CPPFLAGS="${CPPFLAGS} -I${ac_scotch_include_dir}";
+  #fi
 
   scotch_usable="${scotch_lib}"
+
+  # back to root directory
+  cd $builddir
 
 fi
 
@@ -5051,7 +5058,7 @@ test -n "$YACC" || YACC="yacc"
  # uses bundled scotch: current version 5.1.11
  USE_BUNDLED_SCOTCH=1
 
- SCOTCH_DIR="scotch_5.1.11"
+ SCOTCH_DIR="scotch_5.1.11" 
  SCOTCH_LIBDIR="${SCOTCH_DIR}/lib"
  SCOTCH_INCLUDEDIR="${SCOTCH_DIR}/include"
 
@@ -5059,7 +5066,8 @@ test -n "$YACC" || YACC="yacc"
  # will only be compiled once (no recompilation) when calling make
  #
  builddir=`pwd`
-
+ cd src/meshfem2D/
+ 
  if test ! -f "${SCOTCH_DIR}/src/scotch/Makefile.org"; then
 
   # no Makefile backup files yet
@@ -5541,7 +5549,7 @@ fi
 # Checks for library functions.
 
 
-ac_config_files="$ac_config_files Makefile src/specfem2D/Makefile src/meshfem2D/Makefile DATA/Par_file DATA/SOURCE setup/constants.h setup/precision_mpi.h scotch_5.1.11/src/Makefile.inc"
+ac_config_files="$ac_config_files Makefile src/specfem2D/Makefile src/meshfem2D/Makefile DATA/Par_file DATA/SOURCE setup/constants.h setup/precision_mpi.h src/meshfem2D/scotch_5.1.11/src/Makefile.inc"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -6248,7 +6256,7 @@ do
     "DATA/SOURCE") CONFIG_FILES="$CONFIG_FILES DATA/SOURCE" ;;
     "setup/constants.h") CONFIG_FILES="$CONFIG_FILES setup/constants.h" ;;
     "setup/precision_mpi.h") CONFIG_FILES="$CONFIG_FILES setup/precision_mpi.h" ;;
-    "scotch_5.1.11/src/Makefile.inc") CONFIG_FILES="$CONFIG_FILES scotch_5.1.11/src/Makefile.inc" ;;
+    "src/meshfem2D/scotch_5.1.11/src/Makefile.inc") CONFIG_FILES="$CONFIG_FILES src/meshfem2D/scotch_5.1.11/src/Makefile.inc" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5 ;;
   esac

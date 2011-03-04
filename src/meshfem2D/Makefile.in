@@ -58,11 +58,11 @@ CPPFLAGS = @CPPFLAGS@ $(COND_MPI_CPPFLAGS)
 CFLAGS = @CFLAGS@ $(CPPFLAGS) -I../../setup
 
 ## serial or parallel
-@COND_MPI_TRUE@F90 = $(MPIFC) $(FCFLAGS) -DUSE_MPI -DUSE_SCOTCH -I"../../@SCOTCH_INCLUDEDIR@" $(MPILIBS)
+@COND_MPI_TRUE@F90 = $(MPIFC) $(FCFLAGS) -DUSE_MPI -DUSE_SCOTCH -I"@SCOTCH_INCLUDEDIR@" $(MPILIBS)
 @COND_MPI_FALSE@F90 = $(FC) $(FCFLAGS)
 
 ## scotch libraries
-@COND_MPI_TRUE@LIB = -L"../../@SCOTCH_LIBDIR@" -lscotch -lscotcherr
+@COND_MPI_TRUE@LIB = -L"@SCOTCH_LIBDIR@" -lscotch -lscotcherr
 @COND_MPI_FALSE@LIB =
 
 # optional: uncomment this to use more than one processor core, in which case the SCOTCH graph partitioner is needed
@@ -124,7 +124,7 @@ check_quality_external_mesh: xcheck_quality_external_mesh
 scotch:
 ifeq (@USE_BUNDLED_SCOTCH@,1)
 	(echo "Using bundled Scotch")
-	(cd "../../@SCOTCH_DIR@/src"; make)
+	(cd "@SCOTCH_DIR@/src"; make)
 else
 	(echo "Not using bundled Scotch")
 endif
