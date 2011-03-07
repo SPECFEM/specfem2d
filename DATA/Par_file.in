@@ -1,4 +1,3 @@
-
 # title of job
 title                           = Test for M2 UPPA
 
@@ -89,7 +88,7 @@ absorbing_conditions            = .true.
 # PARAMETERS FOR EXTERNAL MESHING
 
 # data concerning mesh, when generated using third-party app (more info in README)
-# (see also absorbing_conditions  above)
+# (see also absorbing_conditions above)
 mesh_file                       = ./DATA/Mesh_canyon/canyon_mesh_file   # file containing the mesh
 nodes_coords_file               = ./DATA/Mesh_canyon/canyon_nodes_coords_file   # file containing the nodes coordinates
 materials_file                  = ./DATA/Mesh_canyon/canyon_materials_file   # file containing the material number for each element
