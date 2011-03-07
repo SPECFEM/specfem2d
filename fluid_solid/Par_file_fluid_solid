@@ -1,29 +1,14 @@
-
-# title of job, and file that contains interface data
+# title of job
 title                           = External mesh with fluid and solid
-interfacesfile                  = interfaces_M2_UPPA_curved.dat
 
 # forward or adjoint simulation
 SIMULATION_TYPE                 = 1   # 1 = forward, 2 = adjoint + kernels
 SAVE_FORWARD                    = .false.  # save the last frame, needed for adjoint simulation
 
-# data concerning mesh, when generated using third-party app (more info in README)
-read_external_mesh              = .true.
-mesh_file                       = ./mesh/mesh          # file containing the mesh
-nodes_coords_file               = ./mesh/nodes_coords  # file containing the nodes coordinates
-materials_file                  = ./mesh/mat           # file containing the material number for each element
-free_surface_file               = ./mesh/surface_free  # file containing the free surface
-absorbing_surface_file          = ./mesh/surface_abs   # file containing the absorbing surface
-tangential_detection_curve_file = ./DATA/courbe_eros_nodes # file containing the curve delimiting the velocity model
-
 # parameters concerning partitioning
 nproc                           = 1              # number of processes
-partitioning_method             = 1              # SCOTCH = 3, ascending order (very bad idea) = 1
+partitioning_method             = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
 
-# geometry of the model (origin lower-left corner = 0,0) and mesh description
-xmin                            = 0.d0           # abscissa of left side of the model
-xmax                            = 4000.d0        # abscissa of right side of the model
-nx                              = 80             # number of elements along X
 ngnod                           = 4              # number of control nodes per element (4 or 9)
 initialfield                    = .false.        # use a plane wave as source or not
 add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
@@ -34,13 +19,6 @@ TURN_VISCATTENUATION_ON         = .false.        # turn viscous attenuation on o
 Q0                              =  1             # quality factor for viscous attenuation
 freq0                           =  10            # frequency for viscous attenuation
 p_sv                            = .true.         # set the type of calculation (P-SV or SH/membrane waves)
-
-# absorbing boundary parameters
-absorbing_conditions            = .true.	 # absorbing boundary active or not
-absorbbottom                    = .true.
-absorbright                     = .true.
-absorbtop                       = .false.
-absorbleft                      = .true.
 
 # time step parameters
 nt                              = 18000           # total number of time steps
@@ -83,8 +61,9 @@ pointsdisp                      = 6              # points for interpolation of d
 subsamp                         = 1              # subsampling of color snapshots
 sizemax_arrows                  = 1.d0           # maximum size of arrows on vector plots in cm
 gnuplot                         = .false.        # generate a GNUPLOT file for the grid
-outputgrid                      = .false.        # save the grid in a text file or not
-OUTPUT_ENERGY                   = .false.        # compute and output acoustic and elastic energy (slows down the code significantly)
+output_grid                     = .false.        # save the grid in a text file or not
+output_energy                   = .false.        # compute and output acoustic and elastic energy (slows down the code significantly)
+output_wavefield_snapshot       = .false.         # output Ux,Uy,Uz text file for each output time (big files)
 
 # velocity and density models
 nbmodels                        = 5              # nb of different models
@@ -100,6 +79,42 @@ nbmodels                        = 5              # nb of different models
 4 3 2200.d0 786.3d0  0.4 2.0 1d-11 0.0 1d-11 5.341d9 2d9 3d9 0.0d-4 3.204d9 10.d0
 5 2 2500.d0 169.d9 122.d9 0.d0 169.d9 0.d0 75.3d9 0 0 0 0 0 0
 #4 1 2200.d0 2200.d0 1343.375d0 0 0 10.d0 10.d0 0 0 0 0 0 0
+
+# external mesh or not
+read_external_mesh              = .true.
+
+# absorbing boundary active or not
+absorbing_conditions            = .true.
+
+#-----------------------------------------------------------------------------
+# PARAMETERS FOR EXTERNAL MESHING
+
+# data concerning mesh, when generated using third-party app (more info in README)
+# (see also absorbing_conditions above)
+mesh_file                       = ./mesh/mesh          # file containing the mesh
+nodes_coords_file               = ./mesh/nodes_coords  # file containing the nodes coordinates
+materials_file                  = ./mesh/mat           # file containing the material number for each element
+free_surface_file               = ./mesh/surface_free  # file containing the free surface
+absorbing_surface_file          = ./mesh/surface_abs   # file containing the absorbing surface
+tangential_detection_curve_file = ./DATA/courbe_eros_nodes # file containing the curve delimiting the velocity model
+
+#-----------------------------------------------------------------------------
+# PARAMETERS FOR INTERNAL MESHING
+
+# file containing interfaces for internal mesh
+interfacesfile                  = interfaces_M2_UPPA_curved.dat
+
+# geometry of the model (origin lower-left corner = 0,0) and mesh description
+xmin                            = 0.d0           # abscissa of left side of the model
+xmax                            = 4000.d0        # abscissa of right side of the model
+nx                              = 80             # number of elements along X
+
+# absorbing boundary parameters (see absorbing_conditions above)
+absorbbottom                    = .true.
+absorbright                     = .true.
+absorbtop                       = .false.
+absorbleft                      = .true.
+
 # define the different regions of the model in the (nx,nz) spectral element mesh
 nbregions                       = 6              # nb of regions and model number for each
 1 80  1 20 1
