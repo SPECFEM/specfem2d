@@ -6556,26 +6556,6 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 
   endif
 
-!----------------------------------------------
-! write the full (local) wavefield to file as three components (Uy = 0 for PSV; Ux,Uz = 0 for SH)
-
-if (output_wavefield_snapshot) then
-  write(wavefield_file,"('OUTPUT_FILES/wavefield',i7.7,'_',i2.2,'_',i3.3,'.txt')") it,SIMULATION_TYPE,myrank
-  open(unit=27,file=wavefield_file,status='unknown')
-  do ispec = 1,nspec
-     do j = 1,NGLLZ
-        do i = 1,NGLLX
-           iglob = ibool(i,j,ispec)
-           write(27,'(5e16.6)') coord(1,iglob), coord(2,iglob), &
-             vector_field_display(1,iglob), &
-             vector_field_display(2,iglob), &
-             vector_field_display(3,iglob)
-        enddo
-     enddo
-  enddo
-  close(27)
-endif
-
 !
 !----  display color image
 !
@@ -6685,6 +6665,28 @@ endif
 
   endif
 
+!----------------------------------------------
+! write the full (local) wavefield to file as three components (Uy = 0 for PSV; Ux,Uz = 0 for SH)
+! note 1: for SH case, this requires output_color_image = .true. in order to have vector_field_display
+! note 2: for MPI, it would be more convenient to output a single file rather than one for each myrank
+
+if (output_wavefield_snapshot) then
+  write(wavefield_file,"('OUTPUT_FILES/wavefield',i7.7,'_',i2.2,'_',i3.3,'.txt')") it,SIMULATION_TYPE,myrank
+  open(unit=27,file=wavefield_file,status='unknown')
+  do ispec = 1,nspec
+     do j = 1,NGLLZ
+        do i = 1,NGLLX
+           iglob = ibool(i,j,ispec)
+           write(27,'(5e16.6)') coord(1,iglob), coord(2,iglob), &
+             vector_field_display(1,iglob), &
+             vector_field_display(2,iglob), &
+             vector_field_display(3,iglob)
+        enddo
+     enddo
+  enddo
+  close(27)
+endif
+
 !----  save temporary or final seismograms
 ! suppress seismograms if we generate traces of the run for analysis with "ParaVer", because time consuming
   if(.not. GENERATE_PARAVER_TRACES) &
@@ -6695,7 +6697,7 @@ endif
   seismo_offset = seismo_offset + seismo_current
   seismo_current = 0
 
-  endif
+  endif  ! display results for specified time step
 
 #ifdef USE_MPI
 ! add a barrier if we generate traces of the run for analysis with "ParaVer"
