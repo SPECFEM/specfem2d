@@ -849,7 +849,7 @@ sizemax_arrows                  = 1.d0           # maximum size of arrows on vec
 gnuplot                         = .false.        # generate a GNUPLOT file for the grid
 output_grid                     = .false.        # save the grid in a text file or not
 output_energy                   = .false.        # compute and output acoustic and elastic energy (slows down the code significantly)
-output_wavefield_snapshot       = .false.        # output Ux,Uy,Uz text file for each output time (big files)
+output_wavefield_snapshot       = .true.         # output Ux,Uy,Uz text file for each output time (big files)
 
 # velocity and density models
 nbmodels                        = 1              # nb of different models
