@@ -6678,9 +6678,9 @@ if (output_wavefield_snapshot) then
         do i = 1,NGLLX
            iglob = ibool(i,j,ispec)
            write(27,'(5e16.6)') coord(1,iglob), coord(2,iglob), &
-             vector_field_display(1,iglob), &
-             vector_field_display(2,iglob), &
-             vector_field_display(3,iglob)
+             sngl(vector_field_display(1,iglob)), &
+             sngl(vector_field_display(2,iglob)), &
+             sngl(vector_field_display(3,iglob))
         enddo
      enddo
   enddo
