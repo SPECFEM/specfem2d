@@ -234,15 +234,6 @@ directory in which you want to install the package, type
 The directory \texttt{SPECFEM2D-6.1.1/} will then contain
 the source code. In the following, we will refer to this directory as the root directory \texttt{SPECFEM2D/}. \\
 
-%To configure the software for your system, run the
-%\texttt{configure} shell script. This script will attempt to guess
-%the appropriate configuration values for your system. However, at
-%a minimum, it is recommended that you explicitly specify the appropriate
-%command names for your Fortran90 compiler:
-%\begin{lyxcode}
-%./configure~FC=ifort
-%\end{lyxcode}
-
 To configure the software for your system, run the
 \texttt{configure} shell script. This script will attempt to guess
 the appropriate configuration values for your system. However, at
@@ -274,6 +265,11 @@ Just as an example:
 ./configure~FC=ifort~MPIFC=mpif90~-{}-with-mpi~-{}-with-scotch-dir=/opt/scotch
 \end{lyxcode}
 
+If you use the Intel ifort compiler to compile the code, we recommend that you use the Intel icc C compiler to compile Scotch, i.e., use:
+\begin{lyxcode}
+./configure~CC=icc~FC=ifort~MPIFC=mpif90
+\end{lyxcode}
+
 For further details about the installation of SCOTCH,
 go to subdirectory \texttt{scotch\_5.1.11/} and read \texttt{INSTALL.txt}. You may want to download more recent versions of SCOTCH in the future from \urlwithparentheses{http://www.labri.fr/perso/pelegrin/scotch/scotch_en.html} . Support for the METIS graph partitioner has been discontinued because SCOTCH is more recent and performs better.
 
@@ -287,7 +283,7 @@ After these steps, go back to the main directory of SPECFEM2D/ and type
 \begin{lyxcode}
 make
 \end{lyxcode}
-to create all executables which will be placed into the folder \texttt{./bin/}. 
+to create all executables which will be placed into the folder \texttt{./bin/}.
 
 
 
