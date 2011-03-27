@@ -587,6 +587,8 @@ float (*func)();
     h[j+1]=0.25*h[j];
   }
   nrerror("Too many steps in routine QROMB");
+/* return an error code if needed */
+  return -1.;
 }
 
 #undef EPS
