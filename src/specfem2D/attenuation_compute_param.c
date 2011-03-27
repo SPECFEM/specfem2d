@@ -19,7 +19,7 @@
 /* Underscores should or should not follow this function name, depending on the compiler and its options.
    It is called in "attenuation_model.f90".
 */
-int attenuation_compute_param_(int *nmech_in, double *Qp_in, double *Qs_in, double *f1_in, double *f2_in,
+void attenuation_compute_param_(int *nmech_in, double *Qp_in, double *Qs_in, double *f1_in, double *f2_in,
              double *tau_sigma_nu1, double *tau_sigma_nu2,
              double *tau_epsilon_nu1, double *tau_epsilon_nu2
              )
@@ -625,6 +625,8 @@ float (*func)();
     h[j+1]=0.25*h[j];
   }
   nrerror("Too many steps in routine QROMB");
+/* return an error code if needed */
+  return -1.;
 }
 
 #undef EPS
