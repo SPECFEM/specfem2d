@@ -137,8 +137,7 @@ regular and unstructured meshes, generated for example by Cubit
 \urlwithparentheses{http://cubit.sandia.gov},
 Gmsh \urlwithparentheses{http://geuz.org/gmsh}
 or GiD \urlwithparentheses{http://www.gid.cimne.upc.es}.
-Even mesh creation packages that generate triangles, for instance Delaunay-Voronoi triangulation codes, can be used because each triangle can then easily be decomposed into three quadrangles by linking the barycenter to the center of each edge; while this approach does not generate quadrangles of optimal quality, it can ease mesh creation in some situations and it has been shown that the spectral-element method can very accurately handle distorted mesh elements.
-
+Even mesh creation packages that generate triangles, for instance Delaunay-Voronoi triangulation codes, can be used because each triangle can then easily be decomposed into three quadrangles by linking the barycenter to the center of each edge; while this approach does not generate quadrangles of optimal quality, it can ease mesh creation in some situations and it has been shown that the spectral-element method can very accurately handle distorted mesh elements.\\
 
 The solver has adjoint capabilities and can
 calculate finite-frequency sensitivity kernels for acoustic,
@@ -146,7 +145,7 @@ calculate finite-frequency sensitivity kernels for acoustic,
 and P-SV wave propagation. Finally, the solver can run
 both in serial and in parallel. See SPECFEM2D
 \urlwithparentheses{http://www.geodynamics.org/cig/software/packages/seismo/specfem2d}
-for the source code.
+for the source code.\\
 
 The SEM is a continuous Galerkin technique, which can easily be made discontinous \citep{BeMaPa94,Ch00,KoWoHu02,ChCaVi03,LaWaBe05,Kop06,WiStBuGh10,AcKo11}; it is then close to a particular case of the discontinuous Galerkin technique \citep{ReHi73,Arn82,FaRi99,HuHuRa99,CoKaSh00,GiHeWa02,RiWh03,MoRi05,GrScSc06,AiMoMu06,BeLaPi06,DuKa06,DeSeWh08,PuAmKa09,WiStBuGh10,DeSe10,EtChViGl10}, with optimized efficiency because of its tensorized basis functions \citep{WiStBuGh10,AcKo11}.
 In particular, it can accurately handle very distorted mesh elements \citep{OlSe11}.\\
@@ -155,14 +154,10 @@ It has very good accuracy and convergence properties \citep{MaPa89,SePr94,DeFiMu
 The spectral element approach admits spectral rates of convergence and allows exploiting $hp$-convergence schemes.
 It is also very well suited to parallel implementation on very large supercomputers \citep{KoTr02a,KoTsChTr03,TsKoChTr03,KoLaMi08a,CaKoLaTiMiLeSnTr08,KoViCh10} as well as on clusters of GPU accelerating graphics cards \citep{KoMiEr09,KoErGoMi10,Kom11}. Tensor products inside each element can be optimized to reach very high efficiency \citep{DeFiMu02}, and mesh point and element numbering can be optimized to reduce processor cache misses and improve cache reuse \citep{KoLaMi08a}. The SEM can also handle triangular (in 2D) or tetrahedral (in 3D) elements \citep{WinBoyd96,TaWi00,KoMaTrTaWi01,Coh02,MeViSa06} as well as mixed meshes, although with increased cost and reduced accuracy in these elements, as in the discontinuous Galerkin method.\\
 
-Note that in most geological models in the context of seismic wave propagation studies
-(except for fault dynamic rupture studies, in which very high frequencies or supershear rupture need to be modeled near the fault, see e.g. \cite{BeGlCrViPi07,BeGlCrVi09,PuAmKa09,TaCrEtViBeSa10})
-a discontinous mesh is not needed because material property contrasts are not drastic and thus a continuous formulation is sufficient;
-conforming mesh doubling bricks can efficiently handle mesh size variations \citep{KoTr02a,KoLiTrSuStSh04,LeChLiKoHuTr08,LeChKoHuTr09,LeKoHuTr09}.
-Also, without significant modifications in the complexity of the
-discontinuous technique \citep{CaKaBr10,SmCoObOvSch10},
-usually those methods need to assume constant material properties inside
-each element, while the SEM can handle gradients inside each element.\\
+Note that in many geological models in the context of seismic wave propagation studies
+(except for instance for fault dynamic rupture studies, in which very high frequencies or supershear rupture need to be modeled near the fault, see e.g. \cite{BeGlCrViPi07,BeGlCrVi09,PuAmKa09,TaCrEtViBeSa10})
+a continuous formulation is sufficient because material property contrasts are not drastic and thus
+conforming mesh doubling bricks can efficiently handle mesh size variations \citep{KoTr02a,KoLiTrSuStSh04,LeChLiKoHuTr08,LeChKoHuTr09,LeKoHuTr09}.\\
 
 For a detailed introduction to the SEM as applied to regional
 seismic wave propagation, please consult \citet{KoVi98,KoTr99,ChKoViCaVaFe07,TrKoLi08} and
@@ -170,7 +165,22 @@ in particular \citet{KoLiTrSuStSh04}.
 A detailed theoretical analysis of the dispersion
 and stability properties of the SEM is available in \citet{Coh02}, \citet{DeSe07} and \citet{SeOl07}.\\
 
+The SEM was originally developed in computational fluid dynamics \citep{Pat84,MaPa89}
+and has been successfully adapted to address problems in seismic wave propagation.
+Early seismic wave propagation applications of the SEM, utilizing Legendre basis functions and a
+perfectly diagonal mass matrix, include \cite{CoJoTo93}, \cite{Kom97},
+\cite{FaMaPaQu97}, \cite{CaGa97}, \cite{KoVi98} and \cite{KoTr99},
+whereas applications involving Chebyshev basis functions and a nondiagonal mass matrix
+include \cite{SePr94}, \cite{PrCaSe94} and \cite{SePrPr95}.\\
 
+All SPECFEM2D software is written in Fortran90 with full portability
+in mind, and conforms strictly to the Fortran95 standard. It uses
+no obsolete or obsolescent features of Fortran77. The package uses
+parallel programming based upon the Message Passing Interface (MPI)
+\citep{GrLuSk94,Pac97}.\\
+
+The next release of the code will include support for GPU graphics card acceleration \citep{KoMiEr09,KoErGoMi10,MiKo10,Kom11}
+as well as Convolutional or Auxiliary Differential Equation Perfectly Matched absorbing Layers (C-PML or ADE-PML) \citep{KoMa07,MaKoEz08,MaKoGe08,MaKo09,MaKoGeBr10}.\\
 
 %------------------------------------------------------------------------------------------------%
 \section{Citation}
