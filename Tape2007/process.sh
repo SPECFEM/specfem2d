@@ -41,6 +41,9 @@ ln -s ../../bin/xspecfem2D
 # stores setup
 cp DATA/Par_file OUTPUT_FILES/
 cp DATA/SOURCE OUTPUT_FILES/
+cp DATA/SOURCE_xz.dat OUTPUT_FILES/
+cp DATA/STATIONS OUTPUT_FILES/
+cp DATA/STATIONS_target OUTPUT_FILES/
 
 # runs database generation
 echo

@@ -20,3 +20,9 @@ TO RUN:
    ./process.sh
 
 5. check out the output files in the local directory OUTPUT_FILES
+
+6. optional: set output_wavefield_snapshot = .true. in Par_file, re-run,
+             then try plotting the wavefield using the script
+                SPECFEM2D/UTILS/visualization/plot_wavefield.pl
+
+----------------------------------------------------------------------

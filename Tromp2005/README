@@ -35,6 +35,9 @@ TO RUN:
 
    The seismograms (S0001.AA.BHX.semd,S0001.AA.BHZ.semd) will be similar to those in Tromp2005, Figure 7b, but with an 8-second time shift due to the difference in origin time convention.
 
+   optional: try plotting the wavefield using the script
+                SPECFEM2D/UTILS/visualization/plot_wavefield.pl
+
 7. mv OUTPUT_FILES OUTPUT_FILES_PSV
 
 8. set p_sv = .false. in Par_file_Tromp2005 
@@ -45,5 +48,8 @@ TO RUN:
 10. check out the output files in the local directory OUTPUT_FILES
 
    The seismogram (S0001.AA.BHY.semd) will be similar to those in Tromp2005, Figure 2b, but with an 8-second time shift due to the difference in origin time convention.
+
+   optional: try plotting the wavefield using the script
+                SPECFEM2D/UTILS/visualization/plot_wavefield.pl
 
 ---------------------------

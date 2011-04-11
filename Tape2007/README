@@ -25,7 +25,7 @@ TO RUN:
 1. in SPECFEM2D root directory, configure, e.g., 
    ./configure FC=gfortran
 
-2. modify constants.h file, setting USER_TO = 48 s
+2. modify setup/constants.h file, setting USER_TO = 48.0 s
 
 3. compile:
    make all
@@ -36,5 +36,8 @@ TO RUN:
    ./process.sh
 
 6. check out the output files in the local directory OUTPUT_FILES
+
+   optional: try plotting the wavefield using the script
+                SPECFEM2D/UTILS/visualization/plot_wavefield.pl
 
 ---------------------------
