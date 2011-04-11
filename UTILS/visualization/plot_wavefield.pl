@@ -13,11 +13,14 @@
 #   1. must have output_wavefield_snapshot = .true. in Par_file to generate wavefield snapshots
 #   2. boundaries between material regions are NOT plotted here
 #
-# EXAMPLES:
+# WAVEFIELD EXAMPLES:
 #    plot_wavefield.pl 100/1600/400 200/800/200  0/4/0/4      1/0.1/1/0.1  -3/-3/-3 6/6/6     0.0/0.001 1/0/1/1/1 1.7/1/1 1/0/1/120 M2_UPPA PSV
 #    plot_wavefield.pl 400/2800/400 400/2000/400 0/200/0/80    50/10/40/10 -3/-3/-3 4/4/4     -8.0/0.02 1/0/1/1/1 3.0/1/0 1/0/1/200 Tromp2005 PSV
 #    plot_wavefield.pl 400/2800/400 400/2000/400 0/200/0/80    50/10/40/10 -3/-3/-3 10/10/10  -8.0/0.02 0/1/0/0/1 3.0/1/0 1/0/1/200 Tromp2005 SH
 #    plot_wavefield.pl 400/4800/400 400/2800/800 0/480/0/480 120/20/120/20 -3/-3/-3 6/6/6    -48.0/0.06 0/1/0/0/1 1.7/1/0 1/0/1/120 Tape2007 onerec
+#
+# KERNEL EXAMPLES:
+#    plot_wavefield.pl 400/3000/400 400/2800/800 0/480/0/480 120/20/120/20 -8/-8/-8 1/1/1    -48.0/0.06 0/1/0/0/0 2.0/1/0 1/0/1/120 Tape2007_kernel onerec
 #
 #
 #----------------------------------------------
@@ -42,11 +45,9 @@ if (@ARGV < 1) {die("Usage: plot_wavefield.pl xxx\n");}
 $numf = ($pend - $pfirst)/$pint + 1;
 
 # directory with data files
-#$idir1 = "/data/svn/seismo/2D/SPECFEM2D_work/OUTPUT_FILES";                 # if running from the default directory
-$idir1 = "/data/svn/seismo/2D/SPECFEM2D_work/EXAMPLES/$tlab/OUTPUT_FILES";   # if running from an examples directory
-if($itype==0) {$idir1 = "/data/svn/seismo/2D/SPECFEM2D_work/OUTPUT_FILES_${tlab}";}
-#$idir1 = "${idir1}_${ttag}";
-#$idir1 = "${idir1}_${tlab}";
+$bdir = "/data/svn/seismo/2D/SPECFEM2D_work";
+#$idir1 = "$bdir/OUTPUT_FILES";                 # if running from the default directory
+$idir1 = "$bdir/EXAMPLES/$tlab/OUTPUT_FILES";   # if running from an examples directory
 if (not -e $idir1) {die("check if idir1 $idir1 exist or not\n");}
 
 # plot the color frames or not
@@ -598,7 +599,7 @@ print CSH "pstext -N $J $R $Utag -K -O -V $shift >>$psfile<<EOF\n $xmin $zmax $f
   if($iheader==1) {
   # plot title and GMT header
   $plabel = "plot_wavefield.pl";
-  $ux = -$xwid;
+  $ux = 0;
   $uy = $ywid + 0.3;
   $Utag = "-U/$ux/$uy/$plabel";	# GMT header
   $shift = "-X0i -Y0.7i";
