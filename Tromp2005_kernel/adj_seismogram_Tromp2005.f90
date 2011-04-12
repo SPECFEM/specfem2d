@@ -52,8 +52,8 @@ program adj_seismogram
 
   integer, parameter :: NSTEP = 3000
   integer, parameter :: nrec = 1
-  double precision, parameter :: t0 = 48.0   ! labeled as 'time delay'
-  double precision, parameter :: deltat = 0.06
+  double precision, parameter :: t0 = 8.0   ! labeled as 'time delay'
+  double precision, parameter :: deltat = 0.02
   double precision, parameter :: EPS = 1.d-40
 
   integer :: itime,icomp,istart,iend,nlen,irec,NDIM,NDIMr,adj_comp
@@ -69,19 +69,19 @@ program adj_seismogram
   comp = (/"BHX","BHY","BHZ"/)
 
   ! number of components
-  !NDIMr=2  ! P-SV
-  NDIMr=1  ! SH (membrane)
-  !compr = (/"BHX","BHZ"/)    ! P-SV
-  compr = (/"BHY","tmp"/)  ! SH (membrane)
+  NDIMr=2  ! P-SV
+  !NDIMr=1  ! SH (membrane)
+  compr = (/"BHX","BHZ"/)    ! P-SV
+  !compr = (/"BHY","tmp"/)  ! SH (membrane)
   ! list of stations
   station_name(1) = 'S0001'
 
   ! KEY: 'absolute' time interval for window
-  tstart(1) = 95.d0 + t0
-  tend(1) = 130.d0 + t0
+  tstart(1) = 27.d0 + t0
+  tend(1) = 32.d0 + t0
 
   ! chose the component for the adjoint source (adj_comp = 1:X, 2:Y, 3:Z)
-  adj_comp = 2
+  adj_comp = 1
 
   do irec =1,nrec
 
