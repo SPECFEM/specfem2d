@@ -77,8 +77,8 @@ program adj_seismogram
   station_name(1) = 'S0001'
 
   ! KEY: 'absolute' time interval for window
-  tstart(1) = 135.d0 + t0
-  tend(1) = 180.d0 + t0
+  tstart(1) = 95.d0 + t0
+  tend(1) = 130.d0 + t0
 
   ! chose the component for the adjoint source (adj_comp = 1:X, 2:Y, 3:Z)
   adj_comp = 2
