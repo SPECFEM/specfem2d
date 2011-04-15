@@ -54,6 +54,11 @@ echo "  running solver..."
 echo
 ./xspecfem2D > OUTPUT_FILES/output_solver.txt
 
+# stores output
+cp DATA/SOURCE_xz.dat OUTPUT_FILES/
+cp DATA/STATIONS OUTPUT_FILES/
+cp DATA/STATIONS_target OUTPUT_FILES/
+
 echo
 echo "see results in directory: OUTPUT_FILES/"
 echo

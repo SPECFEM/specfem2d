@@ -41,9 +41,6 @@ ln -s ../../bin/xspecfem2D
 # stores setup
 cp DATA/Par_file OUTPUT_FILES/
 cp DATA/SOURCE OUTPUT_FILES/
-cp DATA/SOURCE_xz.dat OUTPUT_FILES/
-cp DATA/STATIONS OUTPUT_FILES/
-cp DATA/STATIONS_target OUTPUT_FILES/
 
 # runs database generation
 echo
@@ -56,6 +53,11 @@ echo
 echo "  running solver..."
 echo
 ./xspecfem2D > OUTPUT_FILES/output_solver.txt
+
+# stores output
+cp DATA/SOURCE_xz.dat OUTPUT_FILES/
+cp DATA/STATIONS OUTPUT_FILES/
+cp DATA/STATIONS_target OUTPUT_FILES/
 
 echo
 echo "see results in directory: OUTPUT_FILES/"
