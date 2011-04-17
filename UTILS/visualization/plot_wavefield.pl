@@ -15,13 +15,14 @@
 #
 # WAVEFIELD EXAMPLES:
 #    plot_wavefield.pl 100/1600/400 200/800/200  0/4/0/4      1/0.1/1/0.1  -3/-3/-3 6/6/6  0.0/0.001 1/0/1/1/1 1.7/1/1 1/0/1/120 M2_UPPA PSV
-#    plot_wavefield.pl 400/2800/400 400/2000/400 0/200/0/80    50/10/40/10 -3/-3/-3 4/4/4  -8.0/0.02 1/0/1/1/1 3.0/1/0 1/0/1/200 Tromp2005 PSV
-#    plot_wavefield.pl 400/2800/400 400/2000/400 0/200/0/80    50/10/40/10 -4/-4/-4 1/1/1  -8.0/0.02 0/1/0/0/1 3.0/1/0 1/0/1/200 Tromp2005 SH
-#    plot_wavefield.pl 400/4800/400 400/2800/800 0/480/0/480 120/20/120/20 -3/-3/-3 6/6/6 -48.0/0.06 0/1/0/0/1 1.7/1/0 1/0/1/120 Tape2007 onerec
+#    plot_wavefield.pl 400/2800/400 400/2000/400 0/200/0/80    50/10/40/10 -3/-3/-3 4/4/4  -8.0/0.02 1/0/1/1/1 3.0/1/0 1/0/1/200 Tromp2005 PSV_homo
+#    plot_wavefield.pl 400/2800/400 400/2000/400 0/200/0/80    50/10/40/10 -4/-4/-4 1/1/1  -8.0/0.02 0/1/0/0/1 3.0/1/0 1/0/1/200 Tromp2005 SH_homo
+#    plot_wavefield.pl 400/4800/400 400/2800/800 0/480/0/480 120/20/120/20 -3/-3/-3 6/6/6 -48.0/0.06 0/1/0/0/1 1.7/1/0 1/0/1/120 Tape2007 onerec_homo
+#    plot_wavefield.pl 400/4800/400 800/2000/400 0/480/0/480 120/20/120/20 -3/-3/-3 6/6/6 -48.0/0.06 0/1/0/0/1 1.7/1/0 1/0/1/120 Tape2007 132rec_checker
 #
 # KERNEL EXAMPLES:
-#    plot_wavefield.pl 400/3000/400 400/2800/800 0/480/0/480 120/20/120/20 -8/-8/-8 1/1/1 -48.0/0.06 0/1/0/0/0 2.0/1/0 1/0/1/120 Tape2007_kernel onerec
-#    plot_wavefield.pl 400/2800/400 400/2000/400 0/200/0/80    50/10/40/10 -8/-8/-8 1/1/1  -8.0/0.02 1/0/1/1/0 4.0/1/0 1/0/1/200 Tromp2005_kernel PSV
+#    plot_wavefield.pl 400/3000/400 400/2800/800 0/480/0/480 120/20/120/20 -8/-8/-8 1/1/1 -48.0/0.06 0/1/0/0/0 2.0/1/0 1/0/1/120 Tape2007_kernel onerec_homo
+#    plot_wavefield.pl 400/2800/400 400/2000/400 0/200/0/80    50/10/40/10 -8/-8/-8 1/1/1  -8.0/0.02 1/0/1/1/0 4.0/1/0 1/0/1/200 Tromp2005_kernel PSV_homo
 #
 #
 #----------------------------------------------
@@ -176,7 +177,7 @@ print "\nsource at ($srcx, $srcz)\n";
 $cshfile = "plot_wavefield.csh";
 open(CSH,">$cshfile");
 print "\nWriting CSH file $cshfile\n";
-print CSH "gmtset BASEMAP_TYPE plain PAPER_MEDIA letter PLOT_DEGREE_FORMAT D TICK_LENGTH $tick LABEL_FONT_SIZE $fsize2 ANOT_FONT_SIZE $fsize2  HEADER_FONT $fontno ANOT_FONT $fontno LABEL_FONT $fontno HEADER_FONT_SIZE $fsize1 CHAR_ENCODING Standard+ COLOR_NAN $cgray\n";
+print CSH "gmtset BASEMAP_TYPE plain PAPER_MEDIA letter MEASURE_UNIT inch PLOT_DEGREE_FORMAT D TICK_LENGTH $tick LABEL_FONT_SIZE $fsize2 ANOT_FONT_SIZE $fsize2  HEADER_FONT $fontno ANOT_FONT $fontno LABEL_FONT $fontno HEADER_FONT_SIZE $fsize1 CHAR_ENCODING Standard+ COLOR_NAN $cgray\n";
 
 $R = "-R$xmin/$xmax/$zmin/$zmax";
 print "\nregion is $R\n";
