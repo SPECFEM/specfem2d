@@ -8,11 +8,13 @@ Par_file_Tape2007_onerec
 1 source, 1 receiver
 Source index: 1
 Receiver index: 126
+homogeneous model
 
-Par_file_Tape2007_132rec
+Par_file_Tape2007_132rec_checker
 1 source, 132 receivers
 Source index: 5
 Receiver index: 1-132
+checkerboard model (external file model_velocity.dat_checker)
 
 ---------------------------
 
@@ -39,5 +41,10 @@ TO RUN:
 
    optional: try plotting the wavefield using the script
                 SPECFEM2D/UTILS/visualization/plot_wavefield.pl
+
+---------------------------
+
+After running the example above, try the second example:
+  ./process_checker.sh
 
 ---------------------------
