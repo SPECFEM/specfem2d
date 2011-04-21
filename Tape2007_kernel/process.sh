@@ -18,6 +18,7 @@ echo
 
 mkdir -p OUTPUT_FILES
 mkdir -p DATA
+mkdir -p SEM
 
 # sets up local DATA/ directory
 cd DATA/

@@ -119,7 +119,7 @@ program adj_seismogram
 
         print*,comp(icomp)
 
-        filename = 'OUTPUT_FILES/'//trim(station_name(irec))//'.AA.'// comp(icomp) // '.adj'
+        filename = 'SEM/'//trim(station_name(irec))//'.AA.'// comp(icomp) // '.adj'
         open(unit = 11, file = trim(filename))
 
         time_window(:) = 0.d0
@@ -170,7 +170,7 @@ program adj_seismogram
 
   enddo
   print*,'*************************'
-  print*,'The input files (S****.AA.BHX/BHY/BHZ.adj) needed to run the adjoint simulation are in OUTPUT_FILES'
+  print*,'The input files (S****.AA.BHX/BHY/BHZ.adj) needed to run the adjoint simulation are in SEM'
   print*,'*************************'
 
 end program adj_seismogram
