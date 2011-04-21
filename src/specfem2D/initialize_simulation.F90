@@ -71,7 +71,7 @@
   call MPI_COMM_SIZE(MPI_COMM_WORLD,nproc,ier)
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
   if( ier /= 0 ) call exit_MPI('error MPI initialization')
-  
+
   ! this is only used in the case of MPI because it distinguishes between inner and outer element
   ! in the MPI partitions, which is meaningless in the serial case
   if(FURTHER_REDUCE_CACHE_MISSES) then
@@ -114,7 +114,7 @@
 
     open(IOUT,file=prname,status='unknown',action='write',iostat=ier)
     if( ier /= 0 ) call exit_MPI('error opening file simulation_results***.txt')
-    
+
   endif
 
   end subroutine initialize_simulation

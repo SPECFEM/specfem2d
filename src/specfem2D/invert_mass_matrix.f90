@@ -54,7 +54,7 @@
                                 density,poroelastcoef,porosity,tortuosity, &
                                 vpext,rhoext)
 
-!  builds the global mass matrix 
+!  builds the global mass matrix
 
   implicit none
   include 'constants.h'
@@ -64,41 +64,41 @@
   ! inverse mass matrices
   integer :: npoin_elastic
   real(kind=CUSTOM_REAL), dimension(npoin_elastic) :: rmass_inverse_elastic
-  
+
   integer :: npoin_acoustic
   real(kind=CUSTOM_REAL), dimension(npoin_acoustic) :: rmass_inverse_acoustic
-  
+
   integer :: npoin_poroelastic
   real(kind=CUSTOM_REAL), dimension(npoin_poroelastic) :: &
     rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic
-  
+
   integer :: nspec
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
   integer, dimension(nspec) :: kmato
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: wzgll
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: jacobian  
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: jacobian
 
   logical,dimension(nspec) :: elastic,poroelastic
-  
+
   logical :: assign_external_model
   integer :: numat
   double precision, dimension(2,numat) :: density
   double precision, dimension(4,3,numat) :: poroelastcoef
   double precision, dimension(numat) :: porosity,tortuosity
   double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,rhoext
-  
+
   ! local parameters
-  integer :: ispec,i,j,iglob  
+  integer :: ispec,i,j,iglob
   double precision :: rhol,kappal,mul_relaxed,lambdal_relaxed
   double precision :: rhol_s,rhol_f,rhol_bar,phil,tortl
-  
+
   ! initializes mass matrix
   if(any_elastic) rmass_inverse_elastic(:) = 0._CUSTOM_REAL
   if(any_poroelastic) rmass_s_inverse_poroelastic(:) = 0._CUSTOM_REAL
   if(any_poroelastic) rmass_w_inverse_poroelastic(:) = 0._CUSTOM_REAL
   if(any_acoustic) rmass_inverse_acoustic(:) = 0._CUSTOM_REAL
-  
+
   do ispec = 1,nspec
     do j = 1,NGLLZ
       do i = 1,NGLLX
@@ -115,10 +115,10 @@
           kappal = lambdal_relaxed + 2.d0/3.d0*mul_relaxed
         endif
 
-        if( poroelastic(ispec) ) then     
-          
+        if( poroelastic(ispec) ) then
+
           ! material is poroelastic
-          
+
           rhol_s = density(1,kmato(ispec))
           rhol_f = density(2,kmato(ispec))
           phil = porosity(kmato(ispec))
@@ -132,21 +132,21 @@
           rmass_w_inverse_poroelastic(iglob) = rmass_w_inverse_poroelastic(iglob) &
                   + wxgll(i)*wzgll(j)*jacobian(i,j,ispec)*(rhol_bar*rhol_f*tortl  &
                   - phil*rhol_f*rhol_f)/(rhol_bar*phil)
-          
-        elseif( elastic(ispec) ) then    
+
+        elseif( elastic(ispec) ) then
 
           ! for elastic medium
-          
+
           rmass_inverse_elastic(iglob) = rmass_inverse_elastic(iglob)  &
                   + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
-                  
-        else                  
-                 
+
+        else
+
           ! for acoustic medium
-          
+
           rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
                   + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal
-                  
+
         endif
 
       enddo
@@ -177,7 +177,7 @@
 
   integer :: npoin_acoustic
   real(kind=CUSTOM_REAL), dimension(npoin_acoustic) :: rmass_inverse_acoustic
-  
+
   integer :: npoin_poroelastic
   real(kind=CUSTOM_REAL), dimension(npoin_poroelastic) :: &
     rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic

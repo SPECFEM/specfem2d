@@ -78,7 +78,7 @@
   real(kind=CUSTOM_REAL), dimension(3,npoin_elastic) :: displ_elastic
   integer :: npoin_poroelastic
   real(kind=CUSTOM_REAL), dimension(NDIM,npoin_poroelastic) :: displs_poroelastic,displw_poroelastic
-  
+
   double precision, dimension(3,npoin) :: vector_field_display
 
 ! array with derivatives of Lagrange polynomials
@@ -158,7 +158,7 @@
 
   logical, dimension(nspec) :: elastic,poroelastic,anisotropic
   integer :: npoin_acoustic
-  real(kind=CUSTOM_REAL), dimension(npoin_acoustic) :: potential_dot_dot_acoustic  
+  real(kind=CUSTOM_REAL), dimension(npoin_acoustic) :: potential_dot_dot_acoustic
   integer :: npoin_elastic
   real(kind=CUSTOM_REAL), dimension(3,npoin_elastic) :: displ_elastic
   integer :: npoin_poroelastic

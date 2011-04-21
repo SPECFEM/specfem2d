@@ -346,7 +346,7 @@ contains
   ! allocates memory for arrays
   if( .not. allocated(nnodes_elmnts) ) allocate(nnodes_elmnts(0:nnodes-1))
   if( .not. allocated(nodes_elmnts) ) allocate(nodes_elmnts(0:nsize*nnodes-1))
-  
+
   ! initializes
   xadj(:) = 0
   adjncy(:) = 0
@@ -377,8 +377,8 @@ contains
           enddo
         enddo
 
-        ! sets adjacency (adjncy) and number of neighbors (xadj) 
-        ! according to ncommonnodes criteria  
+        ! sets adjacency (adjncy) and number of neighbors (xadj)
+        ! according to ncommonnodes criteria
         if ( connectivity >=  ncommonnodes) then
 
           is_neighbour = .false.
@@ -397,14 +397,14 @@ contains
             xadj(nodes_elmnts(k+j*nsize)) = xadj(nodes_elmnts(k+j*nsize)) + 1
             if (xadj(nodes_elmnts(k+j*nsize)) > MAX_NEIGHBORS) &
               stop 'ERROR : too much neighbours per element, modify the mesh.'
-            
+
             adjncy(nodes_elmnts(l+j*nsize)*MAX_NEIGHBORS &
                    + xadj(nodes_elmnts(l+j*nsize))) = nodes_elmnts(k+j*nsize)
-                   
+
             xadj(nodes_elmnts(l+j*nsize)) = xadj(nodes_elmnts(l+j*nsize)) + 1
             if (xadj(nodes_elmnts(l+j*nsize))>MAX_NEIGHBORS) &
               stop 'ERROR : too much neighbours per element, modify the mesh.'
-            
+
           endif
         endif
       enddo
@@ -598,7 +598,7 @@ contains
                 is_elastic_el = .false.
               endif
 
-              ! looks at all neighbor elements              
+              ! looks at all neighbor elements
               do el_adj = xadj_g(el), xadj_g(el+1)-1
                 ! sets neighbor material flag
                 if ( phi_material(num_material(adjncy_g(el_adj)+1)) < TINYVAL) then
@@ -611,7 +611,7 @@ contains
                   is_acoustic_el_adj = .false.
                   is_elastic_el_adj = .false.
                 endif
-                ! adds element if neighbor element lies in next parition 
+                ! adds element if neighbor element lies in next parition
                 ! and belongs to same material
                 if ( (part(adjncy_g(el_adj)) == num_part_bis) .and. &
                      (is_acoustic_el .eqv. is_acoustic_el_adj) .and. &
@@ -628,7 +628,7 @@ contains
 
      enddo
   enddo
-  
+
   ! stores element indices for elements from above search at each interface
   num_interface = 0
   num_edge = 0
@@ -1361,10 +1361,10 @@ contains
 
   allocate(xadj_l(0:nelmnts))
   allocate(adjncy_l(0:MAX_NEIGHBORS*nelmnts-1))
-  
+
   is_acoustic(:) = .false.
   is_elastic(:) = .false.
-  
+
   do i = 1, nb_materials
      if (phi_material(i) >= 1.d0) then
         is_acoustic(i) = .true.
@@ -1455,7 +1455,7 @@ contains
 
   is_acoustic(:) = .false.
   is_poroelastic(:) = .false.
-  
+
   do i = 1, nb_materials
      if (phi_material(i) >=1.d0) then
         is_acoustic(i) = .true.
@@ -1611,7 +1611,7 @@ contains
   enddo
 
   deallocate(xadj_l,adjncy_l)
-  
+
   end subroutine poro_elastic_repartitioning
 
 

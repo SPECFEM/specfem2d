@@ -65,7 +65,7 @@
 ! for instance to analyze Cuthill-McKee mesh partitioning etc.
   integer :: UPPER_LIMIT_DISPLAY
 
-  integer :: npoin,nspec,numat  
+  integer :: npoin,nspec,numat
   integer, dimension(nspec) :: kmato
   logical, dimension(nspec) :: poroelastic
   integer, dimension(NGLLX,NGLLX,nspec) :: ibool
@@ -102,7 +102,7 @@
           TURN_VISCATTENUATION_ON
 
   integer :: myrank,nproc
-  
+
   ! local parameters
   double precision vpIImax_local,vpIImin_local
   double precision vsmin,vsmax,densmin,densmax,vpImax_local,vpImin_local,vsmin_local
@@ -447,7 +447,7 @@
 
       do i = 1,NSOURCES
 
-        ! excludes Dirac and Heaviside sources  
+        ! excludes Dirac and Heaviside sources
         if(time_function_type(i) /= 4 .and. time_function_type(i) /= 5) then
 !          write(IOUT,*) ' Onset time = ',t0+tshift_src(i)
 !          write(IOUT,*) ' Fundamental period = ',1.d0/f0(i)
@@ -721,9 +721,9 @@
     material = kmato(ispec)
 
     if(poroelastic(ispec)) then
-    
+
       ! poroelastic material
-      
+
       phi=porosity(material)
       tort=tortuosity(material)
       perm=permeability(1,material)
@@ -1861,22 +1861,22 @@ endif
  681 format(f6.2,1x,f6.2)
 
   end subroutine checkgrid
-  
-  
+
+
 !
 !-------------------------------------------------------------------------------------------------
-!  
+!
 
   subroutine checkgrid_setup_GLLper(percent_GLL,NGLLX_MAX_STABILITY)
 
   implicit none
   include "constants.h"
 
-  integer :: NGLLX_MAX_STABILITY 
+  integer :: NGLLX_MAX_STABILITY
   double precision :: percent_GLL(NGLLX_MAX_STABILITY)
 
   if( NGLLX_MAX_STABILITY /= 15 ) call exit_MPI('check NGLLX_MAX_STABILITY in checkgrid.f90')
-  
+
 ! define percentage of smallest distance between GLL points for NGLLX points
 ! percentages were computed by calling the GLL points routine for each degree
 
@@ -1903,12 +1903,12 @@ endif
   endif
 
   end subroutine checkgrid_setup_GLLper
-  
-  
+
+
 !
 !-------------------------------------------------------------------------------------------------
-!  
-  
+!
+
   subroutine checkgrid_setup_colorp(red,green,blue,NUM_COLORS)
 
 ! color palette
@@ -1918,7 +1918,7 @@ endif
   double precision, dimension(NUM_COLORS) :: red,green,blue
 
   if( NUM_COLORS /= 236 ) call exit_MPI('check NUM_COLORS in checkgrid.f90')
-  
+
 ! red
   red(1) = 1.00000000000000
   green(1) = 0.000000000000000E+000
@@ -3098,5 +3098,5 @@ endif
   red(236) = 1.00000000000000
   green(236) = 0.894117647058824
   blue(236) = 0.768627450980392
-  
+
   end subroutine checkgrid_setup_colorp

@@ -100,7 +100,7 @@
 
   integer :: npoin_elastic
   real(kind=CUSTOM_REAL), dimension(3,npoin_elastic) :: displ_elastic,veloc_elastic
-  
+
   integer :: npoin_poroelastic
   real(kind=CUSTOM_REAL), dimension(NDIM,npoin_poroelastic) :: displs_poroelastic,velocs_poroelastic
   real(kind=CUSTOM_REAL), dimension(NDIM,npoin_poroelastic) :: displw_poroelastic,velocw_poroelastic

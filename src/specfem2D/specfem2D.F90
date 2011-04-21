@@ -250,6 +250,12 @@
 ! volume = {5336},
 ! pages = {350-363}}
 !
+! version 6.2, many developers, April 2011:
+!               - restructured package source code into separate src/ directories
+!               - added configure & Makefile scripts and a PDF manual in doc/
+!               - added user examples in EXAMPLES/
+!               - added a USER_T0 parameter to fix the onset time in simulation
+!
 ! version 6.1, Christina Morency and Pieyre Le Loher, March 2010:
 !               - added SH (membrane) waves calculation for elastic media
 !               - added support for external fully anisotropic media
@@ -1334,93 +1340,94 @@
     if(ADD_PERIODIC_CONDITIONS) then
 
 #ifdef USE_MPI
-  stop 'periodic conditions currently implemented for a serial simulation only (due e.g. to mass matrix rebuilding)'
+      stop 'periodic conditions currently implemented for a serial simulation only (due e.g. to mass matrix rebuilding)'
 #endif
 
-  if(any_poroelastic .or. any_acoustic) stop 'periodic conditions currently implemented for purely elastic models only'
+      if(any_poroelastic .or. any_acoustic) &
+        stop 'periodic conditions currently implemented for purely elastic models only'
 
-  if(ACTUALLY_IMPLEMENT_PERM_OUT .or. ACTUALLY_IMPLEMENT_PERM_INN .or. ACTUALLY_IMPLEMENT_PERM_WHOLE) &
-    stop 'currently, all permutations should be off for periodic conditions'
+      if(ACTUALLY_IMPLEMENT_PERM_OUT .or. ACTUALLY_IMPLEMENT_PERM_INN .or. ACTUALLY_IMPLEMENT_PERM_WHOLE) &
+        stop 'currently, all permutations should be off for periodic conditions'
 
-print *
-open(unit=123,file='DATA/Database00000_left_edge_only',status='old')
-do ispecperio = 1,NSPEC_PERIO
-  read(123,*) numperio_left(ispecperio), &
-     codeabs_perio_left(IBOTTOM,ispecperio), &
-     codeabs_perio_left(IRIGHT,ispecperio), &
-     codeabs_perio_left(ITOP,ispecperio), &
-     codeabs_perio_left(ILEFT,ispecperio), &
-     idummy1, idummy2, idummy3, idummy4, idummy5, idummy6, idummy7, idummy8
-enddo
-close(123)
-print *,'read ',NSPEC_PERIO,' elements for left periodic edge'
+      print *
+      open(unit=123,file='DATA/Database00000_left_edge_only',status='old')
+      do ispecperio = 1,NSPEC_PERIO
+      read(123,*) numperio_left(ispecperio), &
+         codeabs_perio_left(IBOTTOM,ispecperio), &
+         codeabs_perio_left(IRIGHT,ispecperio), &
+         codeabs_perio_left(ITOP,ispecperio), &
+         codeabs_perio_left(ILEFT,ispecperio), &
+         idummy1, idummy2, idummy3, idummy4, idummy5, idummy6, idummy7, idummy8
+      enddo
+      close(123)
+      print *,'read ',NSPEC_PERIO,' elements for left periodic edge'
 
-open(unit=123,file='DATA/Database00000_right_edge_only',status='old')
-do ispecperio = 1,NSPEC_PERIO
-  read(123,*) numperio_right(ispecperio), &
-     codeabs_perio_right(IBOTTOM,ispecperio), &
-     codeabs_perio_right(IRIGHT,ispecperio), &
-     codeabs_perio_right(ITOP,ispecperio), &
-     codeabs_perio_right(ILEFT,ispecperio), &
-     idummy1, idummy2, idummy3, idummy4, idummy5, idummy6, idummy7, idummy8
-enddo
-close(123)
-print *,'read ',NSPEC_PERIO,' elements for right periodic edge'
-print *
+      open(unit=123,file='DATA/Database00000_right_edge_only',status='old')
+      do ispecperio = 1,NSPEC_PERIO
+      read(123,*) numperio_right(ispecperio), &
+         codeabs_perio_right(IBOTTOM,ispecperio), &
+         codeabs_perio_right(IRIGHT,ispecperio), &
+         codeabs_perio_right(ITOP,ispecperio), &
+         codeabs_perio_right(ILEFT,ispecperio), &
+         idummy1, idummy2, idummy3, idummy4, idummy5, idummy6, idummy7, idummy8
+      enddo
+      close(123)
+      print *,'read ',NSPEC_PERIO,' elements for right periodic edge'
+      print *
 
-print *,'because of periodic conditions, values computed by checkgrid() are not reliable'
-print *
+      print *,'because of periodic conditions, values computed by checkgrid() are not reliable'
+      print *
 
 !---------------------------------------------------------------------------
 
-         do ispecperio = 1,NSPEC_PERIO
+      do ispecperio = 1,NSPEC_PERIO
 
-            ispec = numperio_left(ispecperio)
+        ispec = numperio_left(ispecperio)
 
 ! print *,'dist of edge is ',sqrt((coord(2,ibool(1,1,ispec)) - coord(2,ibool(1,NGLLZ,ispec))) ** 2 + &
 !                                 (coord(1,ibool(1,1,ispec)) - coord(1,ibool(1,NGLLZ,ispec))) ** 2)
 
-            if(codeabs_perio_left(ILEFT,ispecperio)) then
-               i = 1
-               do j = 1,NGLLZ
-                  iglob = ibool(i,j,ispec)
+        if(codeabs_perio_left(ILEFT,ispecperio)) then
+           i = 1
+           do j = 1,NGLLZ
+              iglob = ibool(i,j,ispec)
 !----------------------------------------------------------------------
-                  include "include_for_periodic_conditions.f90"
+              include "include_for_periodic_conditions.f90"
 !----------------------------------------------------------------------
-               enddo
-            endif
+           enddo
+        endif
 
-            if(codeabs_perio_left(IRIGHT,ispecperio)) then
-               i = NGLLX
-               do j = 1,NGLLZ
-                  iglob = ibool(i,j,ispec)
+        if(codeabs_perio_left(IRIGHT,ispecperio)) then
+           i = NGLLX
+           do j = 1,NGLLZ
+              iglob = ibool(i,j,ispec)
 !----------------------------------------------------------------------
-                  include "include_for_periodic_conditions.f90"
+              include "include_for_periodic_conditions.f90"
 !----------------------------------------------------------------------
-               enddo
-            endif
+           enddo
+        endif
 
-            if(codeabs_perio_left(IBOTTOM,ispecperio)) then
-               j = 1
-               do i = 1,NGLLX
-                  iglob = ibool(i,j,ispec)
+        if(codeabs_perio_left(IBOTTOM,ispecperio)) then
+           j = 1
+           do i = 1,NGLLX
+              iglob = ibool(i,j,ispec)
 !----------------------------------------------------------------------
-                  include "include_for_periodic_conditions.f90"
+              include "include_for_periodic_conditions.f90"
 !----------------------------------------------------------------------
-               enddo
-            endif
+           enddo
+        endif
 
-            if(codeabs_perio_left(ITOP,ispecperio)) then
-               j = NGLLZ
-               do i = 1,NGLLX
-                  iglob = ibool(i,j,ispec)
+        if(codeabs_perio_left(ITOP,ispecperio)) then
+           j = NGLLZ
+           do i = 1,NGLLX
+              iglob = ibool(i,j,ispec)
 !----------------------------------------------------------------------
-                  include "include_for_periodic_conditions.f90"
+              include "include_for_periodic_conditions.f90"
 !----------------------------------------------------------------------
-               enddo
-            endif
+           enddo
+        endif
 
-         enddo
+      enddo
 
 ! rebuild the mass matrix based on this new numbering
 !
@@ -1730,11 +1737,13 @@ print *
 !!$      enddo
 !!$    enddo
 !!$  enddo
-!!$  open(unit=55,file='OUTPUT_FILES/x_z_weightLineX_weightLineZ_weightSurface',status='unknown')
-!!$  do n = 1,npoin
-!!$    write(55,*) coord(1,n), coord(2,n), weight_line_x(n), weight_line_z(n), weight_surface(n),weight_jacobian(n),weight_gll(n)
-!!$  enddo
-!!$  close(55)
+!!$  if( myrank == 0 ) then
+!!$    open(unit=55,file='OUTPUT_FILES/x_z_weightLineX_weightLineZ_weightSurface',status='unknown')
+!!$    do n = 1,npoin
+!!$      write(55,*) coord(1,n), coord(2,n), weight_line_x(n), weight_line_z(n), weight_surface(n),weight_jacobian(n),weight_gll(n)
+!!$    enddo
+!!$    close(55)
+!!$  endif
 !!$  deallocate(weight_line_x)
 !!$  deallocate(weight_line_z)
 !!$  deallocate(weight_surface)
@@ -3785,19 +3794,19 @@ print *
     endif
   endif
 
-call mpi_allreduce(d1_coorg_send_ps_element_mesh,d1_coorg_recv_ps_element_mesh,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-call mpi_allreduce(d2_coorg_send_ps_element_mesh,d2_coorg_recv_ps_element_mesh,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-call mpi_allreduce(d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+  call mpi_allreduce(d1_coorg_send_ps_element_mesh,d1_coorg_recv_ps_element_mesh,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+  call mpi_allreduce(d2_coorg_send_ps_element_mesh,d2_coorg_recv_ps_element_mesh,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+  call mpi_allreduce(d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
 
   d1_coorg_send_ps_abs=4
   d2_coorg_send_ps_abs=4*nelemabs
-call mpi_allreduce(d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-call mpi_allreduce(d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+  call mpi_allreduce(d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+  call mpi_allreduce(d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
 
   d1_coorg_send_ps_free_surface=4
   d2_coorg_send_ps_free_surface=4*nelem_acoustic_surface
-call mpi_allreduce(d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-call mpi_allreduce(d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+  call mpi_allreduce(d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+  call mpi_allreduce(d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
 
   d1_coorg_send_ps_vector_field=8
   if(interpol) then
@@ -3809,8 +3818,8 @@ call mpi_allreduce(d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface,1
   else
     d2_coorg_send_ps_vector_field=npoin
   endif
-call mpi_allreduce(d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+  call mpi_allreduce(d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+  call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
 
 
 #else
@@ -4119,22 +4128,21 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
 ! *********************************************************
 
     if(coupled_acoustic_elastic) then
-
-! loop on all the coupling edges
+      ! loop on all the coupling edges
       do inum = 1,num_fluid_solid_edges
 
-! get the edge of the acoustic element
+      ! get the edge of the acoustic element
         ispec_acoustic = fluid_solid_acoustic_ispec(inum)
         iedge_acoustic = fluid_solid_acoustic_iedge(inum)
 
-! get the corresponding edge of the elastic element
+      ! get the corresponding edge of the elastic element
         ispec_elastic = fluid_solid_elastic_ispec(inum)
         iedge_elastic = fluid_solid_elastic_iedge(inum)
 
-! implement 1D coupling along the edge
+      ! implement 1D coupling along the edge
         do ipoin1D = 1,NGLLX
 
-! get point values for the elastic side, which matches our side in the inverse direction
+      ! get point values for the elastic side, which matches our side in the inverse direction
           i = ivalue_inverse(ipoin1D,iedge_elastic)
           j = jvalue_inverse(ipoin1D,iedge_elastic)
           iglob = ibool(i,j,ispec_elastic)
@@ -4147,16 +4155,16 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
             b_displ_z = b_displ_elastic(3,iglob)
           endif
 
-! get point values for the acoustic side
+      ! get point values for the acoustic side
           i = ivalue(ipoin1D,iedge_acoustic)
           j = jvalue(ipoin1D,iedge_acoustic)
           iglob = ibool(i,j,ispec_acoustic)
 
-! compute the 1D Jacobian and the normal to the edge: for their expression see for instance
-! O. C. Zienkiewicz and R. L. Taylor, The Finite Element Method for Solid and Structural Mechanics,
-! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
-! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
-! Blackwell Science, page 110, equation (4.60).
+      ! compute the 1D Jacobian and the normal to the edge: for their expression see for instance
+      ! O. C. Zienkiewicz and R. L. Taylor, The Finite Element Method for Solid and Structural Mechanics,
+      ! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
+      ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
+      ! Blackwell Science, page 110, equation (4.60).
           if(iedge_acoustic == ITOP)then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
@@ -4187,13 +4195,13 @@ call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1
             weight = jacobian1D * wzgll(j)
           endif
 
-! compute dot product
+      ! compute dot product
           displ_n = displ_x*nx + displ_z*nz
 
           potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
 
           if(SIMULATION_TYPE == 2) then
-          b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) +&
+          b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) + &
                       weight*(b_displ_x*nx + b_displ_z*nz)
           endif !if(SIMULATION_TYPE == 2) then
 
@@ -6824,45 +6832,45 @@ endif
     close(IOUT_ENERGY)
   endif
 
-   if (.not. any_poroelastic) then
-open(unit=1001,file='DATA/model_velocity.dat_output',status='unknown')
-   if ( .NOT. assign_external_model) then
-allocate(rho_local(ngllx,ngllz,nspec)); rho_local=0.
-allocate(vp_local(ngllx,ngllz,nspec)); vp_local=0.
-allocate(vs_local(ngllx,ngllz,nspec)); vs_local=0.
+  if (.not. any_poroelastic) then
+    open(unit=1001,file='DATA/model_velocity.dat_output',status='unknown')
+    if ( .NOT. assign_external_model) then
+      allocate(rho_local(ngllx,ngllz,nspec)); rho_local=0.
+      allocate(vp_local(ngllx,ngllz,nspec)); vp_local=0.
+      allocate(vs_local(ngllx,ngllz,nspec)); vs_local=0.
 !!      write(1001,*) npoin
 !!      do iglob = 1,npoin
 !!         write(1001,*) coord(1,iglob),coord(2,iglob),rho_global(iglob),vp_global(iglob),vs_global(iglob)
 !!      end do
-    do ispec = 1,nspec
-       do j = 1,NGLLZ
-       do i = 1,NGLLX
-          iglob = ibool(i,j,ispec)
-          rho_local(i,j,ispec) = density(1,kmato(ispec))
-          vp_local(i,j,ispec) = sqrt(poroelastcoef(3,1,kmato(ispec))/density(1,kmato(ispec)))
-          vs_local(i,j,ispec) = sqrt(poroelastcoef(2,1,kmato(ispec))/density(1,kmato(ispec)))
-          write(1001,'(I10, 5F13.4)') iglob, coord(1,iglob),coord(2,iglob),&
+      do ispec = 1,nspec
+        do j = 1,NGLLZ
+          do i = 1,NGLLX
+            iglob = ibool(i,j,ispec)
+            rho_local(i,j,ispec) = density(1,kmato(ispec))
+            vp_local(i,j,ispec) = sqrt(poroelastcoef(3,1,kmato(ispec))/density(1,kmato(ispec)))
+            vs_local(i,j,ispec) = sqrt(poroelastcoef(2,1,kmato(ispec))/density(1,kmato(ispec)))
+            write(1001,'(I10, 5F13.4)') iglob, coord(1,iglob),coord(2,iglob),&
                                       rho_local(i,j,ispec),vp_local(i,j,ispec),vs_local(i,j,ispec)
-       end do
-       end do
-    end do
-   else
+          end do
+        end do
+      end do
+    else
 !!     write(1001,*) npoin
 !!  do iglob = 1,npoin
 !!     write(1001,*) coord(1,iglob),coord(2,iglob),rhoext_global(iglob),vpext_global(iglob),vsext_global(iglob)
 !!  end do
-     do ispec = 1,nspec
+      do ispec = 1,nspec
         do j = 1,NGLLZ
-        do i = 1,NGLLX
-           iglob = ibool(i,j,ispec)
-           write(1001,'(I10,5F13.4)') iglob, coord(1,iglob),coord(2,iglob),&
+          do i = 1,NGLLX
+            iglob = ibool(i,j,ispec)
+            write(1001,'(I10,5F13.4)') iglob, coord(1,iglob),coord(2,iglob),&
                                        rhoext(i,j,ispec),vpext(i,j,ispec),vsext(i,j,ispec)
+          end do
         end do
-        end do
-     end do
-   endif
-close(1001)
-   endif
+      end do
+    endif
+    close(1001)
+  endif
 
 ! print exit banner
   if (myrank == 0) call datim(simulation_title)

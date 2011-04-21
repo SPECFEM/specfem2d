@@ -42,7 +42,7 @@
 !
 !========================================================================
 
-  
+
   subroutine check_stability(myrank,time,it,NSTEP, &
                         npoin_acoustic,npoin_elastic,npoin_poroelastic, &
                         any_elastic_glob,any_elastic,displ_elastic, &
@@ -52,32 +52,32 @@
                         year_start,month_start,time_start)
 
 ! checks simulation stability and outputs timerun infos
-  
+
   implicit none
   include "constants.h"
 #ifdef USE_MPI
   include "mpif.h"
 #endif
-  
+
   integer :: myrank,it,NSTEP
 
   double precision :: time
-  
+
   logical :: any_elastic_glob,any_elastic
   integer :: npoin_elastic
   real(kind=CUSTOM_REAL), dimension(3,npoin_elastic) :: displ_elastic
-    
+
   logical :: any_poroelastic_glob,any_poroelastic
   integer :: npoin_poroelastic
   real(kind=CUSTOM_REAL), dimension(NDIM,npoin_poroelastic) :: displs_poroelastic,displw_poroelastic
-  
+
   logical :: any_acoustic_glob,any_acoustic
   integer :: npoin_acoustic
   real(kind=CUSTOM_REAL), dimension(npoin_acoustic) :: potential_acoustic
 
   double precision :: time_start
   integer :: year_start,month_start
-  
+
   ! local parameters
   double precision displnorm_all,displnorm_all_glob
   ! timer to count elapsed time
@@ -102,7 +102,7 @@
   integer :: ier
 #endif
 
-  ! user output  
+  ! user output
   if (myrank == 0) then
     write(IOUT,*)
     if(time >= 1.d-3 .and. time < 1000.d0) then
@@ -123,7 +123,7 @@
     else
       displnorm_all = 0.d0
     endif
-    
+
     displnorm_all_glob = displnorm_all
 #ifdef USE_MPI
     call MPI_ALLREDUCE (displnorm_all, displnorm_all_glob, 1, MPI_DOUBLE_PRECISION, &
@@ -138,7 +138,7 @@
     ! than the greatest possible floating-point number of the machine
     if(displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
       call exit_MPI('code became unstable and blew up in solid (elastic)')
-      
+
   endif
 
   ! poroelastic wavefield
@@ -264,7 +264,7 @@
              ihours_total,iminutes_total,iseconds_total
 
       if(it < NSTEP) then
-        ! compute date and time at which the run should finish 
+        ! compute date and time at which the run should finish
         ! (useful for long runs); for simplicity only minutes
         ! are considered, seconds are ignored; in any case the prediction is not
         ! accurate down to seconds because of system and network fluctuations
@@ -300,6 +300,6 @@
   endif
 
   if (myrank == 0) write(IOUT,*)
-  
-  end subroutine check_stability  
-  
+
+  end subroutine check_stability
+

@@ -66,12 +66,12 @@
 
   logical, dimension(nspec) :: elastic,poroelastic
   integer :: npoin_acoustic
-  real(kind=CUSTOM_REAL), dimension(npoin_acoustic) :: potential_acoustic  
+  real(kind=CUSTOM_REAL), dimension(npoin_acoustic) :: potential_acoustic
   integer :: npoin_elastic
   real(kind=CUSTOM_REAL), dimension(3,npoin_elastic) :: veloc_elastic
   integer :: npoin_poroelastic
   real(kind=CUSTOM_REAL), dimension(NDIM,npoin_poroelastic) :: velocs_poroelastic
-  
+
   double precision, dimension(3,npoin) :: vector_field_display
 
 ! array with derivatives of Lagrange polynomials
@@ -143,7 +143,7 @@
 
   logical, dimension(nspec) :: elastic,poroelastic
   integer :: npoin_acoustic
-  real(kind=CUSTOM_REAL), dimension(npoin_acoustic) :: potential_acoustic  
+  real(kind=CUSTOM_REAL), dimension(npoin_acoustic) :: potential_acoustic
   integer :: npoin_elastic
   real(kind=CUSTOM_REAL), dimension(3,npoin_elastic) :: veloc_elastic
   integer :: npoin_poroelastic

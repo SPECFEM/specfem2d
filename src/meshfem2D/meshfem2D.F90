@@ -762,20 +762,20 @@ program meshfem2D
   !*****************************
   ! partitioning
   !*****************************
-  
+
   ! allocates & initializes partioning of elements
   allocate(part(0:nelmnts-1))
   part(:) = -1
-  
+
   if( nproc > 1 ) then
     allocate(xadj_g(0:nelmnts))
-    allocate(adjncy_g(0:MAX_NEIGHBORS*nelmnts-1))  
+    allocate(adjncy_g(0:MAX_NEIGHBORS*nelmnts-1))
     xadj_g(:) = 0
     adjncy_g(:) = -1
   endif
 
   ! construction of the graph
-  
+
   ! if ngnod == 9, we work on a subarray of elements that represents the elements with four nodes (four corners) only
   ! because the adjacency of the mesh elements can be entirely determined from the knowledge of the four corners only
   if ( ngnod == 9 ) then

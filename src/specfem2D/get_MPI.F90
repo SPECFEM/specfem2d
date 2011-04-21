@@ -63,7 +63,7 @@
 
   include "constants.h"
   include 'mpif.h'
-  
+
   integer, intent(in)  :: nspec, npoin, ngnod
   logical, dimension(nspec), intent(in)  :: elastic, poroelastic
   integer, dimension(ngnod,nspec), intent(in)  :: knods
@@ -73,7 +73,7 @@
   integer  :: max_interface_size
   integer, dimension(ninterface)  :: my_nelmnts_neighbours,my_neighbours
   integer, dimension(4,max_interface_size,ninterface)  :: my_interfaces
-  
+
   integer, dimension(NGLLX*max_interface_size,ninterface)  :: &
        ibool_interfaces_acoustic,ibool_interfaces_elastic,ibool_interfaces_poroelastic
   integer, dimension(ninterface)  :: &
@@ -86,7 +86,7 @@
 
   integer :: myrank,ipass
   double precision, dimension(NDIM,npoin) :: coord
-  
+
   !local parameters
   double precision, dimension(:), allocatable :: xp,zp
   double precision, dimension(:), allocatable :: work
@@ -107,7 +107,7 @@
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_recv_faces_vector_ac
   integer, dimension(:), allocatable  :: tab_requests_send_recv_acoustic
 
-  ! gets global indices for points on MPI interfaces 
+  ! gets global indices for points on MPI interfaces
   ! (defined by my_interfaces) between different partitions
   ! and stores them in ibool_interfaces*** & nibool_interfaces*** (number of total points)
   call prepare_assemble_MPI(nspec,ibool,knods, ngnod,npoin, elastic, poroelastic, &
@@ -127,9 +127,9 @@
   num_points1 = 0
   num_points2 = 0
   allocate(nibool_interfaces_true(ninterface))
-  
+
   do idomain = 1,3
-    
+
     ! checks number of interface in this domain
     num_interface = 0
     if( idomain == 1 ) then
@@ -140,22 +140,22 @@
       num_interface = ninterface_poroelastic
     endif
     if( num_interface == 0 ) cycle
-    
+
     ! loops over interfaces
     do iinterface = 1, ninterface
-          
-      ! number of global points in this interface    
+
+      ! number of global points in this interface
       num_nibool = 0
       if( idomain == 1 ) then
         num_nibool = nibool_interfaces_acoustic(iinterface)
       elseif( idomain == 2 ) then
         num_nibool = nibool_interfaces_elastic(iinterface)
       elseif( idomain == 3 ) then
-        num_nibool = nibool_interfaces_poroelastic(iinterface)      
+        num_nibool = nibool_interfaces_poroelastic(iinterface)
       endif
       ! checks if anything to sort
       if( num_nibool == 0 ) cycle
-      
+
       allocate(xp(num_nibool))
       allocate(zp(num_nibool))
       allocate(locval(num_nibool))
@@ -173,14 +173,14 @@
       elseif( idomain == 2 ) then
         ibool_dummy(:) = ibool_interfaces_elastic(1:num_nibool,iinterface)
       elseif( idomain == 3 ) then
-        ibool_dummy(:) = ibool_interfaces_poroelastic(1:num_nibool,iinterface)        
+        ibool_dummy(:) = ibool_interfaces_poroelastic(1:num_nibool,iinterface)
       endif
 
       ! gets x,y,z coordinates of global points on MPI interface
       do ilocnum = 1, num_nibool
-        iglob = ibool_dummy(ilocnum)        
+        iglob = ibool_dummy(ilocnum)
         xp(ilocnum) = coord(1,iglob)
-        zp(ilocnum) = coord(2,iglob)        
+        zp(ilocnum) = coord(2,iglob)
       enddo
 
       ! sorts (lexicographically?) ibool_interfaces and updates value
@@ -200,7 +200,7 @@
         write(IOUT,*) '   interface:',iinterface,num_points1,num_points2
         call exit_MPI('error sorting MPI interface')
       endif
-  
+
       ! stores new order of ibool array
       if( idomain == 1 ) then
         ibool_interfaces_acoustic(1:num_nibool,iinterface) = ibool_dummy(:)
@@ -208,7 +208,7 @@
         ibool_interfaces_elastic(1:num_nibool,iinterface) = ibool_dummy(:)
       elseif( idomain == 3 ) then
         ibool_interfaces_poroelastic(1:num_nibool,iinterface) = ibool_dummy(:)
-      endif      
+      endif
 
       ! cleanup temporary arrays
       deallocate(xp)
@@ -229,7 +229,7 @@
 
   ! outputs total number of MPI interface points
   call MPI_REDUCE(num_points2, num_points1, 1, MPI_INTEGER, &
-                    MPI_SUM, 0, MPI_COMM_WORLD, ier)  
+                    MPI_SUM, 0, MPI_COMM_WORLD, ier)
   if( myrank == 0 .and. ipass == 1 ) then
     write(IOUT,*) 'total MPI interface points: ',num_points1
   endif
@@ -269,16 +269,16 @@
       inum = inum + nibool_interfaces_acoustic(iinterface)
     enddo
   endif
-  
+
   ! note: this mpi reduction awaits information from all processes.
   !          thus, avoid an mpi deadlock in case some of the paritions have no acoustic interface
   call MPI_REDUCE(inum, num_points1, 1, MPI_INTEGER, &
-                    MPI_SUM, 0, MPI_COMM_WORLD, ier)  
+                    MPI_SUM, 0, MPI_COMM_WORLD, ier)
 
   if( myrank == 0 .and. ipass == 1 ) then
     write(IOUT,*) '       acoustic interface points: ',num_points1
   endif
-  
+
   ! checks if assembly works
   inum = 0
   if( ninterface_acoustic > 0 ) then
@@ -297,30 +297,30 @@
       ! only counts flags with MPI contributions
       if( nint(test_flag_cr(iglob)) > myrank+1 ) inum = inum + 1
     enddo
-    
+
     deallocate(tab_requests_send_recv_acoustic)
     deallocate(buffer_send_faces_vector_ac)
     deallocate(buffer_recv_faces_vector_ac)
-    deallocate(test_flag_cr)    
+    deallocate(test_flag_cr)
   endif
 
-  ! note: this mpi reduction awaits information from all processes.  
+  ! note: this mpi reduction awaits information from all processes.
   call MPI_REDUCE(inum, num_points2, 1, MPI_INTEGER, &
-                    MPI_SUM, 0, MPI_COMM_WORLD, ier)  
-  
+                    MPI_SUM, 0, MPI_COMM_WORLD, ier)
+
   if( myrank == 0 ) then
     if( ipass == 1 ) then
       write(IOUT,*) '       assembly acoustic MPI interface points:',num_points2
-    endif 
+    endif
 
     ! they don't need to fit, somehow..
     !if( num_points2 /= num_points1 ) then
     !  print*,'error acoustic assembly:' !,myrank
     !  print*,'  total = ',num_points1,' not equal to assembled ',num_points2
     !  call exit_MPI('error acoustic MPI assembly')
-    !endif  
+    !endif
   endif
-  
+
   end subroutine get_MPI
 
 #endif

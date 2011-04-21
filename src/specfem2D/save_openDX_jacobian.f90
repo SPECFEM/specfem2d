@@ -45,27 +45,27 @@
 
 
   subroutine save_openDX_jacobian(nspec,npgeo,ngnod,knods,coorg,xigll,zigll)
-  
+
   implicit none
   include "constants.h"
-  
+
   integer :: nspec,npgeo,ngnod
   double precision, dimension(NDIM,npgeo) :: coorg
   double precision, dimension(NGLLX) :: xigll
   double precision, dimension(NGLLZ) :: zigll
-  
+
   integer, dimension(ngnod,nspec) :: knods
-  
+
   ! local parameters
   integer, dimension(:), allocatable :: ibool_OpenDX
   logical, dimension(:), allocatable :: mask_point
   double precision :: xelm,zelm
   double precision :: xi,gamma,x,z
   double precision :: xixl,xizl,gammaxl,gammazl,jacobianl
-  
+
   integer :: ia,nnum,ipoint_number,total_of_negative_elements
   integer :: ispec,i,j
-  logical :: found_a_problem_in_this_element  
+  logical :: found_a_problem_in_this_element
 
   ! create an OpenDX file to visualize this element
   open(unit=11,file='DX_all_elements_with_negative_jacobian_in_red.dx',status='unknown')
@@ -151,5 +151,5 @@
   print *,total_of_negative_elements,' elements have a negative Jacobian, out of ',nspec
   print *,'i.e., ',sngl(100.d0 * dble(total_of_negative_elements)/dble(nspec)),'%'
   print *
-  
+
   end subroutine save_openDX_jacobian

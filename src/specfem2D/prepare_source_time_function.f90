@@ -88,7 +88,7 @@
 
     ! note: t0 is the simulation start time, tshift_src is the time shift of the source
     !          relative to this start time
-    
+
     ! compute current time
     time = (it-1)*deltat
 

@@ -122,7 +122,7 @@
                                     Qp_attenuationext(i,j,ispec),Qs_attenuationext(i,j,ispec),&
                                     c11ext(i,j,ispec),c13ext(i,j,ispec),c15ext(i,j,ispec), &
                                     c33ext(i,j,ispec),c35ext(i,j,ispec),c55ext(i,j,ispec))
-                                    
+
           if((c11ext(i,j,ispec) /= 0) .or. (c13ext(i,j,ispec) /= 0) .or. (c15ext(i,j,ispec) /= 0) .or. &
             (c33ext(i,j,ispec) /= 0) .or. (c35ext(i,j,ispec) /= 0) .or. (c55ext(i,j,ispec) /= 0)) then
             ! vp, vs : dummy values, trick to avoid floating point errors
@@ -142,7 +142,7 @@
   anisotropic(:) = .false.
   elastic(:) = .false.
   poroelastic(:) = .false.
-  
+
   do ispec = 1,nspec
     previous_vsext = -1.d0
     do j = 1,NGLLZ
@@ -152,7 +152,7 @@
           ((vsext(i,j,ispec) >= TINYVAL .and. previous_vsext < TINYVAL) .or. &
           (vsext(i,j,ispec) < TINYVAL .and. previous_vsext >= TINYVAL)))  &
           call exit_MPI('external velocity model cannot be both fluid and solid inside the same spectral element')
-          
+
         if((c11ext(i,j,ispec) /= 0) .or. (c13ext(i,j,ispec) /= 0) .or. (c15ext(i,j,ispec) /= 0) .or. &
           (c33ext(i,j,ispec) /= 0) .or. (c35ext(i,j,ispec) /= 0) .or. (c55ext(i,j,ispec) /= 0)) then
           anisotropic(ispec) = .true.
@@ -170,7 +170,7 @@
           elastic(ispec) = .true.
           any_elastic = .true.
         endif
-        
+
         call attenuation_model(N_SLS,Qp_attenuationext(i,j,ispec),Qs_attenuationext(i,j,ispec), &
                               f0_attenuation,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
                               inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent)

@@ -143,15 +143,15 @@
         do ix = ixmin, ixmax, sens
           ! global index
           iglob = ibool(ix,iz,ispec)
-        
-          ! checks to which material this common interface belongs          
+
+          ! checks to which material this common interface belongs
           if ( elastic(ispec) ) then
             ! elastic element
             if(.not. mask_ibool_elastic(iglob)) then
               mask_ibool_elastic(iglob) = .true.
               npoin_interface_elastic = npoin_interface_elastic + 1
               ibool_interfaces_elastic(npoin_interface_elastic,num_interface) = iglob
-            end if            
+            end if
           else if ( poroelastic(ispec) ) then
             ! poroelastic element
             if(.not. mask_ibool_poroelastic(iglob)) then
@@ -171,7 +171,7 @@
       end do
 
     end do
-    
+
     ! stores counters for interface points
     nibool_interfaces_acoustic(num_interface) = npoin_interface_acoustic
     nibool_interfaces_elastic(num_interface) = npoin_interface_elastic
@@ -197,7 +197,7 @@
   ninterface_acoustic = 0
   ninterface_elastic =  0
   ninterface_poroelastic =  0
-  
+
   ! loops over all MPI interfaces
   do num_interface = 1, ninterface
     ! sets acoustic MPI interface (local) indices in range [1,ninterface_acoustic]
@@ -237,9 +237,9 @@
   integer, intent(out)  :: sens
 
   if ( itype == 1 ) then
-  
+
     ! common single point
-    
+
     ! checks which corner point is given
     if ( e1 == n(1) ) then
         ixmin = 1
@@ -266,11 +266,11 @@
         izmax = NGLLZ
     end if
     sens = 1
-    
+
   else if( itype == 2 ) then
-  
+
     ! common edge
-    
+
     ! checks which edge and corner points are given
     if ( e1 ==  n(1) ) then
         ixmin = 1
@@ -328,11 +328,11 @@
            sens = 1
         end if
      end if
-     
+
   else
 
     call exit_MPI('ERROR get_edge unknown type')
-  
+
   end if
 
   end subroutine get_edge
