@@ -146,7 +146,7 @@
   if ( abs(dist_glob - distmin) < TINYVAL ) is_proc_source = 1
 
 #ifdef USE_MPI
-  ! determining the number of processes that contain the source 
+  ! determining the number of processes that contain the source
   ! (useful when the source is located on an interface)
   call MPI_ALLREDUCE (is_proc_source, nb_proc_source, 1, MPI_INTEGER, &
                       MPI_SUM, MPI_COMM_WORLD, ierror)

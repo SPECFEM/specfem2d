@@ -72,8 +72,8 @@
   double precision :: w_c
   integer in,n,indic
   character(len=80) datlin
-  
-  
+
+
   !
   !---- loop over the different material sets
   !

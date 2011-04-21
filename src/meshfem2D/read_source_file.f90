@@ -120,7 +120,7 @@ contains
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mxz(i_source))
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,factor(i_source))
 
-    ! note: we will further process source info in solver, 
+    ! note: we will further process source info in solver,
     !         here we just read in the given specifics and show them
 
     print *

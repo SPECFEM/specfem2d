@@ -169,7 +169,7 @@
 
   do icomp = 1,3
 
-    filename = 'OUTPUT_FILES/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
+    filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
     open(unit = IIN, file = trim(filename), iostat = ios)
     if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
 

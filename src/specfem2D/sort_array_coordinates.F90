@@ -63,7 +63,7 @@
   integer,intent(out) :: nglob
 
   integer,intent(inout) :: ibool(npointot)
-  
+
   integer iglob(npointot),loc(npointot)
   integer ind(npointot),ninseg(npointot)
   logical ifseg(npointot)
@@ -93,7 +93,7 @@
     ! sort within each segment
     ioff=1
     do iseg=1,nseg
-    
+
       if(j == 1) then
         call rank_buffers(x(ioff),ind,ninseg(iseg))
       else if(j == 2) then

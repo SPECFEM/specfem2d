@@ -48,7 +48,7 @@
                             xmin_color_image,xmax_color_image, &
                             zmin_color_image,zmax_color_image, &
                             coord,npoin,npgeo)
-  
+
   implicit none
   include "constants.h"
 #ifdef USE_MPI
@@ -59,18 +59,18 @@
 
   integer :: npoin,npgeo
   double precision, dimension(NDIM,npoin) :: coord
-  
+
   double precision :: xmin_color_image,xmax_color_image, &
     zmin_color_image,zmax_color_image
-  
+
   ! local parameters
-  integer  :: npgeo_glob  
+  integer  :: npgeo_glob
   double precision  :: xmin_color_image_loc, xmax_color_image_loc, &
       zmin_color_image_loc,zmax_color_image_loc
 #ifdef USE_MPI
   integer :: ier
 #endif
-    
+
   ! horizontal size of the image
   xmin_color_image_loc = minval(coord(1,:))
   xmax_color_image_loc = maxval(coord(1,:))
@@ -104,7 +104,7 @@
   NZ_IMAGE_color = nint(NX_IMAGE_color * (zmax_color_image - zmin_color_image) &
                                       / (xmax_color_image - xmin_color_image))
 
-  ! convert pixel sizes to even numbers because easier to reduce size, 
+  ! convert pixel sizes to even numbers because easier to reduce size,
   ! create MPEG movies in postprocessing
   NX_IMAGE_color = 2 * (NX_IMAGE_color / 2)
   NZ_IMAGE_color = 2 * (NZ_IMAGE_color / 2)
@@ -114,18 +114,18 @@
   if (NZ_IMAGE_color > 99999) call exit_MPI('output image too big : NZ_IMAGE_color > 99999.')
 
   end subroutine prepare_color_image_init
-  
-  
+
+
 !
 !-------------------------------------------------------------------------------------------------
-!  
-  
+!
+
   subroutine prepare_color_image_pixels(myrank,NX_IMAGE_color,NZ_IMAGE_color, &
                             xmin_color_image,xmax_color_image, &
                             zmin_color_image,zmax_color_image, &
                             coord,npoin,coorg,npgeo,nspec,ngnod,knods,ibool, &
                             nb_pixel_loc,iglob_image_color)
-  
+
   implicit none
   include "constants.h"
 
@@ -137,13 +137,13 @@
   integer :: npoin,nspec,npgeo,ngnod
   double precision, dimension(NDIM,npoin) :: coord
   double precision, dimension(NDIM,npgeo) :: coorg
-  
+
   integer, dimension(ngnod,nspec) :: knods
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
-    
+
   integer :: nb_pixel_loc
   integer, dimension(NX_IMAGE_color,NZ_IMAGE_color) :: iglob_image_color
-  
+
   ! local parameters
   double precision  :: size_pixel_horizontal,size_pixel_vertical
   double precision, dimension(2,4)  :: elmnt_coords
@@ -222,7 +222,7 @@
      enddo
   enddo
 
-  end subroutine prepare_color_image_pixels  
+  end subroutine prepare_color_image_pixels
 
 
 !
@@ -237,7 +237,7 @@
                             nproc,myrank,assign_external_model,vpext)
 
 ! stores P-velocity model in image_color_vp_display
-  
+
   implicit none
   include "constants.h"
 #ifdef USE_MPI
@@ -248,15 +248,15 @@
   integer :: NX_IMAGE_color,NZ_IMAGE_color
   double precision, dimension(NX_IMAGE_color,NZ_IMAGE_color) :: image_color_vp_display
   integer, dimension(NX_IMAGE_color,NZ_IMAGE_color) :: iglob_image_color
-  
+
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
   integer, dimension(nspec) :: kmato
-  
+
   logical, dimension(nspec) :: poroelastic
 
   integer :: nb_pixel_loc
   integer, dimension(nb_pixel_loc) :: num_pixel_loc
-    
+
   logical :: assign_external_model
   integer :: nproc,myrank
   integer :: numat
@@ -265,7 +265,7 @@
   double precision, dimension(numat) :: porosity,tortuosity
   double precision, dimension(NGLLX,NGLLX,nspec) :: vpext
 
-  ! local parameters  
+  ! local parameters
   double precision, dimension(:), allocatable :: vp_display
   double precision :: rhol,mul_relaxed,lambdal_relaxed
   double precision :: rhol_s,rhol_f,rhol_bar,phil,tortl,mul_s,kappal_s,kappal_f, &
@@ -279,10 +279,10 @@
   double precision, dimension(:), allocatable  :: data_pixel_send
   integer, dimension(:,:), allocatable  :: num_pixel_recv
   integer, dimension(:), allocatable  :: nb_pixel_per_proc
-  integer, dimension(MPI_STATUS_SIZE)  :: request_mpi_status  
+  integer, dimension(MPI_STATUS_SIZE)  :: request_mpi_status
   integer :: ier,iproc
 #else
-  integer :: dummy    
+  integer :: dummy
 #endif
 
   ! to display the P-velocity model in background on color images
@@ -398,7 +398,7 @@
             print*,'image vp bounds:',myrank,iproc,k, &
               num_pixel_recv(k,iproc+1),nb_pixel_per_proc(iproc+1)
             print*,'  i: ',i,NX_IMAGE_color
-            print*,'  j: ',j,NZ_IMAGE_color              
+            print*,'  j: ',j,NZ_IMAGE_color
           endif
 
           image_color_vp_display(i,j) = data_pixel_recv(k)
@@ -432,5 +432,5 @@
   dummy = myrank
   dummy = nproc
 #endif
-    
+
   end subroutine prepare_color_image_vp

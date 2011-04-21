@@ -674,7 +674,7 @@ any given phase if needed (\texttt{tstart},\texttt{tend}), add the right number 
 put one component of the source to zero if needed.
 The ouput files of \texttt{adj\_seismogram.f90} are \texttt{S****.AA.BHX.adj} and \texttt{S****.AA.BHZ.adj}, for P-SV waves (and
 \texttt{S****.AA.BHY.adj}, for SH (membrane) waves). Note that you will need these three
-files (\texttt{S****.AA.BHX.adj}, \texttt{S****.AA.BHY.adj} and \texttt{S****.AA.BHZ.adj}) to be present in the \texttt{OUTPUT\_FILES/} directory
+files (\texttt{S****.AA.BHX.adj}, \texttt{S****.AA.BHY.adj} and \texttt{S****.AA.BHZ.adj}) to be present in the \texttt{SEM/} directory
 together with the \texttt{absorb\_elastic\_****.bin} and \texttt{lastframe\_elastic.bin} files to be read
 when running the adjoint simulation.\\
 
@@ -699,7 +699,7 @@ Please note that
 \item at the moment, adjoint simulations do not support anisotropy, attenuation, and viscous damping.
 
 \item you will need \texttt{S****.AA.BHX.adj}, \texttt{S****.AA.BHY.adj} and \texttt{S****.AA.BHZ.adj}
-to be present in directory \texttt{OUTPUT\_FILES/} even if you are just running an acoustic or
+to be present in directory \texttt{SEM/} even if you are just running an acoustic or
 poroelastic adjoint simulation.\\
 \texttt{S****.AA.BHX.adj} is the only relevant component for an acoustic case.\\
 \texttt{S****.AA.BHX.adj} and \texttt{S****.AA.BHZ.adj} are the only relevant components for a

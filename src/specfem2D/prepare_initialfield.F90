@@ -56,14 +56,14 @@
 #ifdef USE_MPI
   include "mpif.h"
 #endif
-  
+
   integer :: myrank
   logical :: any_acoustic,any_poroelastic
-  
+
   integer :: NSOURCES
   integer, dimension(NSOURCES) :: source_type
   double precision, dimension(NSOURCES) :: angleforce,x_source,z_source,f0
-  
+
   integer :: npoin,numat
   double precision, dimension(4,3,numat) :: poroelastcoef
   double precision, dimension(2,numat) :: density
@@ -74,9 +74,9 @@
   double precision, dimension(2) :: A_plane, B_plane, C_plane
 
   real(kind=CUSTOM_REAL), dimension(3,npoin) :: accel_elastic,veloc_elastic,displ_elastic
-  
+
   logical :: over_critical_angle
-    
+
   ! local parameters
   integer :: numat_local,i
   double precision :: denst,lambdaplus2mu,mu,p
@@ -87,7 +87,7 @@
   integer :: ier
 #endif
   double precision, external :: ricker_Bielak_displ,ricker_Bielak_veloc,ricker_Bielak_accel
-    
+
   ! user output
   if (myrank == 0) then
     write(IOUT,*)
@@ -97,7 +97,7 @@
     write(IOUT,*) 'Implementing an analytical initial plane wave...'
     write(IOUT,*)
   endif
-  
+
   if(any_acoustic .or. any_poroelastic) &
     call exit_MPI('initial field currently implemented for purely elastic simulation only')
 
@@ -133,7 +133,7 @@
       call exit_MPI("incorrect angleforce: must have 0 <= angleforce < 90")
     endif
   endif
-  
+
   ! only implemented for homogeneous media therefore only 1 material supported
   numat_local = numat
   if (numat /= 1) then
@@ -187,7 +187,7 @@
     ! if this coefficient is greater than 1, we are beyond the critical SV wave angle and there cannot be a converted P wave
     if (p*c_refl<=1.d0) then
       angleforce_refl = asin(p*c_refl)
-             
+
       ! from formulas (5.30) and (5.31) p 140 in Aki & Richards (1980)
       SS = (cos(2.d0*angleforce(1))**2/csloc**3 &
           - 4.d0*p**2*cos(angleforce(1))*cos(angleforce_refl)/cploc) / &
@@ -308,9 +308,9 @@
     enddo
 
   endif
-  
-  end subroutine prepare_initialfield  
-  
+
+  end subroutine prepare_initialfield
+
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -319,7 +319,7 @@
                                     numabs,codeabs,ibool,nspec, &
                                     source_type,NSOURCES,c_inc,c_refl, &
                                     count_bottom,count_left,count_right)
-  
+
   implicit none
   include "constants.h"
 
@@ -337,7 +337,7 @@
 
   integer :: NSOURCES
   integer :: source_type(NSOURCES)
-  
+
   double precision :: c_inc,c_refl
 
   integer :: count_bottom,count_left,count_right
@@ -390,6 +390,6 @@
        enddo
     endif
   enddo
-  
+
   end subroutine prepare_initialfield_paco
 

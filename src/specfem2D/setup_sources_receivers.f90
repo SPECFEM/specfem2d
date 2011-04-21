@@ -150,9 +150,9 @@
              Mxx(i_source),Mzz(i_source),Mxz(i_source),xix,xiz,gammax,gammaz,xigll,zigll,nspec)
 
     else if(.not.initialfield) then
-    
+
       call exit_MPI('incorrect source type')
-      
+
     endif
 
   enddo ! do i_source=1,NSOURCES

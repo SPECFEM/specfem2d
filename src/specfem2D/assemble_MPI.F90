@@ -140,8 +140,8 @@
   end do
 
   do num_interface = 1, ninterface
-     
-     ! starts a blocking receive  
+
+     ! starts a blocking receive
      call MPI_recv ( buffer_recv_faces_scalar(1,num_interface), &
           nibool_interfaces_acoustic(num_interface)+nibool_interfaces_elastic(num_interface)+&
           nibool_interfaces_poroelastic(num_interface)+nibool_interfaces_poroelastic(num_interface), &
@@ -236,7 +236,7 @@
   buffer_send_faces_vector_ac(:,:) = 0._CUSTOM_REAL
   buffer_recv_faces_vector_ac(:,:) = 0._CUSTOM_REAL
   tab_requests_send_recv_acoustic(:) = 0
-  
+
   ! loops over acoustic interfaces only
   do iinterface = 1, ninterface_acoustic
 
@@ -280,7 +280,7 @@
 
   end do
 
-  
+
   ! waits for MPI requests to complete (recv)
   ! each wait returns once the specified MPI request completed
   do iinterface = 1, ninterface_acoustic
@@ -291,7 +291,7 @@
   ! assembles the array values
   do iinterface = 1, ninterface_acoustic
 
-    ! gets global interface index 
+    ! gets global interface index
     num_interface = inum_interfaces_acoustic(iinterface)
 
     ! loops over all interface points

@@ -68,7 +68,7 @@
   integer :: i_source
   double precision, dimension(NSOURCES) :: t0_source,hdur
   double precision :: min_tshift_src_original
-  
+
   ! checks the input
   do i_source=1,NSOURCES
 
@@ -100,7 +100,7 @@
     if( abs(f0(i_source)) < TINYVAL ) then
       call exit_MPI('Error source frequency is zero')
     endif
-    
+
     ! half-duration of source
     hdur(i_source) = 1.d0 / f0(i_source)
 
@@ -116,7 +116,7 @@
 
     ! convert angle from degrees to radians
     angleforce(i_source) = angleforce(i_source) * PI / 180.d0
-    
+
   enddo ! do i_source=1,NSOURCES
 
   ! initializes simulation start time
@@ -133,7 +133,7 @@
     min_tshift_src_original = minval( tshift_src(:) )
     tshift_src(:) = t0_source(:) - t0
   endif
-  
+
   ! checks if user set USER_T0 to fix simulation start time
   ! note: USER_T0 has to be positive
   if( USER_T0 > 0.d0 ) then
@@ -147,13 +147,13 @@
       write(IOUT,*) '    using USER_T0 . . . . . . . . . = ',USER_T0
       write(IOUT,*) '      original t0 . . . . . . . . . = ',t0
       write(IOUT,*) '      min_tshift_src_original . . . = ',min_tshift_src_original
-      write(IOUT,*)      
+      write(IOUT,*)
     endif
 
     ! checks if automatically set t0 is too small
     ! note: times in seismograms are shifted by t0(1)
     if( t0 <= USER_T0 + min_tshift_src_original ) then
-        
+
       ! sets new simulation start time such that
       ! simulation starts at t = - t0 = - USER_T0
       t0 = USER_T0
@@ -171,14 +171,14 @@
         else
           tshift_src(i_source) = t0_source(i_source) - 1.20d0 * hdur(i_source)
         endif
-        ! user output  
+        ! user output
         if( myrank == 0 .and. ipass == 1) then
           write(IOUT,*) '    source ',i_source,'uses tshift = ',tshift_src(i_source)
         endif
       enddo
-      ! user output  
+      ! user output
       if( myrank == 0 .and. ipass == 1) then
-        write(IOUT,*) 
+        write(IOUT,*)
       endif
 
     else
@@ -205,17 +205,17 @@
 
     ! loops over sources
     do i_source = 1,NSOURCES
-    
+
       ! excludes Dirac and Heaviside sources
       if(time_function_type(i_source) /= 4 .and. time_function_type(i_source) /= 5) then
-  
+
         ! user output
         if( myrank == 0 .and. ipass == 1 ) then
           write(IOUT,*) '    Onset time. . . . . . = ',t0+tshift_src(i_source)
           write(IOUT,*) '    Fundamental period. . = ',1.d0/f0(i_source)
           write(IOUT,*) '    Fundamental frequency = ',f0(i_source)
         endif
-        
+
         ! checks source onset time
         if( t0+tshift_src(i_source) <= 1.d0/f0(i_source)) then
           call exit_MPI('Onset time too small')
@@ -228,7 +228,7 @@
     enddo
 
   endif
-  
+
 
   ! output formats
 212 format(//,5x,'Source Type. . . . . . . . . . . . . . = Collocated Force',/5x, &

@@ -72,7 +72,7 @@
   do ispec_acoustic_surface = 1, nelem_acoustic_surface
 
     ispec = acoustic_surface(1,ispec_acoustic_surface)
-    
+
     do j = acoustic_surface(4,ispec_acoustic_surface), acoustic_surface(5,ispec_acoustic_surface)
       do i = acoustic_surface(2,ispec_acoustic_surface), acoustic_surface(3,ispec_acoustic_surface)
         iglob = ibool(i,j,ispec)
