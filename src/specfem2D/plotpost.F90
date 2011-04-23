@@ -46,7 +46,7 @@
           xinterp,zinterp,shapeint,Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
           poroelastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,nelem_acoustic_surface, acoustic_edges, &
-          simulation_title,npoin,npgeo,vpmin,vpmax,nrec,NSOURCES, &
+          simulation_title,nglob,npgeo,vpmin,vpmax,nrec,NSOURCES, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
@@ -92,7 +92,7 @@
   double precision, dimension(NUM_COLORS) :: red,green,blue
 
   integer it,nrec,nelemabs,numat,pointsdisp,pointsdisp_loop,nspec
-  integer i,npoin,npgeo,ngnod,NSOURCES
+  integer i,nglob,npgeo,ngnod,NSOURCES
 
   integer kmato(nspec),knods(ngnod,nspec)
   integer ibool(NGLLX,NGLLZ,nspec)
@@ -106,7 +106,7 @@
 
   double precision dt,timeval
   double precision, dimension(NSOURCES) :: x_source,z_source
-  double precision displ(3,npoin),coord(NDIM,npoin)
+  double precision displ(3,nglob),coord(NDIM,nglob)
   double precision vpext(NGLLX,NGLLZ,nspec)
 
   double precision coorg(NDIM,npgeo)
@@ -2872,7 +2872,7 @@ coorg_recv_ps_vector_field
 
   buffer_offset = 0
 
-  do ipoin=1,npoin
+  do ipoin=1,nglob
 
   x1 =(coord(1,ipoin)-xmin)*ratio_page
   z1 =(coord(2,ipoin)-zmin)*ratio_page

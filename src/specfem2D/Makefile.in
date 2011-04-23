@@ -125,6 +125,7 @@ OBJS_SPECFEM2D = \
 	$O/define_shape_functions.o \
 	$O/enforce_acoustic_free_surface.o \
 	$O/exit_mpi.o \
+	$O/get_global.o \
 	$O/get_MPI.o \
 	$O/get_perm_cuthill_mckee.o \
 	$O/get_poroelastic_velocities.o \
@@ -284,6 +285,9 @@ $O/define_shape_functions.o: ${S}/define_shape_functions.f90 ${SETUP}/constants.
 $O/exit_mpi.o: ${S}/exit_mpi.F90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/exit_mpi.o ${S}/exit_mpi.F90
 
+$O/get_global.o: ${S}/get_global.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/get_global.o ${S}/get_global.f90
+
 $O/get_MPI.o: ${S}/get_MPI.F90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/get_MPI.o ${S}/get_MPI.F90
 
@@ -422,7 +426,7 @@ $O/specfem2D.o: ${S}/specfem2D.F90 ${SETUP}/constants.h
 
 ##
 ## shared
-## 
+##
 $O/read_value_parameters.o: ${SHARED}/read_value_parameters.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/read_value_parameters.o ${SHARED}/read_value_parameters.f90
 

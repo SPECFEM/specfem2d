@@ -42,7 +42,7 @@
 !
 !========================================================================
 
-  subroutine plotgll(knods,ibool,coorg,coord,npoin,npgeo,ngnod,nspec)
+  subroutine plotgll(knods,ibool,coorg,coord,nglob,npgeo,ngnod,nspec)
 
 ! output the Gauss-Lobatto-Legendre mesh in a gnuplot file
 
@@ -50,11 +50,11 @@
 
   include "constants.h"
 
-  integer ispec,iy,ix,iglobnum,iglobnum2,ibloc,inode,npoin,npgeo,ngnod,nspec
+  integer ispec,iy,ix,iglobnum,iglobnum2,ibloc,inode,nglob,npgeo,ngnod,nspec
 
   integer knods(ngnod,nspec),ibool(NGLLX,NGLLX,nspec)
 
-  double precision coorg(NDIM,npgeo),coord(NDIM,npoin)
+  double precision coorg(NDIM,npgeo),coord(NDIM,nglob)
 
 ! coordinates of the nodes for Gnuplot file
   integer, parameter :: MAXNGNOD = 9

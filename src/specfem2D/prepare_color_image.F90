@@ -47,7 +47,7 @@
   subroutine prepare_color_image_init(NX_IMAGE_color,NZ_IMAGE_color, &
                             xmin_color_image,xmax_color_image, &
                             zmin_color_image,zmax_color_image, &
-                            coord,npoin,npgeo)
+                            coord,nglob,npgeo)
 
   implicit none
   include "constants.h"
@@ -57,8 +57,8 @@
 
   integer :: NX_IMAGE_color,NZ_IMAGE_color
 
-  integer :: npoin,npgeo
-  double precision, dimension(NDIM,npoin) :: coord
+  integer :: nglob,npgeo
+  double precision, dimension(NDIM,nglob) :: coord
 
   double precision :: xmin_color_image,xmax_color_image, &
     zmin_color_image,zmax_color_image
@@ -123,7 +123,7 @@
   subroutine prepare_color_image_pixels(myrank,NX_IMAGE_color,NZ_IMAGE_color, &
                             xmin_color_image,xmax_color_image, &
                             zmin_color_image,zmax_color_image, &
-                            coord,npoin,coorg,npgeo,nspec,ngnod,knods,ibool, &
+                            coord,nglob,coorg,npgeo,nspec,ngnod,knods,ibool, &
                             nb_pixel_loc,iglob_image_color)
 
   implicit none
@@ -134,8 +134,8 @@
   double precision :: xmin_color_image,xmax_color_image, &
     zmin_color_image,zmax_color_image
 
-  integer :: npoin,nspec,npgeo,ngnod
-  double precision, dimension(NDIM,npoin) :: coord
+  integer :: nglob,nspec,npgeo,ngnod
+  double precision, dimension(NDIM,nglob) :: coord
   double precision, dimension(NDIM,npgeo) :: coorg
 
   integer, dimension(ngnod,nspec) :: knods
@@ -230,7 +230,7 @@
 !
 
 
-  subroutine prepare_color_image_vp(npoin,image_color_vp_display,iglob_image_color, &
+  subroutine prepare_color_image_vp(nglob,image_color_vp_display,iglob_image_color, &
                             NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc, &
                             num_pixel_loc,nspec,poroelastic,ibool,kmato, &
                             numat,density,poroelastcoef,porosity,tortuosity, &
@@ -244,7 +244,7 @@
   include "mpif.h"
 #endif
 
-  integer :: npoin,nspec
+  integer :: nglob,nspec
   integer :: NX_IMAGE_color,NZ_IMAGE_color
   double precision, dimension(NX_IMAGE_color,NZ_IMAGE_color) :: image_color_vp_display
   integer, dimension(NX_IMAGE_color,NZ_IMAGE_color) :: iglob_image_color
@@ -286,7 +286,7 @@
 #endif
 
   ! to display the P-velocity model in background on color images
-  allocate(vp_display(npoin))
+  allocate(vp_display(nglob))
 
   do ispec = 1,nspec
 

@@ -41,7 +41,7 @@
 !
 !========================================================================
 
-  subroutine compute_forces_poro_fluid(npoin,nspec,myrank,nelemabs,numat, &
+  subroutine compute_forces_poro_fluid(nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                source_type,it,NSTEP,anyabs, &
                initialfield,TURN_ATTENUATION_ON,TURN_VISCATTENUATION_ON,deltatcube, &
@@ -69,7 +69,7 @@
   include "constants.h"
   integer :: NSOURCES, i_source
   integer, dimension(NSOURCES) ::ispec_selected_source,source_type,is_proc_source
-  integer :: npoin,nspec,nelemabs,numat,it,NSTEP
+  integer :: nglob,nspec,nelemabs,numat,it,NSTEP
   integer :: nrec,SIMULATION_TYPE,myrank
   integer, dimension(nrec) :: ispec_selected_rec,which_proc_receiver
   integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
@@ -91,9 +91,9 @@
   logical, dimension(nspec) :: poroelastic
   logical, dimension(4,nelemabs)  :: codeabs
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: accelw_poroelastic,velocw_poroelastic,displw_poroelastic,&
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: accelw_poroelastic,velocw_poroelastic,displw_poroelastic,&
                                             displs_poroelastic,velocs_poroelastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) :: b_accelw_poroelastic,b_displw_poroelastic,b_displs_poroelastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: b_accelw_poroelastic,b_displw_poroelastic,b_displs_poroelastic
   double precision, dimension(2,numat) :: density
   double precision, dimension(3,numat) :: permeability
   double precision, dimension(numat) :: porosity,tortuosity
@@ -102,12 +102,12 @@
   real(kind=CUSTOM_REAL), dimension(NSOURCES,NSTEP) :: source_time_function
   real(kind=CUSTOM_REAL), dimension(NSOURCES,NDIM,NGLLX,NGLLZ) :: sourcearray
   real(kind=CUSTOM_REAL), dimension(nrec,NSTEP,3,NGLLX,NGLLZ) :: adj_sourcearrays
-  real(kind=CUSTOM_REAL), dimension(npoin) :: C_k,M_k
+  real(kind=CUSTOM_REAL), dimension(nglob) :: C_k,M_k
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLZ,nspec_left,NSTEP) :: b_absorb_poro_w_left
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLZ,nspec_right,NSTEP) :: b_absorb_poro_w_right
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,nspec_top,NSTEP) :: b_absorb_poro_w_top
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,nspec_bottom,NSTEP) :: b_absorb_poro_w_bottom
-  real(kind=CUSTOM_REAL), dimension(npoin) :: b_viscodampx,b_viscodampz
+  real(kind=CUSTOM_REAL), dimension(nglob) :: b_viscodampx,b_viscodampz
 
   integer :: N_SLS
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e11,e13
@@ -184,7 +184,7 @@
 
 ! compute Grad(displs_poroelastic) at time step n for attenuation
   if(TURN_ATTENUATION_ON) call compute_gradient_attenuation(displs_poroelastic,dux_dxl_n,duz_dxl_n, &
-      dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,poroelastic,hprime_xx,hprime_zz,nspec,npoin)
+      dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,poroelastic,hprime_xx,hprime_zz,nspec,nglob)
 
 ! loop over spectral elements
   do ispec = 1,nspec
@@ -868,7 +868,7 @@
 
 ! compute Grad(displs_poroelastic) at time step n+1 for attenuation
     call compute_gradient_attenuation(displs_poroelastic,dux_dxl_np1,duz_dxl_np1, &
-      dux_dzl_np1,duz_dzl_np1,xix,xiz,gammax,gammaz,ibool,poroelastic,hprime_xx,hprime_zz,nspec,npoin)
+      dux_dzl_np1,duz_dzl_np1,xix,xiz,gammax,gammaz,ibool,poroelastic,hprime_xx,hprime_zz,nspec,nglob)
 
 ! update memory variables with fourth-order Runge-Kutta time scheme for attenuation
 ! loop over spectral elements

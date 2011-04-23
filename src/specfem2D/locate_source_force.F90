@@ -46,7 +46,7 @@
 !---- locate_source_force finds the correct position of the point force source
 !----
 
-  subroutine locate_source_force(ibool,coord,nspec,npoin,xigll,zigll,x_source,z_source, &
+  subroutine locate_source_force(ibool,coord,nspec,nglob,xigll,zigll,x_source,z_source, &
                ispec_selected_source,is_proc_source,nb_proc_source,nproc,myrank, &
                xi_source,gamma_source,coorg,knods,ngnod,npgeo,ipass,iglob_source)
 
@@ -57,7 +57,7 @@
   include "mpif.h"
 #endif
 
-  integer nspec,npoin,ngnod,npgeo,ipass
+  integer nspec,nglob,ngnod,npgeo,ipass
 
   integer knods(ngnod,nspec)
   double precision coorg(NDIM,npgeo)
@@ -65,7 +65,7 @@
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
 
 ! array containing coordinates of the points
-  double precision coord(NDIM,npoin)
+  double precision coord(NDIM,nglob)
 
   integer i,j,ispec,iglob,iter_loop,ix_initial_guess,iz_initial_guess
 

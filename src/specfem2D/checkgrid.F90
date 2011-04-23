@@ -44,7 +44,7 @@
 
   subroutine checkgrid(vpext,vsext,rhoext,density,poroelastcoef, &
                       porosity,tortuosity,permeability,ibool,kmato, &
-                      coord,npoin,vpImin,vpImax,vpIImin,vpIImax, &
+                      coord,nglob,vpImin,vpImax,vpIImin,vpIImax, &
                       assign_external_model,nspec,UPPER_LIMIT_DISPLAY,numat,deltat, &
                       f0,initialfield,time_function_type, &
                       coorg,xinterp,zinterp,shapeint,knods,simulation_title, &
@@ -65,7 +65,7 @@
 ! for instance to analyze Cuthill-McKee mesh partitioning etc.
   integer :: UPPER_LIMIT_DISPLAY
 
-  integer :: npoin,nspec,numat
+  integer :: nglob,nspec,numat
   integer, dimension(nspec) :: kmato
   logical, dimension(nspec) :: poroelastic
   integer, dimension(NGLLX,NGLLX,nspec) :: ibool
@@ -76,7 +76,7 @@
   double precision, dimension(3,numat) :: permeability
   double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext
 
-  double precision coord(NDIM,npoin)
+  double precision coord(NDIM,nglob)
 
   integer :: NSOURCES
   integer, dimension(NSOURCES) :: time_function_type

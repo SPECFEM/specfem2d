@@ -118,3 +118,90 @@
   endif
 
   end subroutine initialize_simulation
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine initialize_simulation_domains(any_acoustic,any_elastic,any_poroelastic, &
+                                anisotropic,elastic,poroelastic,porosity,anisotropy,kmato,numat, &
+                                nspec,nspec_allocate,p_sv,TURN_ATTENUATION_ON)
+
+  implicit none
+  include "constants.h"
+
+  integer :: nspec,nspec_allocate
+
+  logical, dimension(nspec) :: anisotropic
+  logical, dimension(nspec) :: elastic
+  logical, dimension(nspec) :: poroelastic
+
+  integer :: numat
+  double precision, dimension(numat) :: porosity
+  double precision, dimension(6,numat) :: anisotropy
+  integer, dimension(nspec) :: kmato
+
+  logical :: any_acoustic,any_elastic,any_poroelastic
+  logical :: p_sv,TURN_ATTENUATION_ON
+
+  ! local parameters
+  integer :: ispec
+
+  ! initializes
+  any_acoustic = .false.
+  any_elastic = .false.
+  any_poroelastic = .false.
+
+  anisotropic(:) = .false.
+  elastic(:) = .false.
+  poroelastic(:) = .false.
+
+  ! loops over all elements
+  do ispec = 1,nspec
+
+    if( nint(porosity(kmato(ispec))) == 1 ) then
+      ! acoustic domain
+      elastic(ispec) = .false.
+      poroelastic(ispec) = .false.
+      any_acoustic = .true.
+    elseif( porosity(kmato(ispec)) < TINYVAL) then
+      ! elastic domain
+      elastic(ispec) = .true.
+      poroelastic(ispec) = .false.
+      any_elastic = .true.
+      if(any(anisotropy(:,kmato(ispec)) /= 0)) then
+         anisotropic(ispec) = .true.
+      end if
+    else
+      ! poroelastic domain
+      elastic(ispec) = .false.
+      poroelastic(ispec) = .true.
+      any_poroelastic = .true.
+    endif
+
+  enddo !do ispec = 1,nspec
+
+
+  if(.not. p_sv .and. .not. any_elastic) then
+    print*, '*************** WARNING ***************'
+    print*, 'Surface (membrane) waves calculation needs an elastic medium'
+    print*, '*************** WARNING ***************'
+    stop
+  endif
+  if(.not. p_sv .and. (TURN_ATTENUATION_ON)) then
+    print*, '*************** WARNING ***************'
+    print*, 'Attenuation and anisotropy are not implemented for surface (membrane) waves calculation'
+    print*, '*************** WARNING ***************'
+    stop
+  endif
+
+
+  if(TURN_ATTENUATION_ON) then
+    nspec_allocate = nspec
+  else
+    nspec_allocate = 1
+  endif
+
+  end subroutine initialize_simulation_domains

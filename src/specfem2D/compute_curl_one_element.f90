@@ -44,7 +44,7 @@
   subroutine compute_curl_one_element(curl_element,displ_elastic, &
                               displs_poroelastic,elastic,poroelastic, &
                               xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                              nspec,npoin_elastic,npoin_poroelastic,ispec)
+                              nspec,nglob_elastic,nglob_poroelastic,ispec)
 
   ! compute curl in (poro)elastic elements (for rotational study)
 
@@ -63,10 +63,10 @@
 
   logical, dimension(nspec) :: elastic,poroelastic
 
-  integer :: npoin_elastic
-  real(kind=CUSTOM_REAL), dimension(3,npoin_elastic) :: displ_elastic
-  integer :: npoin_poroelastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin_poroelastic) :: displs_poroelastic
+  integer :: nglob_elastic
+  real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: displ_elastic
+  integer :: nglob_poroelastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: displs_poroelastic
 
   ! array with derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx

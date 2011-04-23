@@ -47,7 +47,7 @@
                             displw_poroelastic,velocw_poroelastic, &
                             xix,xiz,gammax,gammaz,jacobian,ibool, &
                             elastic,poroelastic,hprime_xx,hprime_zz, &
-                            nspec,npoin_acoustic,npoin_elastic,npoin_poroelastic, &
+                            nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                             assign_external_model,it,deltat,t0,kmato,poroelastcoef,density, &
                             porosity,tortuosity, &
                             vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext, &
@@ -74,8 +74,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11
   double precision, dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
 
-  integer :: npoin_acoustic
-  real(kind=CUSTOM_REAL), dimension(npoin_acoustic) :: &
+  integer :: nglob_acoustic
+  real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: &
     potential_dot_acoustic,potential_dot_dot_acoustic
 
   logical :: TURN_ATTENUATION_ON,p_sv
@@ -98,12 +98,12 @@
   double precision, dimension(NGLLX,NGLLZ,nspec) ::  c11ext,c15ext,c13ext, &
     c33ext,c35ext,c55ext
 
-  integer :: npoin_elastic
-  real(kind=CUSTOM_REAL), dimension(3,npoin_elastic) :: displ_elastic,veloc_elastic
+  integer :: nglob_elastic
+  real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: displ_elastic,veloc_elastic
 
-  integer :: npoin_poroelastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin_poroelastic) :: displs_poroelastic,velocs_poroelastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin_poroelastic) :: displw_poroelastic,velocw_poroelastic
+  integer :: nglob_poroelastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: displs_poroelastic,velocs_poroelastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: displw_poroelastic,velocw_poroelastic
 
 ! Gauss-Lobatto-Legendre points and weights
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
@@ -347,7 +347,7 @@
       call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic, &
                   displs_poroelastic,displw_poroelastic,elastic,poroelastic, &
                   xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
-                  npoin_acoustic,npoin_elastic,npoin_poroelastic,assign_external_model, &
+                  nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
                   numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
                   c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,ispec,e1,e11, &
                   TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
@@ -357,7 +357,7 @@
                   veloc_elastic,velocs_poroelastic, &
                   elastic,poroelastic,xix,xiz,gammax,gammaz, &
                   ibool,hprime_xx,hprime_zz, &
-                  nspec,npoin_acoustic,npoin_elastic,npoin_poroelastic, &
+                  nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                   ispec,numat,kmato,density,rhoext,assign_external_model)
 
       ! get density of current spectral element

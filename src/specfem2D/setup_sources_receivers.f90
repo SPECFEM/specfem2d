@@ -44,7 +44,7 @@
 !========================================================================
 
   subroutine setup_sources_receivers(NSOURCES,initialfield,source_type,&
-     coord,ibool,npoin,nspec,nelem_acoustic_surface,acoustic_surface,elastic,poroelastic, &
+     coord,ibool,nglob,nspec,nelem_acoustic_surface,acoustic_surface,elastic,poroelastic, &
      x_source,z_source,ispec_selected_source,ispec_selected_rec, &
      is_proc_source,nb_proc_source,ipass,&
      sourcearray,Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,npgeo,&
@@ -59,7 +59,7 @@
   logical :: initialfield
   integer :: NSOURCES
   integer :: npgeo,ngnod,myrank,ipass,nproc
-  integer :: npoin,nspec,nelem_acoustic_surface
+  integer :: nglob,nspec,nelem_acoustic_surface
 
   ! Gauss-Lobatto-Legendre points
   double precision, dimension(NGLLX) :: xigll
@@ -88,7 +88,7 @@
   integer, dimension(NGLLX,NGLLZ,nspec)  :: ibool
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec)  :: xix,xiz,gammax,gammaz
   double precision, dimension(NDIM,npgeo) :: coorg
-  double precision, dimension(NDIM,npoin) :: coord
+  double precision, dimension(NDIM,nglob) :: coord
 
   integer  :: ixmin, ixmax, izmin, izmax
 
@@ -100,7 +100,7 @@
     if(source_type(i_source) == 1) then
 
       ! collocated force source
-      call locate_source_force(ibool,coord,nspec,npoin,xigll,zigll,x_source(i_source),z_source(i_source), &
+      call locate_source_force(ibool,coord,nspec,nglob,xigll,zigll,x_source(i_source),z_source(i_source), &
           ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source),&
           nproc,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo,ipass,&
           iglob_source(i_source))
@@ -140,7 +140,7 @@
 
     else if(source_type(i_source) == 2) then
       ! moment-tensor source
-      call locate_source_moment_tensor(ibool,coord,nspec,npoin,xigll,zigll,x_source(i_source),z_source(i_source), &
+      call locate_source_moment_tensor(ibool,coord,nspec,nglob,xigll,zigll,x_source(i_source),z_source(i_source), &
              ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source),&
              nproc,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo,ipass)
 
@@ -158,7 +158,7 @@
   enddo ! do i_source=1,NSOURCES
 
   ! locate receivers in the mesh
-  call locate_receivers(ibool,coord,nspec,npoin,xigll,zigll, &
+  call locate_receivers(ibool,coord,nspec,nglob,xigll,zigll, &
                       nrec,nrecloc,recloc,which_proc_receiver,nproc,myrank, &
                       st_xval,st_zval,ispec_selected_rec, &
                       xi_receiver,gamma_receiver,station_name,network_name, &

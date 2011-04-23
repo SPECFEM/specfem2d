@@ -46,7 +46,7 @@
 
   subroutine prepare_initialfield(myrank,any_acoustic,any_poroelastic,over_critical_angle, &
                         NSOURCES,source_type,angleforce,x_source,z_source,f0, &
-                        npoin,numat,poroelastcoef,density,coord, &
+                        nglob,numat,poroelastcoef,density,coord, &
                         angleforce_refl,c_inc,c_refl,cploc,csloc,time_offset, &
                         A_plane, B_plane, C_plane, &
                         accel_elastic,veloc_elastic,displ_elastic)
@@ -64,16 +64,16 @@
   integer, dimension(NSOURCES) :: source_type
   double precision, dimension(NSOURCES) :: angleforce,x_source,z_source,f0
 
-  integer :: npoin,numat
+  integer :: nglob,numat
   double precision, dimension(4,3,numat) :: poroelastcoef
   double precision, dimension(2,numat) :: density
-  double precision, dimension(NDIM,npoin) :: coord
+  double precision, dimension(NDIM,nglob) :: coord
 
   double precision :: angleforce_refl,c_inc,c_refl,cploc,csloc
   double precision :: time_offset,x0_source,z0_source
   double precision, dimension(2) :: A_plane, B_plane, C_plane
 
-  real(kind=CUSTOM_REAL), dimension(3,npoin) :: accel_elastic,veloc_elastic,displ_elastic
+  real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic,veloc_elastic,displ_elastic
 
   logical :: over_critical_angle
 
@@ -108,7 +108,7 @@
   !=======================================================================
 
   if (myrank == 0) then
-    write(IOUT,*) 'Number of grid points: ',npoin
+    write(IOUT,*) 'Number of grid points: ',nglob
     write(IOUT,*)
     write(IOUT,*) '*** calculation of the initial plane wave ***'
     write(IOUT,*)
@@ -264,7 +264,7 @@
 
   if (.not. over_critical_angle) then
 
-    do i = 1,npoin
+    do i = 1,nglob
 
       x = coord(1,i)
       z = coord(2,i)

@@ -45,7 +45,7 @@
 
 
   subroutine read_external_model(any_acoustic,any_elastic,any_poroelastic, &
-                elastic,poroelastic,anisotropic,nspec,npoin,N_SLS,ibool, &
+                elastic,poroelastic,anisotropic,nspec,nglob,N_SLS,ibool, &
                 f0_attenuation,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
                 inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent, &
                 inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,&
@@ -56,12 +56,12 @@
   implicit none
   include "constants.h"
 
-  integer :: nspec,myrank,npoin
+  integer :: nspec,myrank,nglob
   double precision  :: f0_attenuation
 
   ! Mesh
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
-  double precision, dimension(NDIM,npoin) :: coord
+  double precision, dimension(NDIM,nglob) :: coord
 
   ! Material properties
   logical :: any_acoustic,any_elastic,any_poroelastic,READ_EXTERNAL_SEP_FILE
