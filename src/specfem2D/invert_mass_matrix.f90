@@ -44,10 +44,10 @@
 !========================================================================
 
   subroutine invert_mass_matrix_init(any_elastic,any_acoustic,any_poroelastic, &
-                                rmass_inverse_elastic,npoin_elastic, &
-                                rmass_inverse_acoustic,npoin_acoustic, &
+                                rmass_inverse_elastic,nglob_elastic, &
+                                rmass_inverse_acoustic,nglob_acoustic, &
                                 rmass_s_inverse_poroelastic, &
-                                rmass_w_inverse_poroelastic,npoin_poroelastic, &
+                                rmass_w_inverse_poroelastic,nglob_poroelastic, &
                                 nspec,ibool,kmato,wxgll,wzgll,jacobian, &
                                 elastic,poroelastic, &
                                 assign_external_model,numat, &
@@ -62,14 +62,14 @@
   logical any_elastic,any_acoustic,any_poroelastic
 
   ! inverse mass matrices
-  integer :: npoin_elastic
-  real(kind=CUSTOM_REAL), dimension(npoin_elastic) :: rmass_inverse_elastic
+  integer :: nglob_elastic
+  real(kind=CUSTOM_REAL), dimension(nglob_elastic) :: rmass_inverse_elastic
 
-  integer :: npoin_acoustic
-  real(kind=CUSTOM_REAL), dimension(npoin_acoustic) :: rmass_inverse_acoustic
+  integer :: nglob_acoustic
+  real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: rmass_inverse_acoustic
 
-  integer :: npoin_poroelastic
-  real(kind=CUSTOM_REAL), dimension(npoin_poroelastic) :: &
+  integer :: nglob_poroelastic
+  real(kind=CUSTOM_REAL), dimension(nglob_poroelastic) :: &
     rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic
 
   integer :: nspec
@@ -159,10 +159,10 @@
 !
 
   subroutine invert_mass_matrix(any_elastic,any_acoustic,any_poroelastic, &
-                                rmass_inverse_elastic,npoin_elastic, &
-                                rmass_inverse_acoustic,npoin_acoustic, &
+                                rmass_inverse_elastic,nglob_elastic, &
+                                rmass_inverse_acoustic,nglob_acoustic, &
                                 rmass_s_inverse_poroelastic, &
-                                rmass_w_inverse_poroelastic,npoin_poroelastic)
+                                rmass_w_inverse_poroelastic,nglob_poroelastic)
 
 ! inverts the global mass matrix
 
@@ -172,14 +172,14 @@
   logical any_elastic,any_acoustic,any_poroelastic
 
 ! inverse mass matrices
-  integer :: npoin_elastic
-  real(kind=CUSTOM_REAL), dimension(npoin_elastic) :: rmass_inverse_elastic
+  integer :: nglob_elastic
+  real(kind=CUSTOM_REAL), dimension(nglob_elastic) :: rmass_inverse_elastic
 
-  integer :: npoin_acoustic
-  real(kind=CUSTOM_REAL), dimension(npoin_acoustic) :: rmass_inverse_acoustic
+  integer :: nglob_acoustic
+  real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: rmass_inverse_acoustic
 
-  integer :: npoin_poroelastic
-  real(kind=CUSTOM_REAL), dimension(npoin_poroelastic) :: &
+  integer :: nglob_poroelastic
+  real(kind=CUSTOM_REAL), dimension(nglob_poroelastic) :: &
     rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic
 
 

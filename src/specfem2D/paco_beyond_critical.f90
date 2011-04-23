@@ -14,7 +14,7 @@
 ! modified by Dimitri Komatitsch and Ronan Madec in March 2008
 ! in particular, converted to Fortran90 and to double precision
 
-subroutine paco_beyond_critical(coord,npoin,deltat,NSTEP_global,angleforce,&
+subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,angleforce,&
      f0,cp_local,cs_local,INCLUDE_ATTENUATION,QD,source_type,v0x_left,v0z_left,v0x_right,v0z_right,&
      v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot,left_bound,right_bound,&
      bot_bound,nleft,nright,nbot,displ_elastic,veloc_elastic,accel_elastic)
@@ -25,7 +25,7 @@ subroutine paco_beyond_critical(coord,npoin,deltat,NSTEP_global,angleforce,&
 
   double precision :: f0,cp_local,cs_local,deltat,dt,TP,angleforce,QD,delta_in_period
   logical :: INCLUDE_ATTENUATION
-  integer :: npt,NSTEP_global,source_type,nleft,nright,nbot,npoin
+  integer :: npt,NSTEP_global,source_type,nleft,nright,nbot,nglob
 
   integer, dimension(nleft) :: left_bound
   integer, dimension(nright) :: right_bound
@@ -35,10 +35,10 @@ subroutine paco_beyond_critical(coord,npoin,deltat,NSTEP_global,angleforce,&
   double precision, dimension(nright,NSTEP_global) :: v0x_right,v0z_right, t0x_right,t0z_right
   double precision, dimension(nbot,NSTEP_global) :: v0x_bot,v0z_bot, t0x_bot,t0z_bot
 
-  double precision, dimension(2,npoin) :: coord
-  double precision, dimension(2,npoin) :: displ_elastic
-  double precision, dimension(2,npoin) :: veloc_elastic
-  double precision, dimension(2,npoin) :: accel_elastic
+  double precision, dimension(2,nglob) :: coord
+  double precision, dimension(2,nglob) :: displ_elastic
+  double precision, dimension(2,nglob) :: veloc_elastic
+  double precision, dimension(2,nglob) :: accel_elastic
 
   integer, dimension(:),allocatable :: local_pt
 
@@ -139,7 +139,7 @@ subroutine paco_beyond_critical(coord,npoin,deltat,NSTEP_global,angleforce,&
 
      if (FLAG==0) then
         print *, "calcul of the initial field for every point of the mesh"
-        npt=npoin
+        npt=nglob
         allocate(local_pt(npt))
         do inode=1,npt
            local_pt(inode)=inode

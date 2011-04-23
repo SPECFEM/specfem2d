@@ -44,7 +44,7 @@
 
 ! compute analytical initial plane wave for Bielak's conditions
 
-subroutine compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+subroutine compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
      x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
      c_inc, c_refl, time_offset,f0)
 
@@ -52,13 +52,13 @@ subroutine compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,
 
   include "constants.h"
 
-  integer, intent(in) :: iglob,npoin,it
+  integer, intent(in) :: iglob,nglob,it
 
   double precision, intent(in) :: deltat
 
   double precision, intent(out) :: dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert
 
-  double precision, dimension(NDIM,npoin), intent(in) :: coord
+  double precision, dimension(NDIM,nglob), intent(in) :: coord
 
   double precision :: time_veloc,time_traction,t,x,z
 

@@ -42,7 +42,7 @@
 !
 !========================================================================
 
-  subroutine compute_forces_acoustic(npoin,nspec,nelemabs,numat,it,NSTEP, &
+  subroutine compute_forces_acoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
                anyabs,assign_external_model,ibool,kmato,numabs, &
                elastic,poroelastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
                potential_acoustic,b_potential_dot_dot_acoustic,b_potential_acoustic, &
@@ -61,7 +61,7 @@
 
   include "constants.h"
 
-  integer :: npoin,nspec,nelemabs,numat,it,NSTEP,SIMULATION_TYPE
+  integer :: nglob,nspec,nelemabs,numat,it,NSTEP,SIMULATION_TYPE
 
   integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
   integer, dimension(nelemabs) :: ib_left
@@ -80,9 +80,9 @@
   logical, dimension(nspec) :: elastic,poroelastic
   logical, dimension(4,nelemabs)  :: codeabs
 
-  real(kind=CUSTOM_REAL), dimension(npoin) :: &
+  real(kind=CUSTOM_REAL), dimension(nglob) :: &
     potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
-  real(kind=CUSTOM_REAL), dimension(npoin) :: &
+  real(kind=CUSTOM_REAL), dimension(nglob) :: &
     b_potential_dot_dot_acoustic,b_potential_acoustic
   double precision, dimension(2,numat) :: density
   double precision, dimension(4,3,numat) :: poroelastcoef
@@ -432,7 +432,7 @@
 !
 
 
-  subroutine compute_forces_acoustic_2(npoin,nspec,nelemabs,numat,it,NSTEP, &
+  subroutine compute_forces_acoustic_2(nglob,nspec,nelemabs,numat,it,NSTEP, &
                anyabs,assign_external_model,ibool,kmato,numabs, &
                elastic,poroelastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
                potential_acoustic, &
@@ -452,7 +452,7 @@
 
   include "constants.h"
 
-  integer :: npoin,nspec,nelemabs,numat,it,NSTEP,SIMULATION_TYPE
+  integer :: nglob,nspec,nelemabs,numat,it,NSTEP,SIMULATION_TYPE
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
   integer, dimension(nspec) :: kmato
@@ -462,7 +462,7 @@
   logical, dimension(nspec) :: elastic,poroelastic
   logical, dimension(4,nelemabs)  :: codeabs
 
-  real(kind=CUSTOM_REAL), dimension(npoin) :: &
+  real(kind=CUSTOM_REAL), dimension(nglob) :: &
     potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
 
   double precision, dimension(2,numat) :: density

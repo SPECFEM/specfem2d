@@ -44,7 +44,7 @@
 
   subroutine enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
                                           potential_acoustic,acoustic_surface, &
-                                          ibool,nelem_acoustic_surface,npoin,nspec)
+                                          ibool,nelem_acoustic_surface,nglob,nspec)
 
 ! free surface for an acoustic medium
 ! if acoustic, the free surface condition is a Dirichlet condition for the potential,
@@ -54,13 +54,13 @@
 
   include "constants.h"
 
-  integer :: nelem_acoustic_surface,npoin,nspec
+  integer :: nelem_acoustic_surface,nglob,nspec
 
   integer, dimension(5,nelem_acoustic_surface) :: acoustic_surface
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
 
-  real(kind=CUSTOM_REAL), dimension(npoin) :: &
+  real(kind=CUSTOM_REAL), dimension(nglob) :: &
     potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
 
 !---

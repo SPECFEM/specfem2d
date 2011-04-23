@@ -45,7 +45,7 @@
   subroutine compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,&
                   displs_poroelastic,displw_poroelastic,elastic,poroelastic,vector_field_display, &
                   xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
-                  npoin,npoin_acoustic,npoin_elastic,npoin_poroelastic,assign_external_model, &
+                  nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
                   numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
                   c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,e1,e11, &
                   TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
@@ -56,7 +56,7 @@
 
   include "constants.h"
 
-  integer :: nspec,npoin,numat
+  integer :: nspec,nglob,numat
 
 
   integer, dimension(nspec) :: kmato
@@ -72,14 +72,14 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
 
   logical, dimension(nspec) :: elastic,poroelastic,anisotropic
-  integer :: npoin_acoustic
-  real(kind=CUSTOM_REAL), dimension(npoin_acoustic) :: potential_dot_dot_acoustic
-  integer :: npoin_elastic
-  real(kind=CUSTOM_REAL), dimension(3,npoin_elastic) :: displ_elastic
-  integer :: npoin_poroelastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin_poroelastic) :: displs_poroelastic,displw_poroelastic
+  integer :: nglob_acoustic
+  real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: potential_dot_dot_acoustic
+  integer :: nglob_elastic
+  real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: displ_elastic
+  integer :: nglob_poroelastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: displs_poroelastic,displw_poroelastic
 
-  double precision, dimension(3,npoin) :: vector_field_display
+  double precision, dimension(3,nglob) :: vector_field_display
 
 ! array with derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
@@ -104,7 +104,7 @@
     call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,&
          displs_poroelastic,displw_poroelastic,elastic,poroelastic,&
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
-         npoin_acoustic,npoin_elastic,npoin_poroelastic,assign_external_model, &
+         nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
          numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,ispec,e1,e11, &
          TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
@@ -128,7 +128,7 @@
   subroutine compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,&
          displs_poroelastic,displw_poroelastic,elastic,poroelastic,&
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
-         npoin_acoustic,npoin_elastic,npoin_poroelastic,assign_external_model, &
+         nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
          numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,ispec,e1,e11, &
          TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
@@ -157,12 +157,12 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: pressure_element
 
   logical, dimension(nspec) :: elastic,poroelastic,anisotropic
-  integer :: npoin_acoustic
-  real(kind=CUSTOM_REAL), dimension(npoin_acoustic) :: potential_dot_dot_acoustic
-  integer :: npoin_elastic
-  real(kind=CUSTOM_REAL), dimension(3,npoin_elastic) :: displ_elastic
-  integer :: npoin_poroelastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin_poroelastic) :: displs_poroelastic,displw_poroelastic
+  integer :: nglob_acoustic
+  real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: potential_dot_dot_acoustic
+  integer :: nglob_elastic
+  real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: displ_elastic
+  integer :: nglob_poroelastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: displs_poroelastic,displw_poroelastic
 
 ! array with derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx

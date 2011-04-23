@@ -43,7 +43,7 @@
 !========================================================================
 
   subroutine compute_gradient_attenuation(displ_elastic,dux_dxl,duz_dxl,dux_dzl,duz_dzl, &
-         xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,npoin)
+         xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob)
 
 ! compute Grad(displ_elastic) for attenuation
 
@@ -51,7 +51,7 @@
 
   include "constants.h"
 
-  integer :: nspec,npoin
+  integer :: nspec,nglob
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
 
@@ -60,7 +60,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec)  :: xix,xiz,gammax,gammaz
 
-  real(kind=CUSTOM_REAL), dimension(3,npoin) :: displ_elastic
+  real(kind=CUSTOM_REAL), dimension(3,nglob) :: displ_elastic
 
 ! array with derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx

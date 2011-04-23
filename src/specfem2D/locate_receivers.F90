@@ -46,7 +46,7 @@
 !---- locate_receivers finds the correct position of the receivers
 !----
 
-  subroutine locate_receivers(ibool,coord,nspec,npoin,xigll,zigll, &
+  subroutine locate_receivers(ibool,coord,nspec,nglob,xigll,zigll, &
                           nrec,nrecloc,recloc,which_proc_receiver,nproc,myrank, &
                           st_xval,st_zval,ispec_selected_rec, &
                           xi_receiver,gamma_receiver,station_name,network_name, &
@@ -61,7 +61,7 @@
   include "mpif.h"
 #endif
 
-  integer nrec,nspec,npoin,ngnod,npgeo,ipass
+  integer nrec,nspec,nglob,ngnod,npgeo,ipass
   integer, intent(in)  :: nproc, myrank
 
   integer knods(ngnod,nspec)
@@ -70,7 +70,7 @@
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
 
 ! array containing coordinates of the points
-  double precision coord(NDIM,npoin)
+  double precision coord(NDIM,nglob)
 
   integer irec,i,j,ispec,iglob,iter_loop,ix_initial_guess,iz_initial_guess
 

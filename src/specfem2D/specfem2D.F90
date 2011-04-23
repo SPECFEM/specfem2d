@@ -365,10 +365,10 @@
 ! curl in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: curl_element
 
-  integer :: i,j,k,it,irec,id,n,ispec,npoin,npgeo,iglob
-  integer :: npoin_acoustic
-  integer :: npoin_elastic
-  integer :: npoin_poroelastic
+  integer :: i,j,k,it,irec,id,n,ispec,nglob,npgeo,iglob
+  integer :: nglob_acoustic
+  integer :: nglob_elastic
+  integer :: nglob_poroelastic
   logical :: anyabs
   double precision :: dxd,dyd,dzd,dcurld,valux,valuy,valuz,valcurl,hlagrange,rhol,xi,gamma,x,z
 
@@ -679,11 +679,6 @@
   integer  :: nrecloc, irecloc
   integer, dimension(:), allocatable :: recloc, which_proc_receiver
 
-! mask to sort ibool
-  integer, dimension(:), allocatable :: mask_ibool
-  integer, dimension(:,:,:), allocatable :: copy_ibool_ori
-  integer :: inumber
-
 ! to compute analytical initial plane wave field
   double precision :: angleforce_refl, c_inc, c_refl, cploc, csloc
   double precision, dimension(2) :: A_plane, B_plane, C_plane
@@ -699,7 +694,7 @@
 
 ! further reduce cache misses inner/outer in two passes in the case of an MPI simulation
   integer :: ipass,ispec_inner,ispec_outer,NUMBER_OF_PASSES
-  integer :: npoin_outer,npoin_inner
+  integer :: nglob_outer,nglob_inner
   integer, dimension(:), allocatable :: perm,antecedent_list,check_perm
 
 ! arrays for plotpost
@@ -933,62 +928,11 @@
 !-------------------------------------------------------------------------------
 !----  determine if each spectral element is elastic, poroelastic, or acoustic
 !-------------------------------------------------------------------------------
-  ! initializes
-  any_acoustic = .false.
-  any_elastic = .false.
-  any_poroelastic = .false.
+  call initialize_simulation_domains(any_acoustic,any_elastic,any_poroelastic, &
+                                anisotropic,elastic,poroelastic,porosity,anisotropy,kmato,numat, &
+                                nspec,nspec_allocate,p_sv,TURN_ATTENUATION_ON)
 
-  anisotropic(:) = .false.
-  elastic(:) = .false.
-  poroelastic(:) = .false.
-
-  ! loops over all elements
-  do ispec = 1,nspec
-
-    if( nint(porosity(kmato(ispec))) == 1 ) then
-      ! acoustic domain
-      elastic(ispec) = .false.
-      poroelastic(ispec) = .false.
-      any_acoustic = .true.
-    elseif( porosity(kmato(ispec)) < TINYVAL) then
-      ! elastic domain
-      elastic(ispec) = .true.
-      poroelastic(ispec) = .false.
-      any_elastic = .true.
-      if(any(anisotropy(:,kmato(ispec)) /= 0)) then
-         anisotropic(ispec) = .true.
-      end if
-    else
-      ! poroelastic domain
-      elastic(ispec) = .false.
-      poroelastic(ispec) = .true.
-      any_poroelastic = .true.
-    endif
-
-  enddo !do ispec = 1,nspec
-
-
-  if(.not. p_sv .and. .not. any_elastic) then
-    print*, '*************** WARNING ***************'
-    print*, 'Surface (membrane) waves calculation needs an elastic medium'
-    print*, '*************** WARNING ***************'
-    stop
-  endif
-  if(.not. p_sv .and. (TURN_ATTENUATION_ON)) then
-    print*, '*************** WARNING ***************'
-    print*, 'Attenuation and anisotropy are not implemented for surface (membrane) waves calculation'
-    print*, '*************** WARNING ***************'
-    stop
-  endif
-
-
-  if(TURN_ATTENUATION_ON) then
-    nspec_allocate = nspec
-  else
-    nspec_allocate = 1
-  endif
-
-! allocate memory variables for attenuation
+  ! allocate memory variables for attenuation
   if(ipass == 1) then
     allocate(e1(NGLLX,NGLLZ,nspec_allocate,N_SLS))
     allocate(e11(NGLLX,NGLLZ,nspec_allocate,N_SLS))
@@ -1317,18 +1261,15 @@
 
 ! "slow and clean" or "quick and dirty" version
   if(FAST_NUMBERING) then
-    call createnum_fast(knods,ibool,shape2D,coorg,npoin,npgeo,nspec,ngnod,myrank,ipass)
+    call createnum_fast(knods,ibool,shape2D,coorg,nglob,npgeo,nspec,ngnod,myrank,ipass)
   else
-    call createnum_slow(knods,ibool,npoin,nspec,ngnod,myrank,ipass)
+    call createnum_slow(knods,ibool,nglob,nspec,ngnod,myrank,ipass)
   endif
 
 ! create a new indirect addressing array to reduce cache misses in memory access in the solver
   if(ipass == 2) then
 
     deallocate(perm)
-
-    allocate(copy_ibool_ori(NGLLX,NGLLZ,nspec))
-    allocate(mask_ibool(npoin))
 
     print *
     print *,'Xmin,Xmax of the whole mesh = ',minval(coord(1,:)),maxval(coord(1,:))
@@ -1468,73 +1409,8 @@
 
 !! DK DK Feb 2010 end of periodic conditions: detect common points between left and right edges
 
-    mask_ibool(:) = -1
-    copy_ibool_ori(:,:,:) = ibool(:,:,:)
-
-    inumber = 0
-
-    if(.not. ACTUALLY_IMPLEMENT_PERM_WHOLE) then
-
-! first reduce cache misses in outer elements, since they are taken first
-! loop over spectral elements
-      do ispec = 1,nspec_outer
-        do j=1,NGLLZ
-          do i=1,NGLLX
-            if(mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
-              ! create a new point
-              inumber = inumber + 1
-              ibool(i,j,ispec) = inumber
-              mask_ibool(copy_ibool_ori(i,j,ispec)) = inumber
-            else
-              ! use an existing point created previously
-              ibool(i,j,ispec) = mask_ibool(copy_ibool_ori(i,j,ispec))
-            endif
-          enddo
-        enddo
-      enddo
-
-! then reduce cache misses in inner elements, since they are taken second
-! loop over spectral elements
-      do ispec = nspec_outer+1,nspec
-        do j=1,NGLLZ
-          do i=1,NGLLX
-            if(mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
-              ! create a new point
-              inumber = inumber + 1
-              ibool(i,j,ispec) = inumber
-              mask_ibool(copy_ibool_ori(i,j,ispec)) = inumber
-            else
-              ! use an existing point created previously
-              ibool(i,j,ispec) = mask_ibool(copy_ibool_ori(i,j,ispec))
-            endif
-          enddo
-        enddo
-      enddo
-
-    else ! if ACTUALLY_IMPLEMENT_PERM_WHOLE
-
-! reduce cache misses in all the elements
-! loop over spectral elements
-      do ispec = 1,nspec
-        do j=1,NGLLZ
-          do i=1,NGLLX
-            if(mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
-              ! create a new point
-              inumber = inumber + 1
-              ibool(i,j,ispec) = inumber
-              mask_ibool(copy_ibool_ori(i,j,ispec)) = inumber
-            else
-              ! use an existing point created previously
-              ibool(i,j,ispec) = mask_ibool(copy_ibool_ori(i,j,ispec))
-            endif
-          enddo
-        enddo
-      enddo
-
-    endif
-
-    deallocate(copy_ibool_ori)
-    deallocate(mask_ibool)
+    ! reduces cache misses
+    call get_global(nspec_outer,nspec,nglob,ibool)
 
   else if(ipass /= 1) then
 
@@ -1611,10 +1487,10 @@
     allocate(hgammas_store(NSOURCES,NGLLZ))
 
 ! allocate other global arrays
-    allocate(coord(NDIM,npoin))
+    allocate(coord(NDIM,nglob))
 
 ! to display acoustic elements
-    allocate(vector_field_display(3,npoin))
+    allocate(vector_field_display(3,nglob))
 
 !    if(assign_external_model) then
 
@@ -1708,11 +1584,11 @@
 !!$!xix(NGLLX,NGLLZ,nspec),xiz,gammax,gammaz,jacobian
 !!$!recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl,jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo, &
 !!$!          .true.)
-!!$  allocate(weight_line_x(npoin))
-!!$  allocate(weight_line_z(npoin))
-!!$  allocate(weight_surface(npoin))
-!!$  allocate(weight_jacobian(npoin))
-!!$  allocate(weight_gll(npoin))
+!!$  allocate(weight_line_x(nglob))
+!!$  allocate(weight_line_z(nglob))
+!!$  allocate(weight_surface(nglob))
+!!$  allocate(weight_jacobian(nglob))
+!!$  allocate(weight_gll(nglob))
 !!$  weight_line_x=0.0
 !!$  weight_line_z=0.0
 !!$  weight_surface=0.0
@@ -1739,7 +1615,7 @@
 !!$  enddo
 !!$  if( myrank == 0 ) then
 !!$    open(unit=55,file='OUTPUT_FILES/x_z_weightLineX_weightLineZ_weightSurface',status='unknown')
-!!$    do n = 1,npoin
+!!$    do n = 1,nglob
 !!$      write(55,*) coord(1,n), coord(2,n), weight_line_x(n), weight_line_z(n), weight_surface(n),weight_jacobian(n),weight_gll(n)
 !!$    enddo
 !!$    close(55)
@@ -1758,8 +1634,8 @@
      write(IOUT,*) 'Saving the grid in a text file...'
      write(IOUT,*)
      open(unit=55,file='OUTPUT_FILES/grid_points_and_model.txt',status='unknown')
-     write(55,*) npoin
-     do n = 1,npoin
+     write(55,*) nglob
+     do n = 1,nglob
         write(55,*) (coord(i,n), i=1,NDIM)
      enddo
      close(55)
@@ -1769,7 +1645,7 @@
 !-----   plot the GLL mesh in a Gnuplot file
 !
   if(gnuplot .and. myrank == 0 .and. ipass == 1)  &
-    call plotgll(knods,ibool,coorg,coord,npoin,npgeo,ngnod,nspec)
+    call plotgll(knods,ibool,coorg,coord,nglob,npgeo,ngnod,nspec)
 
   if(myrank == 0 .and. ipass == 1)  &
     write(IOUT,*) 'assign_external_model = ', assign_external_model
@@ -1777,7 +1653,7 @@
 !if ( assign_external_model .and. ipass == 1) then
   if ( assign_external_model) then
     call read_external_model(any_acoustic,any_elastic,any_poroelastic, &
-                elastic,poroelastic,anisotropic,nspec,npoin,N_SLS,ibool, &
+                elastic,poroelastic,anisotropic,nspec,nglob,N_SLS,ibool, &
                 f0_attenuation,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
                 inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent, &
                 inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,&
@@ -1838,7 +1714,7 @@
 !---- define actual location of source and receivers
 
   call setup_sources_receivers(NSOURCES,initialfield,source_type,&
-     coord,ibool,npoin,nspec,nelem_acoustic_surface,acoustic_surface,elastic,poroelastic, &
+     coord,ibool,nglob,nspec,nelem_acoustic_surface,acoustic_surface,elastic,poroelastic, &
      x_source,z_source,ispec_selected_source,ispec_selected_rec, &
      is_proc_source,nb_proc_source,ipass,&
      sourcearray,Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,npgeo,&
@@ -2167,37 +2043,37 @@
   if(ipass == 1) then
 
     if(any_elastic) then
-      npoin_elastic = npoin
+      nglob_elastic = nglob
     else
       ! allocate unused arrays with fictitious size
-      npoin_elastic = 1
+      nglob_elastic = 1
     endif
-    allocate(displ_elastic(3,npoin_elastic))
-    allocate(veloc_elastic(3,npoin_elastic))
-    allocate(accel_elastic(3,npoin_elastic))
-    allocate(rmass_inverse_elastic(npoin_elastic))
+    allocate(displ_elastic(3,nglob_elastic))
+    allocate(veloc_elastic(3,nglob_elastic))
+    allocate(accel_elastic(3,nglob_elastic))
+    allocate(rmass_inverse_elastic(nglob_elastic))
 
     ! extra array if adjoint and kernels calculation
     if(SIMULATION_TYPE == 2 .and. any_elastic) then
-      allocate(b_displ_elastic(3,npoin))
-      allocate(b_veloc_elastic(3,npoin))
-      allocate(b_accel_elastic(3,npoin))
+      allocate(b_displ_elastic(3,nglob))
+      allocate(b_veloc_elastic(3,nglob))
+      allocate(b_accel_elastic(3,nglob))
       allocate(rho_kl(NGLLX,NGLLZ,nspec))
-      allocate(rho_k(npoin))
-      allocate(rhol_global(npoin))
+      allocate(rho_k(nglob))
+      allocate(rhol_global(nglob))
       allocate(mu_kl(NGLLX,NGLLZ,nspec))
-      allocate(mu_k(npoin))
-      allocate(mul_global(npoin))
+      allocate(mu_k(nglob))
+      allocate(mul_global(nglob))
       allocate(kappa_kl(NGLLX,NGLLZ,nspec))
-      allocate(kappa_k(npoin))
-      allocate(kappal_global(npoin))
+      allocate(kappa_k(nglob))
+      allocate(kappal_global(nglob))
       allocate(rhop_kl(NGLLX,NGLLZ,nspec))
       allocate(alpha_kl(NGLLX,NGLLZ,nspec))
       allocate(beta_kl(NGLLX,NGLLZ,nspec))
       allocate(rhorho_el_hessian_final2(NGLLX,NGLLZ,nspec))
-      allocate(rhorho_el_hessian_temp2(npoin))
+      allocate(rhorho_el_hessian_temp2(nglob))
       allocate(rhorho_el_hessian_final1(NGLLX,NGLLZ,nspec))
-      allocate(rhorho_el_hessian_temp1(npoin))
+      allocate(rhorho_el_hessian_temp1(nglob))
     else
       allocate(b_displ_elastic(1,1))
       allocate(b_veloc_elastic(1,1))
@@ -2221,44 +2097,44 @@
     endif
 
     if(any_poroelastic) then
-      npoin_poroelastic = npoin
+      nglob_poroelastic = nglob
     else
       ! allocate unused arrays with fictitious size
-      npoin_poroelastic = 1
+      nglob_poroelastic = 1
     endif
-    allocate(displs_poroelastic(NDIM,npoin_poroelastic))
-    allocate(velocs_poroelastic(NDIM,npoin_poroelastic))
-    allocate(accels_poroelastic(NDIM,npoin_poroelastic))
-    allocate(rmass_s_inverse_poroelastic(npoin_poroelastic))
-    allocate(displw_poroelastic(NDIM,npoin_poroelastic))
-    allocate(velocw_poroelastic(NDIM,npoin_poroelastic))
-    allocate(accelw_poroelastic(NDIM,npoin_poroelastic))
-    allocate(rmass_w_inverse_poroelastic(npoin_poroelastic))
+    allocate(displs_poroelastic(NDIM,nglob_poroelastic))
+    allocate(velocs_poroelastic(NDIM,nglob_poroelastic))
+    allocate(accels_poroelastic(NDIM,nglob_poroelastic))
+    allocate(rmass_s_inverse_poroelastic(nglob_poroelastic))
+    allocate(displw_poroelastic(NDIM,nglob_poroelastic))
+    allocate(velocw_poroelastic(NDIM,nglob_poroelastic))
+    allocate(accelw_poroelastic(NDIM,nglob_poroelastic))
+    allocate(rmass_w_inverse_poroelastic(nglob_poroelastic))
 
     ! extra array if adjoint and kernels calculation
     if(SIMULATION_TYPE == 2 .and. any_poroelastic) then
-      allocate(b_displs_poroelastic(NDIM,npoin))
-      allocate(b_velocs_poroelastic(NDIM,npoin))
-      allocate(b_accels_poroelastic(NDIM,npoin))
-      allocate(b_displw_poroelastic(NDIM,npoin))
-      allocate(b_velocw_poroelastic(NDIM,npoin))
-      allocate(b_accelw_poroelastic(NDIM,npoin))
+      allocate(b_displs_poroelastic(NDIM,nglob))
+      allocate(b_velocs_poroelastic(NDIM,nglob))
+      allocate(b_accels_poroelastic(NDIM,nglob))
+      allocate(b_displw_poroelastic(NDIM,nglob))
+      allocate(b_velocw_poroelastic(NDIM,nglob))
+      allocate(b_accelw_poroelastic(NDIM,nglob))
       allocate(rhot_kl(NGLLX,NGLLZ,nspec))
-      allocate(rhot_k(npoin))
+      allocate(rhot_k(nglob))
       allocate(rhof_kl(NGLLX,NGLLZ,nspec))
-      allocate(rhof_k(npoin))
+      allocate(rhof_k(nglob))
       allocate(sm_kl(NGLLX,NGLLZ,nspec))
-      allocate(sm_k(npoin))
+      allocate(sm_k(nglob))
       allocate(eta_kl(NGLLX,NGLLZ,nspec))
-      allocate(eta_k(npoin))
+      allocate(eta_k(nglob))
       allocate(mufr_kl(NGLLX,NGLLZ,nspec))
-      allocate(mufr_k(npoin))
+      allocate(mufr_k(nglob))
       allocate(B_kl(NGLLX,NGLLZ,nspec))
-      allocate(B_k(npoin))
+      allocate(B_k(nglob))
       allocate(C_kl(NGLLX,NGLLZ,nspec))
-      allocate(C_k(npoin))
+      allocate(C_k(nglob))
       allocate(M_kl(NGLLX,NGLLZ,nspec))
-      allocate(M_k(npoin))
+      allocate(M_k(nglob))
       allocate(rhob_kl(NGLLX,NGLLZ,nspec))
       allocate(rhofb_kl(NGLLX,NGLLZ,nspec))
       allocate(phi_kl(NGLLX,NGLLZ,nspec))
@@ -2273,16 +2149,16 @@
       allocate(cpII_kl(NGLLX,NGLLZ,nspec))
       allocate(cs_kl(NGLLX,NGLLZ,nspec))
       allocate(ratio_kl(NGLLX,NGLLZ,nspec))
-      allocate(phil_global(npoin))
-      allocate(mulfr_global(npoin))
-      allocate(etal_f_global(npoin))
-      allocate(rhol_s_global(npoin))
-      allocate(rhol_f_global(npoin))
-      allocate(rhol_bar_global(npoin))
-      allocate(tortl_global(npoin))
-      allocate(permlxx_global(npoin))
-      allocate(permlxz_global(npoin))
-      allocate(permlzz_global(npoin))
+      allocate(phil_global(nglob))
+      allocate(mulfr_global(nglob))
+      allocate(etal_f_global(nglob))
+      allocate(rhol_s_global(nglob))
+      allocate(rhol_f_global(nglob))
+      allocate(rhol_bar_global(nglob))
+      allocate(tortl_global(nglob))
+      allocate(permlxx_global(nglob))
+      allocate(permlxz_global(nglob))
+      allocate(permlzz_global(nglob))
     else
       allocate(b_displs_poroelastic(1,1))
       allocate(b_velocs_poroelastic(1,1))
@@ -2333,34 +2209,34 @@
     endif
 
     if(any_poroelastic .and. any_elastic) then
-      allocate(icount(npoin))
+      allocate(icount(nglob))
     else
       allocate(icount(1))
     endif
 
     ! potential, its first and second derivative, and inverse of the mass matrix for acoustic elements
     if(any_acoustic) then
-      npoin_acoustic = npoin
+      nglob_acoustic = nglob
     else
       ! allocate unused arrays with fictitious size
-      npoin_acoustic = 1
+      nglob_acoustic = 1
     endif
-    allocate(potential_acoustic(npoin_acoustic))
-    allocate(potential_dot_acoustic(npoin_acoustic))
-    allocate(potential_dot_dot_acoustic(npoin_acoustic))
-    allocate(rmass_inverse_acoustic(npoin_acoustic))
+    allocate(potential_acoustic(nglob_acoustic))
+    allocate(potential_dot_acoustic(nglob_acoustic))
+    allocate(potential_dot_dot_acoustic(nglob_acoustic))
+    allocate(rmass_inverse_acoustic(nglob_acoustic))
 
     if(SIMULATION_TYPE == 2 .and. any_acoustic) then
-      allocate(b_potential_acoustic(npoin))
-      allocate(b_potential_dot_acoustic(npoin))
-      allocate(b_potential_dot_dot_acoustic(npoin))
-      allocate(b_displ_ac(2,npoin))
-      allocate(b_accel_ac(2,npoin))
-      allocate(accel_ac(2,npoin))
+      allocate(b_potential_acoustic(nglob))
+      allocate(b_potential_dot_acoustic(nglob))
+      allocate(b_potential_dot_dot_acoustic(nglob))
+      allocate(b_displ_ac(2,nglob))
+      allocate(b_accel_ac(2,nglob))
+      allocate(accel_ac(2,nglob))
       allocate(rho_ac_kl(NGLLX,NGLLZ,nspec))
-      allocate(rhol_ac_global(npoin))
+      allocate(rhol_ac_global(nglob))
       allocate(kappa_ac_kl(NGLLX,NGLLZ,nspec))
-      allocate(kappal_ac_global(npoin))
+      allocate(kappal_ac_global(nglob))
       allocate(rhop_ac_kl(NGLLX,NGLLZ,nspec))
       allocate(alpha_ac_kl(NGLLX,NGLLZ,nspec))
       allocate(rhorho_ac_hessian_final2(NGLLX,NGLLZ,nspec))
@@ -2389,10 +2265,10 @@
   !---- build the global mass matrix
   !
   call invert_mass_matrix_init(any_elastic,any_acoustic,any_poroelastic, &
-                                rmass_inverse_elastic,npoin_elastic, &
-                                rmass_inverse_acoustic,npoin_acoustic, &
+                                rmass_inverse_elastic,nglob_elastic, &
+                                rmass_inverse_acoustic,nglob_acoustic, &
                                 rmass_s_inverse_poroelastic, &
-                                rmass_w_inverse_poroelastic,npoin_poroelastic, &
+                                rmass_w_inverse_poroelastic,nglob_poroelastic, &
                                 nspec,ibool,kmato,wxgll,wzgll,jacobian, &
                                 elastic,poroelastic, &
                                 assign_external_model,numat, &
@@ -2408,7 +2284,7 @@
     if(ipass == 1) allocate(mask_ispec_inner_outer(nspec))
     mask_ispec_inner_outer(:) = .false.
 
-    call get_MPI(nspec,ibool,knods,ngnod,npoin,elastic,poroelastic, &
+    call get_MPI(nspec,ibool,knods,ngnod,nglob,elastic,poroelastic, &
                     ninterface, max_interface_size, &
                     my_nelmnts_neighbours,my_interfaces,my_neighbours, &
                     ibool_interfaces_acoustic, ibool_interfaces_elastic, &
@@ -2464,9 +2340,9 @@
     endif
 
 ! assembling the mass matrix
-    call assemble_MPI_scalar(rmass_inverse_acoustic,npoin_acoustic, &
-                            rmass_inverse_elastic,npoin_elastic, &
-                            rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic,npoin_poroelastic, &
+    call assemble_MPI_scalar(rmass_inverse_acoustic,nglob_acoustic, &
+                            rmass_inverse_elastic,nglob_elastic, &
+                            rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic,nglob_poroelastic, &
                             ninterface, max_interface_size, max_ibool_interfaces_size_ac, &
                             max_ibool_interfaces_size_el, &
                             max_ibool_interfaces_size_po, &
@@ -2547,65 +2423,18 @@
       ibool_inner(:,:,ispec_inner) = ibool(:,:,ispec)
     enddo
 
-    allocate(copy_ibool_ori(NGLLX,NGLLZ,nspec_outer))
-    allocate(mask_ibool(npoin))
-
-    mask_ibool(:) = -1
-    copy_ibool_ori(:,:,:) = ibool_outer(:,:,:)
-
-    inumber = 0
-
-    do ispec = 1,nspec_outer
-      do j=1,NGLLZ
-        do i=1,NGLLX
-          if(mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
-    ! create a new point
-            inumber = inumber + 1
-            ibool_outer(i,j,ispec) = inumber
-            mask_ibool(copy_ibool_ori(i,j,ispec)) = inumber
-          else
-    ! use an existing point created previously
-            ibool_outer(i,j,ispec) = mask_ibool(copy_ibool_ori(i,j,ispec))
-          endif
-        enddo
-      enddo
-    enddo
-
-    deallocate(copy_ibool_ori)
-    deallocate(mask_ibool)
+    ! reduces cache misses for outer elements
+    call get_global_indirect_addressing(nspec_outer,nglob,ibool_outer)
 
     ! the total number of points without multiples in this region is now known
-    npoin_outer = maxval(ibool_outer)
+    nglob_outer = maxval(ibool_outer)
 
-    allocate(copy_ibool_ori(NGLLX,NGLLZ,nspec_inner))
-    allocate(mask_ibool(npoin))
+    ! reduces cache misses for inner elements
+    call get_global_indirect_addressing(nspec_inner,nglob,ibool_inner)
 
-    mask_ibool(:) = -1
-    copy_ibool_ori(:,:,:) = ibool_inner(:,:,:)
-
-    inumber = 0
-
-    do ispec = 1,nspec_inner
-      do j=1,NGLLZ
-        do i=1,NGLLX
-          if(mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
-    ! create a new point
-            inumber = inumber + 1
-            ibool_inner(i,j,ispec) = inumber
-            mask_ibool(copy_ibool_ori(i,j,ispec)) = inumber
-          else
-    ! use an existing point created previously
-            ibool_inner(i,j,ispec) = mask_ibool(copy_ibool_ori(i,j,ispec))
-          endif
-        enddo
-      enddo
-    enddo
-
-    deallocate(copy_ibool_ori)
-    deallocate(mask_ibool)
 
     ! the total number of points without multiples in this region is now known
-    npoin_inner = maxval(ibool_inner)
+    nglob_inner = maxval(ibool_inner)
 
     !allocate(perm(nspec))
 
@@ -2617,7 +2446,7 @@
     if(ACTUALLY_IMPLEMENT_PERM_WHOLE) then
 
       allocate(check_perm(nspec))
-      call get_perm(ibool,perm,LIMIT_MULTI_CUTHILL,nspec,npoin)
+      call get_perm(ibool,perm,LIMIT_MULTI_CUTHILL,nspec,nglob)
     ! check that the permutation obtained is bijective
       check_perm(:) = -1
       do ispec = 1,nspec
@@ -2630,7 +2459,7 @@
 
     if(ACTUALLY_IMPLEMENT_PERM_OUT) then
       allocate(check_perm(nspec_outer))
-      call get_perm(ibool_outer,perm(1:nspec_outer),LIMIT_MULTI_CUTHILL,nspec_outer,npoin_outer)
+      call get_perm(ibool_outer,perm(1:nspec_outer),LIMIT_MULTI_CUTHILL,nspec_outer,nglob_outer)
     ! check that the permutation obtained is bijective
       check_perm(:) = -1
       do ispec = 1,nspec_outer
@@ -2644,7 +2473,7 @@
 
     if(ACTUALLY_IMPLEMENT_PERM_INN) then
       allocate(check_perm(nspec_inner))
-      call get_perm(ibool_inner,perm(nspec_outer+1:nspec),LIMIT_MULTI_CUTHILL,nspec_inner,npoin_inner)
+      call get_perm(ibool_inner,perm(nspec_outer+1:nspec),LIMIT_MULTI_CUTHILL,nspec_inner,nglob_inner)
     ! check that the permutation obtained is bijective
       check_perm(:) = -1
       do ispec = 1,nspec_inner
@@ -2675,10 +2504,10 @@
 !---
 
   call invert_mass_matrix(any_elastic,any_acoustic,any_poroelastic,&
-              rmass_inverse_elastic,npoin_elastic, &
-              rmass_inverse_acoustic,npoin_acoustic, &
+              rmass_inverse_elastic,nglob_elastic, &
+              rmass_inverse_acoustic,nglob_acoustic, &
               rmass_s_inverse_poroelastic, &
-              rmass_w_inverse_poroelastic,npoin_poroelastic)
+              rmass_w_inverse_poroelastic,nglob_poroelastic)
 
 ! check the mesh, stability and number of points per wavelength
   if(DISPLAY_SUBSET_OPTION == 1) then
@@ -2694,7 +2523,7 @@
   endif
   call checkgrid(vpext,vsext,rhoext,density,poroelastcoef, &
                  porosity,tortuosity,permeability,ibool,kmato, &
-                 coord,npoin,vpImin,vpImax,vpIImin,vpIImax, &
+                 coord,nglob,vpImin,vpImax,vpIImin,vpIImax, &
                  assign_external_model,nspec,UPPER_LIMIT_DISPLAY,numat,deltat, &
                  f0,initialfield,time_function_type, &
                  coorg,xinterp,zinterp,shape2D_display,knods,simulation_title, &
@@ -2714,7 +2543,7 @@
     call prepare_color_image_init(NX_IMAGE_color,NZ_IMAGE_color, &
                             xmin_color_image,xmax_color_image, &
                             zmin_color_image,zmax_color_image, &
-                            coord,npoin,npgeo)
+                            coord,nglob,npgeo)
 
     ! allocate an array for image data
     allocate(image_color_data(NX_IMAGE_color,NZ_IMAGE_color))
@@ -2728,7 +2557,7 @@
     call prepare_color_image_pixels(myrank,NX_IMAGE_color,NZ_IMAGE_color, &
                             xmin_color_image,xmax_color_image, &
                             zmin_color_image,zmax_color_image, &
-                            coord,npoin,coorg,npgeo,nspec,ngnod,knods,ibool, &
+                            coord,nglob,coorg,npgeo,nspec,ngnod,knods,ibool, &
                             nb_pixel_loc,iglob_image_color)
 
 
@@ -2810,12 +2639,12 @@
 !----- Files where viscous damping are saved during forward wavefield calculation
 !
   if(any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE .eq. 2)) then
-    allocate(b_viscodampx(npoin))
-    allocate(b_viscodampz(npoin))
+    allocate(b_viscodampx(nglob))
+    allocate(b_viscodampz(nglob))
     write(outputname,'(a,i6.6,a)') 'viscodampingx',myrank,'.bin'
     write(outputname2,'(a,i6.6,a)') 'viscodampingz',myrank,'.bin'
     if(SIMULATION_TYPE == 2) then
-      reclen = CUSTOM_REAL * npoin
+      reclen = CUSTOM_REAL * nglob
       open(unit=23,file='OUTPUT_FILES/'//outputname,status='old',&
             action='read',form='unformatted',access='direct',&
             recl=reclen)
@@ -2823,7 +2652,7 @@
             action='read',form='unformatted',access='direct',&
             recl=reclen)
     else
-      reclen = CUSTOM_REAL * npoin
+      reclen = CUSTOM_REAL * nglob
       open(unit=23,file='OUTPUT_FILES/'//outputname,status='unknown',&
             form='unformatted',access='direct',&
             recl=reclen)
@@ -2994,7 +2823,7 @@
     if( any_elastic ) then
       call prepare_initialfield(myrank,any_acoustic,any_poroelastic,over_critical_angle, &
                         NSOURCES,source_type,angleforce,x_source,z_source,f0, &
-                        npoin,numat,poroelastcoef,density,coord, &
+                        nglob,numat,poroelastcoef,density,coord, &
                         angleforce_refl,c_inc,c_refl,cploc,csloc,time_offset, &
                         A_plane, B_plane, C_plane, &
                         accel_elastic,veloc_elastic,displ_elastic)
@@ -3026,12 +2855,12 @@
       allocate(t0x_bot(count_bottom,NSTEP))
       allocate(t0z_bot(count_bottom,NSTEP))
 
-      allocate(displ_paco(NDIM,npoin))
-      allocate(veloc_paco(NDIM,npoin))
-      allocate(accel_paco(NDIM,npoin))
+      allocate(displ_paco(NDIM,nglob))
+      allocate(veloc_paco(NDIM,nglob))
+      allocate(accel_paco(NDIM,nglob))
 
       ! call Paco's routine to compute in frequency and convert to time by Fourier transform
-      call paco_beyond_critical(coord,npoin,deltat,NSTEP,angleforce(1),&
+      call paco_beyond_critical(coord,nglob,deltat,NSTEP,angleforce(1),&
               f0(1),cploc,csloc,TURN_ATTENUATION_ON,Qp_attenuation,source_type(1),v0x_left,v0z_left,&
               v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,&
               t0x_bot,t0z_bot,left_bound(1:count_left),right_bound(1:count_right),bot_bound(1:count_bottom)&
@@ -3689,7 +3518,7 @@
 
   ! prepares image background
   if(output_color_image) then
-    call prepare_color_image_vp(npoin,image_color_vp_display,iglob_image_color, &
+    call prepare_color_image_vp(nglob,image_color_vp_display,iglob_image_color, &
                             NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc, &
                             num_pixel_loc,nspec,poroelastic,ibool,kmato, &
                             numat,density,poroelastcoef,porosity,tortuosity, &
@@ -3816,7 +3645,7 @@
       d2_coorg_send_ps_vector_field=nspec*pointsdisp*pointsdisp
     endif
   else
-    d2_coorg_send_ps_vector_field=npoin
+    d2_coorg_send_ps_vector_field=nglob
   endif
   call mpi_allreduce(d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
   call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
@@ -4027,12 +3856,12 @@
       if ( nelem_acoustic_surface > 0 ) then
         call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
                                           potential_acoustic,acoustic_surface, &
-                                          ibool,nelem_acoustic_surface,npoin,nspec)
+                                          ibool,nelem_acoustic_surface,nglob,nspec)
 
         if(SIMULATION_TYPE == 2) then ! Adjoint calculation
           call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
                                             b_potential_acoustic,acoustic_surface, &
-                                            ibool,nelem_acoustic_surface,npoin,nspec)
+                                            ibool,nelem_acoustic_surface,nglob,nspec)
         endif
       endif
 
@@ -4040,7 +3869,7 @@
 ! ************* compute forces for the acoustic elements
 ! *********************************************************
 
-!      call compute_forces_acoustic(npoin,nspec,nelemabs,numat,it,NSTEP, &
+!      call compute_forces_acoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
 !               anyabs,assign_external_model,ibool,kmato,numabs, &
 !               elastic,poroelastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
 !               potential_acoustic,b_potential_dot_dot_acoustic,b_potential_acoustic, &
@@ -4055,7 +3884,7 @@
 !               nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top)
 
 
-      call compute_forces_acoustic_2(npoin,nspec,nelemabs,numat,it,NSTEP, &
+      call compute_forces_acoustic_2(nglob,nspec,nelemabs,numat,it,NSTEP, &
                anyabs,assign_external_model,ibool,kmato,numabs, &
                elastic,poroelastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
                potential_acoustic, &
@@ -4069,7 +3898,7 @@
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
                b_absorb_acoustic_bottom,b_absorb_acoustic_top)
       if( SIMULATION_TYPE == 2 ) then
-        call compute_forces_acoustic_2(npoin,nspec,nelemabs,numat,it,NSTEP, &
+        call compute_forces_acoustic_2(nglob,nspec,nelemabs,numat,it,NSTEP, &
                anyabs,assign_external_model,ibool,kmato,numabs, &
                elastic,poroelastic,codeabs,b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
                b_potential_acoustic, &
@@ -4391,7 +4220,7 @@
 ! assembling potential_dot_dot for acoustic elements
 #ifdef USE_MPI
   if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
-    call assemble_MPI_vector_ac(potential_dot_dot_acoustic,npoin, &
+    call assemble_MPI_vector_ac(potential_dot_dot_acoustic,nglob, &
                     ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
                     max_interface_size, max_ibool_interfaces_size_ac,&
                     ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
@@ -4399,7 +4228,7 @@
                     buffer_recv_faces_vector_ac, my_neighbours)
 
     if ( SIMULATION_TYPE == 2) then
-      call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic,npoin, &
+      call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic,nglob, &
                      ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
                      max_interface_size, max_ibool_interfaces_size_ac,&
                      ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
@@ -4411,7 +4240,7 @@
   endif
 
 !  if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0 .and. SIMULATION_TYPE == 2) then
-!    call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic,npoin, &
+!    call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic,nglob, &
 !           ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
 !           max_interface_size, max_ibool_interfaces_size_ac,&
 !           ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
@@ -4439,12 +4268,12 @@
     if ( nelem_acoustic_surface > 0 ) then
       call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
                                         potential_acoustic,acoustic_surface, &
-                                        ibool,nelem_acoustic_surface,npoin,nspec)
+                                        ibool,nelem_acoustic_surface,nglob,nspec)
 
       if(SIMULATION_TYPE == 2) then
         call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
                                           b_potential_acoustic,acoustic_surface, &
-                                          ibool,nelem_acoustic_surface,npoin,nspec)
+                                          ibool,nelem_acoustic_surface,nglob,nspec)
       endif
 
     endif
@@ -4457,7 +4286,7 @@
 ! *********************************************************
 
  if(any_elastic) then
-    call compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
+    call compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
                source_type,it,NSTEP,anyabs,assign_external_model, &
                initialfield,TURN_ATTENUATION_ON,angleforce,deltatcube, &
@@ -5022,7 +4851,7 @@
 ! assembling accel_elastic for elastic elements
 #ifdef USE_MPI
   if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
-    call assemble_MPI_vector_el(accel_elastic,npoin, &
+    call assemble_MPI_vector_el(accel_elastic,nglob, &
       ninterface, ninterface_elastic,inum_interfaces_elastic, &
       max_interface_size, max_ibool_interfaces_size_el,&
       ibool_interfaces_elastic, nibool_interfaces_elastic, &
@@ -5031,7 +4860,7 @@
   endif
 
   if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0 .and. SIMULATION_TYPE == 2) then
-    call assemble_MPI_vector_el(b_accel_elastic,npoin, &
+    call assemble_MPI_vector_el(b_accel_elastic,nglob, &
       ninterface, ninterface_elastic,inum_interfaces_elastic, &
       max_interface_size, max_ibool_interfaces_size_el,&
       ibool_interfaces_elastic, nibool_interfaces_elastic, &
@@ -5077,7 +4906,7 @@
      b_viscodampz(:) = ZERO
     endif
 
-    call compute_forces_poro_solid(npoin,nspec,myrank,nelemabs,numat, &
+    call compute_forces_poro_solid(nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                source_type,it,NSTEP,anyabs, &
                initialfield,TURN_ATTENUATION_ON,TURN_VISCATTENUATION_ON,deltatcube, &
@@ -5100,7 +4929,7 @@
 
 
 
-    call compute_forces_poro_fluid(npoin,nspec,myrank,nelemabs,numat, &
+    call compute_forces_poro_fluid(nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                source_type,it,NSTEP,anyabs, &
                initialfield,TURN_ATTENUATION_ON,TURN_VISCATTENUATION_ON,deltatcube, &
@@ -5659,7 +5488,7 @@
 ! assembling accels_proelastic & accelw_poroelastic for poroelastic elements
 #ifdef USE_MPI
   if (nproc > 1 .and. any_poroelastic .and. ninterface_poroelastic > 0) then
-    call assemble_MPI_vector_po(accels_poroelastic,accelw_poroelastic,npoin, &
+    call assemble_MPI_vector_po(accels_poroelastic,accelw_poroelastic,nglob, &
       ninterface, ninterface_poroelastic,inum_interfaces_poroelastic, &
       max_interface_size, max_ibool_interfaces_size_po,&
       ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
@@ -5669,7 +5498,7 @@
   endif
 
   if (nproc > 1 .and. any_poroelastic .and. ninterface_poroelastic > 0 .and. SIMULATION_TYPE == 2) then
-    call assemble_MPI_vector_po(b_accels_poroelastic,b_accelw_poroelastic,npoin, &
+    call assemble_MPI_vector_po(b_accels_poroelastic,b_accelw_poroelastic,nglob, &
       ninterface, ninterface_poroelastic,inum_interfaces_poroelastic, &
       max_interface_size, max_ibool_interfaces_size_po,&
       ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
@@ -5800,7 +5629,7 @@
     if(any_acoustic) then
       write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
       open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
-      do j=1,npoin
+      do j=1,nglob
         read(55) b_potential_acoustic(j),&
                 b_potential_dot_acoustic(j),&
                 b_potential_dot_dot_acoustic(j)
@@ -5811,7 +5640,7 @@
       if ( nelem_acoustic_surface > 0 ) then
         call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
                                           b_potential_acoustic,acoustic_surface, &
-                                          ibool,nelem_acoustic_surface,npoin,nspec)
+                                          ibool,nelem_acoustic_surface,nglob,nspec)
       endif
     endif
 
@@ -5820,7 +5649,7 @@
       write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
       open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
       if(p_sv)then !P-SV waves
-        do j=1,npoin
+        do j=1,nglob
           read(55) (b_displ_elastic(i,j), i=1,NDIM), &
                     (b_veloc_elastic(i,j), i=1,NDIM), &
                     (b_accel_elastic(i,j), i=1,NDIM)
@@ -5832,7 +5661,7 @@
         b_accel_elastic(3,:) = b_accel_elastic(2,:)
         b_accel_elastic(2,:) = 0._CUSTOM_REAL
       else !SH (membrane) waves
-        do j=1,npoin
+        do j=1,nglob
           read(55) b_displ_elastic(2,j), &
                     b_veloc_elastic(2,j), &
                     b_accel_elastic(2,j)
@@ -5853,7 +5682,7 @@
     open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
     write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
     open(unit=56,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
-       do j=1,npoin
+       do j=1,nglob
       read(55) (b_displs_poroelastic(i,j), i=1,NDIM), &
                   (b_velocs_poroelastic(i,j), i=1,NDIM), &
                   (b_accels_poroelastic(i,j), i=1,NDIM)
@@ -5871,7 +5700,7 @@
 !                                      kernels calculation
 ! ********************************************************************************************
   if(any_elastic .and. SIMULATION_TYPE == 2) then ! kernels calculation
-      do iglob = 1,npoin
+      do iglob = 1,nglob
             rho_k(iglob) =  accel_elastic(1,iglob)*b_displ_elastic(1,iglob) +&
                             accel_elastic(2,iglob)*b_displ_elastic(2,iglob) +&
                             accel_elastic(3,iglob)*b_displ_elastic(3,iglob)
@@ -5885,7 +5714,7 @@
   endif
 
   if(any_poroelastic .and. SIMULATION_TYPE ==2) then
-   do iglob =1,npoin
+   do iglob =1,nglob
             rhot_k(iglob) = accels_poroelastic(1,iglob) * b_displs_poroelastic(1,iglob) + &
                   accels_poroelastic(2,iglob) * b_displs_poroelastic(2,iglob)
             rhof_k(iglob) = accelw_poroelastic(1,iglob) * b_displs_poroelastic(1,iglob) + &
@@ -5905,7 +5734,7 @@
                         displs_poroelastic,velocs_poroelastic, &
                         displw_poroelastic,velocw_poroelastic, &
                         xix,xiz,gammax,gammaz,jacobian,ibool,elastic,poroelastic,hprime_xx,hprime_zz, &
-                        nspec,npoin_acoustic,npoin_elastic,npoin_poroelastic, &
+                        nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                         assign_external_model,it,deltat,t0,kmato,poroelastcoef,density, &
                         porosity,tortuosity, &
                         vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext, &
@@ -5917,7 +5746,7 @@
 !----  display time step and max of norm of displacement
   if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
     call check_stability(myrank,time,it,NSTEP, &
-                        npoin_acoustic,npoin_elastic,npoin_poroelastic, &
+                        nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                         any_elastic_glob,any_elastic,displ_elastic, &
                         any_poroelastic_glob,any_poroelastic, &
                         displs_poroelastic,displw_poroelastic, &
@@ -5938,7 +5767,7 @@
        call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,&
             displs_poroelastic,displw_poroelastic,elastic,poroelastic,&
             xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
-            npoin_acoustic,npoin_elastic,npoin_poroelastic,assign_external_model, &
+            nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
             numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
             c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,ispec,e1,e11, &
             TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
@@ -5951,21 +5780,21 @@
                               displ_elastic,displs_poroelastic,&
                               elastic,poroelastic,xix,xiz,gammax,gammaz, &
                               ibool,hprime_xx,hprime_zz, &
-                              nspec,npoin_acoustic,npoin_elastic,npoin_poroelastic, &
+                              nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                               ispec,numat,kmato,density,rhoext,assign_external_model)
        else if(seismotype == 2) then
           call compute_vector_one_element(vector_field_element,potential_dot_acoustic, &
                               veloc_elastic,velocs_poroelastic, &
                               elastic,poroelastic,xix,xiz,gammax,gammaz, &
                               ibool,hprime_xx,hprime_zz, &
-                              nspec,npoin_acoustic,npoin_elastic,npoin_poroelastic, &
+                              nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                               ispec,numat,kmato,density,rhoext,assign_external_model)
        else if(seismotype == 3) then
           call compute_vector_one_element(vector_field_element,potential_dot_dot_acoustic, &
                               accel_elastic,accels_poroelastic, &
                               elastic,poroelastic,xix,xiz,gammax,gammaz, &
                               ibool,hprime_xx,hprime_zz, &
-                              nspec,npoin_acoustic,npoin_elastic,npoin_poroelastic, &
+                              nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                               ispec,numat,kmato,density,rhoext,assign_external_model)
        endif
 
@@ -5973,7 +5802,7 @@
        call compute_curl_one_element(curl_element,displ_elastic, &
                             displs_poroelastic,elastic,poroelastic, &
                             xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                            nspec,npoin_elastic,npoin_poroelastic,ispec)
+                            nspec,nglob_elastic,nglob_poroelastic,ispec)
     endif
 
 ! perform the general interpolation using Lagrange polynomials
@@ -6427,7 +6256,7 @@
     call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic,&
                         elastic,poroelastic,vector_field_display, &
                         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                        nspec,npoin,npoin_acoustic,npoin_elastic,npoin_poroelastic, &
+                        nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                         numat,kmato,density,rhoext,assign_external_model)
 
     call plotpost(vector_field_display,coord,vpext,x_source,z_source,x_final_receiver,z_final_receiver, &
@@ -6435,7 +6264,7 @@
           Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
           poroelastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
-          simulation_title,npoin,npgeo,vpImin,vpImax,nrec,NSOURCES, &
+          simulation_title,nglob,npgeo,vpImin,vpImax,nrec,NSOURCES, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
@@ -6471,7 +6300,7 @@
     call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,velocs_poroelastic,&
                         elastic,poroelastic,vector_field_display, &
                         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                        nspec,npoin,npoin_acoustic,npoin_elastic,npoin_poroelastic, &
+                        nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                         numat,kmato,density,rhoext,assign_external_model)
 
     call plotpost(vector_field_display,coord,vpext,x_source,z_source,x_final_receiver,z_final_receiver, &
@@ -6479,7 +6308,7 @@
           Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
           poroelastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
-          simulation_title,npoin,npgeo,vpImin,vpImax,nrec,NSOURCES, &
+          simulation_title,nglob,npgeo,vpImin,vpImax,nrec,NSOURCES, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
@@ -6515,7 +6344,7 @@
     call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,accels_poroelastic,&
                         elastic,poroelastic,vector_field_display, &
                         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                        nspec,npoin,npoin_acoustic,npoin_elastic,npoin_poroelastic, &
+                        nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                         numat,kmato,density,rhoext,assign_external_model)
 
     call plotpost(vector_field_display,coord,vpext,x_source,z_source,x_final_receiver,z_final_receiver, &
@@ -6523,7 +6352,7 @@
           Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
           poroelastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
-          simulation_title,npoin,npgeo,vpImin,vpImax,nrec,NSOURCES, &
+          simulation_title,nglob,npgeo,vpImin,vpImax,nrec,NSOURCES, &
           colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
@@ -6578,7 +6407,7 @@
     call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic,&
                         elastic,poroelastic,vector_field_display, &
                         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                        nspec,npoin,npoin_acoustic,npoin_elastic,npoin_poroelastic, &
+                        nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                         numat,kmato,density,rhoext,assign_external_model)
 
   else if(imagetype == 2) then
@@ -6588,7 +6417,7 @@
     call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,velocs_poroelastic,&
                         elastic,poroelastic,vector_field_display, &
                         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                        nspec,npoin,npoin_acoustic,npoin_elastic,npoin_poroelastic, &
+                        nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                         numat,kmato,density,rhoext,assign_external_model)
 
   else if(imagetype == 3) then
@@ -6598,7 +6427,7 @@
     call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,accels_poroelastic,&
                         elastic,poroelastic,vector_field_display, &
                         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                        nspec,npoin,npoin_acoustic,npoin_elastic,npoin_poroelastic, &
+                        nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                         numat,kmato,density,rhoext,assign_external_model)
 
   else if(imagetype == 4 .and. p_sv) then
@@ -6608,7 +6437,7 @@
     call compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,&
          displs_poroelastic,displw_poroelastic,elastic,poroelastic,vector_field_display, &
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
-         npoin,npoin_acoustic,npoin_elastic,npoin_poroelastic,assign_external_model, &
+         nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
          numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,e1,e11, &
          TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
@@ -6751,13 +6580,13 @@ endif
     write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
     open(unit=55,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
     if(p_sv)then !P-SV waves
-      do j=1,npoin
+      do j=1,nglob
         write(55) displ_elastic(1,j), displ_elastic(3,j), &
                   veloc_elastic(1,j), veloc_elastic(3,j), &
                   accel_elastic(1,j), accel_elastic(3,j)
       enddo
     else !SH (membrane) waves
-      do j=1,npoin
+      do j=1,nglob
         write(55) displ_elastic(2,j), &
                   veloc_elastic(2,j), &
                   accel_elastic(2,j)
@@ -6776,7 +6605,7 @@ endif
     open(unit=55,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
     write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
     open(unit=56,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
-       do j=1,npoin
+       do j=1,nglob
       write(55) (displs_poroelastic(i,j), i=1,NDIM), &
                   (velocs_poroelastic(i,j), i=1,NDIM), &
                   (accels_poroelastic(i,j), i=1,NDIM)
@@ -6796,7 +6625,7 @@ endif
   endif
     write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
     open(unit=55,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
-       do j=1,npoin
+       do j=1,nglob
       write(55) potential_acoustic(j),&
                potential_dot_acoustic(j),&
                potential_dot_dot_acoustic(j)
@@ -6838,8 +6667,8 @@ endif
       allocate(rho_local(ngllx,ngllz,nspec)); rho_local=0.
       allocate(vp_local(ngllx,ngllz,nspec)); vp_local=0.
       allocate(vs_local(ngllx,ngllz,nspec)); vs_local=0.
-!!      write(1001,*) npoin
-!!      do iglob = 1,npoin
+!!      write(1001,*) nglob
+!!      do iglob = 1,nglob
 !!         write(1001,*) coord(1,iglob),coord(2,iglob),rho_global(iglob),vp_global(iglob),vs_global(iglob)
 !!      end do
       do ispec = 1,nspec
@@ -6855,8 +6684,8 @@ endif
         end do
       end do
     else
-!!     write(1001,*) npoin
-!!  do iglob = 1,npoin
+!!     write(1001,*) nglob
+!!  do iglob = 1,nglob
 !!     write(1001,*) coord(1,iglob),coord(2,iglob),rhoext_global(iglob),vpext_global(iglob),vsext_global(iglob)
 !!  end do
       do ispec = 1,nspec

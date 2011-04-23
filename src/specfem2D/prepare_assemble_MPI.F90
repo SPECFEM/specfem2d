@@ -58,7 +58,7 @@
 ! We have both acoustic and (poro)elastic buffers, for coupling between acoustic and (poro)elastic elements
 ! led us to have two sets of communications.
 !-----------------------------------------------
-  subroutine prepare_assemble_MPI(nspec,ibool,knods, ngnod,npoin, elastic, poroelastic, &
+  subroutine prepare_assemble_MPI(nspec,ibool,knods, ngnod,nglob, elastic, poroelastic, &
                                 ninterface, max_interface_size, &
                                 my_nelmnts_neighbours, my_interfaces, &
                                 ibool_interfaces_acoustic, ibool_interfaces_elastic, &
@@ -74,7 +74,7 @@
 
   include 'constants.h'
 
-  integer, intent(in)  :: nspec, npoin, ngnod
+  integer, intent(in)  :: nspec, nglob, ngnod
   logical, dimension(nspec), intent(in)  :: elastic, poroelastic
   integer, dimension(ngnod,nspec), intent(in)  :: knods
   integer, dimension(NGLLX,NGLLZ,nspec), intent(in)  :: ibool
@@ -97,15 +97,15 @@
   ! local parameters
   integer  :: num_interface
   integer  :: ispec_interface
-  logical, dimension(npoin)  :: mask_ibool_acoustic
-  logical, dimension(npoin)  :: mask_ibool_elastic
-  logical, dimension(npoin)  :: mask_ibool_poroelastic
+  logical, dimension(nglob)  :: mask_ibool_acoustic
+  logical, dimension(nglob)  :: mask_ibool_elastic
+  logical, dimension(nglob)  :: mask_ibool_poroelastic
   integer  :: ixmin, ixmax, izmin, izmax, ix, iz
   integer, dimension(ngnod)  :: n
   integer  :: e1, e2, itype, ispec, k, sens, iglob
-  integer  :: npoin_interface_acoustic
-  integer  :: npoin_interface_elastic
-  integer  :: npoin_interface_poroelastic
+  integer  :: nglob_interface_acoustic
+  integer  :: nglob_interface_elastic
+  integer  :: nglob_interface_poroelastic
 
   ! initializes
   ibool_interfaces_acoustic(:,:) = 0
@@ -117,9 +117,9 @@
 
   do num_interface = 1, ninterface
     ! initializes interface point counters
-    npoin_interface_acoustic = 0
-    npoin_interface_elastic = 0
-    npoin_interface_poroelastic = 0
+    nglob_interface_acoustic = 0
+    nglob_interface_elastic = 0
+    nglob_interface_poroelastic = 0
     mask_ibool_acoustic(:) = .false.
     mask_ibool_elastic(:) = .false.
     mask_ibool_poroelastic(:) = .false.
@@ -149,22 +149,22 @@
             ! elastic element
             if(.not. mask_ibool_elastic(iglob)) then
               mask_ibool_elastic(iglob) = .true.
-              npoin_interface_elastic = npoin_interface_elastic + 1
-              ibool_interfaces_elastic(npoin_interface_elastic,num_interface) = iglob
+              nglob_interface_elastic = nglob_interface_elastic + 1
+              ibool_interfaces_elastic(nglob_interface_elastic,num_interface) = iglob
             end if
           else if ( poroelastic(ispec) ) then
             ! poroelastic element
             if(.not. mask_ibool_poroelastic(iglob)) then
               mask_ibool_poroelastic(iglob) = .true.
-              npoin_interface_poroelastic = npoin_interface_poroelastic + 1
-              ibool_interfaces_poroelastic(npoin_interface_poroelastic,num_interface) = iglob
+              nglob_interface_poroelastic = nglob_interface_poroelastic + 1
+              ibool_interfaces_poroelastic(nglob_interface_poroelastic,num_interface) = iglob
             end if
           else
             ! acoustic element
             if(.not. mask_ibool_acoustic(iglob)) then
               mask_ibool_acoustic(iglob) = .true.
-              npoin_interface_acoustic = npoin_interface_acoustic + 1
-              ibool_interfaces_acoustic(npoin_interface_acoustic,num_interface) = iglob
+              nglob_interface_acoustic = nglob_interface_acoustic + 1
+              ibool_interfaces_acoustic(nglob_interface_acoustic,num_interface) = iglob
             end if
           end if
         end do
@@ -173,9 +173,9 @@
     end do
 
     ! stores counters for interface points
-    nibool_interfaces_acoustic(num_interface) = npoin_interface_acoustic
-    nibool_interfaces_elastic(num_interface) = npoin_interface_elastic
-    nibool_interfaces_poroelastic(num_interface) = npoin_interface_poroelastic
+    nibool_interfaces_acoustic(num_interface) = nglob_interface_acoustic
+    nibool_interfaces_elastic(num_interface) = nglob_interface_elastic
+    nibool_interfaces_poroelastic(num_interface) = nglob_interface_poroelastic
 
     ! sets inner/outer element flags
     do ispec = 1, nspec

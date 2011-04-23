@@ -44,7 +44,7 @@
 
 #ifdef USE_MPI
 
-  subroutine get_MPI(nspec,ibool,knods,ngnod,npoin,elastic,poroelastic, &
+  subroutine get_MPI(nspec,ibool,knods,ngnod,nglob,elastic,poroelastic, &
                     ninterface, max_interface_size, &
                     my_nelmnts_neighbours,my_interfaces,my_neighbours, &
                     ibool_interfaces_acoustic, ibool_interfaces_elastic, &
@@ -64,7 +64,7 @@
   include "constants.h"
   include 'mpif.h'
 
-  integer, intent(in)  :: nspec, npoin, ngnod
+  integer, intent(in)  :: nspec, nglob, ngnod
   logical, dimension(nspec), intent(in)  :: elastic, poroelastic
   integer, dimension(ngnod,nspec), intent(in)  :: knods
   integer, dimension(NGLLX,NGLLZ,nspec), intent(in)  :: ibool
@@ -85,7 +85,7 @@
   logical, dimension(nspec), intent(inout)  :: mask_ispec_inner_outer
 
   integer :: myrank,ipass
-  double precision, dimension(NDIM,npoin) :: coord
+  double precision, dimension(NDIM,nglob) :: coord
 
   !local parameters
   double precision, dimension(:), allocatable :: xp,zp
@@ -110,7 +110,7 @@
   ! gets global indices for points on MPI interfaces
   ! (defined by my_interfaces) between different partitions
   ! and stores them in ibool_interfaces*** & nibool_interfaces*** (number of total points)
-  call prepare_assemble_MPI(nspec,ibool,knods, ngnod,npoin, elastic, poroelastic, &
+  call prepare_assemble_MPI(nspec,ibool,knods, ngnod,nglob, elastic, poroelastic, &
                                 ninterface, max_interface_size, &
                                 my_nelmnts_neighbours, my_interfaces, &
                                 ibool_interfaces_acoustic, ibool_interfaces_elastic, &
@@ -240,7 +240,7 @@
   if ( ninterface_acoustic > 0) then
 
     ! checks with assembly of test fields
-    allocate(test_flag_cr(npoin))
+    allocate(test_flag_cr(nglob))
     test_flag_cr(:) = 0._CUSTOM_REAL
     count = 0
     do ispec = 1, nspec
@@ -284,7 +284,7 @@
   if( ninterface_acoustic > 0 ) then
     ! adds contributions from different partitions to flag arrays
     ! custom_real arrays
-    call assemble_MPI_vector_ac(test_flag_cr,npoin, &
+    call assemble_MPI_vector_ac(test_flag_cr,nglob, &
                     ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
                     max_interface_size, max_nibool_interfaces,&
                     ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
@@ -293,7 +293,7 @@
 
     ! checks number of interface points
     inum = 0
-    do iglob=1,npoin
+    do iglob=1,nglob
       ! only counts flags with MPI contributions
       if( nint(test_flag_cr(iglob)) > myrank+1 ) inum = inum + 1
     enddo

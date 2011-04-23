@@ -42,7 +42,7 @@
 !
 !========================================================================
 
-subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
+subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
      ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
      source_type,it,NSTEP,anyabs,assign_external_model, &
      initialfield,TURN_ATTENUATION_ON,angleforce,deltatcube, &
@@ -69,7 +69,7 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
 
   logical :: p_sv
   integer :: NSOURCES, i_source
-  integer :: npoin,nspec,myrank,nelemabs,numat,it,NSTEP
+  integer :: nglob,nspec,myrank,nelemabs,numat,it,NSTEP
   integer, dimension(NSOURCES) :: ispec_selected_source,is_proc_source,source_type
 
   integer :: nrec,SIMULATION_TYPE
@@ -94,7 +94,7 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
   logical, dimension(nspec) :: elastic,anisotropic
   logical, dimension(4,nelemabs)  :: codeabs
 
-  real(kind=CUSTOM_REAL), dimension(3,npoin) :: accel_elastic,veloc_elastic,displ_elastic
+  real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic,veloc_elastic,displ_elastic
   double precision, dimension(2,numat) :: density
   double precision, dimension(4,3,numat) :: poroelastcoef
   double precision, dimension(6,numat) :: anisotropy
@@ -105,9 +105,9 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL), dimension(NSOURCES,NSTEP) :: source_time_function
   real(kind=CUSTOM_REAL), dimension(NSOURCES,NDIM,NGLLX,NGLLZ) :: sourcearray
 
-  real(kind=CUSTOM_REAL), dimension(3,npoin) :: b_accel_elastic,b_displ_elastic
+  real(kind=CUSTOM_REAL), dimension(3,nglob) :: b_accel_elastic,b_displ_elastic
   real(kind=CUSTOM_REAL), dimension(nrec,NSTEP,3,NGLLX,NGLLZ) :: adj_sourcearrays
-  real(kind=CUSTOM_REAL), dimension(npoin) :: mu_k,kappa_k
+  real(kind=CUSTOM_REAL), dimension(nglob) :: mu_k,kappa_k
   real(kind=CUSTOM_REAL), dimension(3,NGLLZ,nspec_left,NSTEP) :: b_absorb_elastic_left
   real(kind=CUSTOM_REAL), dimension(3,NGLLZ,nspec_right,NSTEP) :: b_absorb_elastic_right
   real(kind=CUSTOM_REAL), dimension(3,NGLLX,nspec_top,NSTEP) :: b_absorb_elastic_top
@@ -167,7 +167,7 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
 
   ! for analytical initial plane wave for Bielak's conditions
   double precision :: veloc_horiz,veloc_vert,dxUx,dzUx,dxUz,dzUz,traction_x_t0,traction_z_t0,deltat
-  double precision, dimension(NDIM,npoin), intent(in) :: coord
+  double precision, dimension(NDIM,nglob), intent(in) :: coord
   double precision x0_source, z0_source, angleforce_refl, c_inc, c_refl, time_offset, f0
   double precision, dimension(NDIM) :: A_plane, B_plane, C_plane
   !over critical angle
@@ -183,7 +183,7 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
   ! compute Grad(displ_elastic) at time step n for attenuation
   if(TURN_ATTENUATION_ON) then
      call compute_gradient_attenuation(displ_elastic,dux_dxl_n,duz_dxl_n, &
-          dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,npoin)
+          dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob)
   endif
 
   ifirstelem = 1
@@ -488,7 +488,7 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
               ! left or right edge, horizontal normal vector
               if(add_Bielak_conditions .and. initialfield) then
                  if (.not.over_critical_angle) then
-                    call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                    call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
                          x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
                          c_inc, c_refl, time_offset,f0)
                     traction_x_t0 = (lambdal_relaxed+2*mul_relaxed)*dxUx + lambdal_relaxed*dzUz
@@ -579,7 +579,7 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
               ! left or right edge, horizontal normal vector
               if(add_Bielak_conditions .and. initialfield) then
                  if (.not.over_critical_angle) then
-                    call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                    call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
                          x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
                          c_inc, c_refl, time_offset,f0)
                     traction_x_t0 = (lambdal_relaxed+2*mul_relaxed)*dxUx + lambdal_relaxed*dzUz
@@ -676,7 +676,7 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
               ! top or bottom edge, vertical normal vector
               if(add_Bielak_conditions .and. initialfield) then
                  if (.not.over_critical_angle) then
-                    call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                    call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
                          x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
                          c_inc, c_refl, time_offset,f0)
                     traction_x_t0 = mul_relaxed*(dxUz + dzUx)
@@ -772,7 +772,7 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
               ! for analytical initial plane wave for Bielak's conditions
               ! top or bottom edge, vertical normal vector
               if(add_Bielak_conditions .and. initialfield) then
-                 call compute_Bielak_conditions(coord,iglob,npoin,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                 call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
                       x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
                       c_inc, c_refl, time_offset,f0)
                  traction_x_t0 = mul_relaxed*(dxUz + dzUx)
@@ -919,7 +919,7 @@ subroutine compute_forces_viscoelastic(p_sv,npoin,nspec,myrank,nelemabs,numat, &
 
      ! compute Grad(displ_elastic) at time step n+1 for attenuation
      call compute_gradient_attenuation(displ_elastic,dux_dxl_np1,duz_dxl_np1, &
-          dux_dzl_np1,duz_dzl_np1,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,npoin)
+          dux_dzl_np1,duz_dzl_np1,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob)
 
      ! update memory variables with fourth-order Runge-Kutta time scheme for attenuation
      ! loop over spectral elements

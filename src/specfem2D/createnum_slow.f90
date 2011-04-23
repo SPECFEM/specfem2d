@@ -42,7 +42,7 @@
 !
 !========================================================================
 
-  subroutine createnum_slow(knods,ibool,npoin,nspec,ngnod,myrank,ipass)
+  subroutine createnum_slow(knods,ibool,nglob,nspec,ngnod,myrank,ipass)
 
 ! generate the global numbering
 
@@ -50,7 +50,7 @@
 
   include "constants.h"
 
-  integer npoin,nspec,ngnod,myrank,ipass
+  integer nglob,nspec,ngnod,myrank,ipass
 
   integer knods(ngnod,nspec),ibool(NGLLX,NGLLZ,nspec)
 
@@ -69,7 +69,7 @@
     write(IOUT,*)
   endif
 
-  npoin = 0
+  nglob = 0
   npedge = 0
   npcorn = 0
 
@@ -107,8 +107,8 @@
 !
   if(i /= 1 .and. i /= NGLLX .and. j /= 1 .and. j /= NGLLZ) then
 
-    npoin = npoin + 1
-    ibool(i,j,numelem) = npoin
+    nglob = nglob + 1
+    ibool(i,j,numelem) = nglob
 
 !
 !---- point au coin d'un element, rechercher les coins des autres elements
@@ -176,8 +176,8 @@
 ! si un ancien point n'a pas ete trouve, en generer un nouveau
   if(.not. alreadyexist) then
     npcorn = npcorn + 1
-    npoin = npoin + 1
-    ibool(i,j,numelem) = npoin
+    nglob = nglob + 1
+    ibool(i,j,numelem) = nglob
   endif
 
 !
@@ -296,8 +296,8 @@
 ! si un ancien point n'a pas ete trouve, en generer un nouveau
   if(.not. alreadyexist) then
     npedge = npedge + 1
-    npoin = npoin + 1
-    ibool(i,j,numelem) = npoin
+    nglob = nglob + 1
+    ibool(i,j,numelem) = nglob
   endif
 
   endif
@@ -309,12 +309,12 @@
   enddo
 
 ! verification de la coherence de la numerotation generee
-  if(minval(ibool) /= 1 .or. maxval(ibool) /= npoin) call exit_MPI('Error while generating global numbering')
+  if(minval(ibool) /= 1 .or. maxval(ibool) /= nglob) call exit_MPI('Error while generating global numbering')
 
   if(myrank == 0 .and. ipass == 1) then
-    write(IOUT,*) 'Total number of points of the global mesh: ',npoin,' distributed as follows:'
+    write(IOUT,*) 'Total number of points of the global mesh: ',nglob,' distributed as follows:'
     write(IOUT,*)
-    write(IOUT,*) 'Number of interior points: ',npoin-npedge-npcorn
+    write(IOUT,*) 'Number of interior points: ',nglob-npedge-npcorn
     write(IOUT,*) 'Number of edge points (without corners): ',npedge
     write(IOUT,*) 'Number of corner points: ',npcorn
     write(IOUT,*)
