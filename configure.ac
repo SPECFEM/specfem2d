@@ -141,7 +141,7 @@ if test "${USE_BUNDLED_SCOTCH}" != "1"; then
 
   scotch_include=""
   ac_save_cppflags=${CPPFLAGS}
-  # scotch only needed for fortran code  
+  # scotch only needed for fortran code
   #if test -n "${ac_scotch_include_dir}"; then
   #  CPPFLAGS="${CPPFLAGS} -I${ac_scotch_include_dir}";
   #fi
@@ -162,7 +162,7 @@ AC_MSG_CHECKING([whether Scotch is usable])
 if test "x${scotch_usable}" = "xyes"; then
  AC_DEFINE([HAVE_SCOTCH],[1],[defined if Scotch is installed])
  USE_BUNDLED_SCOTCH=0
- SCOTCH_DIR="${ac_scotch_dir}" 
+ SCOTCH_DIR="${ac_scotch_dir}"
  SCOTCH_LIBDIR="${ac_scotch_lib_dir}"
  SCOTCH_INCLUDEDIR="${ac_scotch_include_dir}"
  AC_MSG_RESULT([yes])
@@ -435,7 +435,7 @@ fi
 # Checks for library functions.
 
 
-AC_CONFIG_FILES([Makefile DATA/Par_file DATA/SOURCE src/meshfem2D/Makefile src/specfem2D/Makefile setup/constants.h setup/precision_mpi.h src/meshfem2D/scotch_5.1.11/src/Makefile.inc])
+AC_CONFIG_FILES([Makefile DATA/Par_file DATA/SOURCE src/meshfem2D/Makefile src/specfem2D/Makefile setup/constants.h setup/precision.h src/meshfem2D/scotch_5.1.11/src/Makefile.inc])
 AC_OUTPUT
 
 

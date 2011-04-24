@@ -165,7 +165,7 @@
 
   adj_sourcearray(:,:,:,:) = 0.
 
-  comp = (/"BHX","BHY","BHZ"/)
+  comp = (/"BXX","BXY","BXZ"/)
 
   do icomp = 1,3
 

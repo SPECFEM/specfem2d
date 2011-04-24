@@ -427,8 +427,10 @@ $O/specfem2D.o: ${S}/specfem2D.F90 ${SETUP}/constants.h
 ##
 ## shared
 ##
-$O/read_value_parameters.o: ${SHARED}/read_value_parameters.f90
-	${F90} $(FLAGS_CHECK) -c -o $O/read_value_parameters.o ${SHARED}/read_value_parameters.f90
-
+#$O/read_value_parameters.o: ${SHARED}/read_value_parameters.f90
+#	${F90} $(FLAGS_CHECK) -c -o $O/read_value_parameters.o ${SHARED}/read_value_parameters.f90
+#
+#$O/param_reader.o: ${SHARED}/param_reader.c
+#	${CC} -c $(CFLAGS) -o $O/param_reader.o ${SHARED}/param_reader.c
 
 

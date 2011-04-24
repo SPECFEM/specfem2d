@@ -39,7 +39,7 @@ if (@ARGV < 1) {die("Usage: plot_wavefield.pl xxx\n");}
 @cmax    = split("/",$ctemp);     # CMAX : decrease for more contrast
 ($t0,$dt) = split("/",$tinc);
 ($ipx,$ipy,$ipz,$ipsv,$itype) = split("/",$ipar1);   # itype =0 (kernel), =1 (forward wavefield), (=2) adjoint wavefield
-($xwid,$iportrait,$irecsurf) = split("/",$ipar2); 
+($xwid,$iportrait,$irecsurf) = split("/",$ipar2);
 ($igrd,$imask,$msize,$xpix) = split("/",$ipar3);
 
 #@frames  = split("/",$ftemp);
@@ -104,7 +104,7 @@ if($igrd==1) {print "interpolation for grd file is $interp\n";}
 if($iportrait==1) {$orient = "-P";} else {$orient = "";}
 
    $ncol = $ipx + $ipy + $ipz;
-   print "$ncol (ncol) to display: $ipx (X), $ipy (Y), $ipz (Z)\n";   
+   print "$ncol (ncol) to display: $ipx (X), $ipy (Y), $ipz (Z)\n";
    if($ncol==0) {die("Must specify at least one component to display");}
    if($ncol==1 && $ipx==1) {@comps = (1);}
    if($ncol==1 && $ipy==1) {@comps = (2);}
@@ -113,7 +113,7 @@ if($iportrait==1) {$orient = "-P";} else {$orient = "";}
    if($ncol==2 && $ipy==0) {@comps = (1,3);}
    if($ncol==2 && $ipz==0) {@comps = (1,2);}
    if($ncol==3) {@comps = (1,2,3);}
-   print "$ncol (ncol) to display: $ipx (X), $ipy (Y), $ipz (Z)\n";  
+   print "$ncol (ncol) to display: $ipx (X), $ipy (Y), $ipz (Z)\n";
    print "comps: @comps\n";
    #die("TESTING");
 
@@ -158,7 +158,7 @@ if($irecsurf == 1) {$rdy = 6; $tdy = 15;}
 
 # -N or not
 $rec = "-W1p $rfill -Si10p -D${rdx}p/${rdy}p";
-$rec2 = "-W1p,0/255/255 $rfill -Si10p -D${rdx}p/${rdy}p"; 
+$rec2 = "-W1p,0/255/255 $rfill -Si10p -D${rdx}p/${rdy}p";
 $textrec = "-D${tdx}p/${tdy}p -W255 -C1p -N";
 
 # source and receivers
@@ -275,7 +275,7 @@ for ($i = $imin; $i <= $imax; $i++) {
    $time = sprintf("%.3f",$t0 + $j1*$dt);
    #$time = sprintf("%.0f",$j1);     # snapshot
    #print "\n--time,t0,j1,i -- $time, $t0, $j1, $i--\n";
-   
+
    $snapshot_f = "${idir1}/$wavefield[0]${snap1}_${stitype}_000.txt";   # 000 assumes one processor only
    #if($igrd==1) {$snapshot_f = "${idir1}/$wavefield[0]${snap1}_${stitype}_pixel.txt";}
 
@@ -288,7 +288,7 @@ for ($i = $imin; $i <= $imax; $i++) {
 
    print CSH "echo $psfile\n";
    print CSH "echo $snapshot_f\n";
-    
+
    $B0 = sprintf("-Ba${btick1x}f${btick2x}/a${btick1z}f${btick2z}:\"t = $time s\"::.\"  \"");
    $B      = "$B0:Wsne";
    $B_row1 = "$B0:WSne";
@@ -410,8 +410,8 @@ for ($i = $imin; $i <= $imax; $i++) {
    #$ztext = $zmin+0.5*$zran;
    #$tstr = "t = $time s";
    #print CSH "pstext -N $J $R -K -O -V >>$psfile<<EOF\n $xtext $ztext $fsize1 90 $fontno CM $tstr\nEOF\n";
-      
-   #$xtx = $xmin+0.5*$xran; $ztx = $zmin+1.1*$zran; 
+
+   #$xtx = $xmin+0.5*$xran; $ztx = $zmin+1.1*$zran;
    #if ($i == $imax) {print CSH "pstext -N $J $R -K -O -V >>$psfile<<EOF\n $xtx $ztx $fsize1 0 $fontno CM $titles[$k]\nEOF\n";}
 
    #-------------------------
@@ -487,11 +487,11 @@ print CSH "pstext -N $J $R $Utag -K -O -V $shift >>$psfile<<EOF\n $xmin $zmax $f
   if ($iktype==1) {
     @titles    = ("K$sik-\@~r\@","K$sik-\@~k\@","K$sik-\@~m\@");
     @ytitles    = ("Krho","Kkappa","Kmu");
-    $kfile1 = "${idir1}/snapshot_rho_kappa_mu_000000";
+    $kfile1 = "${idir1}/proc000000_rho_kappa_mu_kernel.dat";
   } else {
     @titles    = ("K$sik-\@~r\@","K$sik-Vp","K$sik-Vs");
     @ytitles    = ("Krho","Kalpha","Kbeta");
-    $kfile1 = "${idir1}/snapshot_rhop_alpha_beta_000000";
+    $kfile1 = "${idir1}/proc000000_rhop_alpha_beta_kernel.dat";
   }
   #@ytitles    = (" "," "," ");
   @wavefield = ("wavefield","wavefield","wavefield");
@@ -521,7 +521,7 @@ print CSH "pstext -N $J $R $Utag -K -O -V $shift >>$psfile<<EOF\n $xmin $zmax $f
 
   print CSH "echo $kfile\n";
   print CSH "echo $psfile\n";
-    
+
   #$B0 = sprintf("-Ba${btick1x}f${btick2x}/a${btick1z}f${btick2z}:\"t = $time s\"::.\"  \"");
   $B1 = sprintf("-Ba${btick1x}f${btick2x}/a${btick1z}f${btick2z}:\"$ytitles[0]\"::.\" \":WSne");
   $B2 = sprintf("-Ba${btick1x}f${btick2x}/a${btick1z}f${btick2z}:\"$ytitles[1]\"::.\" \":Wsne");
@@ -592,7 +592,7 @@ print CSH "pstext -N $J $R $Utag -K -O -V $shift >>$psfile<<EOF\n $xmin $zmax $f
     }
 
     # plot title
-    $xtx = $xmin+0.98*$xran; $ztx = $zmin+0.93*$zran; 
+    $xtx = $xmin+0.98*$xran; $ztx = $zmin+0.93*$zran;
     print "\ntitle plotting at $xtx, $ztx\n";
     $textinfo = "-G0 -W255 -C2p -N";
     print CSH "pstext $textinfo $J $R -K -O -V >>$psfile<<EOF\n $xtx $ztx 16 0 $fontno RT $titles[$k]\nEOF\n";

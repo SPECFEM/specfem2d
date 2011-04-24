@@ -99,6 +99,7 @@ SETUP = ../../setup
 
 OBJS_MESHFEM2D = \
 	$O/get_node_number.o \
+	$O/param_reader.o \
 	$O/part_unstruct.o \
 	$O/read_interfaces_file.o \
 	$O/read_materials.o \
@@ -154,8 +155,8 @@ xmeshfem2D: $(OBJS_MESHFEM2D)
 ##
 ## check_quality_external_mesh
 ##
-xcheck_quality_external_mesh: $O/check_quality_external_mesh.o $O/read_value_parameters.o
-	${F90} $(FLAGS_CHECK) -o ${E}/xcheck_quality_external_mesh $O/check_quality_external_mesh.o $O/read_value_parameters.o
+xcheck_quality_external_mesh: $O/check_quality_external_mesh.o $O/read_value_parameters.o $O/param_reader.o
+	${F90} $(FLAGS_CHECK) -o ${E}/xcheck_quality_external_mesh $O/check_quality_external_mesh.o $O/read_value_parameters.o $O/param_reader.o
 
 ##
 ## object files
@@ -210,9 +211,12 @@ $O/check_quality_external_mesh.o: ${SHARED}/check_quality_external_mesh.f90
 
 ##
 ## shared
-## 
+##
 $O/read_value_parameters.o: ${SHARED}/read_value_parameters.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/read_value_parameters.o ${SHARED}/read_value_parameters.f90
+
+$O/param_reader.o: ${SHARED}/param_reader.c
+	${CC} -c $(CFLAGS) -o $O/param_reader.o ${SHARED}/param_reader.c
 
 
 

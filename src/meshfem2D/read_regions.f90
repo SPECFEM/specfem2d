@@ -64,9 +64,13 @@
   integer :: iregion,ixdebregion,ixfinregion,izdebregion,izfinregion,imaterial_number
   integer :: i,j
   double precision :: vpregion,vsregion,poisson_ratio
+  integer,external :: err_occurred
 
   ! read the material numbers for each region
-  call read_value_integer(IIN,IGNORE_JUNK,nbregion)
+  !call read_value_integer(IIN,IGNORE_JUNK,nbregion)
+  call read_value_integer_p(nbregion, 'mesher.nbregions')
+  if(err_occurred() /= 0) stop 'error reading parameter nbregions in Par_file'
+
 
   if(nbregion <= 0) stop 'Negative number of regions not allowed!'
 
@@ -76,7 +80,10 @@
 
   do iregion = 1,nbregion
 
-    call read_region_coordinates(IIN,DONT_IGNORE_JUNK,ixdebregion,ixfinregion, &
+    !call read_region_coordinates(IIN,DONT_IGNORE_JUNK,ixdebregion,ixfinregion, &
+    !                            izdebregion,izfinregion,imaterial_number)
+
+    call read_region_coordinates_p(ixdebregion,ixfinregion, &
                                 izdebregion,izfinregion,imaterial_number)
 
     if(imaterial_number < 1) stop 'Negative material number not allowed!'

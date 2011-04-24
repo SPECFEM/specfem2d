@@ -66,13 +66,13 @@ program adj_seismogram
   character(len=150) :: filename
 
   NDIM=3
-  comp = (/"BHX","BHY","BHZ"/)
+  comp = (/"BXX","BXY","BXZ"/)
 
   ! number of components
   !NDIMr=2  ! P-SV
   NDIMr=1  ! SH (membrane)
-  !compr = (/"BHX","BHZ"/)    ! P-SV
-  compr = (/"BHY","tmp"/)  ! SH (membrane)
+  !compr = (/"BXX","BXZ"/)    ! P-SV
+  compr = (/"BXY","tmp"/)  ! SH (membrane)
   ! list of stations
   station_name(1) = 'S0001'
 
@@ -170,7 +170,7 @@ program adj_seismogram
 
   enddo
   print*,'*************************'
-  print*,'The input files (S****.AA.BHX/BHY/BHZ.adj) needed to run the adjoint simulation are in SEM'
+  print*,'The input files (S****.AA.BXX/BXY/BXZ.adj) needed to run the adjoint simulation are in SEM'
   print*,'*************************'
 
 end program adj_seismogram
