@@ -4762,7 +4762,7 @@ if test "${USE_BUNDLED_SCOTCH}" != "1"; then
 #daniel: scotch will be needed in directory src/meshfem2D/
   builddir=`pwd`
   cd src/meshfem2D/
-  
+
   if test -z "${ac_scotch_lib_dir}"; then
     if test -n "${ac_scotch_dir}"; then
       ac_scotch_lib_dir="${ac_scotch_dir}/lib";
@@ -5058,7 +5058,7 @@ test -n "$YACC" || YACC="yacc"
  # uses bundled scotch: current version 5.1.11
  USE_BUNDLED_SCOTCH=1
 
- SCOTCH_DIR="scotch_5.1.11" 
+ SCOTCH_DIR="scotch_5.1.11"
  SCOTCH_LIBDIR="${SCOTCH_DIR}/lib"
  SCOTCH_INCLUDEDIR="${SCOTCH_DIR}/include"
 
@@ -5067,7 +5067,7 @@ test -n "$YACC" || YACC="yacc"
  #
  builddir=`pwd`
  cd src/meshfem2D/
- 
+
  if test ! -f "${SCOTCH_DIR}/src/scotch/Makefile.org"; then
 
   # no Makefile backup files yet
@@ -5549,7 +5549,7 @@ fi
 # Checks for library functions.
 
 
-ac_config_files="$ac_config_files Makefile src/specfem2D/Makefile src/meshfem2D/Makefile DATA/Par_file DATA/SOURCE setup/constants.h setup/precision_mpi.h src/meshfem2D/scotch_5.1.11/src/Makefile.inc"
+ac_config_files="$ac_config_files Makefile src/specfem2D/Makefile src/meshfem2D/Makefile DATA/Par_file DATA/SOURCE setup/constants.h setup/precision.h src/meshfem2D/scotch_5.1.11/src/Makefile.inc"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -6255,7 +6255,7 @@ do
     "DATA/Par_file") CONFIG_FILES="$CONFIG_FILES DATA/Par_file" ;;
     "DATA/SOURCE") CONFIG_FILES="$CONFIG_FILES DATA/SOURCE" ;;
     "setup/constants.h") CONFIG_FILES="$CONFIG_FILES setup/constants.h" ;;
-    "setup/precision_mpi.h") CONFIG_FILES="$CONFIG_FILES setup/precision_mpi.h" ;;
+    "setup/precision.h") CONFIG_FILES="$CONFIG_FILES setup/precision.h" ;;
     "src/meshfem2D/scotch_5.1.11/src/Makefile.inc") CONFIG_FILES="$CONFIG_FILES src/meshfem2D/scotch_5.1.11/src/Makefile.inc" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5 ;;

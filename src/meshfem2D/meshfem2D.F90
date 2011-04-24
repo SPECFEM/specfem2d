@@ -373,7 +373,7 @@ program meshfem2D
   integer :: iproc
   integer :: ix,iz,i,j
   integer :: imaterial_number,inumelem
-  integer :: i_source,ios
+  integer :: i_source
   double precision :: tang1,tangN
 
   ! ***
@@ -383,8 +383,8 @@ program meshfem2D
   print *,'Reading the parameter file ... '
   print *
 
-  open(unit=IIN,file='DATA/Par_file',status='old',iostat=ios)
-  if( ios /= 0 ) stop 'error opening DATA/Par_file file'
+  ! opens file Par_file
+  call open_parameter_file()
 
   ! reads in parameters in DATA/Par_file
   call read_parameter_file()
@@ -412,7 +412,8 @@ program meshfem2D
                       nelmnts,num_material,nxread,nzread)
   endif
 
-  close(IIN)
+  ! closes file Par_file
+  call close_parameter_file()
 
   print *
   print *,'Parameter file successfully read... '

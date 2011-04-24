@@ -209,3 +209,241 @@
 
   end subroutine read_next_line
 
+!--------------------
+
+
+
+
+!--------------------
+!--------------------
+! uses param_reader.c functions
+!--------------------
+!--------------------
+
+
+  subroutine read_value_integer_p(value_to_read, name)
+
+  implicit none
+
+  integer value_to_read
+  character(len=*) name
+  character(len=100) string_read
+  integer ierr
+  common /param_err_common/ ierr
+
+  call param_read(string_read, len(string_read), name, len(name), ierr)
+  if (ierr .ne. 0) return
+  read(string_read,*) value_to_read
+
+  end subroutine read_value_integer_p
+
+!--------------------
+
+  subroutine read_value_double_precision_p(value_to_read, name)
+
+  implicit none
+
+  double precision value_to_read
+  character(len=*) name
+  character(len=100) string_read
+  integer ierr
+  common /param_err_common/ ierr
+
+  call param_read(string_read, len(string_read), name, len(name), ierr)
+  if (ierr .ne. 0) return
+  read(string_read,*) value_to_read
+
+  end subroutine read_value_double_precision_p
+
+!--------------------
+
+  subroutine read_value_logical_p(value_to_read, name)
+
+  implicit none
+
+  logical value_to_read
+  character(len=*) name
+  character(len=100) string_read
+  integer ierr
+  common /param_err_common/ ierr
+
+  call param_read(string_read, len(string_read), name, len(name), ierr)
+  if (ierr .ne. 0) return
+  read(string_read,*) value_to_read
+
+  end subroutine read_value_logical_p
+
+!--------------------
+
+  subroutine read_value_string_p(value_to_read, name)
+
+  implicit none
+
+  character(len=*) value_to_read
+  character(len=*) name
+  character(len=100) string_read
+  integer ierr
+  common /param_err_common/ ierr
+
+  call param_read(string_read, len(string_read), name, len(name), ierr)
+  if (ierr .ne. 0) return
+  value_to_read = string_read
+
+  end subroutine read_value_string_p
+
+!--------------------
+
+  subroutine read_value_integer_next_p(value_to_read, name)
+
+  implicit none
+
+  integer value_to_read
+  character(len=*) name
+  character(len=100) string_read
+  integer ierr
+  common /param_err_common/ ierr
+
+  call param_read_nextparam(string_read, len(string_read), name, len(name), ierr)
+  if (ierr .ne. 0) return
+  read(string_read,*) value_to_read
+
+  end subroutine read_value_integer_next_p
+
+!--------------------
+
+  subroutine read_value_double_prec_next_p(value_to_read, name)
+
+  implicit none
+
+  double precision value_to_read
+  character(len=*) name
+  character(len=100) string_read
+  integer ierr
+  common /param_err_common/ ierr
+
+  call param_read_nextparam(string_read, len(string_read), name, len(name), ierr)
+  if (ierr .ne. 0) return
+  read(string_read,*) value_to_read
+
+  end subroutine read_value_double_prec_next_p
+
+!--------------------
+
+  subroutine read_value_logical_next_p(value_to_read, name)
+
+  implicit none
+
+  logical value_to_read
+  character(len=*) name
+  character(len=100) string_read
+  integer ierr
+  common /param_err_common/ ierr
+
+  call param_read_nextparam(string_read, len(string_read), name, len(name), ierr)
+  if (ierr .ne. 0) return
+  read(string_read,*) value_to_read
+
+  end subroutine read_value_logical_next_p
+
+
+!--------------------
+
+  subroutine read_material_parameters_p(i,icodematread,val0read,val1read,val2read,val3read, &
+                         val4read,val5read,val6read,val7read,val8read,val9read,val10read, &
+                         val11read,val12read)
+
+
+  implicit none
+
+  integer i,icodematread
+  double precision val0read,val1read,val2read,val3read,val4read,val5read,val6read,val7read,&
+                   val8read,val9read,val10read,val11read,val12read
+
+  character(len=100) string_read
+  integer ierr
+  common /param_err_common/ ierr
+
+  call param_read_nextline(string_read, len(string_read), ierr)
+  if (ierr .ne. 0) stop 'error reading material parameter'
+  print*,trim(string_read)
+  read(string_read,*,iostat=ierr) i,icodematread,val0read,val1read,val2read,val3read,val4read,val5read,&
+                      val6read,val7read,val8read,val9read,val10read,val11read,val12read
+
+  if( ierr .ne. 0) stop 'error reading material parameters line'
+
+  end subroutine read_material_parameters_p
+
+!--------------------
+
+  subroutine read_region_coordinates_p(value_to_read_1,value_to_read_2, &
+                          value_to_read_3,value_to_read_4,value_to_read_5)
+
+  implicit none
+
+  integer value_to_read_1,value_to_read_2,value_to_read_3,value_to_read_4,value_to_read_5
+  character(len=100) string_read
+  integer ierr
+  common /param_err_common/ ierr
+
+  call param_read_nextline(string_read, len(string_read), ierr)
+  if (ierr .ne. 0) stop 'error reading region coordinates'
+  !print*,string_read
+
+  read(string_read,*,iostat=ierr) value_to_read_1,value_to_read_2,value_to_read_3,value_to_read_4,value_to_read_5
+
+  if( ierr .ne. 0) stop 'error reading region coordinates line'
+
+  end subroutine read_region_coordinates_p
+
+
+!--------------------
+
+
+  subroutine open_parameter_file()
+
+  implicit none
+  include 'constants.h'
+  integer ierr
+  common /param_err_common/ ierr
+  character(len=50) filename
+
+  ! to use fortran routines
+  !open(unit=IIN,file='DATA/Par_file',status='old',iostat=ios)
+  !if( ios /= 0 ) stop 'error opening DATA/Par_file file'
+
+  ! to use c routines
+  filename = 'DATA/Par_file'
+
+  call param_open(filename, len_trim(filename), ierr)
+  if( ierr .ne. 0 ) stop 'error opening DATA/Par_file file'
+
+  end subroutine open_parameter_file
+
+!--------------------
+
+  subroutine close_parameter_file()
+
+  implicit none
+  include 'constants.h'
+
+  ! to use fortran routines
+  !close(IIN)
+
+  ! to use c routines
+  call param_close()
+
+  end subroutine close_parameter_file
+
+!--------------------
+
+  integer function err_occurred()
+
+  implicit none
+
+  integer ierr
+  common /param_err_common/ ierr
+
+  err_occurred = ierr
+
+  end function err_occurred
+

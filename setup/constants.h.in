@@ -9,7 +9,7 @@
 !
 ! solver in single or double precision depending on the machine (4 or 8 bytes)
 !
-! ALSO CHANGE FILE precision_mpi.h ACCORDINGLY
+! ALSO CHANGE FILE precision.h ACCORDINGLY
 !
   integer, parameter :: SIZE_REAL = 4
   integer, parameter :: SIZE_DOUBLE = 8
@@ -18,7 +18,7 @@
 ! set to SIZE_REAL to run in single precision
 ! set to SIZE_DOUBLE to run in double precision (increases memory size by 2)
 !
-! DO CHANGE precision_mpi.h accordingly
+! DO CHANGE precision.h accordingly
 !
   integer, parameter :: CUSTOM_REAL = @CUSTOM_REAL@
 

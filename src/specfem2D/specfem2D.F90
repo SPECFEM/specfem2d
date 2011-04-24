@@ -2712,12 +2712,12 @@
   if(SIMULATION_TYPE == 2) then
 
     if(any_elastic) then
-      write(outputname,'(a,i6.6,a)') 'snapshot_rho_kappa_mu_',myrank
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_mu_kernel.dat'
       open(unit = 97, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing snapshot to disk'
-      write(outputname,'(a,i6.6,a)') 'snapshot_rhop_alpha_beta_',myrank
+      if (ios /= 0) stop 'Error writing kernel file to disk'
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_alpha_beta_kernel.dat'
       open(unit = 98, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing snapshot to disk'
+      if (ios /= 0) stop 'Error writing kernel file to disk'
 
       rho_kl(:,:,:) = 0._CUSTOM_REAL
       mu_kl(:,:,:) = 0._CUSTOM_REAL
@@ -2735,35 +2735,35 @@
     if(any_poroelastic) then
 
       ! Primary kernels
-      write(outputname,'(a,i6.6,a)') 'snapshot_mu_B_C_',myrank
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mu_B_C_kernel.dat'
       open(unit = 144, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing snapshot to disk'
-      write(outputname,'(a,i6.6,a)') 'snapshot_M_rho_rhof_',myrank
+      if (ios /= 0) stop 'Error writing kernel file to disk'
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_M_rho_rhof_kernel.dat'
       open(unit = 155, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing snapshot to disk'
-      write(outputname,'(a,i6.6,a)') 'snapshot_m_eta_',myrank
+      if (ios /= 0) stop 'Error writing kernel file to disk'
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_m_eta_kernel.dat'
       open(unit = 16, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing snapshot to disk'
+      if (ios /= 0) stop 'Error writing kernel file to disk'
       ! Wavespeed kernels
-      write(outputname,'(a,i6.6,a)') 'snapshot_cpI_cpII_cs_',myrank
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_cpI_cpII_cs_kernel.dat'
       open(unit = 20, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing snapshot to disk'
-      write(outputname,'(a,i6.6,a)') 'snapshot_rhobb_rhofbb_ratio_',myrank
+      if (ios /= 0) stop 'Error writing kernel file to disk'
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhobb_rhofbb_ratio_kernel.dat'
       open(unit = 21, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing snapshot to disk'
-      write(outputname,'(a,i6.6,a)') 'snapshot_phib_eta_',myrank
+      if (ios /= 0) stop 'Error writing kernel file to disk'
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_phib_eta_kernel.dat'
       open(unit = 22, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing snapshot to disk'
+      if (ios /= 0) stop 'Error writing kernel file to disk'
       ! Density normalized kernels
-      write(outputname,'(a,i6.6,a)') 'snapshot_mub_Bb_Cb_',myrank
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mub_Bb_Cb_kernel.dat'
       open(unit = 17, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing snapshot to disk'
-      write(outputname,'(a,i6.6,a)') 'snapshot_Mb_rhob_rhofb_',myrank
+      if (ios /= 0) stop 'Error writing kernel file to disk'
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Mb_rhob_rhofb_kernel.dat'
       open(unit = 18, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing snapshot to disk'
-      write(outputname,'(a,i6.6,a)') 'snapshot_mb_etab_',myrank
+      if (ios /= 0) stop 'Error writing kernel file to disk'
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mb_etab_kernel.dat'
       open(unit = 19, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing snapshot to disk'
+      if (ios /= 0) stop 'Error writing kernel file to disk'
 
       rhot_kl(:,:,:) = 0._CUSTOM_REAL
       rhof_kl(:,:,:) = 0._CUSTOM_REAL
@@ -2792,12 +2792,12 @@
     endif
 
     if(any_acoustic) then
-      write(outputname,'(a,i6.6,a)') 'snapshot_rho_kappa_',myrank
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_kernel.dat'
       open(unit = 95, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing snapshot to disk'
-      write(outputname,'(a,i6.6,a)') 'snapshot_rhop_c_',myrank
+      if (ios /= 0) stop 'Error writing kernel file to disk'
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_c_kernel.dat'
       open(unit = 96, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing snapshot to disk'
+      if (ios /= 0) stop 'Error writing kernel file to disk'
 
       rho_ac_kl(:,:,:) = 0._CUSTOM_REAL
       kappa_ac_kl(:,:,:) = 0._CUSTOM_REAL

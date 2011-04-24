@@ -210,7 +210,7 @@
 
   include 'constants.h'
   include 'mpif.h'
-  include 'precision_mpi.h'
+  include 'precision.h'
 
   integer, intent(in)  :: npoin
   integer, intent(in)  :: ninterface, ninterface_acoustic
@@ -339,7 +339,7 @@
 
   include 'constants.h'
   include 'mpif.h'
-  include 'precision_mpi.h'
+  include 'precision.h'
 
   integer, intent(in)  :: npoin
   integer, intent(in)  :: ninterface, ninterface_elastic
@@ -446,7 +446,7 @@
 
   include 'constants.h'
   include 'mpif.h'
-  include 'precision_mpi.h'
+  include 'precision.h'
 
   integer, intent(in)  :: npoin
   integer, intent(in)  :: ninterface, ninterface_poroelastic

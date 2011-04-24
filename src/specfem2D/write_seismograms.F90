@@ -227,9 +227,9 @@
         do iorientation = 1,number_of_components
 
            if(iorientation == 1) then
-              chn = 'BHX'
+              chn = 'BXX'
            else if(iorientation == 2) then
-              chn = 'BHZ'
+              chn = 'BXZ'
            else if(iorientation == 3) then
               chn = 'cur'
            else
@@ -239,7 +239,7 @@
            ! in case of pressure, use different abbreviation
            if(seismotype == 4 .or. seismotype == 6) chn = 'PRE'
            ! in case of SH (membrane) waves, use different abbreviation
-           if(.not.p_sv) chn = 'BHY'
+           if(.not.p_sv) chn = 'BXY'
 
            ! create the name of the seismogram file for each slice
            ! file name includes the name of the station, the network and the component
