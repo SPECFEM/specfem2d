@@ -18,7 +18,7 @@ TO RUN:
 
 0. Read the user manual in SPECFEM2D/doc/manual_SPECFEM2D.pdf
 
-1. in SPECFEM2D root directory, configure, e.g., 
+1. in SPECFEM2D root directory, configure, e.g.,
    ./configure FC=gfortran
 
 2. modify constants.h file, setting USER_TO = 8.0 s
@@ -33,21 +33,21 @@ TO RUN:
 
 6. check out the output files in the local directory OUTPUT_FILES
 
-   The seismograms (S0001.AA.BHX.semd,S0001.AA.BHZ.semd) will be similar to those in Tromp2005, Figure 7b, but with an 8-second time shift due to the difference in origin time convention.
+   The seismograms (S0001.AA.BXX.semd,S0001.AA.BXZ.semd) will be similar to those in Tromp2005, Figure 7b, but with an 8-second time shift due to the difference in origin time convention.
 
    optional: try plotting the wavefield using the script
                 SPECFEM2D/UTILS/visualization/plot_wavefield.pl
 
 7. mv OUTPUT_FILES OUTPUT_FILES_PSV
 
-8. set p_sv = .false. in Par_file_Tromp2005 
+8. set p_sv = .false. in Par_file_Tromp2005
 
 9. execute script to run mesher and solver for the SH case:
    ./process.sh
 
 10. check out the output files in the local directory OUTPUT_FILES
 
-   The seismogram (S0001.AA.BHY.semd) will be similar to those in Tromp2005, Figure 2b, but with an 8-second time shift due to the difference in origin time convention.
+   The seismogram (S0001.AA.BXY.semd) will be similar to those in Tromp2005, Figure 2b, but with an 8-second time shift due to the difference in origin time convention.
 
    optional: try plotting the wavefield using the script
                 SPECFEM2D/UTILS/visualization/plot_wavefield.pl
