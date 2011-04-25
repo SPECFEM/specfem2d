@@ -551,10 +551,14 @@
   logical :: SAVE_FORWARD ! whether or not the last frame is saved to reconstruct the forward field
   integer :: SIMULATION_TYPE      ! 1 = forward wavefield, 2 = backward and adjoint wavefields and kernels
   double precision :: b_deltatover2,b_deltatsquareover2,b_deltat ! coefficients of the explicit Newmark time scheme
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_accels_poroelastic,b_velocs_poroelastic,b_displs_poroelastic
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_accelw_poroelastic,b_velocw_poroelastic,b_displw_poroelastic
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_accel_elastic,b_veloc_elastic,b_displ_elastic
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
+    b_accels_poroelastic,b_velocs_poroelastic,b_displs_poroelastic
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
+    b_accelw_poroelastic,b_velocw_poroelastic,b_displw_poroelastic
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
+    b_accel_elastic,b_veloc_elastic,b_displ_elastic
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
+    b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_ac,b_displ_ac,b_accel_ac
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rho_kl, mu_kl, kappa_kl
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhol_global, mul_global, kappal_global
@@ -568,7 +572,8 @@
     rhobb_kl, rhofbb_kl, phib_kl, cpI_kl, cpII_kl, cs_kl, ratio_kl
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhot_k, rhof_k, sm_k, eta_k, mufr_k, B_k, &
     C_k, M_k
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: phil_global,etal_f_global,rhol_s_global,rhol_f_global,rhol_bar_global, &
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: phil_global,etal_f_global, &
+    rhol_s_global,rhol_f_global,rhol_bar_global, &
     tortl_global,mulfr_global
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: permlxx_global,permlxz_global,permlzz_global
   character(len=150) :: adj_source_file
@@ -576,12 +581,17 @@
   double precision :: xx,zz,rholb,tempx1l,tempx2l,b_tempx1l,b_tempx2l,bb_tempx1l,bb_tempx2l
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: adj_sourcearray
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: adj_sourcearrays
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: b_absorb_elastic_left,b_absorb_poro_s_left,b_absorb_poro_w_left
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: b_absorb_elastic_right,b_absorb_poro_s_right,b_absorb_poro_w_right
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: b_absorb_elastic_bottom,b_absorb_poro_s_bottom,b_absorb_poro_w_bottom
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: b_absorb_elastic_top,b_absorb_poro_s_top,b_absorb_poro_w_top
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable ::  b_absorb_acoustic_left,b_absorb_acoustic_right,&
-                      b_absorb_acoustic_bottom, b_absorb_acoustic_top
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
+    b_absorb_elastic_left,b_absorb_poro_s_left,b_absorb_poro_w_left
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
+    b_absorb_elastic_right,b_absorb_poro_s_right,b_absorb_poro_w_right
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
+    b_absorb_elastic_bottom,b_absorb_poro_s_bottom,b_absorb_poro_w_bottom
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
+    b_absorb_elastic_top,b_absorb_poro_s_top,b_absorb_poro_w_top
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable ::  &
+    b_absorb_acoustic_left,b_absorb_acoustic_right,&
+    b_absorb_acoustic_bottom, b_absorb_acoustic_top
   integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
   integer, dimension(:), allocatable :: ib_left,ib_right,ib_bottom,ib_top
 
@@ -1579,7 +1589,8 @@
   endif
 
 !!$!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! yang  output weights for line, surface integrals !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!$!define_derivation_matrices(xigll(NGLLX),zigll(NGLLZ),wxgll(NGLLX),wzgll(NGLLZ),hprime_xx(NGLLX,NGLLX),hprime_zz(NGLLZ,NGLLZ),&
+!!$!define_derivation_matrices(xigll(NGLLX),zigll(NGLLZ),wxgll(NGLLX),wzgll(NGLLZ), &
+!!$!                           hprime_xx(NGLLX,NGLLX),hprime_zz(NGLLZ,NGLLZ),&
 !!$!                           hprimewgll_xx(NGLLX,NGLLX),hprimewgll_zz(NGLLZ,NGLLZ))
 !!$!xix(NGLLX,NGLLZ,nspec),xiz,gammax,gammaz,jacobian
 !!$!recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl,jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo, &
@@ -3705,7 +3716,9 @@
   allocate(coorg_recv_ps_vector_field(d1_coorg_recv_ps_vector_field,d2_coorg_recv_ps_vector_field))
 
 ! *********************************************************
+!
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
+!
 ! *********************************************************
 
 #ifdef USE_MPI
@@ -3772,9 +3785,8 @@
 ! implement viscous attenuation for poroelastic media
 !
     if(TURN_VISCATTENUATION_ON .and. any_poroelastic) then
-! update memory variables with fourth-order Runge-Kutta time scheme for attenuation
-! loop over spectral elements
-
+      ! update memory variables with fourth-order Runge-Kutta time scheme for attenuation
+      ! loop over spectral elements
       do ispec = 1,nspec
 
         etal_f = poroelastcoef(2,2,kmato(ispec))
@@ -3960,18 +3972,18 @@
       ! loop on all the coupling edges
       do inum = 1,num_fluid_solid_edges
 
-      ! get the edge of the acoustic element
+        ! get the edge of the acoustic element
         ispec_acoustic = fluid_solid_acoustic_ispec(inum)
         iedge_acoustic = fluid_solid_acoustic_iedge(inum)
 
-      ! get the corresponding edge of the elastic element
+        ! get the corresponding edge of the elastic element
         ispec_elastic = fluid_solid_elastic_ispec(inum)
         iedge_elastic = fluid_solid_elastic_iedge(inum)
 
-      ! implement 1D coupling along the edge
+        ! implement 1D coupling along the edge
         do ipoin1D = 1,NGLLX
 
-      ! get point values for the elastic side, which matches our side in the inverse direction
+          ! get point values for the elastic side, which matches our side in the inverse direction
           i = ivalue_inverse(ipoin1D,iedge_elastic)
           j = jvalue_inverse(ipoin1D,iedge_elastic)
           iglob = ibool(i,j,ispec_elastic)
@@ -3984,16 +3996,16 @@
             b_displ_z = b_displ_elastic(3,iglob)
           endif
 
-      ! get point values for the acoustic side
+          ! get point values for the acoustic side
           i = ivalue(ipoin1D,iedge_acoustic)
           j = jvalue(ipoin1D,iedge_acoustic)
           iglob = ibool(i,j,ispec_acoustic)
 
-      ! compute the 1D Jacobian and the normal to the edge: for their expression see for instance
-      ! O. C. Zienkiewicz and R. L. Taylor, The Finite Element Method for Solid and Structural Mechanics,
-      ! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
-      ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
-      ! Blackwell Science, page 110, equation (4.60).
+          ! compute the 1D Jacobian and the normal to the edge: for their expression see for instance
+          ! O. C. Zienkiewicz and R. L. Taylor, The Finite Element Method for Solid and Structural Mechanics,
+          ! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
+          ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
+          ! Blackwell Science, page 110, equation (4.60).
           if(iedge_acoustic == ITOP)then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
@@ -4024,7 +4036,7 @@
             weight = jacobian1D * wzgll(j)
           endif
 
-      ! compute dot product
+          ! compute dot product
           displ_n = displ_x*nx + displ_z*nz
 
           potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
@@ -4046,21 +4058,21 @@
 
     if(coupled_acoustic_poro) then
 
-! loop on all the coupling edges
+      ! loop on all the coupling edges
       do inum = 1,num_fluid_poro_edges
 
-! get the edge of the acoustic element
+        ! get the edge of the acoustic element
         ispec_acoustic = fluid_poro_acoustic_ispec(inum)
         iedge_acoustic = fluid_poro_acoustic_iedge(inum)
 
-! get the corresponding edge of the poroelastic element
+        ! get the corresponding edge of the poroelastic element
         ispec_poroelastic = fluid_poro_poroelastic_ispec(inum)
         iedge_poroelastic = fluid_poro_poroelastic_iedge(inum)
 
-! implement 1D coupling along the edge
+        ! implement 1D coupling along the edge
         do ipoin1D = 1,NGLLX
 
-! get point values for the poroelastic side, which matches our side in the inverse direction
+          ! get point values for the poroelastic side, which matches our side in the inverse direction
           i = ivalue_inverse(ipoin1D,iedge_poroelastic)
           j = jvalue_inverse(ipoin1D,iedge_poroelastic)
           iglob = ibool(i,j,ispec_poroelastic)
@@ -4080,17 +4092,17 @@
             b_displw_z = b_displw_poroelastic(2,iglob)
           endif
 
-! get point values for the acoustic side
-! get point values for the acoustic side
+          ! get point values for the acoustic side
+          ! get point values for the acoustic side
           i = ivalue(ipoin1D,iedge_acoustic)
           j = jvalue(ipoin1D,iedge_acoustic)
           iglob = ibool(i,j,ispec_acoustic)
 
-! compute the 1D Jacobian and the normal to the edge: for their expression see for instance
-! O. C. Zienkiewicz and R. L. Taylor, The Finite Element Method for Solid and Structural Mechanics,
-! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
-! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
-! Blackwell Science, page 110, equation (4.60).
+          ! compute the 1D Jacobian and the normal to the edge: for their expression see for instance
+          ! O. C. Zienkiewicz and R. L. Taylor, The Finite Element Method for Solid and Structural Mechanics,
+          ! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
+          ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
+          ! Blackwell Science, page 110, equation (4.60).
           if(iedge_acoustic == ITOP)then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
@@ -4121,7 +4133,7 @@
             weight = jacobian1D * wzgll(j)
           endif
 
-! compute dot product [u_s + w]*n
+          ! compute dot product [u_s + w]*n
           displ_n = (displ_x + displw_x)*nx + (displ_z + displw_z)*nz
 
           potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
@@ -4144,7 +4156,7 @@
 
     if(any_acoustic) then
 
-! --- add the source
+      ! --- add the source
       if(.not. initialfield) then
 
         do i_source=1,NSOURCES
@@ -4153,10 +4165,10 @@
             .not. elastic(ispec_selected_source(i_source)) .and. &
             .not. poroelastic(ispec_selected_source(i_source))) then
 
-! collocated force
-! beware, for acoustic medium, source is: pressure divided by Kappa of the fluid
-! the sign is negative because pressure p = - Chi_dot_dot therefore we need
-! to add minus the source to Chi_dot_dot to get plus the source in pressure
+            ! collocated force
+            ! beware, for acoustic medium, source is: pressure divided by Kappa of the fluid
+            ! the sign is negative because pressure p = - Chi_dot_dot therefore we need
+            ! to add minus the source to Chi_dot_dot to get plus the source in pressure
             if(source_type(i_source) == 1) then
 
               if(SIMULATION_TYPE == 1) then
@@ -4219,25 +4231,25 @@
 
 ! assembling potential_dot_dot for acoustic elements
 #ifdef USE_MPI
-  if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
-    call assemble_MPI_vector_ac(potential_dot_dot_acoustic,nglob, &
+    if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
+      call assemble_MPI_vector_ac(potential_dot_dot_acoustic,nglob, &
                     ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
                     max_interface_size, max_ibool_interfaces_size_ac,&
                     ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
                     tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac, &
                     buffer_recv_faces_vector_ac, my_neighbours)
 
-    if ( SIMULATION_TYPE == 2) then
-      call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic,nglob, &
+      if ( SIMULATION_TYPE == 2) then
+        call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic,nglob, &
                      ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
                      max_interface_size, max_ibool_interfaces_size_ac,&
                      ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
                      tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac, &
                      buffer_recv_faces_vector_ac, my_neighbours)
 
-    endif
+      endif
 
-  endif
+    endif
 
 !  if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0 .and. SIMULATION_TYPE == 2) then
 !    call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic,nglob, &
@@ -4253,40 +4265,40 @@
 ! ************* multiply by the inverse of the mass matrix and update velocity
 ! ************************************************************************************
 
-  if(any_acoustic) then
+    if(any_acoustic) then
 
-    potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
-    potential_dot_acoustic = potential_dot_acoustic + deltatover2*potential_dot_dot_acoustic
+      potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
+      potential_dot_acoustic = potential_dot_acoustic + deltatover2*potential_dot_dot_acoustic
 
-    if(SIMULATION_TYPE ==2)then
-    b_potential_dot_dot_acoustic = b_potential_dot_dot_acoustic * rmass_inverse_acoustic
-    b_potential_dot_acoustic = b_potential_dot_acoustic + b_deltatover2*b_potential_dot_dot_acoustic
-    endif
+      if(SIMULATION_TYPE ==2)then
+        b_potential_dot_dot_acoustic = b_potential_dot_dot_acoustic * rmass_inverse_acoustic
+        b_potential_dot_acoustic = b_potential_dot_acoustic + b_deltatover2*b_potential_dot_dot_acoustic
+      endif
 
 
-! free surface for an acoustic medium
-    if ( nelem_acoustic_surface > 0 ) then
-      call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
+      ! free surface for an acoustic medium
+      if ( nelem_acoustic_surface > 0 ) then
+        call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
                                         potential_acoustic,acoustic_surface, &
                                         ibool,nelem_acoustic_surface,nglob,nspec)
 
-      if(SIMULATION_TYPE == 2) then
-        call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
+        if(SIMULATION_TYPE == 2) then
+          call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
                                           b_potential_acoustic,acoustic_surface, &
                                           ibool,nelem_acoustic_surface,nglob,nspec)
+        endif
+
       endif
 
-    endif
-
-  endif !if(any_acoustic)
+    endif !if(any_acoustic)
 
 
 ! *********************************************************
 ! ************* main solver for the elastic elements
 ! *********************************************************
 
- if(any_elastic) then
-    call compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
+    if(any_elastic) then
+      call compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
                source_type,it,NSTEP,anyabs,assign_external_model, &
                initialfield,TURN_ATTENUATION_ON,angleforce,deltatcube, &
@@ -4308,91 +4320,82 @@
                b_absorb_elastic_left,b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top, &
                nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,mu_k,kappa_k)
 
-    if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
-!--- left absorbing boundary
-      if(nspec_left >0) then
-      do ispec = 1,nspec_left
+      if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
+        !--- left absorbing boundary
+        if(nspec_left >0) then
+          do ispec = 1,nspec_left
+            if(p_sv)then!P-SV waves
+              do i=1,NGLLZ
+                write(35) b_absorb_elastic_left(1,i,ispec,it)
+              enddo
+              do i=1,NGLLZ
+                write(35) b_absorb_elastic_left(3,i,ispec,it)
+              enddo
+            else!SH (membrane) waves
+              do i=1,NGLLZ
+                write(35) b_absorb_elastic_left(2,i,ispec,it)
+              enddo
+            endif
+          enddo
+        endif
 
-      if(p_sv)then!P-SV waves
-        do i=1,NGLLZ
-          write(35) b_absorb_elastic_left(1,i,ispec,it)
-        enddo
-        do i=1,NGLLZ
-          write(35) b_absorb_elastic_left(3,i,ispec,it)
-        enddo
-      else!SH (membrane) waves
-        do i=1,NGLLZ
-          write(35) b_absorb_elastic_left(2,i,ispec,it)
-        enddo
-      endif
+        !--- right absorbing boundary
+        if(nspec_right >0) then
+          do ispec = 1,nspec_right
+            if(p_sv)then!P-SV waves
+              do i=1,NGLLZ
+                write(36) b_absorb_elastic_right(1,i,ispec,it)
+              enddo
+              do i=1,NGLLZ
+                write(36) b_absorb_elastic_right(3,i,ispec,it)
+              enddo
+            else!SH (membrane) waves
+              do i=1,NGLLZ
+                write(36) b_absorb_elastic_right(2,i,ispec,it)
+              enddo
+            endif
+          enddo
+        endif
 
-      enddo
-      endif
+        !--- bottom absorbing boundary
+        if(nspec_bottom >0) then
+          do ispec = 1,nspec_bottom
+            if(p_sv)then!P-SV waves
+              do i=1,NGLLX
+                write(37) b_absorb_elastic_bottom(1,i,ispec,it)
+              enddo
+              do i=1,NGLLX
+                write(37) b_absorb_elastic_bottom(3,i,ispec,it)
+              enddo
+            else!SH (membrane) waves
+              do i=1,NGLLX
+                write(37) b_absorb_elastic_bottom(2,i,ispec,it)
+              enddo
+            endif
+          enddo
+        endif
 
-!--- right absorbing boundary
-      if(nspec_right >0) then
-      do ispec = 1,nspec_right
+        !--- top absorbing boundary
+        if(nspec_top >0) then
+          do ispec = 1,nspec_top
+            if(p_sv)then!P-SV waves
+              do i=1,NGLLX
+                write(38) b_absorb_elastic_top(1,i,ispec,it)
+              enddo
+              do i=1,NGLLX
+                write(38) b_absorb_elastic_top(3,i,ispec,it)
+              enddo
+            else!SH (membrane) waves
+              do i=1,NGLLX
+                write(38) b_absorb_elastic_top(2,i,ispec,it)
+              enddo
+            endif
+          enddo
+        endif
 
+      endif ! if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)
 
-      if(p_sv)then!P-SV waves
-         do i=1,NGLLZ
-     write(36) b_absorb_elastic_right(1,i,ispec,it)
-         enddo
-         do i=1,NGLLZ
-     write(36) b_absorb_elastic_right(3,i,ispec,it)
-         enddo
-      else!SH (membrane) waves
-         do i=1,NGLLZ
-     write(36) b_absorb_elastic_right(2,i,ispec,it)
-         enddo
-      endif
-
-      enddo
-      endif
-
-!--- bottom absorbing boundary
-      if(nspec_bottom >0) then
-      do ispec = 1,nspec_bottom
-
-      if(p_sv)then!P-SV waves
-         do i=1,NGLLX
-     write(37) b_absorb_elastic_bottom(1,i,ispec,it)
-         enddo
-         do i=1,NGLLX
-     write(37) b_absorb_elastic_bottom(3,i,ispec,it)
-         enddo
-      else!SH (membrane) waves
-         do i=1,NGLLX
-     write(37) b_absorb_elastic_bottom(2,i,ispec,it)
-         enddo
-      endif
-
-      enddo
-      endif
-
-!--- top absorbing boundary
-      if(nspec_top >0) then
-      do ispec = 1,nspec_top
-
-      if(p_sv)then!P-SV waves
-         do i=1,NGLLX
-     write(38) b_absorb_elastic_top(1,i,ispec,it)
-         enddo
-         do i=1,NGLLX
-     write(38) b_absorb_elastic_top(3,i,ispec,it)
-         enddo
-      else!SH (membrane) waves
-         do i=1,NGLLX
-     write(38) b_absorb_elastic_top(2,i,ispec,it)
-         enddo
-      endif
-
-      enddo
-      endif
-
-    endif ! if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)
-
-  endif !if(any_elastic)
+    endif !if(any_elastic)
 
 ! *********************************************************
 ! ************* add coupling with the acoustic side
@@ -4400,76 +4403,76 @@
 
     if(coupled_acoustic_elastic) then
 
-! loop on all the coupling edges
+      ! loop on all the coupling edges
       do inum = 1,num_fluid_solid_edges
 
-! get the edge of the acoustic element
+        ! get the edge of the acoustic element
         ispec_acoustic = fluid_solid_acoustic_ispec(inum)
         iedge_acoustic = fluid_solid_acoustic_iedge(inum)
 
-! get the corresponding edge of the elastic element
+        ! get the corresponding edge of the elastic element
         ispec_elastic = fluid_solid_elastic_ispec(inum)
         iedge_elastic = fluid_solid_elastic_iedge(inum)
 
-! implement 1D coupling along the edge
+        ! implement 1D coupling along the edge
         do ipoin1D = 1,NGLLX
 
-! get point values for the acoustic side, which matches our side in the inverse direction
+          ! get point values for the acoustic side, which matches our side in the inverse direction
           i = ivalue_inverse(ipoin1D,iedge_acoustic)
           j = jvalue_inverse(ipoin1D,iedge_acoustic)
           iglob = ibool(i,j,ispec_acoustic)
 
-! compute pressure on the fluid/solid edge
+          ! compute pressure on the fluid/solid edge
           pressure = - potential_dot_dot_acoustic(iglob)
           if(SIMULATION_TYPE == 2) then
-          b_pressure = - b_potential_dot_dot_acoustic(iglob)
+            b_pressure = - b_potential_dot_dot_acoustic(iglob)
           endif
-! get point values for the elastic side
+          ! get point values for the elastic side
           ii2 = ivalue(ipoin1D,iedge_elastic)
           jj2 = jvalue(ipoin1D,iedge_elastic)
           iglob = ibool(ii2,jj2,ispec_elastic)
 
-! compute the 1D Jacobian and the normal to the edge: for their expression see for instance
-! O. C. Zienkiewicz and R. L. Taylor, The Finite Element Method for Solid and Structural Mechanics,
-! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
-! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
-! Blackwell Science, page 110, equation (4.60).
+          ! compute the 1D Jacobian and the normal to the edge: for their expression see for instance
+          ! O. C. Zienkiewicz and R. L. Taylor, The Finite Element Method for Solid and Structural Mechanics,
+          ! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
+          ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
+          ! Blackwell Science, page 110, equation (4.60).
           if(iedge_acoustic == ITOP)then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = - zxi / jacobian1D
             nz = + xxi / jacobian1D
-          weight = jacobian1D * wxgll(i)
+            weight = jacobian1D * wxgll(i)
           elseif(iedge_acoustic == IBOTTOM)then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = + zxi / jacobian1D
             nz = - xxi / jacobian1D
-          weight = jacobian1D * wxgll(i)
+            weight = jacobian1D * wxgll(i)
           elseif(iedge_acoustic ==ILEFT)then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = - zgamma / jacobian1D
             nz = + xgamma / jacobian1D
-          weight = jacobian1D * wzgll(j)
+            weight = jacobian1D * wzgll(j)
           elseif(iedge_acoustic ==IRIGHT)then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = + zgamma / jacobian1D
             nz = - xgamma / jacobian1D
-          weight = jacobian1D * wzgll(j)
+            weight = jacobian1D * wzgll(j)
           endif
 
           accel_elastic(1,iglob) = accel_elastic(1,iglob) + weight*nx*pressure
           accel_elastic(3,iglob) = accel_elastic(3,iglob) + weight*nz*pressure
 
           if(SIMULATION_TYPE == 2) then
-          b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) + weight*nx*b_pressure
-          b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) + weight*nz*b_pressure
+            b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) + weight*nx*b_pressure
+            b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) + weight*nz*b_pressure
           endif !if(SIMULATION_TYPE == 2) then
 
         enddo
@@ -4483,50 +4486,50 @@
 ! ****************************************************************************
     if(coupled_elastic_poro) then
 
-! loop on all the coupling edges
+      ! loop on all the coupling edges
       do inum = 1,num_solid_poro_edges
 
-! get the edge of the elastic element
+        ! get the edge of the elastic element
         ispec_elastic = solid_poro_elastic_ispec(inum)
         iedge_elastic = solid_poro_elastic_iedge(inum)
 
-! get the corresponding edge of the poroelastic element
+        ! get the corresponding edge of the poroelastic element
         ispec_poroelastic = solid_poro_poroelastic_ispec(inum)
         iedge_poroelastic = solid_poro_poroelastic_iedge(inum)
 
-! implement 1D coupling along the edge
+        ! implement 1D coupling along the edge
         do ipoin1D = 1,NGLLX
 
-! get point values for the poroelastic side, which matches our side in the inverse direction
+          ! get point values for the poroelastic side, which matches our side in the inverse direction
           i = ivalue_inverse(ipoin1D,iedge_poroelastic)
           j = jvalue_inverse(ipoin1D,iedge_poroelastic)
           iglob = ibool(i,j,ispec_poroelastic)
 
-! get poroelastic domain paramters
-    phil = porosity(kmato(ispec_poroelastic))
-    tortl = tortuosity(kmato(ispec_poroelastic))
-!solid properties
-    mul_s = poroelastcoef(2,1,kmato(ispec_poroelastic))
-    kappal_s = poroelastcoef(3,1,kmato(ispec_poroelastic)) - 4._CUSTOM_REAL*mul_s/3._CUSTOM_REAL
-    rhol_s = density(1,kmato(ispec_poroelastic))
-!fluid properties
-    kappal_f = poroelastcoef(1,2,kmato(ispec_poroelastic))
-    rhol_f = density(2,kmato(ispec_poroelastic))
-!frame properties
-    mul_fr = poroelastcoef(2,3,kmato(ispec_poroelastic))
-    kappal_fr = poroelastcoef(3,3,kmato(ispec_poroelastic)) - 4._CUSTOM_REAL*mul_fr/3._CUSTOM_REAL
-    rhol_bar =  (1._CUSTOM_REAL - phil)*rhol_s + phil*rhol_f
-!Biot coefficients for the input phi
-      D_biot = kappal_s*(1._CUSTOM_REAL + phil*(kappal_s/kappal_f - 1._CUSTOM_REAL))
-      H_biot = (kappal_s - kappal_fr)*(kappal_s - kappal_fr)/(D_biot - kappal_fr) + &
+          ! get poroelastic domain paramters
+          phil = porosity(kmato(ispec_poroelastic))
+          tortl = tortuosity(kmato(ispec_poroelastic))
+          !solid properties
+          mul_s = poroelastcoef(2,1,kmato(ispec_poroelastic))
+          kappal_s = poroelastcoef(3,1,kmato(ispec_poroelastic)) - 4._CUSTOM_REAL*mul_s/3._CUSTOM_REAL
+          rhol_s = density(1,kmato(ispec_poroelastic))
+          !fluid properties
+          kappal_f = poroelastcoef(1,2,kmato(ispec_poroelastic))
+          rhol_f = density(2,kmato(ispec_poroelastic))
+          !frame properties
+          mul_fr = poroelastcoef(2,3,kmato(ispec_poroelastic))
+          kappal_fr = poroelastcoef(3,3,kmato(ispec_poroelastic)) - 4._CUSTOM_REAL*mul_fr/3._CUSTOM_REAL
+          rhol_bar =  (1._CUSTOM_REAL - phil)*rhol_s + phil*rhol_f
+          !Biot coefficients for the input phi
+          D_biot = kappal_s*(1._CUSTOM_REAL + phil*(kappal_s/kappal_f - 1._CUSTOM_REAL))
+          H_biot = (kappal_s - kappal_fr)*(kappal_s - kappal_fr)/(D_biot - kappal_fr) + &
                 kappal_fr + 4._CUSTOM_REAL*mul_fr/3._CUSTOM_REAL
-      C_biot = kappal_s*(kappal_s - kappal_fr)/(D_biot - kappal_fr)
-      M_biot = kappal_s*kappal_s/(D_biot - kappal_fr)
-      mul_G = mul_fr
-      lambdal_G = H_biot - 2._CUSTOM_REAL*mul_fr
-      lambdalplus2mul_G = lambdal_G + TWO*mul_G
+          C_biot = kappal_s*(kappal_s - kappal_fr)/(D_biot - kappal_fr)
+          M_biot = kappal_s*kappal_s/(D_biot - kappal_fr)
+          mul_G = mul_fr
+          lambdal_G = H_biot - 2._CUSTOM_REAL*mul_fr
+          lambdalplus2mul_G = lambdal_G + TWO*mul_G
 
-! derivative along x and along z for u_s and w
+          ! derivative along x and along z for u_s and w
           dux_dxi = ZERO
           duz_dxi = ZERO
 
@@ -4540,21 +4543,21 @@
           dwz_dgamma = ZERO
 
           if(SIMULATION_TYPE == 2) then
-          b_dux_dxi = ZERO
-          b_duz_dxi = ZERO
+            b_dux_dxi = ZERO
+            b_duz_dxi = ZERO
 
-          b_dux_dgamma = ZERO
-          b_duz_dgamma = ZERO
+            b_dux_dgamma = ZERO
+            b_duz_dgamma = ZERO
 
-          b_dwx_dxi = ZERO
-          b_dwz_dxi = ZERO
+            b_dwx_dxi = ZERO
+            b_dwz_dxi = ZERO
 
-          b_dwx_dgamma = ZERO
-          b_dwz_dgamma = ZERO
+            b_dwx_dgamma = ZERO
+            b_dwz_dgamma = ZERO
           endif
 
-! first double loop over GLL points to compute and store gradients
-! we can merge the two loops because NGLLX == NGLLZ
+          ! first double loop over GLL points to compute and store gradients
+          ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
             dux_dxi = dux_dxi + displs_poroelastic(1,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
             duz_dxi = duz_dxi + displs_poroelastic(2,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
@@ -4566,15 +4569,15 @@
             dwx_dgamma = dwx_dgamma + displw_poroelastic(1,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
             dwz_dgamma = dwz_dgamma + displw_poroelastic(2,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
             if(SIMULATION_TYPE == 2) then
-            b_dux_dxi = b_dux_dxi + b_displs_poroelastic(1,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
-            b_duz_dxi = b_duz_dxi + b_displs_poroelastic(2,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
-            b_dux_dgamma = b_dux_dgamma + b_displs_poroelastic(1,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
-            b_duz_dgamma = b_duz_dgamma + b_displs_poroelastic(2,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
+              b_dux_dxi = b_dux_dxi + b_displs_poroelastic(1,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
+              b_duz_dxi = b_duz_dxi + b_displs_poroelastic(2,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
+              b_dux_dgamma = b_dux_dgamma + b_displs_poroelastic(1,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
+              b_duz_dgamma = b_duz_dgamma + b_displs_poroelastic(2,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
 
-            b_dwx_dxi = b_dwx_dxi + b_displw_poroelastic(1,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
-            b_dwz_dxi = b_dwz_dxi + b_displw_poroelastic(2,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
-            b_dwx_dgamma = b_dwx_dgamma + b_displw_poroelastic(1,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
-            b_dwz_dgamma = b_dwz_dgamma + b_displw_poroelastic(2,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
+              b_dwx_dxi = b_dwx_dxi + b_displw_poroelastic(1,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
+              b_dwz_dxi = b_dwz_dxi + b_displw_poroelastic(2,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
+              b_dwx_dgamma = b_dwx_dgamma + b_displw_poroelastic(1,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
+              b_dwz_dgamma = b_dwz_dgamma + b_displw_poroelastic(2,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
             endif
           enddo
 
@@ -4583,7 +4586,7 @@
           gammaxl = gammax(i,j,ispec_poroelastic)
           gammazl = gammaz(i,j,ispec_poroelastic)
 
-! derivatives of displacement
+          ! derivatives of displacement
           dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
           dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
 
@@ -4597,41 +4600,41 @@
           dwz_dzl = dwz_dxi*xizl + dwz_dgamma*gammazl
 
           if(SIMULATION_TYPE == 2) then
-          b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
-          b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
+            b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
+            b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
 
-          b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
-          b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
+            b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
+            b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
 
-          b_dwx_dxl = b_dwx_dxi*xixl + b_dwx_dgamma*gammaxl
-          b_dwx_dzl = b_dwx_dxi*xizl + b_dwx_dgamma*gammazl
+            b_dwx_dxl = b_dwx_dxi*xixl + b_dwx_dgamma*gammaxl
+            b_dwx_dzl = b_dwx_dxi*xizl + b_dwx_dgamma*gammazl
 
-          b_dwz_dxl = b_dwz_dxi*xixl + b_dwz_dgamma*gammaxl
-          b_dwz_dzl = b_dwz_dxi*xizl + b_dwz_dgamma*gammazl
+            b_dwz_dxl = b_dwz_dxi*xixl + b_dwz_dgamma*gammaxl
+            b_dwz_dzl = b_dwz_dxi*xizl + b_dwz_dgamma*gammazl
           endif
-! compute stress tensor (include attenuation or anisotropy if needed)
+          ! compute stress tensor (include attenuation or anisotropy if needed)
 
-! no attenuation
-    sigma_xx = lambdalplus2mul_G*dux_dxl + lambdal_G*duz_dzl + C_biot*(dwx_dxl + dwz_dzl)
-    sigma_xz = mul_G*(duz_dxl + dux_dzl)
-    sigma_zz = lambdalplus2mul_G*duz_dzl + lambdal_G*dux_dxl + C_biot*(dwx_dxl + dwz_dzl)
+          ! no attenuation
+          sigma_xx = lambdalplus2mul_G*dux_dxl + lambdal_G*duz_dzl + C_biot*(dwx_dxl + dwz_dzl)
+          sigma_xz = mul_G*(duz_dxl + dux_dzl)
+          sigma_zz = lambdalplus2mul_G*duz_dzl + lambdal_G*dux_dxl + C_biot*(dwx_dxl + dwz_dzl)
 
-    if(SIMULATION_TYPE == 2) then
-    b_sigma_xx = lambdalplus2mul_G*b_dux_dxl + lambdal_G*b_duz_dzl + C_biot*(b_dwx_dxl + b_dwz_dzl)
-    b_sigma_xz = mul_G*(b_duz_dxl + b_dux_dzl)
-    b_sigma_zz = lambdalplus2mul_G*b_duz_dzl + lambdal_G*b_dux_dxl + C_biot*(b_dwx_dxl + b_dwz_dzl)
-    endif
-! get point values for the elastic domain, which matches our side in the inverse direction
+          if(SIMULATION_TYPE == 2) then
+            b_sigma_xx = lambdalplus2mul_G*b_dux_dxl + lambdal_G*b_duz_dzl + C_biot*(b_dwx_dxl + b_dwz_dzl)
+            b_sigma_xz = mul_G*(b_duz_dxl + b_dux_dzl)
+            b_sigma_zz = lambdalplus2mul_G*b_duz_dzl + lambdal_G*b_dux_dxl + C_biot*(b_dwx_dxl + b_dwz_dzl)
+          endif
+          ! get point values for the elastic domain, which matches our side in the inverse direction
           ii2 = ivalue(ipoin1D,iedge_elastic)
           jj2 = jvalue(ipoin1D,iedge_elastic)
           iglob = ibool(ii2,jj2,ispec_elastic)
 
-! get elastic properties
-    lambdal_relaxed = poroelastcoef(1,1,kmato(ispec_elastic))
-    mul_relaxed = poroelastcoef(2,1,kmato(ispec_elastic))
-    lambdalplus2mul_relaxed = poroelastcoef(3,1,kmato(ispec_elastic))
+          ! get elastic properties
+          lambdal_relaxed = poroelastcoef(1,1,kmato(ispec_elastic))
+          mul_relaxed = poroelastcoef(2,1,kmato(ispec_elastic))
+          lambdalplus2mul_relaxed = poroelastcoef(3,1,kmato(ispec_elastic))
 
-! derivative along x and along z for u_s and w
+          ! derivative along x and along z for u_s and w
           dux_dxi = ZERO
           duz_dxi = ZERO
 
@@ -4639,15 +4642,15 @@
           duz_dgamma = ZERO
 
           if(SIMULATION_TYPE == 2) then
-          b_dux_dxi = ZERO
-          b_duz_dxi = ZERO
+            b_dux_dxi = ZERO
+            b_duz_dxi = ZERO
 
-          b_dux_dgamma = ZERO
-          b_duz_dgamma = ZERO
+            b_dux_dgamma = ZERO
+            b_duz_dgamma = ZERO
           endif
 
-! first double loop over GLL points to compute and store gradients
-! we can merge the two loops because NGLLX == NGLLZ
+          ! first double loop over GLL points to compute and store gradients
+          ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
             dux_dxi = dux_dxi + displ_elastic(1,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
             duz_dxi = duz_dxi + displ_elastic(3,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
@@ -4655,10 +4658,10 @@
             duz_dgamma = duz_dgamma + displ_elastic(3,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
 
             if(SIMULATION_TYPE == 2) then
-            b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
-            b_duz_dxi = b_duz_dxi + b_displ_elastic(3,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
-            b_dux_dgamma = b_dux_dgamma + b_displ_elastic(1,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
-            b_duz_dgamma = b_duz_dgamma + b_displ_elastic(3,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
+              b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
+              b_duz_dxi = b_duz_dxi + b_displ_elastic(3,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
+              b_dux_dgamma = b_dux_dgamma + b_displ_elastic(1,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
+              b_duz_dgamma = b_duz_dgamma + b_displ_elastic(3,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
             endif
           enddo
 
@@ -4667,7 +4670,7 @@
           gammaxl = gammax(ii2,jj2,ispec_elastic)
           gammazl = gammaz(ii2,jj2,ispec_elastic)
 
-! derivatives of displacement
+          ! derivatives of displacement
           dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
           dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
 
@@ -4675,81 +4678,81 @@
           duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
           if(SIMULATION_TYPE == 2) then
-          b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
-          b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
+            b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
+            b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
 
-          b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
-          b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
+            b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
+            b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
           endif
-! compute stress tensor
-! full anisotropy
-  if(kmato(ispec_elastic) == 2) then
-! implement anisotropy in 2D
-      if(assign_external_model) then
-         c11 = c11ext(ii2,jj2,ispec_elastic)
-         c13 = c13ext(ii2,jj2,ispec_elastic)
-         c15 = c15ext(ii2,jj2,ispec_elastic)
-         c33 = c33ext(ii2,jj2,ispec_elastic)
-         c35 = c35ext(ii2,jj2,ispec_elastic)
-         c55 = c55ext(ii2,jj2,ispec_elastic)
-      else
-         c11 = anisotropy(1,kmato(ispec_elastic))
-         c13 = anisotropy(2,kmato(ispec_elastic))
-         c15 = anisotropy(3,kmato(ispec_elastic))
-         c33 = anisotropy(4,kmato(ispec_elastic))
-         c35 = anisotropy(5,kmato(ispec_elastic))
-         c55 = anisotropy(6,kmato(ispec_elastic))
-      end if
+          ! compute stress tensor
+          ! full anisotropy
+          if(kmato(ispec_elastic) == 2) then
+            ! implement anisotropy in 2D
+            if(assign_external_model) then
+              c11 = c11ext(ii2,jj2,ispec_elastic)
+              c13 = c13ext(ii2,jj2,ispec_elastic)
+              c15 = c15ext(ii2,jj2,ispec_elastic)
+              c33 = c33ext(ii2,jj2,ispec_elastic)
+              c35 = c35ext(ii2,jj2,ispec_elastic)
+              c55 = c55ext(ii2,jj2,ispec_elastic)
+            else
+              c11 = anisotropy(1,kmato(ispec_elastic))
+              c13 = anisotropy(2,kmato(ispec_elastic))
+              c15 = anisotropy(3,kmato(ispec_elastic))
+              c33 = anisotropy(4,kmato(ispec_elastic))
+              c35 = anisotropy(5,kmato(ispec_elastic))
+              c55 = anisotropy(6,kmato(ispec_elastic))
+            end if
 
-     sigma_xx = sigma_xx + c11*dux_dxl + c15*(duz_dxl + dux_dzl) + c13*duz_dzl
-     sigma_zz = sigma_zz + c13*dux_dxl + c35*(duz_dxl + dux_dzl) + c33*duz_dzl
-     sigma_xz = sigma_xz + c15*dux_dxl + c55*(duz_dxl + dux_dzl) + c35*duz_dzl
-  else
-! no attenuation
-    sigma_xx = sigma_xx + lambdalplus2mul_relaxed*dux_dxl + lambdal_relaxed*duz_dzl
-    sigma_xz = sigma_xz + mul_relaxed*(duz_dxl + dux_dzl)
-    sigma_zz = sigma_zz + lambdalplus2mul_relaxed*duz_dzl + lambdal_relaxed*dux_dxl
-  endif
+            sigma_xx = sigma_xx + c11*dux_dxl + c15*(duz_dxl + dux_dzl) + c13*duz_dzl
+            sigma_zz = sigma_zz + c13*dux_dxl + c35*(duz_dxl + dux_dzl) + c33*duz_dzl
+            sigma_xz = sigma_xz + c15*dux_dxl + c55*(duz_dxl + dux_dzl) + c35*duz_dzl
+          else
+            ! no attenuation
+            sigma_xx = sigma_xx + lambdalplus2mul_relaxed*dux_dxl + lambdal_relaxed*duz_dzl
+            sigma_xz = sigma_xz + mul_relaxed*(duz_dxl + dux_dzl)
+            sigma_zz = sigma_zz + lambdalplus2mul_relaxed*duz_dzl + lambdal_relaxed*dux_dxl
+          endif
 
-    if(SIMULATION_TYPE == 2) then
-    b_sigma_xx = b_sigma_xx + lambdalplus2mul_relaxed*b_dux_dxl + lambdal_relaxed*b_duz_dzl
-    b_sigma_xz = b_sigma_xz + mul_relaxed*(b_duz_dxl + b_dux_dzl)
-    b_sigma_zz = b_sigma_zz + lambdalplus2mul_relaxed*b_duz_dzl + lambdal_relaxed*b_dux_dxl
-    endif
+          if(SIMULATION_TYPE == 2) then
+            b_sigma_xx = b_sigma_xx + lambdalplus2mul_relaxed*b_dux_dxl + lambdal_relaxed*b_duz_dzl
+            b_sigma_xz = b_sigma_xz + mul_relaxed*(b_duz_dxl + b_dux_dzl)
+            b_sigma_zz = b_sigma_zz + lambdalplus2mul_relaxed*b_duz_dzl + lambdal_relaxed*b_dux_dxl
+          endif
 
-! compute the 1D Jacobian and the normal to the edge: for their expression see for instance
-! O. C. Zienkiewicz and R. L. Taylor, The Finite Element Method for Solid and Structural Mechanics,
-! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
-! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
-! Blackwell Science, page 110, equation (4.60).
+          ! compute the 1D Jacobian and the normal to the edge: for their expression see for instance
+          ! O. C. Zienkiewicz and R. L. Taylor, The Finite Element Method for Solid and Structural Mechanics,
+          ! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
+          ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
+          ! Blackwell Science, page 110, equation (4.60).
           if(iedge_poroelastic == ITOP)then
             xxi = + gammaz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             zxi = - gammax(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = - zxi / jacobian1D
             nz = + xxi / jacobian1D
-          weight = jacobian1D * wxgll(i)
+            weight = jacobian1D * wxgll(i)
           elseif(iedge_poroelastic == IBOTTOM)then
             xxi = + gammaz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             zxi = - gammax(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = + zxi / jacobian1D
             nz = - xxi / jacobian1D
-          weight = jacobian1D * wxgll(i)
+            weight = jacobian1D * wxgll(i)
           elseif(iedge_poroelastic ==ILEFT)then
             xgamma = - xiz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             zgamma = + xix(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = - zgamma / jacobian1D
             nz = + xgamma / jacobian1D
-          weight = jacobian1D * wzgll(j)
+            weight = jacobian1D * wzgll(j)
           elseif(iedge_poroelastic ==IRIGHT)then
             xgamma = - xiz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             zgamma = + xix(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = + zgamma / jacobian1D
             nz = - xgamma / jacobian1D
-          weight = jacobian1D * wzgll(j)
+            weight = jacobian1D * wzgll(j)
           endif
 
           accel_elastic(1,iglob) = accel_elastic(1,iglob) - weight* &
@@ -4759,10 +4762,10 @@
                 (sigma_xz*nx + sigma_zz*nz)/2.d0
 
           if(SIMULATION_TYPE == 2) then
-          b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - weight* &
+            b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - weight* &
                 (b_sigma_xx*nx + b_sigma_xz*nz)/2.d0
 
-          b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - weight* &
+            b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - weight* &
                 (b_sigma_xz*nx + b_sigma_zz*nz)/2.d0
           endif !if(SIMULATION_TYPE == 2) then
 
@@ -4777,96 +4780,92 @@
 ! ************************************ add force source
 ! ************************************************************************************
 
-  if(any_elastic) then
+    if(any_elastic) then
 
-! --- add the source if it is a collocated force
-    if(.not. initialfield) then
+      ! --- add the source if it is a collocated force
+      if(.not. initialfield) then
 
-    do i_source=1,NSOURCES
-! if this processor carries the source and the source element is elastic
-      if (is_proc_source(i_source) == 1 .and. elastic(ispec_selected_source(i_source))) then
+        do i_source=1,NSOURCES
+          ! if this processor carries the source and the source element is elastic
+          if (is_proc_source(i_source) == 1 .and. elastic(ispec_selected_source(i_source))) then
 
-! collocated force
-        if(source_type(i_source) == 1) then
-       if(SIMULATION_TYPE == 1) then  ! forward wavefield
-
-          if(p_sv) then ! P-SV calculation
-          do j = 1,NGLLZ
-           do i = 1,NGLLX
-             iglob = ibool(i,j,ispec_selected_source(i_source))
-             hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-          accel_elastic(1,iglob) = accel_elastic(1,iglob) &
-              - sin(angleforce(i_source))*source_time_function(i_source,it)*hlagrange
-          accel_elastic(3,iglob) = accel_elastic(3,iglob) &
-              + cos(angleforce(i_source))*source_time_function(i_source,it)*hlagrange
-           enddo
-          enddo
-          else    ! SH (membrane) calculation
-          do j = 1,NGLLZ
-           do i = 1,NGLLX
-             iglob = ibool(i,j,ispec_selected_source(i_source))
-             hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-          accel_elastic(2,iglob) = accel_elastic(2,iglob) &
+            ! collocated force
+            if(source_type(i_source) == 1) then
+              if(SIMULATION_TYPE == 1) then  ! forward wavefield
+                if(p_sv) then ! P-SV calculation
+                  do j = 1,NGLLZ
+                    do i = 1,NGLLX
+                      iglob = ibool(i,j,ispec_selected_source(i_source))
+                      hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+                      accel_elastic(1,iglob) = accel_elastic(1,iglob) &
+                        - sin(angleforce(i_source))*source_time_function(i_source,it)*hlagrange
+                      accel_elastic(3,iglob) = accel_elastic(3,iglob) &
+                        + cos(angleforce(i_source))*source_time_function(i_source,it)*hlagrange
+                    enddo
+                  enddo
+                else    ! SH (membrane) calculation
+                  do j = 1,NGLLZ
+                    do i = 1,NGLLX
+                      iglob = ibool(i,j,ispec_selected_source(i_source))
+                      hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+                      accel_elastic(2,iglob) = accel_elastic(2,iglob) &
                             + source_time_function(i_source,it)*hlagrange
-           enddo
-          enddo
-          endif
-
-       else                   ! backward wavefield
-
-          if(p_sv) then ! P-SV calculation
-          do j = 1,NGLLZ
-           do i = 1,NGLLX
-             iglob = ibool(i,j,ispec_selected_source(i_source))
-             hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-      b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) &
-            - sin(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1) &
-            *hlagrange
-      b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) &
-            + cos(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1) &
-            *hlagrange
-           enddo
-          enddo
-          else    ! SH (membrane) calculation
-          do j = 1,NGLLZ
-           do i = 1,NGLLX
-             iglob = ibool(i,j,ispec_selected_source(i_source))
-             hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-      b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) &
+                    enddo
+                  enddo
+                endif
+              else                   ! backward wavefield
+                if(p_sv) then ! P-SV calculation
+                  do j = 1,NGLLZ
+                    do i = 1,NGLLX
+                      iglob = ibool(i,j,ispec_selected_source(i_source))
+                      hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+                      b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) &
+                        - sin(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1) &
+                          *hlagrange
+                      b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) &
+                        + cos(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1) &
+                          *hlagrange
+                    enddo
+                  enddo
+                else    ! SH (membrane) calculation
+                  do j = 1,NGLLZ
+                    do i = 1,NGLLX
+                      iglob = ibool(i,j,ispec_selected_source(i_source))
+                      hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+                      b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) &
                             + source_time_function(i_source,NSTEP-it+1)*hlagrange
-           enddo
-          enddo
+                    enddo
+                  enddo
+                endif
 
-          endif
+              endif  !endif SIMULATION_TYPE == 1
+            endif
 
-       endif  !endif SIMULATION_TYPE == 1
-        endif
+          endif ! if this processor carries the source and the source element is elastic
+        enddo ! do i_source=1,NSOURCES
 
-      endif ! if this processor carries the source and the source element is elastic
-    enddo ! do i_source=1,NSOURCES
-
-    endif ! if not using an initial field
-  endif !if(any_elastic)
+      endif ! if not using an initial field
+    endif !if(any_elastic)
 
 ! assembling accel_elastic for elastic elements
 #ifdef USE_MPI
-  if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
-    call assemble_MPI_vector_el(accel_elastic,nglob, &
-      ninterface, ninterface_elastic,inum_interfaces_elastic, &
-      max_interface_size, max_ibool_interfaces_size_el,&
-      ibool_interfaces_elastic, nibool_interfaces_elastic, &
-      tab_requests_send_recv_elastic,buffer_send_faces_vector_el, &
-      buffer_recv_faces_vector_el, my_neighbours)
-  endif
+    if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
+      call assemble_MPI_vector_el(accel_elastic,nglob, &
+            ninterface, ninterface_elastic,inum_interfaces_elastic, &
+            max_interface_size, max_ibool_interfaces_size_el,&
+            ibool_interfaces_elastic, nibool_interfaces_elastic, &
+            tab_requests_send_recv_elastic,buffer_send_faces_vector_el, &
+            buffer_recv_faces_vector_el, my_neighbours)
+    endif
 
-  if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0 .and. SIMULATION_TYPE == 2) then
-    call assemble_MPI_vector_el(b_accel_elastic,nglob, &
-      ninterface, ninterface_elastic,inum_interfaces_elastic, &
-      max_interface_size, max_ibool_interfaces_size_el,&
-      ibool_interfaces_elastic, nibool_interfaces_elastic, &
-      tab_requests_send_recv_elastic,buffer_send_faces_vector_el, &
-      buffer_recv_faces_vector_el, my_neighbours)
-  endif
+    if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0 .and. SIMULATION_TYPE == 2) then
+      call assemble_MPI_vector_el(b_accel_elastic,nglob, &
+            ninterface, ninterface_elastic,inum_interfaces_elastic, &
+            max_interface_size, max_ibool_interfaces_size_el,&
+            ibool_interfaces_elastic, nibool_interfaces_elastic, &
+            tab_requests_send_recv_elastic,buffer_send_faces_vector_el, &
+            buffer_recv_faces_vector_el, my_neighbours)
+    endif
 #endif
 
 
@@ -4874,39 +4873,39 @@
 ! ************* multiply by the inverse of the mass matrix and update velocity
 ! ************************************************************************************
 
-  if(any_elastic) then
-    accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic
-    accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic
-    accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic
+    if(any_elastic) then
+      accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic
+      accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic
+      accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic
 
-    veloc_elastic = veloc_elastic + deltatover2*accel_elastic
+      veloc_elastic = veloc_elastic + deltatover2*accel_elastic
 
-   if(SIMULATION_TYPE == 2) then
-    b_accel_elastic(1,:) = b_accel_elastic(1,:) * rmass_inverse_elastic(:)
-    b_accel_elastic(2,:) = b_accel_elastic(2,:) * rmass_inverse_elastic(:)
-    b_accel_elastic(3,:) = b_accel_elastic(3,:) * rmass_inverse_elastic(:)
+      if(SIMULATION_TYPE == 2) then
+        b_accel_elastic(1,:) = b_accel_elastic(1,:) * rmass_inverse_elastic(:)
+        b_accel_elastic(2,:) = b_accel_elastic(2,:) * rmass_inverse_elastic(:)
+        b_accel_elastic(3,:) = b_accel_elastic(3,:) * rmass_inverse_elastic(:)
 
-    b_veloc_elastic = b_veloc_elastic + b_deltatover2*b_accel_elastic
-   endif
+        b_veloc_elastic = b_veloc_elastic + b_deltatover2*b_accel_elastic
+      endif
 
-  endif !if(any_elastic)
+    endif !if(any_elastic)
 
 
 ! ******************************************************************************************************************
 ! ************* main solver for the poroelastic elements: first the solid (u_s) than the fluid (w)
 ! ******************************************************************************************************************
 
-  if(any_poroelastic) then
+    if(any_poroelastic) then
 
-    if(SIMULATION_TYPE == 2) then
-! if inviscid fluid, comment the reading and uncomment the zeroing
-!     read(23,rec=NSTEP-it+1) b_viscodampx
-!     read(24,rec=NSTEP-it+1) b_viscodampz
-     b_viscodampx(:) = ZERO
-     b_viscodampz(:) = ZERO
-    endif
+      if(SIMULATION_TYPE == 2) then
+        ! if inviscid fluid, comment the reading and uncomment the zeroing
+        !     read(23,rec=NSTEP-it+1) b_viscodampx
+        !     read(24,rec=NSTEP-it+1) b_viscodampz
+        b_viscodampx(:) = ZERO
+        b_viscodampz(:) = ZERO
+      endif
 
-    call compute_forces_poro_solid(nglob,nspec,myrank,nelemabs,numat, &
+      call compute_forces_poro_solid(nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                source_type,it,NSTEP,anyabs, &
                initialfield,TURN_ATTENUATION_ON,TURN_VISCATTENUATION_ON,deltatcube, &
@@ -4929,7 +4928,7 @@
 
 
 
-    call compute_forces_poro_fluid(nglob,nspec,myrank,nelemabs,numat, &
+      call compute_forces_poro_fluid(nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                source_type,it,NSTEP,anyabs, &
                initialfield,TURN_ATTENUATION_ON,TURN_VISCATTENUATION_ON,deltatcube, &
@@ -4951,65 +4950,65 @@
                nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,f0(1),freq0,Q0)
 
 
-    if(SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
-! if inviscid fluid, comment
-!     write(23,rec=it) b_viscodampx
-!     write(24,rec=it) b_viscodampz
-    endif
-
-    if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
-
-!--- left absorbing boundary
-      if(nspec_left >0) then
-      do ispec = 1,nspec_left
-       do id =1,2
-         do i=1,NGLLZ
-     write(45) b_absorb_poro_s_left(id,i,ispec,it)
-     write(25) b_absorb_poro_w_left(id,i,ispec,it)
-         enddo
-       enddo
-      enddo
+      if(SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
+        ! if inviscid fluid, comment
+        !     write(23,rec=it) b_viscodampx
+        !     write(24,rec=it) b_viscodampz
       endif
 
-!--- right absorbing boundary
-      if(nspec_right >0) then
-      do ispec = 1,nspec_right
-       do id =1,2
-         do i=1,NGLLZ
-     write(46) b_absorb_poro_s_right(id,i,ispec,it)
-     write(26) b_absorb_poro_w_right(id,i,ispec,it)
-         enddo
-       enddo
-      enddo
-      endif
+      if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
 
-!--- bottom absorbing boundary
-      if(nspec_bottom >0) then
-      do ispec = 1,nspec_bottom
-       do id =1,2
-         do i=1,NGLLX
-     write(47) b_absorb_poro_s_bottom(id,i,ispec,it)
-     write(29) b_absorb_poro_w_bottom(id,i,ispec,it)
-         enddo
-       enddo
-      enddo
-      endif
+        !--- left absorbing boundary
+        if(nspec_left >0) then
+          do ispec = 1,nspec_left
+            do id =1,2
+              do i=1,NGLLZ
+                write(45) b_absorb_poro_s_left(id,i,ispec,it)
+                write(25) b_absorb_poro_w_left(id,i,ispec,it)
+              enddo
+            enddo
+          enddo
+        endif
 
-!--- top absorbing boundary
-      if(nspec_top >0) then
-      do ispec = 1,nspec_top
-       do id =1,2
-         do i=1,NGLLX
-     write(48) b_absorb_poro_s_top(id,i,ispec,it)
-     write(28) b_absorb_poro_w_top(id,i,ispec,it)
-         enddo
-       enddo
-      enddo
-      endif
+        !--- right absorbing boundary
+        if(nspec_right >0) then
+          do ispec = 1,nspec_right
+            do id =1,2
+              do i=1,NGLLZ
+                write(46) b_absorb_poro_s_right(id,i,ispec,it)
+                write(26) b_absorb_poro_w_right(id,i,ispec,it)
+              enddo
+            enddo
+          enddo
+        endif
 
-    endif ! if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)
+        !--- bottom absorbing boundary
+        if(nspec_bottom >0) then
+          do ispec = 1,nspec_bottom
+            do id =1,2
+              do i=1,NGLLX
+                write(47) b_absorb_poro_s_bottom(id,i,ispec,it)
+                write(29) b_absorb_poro_w_bottom(id,i,ispec,it)
+              enddo
+            enddo
+          enddo
+        endif
 
-  endif !if(any_poroelastic) then
+        !--- top absorbing boundary
+        if(nspec_top >0) then
+          do ispec = 1,nspec_top
+            do id =1,2
+              do i=1,NGLLX
+                write(48) b_absorb_poro_s_top(id,i,ispec,it)
+                write(28) b_absorb_poro_w_top(id,i,ispec,it)
+              enddo
+            enddo
+          enddo
+        endif
+
+      endif ! if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)
+
+    endif !if(any_poroelastic) then
 
 ! *********************************************************
 ! ************* add coupling with the acoustic side
@@ -5017,94 +5016,102 @@
 
     if(coupled_acoustic_poro) then
 
-! loop on all the coupling edges
+      ! loop on all the coupling edges
       do inum = 1,num_fluid_poro_edges
 
-! get the edge of the acoustic element
+        ! get the edge of the acoustic element
         ispec_acoustic = fluid_poro_acoustic_ispec(inum)
         iedge_acoustic = fluid_poro_acoustic_iedge(inum)
 
-! get the corresponding edge of the poroelastic element
+        ! get the corresponding edge of the poroelastic element
         ispec_poroelastic = fluid_poro_poroelastic_ispec(inum)
         iedge_poroelastic = fluid_poro_poroelastic_iedge(inum)
 
-! implement 1D coupling along the edge
+        ! implement 1D coupling along the edge
         do ipoin1D = 1,NGLLX
 
-! get point values for the acoustic side, which matches our side in the inverse direction
+          ! get point values for the acoustic side, which matches our side in the inverse direction
           i = ivalue_inverse(ipoin1D,iedge_acoustic)
           j = jvalue_inverse(ipoin1D,iedge_acoustic)
           iglob = ibool(i,j,ispec_acoustic)
 
-! get poroelastic parameters
-            phil = porosity(kmato(ispec_poroelastic))
-            tortl = tortuosity(kmato(ispec_poroelastic))
-            rhol_f = density(2,kmato(ispec_poroelastic))
-            rhol_s = density(1,kmato(ispec_poroelastic))
-            rhol_bar = (1._CUSTOM_REAL-phil)*rhol_s + phil*rhol_f
+          ! get poroelastic parameters
+          phil = porosity(kmato(ispec_poroelastic))
+          tortl = tortuosity(kmato(ispec_poroelastic))
+          rhol_f = density(2,kmato(ispec_poroelastic))
+          rhol_s = density(1,kmato(ispec_poroelastic))
+          rhol_bar = (1._CUSTOM_REAL-phil)*rhol_s + phil*rhol_f
 
-! compute pressure on the fluid/porous medium edge
+          ! compute pressure on the fluid/porous medium edge
           pressure = - potential_dot_dot_acoustic(iglob)
           if(SIMULATION_TYPE == 2) then
-          b_pressure = - b_potential_dot_dot_acoustic(iglob)
+            b_pressure = - b_potential_dot_dot_acoustic(iglob)
           endif
 
-! get point values for the poroelastic side
+          ! get point values for the poroelastic side
           ii2 = ivalue(ipoin1D,iedge_poroelastic)
           jj2 = jvalue(ipoin1D,iedge_poroelastic)
           iglob = ibool(ii2,jj2,ispec_poroelastic)
 
-! compute the 1D Jacobian and the normal to the edge: for their expression see for instance
-! O. C. Zienkiewicz and R. L. Taylor, The Finite Element Method for Solid and Structural Mechanics,
-! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
-! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
-! Blackwell Science, page 110, equation (4.60).
+          ! compute the 1D Jacobian and the normal to the edge: for their expression see for instance
+          ! O. C. Zienkiewicz and R. L. Taylor, The Finite Element Method for Solid and Structural Mechanics,
+          ! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
+          ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
+          ! Blackwell Science, page 110, equation (4.60).
           if(iedge_acoustic == ITOP)then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = - zxi / jacobian1D
             nz = + xxi / jacobian1D
-          weight = jacobian1D * wxgll(i)
+            weight = jacobian1D * wxgll(i)
           elseif(iedge_acoustic == IBOTTOM)then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = + zxi / jacobian1D
             nz = - xxi / jacobian1D
-          weight = jacobian1D * wxgll(i)
+            weight = jacobian1D * wxgll(i)
           elseif(iedge_acoustic ==ILEFT)then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = - zgamma / jacobian1D
             nz = + xgamma / jacobian1D
-          weight = jacobian1D * wzgll(j)
+            weight = jacobian1D * wzgll(j)
           elseif(iedge_acoustic ==IRIGHT)then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = + zgamma / jacobian1D
             nz = - xgamma / jacobian1D
-          weight = jacobian1D * wzgll(j)
+            weight = jacobian1D * wzgll(j)
           endif
 
-! contribution to the solid phase
-          accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) + weight*nx*pressure*(1._CUSTOM_REAL-phil/tortl)
-          accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + weight*nz*pressure*(1._CUSTOM_REAL-phil/tortl)
+          ! contribution to the solid phase
+          accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) &
+            + weight*nx*pressure*(1._CUSTOM_REAL-phil/tortl)
+          accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) &
+            + weight*nz*pressure*(1._CUSTOM_REAL-phil/tortl)
 
-! contribution to the fluid phase
-          accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) + weight*nx*pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)
-          accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) + weight*nz*pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)
+          ! contribution to the fluid phase
+          accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) &
+            + weight*nx*pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)
+          accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) &
+            + weight*nz*pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)
 
           if(SIMULATION_TYPE == 2) then
-! contribution to the solid phase
-          b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) + weight*nx*b_pressure*(1._CUSTOM_REAL-phil/tortl)
-          b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) + weight*nz*b_pressure*(1._CUSTOM_REAL-phil/tortl)
+            ! contribution to the solid phase
+            b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) &
+              + weight*nx*b_pressure*(1._CUSTOM_REAL-phil/tortl)
+            b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) &
+              + weight*nz*b_pressure*(1._CUSTOM_REAL-phil/tortl)
 
-! contribution to the fluid phase
-          b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) + weight*nx*b_pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)
-          b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) + weight*nz*b_pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)
+            ! contribution to the fluid phase
+            b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) &
+              + weight*nx*b_pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)
+            b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) &
+              + weight*nz*b_pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)
           endif !if(SIMULATION_TYPE == 2) then
 
         enddo ! do ipoin1D = 1,NGLLX
@@ -5119,31 +5126,31 @@
 
     if(coupled_elastic_poro) then
 
-! loop on all the coupling edges
+      ! loop on all the coupling edges
       do inum = 1,num_solid_poro_edges
 
-! get the edge of the elastic element
+        ! get the edge of the elastic element
         ispec_elastic = solid_poro_elastic_ispec(inum)
         iedge_elastic = solid_poro_elastic_iedge(inum)
 
-! get the corresponding edge of the poroelastic element
+        ! get the corresponding edge of the poroelastic element
         ispec_poroelastic = solid_poro_poroelastic_ispec(inum)
         iedge_poroelastic = solid_poro_poroelastic_iedge(inum)
 
-! implement 1D coupling along the edge
+        ! implement 1D coupling along the edge
         do ipoin1D = 1,NGLLX
 
-! get point values for the elastic side, which matches our side in the inverse direction
+          ! get point values for the elastic side, which matches our side in the inverse direction
           i = ivalue_inverse(ipoin1D,iedge_elastic)
           j = jvalue_inverse(ipoin1D,iedge_elastic)
           iglob = ibool(i,j,ispec_elastic)
 
-! get elastic properties
-    lambdal_relaxed = poroelastcoef(1,1,kmato(ispec_elastic))
-    mul_relaxed = poroelastcoef(2,1,kmato(ispec_elastic))
-    lambdalplus2mul_relaxed = poroelastcoef(3,1,kmato(ispec_elastic))
+          ! get elastic properties
+          lambdal_relaxed = poroelastcoef(1,1,kmato(ispec_elastic))
+          mul_relaxed = poroelastcoef(2,1,kmato(ispec_elastic))
+          lambdalplus2mul_relaxed = poroelastcoef(3,1,kmato(ispec_elastic))
 
-! derivative along x and along z for u_s and w
+          ! derivative along x and along z for u_s and w
           dux_dxi = ZERO
           duz_dxi = ZERO
 
@@ -5151,15 +5158,15 @@
           duz_dgamma = ZERO
 
           if(SIMULATION_TYPE == 2) then
-          b_dux_dxi = ZERO
-          b_duz_dxi = ZERO
+            b_dux_dxi = ZERO
+            b_duz_dxi = ZERO
 
-          b_dux_dgamma = ZERO
-          b_duz_dgamma = ZERO
+            b_dux_dgamma = ZERO
+            b_duz_dgamma = ZERO
           endif
 
-! first double loop over GLL points to compute and store gradients
-! we can merge the two loops because NGLLX == NGLLZ
+          ! first double loop over GLL points to compute and store gradients
+          ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
             dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec_elastic))*hprime_xx(i,k)
             duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec_elastic))*hprime_xx(i,k)
@@ -5167,10 +5174,10 @@
             duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
 
             if(SIMULATION_TYPE == 2) then
-            b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,j,ispec_elastic))*hprime_xx(i,k)
-            b_duz_dxi = b_duz_dxi + b_displ_elastic(3,ibool(k,j,ispec_elastic))*hprime_xx(i,k)
-            b_dux_dgamma = b_dux_dgamma + b_displ_elastic(1,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
-            b_duz_dgamma = b_duz_dgamma + b_displ_elastic(3,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
+              b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,j,ispec_elastic))*hprime_xx(i,k)
+              b_duz_dxi = b_duz_dxi + b_displ_elastic(3,ibool(k,j,ispec_elastic))*hprime_xx(i,k)
+              b_dux_dgamma = b_dux_dgamma + b_displ_elastic(1,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
+              b_duz_dgamma = b_duz_dgamma + b_displ_elastic(3,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
             endif
           enddo
 
@@ -5179,7 +5186,7 @@
           gammaxl = gammax(i,j,ispec_elastic)
           gammazl = gammaz(i,j,ispec_elastic)
 
-! derivatives of displacement
+          ! derivatives of displacement
           dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
           dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
 
@@ -5187,77 +5194,77 @@
           duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
           if(SIMULATION_TYPE == 2) then
-          b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
-          b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
+            b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
+            b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
 
-          b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
-          b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
+            b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
+            b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
           endif
-! compute stress tensor
-! full anisotropy
-  if(kmato(ispec_elastic) == 2) then
-! implement anisotropy in 2D
-      if(assign_external_model) then
-         c11 = c11ext(i,j,ispec_elastic)
-         c13 = c13ext(i,j,ispec_elastic)
-         c15 = c15ext(i,j,ispec_elastic)
-         c33 = c33ext(i,j,ispec_elastic)
-         c35 = c35ext(i,j,ispec_elastic)
-         c55 = c55ext(i,j,ispec_elastic)
-      else
-         c11 = anisotropy(1,kmato(ispec_elastic))
-         c13 = anisotropy(2,kmato(ispec_elastic))
-         c15 = anisotropy(3,kmato(ispec_elastic))
-         c33 = anisotropy(4,kmato(ispec_elastic))
-         c35 = anisotropy(5,kmato(ispec_elastic))
-         c55 = anisotropy(6,kmato(ispec_elastic))
-      end if
-     sigma_xx = c11*dux_dxl + c15*(duz_dxl + dux_dzl) + c13*duz_dzl
-     sigma_zz = c13*dux_dxl + c35*(duz_dxl + dux_dzl) + c33*duz_dzl
-     sigma_xz = c15*dux_dxl + c55*(duz_dxl + dux_dzl) + c35*duz_dzl
-  else
-! no attenuation
-    sigma_xx = lambdalplus2mul_relaxed*dux_dxl + lambdal_relaxed*duz_dzl
-    sigma_xz = mul_relaxed*(duz_dxl + dux_dzl)
-    sigma_zz = lambdalplus2mul_relaxed*duz_dzl + lambdal_relaxed*dux_dxl
-  endif
+          ! compute stress tensor
+          ! full anisotropy
+          if(kmato(ispec_elastic) == 2) then
+            ! implement anisotropy in 2D
+            if(assign_external_model) then
+              c11 = c11ext(i,j,ispec_elastic)
+              c13 = c13ext(i,j,ispec_elastic)
+              c15 = c15ext(i,j,ispec_elastic)
+              c33 = c33ext(i,j,ispec_elastic)
+              c35 = c35ext(i,j,ispec_elastic)
+              c55 = c55ext(i,j,ispec_elastic)
+            else
+              c11 = anisotropy(1,kmato(ispec_elastic))
+              c13 = anisotropy(2,kmato(ispec_elastic))
+              c15 = anisotropy(3,kmato(ispec_elastic))
+              c33 = anisotropy(4,kmato(ispec_elastic))
+              c35 = anisotropy(5,kmato(ispec_elastic))
+              c55 = anisotropy(6,kmato(ispec_elastic))
+            end if
+            sigma_xx = c11*dux_dxl + c15*(duz_dxl + dux_dzl) + c13*duz_dzl
+            sigma_zz = c13*dux_dxl + c35*(duz_dxl + dux_dzl) + c33*duz_dzl
+            sigma_xz = c15*dux_dxl + c55*(duz_dxl + dux_dzl) + c35*duz_dzl
+          else
+            ! no attenuation
+            sigma_xx = lambdalplus2mul_relaxed*dux_dxl + lambdal_relaxed*duz_dzl
+            sigma_xz = mul_relaxed*(duz_dxl + dux_dzl)
+            sigma_zz = lambdalplus2mul_relaxed*duz_dzl + lambdal_relaxed*dux_dxl
+          endif
 
-    if(SIMULATION_TYPE == 2) then
-    b_sigma_xx = lambdalplus2mul_relaxed*b_dux_dxl + lambdal_relaxed*b_duz_dzl
-    b_sigma_xz = mul_relaxed*(b_duz_dxl + b_dux_dzl)
-    b_sigma_zz = lambdalplus2mul_relaxed*b_duz_dzl + lambdal_relaxed*b_dux_dxl
-    endif ! if(SIMULATION_TYPE == 2)
+          if(SIMULATION_TYPE == 2) then
+            b_sigma_xx = lambdalplus2mul_relaxed*b_dux_dxl + lambdal_relaxed*b_duz_dzl
+            b_sigma_xz = mul_relaxed*(b_duz_dxl + b_dux_dzl)
+            b_sigma_zz = lambdalplus2mul_relaxed*b_duz_dzl + lambdal_relaxed*b_dux_dxl
+          endif ! if(SIMULATION_TYPE == 2)
 
-! get point values for the poroelastic side
+          ! get point values for the poroelastic side
           i = ivalue(ipoin1D,iedge_poroelastic)
           j = jvalue(ipoin1D,iedge_poroelastic)
           iglob = ibool(i,j,ispec_poroelastic)
 
-! get poroelastic domain paramters
-    phil = porosity(kmato(ispec_poroelastic))
-    tortl = tortuosity(kmato(ispec_poroelastic))
-!solid properties
-    mul_s = poroelastcoef(2,1,kmato(ispec_poroelastic))
-    kappal_s = poroelastcoef(3,1,kmato(ispec_poroelastic)) - 4._CUSTOM_REAL*mul_s/3._CUSTOM_REAL
-    rhol_s = density(1,kmato(ispec_poroelastic))
-!fluid properties
-    kappal_f = poroelastcoef(1,2,kmato(ispec_poroelastic))
-    rhol_f = density(2,kmato(ispec_poroelastic))
-!frame properties
-    mul_fr = poroelastcoef(2,3,kmato(ispec_poroelastic))
-    kappal_fr = poroelastcoef(3,3,kmato(ispec_poroelastic)) - 4._CUSTOM_REAL*mul_fr/3._CUSTOM_REAL
-    rhol_bar =  (1._CUSTOM_REAL - phil)*rhol_s + phil*rhol_f
-!Biot coefficients for the input phi
-      D_biot = kappal_s*(1._CUSTOM_REAL + phil*(kappal_s/kappal_f - 1._CUSTOM_REAL))
-      H_biot = (kappal_s - kappal_fr)*(kappal_s - kappal_fr)/(D_biot - kappal_fr) + &
+          ! get poroelastic domain paramters
+          phil = porosity(kmato(ispec_poroelastic))
+          tortl = tortuosity(kmato(ispec_poroelastic))
+          !solid properties
+          mul_s = poroelastcoef(2,1,kmato(ispec_poroelastic))
+          kappal_s = poroelastcoef(3,1,kmato(ispec_poroelastic)) - 4._CUSTOM_REAL*mul_s/3._CUSTOM_REAL
+          rhol_s = density(1,kmato(ispec_poroelastic))
+          !fluid properties
+          kappal_f = poroelastcoef(1,2,kmato(ispec_poroelastic))
+          rhol_f = density(2,kmato(ispec_poroelastic))
+          !frame properties
+          mul_fr = poroelastcoef(2,3,kmato(ispec_poroelastic))
+          kappal_fr = poroelastcoef(3,3,kmato(ispec_poroelastic)) - 4._CUSTOM_REAL*mul_fr/3._CUSTOM_REAL
+          rhol_bar =  (1._CUSTOM_REAL - phil)*rhol_s + phil*rhol_f
+          !Biot coefficients for the input phi
+          D_biot = kappal_s*(1._CUSTOM_REAL + phil*(kappal_s/kappal_f - 1._CUSTOM_REAL))
+          H_biot = (kappal_s - kappal_fr)*(kappal_s - kappal_fr)/(D_biot - kappal_fr) + &
                 kappal_fr + 4._CUSTOM_REAL*mul_fr/3._CUSTOM_REAL
-      C_biot = kappal_s*(kappal_s - kappal_fr)/(D_biot - kappal_fr)
-      M_biot = kappal_s*kappal_s/(D_biot - kappal_fr)
-      mul_G = mul_fr
-      lambdal_G = H_biot - 2._CUSTOM_REAL*mul_fr
-      lambdalplus2mul_G = lambdal_G + TWO*mul_G
+          C_biot = kappal_s*(kappal_s - kappal_fr)/(D_biot - kappal_fr)
+          M_biot = kappal_s*kappal_s/(D_biot - kappal_fr)
+          mul_G = mul_fr
+          lambdal_G = H_biot - 2._CUSTOM_REAL*mul_fr
+          lambdalplus2mul_G = lambdal_G + TWO*mul_G
 
-! derivative along x and along z for u_s and w
+          ! derivative along x and along z for u_s and w
           dux_dxi = ZERO
           duz_dxi = ZERO
 
@@ -5271,21 +5278,21 @@
           dwz_dgamma = ZERO
 
           if(SIMULATION_TYPE == 2) then
-          b_dux_dxi = ZERO
-          b_duz_dxi = ZERO
+            b_dux_dxi = ZERO
+            b_duz_dxi = ZERO
 
-          b_dux_dgamma = ZERO
-          b_duz_dgamma = ZERO
+            b_dux_dgamma = ZERO
+            b_duz_dgamma = ZERO
 
-          b_dwx_dxi = ZERO
-          b_dwz_dxi = ZERO
+            b_dwx_dxi = ZERO
+            b_dwz_dxi = ZERO
 
-          b_dwx_dgamma = ZERO
-          b_dwz_dgamma = ZERO
+            b_dwx_dgamma = ZERO
+            b_dwz_dgamma = ZERO
           endif
 
-! first double loop over GLL points to compute and store gradients
-! we can merge the two loops because NGLLX == NGLLZ
+          ! first double loop over GLL points to compute and store gradients
+          ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
             dux_dxi = dux_dxi + displs_poroelastic(1,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
             duz_dxi = duz_dxi + displs_poroelastic(2,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
@@ -5297,15 +5304,15 @@
             dwx_dgamma = dwx_dgamma + displw_poroelastic(1,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
             dwz_dgamma = dwz_dgamma + displw_poroelastic(2,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
             if(SIMULATION_TYPE == 2) then
-            b_dux_dxi = b_dux_dxi + b_displs_poroelastic(1,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
-            b_duz_dxi = b_duz_dxi + b_displs_poroelastic(2,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
-            b_dux_dgamma = b_dux_dgamma + b_displs_poroelastic(1,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
-            b_duz_dgamma = b_duz_dgamma + b_displs_poroelastic(2,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
+              b_dux_dxi = b_dux_dxi + b_displs_poroelastic(1,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
+              b_duz_dxi = b_duz_dxi + b_displs_poroelastic(2,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
+              b_dux_dgamma = b_dux_dgamma + b_displs_poroelastic(1,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
+              b_duz_dgamma = b_duz_dgamma + b_displs_poroelastic(2,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
 
-            b_dwx_dxi = b_dwx_dxi + b_displw_poroelastic(1,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
-            b_dwz_dxi = b_dwz_dxi + b_displw_poroelastic(2,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
-            b_dwx_dgamma = b_dwx_dgamma + b_displw_poroelastic(1,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
-            b_dwz_dgamma = b_dwz_dgamma + b_displw_poroelastic(2,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
+              b_dwx_dxi = b_dwx_dxi + b_displw_poroelastic(1,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
+              b_dwz_dxi = b_dwz_dxi + b_displw_poroelastic(2,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
+              b_dwx_dgamma = b_dwx_dgamma + b_displw_poroelastic(1,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
+              b_dwz_dgamma = b_dwz_dgamma + b_displw_poroelastic(2,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
             endif
           enddo
 
@@ -5314,7 +5321,7 @@
           gammaxl = gammax(i,j,ispec_poroelastic)
           gammazl = gammaz(i,j,ispec_poroelastic)
 
-! derivatives of displacement
+          ! derivatives of displacement
           dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
           dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
 
@@ -5328,89 +5335,89 @@
           dwz_dzl = dwz_dxi*xizl + dwz_dgamma*gammazl
 
           if(SIMULATION_TYPE == 2) then
-          b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
-          b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
+            b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
+            b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
 
-          b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
-          b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
+            b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
+            b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
 
-          b_dwx_dxl = b_dwx_dxi*xixl + b_dwx_dgamma*gammaxl
-          b_dwx_dzl = b_dwx_dxi*xizl + b_dwx_dgamma*gammazl
+            b_dwx_dxl = b_dwx_dxi*xixl + b_dwx_dgamma*gammaxl
+            b_dwx_dzl = b_dwx_dxi*xizl + b_dwx_dgamma*gammazl
 
-          b_dwz_dxl = b_dwz_dxi*xixl + b_dwz_dgamma*gammaxl
-          b_dwz_dzl = b_dwz_dxi*xizl + b_dwz_dgamma*gammazl
+            b_dwz_dxl = b_dwz_dxi*xixl + b_dwz_dgamma*gammaxl
+            b_dwz_dzl = b_dwz_dxi*xizl + b_dwz_dgamma*gammazl
           endif
-! compute stress tensor
+          ! compute stress tensor
 
-! no attenuation
-    sigma_xx = sigma_xx + lambdalplus2mul_G*dux_dxl + lambdal_G*duz_dzl + C_biot*(dwx_dxl + dwz_dzl)
-    sigma_xz = sigma_xz + mul_G*(duz_dxl + dux_dzl)
-    sigma_zz = sigma_zz + lambdalplus2mul_G*duz_dzl + lambdal_G*dux_dxl + C_biot*(dwx_dxl + dwz_dzl)
+          ! no attenuation
+          sigma_xx = sigma_xx + lambdalplus2mul_G*dux_dxl + lambdal_G*duz_dzl + C_biot*(dwx_dxl + dwz_dzl)
+          sigma_xz = sigma_xz + mul_G*(duz_dxl + dux_dzl)
+          sigma_zz = sigma_zz + lambdalplus2mul_G*duz_dzl + lambdal_G*dux_dxl + C_biot*(dwx_dxl + dwz_dzl)
 
-    sigmap = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl + dwz_dzl)
+          sigmap = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl + dwz_dzl)
 
-    if(SIMULATION_TYPE == 2) then
-    b_sigma_xx = b_sigma_xx + lambdalplus2mul_G*b_dux_dxl + lambdal_G*b_duz_dzl + C_biot*(b_dwx_dxl + b_dwz_dzl)
-    b_sigma_xz = b_sigma_xz + mul_G*(b_duz_dxl + b_dux_dzl)
-    b_sigma_zz = b_sigma_zz + lambdalplus2mul_G*b_duz_dzl + lambdal_G*b_dux_dxl + C_biot*(b_dwx_dxl + b_dwz_dzl)
-    b_sigmap = C_biot*(b_dux_dxl + b_duz_dzl) + M_biot*(b_dwx_dxl + b_dwz_dzl)
-    endif
+          if(SIMULATION_TYPE == 2) then
+            b_sigma_xx = b_sigma_xx + lambdalplus2mul_G*b_dux_dxl + lambdal_G*b_duz_dzl + C_biot*(b_dwx_dxl + b_dwz_dzl)
+            b_sigma_xz = b_sigma_xz + mul_G*(b_duz_dxl + b_dux_dzl)
+            b_sigma_zz = b_sigma_zz + lambdalplus2mul_G*b_duz_dzl + lambdal_G*b_dux_dxl + C_biot*(b_dwx_dxl + b_dwz_dzl)
+            b_sigmap = C_biot*(b_dux_dxl + b_duz_dzl) + M_biot*(b_dwx_dxl + b_dwz_dzl)
+          endif
 
-! compute the 1D Jacobian and the normal to the edge: for their expression see for instance
-! O. C. Zienkiewicz and R. L. Taylor, The Finite Element Method for Solid and Structural Mechanics,
-! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
-! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
-! Blackwell Science, page 110, equation (4.60).
+          ! compute the 1D Jacobian and the normal to the edge: for their expression see for instance
+          ! O. C. Zienkiewicz and R. L. Taylor, The Finite Element Method for Solid and Structural Mechanics,
+          ! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
+          ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
+          ! Blackwell Science, page 110, equation (4.60).
           if(iedge_poroelastic == ITOP)then
             xxi = + gammaz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             zxi = - gammax(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = - zxi / jacobian1D
             nz = + xxi / jacobian1D
-          weight = jacobian1D * wxgll(i)
+            weight = jacobian1D * wxgll(i)
           elseif(iedge_poroelastic == IBOTTOM)then
             xxi = + gammaz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             zxi = - gammax(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = + zxi / jacobian1D
             nz = - xxi / jacobian1D
-          weight = jacobian1D * wxgll(i)
+            weight = jacobian1D * wxgll(i)
           elseif(iedge_poroelastic ==ILEFT)then
             xgamma = - xiz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             zgamma = + xix(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = - zgamma / jacobian1D
             nz = + xgamma / jacobian1D
-          weight = jacobian1D * wzgll(j)
+            weight = jacobian1D * wzgll(j)
           elseif(iedge_poroelastic ==IRIGHT)then
             xgamma = - xiz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             zgamma = + xix(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = + zgamma / jacobian1D
             nz = - xgamma / jacobian1D
-          weight = jacobian1D * wzgll(j)
+            weight = jacobian1D * wzgll(j)
           endif
 
-! contribution to the solid phase
+          ! contribution to the solid phase
           accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) + &
                 weight*((sigma_xx*nx + sigma_xz*nz)/2.d0 -phil/tortl*sigmap*nx)
 
           accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + &
                 weight*((sigma_xz*nx + sigma_zz*nz)/2.d0 -phil/tortl*sigmap*nz)
 
-! contribution to the fluid phase
-! w = 0
+          ! contribution to the fluid phase
+          ! w = 0
 
           if(SIMULATION_TYPE == 2) then
-! contribution to the solid phase
-          b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) + &
+            ! contribution to the solid phase
+            b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) + &
                 weight*((b_sigma_xx*nx + b_sigma_xz*nz)/2.d0 -phil/tortl*b_sigmap*nx)
 
-          b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) + &
+            b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) + &
                 weight*((b_sigma_xz*nx + b_sigma_zz*nz)/2.d0 -phil/tortl*b_sigmap*nz)
 
-! contribution to the fluid phase
-! w = 0
+            ! contribution to the fluid phase
+            ! w = 0
           endif !if(SIMULATION_TYPE == 2) then
 
         enddo
@@ -5424,88 +5431,88 @@
 ! ******************************** add force source
 ! ************************************************************************************
 
- if(any_poroelastic) then
+    if(any_poroelastic) then
 
 
-! --- add the source if it is a collocated force
-    if(.not. initialfield) then
+      ! --- add the source if it is a collocated force
+      if(.not. initialfield) then
 
-    do i_source=1,NSOURCES
-! if this processor carries the source and the source element is elastic
-      if (is_proc_source(i_source) == 1 .and. poroelastic(ispec_selected_source(i_source))) then
+        do i_source=1,NSOURCES
+          ! if this processor carries the source and the source element is elastic
+          if (is_proc_source(i_source) == 1 .and. poroelastic(ispec_selected_source(i_source))) then
 
-    phil = porosity(kmato(ispec_selected_source(i_source)))
-    tortl = tortuosity(kmato(ispec_selected_source(i_source)))
-    rhol_s = density(1,kmato(ispec_selected_source(i_source)))
-    rhol_f = density(2,kmato(ispec_selected_source(i_source)))
-    rhol_bar = (1._CUSTOM_REAL - phil)*rhol_s + phil*rhol_f
+            phil = porosity(kmato(ispec_selected_source(i_source)))
+            tortl = tortuosity(kmato(ispec_selected_source(i_source)))
+            rhol_s = density(1,kmato(ispec_selected_source(i_source)))
+            rhol_f = density(2,kmato(ispec_selected_source(i_source)))
+            rhol_bar = (1._CUSTOM_REAL - phil)*rhol_s + phil*rhol_f
 
-! collocated force
-        if(source_type(i_source) == 1) then
-       if(SIMULATION_TYPE == 1) then  ! forward wavefield
-          do j = 1,NGLLZ
-           do i = 1,NGLLX
-             iglob = ibool(i,j,ispec_selected_source(i_source))
-             hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-! s
-      accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) - hlagrange * &
-                               (1._CUSTOM_REAL - phil/tortl)*sin(angleforce(i_source))*source_time_function(i_source,it)
-      accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + hlagrange * &
-                               (1._CUSTOM_REAL - phil/tortl)*cos(angleforce(i_source))*source_time_function(i_source,it)
-! w
-      accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - hlagrange * &
-         (1._CUSTOM_REAL - rhol_f/rhol_bar)*sin(angleforce(i_source))*source_time_function(i_source,it)
-      accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) + hlagrange * &
-         (1._CUSTOM_REAL - rhol_f/rhol_bar)*cos(angleforce(i_source))*source_time_function(i_source,it)
-           enddo
-          enddo
-       else                   ! backward wavefield
-          do j = 1,NGLLZ
-           do i = 1,NGLLX
-             iglob = ibool(i,j,ispec_selected_source(i_source))
-             hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-! b_s
-      b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - hlagrange * &
-                               (1._CUSTOM_REAL - phil/tortl)*sin(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
-      b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) + hlagrange * &
-                               (1._CUSTOM_REAL - phil/tortl)*cos(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
-!b_w
-      b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) - hlagrange * &
-         (1._CUSTOM_REAL - rhol_f/rhol_bar)*sin(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
-      b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) + hlagrange * &
-         (1._CUSTOM_REAL - rhol_f/rhol_bar)*cos(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
-           enddo
-          enddo
-       endif !endif SIMULATION_TYPE == 1
-        endif
+            ! collocated force
+            if(source_type(i_source) == 1) then
+              if(SIMULATION_TYPE == 1) then  ! forward wavefield
+                do j = 1,NGLLZ
+                  do i = 1,NGLLX
+                    iglob = ibool(i,j,ispec_selected_source(i_source))
+                    hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+                    ! s
+                    accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) - hlagrange * &
+                      (1._CUSTOM_REAL - phil/tortl)*sin(angleforce(i_source))*source_time_function(i_source,it)
+                    accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + hlagrange * &
+                      (1._CUSTOM_REAL - phil/tortl)*cos(angleforce(i_source))*source_time_function(i_source,it)
+                    ! w
+                    accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - hlagrange * &
+                      (1._CUSTOM_REAL - rhol_f/rhol_bar)*sin(angleforce(i_source))*source_time_function(i_source,it)
+                    accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) + hlagrange * &
+                      (1._CUSTOM_REAL - rhol_f/rhol_bar)*cos(angleforce(i_source))*source_time_function(i_source,it)
+                  enddo
+                enddo
+              else                   ! backward wavefield
+                do j = 1,NGLLZ
+                  do i = 1,NGLLX
+                    iglob = ibool(i,j,ispec_selected_source(i_source))
+                    hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+                    ! b_s
+                    b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - hlagrange * &
+                      (1._CUSTOM_REAL - phil/tortl)*sin(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
+                    b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) + hlagrange * &
+                      (1._CUSTOM_REAL - phil/tortl)*cos(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
+                    !b_w
+                    b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) - hlagrange * &
+                      (1._CUSTOM_REAL - rhol_f/rhol_bar)*sin(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
+                    b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) + hlagrange * &
+                      (1._CUSTOM_REAL - rhol_f/rhol_bar)*cos(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
+                  enddo
+                enddo
+              endif !endif SIMULATION_TYPE == 1
+            endif
 
-      endif ! if this processor carries the source and the source element is elastic
-    enddo ! do i_source=1,NSOURCES
+          endif ! if this processor carries the source and the source element is elastic
+        enddo ! do i_source=1,NSOURCES
 
-    endif ! if not using an initial field
-  endif !if(any_poroelastic)
+      endif ! if not using an initial field
+    endif !if(any_poroelastic)
 
 ! assembling accels_proelastic & accelw_poroelastic for poroelastic elements
 #ifdef USE_MPI
-  if (nproc > 1 .and. any_poroelastic .and. ninterface_poroelastic > 0) then
-    call assemble_MPI_vector_po(accels_poroelastic,accelw_poroelastic,nglob, &
-      ninterface, ninterface_poroelastic,inum_interfaces_poroelastic, &
-      max_interface_size, max_ibool_interfaces_size_po,&
-      ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
-      tab_requests_send_recv_poro,buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
-      buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
-      my_neighbours)
-  endif
+    if (nproc > 1 .and. any_poroelastic .and. ninterface_poroelastic > 0) then
+      call assemble_MPI_vector_po(accels_poroelastic,accelw_poroelastic,nglob, &
+            ninterface, ninterface_poroelastic,inum_interfaces_poroelastic, &
+            max_interface_size, max_ibool_interfaces_size_po,&
+            ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
+            tab_requests_send_recv_poro,buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
+            buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
+            my_neighbours)
+    endif
 
-  if (nproc > 1 .and. any_poroelastic .and. ninterface_poroelastic > 0 .and. SIMULATION_TYPE == 2) then
-    call assemble_MPI_vector_po(b_accels_poroelastic,b_accelw_poroelastic,nglob, &
-      ninterface, ninterface_poroelastic,inum_interfaces_poroelastic, &
-      max_interface_size, max_ibool_interfaces_size_po,&
-      ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
-      tab_requests_send_recv_poro,buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
-      buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
-      my_neighbours)
-   endif
+    if (nproc > 1 .and. any_poroelastic .and. ninterface_poroelastic > 0 .and. SIMULATION_TYPE == 2) then
+      call assemble_MPI_vector_po(b_accels_poroelastic,b_accelw_poroelastic,nglob, &
+            ninterface, ninterface_poroelastic,inum_interfaces_poroelastic, &
+            max_interface_size, max_ibool_interfaces_size_po,&
+            ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
+            tab_requests_send_recv_poro,buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
+            buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
+            my_neighbours)
+    endif
 #endif
 
 
@@ -5513,107 +5520,107 @@
 ! ************* multiply by the inverse of the mass matrix and update velocity
 ! ************************************************************************************
 
- if(any_poroelastic) then
-    accels_poroelastic(1,:) = accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
-    accels_poroelastic(2,:) = accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
-    velocs_poroelastic = velocs_poroelastic + deltatover2*accels_poroelastic
+    if(any_poroelastic) then
+      accels_poroelastic(1,:) = accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
+      accels_poroelastic(2,:) = accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
+      velocs_poroelastic = velocs_poroelastic + deltatover2*accels_poroelastic
 
-    accelw_poroelastic(1,:) = accelw_poroelastic(1,:) * rmass_w_inverse_poroelastic(:)
-    accelw_poroelastic(2,:) = accelw_poroelastic(2,:) * rmass_w_inverse_poroelastic(:)
-    velocw_poroelastic = velocw_poroelastic + deltatover2*accelw_poroelastic
+      accelw_poroelastic(1,:) = accelw_poroelastic(1,:) * rmass_w_inverse_poroelastic(:)
+      accelw_poroelastic(2,:) = accelw_poroelastic(2,:) * rmass_w_inverse_poroelastic(:)
+      velocw_poroelastic = velocw_poroelastic + deltatover2*accelw_poroelastic
 
-   if(SIMULATION_TYPE == 2) then
-    b_accels_poroelastic(1,:) = b_accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
-    b_accels_poroelastic(2,:) = b_accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
-    b_velocs_poroelastic = b_velocs_poroelastic + b_deltatover2*b_accels_poroelastic
+      if(SIMULATION_TYPE == 2) then
+        b_accels_poroelastic(1,:) = b_accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
+        b_accels_poroelastic(2,:) = b_accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
+        b_velocs_poroelastic = b_velocs_poroelastic + b_deltatover2*b_accels_poroelastic
 
-    b_accelw_poroelastic(1,:) = b_accelw_poroelastic(1,:) * rmass_w_inverse_poroelastic(:)
-    b_accelw_poroelastic(2,:) = b_accelw_poroelastic(2,:) * rmass_w_inverse_poroelastic(:)
-    b_velocw_poroelastic = b_velocw_poroelastic + b_deltatover2*b_accelw_poroelastic
-   endif
+        b_accelw_poroelastic(1,:) = b_accelw_poroelastic(1,:) * rmass_w_inverse_poroelastic(:)
+        b_accelw_poroelastic(2,:) = b_accelw_poroelastic(2,:) * rmass_w_inverse_poroelastic(:)
+        b_velocw_poroelastic = b_velocw_poroelastic + b_deltatover2*b_accelw_poroelastic
+      endif
 
-  endif !if(any_poroelastic)
+    endif !if(any_poroelastic)
 
 !*******************************************************************************
 !         assembling the displacements on the elastic-poro boundaries
 !*******************************************************************************
     if(coupled_elastic_poro) then
-     icount(:)=ZERO
+      icount(:)=ZERO
 
-! loop on all the coupling edges
+      ! loop on all the coupling edges
       do inum = 1,num_solid_poro_edges
-! get the edge of the elastic element
+        ! get the edge of the elastic element
         ispec_elastic = solid_poro_elastic_ispec(inum)
         iedge_elastic = solid_poro_elastic_iedge(inum)
-! get the corresponding edge of the poroelastic element
+        ! get the corresponding edge of the poroelastic element
         ispec_poroelastic = solid_poro_poroelastic_ispec(inum)
         iedge_poroelastic = solid_poro_poroelastic_iedge(inum)
 
         do ipoin1D = 1,NGLLX
-! recovering original velocities and accelerations on boundaries (elastic side)
+          ! recovering original velocities and accelerations on boundaries (elastic side)
           i = ivalue(ipoin1D,iedge_poroelastic)
           j = jvalue(ipoin1D,iedge_poroelastic)
           iglob = ibool(i,j,ispec_poroelastic)
           icount(iglob) = icount(iglob) + 1
 
-        if(icount(iglob) ==1)then
-          veloc_elastic(1,iglob) = veloc_elastic(1,iglob) - deltatover2*accel_elastic(1,iglob)
-          veloc_elastic(3,iglob) = veloc_elastic(3,iglob) - deltatover2*accel_elastic(3,iglob)
-          accel_elastic(1,iglob) = accel_elastic(1,iglob) / rmass_inverse_elastic(iglob)
-          accel_elastic(3,iglob) = accel_elastic(3,iglob) / rmass_inverse_elastic(iglob)
-! recovering original velocities and accelerations on boundaries (poro side)
-          velocs_poroelastic(1,iglob) = velocs_poroelastic(1,iglob) - deltatover2*accels_poroelastic(1,iglob)
-          velocs_poroelastic(2,iglob) = velocs_poroelastic(2,iglob) - deltatover2*accels_poroelastic(2,iglob)
-          accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) / rmass_s_inverse_poroelastic(iglob)
-          accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) / rmass_s_inverse_poroelastic(iglob)
-! assembling accelerations
-          accel_elastic(1,iglob) = ( accel_elastic(1,iglob) + accels_poroelastic(1,iglob) ) / &
+          if(icount(iglob) ==1)then
+            veloc_elastic(1,iglob) = veloc_elastic(1,iglob) - deltatover2*accel_elastic(1,iglob)
+            veloc_elastic(3,iglob) = veloc_elastic(3,iglob) - deltatover2*accel_elastic(3,iglob)
+            accel_elastic(1,iglob) = accel_elastic(1,iglob) / rmass_inverse_elastic(iglob)
+            accel_elastic(3,iglob) = accel_elastic(3,iglob) / rmass_inverse_elastic(iglob)
+            ! recovering original velocities and accelerations on boundaries (poro side)
+            velocs_poroelastic(1,iglob) = velocs_poroelastic(1,iglob) - deltatover2*accels_poroelastic(1,iglob)
+            velocs_poroelastic(2,iglob) = velocs_poroelastic(2,iglob) - deltatover2*accels_poroelastic(2,iglob)
+            accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) / rmass_s_inverse_poroelastic(iglob)
+            accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) / rmass_s_inverse_poroelastic(iglob)
+            ! assembling accelerations
+            accel_elastic(1,iglob) = ( accel_elastic(1,iglob) + accels_poroelastic(1,iglob) ) / &
                                    ( 1.0/rmass_inverse_elastic(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
-          accel_elastic(3,iglob) = ( accel_elastic(3,iglob) + accels_poroelastic(2,iglob) ) / &
+            accel_elastic(3,iglob) = ( accel_elastic(3,iglob) + accels_poroelastic(2,iglob) ) / &
                                    ( 1.0/rmass_inverse_elastic(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
-          accels_poroelastic(1,iglob) = accel_elastic(1,iglob)
-          accels_poroelastic(2,iglob) = accel_elastic(3,iglob)
-! updating velocities
-          velocs_poroelastic(1,iglob) = velocs_poroelastic(1,iglob) + deltatover2*accels_poroelastic(1,iglob)
-          velocs_poroelastic(2,iglob) = velocs_poroelastic(2,iglob) + deltatover2*accels_poroelastic(2,iglob)
-          veloc_elastic(1,iglob) = veloc_elastic(1,iglob) + deltatover2*accel_elastic(1,iglob)
-          veloc_elastic(3,iglob) = veloc_elastic(3,iglob) + deltatover2*accel_elastic(3,iglob)
-! zeros w
-          accelw_poroelastic(1,iglob) = ZERO
-          accelw_poroelastic(2,iglob) = ZERO
-          velocw_poroelastic(1,iglob) = ZERO
-          velocw_poroelastic(2,iglob) = ZERO
+            accels_poroelastic(1,iglob) = accel_elastic(1,iglob)
+            accels_poroelastic(2,iglob) = accel_elastic(3,iglob)
+            ! updating velocities
+            velocs_poroelastic(1,iglob) = velocs_poroelastic(1,iglob) + deltatover2*accels_poroelastic(1,iglob)
+            velocs_poroelastic(2,iglob) = velocs_poroelastic(2,iglob) + deltatover2*accels_poroelastic(2,iglob)
+            veloc_elastic(1,iglob) = veloc_elastic(1,iglob) + deltatover2*accel_elastic(1,iglob)
+            veloc_elastic(3,iglob) = veloc_elastic(3,iglob) + deltatover2*accel_elastic(3,iglob)
+            ! zeros w
+            accelw_poroelastic(1,iglob) = ZERO
+            accelw_poroelastic(2,iglob) = ZERO
+            velocw_poroelastic(1,iglob) = ZERO
+            velocw_poroelastic(2,iglob) = ZERO
 
-         if(SIMULATION_TYPE == 2) then
-          b_veloc_elastic(1,iglob) = b_veloc_elastic(1,iglob) - b_deltatover2*b_accel_elastic(1,iglob)
-          b_veloc_elastic(3,iglob) = b_veloc_elastic(3,iglob) - b_deltatover2*b_accel_elastic(3,iglob)
-          b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) / rmass_inverse_elastic(iglob)
-          b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) / rmass_inverse_elastic(iglob)
-! recovering original velocities and accelerations on boundaries (poro side)
-          b_velocs_poroelastic(1,iglob) = b_velocs_poroelastic(1,iglob) - b_deltatover2*b_accels_poroelastic(1,iglob)
-          b_velocs_poroelastic(2,iglob) = b_velocs_poroelastic(2,iglob) - b_deltatover2*b_accels_poroelastic(2,iglob)
-          b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) / rmass_s_inverse_poroelastic(iglob)
-          b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) / rmass_s_inverse_poroelastic(iglob)
-! assembling accelerations
-          b_accel_elastic(1,iglob) = ( b_accel_elastic(1,iglob) + b_accels_poroelastic(1,iglob) ) / &
+            if(SIMULATION_TYPE == 2) then
+              b_veloc_elastic(1,iglob) = b_veloc_elastic(1,iglob) - b_deltatover2*b_accel_elastic(1,iglob)
+              b_veloc_elastic(3,iglob) = b_veloc_elastic(3,iglob) - b_deltatover2*b_accel_elastic(3,iglob)
+              b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) / rmass_inverse_elastic(iglob)
+              b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) / rmass_inverse_elastic(iglob)
+              ! recovering original velocities and accelerations on boundaries (poro side)
+              b_velocs_poroelastic(1,iglob) = b_velocs_poroelastic(1,iglob) - b_deltatover2*b_accels_poroelastic(1,iglob)
+              b_velocs_poroelastic(2,iglob) = b_velocs_poroelastic(2,iglob) - b_deltatover2*b_accels_poroelastic(2,iglob)
+              b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) / rmass_s_inverse_poroelastic(iglob)
+              b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) / rmass_s_inverse_poroelastic(iglob)
+              ! assembling accelerations
+              b_accel_elastic(1,iglob) = ( b_accel_elastic(1,iglob) + b_accels_poroelastic(1,iglob) ) / &
                                    ( 1.0/rmass_inverse_elastic(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
-          b_accel_elastic(3,iglob) = ( b_accel_elastic(3,iglob) + b_accels_poroelastic(2,iglob) ) / &
+              b_accel_elastic(3,iglob) = ( b_accel_elastic(3,iglob) + b_accels_poroelastic(2,iglob) ) / &
                                    ( 1.0/rmass_inverse_elastic(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
-          b_accels_poroelastic(1,iglob) = b_accel_elastic(1,iglob)
-          b_accels_poroelastic(2,iglob) = b_accel_elastic(3,iglob)
-! updating velocities
-          b_velocs_poroelastic(1,iglob) = b_velocs_poroelastic(1,iglob) + b_deltatover2*b_accels_poroelastic(1,iglob)
-          b_velocs_poroelastic(2,iglob) = b_velocs_poroelastic(2,iglob) + b_deltatover2*b_accels_poroelastic(2,iglob)
-          b_veloc_elastic(1,iglob) = b_veloc_elastic(1,iglob) + b_deltatover2*b_accel_elastic(1,iglob)
-          b_veloc_elastic(3,iglob) = b_veloc_elastic(3,iglob) + b_deltatover2*b_accel_elastic(3,iglob)
-! zeros w
-          b_accelw_poroelastic(1,iglob) = ZERO
-          b_accelw_poroelastic(2,iglob) = ZERO
-          b_velocw_poroelastic(1,iglob) = ZERO
-          b_velocw_poroelastic(2,iglob) = ZERO
-         endif !if(SIMULATION_TYPE == 2)
+              b_accels_poroelastic(1,iglob) = b_accel_elastic(1,iglob)
+              b_accels_poroelastic(2,iglob) = b_accel_elastic(3,iglob)
+              ! updating velocities
+              b_velocs_poroelastic(1,iglob) = b_velocs_poroelastic(1,iglob) + b_deltatover2*b_accels_poroelastic(1,iglob)
+              b_velocs_poroelastic(2,iglob) = b_velocs_poroelastic(2,iglob) + b_deltatover2*b_accels_poroelastic(2,iglob)
+              b_veloc_elastic(1,iglob) = b_veloc_elastic(1,iglob) + b_deltatover2*b_accel_elastic(1,iglob)
+              b_veloc_elastic(3,iglob) = b_veloc_elastic(3,iglob) + b_deltatover2*b_accel_elastic(3,iglob)
+              ! zeros w
+              b_accelw_poroelastic(1,iglob) = ZERO
+              b_accelw_poroelastic(2,iglob) = ZERO
+              b_velocw_poroelastic(1,iglob) = ZERO
+              b_velocw_poroelastic(2,iglob) = ZERO
+            endif !if(SIMULATION_TYPE == 2)
 
-        endif !if(icount(iglob) ==1)
+          endif !if(icount(iglob) ==1)
 
         enddo
 
@@ -5623,114 +5630,114 @@
 ! ********************************************************************************************
 !                       reading lastframe for adjoint/kernels calculation
 ! ********************************************************************************************
-   if(it == 1 .and. SIMULATION_TYPE == 2) then
+    if(it == 1 .and. SIMULATION_TYPE == 2) then
 
-! acoustic medium
-    if(any_acoustic) then
-      write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
-      open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
-      do j=1,nglob
-        read(55) b_potential_acoustic(j),&
-                b_potential_dot_acoustic(j),&
-                b_potential_dot_dot_acoustic(j)
-        enddo
-      close(55)
-
-! free surface for an acoustic medium
-      if ( nelem_acoustic_surface > 0 ) then
-        call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                                          b_potential_acoustic,acoustic_surface, &
-                                          ibool,nelem_acoustic_surface,nglob,nspec)
-      endif
-    endif
-
-! elastic medium
-    if(any_elastic) then
-      write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
-      open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
-      if(p_sv)then !P-SV waves
+      ! acoustic medium
+      if(any_acoustic) then
+        write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
+        open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
         do j=1,nglob
-          read(55) (b_displ_elastic(i,j), i=1,NDIM), &
-                    (b_veloc_elastic(i,j), i=1,NDIM), &
-                    (b_accel_elastic(i,j), i=1,NDIM)
-        enddo
-        b_displ_elastic(3,:) = b_displ_elastic(2,:)
-        b_displ_elastic(2,:) = 0._CUSTOM_REAL
-        b_veloc_elastic(3,:) = b_veloc_elastic(2,:)
-        b_veloc_elastic(2,:) = 0._CUSTOM_REAL
-        b_accel_elastic(3,:) = b_accel_elastic(2,:)
-        b_accel_elastic(2,:) = 0._CUSTOM_REAL
-      else !SH (membrane) waves
-        do j=1,nglob
-          read(55) b_displ_elastic(2,j), &
-                    b_veloc_elastic(2,j), &
-                    b_accel_elastic(2,j)
-        enddo
-        b_displ_elastic(1,:) = 0._CUSTOM_REAL
-        b_displ_elastic(3,:) = 0._CUSTOM_REAL
-        b_veloc_elastic(1,:) = 0._CUSTOM_REAL
-        b_veloc_elastic(3,:) = 0._CUSTOM_REAL
-        b_accel_elastic(1,:) = 0._CUSTOM_REAL
-        b_accel_elastic(3,:) = 0._CUSTOM_REAL
+          read(55) b_potential_acoustic(j),&
+                  b_potential_dot_acoustic(j),&
+                  b_potential_dot_dot_acoustic(j)
+          enddo
+        close(55)
+
+        ! free surface for an acoustic medium
+        if ( nelem_acoustic_surface > 0 ) then
+          call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
+                                            b_potential_acoustic,acoustic_surface, &
+                                            ibool,nelem_acoustic_surface,nglob,nspec)
+        endif
       endif
-      close(55)
-    endif
 
-! poroelastic medium
-    if(any_poroelastic) then
-    write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_s',myrank,'.bin'
-    open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
-    write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
-    open(unit=56,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
-       do j=1,nglob
-      read(55) (b_displs_poroelastic(i,j), i=1,NDIM), &
-                  (b_velocs_poroelastic(i,j), i=1,NDIM), &
-                  (b_accels_poroelastic(i,j), i=1,NDIM)
-      read(56) (b_displw_poroelastic(i,j), i=1,NDIM), &
-                  (b_velocw_poroelastic(i,j), i=1,NDIM), &
-                  (b_accelw_poroelastic(i,j), i=1,NDIM)
-       enddo
-    close(55)
-    close(56)
-    endif
+      ! elastic medium
+      if(any_elastic) then
+        write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
+        open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
+        if(p_sv)then !P-SV waves
+          do j=1,nglob
+            read(55) (b_displ_elastic(i,j), i=1,NDIM), &
+                      (b_veloc_elastic(i,j), i=1,NDIM), &
+                      (b_accel_elastic(i,j), i=1,NDIM)
+          enddo
+          b_displ_elastic(3,:) = b_displ_elastic(2,:)
+          b_displ_elastic(2,:) = 0._CUSTOM_REAL
+          b_veloc_elastic(3,:) = b_veloc_elastic(2,:)
+          b_veloc_elastic(2,:) = 0._CUSTOM_REAL
+          b_accel_elastic(3,:) = b_accel_elastic(2,:)
+          b_accel_elastic(2,:) = 0._CUSTOM_REAL
+        else !SH (membrane) waves
+          do j=1,nglob
+            read(55) b_displ_elastic(2,j), &
+                      b_veloc_elastic(2,j), &
+                      b_accel_elastic(2,j)
+          enddo
+          b_displ_elastic(1,:) = 0._CUSTOM_REAL
+          b_displ_elastic(3,:) = 0._CUSTOM_REAL
+          b_veloc_elastic(1,:) = 0._CUSTOM_REAL
+          b_veloc_elastic(3,:) = 0._CUSTOM_REAL
+          b_accel_elastic(1,:) = 0._CUSTOM_REAL
+          b_accel_elastic(3,:) = 0._CUSTOM_REAL
+        endif
+        close(55)
+      endif
 
-  endif ! if(it == 1 .and. SIMULATION_TYPE == 2)
+      ! poroelastic medium
+      if(any_poroelastic) then
+        write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_s',myrank,'.bin'
+        open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
+        write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
+        open(unit=56,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
+        do j=1,nglob
+          read(55) (b_displs_poroelastic(i,j), i=1,NDIM), &
+                    (b_velocs_poroelastic(i,j), i=1,NDIM), &
+                    (b_accels_poroelastic(i,j), i=1,NDIM)
+          read(56) (b_displw_poroelastic(i,j), i=1,NDIM), &
+                    (b_velocw_poroelastic(i,j), i=1,NDIM), &
+                    (b_accelw_poroelastic(i,j), i=1,NDIM)
+        enddo
+        close(55)
+        close(56)
+      endif
+
+    endif ! if(it == 1 .and. SIMULATION_TYPE == 2)
 
 ! ********************************************************************************************
 !                                      kernels calculation
 ! ********************************************************************************************
-  if(any_elastic .and. SIMULATION_TYPE == 2) then ! kernels calculation
+    if(any_elastic .and. SIMULATION_TYPE == 2) then ! kernels calculation
       do iglob = 1,nglob
-            rho_k(iglob) =  accel_elastic(1,iglob)*b_displ_elastic(1,iglob) +&
+        rho_k(iglob) =  accel_elastic(1,iglob)*b_displ_elastic(1,iglob) +&
                             accel_elastic(2,iglob)*b_displ_elastic(2,iglob) +&
                             accel_elastic(3,iglob)*b_displ_elastic(3,iglob)
-            rhorho_el_hessian_temp1(iglob) = accel_elastic(1,iglob)*accel_elastic(1,iglob) +&
+        rhorho_el_hessian_temp1(iglob) = accel_elastic(1,iglob)*accel_elastic(1,iglob) +&
                                             accel_elastic(2,iglob)*accel_elastic(2,iglob)  +&
                                             accel_elastic(3,iglob)*accel_elastic(3,iglob)
-            rhorho_el_hessian_temp2(iglob) = accel_elastic(1,iglob)*b_accel_elastic(1,iglob) +&
+        rhorho_el_hessian_temp2(iglob) = accel_elastic(1,iglob)*b_accel_elastic(1,iglob) +&
                                             accel_elastic(2,iglob)*b_accel_elastic(2,iglob)  +&
                                             accel_elastic(3,iglob)*b_accel_elastic(3,iglob)
       enddo
-  endif
+    endif
 
-  if(any_poroelastic .and. SIMULATION_TYPE ==2) then
-   do iglob =1,nglob
-            rhot_k(iglob) = accels_poroelastic(1,iglob) * b_displs_poroelastic(1,iglob) + &
+    if(any_poroelastic .and. SIMULATION_TYPE ==2) then
+      do iglob =1,nglob
+        rhot_k(iglob) = accels_poroelastic(1,iglob) * b_displs_poroelastic(1,iglob) + &
                   accels_poroelastic(2,iglob) * b_displs_poroelastic(2,iglob)
-            rhof_k(iglob) = accelw_poroelastic(1,iglob) * b_displs_poroelastic(1,iglob) + &
+        rhof_k(iglob) = accelw_poroelastic(1,iglob) * b_displs_poroelastic(1,iglob) + &
                   accelw_poroelastic(2,iglob) * b_displs_poroelastic(2,iglob) + &
                   accels_poroelastic(1,iglob) * b_displw_poroelastic(1,iglob) + &
                   accels_poroelastic(2,iglob) * b_displw_poroelastic(2,iglob)
-            sm_k(iglob) =  accelw_poroelastic(1,iglob) * b_displw_poroelastic(1,iglob) + &
+        sm_k(iglob) =  accelw_poroelastic(1,iglob) * b_displw_poroelastic(1,iglob) + &
                   accelw_poroelastic(2,iglob) * b_displw_poroelastic(2,iglob)
-            eta_k(iglob) = velocw_poroelastic(1,iglob) * b_displw_poroelastic(1,iglob) + &
+        eta_k(iglob) = velocw_poroelastic(1,iglob) * b_displw_poroelastic(1,iglob) + &
                   velocw_poroelastic(2,iglob) * b_displw_poroelastic(2,iglob)
-   enddo
-  endif
+      enddo
+    endif
 
 !----  compute kinetic and potential energy
-  if(output_energy) &
-     call compute_energy(displ_elastic,veloc_elastic, &
+    if(output_energy) &
+      call compute_energy(displ_elastic,veloc_elastic, &
                         displs_poroelastic,velocs_poroelastic, &
                         displw_poroelastic,velocw_poroelastic, &
                         xix,xiz,gammax,gammaz,jacobian,ibool,elastic,poroelastic,hprime_xx,hprime_zz, &
@@ -5744,828 +5751,869 @@
                         TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS,p_sv)
 
 !----  display time step and max of norm of displacement
-  if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
-    call check_stability(myrank,time,it,NSTEP, &
+    if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
+      call check_stability(myrank,time,it,NSTEP, &
                         nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                         any_elastic_glob,any_elastic,displ_elastic, &
                         any_poroelastic_glob,any_poroelastic, &
                         displs_poroelastic,displw_poroelastic, &
                         any_acoustic_glob,any_acoustic,potential_acoustic, &
                         year_start,month_start,time_start)
-  endif
+    endif
 
-! loop on all the receivers to compute and store the seismograms
-  do irecloc = 1,nrecloc
+!---- loop on all the receivers to compute and store the seismograms
+    do irecloc = 1,nrecloc
 
-    irec = recloc(irecloc)
+      irec = recloc(irecloc)
 
-    ispec = ispec_selected_rec(irec)
+      ispec = ispec_selected_rec(irec)
 
-! compute pressure in this element if needed
-    if(seismotype == 4) then
+      ! compute pressure in this element if needed
+      if(seismotype == 4) then
 
-       call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,&
-            displs_poroelastic,displw_poroelastic,elastic,poroelastic,&
-            xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
-            nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
-            numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
-            c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,ispec,e1,e11, &
-            TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
+        call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,&
+              displs_poroelastic,displw_poroelastic,elastic,poroelastic,&
+              xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
+              nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
+              numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
+              c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,ispec,e1,e11, &
+              TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
 
-    else if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
+      else if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
 
-! for acoustic medium, compute vector field from gradient of potential for seismograms
-       if(seismotype == 1) then
+        ! for acoustic medium, compute vector field from gradient of potential for seismograms
+        if(seismotype == 1) then
           call compute_vector_one_element(vector_field_element,potential_acoustic, &
                               displ_elastic,displs_poroelastic,&
                               elastic,poroelastic,xix,xiz,gammax,gammaz, &
                               ibool,hprime_xx,hprime_zz, &
                               nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                               ispec,numat,kmato,density,rhoext,assign_external_model)
-       else if(seismotype == 2) then
+        else if(seismotype == 2) then
           call compute_vector_one_element(vector_field_element,potential_dot_acoustic, &
                               veloc_elastic,velocs_poroelastic, &
                               elastic,poroelastic,xix,xiz,gammax,gammaz, &
                               ibool,hprime_xx,hprime_zz, &
                               nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                               ispec,numat,kmato,density,rhoext,assign_external_model)
-       else if(seismotype == 3) then
+        else if(seismotype == 3) then
           call compute_vector_one_element(vector_field_element,potential_dot_dot_acoustic, &
                               accel_elastic,accels_poroelastic, &
                               elastic,poroelastic,xix,xiz,gammax,gammaz, &
                               ibool,hprime_xx,hprime_zz, &
                               nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                               ispec,numat,kmato,density,rhoext,assign_external_model)
-       endif
+        endif
 
-    else if(seismotype == 5) then
-       call compute_curl_one_element(curl_element,displ_elastic, &
+      else if(seismotype == 5) then
+        call compute_curl_one_element(curl_element,displ_elastic, &
                             displs_poroelastic,elastic,poroelastic, &
                             xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
                             nspec,nglob_elastic,nglob_poroelastic,ispec)
-    endif
+      endif
 
-! perform the general interpolation using Lagrange polynomials
-    valux = ZERO
-    valuy = ZERO
-    valuz = ZERO
-    valcurl = ZERO
+      ! perform the general interpolation using Lagrange polynomials
+      valux = ZERO
+      valuy = ZERO
+      valuz = ZERO
+      valcurl = ZERO
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          iglob = ibool(i,j,ispec)
+          hlagrange = hxir_store(irec,i)*hgammar_store(irec,j)
+          dcurld=ZERO
 
-    do j = 1,NGLLZ
-      do i = 1,NGLLX
+          if(seismotype == 4) then
 
-        iglob = ibool(i,j,ispec)
+            dxd = pressure_element(i,j)
+            dzd = ZERO
 
-        hlagrange = hxir_store(irec,i)*hgammar_store(irec,j)
+          else if(.not. elastic(ispec) .and. .not. poroelastic(ispec) .and.  seismotype /= 6) then
 
-        dcurld=ZERO
+            dxd = vector_field_element(1,i,j)
+            dzd = vector_field_element(3,i,j)
 
-        if(seismotype == 4) then
+          else if(seismotype == 6) then
 
-          dxd = pressure_element(i,j)
-          dzd = ZERO
+            dxd = potential_acoustic(iglob)
+            dzd = ZERO
 
-        else if(.not. elastic(ispec) .and. .not. poroelastic(ispec) .and.  seismotype /= 6) then
+          else if(seismotype == 1) then
 
-          dxd = vector_field_element(1,i,j)
-          dzd = vector_field_element(3,i,j)
+            if(poroelastic(ispec)) then
+              dxd = displs_poroelastic(1,iglob)
+              dzd = displs_poroelastic(2,iglob)
+            elseif(elastic(ispec)) then
+              dxd = displ_elastic(1,iglob)
+              dyd = displ_elastic(2,iglob)
+              dzd = displ_elastic(3,iglob)
+            endif
 
-        else if(seismotype == 6) then
+          else if(seismotype == 2) then
 
-          dxd = potential_acoustic(iglob)
-          dzd = ZERO
+            if(poroelastic(ispec)) then
+              dxd = velocs_poroelastic(1,iglob)
+              dzd = velocs_poroelastic(2,iglob)
+            elseif(elastic(ispec)) then
+              dxd = veloc_elastic(1,iglob)
+              dyd = veloc_elastic(2,iglob)
+              dzd = veloc_elastic(3,iglob)
+            endif
 
-        else if(seismotype == 1) then
+          else if(seismotype == 3) then
 
-             if(poroelastic(ispec)) then
-          dxd = displs_poroelastic(1,iglob)
-          dzd = displs_poroelastic(2,iglob)
-             elseif(elastic(ispec)) then
-          dxd = displ_elastic(1,iglob)
-          dyd = displ_elastic(2,iglob)
-          dzd = displ_elastic(3,iglob)
-             endif
+            if(poroelastic(ispec)) then
+              dxd = accels_poroelastic(1,iglob)
+              dzd = accels_poroelastic(2,iglob)
+            elseif(elastic(ispec)) then
+              dxd = accel_elastic(1,iglob)
+              dyd = accel_elastic(2,iglob)
+              dzd = accel_elastic(3,iglob)
+            endif
 
-        else if(seismotype == 2) then
+          else if(seismotype == 5) then
 
-             if(poroelastic(ispec)) then
-          dxd = velocs_poroelastic(1,iglob)
-          dzd = velocs_poroelastic(2,iglob)
-             elseif(elastic(ispec)) then
-          dxd = veloc_elastic(1,iglob)
-          dyd = veloc_elastic(2,iglob)
-          dzd = veloc_elastic(3,iglob)
-             endif
+            if(poroelastic(ispec)) then
+              dxd = displs_poroelastic(1,iglob)
+              dzd = displs_poroelastic(2,iglob)
+            elseif(elastic(ispec)) then
+              dxd = displ_elastic(1,iglob)
+              dzd = displ_elastic(2,iglob)
+            endif
+            dcurld = curl_element(i,j)
 
-        else if(seismotype == 3) then
+          endif
 
-             if(poroelastic(ispec)) then
-          dxd = accels_poroelastic(1,iglob)
-          dzd = accels_poroelastic(2,iglob)
-             elseif(elastic(ispec)) then
-          dxd = accel_elastic(1,iglob)
-          dyd = accel_elastic(2,iglob)
-          dzd = accel_elastic(3,iglob)
-             endif
+          ! compute interpolated field
+          valux = valux + dxd*hlagrange
+          if(elastic(ispec))  valuy = valuy + dyd*hlagrange
+          valuz = valuz + dzd*hlagrange
+          valcurl = valcurl + dcurld*hlagrange
 
-        else if(seismotype == 5) then
-
-             if(poroelastic(ispec)) then
-          dxd = displs_poroelastic(1,iglob)
-          dzd = displs_poroelastic(2,iglob)
-             elseif(elastic(ispec)) then
-          dxd = displ_elastic(1,iglob)
-          dzd = displ_elastic(2,iglob)
-             endif
-          dcurld = curl_element(i,j)
-
-        endif
-
-! compute interpolated field
-        valux = valux + dxd*hlagrange
-        if(elastic(ispec))  valuy = valuy + dyd*hlagrange
-        valuz = valuz + dzd*hlagrange
-        valcurl = valcurl + dcurld*hlagrange
-
+        enddo
       enddo
-   enddo
 
-! rotate seismogram components if needed, except if recording pressure, which is a scalar
-    if(seismotype /= 4 .and. seismotype /= 6) then
-      if(p_sv) then
-        sisux(seismo_current,irecloc) =   cosrot_irec(irecloc)*valux + sinrot_irec(irecloc)*valuz
-        sisuz(seismo_current,irecloc) = - sinrot_irec(irecloc)*valux + cosrot_irec(irecloc)*valuz
+      ! rotate seismogram components if needed, except if recording pressure, which is a scalar
+      if(seismotype /= 4 .and. seismotype /= 6) then
+        if(p_sv) then
+          sisux(seismo_current,irecloc) =   cosrot_irec(irecloc)*valux + sinrot_irec(irecloc)*valuz
+          sisuz(seismo_current,irecloc) = - sinrot_irec(irecloc)*valux + cosrot_irec(irecloc)*valuz
+        else
+          sisux(seismo_current,irecloc) = valuy
+          sisuz(seismo_current,irecloc) = ZERO
+        endif
       else
-        sisux(seismo_current,irecloc) = valuy
+        sisux(seismo_current,irecloc) = valux
         sisuz(seismo_current,irecloc) = ZERO
       endif
-    else
-      sisux(seismo_current,irecloc) = valux
-      sisuz(seismo_current,irecloc) = ZERO
-    endif
-    siscurl(seismo_current,irecloc) = valcurl
+      siscurl(seismo_current,irecloc) = valcurl
 
- enddo
+    enddo
 
 
 !----- writing the kernels
-!
-! kernels output
-  if(SIMULATION_TYPE == 2) then
+    ! kernels output
+    if(SIMULATION_TYPE == 2) then
 
-   if(any_acoustic) then
+      if(any_acoustic) then
 
-    do ispec = 1, nspec
-     if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
-      do j = 1, NGLLZ
-          do i = 1, NGLLX
-            iglob = ibool(i,j,ispec)
-    kappal_ac_global(iglob) = poroelastcoef(3,1,kmato(ispec))
-    rhol_ac_global(iglob) = density(1,kmato(ispec))
+        do ispec = 1, nspec
+          if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
+            do j = 1, NGLLZ
+              do i = 1, NGLLX
+                iglob = ibool(i,j,ispec)
+                kappal_ac_global(iglob) = poroelastcoef(3,1,kmato(ispec))
+                rhol_ac_global(iglob) = density(1,kmato(ispec))
 
 ! calcul the displacement by computing the gradient of potential / rho
 ! and calcul the acceleration by computing the gradient of potential_dot_dot / rho
-        tempx1l = ZERO
-        tempx2l = ZERO
-        b_tempx1l = ZERO
-        b_tempx2l = ZERO
-        do k = 1,NGLLX
-! derivative along x
-          tempx1l = tempx1l + potential_dot_dot_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
-          b_tempx1l = b_tempx1l + b_potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
-          bb_tempx1l = bb_tempx1l + b_potential_dot_dot_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
-! derivative along z
-          tempx2l = tempx2l + potential_dot_dot_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
-          b_tempx2l = b_tempx2l + b_potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
-          bb_tempx2l = bb_tempx2l + b_potential_dot_dot_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
+                tempx1l = ZERO
+                tempx2l = ZERO
+                b_tempx1l = ZERO
+                b_tempx2l = ZERO
+                do k = 1,NGLLX
+                  ! derivative along x
+                  tempx1l = tempx1l + potential_dot_dot_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
+                  b_tempx1l = b_tempx1l + b_potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
+                  bb_tempx1l = bb_tempx1l + b_potential_dot_dot_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
+                  ! derivative along z
+                  tempx2l = tempx2l + potential_dot_dot_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
+                  b_tempx2l = b_tempx2l + b_potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
+                  bb_tempx2l = bb_tempx2l + b_potential_dot_dot_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
+                enddo
+
+                xixl = xix(i,j,ispec)
+                xizl = xiz(i,j,ispec)
+                gammaxl = gammax(i,j,ispec)
+                gammazl = gammaz(i,j,ispec)
+
+                if(assign_external_model) rhol_ac_global(iglob) = rhoext(i,j,ispec)
+
+                ! derivatives of potential
+                accel_ac(1,iglob) = (tempx1l*xixl + tempx2l*gammaxl) / rhol_ac_global(iglob)
+                accel_ac(2,iglob) = (tempx1l*xizl + tempx2l*gammazl) / rhol_ac_global(iglob)
+                b_displ_ac(1,iglob) = (b_tempx1l*xixl + b_tempx2l*gammaxl) / rhol_ac_global(iglob)
+                b_displ_ac(2,iglob) = (b_tempx1l*xizl + b_tempx2l*gammazl) / rhol_ac_global(iglob)
+                b_accel_ac(1,iglob) = (bb_tempx1l*xixl + bb_tempx2l*gammaxl) / rhol_ac_global(iglob)
+                b_accel_ac(2,iglob) = (bb_tempx1l*xizl + bb_tempx2l*gammazl) / rhol_ac_global(iglob)
+
+              enddo !i = 1, NGLLX
+            enddo !j = 1, NGLLZ
+          endif
         enddo
 
-        xixl = xix(i,j,ispec)
-        xizl = xiz(i,j,ispec)
-        gammaxl = gammax(i,j,ispec)
-        gammazl = gammaz(i,j,ispec)
-
-        if(assign_external_model) rhol_ac_global(iglob) = rhoext(i,j,ispec)
-
-! derivatives of potential
-        accel_ac(1,iglob) = (tempx1l*xixl + tempx2l*gammaxl) / rhol_ac_global(iglob)
-        accel_ac(2,iglob) = (tempx1l*xizl + tempx2l*gammazl) / rhol_ac_global(iglob)
-        b_displ_ac(1,iglob) = (b_tempx1l*xixl + b_tempx2l*gammaxl) / rhol_ac_global(iglob)
-        b_displ_ac(2,iglob) = (b_tempx1l*xizl + b_tempx2l*gammazl) / rhol_ac_global(iglob)
-        b_accel_ac(1,iglob) = (bb_tempx1l*xixl + bb_tempx2l*gammaxl) / rhol_ac_global(iglob)
-        b_accel_ac(2,iglob) = (bb_tempx1l*xizl + bb_tempx2l*gammazl) / rhol_ac_global(iglob)
-
-          enddo !i = 1, NGLLX
-      enddo !j = 1, NGLLZ
-     endif
-    enddo
-
-          do ispec = 1,nspec
-     if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
-      do j = 1, NGLLZ
-          do i = 1, NGLLX
-            iglob = ibool(i,j,ispec)
-            rho_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) - rhol_ac_global(iglob)  * &
+        do ispec = 1,nspec
+          if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
+            do j = 1, NGLLZ
+              do i = 1, NGLLX
+                iglob = ibool(i,j,ispec)
+                rho_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) - rhol_ac_global(iglob)  * &
                            dot_product(accel_ac(:,iglob),b_displ_ac(:,iglob)) * deltat
-            kappa_ac_kl(i,j,ispec) = kappa_ac_kl(i,j,ispec) - kappal_ac_global(iglob) * &
+                kappa_ac_kl(i,j,ispec) = kappa_ac_kl(i,j,ispec) - kappal_ac_global(iglob) * &
                            potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob) * &
                            b_potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob)&
                            * deltat
-!
-            rhop_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) + kappa_ac_kl(i,j,ispec)
-            alpha_ac_kl(i,j,ispec) = TWO *  kappa_ac_kl(i,j,ispec)
-            rhorho_ac_hessian_final1(i,j,ispec) =  rhorho_ac_hessian_final1(i,j,ispec) + &
+                !
+                rhop_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) + kappa_ac_kl(i,j,ispec)
+                alpha_ac_kl(i,j,ispec) = TWO *  kappa_ac_kl(i,j,ispec)
+                rhorho_ac_hessian_final1(i,j,ispec) =  rhorho_ac_hessian_final1(i,j,ispec) + &
                              dot_product(accel_ac(:,iglob),accel_ac(:,iglob)) * deltat
-            rhorho_ac_hessian_final2(i,j,ispec) =  rhorho_ac_hessian_final2(i,j,ispec) + &
+                rhorho_ac_hessian_final2(i,j,ispec) =  rhorho_ac_hessian_final2(i,j,ispec) + &
                              dot_product(accel_ac(:,iglob),b_accel_ac(:,iglob)) * deltat
-         enddo
-       enddo
-      endif
-          enddo
+              enddo
+            enddo
+          endif
+        enddo
 
-    endif !if(any_acoustic)
+      endif !if(any_acoustic)
 
-   if(any_elastic) then
+      if(any_elastic) then
 
-    do ispec = 1, nspec
-     if(elastic(ispec)) then
-      do j = 1, NGLLZ
-          do i = 1, NGLLX
-            iglob = ibool(i,j,ispec)
-    mul_global(iglob) = poroelastcoef(2,1,kmato(ispec))
-    kappal_global(iglob) = poroelastcoef(3,1,kmato(ispec)) - 4._CUSTOM_REAL*mul_global(iglob)/3._CUSTOM_REAL
-    rhol_global(iglob) = density(1,kmato(ispec))
+        do ispec = 1, nspec
+          if(elastic(ispec)) then
+            do j = 1, NGLLZ
+              do i = 1, NGLLX
+                iglob = ibool(i,j,ispec)
+                mul_global(iglob) = poroelastcoef(2,1,kmato(ispec))
+                kappal_global(iglob) = poroelastcoef(3,1,kmato(ispec)) &
+                                    - 4._CUSTOM_REAL*mul_global(iglob)/3._CUSTOM_REAL
+                rhol_global(iglob) = density(1,kmato(ispec))
 
-            rho_kl(i,j,ispec) = rho_kl(i,j,ispec) - rhol_global(iglob)  * rho_k(iglob) * deltat
-            mu_kl(i,j,ispec) =  mu_kl(i,j,ispec) - TWO * mul_global(iglob) * mu_k(iglob) * deltat
-            kappa_kl(i,j,ispec) = kappa_kl(i,j,ispec) - kappal_global(iglob) * kappa_k(iglob) * deltat
-!
-            rhop_kl(i,j,ispec) = rho_kl(i,j,ispec) + kappa_kl(i,j,ispec) + mu_kl(i,j,ispec)
-            beta_kl(i,j,ispec) = TWO * (mu_kl(i,j,ispec) - 4._CUSTOM_REAL * mul_global(iglob) &
-                  / (3._CUSTOM_REAL * kappal_global(iglob)) * kappa_kl(i,j,ispec))
-            alpha_kl(i,j,ispec) = TWO * (1._CUSTOM_REAL + 4._CUSTOM_REAL * mul_global(iglob)/&
-                   (3._CUSTOM_REAL * kappal_global(iglob))) * kappa_kl(i,j,ispec)
-            rhorho_el_hessian_final1(i,j,ispec) = rhorho_el_hessian_final1(i,j,ispec) + rhorho_el_hessian_temp1(iglob) * deltat
-            rhorho_el_hessian_final2(i,j,ispec) = rhorho_el_hessian_final2(i,j,ispec) + rhorho_el_hessian_temp2(iglob) * deltat
+                rho_kl(i,j,ispec) = rho_kl(i,j,ispec) - rhol_global(iglob)  * rho_k(iglob) * deltat
+                mu_kl(i,j,ispec) =  mu_kl(i,j,ispec) - TWO * mul_global(iglob) * mu_k(iglob) * deltat
+                kappa_kl(i,j,ispec) = kappa_kl(i,j,ispec) - kappal_global(iglob) * kappa_k(iglob) * deltat
+                !
+                rhop_kl(i,j,ispec) = rho_kl(i,j,ispec) + kappa_kl(i,j,ispec) + mu_kl(i,j,ispec)
+                beta_kl(i,j,ispec) = TWO * (mu_kl(i,j,ispec) - 4._CUSTOM_REAL * mul_global(iglob) &
+                    / (3._CUSTOM_REAL * kappal_global(iglob)) * kappa_kl(i,j,ispec))
+                alpha_kl(i,j,ispec) = TWO * (1._CUSTOM_REAL + 4._CUSTOM_REAL * mul_global(iglob)/&
+                     (3._CUSTOM_REAL * kappal_global(iglob))) * kappa_kl(i,j,ispec)
+                rhorho_el_hessian_final1(i,j,ispec) = rhorho_el_hessian_final1(i,j,ispec) &
+                                                  + rhorho_el_hessian_temp1(iglob) * deltat
+                rhorho_el_hessian_final2(i,j,ispec) = rhorho_el_hessian_final2(i,j,ispec) &
+                                                  + rhorho_el_hessian_temp2(iglob) * deltat
 
-          enddo
-      enddo
-     endif
-    enddo
+              enddo
+            enddo
+          endif
+        enddo
 
-   endif !if(any_elastic)
+      endif !if(any_elastic)
 
-  if(any_poroelastic) then
+      if(any_poroelastic) then
 
-    do ispec = 1, nspec
-     if(poroelastic(ispec)) then
-      do j = 1, NGLLZ
-          do i = 1, NGLLX
-            iglob = ibool(i,j,ispec)
-    phil_global(iglob) = porosity(kmato(ispec))
-    tortl_global(iglob) = tortuosity(kmato(ispec))
-    rhol_s_global(iglob) = density(1,kmato(ispec))
-    rhol_f_global(iglob) = density(2,kmato(ispec))
-    rhol_bar_global(iglob) =  (1._CUSTOM_REAL - phil_global(iglob))*rhol_s_global(iglob) &
-              + phil_global(iglob)*rhol_f_global(iglob)
-    etal_f_global(iglob) = poroelastcoef(2,2,kmato(ispec))
-    permlxx_global(iglob) = permeability(1,kmato(ispec))
-    permlxz_global(iglob) = permeability(2,kmato(ispec))
-    permlzz_global(iglob) = permeability(3,kmato(ispec))
-    mulfr_global(iglob) = poroelastcoef(2,3,kmato(ispec))
+        do ispec = 1, nspec
+          if(poroelastic(ispec)) then
+            do j = 1, NGLLZ
+              do i = 1, NGLLX
+                iglob = ibool(i,j,ispec)
+                phil_global(iglob) = porosity(kmato(ispec))
+                tortl_global(iglob) = tortuosity(kmato(ispec))
+                rhol_s_global(iglob) = density(1,kmato(ispec))
+                rhol_f_global(iglob) = density(2,kmato(ispec))
+                rhol_bar_global(iglob) =  (1._CUSTOM_REAL - phil_global(iglob))*rhol_s_global(iglob) &
+                  + phil_global(iglob)*rhol_f_global(iglob)
+                etal_f_global(iglob) = poroelastcoef(2,2,kmato(ispec))
+                permlxx_global(iglob) = permeability(1,kmato(ispec))
+                permlxz_global(iglob) = permeability(2,kmato(ispec))
+                permlzz_global(iglob) = permeability(3,kmato(ispec))
+                mulfr_global(iglob) = poroelastcoef(2,3,kmato(ispec))
 
-            rhot_kl(i,j,ispec) = rhot_kl(i,j,ispec) - deltat * rhol_bar_global(iglob) * rhot_k(iglob)
-            rhof_kl(i,j,ispec) = rhof_kl(i,j,ispec) - deltat * rhol_f_global(iglob) * rhof_k(iglob)
-            sm_kl(i,j,ispec) = sm_kl(i,j,ispec) - deltat * rhol_f_global(iglob)*tortl_global(iglob)/phil_global(iglob) * sm_k(iglob)
-!at the moment works with constant permeability
-            eta_kl(i,j,ispec) = eta_kl(i,j,ispec) - deltat * etal_f_global(iglob)/permlxx_global(iglob) * eta_k(iglob)
-            B_kl(i,j,ispec) = B_kl(i,j,ispec) - deltat * B_k(iglob)
-            C_kl(i,j,ispec) = C_kl(i,j,ispec) - deltat * C_k(iglob)
-            M_kl(i,j,ispec) = M_kl(i,j,ispec) - deltat * M_k(iglob)
-            mufr_kl(i,j,ispec) = mufr_kl(i,j,ispec) - TWO * deltat * mufr_k(iglob)
-! density kernels
-            rholb = rhol_bar_global(iglob) - phil_global(iglob)*rhol_f_global(iglob)/tortl_global(iglob)
-            rhob_kl(i,j,ispec) = rhot_kl(i,j,ispec) + B_kl(i,j,ispec) + mufr_kl(i,j,ispec)
-            rhofb_kl(i,j,ispec) = rhof_kl(i,j,ispec) + C_kl(i,j,ispec) + M_kl(i,j,ispec) + sm_kl(i,j,ispec)
-            Bb_kl(i,j,ispec) = B_kl(i,j,ispec)
-            Cb_kl(i,j,ispec) = C_kl(i,j,ispec)
-            Mb_kl(i,j,ispec) = M_kl(i,j,ispec)
-            mufrb_kl(i,j,ispec) = mufr_kl(i,j,ispec)
-            phi_kl(i,j,ispec) = - sm_kl(i,j,ispec) - M_kl(i,j,ispec)
-! wave speed kernels
-            dd1 = (1._CUSTOM_REAL+rholb/rhol_f_global(iglob))*ratio**2 + 2._CUSTOM_REAL*ratio +&
-                tortl_global(iglob)/phil_global(iglob)
-            rhobb_kl(i,j,ispec) = rhob_kl(i,j,ispec) - &
-                phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*B_biot) * &
-                   (cpIIsquare + (cpIsquare - cpIIsquare)*( (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1+&
-                   (rhol_bar_global(iglob)**2*ratio**2/rhol_f_global(iglob)**2*(phil_global(iglob)/tortl_global(iglob)*&
-                   ratio+1)*(phil_global(iglob)/tortl_global(iglob)*ratio+phil_global(iglob)/tortl_global(iglob)*&
-                   (1+rhol_f_global(iglob)/rhol_bar_global(iglob))-1) )/dd1**2 )- FOUR_THIRDS*cssquare )*&
-                   Bb_kl(i,j,ispec) - &
-                rhol_bar_global(iglob)*ratio**2/M_biot * (cpIsquare - cpIIsquare)* &
-                   (phil_global(iglob)/tortl_global(iglob)*ratio + 1._CUSTOM_REAL)**2/dd1**2*Mb_kl(i,j,ispec) + &
-                rhol_bar_global(iglob)*ratio/C_biot * (cpIsquare - cpIIsquare)* (&
-                   (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1 - &
-                   phil_global(iglob)*ratio/tortl_global(iglob)*(phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*&
-                   (1+rhol_bar_global(iglob)*ratio/rhol_f_global(iglob))/dd1**2)*Cb_kl(i,j,ispec)+ &
-                phil_global(iglob)*rhol_f_global(iglob)*cssquare/(tortl_global(iglob)*mulfr_global(iglob))*mufrb_kl(i,j,ispec)
-           rhofbb_kl(i,j,ispec) = rhofb_kl(i,j,ispec) + &
-                phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*B_biot) * &
-                   (cpIIsquare + (cpIsquare - cpIIsquare)*( (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1+&
-                   (rhol_bar_global(iglob)**2*ratio**2/rhol_f_global(iglob)**2*(phil_global(iglob)/tortl_global(iglob)*&
-                   ratio+1)*(phil_global(iglob)/tortl_global(iglob)*ratio+phil_global(iglob)/tortl_global(iglob)*&
-                   (1+rhol_f_global(iglob)/rhol_bar_global(iglob))-1) )/dd1**2 )- FOUR_THIRDS*cssquare )*&
-                   Bb_kl(i,j,ispec) + &
-                rhol_bar_global(iglob)*ratio**2/M_biot * (cpIsquare - cpIIsquare)* &
-                   (phil_global(iglob)/tortl_global(iglob)*ratio + 1._CUSTOM_REAL)**2/dd1**2*Mb_kl(i,j,ispec) - &
-                rhol_bar_global(iglob)*ratio/C_biot * (cpIsquare - cpIIsquare)* (&
-                   (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1 - &
-                   phil_global(iglob)*ratio/tortl_global(iglob)*(phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*&
-                   (1+rhol_bar_global(iglob)*ratio/rhol_f_global(iglob))/dd1**2)*Cb_kl(i,j,ispec)- &
-                phil_global(iglob)*rhol_f_global(iglob)*cssquare/(tortl_global(iglob)*mulfr_global(iglob))*mufrb_kl(i,j,ispec)
-           phib_kl(i,j,ispec) = phi_kl(i,j,ispec) - &
-                phil_global(iglob)*rhol_bar_global(iglob)/(tortl_global(iglob)*B_biot) * ( cpIsquare - rhol_f_global(iglob)/&
-                   rhol_bar_global(iglob)*cpIIsquare- &
-                   (cpIsquare-cpIIsquare)*( (TWO*ratio**2*phil_global(iglob)/tortl_global(iglob) + (1._CUSTOM_REAL+&
-                   rhol_f_global(iglob)/rhol_bar_global(iglob))*(TWO*ratio*phil_global(iglob)/tortl_global(iglob)+&
-                   1._CUSTOM_REAL))/dd1 + (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*(phil_global(iglob)*&
-                   ratio/tortl_global(iglob)+phil_global(iglob)/tortl_global(iglob)*(1._CUSTOM_REAL+rhol_f_global(iglob)/&
-                   rhol_bar_global(iglob))-1._CUSTOM_REAL)*((1._CUSTOM_REAL+rhol_bar_global(iglob)/rhol_f_global(iglob)-&
-                   TWO*phil_global(iglob)/tortl_global(iglob))*ratio**2+TWO*ratio)/dd1**2 ) - &
-                   FOUR_THIRDS*rhol_f_global(iglob)*cssquare/rhol_bar_global(iglob) )*Bb_kl(i,j,ispec) + &
-                rhol_f_global(iglob)/M_biot * (cpIsquare-cpIIsquare)*(&
-                   TWO*ratio*(phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1 - &
-                   (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)**2*((1._CUSTOM_REAL+rhol_bar_global(iglob)/&
-                   rhol_f_global(iglob)-TWO*phil_global(iglob)/tortl_global(iglob))*ratio**2+TWO*ratio)/dd1**2&
-                   )*Mb_kl(i,j,ispec) + &
-                phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*C_biot)*(cpIsquare-cpIIsquare)*ratio* (&
-                   (1._CUSTOM_REAL+rhol_f_global(iglob)/rhol_bar_global(iglob)*ratio)/dd1 - &
-                   (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*(1._CUSTOM_REAL+rhol_bar_global(iglob)/&
-                   rhol_f_global(iglob)*ratio)*((1._CUSTOM_REAL+rhol_bar_global(iglob)/rhol_f_global(iglob)-TWO*&
-                   phil_global(iglob)/tortl_global(iglob))*ratio+TWO)/dd1**2&
-                    )*Cb_kl(i,j,ispec) -&
-                phil_global(iglob)*rhol_f_global(iglob)*cssquare/(tortl_global(iglob)*mulfr_global(iglob))*mufrb_kl(i,j,ispec)
-           cpI_kl(i,j,ispec) = 2._CUSTOM_REAL*cpIsquare/B_biot*rhol_bar_global(iglob)*( &
-                   1._CUSTOM_REAL-phil_global(iglob)/tortl_global(iglob) + &
-                   (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*(phil_global(iglob)/tortl_global(iglob)*&
-                   ratio+phil_global(iglob)/tortl_global(iglob)*(1._CUSTOM_REAL+rhol_f_global(iglob)/rhol_bar_global(iglob))-&
-                   1._CUSTOM_REAL)/dd1 &
-                    )* Bb_kl(i,j,ispec) +&
-                2._CUSTOM_REAL*cpIsquare*rhol_f_global(iglob)*tortl_global(iglob)/(phil_global(iglob)*M_biot) *&
-                   (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)**2/dd1*Mb_kl(i,j,ispec)+&
-                2._CUSTOM_REAL*cpIsquare*rhol_f_global(iglob)/C_biot * &
-                   (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*(1._CUSTOM_REAL+rhol_bar_global(iglob)/&
-                   rhol_f_global(iglob)*ratio)/dd1*Cb_kl(i,j,ispec)
-           cpII_kl(i,j,ispec) = 2._CUSTOM_REAL*cpIIsquare*rhol_bar_global(iglob)/B_biot * (&
-                   phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*rhol_bar_global(iglob)) - &
-                   (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*(phil_global(iglob)/tortl_global(iglob)*&
-                   ratio+phil_global(iglob)/tortl_global(iglob)*(1._CUSTOM_REAL+rhol_f_global(iglob)/rhol_bar_global(iglob))-&
-                   1._CUSTOM_REAL)/dd1  ) * Bb_kl(i,j,ispec) +&
-                2._CUSTOM_REAL*cpIIsquare*rhol_f_global(iglob)*tortl_global(iglob)/(phil_global(iglob)*M_biot) * (&
-                   1._CUSTOM_REAL - (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)**2/dd1  )*Mb_kl(i,j,ispec) + &
-                2._CUSTOM_REAL*cpIIsquare*rhol_f_global(iglob)/C_biot * (&
-                   1._CUSTOM_REAL - (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*(1._CUSTOM_REAL+&
-                   rhol_bar_global(iglob)/rhol_f_global(iglob)*ratio)/dd1  )*Cb_kl(i,j,ispec)
-           cs_kl(i,j,ispec) = - 8._CUSTOM_REAL/3._CUSTOM_REAL*cssquare*rhol_bar_global(iglob)/B_biot*(1._CUSTOM_REAL-&
-                   phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*rhol_bar_global(iglob)))*Bb_kl(i,j,ispec) + &
-                2._CUSTOM_REAL*(rhol_bar_global(iglob)-rhol_f_global(iglob)*phil_global(iglob)/tortl_global(iglob))/&
-                   mulfr_global(iglob)*cssquare*mufrb_kl(i,j,ispec)
-           ratio_kl(i,j,ispec) = ratio*rhol_bar_global(iglob)*phil_global(iglob)/(tortl_global(iglob)*B_biot) * &
-                   (cpIsquare-cpIIsquare) * ( &
-                   phil_global(iglob)/tortl_global(iglob)*(2._CUSTOM_REAL*ratio+1._CUSTOM_REAL+rhol_f_global(iglob)/ &
-                   rhol_bar_global(iglob))/dd1 - (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*&
-                   (phil_global(iglob)/tortl_global(iglob)*ratio+phil_global(iglob)/tortl_global(iglob)*(&
-                   1._CUSTOM_REAL+rhol_f_global(iglob)/rhol_bar_global(iglob))-1._CUSTOM_REAL)*(2._CUSTOM_REAL*ratio*(&
-                   1._CUSTOM_REAL+rhol_bar_global(iglob)/rhol_f_global(iglob)-phil_global(iglob)/tortl_global(iglob)) +&
-                   2._CUSTOM_REAL)/dd1**2  )*Bb_kl(i,j,ispec) + &
-                ratio*rhol_f_global(iglob)*tortl_global(iglob)/(phil_global(iglob)*M_biot)*(cpIsquare-cpIIsquare) * &
-                   2._CUSTOM_REAL*phil_global(iglob)/tortl_global(iglob) * (&
-                   (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1 - &
-                   (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)**2*((1._CUSTOM_REAL+rhol_bar_global(iglob)/&
-                   rhol_f_global(iglob)-phil_global(iglob)/tortl_global(iglob))*ratio+1._CUSTOM_REAL)/dd1**2 )*Mb_kl(i,j,ispec) +&
-                ratio*rhol_f_global(iglob)/C_biot*(cpIsquare-cpIIsquare) * (&
-                   (2._CUSTOM_REAL*phil_global(iglob)*rhol_bar_global(iglob)*ratio/(tortl_global(iglob)*rhol_f_global(iglob))+&
-                   phil_global(iglob)/tortl_global(iglob)+rhol_bar_global(iglob)/rhol_f_global(iglob))/dd1 - &
-                   2._CUSTOM_REAL*phil_global(iglob)/tortl_global(iglob)*(phil_global(iglob)/tortl_global(iglob)*ratio+&
-                   1._CUSTOM_REAL)*(1._CUSTOM_REAL+rhol_bar_global(iglob)/rhol_f_global(iglob)*ratio)*((1._CUSTOM_REAL+&
-                   rhol_bar_global(iglob)/rhol_f_global(iglob)-phil_global(iglob)/tortl_global(iglob))*ratio+1._CUSTOM_REAL)/&
-                   dd1**2 )*Cb_kl(i,j,ispec)
+                rhot_kl(i,j,ispec) = rhot_kl(i,j,ispec) - deltat * rhol_bar_global(iglob) * rhot_k(iglob)
+                rhof_kl(i,j,ispec) = rhof_kl(i,j,ispec) - deltat * rhol_f_global(iglob) * rhof_k(iglob)
+                sm_kl(i,j,ispec) = sm_kl(i,j,ispec) - &
+                        deltat * rhol_f_global(iglob)*tortl_global(iglob)/phil_global(iglob) * sm_k(iglob)
+                !at the moment works with constant permeability
+                eta_kl(i,j,ispec) = eta_kl(i,j,ispec) - deltat * etal_f_global(iglob)/permlxx_global(iglob) * eta_k(iglob)
+                B_kl(i,j,ispec) = B_kl(i,j,ispec) - deltat * B_k(iglob)
+                C_kl(i,j,ispec) = C_kl(i,j,ispec) - deltat * C_k(iglob)
+                M_kl(i,j,ispec) = M_kl(i,j,ispec) - deltat * M_k(iglob)
+                mufr_kl(i,j,ispec) = mufr_kl(i,j,ispec) - TWO * deltat * mufr_k(iglob)
+                ! density kernels
+                rholb = rhol_bar_global(iglob) - phil_global(iglob)*rhol_f_global(iglob)/tortl_global(iglob)
+                rhob_kl(i,j,ispec) = rhot_kl(i,j,ispec) + B_kl(i,j,ispec) + mufr_kl(i,j,ispec)
+                rhofb_kl(i,j,ispec) = rhof_kl(i,j,ispec) + C_kl(i,j,ispec) + M_kl(i,j,ispec) + sm_kl(i,j,ispec)
+                Bb_kl(i,j,ispec) = B_kl(i,j,ispec)
+                Cb_kl(i,j,ispec) = C_kl(i,j,ispec)
+                Mb_kl(i,j,ispec) = M_kl(i,j,ispec)
+                mufrb_kl(i,j,ispec) = mufr_kl(i,j,ispec)
+                phi_kl(i,j,ispec) = - sm_kl(i,j,ispec) - M_kl(i,j,ispec)
+                ! wave speed kernels
+                dd1 = (1._CUSTOM_REAL+rholb/rhol_f_global(iglob))*ratio**2 &
+                      + 2._CUSTOM_REAL*ratio &
+                      + tortl_global(iglob)/phil_global(iglob)
 
-          enddo
-       enddo
-     endif
-    enddo
+                rhobb_kl(i,j,ispec) = rhob_kl(i,j,ispec) - &
+                      phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*B_biot) * &
+                      (cpIIsquare + (cpIsquare - cpIIsquare)*( (phil_global(iglob) / &
+                      tortl_global(iglob)*ratio +1._CUSTOM_REAL)/dd1 + &
+                      (rhol_bar_global(iglob)**2*ratio**2/rhol_f_global(iglob)**2*(phil_global(iglob) / &
+                      tortl_global(iglob)*ratio+1)*(phil_global(iglob)/tortl_global(iglob)*ratio + &
+                      phil_global(iglob)/tortl_global(iglob) * &
+                      (1+rhol_f_global(iglob)/rhol_bar_global(iglob))-1) )/dd1**2 ) - &
+                      FOUR_THIRDS*cssquare )*Bb_kl(i,j,ispec) - &
+                      rhol_bar_global(iglob)*ratio**2/M_biot * (cpIsquare - cpIIsquare)* &
+                      (phil_global(iglob)/tortl_global(iglob)*ratio + &
+                      1._CUSTOM_REAL)**2/dd1**2*Mb_kl(i,j,ispec) + &
+                      rhol_bar_global(iglob)*ratio/C_biot * (cpIsquare - cpIIsquare)* (&
+                      (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1 - &
+                      phil_global(iglob)*ratio/tortl_global(iglob)*(phil_global(iglob) / &
+                      tortl_global(iglob)*ratio+1._CUSTOM_REAL)*&
+                      (1+rhol_bar_global(iglob)*ratio/rhol_f_global(iglob))/dd1**2)*Cb_kl(i,j,ispec)+ &
+                      phil_global(iglob)*rhol_f_global(iglob)*cssquare / &
+                      (tortl_global(iglob)*mulfr_global(iglob))*mufrb_kl(i,j,ispec)
+                rhofbb_kl(i,j,ispec) = rhofb_kl(i,j,ispec) + &
+                        phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*B_biot) * &
+                       (cpIIsquare + (cpIsquare - cpIIsquare)*( (phil_global(iglob)/ &
+                       tortl_global(iglob)*ratio +1._CUSTOM_REAL)/dd1+&
+                       (rhol_bar_global(iglob)**2*ratio**2/rhol_f_global(iglob)**2*(phil_global(iglob)/ &
+                       tortl_global(iglob)*ratio+1)*(phil_global(iglob)/tortl_global(iglob)*ratio+ &
+                       phil_global(iglob)/tortl_global(iglob)*&
+                       (1+rhol_f_global(iglob)/rhol_bar_global(iglob))-1) )/dd1**2 )- &
+                       FOUR_THIRDS*cssquare )*Bb_kl(i,j,ispec) + &
+                        rhol_bar_global(iglob)*ratio**2/M_biot * (cpIsquare - cpIIsquare)* &
+                       (phil_global(iglob)/tortl_global(iglob)*ratio + &
+                       1._CUSTOM_REAL)**2/dd1**2*Mb_kl(i,j,ispec) - &
+                       rhol_bar_global(iglob)*ratio/C_biot * (cpIsquare - cpIIsquare)* (&
+                       (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1 - &
+                       phil_global(iglob)*ratio/tortl_global(iglob)*(phil_global(iglob)/ &
+                       tortl_global(iglob)*ratio+1._CUSTOM_REAL)*&
+                       (1+rhol_bar_global(iglob)*ratio/rhol_f_global(iglob))/dd1**2)*Cb_kl(i,j,ispec)- &
+                       phil_global(iglob)*rhol_f_global(iglob)*cssquare/ &
+                       (tortl_global(iglob)*mulfr_global(iglob))*mufrb_kl(i,j,ispec)
+                phib_kl(i,j,ispec) = phi_kl(i,j,ispec) - &
+                       phil_global(iglob)*rhol_bar_global(iglob)/(tortl_global(iglob)*B_biot) &
+                       * ( cpIsquare - rhol_f_global(iglob)/rhol_bar_global(iglob)*cpIIsquare- &
+                       (cpIsquare-cpIIsquare)*( (TWO*ratio**2*phil_global(iglob)/ &
+                       tortl_global(iglob) + (1._CUSTOM_REAL+&
+                       rhol_f_global(iglob)/rhol_bar_global(iglob))* &
+                       (TWO*ratio*phil_global(iglob)/tortl_global(iglob)+&
+                       1._CUSTOM_REAL))/dd1 + (phil_global(iglob)/tortl_global(iglob)*ratio+ &
+                       1._CUSTOM_REAL)*(phil_global(iglob)*&
+                       ratio/tortl_global(iglob)+phil_global(iglob)/tortl_global(iglob)* &
+                       (1._CUSTOM_REAL+rhol_f_global(iglob)/&
+                       rhol_bar_global(iglob))-1._CUSTOM_REAL)*((1._CUSTOM_REAL+ &
+                       rhol_bar_global(iglob)/rhol_f_global(iglob)-&
+                       TWO*phil_global(iglob)/tortl_global(iglob))*ratio**2+TWO*ratio)/dd1**2 ) - &
+                       FOUR_THIRDS*rhol_f_global(iglob)*cssquare/rhol_bar_global(iglob) )*Bb_kl(i,j,ispec) + &
+                       rhol_f_global(iglob)/M_biot * (cpIsquare-cpIIsquare)*(&
+                       TWO*ratio*(phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1 - &
+                       (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)**2*( &
+                       (1._CUSTOM_REAL+rhol_bar_global(iglob)/&
+                       rhol_f_global(iglob)-TWO*phil_global(iglob)/tortl_global(iglob))*ratio**2+TWO*ratio)/dd1**2 &
+                       )*Mb_kl(i,j,ispec) + &
+                       phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*C_biot)* &
+                       (cpIsquare-cpIIsquare)*ratio* (&
+                       (1._CUSTOM_REAL+rhol_f_global(iglob)/rhol_bar_global(iglob)*ratio)/dd1 - &
+                       (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)* &
+                       (1._CUSTOM_REAL+rhol_bar_global(iglob)/&
+                       rhol_f_global(iglob)*ratio)*((1._CUSTOM_REAL+rhol_bar_global(iglob)/rhol_f_global(iglob)-TWO*&
+                       phil_global(iglob)/tortl_global(iglob))*ratio+TWO)/dd1**2&
+                        )*Cb_kl(i,j,ispec) -&
+                       phil_global(iglob)*rhol_f_global(iglob)*cssquare &
+                       /(tortl_global(iglob)*mulfr_global(iglob))*mufrb_kl(i,j,ispec)
+                cpI_kl(i,j,ispec) = 2._CUSTOM_REAL*cpIsquare/B_biot*rhol_bar_global(iglob)*( &
+                       1._CUSTOM_REAL-phil_global(iglob)/tortl_global(iglob) + &
+                       (phil_global(iglob)/tortl_global(iglob)*ratio+ &
+                       1._CUSTOM_REAL)*(phil_global(iglob)/tortl_global(iglob)*&
+                       ratio+phil_global(iglob)/tortl_global(iglob)* &
+                       (1._CUSTOM_REAL+rhol_f_global(iglob)/rhol_bar_global(iglob))-&
+                       1._CUSTOM_REAL)/dd1 &
+                        )* Bb_kl(i,j,ispec) +&
+                       2._CUSTOM_REAL*cpIsquare*rhol_f_global(iglob)*tortl_global(iglob)/(phil_global(iglob)*M_biot) *&
+                       (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)**2/dd1*Mb_kl(i,j,ispec)+&
+                       2._CUSTOM_REAL*cpIsquare*rhol_f_global(iglob)/C_biot * &
+                       (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)* &
+                       (1._CUSTOM_REAL+rhol_bar_global(iglob)/&
+                       rhol_f_global(iglob)*ratio)/dd1*Cb_kl(i,j,ispec)
+                cpII_kl(i,j,ispec) = 2._CUSTOM_REAL*cpIIsquare*rhol_bar_global(iglob)/B_biot * (&
+                       phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*rhol_bar_global(iglob)) - &
+                       (phil_global(iglob)/tortl_global(iglob)*ratio+ &
+                       1._CUSTOM_REAL)*(phil_global(iglob)/tortl_global(iglob)*&
+                       ratio+phil_global(iglob)/tortl_global(iglob)* &
+                       (1._CUSTOM_REAL+rhol_f_global(iglob)/rhol_bar_global(iglob))-&
+                       1._CUSTOM_REAL)/dd1  ) * Bb_kl(i,j,ispec) +&
+                       2._CUSTOM_REAL*cpIIsquare*rhol_f_global(iglob)*tortl_global(iglob)/(phil_global(iglob)*M_biot) * (&
+                       1._CUSTOM_REAL - (phil_global(iglob)/tortl_global(iglob)*ratio+ &
+                       1._CUSTOM_REAL)**2/dd1  )*Mb_kl(i,j,ispec) + &
+                       2._CUSTOM_REAL*cpIIsquare*rhol_f_global(iglob)/C_biot * (&
+                       1._CUSTOM_REAL - (phil_global(iglob)/tortl_global(iglob)*ratio+ &
+                       1._CUSTOM_REAL)*(1._CUSTOM_REAL+&
+                       rhol_bar_global(iglob)/rhol_f_global(iglob)*ratio)/dd1  )*Cb_kl(i,j,ispec)
+                cs_kl(i,j,ispec) = - 8._CUSTOM_REAL/3._CUSTOM_REAL*cssquare* &
+                       rhol_bar_global(iglob)/B_biot*(1._CUSTOM_REAL-&
+                       phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)* &
+                       rhol_bar_global(iglob)))*Bb_kl(i,j,ispec) + &
+                       2._CUSTOM_REAL*(rhol_bar_global(iglob)-rhol_f_global(iglob)*&
+                       phil_global(iglob)/tortl_global(iglob))/&
+                       mulfr_global(iglob)*cssquare*mufrb_kl(i,j,ispec)
+                ratio_kl(i,j,ispec) = ratio*rhol_bar_global(iglob)*phil_global(iglob)/(tortl_global(iglob)*B_biot) * &
+                       (cpIsquare-cpIIsquare) * ( &
+                       phil_global(iglob)/tortl_global(iglob)*(2._CUSTOM_REAL*ratio+1._CUSTOM_REAL+rhol_f_global(iglob)/ &
+                       rhol_bar_global(iglob))/dd1 - (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*&
+                       (phil_global(iglob)/tortl_global(iglob)*ratio+phil_global(iglob)/tortl_global(iglob)*(&
+                       1._CUSTOM_REAL+rhol_f_global(iglob)/rhol_bar_global(iglob))-1._CUSTOM_REAL)*(2._CUSTOM_REAL*ratio*(&
+                       1._CUSTOM_REAL+rhol_bar_global(iglob)/rhol_f_global(iglob)-phil_global(iglob)/tortl_global(iglob)) +&
+                       2._CUSTOM_REAL)/dd1**2  )*Bb_kl(i,j,ispec) + &
+                       ratio*rhol_f_global(iglob)*tortl_global(iglob)/(phil_global(iglob)*M_biot)*(cpIsquare-cpIIsquare) * &
+                       2._CUSTOM_REAL*phil_global(iglob)/tortl_global(iglob) * (&
+                       (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1 - &
+                       (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)**2*( &
+                       (1._CUSTOM_REAL+rhol_bar_global(iglob)/&
+                       rhol_f_global(iglob)-phil_global(iglob)/tortl_global(iglob))*ratio+ &
+                       1._CUSTOM_REAL)/dd1**2 )*Mb_kl(i,j,ispec) +&
+                       ratio*rhol_f_global(iglob)/C_biot*(cpIsquare-cpIIsquare) * (&
+                       (2._CUSTOM_REAL*phil_global(iglob)*rhol_bar_global(iglob)* &
+                       ratio/(tortl_global(iglob)*rhol_f_global(iglob))+&
+                       phil_global(iglob)/tortl_global(iglob)+rhol_bar_global(iglob)/rhol_f_global(iglob))/dd1 - &
+                       2._CUSTOM_REAL*phil_global(iglob)/tortl_global(iglob)*(phil_global(iglob)/tortl_global(iglob)*ratio+&
+                       1._CUSTOM_REAL)*(1._CUSTOM_REAL+rhol_bar_global(iglob)/rhol_f_global(iglob)*ratio)*((1._CUSTOM_REAL+&
+                       rhol_bar_global(iglob)/rhol_f_global(iglob)- &
+                       phil_global(iglob)/tortl_global(iglob))*ratio+1._CUSTOM_REAL)/&
+                       dd1**2 )*Cb_kl(i,j,ispec)
 
-   endif ! if(any_poroelastic)
+              enddo
+            enddo
+          endif
+        enddo
 
-   endif ! if(SIMULATION_TYPE == 2)
+      endif ! if(any_poroelastic)
+
+    endif ! if(SIMULATION_TYPE == 2)
 
 !
 !----  display results at given time steps
 !
-  if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
+    if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
 
 !
 ! kernels output files
 !
 
-   if(SIMULATION_TYPE == 2 .and. it == NSTEP) then
+      if(SIMULATION_TYPE == 2 .and. it == NSTEP) then
 
-  if ( myrank == 0 ) then
-  write(IOUT,*) 'Writing Kernels file'
-  endif
+        if ( myrank == 0 ) then
+          write(IOUT,*) 'Writing Kernels file'
+        endif
 
-    if(any_acoustic) then
-    do ispec = 1, nspec
-      do j = 1, NGLLZ
-          do i = 1, NGLLX
-            iglob = ibool(i,j,ispec)
-        xx = coord(1,iglob)
-        zz = coord(2,iglob)
-         write(95,'(5e11.3)')xx,zz,rho_ac_kl(i,j,ispec),kappa_ac_kl(i,j,ispec)
-         write(96,'(5e11.3)')rhorho_ac_hessian_final1(i,j,ispec), rhorho_ac_hessian_final2(i,j,ispec),&
-                             rhop_ac_kl(i,j,ispec),alpha_ac_kl(i,j,ispec)
+        if(any_acoustic) then
+          do ispec = 1, nspec
+            do j = 1, NGLLZ
+              do i = 1, NGLLX
+                iglob = ibool(i,j,ispec)
+                xx = coord(1,iglob)
+                zz = coord(2,iglob)
+                write(95,'(5e11.3)')xx,zz,rho_ac_kl(i,j,ispec),kappa_ac_kl(i,j,ispec)
+                write(96,'(5e11.3)')rhorho_ac_hessian_final1(i,j,ispec), rhorho_ac_hessian_final2(i,j,ispec),&
+                                rhop_ac_kl(i,j,ispec),alpha_ac_kl(i,j,ispec)
+              enddo
+            enddo
           enddo
-      enddo
-    enddo
-    close(95)
-    close(96)
-    endif
+          close(95)
+          close(96)
+        endif
 
-    if(any_elastic) then
-    do ispec = 1, nspec
-      do j = 1, NGLLZ
-          do i = 1, NGLLX
-            iglob = ibool(i,j,ispec)
-        xx = coord(1,iglob)
-        zz = coord(2,iglob)
-         write(97,'(5e11.3)')xx,zz,rho_kl(i,j,ispec),kappa_kl(i,j,ispec),mu_kl(i,j,ispec)
-         write(98,'(5e11.3)')xx,zz,rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
-         !write(98,'(5e11.3)')rhorho_el_hessian_final1(i,j,ispec), rhorho_el_hessian_final2(i,j,ispec),&
-         !                    rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
+        if(any_elastic) then
+          do ispec = 1, nspec
+            do j = 1, NGLLZ
+              do i = 1, NGLLX
+                iglob = ibool(i,j,ispec)
+                xx = coord(1,iglob)
+                zz = coord(2,iglob)
+                write(97,'(5e11.3)')xx,zz,rho_kl(i,j,ispec),kappa_kl(i,j,ispec),mu_kl(i,j,ispec)
+                write(98,'(5e11.3)')xx,zz,rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
+                !write(98,'(5e11.3)')rhorho_el_hessian_final1(i,j,ispec), rhorho_el_hessian_final2(i,j,ispec),&
+                !                    rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
+              enddo
+            enddo
           enddo
-      enddo
-    enddo
-    close(97)
-    close(98)
-    endif
+          close(97)
+          close(98)
+        endif
 
-    if(any_poroelastic) then
-    do ispec = 1, nspec
-      do j = 1, NGLLZ
-          do i = 1, NGLLX
-            iglob = ibool(i,j,ispec)
-        xx = coord(1,iglob)
-        zz = coord(2,iglob)
-         write(144,'(5e11.3)')xx,zz,mufr_kl(i,j,ispec),B_kl(i,j,ispec),C_kl(i,j,ispec)
-         write(155,'(5e11.3)')xx,zz,M_kl(i,j,ispec),rhot_kl(i,j,ispec),rhof_kl(i,j,ispec)
-         write(16,'(5e11.3)')xx,zz,sm_kl(i,j,ispec),eta_kl(i,j,ispec)
-         write(17,'(5e11.3)')xx,zz,mufrb_kl(i,j,ispec),Bb_kl(i,j,ispec),Cb_kl(i,j,ispec)
-         write(18,'(5e11.3)')xx,zz,Mb_kl(i,j,ispec),rhob_kl(i,j,ispec),rhofb_kl(i,j,ispec)
-         write(19,'(5e11.3)')xx,zz,phi_kl(i,j,ispec),eta_kl(i,j,ispec)
-         write(20,'(5e11.3)')xx,zz,cpI_kl(i,j,ispec),cpII_kl(i,j,ispec),cs_kl(i,j,ispec)
-         write(21,'(5e11.3)')xx,zz,rhobb_kl(i,j,ispec),rhofbb_kl(i,j,ispec),ratio_kl(i,j,ispec)
-         write(22,'(5e11.3)')xx,zz,phib_kl(i,j,ispec),eta_kl(i,j,ispec)
+        if(any_poroelastic) then
+          do ispec = 1, nspec
+            do j = 1, NGLLZ
+              do i = 1, NGLLX
+                iglob = ibool(i,j,ispec)
+                xx = coord(1,iglob)
+                zz = coord(2,iglob)
+                write(144,'(5e11.3)')xx,zz,mufr_kl(i,j,ispec),B_kl(i,j,ispec),C_kl(i,j,ispec)
+                write(155,'(5e11.3)')xx,zz,M_kl(i,j,ispec),rhot_kl(i,j,ispec),rhof_kl(i,j,ispec)
+                write(16,'(5e11.3)')xx,zz,sm_kl(i,j,ispec),eta_kl(i,j,ispec)
+                write(17,'(5e11.3)')xx,zz,mufrb_kl(i,j,ispec),Bb_kl(i,j,ispec),Cb_kl(i,j,ispec)
+                write(18,'(5e11.3)')xx,zz,Mb_kl(i,j,ispec),rhob_kl(i,j,ispec),rhofb_kl(i,j,ispec)
+                write(19,'(5e11.3)')xx,zz,phi_kl(i,j,ispec),eta_kl(i,j,ispec)
+                write(20,'(5e11.3)')xx,zz,cpI_kl(i,j,ispec),cpII_kl(i,j,ispec),cs_kl(i,j,ispec)
+                write(21,'(5e11.3)')xx,zz,rhobb_kl(i,j,ispec),rhofbb_kl(i,j,ispec),ratio_kl(i,j,ispec)
+                write(22,'(5e11.3)')xx,zz,phib_kl(i,j,ispec),eta_kl(i,j,ispec)
+              enddo
+            enddo
           enddo
-      enddo
-    enddo
-    close(144)
-    close(155)
-    close(16)
-    close(17)
-    close(18)
-    close(19)
-    close(20)
-    close(21)
-    close(22)
-    endif
+          close(144)
+          close(155)
+          close(16)
+          close(17)
+          close(18)
+          close(19)
+          close(20)
+          close(21)
+          close(22)
+        endif
 
-    endif
+      endif
 
 !
 !----  PostScript display
 !
-  if(output_postscript_snapshot) then
+      if(output_postscript_snapshot) then
 
-  if (myrank == 0) write(IOUT,*) 'Writing PostScript file'
+        if (myrank == 0) write(IOUT,*) 'Writing PostScript file'
 
-  if(imagetype == 1 .and. p_sv) then
+        if(imagetype == 1 .and. p_sv) then
 
-    if (myrank == 0) write(IOUT,*) 'drawing displacement vector as small arrows...'
+          if (myrank == 0) write(IOUT,*) 'drawing displacement vector as small arrows...'
 
-    call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic,&
-                        elastic,poroelastic,vector_field_display, &
-                        xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                        nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-                        numat,kmato,density,rhoext,assign_external_model)
+          call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic,&
+                          elastic,poroelastic,vector_field_display, &
+                          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
+                          nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
+                          numat,kmato,density,rhoext,assign_external_model)
 
-    call plotpost(vector_field_display,coord,vpext,x_source,z_source,x_final_receiver,z_final_receiver, &
-          it,deltat,coorg,xinterp,zinterp,shape2D_display, &
-          Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
-          poroelastcoef,knods,kmato,ibool, &
-          numabs,codeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
-          simulation_title,nglob,npgeo,vpImin,vpImax,nrec,NSOURCES, &
-          colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
-          boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
-          nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
-          any_acoustic,any_poroelastic,plot_lowerleft_corner_only, &
-          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges,&
-          fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
-          solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,num_solid_poro_edges, &
-          myrank,nproc,ier,&
-          d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
-          d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
-          d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model, &
-          d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model, &
-          coorg_send_ps_velocity_model,RGB_send_ps_velocity_model, &
-          coorg_recv_ps_velocity_model,RGB_recv_ps_velocity_model, &
-          d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh, &
-          d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh, &
-          d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh, &
-          coorg_send_ps_element_mesh,color_send_ps_element_mesh, &
-          coorg_recv_ps_element_mesh,color_recv_ps_element_mesh, &
-          d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs,d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs, &
-          coorg_send_ps_abs,coorg_recv_ps_abs, &
-          d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface, &
-          d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface, &
-          coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
-          d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field, &
-          d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
-          coorg_send_ps_vector_field,coorg_recv_ps_vector_field)
+          call plotpost(vector_field_display,coord,vpext,x_source,z_source,x_final_receiver,z_final_receiver, &
+                      it,deltat,coorg,xinterp,zinterp,shape2D_display, &
+                      Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
+                      poroelastcoef,knods,kmato,ibool, &
+                      numabs,codeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
+                      simulation_title,nglob,npgeo,vpImin,vpImax,nrec,NSOURCES, &
+                      colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
+                      boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
+                      nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
+                      any_acoustic,any_poroelastic,plot_lowerleft_corner_only, &
+                      fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges,&
+                      fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
+                      solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,num_solid_poro_edges, &
+                      myrank,nproc,ier,&
+                      d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
+                      d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
+                      d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model, &
+                      d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model, &
+                      coorg_send_ps_velocity_model,RGB_send_ps_velocity_model, &
+                      coorg_recv_ps_velocity_model,RGB_recv_ps_velocity_model, &
+                      d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh, &
+                      d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh, &
+                      d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh, &
+                      coorg_send_ps_element_mesh,color_send_ps_element_mesh, &
+                      coorg_recv_ps_element_mesh,color_recv_ps_element_mesh, &
+                      d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs,d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs, &
+                      coorg_send_ps_abs,coorg_recv_ps_abs, &
+                      d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface, &
+                      d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface, &
+                      coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
+                      d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field, &
+                      d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
+                      coorg_send_ps_vector_field,coorg_recv_ps_vector_field)
 
-  else if(imagetype == 2 .and. p_sv) then
+        else if(imagetype == 2 .and. p_sv) then
 
-    if (myrank == 0) write(IOUT,*) 'drawing velocity vector as small arrows...'
+          if (myrank == 0) write(IOUT,*) 'drawing velocity vector as small arrows...'
 
-    call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,velocs_poroelastic,&
-                        elastic,poroelastic,vector_field_display, &
-                        xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                        nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-                        numat,kmato,density,rhoext,assign_external_model)
+          call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,velocs_poroelastic,&
+                          elastic,poroelastic,vector_field_display, &
+                          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
+                          nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
+                          numat,kmato,density,rhoext,assign_external_model)
 
-    call plotpost(vector_field_display,coord,vpext,x_source,z_source,x_final_receiver,z_final_receiver, &
-          it,deltat,coorg,xinterp,zinterp,shape2D_display, &
-          Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
-          poroelastcoef,knods,kmato,ibool, &
-          numabs,codeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
-          simulation_title,nglob,npgeo,vpImin,vpImax,nrec,NSOURCES, &
-          colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
-          boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
-          nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
-          any_acoustic,any_poroelastic,plot_lowerleft_corner_only, &
-          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges,&
-          fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
-          solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,num_solid_poro_edges, &
-          myrank,nproc,ier,&
-          d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
-          d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
-          d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model, &
-          d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model, &
-          coorg_send_ps_velocity_model,RGB_send_ps_velocity_model, &
-          coorg_recv_ps_velocity_model,RGB_recv_ps_velocity_model, &
-          d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh, &
-          d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh, &
-          d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh, &
-          coorg_send_ps_element_mesh,color_send_ps_element_mesh, &
-          coorg_recv_ps_element_mesh,color_recv_ps_element_mesh, &
-          d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs,d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs, &
-          coorg_send_ps_abs,coorg_recv_ps_abs, &
-          d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface, &
-          d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface, &
-          coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
-          d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field, &
-          d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
-          coorg_send_ps_vector_field,coorg_recv_ps_vector_field)
+          call plotpost(vector_field_display,coord,vpext,x_source,z_source,x_final_receiver,z_final_receiver, &
+                      it,deltat,coorg,xinterp,zinterp,shape2D_display, &
+                      Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
+                      poroelastcoef,knods,kmato,ibool, &
+                      numabs,codeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
+                      simulation_title,nglob,npgeo,vpImin,vpImax,nrec,NSOURCES, &
+                      colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
+                      boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
+                      nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
+                      any_acoustic,any_poroelastic,plot_lowerleft_corner_only, &
+                      fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges,&
+                      fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
+                      solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,num_solid_poro_edges, &
+                      myrank,nproc,ier,&
+                      d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
+                      d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
+                      d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model, &
+                      d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model, &
+                      coorg_send_ps_velocity_model,RGB_send_ps_velocity_model, &
+                      coorg_recv_ps_velocity_model,RGB_recv_ps_velocity_model, &
+                      d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh, &
+                      d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh, &
+                      d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh, &
+                      coorg_send_ps_element_mesh,color_send_ps_element_mesh, &
+                      coorg_recv_ps_element_mesh,color_recv_ps_element_mesh, &
+                      d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs,d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs, &
+                      coorg_send_ps_abs,coorg_recv_ps_abs, &
+                      d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface, &
+                      d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface, &
+                      coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
+                      d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field, &
+                      d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
+                      coorg_send_ps_vector_field,coorg_recv_ps_vector_field)
 
-  else if(imagetype == 3 .and. p_sv) then
+        else if(imagetype == 3 .and. p_sv) then
 
-    if (myrank == 0) write(IOUT,*) 'drawing acceleration vector as small arrows...'
+          if (myrank == 0) write(IOUT,*) 'drawing acceleration vector as small arrows...'
 
-    call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,accels_poroelastic,&
-                        elastic,poroelastic,vector_field_display, &
-                        xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                        nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-                        numat,kmato,density,rhoext,assign_external_model)
+          call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,accels_poroelastic,&
+                          elastic,poroelastic,vector_field_display, &
+                          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
+                          nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
+                          numat,kmato,density,rhoext,assign_external_model)
 
-    call plotpost(vector_field_display,coord,vpext,x_source,z_source,x_final_receiver,z_final_receiver, &
-          it,deltat,coorg,xinterp,zinterp,shape2D_display, &
-          Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
-          poroelastcoef,knods,kmato,ibool, &
-          numabs,codeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
-          simulation_title,nglob,npgeo,vpImin,vpImax,nrec,NSOURCES, &
-          colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
-          boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
-          nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
-          any_acoustic,any_poroelastic,plot_lowerleft_corner_only, &
-          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
-          fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
-          solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,num_solid_poro_edges, &
-          myrank,nproc,ier,&
-          d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
-          d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
-          d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model, &
-          d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model, &
-          coorg_send_ps_velocity_model,RGB_send_ps_velocity_model, &
-          coorg_recv_ps_velocity_model,RGB_recv_ps_velocity_model, &
-          d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh, &
-          d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh, &
-          d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh, &
-          coorg_send_ps_element_mesh,color_send_ps_element_mesh, &
-          coorg_recv_ps_element_mesh,color_recv_ps_element_mesh, &
-          d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs,d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs, &
-          coorg_send_ps_abs,coorg_recv_ps_abs, &
-          d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface, &
-          d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface, &
-          coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
-          d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field, &
-          d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
-          coorg_send_ps_vector_field,coorg_recv_ps_vector_field)
+          call plotpost(vector_field_display,coord,vpext,x_source,z_source,x_final_receiver,z_final_receiver, &
+                      it,deltat,coorg,xinterp,zinterp,shape2D_display, &
+                      Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
+                      poroelastcoef,knods,kmato,ibool, &
+                      numabs,codeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
+                      simulation_title,nglob,npgeo,vpImin,vpImax,nrec,NSOURCES, &
+                      colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
+                      boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
+                      nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
+                      any_acoustic,any_poroelastic,plot_lowerleft_corner_only, &
+                      fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
+                      fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
+                      solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,num_solid_poro_edges, &
+                      myrank,nproc,ier,&
+                      d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
+                      d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
+                      d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model, &
+                      d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model, &
+                      coorg_send_ps_velocity_model,RGB_send_ps_velocity_model, &
+                      coorg_recv_ps_velocity_model,RGB_recv_ps_velocity_model, &
+                      d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh, &
+                      d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh, &
+                      d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh, &
+                      coorg_send_ps_element_mesh,color_send_ps_element_mesh, &
+                      coorg_recv_ps_element_mesh,color_recv_ps_element_mesh, &
+                      d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs,d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs, &
+                      coorg_send_ps_abs,coorg_recv_ps_abs, &
+                      d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface, &
+                      d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface, &
+                      coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
+                      d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field, &
+                      d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
+                      coorg_send_ps_vector_field,coorg_recv_ps_vector_field)
 
-  else if(imagetype == 4 .or. .not. p_sv) then
+        else if(imagetype == 4 .or. .not. p_sv) then
 
-    if (myrank == 0) write(IOUT,*) 'cannot draw scalar pressure field or y-component field as a vector plot, skipping...'
+          if (myrank == 0) &
+            write(IOUT,*) 'cannot draw scalar pressure field or y-component field as a vector plot, skipping...'
 
-  else
-    call exit_MPI('wrong type for snapshots')
-  endif
+        else
+          call exit_MPI('wrong type for snapshots')
+        endif
 
-  if (myrank == 0 .and. imagetype /= 4 .and. p_sv) write(IOUT,*) 'PostScript file written'
+        if (myrank == 0 .and. imagetype /= 4 .and. p_sv) write(IOUT,*) 'PostScript file written'
 
-  endif
+      endif
 
 !
 !----  display color image
 !
-  if(output_color_image) then
+      if(output_color_image) then
 
-  if (myrank == 0) write(IOUT,*) 'Creating color image of size ',NX_IMAGE_color,' x ',NZ_IMAGE_color,' for time step ',it
+        if (myrank == 0) &
+          write(IOUT,*) 'Creating color image of size ',NX_IMAGE_color,' x ',NZ_IMAGE_color,' for time step ',it
 
-  if(imagetype == 1) then
+        if(imagetype == 1) then
 
-    if (myrank == 0) write(IOUT,*) 'drawing image of z (if P-SV) or y (if SH) component of displacement vector...'
+          if (myrank == 0) &
+            write(IOUT,*) 'drawing image of z (if P-SV) or y (if SH) component of displacement vector...'
 
-    call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic,&
-                        elastic,poroelastic,vector_field_display, &
-                        xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                        nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-                        numat,kmato,density,rhoext,assign_external_model)
+          call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic,&
+                          elastic,poroelastic,vector_field_display, &
+                          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
+                          nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
+                          numat,kmato,density,rhoext,assign_external_model)
 
-  else if(imagetype == 2) then
+        else if(imagetype == 2) then
 
-    if (myrank == 0) write(IOUT,*) 'drawing image of z (if P-SV) or y (if SH) component of velocity vector...'
+          if (myrank == 0) &
+            write(IOUT,*) 'drawing image of z (if P-SV) or y (if SH) component of velocity vector...'
 
-    call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,velocs_poroelastic,&
-                        elastic,poroelastic,vector_field_display, &
-                        xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                        nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-                        numat,kmato,density,rhoext,assign_external_model)
+          call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,velocs_poroelastic,&
+                          elastic,poroelastic,vector_field_display, &
+                          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
+                          nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
+                          numat,kmato,density,rhoext,assign_external_model)
 
-  else if(imagetype == 3) then
+        else if(imagetype == 3) then
 
-    if (myrank == 0) write(IOUT,*) 'drawing image of z (if P-SV) or y (if SH) component of acceleration vector...'
+          if (myrank == 0) &
+            write(IOUT,*) 'drawing image of z (if P-SV) or y (if SH) component of acceleration vector...'
 
-    call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,accels_poroelastic,&
-                        elastic,poroelastic,vector_field_display, &
-                        xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                        nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-                        numat,kmato,density,rhoext,assign_external_model)
+          call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,accels_poroelastic,&
+                          elastic,poroelastic,vector_field_display, &
+                          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
+                          nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
+                          numat,kmato,density,rhoext,assign_external_model)
 
-  else if(imagetype == 4 .and. p_sv) then
+        else if(imagetype == 4 .and. p_sv) then
 
-    if (myrank == 0) write(IOUT,*) 'drawing image of pressure field...'
+          if (myrank == 0) write(IOUT,*) 'drawing image of pressure field...'
 
-    call compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,&
-         displs_poroelastic,displw_poroelastic,elastic,poroelastic,vector_field_display, &
-         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
-         nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
-         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
-         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,e1,e11, &
-         TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
+          call compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,&
+                     displs_poroelastic,displw_poroelastic,elastic,poroelastic,vector_field_display, &
+                     xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
+                     nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
+                     numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
+                     c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,e1,e11, &
+                     TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
 
-  else if(imagetype == 4 .and. .not. p_sv) then
-    call exit_MPI('cannot draw pressure field for SH (membrane) waves')
-  else
-    call exit_MPI('wrong type for snapshots')
-  endif
+        else if(imagetype == 4 .and. .not. p_sv) then
+          call exit_MPI('cannot draw pressure field for SH (membrane) waves')
+        else
+          call exit_MPI('wrong type for snapshots')
+        endif
 
-  image_color_data(:,:) = 0.d0
+        image_color_data(:,:) = 0.d0
 
-  do k = 1, nb_pixel_loc
-     j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
-     i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
-    if(p_sv) then !P-SH waves, plot vertical component or pressure
-     image_color_data(i,j) = vector_field_display(3,iglob_image_color(i,j))
-    else !SH (membrane) waves, plot y-component
-     image_color_data(i,j) = vector_field_display(2,iglob_image_color(i,j))
-    endif
-  enddo
+        do k = 1, nb_pixel_loc
+          j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
+          i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
+          if(p_sv) then
+            !P-SH waves, plot vertical component or pressure
+            image_color_data(i,j) = vector_field_display(3,iglob_image_color(i,j))
+          else
+            !SH (membrane) waves, plot y-component
+            image_color_data(i,j) = vector_field_display(2,iglob_image_color(i,j))
+          endif
+        enddo
 
 ! assembling array image_color_data on process zero for color output
 #ifdef USE_MPI
-  if (nproc > 1) then
-     if (myrank == 0) then
+        if (nproc > 1) then
+          if (myrank == 0) then
+            do iproc = 1, nproc-1
+              call MPI_RECV(data_pixel_recv(1),nb_pixel_per_proc(iproc+1), MPI_DOUBLE_PRECISION, &
+                  iproc, 43, MPI_COMM_WORLD, request_mpi_status, ier)
 
-        do iproc = 1, nproc-1
-           call MPI_RECV(data_pixel_recv(1),nb_pixel_per_proc(iproc+1), MPI_DOUBLE_PRECISION, &
-                iproc, 43, MPI_COMM_WORLD, request_mpi_status, ier)
+              do k = 1, nb_pixel_per_proc(iproc+1)
+                j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
+                i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
+                image_color_data(i,j) = data_pixel_recv(k)
+              enddo
+            enddo
+          else
+            do k = 1, nb_pixel_loc
+              j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
+              i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
+              if(p_sv) then !P-SH waves, plot vertical component or pressure
+                data_pixel_send(k) = vector_field_display(3,iglob_image_color(i,j))
+              else !SH (membrane) waves, plot y-component
+                data_pixel_send(k) = vector_field_display(2,iglob_image_color(i,j))
+              endif
+            enddo
 
-           do k = 1, nb_pixel_per_proc(iproc+1)
-              j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
-              i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
-              image_color_data(i,j) = data_pixel_recv(k)
-           enddo
-        enddo
-
-     else
-        do k = 1, nb_pixel_loc
-           j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
-           i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
-           if(p_sv) then !P-SH waves, plot vertical component or pressure
-             data_pixel_send(k) = vector_field_display(3,iglob_image_color(i,j))
-           else !SH (membrane) waves, plot y-component
-             data_pixel_send(k) = vector_field_display(2,iglob_image_color(i,j))
-           endif
-        enddo
-
-        call MPI_SEND(data_pixel_send(1),nb_pixel_loc,MPI_DOUBLE_PRECISION, 0, 43, MPI_COMM_WORLD, ier)
-
-     endif
-  endif
-
+            call MPI_SEND(data_pixel_send(1),nb_pixel_loc,MPI_DOUBLE_PRECISION, 0, 43, MPI_COMM_WORLD, ier)
+          endif
+        endif
 #endif
 
-  if (myrank == 0) then
-     call create_color_image(image_color_data,iglob_image_color, &
-                NX_IMAGE_color,NZ_IMAGE_color,it,cutsnaps,image_color_vp_display)
-     write(IOUT,*) 'Color image created'
-  endif
+        if (myrank == 0) then
+          call create_color_image(image_color_data,iglob_image_color, &
+                  NX_IMAGE_color,NZ_IMAGE_color,it,cutsnaps,image_color_vp_display)
+          write(IOUT,*) 'Color image created'
+        endif
 
-  endif
+      endif
 
 !----------------------------------------------
 ! write the full (local) wavefield to file as three components (Uy = 0 for PSV; Ux,Uz = 0 for SH)
 ! note 1: for SH case, this requires output_color_image = .true. in order to have vector_field_display
 ! note 2: for MPI, it would be more convenient to output a single file rather than one for each myrank
 
-if (output_wavefield_snapshot) then
-  write(wavefield_file,"('OUTPUT_FILES/wavefield',i7.7,'_',i2.2,'_',i3.3,'.txt')") it,SIMULATION_TYPE,myrank
-  open(unit=27,file=wavefield_file,status='unknown')
-  do ispec = 1,nspec
-     do j = 1,NGLLZ
-        do i = 1,NGLLX
-           iglob = ibool(i,j,ispec)
-           write(27,'(5e16.6)') coord(1,iglob), coord(2,iglob), &
-             sngl(vector_field_display(1,iglob)), &
-             sngl(vector_field_display(2,iglob)), &
-             sngl(vector_field_display(3,iglob))
+      if (output_wavefield_snapshot) then
+        write(wavefield_file,"('OUTPUT_FILES/wavefield',i7.7,'_',i2.2,'_',i3.3,'.txt')") it,SIMULATION_TYPE,myrank
+        open(unit=27,file=wavefield_file,status='unknown')
+        do ispec = 1,nspec
+          do j = 1,NGLLZ
+            do i = 1,NGLLX
+               iglob = ibool(i,j,ispec)
+               write(27,'(5e16.6)') coord(1,iglob), coord(2,iglob), &
+                              sngl(vector_field_display(1,iglob)), &
+                              sngl(vector_field_display(2,iglob)), &
+                              sngl(vector_field_display(3,iglob))
+            enddo
+          enddo
         enddo
-     enddo
-  enddo
-  close(27)
-endif
+        close(27)
+      endif
 
 !----  save temporary or final seismograms
 ! suppress seismograms if we generate traces of the run for analysis with "ParaVer", because time consuming
-  if(.not. GENERATE_PARAVER_TRACES) &
-    call write_seismograms(sisux,sisuz,siscurl,station_name,network_name,NSTEP, &
-                          nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
-                          NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current,p_sv)
+      if(.not. GENERATE_PARAVER_TRACES) &
+        call write_seismograms(sisux,sisuz,siscurl,station_name,network_name,NSTEP, &
+                            nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
+                            NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current,p_sv)
 
-  seismo_offset = seismo_offset + seismo_current
-  seismo_current = 0
+      seismo_offset = seismo_offset + seismo_current
+      seismo_current = 0
 
-  endif  ! display results for specified time step
+    endif  ! display results for specified time step
 
 #ifdef USE_MPI
 ! add a barrier if we generate traces of the run for analysis with "ParaVer"
-  if(GENERATE_PARAVER_TRACES) call MPI_BARRIER(MPI_COMM_WORLD,ier)
+    if(GENERATE_PARAVER_TRACES) call MPI_BARRIER(MPI_COMM_WORLD,ier)
 #endif
 
   enddo ! end of the main time loop
 
+! *********************************************************
+! ************* END MAIN LOOP OVER THE TIME STEPS *************
+! *********************************************************
+
   if((SAVE_FORWARD .and. SIMULATION_TYPE==1) .or. SIMULATION_TYPE ==2) then
-   if(any_acoustic) then
-  close(65)
-  close(66)
-  close(67)
-  close(68)
-   endif
-   if(any_elastic) then
-  close(35)
-  close(36)
-  close(37)
-  close(38)
-   endif
-   if(any_poroelastic) then
-  close(25)
-  close(45)
-  close(26)
-  close(46)
-  close(29)
-  close(47)
-  close(28)
-  close(48)
-   endif
+    if(any_acoustic) then
+      close(65)
+      close(66)
+      close(67)
+      close(68)
+    endif
+    if(any_elastic) then
+      close(35)
+      close(36)
+      close(37)
+      close(38)
+    endif
+    if(any_poroelastic) then
+      close(25)
+      close(45)
+      close(26)
+      close(46)
+      close(29)
+      close(47)
+      close(28)
+      close(48)
+    endif
   endif
 
 !
@@ -6596,11 +6644,11 @@ endif
   endif
 
   if(SAVE_FORWARD .and. SIMULATION_TYPE ==1 .and. any_poroelastic) then
-  if ( myrank == 0 ) then
-    write(IOUT,*)
-    write(IOUT,*) 'Saving poroelastic last frame...'
-    write(IOUT,*)
-  endif
+    if ( myrank == 0 ) then
+      write(IOUT,*)
+      write(IOUT,*) 'Saving poroelastic last frame...'
+      write(IOUT,*)
+    endif
     write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_s',myrank,'.bin'
     open(unit=55,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
     write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
@@ -6618,11 +6666,11 @@ endif
   endif
 
   if(SAVE_FORWARD .and. SIMULATION_TYPE ==1 .and. any_acoustic) then
-  if ( myrank == 0 ) then
-    write(IOUT,*)
-    write(IOUT,*) 'Saving acoustic last frame...'
-    write(IOUT,*)
-  endif
+    if ( myrank == 0 ) then
+      write(IOUT,*)
+      write(IOUT,*) 'Saving acoustic last frame...'
+      write(IOUT,*)
+    endif
     write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
     open(unit=55,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
        do j=1,nglob

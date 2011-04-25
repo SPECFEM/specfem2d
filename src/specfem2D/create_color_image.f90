@@ -208,7 +208,11 @@
 
 ! define normalized image data in [-1:1] and convert to nearest integer
 ! keeping in mind that data values can be negative
-        normalized_value = color_image_2D_data(ix,iy) / amplitude_max
+        if( amplitude_max >= TINYVAL ) then
+          normalized_value = color_image_2D_data(ix,iy) / amplitude_max
+        else
+          normalized_value = color_image_2D_data(ix,iy) / TINYVAL
+        endif
 
 ! suppress values outside of [-1:+1]
         if(normalized_value < -1.d0) normalized_value = -1.d0

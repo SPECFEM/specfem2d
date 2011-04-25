@@ -249,6 +249,13 @@
 ! volume = {5336},
 ! pages = {350-363}}
 !
+!
+! version 6.2, many developers, April 2011:
+!               - restructured package source code into separate src/ directories
+!               - added configure & Makefile scripts and a PDF manual in doc/
+!               - added user examples in EXAMPLES/
+!               - added a USER_T0 parameter to fix the onset time in simulation
+!
 ! version 6.1, Christina Morency and Pieyre Le Loher, March 2010:
 !               - added SH (membrane) waves calculation for elastic media
 !               - added support for external fully anisotropic media
@@ -496,7 +503,8 @@ program meshfem2D
         tang1 = (zinterface_bottom(2)-zinterface_bottom(1)) / (xinterface_bottom(2)-xinterface_bottom(1))
         tangN = (zinterface_bottom(npoints_interface_bottom)-zinterface_bottom(npoints_interface_bottom-1)) / &
              (xinterface_bottom(npoints_interface_bottom)-xinterface_bottom(npoints_interface_bottom-1))
-        call spline_construction(xinterface_bottom,zinterface_bottom,npoints_interface_bottom,tang1,tangN,coefs_interface_bottom)
+        call spline_construction(xinterface_bottom,zinterface_bottom,npoints_interface_bottom, &
+                              tang1,tangN,coefs_interface_bottom)
 
         ! compute the spline for the top interface, impose the tangent on both edges
         tang1 = (zinterface_top(2)-zinterface_top(1)) / (xinterface_top(2)-xinterface_top(1))
@@ -510,7 +518,8 @@ program meshfem2D
            if(source_surf(i_source) .and. ilayer == number_of_layers ) then
                 print *, 'source ', i_source
                 print *, '  target (input) z: ', zs(i_source)
-                zs(i_source) = value_spline(xs(i_source),xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
+                zs(i_source) = value_spline(xs(i_source),xinterface_top,zinterface_top, &
+                                            coefs_interface_top,npoints_interface_top)
                 print *, '  surface (actual) z: ', zs(i_source)
            endif
         enddo
@@ -789,7 +798,8 @@ program meshfem2D
 
 !! DK DK fixed problem in the previous implementation by Nicolas Le Goff:
 !! DK DK (nxread+1)*(nzread+1) is OK for a regular internal mesh only, not for non structured external meshes
-!! DK DK      call mesh2dual_ncommonnodes(nelmnts, (nxread+1)*(nzread+1), elmnts_bis, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
+!! DK DK      call mesh2dual_ncommonnodes(nelmnts, (nxread+1)*(nzread+1), &
+!! DK DK                                    elmnts_bis, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
 !! DK DK the subset of element corners is not renumbered therefore we must still use the nnodes computed for 9 nodes here
         ! determines maximum neighbors based on 1 common node
         call mesh2dual_ncommonnodes(elmnts_bis,1,xadj_g,adjncy_g)
