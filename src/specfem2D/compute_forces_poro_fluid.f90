@@ -1,7 +1,7 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 6.3
+!                   S P E C F E M 2 D  Version 6 . 2
 !                   ------------------------------
 !
 ! Copyright Universite de Pau et des Pays de l'Adour and CNRS, France.

@@ -1,7 +1,7 @@
 
 #========================================================================
 #
-#                   S P E C F E M 2 D  Version 6.1
+#                   S P E C F E M 2 D  Version 6 . 2
 #                   ------------------------------
 #
 # Copyright Universite de Pau, CNRS and INRIA, France,
@@ -78,7 +78,7 @@ obj:
 ##
 ## mesher
 ##
-xmeshfem2D:  required 
+xmeshfem2D:  required
 	     (cd src/meshfem2D; make )
 
 ##
@@ -90,7 +90,7 @@ xcheck_quality_external_mesh: required
 ##
 ## solver
 ##
-xspecfem2D:  required 
+xspecfem2D:  required
 	     (cd src/specfem2D; make specfem2D)
 
 ##

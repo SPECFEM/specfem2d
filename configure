@@ -542,8 +542,8 @@ MAKEFLAGS=
 # Identity of this package.
 PACKAGE_NAME='Specfem 2D'
 PACKAGE_TARNAME='Specfem2D'
-PACKAGE_VERSION='6.1.1'
-PACKAGE_STRING='Specfem 2D 6.1.1'
+PACKAGE_VERSION='6.2.0'
+PACKAGE_STRING='Specfem 2D 6.2.0'
 PACKAGE_BUGREPORT='jtromp AT princeton.edu'
 PACKAGE_URL=''
 

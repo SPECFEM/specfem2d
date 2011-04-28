@@ -1,10 +1,11 @@
 
-The main developers of SPECFEM2D version 6.0 are:
+The main developers of SPECFEM2D version 6.2 are:
 
  Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
  Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
  Roland Martin, roland DOT martin aT univ-pau DOT fr
  Christina Morency, cmorency aT princeton DOT edu
+ Daniel Peter, dpeter aT princeton DOT edu
 
 For more details on how to use this code, users can also refer to the manuals
 of the 3D versions (SPECFEM3D_SESAME and SPECFEM3D_GLOBE), which contain far
@@ -23,8 +24,6 @@ the current code with the bug can be used without any major problem.
 Dimitri Komatitsch, April 28, 2009.
 
 ---------------------------
-
-- improving compiling with SCOTCH (issue with header file scotchf.h which is Fortran77 legal). Having our own scotchf.h file (without the comments) is not wise.
 
 - comparing the different partitioning methods for METIS and SCOTCH, and finding a good default for SCOTCH.
 
