@@ -66,7 +66,7 @@ output_energy                   = .false.        # compute and output acoustic a
 output_wavefield_snapshot       = .false.         # output Ux,Uy,Uz text file for each output time (big files)
 
 # velocity and density models
-nbmodels                        = 5              # nb of different models
+nbmodels                        = 2              # nb of different models
 # define models as
 # I:   (model_number 1 rho Vp Vs 0 0 Qp Qs 0 0 0 0 0 0) or
 # II:  (model_number 2 rho c11 c13 c15 c33 c35 c55 0 0 0 0 0 0) or
@@ -75,9 +75,9 @@ nbmodels                        = 5              # nb of different models
 # and for isotropic poroelastic material use III. The mesh can contain acoustic, elastic, and poroelastic models simultaneously.
 1 1 1000.d0 1500.d0 0.0d0 0 0 10.d0 10.d0 0 0 0 0 0 0
 2 1 2500.d0 5000.d0 2500.0d0  0 0 10.d0 10.d0 0 0 0 0 0 0
-3 1 2200.d0 2500.d0 1443.375d0 0 0 10.d0 10.d0 0 0 0 0 0 0
-4 3 2200.d0 786.3d0  0.4 2.0 1d-11 0.0 1d-11 5.341d9 2d9 3d9 0.0d-4 3.204d9 10.d0
-5 2 2500.d0 169.d9 122.d9 0.d0 169.d9 0.d0 75.3d9 0 0 0 0 0 0
+#3 1 2200.d0 2500.d0 1443.375d0 0 0 10.d0 10.d0 0 0 0 0 0 0
+#4 3 2200.d0 786.3d0  0.4 2.0 1d-11 0.0 1d-11 5.341d9 2d9 3d9 0.0d-4 3.204d9 10.d0
+#5 2 2500.d0 169.d9 122.d9 0.d0 169.d9 0.d0 75.3d9 0 0 0 0 0 0
 #4 1 2200.d0 2200.d0 1343.375d0 0 0 10.d0 10.d0 0 0 0 0 0 0
 
 # external mesh or not
