@@ -356,7 +356,7 @@ contains
   call read_value_integer_p(nb_materials, 'mesher.nbmodels')
   if(err_occurred() /= 0) stop 'error reading parameter 49 in Par_file'
 
-  if(nb_materials <= 0) stop 'Negative number of materials not allowed!'
+  if(nb_materials <= 0) stop 'Non-positive number of materials not allowed!'
 
   allocate(icodemat(nb_materials))
   allocate(cp(nb_materials))
