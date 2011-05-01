@@ -121,7 +121,7 @@
         Qs(i) = val6read
 
         if(rho_s(i) <= 0.d0 .or. cp(i) <= 0.d0 .or. cs(i) < 0.d0) stop 'negative value of velocity or density'
-        if(Qp(i) <= 0.d0 .or. Qs(i) <= 0.d0) stop 'negative value of Qp or Qs'
+        if(Qp(i) <= 0.d0 .or. Qs(i) <= 0.d0) stop 'non-positive value of Qp or Qs'
 
         aniso3(i) = val3read
         aniso4(i) = val4read
@@ -163,12 +163,12 @@
         mu_fr(i) = val11read
         Qs(i) = val12read
 
-        if(rho_s(i) <= 0.d0 .or. rho_f(i) <= 0.d0) stop 'negative value of density'
-        if(phi(i) <= 0.d0 .or. tortuosity(i) <= 0.d0) stop 'negative value of porosity or tortuosity'
+        if(rho_s(i) <= 0.d0 .or. rho_f(i) <= 0.d0) stop 'non-positive value of density'
+        if(phi(i) <= 0.d0 .or. tortuosity(i) <= 0.d0) stop 'non-positive value of porosity or tortuosity'
         if(kappa_s(i) <= 0.d0 .or. kappa_f(i) <= 0.d0 .or. kappa_fr(i) <= 0.d0 .or. mu_fr(i) <= 0.d0) then
-           stop 'negative value of modulus'
+           stop 'non-positive value of modulus'
         end if
-        if(Qs(i) <= 0.d0) stop 'negative value of Qs'
+        if(Qs(i) <= 0.d0) stop 'non-positive value of Qs'
      endif
   enddo
 
