@@ -40,15 +40,15 @@ anglerec                        = 0.d0           # angle to rotate components at
 rec_normal_to_surface           = .false.        # base anglerec normal to surface (external mesh and curve file needed)
 
 # first receiver line
-nrec                            = 100             # number of receivers
-xdeb                            = 0.           # first receiver x in meters
-zdeb                            = -30.          # first receiver z in meters
-xfin                            = 13000.          # last receiver x in meters (ignored if only one receiver)
-zfin                            = -30.          # last receiver z in meters (ignored if only one receiver)
-enreg_surf_same_vertical        = .false.         # receivers inside the medium or at the surface
+nrec                            = 12             # number of receivers
+xdeb                            = -9000.         # first receiver x in meters
+zdeb                            = -30.           # first receiver z in meters
+xfin                            = 12000.         # last receiver x in meters (ignored if only one receiver)
+zfin                            = -30.           # last receiver z in meters (ignored if only one receiver)
+enreg_surf_same_vertical        = .false.        # receivers inside the medium or at the surface
 
 # display parameters
-NTSTEP_BETWEEN_OUTPUT_INFO      = 2000            # display frequency in time steps
+NTSTEP_BETWEEN_OUTPUT_INFO      = 2000           # display frequency in time steps
 output_postscript_snapshot      = .true.         # output Postscript snapshot of the results
 output_color_image              = .true.         # output color image of the results
 imagetype                       = 1              # display 1=displ 2=veloc 3=accel 4=pressure
@@ -73,7 +73,7 @@ nbmodels                        = 2              # nb of different models
 # III: (model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qs).
 # For istropic elastic/acoustic material use I and set Vs to zero to make a given model acoustic, for anisotropic elastic use II,
 # and for isotropic poroelastic material use III. The mesh can contain acoustic, elastic, and poroelastic models simultaneously.
-1 1 1000.d0 1500.d0 0.0d0 0 0 10.d0 10.d0 0 0 0 0 0 0
+1 1 1000.d0 1500.d0    0.0d0  0 0 10.d0 10.d0 0 0 0 0 0 0
 2 1 2500.d0 5000.d0 2500.0d0  0 0 10.d0 10.d0 0 0 0 0 0 0
 #3 1 2200.d0 2500.d0 1443.375d0 0 0 10.d0 10.d0 0 0 0 0 0 0
 #4 3 2200.d0 786.3d0  0.4 2.0 1d-11 0.0 1d-11 5.341d9 2d9 3d9 0.0d-4 3.204d9 10.d0
