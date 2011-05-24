@@ -1,0 +1,24 @@
+SPECFEM2D/UTILS/cubit2specfem2d/matlab/README
+Carl Tape (carltape@gi.alaska.edu), 24-May-2011
+
+NOTE: The preferred way to convert cubit output to SPECFEM2D input would be to use python scripts, similar to what is done with SPECFEM3D.
+
+These matlab scripts are designed to take an output Abaqus file from cubit and then produce the input files needed for SPECFEM2D. We also include the cubit journal file to generate the simple mesh in this example (Tromp2005). (Note that for such a simple mesh cubit is not needed, and the SPECFEM2D internal mesher will produce the equivalent mesh!)
+
+1. open cubit and play the journal file Tromp2005.jou
+2. note the number of elements and nodes in the mesh
+
+Executive Abaqus summary:
+  Number of dimensions     = 3
+  Number of element blocks = 1
+  Number of sidesets       = 0
+  Number of nodesets       = 0
+  Number of bc sets        = 1
+  Number of elements       = 2560
+  Number of nodes          = 2673
+
+3. open matlab and execute run_cubit2specfem2d.m
+
+   you should see a couple figures, including Tromp2005_mesh_boundaries.png
+
+===============================================
