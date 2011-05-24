@@ -1,0 +1,26 @@
+reset
+create vertex 200000.000 0.000 80000.000
+#{v1=Id("vertex")}
+create vertex 0.000 0.000 80000.000
+#{v2=Id("vertex")}
+create vertex 0.000 0.000 0.000
+#{v3=Id("vertex")}
+create vertex 200000.000 0.000 0.000
+#{v4=Id("vertex")}
+create curve vertex {v1} {v2}
+#{c1 = Id("curve")}
+create curve vertex {v2} {v3}
+#{c2 = Id("curve")}
+create curve vertex {v3} {v4}
+#{c3 = Id("curve")}
+create curve vertex {v4} {v1}
+#{c4 = Id("curve")}
+vertex all visibility off
+create surf curve {c1} {c2} {c3} {c4}
+surface all size 2500
+surface all scheme pave
+mesh surface all
+export Abaqus "Tromp2005_elements_nodes" overwrite cubitids
+block 1 curve 1
+block 2 curve 2 3 4
+export Abaqus "Tromp2005_boundaries" overwrite cubitids
