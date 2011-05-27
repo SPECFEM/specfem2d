@@ -45,10 +45,9 @@
 
 /*
 
-by Dennis McRitchie (Princeton University, USA)
+ by Dennis McRitchie (Princeton University, USA)
 
  January 7, 2010 - par_file parsing
- May 25, 2011 - Updated to support multi-word values
  ..
  You'll notice that the heart of the parser is a complex regular
  expression that is compiled within the C code, and then used to split
@@ -64,7 +63,7 @@ by Dennis McRitchie (Princeton University, USA)
  already six C files that make up part of the build (though they all are
  related to the pyre-framework).
  ..
-*/
+ */
 
 #define _GNU_SOURCE
 #include "config.h"
@@ -129,6 +128,8 @@ FC_FUNC_(param_close,PARAM_CLOSE)()
   fclose(fid);
 }
 
+
+// Parses file to read in parameter
 void
 FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char * name, int * name_len, int * ierr)
 {
@@ -158,15 +159,16 @@ FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char 
   }
   /* Regular expression for parsing lines from param file.
    ** Good luck reading this regular expression.  Basically, the lines of
-   ** the parameter file should be of the form 'parameter = value',
-   ** optionally followed by a #-delimited comment.  
-   ** 'value' can be any number of space- or tab-separated words. Blank
+   ** the parameter file should be of the form 'parameter = value'.  Blank
    ** lines, lines containing only white space and lines whose first non-
    ** whitespace character is '#' are ignored.  White space is generally
    ** ignored.  As you will see later in the code, if both parameter and
    ** value are not specified the line is ignored.
    */
-  char pattern[] = "^[ \t]*([^# \t]+)[ \t]*=[ \t]*([^# \t]+([ \t]+[^# \t]+)*)";
+  // line must include a "=" character and end with a comment
+  //char pattern[] = "^[ \t]*([^# \t]*)[ \t]*=[ \t]*([^# \t]*)[ \t]*(#.*){0,1}$";
+  // line must include a "=" character (no need to end with a comment)
+  char pattern[] = "^[ \t]*([^# \t]*)[ \t]*=[ \t]*([^# \t]*)[ \t]*";
 
   // Compile the regular expression.
   status = regcomp(&compiled_pattern, pattern, REG_EXTENDED);
@@ -201,9 +203,15 @@ FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char 
       regfree(&compiled_pattern);
       return;
     }
-    //    printf("Line read = %s\n", line);
+    //printf("Line read: %s\n", line);
+    //keyword = strndup(line+parameter[0].rm_so, parameter[0].rm_eo-parameter[0].rm_so);
+    //printf("string 0: %s\n", keyword);
+    //free(keyword);
+
     // If we have a match, extract the keyword from the line.
     keyword = strndup(line+parameter[1].rm_so, parameter[1].rm_eo-parameter[1].rm_so);
+    //printf("keyword: %s\n", keyword);
+
     // If the keyword is not the one we're looking for, check the next line.
     if (strcmp(keyword, namecopy2) != 0) {
       free(keyword);
@@ -213,18 +221,259 @@ FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char 
     regfree(&compiled_pattern);
     // If it matches, extract the value from the line.
     value = strndup(line+parameter[2].rm_so, parameter[2].rm_eo-parameter[2].rm_so);
+    //printf("value: %s\n", value);
+
     // Clear out the return string with blanks, copy the value into it, and return.
     memset(string_read, ' ', *string_read_len);
     strncpy(string_read, value, strlen(value));
-    // printf("'%s'='%s'\n", namecopy2, value);
     free(value);
     free(namecopy);
     *ierr = 0;
     return;
   }
   // If no keyword matches, print out error and die.
-  printf("No match in parameter file for keyword '%s'\n", namecopy);
+  printf("No match in parameter file for keyword %s\n", namecopy2);
   free(namecopy);
+  regfree(&compiled_pattern);
+  *ierr = 1;
+  return;
+}
+
+
+// reads next line in file to read in parameters without need of given parameter name
+void
+FC_FUNC_(param_read_nextparam,PARAM_READ_NEXTPARAM)(char * string_read, int * string_read_len, char * name, int * name_len, int * ierr)
+{
+  char * namecopy;
+  char * blank;
+  char * namecopy2;
+  int status;
+  regex_t compiled_pattern;
+  char line[LINE_MAX];
+  int regret;
+  regmatch_t parameter[3];
+  char * keyword;
+  char * value;
+
+  // Trim the keyword name we're looking for.
+  namecopy = strndup(name, *name_len);
+  blank = strchr(namecopy, ' ');
+  if (blank != NULL) {
+   namecopy[blank - namecopy] = '\0';
+  }
+  // Then get rid of any dot-terminated prefix.
+  namecopy2 = strchr(namecopy, '.');
+  if (namecopy2 != NULL) {
+   namecopy2 += 1;
+  } else {
+   namecopy2 = namecopy;
+  }
+
+  /* Regular expression for parsing lines from param file.
+   ** Good luck reading this regular expression.  Basically, the lines of
+   ** the parameter file should be of the form 'parameter = value'.  Blank
+   ** lines, lines containing only white space and lines whose first non-
+   ** whitespace character is '#' are ignored.  White space is generally
+   ** ignored.  As you will see later in the code, if both parameter and
+   ** value are not specified the line is ignored.
+   */
+  // line must include a "=" character and end with a comment
+  //char pattern[] = "^[ \t]*([^# \t]*)[ \t]*=[ \t]*([^# \t]*)[ \t]*(#.*){0,1}$";
+  // line must include a "=" character (no need to end with a comment
+  char pattern[] = "^[ \t]*([^# \t]*)[ \t]*=[ \t]*([^# \t]*)[ \t]*";
+
+  // Compile the regular expression.
+  status = regcomp(&compiled_pattern, pattern, REG_EXTENDED);
+  if (status != 0) {
+    printf("regcomp returned error %d\n", status);
+  }
+
+  // skips this... takes current position where file pointer is now...
+  /*
+   // Position the open file to the beginning.
+   if (fseek(fid, 0, SEEK_SET) != 0) {
+   printf("Can't seek to begining of parameter file\n");
+   *ierr = 1;
+   regfree(&compiled_pattern);
+   return;
+   }
+   */
+
+  // Read every line in the file.
+  while (fgets(line, LINE_MAX, fid) != NULL) {
+    // Get rid of the ending newline.
+    int linelen = strlen(line);
+    if (line[linelen-1] == '\n') {
+      line[linelen-1] = '\0';
+    }
+    /* Test if line matches the regular expression pattern, if so
+     ** return position of keyword and value */
+    regret = regexec(&compiled_pattern, line, 3, parameter, 0);
+    // If no match, check the next line.
+    if (regret == REG_NOMATCH) {
+      continue;
+    }
+    // If any error, bail out with an error message.
+    if(regret != 0) {
+      printf("regexec returned error %d\n", regret);
+      *ierr = 1;
+      regfree(&compiled_pattern);
+      return;
+    }
+    //printf("Line nextparam read: %s\n", line);
+
+    // If we have a match, extract the keyword from the line.
+    keyword = strndup(line+parameter[1].rm_so, parameter[1].rm_eo-parameter[1].rm_so);
+    //printf("keyword: %s\n", keyword);
+
+    // If the keyword is not the one we're looking for, return with an error.
+    if (strcmp(keyword, namecopy2) != 0) {
+      printf("keyword returned wrong parameter %s instead of %s \n", keyword,namecopy2);
+      free(keyword);
+      *ierr = 1;
+      regfree(&compiled_pattern);
+      return;
+    }
+    free(keyword);
+    regfree(&compiled_pattern);
+
+    // If it matches, extract the value from the line.
+    value = strndup(line+parameter[2].rm_so, parameter[2].rm_eo-parameter[2].rm_so);
+    //printf("value: %s\n", value);
+
+    // Clear out the return string with blanks, copy the value into it, and return.
+    memset(string_read, ' ', *string_read_len);
+    strncpy(string_read, value, strlen(value));
+    free(value);
+    free(namecopy);
+    *ierr = 0;
+    return;
+  }
+  // If no next line matches, print out error and die.
+  printf("No match in parameter file for %s on next line \n",namecopy2);
+  //free(namecopy);
+  regfree(&compiled_pattern);
+  *ierr = 1;
+  return;
+}
+
+
+// reads next line in file to read in parameters without need of given parameter name
+void
+FC_FUNC_(param_read_nextline,PARAM_READ_NEXTLINE)(char * string_read, int * string_read_len, int * ierr)
+{
+  //char * namecopy;
+  //char * blank;
+  //char * namecopy2;
+  int status;
+  regex_t compiled_pattern;
+  char line[LINE_MAX];
+  int regret;
+  regmatch_t parameter[1];
+  //char * keyword;
+  char * value;
+
+  // no parameter name appears on this line ...
+  /*
+  // Trim the keyword name we're looking for.
+  namecopy = strndup(name, *name_len);
+  blank = strchr(namecopy, ' ');
+  if (blank != NULL) {
+    namecopy[blank - namecopy] = '\0';
+  }
+  // Then get rid of any dot-terminated prefix.
+  namecopy2 = strchr(namecopy, '.');
+  if (namecopy2 != NULL) {
+    namecopy2 += 1;
+  } else {
+    namecopy2 = namecopy;
+  }
+  */
+
+  /* Regular expression for parsing lines from param file.
+   ** Good luck reading this regular expression.  Basically, the lines of
+   ** the parameter file should be of the form 'parameter = value'.  Blank
+   ** lines, lines containing only white space and lines whose first non-
+   ** whitespace character is '#' are ignored.  White space is generally
+   ** ignored.  As you will see later in the code, if both parameter and
+   ** value are not specified the line is ignored.
+   */
+  // line must include a "=" character and end with a comment
+  //char pattern[] = "^[ \t]*([^# \t]*)[ \t]*=[ \t]*([^# \t]*)[ \t]*(#.*){0,1}$";
+  // line must include a "=" character (no need to end with a comment)
+  //char pattern[] = "^[ \t]*([^# \t]*)[ \t]*=[ \t]*([^# \t]*)[ \t]*";
+  // line must include numbers
+  char pattern[] = "^[ \t]*[^# \t][0-9]*";
+
+  // Compile the regular expression.
+  status = regcomp(&compiled_pattern, pattern, REG_EXTENDED);
+  if (status != 0) {
+    printf("regcomp returned error %d\n", status);
+  }
+
+  // skips this... takes current position where file pointer is now...
+  /*
+  // Position the open file to the beginning.
+  if (fseek(fid, 0, SEEK_SET) != 0) {
+    printf("Can't seek to begining of parameter file\n");
+    *ierr = 1;
+    regfree(&compiled_pattern);
+    return;
+  }
+  */
+
+  // Read every line in the file.
+  while (fgets(line, LINE_MAX, fid) != NULL) {
+    // Get rid of the ending newline.
+    int linelen = strlen(line);
+    if (line[linelen-1] == '\n') {
+      line[linelen-1] = '\0';
+    }
+    /* Test if line matches the regular expression pattern, if so
+     ** return position of keyword and value */
+    regret = regexec(&compiled_pattern, line, 1, parameter, 0);
+    // If no match, check the next line.
+    if (regret == REG_NOMATCH) {
+      continue;
+    }
+    // If any error, bail out with an error message.
+    if(regret != 0) {
+      printf("regexec returned error %d\n", regret);
+      *ierr = 1;
+      regfree(&compiled_pattern);
+      return;
+    }
+    //printf("Line nextline read: %s\n", line);
+
+    // no comparison with parameter needed
+    /*
+    // If we have a match, extract the keyword from the line.
+    keyword = strndup(line+parameter[1].rm_so, parameter[1].rm_eo-parameter[1].rm_so);
+
+    // If the keyword is not the one we're looking for, check the next line.
+    if (strcmp(keyword, namecopy2) != 0) {
+      free(keyword);
+      continue;
+    }
+    free(keyword);
+     */
+    regfree(&compiled_pattern);
+
+    // If it matches, extract the value from the line.
+    value = strndup(line+parameter[0].rm_so, strlen(line));
+    //printf("value: %s\n", value);
+
+    // Clear out the return string with blanks, copy the value into it, and return.
+    memset(string_read, ' ', *string_read_len);
+    strncpy(string_read, value, strlen(value));
+    free(value);
+    //free(namecopy);
+    *ierr = 0;
+    return;
+  }
+  // If no next line matches, print out error and die.
+  printf("No match in parameter file for next line \n");
+  //free(namecopy);
   regfree(&compiled_pattern);
   *ierr = 1;
   return;
