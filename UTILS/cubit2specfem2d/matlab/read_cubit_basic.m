@@ -32,14 +32,15 @@ else            % 3D mesh
     ncol1 = 3; ncol2 = 8; icol1 = [2 3 4]; i2D = 0;
 end
 icol2 = 2:(ncol2+1);
+disp(sprintf('read_cubit_basic.m: %s', ifile));
 
 lines = textread(ifile,'%s','delimiter','\n');
 
 % line numbers for start and finish
 in1 = 10;
 in2 = in1 + nnod - 1;
-ie1 = in2 + 4;
-ie2 = ie1 + nele - 1 + (nunit-1);
+ie1 = in2 + 3;
+ie2 = ie1 + nele + nunit - 1;
 
 % read in nodes
 dnode = zeros(nnod,ncol1);
@@ -62,7 +63,7 @@ end
 
 % read in elements
 iele = zeros(nele,ncol2);
-mele = zeros(nele,1); im = 1;
+mele = zeros(nele,1); im = 0;
 ieleind = zeros(nele,1);  % index listed by cubit
 jj = 0;
 imax = ie2-ie1+1;

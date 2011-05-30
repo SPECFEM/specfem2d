@@ -19,7 +19,7 @@ iwrite = 1;
 sfac = 1;
 icol = [2 4];
 nbound = 2;
-nnod = 2673; nele = 2560; stag = 'Tromp2005'; iunit = [1 2];
+nnod = 2673; nele = 2560; stag = 'Tromp2005'; iunit = [1];
 dir0 = '/data/svn/seismo/2D/SPECFEM2D/UTILS/cubit2specfem2d/matlab/';
 
 ifile1 = [dir0 stag '_elements_nodes'];
