@@ -3504,8 +3504,25 @@
 #ifdef USE_MPI
   if(output_energy) stop 'energy calculation currently serial only, should add an MPI_REDUCE in parallel'
 #endif
+
+!----  create a gnuplot script to display the energy curve in log scale
+  if(output_energy .and. myrank == 0) then
+    close(IOUT_ENERGY)
+    open(unit=IOUT_ENERGY,file='plot_energy.gnu',status='unknown')
+    write(IOUT_ENERGY,*) 'set term wxt'
+    write(IOUT_ENERGY,*) '#set term postscript landscape color solid "Helvetica" 22'
+    write(IOUT_ENERGY,*) '#set output "energy.ps"'
+    write(IOUT_ENERGY,*) '# set xrange [0:60]'
+    write(IOUT_ENERGY,*) 'set logscale y'
+    write(IOUT_ENERGY,*) 'set xlabel "Time (s)"'
+    write(IOUT_ENERGY,*) 'set ylabel "Energy (J)"'
+    write(IOUT_ENERGY,*) &
+      'plot "energy.dat" us 1:4 t ''Total Energy'' w l lc 1, "energy.dat" us 1:3 t ''Potential Energy'' w l lc 2'
+    close(IOUT_ENERGY)
+  endif
+
 ! open the file in which we will store the energy curve
-  if(output_energy) open(unit=IOUT_ENERGY,file='energy.gnu',status='unknown')
+  if(output_energy .and. myrank == 0) open(unit=IOUT_ENERGY,file='energy.dat',status='unknown')
 
 !
 !----          s t a r t   t i m e   i t e r a t i o n s
@@ -6697,17 +6714,8 @@
   deallocate(t0x_bot)
   deallocate(t0z_bot)
 
-!----  close energy file and create a gnuplot script to display it
-  if(output_energy .and. myrank == 0) then
-    close(IOUT_ENERGY)
-    open(unit=IOUT_ENERGY,file='plotenergy',status='unknown')
-    write(IOUT_ENERGY,*) 'set term postscript landscape color solid "Helvetica" 22'
-    write(IOUT_ENERGY,*) 'set output "energy.ps"'
-    write(IOUT_ENERGY,*) 'set xlabel "Time (s)"'
-    write(IOUT_ENERGY,*) 'set ylabel "Energy (J)"'
-    write(IOUT_ENERGY,*) 'plot "energy.gnu" us 1:4 t ''Total Energy'' w l 1, "energy.gnu" us 1:3 t ''Potential Energy'' w l 2'
-    close(IOUT_ENERGY)
-  endif
+!----  close energy file
+  if(output_energy .and. myrank == 0) close(IOUT_ENERGY)
 
   if (.not. any_poroelastic) then
     open(unit=1001,file='DATA/model_velocity.dat_output',status='unknown')
