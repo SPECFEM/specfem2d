@@ -125,6 +125,7 @@ OBJS_SPECFEM2D = \
 	$O/define_shape_functions.o \
 	$O/enforce_acoustic_free_surface.o \
 	$O/exit_mpi.o \
+	$O/force_ftz.o \
 	$O/get_global.o \
 	$O/get_MPI.o \
 	$O/get_perm_cuthill_mckee.o \
@@ -284,6 +285,10 @@ $O/define_shape_functions.o: ${S}/define_shape_functions.f90 ${SETUP}/constants.
 
 $O/exit_mpi.o: ${S}/exit_mpi.F90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/exit_mpi.o ${S}/exit_mpi.F90
+
+### C compilation
+$O/force_ftz.o: ${SHARED}/force_ftz.c ${SETUP}/config.h
+	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $O/force_ftz.o ${SHARED}/force_ftz.c
 
 $O/get_global.o: ${S}/get_global.f90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/get_global.o ${S}/get_global.f90
