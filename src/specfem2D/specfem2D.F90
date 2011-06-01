@@ -798,9 +798,12 @@
 !             i n i t i a l i z a t i o n    p h a s e
 !
 !***********************************************************************
+
+  ! force Flush-To-Zero if available to avoid very slow Gradual Underflow trapping
+  call force_ftz()
+
   call initialize_simulation(nproc,myrank,NUMBER_OF_PASSES, &
                   ninterface_acoustic,ninterface_elastic,ninterface_poroelastic)
-
 
   ! reduction of cache misses inner/outer in two passes
   do ipass = 1,NUMBER_OF_PASSES
