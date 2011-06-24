@@ -130,7 +130,7 @@
      end do
 
      ! non-blocking synchronous send request
-     call MPI_ISSEND( buffer_send_faces_scalar(1,num_interface), &
+     call MPI_ISEND( buffer_send_faces_scalar(1,num_interface), &
           nibool_interfaces_acoustic(num_interface)+nibool_interfaces_elastic(num_interface)+&
           nibool_interfaces_poroelastic(num_interface)+nibool_interfaces_poroelastic(num_interface), &
           MPI_DOUBLE_PRECISION, &
@@ -259,13 +259,13 @@
     num_interface = inum_interfaces_acoustic(iinterface)
 
     ! non-blocking synchronous send
-    call MPI_ISSEND( buffer_send_faces_vector_ac(1,iinterface), &
+    call MPI_ISEND( buffer_send_faces_vector_ac(1,iinterface), &
              nibool_interfaces_acoustic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_acoustic(iinterface), ier)
 
     if ( ier /= MPI_SUCCESS ) then
-      call exit_mpi('MPI_ISSEND unsuccessful in assemble_MPI_vector_start')
+      call exit_mpi('MPI_ISEND unsuccessful in assemble_MPI_vector_start')
     end if
 
     ! starts a non-blocking receive
@@ -378,13 +378,13 @@
 
     num_interface = inum_interfaces_elastic(iinterface)
 
-    call MPI_ISSEND( buffer_send_faces_vector_el(1,iinterface), &
+    call MPI_ISEND( buffer_send_faces_vector_el(1,iinterface), &
              3*nibool_interfaces_elastic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_elastic(iinterface), ier)
 
     if ( ier /= MPI_SUCCESS ) then
-      call exit_mpi('MPI_ISSEND unsuccessful in assemble_MPI_vector_el')
+      call exit_mpi('MPI_ISEND unsuccessful in assemble_MPI_vector_el')
     end if
 
     call MPI_Irecv ( buffer_recv_faces_vector_el(1,iinterface), &
@@ -492,13 +492,13 @@
 
     num_interface = inum_interfaces_poroelastic(iinterface)
 
-    call MPI_ISSEND( buffer_send_faces_vector_pos(1,iinterface), &
+    call MPI_ISEND( buffer_send_faces_vector_pos(1,iinterface), &
              NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_poro(iinterface), ier)
 
     if ( ier /= MPI_SUCCESS ) then
-      call exit_mpi('MPI_ISSEND unsuccessful in assemble_MPI_vector_pos')
+      call exit_mpi('MPI_ISEND unsuccessful in assemble_MPI_vector_pos')
     end if
 
     call MPI_Irecv ( buffer_recv_faces_vector_pos(1,iinterface), &
@@ -510,13 +510,13 @@
       call exit_mpi('MPI_Irecv unsuccessful in assemble_MPI_vector_pos')
     end if
 
-    call MPI_ISSEND( buffer_send_faces_vector_pow(1,iinterface), &
+    call MPI_ISEND( buffer_send_faces_vector_pow(1,iinterface), &
              NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_poro(ninterface_poroelastic*2+iinterface), ier)
 
     if ( ier /= MPI_SUCCESS ) then
-      call exit_mpi('MPI_ISSEND unsuccessful in assemble_MPI_vector_pow')
+      call exit_mpi('MPI_ISEND unsuccessful in assemble_MPI_vector_pow')
     end if
 
     call MPI_Irecv ( buffer_recv_faces_vector_pow(1,iinterface), &
