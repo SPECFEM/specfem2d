@@ -3735,7 +3735,8 @@
   allocate(coorg_send_ps_vector_field(d1_coorg_send_ps_vector_field,d2_coorg_send_ps_vector_field))
   allocate(coorg_recv_ps_vector_field(d1_coorg_recv_ps_vector_field,d2_coorg_recv_ps_vector_field))
 
-  if(SIMULATION_TYPE == 2) then ! Adjoint calculation: set zero initial condition for the backward field
+! Adjoint calculation: set zero initial condition for the backward field
+  if(SIMULATION_TYPE == 2 .and. .not. SAVE_FORWARD) then
     b_displ_elastic = ZERO
     b_veloc_elastic = ZERO
     b_accel_elastic = ZERO
