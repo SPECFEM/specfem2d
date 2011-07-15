@@ -2691,7 +2691,7 @@
 
   if(anyabs .and. SIMULATION_TYPE == 2) then
 
-    ! reads in absorbing bounday data
+    ! reads in absorbing boundary data
     if(any_elastic) then
       call prepare_absorb_elastic(NSTEP,p_sv, &
                       nspec_left,nspec_right,nspec_bottom,nspec_top, &
@@ -3734,6 +3734,12 @@
 
   allocate(coorg_send_ps_vector_field(d1_coorg_send_ps_vector_field,d2_coorg_send_ps_vector_field))
   allocate(coorg_recv_ps_vector_field(d1_coorg_recv_ps_vector_field,d2_coorg_recv_ps_vector_field))
+
+  if(SIMULATION_TYPE == 2) then ! Adjoint calculation: set zero initial condition for the backward field
+    b_displ_elastic = ZERO
+    b_veloc_elastic = ZERO
+    b_accel_elastic = ZERO
+  endif
 
 ! *********************************************************
 !
