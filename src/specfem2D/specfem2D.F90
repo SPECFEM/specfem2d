@@ -3735,17 +3735,8 @@
   allocate(coorg_send_ps_vector_field(d1_coorg_send_ps_vector_field,d2_coorg_send_ps_vector_field))
   allocate(coorg_recv_ps_vector_field(d1_coorg_recv_ps_vector_field,d2_coorg_recv_ps_vector_field))
 
-! Adjoint calculation: set zero initial condition for the backward field
-  if(SIMULATION_TYPE == 2 .and. .not. SAVE_FORWARD) then
-    b_displ_elastic = ZERO
-    b_veloc_elastic = ZERO
-    b_accel_elastic = ZERO
-  endif
-
 ! *********************************************************
-!
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
-!
 ! *********************************************************
 
 #ifdef USE_MPI
@@ -6615,7 +6606,7 @@
   enddo ! end of the main time loop
 
 ! *********************************************************
-! ************* END MAIN LOOP OVER THE TIME STEPS *************
+! ************* END MAIN LOOP OVER THE TIME STEPS *********
 ! *********************************************************
 
   if((SAVE_FORWARD .and. SIMULATION_TYPE==1) .or. SIMULATION_TYPE ==2) then
