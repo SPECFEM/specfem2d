@@ -103,6 +103,8 @@ if nbound==2
         [i1,~] = find(inds2(1) == iele);
         [i2,~] = find(inds2(2) == iele);
         %ii, inds2, i1, i2
+        % NOTE (lqy): this explicitly requires that the boundary elements (edges) 
+        % are on the boundary of the entire domain.
         bele2(ii) = intersect(i1,i2);
     end
 end
