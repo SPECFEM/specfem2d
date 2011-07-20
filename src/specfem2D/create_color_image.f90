@@ -47,7 +47,7 @@
 
 ! display a given field as a red and blue color image
 
-! to display the snapshots : display image*.gif
+! to display the snapshots : display image*.jpg
 
 ! when compiling with Intel ifort, use " -assume byterecl " option to create binary PNM images
 
@@ -260,7 +260,7 @@
 
 ! open image file and create system command to convert image to more convenient format
 ! use the "convert" command from ImageMagick http://www.imagemagick.org
-  write(system_command,"('cd OUTPUT_FILES ; convert image',i7.7,'.pnm image',i7.7,'.gif ; rm -f image',i7.7,'.pnm')") it,it,it
+  write(system_command,"('cd OUTPUT_FILES ; convert image',i7.7,'.pnm image',i7.7,'.jpg ; rm -f image',i7.7,'.pnm')") it,it,it
 
 ! call the system to convert image to GIF
 ! this line can be safely commented out if your compiler does not implement "system()" for system calls;

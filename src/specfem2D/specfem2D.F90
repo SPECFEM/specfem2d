@@ -2836,7 +2836,7 @@
     ! Calculation of the initial field for a plane wave
     if( any_elastic ) then
       call prepare_initialfield(myrank,any_acoustic,any_poroelastic,over_critical_angle, &
-                        NSOURCES,source_type,angleforce,x_source,z_source,f0, &
+                        NSOURCES,source_type,angleforce,x_source,z_source,f0,t0, &
                         nglob,numat,poroelastcoef,density,coord, &
                         angleforce_refl,c_inc,c_refl,cploc,csloc,time_offset, &
                         A_plane, B_plane, C_plane, &

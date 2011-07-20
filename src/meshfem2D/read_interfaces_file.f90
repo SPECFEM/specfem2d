@@ -111,6 +111,8 @@ contains
 
   allocate(nz_layer(number_of_layers))
 
+  print *, 'Total number of layers in z direction = ', number_of_layers
+
   ! loop on all the layers
   do ilayer = 1,number_of_layers
 
