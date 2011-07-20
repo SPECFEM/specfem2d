@@ -580,7 +580,7 @@ to the desired half-duration.
 %%
 \begin{figure}[htbp]
 \noindent \begin{centering}
-\includegraphics[width=3in]{figures/gauss_vs_triangle_mod.eps}
+\includegraphics[width=3in]{figures/gauss_vs_triangle_mod.pdf}
 \par\end{centering}
 \caption{Comparison of the shape of a triangle and the Gaussian function actually
 used.}
@@ -660,7 +660,24 @@ A useful Python script called \texttt{SEM\_save\_dir.py}, written by Paul Cristi
 Laboratoire de Mecanique et d'Acoustique, CNRS, Marseille, France, is provided.
 It allows one to automatically save all the parameters and results of a given simulation.
 
-
+%------------------------------------------------------------------------------------------------%
+\section{How to set plane waves as initial conditions}
+To simulate propagation of incoming plane waves in the simulation domain, initial conditions based on analytical formulae of plane waves in homogenous model need to be set. No additional body or boundary forces are required. To set up this senario:
+\begin{description}
+\item{\verb+Par_file+:} 
+  \begin{itemize}
+  \item switch on \verb+initialfield = .true. + 
+  \item at this point setting \verb+add_bielak_condition+ does not seem to help with absorbing boundaries, therefore, it should be turned off.
+  \end{itemize}
+\item{\verb+SOURCE+:}
+  \begin{itemize}
+  \item \verb+zs+ has to be the same as the height of the simulation domain defined in \verb+interfacesfile+.
+  \item \verb+xs+ is the x-coordinate of the intersection of the initial plane wave front with the free surface. 
+  \item \verb+source_type+ = 1 for a plane P wave, 2 for a plane SV wave, 3 for a Rayleigh wave. 
+  \item \verb+angleforce+ can be negative to indicate a plane wave incident from the right (instead of the left)
+  \end{itemize}
+\end{description}
+%------------------------------------------------------------------------------------------------%
 
 
 %------------------------------------------------------------------------------------------------%
@@ -689,7 +706,7 @@ not in dyne.cm as in the \texttt{DATA/CMTSOLUTION} source file of the 3D version
 {\small }%
 \begin{figure}[htbp]
 \noindent \begin{centering}
-{\small \includegraphics[width=5in]{figures/source_timing.eps} }
+{\small \includegraphics[width=5in]{figures/source_timing.pdf} }
 \par\end{centering}{\small \par}
 \caption{Example of timing for three sources. The center of the first source
 triangle is defined to be time zero. Note that this is NOT in general
