@@ -140,6 +140,7 @@ OBJS_SPECFEM2D = \
 	$O/locate_source_force.o \
 	$O/locate_source_moment_tensor.o \
 	$O/netlib_specfun_erf.o \
+        $O/noise_tomography.o \
 	$O/paco_beyond_critical.o \
 	$O/paco_convolve_fft.o \
 	$O/plotgll.o \
@@ -331,6 +332,9 @@ $O/locate_source_moment_tensor.o: ${S}/locate_source_moment_tensor.F90 ${SETUP}/
 
 $O/netlib_specfun_erf.o: ${S}/netlib_specfun_erf.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/netlib_specfun_erf.o ${S}/netlib_specfun_erf.f90
+
+$O/noise_tomography.o: ${S}/noise_tomography.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/noise_tomography.o ${S}/noise_tomography.f90
 
 $O/paco_beyond_critical.o: ${S}/paco_beyond_critical.f90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/paco_beyond_critical.o ${S}/paco_beyond_critical.f90
