@@ -54,7 +54,7 @@ module parameter_file
   implicit none
   character(len=100) :: interfacesfile,title
 
-  integer :: SIMULATION_TYPE
+  integer :: SIMULATION_TYPE, NOISE_TOMOGRAPHY
   logical :: SAVE_FORWARD,read_external_mesh
 
   character(len=256) :: mesh_file, nodes_coords_file, materials_file, &
@@ -140,6 +140,10 @@ contains
   !call read_value_integer(IIN,IGNORE_JUNK,SIMULATION_TYPE)
   call read_value_integer_p(SIMULATION_TYPE, 'solver.SIMULATION_TYPE')
   if(err_occurred() /= 0) stop 'error reading parameter 2 in Par_file'
+
+  !call read_value_integer(IIN,IGNORE_JUNK,NOISE_TOMOGRAPHY)
+  call read_value_integer_p(NOISE_TOMOGRAPHY, 'solver.NOISE_TOMOGRAPHY')
+  if(err_occurred() /= 0) stop 'error reading parameter NOISE_TOMOGRAPHY in Par_file'
 
   !call read_value_logical(IIN,IGNORE_JUNK,SAVE_FORWARD)
   call read_value_logical_p(SAVE_FORWARD, 'solver.SAVE_FORWARD')

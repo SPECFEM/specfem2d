@@ -3,6 +3,7 @@ title                           = Noise_2D
 
 # forward or adjoint simulation
 SIMULATION_TYPE                 = 2   # 1 = forward, 2 = adjoint + kernels
+NOISE_TOMOGRAPHY                = 3   # 0 = earthquake simulation, 1/2/3 = noise simulation
 SAVE_FORWARD                    = .false.  # save the last frame, needed for adjoint simulation
 
 # parameters concerning partitioning

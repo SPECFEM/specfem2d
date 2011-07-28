@@ -3,6 +3,7 @@ title                           = Noise_2D
 
 # forward or adjoint simulation
 SIMULATION_TYPE                 = 1   # 1 = forward, 2 = adjoint + kernels
+NOISE_TOMOGRAPHY                = 2   # 0 = earthquake simulation, 1/2/3 = noise simulation
 SAVE_FORWARD                    = .true.  # save the last frame, needed for adjoint simulation
 
 # parameters concerning partitioning
@@ -97,7 +98,7 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes # file containing the
 # PARAMETERS FOR INTERNAL MESHING
 
 # file containing interfaces for internal mesh
-interfacesfile                  = ../EXAMPLES/noise_example/uniform.dat
+interfacesfile                  = ../EXAMPLES/noise_examples/uniform.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model

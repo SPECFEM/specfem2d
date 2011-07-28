@@ -44,9 +44,9 @@
 !NOISE TOMOGRAPHY TO DO LIST
 
 !1. Replace ad hoc scaling in add_surface_movie_noise by expression involving Jacobian
-!2. Move NOISE_TOMOGRAPHY flag from source code to Par_file
-!3. Use separate STATIONS_ADJOINT file
-!4. Add test case (uniform model) under EXAMPLES
+!2. Use separate STATIONS_ADJOINT file
+!3. Add membrane surface wave test case under EXAMPLES
+!4. Add exploartion test case under EXAMPLES
 !5. Update manual
 
 ! =============================================================================================================

@@ -808,24 +808,15 @@
   ! al., 2011, Noise Cross-Correlation Sensitivity Kernels, Geophysical Journal
   ! International"
 
-
-  integer, parameter :: NOISE_TOMOGRAPHY = 0
-  !setting this flag to a value other than 0 will result in a noise simulation
-
-  !for NOISE_TOMOGRAPHY = 1
+  integer :: NOISE_TOMOGRAPHY
   integer :: irec_master, ispec_noise
   real(kind=CUSTOM_REAL) :: xi_noise, gamma_noise, angle_noise
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: time_function_noise
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: source_array_noise
-
-  !for NOISE_TOMOGRAPHY = 2
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: mask_noise
   !to avoid empty arrays depending on SH/P_SV, use separate arrays for x,y,z
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
     surface_movie_x_noise, surface_movie_y_noise, surface_movie_z_noise
-
-  !for NOISE_TOMOGRAPHY = 3
-  !no additional declarations required for NOISE_TOMOGRAPHY = 3
 
 
 !>RMODRAK
@@ -850,7 +841,7 @@
 
   ! starts reading in Database file
   call read_databases_init(myrank,ipass, &
-                  simulation_title,SIMULATION_TYPE,SAVE_FORWARD,npgeo, &
+                  simulation_title,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo, &
                   gnuplot,interpol,NTSTEP_BETWEEN_OUTPUT_INFO, &
                   output_postscript_snapshot,output_color_image,colors,numbers, &
                   meshvect,modelvect,boundvect,cutsnaps,subsamp,sizemax_arrows, &
