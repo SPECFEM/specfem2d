@@ -92,7 +92,7 @@
     write(15,"(a100)") title
 
     write(15,*) 'Type of simulation'
-    write(15,*) SIMULATION_TYPE, SAVE_FORWARD
+    write(15,*) SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD
 
     call write_glob2loc_nodes_database(15, iproc, npgeo, 1)
 
