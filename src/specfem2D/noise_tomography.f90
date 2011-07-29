@@ -45,9 +45,8 @@
 
 !1. Replace ad hoc scaling in add_surface_movie_noise by expression involving Jacobian
 !2. Use separate STATIONS_ADJOINT file
-!3. Add membrane surface wave test case under EXAMPLES
-!4. Add exploartion test case under EXAMPLES
-!5. Update manual
+!3. Add exploration test case under EXAMPLES
+!4. Update manual
 
 ! =============================================================================================================
 ! specify spatial distribution of microseismic noise sources
