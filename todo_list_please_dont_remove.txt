@@ -21,6 +21,10 @@ That's easy to fix but I have no time for now. Let us fix that in the future.
 It will only make a very small difference in the final seismograms therefore
 the current code with the bug can be used without any major problem.
 
+Daniel Peter did not fix that in 2011; he only fixed the old implementation in SPECFEM3D which used a
+fixed period absorption band to an adaptive one, which uses the resolved
+periods of the mesh (as is done in the global version). The time stepping of the memory variables did not change.
+
 Dimitri Komatitsch, April 28, 2009.
 
 ---------------------------
