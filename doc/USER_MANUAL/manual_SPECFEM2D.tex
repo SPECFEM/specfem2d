@@ -725,9 +725,9 @@ would be hdur1=1/f0\_1, hdur2=1/f0\_2, hdur3=1/f0\_3 for the sources 1, 2, 3 res
 
 \item In section {\bf "\# define models...."}:\\
 There are three possible types of models:\\
- \texttt{I}:   (model\_number 1 rho Vp Vs 0 0 Qp Qs 0 0 0 0 0 0) or\\
+ \texttt{I}:   (model\_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0) or\\
  \texttt{II}:  (model\_number 2 rho c11 c13 c15 c33 c35 c55 0 0 0 0 0 0) or\\
- \texttt{III}: (model\_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qs). \\
+ \texttt{III}: (model\_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu). \\
 
 For istropic elastic/acoustic material use \texttt{I} and set Vs to zero to make a given model acoustic, for anisotropic elastic use \texttt{II},
 and for isotropic poroelastic material use \texttt{III}. The mesh can contain acoustic, elastic, and poroelastic models simultaneously.
@@ -743,7 +743,7 @@ kappa\_f= fluid bulk modulus\\
 kappa\_fr= frame bulk modulus\\
 eta\_f = fluid viscosity\\
 mu\_fr = frame shear modulus\\
-Qs = shear quality factor\\
+Qmu = shear quality factor\\
 
 Note: for the poroelastic case, mu\_s is irrelevant.
 For details on the poroelastic theory see \cite{MoTr08}.

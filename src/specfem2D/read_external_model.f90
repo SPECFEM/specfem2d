@@ -50,7 +50,7 @@
                 inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent, &
                 inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,&
                 coord,kmato,myrank,rhoext,vpext,vsext, &
-                Qp_attenuationext,Qs_attenuationext, &
+                QKappa_attenuationext,Qmu_attenuationext, &
                 c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,READ_EXTERNAL_SEP_FILE)
 
   implicit none
@@ -77,7 +77,7 @@
   double precision, dimension(NGLLX,NGLLZ,nspec,N_SLS) :: inv_tau_sigma_nu1,phi_nu1, &
     inv_tau_sigma_nu2,phi_nu2
   double precision, dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: Qp_attenuationext,Qs_attenuationext
+  double precision, dimension(NGLLX,NGLLZ,nspec) :: QKappa_attenuationext,Qmu_attenuationext
 
   ! for anisotropy
   logical, dimension(nspec) :: anisotropic
@@ -102,10 +102,10 @@
           iglob = ibool(i,j,ispec)
           read(1001,*) tmp1,tmp2,tmp3,rhoext(i,j,ispec),vpext(i,j,ispec),vsext(i,j,ispec)
           !     vsext(i,j,ispec)=0.0
-          ! Qp, Qs : dummy values. If attenuation needed than the "read" line and model_velocity.dat_input
-          ! need to be modified to provide Qp & Qs values
-          Qp_attenuationext(i,j,ispec) = 10.d0
-          Qs_attenuationext(i,j,ispec) = 10.d0
+          ! QKappa, Qmu : dummy values. If attenuation needed than the "read" line and model_velocity.dat_input
+          ! need to be modified to provide QKappa & Qmu values
+          QKappa_attenuationext(i,j,ispec) = 10.d0
+          Qmu_attenuationext(i,j,ispec) = 10.d0
         end do
       end do
     end do
@@ -119,7 +119,7 @@
           iglob = ibool(i,j,ispec)
           call define_external_model(coord(1,iglob),coord(2,iglob),kmato(ispec),myrank,&
                                     rhoext(i,j,ispec),vpext(i,j,ispec),vsext(i,j,ispec), &
-                                    Qp_attenuationext(i,j,ispec),Qs_attenuationext(i,j,ispec),&
+                                    QKappa_attenuationext(i,j,ispec),Qmu_attenuationext(i,j,ispec),&
                                     c11ext(i,j,ispec),c13ext(i,j,ispec),c15ext(i,j,ispec), &
                                     c33ext(i,j,ispec),c35ext(i,j,ispec),c55ext(i,j,ispec))
 
@@ -159,8 +159,8 @@
           poroelastic(ispec) = .false.
           elastic(ispec) = .true.
           any_elastic = .true.
-          Qp_attenuationext(i,j,ispec) = 10.d0
-          Qs_attenuationext(i,j,ispec) = 10.d0
+          QKappa_attenuationext(i,j,ispec) = 10.d0
+          Qmu_attenuationext(i,j,ispec) = 10.d0
         elseif(vsext(i,j,ispec) < TINYVAL) then
           elastic(ispec) = .false.
           poroelastic(ispec) = .false.
@@ -171,7 +171,7 @@
           any_elastic = .true.
         endif
 
-        call attenuation_model(N_SLS,Qp_attenuationext(i,j,ispec),Qs_attenuationext(i,j,ispec), &
+        call attenuation_model(N_SLS,QKappa_attenuationext(i,j,ispec),Qmu_attenuationext(i,j,ispec), &
                               f0_attenuation,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
                               inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent)
         inv_tau_sigma_nu1(i,j,ispec,:) = inv_tau_sigma_nu1_sent(:)

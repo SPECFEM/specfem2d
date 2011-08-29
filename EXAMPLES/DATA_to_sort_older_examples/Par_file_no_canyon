@@ -54,8 +54,8 @@ force_normal_to_surface         = .false.        # angleforce normal to surface 
 
 # constants for attenuation
 N_SLS                           = 2                      # number of standard linear solids for attenuation 
-Qp_attenuation                  = 136.4376068115         # quality factor P for attenuation
-Qs_attenuation                  = 136.4376068115         # quality factor S for attenuation
+QKappa_attenuation              = 136.4376068115         # quality factor P for attenuation
+Qmu_attenuation                 = 136.4376068115         # quality factor S for attenuation
 f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, else it is f0
 
 # receiver line parameters for seismograms

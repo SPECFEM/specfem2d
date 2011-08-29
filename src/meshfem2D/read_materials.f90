@@ -44,7 +44,7 @@
 
   subroutine read_materials(nb_materials,icodemat,cp,cs, &
                             aniso3,aniso4,aniso5,aniso6,aniso7,aniso8, &
-                            Qp,Qs,rho_s,rho_f,phi,tortuosity, &
+                            QKappa,Qmu,rho_s,rho_f,phi,tortuosity, &
                             permxx,permxz,permzz,kappa_s,kappa_f,kappa_fr, &
                             eta_f,mu_fr)
 
@@ -58,7 +58,7 @@
   integer, dimension(nb_materials) :: icodemat
 
   double precision, dimension(nb_materials) :: rho_s,cp,cs, &
-    aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,Qp,Qs
+    aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,QKappa,Qmu
   double precision, dimension(nb_materials) :: rho_f,phi,tortuosity,permxx,permxz,&
        permzz,kappa_s,kappa_f,kappa_fr,eta_f,mu_fr
 
@@ -77,8 +77,8 @@
   aniso6(:) = 0.d0
   aniso7(:) = 0.d0
   aniso8(:) = 0.d0
-  Qp(:) = 0.d0
-  Qs(:) = 0.d0
+  QKappa(:) = 0.d0
+  Qmu(:) = 0.d0
   rho_s(:) = 0.d0
   rho_f(:) = 0.d0
   phi(:) = 0.d0
@@ -117,11 +117,11 @@
         rho_s(i) = val0read
         cp(i) = val1read
         cs(i) = val2read
-        Qp(i) = val5read
-        Qs(i) = val6read
+        QKappa(i) = val5read
+        Qmu(i) = val6read
 
         if(rho_s(i) <= 0.d0 .or. cp(i) <= 0.d0 .or. cs(i) < 0.d0) stop 'negative value of velocity or density'
-        if(Qp(i) <= 0.d0 .or. Qs(i) <= 0.d0) stop 'non-positive value of Qp or Qs'
+        if(QKappa(i) <= 0.d0 .or. Qmu(i) <= 0.d0) stop 'non-positive value of QKappa or Qmu'
 
         aniso3(i) = val3read
         aniso4(i) = val4read
@@ -143,8 +143,8 @@
         aniso6(i) = val6read
         aniso7(i) = val7read
         aniso8(i) = val8read
-        Qp(i) = val9read
-        Qs(i) = val10read
+        QKappa(i) = val9read
+        Qmu(i) = val10read
      else
 
         ! poroelastic materials
@@ -161,14 +161,14 @@
         kappa_fr(i) = val9read
         eta_f(i) = val10read
         mu_fr(i) = val11read
-        Qs(i) = val12read
+        Qmu(i) = val12read
 
         if(rho_s(i) <= 0.d0 .or. rho_f(i) <= 0.d0) stop 'non-positive value of density'
         if(phi(i) <= 0.d0 .or. tortuosity(i) <= 0.d0) stop 'non-positive value of porosity or tortuosity'
         if(kappa_s(i) <= 0.d0 .or. kappa_f(i) <= 0.d0 .or. kappa_fr(i) <= 0.d0 .or. mu_fr(i) <= 0.d0) then
            stop 'non-positive value of modulus'
         end if
-        if(Qs(i) <= 0.d0) stop 'non-positive value of Qs'
+        if(Qmu(i) <= 0.d0) stop 'non-positive value of Qmu'
      endif
   enddo
 
@@ -179,7 +179,7 @@
   do i=1,nb_materials
      if(icodemat(i) /= ANISOTROPIC_MATERIAL .and. icodemat(i) /= POROELASTIC_MATERIAL) then
         print *,'Material #',i,' isotropic'
-        print *,'rho,cp,cs = ',rho_s(i),cp(i),cs(i),Qp(i),Qs(i)
+        print *,'rho,cp,cs = ',rho_s(i),cp(i),cs(i),QKappa(i),Qmu(i)
         if(cs(i) < TINYVAL) then
            print *,'Material is fluid'
         else
@@ -190,13 +190,13 @@
         print *,'rho_s, kappa_s= ',rho_s(i),kappa_s(i)
         print *,'rho_f, kappa_f, eta_f= ',rho_f(i),kappa_f(i),eta_f(i)
         print *,'phi, tortuosity, permxx, permxz, permzz= ',phi(i),tortuosity(i),permxx(i),permxz(i),permzz(i)
-        print *,'kappa_fr, mu_fr, Qs= ',kappa_fr(i),mu_fr(i),Qs(i)
+        print *,'kappa_fr, mu_fr, Qmu= ',kappa_fr(i),mu_fr(i),Qmu(i)
         print *,'Material is porous'
      else
         print *,'Material #',i,' anisotropic'
         print *,'rho,cp,cs = ',rho_s(i),cp(i),cs(i)
         print*,'c11,c13,c15,c33,c35,c55 = ',aniso3(i),aniso4(i),aniso5(i),aniso6(i),aniso7(i),aniso8(i)
-        print *,'Qp,Qs = ',Qp(i),Qs(i)
+        print *,'QKappa,Qmu = ',QKappa(i),Qmu(i)
      endif
      print *
   enddo

@@ -43,7 +43,7 @@
 !========================================================================
 
   subroutine read_regions(nbregion,nb_materials,icodemat,cp,cs, &
-                          rho_s,Qp,Qs,aniso3,aniso4,aniso5,aniso6,aniso7,aniso8, &
+                          rho_s,QKappa,Qmu,aniso3,aniso4,aniso5,aniso6,aniso7,aniso8, &
                           nelmnts,num_material,nxread,nzread)
 
 ! reads in material definitions in DATA/Par_file
@@ -54,7 +54,7 @@
   integer :: nbregion,nb_materials
   integer, dimension(nb_materials) :: icodemat
   double precision, dimension(nb_materials) :: rho_s,cp,cs, &
-    aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,Qp,Qs
+    aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,QKappa,Qmu
 
   integer :: nelmnts
   integer,dimension(nelmnts) :: num_material
@@ -113,8 +113,8 @@
        poisson_ratio = 0.5d0*(vpregion*vpregion-2.d0*vsregion*vsregion) / (vpregion*vpregion-vsregion*vsregion)
        print *,'Poisson''s ratio = ',poisson_ratio
        if(poisson_ratio <= -1.00001d0 .or. poisson_ratio >= 0.50001d0) stop 'incorrect value of Poisson''s ratio'
-       print *,'Qp = ',Qp(imaterial_number)
-       print *,'Qs = ',Qs(imaterial_number)
+       print *,'QKappa = ',QKappa(imaterial_number)
+       print *,'Qmu = ',Qmu(imaterial_number)
     elseif(icodemat(imaterial_number) == POROELASTIC_MATERIAL) then
 
        ! poroelastic material
@@ -133,8 +133,8 @@
        print *,'c35 = ',aniso7(imaterial_number)
        print *,'c55 = ',aniso8(imaterial_number)
        print *,'rho = ',rho_s(imaterial_number)
-       print *,'Qp = ',Qp(imaterial_number)
-       print *,'Qs = ',Qs(imaterial_number)
+       print *,'QKappa = ',QKappa(imaterial_number)
+       print *,'Qmu = ',Qmu(imaterial_number)
     endif
     print *,' -----'
 

@@ -44,7 +44,7 @@
 
   subroutine gmat01(density_array,porosity_array,tortuosity_array, &
                     aniso_array,permeability,poroelastcoef, &
-                    numat,myrank,ipass,Qp_array,Qs_array, &
+                    numat,myrank,ipass,QKappa_array,Qmu_array, &
                     freq0,Q0,f0,TURN_VISCATTENUATION_ON)
 
 ! reads properties of a 2D isotropic or anisotropic linear elastic element
@@ -55,13 +55,13 @@
   integer :: numat,myrank,ipass
   double precision :: density_array(2,numat),poroelastcoef(4,3,numat),porosity_array(numat)
   double precision :: aniso_array(6,numat),tortuosity_array(numat),permeability(3,numat)
-  double precision :: Qp_array(numat),Qs_array(numat)
+  double precision :: QKappa_array(numat),Qmu_array(numat)
   double precision :: f0,Q0,freq0
   logical :: TURN_VISCATTENUATION_ON
 
   ! local parameters
   double precision :: lambdaplus2mu,kappa
-  double precision :: young,poisson,cp,cs,mu,two_mu,lambda,Qp,Qs
+  double precision :: young,poisson,cp,cs,mu,two_mu,lambda,QKappa,Qmu
   double precision :: lambdaplus2mu_s,lambdaplus2mu_fr,kappa_s,kappa_f,kappa_fr
   double precision :: young_s,poisson_s,density(2),phi,tortuosity
   double precision :: cpIsquare,cpIIsquare,cssquare,mu_s,mu_fr,eta_f,lambda_s,lambda_fr
@@ -83,8 +83,8 @@
   aniso_array(:,:) = zero
   permeability(:,:) = zero
   poroelastcoef(:,:,:) = zero
-  Qp_array(:) = zero
-  Qs_array(:) = zero
+  QKappa_array(:) = zero
+  Qmu_array(:) = zero
 
   if(myrank == 0 .and. ipass == 1) write(IOUT,100) numat
 
@@ -106,9 +106,9 @@
         cp = val1
         cs = val2
 
-        ! Qp and Qs values
-        Qp = val5
-        Qs = val6
+        ! QKappa and Qmu values
+        QKappa = val5
+        Qmu = val6
 
         ! Lam'e parameters
         lambdaplus2mu = density(1)*cp*cp
@@ -145,9 +145,9 @@
         c35 = val5
         c55 = val6
 
-        ! Qp and Qs values
-        !Qp = val9
-        !Qs = val10
+        ! QKappa and Qmu values
+        !QKappa = val9
+        !Qmu = val10
 
         ! Lam'e parameters
         lambdaplus2mu = density(1)*cp*cp
@@ -167,8 +167,8 @@
         !---- isotropic material, moduli are given, allows for declaration of poroelastic material
         !---- poroelastic (0<phi<1)
      else if (indic == 3) then
-        ! Qs values
-        Qs = val12
+        ! Qmu values
+        Qmu = val12
 
         density(1) =val0
         density(2) =val1
@@ -233,8 +233,8 @@
         poroelastcoef(2,1,n) = mu
         poroelastcoef(3,1,n) = lambdaplus2mu
         poroelastcoef(4,1,n) = zero
-        Qp_array(n) = Qp
-        Qs_array(n) = Qs
+        QKappa_array(n) = QKappa
+        Qmu_array(n) = Qmu
         if(mu > TINYVAL) then
            porosity_array(n) = 0.d0
         else
@@ -254,8 +254,8 @@
         aniso_array(5,n) = c35
         aniso_array(6,n) = c55
 ! dummy Q values, trick to avoid a bug in attenuation_model
-        Qp_array(n) = 15
-        Qs_array(n) = 15
+        QKappa_array(n) = 15
+        Qmu_array(n) = 15
         porosity_array(n) = 0.d0
      elseif (indic == 3) then
         density_array(1,n) = density(1)
@@ -274,8 +274,8 @@
         poroelastcoef(2,3,n) = mu_fr
         poroelastcoef(3,3,n) = lambdaplus2mu_fr
         poroelastcoef(4,3,n) = zero
-        Qp_array(n) = 10.d0 ! dummy for attenuation_model
-        Qs_array(n) = Qs
+        QKappa_array(n) = 10.d0 ! dummy for attenuation_model
+        Qmu_array(n) = Qmu
      endif
 
      !
@@ -285,9 +285,9 @@
         if(indic == 1) then
            ! material can be acoustic (fluid) or elastic (solid)
            if(poroelastcoef(2,1,n) > TINYVAL) then    ! elastic
-              write(IOUT,200) n,cp,cs,density(1),poisson,lambda,mu,kappa,young,Qp,Qs
+              write(IOUT,200) n,cp,cs,density(1),poisson,lambda,mu,kappa,young,QKappa,Qmu
            else                                       ! acoustic
-              write(IOUT,300) n,cp,density(1),kappa,Qp,Qs
+              write(IOUT,300) n,cp,density(1),kappa,QKappa,Qmu
            endif
         elseif(indic == 2) then                      ! elastic (anisotropic)
            write(IOUT,400) n,density(1),c11,c13,c15,c33,c35,c55
@@ -297,7 +297,7 @@
            write(iout,600) density(1),poisson_s,lambda_s,mu_s,kappa_s,young_s
            write(iout,700) density(2),kappa_f,eta_f
            write(iout,800) lambda_fr,mu_fr,kappa_fr,porosity_array(n),tortuosity_array(n),&
-                permeability(1,n),permeability(2,n),permeability(3,n),Qs
+                permeability(1,n),permeability(2,n),permeability(3,n),Qmu
            write(iout,900) D_biot,H_biot,C_biot,M_biot,w_c
         endif
      endif
@@ -318,13 +318,13 @@
        'P-wave velocity. . . . . . . . . . . (cp) =',1pe15.8,/5x, &
        'S-wave velocity. . . . . . . . . . . (cs) =',1pe15.8,/5x, &
        'Mass density. . . . . . . . . . (density) =',1pe15.8,/5x, &
-       'Poisson''s ratio. . . . . . . . .(poisson) =',1pe15.8,/5x, &
+       'Poisson''s ratio . . . . . . . .(poisson) =',1pe15.8,/5x, &
        'First Lame parameter Lambda. . . (lambda) =',1pe15.8,/5x, &
        'Second Lame parameter Mu. . . . . . .(mu) =',1pe15.8,/5x, &
        'Bulk modulus Kappa . . . . . . . .(kappa) =',1pe15.8,/5x, &
-       'Young''s modulus E. . . . . . . . .(young) =',1pe15.8,/5x, &
-       'Qp_attenuation. . . . . . . . . . . .(Qp) =',1pe15.8,/5x, &
-       'Qs_attenuation. . . . . . . . . . . .(Qs) =',1pe15.8)
+       'Young''s modulus E . . . . . . . .(young) =',1pe15.8,/5x, &
+       'QKappa_attenuation .  . . . . . .(QKappa) =',1pe15.8,/5x, &
+       'Qmu_attenuation . . . . . . . . . . (Qmu) =',1pe15.8)
 
 300 format(//5x,'-------------------------------',/5x, &
        '-- Acoustic (fluid) material --',/5x, &
@@ -333,8 +333,8 @@
        'P-wave velocity. . . . . . . . . . . (cp) =',1pe15.8,/5x, &
        'Mass density. . . . . . . . . . (density) =',1pe15.8,/5x, &
        'Bulk modulus Kappa . . . . . . . .(kappa) =',1pe15.8,/5x, &
-       'Qp_attenuation. . . . . . . . . . . .(Qp) =',1pe15.8,/5x, &
-       'Qs_attenuation. . . . . . . . . . . .(Qs) =',1pe15.8)
+       'QKappa_attenuation. . . . . . . .(QKappa) =',1pe15.8,/5x, &
+       'Qmu_attenuation. . . . . . . . . . .(Qmu) =',1pe15.8)
 
 400 format(//5x,'-------------------------------------',/5x, &
        '-- Transverse anisotropic material --',/5x, &
@@ -352,44 +352,44 @@
        '-- Poroelastic isotropic material --',/5x, &
        '----------------------------------------',/5x, &
        'Material set number. . . . . . . . (jmat) =',i6,/5x, &
-       'First P-wave velocity. . . . . . . . . . . (cpI) =',1pe15.8,/5x, &
-       'Second P-wave velocity. . . . . . . . . . . (cpII) =',1pe15.8,/5x, &
+       'First P-wave velocity. . . . . . . .(cpI) =',1pe15.8,/5x, &
+       'Second P-wave velocity. . . . . . .(cpII) =',1pe15.8,/5x, &
        'S-wave velocity. . . . . . . . . . . (cs) =',1pe15.8)
 
 600 format(//5x,'-------------------------------',/5x, &
        '-- Solid phase properties --',/5x, &
        'Mass density. . . . . . . . . . (density_s) =',1pe15.8,/5x, &
-       'Poisson''s ratio. . . . . . . . .(poisson_s) =',1pe15.8,/5x, &
+       'Poisson''s ratio. . . . . . . . (poisson_s) =',1pe15.8,/5x, &
        'First Lame parameter Lambda. . . (lambda_s) =',1pe15.8,/5x, &
        'Second Lame parameter Mu. . . . . . .(mu_s) =',1pe15.8,/5x, &
-       'Solid bulk modulus Kappa . . . . . . . .(kappa_s) =',1pe15.8,/5x, &
-       'Young''s modulus E. . . . . . . . .(young_s) =',1pe15.8)
+       'Solid bulk modulus Kappa . . . . .(kappa_s) =',1pe15.8,/5x, &
+       'Young''s modulus E. . . . . . .  .(young_s) =',1pe15.8)
 
 700 format(//5x,'-------------------------------',/5x, &
        '-- Fluid phase properties --',/5x, &
        'Mass density. . . . . . . . . . (density_f) =',1pe15.8,/5x, &
-       'Fluid bulk modulus Kappa . . . . . . . .(kappa_f) =',1pe15.8,/5x, &
-       'Fluid viscosity Eta . . . . . . . .(eta_f) =',1pe15.8)
+       'Fluid bulk modulus Kappa . . . . .(kappa_f) =',1pe15.8,/5x, &
+       'Fluid viscosity Eta . . . . . . . . (eta_f) =',1pe15.8)
 
 800 format(//5x,'-------------------------------',/5x, &
        '-- Frame properties --',/5x, &
        'First Lame parameter Lambda. . . (lambda_fr) =',1pe15.8,/5x, &
        'Second Lame parameter Mu. . . . . . .(mu_fr) =',1pe15.8,/5x, &
-       'Frame bulk modulus Kappa . . . . . . . .(kappa_fr) =',1pe15.8,/5x, &
-       'Porosity. . . . . . . . . . . . . . . . .(phi) =',1pe15.8,/5x,&
-       'Tortuosity. . . . . . . . . . . . . . . . .(c) =',1pe15.8,/5x,&
+       'Frame bulk modulus Kappa . . . . .(kappa_fr) =',1pe15.8,/5x, &
+       'Porosity. . . . . . . . . . . . . . . .(phi) =',1pe15.8,/5x,&
+       'Tortuosity. . . . . . . . . . . . . . . .(c) =',1pe15.8,/5x,&
        'Permeability xx component. . . . . . . . . . =',1pe15.8,/5x,&
        'Permeability zx component. . . . . . . . . . =',1pe15.8,/5x,&
        'Permeability zz component. . . . . . . . . . =',1pe15.8,/5x,&
-       'Qs_attenuation. . . . . . . . . . . .(Qs) =',1pe15.8)
+       'Qmu_attenuation. . . . . . . . . . . . (Qmu) =',1pe15.8)
 
 900   format(//5x,'-------------------------------',/5x, &
          '-- Biot coefficients --',/5x, &
          '-------------------------------',/5x, &
-         'D. . . . . . . . =',1pe15.8,/5x, &
-         'H. . . . . . . . =',1pe15.8,/5x, &
-         'C. . . . . . . . =',1pe15.8,/5x, &
-         'M. . . . . . . . =',1pe15.8,/5x, &
+         'D. . . . . . . . . .=',1pe15.8,/5x, &
+         'H. . . . . . . . . .=',1pe15.8,/5x, &
+         'C. . . . . . . . . .=',1pe15.8,/5x, &
+         'M. . . . . . . . . .=',1pe15.8,/5x, &
          'characteristic freq =',1pe15.8)
 
   end subroutine gmat01

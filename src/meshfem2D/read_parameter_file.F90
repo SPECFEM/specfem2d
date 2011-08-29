@@ -110,7 +110,7 @@ module parameter_file
   integer :: nb_materials
   integer, dimension(:),pointer :: icodemat
   double precision, dimension(:),pointer :: rho_s,cp,cs, &
-    aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,Qp,Qs
+    aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,QKappa,Qmu
   double precision, dimension(:),pointer :: rho_f,phi,tortuosity,permxx,permxz,&
        permzz,kappa_s,kappa_f,kappa_fr,eta_f,mu_fr
 
@@ -371,8 +371,8 @@ contains
   allocate(aniso6(nb_materials))
   allocate(aniso7(nb_materials))
   allocate(aniso8(nb_materials))
-  allocate(Qp(nb_materials))
-  allocate(Qs(nb_materials))
+  allocate(QKappa(nb_materials))
+  allocate(Qmu(nb_materials))
   allocate(rho_s(nb_materials))
   allocate(rho_f(nb_materials))
   allocate(phi(nb_materials))
@@ -388,7 +388,7 @@ contains
 
   call read_materials(nb_materials,icodemat,cp,cs, &
                       aniso3,aniso4,aniso5,aniso6,aniso7,aniso8, &
-                      Qp,Qs,rho_s,rho_f,phi,tortuosity, &
+                      QKappa,Qmu,rho_s,rho_f,phi,tortuosity, &
                       permxx,permxz,permzz,kappa_s,kappa_f,kappa_fr, &
                       eta_f,mu_fr)
 
