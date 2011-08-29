@@ -68,7 +68,7 @@ output_wavefield_snapshot       = .false.        # output Ux,Uy,Uz text file for
 
 # velocity and density models
 nbmodels                        = 2              # nb of different models
-# define models as I: (model_number,1,rho,Vp,Vs,0,0,Qp,Qs) or II: (model_number,2,rho,c11,c13,c15,c33,c35,c55) or III: (model_number,3,rhos,rhof,phi,c,kxx,kxz,kzz,Ks,Kf,Kfr,etaf,mufr,Qs).
+# define models as I: (model_number,1,rho,Vp,Vs,0,0,QKappa Qmu) or II: (model_number,2,rho,c11,c13,c15,c33,c35,c55) or III: (model_number,3,rhos,rhof,phi,c,kxx,kxz,kzz,Ks,Kf,Kfr,etaf,mufr,Qmu).
 # For istropic elastic/acoustic material use I and set Vs to zero to make a given model acoustic, for anisotropic elastic use II, 
 # and for isotropic poroelastic material use III. The mesh can contain acoustic, elastic, & poroelastic models simultaneously
 1 1 2000.d0 1680.d0 0.0d0 0 0 10.d0 10.d0 0 0 0 0 0 0
