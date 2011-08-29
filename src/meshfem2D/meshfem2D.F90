@@ -415,7 +415,7 @@ program meshfem2D
      call read_mat(materials_file, num_material)
   else
      call read_regions(nbregion,nb_materials,icodemat,cp,cs, &
-                      rho_s,Qp,Qs,aniso3,aniso4,aniso5,aniso6,aniso7,aniso8, &
+                      rho_s,QKappa,Qmu,aniso3,aniso4,aniso5,aniso6,aniso7,aniso8, &
                       nelmnts,num_material,nxread,nzread)
   endif
 

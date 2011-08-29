@@ -42,7 +42,7 @@
 !
 !========================================================================
 
-  subroutine attenuation_model(N_SLS,Qp_attenuation,Qs_attenuation,f0_attenuation, &
+  subroutine attenuation_model(N_SLS,QKappa_attenuation,Qmu_attenuation,f0_attenuation, &
        inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2)
 
 ! define the attenuation constants
@@ -52,7 +52,7 @@
   include "constants.h"
 
   integer :: N_SLS
-  double precision :: Qp_attenuation,Qs_attenuation,f0_attenuation
+  double precision :: QKappa_attenuation,Qmu_attenuation,f0_attenuation
   double precision, dimension(N_SLS) :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
   double precision :: Mu_nu1,Mu_nu2
 
@@ -62,7 +62,6 @@
 
   double precision :: f1_attenuation, f2_attenuation
 
-
 ! f1 and f2 are computed as : f2/f1=12 and (log(f1)+log(f2))/2 = log(f0)
   f1_attenuation = exp(log(f0_attenuation)-log(12.d0)/2.d0)
   f2_attenuation = 12.d0 * f1_attenuation
@@ -71,14 +70,14 @@
 ! a main can be found in UTILS/attenuation directory).
 ! Beware of underscores in this function name; depending on your compiler and compilation options, you will have to add or
 ! delete underscores. Also look in file "attenuation_compute_param.c" for this issue.
-  call attenuation_compute_param(N_SLS, Qp_attenuation, Qs_attenuation, &
+  call attenuation_compute_param(N_SLS, QKappa_attenuation, Qmu_attenuation, &
        f1_attenuation,f2_attenuation, &
        tau_sigma_nu1, tau_sigma_nu2, tau_epsilon_nu1, tau_epsilon_nu2)
 
 ! attenuation constants for standard linear solids
 
-! nu1 is the dilatation mode
-! nu2 is the shear mode
+! nu1 is the dilatation/incompressibility mode (QKappa)
+! nu2 is the shear mode (Qmu)
 
 ! array index (1) is the first standard linear solid, (2) is the second etc.
 

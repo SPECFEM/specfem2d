@@ -433,7 +433,7 @@
   real(kind=CUSTOM_REAL) :: ratio,dd1
 
   double precision, dimension(:,:,:), allocatable :: vpext,vsext,rhoext
-  double precision, dimension(:,:,:), allocatable :: Qp_attenuationext,Qs_attenuationext
+  double precision, dimension(:,:,:), allocatable :: QKappa_attenuationext,Qmu_attenuationext
   double precision, dimension(:,:,:), allocatable :: c11ext,c13ext,c15ext,c33ext,c35ext,c55ext
 
   double precision, dimension(:,:,:), allocatable :: shape2D,shape2D_display
@@ -474,8 +474,8 @@
 
 ! for attenuation
   integer  :: N_SLS
-  double precision, dimension(:), allocatable  :: Qp_attenuation
-  double precision, dimension(:), allocatable  :: Qs_attenuation
+  double precision, dimension(:), allocatable  :: QKappa_attenuation
+  double precision, dimension(:), allocatable  :: Qmu_attenuation
   double precision  :: f0_attenuation
   integer nspec_allocate
   double precision :: deltatsquare,deltatcube,deltatfourth,twelvedeltat,fourdeltatsquare
@@ -935,8 +935,8 @@
     allocate(tortuosity(numat))
     allocate(permeability(3,numat))
     allocate(poroelastcoef(4,3,numat))
-    allocate(Qp_attenuation(numat))
-    allocate(Qs_attenuation(numat))
+    allocate(QKappa_attenuation(numat))
+    allocate(Qmu_attenuation(numat))
     allocate(kmato(nspec))
     allocate(knods(ngnod,nspec))
     allocate(ibool(NGLLX,NGLLZ,nspec))
@@ -957,7 +957,7 @@
   !---- read the material properties
   !
   call gmat01(density,porosity,tortuosity,anisotropy,permeability,poroelastcoef,numat,&
-              myrank,ipass,Qp_attenuation,Qs_attenuation,freq0,Q0,f0(1),TURN_VISCATTENUATION_ON)
+              myrank,ipass,QKappa_attenuation,Qmu_attenuation,freq0,Q0,f0(1),TURN_VISCATTENUATION_ON)
   !
   !----  read spectral macrobloc data
   !
@@ -1001,7 +1001,7 @@
 ! they can be different for each element.
 !! DK DK if needed in the future, here the quality factor could be different for each point
   do ispec = 1,nspec
-    call attenuation_model(N_SLS,Qp_attenuation(kmato(ispec)),Qs_attenuation(kmato(ispec)), &
+    call attenuation_model(N_SLS,QKappa_attenuation(kmato(ispec)),Qmu_attenuation(kmato(ispec)), &
             f0_attenuation,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
             inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent)
     do j = 1,NGLLZ
@@ -1542,8 +1542,8 @@
       allocate(vpext(NGLLX,NGLLZ,nspec))
       allocate(vsext(NGLLX,NGLLZ,nspec))
       allocate(rhoext(NGLLX,NGLLZ,nspec))
-      allocate(Qp_attenuationext(NGLLX,NGLLZ,nspec))
-      allocate(Qs_attenuationext(NGLLX,NGLLZ,nspec))
+      allocate(QKappa_attenuationext(NGLLX,NGLLZ,nspec))
+      allocate(Qmu_attenuationext(NGLLX,NGLLZ,nspec))
       allocate(c11ext(NGLLX,NGLLZ,nspec))
       allocate(c13ext(NGLLX,NGLLZ,nspec))
       allocate(c15ext(NGLLX,NGLLZ,nspec))
@@ -1703,7 +1703,7 @@
                 inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent, &
                 inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,&
                 coord,kmato,myrank,rhoext,vpext,vsext, &
-                Qp_attenuationext,Qs_attenuationext, &
+                QKappa_attenuationext,Qmu_attenuationext, &
                 c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,READ_EXTERNAL_SEP_FILE)
   end if
 
@@ -2906,7 +2906,7 @@
 
       ! call Paco's routine to compute in frequency and convert to time by Fourier transform
       call paco_beyond_critical(coord,nglob,deltat,NSTEP,angleforce(1),&
-              f0(1),cploc,csloc,TURN_ATTENUATION_ON,Qp_attenuation,source_type(1),v0x_left,v0z_left,&
+              f0(1),cploc,csloc,TURN_ATTENUATION_ON,QKappa_attenuation,source_type(1),v0x_left,v0z_left,&
               v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,&
               t0x_bot,t0z_bot,left_bound(1:count_left),right_bound(1:count_right),bot_bound(1:count_bottom)&
               ,count_left,count_right,count_bottom,displ_paco,veloc_paco,accel_paco)
