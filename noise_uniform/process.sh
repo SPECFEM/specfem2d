@@ -1,31 +1,27 @@
 #!/bin/sh
 
-USAGE="USAGE:  submit  par_file_directory"
-if [ $# -eq 0 ]; then PAR_DIR=uniform; fi
-if [ $# -eq 1 ]; then PAR_DIR=$1; fi
-if [ $# -ne 0 ] && [ $# -ne 1 ]; then echo "$USAGE"; exit 1; fi
-
-
-PAR_DIR_FULL=$PWD/$PAR_DIR
-RUN_DIR=../..
-cd $RUN_DIR
-
+RUN_DIR=$PWD
 
 # prepare directories
-rm -rf   SEM NOISE_TOMOGRAPHY OUTPUT_FILES OUTPUT_ALL
-mkdir -p SEM NOISE_TOMOGRAPHY OUTPUT_FILES OUTPUT_ALL
+rm -rf   DATA SEM NOISE_TOMOGRAPHY OUTPUT_FILES OUTPUT_ALL
+mkdir -p DATA SEM NOISE_TOMOGRAPHY OUTPUT_FILES OUTPUT_ALL
 
 
 # prepare files
-cp $PAR_DIR_FULL/SOURCE_noise           DATA/SOURCE
-cp $PAR_DIR_FULL/STATIONS_target_noise  DATA/STATIONS_target
-#cp $PAR_DIR_FULL/S_squared              NOISE_TOMOGRAPHY
-echo 1 >                                NOISE_TOMOGRAPHY/irec_master
-
+cp SOURCE_noise           DATA/SOURCE
+cp STATIONS_target_noise  DATA/STATIONS_target
+cp S_squared              NOISE_TOMOGRAPHY
+cp uniform.dat            DATA/
+echo 1 >                  NOISE_TOMOGRAPHY/irec_master
+cd ../..
+make
+cd $RUN_DIR
+ln -s ../../bin/xmeshfem2D .
+ln -s ../../bin/xspecfem2D .
 
 #simulation 1
-cp $PAR_DIR_FULL/Par_file_noise_1  DATA/Par_file
-make; bin/xmeshfem2D; bin/xspecfem2D
+cp Par_file_noise_1  DATA/Par_file
+./xmeshfem2D; ./xspecfem2D
 mkdir OUTPUT_ALL/step_1
 mv OUTPUT_FILES/image*  OUTPUT_ALL/step_1
 mv OUTPUT_FILES/*.semd  OUTPUT_ALL/step_1
@@ -33,14 +29,14 @@ mv DATA/Par_file  OUTPUT_ALL/step_1
 
 
 #simulation 2
-cp $PAR_DIR_FULL/Par_file_noise_2  DATA/Par_file
-bin/xmeshfem2D; bin/xspecfem2D
+cp Par_file_noise_2  DATA/Par_file
+./xmeshfem2D; ./xspecfem2D
 mkdir OUTPUT_ALL/step_2
 
-ADJ_CODE=$PAR_DIR_FULL/adj_cc.f90
-gfortran $ADJ_CODE -o adj_cc
+ADJ_CODE=adj_cc.f90
+gfortran $ADJ_CODE -o adj_run
 cp OUTPUT_FILES/*.semd  SEM
-./adj_cc SEM/S0003.AA.BXY.semd
+./adj_run SEM/S0003.AA.BXY.semd
 
 cd SEM
 rename '.semd' '' *.adj
@@ -57,8 +53,8 @@ mv DATA/Par_file  OUTPUT_ALL/step_2
 
 
 #simulation 3
-cp $PAR_DIR_FULL/Par_file_noise_3  DATA/Par_file
-bin/xmeshfem2D; bin/xspecfem2D
+cp Par_file_noise_3  DATA/Par_file
+./xmeshfem2D; ./xspecfem2D
 mkdir OUTPUT_ALL/step_3
 mv OUTPUT_FILES/image*  OUTPUT_ALL/step_3
 mv OUTPUT_FILES/*.semd  OUTPUT_ALL/step_3

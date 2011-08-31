@@ -5,19 +5,21 @@ implicit none
 ! flags
 logical, parameter :: use_filtering = .true.
 logical, parameter :: use_positive_branch = .false.
+logical, parameter :: use_custom_window = .false.
+logical, parameter :: reverse = .true.
+integer, parameter :: differentiate = 1
 
 ! FILTERING PARAMETERS
 real  freq_low,freq_high
-data  freq_low  / 1d-2 /
-data  freq_high / 1d1  /
+data  freq_low  / 1.d-2 /
+data  freq_high / 1.5d1  /
 
-! WINDOW PARAMETERS
+! CUSTOM WINDOW PARAMETERS
 real :: w_delay, w_width, w_tukey
-data w_delay / 1.25 /
-data w_width / 1.00 /
+data w_delay / 1.d0 /
+data w_width / 1.d2 /
 data w_tukey / 0.4 /
-!see explanation of 
-!window parameters, below
+!see explanation below
 
 ! time variables
 integer :: it, nt, nthalf
@@ -39,9 +41,7 @@ real :: F1,F2,D(8),G,DELT
 real :: alpha, beta
 
 
-
-
-! EXPLANATION OF WINDOW PARAMETERS
+! EXPLANATION OF CUSTOM WINDOW PARAMETERS
 
 !To select the desired branch of the cross-correlogram, we employ a Tukey window.  A Tukey taper is just a variant of a cosine taper.  We use three control parameters
 
@@ -54,6 +54,7 @@ real :: alpha, beta
 !Checks on W_WIDTH are carried out to make sure that the window makes sense and lies within a single branch of the cross-correlogram. If the the window falls outside these bounds, it will be adjusted.
 
 !W_TUKEY is a number between 0 and 1, 0 being pure boxcar and 1 being pure cosine
+
 
 
 
@@ -88,16 +89,20 @@ seismo_adj(:) = 0.0d0
 !!!!!!!!!! READ INPUT !!!!!!!!!!!!!!!!!!!!
 open(unit=1001,file=trim(file_in),status='old',action='read')
 do it = 1, nt
-    read(1001,*) t(it), seismo_1(nt-it+1)
+    if (.not. reverse) read(1001,*) t(it), seismo_1(it)
+    if (reverse) read(1001,*) t(it), seismo_1(nt-it+1)
 end do
 close(1001)
 
 
 !!!!!!!!!! DIFFERENTIATE !!!!!!!!!!!!!!!!!!!
-seismo_1(1) = 0.0
-seismo_1(nt) = 0.0
+seismo_2(1) = 0.0
+seismo_2(nt) = 0.0
 do it = 2, nt-1
-    seismo_2(it) = ( seismo_2(it+1) - seismo_1(it-1) ) / (2*dt)
+    if (differentiate == 0) seismo_2(it) = seismo_1(it)
+    if (differentiate == 1) seismo_2(it) = ( seismo_1(it+1) - seismo_1(it-1) ) / (2*dt)
+    if (differentiate == 2) seismo_2(it) = ( seismo_1(it+1) - 2 * seismo_1(it) + seismo_1(it-1) ) / dt**2
+
 end do
 
 
@@ -125,8 +130,13 @@ end if
 
 
 !!!!!!!!!! WINDOW !!!!!!!!!!!!!!!!!!!!
-it_off = floor(w_delay/dt)
-it_wdt = 2*floor(w_width/(2.*dt))
+if (use_custom_window) then
+  it_off = floor(w_delay/dt)
+  it_wdt = 2*floor(w_width/(2.*dt))
+else
+  it_off = int(nthalf/2)
+  it_wdt = int(nthalf) + 1
+endif
 alpha = w_tukey
 
 if (use_positive_branch) then
@@ -179,7 +189,7 @@ write(*,*) ''
 write(*,*) 'Writing to file: '//trim(file_in)//'.adj'
 
 do it = 1,nt
-    write(1002,*), t(it), seismo_adj(it)
+    write(1002,'(f16.12,1pe18.8)'), t(it), seismo_adj(it)
 end do
 close(1002)
 

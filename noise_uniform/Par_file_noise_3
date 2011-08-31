@@ -2,9 +2,9 @@
 title                           = Noise_2D
 
 # forward or adjoint simulation
-SIMULATION_TYPE                 = 2   # 1 = forward, 2 = adjoint + kernels
-NOISE_TOMOGRAPHY                = 3   # 0 = earthquake simulation, 1/2/3 = noise simulation
-SAVE_FORWARD                    = .false.  # save the last frame, needed for adjoint simulation
+SIMULATION_TYPE                 = 2
+NOISE_TOMOGRAPHY                = 3
+SAVE_FORWARD                    = .false.
 
 # parameters concerning partitioning
 nproc                           = 1              # number of processes
@@ -98,7 +98,7 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes # file containing the
 # PARAMETERS FOR INTERNAL MESHING
 
 # file containing interfaces for internal mesh
-interfacesfile                  = ../EXAMPLES/noise_uniform/uniform.dat
+interfacesfile                  = uniform.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
