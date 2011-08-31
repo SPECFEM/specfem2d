@@ -112,13 +112,13 @@
   integer :: i,ios
 
   !define master receiver
-  open(unit=509,file='NOISE_TOMOGRAPHY/irec_master',status='old',action='read',iostat=ios)
+  open(unit=509,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/irec_master',status='old',action='read',iostat=ios)
   if (ios == 0) then
     read(509,*) irec_master
   else
     irec_master=1
     write(*,*) ''
-    write(*,*) 'Error opening NOISE_TOMOGRAPHY/irec_master.'
+    write(*,*) 'Error opening OUTPUT_FILES/NOISE_TOMOGRAPHY/irec_master.'
     write(*,*) 'Using irec_master=1. Continuing.'
     write(*,*) ''
   endif
@@ -227,7 +227,7 @@
   elseif(METHOD == 2) then
 
     ! METHOD 2: read in custom noise function
-    open(unit=55,file='NOISE_TOMOGRAPHY/S_squared',status='old')
+    open(unit=55,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/S_squared',status='old')
     do it = 1,NSTEP
       READ(55,*) time_function_noise(it)
     enddo
