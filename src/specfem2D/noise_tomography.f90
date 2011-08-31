@@ -193,7 +193,7 @@
   real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLZ,NSTEP) :: source_array_noise
 
   !local parameters
-  integer, parameter :: METHOD = 1
+  integer, parameter :: time_function_type_noise = 1
   integer :: it
   real(kind=CUSTOM_REAL) :: t
 
@@ -205,33 +205,79 @@
 
 
   !local parameters
-  real(kind=CUSTOM_REAL) ::f0_noise, aval_noise, t0_noise
+  real(kind=CUSTOM_REAL) ::f0, aval, t0
 
 
-  if(METHOD == 1) then
+  time_function_noise(:) = 0._CUSTOM_REAL
+  t0   = ((NSTEP-1)/2.)*deltat 
+  f0   = 15.0d0
+  aval = PI*PI*f0*f0
+  factor_noise = 1.d3
 
-    ! METHOD 1: use Ricker function
-    time_function_noise(:) = 0._CUSTOM_REAL
-    f0_noise   = 15.0d0
-    aval_noise = PI*PI*f0_noise*f0_noise
-    t0_noise   = ((NSTEP-1)/2.)*deltat + 0.05d0
-    factor_noise = 1.d3
 
+  ! A NOTE ABOUT TIME FUNCTIONS FOR NOISE SIMULATIONS
+  !
+  ! In noise forward modeling and inversion, "time function" refers to the
+  ! source time function of the first noise simulation (which, in Tromp et al.
+  ! 2010 is also called the generating wavefield simulation).
+  !
+  ! Typically, the time function must be computed based on the frequency
+  ! characterstics of the desired noise sources. For example, if you wanted to
+  ! generate correlograms based on the seismic noise field of the continental
+  ! US, you could create a time function by inverse Fourier transforming a 
+  ! a model of the seismic noise spectrum for that region.
+  !
+  ! In such cases--where the user requires a realistic model of the ambient noise
+  ! field--the variable "time_function_type_noise" should be set to 0 and the
+  ! time function should be supplied via the file
+  ! OUTPUT_FILES/NOISE_TOMOGRAPHY/S_squared
+
+  if( time_function_type_noise == 1) then
+    !Ricker (second derivative of a Gaussian) time function
     do it = 1,NSTEP
       t = it*deltat
-      time_function_noise(it) =  factor_noise * &
-            (1. - 2.*aval_noise*((t-t0_noise)**2.)) * &
-            exp(-aval_noise*(t-t0_noise)**2.)
+      time_function_noise(it) = - factor_noise * 2.*aval * (1. - 2.*aval*(t-t0)**2.) * &
+                                 exp(-aval*(t-t0)**2.)
     enddo
 
-  elseif(METHOD == 2) then
 
-    ! METHOD 2: read in custom noise function
+  elseif( time_function_type_noise == 2) then
+    !first derivative of a Gaussian time function
+    do it = 1,NSTEP
+      t = it*deltat
+      time_function_noise(it) = - factor_noise * (2.*aval*(t-t0)) * exp(-aval*(t-t0)**2.)
+    enddo
+
+
+  elseif( time_function_type_noise == 3) then
+    !Gaussian time function
+    do it = 1,NSTEP
+      t = it*deltat
+      time_function_noise(it) = factor_noise * exp(-aval*(t-t0)**2.)
+    enddo
+
+
+  elseif( time_function_type_noise == 4 ) then
+    !reproduce time function from Figure 2a of Tromp et al. 2010
+    do it = 1,NSTEP
+      t = it*deltat
+      time_function_noise(it) = factor_noise * &
+       4.*aval**2. * (3. - 12.*aval*(t-t0)**2. + 4.*aval**2.*(t-t0)**4.) * &
+       exp(-aval*(t-t0)**2.) 
+    enddo
+
+
+  elseif( time_function_type_noise == 0 ) then
+    !read in time function from file S_squared
     open(unit=55,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/S_squared',status='old')
     do it = 1,NSTEP
       READ(55,*) time_function_noise(it)
     enddo
     close(55)
+
+
+  else
+    call exit_MPI('unknown noise time function')
 
   endif
 
