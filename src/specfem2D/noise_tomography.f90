@@ -51,23 +51,21 @@
 ! =============================================================================================================
 ! specify spatial distribution of microseismic noise sources
 ! USERS need to modify this subroutine to suit their own needs
-  subroutine create_mask_noise(p_sv,nglob,coord,angle_noise,mask_noise)
+  subroutine create_mask_noise(nglob,coord,mask_noise)
 
   implicit none
   include "constants.h"
 
   !input
-  logical :: p_sv
   integer :: nglob
-  real(kind=CUSTOM_REAL) :: angle_noise
   real(kind=CUSTOM_REAL), dimension(2,nglob) :: coord
 
   !output
   real(kind=CUSTOM_REAL), dimension(nglob) :: mask_noise
 
   !local
-  integer :: iglob, ios
-  real(kind=CUSTOM_REAL) :: xx,zz,mask_noise_out
+  integer :: iglob
+  real(kind=CUSTOM_REAL) :: xx,zz
 
   !specify distribution of noise sources as a function of xx, zz
   do iglob = 1,nglob
@@ -136,6 +134,8 @@
 
 
   !check simulation parameters
+
+  if ((NOISE_TOMOGRAPHY/=0) .and. (p_sv)) write(*,*) 'Warning: For P-SV case, noise tomography subroutines not yet fully tested.'
   if (NOISE_TOMOGRAPHY==1) then
      if (SIMULATION_TYPE/=1) call exit_mpi('NOISE_TOMOGRAPHY=1 requires SIMULATION_TYPE=1    -> check DATA/Par_file')
 
@@ -176,7 +176,7 @@
 ! =============================================================================================================
 ! read in time series based on noise spectrum and construct noise "source" array 
   subroutine compute_source_array_noise(p_sv,NSTEP,deltat,nglob,ibool,ispec_noise, &
-                       xi_noise,gamma_noise,angle_noise,xigll,zigll, &
+                       xi_noise,gamma_noise,xigll,zigll, &
                        time_function_noise,source_array_noise)
 
   implicit none
@@ -186,9 +186,9 @@
   logical :: p_sv
   integer NSTEP, ispec_noise,nglob
   integer, dimension(NGLLX,NGLLZ,nglob) :: ibool
-  real(kind=CUSTOM_REAL) :: deltat, xi_noise, gamma_noise, angle_noise
+  real(kind=CUSTOM_REAL) :: deltat, xi_noise, gamma_noise
 
-  !output paramters
+  !output parameters
   real(kind=CUSTOM_REAL), dimension(NSTEP) :: time_function_noise
   real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLZ,NSTEP) :: source_array_noise
 
@@ -204,11 +204,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLLZ) :: hgamma, hpgamma
 
 
-  !local paramters, for method 1
+  !local parameters
   real(kind=CUSTOM_REAL) ::f0_noise, aval_noise, t0_noise
-
-  !local paramters, for method 2
-  character(len=60) :: file_in_noise
 
 
   if(METHOD == 1) then
@@ -266,8 +263,7 @@
 ! =============================================================================================================
 ! inject the "source" that drives the "generating wavefield"
   subroutine add_point_source_noise(p_sv,it,NSTEP,nglob,ibool,ispec_noise, &
-                                   accel_elastic,angle_noise,time_function_noise, &
-                                   source_array_noise)
+                                   accel_elastic,angle_noise,source_array_noise)
   implicit none
   include "constants.h"
 
@@ -278,7 +274,6 @@
   integer, dimension(NGLLX,NGLLZ,nglob) :: ibool
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic
   real(kind=CUSTOM_REAL) :: angle_noise
-  real(kind=CUSTOM_REAL), dimension(NSTEP) :: time_function_noise
   real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLZ,NSTEP) :: source_array_noise
 
   !local variables
@@ -309,7 +304,7 @@
 ! =============================================================================================================
 ! read in and inject the "source" that drives the "enemble forward wavefield"
 ! (recall that the ensemble forward wavefield has a spatially distributed source)
-  subroutine add_surface_movie_noise(p_sv,it,NSTEP,nglob,ibool, &
+  subroutine add_surface_movie_noise(p_sv,it,NSTEP,nglob, &
       accel_elastic,surface_movie_x_noise,surface_movie_y_noise, &
       surface_movie_z_noise,mask_noise)
 
@@ -320,7 +315,6 @@
   logical :: p_sv
   integer :: it, NSTEP
   integer :: nglob
-  integer, dimension(NGLLX,NGLLZ,nglob) :: ibool
 
   real(kind=CUSTOM_REAL), dimension(nglob) :: mask_noise
   real(kind=CUSTOM_REAL), dimension(nglob) :: &
@@ -328,8 +322,8 @@
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic
 
   !local variables
-  integer :: i,j,iglob,ios
-  real(kind=CUSTOM_REAL) :: factor_noise, hlagrange
+  integer :: ios
+  real(kind=CUSTOM_REAL) :: factor_noise
   character(len=60) :: file_in_noise
 
 

@@ -791,7 +791,7 @@
   integer :: ispecperio, ispecperio2, ispec2, i2, j2
   integer :: iglob_target_to_replace, ispec3, i3, j3
 
-!<RMODRAK
+!<NOISE_TOMOGRAPHY
   ! NOISE_TOMOGRAPHY = 0 - turn noise tomography subroutines off, resulting in 
   ! an earthquake simulation rather than a noise simulation
 
@@ -819,7 +819,7 @@
     surface_movie_x_noise, surface_movie_y_noise, surface_movie_z_noise
 
 
-!>RMODRAK
+!>NOISE_TOMOGRAPHY
 
 
 !! DK DK Feb 2010 for periodic conditions: detect common points between left and right edges
@@ -3558,7 +3558,7 @@
 ! open the file in which we will store the energy curve
   if(output_energy .and. myrank == 0) open(unit=IOUT_ENERGY,file='energy.dat',status='unknown')
 
-!<RMODRAK
+!<NOISE_TOMOGRAPHY
 
   if (NOISE_TOMOGRAPHY /= 0) then
 
@@ -3582,18 +3582,18 @@
 
   if (NOISE_TOMOGRAPHY == 1) then
     call compute_source_array_noise(p_sv,NSTEP,deltat,nglob,ibool,ispec_noise, &
-                                 xi_noise,gamma_noise,angle_noise,xigll,zigll, &
+                                 xi_noise,gamma_noise,xigll,zigll, &
                                  time_function_noise,source_array_noise)
 
   elseif (NOISE_TOMOGRAPHY == 2) then
-    call create_mask_noise(p_sv,nglob,coord,angle_noise,mask_noise)
+    call create_mask_noise(nglob,coord,mask_noise)
 
   elseif (NOISE_TOMOGRAPHY == 3) then
-    call create_mask_noise(p_sv,nglob,coord,angle_noise,mask_noise)
+    call create_mask_noise(nglob,coord,mask_noise)
 
   endif
 
-!>RMODRAK
+!>NOISE_TOMOGRAPHY
 
 !
 !----          s t a r t   t i m e   i t e r a t i o n s
@@ -4930,28 +4930,27 @@
           endif ! if this processor carries the source and the source element is elastic
         enddo ! do i_source=1,NSOURCES
 
-!<RMODRAK
+!<NOISE_TOMOGRAPHY
 
         ! inject wavefield sources for noise simulations
 
         if (NOISE_TOMOGRAPHY == 1) then
           call  add_point_source_noise(p_sv,it,NSTEP,nglob,ibool,ispec_noise, &
-                            accel_elastic,angle_noise,time_function_noise, &
-                            source_array_noise)
+                            accel_elastic,angle_noise,source_array_noise)
 
         elseif (NOISE_TOMOGRAPHY == 2) then
-          call add_surface_movie_noise(p_sv,it,NSTEP,nglob,ibool,accel_elastic, &
+          call add_surface_movie_noise(p_sv,it,NSTEP,nglob,accel_elastic, &
                             surface_movie_x_noise,surface_movie_y_noise, &
                             surface_movie_z_noise,mask_noise)
 
         elseif (NOISE_TOMOGRAPHY == 3) then
-          call add_surface_movie_noise(p_sv,it,NSTEP,nglob,ibool,b_accel_elastic, &
+          call add_surface_movie_noise(p_sv,it,NSTEP,nglob,b_accel_elastic, &
                             surface_movie_x_noise,surface_movie_y_noise, &
                             surface_movie_z_noise,mask_noise)
 
         endif
 
-!>RMODRAK
+!>NOISE_TOMOGRAPHY
 
 
       endif ! if not using an initial field
@@ -6311,11 +6310,11 @@
 
     endif ! if(SIMULATION_TYPE == 2)
 
-!<RMODRAK
+!<NOISE_TOMOGRAPHY
     if ( NOISE_TOMOGRAPHY == 1 ) then
       call save_surface_movie_noise(p_sv,it,nglob,displ_elastic)
     endif
-!>RMODRAK
+!>NOISE_TOMOGRAPHY
 
 
 !
