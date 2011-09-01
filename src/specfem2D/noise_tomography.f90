@@ -163,7 +163,7 @@
 
 !  moment tensor elements must be zero!
    do i=1,NSOURCES
-     if ( (Mxx(i) /= 0.d0) .or. (Mxz(i) /= 0.d0) .or. (Mzz(i) /= 0.d0) .or. & 
+     if ( (Mxx(i) /= 0.d0) .or. (Mxz(i) /= 0.d0) .or. (Mzz(i) /= 0.d0) .or. &
           (factor(i) /= 0.d0)) then
        call exit_mpi('For noise simulations, all moment tensor elements must be zero. Exiting.')
      endif
@@ -174,7 +174,7 @@
 
 
 ! =============================================================================================================
-! read in time series based on noise spectrum and construct noise "source" array 
+! read in time series based on noise spectrum and construct noise "source" array
   subroutine compute_source_array_noise(p_sv,NSTEP,deltat,nglob,ibool,ispec_noise, &
                        xi_noise,gamma_noise,xigll,zigll, &
                        time_function_noise,source_array_noise)
@@ -203,7 +203,7 @@
   integer, parameter :: time_function_type = 1
 
 
-! --------------------------------------------------------------------------------- 
+! ---------------------------------------------------------------------------------
 ! A NOTE ABOUT TIME FUNCTIONS FOR NOISE SIMULATIONS
 !
 ! In noise forward modeling and inversion, "time function" is used to refer
@@ -215,7 +215,7 @@
 ! particular geographic region, you would have to use a time function created
 ! by inverse Fourier transforming a model of the noise spectrum for that
 ! region.
-! 
+!
 ! IN CASES SUCH AS THIS--WHERE THE USER REQUIRES A REALISTIC MODEL OF THE
 ! SEISMIC NOISE FIELD--THE VARIABE "time_function_type" SHOULD BE SET TO 0
 ! AND A TIME FUNCTION ENCODING THE DESIRED NOISE SPECTRUM SHOULD BE
@@ -230,7 +230,7 @@
 ! ----------------------------------------------------------------------------------
 
   time_function_noise(:) = 0._CUSTOM_REAL
-  t0   = ((NSTEP-1)/2.)*deltat 
+  t0   = ((NSTEP-1)/2.)*deltat
   f0   = 15.0d0
   aval = PI*PI*f0*f0
   factor_noise = 1.d3
@@ -267,7 +267,7 @@
       t = it*deltat
       time_function_noise(it) = factor_noise * &
        4.*aval**2. * (3. - 12.*aval*(t-t0)**2. + 4.*aval**2.*(t-t0)**4.) * &
-       exp(-aval*(t-t0)**2.) 
+       exp(-aval*(t-t0)**2.)
     enddo
 
 

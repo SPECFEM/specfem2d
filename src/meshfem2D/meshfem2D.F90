@@ -945,7 +945,23 @@ program meshfem2D
 
   !--- compute position of the receivers and write the STATIONS file
 
-  if (generate_STATIONS .and. .not. read_external_mesh) then
+  if (generate_STATIONS) then
+
+!! DK DK for now we cannot use both enreg_surf_same_vertical and read_external_mesh
+!! DK DK because we need to know splines to define the shape of the surface of the model
+    if(any(enreg_surf_same_vertical) .and. read_external_mesh) &
+      stop 'for now we cannot use both enreg_surf_same_vertical and read_external_mesh'
+
+!! DK DK if we read an external mesh, the splines are not defined for the shape of the surface and of the interfaces
+!! DK DK therefore let us allocate dummy arrays just to be able to call the "save_stations_file" subroutine
+    if (read_external_mesh) then
+      npoints_interface_top = 1
+      max_npoints_interface = 1
+      allocate(xinterface_top(1))
+      allocate(zinterface_top(1))
+      allocate(coefs_interface_top(1))
+    endif
+
     call save_stations_file(nreceiverlines,nrec,xdeb,zdeb,xfin,zfin,enreg_surf_same_vertical, &
                             xinterface_top,zinterface_top,coefs_interface_top, &
                             npoints_interface_top,max_npoints_interface)

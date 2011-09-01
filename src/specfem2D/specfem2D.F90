@@ -692,7 +692,7 @@
 ! to compute analytical initial plane wave field
   double precision :: angleforce_refl, c_inc, c_refl, cploc, csloc
   double precision, dimension(2) :: A_plane, B_plane, C_plane
-  double precision :: z0_source, x0_source, time_offset
+  double precision :: time_offset
 
 ! beyond critical angle
   integer , dimension(:), allocatable :: left_bound,right_bound,bot_bound
@@ -792,7 +792,7 @@
   integer :: iglob_target_to_replace, ispec3, i3, j3
 
 !<NOISE_TOMOGRAPHY
-  ! NOISE_TOMOGRAPHY = 0 - turn noise tomography subroutines off, resulting in 
+  ! NOISE_TOMOGRAPHY = 0 - turn noise tomography subroutines off, resulting in
   ! an earthquake simulation rather than a noise simulation
 
   ! NOISE_TOMOGRAPHY = 1 - compute "generating wavefield" and store the result
@@ -800,7 +800,7 @@
   ! NOISE_TOMOGRAPHY = 2 - compute "ensemble forward wavefield"; if an adjoint
   ! simulation is planned, users need to manually extract cross-correlograms
 
-  ! NOISE_TOMOGRAPHY = 3 - carry out adjoint simulation; for noise tomography 
+  ! NOISE_TOMOGRAPHY = 3 - carry out adjoint simulation; for noise tomography
   ! applications, users need to supply adjoint source(s) based on cross-
   ! -correlograms from previous simulation
 
@@ -4397,7 +4397,7 @@
                dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1, &
                phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
-               deltat,coord,add_Bielak_conditions, x0_source, z0_source, &
+               deltat,coord,add_Bielak_conditions, x_source(1), z_source(1), &
                A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset, f0(1),&
                v0x_left(1,it),v0z_left(1,it),v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
                t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it),t0x_bot(1,it),t0z_bot(1,it), &
