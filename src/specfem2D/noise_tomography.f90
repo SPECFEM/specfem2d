@@ -193,20 +193,41 @@
   real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLZ,NSTEP) :: source_array_noise
 
   !local parameters
-  integer, parameter :: time_function_type_noise = 1
-  integer :: it
+  integer :: it,i,j,iglob
   real(kind=CUSTOM_REAL) :: t
-
-  integer :: i,j,iglob
-  real(kind=CUSTOM_REAL) :: factor_noise
   real(kind=CUSTOM_REAL) :: xigll, zigll
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: hxi, hpxi
   real(kind=CUSTOM_REAL), dimension(NGLLZ) :: hgamma, hpgamma
+  real(kind=CUSTOM_REAL) :: factor_noise, f0, aval, t0
+
+  integer, parameter :: time_function_type = 1
 
 
-  !local parameters
-  real(kind=CUSTOM_REAL) ::f0, aval, t0
-
+! --------------------------------------------------------------------------------- 
+! A NOTE ABOUT TIME FUNCTIONS FOR NOISE SIMULATIONS
+!
+! In noise forward modeling and inversion, "time function" is used to refer
+! to the source time function that drives the first noise simulation.
+!
+! Typically, the time function must be computed based on the frequency
+! characterstics of the desired noise sources. For example, if you wanted to
+! generate synthetic correlograms representative of the noise field in a
+! particular geographic region, you would have to use a time function created
+! by inverse Fourier transforming a model of the noise spectrum for that
+! region.
+! 
+! IN CASES SUCH AS THIS--WHERE THE USER REQUIRES A REALISTIC MODEL OF THE
+! SEISMIC NOISE FIELD--THE VARIABE "time_function_type" SHOULD BE SET TO 0
+! AND A TIME FUNCTION ENCODING THE DESIRED NOISE SPECTRUM SHOULD BE
+! ***SUPPLIED BY THE USER*** IN THE FILE
+! "OUTPUT_FILES/NOISE_TOMOGRAPHY/S_squared"
+!
+! The alternative--setting "time_function_type" to a value other than
+! 0--results in an idealized time function that does represent a physically
+! realizable noise spectrum but which nevertheless may be useful for
+! performing tests or illustrating certain theoretical concepts.
+!
+! ----------------------------------------------------------------------------------
 
   time_function_noise(:) = 0._CUSTOM_REAL
   t0   = ((NSTEP-1)/2.)*deltat 
@@ -215,24 +236,7 @@
   factor_noise = 1.d3
 
 
-  ! A NOTE ABOUT TIME FUNCTIONS FOR NOISE SIMULATIONS
-  !
-  ! In noise forward modeling and inversion, "time function" refers to the
-  ! source time function of the first noise simulation (which, in Tromp et al.
-  ! 2010 is also called the generating wavefield simulation).
-  !
-  ! Typically, the time function must be computed based on the frequency
-  ! characterstics of the desired noise sources. For example, if you wanted to
-  ! generate correlograms based on the seismic noise field of the continental
-  ! US, you could create a time function by inverse Fourier transforming a 
-  ! a model of the seismic noise spectrum for that region.
-  !
-  ! In such cases--where the user requires a realistic model of the ambient noise
-  ! field--the variable "time_function_type_noise" should be set to 0 and the
-  ! time function should be supplied via the file
-  ! OUTPUT_FILES/NOISE_TOMOGRAPHY/S_squared
-
-  if( time_function_type_noise == 1) then
+  if( time_function_type == 1) then
     !Ricker (second derivative of a Gaussian) time function
     do it = 1,NSTEP
       t = it*deltat
@@ -241,7 +245,7 @@
     enddo
 
 
-  elseif( time_function_type_noise == 2) then
+  elseif( time_function_type == 2) then
     !first derivative of a Gaussian time function
     do it = 1,NSTEP
       t = it*deltat
@@ -249,7 +253,7 @@
     enddo
 
 
-  elseif( time_function_type_noise == 3) then
+  elseif( time_function_type == 3) then
     !Gaussian time function
     do it = 1,NSTEP
       t = it*deltat
@@ -257,7 +261,7 @@
     enddo
 
 
-  elseif( time_function_type_noise == 4 ) then
+  elseif( time_function_type == 4 ) then
     !reproduce time function from Figure 2a of Tromp et al. 2010
     do it = 1,NSTEP
       t = it*deltat
@@ -267,7 +271,7 @@
     enddo
 
 
-  elseif( time_function_type_noise == 0 ) then
+  elseif( time_function_type == 0 ) then
     !read in time function from file S_squared
     open(unit=55,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/S_squared',status='old')
     do it = 1,NSTEP
