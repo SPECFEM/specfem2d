@@ -57,7 +57,7 @@ cp Par_file_noise_3  DATA/Par_file
 ./xmeshfem2D; ./xspecfem2D
 mkdir OUTPUT_ALL/step_3
 mv OUTPUT_FILES/image*  OUTPUT_ALL/step_3
-mv OUTPUT_FILES/*.semd  OUTPUT_ALL/step_3
+mv SEM/*Y.adj           OUTPUT_ALL/step_3
 mv OUTPUT_FILES/proc*   OUTPUT_ALL/step_3
-mv DATA/Par_file  OUTPUT_ALL/step_3
+mv DATA/Par_file        OUTPUT_ALL/step_3
 
