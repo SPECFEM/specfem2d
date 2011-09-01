@@ -8,7 +8,7 @@ echo "running example: `date`"
 currentdir=`pwd`
 
 echo
-echo "(will take about 5 minutes)"
+echo "(will take a few minutes)"
 echo
 
 # sets up directory structure in current example directoy
@@ -23,6 +23,7 @@ mkdir -p DATA
 cd DATA/
 ln -s ../Par_file_canyon Par_file
 ln -s ../SOURCE_canyon SOURCE
+ln -s ../mesh mesh
 cd ../
 
 # cleans output files
@@ -30,7 +31,7 @@ rm -rf OUTPUT_FILES/*
 
 # compiles executables in root directory
 cd ../../
-make > tmp.log
+make
 cd $currentdir
 
 # links executables
@@ -44,15 +45,15 @@ cp DATA/SOURCE OUTPUT_FILES/
 
 # runs database generation
 echo
-echo "  running mesher..."
+echo "  running the mesher..."
 echo
-./xmeshfem2D > OUTPUT_FILES/output_mesher.txt
+./xmeshfem2D
 
 # runs simulation
 echo
-echo "  running solver..."
+echo "  running the solver..."
 echo
-./xspecfem2D > OUTPUT_FILES/output_solver.txt
+./xspecfem2D
 
 # stores output
 cp DATA/SOURCE_xz.dat OUTPUT_FILES/
