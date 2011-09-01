@@ -129,7 +129,7 @@
       call exit_MPI('Unrecognized source_type: should be 1 for plane P waves, 2 for plane SV waves, 3 for Rayleigh wave')
     endif
 
-  ! allow negative angleforce(1): incidence from the right side of the domain 
+  ! allow negative angleforce(1): incidence from the right side of the domain
     angleforce_abs=abs(angleforce(1))
     if (angleforce_abs > pi/2.d0 .and. source_type(1) /= 3) then
       call exit_MPI("incorrect angleforce: must have 0 <= angleforce < 90")
@@ -330,7 +330,7 @@
         + C_plane(2) * ricker_Bielak_accel(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0(1))
 
    enddo
-   
+
 endif
 
 end subroutine prepare_initialfield
