@@ -376,8 +376,8 @@
   character(len=60) :: file_in_noise
 
 
-  write(file_in_noise,"('movie_noise_',i6.6)") NSTEP-it+1
-  open(unit=500,file='OUTPUT_FILES/'//trim(file_in_noise),status='old',form='unformatted',action='read',iostat=ios)
+  write(file_in_noise,"('eta_',i6.6)") NSTEP-it+1
+  open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/'//trim(file_in_noise),status='old',form='unformatted',action='read',iostat=ios)
   if( ios /= 0) write(*,*) 'Error retrieving generating wavefield.'
   if(p_sv) then
     read(500) surface_movie_x_noise
@@ -414,7 +414,7 @@
   end subroutine add_surface_movie_noise
 
 ! =============================================================================================================
-! save a snapshot of the "generating wavefield" that will be used to drive
+! save a snapshot of the "generating wavefield" eta that will be used to drive
 ! the "ensemble forward wavefield"
   subroutine save_surface_movie_noise(p_sv,it,nglob,displ_elastic)
 
@@ -429,8 +429,8 @@
   !local parameters
   character(len=60) file_out_noise
 
-  write(file_out_noise,"('movie_noise_',i6.6)") it
-  open(unit=500,file='OUTPUT_FILES/'//trim(file_out_noise),status='unknown',form='unformatted',action='write')
+  write(file_out_noise,"('eta_',i6.6)") it
+  open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/'//trim(file_out_noise),status='unknown',form='unformatted',action='write')
 
   if(p_sv) then
     write(500) displ_elastic(1,:)
