@@ -112,13 +112,13 @@
   integer :: i,ios
 
   !define master receiver
-  open(unit=509,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/irec_master',status='old',action='read',iostat=ios)
+  open(unit=509,file='DATA/NOISE_TOMOGRAPHY/irec_master',status='old',action='read',iostat=ios)
   if (ios == 0) then
     read(509,*) irec_master
   else
     irec_master=1
     write(*,*) ''
-    write(*,*) 'Error opening OUTPUT_FILES/NOISE_TOMOGRAPHY/irec_master.'
+    write(*,*) 'Error opening DATA/NOISE_TOMOGRAPHY/irec_master.'
     write(*,*) 'Using irec_master=1. Continuing.'
     write(*,*) ''
   endif
@@ -219,8 +219,7 @@
 ! IN CASES SUCH AS THIS--WHERE THE USER REQUIRES A REALISTIC MODEL OF THE
 ! SEISMIC NOISE FIELD--THE VARIABE "time_function_type" SHOULD BE SET TO 0
 ! AND A TIME FUNCTION ENCODING THE DESIRED NOISE SPECTRUM SHOULD BE
-! ***SUPPLIED BY THE USER*** IN THE FILE
-! "OUTPUT_FILES/NOISE_TOMOGRAPHY/S_squared"
+! ***SUPPLIED BY THE USER*** IN THE FILE "DATA/NOISE_TOMOGRAPHY/S_squared"
 !
 ! The alternative--setting "time_function_type" to a value other than
 ! 0--results in an idealized time function that does represent a physically
@@ -236,7 +235,16 @@
   factor_noise = 1.d3
 
 
-  if( time_function_type == 1) then
+  if ( time_function_type == 0) then
+    !read in time function from file S_squared
+    open(unit=55,file='DATA/NOISE_TOMOGRAPHY/S_squared',status='old')
+    do it = 1,NSTEP
+      READ(55,*) time_function_noise(it)
+    enddo
+    close(55)
+
+
+  elseif( time_function_type == 1) then
     !Ricker (second derivative of a Gaussian) time function
     do it = 1,NSTEP
       t = it*deltat
@@ -269,15 +277,6 @@
        4.*aval**2. * (3. - 12.*aval*(t-t0)**2. + 4.*aval**2.*(t-t0)**4.) * &
        exp(-aval*(t-t0)**2.)
     enddo
-
-
-  elseif( time_function_type == 0 ) then
-    !read in time function from file S_squared
-    open(unit=55,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/S_squared',status='old')
-    do it = 1,NSTEP
-      READ(55,*) time_function_noise(it)
-    enddo
-    close(55)
 
 
   else
