@@ -4,15 +4,17 @@ RUN_DIR=$PWD
 
 # prepare directories
 rm -rf   DATA SEM NOISE_TOMOGRAPHY OUTPUT_FILES OUTPUT_ALL
-mkdir -p DATA SEM NOISE_TOMOGRAPHY OUTPUT_FILES OUTPUT_ALL
+mkdir -p DATA SEM NOISE_TOMOGRAPHY OUTPUT_FILES OUTPUT_ALL DATA/NOISE_TOMOGRAPHY OUTPUT_FILES/NOISE_TOMOGRAPHY
 
 
 # prepare files
 cp SOURCE_noise           DATA/SOURCE
 cp STATIONS_target_noise  DATA/STATIONS_target
-cp S_squared              NOISE_TOMOGRAPHY
 cp uniform.dat            DATA/
-echo 1 >                  NOISE_TOMOGRAPHY/irec_master
+echo 1 >                  DATA/NOISE_TOMOGRAPHY/irec_master
+if [ -f S_squared ]; then cp S_squared DATA/NOISE_TOMOGRAPHY/; fi
+
+# compile
 cd ../..
 make
 cd $RUN_DIR
