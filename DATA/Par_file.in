@@ -14,7 +14,7 @@ ngnod                           = 9              # number of control nodes per e
 initialfield                    = .false.        # use a plane wave as source or not
 add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
 assign_external_model           = .false.        # define external earth model or not
-READ_EXTERNAL_SEP_FILE          = .false.        # Read external SEP file from DATA/model_velocity.dat_input, or use routine
+READ_EXTERNAL_SEP_FILE          = .false.        # Read external model from DATA/model_velocity.dat_input, or use routine
 TURN_ATTENUATION_ON             = .false.        # turn attenuation on or off for solid medium
 TURN_VISCATTENUATION_ON         = .false.        # turn viscous attenuation on or off
 Q0                              =  1             # quality factor for viscous attenuation
@@ -34,7 +34,7 @@ N_SLS                           = 2                      # number of standard li
 f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, else it is f0
 
 # receiver line parameters for seismograms
-seismotype                      = 1              # record 1=displ 2=veloc 3=accel 4=pressure
+seismotype                      = 1              # record 1=displ 2=veloc 3=accel 4=pressure 6=potential
 generate_STATIONS               = .true.         # creates a STATION file in ./DATA
 nreceiverlines                  = 1              # number of receiver lines
 anglerec                        = 0.d0           # angle to rotate components at receivers

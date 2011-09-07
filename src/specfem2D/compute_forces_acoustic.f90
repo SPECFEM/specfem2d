@@ -89,10 +89,10 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
   double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,rhoext
 
-  double precision, dimension(NGLLZ,nspec_left,NSTEP) :: b_absorb_acoustic_left
-  double precision, dimension(NGLLZ,nspec_right,NSTEP) :: b_absorb_acoustic_right
-  double precision, dimension(NGLLX,nspec_top,NSTEP) :: b_absorb_acoustic_top
-  double precision, dimension(NGLLX,nspec_bottom,NSTEP) :: b_absorb_acoustic_bottom
+  real(kind=CUSTOM_REAL), dimension(NGLLZ,nspec_left,NSTEP) :: b_absorb_acoustic_left
+  real(kind=CUSTOM_REAL), dimension(NGLLZ,nspec_right,NSTEP) :: b_absorb_acoustic_right
+  real(kind=CUSTOM_REAL), dimension(NGLLX,nspec_top,NSTEP) :: b_absorb_acoustic_top
+  real(kind=CUSTOM_REAL), dimension(NGLLX,nspec_bottom,NSTEP) :: b_absorb_acoustic_bottom
 
 ! derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
@@ -444,7 +444,7 @@
                SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right,&
                nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
-               b_absorb_acoustic_bottom,b_absorb_acoustic_top)
+               b_absorb_acoustic_bottom,b_absorb_acoustic_top,IS_BACKWARD_FIELD)
 
 ! compute forces for the acoustic elements
 
@@ -471,7 +471,7 @@
   double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,rhoext
 
   logical :: anyabs,assign_external_model
-  logical :: SAVE_FORWARD
+  logical :: SAVE_FORWARD,IS_BACKWARD_FIELD
 
 ! derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
@@ -487,10 +487,10 @@
   integer, dimension(nelemabs) :: ib_bottom
   integer, dimension(nelemabs) :: ib_top
 
-  double precision, dimension(NGLLZ,nspec_left,NSTEP) :: b_absorb_acoustic_left
-  double precision, dimension(NGLLZ,nspec_right,NSTEP) :: b_absorb_acoustic_right
-  double precision, dimension(NGLLX,nspec_top,NSTEP) :: b_absorb_acoustic_top
-  double precision, dimension(NGLLX,nspec_bottom,NSTEP) :: b_absorb_acoustic_bottom
+  real(kind=CUSTOM_REAL), dimension(NGLLZ,nspec_left,NSTEP) :: b_absorb_acoustic_left
+  real(kind=CUSTOM_REAL), dimension(NGLLZ,nspec_right,NSTEP) :: b_absorb_acoustic_right
+  real(kind=CUSTOM_REAL), dimension(NGLLX,nspec_top,NSTEP) :: b_absorb_acoustic_top
+  real(kind=CUSTOM_REAL), dimension(NGLLX,nspec_bottom,NSTEP) :: b_absorb_acoustic_bottom
 
 !---
 !--- local variables
@@ -624,10 +624,17 @@
                   potential_dot_dot_acoustic(iglob) &
                   - potential_dot_acoustic(iglob)*weight/cpl/rhol
             elseif(SIMULATION_TYPE == 2) then
-              ! adds (previously) stored contribution
-              potential_dot_dot_acoustic(iglob) = &
-                  potential_dot_dot_acoustic(iglob) &
-                  - b_absorb_acoustic_left(j,ib_left(ispecabs),NSTEP-it+1)
+              if(IS_BACKWARD_FIELD) then
+                ! adds (previously) stored contribution
+                potential_dot_dot_acoustic(iglob) = &
+                    potential_dot_dot_acoustic(iglob) &
+                    - b_absorb_acoustic_left(j,ib_left(ispecabs),NSTEP-it+1)
+              else
+                ! adds absorbing boundary contribution
+                potential_dot_dot_acoustic(iglob) = &
+                    potential_dot_dot_acoustic(iglob) &
+                    - potential_dot_acoustic(iglob)*weight/cpl/rhol
+              endif
             endif
 
             if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
@@ -663,9 +670,17 @@
                   potential_dot_dot_acoustic(iglob) &
                   - potential_dot_acoustic(iglob)*weight/cpl/rhol
             elseif(SIMULATION_TYPE == 2) then
-              potential_dot_dot_acoustic(iglob) = &
-                  potential_dot_dot_acoustic(iglob) &
-                  - b_absorb_acoustic_right(j,ib_right(ispecabs),NSTEP-it+1)
+              if(IS_BACKWARD_FIELD) then
+                ! adds (previously) stored contribution
+                potential_dot_dot_acoustic(iglob) = &
+                    potential_dot_dot_acoustic(iglob) &
+                    - b_absorb_acoustic_right(j,ib_right(ispecabs),NSTEP-it+1)
+              else
+                ! adds absorbing boundary contribution
+                potential_dot_dot_acoustic(iglob) = &
+                    potential_dot_dot_acoustic(iglob) &
+                    - potential_dot_acoustic(iglob)*weight/cpl/rhol
+              endif
             endif
 
             if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
@@ -702,9 +717,17 @@
                   potential_dot_dot_acoustic(iglob) &
                   - potential_dot_acoustic(iglob)*weight/cpl/rhol
             elseif(SIMULATION_TYPE == 2) then
-              potential_dot_dot_acoustic(iglob) = &
-                  potential_dot_dot_acoustic(iglob) &
-                  - b_absorb_acoustic_bottom(i,ib_bottom(ispecabs),NSTEP-it+1)
+              if(IS_BACKWARD_FIELD) then
+                ! adds (previously) stored contribution
+                potential_dot_dot_acoustic(iglob) = &
+                    potential_dot_dot_acoustic(iglob) &
+                    - b_absorb_acoustic_bottom(i,ib_bottom(ispecabs),NSTEP-it+1)
+              else
+                ! adds absorbing boundary contribution
+                potential_dot_dot_acoustic(iglob) = &
+                    potential_dot_dot_acoustic(iglob) &
+                    - potential_dot_acoustic(iglob)*weight/cpl/rhol
+              endif
             endif
 
             if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
@@ -741,9 +764,17 @@
                   potential_dot_dot_acoustic(iglob) &
                   - potential_dot_acoustic(iglob)*weight/cpl/rhol
             elseif(SIMULATION_TYPE == 2) then
-              potential_dot_dot_acoustic(iglob) = &
-                  potential_dot_dot_acoustic(iglob) &
-                  - b_absorb_acoustic_top(i,ib_top(ispecabs),NSTEP-it+1)
+              if(IS_BACKWARD_FIELD) then
+                ! adds (previously) stored contribution
+                potential_dot_dot_acoustic(iglob) = &
+                    potential_dot_dot_acoustic(iglob) &
+                    - b_absorb_acoustic_top(i,ib_top(ispecabs),NSTEP-it+1)
+              else
+                ! adds absorbing boundary contribution
+                potential_dot_dot_acoustic(iglob) = &
+                    potential_dot_dot_acoustic(iglob) &
+                    - potential_dot_acoustic(iglob)*weight/cpl/rhol
+              endif
             endif
 
             if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then

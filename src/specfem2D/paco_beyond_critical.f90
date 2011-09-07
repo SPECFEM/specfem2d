@@ -36,9 +36,9 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,angleforce,&
   double precision, dimension(nbot,NSTEP_global) :: v0x_bot,v0z_bot, t0x_bot,t0z_bot
 
   double precision, dimension(2,nglob) :: coord
-  double precision, dimension(2,nglob) :: displ_elastic
-  double precision, dimension(2,nglob) :: veloc_elastic
-  double precision, dimension(2,nglob) :: accel_elastic
+  real(kind=CUSTOM_REAL), dimension(2,nglob) :: displ_elastic
+  real(kind=CUSTOM_REAL), dimension(2,nglob) :: veloc_elastic
+  real(kind=CUSTOM_REAL), dimension(2,nglob) :: accel_elastic
 
   integer, dimension(:),allocatable :: local_pt
 

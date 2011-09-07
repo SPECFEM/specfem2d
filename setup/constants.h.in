@@ -34,6 +34,9 @@
 ! this flag is ignored in the case of a serial simulation
   logical, parameter :: FURTHER_REDUCE_CACHE_MISSES = .true.
 
+! output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
+  logical,parameter :: SU_FORMAT=.false.
+
 ! for inverse Cuthill-McKee (1969) permutation
   logical, parameter :: PERFORM_CUTHILL_MCKEE = .true.
   logical, parameter :: INVERSE = .true.

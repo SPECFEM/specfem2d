@@ -489,7 +489,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
               if(add_Bielak_conditions .and. initialfield) then
                  if (.not.over_critical_angle) then
                     call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                         x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
+                         x0_source, z0_source, A_plane, B_plane, C_plane, angleforce(1), angleforce_refl, &
                          c_inc, c_refl, time_offset,f0)
                     traction_x_t0 = (lambdal_relaxed+2*mul_relaxed)*dxUx + lambdal_relaxed*dzUz
                     traction_z_t0 = mul_relaxed*(dxUz + dzUx)
@@ -580,7 +580,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
               if(add_Bielak_conditions .and. initialfield) then
                  if (.not.over_critical_angle) then
                     call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                         x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
+                         x0_source, z0_source, A_plane, B_plane, C_plane, angleforce(1), angleforce_refl, &
                          c_inc, c_refl, time_offset,f0)
                     traction_x_t0 = (lambdal_relaxed+2*mul_relaxed)*dxUx + lambdal_relaxed*dzUz
                     traction_z_t0 = mul_relaxed*(dxUz + dzUx)
@@ -677,7 +677,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
               if(add_Bielak_conditions .and. initialfield) then
                  if (.not.over_critical_angle) then
                     call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                         x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
+                         x0_source, z0_source, A_plane, B_plane, C_plane, angleforce(1), angleforce_refl, &
                          c_inc, c_refl, time_offset,f0)
                     traction_x_t0 = mul_relaxed*(dxUz + dzUx)
                     traction_z_t0 = lambdal_relaxed*dxUx + (lambdal_relaxed+2*mul_relaxed)*dzUz
@@ -773,7 +773,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
               ! top or bottom edge, vertical normal vector
               if(add_Bielak_conditions .and. initialfield) then
                  call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                      x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
+                      x0_source, z0_source, A_plane, B_plane, C_plane, angleforce(1), angleforce_refl, &
                       c_inc, c_refl, time_offset,f0)
                  traction_x_t0 = mul_relaxed*(dxUz + dzUx)
                  traction_z_t0 = lambdal_relaxed*dxUx + (lambdal_relaxed+2*mul_relaxed)*dzUz

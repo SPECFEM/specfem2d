@@ -65,7 +65,7 @@
   integer :: nspec,numat
 
 ! vector field in an element
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLX) :: vector_field_element
+  real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLX) :: vector_field_element
 
 ! pressure in an element
   integer :: N_SLS
