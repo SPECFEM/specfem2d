@@ -195,7 +195,8 @@
   !local parameters
   integer :: it,i,j,iglob
   real(kind=CUSTOM_REAL) :: t
-  real(kind=CUSTOM_REAL) :: xigll, zigll
+  real(kind=CUSTOM_REAL), dimension(NGLLX) :: xigll
+  real(kind=CUSTOM_REAL), dimension(NGLLZ) :: zigll
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: hxi, hpxi
   real(kind=CUSTOM_REAL), dimension(NGLLZ) :: hgamma, hpgamma
   real(kind=CUSTOM_REAL) :: factor_noise, f0, aval, t0

@@ -1,4 +1,4 @@
-
+  program specfem2D
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 6 . 2
@@ -323,7 +323,6 @@
 ! not work because it would be discontinuous at such an interface and would
 ! therefore not be consistent with the basis functions.
 
-  program specfem2D
 
   implicit none
 
@@ -501,7 +500,7 @@
   double precision, dimension(3):: bl_relaxed
   double precision :: permlxx,permlxz,permlzz,invpermlxx,invpermlxz,invpermlzz,detk
 ! adjoint
-  double precision, dimension(:), allocatable :: b_viscodampx,b_viscodampz
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_viscodampx,b_viscodampz
   integer reclen
 
 ! for fluid/solid coupling and edge detection
@@ -790,6 +789,16 @@
   integer :: idummy1, idummy2, idummy3, idummy4, idummy5, idummy6, idummy7, idummy8
   integer :: ispecperio, ispecperio2, ispec2, i2, j2
   integer :: iglob_target_to_replace, ispec3, i3, j3
+
+!<SU_FORMAT
+  integer(kind=4) :: header4(1)
+  integer(kind=2) :: header2(2)
+  equivalence(header2,header4)
+  integer(kind=4) :: r4head(60)
+  logical,parameter :: SU_FORMAT=.true.
+  character(len=512) :: filename
+  real(kind=4),dimension(:,:),allocatable :: adj_src_s
+!>SU_FORMAT
 
 !<NOISE_TOMOGRAPHY
   ! NOISE_TOMOGRAPHY = 0 - turn noise tomography subroutines off, resulting in
@@ -1769,34 +1778,68 @@
 
 ! compute source array for adjoint source
   if(SIMULATION_TYPE == 2) then  ! adjoint calculation
-    nadj_rec_local = 0
-    do irec = 1,nrec
-      if(myrank == which_proc_receiver(irec))then
-!   check that the source proc number is okay
-        if(which_proc_receiver(irec) < 0 .or. which_proc_receiver(irec) > NPROC-1) &
-              call exit_MPI('something is wrong with the source proc number in adjoint simulation')
-        nadj_rec_local = nadj_rec_local + 1
-      endif
-    enddo
-    if(ipass == 1) allocate(adj_sourcearray(NSTEP,3,NGLLX,NGLLZ))
-    if (nadj_rec_local > 0 .and. ipass == 1)  then
-      allocate(adj_sourcearrays(nadj_rec_local,NSTEP,3,NGLLX,NGLLZ))
-    else if (ipass == 1) then
-      allocate(adj_sourcearrays(1,1,1,1,1))
-    endif
+    if (.not. SU_FORMAT) then
+       nadj_rec_local = 0
+       do irec = 1,nrec
+         if(myrank == which_proc_receiver(irec))then
+           ! check that the source proc number is okay
+           if(which_proc_receiver(irec) < 0 .or. which_proc_receiver(irec) > NPROC-1) &
+                 call exit_MPI('something is wrong with the source proc number in adjoint simulation')
+           nadj_rec_local = nadj_rec_local + 1
+         endif
+       enddo
+       if(ipass == 1) allocate(adj_sourcearray(NSTEP,3,NGLLX,NGLLZ))
+       if (nadj_rec_local > 0 .and. ipass == 1)  then
+         allocate(adj_sourcearrays(nadj_rec_local,NSTEP,3,NGLLX,NGLLZ))
+       else if (ipass == 1) then
+         allocate(adj_sourcearrays(1,1,1,1,1))
+       endif
 
-    irec_local = 0
-    do irec = 1, nrec
-!   compute only adjoint source arrays in the local proc
-      if(myrank == which_proc_receiver(irec))then
-        irec_local = irec_local + 1
-        adj_source_file = trim(station_name(irec))//'.'//trim(network_name(irec))
-        call compute_arrays_adj_source(adj_source_file, &
-                            xi_receiver(irec), gamma_receiver(irec), &
-                            adj_sourcearray, xigll,zigll,NSTEP)
-        adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
-      endif
-    enddo
+       irec_local = 0
+       do irec = 1, nrec
+         ! compute only adjoint source arrays in the local proc
+         if(myrank == which_proc_receiver(irec))then
+           irec_local = irec_local + 1
+           adj_source_file = trim(station_name(irec))//'.'//trim(network_name(irec))
+           call compute_arrays_adj_source(adj_source_file, &
+                               xi_receiver(irec), gamma_receiver(irec), &
+                               adj_sourcearray, xigll,zigll,NSTEP)
+           adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
+         endif
+       enddo
+    else
+       irec_local = 0
+       write(filename, "('./SEM/Ux_file_single.bin.adj')")
+       open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ios)
+               if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
+       write(filename, "('./SEM/Uz_file_single.bin.adj')")
+       open(113,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ios)
+               if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
+
+       allocate(adj_src_s(NSTEP,3))
+
+       do irec = 1, nrec
+          irec_local = irec_local + 1
+          adj_sourcearray(:,:,:,:) = 0.0
+          read(111,rec=irec,iostat=ios) r4head, adj_src_s(:,1)
+               if (ios /= 0) call exit_MPI(' file '//trim(filename)//' read error')
+          read(113,rec=irec,iostat=ios) r4head, adj_src_s(:,3)
+               if (ios /= 0) call exit_MPI(' file '//trim(filename)//' read error (even if in SH case, this file is needed, although not used. so just make a duplication)')
+          header4=r4head(29)
+          !if (irec==1) print*, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
+          call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
+          call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
+          do k = 1, NGLLZ
+              do i = 1, NGLLX
+                adj_sourcearray(:,:,i,k) = hxir(i) * hgammar(k) * adj_src_s(:,:)
+              enddo
+          enddo
+          adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
+       enddo
+       close(111)
+       close(113)
+       deallocate(adj_src_s)
+    endif
   else if (ipass == 1) then
      allocate(adj_sourcearrays(1,1,1,1,1))
   endif
@@ -2906,7 +2949,7 @@
 
       ! call Paco's routine to compute in frequency and convert to time by Fourier transform
       call paco_beyond_critical(coord,nglob,deltat,NSTEP,angleforce(1),&
-              f0(1),cploc,csloc,TURN_ATTENUATION_ON,QKappa_attenuation,source_type(1),v0x_left,v0z_left,&
+              f0(1),cploc,csloc,TURN_ATTENUATION_ON,QKappa_attenuation(1),source_type(1),v0x_left,v0z_left,&
               v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,&
               t0x_bot,t0z_bot,left_bound(1:count_left),right_bound(1:count_right),bot_bound(1:count_bottom)&
               ,count_left,count_right,count_bottom,displ_paco,veloc_paco,accel_paco)
@@ -3994,7 +4037,7 @@
                SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right,&
                nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
-               b_absorb_acoustic_bottom,b_absorb_acoustic_top)
+               b_absorb_acoustic_bottom,b_absorb_acoustic_top,.false.)
       if( SIMULATION_TYPE == 2 ) then
         call compute_forces_acoustic_2(nglob,nspec,nelemabs,numat,it,NSTEP, &
                anyabs,assign_external_model,ibool,kmato,numabs, &
@@ -4008,7 +4051,7 @@
                SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right,&
                nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
-               b_absorb_acoustic_bottom,b_absorb_acoustic_top)
+               b_absorb_acoustic_bottom,b_absorb_acoustic_top,.true.)
       endif
 
 
@@ -4080,6 +4123,11 @@
           if(SIMULATION_TYPE == 2) then
             b_displ_x = b_displ_elastic(1,iglob)
             b_displ_z = b_displ_elastic(3,iglob)
+            !<YANGL
+            ! new definition of adjoint displacement and adjoint potential
+            displ_x = accel_elastic(1,iglob)
+            displ_z = accel_elastic(3,iglob)
+            !>YANGL
           endif
 
           ! get point values for the acoustic side
@@ -4301,7 +4349,7 @@
                   do i=1,NGLLX
                     iglob = ibool(i,j,ispec_selected_rec(irec))
                     potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
-                                  - adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
+                                  + adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
                   enddo
                 enddo
               endif ! if element acoustic
@@ -4512,6 +4560,10 @@
           pressure = - potential_dot_dot_acoustic(iglob)
           if(SIMULATION_TYPE == 2) then
             b_pressure = - b_potential_dot_dot_acoustic(iglob)
+            !<YANGL
+            ! new definition of adjoint displacement and adjoint potential
+            pressure = potential_acoustic(iglob)
+            !>YANGL
           endif
           ! get point values for the elastic side
           ii2 = ivalue(ipoin1D,iedge_elastic)
@@ -6031,8 +6083,13 @@
             do j = 1, NGLLZ
               do i = 1, NGLLX
                 iglob = ibool(i,j,ispec)
-                kappal_ac_global(iglob) = poroelastcoef(3,1,kmato(ispec))
-                rhol_ac_global(iglob) = density(1,kmato(ispec))
+                if (.not. assign_external_model) then 
+                   kappal_ac_global(iglob) = poroelastcoef(3,1,kmato(ispec))
+                   rhol_ac_global(iglob) = density(1,kmato(ispec))
+                else
+                   rhol_ac_global(iglob)   = rhoext(i,j,ispec)
+                   kappal_ac_global(iglob) = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec)
+                endif
 
 ! calcul the displacement by computing the gradient of potential / rho
 ! and calcul the acceleration by computing the gradient of potential_dot_dot / rho
@@ -6042,11 +6099,13 @@
                 b_tempx2l = ZERO
                 do k = 1,NGLLX
                   ! derivative along x
-                  tempx1l = tempx1l + potential_dot_dot_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
+                  !tempx1l = tempx1l + potential_dot_dot_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
+                  tempx1l = tempx1l + potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k) !!! YANGL
                   b_tempx1l = b_tempx1l + b_potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
                   bb_tempx1l = bb_tempx1l + b_potential_dot_dot_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
                   ! derivative along z
-                  tempx2l = tempx2l + potential_dot_dot_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
+                  !tempx2l = tempx2l + potential_dot_dot_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
+                  tempx2l = tempx2l + potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k) !!! YANGL
                   b_tempx2l = b_tempx2l + b_potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
                   bb_tempx2l = bb_tempx2l + b_potential_dot_dot_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
                 enddo
@@ -6076,12 +6135,21 @@
             do j = 1, NGLLZ
               do i = 1, NGLLX
                 iglob = ibool(i,j,ispec)
-                rho_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) - rhol_ac_global(iglob)  * &
+                !<YANGL
+                !!!! old expression (from elastic kernels)
+                !!!rho_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) - rhol_ac_global(iglob)  * &
+                !!!           dot_product(accel_ac(:,iglob),b_displ_ac(:,iglob)) * deltat
+                !!!kappa_ac_kl(i,j,ispec) = kappa_ac_kl(i,j,ispec) - kappal_ac_global(iglob) * &
+                !!!           potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob) * &
+                !!!           b_potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob)&
+                !!!           * deltat
+                !!!! new expression (from PDE-constrained optimization, coupling terms changed as well)
+                rho_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) + rhol_ac_global(iglob)  * &
                            dot_product(accel_ac(:,iglob),b_displ_ac(:,iglob)) * deltat
-                kappa_ac_kl(i,j,ispec) = kappa_ac_kl(i,j,ispec) - kappal_ac_global(iglob) * &
-                           potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob) * &
-                           b_potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob)&
-                           * deltat
+                kappa_ac_kl(i,j,ispec) = kappa_ac_kl(i,j,ispec) + kappal_ac_global(iglob) * &
+                           potential_acoustic(iglob)/kappal_ac_global(iglob) * &
+                           b_potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob) * deltat
+                !>YANGL
                 !
                 rhop_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) + kappa_ac_kl(i,j,ispec)
                 alpha_ac_kl(i,j,ispec) = TWO *  kappa_ac_kl(i,j,ispec)
@@ -6103,10 +6171,17 @@
             do j = 1, NGLLZ
               do i = 1, NGLLX
                 iglob = ibool(i,j,ispec)
-                mul_global(iglob) = poroelastcoef(2,1,kmato(ispec))
-                kappal_global(iglob) = poroelastcoef(3,1,kmato(ispec)) &
-                                    - 4._CUSTOM_REAL*mul_global(iglob)/3._CUSTOM_REAL
-                rhol_global(iglob) = density(1,kmato(ispec))
+                if (.not. assign_external_model) then 
+                   mul_global(iglob) = poroelastcoef(2,1,kmato(ispec))
+                   kappal_global(iglob) = poroelastcoef(3,1,kmato(ispec)) &
+                                       - 4._CUSTOM_REAL*mul_global(iglob)/3._CUSTOM_REAL
+                   rhol_global(iglob) = density(1,kmato(ispec))
+                else
+                   rhol_global(iglob)   = rhoext(i,j,ispec)
+                   mul_global(iglob)    = rhoext(i,j,ispec)*vsext(i,j,ispec)*vsext(i,j,ispec)
+                   kappal_global(iglob) = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec) &
+                                       -4._CUSTOM_REAL*mul_global(iglob)/3._CUSTOM_REAL
+                endif
 
                 rho_kl(i,j,ispec) = rho_kl(i,j,ispec) - rhol_global(iglob)  * rho_k(iglob) * deltat
                 mu_kl(i,j,ispec) =  mu_kl(i,j,ispec) - TWO * mul_global(iglob) * mu_k(iglob) * deltat
@@ -6339,9 +6414,10 @@
                 iglob = ibool(i,j,ispec)
                 xx = coord(1,iglob)
                 zz = coord(2,iglob)
-                write(95,'(5e11.3)')xx,zz,rho_ac_kl(i,j,ispec),kappa_ac_kl(i,j,ispec)
-                write(96,'(5e11.3)')rhorho_ac_hessian_final1(i,j,ispec), rhorho_ac_hessian_final2(i,j,ispec),&
-                                rhop_ac_kl(i,j,ispec),alpha_ac_kl(i,j,ispec)
+                write(95,'(4e15.5e4)')xx,zz,rho_ac_kl(i,j,ispec),kappa_ac_kl(i,j,ispec)
+                write(96,'(4e15.5e4)')xx,zz,rhop_ac_kl(i,j,ispec),alpha_ac_kl(i,j,ispec)
+                !write(96,'(4e15.5e4)')rhorho_ac_hessian_final1(i,j,ispec), rhorho_ac_hessian_final2(i,j,ispec),&
+                !                rhop_ac_kl(i,j,ispec),alpha_ac_kl(i,j,ispec)
               enddo
             enddo
           enddo
@@ -6356,9 +6432,9 @@
                 iglob = ibool(i,j,ispec)
                 xx = coord(1,iglob)
                 zz = coord(2,iglob)
-                write(97,'(5e11.3)')xx,zz,rho_kl(i,j,ispec),kappa_kl(i,j,ispec),mu_kl(i,j,ispec)
-                write(98,'(5e11.3)')xx,zz,rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
-                !write(98,'(5e11.3)')rhorho_el_hessian_final1(i,j,ispec), rhorho_el_hessian_final2(i,j,ispec),&
+                write(97,'(5e15.5e4)')xx,zz,rho_kl(i,j,ispec),kappa_kl(i,j,ispec),mu_kl(i,j,ispec)
+                write(98,'(5e15.5e4)')xx,zz,rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
+                !write(98,'(5e15.5e4)')rhorho_el_hessian_final1(i,j,ispec), rhorho_el_hessian_final2(i,j,ispec),&
                 !                    rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
               enddo
             enddo
@@ -6689,7 +6765,8 @@
       if(.not. GENERATE_PARAVER_TRACES) &
         call write_seismograms(sisux,sisuz,siscurl,station_name,network_name,NSTEP, &
                             nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
-                            NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current,p_sv)
+                            NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current,p_sv,&
+                            st_zval,x_source(1),z_source(1))
 
       seismo_offset = seismo_offset + seismo_current
       seismo_current = 0

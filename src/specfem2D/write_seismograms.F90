@@ -47,7 +47,7 @@
   subroutine write_seismograms(sisux,sisuz,siscurl,station_name,network_name, &
       NSTEP,nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
       NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current,p_sv &
-      )
+      ,st_zval,x_source,z_source)
 
   implicit none
 
@@ -67,7 +67,7 @@
 
   double precision, dimension(NTSTEP_BETWEEN_OUTPUT_SEISMO,nrecloc), intent(in) :: sisux,sisuz,siscurl
 
-  double precision st_xval(nrec)
+  double precision :: st_xval(nrec)
 
   character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name
@@ -86,6 +86,13 @@
 
 
   integer  :: irecloc
+
+!<SU_FORMAT
+  double precision :: st_zval(nrec),x_source,z_source
+  integer(kind=4) :: header4(1)
+  integer(kind=2) :: header2(2)
+  equivalence(header2,header4)
+!>SU_FORMAT
 
 #ifdef USE_MPI
   integer  :: ierror
@@ -151,9 +158,9 @@
      open(unit=11,file='OUTPUT_FILES/Curl_file_double.bin',status='unknown')
      close(11,status='delete')
 
-   endif
+  endif
 
-   if ( myrank == 0 ) then
+  if ( myrank == 0 ) then
 
 ! write the new files
      if(seismotype == 4 .or. seismotype == 6) then
@@ -218,86 +225,123 @@
               call MPI_RECV(buffer_binary(1,3),NTSTEP_BETWEEN_OUTPUT_SEISMO,MPI_DOUBLE_PRECISION,&
                    which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
            end if
-
-
 #endif
         end if
 
-! write trace
-        do iorientation = 1,number_of_components
+        if(.not. SU_FORMAT) then
+          ! write trace
+          do iorientation = 1,number_of_components
 
-           if(iorientation == 1) then
-              chn = 'BXX'
-           else if(iorientation == 2) then
-              chn = 'BXZ'
-           else if(iorientation == 3) then
-              chn = 'cur'
-           else
-              call exit_MPI('incorrect channel value')
-           endif
+             if(iorientation == 1) then
+                chn = 'BXX'
+             else if(iorientation == 2) then
+                chn = 'BXZ'
+             else if(iorientation == 3) then
+                chn = 'cur'
+             else
+                call exit_MPI('incorrect channel value')
+             endif
 
-           ! in case of pressure, use different abbreviation
-           if(seismotype == 4 .or. seismotype == 6) chn = 'PRE'
-           ! in case of SH (membrane) waves, use different abbreviation
-           if(.not.p_sv) chn = 'BXY'
+             ! in case of pressure, use different abbreviation
+             if(seismotype == 4 .or. seismotype == 6) chn = 'PRE'
+             ! in case of SH (membrane) waves, use different abbreviation
+             if(.not.p_sv) chn = 'BXY'
 
-           ! create the name of the seismogram file for each slice
-           ! file name includes the name of the station, the network and the component
-           length_station_name = len_trim(station_name(irec))
-           length_network_name = len_trim(network_name(irec))
+             ! create the name of the seismogram file for each slice
+             ! file name includes the name of the station, the network and the component
+             length_station_name = len_trim(station_name(irec))
+             length_network_name = len_trim(network_name(irec))
 
-           ! check that length conforms to standard
-           if(length_station_name < 1 .or. length_station_name > MAX_LENGTH_STATION_NAME) then
-             call exit_MPI('wrong length of station name')
+             ! check that length conforms to standard
+             if(length_station_name < 1 .or. length_station_name > MAX_LENGTH_STATION_NAME) then
+               call exit_MPI('wrong length of station name')
+            end if
+             if(length_network_name < 1 .or. length_network_name > MAX_LENGTH_NETWORK_NAME) then
+               call exit_MPI('wrong length of network name')
+            end if
+
+             write(sisname,"('OUTPUT_FILES/',a,'.',a,'.',a3,'.sem',a1)") station_name(irec)(1:length_station_name),&
+                  network_name(irec)(1:length_network_name),chn,component
+
+             ! save seismograms in text format with no subsampling.
+             ! Because we do not subsample the output, this can result in large files
+             ! if the simulation uses many time steps. However, subsampling the output
+             ! here would result in a loss of accuracy when one later convolves
+             ! the results with the source time function
+             if ( seismo_offset == 0 ) then
+               open(unit=11,file=sisname(1:len_trim(sisname)),status='unknown')
+               close(11,status='delete')
+             endif
+             open(unit=11,file=sisname(1:len_trim(sisname)),status='unknown',position='append')
+
+             ! make sure we never write more than the maximum number of time steps
+             ! subtract offset of the source to make sure travel time is correct
+             do isample = 1,seismo_current
+                if(iorientation == 1) then
+                   write(11,*) sngl(dble(seismo_offset+isample-1)*deltat - t0),' ', &
+                                sngl(buffer_binary(isample,iorientation))
+                else
+                   write(11,*) sngl(dble(seismo_offset+isample-1)*deltat - t0),' ', &
+                                sngl(buffer_binary(isample,iorientation))
+                endif
+             enddo
+
+             close(11)
+          end do
+          ! write binary seismogram
+          do isample = 1, seismo_current
+             write(12,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,1))
+             write(13,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,1)
+          if ( seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
+             write(14,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,2))
+             write(15,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,2)
           end if
-           if(length_network_name < 1 .or. length_network_name > MAX_LENGTH_NETWORK_NAME) then
-             call exit_MPI('wrong length of network name')
+          if ( seismotype == 5 ) then
+             write(16,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,3))
+             write(17,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,3)
           end if
+          enddo
+        else
+          if (seismo_offset==0) then
+             ! write SU headers (refer to Seismic Unix for details)
+             write(12,rec=(irec-1)*60+(irec-1)*NSTEP+1)  irec                          ! receiver ID
+             write(12,rec=(irec-1)*60+(irec-1)*NSTEP+10) NINT(st_xval(irec)-x_source)  ! offset
+             write(12,rec=(irec-1)*60+(irec-1)*NSTEP+19) NINT(x_source)                ! source location xs
+             write(12,rec=(irec-1)*60+(irec-1)*NSTEP+20) NINT(z_source)                ! source location zs
+             write(12,rec=(irec-1)*60+(irec-1)*NSTEP+21) NINT(st_xval(irec))           ! receiver location xr
+             write(12,rec=(irec-1)*60+(irec-1)*NSTEP+22) NINT(st_zval(irec))           ! receiver location zr
+             if (nrec>1) write(12,rec=(irec-1)*60+(irec-1)*NSTEP+48) SNGL(st_xval(2)-st_xval(1)) ! receiver interval
+             header2(1)=0  ! dummy
+             header2(2)=NSTEP
+             write(12,rec=(irec-1)*60+(irec-1)*NSTEP+29) header4 ! equivalence(header4(1),header2(2))
+             header2(1)=NINT(deltat*1.0d6)  ! deltat (unit: 10^{-6} second)
+             header2(2)=0  ! dummy
+             write(12,rec=(irec-1)*60+(irec-1)*NSTEP+30) header4 ! equivalence(header4(1),header2(2))
+             if ( seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
+                ! headers
+                if (seismo_offset==0) then
+                   write(14,rec=(irec-1)*60+(irec-1)*NSTEP+1)  irec
+                   write(14,rec=(irec-1)*60+(irec-1)*NSTEP+10) NINT(st_xval(irec)-x_source)
+                   write(14,rec=(irec-1)*60+(irec-1)*NSTEP+19) NINT(x_source)
+                   write(14,rec=(irec-1)*60+(irec-1)*NSTEP+20) NINT(z_source)
+                   write(14,rec=(irec-1)*60+(irec-1)*NSTEP+21) NINT(st_xval(irec))
+                   write(14,rec=(irec-1)*60+(irec-1)*NSTEP+22) NINT(st_zval(irec))
+                   if(nrec>1) write(14,rec=(irec-1)*60+(irec-1)*NSTEP+48) SNGL(st_xval(2)-st_xval(1))
+                   header2(1)=0  ! dummy
+                   header2(2)=NSTEP
+                   write(14,rec=(irec-1)*60+(irec-1)*NSTEP+29) header4
+                   header2(1)=NINT(deltat*1.0d6)
+                   header2(2)=0  ! dummy
+                   write(14,rec=(irec-1)*60+(irec-1)*NSTEP+30) header4
+                end if
+             endif
+          endif
+          ! the "60" in the following corresponds to 240 bytes header (note the reclength is 4 bytes)
+          write(12,rec=irec*60+(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,1))
+          write(14,rec=irec*60+(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,2))
+        endif
 
-           write(sisname,"('OUTPUT_FILES/',a,'.',a,'.',a3,'.sem',a1)") station_name(irec)(1:length_station_name),&
-                network_name(irec)(1:length_network_name),chn,component
-
-           ! save seismograms in text format with no subsampling.
-           ! Because we do not subsample the output, this can result in large files
-           ! if the simulation uses many time steps. However, subsampling the output
-           ! here would result in a loss of accuracy when one later convolves
-           ! the results with the source time function
-           if ( seismo_offset == 0 ) then
-             open(unit=11,file=sisname(1:len_trim(sisname)),status='unknown')
-             close(11,status='delete')
-           endif
-           open(unit=11,file=sisname(1:len_trim(sisname)),status='unknown',position='append')
-
-           ! make sure we never write more than the maximum number of time steps
-           ! subtract offset of the source to make sure travel time is correct
-           do isample = 1,seismo_current
-              if(iorientation == 1) then
-                 write(11,*) sngl(dble(seismo_offset+isample-1)*deltat - t0),' ', &
-                              sngl(buffer_binary(isample,iorientation))
-              else
-                 write(11,*) sngl(dble(seismo_offset+isample-1)*deltat - t0),' ', &
-                              sngl(buffer_binary(isample,iorientation))
-              endif
-           enddo
-
-           close(11)
-        end do
-
-! write binary seismogram
-        do isample = 1, seismo_current
-           write(12,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,1))
-           write(13,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,1)
-        if ( seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
-           write(14,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,2))
-           write(15,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,2)
-        end if
-        if ( seismotype == 5 ) then
-           write(16,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,3))
-           write(17,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,3)
-        end if
-        enddo
 #ifdef USE_MPI
-
      else
         if ( which_proc_receiver(irec) == myrank ) then
            irecloc = irecloc + 1
@@ -309,7 +353,6 @@
               call MPI_SEND(siscurl(1,irecloc),NTSTEP_BETWEEN_OUTPUT_SEISMO,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ierror)
            end if
         end if
-
 #endif
 
      end if

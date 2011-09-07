@@ -112,7 +112,8 @@
   double precision coorg(NDIM,npgeo)
   double precision, dimension(nrec) :: st_xval,st_zval
 
-  integer numabs(nelemabs),codeabs(4,nelemabs)
+  integer numabs(nelemabs)
+  logical codeabs(4,nelemabs)
   logical anyabs,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
           any_acoustic,any_poroelastic,plot_lowerleft_corner_only
 
@@ -2205,7 +2206,7 @@ coorg_recv_ps_vector_field
 
   do iedge = 1,4
 
-  if(codeabs(iedge,inum) /= 0) then
+  if(codeabs(iedge,inum)) then ! codeabs(:,:) is defined as "logical" in MAIN program
 
   if(iedge == ITOP) then
     ideb = 3
