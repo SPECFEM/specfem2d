@@ -393,6 +393,7 @@
   double precision :: mul_relaxed,lambdal_relaxed,lambdalplus2mul_relaxed,kappal
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic,veloc_elastic,displ_elastic
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic_adj_coupling
   double precision, dimension(:,:), allocatable :: &
     coord, flagrange,xinterp,zinterp,Uxinterp,Uzinterp,vector_field_display
 
@@ -760,9 +761,9 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhorho_el_hessian_final1, rhorho_el_hessian_final2
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhorho_el_hessian_temp1, rhorho_el_hessian_temp2
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhorho_ac_hessian_final1, rhorho_ac_hessian_final2
-!!$  real(kind=CUSTOM_REAL), dimension(:), allocatable :: weight_line_x, weight_line_z, weight_surface,weight_jacobian
-!!$  integer, dimension(:), allocatable :: weight_gll
-!!$  real(kind=CUSTOM_REAL) :: zmin_yang, zmax_yang, xmin_yang, xmax_yang
+!$$  real(kind=CUSTOM_REAL), dimension(:), allocatable :: weight_line_x, weight_line_z, weight_surface!,weight_jacobian
+!$$  !integer, dimension(:), allocatable :: weight_gll
+!$$  real(kind=CUSTOM_REAL) :: zmin_yang, zmax_yang, xmin_yang, xmax_yang
 
 ! to help locate elements with a negative Jacobian using OpenDX
   logical :: found_a_negative_jacobian
@@ -791,13 +792,12 @@
   integer :: iglob_target_to_replace, ispec3, i3, j3
 
 !<SU_FORMAT
+  integer(kind=4) :: r4head(60)
+  character(len=512) :: filename
+  real(kind=4),dimension(:,:),allocatable :: adj_src_s
   integer(kind=4) :: header4(1)
   integer(kind=2) :: header2(2)
   equivalence(header2,header4)
-  integer(kind=4) :: r4head(60)
-  logical,parameter :: SU_FORMAT=.true.
-  character(len=512) :: filename
-  real(kind=4),dimension(:,:),allocatable :: adj_src_s
 !>SU_FORMAT
 
 !<NOISE_TOMOGRAPHY
@@ -1631,55 +1631,40 @@
 
   endif
 
-!!$!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! yang  output weights for line, surface integrals !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!$!define_derivation_matrices(xigll(NGLLX),zigll(NGLLZ),wxgll(NGLLX),wzgll(NGLLZ), &
-!!$!                           hprime_xx(NGLLX,NGLLX),hprime_zz(NGLLZ,NGLLZ),&
-!!$!                           hprimewgll_xx(NGLLX,NGLLX),hprimewgll_zz(NGLLZ,NGLLZ))
-!!$!xix(NGLLX,NGLLZ,nspec),xiz,gammax,gammaz,jacobian
-!!$!recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl,jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo, &
-!!$!          .true.)
-!!$  allocate(weight_line_x(nglob))
-!!$  allocate(weight_line_z(nglob))
-!!$  allocate(weight_surface(nglob))
-!!$  allocate(weight_jacobian(nglob))
-!!$  allocate(weight_gll(nglob))
-!!$  weight_line_x=0.0
-!!$  weight_line_z=0.0
-!!$  weight_surface=0.0
-!!$  zmin_yang=minval(coord(2,:))
-!!$  xmin_yang=minval(coord(1,:))
-!!$  zmax_yang=maxval(coord(2,:))
-!!$  xmax_yang=maxval(coord(1,:))
-!!$  do ispec = 1,nspec
-!!$    do j = 1,NGLLZ
-!!$      do i = 1,NGLLX
-!!$            iglob=ibool(i,j,ispec)
-!!$            z=coord(2,ibool(i,j,ispec))
-!!$            xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-!!$            zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-!!$            if ((j==1 .OR. j==NGLLZ) .AND. ( (abs(z-zmin_yang).GE.1) .AND. (abs(z-zmax_yang)).GE.1) )    xxi=xxi/2.0
-!!$            if ((i==1 .OR. i==NGLLZ) .AND. ( (abs(x-xmin_yang).GE.1) .AND. (abs(x-xmax_yang)).GE.1) )    zgamma=zgamma/2.0
-!!$            weight_line_x(iglob) =  weight_line_x(iglob) + xxi * wxgll(i)
-!!$            weight_line_z(iglob) =  weight_line_z(iglob) + zgamma * wzgll(j)
-!!$            weight_surface(iglob) = weight_surface(iglob) + wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
-!!$            weight_jacobian(iglob) = jacobian(i,j,ispec)
-!!$            weight_gll(iglob) = 10*j+i
-!!$      enddo
-!!$    enddo
-!!$  enddo
-!!$  if( myrank == 0 ) then
-!!$    open(unit=55,file='OUTPUT_FILES/x_z_weightLineX_weightLineZ_weightSurface',status='unknown')
-!!$    do n = 1,nglob
-!!$      write(55,*) coord(1,n), coord(2,n), weight_line_x(n), weight_line_z(n), weight_surface(n),weight_jacobian(n),weight_gll(n)
-!!$    enddo
-!!$    close(55)
-!!$  endif
-!!$  deallocate(weight_line_x)
-!!$  deallocate(weight_line_z)
-!!$  deallocate(weight_surface)
-!!$  deallocate(weight_jacobian)
-!!$  deallocate(weight_gll)
-!!$!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!$$!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! yang  output weights for line, surface integrals !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!$$  ! NSPEC
+!$$ if(myrank==0) then
+!$$  open(unit=55,file='OUTPUT_FILES/x_z_weightLineX_weightLineZ_weightSurface_NSPEC',status='unknown')
+!$$  weight_line_x=0.0
+!$$  weight_line_z=0.0
+!$$  weight_surface=0.0
+!$$  zmin_yang=minval(coord(2,:))
+!$$  xmin_yang=minval(coord(1,:))
+!$$  zmax_yang=maxval(coord(2,:))
+!$$  xmax_yang=maxval(coord(1,:))
+!$$  do ispec = 1,nspec
+!$$    do j = 1,NGLLZ
+!$$      do i = 1,NGLLX
+!$$            iglob=ibool(i,j,ispec)
+!$$            x=coord(1,ibool(i,j,ispec))
+!$$            z=coord(2,ibool(i,j,ispec))
+!$$            xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+!$$            zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
+!$$            !if ((j==1 .OR. j==NGLLZ) .AND. ( (abs(z-zmin_yang).GE.1) .AND. (abs(z-zmax_yang)).GE.1) )    xxi=xxi/2.0
+!$$            !if ((i==1 .OR. i==NGLLZ) .AND. ( (abs(x-xmin_yang).GE.1) .AND. (abs(x-xmax_yang)).GE.1) )    zgamma=zgamma/2.0
+!$$            !weight_line_x(iglob) =  weight_line_x(iglob) + xxi * wxgll(i)
+!$$            !weight_line_z(iglob) =  weight_line_z(iglob) + zgamma * wzgll(j)
+!$$            !weight_surface(iglob) = weight_surface(iglob) + wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
+!$$            !weight_jacobian(iglob) = jacobian(i,j,ispec)
+!$$            !weight_gll(iglob) = 10*j+i
+!$$            !write(55,*) xxi * wxgll(i), zgamma * wzgll(j), wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
+!$$            write(55,*) xxi * wxgll(i), zgamma * wzgll(j), wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
+!$$      enddo
+!$$    enddo
+!$$  enddo
+!$$  close(55)
+!$$ endif
+!$$!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !--- save the grid of points in a file
 !
@@ -1778,23 +1763,23 @@
 
 ! compute source array for adjoint source
   if(SIMULATION_TYPE == 2) then  ! adjoint calculation
-    if (.not. SU_FORMAT) then
-       nadj_rec_local = 0
-       do irec = 1,nrec
-         if(myrank == which_proc_receiver(irec))then
-           ! check that the source proc number is okay
-           if(which_proc_receiver(irec) < 0 .or. which_proc_receiver(irec) > NPROC-1) &
-                 call exit_MPI('something is wrong with the source proc number in adjoint simulation')
-           nadj_rec_local = nadj_rec_local + 1
-         endif
-       enddo
-       if(ipass == 1) allocate(adj_sourcearray(NSTEP,3,NGLLX,NGLLZ))
-       if (nadj_rec_local > 0 .and. ipass == 1)  then
-         allocate(adj_sourcearrays(nadj_rec_local,NSTEP,3,NGLLX,NGLLZ))
-       else if (ipass == 1) then
-         allocate(adj_sourcearrays(1,1,1,1,1))
-       endif
+    nadj_rec_local = 0
+    do irec = 1,nrec
+      if(myrank == which_proc_receiver(irec))then
+        ! check that the source proc number is okay
+        if(which_proc_receiver(irec) < 0 .or. which_proc_receiver(irec) > NPROC-1) &
+              call exit_MPI('something is wrong with the source proc number in adjoint simulation')
+        nadj_rec_local = nadj_rec_local + 1
+      endif
+    enddo
+    if(ipass == 1) allocate(adj_sourcearray(NSTEP,3,NGLLX,NGLLZ))
+    if (nadj_rec_local > 0 .and. ipass == 1)  then
+      allocate(adj_sourcearrays(nadj_rec_local,NSTEP,3,NGLLX,NGLLZ))
+    else if (ipass == 1) then
+      allocate(adj_sourcearrays(1,1,1,1,1))
+    endif
 
+    if (.not. SU_FORMAT) then
        irec_local = 0
        do irec = 1, nrec
          ! compute only adjoint source arrays in the local proc
@@ -1819,14 +1804,15 @@
        allocate(adj_src_s(NSTEP,3))
 
        do irec = 1, nrec
+         if(myrank == which_proc_receiver(irec))then
           irec_local = irec_local + 1
           adj_sourcearray(:,:,:,:) = 0.0
           read(111,rec=irec,iostat=ios) r4head, adj_src_s(:,1)
                if (ios /= 0) call exit_MPI(' file '//trim(filename)//' read error')
           read(113,rec=irec,iostat=ios) r4head, adj_src_s(:,3)
-               if (ios /= 0) call exit_MPI(' file '//trim(filename)//' read error (even if in SH case, this file is needed, although not used. so just make a duplication)')
+               if (ios /= 0) call exit_MPI(' file '//trim(filename)//' read error')
           header4=r4head(29)
-          !if (irec==1) print*, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
+          if (irec==1) print*, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
           call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
           call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
           do k = 1, NGLLZ
@@ -1835,7 +1821,8 @@
               enddo
           enddo
           adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
-       enddo
+         endif !  if(myrank == which_proc_receiver(irec))
+       enddo ! irec
        close(111)
        close(113)
        deallocate(adj_src_s)
@@ -2139,6 +2126,7 @@
     allocate(displ_elastic(3,nglob_elastic))
     allocate(veloc_elastic(3,nglob_elastic))
     allocate(accel_elastic(3,nglob_elastic))
+    allocate(accel_elastic_adj_coupling(3,nglob_elastic))
     allocate(rmass_inverse_elastic(nglob_elastic))
 
     ! extra array if adjoint and kernels calculation
@@ -3869,6 +3857,7 @@
                     + deltat*veloc_elastic &
                     + deltatsquareover2*accel_elastic
       veloc_elastic = veloc_elastic + deltatover2*accel_elastic
+      accel_elastic_adj_coupling = accel_elastic
       accel_elastic = ZERO
 
       if(SIMULATION_TYPE == 2) then ! Adjoint calculation
@@ -4125,8 +4114,8 @@
             b_displ_z = b_displ_elastic(3,iglob)
             !<YANGL
             ! new definition of adjoint displacement and adjoint potential
-            displ_x = accel_elastic(1,iglob)
-            displ_z = accel_elastic(3,iglob)
+            displ_x = -accel_elastic_adj_coupling(1,iglob)
+            displ_z = -accel_elastic_adj_coupling(3,iglob)
             !>YANGL
           endif
 

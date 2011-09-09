@@ -337,8 +337,12 @@
              endif
           endif
           ! the "60" in the following corresponds to 240 bytes header (note the reclength is 4 bytes)
-          write(12,rec=irec*60+(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,1))
-          write(14,rec=irec*60+(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,2))
+          do isample = 1, seismo_current
+             write(12,rec=irec*60+(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,1))
+             if ( seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
+                write(14,rec=irec*60+(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,2))
+             end if
+          enddo
         endif
 
 #ifdef USE_MPI
