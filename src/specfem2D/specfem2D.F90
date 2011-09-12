@@ -417,6 +417,7 @@
 ! for acoustic medium
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
     potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_acoustic_adj_coupling
 
 ! inverse mass matrices
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_elastic
@@ -2298,6 +2299,7 @@
       nglob_acoustic = 1
     endif
     allocate(potential_acoustic(nglob_acoustic))
+    allocate(potential_acoustic_adj_coupling(nglob_acoustic))
     allocate(potential_dot_acoustic(nglob_acoustic))
     allocate(potential_dot_dot_acoustic(nglob_acoustic))
     allocate(rmass_inverse_acoustic(nglob_acoustic))
@@ -4413,6 +4415,11 @@
 
       endif
 
+      ! update the potential field (use a new array here) for coupling terms
+      potential_acoustic_adj_coupling = potential_acoustic &
+                          + deltat*potential_dot_acoustic &
+                          + deltatsquareover2*potential_dot_dot_acoustic
+
     endif !if(any_acoustic)
 
 
@@ -4551,7 +4558,7 @@
             b_pressure = - b_potential_dot_dot_acoustic(iglob)
             !<YANGL
             ! new definition of adjoint displacement and adjoint potential
-            pressure = potential_acoustic(iglob)
+            pressure = potential_acoustic_adj_coupling(iglob)
             !>YANGL
           endif
           ! get point values for the elastic side
