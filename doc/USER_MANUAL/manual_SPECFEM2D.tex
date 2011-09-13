@@ -829,7 +829,7 @@ poroelastic case.
 
 %------------------------------------------------------------------------------------------------%
 
-\chapter{Industrial Format Input \& Output}
+\chapter{New Modifications}
 
 %------------------------------------------------------------------------------------------------%
 
@@ -837,7 +837,21 @@ As of version ?.?, the SPECFEM2D package provides compatibilities in industrial 
 The new features include importing Seismic Unix (SU) format wavespeed models into SPECFEM2D,
 outputing seismograms also in SU format with a few key parameters defined in the trace headers
 and reading adjoint sources in SU format etc.
-There is one example given in EXAMPLE/INDUSTRIAL\_FORMAT, which you can follow step by step.
+There is one example given in EXAMPLES/INDUSTRIAL\_FORMAT, which you can follow.
+
+We also change the relationship between adjoint potential and adjoint displacement in fluid region
+(the relationship between forward potential and forward displacement remains the same as previsouly defined).
+The new definition is critical when there are adjoint sources (in other words, receivers) in the acoustic domain,
+and is the direct consequence of the optimization problem.
+\begin{eqnarray*}
+\mathbf{s}&\equiv&\frac{1}{\rho}~\mathbf{\nabla}\phi \\
+p&\equiv&-\kappa(\nabla\cdot\mathbf{s}) =-\partial_t^2\phi \\
+\quad\\
+\partial_t^2\mathbf{s}^\dagger&\equiv&-\frac{1}{\rho}~\mathbf{\nabla}\phi^\dagger\\
+p^\dagger&\equiv&-\kappa(\nabla\cdot\mathbf{s}^\dagger)=\phi^\dagger
+\end{eqnarray*}
+
+
 
 %------------------------------------------------------------------------------------------------%
 
