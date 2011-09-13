@@ -199,10 +199,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLZ) :: zigll
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: hxi, hpxi
   real(kind=CUSTOM_REAL), dimension(NGLLZ) :: hgamma, hpgamma
-  real(kind=CUSTOM_REAL) :: factor_noise, f0, aval, t0
-
-  integer, parameter :: time_function_type = 1
-
+  real(kind=CUSTOM_REAL) :: factor_noise, aval, t0
 
 ! ---------------------------------------------------------------------------------
 ! A NOTE ABOUT TIME FUNCTIONS FOR NOISE SIMULATIONS
@@ -229,10 +226,14 @@
 !
 ! ----------------------------------------------------------------------------------
 
+  !the following values are chosen to reproduce the time function from Fig 2a of
+  !"Tromp et al., 2010, Noise Cross-Correlation Sensitivity Kernels"
+
+  integer, parameter :: time_function_type = 4
+
   time_function_noise(:) = 0._CUSTOM_REAL
   t0   = ((NSTEP-1)/2.)*deltat
-  f0   = 15.0d0
-  aval = PI*PI*f0*f0
+  aval = 0.6d0
   factor_noise = 1.d3
 
 
@@ -443,26 +444,102 @@
   end subroutine save_surface_movie_noise
 
 ! =============================================================================================================
-! auxillary routine for writing out the array "mask_noise"; uses a format similar to
-! the one currently used for writing kernels
-  subroutine write_mask_noise(nglob,coord,mask_noise)
+! auxillary routine
+  subroutine snapshot_all(ncol,nglob,filename,array_all)
+
+  implicit none
+  include "constants.h"
+
+  !input paramters
+  integer :: ncol,nglob
+  character(len=100) filename
+
+  real(kind=CUSTOM_REAL), dimension(ncol,nglob) :: array_all
+
+  !local parameters
+  integer :: i,iglob
+  real(kind=CUSTOM_REAL), dimension(ncol) :: row
+
+  open(unit=504,file=filename,status='unknown',action='write')
+
+    do iglob = 1,nglob
+
+          row(:) = array_all(:,iglob)
+
+          do i = 1,ncol-1
+              if (abs(row(i)) < 1.e-32) row(i) = 0.
+              write(unit=504,fmt='(1pe15.5e3)',advance='no') row(i)
+          enddo
+              if (abs(row(ncol)) < 1.e-32) row(ncol) = 0.
+              write(unit=504,fmt='(1pe15.5e3)') row(ncol)
+
+    enddo
+
+  close(504)
+
+
+  end subroutine snapshot_all
+
+
+! =============================================================================================================
+! auxillary routine
+  subroutine elem_to_glob(nspec,nglob,ibool,array_elem,array_glob)
+
+  implicit none
+  include "constants.h"
+
+  !input paramters
+  integer :: nspec, nglob
+  integer :: ibool(NGLLX,NGLLZ,nspec)
+
+  real(kind=CUSTOM_REAL), dimension(nglob) :: array_glob
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: array_elem
+
+  !local parameters
+  integer :: i,j,iglob,ispec
+  real(kind=CUSTOM_REAL) :: xx,zz
+
+  do ispec = 1, nspec
+    do j = 1, NGLLZ
+      do i = 1, NGLLX
+        iglob = ibool(i,j,ispec)
+        array_glob(iglob) = array_elem(i,j,ispec)
+     enddo
+    enddo
+  enddo
+
+  end subroutine elem_to_glob
+
+
+! =============================================================================================================
+! auxillary routine
+  subroutine snapshot_glob(nglob,coord,filename,array1)
 
   implicit none
   include "constants.h"
 
   !input paramters
   integer :: nglob
+  character(len=100) filename
+
   real(kind=CUSTOM_REAL), dimension(2,nglob) :: coord
-  real(kind=CUSTOM_REAL), dimension(nglob) :: mask_noise
+  real(kind=CUSTOM_REAL), dimension(nglob) :: array1
 
   !local parameters
   integer :: iglob
+  real(kind=CUSTOM_REAL) :: xx,zz
 
-  open(unit=504,file='OUTPUT_FILES/mask_noise',status='unknown',action='write')
-  do iglob = 1, nglob
-     write(504,*) coord(1,iglob), coord(2,iglob), mask_noise(iglob)
-  enddo
+
+  open(unit=504,file=filename,status='unknown',action='write')
+
+    do iglob = 1, nglob
+          xx = coord(1,iglob)
+          zz = coord(2,iglob)
+          write(504,*) xx, zz, array1(iglob)
+    enddo
+
   close(504)
 
+  end subroutine snapshot_glob
 
-  end subroutine write_mask_noise
+

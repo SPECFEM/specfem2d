@@ -824,9 +824,15 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: time_function_noise
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: source_array_noise
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: mask_noise
-  !to avoid empty arrays depending on SH/P_SV, use separate arrays for x,y,z
+  !to avoid empty dimensions depending on SH/P_SV, use separate arrays for x,y,z
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
     surface_movie_x_noise, surface_movie_y_noise, surface_movie_z_noise
+
+  integer :: ncol
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rho_klglob
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: noise_all
+  character(len=100) :: fnoise
+
 
 
 !>NOISE_TOMOGRAPHY
@@ -3602,6 +3608,11 @@
     allocate(surface_movie_x_noise(nglob))
     allocate(surface_movie_y_noise(nglob))
     allocate(surface_movie_z_noise(nglob))
+
+    ncol = 6
+    allocate(rho_klglob(nglob))
+    allocate(noise_all(ncol,nglob))
+
 
     !read in parameters for noise tomography
     call read_parameters_noise(NOISE_TOMOGRAPHY,SIMULATION_TYPE,SAVE_FORWARD, &
@@ -6470,6 +6481,34 @@
         endif
 
       endif
+
+!<NOISE_TOMOGRAPHY
+
+      if (NOISE_TOMOGRAPHY == 1) then
+        !write(fnoise,"('OUTPUT_FILES/snapshot_eta_',i6.6)") it
+        !call snapshot_glob(nglob,coord,fnoise,accel_elastic(2,:))
+
+      elseif (NOISE_TOMOGRAPHY == 2) then
+        !write(fnoise,"('OUTPUT_FILES/snapshot_phi_',i6.6)") it
+        !call snapshot_glob(nglob,coord,fnoise,displ_elastic(2,:))
+
+      elseif (NOISE_TOMOGRAPHY == 3) then
+        call elem_to_glob(nspec,nglob,ibool,rho_kl,rho_klglob)
+
+        noise_all(1,:) = coord(1,:)
+        noise_all(2,:) = coord(2,:)
+        noise_all(3,:) = b_displ_elastic(2,:)
+        noise_all(4,:) = accel_elastic(2,:)
+        noise_all(5,:) = rho_k
+        noise_all(6,:) = rho_klglob
+
+        write(fnoise,"('OUTPUT_FILES/snapshot_all_',i6.6)") it
+        call snapshot_all(ncol,nglob,fnoise,noise_all)
+
+      endif
+
+!>NOISE_TOMOGRAPHY
+
 
 !
 !----  PostScript display
