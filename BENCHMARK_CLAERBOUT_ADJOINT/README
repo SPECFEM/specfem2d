@@ -1,0 +1,11 @@
+uncompress the tar ball:
+	tar xzvf DATAs.tar.gz
+
+then you will have four folders, namely:
+	DATA_ADJOINT_AC-EL-COUPLED
+	DATA_ADJOINT_ACOUSTIC
+	DATA_ADJOINT_EL-AC-COUPLED
+	DATA_ADJOINT_ELASTIC
+
+in each of the four directories, a README file is provided.
+you can follow the instruction in README and run the adjoint tests.
