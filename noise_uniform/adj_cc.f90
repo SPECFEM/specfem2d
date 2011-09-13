@@ -2,23 +2,32 @@ program adj_cc
 
 implicit none
 
-! flags
+!choose whether to differentiate traces 0, 1, or 2 times
+integer, parameter :: differentiate = 1
+
+!choose whether to bandpass filter
 logical, parameter :: use_filtering = .true.
+
+!choose exactly one of the following window options
+logical, parameter :: use_negative_branch = .true.
 logical, parameter :: use_positive_branch = .false.
 logical, parameter :: use_custom_window = .false.
+
+!choose whether to time reverse (carried out subsequent to all other processing)
 logical, parameter :: reverse = .true.
-integer, parameter :: differentiate = 1
+
+
 
 ! FILTERING PARAMETERS
 real  freq_low,freq_high
-data  freq_low  / 1.d-2 /
-data  freq_high / 1.5d1  /
+data  freq_low  / 2.d-4 /
+data  freq_high / 5.d-1 /
 
-! CUSTOM WINDOW PARAMETERS
-real :: w_delay, w_width, w_tukey
-data w_delay / 1.d0 /
-data w_width / 1.d2 /
-data w_tukey / 0.4 /
+! WINDOW PARAMETERS
+real :: t_begin, t_end, w_tukey
+data t_begin / 45.d0  /
+data t_end   / 65.d0 /
+data w_tukey / 0.4    /
 !see explanation below
 
 ! time variables
@@ -41,17 +50,9 @@ real :: F1,F2,D(8),G,DELT
 real :: alpha, beta
 
 
-! EXPLANATION OF CUSTOM WINDOW PARAMETERS
+! EXPLANATION OF WINDOW PARAMETERS
 
-!To select the desired branch of the cross-correlogram, we employ a Tukey window.  A Tukey taper is just a variant of a cosine taper.  We use three control parameters
-
-!W_DELAY controls the time offset of the window
-!W_WIDTH controls the width of the window (i.e., the total time range over which the window has non-zero support)
-!W_TUKEY controls the sharpness of the drop-off 
-
-!In noise tomography applications, W_DELAY should be roughly equal to the surface wave travel time from the one receiver to the other.
-
-!Checks on W_WIDTH are carried out to make sure that the window makes sense and lies within a single branch of the cross-correlogram. If the the window falls outside these bounds, it will be adjusted.
+!To select the desired branch of the cross-correlogram, we employ a Tukey window.  A Tukey taper is just a variant of a cosine taper.
 
 !W_TUKEY is a number between 0 and 1, 0 being pure boxcar and 1 being pure cosine
 
@@ -89,8 +90,7 @@ seismo_adj(:) = 0.0d0
 !!!!!!!!!! READ INPUT !!!!!!!!!!!!!!!!!!!!
 open(unit=1001,file=trim(file_in),status='old',action='read')
 do it = 1, nt
-    if (.not. reverse) read(1001,*) t(it), seismo_1(it)
-    if (reverse) read(1001,*) t(it), seismo_1(nt-it+1)
+    read(1001,*) t(it), seismo_1(it)
 end do
 close(1001)
 
@@ -131,26 +131,21 @@ end if
 
 !!!!!!!!!! WINDOW !!!!!!!!!!!!!!!!!!!!
 if (use_custom_window) then
-  it_off = floor(w_delay/dt)
-  it_wdt = 2*floor(w_width/(2.*dt))
-else
-  it_off = int(nthalf/2)
-  it_wdt = int(nthalf) + 1
-endif
-alpha = w_tukey
-
-if (use_positive_branch) then
-  write(*,*) 'Choosing positive branch'
-  it_begin = nthalf + it_off - it_wdt/2
-  it_end   = nthalf + it_off + it_wdt/2
-  if (it_begin < nthalf) it_begin = nthalf 
-  if (it_end > nt) it_end = nt
-else
-  write(*,*) 'Choosing negative branch'
-  it_begin = nthalf - it_off - it_wdt/2
-  it_end   = nthalf - it_off + it_wdt/2
+  it_begin = floor((t_begin - t(1))/dt)
+  it_end   = ceiling((t_end - t(1))/dt)
   if (it_begin < 1) it_begin = 1
-  if (it_end > nthalf) it_end = nthalf
+  if (it_end > nt) it_end = nt
+elseif (use_positive_branch) then
+  write(*,*) 'Choosing positive branch'
+  it_begin = nthalf+1
+  it_end   = nt
+elseif (use_negative_branch) then
+  write(*,*) 'Choosing negative branch'
+  it_begin = 1
+  it_end   = nthalf
+else
+  write(*,*) 'Must select one of the following: positive_branch, &
+              negative_branch, custom_window.'
 endif
 
 write(*,'(a,2f10.3)') ' Time range: ', t(1), t(nt)
@@ -180,7 +175,6 @@ seismo_4 = w * seismo_3
 !!!!!!!!!! NORMALIZE !!!!!!!!!!!!!!!!!!!!
 seismo_adj = - seismo_4/(DOT_PRODUCT(seismo_4,seismo_4)*dt)
 
-
 !!!!!!!!!! WRITE ADJOINT SOURCE !!!!!!!!!!!!!!!!!!!!
 open(unit=1002,file=trim(file_in)//'.adj',status='unknown',iostat=ios)
 if (ios /= 0) write(*,*) 'Error opening output file.'
@@ -189,7 +183,8 @@ write(*,*) ''
 write(*,*) 'Writing to file: '//trim(file_in)//'.adj'
 
 do it = 1,nt
-    write(1002,'(f16.12,1pe18.8)'), t(it), seismo_adj(it)
+    if (.not. reverse) write(1002,'(f16.12,1pe18.8)'), t(it), seismo_adj(it)
+    if (reverse) write(1002,'(f16.12,1pe18.8)'), t(it), seismo_adj(nt+1-it)
 end do
 close(1002)
 
