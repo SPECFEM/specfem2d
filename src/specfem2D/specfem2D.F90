@@ -795,9 +795,7 @@
   integer(kind=4) :: r4head(60)
   character(len=512) :: filename
   real(kind=4),dimension(:,:),allocatable :: adj_src_s
-  integer(kind=4) :: header4(1)
   integer(kind=2) :: header2(2)
-  equivalence(header2,header4)
 !>SU_FORMAT
 
 !<NOISE_TOMOGRAPHY
@@ -1817,7 +1815,7 @@
                if (ios /= 0) call exit_MPI(' file '//trim(filename)//' read error')
           read(113,rec=irec,iostat=ios) r4head, adj_src_s(:,3)
                if (ios /= 0) call exit_MPI(' file '//trim(filename)//' read error')
-          header4=r4head(29)
+          header2=r4head(29)
           if (irec==1) print*, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
           call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
           call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
