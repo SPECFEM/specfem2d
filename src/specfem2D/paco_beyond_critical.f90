@@ -36,9 +36,9 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,angleforce,&
   double precision, dimension(nbot,NSTEP_global) :: v0x_bot,v0z_bot, t0x_bot,t0z_bot
 
   double precision, dimension(2,nglob) :: coord
-  real(kind=CUSTOM_REAL), dimension(2,nglob) :: displ_elastic
-  real(kind=CUSTOM_REAL), dimension(2,nglob) :: veloc_elastic
-  real(kind=CUSTOM_REAL), dimension(2,nglob) :: accel_elastic
+  real(kind=CUSTOM_REAL), dimension(3,nglob) :: displ_elastic
+  real(kind=CUSTOM_REAL), dimension(3,nglob) :: veloc_elastic
+  real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic
 
   integer, dimension(:),allocatable :: local_pt
 
@@ -287,15 +287,15 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,angleforce,&
            call paco_convolve_fft(Field_Ux,1,NSTEP_local,dt,NFREC,temp_field,TP,TS)
            displ_elastic(1,indice)=temp_field(1)
            call paco_convolve_fft(Field_Uz,1,NSTEP_local,dt,NFREC,temp_field,TP,TS)
-           displ_elastic(2,indice)=temp_field(1)
+           displ_elastic(3,indice)=temp_field(1)
            call paco_convolve_fft(Field_Ux,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
            veloc_elastic(1,indice)=temp_field(1)
            call paco_convolve_fft(Field_Uz,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
-           veloc_elastic(2,indice)=temp_field(1)
+           veloc_elastic(3,indice)=temp_field(1)
            call paco_convolve_fft(Field_Ux,3,NSTEP_local,dt,NFREC,temp_field,TP,TS)
            accel_elastic(1,indice)=temp_field(1)
            call paco_convolve_fft(Field_Uz,3,NSTEP_local,dt,NFREC,temp_field,TP,TS)
-           accel_elastic(2,indice)=temp_field(1)
+           accel_elastic(3,indice)=temp_field(1)
 
 ! absorbing boundaries
 
