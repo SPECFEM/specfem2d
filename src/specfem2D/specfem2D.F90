@@ -699,7 +699,6 @@
   integer , dimension(:), allocatable :: left_bound,right_bound,bot_bound
   double precision , dimension(:,:), allocatable :: v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot
   double precision , dimension(:,:), allocatable :: t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_paco,veloc_paco,displ_paco
   integer count_left,count_right,count_bottom
   logical :: over_critical_angle
 
@@ -2939,31 +2938,16 @@
       allocate(t0x_bot(count_bottom,NSTEP))
       allocate(t0z_bot(count_bottom,NSTEP))
 
-      allocate(displ_paco(NDIM,nglob))
-      allocate(veloc_paco(NDIM,nglob))
-      allocate(accel_paco(NDIM,nglob))
-
       ! call Paco's routine to compute in frequency and convert to time by Fourier transform
       call paco_beyond_critical(coord,nglob,deltat,NSTEP,angleforce(1),&
-              f0(1),cploc,csloc,TURN_ATTENUATION_ON,QKappa_attenuation(1),source_type(1),v0x_left,v0z_left,&
-              v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,&
-              t0x_bot,t0z_bot,left_bound(1:count_left),right_bound(1:count_right),bot_bound(1:count_bottom)&
-              ,count_left,count_right,count_bottom,displ_paco,veloc_paco,accel_paco)
-
-      displ_elastic(1,:) = displ_paco(1,:)
-      displ_elastic(3,:) = displ_paco(2,:)
-      veloc_elastic(1,:) = veloc_paco(1,:)
-      veloc_elastic(3,:) = veloc_paco(2,:)
-      accel_elastic(1,:) = accel_paco(1,:)
-      accel_elastic(3,:) = accel_paco(2,:)
+              f0(1),cploc,csloc,TURN_ATTENUATION_ON,QKappa_attenuation(1),source_type(1),v0x_left,v0z_left, &
+              v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right, &
+              t0x_bot,t0z_bot,left_bound(1:count_left),right_bound(1:count_right),bot_bound(1:count_bottom), &
+              count_left,count_right,count_bottom,displ_elastic,veloc_elastic,accel_elastic)
 
       deallocate(left_bound)
       deallocate(right_bound)
       deallocate(bot_bound)
-
-      deallocate(displ_paco)
-      deallocate(veloc_paco)
-      deallocate(accel_paco)
 
       if (myrank == 0) then
         write(IOUT,*)  '***********'
@@ -6090,7 +6074,7 @@
             do j = 1, NGLLZ
               do i = 1, NGLLX
                 iglob = ibool(i,j,ispec)
-                if (.not. assign_external_model) then 
+                if (.not. assign_external_model) then
                    kappal_ac_global(iglob) = poroelastcoef(3,1,kmato(ispec))
                    rhol_ac_global(iglob) = density(1,kmato(ispec))
                 else
@@ -6178,7 +6162,7 @@
             do j = 1, NGLLZ
               do i = 1, NGLLX
                 iglob = ibool(i,j,ispec)
-                if (.not. assign_external_model) then 
+                if (.not. assign_external_model) then
                    mul_global(iglob) = poroelastcoef(2,1,kmato(ispec))
                    kappal_global(iglob) = poroelastcoef(3,1,kmato(ispec)) &
                                        - 4._CUSTOM_REAL*mul_global(iglob)/3._CUSTOM_REAL

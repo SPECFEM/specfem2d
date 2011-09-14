@@ -497,7 +497,6 @@
 
   !local parameters
   integer :: i,j,iglob,ispec
-  real(kind=CUSTOM_REAL) :: xx,zz
 
   do ispec = 1, nspec
     do j = 1, NGLLZ
