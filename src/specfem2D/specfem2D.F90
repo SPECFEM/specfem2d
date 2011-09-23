@@ -828,7 +828,7 @@
   integer :: ncol
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rho_klglob
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: noise_all
-  character(len=100) :: fnoise
+  character(len=100) :: noise_file
 
 
 
@@ -3591,11 +3591,6 @@
     allocate(surface_movie_y_noise(nglob))
     allocate(surface_movie_z_noise(nglob))
 
-    ncol = 6
-    allocate(rho_klglob(nglob))
-    allocate(noise_all(ncol,nglob))
-
-
     !read in parameters for noise tomography
     call read_parameters_noise(NOISE_TOMOGRAPHY,SIMULATION_TYPE,SAVE_FORWARD, &
                                  any_acoustic,any_poroelastic,p_sv,irec_master, &
@@ -3610,12 +3605,69 @@
     call compute_source_array_noise(p_sv,NSTEP,deltat,nglob,ibool,ispec_noise, &
                                  xi_noise,gamma_noise,xigll,zigll, &
                                  time_function_noise,source_array_noise)
+    !write out local coordinates of mesh
+    open(unit=504,file='OUTPUT_FILES/elem',status='unknown',action='write')
+      do ispec = 1, nspec
+        do j = 1, NGLLZ
+          do i = 1, NGLLX
+            iglob = ibool(i,j,ispec)
+            write(504,'(1pe11.3,1pe11.3,2i3,i7)') &
+              coord(1,iglob), coord(2,iglob), i, j, ispec
+         enddo
+        enddo
+      enddo
+    close(504)
+
+    !write out spatial distribution of noise sources
+    call create_mask_noise(nglob,coord,mask_noise)
+    open(unit=504,file='OUTPUT_FILES/mask_noise',status='unknown',action='write')
+      do iglob = 1, nglob
+            write(504,'(1pe11.3,1pe11.3,1pe11.3)') &
+              coord(1,iglob), coord(2,iglob), mask_noise(iglob)
+      enddo
+    close(504)
+
+    !write out velocity model
+    if(assign_external_model) then
+      open(unit=504,file='OUTPUT_FILES/model_rho_vp_vs',status='unknown',action='write')
+        do ispec = 1, nspec
+          do j = 1, NGLLZ
+            do i = 1, NGLLX
+              iglob = ibool(i,j,ispec)
+              write(504,'(1pe11.3,1pe11.3,1pe11.3,1pe11.3,1pe11.3)') &
+                coord(1,iglob), coord(2,iglob), &
+                rhoext(i,j,ispec), vpext(i,j,ispec), vsext(i,j,ispec)
+            enddo
+          enddo
+        enddo
+      close(504)
+    else
+      open(unit=504,file='OUTPUT_FILES/model_rho_kappa_mu',status='unknown',action='write')
+        do ispec = 1, nspec
+          do j = 1, NGLLZ
+            do i = 1, NGLLX
+              iglob = ibool(i,j,ispec)
+              write(504,'(1pe11.3,1pe11.3,1pe11.3,1pe11.3,1pe11.3)') &
+                coord(1,iglob), coord(2,iglob), density(1,kmato(ispec)), &
+                poroelastcoef(1,1,kmato(ispec)) + 2.d0/3.d0*poroelastcoef(2,1,kmato(ispec)), &
+                poroelastcoef(2,1,kmato(ispec))
+
+            enddo
+          enddo
+        enddo
+      close(504)
+    endif
 
   elseif (NOISE_TOMOGRAPHY == 2) then
     call create_mask_noise(nglob,coord,mask_noise)
 
   elseif (NOISE_TOMOGRAPHY == 3) then
     call create_mask_noise(nglob,coord,mask_noise)
+
+    !prepare array that will hold wavefield snapshots
+    ncol = 5
+    allocate(noise_all(ncol,nglob))
+    allocate(rho_klglob(nglob))
 
   endif
 
@@ -4980,14 +5032,14 @@
                             accel_elastic,angle_noise,source_array_noise)
 
         elseif (NOISE_TOMOGRAPHY == 2) then
-          call add_surface_movie_noise(p_sv,it,NSTEP,nglob,accel_elastic, &
+          call add_surface_movie_noise(p_sv,it,NSTEP,nspec,nglob,ibool,accel_elastic, &
                             surface_movie_x_noise,surface_movie_y_noise, &
-                            surface_movie_z_noise,mask_noise)
+                            surface_movie_z_noise,mask_noise,jacobian,wxgll,wzgll)
 
         elseif (NOISE_TOMOGRAPHY == 3) then
-          call add_surface_movie_noise(p_sv,it,NSTEP,nglob,b_accel_elastic, &
+          call add_surface_movie_noise(p_sv,it,NSTEP,nspec,nglob,ibool,b_accel_elastic, &
                             surface_movie_x_noise,surface_movie_y_noise, &
-                            surface_movie_z_noise,mask_noise)
+                            surface_movie_z_noise,mask_noise,jacobian,wxgll,wzgll)
 
         endif
 
@@ -6467,25 +6519,20 @@
 !<NOISE_TOMOGRAPHY
 
       if (NOISE_TOMOGRAPHY == 1) then
-        !write(fnoise,"('OUTPUT_FILES/snapshot_eta_',i6.6)") it
-        !call snapshot_glob(nglob,coord,fnoise,accel_elastic(2,:))
 
       elseif (NOISE_TOMOGRAPHY == 2) then
-        !write(fnoise,"('OUTPUT_FILES/snapshot_phi_',i6.6)") it
-        !call snapshot_glob(nglob,coord,fnoise,displ_elastic(2,:))
 
       elseif (NOISE_TOMOGRAPHY == 3) then
         call elem_to_glob(nspec,nglob,ibool,rho_kl,rho_klglob)
 
-        noise_all(1,:) = coord(1,:)
-        noise_all(2,:) = coord(2,:)
-        noise_all(3,:) = b_displ_elastic(2,:)
-        noise_all(4,:) = accel_elastic(2,:)
-        noise_all(5,:) = rho_k
-        noise_all(6,:) = rho_klglob
+        noise_all(1,:) = surface_movie_y_noise
+        noise_all(2,:) = b_displ_elastic(2,:)
+        noise_all(3,:) = accel_elastic(2,:)
+        noise_all(4,:) = rho_k
+        noise_all(5,:) = rho_klglob
 
-        write(fnoise,"('OUTPUT_FILES/snapshot_all_',i6.6)") it
-        call snapshot_all(ncol,nglob,fnoise,noise_all)
+        write(noise_file,"('OUTPUT_FILES/snapshot_all_',i6.6)") it
+        call snapshot_all(ncol,nglob,noise_file,noise_all)
 
       endif
 
