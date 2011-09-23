@@ -22,7 +22,7 @@ freq0                           =  10            # frequency for viscous attenua
 p_sv                            = .false.        # set the type of calculation (P-SV or SH/membrane waves)
 
 # time step parameters
-nt                              = 4000           # total number of time steps
+nt                              = 2000           # total number of time steps
 deltat                          = 4.d-2          # duration of a time step
 
 # source parameters

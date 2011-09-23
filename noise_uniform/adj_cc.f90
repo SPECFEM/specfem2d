@@ -13,8 +13,8 @@ logical, parameter :: use_negative_branch = .true.
 logical, parameter :: use_positive_branch = .false.
 logical, parameter :: use_custom_window = .false.
 
-!choose whether to time reverse (carried out subsequent to all other processing)
-logical, parameter :: reverse = .true.
+!choose whether to time reverse, carried out subsequent to all other processing
+logical, parameter :: time_reverse = .true.
 
 
 
@@ -183,8 +183,8 @@ write(*,*) ''
 write(*,*) 'Writing to file: '//trim(file_in)//'.adj'
 
 do it = 1,nt
-    if (.not. reverse) write(1002,'(f16.12,1pe18.8)'), t(it), seismo_adj(it)
-    if (reverse) write(1002,'(f16.12,1pe18.8)'), t(it), seismo_adj(nt+1-it)
+    if (.not. time_reverse) write(1002,'(f16.12,1pe18.8)'), t(it), seismo_adj(it)
+    if (time_reverse) write(1002,'(f16.12,1pe18.8)'), t(it), seismo_adj(nt+1-it)
 end do
 close(1002)
 
