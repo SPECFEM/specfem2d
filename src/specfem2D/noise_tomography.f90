@@ -43,10 +43,9 @@
 
 !NOISE TOMOGRAPHY TO DO LIST
 
-!1. Replace ad hoc scaling in add_surface_movie_noise by expression involving Jacobian
-!2. Use separate STATIONS_ADJOINT file
-!3. Add exploration test case under EXAMPLES
-!4. Update manual
+!1. Use separate STATIONS_ADJOINT file
+!2. Add exploration test case under EXAMPLES
+!3. Update manual
 
 ! =============================================================================================================
 ! specify spatial distribution of microseismic noise sources
@@ -355,9 +354,9 @@
 ! =============================================================================================================
 ! read in and inject the "source" that drives the "enemble forward wavefield"
 ! (recall that the ensemble forward wavefield has a spatially distributed source)
-  subroutine add_surface_movie_noise(p_sv,it,NSTEP,nglob, &
+  subroutine add_surface_movie_noise(p_sv,it,NSTEP,nspec,nglob,ibool, &
       accel_elastic,surface_movie_x_noise,surface_movie_y_noise, &
-      surface_movie_z_noise,mask_noise)
+      surface_movie_z_noise,mask_noise,jacobian,wxgll,wzgll)
 
   implicit none
   include "constants.h"
@@ -365,16 +364,17 @@
   !input parameters
   logical :: p_sv
   integer :: it, NSTEP
-  integer :: nglob
+  integer :: nspec, nglob
+  integer :: ibool(NGLLX,NGLLZ,nspec)
 
   real(kind=CUSTOM_REAL), dimension(nglob) :: mask_noise
   real(kind=CUSTOM_REAL), dimension(nglob) :: &
     surface_movie_x_noise, surface_movie_y_noise, surface_movie_z_noise
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic
+  real(kind=CUSTOM_REAL) :: wxgll(NGLLX), wzgll(NGLLZ), jacobian(NGLLX,NGLLZ,nspec)
 
   !local variables
-  integer :: ios
-  real(kind=CUSTOM_REAL) :: factor_noise
+  integer :: ios, i, j, ispec, iglob
   character(len=60) :: file_in_noise
 
 
@@ -389,29 +389,24 @@
   endif
   close(500)
 
-  factor_noise = 1.d6
+  do ispec = 1, nspec
+    do j = 1, NGLLZ
+      do i = 1, NGLLX
+        if (p_sv) then ! P-SV calculation
+          iglob = ibool(i,j,ispec)
+          accel_elastic(1,iglob) = accel_elastic(1,iglob) + surface_movie_x_noise(iglob) * &
+                                   mask_noise(iglob) * wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
+          accel_elastic(3,iglob) = accel_elastic(3,iglob) + surface_movie_z_noise(iglob) * &
+                                   mask_noise(iglob) * wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
 
-  if(p_sv) then ! P-SV calculation
-    accel_elastic(1,:) = accel_elastic(1,:) + factor_noise * mask_noise(:) * surface_movie_x_noise(:)
-    accel_elastic(3,:) = accel_elastic(3,:) + factor_noise * mask_noise(:) * surface_movie_z_noise(:)
-!   note: above implementation does not yet include non-vertical noise
-!   excitation
-
-  else ! SH (membrane) calculation
-    accel_elastic(2,:) = accel_elastic(2,:) + factor_noise * mask_noise(:) * surface_movie_y_noise(:)
-
-!   note: above implementation includes ad hoc scaling by a number
-!   "factor_noise", meant to approximate the correct jacobian and gll weighting
-!   correct implementation should look something like:
-!   do iglob = 1,nglob
-!         hlagrange = weight(iglob) * jacobian(iglob)
-!         accel_elastic(2,iglob) = accel_elastic(2,iglob) &
-!                    + hlagrange * surface_movie_y_noise(iglob)
-!       enddo
-!     enddo
-!   enddo
-
-  endif
+        else ! SH (membrane) calculation
+          iglob = ibool(i,j,ispec)
+          accel_elastic(2,iglob) = accel_elastic(2,iglob) + surface_movie_y_noise(iglob) * &
+                                   mask_noise(iglob) * wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
+        endif
+      enddo
+    enddo
+  enddo
 
   end subroutine add_surface_movie_noise
 
@@ -458,20 +453,15 @@
 
   !local parameters
   integer :: i,iglob
-  real(kind=CUSTOM_REAL), dimension(ncol) :: row
 
   open(unit=504,file=filename,status='unknown',action='write')
 
     do iglob = 1,nglob
 
-          row(:) = array_all(:,iglob)
-
           do i = 1,ncol-1
-              if (abs(row(i)) < 1.e-32) row(i) = 0.
-              write(unit=504,fmt='(1pe15.5e3)',advance='no') row(i)
+              write(unit=504,fmt='(1pe12.3e3)',advance='no') array_all(i,iglob)
           enddo
-              if (abs(row(ncol)) < 1.e-32) row(ncol) = 0.
-              write(unit=504,fmt='(1pe15.5e3)') row(ncol)
+              write(unit=504,fmt='(1pe13.3e3)') array_all(ncol,iglob)
 
     enddo
 
@@ -508,37 +498,4 @@
   enddo
 
   end subroutine elem_to_glob
-
-
-! =============================================================================================================
-! auxillary routine
-  subroutine snapshot_glob(nglob,coord,filename,array1)
-
-  implicit none
-  include "constants.h"
-
-  !input paramters
-  integer :: nglob
-  character(len=100) filename
-
-  real(kind=CUSTOM_REAL), dimension(2,nglob) :: coord
-  real(kind=CUSTOM_REAL), dimension(nglob) :: array1
-
-  !local parameters
-  integer :: iglob
-  real(kind=CUSTOM_REAL) :: xx,zz
-
-
-  open(unit=504,file=filename,status='unknown',action='write')
-
-    do iglob = 1, nglob
-          xx = coord(1,iglob)
-          zz = coord(2,iglob)
-          write(504,*) xx, zz, array1(iglob)
-    enddo
-
-  close(504)
-
-  end subroutine snapshot_glob
-
 
