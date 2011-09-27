@@ -799,17 +799,22 @@
 !>SU_FORMAT
 
 !<NOISE_TOMOGRAPHY
-  ! NOISE_TOMOGRAPHY = 0 - turn noise tomography subroutines off, resulting in
-  ! an earthquake simulation rather than a noise simulation
+  ! NOISE_TOMOGRAPHY = 0 - turn noise tomography subroutines off; setting
+  ! NOISE_TOMOGRAPHY equal to 0, in other words, results in an earthquake 
+  ! simulation rather than a noise simulation
 
-  ! NOISE_TOMOGRAPHY = 1 - compute "generating wavefield" and store the result
+  ! NOISE_TOMOGRAPHY = 1 - compute "generating" wavefield and store the result;
+  ! this stored wavefield is then used to compute the "ensemble forward"
+  ! wavefield in the next noise simulation
 
-  ! NOISE_TOMOGRAPHY = 2 - compute "ensemble forward wavefield"; if an adjoint
-  ! simulation is planned, users need to manually extract cross-correlograms
+  ! NOISE_TOMOGRAPHY = 2 - compute "ensemble forward" wavefield and store the
+  ! result; if an adjoint simulation is planned, users need to store
+  ! seismograms (actually, cross-correlograms) for later processing
 
-  ! NOISE_TOMOGRAPHY = 3 - carry out adjoint simulation; for noise tomography
-  ! applications, users need to supply adjoint source(s) based on cross-
-  ! -correlograms from previous simulation
+  ! NOISE_TOMOGRAPHY = 3 - carry out adjoint simulation; users need to supply
+  ! adjoint sources constructed from cross-correlograms computed during the
+  ! "ensemble forward" step
+
 
   ! For an explanation of terms and concepts in noise tomography, see "Tromp et
   ! al., 2011, Noise Cross-Correlation Sensitivity Kernels, Geophysical Journal
@@ -821,15 +826,28 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: time_function_noise
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: source_array_noise
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: mask_noise
-  !to avoid empty dimensions depending on SH/P_SV, use separate arrays for x,y,z
+
+  ! The following three arrays are used to hold snapshots of the generating
+  ! wavefield or of the ensemble forward wavefield, depending on the type of
+  ! noise simulation specified. In some cases, the entire generating wavefield
+  ! or ensemble forward wavefield needs to be saved for all times steps. Since
+  ! the disk space required to do this is usually quite large, separate arrays
+  ! are used for x,y,z to avoid having empty dimensions (one empty dimension in
+  ! the case of P-SV or two empty dimensions in the case of SH).
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
     surface_movie_x_noise, surface_movie_y_noise, surface_movie_z_noise
 
-  integer :: ncol
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rho_klglob
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: noise_all
-  character(len=100) :: noise_file
+  ! For writing noise wavefields
+  logical :: output_wavefields_noise = .true.
+  integer :: noise_output_ncol
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: noise_output_array
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: noise_output_dim_5
+  character(len=512) :: noise_output_file
 
+  ! For noise tomography only - specify whether to reconstruct ensemble forward
+  ! wavefield by saving everywhere or by saving only at the boundaries (the
+  ! latter usually much faster but prone to artefacts)
+  logical :: save_everywhere = .true.
 
 
 !>NOISE_TOMOGRAPHY
@@ -3605,8 +3623,9 @@
     call compute_source_array_noise(p_sv,NSTEP,deltat,nglob,ibool,ispec_noise, &
                                  xi_noise,gamma_noise,xigll,zigll, &
                                  time_function_noise,source_array_noise)
-    !write out local coordinates of mesh
-    open(unit=504,file='OUTPUT_FILES/elem',status='unknown',action='write')
+
+    !write out coordinates of mesh
+    open(unit=504,file='OUTPUT_FILES/mesh_spec',status='unknown',action='write')
       do ispec = 1, nspec
         do j = 1, NGLLZ
           do i = 1, NGLLX
@@ -3615,6 +3634,13 @@
               coord(1,iglob), coord(2,iglob), i, j, ispec
          enddo
         enddo
+      enddo
+    close(504)
+
+    open(unit=504,file='OUTPUT_FILES/mesh_glob',status='unknown',action='write')
+      do iglob = 1, nglob
+        write(504,'(1pe11.3,1pe11.3,2i3,i7)') &
+          coord(1,iglob), coord(2,iglob), iglob
       enddo
     close(504)
 
@@ -3662,12 +3688,15 @@
     call create_mask_noise(nglob,coord,mask_noise)
 
   elseif (NOISE_TOMOGRAPHY == 3) then
-    call create_mask_noise(nglob,coord,mask_noise)
 
-    !prepare array that will hold wavefield snapshots
-    ncol = 5
-    allocate(noise_all(ncol,nglob))
-    allocate(rho_klglob(nglob))
+    if (output_wavefields_noise) then
+      call create_mask_noise(nglob,coord,mask_noise)
+
+      !prepare array that will hold wavefield snapshots
+      noise_output_ncol = 5
+      allocate(noise_output_array(noise_output_ncol,nglob))
+      allocate(noise_output_dim_5(nglob))
+    endif
 
   endif
 
@@ -5037,10 +5066,11 @@
                             surface_movie_z_noise,mask_noise,jacobian,wxgll,wzgll)
 
         elseif (NOISE_TOMOGRAPHY == 3) then
-          call add_surface_movie_noise(p_sv,it,NSTEP,nspec,nglob,ibool,b_accel_elastic, &
-                            surface_movie_x_noise,surface_movie_y_noise, &
-                            surface_movie_z_noise,mask_noise,jacobian,wxgll,wzgll)
-
+          if (.not. save_everywhere) then
+            call add_surface_movie_noise(p_sv,it,NSTEP,nspec,nglob,ibool,b_accel_elastic, &
+                              surface_movie_x_noise,surface_movie_y_noise, &
+                              surface_movie_z_noise,mask_noise,jacobian,wxgll,wzgll)
+          endif
         endif
 
 !>NOISE_TOMOGRAPHY
@@ -5905,6 +5935,33 @@
 
     endif ! if(it == 1 .and. SIMULATION_TYPE == 2)
 
+!<NOISE_TOMOGRAPHY
+
+  if ( NOISE_TOMOGRAPHY == 1 ) then
+    call save_surface_movie_noise(NOISE_TOMOGRAPHY,p_sv,it,nglob,displ_elastic)
+
+  elseif ( NOISE_TOMOGRAPHY == 2 .and. save_everywhere ) then
+    call save_surface_movie_noise(NOISE_TOMOGRAPHY,p_sv,it,nglob,displ_elastic)
+
+  elseif ( NOISE_TOMOGRAPHY == 3 .and. save_everywhere ) then
+    write(noise_output_file,"('phi_',i6.6)") NSTEP-it+1
+    open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/'//trim(noise_output_file), &
+                        status='old',form='unformatted',action='read',iostat=ios)
+    if( ios /= 0) write(*,*) 'Error retrieving ensemble forward wavefield.'
+    if(p_sv) then
+      read(500) b_displ_elastic(1,:)
+      read(500) b_displ_elastic(3,:)
+    else
+      read(500) b_displ_elastic(2,:)
+    endif
+    close(500)
+
+  endif
+
+
+
+!>NOISE_TOMOGRAPHY 
+
 ! ********************************************************************************************
 !                                      kernels calculation
 ! ********************************************************************************************
@@ -6426,12 +6483,6 @@
 
     endif ! if(SIMULATION_TYPE == 2)
 
-!<NOISE_TOMOGRAPHY
-    if ( NOISE_TOMOGRAPHY == 1 ) then
-      call save_surface_movie_noise(p_sv,it,nglob,displ_elastic)
-    endif
-!>NOISE_TOMOGRAPHY
-
 
 !
 !----  display results at given time steps
@@ -6518,21 +6569,27 @@
 
 !<NOISE_TOMOGRAPHY
 
-      if (NOISE_TOMOGRAPHY == 1) then
+      if ( NOISE_TOMOGRAPHY == 3 .and. output_wavefields_noise ) then
 
-      elseif (NOISE_TOMOGRAPHY == 2) then
+        !load ensemble foward source
+        write(noise_output_file,"('phi_',i6.6)") NSTEP-it+1
+        open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/'//trim(noise_output_file), &
+                            status='old',form='unformatted',action='read',iostat=ios)
+        if( ios /= 0) write(*,*) 'Error preparing noise output.'
+          read(500) surface_movie_y_noise
+        close(500)
 
-      elseif (NOISE_TOMOGRAPHY == 3) then
-        call elem_to_glob(nspec,nglob,ibool,rho_kl,rho_klglob)
+        !load product of fwd, adj wavefields
+        call elem_to_glob(nspec,nglob,ibool,rho_kl,noise_output_dim_5)
 
-        noise_all(1,:) = surface_movie_y_noise
-        noise_all(2,:) = b_displ_elastic(2,:)
-        noise_all(3,:) = accel_elastic(2,:)
-        noise_all(4,:) = rho_k
-        noise_all(5,:) = rho_klglob
-
-        write(noise_file,"('OUTPUT_FILES/snapshot_all_',i6.6)") it
-        call snapshot_all(ncol,nglob,noise_file,noise_all)
+        !write text file
+        noise_output_array(1,:) = surface_movie_y_noise(:) * mask_noise(:)
+        noise_output_array(2,:) = b_displ_elastic(2,:)
+        noise_output_array(3,:) = accel_elastic(2,:)
+        noise_output_array(4,:) = rho_k(:)
+        noise_output_array(5,:) = noise_output_dim_5(:)
+        write(noise_output_file,"('OUTPUT_FILES/snapshot_all_',i6.6)") it
+        call snapshots_noise(noise_output_ncol,nglob,noise_output_file,noise_output_array)
 
       endif
 
