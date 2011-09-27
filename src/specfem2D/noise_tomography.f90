@@ -81,7 +81,7 @@
 
 
 ! =============================================================================================================
-! read noise parameters and check for consitency
+! read noise parameters and check for consistency
   subroutine read_parameters_noise(NOISE_TOMOGRAPHY,SIMULATION_TYPE,SAVE_FORWARD, &
                                      any_acoustic,any_poroelastic,p_sv,irec_master, &
                                      Mxx,Mxz,Mzz,factor,NSOURCES, &
@@ -413,22 +413,32 @@
 ! =============================================================================================================
 ! save a snapshot of the "generating wavefield" eta that will be used to drive
 ! the "ensemble forward wavefield"
-  subroutine save_surface_movie_noise(p_sv,it,nglob,displ_elastic)
+  subroutine save_surface_movie_noise(NOISE_TOMOGRAPHY,p_sv,it,nglob,displ_elastic)
 
   implicit none
   include "constants.h"
 
   !input paramters
+  integer :: NOISE_TOMOGRAPHY
   logical :: p_sv
   integer :: it, nglob
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: displ_elastic
 
   !local parameters
   character(len=60) file_out_noise
+ 
+  if (NOISE_TOMOGRAPHY == 1) then
+    write(file_out_noise,"('OUTPUT_FILES/NOISE_TOMOGRAPHY/eta_',i6.6)") it
 
-  write(file_out_noise,"('eta_',i6.6)") it
-  open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/'//trim(file_out_noise),status='unknown',form='unformatted',action='write')
+  elseif (NOISE_TOMOGRAPHY == 2) then
+    write(file_out_noise,"('OUTPUT_FILES/NOISE_TOMOGRAPHY/phi_',i6.6)") it
 
+  else
+    call exit_mpi('Bad value of NOISE_TOMOGRAPHY in save_surface_movie_noise.')
+
+  endif
+    
+  open(unit=500,file=trim(file_out_noise),status='unknown',form='unformatted',action='write')
   if(p_sv) then
     write(500) displ_elastic(1,:)
     write(500) displ_elastic(3,:)
@@ -439,15 +449,14 @@
   end subroutine save_surface_movie_noise
 
 ! =============================================================================================================
-! auxillary routine
-  subroutine snapshot_all(ncol,nglob,filename,array_all)
+  subroutine snapshots_noise(ncol,nglob,filename,array_all)
 
   implicit none
   include "constants.h"
 
   !input paramters
   integer :: ncol,nglob
-  character(len=100) filename
+  character(len=512) filename
 
   real(kind=CUSTOM_REAL), dimension(ncol,nglob) :: array_all
 
@@ -468,7 +477,7 @@
   close(504)
 
 
-  end subroutine snapshot_all
+  end subroutine snapshots_noise
 
 
 ! =============================================================================================================
