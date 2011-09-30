@@ -847,7 +847,7 @@
   ! For noise tomography only - specify whether to reconstruct ensemble forward
   ! wavefield by saving everywhere or by saving only at the boundaries (the
   ! latter usually much faster but prone to artefacts)
-  logical :: save_everywhere = .true.
+  logical :: save_everywhere = .false.
 
 
 !>NOISE_TOMOGRAPHY
@@ -3639,7 +3639,7 @@
 
     open(unit=504,file='OUTPUT_FILES/mesh_glob',status='unknown',action='write')
       do iglob = 1, nglob
-        write(504,'(1pe11.3,1pe11.3,2i3,i7)') &
+        write(504,'(1pe11.3,1pe11.3,i7)') &
           coord(1,iglob), coord(2,iglob), iglob
       enddo
     close(504)
@@ -5067,7 +5067,7 @@
 
         elseif (NOISE_TOMOGRAPHY == 3) then
           if (.not. save_everywhere) then
-            call add_surface_movie_noise(p_sv,it,NSTEP,nspec,nglob,ibool,b_accel_elastic, &
+            call add_surface_movie_noise(p_sv,NSTEP-it+1,NSTEP,nspec,nglob,ibool,b_accel_elastic, &
                               surface_movie_x_noise,surface_movie_y_noise, &
                               surface_movie_z_noise,mask_noise,jacobian,wxgll,wzgll)
           endif
@@ -6572,7 +6572,7 @@
       if ( NOISE_TOMOGRAPHY == 3 .and. output_wavefields_noise ) then
 
         !load ensemble foward source
-        write(noise_output_file,"('phi_',i6.6)") NSTEP-it+1
+        write(noise_output_file,"('eta_',i6.6)") it
         open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/'//trim(noise_output_file), &
                             status='old',form='unformatted',action='read',iostat=ios)
         if( ios /= 0) write(*,*) 'Error preparing noise output.'
