@@ -54,7 +54,7 @@ ADJ_CODE=adj_cc.f90
 sed -i'.bak' 's/use_positive_branch = .[a-z]*./use_positive_branch = .false./' $ADJ_CODE
 sed -i'.bak' 's/use_negative_branch = .[a-z]*./use_negative_branch = .true./' $ADJ_CODE
 sed -i'.bak' 's/use_custom_window = .[a-z]*./use_custom_window = .false./' $ADJ_CODE
-sed -i'.bak' 's/time_reverse = .[a-z]*./time_reverse = .true./' $ADJ_CODE
+sed -i'.bak' 's/time_reverse = .[a-z]*./time_reverse = .false./' $ADJ_CODE
 
 gfortran $ADJ_CODE -o adj_run
 cp OUTPUT_ALL/step_2/*.semd SEM/

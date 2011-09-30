@@ -36,7 +36,7 @@ mkdir OUTPUT_ALL/step_1
 mv OUTPUT_FILES/*.semd     OUTPUT_ALL/step_1
 mv DATA/Par_file           OUTPUT_ALL/step_1
 mv OUTPUT_FILES/mask_noise OUTPUT_ALL/
-#mv OUTPUT_FILES/snapshot*  OUTPUT_ALL/
+mv OUTPUT_FILES/mesh_????  OUTPUT_ALL/
 
 
 #simulation 2
@@ -46,7 +46,6 @@ mkdir OUTPUT_ALL/step_2
 #mv OUTPUT_FILES/image*     OUTPUT_ALL/step_2
 mv OUTPUT_FILES/*.semd     OUTPUT_ALL/step_2
 mv DATA/Par_file           OUTPUT_ALL/step_2
-#mv OUTPUT_FILES/snapshot*  OUTPUT_ALL/
 
 
 #prepare adjoint source
@@ -54,7 +53,7 @@ ADJ_CODE=adj_cc.f90
 sed -i'.bak' 's/use_positive_branch = .[a-z]*./use_positive_branch = .true./' $ADJ_CODE
 sed -i'.bak' 's/use_negative_branch = .[a-z]*./use_negative_branch = .false./' $ADJ_CODE
 sed -i'.bak' 's/use_custom_window = .[a-z]*./use_custom_window = .false./' $ADJ_CODE
-sed -i'.bak' 's/time_reverse = .[a-z]*./time_reverse = .true./' $ADJ_CODE
+sed -i'.bak' 's/time_reverse = .[a-z]*./time_reverse = .false./' $ADJ_CODE
 
 gfortran $ADJ_CODE -o adj_run
 cp OUTPUT_ALL/step_2/*.semd SEM/
