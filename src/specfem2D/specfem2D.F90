@@ -839,9 +839,10 @@
 
   ! For writing noise wavefields
   logical :: output_wavefields_noise = .true.
+  logical :: ex, od
   integer :: noise_output_ncol
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: noise_output_array
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: noise_output_dim_5
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: noise_output_rhokl
   character(len=512) :: noise_output_file
 
   ! For noise tomography only - specify whether to reconstruct ensemble forward
@@ -3695,7 +3696,7 @@
       !prepare array that will hold wavefield snapshots
       noise_output_ncol = 5
       allocate(noise_output_array(noise_output_ncol,nglob))
-      allocate(noise_output_dim_5(nglob))
+      allocate(noise_output_rhokl(nglob))
     endif
 
   endif
@@ -5061,13 +5062,13 @@
                             accel_elastic,angle_noise,source_array_noise)
 
         elseif (NOISE_TOMOGRAPHY == 2) then
-          call add_surface_movie_noise(p_sv,it,NSTEP,nspec,nglob,ibool,accel_elastic, &
+          call add_surface_movie_noise(p_sv,NOISE_TOMOGRAPHY,it,NSTEP,nspec,nglob,ibool,accel_elastic, &
                             surface_movie_x_noise,surface_movie_y_noise, &
                             surface_movie_z_noise,mask_noise,jacobian,wxgll,wzgll)
 
         elseif (NOISE_TOMOGRAPHY == 3) then
           if (.not. save_everywhere) then
-            call add_surface_movie_noise(p_sv,NSTEP-it+1,NSTEP,nspec,nglob,ibool,b_accel_elastic, &
+            call add_surface_movie_noise(p_sv,NOISE_TOMOGRAPHY,it,NSTEP,nspec,nglob,ibool,b_accel_elastic, &
                               surface_movie_x_noise,surface_movie_y_noise, &
                               surface_movie_z_noise,mask_noise,jacobian,wxgll,wzgll)
           endif
@@ -5938,23 +5939,21 @@
 !<NOISE_TOMOGRAPHY
 
   if ( NOISE_TOMOGRAPHY == 1 ) then
-    call save_surface_movie_noise(NOISE_TOMOGRAPHY,p_sv,it,nglob,displ_elastic)
+    call save_surface_movie_noise(NOISE_TOMOGRAPHY,p_sv,it,NSTEP,nglob,displ_elastic)
 
   elseif ( NOISE_TOMOGRAPHY == 2 .and. save_everywhere ) then
-    call save_surface_movie_noise(NOISE_TOMOGRAPHY,p_sv,it,nglob,displ_elastic)
+    call save_surface_movie_noise(NOISE_TOMOGRAPHY,p_sv,it,NSTEP,nglob,displ_elastic)
 
   elseif ( NOISE_TOMOGRAPHY == 3 .and. save_everywhere ) then
-    write(noise_output_file,"('phi_',i6.6)") NSTEP-it+1
-    open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/'//trim(noise_output_file), &
-                        status='old',form='unformatted',action='read',iostat=ios)
+    if (it==1) &
+      open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/phi',access='direct', &
+      recl=nglob*CUSTOM_REAL,action='write',iostat=ios)
     if( ios /= 0) write(*,*) 'Error retrieving ensemble forward wavefield.'
     if(p_sv) then
-      read(500) b_displ_elastic(1,:)
-      read(500) b_displ_elastic(3,:)
+      call exit_mpi('P-SV case not yet implemented.')
     else
-      read(500) b_displ_elastic(2,:)
+      read(unit=500,rec=NSTEP-it+1) b_displ_elastic(2,:)
     endif
-    close(500)
 
   endif
 
@@ -6011,7 +6010,7 @@
 
 !----  display time step and max of norm of displacement
     if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
-      call check_stability(myrank,time,it,NSTEP, &
+      call check_stability(myrank,time,it,NSTEP,NOISE_TOMOGRAPHY, &
                         nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                         any_elastic_glob,any_elastic,displ_elastic, &
                         any_poroelastic_glob,any_poroelastic, &
@@ -6572,22 +6571,21 @@
       if ( NOISE_TOMOGRAPHY == 3 .and. output_wavefields_noise ) then
 
         !load ensemble foward source
-        write(noise_output_file,"('eta_',i6.6)") it
-        open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/'//trim(noise_output_file), &
-                            status='old',form='unformatted',action='read',iostat=ios)
-        if( ios /= 0) write(*,*) 'Error preparing noise output.'
-          read(500) surface_movie_y_noise
-        close(500)
+        inquire(unit=500,exist=ex,opened=od)
+        if (.not. od) &
+          open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/eta',access='direct', &
+          recl=nglob*CUSTOM_REAL,action='write',iostat=ios)
+        read(unit=500,rec=it) surface_movie_y_noise
 
         !load product of fwd, adj wavefields
-        call elem_to_glob(nspec,nglob,ibool,rho_kl,noise_output_dim_5)
+        call spec2glob(nspec,nglob,ibool,rho_kl,noise_output_rhokl)
 
         !write text file
         noise_output_array(1,:) = surface_movie_y_noise(:) * mask_noise(:)
         noise_output_array(2,:) = b_displ_elastic(2,:)
         noise_output_array(3,:) = accel_elastic(2,:)
         noise_output_array(4,:) = rho_k(:)
-        noise_output_array(5,:) = noise_output_dim_5(:)
+        noise_output_array(5,:) = noise_output_rhokl(:)
         write(noise_output_file,"('OUTPUT_FILES/snapshot_all_',i6.6)") it
         call snapshots_noise(noise_output_ncol,nglob,noise_output_file,noise_output_array)
 

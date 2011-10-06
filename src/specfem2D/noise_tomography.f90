@@ -181,17 +181,17 @@
   implicit none
   include "constants.h"
 
-  !input parameters
+  !input
   logical :: p_sv
   integer NSTEP, ispec_noise,nglob
   integer, dimension(NGLLX,NGLLZ,nglob) :: ibool
   real(kind=CUSTOM_REAL) :: deltat, xi_noise, gamma_noise
 
-  !output parameters
+  !output
   real(kind=CUSTOM_REAL), dimension(NSTEP) :: time_function_noise
   real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLZ,NSTEP) :: source_array_noise
 
-  !local parameters
+  !local
   integer :: it,i,j,iglob
   real(kind=CUSTOM_REAL) :: t
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: xigll
@@ -281,7 +281,7 @@
 
 
   else
-    call exit_MPI('unknown noise time function')
+    call exit_MPI('Bad time_function_type in compute_source_array_noise.')
 
   endif
 
@@ -317,7 +317,7 @@
   implicit none
   include "constants.h"
 
-  !input parameters
+  !input
   logical :: p_sv
   integer :: it, NSTEP
   integer :: ispec_noise, nglob
@@ -326,7 +326,7 @@
   real(kind=CUSTOM_REAL) :: angle_noise
   real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLZ,NSTEP) :: source_array_noise
 
-  !local variables
+  !local
   integer :: i,j,iglob
 
   if(p_sv) then ! P-SV calculation
@@ -354,15 +354,16 @@
 ! =============================================================================================================
 ! read in and inject the "source" that drives the "enemble forward wavefield"
 ! (recall that the ensemble forward wavefield has a spatially distributed source)
-  subroutine add_surface_movie_noise(p_sv,it,NSTEP,nspec,nglob,ibool, &
+  subroutine add_surface_movie_noise(p_sv,NOISE_TOMOGRAPHY,it,NSTEP,nspec,nglob,ibool, &
       accel_elastic,surface_movie_x_noise,surface_movie_y_noise, &
       surface_movie_z_noise,mask_noise,jacobian,wxgll,wzgll)
 
   implicit none
   include "constants.h"
 
-  !input parameters
+  !input
   logical :: p_sv
+  integer :: NOISE_TOMOGRAPHY
   integer :: it, NSTEP
   integer :: nspec, nglob
   integer :: ibool(NGLLX,NGLLZ,nspec)
@@ -373,21 +374,26 @@
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic
   real(kind=CUSTOM_REAL) :: wxgll(NGLLX), wzgll(NGLLZ), jacobian(NGLLX,NGLLZ,nspec)
 
-  !local variables
+  !local
   integer :: ios, i, j, ispec, iglob
-  character(len=60) :: file_in_noise
 
 
-  write(file_in_noise,"('eta_',i6.6)") NSTEP-it+1
-  open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/'//trim(file_in_noise),status='old',form='unformatted',action='read',iostat=ios)
-  if( ios /= 0) write(*,*) 'Error retrieving generating wavefield.'
-  if(p_sv) then
-    read(500) surface_movie_x_noise
-    read(500) surface_movie_z_noise
-  else
-    read(500) surface_movie_y_noise
+  if (it==1) then
+    open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/eta',access='direct', &
+         recl=nglob*CUSTOM_REAL,action='read',iostat=ios)
+    if( ios /= 0) call exit_mpi('Error retrieving generating wavefield.')
   endif
-  close(500)
+
+  if(p_sv) then
+    call exit_mpi('P-SV case not yet implemented.')
+  else
+    if (NOISE_TOMOGRAPHY==2) read(unit=500,rec=NSTEP-it+1) surface_movie_y_noise
+    if (NOISE_TOMOGRAPHY==3) read(unit=500,rec=it) surface_movie_y_noise
+  endif
+
+  if (it==NSTEP) then
+    !close(500)
+  endif
 
   do ispec = 1, nspec
     do j = 1, NGLLZ
@@ -413,37 +419,49 @@
 ! =============================================================================================================
 ! save a snapshot of the "generating wavefield" eta that will be used to drive
 ! the "ensemble forward wavefield"
-  subroutine save_surface_movie_noise(NOISE_TOMOGRAPHY,p_sv,it,nglob,displ_elastic)
+  subroutine save_surface_movie_noise(NOISE_TOMOGRAPHY,p_sv,it,NSTEP,nglob,displ_elastic)
 
   implicit none
   include "constants.h"
 
-  !input paramters
+  !input
   integer :: NOISE_TOMOGRAPHY
   logical :: p_sv
-  integer :: it, nglob
+  integer :: it, NSTEP, nglob
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: displ_elastic
 
-  !local parameters
-  character(len=60) file_out_noise
- 
-  if (NOISE_TOMOGRAPHY == 1) then
-    write(file_out_noise,"('OUTPUT_FILES/NOISE_TOMOGRAPHY/eta_',i6.6)") it
+  !local
+  integer :: ios
 
-  elseif (NOISE_TOMOGRAPHY == 2) then
-    write(file_out_noise,"('OUTPUT_FILES/NOISE_TOMOGRAPHY/phi_',i6.6)") it
+  if (it==1) then
 
-  else
-    call exit_mpi('Bad value of NOISE_TOMOGRAPHY in save_surface_movie_noise.')
+    if (NOISE_TOMOGRAPHY == 1) then
 
-  endif
-    
-  open(unit=500,file=trim(file_out_noise),status='unknown',form='unformatted',action='write')
+      open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/eta',access='direct', &
+           recl=nglob*CUSTOM_REAL,action='write',iostat=ios)
+      if( ios /= 0) call exit_mpi('Error saving generating wavefield.')
+
+    elseif (NOISE_TOMOGRAPHY == 2) then
+
+      open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/phi',access='direct', &
+           recl=nglob*CUSTOM_REAL,action='write',iostat=ios)
+      if( ios /= 0) call exit_mpi('Error saving ensemble forward wavefield.')
+
+    else
+      call exit_mpi('Bad value of NOISE_TOMOGRAPHY in save_surface_movie_noise.')
+
+    endif
+
+  endif ! (it==1)
+
   if(p_sv) then
-    write(500) displ_elastic(1,:)
-    write(500) displ_elastic(3,:)
+    call exit_mpi('P-SV case not yet implemented.')
   else
-    write(500) displ_elastic(2,:)
+    write(unit=500,rec=it) displ_elastic(2,:)
+  endif
+
+  if (it==NSTEP) then
+    !close(500)
   endif
 
   end subroutine save_surface_movie_noise
@@ -482,29 +500,29 @@
 
 ! =============================================================================================================
 ! auxillary routine
-  subroutine elem_to_glob(nspec,nglob,ibool,array_elem,array_glob)
+  subroutine spec2glob(nspec,nglob,ibool,array_spec,array_glob)
 
   implicit none
   include "constants.h"
 
-  !input paramters
+  !input
   integer :: nspec, nglob
   integer :: ibool(NGLLX,NGLLZ,nspec)
 
   real(kind=CUSTOM_REAL), dimension(nglob) :: array_glob
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: array_elem
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: array_spec
 
-  !local parameters
+  !local
   integer :: i,j,iglob,ispec
 
   do ispec = 1, nspec
     do j = 1, NGLLZ
       do i = 1, NGLLX
         iglob = ibool(i,j,ispec)
-        array_glob(iglob) = array_elem(i,j,ispec)
+        array_glob(iglob) = array_spec(i,j,ispec)
      enddo
     enddo
   enddo
 
-  end subroutine elem_to_glob
+  end subroutine spec2glob
 
