@@ -43,7 +43,7 @@
 !========================================================================
 
 
-  subroutine check_stability(myrank,time,it,NSTEP, &
+  subroutine check_stability(myrank,time,it,NSTEP,NOISE_TOMOGRAPHY, &
                         nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                         any_elastic_glob,any_elastic,displ_elastic, &
                         any_poroelastic_glob,any_poroelastic, &
@@ -59,7 +59,7 @@
   include "mpif.h"
 #endif
 
-  integer :: myrank,it,NSTEP
+  integer :: myrank,it,NSTEP,NOISE_TOMOGRAPHY
 
   double precision :: time
 
@@ -130,8 +130,13 @@
                       MPI_MAX, MPI_COMM_WORLD, ier)
 #endif
 
+      if (NOISE_TOMOGRAPHY /= 0) then
+        if (myrank == 0) write(*,*) 'Noise simulation ', NOISE_TOMOGRAPHY, ' of 3'
+      endif
+
+
     if (myrank == 0) &
-      write(IOUT,*) 'Max norm of vector field in solid (elastic) = ',displnorm_all_glob
+      write(IOUT,*) 'Max norm of vector field in solid (elastic) = ', displnorm_all_glob
 
     ! check stability of the code in solid, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
