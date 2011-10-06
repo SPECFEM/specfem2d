@@ -9,12 +9,12 @@ integer, parameter :: differentiate = 1
 logical, parameter :: use_filtering = .true.
 
 !choose exactly one of the following window options
-logical, parameter :: use_negative_branch = .true.
-logical, parameter :: use_positive_branch = .false.
+logical, parameter :: use_negative_branch = .false.
+logical, parameter :: use_positive_branch = .true.
 logical, parameter :: use_custom_window = .false.
 
 !choose whether to time reverse, carried out subsequent to all other processing
-logical, parameter :: time_reverse = .true.
+logical, parameter :: time_reverse = .false.
 
 
 
@@ -135,17 +135,25 @@ if (use_custom_window) then
   it_end   = ceiling((t_end - t(1))/dt)
   if (it_begin < 1) it_begin = 1
   if (it_end > nt) it_end = nt
+
 elseif (use_positive_branch) then
   write(*,*) 'Choosing positive branch'
   it_begin = nthalf+1
   it_end   = nt
+  if (it_begin < nthalf) it_begin = nthalf
+  if (it_end > nt) it_end = nt
+
 elseif (use_negative_branch) then
   write(*,*) 'Choosing negative branch'
   it_begin = 1
   it_end   = nthalf
+  if (it_begin < 1) it_begin = 1
+  if (it_end > nthalf) it_end = nthalf
+
 else
   write(*,*) 'Must select one of the following: positive_branch, &
               negative_branch, custom_window.'
+
 endif
 
 write(*,'(a,2f10.3)') ' Time range: ', t(1), t(nt)
@@ -153,6 +161,7 @@ write(*,'(a,2f10.3)') ' Window:     ', t(it_begin), t(it_end)
 write(*,'(a,f10.3,f10.3)') ' Filtering:  ', 1./freq_high, 1./freq_low
 
 !! Tukey taper
+alpha = w_tukey
 k=0
 do it = it_begin,it_end
   k=k+1
