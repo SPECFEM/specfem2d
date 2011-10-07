@@ -55,6 +55,9 @@
 ! add MPI barriers and suppress seismograms if we generate traces of the run for analysis with "ParaVer"
   logical, parameter :: GENERATE_PARAVER_TRACES = .false.
 
+! factor to subsample color images output by the code (useful for very large models)
+  integer, parameter :: factor_subsample_image = 1
+
 ! option to display only part of the mesh and not the whole mesh,
 ! for instance to analyze Cuthill-McKee mesh partitioning etc.
 ! Possible values are:

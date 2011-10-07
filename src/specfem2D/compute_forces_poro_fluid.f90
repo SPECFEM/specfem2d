@@ -798,7 +798,7 @@
 ! --- add the source
   if(.not. initialfield) then
     do i_source=1,NSOURCES
-! if this processor carries the source and the source element is poroelastic
+! if this processor core carries the source and the source element is poroelastic
      if (is_proc_source(i_source) == 1 .and. poroelastic(ispec_selected_source(i_source))) then
 
     phil = porosity(kmato(ispec_selected_source(i_source)))
@@ -830,7 +830,7 @@
 
   endif !if(source_type(i_source) == 2)
 
-     endif ! if this processor carries the source and the source element is poroelastic
+     endif ! if this processor core carries the source and the source element is poroelastic
       enddo
 
     if(SIMULATION_TYPE == 2) then   ! adjoint wavefield
@@ -857,7 +857,7 @@
       enddo
       endif ! if element is poroelastic
 
-      endif ! if this processor carries the adjoint source and the source element is poroelastic
+      endif ! if this processor core carries the adjoint source and the source element is poroelastic
       enddo ! irec = 1,nrec
     endif ! SIMULATION_TYPE == 2 adjoint wavefield
 

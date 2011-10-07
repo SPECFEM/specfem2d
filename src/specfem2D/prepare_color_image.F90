@@ -106,8 +106,8 @@
 
   ! convert pixel sizes to even numbers because easier to reduce size,
   ! create MPEG movies in postprocessing
-  NX_IMAGE_color = 2 * (NX_IMAGE_color / 2)
-  NZ_IMAGE_color = 2 * (NZ_IMAGE_color / 2)
+  NX_IMAGE_color = 2 * (NX_IMAGE_color / 2 + 1) / factor_subsample_image
+  NZ_IMAGE_color = 2 * (NZ_IMAGE_color / 2 + 1) / factor_subsample_image
 
   ! check that image size is not too big
   if (NX_IMAGE_color > 99999) call exit_MPI('output image too big : NX_IMAGE_color > 99999.')
@@ -394,12 +394,12 @@
           i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
 
           ! checks bounds
-          if( i < 1 .or. i > NX_IMAGE_color .or. j < 1 .or. j > NZ_IMAGE_color ) then
-            print*,'image vp bounds:',myrank,iproc,k, &
-              num_pixel_recv(k,iproc+1),nb_pixel_per_proc(iproc+1)
-            print*,'  i: ',i,NX_IMAGE_color
-            print*,'  j: ',j,NZ_IMAGE_color
-          endif
+!         if( i < 1 .or. i > NX_IMAGE_color .or. j < 1 .or. j > NZ_IMAGE_color ) then
+!           print*,'image vp bounds:',myrank,iproc,k, &
+!             num_pixel_recv(k,iproc+1),nb_pixel_per_proc(iproc+1)
+!           print*,'  i: ',i,NX_IMAGE_color
+!           print*,'  j: ',j,NZ_IMAGE_color
+!         endif
 
           image_color_vp_display(i,j) = data_pixel_recv(k)
         enddo

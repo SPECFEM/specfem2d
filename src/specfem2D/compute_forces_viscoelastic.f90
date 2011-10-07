@@ -848,7 +848,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   if(.not. initialfield) then
 
      do i_source=1,NSOURCES
-        ! if this processor carries the source and the source element is elastic
+        ! if this processor core carries the source and the source element is elastic
         if (is_proc_source(i_source) == 1 .and. elastic(ispec_selected_source(i_source))) then
 
            ! moment tensor
@@ -881,7 +881,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
            endif !if(source_type(i_source) == 2)
 
-        endif ! if this processor carries the source and the source element is elastic
+        endif ! if this processor core carries the source and the source element is elastic
      enddo ! do i_source=1,NSOURCES
 
      if(SIMULATION_TYPE == 2) then   ! adjoint wavefield
@@ -907,7 +907,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                  enddo
               endif ! if element is elastic
 
-           endif ! if this processor carries the adjoint source and the source element is elastic
+           endif ! if this processor core carries the adjoint source and the source element is elastic
         enddo ! irec = 1,nrec
 
      endif ! if SIMULATION_TYPE == 2 adjoint wavefield

@@ -2713,7 +2713,7 @@ coorg_recv_ps_vector_field
 
 ! interpolation on a uniform grid
 #ifdef USE_MPI
-  if(myrank == 0 .and. mod(ispec,1000) == 0) write(IOUT,*) 'Interpolation uniform grid element ',ispec,' on processor 0'
+  if(myrank == 0 .and. mod(ispec,1000) == 0) write(IOUT,*) 'Interpolation uniform grid element ',ispec,' on processor core 0'
 #else
   if(mod(ispec,1000) == 0) write(IOUT,*) 'Interpolation uniform grid element ',ispec
 #endif
