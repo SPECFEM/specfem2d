@@ -971,7 +971,7 @@ program meshfem2D
   if (nproc == 1) then
      print *,'This will be a serial simulation'
   else
-     print *,'This will be a parallel simulation on ',nproc,' processors'
+     print *,'This will be a parallel simulation on ',nproc,' processor cores'
   endif
   print *
 

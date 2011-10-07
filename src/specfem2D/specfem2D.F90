@@ -1348,8 +1348,8 @@
     deallocate(perm)
 
     print *
-    print *,'Xmin,Xmax of the whole mesh = ',minval(coord(1,:)),maxval(coord(1,:))
-    print *,'Zmin,Zmax of the whole mesh = ',minval(coord(2,:)),maxval(coord(2,:))
+    print *,'Xmin,Xmax of the local mesh for proc ',myrank,' = ',minval(coord(1,:)),maxval(coord(1,:))
+    print *,'Zmin,Zmax of the local mesh for proc ',myrank,' = ',minval(coord(2,:)),maxval(coord(2,:))
     print *
 
 !! DK DK Feb 2010 for periodic conditions: detect common points between left and right edges
@@ -4360,7 +4360,7 @@
       if(.not. initialfield) then
 
         do i_source=1,NSOURCES
-          ! if this processor carries the source and the source element is acoustic
+          ! if this processor core carries the source and the source element is acoustic
           if (is_proc_source(i_source) == 1 .and. &
             .not. elastic(ispec_selected_source(i_source)) .and. &
             .not. poroelastic(ispec_selected_source(i_source))) then
@@ -4398,7 +4398,7 @@
               call exit_MPI('cannot have moment tensor source in acoustic element')
 
             endif
-          endif ! if this processor carries the source and the source element is acoustic
+          endif ! if this processor core carries the source and the source element is acoustic
         enddo ! do i_source=1,NSOURCES
 
         if(SIMULATION_TYPE == 2) then   ! adjoint wavefield
@@ -4420,7 +4420,7 @@
                 enddo
               endif ! if element acoustic
 
-            endif ! if this processor carries the adjoint source
+            endif ! if this processor core carries the adjoint source
           enddo ! irec = 1,nrec
         endif ! SIMULATION_TYPE == 2 adjoint wavefield
 
@@ -4995,7 +4995,7 @@
       if(.not. initialfield) then
 
         do i_source=1,NSOURCES
-          ! if this processor carries the source and the source element is elastic
+          ! if this processor core carries the source and the source element is elastic
           if (is_proc_source(i_source) == 1 .and. elastic(ispec_selected_source(i_source))) then
 
             ! collocated force
@@ -5050,7 +5050,7 @@
               endif  !endif SIMULATION_TYPE == 1
             endif
 
-          endif ! if this processor carries the source and the source element is elastic
+          endif ! if this processor core carries the source and the source element is elastic
         enddo ! do i_source=1,NSOURCES
 
 !<NOISE_TOMOGRAPHY
@@ -5671,7 +5671,7 @@
       if(.not. initialfield) then
 
         do i_source=1,NSOURCES
-          ! if this processor carries the source and the source element is elastic
+          ! if this processor core carries the source and the source element is elastic
           if (is_proc_source(i_source) == 1 .and. poroelastic(ispec_selected_source(i_source))) then
 
             phil = porosity(kmato(ispec_selected_source(i_source)))
@@ -5719,7 +5719,7 @@
               endif !endif SIMULATION_TYPE == 1
             endif
 
-          endif ! if this processor carries the source and the source element is elastic
+          endif ! if this processor core carries the source and the source element is elastic
         enddo ! do i_source=1,NSOURCES
 
       endif ! if not using an initial field
