@@ -45,7 +45,134 @@
   subroutine create_color_image(color_image_2D_data,iglob_image_color_2D, &
                                   NX,NY,it,cutsnaps,image_color_vp_display)
 
-! display a given field as a red and blue color image
+! display a given field as a red and blue color JPEG image
+
+! to display the snapshots : display image*.jpg
+
+  implicit none
+
+  include "constants.h"
+
+  integer :: NX,NY,it
+
+  double precision :: cutsnaps
+
+  integer, dimension(NX,NY) :: iglob_image_color_2D
+
+  double precision, dimension(NX,NY) :: color_image_2D_data
+  double precision, dimension(NX,NY) :: image_color_vp_display
+
+! for JPEG
+  character(len=1), dimension(3,NX,NY) :: JPEG_raw_image
+
+  integer :: ix,iy,R,G,B
+
+  double precision :: amplitude_max,normalized_value,vpmin,vpmax,x1
+
+  character(len=100) :: filename
+
+! open the image file
+  write(filename,"('OUTPUT_FILES/image',i7.7,'.jpg')") it
+
+! compute maximum amplitude
+  amplitude_max = maxval(abs(color_image_2D_data))
+  vpmin = HUGEVAL
+  vpmax = TINYVAL
+  do iy=1,NY
+    do ix=1,NX
+      if ( iglob_image_color_2D(ix,iy) > -1 ) then
+        vpmin = min(vpmin,image_color_vp_display(ix,iy))
+        vpmax = max(vpmax,image_color_vp_display(ix,iy))
+      endif
+
+    enddo
+  enddo
+
+! in the image format, the image starts in the upper-left corner
+  do iy=NY,1,-1
+    do ix=1,NX
+
+! check if pixel is defined or not (can be above topography for instance)
+      if(iglob_image_color_2D(ix,iy) == -1) then
+
+! use light blue to display undefined region above topography
+        R = 204
+        G = 255
+        B = 255
+
+! suppress small amplitudes considered as noise
+      else if (abs(color_image_2D_data(ix,iy)) < amplitude_max * cutsnaps) then
+
+! use P velocity model as background where amplitude is negligible
+        if((vpmax-vpmin)/vpmin > 0.02d0) then
+          x1 = (image_color_vp_display(ix,iy)-vpmin)/(vpmax-vpmin)
+        else
+          x1 = 0.5d0
+        endif
+
+! rescale to avoid very dark gray levels
+        x1 = x1*0.7 + 0.2
+        if(x1 > 1.d0) x1=1.d0
+
+! invert scale: white = vpmin, dark gray = vpmax
+        x1 = 1.d0 - x1
+
+! map to [0,255]
+        x1 = x1 * 255.d0
+
+        R = nint(x1)
+        if(R < 0) R = 0
+        if(R > 255) R = 255
+        G = R
+        B = R
+
+      else
+
+! define normalized image data in [-1:1] and convert to nearest integer
+! keeping in mind that data values can be negative
+        if( amplitude_max >= TINYVAL ) then
+          normalized_value = color_image_2D_data(ix,iy) / amplitude_max
+        else
+          normalized_value = color_image_2D_data(ix,iy) / TINYVAL
+        endif
+
+! suppress values outside of [-1:+1]
+        if(normalized_value < -1.d0) normalized_value = -1.d0
+        if(normalized_value > 1.d0) normalized_value = 1.d0
+
+! use red if positive value, blue if negative, no green
+        if(normalized_value >= 0.d0) then
+          R = nint(255.d0*normalized_value**POWER_DISPLAY_COLOR)
+          G = 0
+          B = 0
+        else
+          R = 0
+          G = 0
+          B = nint(255.d0*abs(normalized_value)**POWER_DISPLAY_COLOR)
+        endif
+
+      endif
+
+! for JPEG
+     JPEG_raw_image(1,ix,NY-iy+1) = char(R)
+     JPEG_raw_image(2,ix,NY-iy+1) = char(G)
+     JPEG_raw_image(3,ix,NY-iy+1) = char(B)
+
+    enddo
+  enddo
+
+! for JPEG
+  call write_jpeg_image(JPEG_raw_image,NX,NY,filename)
+
+  end subroutine create_color_image
+
+!========================================================================
+
+! older (now unused) version that first creates a PNM image and then uses "convert" from ImageMagick to create a JPEG file
+  subroutine create_color_image_from_PNM(color_image_2D_data,iglob_image_color_2D, &
+                                  NX,NY,it,cutsnaps,image_color_vp_display)
+
+! display a given field as a red and blue color JPEG image
 
 ! to display the snapshots : display image*.jpg
 
@@ -68,7 +195,7 @@
 
   double precision :: amplitude_max,normalized_value,vpmin,vpmax,x1
 
-  character(len=100) :: file_name,system_command
+  character(len=100) :: filename,system_command
 
 ! create temporary image files in binary PNM P6 format (smaller) or ASCII PNM P3 format (easier to edit)
   logical, parameter :: BINARY_FILE = .true.
@@ -77,11 +204,11 @@
   integer, parameter :: ascii_code_of_zero = 48, ascii_code_of_carriage_return = 10
 
 ! open the image file
-  write(file_name,"('OUTPUT_FILES/image',i7.7,'.pnm')") it
+  write(filename,"('OUTPUT_FILES/image',i7.7,'.pnm')") it
 
   if(BINARY_FILE) then
 
-    open(unit=27,file=file_name,status='unknown',access='direct',recl=1)
+    open(unit=27,file=filename,status='unknown',access='direct',recl=1)
     write(27,rec=1) 'P'
     write(27,rec=2) '6' ! write P6 = binary PNM image format
     write(27,rec=3) char(ascii_code_of_carriage_return)
@@ -145,7 +272,7 @@
 
   else
 
-    open(unit=27,file=file_name,status='unknown')
+    open(unit=27,file=filename,status='unknown')
     write(27,"('P3')") ! write P3 = ASCII PNM image format
     write(27,*) NX,NY  ! write image size
     write(27,*) '255'  ! number of shades
@@ -267,5 +394,5 @@
 ! in such a case you will simply get images in PNM format in directory OUTPUT_FILES instead of GIF format
   call system(system_command)
 
-  end subroutine create_color_image
+  end subroutine create_color_image_from_PNM
 
