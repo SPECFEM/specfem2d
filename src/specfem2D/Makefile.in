@@ -81,6 +81,7 @@ S = .
 ## setup file directory
 SETUP = ../../setup
 
+LIBJPEG = ./libjpeg
 
 ##.PHONY: clean default all backup bak generate_databases specfem3D meshfem3D
 
@@ -140,7 +141,7 @@ OBJS_SPECFEM2D = \
 	$O/locate_source_force.o \
 	$O/locate_source_moment_tensor.o \
 	$O/netlib_specfun_erf.o \
-        $O/noise_tomography.o \
+  $O/noise_tomography.o \
 	$O/paco_beyond_critical.o \
 	$O/paco_convolve_fft.o \
 	$O/plotgll.o \
@@ -158,8 +159,16 @@ OBJS_SPECFEM2D = \
 	$O/setup_sources_receivers.o \
 	$O/sort_array_coordinates.o \
 	$O/write_seismograms.o \
-	$O/specfem2D.o
-
+	$O/specfem2D.o \
+  $O/write_jpeg_image.o \
+  $O/jaricom.o $O/jcapimin.o $O/jcapistd.o $O/jcarith.o $O/jccoefct.o $O/jccolor.o \
+  $O/jcdctmgr.o $O/jchuff.o $O/jcinit.o $O/jcmainct.o $O/jcmarker.o $O/jcmaster.o \
+  $O/jcomapi.o $O/jcparam.o $O/jcprepct.o $O/jcsample.o $O/jctrans.o $O/jdapimin.o \
+  $O/jdapistd.o $O/jdarith.o $O/jdatadst.o $O/jdatasrc.o $O/jdcoefct.o $O/jdcolor.o \
+  $O/jddctmgr.o $O/jdhuff.o $O/jdinput.o $O/jdmainct.o $O/jdmarker.o $O/jdmaster.o \
+  $O/jdmerge.o $O/jdpostct.o $O/jdsample.o $O/jdtrans.o $O/jerror.o $O/jfdctflt.o \
+  $O/jfdctfst.o $O/jfdctint.o $O/jidctflt.o $O/jidctfst.o $O/jidctint.o $O/jquant1.o \
+  $O/jquant2.o $O/jutils.o $O/jmemmgr.o $O/jmemnobs.o
 
 
 default: $(DEFAULT)
@@ -442,4 +451,145 @@ $O/specfem2D.o: ${S}/specfem2D.F90 ${SETUP}/constants.h
 #$O/param_reader.o: ${SHARED}/param_reader.c
 #	${CC} -c $(CFLAGS) -o $O/param_reader.o ${SHARED}/param_reader.c
 
+
+$O/jaricom.o: ${LIBJPEG}/jaricom.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jaricom.o ${LIBJPEG}/jaricom.c
+
+$O/jcapimin.o: ${LIBJPEG}/jcapimin.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jcapimin.o ${LIBJPEG}/jcapimin.c
+
+$O/jcapistd.o: ${LIBJPEG}/jcapistd.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jcapistd.o ${LIBJPEG}/jcapistd.c
+
+$O/jcarith.o: ${LIBJPEG}/jcarith.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jcarith.o ${LIBJPEG}/jcarith.c
+
+$O/jccoefct.o: ${LIBJPEG}/jccoefct.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jccoefct.o ${LIBJPEG}/jccoefct.c
+
+$O/jccolor.o: ${LIBJPEG}/jccolor.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jccolor.o ${LIBJPEG}/jccolor.c
+
+$O/jcdctmgr.o: ${LIBJPEG}/jcdctmgr.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jcdctmgr.o ${LIBJPEG}/jcdctmgr.c
+
+$O/jchuff.o: ${LIBJPEG}/jchuff.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jchuff.o ${LIBJPEG}/jchuff.c
+
+$O/jcinit.o: ${LIBJPEG}/jcinit.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jcinit.o ${LIBJPEG}/jcinit.c
+
+$O/jcmainct.o: ${LIBJPEG}/jcmainct.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jcmainct.o ${LIBJPEG}/jcmainct.c
+
+$O/jcmarker.o: ${LIBJPEG}/jcmarker.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jcmarker.o ${LIBJPEG}/jcmarker.c
+
+$O/jcmaster.o: ${LIBJPEG}/jcmaster.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jcmaster.o ${LIBJPEG}/jcmaster.c
+
+$O/jcomapi.o: ${LIBJPEG}/jcomapi.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jcomapi.o ${LIBJPEG}/jcomapi.c
+
+$O/jcparam.o: ${LIBJPEG}/jcparam.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jcparam.o ${LIBJPEG}/jcparam.c
+
+$O/jcprepct.o: ${LIBJPEG}/jcprepct.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jcprepct.o ${LIBJPEG}/jcprepct.c
+
+$O/jcsample.o: ${LIBJPEG}/jcsample.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jcsample.o ${LIBJPEG}/jcsample.c
+
+$O/jctrans.o: ${LIBJPEG}/jctrans.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jctrans.o ${LIBJPEG}/jctrans.c
+
+$O/jdapimin.o: ${LIBJPEG}/jdapimin.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jdapimin.o ${LIBJPEG}/jdapimin.c
+
+$O/jdapistd.o: ${LIBJPEG}/jdapistd.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jdapistd.o ${LIBJPEG}/jdapistd.c
+
+$O/jdarith.o: ${LIBJPEG}/jdarith.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jdarith.o ${LIBJPEG}/jdarith.c
+
+$O/jdatadst.o: ${LIBJPEG}/jdatadst.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jdatadst.o ${LIBJPEG}/jdatadst.c
+
+$O/jdatasrc.o: ${LIBJPEG}/jdatasrc.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jdatasrc.o ${LIBJPEG}/jdatasrc.c
+
+$O/jdcoefct.o: ${LIBJPEG}/jdcoefct.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jdcoefct.o ${LIBJPEG}/jdcoefct.c
+
+$O/jdcolor.o: ${LIBJPEG}/jdcolor.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jdcolor.o ${LIBJPEG}/jdcolor.c
+
+$O/jddctmgr.o: ${LIBJPEG}/jddctmgr.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jddctmgr.o ${LIBJPEG}/jddctmgr.c
+
+$O/jdhuff.o: ${LIBJPEG}/jdhuff.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jdhuff.o ${LIBJPEG}/jdhuff.c
+
+$O/jdinput.o: ${LIBJPEG}/jdinput.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jdinput.o ${LIBJPEG}/jdinput.c
+
+$O/jdmainct.o: ${LIBJPEG}/jdmainct.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jdmainct.o ${LIBJPEG}/jdmainct.c
+
+$O/jdmarker.o: ${LIBJPEG}/jdmarker.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jdmarker.o ${LIBJPEG}/jdmarker.c
+
+$O/jdmaster.o: ${LIBJPEG}/jdmaster.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jdmaster.o ${LIBJPEG}/jdmaster.c
+
+$O/jdmerge.o: ${LIBJPEG}/jdmerge.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jdmerge.o ${LIBJPEG}/jdmerge.c
+
+$O/jdpostct.o: ${LIBJPEG}/jdpostct.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jdpostct.o ${LIBJPEG}/jdpostct.c
+
+$O/jdsample.o: ${LIBJPEG}/jdsample.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jdsample.o ${LIBJPEG}/jdsample.c
+
+$O/jdtrans.o: ${LIBJPEG}/jdtrans.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jdtrans.o ${LIBJPEG}/jdtrans.c
+
+$O/jerror.o: ${LIBJPEG}/jerror.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jerror.o ${LIBJPEG}/jerror.c
+
+$O/jfdctflt.o: ${LIBJPEG}/jfdctflt.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jfdctflt.o ${LIBJPEG}/jfdctflt.c
+
+$O/jfdctfst.o: ${LIBJPEG}/jfdctfst.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jfdctfst.o ${LIBJPEG}/jfdctfst.c
+
+$O/jfdctint.o: ${LIBJPEG}/jfdctint.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jfdctint.o ${LIBJPEG}/jfdctint.c
+
+$O/jidctflt.o: ${LIBJPEG}/jidctflt.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jidctflt.o ${LIBJPEG}/jidctflt.c
+
+$O/jidctfst.o: ${LIBJPEG}/jidctfst.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jidctfst.o ${LIBJPEG}/jidctfst.c
+
+$O/jidctint.o: ${LIBJPEG}/jidctint.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jidctint.o ${LIBJPEG}/jidctint.c
+
+$O/jquant1.o: ${LIBJPEG}/jquant1.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jquant1.o ${LIBJPEG}/jquant1.c
+
+$O/jquant2.o: ${LIBJPEG}/jquant2.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jquant2.o ${LIBJPEG}/jquant2.c
+
+$O/jutils.o: ${LIBJPEG}/jutils.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jutils.o ${LIBJPEG}/jutils.c
+
+$O/jmemmgr.o: ${LIBJPEG}/jmemmgr.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jmemmgr.o ${LIBJPEG}/jmemmgr.c
+
+$O/jmemnobs.o: ${LIBJPEG}/jmemnobs.c
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jmemnobs.o ${LIBJPEG}/jmemnobs.c
+
+$O/write_jpeg_image.o: write_jpeg_image.c
+	${CC} -c $(CFLAGS) -o $O/write_jpeg_image.o write_jpeg_image.c
 

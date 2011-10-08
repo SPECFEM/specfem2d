@@ -800,7 +800,7 @@
 
 !<NOISE_TOMOGRAPHY
   ! NOISE_TOMOGRAPHY = 0 - turn noise tomography subroutines off; setting
-  ! NOISE_TOMOGRAPHY equal to 0, in other words, results in an earthquake 
+  ! NOISE_TOMOGRAPHY equal to 0, in other words, results in an earthquake
   ! simulation rather than a noise simulation
 
   ! NOISE_TOMOGRAPHY = 1 - compute "generating" wavefield and store the result;
@@ -5959,7 +5959,7 @@
 
 
 
-!>NOISE_TOMOGRAPHY 
+!>NOISE_TOMOGRAPHY
 
 ! ********************************************************************************************
 !                                      kernels calculation
