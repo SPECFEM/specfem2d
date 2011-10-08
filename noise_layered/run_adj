@@ -2,13 +2,17 @@
 #
 # noise tomography simulation 3
 #
+
+if [ $# -ne 2 ]; then echo "Usage:  run_adj  nrec  irec"; exit 1; fi
+
+
 NREC=$1
 IREC=$2
 ISRC=$IREC
 
 rm log.*
 rm DATA/Par_file
-rm OUTPUT_FILES/image*
+#rm OUTPUT_FILES/image*
 rm OUTPUT_FILES/*.semd
 
 
@@ -23,7 +27,7 @@ do
     WF_DIR=`printf ../../WF_DIR/noise_cc_%02d/step_2/ $IREC`
     YTRACE=`printf "S%04d.AA.BXY" $ii`
     cp ../OUTPUT_ALL/step_2/$YTRACE.semd .
-    TOFF=`../../get_time $NREC $ISRC $ii` 
+    TOFF=`../../getdirect $NREC $ISRC $ii` 
     ../adj_run $YTRACE.semd $TOFF >> ../log.adj
     rename '.semd' '' $YTRACE.semd.adj
 

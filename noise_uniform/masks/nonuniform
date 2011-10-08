@@ -1,6 +1,3 @@
-! =============================================================================================================
-! specify spatial distribution of microseismic noise sources
-! USERS need to modify this subroutine to suit their own needs
   subroutine create_mask_noise(nglob,coord,mask_noise)
 
   implicit none
@@ -39,4 +36,3 @@
   enddo
 
   end subroutine create_mask_noise
-

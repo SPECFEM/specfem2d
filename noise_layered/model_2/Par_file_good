@@ -1,5 +1,5 @@
 # title of job
-title                           = Test for M2 UPPA
+title                           = PASSIVE IMAGING - 2 INTERFACES
 
 # forward or adjoint simulation
 SIMULATION_TYPE                 = 1
@@ -42,16 +42,16 @@ rec_normal_to_surface           = .false.        # base anglerec normal to surfa
 
 # first receiver line (repeat these 6 lines and adjust nreceiverlines accordingly)
 nrec                            = 29             # number of receivers
-xdeb                            = 150.           # first receiver x in meters
+xdeb                            = 400.           # first receiver x in meters
 zdeb                            = 1500.          # first receiver z in meters
-xfin                            = 1850.          # last receiver x in meters (ignored if onlyone receiver)
+xfin                            = 2100.          # last receiver x in meters (ignored if onlyone receiver)
 zfin                            = 1500.          # last receiver z in meters (ignored if onlyone receiver)
 enreg_surf_same_vertical        = .true.         # receivers inside the medium or at the surface
 
 # display parameters
 NTSTEP_BETWEEN_OUTPUT_INFO      = 250            # display frequency in time steps
-output_postscript_snapshot      = .true.         # output Postscript snapshot of the results
-output_color_image              = .true.         # output color image of the results
+output_postscript_snapshot      = .false.        # output Postscript snapshot of the results
+output_color_image              = .false.        # output color image of the results
 imagetype                       = 1              # display 1=displ 2=veloc 3=accel 4=pressure
 cutsnaps                        = 1.             # minimum amplitude in % for snapshots
 meshvect                        = .true.         # display mesh on vector plots or not
@@ -100,12 +100,12 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes # file containing the
 # PARAMETERS FOR INTERNAL MESHING
 
 # file containing interfaces for internal mesh
-interfacesfile                  = interfaces_1.dat
+interfacesfile                  = interfaces.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
-xmax                            = 2000.d0        # abscissa of right side of the model
-nx                              = 40             # number of elements along X
+xmax                            = 2500.d0        # abscissa of right side of the model
+nx                              = 50             # number of elements along X
 
 # absorbing boundary parameters (see absorbing_conditions above)
 absorbbottom                    = .true.
@@ -115,6 +115,6 @@ absorbleft                      = .true.
 
 # define the different regions of the model in the (nx,nz) spectral element mesh
 nbregions                       = 3              # nb of regions and model number for each
-1 40  1 10 1
-1 40 11 20 2
-1 40 21 30 3
+1 50  1 10 1
+1 50 11 20 2
+1 50 21 30 3

@@ -1,10 +1,10 @@
 # title of job
-title                           = Test for M2 UPPA
+title                           = PASSIVE IMAGING - 1 INTERFACE
 
 # forward or adjoint simulation
 SIMULATION_TYPE                 = 1
-NOISE_TOMOGRAPHY                = 2
-SAVE_FORWARD                    = .true.
+NOISE_TOMOGRAPHY                = 1
+SAVE_FORWARD                    = .false.
 
 # parameters concerning partitioning
 nproc                           = 1              # number of processes
@@ -41,7 +41,7 @@ anglerec                        = 0.d0           # angle to rotate components at
 rec_normal_to_surface           = .false.        # base anglerec normal to surface (external mesh and curve file needed)
 
 # first receiver line (repeat these 6 lines and adjust nreceiverlines accordingly)
-nrec                            = 29             # number of receivers
+nrec                            = 29
 xdeb                            = 150.           # first receiver x in meters
 zdeb                            = 1500.          # first receiver z in meters
 xfin                            = 1850.          # last receiver x in meters (ignored if onlyone receiver)
@@ -50,8 +50,8 @@ enreg_surf_same_vertical        = .true.         # receivers inside the medium o
 
 # display parameters
 NTSTEP_BETWEEN_OUTPUT_INFO      = 250            # display frequency in time steps
-output_postscript_snapshot      = .true.         # output Postscript snapshot of the results
-output_color_image              = .true.         # output color image of the results
+output_postscript_snapshot      = .false.        # output Postscript snapshot of the results
+output_color_image              = .false.        # output color image of the results
 imagetype                       = 1              # display 1=displ 2=veloc 3=accel 4=pressure
 cutsnaps                        = 1.             # minimum amplitude in % for snapshots
 meshvect                        = .true.         # display mesh on vector plots or not
@@ -67,7 +67,7 @@ output_energy                   = .false.        # compute and output acoustic a
 output_wavefield_snapshot       = .false.         # output Ux,Uy,Uz text file for each output time (big files)
 
 # velocity and density models
-nbmodels                        = 3              # nb of different models
+nbmodels                        = 2              # nb of different models
 # define models as
 # I:   (model_number 1 rho Vp Vs 0 0 Qp Qs 0 0 0 0 0 0) or
 # II:  (model_number 2 rho c11 c13 c15 c33 c35 c55 0 0 0 0 0 0) or
@@ -76,7 +76,6 @@ nbmodels                        = 3              # nb of different models
 # and for isotropic poroelastic material use III. The mesh can contain acoustic, elastic, and poroelastic models simultaneously.
 1 1 2700.d0 3000.d0 1732.051d0 0 0 9999 9999 0 0 0 0 0 0
 2 1 2500.d0 2700.d0 1600.000d0 0 0 9999 9999 0 0 0 0 0 0
-3 1 2200.d0 2500.d0 1443.375d0 0 0 9999 9999 0 0 0 0 0 0
 
 # external mesh or not
 read_external_mesh              = .false.
@@ -100,7 +99,7 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes # file containing the
 # PARAMETERS FOR INTERNAL MESHING
 
 # file containing interfaces for internal mesh
-interfacesfile                  = interfaces_1.dat
+interfacesfile                  = interfaces.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
@@ -114,7 +113,6 @@ absorbtop                       = .false.
 absorbleft                      = .true.
 
 # define the different regions of the model in the (nx,nz) spectral element mesh
-nbregions                       = 3              # nb of regions and model number for each
-1 40  1 10 1
-1 40 11 20 2
-1 40 21 30 3
+nbregions                       = 2              # nb of regions and model number for each
+1 40  1 15 1
+1 40 16 30 2

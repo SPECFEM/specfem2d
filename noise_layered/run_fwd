@@ -3,6 +3,9 @@
 # runs first and second noise tomography simulations
 #
 
+if [ $# -ne 2 ]; then echo "Usage:  run_fwd  nrec  irec"; exit 1; fi
+
+
 NREC=$1
 IREC=$2
 
@@ -16,7 +19,7 @@ mkdir -p DATA SEM OUTPUT_FILES OUTPUT_ALL DATA/NOISE_TOMOGRAPHY OUTPUT_FILES/NOI
 
 
 # prepare files
-../change_rec . $NREC &> /dev/null
+../changerec . $NREC &> /dev/null
 
 cp SOURCE_noise DATA/SOURCE
 cp interfaces*  DATA/

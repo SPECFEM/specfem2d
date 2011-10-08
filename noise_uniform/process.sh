@@ -1,8 +1,10 @@
 #!/bin/bash
 
-./contribution_1
-mv OUTPUT_ALL OUTPUT_ALL_1
+#reproduce results from Tromp et al. 2010
 
-./contribution_2
-mv OUTPUT_ALL OUTPUT_ALL_2
+./use_negative_branch 3 1
+mv OUTPUT_ALL CBA_NEG
+
+./use_positive_branch 1 3
+mv OUTPUT_ALL CAB_POS
 

@@ -1,5 +1,5 @@
 # title of job
-title                           = Test for M2 UPPA
+title                           = PASSIVE IMAGING - 2 INTERFACES
 
 # forward or adjoint simulation
 SIMULATION_TYPE                 = 1
@@ -50,8 +50,8 @@ enreg_surf_same_vertical        = .true.         # receivers inside the medium o
 
 # display parameters
 NTSTEP_BETWEEN_OUTPUT_INFO      = 250            # display frequency in time steps
-output_postscript_snapshot      = .true.         # output Postscript snapshot of the results
-output_color_image              = .true.         # output color image of the results
+output_postscript_snapshot      = .false.        # output Postscript snapshot of the results
+output_color_image              = .false.        # output color image of the results
 imagetype                       = 1              # display 1=displ 2=veloc 3=accel 4=pressure
 cutsnaps                        = 1.             # minimum amplitude in % for snapshots
 meshvect                        = .true.         # display mesh on vector plots or not
@@ -100,7 +100,7 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes # file containing the
 # PARAMETERS FOR INTERNAL MESHING
 
 # file containing interfaces for internal mesh
-interfacesfile                  = interfaces_1.dat
+interfacesfile                  = interfaces.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
