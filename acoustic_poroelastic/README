@@ -1,0 +1,28 @@
+----------------------------------------------------------------------
+README
+----------------------------------------------------------------------
+
+This default example creates an internal mesh with a flat interface between
+an acoustic layer on top of a poroelastic layer.
+
+TO RUN:
+
+0. Read the user manual in SPECFEM2D/doc/manual_SPECFEM2D.pdf
+
+1. in SPECFEM2D root directory, configure, e.g. for a serial calculation,
+   ./configure FC=gfortran
+
+2. compile:
+   make all
+
+3. cd EXAMPLES/acoustic_poroelastic
+
+4. execute script to run mesher and solver for the PSV case:
+   ./process.sh
+
+5. check out the output files in the local directory OUTPUT_FILES,
+the seismograms should compare to Fig.8 in Morency and Tromp, Geophys. J. Int. (2008) 175, 301-345
+with a reversed polarity due to a reversed expression of the Ricker source time function in this paper.
+
+
+----------------------------------------------------------------------
