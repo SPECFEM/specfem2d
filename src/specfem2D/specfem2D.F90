@@ -402,6 +402,8 @@
     accels_poroelastic,velocs_poroelastic,displs_poroelastic
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     accelw_poroelastic,velocw_poroelastic,displw_poroelastic
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
+    accels_poroelastic_adj_coupling, accelw_poroelastic_adj_coupling      
   double precision, dimension(:), allocatable :: porosity,tortuosity
   double precision, dimension(:,:), allocatable :: density,permeability
 
@@ -2204,10 +2206,12 @@
     allocate(displs_poroelastic(NDIM,nglob_poroelastic))
     allocate(velocs_poroelastic(NDIM,nglob_poroelastic))
     allocate(accels_poroelastic(NDIM,nglob_poroelastic))
+    allocate(accels_poroelastic_adj_coupling(NDIM,nglob_poroelastic))
     allocate(rmass_s_inverse_poroelastic(nglob_poroelastic))
     allocate(displw_poroelastic(NDIM,nglob_poroelastic))
     allocate(velocw_poroelastic(NDIM,nglob_poroelastic))
     allocate(accelw_poroelastic(NDIM,nglob_poroelastic))
+    allocate(accelw_poroelastic_adj_coupling(NDIM,nglob_poroelastic))
     allocate(rmass_w_inverse_poroelastic(nglob_poroelastic))
 
     ! extra array if adjoint and kernels calculation
@@ -3952,12 +3956,14 @@
                          + deltat*velocs_poroelastic &
                          + deltatsquareover2*accels_poroelastic
       velocs_poroelastic = velocs_poroelastic + deltatover2*accels_poroelastic
+      accels_poroelastic_adj_coupling = accels_poroelastic
       accels_poroelastic = ZERO
       !for the fluid
       displw_poroelastic = displw_poroelastic &
                          + deltat*velocw_poroelastic &
                          + deltatsquareover2*accelw_poroelastic
       velocw_poroelastic = velocw_poroelastic + deltatover2*accelw_poroelastic
+      accelw_poroelastic_adj_coupling = accelw_poroelastic
       accelw_poroelastic = ZERO
 
       if(SIMULATION_TYPE == 2) then ! Adjoint calculation
@@ -4290,6 +4296,13 @@
 
             b_displw_x = b_displw_poroelastic(1,iglob)
             b_displw_z = b_displw_poroelastic(2,iglob)
+
+            ! new definition of adjoint displacement and adjoint potential
+            displ_x = -accels_poroelastic_adj_coupling(1,iglob)
+            displ_z = -accels_poroelastic_adj_coupling(2,iglob)
+
+            displw_x = -accelw_poroelastic_adj_coupling(1,iglob)
+            displw_z = -accelw_poroelastic_adj_coupling(2,iglob)
           endif
 
           ! get point values for the acoustic side
@@ -5279,6 +5292,8 @@
           pressure = - potential_dot_dot_acoustic(iglob)
           if(SIMULATION_TYPE == 2) then
             b_pressure = - b_potential_dot_dot_acoustic(iglob)
+            ! new definition of adjoint displacement and adjoint potential
+            pressure = potential_acoustic_adj_coupling(iglob)
           endif
 
           ! get point values for the poroelastic side
