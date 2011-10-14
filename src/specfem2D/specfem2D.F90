@@ -5125,7 +5125,7 @@
 
 
 ! ******************************************************************************************************************
-! ************* main solver for the poroelastic elements: first the solid (u_s) than the fluid (w)
+! ************* main solver for the poroelastic elements: first the solid (u_s) then the fluid (w)
 ! ******************************************************************************************************************
 
     if(any_poroelastic) then
