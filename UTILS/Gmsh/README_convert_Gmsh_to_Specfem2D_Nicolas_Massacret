@@ -1,0 +1,8 @@
+
+Avant de lancer l'exécutable, il est nécessaire de spécifier le nom du fichier source créé par gmsh dans "convert_Gmsh_to_Specfem2D_Nicolas_Massacret.c" ligne 30 et de créer trois fichers (dans le même dossier que l'exécutable et le fichier source) nommés :
+
+element
+material
+nodes
+
+
