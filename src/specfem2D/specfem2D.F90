@@ -403,7 +403,7 @@
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     accelw_poroelastic,velocw_poroelastic,displw_poroelastic
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
-    accels_poroelastic_adj_coupling, accelw_poroelastic_adj_coupling      
+    accels_poroelastic_adj_coupling, accelw_poroelastic_adj_coupling
   double precision, dimension(:), allocatable :: porosity,tortuosity
   double precision, dimension(:,:), allocatable :: density,permeability
 
