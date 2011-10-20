@@ -19,17 +19,16 @@
 /* Underscores should or should not follow this function name, depending on the compiler and its options.
    It is called in "attenuation_model.f90".
 */
-void attenuation_compute_param_(int *nmech_in, double *Qp_in, double *Qs_in, double *f1_in, double *f2_in,
+void attenuation_compute_param_(int *nmech_in, double *Q1_in, double *Q2_in, double *f1_in, double *f2_in,
              double *tau_sigma_nu1, double *tau_sigma_nu2,
              double *tau_epsilon_nu1, double *tau_epsilon_nu2
              )
 
 {
   int             xmgr, n, i, j, plot, nu;
-  double          Q_s, target_Qp, target_Qs;
+  double          Q_value, target_Q1, target_Q2;
   double          f1, f2, Q, om0, Omega;
   double          a, b;
-  double          kappa, mu, kappa0, mu0, kappaR, muR;
   double         *tau_s, *tau_e;
   double         *dvector();
   void            constant_Q2_sub(),plot_modulus();
@@ -37,20 +36,20 @@ void attenuation_compute_param_(int *nmech_in, double *Qp_in, double *Qs_in, dou
 
 
   /* We get the arguments passed in fortran by adress. */
-  target_Qp = *Qp_in; /* target value of Qp */
-  target_Qs = *Qs_in; /* target value of Qs */
+  target_Q1 = *Q1_in; /* target value of Q1 */
+  target_Q2 = *Q2_in; /* target value of Q2 */
   n = *nmech_in;      /* number of mechanisms */
   f1 = *f1_in;        /* shortest frequency (Hz) */
   f2 = *f2_in;        /* highest frequency (Hz) */
 
   /*
-  printf("target value of Qp: ");
-  scanf("%lf",&target_Qp);
-  printf("%lf\n",target_Qp);
+  printf("target value of Q1: ");
+  scanf("%lf",&target_Q1);
+  printf("%lf\n",target_Q1);
 
-  printf("target value of Qs: ");
-  scanf("%lf",&target_Qs);
-  printf("%lf\n",target_Qs);
+  printf("target value of Q2: ");
+  scanf("%lf",&target_Q2);
+  printf("%lf\n",target_Q2);
 
   printf("shortest frequency (Hz): ");
   scanf("%lf",&f1);
@@ -73,12 +72,12 @@ void attenuation_compute_param_(int *nmech_in, double *Qp_in, double *Qs_in, dou
     printf("T2 > T1\n");
     exit; }
 
-  if (target_Qp <= 0.0001) {
-    printf("Qp cannot be negative or null\n");
+  if (target_Q1 <= 0.0001) {
+    printf("Q1 cannot be negative or null\n");
     exit; }
 
-  if (target_Qs <= 0.0001) {
-    printf("Qs cannot be negative or null\n");
+  if (target_Q2 <= 0.0001) {
+    printf("Q2 cannot be negative or null\n");
     exit; }
 
   if (n < 1) {
@@ -98,25 +97,25 @@ void attenuation_compute_param_(int *nmech_in, double *Qp_in, double *Qs_in, dou
   printf("! frequency range: %lf Hz - %lf Hz\n", f1 , f2);
   printf("! central frequency in log scale in Hz = %20.15f\n",om0 / PI2);
 
-  printf("! target constant attenuation factor Qp = %20.10lf\n", target_Qp);
-  printf("! target constant attenuation factor Qs = %20.10lf\n\n", target_Qs);
+  printf("! target constant attenuation factor Q1 = %20.10lf\n", target_Q1);
+  printf("! target constant attenuation factor Q2 = %20.10lf\n\n", target_Q2);
 
   printf("! tau_sigma evenly spaced in log frequency, do not depend on value of Q\n\n");
   */
 
   plot = 0;
 
-/* loop on the Qp dilatation mode (nu = 1) and Qs shear mode (nu = 2) */
+/* loop on the Q1 dilatation mode (nu = 1) and Q2 shear mode (nu = 2) defined in Carcione's papers */
   for (nu = 1; nu <= 2; nu++) {
 
-/* assign Qp or Qs to generic variable Q_s which is used for the calculations */
-    if (nu == 1) { Q_s = target_Qp ; }
-    if (nu == 2) { Q_s = target_Qs ; }
+/* assign Q1 or Q2 to generic variable Q_value which is used for the calculations */
+    if (nu == 1) { Q_value = target_Q1 ; }
+    if (nu == 2) { Q_value = target_Q2 ; }
 
     tau_s = dvector(1, n);
     tau_e = dvector(1, n);
 
-    constant_Q2_sub(f1, f2, n, Q_s, tau_s, tau_e, xmgr);
+    constant_Q2_sub(f1, f2, n, Q_value, tau_s, tau_e, xmgr);
 
 /* output in Fortran90 format */
     for (i = 1; i <= n; i++) {
