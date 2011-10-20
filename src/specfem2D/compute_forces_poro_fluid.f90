@@ -677,9 +677,9 @@
         ibegin = ibegin_bottom_poro(ispecabs)
         iend = iend_bottom_poro(ispecabs)
 
-! exclude corners to make sure there is no contradiction on the normal
-        if(codeabs(ILEFT,ispecabs)) ibegin = 2
-        if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
+!! DK DK not needed! exclude corners to make sure there is no contradiction on the normal
+!! DK DK not needed        if(codeabs(ILEFT,ispecabs)) ibegin = 2
+!! DK DK not needed        if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
 
         do i = ibegin,iend
 
@@ -737,9 +737,9 @@
         ibegin = ibegin_top_poro(ispecabs)
         iend = iend_top_poro(ispecabs)
 
-! exclude corners to make sure there is no contradiction on the normal
-        if(codeabs(ILEFT,ispecabs)) ibegin = 2
-        if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
+!! DK DK not needed! exclude corners to make sure there is no contradiction on the normal
+!! DK DK not needed        if(codeabs(ILEFT,ispecabs)) ibegin = 2
+!! DK DK not needed        if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
 
         do i = ibegin,iend
 
