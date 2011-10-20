@@ -31,6 +31,21 @@ int write_jpeg_image_( unsigned char *raw_image, int *width_in, int *height_in, 
 
   /* this is a pointer to one row of image data */
   JSAMPROW row_pointer[1];
+
+// DK DK trim white spaces in filename coming from Fortran call
+// DK DK taken from http://stackoverflow.com/questions/122616/how-do-i-trim-leading-trailing-whitespace-in-a-standard-way
+  char *end;
+
+  // Trim leading space
+  while(isspace(*filename)) filename++;
+
+  // Trim trailing space
+  end = filename + strlen(filename) - 1;
+  while(end > filename && isspace(*end)) end--;
+
+  // Write new null terminator
+  *(end+1) = 0;
+
   FILE *outfile = fopen( filename, "wb" );
 
   if ( !outfile )
