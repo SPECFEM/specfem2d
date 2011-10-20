@@ -187,7 +187,7 @@
 
 !-----------------------------------------------
 ! Assembling potential_dot_dot for acoustic elements :
-! the buffers are filled, the Isend and Irecv are started here, then
+! the buffers are filled, the ISEND and IRECV are started here, then
 ! contributions are added.
 ! The previous version included communication overlap using persistent
 ! communication, but the merging of the outer and inner elements rendered
@@ -269,13 +269,13 @@
     end if
 
     ! starts a non-blocking receive
-    call MPI_Irecv ( buffer_recv_faces_vector_ac(1,iinterface), &
+    call MPI_IRECV ( buffer_recv_faces_vector_ac(1,iinterface), &
              nibool_interfaces_acoustic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_acoustic(ninterface_acoustic+iinterface), ier)
 
     if ( ier /= MPI_SUCCESS ) then
-      call exit_mpi('MPI_Irecv unsuccessful in assemble_MPI_vector')
+      call exit_mpi('MPI_IRECV unsuccessful in assemble_MPI_vector')
     end if
 
   end do
@@ -316,7 +316,7 @@
 
 !-----------------------------------------------
 ! Assembling accel_elastic for elastic elements :
-! the buffers are filled, the Isend and Irecv are started here, then
+! the buffers are filled, the ISEND and IRECV are started here, then
 ! contributions are added.
 ! The previous version included communication overlap using persistent
 ! communication, but the merging of the outer and inner elements rendered
@@ -387,13 +387,13 @@
       call exit_mpi('MPI_ISEND unsuccessful in assemble_MPI_vector_el')
     end if
 
-    call MPI_Irecv ( buffer_recv_faces_vector_el(1,iinterface), &
+    call MPI_IRECV ( buffer_recv_faces_vector_el(1,iinterface), &
              3*nibool_interfaces_elastic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_elastic(ninterface_elastic+iinterface), ier)
 
     if ( ier /= MPI_SUCCESS ) then
-      call exit_mpi('MPI_Irecv unsuccessful in assemble_MPI_vector_el')
+      call exit_mpi('MPI_IRECV unsuccessful in assemble_MPI_vector_el')
     end if
 
   end do
@@ -423,7 +423,7 @@
 
 !-----------------------------------------------
 ! Assembling accel_elastic for elastic elements :
-! the buffers are filled, the Isend and Irecv are started here, then
+! the buffers are filled, the ISEND and IRECV are started here, then
 ! contributions are added.
 ! The previous version included communication overlap using persistent
 ! communication, but the merging of the outer and inner elements rendered
@@ -501,13 +501,13 @@
       call exit_mpi('MPI_ISEND unsuccessful in assemble_MPI_vector_pos')
     end if
 
-    call MPI_Irecv ( buffer_recv_faces_vector_pos(1,iinterface), &
+    call MPI_IRECV ( buffer_recv_faces_vector_pos(1,iinterface), &
              NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_poro(ninterface_poroelastic+iinterface), ier)
 
     if ( ier /= MPI_SUCCESS ) then
-      call exit_mpi('MPI_Irecv unsuccessful in assemble_MPI_vector_pos')
+      call exit_mpi('MPI_IRECV unsuccessful in assemble_MPI_vector_pos')
     end if
 
     call MPI_ISEND( buffer_send_faces_vector_pow(1,iinterface), &
@@ -519,13 +519,13 @@
       call exit_mpi('MPI_ISEND unsuccessful in assemble_MPI_vector_pow')
     end if
 
-    call MPI_Irecv ( buffer_recv_faces_vector_pow(1,iinterface), &
+    call MPI_IRECV ( buffer_recv_faces_vector_pow(1,iinterface), &
              NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_poro(ninterface_poroelastic*3+iinterface), ier)
 
     if ( ier /= MPI_SUCCESS ) then
-      call exit_mpi('MPI_Irecv unsuccessful in assemble_MPI_vector_pow')
+      call exit_mpi('MPI_IRECV unsuccessful in assemble_MPI_vector_pow')
     end if
 
   end do
