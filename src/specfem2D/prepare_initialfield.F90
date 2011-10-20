@@ -143,7 +143,7 @@
 !    numat_local = 1
      if (myrank == 0) then
         print *, 'This is not a homogenous model while plane wave initial condition'
-        print *, '  is given by analytical formulae for a homogenous model. '
+        print *, '  is given by analytical formulae for a homogenous model.'
         print *, 'Use at your own risk!'
      endif
   endif
@@ -182,7 +182,7 @@
     ! we put the opposite sign on z coefficients because z axis is oriented from bottom to top
     A_plane(1) = sin(angleforce_abs);           A_plane(2) = cos(angleforce_abs)
     B_plane(1) = PP * sin(angleforce_abs);      B_plane(2) = - PP * cos(angleforce_abs)
-    C_plane(1) = PS * cos(angleforce_refl);    C_plane(2) = PS * sin(angleforce_refl)
+    C_plane(1) = PS * cos(angleforce_refl);     C_plane(2) = PS * sin(angleforce_refl)
 
   ! SV wave case
   else if (source_type(1) == 2) then
@@ -224,7 +224,7 @@
     ! we put the opposite sign on z coefficients because z axis is oriented from bottom to top
     A_plane(1) = cos(angleforce_abs);           A_plane(2) = - sin(angleforce_abs)
     B_plane(1) = SS * cos(angleforce_abs);      B_plane(2) = SS * sin(angleforce_abs)
-    C_plane(1) = SP * sin(angleforce_refl);    C_plane(2) = - SP * cos(angleforce_refl)
+    C_plane(1) = SP * sin(angleforce_refl);     C_plane(2) = - SP * cos(angleforce_refl)
 
   ! Rayleigh case
   else if (source_type(1) == 3) then
@@ -265,14 +265,14 @@
   ! initialize the time offset to put the plane wave not too close to the irregularity on the free surface
   ! add -t0 to match with the actual traveltime of plane waves
   if (abs(angleforce(1))<1.d0*pi/180.d0 .and. source_type(1)/=3) then
-    time_offset=-1.d0*(zmax-zmin)/2.d0/c_inc - t0
+    time_offset = -1.d0*(zmax-zmin)/2.d0/c_inc - t0
   else
-    time_offset=0.d0 - t0
+    time_offset = 0.d0 - t0
   endif
 
   ! to correctly center the initial plane wave in the mesh
-  x0_source=x_source(1)
-  z0_source=z_source(1)
+  x0_source = x_source(1)
+  z0_source = z_source(1)
 
   if (myrank == 0) then
     write(IOUT,*)
@@ -402,11 +402,11 @@ end subroutine prepare_initialfield
     endif
     if(codeabs(IBOTTOM,ispecabs)) then
        j = 1
-       ! exclude corners to make sure there is no contradiction regarding the normal
+!! DK DK not needed       ! exclude corners to make sure there is no contradiction regarding the normal
        ibegin = 1
        iend = NGLLX
-       if(codeabs(ILEFT,ispecabs)) ibegin = 2
-       if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
+!! DK DK not needed       if(codeabs(ILEFT,ispecabs)) ibegin = 2
+!! DK DK not needed       if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
        do i = ibegin,iend
           count_bottom=count_bottom+1
           iglob = ibool(i,j,ispec)
