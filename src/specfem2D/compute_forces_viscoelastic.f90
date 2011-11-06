@@ -543,8 +543,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                  if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
                     if(p_sv)then !P-SV waves
-                       b_absorb_elastic_left(1,j,ib_left(ispecabs),it) = tx*weight
-                       b_absorb_elastic_left(3,j,ib_left(ispecabs),it) = tz*weight
+                       b_absorb_elastic_left(1,j,ib_left(ispecabs),it) = (tx + traction_x_t0)*weight
+                       b_absorb_elastic_left(3,j,ib_left(ispecabs),it) = (tz + traction_z_t0)*weight
                     else !SH (membrane) waves
                        b_absorb_elastic_left(2,j,ib_left(ispecabs),it) = ty*weight
                     endif
@@ -634,8 +634,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                  if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
                     if(p_sv)then !P-SV waves
-                       b_absorb_elastic_right(1,j,ib_right(ispecabs),it) = tx*weight
-                       b_absorb_elastic_right(3,j,ib_right(ispecabs),it) = tz*weight
+                       b_absorb_elastic_right(1,j,ib_right(ispecabs),it) = (tx - traction_x_t0)*weight
+                       b_absorb_elastic_right(3,j,ib_right(ispecabs),it) = (tz - traction_z_t0)*weight
                     else! SH (membrane) waves
                        b_absorb_elastic_right(2,j,ib_right(ispecabs),it) = ty*weight
                     endif
@@ -731,8 +731,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                  if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
                     if(p_sv)then !P-SV waves
-                       b_absorb_elastic_bottom(1,i,ib_bottom(ispecabs),it) = tx*weight
-                       b_absorb_elastic_bottom(3,i,ib_bottom(ispecabs),it) = tz*weight
+                       b_absorb_elastic_bottom(1,i,ib_bottom(ispecabs),it) = (tx + traction_x_t0)*weight
+                       b_absorb_elastic_bottom(3,i,ib_bottom(ispecabs),it) = (tz + traction_z_t0)*weight
                     else!SH (membrane) waves
                        b_absorb_elastic_bottom(2,i,ib_bottom(ispecabs),it) = ty*weight
                     endif
@@ -820,8 +820,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                  if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
                     if(p_sv)then !P-SV waves
-                       b_absorb_elastic_top(1,i,ib_top(ispecabs),it) = tx*weight
-                       b_absorb_elastic_top(3,i,ib_top(ispecabs),it) = tz*weight
+                       b_absorb_elastic_top(1,i,ib_top(ispecabs),it) = (tx- traction_x_t0)*weight
+                       b_absorb_elastic_top(3,i,ib_top(ispecabs),it) = (tz- traction_z_t0)*weight
                     else!SH (membrane) waves
                        b_absorb_elastic_top(2,i,ib_top(ispecabs),it) = ty*weight
                     endif
