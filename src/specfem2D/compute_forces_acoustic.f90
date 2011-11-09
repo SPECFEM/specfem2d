@@ -333,9 +333,9 @@
         ibegin = ibegin_bottom(ispecabs)
         iend = iend_bottom(ispecabs)
 
-!! DK DK not needed! exclude corners to make sure there is no contradiction on the normal
-!! DK DK not needed        if(codeabs(ILEFT,ispecabs)) ibegin = 2
-!! DK DK not needed        if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
+! exclude corners to make sure there is no contradiction on the normal
+        if(codeabs(ILEFT,ispecabs)) ibegin = 2
+        if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
 
         do i = ibegin,iend
 
@@ -380,9 +380,9 @@
         ibegin = ibegin_top(ispecabs)
         iend = iend_top(ispecabs)
 
-!! DK DK not needed! exclude corners to make sure there is no contradiction on the normal
-!! DK DK not needed        if(codeabs(ILEFT,ispecabs)) ibegin = 2
-!! DK DK not needed        if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
+! exclude corners to make sure there is no contradiction on the normal
+        if(codeabs(ILEFT,ispecabs)) ibegin = 2
+        if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
 
         do i = ibegin,iend
 
@@ -696,9 +696,9 @@
           j = 1
           ibegin = ibegin_bottom(ispecabs)
           iend = iend_bottom(ispecabs)
-!! DK DK not needed          ! exclude corners to make sure there is no contradiction on the normal
-!! DK DK not needed          if(codeabs(ILEFT,ispecabs)) ibegin = 2
-!! DK DK not needed          if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
+          ! exclude corners to make sure there is no contradiction on the normal
+          if(codeabs(ILEFT,ispecabs)) ibegin = 2
+          if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
           do i = ibegin,iend
             iglob = ibool(i,j,ispec)
             ! external velocity model
@@ -743,9 +743,9 @@
           j = NGLLZ
           ibegin = ibegin_top(ispecabs)
           iend = iend_top(ispecabs)
-!! DK DK not needed          ! exclude corners to make sure there is no contradiction on the normal
-!! DK DK not needed          if(codeabs(ILEFT,ispecabs)) ibegin = 2
-!! DK DK not needed          if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
+          ! exclude corners to make sure there is no contradiction on the normal
+          if(codeabs(ILEFT,ispecabs)) ibegin = 2
+          if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
           do i = ibegin,iend
             iglob = ibool(i,j,ispec)
             ! external velocity model

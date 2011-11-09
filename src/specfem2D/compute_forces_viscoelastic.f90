@@ -662,11 +662,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
            j = 1
 
-!! DK DK not needed           ! exclude corners to make sure there is no contradiction on the normal
+           ! exclude corners to make sure there is no contradiction on the normal
            ibegin = 1
            iend = NGLLX
-!! DK DK not needed           if(codeabs(ILEFT,ispecabs)) ibegin = 2
-!! DK DK not needed           if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
+           if(codeabs(ILEFT,ispecabs)) ibegin = 2
+           if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
 
            do i = ibegin,iend
 
@@ -759,11 +759,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
            j = NGLLZ
 
-!! DK DK not needed           ! exclude corners to make sure there is no contradiction on the normal
+           ! exclude corners to make sure there is no contradiction on the normal
            ibegin = 1
            iend = NGLLX
-!! DK DK not needed           if(codeabs(ILEFT,ispecabs)) ibegin = 2
-!! DK DK not needed           if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
+           if(codeabs(ILEFT,ispecabs)) ibegin = 2
+           if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
 
            do i = ibegin,iend
 

@@ -402,11 +402,11 @@ end subroutine prepare_initialfield
     endif
     if(codeabs(IBOTTOM,ispecabs)) then
        j = 1
-!! DK DK not needed       ! exclude corners to make sure there is no contradiction regarding the normal
+       ! exclude corners to make sure there is no contradiction regarding the normal
        ibegin = 1
        iend = NGLLX
-!! DK DK not needed       if(codeabs(ILEFT,ispecabs)) ibegin = 2
-!! DK DK not needed       if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
+       if(codeabs(ILEFT,ispecabs)) ibegin = 2
+       if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
        do i = ibegin,iend
           count_bottom=count_bottom+1
           iglob = ibool(i,j,ispec)
