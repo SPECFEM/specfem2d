@@ -4082,22 +4082,7 @@
 ! ************* compute forces for the acoustic elements
 ! *********************************************************
 
-!      call compute_forces_acoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
-!               anyabs,assign_external_model,ibool,kmato,numabs, &
-!               elastic,poroelastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
-!               potential_acoustic,b_potential_dot_dot_acoustic,b_potential_acoustic, &
-!               density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
-!               vpext,rhoext,hprime_xx,hprimewgll_xx, &
-!               hprime_zz,hprimewgll_zz,wxgll,wzgll, &
-!               ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
-!               jbegin_left,jend_left,jbegin_right,jend_right, &
-!               SIMULATION_TYPE,SAVE_FORWARD,b_absorb_acoustic_left,&
-!               b_absorb_acoustic_right,b_absorb_acoustic_bottom,&
-!               b_absorb_acoustic_top,nspec_left,nspec_right,&
-!               nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top)
-
-
-      call compute_forces_acoustic_2(nglob,nspec,nelemabs,numat,it,NSTEP, &
+      call compute_forces_acoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
                anyabs,assign_external_model,ibool,kmato,numabs, &
                elastic,poroelastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
                potential_acoustic, &
@@ -4111,7 +4096,7 @@
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
                b_absorb_acoustic_bottom,b_absorb_acoustic_top,.false.)
       if( SIMULATION_TYPE == 2 ) then
-        call compute_forces_acoustic_2(nglob,nspec,nelemabs,numat,it,NSTEP, &
+        call compute_forces_acoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
                anyabs,assign_external_model,ibool,kmato,numabs, &
                elastic,poroelastic,codeabs,b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
                b_potential_acoustic, &
