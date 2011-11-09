@@ -3731,7 +3731,7 @@
   if(output_color_image) then
     call prepare_color_image_vp(nglob,image_color_vp_display,iglob_image_color, &
                             NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc, &
-                            num_pixel_loc,nspec,poroelastic,ibool,kmato, &
+                            num_pixel_loc,nspec,elastic,poroelastic,ibool,kmato, &
                             numat,density,poroelastcoef,porosity,tortuosity, &
                             nproc,myrank,assign_external_model,vpext)
 

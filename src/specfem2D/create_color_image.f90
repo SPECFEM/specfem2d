@@ -80,7 +80,8 @@
   vpmax = TINYVAL
   do iy=1,NY
     do ix=1,NX
-      if ( iglob_image_color_2D(ix,iy) > -1 ) then
+! negative values in image_color_vp_display are a flag indicating a water layer to color in light blue later
+      if ( iglob_image_color_2D(ix,iy) > -1 .and. image_color_vp_display(ix,iy) >= 0) then
         vpmin = min(vpmin,image_color_vp_display(ix,iy))
         vpmax = max(vpmax,image_color_vp_display(ix,iy))
       endif
@@ -95,16 +96,12 @@
 ! check if pixel is defined or not (can be above topography for instance)
       if(iglob_image_color_2D(ix,iy) == -1) then
 
-!!! use light blue to display undefined region above topography
-!!        R = 204
-!!        G = 255
-!!        B = 255
-! now use white to display undefined region above topography to avoid visual confusion with a water layer
+! use white to display undefined region above topography to avoid visual confusion with a water layer
         R = 255
         G = 255
         B = 255
 
-! suppress small amplitudes considered as noise
+! suppress small amplitudes considered as noise and display the background velocity model instead
       else if (abs(color_image_2D_data(ix,iy)) < amplitude_max * cutsnaps) then
 
 ! use P velocity model as background where amplitude is negligible
@@ -129,6 +126,17 @@
         if(R > 255) R = 255
         G = R
         B = R
+
+! negative values in image_color_vp_display are a flag indicating a water layer to color in light blue
+        if (image_color_vp_display(ix,iy) < 0) then
+! use light blue to display water
+!!!!!!          R = 204
+!!!!!!          G = 255
+!!!!!!          B = 255
+          R = 135 !!! LightSkyBlue
+          G = 206
+          B = 250
+        endif
 
       else
 
