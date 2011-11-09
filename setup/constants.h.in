@@ -58,6 +58,11 @@
 ! factor to subsample color images output by the code (useful for very large models)
   integer, parameter :: factor_subsample_image = 1
 
+! display acoustic layers as constant blue, because they likely correspond to water in the case of ocean acoustics
+! or in the case of offshore oil industry experiments.
+! (if off, display them as greyscale, as for elastic or poroelastic elements)
+  logical, parameter :: DRAW_WATER_CONSTANT_BLUE_IN_JPG = .true.
+
 ! option to display only part of the mesh and not the whole mesh,
 ! for instance to analyze Cuthill-McKee mesh partitioning etc.
 ! Possible values are:
