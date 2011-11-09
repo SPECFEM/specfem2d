@@ -662,11 +662,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
            j = 1
 
-           ! exclude corners to make sure there is no contradiction on the normal
+!! DK DK not needed           ! exclude corners to make sure there is no contradiction on the normal
            ibegin = 1
            iend = NGLLX
-           if(codeabs(ILEFT,ispecabs)) ibegin = 2
-           if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
+!! DK DK not needed           if(codeabs(ILEFT,ispecabs)) ibegin = 2
+!! DK DK not needed           if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
 
            do i = ibegin,iend
 
@@ -725,6 +725,15 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                  ty = rho_vs*vy
                  tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
 
+! exclude corners to make sure there is no contradiction on the normal
+! for Stacey absorbing conditions but not for incident plane waves;
+! thus subtract nothing i.e. zero in that case
+                 if((codeabs(ILEFT,ispecabs) .and. i == 1) .or. (codeabs(IRIGHT,ispecabs) .and. i == NGLLX)) then
+                   tx = 0
+                   ty = 0
+                   tz = 0
+                 endif
+
                  accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0)*weight
                  accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
                  accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0)*weight
@@ -759,11 +768,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
            j = NGLLZ
 
-           ! exclude corners to make sure there is no contradiction on the normal
+!! DK DK not needed           ! exclude corners to make sure there is no contradiction on the normal
            ibegin = 1
            iend = NGLLX
-           if(codeabs(ILEFT,ispecabs)) ibegin = 2
-           if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
+!! DK DK not needed           if(codeabs(ILEFT,ispecabs)) ibegin = 2
+!! DK DK not needed           if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
 
            do i = ibegin,iend
 
@@ -813,6 +822,15 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                  tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
                  ty = rho_vs*vy
                  tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
+
+! exclude corners to make sure there is no contradiction on the normal
+! for Stacey absorbing conditions but not for incident plane waves;
+! thus subtract nothing i.e. zero in that case
+                 if((codeabs(ILEFT,ispecabs) .and. i == 1) .or. (codeabs(IRIGHT,ispecabs) .and. i == NGLLX)) then
+                   tx = 0
+                   ty = 0
+                   tz = 0
+                 endif
 
                  accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx - traction_x_t0)*weight
                  accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight

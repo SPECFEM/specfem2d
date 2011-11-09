@@ -352,7 +352,7 @@
           endif
         enddo
       enddo
-    endif !if(poroelastic(ispec)) then
+    endif ! of if(poroelastic(ispec)) then
 
 ! now display acoustic layers as constant blue, because they likely correspond to water in the case of ocean acoustics
 ! or in the case of offshore oil industry experiments.
