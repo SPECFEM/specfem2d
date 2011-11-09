@@ -95,8 +95,12 @@
 ! check if pixel is defined or not (can be above topography for instance)
       if(iglob_image_color_2D(ix,iy) == -1) then
 
-! use light blue to display undefined region above topography
-        R = 204
+!!! use light blue to display undefined region above topography
+!!        R = 204
+!!        G = 255
+!!        B = 255
+! now use white to display undefined region above topography to avoid visual confusion with a water layer
+        R = 255
         G = 255
         B = 255
 
