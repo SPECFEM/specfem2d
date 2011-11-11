@@ -36,10 +36,10 @@ int write_jpeg_image_( unsigned char *raw_image, int *width_in, int *height_in, 
 // DK DK taken from http://stackoverflow.com/questions/122616/how-do-i-trim-leading-trailing-whitespace-in-a-standard-way
   char *end;
 
-  // Trim leading space
+  // Trim leading white spaces
   while(isspace(*filename)) filename++;
 
-// DK DK  // Trim trailing space
+// DK DK  // Trim trailing white spaces
 // DK DK  end = filename + strlen(filename) - 1;
 // DK DK  while(end > filename && isspace(*end)) end--;
 
