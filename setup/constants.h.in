@@ -58,6 +58,9 @@
 ! factor to subsample color images output by the code (useful for very large models)
   integer, parameter :: factor_subsample_image = 1
 
+! use snapshot number in the file name of JPG color snapshots instead of the time step
+  logical, parameter :: USE_SNAPSHOT_NUMBER_IN_FILENAME = .false.
+
 ! display acoustic layers as constant blue, because they likely correspond to water in the case of ocean acoustics
 ! or in the case of offshore oil industry experiments.
 ! (if off, display them as greyscale, as for elastic or poroelastic elements)

@@ -39,12 +39,19 @@ int write_jpeg_image_( unsigned char *raw_image, int *width_in, int *height_in, 
   // Trim leading space
   while(isspace(*filename)) filename++;
 
-  // Trim trailing space
-  end = filename + strlen(filename) - 1;
-  while(end > filename && isspace(*end)) end--;
+// DK DK  // Trim trailing space
+// DK DK  end = filename + strlen(filename) - 1;
+// DK DK  while(end > filename && isspace(*end)) end--;
 
-  // Write new null terminator
-  *(end+1) = 0;
+// DK DK  // Write new null terminator
+// DK DK  *(end+1) = 0;
+
+  // find first white space after the end of the file name
+  end = filename;
+  while(!isspace(*end)) end++;
+
+  // write null terminator to keep the useful part of the file name only
+  *end = 0;
 
   FILE *outfile = fopen( filename, "wb" );
 

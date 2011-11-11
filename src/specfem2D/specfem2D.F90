@@ -792,6 +792,7 @@
   integer :: idummy1, idummy2, idummy3, idummy4, idummy5, idummy6, idummy7, idummy8
   integer :: ispecperio, ispecperio2, ispec2, i2, j2
   integer :: iglob_target_to_replace, ispec3, i3, j3
+  integer :: isnapshot_number = 0
 
 !<SU_FORMAT
   integer(kind=4) :: r4head(60)
@@ -6851,7 +6852,7 @@
 
         if (myrank == 0) then
           call create_color_image(image_color_data,iglob_image_color, &
-                  NX_IMAGE_color,NZ_IMAGE_color,it,cutsnaps,image_color_vp_display)
+                  NX_IMAGE_color,NZ_IMAGE_color,it,isnapshot_number,cutsnaps,image_color_vp_display)
           write(IOUT,*) 'Color image created'
         endif
 

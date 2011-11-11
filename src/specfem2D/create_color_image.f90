@@ -43,7 +43,7 @@
 !========================================================================
 
   subroutine create_color_image(color_image_2D_data,iglob_image_color_2D, &
-                                  NX,NY,it,cutsnaps,image_color_vp_display)
+                                  NX,NY,it,isnapshot_number,cutsnaps,image_color_vp_display)
 
 ! display a given field as a red and blue color JPEG image
 
@@ -53,7 +53,7 @@
 
   include "constants.h"
 
-  integer :: NX,NY,it
+  integer :: NX,NY,it,isnapshot_number
 
   double precision :: cutsnaps
 
@@ -72,7 +72,12 @@
   character(len=100) :: filename
 
 ! open the image file
-  write(filename,"('OUTPUT_FILES/image',i7.7,'.jpg')") it
+  if(USE_SNAPSHOT_NUMBER_IN_FILENAME) then
+    isnapshot_number = isnapshot_number + 1
+    write(filename,"('OUTPUT_FILES/image',i7.7,'.jpg')") isnapshot_number
+  else
+    write(filename,"('OUTPUT_FILES/image',i7.7,'.jpg')") it
+  endif
 
 ! compute maximum amplitude
   amplitude_max = maxval(abs(color_image_2D_data))
