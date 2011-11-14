@@ -50,7 +50,7 @@
                       coorg,xinterp,zinterp,shapeint,knods,simulation_title, &
                       npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic, &
                       myrank,nproc,NSOURCES,poroelastic, &
-                      freq0,Q0,TURN_VISCATTENUATION_ON)
+                      freq0,Q0,TURN_VISCATTENUATION_ON,US_LETTER)
 
 ! check the mesh, stability and number of points per wavelength
 
@@ -90,6 +90,9 @@
   double precision :: shapeint(ngnod,pointsdisp,pointsdisp)
 
   double precision :: coorg(NDIM,npgeo)
+
+! US letter paper or European A4
+  logical :: US_LETTER
 
 ! title of the plot
   character(len=60) :: simulation_title

@@ -98,9 +98,6 @@
   logical  :: read_external_mesh
   character(len=256)  :: mesh_file, nodes_coords_file
 
-  ! ignore variable name field (junk) at the beginning of each input line
-  !logical, parameter :: IGNORE_JUNK = .true.
-
   integer :: NPOIN_unique_needed
   integer, dimension(:), allocatable :: ibool_reduced
   logical, dimension(:), allocatable :: mask_ibool
@@ -115,29 +112,17 @@
   print *,'Reading the parameter file ... '
   print *
 
-  !open(unit=IIN,file='DATA/Par_file',status='old')
   call open_parameter_file()
 
-  ! read and ignore file names and path for output
-  !call read_value_string(IIN,IGNORE_JUNK,title)
-  !call read_value_string(IIN,IGNORE_JUNK,interfacesfile)
-
-  ! read and ignore type of simulation
-  !call read_value_integer(IIN,IGNORE_JUNK,SIMULATION_TYPE)
-  !call read_value_logical(IIN,IGNORE_JUNK,SAVE_FORWARD)
-
   ! read info about external mesh
-  !call read_value_logical(IIN,IGNORE_JUNK,read_external_mesh)
   call read_value_logical_p(read_external_mesh, 'mesher.read_external_mesh')
   if(err_occurred() /= 0) stop 'error reading parameter read_external_mesh in Par_file'
 
   if(.not. read_external_mesh) stop 'this program is designed for read_external_mesh = .true.'
 
-  !call read_value_string(IIN,IGNORE_JUNK,mesh_file)
   call read_value_string_p(mesh_file, 'mesher.mesh_file')
   if(err_occurred() /= 0) stop 'error reading parameter mesh_file in Par_file'
 
-  !call read_value_string(IIN,IGNORE_JUNK,nodes_coords_file)
   call read_value_string_p(nodes_coords_file, 'mesher.nodes_coords_file')
   if(err_occurred() /= 0) stop 'error reading parameter nodes_coords_file in Par_file'
 

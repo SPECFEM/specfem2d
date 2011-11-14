@@ -112,8 +112,8 @@
     write(15,*) 'output_postscript_snapshot output_color_image colors numbers'
     write(15,*) output_postscript_snapshot,output_color_image,' 1 0'
 
-    write(15,*) 'meshvect modelvect boundvect cutsnaps subsamp sizemax_arrows'
-    write(15,*) meshvect,modelvect,boundvect,cutsnaps,subsamp,sizemax_arrows
+    write(15,*) 'meshvect modelvect boundvect cutsnaps subsamp_postscript sizemax_arrows'
+    write(15,*) meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows
 
     write(15,*) 'anglerec'
     write(15,*) anglerec
@@ -135,6 +135,30 @@
 
     write(15,*) 'p_sv'
     write(15,*) p_sv
+
+    write(15,*) 'factor_subsample_image'
+    write(15,*) factor_subsample_image
+
+    write(15,*) 'USE_SNAPSHOT_NUMBER_IN_FILENAME'
+    write(15,*) USE_SNAPSHOT_NUMBER_IN_FILENAME
+
+    write(15,*) 'DRAW_WATER_CONSTANT_BLUE_IN_JPG'
+    write(15,*) DRAW_WATER_CONSTANT_BLUE_IN_JPG
+
+    write(15,*) 'US_LETTER'
+    write(15,*) US_LETTER
+
+    write(15,*) 'POWER_DISPLAY_COLOR'
+    write(15,*) POWER_DISPLAY_COLOR
+
+    write(15,*) 'PERFORM_CUTHILL_MCKEE'
+    write(15,*) PERFORM_CUTHILL_MCKEE
+
+    write(15,*) 'SU_FORMAT'
+    write(15,*) SU_FORMAT
+
+    write(15,*) 'USER_T0'
+    write(15,*) USER_T0
 
     write(15,*) 'nt deltat'
     write(15,*) nt,deltat

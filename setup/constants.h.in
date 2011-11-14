@@ -34,11 +34,7 @@
 ! this flag is ignored in the case of a serial simulation
   logical, parameter :: FURTHER_REDUCE_CACHE_MISSES = .true.
 
-! output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
-  logical,parameter :: SU_FORMAT=.false.
-
 ! for inverse Cuthill-McKee (1969) permutation
-  logical, parameter :: PERFORM_CUTHILL_MCKEE = .true.
   logical, parameter :: INVERSE = .true.
   logical, parameter :: FACE = .false.
   integer, parameter :: NGNOD_QUADRANGLE = 4
@@ -55,17 +51,6 @@
 ! add MPI barriers and suppress seismograms if we generate traces of the run for analysis with "ParaVer"
   logical, parameter :: GENERATE_PARAVER_TRACES = .false.
 
-! factor to subsample color images output by the code (useful for very large models)
-  integer, parameter :: factor_subsample_image = 1
-
-! use snapshot number in the file name of JPG color snapshots instead of the time step
-  logical, parameter :: USE_SNAPSHOT_NUMBER_IN_FILENAME = .false.
-
-! display acoustic layers as constant blue, because they likely correspond to water in the case of ocean acoustics
-! or in the case of offshore oil industry experiments.
-! (if off, display them as greyscale, as for elastic or poroelastic elements)
-  logical, parameter :: DRAW_WATER_CONSTANT_BLUE_IN_JPG = .true.
-
 ! option to display only part of the mesh and not the whole mesh,
 ! for instance to analyze Cuthill-McKee mesh partitioning etc.
 ! Possible values are:
@@ -76,11 +61,6 @@
   integer, parameter :: DISPLAY_SUBSET_OPTION = 1
 ! number of spectral elements to display in each subset when a fixed subset size is used (option 4 above)
   integer, parameter :: NSPEC_DISPLAY_SUBSET = 2300
-
-! use this t0 as earliest starting time rather than the automatically calculated one
-! (must be positive and bigger than the automatically one to be effective;
-!  simulation will start at t = - t0)
-  double precision, parameter :: USER_T0 = 0.0d0
 
 !--- beginning of Nicolas Le Goff's constants for an unstructured CUBIT/METIS/SCOTCH mesh
 
@@ -160,12 +140,6 @@
 ! was found by trial and error
   double precision, parameter :: SOURCE_DECAY_MIMIC_TRIANGLE = 1.628d0
 
-! non linear display to enhance small amplitudes in color images
-  double precision, parameter :: POWER_DISPLAY_COLOR = 0.30d0
-
-! US letter paper or European A4
-  logical, parameter :: US_LETTER = .false.
-
 ! X and Z axis origin of PostScript plot in centimeters
   double precision, parameter :: ORIG_X = 2.4d0
   double precision, parameter :: ORIG_Z = 2.9d0
@@ -181,17 +155,15 @@
   double precision, parameter :: RPERCENTX = 70.0d0,RPERCENTZ = 77.0d0
 
 ! flag to indicate an isotropic elastic/acoustic material
-  integer, parameter :: ISOTROPIC_MATERIAL = 1
-
 ! flag to indicate an anisotropic material
-  integer, parameter :: ANISOTROPIC_MATERIAL = 2
-
 ! flag to indicate a poroelastic material
+  integer, parameter :: ISOTROPIC_MATERIAL = 1
+  integer, parameter :: ANISOTROPIC_MATERIAL = 2
   integer, parameter :: POROELASTIC_MATERIAL = 3
 
 ! file number for interface file
   integer, parameter :: IIN_INTERFACES = 15
 
 ! ignore variable name field (junk) at the beginning of each input line
-  logical, parameter :: IGNORE_JUNK = .true.,DONT_IGNORE_JUNK = .false.
+  logical, parameter :: IGNORE_JUNK = .true., DONT_IGNORE_JUNK = .false.
 

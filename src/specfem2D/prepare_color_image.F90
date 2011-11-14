@@ -47,7 +47,7 @@
   subroutine prepare_color_image_init(NX_IMAGE_color,NZ_IMAGE_color, &
                             xmin_color_image,xmax_color_image, &
                             zmin_color_image,zmax_color_image, &
-                            coord,nglob,npgeo)
+                            coord,nglob,npgeo,factor_subsample_image)
 
   implicit none
   include "constants.h"
@@ -56,6 +56,9 @@
 #endif
 
   integer :: NX_IMAGE_color,NZ_IMAGE_color
+
+! factor to subsample color images output by the code (useful for very large models)
+  integer :: factor_subsample_image
 
   integer :: nglob,npgeo
   double precision, dimension(NDIM,nglob) :: coord
@@ -234,7 +237,7 @@
                             NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc, &
                             num_pixel_loc,nspec,elastic,poroelastic,ibool,kmato, &
                             numat,density,poroelastcoef,porosity,tortuosity, &
-                            nproc,myrank,assign_external_model,vpext)
+                            nproc,myrank,assign_external_model,vpext,DRAW_WATER_CONSTANT_BLUE_IN_JPG)
 
 ! stores P-velocity model in image_color_vp_display
 
@@ -264,6 +267,11 @@
   double precision, dimension(4,3,numat) :: poroelastcoef
   double precision, dimension(numat) :: porosity,tortuosity
   double precision, dimension(NGLLX,NGLLX,nspec) :: vpext
+
+! display acoustic layers as constant blue, because they likely correspond to water in the case of ocean acoustics
+! or in the case of offshore oil industry experiments.
+! (if off, display them as greyscale, as for elastic or poroelastic elements)
+  logical :: DRAW_WATER_CONSTANT_BLUE_IN_JPG
 
   ! local parameters
   double precision, dimension(:), allocatable :: vp_display

@@ -47,7 +47,7 @@
           poroelastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,nelem_acoustic_surface, acoustic_edges, &
           simulation_title,nglob,npgeo,vpmin,vpmax,nrec,NSOURCES, &
-          colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
+          colors,numbers,subsamp_postscript,imagetype,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
           any_acoustic,any_poroelastic,plot_lowerleft_corner_only, &
@@ -74,7 +74,7 @@
           coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
           d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field, &
           d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
-          coorg_send_ps_vector_field,coorg_recv_ps_vector_field)
+          coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER)
 
 !
 ! PostScript display routine
@@ -134,6 +134,9 @@
   equivalence (postscript_line,ch1)
   logical :: first
 
+! US letter paper or European A4
+  logical :: US_LETTER
+
   double precision convert,x1,cpIloc,xa,za,xb,zb
   double precision z1,x2,z2,d,d1,d2,dummy,theta,thetaup,thetadown
 
@@ -146,7 +149,7 @@
   integer k,j,ispec,material,is,ir,imat,icol,l,line_length
   integer index_char,ii,ipoin,in,nnum,inum,ideb,ifin,iedge
 
-  integer colors,numbers,subsamp,imagetype
+  integer colors,numbers,subsamp_postscript,imagetype
   logical interpol,meshvect,modelvect,boundvect,assign_external_model
   double precision cutsnaps,sizemax_arrows
 
@@ -1654,8 +1657,8 @@ coorg_recv_ps_vector_field
   RGB_offset = 0
 
   do ispec=1,nspec
-    do i=1,NGLLX-subsamp,subsamp
-          do j=1,NGLLX-subsamp,subsamp
+    do i=1,NGLLX-subsamp_postscript,subsamp_postscript
+          do j=1,NGLLX-subsamp_postscript,subsamp_postscript
 
   if((vpmax-vpmin)/vpmin > 0.02d0) then
   if(assign_external_model) then
@@ -1714,8 +1717,8 @@ coorg_recv_ps_vector_field
      coorg_send_ps_velocity_model(2,buffer_offset) = zw
   endif
 
-  xw = coord(1,ibool(i+subsamp,j,ispec))
-  zw = coord(2,ibool(i+subsamp,j,ispec))
+  xw = coord(1,ibool(i+subsamp_postscript,j,ispec))
+  zw = coord(2,ibool(i+subsamp_postscript,j,ispec))
   xw = (xw-xmin)*ratio_page + orig_x
   zw = (zw-zmin)*ratio_page + orig_z
   xw = xw * centim
@@ -1728,8 +1731,8 @@ coorg_recv_ps_vector_field
      coorg_send_ps_velocity_model(2,buffer_offset) = zw
   endif
 
-  xw = coord(1,ibool(i+subsamp,j+subsamp,ispec))
-  zw = coord(2,ibool(i+subsamp,j+subsamp,ispec))
+  xw = coord(1,ibool(i+subsamp_postscript,j+subsamp_postscript,ispec))
+  zw = coord(2,ibool(i+subsamp_postscript,j+subsamp_postscript,ispec))
   xw = (xw-xmin)*ratio_page + orig_x
   zw = (zw-zmin)*ratio_page + orig_z
   xw = xw * centim
@@ -1742,8 +1745,8 @@ coorg_recv_ps_vector_field
      coorg_send_ps_velocity_model(2,buffer_offset) = zw
   endif
 
-  xw = coord(1,ibool(i,j+subsamp,ispec))
-  zw = coord(2,ibool(i,j+subsamp,ispec))
+  xw = coord(1,ibool(i,j+subsamp_postscript,ispec))
+  zw = coord(2,ibool(i,j+subsamp_postscript,ispec))
   xw = (xw-xmin)*ratio_page + orig_x
   zw = (zw-zmin)*ratio_page + orig_z
   xw = xw * centim
@@ -1774,16 +1777,16 @@ coorg_recv_ps_vector_field
      do iproc = 1, nproc-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
         call MPI_RECV (coorg_recv_ps_velocity_model(1,1), &
-             2*nspec_recv*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4, &
+             2*nspec_recv*((NGLLX-subsamp_postscript)/subsamp_postscript)*((NGLLX-subsamp_postscript)/subsamp_postscript)*4, &
              MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
-        call MPI_RECV (RGB_recv_ps_velocity_model(1,1), nspec_recv*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp), &
+        call MPI_RECV (RGB_recv_ps_velocity_model(1,1), nspec_recv*((NGLLX-subsamp_postscript)/subsamp_postscript)*((NGLLX-subsamp_postscript)/subsamp_postscript), &
              MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
 
         buffer_offset = 0
         RGB_offset = 0
         do ispec = 1, nspec_recv
-           do i=1,NGLLX-subsamp,subsamp
-              do j=1,NGLLX-subsamp,subsamp
+           do i=1,NGLLX-subsamp_postscript,subsamp_postscript
+              do j=1,NGLLX-subsamp_postscript,subsamp_postscript
                  buffer_offset = buffer_offset + 1
                  write(24,500) coorg_recv_ps_velocity_model(1,buffer_offset), &
                                coorg_recv_ps_velocity_model(2,buffer_offset)
@@ -1805,9 +1808,9 @@ coorg_recv_ps_vector_field
      enddo
   else
      call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
-     call MPI_SEND (coorg_send_ps_velocity_model(1,1), 2*nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4, &
+     call MPI_SEND (coorg_send_ps_velocity_model(1,1), 2*nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)*((NGLLX-subsamp_postscript)/subsamp_postscript)*4, &
           MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
-     call MPI_SEND (RGB_send_ps_velocity_model(1,1), nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp), &
+     call MPI_SEND (RGB_send_ps_velocity_model(1,1), nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)*((NGLLX-subsamp_postscript)/subsamp_postscript), &
           MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
   endif
 

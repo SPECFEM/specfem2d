@@ -48,12 +48,14 @@
                   simulation_title,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo, &
                   gnuplot,interpol,NTSTEP_BETWEEN_OUTPUT_INFO, &
                   output_postscript_snapshot,output_color_image,colors,numbers, &
-                  meshvect,modelvect,boundvect,cutsnaps,subsamp,sizemax_arrows, &
+                  meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows, &
                   anglerec,initialfield,add_Bielak_conditions, &
                   seismotype,imagetype,assign_external_model,READ_EXTERNAL_SEP_FILE, &
                   output_grid,output_energy,output_wavefield_snapshot,TURN_ATTENUATION_ON, &
                   TURN_VISCATTENUATION_ON,Q0,freq0,p_sv, &
-                  NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCES)
+                  NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCES, &
+                  factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_CONSTANT_BLUE_IN_JPG,US_LETTER, &
+                  POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0)
 
 ! starts reading in parameters from input Database file
 
@@ -63,7 +65,7 @@
   integer :: myrank,ipass
   character(len=60) simulation_title
   integer :: SIMULATION_TYPE,NOISE_TOMOGRAPHY,npgeo
-  integer :: colors,numbers,subsamp,seismotype,imagetype
+  integer :: colors,numbers,subsamp_postscript,seismotype,imagetype
   logical :: SAVE_FORWARD,gnuplot,interpol,output_postscript_snapshot, &
     output_color_image
   logical :: meshvect,modelvect,boundvect,initialfield,add_Bielak_conditions, &
@@ -77,6 +79,34 @@
 
   integer :: NSTEP,NSOURCES
   integer :: NTSTEP_BETWEEN_OUTPUT_INFO,NTSTEP_BETWEEN_OUTPUT_SEISMO
+
+! factor to subsample color images output by the code (useful for very large models)
+  integer :: factor_subsample_image
+
+! use snapshot number in the file name of JPG color snapshots instead of the time step
+  logical :: USE_SNAPSHOT_NUMBER_IN_FILENAME
+
+! display acoustic layers as constant blue, because they likely correspond to water in the case of ocean acoustics
+! or in the case of offshore oil industry experiments.
+! (if off, display them as greyscale, as for elastic or poroelastic elements)
+  logical :: DRAW_WATER_CONSTANT_BLUE_IN_JPG
+
+! US letter paper or European A4
+  logical :: US_LETTER
+
+! non linear display to enhance small amplitudes in color images
+  double precision :: POWER_DISPLAY_COLOR
+
+! perform inverse Cuthill-McKee (1969) permutation for mesh numbering
+  logical :: PERFORM_CUTHILL_MCKEE
+
+! output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
+  logical :: SU_FORMAT
+
+! use this t0 as earliest starting time rather than the automatically calculated one
+! (must be positive and bigger than the automatically one to be effective;
+!  simulation will start at t = - t0)
+  double precision :: USER_T0
 
   ! local parameters
   integer :: ier
@@ -126,7 +156,7 @@
   read(IIN,*) output_postscript_snapshot,output_color_image,colors,numbers
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) meshvect,modelvect,boundvect,cutsnaps,subsamp,sizemax_arrows
+  read(IIN,*) meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows
   cutsnaps = cutsnaps / 100.d0
 
   read(IIN,"(a80)") datlin
@@ -162,6 +192,30 @@
   read(IIN,"(a80)") datlin
   read(IIN,*) p_sv
 
+  read(IIN,"(a80)") datlin
+  read(IIN,*) factor_subsample_image
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) USE_SNAPSHOT_NUMBER_IN_FILENAME
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) DRAW_WATER_CONSTANT_BLUE_IN_JPG
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) US_LETTER
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) POWER_DISPLAY_COLOR
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) PERFORM_CUTHILL_MCKEE
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) SU_FORMAT
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) USER_T0
+
   !---- check parameters read
   if (myrank == 0 .and. ipass == 1) then
     write(IOUT,200) npgeo,NDIM
@@ -170,7 +224,7 @@
     write(IOUT,750) initialfield,add_Bielak_conditions,assign_external_model,&
                     READ_EXTERNAL_SEP_FILE,TURN_ATTENUATION_ON, &
                     output_grid,output_energy
-    write(IOUT,800) imagetype,100.d0*cutsnaps,subsamp
+    write(IOUT,800) imagetype,100.d0*cutsnaps,subsamp_postscript
   endif
 
   !---- read time step
@@ -221,9 +275,9 @@
   'Save a file with total energy or not.(output_energy) = ',l6)
 
 800 format(//1x,'C o n t r o l',/1x,13('='),//5x, &
-  'Vector display type . . . . . . . . . . .(imagetype) = ',i6/5x, &
-  'Percentage of cut for vector plots . . . .(cutsnaps) = ',f6.2/5x, &
-  'Subsampling for velocity model display. . .(subsamp) = ',i6)
+  'Vector display type . . . . . . . . . . . . . . (imagetype) = ',i6/5x, &
+  'Percentage of cut for vector plots. . . . . . . .(cutsnaps) = ',f6.2/5x, &
+  'Subsampling of velocity model display. (subsamp_postscript) = ',i6)
 
 703 format(//' I t e r a t i o n s '/1x,19('='),//5x, &
       'Number of time iterations . . . . .(NSTEP) =',i8,/5x, &

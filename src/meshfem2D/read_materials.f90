@@ -94,10 +94,6 @@
 
   ! reads in material parameters
   do imaterial=1,nb_materials
-     !call read_material_parameters(IIN,DONT_IGNORE_JUNK,i,icodematread, &
-     !                         val0read,val1read,val2read,val3read, &
-     !                         val4read,val5read,val6read,val7read, &
-     !                         val8read,val9read,val10read,val11read,val12read)
 
      call read_material_parameters_p(i,icodematread, &
                               val0read,val1read,val2read,val3read, &
