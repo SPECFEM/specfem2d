@@ -9,6 +9,7 @@ SAVE_FORWARD                    = .false.  # save the last frame, needed for adj
 # parameters concerning partitioning
 nproc                           = 1              # number of processes
 partitioning_method             = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
+PERFORM_CUTHILL_MCKEE           = .true.         # perform inverse Cuthill-McKee (1969) optimization/permutation for mesh numbering
 
 ngnod                           = 4              # number of control nodes per element (4 or 9)
 initialfield                    = .true.         # use a plane wave as source or not
@@ -24,6 +25,7 @@ p_sv                            = .true.         # set the type of calculation (
 # time step parameters
 nt                              = 5000           # total number of time steps
 deltat                          = 2.e-3          # duration of a time step
+USER_T0                         = 0.0d0          # use this t0 as earliest starting time rather than the automatically calculated one
 
 # source parameters
 NSOURCES                        = 1              # number of sources [source info read in CMTSOLUTION file]
@@ -39,6 +41,7 @@ generate_STATIONS               = .true.         # creates a STATION file in ./D
 nreceiverlines                  = 1              # number of receiver lines
 anglerec                        = 0.d0           # angle to rotate components at receivers
 rec_normal_to_surface           = .false.        # base anglerec normal to surface (external mesh and curve file needed)
+SU_FORMAT                       = .false.        # output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
 
 # first receiver line
 nrec                            = 5              # number of receivers
@@ -59,8 +62,13 @@ modelvect                       = .false.        # display velocity model on vec
 boundvect                       = .true.         # display boundary conditions on plots
 interpol                        = .true.         # interpolation of the display or not
 pointsdisp                      = 6              # points for interpolation of display (set to 1 for lower-left corner only)
-subsamp                         = 1              # subsampling of color snapshots
+subsamp_postscript              = 1              # subsampling of background velocity model in PostScript snapshots
+factor_subsample_image          = 1              # factor to subsample color images output by the code (useful for very large models)
+POWER_DISPLAY_COLOR             = 0.30d0         # non linear display to enhance small amplitudes in color images
+DRAW_WATER_CONSTANT_BLUE_IN_JPG = .true.         # display acoustic layers as constant blue in JPEG images, because they likely correspond to water
 sizemax_arrows                  = 1.d0           # maximum size of arrows on vector plots in cm
+US_LETTER                       = .false.        # US letter paper or European A4
+USE_SNAPSHOT_NUMBER_IN_FILENAME = .false.        # use snapshot number in the file name of JPEG color snapshots instead of the time step
 gnuplot                         = .false.        # generate a GNUPLOT file for the grid
 output_grid                     = .false.        # save the grid in a text file or not
 output_energy                   = .false.        # compute and output acoustic and elastic energy (slows down the code significantly)
