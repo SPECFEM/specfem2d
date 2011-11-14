@@ -48,7 +48,7 @@
 ! New-York, New-York, USA, 1969. ACM Press.
 ! see for instance http://en.wikipedia.org/wiki/Cuthill%E2%80%93McKee_algorithm
 
-  subroutine get_perm(ibool,perm,limit,nspec,nglob)
+  subroutine get_perm_cuthill_mckee(ibool,perm,limit,nspec,nglob,PERFORM_CUTHILL_MCKEE)
 
   implicit none
 
@@ -84,6 +84,9 @@
 ! only count the total size of the array that will be created, or actually create it
   logical count_only
   integer total_size_ne,total_size_adj,limit
+
+! perform inverse Cuthill-McKee (1969) permutation for mesh numbering
+  logical :: PERFORM_CUTHILL_MCKEE
 
 !
 !-----------------------------------------------------------------------
@@ -143,7 +146,7 @@
     enddo
   endif
 
-  end subroutine get_perm
+  end subroutine get_perm_cuthill_mckee
 
 !=======================================================================
 !

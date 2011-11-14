@@ -46,7 +46,7 @@
 
   subroutine set_sources(myrank,NSOURCES,source_type,time_function_type, &
                       x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,angleforce,aval, &
-                      t0,initialfield,ipass,deltat)
+                      t0,initialfield,ipass,deltat,USER_T0)
 
 ! gets source parameters
 
@@ -63,6 +63,11 @@
   double precision :: deltat
   integer :: ipass
   logical :: initialfield
+
+! use this t0 as earliest starting time rather than the automatically calculated one
+! (must be positive and bigger than the automatically one to be effective;
+!  simulation will start at t = - t0)
+  double precision :: USER_T0
 
   ! local parameters
   integer :: i_source

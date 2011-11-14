@@ -45,7 +45,7 @@
 
 
   subroutine initialize_simulation(nproc,myrank,NUMBER_OF_PASSES, &
-                  ninterface_acoustic,ninterface_elastic,ninterface_poroelastic)
+                  ninterface_acoustic,ninterface_elastic,ninterface_poroelastic,PERFORM_CUTHILL_MCKEE)
 
   implicit none
   include "constants.h"
@@ -55,6 +55,9 @@
 
   integer :: nproc,myrank,NUMBER_OF_PASSES
   integer :: ninterface_acoustic, ninterface_elastic,ninterface_poroelastic
+
+! perform inverse Cuthill-McKee (1969) permutation for mesh numbering
+  logical :: PERFORM_CUTHILL_MCKEE
 
   ! local parameters
   integer :: ier

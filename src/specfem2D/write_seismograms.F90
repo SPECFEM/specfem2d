@@ -46,8 +46,8 @@
 
   subroutine write_seismograms(sisux,sisuz,siscurl,station_name,network_name, &
       NSTEP,nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
-      NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current,p_sv &
-      ,st_zval,x_source,z_source)
+      NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current,p_sv, &
+      st_zval,x_source,z_source,SU_FORMAT)
 
   implicit none
 
@@ -59,6 +59,9 @@
   integer :: nrec,NSTEP,seismotype
   integer :: NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current
   double precision :: t0,deltat
+
+! output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
+  logical :: SU_FORMAT
 
   logical :: p_sv
 

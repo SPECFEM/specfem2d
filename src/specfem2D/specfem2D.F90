@@ -345,6 +345,34 @@
 ! for P-SV or SH (membrane) waves calculation
   logical :: p_sv
 
+! factor to subsample color images output by the code (useful for very large models)
+  integer :: factor_subsample_image
+
+! use snapshot number in the file name of JPG color snapshots instead of the time step
+  logical :: USE_SNAPSHOT_NUMBER_IN_FILENAME
+
+! display acoustic layers as constant blue, because they likely correspond to water in the case of ocean acoustics
+! or in the case of offshore oil industry experiments.
+! (if off, display them as greyscale, as for elastic or poroelastic elements)
+  logical :: DRAW_WATER_CONSTANT_BLUE_IN_JPG
+
+! US letter paper or European A4
+  logical :: US_LETTER
+
+! non linear display to enhance small amplitudes in color images
+  double precision :: POWER_DISPLAY_COLOR
+
+! perform inverse Cuthill-McKee (1969) permutation for mesh numbering
+  logical :: PERFORM_CUTHILL_MCKEE
+
+! output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
+  logical :: SU_FORMAT
+
+! use this t0 as earliest starting time rather than the automatically calculated one
+! (must be positive and bigger than the automatically one to be effective;
+!  simulation will start at t = - t0)
+  double precision :: USER_T0
+
 ! receiver information
   integer :: nrec,ios
   integer, dimension(:), allocatable :: ispec_selected_rec
@@ -457,7 +485,7 @@
 
   double precision :: vpImin,vpImax,vpIImin,vpIImax
 
-  integer :: colors,numbers,subsamp,imagetype, &
+  integer :: colors,numbers,subsamp_postscript,imagetype, &
     NTSTEP_BETWEEN_OUTPUT_INFO,NTSTEP_BETWEEN_OUTPUT_SEISMO,seismotype
   integer :: numat,ngnod,nspec,pointsdisp, &
     nelemabs,nelem_acoustic_surface,ispecabs,UPPER_LIMIT_DISPLAY
@@ -869,7 +897,7 @@
   call force_ftz()
 
   call initialize_simulation(nproc,myrank,NUMBER_OF_PASSES, &
-                  ninterface_acoustic,ninterface_elastic,ninterface_poroelastic)
+                  ninterface_acoustic,ninterface_elastic,ninterface_poroelastic,PERFORM_CUTHILL_MCKEE)
 
   ! reduction of cache misses inner/outer in two passes
   do ipass = 1,NUMBER_OF_PASSES
@@ -879,12 +907,14 @@
                   simulation_title,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo, &
                   gnuplot,interpol,NTSTEP_BETWEEN_OUTPUT_INFO, &
                   output_postscript_snapshot,output_color_image,colors,numbers, &
-                  meshvect,modelvect,boundvect,cutsnaps,subsamp,sizemax_arrows, &
+                  meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows, &
                   anglerec,initialfield,add_Bielak_conditions, &
                   seismotype,imagetype,assign_external_model,READ_EXTERNAL_SEP_FILE, &
                   output_grid,output_energy,output_wavefield_snapshot,TURN_ATTENUATION_ON, &
                   TURN_VISCATTENUATION_ON,Q0,freq0,p_sv, &
-                  NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCES)
+                  NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCES, &
+                  factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_CONSTANT_BLUE_IN_JPG,US_LETTER, &
+                  POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0)
 
   !
   !--- source information
@@ -919,7 +949,7 @@
   ! sets source parameters
   call set_sources(myrank,NSOURCES,source_type,time_function_type, &
                       x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,angleforce,aval, &
-                      t0,initialfield,ipass,deltat)
+                      t0,initialfield,ipass,deltat,USER_T0)
 
   !
   !----  read attenuation information
@@ -2551,7 +2581,7 @@
     if(ACTUALLY_IMPLEMENT_PERM_WHOLE) then
 
       allocate(check_perm(nspec))
-      call get_perm(ibool,perm,LIMIT_MULTI_CUTHILL,nspec,nglob)
+      call get_perm_cuthill_mckee(ibool,perm,LIMIT_MULTI_CUTHILL,nspec,nglob,PERFORM_CUTHILL_MCKEE)
     ! check that the permutation obtained is bijective
       check_perm(:) = -1
       do ispec = 1,nspec
@@ -2564,7 +2594,7 @@
 
     if(ACTUALLY_IMPLEMENT_PERM_OUT) then
       allocate(check_perm(nspec_outer))
-      call get_perm(ibool_outer,perm(1:nspec_outer),LIMIT_MULTI_CUTHILL,nspec_outer,nglob_outer)
+      call get_perm_cuthill_mckee(ibool_outer,perm(1:nspec_outer),LIMIT_MULTI_CUTHILL,nspec_outer,nglob_outer,PERFORM_CUTHILL_MCKEE)
     ! check that the permutation obtained is bijective
       check_perm(:) = -1
       do ispec = 1,nspec_outer
@@ -2578,7 +2608,8 @@
 
     if(ACTUALLY_IMPLEMENT_PERM_INN) then
       allocate(check_perm(nspec_inner))
-      call get_perm(ibool_inner,perm(nspec_outer+1:nspec),LIMIT_MULTI_CUTHILL,nspec_inner,nglob_inner)
+      call get_perm_cuthill_mckee(ibool_inner,perm(nspec_outer+1:nspec),LIMIT_MULTI_CUTHILL,nspec_inner,nglob_inner, &
+                  PERFORM_CUTHILL_MCKEE)
     ! check that the permutation obtained is bijective
       check_perm(:) = -1
       do ispec = 1,nspec_inner
@@ -2634,7 +2665,7 @@
                  coorg,xinterp,zinterp,shape2D_display,knods,simulation_title, &
                  npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic, &
                  myrank,nproc,NSOURCES,poroelastic, &
-                 freq0,Q0,TURN_VISCATTENUATION_ON)
+                 freq0,Q0,TURN_VISCATTENUATION_ON,US_LETTER)
 
 ! convert receiver angle to radians
   anglerec = anglerec * pi / 180.d0
@@ -2648,7 +2679,7 @@
     call prepare_color_image_init(NX_IMAGE_color,NZ_IMAGE_color, &
                             xmin_color_image,xmax_color_image, &
                             zmin_color_image,zmax_color_image, &
-                            coord,nglob,npgeo)
+                            coord,nglob,npgeo,factor_subsample_image)
 
     ! allocate an array for image data
     allocate(image_color_data(NX_IMAGE_color,NZ_IMAGE_color))
@@ -3734,8 +3765,7 @@
                             NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc, &
                             num_pixel_loc,nspec,elastic,poroelastic,ibool,kmato, &
                             numat,density,poroelastcoef,porosity,tortuosity, &
-                            nproc,myrank,assign_external_model,vpext)
-
+                            nproc,myrank,assign_external_model,vpext,factor_subsample_image,DRAW_WATER_CONSTANT_BLUE_IN_JPG)
   endif
 
 ! dummy allocation of plane wave arrays if they are unused (but still need to exist because
@@ -3793,10 +3823,10 @@
   if(modelvect) then
   d1_coorg_recv_ps_velocity_model=2
   call mpi_allreduce(nspec,d2_coorg_recv_ps_velocity_model,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-  d2_coorg_recv_ps_velocity_model=d2_coorg_recv_ps_velocity_model*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4
+  d2_coorg_recv_ps_velocity_model=d2_coorg_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)*((NGLLX-subsamp_postscript)/subsamp_postscript)*4
   d1_RGB_recv_ps_velocity_model=1
   call mpi_allreduce(nspec,d2_RGB_recv_ps_velocity_model,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-  d2_RGB_recv_ps_velocity_model=d2_RGB_recv_ps_velocity_model*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4
+  d2_RGB_recv_ps_velocity_model=d2_RGB_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)*((NGLLX-subsamp_postscript)/subsamp_postscript)*4
   else
   d1_coorg_recv_ps_velocity_model=1
   d2_coorg_recv_ps_velocity_model=1
@@ -3892,9 +3922,11 @@
 
 #endif
   d1_coorg_send_ps_velocity_model=2
-  d2_coorg_send_ps_velocity_model=nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)*4
+  d2_coorg_send_ps_velocity_model=nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+                                        ((NGLLX-subsamp_postscript)/subsamp_postscript)*4
   d1_RGB_send_ps_velocity_model=1
-  d2_RGB_send_ps_velocity_model=nspec*((NGLLX-subsamp)/subsamp)*((NGLLX-subsamp)/subsamp)
+  d2_RGB_send_ps_velocity_model=nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+                                      ((NGLLX-subsamp_postscript)/subsamp_postscript)
 
   allocate(coorg_send_ps_velocity_model(d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model))
   allocate(RGB_send_ps_velocity_model(d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model))
@@ -6618,7 +6650,7 @@
                       poroelastcoef,knods,kmato,ibool, &
                       numabs,codeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
                       simulation_title,nglob,npgeo,vpImin,vpImax,nrec,NSOURCES, &
-                      colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
+                      colors,numbers,subsamp_postscript,imagetype,interpol,meshvect,modelvect, &
                       boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
                       nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
                       any_acoustic,any_poroelastic,plot_lowerleft_corner_only, &
@@ -6644,7 +6676,7 @@
                       coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
                       d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field, &
                       d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
-                      coorg_send_ps_vector_field,coorg_recv_ps_vector_field)
+                      coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER)
 
         else if(imagetype == 2 .and. p_sv) then
 
@@ -6662,7 +6694,7 @@
                       poroelastcoef,knods,kmato,ibool, &
                       numabs,codeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
                       simulation_title,nglob,npgeo,vpImin,vpImax,nrec,NSOURCES, &
-                      colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
+                      colors,numbers,subsamp_postscript,imagetype,interpol,meshvect,modelvect, &
                       boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
                       nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
                       any_acoustic,any_poroelastic,plot_lowerleft_corner_only, &
@@ -6688,7 +6720,7 @@
                       coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
                       d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field, &
                       d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
-                      coorg_send_ps_vector_field,coorg_recv_ps_vector_field)
+                      coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER)
 
         else if(imagetype == 3 .and. p_sv) then
 
@@ -6706,7 +6738,7 @@
                       poroelastcoef,knods,kmato,ibool, &
                       numabs,codeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
                       simulation_title,nglob,npgeo,vpImin,vpImax,nrec,NSOURCES, &
-                      colors,numbers,subsamp,imagetype,interpol,meshvect,modelvect, &
+                      colors,numbers,subsamp_postscript,imagetype,interpol,meshvect,modelvect, &
                       boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
                       nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
                       any_acoustic,any_poroelastic,plot_lowerleft_corner_only, &
@@ -6732,7 +6764,7 @@
                       coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
                       d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field, &
                       d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
-                      coorg_send_ps_vector_field,coorg_recv_ps_vector_field)
+                      coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER)
 
         else if(imagetype == 4 .or. .not. p_sv) then
 
@@ -6852,7 +6884,8 @@
 
         if (myrank == 0) then
           call create_color_image(image_color_data,iglob_image_color, &
-                  NX_IMAGE_color,NZ_IMAGE_color,it,isnapshot_number,cutsnaps,image_color_vp_display)
+                  NX_IMAGE_color,NZ_IMAGE_color,it,isnapshot_number,cutsnaps,image_color_vp_display, &
+                  USE_SNAPSHOT_NUMBER_IN_FILENAME,POWER_DISPLAY_COLOR)
           write(IOUT,*) 'Color image created'
         endif
 
@@ -6886,7 +6919,7 @@
         call write_seismograms(sisux,sisuz,siscurl,station_name,network_name,NSTEP, &
                             nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
                             NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current,p_sv,&
-                            st_zval,x_source(1),z_source(1))
+                            st_zval,x_source(1),z_source(1),SU_FORMAT)
 
       seismo_offset = seismo_offset + seismo_current
       seismo_current = 0

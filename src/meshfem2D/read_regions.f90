@@ -67,7 +67,6 @@
   integer,external :: err_occurred
 
   ! read the material numbers for each region
-  !call read_value_integer(IIN,IGNORE_JUNK,nbregion)
   call read_value_integer_p(nbregion, 'mesher.nbregions')
   if(err_occurred() /= 0) stop 'error reading parameter nbregions in Par_file'
 
@@ -79,9 +78,6 @@
   print *
 
   do iregion = 1,nbregion
-
-    !call read_region_coordinates(IIN,DONT_IGNORE_JUNK,ixdebregion,ixfinregion, &
-    !                            izdebregion,izfinregion,imaterial_number)
 
     call read_region_coordinates_p(ixdebregion,ixfinregion, &
                                 izdebregion,izfinregion,imaterial_number)
