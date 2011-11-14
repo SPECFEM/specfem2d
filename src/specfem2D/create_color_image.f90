@@ -72,9 +72,10 @@
   character(len=100) :: filename
 
 ! open the image file
+! slightly change the beginning of the file name depending if we use the time step of the image number, to avoid confusion
   if(USE_SNAPSHOT_NUMBER_IN_FILENAME) then
     isnapshot_number = isnapshot_number + 1
-    write(filename,"('OUTPUT_FILES/image',i7.7,'.jpg')") isnapshot_number
+    write(filename,"('OUTPUT_FILES/img',i7.7,'.jpg')") isnapshot_number
   else
     write(filename,"('OUTPUT_FILES/image',i7.7,'.jpg')") it
   endif
