@@ -795,7 +795,10 @@
 ! to help locate elements with a negative Jacobian using OpenDX
   logical :: found_a_negative_jacobian
 
-!! DK DK the horizontal periodicity distance for periodic conditions
+!! DK DK for horizontal periodic conditions: detect common points between left and right edges
+  logical :: ADD_PERIODIC_CONDITIONS
+
+!! DK DK horizontal periodicity distance for periodic conditions
   double precision :: PERIODIC_horiz_dist
 
 !! DK DK grid point detection tolerance for periodic conditions
@@ -905,7 +908,8 @@
                   TURN_VISCATTENUATION_ON,Q0,freq0,p_sv, &
                   NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCES, &
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_CONSTANT_BLUE_IN_JPG,US_LETTER, &
-                  POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0)
+                  POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, &
+                  ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL)
 
   !
   !--- source information
