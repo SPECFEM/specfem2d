@@ -142,6 +142,15 @@ module parameter_file
 !  simulation will start at t = - t0)
   double precision :: USER_T0
 
+!! DK DK for horizontal periodic conditions: detect common points between left and right edges
+  logical :: ADD_PERIODIC_CONDITIONS
+
+!! DK DK horizontal periodicity distance for periodic conditions
+  double precision :: PERIODIC_horiz_dist
+
+!! DK DK grid point detection tolerance for periodic conditions
+  double precision :: PERIODIC_DETECT_TOL
+
 contains
 
   subroutine read_parameter_file()
@@ -400,8 +409,16 @@ contains
 
   ! boolean defining whether to use any absorbing boundaries
   call read_value_logical_p(any_abs, 'solver.absorbing_conditions')
-  if(err_occurred() /= 0) stop 'error reading parameter 51 in Par_file'
+  if(err_occurred() /= 0) stop 'error reading parameter 51a in Par_file'
 
+  call read_value_logical_p(ADD_PERIODIC_CONDITIONS, 'solver.ADD_PERIODIC_CONDITIONS')
+  if(err_occurred() /= 0) stop 'error reading parameter 51b in Par_file'
+
+  call read_value_double_precision_p(PERIODIC_horiz_dist, 'solver.PERIODIC_horiz_dist')
+  if(err_occurred() /= 0) stop 'error reading parameter 51c in Par_file'
+
+  call read_value_double_precision_p(PERIODIC_DETECT_TOL, 'solver.PERIODIC_DETECT_TOL')
+  if(err_occurred() /= 0) stop 'error reading parameter 51d in Par_file'
 
   !-----------------
   ! external mesh parameters

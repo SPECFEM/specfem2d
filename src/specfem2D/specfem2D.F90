@@ -785,37 +785,29 @@
   double precision :: distmin, dist_current, angleforce_recv
   double precision, dimension(:), allocatable :: dist_tangential_detection_curve
   double precision :: x_final_receiver_dummy, z_final_receiver_dummy
-!!!!!!!!!!
+
   double precision, dimension(:,:,:),allocatable:: rho_local,vp_local,vs_local
 !!!! hessian
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhorho_el_hessian_final1, rhorho_el_hessian_final2
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhorho_el_hessian_temp1, rhorho_el_hessian_temp2
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhorho_ac_hessian_final1, rhorho_ac_hessian_final2
-!$$  real(kind=CUSTOM_REAL), dimension(:), allocatable :: weight_line_x, weight_line_z, weight_surface!,weight_jacobian
-!$$  !integer, dimension(:), allocatable :: weight_gll
-!$$  real(kind=CUSTOM_REAL) :: zmin_yang, zmax_yang, xmin_yang, xmax_yang
 
 ! to help locate elements with a negative Jacobian using OpenDX
   logical :: found_a_negative_jacobian
 
-!! DK DK Feb 2010 for periodic conditions: detect common points between left and right edges
-  logical, parameter :: ADD_PERIODIC_CONDITIONS = .false.
+!! DK DK the horizontal periodicity distance for periodic conditions
+  double precision :: PERIODIC_horiz_dist
 
-!! DK DK the periodic conditions below are currently specific to a Gmsh model designed by Paul Cristini
+!! DK DK grid point detection tolerance for periodic conditions
+  double precision :: PERIODIC_DETECT_TOL
 
-!! DK DK the horizontal periodicity distance is:
-  double precision, parameter :: PERIODIC_horiz_dist =   0.3597d0
+  integer :: NSPEC_PERIO
 
-!! DK DK the length of an edge is about 1d-003, thus use e.g. 1/300 of that
-  double precision, parameter :: PERIODIC_DETECT_TOL = 1d-003 / 300.d0
+  integer, dimension(:), allocatable :: numperio_left
+  integer, dimension(:), allocatable :: numperio_right
 
-  integer, parameter :: NSPEC_PERIO = 670 / 2  ! 414 / 2
-
-  integer, dimension(NSPEC_PERIO) :: numperio_left
-  integer, dimension(NSPEC_PERIO) :: numperio_right
-
-  logical, dimension(4,NSPEC_PERIO) :: codeabs_perio_left
-  logical, dimension(4,NSPEC_PERIO) :: codeabs_perio_right
+  logical, dimension(:,:), allocatable :: codeabs_perio_left
+  logical, dimension(:,:), allocatable :: codeabs_perio_right
 
   integer :: idummy1, idummy2, idummy3, idummy4, idummy5, idummy6, idummy7, idummy8
   integer :: ispecperio, ispecperio2, ispec2, i2, j2
@@ -884,8 +876,7 @@
 
 !>NOISE_TOMOGRAPHY
 
-
-!! DK DK Feb 2010 for periodic conditions: detect common points between left and right edges
+!! DK DK for periodic conditions: detect common points between left and right edges
 
 !***********************************************************************
 !
@@ -1385,7 +1376,7 @@
     print *,'Zmin,Zmax of the local mesh for proc ',myrank,' = ',minval(coord(2,:)),maxval(coord(2,:))
     print *
 
-!! DK DK Feb 2010 for periodic conditions: detect common points between left and right edges
+!! DK DK for periodic conditions: detect common points between left and right edges
 
     if(ADD_PERIODIC_CONDITIONS) then
 
@@ -1401,6 +1392,10 @@
 
       print *
       open(unit=123,file='DATA/Database00000_left_edge_only',status='old')
+      read(123,*) NSPEC_PERIO
+      read(123,*) PERIODIC_horiz_dist
+      allocate(numperio_left(NSPEC_PERIO))
+      allocate(codeabs_perio_left(4,NSPEC_PERIO))
       do ispecperio = 1,NSPEC_PERIO
       read(123,*) numperio_left(ispecperio), &
          codeabs_perio_left(IBOTTOM,ispecperio), &
@@ -1411,8 +1406,13 @@
       enddo
       close(123)
       print *,'read ',NSPEC_PERIO,' elements for left periodic edge'
+      print *,'horizontal periodicity distance is ',PERIODIC_horiz_dist
 
       open(unit=123,file='DATA/Database00000_right_edge_only',status='old')
+      read(123,*) NSPEC_PERIO
+      read(123,*) PERIODIC_horiz_dist
+      allocate(numperio_right(NSPEC_PERIO))
+      allocate(codeabs_perio_right(4,NSPEC_PERIO))
       do ispecperio = 1,NSPEC_PERIO
       read(123,*) numperio_right(ispecperio), &
          codeabs_perio_right(IBOTTOM,ispecperio), &
@@ -1423,6 +1423,7 @@
       enddo
       close(123)
       print *,'read ',NSPEC_PERIO,' elements for right periodic edge'
+      print *,'horizontal periodicity distance is ',PERIODIC_horiz_dist
       print *
 
       print *,'because of periodic conditions, values computed by checkgrid() are not reliable'
@@ -1516,7 +1517,7 @@
 
     endif ! of if(ADD_PERIODIC_CONDITIONS)
 
-!! DK DK Feb 2010 end of periodic conditions: detect common points between left and right edges
+!! DK DK end of periodic conditions: detect common points between left and right edges
 
     ! reduces cache misses
     call get_global(nspec_outer,nspec,nglob,ibool)
