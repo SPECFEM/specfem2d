@@ -216,6 +216,15 @@
   read(IIN,"(a80)") datlin
   read(IIN,*) USER_T0
 
+  read(IIN,"(a80)") datlin
+  read(IIN,*) ADD_PERIODIC_CONDITIONS
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) PERIODIC_horiz_dist
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) PERIODIC_DETECT_TOL
+
   !---- check parameters read
   if (myrank == 0 .and. ipass == 1) then
     write(IOUT,200) npgeo,NDIM

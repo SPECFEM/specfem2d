@@ -160,6 +160,15 @@
     write(15,*) 'USER_T0'
     write(15,*) USER_T0
 
+    write(15,*) 'ADD_PERIODIC_CONDITIONS'
+    write(15,*) ADD_PERIODIC_CONDITIONS
+
+    write(15,*) 'PERIODIC_horiz_dist'
+    write(15,*) PERIODIC_horiz_dist
+
+    write(15,*) 'PERIODIC_DETECT_TOL'
+    write(15,*) PERIODIC_DETECT_TOL
+
     write(15,*) 'nt deltat'
     write(15,*) nt,deltat
     write(15,*) 'NSOURCES'

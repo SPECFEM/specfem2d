@@ -93,6 +93,15 @@ read_external_mesh              = .false.
 # absorbing boundary active or not
 absorbing_conditions            = .true.
 
+# for horizontal periodic conditions: detect common points between left and right edges
+ADD_PERIODIC_CONDITIONS         = .false.
+
+# horizontal periodicity distance for periodic conditions
+PERIODIC_horiz_dist             = 0.3597d0
+
+# grid point detection tolerance for periodic conditions
+PERIODIC_DETECT_TOL             = 3.3334d-6
+
 #-----------------------------------------------------------------------------
 # PARAMETERS FOR EXTERNAL MESHING
 
