@@ -45,7 +45,7 @@
 
 
   subroutine initialize_simulation(nproc,myrank,NUMBER_OF_PASSES, &
-                  ninterface_acoustic,ninterface_elastic,ninterface_poroelastic,PERFORM_CUTHILL_MCKEE)
+                  ninterface_acoustic,ninterface_elastic,ninterface_poroelastic)
 
   implicit none
   include "constants.h"
@@ -55,9 +55,6 @@
 
   integer :: nproc,myrank,NUMBER_OF_PASSES
   integer :: ninterface_acoustic, ninterface_elastic,ninterface_poroelastic
-
-! perform inverse Cuthill-McKee (1969) permutation for mesh numbering
-  logical :: PERFORM_CUTHILL_MCKEE
 
   ! local parameters
   integer :: ier
@@ -82,23 +79,10 @@
   else
     NUMBER_OF_PASSES = 1
   endif
-
 #else
   nproc = 1
   myrank = 0
-  !ier = 0
-  !ninterface_acoustic = 0
-  !ninterface_elastic = 0
-  !ninterface_poroelastic = 0
-  !iproc = 0
-  !ispec_inner = 0
-  !ispec_outer = 0
-
-  if(PERFORM_CUTHILL_MCKEE) then
-    NUMBER_OF_PASSES = 2
-  else
-    NUMBER_OF_PASSES = 1
-  endif
+  NUMBER_OF_PASSES = 1   ! assign dummy value for now, will be changed later if needed
 #endif
 
   ninterface_acoustic = 0

@@ -876,11 +876,6 @@
   ! latter usually much faster but prone to artefacts)
   logical :: save_everywhere = .false.
 
-
-!>NOISE_TOMOGRAPHY
-
-!! DK DK for periodic conditions: detect common points between left and right edges
-
 !***********************************************************************
 !
 !             i n i t i a l i z a t i o n    p h a s e
@@ -891,12 +886,12 @@
   call force_ftz()
 
   call initialize_simulation(nproc,myrank,NUMBER_OF_PASSES, &
-                  ninterface_acoustic,ninterface_elastic,ninterface_poroelastic,PERFORM_CUTHILL_MCKEE)
-
-  ! reduction of cache misses inner/outer in two passes
-  do ipass = 1,NUMBER_OF_PASSES
+                  ninterface_acoustic,ninterface_elastic,ninterface_poroelastic)
 
   ! starts reading in Database file
+  ! it is necessary to duplicate this call before the loop on ipass = 1,NUMBER_OF_PASSES
+  ! because we need to read the value of logical flag PERFORM_CUTHILL_MCKEE
+  ipass = 1
   call read_databases_init(myrank,ipass, &
                   simulation_title,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo, &
                   gnuplot,interpol,NTSTEP_BETWEEN_OUTPUT_INFO, &
@@ -910,6 +905,32 @@
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_CONSTANT_BLUE_IN_JPG,US_LETTER, &
                   POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, &
                   ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL)
+
+#ifndef USE_MPI
+  if(PERFORM_CUTHILL_MCKEE) then
+    NUMBER_OF_PASSES = 2
+  else
+    NUMBER_OF_PASSES = 1
+  endif
+#endif
+
+  ! reduction of cache misses inner/outer in two passes
+  do ipass = 1,NUMBER_OF_PASSES
+
+  ! starts reading in Database file
+    if(ipass > 1) call read_databases_init(myrank,ipass, &
+                      simulation_title,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo, &
+                      gnuplot,interpol,NTSTEP_BETWEEN_OUTPUT_INFO, &
+                      output_postscript_snapshot,output_color_image,colors,numbers, &
+                      meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows, &
+                      anglerec,initialfield,add_Bielak_conditions, &
+                      seismotype,imagetype,assign_external_model,READ_EXTERNAL_SEP_FILE, &
+                      output_grid,output_energy,output_wavefield_snapshot,TURN_ATTENUATION_ON, &
+                      TURN_VISCATTENUATION_ON,Q0,freq0,p_sv, &
+                      NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCES, &
+                      factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_CONSTANT_BLUE_IN_JPG,US_LETTER, &
+                      POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, &
+                      ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL)
 
   !
   !--- source information
