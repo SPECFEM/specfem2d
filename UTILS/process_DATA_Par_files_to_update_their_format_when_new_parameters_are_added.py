@@ -8,6 +8,7 @@ Usage : "python PathTo/SPECFEM2D/UTILS/ProcessParFileTor19201.py PathTo/filename
 
 @author: Cristini Paul, Laboratoire de Mecanique et d'Acoustique, CNRS, Marseille, France
 """
+
 import sys
 from shutil import move
 from os.path import exists
@@ -42,24 +43,17 @@ def ProcessParfileTor19201(fic):
         for ilg, lig in enumerate(ligs):
             if lig.startswith('partitioning'):
                 ligs.insert(ilg+1,a1)
-                Ct+=1
             if lig.startswith('deltat'):
                 ligs.insert(ilg+1,a2)
-                Ct+=1
             if lig.startswith('rec_normal'):
                 ligs.insert(ilg+1,a3)
-                Ct+=1
             if lig.startswith('subsamp'):
                 ligs[ilg]=string.replace(ligs[ilg],'subsamp           ','subsamp_postscript',1)
                 ligs.insert(ilg+1,a4)
-                Ct+=1
             if lig.startswith('sizemax'):
                 ligs.insert(ilg+1,a5)
-                Ct+=1
             if lig.startswith('absorbing_conditions'):
                 ligs.insert(ilg+1,a6)
-                Ct+=1
-        print fic, Ct
 #        #
         move(fic,fic+'.old')
         fm = open(fic,'w')
@@ -68,8 +62,6 @@ def ProcessParfileTor19201(fic):
         print 'File : '+fic+' processed'
     else:
         print 'File : '+fic+' already processed'
-    return 
-  
+    return
 if __name__=='__main__':
     ProcessParfileTor19201(sys.argv[1])
-    
