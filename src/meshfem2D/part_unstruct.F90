@@ -1279,7 +1279,8 @@ contains
   edgecut = vwgt(0)
   edgecut = 0
 
-  ! we use default strategy for partitioning, thus omit specifing explicit strategy .
+  ! we use the default strategy for partitioning
+  ! thus no need to define an explicit strategy
   call scotchfstratinit (SCOTCHSTRAT(1), IERR)
    IF (IERR .NE. 0) THEN
      PRINT *, 'ERROR : MAIN : Cannot initialize strat'
