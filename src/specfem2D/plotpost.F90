@@ -1779,7 +1779,8 @@ coorg_recv_ps_vector_field
         call MPI_RECV (coorg_recv_ps_velocity_model(1,1), &
              2*nspec_recv*((NGLLX-subsamp_postscript)/subsamp_postscript)*((NGLLX-subsamp_postscript)/subsamp_postscript)*4, &
              MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
-        call MPI_RECV (RGB_recv_ps_velocity_model(1,1), nspec_recv*((NGLLX-subsamp_postscript)/subsamp_postscript)*((NGLLX-subsamp_postscript)/subsamp_postscript), &
+        call MPI_RECV (RGB_recv_ps_velocity_model(1,1), nspec_recv*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+             ((NGLLX-subsamp_postscript)/subsamp_postscript), &
              MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
 
         buffer_offset = 0
@@ -1808,9 +1809,11 @@ coorg_recv_ps_vector_field
      enddo
   else
      call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
-     call MPI_SEND (coorg_send_ps_velocity_model(1,1), 2*nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)*((NGLLX-subsamp_postscript)/subsamp_postscript)*4, &
+     call MPI_SEND (coorg_send_ps_velocity_model(1,1), 2*nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+          ((NGLLX-subsamp_postscript)/subsamp_postscript)*4, &
           MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
-     call MPI_SEND (RGB_send_ps_velocity_model(1,1), nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)*((NGLLX-subsamp_postscript)/subsamp_postscript), &
+     call MPI_SEND (RGB_send_ps_velocity_model(1,1), nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+          ((NGLLX-subsamp_postscript)/subsamp_postscript), &
           MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
   endif
 
