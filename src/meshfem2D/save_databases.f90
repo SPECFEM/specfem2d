@@ -100,8 +100,8 @@
     call write_partition_database(15, iproc, nspec, num_material, ngnod, 1)
 
 
-    write(15,*) 'npgeo'
-    write(15,*) npgeo
+    write(15,*) 'npgeo nproc'
+    write(15,*) npgeo,nproc
 
     write(15,*) 'gnuplot interpol'
     write(15,*) gnuplot,interpol
