@@ -50,7 +50,7 @@
                       coorg,xinterp,zinterp,shapeint,knods,simulation_title, &
                       npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic, &
                       myrank,nproc,NSOURCES,poroelastic, &
-                      freq0,Q0,TURN_VISCATTENUATION_ON,US_LETTER)
+                      freq0,Q0,TURN_VISCATTENUATION_ON,US_LETTER,output_postscript_snapshot)
 
 ! check the mesh, stability and number of points per wavelength
 
@@ -102,7 +102,7 @@
   double precision :: deltat
 
   logical :: assign_external_model,initialfield,any_elastic,any_poroelastic,all_anisotropic, &
-          TURN_VISCATTENUATION_ON
+          TURN_VISCATTENUATION_ON,output_postscript_snapshot
 
   integer :: myrank,nproc
 
@@ -487,6 +487,9 @@
 !
 !--------------------------------------------------------------------------------
 !
+
+! do not create the PostScript file below if the postscript flag is off
+  if(.not. output_postscript_snapshot) return
 
 ! A4 or US letter paper
   if(US_LETTER) then
