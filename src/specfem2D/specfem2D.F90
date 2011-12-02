@@ -887,10 +887,7 @@
 
   call initialize_simulation(nproc,myrank,NUMBER_OF_PASSES, &
                   ninterface_acoustic,ninterface_elastic,ninterface_poroelastic)
-
-#ifdef USE_MPI
-  if(nproc <= 1) stop 'should have nproc > 1 when running an MPI simulation'
-#endif
+  if(nproc < 1) stop 'should have nproc >= 1'
 
   ! starts reading in Database file
   ! it is necessary to duplicate this call before the loop on ipass = 1,NUMBER_OF_PASSES
@@ -909,9 +906,7 @@
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_CONSTANT_BLUE_IN_JPG,US_LETTER, &
                   POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, &
                   ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL)
-#ifdef USE_MPI
-  if(nproc_read_from_database <= 1) stop 'should have nproc_read_from_database > 1 when running an MPI simulation'
-#endif
+  if(nproc_read_from_database < 1) stop 'should have nproc_read_from_database >= 1'
   if(nproc /= nproc_read_from_database) stop 'must always have nproc == nproc_read_from_database'
 
 #ifndef USE_MPI
