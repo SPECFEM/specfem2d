@@ -2714,7 +2714,7 @@
                  coorg,xinterp,zinterp,shape2D_display,knods,simulation_title, &
                  npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic, &
                  myrank,nproc,NSOURCES,poroelastic, &
-                 freq0,Q0,TURN_VISCATTENUATION_ON,US_LETTER)
+                 freq0,Q0,TURN_VISCATTENUATION_ON,US_LETTER,output_postscript_snapshot)
 
 ! convert receiver angle to radians
   anglerec = anglerec * pi / 180.d0
