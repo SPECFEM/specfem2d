@@ -1135,6 +1135,21 @@
                               my_neighbours,my_nelmnts_neighbours,my_interfaces, &
                               perm,antecedent_list)
 
+  else
+    if(ipass == 1) then
+       allocate(my_neighbours(1))
+       allocate(my_nelmnts_neighbours(1))
+       allocate(my_interfaces(1,1,1))
+       allocate(ibool_interfaces_acoustic(1,1))
+       allocate(ibool_interfaces_elastic(1,1))
+       allocate(ibool_interfaces_poroelastic(1,1))
+       allocate(nibool_interfaces_acoustic(1))
+       allocate(nibool_interfaces_elastic(1))
+       allocate(nibool_interfaces_poroelastic(1))
+       allocate(inum_interfaces_acoustic(1))
+       allocate(inum_interfaces_elastic(1))
+       allocate(inum_interfaces_poroelastic(1))
+    endif
   endif
 
 
