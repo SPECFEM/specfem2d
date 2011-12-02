@@ -677,7 +677,7 @@
 
 ! for MPI and partitioning
   integer  :: ier
-  integer  :: nproc
+  integer  :: nproc,nproc_read_from_database
   integer  :: myrank
   character(len=150) :: outputname,outputname2
 
@@ -888,12 +888,16 @@
   call initialize_simulation(nproc,myrank,NUMBER_OF_PASSES, &
                   ninterface_acoustic,ninterface_elastic,ninterface_poroelastic)
 
+#ifdef USE_MPI
+  if(nproc <= 1) stop 'should have nproc > 1 when running an MPI simulation'
+#endif
+
   ! starts reading in Database file
   ! it is necessary to duplicate this call before the loop on ipass = 1,NUMBER_OF_PASSES
   ! because we need to read the value of logical flag PERFORM_CUTHILL_MCKEE
   ipass = 1
   call read_databases_init(myrank,ipass, &
-                  simulation_title,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo, &
+                  simulation_title,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo,nproc_read_from_database, &
                   gnuplot,interpol,NTSTEP_BETWEEN_OUTPUT_INFO, &
                   output_postscript_snapshot,output_color_image,colors,numbers, &
                   meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows, &
@@ -905,6 +909,10 @@
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_CONSTANT_BLUE_IN_JPG,US_LETTER, &
                   POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, &
                   ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL)
+#ifdef USE_MPI
+  if(nproc_read_from_database <= 1) stop 'should have nproc_read_from_database > 1 when running an MPI simulation'
+#endif
+  if(nproc /= nproc_read_from_database) stop 'must always have nproc == nproc_read_from_database'
 
 #ifndef USE_MPI
   if(PERFORM_CUTHILL_MCKEE) then
@@ -919,7 +927,7 @@
 
   ! starts reading in Database file
     if(ipass > 1) call read_databases_init(myrank,ipass, &
-                      simulation_title,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo, &
+                      simulation_title,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo,nproc_read_from_database, &
                       gnuplot,interpol,NTSTEP_BETWEEN_OUTPUT_INFO, &
                       output_postscript_snapshot,output_color_image,colors,numbers, &
                       meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows, &

@@ -45,7 +45,7 @@
 
 
   subroutine read_databases_init(myrank,ipass, &
-                  simulation_title,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo, &
+                  simulation_title,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo,nproc, &
                   gnuplot,interpol,NTSTEP_BETWEEN_OUTPUT_INFO, &
                   output_postscript_snapshot,output_color_image,colors,numbers, &
                   meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows, &
@@ -65,7 +65,7 @@
 
   integer :: myrank,ipass
   character(len=60) simulation_title
-  integer :: SIMULATION_TYPE,NOISE_TOMOGRAPHY,npgeo
+  integer :: SIMULATION_TYPE,NOISE_TOMOGRAPHY,npgeo,nproc
   integer :: colors,numbers,subsamp_postscript,seismotype,imagetype
   logical :: SAVE_FORWARD,gnuplot,interpol,output_postscript_snapshot, &
     output_color_image
@@ -154,7 +154,7 @@
   read(IIN,*) SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) npgeo
+  read(IIN,*) npgeo,nproc
 
   read(IIN,"(a80)") datlin
   read(IIN,*) gnuplot,interpol
