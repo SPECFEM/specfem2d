@@ -3780,26 +3780,6 @@
 
 !>NOISE_TOMOGRAPHY
 
-!
-!----          s t a r t   t i m e   i t e r a t i o n s
-!
-  if (myrank == 0) write(IOUT,400)
-
-  ! count elapsed wall-clock time
-  call date_and_time(datein,timein,zone,time_values)
-  ! time_values(1): year
-  ! time_values(2): month of the year
-  ! time_values(3): day of the month
-  ! time_values(5): hour of the day
-  ! time_values(6): minutes of the hour
-  ! time_values(7): seconds of the minute
-  ! time_values(8): milliseconds of the second
-  ! this fails if we cross the end of the month
-  time_start = 86400.d0*time_values(3) + 3600.d0*time_values(5) + &
-               60.d0*time_values(6) + time_values(7) + time_values(8) / 1000.d0
-  month_start = time_values(2)
-  year_start = time_values(1)
-
   ! prepares image background
   if(output_color_image) then
     call prepare_color_image_vp(nglob,image_color_vp_display,iglob_image_color, &
@@ -3991,14 +3971,34 @@
   allocate(coorg_send_ps_vector_field(d1_coorg_send_ps_vector_field,d2_coorg_send_ps_vector_field))
   allocate(coorg_recv_ps_vector_field(d1_coorg_recv_ps_vector_field,d2_coorg_recv_ps_vector_field))
 
-! *********************************************************
-! ************* MAIN LOOP OVER THE TIME STEPS *************
-! *********************************************************
-
 #ifdef USE_MPI
 ! add a barrier if we generate traces of the run for analysis with "ParaVer"
   if(GENERATE_PARAVER_TRACES) call MPI_BARRIER(MPI_COMM_WORLD,ier)
 #endif
+
+!
+!----          s t a r t   t i m e   i t e r a t i o n s
+!
+  if (myrank == 0) write(IOUT,400)
+
+  ! count elapsed wall-clock time
+  call date_and_time(datein,timein,zone,time_values)
+  ! time_values(1): year
+  ! time_values(2): month of the year
+  ! time_values(3): day of the month
+  ! time_values(5): hour of the day
+  ! time_values(6): minutes of the hour
+  ! time_values(7): seconds of the minute
+  ! time_values(8): milliseconds of the second
+  ! this fails if we cross the end of the month
+  time_start = 86400.d0*time_values(3) + 3600.d0*time_values(5) + &
+               60.d0*time_values(6) + time_values(7) + time_values(8) / 1000.d0
+  month_start = time_values(2)
+  year_start = time_values(1)
+
+! *********************************************************
+! ************* MAIN LOOP OVER THE TIME STEPS *************
+! *********************************************************
 
   do it = 1,NSTEP
 
