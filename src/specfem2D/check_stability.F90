@@ -108,7 +108,7 @@
     if(time >= 1.d-3 .and. time < 1000.d0) then
       write(IOUT,"('Time step number ',i7,'   t = ',f9.4,' s out of ',i7)") it,time,NSTEP
     else
-      write(IOUT,"('Time step number ',i7,'   t = ',1pe12.6,' s out of ',i7)") it,time,NSTEP
+      write(IOUT,"('Time step number ',i7,'   t = ',1pe13.6,' s out of ',i7)") it,time,NSTEP
     endif
     write(IOUT,*) 'We have done ',sngl(100.d0*dble(it-1)/dble(NSTEP-1)),'% of the total'
   endif
