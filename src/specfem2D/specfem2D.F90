@@ -665,15 +665,13 @@
 ! for Lagrange interpolants
   double precision, external :: hgll
 
-! timer to count elapsed time
-  double precision :: time_start
-  integer :: year_start,month_start
-
   ! to determine date and time at which the run will finish
   character(len=8) datein
   character(len=10) timein
   character(len=5)  :: zone
   integer, dimension(8) :: time_values
+  integer :: year,mon,day,hr,minutes,timestamp
+  double precision :: timestamp_seconds_start
 
 ! for MPI and partitioning
   integer  :: ier
@@ -3993,11 +3991,17 @@
   ! time_values(6): minutes of the hour
   ! time_values(7): seconds of the minute
   ! time_values(8): milliseconds of the second
-  ! this fails if we cross the end of the month
-  time_start = 86400.d0*time_values(3) + 3600.d0*time_values(5) + &
-               60.d0*time_values(6) + time_values(7) + time_values(8) / 1000.d0
-  month_start = time_values(2)
-  year_start = time_values(1)
+
+  ! get timestamp in minutes of current date and time
+  year = time_values(1)
+  mon = time_values(2)
+  day = time_values(3)
+  hr = time_values(5)
+  minutes = time_values(6)
+  call convtime(timestamp,year,mon,day,hr,minutes)
+
+  ! convert to seconds instead of minutes, to be more precise for 2D runs, which can be fast
+  timestamp_seconds_start = timestamp*60.d0 + time_values(7) + time_values(8)/1000.d0
 
 ! *********************************************************
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
@@ -6095,7 +6099,7 @@
                         any_poroelastic_glob,any_poroelastic, &
                         displs_poroelastic,displw_poroelastic, &
                         any_acoustic_glob,any_acoustic,potential_acoustic, &
-                        year_start,month_start,time_start)
+                        timestamp_seconds_start)
     endif
 
 !---- loop on all the receivers to compute and store the seismograms

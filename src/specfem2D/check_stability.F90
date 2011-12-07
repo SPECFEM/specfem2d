@@ -49,7 +49,7 @@
                         any_poroelastic_glob,any_poroelastic, &
                         displs_poroelastic,displw_poroelastic, &
                         any_acoustic_glob,any_acoustic,potential_acoustic, &
-                        year_start,month_start,time_start)
+                        timestamp_seconds_start)
 
 ! checks simulation stability and outputs timerun infos
 
@@ -75,15 +75,12 @@
   integer :: nglob_acoustic
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: potential_acoustic
 
-  double precision :: time_start
-  integer :: year_start,month_start
+  double precision :: timestamp_seconds_start
 
   ! local parameters
   double precision displnorm_all,displnorm_all_glob
   ! timer to count elapsed time
-  double precision :: time_end
-  integer :: year_end,month_end
-  double precision :: tCPU,t_remain,t_total
+  double precision :: tCPU,t_remain,t_total,timestamp_seconds_current
   integer :: ihours,iminutes,iseconds,int_tCPU, &
              ihours_remain,iminutes_remain,iseconds_remain,int_t_remain, &
              ihours_total,iminutes_total,iseconds_total,int_t_total
@@ -229,16 +226,21 @@
   ! time_values(6): minutes of the hour
   ! time_values(7): seconds of the minute
   ! time_values(8): milliseconds of the second
-  ! this fails if we cross the end of the month
-  time_end = 86400.d0*time_values(3) + 3600.d0*time_values(5) + &
-             60.d0*time_values(6) + time_values(7) + time_values(8) / 1000.d0
-  month_end = time_values(2)
-  year_end = time_values(1)
+
+  ! get timestamp in minutes of current date and time
+  year = time_values(1)
+  mon = time_values(2)
+  day = time_values(3)
+  hr = time_values(5)
+  minutes = time_values(6)
+  call convtime(timestamp,year,mon,day,hr,minutes)
+
+  ! convert to seconds instead of minutes, to be more precise for 2D runs, which can be fast
+  timestamp_seconds_current = timestamp*60.d0 + time_values(7) + time_values(8)/1000.d0
 
   ! elapsed time since beginning of the simulation
   if (myrank == 0) then
-    if(month_end == month_start .and. year_end == year_start) then
-      tCPU = time_end - time_start
+      tCPU = timestamp_seconds_current - timestamp_seconds_start
       int_tCPU = int(tCPU)
       ihours = int_tCPU / 3600
       iminutes = (int_tCPU - 3600*ihours) / 60
@@ -269,23 +271,9 @@
              ihours_total,iminutes_total,iseconds_total
 
       if(it < NSTEP) then
-        ! compute date and time at which the run should finish
-        ! (useful for long runs); for simplicity only minutes
-        ! are considered, seconds are ignored; in any case the prediction is not
-        ! accurate down to seconds because of system and network fluctuations
-        year = time_values(1)
-        mon = time_values(2)
-        day = time_values(3)
-        hr = time_values(5)
-        minutes = time_values(6)
-
-        ! get timestamp in minutes of current date and time
-        call convtime(timestamp,year,mon,day,hr,minutes)
-
-        ! add remaining minutes
-        timestamp = timestamp + nint(t_remain / 60.d0)
-
-        ! get date and time of that future timestamp in minutes
+        ! compute date and time at which the run should finish (useful for long runs)
+        ! add remaining minutes and get date and time of that future timestamp in minutes
+        timestamp = (timestamp_seconds_current + t_remain) / 60.d0
         call invtime(timestamp,year,mon,day,hr,minutes)
 
         ! convert to Julian day to get day of the week
@@ -297,11 +285,6 @@
 
       endif
       write(IOUT,*)
-    else
-      write(IOUT,*) 'The calendar has crossed the end of the month during the simulation,'
-      write(IOUT,*) 'cannot produce accurate CPU time estimates any more.'
-      write(IOUT,*)
-    endif
   endif
 
   if (myrank == 0) write(IOUT,*)
