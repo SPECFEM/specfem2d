@@ -253,9 +253,6 @@
         aniso_array(4,n) = c33
         aniso_array(5,n) = c35
         aniso_array(6,n) = c55
-! dummy Q values, trick to avoid a bug in attenuation_model
-        QKappa_array(n) = 15
-        Qmu_array(n) = 15
         porosity_array(n) = 0.d0
      elseif (indic == 3) then
         density_array(1,n) = density(1)
@@ -274,8 +271,6 @@
         poroelastcoef(2,3,n) = mu_fr
         poroelastcoef(3,3,n) = lambdaplus2mu_fr
         poroelastcoef(4,3,n) = zero
-        QKappa_array(n) = 10.d0 ! dummy for attenuation_model
-        Qmu_array(n) = Qmu
      endif
 
      !
