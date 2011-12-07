@@ -72,12 +72,12 @@ void attenuation_compute_param_(int *nmech_in, double *Q1_in, double *Q2_in, dou
     printf("T2 > T1\n");
     exit; }
 
-  if (target_Q1 <= 0.0001) {
-    printf("Q1 cannot be negative or null\n");
+  if (target_Q1 <= -0.0001) {
+    printf("Q1 cannot be negative\n");
     exit; }
 
-  if (target_Q2 <= 0.0001) {
-    printf("Q2 cannot be negative or null\n");
+  if (target_Q2 <= -0.0001) {
+    printf("Q2 cannot be negative\n");
     exit; }
 
   if (n < 1) {
@@ -111,6 +111,9 @@ void attenuation_compute_param_(int *nmech_in, double *Q1_in, double *Q2_in, dou
 /* assign Q1 or Q2 to generic variable Q_value which is used for the calculations */
     if (nu == 1) { Q_value = target_Q1 ; }
     if (nu == 2) { Q_value = target_Q2 ; }
+
+/* no need to compute these parameters if there is no attenuation; it could lead to a division by zero in the code */
+    if (Q_value > 0.00001) {
 
     tau_s = dvector(1, n);
     tau_e = dvector(1, n);
@@ -150,6 +153,8 @@ void attenuation_compute_param_(int *nmech_in, double *Q1_in, double *Q2_in, dou
 
     free_dvector(tau_s, 1, n);
     free_dvector(tau_e, 1, n);
+
+  }
 
   }
 
