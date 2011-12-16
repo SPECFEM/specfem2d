@@ -59,7 +59,7 @@
 
   include "constants.h"
 
-  integer, parameter :: NGNOD = 4                       ! quadrangles
+  integer, parameter :: NGNOD = 4     ! quadrangles
 
   integer :: NPOIN                    ! number of nodes
   integer :: NSPEC                    ! number of elements
@@ -88,13 +88,7 @@
   integer :: ntotspecAVS_DX
   logical :: USE_OPENDX
 
-  !character(len=100) interfacesfile,title
-
-  ! flag to save the last frame for kernels calculation purpose and type of simulation
-  !logical :: SAVE_FORWARD
-  !integer :: SIMULATION_TYPE
-
-  ! parameters for external mesh
+! parameters for external mesh
   logical  :: read_external_mesh
   character(len=256)  :: mesh_file, nodes_coords_file
 
@@ -102,6 +96,17 @@
   integer, dimension(:), allocatable :: ibool_reduced
   logical, dimension(:), allocatable :: mask_ibool
   integer,external :: err_occurred
+
+! to check if any element with a negative Jacobian is found
+
+! 2D shape functions and their derivatives at receiver
+  double precision shape2D(ngnod)
+  double precision dershape2D(NDIM,ngnod)
+
+  double precision xxi,zxi,xgamma,zgamma,xelm,zelm
+  double precision xi,gamma,jacobian
+
+  integer ia
 
   if(NGNOD /= 4) stop 'NGNOD must be 4'
 
@@ -212,9 +217,47 @@
   print *,'done reading the external files'
   print *
 
-  print *,'start computing the minimum and maximum edge size'
+! ************* compute min and max of skewness and ratios ******************
+
+  print *,'start checking if any element with a negative Jacobian is found'
+
+! create the 2D shape functions and the Jacobian
+  call define_shape_functions(shape2D,dershape2D,xi,gamma,ngnod)
+
+  do i = 1,NSPEC
+
+! compute jacobian matrix
+  xxi = ZERO
+  zxi = ZERO
+  xgamma = ZERO
+  zgamma = ZERO
+
+  do ia=1,ngnod
+    xelm = x(ibool(ia,i))
+    zelm = y(ibool(ia,i))
+
+    xxi = xxi + dershape2D(1,ia)*xelm
+    zxi = zxi + dershape2D(1,ia)*zelm
+    xgamma = xgamma + dershape2D(2,ia)*xelm
+    zgamma = zgamma + dershape2D(2,ia)*zelm
+  enddo
+
+  jacobian = xxi*zgamma - xgamma*zxi
+
+! the Jacobian is negative, this means that there is an error in the mesh
+  if(jacobian <= ZERO) then
+    print *,'element ',i,' has a negative Jacobian'
+    stop 'negative Jacobian found'
+  endif
+
+  enddo
+
+  print *,'OK, no element with a negative Jacobian found in the mesh'
+  print *
 
 ! ************* compute min and max of skewness and ratios ******************
+
+  print *,'start computing the minimum and maximum edge size'
 
 ! erase minimum and maximum of quality numbers
   equiangle_skewness_min = + HUGEVAL
@@ -685,4 +728,20 @@
    diagonal_aspect_ratio = max(dist1,dist2) / min(dist1,dist2)
 
   end subroutine create_mesh_quality_data_2D
+
+!========================================================================
+
+! dummy version needed to compile and link the call to "define_shape_functions" above
+
+subroutine exit_MPI(error_msg)
+
+  implicit none
+
+  character(len=*) error_msg
+
+  write(*,*) error_msg(1:len(error_msg))
+  write(*,*) 'Error detected'
+  stop 'error, program ended in exit_MPI'
+
+end subroutine exit_MPI
 
