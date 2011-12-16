@@ -161,7 +161,7 @@
 
 !--- check the shape functions and their derivatives
 ! sum of shape functions should be one
-! sum of derivaticves of shape functions should be zero
+! sum of derivatives of shape functions should be zero
   if(abs(sum(shape2D)-ONE) > TINYVAL) call exit_MPI('error shape functions')
   if(abs(sum(dershape2D(1,:))) > TINYVAL) call exit_MPI('error deriv xi shape functions')
   if(abs(sum(dershape2D(2,:))) > TINYVAL) call exit_MPI('error deriv gamma shape functions')

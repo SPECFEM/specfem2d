@@ -155,8 +155,11 @@ xmeshfem2D: $(OBJS_MESHFEM2D)
 ##
 ## check_quality_external_mesh
 ##
-xcheck_quality_external_mesh: $O/check_quality_external_mesh.o $O/read_value_parameters.o $O/param_reader.o
-	${F90} $(FLAGS_CHECK) -o ${E}/xcheck_quality_external_mesh $O/check_quality_external_mesh.o $O/read_value_parameters.o $O/param_reader.o
+xcheck_quality_external_mesh: $O/check_quality_external_mesh.o $O/read_value_parameters.o $O/param_reader.o $O/define_shape_functions.o
+	${F90} $(FLAGS_CHECK) -o ${E}/xcheck_quality_external_mesh $O/check_quality_external_mesh.o $O/read_value_parameters.o $O/param_reader.o $O/define_shape_functions.o
+
+$O/define_shape_functions.o: ${S}/../specfem2D/define_shape_functions.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/define_shape_functions.o ${S}/../specfem2D/define_shape_functions.f90
 
 ##
 ## object files
