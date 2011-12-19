@@ -111,11 +111,10 @@
   double precision vsmin,vsmax,densmin,densmax,vpImax_local,vpImin_local,vsmin_local
   double precision kappa_s,kappa_f,kappa_fr,mu_s,mu_fr,denst_s,denst_f,denst,phi,tort,cpIloc,cpIIloc,csloc
   double precision D_biot,H_biot,C_biot,M_biot,cpIsquare,cpIIsquare,cssquare
-  double precision f0min,f0max,freq0,Q0,w_c,eta_f,perm
+  double precision f0max,freq0,Q0,w_c,eta_f,perm
   double precision lambdaplus2mu,mu
-  double precision distance_min,distance_max,distance_min_local,distance_max_local
-  double precision courant_stability_number_max,lambdaPImin,lambdaPImax,lambdaPIImin,lambdaPIImax, &
-                   lambdaSmin,lambdaSmax
+  double precision distance_min,distance_max,distance_min_local,distance_max_local,lambdaS_local,lambdaPI_local
+  double precision courant_stability_number_max,lambdaPImin,lambdaPImax,lambdaPIImin,lambdaPIImax,lambdaSmin,lambdaSmax
   double precision distance_1,distance_2,distance_3,distance_4
 
 ! for the stability condition
@@ -128,7 +127,7 @@
   double precision, dimension(NUM_COLORS) :: red,green,blue
 
   double precision :: xmax,zmax,height,usoffset,sizex,sizez,courant_stability_number
-  double precision :: x1,z1,x2,z2,ratio_page,xmin,zmin,lambdaS_local,lambdaPI_local
+  double precision :: x1,z1,x2,z2,ratio_page,xmin,zmin
 
 #ifdef USE_MPI
   integer  :: icol
@@ -136,7 +135,8 @@
   double precision  :: vpIImin_glob,vpIImax_glob
   double precision  :: distance_min_glob,distance_max_glob
   double precision  :: courant_stability_max_glob,lambdaPImin_glob,lambdaPImax_glob,&
-                       lambdaPIImin_glob,lambdaPIImax_glob,lambdaSmin_glob,lambdaSmax_glob
+                       lambdaPIImin_glob,lambdaPIImax_glob,lambdaSmin_glob,lambdaSmax_glob, &
+                       lambdaSmin_glob_with_P_in_fluid,lambdaSmax_glob_with_P_in_fluid
   double precision  :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
 #endif
 
@@ -153,6 +153,16 @@
   integer :: ier
   integer :: i,j,ispec,material
   integer :: is,ir,in,nnum
+
+! for histogram of number of points per wavelength
+  double precision :: lambdaSmin_P_in_fluid_histo,lambdaSmax_P_in_fluid_histo,lambdaPmin_histo,lambdaPmax_histo, &
+                   min_nb_of_points_per_wavelength,max_nb_of_points_per_wavelength,nb_of_points_per_wavelength, &
+                   scaling_factor,scaling_factor_S,scaling_factor_P
+  integer, parameter :: NCLASSES = 20
+  integer, dimension(0:NCLASSES-1) :: classes_wavelength,classes_wavelength_all
+  integer :: iclass,nspec_all,ipass
+  logical :: create_wavelength_histogram
+  double precision :: current_percent,total_percent
 
 #ifdef USE_MPI
   integer, dimension(MPI_STATUS_SIZE)  :: request_mpi_status
@@ -229,6 +239,9 @@
     lambdaPIImin = 0
     lambdaPIImax = 0
   endif
+
+  lambdaSmin_P_in_fluid_histo = HUGEVAL
+  lambdaSmax_P_in_fluid_histo = -HUGEVAL
 
   do ispec=1,nspec
 
@@ -309,11 +322,11 @@
         densmin = min(densmin,denst)
         densmax = max(densmax,denst)
 
-        vpImax_local = max(vpImax_local,vpImax)
-        vpImin_local = min(vpImin_local,vpImin)
-        vpIImax_local = max(vpIImax_local,vpIImax)
-        vpIImin_local = min(vpIImin_local,vpIImin)
-        vsmin_local = min(vsmin_local,vsmin)
+        vpImax_local = max(vpImax_local,cpIloc)
+        vpImin_local = min(vpImin_local,cpIloc)
+        vpIImax_local = max(vpIImax_local,cpIIloc)
+        vpIImin_local = min(vpIImin_local,cpIIloc)
+        vsmin_local = min(vsmin_local,csloc)
 
       enddo
     enddo
@@ -341,9 +354,14 @@
                 vpImax_local * deltat / (distance_min_local * percent_GLL(NGLLX)))
 
 ! ignore fluid regions with Vs = 0
-    if(csloc > 0.0001d0) then
+    if(vsmin_local > 0.0001d0) then
       lambdaSmin = min(lambdaSmin,vsmin_local / (distance_max_local / (NGLLX - 1)))
       lambdaSmax = max(lambdaSmax,vsmin_local / (distance_max_local / (NGLLX - 1)))
+      lambdaSmin_P_in_fluid_histo = min(lambdaSmin_P_in_fluid_histo,vsmin_local / (distance_max_local / (NGLLX - 1)))
+      lambdaSmax_P_in_fluid_histo = max(lambdaSmax_P_in_fluid_histo,vsmin_local / (distance_max_local / (NGLLX - 1)))
+    else
+      lambdaSmin_P_in_fluid_histo = min(lambdaSmin_P_in_fluid_histo,vpImin_local / (distance_max_local / (NGLLX - 1)))
+      lambdaSmax_P_in_fluid_histo = max(lambdaSmax_P_in_fluid_histo,vpImin_local / (distance_max_local / (NGLLX - 1)))
     endif
 
     lambdaPImin = min(lambdaPImin,vpImin_local / (distance_max_local / (NGLLX - 1)))
@@ -393,6 +411,10 @@
                     MPI_MIN, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE (lambdaSmax, lambdaSmax_glob, 1, MPI_DOUBLE_PRECISION, &
                     MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (lambdaSmin_P_in_fluid_histo, lambdaSmin_glob_with_P_in_fluid, 1, MPI_DOUBLE_PRECISION, &
+                    MPI_MIN, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE (lambdaSmax_P_in_fluid_histo, lambdaSmax_glob_with_P_in_fluid, 1, MPI_DOUBLE_PRECISION, &
+                    MPI_MAX, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE (any_elastic, any_elastic_glob, 1, MPI_LOGICAL, &
                     MPI_LOR, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE (any_poroelastic, any_poroelastic_glob, 1, MPI_LOGICAL, &
@@ -414,7 +436,8 @@
   lambdaPIImax = lambdaPIImax_glob
   lambdaSmin = lambdaSmin_glob
   lambdaSmax = lambdaSmax_glob
-
+  lambdaSmin_P_in_fluid_histo = lambdaSmin_glob_with_P_in_fluid
+  lambdaSmax_P_in_fluid_histo = lambdaSmax_glob_with_P_in_fluid
 #endif
 
   if ( myrank == 0 ) then
@@ -441,48 +464,293 @@
       write(IOUT,*)
     end if
 
+    create_wavelength_histogram = .false.
+
 ! only if time source is not a Dirac or Heaviside (otherwise maximum frequency of spectrum undefined)
 ! and if source is not an initial field, for the same reason
     if(.not. initialfield) then
       f0max = -HUGEVAL
-      f0min = HUGEVAL
-!      write(IOUT,*) ' USER_T0 = ',USER_T0
 
       do i = 1,NSOURCES
 
         ! excludes Dirac and Heaviside sources
         if(time_function_type(i) /= 4 .and. time_function_type(i) /= 5) then
-!          write(IOUT,*) ' Onset time = ',t0+tshift_src(i)
-!          write(IOUT,*) ' Fundamental period = ',1.d0/f0(i)
-!          write(IOUT,*) ' Fundamental frequency = ',f0(i)
-!          ! checks source onset time
-!          if( t0+tshift_src(i) <= 1.d0/f0(i)) then
-!            call exit_MPI('Onset time too small')
-!          else
-!            write(IOUT,*) ' --> onset time ok'
-!          endif
 
           ! sets min/max frequency
           if(f0(i) > f0max) f0max = f0(i)
-          if(f0(i) < f0min) f0min = f0(i)
 
           if( i == NSOURCES ) then
             write(IOUT,*) '----'
-            write(IOUT,*) ' Nb pts / lambdaPImin_fmax max = ',lambdaPImax/(2.5d0*f0min)
-            write(IOUT,*) ' Nb pts / lambdaPImin_fmax min = ',lambdaPImin/(2.5d0*f0max)
+            write(IOUT,*) ' Nb pts / lambdaPI_fmax min = ',lambdaPImin/(2.5d0*f0max)
+            write(IOUT,*) ' Nb pts / lambdaPI_fmax max = ',lambdaPImax/(2.5d0*f0max)
             write(IOUT,*) '----'
-            write(IOUT,*) ' Nb pts / lambdaPIImin_fmax max = ',lambdaPIImax/(2.5d0*f0min)
-            write(IOUT,*) ' Nb pts / lambdaPIImin_fmax min = ',lambdaPIImin/(2.5d0*f0max)
+            write(IOUT,*) ' Nb pts / lambdaPII_fmax min = ',lambdaPIImin/(2.5d0*f0max)
+            write(IOUT,*) ' Nb pts / lambdaPII_fmax max = ',lambdaPIImax/(2.5d0*f0max)
             write(IOUT,*) '----'
-            write(IOUT,*) ' Nb pts / lambdaSmin_fmax max = ',lambdaSmax/(2.5d0*f0min)
-            write(IOUT,*) ' Nb pts / lambdaSmin_fmax min = ',lambdaSmin/(2.5d0*f0max)
+            write(IOUT,*) ' Nb pts / lambdaS_fmax min = ',lambdaSmin/(2.5d0*f0max)
+            write(IOUT,*) ' Nb pts / lambdaS_fmax max = ',lambdaSmax/(2.5d0*f0max)
             write(IOUT,*) '----'
+
+! for histogram
+            lambdaSmin_P_in_fluid_histo = lambdaSmin_P_in_fluid_histo/(2.5d0*f0max)
+            lambdaSmax_P_in_fluid_histo = lambdaSmax_P_in_fluid_histo/(2.5d0*f0max)
+
+            if(lambdaPIImin <= ZERO) then
+              lambdaPmin_histo = lambdaPImin/(2.5d0*f0max)
+            else
+              lambdaPmin_histo = min(lambdaPImin,lambdaPIImin)/(2.5d0*f0max)
+            endif
+            lambdaPmax_histo = max(lambdaPImax,lambdaPIImax)/(2.5d0*f0max)
+
+            create_wavelength_histogram = .true.
+
           endif
 
         endif
       enddo
     endif
   endif
+
+#ifdef USE_MPI
+  call MPI_BCAST(lambdaSmin_P_in_fluid_histo,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(lambdaSmax_P_in_fluid_histo,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(lambdaPmin_histo,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(lambdaPmax_histo,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(f0max,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(create_wavelength_histogram,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
+#endif
+
+!!!!!!!!!!!!!!!! DK DK: added histogram of minimum number of points per wavelength
+
+!! DK DK take into account the fact that there is no S velocity in the fluid
+!! DK DK in this case, for the fluid, use the P wave data
+
+  if(create_wavelength_histogram) then
+
+! create statistics about mesh sampling (number of points per wavelength)
+
+! first pass is for S wave sampling, second pass is for P wave sampling
+  do ipass = 1,2
+
+  if(ipass == 1) then
+    min_nb_of_points_per_wavelength = lambdaSmin_P_in_fluid_histo
+    max_nb_of_points_per_wavelength = lambdaSmax_P_in_fluid_histo
+  else
+    min_nb_of_points_per_wavelength = lambdaPmin_histo
+    max_nb_of_points_per_wavelength = lambdaPmax_histo
+  endif
+
+! erase histogram of wavelength
+  classes_wavelength(:) = 0
+
+! loop on all the elements
+  do ispec = 1,nspec
+
+    material = kmato(ispec)
+
+    if(poroelastic(ispec)) then
+
+      ! poroelastic material
+
+      phi = porosity(material)
+      tort = tortuosity(material)
+      perm = permeability(1,material)
+      ! solid properties
+      mu_s = poroelastcoef(2,1,material)
+      kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
+      denst_s = density(1,material)
+      denst = denst_s
+      ! fluid properties
+      kappa_f = poroelastcoef(1,2,material)
+      denst_f = density(2,material)
+      eta_f = poroelastcoef(2,2,material)
+      ! frame properties
+      mu_fr = poroelastcoef(2,3,material)
+      kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
+      ! Biot coefficients for the input phi
+      D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
+      H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
+      C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
+      M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
+
+      call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
+             tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,TURN_VISCATTENUATION_ON)
+
+      cpIloc = sqrt(cpIsquare)
+      cpIIloc = sqrt(cpIIsquare)
+      csloc = sqrt(cssquare)
+    else
+      mu = poroelastcoef(2,1,material)
+      lambdaplus2mu  = poroelastcoef(3,1,material)
+      denst = density(1,material)
+
+      cpIloc = sqrt(lambdaplus2mu/denst)
+      cpIIloc = 0.d0
+      csloc = sqrt(mu/denst)
+    endif
+
+    vpImin_local = HUGEVAL
+    vpIImin_local = HUGEVAL
+    vsmin_local = HUGEVAL
+
+    distance_min_local = HUGEVAL
+    distance_max_local = -HUGEVAL
+
+    do j=1,NGLLZ
+      do i=1,NGLLX
+
+!--- if heterogeneous formulation with external velocity model
+        if(assign_external_model) then
+          cpIloc = vpext(i,j,ispec)
+          csloc = vsext(i,j,ispec)
+        endif
+
+        vpImin_local = min(vpImin_local,cpIloc)
+        vpIImin_local = min(vpIImin_local,cpIIloc)
+        vsmin_local = min(vsmin_local,csloc)
+
+      enddo
+    enddo
+
+! compute minimum and maximum size of edges of this grid cell
+    distance_1 = sqrt((coord(1,ibool(1,1,ispec)) - coord(1,ibool(NGLLX,1,ispec)))**2 + &
+               (coord(2,ibool(1,1,ispec)) - coord(2,ibool(NGLLX,1,ispec)))**2)
+
+    distance_2 = sqrt((coord(1,ibool(NGLLX,1,ispec)) - coord(1,ibool(NGLLX,NGLLZ,ispec)))**2 + &
+               (coord(2,ibool(NGLLX,1,ispec)) - coord(2,ibool(NGLLX,NGLLZ,ispec)))**2)
+
+    distance_3 = sqrt((coord(1,ibool(NGLLX,NGLLZ,ispec)) - coord(1,ibool(1,NGLLZ,ispec)))**2 + &
+               (coord(2,ibool(NGLLX,NGLLZ,ispec)) - coord(2,ibool(1,NGLLZ,ispec)))**2)
+
+    distance_4 = sqrt((coord(1,ibool(1,NGLLZ,ispec)) - coord(1,ibool(1,1,ispec)))**2 + &
+               (coord(2,ibool(1,NGLLZ,ispec)) - coord(2,ibool(1,1,ispec)))**2)
+
+    distance_min_local = min(distance_1,distance_2,distance_3,distance_4)
+    distance_max_local = max(distance_1,distance_2,distance_3,distance_4)
+
+  if(ipass == 1) then
+
+! ignore fluid regions with Vs = 0
+    if(vsmin_local > 0.0001d0) then
+      nb_of_points_per_wavelength = vsmin_local / (distance_max_local / (NGLLX - 1))
+    else
+      nb_of_points_per_wavelength = vpImin_local / (distance_max_local / (NGLLX - 1))
+    endif
+
+  else
+
+    if(vpIImin_local <= ZERO) then
+      nb_of_points_per_wavelength = vpImin_local / (distance_max_local / (NGLLX - 1))
+    else
+      nb_of_points_per_wavelength = min(vpImin_local,vpIImin_local) / (distance_max_local / (NGLLX - 1))
+    endif
+
+  endif
+
+    nb_of_points_per_wavelength = nb_of_points_per_wavelength/(2.5d0*f0max)
+
+! store number of points per wavelength in histogram
+    iclass = int((nb_of_points_per_wavelength - min_nb_of_points_per_wavelength) / &
+                 (max_nb_of_points_per_wavelength - min_nb_of_points_per_wavelength) * dble(NCLASSES))
+    if(iclass < 0) iclass = 0
+    if(iclass > NCLASSES-1) iclass = NCLASSES-1
+    classes_wavelength(iclass) = classes_wavelength(iclass) + 1
+
+  enddo
+
+#ifdef USE_MPI
+  call MPI_REDUCE(classes_wavelength, classes_wavelength_all, NCLASSES, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+#else
+  classes_wavelength_all(:) = classes_wavelength(:)
+#endif
+
+#ifdef USE_MPI
+  call MPI_REDUCE(nspec, nspec_all, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+#else
+  nspec_all = nspec
+#endif
+
+! create histogram of wavelength and save in Gnuplot file
+  if (myrank == 0) then
+
+  write(IOUT,*)
+  if(ipass == 1) then
+    write(IOUT,*) 'histogram of min number of points per S wavelength'
+    write(IOUT,*) '  (P wavelength in acoustic regions)'
+  else
+    write(IOUT,*) 'histogram of min number of points per P wavelength'
+  endif
+  write(IOUT,*) '(too small: poor resolution of calculations -'
+  write(IOUT,*) ' too big = wasting memory and CPU time)'
+  write(IOUT,*) '(threshold value is around 4.5 points per wavelength'
+  write(IOUT,*) ' in elastic media and 5.5 in acoustic media):'
+  write(IOUT,*)
+
+  total_percent = 0.
+  scaling_factor = max_nb_of_points_per_wavelength - min_nb_of_points_per_wavelength
+
+  if(ipass == 1) then
+    open(unit=14,file='points_per_wavelength_histogram_S.txt',status='unknown')
+    scaling_factor_S = scaling_factor
+  else
+    open(unit=14,file='points_per_wavelength_histogram_P.txt',status='unknown')
+    scaling_factor_P = scaling_factor
+  endif
+  do iclass = 0,NCLASSES-1
+    current_percent = 100.*dble(classes_wavelength_all(iclass))/dble(nspec_all)
+    total_percent = total_percent + current_percent
+    write(IOUT,*) sngl(min_nb_of_points_per_wavelength + scaling_factor*iclass/dble(NCLASSES)),' - ', &
+                  sngl(min_nb_of_points_per_wavelength + scaling_factor*(iclass+1)/dble(NCLASSES)),classes_wavelength_all(iclass), &
+                  ' ',sngl(current_percent),' %'
+    write(14,*) 0.5*(sngl(min_nb_of_points_per_wavelength + scaling_factor*iclass/dble(NCLASSES)) + &
+                     sngl(min_nb_of_points_per_wavelength + scaling_factor*(iclass+1)/dble(NCLASSES))),' ',sngl(current_percent)
+  enddo
+  close(14)
+
+  if(total_percent < 99.9d0 .or. total_percent > 100.1d0) then
+    write(IOUT,*) 'total percentage = ',total_percent,' %'
+    stop 'total percentage should be 100%'
+  endif
+
+  endif ! of if myrank == 0
+
+  enddo ! end of the two passes on S wavelength data and P wavelength data
+
+! create script for Gnuplot histogram file
+  if (myrank == 0) then
+
+  open(unit=14,file='plot_points_per_wavelength_histogram.gnu',status='unknown')
+  write(14,*) 'set term x11'
+
+  write(14,*) '#set term gif'
+  write(14,*) '#set output "points_per_wavelength_histogram_S.gif"'
+  write(14,*)
+  write(14,*) 'set boxwidth ',real(scaling_factor_S/NCLASSES)
+  write(14,*) 'set xlabel "Range of min number of points per S wavelength"'
+  write(14,*) 'set ylabel "Percentage of elements (%)"'
+  write(14,*) 'plot "points_per_wavelength_histogram_S.txt" with boxes'
+  write(14,*) 'pause -1 "hit any key..."'
+
+  write(14,*) '#set term gif'
+  write(14,*) '#set output "points_per_wavelength_histogram_P.gif"'
+  write(14,*)
+  write(14,*) 'set boxwidth ',real(scaling_factor_P/NCLASSES)
+  write(14,*) 'set xlabel "Range of min number of points per P wavelength"'
+  write(14,*) 'set ylabel "Percentage of elements (%)"'
+  write(14,*) 'plot "points_per_wavelength_histogram_P.txt" with boxes'
+  write(14,*) 'pause -1 "hit any key..."'
+
+  close(14)
+
+  write(IOUT,*)
+  write(IOUT,*) 'total number of elements = ',nspec_all
+  write(IOUT,*)
+
+  endif ! of if myrank == 0
+
+  endif ! of if create_wavelength_histogram
+
+!!!!!!!!!!!!!!!! DK DK: added histogram of minimum number of points per wavelength
 
 !
 !--------------------------------------------------------------------------------
@@ -1166,7 +1434,7 @@
   if(any_elastic_glob .or. any_poroelastic_glob) then
 
 ! ignore fluid regions with Vs = 0
-  if(csloc > 0.0001d0) then
+  if(vsmin_local > 0.0001d0) then
 
     lambdaS_local = vsmin_local / (distance_max_local / (NGLLX - 1))
 
@@ -3106,3 +3374,4 @@ endif
   blue(236) = 0.768627450980392
 
   end subroutine checkgrid_setup_colorp
+
