@@ -79,8 +79,8 @@
   double precision :: distmin,distmax
 
 ! for histogram
-  integer, parameter :: NCLASS = 20
-  integer classes_skewness(0:NCLASS-1)
+  integer, parameter :: NCLASSES = 20
+  integer classes_skewness(0:NCLASSES-1)
   integer :: iclass
   double precision :: current_percent,total_percent
 
@@ -344,9 +344,9 @@
                equiangle_skewness,edge_aspect_ratio,diagonal_aspect_ratio,distmin,distmax)
 
 ! store skewness in histogram
-    iclass = int(equiangle_skewness * dble(NCLASS))
+    iclass = int(equiangle_skewness * dble(NCLASSES))
     if(iclass < 0) iclass = 0
-    if(iclass > NCLASS-1) iclass = NCLASS-1
+    if(iclass > NCLASSES-1) iclass = NCLASSES-1
     classes_skewness(iclass) = classes_skewness(iclass) + 1
 
   enddo
@@ -357,11 +357,12 @@
   print *
   total_percent = 0.
   open(unit=14,file='mesh_quality_histogram.txt',status='unknown')
-  do iclass = 0,NCLASS-1
+  do iclass = 0,NCLASSES-1
     current_percent = 100.*dble(classes_skewness(iclass))/dble(NSPEC)
     total_percent = total_percent + current_percent
-    print *,real(iclass/dble(NCLASS)),' - ',real((iclass+1)/dble(NCLASS)),classes_skewness(iclass),' ',sngl(current_percent),' %'
-    write(14,*) 0.5*(real(iclass/dble(NCLASS)) + real((iclass+1)/dble(NCLASS))),' ',sngl(current_percent)
+    print *,real(iclass/dble(NCLASSES)),' - ',real((iclass+1)/dble(NCLASSES)),classes_skewness(iclass),' ', &
+       sngl(current_percent),' %'
+    write(14,*) 0.5*(real(iclass/dble(NCLASSES)) + real((iclass+1)/dble(NCLASSES))),' ',sngl(current_percent)
   enddo
   close(14)
 
@@ -373,7 +374,7 @@
   write(14,*)
   write(14,*) 'set xrange [0:1]'
   write(14,*) 'set xtics 0,0.1,1'
-  write(14,*) 'set boxwidth ',1./real(NCLASS)
+  write(14,*) 'set boxwidth ',1./real(NCLASSES)
   write(14,*) 'set xlabel "Skewness range"'
   write(14,*) 'set ylabel "Percentage of elements (%)"'
   write(14,*) 'plot "mesh_quality_histogram.txt" with boxes'
