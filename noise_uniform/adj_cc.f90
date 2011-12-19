@@ -9,8 +9,8 @@ integer, parameter :: differentiate = 1
 logical, parameter :: use_filtering = .true.
 
 !choose exactly one of the following window options
-logical, parameter :: use_negative_branch = .false.
-logical, parameter :: use_positive_branch = .true.
+logical, parameter :: use_negative_branch = .true.
+logical, parameter :: use_positive_branch = .false.
 logical, parameter :: use_custom_window = .false.
 
 !choose whether to time reverse, carried out subsequent to all other processing

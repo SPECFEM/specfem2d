@@ -37,21 +37,23 @@ ln -s ../../bin/xspecfem2D .
 cp Par_file_noise_1  DATA/Par_file
 ./xmeshfem2D; ./xspecfem2D
 mkdir OUTPUT_ALL/step_1
-#mv OUTPUT_FILES/image*     OUTPUT_ALL/step_1
-mv OUTPUT_FILES/*.semd     OUTPUT_ALL/step_1
-mv DATA/Par_file           OUTPUT_ALL/step_1
-mv OUTPUT_FILES/mask*      OUTPUT_ALL/
-mv OUTPUT_FILES/mesh_????  OUTPUT_ALL/
-mv OUTPUT_FILES/model*     OUTPUT_ALL/
+#mv OUTPUT_FILES/image*       OUTPUT_ALL/step_1
+mv OUTPUT_FILES/*histogram*  OUTPUT_ALL/step_1
+mv OUTPUT_FILES/*.semd       OUTPUT_ALL/step_1
+mv DATA/Par_file             OUTPUT_ALL/step_1
+mv OUTPUT_FILES/mask*        OUTPUT_ALL/
+mv OUTPUT_FILES/mesh_????    OUTPUT_ALL/
+mv OUTPUT_FILES/model*       OUTPUT_ALL/
 
 
 #simulation 2
 cp Par_file_noise_2  DATA/Par_file
 ./xmeshfem2D; ./xspecfem2D
 mkdir OUTPUT_ALL/step_2
-#mv OUTPUT_FILES/image*     OUTPUT_ALL/step_2
-cp OUTPUT_FILES/*.semd     OUTPUT_ALL/step_2
-mv DATA/Par_file           OUTPUT_ALL/step_2
+#mv OUTPUT_FILES/image*       OUTPUT_ALL/step_2
+mv OUTPUT_FILES/*histogram*  OUTPUT_ALL/step_2
+cp OUTPUT_FILES/*.semd       OUTPUT_ALL/step_2
+mv DATA/Par_file             OUTPUT_ALL/step_2
 
 
 #write zero traces
@@ -82,9 +84,10 @@ rename '.semd' '' SEM/$TRACE.adj
 cp Par_file_noise_3  DATA/Par_file
 ./xmeshfem2D; ./xspecfem2D
 mkdir OUTPUT_ALL/step_3
-#mv OUTPUT_FILES/image*     OUTPUT_ALL/step_3
-mv SEM/*Y.adj              OUTPUT_ALL/step_3
-mv OUTPUT_FILES/proc*      OUTPUT_ALL/step_3
-mv DATA/Par_file           OUTPUT_ALL/step_3
-mv OUTPUT_FILES/snapshot*  OUTPUT_ALL/
+#mv OUTPUT_FILES/image*       OUTPUT_ALL/step_3
+mv OUTPUT_FILES/*histogram*  OUTPUT_ALL/step_3
+mv SEM/*Y.adj                OUTPUT_ALL/step_3
+mv DATA/Par_file             OUTPUT_ALL/step_3
+mv OUTPUT_FILES/proc*        OUTPUT_ALL/
+mv OUTPUT_FILES/snapshot*    OUTPUT_ALL/
 
