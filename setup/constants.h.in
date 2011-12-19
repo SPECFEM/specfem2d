@@ -48,6 +48,9 @@
   logical, parameter :: ACTUALLY_IMPLEMENT_PERM_INN = .false.
   logical, parameter :: ACTUALLY_IMPLEMENT_PERM_WHOLE = .true.
 
+! in PostScript files about mesh quality, show all elements above this threshold
+  double precision, parameter :: THRESHOLD_POSTSCRIPT = 95.d0 / 100.d0
+
 ! add MPI barriers and suppress seismograms if we generate traces of the run for analysis with "ParaVer"
   logical, parameter :: GENERATE_PARAVER_TRACES = .false.
 
