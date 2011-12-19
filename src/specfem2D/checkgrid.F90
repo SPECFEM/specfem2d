@@ -1070,8 +1070,8 @@
 
     courant_stability_number = vpImax_local * deltat / (distance_min_local * percent_GLL(NGLLX))
 
-! display bad elements that are above 80% of the threshold
-    if(courant_stability_number >= 0.80 * courant_stability_number_max) then
+! display bad elements that are above the threshold
+    if(courant_stability_number >= THRESHOLD_POSTSCRIPT * courant_stability_number_max) then
       if ( myrank == 0 ) then
         write(24,*) '1 0 0 RG GF 0 setgray ST'
       else
@@ -1355,19 +1355,19 @@
     phi = porosity(material)
     tort = tortuosity(material)
     perm = permeability(1,material)
-!solid properties
+! solid properties
     mu_s = poroelastcoef(2,1,material)
     kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
     denst_s = density(1,material)
     denst = denst_s
-!fluid properties
+! fluid properties
     kappa_f = poroelastcoef(1,2,material)
     denst_f = density(2,material)
     eta_f = poroelastcoef(2,2,material)
-!frame properties
+! frame properties
     mu_fr = poroelastcoef(2,3,material)
     kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
-!Biot coefficients for the input phi
+! Biot coefficients for the input phi
       D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
       H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
       C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
@@ -1438,16 +1438,16 @@
 
     lambdaS_local = vsmin_local / (distance_max_local / (NGLLX - 1))
 
-! display very good elements that are above 80% of the threshold in red
-    if(lambdaS_local >= 0.80 * lambdaSmax) then
+! display very good elements that are above the threshold in red
+    if(lambdaS_local >= THRESHOLD_POSTSCRIPT * lambdaSmax) then
        if ( myrank == 0 ) then
           write(24,*) '1 0 0 RG GF 0 setgray ST'
        else
           RGB_send(ispec) = 1
        endif
 
-! display bad elements that are below 120% of the threshold in blue
-    else if(lambdaS_local <= 1.20 * lambdaSmin) then
+! display bad elements that are below the threshold in blue
+    else if(lambdaS_local <= (1. + (1. - THRESHOLD_POSTSCRIPT)) * lambdaSmin) then
        if ( myrank == 0 ) then
           write(24,*) '0 0 1 RG GF 0 setgray ST'
        else
@@ -1477,16 +1477,16 @@
 
     lambdaPI_local = vpImin_local / (distance_max_local / (NGLLX - 1))
 
-! display very good elements that are above 80% of the threshold in red
-    if(lambdaPI_local >= 0.80 * lambdaPImax) then
+! display very good elements that are above the threshold in red
+    if(lambdaPI_local >= THRESHOLD_POSTSCRIPT * lambdaPImax) then
        if ( myrank == 0 ) then
           write(24,*) '1 0 0 RG GF 0 setgray ST'
        else
           RGB_send(ispec) = 1
        endif
 
-! display bad elements that are below 120% of the threshold in blue
-    else if(lambdaPI_local <= 1.20 * lambdaPImin) then
+! display bad elements that are below the threshold in blue
+    else if(lambdaPI_local <= (1. + (1. - THRESHOLD_POSTSCRIPT)) * lambdaPImin) then
        if ( myrank == 0 ) then
           write(24,*) '0 0 1 RG GF 0 setgray ST'
        else
