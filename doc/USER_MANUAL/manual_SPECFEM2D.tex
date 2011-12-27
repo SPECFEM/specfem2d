@@ -812,6 +812,32 @@ and at the local level, that is as "kernels(i,j,ispec)".
 
 \end{enumerate}
 
+\subsection*{Remarks about adjoint runs and solving inverse problems}
+
+% This from Carl Tape:
+SPECFEM2D can produce the gradient of the misfit function for a
+tomographic inversion, but options for using the gradient within an
+iterative inversion are left to the user (e.g., conjugate-gradient,
+steepest descent). The plan is to include some examples in the future.\\
+
+% This from Yang Luo:
+The algorithm is simple:
+
+\begin{enumerate}
+\item[1.] calculate the forward wave field $\mathbf{s}(x,t)$
+\item[2.] calculate the adjoint wave field $\mathbf{s}^\dagger(x,t)$
+\item[3.] calculate their interaction $\mathbf{s}(x,t) \cdot \mathbf{s}^\dagger(x,T-t)$ (these symbolic, temporal and spatial derivatives should be included)
+\item[4.] integrate the interactions, which is summation in the code.
+\end{enumerate}
+
+That's all. Step 3 has some tricks in implementation, but which can be skipped by regular users.\\
+
+If you look into SPECFEM2D, besides "rhop\_ac\_kl" and "rho\_ac\_kl",
+there are more variables such as "kappa\_ac\_kl" and "rho\_el\_kl" etc.
+"rho" denotes density $\rho$ ("kappa" for bulk modulus $\kappa$ etc.),
+"ac" denotes acoustic ("el" for elastic),
+"kl" means kernel (and you may find "k" as well, which is the interaction at each time step, i.e., before doing time integration).
+
 \subsection*{Caution}
 
 Please note that
