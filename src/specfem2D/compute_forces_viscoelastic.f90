@@ -131,7 +131,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
   real(kind=CUSTOM_REAL), dimension(NGLLZ) :: wzgll
 
-
   !---
   !--- local variables
   !---
@@ -179,6 +178,14 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   integer count_left,count_right,count_bottom
 
   integer :: ifirstelem,ilastelem
+
+! this to avoid a warning at execution time about an undefined variable being used
+! for the SH component in the case of a P-SV calculation, and vice versa
+  sigma_xx = 0
+  sigma_xy = 0
+  sigma_xz = 0
+  sigma_zy = 0
+  sigma_zz = 0
 
   ! compute Grad(displ_elastic) at time step n for attenuation
   if(TURN_ATTENUATION_ON) then
