@@ -44,12 +44,12 @@ rec_normal_to_surface           = .false.        # base anglerec normal to surfa
 SU_FORMAT                       = .false.        # output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
 
 # first receiver line
-nrec                            = 2             # number of receivers
-xdeb                            = 1400.d0
+nrec                            = 1              # number of receivers
+xdeb                            = 1500.d0
 zdeb                            = 1500.d0
-xfin                            = 1500.d0
-zfin                            = 1500.d0
-enreg_surf_same_vertical        = .false.         # receivers inside the medium or at the surface
+xfin                            = 99999.d0       # ignored because only one receiver
+zfin                            = 99999.d0       # ignored because only one receiver
+enreg_surf_same_vertical        = .false.        # receivers inside the medium or at the surface
 
 # display parameters
 NTSTEP_BETWEEN_OUTPUT_INFO      = 100            # display frequency in time steps
