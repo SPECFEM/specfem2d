@@ -484,8 +484,29 @@ gnuplot plot\_mesh\_quality\_histogram.gnu
 \end{lyxcode}
 This tool is useful to estimate the mesh quality and to see it evolve along the successive corrections.
 
+%------------------------------------------------------------------------------------------------%
+\section{Controlling how the mesh samples the wave field}
+%------------------------------------------------------------------------------------------------%
 
+To examine (using Gnuplot) how the mesh samples the wave field, type
+\begin{lyxcode}
+gnuplot plot\_points\_per\_wavelength\_histogram.gnu
+\end{lyxcode}
+%
+and also check the following histogram printed on the screen or in the output file:
+%
+\begin{lyxcode}
+ histogram of min number of points per S wavelength
+   (P wavelength in acoustic regions)\\
+ (too small: poor resolution of calculations -
+  too big = wasting memory and CPU time)\\
+ (threshold value is around 4.5 points per wavelength
+  in elastic media and 5.5 in acoustic media)
+\end{lyxcode}
 
+\noindent If you see that you have a significant number of mesh elements below the threshold indicated, then your simulations
+will not be accurate and you should create a denser mesh. Conversely, if you have a significant number of mesh elements above the threshold indicated,
+the mesh your created is too dense, it will be extremely accurate but the simulations will be slow; using a coarser mesh would be sufficient and would lead to faster simulations.
 
 %------------------------------------------------------------------------------------------------%
 
