@@ -19,11 +19,13 @@ TO RUN:
 4. execute script to run mesher and solver for the PSV case:
    ./process.sh
 
-5. check out the output files in the local directory OUTPUT_FILES
+5. check out the output files in the local directory OUTPUT_FILES; in particular, you can type "gnuplot plot_compare_to_analytical_solution.gnu" to compare the seismograms computed to the quasi-analytical solution of Carcione et al. (1988). Note that because our example has no absorbing conditions on the edges of the grid, there are extra (spurious) waves after the main P and S waves, reflected off the edges of the grid, which are not present in the quasi-analytical solution and which you can safely ignore. Beware that the reference solution is not exact, only quasi-exact (i.e., the formulation uses an approximation, and some integrals are computed numerically) therefore some small discrepancies can be noticed.
 
-Reference:
-----------
+References:
+-----------
 
-Dimitri Komatitsch and Jeroen Tromp, Introduction to the spectral-element method for 3-D seismic wave propagation, Geophysical Journal International, vol. 139, p. 806-822 (1999)
+Dimitri Komatitsch and Jeroen Tromp, Introduction to the spectral-element method for 3-D seismic wave propagation, Geophysical Journal International, vol. 139, p. 806-822 (1999).
+
+Jose M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation in a linear viscoelastic medium, Geophysical Journal International, vol. 95, p. 597-611 (1988). 
 
 ----------------------------------------------------------------------
