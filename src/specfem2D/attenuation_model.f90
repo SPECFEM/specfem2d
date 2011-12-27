@@ -84,7 +84,7 @@
 ! from J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
 ! vol. 58(1), p. 110-120 (1993) for two memory-variable mechanisms (page 112).
 ! Beware: these values implement specific values of the quality factors:
-! Qp approximately equal to 13 and Qs approximately equal to 10,
+! Qp approximately equal to 13, Qkappa approximately to 20 and Qmu / Qs approximately to 10,
 ! which means very high attenuation, see that paper for details.
 ! tau_epsilon_nu1(1) = 0.0334d0
 ! tau_sigma_nu1(1)   = 0.0303d0
@@ -100,7 +100,7 @@
 ! in a linear viscoelastic medium, Geophysical Journal International,
 ! vol. 95, p. 597-611 (1988) for two memory-variable mechanisms (page 604).
 ! Beware: these values implement specific values of the quality factors:
-! Qp approximately equal to 27 and Qs approximately equal to 20,
+! Qkappa approximately to 27 and Qmu / Qs approximately to 20,
 ! which means very high attenuation, see that paper for details.
 !  tau_epsilon_nu1(1) = 0.0325305d0
 !  tau_sigma_nu1(1)   = 0.0311465d0
