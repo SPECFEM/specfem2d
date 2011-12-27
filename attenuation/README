@@ -1,0 +1,29 @@
+----------------------------------------------------------------------
+README
+----------------------------------------------------------------------
+
+This default example creates the 2D attenuation example of Komatitsch and Tromp (1999, Figure 16).
+
+TO RUN:
+
+0. Read the user manual in SPECFEM2D/doc/manual_SPECFEM2D.pdf
+
+1. in the SPECFEM2D root directory, configure, e.g., 
+   ./configure FC=gfortran
+
+2. compile:
+   make all
+
+3. cd EXAMPLES/attenuation/
+
+4. execute script to run mesher and solver for the PSV case:
+   ./process.sh
+
+5. check out the output files in the local directory OUTPUT_FILES
+
+Reference:
+----------
+
+Dimitri Komatitsch and Jeroen Tromp, Introduction to the spectral-element method for 3-D seismic wave propagation, Geophysical Journal International, vol. 139, p. 806-822 (1999)
+
+----------------------------------------------------------------------
