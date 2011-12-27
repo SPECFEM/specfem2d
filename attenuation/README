@@ -25,17 +25,17 @@ Note that because our example has no absorbing conditions on the edges of the gr
 
 Beware that the reference solution is not exact, only quasi-exact (i.e., the formulation uses an approximation, and some integrals are computed numerically) therefore some small discrepancies can be noticed.
 
-More importantly, in the example provided, "tau" relaxation times for attenuation memory variables are recomputed using approximate quality factor targets of Qkappa approximately equal to 27 and Qmu / Qs approximately equal to 20, read (roughly) from Figure 1 page 604 of the article of Carcione et al. (1988). This will NOT lead to the exact same "tau" values as in Table 1 of Carcione et al. (1988). Thus, in order to perform a far more precise comparison to the analytical solution, which is computed using the "tau" values from Table 1 of Carcione et al. (1988), in file "src/specfem2D/attenuation_model.f90" you should impose this instead for this test (only):
+More importantly, in the example provided, "tau" relaxation times for attenuation memory variables are recomputed using approximate quality factor targets of Qkappa approximately equal to 27 and Qmu / Qs approximately equal to 20, read (roughly) from Figure 1 page 604 of the article of Carcione et al. (1988). This will NOT lead to the exact same "tau" values as in Table 1 of Carcione et al. (1988). Thus, in order to perform a far more precise comparison to the analytical solution, which is computed using the "tau" values from Table 1 of Carcione et al. (1988), in file "src/specfem2D/attenuation_model.f90" you should impose this instead for this test (only) by uncommenting the following 8 lines:
 
-  tau_epsilon_nu1(1) = 0.0325305d0
-  tau_sigma_nu1(1)   = 0.0311465d0
-  tau_epsilon_nu2(1) = 0.0332577d0
-  tau_sigma_nu2(1)   = 0.0304655d0
+! tau_epsilon_nu1(1) = 0.0325305d0
+! tau_sigma_nu1(1)   = 0.0311465d0
+! tau_epsilon_nu2(1) = 0.0332577d0
+! tau_sigma_nu2(1)   = 0.0304655d0
 
-  tau_epsilon_nu1(2) = 0.0032530d0
-  tau_sigma_nu1(2)   = 0.0031146d0
-  tau_epsilon_nu2(2) = 0.0033257d0
-  tau_sigma_nu2(2)   = 0.0030465d0
+! tau_epsilon_nu1(2) = 0.0032530d0
+! tau_sigma_nu1(2)   = 0.0031146d0
+! tau_epsilon_nu2(2) = 0.0033257d0
+! tau_sigma_nu2(2)   = 0.0030465d0
 
 
 References:
