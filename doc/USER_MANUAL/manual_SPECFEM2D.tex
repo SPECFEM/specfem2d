@@ -830,7 +830,7 @@ The algorithm is simple:
 \item[4.] integrate the interactions, which is summation in the code.
 \end{enumerate}
 
-That's all. Step 3 has some tricks in implementation, but which can be skipped by regular users.\\
+That is all. Step 3 has some tricks in implementation, but which can be skipped by regular users.\\
 
 If you look into SPECFEM2D, besides "rhop\_ac\_kl" and "rho\_ac\_kl",
 there are more variables such as "kappa\_ac\_kl" and "rho\_el\_kl" etc.
@@ -855,17 +855,17 @@ poroelastic case.
 
 %------------------------------------------------------------------------------------------------%
 
-\chapter{New Modifications}
+\chapter{Oil and gas industry simulations}
 
 %------------------------------------------------------------------------------------------------%
 
-As of version ?.?, the SPECFEM2D package provides compatibilities in industrial type of simulations.
-The new features include importing Seismic Unix (SU) format wavespeed models into SPECFEM2D,
+The SPECFEM2D package provides compatibilities in industrial (oil and gas industry) types of simulations.
+These features include importing Seismic Unix (SU) format wavespeed models into SPECFEM2D,
 outputing seismograms also in SU format with a few key parameters defined in the trace headers
 and reading adjoint sources in SU format etc.
 There is one example given in EXAMPLES/INDUSTRIAL\_FORMAT, which you can follow.
 
-We also change the relationship between adjoint potential and adjoint displacement in fluid region
+We also changed the relationship between adjoint potential and adjoint displacement in fluid region
 (the relationship between forward potential and forward displacement remains the same as previsouly defined).
 The new definition is critical when there are adjoint sources (in other words, receivers) in the acoustic domain,
 and is the direct consequence of the optimization problem.
