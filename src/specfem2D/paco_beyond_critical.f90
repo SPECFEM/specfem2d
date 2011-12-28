@@ -211,7 +211,7 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,angleforce,&
         end if
 
         if (mod(indice,500)==0) then
-           print *,indice,"points have been have been computed out of ",npt
+           print *,indice,"points have been computed out of ",npt
         end if
 
 !
