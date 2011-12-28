@@ -90,9 +90,9 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,angleforce,&
      DT=DT/2.d0
   end do
   if (abs(DT-deltat)>1.0d-13) then
-     print *, "you must take a deltat as a power of two (power can be negative)"
+     print *, "you must take a deltat that is a power of two (power can be negative)"
      print *, "for example you can take", DT
-     stop "can't go further, restart with new deltat"
+     stop "cannot go further, restart with new deltat"
   end if
 
   DT=deltat/2.d0
@@ -106,7 +106,7 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,angleforce,&
      N=2.d0*N
   end do
 
-  print *, 'N found to do frequency calcul :', N
+  print *,'N found to perform the frequency calculation:',N
   print *,'number of discrete frequencies = ',N/2
   print *,'delta in period (seconds) = ',delta_in_period
   print *,'delta in frequency (Hz) = ',1.d0/delta_in_period
@@ -138,7 +138,7 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,angleforce,&
   do FLAG=0,3
 
      if (FLAG==0) then
-        print *, "calcul of the initial field for every point of the mesh"
+        print *,"calculation of the initial field for every point of the mesh"
         npt=nglob
         allocate(local_pt(npt))
         do inode=1,npt
@@ -146,19 +146,19 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,angleforce,&
         end do
         NSTEP_local=1
      else if(FLAG==1) then
-        print *, "calcul of every time step on the left absorbing boundary"
+        print *,"calculation of every time step on the left absorbing boundary"
         npt=nleft
         allocate(local_pt(npt))
         local_pt=left_bound
         NSTEP_local=NSTEP_global
      else if(FLAG==2) then
-        print *, "calcul of every time step on the right absorbing boundary"
+        print *,"calculation of every time step on the right absorbing boundary"
         npt=nright
         allocate(local_pt(npt))
         local_pt=right_bound
         NSTEP_local=NSTEP_global
      else if(FLAG==3) then
-        print *, "calcul of every time step on the bottom absorbing boundary"
+        print *,"calculation of every time step on the bottom absorbing boundary"
         npt=nbot
         allocate(local_pt(npt))
         local_pt=bot_bound
@@ -211,7 +211,7 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,angleforce,&
         end if
 
         if (mod(indice,500)==0) then
-           print *, indice, "points have been treated on ",npt," total points"
+           print *,indice,"points have been have been computed out of ",npt
         end if
 
 !
