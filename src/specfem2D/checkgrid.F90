@@ -540,6 +540,13 @@
     max_nb_of_points_per_wavelength = lambdaPmax_histo
   endif
 
+! when the grid is regular and the medium is homogeneous, the minimum and the maximum are equal
+! and thus we cannot create an histogram; in such a case, let us artificially create a non-empty range
+  if(abs(max_nb_of_points_per_wavelength - min_nb_of_points_per_wavelength) < 1.d-10) then
+    min_nb_of_points_per_wavelength = min_nb_of_points_per_wavelength * 0.99d0
+    max_nb_of_points_per_wavelength = max_nb_of_points_per_wavelength * 1.01d0
+  endif
+
 ! erase histogram of wavelength
   classes_wavelength(:) = 0
 
