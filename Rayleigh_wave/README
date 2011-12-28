@@ -1,0 +1,29 @@
+----------------------------------------------------------------------
+README
+----------------------------------------------------------------------
+
+This example propagates an initial (incident) Rayleigh wave along the surface of a 2D homogeneous medium, similar to Figure 3 of Komatitsch and Tromp (1999) but without the canyon.
+
+TO RUN:
+
+0. Read the user manual in SPECFEM2D/doc/manual_SPECFEM2D.pdf
+
+1. in the SPECFEM2D root directory, configure, e.g.,
+   ./configure FC=gfortran
+
+2. compile:
+   make all
+
+3. cd EXAMPLES/Rayleigh_wave
+
+4. execute script to run mesher and solver for the PSV case:
+   ./process.sh
+
+5. check out the output files in the local directory OUTPUT_FILES
+
+References:
+-----------
+
+Dimitri Komatitsch, Jean-Pierre Vilotte, Rossana Vai, José M. Castillo-Covarrubias and Francisco J. Sánchez-Sesma, The Spectral Element method for elastic wave equations: application to 2D and 3D seismic problems, International Journal for Numerical Methods in Engineering, vol. 45, p. 1139-1164 (1999).
+
+----------------------------------------------------------------------

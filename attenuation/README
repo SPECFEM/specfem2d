@@ -2,7 +2,7 @@
 README
 ----------------------------------------------------------------------
 
-This default example creates the 2D attenuation example of Komatitsch and Tromp (1999, Figure 16).
+This example creates the 2D attenuation benchmark of Komatitsch and Tromp (1999, Figure 16).
 
 TO RUN:
 
@@ -14,7 +14,7 @@ TO RUN:
 2. compile:
    make all
 
-3. cd EXAMPLES/attenuation/
+3. cd EXAMPLES/attenuation
 
 4. execute script to run mesher and solver for the PSV case:
    ./process.sh
