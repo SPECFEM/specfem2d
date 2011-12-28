@@ -48,6 +48,9 @@
   logical, parameter :: ACTUALLY_IMPLEMENT_PERM_INN = .false.
   logical, parameter :: ACTUALLY_IMPLEMENT_PERM_WHOLE = .true.
 
+! create file DATA/model_velocity.dat_output or not (can be huge and slow, thus off by default)
+  logical, parameter :: OUTPUT_MODEL_VELOCITY_FILE = .false.
+
 ! in PostScript files about mesh quality, show all elements above this threshold
   double precision, parameter :: THRESHOLD_POSTSCRIPT = 95.d0 / 100.d0
 

@@ -1,4 +1,6 @@
+
   program specfem2D
+
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 6 . 2
@@ -3038,7 +3040,7 @@
               f0(1),cploc,csloc,TURN_ATTENUATION_ON,QKappa_attenuation(1),source_type(1),v0x_left,v0z_left, &
               v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right, &
               t0x_bot,t0z_bot,left_bound(1:count_left),right_bound(1:count_right),bot_bound(1:count_bottom), &
-              count_left,count_right,count_bottom,displ_elastic,veloc_elastic,accel_elastic)
+              count_left,count_right,count_bottom,displ_elastic,veloc_elastic,accel_elastic,x_source(1))
 
       deallocate(left_bound)
       deallocate(right_bound)
@@ -7096,16 +7098,12 @@
 !----  close energy file
   if(output_energy .and. myrank == 0) close(IOUT_ENERGY)
 
-  if (.not. any_poroelastic) then
+  if (OUTPUT_MODEL_VELOCITY_FILE .and. .not. any_poroelastic) then
     open(unit=1001,file='DATA/model_velocity.dat_output',status='unknown')
     if ( .NOT. assign_external_model) then
       allocate(rho_local(ngllx,ngllz,nspec)); rho_local=0.
       allocate(vp_local(ngllx,ngllz,nspec)); vp_local=0.
       allocate(vs_local(ngllx,ngllz,nspec)); vs_local=0.
-!!      write(1001,*) nglob
-!!      do iglob = 1,nglob
-!!         write(1001,*) coord(1,iglob),coord(2,iglob),rho_global(iglob),vp_global(iglob),vs_global(iglob)
-!!      end do
       do ispec = 1,nspec
         do j = 1,NGLLZ
           do i = 1,NGLLX
@@ -7119,10 +7117,6 @@
         end do
       end do
     else
-!!     write(1001,*) nglob
-!!  do iglob = 1,nglob
-!!     write(1001,*) coord(1,iglob),coord(2,iglob),rhoext_global(iglob),vpext_global(iglob),vsext_global(iglob)
-!!  end do
       do ispec = 1,nspec
         do j = 1,NGLLZ
           do i = 1,NGLLX

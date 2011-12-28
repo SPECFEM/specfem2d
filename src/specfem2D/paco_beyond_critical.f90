@@ -17,7 +17,7 @@
 subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,angleforce,&
      f0,cp_local,cs_local,INCLUDE_ATTENUATION,QD,source_type,v0x_left,v0z_left,v0x_right,v0z_right,&
      v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot,left_bound,right_bound,&
-     bot_bound,nleft,nright,nbot,displ_elastic,veloc_elastic,accel_elastic)
+     bot_bound,nleft,nright,nbot,displ_elastic,veloc_elastic,accel_elastic,x_source)
 
   implicit none
 
@@ -59,10 +59,7 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,angleforce,&
 
   complex(selected_real_kind(15,300)), dimension(:),allocatable::Field_Ux,Field_Uz,Field_Tx,Field_Tz
 
-  double precision :: TS
-
-! to move the place where the wave reflects on free surface (offset too)
-  double precision :: offset
+  double precision :: TS,offset,x_source
 
 ! size of the model
   xmin=minval(coord(1,:))
@@ -70,12 +67,13 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,angleforce,&
   zmin=minval(coord(2,:))
   zmax=maxval(coord(2,:))
 
-! offset of the origin of time of the Ricker (equivalent to t0 in SPECFEM2D)
-  offset=4.d0*(xmax-xmin)/5.d0
-  TS=2.d0/f0
+  TS=1.2d0/f0
 
-! dominant period of the Ricker (equivalent to 1/f0 in SPECFEM2D)
+! dominant period of the Ricker
   TP=1.d0/f0
+
+! offset to move the initial location of the source in the horizontal direction of the mesh
+  offset = x_source
 
 ! find optimal period
 ! if period is too small, you should see several initial plane wave on your initial field
@@ -93,7 +91,7 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,angleforce,&
      print *, "you must take a deltat that is a power of two (power can be negative)"
      print *, "for example you can take", DT
      stop "cannot go further, restart with new deltat"
-  end if
+  endif
 
   DT=deltat/2.d0
 
@@ -163,7 +161,7 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,angleforce,&
         allocate(local_pt(npt))
         local_pt=bot_bound
         NSTEP_local=NSTEP_global
-     end if
+     endif
 
 ! to distinguish all model case and boundary case
      allocate(temp_field(NSTEP_local))
@@ -191,28 +189,28 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,angleforce,&
      else
         VNZ = 0.d0
         VNX = 0.d0
-     end if
+     endif
 
 
      do indice=1,npt
 
         if (FLAG==0) then
            inode=indice
-           X=coord(1,indice)-offset
+           X=coord(1,indice) - offset
 ! specfem coordinate axes are implemented from bottom to top whereas for this code
 ! we need from top to bottom
            Z=zmax-coord(2,indice)
         else
            inode=local_pt(indice)
-           X=coord(1,inode)-offset
+           X=coord(1,inode) - offset
 ! specfem coordinate axes are implemented from bottom to top whereas for this code
 ! we need from top to bottom
            Z=zmax-coord(2,inode)
-        end if
+        endif
 
         if (mod(indice,500)==0) then
            print *,indice,"points have been computed out of ",npt
-        end if
+        endif
 
 !
 ! first handle the particular case of zero frequency
@@ -235,7 +233,7 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,angleforce,&
         if (FLAG/=0) then
            Field_Tx(1)=TX
            Field_Tz(1)=TZ
-        end if
+        endif
 
 !
 ! then loop on all the other discrete frequencies
@@ -274,7 +272,7 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,angleforce,&
            if (FLAG/=0) then
               Field_Tx(J+1)=TX
               Field_Tz(J+1)=TZ
-           end if
+           endif
 
         enddo
 
@@ -331,7 +329,7 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,angleforce,&
            t0x_bot(indice,:)=temp_field(:)
            call paco_convolve_fft(Field_Tz,4,NSTEP_local,dt,NFREC,temp_field,TP,TS)
            t0z_bot(indice,:)=temp_field(:)
-        end if
+        endif
      enddo
 
      deallocate(temp_field)
@@ -363,24 +361,24 @@ SUBROUTINE DESFXY(X,Z,ICAS,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM)
      AUX1=A1*EXP(UI*(AM*Z-AL*X))         ! campo P incidente
   else
      AUX1=CMPLX(0.0d0)
-  end if
+  endif
   if (A2/=0.0d0) then
      AUX2=A2*EXP(-UI*(AM*Z+AL*X)) *1.0d0      ! campo P reflejado
   else
      AUX2=CMPLX(0.0d0)
-  end if
+  endif
   FI1=AUX1+AUX2
   FI2=AUX1-AUX2
   if (B1/=0.0d0) then
      AUX1=B1*EXP(UI*(AK*Z-AL*X))            ! campo S incidente
   else
      AUX1=CMPLX(0.0d0)
-  end if
+  endif
   if (B2/=0.0d0) then
      AUX2=B2*EXP(-UI*(AK*Z+AL*X)) *1.0d0      ! campo S reflejado
   else
      AUX2=CMPLX(0.0d0)
-  end if
+  endif
   PS1=AUX1+AUX2
   PS2=AUX1-AUX2
 
