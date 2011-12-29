@@ -401,6 +401,13 @@
   logical :: anyabs
   double precision :: dxd,dyd,dzd,dcurld,valux,valuy,valuz,valcurl,hlagrange,rhol,xi,gamma,x,z
 
+!! DK DK Dec 2011: add a crack manually
+  logical, parameter :: ADD_A_CRACK = .true. ! .false.
+!! must be set equal to the number of spectral elements on one vertical side of the crack
+  integer :: NB_POINTS_TO_ADD_TO_NPGEO = 3
+  integer :: check_nb_points_to_add_to_npgeo,current_last_point,npgeo_ori,original_value,ignod
+  logical :: already_found_a_crack_element
+
 ! coefficients of the explicit Newmark time scheme
   integer NSTEP
   double precision :: deltatover2,deltatsquareover2,time
@@ -908,6 +915,9 @@
                   ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL)
   if(nproc_read_from_database < 1) stop 'should have nproc_read_from_database >= 1'
   if(nproc /= nproc_read_from_database) stop 'must always have nproc == nproc_read_from_database'
+!! DK DK Dec 2011: add a crack manually
+  npgeo_ori = npgeo
+  if(ADD_A_CRACK) npgeo = npgeo + NB_POINTS_TO_ADD_TO_NPGEO
 
 #ifndef USE_MPI
   if(PERFORM_CUTHILL_MCKEE) then
@@ -921,7 +931,8 @@
   do ipass = 1,NUMBER_OF_PASSES
 
   ! starts reading in Database file
-    if(ipass > 1) call read_databases_init(myrank,ipass, &
+    if(ipass > 1) &
+       call read_databases_init(myrank,ipass, &
                       simulation_title,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo,nproc_read_from_database, &
                       gnuplot,interpol,NTSTEP_BETWEEN_OUTPUT_INFO, &
                       output_postscript_snapshot,output_color_image,colors,numbers, &
@@ -988,7 +999,9 @@
 
   ! reads the spectral macrobloc nodal coordinates
   ! and basic properties of the spectral elements
-  call read_databases_coorg_elem(myrank,ipass,npgeo,coorg,numat,ngnod,nspec, &
+!! DK DK  call read_databases_coorg_elem(myrank,ipass,npgeo,coorg,numat,ngnod,nspec, &
+!! DK DK Dec 2011: added a crack manually
+  call read_databases_coorg_elem(myrank,ipass,npgeo_ori,coorg,numat,ngnod,nspec, &
                               pointsdisp,plot_lowerleft_corner_only, &
                               nelemabs,nelem_acoustic_surface, &
                               num_fluid_solid_edges,num_fluid_poro_edges, &
@@ -1052,6 +1065,89 @@
   call read_databases_mato(ipass,nspec,ngnod,kmato,knods, &
                                 perm,antecedent_list)
 
+!! DK DK Dec 2011: handle a crack added manually
+  if(ADD_A_CRACK) then
+
+#ifdef USE_MPI
+  stop 'currently only serial runs are handled when adding a crack manually'
+#endif
+!! DK DK material number 2 indicates the spectral elements that form the left vertical side of the crack
+  check_nb_points_to_add_to_npgeo = count(kmato == 2)
+  print *
+  print *,'adding a crack manually'
+  print *,'need to add ',nb_points_to_add_to_npgeo,' npgeo mesh points to do that'
+
+  if(check_nb_points_to_add_to_npgeo /= NB_POINTS_TO_ADD_TO_NPGEO) &
+    stop 'must have check_nb_points_to_add_to_npgeo == NB_POINTS_TO_ADD_TO_NPGEO when adding a crack manually'
+
+  if(ngnod /= 4) stop 'must currently have ngnod == 4 when adding a crack manually'
+
+  if(PERFORM_CUTHILL_MCKEE) stop 'must not have PERFORM_CUTHILL_MCKEE when adding a crack manually'
+
+  if(FAST_NUMBERING) stop 'must not have FAST_NUMBERING when adding a crack manually'
+
+!! DK DK modify arrays "knods" and "coorg" to introduce the crack manually by duplicating and splitting the nodes
+  already_found_a_crack_element = .false.
+  current_last_point = npgeo_ori
+
+  do ispec = 1,nspec-1
+!! DK DK my convention is to introduce a vertical crack between two elements with material numbers 2 and 3
+    if(kmato(ispec) == 2 .and. kmato(ispec+1) == 3) then
+
+      print *,'adding a crack between elements ',ispec,' and ',ispec+1
+
+!! DK DK duplicate and split the lower-right corner of this element,
+!! DK DK except if it is the first crack element found, because then it is the crack
+!! DK DK tip and thus it should be assembled rather than split.
+!! DK DK Lower-right corner of an element is local npgeo point #2
+      if(already_found_a_crack_element .and. knods(2,ispec) <= npgeo_ori) then
+        current_last_point = current_last_point + 1
+        original_value = knods(2,ispec)
+!! DK DK split this point number in all the elements in which it appears
+        do ispec2 = 1,nspec
+! do this only for elements that define the left vertical edge of the crack
+          if(kmato(ispec2) /= 2) cycle
+          do ignod = 1,ngnod
+            if(knods(ignod,ispec2) == original_value) then
+              knods(ignod,ispec2) = current_last_point
+              coorg(:,current_last_point) = coorg(:,original_value)
+            endif
+          enddo
+        enddo
+      endif
+
+!! DK DK duplicate and split the upper-right corner of this element
+      already_found_a_crack_element = .true.
+
+!! DK DK Upper-right corner of an element is local npgeo point #3
+      if(knods(3,ispec) <= npgeo_ori) then
+
+        current_last_point = current_last_point + 1
+        original_value = knods(3,ispec)
+!! DK DK split this point number in all the elements in which it appears
+        do ispec2 = 1,nspec
+! do this only for elements that define the left vertical edge of the crack
+          if(kmato(ispec2) /= 2) cycle
+          do ignod = 1,ngnod
+            if(knods(ignod,ispec2) == original_value) then
+              knods(ignod,ispec2) = current_last_point
+              coorg(:,current_last_point) = coorg(:,original_value)
+            endif
+          enddo
+        enddo
+      endif
+
+    endif ! of if(kmato(ispec) == 2 .and. kmato(ispec+1) == 3)
+
+  enddo
+
+  if(current_last_point /= npgeo) then
+    print *,'current_last_point = ',current_last_point
+    print *,'npgeo_new = ',npgeo
+    stop 'did not find the right total number of points, should have current_last_point == npgeo_new'
+  endif
+
+  endif ! of if(ADD_A_CRACK) then
 
 !-------------------------------------------------------------------------------
 !----  determine if each spectral element is elastic, poroelastic, or acoustic

@@ -135,10 +135,10 @@
     print *,' -----'
 
     ! store density and velocity model
-    do i = ixdebregion,ixfinregion
-       do j = izdebregion,izfinregion
-          num_material((j-1)*nxread+i) = imaterial_number
-       enddo
+    do j = izdebregion,izfinregion
+      do i = ixdebregion,ixfinregion
+        num_material((j-1)*nxread+i) = imaterial_number
+      enddo
     enddo
 
   enddo
