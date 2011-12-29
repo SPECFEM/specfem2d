@@ -48,14 +48,12 @@ echo
 echo "  running mesher..."
 echo
 ./xmeshfem2D > OUTPUT_FILES/output_mesher.txt
-./xmeshfem2D
 
 # runs simulation
 echo
 echo "  running solver..."
 echo
-#./xspecfem2D > OUTPUT_FILES/output_solver.txt
-./xspecfem2D
+./xspecfem2D > OUTPUT_FILES/output_solver.txt
 
 # stores output
 cp DATA/SOURCE_xz.dat OUTPUT_FILES/
