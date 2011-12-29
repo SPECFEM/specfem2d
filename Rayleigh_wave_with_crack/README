@@ -2,7 +2,7 @@
 README
 ----------------------------------------------------------------------
 
-This example propagates an initial (incident) Rayleigh wave along the surface of a 2D homogeneous medium, similar to Figure 3 of Komatitsch and Tromp (1999) but without the canyon.
+This example propagates an initial (incident) Rayleigh wave along the surface of a 2D homogeneous medium with a crack, similar to Figure 3 of Komatitsch and Tromp (1999) but with a crack instead of a canyon.
 
 TO RUN:
 
@@ -14,7 +14,7 @@ TO RUN:
 2. compile:
    make all
 
-3. cd EXAMPLES/Rayleigh_wave
+3. cd EXAMPLES/Rayleigh_wave_with_crack
 
 4. execute script to run mesher and solver for the PSV case:
    ./process.sh
