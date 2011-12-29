@@ -402,7 +402,7 @@
   double precision :: dxd,dyd,dzd,dcurld,valux,valuy,valuz,valcurl,hlagrange,rhol,xi,gamma,x,z
 
 !! DK DK Dec 2011: add a crack manually
-  logical, parameter :: ADD_A_CRACK = .true. ! .false.
+  logical, parameter :: ADD_A_CRACK = .false.
 !! must be set equal to the number of spectral elements on one vertical side of the crack
   integer :: NB_POINTS_TO_ADD_TO_NPGEO = 3
   integer :: check_nb_points_to_add_to_npgeo,current_last_point,npgeo_ori,original_value,ignod
