@@ -1,5 +1,5 @@
 # title of job, and file that contains interface data r19201
-title                           = Shallow water 30 Hz Source middle 4 receiver lines
+title                           = Shallow water 30 Hz Source middle 4 receiver sets
 
 # forward or adjoint simulation
 SIMULATION_TYPE                 = 1   # 1 = forward, 2 = adjoint + kernels
@@ -36,15 +36,15 @@ force_normal_to_surface         = .false.        # angleforce normal to surface 
 N_SLS                           = 2                      # number of standard linear solids for attenuation
 f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, else it is f0
 
-# receiver line parameters for seismograms
+# receiver set parameters for seismograms
 seismotype                      = 4              # record 1=displ 2=veloc 3=accel 4=pressure
 generate_STATIONS               = .true.         # creates a STATION file in ./DATA
-nreceiverlines                  = 1              # number of receiver lines
+nreceiversets                   = 1              # number of receiver sets
 anglerec                        = 0.d0           # angle to rotate components at receivers
 rec_normal_to_surface           = .false.        # replace anglerec with the normal to the surface (external mesh and curve file needed, anglerec above ignored)
 SU_FORMAT                       = .false.        # output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
 
-# first receiver line
+# first receiver set
 nrec                            = 11             # number of receivers
 xdeb                            = -0.5          # first receiver x in meters
 zdeb                            = 0.5          # first receiver z in meters

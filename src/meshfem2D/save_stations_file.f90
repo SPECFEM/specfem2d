@@ -42,16 +42,16 @@
 !
 !========================================================================
 
-  subroutine save_stations_file(nreceiverlines,nrec,xdeb,zdeb,xfin,zfin,enreg_surf_same_vertical, &
+  subroutine save_stations_file(nreceiversets,nrec,xdeb,zdeb,xfin,zfin,enreg_surf_same_vertical, &
                             xinterface_top,zinterface_top,coefs_interface_top, &
                             npoints_interface_top,max_npoints_interface)
 
   implicit none
 
-  integer :: nreceiverlines
-  integer, dimension(nreceiverlines) :: nrec
-  double precision, dimension(nreceiverlines) :: xdeb,zdeb,xfin,zfin
-  logical, dimension(nreceiverlines) :: enreg_surf_same_vertical
+  integer :: nreceiversets
+  integer, dimension(nreceiversets) :: nrec
+  double precision, dimension(nreceiversets) :: xdeb,zdeb,xfin,zfin
+  logical, dimension(nreceiversets) :: enreg_surf_same_vertical
 
   integer :: max_npoints_interface
   double precision, dimension(max_npoints_interface) :: xinterface_top, &
@@ -84,7 +84,7 @@
   irec_global_number = 0
 
   ! loop on all the receiver lines
-  do ireceiverlines = 1,nreceiverlines
+  do ireceiverlines = 1,nreceiversets
 
     ! loop on all the receivers of this receiver line
     do irec = 1,nrec(ireceiverlines)

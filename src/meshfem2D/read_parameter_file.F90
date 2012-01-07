@@ -88,7 +88,7 @@ module parameter_file
   integer :: seismotype
   logical :: generate_STATIONS
 
-  integer :: nreceiverlines
+  integer :: nreceiversets
   double precision :: anglerec
   logical :: rec_normal_to_surface
 
@@ -255,7 +255,7 @@ contains
   call read_value_logical_p(generate_STATIONS, 'solver.generate_STATIONS')
   if(err_occurred() /= 0) stop 'error reading parameter 23 in Par_file'
 
-  call read_value_integer_p(nreceiverlines, 'solver.nreceiverlines')
+  call read_value_integer_p(nreceiversets, 'solver.nreceiversets')
   if(err_occurred() /= 0) stop 'error reading parameter 24 in Par_file'
 
   call read_value_double_precision_p(anglerec, 'solver.anglerec')
@@ -267,19 +267,19 @@ contains
   call read_value_logical_p(SU_FORMAT, 'solver.SU_FORMAT')
   if(err_occurred() /= 0) stop 'error reading parameter 26b in Par_file'
 
-  if(nreceiverlines < 1) stop 'number of receiver lines must be greater than 1'
+  if(nreceiversets < 1) stop 'number of receiver lines must be greater than 1'
 
   ! allocate receiver line arrays
-  allocate(nrec(nreceiverlines))
-  allocate(xdeb(nreceiverlines))
-  allocate(zdeb(nreceiverlines))
-  allocate(xfin(nreceiverlines))
-  allocate(zfin(nreceiverlines))
-  allocate(enreg_surf_same_vertical(nreceiverlines),stat=ios)
+  allocate(nrec(nreceiversets))
+  allocate(xdeb(nreceiversets))
+  allocate(zdeb(nreceiversets))
+  allocate(xfin(nreceiversets))
+  allocate(zfin(nreceiversets))
+  allocate(enreg_surf_same_vertical(nreceiversets),stat=ios)
   if( ios /= 0 ) stop 'error allocating receiver lines'
 
   ! loop on all the receiver lines
-  do ireceiverlines = 1,nreceiverlines
+  do ireceiverlines = 1,nreceiversets
     call read_value_integer_next_p(nrec(ireceiverlines),'solver.nrec')
     if(err_occurred() /= 0) stop 'error reading parameter 27 in Par_file'
 
