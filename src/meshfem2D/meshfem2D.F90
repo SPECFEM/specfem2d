@@ -962,7 +962,7 @@ program meshfem2D
       allocate(coefs_interface_top(1))
     endif
 
-    call save_stations_file(nreceiverlines,nrec,xdeb,zdeb,xfin,zfin,enreg_surf_same_vertical, &
+    call save_stations_file(nreceiversets,nrec,xdeb,zdeb,xfin,zfin,enreg_surf_same_vertical, &
                             xinterface_top,zinterface_top,coefs_interface_top, &
                             npoints_interface_top,max_npoints_interface)
   endif
