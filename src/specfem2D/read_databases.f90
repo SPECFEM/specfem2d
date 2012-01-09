@@ -52,7 +52,7 @@
                   anglerec,initialfield,add_Bielak_conditions, &
                   seismotype,imagetype,assign_external_model,READ_EXTERNAL_SEP_FILE, &
                   output_grid,output_energy,output_wavefield_snapshot,ATTENUATION_VISCOELASTIC_SOLID, &
-                  ATTENUATION_POROELASTIC_SOLID,Q0,freq0,p_sv, &
+                  ATTENUATION_PORO_FLUID_PART,Q0,freq0,p_sv, &
                   NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCES, &
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_CONSTANT_BLUE_IN_JPG,US_LETTER, &
                   POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, &
@@ -72,7 +72,7 @@
   logical :: meshvect,modelvect,boundvect,initialfield,add_Bielak_conditions, &
     assign_external_model,READ_EXTERNAL_SEP_FILE, &
     output_grid,output_energy,output_wavefield_snapshot,p_sv
-  logical :: ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_POROELASTIC_SOLID
+  logical :: ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART
 
   double precision :: cutsnaps,sizemax_arrows,anglerec
   double precision :: Q0,freq0
@@ -197,7 +197,7 @@
   read(IIN,*) output_grid,output_energy,output_wavefield_snapshot
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_POROELASTIC_SOLID
+  read(IIN,*) ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART
 
   read(IIN,"(a80)") datlin
   read(IIN,*) Q0,freq0
@@ -255,7 +255,7 @@
   if (myrank == 0 .and. ipass == 1) write(IOUT,703) NSTEP,deltat,NSTEP*deltat
 
   if( SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. &
-    (ATTENUATION_VISCOELASTIC_SOLID .or. ATTENUATION_POROELASTIC_SOLID) ) then
+    (ATTENUATION_VISCOELASTIC_SOLID .or. ATTENUATION_PORO_FLUID_PART) ) then
     print*, '*************** WARNING ***************'
     print*, 'Anisotropy & Attenuation & Viscous damping are not presently implemented for adjoint calculations'
     stop

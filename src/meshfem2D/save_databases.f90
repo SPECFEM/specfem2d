@@ -130,8 +130,8 @@
     write(15,*) 'output_grid output_energy output_wavefield_snapshot'
     write(15,*) output_grid,output_energy,output_wavefield_snapshot
 
-    write(15,*) 'ATTENUATION_VISCOELASTIC_SOLID ATTENUATION_POROELASTIC_SOLID'
-    write(15,*) ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_POROELASTIC_SOLID
+    write(15,*) 'ATTENUATION_VISCOELASTIC_SOLID ATTENUATION_PORO_FLUID_PART'
+    write(15,*) ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART
 
     write(15,*) 'Q0 freq0'
     write(15,*) Q0,freq0
