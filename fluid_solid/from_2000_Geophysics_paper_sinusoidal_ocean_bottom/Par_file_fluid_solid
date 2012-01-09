@@ -1,5 +1,5 @@
 # title of job
-title                           = Flat fluid/solid interface
+title                           = Sinusoidal fluid/solid interface
 
 # forward or adjoint simulation
 SIMULATION_TYPE                 = 1   # 1 = forward, 2 = adjoint + kernels
@@ -11,7 +11,7 @@ nproc                           = 1              # number of processes
 partitioning_method             = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
 PERFORM_CUTHILL_MCKEE           = .true.         # perform inverse Cuthill-McKee (1969) optimization/permutation for mesh numbering
 
-ngnod                           = 4              # number of control nodes per element (4 or 9)
+ngnod                           = 9              # number of control nodes per element (4 or 9)
 initialfield                    = .false.        # use a plane wave as source or not
 add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
 assign_external_model           = .false.        # define external earth model or not
@@ -23,8 +23,8 @@ freq0                           =  10            # frequency for viscous attenua
 p_sv                            = .true.         # set the type of calculation (P-SV or SH/membrane waves)
 
 # time step parameters
-nt                              = 4500           # total number of time steps
-deltat                          = 0.85d-3        # duration of a time step
+nt                              = 5000           # total number of time steps
+deltat                          = 0.55d-3        # duration of a time step
 USER_T0                         = 0.0d0          # use this t0 as earliest starting time rather than the automatically calculated one
 
 # source parameters
@@ -117,7 +117,7 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes # file containing the
 # PARAMETERS FOR INTERNAL MESHING
 
 # file containing interfaces for internal mesh
-interfacesfile                  = ../interfaces_fluid_flat.dat
+interfacesfile                  = ../interfaces_fluid_sinusoidal.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
