@@ -54,7 +54,7 @@
                             anisotropic,anisotropy,wxgll,wzgll,numat, &
                             pressure_element,vector_field_element,e1,e11, &
                             potential_dot_acoustic,potential_dot_dot_acoustic, &
-                            TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS,p_sv)
+                            ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS,p_sv)
 
 ! compute kinetic and potential energy in the solid (acoustic elements are excluded)
 
@@ -78,7 +78,7 @@
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: &
     potential_dot_acoustic,potential_dot_dot_acoustic
 
-  logical :: TURN_ATTENUATION_ON,p_sv
+  logical :: ATTENUATION_VISCOELASTIC_SOLID,p_sv
 
   integer :: it
   double precision :: t0,deltat
@@ -350,7 +350,7 @@
                   nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
                   numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
                   c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,ispec,e1,e11, &
-                  TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
+                  ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
       ! compute velocity vector field in this element
       call compute_vector_one_element(vector_field_element,potential_dot_acoustic, &

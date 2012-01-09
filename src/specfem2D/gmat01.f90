@@ -45,7 +45,7 @@
   subroutine gmat01(density_array,porosity_array,tortuosity_array, &
                     aniso_array,permeability,poroelastcoef, &
                     numat,myrank,ipass,QKappa_array,Qmu_array, &
-                    freq0,Q0,f0,TURN_VISCATTENUATION_ON)
+                    freq0,Q0,f0,ATTENUATION_POROELASTIC_SOLID)
 
 ! reads properties of a 2D isotropic or anisotropic linear elastic element
 
@@ -57,7 +57,7 @@
   double precision :: aniso_array(6,numat),tortuosity_array(numat),permeability(3,numat)
   double precision :: QKappa_array(numat),Qmu_array(numat)
   double precision :: f0,Q0,freq0
-  logical :: TURN_VISCATTENUATION_ON
+  logical :: ATTENUATION_POROELASTIC_SOLID
 
   ! local parameters
   double precision :: lambdaplus2mu,kappa
@@ -199,7 +199,7 @@
         call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare, &
                                   H_biot,C_biot,M_biot,mu_fr,phi, &
                                   tortuosity,density(1),density(2),eta_f, &
-                                  val4,f0,freq0,Q0,w_c,TURN_VISCATTENUATION_ON)
+                                  val4,f0,freq0,Q0,w_c,ATTENUATION_POROELASTIC_SOLID)
 
         porosity_array(n) = val2
         tortuosity_array(n) = val3

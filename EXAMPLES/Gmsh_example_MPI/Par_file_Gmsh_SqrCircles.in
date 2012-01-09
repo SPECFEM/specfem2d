@@ -10,15 +10,15 @@ SAVE_FORWARD                    = .false.  # save the last frame, needed for adj
 nproc                           = 4              # number of processes
 partitioning_method             = 3              # ascending order = 1, Scotch = 3
 PERFORM_CUTHILL_MCKEE           = .true.         # perform inverse Cuthill-McKee (1969) optimization/permutation for mesh numbering
-                                                 
+
 
 ngnod                           = 9              # number of control nodes per element (4 or 9)
 initialfield                    = .false.        # use a plane wave as source or not
 add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
 assign_external_model           = .false.        # define external earth model or not
 READ_EXTERNAL_SEP_FILE          = .false.        # Read external SEP file from DATA/model_velocity.dat_input, or use routine
-TURN_ATTENUATION_ON             = .false.        # turn attenuation on or off for solid medium
-TURN_VISCATTENUATION_ON         = .false.        # turn viscous attenuation on or off 
+ATTENUATION_VISCOELASTIC_SOLID  = .false.        # turn attenuation (viscoelasticity) on or off for non-poroelastic solid parts of the model
+ATTENUATION_POROELASTIC_SOLID   = .false.        # turn viscous attenuation on or off for poroelastic solid parts of the model
 Q0                              =  1             # quality factor for viscous attenuation
 freq0                           =  10            # frequency for viscous attenuation
 p_sv                            = .true.         # set the type of calculation (P-SV or SH/membrane waves)
@@ -32,7 +32,7 @@ USER_T0                         = 0.0d0          # use this t0 as earliest start
 NSOURCES                         = 1              # number of sources [source info read in CMTSOLUTION file]
 force_normal_to_surface         = .false.        # angleforce normal to surface (external mesh and curve file needed)
 
-# constants for attenuation 
+# constants for attenuation
 N_SLS                           = 2                      # number of standard linear solids for attenuation
 f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, else it is f0
 
@@ -78,7 +78,7 @@ output_wavefield_snapshot       = .false.        # output Ux,Uy,Uz text file for
 # velocity and density models
 nbmodels                        = 2              # nb of different models
 # define models as I: (model_number,1,rho,Vp,Vs,0,0,QKappa Qmu) or II: (model_number,2,rho,c11,c13,c15,c33,c35,c55) or III: (model_number,3,rhos,rhof,phi,c,kxx,kxz,kzz,Ks,Kf,Kfr,etaf,mufr,Qmu).
-# For istropic elastic/acoustic material use I and set Vs to zero to make a given model acoustic, for anisotropic elastic use II, 
+# For istropic elastic/acoustic material use I and set Vs to zero to make a given model acoustic, for anisotropic elastic use II,
 # and for isotropic poroelastic material use III. The mesh can contain acoustic, elastic, & poroelastic models simultaneously
 1 1 2000.d0 1680.d0 0.0d0 0 0 10.d0 10.d0 0 0 0 0 0 0
 2 1 1000.d0 1477.d0 0.0d0 0 0 10.d0 10.d0 0 0 0 0 0 0
@@ -128,7 +128,7 @@ xmax                            = 4.d0        # abscissa of right side of the mo
 nx                              = 835             # number of elements along X
 
 # absorbing boundaries parameters
-absorbbottom                    = .true.         
+absorbbottom                    = .true.
 absorbright                     = .true.
 absorbtop                       = .true.
 absorbleft                      = .true.

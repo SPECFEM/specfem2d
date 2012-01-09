@@ -44,7 +44,7 @@
   subroutine compute_forces_poro_solid(nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                source_type,it,NSTEP,anyabs, &
-               initialfield,TURN_ATTENUATION_ON,TURN_VISCATTENUATION_ON,deltatcube, &
+               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_POROELASTIC_SOLID,deltatcube, &
                deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,poroelastic,codeabs, &
                accels_poroelastic,velocs_poroelastic,velocw_poroelastic,displs_poroelastic,displw_poroelastic,&
                b_accels_poroelastic,b_displs_poroelastic,b_displw_poroelastic,&
@@ -78,7 +78,7 @@
   integer, dimension(nelemabs) :: ib_bottom
   integer, dimension(nelemabs) :: ib_top
 
-  logical :: anyabs,initialfield,TURN_ATTENUATION_ON
+  logical :: anyabs,initialfield,ATTENUATION_VISCOELASTIC_SOLID
   logical :: SAVE_FORWARD
 
   double precision :: deltatcube,deltatfourth,twelvedeltat,fourdeltatsquare
@@ -123,7 +123,7 @@
   double precision, dimension(NGLLX,NGLLZ,nspec) :: rx_viscous
   double precision, dimension(NGLLX,NGLLZ,nspec) :: rz_viscous
   double precision :: theta_e,theta_s
-  logical TURN_VISCATTENUATION_ON
+  logical ATTENUATION_POROELASTIC_SOLID
   double precision, dimension(3):: bl_unrelaxed,bl_relaxed
 
 ! derivatives of Lagrange polynomials
@@ -185,7 +185,7 @@
   real(kind=CUSTOM_REAL) :: Un,Unp1,tauinv,Sn,Snp1,theta_n,theta_np1,tauinvsquare,tauinvcube,tauinvUn
 
 ! compute Grad(displs_poroelastic) at time step n for attenuation
-  if(TURN_ATTENUATION_ON) call compute_gradient_attenuation(displs_poroelastic,dux_dxl_n,duz_dxl_n, &
+  if(ATTENUATION_VISCOELASTIC_SOLID) call compute_gradient_attenuation(displs_poroelastic,dux_dxl_n,duz_dxl_n, &
       dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,poroelastic,hprime_xx,hprime_zz,nspec,nglob)
 
 ! loop over spectral elements
@@ -315,7 +315,7 @@
 
 ! compute stress tensor (include attenuation or anisotropy if needed)
 
-  if(TURN_ATTENUATION_ON) then
+  if(ATTENUATION_VISCOELASTIC_SOLID) then
 ! Dissipation only controlled by frame share attenuation in poroelastic (see Morency & Tromp, GJI 2008).
 ! attenuation is implemented following the memory variable formulation of
 ! J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
@@ -495,7 +495,7 @@
           bl_relaxed(2) = etal_f*invpermlxz
           bl_relaxed(3) = etal_f*invpermlzz
 
-    if(TURN_VISCATTENUATION_ON) then
+    if(ATTENUATION_POROELASTIC_SOLID) then
           bl_unrelaxed(1) = etal_f*invpermlxx*theta_e/theta_s
           bl_unrelaxed(2) = etal_f*invpermlxz*theta_e/theta_s
           bl_unrelaxed(3) = etal_f*invpermlzz*theta_e/theta_s
@@ -506,7 +506,7 @@
 
           iglob = ibool(i,j,ispec)
 
-     if(TURN_VISCATTENUATION_ON) then
+     if(ATTENUATION_POROELASTIC_SOLID) then
 ! compute the viscous damping term with the unrelaxed viscous coef and add memory variable
       viscodampx = velocw_poroelastic(1,iglob)*bl_unrelaxed(1) + velocw_poroelastic(2,iglob)*bl_unrelaxed(2)&
                   - rx_viscous(i,j,ispec)
@@ -571,7 +571,7 @@
       M_biot = kappal_s*kappal_s/(D_biot - kappal_fr)
 
     call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mul_fr,phil, &
-             tortl,rhol_s,rhol_f,etal_f,permlxx,f0,freq0,Q0,w_c,TURN_VISCATTENUATION_ON)
+             tortl,rhol_s,rhol_f,etal_f,permlxx,f0,freq0,Q0,w_c,ATTENUATION_POROELASTIC_SOLID)
 
       cpIl = sqrt(cpIsquare)
       cpIIl = sqrt(cpIIsquare)
@@ -880,7 +880,7 @@
   endif ! if not using an initial field
 
 ! implement attenuation
-  if(TURN_ATTENUATION_ON) then
+  if(ATTENUATION_VISCOELASTIC_SOLID) then
 
 ! compute Grad(displs_poroelastic) at time step n+1 for attenuation
     call compute_gradient_attenuation(displs_poroelastic,dux_dxl_np1,duz_dxl_np1, &

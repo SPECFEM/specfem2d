@@ -46,7 +46,7 @@
 !----
 
   subroutine get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mul_fr,phil, &
-             tortl,rhol_s,rhol_f,etal_f,perm,fi,f0,Q0,w_c,TURN_VISCATTENUATION_ON)
+             tortl,rhol_s,rhol_f,etal_f,perm,fi,f0,Q0,w_c,ATTENUATION_POROELASTIC_SOLID)
 
   implicit none
 
@@ -64,7 +64,7 @@
   double precision :: wi,fi,taus,taue,Q0,bbr,bbi
 
   double precision :: gA,gB,sa,sb,xxs,yys
-  logical :: TURN_VISCATTENUATION_ON
+  logical :: ATTENUATION_POROELASTIC_SOLID
 
     rhol_bar =  (1.d0 - phil)*rhol_s + phil*rhol_f
 
@@ -78,7 +78,7 @@
     taue = (sqrt(Q0*Q0+1) +1)/(w0il*Q0)
     taus = (sqrt(Q0*Q0+1) -1)/(w0il*Q0)
 
-     if(TURN_VISCATTENUATION_ON) then
+     if(ATTENUATION_POROELASTIC_SOLID) then
 ! high frequency, with memory variables
     bbr = etal_f/perm*(1.d0+alpha*alpha*taus*taue)/(1.d0 + alpha*alpha*taus*taus)
     bbi = etal_f/perm*alpha*(taue-taus)/(1.d0 + alpha*alpha*taus*taus)
