@@ -2,10 +2,11 @@
 README
 ----------------------------------------------------------------------
 
-This example creates an external mesh with fluid and solid domains, and topography.
+This example creates the fluid-solid example with flat ocean bottom from the 2000 Geophysics paper of Komatitsch, Barnes and Tromp.
 
 To run the example, type:
 
   ./process.sh
 
 in this directory.
+
