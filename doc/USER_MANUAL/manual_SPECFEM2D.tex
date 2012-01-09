@@ -362,6 +362,23 @@ to create the mesh (which will be stored in directory \texttt{OUTPUT\_FILES/}). 
 \end{figure}
 %%
 
+Regarding mesh point numbering in the files created by the mesher, we use the classical convention of 4-node and 9-node finite elements:
+\begin{verbatim}
+         4 . . . . 7 . . . . 3
+         .                   .
+         .         eta       .
+         .         |         .
+         8         9--xi     6
+         .                   .
+         .                   .
+         .                   .
+         1 . . . . 5 . . . . 2
+\end{verbatim}
+\noindent
+the local coordinate system being $\xi$ and $\eta$ (\texttt{xi} and \texttt{eta}).
+Note that this convention is used to describe the geometry only. In the solver the wave field is then described based on high-order Lagrange interpolants 
+at Gauss-Lobatto-Legendre points, as is classical in spectral-element methods.
+
 \section{How to use Gmsh to generate an external mesh}
 
 Gmsh%
