@@ -48,7 +48,7 @@
                   nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
                   numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
                   c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,e1,e11, &
-                  TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
+                  ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
 ! compute pressure in acoustic elements and in elastic elements
 
@@ -85,7 +85,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
   real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
 
-  logical :: assign_external_model,TURN_ATTENUATION_ON
+  logical :: assign_external_model,ATTENUATION_VISCOELASTIC_SOLID
 
   integer :: N_SLS
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11
@@ -107,7 +107,7 @@
          nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
          numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,ispec,e1,e11, &
-         TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
+         ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
 ! use vector_field_display as temporary storage, store pressure in its second component
     do j = 1,NGLLZ
@@ -131,7 +131,7 @@
          nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
          numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,ispec,e1,e11, &
-         TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
+         ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
 ! compute pressure in acoustic elements and in elastic elements
 
@@ -168,7 +168,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
   real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
 
-  logical :: assign_external_model,TURN_ATTENUATION_ON
+  logical :: assign_external_model,ATTENUATION_VISCOELASTIC_SOLID
 
   integer :: N_SLS
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11
@@ -272,7 +272,7 @@
 
 ! compute diagonal components of the stress tensor (include attenuation or anisotropy if needed)
 
-        if(TURN_ATTENUATION_ON) then
+        if(ATTENUATION_VISCOELASTIC_SOLID) then
 
 ! attenuation is implemented following the memory variable formulation of
 ! J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
@@ -423,7 +423,7 @@
 
 ! compute diagonal components of the stress tensor (include attenuation if needed)
 
-        if(TURN_ATTENUATION_ON) then
+        if(ATTENUATION_VISCOELASTIC_SOLID) then
 !-------------------- ATTENTION TO BE DEFINED ------------------------------!
 
 ! attenuation is implemented following the memory variable formulation of

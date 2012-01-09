@@ -45,7 +45,7 @@
 subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
      ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
      source_type,it,NSTEP,anyabs,assign_external_model, &
-     initialfield,TURN_ATTENUATION_ON,angleforce,deltatcube, &
+     initialfield,ATTENUATION_VISCOELASTIC_SOLID,angleforce,deltatcube, &
      deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,elastic,codeabs, &
      accel_elastic,veloc_elastic,displ_elastic,b_accel_elastic,b_displ_elastic, &
      density,poroelastcoef,xix,xiz,gammax,gammaz, &
@@ -80,7 +80,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   integer, dimension(nelemabs) :: ib_bottom
   integer, dimension(nelemabs) :: ib_top
 
-  logical :: anyabs,assign_external_model,initialfield,TURN_ATTENUATION_ON,add_Bielak_conditions
+  logical :: anyabs,assign_external_model,initialfield,ATTENUATION_VISCOELASTIC_SOLID,add_Bielak_conditions
 
   logical :: SAVE_FORWARD
 
@@ -188,7 +188,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   sigma_zz = 0
 
   ! compute Grad(displ_elastic) at time step n for attenuation
-  if(TURN_ATTENUATION_ON) then
+  if(ATTENUATION_VISCOELASTIC_SOLID) then
      call compute_gradient_attenuation(displ_elastic,dux_dxl_n,duz_dxl_n, &
           dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob)
   endif
@@ -305,7 +305,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
               ! compute stress tensor (include attenuation or anisotropy if needed)
 
-              if(TURN_ATTENUATION_ON) then
+              if(ATTENUATION_VISCOELASTIC_SOLID) then
 
                  ! attenuation is implemented following the memory variable formulation of
                  ! J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
@@ -940,7 +940,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   endif ! if not using an initial field
 
   ! implement attenuation
-  if(TURN_ATTENUATION_ON) then
+  if(ATTENUATION_VISCOELASTIC_SOLID) then
 
      ! compute Grad(displ_elastic) at time step n+1 for attenuation
      call compute_gradient_attenuation(displ_elastic,dux_dxl_np1,duz_dxl_np1, &

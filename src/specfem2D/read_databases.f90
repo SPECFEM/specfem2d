@@ -51,8 +51,8 @@
                   meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows, &
                   anglerec,initialfield,add_Bielak_conditions, &
                   seismotype,imagetype,assign_external_model,READ_EXTERNAL_SEP_FILE, &
-                  output_grid,output_energy,output_wavefield_snapshot,TURN_ATTENUATION_ON, &
-                  TURN_VISCATTENUATION_ON,Q0,freq0,p_sv, &
+                  output_grid,output_energy,output_wavefield_snapshot,ATTENUATION_VISCOELASTIC_SOLID, &
+                  ATTENUATION_POROELASTIC_SOLID,Q0,freq0,p_sv, &
                   NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCES, &
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_CONSTANT_BLUE_IN_JPG,US_LETTER, &
                   POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, &
@@ -72,7 +72,7 @@
   logical :: meshvect,modelvect,boundvect,initialfield,add_Bielak_conditions, &
     assign_external_model,READ_EXTERNAL_SEP_FILE, &
     output_grid,output_energy,output_wavefield_snapshot,p_sv
-  logical :: TURN_ATTENUATION_ON,TURN_VISCATTENUATION_ON
+  logical :: ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_POROELASTIC_SOLID
 
   double precision :: cutsnaps,sizemax_arrows,anglerec
   double precision :: Q0,freq0
@@ -194,10 +194,10 @@
   read(IIN,*) assign_external_model,READ_EXTERNAL_SEP_FILE
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) output_grid,output_energy,output_wavefield_snapshot,TURN_ATTENUATION_ON
+  read(IIN,*) output_grid,output_energy,output_wavefield_snapshot,ATTENUATION_VISCOELASTIC_SOLID
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) TURN_VISCATTENUATION_ON,Q0,freq0
+  read(IIN,*) ATTENUATION_POROELASTIC_SOLID,Q0,freq0
 
   read(IIN,"(a80)") datlin
   read(IIN,*) p_sv
@@ -241,7 +241,7 @@
     write(IOUT,600) NTSTEP_BETWEEN_OUTPUT_INFO,colors,numbers
     write(IOUT,700) seismotype,anglerec
     write(IOUT,750) initialfield,add_Bielak_conditions,assign_external_model,&
-                    READ_EXTERNAL_SEP_FILE,TURN_ATTENUATION_ON, &
+                    READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID, &
                     output_grid,output_energy
     write(IOUT,800) imagetype,100.d0*cutsnaps,subsamp_postscript
   endif
@@ -252,7 +252,7 @@
   if (myrank == 0 .and. ipass == 1) write(IOUT,703) NSTEP,deltat,NSTEP*deltat
 
   if( SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. &
-    (TURN_ATTENUATION_ON .or. TURN_VISCATTENUATION_ON) ) then
+    (ATTENUATION_VISCOELASTIC_SOLID .or. ATTENUATION_POROELASTIC_SOLID) ) then
     print*, '*************** WARNING ***************'
     print*, 'Anisotropy & Attenuation & Viscous damping are not presently implemented for adjoint calculations'
     stop
@@ -289,7 +289,7 @@
   'Add Bielak conditions . . . .(add_Bielak_conditions) = ',l6/5x, &
   'Assign external model . . . .(assign_external_model) = ',l6/5x, &
   'Read external SEP file . . .(READ_EXTERNAL_SEP_FILE) = ',l6/5x, &
-  'Turn attenuation on or off. . .(TURN_ATTENUATION_ON) = ',l6/5x, &
+  'Turn attenuation on or off. . .(ATTENUATION_VISCOELASTIC_SOLID) = ',l6/5x, &
   'Save grid in external file or not. . . (output_grid) = ',l6/5x, &
   'Save a file with total energy or not.(output_energy) = ',l6)
 

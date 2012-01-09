@@ -114,7 +114,7 @@
 
   subroutine initialize_simulation_domains(any_acoustic,any_elastic,any_poroelastic, &
                                 anisotropic,elastic,poroelastic,porosity,anisotropy,kmato,numat, &
-                                nspec,nspec_allocate,p_sv,TURN_ATTENUATION_ON)
+                                nspec,nspec_allocate,p_sv,ATTENUATION_VISCOELASTIC_SOLID)
 
   implicit none
   include "constants.h"
@@ -131,7 +131,7 @@
   integer, dimension(nspec) :: kmato
 
   logical :: any_acoustic,any_elastic,any_poroelastic
-  logical :: p_sv,TURN_ATTENUATION_ON
+  logical :: p_sv,ATTENUATION_VISCOELASTIC_SOLID
 
   ! local parameters
   integer :: ispec
@@ -177,7 +177,7 @@
     print*, '*************** WARNING ***************'
     stop
   endif
-  if(.not. p_sv .and. (TURN_ATTENUATION_ON)) then
+  if(.not. p_sv .and. (ATTENUATION_VISCOELASTIC_SOLID)) then
     print*, '*************** WARNING ***************'
     print*, 'Attenuation and anisotropy are not implemented for surface (membrane) waves calculation'
     print*, '*************** WARNING ***************'
@@ -185,7 +185,7 @@
   endif
 
 
-  if(TURN_ATTENUATION_ON) then
+  if(ATTENUATION_VISCOELASTIC_SOLID) then
     nspec_allocate = nspec
   else
     nspec_allocate = 1

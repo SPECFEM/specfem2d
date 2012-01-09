@@ -127,11 +127,11 @@
     write(15,*) 'assign_external_model READ_EXTERNAL_SEP_FILE'
     write(15,*) assign_external_model,READ_EXTERNAL_SEP_FILE
 
-    write(15,*) 'output_grid output_energy output_wavefield_snapshot TURN_ATTENUATION_ON'
-    write(15,*) output_grid,output_energy,output_wavefield_snapshot,TURN_ATTENUATION_ON
+    write(15,*) 'output_grid output_energy output_wavefield_snapshot ATTENUATION_VISCOELASTIC_SOLID'
+    write(15,*) output_grid,output_energy,output_wavefield_snapshot,ATTENUATION_VISCOELASTIC_SOLID
 
-    write(15,*) 'TURN_VISCATTENUATION_ON Q0 freq0'
-    write(15,*) TURN_VISCATTENUATION_ON,Q0,freq0
+    write(15,*) 'ATTENUATION_POROELASTIC_SOLID Q0 freq0'
+    write(15,*) ATTENUATION_POROELASTIC_SOLID,Q0,freq0
 
     write(15,*) 'p_sv'
     write(15,*) p_sv

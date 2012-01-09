@@ -50,7 +50,7 @@
                       coorg,xinterp,zinterp,shapeint,knods,simulation_title, &
                       npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic, &
                       myrank,nproc,NSOURCES,poroelastic, &
-                      freq0,Q0,TURN_VISCATTENUATION_ON,US_LETTER,output_postscript_snapshot)
+                      freq0,Q0,ATTENUATION_POROELASTIC_SOLID,US_LETTER,output_postscript_snapshot)
 
 ! check the mesh, stability and number of points per wavelength
 
@@ -102,7 +102,7 @@
   double precision :: deltat
 
   logical :: assign_external_model,initialfield,any_elastic,any_poroelastic,all_anisotropic, &
-          TURN_VISCATTENUATION_ON,output_postscript_snapshot
+          ATTENUATION_POROELASTIC_SOLID,output_postscript_snapshot
 
   integer :: myrank,nproc
 
@@ -276,7 +276,7 @@
       M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
 
       call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-             tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,TURN_VISCATTENUATION_ON)
+             tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,ATTENUATION_POROELASTIC_SOLID)
 
       cpIloc = sqrt(cpIsquare)
       cpIIloc = sqrt(cpIIsquare)
@@ -592,7 +592,7 @@
       M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
 
       call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-             tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,TURN_VISCATTENUATION_ON)
+             tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,ATTENUATION_POROELASTIC_SOLID)
 
       cpIloc = sqrt(cpIsquare)
       cpIIloc = sqrt(cpIIsquare)
@@ -1076,7 +1076,7 @@
       M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
 
       call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-           tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,TURN_VISCATTENUATION_ON)
+           tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,ATTENUATION_POROELASTIC_SOLID)
 
       cpIloc = sqrt(cpIsquare)
     else
@@ -1430,7 +1430,7 @@
       M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
 
     call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-             tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,TURN_VISCATTENUATION_ON)
+             tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,ATTENUATION_POROELASTIC_SOLID)
 
     cpIloc = sqrt(cpIsquare)
     csloc = sqrt(cssquare)
@@ -1848,7 +1848,7 @@ endif
       M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
 
     call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-             tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,TURN_VISCATTENUATION_ON)
+             tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,ATTENUATION_POROELASTIC_SOLID)
 
     cpIloc = sqrt(cpIsquare)
    else

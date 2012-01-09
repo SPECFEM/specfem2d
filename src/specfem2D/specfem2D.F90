@@ -500,7 +500,7 @@
     nelemabs,nelem_acoustic_surface,ispecabs,UPPER_LIMIT_DISPLAY
 
   logical interpol,meshvect,modelvect,boundvect,assign_external_model,initialfield, &
-    output_grid,gnuplot,TURN_ATTENUATION_ON,output_postscript_snapshot,output_color_image, &
+    output_grid,gnuplot,ATTENUATION_VISCOELASTIC_SOLID,output_postscript_snapshot,output_color_image, &
     plot_lowerleft_corner_only,add_Bielak_conditions,output_energy,READ_EXTERNAL_SEP_FILE, &
     output_wavefield_snapshot
 
@@ -535,7 +535,7 @@
   double precision :: theta_e,theta_s
   double precision :: Q0,freq0
   double precision :: alphaval,betaval,gammaval,thetainv
-  logical :: TURN_VISCATTENUATION_ON
+  logical :: ATTENUATION_POROELASTIC_SOLID
   double precision, dimension(NGLLX,NGLLZ) :: viscox_loc,viscoz_loc
   double precision :: Sn,Snp1,etal_f
   double precision, dimension(3):: bl_relaxed
@@ -907,8 +907,8 @@
                   meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows, &
                   anglerec,initialfield,add_Bielak_conditions, &
                   seismotype,imagetype,assign_external_model,READ_EXTERNAL_SEP_FILE, &
-                  output_grid,output_energy,output_wavefield_snapshot,TURN_ATTENUATION_ON, &
-                  TURN_VISCATTENUATION_ON,Q0,freq0,p_sv, &
+                  output_grid,output_energy,output_wavefield_snapshot,ATTENUATION_VISCOELASTIC_SOLID, &
+                  ATTENUATION_POROELASTIC_SOLID,Q0,freq0,p_sv, &
                   NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCES, &
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_CONSTANT_BLUE_IN_JPG,US_LETTER, &
                   POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, &
@@ -939,8 +939,8 @@
                       meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows, &
                       anglerec,initialfield,add_Bielak_conditions, &
                       seismotype,imagetype,assign_external_model,READ_EXTERNAL_SEP_FILE, &
-                      output_grid,output_energy,output_wavefield_snapshot,TURN_ATTENUATION_ON, &
-                      TURN_VISCATTENUATION_ON,Q0,freq0,p_sv, &
+                      output_grid,output_energy,output_wavefield_snapshot,ATTENUATION_VISCOELASTIC_SOLID, &
+                      ATTENUATION_POROELASTIC_SOLID,Q0,freq0,p_sv, &
                       NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCES, &
                       factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_CONSTANT_BLUE_IN_JPG,US_LETTER, &
                       POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, &
@@ -1054,7 +1054,7 @@
   !---- read the material properties
   !
   call gmat01(density,porosity,tortuosity,anisotropy,permeability,poroelastcoef,numat,&
-              myrank,ipass,QKappa_attenuation,Qmu_attenuation,freq0,Q0,f0(1),TURN_VISCATTENUATION_ON)
+              myrank,ipass,QKappa_attenuation,Qmu_attenuation,freq0,Q0,f0(1),ATTENUATION_POROELASTIC_SOLID)
   !
   !----  read spectral macrobloc data
   !
@@ -1154,7 +1154,7 @@
 !-------------------------------------------------------------------------------
   call initialize_simulation_domains(any_acoustic,any_elastic,any_poroelastic, &
                                 anisotropic,elastic,poroelastic,porosity,anisotropy,kmato,numat, &
-                                nspec,nspec_allocate,p_sv,TURN_ATTENUATION_ON)
+                                nspec,nspec_allocate,p_sv,ATTENUATION_VISCOELASTIC_SOLID)
 
   ! allocate memory variables for attenuation
   if(ipass == 1) then
@@ -1198,7 +1198,7 @@
 
 ! allocate memory variables for viscous attenuation (poroelastic media)
   if(ipass == 1) then
-    if(TURN_VISCATTENUATION_ON) then
+    if(ATTENUATION_POROELASTIC_SOLID) then
       allocate(rx_viscous(NGLLX,NGLLZ,nspec))
       allocate(rz_viscous(NGLLX,NGLLZ,nspec))
       allocate(viscox(NGLLX,NGLLZ,nspec))
@@ -1906,7 +1906,7 @@
   if(all_anisotropic .and. anyabs) &
     call exit_MPI('Cannot put absorbing boundaries if anisotropic materials along edges')
 
-  if(TURN_ATTENUATION_ON .and. all_anisotropic) then
+  if(ATTENUATION_VISCOELASTIC_SOLID .and. all_anisotropic) then
     call exit_MPI('Cannot turn attenuation on in anisotropic materials')
   end if
 
@@ -1930,7 +1930,7 @@
 #endif
 
   ! for acoustic
-  if(TURN_ATTENUATION_ON .and. .not. any_elastic_glob) &
+  if(ATTENUATION_VISCOELASTIC_SOLID .and. .not. any_elastic_glob) &
     call exit_MPI('currently cannot have attenuation if acoustic/poroelastic simulation only')
 
 !
@@ -2805,7 +2805,7 @@
                  coorg,xinterp,zinterp,shape2D_display,knods,simulation_title, &
                  npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic, &
                  myrank,nproc,NSOURCES,poroelastic, &
-                 freq0,Q0,TURN_VISCATTENUATION_ON,US_LETTER,output_postscript_snapshot)
+                 freq0,Q0,ATTENUATION_POROELASTIC_SOLID,US_LETTER,output_postscript_snapshot)
 
 ! convert receiver angle to radians
   anglerec = anglerec * pi / 180.d0
@@ -3133,7 +3133,7 @@
 
       ! call Paco's routine to compute in frequency and convert to time by Fourier transform
       call paco_beyond_critical(coord,nglob,deltat,NSTEP,angleforce(1),&
-              f0(1),cploc,csloc,TURN_ATTENUATION_ON,QKappa_attenuation(1),source_type(1),v0x_left,v0z_left, &
+              f0(1),cploc,csloc,ATTENUATION_VISCOELASTIC_SOLID,QKappa_attenuation(1),source_type(1),v0x_left,v0z_left, &
               v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right, &
               t0x_bot,t0z_bot,left_bound(1:count_left),right_bound(1:count_right),bot_bound(1:count_bottom), &
               count_left,count_right,count_bottom,displ_elastic,veloc_elastic,accel_elastic,x_source(1))
@@ -3553,7 +3553,7 @@
 ! the common nodes forming the edge are computed here
   if(coupled_elastic_poro) then
 
-    if(TURN_ATTENUATION_ON .or. TURN_VISCATTENUATION_ON) &
+    if(ATTENUATION_VISCOELASTIC_SOLID .or. ATTENUATION_POROELASTIC_SOLID) &
                    stop 'Attenuation not supported for mixed elastic/poroelastic simulations'
 
     if ( myrank == 0 ) then
@@ -3912,7 +3912,7 @@
   seismo_current = 0
 
 ! Precompute Runge Kutta coefficients if viscous attenuation
-  if(TURN_VISCATTENUATION_ON) then
+  if(ATTENUATION_POROELASTIC_SOLID) then
     theta_e = (sqrt(Q0**2+1.d0) +1.d0)/(2.d0*pi*freq0*Q0)
     theta_s = (sqrt(Q0**2+1.d0) -1.d0)/(2.d0*pi*freq0*Q0)
 
@@ -4166,7 +4166,7 @@
 !--------------------------------------------------------------------------------------------
 ! implement viscous attenuation for poroelastic media
 !
-    if(TURN_VISCATTENUATION_ON .and. any_poroelastic) then
+    if(ATTENUATION_POROELASTIC_SOLID .and. any_poroelastic) then
       ! update memory variables with fourth-order Runge-Kutta time scheme for attenuation
       ! loop over spectral elements
       do ispec = 1,nspec
@@ -4685,7 +4685,7 @@
       call compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
                source_type,it,NSTEP,anyabs,assign_external_model, &
-               initialfield,TURN_ATTENUATION_ON,angleforce,deltatcube, &
+               initialfield,ATTENUATION_VISCOELASTIC_SOLID,angleforce,deltatcube, &
                deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,elastic,codeabs, &
                accel_elastic,veloc_elastic,displ_elastic,b_accel_elastic,b_displ_elastic, &
                density,poroelastcoef,xix,xiz,gammax,gammaz, &
@@ -5320,7 +5320,7 @@
       call compute_forces_poro_solid(nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                source_type,it,NSTEP,anyabs, &
-               initialfield,TURN_ATTENUATION_ON,TURN_VISCATTENUATION_ON,deltatcube, &
+               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_POROELASTIC_SOLID,deltatcube, &
                deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,poroelastic,codeabs, &
                accels_poroelastic,velocs_poroelastic,velocw_poroelastic,displs_poroelastic,displw_poroelastic,&
                b_accels_poroelastic,b_displs_poroelastic,b_displw_poroelastic,&
@@ -5343,7 +5343,7 @@
       call compute_forces_poro_fluid(nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                source_type,it,NSTEP,anyabs, &
-               initialfield,TURN_ATTENUATION_ON,TURN_VISCATTENUATION_ON,deltatcube, &
+               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_POROELASTIC_SOLID,deltatcube, &
                deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,poroelastic,codeabs, &
                accelw_poroelastic,velocw_poroelastic,displw_poroelastic,velocs_poroelastic,displs_poroelastic,&
                b_accelw_poroelastic,b_displw_poroelastic,b_displs_poroelastic,&
@@ -6187,7 +6187,7 @@
                         anisotropic,anisotropy,wxgll,wzgll,numat, &
                         pressure_element,vector_field_element,e1,e11, &
                         potential_dot_acoustic,potential_dot_dot_acoustic, &
-                        TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS,p_sv)
+                        ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS,p_sv)
 
 !----  display time step and max of norm of displacement
     if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
@@ -6216,7 +6216,7 @@
               nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
               numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
               c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,ispec,e1,e11, &
-              TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
+              ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
       else if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
 
@@ -6978,7 +6978,7 @@
                      nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
                      numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
                      c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,e1,e11, &
-                     TURN_ATTENUATION_ON,Mu_nu1,Mu_nu2,N_SLS)
+                     ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
         else if(imagetype == 4 .and. .not. p_sv) then
           call exit_MPI('cannot draw pressure field for SH (membrane) waves')
