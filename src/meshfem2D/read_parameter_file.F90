@@ -68,7 +68,7 @@ module parameter_file
   integer :: nx,ngnod
 
   logical :: initialfield,add_Bielak_conditions,assign_external_model, &
-            READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_POROELASTIC_SOLID
+            READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART
 
   double precision :: Q0,freq0
 
@@ -211,7 +211,7 @@ contains
   if(err_occurred() /= 0) stop 'error reading parameter 11 in Par_file'
 
   ! read viscous attenuation parameters (poroelastic media)
-  call read_value_logical_p(ATTENUATION_POROELASTIC_SOLID, 'solver.ATTENUATION_POROELASTIC_SOLID')
+  call read_value_logical_p(ATTENUATION_PORO_FLUID_PART, 'solver.ATTENUATION_PORO_FLUID_PART')
   if(err_occurred() /= 0) stop 'error reading parameter 12 in Par_file'
 
   call read_value_double_precision_p(Q0, 'solver.Q0')

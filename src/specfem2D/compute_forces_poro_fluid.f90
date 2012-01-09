@@ -44,7 +44,7 @@
   subroutine compute_forces_poro_fluid(nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                source_type,it,NSTEP,anyabs, &
-               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_POROELASTIC_SOLID,deltatcube, &
+               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltatcube, &
                deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,poroelastic,codeabs, &
                accelw_poroelastic,velocw_poroelastic,displw_poroelastic,velocs_poroelastic,displs_poroelastic,&
                b_accelw_poroelastic,b_displw_poroelastic,b_displs_poroelastic,&
@@ -123,7 +123,7 @@
   double precision, dimension(NGLLX,NGLLZ,nspec) :: rx_viscous
   double precision, dimension(NGLLX,NGLLZ,nspec) :: rz_viscous
   double precision :: theta_e,theta_s
-  logical ATTENUATION_POROELASTIC_SOLID
+  logical ATTENUATION_PORO_FLUID_PART
   double precision, dimension(3):: bl_unrelaxed,bl_relaxed
 
 ! derivatives of Lagrange polynomials
@@ -475,7 +475,7 @@
           bl_relaxed(2) = etal_f*invpermlxz
           bl_relaxed(3) = etal_f*invpermlzz
 
-    if(ATTENUATION_POROELASTIC_SOLID) then
+    if(ATTENUATION_PORO_FLUID_PART) then
           bl_unrelaxed(1) = etal_f*invpermlxx*theta_e/theta_s
           bl_unrelaxed(2) = etal_f*invpermlxz*theta_e/theta_s
           bl_unrelaxed(3) = etal_f*invpermlzz*theta_e/theta_s
@@ -486,7 +486,7 @@
 
           iglob = ibool(i,j,ispec)
 
-     if(ATTENUATION_POROELASTIC_SOLID) then
+     if(ATTENUATION_PORO_FLUID_PART) then
 ! compute the viscous damping term with the unrelaxed viscous coef and add memory variable
       viscodampx = velocw_poroelastic(1,iglob)*bl_unrelaxed(1) + velocw_poroelastic(2,iglob)*bl_unrelaxed(2)&
                  - rx_viscous(i,j,ispec)
@@ -552,7 +552,7 @@
       M_biot = kappal_s*kappal_s/(D_biot - kappal_fr)
 
     call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mul_fr,phil, &
-             tortl,rhol_s,rhol_f,etal_f,permlxx,f0,freq0,Q0,w_c,ATTENUATION_POROELASTIC_SOLID)
+             tortl,rhol_s,rhol_f,etal_f,permlxx,f0,freq0,Q0,w_c,ATTENUATION_PORO_FLUID_PART)
 
       cpIl = sqrt(cpIsquare)
       cpIIl = sqrt(cpIIsquare)

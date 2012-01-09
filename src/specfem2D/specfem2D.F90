@@ -535,7 +535,7 @@
   double precision :: theta_e,theta_s
   double precision :: Q0,freq0
   double precision :: alphaval,betaval,gammaval,thetainv
-  logical :: ATTENUATION_POROELASTIC_SOLID
+  logical :: ATTENUATION_PORO_FLUID_PART
   double precision, dimension(NGLLX,NGLLZ) :: viscox_loc,viscoz_loc
   double precision :: Sn,Snp1,etal_f
   double precision, dimension(3):: bl_relaxed
@@ -908,7 +908,7 @@
                   anglerec,initialfield,add_Bielak_conditions, &
                   seismotype,imagetype,assign_external_model,READ_EXTERNAL_SEP_FILE, &
                   output_grid,output_energy,output_wavefield_snapshot,ATTENUATION_VISCOELASTIC_SOLID, &
-                  ATTENUATION_POROELASTIC_SOLID,Q0,freq0,p_sv, &
+                  ATTENUATION_PORO_FLUID_PART,Q0,freq0,p_sv, &
                   NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCES, &
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_CONSTANT_BLUE_IN_JPG,US_LETTER, &
                   POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, &
@@ -940,7 +940,7 @@
                       anglerec,initialfield,add_Bielak_conditions, &
                       seismotype,imagetype,assign_external_model,READ_EXTERNAL_SEP_FILE, &
                       output_grid,output_energy,output_wavefield_snapshot,ATTENUATION_VISCOELASTIC_SOLID, &
-                      ATTENUATION_POROELASTIC_SOLID,Q0,freq0,p_sv, &
+                      ATTENUATION_PORO_FLUID_PART,Q0,freq0,p_sv, &
                       NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCES, &
                       factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_CONSTANT_BLUE_IN_JPG,US_LETTER, &
                       POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, &
@@ -1054,7 +1054,7 @@
   !---- read the material properties
   !
   call gmat01(density,porosity,tortuosity,anisotropy,permeability,poroelastcoef,numat,&
-              myrank,ipass,QKappa_attenuation,Qmu_attenuation,freq0,Q0,f0(1),ATTENUATION_POROELASTIC_SOLID)
+              myrank,ipass,QKappa_attenuation,Qmu_attenuation,freq0,Q0,f0(1),ATTENUATION_PORO_FLUID_PART)
   !
   !----  read spectral macrobloc data
   !
@@ -1198,7 +1198,7 @@
 
 ! allocate memory variables for viscous attenuation (poroelastic media)
   if(ipass == 1) then
-    if(ATTENUATION_POROELASTIC_SOLID) then
+    if(ATTENUATION_PORO_FLUID_PART) then
       allocate(rx_viscous(NGLLX,NGLLZ,nspec))
       allocate(rz_viscous(NGLLX,NGLLZ,nspec))
       allocate(viscox(NGLLX,NGLLZ,nspec))
@@ -2805,7 +2805,7 @@
                  coorg,xinterp,zinterp,shape2D_display,knods,simulation_title, &
                  npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic, &
                  myrank,nproc,NSOURCES,poroelastic, &
-                 freq0,Q0,ATTENUATION_POROELASTIC_SOLID,US_LETTER,output_postscript_snapshot)
+                 freq0,Q0,ATTENUATION_PORO_FLUID_PART,US_LETTER,output_postscript_snapshot)
 
 ! convert receiver angle to radians
   anglerec = anglerec * pi / 180.d0
@@ -3553,7 +3553,7 @@
 ! the common nodes forming the edge are computed here
   if(coupled_elastic_poro) then
 
-    if(ATTENUATION_VISCOELASTIC_SOLID .or. ATTENUATION_POROELASTIC_SOLID) &
+    if(ATTENUATION_VISCOELASTIC_SOLID .or. ATTENUATION_PORO_FLUID_PART) &
                    stop 'Attenuation not supported for mixed elastic/poroelastic simulations'
 
     if ( myrank == 0 ) then
@@ -3912,7 +3912,7 @@
   seismo_current = 0
 
 ! Precompute Runge Kutta coefficients if viscous attenuation
-  if(ATTENUATION_POROELASTIC_SOLID) then
+  if(ATTENUATION_PORO_FLUID_PART) then
     theta_e = (sqrt(Q0**2+1.d0) +1.d0)/(2.d0*pi*freq0*Q0)
     theta_s = (sqrt(Q0**2+1.d0) -1.d0)/(2.d0*pi*freq0*Q0)
 
@@ -4166,7 +4166,7 @@
 !--------------------------------------------------------------------------------------------
 ! implement viscous attenuation for poroelastic media
 !
-    if(ATTENUATION_POROELASTIC_SOLID .and. any_poroelastic) then
+    if(ATTENUATION_PORO_FLUID_PART .and. any_poroelastic) then
       ! update memory variables with fourth-order Runge-Kutta time scheme for attenuation
       ! loop over spectral elements
       do ispec = 1,nspec
@@ -5320,7 +5320,7 @@
       call compute_forces_poro_solid(nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                source_type,it,NSTEP,anyabs, &
-               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_POROELASTIC_SOLID,deltatcube, &
+               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltatcube, &
                deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,poroelastic,codeabs, &
                accels_poroelastic,velocs_poroelastic,velocw_poroelastic,displs_poroelastic,displw_poroelastic,&
                b_accels_poroelastic,b_displs_poroelastic,b_displw_poroelastic,&
@@ -5343,7 +5343,7 @@
       call compute_forces_poro_fluid(nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                source_type,it,NSTEP,anyabs, &
-               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_POROELASTIC_SOLID,deltatcube, &
+               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltatcube, &
                deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,poroelastic,codeabs, &
                accelw_poroelastic,velocw_poroelastic,displw_poroelastic,velocs_poroelastic,displs_poroelastic,&
                b_accelw_poroelastic,b_displw_poroelastic,b_displs_poroelastic,&
