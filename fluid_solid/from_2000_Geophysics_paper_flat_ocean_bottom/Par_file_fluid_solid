@@ -44,7 +44,7 @@ rec_normal_to_surface           = .false.        # base anglerec normal to surfa
 SU_FORMAT                       = .false.        # output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
 
 # first receiver set (repeat these 6 lines and adjust nreceiversets  accordingly)
-nrec                            = 11             # number of receivers
+nrec                            = 110            # number of receivers
 xdeb                            = 2500.d0        # first receiver x in meters
 zdeb                            = 2933.33333d0   # first receiver z in meters
 xfin                            = 6000.d0        # last receiver x in meters (ignored if onlyone receiver)
