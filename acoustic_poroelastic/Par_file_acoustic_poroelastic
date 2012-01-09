@@ -10,14 +10,14 @@ SAVE_FORWARD                    = .false.  # save the last frame, needed for adj
 nproc                           = 1              # number of processes
 partitioning_method             = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
 PERFORM_CUTHILL_MCKEE           = .true.         # perform inverse Cuthill-McKee (1969) optimization/permutation for mesh numbering
-                                                 
+
 ngnod                           = 9              # number of control nodes per element (4 or 9)
 initialfield                    = .false.        # use a plane wave as source or not
 add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
 assign_external_model           = .false.        # define external earth model or not
 READ_EXTERNAL_SEP_FILE          = .false.        # Read external SEP file from DATA/model_velocity.dat_input, or use routine
-TURN_ATTENUATION_ON             = .false.        # turn attenuation on or off for solid medium
-TURN_VISCATTENUATION_ON         = .false.        # turn viscous attenuation on or off
+ATTENUATION_VISCOELASTIC_SOLID  = .false.        # turn attenuation (viscoelasticity) on or off for non-poroelastic solid parts of the model
+ATTENUATION_POROELASTIC_SOLID   = .false.        # turn viscous attenuation on or off for poroelastic solid parts of the model
 Q0                              =  1             # quality factor for viscous attenuation
 freq0                           =  10            # frequency for viscous attenuation
 p_sv                            = .true.         # set the type of calculation (P-SV or SH/membrane waves)
@@ -32,7 +32,7 @@ NSOURCES                        = 1              # number of sources [source inf
 force_normal_to_surface         = .false.        # angleforce normal to surface (external mesh and curve file needed)
 
 # constants for attenuation
-N_SLS                           = 2                      # number of standard linear solids for attenuation 
+N_SLS                           = 2                      # number of standard linear solids for attenuation
 f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, else it is f0
 
 # receiver set parameters for seismograms
@@ -132,7 +132,7 @@ xmax                            = 4800.d0        # abscissa of right side of the
 nx                              = 260            # number of elements along X
 
 # absorbing boundary parameters (see absorbing_conditions above)
-absorbbottom                    = .true.         
+absorbbottom                    = .true.
 absorbright                     = .true.
 absorbtop                       = .false.
 absorbleft                      = .true.
