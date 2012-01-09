@@ -194,10 +194,13 @@
   read(IIN,*) assign_external_model,READ_EXTERNAL_SEP_FILE
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) output_grid,output_energy,output_wavefield_snapshot,ATTENUATION_VISCOELASTIC_SOLID
+  read(IIN,*) output_grid,output_energy,output_wavefield_snapshot
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) ATTENUATION_POROELASTIC_SOLID,Q0,freq0
+  read(IIN,*) ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_POROELASTIC_SOLID
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) Q0,freq0
 
   read(IIN,"(a80)") datlin
   read(IIN,*) p_sv
