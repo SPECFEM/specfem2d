@@ -35,8 +35,8 @@ cd $currentdir
 
 # links executables
 rm -f xmeshfem2D xspecfem2D
-ln -s ../../bin/xmeshfem2D
-ln -s ../../bin/xspecfem2D
+ln -s ../../../bin/xmeshfem2D
+ln -s ../../../bin/xspecfem2D
 
 # stores setup
 cp DATA/Par_file OUTPUT_FILES/
