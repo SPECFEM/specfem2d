@@ -344,6 +344,10 @@
       e13_sum = e13_sum + e13(i,j,ispec,i_sls)
     enddo
 
+! mul_G is the relaxed modulus. Note that it is defined as the
+! frame modulus (in compute_forces_poro_solid.f90), which Christina Morency noted
+! mul_fr, which is in her case equivalent to the solid phase shear
+! modulus, and whose value is entered in Par_file for example
     sigma_xx = sigma_xx + TWO * mul_G * e11_sum
     sigma_xz = sigma_xz + mul_G * e13_sum
     sigma_zz = sigma_zz - TWO * mul_G * e11_sum
