@@ -1,19 +1,43 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov 15 09:00:00 2011
+Updated on Wed Jan 11 2012
 
-Process Par_file to update them to the new format of release 19201
+Processing of Par_file to update them to new format
 
-Usage : "python PathTo/SPECFEM2D/UTILS/ProcessParFileTor19201.py PathTo/filename"
+Usage : "python PathTo/SPECFEM2D/UTILS/ProcessParFileParametersToNewRelease.py"
+This will process all Par_file starting from current directory
 
 @author: Cristini Paul, Laboratoire de Mecanique et d'Acoustique, CNRS, Marseille, France
 """
-
-import sys
-from shutil import move
+import os, string, sys
+from os import listdir, walk
+from shutil import copy, move
 from os.path import exists
-
-def ProcessParfileTor19201(fic):
+#------------------------------------------------------------------------------
+def LoadLig(Fichier):
+    f = open(Fichier,'r')
+    ligs= f.readlines()
+    f.close()
+    return ligs
+#------------------------------------------------------------------------------
+def mylister(currdir):
+    for file in os.listdir(currdir):
+        path=os.path.join(currdir, file)
+        if not os.path.isdir(path):
+            #print path
+            Fichiers.append(path)
+        else:
+            mylister(path)
+#------------------------------------------------------------------------------
+def ProcessParfile_r19201(fic):
+    # Open the file and get all lines from Par_file
+    ligs= LoadLig(fic)
+    # Test pour voir si le traitement a déjà été fait
+    for lig in ligs:
+        if 'ADD_PERIODIC_CONDITIONS' in lig:
+            print '----> '+fic+' already processed to r19201'            
+            return
     # New additions to the Par_file
     a1='PERFORM_CUTHILL_MCKEE           = .true.         # perform inverse Cuthill-McKee (1969) optimization/permutation for mesh numbering\n'
     a2='USER_T0                         = 0.0d0          # use this t0 as earliest starting time rather than the automatically calculated one\n'
@@ -28,40 +52,110 @@ def ProcessParfileTor19201(fic):
     '# horizontal periodicity distance for periodic conditions\n'+ \
     'PERIODIC_horiz_dist             = 0.3597d0\n\n'+ \
     '# grid point detection tolerance for periodic conditions\n'+ \
-    "PERIODIC_DETECT_TOL             = 3.3334d-6\n"
+    'PERIODIC_DETECT_TOL             = 3.3334d-6\n'  
+    #--------------------------------------------------------------------------
+    # Ajout des parametres supplementaires
+    # 
+    for ilg, lig in enumerate(ligs):
+        if lig.startswith('partitioning'):
+            ligs.insert(ilg+1,a1)
+
+        if lig.startswith('deltat'):
+            ligs.insert(ilg+1,a2)
+
+        if lig.startswith('rec_normal'):
+            ligs.insert(ilg+1,a3)
+
+        if lig.startswith('subsamp'):
+            ligs[ilg]=string.replace(ligs[ilg],'subsamp           ','subsamp_postscript',1)
+            ligs.insert(ilg+1,a4)
+
+        if lig.startswith('sizemax'):
+            ligs.insert(ilg+1,a5)
+            
+        if lig.startswith('absorbing_conditions'):
+            ligs.insert(ilg+1,a6)
     #
-    f = open(fic,'r')
-    ligs= f.readlines()
-    f.close()
+    move(fic,fic+'.before_update_to_r19201')
+    fm = open(fic,'w')
+    fm.writelines(ligs)
+    fm.close()
+    #
+    print 'xxxxx------> '+fic+' processed to r19201'
+    return
+#------------------------------------------------------------------------------
+def ProcessParfile_r19340(fic):
+    # Open the file and get all lines from Par_file
+    ligs= LoadLig(fic)
+    # Teste si le traitement a déjà été fait
+    for lig in ligs:
+        if 'nreceiversets' in lig:
+            print '----> '+fic+' already processed to r19340'            
+            return
     #
     # Ajout des parametres supplementaires
-    # On verifie si le fichier n'a pas deja ete traite
-    if not (ligs[0].endswith('r19201\n')):
-        ligs[0]=ligs[0][:-1]+' r19201\n'  # On indique que le fichier est traite pour cette release
-        #
-        Ct=0
-        for ilg, lig in enumerate(ligs):
-            if lig.startswith('partitioning'):
-                ligs.insert(ilg+1,a1)
-            if lig.startswith('deltat'):
-                ligs.insert(ilg+1,a2)
-            if lig.startswith('rec_normal'):
-                ligs.insert(ilg+1,a3)
-            if lig.startswith('subsamp'):
-                ligs[ilg]=string.replace(ligs[ilg],'subsamp           ','subsamp_postscript',1)
-                ligs.insert(ilg+1,a4)
-            if lig.startswith('sizemax'):
-                ligs.insert(ilg+1,a5)
-            if lig.startswith('absorbing_conditions'):
-                ligs.insert(ilg+1,a6)
-#        #
-        move(fic,fic+'.old')
-        fm = open(fic,'w')
-        fm.writelines(ligs)
-        fm.close()
-        print 'File : '+fic+' processed'
-    else:
-        print 'File : '+fic+' already processed'
+    # 
+    for ilg, lig in enumerate(ligs):
+        if lig.startswith('nreceiverlines'):
+            ligs[ilg]=ligs[ilg].replace('lines','sets ')
+    #
+    move(fic,fic+'.before_update_to_r19340')
+    #
+    fm = open(fic,'w')
+    fm.writelines(ligs)
+    fm.close()
+    #
+    print 'xxxxx------> '+fic+' processed to r19340'
     return
+#------------------------------------------------------------------------------
+def ProcessParfile_r19346(fic):
+    # Open the file and get all lines from Par_file
+    ligs= LoadLig(fic)
+    # Teste si le traitement a déjà été fait
+    for lig in ligs:
+        if 'ATTENUATION_PORO_FLUID_PART' in lig:
+            print '----> '+fic+' already processed to r19346'            
+            return
+    #--------------------------------------------------------------------------
+    # Ajout des parametres supplementaires
+    # 
+    for ilg, lig in enumerate(ligs):
+        if lig.startswith('TURN_ATTENUATION_ON'):
+            ligs[ilg]=ligs[ilg].replace('TURN_ATTENUATION_ON           ', \
+                            'ATTENUATION_VISCOELASTIC_SOLID')
+        if lig.startswith('TURN_VISCATTENUATION_ON'):
+            ligs[ilg]=ligs[ilg].replace('TURN_VISCATTENUATION_ON    ', \
+                            'ATTENUATION_PORO_FLUID_PART')
+    #
+    move(fic,fic+'.before_update_to_r19346')
+    #
+    fm = open(fic,'w')
+    fm.writelines(ligs)
+    fm.close()
+    #
+    print 'xxxxx------> '+fic+' processed to r19346'
+    return 
+#------------------------------------------------------------------------------
 if __name__=='__main__':
-    ProcessParfileTor19201(sys.argv[1])
+    ## Liste de tous les fichiers à partir du répertoire courant
+    Fichiers=[]
+    mylister('.')
+    #
+    print '~'*80
+    Ct_Par_file=0
+    for fic in Fichiers:
+        repert, ficname = os.path.split(fic)
+        if not( ('.svn' in repert) or ('unused' in repert) or \
+                '.before_update_to_' in ficname):
+            if ficname.startswith('Par_file'):
+                print 'Analysis of file : '+fic
+                if not (ficname.endswith('~')):
+                    Ct_Par_file+=1
+                    ProcessParfile_r19201(fic)
+                    ProcessParfile_r19340(fic)
+                    ProcessParfile_r19346(fic)
+                print '~'*80
+    #                
+    print 'Number of Par_file analysed : ', Ct_Par_file   
+    print 'END OF Par_file PROCESSING'
+    
