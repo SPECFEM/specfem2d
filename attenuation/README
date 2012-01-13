@@ -2,7 +2,11 @@
 README
 ----------------------------------------------------------------------
 
-This example creates the 2D attenuation benchmark of Komatitsch and Tromp (1999, Figure 16).
+This example creates the 2D attenuation benchmark of Komatitsch and Tromp (1999, Figure 16), with an important modification:
+the two articles by Carcione et al. (1988, 1993) have non-causal attenuation, i.e., waves going faster rather than slower when attenuation
+is turned on. Xie Zhinan fixed that in January 2011. This example thus presents the example of our 1999 article but with that problem fixed;
+in 1999 we did not know that there was a problem in Carcione et al. (1988, 1993) and thus our 1999 article contains the problem as well.
+
 
 TO RUN:
 
