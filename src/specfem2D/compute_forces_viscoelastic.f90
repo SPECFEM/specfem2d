@@ -155,8 +155,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
 
   ! material properties of the elastic medium
-  real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,lambdalplus2mul_relaxed,kappal,cpl,csl,rhol, &
-       lambdal_unrelaxed,mul_unrelaxed,lambdalplus2mul_unrelaxed
+  real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic,kappal,cpl,csl,rhol, &
+       lambdal_relaxed_viscoelastic,mul_relaxed_viscoelastic,lambdalplus2mul_relaxed_viscoelastic
 
   ! for attenuation
   real(kind=CUSTOM_REAL) :: Un,Unp1,tauinv,Sn,Snp1,theta_n,theta_np1,tauinvsquare,tauinvcube,tauinvUn
@@ -219,10 +219,10 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
      !---
      if(elastic(ispec)) then
 
-        ! get relaxed elastic parameters of current spectral element
-        lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
-        mul_relaxed = poroelastcoef(2,1,kmato(ispec))
-        lambdalplus2mul_relaxed = poroelastcoef(3,1,kmato(ispec))
+        ! get unrelaxed elastic parameters of current spectral element
+        lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
+        mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
+        lambdaplus2mu_unrelaxed_elastic = poroelastcoef(3,1,kmato(ispec))
 
         ! first double loop over GLL points to compute and store gradients
         do j = 1,NGLLZ
@@ -233,9 +233,9 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                  cpl = vpext(i,j,ispec)
                  csl = vsext(i,j,ispec)
                  rhol = rhoext(i,j,ispec)
-                 mul_relaxed = rhol*csl*csl
-                 lambdal_relaxed = rhol*cpl*cpl - TWO*mul_relaxed
-                 lambdalplus2mul_relaxed = lambdal_relaxed + TWO*mul_relaxed
+                 mul_unrelaxed_elastic = rhol*csl*csl
+                 lambdal_unrelaxed_elastic = rhol*cpl*cpl - TWO*mul_unrelaxed_elastic
+                 lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic
               endif
 
               ! derivative along x and along z
@@ -313,18 +313,28 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                  ! J. M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation in a linear
                  ! viscoelastic medium, Geophysical Journal International, vol. 95, p. 597-611 (1988).
 
-                 ! compute unrelaxed elastic coefficients from formulas in Carcione 1993 page 111
-                 lambdal_unrelaxed = (lambdal_relaxed + mul_relaxed) * Mu_nu1(i,j,ispec) - mul_relaxed * Mu_nu2(i,j,ispec)
-                 mul_unrelaxed = mul_relaxed * Mu_nu2(i,j,ispec)
-                 lambdalplus2mul_unrelaxed = lambdal_unrelaxed + TWO*mul_unrelaxed
+                 ! When implementing viscoelasticity according to Carcione 1993 paper, the attenuation is 
+                 ! non-causal rather than causal. We fixed the problem by using equations in Carcione's 
+                 ! 2004 paper and his 2007 book.
 
-                 ! compute the stress using the unrelaxed Lame parameters (Carcione 1993, page 111)
-                 sigma_xx = lambdalplus2mul_unrelaxed*dux_dxl + lambdal_unrelaxed*duz_dzl
-                 sigma_xz = mul_unrelaxed*(duz_dxl + dux_dzl)
-                 sigma_zz = lambdalplus2mul_unrelaxed*duz_dzl + lambdal_unrelaxed*dux_dxl
+                 !J. M. Carcione, H B. Helle, The physics and simulation of wave propagation at the ocean 
+                 ! bottom, Geophysics, vol. 69(3), p. 825-839, 2004
+                 !J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic 
+                 ! and porous media, Elsevier, p. 124-125, 2007
 
-                 ! add the memory variables using the relaxed parameters (Carcione 1993, page 111)
-                 ! beware: there is a bug in Carcione's equation (2c) for sigma_zz, we fixed it in the code below
+                 ! compute unrelaxed elastic coefficients from formulas in Carcione 2007 page 125
+                 lambdal_relaxed_viscoelastic = (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) / Mu_nu1(i,j,ispec) &
+                                                - mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
+                 mul_relaxed_viscoelastic = mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
+                 lambdalplus2mul_relaxed_viscoelastic = lambdal_relaxed_viscoelastic + TWO*mul_relaxed_viscoelastic
+
+                 ! compute the stress using the unrelaxed Lame parameters (Carcione 2007 page 125)
+                 sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
+                 sigma_xz = mul_unrelaxed_elastic*(duz_dxl + dux_dzl)
+                 sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
+
+                 ! add the memory variables using the relaxed parameters (Carcione 2007 page 125)
+                 ! beware: there is a bug in Carcione's equation (2c) of his 1993 paper for sigma_zz, we fixed it in the code below
                  e1_sum = 0._CUSTOM_REAL
                  e11_sum = 0._CUSTOM_REAL
                  e13_sum = 0._CUSTOM_REAL
@@ -335,25 +345,27 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     e13_sum = e13_sum + e13(i,j,ispec,i_sls)
                  enddo
 
-                 sigma_xx = sigma_xx + (lambdal_relaxed + mul_relaxed) * e1_sum + TWO * mul_relaxed * e11_sum
-                 sigma_xz = sigma_xz + mul_relaxed * e13_sum
-                 sigma_zz = sigma_zz + (lambdal_relaxed + mul_relaxed) * e1_sum - TWO * mul_relaxed * e11_sum
+                 sigma_xx = sigma_xx + (lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic) * e1_sum &
+                                     + TWO * mul_relaxed_viscoelastic * e11_sum
+                 sigma_xz = sigma_xz + mul_relaxed_viscoelastic * e13_sum
+                 sigma_zz = sigma_zz + (lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic) * e1_sum &
+                                     - TWO * mul_relaxed_viscoelastic * e11_sum
 
               else
 
                  ! no attenuation
-                 sigma_xx = lambdalplus2mul_relaxed*dux_dxl + lambdal_relaxed*duz_dzl
-                 sigma_xy = mul_relaxed*duy_dxl
-                 sigma_xz = mul_relaxed*(duz_dxl + dux_dzl)
-                 sigma_zy = mul_relaxed*duy_dzl
-                 sigma_zz = lambdalplus2mul_relaxed*duz_dzl + lambdal_relaxed*dux_dxl
+                 sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
+                 sigma_xy = mul_unrelaxed_elastic*duy_dxl
+                 sigma_xz = mul_unrelaxed_elastic*(duz_dxl + dux_dzl)
+                 sigma_zy = mul_unrelaxed_elastic*duy_dzl
+                 sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
 
                  if(SIMULATION_TYPE == 2) then ! Adjoint calculation, backward wavefield
-                    b_sigma_xx = lambdalplus2mul_relaxed*b_dux_dxl + lambdal_relaxed*b_duz_dzl
-                    b_sigma_xy = mul_relaxed*b_duy_dxl
-                    b_sigma_xz = mul_relaxed*(b_duz_dxl + b_dux_dzl)
-                    b_sigma_zy = mul_relaxed*b_duy_dzl
-                    b_sigma_zz = lambdalplus2mul_relaxed*b_duz_dzl + lambdal_relaxed*b_dux_dxl
+                    b_sigma_xx = lambdaplus2mu_unrelaxed_elastic*b_dux_dxl + lambdal_unrelaxed_elastic*b_duz_dzl
+                    b_sigma_xy = mul_unrelaxed_elastic*b_duy_dxl
+                    b_sigma_xz = mul_unrelaxed_elastic*(b_duz_dxl + b_dux_dzl)
+                    b_sigma_zy = mul_unrelaxed_elastic*b_duy_dzl
+                    b_sigma_zz = lambdaplus2mu_unrelaxed_elastic*b_duz_dzl + lambdal_unrelaxed_elastic*b_dux_dxl
                  endif
 
               endif
@@ -475,12 +487,12 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
         ispec = numabs(ispecabs)
 
         ! get elastic parameters of current spectral element
-        lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
-        mul_relaxed = poroelastcoef(2,1,kmato(ispec))
+        lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
+        mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
         rhol  = density(1,kmato(ispec))
-        kappal  = lambdal_relaxed + TWO*mul_relaxed/3._CUSTOM_REAL
-        cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_relaxed/3._CUSTOM_REAL)/rhol)
-        csl = sqrt(mul_relaxed/rhol)
+        kappal  = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic/3._CUSTOM_REAL
+        cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_unrelaxed_elastic/3._CUSTOM_REAL)/rhol)
+        csl = sqrt(mul_unrelaxed_elastic/rhol)
 
         !--- left absorbing boundary
         if(codeabs(ILEFT,ispecabs)) then
@@ -498,8 +510,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
                          x0_source, z0_source, A_plane, B_plane, C_plane, angleforce(1), angleforce_refl, &
                          c_inc, c_refl, time_offset,f0)
-                    traction_x_t0 = (lambdal_relaxed+2*mul_relaxed)*dxUx + lambdal_relaxed*dzUz
-                    traction_z_t0 = mul_relaxed*(dxUz + dzUx)
+                    traction_x_t0 = (lambdal_unrelaxed_elastic+2*mul_unrelaxed_elastic)*dxUx + lambdal_unrelaxed_elastic*dzUz
+                    traction_z_t0 = mul_unrelaxed_elastic*(dxUz + dzUx)
                  else
                     veloc_horiz=v0x_left(count_left)
                     veloc_vert=v0z_left(count_left)
@@ -589,8 +601,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
                          x0_source, z0_source, A_plane, B_plane, C_plane, angleforce(1), angleforce_refl, &
                          c_inc, c_refl, time_offset,f0)
-                    traction_x_t0 = (lambdal_relaxed+2*mul_relaxed)*dxUx + lambdal_relaxed*dzUz
-                    traction_z_t0 = mul_relaxed*(dxUz + dzUx)
+                    traction_x_t0 = (lambdal_unrelaxed_elastic+2*mul_unrelaxed_elastic)*dxUx + lambdal_unrelaxed_elastic*dzUz
+                    traction_z_t0 = mul_unrelaxed_elastic*(dxUz + dzUx)
                  else
                     veloc_horiz=v0x_right(count_right)
                     veloc_vert=v0z_right(count_right)
@@ -686,8 +698,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
                          x0_source, z0_source, A_plane, B_plane, C_plane, angleforce(1), angleforce_refl, &
                          c_inc, c_refl, time_offset,f0)
-                    traction_x_t0 = mul_relaxed*(dxUz + dzUx)
-                    traction_z_t0 = lambdal_relaxed*dxUx + (lambdal_relaxed+2*mul_relaxed)*dzUz
+                    traction_x_t0 = mul_unrelaxed_elastic*(dxUz + dzUx)
+                    traction_z_t0 = lambdal_unrelaxed_elastic*dxUx + (lambdal_unrelaxed_elastic+2*mul_unrelaxed_elastic)*dzUz
                  else
                     veloc_horiz=v0x_bot(count_bottom)
                     veloc_vert=v0z_bot(count_bottom)
@@ -791,8 +803,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                  call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
                       x0_source, z0_source, A_plane, B_plane, C_plane, angleforce(1), angleforce_refl, &
                       c_inc, c_refl, time_offset,f0)
-                 traction_x_t0 = mul_relaxed*(dxUz + dzUx)
-                 traction_z_t0 = lambdal_relaxed*dxUx + (lambdal_relaxed+2*mul_relaxed)*dzUz
+                 traction_x_t0 = mul_unrelaxed_elastic*(dxUz + dzUx)
+                 traction_z_t0 = lambdal_unrelaxed_elastic*dxUx + (lambdal_unrelaxed_elastic+2*mul_unrelaxed_elastic)*dzUz
               else
                  veloc_horiz = 0
                  veloc_vert = 0

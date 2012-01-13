@@ -126,8 +126,8 @@
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
 
   real(kind=CUSTOM_REAL) :: kinetic_energy,potential_energy
-  real(kind=CUSTOM_REAL) :: cpl,csl,rhol,mul_relaxed,lambdal_relaxed, &
-    lambdalplus2mul_relaxed,kappal
+  real(kind=CUSTOM_REAL) :: cpl,csl,rhol,mul_unrelaxed_elastic,lambdal_unrelaxed_elastic, &
+    lambdaplus2mu_unrelaxed_elastic,kappal
   real(kind=CUSTOM_REAL) :: mul_s,kappal_s,rhol_s
   real(kind=CUSTOM_REAL) :: kappal_f,rhol_f
   real(kind=CUSTOM_REAL) :: mul_fr,kappal_fr,phil,tortl
@@ -151,9 +151,9 @@
       endif
 
       ! get relaxed elastic parameters of current spectral element
-      lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
-      mul_relaxed = poroelastcoef(2,1,kmato(ispec))
-      lambdalplus2mul_relaxed = poroelastcoef(3,1,kmato(ispec))
+      lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
+      mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
+      lambdaplus2mu_unrelaxed_elastic = poroelastcoef(3,1,kmato(ispec))
       rhol  = density(1,kmato(ispec))
 
       ! double loop over GLL points
@@ -165,9 +165,9 @@
             cpl = vpext(i,j,ispec)
             csl = vsext(i,j,ispec)
             rhol = rhoext(i,j,ispec)
-            mul_relaxed = rhol*csl*csl
-            lambdal_relaxed = rhol*cpl*cpl - TWO*mul_relaxed
-            lambdalplus2mul_relaxed = lambdal_relaxed + TWO*mul_relaxed
+            mul_unrelaxed_elastic = rhol*csl*csl
+            lambdal_unrelaxed_elastic = rhol*cpl*cpl - TWO*mul_unrelaxed_elastic
+            lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic
           endif
 
           ! derivative along x and along z
@@ -206,10 +206,10 @@
 
           ! compute potential energy
           potential_energy = potential_energy &
-              + (lambdalplus2mul_relaxed*dux_dxl**2 &
-              + lambdalplus2mul_relaxed*duz_dzl**2 &
-              + two*lambdal_relaxed*dux_dxl*duz_dzl &
-              + mul_relaxed*(dux_dzl + duz_dxl)**2)*wxgll(i)*wzgll(j)*jacobianl / TWO
+              + (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
+              + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
+              + two*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
+              + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2)*wxgll(i)*wzgll(j)*jacobianl / TWO
 
         enddo
       enddo
@@ -219,7 +219,7 @@
     !---
     elseif(poroelastic(ispec)) then
 
-      ! get relaxed elastic parameters of current spectral element
+      ! get unrelaxed elastic parameters of current spectral element
       !for now replaced by solid, fluid, and frame parameters of current spectral element
       phil = porosity(kmato(ispec))
       tortl = tortuosity(kmato(ispec))
@@ -361,11 +361,11 @@
                   ispec,numat,kmato,density,rhoext,assign_external_model)
 
       ! get density of current spectral element
-      lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
-      mul_relaxed = poroelastcoef(2,1,kmato(ispec))
+      lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
+      mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
       rhol  = density(1,kmato(ispec))
-      kappal  = lambdal_relaxed + TWO*mul_relaxed/3._CUSTOM_REAL
-      cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_relaxed/3._CUSTOM_REAL)/rhol)
+      kappal  = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic/3._CUSTOM_REAL
+      cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_unrelaxed_elastic/3._CUSTOM_REAL)/rhol)
 
       ! double loop over GLL points
       do j = 1,NGLLZ

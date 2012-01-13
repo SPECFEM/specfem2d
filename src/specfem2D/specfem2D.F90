@@ -427,7 +427,7 @@
   double precision :: xixl,xizl,gammaxl,gammazl,jacobianl
 
 ! material properties of the elastic medium
-  double precision :: mul_relaxed,lambdal_relaxed,lambdalplus2mul_relaxed,kappal
+  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic,kappal
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic,veloc_elastic,displ_elastic
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic_adj_coupling
@@ -538,7 +538,7 @@
   logical :: ATTENUATION_PORO_FLUID_PART
   double precision, dimension(NGLLX,NGLLZ) :: viscox_loc,viscoz_loc
   double precision :: Sn,Snp1,etal_f
-  double precision, dimension(3):: bl_relaxed
+  double precision, dimension(3):: bl_unrelaxed_elastic
   double precision :: permlxx,permlxz,permlzz,invpermlxx,invpermlxz,invpermlzz,detk
 ! adjoint
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_viscodampx,b_viscodampz
@@ -1635,9 +1635,9 @@
               kappal = rhol * vpext(i,j,ispec)**2
             else
               rhol = density(1,kmato(ispec))
-              lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
-              mul_relaxed = poroelastcoef(2,1,kmato(ispec))
-              kappal = lambdal_relaxed + 2.d0/3.d0*mul_relaxed
+              lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
+              mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
+              kappal = lambdal_unrelaxed_elastic + 2.d0/3.d0*mul_unrelaxed_elastic
             endif
 
              rmass_inverse_elastic(iglob) = rmass_inverse_elastic(iglob) &
@@ -4189,19 +4189,19 @@
         endif
 
         ! relaxed viscous coef
-        bl_relaxed(1) = etal_f*invpermlxx
-        bl_relaxed(2) = etal_f*invpermlxz
-        bl_relaxed(3) = etal_f*invpermlzz
+        bl_unrelaxed_elastic(1) = etal_f*invpermlxx
+        bl_unrelaxed_elastic(2) = etal_f*invpermlxz
+        bl_unrelaxed_elastic(3) = etal_f*invpermlzz
 
         do j=1,NGLLZ
           do i=1,NGLLX
 
             iglob = ibool(i,j,ispec)
 
-            viscox_loc(i,j) = velocw_poroelastic(1,iglob)*bl_relaxed(1) + &
-                               velocw_poroelastic(2,iglob)*bl_relaxed(2)
-            viscoz_loc(i,j) = velocw_poroelastic(1,iglob)*bl_relaxed(2) + &
-                               velocw_poroelastic(2,iglob)*bl_relaxed(3)
+            viscox_loc(i,j) = velocw_poroelastic(1,iglob)*bl_unrelaxed_elastic(1) + &
+                               velocw_poroelastic(2,iglob)*bl_unrelaxed_elastic(2)
+            viscoz_loc(i,j) = velocw_poroelastic(1,iglob)*bl_unrelaxed_elastic(2) + &
+                               velocw_poroelastic(2,iglob)*bl_unrelaxed_elastic(3)
 
             ! evolution rx_viscous
             Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
@@ -5018,9 +5018,9 @@
           iglob = ibool(ii2,jj2,ispec_elastic)
 
           ! get elastic properties
-          lambdal_relaxed = poroelastcoef(1,1,kmato(ispec_elastic))
-          mul_relaxed = poroelastcoef(2,1,kmato(ispec_elastic))
-          lambdalplus2mul_relaxed = poroelastcoef(3,1,kmato(ispec_elastic))
+          lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec_elastic))
+          mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec_elastic))
+          lambdaplus2mu_unrelaxed_elastic = poroelastcoef(3,1,kmato(ispec_elastic))
 
           ! derivative along x and along z for u_s and w
           dux_dxi = ZERO
@@ -5097,15 +5097,15 @@
             sigma_xz = sigma_xz + c15*dux_dxl + c55*(duz_dxl + dux_dzl) + c35*duz_dzl
           else
             ! no attenuation
-            sigma_xx = sigma_xx + lambdalplus2mul_relaxed*dux_dxl + lambdal_relaxed*duz_dzl
-            sigma_xz = sigma_xz + mul_relaxed*(duz_dxl + dux_dzl)
-            sigma_zz = sigma_zz + lambdalplus2mul_relaxed*duz_dzl + lambdal_relaxed*dux_dxl
+            sigma_xx = sigma_xx + lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
+            sigma_xz = sigma_xz + mul_unrelaxed_elastic*(duz_dxl + dux_dzl)
+            sigma_zz = sigma_zz + lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
           endif
 
           if(SIMULATION_TYPE == 2) then
-            b_sigma_xx = b_sigma_xx + lambdalplus2mul_relaxed*b_dux_dxl + lambdal_relaxed*b_duz_dzl
-            b_sigma_xz = b_sigma_xz + mul_relaxed*(b_duz_dxl + b_dux_dzl)
-            b_sigma_zz = b_sigma_zz + lambdalplus2mul_relaxed*b_duz_dzl + lambdal_relaxed*b_dux_dxl
+            b_sigma_xx = b_sigma_xx + lambdaplus2mu_unrelaxed_elastic*b_dux_dxl + lambdal_unrelaxed_elastic*b_duz_dzl
+            b_sigma_xz = b_sigma_xz + mul_unrelaxed_elastic*(b_duz_dxl + b_dux_dzl)
+            b_sigma_zz = b_sigma_zz + lambdaplus2mu_unrelaxed_elastic*b_duz_dzl + lambdal_unrelaxed_elastic*b_dux_dxl
           endif
 
           ! compute the 1D Jacobian and the normal to the edge: for their expression see for instance
@@ -5560,9 +5560,9 @@
           iglob = ibool(i,j,ispec_elastic)
 
           ! get elastic properties
-          lambdal_relaxed = poroelastcoef(1,1,kmato(ispec_elastic))
-          mul_relaxed = poroelastcoef(2,1,kmato(ispec_elastic))
-          lambdalplus2mul_relaxed = poroelastcoef(3,1,kmato(ispec_elastic))
+          lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec_elastic))
+          mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec_elastic))
+          lambdaplus2mu_unrelaxed_elastic = poroelastcoef(3,1,kmato(ispec_elastic))
 
           ! derivative along x and along z for u_s and w
           dux_dxi = ZERO
@@ -5638,15 +5638,15 @@
             sigma_xz = c15*dux_dxl + c55*(duz_dxl + dux_dzl) + c35*duz_dzl
           else
             ! no attenuation
-            sigma_xx = lambdalplus2mul_relaxed*dux_dxl + lambdal_relaxed*duz_dzl
-            sigma_xz = mul_relaxed*(duz_dxl + dux_dzl)
-            sigma_zz = lambdalplus2mul_relaxed*duz_dzl + lambdal_relaxed*dux_dxl
+            sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
+            sigma_xz = mul_unrelaxed_elastic*(duz_dxl + dux_dzl)
+            sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
           endif
 
           if(SIMULATION_TYPE == 2) then
-            b_sigma_xx = lambdalplus2mul_relaxed*b_dux_dxl + lambdal_relaxed*b_duz_dzl
-            b_sigma_xz = mul_relaxed*(b_duz_dxl + b_dux_dzl)
-            b_sigma_zz = lambdalplus2mul_relaxed*b_duz_dzl + lambdal_relaxed*b_dux_dxl
+            b_sigma_xx = lambdaplus2mu_unrelaxed_elastic*b_dux_dxl + lambdal_unrelaxed_elastic*b_duz_dzl
+            b_sigma_xz = mul_unrelaxed_elastic*(b_duz_dxl + b_dux_dzl)
+            b_sigma_zz = lambdaplus2mu_unrelaxed_elastic*b_duz_dzl + lambdal_unrelaxed_elastic*b_dux_dxl
           endif ! if(SIMULATION_TYPE == 2)
 
           ! get point values for the poroelastic side
