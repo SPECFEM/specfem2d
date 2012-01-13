@@ -124,7 +124,7 @@
   double precision, dimension(NGLLX,NGLLZ,nspec) :: rz_viscous
   double precision :: theta_e,theta_s
   logical ATTENUATION_PORO_FLUID_PART
-  double precision, dimension(3):: bl_unrelaxed,bl_relaxed
+  double precision, dimension(3):: bl_relaxed_viscoelastic,bl_unrelaxed_elastic
 
 ! derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
@@ -169,7 +169,7 @@
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
 
 ! material properties of the poroelastic medium
-  real(kind=CUSTOM_REAL) :: mul_unrelaxed,lambdal_unrelaxed,lambdalplus2mul_unrelaxed
+  real(kind=CUSTOM_REAL) :: mul_relaxed_viscoelastic,lambdal_relaxed_viscoelastic,lambdalplus2mul_relaxed_viscoelastic
   real(kind=CUSTOM_REAL) :: mul_s,kappal_s,rhol_s
   real(kind=CUSTOM_REAL) :: etal_f,kappal_f,rhol_f
   real(kind=CUSTOM_REAL) :: mul_fr,kappal_fr,phil,tortl,viscodampx,viscodampz
@@ -322,20 +322,30 @@
 ! J. M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation in a linear
 ! viscoelastic medium, Geophysical Journal International, vol. 95, p. 597-611 (1988).
 
-! compute unrelaxed elastic coefficients from formulas in Carcione 1993 page 111
-    lambdal_unrelaxed = (lambdal_G + mul_G) - mul_G * Mu_nu2(i,j,ispec)
-    mul_unrelaxed = mul_G * Mu_nu2(i,j,ispec)
-    lambdalplus2mul_unrelaxed = lambdal_unrelaxed + TWO*mul_unrelaxed
+! When implementing viscoelasticity according to Carcione 1993 paper, the attenuation is 
+! non-causal rather than causal. We fixed the problem by using equations in Carcione's 
+! 2004 paper and his 2007 book.
 
-! compute the stress using the unrelaxed Lame parameters (Carcione 1993, page 111)
-    sigma_xx = lambdalplus2mul_unrelaxed*dux_dxl + lambdal_unrelaxed*duz_dzl + C_biot*(dwx_dxl + dwz_dzl)
-    sigma_xz = mul_unrelaxed*(duz_dxl + dux_dzl)
-    sigma_zz = lambdalplus2mul_unrelaxed*duz_dzl + lambdal_unrelaxed*dux_dxl + C_biot*(dwx_dxl + dwz_dzl)
+!J. M. Carcione, H B. Helle, The physics and simulation of wave propagation at the ocean 
+! bottom, Geophysics, vol. 69(3), p. 825-839, 2004
+!J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic 
+! and porous media, Elsevier, p. 124-125, 2007
+
+
+! compute unrelaxed elastic coefficients from formulas in Carcione 2007 page 125
+    lambdal_relaxed_viscoelastic = (lambdal_G + mul_G) - mul_G / Mu_nu2(i,j,ispec)
+    mul_relaxed_viscoelastic = mul_G / Mu_nu2(i,j,ispec)
+    lambdalplus2mul_relaxed_viscoelastic = lambdal_relaxed_viscoelastic + TWO*mul_relaxed_viscoelastic
+
+! compute the stress using the unrelaxed Lame parameters (Carcione 2007 page 125)
+    sigma_xx = (lambdal_G + 2.0 * mul_G)*dux_dxl + mul_G*duz_dzl + C_biot*(dwx_dxl + dwz_dzl)
+    sigma_xz = mul_G*(duz_dxl + dux_dzl)
+    sigma_zz = (lambdal_G + 2.0 * mul_G)*duz_dzl + mul_G*dux_dxl + C_biot*(dwx_dxl + dwz_dzl)
 
     sigmap = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl + dwz_dzl)
 
-! add the memory variables using the relaxed parameters (Carcione 1993, page 111)
-! beware: there is a bug in Carcione's equation (2c) for sigma_zz, we fixed it in the code below
+! add the memory variables using the relaxed parameters (Carcione 2007 page 125)
+! beware: there is a bug in Carcione's equation (2c) of his 1993 paper for sigma_zz, we fixed it in the code below
     e11_sum = 0._CUSTOM_REAL
     e13_sum = 0._CUSTOM_REAL
 
@@ -348,9 +358,9 @@
 ! frame modulus (in compute_forces_poro_solid.f90), which Christina Morency noted
 ! mul_fr, which is in her case equivalent to the solid phase shear
 ! modulus, and whose value is entered in Par_file for example
-    sigma_xx = sigma_xx + TWO * mul_G * e11_sum
-    sigma_xz = sigma_xz + mul_G * e13_sum
-    sigma_zz = sigma_zz - TWO * mul_G * e11_sum
+    sigma_xx = sigma_xx + TWO * mul_relaxed_viscoelastic * e11_sum
+    sigma_xz = sigma_xz + mul_relaxed_viscoelastic * e13_sum
+    sigma_zz = sigma_zz - TWO * mul_relaxed_viscoelastic * e11_sum
 
   else
 
@@ -475,14 +485,14 @@
     endif
 
 ! relaxed viscous coef
-          bl_relaxed(1) = etal_f*invpermlxx
-          bl_relaxed(2) = etal_f*invpermlxz
-          bl_relaxed(3) = etal_f*invpermlzz
+          bl_unrelaxed_elastic(1) = etal_f*invpermlxx
+          bl_unrelaxed_elastic(2) = etal_f*invpermlxz
+          bl_unrelaxed_elastic(3) = etal_f*invpermlzz
 
     if(ATTENUATION_PORO_FLUID_PART) then
-          bl_unrelaxed(1) = etal_f*invpermlxx*theta_e/theta_s
-          bl_unrelaxed(2) = etal_f*invpermlxz*theta_e/theta_s
-          bl_unrelaxed(3) = etal_f*invpermlzz*theta_e/theta_s
+          bl_relaxed_viscoelastic(1) = etal_f*invpermlxx*theta_e/theta_s
+          bl_relaxed_viscoelastic(2) = etal_f*invpermlxz*theta_e/theta_s
+          bl_relaxed_viscoelastic(3) = etal_f*invpermlzz*theta_e/theta_s
     endif
 
       do j = 1,NGLLZ
@@ -492,14 +502,14 @@
 
      if(ATTENUATION_PORO_FLUID_PART) then
 ! compute the viscous damping term with the unrelaxed viscous coef and add memory variable
-      viscodampx = velocw_poroelastic(1,iglob)*bl_unrelaxed(1) + velocw_poroelastic(2,iglob)*bl_unrelaxed(2)&
+      viscodampx = velocw_poroelastic(1,iglob)*bl_relaxed_viscoelastic(1) + velocw_poroelastic(2,iglob)*bl_relaxed_viscoelastic(2)&
                  - rx_viscous(i,j,ispec)
-      viscodampz = velocw_poroelastic(1,iglob)*bl_unrelaxed(2) + velocw_poroelastic(2,iglob)*bl_unrelaxed(3)&
+      viscodampz = velocw_poroelastic(1,iglob)*bl_relaxed_viscoelastic(2) + velocw_poroelastic(2,iglob)*bl_relaxed_viscoelastic(3)&
                  - rz_viscous(i,j,ispec)
      else
 ! no viscous attenuation
-      viscodampx = velocw_poroelastic(1,iglob)*bl_relaxed(1) + velocw_poroelastic(2,iglob)*bl_relaxed(2)
-      viscodampz = velocw_poroelastic(1,iglob)*bl_relaxed(2) + velocw_poroelastic(2,iglob)*bl_relaxed(3)
+      viscodampx = velocw_poroelastic(1,iglob)*bl_unrelaxed_elastic(1) + velocw_poroelastic(2,iglob)*bl_unrelaxed_elastic(2)
+      viscodampz = velocw_poroelastic(1,iglob)*bl_unrelaxed_elastic(2) + velocw_poroelastic(2,iglob)*bl_unrelaxed_elastic(3)
      endif
 
             accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - wxgll(i)*wzgll(j)*jacobian(i,j,ispec)*&

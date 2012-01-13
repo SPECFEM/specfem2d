@@ -190,8 +190,8 @@
   real(kind=CUSTOM_REAL) :: dwx_dxl,dwz_dzl
 
 ! material properties of the elastic medium
-  real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,lambdalplus2mul_relaxed,denst
-  real(kind=CUSTOM_REAL) :: mul_unrelaxed,lambdal_unrelaxed,lambdalplus2mul_unrelaxed,cpl,csl
+  real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic,denst
+  real(kind=CUSTOM_REAL) :: mul_relaxed_viscoelastic,lambdal_relaxed_viscoelastic,lambdalplus2mul_relaxed_viscoelastic,cpl,csl
 
   real(kind=CUSTOM_REAL) :: mul_s,kappal_s,rhol_s
   real(kind=CUSTOM_REAL) :: kappal_f,rhol_f
@@ -229,9 +229,9 @@
   if(elastic(ispec)) then
 
     ! get relaxed elastic parameters of current spectral element
-    lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
-    mul_relaxed = poroelastcoef(2,1,kmato(ispec))
-    lambdalplus2mul_relaxed = poroelastcoef(3,1,kmato(ispec))
+    lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
+    mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
+    lambdaplus2mu_unrelaxed_elastic = poroelastcoef(3,1,kmato(ispec))
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
@@ -241,8 +241,8 @@
           cpl = vpext(i,j,ispec)
           csl = vsext(i,j,ispec)
           denst = rhoext(i,j,ispec)
-          mul_relaxed = denst*csl*csl
-          lambdal_relaxed = denst*cpl*cpl - TWO*mul_relaxed
+          mul_unrelaxed_elastic = denst*csl*csl
+          lambdal_unrelaxed_elastic = denst*cpl*cpl - TWO*mul_unrelaxed_elastic
         endif
 
         ! derivative along x and along z
@@ -280,18 +280,27 @@
 ! J. M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation in a linear
 ! viscoelastic medium, Geophysical Journal International, vol. 95, p. 597-611 (1988).
 
-          ! compute unrelaxed elastic coefficients from formulas in Carcione 1993 page 111
-          lambdal_unrelaxed = (lambdal_relaxed + mul_relaxed) * Mu_nu1(i,j,ispec) &
-                            - mul_relaxed * Mu_nu2(i,j,ispec)
-          mul_unrelaxed = mul_relaxed * Mu_nu2(i,j,ispec)
-          lambdalplus2mul_unrelaxed = lambdal_unrelaxed + TWO*mul_unrelaxed
+! When implementing viscoelasticity according to Carcione 1993 paper, the attenuation is 
+! non-causal rather than causal. We fixed the problem by using equations in Carcione's 
+! 2004 paper and his 2007 book.
 
-          ! compute the stress using the unrelaxed Lame parameters (Carcione 1993, page 111)
-          sigma_xx = lambdalplus2mul_unrelaxed*dux_dxl + lambdal_unrelaxed*duz_dzl
-          sigma_zz = lambdalplus2mul_unrelaxed*duz_dzl + lambdal_unrelaxed*dux_dxl
+!J. M. Carcione, H B. Helle, The physics and simulation of wave propagation at the ocean 
+! bottom, Geophysics, vol. 69(3), p. 825-839, 2004
+!J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic 
+! and porous media, Elsevier, p. 124-125, 2007
 
-          ! add the memory variables using the relaxed parameters (Carcione 1993, page 111)
-          ! beware: there is a bug in Carcione's equation (2c) for sigma_zz, we fixed it in the code below
+          ! compute unrelaxed elastic coefficients from formulas in Carcione 2007 page 125
+          lambdal_relaxed_viscoelastic = (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) / Mu_nu1(i,j,ispec) &
+                            - mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
+          mul_relaxed_viscoelastic = mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
+          lambdalplus2mul_relaxed_viscoelastic = lambdal_relaxed_viscoelastic + TWO*mul_relaxed_viscoelastic
+
+          ! compute the stress using the unrelaxed Lame parameters (Carcione 2007 page 125)
+          sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
+          sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
+
+          ! add the memory variables using the relaxed parameters (Carcione 2007 page 125)
+          ! beware: there is a bug in Carcione's equation (2c) of his 1993 paper for sigma_zz, we fixed it in the code below
           e1_sum = 0._CUSTOM_REAL
           e11_sum = 0._CUSTOM_REAL
 
@@ -300,16 +309,16 @@
             e11_sum = e11_sum + e11(i,j,ispec,i_sls)
           enddo
 
-          sigma_xx = sigma_xx + (lambdal_relaxed + mul_relaxed) * e1_sum &
-                      + TWO * mul_relaxed * e11_sum
-          sigma_zz = sigma_zz + (lambdal_relaxed + mul_relaxed) * e1_sum &
-                      - TWO * mul_relaxed * e11_sum
+          sigma_xx = sigma_xx + (lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic) * e1_sum &
+                      + TWO * mul_unrelaxed_elastic * e11_sum
+          sigma_zz = sigma_zz + (lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic) * e1_sum &
+                      - TWO * mul_relaxed_viscoelastic * e11_sum
 
         else
 
           ! no attenuation
-          sigma_xx = lambdalplus2mul_relaxed*dux_dxl + lambdal_relaxed*duz_dzl
-          sigma_zz = lambdalplus2mul_relaxed*duz_dzl + lambdal_relaxed*dux_dxl
+          sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
+          sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
 
         endif
 
@@ -348,8 +357,8 @@
 
   elseif(poroelastic(ispec)) then
 
-    lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
-    mul_relaxed = poroelastcoef(2,1,kmato(ispec))
+    lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
+    mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
 
     ! get poroelastic parameters of current spectral element
     phil = porosity(kmato(ispec))
@@ -432,18 +441,27 @@
 ! J. M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation in a linear
 ! viscoelastic medium, Geophysical Journal International, vol. 95, p. 597-611 (1988).
 
-          ! compute unrelaxed elastic coefficients from formulas in Carcione 1993 page 111
-          lambdal_unrelaxed = (lambdal_relaxed + mul_relaxed) * Mu_nu1(i,j,ispec) &
-                            - mul_relaxed * Mu_nu2(i,j,ispec)
-          mul_unrelaxed = mul_relaxed * Mu_nu2(i,j,ispec)
-          lambdalplus2mul_unrelaxed = lambdal_unrelaxed + TWO*mul_unrelaxed
+! When implement viscoelasticity according to Carcione 1993 paper, the attenuation is 
+! non-causal rather than causal. We fixed the problem by using equations in Carcione's 
+! 2004 paper and his 2007 book.
 
-          ! compute the stress using the unrelaxed Lame parameters (Carcione 1993, page 111)
-          sigma_xx = lambdalplus2mul_unrelaxed*dux_dxl + lambdal_unrelaxed*duz_dzl
-          sigma_zz = lambdalplus2mul_unrelaxed*duz_dzl + lambdal_unrelaxed*dux_dxl
+!J. M. Carcione, H B. Helle, The physics and simulation of wave propagation at the ocean 
+! bottom, Geophysics, vol. 69(3), p. 825-839, 2004
+!J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic 
+! and porous media, Elsevier, p. 124-125, 2007
 
-          ! add the memory variables using the relaxed parameters (Carcione 1993, page 111)
-          ! beware: there is a bug in Carcione's equation (2c) for sigma_zz, we fixed it in the code below
+          ! compute relaxed elastic coefficients from formulas in Carcione 2007 page 125
+          lambdal_relaxed_viscoelastic = (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) / Mu_nu1(i,j,ispec) &
+                            - mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
+          mul_relaxed_viscoelastic = mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
+          lambdalplus2mul_relaxed_viscoelastic = lambdal_relaxed_viscoelastic + TWO*mul_relaxed_viscoelastic
+
+          ! compute the stress using the unrelaxed Lame parameters (Carcione 2007 page 125)
+          sigma_xx = (lambdal_unrelaxed_elastic + 2.0 * mul_unrelaxed_elastic)*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
+          sigma_zz = (lambdal_unrelaxed_elastic + 2.0 * mul_unrelaxed_elastic)*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
+
+          ! add the memory variables using the relaxed parameters (Carcione 2007 page 125)
+          ! beware: there is a bug in  Carcione's equation (2c) of his 1993 paper for sigma_zz, we fixed it in the code below
           e1_sum = 0._CUSTOM_REAL
           e11_sum = 0._CUSTOM_REAL
 
@@ -452,10 +470,10 @@
             e11_sum = e11_sum + e11(i,j,ispec,i_sls)
           enddo
 
-          sigma_xx = sigma_xx + (lambdal_relaxed + mul_relaxed) * e1_sum &
-                    + TWO * mul_relaxed * e11_sum
-          sigma_zz = sigma_zz + (lambdal_relaxed + mul_relaxed) * e1_sum &
-                    - TWO * mul_relaxed * e11_sum
+          sigma_xx = sigma_xx + (lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic) * e1_sum &
+                    + TWO * mul_relaxed_viscoelastic * e11_sum
+          sigma_zz = sigma_zz + (lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic) * e1_sum &
+                    - TWO * mul_relaxed_viscoelastic * e11_sum
 
         else
 
