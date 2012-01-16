@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov 15 09:00:00 2011
-Updated on Wed Jan 11 2012
+Updated on Fri Jan 13 2012
 
 Processing of Par_file to update them to new format
 
@@ -134,6 +134,35 @@ def ProcessParfile_r19346(fic):
     fm.close()
     #
     print 'xxxxx------> '+fic+' processed to r19346'
+    return
+#------------------------------------------------------------------------------
+def ProcessParfile_r19xxx(fic):
+    # Open the file and get all lines from Par_file
+    ligs= LoadLig(fic)
+    # Teste si le traitement a déjà été fait
+    for lig in ligs:
+        if 'time_stepping_scheme' in lig:
+            print '----> '+fic+' already processed to r19xxx'            
+            return
+    #
+    a1='time_stepping_scheme            = 1   # 1 = Newmark (2nd order), \
+    2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta), \
+    3 = classical 4th-order 4-stage Runge-Kutta\n'
+
+    #--------------------------------------------------------------------------
+    # Ajout des parametres supplementaires
+    # 
+    for ilg, lig in enumerate(ligs):
+        if lig.startswith('USER_T0'):
+            ligs.insert(ilg+1,a1)
+    #
+    move(fic,fic+'.before_update_to_r19xxx')
+    #
+    fm = open(fic,'w')
+    fm.writelines(ligs)
+    fm.close()
+    #
+    print 'xxxxx------> '+fic+' processed to r19xxx'
     return 
 #------------------------------------------------------------------------------
 if __name__=='__main__':
@@ -154,6 +183,7 @@ if __name__=='__main__':
                     ProcessParfile_r19201(fic)
                     ProcessParfile_r19340(fic)
                     ProcessParfile_r19346(fic)
+                    ProcessParfile_r19xxx(fic)
                 print '~'*80
     #                
     print 'Number of Par_file analysed : ', Ct_Par_file   
