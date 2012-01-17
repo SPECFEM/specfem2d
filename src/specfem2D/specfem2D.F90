@@ -3913,6 +3913,9 @@
 
 ! Precompute Runge Kutta coefficients if viscous attenuation
   if(ATTENUATION_PORO_FLUID_PART) then
+! viscous attenuation is implemented following the memory variable formulation of
+! J. M. Carcione Wave fields in real media: wave propagation in anisotropic,
+! anelastic and porous media, Elsevier, p. 304-305, 2007
     theta_e = (sqrt(Q0**2+1.d0) +1.d0)/(2.d0*pi*freq0*Q0)
     theta_s = (sqrt(Q0**2+1.d0) -1.d0)/(2.d0*pi*freq0*Q0)
 

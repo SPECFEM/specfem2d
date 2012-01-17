@@ -490,6 +490,9 @@
           bl_unrelaxed_elastic(3) = etal_f*invpermlzz
 
     if(ATTENUATION_PORO_FLUID_PART) then
+! viscous attenuation is implemented following the memory variable formulation of
+! J. M. Carcione Wave fields in real media: wave propagation in anisotropic,
+! anelastic and porous media, Elsevier, p. 304-305, 2007
           bl_relaxed_viscoelastic(1) = etal_f*invpermlxx*theta_e/theta_s
           bl_relaxed_viscoelastic(2) = etal_f*invpermlxz*theta_e/theta_s
           bl_relaxed_viscoelastic(3) = etal_f*invpermlzz*theta_e/theta_s
