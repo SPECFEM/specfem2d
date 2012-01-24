@@ -224,7 +224,6 @@ if (xmgr == 1) {
 
 }
 
-#include <malloc.h>
 #include <stdio.h>
 
 void nrerror(error_text)
