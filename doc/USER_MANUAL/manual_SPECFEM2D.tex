@@ -253,15 +253,20 @@ command names for your Fortran90 compiler:
 ./configure~FC=ifort~
 \end{lyxcode}
 
-
-\noindent
-To optimize compilation of the executables on your specific system, please follow these steps:
-\begin{itemize}
-
-\item if you want to run in parallel, i.e., using more than one processor core, then you would type
+If you want to run in parallel, i.e., using more than one processor core, then you would type
 \begin{lyxcode}
 ./configure~FC=ifort~MPIFC=mpif90~-{}-with-mpi
 \end{lyxcode}
+
+Before running the \texttt{configure} script, you should probably edit file \texttt{flags.guess} to make sure that it contains the best compiler options for your system. Known problems or things to check are:
+
+\begin{description}
+\item [{\texttt{Intel ifort compiler}}] See if you need to add \texttt{-assume byterecl} for your machine.
+\item [{\texttt{IBM or Cray compilers}}] See if you need to add \texttt{-qsave} or \texttt{-qnosave} for your machine.
+\item [{\texttt{Mac OS}}] You will probably need to install \texttt{XCODE}.
+In addition, the \texttt{clock\_gettime} routine, which is used by the \texttt{SCOTCH} library that we use, does not exist in Mac OS.
+You will need to replace it with \texttt{clock\_get\_time} if you want to use \texttt{SCOTCH}.
+\end{description}
 
 The SPECFEM2D software package relies on the SCOTCH library to partition meshes.
 The SCOTCH library \citep{PeRo96}
@@ -283,12 +288,10 @@ If you use the Intel ifort compiler to compile the code, we recommend that you u
 For further details about the installation of SCOTCH,
 go to subdirectory \texttt{scotch\_5.1.11/} and read \texttt{INSTALL.txt}. You may want to download more recent versions of SCOTCH in the future from \urlwithparentheses{http://www.labri.fr/perso/pelegrin/scotch/scotch_en.html} . Support for the METIS graph partitioner has been discontinued because SCOTCH is more recent and performs better.
 
-\item edit the \texttt{Makefile} for more specific modifications. Especially, there are several options available :\\
+Edit the \texttt{Makefile} for more specific modifications. Especially, there are several options available :\\
 \texttt{-DUSE\_MPI} compiles with use of an MPI library. \\
 \texttt{-DUSE\_SCOTCH} enables use of graph partitioner SCOTCH.
 
-
-\end{itemize}
 After these steps, go back to the main directory of SPECFEM2D/ and type
 \begin{lyxcode}
 make
