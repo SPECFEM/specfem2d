@@ -46,7 +46,7 @@
 
   subroutine prepare_source_time_function(myrank,NSTEP,NSOURCES,source_time_function, &
                           time_function_type,f0,tshift_src,factor,aval, &
-                          t0,nb_proc_source,deltat)
+                          t0,nb_proc_source,deltat,stage_time_scheme,c_LDDRK)
 
 ! prepares source_time_function array
 
@@ -62,15 +62,25 @@
   double precision :: t0
   integer,dimension(NSOURCES) :: nb_proc_source
   double precision :: deltat
+  integer :: stage_time_scheme
+  double precision, dimension(Nstages) :: c_LDDRK
 
-  real(kind=CUSTOM_REAL),dimension(NSOURCES,NSTEP) :: source_time_function
+  real(kind=CUSTOM_REAL),dimension(NSOURCES,NSTEP,stage_time_scheme) :: source_time_function
 
   ! local parameters
   double precision :: stf_used,time
   double precision, dimension(NSOURCES) :: hdur,hdur_gauss
   double precision, external :: netlib_specfun_erf
   integer :: it,i_source
+  integer :: i_stage
+  double precision, dimension(4) :: c_RK
 
+  if(stage_time_scheme == 4)then
+   c_RK(1)=0.0d0*deltat
+   c_RK(2)=0.5d0*deltat
+   c_RK(3)=0.5d0*deltat
+   c_RK(4)=1.0d0*deltat
+  endif
 
   ! user output
   if (myrank == 0) then
@@ -84,13 +94,27 @@
   !    do i_source=1,NSOURCES
 
   ! loop on all the time steps
+
+
   do it = 1,NSTEP
 
     ! note: t0 is the simulation start time, tshift_src is the time shift of the source
     !          relative to this start time
+    do i_stage = 1,stage_time_scheme
 
     ! compute current time
+    if(stage_time_scheme == 1)then
     time = (it-1)*deltat
+    endif
+
+    if(stage_time_scheme == 4)then
+     time = (it-1)*deltat+c_RK(i_stage)*deltat
+    endif
+
+    if(stage_time_scheme == 6)then
+     time = (it-1)*deltat+c_LDDRK(i_stage)*deltat
+    endif
+
 
     stf_used = 0.d0
 
@@ -100,7 +124,7 @@
       if( time_function_type(i_source) == 1 ) then
 
         ! Ricker (second derivative of a Gaussian) source time function
-        source_time_function(i_source,it) = - factor(i_source) * &
+        source_time_function(i_source,it,i_stage) = - factor(i_source) * &
                   (ONE-TWO*aval(i_source)*(time-t0-tshift_src(i_source))**2) * &
                   exp(-aval(i_source)*(time-t0-tshift_src(i_source))**2)
 
@@ -111,14 +135,14 @@
       else if( time_function_type(i_source) == 2 ) then
 
         ! first derivative of a Gaussian source time function
-        source_time_function(i_source,it) = - factor(i_source) * &
+        source_time_function(i_source,it,i_stage) = - factor(i_source) * &
                   TWO*aval(i_source)*(time-t0-tshift_src(i_source)) * &
                   exp(-aval(i_source)*(time-t0-tshift_src(i_source))**2)
 
       else if(time_function_type(i_source) == 3 .or. time_function_type(i_source) == 4) then
 
         ! Gaussian or Dirac (we use a very thin Gaussian instead) source time function
-        source_time_function(i_source,it) = factor(i_source) * &
+        source_time_function(i_source,it,i_stage) = factor(i_source) * &
                   exp(-aval(i_source)*(time-t0-tshift_src(i_source))**2)
 
       else if(time_function_type(i_source) == 5) then
@@ -126,14 +150,14 @@
         ! Heaviside source time function (we use a very thin error function instead)
         hdur(i_source) = 1.d0 / f0(i_source)
         hdur_gauss(i_source) = hdur(i_source) * 5.d0 / 3.d0
-        source_time_function(i_source,it) = factor(i_source) * 0.5d0*(1.0d0 + &
+        source_time_function(i_source,it,i_stage) = factor(i_source) * 0.5d0*(1.0d0 + &
             netlib_specfun_erf(SOURCE_DECAY_MIMIC_TRIANGLE*(time-t0-tshift_src(i_source))/hdur_gauss(i_source)))
 
       else
         call exit_MPI('unknown source time function')
       endif
 
-      stf_used = stf_used + source_time_function(i_source,it)
+      stf_used = stf_used + source_time_function(i_source,it,i_stage)
 
     enddo
 
@@ -144,7 +168,8 @@
         write(55,*) sngl(time-t0),sngl(stf_used),sngl(time)
     endif
 
-    !enddo
+    enddo
+
   enddo
 
   if (myrank == 0) close(55)
@@ -154,7 +179,7 @@
   ! since source contribution is linear, the source_time_function is cut down by that number (it would have been similar
   ! if we just had elected one of those processes).
   do i_source=1,NSOURCES
-    source_time_function(i_source,:) = source_time_function(i_source,:) / nb_proc_source(i_source)
+    source_time_function(i_source,:,:) = source_time_function(i_source,:,:) / nb_proc_source(i_source)
   enddo
 
   end subroutine prepare_source_time_function
