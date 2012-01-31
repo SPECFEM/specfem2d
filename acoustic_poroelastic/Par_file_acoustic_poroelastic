@@ -19,12 +19,12 @@ READ_EXTERNAL_SEP_FILE          = .false.        # Read external SEP file from D
 ATTENUATION_VISCOELASTIC_SOLID  = .false.        # turn attenuation (viscoelasticity) on or off for non-poroelastic solid parts of the model
 ATTENUATION_PORO_FLUID_PART     = .false.        # turn viscous attenuation on or off for the fluid part of poroelastic parts of the model
 Q0                              =  1             # quality factor for viscous attenuation
-freq0                           =  1000            # frequency for viscous attenuation
+freq0                           =  1000           # frequency for viscous attenuation
 p_sv                            = .true.         # set the type of calculation (P-SV or SH/membrane waves)
 
 # time step parameters
-nt                              = 5000           # total number of time steps
-deltat                          = 1.2d-4         # duration of a time step
+nt                              = 2500           # total number of time steps
+deltat                          = 4.d-4         # duration of a time step
 USER_T0                         = 0.0d0          # use this t0 as earliest starting time rather than the automatically calculated one
 time_stepping_scheme            = 2   # 1 = Newmark (2nd order),     2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta),     3 = classical 4th-order 4-stage Runge-Kutta
 
@@ -91,8 +91,8 @@ nbmodels                        = 2              # nb of different models
 # III: (model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu).
 # For istropic elastic/acoustic material use I and set Vs to zero to make a given model acoustic, for anisotropic elastic use II,
 # and for isotropic poroelastic material use III. The mesh can contain acoustic, elastic, and poroelastic models simultaneously.
-1 3 2650.d0 880.d0 0.3d0 1.2 1d-9 0.d0 1d-9 1.22d10 1.985d9 9.6d9 10d-4 0.0001 10000
-2 1 2500.d0 3400.d0 1963.d0 0 0 9999 9999 0 0 0 0 0 0
+1 3 2650.d0 880.d0 0.3d0 1.2 1d-9 0.d0 1d-9 1.22d10 1.985d9 9.6d9 10d-4 0.0001 9999999999
+2 1 1020.d0 1500.d0 0.d0 0 0 10.d0 10.d0 0 0 0 0 0 0
 
 # external mesh or not
 read_external_mesh              = .false.
@@ -130,7 +130,7 @@ interfacesfile                  = ../interfaces_acoustic_poroelastic.dat
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
 xmax                            = 4800.d0        # abscissa of right side of the model
-nx                              = 260            # number of elements along X
+nx                              = 130            # number of elements along X
 
 # absorbing boundary parameters (see absorbing_conditions above)
 absorbbottom                    = .true.
@@ -140,5 +140,5 @@ absorbleft                      = .true.
 
 # define the different regions of the model in the (nx,nz) spectral element mesh
 nbregions                       = 2              # nb of regions and model number for each
-1 260 1 110 1
-1 260 111 220 2
+1 130 1 55 1
+1 130 56 110 2
