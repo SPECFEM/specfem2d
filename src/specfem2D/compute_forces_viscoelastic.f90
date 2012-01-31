@@ -205,7 +205,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
   ! compute Grad(displ_elastic) at time step n for attenuation
   if(ATTENUATION_VISCOELASTIC_SOLID) then
-     temp_displ_elastic = displ_elastic + deltat * veloc_elastic + 0.5 * deltat**2 * accel_elastic !xiezhinan
+     temp_displ_elastic = displ_elastic + deltat * veloc_elastic + 0.5 * deltat**2 * accel_elastic
      call compute_gradient_attenuation(displ_elastic,dux_dxl_n,duz_dxl_n, &
           dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob)
   endif
@@ -990,18 +990,18 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                  ! evolution e1
                  if(stage_time_scheme == 1) then
-                 Un = e1(i,j,ispec,i_sls)
-                 tauinv = - inv_tau_sigma_nu1(i,j,ispec,i_sls)
-                 tauinvsquare = tauinv * tauinv
-                 tauinvcube = tauinvsquare * tauinv
-                 tauinvUn = tauinv * Un
-                 Sn   = theta_n * phi_nu1(i,j,ispec,i_sls)
-                 Snp1 = theta_np1 * phi_nu1(i,j,ispec,i_sls)
-                 Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
-                      twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
-                      fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
-                      deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
-                 e1(i,j,ispec,i_sls) = Unp1
+                    Un = e1(i,j,ispec,i_sls)
+                    tauinv = - inv_tau_sigma_nu1(i,j,ispec,i_sls)
+                    tauinvsquare = tauinv * tauinv
+                    tauinvcube = tauinvsquare * tauinv
+                    tauinvUn = tauinv * Un
+                    Sn   = theta_n * phi_nu1(i,j,ispec,i_sls)
+                    Snp1 = theta_np1 * phi_nu1(i,j,ispec,i_sls)
+                    Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
+                         twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
+                         fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
+                         deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
+                    e1(i,j,ispec,i_sls) = Unp1
                  endif
 
                  if(stage_time_scheme == 6) then
@@ -1009,158 +1009,129 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     tauinv = inv_tau_sigma_nu1(i,j,ispec,i_sls)
                     Un = e1(i,j,ispec,i_sls)
                     temp_time_scheme = phi_nu1(i,j,ispec,i_sls)
-              e1_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls) + &
+                    e1_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls) + &
                                               deltat * (theta_n * temp_time_scheme - Un * tauinv)
-              e1(i,j,ispec,i_sls) = Un + beta_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls)
+                    e1(i,j,ispec,i_sls) = Un + beta_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls)
                  endif
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
                  if(stage_time_scheme == 4) then
 
-                      tauinv = inv_tau_sigma_nu1(i,j,ispec,i_sls)
-                      Un = e1(i,j,ispec,i_sls)
-                      temp_time_scheme = phi_nu1(i,j,ispec,i_sls)
-                e1_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (theta_n * temp_time_scheme - Un * tauinv)
+                    tauinv = inv_tau_sigma_nu1(i,j,ispec,i_sls)
+                    Un = e1(i,j,ispec,i_sls)
+                    temp_time_scheme = phi_nu1(i,j,ispec,i_sls)
+                    e1_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (theta_n * temp_time_scheme - Un * tauinv)
 
-                      if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
-                        if(i_stage == 1)weight_rk = 0.5d0
-                        if(i_stage == 2)weight_rk = 0.5d0
-            if(i_stage == 3)weight_rk = 1.0d0
+                    if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+                       if(i_stage == 1)weight_rk = 0.5d0
+                       if(i_stage == 2)weight_rk = 0.5d0
+                       if(i_stage == 3)weight_rk = 1.0d0
 
-            if(i_stage==1)then
+                       if(i_stage==1)then
+                       e1_initial_rk(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls)
+                       endif
 
-            e1_initial_rk(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls)
+                       e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) + weight_rk * e1_force_RK(i,j,ispec,i_sls,i_stage)
 
-            endif
+                    elseif(i_stage==4)then
 
-      e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) + weight_rk * e1_force_RK(i,j,ispec,i_sls,i_stage)
-
-
-                elseif(i_stage==4)then
-
-            e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) + 1.0d0 / 6.0d0 * &
-            (e1_force_RK(i,j,ispec,i_sls,1) + 2.0d0 * e1_force_RK(i,j,ispec,i_sls,2) + &
-             2.0d0 * e1_force_RK(i,j,ispec,i_sls,3) + e1_force_RK(i,j,ispec,i_sls,4))
-
-                endif
-
+                       e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) + 1.0d0 / 6.0d0 * &
+                                             (e1_force_RK(i,j,ispec,i_sls,1) + 2.0d0 * e1_force_RK(i,j,ispec,i_sls,2) + &
+                                             2.0d0 * e1_force_RK(i,j,ispec,i_sls,3) + e1_force_RK(i,j,ispec,i_sls,4))
+                    endif
                  endif
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 
                  ! evolution e11
-     if(stage_time_scheme == 1) then
-                 Un = e11(i,j,ispec,i_sls)
-                 tauinv = - inv_tau_sigma_nu2(i,j,ispec,i_sls)
-                 tauinvsquare = tauinv * tauinv
-                 tauinvcube = tauinvsquare * tauinv
-                 tauinvUn = tauinv * Un
-                 Sn   = (dux_dxl_n(i,j,ispec) - theta_n/TWO) * phi_nu2(i,j,ispec,i_sls)
-                 Snp1 = (dux_dxl_np1(i,j,ispec) - theta_np1/TWO) * phi_nu2(i,j,ispec,i_sls)
-                 Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
-                      twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
-                      fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
-                      deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
-                 e11(i,j,ispec,i_sls) = Unp1
-     endif
-
-                 if(stage_time_scheme == 6) then
-                 temp_time_scheme = dux_dxl_n(i,j,ispec)-theta_n/TWO
-                 temper_time_scheme = phi_nu2(i,j,ispec,i_sls)
-           e11_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e11_LDDRK(i,j,ispec,i_sls) &
-                                              + deltat * (temp_time_scheme * temper_time_scheme)- &
-                                       deltat * (e11(i,j,ispec,i_sls) * inv_tau_sigma_nu2(i,j,ispec,i_sls))
-           e11(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)+beta_LDDRK(i_stage)*e11_LDDRK(i,j,ispec,i_sls)
-     endif
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                 if(stage_time_scheme == 4) then
-
-                      temp_time_scheme = dux_dxl_n(i,j,ispec)-theta_n/TWO
-                      temper_time_scheme = phi_nu2(i,j,ispec,i_sls)
-                e11_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (temp_time_scheme * temper_time_scheme- &
-                                            e11(i,j,ispec,i_sls) * inv_tau_sigma_nu2(i,j,ispec,i_sls))
-
-                      if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
-                        if(i_stage == 1)weight_rk = 0.5d0
-                        if(i_stage == 2)weight_rk = 0.5d0
-            if(i_stage == 3)weight_rk = 1.0d0
-
-            if(i_stage==1)then
-
-            e11_initial_rk(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)
-
-            endif
-
-      e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + weight_rk * e11_force_RK(i,j,ispec,i_sls,i_stage)
-
-
-                elseif(i_stage==4)then
-
-            e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + 1.0d0 / 6.0d0 * &
-            (e11_force_RK(i,j,ispec,i_sls,1) + 2.0d0 * e11_force_RK(i,j,ispec,i_sls,2) + &
-             2.0d0 * e11_force_RK(i,j,ispec,i_sls,3) + e11_force_RK(i,j,ispec,i_sls,4))
-
+                 if(stage_time_scheme == 1) then
+                    Un = e11(i,j,ispec,i_sls)
+                    tauinv = - inv_tau_sigma_nu2(i,j,ispec,i_sls)
+                    tauinvsquare = tauinv * tauinv
+                    tauinvcube = tauinvsquare * tauinv
+                    tauinvUn = tauinv * Un
+                    Sn   = (dux_dxl_n(i,j,ispec) - theta_n/TWO) * phi_nu2(i,j,ispec,i_sls)
+                    Snp1 = (dux_dxl_np1(i,j,ispec) - theta_np1/TWO) * phi_nu2(i,j,ispec,i_sls)
+                    Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
+                         twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
+                         fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
+                         deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
+                    e11(i,j,ispec,i_sls) = Unp1
                 endif
 
+                 if(stage_time_scheme == 6) then
+                    temp_time_scheme = dux_dxl_n(i,j,ispec)-theta_n/TWO
+                    temper_time_scheme = phi_nu2(i,j,ispec,i_sls)
+                    e11_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e11_LDDRK(i,j,ispec,i_sls) &
+                                                 + deltat * (temp_time_scheme * temper_time_scheme)- &
+                                                 deltat * (e11(i,j,ispec,i_sls) * inv_tau_sigma_nu2(i,j,ispec,i_sls))
+                    e11(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)+beta_LDDRK(i_stage)*e11_LDDRK(i,j,ispec,i_sls)
                  endif
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+                 if(stage_time_scheme == 4) then
+
+                    temp_time_scheme = dux_dxl_n(i,j,ispec)-theta_n/TWO
+                    temper_time_scheme = phi_nu2(i,j,ispec,i_sls)
+                    e11_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (temp_time_scheme * temper_time_scheme- &
+                                               e11(i,j,ispec,i_sls) * inv_tau_sigma_nu2(i,j,ispec,i_sls))
+
+                    if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+                       if(i_stage == 1)weight_rk = 0.5d0
+                       if(i_stage == 2)weight_rk = 0.5d0
+                       if(i_stage == 3)weight_rk = 1.0d0
+                       if(i_stage==1)then
+                          e11_initial_rk(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)
+                       endif
+                       e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + weight_rk * e11_force_RK(i,j,ispec,i_sls,i_stage)
+                    elseif(i_stage==4)then
+                      e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + 1.0d0 / 6.0d0 * &
+                                             (e11_force_RK(i,j,ispec,i_sls,1) + 2.0d0 * e11_force_RK(i,j,ispec,i_sls,2) + &
+                                              2.0d0 * e11_force_RK(i,j,ispec,i_sls,3) + e11_force_RK(i,j,ispec,i_sls,4))
+                    endif
+                 endif
 
                  ! evolution e13
-     if(stage_time_scheme == 1) then
-                 Un = e13(i,j,ispec,i_sls)
-                 tauinv = - inv_tau_sigma_nu2(i,j,ispec,i_sls)
-                 tauinvsquare = tauinv * tauinv
-                 tauinvcube = tauinvsquare * tauinv
-                 tauinvUn = tauinv * Un
-                 Sn   = (dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)) * phi_nu2(i,j,ispec,i_sls)
-                 Snp1 = (dux_dzl_np1(i,j,ispec) + duz_dxl_np1(i,j,ispec)) * phi_nu2(i,j,ispec,i_sls)
-                 Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
-                      twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
-                      fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
-                      deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
-                 e13(i,j,ispec,i_sls) = Unp1
-     endif
+                 if(stage_time_scheme == 1) then
+                    Un = e13(i,j,ispec,i_sls)
+                    tauinv = - inv_tau_sigma_nu2(i,j,ispec,i_sls)
+                    tauinvsquare = tauinv * tauinv
+                    tauinvcube = tauinvsquare * tauinv
+                    tauinvUn = tauinv * Un
+                    Sn   = (dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)) * phi_nu2(i,j,ispec,i_sls)
+                    Snp1 = (dux_dzl_np1(i,j,ispec) + duz_dxl_np1(i,j,ispec)) * phi_nu2(i,j,ispec,i_sls)
+                    Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
+                         twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
+                         fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
+                         deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
+                    e13(i,j,ispec,i_sls) = Unp1
+                 endif
 
                  if(stage_time_scheme == 6) then
-                 temp_time_scheme=dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)
-                 temper_time_scheme=phi_nu2(i,j,ispec,i_sls)
-           e13_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls)+&
+                    temp_time_scheme=dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)
+                    temper_time_scheme=phi_nu2(i,j,ispec,i_sls)
+                    e13_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls)+&
                                              deltat * (temp_time_scheme*temper_time_scheme)- &
                                             deltat * (e13(i,j,ispec,i_sls) * inv_tau_sigma_nu2(i,j,ispec,i_sls))
-           e13(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)+beta_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls)
-     endif
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                 if(stage_time_scheme == 4) then
-
-                      temp_time_scheme=dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)
-                      temper_time_scheme=phi_nu2(i,j,ispec,i_sls)
-                e13_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (temp_time_scheme*temper_time_scheme- &
-                                            e13(i,j,ispec,i_sls) * inv_tau_sigma_nu2(i,j,ispec,i_sls))
-
-                      if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
-                        if(i_stage == 1)weight_rk = 0.5d0
-                        if(i_stage == 2)weight_rk = 0.5d0
-            if(i_stage == 3)weight_rk = 1.0d0
-
-            if(i_stage==1)then
-
-            e13_initial_rk(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)
-
-            endif
-
-      e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + weight_rk * e13_force_RK(i,j,ispec,i_sls,i_stage)
-
-
-                elseif(i_stage==4)then
-
-            e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + 1.0d0 / 6.0d0 * &
-            (e13_force_RK(i,j,ispec,i_sls,1) + 2.0d0 * e13_force_RK(i,j,ispec,i_sls,2) + &
-             2.0d0 * e13_force_RK(i,j,ispec,i_sls,3) + e13_force_RK(i,j,ispec,i_sls,4))
-
-                endif
-
+                    e13(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)+beta_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls)
                  endif
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+                 if(stage_time_scheme == 4) then
+                    temp_time_scheme=dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)
+                    temper_time_scheme=phi_nu2(i,j,ispec,i_sls)
+                    e13_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (temp_time_scheme*temper_time_scheme- &
+                                            e13(i,j,ispec,i_sls) * inv_tau_sigma_nu2(i,j,ispec,i_sls))
+                    if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+                       if(i_stage == 1)weight_rk = 0.5d0
+                       if(i_stage == 2)weight_rk = 0.5d0
+                       if(i_stage == 3)weight_rk = 1.0d0
+                       if(i_stage==1)then
+                          e13_initial_rk(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)
+                       endif
+                          e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + weight_rk * e13_force_RK(i,j,ispec,i_sls,i_stage)
+                    elseif(i_stage==4)then
+                       e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + 1.0d0 / 6.0d0 * &
+                                              (e13_force_RK(i,j,ispec,i_sls,1) + 2.0d0 * e13_force_RK(i,j,ispec,i_sls,2) + &
+                                              2.0d0 * e13_force_RK(i,j,ispec,i_sls,3) + e13_force_RK(i,j,ispec,i_sls,4))
+                    endif
+                 endif
 
               enddo
 
