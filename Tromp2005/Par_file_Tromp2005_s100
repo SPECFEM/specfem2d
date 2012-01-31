@@ -26,6 +26,7 @@ p_sv                            = .true.         # set the type of calculation (
 nt                              = 3000           # total number of time steps
 deltat                          = 2.0d-4         # duration of a time step
 USER_T0                         = 0.0d0          # use this t0 as earliest starting time rather than the automatically calculated one
+time_stepping_scheme            = 1   # 1 = Newmark (2nd order),     2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta),     3 = classical 4th-order 4-stage Runge-Kutta
 
 # source parameters
 NSOURCES                        = 1              # number of sources [source info read in CMTSOLUTION file]
