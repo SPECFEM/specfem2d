@@ -375,6 +375,11 @@
 !  simulation will start at t = - t0)
   double precision :: USER_T0
 
+! value of time_stepping_scheme to decide which time scheme will be used
+! 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta)
+! 3 = classical 4th-order 4-stage Runge-Kutta
+  integer :: time_stepping_scheme
+
 ! receiver information
   integer :: nrec,ios
   integer, dimension(:), allocatable :: ispec_selected_rec
@@ -430,6 +435,9 @@
   double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic,kappal
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic,veloc_elastic,displ_elastic
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: veloc_elastic_LDDRK,displ_elastic_LDDRK
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: accel_elastic_rk,veloc_elastic_rk
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: veloc_elastic_initial_rk,displ_elastic_initial_rk
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic_adj_coupling
   double precision, dimension(:,:), allocatable :: &
     coord, flagrange,xinterp,zinterp,Uxinterp,Uzinterp,vector_field_display
@@ -438,7 +446,19 @@
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     accels_poroelastic,velocs_poroelastic,displs_poroelastic
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
+    velocs_poroelastic_LDDRK,displs_poroelastic_LDDRK
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
+    velocs_poroelastic_initial_rk,displs_poroelastic_initial_rk
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
+    accels_poroelastic_rk,velocs_poroelastic_rk
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     accelw_poroelastic,velocw_poroelastic,displw_poroelastic
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
+    velocw_poroelastic_LDDRK,displw_poroelastic_LDDRK
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
+    velocw_poroelastic_initial_rk,displw_poroelastic_initial_rk
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
+    accelw_poroelastic_rk,velocw_poroelastic_rk
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     accels_poroelastic_adj_coupling, accelw_poroelastic_adj_coupling
   double precision, dimension(:), allocatable :: porosity,tortuosity
@@ -456,6 +476,9 @@
 ! for acoustic medium
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
     potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_dot_acoustic_LDDRK, potential_acoustic_LDDRK
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_acoustic_init_rk, potential_dot_acoustic_init_rk
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: potential_dot_dot_acoustic_rk, potential_dot_acoustic_rk
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_acoustic_adj_coupling
 
 ! inverse mass matrices
@@ -489,7 +512,7 @@
   integer, dimension(:), allocatable :: ispec_selected_source,iglob_source,&
                                         is_proc_source,nb_proc_source
   double precision, dimension(:), allocatable :: aval
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: source_time_function
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: source_time_function
   double precision, external :: netlib_specfun_erf
 
   double precision :: vpImin,vpImax,vpIImin,vpIImax
@@ -521,6 +544,9 @@
   double precision :: deltatsquare,deltatcube,deltatfourth,twelvedeltat,fourdeltatsquare
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1,e11,e13
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_LDDRK,e11_LDDRK,e13_LDDRK
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_initial_rk,e11_initial_rk,e13_initial_rk
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: e1_force_rk,e11_force_rk,e13_force_rk
   double precision, dimension(:,:,:,:), allocatable :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
   double precision, dimension(:), allocatable :: inv_tau_sigma_nu1_sent,phi_nu1_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent
   double precision, dimension(:,:,:) , allocatable :: Mu_nu1,Mu_nu2
@@ -532,6 +558,16 @@
 ! for viscous attenuation
   double precision, dimension(:,:,:), allocatable :: &
     rx_viscous,rz_viscous,viscox,viscoz
+
+  double precision, dimension(:,:,:), allocatable :: &
+    rx_viscous_LDDRK,rz_viscous_LDDRK
+
+  double precision, dimension(:,:,:), allocatable :: &
+    rx_viscous_initial_rk,rz_viscous_initial_rk
+
+  double precision, dimension(:,:,:,:), allocatable :: &
+    rx_viscous_force_RK,rz_viscous_force_RK
+
   double precision :: theta_e,theta_s
   double precision :: Q0,freq0
   double precision :: alphaval,betaval,gammaval,thetainv
@@ -883,6 +919,25 @@
   ! latter usually much faster but prone to artefacts)
   logical :: save_everywhere = .false.
 
+! for LDDRK46
+  integer :: i_stage,stage_time_scheme
+  double precision, dimension(Nstages):: alpha_LDDRK,beta_LDDRK,c_LDDRK
+
+Data alpha_LDDRK /0.0_CUSTOM_REAL,-0.737101392796_CUSTOM_REAL, &
+     -1.634740794341_CUSTOM_REAL,-0.744739003780_CUSTOM_REAL, &
+     -1.469897351522_CUSTOM_REAL,-2.813971388035_CUSTOM_REAL/
+
+Data beta_LDDRK /0.032918605146_CUSTOM_REAL,0.823256998200_CUSTOM_REAL,&
+                   0.381530948900_CUSTOM_REAL,0.200092213184_CUSTOM_REAL,&
+                   1.718581042715_CUSTOM_REAL,0.27_CUSTOM_REAL/
+
+Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
+                0.249351723343_CUSTOM_REAL,0.466911705055_CUSTOM_REAL,&
+                0.582030414044_CUSTOM_REAL,0.847252983783_CUSTOM_REAL/
+
+! for rk44
+  double precision :: weight_rk
+
 !***********************************************************************
 !
 !             i n i t i a l i z a t i o n    p h a s e
@@ -911,7 +966,7 @@
                   ATTENUATION_PORO_FLUID_PART,Q0,freq0,p_sv, &
                   NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCES, &
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_CONSTANT_BLUE_IN_JPG,US_LETTER, &
-                  POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, &
+                  POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, time_stepping_scheme, &
                   ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL)
   if(nproc_read_from_database < 1) stop 'should have nproc_read_from_database >= 1'
   if(nproc /= nproc_read_from_database) stop 'must always have nproc == nproc_read_from_database'
@@ -943,7 +998,7 @@
                       ATTENUATION_PORO_FLUID_PART,Q0,freq0,p_sv, &
                       NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCES, &
                       factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_CONSTANT_BLUE_IN_JPG,US_LETTER, &
-                      POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, &
+                      POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, time_stepping_scheme, &
                       ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL)
 
   !
@@ -980,6 +1035,19 @@
   call set_sources(myrank,NSOURCES,source_type,time_function_type, &
                       x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,angleforce,aval, &
                       t0,initialfield,ipass,deltat,USER_T0)
+
+
+
+  !----  define time stepping scheme
+
+  if(time_stepping_scheme == 1)then
+    stage_time_scheme=1
+  elseif(time_stepping_scheme == 2)then
+    stage_time_scheme=Nstages
+  elseif(time_stepping_scheme == 3)then
+    stage_time_scheme=4
+  endif
+
 
   !
   !----  read attenuation information
@@ -1165,6 +1233,41 @@
     e11(:,:,:,:) = 0._CUSTOM_REAL
     e13(:,:,:,:) = 0._CUSTOM_REAL
 
+    if(time_stepping_scheme == 2)then
+      allocate(e1_LDDRK(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+      allocate(e11_LDDRK(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+      allocate(e13_LDDRK(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+    else
+      allocate(e1_LDDRK(1,1,1,1))
+      allocate(e11_LDDRK(1,1,1,1))
+      allocate(e13_LDDRK(1,1,1,1))
+    endif
+    e1_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
+    e11_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
+    e13_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
+
+    if(time_stepping_scheme == 3)then
+      allocate(e1_initial_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+      allocate(e11_initial_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+      allocate(e13_initial_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+      allocate(e1_force_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS,stage_time_scheme))
+      allocate(e11_force_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS,stage_time_scheme))
+      allocate(e13_force_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS,stage_time_scheme))
+    else
+      allocate(e1_initial_rk(1,1,1,1))
+      allocate(e11_initial_rk(1,1,1,1))
+      allocate(e13_initial_rk(1,1,1,1))
+      allocate(e1_force_rk(1,1,1,1,1))
+      allocate(e11_force_rk(1,1,1,1,1))
+      allocate(e13_force_rk(1,1,1,1,1))
+    endif
+    e1_initial_rk(:,:,:,:) = 0._CUSTOM_REAL
+    e11_initial_rk(:,:,:,:) = 0._CUSTOM_REAL
+    e13_initial_rk(:,:,:,:) = 0._CUSTOM_REAL
+    e1_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
+    e11_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
+    e13_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
+
     allocate(dux_dxl_n(NGLLX,NGLLZ,nspec_allocate))
     allocate(duz_dzl_n(NGLLX,NGLLZ,nspec_allocate))
     allocate(duz_dxl_n(NGLLX,NGLLZ,nspec_allocate))
@@ -1203,6 +1306,19 @@
       allocate(rz_viscous(NGLLX,NGLLZ,nspec))
       allocate(viscox(NGLLX,NGLLZ,nspec))
       allocate(viscoz(NGLLX,NGLLZ,nspec))
+
+      if(time_stepping_scheme == 2) then
+      allocate(rx_viscous_LDDRK(NGLLX,NGLLZ,nspec))
+      allocate(rz_viscous_LDDRK(NGLLX,NGLLZ,nspec))
+      endif
+
+      if(time_stepping_scheme == 3) then
+      allocate(rx_viscous_initial_rk(NGLLX,NGLLZ,nspec))
+      allocate(rz_viscous_initial_rk(NGLLX,NGLLZ,nspec))
+      allocate(rx_viscous_force_RK(NGLLX,NGLLZ,nspec,stage_time_scheme))
+      allocate(rz_viscous_force_RK(NGLLX,NGLLZ,nspec,stage_time_scheme))
+      endif
+
     else
       allocate(rx_viscous(NGLLX,NGLLZ,1))
       allocate(rz_viscous(NGLLX,NGLLZ,1))
@@ -2325,6 +2441,18 @@
     allocate(accel_elastic_adj_coupling(3,nglob_elastic))
     allocate(rmass_inverse_elastic(nglob_elastic))
 
+    if(time_stepping_scheme==2)then
+    allocate(displ_elastic_LDDRK(3,nglob_elastic))
+    allocate(veloc_elastic_LDDRK(3,nglob_elastic))
+    endif
+
+    if(time_stepping_scheme == 3)then
+    allocate(accel_elastic_rk(3,nglob_elastic,stage_time_scheme))
+    allocate(veloc_elastic_rk(3,nglob_elastic,stage_time_scheme))
+    allocate(veloc_elastic_initial_rk(3,nglob_elastic))
+    allocate(displ_elastic_initial_rk(3,nglob_elastic))
+    endif
+
     ! extra array if adjoint and kernels calculation
     if(SIMULATION_TYPE == 2 .and. any_elastic) then
       allocate(b_displ_elastic(3,nglob))
@@ -2384,6 +2512,24 @@
     allocate(accelw_poroelastic(NDIM,nglob_poroelastic))
     allocate(accelw_poroelastic_adj_coupling(NDIM,nglob_poroelastic))
     allocate(rmass_w_inverse_poroelastic(nglob_poroelastic))
+
+    if(time_stepping_scheme == 2)then
+    allocate(displs_poroelastic_LDDRK(NDIM,nglob_poroelastic))
+    allocate(velocs_poroelastic_LDDRK(NDIM,nglob_poroelastic))
+    allocate(displw_poroelastic_LDDRK(NDIM,nglob_poroelastic))
+    allocate(velocw_poroelastic_LDDRK(NDIM,nglob_poroelastic))
+    endif
+
+    if(time_stepping_scheme == 3)then
+    allocate(accels_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme))
+    allocate(velocs_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme))
+    allocate(accelw_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme))
+    allocate(velocw_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme))
+    allocate(displs_poroelastic_initial_rk(NDIM,nglob_poroelastic))
+    allocate(velocs_poroelastic_initial_rk(NDIM,nglob_poroelastic))
+    allocate(displw_poroelastic_initial_rk(NDIM,nglob_poroelastic))
+    allocate(velocw_poroelastic_initial_rk(NDIM,nglob_poroelastic))
+    endif
 
     ! extra array if adjoint and kernels calculation
     if(SIMULATION_TYPE == 2 .and. any_poroelastic) then
@@ -2500,6 +2646,18 @@
     allocate(potential_dot_acoustic(nglob_acoustic))
     allocate(potential_dot_dot_acoustic(nglob_acoustic))
     allocate(rmass_inverse_acoustic(nglob_acoustic))
+    if(time_stepping_scheme == 2) then
+    allocate(potential_acoustic_LDDRK(nglob_acoustic))
+    allocate(potential_dot_acoustic_LDDRK(nglob_acoustic))
+    endif
+
+    if(time_stepping_scheme == 3) then
+    allocate(potential_acoustic_init_rk(nglob_acoustic))
+    allocate(potential_dot_acoustic_init_rk(nglob_acoustic))
+    allocate(potential_dot_dot_acoustic_rk(nglob_acoustic,stage_time_scheme))
+    allocate(potential_dot_acoustic_rk(nglob_acoustic,stage_time_scheme))
+    endif
+
 
     if(SIMULATION_TYPE == 2 .and. any_acoustic) then
       allocate(b_potential_acoustic(nglob))
@@ -2900,6 +3058,18 @@
   veloc_elastic = 0._CUSTOM_REAL
   accel_elastic = 0._CUSTOM_REAL
 
+  if(time_stepping_scheme == 2) then
+  displ_elastic_LDDRK = 0._CUSTOM_REAL
+  veloc_elastic_LDDRK = 0._CUSTOM_REAL
+  endif
+
+  if(time_stepping_scheme == 3)then
+   accel_elastic_rk = 0._CUSTOM_REAL
+   veloc_elastic_rk = 0._CUSTOM_REAL
+   veloc_elastic_initial_rk = 0._CUSTOM_REAL
+   displ_elastic_initial_rk = 0._CUSTOM_REAL
+  endif
+
   displs_poroelastic = 0._CUSTOM_REAL
   velocs_poroelastic = 0._CUSTOM_REAL
   accels_poroelastic = 0._CUSTOM_REAL
@@ -2907,9 +3077,43 @@
   velocw_poroelastic = 0._CUSTOM_REAL
   accelw_poroelastic = 0._CUSTOM_REAL
 
+  if(time_stepping_scheme == 2) then
+  displs_poroelastic_LDDRK = 0._CUSTOM_REAL
+  velocs_poroelastic_LDDRK = 0._CUSTOM_REAL
+  displw_poroelastic_LDDRK = 0._CUSTOM_REAL
+  velocw_poroelastic_LDDRK = 0._CUSTOM_REAL
+  endif
+
+  if(time_stepping_scheme == 3) then
+  accels_poroelastic_rk = 0._CUSTOM_REAL
+  velocs_poroelastic_rk = 0._CUSTOM_REAL
+
+  accelw_poroelastic_rk = 0._CUSTOM_REAL
+  velocw_poroelastic_rk = 0._CUSTOM_REAL
+
+  velocs_poroelastic_initial_rk = 0._CUSTOM_REAL
+  displs_poroelastic_initial_rk = 0._CUSTOM_REAL
+
+  velocw_poroelastic_initial_rk = 0._CUSTOM_REAL
+  displw_poroelastic_initial_rk = 0._CUSTOM_REAL
+
+  endif
+
   potential_acoustic = 0._CUSTOM_REAL
   potential_dot_acoustic = 0._CUSTOM_REAL
   potential_dot_dot_acoustic = 0._CUSTOM_REAL
+
+  if(time_stepping_scheme == 2 )then
+  potential_acoustic_LDDRK = 0._CUSTOM_REAL
+  potential_dot_acoustic_LDDRK = 0._CUSTOM_REAL
+  endif
+
+  if(time_stepping_scheme == 3 )then
+  potential_acoustic_init_rk = 0._CUSTOM_REAL
+  potential_dot_acoustic_init_rk = 0._CUSTOM_REAL
+  potential_dot_dot_acoustic_rk = 0._CUSTOM_REAL
+  potential_dot_acoustic_rk = 0._CUSTOM_REAL
+  endif
 
 !
 !----- Files where viscous damping are saved during forward wavefield calculation
@@ -3165,17 +3369,17 @@
 ! compute the source time function and store it in a text file
   if(.not. initialfield) then
 
-    allocate(source_time_function(NSOURCES,NSTEP))
-    source_time_function(:,:) = 0._CUSTOM_REAL
+    allocate(source_time_function(NSOURCES,NSTEP,stage_time_scheme))
+    source_time_function(:,:,:) = 0._CUSTOM_REAL
 
     ! computes source time function array
     call prepare_source_time_function(myrank,NSTEP,NSOURCES,source_time_function, &
                           time_function_type,f0,tshift_src,factor,aval, &
-                          t0,nb_proc_source,deltat)
+                          t0,nb_proc_source,deltat,stage_time_scheme,c_LDDRK)
   else
     ! uses an initialfield
     ! dummy allocation
-    allocate(source_time_function(1,1))
+    allocate(source_time_function(1,1,1))
   endif
 
 ! determine if coupled fluid-solid simulation
@@ -3938,6 +4142,17 @@
     viscoz(:,:,:) = 0.d0
     rx_viscous(:,:,:) = 0.d0
     rz_viscous(:,:,:) = 0.d0
+    if(time_stepping_scheme == 2) then
+     rx_viscous_LDDRK = 0.d0
+     rz_viscous_LDDRK = 0.d0
+    endif
+
+    if(time_stepping_scheme == 3) then
+     rx_viscous_initial_rk = 0.d0
+     rz_viscous_initial_rk = 0.d0
+     rx_viscous_force_RK = 0.d0
+     rz_viscous_force_RK = 0.d0
+    endif
 
   endif
 
@@ -4116,14 +4331,29 @@
 ! compute current time
     time = (it-1)*deltat
 
+    do i_stage=1, stage_time_scheme
+
 ! update displacement using finite-difference time scheme (Newmark)
     if(any_elastic) then
+
+      if(time_stepping_scheme==1)then
       displ_elastic = displ_elastic &
                     + deltat*veloc_elastic &
                     + deltatsquareover2*accel_elastic
       veloc_elastic = veloc_elastic + deltatover2*accel_elastic
       accel_elastic_adj_coupling = accel_elastic
       accel_elastic = ZERO
+      endif
+
+      if(time_stepping_scheme==2)then
+      accel_elastic_adj_coupling = accel_elastic
+      accel_elastic = ZERO
+      endif
+
+      if(time_stepping_scheme==3)then
+      accel_elastic_adj_coupling = accel_elastic
+      accel_elastic = ZERO
+      endif
 
       if(SIMULATION_TYPE == 2) then ! Adjoint calculation
         b_displ_elastic = b_displ_elastic &
@@ -4135,6 +4365,8 @@
     endif
 
     if(any_poroelastic) then
+
+      if(time_stepping_scheme==1)then
       !for the solid
       displs_poroelastic = displs_poroelastic &
                          + deltat*velocs_poroelastic &
@@ -4149,6 +4381,25 @@
       velocw_poroelastic = velocw_poroelastic + deltatover2*accelw_poroelastic
       accelw_poroelastic_adj_coupling = accelw_poroelastic
       accelw_poroelastic = ZERO
+      endif
+
+      if(time_stepping_scheme==2)then
+      !for the solid
+      accels_poroelastic_adj_coupling = accels_poroelastic
+      accels_poroelastic = ZERO
+      !for the fluid
+      accelw_poroelastic_adj_coupling = accelw_poroelastic
+      accelw_poroelastic = ZERO
+      endif
+
+      if(time_stepping_scheme==3)then
+      !for the solid
+      accels_poroelastic_adj_coupling = accels_poroelastic
+      accels_poroelastic = ZERO
+      !for the fluid
+      accelw_poroelastic_adj_coupling = accelw_poroelastic
+      accelw_poroelastic = ZERO
+      endif
 
       if(SIMULATION_TYPE == 2) then ! Adjoint calculation
         !for the solid
@@ -4202,10 +4453,11 @@
             iglob = ibool(i,j,ispec)
 
             viscox_loc(i,j) = velocw_poroelastic(1,iglob)*bl_unrelaxed_elastic(1) + &
-                               velocw_poroelastic(2,iglob)*bl_unrelaxed_elastic(2)
+                               velocw_poroelastic(2,iglob) * bl_unrelaxed_elastic(2)
             viscoz_loc(i,j) = velocw_poroelastic(1,iglob)*bl_unrelaxed_elastic(2) + &
                                velocw_poroelastic(2,iglob)*bl_unrelaxed_elastic(3)
 
+            if(time_stepping_scheme == 1) then
             ! evolution rx_viscous
             Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
             Snp1 = - (1.d0 - theta_e/theta_s)/theta_s*viscox_loc(i,j)
@@ -4217,21 +4469,90 @@
             Snp1 = - (1.d0 - theta_e/theta_s)/theta_s*viscoz_loc(i,j)
             rz_viscous(i,j,ispec) = alphaval * rz_viscous(i,j,ispec) &
                                   + betaval * Sn + gammaval * Snp1
+            endif
 
+            if(time_stepping_scheme == 2) then
+            Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
+      rx_viscous_LDDRK(i,j,ispec)= alpha_LDDRK(i_stage) * rx_viscous_LDDRK(i,j,ispec)+&
+                                             deltat * (Sn + thetainv * rx_viscous(i,j,ispec))
+      rx_viscous(i,j,ispec)= rx_viscous(i,j,ispec)+beta_LDDRK(i_stage) * rx_viscous_LDDRK(i,j,ispec)
+
+            Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
+      rz_viscous_LDDRK(i,j,ispec)= alpha_LDDRK(i_stage) * rz_viscous_LDDRK(i,j,ispec)+&
+                                             deltat * (Sn + thetainv * rz_viscous(i,j,ispec))
+      rz_viscous(i,j,ispec)= rz_viscous(i,j,ispec)+beta_LDDRK(i_stage) * rz_viscous_LDDRK(i,j,ispec)
+
+            endif
+
+            if(time_stepping_scheme == 3) then
+
+                      Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
+                rx_viscous_force_RK(i,j,ispec,i_stage) = deltat * (Sn + thetainv * rx_viscous(i,j,ispec))
+
+                      if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+                        if(i_stage == 1)weight_rk = 0.5d0
+                        if(i_stage == 2)weight_rk = 0.5d0
+            if(i_stage == 3)weight_rk = 1.0d0
+
+            if(i_stage==1)then
+
+            rx_viscous_initial_rk(i,j,ispec) = rx_viscous(i,j,ispec)
+
+            endif
+
+      rx_viscous(i,j,ispec) = rx_viscous_initial_rk(i,j,ispec) + weight_rk * rx_viscous_force_RK(i,j,ispec,i_stage)
+
+
+                elseif(i_stage==4)then
+
+            rx_viscous(i,j,ispec) = rx_viscous_initial_rk(i,j,ispec) + 1.0d0 / 6.0d0 * &
+            (rx_viscous_force_RK(i,j,ispec,i_stage) + 2.0d0 * rx_viscous_force_RK(i,j,ispec,i_stage) + &
+             2.0d0 * rx_viscous_force_RK(i,j,ispec,i_stage) + rx_viscous_force_RK(i,j,ispec,i_stage))
+
+               endif
+
+                      Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
+                rz_viscous_force_RK(i,j,ispec,i_stage) = deltat * (Sn + thetainv * rz_viscous(i,j,ispec))
+
+                      if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+                        if(i_stage == 1)weight_rk = 0.5d0
+                        if(i_stage == 2)weight_rk = 0.5d0
+            if(i_stage == 3)weight_rk = 1.0d0
+
+            if(i_stage==1)then
+
+            rz_viscous_initial_rk(i,j,ispec) = rz_viscous(i,j,ispec)
+
+            endif
+
+      rz_viscous(i,j,ispec) = rz_viscous_initial_rk(i,j,ispec) + weight_rk * rz_viscous_force_RK(i,j,ispec,i_stage)
+
+
+                elseif(i_stage==4)then
+
+            rz_viscous(i,j,ispec) = rz_viscous_initial_rk(i,j,ispec) + 1.0d0 / 6.0d0 * &
+            (rz_viscous_force_RK(i,j,ispec,i_stage) + 2.0d0 * rz_viscous_force_RK(i,j,ispec,i_stage) + &
+             2.0d0 * rz_viscous_force_RK(i,j,ispec,i_stage) + rz_viscous_force_RK(i,j,ispec,i_stage))
+
+               endif
+
+            endif
 
           enddo
         enddo
 
-        ! save visco for Runge-Kutta scheme
+        if(stage_time_scheme == 1) then
+        ! save visco for Runge-Kutta scheme when used together with Newmark
         viscox(:,:,ispec) = viscox_loc(:,:)
         viscoz(:,:,ispec) = viscoz_loc(:,:)
+        endif
 
       enddo   ! end of spectral element loop
     endif ! end of viscous attenuation for porous media
 
 !-----------------------------------------
     if(any_acoustic) then
-
+      if(time_stepping_scheme==1)then
       ! Newmark time scheme
       potential_acoustic = potential_acoustic &
                           + deltat*potential_dot_acoustic &
@@ -4239,6 +4560,15 @@
       potential_dot_acoustic = potential_dot_acoustic &
                               + deltatover2*potential_dot_dot_acoustic
       potential_dot_dot_acoustic = ZERO
+      endif
+
+      if(time_stepping_scheme==2)then
+      potential_dot_dot_acoustic = ZERO
+      endif
+
+      if(time_stepping_scheme==3)then
+      potential_dot_dot_acoustic = ZERO
+      endif
 
       if(SIMULATION_TYPE == 2) then ! Adjoint calculation
         b_potential_acoustic = b_potential_acoustic &
@@ -4560,7 +4890,7 @@
                     iglob = ibool(i,j,ispec_selected_source(i_source))
                     hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
                     potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
-                                            - source_time_function(i_source,it)*hlagrange
+                                            - source_time_function(i_source,it,i_stage)*hlagrange
                   enddo
                 enddo
               else
@@ -4570,7 +4900,7 @@
                     iglob = ibool(i,j,ispec_selected_source(i_source))
                     hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
                     b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) &
-                                          - source_time_function(i_source,NSTEP-it+1)*hlagrange
+                                          - source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1)*hlagrange
                   enddo
                 enddo
               endif
@@ -4648,9 +4978,63 @@
 ! ************************************************************************************
 
     if(any_acoustic) then
-
+      if(time_stepping_scheme == 1)then
       potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
       potential_dot_acoustic = potential_dot_acoustic + deltatover2*potential_dot_dot_acoustic
+      endif
+
+      if(time_stepping_scheme == 2)then
+
+        potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
+
+        potential_dot_acoustic_LDDRK = alpha_LDDRK(i_stage) * potential_dot_acoustic_LDDRK &
+                                       + deltat * potential_dot_dot_acoustic
+
+        potential_acoustic_LDDRK = alpha_LDDRK(i_stage) * potential_acoustic_LDDRK &
+                                       +deltat*potential_dot_acoustic
+
+        potential_dot_acoustic = potential_dot_acoustic + beta_LDDRK(i_stage) * potential_dot_acoustic_LDDRK
+
+        potential_acoustic = potential_acoustic + beta_LDDRK(i_stage) * potential_acoustic_LDDRK
+
+      endif
+
+      if(time_stepping_scheme == 3)then
+
+  potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
+
+        potential_dot_dot_acoustic_rk(:,i_stage) = deltat * potential_dot_dot_acoustic(:)
+        potential_dot_acoustic_rk(:,i_stage) = deltat * potential_dot_acoustic(:)
+
+        if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+
+        if(i_stage == 1)weight_rk = 0.5d0
+        if(i_stage == 2)weight_rk = 0.5d0
+        if(i_stage == 3)weight_rk = 1.0d0
+
+        if(i_stage==1)then
+
+        potential_dot_acoustic_init_rk(:) = potential_dot_acoustic(:)
+        potential_acoustic_init_rk(:) = potential_acoustic(:)
+
+        endif
+
+        potential_dot_acoustic(:) = potential_dot_acoustic_init_rk(:) + weight_rk * potential_dot_dot_acoustic_rk(:,i_stage)
+        potential_acoustic(:) = potential_acoustic_init_rk(:) + weight_rk * potential_dot_acoustic_rk(:,i_stage)
+
+        elseif(i_stage==4)then
+
+        potential_dot_acoustic(:) = potential_dot_acoustic_init_rk(:) + 1.0d0 / 6.0d0 * &
+        (potential_dot_dot_acoustic_rk(:,1) + 2.0d0 * potential_dot_dot_acoustic_rk(:,2) + &
+         2.0d0 * potential_dot_dot_acoustic_rk(:,3) + potential_dot_dot_acoustic_rk(:,4))
+
+        potential_acoustic(:) = potential_acoustic_init_rk(:) + 1.0d0 / 6.0d0 * &
+        (potential_dot_acoustic_rk(:,1) + 2.0d0 * potential_dot_acoustic_rk(:,2) + &
+         2.0d0 * potential_dot_acoustic_rk(:,3) + potential_dot_acoustic_rk(:,4))
+
+        endif
+
+      endif
 
       if(SIMULATION_TYPE ==2)then
         b_potential_dot_dot_acoustic = b_potential_dot_dot_acoustic * rmass_inverse_acoustic
@@ -4705,7 +5089,10 @@
                count_left,count_right,count_bottom,over_critical_angle, &
                NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD, &
                b_absorb_elastic_left,b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top, &
-               nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,mu_k,kappa_k)
+               nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,mu_k,kappa_k, &
+               e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
+               e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_rk, e11_force_rk, e13_force_rk, &
+               stage_time_scheme,i_stage)
 
       if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
         !--- left absorbing boundary
@@ -5189,9 +5576,9 @@
                       iglob = ibool(i,j,ispec_selected_source(i_source))
                       hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
                       accel_elastic(1,iglob) = accel_elastic(1,iglob) &
-                        - sin(angleforce(i_source))*source_time_function(i_source,it)*hlagrange
+                        - sin(angleforce(i_source))*source_time_function(i_source,it,i_stage)*hlagrange
                       accel_elastic(3,iglob) = accel_elastic(3,iglob) &
-                        + cos(angleforce(i_source))*source_time_function(i_source,it)*hlagrange
+                        + cos(angleforce(i_source))*source_time_function(i_source,it,i_stage)*hlagrange
                     enddo
                   enddo
                 else    ! SH (membrane) calculation
@@ -5200,7 +5587,7 @@
                       iglob = ibool(i,j,ispec_selected_source(i_source))
                       hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
                       accel_elastic(2,iglob) = accel_elastic(2,iglob) &
-                            + source_time_function(i_source,it)*hlagrange
+                            + source_time_function(i_source,it,i_stage)*hlagrange
                     enddo
                   enddo
                 endif
@@ -5211,10 +5598,10 @@
                       iglob = ibool(i,j,ispec_selected_source(i_source))
                       hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
                       b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) &
-                        - sin(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1) &
+                        - sin(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1) &
                           *hlagrange
                       b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) &
-                        + cos(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1) &
+                        + cos(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1) &
                           *hlagrange
                     enddo
                   enddo
@@ -5224,7 +5611,7 @@
                       iglob = ibool(i,j,ispec_selected_source(i_source))
                       hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
                       b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) &
-                            + source_time_function(i_source,NSTEP-it+1)*hlagrange
+                            + source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1)*hlagrange
                     enddo
                   enddo
                 endif
@@ -5289,11 +5676,96 @@
 ! ************************************************************************************
 
     if(any_elastic) then
-      accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic
-      accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic
-      accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic
 
-      veloc_elastic = veloc_elastic + deltatover2*accel_elastic
+      if(time_stepping_scheme == 1)then
+        accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic
+        accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic
+        accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic
+        veloc_elastic = veloc_elastic + deltatover2 * accel_elastic
+      endif
+
+      if(time_stepping_scheme == 2)then
+        accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic
+        accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic
+        accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic
+
+  veloc_elastic_LDDRK = alpha_LDDRK(i_stage) * veloc_elastic_LDDRK + deltat * accel_elastic
+  displ_elastic_LDDRK = alpha_LDDRK(i_stage) * displ_elastic_LDDRK + deltat * veloc_elastic
+
+  veloc_elastic = veloc_elastic + beta_LDDRK(i_stage) * veloc_elastic_LDDRK
+  displ_elastic = displ_elastic + beta_LDDRK(i_stage) * displ_elastic_LDDRK
+
+      endif
+
+      if(time_stepping_scheme == 3)then
+
+        accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic
+        accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic
+        accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic
+
+        accel_elastic_rk(1,:,i_stage) = deltat * accel_elastic(1,:)
+        accel_elastic_rk(2,:,i_stage) = deltat * accel_elastic(2,:)
+        accel_elastic_rk(3,:,i_stage) = deltat * accel_elastic(3,:)
+
+        veloc_elastic_rk(1,:,i_stage) = deltat * veloc_elastic(1,:)
+        veloc_elastic_rk(2,:,i_stage) = deltat * veloc_elastic(2,:)
+        veloc_elastic_rk(3,:,i_stage) = deltat * veloc_elastic(3,:)
+
+        if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+
+        if(i_stage == 1)weight_rk = 0.5d0
+        if(i_stage == 2)weight_rk = 0.5d0
+        if(i_stage == 3)weight_rk = 1.0d0
+
+        if(i_stage==1)then
+
+        veloc_elastic_initial_rk(1,:) = veloc_elastic(1,:)
+        veloc_elastic_initial_rk(2,:) = veloc_elastic(2,:)
+        veloc_elastic_initial_rk(3,:) = veloc_elastic(3,:)
+
+        displ_elastic_initial_rk(1,:) = displ_elastic(1,:)
+        displ_elastic_initial_rk(2,:) = displ_elastic(2,:)
+        displ_elastic_initial_rk(3,:) = displ_elastic(3,:)
+
+        endif
+
+        veloc_elastic(1,:) = veloc_elastic_initial_rk(1,:) + weight_rk * accel_elastic_rk(1,:,i_stage)
+  veloc_elastic(2,:) = veloc_elastic_initial_rk(2,:) + weight_rk * accel_elastic_rk(2,:,i_stage)
+  veloc_elastic(3,:) = veloc_elastic_initial_rk(3,:) + weight_rk * accel_elastic_rk(3,:,i_stage)
+
+        displ_elastic(1,:) = displ_elastic_initial_rk(1,:) + weight_rk * veloc_elastic_rk(1,:,i_stage)
+  displ_elastic(2,:) = displ_elastic_initial_rk(2,:) + weight_rk * veloc_elastic_rk(2,:,i_stage)
+  displ_elastic(3,:) = displ_elastic_initial_rk(3,:) + weight_rk * veloc_elastic_rk(3,:,i_stage)
+
+        elseif(i_stage==4)then
+
+        veloc_elastic(1,:) = veloc_elastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
+        (accel_elastic_rk(1,:,1) + 2.0d0 * accel_elastic_rk(1,:,2) + &
+         2.0d0 * accel_elastic_rk(1,:,3) + accel_elastic_rk(1,:,4))
+
+        veloc_elastic(2,:) = veloc_elastic_initial_rk(2,:) + 1.0d0 / 6.0d0 * &
+        (accel_elastic_rk(2,:,1) + 2.0d0 * accel_elastic_rk(2,:,2) + &
+         2.0d0 * accel_elastic_rk(2,:,3) + accel_elastic_rk(2,:,4))
+
+         veloc_elastic(3,:) = veloc_elastic_initial_rk(3,:) + 1.0d0 / 6.0d0 * &
+        (accel_elastic_rk(3,:,1) + 2.0d0 * accel_elastic_rk(3,:,2) + &
+         2.0d0 * accel_elastic_rk(3,:,3) + accel_elastic_rk(3,:,4))
+
+        displ_elastic(1,:) = displ_elastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
+        (veloc_elastic_rk(1,:,1) + 2.0d0 * veloc_elastic_rk(1,:,2) + &
+         2.0d0 * veloc_elastic_rk(1,:,3) + veloc_elastic_rk(1,:,4))
+
+        displ_elastic(2,:) = displ_elastic_initial_rk(2,:) + 1.0d0 / 6.0d0 * &
+        (veloc_elastic_rk(2,:,1) + 2.0d0 * veloc_elastic_rk(2,:,2) + &
+         2.0d0 * veloc_elastic_rk(2,:,3) + veloc_elastic_rk(2,:,4))
+
+        displ_elastic(3,:) = displ_elastic_initial_rk(3,:) + 1.0d0 / 6.0d0 * &
+        (veloc_elastic_rk(3,:,1) + 2.0d0 * veloc_elastic_rk(3,:,2) + &
+         2.0d0 * veloc_elastic_rk(3,:,3) + veloc_elastic_rk(3,:,4))
+
+        endif
+
+      endif
 
       if(SIMULATION_TYPE == 2) then
         b_accel_elastic(1,:) = b_accel_elastic(1,:) * rmass_inverse_elastic(:)
@@ -5323,7 +5795,7 @@
       call compute_forces_poro_solid(nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                source_type,it,NSTEP,anyabs, &
-               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltatcube, &
+               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat,deltatcube, &
                deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,poroelastic,codeabs, &
                accels_poroelastic,velocs_poroelastic,velocw_poroelastic,displs_poroelastic,displw_poroelastic,&
                b_accels_poroelastic,b_displs_poroelastic,b_displw_poroelastic,&
@@ -5339,14 +5811,15 @@
                jbegin_left_poro,jend_left_poro,jbegin_right_poro,jend_right_poro,&
                mufr_k,B_k,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,&
                b_absorb_poro_s_left,b_absorb_poro_s_right,b_absorb_poro_s_bottom,b_absorb_poro_s_top,&
-               nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,f0(1),freq0,Q0)
-
-
+               nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,f0(1),freq0,Q0,&
+               e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
+               e11_initial_rk,e13_initial_rk,e11_force_RK, e13_force_RK, &
+               stage_time_scheme,i_stage)
 
       call compute_forces_poro_fluid(nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                source_type,it,NSTEP,anyabs, &
-               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltatcube, &
+               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat,deltatcube, &
                deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,poroelastic,codeabs, &
                accelw_poroelastic,velocw_poroelastic,displw_poroelastic,velocs_poroelastic,displs_poroelastic,&
                b_accelw_poroelastic,b_displw_poroelastic,b_displs_poroelastic,&
@@ -5362,8 +5835,10 @@
                jbegin_left_poro,jend_left_poro,jbegin_right_poro,jend_right_poro,&
                C_k,M_k,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,&
                b_absorb_poro_w_left,b_absorb_poro_w_right,b_absorb_poro_w_bottom,b_absorb_poro_w_top,&
-               nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,f0(1),freq0,Q0)
-
+               nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,f0(1),freq0,Q0,&
+               e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
+               e11_initial_rk,e13_initial_rk,e11_force_RK, e13_force_RK, &
+               stage_time_scheme,i_stage)
 
       if(SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
         ! if inviscid fluid, comment
@@ -5873,14 +6348,14 @@
                     hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
                     ! s
                     accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) - hlagrange * &
-                      (1._CUSTOM_REAL - phil/tortl)*sin(angleforce(i_source))*source_time_function(i_source,it)
+                      (1._CUSTOM_REAL - phil/tortl)*sin(angleforce(i_source))*source_time_function(i_source,it,i_stage)
                     accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + hlagrange * &
-                      (1._CUSTOM_REAL - phil/tortl)*cos(angleforce(i_source))*source_time_function(i_source,it)
+                      (1._CUSTOM_REAL - phil/tortl)*cos(angleforce(i_source))*source_time_function(i_source,it,i_stage)
                     ! w
                     accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - hlagrange * &
-                      (1._CUSTOM_REAL - rhol_f/rhol_bar)*sin(angleforce(i_source))*source_time_function(i_source,it)
+                      (1._CUSTOM_REAL - rhol_f/rhol_bar)*sin(angleforce(i_source))*source_time_function(i_source,it,i_stage)
                     accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) + hlagrange * &
-                      (1._CUSTOM_REAL - rhol_f/rhol_bar)*cos(angleforce(i_source))*source_time_function(i_source,it)
+                      (1._CUSTOM_REAL - rhol_f/rhol_bar)*cos(angleforce(i_source))*source_time_function(i_source,it,i_stage)
                   enddo
                 enddo
               else                   ! backward wavefield
@@ -5890,14 +6365,18 @@
                     hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
                     ! b_s
                     b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - hlagrange * &
-                      (1._CUSTOM_REAL - phil/tortl)*sin(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
+                      (1._CUSTOM_REAL - phil/tortl)*sin(angleforce(i_source))* &
+                      source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1)
                     b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) + hlagrange * &
-                      (1._CUSTOM_REAL - phil/tortl)*cos(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
+                      (1._CUSTOM_REAL - phil/tortl)*cos(angleforce(i_source))* &
+                      source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1)
                     !b_w
                     b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) - hlagrange * &
-                      (1._CUSTOM_REAL - rhol_f/rhol_bar)*sin(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
+                      (1._CUSTOM_REAL - rhol_f/rhol_bar)*sin(angleforce(i_source))* &
+                      source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1)
                     b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) + hlagrange * &
-                      (1._CUSTOM_REAL - rhol_f/rhol_bar)*cos(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1)
+                      (1._CUSTOM_REAL - rhol_f/rhol_bar)*cos(angleforce(i_source))* &
+                      source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1)
                   enddo
                 enddo
               endif !endif SIMULATION_TYPE == 1
@@ -5938,6 +6417,9 @@
 ! ************************************************************************************
 
     if(any_poroelastic) then
+
+      if(time_stepping_scheme == 1)then
+
       accels_poroelastic(1,:) = accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
       accels_poroelastic(2,:) = accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
       velocs_poroelastic = velocs_poroelastic + deltatover2*accels_poroelastic
@@ -5945,6 +6427,118 @@
       accelw_poroelastic(1,:) = accelw_poroelastic(1,:) * rmass_w_inverse_poroelastic(:)
       accelw_poroelastic(2,:) = accelw_poroelastic(2,:) * rmass_w_inverse_poroelastic(:)
       velocw_poroelastic = velocw_poroelastic + deltatover2*accelw_poroelastic
+
+      endif
+
+      if(time_stepping_scheme == 2)then
+
+        accels_poroelastic(1,:) = accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
+        accels_poroelastic(2,:) = accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
+
+  velocs_poroelastic_LDDRK = alpha_LDDRK(i_stage) * velocs_poroelastic_LDDRK + deltat * accels_poroelastic
+  displs_poroelastic_LDDRK = alpha_LDDRK(i_stage) * displs_poroelastic_LDDRK + deltat * velocs_poroelastic
+
+  velocs_poroelastic = velocs_poroelastic + beta_LDDRK(i_stage) * velocs_poroelastic_LDDRK
+  displs_poroelastic = displs_poroelastic + beta_LDDRK(i_stage) * displs_poroelastic_LDDRK
+
+        accelw_poroelastic(1,:) = accelw_poroelastic(1,:) * rmass_w_inverse_poroelastic(:)
+        accelw_poroelastic(2,:) = accelw_poroelastic(2,:) * rmass_w_inverse_poroelastic(:)
+
+  velocw_poroelastic_LDDRK = alpha_LDDRK(i_stage) * velocw_poroelastic_LDDRK + deltat * accelw_poroelastic
+  displw_poroelastic_LDDRK = alpha_LDDRK(i_stage) * displw_poroelastic_LDDRK + deltat * velocw_poroelastic
+
+  velocw_poroelastic = velocw_poroelastic + beta_LDDRK(i_stage) * velocw_poroelastic_LDDRK
+  displw_poroelastic = displw_poroelastic + beta_LDDRK(i_stage) * displw_poroelastic_LDDRK
+
+      endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      if(time_stepping_scheme == 3)then
+
+        accels_poroelastic(1,:) = accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
+        accels_poroelastic(2,:) = accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
+
+        accels_poroelastic_rk(1,:,i_stage) = deltat * accels_poroelastic(1,:)
+        accels_poroelastic_rk(2,:,i_stage) = deltat * accels_poroelastic(2,:)
+        velocs_poroelastic_rk(1,:,i_stage) = deltat * velocs_poroelastic(1,:)
+        velocs_poroelastic_rk(2,:,i_stage) = deltat * velocs_poroelastic(2,:)
+
+        accelw_poroelastic(1,:) = accelw_poroelastic(1,:) * rmass_w_inverse_poroelastic(:)
+        accelw_poroelastic(2,:) = accelw_poroelastic(2,:) * rmass_w_inverse_poroelastic(:)
+
+        accelw_poroelastic_rk(1,:,i_stage) = deltat * accelw_poroelastic(1,:)
+        accelw_poroelastic_rk(2,:,i_stage) = deltat * accelw_poroelastic(2,:)
+        velocw_poroelastic_rk(1,:,i_stage) = deltat * velocw_poroelastic(1,:)
+        velocw_poroelastic_rk(2,:,i_stage) = deltat * velocw_poroelastic(2,:)
+
+        if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+
+        if(i_stage == 1)weight_rk = 0.5d0
+        if(i_stage == 2)weight_rk = 0.5d0
+        if(i_stage == 3)weight_rk = 1.0d0
+
+        if(i_stage==1)then
+
+        velocs_poroelastic_initial_rk(1,:) = velocs_poroelastic(1,:)
+        velocs_poroelastic_initial_rk(2,:) = velocs_poroelastic(2,:)
+        displs_poroelastic_initial_rk(1,:) = displs_poroelastic(1,:)
+        displs_poroelastic_initial_rk(2,:) = displs_poroelastic(2,:)
+
+        velocw_poroelastic_initial_rk(1,:) = velocw_poroelastic(1,:)
+        velocw_poroelastic_initial_rk(2,:) = velocw_poroelastic(2,:)
+        displw_poroelastic_initial_rk(1,:) = displw_poroelastic(1,:)
+        displw_poroelastic_initial_rk(2,:) = displw_poroelastic(2,:)
+
+        endif
+
+        velocs_poroelastic(1,:) = velocs_poroelastic_initial_rk(1,:) + weight_rk * accels_poroelastic_rk(1,:,i_stage)
+  velocs_poroelastic(2,:) = velocs_poroelastic_initial_rk(2,:) + weight_rk * accels_poroelastic_rk(2,:,i_stage)
+        displs_poroelastic(1,:) = displs_poroelastic_initial_rk(1,:) + weight_rk * velocs_poroelastic_rk(1,:,i_stage)
+  displs_poroelastic(2,:) = displs_poroelastic_initial_rk(2,:) + weight_rk * velocs_poroelastic_rk(2,:,i_stage)
+
+        velocw_poroelastic(1,:) = velocw_poroelastic_initial_rk(1,:) + weight_rk * accelw_poroelastic_rk(1,:,i_stage)
+  velocw_poroelastic(2,:) = velocw_poroelastic_initial_rk(2,:) + weight_rk * accelw_poroelastic_rk(2,:,i_stage)
+        displw_poroelastic(1,:) = displw_poroelastic_initial_rk(1,:) + weight_rk * velocw_poroelastic_rk(1,:,i_stage)
+  displw_poroelastic(2,:) = displw_poroelastic_initial_rk(2,:) + weight_rk * velocw_poroelastic_rk(2,:,i_stage)
+
+
+        elseif(i_stage==4)then
+
+        velocs_poroelastic(1,:) = velocs_poroelastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
+        (accels_poroelastic_rk(1,:,1) + 2.0d0 * accels_poroelastic_rk(1,:,2) + &
+         2.0d0 * accels_poroelastic_rk(1,:,3) + accels_poroelastic_rk(1,:,4))
+
+        velocs_poroelastic(2,:) = velocs_poroelastic_initial_rk(2,:) + 1.0d0 / 6.0d0 * &
+        (accels_poroelastic_rk(2,:,1) + 2.0d0 * accels_poroelastic_rk(2,:,2) + &
+         2.0d0 * accels_poroelastic_rk(2,:,3) + accels_poroelastic_rk(2,:,4))
+
+        displs_poroelastic(1,:) = displs_poroelastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
+        (velocs_poroelastic_rk(1,:,1) + 2.0d0 * velocs_poroelastic_rk(1,:,2) + &
+         2.0d0 * velocs_poroelastic_rk(1,:,3) + velocs_poroelastic_rk(1,:,4))
+
+        displs_poroelastic(2,:) = displs_poroelastic_initial_rk(2,:) + 1.0d0 / 6.0d0 * &
+        (velocs_poroelastic_rk(2,:,1) + 2.0d0 * velocs_poroelastic_rk(2,:,2) + &
+         2.0d0 * velocs_poroelastic_rk(2,:,3) + velocs_poroelastic_rk(2,:,4))
+
+        velocw_poroelastic(1,:) = velocw_poroelastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
+        (accelw_poroelastic_rk(1,:,1) + 2.0d0 * accelw_poroelastic_rk(1,:,2) + &
+         2.0d0 * accelw_poroelastic_rk(1,:,3) + accelw_poroelastic_rk(1,:,4))
+
+        velocw_poroelastic(2,:) = velocw_poroelastic_initial_rk(2,:) + 1.0d0 / 6.0d0 * &
+        (accelw_poroelastic_rk(2,:,1) + 2.0d0 * accelw_poroelastic_rk(2,:,2) + &
+         2.0d0 * accelw_poroelastic_rk(2,:,3) + accelw_poroelastic_rk(2,:,4))
+
+        displw_poroelastic(1,:) = displw_poroelastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
+        (velocw_poroelastic_rk(1,:,1) + 2.0d0 * velocw_poroelastic_rk(1,:,2) + &
+         2.0d0 * velocw_poroelastic_rk(1,:,3) + velocw_poroelastic_rk(1,:,4))
+
+        displw_poroelastic(2,:) = displw_poroelastic_initial_rk(2,:) + 1.0d0 / 6.0d0 * &
+        (velocw_poroelastic_rk(2,:,1) + 2.0d0 * velocw_poroelastic_rk(2,:,2) + &
+         2.0d0 * velocw_poroelastic_rk(2,:,3) + velocw_poroelastic_rk(2,:,4))
+
+        endif
+
+      endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       if(SIMULATION_TYPE == 2) then
         b_accels_poroelastic(1,:) = b_accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
@@ -5981,6 +6575,9 @@
           icount(iglob) = icount(iglob) + 1
 
           if(icount(iglob) ==1)then
+
+            if(time_stepping_scheme == 1)then
+
             veloc_elastic(1,iglob) = veloc_elastic(1,iglob) - deltatover2*accel_elastic(1,iglob)
             veloc_elastic(3,iglob) = veloc_elastic(3,iglob) - deltatover2*accel_elastic(3,iglob)
             accel_elastic(1,iglob) = accel_elastic(1,iglob) / rmass_inverse_elastic(iglob)
@@ -6007,6 +6604,227 @@
             accelw_poroelastic(2,iglob) = ZERO
             velocw_poroelastic(1,iglob) = ZERO
             velocw_poroelastic(2,iglob) = ZERO
+
+            endif
+
+            if(time_stepping_scheme == 2)then
+            ! recovering original velocities and accelerations on boundaries (elastic side)
+      veloc_elastic = veloc_elastic - beta_LDDRK(i_stage) * veloc_elastic_LDDRK
+      displ_elastic = displ_elastic - beta_LDDRK(i_stage) * displ_elastic_LDDRK
+      veloc_elastic_LDDRK = (veloc_elastic_LDDRK - deltat * accel_elastic) / alpha_LDDRK(i_stage)
+      displ_elastic_LDDRK = (displ_elastic_LDDRK - deltat * veloc_elastic) / alpha_LDDRK(i_stage)
+            accel_elastic(1,iglob) = accel_elastic(1,iglob) / rmass_inverse_elastic(iglob)
+            accel_elastic(3,iglob) = accel_elastic(3,iglob) / rmass_inverse_elastic(iglob)
+
+            ! recovering original velocities and accelerations on boundaries (poro side)
+      velocs_poroelastic = velocs_poroelastic - beta_LDDRK(i_stage) * velocs_poroelastic_LDDRK
+      displs_poroelastic = displs_poroelastic - beta_LDDRK(i_stage) * displs_poroelastic_LDDRK
+      velocs_poroelastic_LDDRK = (velocs_poroelastic_LDDRK - deltat * accels_poroelastic) / alpha_LDDRK(i_stage)
+      displs_poroelastic_LDDRK = (velocs_poroelastic_LDDRK - deltat * velocs_poroelastic) / alpha_LDDRK(i_stage)
+            accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) / rmass_s_inverse_poroelastic(iglob)
+            accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) / rmass_s_inverse_poroelastic(iglob)
+
+            ! assembling accelerations
+            accel_elastic(1,iglob) = ( accel_elastic(1,iglob) + accels_poroelastic(1,iglob) ) / &
+                                   ( 1.0/rmass_inverse_elastic(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
+            accel_elastic(3,iglob) = ( accel_elastic(3,iglob) + accels_poroelastic(2,iglob) ) / &
+                                   ( 1.0/rmass_inverse_elastic(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
+            accels_poroelastic(1,iglob) = accel_elastic(1,iglob)
+            accels_poroelastic(2,iglob) = accel_elastic(3,iglob)
+
+      ! updating velocities
+            ! updating velocities(elastic side)
+      veloc_elastic_LDDRK = alpha_LDDRK(i_stage) * veloc_elastic_LDDRK + deltat * accel_elastic
+      displ_elastic_LDDRK = alpha_LDDRK(i_stage) * displ_elastic_LDDRK + deltat * veloc_elastic
+      veloc_elastic = veloc_elastic + beta_LDDRK(i_stage) * veloc_elastic_LDDRK
+      displ_elastic = displ_elastic + beta_LDDRK(i_stage) * displ_elastic_LDDRK
+            ! updating velocities(poro side)
+      velocs_poroelastic_LDDRK = alpha_LDDRK(i_stage) * velocs_poroelastic_LDDRK + deltat * accels_poroelastic
+      displs_poroelastic_LDDRK = alpha_LDDRK(i_stage) * displs_poroelastic_LDDRK + deltat * velocs_poroelastic
+      velocs_poroelastic = velocs_poroelastic + beta_LDDRK(i_stage) * velocs_poroelastic_LDDRK
+      displs_poroelastic = displs_poroelastic + beta_LDDRK(i_stage) * displs_poroelastic_LDDRK
+
+            ! zeros w
+            accelw_poroelastic(1,iglob) = ZERO
+            accelw_poroelastic(2,iglob) = ZERO
+            velocw_poroelastic(1,iglob) = ZERO
+            velocw_poroelastic(2,iglob) = ZERO
+            endif
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      if(time_stepping_scheme == 3)then
+
+        ! recovering original velocities and accelerations on boundaries (elastic side)
+        if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+
+        if(i_stage == 1)weight_rk = 0.5d0
+        if(i_stage == 2)weight_rk = 0.5d0
+        if(i_stage == 3)weight_rk = 1.0d0
+
+        veloc_elastic(1,iglob) = veloc_elastic_initial_rk(1,iglob) - weight_rk * accel_elastic_rk(1,iglob,i_stage)
+  veloc_elastic(3,iglob) = veloc_elastic_initial_rk(3,iglob) - weight_rk * accel_elastic_rk(3,iglob,i_stage)
+        displ_elastic(1,iglob) = displ_elastic_initial_rk(1,iglob) - weight_rk * veloc_elastic_rk(1,iglob,i_stage)
+  displ_elastic(3,iglob) = displ_elastic_initial_rk(3,iglob) - weight_rk * veloc_elastic_rk(3,iglob,i_stage)
+
+
+        elseif(i_stage==4)then
+
+        veloc_elastic(1,iglob) = veloc_elastic_initial_rk(1,iglob) - 1.0d0 / 6.0d0 * &
+        (accel_elastic_rk(1,iglob,1) + 2.0d0 * accel_elastic_rk(1,iglob,2) + &
+         2.0d0 * accel_elastic_rk(1,iglob,3) + accel_elastic_rk(1,iglob,4))
+
+        veloc_elastic(3,iglob) = veloc_elastic_initial_rk(3,iglob) - 1.0d0 / 6.0d0 * &
+        (accel_elastic_rk(3,iglob,1) + 2.0d0 * accel_elastic_rk(3,iglob,2) + &
+         2.0d0 * accel_elastic_rk(3,iglob,3) + accel_elastic_rk(3,iglob,4))
+
+        displ_elastic(1,iglob) = displ_elastic_initial_rk(1,iglob) - 1.0d0 / 6.0d0 * &
+        (veloc_elastic_rk(1,iglob,1) + 2.0d0 * veloc_elastic_rk(1,iglob,2) + &
+         2.0d0 * veloc_elastic_rk(1,iglob,3) + veloc_elastic_rk(1,iglob,4))
+
+        displ_elastic(3,iglob) = displ_elastic_initial_rk(3,iglob) - 1.0d0 / 6.0d0 * &
+        (veloc_elastic_rk(3,iglob,1) + 2.0d0 * veloc_elastic_rk(3,iglob,2) + &
+         2.0d0 * veloc_elastic_rk(3,iglob,3) + veloc_elastic_rk(3,iglob,4))
+
+        endif
+
+        accel_elastic(1,iglob) = accel_elastic(1,iglob) / rmass_inverse_elastic(iglob)
+        accel_elastic(3,iglob) = accel_elastic(3,iglob) / rmass_inverse_elastic(iglob)
+
+        accel_elastic_rk(1,iglob,i_stage) = accel_elastic(1,iglob) / deltat
+        accel_elastic_rk(3,iglob,i_stage) = accel_elastic(3,iglob) / deltat
+        veloc_elastic_rk(1,iglob,i_stage) = veloc_elastic(1,iglob) / deltat
+        veloc_elastic_rk(3,iglob,i_stage) = veloc_elastic(3,iglob) / deltat
+
+
+        ! recovering original velocities and accelerations on boundaries (poro side)
+        if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+
+        if(i_stage == 1)weight_rk = 0.5d0
+        if(i_stage == 2)weight_rk = 0.5d0
+        if(i_stage == 3)weight_rk = 1.0d0
+
+        velocs_poroelastic(1,iglob) = velocs_poroelastic_initial_rk(1,iglob) - weight_rk * accels_poroelastic_rk(1,iglob,i_stage)
+  velocs_poroelastic(2,iglob) = velocs_poroelastic_initial_rk(2,iglob) - weight_rk * accels_poroelastic_rk(2,iglob,i_stage)
+        displs_poroelastic(1,iglob) = displs_poroelastic_initial_rk(1,iglob) - weight_rk * velocs_poroelastic_rk(1,iglob,i_stage)
+  displs_poroelastic(2,iglob) = displs_poroelastic_initial_rk(2,iglob) - weight_rk * velocs_poroelastic_rk(2,iglob,i_stage)
+
+
+        elseif(i_stage==4)then
+
+        velocs_poroelastic(1,iglob) = velocs_poroelastic_initial_rk(1,iglob) - 1.0d0 / 6.0d0 * &
+        (accels_poroelastic_rk(1,iglob,1) + 2.0d0 * accels_poroelastic_rk(1,iglob,2) + &
+         2.0d0 * accels_poroelastic_rk(1,iglob,3) + accels_poroelastic_rk(1,iglob,4))
+
+        velocs_poroelastic(2,iglob) = velocs_poroelastic_initial_rk(2,iglob) - 1.0d0 / 6.0d0 * &
+        (accels_poroelastic_rk(2,iglob,1) + 2.0d0 * accels_poroelastic_rk(2,iglob,2) + &
+         2.0d0 * accels_poroelastic_rk(2,iglob,3) + accels_poroelastic_rk(2,iglob,4))
+
+        displs_poroelastic(1,iglob) = displs_poroelastic_initial_rk(1,iglob) - 1.0d0 / 6.0d0 * &
+        (velocs_poroelastic_rk(1,iglob,1) + 2.0d0 * velocs_poroelastic_rk(1,iglob,2) + &
+         2.0d0 * velocs_poroelastic_rk(1,iglob,3) + velocs_poroelastic_rk(1,iglob,4))
+
+        displs_poroelastic(2,iglob) = displs_poroelastic_initial_rk(2,iglob) - 1.0d0 / 6.0d0 * &
+        (velocs_poroelastic_rk(2,iglob,1) + 2.0d0 * velocs_poroelastic_rk(2,iglob,2) + &
+         2.0d0 * velocs_poroelastic_rk(2,iglob,3) + velocs_poroelastic_rk(2,iglob,4))
+
+        endif
+
+        accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) / rmass_s_inverse_poroelastic(iglob)
+        accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) / rmass_s_inverse_poroelastic(iglob)
+
+        accels_poroelastic_rk(1,iglob,i_stage) = accels_poroelastic(1,iglob) / deltat
+        accels_poroelastic_rk(2,iglob,i_stage) = accels_poroelastic(2,iglob) / deltat
+        velocs_poroelastic_rk(1,iglob,i_stage) = velocs_poroelastic(1,iglob) / deltat
+        velocs_poroelastic_rk(2,iglob,i_stage) = velocs_poroelastic(2,iglob) / deltat
+
+
+        ! assembling accelerations
+            accel_elastic(1,iglob) = ( accel_elastic(1,iglob) + accels_poroelastic(1,iglob) ) / &
+                                   ( 1.0/rmass_inverse_elastic(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
+            accel_elastic(3,iglob) = ( accel_elastic(3,iglob) + accels_poroelastic(2,iglob) ) / &
+                                   ( 1.0/rmass_inverse_elastic(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
+            accels_poroelastic(1,iglob) = accel_elastic(1,iglob)
+            accels_poroelastic(2,iglob) = accel_elastic(3,iglob)
+
+  ! updating velocities
+        ! updating velocities(elastic side)
+
+        accel_elastic_rk(1,iglob,i_stage) = accel_elastic(1,iglob) * deltat
+        accel_elastic_rk(3,iglob,i_stage) = accel_elastic(3,iglob) * deltat
+
+        if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+
+        if(i_stage == 1)weight_rk = 0.5d0
+        if(i_stage == 2)weight_rk = 0.5d0
+        if(i_stage == 3)weight_rk = 1.0d0
+
+        veloc_elastic(1,iglob) = veloc_elastic_initial_rk(1,iglob) + weight_rk * accel_elastic_rk(1,iglob,i_stage)
+  veloc_elastic(3,iglob) = veloc_elastic_initial_rk(3,iglob) + weight_rk * accel_elastic_rk(3,iglob,i_stage)
+        displ_elastic(1,iglob) = displ_elastic_initial_rk(1,iglob) + weight_rk * veloc_elastic_rk(1,iglob,i_stage)
+  displ_elastic(3,iglob) = displ_elastic_initial_rk(3,iglob) + weight_rk * veloc_elastic_rk(3,iglob,i_stage)
+
+
+        elseif(i_stage==4)then
+
+        veloc_elastic(1,iglob) = veloc_elastic_initial_rk(1,iglob) + 1.0d0 / 6.0d0 * &
+        (accel_elastic_rk(1,iglob,1) + 2.0d0 * accel_elastic_rk(1,iglob,2) + &
+         2.0d0 * accel_elastic_rk(1,iglob,3) + accel_elastic_rk(1,iglob,4))
+
+        veloc_elastic(3,iglob) = veloc_elastic_initial_rk(3,iglob) + 1.0d0 / 6.0d0 * &
+        (accel_elastic_rk(3,iglob,1) + 2.0d0 * accel_elastic_rk(3,iglob,2) + &
+         2.0d0 * accel_elastic_rk(3,iglob,3) + accel_elastic_rk(3,iglob,4))
+
+        displ_elastic(1,iglob) = displ_elastic_initial_rk(1,iglob) + 1.0d0 / 6.0d0 * &
+        (veloc_elastic_rk(1,iglob,1) + 2.0d0 * veloc_elastic_rk(1,iglob,2) + &
+         2.0d0 * veloc_elastic_rk(1,iglob,3) + veloc_elastic_rk(1,iglob,4))
+
+        displ_elastic(3,iglob) = displ_elastic_initial_rk(3,iglob) + 1.0d0 / 6.0d0 * &
+        (veloc_elastic_rk(3,iglob,1) + 2.0d0 * veloc_elastic_rk(3,iglob,2) + &
+         2.0d0 * veloc_elastic_rk(3,iglob,3) + veloc_elastic_rk(3,iglob,4))
+
+        endif
+        ! updating velocities(poro side)
+
+        accels_poroelastic_rk(1,iglob,i_stage) = deltat * accels_poroelastic(1,iglob)
+        accels_poroelastic_rk(2,iglob,i_stage) = deltat * accels_poroelastic(2,iglob)
+        velocs_poroelastic_rk(1,iglob,i_stage) = deltat * velocs_poroelastic(1,iglob)
+        velocs_poroelastic_rk(2,iglob,i_stage) = deltat * velocs_poroelastic(2,iglob)
+
+
+        if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+
+        if(i_stage == 1)weight_rk = 0.5d0
+        if(i_stage == 2)weight_rk = 0.5d0
+        if(i_stage == 3)weight_rk = 1.0d0
+
+        velocs_poroelastic(1,iglob) = velocs_poroelastic_initial_rk(1,iglob) + weight_rk * accels_poroelastic_rk(1,iglob,i_stage)
+  velocs_poroelastic(2,iglob) = velocs_poroelastic_initial_rk(2,iglob) + weight_rk * accels_poroelastic_rk(2,iglob,i_stage)
+        displs_poroelastic(1,iglob) = displs_poroelastic_initial_rk(1,iglob) + weight_rk * velocs_poroelastic_rk(1,iglob,i_stage)
+  displs_poroelastic(2,iglob) = displs_poroelastic_initial_rk(2,iglob) + weight_rk * velocs_poroelastic_rk(2,iglob,i_stage)
+
+
+        elseif(i_stage==4)then
+
+        velocs_poroelastic(1,iglob) = velocs_poroelastic_initial_rk(1,iglob) + 1.0d0 / 6.0d0 * &
+        (accels_poroelastic_rk(1,iglob,1) + 2.0d0 * accels_poroelastic_rk(1,iglob,2) + &
+         2.0d0 * accels_poroelastic_rk(1,iglob,3) + accels_poroelastic_rk(1,iglob,4))
+
+        velocs_poroelastic(2,iglob) = velocs_poroelastic_initial_rk(2,iglob) + 1.0d0 / 6.0d0 * &
+        (accels_poroelastic_rk(2,iglob,1) + 2.0d0 * accels_poroelastic_rk(2,iglob,2) + &
+         2.0d0 * accels_poroelastic_rk(2,iglob,3) + accels_poroelastic_rk(2,iglob,4))
+
+        displs_poroelastic(1,iglob) = displs_poroelastic_initial_rk(1,iglob) + 1.0d0 / 6.0d0 * &
+        (velocs_poroelastic_rk(1,iglob,1) + 2.0d0 * velocs_poroelastic_rk(1,iglob,2) + &
+         2.0d0 * velocs_poroelastic_rk(1,iglob,3) + velocs_poroelastic_rk(1,iglob,4))
+
+        displs_poroelastic(2,iglob) = displs_poroelastic_initial_rk(2,iglob) + 1.0d0 / 6.0d0 * &
+        (velocs_poroelastic_rk(2,iglob,1) + 2.0d0 * velocs_poroelastic_rk(2,iglob,2) + &
+         2.0d0 * velocs_poroelastic_rk(2,iglob,3) + velocs_poroelastic_rk(2,iglob,4))
+
+        endif
+
+      endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
             if(SIMULATION_TYPE == 2) then
               b_veloc_elastic(1,iglob) = b_veloc_elastic(1,iglob) - b_deltatover2*b_accel_elastic(1,iglob)
@@ -6043,6 +6861,8 @@
 
       enddo
     endif
+
+   enddo !LDDRK or RK
 
 ! ********************************************************************************************
 !                       reading lastframe for adjoint/kernels calculation

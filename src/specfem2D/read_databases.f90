@@ -55,7 +55,7 @@
                   ATTENUATION_PORO_FLUID_PART,Q0,freq0,p_sv, &
                   NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCES, &
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_CONSTANT_BLUE_IN_JPG,US_LETTER, &
-                  POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, &
+                  POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0,time_stepping_scheme,&
                   ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL)
 
 ! starts reading in parameters from input Database file
@@ -108,6 +108,11 @@
 ! (must be positive and bigger than the automatically one to be effective;
 !  simulation will start at t = - t0)
   double precision :: USER_T0
+
+! value of time_stepping_scheme to decide which time scheme will be used
+! # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta)
+! 3 = classical 4th-order 4-stage Runge-Kutta
+  integer :: time_stepping_scheme
 
 !! DK DK for horizontal periodic conditions: detect common points between left and right edges
   logical :: ADD_PERIODIC_CONDITIONS
@@ -228,6 +233,9 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,*) USER_T0
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) time_stepping_scheme
 
   read(IIN,"(a80)") datlin
   read(IIN,*) ADD_PERIODIC_CONDITIONS

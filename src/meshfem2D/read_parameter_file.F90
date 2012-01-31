@@ -142,6 +142,11 @@ module parameter_file
 !  simulation will start at t = - t0)
   double precision :: USER_T0
 
+! value of time_stepping_scheme to decide which time scheme will be used
+! # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta)
+! 3 = classical 4th-order 4-stage Runge-Kutta
+  integer :: time_stepping_scheme
+
 !! DK DK for horizontal periodic conditions: detect common points between left and right edges
   logical :: ADD_PERIODIC_CONDITIONS
 
@@ -233,6 +238,9 @@ contains
 
   call read_value_double_precision_p(USER_T0, 'solver.USER_T0')
   if(err_occurred() /= 0) stop 'error reading parameter 17b in Par_file'
+
+  call read_value_integer_p(time_stepping_scheme, 'solver.time_stepping_scheme')  !xiezhinan
+  if(err_occurred() /= 0) stop 'error reading parameter 17c in Par_file'          !xiezhinan
 
   ! read source infos
   call read_value_integer_p(NSOURCES, 'solver.NSOURCES')

@@ -163,6 +163,9 @@
     write(15,*) 'USER_T0'
     write(15,*) USER_T0
 
+    write(15,*) 'time_stepping_scheme'
+    write(15,*) time_stepping_scheme
+
     write(15,*) 'ADD_PERIODIC_CONDITIONS'
     write(15,*) ADD_PERIODIC_CONDITIONS
 

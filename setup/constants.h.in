@@ -173,3 +173,6 @@
 ! ignore variable name field (junk) at the beginning of each input line
   logical, parameter :: IGNORE_JUNK = .true., DONT_IGNORE_JUNK = .false.
 
+! maximum number of stages for optimized (for reduced storage) LDDRK4-6 Runge-Kutta time scheme
+  integer, parameter :: Nstages = 6
+

@@ -44,7 +44,7 @@
   subroutine compute_forces_poro_solid(nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                source_type,it,NSTEP,anyabs, &
-               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltatcube, &
+               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat,deltatcube, &
                deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,poroelastic,codeabs, &
                accels_poroelastic,velocs_poroelastic,velocw_poroelastic,displs_poroelastic,displw_poroelastic,&
                b_accels_poroelastic,b_displs_poroelastic,b_displw_poroelastic,&
@@ -60,7 +60,10 @@
                jbegin_left_poro,jend_left_poro,jbegin_right_poro,jend_right_poro,&
                mufr_k,B_k,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,&
                b_absorb_poro_s_left,b_absorb_poro_s_right,b_absorb_poro_s_bottom,b_absorb_poro_s_top,&
-               nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,ib_left,ib_right,ib_bottom,ib_top,f0,freq0,Q0)
+               nspec_xmin,nspec_xmax,nspec_zmin,nspec_zmax,ib_left,ib_right,ib_bottom,ib_top,f0,freq0,Q0,&
+               e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
+               e11_initial_rk,e13_initial_rk,e11_force_RK, e13_force_RK, &
+               stage_time_scheme,i_stage)
 
 ! compute forces for the solid poroelastic part
 
@@ -77,11 +80,12 @@
   integer, dimension(nelemabs) :: ib_right
   integer, dimension(nelemabs) :: ib_bottom
   integer, dimension(nelemabs) :: ib_top
+  integer :: stage_time_scheme,i_stage
 
   logical :: anyabs,initialfield,ATTENUATION_VISCOELASTIC_SOLID
   logical :: SAVE_FORWARD
 
-  double precision :: deltatcube,deltatfourth,twelvedeltat,fourdeltatsquare
+  double precision :: deltat,deltatcube,deltatfourth,twelvedeltat,fourdeltatsquare
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
   integer, dimension(nspec) :: kmato
@@ -99,7 +103,7 @@
   double precision, dimension(numat) :: porosity,tortuosity
   double precision, dimension(4,3,numat) :: poroelastcoef
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
-  real(kind=CUSTOM_REAL), dimension(NSOURCES,NSTEP) :: source_time_function
+  real(kind=CUSTOM_REAL), dimension(NSOURCES,NSTEP,stage_time_scheme) :: source_time_function
   real(kind=CUSTOM_REAL), dimension(NSOURCES,NDIM,NGLLX,NGLLZ) :: sourcearray
   real(kind=CUSTOM_REAL), dimension(nrec,NSTEP,3,NGLLX,NGLLZ) :: adj_sourcearrays
   real(kind=CUSTOM_REAL), dimension(nglob) :: mufr_k,B_k
@@ -111,6 +115,9 @@
 
   integer :: N_SLS
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e11,e13
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e11_LDDRK,e13_LDDRK
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e11_initial_rk,e13_initial_rk
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS,stage_time_scheme) :: e11_force_RK, e13_force_RK
   double precision, dimension(NGLLX,NGLLZ,nspec,N_SLS) :: inv_tau_sigma_nu2,phi_nu2
   double precision, dimension(NGLLX,NGLLZ,nspec) :: Mu_nu2
   real(kind=CUSTOM_REAL) :: e11_sum,e13_sum
@@ -136,6 +143,12 @@
 
 !
   double precision :: f0,freq0,Q0,w_c
+
+! Parameter for LDDRK time scheme
+  double precision, dimension(Nstages) :: alpha_LDDRK,beta_LDDRK
+
+!temp variable
+  double precision :: temp_time_scheme,temper_time_scheme,weight_rk
 
 !---
 !--- local variables
@@ -171,7 +184,7 @@
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
 
 ! material properties of the poroelastic medium
-  real(kind=CUSTOM_REAL) :: mul_relaxed_viscoelastic,lambdal_relaxed_viscoelastic,lambdalplus2mul_relaxed_viscoelastic
+  real(kind=CUSTOM_REAL) :: mul_relaxed_viscoelastic,lambdal_relaxed_viscoelastic,lambdalplus2mul_relaxed_viscoel
   real(kind=CUSTOM_REAL) :: mul_s,kappal_s,rhol_s
   real(kind=CUSTOM_REAL) :: etal_f,kappal_f,rhol_f
   real(kind=CUSTOM_REAL) :: mul_fr,kappal_fr,phil,tortl,viscodampx,viscodampz
@@ -323,19 +336,19 @@
 ! J. M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation in a linear
 ! viscoelastic medium, Geophysical Journal International, vol. 95, p. 597-611 (1988).
 
-! When implementing viscoelasticity according to Carcione 1993 paper, the attenuation is 
-! non-causal rather than causal. We fixed the problem by using equations in Carcione's 
+! When implementing viscoelasticity according to Carcione 1993 paper, the attenuation is
+! non-causal rather than causal. We fixed the problem by using equations in Carcione's
 ! 2004 paper and his 2007 book.
 
-!J. M. Carcione, H B. Helle, The physics and simulation of wave propagation at the ocean 
+!J. M. Carcione, H B. Helle, The physics and simulation of wave propagation at the ocean
 ! bottom, Geophysics, vol. 69(3), p. 825-839, 2004
-!J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic 
+!J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic
 ! and porous media, Elsevier, p. 124-125, 2007
 
 ! compute unrelaxed elastic coefficients from formulas in Carcione 2007 page 125
     lambdal_relaxed_viscoelastic = (lambdal_G + mul_G) - mul_G / Mu_nu2(i,j,ispec)
     mul_relaxed_viscoelastic = mul_G / Mu_nu2(i,j,ispec)
-    lambdalplus2mul_relaxed_viscoelastic = lambdal_relaxed_viscoelastic + TWO*mul_relaxed_viscoelastic
+    lambdalplus2mul_relaxed_viscoel = lambdal_relaxed_viscoelastic + TWO*mul_relaxed_viscoelastic
 
 ! compute the stress using the unrelaxed Lame parameters (Carcione 2007 page 125)
     sigma_xx = (lambdal_G + 2.0*mul_G)*dux_dxl + lambdal_G*duz_dzl + C_biot*(dwx_dxl + dwz_dzl)
@@ -839,7 +852,7 @@
       do i_source=1,NSOURCES
 
 ! if this processor core carries the source and the source element is poroelastic
-     if (is_proc_source(i_source) == 1 .and. poroelastic(ispec_selected_source(i_source))) then
+    if (is_proc_source(i_source) == 1 .and. poroelastic(ispec_selected_source(i_source))) then
 
     phil = porosity(kmato(ispec_selected_source(i_source)))
     tortl = tortuosity(kmato(ispec_selected_source(i_source)))
@@ -853,7 +866,7 @@
         do i=1,NGLLX
           iglob = ibool(i,j,ispec_selected_source(i_source))
           accels_poroelastic(:,iglob) = accels_poroelastic(:,iglob) + &
-          (1._CUSTOM_REAL - phil/tortl)*sourcearray(i_source,:,i,j)*source_time_function(i_source,it)
+          (1._CUSTOM_REAL - phil/tortl)*sourcearray(i_source,:,i,j)*source_time_function(i_source,it,i_stage)
         enddo
       enddo
        else                   ! backward wavefield
@@ -861,7 +874,8 @@
         do i=1,NGLLX
           iglob = ibool(i,j,ispec_selected_source(i_source))
           b_accels_poroelastic(:,iglob) = b_accels_poroelastic(:,iglob) + &
-          (1._CUSTOM_REAL - phil/tortl)*sourcearray(i_source,:,i,j)*source_time_function(i_source,NSTEP-it+1)
+          (1._CUSTOM_REAL - phil/tortl)*sourcearray(i_source,:,i,j) * &
+           source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1)
         enddo
       enddo
        endif  !endif SIMULATION_TYPE == 1
@@ -932,32 +946,117 @@
 !  e1(i,j,ispec,i_sls) = Unp1
 
 ! evolution e11
-  Un = e11(i,j,ispec,i_sls)
-  tauinv = - inv_tau_sigma_nu2(i,j,ispec,i_sls)
-  tauinvsquare = tauinv * tauinv
-  tauinvcube = tauinvsquare * tauinv
-  tauinvUn = tauinv * Un
-  Sn   = (dux_dxl_n(i,j,ispec) - theta_n/TWO) * phi_nu2(i,j,ispec,i_sls)
-  Snp1 = (dux_dxl_np1(i,j,ispec) - theta_np1/TWO) * phi_nu2(i,j,ispec,i_sls)
-  Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
-      twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
-      fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
-      deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
-  e11(i,j,ispec,i_sls) = Unp1
+
+     if(stage_time_scheme == 1) then
+                 Un = e11(i,j,ispec,i_sls)
+                 tauinv = - inv_tau_sigma_nu2(i,j,ispec,i_sls)
+                 tauinvsquare = tauinv * tauinv
+                 tauinvcube = tauinvsquare * tauinv
+                 tauinvUn = tauinv * Un
+                 Sn   = (dux_dxl_n(i,j,ispec) - theta_n/TWO) * phi_nu2(i,j,ispec,i_sls)
+                 Snp1 = (dux_dxl_np1(i,j,ispec) - theta_np1/TWO) * phi_nu2(i,j,ispec,i_sls)
+                 Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
+                      twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
+                      fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
+                      deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
+                 e11(i,j,ispec,i_sls) = Unp1
+     endif
+
+                 if(stage_time_scheme == 6) then
+                 temp_time_scheme = dux_dxl_n(i,j,ispec)-theta_n/TWO
+                 temper_time_scheme = phi_nu2(i,j,ispec,i_sls)
+           e11_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e11_LDDRK(i,j,ispec,i_sls) &
+                                              + deltat * (temp_time_scheme * temper_time_scheme)- &
+                                       deltat * (e11(i,j,ispec,i_sls) * inv_tau_sigma_nu2(i,j,ispec,i_sls))
+           e11(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)+beta_LDDRK(i_stage)*e11_LDDRK(i,j,ispec,i_sls)
+     endif
+
+                 if(stage_time_scheme == 4) then
+
+                      temp_time_scheme = dux_dxl_n(i,j,ispec)-theta_n/TWO
+                      temper_time_scheme = phi_nu2(i,j,ispec,i_sls)
+                e11_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (temp_time_scheme * temper_time_scheme- &
+                                            e11(i,j,ispec,i_sls) * inv_tau_sigma_nu2(i,j,ispec,i_sls))
+
+                      if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+                        if(i_stage == 1)weight_rk = 0.5d0
+                        if(i_stage == 2)weight_rk = 0.5d0
+            if(i_stage == 3)weight_rk = 1.0d0
+
+            if(i_stage==1)then
+
+            e11_initial_rk(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)
+
+            endif
+
+      e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + weight_rk * e11_force_RK(i,j,ispec,i_sls,i_stage)
+
+
+                elseif(i_stage==4)then
+
+            e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + 1.0d0 / 6.0d0 * &
+            (e11_force_RK(i,j,ispec,i_sls,1) + 2.0d0 * e11_force_RK(i,j,ispec,i_sls,2) + &
+             2.0d0 * e11_force_RK(i,j,ispec,i_sls,3) + e11_force_RK(i,j,ispec,i_sls,4))
+
+                endif
+
+                 endif
 
 ! evolution e13
-  Un = e13(i,j,ispec,i_sls)
-  tauinv = - inv_tau_sigma_nu2(i,j,ispec,i_sls)
-  tauinvsquare = tauinv * tauinv
-  tauinvcube = tauinvsquare * tauinv
-  tauinvUn = tauinv * Un
-  Sn   = (dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)) * phi_nu2(i,j,ispec,i_sls)
-  Snp1 = (dux_dzl_np1(i,j,ispec) + duz_dxl_np1(i,j,ispec)) * phi_nu2(i,j,ispec,i_sls)
-  Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
-      twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
-      fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
-      deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
-  e13(i,j,ispec,i_sls) = Unp1
+     if(stage_time_scheme == 1) then
+                 Un = e13(i,j,ispec,i_sls)
+                 tauinv = - inv_tau_sigma_nu2(i,j,ispec,i_sls)
+                 tauinvsquare = tauinv * tauinv
+                 tauinvcube = tauinvsquare * tauinv
+                 tauinvUn = tauinv * Un
+                 Sn   = (dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)) * phi_nu2(i,j,ispec,i_sls)
+                 Snp1 = (dux_dzl_np1(i,j,ispec) + duz_dxl_np1(i,j,ispec)) * phi_nu2(i,j,ispec,i_sls)
+                 Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
+                      twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
+                      fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
+                      deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
+                 e13(i,j,ispec,i_sls) = Unp1
+     endif
+
+                 if(stage_time_scheme == 6) then
+                 temp_time_scheme=dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)
+                 temper_time_scheme=phi_nu2(i,j,ispec,i_sls)
+           e13_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls)+&
+                                             deltat * (temp_time_scheme*temper_time_scheme)- &
+                                            deltat * (e13(i,j,ispec,i_sls) * inv_tau_sigma_nu2(i,j,ispec,i_sls))
+           e13(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)+beta_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls)
+     endif
+
+                 if(stage_time_scheme == 4) then
+
+                      temp_time_scheme=dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)
+                      temper_time_scheme=phi_nu2(i,j,ispec,i_sls)
+                e13_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (temp_time_scheme*temper_time_scheme- &
+                                            e13(i,j,ispec,i_sls) * inv_tau_sigma_nu2(i,j,ispec,i_sls))
+
+                      if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+                        if(i_stage == 1)weight_rk = 0.5d0
+                        if(i_stage == 2)weight_rk = 0.5d0
+            if(i_stage == 3)weight_rk = 1.0d0
+
+            if(i_stage==1)then
+
+            e13_initial_rk(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)
+
+            endif
+
+      e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + weight_rk * e13_force_RK(i,j,ispec,i_sls,i_stage)
+
+
+                elseif(i_stage==4)then
+
+            e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + 1.0d0 / 6.0d0 * &
+            (e13_force_RK(i,j,ispec,i_sls,1) + 2.0d0 * e13_force_RK(i,j,ispec,i_sls,2) + &
+             2.0d0 * e13_force_RK(i,j,ispec,i_sls,3) + e13_force_RK(i,j,ispec,i_sls,4))
+
+                endif
+
+                 endif
 
   enddo
 

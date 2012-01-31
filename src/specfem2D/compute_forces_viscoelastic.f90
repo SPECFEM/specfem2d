@@ -59,7 +59,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
      v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot,&
      nleft,nright,nbot,over_critical_angle,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,b_absorb_elastic_left,&
      b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top,nspec_left,nspec_right,&
-     nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,mu_k,kappa_k)
+     nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,mu_k,kappa_k,&
+     e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
+     e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_RK, e11_force_RK, e13_force_RK, &
+     stage_time_scheme,i_stage)
+
 
   ! compute forces for the elastic elements
 
@@ -79,6 +83,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   integer, dimension(nelemabs) :: ib_right
   integer, dimension(nelemabs) :: ib_bottom
   integer, dimension(nelemabs) :: ib_top
+  integer :: stage_time_scheme,i_stage
 
   logical :: anyabs,assign_external_model,initialfield,ATTENUATION_VISCOELASTIC_SOLID,add_Bielak_conditions
 
@@ -95,6 +100,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   logical, dimension(4,nelemabs)  :: codeabs
 
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic,veloc_elastic,displ_elastic
+  real(kind=CUSTOM_REAL), dimension(3,nglob) :: temp_displ_elastic
   double precision, dimension(2,numat) :: density
   double precision, dimension(4,3,numat) :: poroelastcoef
   double precision, dimension(6,numat) :: anisotropy
@@ -102,7 +108,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,vsext,rhoext
   double precision, dimension(NGLLX,NGLLZ,nspec) ::  c11ext,c15ext,c13ext,c33ext,c35ext,c55ext
 
-  real(kind=CUSTOM_REAL), dimension(NSOURCES,NSTEP) :: source_time_function
+  real(kind=CUSTOM_REAL), dimension(NSOURCES,NSTEP,stage_time_scheme) :: source_time_function
   real(kind=CUSTOM_REAL), dimension(NSOURCES,NDIM,NGLLX,NGLLZ) :: sourcearray
 
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: b_accel_elastic,b_displ_elastic
@@ -115,6 +121,9 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
   integer :: N_SLS
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11,e13
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1_LDDRK,e11_LDDRK,e13_LDDRK
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1_initial_rk,e11_initial_rk,e13_initial_rk
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS,stage_time_scheme) :: e1_force_RK, e11_force_RK, e13_force_RK
   double precision, dimension(NGLLX,NGLLZ,nspec,N_SLS) :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
   double precision, dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
   real(kind=CUSTOM_REAL) :: e1_sum,e11_sum,e13_sum
@@ -130,6 +139,13 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   ! Gauss-Lobatto-Legendre weights
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
   real(kind=CUSTOM_REAL), dimension(NGLLZ) :: wzgll
+
+  ! Parameter for LDDRK time scheme
+  double precision, dimension(Nstages) :: alpha_LDDRK,beta_LDDRK
+
+  !temp variable
+  double precision :: temp_time_scheme,temper_time_scheme,weight_rk
+
 
   !---
   !--- local variables
@@ -156,7 +172,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
   ! material properties of the elastic medium
   real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic,kappal,cpl,csl,rhol, &
-       lambdal_relaxed_viscoelastic,mul_relaxed_viscoelastic,lambdalplus2mul_relaxed_viscoelastic
+       lambdal_relaxed_viscoelastic,mul_relaxed_viscoelastic,lambdalplus2mul_relaxed_viscoel
 
   ! for attenuation
   real(kind=CUSTOM_REAL) :: Un,Unp1,tauinv,Sn,Snp1,theta_n,theta_np1,tauinvsquare,tauinvcube,tauinvUn
@@ -189,6 +205,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
   ! compute Grad(displ_elastic) at time step n for attenuation
   if(ATTENUATION_VISCOELASTIC_SOLID) then
+     temp_displ_elastic = displ_elastic + deltat * veloc_elastic + 0.5 * deltat**2 * accel_elastic !xiezhinan
      call compute_gradient_attenuation(displ_elastic,dux_dxl_n,duz_dxl_n, &
           dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob)
   endif
@@ -313,20 +330,20 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                  ! J. M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation in a linear
                  ! viscoelastic medium, Geophysical Journal International, vol. 95, p. 597-611 (1988).
 
-                 ! When implementing viscoelasticity according to Carcione 1993 paper, the attenuation is 
-                 ! non-causal rather than causal. We fixed the problem by using equations in Carcione's 
+                 ! When implementing viscoelasticity according to Carcione 1993 paper, the attenuation is
+                 ! non-causal rather than causal. We fixed the problem by using equations in Carcione's
                  ! 2004 paper and his 2007 book.
 
-                 !J. M. Carcione, H B. Helle, The physics and simulation of wave propagation at the ocean 
+                 !J. M. Carcione, H B. Helle, The physics and simulation of wave propagation at the ocean
                  ! bottom, Geophysics, vol. 69(3), p. 825-839, 2004
-                 !J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic 
+                 !J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic
                  ! and porous media, Elsevier, p. 124-125, 2007
 
                  ! compute unrelaxed elastic coefficients from formulas in Carcione 2007 page 125
                  lambdal_relaxed_viscoelastic = (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) / Mu_nu1(i,j,ispec) &
                                                 - mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
                  mul_relaxed_viscoelastic = mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
-                 lambdalplus2mul_relaxed_viscoelastic = lambdal_relaxed_viscoelastic + TWO*mul_relaxed_viscoelastic
+                 lambdalplus2mul_relaxed_viscoel = lambdal_relaxed_viscoelastic + TWO*mul_relaxed_viscoelastic
 
                  ! compute the stress using the unrelaxed Lame parameters (Carcione 2007 page 125)
                  sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
@@ -899,9 +916,9 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     do i=1,NGLLX
                        iglob = ibool(i,j,ispec_selected_source(i_source))
                        accel_elastic(1,iglob) = accel_elastic(1,iglob) + &
-                            sourcearray(i_source,1,i,j)*source_time_function(i_source,it)
+                            sourcearray(i_source,1,i,j)*source_time_function(i_source,it,i_stage)
                        accel_elastic(3,iglob) = accel_elastic(3,iglob) + &
-                            sourcearray(i_source,2,i,j)*source_time_function(i_source,it)
+                            sourcearray(i_source,2,i,j)*source_time_function(i_source,it,i_stage)
                     enddo
                  enddo
               else                   ! backward wavefield
@@ -909,9 +926,9 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     do i=1,NGLLX
                        iglob = ibool(i,j,ispec_selected_source(i_source))
                        b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) + &
-                            sourcearray(i_source,1,i,j)*source_time_function(i_source,NSTEP-it+1)
+                            sourcearray(i_source,1,i,j)*source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1)
                        b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) + &
-                            sourcearray(i_source,2,i,j)*source_time_function(i_source,NSTEP-it+1)
+                            sourcearray(i_source,2,i,j)*source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1)
                     enddo
                  enddo
               endif  !endif SIMULATION_TYPE == 1
@@ -955,7 +972,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   if(ATTENUATION_VISCOELASTIC_SOLID) then
 
      ! compute Grad(displ_elastic) at time step n+1 for attenuation
-     call compute_gradient_attenuation(displ_elastic,dux_dxl_np1,duz_dxl_np1, &
+     call compute_gradient_attenuation(temp_displ_elastic,dux_dxl_np1,duz_dxl_np1, &
           dux_dzl_np1,duz_dzl_np1,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob)
 
      ! update memory variables with fourth-order Runge-Kutta time scheme for attenuation
@@ -972,6 +989,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
               do i_sls = 1,N_SLS
 
                  ! evolution e1
+                 if(stage_time_scheme == 1) then
                  Un = e1(i,j,ispec,i_sls)
                  tauinv = - inv_tau_sigma_nu1(i,j,ispec,i_sls)
                  tauinvsquare = tauinv * tauinv
@@ -984,8 +1002,52 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                       fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
                       deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
                  e1(i,j,ispec,i_sls) = Unp1
+                 endif
+
+                 if(stage_time_scheme == 6) then
+
+                    tauinv = inv_tau_sigma_nu1(i,j,ispec,i_sls)
+                    Un = e1(i,j,ispec,i_sls)
+                    temp_time_scheme = phi_nu1(i,j,ispec,i_sls)
+              e1_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls) + &
+                                              deltat * (theta_n * temp_time_scheme - Un * tauinv)
+              e1(i,j,ispec,i_sls) = Un + beta_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls)
+                 endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                 if(stage_time_scheme == 4) then
+
+                      tauinv = inv_tau_sigma_nu1(i,j,ispec,i_sls)
+                      Un = e1(i,j,ispec,i_sls)
+                      temp_time_scheme = phi_nu1(i,j,ispec,i_sls)
+                e1_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (theta_n * temp_time_scheme - Un * tauinv)
+
+                      if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+                        if(i_stage == 1)weight_rk = 0.5d0
+                        if(i_stage == 2)weight_rk = 0.5d0
+            if(i_stage == 3)weight_rk = 1.0d0
+
+            if(i_stage==1)then
+
+            e1_initial_rk(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls)
+
+            endif
+
+      e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) + weight_rk * e1_force_RK(i,j,ispec,i_sls,i_stage)
+
+
+                elseif(i_stage==4)then
+
+            e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) + 1.0d0 / 6.0d0 * &
+            (e1_force_RK(i,j,ispec,i_sls,1) + 2.0d0 * e1_force_RK(i,j,ispec,i_sls,2) + &
+             2.0d0 * e1_force_RK(i,j,ispec,i_sls,3) + e1_force_RK(i,j,ispec,i_sls,4))
+
+                endif
+
+                 endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
                  ! evolution e11
+     if(stage_time_scheme == 1) then
                  Un = e11(i,j,ispec,i_sls)
                  tauinv = - inv_tau_sigma_nu2(i,j,ispec,i_sls)
                  tauinvsquare = tauinv * tauinv
@@ -998,8 +1060,52 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                       fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
                       deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
                  e11(i,j,ispec,i_sls) = Unp1
+     endif
+
+                 if(stage_time_scheme == 6) then
+                 temp_time_scheme = dux_dxl_n(i,j,ispec)-theta_n/TWO
+                 temper_time_scheme = phi_nu2(i,j,ispec,i_sls)
+           e11_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e11_LDDRK(i,j,ispec,i_sls) &
+                                              + deltat * (temp_time_scheme * temper_time_scheme)- &
+                                       deltat * (e11(i,j,ispec,i_sls) * inv_tau_sigma_nu2(i,j,ispec,i_sls))
+           e11(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)+beta_LDDRK(i_stage)*e11_LDDRK(i,j,ispec,i_sls)
+     endif
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                 if(stage_time_scheme == 4) then
+
+                      temp_time_scheme = dux_dxl_n(i,j,ispec)-theta_n/TWO
+                      temper_time_scheme = phi_nu2(i,j,ispec,i_sls)
+                e11_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (temp_time_scheme * temper_time_scheme- &
+                                            e11(i,j,ispec,i_sls) * inv_tau_sigma_nu2(i,j,ispec,i_sls))
+
+                      if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+                        if(i_stage == 1)weight_rk = 0.5d0
+                        if(i_stage == 2)weight_rk = 0.5d0
+            if(i_stage == 3)weight_rk = 1.0d0
+
+            if(i_stage==1)then
+
+            e11_initial_rk(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)
+
+            endif
+
+      e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + weight_rk * e11_force_RK(i,j,ispec,i_sls,i_stage)
+
+
+                elseif(i_stage==4)then
+
+            e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + 1.0d0 / 6.0d0 * &
+            (e11_force_RK(i,j,ispec,i_sls,1) + 2.0d0 * e11_force_RK(i,j,ispec,i_sls,2) + &
+             2.0d0 * e11_force_RK(i,j,ispec,i_sls,3) + e11_force_RK(i,j,ispec,i_sls,4))
+
+                endif
+
+                 endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
                  ! evolution e13
+     if(stage_time_scheme == 1) then
                  Un = e13(i,j,ispec,i_sls)
                  tauinv = - inv_tau_sigma_nu2(i,j,ispec,i_sls)
                  tauinvsquare = tauinv * tauinv
@@ -1012,6 +1118,49 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                       fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
                       deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
                  e13(i,j,ispec,i_sls) = Unp1
+     endif
+
+                 if(stage_time_scheme == 6) then
+                 temp_time_scheme=dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)
+                 temper_time_scheme=phi_nu2(i,j,ispec,i_sls)
+           e13_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls)+&
+                                             deltat * (temp_time_scheme*temper_time_scheme)- &
+                                            deltat * (e13(i,j,ispec,i_sls) * inv_tau_sigma_nu2(i,j,ispec,i_sls))
+           e13(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)+beta_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls)
+     endif
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                 if(stage_time_scheme == 4) then
+
+                      temp_time_scheme=dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)
+                      temper_time_scheme=phi_nu2(i,j,ispec,i_sls)
+                e13_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (temp_time_scheme*temper_time_scheme- &
+                                            e13(i,j,ispec,i_sls) * inv_tau_sigma_nu2(i,j,ispec,i_sls))
+
+                      if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+                        if(i_stage == 1)weight_rk = 0.5d0
+                        if(i_stage == 2)weight_rk = 0.5d0
+            if(i_stage == 3)weight_rk = 1.0d0
+
+            if(i_stage==1)then
+
+            e13_initial_rk(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)
+
+            endif
+
+      e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + weight_rk * e13_force_RK(i,j,ispec,i_sls,i_stage)
+
+
+                elseif(i_stage==4)then
+
+            e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + 1.0d0 / 6.0d0 * &
+            (e13_force_RK(i,j,ispec,i_sls,1) + 2.0d0 * e13_force_RK(i,j,ispec,i_sls,2) + &
+             2.0d0 * e13_force_RK(i,j,ispec,i_sls,3) + e13_force_RK(i,j,ispec,i_sls,4))
+
+                endif
+
+                 endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
               enddo
 

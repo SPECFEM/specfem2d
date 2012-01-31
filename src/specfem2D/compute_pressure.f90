@@ -191,7 +191,7 @@
 
 ! material properties of the elastic medium
   real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic,denst
-  real(kind=CUSTOM_REAL) :: mul_relaxed_viscoelastic,lambdal_relaxed_viscoelastic,lambdalplus2mul_relaxed_viscoelastic,cpl,csl
+  real(kind=CUSTOM_REAL) :: mul_relaxed_viscoelastic,lambdal_relaxed_viscoelastic,lambdalplus2mul_relaxed_viscoel,cpl,csl
 
   real(kind=CUSTOM_REAL) :: mul_s,kappal_s,rhol_s
   real(kind=CUSTOM_REAL) :: kappal_f,rhol_f
@@ -280,20 +280,20 @@
 ! J. M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation in a linear
 ! viscoelastic medium, Geophysical Journal International, vol. 95, p. 597-611 (1988).
 
-! When implementing viscoelasticity according to Carcione 1993 paper, the attenuation is 
-! non-causal rather than causal. We fixed the problem by using equations in Carcione's 
+! When implementing viscoelasticity according to Carcione 1993 paper, the attenuation is
+! non-causal rather than causal. We fixed the problem by using equations in Carcione's
 ! 2004 paper and his 2007 book.
 
-!J. M. Carcione, H B. Helle, The physics and simulation of wave propagation at the ocean 
+!J. M. Carcione, H B. Helle, The physics and simulation of wave propagation at the ocean
 ! bottom, Geophysics, vol. 69(3), p. 825-839, 2004
-!J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic 
+!J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic
 ! and porous media, Elsevier, p. 124-125, 2007
 
           ! compute unrelaxed elastic coefficients from formulas in Carcione 2007 page 125
           lambdal_relaxed_viscoelastic = (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) / Mu_nu1(i,j,ispec) &
                             - mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
           mul_relaxed_viscoelastic = mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
-          lambdalplus2mul_relaxed_viscoelastic = lambdal_relaxed_viscoelastic + TWO*mul_relaxed_viscoelastic
+          lambdalplus2mul_relaxed_viscoel = lambdal_relaxed_viscoelastic + TWO*mul_relaxed_viscoelastic
 
           ! compute the stress using the unrelaxed Lame parameters (Carcione 2007 page 125)
           sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
@@ -441,20 +441,20 @@
 ! J. M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation in a linear
 ! viscoelastic medium, Geophysical Journal International, vol. 95, p. 597-611 (1988).
 
-! When implement viscoelasticity according to Carcione 1993 paper, the attenuation is 
-! non-causal rather than causal. We fixed the problem by using equations in Carcione's 
+! When implement viscoelasticity according to Carcione 1993 paper, the attenuation is
+! non-causal rather than causal. We fixed the problem by using equations in Carcione's
 ! 2004 paper and his 2007 book.
 
-!J. M. Carcione, H B. Helle, The physics and simulation of wave propagation at the ocean 
+!J. M. Carcione, H B. Helle, The physics and simulation of wave propagation at the ocean
 ! bottom, Geophysics, vol. 69(3), p. 825-839, 2004
-!J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic 
+!J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic
 ! and porous media, Elsevier, p. 124-125, 2007
 
           ! compute relaxed elastic coefficients from formulas in Carcione 2007 page 125
           lambdal_relaxed_viscoelastic = (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) / Mu_nu1(i,j,ispec) &
                             - mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
           mul_relaxed_viscoelastic = mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
-          lambdalplus2mul_relaxed_viscoelastic = lambdal_relaxed_viscoelastic + TWO*mul_relaxed_viscoelastic
+          lambdalplus2mul_relaxed_viscoel = lambdal_relaxed_viscoelastic + TWO*mul_relaxed_viscoelastic
 
           ! compute the stress using the unrelaxed Lame parameters (Carcione 2007 page 125)
           sigma_xx = (lambdal_unrelaxed_elastic + 2.0 * mul_unrelaxed_elastic)*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
