@@ -300,7 +300,7 @@
   'Add Bielak conditions . . . .(add_Bielak_conditions) = ',l6/5x, &
   'Assign external model . . . .(assign_external_model) = ',l6/5x, &
   'Read external SEP file . . .(READ_EXTERNAL_SEP_FILE) = ',l6/5x, &
-  'Turn attenuation on or off. . .(ATTENUATION_VISCOELASTIC_SOLID) = ',l6/5x, &
+  'Attenuation on/off .(ATTENUATION_VISCOELASTIC_SOLID) = ',l6/5x, &
   'Save grid in external file or not. . . (output_grid) = ',l6/5x, &
   'Save a file with total energy or not.(output_energy) = ',l6)
 

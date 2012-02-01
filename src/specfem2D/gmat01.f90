@@ -281,6 +281,14 @@
            ! material can be acoustic (fluid) or elastic (solid)
            if(poroelastcoef(2,1,n) > TINYVAL) then    ! elastic
               write(IOUT,200) n,cp,cs,density(1),poisson,lambda,mu,kappa,young,QKappa,Qmu
+              if(poisson < 0.d0) then
+                write(IOUT,*)
+                write(IOUT,*) 'Materials with a negative Poisson''s ratio can exist,'
+                write(IOUT,*) 'see e.g. R. Lakes, "Science" vol. 235, p. 1038-1040 (1987),'
+                write(IOUT,*) 'but are extremely rare.'
+                write(IOUT,*) 'Hope you know what you are doing...'
+                write(IOUT,*)
+              endif
            else                                       ! acoustic
               write(IOUT,300) n,cp,density(1),kappa,QKappa,Qmu
            endif
@@ -290,6 +298,14 @@
            ! material is poroelastic (solid/fluid)
            write(iout,500) n,sqrt(cpIsquare),sqrt(cpIIsquare),sqrt(cssquare)
            write(iout,600) density(1),poisson_s,lambda_s,mu_s,kappa_s,young_s
+           if(poisson_s < 0.d0) then
+             write(IOUT,*)
+             write(IOUT,*) 'Materials with a negative Poisson''s ratio can exist,'
+             write(IOUT,*) 'see e.g. R. Lakes, "Science" vol. 235, p. 1038-1040 (1987),'
+             write(IOUT,*) 'but are extremely rare.'
+             write(IOUT,*) 'Hope you know what you are doing...'
+             write(IOUT,*) 
+           endif
            write(iout,700) density(2),kappa_f,eta_f
            write(iout,800) lambda_fr,mu_fr,kappa_fr,porosity_array(n),tortuosity_array(n),&
                 permeability(1,n),permeability(2,n),permeability(3,n),Qmu
@@ -313,11 +329,11 @@
        'P-wave velocity. . . . . . . . . . . (cp) =',1pe15.8,/5x, &
        'S-wave velocity. . . . . . . . . . . (cs) =',1pe15.8,/5x, &
        'Mass density. . . . . . . . . . (density) =',1pe15.8,/5x, &
-       'Poisson''s ratio . . . . . . . .(poisson) =',1pe15.8,/5x, &
+       'Poisson''s ratio. . . . . . . . .(poisson) =',1pe15.8,/5x, &
        'First Lame parameter Lambda. . . (lambda) =',1pe15.8,/5x, &
        'Second Lame parameter Mu. . . . . . .(mu) =',1pe15.8,/5x, &
        'Bulk modulus Kappa . . . . . . . .(kappa) =',1pe15.8,/5x, &
-       'Young''s modulus E . . . . . . . .(young) =',1pe15.8,/5x, &
+       'Young''s modulus E. . . . . . . . .(young) =',1pe15.8,/5x, &
        'QKappa_attenuation .  . . . . . .(QKappa) =',1pe15.8,/5x, &
        'Qmu_attenuation . . . . . . . . . . (Qmu) =',1pe15.8)
 
@@ -354,11 +370,11 @@
 600 format(//5x,'-------------------------------',/5x, &
        '-- Solid phase properties --',/5x, &
        'Mass density. . . . . . . . . . (density_s) =',1pe15.8,/5x, &
-       'Poisson''s ratio. . . . . . . . (poisson_s) =',1pe15.8,/5x, &
+       'Poisson''s ratio . . . . . . . . (poisson_s) =',1pe15.8,/5x, &
        'First Lame parameter Lambda. . . (lambda_s) =',1pe15.8,/5x, &
        'Second Lame parameter Mu. . . . . . .(mu_s) =',1pe15.8,/5x, &
        'Solid bulk modulus Kappa . . . . .(kappa_s) =',1pe15.8,/5x, &
-       'Young''s modulus E. . . . . . .  .(young_s) =',1pe15.8)
+       'Young''s modulus E . . . . . . .  .(young_s) =',1pe15.8)
 
 700 format(//5x,'-------------------------------',/5x, &
        '-- Fluid phase properties --',/5x, &
@@ -385,7 +401,7 @@
          'H. . . . . . . . . .=',1pe15.8,/5x, &
          'C. . . . . . . . . .=',1pe15.8,/5x, &
          'M. . . . . . . . . .=',1pe15.8,/5x, &
-         'characteristic freq =',1pe15.8)
+         'Characteristic freq =',1pe15.8)
 
   end subroutine gmat01
 
