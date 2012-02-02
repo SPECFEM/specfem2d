@@ -3761,7 +3761,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 if(ATTENUATION_PORO_FLUID_PART .and. any_poroelastic .and. &
 (time_stepping_scheme == 2.or. time_stepping_scheme == 3)) &
     stop 'RK and LDDRK time scheme not supported poroelastic simulations with attenuation'
- 
+
 if(coupled_elastic_poro) then
 
     if(ATTENUATION_VISCOELASTIC_SOLID .or. ATTENUATION_PORO_FLUID_PART) &
@@ -6565,6 +6565,42 @@ if(coupled_elastic_poro) then
 !*******************************************************************************
 !         assembling the displacements on the elastic-poro boundaries
 !*******************************************************************************
+
+!
+! Explanation of the code below, from Christina Morency and Yang Luo, January 2012:
+!
+! Coupled elastic-poroelastic simulations imply continuity of traction and
+! displacement at the interface.
+! For the traction we pass on both sides n*(T + Te)/2 , that is, the average
+! between the total stress (from the poroelastic part) and the elastic stress.
+! For the displacement, we enforce its continuity in the assembling stage,
+! realizing that continuity of displacement correspond to the continuity of
+! the acceleration we have:
+!
+! accel_elastic = rmass_inverse_elastic * force_elastic
+! accels_poroelastic = rmass_s_inverse_poroelastic * force_poroelastic
+!
+! Therefore, continuity of acceleration gives
+!
+! accel = (force_elastic + force_poroelastic)/
+!     (1/rmass_inverse_elastic + 1/rmass_inverse_poroelastic)
+!
+! Then
+!
+! accel_elastic = accel
+! accels_poroelastic = accel
+! accelw_poroelastic = 0
+!
+! From there, the velocity and displacement are updated.
+! Note that force_elastic and force_poroelastic are the right hand sides of
+! the equations we solve, that is, the acceleration terms before the
+! division by the inverse of the mass matrices. This is why in the code below
+! we first need to recover the accelerations (which are then
+! the right hand sides forces) and the velocities before the update.
+!
+! This implementation highly helped stability especially with unstructured meshes.
+!
+
     if(coupled_elastic_poro) then
       icount(:)=ZERO
 
