@@ -3,8 +3,17 @@
 #
 #  Python code to link gmsh with specfem
 #
+#@author: Cristini Paul, 
+#  Laboratoire de Mecanique et d'Acoustique, CNRS, Marseille, France
+#
+# Feb, 28, 2012
+#
 import sys, string, time
-from numpy import *
+from os.path import splitext, isfile
+try:
+    from numpy import *
+except ImportError:
+    print "numpy is not installed"
 #
 def SauvFicSpecfem(Ng, Ct, Var, Fv):
     # Sauvegarde au format ascii
@@ -20,7 +29,14 @@ def SauvFicSpecfem(Ng, Ct, Var, Fv):
 #
 def OuvreGmsh(Dir,Nom,Bords):
     # Lecture de fichiers .msh genere avec Gmsh
-    fic=Nom+'.msh'
+    if splitext(Nom)[-1]=='.msh':
+       fic=Nom
+    elif splitext(Nom)[-1]=='':
+       fic=Nom+'.msh'
+    else:
+        print 'File extension is not correct'
+        print 'script aborted'
+        sys.exit()
     #
     # Open the file and get the lines
     # 
