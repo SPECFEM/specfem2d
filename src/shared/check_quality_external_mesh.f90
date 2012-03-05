@@ -221,9 +221,6 @@
 
   print *,'start checking if any element with a negative Jacobian is found'
 
-! create the 2D shape functions and the Jacobian
-  call define_shape_functions(shape2D,dershape2D,xi,gamma,ngnod)
-
   do i = 1,NSPEC
 
 ! compute jacobian matrix
@@ -235,6 +232,25 @@
   do ia=1,ngnod
     xelm = x(ibool(ia,i))
     zelm = y(ibool(ia,i))
+
+! create the 2D shape functions
+    if(ia == 1) then
+      xi    = -1.d0
+      gamma = -1.d0
+    else if(ia == 2) then
+      xi    = +1.d0
+      gamma = -1.d0
+    else if(ia == 3) then
+      xi    = +1.d0
+      gamma = +1.d0
+    else if(ia == 4) then
+      xi    = -1.d0
+      gamma = +1.d0
+    else
+      stop 'ia must be between 1 and NGNOD = 4'
+    endif
+
+    call define_shape_functions(shape2D,dershape2D,xi,gamma,ngnod)
 
     xxi = xxi + dershape2D(1,ia)*xelm
     zxi = zxi + dershape2D(1,ia)*zelm
