@@ -384,6 +384,14 @@
   do k = 1, nb_pixel_loc
     j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
     i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
+
+! avoid edge effects
+    if(i < 1) i = 1
+    if(i > NX_IMAGE_color) i = NX_IMAGE_color
+
+    if(j < 1) j = 1
+    if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
+
     image_color_vp_display(i,j) = vp_display(iglob_image_color(i,j))
   enddo
 
@@ -416,13 +424,12 @@
           j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
           i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
 
-          ! checks bounds
-!         if( i < 1 .or. i > NX_IMAGE_color .or. j < 1 .or. j > NZ_IMAGE_color ) then
-!           print*,'image vp bounds:',myrank,iproc,k, &
-!             num_pixel_recv(k,iproc+1),nb_pixel_per_proc(iproc+1)
-!           print*,'  i: ',i,NX_IMAGE_color
-!           print*,'  j: ',j,NZ_IMAGE_color
-!         endif
+! avoid edge effects
+          if(i < 1) i = 1
+          if(i > NX_IMAGE_color) i = NX_IMAGE_color
+
+          if(j < 1) j = 1
+          if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
 
           image_color_vp_display(i,j) = data_pixel_recv(k)
         enddo
@@ -432,6 +439,14 @@
       do k = 1, nb_pixel_loc
         j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
         i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
+
+! avoid edge effects
+        if(i < 1) i = 1
+        if(i > NX_IMAGE_color) i = NX_IMAGE_color
+
+        if(j < 1) j = 1
+        if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
+
         data_pixel_send(k) = vp_display(iglob_image_color(i,j))
       enddo
 
@@ -457,3 +472,4 @@
 #endif
 
   end subroutine prepare_color_image_vp
+
