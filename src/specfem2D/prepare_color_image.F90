@@ -392,7 +392,7 @@
     if(j < 1) j = 1
     if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
 
-    image_color_vp_display(i,j) = vp_display(iglob_image_color(i,j))
+    if(iglob_image_color(i,j) /= -1) image_color_vp_display(i,j) = vp_display(iglob_image_color(i,j))
   enddo
 
 ! assembling array image_color_vp_display on process zero for color output
@@ -447,7 +447,7 @@
         if(j < 1) j = 1
         if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
 
-        data_pixel_send(k) = vp_display(iglob_image_color(i,j))
+        if(iglob_image_color(i,j) /= -1) data_pixel_send(k) = vp_display(iglob_image_color(i,j))
       enddo
 
       call MPI_SEND(num_pixel_loc(1),nb_pixel_loc,MPI_INTEGER, &

@@ -2710,8 +2710,6 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                                 density,poroelastcoef,porosity,tortuosity, &
                                 vpext,rhoext)
 
-
-
 #ifdef USE_MPI
   if ( nproc > 1 ) then
 
@@ -3034,8 +3032,15 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
              do k = 1, nb_pixel_per_proc(iproc+1)
                 j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
                 i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
-                iglob_image_color(i,j) = iproc
 
+                ! avoid edge effects
+                if(i < 1) i = 1
+                if(j < 1) j = 1
+
+                if(i > NX_IMAGE_color) i = NX_IMAGE_color
+                if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
+
+                iglob_image_color(i,j) = iproc
              enddo
           enddo
 
@@ -7860,12 +7865,20 @@ if(coupled_elastic_poro) then
         do k = 1, nb_pixel_loc
           j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
           i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
+
+          ! avoid edge effects
+          if(i < 1) i = 1
+          if(j < 1) j = 1
+
+          if(i > NX_IMAGE_color) i = NX_IMAGE_color
+          if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
+
           if(p_sv) then
             !P-SH waves, plot vertical component or pressure
-            image_color_data(i,j) = vector_field_display(3,iglob_image_color(i,j))
+            if(iglob_image_color(i,j) /= -1) image_color_data(i,j) = vector_field_display(3,iglob_image_color(i,j))
           else
             !SH (membrane) waves, plot y-component
-            image_color_data(i,j) = vector_field_display(2,iglob_image_color(i,j))
+            if(iglob_image_color(i,j) /= -1) image_color_data(i,j) = vector_field_display(2,iglob_image_color(i,j))
           endif
         enddo
 
@@ -7880,6 +7893,14 @@ if(coupled_elastic_poro) then
               do k = 1, nb_pixel_per_proc(iproc+1)
                 j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
                 i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
+
+                ! avoid edge effects
+                if(i < 1) i = 1
+                if(j < 1) j = 1
+
+                if(i > NX_IMAGE_color) i = NX_IMAGE_color
+                if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
+
                 image_color_data(i,j) = data_pixel_recv(k)
               enddo
             enddo
@@ -7887,10 +7908,18 @@ if(coupled_elastic_poro) then
             do k = 1, nb_pixel_loc
               j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
               i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
+
+              ! avoid edge effects
+              if(i < 1) i = 1
+              if(j < 1) j = 1
+
+              if(i > NX_IMAGE_color) i = NX_IMAGE_color
+              if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
+
               if(p_sv) then !P-SH waves, plot vertical component or pressure
-                data_pixel_send(k) = vector_field_display(3,iglob_image_color(i,j))
+                if(iglob_image_color(i,j) /= -1) data_pixel_send(k) = vector_field_display(3,iglob_image_color(i,j))
               else !SH (membrane) waves, plot y-component
-                data_pixel_send(k) = vector_field_display(2,iglob_image_color(i,j))
+                if(iglob_image_color(i,j) /= -1) data_pixel_send(k) = vector_field_display(2,iglob_image_color(i,j))
               endif
             enddo
 
