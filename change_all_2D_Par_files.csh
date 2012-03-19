@@ -11,11 +11,12 @@ foreach file ( DATA/Par_file EXAMPLES/Abel_Brest/Par_file_Abel_Balanche_bathy_so
 set newfile = "../"$file
 
 # DK DK leave the white spaces, in order to have the right alignment with other variables
+###sed -e '1,$s/PERFORM_CUTHILL_MCKEE           = .true.         # perform inverse Cuthill-McKee (1969) optimization\/permutation for mesh numbering/PERFORM_CUTHILL_MCKEE           = .false.        # perform inverse Cuthill-McKee (1969) optimization\/permutation for mesh numbering (can be very costly and not very useful)/g' < $newfile > __________temp_27_zzzyyyyxxxx__________
 sed -e '1,$s/PERFORM_CUTHILL_MCKEE           = .true.         # perform inverse Cuthill-McKee (1969) optimization\/permutation for mesh numbering/PERFORM_CUTHILL_MCKEE           = .false.        # perform inverse Cuthill-McKee (1969) optimization\/permutation for mesh numbering (can be very costly and not very useful)/g' < $newfile > __________temp_27_zzzyyyyxxxx__________
 
 clean_a_Par_file.py __________temp_27_zzzyyyyxxxx__________ $file
 
-mv __________temp_27_zzzyyyyxxxx__________ $newfile
+#mv __________temp_27_zzzyyyyxxxx__________ $newfile
 
 end
 
