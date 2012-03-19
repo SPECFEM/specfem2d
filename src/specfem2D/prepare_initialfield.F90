@@ -128,13 +128,12 @@
     else
       call exit_MPI('Unrecognized source_type: should be 1 for plane P waves, 2 for plane SV waves, 3 for Rayleigh wave')
     endif
+  endif
 
   ! allow negative angleforce(1): incidence from the right side of the domain
     angleforce_abs=abs(angleforce(1))
-    if (angleforce_abs > pi/2.d0 .and. source_type(1) /= 3) then
+    if (angleforce_abs > pi/2.d0 .and. source_type(1) /= 3) &
       call exit_MPI("incorrect angleforce: must have 0 <= angleforce < 90")
-    endif
-  endif
 
   ! only implemented for homogeneous media therefore only 1 material supported
   numat_local = numat
