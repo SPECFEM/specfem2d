@@ -1641,10 +1641,10 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
     deallocate(perm)
 
-    print *
-    print *,'Xmin,Xmax of the local mesh for proc ',myrank,' = ',minval(coord(1,:)),maxval(coord(1,:))
-    print *,'Zmin,Zmax of the local mesh for proc ',myrank,' = ',minval(coord(2,:)),maxval(coord(2,:))
-    print *
+!   print *
+!   print *,'Xmin,Xmax of the local mesh for proc ',myrank,' = ',minval(coord(1,:)),maxval(coord(1,:))
+!   print *,'Zmin,Zmax of the local mesh for proc ',myrank,' = ',minval(coord(2,:)),maxval(coord(2,:))
+!   print *
 
 !! DK DK for periodic conditions: detect common points between left and right edges
 
