@@ -9,7 +9,7 @@ SAVE_FORWARD                    = .false.  # save the last frame, needed for adj
 # parameters concerning partitioning
 nproc                           = 1              # number of processes
 partitioning_method             = 3              # ascending order = 1, Scotch = 3
-PERFORM_CUTHILL_MCKEE           = .true.         # perform inverse Cuthill-McKee (1969) optimization/permutation for mesh numbering
+PERFORM_CUTHILL_MCKEE           = .false.        # perform inverse Cuthill-McKee (1969) optimization/permutation for mesh numbering (can be very costly and not very useful)
 
 
 ngnod                           = 9              # number of control nodes per element (4 or 9)
