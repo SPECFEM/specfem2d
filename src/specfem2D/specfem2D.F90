@@ -2725,9 +2725,12 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                                 density,poroelastcoef,porosity,tortuosity, &
                                 vpext,rhoext,&
   anyabs,numabs,deltat,codeabs,rmass_inverse_elastic_three,&
-  nelemabs,vsext,xix,xiz,gammaz,gammax)
-
-
+  nelemabs,vsext,xix,xiz,gammaz,gammax &
+!! DK DK added this for Guenneau, March 2012
+#ifdef USE_GUENNEAU
+                                ,coord &
+#endif
+                                )
 
 #ifdef USE_MPI
   if ( nproc > 1 ) then

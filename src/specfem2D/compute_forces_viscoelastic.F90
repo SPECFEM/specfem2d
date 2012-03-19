@@ -167,6 +167,17 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,rho_vp,rho_vs,tx,ty,tz,weight,xxi,zxi,xgamma,zgamma,jacobian1D
   real(kind=CUSTOM_REAL) :: displx,disply,displz,displn,spring_position,displtx,displty,displtz
 
+!! DK DK added this for Guenneau, March 2012
+#ifdef USE_GUENNEAU
+  integer :: kmato_ispec_outside_Guenneau
+  real(kind=CUSTOM_REAL) :: ang, ct, st, r, a, inva, lambda, mu, x, y, &
+                            lambdaplus2mu, ct2 , ct3 , ct4 , twoct2 , st2 , st3 , st4
+  real(kind=CUSTOM_REAL) :: epsilon_xx,epsilon_xz,epsilon_zx,epsilon_zz
+  real(kind=CUSTOM_REAL) :: C1111, C1112, C1121, C1122, C1211, C1212, C1221, C1222, C2111, C2112, C2121, &
+                            C2122, C2211, C2212, C2221, C2222
+#endif
+!! DK DK added this for Guenneau, March 2012
+
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: tempx1,tempx2,tempy1,tempy2,tempz1,tempz2
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: b_tempx1,b_tempx2,b_tempy1,b_tempy2,b_tempz1,b_tempz2
 
@@ -380,12 +391,25 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                  sigma_zy = mul_unrelaxed_elastic*duy_dzl
                  sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
 
+! the stress tensor is symmetric by default, unless defined otherwise
+! this can be overwritten below if needed
+                 sigma_zx = sigma_xz
+
+!! DK DK added this for Guenneau, March 2012
+#ifdef USE_GUENNEAU
+  include "include_stiffness_Guenneau.f90"
+#endif
+!! DK DK added this for Guenneau, March 2012
+
                  if(SIMULATION_TYPE == 2) then ! Adjoint calculation, backward wavefield
                     b_sigma_xx = lambdaplus2mu_unrelaxed_elastic*b_dux_dxl + lambdal_unrelaxed_elastic*b_duz_dzl
                     b_sigma_xy = mul_unrelaxed_elastic*b_duy_dxl
                     b_sigma_xz = mul_unrelaxed_elastic*(b_duz_dxl + b_dux_dzl)
                     b_sigma_zy = mul_unrelaxed_elastic*b_duy_dzl
                     b_sigma_zz = lambdaplus2mu_unrelaxed_elastic*b_duz_dzl + lambdal_unrelaxed_elastic*b_dux_dxl
+
+                    ! the stress tensor is symmetric
+                    b_sigma_zx = b_sigma_xz
                  endif
 
               endif
@@ -436,10 +460,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
               endif
 
               jacobianl = jacobian(i,j,ispec)
-
-              ! the stress tensor is symmetric
-              sigma_zx = sigma_xz
-              b_sigma_zx = b_sigma_xz
 
               ! weak formulation term based on stress tensor (non-symmetric form)
               ! also add GLL integration weights
@@ -603,7 +623,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                            +mul_unrelaxed_elastic/(2.0*spring_position)*(displz-displn*nz)
 
                  endif
-                 
+
 
                  accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0+displtx)*weight
                  accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
@@ -719,7 +739,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                            +mul_unrelaxed_elastic/(2.0*spring_position)*(displz-displn*nz)
 
                  endif
-                 
+
 
                  accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0+displtx)*weight
                  accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
@@ -857,7 +877,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
 
                  endif
-                 
+
 
                  accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0+displtx)*weight
                  accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
@@ -987,7 +1007,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
 
                  endif
-                 
+
 
                  accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0+displtx)*weight
                  accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight

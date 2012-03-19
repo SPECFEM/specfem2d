@@ -318,8 +318,8 @@ $O/gll_library.o: ${S}/gll_library.f90 ${SETUP}/constants.h
 $O/gmat01.o: ${S}/gmat01.f90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/gmat01.o ${S}/gmat01.f90
 
-$O/invert_mass_matrix.o: ${S}/invert_mass_matrix.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/invert_mass_matrix.o ${S}/invert_mass_matrix.f90
+$O/invert_mass_matrix.o: ${S}/invert_mass_matrix.F90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/invert_mass_matrix.o ${S}/invert_mass_matrix.F90
 
 $O/initialize_simulation.o: ${S}/initialize_simulation.F90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/initialize_simulation.o ${S}/initialize_simulation.F90
@@ -426,8 +426,8 @@ $O/compute_forces_poro_fluid.o: ${S}/compute_forces_poro_fluid.f90 ${SETUP}/cons
 $O/compute_forces_poro_solid.o: ${S}/compute_forces_poro_solid.f90 ${SETUP}/constants.h
 	${F90} $(FLAGS_NO_CHECK) -c -o $O/compute_forces_poro_solid.o ${S}/compute_forces_poro_solid.f90
 
-$O/compute_forces_viscoelastic.o: ${S}/compute_forces_viscoelastic.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_NO_CHECK) -c -o $O/compute_forces_viscoelastic.o ${S}/compute_forces_viscoelastic.f90
+$O/compute_forces_viscoelastic.o: ${S}/compute_forces_viscoelastic.F90 ${SETUP}/constants.h
+	${F90} $(FLAGS_NO_CHECK) -c -o $O/compute_forces_viscoelastic.o ${S}/compute_forces_viscoelastic.F90
 
 $O/compute_gradient_attenuation.o: ${S}/compute_gradient_attenuation.f90 ${SETUP}/constants.h
 	${F90} $(FLAGS_NO_CHECK) -c -o $O/compute_gradient_attenuation.o ${S}/compute_gradient_attenuation.f90

@@ -54,7 +54,12 @@
                                 density,poroelastcoef,porosity,tortuosity, &
                                 vpext,rhoext,&
    anyabs,numabs,deltat,codeabs,rmass_inverse_elastic_three,&
-   nelemabs,vsext,xix,xiz,gammaz,gammax)
+   nelemabs,vsext,xix,xiz,gammaz,gammax &
+!! DK DK added this for Guenneau, March 2012
+#ifdef USE_GUENNEAU
+                                ,coord &
+#endif
+                                )
 
 !  builds the global mass matrix
 
@@ -116,7 +121,14 @@
   double precision :: rhol,kappal,mul_relaxed,lambdal_relaxed
   double precision :: rhol_s,rhol_f,rhol_bar,phil,tortl
 
-  ! initializes mass matrix
+!! DK DK added this for Guenneau, March 2012
+#ifdef USE_GUENNEAU
+  double precision, dimension(NDIM,nglob_elastic), intent(in) :: coord
+  real(kind=CUSTOM_REAL) :: r, epsr, epsfi, x, y
+#endif
+!! DK DK added this for Guenneau, March 2012
+
+  ! initialize mass matrix
   if(any_elastic) rmass_inverse_elastic_one(:) = 0._CUSTOM_REAL
   if(any_elastic) rmass_inverse_elastic_three(:) = 0._CUSTOM_REAL
   if(any_poroelastic) rmass_s_inverse_poroelastic(:) = 0._CUSTOM_REAL
@@ -160,10 +172,20 @@
         elseif( elastic(ispec) ) then
 
           ! for elastic medium
+
+!! DK DK added this for Guenneau, March 2012
+#ifdef USE_GUENNEAU
+  include "include_mass_Guenneau.f90"
+#endif
+!! DK DK added this for Guenneau, March 2012
+
           rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
                   + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
-          rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
 
+#ifdef USE_GUENNEAU
+  endif
+#endif
+          rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
  
         else
 
