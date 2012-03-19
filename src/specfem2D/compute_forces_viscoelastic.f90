@@ -62,7 +62,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
      nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,mu_k,kappa_k,&
      e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
      e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_RK, e11_force_RK, e13_force_RK, &
-     stage_time_scheme,i_stage)
+     stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring)
 
 
   ! compute forces for the elastic elements
@@ -86,6 +86,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   integer :: stage_time_scheme,i_stage
 
   logical :: anyabs,assign_external_model,initialfield,ATTENUATION_VISCOELASTIC_SOLID,add_Bielak_conditions
+  logical :: ADD_SPRING_TO_STACEY
+  real(kind=CUSTOM_REAL) :: x_center_spring,z_center_spring
 
   logical :: SAVE_FORWARD
 
@@ -163,6 +165,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL) :: sigma_xx,sigma_xy,sigma_xz,sigma_zy,sigma_zz,sigma_zx
   real(kind=CUSTOM_REAL) :: b_sigma_xx,b_sigma_xy,b_sigma_xz,b_sigma_zy,b_sigma_zz,b_sigma_zx
   real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,rho_vp,rho_vs,tx,ty,tz,weight,xxi,zxi,xgamma,zgamma,jacobian1D
+  real(kind=CUSTOM_REAL) :: displx,disply,displz,displn,spring_position,displtx,displty,displtz
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: tempx1,tempx2,tempy1,tempy2,tempz1,tempz2
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: b_tempx1,b_tempx2,b_tempy1,b_tempy2,b_tempz1,b_tempz2
@@ -577,9 +580,34 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                  ty = rho_vs*vy
                  tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
 
-                 accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0)*weight
+                 displtx=0.0d0
+                 displtz=0.0d0
+
+                 if(ADD_SPRING_TO_STACEY)then
+
+                 displx = displ_elastic(1,iglob)
+                 disply = displ_elastic(2,iglob)
+                 displz = displ_elastic(3,iglob)
+
+                 spring_position=sqrt((coord(1,iglob)-x_center_spring)**2 +&
+                                 (coord(2,iglob)-z_center_spring)**2)
+
+                 displn = nx*displx+nz*displz
+
+                 displtx = (lambdal_unrelaxed_elastic+2*mul_unrelaxed_elastic)/&
+                            (2.0*spring_position)*displn*nx &
+                           +mul_unrelaxed_elastic/(2.0*spring_position)*(displx-displn*nx)
+                 displty = mul_unrelaxed_elastic*disply
+                 displtz = (lambdal_unrelaxed_elastic+2*mul_unrelaxed_elastic)/&
+                            (2.0*spring_position)*displn*nz &
+                           +mul_unrelaxed_elastic/(2.0*spring_position)*(displz-displn*nz)
+
+                 endif
+                 
+
+                 accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0+displtx)*weight
                  accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
-                 accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0)*weight
+                 accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0+displtz)*weight
 
                  if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
                     if(p_sv)then !P-SV waves
@@ -668,9 +696,34 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                  ty = rho_vs*vy
                  tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
 
-                 accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx - traction_x_t0)*weight
+                 displtx=0.0d0
+                 displtz=0.0d0
+
+                 if(ADD_SPRING_TO_STACEY)then
+
+                 displx = displ_elastic(1,iglob)
+                 disply = displ_elastic(2,iglob)
+                 displz = displ_elastic(3,iglob)
+
+                 spring_position=sqrt((coord(1,iglob)-x_center_spring)**2 +&
+                                 (coord(2,iglob)-z_center_spring)**2)
+
+                 displn = nx*displx+nz*displz
+
+                 displtx = (lambdal_unrelaxed_elastic+2*mul_unrelaxed_elastic)/&
+                            (2.0*spring_position)*displn*nx &
+                           +mul_unrelaxed_elastic/(2.0*spring_position)*(displx-displn*nx)
+                 displty = mul_unrelaxed_elastic*disply
+                 displtz = (lambdal_unrelaxed_elastic+2*mul_unrelaxed_elastic)/&
+                            (2.0*spring_position)*displn*nz &
+                           +mul_unrelaxed_elastic/(2.0*spring_position)*(displz-displn*nz)
+
+                 endif
+                 
+
+                 accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0+displtx)*weight
                  accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
-                 accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz - traction_z_t0)*weight
+                 accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0+displtz)*weight
 
                  if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
                     if(p_sv)then !P-SV waves
@@ -774,9 +827,41 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                    tz = 0
                  endif
 
-                 accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0)*weight
+                 displtx=0.0d0
+                 displtz=0.0d0
+
+                 if(ADD_SPRING_TO_STACEY)then
+
+                 displx = displ_elastic(1,iglob)
+                 disply = displ_elastic(2,iglob)
+                 displz = displ_elastic(3,iglob)
+
+                 spring_position=sqrt((coord(1,iglob)-x_center_spring)**2 +&
+                                 (coord(2,iglob)-z_center_spring)**2)
+
+                 displn = nx*displx+nz*displz
+
+                 displtx = (lambdal_unrelaxed_elastic+2.0*mul_unrelaxed_elastic)/&
+                            (2.0*spring_position)*displn*nx &
+                           +mul_unrelaxed_elastic/(2.0*spring_position)*(displx-displn*nx)
+                 displty = mul_unrelaxed_elastic*disply
+                 displtz = (lambdal_unrelaxed_elastic+2.0*mul_unrelaxed_elastic)/&
+                            (2.0*spring_position)*displn*nz &
+                           +mul_unrelaxed_elastic/(2.0*spring_position)*(displz-displn*nz)
+
+                 if((codeabs(ILEFT,ispecabs) .and. i == 1) .or. (codeabs(IRIGHT,ispecabs) .and. i == NGLLX)) then
+                   displtx = 0
+                   displty = 0
+                   displtz = 0
+                 endif
+
+
+                 endif
+                 
+
+                 accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0+displtx)*weight
                  accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
-                 accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0)*weight
+                 accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0+displtz)*weight
 
                  if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
                     if(p_sv)then !P-SV waves
@@ -872,9 +957,41 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                    tz = 0
                  endif
 
-                 accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx - traction_x_t0)*weight
+                 displtx=0.0d0
+                 displtz=0.0d0
+
+                 if(ADD_SPRING_TO_STACEY)then
+
+                 displx = displ_elastic(1,iglob)
+                 disply = displ_elastic(2,iglob)
+                 displz = displ_elastic(3,iglob)
+
+                 spring_position=sqrt((coord(1,iglob)-x_center_spring)**2 +&
+                                 (coord(2,iglob)-z_center_spring)**2)
+
+                 displn = nx*displx+nz*displz
+
+                 displtx = (lambdal_unrelaxed_elastic+2*mul_unrelaxed_elastic)/&
+                            (2.0*spring_position)*displn*nx &
+                           +mul_unrelaxed_elastic/(2.0*spring_position)*(displx-displn*nx)
+                 displty = mul_unrelaxed_elastic*disply
+                 displtz = (lambdal_unrelaxed_elastic+2*mul_unrelaxed_elastic)/&
+                            (2.0*spring_position)*displn*nz &
+                           +mul_unrelaxed_elastic/(2.0*spring_position)*(displz-displn*nz)
+
+                 if((codeabs(ILEFT,ispecabs) .and. i == 1) .or. (codeabs(IRIGHT,ispecabs) .and. i == NGLLX)) then
+                   displtx = 0
+                   displty = 0
+                   displtz = 0
+                 endif
+
+
+                 endif
+                 
+
+                 accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0+displtx)*weight
                  accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
-                 accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz - traction_z_t0)*weight
+                 accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0+displtz)*weight
 
                  if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
                     if(p_sv)then !P-SV waves

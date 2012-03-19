@@ -55,7 +55,7 @@
 ! Assembling the mass matrix.
 !-----------------------------------------------
   subroutine assemble_MPI_scalar(array_val1,npoin_val1, &
-                              array_val2,npoin_val2, &
+                              array_val2,array_val5,npoin_val2, &
                               array_val3,array_val4,npoin_val3, &
                               ninterface, max_interface_size, max_ibool_interfaces_size_ac, &
                               max_ibool_interfaces_size_el, &
@@ -85,7 +85,7 @@
   real(kind=CUSTOM_REAL), dimension(npoin_val1), intent(inout) :: array_val1
   ! elastic
   integer :: npoin_val2
-  real(kind=CUSTOM_REAL), dimension(npoin_val2), intent(inout) :: array_val2
+  real(kind=CUSTOM_REAL), dimension(npoin_val2), intent(inout) :: array_val2,array_val5
   ! poroelastic
   integer :: npoin_val3
   real(kind=CUSTOM_REAL), dimension(npoin_val3), intent(inout) :: array_val3,array_val4
@@ -116,6 +116,12 @@
         ipoin = ipoin + 1
         buffer_send_faces_scalar(ipoin,num_interface) = &
              array_val2(ibool_interfaces_elastic(i,num_interface))
+     end do
+
+     do i = 1, nibool_interfaces_elastic(num_interface)
+        ipoin = ipoin + 1
+        buffer_send_faces_scalar(ipoin,num_interface) = &
+             array_val5(ibool_interfaces_elastic(i,num_interface))
      end do
 
      do i = 1, nibool_interfaces_poroelastic(num_interface)
@@ -161,6 +167,13 @@
         ipoin = ipoin + 1
         array_val2(ibool_interfaces_elastic(i,num_interface)) = &
             array_val2(ibool_interfaces_elastic(i,num_interface))  &
+            + buffer_recv_faces_scalar(ipoin,num_interface)
+     end do
+
+     do i = 1, nibool_interfaces_elastic(num_interface)
+        ipoin = ipoin + 1
+        array_val5(ibool_interfaces_elastic(i,num_interface)) = &
+            array_val5(ibool_interfaces_elastic(i,num_interface))  &
             + buffer_recv_faces_scalar(ipoin,num_interface)
      end do
 
