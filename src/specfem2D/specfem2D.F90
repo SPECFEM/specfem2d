@@ -482,7 +482,9 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_acoustic_adj_coupling
 
 ! inverse mass matrices
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_elastic
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_elastic_one !zhinan
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_elastic_three !zhinan
+
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_acoustic
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
     rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic
@@ -838,6 +840,10 @@
 ! to help locate elements with a negative Jacobian using OpenDX
   logical :: found_a_negative_jacobian
 
+!! DK DK for add spring to stacey absorbing boundary condition
+  logical :: ADD_SPRING_TO_STACEY
+  double precision :: x_center_spring,z_center_spring,xmin_spring,xmax_spring,zmin_spring,zmax_spring
+
 !! DK DK for horizontal periodic conditions: detect common points between left and right edges
   logical :: ADD_PERIODIC_CONDITIONS
 
@@ -967,7 +973,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                   NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCES, &
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_CONSTANT_BLUE_IN_JPG,US_LETTER, &
                   POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, time_stepping_scheme, &
-                  ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL)
+                  ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL)
   if(nproc_read_from_database < 1) stop 'should have nproc_read_from_database >= 1'
   if(SIMULATION_TYPE == 2 .and.(time_stepping_scheme == 2 .or. time_stepping_scheme == 3)) &
                                   stop 'RK and LDDRK time scheme not supported for adjoint inversion'
@@ -1001,7 +1007,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                       NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCES, &
                       factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_CONSTANT_BLUE_IN_JPG,US_LETTER, &
                       POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, time_stepping_scheme, &
-                      ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL)
+                      ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL)
 
   !
   !--- source information
@@ -1612,6 +1618,13 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     enddo
   enddo
 
+  xmin_spring = minval(coord(1,:))
+  xmax_spring = maxval(coord(1,:))
+  zmin_spring = minval(coord(2,:))
+  zmax_spring = maxval(coord(2,:))
+
+  x_center_spring=(xmax_spring+xmin_spring)/2.d0
+  z_center_spring=(zmax_spring+zmin_spring)/2.d0
 !
 !---- generate the global numbering
 !
@@ -1741,7 +1754,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 !
 !---- build the global mass matrix and invert it once and for all
 !
-      rmass_inverse_elastic(:) = 0._CUSTOM_REAL
+      rmass_inverse_elastic_one(:) = 0._CUSTOM_REAL
       do ispec = 1,nspec
         do j = 1,NGLLZ
           do i = 1,NGLLX
@@ -1758,7 +1771,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
               kappal = lambdal_unrelaxed_elastic + 2.d0/3.d0*mul_unrelaxed_elastic
             endif
 
-             rmass_inverse_elastic(iglob) = rmass_inverse_elastic(iglob) &
+             rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob) &
                                 + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
 
           enddo
@@ -1769,8 +1782,8 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 ! set entries that are equal to zero to something else, e.g. 1, to avoid division by zero
 ! these degrees of freedom correspond to points that have been replaced with their periodic counterpart
 ! and thus are not used any more
-      where(rmass_inverse_elastic == 0._CUSTOM_REAL) rmass_inverse_elastic = 1._CUSTOM_REAL
-      rmass_inverse_elastic(:) = 1._CUSTOM_REAL / rmass_inverse_elastic(:)
+      where(rmass_inverse_elastic_one == 0._CUSTOM_REAL) rmass_inverse_elastic_one = 1._CUSTOM_REAL
+      rmass_inverse_elastic_one(:) = 1._CUSTOM_REAL / rmass_inverse_elastic_one(:)
 
     endif ! of if(ADD_PERIODIC_CONDITIONS)
 
@@ -2441,7 +2454,9 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     allocate(veloc_elastic(3,nglob_elastic))
     allocate(accel_elastic(3,nglob_elastic))
     allocate(accel_elastic_adj_coupling(3,nglob_elastic))
-    allocate(rmass_inverse_elastic(nglob_elastic))
+
+    allocate(rmass_inverse_elastic_one(nglob_elastic))
+    allocate(rmass_inverse_elastic_three(nglob_elastic))
 
     if(time_stepping_scheme==2)then
     allocate(displ_elastic_LDDRK(3,nglob_elastic))
@@ -2700,7 +2715,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   !---- build the global mass matrix
   !
   call invert_mass_matrix_init(any_elastic,any_acoustic,any_poroelastic, &
-                                rmass_inverse_elastic,nglob_elastic, &
+                                rmass_inverse_elastic_one,nglob_elastic, &
                                 rmass_inverse_acoustic,nglob_acoustic, &
                                 rmass_s_inverse_poroelastic, &
                                 rmass_w_inverse_poroelastic,nglob_poroelastic, &
@@ -2708,7 +2723,11 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                                 elastic,poroelastic, &
                                 assign_external_model,numat, &
                                 density,poroelastcoef,porosity,tortuosity, &
-                                vpext,rhoext)
+                                vpext,rhoext,&
+  anyabs,numabs,deltat,codeabs,rmass_inverse_elastic_three,&
+  nelemabs,vsext,xix,xiz,gammaz,gammax)
+
+
 
 #ifdef USE_MPI
   if ( nproc > 1 ) then
@@ -2774,7 +2793,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
 ! assembling the mass matrix
     call assemble_MPI_scalar(rmass_inverse_acoustic,nglob_acoustic, &
-                            rmass_inverse_elastic,nglob_elastic, &
+                            rmass_inverse_elastic_one,nglob_elastic, &
                             rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic,nglob_poroelastic, &
                             ninterface, max_interface_size, max_ibool_interfaces_size_ac, &
                             max_ibool_interfaces_size_el, &
@@ -2938,10 +2957,11 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 !---
 
   call invert_mass_matrix(any_elastic,any_acoustic,any_poroelastic,&
-              rmass_inverse_elastic,nglob_elastic, &
+              rmass_inverse_elastic_one,rmass_inverse_elastic_three,nglob_elastic, &
               rmass_inverse_acoustic,nglob_acoustic, &
               rmass_s_inverse_poroelastic, &
               rmass_w_inverse_poroelastic,nglob_poroelastic)
+
 
 ! check the mesh, stability and number of points per wavelength
   if(DISPLAY_SUBSET_OPTION == 1) then
@@ -3041,6 +3061,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                 if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
 
                 iglob_image_color(i,j) = iproc
+
              enddo
           enddo
 
@@ -5107,7 +5128,7 @@ if(coupled_elastic_poro) then
                nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,mu_k,kappa_k, &
                e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
                e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_rk, e11_force_rk, e13_force_rk, &
-               stage_time_scheme,i_stage)
+               stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring)
 
       if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
         !--- left absorbing boundary
@@ -5693,16 +5714,18 @@ if(coupled_elastic_poro) then
     if(any_elastic) then
 
       if(time_stepping_scheme == 1)then
-        accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic
-        accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic
-        accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic
+
+        accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic_one
+        accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic_one
+        accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic_three
+
         veloc_elastic = veloc_elastic + deltatover2 * accel_elastic
       endif
 
       if(time_stepping_scheme == 2)then
-        accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic
-        accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic
-        accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic
+        accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic_one
+        accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic_one
+        accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic_three
 
   veloc_elastic_LDDRK = alpha_LDDRK(i_stage) * veloc_elastic_LDDRK + deltat * accel_elastic
   displ_elastic_LDDRK = alpha_LDDRK(i_stage) * displ_elastic_LDDRK + deltat * veloc_elastic
@@ -5714,9 +5737,9 @@ if(coupled_elastic_poro) then
 
       if(time_stepping_scheme == 3)then
 
-        accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic
-        accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic
-        accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic
+        accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic_one
+        accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic_one
+        accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic_three
 
         accel_elastic_rk(1,:,i_stage) = deltat * accel_elastic(1,:)
         accel_elastic_rk(2,:,i_stage) = deltat * accel_elastic(2,:)
@@ -5783,9 +5806,9 @@ if(coupled_elastic_poro) then
       endif
 
       if(SIMULATION_TYPE == 2) then
-        b_accel_elastic(1,:) = b_accel_elastic(1,:) * rmass_inverse_elastic(:)
-        b_accel_elastic(2,:) = b_accel_elastic(2,:) * rmass_inverse_elastic(:)
-        b_accel_elastic(3,:) = b_accel_elastic(3,:) * rmass_inverse_elastic(:)
+        b_accel_elastic(1,:) = b_accel_elastic(1,:) * rmass_inverse_elastic_one(:)
+        b_accel_elastic(2,:) = b_accel_elastic(2,:) * rmass_inverse_elastic_one(:)
+        b_accel_elastic(3,:) = b_accel_elastic(3,:) * rmass_inverse_elastic_three(:)
 
         b_veloc_elastic = b_veloc_elastic + b_deltatover2*b_accel_elastic
       endif
@@ -6631,8 +6654,8 @@ if(coupled_elastic_poro) then
 
             veloc_elastic(1,iglob) = veloc_elastic(1,iglob) - deltatover2*accel_elastic(1,iglob)
             veloc_elastic(3,iglob) = veloc_elastic(3,iglob) - deltatover2*accel_elastic(3,iglob)
-            accel_elastic(1,iglob) = accel_elastic(1,iglob) / rmass_inverse_elastic(iglob)
-            accel_elastic(3,iglob) = accel_elastic(3,iglob) / rmass_inverse_elastic(iglob)
+            accel_elastic(1,iglob) = accel_elastic(1,iglob) / rmass_inverse_elastic_one(iglob)
+            accel_elastic(3,iglob) = accel_elastic(3,iglob) / rmass_inverse_elastic_three(iglob)
             ! recovering original velocities and accelerations on boundaries (poro side)
             velocs_poroelastic(1,iglob) = velocs_poroelastic(1,iglob) - deltatover2*accels_poroelastic(1,iglob)
             velocs_poroelastic(2,iglob) = velocs_poroelastic(2,iglob) - deltatover2*accels_poroelastic(2,iglob)
@@ -6640,9 +6663,9 @@ if(coupled_elastic_poro) then
             accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) / rmass_s_inverse_poroelastic(iglob)
             ! assembling accelerations
             accel_elastic(1,iglob) = ( accel_elastic(1,iglob) + accels_poroelastic(1,iglob) ) / &
-                                   ( 1.0/rmass_inverse_elastic(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
+                                   ( 1.0/rmass_inverse_elastic_one(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
             accel_elastic(3,iglob) = ( accel_elastic(3,iglob) + accels_poroelastic(2,iglob) ) / &
-                                   ( 1.0/rmass_inverse_elastic(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
+                                   ( 1.0/rmass_inverse_elastic_three(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
             accels_poroelastic(1,iglob) = accel_elastic(1,iglob)
             accels_poroelastic(2,iglob) = accel_elastic(3,iglob)
             ! updating velocities
@@ -6880,8 +6903,8 @@ if(coupled_elastic_poro) then
             if(SIMULATION_TYPE == 2) then
               b_veloc_elastic(1,iglob) = b_veloc_elastic(1,iglob) - b_deltatover2*b_accel_elastic(1,iglob)
               b_veloc_elastic(3,iglob) = b_veloc_elastic(3,iglob) - b_deltatover2*b_accel_elastic(3,iglob)
-              b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) / rmass_inverse_elastic(iglob)
-              b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) / rmass_inverse_elastic(iglob)
+              b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) / rmass_inverse_elastic_one(iglob)
+              b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) / rmass_inverse_elastic_three(iglob)
               ! recovering original velocities and accelerations on boundaries (poro side)
               b_velocs_poroelastic(1,iglob) = b_velocs_poroelastic(1,iglob) - b_deltatover2*b_accels_poroelastic(1,iglob)
               b_velocs_poroelastic(2,iglob) = b_velocs_poroelastic(2,iglob) - b_deltatover2*b_accels_poroelastic(2,iglob)
@@ -6889,9 +6912,9 @@ if(coupled_elastic_poro) then
               b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) / rmass_s_inverse_poroelastic(iglob)
               ! assembling accelerations
               b_accel_elastic(1,iglob) = ( b_accel_elastic(1,iglob) + b_accels_poroelastic(1,iglob) ) / &
-                                   ( 1.0/rmass_inverse_elastic(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
+                                   ( 1.0/rmass_inverse_elastic_one(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
               b_accel_elastic(3,iglob) = ( b_accel_elastic(3,iglob) + b_accels_poroelastic(2,iglob) ) / &
-                                   ( 1.0/rmass_inverse_elastic(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
+                                   ( 1.0/rmass_inverse_elastic_three(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
               b_accels_poroelastic(1,iglob) = b_accel_elastic(1,iglob)
               b_accels_poroelastic(2,iglob) = b_accel_elastic(3,iglob)
               ! updating velocities

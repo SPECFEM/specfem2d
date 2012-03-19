@@ -74,6 +74,7 @@ module parameter_file
 
   logical :: p_sv
   logical :: any_abs,absbottom,absright,abstop,absleft
+  logical :: ADD_SPRING_TO_STACEY
 
   integer :: nt
   double precision :: deltat
@@ -239,8 +240,8 @@ contains
   call read_value_double_precision_p(USER_T0, 'solver.USER_T0')
   if(err_occurred() /= 0) stop 'error reading parameter 17b in Par_file'
 
-  call read_value_integer_p(time_stepping_scheme, 'solver.time_stepping_scheme')  !xiezhinan
-  if(err_occurred() /= 0) stop 'error reading parameter 17c in Par_file'          !xiezhinan
+  call read_value_integer_p(time_stepping_scheme, 'solver.time_stepping_scheme')
+  if(err_occurred() /= 0) stop 'error reading parameter 17c in Par_file'        
 
   ! read source infos
   call read_value_integer_p(NSOURCES, 'solver.NSOURCES')
@@ -417,6 +418,9 @@ contains
 
   ! boolean defining whether to use any absorbing boundaries
   call read_value_logical_p(any_abs, 'solver.absorbing_conditions')
+  if(err_occurred() /= 0) stop 'error reading parameter 51a in Par_file'
+
+  call read_value_logical_p(ADD_SPRING_TO_STACEY, 'solver.ADD_SPRING_TO_STACEY')
   if(err_occurred() /= 0) stop 'error reading parameter 51a in Par_file'
 
   call read_value_logical_p(ADD_PERIODIC_CONDITIONS, 'solver.ADD_PERIODIC_CONDITIONS')
