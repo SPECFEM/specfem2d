@@ -6,21 +6,21 @@
 #@author: Cristini Paul, 
 #  Laboratoire de Mecanique et d'Acoustique, CNRS, Marseille, France
 #
-# Feb, 28, 2012
+# February 2012
 #
 import sys, string, time
 from os.path import splitext, isfile
 try:
     from numpy import *
 except ImportError:
-    print "numpy is not installed"
+    print "error: package python-numpy is not installed"
 #
 def SauvFicSpecfem(Ng, Ct, Var, Fv):
     # Sauvegarde au format ascii
-    # Ng est le nom générique
-    # Ct le nombre de lignes à lire
-    # Var est le nom de la variable contenant les informations à écrire
-    # Fv est le format d'écriture '%f' pour les noeuds, '%i' pour les autres fichiers
+    # Ng est le nom generique
+    # Ct le nombre de lignes a lire
+    # Var est le nom de la variable contenant les informations a ecrire
+    # Fv est le format d'ecriture '%f' pour les noeuds, '%i' pour les autres fichiers
     savetxt(Ng,(Ct,), fmt='%i')
     fd = open(Ng,'a')
     savetxt(fd, Var, fmt=Fv)
@@ -60,7 +60,7 @@ def OuvreGmsh(Dir,Nom,Bords):
         Ngnod, LinElem, SurfElem = 9, 8, 10
         len1D, len2D = 3, 9
     else:
-        print 'Element type is not 4 or 9 nodes'
+        print 'Element type is not 4 nor 9 nodes'
     #-------------------------------------------------------------------------
     # Conditions aux bords du domaine
     # Possible choices: Abso, Free or Perio
@@ -87,12 +87,12 @@ def OuvreGmsh(Dir,Nom,Bords):
             if Nam == 'Bottom': Bord_bottom=Zon
     #--------------------------------------
     print 'Physical Names', PhysCar
-    print 'Bords absorbants', Bord_abso
-    print 'Bords libres', Bord_free
-    print 'Bords droit', Bord_right
-    print 'Bords gauche', Bord_left
-    print 'Bords haut', Bord_top
-    print 'Bords bas', Bord_bottom
+    print 'Absorbing boundaries', Bord_abso
+    print 'Free boundaries', Bord_free
+    print 'Right boundaries', Bord_right
+    print 'Left boundaries', Bord_left
+    print 'Top boundaries', Bord_top
+    print 'Bottom boundaries', Bord_bottom
     #---------------------------------------------------------------------------
     # Infos sur le fichier Gmsh
     Ver=float(string.split(lignes[1])[0])
@@ -100,7 +100,7 @@ def OuvreGmsh(Dir,Nom,Bords):
     Data_Size=int(string.split(lignes[1])[2])
     # Lecture de noeuds
     NbNodes=int(string.split(lignes[PosNodes+1])[0])
-    print 'Number of nodes : ',NbNodes
+    print 'Number of nodes: ',NbNodes
     Nodes=zeros((NbNodes,2),dtype=float)
     for Ninc in range(NbNodes):
         Nodes[Ninc]= [float(val) for val in (string.split(lignes[PosNodes+2+Ninc])[1:3])]
@@ -110,7 +110,7 @@ def OuvreGmsh(Dir,Nom,Bords):
     # Lecture des elements
     DecElem=12+NbNodes
     NbElements=int(string.split(lignes[PosElem+1])[0])
-    print 'Number of elements : ', NbElements
+    print 'Number of elements: ', NbElements
     # depend de l'ordre
     Elements        = empty((NbElements,len2D),dtype=int)
     Milieu          = empty((NbElements,1),dtype=int)
@@ -207,10 +207,10 @@ def OuvreGmsh(Dir,Nom,Bords):
     Elements1DBordLeft=Elements1DBordLeft[:Ninc1DBordLeft,:]
     Elements1DBordTop=Elements1DBordTop[:Ninc1DBordTop,:]
     Elements1DBordBottom=Elements1DBordBottom[:Ninc1DBordBottom,:]
-    # Modification la matrice contenant les éléments 1D pour travailler sur les noeuds
+    # Modification la matrice contenant les elements 1D pour travailler sur les noeuds
     Elements1DBordFlat=ravel(Elements1DBord)
     # Noeuds appartenant aux bords du domaine
-    NodesBordC=set(Elements1DBordFlat)       # permet d'enlever les elements dupliqués
+    NodesBordC=set(Elements1DBordFlat)       # permet d'enlever les elements dupliques
     NodesBord2n=set(Elements1DBordFlat[::3]) # Noeuds aux bords sans intermediaire
     #-------------------------------------------------------
     NodesBordRight  = set(ravel(Elements1DBordRight))
@@ -232,7 +232,7 @@ def OuvreGmsh(Dir,Nom,Bords):
     t0=time.clock()
     ctf, cta, ctr, ctl, ctt, ctb = 0, 0, 0, 0, 0, 0
     for Ct2D in xrange(Ninc2D):
-        # Attention aux éléments qui ont un point correspondant à un coin
+        # Attention aux elements qui ont un point correspondant a un coin
         jj=set(Elements[Ct2D])
         if not set.isdisjoint(jj, NodesBordC):
             ctBord+=1
@@ -252,7 +252,7 @@ def OuvreGmsh(Dir,Nom,Bords):
                 # Cas du bord double
                 if len(rr)==3:
                     ctdb=0
-                    # Recherche des deux éléments 1D
+                    # Recherche des deux elements 1D
                     for Nn in xrange(Ninc1DBordRight):
                         kk  = set(Elements1DBordRight[Nn])
                         if not set.isdisjoint(rr, kk):
@@ -296,7 +296,7 @@ def OuvreGmsh(Dir,Nom,Bords):
                 # Cas du bord double
                 if len(rr)==3:
                     ctdb=0
-                    # Recherche des deux éléments 1D
+                    # Recherche des deux elements 1D
                     for Nn in xrange(Ninc1DBordLeft):
                         kk  = set(Elements1DBordLeft[Nn])
                         if not set.isdisjoint(rr, kk):
@@ -379,7 +379,7 @@ def OuvreGmsh(Dir,Nom,Bords):
 if __name__=='__main__':
     set_printoptions(precision=6, threshold=None, edgeitems=None, linewidth=200, suppress=None, nanstr=None, infstr=None)
     #
-    # Lecture des paramètres d'entrée éventuels
+    # Lecture des paramètres d'entree eventuels
     #
     Fic = sys.argv[1];                          del sys.argv[1]
     #
@@ -410,7 +410,7 @@ if __name__=='__main__':
             else:
                 print 'Wrong condition'
             del sys.argv[1]
-        elif opt == '-r':            # On affiche le résltat ou pas
+        elif opt == '-r':            # On affiche le resultat ou pas
             if sys.argv[1]== 'F':
                 Bords['Right']='Free'
             elif sys.argv[1]== 'A':
@@ -423,3 +423,4 @@ if __name__=='__main__':
             sys.exit(1)
     #
     OuvreGmsh('',Fic, Bords)
+

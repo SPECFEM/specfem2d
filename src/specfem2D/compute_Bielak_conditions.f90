@@ -121,7 +121,7 @@ subroutine compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,
 !!$         (t - x/2.d0 - (sqrt(3.d0)*(-9 + z))/2.d0))*exp(-(a*(-2*t + x + sqrt(3.d0)*(-9 + z))**2)/4.d0) + &
 !!$      (2*t - x + sqrt(3.d0)*(-9 + z))*exp(-(a*(2*t - x + sqrt(3.d0)*(-9 + z))**2)/4.d0)))/2.d0
 
-! to ompute the derivative of the displacement, we take the velocity ricker expression and we multiply by
+! to compute the derivative of the displacement, we take the velocity ricker expression and we multiply by
 ! the derivative of the interior argument of ricker_Bielak_veloc
 
   dxUx = A_plane(1) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) * (-sin(angleforce)/c_inc)&
