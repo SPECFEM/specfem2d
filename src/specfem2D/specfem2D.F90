@@ -4128,7 +4128,7 @@ if(coupled_elastic_poro) then
                             NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc, &
                             num_pixel_loc,nspec,elastic,poroelastic,ibool,kmato, &
                             numat,density,poroelastcoef,porosity,tortuosity, &
-                            nproc,myrank,assign_external_model,vpext,factor_subsample_image,DRAW_WATER_CONSTANT_BLUE_IN_JPG)
+                            nproc,myrank,assign_external_model,vpext,DRAW_WATER_CONSTANT_BLUE_IN_JPG)
   endif
 
 ! dummy allocation of plane wave arrays if they are unused (but still need to exist because
