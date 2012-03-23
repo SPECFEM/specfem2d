@@ -7900,7 +7900,7 @@ if(coupled_elastic_poro) then
           if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
 
           if(p_sv) then
-            !P-SH waves, plot vertical component or pressure
+            !P-SH waves, plot vertical component of vector, or else pressure
             if(iglob_image_color(i,j) /= -1) image_color_data(i,j) = vector_field_display(3,iglob_image_color(i,j))
           else
             !SH (membrane) waves, plot y-component
@@ -7942,7 +7942,7 @@ if(coupled_elastic_poro) then
               if(i > NX_IMAGE_color) i = NX_IMAGE_color
               if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
 
-              if(p_sv) then !P-SH waves, plot vertical component or pressure
+              if(p_sv) then !P-SH waves, plot vertical component of vector, or else pressure
                 if(iglob_image_color(i,j) /= -1) data_pixel_send(k) = vector_field_display(3,iglob_image_color(i,j))
               else !SH (membrane) waves, plot y-component
                 if(iglob_image_color(i,j) /= -1) data_pixel_send(k) = vector_field_display(2,iglob_image_color(i,j))
