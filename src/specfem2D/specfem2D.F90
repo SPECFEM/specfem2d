@@ -1618,13 +1618,6 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     enddo
   enddo
 
-  xmin_spring = minval(coord(1,:))
-  xmax_spring = maxval(coord(1,:))
-  zmin_spring = minval(coord(2,:))
-  zmax_spring = maxval(coord(2,:))
-
-  x_center_spring=(xmax_spring+xmin_spring)/2.d0
-  z_center_spring=(zmax_spring+zmin_spring)/2.d0
 !
 !---- generate the global numbering
 !
@@ -1958,40 +1951,14 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
   endif
 
-!$$!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! yang  output weights for line, surface integrals !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!$$  ! NSPEC
-!$$ if(myrank==0) then
-!$$  open(unit=55,file='OUTPUT_FILES/x_z_weightLineX_weightLineZ_weightSurface_NSPEC',status='unknown')
-!$$  weight_line_x=0.0
-!$$  weight_line_z=0.0
-!$$  weight_surface=0.0
-!$$  zmin_yang=minval(coord(2,:))
-!$$  xmin_yang=minval(coord(1,:))
-!$$  zmax_yang=maxval(coord(2,:))
-!$$  xmax_yang=maxval(coord(1,:))
-!$$  do ispec = 1,nspec
-!$$    do j = 1,NGLLZ
-!$$      do i = 1,NGLLX
-!$$            iglob=ibool(i,j,ispec)
-!$$            x=coord(1,ibool(i,j,ispec))
-!$$            z=coord(2,ibool(i,j,ispec))
-!$$            xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-!$$            zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-!$$            !if ((j==1 .OR. j==NGLLZ) .AND. ( (abs(z-zmin_yang).GE.1) .AND. (abs(z-zmax_yang)).GE.1) )    xxi=xxi/2.0
-!$$            !if ((i==1 .OR. i==NGLLZ) .AND. ( (abs(x-xmin_yang).GE.1) .AND. (abs(x-xmax_yang)).GE.1) )    zgamma=zgamma/2.0
-!$$            !weight_line_x(iglob) =  weight_line_x(iglob) + xxi * wxgll(i)
-!$$            !weight_line_z(iglob) =  weight_line_z(iglob) + zgamma * wzgll(j)
-!$$            !weight_surface(iglob) = weight_surface(iglob) + wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
-!$$            !weight_jacobian(iglob) = jacobian(i,j,ispec)
-!$$            !weight_gll(iglob) = 10*j+i
-!$$            !write(55,*) xxi * wxgll(i), zgamma * wzgll(j), wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
-!$$            write(55,*) xxi * wxgll(i), zgamma * wzgll(j), wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
-!$$      enddo
-!$$    enddo
-!$$  enddo
-!$$  close(55)
-!$$ endif
-!$$!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  xmin_spring = minval(coord(1,:))
+  xmax_spring = maxval(coord(1,:))
+  zmin_spring = minval(coord(2,:))
+  zmax_spring = maxval(coord(2,:))
+
+  x_center_spring=(xmax_spring+xmin_spring)/2.d0
+  z_center_spring=(zmax_spring+zmin_spring)/2.d0
+
 !
 !--- save the grid of points in a file
 !
@@ -2796,7 +2763,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
 ! assembling the mass matrix
     call assemble_MPI_scalar(rmass_inverse_acoustic,nglob_acoustic, &
-                            rmass_inverse_elastic_one,nglob_elastic, &
+                            rmass_inverse_elastic_one,rmass_inverse_elastic_three,nglob_elastic, &
                             rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic,nglob_poroelastic, &
                             ninterface, max_interface_size, max_ibool_interfaces_size_ac, &
                             max_ibool_interfaces_size_el, &
