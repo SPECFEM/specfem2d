@@ -93,7 +93,9 @@
   integer  :: ipoin, num_interface
   integer  :: ier
   integer  :: i
-  double precision, dimension(max_ibool_interfaces_size_ac+max_ibool_interfaces_size_el+&
+! there are now two different mass matrices for the elastic case
+! in order to handle the C deltat / 2 contribution of the Stacey conditions to the mass matrix
+  double precision, dimension(max_ibool_interfaces_size_ac+2*max_ibool_interfaces_size_el+&
        2*max_ibool_interfaces_size_po, ninterface)  :: &
        buffer_send_faces_scalar, &
        buffer_recv_faces_scalar
@@ -120,6 +122,8 @@
 
      do i = 1, nibool_interfaces_elastic(num_interface)
         ipoin = ipoin + 1
+! there are now two different mass matrices for the elastic case
+! in order to handle the C deltat / 2 contribution of the Stacey conditions to the mass matrix
         buffer_send_faces_scalar(ipoin,num_interface) = &
              array_val5(ibool_interfaces_elastic(i,num_interface))
      end do
@@ -135,10 +139,12 @@
              array_val4(ibool_interfaces_poroelastic(i,num_interface))
      end do
 
-     ! non-blocking synchronous send request
+     ! non-blocking send
      call MPI_ISEND( buffer_send_faces_scalar(1,num_interface), &
-          nibool_interfaces_acoustic(num_interface)+nibool_interfaces_elastic(num_interface)+&
-          nibool_interfaces_poroelastic(num_interface)+nibool_interfaces_poroelastic(num_interface), &
+! there are now two different mass matrices for the elastic case
+! in order to handle the C deltat / 2 contribution of the Stacey conditions to the mass matrix
+          nibool_interfaces_acoustic(num_interface)+2*nibool_interfaces_elastic(num_interface)+&
+          2*nibool_interfaces_poroelastic(num_interface), &
           MPI_DOUBLE_PRECISION, &
           my_neighbours(num_interface), 11, &
           MPI_COMM_WORLD, msg_requests(num_interface), ier)
@@ -148,9 +154,11 @@
   do num_interface = 1, ninterface
 
      ! starts a blocking receive
-     call MPI_recv ( buffer_recv_faces_scalar(1,num_interface), &
-          nibool_interfaces_acoustic(num_interface)+nibool_interfaces_elastic(num_interface)+&
-          nibool_interfaces_poroelastic(num_interface)+nibool_interfaces_poroelastic(num_interface), &
+     call MPI_RECV ( buffer_recv_faces_scalar(1,num_interface), &
+! there are now two different mass matrices for the elastic case
+! in order to handle the C deltat / 2 contribution of the Stacey conditions to the mass matrix
+          nibool_interfaces_acoustic(num_interface)+2*nibool_interfaces_elastic(num_interface)+&
+          2*nibool_interfaces_poroelastic(num_interface), &
           MPI_DOUBLE_PRECISION, &
           my_neighbours(num_interface), 11, &
           MPI_COMM_WORLD, msg_status(1), ier)
@@ -172,6 +180,8 @@
 
      do i = 1, nibool_interfaces_elastic(num_interface)
         ipoin = ipoin + 1
+! there are now two different mass matrices for the elastic case
+! in order to handle the C deltat / 2 contribution of the Stacey conditions to the mass matrix
         array_val5(ibool_interfaces_elastic(i,num_interface)) = &
             array_val5(ibool_interfaces_elastic(i,num_interface))  &
             + buffer_recv_faces_scalar(ipoin,num_interface)
@@ -271,7 +281,7 @@
     ! gets global interface index
     num_interface = inum_interfaces_acoustic(iinterface)
 
-    ! non-blocking synchronous send
+    ! non-blocking send
     call MPI_ISEND( buffer_send_faces_vector_ac(1,iinterface), &
              nibool_interfaces_acoustic(num_interface), CUSTOM_MPI_TYPE, &
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
