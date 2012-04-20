@@ -18,7 +18,7 @@ checkerboard model (external file model_velocity.dat_checker)
 
 ---------------------------
 
-The examples in Tape-Liu-Tromp (GJI 2007) assume a simulation start time of t=0, and a source start time of t = t0 = 48 s. SPECFEM2D assumes that the simulation starts at t = -t0 and the source start time is t = 0. In order to generate the same time series as in Tape2007, the user must first modify USER_T0 in constants.h
+The examples in Tape-Liu-Tromp (GJI 2007) assume a simulation start time of t=0, and a source start time of t = t0 = 48 s. SPECFEM2D assumes that the simulation starts at t = -t0 and the source start time is t = 0. Thus, USER_T0 is set to 48.0 in the Par_file
 
 TO RUN:
 
@@ -27,24 +27,30 @@ TO RUN:
 1. in SPECFEM2D root directory, configure, e.g., 
    ./configure FC=gfortran
 
-2. modify setup/constants.h file, setting USER_TO = 48.0 s
-
-3. compile:
+2. compile:
    make all
 
-4. cd EXAMPLES/Tape2007/
+3. cd EXAMPLES/Tape2007/
 
-5. execute script to run mesher and solver for the SH/membrane case:
+4. execute script to run mesher and solver for the SH/membrane case:
    ./process.sh
 
-6. check out the output files in the local directory OUTPUT_FILES
+5. check out the output files in the local directory OUTPUT_FILES
 
-   optional: try plotting the wavefield using the script
-                SPECFEM2D/UTILS/visualization/plot_wavefield.pl
+   optional: try plotting the wavefield using the script plot_wavefield.pl
+   (note: you will need to change a path variable in plot_wavefield.pl)
+     cd OUTPUT_FILES
+     ln -s ../../../UTILS/visualization/plot_wavefield.pl .
+     plot_wavefield.pl 400/4800/400 400/2800/800 0/480/0/480 120/20/120/20 -3/-3/-3 6/6/6 -48.0/0.06 0/1/0/0/1 1.7/1/0 1/0/1/120 Tape2007 onerec_homo
 
 ---------------------------
 
 After running the example above, try the second example:
   ./process_checker.sh
+
+   optional: try plotting the wavefield using the script plot_wavefield.pl
+     cd OUTPUT_FILES
+     ln -s ../../../UTILS/visualization/plot_wavefield.pl .
+     plot_wavefield.pl 400/4800/400 800/2000/400 0/480/0/480 120/20/120/20 -3/-3/-3 6/6/6 -48.0/0.06 0/1/0/0/1 1.7/1/0 1/0/1/120 Tape2007 132rec_checker
 
 ---------------------------
