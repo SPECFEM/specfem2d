@@ -7,7 +7,8 @@
 #
 # This perl script writes a shell script that calls GMT to plot kernels or snapshots of the wavefield.
 # Most of the input commands are associated with plotting.
-# The script could use quite a bit of cleaning up.
+# Anyone is welcome/encouraged to improve this script.
+# It has been tested for the Tromp2005 and Tape2007 examples.
 #
 # NOTES:
 #   1. must have output_wavefield_snapshot = .true. in Par_file to generate wavefield snapshots
@@ -16,7 +17,7 @@
 # WAVEFIELD EXAMPLES:
 #    plot_wavefield.pl 100/1600/400 200/800/200  0/4/0/4      1/0.1/1/0.1  -3/-3/-3 6/6/6  0.0/0.001 1/0/1/1/1 1.7/1/1 1/0/1/120 M2_UPPA PSV
 #    plot_wavefield.pl 400/2800/400 400/2000/400 0/200/0/80    50/10/40/10 -3/-3/-3 4/4/4  -8.0/0.02 1/0/1/1/1 3.0/1/0 1/0/1/200 Tromp2005 PSV_homo
-#    plot_wavefield.pl 400/2800/400 400/2000/400 0/200/0/80    50/10/40/10 -4/-4/-4 1/1/1  -8.0/0.02 0/1/0/0/1 3.0/1/0 1/0/1/200 Tromp2005 SH_homo
+#    plot_wavefield.pl 400/2800/400 400/2000/400 0/200/0/80    50/10/40/10 -2/-2/-2 1/1/1  -8.0/0.02 0/1/0/0/1 3.0/1/0 1/0/1/200 Tromp2005 SH_homo
 #    plot_wavefield.pl 400/4800/400 400/2800/800 0/480/0/480 120/20/120/20 -3/-3/-3 6/6/6 -48.0/0.06 0/1/0/0/1 1.7/1/0 1/0/1/120 Tape2007 onerec_homo
 #    plot_wavefield.pl 400/4800/400 800/2000/400 0/480/0/480 120/20/120/20 -3/-3/-3 6/6/6 -48.0/0.06 0/1/0/0/1 1.7/1/0 1/0/1/120 Tape2007 132rec_checker
 #
@@ -46,8 +47,8 @@ if (@ARGV < 1) {die("Usage: plot_wavefield.pl xxx\n");}
 #$numf = @frames;
 $numf = ($pend - $pfirst)/$pint + 1;
 
-# directory with data files
-$bdir = "/data/svn/seismo/2D/SPECFEM2D_work";
+# directory with data files (USER CHANGE THIS)
+$bdir = "/data2/SVN/seismo/2D/SPECFEM2D_20120420";
 #$idir1 = "$bdir/OUTPUT_FILES";                 # if running from the default directory
 $idir1 = "$bdir/EXAMPLES/$tlab/OUTPUT_FILES";   # if running from an examples directory
 if (not -e $idir1) {die("check if idir1 $idir1 exist or not\n");}
