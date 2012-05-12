@@ -1,0 +1,4 @@
+
+See the to-do list of SPECFEM3D instead: to be more efficient we now maintain a single to-do list
+for all the versions of the SPECFEM codes.
+
