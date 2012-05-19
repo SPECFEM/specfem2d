@@ -10,7 +10,7 @@ dnl You must have recent versions of Autoconf and Automake installed.
 
 
 AC_PREREQ(2.61)
-AC_INIT([Specfem 2D], [6.2.0], [jtromp AT princeton.edu], [Specfem2D])
+AC_INIT([Specfem 2D], [6], [jtromp AT princeton.edu], [Specfem2D])
 AC_CONFIG_SRCDIR([README])
 AC_CONFIG_HEADER([setup/config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -439,7 +439,7 @@ fi
 # Checks for library functions.
 
 
-AC_CONFIG_FILES([Makefile DATA/Par_file DATA/SOURCE src/meshfem2D/Makefile src/specfem2D/Makefile setup/constants.h setup/precision.h src/meshfem2D/scotch_5.1.11/src/Makefile.inc])
+AC_CONFIG_FILES([Makefile src/meshfem2D/Makefile src/specfem2D/Makefile setup/constants.h setup/precision.h src/meshfem2D/scotch_5.1.11/src/Makefile.inc])
 AC_OUTPUT
 
 
