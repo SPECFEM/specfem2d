@@ -301,11 +301,15 @@ to create all executables which will be placed into the folder \texttt{./bin/}.
 If you run very large meshes on a relatively small number
 of processors, the memory size needed on each processor might become
 greater than 2 gigabytes, which is the upper limit for 32-bit addressing.
-In this case, on some compilers you may need to add \texttt{``-mcmodel=medium}''
+In this case, on some compilers you may need to add \texttt{``-mcmodel=medium}'' or \texttt{``-mcmodel=medium -shared-intel}''
 to the compiler options of CFLAGS, FCFLAGS and LDFLAGS otherwise the compiler will display an error
 message (for instance \texttt{``relocation truncated to fit: R\_X86\_64\_PC32 against .bss''} or something similar);
 on an IBM machine with the \texttt{xlf} and \texttt{xlc} compilers, using \texttt{-q64} is usually sufficient.
 
+\section{Visualizing the subroutine calling tree of the source code}
+
+Packages such as \texttt{doxywizard} can be used to visualize the subroutine calling tree of the source code.
+\texttt{Doxywizard} is a GUI front-end for configuring and running \texttt{doxygen}.
 
 %------------------------------------------------------------------------------------------------%
 
