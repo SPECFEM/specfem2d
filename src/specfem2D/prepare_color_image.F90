@@ -113,8 +113,15 @@
   NZ_IMAGE_color = 2 * (NZ_IMAGE_color / 2 + 1) / factor_subsample_image
 
   ! check that image size is not too big
-  if (NX_IMAGE_color > 99999) call exit_MPI('output image too big : NX_IMAGE_color > 99999.')
-  if (NZ_IMAGE_color > 99999) call exit_MPI('output image too big : NZ_IMAGE_color > 99999.')
+! because from http://www.jpegcameras.com/libjpeg/libjpeg-2.html
+! we know that the size limit of the image in each dimension is 65535:
+! "JPEG supports image dimensions of 1 to 64K pixels in either direction".
+  if (NX_IMAGE_color < 4) call exit_MPI('output image too big : NX_IMAGE_color < 4.')
+  if (NZ_IMAGE_color < 4) call exit_MPI('output image too big : NZ_IMAGE_color < 4.')
+  if (NX_IMAGE_color > 65534) &
+    call exit_MPI('output image too big : NX_IMAGE_color > 65534; increase factor_subsample_image in DATA/Par_file.')
+  if (NZ_IMAGE_color > 65534) &
+    call exit_MPI('output image too big : NZ_IMAGE_color > 65534; increase factor_subsample_image in DATA/Par_file.')
 
   end subroutine prepare_color_image_init
 
