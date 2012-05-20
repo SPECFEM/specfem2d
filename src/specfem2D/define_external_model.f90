@@ -43,7 +43,7 @@
 !========================================================================
 
 
-  subroutine define_external_model(x,y,iflag_element,myrank,rho,vp,vs,QKappa_attenuation,&
+  subroutine define_external_model(x,y,iflag_element,rho,vp,vs,QKappa_attenuation,&
        Qmu_attenuation,c11,c13,c15,c33,c35,c55 )
 
   implicit none
@@ -53,7 +53,7 @@
 ! user can modify this routine to assign any different external Earth model (rho, vp, vs)
 ! based on the x and y coordinates of that grid point and the flag of the region it belongs to
 
-  integer, intent(in) :: iflag_element,myrank
+  integer, intent(in) :: iflag_element
 
   double precision, intent(in) :: x,y
 
@@ -62,7 +62,7 @@
   double precision, intent(out) :: c11,c15,c13,c33,c35,c55
 
 ! dummy routine here, just to demonstrate how the model can be assigned
-   if(myrank == 0 .and. iflag_element == 1 .or. x < 1700.d0 .or. y >= 2300.d0) then
+   if(iflag_element == 1 .or. x < 1700.d0 .or. y >= 2300.d0) then
      rho = 2000.d0
      vp = 3000.d0
      vs = vp / sqrt(3.d0)
@@ -89,3 +89,4 @@
    endif
 
   end subroutine define_external_model
+
