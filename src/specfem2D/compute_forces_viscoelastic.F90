@@ -391,10 +391,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                  sigma_zy = mul_unrelaxed_elastic*duy_dzl
                  sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
 
-! the stress tensor is symmetric by default, unless defined otherwise
-! this can be overwritten below if needed
-                 sigma_zx = sigma_xz
-
 !! DK DK added this for Guenneau, March 2012
 #ifdef USE_GUENNEAU
   include "include_stiffness_Guenneau.f90"
@@ -437,10 +433,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                  sigma_zz = c13*dux_dxl + c35*(duz_dxl + dux_dzl) + c33*duz_dzl
                  sigma_xz = c15*dux_dxl + c55*(duz_dxl + dux_dzl) + c35*duz_dzl
 
-! the stress tensor is symmetric by default, unless defined otherwise
-! this can be overwritten below if needed
-                 sigma_zx = sigma_xz
-
               endif
 
               ! Pre-kernels calculation
@@ -464,6 +456,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
               endif
 
               jacobianl = jacobian(i,j,ispec)
+
+! the stress tensor is symmetric by default, unless defined otherwise
+#ifndef USE_GUENNEAU
+              sigma_zx = sigma_xz
+#endif
 
               ! weak formulation term based on stress tensor (non-symmetric form)
               ! also add GLL integration weights
