@@ -420,7 +420,7 @@
 
           jacobianl = jacobian(i,j,ispec)
 
-! weak formulation term based on stress tensor (non-symmetric form)
+! weak formulation term based on stress tensor (symmetric form)
 ! also add GLL integration weights
           tempx1(i,j) = wzgll(j)*jacobianl*(sigma_xx*xixl+sigma_xz*xizl)
           tempz1(i,j) = wzgll(j)*jacobianl*(sigma_xz*xixl+sigma_zz*xizl)
