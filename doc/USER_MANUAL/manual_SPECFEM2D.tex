@@ -391,7 +391,7 @@ Regarding mesh point numbering in the files created by the mesher, we use the cl
 \end{verbatim}
 \noindent
 the local coordinate system being $\xi$ and $\eta$ (\texttt{xi} and \texttt{eta}).
-Note that this convention is used to describe the geometry only. In the solver the wave field is then described based on high-order Lagrange interpolants 
+Note that this convention is used to describe the geometry only. In the solver the wave field is then described based on high-order Lagrange interpolants
 at Gauss-Lobatto-Legendre points, as is classical in spectral-element methods.
 
 \section{How to use Gmsh to generate an external mesh}
@@ -714,27 +714,41 @@ Laboratoire de Mecanique et d'Acoustique, CNRS, Marseille, France, is provided.
 It allows one to automatically save all the parameters and results of a given simulation.
 
 %------------------------------------------------------------------------------------------------%
-\section{How to set plane waves as initial conditions}
-To simulate propagation of incoming plane waves in the simulation domain, initial conditions based on analytical formulae of plane waves in homogenous model need to be set. No additional body or boundary forces are required. To set up this senario:
-\begin{description}
-\item{\verb+Par_file+:} 
-  \begin{itemize}
-  \item switch on \verb+initialfield = .true. + 
-  \item at this point setting \verb+add_bielak_condition+ does not seem to help with absorbing boundaries, therefore, it should be turned off.
-  \end{itemize}
-\item{\verb+SOURCE+:}
-  \begin{itemize}
-  \item \verb+zs+ has to be the same as the height of the simulation domain defined in \verb+interfacesfile+.
-  \item \verb+xs+ is the x-coordinate of the intersection of the initial plane wave front with the free surface. 
-  \item \verb+source_type+ = 1 for a plane P wave, 2 for a plane SV wave, 3 for a Rayleigh wave. 
-  \item \verb+angleforce+ can be negative to indicate a plane wave incident from the right (instead of the left)
-  \end{itemize}
-\end{description}
+\section{How to use anisotropy}
 %------------------------------------------------------------------------------------------------%
+
+\begin{flushleft}
+Following \cite{CaKoKo88}, we use the classical reduced Voigt notation \citep{Hel94,Car07}:
+\end{flushleft}
+%%%
+\noindent \begin{centering}
+{\small \includegraphics[width=4.2in,trim=0 2.6cm 0 2.6cm]{figures/Carcione_et_al_aniso_1988_image1.pdf} }
+\par\end{centering}{\small \par}
+%%%
+\begin{flushleft}
+and the following convention for the stress-strain relationship in the 2D P-SV case:
+\end{flushleft}
+%%%
+\noindent \begin{centering}
+{\small \includegraphics[width=4.2in,trim=0 6.4cm 0 6.4cm]{figures/Carcione_et_al_aniso_1988_image2.pdf} }
+\par\end{centering}{\small \par}
+%%%
+
+\noindent
+Thus we have:
+%
+\begin{verbatim}
+! implement anisotropy in 2D
+sigma_xx = c11*dux_dx + c15*(duz_dx + dux_dz) + c13*duz_dz
+sigma_zz = c13*dux_dx + c35*(duz_dx + dux_dz) + c33*duz_dz
+sigma_xz = c15*dux_dx + c55*(duz_dx + dux_dz) + c35*duz_dz
+\end{verbatim}
+%
+where the notations are for instance \texttt{duz\_dx = d(Uz) / dx}.
 
 
 %------------------------------------------------------------------------------------------------%
-\section{How to use Poroelasticity}
+\section{How to use poroelasticity}
 %------------------------------------------------------------------------------------------------%
 
 Check the following new inputs in \texttt{Par\_file}:
@@ -809,6 +823,24 @@ and the dominant frequency of the first source , f0(1). Caution if you use
 several sources with different frequencies and if you consider anistropic
 permeability.
 
+%------------------------------------------------------------------------------------------------%
+\section{How to set plane waves as initial conditions}
+To simulate propagation of incoming plane waves in the simulation domain, initial conditions based on analytical formulae of plane waves in homogenous model need to be set. No additional body or boundary forces are required. To set up this senario:
+\begin{description}
+\item{\verb+Par_file+:}
+  \begin{itemize}
+  \item switch on \verb+initialfield = .true. +
+  \item at this point setting \verb+add_bielak_condition+ does not seem to help with absorbing boundaries, therefore, it should be turned off.
+  \end{itemize}
+\item{\verb+SOURCE+:}
+  \begin{itemize}
+  \item \verb+zs+ has to be the same as the height of the simulation domain defined in \verb+interfacesfile+.
+  \item \verb+xs+ is the x-coordinate of the intersection of the initial plane wave front with the free surface.
+  \item \verb+source_type+ = 1 for a plane P wave, 2 for a plane SV wave, 3 for a Rayleigh wave.
+  \item \verb+angleforce+ can be negative to indicate a plane wave incident from the right (instead of the left)
+  \end{itemize}
+\end{description}
+%------------------------------------------------------------------------------------------------%
 
 
 %------------------------------------------------------------------------------------------------%
