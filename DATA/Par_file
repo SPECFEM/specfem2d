@@ -81,8 +81,17 @@ nbmodels                        = 4              # nb of different models
 # I:   (model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0) or
 # II:  (model_number 2 rho c11 c13 c15 c33 c35 c55 0 0 0 0 0 0) or
 # III: (model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu).
+#
 # For istropic elastic/acoustic material use I and set Vs to zero to make a given model acoustic, for anisotropic elastic use II,
 # and for isotropic poroelastic material use III. The mesh can contain acoustic, elastic, and poroelastic models simultaneously.
+#
+# For anisotropic media in the most general 2D case we have the following convention for the stress-strain relationship:
+# ! implement anisotropy in 2D
+# sigma_xx = c11*dux_dx + c15*(duz_dx + dux_dz) + c13*duz_dz
+# sigma_zz = c13*dux_dx + c35*(duz_dx + dux_dz) + c33*duz_dz
+# sigma_xz = c15*dux_dx + c55*(duz_dx + dux_dz) + c35*duz_dz
+# where the notations are for instance duz_dx = d(Uz) / dx.
+#
 1 1 2700.d0 3000.d0 1732.051d0 0 0 9999 9999 0 0 0 0 0 0
 2 1 2500.d0 2700.d0 0 0 0 9999 9999 0 0 0 0 0 0
 3 1 2200.d0 2500.d0 1443.375d0 0 0 9999 9999 0 0 0 0 0 0
