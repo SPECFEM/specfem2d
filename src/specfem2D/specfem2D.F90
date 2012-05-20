@@ -7122,7 +7122,15 @@ if(coupled_elastic_poro) then
       valux = ZERO
       valuy = ZERO
       valuz = ZERO
+
       valcurl = ZERO
+
+      dxd = 0
+      dyd = 0
+      dzd = 0
+
+      dcurld = 0
+
       do j = 1,NGLLZ
         do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
