@@ -437,6 +437,10 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                  sigma_zz = c13*dux_dxl + c35*(duz_dxl + dux_dzl) + c33*duz_dzl
                  sigma_xz = c15*dux_dxl + c55*(duz_dxl + dux_dzl) + c35*duz_dzl
 
+! the stress tensor is symmetric by default, unless defined otherwise
+! this can be overwritten below if needed
+                 sigma_zx = sigma_xz
+
               endif
 
               ! Pre-kernels calculation
