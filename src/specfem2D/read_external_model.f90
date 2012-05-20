@@ -49,14 +49,14 @@
                 f0_attenuation,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
                 inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent, &
                 inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,&
-                coord,kmato,myrank,rhoext,vpext,vsext, &
+                coord,kmato,rhoext,vpext,vsext, &
                 QKappa_attenuationext,Qmu_attenuationext, &
                 c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,READ_EXTERNAL_SEP_FILE)
 
   implicit none
   include "constants.h"
 
-  integer :: nspec,myrank,nglob
+  integer :: nspec,nglob
   double precision  :: f0_attenuation
 
   ! Mesh
@@ -117,7 +117,7 @@
         do i = 1,NGLLX
 
           iglob = ibool(i,j,ispec)
-          call define_external_model(coord(1,iglob),coord(2,iglob),kmato(ispec),myrank,&
+          call define_external_model(coord(1,iglob),coord(2,iglob),kmato(ispec),&
                                     rhoext(i,j,ispec),vpext(i,j,ispec),vsext(i,j,ispec), &
                                     QKappa_attenuationext(i,j,ispec),Qmu_attenuationext(i,j,ispec),&
                                     c11ext(i,j,ispec),c13ext(i,j,ispec),c15ext(i,j,ispec), &
