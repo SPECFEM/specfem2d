@@ -43,8 +43,8 @@
 !========================================================================
 
 
-  subroutine define_external_model(x,y,iflag_element,rho,vp,vs,QKappa_attenuation,&
-       Qmu_attenuation,c11,c13,c15,c33,c35,c55 )
+  subroutine define_external_model(x,y,iflag_element,rho,vp,vs,QKappa_attenuation, &
+       Qmu_attenuation,c11,c13,c15,c33,c35,c55)
 
   implicit none
 
@@ -66,8 +66,8 @@
      rho = 2000.d0
      vp = 3000.d0
      vs = vp / sqrt(3.d0)
-     QKappa_attenuation = 0
-     Qmu_attenuation = 0
+     QKappa_attenuation = 9999. ! this means no attenuation
+     Qmu_attenuation    = 9999. ! this means no attenuation
      c11 = 169.d9
      c13 = 122.d9
      c15 = 0.d0
@@ -78,9 +78,9 @@
      rho = 2500.d0
      vp = 3600.d0
      vs = vp / 2.d0
-     QKappa_attenuation = 60
-     Qmu_attenuation = 60
-     c11 = 0.d0
+     QKappa_attenuation = 60.
+     Qmu_attenuation = 60.
+     c11 = 0.d0   ! this means no anisotropy
      c13 = 0.d0
      c15 = 0.d0
      c33 = 0.d0
