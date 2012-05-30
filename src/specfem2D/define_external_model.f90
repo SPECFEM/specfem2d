@@ -61,7 +61,9 @@
   double precision, intent(out) :: QKappa_attenuation,Qmu_attenuation
   double precision, intent(out) :: c11,c15,c13,c33,c35,c55
 
-! dummy routine here, just to demonstrate how the model can be assigned
+! completely dummy routine here, just to demonstrate how the model can be assigned
+! and how such a routine can be written
+
    if(iflag_element == 1 .or. x < 1700.d0 .or. y >= 2300.d0) then
      rho = 2000.d0
      vp = 3000.d0
@@ -74,18 +76,22 @@
      c33 = c11
      c35 = 0.d0
      c55 = 75.3d9
-   else
+
+   else if(iflag_element == 2) then
      rho = 2500.d0
      vp = 3600.d0
      vs = vp / 2.d0
-     QKappa_attenuation = 60.
-     Qmu_attenuation = 60.
+     QKappa_attenuation = 120.
+     Qmu_attenuation = 120.
      c11 = 0.d0   ! this means no anisotropy
      c13 = 0.d0
      c15 = 0.d0
      c33 = 0.d0
      c35 = 0.d0
      c55 = 0.d0
+
+   else
+     stop 'wrong flag number in external model'
    endif
 
   end subroutine define_external_model

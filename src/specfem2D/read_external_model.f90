@@ -123,9 +123,9 @@
                                     c11ext(i,j,ispec),c13ext(i,j,ispec),c15ext(i,j,ispec), &
                                     c33ext(i,j,ispec),c35ext(i,j,ispec),c55ext(i,j,ispec))
 
-          if((c11ext(i,j,ispec) /= 0) .or. (c13ext(i,j,ispec) /= 0) .or. (c15ext(i,j,ispec) /= 0) .or. &
-            (c33ext(i,j,ispec) /= 0) .or. (c35ext(i,j,ispec) /= 0) .or. (c55ext(i,j,ispec) /= 0)) then
-            ! vp, vs : dummy values, trick to avoid floating point errors
+          if(c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
+             c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) then
+            ! vp, vs : assign dummy values, trick to avoid floating point errors in the case of an anisotropic medium
             vpext(i,j,ispec) = 20.d0
             vsext(i,j,ispec) = 10.d0
           end if
@@ -153,15 +153,15 @@
           (vsext(i,j,ispec) < TINYVAL .and. previous_vsext >= TINYVAL)))  &
           call exit_MPI('external velocity model cannot be both fluid and solid inside the same spectral element')
 
-        if((c11ext(i,j,ispec) /= 0) .or. (c13ext(i,j,ispec) /= 0) .or. (c15ext(i,j,ispec) /= 0) .or. &
-          (c33ext(i,j,ispec) /= 0) .or. (c35ext(i,j,ispec) /= 0) .or. (c55ext(i,j,ispec) /= 0)) then
+        if(c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
+           c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) then
           anisotropic(ispec) = .true.
           poroelastic(ispec) = .false.
           elastic(ispec) = .true.
           any_elastic = .true.
           QKappa_attenuationext(i,j,ispec) = 10.d0
           Qmu_attenuationext(i,j,ispec) = 10.d0
-        elseif(vsext(i,j,ispec) < TINYVAL) then
+        else if(vsext(i,j,ispec) < TINYVAL) then
           elastic(ispec) = .false.
           poroelastic(ispec) = .false.
           any_acoustic = .true.
