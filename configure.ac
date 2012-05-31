@@ -2,15 +2,13 @@ dnl                                               -*- Autoconf -*-
 dnl
 dnl Process this file with autoconf to produce the 'configure' script:
 dnl
-dnl ACLOCAL="aclocal -I m4" autoreconf
+dnl autoreconf -I m4
 dnl
 dnl You must have recent versions of Autoconf and Automake installed.
 
-# $Id: configure.ac,v 1.1 2005/08/24 22:45:51 leif Exp $
-
 
 AC_PREREQ(2.61)
-AC_INIT([Specfem 2D], [6], [jtromp AT princeton.edu], [Specfem2D])
+AC_INIT([Specfem 2D], [6.2.0], [jtromp AT princeton.edu], [Specfem2D])
 AC_CONFIG_SRCDIR([README])
 AC_CONFIG_HEADER([setup/config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -439,7 +437,14 @@ fi
 # Checks for library functions.
 
 
-AC_CONFIG_FILES([Makefile src/meshfem2D/Makefile src/specfem2D/Makefile setup/constants.h setup/precision.h src/meshfem2D/scotch_5.1.11/src/Makefile.inc])
+AC_CONFIG_FILES([
+	Makefile
+	src/meshfem2D/Makefile
+	src/specfem2D/Makefile
+	setup/constants.h
+	setup/precision.h
+	src/meshfem2D/scotch_5.1.11/src/Makefile.inc
+])
 AC_OUTPUT
 
 

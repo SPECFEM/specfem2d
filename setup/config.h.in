@@ -1,32 +1,58 @@
-/* config.h.in.  Generated from configure.ac by autoheader.  */
-/*
-!=====================================================================
-!
-!                   S P E C F E M 2 D  Version 6 . 2
-!
-!=====================================================================
-*/
+/* setup/config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Define to dummy `main' function (if any) required to link to the Fortran
- libraries. */
+   libraries. */
 #undef FC_DUMMY_MAIN
 
 /* Define if F77 and FC dummy `main' functions are identical. */
 #undef FC_DUMMY_MAIN_EQ_F77
 
 /* Define to a macro mangling the given C identifier (in lower and upper
- case), which must not contain underscores, for linking with Fortran. */
+   case), which must not contain underscores, for linking with Fortran. */
 #undef FC_FUNC
 
 /* As FC_FUNC, but for C identifiers containing underscores. */
 #undef FC_FUNC_
 
 /* Define to alternate name for `main' routine that is called from a `main' in
- the Fortran libraries. */
+   the Fortran libraries. */
 #undef FC_MAIN
+
+/* Define if emmintrin.h */
+#undef HAVE_EMMINTRIN
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
 
 /* defined if Scotch is installed */
 #undef HAVE_SCOTCH
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define if xmmintrin.h */
+#undef HAVE_XMMINTRIN
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
@@ -46,6 +72,9 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
- `char[]'. */
+   `char[]'. */
 #undef YYTEXT_POINTER
