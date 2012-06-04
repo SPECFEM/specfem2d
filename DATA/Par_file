@@ -60,6 +60,14 @@ enreg_surf_same_vertical        = .true.         # receivers inside the medium o
 NSTEP_BETWEEN_OUTPUT_INFO       = 100            # every how many time steps we display information about the simulation (costly, do not use a very small value)
 ####
 NSTEP_BETWEEN_OUTPUT_IMAGES     = 100            # every how many time steps we draw JPEG or PostScript pictures of the simulation (costly, do not use a very small value)
+#### for JPEG color images ####
+output_color_image              = .true.         # output JPEG color image of the results every NSTEP_BETWEEN_OUTPUT_IMAGES time steps
+imagetype_JPEG                  = 2              # display 1=displ_Ux 2=displ_Uz 3=displ_norm 4=veloc_Vx 5=veloc_Vz 6=veloc_norm 7=accel_Ax 8=accel_Az 9=accel_norm 10=pressure
+factor_subsample_image          = 1              # factor to spatially subsample color JPEG images output by the code (useful for very large models)
+POWER_DISPLAY_COLOR             = 0.30d0         # non linear display to enhance small amplitudes in JPEG color images
+DRAW_SOURCES_AND_RECEIVERS      = .true.         # display sources as orange crosses and receivers are green squares in JPEG images or not
+DRAW_WATER_IN_BLUE              = .true.         # display acoustic layers as constant blue in JPEG images, because they likely correspond to water in the case of ocean acoustics or in the case of offshore oil industry experiments (if off, display them as greyscale, as for elastic or poroelastic elements, for instance for acoustic-only oil industry models of solid media)
+USE_SNAPSHOT_NUMBER_IN_FILENAME = .false.        # use snapshot number in the file name of JPEG color snapshots instead of the time step
 #### for PostScript snapshots ####
 output_postscript_snapshot      = .true.         # output Postscript snapshot of the results every NSTEP_BETWEEN_OUTPUT_IMAGES time steps
 imagetype_postscript            = 1              # display 1=displ vector 2=veloc vector 3=accel vector 4=pressure
@@ -72,14 +80,6 @@ pointsdisp                      = 6              # points for interpolation of P
 subsamp_postscript              = 1              # subsampling of background velocity model in PostScript snapshots
 sizemax_arrows                  = 1.d0           # maximum size of arrows on PostScript plots in centimeters
 US_LETTER                       = .false.        # US letter or European A4 paper for PostScript plots
-#### for JPEG color images ####
-output_color_image              = .true.         # output JPEG color image of the results every NSTEP_BETWEEN_OUTPUT_IMAGES time steps
-imagetype_JPEG                  = 2              # display 1=displ_Ux 2=displ_Uz 3=displ_norm 4=veloc_Vx 5=veloc_Vz 6=veloc_norm 7=accel_Ax 8=accel_Az 9=accel_norm 10=pressure
-factor_subsample_image          = 1              # factor to spatially subsample color JPEG images output by the code (useful for very large models)
-POWER_DISPLAY_COLOR             = 0.30d0         # non linear display to enhance small amplitudes in JPEG color images
-DRAW_SOURCES_AND_RECEIVERS      = .true.         # display sources as orange crosses and receivers are green squares in JPEG images or not
-DRAW_WATER_IN_BLUE              = .true.         # display acoustic layers as constant blue in JPEG images, because they likely correspond to water in the case of ocean acoustics or in the case of offshore oil industry experiments (if off, display them as greyscale, as for elastic or poroelastic elements, for instance for acoustic-only oil industry models of solid media)
-USE_SNAPSHOT_NUMBER_IN_FILENAME = .false.        # use snapshot number in the file name of JPEG color snapshots instead of the time step
 ####
 NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS = 100            # every how many time steps we dump results of the simulation as ASCII text files (costly, do not use a very small value)
 output_TEXT_wavefield_dumps     = .false.        # output wave field to text file every NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS time steps (creates very big files)
