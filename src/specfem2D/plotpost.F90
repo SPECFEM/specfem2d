@@ -47,7 +47,7 @@
           poroelastcoef,knods,kmato,ibool, &
           numabs,codeabs,anyabs,nelem_acoustic_surface, acoustic_edges, &
           simulation_title,nglob,npgeo,vpmin,vpmax,nrec,NSOURCES, &
-          colors,numbers,subsamp_postscript,imagetype,interpol,meshvect,modelvect, &
+          colors,numbers,subsamp_postscript,imagetype_postscript,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
           nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
           any_acoustic,any_poroelastic,plot_lowerleft_corner_only, &
@@ -149,7 +149,7 @@
   integer k,j,ispec,material,is,ir,imat,icol,l,line_length
   integer index_char,ii,ipoin,in,nnum,inum,ideb,ifin,iedge
 
-  integer colors,numbers,subsamp_postscript,imagetype
+  integer colors,numbers,subsamp_postscript,imagetype_postscript
   logical interpol,meshvect,modelvect,boundvect,assign_external_model
   double precision cutsnaps,sizemax_arrows
 
@@ -1600,11 +1600,11 @@ coorg_recv_ps_vector_field
   write(24,*) '24.35 CM 18.9 CM MV'
   write(24,*) usoffset,' CM 2 div neg 0 MR'
   write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  if(imagetype == 1) then
+  if(imagetype_postscript == 1) then
     write(24,*) '(Displacement vector field) show'
-  else if(imagetype == 2) then
+  else if(imagetype_postscript == 2) then
     write(24,*) '(Velocity vector field) show'
-  else if(imagetype == 3) then
+  else if(imagetype_postscript == 3) then
     write(24,*) '(Acceleration vector field) show'
   else
     call exit_MPI('Bad field code in PostScript display')

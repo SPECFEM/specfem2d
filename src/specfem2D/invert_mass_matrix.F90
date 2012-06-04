@@ -186,7 +186,7 @@
   endif
 #endif
           rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
- 
+
         else
 
           ! for acoustic medium

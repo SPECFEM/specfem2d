@@ -46,7 +46,7 @@
 
   subroutine write_seismograms(sisux,sisuz,siscurl,station_name,network_name, &
       NSTEP,nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
-      NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current,p_sv, &
+      NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,p_sv, &
       st_zval,x_source,z_source,SU_FORMAT)
 
   implicit none
@@ -57,7 +57,7 @@
 #endif
 
   integer :: nrec,NSTEP,seismotype
-  integer :: NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current
+  integer :: NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current
   double precision :: t0,deltat
 
 ! output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
@@ -68,7 +68,7 @@
   integer, intent(in) :: nrecloc,myrank
   integer, dimension(nrec),intent(in) :: which_proc_receiver
 
-  double precision, dimension(NTSTEP_BETWEEN_OUTPUT_SEISMO,nrecloc), intent(in) :: sisux,sisuz,siscurl
+  double precision, dimension(NSTEP_BETWEEN_OUTPUT_SEISMOS,nrecloc), intent(in) :: sisux,sisuz,siscurl
 
   double precision :: st_xval(nrec)
 
@@ -129,7 +129,7 @@
      number_of_components = NDIM
   endif
 
-  allocate(buffer_binary(NTSTEP_BETWEEN_OUTPUT_SEISMO,number_of_components))
+  allocate(buffer_binary(NSTEP_BETWEEN_OUTPUT_SEISMOS,number_of_components))
 
 
   if ( myrank == 0 .and. seismo_offset == 0 ) then
@@ -214,16 +214,16 @@
 
 #ifdef USE_MPI
         else
-           call MPI_RECV(buffer_binary(1,1),NTSTEP_BETWEEN_OUTPUT_SEISMO,MPI_DOUBLE_PRECISION,&
+           call MPI_RECV(buffer_binary(1,1),NSTEP_BETWEEN_OUTPUT_SEISMOS,MPI_DOUBLE_PRECISION,&
                 which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
            if ( number_of_components == 2 ) then
-              call MPI_RECV(buffer_binary(1,2),NTSTEP_BETWEEN_OUTPUT_SEISMO,MPI_DOUBLE_PRECISION,&
+              call MPI_RECV(buffer_binary(1,2),NSTEP_BETWEEN_OUTPUT_SEISMOS,MPI_DOUBLE_PRECISION,&
                    which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
            end if
            if ( number_of_components == 3 ) then
-              call MPI_RECV(buffer_binary(1,2),NTSTEP_BETWEEN_OUTPUT_SEISMO,MPI_DOUBLE_PRECISION,&
+              call MPI_RECV(buffer_binary(1,2),NSTEP_BETWEEN_OUTPUT_SEISMOS,MPI_DOUBLE_PRECISION,&
                    which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
-              call MPI_RECV(buffer_binary(1,3),NTSTEP_BETWEEN_OUTPUT_SEISMO,MPI_DOUBLE_PRECISION,&
+              call MPI_RECV(buffer_binary(1,3),NSTEP_BETWEEN_OUTPUT_SEISMOS,MPI_DOUBLE_PRECISION,&
                    which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
            end if
 #endif
@@ -350,12 +350,12 @@
      else
         if ( which_proc_receiver(irec) == myrank ) then
            irecloc = irecloc + 1
-           call MPI_SEND(sisux(1,irecloc),NTSTEP_BETWEEN_OUTPUT_SEISMO,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ierror)
+           call MPI_SEND(sisux(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ierror)
            if ( number_of_components >= 2 ) then
-              call MPI_SEND(sisuz(1,irecloc),NTSTEP_BETWEEN_OUTPUT_SEISMO,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ierror)
+              call MPI_SEND(sisuz(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ierror)
            end if
            if ( number_of_components == 3 ) then
-              call MPI_SEND(siscurl(1,irecloc),NTSTEP_BETWEEN_OUTPUT_SEISMO,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ierror)
+              call MPI_SEND(siscurl(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ierror)
            end if
         end if
 #endif

@@ -355,8 +355,9 @@
 
 ! display acoustic layers as constant blue, because they likely correspond to water in the case of ocean acoustics
 ! or in the case of offshore oil industry experiments.
-! (if off, display them as greyscale, as for elastic or poroelastic elements)
-  logical :: DRAW_WATER_CONSTANT_BLUE_IN_JPG
+! (if off, display them as greyscale, as for elastic or poroelastic elements,
+!  for instance for acoustic-only oil industry models of solid media)
+  logical :: DRAW_WATER_IN_BLUE
 
 ! US letter paper or European A4
   logical :: US_LETTER
@@ -406,8 +407,8 @@
   logical :: anyabs
   double precision :: dxd,dyd,dzd,dcurld,valux,valuy,valuz,valcurl,hlagrange,rhol,xi,gamma,x,z
 
-!! DK DK Dec 2011: add a crack manually
-  logical, parameter :: ADD_A_CRACK = .false.
+!! DK DK Dec 2011: add a small crack (discontinuity) in the medium manually
+  logical, parameter :: ADD_A_SMALL_CRACK_IN_THE_MEDIUM = .false.
 !! must be set equal to the number of spectral elements on one vertical side of the crack
   integer :: NB_POINTS_TO_ADD_TO_NPGEO = 3
   integer :: check_nb_points_to_add_to_npgeo,current_last_point,npgeo_ori,original_value,ignod
@@ -519,15 +520,16 @@
 
   double precision :: vpImin,vpImax,vpIImin,vpIImax
 
-  integer :: colors,numbers,subsamp_postscript,imagetype, &
-    NTSTEP_BETWEEN_OUTPUT_INFO,NTSTEP_BETWEEN_OUTPUT_SEISMO,seismotype
+  integer :: colors,numbers,subsamp_postscript,imagetype_postscript, &
+    NSTEP_BETWEEN_OUTPUT_INFO,seismotype,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP_BETWEEN_OUTPUT_IMAGES, &
+    NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS,subsamp_seismos,imagetype_JPEG,imagetype_TEXT_wavefield_dumps
   integer :: numat,ngnod,nspec,pointsdisp, &
     nelemabs,nelem_acoustic_surface,ispecabs,UPPER_LIMIT_DISPLAY
 
   logical interpol,meshvect,modelvect,boundvect,assign_external_model,initialfield, &
-    output_grid,gnuplot,ATTENUATION_VISCOELASTIC_SOLID,output_postscript_snapshot,output_color_image, &
+    output_grid_ASCII,output_grid_gnuplot,ATTENUATION_VISCOELASTIC_SOLID,output_postscript_snapshot,output_color_image, &
     plot_lowerleft_corner_only,add_Bielak_conditions,output_energy,READ_EXTERNAL_SEP_FILE, &
-    output_wavefield_snapshot
+    output_TEXT_wavefield_dumps
 
   double precision :: cutsnaps,sizemax_arrows,anglerec,xirec,gammarec
 
@@ -573,7 +575,7 @@
   double precision :: theta_e,theta_s
   double precision :: Q0,freq0
   double precision :: alphaval,betaval,gammaval,thetainv
-  logical :: ATTENUATION_PORO_FLUID_PART
+  logical :: ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms,save_binary_seismograms,DRAW_SOURCES_AND_RECEIVERS
   double precision, dimension(NGLLX,NGLLZ) :: viscox_loc,viscoz_loc
   double precision :: Sn,Snp1,etal_f
   double precision, dimension(3):: bl_unrelaxed_elastic
@@ -963,24 +965,26 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   ipass = 1
   call read_databases_init(myrank,ipass, &
                   simulation_title,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo,nproc_read_from_database, &
-                  gnuplot,interpol,NTSTEP_BETWEEN_OUTPUT_INFO, &
+                  output_grid_gnuplot,interpol,NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS, &
+                  NSTEP_BETWEEN_OUTPUT_IMAGES,NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS,subsamp_seismos, &
+                  imagetype_JPEG,imagetype_TEXT_wavefield_dumps, &
                   output_postscript_snapshot,output_color_image,colors,numbers, &
                   meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows, &
                   anglerec,initialfield,add_Bielak_conditions, &
-                  seismotype,imagetype,assign_external_model,READ_EXTERNAL_SEP_FILE, &
-                  output_grid,output_energy,output_wavefield_snapshot,ATTENUATION_VISCOELASTIC_SOLID, &
-                  ATTENUATION_PORO_FLUID_PART,Q0,freq0,p_sv, &
-                  NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCES, &
-                  factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_CONSTANT_BLUE_IN_JPG,US_LETTER, &
+                  seismotype,imagetype_postscript,assign_external_model,READ_EXTERNAL_SEP_FILE, &
+                  output_grid_ASCII,output_energy,output_TEXT_wavefield_dumps,ATTENUATION_VISCOELASTIC_SOLID, &
+                  ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms,save_binary_seismograms,DRAW_SOURCES_AND_RECEIVERS, &
+                  Q0,freq0,p_sv,NSTEP,deltat,NSOURCES, &
+                  factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                   POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, time_stepping_scheme, &
                   ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL)
   if(nproc_read_from_database < 1) stop 'should have nproc_read_from_database >= 1'
   if(SIMULATION_TYPE == 2 .and.(time_stepping_scheme == 2 .or. time_stepping_scheme == 3)) &
                                   stop 'RK and LDDRK time scheme not supported for adjoint inversion'
   if(nproc /= nproc_read_from_database) stop 'must always have nproc == nproc_read_from_database'
-!! DK DK Dec 2011: add a crack manually
+!! DK DK Dec 2011: add a small crack (discontinuity) in the medium manually
   npgeo_ori = npgeo
-  if(ADD_A_CRACK) npgeo = npgeo + NB_POINTS_TO_ADD_TO_NPGEO
+  if(ADD_A_SMALL_CRACK_IN_THE_MEDIUM) npgeo = npgeo + NB_POINTS_TO_ADD_TO_NPGEO
 
 #ifndef USE_MPI
   if(PERFORM_CUTHILL_MCKEE) then
@@ -997,15 +1001,17 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     if(ipass > 1) &
        call read_databases_init(myrank,ipass, &
                       simulation_title,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo,nproc_read_from_database, &
-                      gnuplot,interpol,NTSTEP_BETWEEN_OUTPUT_INFO, &
+                      output_grid_gnuplot,interpol,NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS, &
+                      NSTEP_BETWEEN_OUTPUT_IMAGES,NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS,subsamp_seismos, &
+                      imagetype_JPEG,imagetype_TEXT_wavefield_dumps, &
                       output_postscript_snapshot,output_color_image,colors,numbers, &
                       meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows, &
                       anglerec,initialfield,add_Bielak_conditions, &
-                      seismotype,imagetype,assign_external_model,READ_EXTERNAL_SEP_FILE, &
-                      output_grid,output_energy,output_wavefield_snapshot,ATTENUATION_VISCOELASTIC_SOLID, &
-                      ATTENUATION_PORO_FLUID_PART,Q0,freq0,p_sv, &
-                      NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCES, &
-                      factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_CONSTANT_BLUE_IN_JPG,US_LETTER, &
+                      seismotype,imagetype_postscript,assign_external_model,READ_EXTERNAL_SEP_FILE, &
+                      output_grid_ASCII,output_energy,output_TEXT_wavefield_dumps,ATTENUATION_VISCOELASTIC_SOLID, &
+                      ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms,save_binary_seismograms,DRAW_SOURCES_AND_RECEIVERS, &
+                      Q0,freq0,p_sv,NSTEP,deltat,NSOURCES, &
+                      factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                       POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, time_stepping_scheme, &
                       ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL)
 
@@ -1141,8 +1147,8 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   call read_databases_mato(ipass,nspec,ngnod,kmato,knods, &
                                 perm,antecedent_list)
 
-!! DK DK Dec 2011: handle a crack added manually
-  if(ADD_A_CRACK) then
+!! DK DK Dec 2011: add a small crack (discontinuity) in the medium manually
+  if(ADD_A_SMALL_CRACK_IN_THE_MEDIUM) then
 
 #ifdef USE_MPI
   stop 'currently only serial runs are handled when adding a crack manually'
@@ -1223,7 +1229,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     stop 'did not find the right total number of points, should have current_last_point == npgeo_new'
   endif
 
-  endif ! of if(ADD_A_CRACK) then
+  endif ! of if(ADD_A_SMALL_CRACK_IN_THE_MEDIUM) then
 
 !-------------------------------------------------------------------------------
 !----  determine if each spectral element is elastic, poroelastic, or acoustic
@@ -1962,11 +1968,11 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 !
 !--- save the grid of points in a file
 !
-  if(output_grid .and. myrank == 0 .and. ipass == 1) then
+  if(output_grid_ASCII .and. myrank == 0 .and. ipass == 1) then
      write(IOUT,*)
-     write(IOUT,*) 'Saving the grid in a text file...'
+     write(IOUT,*) 'Saving the grid in an ASCII text file...'
      write(IOUT,*)
-     open(unit=55,file='OUTPUT_FILES/grid_points_and_model.txt',status='unknown')
+     open(unit=55,file='OUTPUT_FILES/ASCII_dump_of_grid_points.txt',status='unknown')
      write(55,*) nglob
      do n = 1,nglob
         write(55,*) (coord(i,n), i=1,NDIM)
@@ -1977,7 +1983,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 !
 !-----   plot the GLL mesh in a Gnuplot file
 !
-  if(gnuplot .and. myrank == 0 .and. ipass == 1)  &
+  if(output_grid_gnuplot .and. myrank == 0 .and. ipass == 1)  &
     call plotgll(knods,ibool,coorg,coord,nglob,npgeo,ngnod,nspec)
 
   if(myrank == 0 .and. ipass == 1)  &
@@ -2346,9 +2352,9 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
 ! allocate seismogram arrays
   if(ipass == 1) then
-    allocate(sisux(NTSTEP_BETWEEN_OUTPUT_SEISMO,nrecloc))
-    allocate(sisuz(NTSTEP_BETWEEN_OUTPUT_SEISMO,nrecloc))
-    allocate(siscurl(NTSTEP_BETWEEN_OUTPUT_SEISMO,nrecloc))
+    allocate(sisux(NSTEP_BETWEEN_OUTPUT_SEISMOS,nrecloc))
+    allocate(sisuz(NSTEP_BETWEEN_OUTPUT_SEISMOS,nrecloc))
+    allocate(siscurl(NSTEP_BETWEEN_OUTPUT_SEISMOS,nrecloc))
   endif
 
 ! check if acoustic receiver is exactly on the free surface because pressure is zero there
@@ -3965,7 +3971,7 @@ if(coupled_elastic_poro) then
   if(output_energy) stop 'energy calculation currently serial only, should add an MPI_REDUCE in parallel'
 #endif
 
-!----  create a gnuplot script to display the energy curve in log scale
+!----  create a Gnuplot script to display the energy curve in log scale
   if(output_energy .and. myrank == 0) then
     close(IOUT_ENERGY)
     open(unit=IOUT_ENERGY,file='plot_energy.gnu',status='unknown')
@@ -4095,7 +4101,7 @@ if(coupled_elastic_poro) then
                             NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc, &
                             num_pixel_loc,nspec,elastic,poroelastic,ibool,kmato, &
                             numat,density,poroelastcoef,porosity,tortuosity, &
-                            nproc,myrank,assign_external_model,vpext,DRAW_WATER_CONSTANT_BLUE_IN_JPG)
+                            nproc,myrank,assign_external_model,vpext,DRAW_WATER_IN_BLUE)
   endif
 
 ! dummy allocation of plane wave arrays if they are unused (but still need to exist because
@@ -7057,7 +7063,7 @@ if(coupled_elastic_poro) then
                         ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS,p_sv)
 
 !----  display time step and max of norm of displacement
-    if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
+    if(mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
       call check_stability(myrank,time,it,NSTEP,NOISE_TOMOGRAPHY, &
                         nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                         any_elastic_glob,any_elastic,displ_elastic, &
@@ -7542,7 +7548,7 @@ if(coupled_elastic_poro) then
 !
 !----  display results at given time steps
 !
-    if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
+    if(mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
 
 !
 ! kernels output files
@@ -7657,7 +7663,7 @@ if(coupled_elastic_poro) then
 
         if (myrank == 0) write(IOUT,*) 'Writing PostScript file'
 
-        if(imagetype == 1 .and. p_sv) then
+        if(imagetype_postscript == 1 .and. p_sv) then
 
           if (myrank == 0) write(IOUT,*) 'drawing displacement vector as small arrows...'
 
@@ -7673,7 +7679,7 @@ if(coupled_elastic_poro) then
                       poroelastcoef,knods,kmato,ibool, &
                       numabs,codeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
                       simulation_title,nglob,npgeo,vpImin,vpImax,nrec,NSOURCES, &
-                      colors,numbers,subsamp_postscript,imagetype,interpol,meshvect,modelvect, &
+                      colors,numbers,subsamp_postscript,imagetype_postscript,interpol,meshvect,modelvect, &
                       boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
                       nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
                       any_acoustic,any_poroelastic,plot_lowerleft_corner_only, &
@@ -7701,7 +7707,7 @@ if(coupled_elastic_poro) then
                       d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
                       coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER)
 
-        else if(imagetype == 2 .and. p_sv) then
+        else if(imagetype_postscript == 2 .and. p_sv) then
 
           if (myrank == 0) write(IOUT,*) 'drawing velocity vector as small arrows...'
 
@@ -7717,7 +7723,7 @@ if(coupled_elastic_poro) then
                       poroelastcoef,knods,kmato,ibool, &
                       numabs,codeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
                       simulation_title,nglob,npgeo,vpImin,vpImax,nrec,NSOURCES, &
-                      colors,numbers,subsamp_postscript,imagetype,interpol,meshvect,modelvect, &
+                      colors,numbers,subsamp_postscript,imagetype_postscript,interpol,meshvect,modelvect, &
                       boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
                       nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
                       any_acoustic,any_poroelastic,plot_lowerleft_corner_only, &
@@ -7745,7 +7751,7 @@ if(coupled_elastic_poro) then
                       d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
                       coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER)
 
-        else if(imagetype == 3 .and. p_sv) then
+        else if(imagetype_postscript == 3 .and. p_sv) then
 
           if (myrank == 0) write(IOUT,*) 'drawing acceleration vector as small arrows...'
 
@@ -7761,7 +7767,7 @@ if(coupled_elastic_poro) then
                       poroelastcoef,knods,kmato,ibool, &
                       numabs,codeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
                       simulation_title,nglob,npgeo,vpImin,vpImax,nrec,NSOURCES, &
-                      colors,numbers,subsamp_postscript,imagetype,interpol,meshvect,modelvect, &
+                      colors,numbers,subsamp_postscript,imagetype_postscript,interpol,meshvect,modelvect, &
                       boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
                       nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
                       any_acoustic,any_poroelastic,plot_lowerleft_corner_only, &
@@ -7789,7 +7795,7 @@ if(coupled_elastic_poro) then
                       d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
                       coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER)
 
-        else if(imagetype == 4 .or. .not. p_sv) then
+        else if(imagetype_postscript == 4 .or. .not. p_sv) then
 
           if (myrank == 0) &
             write(IOUT,*) 'cannot draw scalar pressure field or y-component field as a vector plot, skipping...'
@@ -7798,7 +7804,7 @@ if(coupled_elastic_poro) then
           call exit_MPI('wrong type for snapshots')
         endif
 
-        if (myrank == 0 .and. imagetype /= 4 .and. p_sv) write(IOUT,*) 'PostScript file written'
+        if (myrank == 0 .and. imagetype_postscript /= 4 .and. p_sv) write(IOUT,*) 'PostScript file written'
 
       endif
 
@@ -7810,7 +7816,7 @@ if(coupled_elastic_poro) then
         if (myrank == 0) &
           write(IOUT,*) 'Creating color image of size ',NX_IMAGE_color,' x ',NZ_IMAGE_color,' for time step ',it
 
-        if(imagetype == 1) then
+        if(imagetype_JPEG == 1) then
 
           if (myrank == 0) &
             write(IOUT,*) 'drawing image of z (if P-SV) or y (if SH) component of displacement vector...'
@@ -7821,7 +7827,7 @@ if(coupled_elastic_poro) then
                           nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                           numat,kmato,density,rhoext,assign_external_model)
 
-        else if(imagetype == 2) then
+        else if(imagetype_JPEG == 2) then
 
           if (myrank == 0) &
             write(IOUT,*) 'drawing image of z (if P-SV) or y (if SH) component of velocity vector...'
@@ -7832,7 +7838,7 @@ if(coupled_elastic_poro) then
                           nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                           numat,kmato,density,rhoext,assign_external_model)
 
-        else if(imagetype == 3) then
+        else if(imagetype_JPEG == 3) then
 
           if (myrank == 0) &
             write(IOUT,*) 'drawing image of z (if P-SV) or y (if SH) component of acceleration vector...'
@@ -7843,7 +7849,7 @@ if(coupled_elastic_poro) then
                           nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                           numat,kmato,density,rhoext,assign_external_model)
 
-        else if(imagetype == 4 .and. p_sv) then
+        else if(imagetype_JPEG == 4 .and. p_sv) then
 
           if (myrank == 0) write(IOUT,*) 'drawing image of pressure field...'
 
@@ -7855,7 +7861,7 @@ if(coupled_elastic_poro) then
                      c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,e1,e11, &
                      ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
-        else if(imagetype == 4 .and. .not. p_sv) then
+        else if(imagetype_JPEG == 4 .and. .not. p_sv) then
           call exit_MPI('cannot draw pressure field for SH (membrane) waves')
         else
           call exit_MPI('wrong type for snapshots')
@@ -7943,7 +7949,7 @@ if(coupled_elastic_poro) then
 ! note 1: for SH case, this requires output_color_image = .true. in order to have vector_field_display
 ! note 2: for MPI, it would be more convenient to output a single file rather than one for each myrank
 
-      if (output_wavefield_snapshot) then
+      if (output_TEXT_wavefield_dumps) then
         write(wavefield_file,"('OUTPUT_FILES/wavefield',i7.7,'_',i2.2,'_',i3.3,'.txt')") it,SIMULATION_TYPE,myrank
         open(unit=27,file=wavefield_file,status='unknown')
         do ispec = 1,nspec
@@ -7965,7 +7971,7 @@ if(coupled_elastic_poro) then
       if(.not. GENERATE_PARAVER_TRACES) &
         call write_seismograms(sisux,sisuz,siscurl,station_name,network_name,NSTEP, &
                             nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
-                            NTSTEP_BETWEEN_OUTPUT_SEISMO,seismo_offset,seismo_current,p_sv,&
+                            NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,p_sv,&
                             st_zval,x_source(1),z_source(1),SU_FORMAT)
 
       seismo_offset = seismo_offset + seismo_current

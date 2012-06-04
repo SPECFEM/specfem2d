@@ -103,11 +103,23 @@
     write(15,*) 'npgeo nproc'
     write(15,*) npgeo,nproc
 
-    write(15,*) 'gnuplot interpol'
-    write(15,*) gnuplot,interpol
+    write(15,*) 'output_grid_gnuplot interpol'
+    write(15,*) output_grid_gnuplot,interpol
 
-    write(15,*) 'NTSTEP_BETWEEN_OUTPUT_INFO'
-    write(15,*) NTSTEP_BETWEEN_OUTPUT_INFO
+    write(15,*) 'NSTEP_BETWEEN_OUTPUT_INFO'
+    write(15,*) NSTEP_BETWEEN_OUTPUT_INFO
+
+    write(15,*) 'NSTEP_BETWEEN_OUTPUT_SEISMOS'
+    write(15,*) NSTEP_BETWEEN_OUTPUT_SEISMOS
+
+    write(15,*) 'NSTEP_BETWEEN_OUTPUT_IMAGES'
+    write(15,*) NSTEP_BETWEEN_OUTPUT_IMAGES
+
+    write(15,*) 'NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS'
+    write(15,*) NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS
+
+    write(15,*) 'subsamp_seismos imagetype_JPEG imagetype_TEXT_wavefield_dumps'
+    write(15,*) subsamp_seismos,imagetype_JPEG,imagetype_TEXT_wavefield_dumps
 
     write(15,*) 'output_postscript_snapshot output_color_image colors numbers'
     write(15,*) output_postscript_snapshot,output_color_image,' 1 0'
@@ -121,17 +133,20 @@
     write(15,*) 'initialfield add_Bielak_conditions'
     write(15,*) initialfield,add_Bielak_conditions
 
-    write(15,*) 'seismotype imagetype'
-    write(15,*) seismotype,imagetype
+    write(15,*) 'seismotype imagetype_postscript'
+    write(15,*) seismotype,imagetype_postscript
 
     write(15,*) 'assign_external_model READ_EXTERNAL_SEP_FILE'
     write(15,*) assign_external_model,READ_EXTERNAL_SEP_FILE
 
-    write(15,*) 'output_grid output_energy output_wavefield_snapshot'
-    write(15,*) output_grid,output_energy,output_wavefield_snapshot
+    write(15,*) 'output_grid_ASCII output_energy output_TEXT_wavefield_dumps'
+    write(15,*) output_grid_ASCII,output_energy,output_TEXT_wavefield_dumps
 
     write(15,*) 'ATTENUATION_VISCOELASTIC_SOLID ATTENUATION_PORO_FLUID_PART'
     write(15,*) ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART
+
+    write(15,*) 'save_ASCII_seismograms save_binary_seismograms DRAW_SOURCES_AND_RECEIVERS'
+    write(15,*) save_ASCII_seismograms,save_binary_seismograms,DRAW_SOURCES_AND_RECEIVERS
 
     write(15,*) 'Q0 freq0'
     write(15,*) Q0,freq0
@@ -145,8 +160,8 @@
     write(15,*) 'USE_SNAPSHOT_NUMBER_IN_FILENAME'
     write(15,*) USE_SNAPSHOT_NUMBER_IN_FILENAME
 
-    write(15,*) 'DRAW_WATER_CONSTANT_BLUE_IN_JPG'
-    write(15,*) DRAW_WATER_CONSTANT_BLUE_IN_JPG
+    write(15,*) 'DRAW_WATER_IN_BLUE'
+    write(15,*) DRAW_WATER_IN_BLUE
 
     write(15,*) 'US_LETTER'
     write(15,*) US_LETTER

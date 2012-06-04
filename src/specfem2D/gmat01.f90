@@ -304,7 +304,7 @@
              write(IOUT,*) 'see e.g. R. Lakes, "Science" vol. 235, p. 1038-1040 (1987),'
              write(IOUT,*) 'but are extremely rare.'
              write(IOUT,*) 'Hope you know what you are doing...'
-             write(IOUT,*) 
+             write(IOUT,*)
            endif
            write(iout,700) density(2),kappa_f,eta_f
            write(iout,800) lambda_fr,mu_fr,kappa_fr,porosity_array(n),tortuosity_array(n),&
