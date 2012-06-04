@@ -68,7 +68,8 @@ module parameter_file
   integer :: nx,ngnod
 
   logical :: initialfield,add_Bielak_conditions,assign_external_model, &
-            READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART
+            READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART, &
+            save_ASCII_seismograms,save_binary_seismograms,DRAW_SOURCES_AND_RECEIVERS
 
   double precision :: Q0,freq0
 
@@ -97,14 +98,15 @@ module parameter_file
   double precision, dimension(:), pointer :: xdeb,zdeb,xfin,zfin
   logical, dimension(:), pointer :: enreg_surf_same_vertical
 
-  integer :: NTSTEP_BETWEEN_OUTPUT_INFO
+  integer :: NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP_BETWEEN_OUTPUT_IMAGES,NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS, &
+             subsamp_seismos,imagetype_JPEG,imagetype_TEXT_wavefield_dumps
   logical :: output_postscript_snapshot,output_color_image
-  integer :: imagetype
+  integer :: imagetype_postscript
   double precision :: cutsnaps
   logical :: meshvect,modelvect,boundvect,interpol
   integer :: pointsdisp,subsamp_postscript
   double precision :: sizemax_arrows
-  logical :: gnuplot,output_grid,output_energy,output_wavefield_snapshot
+  logical :: output_grid_gnuplot,output_grid_ASCII,output_energy,output_TEXT_wavefield_dumps
   logical :: plot_lowerleft_corner_only
 
   ! to store density and velocity model
@@ -124,7 +126,7 @@ module parameter_file
 ! display acoustic layers as constant blue, because they likely correspond to water in the case of ocean acoustics
 ! or in the case of offshore oil industry experiments.
 ! (if off, display them as greyscale, as for elastic or poroelastic elements)
-  logical :: DRAW_WATER_CONSTANT_BLUE_IN_JPG
+  logical :: DRAW_WATER_IN_BLUE
 
 ! US letter paper or European A4
   logical :: US_LETTER
@@ -218,7 +220,7 @@ contains
 
   ! read viscous attenuation parameters (poroelastic media)
   call read_value_logical_p(ATTENUATION_PORO_FLUID_PART, 'solver.ATTENUATION_PORO_FLUID_PART')
-  if(err_occurred() /= 0) stop 'error reading parameter 12 in Par_file'
+  if(err_occurred() /= 0) stop 'error reading parameter 12a in Par_file'
 
   call read_value_double_precision_p(Q0, 'solver.Q0')
   if(err_occurred() /= 0) stop 'error reading parameter 13 in Par_file'
@@ -241,7 +243,7 @@ contains
   if(err_occurred() /= 0) stop 'error reading parameter 17b in Par_file'
 
   call read_value_integer_p(time_stepping_scheme, 'solver.time_stepping_scheme')
-  if(err_occurred() /= 0) stop 'error reading parameter 17c in Par_file'        
+  if(err_occurred() /= 0) stop 'error reading parameter 17c in Par_file'
 
   ! read source infos
   call read_value_integer_p(NSOURCES, 'solver.NSOURCES')
@@ -260,6 +262,18 @@ contains
   ! read receiver line parameters
   call read_value_integer_p(seismotype, 'solver.seismotype')
   if(err_occurred() /= 0) stop 'error reading parameter 22 in Par_file'
+
+  call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_SEISMOS, 'solver.NSTEP_BETWEEN_OUTPUT_SEISMOS')
+  if(err_occurred() /= 0) stop 'error reading parameter 33b in Par_file'
+
+  call read_value_logical_p(save_ASCII_seismograms, 'solver.save_ASCII_seismograms')
+  if(err_occurred() /= 0) stop 'error reading parameter 12b in Par_file'
+
+  call read_value_logical_p(save_binary_seismograms, 'solver.save_binary_seismograms')
+  if(err_occurred() /= 0) stop 'error reading parameter 12c in Par_file'
+
+  call read_value_integer_p(subsamp_seismos, 'solver.subsamp_seismos')
+  if(err_occurred() /= 0) stop 'error reading parameter 33e in Par_file'
 
   call read_value_logical_p(generate_STATIONS, 'solver.generate_STATIONS')
   if(err_occurred() /= 0) stop 'error reading parameter 23 in Par_file'
@@ -313,16 +327,16 @@ contains
   enddo
 
   ! read display parameters
-  call read_value_integer_p(NTSTEP_BETWEEN_OUTPUT_INFO, 'solver.NTSTEP_BETWEEN_OUTPUT_INFO')
-  if(err_occurred() /= 0) stop 'error reading parameter 33 in Par_file'
+  call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_INFO, 'solver.NSTEP_BETWEEN_OUTPUT_INFO')
+  if(err_occurred() /= 0) stop 'error reading parameter 33a in Par_file'
+
+  call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_IMAGES, 'solver.NSTEP_BETWEEN_OUTPUT_IMAGES')
+  if(err_occurred() /= 0) stop 'error reading parameter 33c in Par_file'
 
   call read_value_logical_p(output_postscript_snapshot, 'solver.output_postscript_snapshot')
   if(err_occurred() /= 0) stop 'error reading parameter 34 in Par_file'
 
-  call read_value_logical_p(output_color_image, 'solver.output_color_image')
-  if(err_occurred() /= 0) stop 'error reading parameter 35 in Par_file'
-
-  call read_value_integer_p(imagetype, 'solver.imagetype')
+  call read_value_integer_p(imagetype_postscript, 'solver.imagetype_postscript')
   if(err_occurred() /= 0) stop 'error reading parameter 36 in Par_file'
 
   call read_value_double_precision_p(cutsnaps, 'solver.cutsnaps')
@@ -346,35 +360,50 @@ contains
   call read_value_integer_p(subsamp_postscript, 'solver.subsamp_postscript')
   if(err_occurred() /= 0) stop 'error reading parameter 43a in Par_file'
 
-  call read_value_integer_p(factor_subsample_image, 'solver.factor_subsample_image')
-  if(err_occurred() /= 0) stop 'error reading parameter 43b in Par_file'
-
-  call read_value_double_precision_p(POWER_DISPLAY_COLOR, 'solver.POWER_DISPLAY_COLOR')
-  if(err_occurred() /= 0) stop 'error reading parameter 43c in Par_file'
-
-  call read_value_logical_p(DRAW_WATER_CONSTANT_BLUE_IN_JPG, 'solver.DRAW_WATER_CONSTANT_BLUE_IN_JPG')
-  if(err_occurred() /= 0) stop 'error reading parameter 43d in Par_file'
-
   call read_value_double_precision_p(sizemax_arrows, 'solver.sizemax_arrows')
   if(err_occurred() /= 0) stop 'error reading parameter 44a in Par_file'
 
   call read_value_logical_p(US_LETTER, 'solver.US_LETTER')
   if(err_occurred() /= 0) stop 'error reading parameter 44b in Par_file'
 
+  call read_value_logical_p(output_color_image, 'solver.output_color_image')
+  if(err_occurred() /= 0) stop 'error reading parameter 35 in Par_file'
+
+  call read_value_integer_p(imagetype_JPEG, 'solver.imagetype_JPEG')
+  if(err_occurred() /= 0) stop 'error reading parameter 33f in Par_file'
+
+  call read_value_integer_p(factor_subsample_image, 'solver.factor_subsample_image')
+  if(err_occurred() /= 0) stop 'error reading parameter 43b in Par_file'
+
+  call read_value_double_precision_p(POWER_DISPLAY_COLOR, 'solver.POWER_DISPLAY_COLOR')
+  if(err_occurred() /= 0) stop 'error reading parameter 43c in Par_file'
+
+  call read_value_logical_p(DRAW_SOURCES_AND_RECEIVERS, 'solver.DRAW_SOURCES_AND_RECEIVERS')
+  if(err_occurred() /= 0) stop 'error reading parameter 12d in Par_file'
+
+  call read_value_logical_p(DRAW_WATER_IN_BLUE, 'solver.DRAW_WATER_IN_BLUE')
+  if(err_occurred() /= 0) stop 'error reading parameter 43d in Par_file'
+
   call read_value_logical_p(USE_SNAPSHOT_NUMBER_IN_FILENAME, 'solver.USE_SNAPSHOT_NUMBER_IN_FILENAME')
   if(err_occurred() /= 0) stop 'error reading parameter 44c in Par_file'
 
-  call read_value_logical_p(gnuplot, 'solver.gnuplot')
+  call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS, 'solver.NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS')
+  if(err_occurred() /= 0) stop 'error reading parameter 33d in Par_file'
+
+  call read_value_logical_p(output_TEXT_wavefield_dumps, 'solver.output_TEXT_wavefield_dumps')
+  if(err_occurred() /= 0) stop 'error reading parameter 48 in Par_file'
+
+  call read_value_integer_p(imagetype_TEXT_wavefield_dumps, 'solver.imagetype_TEXT_wavefield_dumps')
+  if(err_occurred() /= 0) stop 'error reading parameter 33g in Par_file'
+
+  call read_value_logical_p(output_grid_gnuplot, 'solver.output_grid_gnuplot')
   if(err_occurred() /= 0) stop 'error reading parameter 45 in Par_file'
 
-  call read_value_logical_p(output_grid, 'solver.output_grid')
+  call read_value_logical_p(output_grid_ASCII, 'solver.output_grid_ASCII')
   if(err_occurred() /= 0) stop 'error reading parameter 46 in Par_file'
 
   call read_value_logical_p(output_energy, 'solver.output_energy')
   if(err_occurred() /= 0) stop 'error reading parameter 47 in Par_file'
-
-  call read_value_logical_p(output_wavefield_snapshot, 'solver.output_wavefield_snapshot')
-  if(err_occurred() /= 0) stop 'error reading parameter 48 in Par_file'
 
   ! read the different material materials
   call read_value_integer_p(nb_materials, 'mesher.nbmodels')

@@ -43,18 +43,18 @@
 !
 !========================================================================
 
-
   subroutine read_databases_init(myrank,ipass, &
                   simulation_title,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo,nproc, &
-                  gnuplot,interpol,NTSTEP_BETWEEN_OUTPUT_INFO, &
+                  output_grid_gnuplot,interpol,NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP_BETWEEN_OUTPUT_IMAGES, &
+                  NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS,subsamp_seismos,imagetype_JPEG,imagetype_TEXT_wavefield_dumps, &
                   output_postscript_snapshot,output_color_image,colors,numbers, &
                   meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows, &
                   anglerec,initialfield,add_Bielak_conditions, &
-                  seismotype,imagetype,assign_external_model,READ_EXTERNAL_SEP_FILE, &
-                  output_grid,output_energy,output_wavefield_snapshot,ATTENUATION_VISCOELASTIC_SOLID, &
-                  ATTENUATION_PORO_FLUID_PART,Q0,freq0,p_sv, &
-                  NSTEP,deltat,NTSTEP_BETWEEN_OUTPUT_SEISMO,NSOURCES, &
-                  factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_CONSTANT_BLUE_IN_JPG,US_LETTER, &
+                  seismotype,imagetype_postscript,assign_external_model,READ_EXTERNAL_SEP_FILE, &
+                  output_grid_ASCII,output_energy,output_TEXT_wavefield_dumps,ATTENUATION_VISCOELASTIC_SOLID, &
+                  ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms,save_binary_seismograms, &
+                  DRAW_SOURCES_AND_RECEIVERS,Q0,freq0,p_sv,NSTEP,deltat,NSOURCES, &
+                  factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                   POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0,time_stepping_scheme,&
                   ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL)
 
@@ -66,20 +66,22 @@
   integer :: myrank,ipass
   character(len=60) simulation_title
   integer :: SIMULATION_TYPE,NOISE_TOMOGRAPHY,npgeo,nproc
-  integer :: colors,numbers,subsamp_postscript,seismotype,imagetype
-  logical :: SAVE_FORWARD,gnuplot,interpol,output_postscript_snapshot, &
+  integer :: colors,numbers,subsamp_postscript,seismotype,imagetype_postscript
+  logical :: SAVE_FORWARD,output_grid_gnuplot,interpol,output_postscript_snapshot, &
     output_color_image
   logical :: meshvect,modelvect,boundvect,initialfield,add_Bielak_conditions, &
     assign_external_model,READ_EXTERNAL_SEP_FILE, &
-    output_grid,output_energy,output_wavefield_snapshot,p_sv
-  logical :: ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART
+    output_grid_ASCII,output_energy,output_TEXT_wavefield_dumps,p_sv
+  logical :: ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART, &
+             save_ASCII_seismograms,save_binary_seismograms,DRAW_SOURCES_AND_RECEIVERS
 
   double precision :: cutsnaps,sizemax_arrows,anglerec
   double precision :: Q0,freq0
   double precision :: deltat
 
   integer :: NSTEP,NSOURCES
-  integer :: NTSTEP_BETWEEN_OUTPUT_INFO,NTSTEP_BETWEEN_OUTPUT_SEISMO
+  integer :: NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP_BETWEEN_OUTPUT_IMAGES,NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS, &
+             subsamp_seismos,imagetype_JPEG,imagetype_TEXT_wavefield_dumps
 
 ! factor to subsample color images output by the code (useful for very large models)
   integer :: factor_subsample_image
@@ -90,7 +92,7 @@
 ! display acoustic layers as constant blue, because they likely correspond to water in the case of ocean acoustics
 ! or in the case of offshore oil industry experiments.
 ! (if off, display them as greyscale, as for elastic or poroelastic elements)
-  logical :: DRAW_WATER_CONSTANT_BLUE_IN_JPG
+  logical :: DRAW_WATER_IN_BLUE
 
 ! US letter paper or European A4
   logical :: US_LETTER
@@ -165,10 +167,22 @@
   read(IIN,*) npgeo,nproc
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) gnuplot,interpol
+  read(IIN,*) output_grid_gnuplot,interpol
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) NTSTEP_BETWEEN_OUTPUT_INFO
+  read(IIN,*) NSTEP_BETWEEN_OUTPUT_INFO
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) NSTEP_BETWEEN_OUTPUT_SEISMOS
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) NSTEP_BETWEEN_OUTPUT_IMAGES
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) subsamp_seismos,imagetype_JPEG,imagetype_TEXT_wavefield_dumps
 
   read(IIN,"(a80)") datlin
   read(IIN,*) output_postscript_snapshot,output_color_image,colors,numbers
@@ -186,9 +200,9 @@
     stop 'need to have an initial field to add Bielak plane wave conditions'
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) seismotype,imagetype
+  read(IIN,*) seismotype,imagetype_postscript
   if(seismotype < 1 .or. seismotype > 6) call exit_MPI('Wrong type for seismogram output')
-  if(imagetype < 1 .or. imagetype > 4) call exit_MPI('Wrong type for snapshots')
+  if(imagetype_postscript < 1 .or. imagetype_postscript > 4) call exit_MPI('Wrong type for PostScript snapshots')
 
   if(SAVE_FORWARD .and. (seismotype /= 1 .and. seismotype /= 6)) then
     print*, '***** WARNING *****'
@@ -202,10 +216,13 @@
   read(IIN,*) assign_external_model,READ_EXTERNAL_SEP_FILE
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) output_grid,output_energy,output_wavefield_snapshot
+  read(IIN,*) output_grid_ASCII,output_energy,output_TEXT_wavefield_dumps
 
   read(IIN,"(a80)") datlin
   read(IIN,*) ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) save_ASCII_seismograms,save_binary_seismograms,DRAW_SOURCES_AND_RECEIVERS
 
   read(IIN,"(a80)") datlin
   read(IIN,*) Q0,freq0
@@ -220,7 +237,7 @@
   read(IIN,*) USE_SNAPSHOT_NUMBER_IN_FILENAME
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) DRAW_WATER_CONSTANT_BLUE_IN_JPG
+  read(IIN,*) DRAW_WATER_IN_BLUE
 
   read(IIN,"(a80)") datlin
   read(IIN,*) US_LETTER
@@ -255,12 +272,12 @@
   !---- check parameters read
   if (myrank == 0 .and. ipass == 1) then
     write(IOUT,200) npgeo,NDIM
-    write(IOUT,600) NTSTEP_BETWEEN_OUTPUT_INFO,colors,numbers
+    write(IOUT,600) NSTEP_BETWEEN_OUTPUT_INFO,colors,numbers
     write(IOUT,700) seismotype,anglerec
     write(IOUT,750) initialfield,add_Bielak_conditions,assign_external_model,&
                     READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID, &
-                    output_grid,output_energy
-    write(IOUT,800) imagetype,100.d0*cutsnaps,subsamp_postscript
+                    output_grid_ASCII,output_energy
+    write(IOUT,800) imagetype_postscript,100.d0*cutsnaps,subsamp_postscript
   endif
 
   !---- read time step
@@ -275,7 +292,8 @@
     stop
   endif
 
-  NTSTEP_BETWEEN_OUTPUT_SEISMO = min(NSTEP,NTSTEP_BETWEEN_OUTPUT_INFO)
+! output seismograms at least once at the end of the simulation
+  NSTEP_BETWEEN_OUTPUT_SEISMOS = min(NSTEP,NSTEP_BETWEEN_OUTPUT_SEISMOS)
 
   !----  read source information
   read(IIN,"(a80)") datlin
@@ -289,7 +307,7 @@
   'Number of space dimensions. . . . . . . . . . (NDIM) =',i8)
 
 600 format(//1x,'C o n t r o l',/1x,13('='),//5x, &
-  'Display frequency . . . (NTSTEP_BETWEEN_OUTPUT_INFO) = ',i6/ 5x, &
+  'Display frequency . . . .(NSTEP_BETWEEN_OUTPUT_INFO) = ',i6/ 5x, &
   'Color display . . . . . . . . . . . . . . . (colors) = ',i6/ 5x, &
   '        ==  0     black and white display              ',  / 5x, &
   '        ==  1     color display                        ',  /5x, &
@@ -307,11 +325,11 @@
   'Assign external model . . . .(assign_external_model) = ',l6/5x, &
   'Read external SEP file . . .(READ_EXTERNAL_SEP_FILE) = ',l6/5x, &
   'Attenuation on/off .(ATTENUATION_VISCOELASTIC_SOLID) = ',l6/5x, &
-  'Save grid in external file or not. . . (output_grid) = ',l6/5x, &
+  'Save grid in ASCII file or not . (output_grid_ASCII) = ',l6/5x, &
   'Save a file with total energy or not.(output_energy) = ',l6)
 
 800 format(//1x,'C o n t r o l',/1x,13('='),//5x, &
-  'Vector display type . . . . . . . . . . . . . . (imagetype) = ',i6/5x, &
+  'Vector display type . . . . . . . . .(imagetype_postscript) = ',i6/5x, &
   'Percentage of cut for vector plots. . . . . . . .(cutsnaps) = ',f6.2/5x, &
   'Subsampling of velocity model display. (subsamp_postscript) = ',i6)
 

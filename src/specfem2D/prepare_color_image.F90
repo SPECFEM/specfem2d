@@ -244,7 +244,7 @@
                             NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc, &
                             num_pixel_loc,nspec,elastic,poroelastic,ibool,kmato, &
                             numat,density,poroelastcoef,porosity,tortuosity, &
-                            nproc,myrank,assign_external_model,vpext,DRAW_WATER_CONSTANT_BLUE_IN_JPG)
+                            nproc,myrank,assign_external_model,vpext,DRAW_WATER_IN_BLUE)
 
 ! stores P-velocity model in image_color_vp_display
 
@@ -278,7 +278,7 @@
 ! display acoustic layers as constant blue, because they likely correspond to water in the case of ocean acoustics
 ! or in the case of offshore oil industry experiments.
 ! (if off, display them as greyscale, as for elastic or poroelastic elements)
-  logical :: DRAW_WATER_CONSTANT_BLUE_IN_JPG
+  logical :: DRAW_WATER_IN_BLUE
 
   ! local parameters
   double precision, dimension(:), allocatable :: vp_display
@@ -371,11 +371,11 @@
 
 ! now display acoustic layers as constant blue, because they likely correspond to water in the case of ocean acoustics
 ! or in the case of offshore oil industry experiments.
-! (simply turn DRAW_WATER_CONSTANT_BLUE_IN_JPG off in setup/constants.h if you want to suppress this (for instance when running
+! (simply turn DRAW_WATER_IN_BLUE off in DATA/Par_file if you want to suppress this (for instance when running
 !  a purely acoustic simulation with different acoustic media for the oil industry, one then wants to see the different
 !  acoustic wave speeds displayed as a grey scale).
 ! For now, in this routine, use -1 as a flag to label such acoustic points
-    if(DRAW_WATER_CONSTANT_BLUE_IN_JPG .and. .not. elastic(ispec) .and. .not. poroelastic(ispec)) then
+    if(DRAW_WATER_IN_BLUE .and. .not. elastic(ispec) .and. .not. poroelastic(ispec)) then
       do j = 1,NGLLZ
         do i = 1,NGLLX
           vp_display(ibool(i,j,ispec)) = -1
