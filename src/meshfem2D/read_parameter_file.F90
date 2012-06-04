@@ -333,6 +333,27 @@ contains
   call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_IMAGES, 'solver.NSTEP_BETWEEN_OUTPUT_IMAGES')
   if(err_occurred() /= 0) stop 'error reading parameter 33c in Par_file'
 
+  call read_value_logical_p(output_color_image, 'solver.output_color_image')
+  if(err_occurred() /= 0) stop 'error reading parameter 35 in Par_file'
+
+  call read_value_integer_p(imagetype_JPEG, 'solver.imagetype_JPEG')
+  if(err_occurred() /= 0) stop 'error reading parameter 33f in Par_file'
+
+  call read_value_integer_p(factor_subsample_image, 'solver.factor_subsample_image')
+  if(err_occurred() /= 0) stop 'error reading parameter 43b in Par_file'
+
+  call read_value_double_precision_p(POWER_DISPLAY_COLOR, 'solver.POWER_DISPLAY_COLOR')
+  if(err_occurred() /= 0) stop 'error reading parameter 43c in Par_file'
+
+  call read_value_logical_p(DRAW_SOURCES_AND_RECEIVERS, 'solver.DRAW_SOURCES_AND_RECEIVERS')
+  if(err_occurred() /= 0) stop 'error reading parameter 12d in Par_file'
+
+  call read_value_logical_p(DRAW_WATER_IN_BLUE, 'solver.DRAW_WATER_IN_BLUE')
+  if(err_occurred() /= 0) stop 'error reading parameter 43d in Par_file'
+
+  call read_value_logical_p(USE_SNAPSHOT_NUMBER_IN_FILENAME, 'solver.USE_SNAPSHOT_NUMBER_IN_FILENAME')
+  if(err_occurred() /= 0) stop 'error reading parameter 44c in Par_file'
+
   call read_value_logical_p(output_postscript_snapshot, 'solver.output_postscript_snapshot')
   if(err_occurred() /= 0) stop 'error reading parameter 34 in Par_file'
 
@@ -365,27 +386,6 @@ contains
 
   call read_value_logical_p(US_LETTER, 'solver.US_LETTER')
   if(err_occurred() /= 0) stop 'error reading parameter 44b in Par_file'
-
-  call read_value_logical_p(output_color_image, 'solver.output_color_image')
-  if(err_occurred() /= 0) stop 'error reading parameter 35 in Par_file'
-
-  call read_value_integer_p(imagetype_JPEG, 'solver.imagetype_JPEG')
-  if(err_occurred() /= 0) stop 'error reading parameter 33f in Par_file'
-
-  call read_value_integer_p(factor_subsample_image, 'solver.factor_subsample_image')
-  if(err_occurred() /= 0) stop 'error reading parameter 43b in Par_file'
-
-  call read_value_double_precision_p(POWER_DISPLAY_COLOR, 'solver.POWER_DISPLAY_COLOR')
-  if(err_occurred() /= 0) stop 'error reading parameter 43c in Par_file'
-
-  call read_value_logical_p(DRAW_SOURCES_AND_RECEIVERS, 'solver.DRAW_SOURCES_AND_RECEIVERS')
-  if(err_occurred() /= 0) stop 'error reading parameter 12d in Par_file'
-
-  call read_value_logical_p(DRAW_WATER_IN_BLUE, 'solver.DRAW_WATER_IN_BLUE')
-  if(err_occurred() /= 0) stop 'error reading parameter 43d in Par_file'
-
-  call read_value_logical_p(USE_SNAPSHOT_NUMBER_IN_FILENAME, 'solver.USE_SNAPSHOT_NUMBER_IN_FILENAME')
-  if(err_occurred() /= 0) stop 'error reading parameter 44c in Par_file'
 
   call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS, 'solver.NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS')
   if(err_occurred() /= 0) stop 'error reading parameter 33d in Par_file'
