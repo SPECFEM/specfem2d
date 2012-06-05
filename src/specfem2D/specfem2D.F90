@@ -7671,7 +7671,10 @@ if(coupled_elastic_poro) then
 !
       if(output_postscript_snapshot) then
 
-        if (myrank == 0) write(IOUT,*) 'Writing PostScript file'
+        if (myrank == 0) then 
+          write(IOUT,*)
+          write(IOUT,*) 'Writing PostScript file'
+        endif
 
         if(imagetype_postscript == 1 .and. p_sv) then
 
@@ -7805,13 +7808,11 @@ if(coupled_elastic_poro) then
                       d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
                       coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER)
 
-        else if(imagetype_postscript == 4 .or. .not. p_sv) then
-
-          if (myrank == 0) &
-            write(IOUT,*) 'cannot draw scalar pressure field or y-component field as a vector plot, skipping...'
+        else if(.not. p_sv) then
+          call exit_MPI('cannot draw scalar field as a PostScript vector plot')
 
         else
-          call exit_MPI('wrong type for snapshots')
+          call exit_MPI('wrong type for PostScript snapshots')
         endif
 
         if (myrank == 0 .and. imagetype_postscript /= 4 .and. p_sv) write(IOUT,*) 'PostScript file written'
@@ -7823,46 +7824,41 @@ if(coupled_elastic_poro) then
 !
       if(output_color_image) then
 
-        if (myrank == 0) &
+        if (myrank == 0) then
+          write(IOUT,*)
           write(IOUT,*) 'Creating color image of size ',NX_IMAGE_color,' x ',NZ_IMAGE_color,' for time step ',it
+        endif
 
-        if(imagetype_JPEG == 1) then
+        if(imagetype_JPEG >= 1 .and. imagetype_JPEG <= 3) then
 
-          if (myrank == 0) &
-            write(IOUT,*) 'drawing image of z (if P-SV) or y (if SH) component of displacement vector...'
-
+          if (myrank == 0) write(IOUT,*) 'drawing scalar image of part of the displacement vector...'
           call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic,&
                           elastic,poroelastic,vector_field_display, &
                           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
                           nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                           numat,kmato,density,rhoext,assign_external_model)
 
-        else if(imagetype_JPEG == 2) then
+        else if(imagetype_JPEG >= 4 .and. imagetype_JPEG <= 6) then
 
-          if (myrank == 0) &
-            write(IOUT,*) 'drawing image of z (if P-SV) or y (if SH) component of velocity vector...'
-
+          if (myrank == 0) write(IOUT,*) 'drawing scalar image of part of the velocity vector...'
           call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,velocs_poroelastic,&
                           elastic,poroelastic,vector_field_display, &
                           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
                           nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                           numat,kmato,density,rhoext,assign_external_model)
 
-        else if(imagetype_JPEG == 3) then
+        else if(imagetype_JPEG >= 7 .and. imagetype_JPEG <= 9) then
 
-          if (myrank == 0) &
-            write(IOUT,*) 'drawing image of z (if P-SV) or y (if SH) component of acceleration vector...'
-
+          if (myrank == 0) write(IOUT,*) 'drawing scalar image of part of the acceleration vector...'
           call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,accels_poroelastic,&
                           elastic,poroelastic,vector_field_display, &
                           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
                           nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                           numat,kmato,density,rhoext,assign_external_model)
 
-        else if(imagetype_JPEG == 4 .and. p_sv) then
+        else if(imagetype_JPEG == 10 .and. p_sv) then
 
           if (myrank == 0) write(IOUT,*) 'drawing image of pressure field...'
-
           call compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,&
                      displs_poroelastic,displw_poroelastic,elastic,poroelastic,vector_field_display, &
                      xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
@@ -7871,10 +7867,11 @@ if(coupled_elastic_poro) then
                      c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,e1,e11, &
                      ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
-        else if(imagetype_JPEG == 4 .and. .not. p_sv) then
+        else if(imagetype_JPEG == 10 .and. .not. p_sv) then
           call exit_MPI('cannot draw pressure field for SH (membrane) waves')
+
         else
-          call exit_MPI('wrong type for snapshots')
+          call exit_MPI('wrong type for JPEG snapshots')
         endif
 
         image_color_data(:,:) = 0.d0
@@ -7890,11 +7887,28 @@ if(coupled_elastic_poro) then
           if(i > NX_IMAGE_color) i = NX_IMAGE_color
           if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
 
-          if(p_sv) then
-            !P-SH waves, plot vertical component of vector, or else pressure
-            if(iglob_image_color(i,j) /= -1) image_color_data(i,j) = vector_field_display(3,iglob_image_color(i,j))
-          else
-            !SH (membrane) waves, plot y-component
+          if(p_sv) then ! P-SH waves, plot a component of vector, its norm, or else pressure
+            if(iglob_image_color(i,j) /= -1) then 
+              if(imagetype_JPEG == 1 .or. imagetype_JPEG == 4 .or. imagetype_JPEG == 7) then
+                image_color_data(i,j) = vector_field_display(1,iglob_image_color(i,j))  ! draw the X component of the vector
+
+              else if(imagetype_JPEG == 2 .or. imagetype_JPEG == 5 .or. imagetype_JPEG == 8) then
+                image_color_data(i,j) = vector_field_display(3,iglob_image_color(i,j))  ! draw the Z component of the vector
+
+              else if(imagetype_JPEG == 3 .or. imagetype_JPEG == 6 .or. imagetype_JPEG == 9) then
+                image_color_data(i,j) = sqrt(vector_field_display(1,iglob_image_color(i,j))**2 + &
+                                             vector_field_display(3,iglob_image_color(i,j))**2)  ! draw the norm of the vector
+
+              else if(imagetype_JPEG == 10) then
+! by convention we have stored pressure in the third component of the array
+                image_color_data(i,j) = vector_field_display(3,iglob_image_color(i,j))
+
+              else
+                call exit_MPI('wrong type for JPEG snapshots')
+              endif
+            endif
+
+          else ! SH (membrane) waves, plot y-component
             if(iglob_image_color(i,j) /= -1) image_color_data(i,j) = vector_field_display(2,iglob_image_color(i,j))
           endif
         enddo
@@ -7933,9 +7947,27 @@ if(coupled_elastic_poro) then
               if(i > NX_IMAGE_color) i = NX_IMAGE_color
               if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
 
-              if(p_sv) then !P-SH waves, plot vertical component of vector, or else pressure
-                if(iglob_image_color(i,j) /= -1) data_pixel_send(k) = vector_field_display(3,iglob_image_color(i,j))
-              else !SH (membrane) waves, plot y-component
+              if(p_sv) then ! P-SH waves, plot a component of vector, its norm, or else pressure
+
+                if(imagetype_JPEG == 1 .or. imagetype_JPEG == 4 .or. imagetype_JPEG == 7) then
+                  data_pixel_send(k) = vector_field_display(1,iglob_image_color(i,j))  ! draw the X component of the vector
+
+                else if(imagetype_JPEG == 2 .or. imagetype_JPEG == 5 .or. imagetype_JPEG == 8) then
+                  data_pixel_send(k) = vector_field_display(3,iglob_image_color(i,j))  ! draw the Z component of the vector
+
+                else if(imagetype_JPEG == 3 .or. imagetype_JPEG == 6 .or. imagetype_JPEG == 9) then
+                  data_pixel_send(k) = sqrt(vector_field_display(1,iglob_image_color(i,j))**2 + &
+                                            vector_field_display(3,iglob_image_color(i,j))**2)  ! draw the norm of the vector
+
+                else if(imagetype_JPEG == 10) then
+! by convention we have stored pressure in the third component of the array
+                  data_pixel_send(k) = vector_field_display(3,iglob_image_color(i,j))
+
+                else
+                  call exit_MPI('wrong type for JPEG snapshots')
+                endif
+
+              else ! SH (membrane) waves, plot y-component
                 if(iglob_image_color(i,j) /= -1) data_pixel_send(k) = vector_field_display(2,iglob_image_color(i,j))
               endif
             enddo

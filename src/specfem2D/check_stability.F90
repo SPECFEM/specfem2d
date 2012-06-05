@@ -287,7 +287,5 @@
       write(IOUT,*)
   endif
 
-  if (myrank == 0) write(IOUT,*)
-
   end subroutine check_stability
 
