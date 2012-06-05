@@ -575,7 +575,8 @@
   double precision :: theta_e,theta_s
   double precision :: Q0,freq0
   double precision :: alphaval,betaval,gammaval,thetainv
-  logical :: ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms,save_binary_seismograms,DRAW_SOURCES_AND_RECEIVERS
+  logical :: ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms,save_binary_seismograms_single,save_binary_seismograms_double, &
+             DRAW_SOURCES_AND_RECEIVERS
   double precision, dimension(NGLLX,NGLLZ) :: viscox_loc,viscoz_loc
   double precision :: Sn,Snp1,etal_f
   double precision, dimension(3):: bl_unrelaxed_elastic
@@ -974,7 +975,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                   seismotype,imagetype_postscript,assign_external_model,READ_EXTERNAL_SEP_FILE, &
                   output_grid_ASCII,output_energy,output_wavefield_dumps,use_binary_for_wavefield_dumps, &
                   ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms, &
-                  save_binary_seismograms,DRAW_SOURCES_AND_RECEIVERS, &
+                  save_binary_seismograms_single,save_binary_seismograms_double,DRAW_SOURCES_AND_RECEIVERS, &
                   Q0,freq0,p_sv,NSTEP,deltat,NSOURCES, &
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                   POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, time_stepping_scheme, &
@@ -1011,7 +1012,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                       seismotype,imagetype_postscript,assign_external_model,READ_EXTERNAL_SEP_FILE, &
                       output_grid_ASCII,output_energy,output_wavefield_dumps,use_binary_for_wavefield_dumps, &
                       ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms, &
-                      save_binary_seismograms,DRAW_SOURCES_AND_RECEIVERS, &
+                      save_binary_seismograms_single,save_binary_seismograms_double,DRAW_SOURCES_AND_RECEIVERS, &
                       Q0,freq0,p_sv,NSTEP,deltat,NSOURCES, &
                       factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                       POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, time_stepping_scheme, &
@@ -7986,8 +7987,9 @@ if(coupled_elastic_poro) then
       if(.not. GENERATE_PARAVER_TRACES) &
         call write_seismograms(sisux,sisuz,siscurl,station_name,network_name,NSTEP, &
                             nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
-                            NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,p_sv,&
-                            st_zval,x_source(1),z_source(1),SU_FORMAT)
+                            NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,p_sv, &
+                            st_zval,x_source(1),z_source(1),SU_FORMAT,save_ASCII_seismograms, &
+                            save_binary_seismograms_single,save_binary_seismograms_double)
 
       seismo_offset = seismo_offset + seismo_current
       seismo_current = 0

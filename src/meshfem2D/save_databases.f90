@@ -148,8 +148,14 @@
     write(15,*) 'ATTENUATION_VISCOELASTIC_SOLID ATTENUATION_PORO_FLUID_PART'
     write(15,*) ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART
 
-    write(15,*) 'save_ASCII_seismograms save_binary_seismograms DRAW_SOURCES_AND_RECEIVERS'
-    write(15,*) save_ASCII_seismograms,save_binary_seismograms,DRAW_SOURCES_AND_RECEIVERS
+    write(15,*) 'save_ASCII_seismograms'
+    write(15,*) save_ASCII_seismograms
+
+    write(15,*) 'save_binary_seismograms_single save_binary_seismograms_double'
+    write(15,*) save_binary_seismograms_single,save_binary_seismograms_double
+
+    write(15,*) 'DRAW_SOURCES_AND_RECEIVERS'
+    write(15,*) DRAW_SOURCES_AND_RECEIVERS
 
     write(15,*) 'Q0 freq0'
     write(15,*) Q0,freq0

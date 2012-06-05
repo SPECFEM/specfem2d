@@ -69,7 +69,7 @@ module parameter_file
 
   logical :: initialfield,add_Bielak_conditions,assign_external_model, &
             READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART, &
-            save_ASCII_seismograms,save_binary_seismograms,DRAW_SOURCES_AND_RECEIVERS
+            save_ASCII_seismograms,save_binary_seismograms_single,save_binary_seismograms_double,DRAW_SOURCES_AND_RECEIVERS
 
   double precision :: Q0,freq0
 
@@ -269,8 +269,14 @@ contains
   call read_value_logical_p(save_ASCII_seismograms, 'solver.save_ASCII_seismograms')
   if(err_occurred() /= 0) stop 'error reading parameter 12b in Par_file'
 
-  call read_value_logical_p(save_binary_seismograms, 'solver.save_binary_seismograms')
+  call read_value_logical_p(save_binary_seismograms_single, 'solver.save_binary_seismograms_single')
   if(err_occurred() /= 0) stop 'error reading parameter 12c in Par_file'
+
+  call read_value_logical_p(save_binary_seismograms_double, 'solver.save_binary_seismograms_double')
+  if(err_occurred() /= 0) stop 'error reading parameter 12cc in Par_file'
+
+  call read_value_logical_p(SU_FORMAT, 'solver.SU_FORMAT')
+  if(err_occurred() /= 0) stop 'error reading parameter 26b in Par_file'
 
   call read_value_integer_p(subsamp_seismos, 'solver.subsamp_seismos')
   if(err_occurred() /= 0) stop 'error reading parameter 33e in Par_file'
@@ -286,9 +292,6 @@ contains
 
   call read_value_logical_p(rec_normal_to_surface, 'solver.rec_normal_to_surface')
   if(err_occurred() /= 0) stop 'error reading parameter 26a in Par_file'
-
-  call read_value_logical_p(SU_FORMAT, 'solver.SU_FORMAT')
-  if(err_occurred() /= 0) stop 'error reading parameter 26b in Par_file'
 
   if(nreceiversets < 1) stop 'number of receiver lines must be greater than 1'
 

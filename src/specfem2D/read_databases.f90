@@ -52,7 +52,8 @@
                   anglerec,initialfield,add_Bielak_conditions, &
                   seismotype,imagetype_postscript,assign_external_model,READ_EXTERNAL_SEP_FILE, &
                   output_grid_ASCII,output_energy,output_wavefield_dumps,use_binary_for_wavefield_dumps, &
-                  ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms,save_binary_seismograms, &
+                  ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms, &
+                  save_binary_seismograms_single,save_binary_seismograms_double, &
                   DRAW_SOURCES_AND_RECEIVERS,Q0,freq0,p_sv,NSTEP,deltat,NSOURCES, &
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                   POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0,time_stepping_scheme,&
@@ -73,7 +74,7 @@
     assign_external_model,READ_EXTERNAL_SEP_FILE, &
     output_grid_ASCII,output_energy,output_wavefield_dumps,p_sv,use_binary_for_wavefield_dumps
   logical :: ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART, &
-             save_ASCII_seismograms,save_binary_seismograms,DRAW_SOURCES_AND_RECEIVERS
+             save_ASCII_seismograms,save_binary_seismograms_single,save_binary_seismograms_double,DRAW_SOURCES_AND_RECEIVERS
 
   double precision :: cutsnaps,sizemax_arrows,anglerec
   double precision :: Q0,freq0
@@ -225,7 +226,13 @@
   read(IIN,*) ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) save_ASCII_seismograms,save_binary_seismograms,DRAW_SOURCES_AND_RECEIVERS
+  read(IIN,*) save_ASCII_seismograms
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) save_binary_seismograms_single,save_binary_seismograms_double
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) DRAW_SOURCES_AND_RECEIVERS
 
   read(IIN,"(a80)") datlin
   read(IIN,*) Q0,freq0

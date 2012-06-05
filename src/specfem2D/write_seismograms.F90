@@ -47,7 +47,8 @@
   subroutine write_seismograms(sisux,sisuz,siscurl,station_name,network_name, &
       NSTEP,nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
       NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,p_sv, &
-      st_zval,x_source,z_source,SU_FORMAT)
+      st_zval,x_source,z_source,SU_FORMAT,save_ASCII_seismograms, &
+      save_binary_seismograms_single,save_binary_seismograms_double)
 
   implicit none
 
@@ -63,7 +64,7 @@
 ! output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
   logical :: SU_FORMAT
 
-  logical :: p_sv
+  logical :: p_sv,save_ASCII_seismograms,save_binary_seismograms,save_binary_seismograms_single,save_binary_seismograms_double
 
   integer, intent(in) :: nrecloc,myrank
   integer, dimension(nrec),intent(in) :: which_proc_receiver
@@ -102,6 +103,12 @@
 
 !----
 
+! see if we need to save any seismogram in binary format
+  save_binary_seismograms = save_binary_seismograms_single .or. save_binary_seismograms_double
+
+  if(SU_FORMAT .and. .not. save_binary_seismograms_single) &
+     stop 'error: SU_FORMAT seismograms are single precision and thus require save_binary_seismograms_single'
+
 ! write seismograms in ASCII format
 
 ! save displacement, velocity, acceleration or pressure
@@ -131,39 +138,39 @@
 
   allocate(buffer_binary(NSTEP_BETWEEN_OUTPUT_SEISMOS,number_of_components))
 
-
-  if ( myrank == 0 .and. seismo_offset == 0 ) then
+  if (save_binary_seismograms .and. myrank == 0 .and. seismo_offset == 0) then
 
 ! delete the old files
-     open(unit=11,file='OUTPUT_FILES/Ux_file_single.bin',status='unknown')
-     close(11,status='delete')
+     open(unit=12,file='OUTPUT_FILES/Ux_file_single.bin',status='unknown')
+     close(12,status='delete')
 
-     open(unit=11,file='OUTPUT_FILES/Ux_file_double.bin',status='unknown')
-     close(11,status='delete')
+     open(unit=12,file='OUTPUT_FILES/Ux_file_double.bin',status='unknown')
+     close(12,status='delete')
 
-     open(unit=11,file='OUTPUT_FILES/pressure_file_single.bin',status='unknown')
-     close(11,status='delete')
+     open(unit=12,file='OUTPUT_FILES/pressure_file_single.bin',status='unknown')
+     close(12,status='delete')
 
-     open(unit=11,file='OUTPUT_FILES/pressure_file_double.bin',status='unknown')
-     close(11,status='delete')
+     open(unit=12,file='OUTPUT_FILES/pressure_file_double.bin',status='unknown')
+     close(12,status='delete')
 
-     open(unit=11,file='OUTPUT_FILES/Uz_file_single.bin',status='unknown')
-     close(11,status='delete')
+     open(unit=12,file='OUTPUT_FILES/Uz_file_single.bin',status='unknown')
+     close(12,status='delete')
 
-     open(unit=11,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown')
-     close(11,status='delete')
+     open(unit=12,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown')
+     close(12,status='delete')
 
-     open(unit=11,file='OUTPUT_FILES/Curl_file_single.bin',status='unknown')
-     close(11,status='delete')
+     open(unit=12,file='OUTPUT_FILES/Curl_file_single.bin',status='unknown')
+     close(12,status='delete')
 
-     open(unit=11,file='OUTPUT_FILES/Curl_file_double.bin',status='unknown')
-     close(11,status='delete')
+     open(unit=12,file='OUTPUT_FILES/Curl_file_double.bin',status='unknown')
+     close(12,status='delete')
 
   endif
 
-  if ( myrank == 0 ) then
+  if (save_binary_seismograms .and. myrank == 0) then
 
 ! write the new files
+     if(save_binary_seismograms_single) then
      if(seismotype == 4 .or. seismotype == 6) then
         open(unit=12,file='OUTPUT_FILES/pressure_file_single.bin',status='unknown',access='direct',recl=4)
      elseif(.not.p_sv) then
@@ -171,7 +178,9 @@
      else
         open(unit=12,file='OUTPUT_FILES/Ux_file_single.bin',status='unknown',access='direct',recl=4)
      endif
+     endif
 
+     if(save_binary_seismograms_double) then
      if(seismotype == 4 .or. seismotype == 6) then
         open(unit=13,file='OUTPUT_FILES/pressure_file_double.bin',status='unknown',access='direct',recl=8)
      elseif(.not.p_sv) then
@@ -179,22 +188,25 @@
      else
         open(unit=13,file='OUTPUT_FILES/Ux_file_double.bin',status='unknown',access='direct',recl=8)
      endif
+     endif
 
 ! no Z component seismogram if pressure
      if(seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
+       if(save_binary_seismograms_single) &
         open(unit=14,file='OUTPUT_FILES/Uz_file_single.bin',status='unknown',access='direct',recl=4)
+       if(save_binary_seismograms_double) &
         open(unit=15,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown',access='direct',recl=8)
-
-     end if
+     endif
 
 ! curl output
      if(seismotype == 5) then
+       if(save_binary_seismograms_single) &
         open(unit=16,file='OUTPUT_FILES/Curl_file_single.bin',status='unknown',access='direct',recl=4)
+       if(save_binary_seismograms_double) &
         open(unit=17,file='OUTPUT_FILES/Curl_file_double.bin',status='unknown',access='direct',recl=8)
+     endif
 
-     end if
-
-  end if
+  endif
 
 
   irecloc = 0
@@ -210,7 +222,7 @@
            else if ( number_of_components == 3 ) then
               buffer_binary(:,2) = sisuz(:,irecloc)
               buffer_binary(:,3) = siscurl(:,irecloc)
-           end if
+           endif
 
 #ifdef USE_MPI
         else
@@ -219,17 +231,20 @@
            if ( number_of_components == 2 ) then
               call MPI_RECV(buffer_binary(1,2),NSTEP_BETWEEN_OUTPUT_SEISMOS,MPI_DOUBLE_PRECISION,&
                    which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
-           end if
+           endif
            if ( number_of_components == 3 ) then
               call MPI_RECV(buffer_binary(1,2),NSTEP_BETWEEN_OUTPUT_SEISMOS,MPI_DOUBLE_PRECISION,&
                    which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
               call MPI_RECV(buffer_binary(1,3),NSTEP_BETWEEN_OUTPUT_SEISMOS,MPI_DOUBLE_PRECISION,&
                    which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
-           end if
+           endif
 #endif
-        end if
+        endif
 
         if(.not. SU_FORMAT) then
+
+          if(save_ASCII_seismograms) then
+
           ! write trace
           do iorientation = 1,number_of_components
 
@@ -256,10 +271,10 @@
              ! check that length conforms to standard
              if(length_station_name < 1 .or. length_station_name > MAX_LENGTH_STATION_NAME) then
                call exit_MPI('wrong length of station name')
-            end if
+            endif
              if(length_network_name < 1 .or. length_network_name > MAX_LENGTH_NETWORK_NAME) then
                call exit_MPI('wrong length of network name')
-            end if
+            endif
 
              write(sisname,"('OUTPUT_FILES/',a,'.',a,'.',a3,'.sem',a1)") station_name(irec)(1:length_station_name),&
                   network_name(irec)(1:length_network_name),chn,component
@@ -288,21 +303,34 @@
              enddo
 
              close(11)
-          end do
-          ! write binary seismogram
-          do isample = 1, seismo_current
-             write(12,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,1))
-             write(13,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,1)
-          if ( seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
-             write(14,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,2))
-             write(15,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,2)
-          end if
-          if ( seismotype == 5 ) then
-             write(16,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,3))
-             write(17,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,3)
-          end if
           enddo
-        else
+
+          endif
+
+          ! write binary seismogram
+          if(save_binary_seismograms) then
+          do isample = 1, seismo_current
+            if(save_binary_seismograms_single) &
+              write(12,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,1))
+              if(save_binary_seismograms_double) &
+              write(13,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,1)
+            if ( seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
+              if(save_binary_seismograms_single) &
+                write(14,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,2))
+              if(save_binary_seismograms_double) &
+                write(15,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,2)
+            endif
+            if ( seismotype == 5 ) then
+              if(save_binary_seismograms_single) &
+                write(16,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,3))
+              if(save_binary_seismograms_double) &
+                write(17,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,3)
+            endif
+          enddo
+          endif
+
+        else ! if SU_FORMAT
+
           if (seismo_offset==0) then
              ! write SU headers (refer to Seismic Unix for details)
              write(12,rec=(irec-1)*60+(irec-1)*NSTEP+1)  irec                          ! receiver ID
@@ -334,16 +362,18 @@
                    header2(1)=NINT(deltat*1.0d6)
                    header2(2)=0  ! dummy
                    write(14,rec=(irec-1)*60+(irec-1)*NSTEP+30) header2
-                end if
+                endif
              endif
           endif
+
           ! the "60" in the following corresponds to 240 bytes header (note the reclength is 4 bytes)
           do isample = 1, seismo_current
              write(12,rec=irec*60+(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,1))
              if ( seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
                 write(14,rec=irec*60+(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,2))
-             end if
+             endif
           enddo
+
         endif
 
 #ifdef USE_MPI
@@ -353,27 +383,27 @@
            call MPI_SEND(sisux(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ierror)
            if ( number_of_components >= 2 ) then
               call MPI_SEND(sisuz(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ierror)
-           end if
+           endif
            if ( number_of_components == 3 ) then
               call MPI_SEND(siscurl(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ierror)
-           end if
-        end if
+           endif
+        endif
 #endif
 
-     end if
+     endif
 
   enddo
 
-  close(12)
-  close(13)
-  if ( seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
-     close(14)
-     close(15)
-  end if
-  if ( seismotype == 5 ) then
-     close(16)
-     close(17)
-  end if
+  if(save_binary_seismograms_single) close(12)
+  if(save_binary_seismograms_double) close(13)
+  if (seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
+    if(save_binary_seismograms_single) close(14)
+    if(save_binary_seismograms_double) close(15)
+  endif
+  if (seismotype == 5) then
+    if(save_binary_seismograms_single) close(16)
+    if(save_binary_seismograms_double) close(17)
+  endif
 
 !----
 
@@ -429,7 +459,7 @@
   write(11,*) '/bin/rm -f tempfile tempfile2'
   close(11)
 
-end if
+endif
 
 ! formats
   110 format('xwigb@xcur=',f8.2,'@n1=',i6,'@d1=',f15.8,'@f1=',f15.8,'@label1="Time@(s)"@label2="x@(m)"@n2=',i6,'@x2=')
