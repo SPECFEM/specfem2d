@@ -40,13 +40,14 @@ f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if
 seismotype                      = 1              # record 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential
 NSTEP_BETWEEN_OUTPUT_SEISMOS    = 5000000        # every how many time steps we save the seismograms (costly, do not use a very small value; if you use a very large value that is larger than the total number of time steps of the run, the seismograms will automatically be saved once at the end of the run anyway)
 save_ASCII_seismograms          = .true.         # save seismograms in ASCII format or not
-save_binary_seismograms         = .true.         # save seismograms in binary format or not (can be used jointly with ASCII above to save both)
+save_binary_seismograms_single  = .true.         # save seismograms in single precision binary format or not (can be used jointly with ASCII above to save both)
+save_binary_seismograms_double  = .false.        # save seismograms in double precision binary format or not (can be used jointly with both flags above to save all)
+SU_FORMAT                       = .false.        # output single precision binary seismograms in Seismic Unix format (adjoint traces will be read in the same format)
 subsamp_seismos                 = 1              # subsampling of the seismograms to create smaller files (but less accurately sampled in time)
 generate_STATIONS               = .true.         # creates a STATION file in ./DATA
 nreceiversets                   = 1              # number of receiver sets
 anglerec                        = 0.d0           # angle to rotate components at receivers
 rec_normal_to_surface           = .false.        # base anglerec normal to surface (external mesh and curve file needed)
-SU_FORMAT                       = .false.        # output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
 
 # first receiver set (repeat these 6 lines and adjust nreceiversets accordingly)
 nrec                            = 11             # number of receivers
