@@ -915,7 +915,7 @@
     surface_movie_x_noise, surface_movie_y_noise, surface_movie_z_noise
 
   ! For writing noise wavefields
-  logical :: output_wavefields_noise = .true.
+  logical :: output_wavefields_noise = .true. ! this is output only in the case of noise tomography
   logical :: ex, od
   integer :: noise_output_ncol
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: noise_output_array
@@ -7066,6 +7066,7 @@ if(coupled_elastic_poro) then
 
 !----  display time step and max of norm of displacement
     if(mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
+
       call check_stability(myrank,time,it,NSTEP,NOISE_TOMOGRAPHY, &
                         nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                         any_elastic_glob,any_elastic,displ_elastic, &
@@ -7073,6 +7074,12 @@ if(coupled_elastic_poro) then
                         displs_poroelastic,displw_poroelastic, &
                         any_acoustic_glob,any_acoustic,potential_acoustic, &
                         timestamp_seconds_start)
+
+#ifdef USE_MPI
+! add a barrier if we generate traces of the run for analysis with "ParaVer"
+      if(GENERATE_PARAVER_TRACES) call MPI_BARRIER(MPI_COMM_WORLD,ier)
+#endif
+
     endif
 
 !---- loop on all the receivers to compute and store the seismograms
@@ -7550,7 +7557,7 @@ if(coupled_elastic_poro) then
 !
 !----  display results at given time steps
 !
-    if(mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
+    if(mod(it,NSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5 .or. it == NSTEP) then
 
 !
 ! kernels output files
@@ -7634,7 +7641,7 @@ if(coupled_elastic_poro) then
 
       if ( NOISE_TOMOGRAPHY == 3 .and. output_wavefields_noise ) then
 
-        !load ensemble foward source
+        !load ensemble forward source
         inquire(unit=500,exist=ex,opened=od)
         if (.not. od) &
           open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/eta',access='direct', &
@@ -7945,12 +7952,14 @@ if(coupled_elastic_poro) then
         endif
 
       endif
+    endif  ! of display images at a given time step
 
 !----------------------------------------------
 ! write the full (local) wavefield to file as three components (Uy = 0 for PSV; Ux,Uz = 0 for SH)
 ! note 1: for SH case, this requires output_color_image = .true. in order to have vector_field_display
 ! note 2: for MPI, it would be more convenient to output a single file rather than one for each myrank
 
+    if(mod(it,NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS) == 0 .or. it == NSTEP) then
       if (output_wavefield_dumps) then
         write(wavefield_file,"('OUTPUT_FILES/wavefield',i7.7,'_',i2.2,'_',i3.3,'.txt')") it,SIMULATION_TYPE,myrank
         open(unit=27,file=wavefield_file,status='unknown')
@@ -7959,6 +7968,7 @@ if(coupled_elastic_poro) then
             do i = 1,NGLLX
 !!!!!!!!!! DK DK save NGLOB on the first line maybe
                iglob = ibool(i,j,ispec)
+!!!!!!!!!! DK DK save the grid separately and once only
                write(27,'(5e16.6)') coord(1,iglob), coord(2,iglob), &
                               sngl(vector_field_display(1,iglob)), &
                               sngl(vector_field_display(2,iglob)), &
@@ -7968,9 +7978,11 @@ if(coupled_elastic_poro) then
         enddo
         close(27)
       endif
+    endif  ! of display wavefield dumps at a given time step
 
 !----  save temporary or final seismograms
 ! suppress seismograms if we generate traces of the run for analysis with "ParaVer", because time consuming
+    if(mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
       if(.not. GENERATE_PARAVER_TRACES) &
         call write_seismograms(sisux,sisuz,siscurl,station_name,network_name,NSTEP, &
                             nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
@@ -7980,12 +7992,7 @@ if(coupled_elastic_poro) then
       seismo_offset = seismo_offset + seismo_current
       seismo_current = 0
 
-    endif  ! display results for specified time step
-
-#ifdef USE_MPI
-! add a barrier if we generate traces of the run for analysis with "ParaVer"
-    if(GENERATE_PARAVER_TRACES) call MPI_BARRIER(MPI_COMM_WORLD,ier)
-#endif
+    endif  ! of display images at a given time step
 
   enddo ! end of the main time loop
 
