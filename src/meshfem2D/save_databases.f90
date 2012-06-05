@@ -103,8 +103,8 @@
     write(15,*) 'npgeo nproc'
     write(15,*) npgeo,nproc
 
-    write(15,*) 'output_grid_gnuplot interpol'
-    write(15,*) output_grid_gnuplot,interpol
+    write(15,*) 'output_grid_Gnuplot interpol'
+    write(15,*) output_grid_Gnuplot,interpol
 
     write(15,*) 'NSTEP_BETWEEN_OUTPUT_INFO'
     write(15,*) NSTEP_BETWEEN_OUTPUT_INFO
@@ -115,11 +115,11 @@
     write(15,*) 'NSTEP_BETWEEN_OUTPUT_IMAGES'
     write(15,*) NSTEP_BETWEEN_OUTPUT_IMAGES
 
-    write(15,*) 'NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS'
-    write(15,*) NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS
+    write(15,*) 'NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS'
+    write(15,*) NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS
 
-    write(15,*) 'subsamp_seismos imagetype_JPEG imagetype_TEXT_wavefield_dumps'
-    write(15,*) subsamp_seismos,imagetype_JPEG,imagetype_TEXT_wavefield_dumps
+    write(15,*) 'subsamp_seismos imagetype_JPEG imagetype_wavefield_dumps'
+    write(15,*) subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps
 
     write(15,*) 'output_postscript_snapshot output_color_image colors numbers'
     write(15,*) output_postscript_snapshot,output_color_image,' 1 0'
@@ -139,8 +139,11 @@
     write(15,*) 'assign_external_model READ_EXTERNAL_SEP_FILE'
     write(15,*) assign_external_model,READ_EXTERNAL_SEP_FILE
 
-    write(15,*) 'output_grid_ASCII output_energy output_TEXT_wavefield_dumps'
-    write(15,*) output_grid_ASCII,output_energy,output_TEXT_wavefield_dumps
+    write(15,*) 'output_grid_ASCII output_energy output_wavefield_dumps'
+    write(15,*) output_grid_ASCII,output_energy,output_wavefield_dumps
+
+    write(15,*) 'use_binary_for_wavefield_dumps'
+    write(15,*) use_binary_for_wavefield_dumps
 
     write(15,*) 'ATTENUATION_VISCOELASTIC_SOLID ATTENUATION_PORO_FLUID_PART'
     write(15,*) ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART

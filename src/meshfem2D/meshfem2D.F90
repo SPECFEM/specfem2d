@@ -764,7 +764,7 @@ program meshfem2D
   ! ***
   ! *** create a Gnuplot file that displays the grid
   ! ***
-  if (output_grid_gnuplot .and. .not. read_external_mesh) call save_gnuplot_file(ngnod,nx,nz,x,z)
+  if (output_grid_Gnuplot .and. .not. read_external_mesh) call save_gnuplot_file(ngnod,nx,nz,x,z)
 
 
   !*****************************
