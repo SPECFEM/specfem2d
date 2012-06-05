@@ -295,11 +295,25 @@
   read(IIN,*) NSTEP,deltat
   if (myrank == 0 .and. ipass == 1) write(IOUT,703) NSTEP,deltat,NSTEP*deltat
 
-  if( SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. &
-    (ATTENUATION_VISCOELASTIC_SOLID .or. ATTENUATION_PORO_FLUID_PART) ) then
-    print*, '*************** WARNING ***************'
-    print*, 'Anisotropy & Attenuation & Viscous damping are not presently implemented for adjoint calculations'
-    stop
+  if(SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. &
+     (ATTENUATION_VISCOELASTIC_SOLID .or. ATTENUATION_PORO_FLUID_PART)) then
+    print *, '*************** error ***************'
+    stop 'Anisotropy & Attenuation & Viscous damping are not presently implemented for adjoint calculations'
+  endif
+
+! make sure NSTEP_BETWEEN_OUTPUT_SEISMOS is a multiple of subsamp_seismos
+  if(mod(NSTEP_BETWEEN_OUTPUT_SEISMOS,subsamp_seismos) /= 0) &
+    stop 'error: NSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of subsamp_seismos'
+
+! make sure NSTEP is a multiple of subsamp_seismos
+! if not, increase it a little bit, to the next multiple
+  if(mod(NSTEP,subsamp_seismos) /= 0) then
+    if (myrank == 0) then
+      print *,'NSTEP is not a multiple of subsamp_seismos'
+      NSTEP = (NSTEP/subsamp_seismos + 1)*subsamp_seismos
+      print *,'thus increasing it automatically to the next multiple, which is ',NSTEP
+      print *
+    endif
   endif
 
 ! output seismograms at least once at the end of the simulation

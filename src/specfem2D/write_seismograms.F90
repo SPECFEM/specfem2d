@@ -48,7 +48,7 @@
       NSTEP,nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
       NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,p_sv, &
       st_zval,x_source,z_source,SU_FORMAT,save_ASCII_seismograms, &
-      save_binary_seismograms_single,save_binary_seismograms_double)
+      save_binary_seismograms_single,save_binary_seismograms_double,subsamp_seismos)
 
   implicit none
 
@@ -57,7 +57,7 @@
   include "mpif.h"
 #endif
 
-  integer :: nrec,NSTEP,seismotype
+  integer :: nrec,NSTEP,seismotype,subsamp_seismos
   integer :: NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current
   double precision :: t0,deltat
 
@@ -69,7 +69,7 @@
   integer, intent(in) :: nrecloc,myrank
   integer, dimension(nrec),intent(in) :: which_proc_receiver
 
-  double precision, dimension(NSTEP_BETWEEN_OUTPUT_SEISMOS,nrecloc), intent(in) :: sisux,sisuz,siscurl
+  double precision, dimension(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc), intent(in) :: sisux,sisuz,siscurl
 
   double precision :: st_xval(nrec)
 
@@ -136,7 +136,7 @@
      number_of_components = NDIM
   endif
 
-  allocate(buffer_binary(NSTEP_BETWEEN_OUTPUT_SEISMOS,number_of_components))
+  allocate(buffer_binary(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,number_of_components))
 
   if (save_binary_seismograms .and. myrank == 0 .and. seismo_offset == 0) then
 
@@ -226,16 +226,16 @@
 
 #ifdef USE_MPI
         else
-           call MPI_RECV(buffer_binary(1,1),NSTEP_BETWEEN_OUTPUT_SEISMOS,MPI_DOUBLE_PRECISION,&
+           call MPI_RECV(buffer_binary(1,1),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
                 which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
            if ( number_of_components == 2 ) then
-              call MPI_RECV(buffer_binary(1,2),NSTEP_BETWEEN_OUTPUT_SEISMOS,MPI_DOUBLE_PRECISION,&
+              call MPI_RECV(buffer_binary(1,2),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
                    which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
            endif
            if ( number_of_components == 3 ) then
-              call MPI_RECV(buffer_binary(1,2),NSTEP_BETWEEN_OUTPUT_SEISMOS,MPI_DOUBLE_PRECISION,&
+              call MPI_RECV(buffer_binary(1,2),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
                    which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
-              call MPI_RECV(buffer_binary(1,3),NSTEP_BETWEEN_OUTPUT_SEISMOS,MPI_DOUBLE_PRECISION,&
+              call MPI_RECV(buffer_binary(1,3),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
                    which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
            endif
 #endif
@@ -378,14 +378,17 @@
 
 #ifdef USE_MPI
      else
-        if ( which_proc_receiver(irec) == myrank ) then
+        if (which_proc_receiver(irec) == myrank) then
            irecloc = irecloc + 1
-           call MPI_SEND(sisux(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ierror)
-           if ( number_of_components >= 2 ) then
-              call MPI_SEND(sisuz(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ierror)
+           call MPI_SEND(sisux(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,0,irec, &
+                           MPI_COMM_WORLD,ierror)
+           if (number_of_components >= 2) then
+              call MPI_SEND(sisuz(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,0,irec, &
+                           MPI_COMM_WORLD,ierror)
            endif
-           if ( number_of_components == 3 ) then
-              call MPI_SEND(siscurl(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ierror)
+           if (number_of_components == 3) then
+              call MPI_SEND(siscurl(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,0,irec, &
+                           MPI_COMM_WORLD,ierror)
            endif
         endif
 #endif

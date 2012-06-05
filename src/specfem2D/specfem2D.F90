@@ -2355,9 +2355,9 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
 ! allocate seismogram arrays
   if(ipass == 1) then
-    allocate(sisux(NSTEP_BETWEEN_OUTPUT_SEISMOS,nrecloc))
-    allocate(sisuz(NSTEP_BETWEEN_OUTPUT_SEISMOS,nrecloc))
-    allocate(siscurl(NSTEP_BETWEEN_OUTPUT_SEISMOS,nrecloc))
+    allocate(sisux(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc))
+    allocate(sisuz(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc))
+    allocate(siscurl(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc))
   endif
 
 ! check if acoustic receiver is exactly on the free surface because pressure is zero there
@@ -3971,7 +3971,7 @@ if(coupled_elastic_poro) then
   endif
 
 #ifdef USE_MPI
-  if(output_energy) stop 'energy calculation currently serial only, should add an MPI_REDUCE in parallel'
+  if(output_energy) stop 'error: energy calculation currently serial only, should add an MPI_REDUCE in parallel'
 #endif
 
 !----  create a Gnuplot script to display the energy curve in log scale
@@ -4339,9 +4339,6 @@ if(coupled_elastic_poro) then
 ! *********************************************************
 
   do it = 1,NSTEP
-
-! update position in seismograms
-    seismo_current = seismo_current + 1
 
 ! compute current time
     time = (it-1)*deltat
@@ -7067,7 +7064,6 @@ if(coupled_elastic_poro) then
 
 !----  display time step and max of norm of displacement
     if(mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
-
       call check_stability(myrank,time,it,NSTEP,NOISE_TOMOGRAPHY, &
                         nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                         any_elastic_glob,any_elastic,displ_elastic, &
@@ -7080,10 +7076,14 @@ if(coupled_elastic_poro) then
 ! add a barrier if we generate traces of the run for analysis with "ParaVer"
       if(GENERATE_PARAVER_TRACES) call MPI_BARRIER(MPI_COMM_WORLD,ier)
 #endif
-
     endif
 
 !---- loop on all the receivers to compute and store the seismograms
+    if(mod(it-1,subsamp_seismos) == 0) then
+
+! update position in seismograms
+    seismo_current = seismo_current + 1
+
     do irecloc = 1,nrecloc
 
       irec = recloc(irecloc)
@@ -7223,6 +7223,10 @@ if(coupled_elastic_poro) then
         enddo
       enddo
 
+      ! check for edge effects
+      if(seismo_current < 1 .or. seismo_current > NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos) &
+        stop 'error: seismo_current out of bounds in recording of seismograms'
+
       ! rotate seismogram components if needed, except if recording pressure, which is a scalar
       if(seismotype /= 4 .and. seismotype /= 6) then
         if(p_sv) then
@@ -7240,6 +7244,7 @@ if(coupled_elastic_poro) then
 
     enddo
 
+    endif
 
 !----- writing the kernels
     ! kernels output
@@ -8021,7 +8026,7 @@ if(coupled_elastic_poro) then
                             nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
                             NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,p_sv, &
                             st_zval,x_source(1),z_source(1),SU_FORMAT,save_ASCII_seismograms, &
-                            save_binary_seismograms_single,save_binary_seismograms_double)
+                            save_binary_seismograms_single,save_binary_seismograms_double,subsamp_seismos)
 
       seismo_offset = seismo_offset + seismo_current
       seismo_current = 0
