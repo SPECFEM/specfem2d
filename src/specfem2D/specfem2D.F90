@@ -7678,7 +7678,7 @@ if(coupled_elastic_poro) then
 
         if (myrank == 0) then 
           write(IOUT,*)
-          write(IOUT,*) 'Writing PostScript file'
+          write(IOUT,*) 'Writing PostScript vector plot for time step ',it
         endif
 
         if(imagetype_postscript == 1 .and. p_sv) then
