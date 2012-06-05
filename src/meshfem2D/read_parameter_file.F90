@@ -98,15 +98,15 @@ module parameter_file
   double precision, dimension(:), pointer :: xdeb,zdeb,xfin,zfin
   logical, dimension(:), pointer :: enreg_surf_same_vertical
 
-  integer :: NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP_BETWEEN_OUTPUT_IMAGES,NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS, &
-             subsamp_seismos,imagetype_JPEG,imagetype_TEXT_wavefield_dumps
+  integer :: NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP_BETWEEN_OUTPUT_IMAGES,NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS, &
+             subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps
   logical :: output_postscript_snapshot,output_color_image
   integer :: imagetype_postscript
   double precision :: cutsnaps
   logical :: meshvect,modelvect,boundvect,interpol
   integer :: pointsdisp,subsamp_postscript
   double precision :: sizemax_arrows
-  logical :: output_grid_gnuplot,output_grid_ASCII,output_energy,output_TEXT_wavefield_dumps
+  logical :: output_grid_Gnuplot,output_grid_ASCII,output_energy,output_wavefield_dumps,use_binary_for_wavefield_dumps
   logical :: plot_lowerleft_corner_only
 
   ! to store density and velocity model
@@ -387,16 +387,19 @@ contains
   call read_value_logical_p(US_LETTER, 'solver.US_LETTER')
   if(err_occurred() /= 0) stop 'error reading parameter 44b in Par_file'
 
-  call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS, 'solver.NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS')
+  call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS, 'solver.NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS')
   if(err_occurred() /= 0) stop 'error reading parameter 33d in Par_file'
 
-  call read_value_logical_p(output_TEXT_wavefield_dumps, 'solver.output_TEXT_wavefield_dumps')
+  call read_value_logical_p(output_wavefield_dumps, 'solver.output_wavefield_dumps')
   if(err_occurred() /= 0) stop 'error reading parameter 48 in Par_file'
 
-  call read_value_integer_p(imagetype_TEXT_wavefield_dumps, 'solver.imagetype_TEXT_wavefield_dumps')
+  call read_value_integer_p(imagetype_wavefield_dumps, 'solver.imagetype_wavefield_dumps')
   if(err_occurred() /= 0) stop 'error reading parameter 33g in Par_file'
 
-  call read_value_logical_p(output_grid_gnuplot, 'solver.output_grid_gnuplot')
+  call read_value_logical_p(use_binary_for_wavefield_dumps, 'solver.use_binary_for_wavefield_dumps')
+  if(err_occurred() /= 0) stop 'error reading parameter 48 in Par_file'
+
+  call read_value_logical_p(output_grid_Gnuplot, 'solver.output_grid_Gnuplot')
   if(err_occurred() /= 0) stop 'error reading parameter 45 in Par_file'
 
   call read_value_logical_p(output_grid_ASCII, 'solver.output_grid_ASCII')

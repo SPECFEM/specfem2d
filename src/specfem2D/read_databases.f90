@@ -45,14 +45,14 @@
 
   subroutine read_databases_init(myrank,ipass, &
                   simulation_title,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo,nproc, &
-                  output_grid_gnuplot,interpol,NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP_BETWEEN_OUTPUT_IMAGES, &
-                  NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS,subsamp_seismos,imagetype_JPEG,imagetype_TEXT_wavefield_dumps, &
+                  output_grid_Gnuplot,interpol,NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP_BETWEEN_OUTPUT_IMAGES, &
+                  NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS,subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps, &
                   output_postscript_snapshot,output_color_image,colors,numbers, &
                   meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows, &
                   anglerec,initialfield,add_Bielak_conditions, &
                   seismotype,imagetype_postscript,assign_external_model,READ_EXTERNAL_SEP_FILE, &
-                  output_grid_ASCII,output_energy,output_TEXT_wavefield_dumps,ATTENUATION_VISCOELASTIC_SOLID, &
-                  ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms,save_binary_seismograms, &
+                  output_grid_ASCII,output_energy,output_wavefield_dumps,use_binary_for_wavefield_dumps, &
+                  ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms,save_binary_seismograms, &
                   DRAW_SOURCES_AND_RECEIVERS,Q0,freq0,p_sv,NSTEP,deltat,NSOURCES, &
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                   POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0,time_stepping_scheme,&
@@ -67,11 +67,11 @@
   character(len=60) simulation_title
   integer :: SIMULATION_TYPE,NOISE_TOMOGRAPHY,npgeo,nproc
   integer :: colors,numbers,subsamp_postscript,seismotype,imagetype_postscript
-  logical :: SAVE_FORWARD,output_grid_gnuplot,interpol,output_postscript_snapshot, &
+  logical :: SAVE_FORWARD,output_grid_Gnuplot,interpol,output_postscript_snapshot, &
     output_color_image
   logical :: meshvect,modelvect,boundvect,initialfield,add_Bielak_conditions, &
     assign_external_model,READ_EXTERNAL_SEP_FILE, &
-    output_grid_ASCII,output_energy,output_TEXT_wavefield_dumps,p_sv
+    output_grid_ASCII,output_energy,output_wavefield_dumps,p_sv,use_binary_for_wavefield_dumps
   logical :: ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART, &
              save_ASCII_seismograms,save_binary_seismograms,DRAW_SOURCES_AND_RECEIVERS
 
@@ -80,8 +80,8 @@
   double precision :: deltat
 
   integer :: NSTEP,NSOURCES
-  integer :: NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP_BETWEEN_OUTPUT_IMAGES,NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS, &
-             subsamp_seismos,imagetype_JPEG,imagetype_TEXT_wavefield_dumps
+  integer :: NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP_BETWEEN_OUTPUT_IMAGES,NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS, &
+             subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps
 
 ! factor to subsample color images output by the code (useful for very large models)
   integer :: factor_subsample_image
@@ -167,7 +167,7 @@
   read(IIN,*) npgeo,nproc
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) output_grid_gnuplot,interpol
+  read(IIN,*) output_grid_Gnuplot,interpol
 
   read(IIN,"(a80)") datlin
   read(IIN,*) NSTEP_BETWEEN_OUTPUT_INFO
@@ -179,10 +179,10 @@
   read(IIN,*) NSTEP_BETWEEN_OUTPUT_IMAGES
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS
+  read(IIN,*) NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) subsamp_seismos,imagetype_JPEG,imagetype_TEXT_wavefield_dumps
+  read(IIN,*) subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps
 
   read(IIN,"(a80)") datlin
   read(IIN,*) output_postscript_snapshot,output_color_image,colors,numbers
@@ -216,7 +216,10 @@
   read(IIN,*) assign_external_model,READ_EXTERNAL_SEP_FILE
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) output_grid_ASCII,output_energy,output_TEXT_wavefield_dumps
+  read(IIN,*) output_grid_ASCII,output_energy,output_wavefield_dumps
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) use_binary_for_wavefield_dumps
 
   read(IIN,"(a80)") datlin
   read(IIN,*) ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART

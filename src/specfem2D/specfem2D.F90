@@ -522,14 +522,14 @@
 
   integer :: colors,numbers,subsamp_postscript,imagetype_postscript, &
     NSTEP_BETWEEN_OUTPUT_INFO,seismotype,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP_BETWEEN_OUTPUT_IMAGES, &
-    NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS,subsamp_seismos,imagetype_JPEG,imagetype_TEXT_wavefield_dumps
+    NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS,subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps
   integer :: numat,ngnod,nspec,pointsdisp, &
     nelemabs,nelem_acoustic_surface,ispecabs,UPPER_LIMIT_DISPLAY
 
   logical interpol,meshvect,modelvect,boundvect,assign_external_model,initialfield, &
-    output_grid_ASCII,output_grid_gnuplot,ATTENUATION_VISCOELASTIC_SOLID,output_postscript_snapshot,output_color_image, &
+    output_grid_ASCII,output_grid_Gnuplot,ATTENUATION_VISCOELASTIC_SOLID,output_postscript_snapshot,output_color_image, &
     plot_lowerleft_corner_only,add_Bielak_conditions,output_energy,READ_EXTERNAL_SEP_FILE, &
-    output_TEXT_wavefield_dumps
+    output_wavefield_dumps,use_binary_for_wavefield_dumps
 
   double precision :: cutsnaps,sizemax_arrows,anglerec,xirec,gammarec
 
@@ -965,15 +965,16 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   ipass = 1
   call read_databases_init(myrank,ipass, &
                   simulation_title,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo,nproc_read_from_database, &
-                  output_grid_gnuplot,interpol,NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS, &
-                  NSTEP_BETWEEN_OUTPUT_IMAGES,NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS,subsamp_seismos, &
-                  imagetype_JPEG,imagetype_TEXT_wavefield_dumps, &
+                  output_grid_Gnuplot,interpol,NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS, &
+                  NSTEP_BETWEEN_OUTPUT_IMAGES,NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS,subsamp_seismos, &
+                  imagetype_JPEG,imagetype_wavefield_dumps, &
                   output_postscript_snapshot,output_color_image,colors,numbers, &
                   meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows, &
                   anglerec,initialfield,add_Bielak_conditions, &
                   seismotype,imagetype_postscript,assign_external_model,READ_EXTERNAL_SEP_FILE, &
-                  output_grid_ASCII,output_energy,output_TEXT_wavefield_dumps,ATTENUATION_VISCOELASTIC_SOLID, &
-                  ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms,save_binary_seismograms,DRAW_SOURCES_AND_RECEIVERS, &
+                  output_grid_ASCII,output_energy,output_wavefield_dumps,use_binary_for_wavefield_dumps, &
+                  ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms, &
+                  save_binary_seismograms,DRAW_SOURCES_AND_RECEIVERS, &
                   Q0,freq0,p_sv,NSTEP,deltat,NSOURCES, &
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                   POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, time_stepping_scheme, &
@@ -1001,15 +1002,16 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     if(ipass > 1) &
        call read_databases_init(myrank,ipass, &
                       simulation_title,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo,nproc_read_from_database, &
-                      output_grid_gnuplot,interpol,NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS, &
-                      NSTEP_BETWEEN_OUTPUT_IMAGES,NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS,subsamp_seismos, &
-                      imagetype_JPEG,imagetype_TEXT_wavefield_dumps, &
+                      output_grid_Gnuplot,interpol,NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS, &
+                      NSTEP_BETWEEN_OUTPUT_IMAGES,NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS,subsamp_seismos, &
+                      imagetype_JPEG,imagetype_wavefield_dumps, &
                       output_postscript_snapshot,output_color_image,colors,numbers, &
                       meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows, &
                       anglerec,initialfield,add_Bielak_conditions, &
                       seismotype,imagetype_postscript,assign_external_model,READ_EXTERNAL_SEP_FILE, &
-                      output_grid_ASCII,output_energy,output_TEXT_wavefield_dumps,ATTENUATION_VISCOELASTIC_SOLID, &
-                      ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms,save_binary_seismograms,DRAW_SOURCES_AND_RECEIVERS, &
+                      output_grid_ASCII,output_energy,output_wavefield_dumps,use_binary_for_wavefield_dumps, &
+                      ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms, &
+                      save_binary_seismograms,DRAW_SOURCES_AND_RECEIVERS, &
                       Q0,freq0,p_sv,NSTEP,deltat,NSOURCES, &
                       factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                       POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, time_stepping_scheme, &
@@ -1983,7 +1985,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 !
 !-----   plot the GLL mesh in a Gnuplot file
 !
-  if(output_grid_gnuplot .and. myrank == 0 .and. ipass == 1)  &
+  if(output_grid_Gnuplot .and. myrank == 0 .and. ipass == 1)  &
     call plotgll(knods,ibool,coorg,coord,nglob,npgeo,ngnod,nspec)
 
   if(myrank == 0 .and. ipass == 1)  &
@@ -7949,12 +7951,13 @@ if(coupled_elastic_poro) then
 ! note 1: for SH case, this requires output_color_image = .true. in order to have vector_field_display
 ! note 2: for MPI, it would be more convenient to output a single file rather than one for each myrank
 
-      if (output_TEXT_wavefield_dumps) then
+      if (output_wavefield_dumps) then
         write(wavefield_file,"('OUTPUT_FILES/wavefield',i7.7,'_',i2.2,'_',i3.3,'.txt')") it,SIMULATION_TYPE,myrank
         open(unit=27,file=wavefield_file,status='unknown')
         do ispec = 1,nspec
           do j = 1,NGLLZ
             do i = 1,NGLLX
+!!!!!!!!!! DK DK save NGLOB on the first line maybe
                iglob = ibool(i,j,ispec)
                write(27,'(5e16.6)') coord(1,iglob), coord(2,iglob), &
                               sngl(vector_field_display(1,iglob)), &
