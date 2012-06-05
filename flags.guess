@@ -29,7 +29,7 @@ case $FC in
         # standard options (leave option -ftz, which is *critical* for performance)
         # add -Winline to get information about routines that are inlined
         # add -vec-report2 to get information about loops that are vectorized or not
-            FLAGS_NO_CHECK="-O3 -xSSE4.2 -funroll-loops -unroll5 -vec-report0 -std95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -ftz" # -DUSE_GUENNEAU
+            FLAGS_NO_CHECK="-O3 -xHost -funroll-loops -unroll5 -vec-report0 -std95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -ftz" # -DUSE_GUENNEAU
             #FLAGS_NO_CHECK="-O3 -assume byterecl -check nobounds -ftz"
 
         fi
