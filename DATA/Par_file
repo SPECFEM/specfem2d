@@ -85,7 +85,7 @@ US_LETTER                       = .false.        # use US letter or European A4 
 NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS = 100            # every how many time steps we dump results of the simulation as ASCII or binary files (costly, do not use a very small value)
 output_wavefield_dumps          = .false.        # output wave field to a text file every NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS time steps (creates very big files)
 imagetype_wavefield_dumps       = 1              # display 1=displ vector 2=veloc vector 3=accel vector 4=pressure
-use_binary_for_wavefield_dumps  = .false.        # use ASCII or binary format for the wave field dumps
+use_binary_for_wavefield_dumps  = .false.        # use ASCII or single-precision binary format for the wave field dumps
 ####
 output_grid_Gnuplot             = .false.        # generate a GNUPLOT file containing the grid, and a script to plot it
 output_grid_ASCII               = .false.        # dump the grid in an ASCII text file consisting of a set of X,Y,Z points or not

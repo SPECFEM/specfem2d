@@ -834,6 +834,11 @@
   double precision, dimension(:), allocatable :: dist_tangential_detection_curve
   double precision :: x_final_receiver_dummy, z_final_receiver_dummy
 
+! to dump the wave field
+  integer :: icounter,nb_of_values_to_save
+  logical :: this_is_the_first_time_we_dump
+  logical, dimension(:), allocatable  :: mask_ibool
+
   double precision, dimension(:,:,:),allocatable:: rho_local,vp_local,vs_local
 !!!! hessian
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhorho_el_hessian_final1, rhorho_el_hessian_final2
@@ -4303,6 +4308,9 @@ if(coupled_elastic_poro) then
   allocate(coorg_send_ps_vector_field(d1_coorg_send_ps_vector_field,d2_coorg_send_ps_vector_field))
   allocate(coorg_recv_ps_vector_field(d1_coorg_recv_ps_vector_field,d2_coorg_recv_ps_vector_field))
 
+! to dump the wave field
+  this_is_the_first_time_we_dump = .true.
+
 #ifdef USE_MPI
 ! add a barrier if we generate traces of the run for analysis with "ParaVer"
   if(GENERATE_PARAVER_TRACES) call MPI_BARRIER(MPI_COMM_WORLD,ier)
@@ -7645,7 +7653,7 @@ if(coupled_elastic_poro) then
 
 !<NOISE_TOMOGRAPHY
 
-      if ( NOISE_TOMOGRAPHY == 3 .and. output_wavefields_noise ) then
+      if (NOISE_TOMOGRAPHY == 3 .and. output_wavefields_noise) then
 
         !load ensemble forward source
         inquire(unit=500,exist=ex,opened=od)
@@ -7676,7 +7684,7 @@ if(coupled_elastic_poro) then
 !
       if(output_postscript_snapshot) then
 
-        if (myrank == 0) then 
+        if (myrank == 0) then
           write(IOUT,*)
           write(IOUT,*) 'Writing PostScript vector plot for time step ',it
         endif
@@ -7893,7 +7901,7 @@ if(coupled_elastic_poro) then
           if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
 
           if(p_sv) then ! P-SH waves, plot a component of vector, its norm, or else pressure
-            if(iglob_image_color(i,j) /= -1) then 
+            if(iglob_image_color(i,j) /= -1) then
               if(imagetype_JPEG == 1 .or. imagetype_JPEG == 4 .or. imagetype_JPEG == 7) then
                 image_color_data(i,j) = vector_field_display(1,iglob_image_color(i,j))  ! draw the X component of the vector
 
@@ -7993,29 +8001,171 @@ if(coupled_elastic_poro) then
     endif  ! of display images at a given time step
 
 !----------------------------------------------
-! write the full (local) wavefield to file as three components (Uy = 0 for PSV; Ux,Uz = 0 for SH)
-! note 1: for SH case, this requires output_color_image = .true. in order to have vector_field_display
-! note 2: for MPI, it would be more convenient to output a single file rather than one for each myrank
 
-    if(mod(it,NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS) == 0 .or. it == NSTEP) then
-      if (output_wavefield_dumps) then
-        write(wavefield_file,"('OUTPUT_FILES/wavefield',i7.7,'_',i2.2,'_',i3.3,'.txt')") it,SIMULATION_TYPE,myrank
-        open(unit=27,file=wavefield_file,status='unknown')
+! dump the full (local) wavefield to a file
+! note: in the case of MPI, in the future it would be more convenient to output a single file rather than one for each myrank
+
+    if(output_wavefield_dumps .and. (mod(it,NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS) == 0 .or. it == 5 .or. it == NSTEP)) then
+
+      if (myrank == 0) then
+        write(IOUT,*)
+        write(IOUT,*) 'Dumping the wave field to a file for time step ',it
+      endif
+
+      if(this_is_the_first_time_we_dump) then
+
+        allocate(mask_ibool(nglob))
+
+! save the grid separately once and for all
+        if(use_binary_for_wavefield_dumps) then
+          write(wavefield_file,"('OUTPUT_FILES/wavefield_grid_for_dumps_',i3.3,'.bin')") myrank
+          open(unit=27,file=wavefield_file,form='unformatted',access='direct',status='unknown', &
+               action='write',recl=2*SIZE_REAL)
+        else
+          write(wavefield_file,"('OUTPUT_FILES/wavefield_grid_for_dumps_',i3.3,'.txt')") myrank
+          open(unit=27,file=wavefield_file,status='unknown',action='write')
+        endif
+
+        icounter = 0
+        mask_ibool(:) = .false.
         do ispec = 1,nspec
+#ifdef CRISTINI_DO_NOT_DUMP_FICTITIOUS_REGIONS
+         if(kmato(ispec) > 2) cycle
+#endif
           do j = 1,NGLLZ
             do i = 1,NGLLX
-!!!!!!!!!! DK DK save NGLOB on the first line maybe
                iglob = ibool(i,j,ispec)
-!!!!!!!!!! DK DK save the grid separately and once only
-               write(27,'(5e16.6)') coord(1,iglob), coord(2,iglob), &
-                              sngl(vector_field_display(1,iglob)), &
-                              sngl(vector_field_display(2,iglob)), &
-                              sngl(vector_field_display(3,iglob))
+               if(.not. mask_ibool(iglob)) then
+                 icounter = icounter + 1
+                 mask_ibool(iglob) = .true.
+                 if(use_binary_for_wavefield_dumps) then
+                   write(27,rec=icounter) sngl(coord(1,iglob)),sngl(coord(2,iglob))
+                 else
+                   write(27,'(2e16.6)') coord(1,iglob),coord(2,iglob)
+                 endif
+               endif
             enddo
           enddo
         enddo
+
         close(27)
+
+! save nglob to a file once and for all
+        write(wavefield_file,"('OUTPUT_FILES/wavefield_grid_value_of_nglob_',i3.3,'.txt')") myrank
+        open(unit=27,file=wavefield_file,status='unknown',action='write')
+        write(27,*) icounter
+        close(27)
+#ifndef CRISTINI_DO_NOT_DUMP_FICTITIOUS_REGIONS
+        if(icounter /= nglob) stop 'error: should have icounter == nglob in wavefield dumps'
+#endif
+
+        this_is_the_first_time_we_dump = .false.
+
       endif
+
+        if(imagetype_wavefield_dumps == 1) then
+
+          if (myrank == 0) write(IOUT,*) 'dumping the displacement vector...'
+          call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic,&
+                          elastic,poroelastic,vector_field_display, &
+                          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
+                          nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
+                          numat,kmato,density,rhoext,assign_external_model)
+
+        else if(imagetype_wavefield_dumps == 2) then
+
+          if (myrank == 0) write(IOUT,*) 'dumping the velocity vector...'
+          call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,velocs_poroelastic,&
+                          elastic,poroelastic,vector_field_display, &
+                          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
+                          nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
+                          numat,kmato,density,rhoext,assign_external_model)
+
+        else if(imagetype_wavefield_dumps == 3) then
+
+          if (myrank == 0) write(IOUT,*) 'dumping the acceleration vector...'
+          call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,accels_poroelastic,&
+                          elastic,poroelastic,vector_field_display, &
+                          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
+                          nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
+                          numat,kmato,density,rhoext,assign_external_model)
+
+        else if(imagetype_wavefield_dumps == 4 .and. p_sv) then
+
+          if (myrank == 0) write(IOUT,*) 'dumping the pressure field...'
+          call compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,&
+                     displs_poroelastic,displw_poroelastic,elastic,poroelastic,vector_field_display, &
+                     xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
+                     nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
+                     numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
+                     c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,e1,e11, &
+                     ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
+
+        else if(imagetype_wavefield_dumps == 4 .and. .not. p_sv) then
+          call exit_MPI('cannot dump the pressure field for SH (membrane) waves')
+
+        else
+          call exit_MPI('wrong type of flag for wavefield dumping')
+        endif
+
+        if(use_binary_for_wavefield_dumps) then
+          if(p_sv .and. .not. imagetype_wavefield_dumps == 4) then
+            nb_of_values_to_save = 2
+          else
+            nb_of_values_to_save = 1
+          endif
+          write(wavefield_file,"('OUTPUT_FILES/wavefield',i7.7,'_',i2.2,'_',i3.3,'.bin')") it,SIMULATION_TYPE,myrank
+          open(unit=27,file=wavefield_file,form='unformatted',access='direct',status='unknown', &
+                       action='write',recl=nb_of_values_to_save*SIZE_REAL)
+        else
+          write(wavefield_file,"('OUTPUT_FILES/wavefield',i7.7,'_',i2.2,'_',i3.3,'.txt')") it,SIMULATION_TYPE,myrank
+          open(unit=27,file=wavefield_file,status='unknown',action='write')
+        endif
+
+        icounter = 0
+        mask_ibool(:) = .false.
+        do ispec = 1,nspec
+#ifdef CRISTINI_DO_NOT_DUMP_FICTITIOUS_REGIONS
+         if(kmato(ispec) > 2) cycle
+#endif
+          do j = 1,NGLLZ
+            do i = 1,NGLLX
+               iglob = ibool(i,j,ispec)
+               if(.not. mask_ibool(iglob)) then
+                 icounter = icounter + 1
+                 mask_ibool(iglob) = .true.
+                 if(use_binary_for_wavefield_dumps) then
+
+                   if(p_sv .and. .not. imagetype_wavefield_dumps == 4) then
+                     write(27,rec=icounter) sngl(vector_field_display(1,iglob)),sngl(vector_field_display(3,iglob))
+                   else if(p_sv .and. imagetype_wavefield_dumps == 4) then
+! by convention we use the third component of the array to store the pressure above
+                     write(27,rec=icounter) sngl(vector_field_display(3,iglob))
+                   else ! SH case
+                     write(27,rec=icounter) sngl(vector_field_display(2,iglob))
+                   endif
+
+                 else
+
+                   if(p_sv .and. .not. imagetype_wavefield_dumps == 4) then
+                     write(27,*) sngl(vector_field_display(1,iglob)),sngl(vector_field_display(3,iglob))
+                   else if(p_sv .and. imagetype_wavefield_dumps == 4) then
+! by convention we use the third component of the array to store the pressure above
+                     write(27,*) sngl(vector_field_display(3,iglob))
+                   else ! SH case
+                     write(27,*) sngl(vector_field_display(2,iglob))
+                   endif
+
+                 endif
+               endif
+            enddo
+          enddo
+        enddo
+
+        close(27)
+
+        if(myrank ==0) write(IOUT,*) 'Wave field dumped'
+
     endif  ! of display wavefield dumps at a given time step
 
 !----  save temporary or final seismograms
@@ -8038,6 +8188,8 @@ if(coupled_elastic_poro) then
 ! *********************************************************
 ! ************* END MAIN LOOP OVER THE TIME STEPS *********
 ! *********************************************************
+
+  if(output_wavefield_dumps) deallocate(mask_ibool)
 
   if((SAVE_FORWARD .and. SIMULATION_TYPE==1) .or. SIMULATION_TYPE ==2) then
     if(any_acoustic) then

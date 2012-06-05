@@ -29,12 +29,12 @@ case $FC in
         # standard options (leave option -ftz, which is *critical* for performance)
         # add -Winline to get information about routines that are inlined
         # add -vec-report2 to get information about loops that are vectorized or not
-            FLAGS_NO_CHECK="-O3 -xHost -funroll-loops -unroll5 -vec-report0 -std95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -ftz" # -DUSE_GUENNEAU
+            FLAGS_NO_CHECK="-O3 -xHost -funroll-loops -unroll5 -vec-report0 -std95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -ftz" # -DUSE_GUENNEAU -DCRISTINI_DO_NOT_DUMP_FICTITIOUS_REGIONS
             #FLAGS_NO_CHECK="-O3 -assume byterecl -check nobounds -ftz"
 
         fi
         if test x"$FLAGS_CHECK" = x; then
-            FLAGS_CHECK="-O1 -vec-report0 -std95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check all -align sequence -assume byterecl -ftz -traceback -ftrapuv" # -DUSE_GUENNEAU
+            FLAGS_CHECK="-O1 -vec-report0 -std95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check all -align sequence -assume byterecl -ftz -traceback -ftrapuv" # -DUSE_GUENNEAU -DCRISTINI_DO_NOT_DUMP_FICTITIOUS_REGIONS
             #FLAGS_CHECK="-O3 -assume byterecl -traceback -ftrapuv -ftz"
 
 
