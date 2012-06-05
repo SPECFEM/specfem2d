@@ -333,6 +333,9 @@ contains
   call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_IMAGES, 'solver.NSTEP_BETWEEN_OUTPUT_IMAGES')
   if(err_occurred() /= 0) stop 'error reading parameter 33c in Par_file'
 
+  call read_value_double_precision_p(cutsnaps, 'solver.cutsnaps')
+  if(err_occurred() /= 0) stop 'error reading parameter 37 in Par_file'
+
   call read_value_logical_p(output_color_image, 'solver.output_color_image')
   if(err_occurred() /= 0) stop 'error reading parameter 35 in Par_file'
 
@@ -359,9 +362,6 @@ contains
 
   call read_value_integer_p(imagetype_postscript, 'solver.imagetype_postscript')
   if(err_occurred() /= 0) stop 'error reading parameter 36 in Par_file'
-
-  call read_value_double_precision_p(cutsnaps, 'solver.cutsnaps')
-  if(err_occurred() /= 0) stop 'error reading parameter 37 in Par_file'
 
   call read_value_logical_p(meshvect, 'solver.meshvect')
   if(err_occurred() /= 0) stop 'error reading parameter 38 in Par_file'
