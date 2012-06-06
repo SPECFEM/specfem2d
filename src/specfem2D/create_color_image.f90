@@ -44,7 +44,9 @@
 
   subroutine create_color_image(color_image_2D_data,iglob_image_color_2D, &
                                   NX,NY,it,isnapshot_number,cutsnaps,image_color_vp_display, &
-                                  USE_SNAPSHOT_NUMBER_IN_FILENAME,POWER_DISPLAY_COLOR)
+                                  USE_SNAPSHOT_NUMBER_IN_FILENAME,POWER_DISPLAY_COLOR, &
+                                  DRAW_SOURCES_AND_RECEIVERS,NSOURCES,nrec, &
+                                  ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver)
 
 ! display a given field as a red and blue color JPEG image
 
@@ -63,7 +65,14 @@
   double precision, dimension(NX,NY) :: color_image_2D_data
   double precision, dimension(NX,NY) :: image_color_vp_display
 
-! for JPEG
+! to draw the sources and receivers
+  integer, intent(in) :: NSOURCES,nrec
+  logical, intent(in) :: DRAW_SOURCES_AND_RECEIVERS
+  integer, dimension(NSOURCES), intent(in) :: ix_image_color_source,iy_image_color_source
+  integer, dimension(nrec), intent(in) :: ix_image_color_receiver,iy_image_color_receiver
+  integer :: i
+
+! for the JPEG library
   character(len=1), dimension(3,NX,NY) :: JPEG_raw_image
 
   integer :: ix,iy,R,G,B
@@ -185,6 +194,60 @@
 
     enddo
   enddo
+
+!
+!----  draw position of the sources and receivers
+!
+  if (DRAW_SOURCES_AND_RECEIVERS) then
+
+! draw position of the sources with orange crosses
+    do i=1,NSOURCES
+
+      do iy = iy_image_color_source(i) - width_cross, iy_image_color_source(i) + width_cross
+        do ix = ix_image_color_source(i) - thickness_cross, ix_image_color_source(i) + thickness_cross
+! use orange color
+          R = 255
+          G = 157
+          B = 0
+! for JPEG
+          JPEG_raw_image(1,ix,NY-iy+1) = char(R)
+          JPEG_raw_image(2,ix,NY-iy+1) = char(G)
+          JPEG_raw_image(3,ix,NY-iy+1) = char(B)
+        enddo
+      enddo
+
+      do iy = iy_image_color_source(i) - thickness_cross, iy_image_color_source(i) + thickness_cross
+        do ix = ix_image_color_source(i) - width_cross, ix_image_color_source(i) + width_cross
+! use orange color
+          R = 255
+          G = 157
+          B = 0
+! for JPEG
+          JPEG_raw_image(1,ix,NY-iy+1) = char(R)
+          JPEG_raw_image(2,ix,NY-iy+1) = char(G)
+          JPEG_raw_image(3,ix,NY-iy+1) = char(B)
+        enddo
+      enddo
+
+    enddo
+
+! draw position of the receivers with green squares
+    do i=1,nrec
+      do iy = iy_image_color_receiver(i) - size_square, iy_image_color_receiver(i) + size_square
+        do ix = ix_image_color_receiver(i) - size_square, ix_image_color_receiver(i) + size_square
+! use dark green color
+          R = 30
+          G = 180
+          B = 60
+! for JPEG
+          JPEG_raw_image(1,ix,NY-iy+1) = char(R)
+          JPEG_raw_image(2,ix,NY-iy+1) = char(G)
+          JPEG_raw_image(3,ix,NY-iy+1) = char(B)
+        enddo
+      enddo
+    enddo
+
+  endif
 
 ! for JPEG
   call write_jpeg_image(JPEG_raw_image,NX,NY,filename)

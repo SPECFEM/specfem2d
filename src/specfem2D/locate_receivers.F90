@@ -231,7 +231,7 @@
   ! close receiver file
   close(1)
 
-! elect one process for each receiver.
+! select one mesh slice for each receiver
 #ifdef USE_MPI
   call MPI_GATHER(final_distance(1),nrec,MPI_DOUBLE_PRECISION,&
         gather_final_distance(1,1),nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierror)

@@ -146,6 +146,9 @@
 ! was found by trial and error
   double precision, parameter :: SOURCE_DECAY_MIMIC_TRIANGLE = 1.628d0
 
+! size of cross and square in pixels drawn to represent the source and the receivers in JPEG pictures
+  integer, parameter :: width_cross = 5, thickness_cross = 1, size_square = 3
+
 ! X and Z axis origin of PostScript plot in centimeters
   double precision, parameter :: ORIG_X = 2.4d0
   double precision, parameter :: ORIG_Z = 2.9d0
