@@ -333,12 +333,11 @@
   include "mpif.h"
 #endif
 
-!  character(len=80) datlin
-
   integer NSOURCES,i_source
   integer, dimension(:), allocatable :: source_type,time_function_type
   double precision, dimension(:), allocatable :: x_source,z_source,xi_source,gamma_source,&
                   Mxx,Mzz,Mxz,f0,tshift_src,factor,angleforce
+  integer, dimension(:), allocatable :: ix_image_color_source,iy_image_color_source
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sourcearray
   double precision :: t0
 
@@ -819,6 +818,7 @@
   double precision, dimension(:), allocatable :: anglerec_irec
   double precision, dimension(:), allocatable :: cosrot_irec, sinrot_irec
   double precision, dimension(:), allocatable :: x_final_receiver, z_final_receiver
+  integer, dimension(:), allocatable :: ix_image_color_receiver,iy_image_color_receiver
   logical :: force_normal_to_surface,rec_normal_to_surface
 
   integer, dimension(:), allocatable :: source_courbe_eros
@@ -1031,6 +1031,8 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     allocate( time_function_type(NSOURCES) )
     allocate( x_source(NSOURCES) )
     allocate( z_source(NSOURCES) )
+    allocate( ix_image_color_source(NSOURCES) )
+    allocate( iy_image_color_source(NSOURCES) )
     allocate( f0(NSOURCES) )
     allocate( tshift_src(NSOURCES) )
     allocate( factor(NSOURCES) )
@@ -1854,6 +1856,8 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     allocate(which_proc_receiver(nrec))
     allocate(x_final_receiver(nrec))
     allocate(z_final_receiver(nrec))
+    allocate(ix_image_color_receiver(nrec))
+    allocate(iy_image_color_receiver(nrec))
 
 ! allocate 1-D Lagrange interpolators and derivatives
     allocate(hxir(NGLLX))
@@ -2996,8 +3000,9 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                             xmin_color_image,xmax_color_image, &
                             zmin_color_image,zmax_color_image, &
                             coord,nglob,coorg,npgeo,nspec,ngnod,knods,ibool, &
-                            nb_pixel_loc,iglob_image_color)
-
+                            nb_pixel_loc,iglob_image_color, &
+                            DRAW_SOURCES_AND_RECEIVERS,NSOURCES,nrec,x_source,z_source,st_xval,st_zval, &
+                            ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver)
 
     ! creating and filling array num_pixel_loc with the positions of each colored
     ! pixel owned by the local process (useful for parallel jobs)
@@ -7699,7 +7704,7 @@ if(coupled_elastic_poro) then
                           nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                           numat,kmato,density,rhoext,assign_external_model)
 
-          call plotpost(vector_field_display,coord,vpext,x_source,z_source,x_final_receiver,z_final_receiver, &
+          call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
                       it,deltat,coorg,xinterp,zinterp,shape2D_display, &
                       Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
                       poroelastcoef,knods,kmato,ibool, &
@@ -7743,7 +7748,7 @@ if(coupled_elastic_poro) then
                           nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                           numat,kmato,density,rhoext,assign_external_model)
 
-          call plotpost(vector_field_display,coord,vpext,x_source,z_source,x_final_receiver,z_final_receiver, &
+          call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
                       it,deltat,coorg,xinterp,zinterp,shape2D_display, &
                       Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
                       poroelastcoef,knods,kmato,ibool, &
@@ -7787,7 +7792,7 @@ if(coupled_elastic_poro) then
                           nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                           numat,kmato,density,rhoext,assign_external_model)
 
-          call plotpost(vector_field_display,coord,vpext,x_source,z_source,x_final_receiver,z_final_receiver, &
+          call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
                       it,deltat,coorg,xinterp,zinterp,shape2D_display, &
                       Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
                       poroelastcoef,knods,kmato,ibool, &
@@ -7993,7 +7998,9 @@ if(coupled_elastic_poro) then
         if (myrank == 0) then
           call create_color_image(image_color_data,iglob_image_color, &
                   NX_IMAGE_color,NZ_IMAGE_color,it,isnapshot_number,cutsnaps,image_color_vp_display, &
-                  USE_SNAPSHOT_NUMBER_IN_FILENAME,POWER_DISPLAY_COLOR)
+                  USE_SNAPSHOT_NUMBER_IN_FILENAME,POWER_DISPLAY_COLOR, &
+                  DRAW_SOURCES_AND_RECEIVERS,NSOURCES,nrec, &
+                  ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver)
           write(IOUT,*) 'Color image created'
         endif
 

@@ -134,7 +134,9 @@
                             xmin_color_image,xmax_color_image, &
                             zmin_color_image,zmax_color_image, &
                             coord,nglob,coorg,npgeo,nspec,ngnod,knods,ibool, &
-                            nb_pixel_loc,iglob_image_color)
+                            nb_pixel_loc,iglob_image_color, &
+                            DRAW_SOURCES_AND_RECEIVERS,NSOURCES,nrec,x_source,z_source,st_xval,st_zval, &
+                            ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver)
 
   implicit none
   include "constants.h"
@@ -153,6 +155,14 @@
 
   integer :: nb_pixel_loc
   integer, dimension(NX_IMAGE_color,NZ_IMAGE_color) :: iglob_image_color
+
+! to draw the sources and receivers
+  integer, intent(in) :: NSOURCES,nrec
+  logical, intent(in) :: DRAW_SOURCES_AND_RECEIVERS
+  double precision, dimension(NSOURCES), intent(in) :: x_source,z_source
+  double precision, dimension(nrec), intent(in) :: st_xval,st_zval
+  integer, dimension(NSOURCES), intent(out) :: ix_image_color_source,iy_image_color_source
+  integer, dimension(nrec), intent(out) :: ix_image_color_receiver,iy_image_color_receiver
 
   ! local parameters
   double precision  :: size_pixel_horizontal,size_pixel_vertical
@@ -174,7 +184,7 @@
 
   iglob_image_color(:,:) = -1
 
-  ! checking which pixels are inside each elements
+  ! checking which pixels are inside each element
 
   nb_pixel_loc = 0
   do ispec = 1, nspec
@@ -231,6 +241,39 @@
         enddo
      enddo
   enddo
+
+!
+!----  find pixel position of the sources and receivers
+!
+  if (DRAW_SOURCES_AND_RECEIVERS .and. myrank == 0) then
+
+! find pixel position of the sources with orange crosses
+    do i=1,NSOURCES
+      ix_image_color_source(i) = (x_source(i) - xmin_color_image) / size_pixel_horizontal + 1
+      iy_image_color_source(i) = (z_source(i) - zmin_color_image) / size_pixel_vertical + 1
+
+      ! avoid edge effects
+      if(ix_image_color_source(i) < 1) ix_image_color_source(i) = 1
+      if(iy_image_color_source(i) < 1) iy_image_color_source(i) = 1
+
+      if(ix_image_color_source(i) > NX_IMAGE_color) ix_image_color_source(i) = NX_IMAGE_color
+      if(iy_image_color_source(i) > NZ_IMAGE_color) iy_image_color_source(i) = NZ_IMAGE_color
+    enddo
+
+! find pixel position of the receivers with green squares
+    do i=1,nrec
+      ix_image_color_receiver(i) = (st_xval(i) - xmin_color_image) / size_pixel_horizontal + 1
+      iy_image_color_receiver(i) = (st_zval(i) - zmin_color_image) / size_pixel_vertical + 1
+
+      ! avoid edge effects
+      if(ix_image_color_receiver(i) < 1) ix_image_color_receiver(i) = 1
+      if(iy_image_color_receiver(i) < 1) iy_image_color_receiver(i) = 1
+
+      if(ix_image_color_receiver(i) > NX_IMAGE_color) ix_image_color_receiver(i) = NX_IMAGE_color
+      if(iy_image_color_receiver(i) > NZ_IMAGE_color) iy_image_color_receiver(i) = NZ_IMAGE_color
+    enddo
+
+  endif
 
   end subroutine prepare_color_image_pixels
 
