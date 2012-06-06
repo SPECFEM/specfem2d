@@ -7827,7 +7827,7 @@ if(coupled_elastic_poro) then
                       coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER)
 
         else if(.not. p_sv) then
-          call exit_MPI('cannot draw scalar field as a PostScript vector plot')
+          call exit_MPI('cannot draw a SH scalar field as a vector plot, turn PostScript plots off')
 
         else
           call exit_MPI('wrong type for PostScript snapshots')
