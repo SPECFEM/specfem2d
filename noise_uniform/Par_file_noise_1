@@ -1,4 +1,4 @@
-# title of job r19201
+# title of job
 title                           = Noise_2D
 
 # forward or adjoint simulation
@@ -37,12 +37,17 @@ N_SLS                           = 2                      # number of standard li
 f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, else it is f0
 
 # receiver set parameters for seismograms
-seismotype                      = 1              # record 1=displ 2=veloc 3=accel 4=pressure
+seismotype                      = 1              # record 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential
+NSTEP_BETWEEN_OUTPUT_SEISMOS    = 5000000        # every how many time steps we save the seismograms (costly, do not use a very small value; if you use a very large value that is larger than the total number of time steps of the run, the seismograms will automatically be saved once at the end of the run anyway)
+save_ASCII_seismograms          = .true.         # save seismograms in ASCII format or not
+save_binary_seismograms_single  = .true.         # save seismograms in single precision binary format or not (can be used jointly with ASCII above to save both)
+save_binary_seismograms_double  = .false.        # save seismograms in double precision binary format or not (can be used jointly with both flags above to save all)
+SU_FORMAT                       = .false.        # output single precision binary seismograms in Seismic Unix format (adjoint traces will be read in the same format)
+subsamp_seismos                 = 1              # subsampling of the seismograms to create smaller files (but less accurately sampled in time)
 generate_STATIONS               = .false.        # creates a STATION file in ./DATA
 nreceiversets                   = 1              # number of receiver sets
 anglerec                        = 0.d0           # angle to rotate components at receivers
 rec_normal_to_surface           = .false.        # base anglerec normal to surface (external mesh and curve file needed)
-SU_FORMAT                       = .false.        # output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
 
 # first receiver set (repeat these 6 lines and adjust nreceiversets  accordingly)
 nrec                            = 1              # number of receivers
@@ -53,27 +58,40 @@ zfin                            = 1500.          # last receiver z in meters (ig
 enreg_surf_same_vertical        = .false.        # receivers inside the medium or at the surface
 
 # display parameters
-NTSTEP_BETWEEN_OUTPUT_INFO      = 250            # display frequency in time steps
+NSTEP_BETWEEN_OUTPUT_INFO      = 250            # every how many time steps we display information about the simulation (costly, do not use a very small value)
+NSTEP_BETWEEN_OUTPUT_IMAGES     = 100            # every how many time steps we draw JPEG or PostScript pictures of the simulation (costly, do not use a very small value)
+cutsnaps                        = 1.             # minimum amplitude kept in % for the JPEG and PostScript snapshots; amplitudes below that are muted
+
+#### for JPEG color images ####
+output_color_image              = .false.        # output JPEG color image of the results every NSTEP_BETWEEN_OUTPUT_IMAGES time steps or not
+imagetype_JPEG                  = 3              # display 1=displ_Ux 2=displ_Uz 3=displ_norm 4=veloc_Vx 5=veloc_Vz 6=veloc_norm 7=accel_Ax 8=accel_Az 9=accel_norm 10=pressure
+factor_subsample_image          = 1              # factor to subsample color images output by the code (useful for very large models)
+POWER_DISPLAY_COLOR             = 0.30d0         # non linear display to enhance small amplitudes in color images
+DRAW_SOURCES_AND_RECEIVERS      = .true.         # display sources as orange crosses and receivers as green squares in JPEG images or not
+DRAW_WATER_IN_BLUE              = .true.         # display acoustic layers as constant blue in JPEG images, because they likely correspond to water in the case of ocean acoustics or in the case of offshore oil industry experiments (if off, display them as greyscale, as for elastic or poroelastic elements, for instance for acoustic-only oil industry models of solid media)
+USE_SNAPSHOT_NUMBER_IN_FILENAME = .false.        # use snapshot number in the file name of JPEG color snapshots instead of the time step
+
+#### for PostScript snapshots ####
 output_postscript_snapshot      = .false.        # output Postscript snapshot of the results
-output_color_image              = .false.        # output color image of the results
-imagetype                       = 1              # display 1=displ 2=veloc 3=accel 4=pressure
-cutsnaps                        = 1.             # minimum amplitude in % for snapshots
+imagetype_postscript            = 1              # display 1=displ vector 2=veloc vector 3=accel vector; small arrows are displayed for the vectors
 meshvect                        = .true.         # display mesh on vector plots or not
 modelvect                       = .false.        # display velocity model on vector plots
 boundvect                       = .true.         # display boundary conditions on plots
 interpol                        = .true.         # interpolation of the display or not
 pointsdisp                      = 6              # points for interpolation of display (set to 1 for lower-left corner only)
 subsamp_postscript              = 1              # subsampling of color snapshots
-factor_subsample_image          = 1              # factor to subsample color images output by the code (useful for very large models)
-POWER_DISPLAY_COLOR             = 0.30d0         # non linear display to enhance small amplitudes in color images
-DRAW_WATER_CONSTANT_BLUE_IN_JPG = .true.         # display acoustic layers as constant blue in JPEG images, because they likely correspond to water
 sizemax_arrows                  = 1.d0           # maximum size of arrows on vector plots in cm
 US_LETTER                       = .false.        # US letter paper or European A4
-USE_SNAPSHOT_NUMBER_IN_FILENAME = .false.        # use snapshot number in the file name of JPEG color snapshots instead of the time step
-gnuplot                         = .false.        # generate a GNUPLOT file for the grid
-output_grid                     = .false.        # save the grid in a text file or not
+
+#### for wavefield dumps ####
+NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS = 100            # every how many time steps we dump results of the simulation as ASCII or binary files (costly, do not use a very small value)
+output_wavefield_dumps          = .false.        # output wave field to a text file every NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS time steps (creates very big files)
+imagetype_wavefield_dumps       = 1              # display 1=displ vector 2=veloc vector 3=accel vector 4=pressure
+use_binary_for_wavefield_dumps  = .false.        # use ASCII or single-precision binary format for the wave field dumps
+####
+output_grid_Gnuplot             = .false.        # save the grid in a text file or not
+output_grid_ASCII               = .false.        # dump the grid in an ASCII text file consisting of a set of X,Y,Z points or not
 output_energy                   = .false.        # compute and output acoustic and elastic energy (slows down the code significantly)
-output_wavefield_snapshot       = .false.        # output Ux,Uy,Uz text file for each output time (big files)
 
 # velocity and density models
 nbmodels                        = 1              # nb of different models
