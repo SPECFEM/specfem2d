@@ -952,6 +952,10 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 ! for rk44
   double precision :: weight_rk
 
+! to count the number of degrees of freedom
+  integer :: count_nspec_acoustic,count_nspec_acoustic_total,nspec_total,nglob_total,nb_acoustic_DOFs,nb_elastic_DOFs
+  double precision :: ratio_1DOF,ratio_2DOFs
+
 !***********************************************************************
 !
 !             i n i t i a l i z a t i o n    p h a s e
@@ -1246,7 +1250,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 !-------------------------------------------------------------------------------
   call initialize_simulation_domains(any_acoustic,any_elastic,any_poroelastic, &
                                 anisotropic,elastic,poroelastic,porosity,anisotropy,kmato,numat, &
-                                nspec,nspec_allocate,p_sv,ATTENUATION_VISCOELASTIC_SOLID)
+                                nspec,nspec_allocate,p_sv,ATTENUATION_VISCOELASTIC_SOLID,count_nspec_acoustic)
 
   ! allocate memory variables for attenuation
   if(ipass == 1) then
@@ -1643,6 +1647,50 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     call createnum_fast(knods,ibool,shape2D,coorg,nglob,npgeo,nspec,ngnod,myrank,ipass)
   else
     call createnum_slow(knods,ibool,nglob,nspec,ngnod,myrank,ipass)
+  endif
+
+#ifdef USE_MPI
+  call MPI_REDUCE(count_nspec_acoustic, count_nspec_acoustic_total, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+  call MPI_REDUCE(nspec, nspec_total, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+  call MPI_REDUCE(nglob, nglob_total, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+#else
+  count_nspec_acoustic_total = count_nspec_acoustic
+  nspec_total = nspec
+  nglob_total = nglob
+#endif
+  if (myrank == 0 .and. ipass == 1) then
+    write(IOUT,*)
+    write(IOUT,*) 'Total number of elastic/visco/poro elements: ',nspec_total - count_nspec_acoustic_total
+    write(IOUT,*) 'Total number of acoustic elements: ',count_nspec_acoustic_total
+    write(IOUT,*)
+#ifdef USE_MPI
+    write(IOUT,*) 'Approximate total number of grid points in the mesh'
+    write(IOUT,*) '(with a few duplicates coming from MPI buffers): ',nglob_total
+#else
+    write(IOUT,*) 'Exact total number of grid points in the mesh: ',nglob_total
+#endif
+
+! percentage of elements with 2 degrees of freedom per point
+    ratio_2DOFs = (nspec_total - count_nspec_acoustic_total) / dble(nspec_total)
+    ratio_1DOF  = count_nspec_acoustic_total / dble(nspec_total)
+    nb_acoustic_DOFs = nint(nglob_total*ratio_1DOF)
+! elastic elements have two degrees of freedom per point
+    nb_elastic_DOFs  = nint(nglob_total*ratio_2DOFs*2)
+
+    if(p_sv) then
+      write(IOUT,*)
+      write(IOUT,*) 'Approximate number of acoustic degrees of freedom in the mesh: ',nb_acoustic_DOFs
+      write(IOUT,*) 'Approximate number of elastic degrees of freedom in the mesh: ',nb_elastic_DOFs
+      write(IOUT,*) '  (there are 2 degrees of freedom per point for elastic elements)'
+      write(IOUT,*)
+      write(IOUT,*) 'Approximate total number of degrees of freedom in the mesh'
+      write(IOUT,*) '(sum of the two values above): ',nb_acoustic_DOFs + nb_elastic_DOFs
+      write(IOUT,*)
+      write(IOUT,*) ' (for simplicity viscoelastic or poroelastic elements, if any,'
+      write(IOUT,*) '  are counted as elastic in the above three estimates;'
+      write(IOUT,*) '  in reality they have more degrees of freedom)'
+      write(IOUT,*)
+    endif
   endif
 
 ! create a new indirect addressing array to reduce cache misses in memory access in the solver

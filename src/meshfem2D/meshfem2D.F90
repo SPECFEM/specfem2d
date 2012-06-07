@@ -857,19 +857,19 @@ program meshfem2D
 
   endif
 
-  ! beware of fluid solid edges : coupled elements are transfered to the same partition
+  ! beware of fluid solid edges : coupled elements are transferred to the same partition
   if ( ngnod == 9 ) then
      call acoustic_elastic_repartitioning (elmnts_bis, nb_materials, phi, num_material, nproc)
   else
      call acoustic_elastic_repartitioning (elmnts, nb_materials, phi, num_material, nproc)
   endif
-  ! beware of fluid porous edges : coupled elements are transfered to the same partition
+  ! beware of fluid porous edges : coupled elements are transferred to the same partition
   if ( ngnod == 9 ) then
      call acoustic_poro_repartitioning (elmnts_bis, nb_materials, phi, num_material, nproc)
   else
      call acoustic_poro_repartitioning (elmnts, nb_materials, phi, num_material, nproc)
   endif
-  ! beware of porous solid edges : coupled elements are transfered to the same partition
+  ! beware of porous solid edges : coupled elements are transferred to the same partition
   if ( ngnod == 9 ) then
      call poro_elastic_repartitioning (elmnts_bis, nb_materials, phi, num_material, nproc)
   else

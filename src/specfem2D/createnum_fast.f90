@@ -231,11 +231,11 @@
 ! check the numbering obtained
   if(minval(ibool) /= 1 .or. maxval(ibool) /= nglob) call exit_MPI('Error while generating global numbering')
 
-  if(myrank == 0 .and. ipass == 1) then
-    write(IOUT,*)
-    write(IOUT,*) 'Total number of points of the global mesh: ',nglob
-    write(IOUT,*)
-  endif
+! if(myrank == 0 .and. ipass == 1) then
+!   write(IOUT,*)
+!   write(IOUT,*) 'Total number of points of the global mesh on slice 0: ',nglob
+!   write(IOUT,*)
+! endif
 
   end subroutine createnum_fast
 
