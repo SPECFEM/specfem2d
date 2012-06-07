@@ -203,8 +203,9 @@
 ! draw position of the sources with orange crosses
     do i=1,NSOURCES
 
-      do iy = iy_image_color_source(i) - width_cross, iy_image_color_source(i) + width_cross
-        do ix = ix_image_color_source(i) - thickness_cross, ix_image_color_source(i) + thickness_cross
+! avoid edge effects for source or receiver symbols that can be partly outside of the image
+      do iy = max(iy_image_color_source(i) - width_cross,1), min(iy_image_color_source(i) + width_cross,NY)
+        do ix = max(ix_image_color_source(i) - thickness_cross,1), min(ix_image_color_source(i) + thickness_cross,NX)
 ! use orange color
           R = 255
           G = 157
@@ -216,8 +217,9 @@
         enddo
       enddo
 
-      do iy = iy_image_color_source(i) - thickness_cross, iy_image_color_source(i) + thickness_cross
-        do ix = ix_image_color_source(i) - width_cross, ix_image_color_source(i) + width_cross
+! avoid edge effects for source or receiver symbols that can be partly outside of the image
+      do iy = max(iy_image_color_source(i) - thickness_cross,1), min(iy_image_color_source(i) + thickness_cross,NY)
+        do ix = max(ix_image_color_source(i) - width_cross,1), min(ix_image_color_source(i) + width_cross,NX)
 ! use orange color
           R = 255
           G = 157
@@ -233,8 +235,9 @@
 
 ! draw position of the receivers with green squares
     do i=1,nrec
-      do iy = iy_image_color_receiver(i) - size_square, iy_image_color_receiver(i) + size_square
-        do ix = ix_image_color_receiver(i) - size_square, ix_image_color_receiver(i) + size_square
+! avoid edge effects for source or receiver symbols that can be partly outside of the image
+      do iy = max(iy_image_color_receiver(i) - size_square,1), min(iy_image_color_receiver(i) + size_square,NY)
+        do ix = max(ix_image_color_receiver(i) - size_square,1), min(ix_image_color_receiver(i) + size_square,NX)
 ! use dark green color
           R = 30
           G = 180
