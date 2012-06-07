@@ -685,7 +685,7 @@
   integer  :: nb_pixel_loc
   integer, dimension(:), allocatable  :: num_pixel_loc
 
-! wavefield snapshot
+! name of wavefield snapshot file
   character(len=150) :: wavefield_file
 
 #ifdef USE_MPI
