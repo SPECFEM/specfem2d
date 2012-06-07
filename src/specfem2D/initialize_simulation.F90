@@ -114,7 +114,7 @@
 
   subroutine initialize_simulation_domains(any_acoustic,any_elastic,any_poroelastic, &
                                 anisotropic,elastic,poroelastic,porosity,anisotropy,kmato,numat, &
-                                nspec,nspec_allocate,p_sv,ATTENUATION_VISCOELASTIC_SOLID)
+                                nspec,nspec_allocate,p_sv,ATTENUATION_VISCOELASTIC_SOLID,count_nspec_acoustic)
 
   implicit none
   include "constants.h"
@@ -125,7 +125,7 @@
   logical, dimension(nspec) :: elastic
   logical, dimension(nspec) :: poroelastic
 
-  integer :: numat
+  integer :: numat,count_nspec_acoustic
   double precision, dimension(numat) :: porosity
   double precision, dimension(6,numat) :: anisotropy
   integer, dimension(nspec) :: kmato
@@ -146,6 +146,7 @@
   poroelastic(:) = .false.
 
   ! loops over all elements
+  count_nspec_acoustic = 0
   do ispec = 1,nspec
 
     if( nint(porosity(kmato(ispec))) == 1 ) then
@@ -153,6 +154,7 @@
       elastic(ispec) = .false.
       poroelastic(ispec) = .false.
       any_acoustic = .true.
+      count_nspec_acoustic = count_nspec_acoustic + 1
     elseif( porosity(kmato(ispec)) < TINYVAL) then
       ! elastic domain
       elastic(ispec) = .true.
@@ -168,7 +170,7 @@
       any_poroelastic = .true.
     endif
 
-  enddo !do ispec = 1,nspec
+  enddo ! of do ispec = 1,nspec
 
 
   if(.not. p_sv .and. .not. any_elastic) then

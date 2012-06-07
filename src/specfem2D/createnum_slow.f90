@@ -311,14 +311,14 @@
 ! verification de la coherence de la numerotation generee
   if(minval(ibool) /= 1 .or. maxval(ibool) /= nglob) call exit_MPI('Error while generating global numbering')
 
-  if(myrank == 0 .and. ipass == 1) then
-    write(IOUT,*) 'Total number of points of the global mesh: ',nglob,' distributed as follows:'
-    write(IOUT,*)
-    write(IOUT,*) 'Number of interior points: ',nglob-npedge-npcorn
-    write(IOUT,*) 'Number of edge points (without corners): ',npedge
-    write(IOUT,*) 'Number of corner points: ',npcorn
-    write(IOUT,*)
-  endif
+! if(myrank == 0 .and. ipass == 1) then
+!   write(IOUT,*) 'Total number of points of the global mesh on slice 0: ',nglob,' distributed as follows:'
+!   write(IOUT,*)
+!   write(IOUT,*) 'Number of interior points: ',nglob-npedge-npcorn
+!   write(IOUT,*) 'Number of edge points (without corners): ',npedge
+!   write(IOUT,*) 'Number of corner points: ',npcorn
+!   write(IOUT,*)
+! endif
 
   end subroutine createnum_slow
 
