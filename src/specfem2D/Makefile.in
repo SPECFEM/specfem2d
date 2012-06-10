@@ -146,6 +146,7 @@ OBJS_SPECFEM2D = \
 	$O/paco_convolve_fft.o \
 	$O/plotgll.o \
 	$O/plotpost.o \
+	$O/pml_init.o \
 	$O/prepare_absorb.o \
 	$O/prepare_assemble_MPI.o \
 	$O/prepare_color_image.o \
@@ -357,6 +358,9 @@ $O/plotgll.o: ${S}/plotgll.f90 ${SETUP}/constants.h
 $O/plotpost.o: ${S}/plotpost.F90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/plotpost.o ${S}/plotpost.F90
 
+$O/pml_init.o: ${S}/pml_init.F90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/pml_init.o ${S}/pml_init.F90
+  
 $O/prepare_absorb.o: ${S}/prepare_absorb.f90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/prepare_absorb.o ${S}/prepare_absorb.f90
 

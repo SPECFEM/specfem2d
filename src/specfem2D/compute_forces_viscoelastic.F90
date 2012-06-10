@@ -62,7 +62,12 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
      nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,mu_k,kappa_k,&
      e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
      e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_RK, e11_force_RK, e13_force_RK, &
-     stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring)
+     stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring, &
+     is_PML,nspec_PML,npoin_PML,ibool_PML,spec_to_PML,which_PML_elem, &
+     K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
+     rmemory_displ_elastic,rmemory_displ_elastic_corner, &
+     rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz, &
+     rmemory_dux_dx_corner,rmemory_dux_dz_corner,rmemory_duz_dx_corner,rmemory_duz_dz_corner)
 
 
   ! compute forces for the elastic elements
@@ -185,8 +190,9 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
 
   ! material properties of the elastic medium
-  real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic,kappal,cpl,csl,rhol, &
-       lambdal_relaxed_viscoelastic,mul_relaxed_viscoelastic,lambdalplus2mul_relaxed_viscoel
+  real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic, &
+    lambdaplus2mu_unrelaxed_elastic,kappal,cpl,csl,rhol, &
+    lambdal_relaxed_viscoelastic,mul_relaxed_viscoelastic,lambdalplus2mul_relaxed_viscoel
 
   ! for attenuation
   real(kind=CUSTOM_REAL) :: Un,Unp1,tauinv,Sn,Snp1,theta_n,theta_np1,tauinvsquare,tauinvcube,tauinvUn
@@ -209,6 +215,31 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
   integer :: ifirstelem,ilastelem
 
+!CPML coefficients and memory variables
+  integer :: nspec_PML,npoin_PML,iPML,ispec_PML
+  logical, dimension(4,nspec) :: which_PML_elem  
+  logical, dimension(nspec) :: is_PML
+  integer, dimension(nspec) :: spec_to_PML
+  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool_PML
+
+  real(kind=CUSTOM_REAL), dimension(2,3,NGLLX,NGLLZ,nspec_PML) :: rmemory_displ_elastic,rmemory_displ_elastic_corner
+  real(kind=CUSTOM_REAL), dimension(2,NGLLX,NGLLZ,nspec_PML) :: &
+    rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz,&
+    rmemory_dux_dx_corner,rmemory_dux_dz_corner,rmemory_duz_dx_corner,rmemory_duz_dz_corner
+  real(kind=CUSTOM_REAL), dimension(npoin_PML) :: K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
+
+  real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLZ,nspec_PML) :: accel_elastic_PML, accel_elastic_PML_corner
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) ::PML_dux_dxl,PML_dux_dzl,PML_duz_dxl,PML_duz_dzl,&
+                           PML_dux_dxl_new,PML_dux_dzl_new,PML_duz_dxl_new,PML_duz_dzl_new
+  real(kind=CUSTOM_REAL) :: coef0_x, coef1_x, coef2_x, coef0_z, coef1_z, coef2_z,bb !,aa
+
+  real(kind=CUSTOM_REAL) :: A0, A1, A2, A3, A4, A5, A6, A7, A8 !, A9, A10
+
+  real(kind=CUSTOM_REAL) :: dux_dxi_new,dux_dgamma_new,duz_dxi_new,duz_dgamma_new !duy_dxi_new,duy_dgamma_new
+  real(kind=CUSTOM_REAL) :: dux_dxl_new,dux_dzl_new,duz_dxl_new,duz_dzl_new  
+  real(kind=CUSTOM_REAL), dimension(3,nglob) :: displ_elastic_new
+
+
 ! this to avoid a warning at execution time about an undefined variable being used
 ! for the SH component in the case of a P-SV calculation, and vice versa
   sigma_xx = 0
@@ -216,6 +247,21 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   sigma_xz = 0
   sigma_zy = 0
   sigma_zz = 0
+
+  if( PML_BOUNDARY_CONDITIONS ) then
+    accel_elastic_PML = 0._CUSTOM_REAL
+    accel_elastic_PML_corner = 0._CUSTOM_REAL
+    PML_dux_dxl = 0._CUSTOM_REAL
+    PML_dux_dzl = 0._CUSTOM_REAL
+    PML_duz_dxl = 0._CUSTOM_REAL
+    PML_duz_dzl = 0._CUSTOM_REAL
+    PML_dux_dxl_new = 0._CUSTOM_REAL
+    PML_dux_dzl_new = 0._CUSTOM_REAL
+    PML_duz_dxl_new = 0._CUSTOM_REAL
+    PML_duz_dzl_new = 0._CUSTOM_REAL
+    displ_elastic_new = displ_elastic + deltat * veloc_elastic
+  endif
+
 
   ! compute Grad(displ_elastic) at time step n for attenuation
   if(ATTENUATION_VISCOELASTIC_SOLID) then
@@ -323,6 +369,364 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
               duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
               duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
+              if( PML_BOUNDARY_CONDITIONS ) then
+                if(is_PML(ispec))then
+                  ! derivative along x and along z
+                  dux_dxi_new = ZERO
+                  duz_dxi_new = ZERO
+                  dux_dgamma_new = ZERO
+                  duz_dgamma_new = ZERO
+
+                  ! first double loop over GLL points to compute and store gradients
+                  ! we can merge the two loops because NGLLX == NGLLZ
+                  do k = 1,NGLLX
+                    dux_dxi_new = dux_dxi_new + displ_elastic_new(1,ibool(k,j,ispec))*hprime_xx(i,k)
+                    duz_dxi_new = duz_dxi_new + displ_elastic_new(3,ibool(k,j,ispec))*hprime_xx(i,k)
+                    dux_dgamma_new = dux_dgamma_new + displ_elastic_new(1,ibool(i,k,ispec))*hprime_zz(j,k)
+                    duz_dgamma_new = duz_dgamma_new + displ_elastic_new(3,ibool(i,k,ispec))*hprime_zz(j,k)
+                  enddo
+
+                  xixl = xix(i,j,ispec)
+                  xizl = xiz(i,j,ispec)
+                  gammaxl = gammax(i,j,ispec)
+                  gammazl = gammaz(i,j,ispec)
+
+                  ! derivatives of displacement
+                  dux_dxl_new = dux_dxi_new*xixl + dux_dgamma_new*gammaxl
+                  dux_dzl_new = dux_dxi_new*xizl + dux_dgamma_new*gammazl
+                  duz_dxl_new = duz_dxi_new*xixl + duz_dgamma_new*gammaxl
+                  duz_dzl_new = duz_dxi_new*xizl + duz_dgamma_new*gammazl
+                endif
+              endif
+
+              iglob = ibool(i,j,ispec)
+
+              if( PML_BOUNDARY_CONDITIONS ) then
+                if( is_PML(ispec) ) then
+                  ispec_PML=spec_to_PML(ispec)
+                  iPML=ibool_PML(i,j,ispec) 
+
+!------------------------------------------------------------------------------
+!---------------------------- LEFT & RIGHT ------------------------------------
+!------------------------------------------------------------------------------
+                  if ( which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec) ) then 
+
+                    !---------------------- A8 and A6 --------------------------        
+                    A8 = - d_x_store(iPML) / ( k_x_store(iPML) ** 2 )
+                    A6 = 0.d0                   
+
+                    bb = d_x_store(iPML) / k_x_store(iPML) + alpha_x_store(iPML)
+                    coef0_x = exp(-bb * deltat)         
+                    if ( abs(bb) > 1.d-3 ) then 
+                      coef1_x = (1.d0 - exp(-bb * deltat / 2.d0)) * A8 / bb
+                      coef2_x = (1.d0 - exp(-bb* deltat / 2.d0)) * exp(-bb * deltat / 2.d0) * A8 / bb
+                    else
+                      coef1_x = deltat / 2.0d0 * A8
+                      coef2_x = deltat * A8
+                    end if   
+
+                    PML_dux_dxl(i,j,ispec_PML) = dux_dxl 
+                    PML_dux_dxl_new(i,j,ispec_PML) = dux_dxl_new 
+
+                    rmemory_dux_dx(1,i,j,ispec_PML) = 0.d0
+                    !! DK DK new from Wang eq (21)
+                    rmemory_dux_dx(2,i,j,ispec_PML) = coef0_x*rmemory_dux_dx(2,i,j,ispec_PML) &
+                    + PML_dux_dxl_new(i,j,ispec_PML) * coef1_x + PML_dux_dxl(i,j,ispec_PML) * coef2_x
+
+                    PML_duz_dxl(i,j,ispec_PML)=duz_dxl   !!!when in corner this is no need
+                    PML_duz_dxl_new(i,j,ispec_PML)=duz_dxl_new   !!!when in corner this is no need
+
+                    rmemory_duz_dx(1,i,j,ispec_PML) = 0.d0
+                    !! DK DK new from Wang eq (21)
+                    rmemory_duz_dx(2,i,j,ispec_PML) = coef0_x*rmemory_duz_dx(2,i,j,ispec_PML) &
+                    + PML_duz_dxl_new(i,j,ispec_PML) * coef1_x + PML_duz_dxl(i,j,ispec_PML) * coef2_x
+
+                    !---------------------- A5 and A7 --------------------------        
+                    A5 = d_x_store(iPML )
+                    A7 = 0.d0                   
+
+                    bb = alpha_x_store(iPML)
+                    coef0_x = exp(- bb * deltat) 
+                   
+                    if ( abs( bb ) > 1.d-3) then
+                      coef1_x = (1.0d0 - exp(- bb * deltat / 2.0d0) ) * A5 / bb 
+                      coef2_x = (1.0d0 - exp(- bb * deltat / 2.0d0) ) * exp(- bb * deltat / 2.0d0) * &
+                             A5 / bb
+                    else
+                      coef1_x = deltat / 2.0d0 * A5 
+                      coef2_x = deltat * A5 ! Rene Matzen
+                    end if 
+
+                    PML_dux_dzl(i,j,ispec_PML)=dux_dzl   !!!when in corner this is no need
+                    PML_dux_dzl_new(i,j,ispec_PML)=dux_dzl_new   !!!when in corner this is no need
+                   
+                    !! DK DK new from Wang eq (21)
+                    rmemory_dux_dz(1,i,j,ispec_PML) = coef0_x * rmemory_dux_dz(1,i,j,ispec_PML) &
+                    + PML_dux_dzl_new(i,j,ispec_PML) *coef1_x + PML_dux_dzl(i,j,ispec_PML) * coef2_x
+                    rmemory_dux_dz(2,i,j,ispec_PML) = 0.d0
+
+                    PML_duz_dzl(i,j,ispec_PML)=duz_dzl  !!!when in corner this is no need
+                    PML_duz_dzl_new(i,j,ispec_PML)=duz_dzl_new  !!!when in corner this is no need
+
+                    !! DK DK new from Wang eq (21)
+                    rmemory_duz_dz(1,i,j,ispec_PML) = coef0_x * rmemory_duz_dz(1,i,j,ispec_PML) &
+                    + PML_duz_dzl_new(i,j,ispec_PML) *coef1_x + PML_duz_dzl(i,j,ispec_PML) * coef2_x
+                    rmemory_duz_dz(2,i,j,ispec_PML) = 0.d0
+
+                    dux_dxl = PML_dux_dxl(i,j,ispec_PML)  + rmemory_dux_dx(1,i,j,ispec_PML) + rmemory_dux_dx(2,i,j,ispec_PML)  
+                    duz_dxl = PML_duz_dxl(i,j,ispec_PML)  + rmemory_duz_dx(1,i,j,ispec_PML) + rmemory_duz_dx(2,i,j,ispec_PML)  
+                    dux_dzl = PML_dux_dzl(i,j,ispec_PML)  + rmemory_dux_dz(1,i,j,ispec_PML) + rmemory_dux_dz(2,i,j,ispec_PML)  
+                    duz_dzl = PML_duz_dzl(i,j,ispec_PML)  + rmemory_duz_dz(1,i,j,ispec_PML) + rmemory_duz_dz(2,i,j,ispec_PML)   
+
+!------------------------------------------------------------------------------
+!---------------------------- CORNER ------------------------------------------
+!------------------------------------------------------------------------------
+                    if ( which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec) ) then
+                      ispec_PML=spec_to_PML(ispec)
+                      iPML=ibool_PML(i,j,ispec)
+
+                      !----------------------- A7 ------------------------------        
+                      if ( abs( alpha_z_store(iPML) ) < 1.d-3 .AND. &
+                          abs( d_z_store(iPML) )     < 1.d-3       &
+                        ) then
+                        A7 = 0.d0
+                      elseif ( abs( alpha_x_store(iPML) ) < 1.d-3 .AND. &
+                          abs( d_x_store(iPML) )     < 1.d-3       &
+                        ) then
+                        A7 = d_z_store(iPML)
+                      elseif ( abs( alpha_x_store(iPML) - alpha_z_store(iPML) ) < 1.d-3 .AND. &
+                          abs( d_x_store(iPML) - d_z_store(iPML) )         < 1.d-3 .AND. &
+                          abs( k_x_store(iPML) - k_z_store(iPML) )         < 1.d-3       &
+                        ) then
+                        A7 = 0.d0
+                      else
+                        A7 = d_z_store(iPML) * ( alpha_x_store(iPML) - alpha_z_store(iPML) ) &
+                           / ( k_x_store(iPML) * ( alpha_x_store(iPML) - alpha_z_store(iPML) ) + d_x_store(iPML) )
+                      end if
+                      bb = alpha_z_store(iPML)
+                      coef0_x = exp(- bb * deltat)
+
+                      if ( abs(bb) > 1.d-3 ) then
+                        coef1_x = ( 1 - exp(- bb * deltat / 2) ) * A7 / bb
+                        coef2_x = ( 1 - exp(- bb * deltat / 2) ) * exp(- bb * deltat / 2) * A7 / bb
+                      else
+                        coef1_x = deltat / 2.0d0 * A7
+                        coef2_x = deltat * A7 ! Rene Matzen
+                      end if
+                      
+                      !! DK DK new from Wang eq (21)
+                      rmemory_dux_dx_corner(1,i,j,ispec_PML) = coef0_x*rmemory_dux_dx_corner(1,i,j,ispec_PML) &
+                      + PML_dux_dxl_new(i,j,ispec_PML) * coef1_x + PML_dux_dxl(i,j,ispec_PML) * coef2_x
+
+                      !! DK DK new from Wang eq (21)
+                      rmemory_duz_dx_corner(1,i,j,ispec_PML) = coef0_x*rmemory_duz_dx_corner(1,i,j,ispec_PML) &
+                      + PML_duz_dxl_new(i,j,ispec_PML) * coef1_x + PML_duz_dxl(i,j,ispec_PML) * coef2_x
+
+                      !---------------------------- A8 ----------------------------        
+                      if ( abs( alpha_z_store(iPML) ) < 1.d-3 .AND. &
+                          abs( d_z_store(iPML) )     < 1.d-3       &
+                        ) then
+                        A8 = - d_x_store(iPML) / ( k_x_store(iPML) ** 2 )  
+                      elseif ( abs( alpha_x_store(iPML) ) < 1.d-3 .AND. &
+                          abs( d_x_store(iPML) )     < 1.d-3       &
+                        ) then
+                        A8 = 0.d0
+                      elseif ( abs( alpha_x_store(iPML) - alpha_z_store(iPML) ) < 1.d-3 .AND. &
+                          abs( d_x_store(iPML) - d_z_store(iPML) )         < 1.d-3 .AND. &
+                          abs( k_x_store(iPML) - k_z_store(iPML) )         < 1.d-3       &
+                        ) then
+                        A8 = 0.d0
+                      else
+                        A8 = d_x_store(iPML) * &
+                             (  k_x_store(iPML) * k_z_store(iPML) * ( alpha_z_store(iPML) - alpha_x_store(iPML) ) &
+                              + k_x_store(iPML) * d_z_store(iPML) - k_z_store(iPML) * d_x_store(iPML) &
+                             ) &
+                           / (   k_x_store(iPML)**2 * (  k_x_store(iPML) * ( alpha_x_store(iPML) - alpha_z_store(iPML) ) &  
+                               + d_x_store(iPML) ) &
+                             )                        
+                      end if
+                      bb = d_x_store(iPML) / k_x_store(iPML) + alpha_x_store(iPML)  
+                      coef0_z = exp(- bb * deltat)
+                   
+                      if ( abs(bb) > 1.d-3 ) then
+                        coef1_z = ( 1.d0 - exp(- bb * deltat / 2.d0) ) * A8 / bb
+                        coef2_z = ( 1.d0 - exp(- bb * deltat / 2.d0) ) * exp(- bb * deltat / 2.d0) * A8 / bb
+                      else
+                        coef1_z = deltat / 2.0d0 * A8
+                        coef2_z = deltat * A8 ! Rene Matzen
+                      end if 
+
+                      !! DK DK new from Wang eq (21)
+                      rmemory_dux_dx_corner(2,i,j,ispec_PML) = coef0_z*rmemory_dux_dx_corner(2,i,j,ispec_PML) &
+                      + PML_dux_dxl_new(i,j,ispec_PML) * coef1_z + PML_dux_dxl(i,j,ispec_PML) * coef2_z
+
+                      !! DK DK new from Wang eq (21)
+                      rmemory_duz_dx_corner(2,i,j,ispec_PML) = coef0_z*rmemory_duz_dx_corner(2,i,j,ispec_PML) &
+                      + PML_duz_dxl_new(i,j,ispec_PML) * coef1_z + PML_duz_dxl(i,j,ispec_PML) * coef2_z
+                                         
+                      !---------------------------- A5 ----------------------------        
+                      if ( abs( alpha_z_store(iPML) ) < 1.d-3 .AND. &
+                          abs( d_z_store(iPML) )     < 1.d-3       &
+                        ) then
+                        A5 = d_x_store(iPML)
+                      elseif ( abs( alpha_x_store(iPML) ) < 1.d-3 .AND. &
+                          abs( d_x_store(iPML) )     < 1.d-3       &
+                        ) then            
+                        A5 = 0.d0
+                      elseif ( abs( alpha_x_store(iPML) - alpha_z_store(iPML) ) < 1.d-3 .AND. &
+                          abs( d_x_store(iPML) - d_z_store(iPML) )         < 1.d-3 .AND. &
+                          abs( k_x_store(iPML) - k_z_store(iPML) )         < 1.d-3       &
+                        ) then
+                        A5 = 0.d0
+                      else
+                        A5 = d_x_store(iPML) * ( alpha_z_store(iPML) - alpha_x_store(iPML) ) &
+                           / ( k_z_store(iPML) * ( alpha_z_store(iPML) - alpha_x_store(iPML) ) + d_z_store(iPML) )
+                      end if
+                      bb = alpha_x_store(iPML)
+                      coef0_x = exp(- bb * deltat)
+
+                      if ( abs(bb) > 1.d-3 ) then
+                        coef1_x = ( 1 - exp(- bb * deltat / 2) ) * A5 / bb
+                        coef2_x = ( 1 - exp(- bb * deltat / 2) ) * exp(- bb * deltat / 2) * A5 / bb
+                      else
+                        coef1_x = deltat / 2.0d0 * A5
+                        coef2_x = deltat * A5 ! Rene Matzen
+                      end if 
+
+                      !! DK DK new from Wang eq (21)
+                      rmemory_dux_dz_corner(1,i,j,ispec_PML) = coef0_x * rmemory_dux_dz_corner(1,i,j,ispec_PML) &
+                      + PML_dux_dzl_new(i,j,ispec_PML) *coef1_x + PML_dux_dzl(i,j,ispec_PML) * coef2_x
+
+                      !! DK DK new from Wang eq (21)
+                      rmemory_duz_dz_corner(1,i,j,ispec_PML) = coef0_x * rmemory_duz_dz_corner(1,i,j,ispec_PML) &
+                      + PML_duz_dzl_new(i,j,ispec_PML) *coef1_x + PML_duz_dzl(i,j,ispec_PML) * coef2_x
+
+                      !---------------------------- A6 ----------------------------        
+                      if ( abs( alpha_z_store(iPML) ) < 1.d-3 .AND. &
+                          abs( d_z_store(iPML) )     < 1.d-3       &
+                        ) then
+                        A6 = 0.d0
+                      elseif ( abs( alpha_x_store(iPML) ) < 1.d-3 .AND. &
+                          abs( d_x_store(iPML) )     < 1.d-3       &
+                         ) then
+                         A6 = - d_z_store(iPML) / ( k_z_store(iPML) ** 2 )  
+                      elseif ( abs( alpha_x_store(iPML) - alpha_z_store(iPML) ) < 1.d-3 .AND. &
+                           abs( d_x_store(iPML) - d_z_store(iPML) )         < 1.d-3 .AND. &
+                           abs( k_x_store(iPML) - k_z_store(iPML) )         < 1.d-3       &
+                         ) then
+                         A6 = 0.d0
+                      else
+                         A6 = d_z_store(iPML) * &
+                              (  k_z_store(iPML) * k_x_store(iPML) * ( alpha_x_store(iPML) - alpha_z_store(iPML) ) &
+                               + k_z_store(iPML) * d_x_store(iPML) - k_x_store(iPML) * d_z_store(iPML) &
+                              ) &
+                            / (   k_z_store(iPML)**2 * (  k_z_store(iPML) * ( alpha_z_store(iPML) - alpha_x_store(iPML) ) &  
+                               + d_z_store(iPML) ) &
+                              )                        
+                      end if
+                      bb = d_z_store(iPML) / k_z_store(iPML) + alpha_z_store(iPML)  
+                      coef0_z = exp(- bb * deltat)
+                   
+                      if ( abs(bb) > 1.d-3 ) then
+                        coef1_z = ( 1.d0 - exp(- bb * deltat / 2.d0) ) * A6 / bb
+                        coef2_z = ( 1.d0 - exp(- bb * deltat / 2.d0) ) * exp(- bb * deltat / 2.d0) * A6 / bb
+                      else
+                        coef1_z = deltat / 2.0d0 * A6
+                        coef2_z = deltat * A6 ! Rene Matzen
+                      end if 
+                         
+                      !! DK DK new from Wang eq (21)
+                      rmemory_dux_dz_corner(2,i,j,ispec_PML) = coef0_z * rmemory_dux_dz_corner(2,i,j,ispec_PML) &
+                      + PML_dux_dzl_new(i,j,ispec_PML) *coef1_z + PML_dux_dzl(i,j,ispec_PML) * coef2_z
+
+                      !! DK DK new from Wang eq (21)
+                      rmemory_duz_dz_corner(2,i,j,ispec_PML) = coef0_z * rmemory_duz_dz_corner(2,i,j,ispec_PML) &
+                      + PML_duz_dzl_new(i,j,ispec_PML) *coef1_z + PML_duz_dzl(i,j,ispec_PML) * coef2_z
+
+                      dux_dxl = PML_dux_dxl(i,j,ispec_PML)  + rmemory_dux_dx_corner(1,i,j,ispec_PML) +&
+                           rmemory_dux_dx_corner(2,i,j,ispec_PML)  
+                      duz_dxl = PML_duz_dxl(i,j,ispec_PML)  + rmemory_duz_dx_corner(1,i,j,ispec_PML) +&
+                           rmemory_duz_dx_corner(2,i,j,ispec_PML)  
+                      dux_dzl = PML_dux_dzl(i,j,ispec_PML)  + rmemory_dux_dz_corner(1,i,j,ispec_PML) + &
+                           rmemory_dux_dz_corner(2,i,j,ispec_PML)  
+                      duz_dzl = PML_duz_dzl(i,j,ispec_PML)  + rmemory_duz_dz_corner(1,i,j,ispec_PML) + &
+                           rmemory_duz_dz_corner(2,i,j,ispec_PML)  
+                    endif
+
+                  else
+!------------------------------------------------------------------------------
+!---------------------------- TOP & BOTTOM ------------------------------------
+!------------------------------------------------------------------------------
+
+                    !---------------------- A5 and A7 --------------------------        
+                    A7 = d_z_store(iPML )
+                    A5 = 0.d0                   
+                    bb = alpha_z_store(iPML)
+                    coef0_x = exp(- bb * deltat) 
+                   
+                    if ( abs( bb ) > 1.d-3) then
+                      coef1_x = (1.0d0 - exp(- bb * deltat / 2.0d0) ) * A7 / bb 
+                      coef2_x = (1.0d0 - exp(- bb * deltat / 2.0d0) ) * exp(- bb * deltat / 2.0d0) * &
+                             A7 / bb
+                    else
+                      coef1_x = deltat / 2.0d0 * A7 
+                      coef2_x = deltat * A7 ! Rene Matzen
+                    end if 
+          
+                    PML_dux_dxl(i,j,ispec_PML) = dux_dxl  !!!when in corner this is no need
+                    PML_dux_dxl_new(i,j,ispec_PML) = dux_dxl_new  !!!when in corner this is no need
+
+                    !! DK DK new from Wang eq (21)
+                    rmemory_dux_dx(1,i,j,ispec_PML) = coef0_x*rmemory_dux_dx(1,i,j,ispec_PML) &
+                    + PML_dux_dxl_new(i,j,ispec_PML) * coef1_x + PML_dux_dxl(i,j,ispec_PML) * coef2_x
+                    rmemory_dux_dx(2,i,j,ispec_PML) = 0.d0
+
+                    PML_duz_dxl(i,j,ispec_PML)=duz_dxl   !!!when in corner this is no need
+                    PML_duz_dxl_new(i,j,ispec_PML)=duz_dxl_new   !!!when in corner this is no need
+
+                    !! DK DK new from Wang eq (21)
+                    rmemory_duz_dx(1,i,j,ispec_PML) = coef0_x*rmemory_duz_dx(1,i,j,ispec_PML) &
+                    + PML_duz_dxl_new(i,j,ispec_PML) * coef1_x + PML_duz_dxl(i,j,ispec_PML) * coef2_x
+                    rmemory_duz_dx(2,i,j,ispec_PML) = 0.d0
+
+                    !---------------------- A8 and A6 --------------------------        
+                    A6 = - d_z_store(iPML) / ( k_z_store(iPML) ** 2 )
+                    A8 = 0.d0                   
+                    bb = d_z_store(iPML) / k_z_store(iPML) + alpha_z_store(iPML)
+                    coef0_x = exp(-bb * deltat)         
+                    if ( abs(bb) > 1.d-3 ) then 
+                      coef1_x = (1.d0 - exp(-bb * deltat / 2.d0)) * A6 / bb
+                      coef2_x = (1.d0 - exp(-bb* deltat / 2.d0)) * exp(-bb * deltat / 2.d0) * A6 / bb
+                    else
+                      coef1_x = deltat / 2.0d0 * A6
+                      coef2_x = deltat * A6
+                    end if   
+
+                    PML_dux_dzl(i,j,ispec_PML)=dux_dzl   !!!when in corner this is no need
+                    PML_dux_dzl_new(i,j,ispec_PML)=dux_dzl_new   !!!when in corner this is no need
+
+                    rmemory_dux_dz(1,i,j,ispec_PML) = 0.d0
+                    !! DK DK new from Wang eq (21)
+                    rmemory_dux_dz(2,i,j,ispec_PML) = coef0_x * rmemory_dux_dz(2,i,j,ispec_PML) &
+                    + PML_dux_dzl_new(i,j,ispec_PML) *coef1_x + PML_dux_dzl(i,j,ispec_PML) * coef2_x
+
+                    PML_duz_dzl(i,j,ispec_PML)=duz_dzl  !!!when in corner this is no need
+                    PML_duz_dzl_new(i,j,ispec_PML)=duz_dzl_new  !!!when in corner this is no need
+
+                    rmemory_duz_dz(1,i,j,ispec_PML) = 0.d0
+                    !! DK DK new from Wang eq (21)
+                    rmemory_duz_dz(2,i,j,ispec_PML) = coef0_x * rmemory_duz_dz(2,i,j,ispec_PML) &
+                    + PML_duz_dzl_new(i,j,ispec_PML) *coef1_x + PML_duz_dzl(i,j,ispec_PML) * coef2_x
+
+                    dux_dxl = dux_dxl  + rmemory_dux_dx(1,i,j,ispec_PML) + rmemory_dux_dx(2,i,j,ispec_PML)  
+                    duz_dxl = duz_dxl  + rmemory_duz_dx(1,i,j,ispec_PML) + rmemory_duz_dx(2,i,j,ispec_PML)  
+                    dux_dzl = dux_dzl  + rmemory_dux_dz(1,i,j,ispec_PML) + rmemory_dux_dz(2,i,j,ispec_PML)  
+                    duz_dzl = duz_dzl  + rmemory_duz_dz(1,i,j,ispec_PML) + rmemory_duz_dz(2,i,j,ispec_PML)  
+             
+                  endif
+                endif
+              endif ! PML_BOUNDARY_CONDITIONS
+
               if(SIMULATION_TYPE == 2) then ! Adjoint calculation, backward wavefield
                  b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
                  b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
@@ -390,12 +794,24 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                  sigma_xz = mul_unrelaxed_elastic*(duz_dxl + dux_dzl)
                  sigma_zy = mul_unrelaxed_elastic*duy_dzl
                  sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
+                 sigma_zx = sigma_xz
 
 !! DK DK added this for Guenneau, March 2012
 #ifdef USE_GUENNEAU
   include "include_stiffness_Guenneau.f90"
 #endif
 !! DK DK added this for Guenneau, March 2012
+
+                 if( PML_BOUNDARY_CONDITIONS ) then
+                   if(is_PML(ispec)) then
+                     ispec_PML=spec_to_PML(ispec)
+                     iPML=ibool_PML(i,j,ispec)
+                     sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*PML_duz_dzl(i,j,ispec_PML)
+                     sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*PML_dux_dxl(i,j,ispec_PML)
+                     sigma_zx = mul_unrelaxed_elastic * (PML_duz_dxl(i,j,ispec_PML) + dux_dzl)
+                     sigma_xz = mul_unrelaxed_elastic * (PML_dux_dzl(i,j,ispec_PML) + duz_dxl)
+                   endif
+                 endif
 
                  if(SIMULATION_TYPE == 2) then ! Adjoint calculation, backward wavefield
                     b_sigma_xx = lambdaplus2mu_unrelaxed_elastic*b_dux_dxl + lambdal_unrelaxed_elastic*b_duz_dzl
@@ -458,7 +874,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
               jacobianl = jacobian(i,j,ispec)
 
 ! the stress tensor is symmetric by default, unless defined otherwise
-#ifndef USE_GUENNEAU
+#ifdef USE_GUENNEAU
               sigma_zx = sigma_xz
 #endif
 
@@ -485,6 +901,243 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
            enddo
         enddo
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        ! PML
+        if( PML_BOUNDARY_CONDITIONS ) then
+          if(is_PML(ispec)) then
+            ! first double loop over GLL points to compute and store gradients
+            do j = 1,NGLLZ           
+              do i = 1,NGLLX            
+                if ( assign_external_model) then
+                 rhol = rhoext(i,j,ispec)
+                else
+                 rhol = density(1,kmato(ispec))
+                endif
+
+                if ( is_PML( ispec ) ) then
+                  iPML=ibool_PML(i,j,ispec)
+                  iglob=ibool(i,j,ispec)
+                
+!------------------------------------------------------------------------------
+!---------------------------- LEFT & RIGHT ------------------------------------
+!------------------------------------------------------------------------------
+                  if ( which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec) ) then   
+                    
+                    ispec_PML=spec_to_PML(ispec)
+                    iPML=ibool_PML(i,j,ispec)
+                    iglob=ibool(i,j,ispec)
+
+                    !---------------------- A3 and A4 --------------------------        
+                    A3 = d_x_store(iPML ) * alpha_x_store(iPML) ** 2
+                    A4 = 0.d0                   
+                    bb = alpha_x_store(iPML)
+                    coef0_x = exp(- bb * deltat) 
+                   
+                    if ( abs( bb ) > 1.d-3) then
+                       coef1_x = (1.0d0 - exp(- bb * deltat / 2.0d0) ) * A3 / bb 
+                       coef2_x = (1.0d0 - exp(- bb * deltat / 2.0d0) ) * exp(- bb * deltat / 2.0d0) * &
+                             A3 / bb
+                    else
+                       coef1_x = deltat / 2.0d0 * A3 
+                       coef2_x = deltat * A3 ! Rene Matzen
+                    end if 
+                              
+                    rmemory_displ_elastic(1,1,i,j,ispec_PML)=coef0_x * rmemory_displ_elastic(1,1,i,j,ispec_PML) &
+                    + displ_elastic_new(1,iglob) * coef1_x + displ_elastic(1,iglob) * coef2_x 
+                    rmemory_displ_elastic(2,1,i,j,ispec_PML)=0.0   
+
+                    rmemory_displ_elastic(1,3,i,j,ispec_PML)=coef0_x * rmemory_displ_elastic(1,3,i,j,ispec_PML) &
+                    + displ_elastic_new(3,iglob) * coef1_x + displ_elastic(3,iglob) * coef2_x 
+                    rmemory_displ_elastic(2,3,i,j,ispec_PML)=0.0 
+
+!------------------------------------------------------------------------------
+!-------------------------------- CORNER --------------------------------------
+!------------------------------------------------------------------------------
+                    if ( which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec) ) then
+                       ispec_PML=spec_to_PML(ispec)
+                       iPML=ibool_PML(i,j,ispec)
+
+                       !---------------------------- A3 ----------------------------        
+                       if ( abs( alpha_z_store(iPML) ) < 1.d-3 .AND. &
+                            abs( d_z_store(iPML) )     < 1.d-3       &
+                          ) then
+                          A3 = d_x_store(iPML) * alpha_x_store(iPML) ** 2
+                       elseif ( abs( alpha_x_store(iPML) ) < 1.d-3 .AND. &
+                            abs( d_x_store(iPML) )     < 1.d-3       &
+                          ) then            
+                          A3 = 0.d0
+                       elseif ( abs( alpha_x_store(iPML) - alpha_z_store(iPML) ) < 1.d-3 .AND. &
+                            abs( d_x_store(iPML) - d_z_store(iPML) )         < 1.d-3 .AND. &
+                            abs( k_x_store(iPML) - k_z_store(iPML) )         < 1.d-3       &
+                          ) then
+                          A3 = 0.d0
+                       else
+                          A3 = alpha_x_store(iPML) ** 2 * d_x_store(iPML) * &
+                               ( k_z_store(iPML) * ( alpha_x_store(iPML) - alpha_z_store(iPML) ) - d_z_store(iPML) ) &
+                             / ( alpha_x_store(iPML) - alpha_z_store(iPML) )
+                       end if
+                       bb = alpha_x_store(iPML)
+                       coef0_x = exp(- bb * deltat)
+
+                       if ( abs(bb) > 1.d-3 ) then
+                          coef1_x = ( 1 - exp(- bb * deltat / 2) ) * A3 / bb
+                          coef2_x = ( 1 - exp(- bb * deltat / 2) ) * exp(- bb * deltat / 2) * A3 / bb
+                       else
+                          coef1_x = deltat / 2.0d0 * A3
+                          coef2_x = deltat * A3 ! Rene Matzen
+                       end if 
+
+                       rmemory_displ_elastic_corner(1,1,i,j,ispec_PML)= &
+                        coef0_x * rmemory_displ_elastic_corner(1,1,i,j,ispec_PML) &
+                        + displ_elastic_new(1,iglob) * coef1_x + displ_elastic(1,iglob) * coef2_x
+                       rmemory_displ_elastic_corner(1,3,i,j,ispec_PML)= &
+                        coef0_x * rmemory_displ_elastic_corner(1,3,i,j,ispec_PML) &
+                        + displ_elastic_new(3,iglob) * coef1_x + displ_elastic(3,iglob) * coef2_x  
+
+
+                       !---------------------------- A4 ----------------------------        
+                       if ( abs( alpha_z_store(iPML) ) < 1.d-3 .AND. &
+                            abs( d_z_store(iPML) )     < 1.d-3       &
+                          ) then
+                          A4 = 0.d0
+                       elseif ( abs( alpha_x_store(iPML) ) < 1.d-3 .AND. &
+                             abs( d_x_store(iPML) )     < 1.d-3       &
+                           ) then            
+                          A4 = d_z_store(iPML) * alpha_z_store(iPML) ** 2
+                       elseif ( abs( alpha_x_store(iPML) - alpha_z_store(iPML) ) < 1.d-3 .AND. &
+                             abs( d_x_store(iPML) - d_z_store(iPML) )         < 1.d-3 .AND. &
+                             abs( k_x_store(iPML) - k_z_store(iPML) )         < 1.d-3       &
+                           ) then
+                          A4 = 0.d0
+                       else
+                          A4 = alpha_z_store(iPML) ** 2 * d_z_store(iPML) * &
+                               ( k_x_store(iPML) * ( alpha_z_store(iPML) - alpha_x_store(iPML) ) - d_x_store(iPML) ) &
+                             / ( alpha_z_store(iPML) - alpha_x_store(iPML) )
+                       end if
+                       bb = alpha_z_store(iPML)
+                       coef0_x = exp(- bb * deltat)
+
+                       if ( abs(bb) > 1.d-3 ) then
+                          coef1_x = ( 1 - exp(- bb * deltat / 2) ) * A4 / bb
+                          coef2_x = ( 1 - exp(- bb * deltat / 2) ) * exp(- bb * deltat / 2) * A4 / bb
+                       else
+                          coef1_x = deltat / 2.0d0 * A4
+                          coef2_x = deltat * A4 ! Rene Matzen
+                       end if 
+                  
+                       rmemory_displ_elastic_corner(2,1,i,j,ispec_PML)= &
+                        coef0_x * rmemory_displ_elastic_corner(2,1,i,j,ispec_PML) &
+                        + displ_elastic_new(1,iglob) * coef1_x + displ_elastic(1,iglob) * coef2_x    
+                       rmemory_displ_elastic_corner(2,3,i,j,ispec_PML)= &
+                        coef0_x * rmemory_displ_elastic_corner(2,3,i,j,ispec_PML) &
+                        + displ_elastic_new(3,iglob) * coef1_x + displ_elastic(3,iglob) * coef2_x 
+
+                    endif
+
+                  else
+!------------------------------------------------------------------------------
+!-------------------------------- TOP & BOTTOM --------------------------------
+!------------------------------------------------------------------------------
+                    ispec_PML=spec_to_PML(ispec)
+                    iPML=ibool_PML(i,j,ispec)
+                    iglob=ibool(i,j,ispec)
+
+                    !---------------------- A3 and A4 ----------------------------        
+                    A4 = d_z_store(iPML ) * alpha_z_store(iPML) ** 2
+                    A3 = 0.d0                   
+                    bb = alpha_z_store(iPML)
+                    coef0_x = exp(- bb * deltat) 
+                   
+                    if ( abs( bb ) > 1.d-3) then
+                       coef1_x = (1.0d0 - exp(- bb * deltat / 2.0d0) ) * A4 / bb 
+                       coef2_x = (1.0d0 - exp(- bb * deltat / 2.0d0) ) * exp(- bb * deltat / 2.0d0) * &
+                              A4 / bb
+                    else
+                       coef1_x = deltat / 2.0d0 * A4
+                       coef2_x = deltat * A4 ! Rene Matzen
+                    end if 
+                       
+                    rmemory_displ_elastic(1,1,i,j,ispec_PML)=0.d0  
+                    rmemory_displ_elastic(2,1,i,j,ispec_PML)=coef0_x * rmemory_displ_elastic(2,1,i,j,ispec_PML) &
+                    + displ_elastic_new(1,iglob) * coef1_x + displ_elastic(1,iglob) * coef2_x    
+
+                    rmemory_displ_elastic(1,3,i,j,ispec_PML)=0.d0 
+                    rmemory_displ_elastic(2,3,i,j,ispec_PML)=coef0_x * rmemory_displ_elastic(2,3,i,j,ispec_PML) &
+                    + displ_elastic_new(3,iglob) * coef1_x + displ_elastic(3,iglob) * coef2_x 
+
+                  endif
+
+
+                if ( which_PML_elem(ILEFT,ispec) .or. which_PML_elem(IRIGHT,ispec)) then   
+                  ispec_PML=spec_to_PML(ispec)
+                  iPML=ibool_PML(i,j,ispec)
+                  iglob=ibool(i,j,ispec)
+                    
+                  A0 = - alpha_x_store( iPML ) * d_x_store(iPML) * k_z_store(iPML)  
+                  A1 = d_x_store(iPML) * k_z_store(iPML)
+                  A2 = k_x_store(iPML) * k_z_store(iPML) 
+
+                  accel_elastic_PML(1,i,j,ispec_PML) =  wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * &
+                     ( A1 * veloc_elastic(1,iglob)+ &
+                      rmemory_displ_elastic(1,1,i,j,ispec_PML)+rmemory_displ_elastic(2,1,i,j,ispec_PML)&
+                      + A0 * displ_elastic(1,iglob) )
+                  accel_elastic_PML(3,i,j,ispec_PML)= wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * &
+                     ( A1 * veloc_elastic(3,iglob)+&
+                      rmemory_displ_elastic(1,3,i,j,ispec_PML)+rmemory_displ_elastic(2,3,i,j,ispec_PML)&
+                      + A0 *displ_elastic(3,iglob) )
+                    
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!corner
+                  if ( which_PML_elem(ITOP,ispec) .or. which_PML_elem(IBOTTOM,ispec)) then
+                     ispec_PML=spec_to_PML(ispec)
+                     iPML=ibool_PML(i,j,ispec)
+
+                     A0 = d_x_store(iPML) * d_z_store(iPML) &
+                        - alpha_x_store( iPML ) * d_x_store(iPML) * k_z_store(iPML) &
+                        - alpha_z_store( iPML ) * d_z_store(iPML) * k_x_store(iPML)
+                    
+                     A1 = d_x_store(iPML) * k_z_store(iPML) + d_z_store(iPML) * k_x_store(iPML)
+                    
+                     A2 = k_x_store(iPML) * k_z_store(iPML) 
+
+                     accel_elastic_PML_corner(1,i,j,ispec_PML)= wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * &
+                        ( A1 *veloc_elastic(1,iglob)+ &
+                         rmemory_displ_elastic_corner(1,1,i,j,ispec_PML)+rmemory_displ_elastic_corner(2,1,i,j,ispec_PML)&
+                         + A0 * displ_elastic(1,iglob) ) 
+                     accel_elastic_PML_corner(3,i,j,ispec_PML)= wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * &
+                        ( A1 * veloc_elastic(3,iglob)+ &
+                         rmemory_displ_elastic_corner(1,3,i,j,ispec_PML)+rmemory_displ_elastic_corner(2,3,i,j,ispec_PML)&
+                         + A0 * displ_elastic(3,iglob) )
+
+                  endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!corner
+               else
+                  
+                  ispec_PML=spec_to_PML(ispec)
+                  iPML=ibool_PML(i,j,ispec)
+                  iglob=ibool(i,j,ispec)
+                
+                  A0 = - alpha_z_store( iPML ) * d_z_store(iPML) * k_x_store(iPML)  
+                  A1 = d_z_store(iPML) * k_x_store(iPML)
+                  A2 = k_x_store(iPML) * k_z_store(iPML) 
+                
+                  accel_elastic_PML(1,i,j,ispec_PML)= wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * &
+                     ( A1 * veloc_elastic(1,iglob)+ &
+                      rmemory_displ_elastic(1,1,i,j,ispec_PML)+rmemory_displ_elastic(2,1,i,j,ispec_PML)&
+                      + A0 * displ_elastic(1,iglob) )
+                  accel_elastic_PML(3,i,j,ispec_PML)= wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * &
+                     ( A1 * veloc_elastic(3,iglob)+&
+                      rmemory_displ_elastic(1,3,i,j,ispec_PML)+rmemory_displ_elastic(2,3,i,j,ispec_PML)&
+                      + A0 * displ_elastic(3,iglob) )
+               endif
+             endif
+
+           enddo
+        enddo
+
+      endif ! end of test if elastic element
+     endif ! PML_BOUNDARY_CONDITIONS
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
         !
         ! second double-loop over GLL to compute all the terms
         !
@@ -497,9 +1150,12 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
               ! and assemble the contributions
               ! we can merge the two loops because NGLLX == NGLLZ
               do k = 1,NGLLX
-                 accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
-                 accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tempy1(k,j)*hprimewgll_xx(k,i) + tempy2(i,k)*hprimewgll_zz(k,j))
-                 accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tempz1(k,j)*hprimewgll_xx(k,i) + tempz2(i,k)*hprimewgll_zz(k,j))
+                 accel_elastic(1,iglob) = accel_elastic(1,iglob) &
+                  - (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
+                 accel_elastic(2,iglob) = accel_elastic(2,iglob) &
+                  - (tempy1(k,j)*hprimewgll_xx(k,i) + tempy2(i,k)*hprimewgll_zz(k,j))
+                 accel_elastic(3,iglob) = accel_elastic(3,iglob) &
+                  - (tempz1(k,j)*hprimewgll_xx(k,i) + tempz2(i,k)*hprimewgll_zz(k,j))
 
                  if(SIMULATION_TYPE == 2) then ! Adjoint calculation, backward wavefield
                     b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - &
@@ -511,12 +1167,50 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                  endif
               enddo
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          if( PML_BOUNDARY_CONDITIONS ) then
+            if(is_PML(ispec))then
+                if (which_PML_elem(ILEFT,ispec) .or. which_PML_elem(IRIGHT,ispec)) then   
+                        ispec_PML=spec_to_PML(ispec)
+                        iPML=ibool_PML(i,j,ispec)
+                      accel_elastic(1,iglob) = accel_elastic(1,iglob) - accel_elastic_PML(1,i,j,ispec_PML)
+                      accel_elastic(2,iglob) = accel_elastic(2,iglob)
+                      accel_elastic(3,iglob) = accel_elastic(3,iglob) - accel_elastic_PML(3,i,j,ispec_PML)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!corner
+                    if (which_PML_elem(ITOP,ispec) .or. which_PML_elem(IBOTTOM,ispec)) then
+                        ispec_PML=spec_to_PML(ispec)
+                        iPML=ibool_PML(i,j,ispec)
+                      accel_elastic(1,iglob) = accel_elastic(1,iglob) + accel_elastic_PML(1,i,j,ispec_PML)
+                      accel_elastic(2,iglob) = accel_elastic(2,iglob)
+                      accel_elastic(3,iglob) = accel_elastic(3,iglob) + accel_elastic_PML(3,i,j,ispec_PML)
+                      accel_elastic(1,iglob) = accel_elastic(1,iglob) - accel_elastic_PML_corner(1,i,j,ispec_PML)
+                      accel_elastic(2,iglob) = accel_elastic(2,iglob)
+                      accel_elastic(3,iglob) = accel_elastic(3,iglob) - accel_elastic_PML_corner(3,i,j,ispec_PML)
+                    endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!corner
+               else
+                      ispec_PML=spec_to_PML(ispec)
+                      iPML=ibool_PML(i,j,ispec)
+                      accel_elastic(1,iglob) = accel_elastic(1,iglob) - accel_elastic_PML(1,i,j,ispec_PML)
+                      accel_elastic(2,iglob) = accel_elastic(2,iglob)
+                      accel_elastic(3,iglob) = accel_elastic(3,iglob) - accel_elastic_PML(3,i,j,ispec_PML)
+               endif
+               if(it==900)then
+               write(IOUT,*)accel_elastic_PML(1,i,j,ispec_PML),accel_elastic_PML(3,i,j,ispec_PML),'accel_elastic_PML'
+               endif
+             endif
+          endif ! PML_BOUNDARY_CONDITIONS
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
            enddo ! second loop over the GLL points
         enddo
 
      endif ! end of test if elastic element
 
   enddo ! end of loop over all spectral elements
+
+
 
   !
   !--- absorbing boundaries
@@ -1023,10 +1717,13 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     endif
                  elseif(SIMULATION_TYPE == 2) then
                     if(p_sv)then !P-SV waves
-                       b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_top(1,i,ib_top(ispecabs),NSTEP-it+1)
-                       b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_top(3,i,ib_top(ispecabs),NSTEP-it+1)
+                       b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) &
+                        - b_absorb_elastic_top(1,i,ib_top(ispecabs),NSTEP-it+1)
+                       b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) &
+                        - b_absorb_elastic_top(3,i,ib_top(ispecabs),NSTEP-it+1)
                     else!SH (membrane) waves
-                       b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - b_absorb_elastic_top(2,i,ib_top(ispecabs),NSTEP-it+1)
+                       b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) &
+                        - b_absorb_elastic_top(2,i,ib_top(ispecabs),NSTEP-it+1)
                     endif
                  endif
 
@@ -1039,6 +1736,72 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
      enddo
 
   endif  ! end of absorbing boundaries
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ !
+  !--- absorbing boundaries
+  !
+  if( PML_BOUNDARY_CONDITIONS ) then
+
+! we have to put Dirichlet on the boundary of the PML
+     do ispecabs = 1,nelemabs
+
+       ispec = numabs(ispecabs)
+
+       if (is_PML(ispec)) then
+ ispec_PML=spec_to_PML(ispec)
+!--- left absorbing boundary
+      if(codeabs(ILEFT,ispecabs)) then
+        i = 1
+        do j = 1,NGLLZ
+          iglob = ibool(i,j,ispec)
+          displ_elastic(:,iglob) = 0._CUSTOM_REAL
+          veloc_elastic(:,iglob) = 0._CUSTOM_REAL
+          accel_elastic(:,iglob) = 0._CUSTOM_REAL
+       enddo
+      endif
+!--- right absorbing boundary
+      if(codeabs(IRIGHT,ispecabs)) then
+        i = NGLLX
+        do j = 1,NGLLZ
+          iglob = ibool(i,j,ispec)
+          displ_elastic(:,iglob) = 0._CUSTOM_REAL
+          veloc_elastic(:,iglob) = 0._CUSTOM_REAL
+          accel_elastic(:,iglob) = 0._CUSTOM_REAL
+        enddo
+
+      endif
+!--- bottom absorbing boundary
+      if(codeabs(IBOTTOM,ispecabs)) then
+        j = 1
+! exclude corners to make sure there is no contradiction on the normal
+        ibegin = 1
+        iend = NGLLX
+        do i = ibegin,iend
+          iglob = ibool(i,j,ispec)
+          displ_elastic(:,iglob) = 0._CUSTOM_REAL
+          veloc_elastic(:,iglob) = 0._CUSTOM_REAL
+          accel_elastic(:,iglob) = 0._CUSTOM_REAL
+        enddo
+      endif
+!--- top absorbing boundary
+      if(codeabs(ITOP,ispecabs)) then
+        j = NGLLZ
+! exclude corners to make sure there is no contradiction on the normal
+        ibegin = 1
+        iend = NGLLX
+        do i = ibegin,iend
+          iglob = ibool(i,j,ispec)
+          displ_elastic(:,iglob) = 0._CUSTOM_REAL
+          veloc_elastic(:,iglob) = 0._CUSTOM_REAL
+          accel_elastic(:,iglob) = 0._CUSTOM_REAL
+        enddo
+      endif  !  end of top absorbing boundary
+      endif ! end of is_PML
+    enddo ! end specabs loop
+  endif  ! end of absorbing boundaries PML_BOUNDARY_CONDITIONS
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 
   ! --- add the source if it is a moment tensor
   if(.not. initialfield) then
@@ -1172,7 +1935,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                        e1_initial_rk(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls)
                        endif
 
-                       e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) + weight_rk * e1_force_RK(i,j,ispec,i_sls,i_stage)
+                       e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) &
+                        + weight_rk * e1_force_RK(i,j,ispec,i_sls,i_stage)
 
                     elseif(i_stage==4)then
 
@@ -1222,7 +1986,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                        if(i_stage==1)then
                           e11_initial_rk(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)
                        endif
-                       e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + weight_rk * e11_force_RK(i,j,ispec,i_sls,i_stage)
+                       e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) &
+                        + weight_rk * e11_force_RK(i,j,ispec,i_sls,i_stage)
                     elseif(i_stage==4)then
                       e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + 1.0d0 / 6.0d0 * &
                                              (e11_force_RK(i,j,ispec,i_sls,1) + 2.0d0 * e11_force_RK(i,j,ispec,i_sls,2) + &
@@ -1267,7 +2032,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                        if(i_stage==1)then
                           e13_initial_rk(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)
                        endif
-                          e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + weight_rk * e13_force_RK(i,j,ispec,i_sls,i_stage)
+                          e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) &
+                            + weight_rk * e13_force_RK(i,j,ispec,i_sls,i_stage)
                     elseif(i_stage==4)then
                        e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + 1.0d0 / 6.0d0 * &
                                               (e13_force_RK(i,j,ispec,i_sls,1) + 2.0d0 * e13_force_RK(i,j,ispec,i_sls,2) + &

@@ -482,8 +482,8 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_acoustic_adj_coupling
 
 ! inverse mass matrices
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_elastic_one !zhinan
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_elastic_three !zhinan
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_elastic_one
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_elastic_three
 
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_acoustic
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
@@ -956,6 +956,30 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   integer :: count_nspec_acoustic,count_nspec_acoustic_total,nspec_total,nglob_total,nb_acoustic_DOFs,nb_elastic_DOFs
   double precision :: ratio_1DOF,ratio_2DOFs
 
+!PML parameters
+  logical, dimension(:), allocatable :: is_PML
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
+                    K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
+
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
+   rmemory_dux_dx,rmemory_duz_dx,rmemory_dux_dz,rmemory_duz_dz, &
+   rmemory_dux_dx_corner,rmemory_duz_dx_corner,rmemory_dux_dz_corner,rmemory_duz_dz_corner
+
+  integer, dimension(:), allocatable :: spec_to_PML,icorner_iglob
+  integer, dimension(:,:,:), allocatable :: ibool_PML
+  logical, dimension(:,:), allocatable :: which_PML_elem, which_PML_poin
+
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_displ_elastic  
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_displ_elastic_corner
+
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_potential_acoustic,&
+    rmemory_potential_ac_corner,&
+    rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
+    rmemory_acoustic_dux_dx_corner,rmemory_acoustic_dux_dz_corner
+
+  logical :: anyabs_glob
+  integer :: nspec_PML, npoin_PML
+  
 !***********************************************************************
 !
 !             i n i t i a l i z a t i o n    p h a s e
@@ -2741,6 +2765,165 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       allocate(rhorho_ac_hessian_final2(1,1,1))
       allocate(rhorho_ac_hessian_final1(1,1,1))
     endif
+
+    ! PML absorbing conditionds
+    anyabs_glob=anyabs
+#ifdef USE_MPI
+    call MPI_ALLREDUCE(anyabs, anyabs_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
+#endif
+
+    if( PML_BOUNDARY_CONDITIONS .and. anyabs_glob ) then
+
+      !PML code
+      allocate(is_PML(nspec))
+      allocate(icorner_iglob(nglob))
+      allocate(which_PML_elem(4,nspec))
+      allocate(which_PML_poin(4,nglob))
+      allocate(spec_to_PML(nspec))
+      allocate(ibool_PML(NGLLX,NGLLZ,nspec))
+
+      is_PML(:) = .false.
+      which_PML_elem(:,:) = .false.
+      which_PML_poin(:,:) = .false.
+
+      call pml_init(nspec,nglob,anyabs,ibool,nelemabs,codeabs,numabs,&
+                  nspec_PML,is_PML,which_PML_elem,which_PML_poin,spec_to_PML,ibool_PML, &
+                  npoin_PML,icorner_iglob)
+
+      deallocate(icorner_iglob)
+      deallocate(which_PML_poin)
+
+      if (npoin_PML==0) npoin_PML=1
+!!!!!!!!!!!!! DK DK added this
+
+      if (npoin_PML > 0) then
+
+        allocate(K_x_store(npoin_PML))
+        allocate(K_z_store(npoin_PML))
+        allocate(d_x_store(npoin_PML))
+        allocate(d_z_store(npoin_PML))
+        allocate(alpha_x_store(npoin_PML))     
+        allocate(alpha_z_store(npoin_PML))
+
+        !! DK DK initialize to zero
+        K_x_store(:) = 0
+        K_z_store(:) = 0
+        d_x_store(:) = 0  
+        d_z_store(:) = 0  
+        alpha_x_store(:) = 0 
+        alpha_z_store(:) = 0
+
+        call define_PML_coefficients(nglob,nspec,is_PML,ibool,coord,&
+                which_PML_elem,kmato,density,poroelastcoef,numat,f0(1),npoin_PML,&
+                ibool_PML,myrank,&
+                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store)
+
+      endif
+
+      !elastic PML memory variables
+      if (any_elastic .and. nspec_PML>0) then
+
+        allocate(rmemory_displ_elastic(2,3,NGLLX,NGLLZ,nspec_PML)) 
+        allocate(rmemory_displ_elastic_corner(2,3,NGLLX,NGLLZ,nspec_PML)) 
+
+        allocate(rmemory_dux_dx(2,NGLLX,NGLLZ,nspec_PML))  
+        allocate(rmemory_dux_dz(2,NGLLX,NGLLZ,nspec_PML))  
+        allocate(rmemory_duz_dx(2,NGLLX,NGLLZ,nspec_PML))  
+        allocate(rmemory_duz_dz(2,NGLLX,NGLLZ,nspec_PML))  
+
+        allocate(rmemory_dux_dx_corner(2,NGLLX,NGLLZ,nspec_PML))  
+        allocate(rmemory_dux_dz_corner(2,NGLLX,NGLLZ,nspec_PML))  
+        allocate(rmemory_duz_dx_corner(2,NGLLX,NGLLZ,nspec_PML))  
+        allocate(rmemory_duz_dz_corner(2,NGLLX,NGLLZ,nspec_PML))  
+
+      else
+
+        allocate(rmemory_displ_elastic(1,1,1,1,1)) 
+        allocate(rmemory_displ_elastic_corner(1,1,1,1,1)) 
+
+        allocate(rmemory_dux_dx(1,1,1,1))  
+        allocate(rmemory_dux_dz(1,1,1,1))  
+        allocate(rmemory_duz_dx(1,1,1,1))  
+        allocate(rmemory_duz_dz(1,1,1,1))  
+
+        allocate(rmemory_dux_dx_corner(1,1,1,1))  
+        allocate(rmemory_dux_dz_corner(1,1,1,1))  
+        allocate(rmemory_duz_dx_corner(1,1,1,1))  
+        allocate(rmemory_duz_dz_corner(1,1,1,1))  
+
+      end if
+
+      if (any_acoustic .and. nspec_PML>0) then
+
+        allocate(rmemory_potential_acoustic(2,NGLLX,NGLLZ,nspec_PML)) 
+        allocate(rmemory_potential_ac_corner(2,NGLLX,NGLLZ,nspec_PML)) 
+
+        allocate(rmemory_acoustic_dux_dx(2,NGLLX,NGLLZ,nspec_PML))  
+        allocate(rmemory_acoustic_dux_dz(2,NGLLX,NGLLZ,nspec_PML))  
+
+        allocate(rmemory_acoustic_dux_dx_corner(2,NGLLX,NGLLZ,nspec_PML))  
+        allocate(rmemory_acoustic_dux_dz_corner(2,NGLLX,NGLLZ,nspec_PML))  
+
+      else
+
+        allocate(rmemory_potential_acoustic(1,1,1,1)) 
+        allocate(rmemory_potential_ac_corner(1,1,1,1)) 
+
+        allocate(rmemory_acoustic_dux_dx(1,1,1,1))  
+        allocate(rmemory_acoustic_dux_dz(1,1,1,1))  
+
+        allocate(rmemory_acoustic_dux_dx_corner(1,1,1,1))  
+        allocate(rmemory_acoustic_dux_dz_corner(1,1,1,1))  
+
+      end if
+
+    else
+
+
+!!!!!!!!!!!!! DK DK added this
+
+      allocate(rmemory_dux_dx(1,1,1,1))  
+      allocate(rmemory_dux_dz(1,1,1,1))  
+      allocate(rmemory_duz_dx(1,1,1,1))  
+      allocate(rmemory_duz_dz(1,1,1,1))  
+
+      allocate(rmemory_dux_dx_corner(1,1,1,1))  
+      allocate(rmemory_dux_dz_corner(1,1,1,1))  
+      allocate(rmemory_duz_dx_corner(1,1,1,1))  
+      allocate(rmemory_duz_dz_corner(1,1,1,1))  
+
+      allocate(rmemory_displ_elastic(1,1,1,1,1)) 
+      allocate(rmemory_displ_elastic_corner(1,1,1,1,1)) 
+
+      allocate(rmemory_acoustic_dux_dx(1,1,1,1))  
+      allocate(rmemory_acoustic_dux_dz(1,1,1,1))  
+
+      allocate(rmemory_acoustic_dux_dx_corner(1,1,1,1))  
+      allocate(rmemory_acoustic_dux_dz_corner(1,1,1,1))  
+
+      allocate(is_PML(1))
+      allocate(ibool_PML(1,1,1))      
+      allocate(spec_to_PML(1))      
+      allocate(which_PML_elem(1,1))      
+
+      allocate(K_x_store(1))
+      allocate(K_z_store(1))
+      allocate(d_x_store(1))
+      allocate(d_z_store(1))
+      allocate(alpha_x_store(1))     
+      allocate(alpha_z_store(1))
+              
+    end if ! PML_BOUNDARY_CONDITIONS
+
+    rmemory_dux_dx(:,:,:,:) = ZERO
+    rmemory_dux_dz(:,:,:,:) = ZERO
+    rmemory_duz_dx(:,:,:,:) = ZERO
+    rmemory_duz_dz(:,:,:,:) = ZERO
+
+    rmemory_dux_dx_corner(:,:,:,:) = ZERO
+    rmemory_dux_dz_corner(:,:,:,:) = ZERO
+    rmemory_duz_dx_corner(:,:,:,:) = ZERO
+    rmemory_duz_dz_corner(:,:,:,:) = ZERO
 
   endif ! ipass == 1
 
@@ -5165,7 +5348,12 @@ if(coupled_elastic_poro) then
                nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,mu_k,kappa_k, &
                e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
                e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_rk, e11_force_rk, e13_force_rk, &
-               stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring)
+               stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring, &
+               is_PML,nspec_PML,npoin_PML,ibool_PML,spec_to_PML,which_PML_elem, &
+               K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
+               rmemory_displ_elastic,rmemory_displ_elastic_corner,&
+               rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz,&
+               rmemory_dux_dx_corner,rmemory_dux_dz_corner,rmemory_duz_dx_corner,rmemory_duz_dz_corner)
 
       if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
         !--- left absorbing boundary
