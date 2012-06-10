@@ -73,7 +73,7 @@ DRAW_WATER_IN_BLUE              = .true.         # display acoustic layers as co
 USE_SNAPSHOT_NUMBER_IN_FILENAME = .false.        # use snapshot number in the file name of JPEG color snapshots instead of the time step
 
 #### for PostScript snapshots ####
-output_postscript_snapshot      = .true.         # output Postscript snapshot of the results
+output_postscript_snapshot      = .false.         # output Postscript snapshot of the results
 imagetype_postscript            = 1              # display 1=displ vector 2=veloc vector 3=accel vector; small arrows are displayed for the vectors
 meshvect                        = .false.        # display mesh on vector plots or not
 modelvect                       = .false.        # display velocity model on vector plots
