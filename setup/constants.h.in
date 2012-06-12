@@ -186,5 +186,5 @@
 
 ! PML
   logical, parameter :: PML_BOUNDARY_CONDITIONS = .false.
-  integer, parameter :: NELEM_PML_THICKNESS = 4 
-  
+  integer, parameter :: NELEM_PML_THICKNESS = 3
+
