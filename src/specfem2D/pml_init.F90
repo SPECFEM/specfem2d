@@ -43,7 +43,7 @@
 
   subroutine pml_init(nspec,nglob,anyabs,ibool,nelemabs,codeabs,numabs,&
                     nspec_PML,is_PML,which_PML_elem,which_PML_poin,spec_to_PML,ibool_PML, &
-                    npoin_PML,icorner_iglob)
+                    npoin_PML,icorner_iglob,NELEM_PML_THICKNESS)
 
   implicit none
   include 'constants.h'
@@ -52,7 +52,7 @@
   include 'mpif.h'
 #endif
 
-  integer :: nspec,nglob,nelemabs,nspec_PML,npoin_PML
+  integer :: nspec,nglob,nelemabs,nspec_PML,npoin_PML,NELEM_PML_THICKNESS
   logical :: anyabs
 
   integer :: ibound,ispecabs,ncorner,ispec,iglob
@@ -596,9 +596,9 @@
           alpha_x_store(iPML) = alpha_x  
           alpha_z_store(iPML) = alpha_y  
 
-         write(IOUT,*)K_x_store(iPML),K_z_store(iPML),'K_store'
-         write(IOUT,*)d_x_store(iPML),d_z_store(iPML),'d_store'
-         write(IOUT,*)alpha_x_store(iPML),alpha_z_store(iPML),'alpha_store'
+!        write(IOUT,*)K_x_store(iPML),K_z_store(iPML),'K_store'
+!        write(IOUT,*)d_x_store(iPML),d_z_store(iPML),'d_store'
+!        write(IOUT,*)alpha_x_store(iPML),alpha_z_store(iPML),'alpha_store'
 
        enddo
      enddo

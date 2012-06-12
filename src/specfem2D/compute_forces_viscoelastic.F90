@@ -67,8 +67,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
      K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
      rmemory_displ_elastic,rmemory_displ_elastic_corner, &
      rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz, &
-     rmemory_dux_dx_corner,rmemory_dux_dz_corner,rmemory_duz_dx_corner,rmemory_duz_dz_corner)
-
+     rmemory_dux_dx_corner,rmemory_dux_dz_corner,rmemory_duz_dx_corner,rmemory_duz_dz_corner,PML_BOUNDARY_CONDITIONS)
 
   ! compute forces for the elastic elements
 
@@ -76,7 +75,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
   include "constants.h"
 
-  logical :: p_sv
+  logical :: p_sv,PML_BOUNDARY_CONDITIONS
   integer :: NSOURCES, i_source
   integer :: nglob,nspec,myrank,nelemabs,numat,it,NSTEP
   integer, dimension(NSOURCES) :: ispec_selected_source,is_proc_source,source_type

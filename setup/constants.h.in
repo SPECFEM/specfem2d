@@ -184,7 +184,3 @@
   real(kind=CUSTOM_REAL), parameter :: r0_guenneau = 0.20_CUSTOM_REAL
   real(kind=CUSTOM_REAL), parameter :: r1_guenneau = 0.40_CUSTOM_REAL
 
-! PML
-  logical, parameter :: PML_BOUNDARY_CONDITIONS = .false.
-  integer, parameter :: NELEM_PML_THICKNESS = 3
-
