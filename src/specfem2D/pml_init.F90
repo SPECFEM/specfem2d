@@ -69,13 +69,9 @@
   integer, dimension(:), allocatable :: iPML_to_iglob
   logical, dimension(nspec) :: is_PML
 
-  !!!!RM RM RM Beginning PML implementation of coefficients properties
-  !  allocate (is_PML(nspec))
-  !  is_PML(:)=.false.
-
-  nspec_PML=0
-
   !!!detection of PML elements
+
+  nspec_PML = 0
 
      !ibound is the side we are looking (bottom, right, top or left)
      do ibound=1,4
@@ -202,8 +198,6 @@
      end do
 
      deallocate(iPML_to_iglob)
-  !     deallocate(icorner_iglob)
-  !     deallocate(which_PML_poin)
 
      write(IOUT,*) "number of PML spectral elements :", nspec_PML
      write(IOUT,*) "number of PML spectral points   :", npoin_PML
@@ -214,7 +208,6 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-!!!!!!!!!!  subroutine define_PML_coefficients(npoin,nspec,is_PML,a_x,a_z,b_x,b_z,ibool,coord,&
  subroutine define_PML_coefficients(npoin,nspec,is_PML,ibool,coord,&
           which_PML_elem,kmato,density,poroelastcoef,numat,f0_temp,npoin_PML,&
           ibool_PML,myrank,&
@@ -233,8 +226,6 @@
 
   logical, dimension(nspec) :: is_PML
   logical, dimension(4,nspec) :: which_PML_elem
-!!!!!!!!!!!!  double precision, dimension(npoin_PML) :: a_x,a_z,b_x,b_z
-!!!!!!!!!!!!! DK DK added this
   real(kind=CUSTOM_REAL), dimension(npoin_PML) ::  &
                     K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store  !xiezhinan
 
@@ -246,7 +237,7 @@
 
   double precision :: d_x, d_z, K_x, K_z, alpha_x, alpha_z
 ! define an alias for y and z variable names (which are the same)
-  double precision :: d_y, alpha_y, K_y!!!!!!!!!!,aa,bb
+  double precision :: d_y, alpha_y, K_y
   double precision :: d0_z_bottom, d0_x_right, d0_z_top, d0_x_left
   double precision :: abscissa_in_PML, abscissa_normalized
 
@@ -461,13 +452,8 @@
        do j=1,NGLLZ
           do i=1,NGLLX
              iglob=ibool(i,j,ispec)
-!! DK DK il y a un autre bug (un troisieme), c'est que certaines valeurs de ibool_PML() sont egales a zero
-!! DK DK ce qui n'est pas normal car ca doit etre seulement des numeros de points.
-!! DK DK cela n'est probablement pas grave car ca doit correspondre aux elements qui ne sont pas dans les PMLs, donc ignores
              iPML=ibool_PML(i,j,ispec)
-!! DK DK added this
-             if(iPML < 1) stop 'iPML < 1 in a PML element'
-!! DK DK added this
+             if(iPML < 1) stop 'error: iPML < 1 in a PML element'
              ! abscissa of current grid point along the damping profile
              xval = coord(1,iglob)
              zval = coord(2,iglob)
@@ -585,16 +571,14 @@
              d_y = d_z
              alpha_y = alpha_z
 
-
-
-          K_x_store(iPML) = K_x   
+          K_x_store(iPML) = K_x
           K_z_store(iPML) = K_y
 
-          d_x_store(iPML) = d_x   
-          d_z_store(iPML) = d_y   
+          d_x_store(iPML) = d_x
+          d_z_store(iPML) = d_y
 
-          alpha_x_store(iPML) = alpha_x  
-          alpha_z_store(iPML) = alpha_y  
+          alpha_x_store(iPML) = alpha_x
+          alpha_z_store(iPML) = alpha_y
 
 !        write(IOUT,*)K_x_store(iPML),K_z_store(iPML),'K_store'
 !        write(IOUT,*)d_x_store(iPML),d_z_store(iPML),'d_store'
@@ -611,3 +595,4 @@
 !!!!!!!  write(IOUT,*) 'max ay',maxval(a_z),'min ay', minval(a_z)
 
   end subroutine define_PML_coefficients
+
