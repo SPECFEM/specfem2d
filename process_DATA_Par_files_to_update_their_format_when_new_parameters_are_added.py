@@ -383,7 +383,37 @@ def ProcessParfile_r20307(fic):
     fm.close()
     #
     print 'xxxxx------> '+fic+' processed to r20307'
-    return    
+    return
+#------------------------------------------------------------------------------
+def ProcessParfile_r20359(fic):
+    # Open the file and get all lines from Par_file
+    ligs= LoadLig(fic)
+
+    # Test if already processed
+    for lig in ligs:
+        if 'NELEM_PML_THICKNESS' in lig:
+            print '----> '+fic+' already processed to r20359'            
+            return
+    #
+    a1='PML_BOUNDARY_CONDITIONS         = .true.\nNELEM_PML_THICKNESS  ' + \
+    '           = 3\nSTACEY_ABSORBING_CONDITIONS     = .false.\n'
+
+    #--------------------------------------------------------------------------
+    # Add new parameters
+    # 
+    for ilg, lig in enumerate(ligs):
+        if lig.startswith('absorbing_conditions'):
+            ligs.pop(ilg)
+            ligs.insert(ilg,a1)
+    #
+    move(fic,fic+'.before_update_to_r20359')
+    #
+    fm = open(fic,'w')
+    fm.writelines(ligs)
+    fm.close()
+    #
+    print 'xxxxx------> '+fic+' processed to r20359'
+    return
 #------------------------------------------------------------------------------
 if __name__=='__main__':
     ## List of all files of current directory
@@ -407,6 +437,7 @@ if __name__=='__main__':
                     ProcessParfile_r19521(fic)
                     ProcessParfile_r19804(fic)
                     ProcessParfile_r20307(fic)
+                    ProcessParfile_r20359(fic)
                 print '~'*80
     #                
     print 'Number of Par_file analysed : ', Ct_Par_file   
