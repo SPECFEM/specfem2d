@@ -129,6 +129,22 @@
             vpext(i,j,ispec) = 20.d0
             vsext(i,j,ispec) = 10.d0
           end if
+
+! check that the element type is not redefined compared to what is defined initially in DATA/Par_file
+          if((c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
+              c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) &
+              .and. .not. anisotropic(ispec)) then
+      stop 'error: non anisotropic material in DATA/Par_file or external mesh redefined as anisotropic in define_external_model()'
+          endif
+
+          if(vsext(i,j,ispec) < TINYVAL .and. (elastic(ispec) .or. anisotropic(ispec))) then
+            stop 'error: non acoustic material in DATA/Par_file or external mesh redefined as acoustic in define_external_model()'
+          endif
+
+          if(vsext(i,j,ispec) > TINYVAL .and. .not. elastic(ispec)) then
+            stop 'error: acoustic material in DATA/Par_file or external mesh redefined as non acoustic in define_external_model()'
+          endif
+
         end do
       end do
     end do
