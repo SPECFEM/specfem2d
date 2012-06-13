@@ -73,6 +73,9 @@
 
   nspec_PML = 0
 
+! initialize the PML flag array
+  is_PML(:) = .false.
+
      !ibound is the side we are looking (bottom, right, top or left)
      do ibound=1,4
 
