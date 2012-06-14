@@ -75,7 +75,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
   include "constants.h"
 
-  logical :: p_sv,PML_BOUNDARY_CONDITIONS
+  logical :: p_sv
   integer :: NSOURCES, i_source
   integer :: nglob,nspec,myrank,nelemabs,numat,it,NSTEP
   integer, dimension(NSOURCES) :: ispec_selected_source,is_proc_source,source_type
@@ -220,6 +220,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   logical, dimension(nspec) :: is_PML
   integer, dimension(nspec) :: spec_to_PML
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool_PML
+  logical :: PML_BOUNDARY_CONDITIONS, anyabs_local
 
   real(kind=CUSTOM_REAL), dimension(2,3,NGLLX,NGLLZ,nspec_PML) :: rmemory_displ_elastic,rmemory_displ_elastic_corner
   real(kind=CUSTOM_REAL), dimension(2,NGLLX,NGLLZ,nspec_PML) :: &
@@ -245,6 +246,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   sigma_xz = 0
   sigma_zy = 0
   sigma_zz = 0
+  sigma_zx = 0
 
   if( PML_BOUNDARY_CONDITIONS ) then
     accel_elastic_PML = 0._CUSTOM_REAL
@@ -258,6 +260,9 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
     PML_duz_dxl_new = 0._CUSTOM_REAL
     PML_duz_dzl_new = 0._CUSTOM_REAL
     displ_elastic_new = displ_elastic + deltat * veloc_elastic
+    anyabs_local=.false.
+  elseif(.not.PML_BOUNDARY_CONDITIONS .and. anyabs )then
+    anyabs_local=.true.
   endif
 
 
@@ -397,7 +402,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                 endif
               endif
 
-              iglob = ibool(i,j,ispec)
 
               if( PML_BOUNDARY_CONDITIONS ) then
                 if( is_PML(ispec) ) then
@@ -1208,7 +1212,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   !
   !--- absorbing boundaries
   !
-  if(anyabs) then
+  if(anyabs_local) then
 
      count_left=1
      count_right=1
