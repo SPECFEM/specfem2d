@@ -59,7 +59,8 @@
 #ifdef USE_GUENNEAU
                                 ,coord &
 #endif
-                                )
+                                ,K_x_store,K_z_store,npoin_PML,ibool_PML,is_PML,&
+                                d_x_store,d_z_store,alpha_x_store,alpha_z_store,PML_BOUNDARY_CONDITIONS)
 
 !  builds the global mass matrix
 
@@ -88,7 +89,7 @@
   ! inverse mass matrices
   integer :: nglob_elastic
 
- real(kind=CUSTOM_REAL), dimension(nglob_elastic) :: rmass_inverse_elastic_one,&  !zhinan
+ real(kind=CUSTOM_REAL), dimension(nglob_elastic) :: rmass_inverse_elastic_one,&
                                                      rmass_inverse_elastic_three
 
   integer :: nglob_acoustic
@@ -112,15 +113,21 @@
   double precision, dimension(2,numat) :: density
   double precision, dimension(4,3,numat) :: poroelastcoef
   double precision, dimension(numat) :: porosity,tortuosity
-  double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,rhoext,vsext !zhinan
+  double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,rhoext,vsext
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz  !zhinan
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
 
   ! local parameters
   integer :: ispec,i,j,iglob
   double precision :: rhol,kappal,mul_relaxed,lambdal_relaxed
   double precision :: rhol_s,rhol_f,rhol_bar,phil,tortl
 
+!!!!!!!!!!!!! DK DK added this
+  integer :: npoin_PML,iPML
+  real(kind=CUSTOM_REAL), dimension(npoin_PML) :: K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
+  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool_PML
+  logical, dimension(nspec) :: is_PML
+  logical :: PML_BOUNDARY_CONDITIONS, anyabs_local
 !! DK DK added this for Guenneau, March 2012
 #ifdef USE_GUENNEAU
   double precision, dimension(NDIM,nglob_elastic), intent(in) :: coord
@@ -134,6 +141,8 @@
   if(any_poroelastic) rmass_s_inverse_poroelastic(:) = 0._CUSTOM_REAL
   if(any_poroelastic) rmass_w_inverse_poroelastic(:) = 0._CUSTOM_REAL
   if(any_acoustic) rmass_inverse_acoustic(:) = 0._CUSTOM_REAL
+  if(PML_BOUNDARY_CONDITIONS)anyabs_local=.false.
+  if(.not.PML_BOUNDARY_CONDITIONS .and. anyabs)anyabs_local=.true.
 
   do ispec = 1,nspec
     do j = 1,NGLLZ
@@ -173,6 +182,16 @@
 
           ! for elastic medium
 
+
+        if(PML_BOUNDARY_CONDITIONS)then
+        if (is_PML(ispec)) then
+          iPML=ibool_PML(i,j,ispec)
+          rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                  + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(iPML) * K_z_store(iPML)&
+                  + (d_x_store(iPML)*k_z_store(iPML)+d_z_store(iPML)*k_x_store(iPML)) * deltat / 2.d0)
+          rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
+        else
+
 !! DK DK added this for Guenneau, March 2012
 #ifdef USE_GUENNEAU
   include "include_mass_Guenneau.f90"
@@ -186,6 +205,26 @@
   endif
 #endif
           rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
+
+        endif
+        else
+!! DK DK added this for Guenneau, March 2012
+#ifdef USE_GUENNEAU
+  include "include_mass_Guenneau.f90"
+#endif
+!! DK DK added this for Guenneau, March 2012
+
+          rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                  + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
+
+#ifdef USE_GUENNEAU
+  endif
+#endif
+          rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
+        endif
+
+
+
 
         else
 
@@ -208,7 +247,7 @@
   !--- DK and Zhinan Xie: one per component of the wave field i.e. one per spatial dimension.
   !--- DK and Zhinan Xie: This was also suggested by Jean-Paul Ampuero in 2003.
   !
-  if(anyabs) then
+  if(anyabs_local) then
      count_left=1
      count_right=1
      count_bottom=1
