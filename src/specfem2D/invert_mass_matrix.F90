@@ -141,6 +141,8 @@
   if(any_poroelastic) rmass_s_inverse_poroelastic(:) = 0._CUSTOM_REAL
   if(any_poroelastic) rmass_w_inverse_poroelastic(:) = 0._CUSTOM_REAL
   if(any_acoustic) rmass_inverse_acoustic(:) = 0._CUSTOM_REAL
+
+  anyabs_local=.false. ! to avoid having an uninitialized variable
   if(PML_BOUNDARY_CONDITIONS)anyabs_local=.false.
   if(.not.PML_BOUNDARY_CONDITIONS .and. anyabs)anyabs_local=.true.
 
