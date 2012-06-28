@@ -248,6 +248,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   sigma_zz = 0
   sigma_zx = 0
 
+  anyabs_local=.false. ! to avoid having an uninitialized variable
+
   if( PML_BOUNDARY_CONDITIONS ) then
     accel_elastic_PML = 0._CUSTOM_REAL
     accel_elastic_PML_corner = 0._CUSTOM_REAL
