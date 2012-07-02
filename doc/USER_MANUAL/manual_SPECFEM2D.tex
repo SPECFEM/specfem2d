@@ -339,8 +339,14 @@ To run the mesher, please follow these steps:
 
 \begin{itemize}
 
-\item edit the input file \texttt{DATA/Par\_file} which describes the simulation. It contains comments and should be almost self-explanatory, if you need more details we do not have a manual for the 2D version but you can find useful information in the manuals of the 3D versions, since many parameters and the general philosophy is similar. They are available at
-\urlwithparentheses{http://geodynamics.org/wsvn/cig/seismo/3D} in subdirectories \texttt{USER\_MANUAL/}. To create acoustic (fluid) regions, just set the S wave speed to zero and the code will see that these elements are fluid and switch to the right equations there automatically, and automatically match them with the solid regions
+\item edit the input file \texttt{DATA/Par\_file}, which describes the simulation.
+The default \texttt{DATA/Par\_file} provided with the code contains detailed comments and should be almost self-explanatory
+(note that older \texttt{DATA/Par\_file} files provided in the \texttt{EXAMPLES} directory work fine but some of the comments
+they contain may be obsolete or even wrong; thus refer to the default \texttt{DATA/Par\_file} instead for reliable explanations).
+If you need more details we do not have a detailed description of all the parameters for the 2D version in this manual
+but you can find useful information in the manuals of the 3D versions, since many parameters and the general philosophy is similar. They are available at
+\urlwithparentheses{http://geodynamics.org/wsvn/cig/seismo/3D} in subdirectories \texttt{USER\_MANUAL/}.
+To create acoustic (fluid) regions, just set the S wave speed to zero and the code will see that these elements are fluid and switch to the right equations there automatically, and automatically match them with the solid regions
 
 \item if you are using an external mesher (like GID or CUBIT), you should set \texttt{read\_external\_mesh} to \texttt{.true.}:
 	\begin{description}
