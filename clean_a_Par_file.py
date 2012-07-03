@@ -11,11 +11,10 @@
 
 # change tabs to white spaces
             system("expand -6 < $name > _____testzzzXXXyyy_____");
-            $f90name = $name;
             print STDOUT "Cleaning file $nametoprint ...\n";
 
             open(FILEF77,"<_____testzzzXXXyyy_____");
-            open(FILEF90,">$f90name");
+            open(FILEF90,">$nametoprint");
 
 # read the input file
       while($line = <FILEF77>) {

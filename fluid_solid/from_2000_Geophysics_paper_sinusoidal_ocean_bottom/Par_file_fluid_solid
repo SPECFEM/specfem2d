@@ -109,7 +109,7 @@ nbmodels                        = 2              # nb of different models
 read_external_mesh              = .false.
 
 # absorbing boundary active or not
-PML_BOUNDARY_CONDITIONS         = .true.
+PML_BOUNDARY_CONDITIONS         = .false.
 NELEM_PML_THICKNESS             = 3
 STACEY_ABSORBING_CONDITIONS     = .false.
 ADD_SPRING_TO_STACEY            = .true.
