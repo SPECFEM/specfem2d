@@ -504,7 +504,7 @@
   endif
 
   ! output formats
-107 format(/5x,'--> Isoparametric Spectral Elements <--',//)
+107 format(/5x,'--> Spectral Elements <--',//)
 
 207 format(5x,'Number of spectral elements . . . . .  (nspec) =',i7,/5x, &
                'Number of control nodes per element .  (ngnod) =',i7,/5x, &
