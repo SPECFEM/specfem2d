@@ -48,7 +48,7 @@
 !
 !  Set up the shape functions for the superparametric transformation
 ! (i.e. the geometry is defined with lower-order functions than the unknowns
-!  of the problem; see for instance Chapter 19 of the finite-element course of
+!  of the problem; see for instance Chapter 16 of the finite-element course of
 !  Carlos Felippa in Colorado for a discussion about this).
 !  The routine can handle 4 or 9 control nodes defined as follows:
 !
