@@ -85,7 +85,7 @@
   logical, parameter :: FAST_NUMBERING = .true.
 
 ! mesh tolerance for fast global numbering
-  double precision, parameter :: SMALLVALTOL = 0.00001d0
+  double precision, parameter :: SMALLVALTOL = 1.d-10
 
 ! displacement threshold above which we consider the code became unstable
   double precision, parameter :: STABILITY_THRESHOLD = 1.d+25
