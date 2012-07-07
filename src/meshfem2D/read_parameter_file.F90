@@ -462,6 +462,10 @@ contains
   call read_value_logical_p(any_abs, 'solver.STACEY_ABSORBING_CONDITIONS')
   if(err_occurred() /= 0) stop 'error reading parameter 51a in Par_file'
 
+ !DK DK solve the conflict in set the value of PML_BOUNDARY_CONDITIONS and STACEY_ABSORBING_CONDITIONS
+ !in par_file
+  if(PML_BOUNDARY_CONDITIONS) any_abs = .true.
+
   call read_value_logical_p(ADD_SPRING_TO_STACEY, 'solver.ADD_SPRING_TO_STACEY')
   if(err_occurred() /= 0) stop 'error reading parameter 51a in Par_file'
 
