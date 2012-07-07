@@ -1,10 +1,10 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 6 . 2
-!                   ------------------------------
+!                   S P E C F E M 2 D  Version 7 . 0
+!                   --------------------------------
 !
-! Copyright Universite de Pau, CNRS and INRIA, France,
+! Copyright CNRS, INRIA and University of Pau, France,
 ! and Princeton University / California Institute of Technology, USA.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
@@ -970,7 +970,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                             abs( d_x_store(iPML) )     < 1.d-3       &
                           ) then
                           A3 = 0.d0
-                       elseif ( abs( alpha_x_store(iPML) - alpha_z_store(iPML) ) < 1.d-3 & 
+                       elseif ( abs( alpha_x_store(iPML) - alpha_z_store(iPML) ) < 1.d-3 &
                           ) then
                           A3 = alpha_x_store(iPML) ** 2 * d_x_store(iPML) * k_z_store(iPML)
                        else
@@ -1005,7 +1005,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                              abs( d_x_store(iPML) )     < 1.d-3       &
                            ) then
                           A4 = d_z_store(iPML) * alpha_z_store(iPML) ** 2
-                       elseif ( abs( alpha_x_store(iPML) - alpha_z_store(iPML) ) < 1.d-3 & 
+                       elseif ( abs( alpha_x_store(iPML) - alpha_z_store(iPML) ) < 1.d-3 &
                            ) then
                           A4 = alpha_z_store(iPML) ** 2 * d_z_store(iPML) * k_x_store(iPML)
                        else
