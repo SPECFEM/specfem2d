@@ -53,12 +53,10 @@ echo
 echo
 echo "  running solver..."
 echo
-./xspecfem2D > OUTPUT_FILES/output_solver.txt  #xiezhinan
+./xspecfem2D > OUTPUT_FILES/output_solver.txt
 
 # stores output
-cp DATA/SOURCE_xz.dat OUTPUT_FILES/            #xiezhinan
-cp DATA/STATIONS OUTPUT_FILES/                 #xiezhinan
-cp DATA/STATIONS_target OUTPUT_FILES/          #xiezhinan
+cp DATA/*SOURCE* DATA/*STATIONS* OUTPUT_FILES
 
 echo
 echo "see results in directory: OUTPUT_FILES/"
