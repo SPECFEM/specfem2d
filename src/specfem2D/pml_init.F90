@@ -222,12 +222,12 @@
 #endif
 
   integer nspec, npoin, i, j,numat, ispec,iglob,npoin_PML,iPML
-  double precision :: f0_temp !xiezhinan
+  double precision :: f0_temp 
 
   logical, dimension(nspec) :: is_PML
   logical, dimension(4,nspec) :: which_PML_elem
   real(kind=CUSTOM_REAL), dimension(npoin_PML) ::  &
-                    K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store  !xiezhinan
+                    K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store  
 
   real(kind=CUSTOM_REAL), dimension(NDIM,npoin) ::  coord
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool, ibool_PML
@@ -237,7 +237,6 @@
 
   double precision :: d_x, d_z, K_x, K_z, alpha_x, alpha_z
 ! define an alias for y and z variable names (which are the same)
-  double precision :: d_y, alpha_y, K_y
   double precision :: d0_z_bottom, d0_x_right, d0_z_top, d0_x_left
   double precision :: abscissa_in_PML, abscissa_normalized
 
@@ -254,16 +253,16 @@
 #ifdef USE_MPI
 ! for MPI and partitioning
   integer  :: ier
-  integer  :: nproc
-  integer  :: iproc
-  character(len=256)  :: prname
+!  integer  :: nproc
+!  integer  :: iproc
+!  character(len=256)  :: prname
 
   double precision :: thickness_PML_z_min_bottom_glob,thickness_PML_z_max_bottom_glob,&
        thickness_PML_x_min_right_glob,thickness_PML_x_max_right_glob,&
        thickness_PML_z_min_top_glob,thickness_PML_z_max_top_glob,&
-       thickness_PML_x_min_left_glob,thickness_PML_x_max_left_glob,&
-       thickness_PML_z_bottom_glob,thickness_PML_x_right_glob,&
-       thickness_PML_z_top_glob,thickness_PML_x_left_glob
+       thickness_PML_x_min_left_glob,thickness_PML_x_max_left_glob
+!       thickness_PML_z_bottom_glob,thickness_PML_x_right_glob,&
+!       thickness_PML_z_top_glob,thickness_PML_x_left_glob
 
   double precision :: xmin_glob, xmax_glob, zmin_glob, zmax_glob, vpmax_glob, d0
 #endif
@@ -445,6 +444,7 @@
   zoriginbottom = thickness_PML_z_bottom + zmin
   zorigintop = zmax-thickness_PML_z_top
 
+
  do ispec = 1,nspec
 
     if (is_PML(ispec)) then
@@ -462,11 +462,9 @@
              if (which_PML_elem(IBOTTOM,ispec)) then
                 ! define damping profile at the grid points
                 abscissa_in_PML = zoriginbottom - zval
-                if(abscissa_in_PML > 0.d0) then
+                if(abscissa_in_PML >= 0.d0) then
                    abscissa_normalized = abscissa_in_PML / thickness_PML_z_bottom
                    d_z = d0_z_bottom / 0.6d0 * abscissa_normalized**NPOWER
-!                   alpha_z = ALPHA_MAX_PML * (1.d0 - abscissa_normalized)
-!                   write(IOUT,*)d0_z_bottom,"d0_z_bottom"
 
                    alpha_z = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
                    + ALPHA_MAX_PML / 2.d0
@@ -489,12 +487,9 @@
              if (which_PML_elem(ITOP,ispec)) then
                 ! define damping profile at the grid points
                 abscissa_in_PML = zval - zorigintop
-                if(abscissa_in_PML > 0.d0) then
+                if(abscissa_in_PML >= 0.d0) then
                    abscissa_normalized = abscissa_in_PML / thickness_PML_z_top
                    d_z = d0_z_top / 0.6d0 * abscissa_normalized**NPOWER
-!                   alpha_z = ALPHA_MAX_PML * (1.d0 - abscissa_normalized)
-!                   write(IOUT,*)d0_z_top,"d0_z_top"
-
                    alpha_z = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
                    + ALPHA_MAX_PML / 2.d0
 
@@ -516,12 +511,9 @@
              if (which_PML_elem(IRIGHT,ispec)) then
                 ! define damping profile at the grid points
                 abscissa_in_PML = xval - xoriginright
-                if(abscissa_in_PML > 0.d0) then
+                if(abscissa_in_PML >= 0.d0) then
                    abscissa_normalized = abscissa_in_PML / thickness_PML_x_right
                    d_x = d0_x_right / 0.6d0 * abscissa_normalized**NPOWER
-!                   write(IOUT,*)d0_x_right,"d0_x_right"
-!                   alpha_x = ALPHA_MAX_PML * (1.d0 - abscissa_normalized)
-
                    alpha_x = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
                    + ALPHA_MAX_PML / 2.d0
 
@@ -543,12 +535,9 @@
              if (which_PML_elem(ILEFT,ispec)) then
                 ! define damping profile at the grid points
                 abscissa_in_PML = xoriginleft - xval
-                if(abscissa_in_PML > 0.d0) then
+                if(abscissa_in_PML >= 0.d0) then
                    abscissa_normalized = abscissa_in_PML / thickness_PML_x_left
                    d_x = d0_x_left / 0.6d0 * abscissa_normalized**NPOWER
-!                   write(IOUT,*)d0_x_left,"d0_x_left"
-!                   alpha_x = ALPHA_MAX_PML * (1.d0 - abscissa_normalized)
-
                    alpha_x = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
                    + ALPHA_MAX_PML / 2.d0
 
@@ -566,33 +555,17 @@
                 endif
              endif
 
-!! DK DK define an alias for y and z variable names (which are the same)
-             K_y = K_z
-             d_y = d_z
-             alpha_y = alpha_z
-
           K_x_store(iPML) = K_x
-          K_z_store(iPML) = K_y
-
+          K_z_store(iPML) = K_z
           d_x_store(iPML) = d_x
-          d_z_store(iPML) = d_y
-
+          d_z_store(iPML) = d_z
           alpha_x_store(iPML) = alpha_x
-          alpha_z_store(iPML) = alpha_y
-
-!        write(IOUT,*)K_x_store(iPML),K_z_store(iPML),'K_store'
-!        write(IOUT,*)d_x_store(iPML),d_z_store(iPML),'d_store'
-!        write(IOUT,*)alpha_x_store(iPML),alpha_z_store(iPML),'alpha_store'
+          alpha_z_store(iPML) = alpha_z
 
        enddo
      enddo
     endif
  enddo
-
-!!!!!!!  write(IOUT,*) 'max bx',maxval(b_x),'min bx', minval(b_x)
-!!!!!!!  write(IOUT,*) 'max ax',maxval(a_x),'min ax', minval(a_x)
-!!!!!!!  write(IOUT,*) 'max by',maxval(b_z),'min by', minval(b_z)
-!!!!!!!  write(IOUT,*) 'max ay',maxval(a_z),'min ay', minval(a_z)
 
   end subroutine define_PML_coefficients
 

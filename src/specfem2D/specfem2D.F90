@@ -973,7 +973,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_displ_elastic_corner
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_potential_acoustic,&
-    rmemory_potential_ac_corner,&
+    rmemory_potential_acoustic_corner,&
     rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
     rmemory_acoustic_dux_dx_corner,rmemory_acoustic_dux_dz_corner
 
@@ -1018,11 +1018,18 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   if(SIMULATION_TYPE == 2 .and.(time_stepping_scheme == 2 .or. time_stepping_scheme == 3)) &
                                   stop 'RK and LDDRK time scheme not supported for adjoint inversion'
   if(nproc /= nproc_read_from_database) stop 'must always have nproc == nproc_read_from_database'
+
+#ifdef USE_MPI
+  if(PML_BOUNDARY_CONDITIONS)then
+   stop 'PML_BOUNDARY_CONDITIONS do not ready for mpi version of the code'
+  endif
+#endif
+
 !! DK DK Dec 2011: add a small crack (discontinuity) in the medium manually
   npgeo_ori = npgeo
   if(ADD_A_SMALL_CRACK_IN_THE_MEDIUM) npgeo = npgeo + NB_POINTS_TO_ADD_TO_NPGEO
 
-#ifndef USE_MPI
+#ifdef USE_MPI
   if(PERFORM_CUTHILL_MCKEE) then
     NUMBER_OF_PASSES = 2
   else
@@ -1277,6 +1284,10 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   call initialize_simulation_domains(any_acoustic,any_elastic,any_poroelastic, &
                                 anisotropic,elastic,poroelastic,porosity,anisotropy,kmato,numat, &
                                 nspec,nspec_allocate,p_sv,ATTENUATION_VISCOELASTIC_SOLID,count_nspec_acoustic)
+
+  if(PML_BOUNDARY_CONDITIONS .and. any_poroelastic) then
+    stop 'PML boundary conditions do not ready for poroelastic simulation'
+  endif
 
   ! allocate memory variables for attenuation
   if(ipass == 1) then
@@ -2148,8 +2159,9 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
      xi_receiver,gamma_receiver,station_name,network_name,x_final_receiver,z_final_receiver,iglob_source)
 
 ! compute source array for adjoint source
+  if(ipass == 1) nadj_rec_local = 0
   if(SIMULATION_TYPE == 2) then  ! adjoint calculation
-    nadj_rec_local = 0
+
     do irec = 1,nrec
       if(myrank == which_proc_receiver(irec)) then
         ! check that the source proc number is okay
@@ -2868,7 +2880,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       if (any_acoustic .and. nspec_PML>0) then
 
         allocate(rmemory_potential_acoustic(2,NGLLX,NGLLZ,nspec_PML))
-        allocate(rmemory_potential_ac_corner(2,NGLLX,NGLLZ,nspec_PML))
+        allocate(rmemory_potential_acoustic_corner(2,NGLLX,NGLLZ,nspec_PML))
 
         allocate(rmemory_acoustic_dux_dx(2,NGLLX,NGLLZ,nspec_PML))
         allocate(rmemory_acoustic_dux_dz(2,NGLLX,NGLLZ,nspec_PML))
@@ -2879,7 +2891,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       else
 
         allocate(rmemory_potential_acoustic(1,1,1,1))
-        allocate(rmemory_potential_ac_corner(1,1,1,1))
+        allocate(rmemory_potential_acoustic_corner(1,1,1,1))
 
         allocate(rmemory_acoustic_dux_dx(1,1,1,1))
         allocate(rmemory_acoustic_dux_dz(1,1,1,1))
@@ -4869,7 +4881,13 @@ if(coupled_elastic_poro) then
                SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right,&
                nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
-               b_absorb_acoustic_bottom,b_absorb_acoustic_top,.false.)
+               b_absorb_acoustic_bottom,b_absorb_acoustic_top,.false.,&
+            is_PML,nspec_PML,npoin_PML,ibool_PML,spec_to_PML,which_PML_elem,&
+            K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
+            rmemory_potential_acoustic,rmemory_potential_acoustic_corner,&
+            rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
+            rmemory_acoustic_dux_dx_corner,rmemory_acoustic_dux_dz_corner,deltat,&
+            PML_BOUNDARY_CONDITIONS)
       if( SIMULATION_TYPE == 2 ) then
         call compute_forces_acoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
                anyabs,assign_external_model,ibool,kmato,numabs, &
@@ -4883,7 +4901,13 @@ if(coupled_elastic_poro) then
                SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right,&
                nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
-               b_absorb_acoustic_bottom,b_absorb_acoustic_top,.true.)
+               b_absorb_acoustic_bottom,b_absorb_acoustic_top,.true.,&
+            is_PML,nspec_PML,npoin_PML,ibool_PML,spec_to_PML,which_PML_elem,&
+            K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
+            rmemory_potential_acoustic,rmemory_potential_acoustic_corner,&
+            rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
+            rmemory_acoustic_dux_dx_corner,rmemory_acoustic_dux_dz_corner,deltat,&
+            PML_BOUNDARY_CONDITIONS)
       endif
 
 
