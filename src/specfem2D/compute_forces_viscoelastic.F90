@@ -970,11 +970,9 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                             abs( d_x_store(iPML) )     < 1.d-3       &
                           ) then
                           A3 = 0.d0
-                       elseif ( abs( alpha_x_store(iPML) - alpha_z_store(iPML) ) < 1.d-3 .AND. &
-                            abs( d_x_store(iPML) - d_z_store(iPML) )         < 1.d-3 .AND. &
-                            abs( k_x_store(iPML) - k_z_store(iPML) )         < 1.d-3       &
+                       elseif ( abs( alpha_x_store(iPML) - alpha_z_store(iPML) ) < 1.d-3 & 
                           ) then
-                          A3 = 0.d0
+                          A3 = alpha_x_store(iPML) ** 2 * d_x_store(iPML) * k_z_store(iPML)
                        else
                           A3 = alpha_x_store(iPML) ** 2 * d_x_store(iPML) * &
                                ( k_z_store(iPML) * ( alpha_x_store(iPML) - alpha_z_store(iPML) ) - d_z_store(iPML) ) &
@@ -990,7 +988,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                           coef1_x = deltat / 2.0d0 * A3
                           coef2_x = deltat * A3 ! Rene Matzen
                        end if
-
                        rmemory_displ_elastic_corner(1,1,i,j,ispec_PML)= &
                         coef0_x * rmemory_displ_elastic_corner(1,1,i,j,ispec_PML) &
                         + displ_elastic_new(1,iglob) * coef1_x + displ_elastic(1,iglob) * coef2_x
@@ -1008,11 +1005,9 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                              abs( d_x_store(iPML) )     < 1.d-3       &
                            ) then
                           A4 = d_z_store(iPML) * alpha_z_store(iPML) ** 2
-                       elseif ( abs( alpha_x_store(iPML) - alpha_z_store(iPML) ) < 1.d-3 .AND. &
-                             abs( d_x_store(iPML) - d_z_store(iPML) )         < 1.d-3 .AND. &
-                             abs( k_x_store(iPML) - k_z_store(iPML) )         < 1.d-3       &
+                       elseif ( abs( alpha_x_store(iPML) - alpha_z_store(iPML) ) < 1.d-3 & 
                            ) then
-                          A4 = 0.d0
+                          A4 = alpha_z_store(iPML) ** 2 * d_z_store(iPML) * k_x_store(iPML)
                        else
                           A4 = alpha_z_store(iPML) ** 2 * d_z_store(iPML) * &
                                ( k_x_store(iPML) * ( alpha_z_store(iPML) - alpha_x_store(iPML) ) - d_x_store(iPML) ) &
@@ -1740,7 +1735,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
  !
   !--- absorbing boundaries
   !
-  if( PML_BOUNDARY_CONDITIONS ) then
+  if( PML_BOUNDARY_CONDITIONS .and. anyabs) then
 
 ! we have to put Dirichlet on the boundary of the PML
      do ispecabs = 1,nelemabs
@@ -1748,7 +1743,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
        ispec = numabs(ispecabs)
 
        if (is_PML(ispec)) then
- ispec_PML=spec_to_PML(ispec)
+      ispec_PML=spec_to_PML(ispec)
 !--- left absorbing boundary
       if(codeabs(ILEFT,ispecabs)) then
         i = 1

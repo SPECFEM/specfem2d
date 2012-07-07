@@ -54,7 +54,13 @@
                SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right,&
                nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
-               b_absorb_acoustic_bottom,b_absorb_acoustic_top,IS_BACKWARD_FIELD)
+               b_absorb_acoustic_bottom,b_absorb_acoustic_top,IS_BACKWARD_FIELD,&
+            is_PML,nspec_PML,npoin_PML,ibool_PML,spec_to_PML,which_PML_elem,&
+            K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
+            rmemory_potential_acoustic,rmemory_potential_acoustic_corner,&
+            rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
+            rmemory_acoustic_dux_dx_corner,rmemory_acoustic_dux_dz_corner,deltat,&
+            PML_BOUNDARY_CONDITIONS)
 
 ! compute forces for the acoustic elements
 
@@ -121,6 +127,28 @@
 
   integer :: ifirstelem,ilastelem
 
+!CPML coefficients and memory variables
+  integer :: nspec_PML,npoin_PML,iPML,ispec_PML
+  logical, dimension(4,nspec) :: which_PML_elem  
+  logical, dimension(nspec) :: is_PML
+  integer, dimension(nspec) :: spec_to_PML
+  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool_PML
+
+  real(kind=CUSTOM_REAL), dimension(2,NGLLX,NGLLZ,nspec_PML) :: rmemory_potential_acoustic,rmemory_potential_acoustic_corner
+  real(kind=CUSTOM_REAL), dimension(2,NGLLX,NGLLZ,nspec_PML) :: &
+    rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
+    rmemory_acoustic_dux_dx_corner,rmemory_acoustic_dux_dz_corner
+  real(kind=CUSTOM_REAL), dimension(npoin_PML) :: K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) :: potential_dot_dot_acoustic_PML, &
+                                                                potential_dot_dot_acoustic_PML_corner
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) ::PML_dux_dxl,PML_dux_dzl,&    
+                           PML_dux_dxl_new,PML_dux_dzl_new
+  real(kind=CUSTOM_REAL) :: coef0_x, coef1_x, coef2_x, coef0_z, coef1_z, coef2_z,bb,aa,&
+                            deltat
+
+  logical :: PML_BOUNDARY_CONDITIONS
+
   ifirstelem = 1
   ilastelem = nspec
 
@@ -157,6 +185,278 @@
           ! derivatives of potential
           dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
           dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
+
+
+          ! derivative along x and along z
+          if(PML_BOUNDARY_CONDITIONS .and. is_PML(ispec))then
+
+          ispec_PML=spec_to_PML(ispec)
+
+          PML_dux_dxl(i,j,ispec_PML) = dux_dxl
+          PML_dux_dzl(i,j,ispec_PML)=dux_dzl
+
+          dux_dxi = ZERO
+          dux_dgamma = ZERO
+
+          ! first double loop over GLL points to compute and store gradients
+          ! we can merge the two loops because NGLLX == NGLLZ
+          do k = 1,NGLLX
+            dux_dxi = dux_dxi &
+            +(potential_acoustic(ibool(k,j,ispec))+deltat*potential_dot_acoustic(ibool(k,j,ispec)))*hprime_xx(i,k)
+            dux_dgamma = dux_dgamma &
+            +(potential_acoustic(ibool(i,k,ispec))+deltat*potential_dot_acoustic(ibool(i,k,ispec)))*hprime_zz(j,k)
+          enddo
+
+          xixl = xix(i,j,ispec)
+          xizl = xiz(i,j,ispec)
+          gammaxl = gammax(i,j,ispec)
+          gammazl = gammaz(i,j,ispec)
+
+          ! derivatives of potential
+          dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
+          dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
+
+          PML_dux_dxl_new(i,j,ispec_PML) = dux_dxl
+          PML_dux_dzl_new(i,j,ispec_PML) = dux_dzl
+          endif
+
+
+             if(PML_BOUNDARY_CONDITIONS .and. is_PML(ispec))then
+               ispec_PML=spec_to_PML(ispec)
+               iPML=ibool_PML(i,j,ispec) 
+               if (which_PML_elem(ILEFT,ispec) .or. which_PML_elem(IRIGHT,ispec)) then 
+
+                 bb = 0.d0 - (d_x_store(iPML) / k_x_store(iPML) + alpha_x_store(iPML))
+                 if(abs(alpha_x_store(iPML)) > 1.d-3) then                
+                 aa = - d_x_store(iPML) / &
+                        (k_x_store(iPML) * d_x_store(iPML) + k_x_store(iPML)**2 * alpha_x_store(iPML))
+                 else
+                 aa = - 1.d0 / k_x_store(iPML)
+                 endif
+
+                 coef0_x = exp(bb * deltat)
+                 coef1_x = (1.d0 - exp(bb * deltat / 2.d0)) * aa
+                 coef2_x = (1.d0 - exp(bb* deltat / 2.d0)) * exp(bb * deltat / 2.d0) * aa
+ 
+
+                 rmemory_acoustic_dux_dx(1,i,j,ispec_PML) = 0.d0 
+                 rmemory_acoustic_dux_dx(2,i,j,ispec_PML) = coef0_x*rmemory_acoustic_dux_dx(2,i,j,ispec_PML) &  
+                 + PML_dux_dxl_new(i,j,ispec_PML) * coef1_x + PML_dux_dxl(i,j,ispec_PML) * coef2_x
+
+                  if(abs(alpha_x_store(iPML)) > 1.d-3) then
+                   bb = alpha_x_store(iPML)
+                   coef0_x = exp(- bb * deltat)
+                   coef1_x = (1 - exp(- bb * deltat / 2)) * d_x_store(iPML)/bb
+                   coef2_x = (1 - exp(- bb * deltat / 2)) * exp(- bb * deltat / 2) * &
+                             d_x_store(iPML)/bb
+                 else
+                   bb = alpha_x_store(iPML)
+                  coef0_x = exp(- bb * deltat)
+                  coef1_x = deltat / 2.0d0 * d_x_store(iPML)
+                  coef2_x = deltat / 2.0d0 * d_x_store(iPML)
+                  endif
+
+                  rmemory_acoustic_dux_dz(1,i,j,ispec_PML) = coef0_x * rmemory_acoustic_dux_dz(1,i,j,ispec_PML) &  
+                  + PML_dux_dzl_new(i,j,ispec_PML) *coef1_x + PML_dux_dzl(i,j,ispec_PML) * coef2_x
+                  rmemory_acoustic_dux_dz(2,i,j,ispec_PML) = 0.d0
+
+                 dux_dxl = PML_dux_dxl(i,j,ispec_PML)  + rmemory_acoustic_dux_dx(1,i,j,ispec_PML) &
+                                                       + rmemory_acoustic_dux_dx(2,i,j,ispec_PML)  
+                 dux_dzl = PML_dux_dzl(i,j,ispec_PML)  + rmemory_acoustic_dux_dz(1,i,j,ispec_PML) &
+                                                       + rmemory_acoustic_dux_dz(2,i,j,ispec_PML)   
+
+                    if (which_PML_elem(ITOP,ispec) .or. which_PML_elem(IBOTTOM,ispec)) then
+                        ispec_PML=spec_to_PML(ispec)
+                        iPML=ibool_PML(i,j,ispec)
+
+                         if(abs(alpha_z_store(iPML)) .lt. 1.d-3)then
+                            bb = alpha_z_store(iPML)
+                            if(abs(k_x_store(iPML)*(alpha_x_store(iPML)-alpha_z_store(iPML))+d_x_store(iPML)) .lt. 1.d-3)then
+                            aa=d_z_store(iPML)/k_x_store(iPML)
+                            else
+                            aa = d_z_store(iPML)*(alpha_x_store(iPML)-alpha_z_store(iPML))/&
+                                     (k_x_store(iPML)*(alpha_x_store(iPML)-alpha_z_store(iPML))+d_x_store(iPML))
+                            endif
+                            coef0_x = exp(- bb * deltat)
+                            coef1_x = deltat / 2.0d0 * aa
+                            coef2_x = deltat / 2.0d0 * aa
+                         else
+                            if(abs(k_x_store(iPML)*(alpha_x_store(iPML)-alpha_z_store(iPML))+d_x_store(iPML)) .lt. 1.d-3)then
+                            aa=d_z_store(iPML)/k_x_store(iPML)
+                            else
+                            aa = d_z_store(iPML)*(alpha_x_store(iPML)-alpha_z_store(iPML))/&
+                                     (k_x_store(iPML)*(alpha_x_store(iPML)-alpha_z_store(iPML))+d_x_store(iPML))
+                            endif
+                            bb = alpha_z_store(iPML)
+                            coef0_x = exp(- bb * deltat)
+                            coef1_x = (1 - exp(- bb * deltat / 2)) * aa/bb
+                            coef2_x = (1 - exp(- bb * deltat / 2)) * exp(- bb * deltat / 2) * aa /bb
+                         endif
+
+
+                  rmemory_acoustic_dux_dx_corner(1,i,j,ispec_PML) = coef0_x*rmemory_acoustic_dux_dx_corner(1,i,j,ispec_PML) &  
+                  + PML_dux_dxl_new(i,j,ispec_PML) * coef1_x + PML_dux_dxl(i,j,ispec_PML) * coef2_x
+
+   
+                        if(abs(d_x_store(iPML)*&
+                                       (k_x_store(iPML)*k_z_store(iPML)*(alpha_z_store(iPML)-alpha_x_store(iPML))+&
+                                        k_x_store(iPML)*d_z_store(iPML)-k_z_store(iPML)*d_x_store(iPML))/&
+                                       (k_x_store(iPML)*(alpha_x_store(iPML)-alpha_z_store(iPML))+d_x_store(iPML))/&
+                                       k_x_store(iPML)**2) .lt. 1.d-3 .and. &
+                        abs(k_x_store(iPML)*alpha_x_store(iPML)+d_x_store(iPML)) .lt. 1.d-3)then  
+                            coef0_z = 1.d0
+                            coef1_z = 0.d0
+                            coef2_z = 0.d0 
+
+                  rmemory_acoustic_dux_dx_corner(2,i,j,ispec_PML) = coef0_z*rmemory_acoustic_dux_dx_corner(2,i,j,ispec_PML) &  
+                  + PML_dux_dxl_new(i,j,ispec_PML) * coef1_z + PML_dux_dxl(i,j,ispec_PML) * coef2_z
+
+
+                        elseif(abs(k_x_store(iPML)*(alpha_x_store(iPML)-alpha_z_store(iPML))+d_x_store(iPML)) .lt. 1.d-3 .and. &
+                        abs(k_x_store(iPML)*alpha_x_store(iPML)+d_x_store(iPML)) .lt. 1.d-3)then
+                            bb=(k_x_store(iPML)*alpha_x_store(iPML)+d_x_store(iPML))/k_x_store(iPML)
+                            aa=d_z_store(iPML)/k_x_store(iPML)
+                            coef0_z = 1.d0
+                            coef1_z = 0.5d0 *deltat
+                            coef2_z = 0.5d0 *deltat
+
+                  rmemory_acoustic_dux_dx_corner(2,i,j,ispec_PML) = coef0_z*rmemory_acoustic_dux_dx_corner(2,i,j,ispec_PML) &  
+                  + PML_dux_dxl_new(i,j,ispec_PML) * coef1_z*aa + PML_dux_dxl(i,j,ispec_PML) * coef2_z*aa
+
+
+                        else
+                            bb=(k_x_store(iPML)*alpha_x_store(iPML)+d_x_store(iPML))/k_x_store(iPML)
+                            aa=d_x_store(iPML)*&
+                                       (k_x_store(iPML)*k_z_store(iPML)*(alpha_z_store(iPML)-alpha_x_store(iPML))+&
+                                        k_x_store(iPML)*d_z_store(iPML)-k_z_store(iPML)*d_x_store(iPML))/&
+                                       (k_x_store(iPML)*(alpha_x_store(iPML)-alpha_z_store(iPML))+d_x_store(iPML))/&
+                                       k_x_store(iPML)**2
+                            coef0_z = exp(- bb * deltat)
+                            coef1_z = (1 - exp(- bb * deltat / 2)) * aa/bb
+                            coef2_z = (1 - exp(- bb * deltat / 2)) * exp(- bb * deltat / 2) * aa /bb
+
+                  rmemory_acoustic_dux_dx_corner(2,i,j,ispec_PML) = coef0_z*rmemory_acoustic_dux_dx_corner(2,i,j,ispec_PML) & 
+                  + PML_dux_dxl_new(i,j,ispec_PML) * coef1_z + PML_dux_dxl(i,j,ispec_PML) * coef2_z
+
+                           
+                        endif
+
+                         if(abs(alpha_x_store(iPML)) .lt. 1.d-3)then
+                            bb = alpha_x_store(iPML)
+                            if(abs(k_z_store(iPML)*(alpha_x_store(iPML)-alpha_z_store(iPML))-d_z_store(iPML)) .lt. 1.d-3)then
+                            aa=d_x_store(iPML)/k_z_store(iPML)
+                            else
+                            aa = d_x_store(iPML)*(alpha_x_store(iPML)-alpha_z_store(iPML))/&
+                                     (k_z_store(iPML)*(alpha_x_store(iPML)-alpha_z_store(iPML))-d_z_store(iPML))
+                            endif
+                            coef0_x = exp(- bb * deltat)
+                            coef1_x = deltat / 2.0d0 * aa
+                            coef2_x = deltat / 2.0d0 * aa
+                         else
+                            if(abs(k_z_store(iPML)*(alpha_x_store(iPML)-alpha_z_store(iPML))-d_z_store(iPML)) .lt. 1.d-3)then
+                            aa=d_x_store(iPML)/k_z_store(iPML)
+                            else
+                            aa = d_x_store(iPML)*(alpha_x_store(iPML)-alpha_z_store(iPML))/&
+                                     (k_z_store(iPML)*(alpha_x_store(iPML)-alpha_z_store(iPML))-d_z_store(iPML))
+                            endif
+                            bb = alpha_x_store(iPML)
+                            coef0_x = exp(- bb * deltat)
+                            coef1_x = (1 - exp(- bb * deltat / 2)) * aa/bb
+                            coef2_x = (1 - exp(- bb * deltat / 2)) * exp(- bb * deltat / 2) * aa /bb
+                         endif
+
+                  rmemory_acoustic_dux_dz_corner(1,i,j,ispec_PML) = coef0_x * rmemory_acoustic_dux_dz_corner(1,i,j,ispec_PML) &  
+                  + PML_dux_dzl_new(i,j,ispec_PML) *coef1_x + PML_dux_dzl(i,j,ispec_PML) * coef2_x
+
+   
+                        if(abs(d_z_store(iPML)*&
+                                       (k_x_store(iPML)*k_z_store(iPML)*(alpha_x_store(iPML)-alpha_z_store(iPML))+&
+                                        k_z_store(iPML)*d_x_store(iPML)-k_x_store(iPML)*d_z_store(iPML))/&
+                                       (k_z_store(iPML)*(alpha_z_store(iPML)-alpha_x_store(iPML))+d_z_store(iPML))/&
+                                       k_z_store(iPML)**2) .lt. 1.d-3 .and. &
+                        abs(k_z_store(iPML)*alpha_z_store(iPML)+d_z_store(iPML)) .lt. 1.d-3)then  
+                            coef0_z = 1.d0
+                            coef1_z = 0.d0
+                            coef2_z = 0.d0 
+
+                  rmemory_acoustic_dux_dz_corner(2,i,j,ispec_PML) = coef0_z * rmemory_acoustic_dux_dz_corner(2,i,j,ispec_PML) &  
+                  + PML_dux_dzl_new(i,j,ispec_PML) *coef1_z + PML_dux_dzl(i,j,ispec_PML) * coef2_z
+
+                        elseif(abs(k_z_store(iPML)*(alpha_z_store(iPML)-alpha_x_store(iPML))+d_z_store(iPML)) .lt. 1.d-3 .and. &
+                        abs(k_z_store(iPML)*alpha_z_store(iPML)+d_z_store(iPML)) .lt. 1.d-3)then
+                            bb=(k_z_store(iPML)*alpha_z_store(iPML)+d_z_store(iPML))/k_z_store(iPML)
+                            aa=d_x_store(iPML)/k_z_store(iPML)
+                            coef0_z = 1.d0
+                            coef1_z = 0.5d0 *deltat
+                            coef2_z = 0.5d0 *deltat
+
+                  rmemory_acoustic_dux_dz_corner(2,i,j,ispec_PML) = coef0_z * rmemory_acoustic_dux_dz_corner(2,i,j,ispec_PML) &  
+                  + PML_dux_dzl_new(i,j,ispec_PML) *coef1_z*aa + PML_dux_dzl(i,j,ispec_PML) * coef2_z*aa
+
+                        else
+                            bb=(k_z_store(iPML)*alpha_z_store(iPML)+d_z_store(iPML))/k_z_store(iPML)
+                            aa=d_z_store(iPML)*&
+                                       (k_x_store(iPML)*k_z_store(iPML)*(alpha_x_store(iPML)-alpha_z_store(iPML))+&
+                                        k_z_store(iPML)*d_x_store(iPML)-k_x_store(iPML)*d_z_store(iPML))/&
+                                       (k_z_store(iPML)*(alpha_z_store(iPML)-alpha_x_store(iPML))+d_z_store(iPML))/&
+                                       k_z_store(iPML)**2
+                            coef0_z = exp(- bb * deltat)
+                            coef1_z = (1 - exp(- bb * deltat / 2)) * aa/bb
+                            coef2_z = (1 - exp(- bb * deltat / 2)) * exp(- bb * deltat / 2) * aa /bb
+
+                  rmemory_acoustic_dux_dz_corner(2,i,j,ispec_PML) = coef0_z * rmemory_acoustic_dux_dz_corner(2,i,j,ispec_PML) &  
+                  + PML_dux_dzl_new(i,j,ispec_PML) *coef1_z + PML_dux_dzl(i,j,ispec_PML) * coef2_z
+                           
+                        endif
+
+                 dux_dxl = PML_dux_dxl(i,j,ispec_PML)  + rmemory_acoustic_dux_dx_corner(1,i,j,ispec_PML) +&
+                           rmemory_acoustic_dux_dx_corner(2,i,j,ispec_PML)  
+                 dux_dzl = PML_dux_dzl(i,j,ispec_PML)  + rmemory_acoustic_dux_dz_corner(1,i,j,ispec_PML) + &
+                           rmemory_acoustic_dux_dz_corner(2,i,j,ispec_PML)  
+
+                    endif
+
+               else
+
+                  if(abs(alpha_z_store(iPML)) > 1.d-3) then
+                   bb = alpha_z_store(iPML)
+                   coef0_x = exp(- bb * deltat)
+                   coef1_x = (1 - exp(- bb * deltat / 2)) * d_z_store(iPML)/bb
+                   coef2_x = (1 - exp(- bb * deltat / 2)) * exp(- bb * deltat / 2) * &
+                             d_z_store(iPML) / bb
+                 else
+                   bb = alpha_z_store(iPML)
+                  coef0_x = exp(- bb * deltat)
+                  coef1_x = deltat / 2.0d0 * d_z_store(iPML)
+                  coef2_x = deltat / 2.0d0 * d_z_store(iPML)
+                  endif
+
+
+                  rmemory_acoustic_dux_dx(1,i,j,ispec_PML) = coef0_x*rmemory_acoustic_dux_dx(1,i,j,ispec_PML) &  
+                  + PML_dux_dxl_new(i,j,ispec_PML) * coef1_x + PML_dux_dxl(i,j,ispec_PML) * coef2_x
+                  rmemory_acoustic_dux_dx(2,i,j,ispec_PML) = 0.d0
+
+                 bb = 0.d0 - (d_z_store(iPML) / k_z_store(iPML) + alpha_z_store(iPML))
+                 if(abs(alpha_z_store(iPML)) > 1.d-3) then                
+                 aa = - d_z_store(iPML) * k_x_store(iPML) / &
+                        (k_z_store(iPML) * d_z_store(iPML) + k_z_store(iPML)**2 * alpha_z_store(iPML))
+                 else
+                 aa = - k_x_store(iPML) / k_z_store(iPML)
+                 endif
+                 coef0_x = exp(bb * deltat)
+                 coef1_x = (1.d0 - exp(bb * deltat / 2.d0)) * aa
+                 coef2_x = (1.d0 - exp(bb* deltat / 2.d0)) * exp(bb * deltat / 2.d0) * aa
+
+                  rmemory_acoustic_dux_dz(1,i,j,ispec_PML) = 0.d0
+                  rmemory_acoustic_dux_dz(2,i,j,ispec_PML) = coef0_x * rmemory_acoustic_dux_dz(2,i,j,ispec_PML) &  
+                  + PML_dux_dzl_new(i,j,ispec_PML) *coef1_x + PML_dux_dzl(i,j,ispec_PML) * coef2_x
+
+                 dux_dxl = dux_dxl  + rmemory_acoustic_dux_dx(1,i,j,ispec_PML) + rmemory_acoustic_dux_dx(2,i,j,ispec_PML)  
+                 dux_dzl = dux_dzl  + rmemory_acoustic_dux_dz(1,i,j,ispec_PML) + rmemory_acoustic_dux_dz(2,i,j,ispec_PML)  
+      
+               endif
+             endif
+
           jacobianl = jacobian(i,j,ispec)
 
           ! if external density model
@@ -168,6 +468,159 @@
           tempx2(i,j) = wxgll(i)*jacobianl*(gammaxl*dux_dxl + gammazl*dux_dzl) / rhol
         enddo
       enddo
+
+
+        ! first double loop over GLL points to compute and store gradients
+        do j = 1,NGLLZ
+           do i = 1,NGLLX
+            if(assign_external_model) then
+              rhol = rhoext(i,j,ispec)
+            else
+!              rhol = density(1,kmato(ispec))
+        lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
+        mul_relaxed = poroelastcoef(2,1,kmato(ispec))
+        kappal  = lambdal_relaxed + TWO*mul_relaxed/3._CUSTOM_REAL
+        rhol = density(1,kmato(ispec))
+            endif
+
+             if(is_PML(ispec))then
+                        iPML=ibool_PML(i,j,ispec)
+                        iglob=ibool(i,j,ispec)
+                
+
+               if (which_PML_elem(ILEFT,ispec) .or. which_PML_elem(IRIGHT,ispec)) then   
+                        ispec_PML=spec_to_PML(ispec)
+                        iPML=ibool_PML(i,j,ispec)
+                        iglob=ibool(i,j,ispec)
+                        bb = alpha_x_store(iPML)
+                        coef0_x = exp(- bb * deltat)
+                        coef1_x = (1 - exp(- bb * deltat / 2)) * (k_z_store(iPML)*d_x_store(iPML)*(bb))
+                        coef2_x = (1 - exp(- bb * deltat / 2)) * exp(- bb * deltat / 2) * &
+                                  (k_z_store(iPML)*d_x_store(iPML)*(bb))
+
+                        rmemory_potential_acoustic(1,i,j,ispec_PML)=coef0_x * rmemory_potential_acoustic(1,i,j,ispec_PML) &
+                         + (potential_acoustic(iglob)+deltat*potential_dot_acoustic(iglob)) * coef1_x &
+                         + potential_acoustic(iglob) * coef2_x 
+
+                        rmemory_potential_acoustic(2,i,j,ispec_PML)=0.0   
+
+                    if (which_PML_elem(ITOP,ispec) .or. which_PML_elem(IBOTTOM,ispec)) then
+                        ispec_PML=spec_to_PML(ispec)
+                        iPML=ibool_PML(i,j,ispec)
+
+                        if(abs(alpha_x_store(iPML)-alpha_z_store(iPML)).lt. 1.d-3)then
+                          bb = alpha_x_store(iPML)
+                          aa = (k_z_store(iPML)*d_x_store(iPML)*(bb))
+                          coef0_x = exp(- bb * deltat)
+                          coef1_x = (1 - exp(- bb * deltat / 2)) * aa 
+                          coef2_x = (1 - exp(- bb * deltat / 2)) * exp(- bb * deltat / 2) * aa  
+
+                         rmemory_potential_acoustic_corner(1,i,j,ispec_PML)=&
+                            coef0_x * rmemory_potential_acoustic_corner(1,i,j,ispec_PML) &
+                          + (potential_acoustic(iglob)+deltat*potential_dot_acoustic(iglob)) * coef1_x &
+                          + potential_acoustic(iglob) * coef2_x
+                        else
+                          bb = alpha_x_store(iPML)
+                          aa = bb*d_x_store(iPML)*(k_z_store(iPML)*(alpha_x_store(iPML)-alpha_z_store(iPML))-d_z_store(iPML))/&
+                               (alpha_x_store(iPML)-alpha_z_store(iPML))
+                          coef0_x = exp(- bb * deltat)
+                          coef1_x = (1 - exp(- bb * deltat / 2)) * aa 
+                          coef2_x = (1 - exp(- bb * deltat / 2)) * exp(- bb * deltat / 2) * aa 
+
+                         rmemory_potential_acoustic_corner(1,i,j,ispec_PML)=&
+                            coef0_x * rmemory_potential_acoustic_corner(1,i,j,ispec_PML) &
+                          + (potential_acoustic(iglob)+deltat*potential_dot_acoustic(iglob)) * coef1_x &
+                          + potential_acoustic(iglob) * coef2_x
+
+                        endif
+
+                        if(abs(alpha_x_store(iPML)-alpha_z_store(iPML)).lt. 1.d-3)then
+                          bb = alpha_z_store(iPML)
+                          aa = k_x_store(iPML)*d_z_store(iPML)*(bb)
+                          coef0_x = exp(- bb * deltat)
+                          coef1_x = (1 - exp(- bb * deltat / 2)) * aa 
+                          coef2_x = (1 - exp(- bb * deltat / 2)) * exp(- bb * deltat / 2) * aa    
+
+                        rmemory_potential_acoustic_corner(2,i,j,ispec_PML)=&
+                           coef0_x * rmemory_potential_acoustic_corner(2,i,j,ispec_PML) &
+                         + (potential_acoustic(iglob)+deltat*potential_dot_acoustic(iglob)) * coef1_x &
+                         + potential_acoustic(iglob) * coef2_x    
+
+                        else
+                          bb = alpha_z_store(iPML)
+                          aa = bb*d_z_store(iPML)*(k_x_store(iPML)*(alpha_x_store(iPML)-alpha_z_store(iPML))+d_x_store(iPML))/&
+                               (alpha_x_store(iPML)-alpha_z_store(iPML))
+                          coef0_x = exp(- bb * deltat)
+                          coef1_x = (1 - exp(- bb * deltat / 2)) * aa 
+                          coef2_x = (1 - exp(- bb * deltat / 2)) * exp(- bb * deltat / 2) * aa  
+
+                         rmemory_potential_acoustic_corner(2,i,j,ispec_PML)=&
+                            coef0_x * rmemory_potential_acoustic_corner(2,i,j,ispec_PML) &
+                          + (potential_acoustic(iglob)+deltat*potential_dot_acoustic(iglob)) * coef1_x &
+                          + potential_acoustic(iglob) * coef2_x
+                        endif
+
+
+                    endif
+
+               else
+
+                        ispec_PML=spec_to_PML(ispec)
+                        iPML=ibool_PML(i,j,ispec)
+                        iglob=ibool(i,j,ispec)
+                        bb = alpha_z_store(iPML)
+                        coef0_x = exp(- bb * deltat)
+                        coef1_x = (1 - exp(- bb * deltat / 2)) * (k_x_store(iPML)*d_z_store(iPML)*(bb))
+                        coef2_x = (1 - exp(- bb * deltat / 2)) * exp(- bb * deltat / 2) * &
+                                  (k_x_store(iPML)*d_z_store(iPML)*(bb))
+
+
+                        rmemory_potential_acoustic(1,i,j,ispec_PML)=0.d0  
+                        rmemory_potential_acoustic(2,i,j,ispec_PML)=coef0_x * rmemory_potential_acoustic(2,i,j,ispec_PML) &
+                         + (potential_acoustic(iglob)+deltat*potential_dot_acoustic(iglob)) * coef1_x &
+                         + potential_acoustic(iglob) * coef2_x    
+         
+               endif
+
+
+               if (which_PML_elem(ILEFT,ispec) .or. which_PML_elem(IRIGHT,ispec)) then   
+                        ispec_PML=spec_to_PML(ispec)
+                        iPML=ibool_PML(i,j,ispec)
+                        iglob=ibool(i,j,ispec)
+                    potential_dot_dot_acoustic_PML(i,j,ispec_PML)= wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * &
+                      ((d_x_store(iPML)*k_z_store(iPML))*potential_dot_acoustic(iglob)+ &
+                      rmemory_potential_acoustic(1,i,j,ispec_PML)+rmemory_potential_acoustic(2,i,j,ispec_PML)&
+                      -k_z_store(iPML)*d_x_store(iPML)*alpha_x_store(iPML)*potential_acoustic(iglob))
+
+
+                    if (which_PML_elem(ITOP,ispec) .or. which_PML_elem(IBOTTOM,ispec)) then
+                        ispec_PML=spec_to_PML(ispec)
+                        iPML=ibool_PML(i,j,ispec)
+
+                    potential_dot_dot_acoustic_PML_corner(i,j,ispec_PML)= wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * &
+                      ((d_x_store(iPML)*k_z_store(iPML)+d_z_store(iPML)*k_x_store(iPML))*potential_dot_acoustic(iglob)+ &
+                      rmemory_potential_acoustic_corner(1,i,j,ispec_PML)+rmemory_potential_acoustic_corner(2,i,j,ispec_PML)&
+                      -k_z_store(iPML)*d_x_store(iPML)*alpha_x_store(iPML)*potential_acoustic(iglob)-&
+                       k_x_store(iPML)*d_z_store(iPML)*alpha_z_store(iPML)*potential_acoustic(iglob)+&
+                       d_z_store(iPML)*d_x_store(iPML)*potential_acoustic(iglob))
+
+                    endif
+
+               else
+                        ispec_PML=spec_to_PML(ispec)
+                        iPML=ibool_PML(i,j,ispec)
+                        iglob=ibool(i,j,ispec)
+                    potential_dot_dot_acoustic_PML(i,j,ispec_PML)= wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * &
+                      ((d_z_store(iPML)*k_x_store(iPML))*potential_dot_acoustic(iglob)+ &
+                      rmemory_potential_acoustic(1,i,j,ispec_PML)+rmemory_potential_acoustic(2,i,j,ispec_PML)&
+                      -k_x_store(iPML)*d_z_store(iPML)*alpha_z_store(iPML)*potential_acoustic(iglob))
+               endif
+             endif
+
+           enddo
+        enddo
+
+
 
 !
 ! second double-loop over GLL to compute all the terms
@@ -184,6 +637,32 @@
                            (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
           enddo
 
+            if(is_PML(ispec))then
+                if (which_PML_elem(ILEFT,ispec) .or. which_PML_elem(IRIGHT,ispec)) then   
+                        ispec_PML=spec_to_PML(ispec)
+                        iPML=ibool_PML(i,j,ispec)
+                      potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
+                                                         - potential_dot_dot_acoustic_PML(i,j,ispec_PML)
+
+                    if (which_PML_elem(ITOP,ispec) .or. which_PML_elem(IBOTTOM,ispec)) then
+                        ispec_PML=spec_to_PML(ispec)
+                        iPML=ibool_PML(i,j,ispec)
+                      potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
+                                                          + potential_dot_dot_acoustic_PML(i,j,ispec_PML)
+
+                      potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
+                                                          - potential_dot_dot_acoustic_PML_corner(i,j,ispec_PML)
+                    endif
+
+               else
+                      ispec_PML=spec_to_PML(ispec)
+                      iPML=ibool_PML(i,j,ispec)
+                      potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
+                                                         - potential_dot_dot_acoustic_PML(i,j,ispec_PML)
+
+               endif
+             endif
+
         enddo ! second loop over the GLL points
       enddo
 
@@ -191,10 +670,71 @@
 
   enddo ! end of loop over all spectral elements
 
+ if(PML_BOUNDARY_CONDITIONS .and. anyabs) then
+
+! we have to put Dirichlet on the boundary of the PML
+     do ispecabs = 1,nelemabs
+
+       ispec = numabs(ispecabs)
+
+       if (is_PML(ispec)) then
+      ispec_PML=spec_to_PML(ispec)
+!--- left absorbing boundary
+      if(codeabs(ILEFT,ispecabs)) then
+        i = 1
+        do j = 1,NGLLZ
+          iglob = ibool(i,j,ispec)
+          potential_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
+       enddo
+      endif
+!--- right absorbing boundary
+      if(codeabs(IRIGHT,ispecabs)) then
+        i = NGLLX
+        do j = 1,NGLLZ
+          iglob = ibool(i,j,ispec)
+          potential_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
+        enddo
+
+      endif
+!--- bottom absorbing boundary
+      if(codeabs(IBOTTOM,ispecabs)) then
+        j = 1
+! exclude corners to make sure there is no contradiction on the normal
+        ibegin = 1
+        iend = NGLLX
+        do i = ibegin,iend
+          iglob = ibool(i,j,ispec)
+          potential_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
+        enddo
+      endif
+!--- top absorbing boundary
+      if(codeabs(ITOP,ispecabs)) then
+        j = NGLLZ
+! exclude corners to make sure there is no contradiction on the normal
+        ibegin = 1
+        iend = NGLLX
+        do i = ibegin,iend
+          iglob = ibool(i,j,ispec)
+          potential_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
+        enddo
+      endif  !  end of top absorbing boundary
+      endif ! end of is_PML
+    enddo ! end specabs loop
+  endif  ! end of absorbing boundaries
+
+
 !
 !--- absorbing boundaries
 !
-  if(anyabs) then
+  if(.not. PML_BOUNDARY_CONDITIONS .and. anyabs) then
 
     do ispecabs=1,nelemabs
 

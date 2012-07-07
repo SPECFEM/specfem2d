@@ -60,7 +60,7 @@
                                 ,coord &
 #endif
                                 ,K_x_store,K_z_store,npoin_PML,ibool_PML,is_PML,&
-                                d_x_store,d_z_store,alpha_x_store,alpha_z_store,PML_BOUNDARY_CONDITIONS)
+                                d_x_store,d_z_store,PML_BOUNDARY_CONDITIONS)
 
 !  builds the global mass matrix
 
@@ -124,7 +124,7 @@
 
 !!!!!!!!!!!!! DK DK added this
   integer :: npoin_PML,iPML
-  real(kind=CUSTOM_REAL), dimension(npoin_PML) :: K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
+  real(kind=CUSTOM_REAL), dimension(npoin_PML) :: K_x_store,K_z_store,d_x_store,d_z_store
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool_PML
   logical, dimension(nspec) :: is_PML
   logical :: PML_BOUNDARY_CONDITIONS, anyabs_local
@@ -232,8 +232,18 @@
 
           ! for acoustic medium
 
+!          rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
+!                  + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal
+
+        if (is_PML(ispec)) then
+          iPML=ibool_PML(i,j,ispec)
+          rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
+                  + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(iPML) * K_z_store(iPML)&
+                  + (d_x_store(iPML)*k_z_store(iPML)+d_z_store(iPML)*k_x_store(iPML)) * deltat / 2.d0)
+         else
           rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
                   + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal
+         endif
 
         endif
 
