@@ -60,6 +60,20 @@
 ! pages = {1-32},
 ! number = {1}}
 !
+! @ARTICLE{PeKoLuMaLeCaLeMaLiBlNiBaTr11,
+! author = {Daniel Peter and Dimitri Komatitsch and Yang Luo and Roland Martin
+!     and Nicolas {Le Goff} and Emanuele Casarotti and Pieyre {Le Loher}
+!     and Federica Magnoni and Qinya Liu and C\'eline Blitz and Tarje Nissen-Meyer
+!     and Piero Basini and Jeroen Tromp},
+! title = {Forward and adjoint simulations of seismic wave propagation on fully
+!     unstructured hexahedral meshes},
+! journal={Geophys. J. Int.},
+! year = {2011},
+! volume = {186},
+! pages = {721-739},
+! number = {2},
+! doi = {10.1111/j.1365-246X.2011.05044.x}}
+!
 ! or
 !
 ! @ARTICLE{VaCaSaKoVi99,
@@ -218,7 +232,19 @@
 ! pages = {1-32},
 ! number = {1}}
 !
-! or
+! @ARTICLE{PeKoLuMaLeCaLeMaLiBlNiBaTr11,
+! author = {Daniel Peter and Dimitri Komatitsch and Yang Luo and Roland Martin
+!     and Nicolas {Le Goff} and Emanuele Casarotti and Pieyre {Le Loher}
+!     and Federica Magnoni and Qinya Liu and C\'eline Blitz and Tarje Nissen-Meyer
+!     and Piero Basini and Jeroen Tromp},
+! title = {Forward and adjoint simulations of seismic wave propagation on fully
+!     unstructured hexahedral meshes},
+! journal={Geophys. J. Int.},
+! year = {2011},
+! volume = {186},
+! pages = {721-739},
+! number = {2},
+! doi = {10.1111/j.1365-246X.2011.05044.x}}
 !
 ! @ARTICLE{LiTr06,
 ! author={Qinya Liu and Jeroen Tromp},
@@ -249,6 +275,11 @@
 ! volume = {5336},
 ! pages = {350-363}}
 !
+!
+! version 7.0, Dimitri Komatitsch, Zhinan Xie, Paul Cristini, Roland Martin and Rene Matzen, July 2012:
+!               - added support for Convolution PML absorbing layers
+!               - added higher-order time schemes (4th order Runge-Kutta and LDDRK4-6)
+!               - many small or moderate bug fixes
 !
 ! version 6.2, many developers, April 2011:
 !               - restructured package source code into separate src/ directories
