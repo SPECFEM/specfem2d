@@ -253,9 +253,6 @@
 #ifdef USE_MPI
 ! for MPI and partitioning
   integer  :: ier
-!  integer  :: nproc
-!  integer  :: iproc
-!  character(len=256)  :: prname
 
   double precision :: thickness_PML_z_min_bottom_glob,thickness_PML_z_max_bottom_glob,&
        thickness_PML_x_min_right_glob,thickness_PML_x_max_right_glob,&
@@ -264,7 +261,7 @@
 !       thickness_PML_z_bottom_glob,thickness_PML_x_right_glob,&
 !       thickness_PML_z_top_glob,thickness_PML_x_left_glob
 
-  double precision :: xmin_glob, xmax_glob, zmin_glob, zmax_glob, vpmax_glob, d0
+  double precision :: xmin_glob, xmax_glob, zmin_glob, zmax_glob, vpmax_glob
 #endif
 
   integer :: myrank
