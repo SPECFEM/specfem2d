@@ -400,8 +400,8 @@ $O/save_stations_file.o: ${S}/save_stations_file.f90
 $O/set_sources.o: ${S}/set_sources.f90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/set_sources.o ${S}/set_sources.f90
 
-$O/setup_sources_receivers.o: ${S}/setup_sources_receivers.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/setup_sources_receivers.o ${S}/setup_sources_receivers.f90
+$O/setup_sources_receivers.o: ${S}/setup_sources_receivers.F90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/setup_sources_receivers.o ${S}/setup_sources_receivers.F90
 
 $O/spline_routines.o: ${S}/spline_routines.f90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/spline_routines.o ${S}/spline_routines.f90

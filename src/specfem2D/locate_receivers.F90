@@ -126,7 +126,7 @@
     write(IOUT,*)
   endif
 
-  open(unit=1,file='DATA/STATIONS_target',status='old',action='read')
+  open(unit=1,file='DATA/STATIONS',status='old',action='read')
 
 ! allocate memory for arrays using number of stations
   allocate(final_distance(nrec))

@@ -1900,7 +1900,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   enddo
 
 ! get number of stations from receiver file
-  open(unit=IIN,file='DATA/STATIONS_target',iostat=ios,status='old',action='read')
+  open(unit=IIN,file='DATA/STATIONS',iostat=ios,status='old',action='read')
   nrec = 0
   do while(ios == 0)
     read(IIN,"(a)",iostat=ios) dummystring
@@ -2151,7 +2151,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   if(SIMULATION_TYPE == 2) then  ! adjoint calculation
     nadj_rec_local = 0
     do irec = 1,nrec
-      if(myrank == which_proc_receiver(irec))then
+      if(myrank == which_proc_receiver(irec)) then
         ! check that the source proc number is okay
         if(which_proc_receiver(irec) < 0 .or. which_proc_receiver(irec) > NPROC-1) &
               call exit_MPI('something is wrong with the source proc number in adjoint simulation')
@@ -5353,7 +5353,7 @@ if(coupled_elastic_poro) then
                nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,mu_k,kappa_k, &
                e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
                e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_rk, e11_force_rk, e13_force_rk, &
-               stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring, &
+               stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring,max(1,nadj_rec_local), &
                is_PML,nspec_PML,npoin_PML,ibool_PML,spec_to_PML,which_PML_elem, &
                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
                rmemory_displ_elastic,rmemory_displ_elastic_corner,&
