@@ -57,7 +57,7 @@
                b_absorb_acoustic_bottom,b_absorb_acoustic_top,IS_BACKWARD_FIELD,&
             is_PML,nspec_PML,npoin_PML,ibool_PML,spec_to_PML,which_PML_elem,&
             K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
-            rmemory_potential_acoustic,rmemory_potential_acoustic_corner,&
+            rmemory_potential_acoustic,rmemory_pot_acoustic_corner,&
             rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
             rmemory_acoustic_dux_dx_corner,rmemory_acoustic_dux_dz_corner,deltat,&
             PML_BOUNDARY_CONDITIONS)
@@ -134,14 +134,14 @@
   integer, dimension(nspec) :: spec_to_PML
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool_PML
 
-  real(kind=CUSTOM_REAL), dimension(2,NGLLX,NGLLZ,nspec_PML) :: rmemory_potential_acoustic,rmemory_potential_acoustic_corner
+  real(kind=CUSTOM_REAL), dimension(2,NGLLX,NGLLZ,nspec_PML) :: rmemory_potential_acoustic,rmemory_pot_acoustic_corner
   real(kind=CUSTOM_REAL), dimension(2,NGLLX,NGLLZ,nspec_PML) :: &
     rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
     rmemory_acoustic_dux_dx_corner,rmemory_acoustic_dux_dz_corner
   real(kind=CUSTOM_REAL), dimension(npoin_PML) :: K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) :: potential_dot_dot_acoustic_PML, &
-                                                                potential_dot_dot_acoustic_PML_corner
+                                                                pot_dotdot_acoustic_PML_corner
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) ::PML_dux_dxl,PML_dux_dzl,&
                            PML_dux_dxl_new,PML_dux_dzl_new
   real(kind=CUSTOM_REAL) :: coef0_x, coef1_x, coef2_x, coef0_z, coef1_z, coef2_z,bb,aa,&
@@ -515,8 +515,8 @@
                           coef1_x = (1 - exp(- bb * deltat / 2)) * aa
                           coef2_x = (1 - exp(- bb * deltat / 2)) * exp(- bb * deltat / 2) * aa
 
-                         rmemory_potential_acoustic_corner(1,i,j,ispec_PML)=&
-                            coef0_x * rmemory_potential_acoustic_corner(1,i,j,ispec_PML) &
+                         rmemory_pot_acoustic_corner(1,i,j,ispec_PML)=&
+                            coef0_x * rmemory_pot_acoustic_corner(1,i,j,ispec_PML) &
                           + (potential_acoustic(iglob)+deltat*potential_dot_acoustic(iglob)) * coef1_x &
                           + potential_acoustic(iglob) * coef2_x
                         else
@@ -527,8 +527,8 @@
                           coef1_x = (1 - exp(- bb * deltat / 2)) * aa
                           coef2_x = (1 - exp(- bb * deltat / 2)) * exp(- bb * deltat / 2) * aa
 
-                         rmemory_potential_acoustic_corner(1,i,j,ispec_PML)=&
-                            coef0_x * rmemory_potential_acoustic_corner(1,i,j,ispec_PML) &
+                         rmemory_pot_acoustic_corner(1,i,j,ispec_PML)=&
+                            coef0_x * rmemory_pot_acoustic_corner(1,i,j,ispec_PML) &
                           + (potential_acoustic(iglob)+deltat*potential_dot_acoustic(iglob)) * coef1_x &
                           + potential_acoustic(iglob) * coef2_x
 
@@ -541,8 +541,8 @@
                           coef1_x = (1 - exp(- bb * deltat / 2)) * aa
                           coef2_x = (1 - exp(- bb * deltat / 2)) * exp(- bb * deltat / 2) * aa
 
-                        rmemory_potential_acoustic_corner(2,i,j,ispec_PML)=&
-                           coef0_x * rmemory_potential_acoustic_corner(2,i,j,ispec_PML) &
+                        rmemory_pot_acoustic_corner(2,i,j,ispec_PML)=&
+                           coef0_x * rmemory_pot_acoustic_corner(2,i,j,ispec_PML) &
                          + (potential_acoustic(iglob)+deltat*potential_dot_acoustic(iglob)) * coef1_x &
                          + potential_acoustic(iglob) * coef2_x
 
@@ -554,8 +554,8 @@
                           coef1_x = (1 - exp(- bb * deltat / 2)) * aa
                           coef2_x = (1 - exp(- bb * deltat / 2)) * exp(- bb * deltat / 2) * aa
 
-                         rmemory_potential_acoustic_corner(2,i,j,ispec_PML)=&
-                            coef0_x * rmemory_potential_acoustic_corner(2,i,j,ispec_PML) &
+                         rmemory_pot_acoustic_corner(2,i,j,ispec_PML)=&
+                            coef0_x * rmemory_pot_acoustic_corner(2,i,j,ispec_PML) &
                           + (potential_acoustic(iglob)+deltat*potential_dot_acoustic(iglob)) * coef1_x &
                           + potential_acoustic(iglob) * coef2_x
                         endif
@@ -597,9 +597,9 @@
                         ispec_PML=spec_to_PML(ispec)
                         iPML=ibool_PML(i,j,ispec)
 
-                    potential_dot_dot_acoustic_PML_corner(i,j,ispec_PML)= wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * &
+                    pot_dotdot_acoustic_PML_corner(i,j,ispec_PML)= wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * &
                       ((d_x_store(iPML)*k_z_store(iPML)+d_z_store(iPML)*k_x_store(iPML))*potential_dot_acoustic(iglob)+ &
-                      rmemory_potential_acoustic_corner(1,i,j,ispec_PML)+rmemory_potential_acoustic_corner(2,i,j,ispec_PML)&
+                      rmemory_pot_acoustic_corner(1,i,j,ispec_PML)+rmemory_pot_acoustic_corner(2,i,j,ispec_PML)&
                       -k_z_store(iPML)*d_x_store(iPML)*alpha_x_store(iPML)*potential_acoustic(iglob)-&
                        k_x_store(iPML)*d_z_store(iPML)*alpha_z_store(iPML)*potential_acoustic(iglob)+&
                        d_z_store(iPML)*d_x_store(iPML)*potential_acoustic(iglob))
@@ -651,7 +651,7 @@
                                                           + potential_dot_dot_acoustic_PML(i,j,ispec_PML)
 
                       potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
-                                                          - potential_dot_dot_acoustic_PML_corner(i,j,ispec_PML)
+                                                          - pot_dotdot_acoustic_PML_corner(i,j,ispec_PML)
                     endif
 
                else

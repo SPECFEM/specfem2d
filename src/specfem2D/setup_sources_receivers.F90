@@ -93,7 +93,10 @@
   integer  :: ixmin, ixmax, izmin, izmax
 
   ! Local variables
-  integer irec,i_source,ispec,ispec_acoustic_surface
+  integer i_source,ispec,ispec_acoustic_surface
+#ifndef USE_MPI
+  integer irec
+#endif
 
   do i_source=1,NSOURCES
 
