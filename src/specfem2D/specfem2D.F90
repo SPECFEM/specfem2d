@@ -2854,7 +2854,6 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         rmemory_dux_dz(:,:,:,:) = ZERO
         rmemory_duz_dx(:,:,:,:) = ZERO
         rmemory_duz_dz(:,:,:,:) = ZERO
-
         rmemory_dux_dx_corner(:,:,:,:) = ZERO
         rmemory_dux_dz_corner(:,:,:,:) = ZERO
         rmemory_duz_dx_corner(:,:,:,:) = ZERO
@@ -2918,6 +2917,9 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
       allocate(rmemory_displ_elastic(1,1,1,1,1))
       allocate(rmemory_displ_elastic_corner(1,1,1,1,1))
+
+      allocate(rmemory_potential_acoustic(1,1,1,1))
+      allocate(rmemory_potential_acoustic_corner(1,1,1,1))
 
       allocate(rmemory_acoustic_dux_dx(1,1,1,1))
       allocate(rmemory_acoustic_dux_dz(1,1,1,1))

@@ -483,7 +483,7 @@
         rhol = density(1,kmato(ispec))
             endif
 
-             if(is_PML(ispec))then
+             if(is_PML(ispec) .and. PML_BOUNDARY_CONDITIONS)then
                         iPML=ibool_PML(i,j,ispec)
                         iglob=ibool(i,j,ispec)
 
@@ -637,7 +637,7 @@
                            (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
           enddo
 
-            if(is_PML(ispec))then
+            if(is_PML(ispec) .and. PML_BOUNDARY_CONDITIONS)then
                 if (which_PML_elem(ILEFT,ispec) .or. which_PML_elem(IRIGHT,ispec)) then
                         ispec_PML=spec_to_PML(ispec)
                         iPML=ibool_PML(i,j,ispec)

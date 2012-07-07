@@ -235,7 +235,7 @@
 !          rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
 !                  + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal
 
-        if (is_PML(ispec)) then
+        if (PML_BOUNDARY_CONDITIONS .and. is_PML(ispec)) then
           iPML=ibool_PML(i,j,ispec)
           rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
                   + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(iPML) * K_z_store(iPML)&
