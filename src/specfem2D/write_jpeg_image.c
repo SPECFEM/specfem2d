@@ -27,7 +27,8 @@ int write_jpeg_image_( unsigned char *raw_image, int *width_in, int *height_in, 
   int height = *height_in;
 
   int bytes_per_pixel = 3;   /* or 1 for GRAYSCALE images */
-  int color_space = JCS_RGB; /* or JCS_GRAYSCALE for grayscale images */
+// DK DK suppressed this to fix a warning
+//  int color_space = JCS_RGB; /* or JCS_GRAYSCALE for grayscale images */
 
   /* this is a pointer to one row of image data */
   JSAMPROW row_pointer[1];
@@ -74,7 +75,9 @@ int write_jpeg_image_( unsigned char *raw_image, int *width_in, int *height_in, 
   cinfo.image_width = width;
   cinfo.image_height = height;
   cinfo.input_components = bytes_per_pixel;
-  cinfo.in_color_space = color_space;
+// DK DK changed this to fix a warning
+//  cinfo.in_color_space = color_space;
+  cinfo.in_color_space = JCS_RGB; /* or JCS_GRAYSCALE for grayscale images */
 
   /* default compression parameters, we should not be worried about these */
   jpeg_set_defaults( &cinfo );
