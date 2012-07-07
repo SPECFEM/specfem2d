@@ -65,7 +65,7 @@
   double precision, external :: value_spline
 
   print *
-  print *,'writing the DATA/STATIONS_target file'
+  print *,'writing the DATA/STATIONS file'
   print *
 
   ! total number of receivers in all the receiver lines
@@ -78,7 +78,7 @@
   print *,'Target positions (x,z) of the ',nrec_total,' receivers'
   print *
 
-  open(unit=15,file='DATA/STATIONS_target',status='unknown',iostat=ios)
+  open(unit=15,file='DATA/STATIONS',status='unknown',iostat=ios)
   if( ios /= 0 ) stop 'error saving STATIONS file'
 
   irec_global_number = 0

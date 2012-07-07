@@ -62,7 +62,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
      nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,mu_k,kappa_k,&
      e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
      e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_RK, e11_force_RK, e13_force_RK, &
-     stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring, &
+     stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring,nadj_rec_local, &
      is_PML,nspec_PML,npoin_PML,ibool_PML,spec_to_PML,which_PML_elem, &
      K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
      rmemory_displ_elastic,rmemory_displ_elastic_corner, &
@@ -87,7 +87,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   integer, dimension(nelemabs) :: ib_right
   integer, dimension(nelemabs) :: ib_bottom
   integer, dimension(nelemabs) :: ib_top
-  integer :: stage_time_scheme,i_stage
+  integer :: stage_time_scheme,i_stage,nadj_rec_local
 
   logical :: anyabs,assign_external_model,initialfield,ATTENUATION_VISCOELASTIC_SOLID,add_Bielak_conditions
   logical :: ADD_SPRING_TO_STACEY
@@ -118,7 +118,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL), dimension(NSOURCES,NDIM,NGLLX,NGLLZ) :: sourcearray
 
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: b_accel_elastic,b_displ_elastic
-  real(kind=CUSTOM_REAL), dimension(nrec,NSTEP,3,NGLLX,NGLLZ) :: adj_sourcearrays
+  real(kind=CUSTOM_REAL), dimension(nadj_rec_local,NSTEP,3,NGLLX,NGLLZ) :: adj_sourcearrays
   real(kind=CUSTOM_REAL), dimension(nglob) :: mu_k,kappa_k
   real(kind=CUSTOM_REAL), dimension(3,NGLLZ,nspec_left,NSTEP) :: b_absorb_elastic_left
   real(kind=CUSTOM_REAL), dimension(3,NGLLZ,nspec_right,NSTEP) :: b_absorb_elastic_right
@@ -1857,7 +1857,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                        iglob = ibool(i,j,ispec_selected_rec(irec))
                        if(p_sv)then !P-SH waves
                           accel_elastic(1,iglob) = accel_elastic(1,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
-!! DK DK bug detected here
                           accel_elastic(3,iglob) = accel_elastic(3,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,3,i,j)
                        else !SH (membrane) waves
                           accel_elastic(2,iglob) = accel_elastic(2,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,2,i,j)
