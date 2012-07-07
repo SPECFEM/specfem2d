@@ -1,9 +1,9 @@
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 6 . 2
-!                   ------------------------------
+!                   S P E C F E M 2 D  Version 7 . 0
+!                   --------------------------------
 !
-! Copyright Universite de Pau, CNRS and INRIA, France,
+! Copyright CNRS, INRIA and University of Pau, France,
 ! and Princeton University / California Institute of Technology, USA.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
@@ -222,12 +222,12 @@
 #endif
 
   integer nspec, npoin, i, j,numat, ispec,iglob,npoin_PML,iPML
-  double precision :: f0_temp 
+  double precision :: f0_temp
 
   logical, dimension(nspec) :: is_PML
   logical, dimension(4,nspec) :: which_PML_elem
   real(kind=CUSTOM_REAL), dimension(npoin_PML) ::  &
-                    K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store  
+                    K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
   real(kind=CUSTOM_REAL), dimension(NDIM,npoin) ::  coord
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool, ibool_PML

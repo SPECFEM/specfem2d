@@ -3,10 +3,10 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 6 . 2
-!                   ------------------------------
+!                   S P E C F E M 2 D  Version 7 . 0
+!                   --------------------------------
 !
-! Copyright Universite de Pau, CNRS and INRIA, France,
+! Copyright CNRS, INRIA and University of Pau, France,
 ! and Princeton University / California Institute of Technology, USA.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
