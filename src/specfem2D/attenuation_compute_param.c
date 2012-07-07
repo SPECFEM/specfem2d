@@ -212,14 +212,16 @@ fclose(fp_q);
 /* DK DK call xmgr to plot curves if needed */
 
 if (xmgr == 1) {
+  int ierr;
+
   sprintf(strng, "xmgr -nxy Q%1d", pid);
-  system(strng);
+  ierr = system(strng);
   sprintf(strng, "xmgr -nxy modulus%1d", pid);
-  system(strng);
+  ierr = system(strng);
   sprintf(strng, "rm modulus%1d", pid);
-  system(strng);
+  ierr = system(strng);
   sprintf(strng, "rm Q%1d", pid);
-  system(strng);
+  ierr = system(strng);
 }
 
 }
