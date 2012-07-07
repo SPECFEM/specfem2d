@@ -16,7 +16,7 @@ mkdir -p DATA SEM OUTPUT_FILES OUTPUT_ALL DATA/NOISE_TOMOGRAPHY OUTPUT_FILES/NOI
 
 #prepare files
 cp SOURCE_noise           DATA/SOURCE
-cp STATIONS_target_noise  DATA/STATIONS_target
+cp STATIONS_noise  DATA/STATIONS
 cp uniform.dat            DATA/
 echo $MASTER >            DATA/NOISE_TOMOGRAPHY/irec_master
 if [ -f S_squared ]; then cp S_squared DATA/NOISE_TOMOGRAPHY/; fi
