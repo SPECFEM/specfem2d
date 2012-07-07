@@ -95,8 +95,8 @@
 \textbf{User Manual}}
 
 \author{$\copyright$ Princeton University (USA) and\\
-University of Pau / CNRS / INRIA (France)\\
-Version 6.2
+CNRS / INRIA / University of Pau (France)\\
+Version 7.0
 }
 
 \date{\noindent \today}
@@ -104,7 +104,7 @@ Version 6.2
 \maketitle
 
 \section*{Authors}
-The SPECFEM2D package was first developed by Dimitri Komatitsch and Jean-Pierre Vilotte at IPG in Paris (France) from 1995 to 1997 and then by Dimitri Komatitsch at Harvard University (USA), Caltech (USA) and then University of Pau (France) from 1998 to 2005. \\
+The SPECFEM2D package was first developed by Dimitri Komatitsch and Jean-Pierre Vilotte at IPG in Paris (France) from 1995 to 1997 and then by Dimitri Komatitsch at Harvard University (USA), Caltech (USA) and then CNRS and University of Pau (France) from 1998 to 2005. \\
 
 \noindent
 Since then it has been developed and maintained by a development team: in alphabetical order,
@@ -134,22 +134,25 @@ Zhinan Xie...
 
 SPECFEM2D facilitates 2D simulations of
 acoustic, (an)elastic, and poroelastic seismic wave propagation.
-With version 6.2, the 2D spectral-element solver accommodates
+The 2D spectral-element solver accommodates
 regular and unstructured meshes, generated for example by Cubit
 \urlwithparentheses{http://cubit.sandia.gov},
 Gmsh \urlwithparentheses{http://geuz.org/gmsh}
 or GiD \urlwithparentheses{http://www.gid.cimne.upc.es}.
-Even mesh creation packages that generate triangles, for instance Delaunay-Voronoi triangulation codes, can be used because each triangle can then easily be decomposed into three quadrangles by linking the barycenter to the center of each edge; while this approach does not generate quadrangles of optimal quality, it can ease mesh creation in some situations and it has been shown that the spectral-element method can very accurately handle distorted mesh elements.\\
+Even mesh creation packages that generate triangles, for instance Delaunay-Voronoi triangulation codes, can be used because each triangle can then easily be decomposed into three quadrangles by linking the barycenter to the center of each edge; while this approach does not generate quadrangles of optimal quality, it can ease mesh creation in some situations and it has been shown that the spectral-element method can very accurately handle distorted mesh elements.
+With version 7.0, the 2D spectral-element solver accommodates Convolution PML absorbing layers.
+Convolution or Auxiliary Differential Equation Perfectly Matched absorbing Layers (C-PML or ADE-PML)
+are described in \cite{KoMa07,MaKoEz08,MaKoGe08,MaKo09,MaKoGeBr10}.\\
 
 The solver has adjoint capabilities and can
-calculate finite-frequency sensitivity kernels for acoustic,
+calculate finite-frequency sensitivity kernels \citep{TrKoLi08,PeKoLuMaLeCaLeMaLiBlNiBaTr11} for acoustic,
 (an)elastic, and poroelastic media. The package also considers 2D SH
 and P-SV wave propagation. Finally, the solver can run
 both in serial and in parallel. See SPECFEM2D
 \urlwithparentheses{http://www.geodynamics.org/cig/software/packages/seismo/specfem2d}
 for the source code.\\
 
-The SEM is a continuous Galerkin technique, which can easily be made discontinous \citep{BeMaPa94,Ch00,KoWoHu02,ChCaVi03,LaWaBe05,Kop06,WiStBuGh10,AcKo11}; it is then close to a particular case of the discontinuous Galerkin technique \citep{ReHi73,Arn82,FaRi99,HuHuRa99,CoKaSh00,GiHeWa02,RiWh03,MoRi05,GrScSc06,AiMoMu06,BeLaPi06,DuKa06,DeSeWh08,PuAmKa09,WiStBuGh10,DeSe10,EtChViGl10}, with optimized efficiency because of its tensorized basis functions \citep{WiStBuGh10,AcKo11}.
+The SEM is a continuous Galerkin technique \citep{TrKoLi08,PeKoLuMaLeCaLeMaLiBlNiBaTr11}, which can easily be made discontinous \citep{BeMaPa94,Ch00,KoWoHu02,ChCaVi03,LaWaBe05,Kop06,WiStBuGh10,AcKo11}; it is then close to a particular case of the discontinuous Galerkin technique \citep{ReHi73,Arn82,FaRi99,HuHuRa99,CoKaSh00,GiHeWa02,RiWh03,MoRi05,GrScSc06,AiMoMu06,BeLaPi06,DuKa06,DeSeWh08,PuAmKa09,WiStBuGh10,DeSe10,EtChViGl10}, with optimized efficiency because of its tensorized basis functions \citep{WiStBuGh10,AcKo11}.
 In particular, it can accurately handle very distorted mesh elements \citep{OlSe11}.\\
 
 It has very good accuracy and convergence properties \citep{MaPa89,SePr94,DeFiMu02,Coh02,DeSe07,SeOl08}.
@@ -181,8 +184,7 @@ no obsolete or obsolescent features of Fortran77. The package uses
 parallel programming based upon the Message Passing Interface (MPI)
 \citep{GrLuSk94,Pac97}.\\
 
-The next release of the code will include support for GPU graphics card acceleration \citep{KoMiEr09,KoErGoMi10,MiKo10,Kom11}
-as well as Convolutional or Auxiliary Differential Equation Perfectly Matched absorbing Layers (C-PML or ADE-PML) \citep{KoMa07,MaKoEz08,MaKoGe08,MaKo09,MaKoGeBr10}.\\
+The next release of the code will include support for GPU graphics card acceleration \citep{KoMiEr09,KoGoErMi10,KoErGoMi10,MiKo10,Kom11}.\\
 
 %------------------------------------------------------------------------------------------------%
 \section{Citation}
@@ -191,19 +193,17 @@ as well as Convolutional or Auxiliary Differential Equation Perfectly Matched ab
 If you use this code for your own research, please cite at least one article
 written by the developers of the package, for instance:
 \newline
-\cite{TrKoLi08}
+\cite{TrKoLi08,PeKoLuMaLeCaLeMaLiBlNiBaTr11}
 or
 \cite{VaCaSaKoVi99, LeChKoHuTr09, LeChLiKoHuTr08, LeKoHuTr09, KoErGoMi10, KoGoErMi10, KoMiEr09,
 LiPoKoTr04, ChKoViCaVaFe07, KoVi98, KoTr99, KoLiTrSuStSh04, MoTr08}
-and/or other articles from \urlwithparentheses{http://web.univ-pau.fr/~dkomati1/publications.html}
+and/or other articles from \url{http://komatitsch.free.fr/publications.html}
 \newline
 
 If you use the kernel capabilities of the code, please cite at least one article
 written by the developers of the package, for instance:
 \newline
-\cite{TrKoLi08}
-or
-\cite{LiTr06, MoLuTr09}
+\cite{TrKoLi08,PeKoLuMaLeCaLeMaLiBlNiBaTr11,LiTr06, MoLuTr09}
 \newline
 
 If you use the SCOTCH / CUBIT non-structured capabilities, please also cite:
@@ -988,9 +988,9 @@ to Jeroen Tromp \urlwithparentheses{jtromp-AT-princeton.edu} or to the CIG Compu
 Main authors: Dimitri Komatitsch and Jeroen Tromp
 
 Princeton University, USA,
-and University of Pau / CNRS / INRIA, France
+and CNRS / INRIA / University of Pau, France
 
-$\copyright$ Princeton University and University of Pau / CNRS / INRIA, January 2011
+$\copyright$ Princeton University and CNRS / INRIA / University of Pau, July 2012
 
 
 %------------------------------------------------------------------------------------------------%
