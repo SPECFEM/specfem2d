@@ -220,7 +220,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   logical, dimension(nspec) :: is_PML
   integer, dimension(nspec) :: spec_to_PML
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool_PML
-  logical :: PML_BOUNDARY_CONDITIONS, anyabs_local
+  logical :: PML_BOUNDARY_CONDITIONS
 
   real(kind=CUSTOM_REAL), dimension(2,3,NGLLX,NGLLZ,nspec_PML) :: rmemory_displ_elastic,rmemory_displ_elastic_corner
   real(kind=CUSTOM_REAL), dimension(2,NGLLX,NGLLZ,nspec_PML) :: &
@@ -231,11 +231,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLZ,nspec_PML) :: accel_elastic_PML, accel_elastic_PML_corner
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) ::PML_dux_dxl,PML_dux_dzl,PML_duz_dxl,PML_duz_dzl,&
                            PML_dux_dxl_new,PML_dux_dzl_new,PML_duz_dxl_new,PML_duz_dzl_new
-  real(kind=CUSTOM_REAL) :: coef0_x, coef1_x, coef2_x, coef0_z, coef1_z, coef2_z,bb !,aa
+  real(kind=CUSTOM_REAL) :: coef0_x, coef1_x, coef2_x, coef0_z, coef1_z, coef2_z,bb
 
-  real(kind=CUSTOM_REAL) :: A0, A1, A2, A3, A4, A5, A6, A7, A8 !, A9, A10
+  real(kind=CUSTOM_REAL) :: A0, A1, A2, A3, A4, A5, A6, A7, A8
 
-  real(kind=CUSTOM_REAL) :: dux_dxi_new,dux_dgamma_new,duz_dxi_new,duz_dgamma_new !duy_dxi_new,duy_dgamma_new
+  real(kind=CUSTOM_REAL) :: dux_dxi_new,dux_dgamma_new,duz_dxi_new,duz_dgamma_new
   real(kind=CUSTOM_REAL) :: dux_dxl_new,dux_dzl_new,duz_dxl_new,duz_dzl_new
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: displ_elastic_new
 
@@ -247,8 +247,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   sigma_zy = 0
   sigma_zz = 0
   sigma_zx = 0
-
-  anyabs_local=.false. ! to avoid having an uninitialized variable
 
   if( PML_BOUNDARY_CONDITIONS ) then
     accel_elastic_PML = 0._CUSTOM_REAL
@@ -262,9 +260,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
     PML_duz_dxl_new = 0._CUSTOM_REAL
     PML_duz_dzl_new = 0._CUSTOM_REAL
     displ_elastic_new = displ_elastic + deltat * veloc_elastic
-    anyabs_local=.false.
-  elseif(.not.PML_BOUNDARY_CONDITIONS .and. anyabs )then
-    anyabs_local=.true.
   endif
 
 
@@ -374,7 +369,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
               duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
               duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
-              if( PML_BOUNDARY_CONDITIONS ) then
+              if(PML_BOUNDARY_CONDITIONS) then
                 if(is_PML(ispec))then
                   ! derivative along x and along z
                   dux_dxi_new = ZERO
@@ -405,8 +400,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
               endif
 
 
-              if( PML_BOUNDARY_CONDITIONS ) then
-                if( is_PML(ispec) ) then
+              if(PML_BOUNDARY_CONDITIONS) then
+                if(is_PML(ispec)) then
                   ispec_PML=spec_to_PML(ispec)
                   iPML=ibool_PML(i,j,ispec)
 
@@ -1209,7 +1204,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   !
   !--- absorbing boundaries
   !
-  if(anyabs_local) then
+  if(.not. PML_BOUNDARY_CONDITIONS .and. anyabs) then
 
      count_left=1
      count_right=1

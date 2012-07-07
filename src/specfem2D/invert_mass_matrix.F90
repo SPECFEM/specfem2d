@@ -127,7 +127,7 @@
   real(kind=CUSTOM_REAL), dimension(npoin_PML) :: K_x_store,K_z_store,d_x_store,d_z_store
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool_PML
   logical, dimension(nspec) :: is_PML
-  logical :: PML_BOUNDARY_CONDITIONS, anyabs_local
+  logical :: PML_BOUNDARY_CONDITIONS
 !! DK DK added this for Guenneau, March 2012
 #ifdef USE_GUENNEAU
   double precision, dimension(NDIM,nglob_elastic), intent(in) :: coord
@@ -141,10 +141,6 @@
   if(any_poroelastic) rmass_s_inverse_poroelastic(:) = 0._CUSTOM_REAL
   if(any_poroelastic) rmass_w_inverse_poroelastic(:) = 0._CUSTOM_REAL
   if(any_acoustic) rmass_inverse_acoustic(:) = 0._CUSTOM_REAL
-
-  anyabs_local=.false. ! to avoid having an uninitialized variable
-  if(PML_BOUNDARY_CONDITIONS)anyabs_local=.false.
-  if(.not.PML_BOUNDARY_CONDITIONS .and. anyabs)anyabs_local=.true.
 
   do ispec = 1,nspec
     do j = 1,NGLLZ
@@ -185,6 +181,7 @@
           ! for elastic medium
 
 
+print *,'PML_BOUNDARY_CONDITIONS in invert mass = ',PML_BOUNDARY_CONDITIONS
         if(PML_BOUNDARY_CONDITIONS)then
         if (is_PML(ispec)) then
           iPML=ibool_PML(i,j,ispec)
@@ -259,7 +256,7 @@
   !--- DK and Zhinan Xie: one per component of the wave field i.e. one per spatial dimension.
   !--- DK and Zhinan Xie: This was also suggested by Jean-Paul Ampuero in 2003.
   !
-  if(anyabs_local) then
+  if(.not. PML_BOUNDARY_CONDITIONS .and. anyabs) then
      count_left=1
      count_right=1
      count_bottom=1
