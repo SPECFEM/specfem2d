@@ -180,8 +180,6 @@
 
           ! for elastic medium
 
-
-print *,'PML_BOUNDARY_CONDITIONS in invert mass = ',PML_BOUNDARY_CONDITIONS
         if(PML_BOUNDARY_CONDITIONS)then
         if (is_PML(ispec)) then
           iPML=ibool_PML(i,j,ispec)
