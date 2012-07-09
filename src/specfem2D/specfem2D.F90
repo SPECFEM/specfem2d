@@ -1316,7 +1316,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   endif
 
 #ifdef USE_MPI
-  if(PML_BOUNDARY_CONDITIONS .and. (any_acoustic .or. any_poroelastic )then
+  if(PML_BOUNDARY_CONDITIONS .and. (any_acoustic .or. any_poroelastic) )then
    stop 'PML_BOUNDARY_CONDITIONS do not ready for mpi version of the code'
   endif
 #endif
