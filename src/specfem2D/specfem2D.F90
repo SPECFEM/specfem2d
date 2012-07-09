@@ -2834,8 +2834,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
       call pml_init(nspec,nglob,anyabs,ibool,nelemabs,codeabs,numabs,&
                   nspec_PML,is_PML,which_PML_elem,which_PML_poin,spec_to_PML,ibool_PML, &
-                  npoin_PML,icorner_iglob,NELEM_PML_THICKNESS,&
-                  coord,myrank)
+                  npoin_PML,icorner_iglob,NELEM_PML_THICKNESS)
 
       deallocate(icorner_iglob)
       deallocate(which_PML_poin)

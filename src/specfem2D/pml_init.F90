@@ -43,8 +43,7 @@
 
   subroutine pml_init(nspec,nglob,anyabs,ibool,nelemabs,codeabs,numabs,&
                     nspec_PML,is_PML,which_PML_elem,which_PML_poin,spec_to_PML,ibool_PML, &
-                    npoin_PML,icorner_iglob,NELEM_PML_THICKNESS,&
-                    coord,myrank)
+                    npoin_PML,icorner_iglob,NELEM_PML_THICKNESS)
 
 
   implicit none
@@ -70,9 +69,6 @@
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool_PML
   integer, dimension(:), allocatable :: iPML_to_iglob
   logical, dimension(nspec) :: is_PML
-  integer :: myrank,ier,ispecpml
-  character(len=256)  :: prname
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob) ::  coord
 
   !!!detection of PML elements
 
@@ -206,26 +202,6 @@
 
      write(IOUT,*) "number of PML spectral elements :", nspec_PML
      write(IOUT,*) "number of PML spectral points   :", npoin_PML
-
-  write(prname,230) myrank
-  open(unit=1234,file=prname,status='unknown')
-  230 format('./OUTPUT_FILES/is_pml',i5.5)
-
-#ifdef USE_MPI
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
-  ispecpml=0
-  do ispec=1,nspec
-   if(is_pml(ispec))then
-   write(1234,*)myrank,'myrank'
-   write(1234,*)is_pml(ispec),coord(1,ibool(3,3,ispec)),coord(2,ibool(3,3,ispec))
-   write(1234,*)which_PML_elem(1,ispec),which_PML_elem(2,ispec),&
-                which_PML_elem(3,ispec),which_PML_elem(4,ispec)
-   ispecpml=ispecpml+1
-   endif
- enddo
-   write(1234,*)ispecpml,'spec number of pml in myrank_',myrank
- call MPI_BARRIER(MPI_COMM_WORLD,ier)
-#endif
 
   end subroutine pml_init
 
