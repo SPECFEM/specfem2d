@@ -180,12 +180,16 @@
 
           ! for elastic medium
 
-        if(PML_BOUNDARY_CONDITIONS)then
-        if (is_PML(ispec)) then
+        if (is_PML(ispec) .and. PML_BOUNDARY_CONDITIONS) then
           iPML=ibool_PML(i,j,ispec)
+!          rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+!                  + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(iPML) * K_z_store(iPML)&
+!                  + (d_x_store(iPML)*k_z_store(iPML)+d_z_store(iPML)*k_x_store(iPML)) * deltat / 2.d0)
+
           rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
-                  + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(iPML) * K_z_store(iPML)&
+                  + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (1.0d0 &
                   + (d_x_store(iPML)*k_z_store(iPML)+d_z_store(iPML)*k_x_store(iPML)) * deltat / 2.d0)
+
           rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
         else
 
@@ -204,22 +208,6 @@
           rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
 
         endif
-        else
-!! DK DK added this for Guenneau, March 2012
-#ifdef USE_GUENNEAU
-  include "include_mass_Guenneau.f90"
-#endif
-!! DK DK added this for Guenneau, March 2012
-
-          rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
-                  + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
-
-#ifdef USE_GUENNEAU
-  endif
-#endif
-          rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
-        endif
-
 
 
 

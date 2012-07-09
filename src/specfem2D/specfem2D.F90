@@ -1050,11 +1050,6 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                                   stop 'RK and LDDRK time scheme not supported for adjoint inversion'
   if(nproc /= nproc_read_from_database) stop 'must always have nproc == nproc_read_from_database'
 
-#ifdef USE_MPI
-  if(PML_BOUNDARY_CONDITIONS)then
-   stop 'PML_BOUNDARY_CONDITIONS do not ready for mpi version of the code'
-  endif
-#endif
 
 !! DK DK Dec 2011: add a small crack (discontinuity) in the medium manually
   npgeo_ori = npgeo
@@ -1319,6 +1314,12 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   if(PML_BOUNDARY_CONDITIONS .and. any_poroelastic) then
     stop 'PML boundary conditions do not ready for poroelastic simulation'
   endif
+
+#ifdef USE_MPI
+  if(PML_BOUNDARY_CONDITIONS .and. (any_acoustic .or. any_poroelastic )then
+   stop 'PML_BOUNDARY_CONDITIONS do not ready for mpi version of the code'
+  endif
+#endif
 
   ! allocate memory variables for attenuation
   if(ipass == 1) then
@@ -2833,7 +2834,8 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
       call pml_init(nspec,nglob,anyabs,ibool,nelemabs,codeabs,numabs,&
                   nspec_PML,is_PML,which_PML_elem,which_PML_poin,spec_to_PML,ibool_PML, &
-                  npoin_PML,icorner_iglob,NELEM_PML_THICKNESS)
+                  npoin_PML,icorner_iglob,NELEM_PML_THICKNESS,&
+                  coord,myrank)
 
       deallocate(icorner_iglob)
       deallocate(which_PML_poin)
