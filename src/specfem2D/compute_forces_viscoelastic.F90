@@ -1067,9 +1067,9 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                   iPML=ibool_PML(i,j,ispec)
                   iglob=ibool(i,j,ispec)
 
-                  A0 = - alpha_x_store( iPML ) * d_x_store(iPML) * k_z_store(iPML)
-                  A1 = d_x_store(iPML) * k_z_store(iPML)
-                  A2 = k_x_store(iPML) * k_z_store(iPML)
+                  A0 = - alpha_x_store( iPML ) * d_x_store(iPML)
+                  A1 = d_x_store(iPML) 
+                  A2 = k_x_store(iPML)
 
                   accel_elastic_PML(1,i,j,ispec_PML) =  wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * &
                      ( A1 * veloc_elastic(1,iglob)+ &
@@ -1110,9 +1110,9 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                   iPML=ibool_PML(i,j,ispec)
                   iglob=ibool(i,j,ispec)
 
-                  A0 = - alpha_z_store( iPML ) * d_z_store(iPML) * k_x_store(iPML)
-                  A1 = d_z_store(iPML) * k_x_store(iPML)
-                  A2 = k_x_store(iPML) * k_z_store(iPML)
+                  A0 = - alpha_z_store( iPML ) * d_z_store(iPML)
+                  A1 = d_z_store(iPML) 
+                  A2 = k_z_store(iPML)
 
                   accel_elastic_PML(1,i,j,ispec_PML)= wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * &
                      ( A1 * veloc_elastic(1,iglob)+ &
