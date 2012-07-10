@@ -2980,7 +2980,6 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   !
   !---- build the global mass matrix
   !
-print *,'PML_BOUNDARY_CONDITIONS in calling program = ',PML_BOUNDARY_CONDITIONS
   call invert_mass_matrix_init(any_elastic,any_acoustic,any_poroelastic, &
                                 rmass_inverse_elastic_one,nglob_elastic, &
                                 rmass_inverse_acoustic,nglob_acoustic, &
