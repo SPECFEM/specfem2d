@@ -369,8 +369,14 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
               duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
               duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
-              if(PML_BOUNDARY_CONDITIONS) then
-                if(is_PML(ispec))then
+              if(PML_BOUNDARY_CONDITIONS .and. is_PML(ispec)) then
+                  ispec_PML=spec_to_PML(ispec)
+
+                  PML_dux_dxl(i,j,ispec_PML) = dux_dxl
+                  PML_dux_dzl(i,j,ispec_PML)=dux_dzl   
+                  PML_duz_dzl(i,j,ispec_PML)=duz_dzl  
+                  PML_duz_dxl(i,j,ispec_PML)=duz_dxl   
+
                   ! derivative along x and along z
                   dux_dxi_new = ZERO
                   duz_dxi_new = ZERO
@@ -396,7 +402,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                   dux_dzl_new = dux_dxi_new*xizl + dux_dgamma_new*gammazl
                   duz_dxl_new = duz_dxi_new*xixl + duz_dgamma_new*gammaxl
                   duz_dzl_new = duz_dxi_new*xizl + duz_dgamma_new*gammazl
-                endif
+
+                  PML_dux_dxl_new(i,j,ispec_PML) = dux_dxl_new
+                  PML_dux_dzl_new(i,j,ispec_PML)=dux_dzl_new   
+                  PML_duz_dzl_new(i,j,ispec_PML)=duz_dzl_new  
+                  PML_duz_dxl_new(i,j,ispec_PML)=duz_dxl_new 
               endif
 
 
@@ -404,14 +414,13 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                 if(is_PML(ispec)) then
                   ispec_PML=spec_to_PML(ispec)
                   iPML=ibool_PML(i,j,ispec)
-
 !------------------------------------------------------------------------------
 !---------------------------- LEFT & RIGHT ------------------------------------
 !------------------------------------------------------------------------------
                   if ( which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec) ) then
 
                     !---------------------- A8 and A6 --------------------------
-                    A8 = - d_x_store(iPML) / ( k_x_store(iPML) ** 2 )
+                    A8 = - d_x_store(iPML) / (k_x_store(iPML) ** 2)
                     A6 = 0.d0
 
                     bb = d_x_store(iPML) / k_x_store(iPML) + alpha_x_store(iPML)
@@ -424,16 +433,10 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                       coef2_x = deltat * A8
                     end if
 
-                    PML_dux_dxl(i,j,ispec_PML) = dux_dxl
-                    PML_dux_dxl_new(i,j,ispec_PML) = dux_dxl_new
-
                     rmemory_dux_dx(1,i,j,ispec_PML) = 0.d0
                     !! DK DK new from Wang eq (21)
                     rmemory_dux_dx(2,i,j,ispec_PML) = coef0_x*rmemory_dux_dx(2,i,j,ispec_PML) &
                     + PML_dux_dxl_new(i,j,ispec_PML) * coef1_x + PML_dux_dxl(i,j,ispec_PML) * coef2_x
-
-                    PML_duz_dxl(i,j,ispec_PML)=duz_dxl   !!!when in corner this is no need
-                    PML_duz_dxl_new(i,j,ispec_PML)=duz_dxl_new   !!!when in corner this is no need
 
                     rmemory_duz_dx(1,i,j,ispec_PML) = 0.d0
                     !! DK DK new from Wang eq (21)
@@ -456,16 +459,10 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                       coef2_x = deltat * A5 ! Rene Matzen
                     end if
 
-                    PML_dux_dzl(i,j,ispec_PML)=dux_dzl   !!!when in corner this is no need
-                    PML_dux_dzl_new(i,j,ispec_PML)=dux_dzl_new   !!!when in corner this is no need
-
                     !! DK DK new from Wang eq (21)
                     rmemory_dux_dz(1,i,j,ispec_PML) = coef0_x * rmemory_dux_dz(1,i,j,ispec_PML) &
                     + PML_dux_dzl_new(i,j,ispec_PML) *coef1_x + PML_dux_dzl(i,j,ispec_PML) * coef2_x
                     rmemory_dux_dz(2,i,j,ispec_PML) = 0.d0
-
-                    PML_duz_dzl(i,j,ispec_PML)=duz_dzl  !!!when in corner this is no need
-                    PML_duz_dzl_new(i,j,ispec_PML)=duz_dzl_new  !!!when in corner this is no need
 
                     !! DK DK new from Wang eq (21)
                     rmemory_duz_dz(1,i,j,ispec_PML) = coef0_x * rmemory_duz_dz(1,i,j,ispec_PML) &
@@ -658,7 +655,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 !------------------------------------------------------------------------------
 
                     !---------------------- A5 and A7 --------------------------
-                    A7 = d_z_store(iPML )
+                    A7 = d_z_store(iPML)
                     A5 = 0.d0
                     bb = alpha_z_store(iPML)
                     coef0_x = exp(- bb * deltat)
@@ -672,16 +669,10 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                       coef2_x = deltat * A7 ! Rene Matzen
                     end if
 
-                    PML_dux_dxl(i,j,ispec_PML) = dux_dxl  !!!when in corner this is no need
-                    PML_dux_dxl_new(i,j,ispec_PML) = dux_dxl_new  !!!when in corner this is no need
-
                     !! DK DK new from Wang eq (21)
                     rmemory_dux_dx(1,i,j,ispec_PML) = coef0_x*rmemory_dux_dx(1,i,j,ispec_PML) &
                     + PML_dux_dxl_new(i,j,ispec_PML) * coef1_x + PML_dux_dxl(i,j,ispec_PML) * coef2_x
                     rmemory_dux_dx(2,i,j,ispec_PML) = 0.d0
-
-                    PML_duz_dxl(i,j,ispec_PML)=duz_dxl   !!!when in corner this is no need
-                    PML_duz_dxl_new(i,j,ispec_PML)=duz_dxl_new   !!!when in corner this is no need
 
                     !! DK DK new from Wang eq (21)
                     rmemory_duz_dx(1,i,j,ispec_PML) = coef0_x*rmemory_duz_dx(1,i,j,ispec_PML) &
@@ -701,16 +692,10 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                       coef2_x = deltat * A6
                     end if
 
-                    PML_dux_dzl(i,j,ispec_PML)=dux_dzl   !!!when in corner this is no need
-                    PML_dux_dzl_new(i,j,ispec_PML)=dux_dzl_new   !!!when in corner this is no need
-
                     rmemory_dux_dz(1,i,j,ispec_PML) = 0.d0
                     !! DK DK new from Wang eq (21)
                     rmemory_dux_dz(2,i,j,ispec_PML) = coef0_x * rmemory_dux_dz(2,i,j,ispec_PML) &
                     + PML_dux_dzl_new(i,j,ispec_PML) *coef1_x + PML_dux_dzl(i,j,ispec_PML) * coef2_x
-
-                    PML_duz_dzl(i,j,ispec_PML)=duz_dzl  !!!when in corner this is no need
-                    PML_duz_dzl_new(i,j,ispec_PML)=duz_dzl_new  !!!when in corner this is no need
 
                     rmemory_duz_dz(1,i,j,ispec_PML) = 0.d0
                     !! DK DK new from Wang eq (21)
@@ -801,15 +786,13 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 #endif
 !! DK DK added this for Guenneau, March 2012
 
-                 if( PML_BOUNDARY_CONDITIONS ) then
-                   if(is_PML(ispec)) then
+                 if(PML_BOUNDARY_CONDITIONS .and. is_PML(ispec)) then
                      ispec_PML=spec_to_PML(ispec)
                      iPML=ibool_PML(i,j,ispec)
                      sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*PML_duz_dzl(i,j,ispec_PML)
                      sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*PML_dux_dxl(i,j,ispec_PML)
                      sigma_zx = mul_unrelaxed_elastic * (PML_duz_dxl(i,j,ispec_PML) + dux_dzl)
                      sigma_xz = mul_unrelaxed_elastic * (PML_dux_dzl(i,j,ispec_PML) + duz_dxl)
-                   endif
                  endif
 
                  if(SIMULATION_TYPE == 2) then ! Adjoint calculation, backward wavefield
