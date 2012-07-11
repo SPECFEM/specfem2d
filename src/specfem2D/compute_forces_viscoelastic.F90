@@ -441,7 +441,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     + PML_duz_dxl_new(i,j,ispec_PML) * coef1_x + PML_duz_dxl(i,j,ispec_PML) * coef2_x
 
                     !---------------------- A5 and A7 --------------------------
-                    A5 = d_x_store(iPML )
+                    A5 = d_x_store(iPML)
                     A7 = 0.d0
 
                     bb = alpha_x_store(iPML)

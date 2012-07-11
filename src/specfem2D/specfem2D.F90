@@ -1002,9 +1002,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_displ_elastic
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_potential_acoustic,&
-    rmemory_pot_acoustic_corner,&
-    rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
-    rmemory_acoustic_dux_dx_corner,rmemory_acoustic_dux_dz_corner
+    rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz
 
   logical :: anyabs_glob
   integer :: nspec_PML, npoin_PML
@@ -2893,24 +2891,16 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       if (any_acoustic .and. nspec_PML>0) then
 
         allocate(rmemory_potential_acoustic(2,NGLLX,NGLLZ,nspec_PML))
-        allocate(rmemory_pot_acoustic_corner(2,NGLLX,NGLLZ,nspec_PML))
 
         allocate(rmemory_acoustic_dux_dx(2,NGLLX,NGLLZ,nspec_PML))
         allocate(rmemory_acoustic_dux_dz(2,NGLLX,NGLLZ,nspec_PML))
 
-        allocate(rmemory_acoustic_dux_dx_corner(2,NGLLX,NGLLZ,nspec_PML))
-        allocate(rmemory_acoustic_dux_dz_corner(2,NGLLX,NGLLZ,nspec_PML))
-
       else
 
         allocate(rmemory_potential_acoustic(1,1,1,1))
-        allocate(rmemory_pot_acoustic_corner(1,1,1,1))
 
         allocate(rmemory_acoustic_dux_dx(1,1,1,1))
         allocate(rmemory_acoustic_dux_dz(1,1,1,1))
-
-        allocate(rmemory_acoustic_dux_dx_corner(1,1,1,1))
-        allocate(rmemory_acoustic_dux_dz_corner(1,1,1,1))
 
       end if
 
@@ -2927,13 +2917,9 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       allocate(rmemory_displ_elastic(1,1,1,1,1))
 
       allocate(rmemory_potential_acoustic(1,1,1,1))
-      allocate(rmemory_pot_acoustic_corner(1,1,1,1))
 
       allocate(rmemory_acoustic_dux_dx(1,1,1,1))
       allocate(rmemory_acoustic_dux_dz(1,1,1,1))
-
-      allocate(rmemory_acoustic_dux_dx_corner(1,1,1,1))
-      allocate(rmemory_acoustic_dux_dz_corner(1,1,1,1))
 
       allocate(is_PML(1))
       allocate(ibool_PML(1,1,1))
@@ -4894,10 +4880,9 @@ if(coupled_elastic_poro) then
                b_absorb_acoustic_bottom,b_absorb_acoustic_top,.false.,&
             is_PML,nspec_PML,npoin_PML,ibool_PML,spec_to_PML,which_PML_elem,&
             K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
-            rmemory_potential_acoustic,rmemory_pot_acoustic_corner,&
+            rmemory_potential_acoustic,&
             rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
-            rmemory_acoustic_dux_dx_corner,rmemory_acoustic_dux_dz_corner,deltat,&
-            PML_BOUNDARY_CONDITIONS)
+            deltat,PML_BOUNDARY_CONDITIONS)
       if( SIMULATION_TYPE == 2 ) then
         call compute_forces_acoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
                anyabs,assign_external_model,ibool,kmato,numabs, &
@@ -4914,10 +4899,9 @@ if(coupled_elastic_poro) then
                b_absorb_acoustic_bottom,b_absorb_acoustic_top,.true.,&
             is_PML,nspec_PML,npoin_PML,ibool_PML,spec_to_PML,which_PML_elem,&
             K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
-            rmemory_potential_acoustic,rmemory_pot_acoustic_corner,&
+            rmemory_potential_acoustic,&
             rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
-            rmemory_acoustic_dux_dx_corner,rmemory_acoustic_dux_dz_corner,deltat,&
-            PML_BOUNDARY_CONDITIONS)
+            deltat,PML_BOUNDARY_CONDITIONS)
       endif
 
 
