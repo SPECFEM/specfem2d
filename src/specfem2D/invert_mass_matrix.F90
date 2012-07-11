@@ -60,7 +60,7 @@
                                 ,coord &
 #endif
                                 ,K_x_store,K_z_store,npoin_PML,ibool_PML,is_PML,&
-                                d_x_store,d_z_store,PML_BOUNDARY_CONDITIONS)
+                                d_x_store,d_z_store,PML_BOUNDARY_CONDITIONS,which_PML_elem)
 
 !  builds the global mass matrix
 
@@ -128,6 +128,7 @@
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool_PML
   logical, dimension(nspec) :: is_PML
   logical :: PML_BOUNDARY_CONDITIONS
+  logical, dimension(4,nspec) :: which_PML_elem
 !! DK DK added this for Guenneau, March 2012
 #ifdef USE_GUENNEAU
   double precision, dimension(NDIM,nglob_elastic), intent(in) :: coord
@@ -182,15 +183,25 @@
 
         if (is_PML(ispec) .and. PML_BOUNDARY_CONDITIONS) then
           iPML=ibool_PML(i,j,ispec)
-!          rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
-!                  + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(iPML) * K_z_store(iPML)&
-!                  + (d_x_store(iPML)*k_z_store(iPML)+d_z_store(iPML)*k_x_store(iPML)) * deltat / 2.d0)
-
+         if ((which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
+             .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
           rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
-                  + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (1.0d0 &
-                  + (d_x_store(iPML)*k_z_store(iPML)+d_z_store(iPML)*k_x_store(iPML)) * deltat / 2.d0)
-
+                  + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(iPML)&
+                  + d_x_store(iPML) * deltat / 2.d0)
           rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
+         elseif ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
+                  (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
+          rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                  + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(iPML) * K_z_store(iPML)&
+                  + (d_x_store(iPML)*k_z_store(iPML)+d_z_store(iPML)*k_x_store(iPML)) * deltat / 2.d0)
+          rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
+         else
+          rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                  + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_z_store(iPML)&
+                  + d_z_store(iPML)* deltat / 2.d0)
+          rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
+         endif         
+
         else
 
 !! DK DK added this for Guenneau, March 2012
@@ -220,13 +231,27 @@
 
         if (PML_BOUNDARY_CONDITIONS .and. is_PML(ispec)) then
           iPML=ibool_PML(i,j,ispec)
+
+         if ((which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
+             .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
+          rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
+                  + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(iPML)&
+                  + d_x_store(iPML) * deltat / 2.d0)
+         elseif ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
+                  (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
           rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
                   + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(iPML) * K_z_store(iPML)&
                   + (d_x_store(iPML)*k_z_store(iPML)+d_z_store(iPML)*k_x_store(iPML)) * deltat / 2.d0)
          else
+          rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
+                  + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_z_store(iPML)&
+                  + d_z_store(iPML)* deltat / 2.d0)
+         endif  
+
+       else
           rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
                   + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal
-         endif
+       endif
 
         endif
 

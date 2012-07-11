@@ -2959,7 +2959,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                                 ,coord &
 #endif
                                 ,K_x_store,K_z_store,npoin_PML,ibool_PML,is_PML,&
-                                d_x_store,d_z_store,PML_BOUNDARY_CONDITIONS)
+                                d_x_store,d_z_store,PML_BOUNDARY_CONDITIONS,which_PML_elem)
 
 #ifdef USE_MPI
   if ( nproc > 1 ) then
