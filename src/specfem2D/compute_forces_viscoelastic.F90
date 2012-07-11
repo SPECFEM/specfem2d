@@ -406,8 +406,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
               endif
 
 
-              if(PML_BOUNDARY_CONDITIONS) then
-                if(is_PML(ispec)) then
+                if(is_PML(ispec) .and. PML_BOUNDARY_CONDITIONS) then
                   ispec_PML=spec_to_PML(ispec)
                   iPML=ibool_PML(i,j,ispec)
 !------------------------------------------------------------------------------
@@ -476,8 +475,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 !------------------------------------------------------------------------------
                    elseif ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
                         (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
-                      ispec_PML=spec_to_PML(ispec)
-                      iPML=ibool_PML(i,j,ispec)
 
                       !----------------------- A7 ------------------------------
                       if ( abs( alpha_z_store(iPML) ) < 1.d-3 .AND. &
@@ -705,7 +702,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     duz_dzl = duz_dzl  + rmemory_duz_dz(1,i,j,ispec_PML) + rmemory_duz_dz(2,i,j,ispec_PML)
 
                   endif
-                endif
               endif ! PML_BOUNDARY_CONDITIONS
 
               if(SIMULATION_TYPE == 2) then ! Adjoint calculation, backward wavefield
@@ -882,9 +878,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         ! PML
-        if( PML_BOUNDARY_CONDITIONS ) then
-          if(is_PML(ispec)) then
-            ! first double loop over GLL points to compute and store gradients
+        if( is_PML(ispec) .and. PML_BOUNDARY_CONDITIONS ) then
+            ispec_PML=spec_to_PML(ispec)
             do j = 1,NGLLZ
               do i = 1,NGLLX
                 if ( assign_external_model) then
@@ -892,20 +887,14 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                 else
                  rhol = density(1,kmato(ispec))
                 endif
-
-                if ( is_PML( ispec ) ) then
-                  iPML=ibool_PML(i,j,ispec)
-                  iglob=ibool(i,j,ispec)
+                    iPML=ibool_PML(i,j,ispec)
+                    iglob=ibool(i,j,ispec)
 
 !------------------------------------------------------------------------------
 !---------------------------- LEFT & RIGHT ------------------------------------
 !------------------------------------------------------------------------------
                   if ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
                        .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
-
-                    ispec_PML=spec_to_PML(ispec)
-                    iPML=ibool_PML(i,j,ispec)
-                    iglob=ibool(i,j,ispec)
 
                     !---------------------- A3 and A4 --------------------------
                     A3 = d_x_store(iPML ) * alpha_x_store(iPML) ** 2
@@ -935,8 +924,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 !------------------------------------------------------------------------------
                    elseif ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
                        (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
-                       ispec_PML=spec_to_PML(ispec)
-                       iPML=ibool_PML(i,j,ispec)
 
                        !---------------------------- A3 ----------------------------
                        if ( abs( alpha_z_store(iPML) ) < 1.d-3 .AND. &
@@ -1012,9 +999,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 !------------------------------------------------------------------------------
 !-------------------------------- TOP & BOTTOM --------------------------------
 !------------------------------------------------------------------------------
-                    ispec_PML=spec_to_PML(ispec)
-                    iPML=ibool_PML(i,j,ispec)
-                    iglob=ibool(i,j,ispec)
 
                     !---------------------- A3 and A4 ----------------------------
                     A4 = d_z_store(iPML ) * alpha_z_store(iPML) ** 2
@@ -1039,14 +1023,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     rmemory_displ_elastic(2,3,i,j,ispec_PML)=coef0_x * rmemory_displ_elastic(2,3,i,j,ispec_PML) &
                     + displ_elastic_new(3,iglob) * coef1_x + displ_elastic(3,iglob) * coef2_x
 
-                  endif
+                endif
 
 
                 if ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
                        .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec))) then
-                  ispec_PML=spec_to_PML(ispec)
-                  iPML=ibool_PML(i,j,ispec)
-                  iglob=ibool(i,j,ispec)
 
                   A0 = - alpha_x_store( iPML ) * d_x_store(iPML)
                   A1 = d_x_store(iPML) 
@@ -1064,9 +1045,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!corner
                elseif ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
                        (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec))) then
-
-                     ispec_PML=spec_to_PML(ispec)
-                     iPML=ibool_PML(i,j,ispec)
 
                      A0 = d_x_store(iPML) * d_z_store(iPML) &
                         - alpha_x_store( iPML ) * d_x_store(iPML) * k_z_store(iPML) &
@@ -1088,10 +1066,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!corner
                else
 
-                  ispec_PML=spec_to_PML(ispec)
-                  iPML=ibool_PML(i,j,ispec)
-                  iglob=ibool(i,j,ispec)
-
                   A0 = - alpha_z_store( iPML ) * d_z_store(iPML)
                   A1 = d_z_store(iPML) 
                   A2 = k_z_store(iPML)
@@ -1105,12 +1079,10 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                       rmemory_displ_elastic(1,3,i,j,ispec_PML)+rmemory_displ_elastic(2,3,i,j,ispec_PML)&
                       + A0 * displ_elastic(3,iglob) )
                endif
-             endif
 
            enddo
         enddo
 
-      endif ! end of test if elastic element
      endif ! PML_BOUNDARY_CONDITIONS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -1119,7 +1091,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
         !
         do j = 1,NGLLZ
            do i = 1,NGLLX
-
               iglob = ibool(i,j,ispec)
 
               ! along x direction and z direction
@@ -1144,32 +1115,26 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
               enddo
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          if( PML_BOUNDARY_CONDITIONS ) then
-            if(is_PML(ispec))then
+            if(is_PML(ispec) .and. PML_BOUNDARY_CONDITIONS)then
+                ispec_PML=spec_to_PML(ispec)
+                iPML=ibool_PML(i,j,ispec)
                 if ((which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
                        .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec))) then
-                        ispec_PML=spec_to_PML(ispec)
-                        iPML=ibool_PML(i,j,ispec)
                       accel_elastic(1,iglob) = accel_elastic(1,iglob) - accel_elastic_PML(1,i,j,ispec_PML)
                       accel_elastic(2,iglob) = accel_elastic(2,iglob)
                       accel_elastic(3,iglob) = accel_elastic(3,iglob) - accel_elastic_PML(3,i,j,ispec_PML)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!corner
                elseif ((which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
                         (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec))) then
-                        ispec_PML=spec_to_PML(ispec)
-                        iPML=ibool_PML(i,j,ispec)
                       accel_elastic(1,iglob) = accel_elastic(1,iglob) - accel_elastic_PML(1,i,j,ispec_PML)
                       accel_elastic(2,iglob) = accel_elastic(2,iglob)
                       accel_elastic(3,iglob) = accel_elastic(3,iglob) - accel_elastic_PML(3,i,j,ispec_PML)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!corner
                else
-                      ispec_PML=spec_to_PML(ispec)
-                      iPML=ibool_PML(i,j,ispec)
                       accel_elastic(1,iglob) = accel_elastic(1,iglob) - accel_elastic_PML(1,i,j,ispec_PML)
                       accel_elastic(2,iglob) = accel_elastic(2,iglob)
                       accel_elastic(3,iglob) = accel_elastic(3,iglob) - accel_elastic_PML(3,i,j,ispec_PML)
                endif
-             endif
           endif ! PML_BOUNDARY_CONDITIONS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
