@@ -65,9 +65,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
      stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring,nadj_rec_local, &
      is_PML,nspec_PML,npoin_PML,ibool_PML,spec_to_PML,which_PML_elem, &
      K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
-     rmemory_displ_elastic,rmemory_displ_elastic_corner, &
-     rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz, &
-     rmemory_dux_dx_corner,rmemory_dux_dz_corner,rmemory_duz_dx_corner,rmemory_duz_dz_corner,PML_BOUNDARY_CONDITIONS)
+     rmemory_displ_elastic,rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz, &
+     PML_BOUNDARY_CONDITIONS)
 
   ! compute forces for the elastic elements
 
@@ -222,13 +221,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool_PML
   logical :: PML_BOUNDARY_CONDITIONS
 
-  real(kind=CUSTOM_REAL), dimension(2,3,NGLLX,NGLLZ,nspec_PML) :: rmemory_displ_elastic,rmemory_displ_elastic_corner
+  real(kind=CUSTOM_REAL), dimension(2,3,NGLLX,NGLLZ,nspec_PML) :: rmemory_displ_elastic
   real(kind=CUSTOM_REAL), dimension(2,NGLLX,NGLLZ,nspec_PML) :: &
-    rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz,&
-    rmemory_dux_dx_corner,rmemory_dux_dz_corner,rmemory_duz_dx_corner,rmemory_duz_dz_corner
+    rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz
   real(kind=CUSTOM_REAL), dimension(npoin_PML) :: K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
-
-  real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLZ,nspec_PML) :: accel_elastic_PML, accel_elastic_PML_corner
+  real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLZ,nspec_PML) :: accel_elastic_PML
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) ::PML_dux_dxl,PML_dux_dzl,PML_duz_dxl,PML_duz_dzl,&
                            PML_dux_dxl_new,PML_dux_dzl_new,PML_duz_dxl_new,PML_duz_dzl_new
   real(kind=CUSTOM_REAL) :: coef0_x, coef1_x, coef2_x, coef0_z, coef1_z, coef2_z,bb
@@ -250,7 +247,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
   if( PML_BOUNDARY_CONDITIONS ) then
     accel_elastic_PML = 0._CUSTOM_REAL
-    accel_elastic_PML_corner = 0._CUSTOM_REAL
     PML_dux_dxl = 0._CUSTOM_REAL
     PML_dux_dzl = 0._CUSTOM_REAL
     PML_duz_dxl = 0._CUSTOM_REAL
@@ -417,7 +413,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 !------------------------------------------------------------------------------
 !---------------------------- LEFT & RIGHT ------------------------------------
 !------------------------------------------------------------------------------
-                  if ( which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec) ) then
+                  if ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
+                       .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec))) then
 
                     !---------------------- A8 and A6 --------------------------
                     A8 = - d_x_store(iPML) / (k_x_store(iPML) ** 2)
@@ -477,7 +474,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 !------------------------------------------------------------------------------
 !---------------------------- CORNER ------------------------------------------
 !------------------------------------------------------------------------------
-                    if ( which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec) ) then
+                   elseif ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
+                        (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
                       ispec_PML=spec_to_PML(ispec)
                       iPML=ibool_PML(i,j,ispec)
 
@@ -511,11 +509,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                       end if
 
                       !! DK DK new from Wang eq (21)
-                      rmemory_dux_dx_corner(1,i,j,ispec_PML) = coef0_x*rmemory_dux_dx_corner(1,i,j,ispec_PML) &
+                      rmemory_dux_dx(1,i,j,ispec_PML) = coef0_x*rmemory_dux_dx(1,i,j,ispec_PML) &
                       + PML_dux_dxl_new(i,j,ispec_PML) * coef1_x + PML_dux_dxl(i,j,ispec_PML) * coef2_x
 
                       !! DK DK new from Wang eq (21)
-                      rmemory_duz_dx_corner(1,i,j,ispec_PML) = coef0_x*rmemory_duz_dx_corner(1,i,j,ispec_PML) &
+                      rmemory_duz_dx(1,i,j,ispec_PML) = coef0_x*rmemory_duz_dx(1,i,j,ispec_PML) &
                       + PML_duz_dxl_new(i,j,ispec_PML) * coef1_x + PML_duz_dxl(i,j,ispec_PML) * coef2_x
 
                       !---------------------------- A8 ----------------------------
@@ -553,11 +551,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                       end if
 
                       !! DK DK new from Wang eq (21)
-                      rmemory_dux_dx_corner(2,i,j,ispec_PML) = coef0_z*rmemory_dux_dx_corner(2,i,j,ispec_PML) &
+                      rmemory_dux_dx(2,i,j,ispec_PML) = coef0_z*rmemory_dux_dx(2,i,j,ispec_PML) &
                       + PML_dux_dxl_new(i,j,ispec_PML) * coef1_z + PML_dux_dxl(i,j,ispec_PML) * coef2_z
 
                       !! DK DK new from Wang eq (21)
-                      rmemory_duz_dx_corner(2,i,j,ispec_PML) = coef0_z*rmemory_duz_dx_corner(2,i,j,ispec_PML) &
+                      rmemory_duz_dx(2,i,j,ispec_PML) = coef0_z*rmemory_duz_dx(2,i,j,ispec_PML) &
                       + PML_duz_dxl_new(i,j,ispec_PML) * coef1_z + PML_duz_dxl(i,j,ispec_PML) * coef2_z
 
                       !---------------------------- A5 ----------------------------
@@ -590,11 +588,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                       end if
 
                       !! DK DK new from Wang eq (21)
-                      rmemory_dux_dz_corner(1,i,j,ispec_PML) = coef0_x * rmemory_dux_dz_corner(1,i,j,ispec_PML) &
+                      rmemory_dux_dz(1,i,j,ispec_PML) = coef0_x * rmemory_dux_dz(1,i,j,ispec_PML) &
                       + PML_dux_dzl_new(i,j,ispec_PML) *coef1_x + PML_dux_dzl(i,j,ispec_PML) * coef2_x
 
                       !! DK DK new from Wang eq (21)
-                      rmemory_duz_dz_corner(1,i,j,ispec_PML) = coef0_x * rmemory_duz_dz_corner(1,i,j,ispec_PML) &
+                      rmemory_duz_dz(1,i,j,ispec_PML) = coef0_x * rmemory_duz_dz(1,i,j,ispec_PML) &
                       + PML_duz_dzl_new(i,j,ispec_PML) *coef1_x + PML_duz_dzl(i,j,ispec_PML) * coef2_x
 
                       !---------------------------- A6 ----------------------------
@@ -632,22 +630,21 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                       end if
 
                       !! DK DK new from Wang eq (21)
-                      rmemory_dux_dz_corner(2,i,j,ispec_PML) = coef0_z * rmemory_dux_dz_corner(2,i,j,ispec_PML) &
+                      rmemory_dux_dz(2,i,j,ispec_PML) = coef0_z * rmemory_dux_dz(2,i,j,ispec_PML) &
                       + PML_dux_dzl_new(i,j,ispec_PML) *coef1_z + PML_dux_dzl(i,j,ispec_PML) * coef2_z
 
                       !! DK DK new from Wang eq (21)
-                      rmemory_duz_dz_corner(2,i,j,ispec_PML) = coef0_z * rmemory_duz_dz_corner(2,i,j,ispec_PML) &
+                      rmemory_duz_dz(2,i,j,ispec_PML) = coef0_z * rmemory_duz_dz(2,i,j,ispec_PML) &
                       + PML_duz_dzl_new(i,j,ispec_PML) *coef1_z + PML_duz_dzl(i,j,ispec_PML) * coef2_z
 
-                      dux_dxl = PML_dux_dxl(i,j,ispec_PML)  + rmemory_dux_dx_corner(1,i,j,ispec_PML) +&
-                           rmemory_dux_dx_corner(2,i,j,ispec_PML)
-                      duz_dxl = PML_duz_dxl(i,j,ispec_PML)  + rmemory_duz_dx_corner(1,i,j,ispec_PML) +&
-                           rmemory_duz_dx_corner(2,i,j,ispec_PML)
-                      dux_dzl = PML_dux_dzl(i,j,ispec_PML)  + rmemory_dux_dz_corner(1,i,j,ispec_PML) + &
-                           rmemory_dux_dz_corner(2,i,j,ispec_PML)
-                      duz_dzl = PML_duz_dzl(i,j,ispec_PML)  + rmemory_duz_dz_corner(1,i,j,ispec_PML) + &
-                           rmemory_duz_dz_corner(2,i,j,ispec_PML)
-                    endif
+                      dux_dxl = PML_dux_dxl(i,j,ispec_PML)  + rmemory_dux_dx(1,i,j,ispec_PML) +&
+                           rmemory_dux_dx(2,i,j,ispec_PML)
+                      duz_dxl = PML_duz_dxl(i,j,ispec_PML)  + rmemory_duz_dx(1,i,j,ispec_PML) +&
+                           rmemory_duz_dx(2,i,j,ispec_PML)
+                      dux_dzl = PML_dux_dzl(i,j,ispec_PML)  + rmemory_dux_dz(1,i,j,ispec_PML) + &
+                           rmemory_dux_dz(2,i,j,ispec_PML)
+                      duz_dzl = PML_duz_dzl(i,j,ispec_PML)  + rmemory_duz_dz(1,i,j,ispec_PML) + &
+                           rmemory_duz_dz(2,i,j,ispec_PML)
 
                   else
 !------------------------------------------------------------------------------
@@ -903,7 +900,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 !------------------------------------------------------------------------------
 !---------------------------- LEFT & RIGHT ------------------------------------
 !------------------------------------------------------------------------------
-                  if ( which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec) ) then
+                  if ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
+                       .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
 
                     ispec_PML=spec_to_PML(ispec)
                     iPML=ibool_PML(i,j,ispec)
@@ -935,7 +933,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 !------------------------------------------------------------------------------
 !-------------------------------- CORNER --------------------------------------
 !------------------------------------------------------------------------------
-                    if ( which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec) ) then
+                   elseif ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
+                       (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
                        ispec_PML=spec_to_PML(ispec)
                        iPML=ibool_PML(i,j,ispec)
 
@@ -966,11 +965,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                           coef1_x = deltat / 2.0d0 * A3
                           coef2_x = deltat * A3 ! Rene Matzen
                        end if
-                       rmemory_displ_elastic_corner(1,1,i,j,ispec_PML)= &
-                        coef0_x * rmemory_displ_elastic_corner(1,1,i,j,ispec_PML) &
+                       rmemory_displ_elastic(1,1,i,j,ispec_PML)= &
+                        coef0_x * rmemory_displ_elastic(1,1,i,j,ispec_PML) &
                         + displ_elastic_new(1,iglob) * coef1_x + displ_elastic(1,iglob) * coef2_x
-                       rmemory_displ_elastic_corner(1,3,i,j,ispec_PML)= &
-                        coef0_x * rmemory_displ_elastic_corner(1,3,i,j,ispec_PML) &
+                       rmemory_displ_elastic(1,3,i,j,ispec_PML)= &
+                        coef0_x * rmemory_displ_elastic(1,3,i,j,ispec_PML) &
                         + displ_elastic_new(3,iglob) * coef1_x + displ_elastic(3,iglob) * coef2_x
 
 
@@ -1002,14 +1001,12 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                           coef2_x = deltat * A4 ! Rene Matzen
                        end if
 
-                       rmemory_displ_elastic_corner(2,1,i,j,ispec_PML)= &
-                        coef0_x * rmemory_displ_elastic_corner(2,1,i,j,ispec_PML) &
+                       rmemory_displ_elastic(2,1,i,j,ispec_PML)= &
+                        coef0_x * rmemory_displ_elastic(2,1,i,j,ispec_PML) &
                         + displ_elastic_new(1,iglob) * coef1_x + displ_elastic(1,iglob) * coef2_x
-                       rmemory_displ_elastic_corner(2,3,i,j,ispec_PML)= &
-                        coef0_x * rmemory_displ_elastic_corner(2,3,i,j,ispec_PML) &
+                       rmemory_displ_elastic(2,3,i,j,ispec_PML)= &
+                        coef0_x * rmemory_displ_elastic(2,3,i,j,ispec_PML) &
                         + displ_elastic_new(3,iglob) * coef1_x + displ_elastic(3,iglob) * coef2_x
-
-                    endif
 
                   else
 !------------------------------------------------------------------------------
@@ -1045,7 +1042,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                   endif
 
 
-                if ( which_PML_elem(ILEFT,ispec) .or. which_PML_elem(IRIGHT,ispec)) then
+                if ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
+                       .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec))) then
                   ispec_PML=spec_to_PML(ispec)
                   iPML=ibool_PML(i,j,ispec)
                   iglob=ibool(i,j,ispec)
@@ -1064,7 +1062,9 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                       + A0 *displ_elastic(3,iglob) )
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!corner
-                  if ( which_PML_elem(ITOP,ispec) .or. which_PML_elem(IBOTTOM,ispec)) then
+               elseif ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
+                       (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec))) then
+
                      ispec_PML=spec_to_PML(ispec)
                      iPML=ibool_PML(i,j,ispec)
 
@@ -1076,16 +1076,15 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                      A2 = k_x_store(iPML) * k_z_store(iPML)
 
-                     accel_elastic_PML_corner(1,i,j,ispec_PML)= wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * &
+                     accel_elastic_PML(1,i,j,ispec_PML)= wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * &
                         ( A1 *veloc_elastic(1,iglob)+ &
-                         rmemory_displ_elastic_corner(1,1,i,j,ispec_PML)+rmemory_displ_elastic_corner(2,1,i,j,ispec_PML)&
+                         rmemory_displ_elastic(1,1,i,j,ispec_PML)+rmemory_displ_elastic(2,1,i,j,ispec_PML)&
                          + A0 * displ_elastic(1,iglob) )
-                     accel_elastic_PML_corner(3,i,j,ispec_PML)= wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * &
+                     accel_elastic_PML(3,i,j,ispec_PML)= wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * &
                         ( A1 * veloc_elastic(3,iglob)+ &
-                         rmemory_displ_elastic_corner(1,3,i,j,ispec_PML)+rmemory_displ_elastic_corner(2,3,i,j,ispec_PML)&
+                         rmemory_displ_elastic(1,3,i,j,ispec_PML)+rmemory_displ_elastic(2,3,i,j,ispec_PML)&
                          + A0 * displ_elastic(3,iglob) )
 
-                  endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!corner
                else
 
@@ -1147,23 +1146,21 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           if( PML_BOUNDARY_CONDITIONS ) then
             if(is_PML(ispec))then
-                if (which_PML_elem(ILEFT,ispec) .or. which_PML_elem(IRIGHT,ispec)) then
+                if ((which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
+                       .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec))) then
                         ispec_PML=spec_to_PML(ispec)
                         iPML=ibool_PML(i,j,ispec)
                       accel_elastic(1,iglob) = accel_elastic(1,iglob) - accel_elastic_PML(1,i,j,ispec_PML)
                       accel_elastic(2,iglob) = accel_elastic(2,iglob)
                       accel_elastic(3,iglob) = accel_elastic(3,iglob) - accel_elastic_PML(3,i,j,ispec_PML)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!corner
-                    if (which_PML_elem(ITOP,ispec) .or. which_PML_elem(IBOTTOM,ispec)) then
+               elseif ((which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
+                        (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec))) then
                         ispec_PML=spec_to_PML(ispec)
                         iPML=ibool_PML(i,j,ispec)
-                      accel_elastic(1,iglob) = accel_elastic(1,iglob) + accel_elastic_PML(1,i,j,ispec_PML)
+                      accel_elastic(1,iglob) = accel_elastic(1,iglob) - accel_elastic_PML(1,i,j,ispec_PML)
                       accel_elastic(2,iglob) = accel_elastic(2,iglob)
-                      accel_elastic(3,iglob) = accel_elastic(3,iglob) + accel_elastic_PML(3,i,j,ispec_PML)
-                      accel_elastic(1,iglob) = accel_elastic(1,iglob) - accel_elastic_PML_corner(1,i,j,ispec_PML)
-                      accel_elastic(2,iglob) = accel_elastic(2,iglob)
-                      accel_elastic(3,iglob) = accel_elastic(3,iglob) - accel_elastic_PML_corner(3,i,j,ispec_PML)
-                    endif
+                      accel_elastic(3,iglob) = accel_elastic(3,iglob) - accel_elastic_PML(3,i,j,ispec_PML)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!corner
                else
                       ispec_PML=spec_to_PML(ispec)

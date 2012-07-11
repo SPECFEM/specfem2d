@@ -993,15 +993,13 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                     K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
-   rmemory_dux_dx,rmemory_duz_dx,rmemory_dux_dz,rmemory_duz_dz, &
-   rmemory_dux_dx_corner,rmemory_duz_dx_corner,rmemory_dux_dz_corner,rmemory_duz_dz_corner
+   rmemory_dux_dx,rmemory_duz_dx,rmemory_dux_dz,rmemory_duz_dz
 
   integer, dimension(:), allocatable :: spec_to_PML,icorner_iglob
   integer, dimension(:,:,:), allocatable :: ibool_PML
   logical, dimension(:,:), allocatable :: which_PML_elem, which_PML_poin
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_displ_elastic
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_displ_elastic_corner
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_potential_acoustic,&
     rmemory_pot_acoustic_corner,&
@@ -2870,41 +2868,25 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       if (any_elastic .and. nspec_PML>0) then
 
         allocate(rmemory_displ_elastic(2,3,NGLLX,NGLLZ,nspec_PML))
-        allocate(rmemory_displ_elastic_corner(2,3,NGLLX,NGLLZ,nspec_PML))
 
         allocate(rmemory_dux_dx(2,NGLLX,NGLLZ,nspec_PML))
         allocate(rmemory_dux_dz(2,NGLLX,NGLLZ,nspec_PML))
         allocate(rmemory_duz_dx(2,NGLLX,NGLLZ,nspec_PML))
         allocate(rmemory_duz_dz(2,NGLLX,NGLLZ,nspec_PML))
 
-        allocate(rmemory_dux_dx_corner(2,NGLLX,NGLLZ,nspec_PML))
-        allocate(rmemory_dux_dz_corner(2,NGLLX,NGLLZ,nspec_PML))
-        allocate(rmemory_duz_dx_corner(2,NGLLX,NGLLZ,nspec_PML))
-        allocate(rmemory_duz_dz_corner(2,NGLLX,NGLLZ,nspec_PML))
-
         rmemory_dux_dx(:,:,:,:) = ZERO
         rmemory_dux_dz(:,:,:,:) = ZERO
         rmemory_duz_dx(:,:,:,:) = ZERO
         rmemory_duz_dz(:,:,:,:) = ZERO
-        rmemory_dux_dx_corner(:,:,:,:) = ZERO
-        rmemory_dux_dz_corner(:,:,:,:) = ZERO
-        rmemory_duz_dx_corner(:,:,:,:) = ZERO
-        rmemory_duz_dz_corner(:,:,:,:) = ZERO
 
       else
 
         allocate(rmemory_displ_elastic(1,1,1,1,1))
-        allocate(rmemory_displ_elastic_corner(1,1,1,1,1))
 
         allocate(rmemory_dux_dx(1,1,1,1))
         allocate(rmemory_dux_dz(1,1,1,1))
         allocate(rmemory_duz_dx(1,1,1,1))
         allocate(rmemory_duz_dz(1,1,1,1))
-
-        allocate(rmemory_dux_dx_corner(1,1,1,1))
-        allocate(rmemory_dux_dz_corner(1,1,1,1))
-        allocate(rmemory_duz_dx_corner(1,1,1,1))
-        allocate(rmemory_duz_dz_corner(1,1,1,1))
 
       end if
 
@@ -2942,13 +2924,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       allocate(rmemory_duz_dx(1,1,1,1))
       allocate(rmemory_duz_dz(1,1,1,1))
 
-      allocate(rmemory_dux_dx_corner(1,1,1,1))
-      allocate(rmemory_dux_dz_corner(1,1,1,1))
-      allocate(rmemory_duz_dx_corner(1,1,1,1))
-      allocate(rmemory_duz_dz_corner(1,1,1,1))
-
       allocate(rmemory_displ_elastic(1,1,1,1,1))
-      allocate(rmemory_displ_elastic_corner(1,1,1,1,1))
 
       allocate(rmemory_potential_acoustic(1,1,1,1))
       allocate(rmemory_pot_acoustic_corner(1,1,1,1))
@@ -5414,9 +5390,8 @@ if(coupled_elastic_poro) then
                stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring,max(1,nadj_rec_local), &
                is_PML,nspec_PML,npoin_PML,ibool_PML,spec_to_PML,which_PML_elem, &
                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
-               rmemory_displ_elastic,rmemory_displ_elastic_corner,&
-               rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz,&
-               rmemory_dux_dx_corner,rmemory_dux_dz_corner,rmemory_duz_dx_corner,rmemory_duz_dz_corner,PML_BOUNDARY_CONDITIONS)
+               rmemory_displ_elastic, rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz,&
+               PML_BOUNDARY_CONDITIONS)
 
       if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
         !--- left absorbing boundary
