@@ -1311,12 +1311,6 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     stop 'PML boundary conditions do not ready for poroelastic simulation'
   endif
 
-#ifdef USE_MPI
-  if(PML_BOUNDARY_CONDITIONS .and. (any_acoustic .or. any_poroelastic) )then
-   stop 'PML_BOUNDARY_CONDITIONS do not ready for mpi version of the code'
-  endif
-#endif
-
   ! allocate memory variables for attenuation
   if(ipass == 1) then
     allocate(e1(NGLLX,NGLLZ,nspec_allocate,N_SLS))
@@ -2872,6 +2866,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         allocate(rmemory_duz_dx(2,NGLLX,NGLLZ,nspec_PML))
         allocate(rmemory_duz_dz(2,NGLLX,NGLLZ,nspec_PML))
 
+        rmemory_displ_elastic(:,:,:,:,:) = ZERO
         rmemory_dux_dx(:,:,:,:) = ZERO
         rmemory_dux_dz(:,:,:,:) = ZERO
         rmemory_duz_dx(:,:,:,:) = ZERO
@@ -2891,9 +2886,12 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       if (any_acoustic .and. nspec_PML>0) then
 
         allocate(rmemory_potential_acoustic(2,NGLLX,NGLLZ,nspec_PML))
-
         allocate(rmemory_acoustic_dux_dx(2,NGLLX,NGLLZ,nspec_PML))
         allocate(rmemory_acoustic_dux_dz(2,NGLLX,NGLLZ,nspec_PML))
+
+        rmemory_potential_acoustic = ZERO
+        rmemory_acoustic_dux_dx = ZERO
+        rmemory_acoustic_dux_dz = ZERO
 
       else
 
