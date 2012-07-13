@@ -2859,12 +2859,16 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       !elastic PML memory variables
       if (any_elastic .and. nspec_PML>0) then
 
-        allocate(rmemory_displ_elastic(2,3,NGLLX,NGLLZ,nspec_PML))
-
-        allocate(rmemory_dux_dx(2,NGLLX,NGLLZ,nspec_PML))
-        allocate(rmemory_dux_dz(2,NGLLX,NGLLZ,nspec_PML))
-        allocate(rmemory_duz_dx(2,NGLLX,NGLLZ,nspec_PML))
-        allocate(rmemory_duz_dz(2,NGLLX,NGLLZ,nspec_PML))
+        allocate(rmemory_displ_elastic(2,3,NGLLX,NGLLZ,nspec_PML),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic'
+        allocate(rmemory_dux_dx(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx'
+        allocate(rmemory_dux_dz(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz'
+        allocate(rmemory_duz_dx(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx'
+        allocate(rmemory_duz_dz(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'        
 
         rmemory_displ_elastic(:,:,:,:,:) = ZERO
         rmemory_dux_dx(:,:,:,:) = ZERO
@@ -2875,7 +2879,6 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       else
 
         allocate(rmemory_displ_elastic(1,1,1,1,1))
-
         allocate(rmemory_dux_dx(1,1,1,1))
         allocate(rmemory_dux_dz(1,1,1,1))
         allocate(rmemory_duz_dx(1,1,1,1))
@@ -2885,9 +2888,12 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
       if (any_acoustic .and. nspec_PML>0) then
 
-        allocate(rmemory_potential_acoustic(2,NGLLX,NGLLZ,nspec_PML))
-        allocate(rmemory_acoustic_dux_dx(2,NGLLX,NGLLZ,nspec_PML))
-        allocate(rmemory_acoustic_dux_dz(2,NGLLX,NGLLZ,nspec_PML))
+        allocate(rmemory_potential_acoustic(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_potential_acoustic'
+        allocate(rmemory_acoustic_dux_dx(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dx'
+        allocate(rmemory_acoustic_dux_dz(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dz'
 
         rmemory_potential_acoustic = ZERO
         rmemory_acoustic_dux_dx = ZERO
@@ -2896,7 +2902,6 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       else
 
         allocate(rmemory_potential_acoustic(1,1,1,1))
-
         allocate(rmemory_acoustic_dux_dx(1,1,1,1))
         allocate(rmemory_acoustic_dux_dz(1,1,1,1))
 
@@ -2911,11 +2916,8 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       allocate(rmemory_dux_dz(1,1,1,1))
       allocate(rmemory_duz_dx(1,1,1,1))
       allocate(rmemory_duz_dz(1,1,1,1))
-
       allocate(rmemory_displ_elastic(1,1,1,1,1))
-
       allocate(rmemory_potential_acoustic(1,1,1,1))
-
       allocate(rmemory_acoustic_dux_dx(1,1,1,1))
       allocate(rmemory_acoustic_dux_dz(1,1,1,1))
 
