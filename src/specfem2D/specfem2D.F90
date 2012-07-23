@@ -992,7 +992,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
                     K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
    rmemory_dux_dx,rmemory_duz_dx,rmemory_dux_dz,rmemory_duz_dz
 
   integer, dimension(:), allocatable :: spec_to_PML,icorner_iglob
@@ -1001,7 +1001,8 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_displ_elastic
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_potential_acoustic,&
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_potential_acoustic
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
     rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz
 
   logical :: anyabs_glob
@@ -2861,28 +2862,28 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
         allocate(rmemory_displ_elastic(2,3,NGLLX,NGLLZ,nspec_PML),stat=ier)
         if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic'
-        allocate(rmemory_dux_dx(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
+        allocate(rmemory_dux_dx(NGLLX,NGLLZ,nspec_PML),stat=ier)
         if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx'
-        allocate(rmemory_dux_dz(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
+        allocate(rmemory_dux_dz(NGLLX,NGLLZ,nspec_PML),stat=ier)
         if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz'
-        allocate(rmemory_duz_dx(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
+        allocate(rmemory_duz_dx(NGLLX,NGLLZ,nspec_PML),stat=ier)
         if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx'
-        allocate(rmemory_duz_dz(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
+        allocate(rmemory_duz_dz(NGLLX,NGLLZ,nspec_PML),stat=ier)
         if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'        
 
         rmemory_displ_elastic(:,:,:,:,:) = ZERO
-        rmemory_dux_dx(:,:,:,:) = ZERO
-        rmemory_dux_dz(:,:,:,:) = ZERO
-        rmemory_duz_dx(:,:,:,:) = ZERO
-        rmemory_duz_dz(:,:,:,:) = ZERO
+        rmemory_dux_dx(:,:,:) = ZERO
+        rmemory_dux_dz(:,:,:) = ZERO
+        rmemory_duz_dx(:,:,:) = ZERO
+        rmemory_duz_dz(:,:,:) = ZERO
 
       else
 
         allocate(rmemory_displ_elastic(1,1,1,1,1))
-        allocate(rmemory_dux_dx(1,1,1,1))
-        allocate(rmemory_dux_dz(1,1,1,1))
-        allocate(rmemory_duz_dx(1,1,1,1))
-        allocate(rmemory_duz_dz(1,1,1,1))
+        allocate(rmemory_dux_dx(1,1,1))
+        allocate(rmemory_dux_dz(1,1,1))
+        allocate(rmemory_duz_dx(1,1,1))
+        allocate(rmemory_duz_dz(1,1,1))
 
       end if
 
@@ -2890,9 +2891,9 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
         allocate(rmemory_potential_acoustic(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
         if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_potential_acoustic'
-        allocate(rmemory_acoustic_dux_dx(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
+        allocate(rmemory_acoustic_dux_dx(NGLLX,NGLLZ,nspec_PML),stat=ier)
         if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dx'
-        allocate(rmemory_acoustic_dux_dz(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
+        allocate(rmemory_acoustic_dux_dz(NGLLX,NGLLZ,nspec_PML),stat=ier)
         if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dz'
 
         rmemory_potential_acoustic = ZERO
@@ -2902,8 +2903,8 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       else
 
         allocate(rmemory_potential_acoustic(1,1,1,1))
-        allocate(rmemory_acoustic_dux_dx(1,1,1,1))
-        allocate(rmemory_acoustic_dux_dz(1,1,1,1))
+        allocate(rmemory_acoustic_dux_dx(1,1,1))
+        allocate(rmemory_acoustic_dux_dz(1,1,1))
 
       end if
 
@@ -2912,14 +2913,14 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
 !!!!!!!!!!!!! DK DK added this
 
-      allocate(rmemory_dux_dx(1,1,1,1))
-      allocate(rmemory_dux_dz(1,1,1,1))
-      allocate(rmemory_duz_dx(1,1,1,1))
-      allocate(rmemory_duz_dz(1,1,1,1))
+      allocate(rmemory_dux_dx(1,1,1))
+      allocate(rmemory_dux_dz(1,1,1))
+      allocate(rmemory_duz_dx(1,1,1))
+      allocate(rmemory_duz_dz(1,1,1))
       allocate(rmemory_displ_elastic(1,1,1,1,1))
       allocate(rmemory_potential_acoustic(1,1,1,1))
-      allocate(rmemory_acoustic_dux_dx(1,1,1,1))
-      allocate(rmemory_acoustic_dux_dz(1,1,1,1))
+      allocate(rmemory_acoustic_dux_dx(1,1,1))
+      allocate(rmemory_acoustic_dux_dz(1,1,1))
 
       allocate(is_PML(1))
       allocate(ibool_PML(1,1,1))
