@@ -459,10 +459,19 @@
                 abscissa_in_PML = zoriginbottom - zval
                 if(abscissa_in_PML >= 0.d0) then
                    abscissa_normalized = abscissa_in_PML / thickness_PML_z_bottom
+
                    d_z = d0_z_bottom / 0.6d0 * abscissa_normalized**NPOWER
 
-                   alpha_z = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
-                   + ALPHA_MAX_PML / 2.d0
+!DK DK we keep the equation to define an nonconstant alpha_z in case user needed,
+!However for users who want to use nonconstant alpha_z, you also need to change 
+!routines for CMPL computation. For example in compute_forces_viscoelastic.f90
+
+!                   alpha_z = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
+!                   + ALPHA_MAX_PML / 2.d0
+
+!DK DK Here we set alpha_z=alpha_x=const where alpha_z or alpha_x is nonzero 
+
+                   alpha_z = ALPHA_MAX_PML / 2.d0
 
                    K_z = 1.d0 + (K_MAX_PML - 1.d0) * abscissa_normalized**NPOWER
                 else
@@ -484,9 +493,13 @@
                 abscissa_in_PML = zval - zorigintop
                 if(abscissa_in_PML >= 0.d0) then
                    abscissa_normalized = abscissa_in_PML / thickness_PML_z_top
+
                    d_z = d0_z_top / 0.6d0 * abscissa_normalized**NPOWER
-                   alpha_z = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
-                   + ALPHA_MAX_PML / 2.d0
+
+!                   alpha_z = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
+!                   + ALPHA_MAX_PML / 2.d0
+
+                   alpha_z = ALPHA_MAX_PML / 2.d0
 
                    K_z = 1.d0 + (K_MAX_PML - 1.d0) * abscissa_normalized**NPOWER
                 else
@@ -508,9 +521,13 @@
                 abscissa_in_PML = xval - xoriginright
                 if(abscissa_in_PML >= 0.d0) then
                    abscissa_normalized = abscissa_in_PML / thickness_PML_x_right
+
                    d_x = d0_x_right / 0.6d0 * abscissa_normalized**NPOWER
-                   alpha_x = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
-                   + ALPHA_MAX_PML / 2.d0
+
+!                   alpha_x = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
+!                   + ALPHA_MAX_PML / 2.d0
+
+                   alpha_x = ALPHA_MAX_PML / 2.d0
 
                    K_x = 1.d0 + (K_MAX_PML - 1.d0) * abscissa_normalized**NPOWER
                 else
@@ -532,9 +549,13 @@
                 abscissa_in_PML = xoriginleft - xval
                 if(abscissa_in_PML >= 0.d0) then
                    abscissa_normalized = abscissa_in_PML / thickness_PML_x_left
+
                    d_x = d0_x_left / 0.6d0 * abscissa_normalized**NPOWER
-                   alpha_x = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
-                   + ALPHA_MAX_PML / 2.d0
+
+!                   alpha_x = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
+!                   + ALPHA_MAX_PML / 2.d0
+
+                   alpha_x = ALPHA_MAX_PML / 2.d0
 
                    K_x = 1.d0 + (K_MAX_PML - 1.d0) * abscissa_normalized**NPOWER
                 else
