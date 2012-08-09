@@ -42,7 +42,7 @@
 !========================================================================
 
   subroutine pml_init(nspec,nglob,anyabs,ibool,nelemabs,codeabs,numabs,&
-                    nspec_PML,is_PML,which_PML_elem,which_PML_poin,spec_to_PML, &
+                    nspec_PML,is_PML,which_PML_elem,spec_to_PML, &
                     icorner_iglob,NELEM_PML_THICKNESS)
 
 
@@ -60,7 +60,6 @@
   integer :: i,j,k,i_coef
 
   logical, dimension(4,nspec) :: which_PML_elem
-  logical, dimension(4,nglob) :: which_PML_poin
   integer, dimension(nglob) ::   icorner_iglob
   integer, dimension(nelemabs) :: numabs
   logical, dimension(4,nelemabs) :: codeabs
@@ -96,9 +95,6 @@
               end do
               ncorner=ncorner+1
               icorner_iglob(ncorner) = iglob
-
-              !array to know which PML it is
-              which_PML_poin(ibound,iglob) = codeabs(ibound,ispecabs)
 
            enddo
         enddo
@@ -142,7 +138,6 @@
                     end do
                     ncorner=ncorner+1
                     icorner_iglob(ncorner) = iglob
-                    which_PML_poin(ibound,iglob) = .true.
                  end do
               end do
               nspec_PML=nspec_PML+1

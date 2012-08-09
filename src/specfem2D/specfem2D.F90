@@ -997,7 +997,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
    rmemory_dux_dx,rmemory_duz_dx,rmemory_dux_dz,rmemory_duz_dz
 
   integer, dimension(:), allocatable :: spec_to_PML,icorner_iglob
-  logical, dimension(:,:), allocatable :: which_PML_elem, which_PML_poin
+  logical, dimension(:,:), allocatable :: which_PML_elem
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_displ_elastic
 
@@ -2815,19 +2815,16 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       allocate(is_PML(nspec))
       allocate(icorner_iglob(nglob))
       allocate(which_PML_elem(4,nspec))
-      allocate(which_PML_poin(4,nglob))
       allocate(spec_to_PML(nspec))
 
       is_PML(:) = .false.
       which_PML_elem(:,:) = .false.
-      which_PML_poin(:,:) = .false.
 
       call pml_init(nspec,nglob,anyabs,ibool,nelemabs,codeabs,numabs,&
-                  nspec_PML,is_PML,which_PML_elem,which_PML_poin,spec_to_PML, &
+                  nspec_PML,is_PML,which_PML_elem,spec_to_PML, &
                   icorner_iglob,NELEM_PML_THICKNESS)
 
       deallocate(icorner_iglob)
-      deallocate(which_PML_poin)
 
       if (nspec_PML==0) nspec_PML=1
 !!!!!!!!!!!!! DK DK added this
