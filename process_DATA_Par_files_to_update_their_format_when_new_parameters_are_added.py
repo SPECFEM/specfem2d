@@ -38,7 +38,7 @@ def OuvreParFile(fic):
         return
     #
     for var in VariableNum:
-        print var
+        #print var
         for ligne in lignes:
             lsplit=string.split(ligne)
             if lsplit!= []:
@@ -432,9 +432,8 @@ def ProcessParfile_r20561(fic):
     # Add new parameters
     # 
     for ilg, lig in enumerate(ligs):
-        if lig.startswith('absorbing_surface_file'):
-            ligs.pop(ilg)
-            ligs.insert(ilg,a1)
+        if lig.startswith('absorbing_surface'):
+            ligs.insert(ilg+1,a1)
     #
     move(fic,fic+'.before_update_to_r20561')
     #
@@ -469,7 +468,7 @@ if __name__=='__main__':
                     ProcessParfile_r20307(fic)
                     ProcessParfile_r20359(fic)
                     ProcessParfile_r20561(fic)
-                print '~'*80
+                    print '~'*80
     #                
     print 'Number of Par_file analysed : ', Ct_Par_file   
     print 'END OF Par_file PROCESSING'
