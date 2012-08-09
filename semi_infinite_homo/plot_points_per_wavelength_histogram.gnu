@@ -1,8 +1,8 @@
  set term x11
  #set term gif
  #set output "points_per_wavelength_histogram_S_in_solid.gif"
-
- set boxwidth   8.66025500E-03
+ 
+ set boxwidth   8.6602550E-03
  set xlabel "Range of min number of points per S wavelength in solid"
  set ylabel "Percentage of elements (%)"
  plot "points_per_wavelength_histogram_S_in_solid.txt" with boxes

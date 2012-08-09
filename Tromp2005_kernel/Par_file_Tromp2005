@@ -130,7 +130,7 @@ mesh_file                       = ./DATA/ice_water_rock_1D/ice_water_rock_1D_ele
 nodes_coords_file               = ./DATA/ice_water_rock_1D/ice_water_rock_1D_nodes          # file containing node coordinates
 materials_file                  = ./DATA/ice_water_rock_1D/ice_water_rock_1D_material       # file containing material index for each element
 free_surface_file               = ./DATA/ice_water_rock_1D/ice_water_rock_1D_surface_free   # file containing free surface
-absorbing_surface_file          = ./DATA/ice_water_rock_1D/ice_water_rock_1D_surface_absorb # file containing absorbing surface
+CPML_element_file               = EltPML_xxxxxx  # file containing the CPML element numbers
 tangential_detection_curve_file = ./DATA/courbe_eros_nodes # file containing the curve delimiting the velocity model
 
 #-----------------------------------------------------------------------------
