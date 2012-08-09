@@ -989,14 +989,14 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
 !PML parameters
   logical, dimension(:), allocatable :: is_PML
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
+
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
                     K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
    rmemory_dux_dx,rmemory_duz_dx,rmemory_dux_dz,rmemory_duz_dz
 
   integer, dimension(:), allocatable :: spec_to_PML,icorner_iglob
-  integer, dimension(:,:,:), allocatable :: ibool_PML
   logical, dimension(:,:), allocatable :: which_PML_elem, which_PML_poin
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_displ_elastic
@@ -1006,7 +1006,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz
 
   logical :: anyabs_glob
-  integer :: nspec_PML, npoin_PML
+  integer :: nspec_PML
 
 !***********************************************************************
 !
@@ -2817,43 +2817,43 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       allocate(which_PML_elem(4,nspec))
       allocate(which_PML_poin(4,nglob))
       allocate(spec_to_PML(nspec))
-      allocate(ibool_PML(NGLLX,NGLLZ,nspec))
 
       is_PML(:) = .false.
       which_PML_elem(:,:) = .false.
       which_PML_poin(:,:) = .false.
 
       call pml_init(nspec,nglob,anyabs,ibool,nelemabs,codeabs,numabs,&
-                  nspec_PML,is_PML,which_PML_elem,which_PML_poin,spec_to_PML,ibool_PML, &
-                  npoin_PML,icorner_iglob,NELEM_PML_THICKNESS)
+                  nspec_PML,is_PML,which_PML_elem,which_PML_poin,spec_to_PML, &
+                  icorner_iglob,NELEM_PML_THICKNESS)
 
       deallocate(icorner_iglob)
       deallocate(which_PML_poin)
 
-      if (npoin_PML==0) npoin_PML=1
+      if (nspec_PML==0) nspec_PML=1
 !!!!!!!!!!!!! DK DK added this
 
-      if (npoin_PML > 0) then
+      if (nspec_PML > 0) then
 
-        allocate(K_x_store(npoin_PML))
-        allocate(K_z_store(npoin_PML))
-        allocate(d_x_store(npoin_PML))
-        allocate(d_z_store(npoin_PML))
-        allocate(alpha_x_store(npoin_PML))
-        allocate(alpha_z_store(npoin_PML))
+        allocate(K_x_store(NGLLX,NGLLZ,nspec_PML))
+        allocate(K_z_store(NGLLX,NGLLZ,nspec_PML))
+        allocate(d_x_store(NGLLX,NGLLZ,nspec_PML))
+        allocate(d_z_store(NGLLX,NGLLZ,nspec_PML))
+        allocate(alpha_x_store(NGLLX,NGLLZ,nspec_PML))
+        allocate(alpha_z_store(NGLLX,NGLLZ,nspec_PML))
 
         !! DK DK initialize to zero
-        K_x_store(:) = 0
-        K_z_store(:) = 0
-        d_x_store(:) = 0
-        d_z_store(:) = 0
-        alpha_x_store(:) = 0
-        alpha_z_store(:) = 0
+        K_x_store(:,:,:) = 0
+        K_z_store(:,:,:) = 0
+        d_x_store(:,:,:) = 0
+        d_z_store(:,:,:) = 0
+        alpha_x_store(:,:,:) = 0
+        alpha_z_store(:,:,:) = 0
 
         call define_PML_coefficients(nglob,nspec,is_PML,ibool,coord,&
-                which_PML_elem,kmato,density,poroelastcoef,numat,f0(1),npoin_PML,&
-                ibool_PML,myrank,&
-                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store)
+                which_PML_elem,kmato,density,poroelastcoef,numat,f0(1),&
+                myrank,&
+                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
+                nspec_PML,spec_to_PML)
 
       endif
 
@@ -2923,16 +2923,15 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       allocate(rmemory_acoustic_dux_dz(1,1,1))
 
       allocate(is_PML(1))
-      allocate(ibool_PML(1,1,1))
       allocate(spec_to_PML(1))
       allocate(which_PML_elem(1,1))
 
-      allocate(K_x_store(1))
-      allocate(K_z_store(1))
-      allocate(d_x_store(1))
-      allocate(d_z_store(1))
-      allocate(alpha_x_store(1))
-      allocate(alpha_z_store(1))
+      allocate(K_x_store(1,1,1))
+      allocate(K_z_store(1,1,1))
+      allocate(d_x_store(1,1,1))
+      allocate(d_z_store(1,1,1))
+      allocate(alpha_x_store(1,1,1))
+      allocate(alpha_z_store(1,1,1))
 
     end if ! PML_BOUNDARY_CONDITIONS
 
@@ -2959,8 +2958,9 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 #ifdef USE_GUENNEAU
                                 ,coord &
 #endif
-                                ,K_x_store,K_z_store,npoin_PML,ibool_PML,is_PML,&
-                                d_x_store,d_z_store,PML_BOUNDARY_CONDITIONS,which_PML_elem)
+                                ,K_x_store,K_z_store,is_PML,&
+                                d_x_store,d_z_store,PML_BOUNDARY_CONDITIONS,which_PML_elem,&
+                nspec_PML,spec_to_PML)
 
 #ifdef USE_MPI
   if ( nproc > 1 ) then
@@ -4879,7 +4879,7 @@ if(coupled_elastic_poro) then
                nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
                b_absorb_acoustic_bottom,b_absorb_acoustic_top,.false.,&
-            is_PML,nspec_PML,npoin_PML,ibool_PML,spec_to_PML,which_PML_elem,&
+            is_PML,nspec_PML,spec_to_PML,which_PML_elem,&
             K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
             rmemory_potential_acoustic,&
             rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
@@ -4898,7 +4898,7 @@ if(coupled_elastic_poro) then
                nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
                b_absorb_acoustic_bottom,b_absorb_acoustic_top,.true.,&
-            is_PML,nspec_PML,npoin_PML,ibool_PML,spec_to_PML,which_PML_elem,&
+            is_PML,nspec_PML,spec_to_PML,which_PML_elem,&
             K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
             rmemory_potential_acoustic,&
             rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
@@ -5373,7 +5373,7 @@ if(coupled_elastic_poro) then
                e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
                e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_rk, e11_force_rk, e13_force_rk, &
                stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring,max(1,nadj_rec_local), &
-               is_PML,nspec_PML,npoin_PML,ibool_PML,spec_to_PML,which_PML_elem, &
+               is_PML,nspec_PML,spec_to_PML,which_PML_elem, &
                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
                rmemory_displ_elastic, rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz,&
                PML_BOUNDARY_CONDITIONS)

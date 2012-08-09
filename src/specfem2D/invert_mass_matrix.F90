@@ -59,8 +59,9 @@
 #ifdef USE_GUENNEAU
                                 ,coord &
 #endif
-                                ,K_x_store,K_z_store,npoin_PML,ibool_PML,is_PML,&
-                                d_x_store,d_z_store,PML_BOUNDARY_CONDITIONS,which_PML_elem)
+                                ,K_x_store,K_z_store,is_PML,&
+                                d_x_store,d_z_store,PML_BOUNDARY_CONDITIONS,which_PML_elem,&
+                                nspec_PML,spec_to_PML)
 
 !  builds the global mass matrix
 
@@ -123,9 +124,10 @@
   double precision :: rhol_s,rhol_f,rhol_bar,phil,tortl
 
 !!!!!!!!!!!!! DK DK added this
-  integer :: npoin_PML,iPML
-  real(kind=CUSTOM_REAL), dimension(npoin_PML) :: K_x_store,K_z_store,d_x_store,d_z_store
-  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool_PML
+  integer :: nspec_PML,ispec_PML
+  integer, dimension(nspec) :: spec_to_PML
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) :: & 
+                  K_x_store,K_z_store,d_x_store,d_z_store
   logical, dimension(nspec) :: is_PML
   logical :: PML_BOUNDARY_CONDITIONS
   logical, dimension(4,nspec) :: which_PML_elem
@@ -182,23 +184,24 @@
           ! for elastic medium
 
         if (is_PML(ispec) .and. PML_BOUNDARY_CONDITIONS) then
-          iPML=ibool_PML(i,j,ispec)
+          ispec_PML=spec_to_PML(ispec)
          if ((which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
              .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
           rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
-                  + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(iPML)&
-                  + d_x_store(iPML) * deltat / 2.d0)
+                  + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML)&
+                  + d_x_store(i,j,ispec_PML) * deltat / 2.d0)
           rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
          elseif ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
                   (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
           rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
-                  + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(iPML) * K_z_store(iPML)&
-                  + (d_x_store(iPML)*k_z_store(iPML)+d_z_store(iPML)*k_x_store(iPML)) * deltat / 2.d0)
+                  + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML)&
+                  + (d_x_store(i,j,ispec_PML)*k_z_store(i,j,ispec_PML)+&
+                     d_z_store(i,j,ispec_PML)*k_x_store(i,j,ispec_PML)) * deltat / 2.d0)
           rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
          else
           rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
-                  + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_z_store(iPML)&
-                  + d_z_store(iPML)* deltat / 2.d0)
+                  + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML)&
+                  + d_z_store(i,j,ispec_PML)* deltat / 2.d0)
           rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
          endif         
 
@@ -230,22 +233,22 @@
 !                  + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal
 
         if (PML_BOUNDARY_CONDITIONS .and. is_PML(ispec)) then
-          iPML=ibool_PML(i,j,ispec)
-
+          ispec_PML=spec_to_PML(ispec)
          if ((which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
              .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
           rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
-                  + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(iPML)&
-                  + d_x_store(iPML) * deltat / 2.d0)
+                  + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML)&
+                  + d_x_store(i,j,ispec_PML) * deltat / 2.d0)
          elseif ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
                   (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
           rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
-                  + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(iPML) * K_z_store(iPML)&
-                  + (d_x_store(iPML)*k_z_store(iPML)+d_z_store(iPML)*k_x_store(iPML)) * deltat / 2.d0)
+                  + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML)&
+                  + (d_x_store(i,j,ispec_PML)*k_z_store(i,j,ispec_PML)&
+                     +d_z_store(i,j,ispec_PML)*k_x_store(i,j,ispec_PML)) * deltat / 2.d0)
          else
           rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
-                  + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_z_store(iPML)&
-                  + d_z_store(iPML)* deltat / 2.d0)
+                  + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML)&
+                  + d_z_store(i,j,ispec_PML)* deltat / 2.d0)
          endif  
 
        else

@@ -42,8 +42,8 @@
 !========================================================================
 
   subroutine pml_init(nspec,nglob,anyabs,ibool,nelemabs,codeabs,numabs,&
-                    nspec_PML,is_PML,which_PML_elem,which_PML_poin,spec_to_PML,ibool_PML, &
-                    npoin_PML,icorner_iglob,NELEM_PML_THICKNESS)
+                    nspec_PML,is_PML,which_PML_elem,which_PML_poin,spec_to_PML, &
+                    icorner_iglob,NELEM_PML_THICKNESS)
 
 
   implicit none
@@ -53,7 +53,7 @@
   include 'mpif.h'
 #endif
 
-  integer :: nspec,nglob,nelemabs,nspec_PML,npoin_PML,NELEM_PML_THICKNESS
+  integer :: nspec,nglob,nelemabs,nspec_PML,NELEM_PML_THICKNESS
   logical :: anyabs
 
   integer :: ibound,ispecabs,ncorner,ispec,iglob
@@ -66,8 +66,6 @@
   logical, dimension(4,nelemabs) :: codeabs
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
   integer, dimension(nspec) :: spec_to_PML
-  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool_PML
-  integer, dimension(:), allocatable :: iPML_to_iglob
   logical, dimension(nspec) :: is_PML
 
   !!!detection of PML elements
@@ -158,7 +156,6 @@
      enddo ! end loop on the 4 boundaries
 
      !construction of table to use less memory for absorbing coefficients
-  !     allocate(spec_to_PML(nspec))
      spec_to_PML=0
      nspec_PML=0
      do ispec=1,nspec
@@ -168,40 +165,7 @@
         end if
      enddo
 
-  !     allocate(ibool_PML(NGLLX,NGLLZ,nspec))
-     if (nspec_PML > 0) then
-        allocate(iPML_to_iglob(nspec_PML*NGLLX*NGLLZ))
-     else
-        allocate(iPML_to_iglob(1))
-     end if
-
-     iPML_to_iglob(:)=0
-     ibool_PML=0
-
-     npoin_PML=0
-     do ispec=1,nspec
-        if (is_PML(ispec)) then
-           do j=1,NGLLZ
-              do i=1,NGLLX
-                 iglob=ibool(i,j,ispec)
-                 k=1
-                 do while (iglob/=iPML_to_iglob(k).and.iPML_to_iglob(k)/=0)
-                    k=k+1
-                 end do
-                 ibool_PML(i,j,ispec)=k
-                 if (k>npoin_PML) then
-                    npoin_PML=npoin_PML+1
-                    iPML_to_iglob(k)=iglob
-                 end if
-              end do
-           end do
-        end if
-     end do
-
-     deallocate(iPML_to_iglob)
-
      write(IOUT,*) "number of PML spectral elements :", nspec_PML
-     write(IOUT,*) "number of PML spectral points   :", npoin_PML
 
   end subroutine pml_init
 
@@ -210,9 +174,10 @@
 !
 
  subroutine define_PML_coefficients(npoin,nspec,is_PML,ibool,coord,&
-          which_PML_elem,kmato,density,poroelastcoef,numat,f0_temp,npoin_PML,&
-          ibool_PML,myrank,&
-            K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store)
+          which_PML_elem,kmato,density,poroelastcoef,numat,f0_temp,&
+          myrank,&
+          K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
+          nspec_PML,spec_to_PML)
 
   implicit none
 
@@ -222,16 +187,16 @@
   include "mpif.h"
 #endif
 
-  integer nspec, npoin, i, j,numat, ispec,iglob,npoin_PML,iPML
+  integer nspec, npoin, i, j,numat, ispec,iglob,nspec_PML
   double precision :: f0_temp
 
   logical, dimension(nspec) :: is_PML
   logical, dimension(4,nspec) :: which_PML_elem
-  real(kind=CUSTOM_REAL), dimension(npoin_PML) ::  &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) ::  &
                     K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
   real(kind=CUSTOM_REAL), dimension(NDIM,npoin) ::  coord
-  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool, ibool_PML
+  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
   double precision, dimension(2,numat) ::  density
   double precision, dimension(4,3,numat) ::  poroelastcoef
   integer, dimension(nspec) :: kmato
@@ -275,10 +240,12 @@
 
   double precision :: Rcoef
 
-  double precision :: factorx, factorz
-
 ! material properties of the elastic medium
   double precision :: lambdalplus2mul_relaxed
+
+!DK,DK 
+  integer, dimension(nspec) :: spec_to_PML
+  integer :: ispec_PML
 
 ! reflection coefficient (INRIA report section 6.1) http://hal.inria.fr/docs/00/07/32/19/PDF/RR-3471.pdf
   Rcoef = 0.001d0
@@ -441,14 +408,18 @@
 
 
  do ispec = 1,nspec
-
+  ispec_PML=spec_to_PML(ispec)
     if (is_PML(ispec)) then
-
        do j=1,NGLLZ
           do i=1,NGLLX
+          K_x_store(i,j,ispec_PML) = 0.0
+          K_z_store(i,j,ispec_PML) = 0.0
+          d_x_store(i,j,ispec_PML) = 0.0
+          d_z_store(i,j,ispec_PML) = 0.0
+          alpha_x_store(i,j,ispec_PML) = 0.0
+          alpha_z_store(i,j,ispec_PML) = 0.0
+
              iglob=ibool(i,j,ispec)
-             iPML=ibool_PML(i,j,ispec)
-             if(iPML < 1) stop 'error: iPML < 1 in a PML element'
              ! abscissa of current grid point along the damping profile
              xval = coord(1,iglob)
              zval = coord(2,iglob)
@@ -479,12 +450,6 @@
                    alpha_z = 0.d0
                    K_z = 1.d0
                 endif
-                factorz = 1.d0
-                if (which_PML_elem(IRIGHT,ispec) .or. which_PML_elem(ILEFT,ispec)) then
-                   factorx = 1.d0
-                else
-                   factorx = 0.d0
-                endif
              endif
 
 !!!! ---------- top edge
@@ -506,12 +471,6 @@
                    d_z = 0.d0
                    alpha_z = 0.d0
                    K_z = 1.d0
-                endif
-                factorz = 1.d0
-                if (which_PML_elem(IRIGHT,ispec) .or. which_PML_elem(ILEFT,ispec)) then
-                   factorx = 1.d0
-                else
-                   factorx = 0.d0
                 endif
              endif
 
@@ -535,12 +494,6 @@
                    alpha_x = 0.d0
                    K_x = 1.d0
                 endif
-                factorx = 1.d0
-                if (which_PML_elem(IBOTTOM,ispec) .or. which_PML_elem(ITOP,ispec)) then
-                   factorz = 1.d0
-                else
-                   factorz = 0.d0
-                endif
              endif
 
 !!!! ---------- left edge
@@ -563,20 +516,14 @@
                    alpha_x = 0.d0
                    K_x = 1.d0
                 endif
-                factorx = 1.d0
-                if (which_PML_elem(IBOTTOM,ispec) .or. which_PML_elem(ITOP,ispec)) then
-                   factorz = 1.d0
-                else
-                   factorz = 0.d0
-                endif
              endif
 
-          K_x_store(iPML) = K_x
-          K_z_store(iPML) = K_z
-          d_x_store(iPML) = d_x
-          d_z_store(iPML) = d_z
-          alpha_x_store(iPML) = alpha_x
-          alpha_z_store(iPML) = alpha_z
+          K_x_store(i,j,ispec_PML) = K_x
+          K_z_store(i,j,ispec_PML) = K_z
+          d_x_store(i,j,ispec_PML) = d_x
+          d_z_store(i,j,ispec_PML) = d_z
+          alpha_x_store(i,j,ispec_PML) = alpha_x
+          alpha_z_store(i,j,ispec_PML) = alpha_z
 
        enddo
      enddo
