@@ -55,7 +55,7 @@
                nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
                b_absorb_acoustic_bottom,b_absorb_acoustic_top,IS_BACKWARD_FIELD,&
-            is_PML,nspec_PML,npoin_PML,ibool_PML,spec_to_PML,which_PML_elem,&
+            is_PML,nspec_PML,spec_to_PML,which_PML_elem,&
             K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
             rmemory_potential_acoustic,&
             rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
@@ -127,16 +127,16 @@
   integer :: ifirstelem,ilastelem
 
 !CPML coefficients and memory variables
-  integer :: nspec_PML,npoin_PML,iPML,ispec_PML
+  integer :: nspec_PML,ispec_PML
   logical, dimension(4,nspec) :: which_PML_elem
   logical, dimension(nspec) :: is_PML
   integer, dimension(nspec) :: spec_to_PML
-  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool_PML
 
   real(kind=CUSTOM_REAL), dimension(2,NGLLX,NGLLZ,nspec_PML) :: rmemory_potential_acoustic
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) :: &
     rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz
-  real(kind=CUSTOM_REAL), dimension(npoin_PML) :: K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) :: &
+              K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) :: potential_dot_dot_acoustic_PML
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) ::PML_dux_dxl,PML_dux_dzl,&
@@ -227,16 +227,15 @@
 
              if(PML_BOUNDARY_CONDITIONS .and. is_PML(ispec))then
                ispec_PML=spec_to_PML(ispec)
-               iPML=ibool_PML(i,j,ispec)
                if ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
                      .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
 !------------------------------------------------------------------------------
 !---------------------------- LEFT & RIGHT ------------------------------------
 !------------------------------------------------------------------------------
                   !---------------------- A8 --------------------------
-                    A8 = - d_x_store(iPML) / (k_x_store(iPML)**2)
+                    A8 = - d_x_store(i,j,ispec_PML) / (k_x_store(i,j,ispec_PML)**2)
 
-                    bb = d_x_store(iPML) / k_x_store(iPML) + alpha_x_store(iPML)
+                    bb = d_x_store(i,j,ispec_PML) / k_x_store(i,j,ispec_PML) + alpha_x_store(i,j,ispec_PML)
                     coef0_x = exp(-bb * deltat)
                     if ( abs(bb) > 1.d-3 ) then
                       coef1_x = (1.d0 - exp(-bb * deltat / 2.d0)) * A8 / bb
@@ -250,9 +249,9 @@
                  + PML_dux_dxl_new(i,j,ispec_PML) * coef1_x + PML_dux_dxl(i,j,ispec_PML) * coef2_x
 
                     !---------------------- A5 --------------------------
-                    A5 = d_x_store(iPML)
+                    A5 = d_x_store(i,j,ispec_PML)
 
-                    bb = alpha_x_store(iPML)
+                    bb = alpha_x_store(i,j,ispec_PML)
                     coef0_x = exp(- bb * deltat)
 
                     if ( abs( bb ) > 1.d-3) then
@@ -277,10 +276,11 @@
 !------------------------------------------------------------------------------
 
                       !---------------------------- A8 ----------------------------
-                      A8 = (k_x_store(iPML) * d_z_store(iPML) - k_z_store(iPML) * d_x_store(iPML)) &
-                           / (k_x_store(iPML)**2)
+                      A8 = (k_x_store(i,j,ispec_PML) * d_z_store(i,j,ispec_PML) &
+                            - k_z_store(i,j,ispec_PML) * d_x_store(i,j,ispec_PML)) &
+                           / (k_x_store(i,j,ispec_PML)**2)
 
-                      bb = d_x_store(iPML) / k_x_store(iPML) + alpha_x_store(iPML)
+                      bb = d_x_store(i,j,ispec_PML) / k_x_store(i,j,ispec_PML) + alpha_x_store(i,j,ispec_PML)
                       coef0_z = exp(- bb * deltat)
 
                       if ( abs(bb) > 1.d-3 ) then
@@ -296,10 +296,11 @@
 
 
                       !---------------------------- A6 ----------------------------
-                      A6 =(k_z_store(iPML) * d_x_store(iPML) - k_x_store(iPML) * d_z_store(iPML)) &
-                            / (k_z_store(iPML)**2)
+                      A6 =(k_z_store(i,j,ispec_PML) * d_x_store(i,j,ispec_PML) &
+                          - k_x_store(i,j,ispec_PML) * d_z_store(i,j,ispec_PML)) &
+                            / (k_z_store(i,j,ispec_PML)**2)
 
-                      bb = d_z_store(iPML) / k_z_store(iPML) + alpha_z_store(iPML)
+                      bb = d_z_store(i,j,ispec_PML) / k_z_store(i,j,ispec_PML) + alpha_z_store(i,j,ispec_PML)
                       coef0_z = exp(- bb * deltat)
 
                       if ( abs(bb) > 1.d-3 ) then
@@ -322,8 +323,8 @@
 !---------------------------- TOP & BOTTOM ------------------------------------
 !------------------------------------------------------------------------------
                     !---------------------- A7 --------------------------
-                    A7 = d_z_store(iPML)
-                    bb = alpha_z_store(iPML)
+                    A7 = d_z_store(i,j,ispec_PML)
+                    bb = alpha_z_store(i,j,ispec_PML)
                     coef0_x = exp(- bb * deltat)
 
                     if ( abs( bb ) > 1.d-3) then
@@ -340,8 +341,8 @@
 
 
                     !---------------------- A6 --------------------------
-                    A6 = - d_z_store(iPML) / ( k_z_store(iPML) ** 2 )
-                    bb = d_z_store(iPML) / k_z_store(iPML) + alpha_z_store(iPML)
+                    A6 = - d_z_store(i,j,ispec_PML) / ( k_z_store(i,j,ispec_PML) ** 2 )
+                    bb = d_z_store(i,j,ispec_PML) / k_z_store(i,j,ispec_PML) + alpha_z_store(i,j,ispec_PML)
                     coef0_x = exp(-bb * deltat)
                     if ( abs(bb) > 1.d-3 ) then
                       coef1_x = (1.d0 - exp(-bb * deltat / 2.d0)) * A6 / bb
@@ -388,7 +389,6 @@
 
              if(is_PML(ispec) .and. PML_BOUNDARY_CONDITIONS)then
                         ispec_PML=spec_to_PML(ispec)
-                        iPML=ibool_PML(i,j,ispec)
                         iglob=ibool(i,j,ispec)
 
                if ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
@@ -398,9 +398,9 @@
 !------------------------------------------------------------------------------
 
                     !---------------------- A3 and A4 --------------------------
-                    A3 = d_x_store(iPML ) * alpha_x_store(iPML) ** 2
+                    A3 = d_x_store(i,j,ispec_PML) * alpha_x_store(i,j,ispec_PML) ** 2
                     A4 = 0.d0
-                    bb = alpha_x_store(iPML)
+                    bb = alpha_x_store(i,j,ispec_PML)
                     coef0_x = exp(- bb * deltat)
 
                     if ( abs( bb ) > 1.d-3) then
@@ -428,7 +428,7 @@
                        !---------------------------- A3 ----------------------------
                        A3 = 1.d0
 
-                       bb = alpha_x_store(iPML)
+                       bb = alpha_x_store(i,j,ispec_PML)
                        coef0_x = exp(- bb * deltat)
 
                        if ( abs(bb) > 1.d-3 ) then
@@ -447,7 +447,7 @@
                        !---------------------------- A4 ----------------------------
                        A4 =1.0d0
 
-                       bb = alpha_z_store(iPML)
+                       bb = alpha_z_store(i,j,ispec_PML)
                        coef0_x = exp(- bb * deltat)
 
                        if ( abs(bb) > 1.d-3 ) then
@@ -471,9 +471,9 @@
 !------------------------------------------------------------------------------
 
                     !---------------------- A3 and A4 ----------------------------
-                    A4 = d_z_store(iPML ) * alpha_z_store(iPML) ** 2
+                    A4 = d_z_store(i,j,ispec_PML) * alpha_z_store(i,j,ispec_PML) ** 2
                     A3 = 0.d0
-                    bb = alpha_z_store(iPML)
+                    bb = alpha_z_store(i,j,ispec_PML)
                     coef0_x = exp(- bb * deltat)
 
                     if ( abs( bb ) > 1.d-3) then
@@ -499,9 +499,9 @@
 !------------------------------------------------------------------------------
 !---------------------------- LEFT & RIGHT ------------------------------------
 !------------------------------------------------------------------------------
-                  A0 = - alpha_x_store( iPML ) * d_x_store(iPML)
-                  A1 = d_x_store(iPML) 
-                  A2 = k_x_store(iPML)
+                  A0 = - alpha_x_store(i,j,ispec_PML) * d_x_store(i,j,ispec_PML)
+                  A1 = d_x_store(i,j,ispec_PML) 
+                  A2 = k_x_store(i,j,ispec_PML)
 
                     potential_dot_dot_acoustic_PML(i,j,ispec_PML)= wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * &
                       (A1*potential_dot_acoustic(iglob)+ &
@@ -514,20 +514,20 @@
 !------------------------------------------------------------------------------
 !-------------------------------- CORNER --------------------------------------
 !------------------------------------------------------------------------------
-                     A0 = d_x_store(iPML) * d_z_store(iPML) &
-                        - alpha_x_store( iPML ) * d_x_store(iPML) * k_z_store(iPML) &
-                        - alpha_z_store( iPML ) * d_z_store(iPML) * k_x_store(iPML)
+                     A0 = d_x_store(i,j,ispec_PML) * d_z_store(i,j,ispec_PML) &
+                        - alpha_x_store(i,j,ispec_PML) * d_x_store(i,j,ispec_PML) * k_z_store(i,j,ispec_PML) &
+                        - alpha_z_store(i,j,ispec_PML) * d_z_store(i,j,ispec_PML) * k_x_store(i,j,ispec_PML)
 
-                     A1 = d_x_store(iPML) * k_z_store(iPML) + d_z_store(iPML) * k_x_store(iPML)
+                     A1 = d_x_store(i,j,ispec_PML) * k_z_store(i,j,ispec_PML) + d_z_store(i,j,ispec_PML) * k_x_store(i,j,ispec_PML)
 
-                     A2 = k_x_store(iPML) * k_z_store(iPML)
+                     A2 = k_x_store(i,j,ispec_PML) * k_z_store(i,j,ispec_PML)
 
-                     A3 = alpha_x_store(iPML) ** 2*(d_x_store(iPML) * k_z_store(iPML)+ &
-                            d_z_store(iPML) * k_x_store(iPML)) &
-                            -2.d0 * alpha_x_store(iPML)*d_x_store(iPML)*d_z_store(iPML)+ &
-                            (it+0.5)*deltat*alpha_x_store(iPML)**2*d_x_store(iPML)*d_z_store(iPML)
+                     A3 = alpha_x_store(i,j,ispec_PML) ** 2*(d_x_store(i,j,ispec_PML) * k_z_store(i,j,ispec_PML)+ &
+                            d_z_store(i,j,ispec_PML) * k_x_store(i,j,ispec_PML)) &
+                            -2.d0 * alpha_x_store(i,j,ispec_PML)*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)+ &
+                            (it+0.5)*deltat*alpha_x_store(i,j,ispec_PML)**2*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)
 
-                     A4 = -alpha_x_store(iPML) ** 2*d_x_store(iPML)*d_z_store(iPML)
+                     A4 = -alpha_x_store(i,j,ispec_PML) ** 2*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)
 
                     potential_dot_dot_acoustic_PML(i,j,ispec_PML)= wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * &
                       (A1*potential_dot_acoustic(iglob)+ &
@@ -539,9 +539,9 @@
 !------------------------------------------------------------------------------
 !-------------------------------- TOP & BOTTOM --------------------------------
 !------------------------------------------------------------------------------
-                  A0 = - alpha_z_store( iPML ) * d_z_store(iPML)
-                  A1 = d_z_store(iPML) 
-                  A2 = k_z_store(iPML)
+                  A0 = - alpha_z_store(i,j,ispec_PML) * d_z_store(i,j,ispec_PML)
+                  A1 = d_z_store(i,j,ispec_PML) 
+                  A2 = k_z_store(i,j,ispec_PML)
 
                     potential_dot_dot_acoustic_PML(i,j,ispec_PML)= wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * &
                       (A1*potential_dot_acoustic(iglob)+ &
@@ -573,7 +573,6 @@
 
             if(is_PML(ispec) .and. PML_BOUNDARY_CONDITIONS)then
                         ispec_PML=spec_to_PML(ispec)
-                        iPML=ibool_PML(i,j,ispec)
                if ((which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
                        .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec))) then
                       potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
