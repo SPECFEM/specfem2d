@@ -58,7 +58,8 @@ module parameter_file
   logical :: SAVE_FORWARD,read_external_mesh
 
   character(len=256) :: mesh_file, nodes_coords_file, materials_file, &
-                        free_surface_file, absorbing_surface_file
+                        free_surface_file, absorbing_surface_file,&
+                        CPML_element_file
   character(len=256)  :: tangential_detection_curve_file
 
   ! variables used for partitioning
@@ -497,6 +498,9 @@ contains
   if(err_occurred() /= 0) stop 'error reading parameter 55 in Par_file'
 
   call read_value_string_p(absorbing_surface_file, 'mesher.absorbing_surface_file')
+  if(err_occurred() /= 0) stop 'error reading parameter 56 in Par_file'
+
+  call read_value_string_p(CPML_element_file, 'mesher.CPML_element_file')
   if(err_occurred() /= 0) stop 'error reading parameter 56 in Par_file'
 
   call read_value_string_p(tangential_detection_curve_file, 'mesher.tangential_detection_curve_file')

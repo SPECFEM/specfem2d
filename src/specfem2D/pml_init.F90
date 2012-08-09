@@ -43,7 +43,8 @@
 
   subroutine pml_init(nspec,nglob,anyabs,ibool,nelemabs,codeabs,numabs,&
                     nspec_PML,is_PML,which_PML_elem,spec_to_PML, &
-                    icorner_iglob,NELEM_PML_THICKNESS)
+                    icorner_iglob,NELEM_PML_THICKNESS,&
+                  read_external_mesh,CPML_element_file)
 
 
   implicit none
@@ -67,8 +68,16 @@
   integer, dimension(nspec) :: spec_to_PML
   logical, dimension(nspec) :: is_PML
 
+!! DK DK for CPML_element_file
+  logical :: read_external_mesh          
+  character(len=256)  :: CPML_element_file 
+  integer :: ier,ispec_CPML
+  integer :: ispec_temp
+  integer, dimension(:), allocatable :: region_CPML
+
   !!!detection of PML elements
 
+  if(.not. read_external_mesh)then
   nspec_PML = 0
 
      !ibound is the side we are looking (bottom, right, top or left)
@@ -161,6 +170,85 @@
      enddo
 
      write(IOUT,*) "number of PML spectral elements :", nspec_PML
+
+     endif
+
+!!!!!!when read_external_mesh read the element in PML
+  if(read_external_mesh)then
+  is_PML(:) = .false.
+  which_PML_elem(:,:) = .false.
+
+  open(unit=9999, file=trim(CPML_element_file), form='formatted' , status='old', action='read',iostat=ier)
+  if( ier /= 0 ) then
+    print*,'error opening file: ',trim(CPML_element_file)
+    stop 'error read external CPML element file'
+  endif  
+
+  read(9999,*)nspec_PML 
+  allocate(region_CPML(nspec_PML))
+
+  do ispec_CPML=1,nspec_PML 
+     read(9999,*)ispec_temp,region_CPML(ispec_CPML)
+     is_PML(ispec_temp)=.true.
+     spec_to_PML(ispec_temp)=ispec_CPML
+  enddo
+
+  do ispec=1,nspec
+     if(is_PML(ispec))then
+     ispec_CPML=spec_to_PML(ispec)
+       if(region_CPML(ispec_CPML)==1)then
+         which_PML_elem(ILEFT,ispec)   = .true.
+         which_PML_elem(IRIGHT,ispec)  = .false.
+         which_PML_elem(ITOP,ispec)    = .false.
+         which_PML_elem(IBOTTOM,ispec) = .false.
+       elseif(region_CPML(ispec_CPML)==2)then
+         which_PML_elem(ILEFT,ispec)   = .false.
+         which_PML_elem(IRIGHT,ispec)  = .true.
+         which_PML_elem(ITOP,ispec)    = .false.
+         which_PML_elem(IBOTTOM,ispec) = .false.
+       elseif(region_CPML(ispec_CPML)==4)then
+         which_PML_elem(ILEFT,ispec)   = .false.
+         which_PML_elem(IRIGHT,ispec)  = .false.
+         which_PML_elem(ITOP,ispec)    = .true.
+         which_PML_elem(IBOTTOM,ispec) = .false.
+       elseif(region_CPML(ispec_CPML)==5)then
+         which_PML_elem(ILEFT,ispec)   = .true.
+         which_PML_elem(IRIGHT,ispec)  = .false.
+         which_PML_elem(ITOP,ispec)    = .true.
+         which_PML_elem(IBOTTOM,ispec) = .false.
+       elseif(region_CPML(ispec_CPML)==6)then
+         which_PML_elem(ILEFT,ispec)   = .false.
+         which_PML_elem(IRIGHT,ispec)  = .true.
+         which_PML_elem(ITOP,ispec)    = .true.
+         which_PML_elem(IBOTTOM,ispec) = .false.
+       elseif(region_CPML(ispec_CPML)==8)then
+         which_PML_elem(ILEFT,ispec)   = .false.
+         which_PML_elem(IRIGHT,ispec)  = .false.
+         which_PML_elem(ITOP,ispec)    = .false.
+         which_PML_elem(IBOTTOM,ispec) = .true.
+       elseif(region_CPML(ispec_CPML)==9)then
+         which_PML_elem(ILEFT,ispec)   = .true.
+         which_PML_elem(IRIGHT,ispec)  = .false.
+         which_PML_elem(ITOP,ispec)    = .false.
+         which_PML_elem(IBOTTOM,ispec) = .true.
+       elseif(region_CPML(ispec_CPML)==10)then
+         which_PML_elem(ILEFT,ispec)   = .false.
+         which_PML_elem(IRIGHT,ispec)  = .true.
+         which_PML_elem(ITOP,ispec)    = .false.
+         which_PML_elem(IBOTTOM,ispec) = .true.
+       else
+         which_PML_elem(ILEFT,ispec)   = .false.
+         which_PML_elem(IRIGHT,ispec)  = .false.
+         which_PML_elem(ITOP,ispec)    = .false.
+         which_PML_elem(IBOTTOM,ispec) = .false.
+       endif
+     endif
+  enddo
+
+     write(IOUT,*) "number of PML spectral elements :", nspec_PML
+
+  endif
+!!!!!!when read_external_mesh read the element in PML
 
   end subroutine pml_init
 
