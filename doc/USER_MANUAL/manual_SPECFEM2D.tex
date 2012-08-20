@@ -308,7 +308,7 @@ If you run very large meshes on a relatively small number
 of processors, the memory size needed on each processor might become
 greater than 2 gigabytes, which is the upper limit for 32-bit addressing.
 In this case, on some compilers you may need to add \texttt{``-mcmodel=medium}'' or \texttt{``-mcmodel=medium -shared-intel}''
-to the compiler options of CFLAGS, FCFLAGS and LDFLAGS otherwise the compiler will display an error
+to the configure options of CFLAGS, FCFLAGS and LDFLAGS otherwise the compiler will display an error
 message (for instance \texttt{``relocation truncated to fit: R\_X86\_64\_PC32 against .bss''} or something similar);
 on an IBM machine with the \texttt{xlf} and \texttt{xlc} compilers, using \texttt{-q64} is usually sufficient.
 
@@ -332,7 +332,7 @@ Packages such as \texttt{doxywizard} can be used to visualize the subroutine cal
 \includegraphics[width=.6\textwidth]{figures/workflow.jpg}
 \par\end{centering}
 
-\caption{Schematic workflow for a SPECFEM2D simulation. The exectable \texttt{xmeshfem2D} creates the GLL mesh points and assigns specific model parameters. The executable \texttt{xspecfem2D} solves the seismic wave propagation.}
+\caption{Schematic workflow for a SPECFEM2D simulation. The executable \texttt{xmeshfem2D} creates the GLL mesh points and assigns specific model parameters. The executable \texttt{xspecfem2D} solves the seismic wave propagation.}
 
 \label{fig:workflow.databases}
 \end{figure}
