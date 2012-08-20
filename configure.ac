@@ -184,10 +184,10 @@ else
  if test "$want_mpi" = yes; then
 
  #daniel: scotch bundle
- # uses bundled scotch: current version 5.1.11
+ # uses bundled scotch: current version 5.1.12b
  USE_BUNDLED_SCOTCH=1
 
- SCOTCH_DIR="scotch_5.1.11"
+ SCOTCH_DIR="scotch_5.1.12b"
  SCOTCH_LIBDIR="${SCOTCH_DIR}/lib"
  SCOTCH_INCLUDEDIR="${SCOTCH_DIR}/include"
 
@@ -443,7 +443,7 @@ AC_CONFIG_FILES([
 	src/specfem2D/Makefile
 	setup/constants.h
 	setup/precision.h
-	src/meshfem2D/scotch_5.1.11/src/Makefile.inc
+	src/meshfem2D/scotch_5.1.12b/src/Makefile.inc
 ])
 AC_OUTPUT
 
