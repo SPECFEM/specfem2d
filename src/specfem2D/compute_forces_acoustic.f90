@@ -338,7 +338,7 @@
                   rmemory_acoustic_dux_dx(i,j,ispec_PML) = coef0*rmemory_acoustic_dux_dx(i,j,ispec_PML) &
                   + PML_dux_dxl_new(i,j,ispec_PML) * coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
 
-                  dux_dxl = dux_dxl  + A7 * rmemory_acoustic_dux_dx(i,j,ispec_PML) 
+                  dux_dxl = PML_dux_dxl(i,j,ispec_PML)  + A7 * rmemory_acoustic_dux_dx(i,j,ispec_PML) 
 
                   !---------------------- A6 --------------------------
                   A6 = - d_z_store(i,j,ispec_PML) / ( k_z_store(i,j,ispec_PML) ** 2 )
@@ -355,7 +355,7 @@
                   rmemory_acoustic_dux_dz(i,j,ispec_PML) = coef0 * rmemory_acoustic_dux_dz(i,j,ispec_PML) &
                   + PML_dux_dzl_new(i,j,ispec_PML) *coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
 
-                  dux_dzl = dux_dzl  + A6 * rmemory_acoustic_dux_dz(i,j,ispec_PML)
+                  dux_dzl = PML_dux_dzl(i,j,ispec_PML)  + A6 * rmemory_acoustic_dux_dz(i,j,ispec_PML)
 
                endif
              endif
