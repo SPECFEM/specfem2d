@@ -149,7 +149,7 @@
 
       ! compute source array for moment-tensor source
       call compute_arrays_source(ispec_selected_source(i_source),xi_source(i_source),gamma_source(i_source),&
-             sourcearray(i_source,:,:,:), &
+             sourcearray(i_source,1,1,1), &
              Mxx(i_source),Mzz(i_source),Mxz(i_source),xix,xiz,gammax,gammaz,xigll,zigll,nspec)
 
     else if(.not.initialfield) then
