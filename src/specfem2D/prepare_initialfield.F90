@@ -275,7 +275,7 @@
 
   if (myrank == 0) then
     write(IOUT,*)
-    write(IOUT,*) 'You can modify the location of the initial plane wave by changing xs and zs in DATA/Par_File.'
+    write(IOUT,*) 'You can modify the location of the initial plane wave by changing xs and zs in DATA/SOURCE.'
     write(IOUT,*) '   for instance: xs=',x_source(1),'   zs=',z_source(1), ' (zs must be the height of the free surface)'
     write(IOUT,*)
   endif
