@@ -463,7 +463,7 @@ contains
   call read_value_logical_p(any_abs, 'solver.STACEY_ABSORBING_CONDITIONS')
   if(err_occurred() /= 0) stop 'error reading parameter 51a in Par_file'
 
-  if(add_Bielak_conditions .and. .not. STACEY_ABSORBING_CONDITIONS) &
+  if(add_Bielak_conditions .and. .not. any_abs) &
     stop 'need STACEY_ABSORBING_CONDITIONS set to .true. in order to use add_Bielak_conditions'
 
   ! solve the conflict in value of PML_BOUNDARY_CONDITIONS and STACEY_ABSORBING_CONDITIONS
