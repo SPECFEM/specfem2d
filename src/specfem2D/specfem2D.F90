@@ -4250,6 +4250,7 @@ if(coupled_elastic_poro) then
     write(IOUT_ENERGY,*) 'set ylabel "Energy (J)"'
     write(IOUT_ENERGY,*) &
       'plot "energy.dat" us 1:4 t ''Total Energy'' w l lc 1, "energy.dat" us 1:3 t ''Potential Energy'' w l lc 2'
+    write(IOUT_ENERGY,*) 'pause -1 "Hit any key..."'
     close(IOUT_ENERGY)
   endif
 
