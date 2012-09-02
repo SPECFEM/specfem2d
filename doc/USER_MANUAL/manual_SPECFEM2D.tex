@@ -360,9 +360,21 @@ To create acoustic (fluid) regions, just set the S wave speed to zero and the co
 
      \item[\texttt{materials\_file}] is the number of the material for every elements : an integer ranging from 1 to nbmodels on each line.
 
-     \item[\texttt{free\_surface\_file}] is the file describing the edges forming the acoustic free surface : number of edges on the first line, then on each line number of the element, number of nodes forming the free surface (1 for a point, 2 for an edge), the nodes forming the free surface for this element. If you do not want free surface, just put 0 on the first line.
+     \item[\texttt{free\_surface\_file}] is the file describing the edges forming the acoustic free surface : number of edges on the first line, then on each line: number of the element, number of nodes forming the free surface (1 for a point, 2 for an edge), the nodes forming the free surface for this element. If you do not want any free surface, just put 0 on the first line.
 
-     \item[\texttt{absorbing\_surface\_file}] is the file describing the edges forming the absorbing boundaries : the format is the same as the \texttt{free\_surface\_file}.
+     \item[\texttt{absorbing\_surface\_file}] is the file describing the edges forming the absorbing boundaries:
+number of edges on the first line, then on each line: number of the element, number of nodes forming the absorbing edge (must always be equal to 2),
+the two nodes forming the absorbing edge for this element, and then the type of absorbing edge: 1 for BOTTOM, 2 for RIGHT, 3 for TOP and 4 for LEFT.
+Only two nodes per element can be listed, i.e., the second parameter of each line must always be equal to 2.
+If one of your elements has more than one edge along a given absorbing contour
+(e.g., if that contour has a corner) then list it twice,
+putting the first edge on the first line and the second edge on the second line.
+Do not list the same element with the same absorbing edge twice or more, otherwise absorption will not be correct because the edge integral
+will be improperly subtracted several times.
+If one of your elements has a single point along the absording contour rather than a full edge, do NOT list it
+(it would have no weight in the contour integral anyway because it would consist of a single point).
+If you use 9-node elements, list only the first and last points of the edge and not the intermediate point
+located around the middle of the edge; the right 9-node curvature will be restored automatically by the code.
 
      \item[\texttt{tangential\_detection\_curve\_file}] contains points describing the envelope, used for \texttt{source\_normal\_to\_surface} and \texttt{rec\_normal\_to\_surface}. Should be fine grained, and ordained clockwise. Number of points on the first line, then (x,z) coordinates on each line.
 	\end{description}
