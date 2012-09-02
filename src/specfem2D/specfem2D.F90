@@ -540,7 +540,7 @@
   integer, dimension(:,:,:), allocatable :: ibool,ibool_outer,ibool_inner
   integer, dimension(:,:), allocatable  :: knods
   integer, dimension(:), allocatable :: kmato,numabs, &
-     ibegin_bottom,iend_bottom,ibegin_top,iend_top,jbegin_left,jend_left,jbegin_right,jend_right
+     ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3,ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2
 
   integer, dimension(:), allocatable :: ispec_selected_source,iglob_source,&
                                         is_proc_source,nb_proc_source
@@ -562,8 +562,8 @@
     output_wavefield_dumps,use_binary_for_wavefield_dumps,PML_BOUNDARY_CONDITIONS
 
 !! DK DK for CPML_element_file
-  logical :: read_external_mesh           
-  character(len=256)  :: CPML_element_file  
+  logical :: read_external_mesh
+  character(len=256)  :: CPML_element_file
 
   double precision :: cutsnaps,sizemax_arrows,anglerec,xirec,gammarec
 
@@ -572,6 +572,7 @@
   real(kind=CUSTOM_REAL) :: nx,nz,weight,xxi,zgamma
 
   logical, dimension(:,:), allocatable  :: codeabs
+  integer, dimension(:), allocatable  :: typeabs
 
 ! for attenuation
   integer  :: N_SLS
@@ -658,8 +659,8 @@
   integer, dimension(:), allocatable :: icount
   double precision :: sigma_xx,sigma_xz,sigma_zz,sigmap
   double precision :: b_sigma_xx,b_sigma_xz,b_sigma_zz,b_sigmap
-  integer, dimension(:), allocatable :: ibegin_bottom_poro,iend_bottom_poro,ibegin_top_poro,&
-            iend_top_poro,jbegin_left_poro,jend_left_poro,jbegin_right_poro,jend_right_poro
+  integer, dimension(:), allocatable :: ibegin_edge1_poro,iend_edge1_poro,ibegin_edge3_poro,&
+            iend_edge3_poro,ibegin_edge4_poro,iend_edge4_poro,ibegin_edge2_poro,iend_edge2_poro
   logical :: any_solid_poro_edges
 
 ! for adjoint method
@@ -1046,7 +1047,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                   POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, time_stepping_scheme, &
                   ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL,&
-                  read_external_mesh,CPML_element_file) 
+                  read_external_mesh,CPML_element_file)
   if(nproc_read_from_database < 1) stop 'should have nproc_read_from_database >= 1'
   if(SIMULATION_TYPE == 2 .and.(time_stepping_scheme == 2 .or. time_stepping_scheme == 3)) &
                                   stop 'RK and LDDRK time scheme not supported for adjoint inversion'
@@ -1315,7 +1316,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                                 nspec,nspec_allocate,p_sv,ATTENUATION_VISCOELASTIC_SOLID,count_nspec_acoustic)
 
   if(PML_BOUNDARY_CONDITIONS .and. any_poroelastic) then
-    stop 'PML boundary conditions do not ready for poroelastic simulation'
+    stop 'PML boundary conditions not implemented for poroelastic simulations yet'
   endif
 
   ! allocate memory variables for attenuation
@@ -1474,26 +1475,27 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   if(ipass == 1) then
     allocate(numabs(nelemabs))
     allocate(codeabs(4,nelemabs))
+    allocate(typeabs(nelemabs))
 
-    allocate(ibegin_bottom(nelemabs))
-    allocate(iend_bottom(nelemabs))
-    allocate(ibegin_top(nelemabs))
-    allocate(iend_top(nelemabs))
+    allocate(ibegin_edge1(nelemabs))
+    allocate(iend_edge1(nelemabs))
+    allocate(ibegin_edge3(nelemabs))
+    allocate(iend_edge3(nelemabs))
 
-    allocate(jbegin_left(nelemabs))
-    allocate(jend_left(nelemabs))
-    allocate(jbegin_right(nelemabs))
-    allocate(jend_right(nelemabs))
+    allocate(ibegin_edge4(nelemabs))
+    allocate(iend_edge4(nelemabs))
+    allocate(ibegin_edge2(nelemabs))
+    allocate(iend_edge2(nelemabs))
 
-    allocate(ibegin_bottom_poro(nelemabs))
-    allocate(iend_bottom_poro(nelemabs))
-    allocate(ibegin_top_poro(nelemabs))
-    allocate(iend_top_poro(nelemabs))
+    allocate(ibegin_edge1_poro(nelemabs))
+    allocate(iend_edge1_poro(nelemabs))
+    allocate(ibegin_edge3_poro(nelemabs))
+    allocate(iend_edge3_poro(nelemabs))
 
-    allocate(jbegin_left_poro(nelemabs))
-    allocate(jend_left_poro(nelemabs))
-    allocate(jbegin_right_poro(nelemabs))
-    allocate(jend_right_poro(nelemabs))
+    allocate(ibegin_edge4_poro(nelemabs))
+    allocate(iend_edge4_poro(nelemabs))
+    allocate(ibegin_edge2_poro(nelemabs))
+    allocate(iend_edge2_poro(nelemabs))
 
     allocate(ib_left(nelemabs))
     allocate(ib_right(nelemabs))
@@ -1506,9 +1508,9 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   !----  read absorbing boundary data
   !
   call read_databases_absorbing(myrank,ipass,nelemabs,nspec,anyabs, &
-                            ibegin_bottom,iend_bottom,jbegin_right,jend_right, &
-                            ibegin_top,iend_top,jbegin_left,jend_left, &
-                            numabs,codeabs,perm,antecedent_list, &
+                            ibegin_edge1,iend_edge1,ibegin_edge2,iend_edge2, &
+                            ibegin_edge3,iend_edge3,ibegin_edge4,iend_edge4, &
+                            numabs,codeabs,typeabs,perm,antecedent_list, &
                             nspec_left,nspec_right,nspec_bottom,nspec_top, &
                             ib_right,ib_left,ib_bottom,ib_top)
 
@@ -1791,10 +1793,10 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       allocate(codeabs_perio_left(4,NSPEC_PERIO))
       do ispecperio = 1,NSPEC_PERIO
       read(123,*) numperio_left(ispecperio), &
-         codeabs_perio_left(IBOTTOM,ispecperio), &
-         codeabs_perio_left(IRIGHT,ispecperio), &
-         codeabs_perio_left(ITOP,ispecperio), &
-         codeabs_perio_left(ILEFT,ispecperio), &
+         codeabs_perio_left(IEDGE1,ispecperio), &
+         codeabs_perio_left(IEDGE2,ispecperio), &
+         codeabs_perio_left(IEDGE3,ispecperio), &
+         codeabs_perio_left(IEDGE4,ispecperio), &
          idummy1, idummy2, idummy3, idummy4, idummy5, idummy6, idummy7, idummy8
       enddo
       close(123)
@@ -1808,10 +1810,10 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       allocate(codeabs_perio_right(4,NSPEC_PERIO))
       do ispecperio = 1,NSPEC_PERIO
       read(123,*) numperio_right(ispecperio), &
-         codeabs_perio_right(IBOTTOM,ispecperio), &
-         codeabs_perio_right(IRIGHT,ispecperio), &
-         codeabs_perio_right(ITOP,ispecperio), &
-         codeabs_perio_right(ILEFT,ispecperio), &
+         codeabs_perio_right(IEDGE1,ispecperio), &
+         codeabs_perio_right(IEDGE2,ispecperio), &
+         codeabs_perio_right(IEDGE3,ispecperio), &
+         codeabs_perio_right(IEDGE4,ispecperio), &
          idummy1, idummy2, idummy3, idummy4, idummy5, idummy6, idummy7, idummy8
       enddo
       close(123)
@@ -1831,7 +1833,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 ! print *,'dist of edge is ',sqrt((coord(2,ibool(1,1,ispec)) - coord(2,ibool(1,NGLLZ,ispec))) ** 2 + &
 !                                 (coord(1,ibool(1,1,ispec)) - coord(1,ibool(1,NGLLZ,ispec))) ** 2)
 
-        if(codeabs_perio_left(ILEFT,ispecperio)) then
+        if(codeabs_perio_left(IEDGE4,ispecperio)) then
            i = 1
            do j = 1,NGLLZ
               iglob = ibool(i,j,ispec)
@@ -1841,7 +1843,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
            enddo
         endif
 
-        if(codeabs_perio_left(IRIGHT,ispecperio)) then
+        if(codeabs_perio_left(IEDGE2,ispecperio)) then
            i = NGLLX
            do j = 1,NGLLZ
               iglob = ibool(i,j,ispec)
@@ -1851,7 +1853,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
            enddo
         endif
 
-        if(codeabs_perio_left(IBOTTOM,ispecperio)) then
+        if(codeabs_perio_left(IEDGE1,ispecperio)) then
            j = 1
            do i = 1,NGLLX
               iglob = ibool(i,j,ispec)
@@ -1861,7 +1863,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
            enddo
         endif
 
-        if(codeabs_perio_left(ITOP,ispecperio)) then
+        if(codeabs_perio_left(IEDGE3,ispecperio)) then
            j = NGLLZ
            do i = 1,NGLLX
               iglob = ibool(i,j,ispec)
@@ -2877,7 +2879,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         allocate(rmemory_duz_dx(NGLLX,NGLLZ,nspec_PML),stat=ier)
         if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx'
         allocate(rmemory_duz_dz(NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'        
+        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'
 
         rmemory_displ_elastic(:,:,:,:,:) = ZERO
         rmemory_dux_dx(:,:,:) = ZERO
@@ -3942,23 +3944,23 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         if(ispec_acoustic == ispec) then
 
           if(iedge_acoustic == IBOTTOM) then
-            jbegin_left(ispecabs) = 2
-            jbegin_right(ispecabs) = 2
+            ibegin_edge4(ispecabs) = 2
+            ibegin_edge2(ispecabs) = 2
           endif
 
           if(iedge_acoustic == ITOP) then
-            jend_left(ispecabs) = NGLLZ - 1
-            jend_right(ispecabs) = NGLLZ - 1
+            iend_edge4(ispecabs) = NGLLZ - 1
+            iend_edge2(ispecabs) = NGLLZ - 1
           endif
 
           if(iedge_acoustic == ILEFT) then
-            ibegin_bottom(ispecabs) = 2
-            ibegin_top(ispecabs) = 2
+            ibegin_edge1(ispecabs) = 2
+            ibegin_edge3(ispecabs) = 2
           endif
 
           if(iedge_acoustic == IRIGHT) then
-            iend_bottom(ispecabs) = NGLLX - 1
-            iend_top(ispecabs) = NGLLX - 1
+            iend_edge1(ispecabs) = NGLLX - 1
+            iend_edge3(ispecabs) = NGLLX - 1
           endif
 
         endif
@@ -3991,23 +3993,23 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         if(ispec_acoustic == ispec) then
 
           if(iedge_acoustic == IBOTTOM) then
-            jbegin_left(ispecabs) = 2
-            jbegin_right(ispecabs) = 2
+            ibegin_edge4(ispecabs) = 2
+            ibegin_edge2(ispecabs) = 2
           endif
 
           if(iedge_acoustic == ITOP) then
-            jend_left(ispecabs) = NGLLZ - 1
-            jend_right(ispecabs) = NGLLZ - 1
+            iend_edge4(ispecabs) = NGLLZ - 1
+            iend_edge2(ispecabs) = NGLLZ - 1
           endif
 
           if(iedge_acoustic == ILEFT) then
-            ibegin_bottom(ispecabs) = 2
-            ibegin_top(ispecabs) = 2
+            ibegin_edge1(ispecabs) = 2
+            ibegin_edge3(ispecabs) = 2
           endif
 
           if(iedge_acoustic == IRIGHT) then
-            iend_bottom(ispecabs) = NGLLX - 1
-            iend_top(ispecabs) = NGLLX - 1
+            iend_edge1(ispecabs) = NGLLX - 1
+            iend_edge3(ispecabs) = NGLLX - 1
           endif
 
         endif
@@ -4170,17 +4172,17 @@ if(coupled_elastic_poro) then
  if(any_poroelastic .and. anyabs) then
 ! loop on all the absorbing elements
     do ispecabs = 1,nelemabs
-            jbegin_left_poro(ispecabs) = 1
-            jbegin_right_poro(ispecabs) = 1
+            ibegin_edge4_poro(ispecabs) = 1
+            ibegin_edge2_poro(ispecabs) = 1
 
-            jend_left_poro(ispecabs) = NGLLZ
-            jend_right_poro(ispecabs) = NGLLZ
+            iend_edge4_poro(ispecabs) = NGLLZ
+            iend_edge2_poro(ispecabs) = NGLLZ
 
-            ibegin_bottom_poro(ispecabs) = 1
-            ibegin_top_poro(ispecabs) = 1
+            ibegin_edge1_poro(ispecabs) = 1
+            ibegin_edge3_poro(ispecabs) = 1
 
-            iend_bottom_poro(ispecabs) = NGLLX
-            iend_top_poro(ispecabs) = NGLLX
+            iend_edge1_poro(ispecabs) = NGLLX
+            iend_edge3_poro(ispecabs) = NGLLX
     enddo
  endif
 
@@ -4206,23 +4208,23 @@ if(coupled_elastic_poro) then
         if(ispec_poroelastic == ispec) then
 
           if(iedge_poroelastic == IBOTTOM) then
-            jbegin_left_poro(ispecabs) = 2
-            jbegin_right_poro(ispecabs) = 2
+            ibegin_edge4_poro(ispecabs) = 2
+            ibegin_edge2_poro(ispecabs) = 2
           endif
 
           if(iedge_poroelastic == ITOP) then
-            jend_left_poro(ispecabs) = NGLLZ - 1
-            jend_right_poro(ispecabs) = NGLLZ - 1
+            iend_edge4_poro(ispecabs) = NGLLZ - 1
+            iend_edge2_poro(ispecabs) = NGLLZ - 1
           endif
 
           if(iedge_poroelastic == ILEFT) then
-            ibegin_bottom_poro(ispecabs) = 2
-            ibegin_top_poro(ispecabs) = 2
+            ibegin_edge1_poro(ispecabs) = 2
+            ibegin_edge3_poro(ispecabs) = 2
           endif
 
           if(iedge_poroelastic == IRIGHT) then
-            iend_bottom_poro(ispecabs) = NGLLX - 1
-            iend_top_poro(ispecabs) = NGLLX - 1
+            iend_edge1_poro(ispecabs) = NGLLX - 1
+            iend_edge3_poro(ispecabs) = NGLLX - 1
           endif
 
         endif
@@ -4882,8 +4884,8 @@ if(coupled_elastic_poro) then
                density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                vpext,rhoext,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
-               ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
-               jbegin_left,jend_left,jbegin_right,jend_right, &
+               ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
+               ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
                SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right,&
                nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
@@ -4901,8 +4903,8 @@ if(coupled_elastic_poro) then
                density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                vpext,rhoext,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
-               ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
-               jbegin_left,jend_left,jbegin_right,jend_right, &
+               ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
+               ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
                SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right,&
                nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
@@ -6102,8 +6104,8 @@ if(coupled_elastic_poro) then
                phi_nu2,Mu_nu2,N_SLS, &
                rx_viscous,rz_viscous,theta_e,theta_s,&
                b_viscodampx,b_viscodampz,&
-               ibegin_bottom_poro,iend_bottom_poro,ibegin_top_poro,iend_top_poro, &
-               jbegin_left_poro,jend_left_poro,jbegin_right_poro,jend_right_poro,&
+               ibegin_edge1_poro,iend_edge1_poro,ibegin_edge3_poro,iend_edge3_poro, &
+               ibegin_edge4_poro,iend_edge4_poro,ibegin_edge2_poro,iend_edge2_poro,&
                mufr_k,B_k,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,&
                b_absorb_poro_s_left,b_absorb_poro_s_right,b_absorb_poro_s_bottom,b_absorb_poro_s_top,&
                nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,f0(1),freq0,Q0,&
@@ -6126,8 +6128,8 @@ if(coupled_elastic_poro) then
                phi_nu2,Mu_nu2,N_SLS, &
                rx_viscous,rz_viscous,theta_e,theta_s,&
                b_viscodampx,b_viscodampz,&
-               ibegin_bottom_poro,iend_bottom_poro,ibegin_top_poro,iend_top_poro, &
-               jbegin_left_poro,jend_left_poro,jbegin_right_poro,jend_right_poro,&
+               ibegin_edge1_poro,iend_edge1_poro,ibegin_edge3_poro,iend_edge3_poro, &
+               ibegin_edge4_poro,iend_edge4_poro,ibegin_edge2_poro,iend_edge2_poro,&
                C_k,M_k,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,&
                b_absorb_poro_w_left,b_absorb_poro_w_right,b_absorb_poro_w_bottom,b_absorb_poro_w_top,&
                nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,f0(1),freq0,Q0,&
@@ -7976,7 +7978,7 @@ if(coupled_elastic_poro) then
                       it,deltat,coorg,xinterp,zinterp,shape2D_display, &
                       Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
                       poroelastcoef,knods,kmato,ibool, &
-                      numabs,codeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
+                      numabs,codeabs,typeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
                       simulation_title,nglob,npgeo,vpImin,vpImax,nrec,NSOURCES, &
                       colors,numbers,subsamp_postscript,imagetype_postscript,interpol,meshvect,modelvect, &
                       boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
@@ -8020,7 +8022,7 @@ if(coupled_elastic_poro) then
                       it,deltat,coorg,xinterp,zinterp,shape2D_display, &
                       Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
                       poroelastcoef,knods,kmato,ibool, &
-                      numabs,codeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
+                      numabs,codeabs,typeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
                       simulation_title,nglob,npgeo,vpImin,vpImax,nrec,NSOURCES, &
                       colors,numbers,subsamp_postscript,imagetype_postscript,interpol,meshvect,modelvect, &
                       boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
@@ -8064,7 +8066,7 @@ if(coupled_elastic_poro) then
                       it,deltat,coorg,xinterp,zinterp,shape2D_display, &
                       Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
                       poroelastcoef,knods,kmato,ibool, &
-                      numabs,codeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
+                      numabs,codeabs,typeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
                       simulation_title,nglob,npgeo,vpImin,vpImax,nrec,NSOURCES, &
                       colors,numbers,subsamp_postscript,imagetype_postscript,interpol,meshvect,modelvect, &
                       boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &

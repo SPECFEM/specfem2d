@@ -302,7 +302,7 @@
     endif
 
 
-    write(15,*) 'List of absorbing elements (bottom right top left):'
+    write(15,*) 'List of absorbing elements (edge1 edge2 edge3 edge4 type):'
     if ( any_abs ) then
       call write_abs_merge_database(15, iproc, 2)
     endif

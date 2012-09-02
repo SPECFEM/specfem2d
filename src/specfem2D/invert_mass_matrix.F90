@@ -126,10 +126,10 @@
 !!!!!!!!!!!!! DK DK added this
   integer :: nspec_PML,ispec_PML
   integer, dimension(nspec) :: spec_to_PML
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) :: & 
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) :: &
                   K_x_store,K_z_store,d_x_store,d_z_store
   logical, dimension(nspec) :: is_PML
-  logical :: PML_BOUNDARY_CONDITIONS
+  logical :: PML_BOUNDARY_CONDITIONS,this_element_has_PML
   logical, dimension(4,nspec) :: which_PML_elem
 !! DK DK added this for Guenneau, March 2012
 #ifdef USE_GUENNEAU
@@ -179,12 +179,18 @@
                   + wxgll(i)*wzgll(j)*jacobian(i,j,ispec)*(rhol_bar*rhol_f*tortl  &
                   - phil*rhol_f*rhol_f)/(rhol_bar*phil)
 
-        elseif( elastic(ispec) ) then
-
           ! for elastic medium
+        else if( elastic(ispec) ) then
 
-        if (is_PML(ispec) .and. PML_BOUNDARY_CONDITIONS) then
-          ispec_PML=spec_to_PML(ispec)
+        this_element_has_PML = .false.
+        if(PML_BOUNDARY_CONDITIONS .and. size(is_PML) > 1) then
+! do not merge this condition with the above line because array is_PML() sometimes has a dummy size of 1
+          if (is_PML(ispec)) this_element_has_PML = .true.
+        endif
+
+        if (this_element_has_PML) then
+
+         ispec_PML=spec_to_PML(ispec)
          if ((which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
              .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
           rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
@@ -203,7 +209,7 @@
                   + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML)&
                   + d_z_store(i,j,ispec_PML)* deltat / 2.d0)
           rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
-         endif         
+         endif
 
         else
 
@@ -223,16 +229,17 @@
 
         endif
 
-
-
+          ! for acoustic medium
         else
 
-          ! for acoustic medium
+        this_element_has_PML = .false.
+        if(PML_BOUNDARY_CONDITIONS .and. size(is_PML) > 1) then
+! do not merge this condition with the above line because array is_PML() sometimes has a dummy size of 1
+          if (is_PML(ispec)) this_element_has_PML = .true.
+        endif
 
-!          rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-!                  + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal
+        if (this_element_has_PML) then
 
-        if (PML_BOUNDARY_CONDITIONS .and. is_PML(ispec)) then
           ispec_PML=spec_to_PML(ispec)
          if ((which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
              .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
@@ -249,7 +256,7 @@
           rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
                   + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML)&
                   + d_z_store(i,j,ispec_PML)* deltat / 2.d0)
-         endif  
+         endif
 
        else
           rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
@@ -260,7 +267,7 @@
 
       enddo
     enddo
-  enddo ! do ispec = 1,nspec
+  enddo ! of do ispec = 1,nspec
 
   !
   !--- DK and Zhinan Xie: add C Delta_t / 2 contribution to the mass matrix
@@ -285,7 +292,7 @@
         csl = sqrt(mul_unrelaxed_elastic/rhol)
 
         !--- left absorbing boundary
-        if(codeabs(ILEFT,ispecabs)) then
+        if(codeabs(IEDGE4,ispecabs)) then
 
            i = 1
 
@@ -335,7 +342,7 @@
         endif  !  end of left absorbing boundary
 
         !--- right absorbing boundary
-        if(codeabs(IRIGHT,ispecabs)) then
+        if(codeabs(IEDGE2,ispecabs)) then
 
            i = NGLLX
 
@@ -389,7 +396,7 @@
         endif  !  end of right absorbing boundary
 
         !--- bottom absorbing boundary
-        if(codeabs(IBOTTOM,ispecabs)) then
+        if(codeabs(IEDGE1,ispecabs)) then
 
            j = 1
            ibegin = 1
@@ -432,7 +439,7 @@
 ! exclude corners to make sure there is no contradiction on the normal
 ! for Stacey absorbing conditions but not for incident plane waves;
 ! thus subtract nothing i.e. zero in that case
-                 if((codeabs(ILEFT,ispecabs) .and. i == 1) .or. (codeabs(IRIGHT,ispecabs) .and. i == NGLLX)) then
+                 if((codeabs(IEDGE4,ispecabs) .and. i == 1) .or. (codeabs(IEDGE2,ispecabs) .and. i == NGLLX)) then
                    tx = 0
                    ty = 0
                    tz = 0
@@ -452,7 +459,7 @@
         endif  !  end of bottom absorbing boundary
 
         !--- top absorbing boundary
-        if(codeabs(ITOP,ispecabs)) then
+        if(codeabs(IEDGE3,ispecabs)) then
 
            j = NGLLZ
 
@@ -497,7 +504,7 @@
 ! exclude corners to make sure there is no contradiction on the normal
 ! for Stacey absorbing conditions but not for incident plane waves;
 ! thus subtract nothing i.e. zero in that case
-                 if((codeabs(ILEFT,ispecabs) .and. i == 1) .or. (codeabs(IRIGHT,ispecabs) .and. i == NGLLX)) then
+                 if((codeabs(IEDGE4,ispecabs) .and. i == 1) .or. (codeabs(IEDGE2,ispecabs) .and. i == NGLLX)) then
                    tx = 0
                    ty = 0
                    tz = 0

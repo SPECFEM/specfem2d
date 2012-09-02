@@ -69,8 +69,8 @@
   logical, dimension(nspec) :: is_PML
 
 !! DK DK for CPML_element_file
-  logical :: read_external_mesh          
-  character(len=256)  :: CPML_element_file 
+  logical :: read_external_mesh
+  character(len=256)  :: CPML_element_file
   integer :: ier,ispec_CPML
   integer :: ispec_temp
   integer, dimension(:), allocatable :: region_CPML
@@ -182,12 +182,12 @@
   if( ier /= 0 ) then
     print*,'error opening file: ',trim(CPML_element_file)
     stop 'error read external CPML element file'
-  endif  
+  endif
 
-  read(9999,*)nspec_PML 
+  read(9999,*)nspec_PML
   allocate(region_CPML(nspec_PML))
 
-  do ispec_CPML=1,nspec_PML 
+  do ispec_CPML=1,nspec_PML
      read(9999,*)ispec_temp,region_CPML(ispec_CPML)
      is_PML(ispec_temp)=.true.
      spec_to_PML(ispec_temp)=ispec_CPML
@@ -326,7 +326,7 @@
 ! material properties of the elastic medium
   double precision :: lambdalplus2mul_relaxed
 
-!DK,DK 
+!DK,DK
   integer, dimension(nspec) :: spec_to_PML
   integer :: ispec_PML
 
@@ -517,13 +517,13 @@
                    d_z = d0_z_bottom / 0.6d0 * abscissa_normalized**NPOWER
 
 !DK DK we keep the equation to define an nonconstant alpha_z in case user needed,
-!However for users who want to use nonconstant alpha_z, you also need to change 
+!However for users who want to use nonconstant alpha_z, you also need to change
 !routines for CMPL computation. For example in compute_forces_viscoelastic.f90
 
 !                   alpha_z = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
 !                   + ALPHA_MAX_PML / 2.d0
 
-!DK DK Here we set alpha_z=alpha_x=const where alpha_z or alpha_x is nonzero 
+!DK DK Here we set alpha_z=alpha_x=const where alpha_z or alpha_x is nonzero
 
                    alpha_z = ALPHA_MAX_PML / 2.d0
 

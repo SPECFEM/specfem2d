@@ -56,8 +56,8 @@
                phi_nu2,Mu_nu2,N_SLS, &
                rx_viscous,rz_viscous,theta_e,theta_s,&
                b_viscodampx,b_viscodampz,&
-               ibegin_bottom_poro,iend_bottom_poro,ibegin_top_poro,iend_top_poro, &
-               jbegin_left_poro,jend_left_poro,jbegin_right_poro,jend_right_poro,&
+               ibegin_edge1_poro,iend_edge1_poro,ibegin_edge3_poro,iend_edge3_poro, &
+               ibegin_edge4_poro,iend_edge4_poro,ibegin_edge2_poro,iend_edge2_poro,&
                C_k,M_k,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,&
                b_absorb_poro_w_left,b_absorb_poro_w_right,b_absorb_poro_w_bottom,b_absorb_poro_w_top,&
                nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,f0,freq0,Q0, &
@@ -89,8 +89,8 @@
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
   integer, dimension(nspec) :: kmato
-  integer, dimension(nelemabs) :: numabs,jbegin_left_poro,jend_left_poro,jbegin_right_poro,jend_right_poro,&
-                                  ibegin_bottom_poro,iend_bottom_poro,ibegin_top_poro,iend_top_poro
+  integer, dimension(nelemabs) :: numabs,ibegin_edge4_poro,iend_edge4_poro,ibegin_edge2_poro,iend_edge2_poro,&
+                                  ibegin_edge1_poro,iend_edge1_poro,ibegin_edge3_poro,iend_edge3_poro
 
   logical, dimension(nspec) :: poroelastic
   logical, dimension(4,nelemabs)  :: codeabs
@@ -589,12 +589,12 @@
       csl = sqrt(cssquare)
 
 !--- left absorbing boundary
-      if(codeabs(ILEFT,ispecabs)) then
+      if(codeabs(IEDGE4,ispecabs)) then
 
         i = 1
 
-        jbegin = jbegin_left_poro(ispecabs)
-        jend = jend_left_poro(ispecabs)
+        jbegin = ibegin_edge4_poro(ispecabs)
+        jend = iend_edge4_poro(ispecabs)
 
         do j = jbegin,jend
 
@@ -644,12 +644,12 @@
       endif  !  end of left absorbing boundary
 
 !--- right absorbing boundary
-      if(codeabs(IRIGHT,ispecabs)) then
+      if(codeabs(IEDGE2,ispecabs)) then
 
         i = NGLLX
 
-        jbegin = jbegin_right_poro(ispecabs)
-        jend = jend_right_poro(ispecabs)
+        jbegin = ibegin_edge2_poro(ispecabs)
+        jend = iend_edge2_poro(ispecabs)
 
         do j = jbegin,jend
 
@@ -700,16 +700,16 @@
       endif  !  end of right absorbing boundary
 
 !--- bottom absorbing boundary
-      if(codeabs(IBOTTOM,ispecabs)) then
+      if(codeabs(IEDGE1,ispecabs)) then
 
         j = 1
 
-        ibegin = ibegin_bottom_poro(ispecabs)
-        iend = iend_bottom_poro(ispecabs)
+        ibegin = ibegin_edge1_poro(ispecabs)
+        iend = iend_edge1_poro(ispecabs)
 
 ! exclude corners to make sure there is no contradiction on the normal
-        if(codeabs(ILEFT,ispecabs)) ibegin = 2
-        if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
+        if(codeabs(IEDGE4,ispecabs)) ibegin = 2
+        if(codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
 
         do i = ibegin,iend
 
@@ -760,16 +760,16 @@
       endif  !  end of bottom absorbing boundary
 
 !--- top absorbing boundary
-      if(codeabs(ITOP,ispecabs)) then
+      if(codeabs(IEDGE3,ispecabs)) then
 
         j = NGLLZ
 
-        ibegin = ibegin_top_poro(ispecabs)
-        iend = iend_top_poro(ispecabs)
+        ibegin = ibegin_edge3_poro(ispecabs)
+        iend = iend_edge3_poro(ispecabs)
 
 ! exclude corners to make sure there is no contradiction on the normal
-        if(codeabs(ILEFT,ispecabs)) ibegin = 2
-        if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
+        if(codeabs(IEDGE4,ispecabs)) ibegin = 2
+        if(codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
 
         do i = ibegin,iend
 
