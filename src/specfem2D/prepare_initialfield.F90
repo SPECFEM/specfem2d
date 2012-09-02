@@ -383,7 +383,7 @@ end subroutine prepare_initialfield
   count_right=0
   do ispecabs=1,nelemabs
     ispec=numabs(ispecabs)
-    if(codeabs(ILEFT,ispecabs)) then
+    if(codeabs(IEDGE4,ispecabs)) then
        i = 1
        do j = 1,NGLLZ
           count_left=count_left+1
@@ -391,7 +391,7 @@ end subroutine prepare_initialfield
           left_bound(count_left)=iglob
        enddo
     endif
-    if(codeabs(IRIGHT,ispecabs)) then
+    if(codeabs(IEDGE2,ispecabs)) then
        i = NGLLX
        do j = 1,NGLLZ
           count_right=count_right+1
@@ -399,13 +399,13 @@ end subroutine prepare_initialfield
           right_bound(count_right)=iglob
        enddo
     endif
-    if(codeabs(IBOTTOM,ispecabs)) then
+    if(codeabs(IEDGE1,ispecabs)) then
        j = 1
 !! DK DK not needed       ! exclude corners to make sure there is no contradiction regarding the normal
        ibegin = 1
        iend = NGLLX
-!! DK DK not needed       if(codeabs(ILEFT,ispecabs)) ibegin = 2
-!! DK DK not needed       if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
+!! DK DK not needed       if(codeabs(IEDGE4,ispecabs)) ibegin = 2
+!! DK DK not needed       if(codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
        do i = ibegin,iend
           count_bottom=count_bottom+1
           iglob = ibool(i,j,ispec)

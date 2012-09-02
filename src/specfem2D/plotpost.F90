@@ -45,7 +45,7 @@
   subroutine plotpost(displ,coord,vpext,x_source,z_source,st_xval,st_zval,it,dt,coorg, &
           xinterp,zinterp,shapeint,Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
           poroelastcoef,knods,kmato,ibool, &
-          numabs,codeabs,anyabs,nelem_acoustic_surface, acoustic_edges, &
+          numabs,codeabs,typeabs,anyabs,nelem_acoustic_surface, acoustic_edges, &
           simulation_title,nglob,npgeo,vpmin,vpmax,nrec,NSOURCES, &
           colors,numbers,subsamp_postscript,imagetype_postscript,interpol,meshvect,modelvect, &
           boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
@@ -114,6 +114,7 @@
 
   integer numabs(nelemabs)
   logical codeabs(4,nelemabs)
+  integer typeabs(nelemabs)
   logical anyabs,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
           any_acoustic,any_poroelastic,plot_lowerleft_corner_only
 
@@ -2214,20 +2215,33 @@ coorg_recv_ps_vector_field
 
   if(codeabs(iedge,inum)) then ! codeabs(:,:) is defined as "logical" in MAIN program
 
-  if(iedge == ITOP) then
-    ideb = 3
-    ifin = 4
-  else if(iedge == IBOTTOM) then
+  if(iedge == IEDGE1) then
     ideb = 1
     ifin = 2
-  else if(iedge == ILEFT) then
-    ideb = 4
-    ifin = 1
-  else if(iedge == IRIGHT) then
+  else if(iedge == IEDGE2) then
     ideb = 2
     ifin = 3
+  else if(iedge == IEDGE3) then
+    ideb = 3
+    ifin = 4
+  else if(iedge == IEDGE4) then
+    ideb = 4
+    ifin = 1
   else
-    call exit_MPI('Wrong absorbing boundary code')
+    call exit_MPI('Wrong codeabs() absorbing boundary code')
+  endif
+
+! draw the Stacey absorbing boundary line segment in different colors depending on its type
+  if(typeabs(inum) == IBOTTOM) then
+    write(24,*) '0 1 0 RG'  ! Green
+  else if(typeabs(inum) == IRIGHT) then
+    write(24,*) '0 0 1 RG'  ! Blue
+  else if(typeabs(inum) == ITOP) then
+    write(24,*) '1 0.7529 0.7960 RG' ! Pink
+  else if(typeabs(inum) == ILEFT) then
+    write(24,*) '1 0.6470 0 RG' ! Orange
+  else
+    call exit_MPI('Wrong typeabs() absorbing boundary code')
   endif
 
   x1 = (coorg(1,knods(ideb,ispec))-xmin)*ratio_page + orig_x
@@ -2248,8 +2262,8 @@ coorg_recv_ps_vector_field
      coorg_send_ps_abs(4,buffer_offset) = z2
   endif
 
-  endif
-  enddo
+  endif ! of if(codeabs(iedge,inum))
+  enddo ! of do iedge = 1,4
 
   enddo
   endif

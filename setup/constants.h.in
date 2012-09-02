@@ -107,6 +107,11 @@
   integer, parameter :: ITOP = 3
   integer, parameter :: ILEFT = 4
 
+  integer, parameter :: IEDGE1 = 1
+  integer, parameter :: IEDGE2 = 2
+  integer, parameter :: IEDGE3 = 3
+  integer, parameter :: IEDGE4 = 4
+
 ! number of edges and corners of each element
   integer, parameter :: NEDGES = 4
   integer, parameter :: NCORNERS = 4

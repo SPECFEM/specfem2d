@@ -132,8 +132,8 @@
   double precision :: PERIODIC_DETECT_TOL
 
 !! DK DK for CPML_element_file
-  logical :: read_external_mesh          
-  character(len=256)  :: CPML_element_file  
+  logical :: read_external_mesh
+  character(len=256)  :: CPML_element_file
 
   ! local parameters
   integer :: ier
@@ -188,13 +188,13 @@
   read(IIN,"(a80)") datlin
   read(IIN,*) PML_BOUNDARY_CONDITIONS
 
-  read(IIN,"(a80)") datlin    
-  read(IIN,*) read_external_mesh  
+  read(IIN,"(a80)") datlin
+  read(IIN,*) read_external_mesh
 
-  if(read_external_mesh)then     
-  read(IIN,"(a80)") datlin      
-  read(IIN,"(a256)") CPML_element_file  
-  endif                          
+  if(read_external_mesh)then
+  read(IIN,"(a80)") datlin
+  read(IIN,"(a256)") CPML_element_file
+  endif
 
   read(IIN,"(a80)") datlin
   read(IIN,*) NELEM_PML_THICKNESS
@@ -447,6 +447,7 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,*) N_SLS, f0_attenuation
+  if(N_SLS < 1) stop 'must have N_SLS >= 1 even if attenuation if off because it is used to assign some arrays'
 
   end subroutine read_databases_atten
 
@@ -670,9 +671,9 @@
 !
 
   subroutine read_databases_absorbing(myrank,ipass,nelemabs,nspec,anyabs, &
-                            ibegin_bottom,iend_bottom,jbegin_right,jend_right, &
-                            ibegin_top,iend_top,jbegin_left,jend_left, &
-                            numabs,codeabs,perm,antecedent_list, &
+                            ibegin_edge1,iend_edge1,ibegin_edge2,iend_edge2, &
+                            ibegin_edge3,iend_edge3,ibegin_edge4,iend_edge4, &
+                            numabs,codeabs,typeabs,perm,antecedent_list, &
                             nspec_left,nspec_right,nspec_bottom,nspec_top, &
                             ib_right,ib_left,ib_bottom,ib_top)
 
@@ -683,9 +684,10 @@
 
   integer :: myrank,ipass,nspec
   integer :: nelemabs
-  integer, dimension(nelemabs) :: numabs,ibegin_bottom,iend_bottom, &
-    ibegin_top,iend_top,jbegin_left,jend_left,jbegin_right,jend_right
+  integer, dimension(nelemabs) :: numabs,ibegin_edge1,iend_edge1, &
+    ibegin_edge3,iend_edge3,ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2
   logical, dimension(4,nelemabs) :: codeabs
+  integer, dimension(nelemabs) :: typeabs
   logical :: anyabs
   integer, dimension(nspec) :: perm,antecedent_list
   integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
@@ -693,22 +695,23 @@
   integer, dimension(nelemabs) :: ib_right,ib_left,ib_bottom,ib_top
 
   ! local parameters
-  integer :: inum,numabsread
+  integer :: inum,numabsread,typeabsread
   logical :: codeabsread(4)
   character(len=80) :: datlin
 
   ! initializes
   codeabs(:,:) = .false.
+  typeabs(:) = 0
 
-  ibegin_bottom(:) = 0
-  iend_bottom(:) = 0
-  ibegin_top(:) = 0
-  iend_top(:) = 0
+  ibegin_edge1(:) = 0
+  iend_edge1(:) = 0
+  ibegin_edge3(:) = 0
+  iend_edge3(:) = 0
 
-  jbegin_left(:) = 0
-  jend_left(:) = 0
-  jbegin_right(:) = 0
-  jend_right(:) = 0
+  ibegin_edge4(:) = 0
+  iend_edge4(:) = 0
+  ibegin_edge2(:) = 0
+  iend_edge2(:) = 0
 
   nspec_left = 0
   nspec_right = 0
@@ -725,12 +728,18 @@
 
   ! reads in values
   if( anyabs ) then
+
     ! reads absorbing boundaries
     do inum = 1,nelemabs
+
+! beware here and below that external meshes (for instance coming from CUBIT or Gmsh)
+! may have rotated elements and thus edge 1 may not correspond to the bottom,
+! edge 2 may not correspond to the right, edge 3 may not correspond to the top,
+! and edge 4 may not correspond to the left.
       read(IIN,*) numabsread,codeabsread(1),codeabsread(2),codeabsread(3),&
-                  codeabsread(4), ibegin_bottom(inum), iend_bottom(inum), &
-                  jbegin_right(inum), jend_right(inum), ibegin_top(inum), &
-                  iend_top(inum), jbegin_left(inum), jend_left(inum)
+                  codeabsread(4), typeabsread, ibegin_edge1(inum), iend_edge1(inum), &
+                  ibegin_edge2(inum), iend_edge2(inum), ibegin_edge3(inum), &
+                  iend_edge3(inum), ibegin_edge4(inum), iend_edge4(inum)
 
       if(numabsread < 1 .or. numabsread > nspec) &
         call exit_MPI('Wrong absorbing element number')
@@ -743,29 +752,39 @@
         call exit_MPI('error: maximum number of passes is 2')
       endif
 
-      codeabs(IBOTTOM,inum) = codeabsread(1)
-      codeabs(IRIGHT,inum) = codeabsread(2)
-      codeabs(ITOP,inum) = codeabsread(3)
-      codeabs(ILEFT,inum) = codeabsread(4)
+      codeabs(IEDGE1,inum) = codeabsread(1)
+      codeabs(IEDGE2,inum) = codeabsread(2)
+      codeabs(IEDGE3,inum) = codeabsread(3)
+      codeabs(IEDGE4,inum) = codeabsread(4)
+
+      typeabs(inum) = typeabsread
+
+! check that a single edge is defined for each element cited
+! (since elements with two absorbing edges MUST be cited twice, each time with a different "typeabs()" code
+      if(count(codeabs(:,inum) .eqv. .true.) /= 1) stop 'must have one and only one absorbing edge per absorbing line cited'
+
     enddo
 
     ! boundary element numbering
     do inum = 1,nelemabs
-      if (codeabs(IBOTTOM,inum)) then
+      if (typeabs(inum) == IBOTTOM) then
         nspec_bottom = nspec_bottom + 1
         ib_bottom(inum) =  nspec_bottom
-      endif
-      if (codeabs(IRIGHT,inum)) then
+
+      else if (typeabs(inum) == IRIGHT) then
         nspec_right = nspec_right + 1
         ib_right(inum) =  nspec_right
-      endif
-      if (codeabs(ITOP,inum)) then
+
+      else if (typeabs(inum) == ITOP) then
         nspec_top = nspec_top + 1
         ib_top(inum) = nspec_top
-      endif
-      if (codeabs(ILEFT,inum)) then
+
+      else if (typeabs(inum) == ILEFT) then
         nspec_left = nspec_left + 1
         ib_left(inum) =  nspec_left
+
+      else
+        stop 'incorrect absorbing boundary element type read'
       endif
     enddo
 

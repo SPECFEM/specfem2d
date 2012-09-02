@@ -369,9 +369,9 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                   ispec_PML=spec_to_PML(ispec)
 
                   PML_dux_dxl(i,j,ispec_PML) = dux_dxl
-                  PML_dux_dzl(i,j,ispec_PML)=dux_dzl   
-                  PML_duz_dzl(i,j,ispec_PML)=duz_dzl  
-                  PML_duz_dxl(i,j,ispec_PML)=duz_dxl   
+                  PML_dux_dzl(i,j,ispec_PML)=dux_dzl
+                  PML_duz_dzl(i,j,ispec_PML)=duz_dzl
+                  PML_duz_dxl(i,j,ispec_PML)=duz_dxl
 
                   ! derivative along x and along z
                   dux_dxi_new = ZERO
@@ -400,9 +400,9 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                   duz_dzl_new = duz_dxi_new*xizl + duz_dgamma_new*gammazl
 
                   PML_dux_dxl_new(i,j,ispec_PML) = dux_dxl_new
-                  PML_dux_dzl_new(i,j,ispec_PML)=dux_dzl_new   
-                  PML_duz_dzl_new(i,j,ispec_PML)=duz_dzl_new  
-                  PML_duz_dxl_new(i,j,ispec_PML)=duz_dxl_new 
+                  PML_dux_dzl_new(i,j,ispec_PML)=dux_dzl_new
+                  PML_duz_dzl_new(i,j,ispec_PML)=duz_dzl_new
+                  PML_duz_dxl_new(i,j,ispec_PML)=duz_dxl_new
               endif
 
 
@@ -445,7 +445,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                       coef1 = (1.0d0 - exp(- bb * deltat / 2.0d0) ) / bb
                       coef2 = (1.0d0 - exp(- bb * deltat / 2.0d0) ) * exp(- bb * deltat / 2.0d0) / bb
                     else
-                      coef1 = deltat / 2.0d0 
+                      coef1 = deltat / 2.0d0
                       coef2 = deltat / 2.0d0
                     end if
 
@@ -773,7 +773,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                        coef1 = (1.0d0 - exp(- bb * deltat / 2.0d0) ) / bb
                        coef2 = (1.0d0 - exp(- bb * deltat / 2.0d0) ) * exp(- bb * deltat / 2.0d0) / bb
                     else
-                       coef1 = deltat / 2.0d0 
+                       coef1 = deltat / 2.0d0
                        coef2 = deltat / 2.0d0
                     end if
 
@@ -861,7 +861,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                        .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec))) then
 
                      A0 = - alpha_x_store(i,j,ispec_PML) * d_x_store(i,j,ispec_PML)
-                     A1 = d_x_store(i,j,ispec_PML) 
+                     A1 = d_x_store(i,j,ispec_PML)
                      A2 = k_x_store(i,j,ispec_PML)
                      A3 = d_x_store(i,j,ispec_PML) * alpha_x_store(i,j,ispec_PML) ** 2
                      A4 = 0.d0
@@ -907,7 +907,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                           A4 * rmemory_displ_elastic(2,1,i,j,ispec_PML)   &
                            )
                      accel_elastic_PML(3,i,j,ispec_PML)= wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * &
-                          ( & 
+                          ( &
                           A0 * displ_elastic(3,iglob) + &
                           A1 *veloc_elastic(3,iglob)  + &
                           A3 * rmemory_displ_elastic(1,3,i,j,ispec_PML) + &
@@ -918,13 +918,13 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                else
 
                      A0 = - alpha_z_store(i,j,ispec_PML) * d_z_store(i,j,ispec_PML)
-                     A1 = d_z_store(i,j,ispec_PML) 
+                     A1 = d_z_store(i,j,ispec_PML)
                      A2 = k_z_store(i,j,ispec_PML)
                      A3 = 0.d0
                      A4 = d_z_store(i,j,ispec_PML) * alpha_z_store(i,j,ispec_PML) ** 2
 
                      accel_elastic_PML(1,i,j,ispec_PML)= wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * &
-                          ( & 
+                          ( &
                           A0 * displ_elastic(1,iglob) + &
                           A1 *veloc_elastic(1,iglob)  + &
                           A3 * rmemory_displ_elastic(1,1,i,j,ispec_PML) + &
@@ -1025,8 +1025,12 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
         cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_unrelaxed_elastic/3._CUSTOM_REAL)/rhol)
         csl = sqrt(mul_unrelaxed_elastic/rhol)
 
+!!! DK DK 
+   c_inc = csl
+!!! DK DK 
+
         !--- left absorbing boundary
-        if(codeabs(ILEFT,ispecabs)) then
+        if(codeabs(IEDGE4,ispecabs)) then
 
            i = 1
 
@@ -1141,7 +1145,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
         endif  !  end of left absorbing boundary
 
         !--- right absorbing boundary
-        if(codeabs(IRIGHT,ispecabs)) then
+        if(codeabs(IEDGE2,ispecabs)) then
 
            i = NGLLX
 
@@ -1256,15 +1260,15 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
         endif  !  end of right absorbing boundary
 
         !--- bottom absorbing boundary
-        if(codeabs(IBOTTOM,ispecabs)) then
+        if(codeabs(IEDGE1,ispecabs)) then
 
            j = 1
 
 !! DK DK not needed           ! exclude corners to make sure there is no contradiction on the normal
            ibegin = 1
            iend = NGLLX
-!! DK DK not needed           if(codeabs(ILEFT,ispecabs)) ibegin = 2
-!! DK DK not needed           if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
+!! DK DK not needed           if(codeabs(IEDGE4,ispecabs)) ibegin = 2
+!! DK DK not needed           if(codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
 
            do i = ibegin,iend
 
@@ -1326,7 +1330,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 ! exclude corners to make sure there is no contradiction on the normal
 ! for Stacey absorbing conditions but not for incident plane waves;
 ! thus subtract nothing i.e. zero in that case
-                 if((codeabs(ILEFT,ispecabs) .and. i == 1) .or. (codeabs(IRIGHT,ispecabs) .and. i == NGLLX)) then
+                 if((codeabs(IEDGE4,ispecabs) .and. i == 1) .or. (codeabs(IEDGE2,ispecabs) .and. i == NGLLX)) then
                    tx = 0
                    ty = 0
                    tz = 0
@@ -1354,7 +1358,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                             (2.0*spring_position)*displn*nz &
                            +mul_unrelaxed_elastic/(2.0*spring_position)*(displz-displn*nz)
 
-                 if((codeabs(ILEFT,ispecabs) .and. i == 1) .or. (codeabs(IRIGHT,ispecabs) .and. i == NGLLX)) then
+                 if((codeabs(IEDGE4,ispecabs) .and. i == 1) .or. (codeabs(IEDGE2,ispecabs) .and. i == NGLLX)) then
                    displtx = 0
                    displty = 0
                    displtz = 0
@@ -1394,15 +1398,15 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
         endif  !  end of bottom absorbing boundary
 
         !--- top absorbing boundary
-        if(codeabs(ITOP,ispecabs)) then
+        if(codeabs(IEDGE3,ispecabs)) then
 
            j = NGLLZ
 
 !! DK DK not needed           ! exclude corners to make sure there is no contradiction on the normal
            ibegin = 1
            iend = NGLLX
-!! DK DK not needed           if(codeabs(ILEFT,ispecabs)) ibegin = 2
-!! DK DK not needed           if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
+!! DK DK not needed           if(codeabs(IEDGE4,ispecabs)) ibegin = 2
+!! DK DK not needed           if(codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
 
            do i = ibegin,iend
 
@@ -1456,7 +1460,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 ! exclude corners to make sure there is no contradiction on the normal
 ! for Stacey absorbing conditions but not for incident plane waves;
 ! thus subtract nothing i.e. zero in that case
-                 if((codeabs(ILEFT,ispecabs) .and. i == 1) .or. (codeabs(IRIGHT,ispecabs) .and. i == NGLLX)) then
+                 if((codeabs(IEDGE4,ispecabs) .and. i == 1) .or. (codeabs(IEDGE2,ispecabs) .and. i == NGLLX)) then
                    tx = 0
                    ty = 0
                    tz = 0
@@ -1484,7 +1488,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                             (2.0*spring_position)*displn*nz &
                            +mul_unrelaxed_elastic/(2.0*spring_position)*(displz-displn*nz)
 
-                 if((codeabs(ILEFT,ispecabs) .and. i == 1) .or. (codeabs(IRIGHT,ispecabs) .and. i == NGLLX)) then
+                 if((codeabs(IEDGE4,ispecabs) .and. i == 1) .or. (codeabs(IEDGE2,ispecabs) .and. i == NGLLX)) then
                    displtx = 0
                    displty = 0
                    displtz = 0
@@ -1541,7 +1545,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
        if (is_PML(ispec)) then
       ispec_PML=spec_to_PML(ispec)
 !--- left absorbing boundary
-      if(codeabs(ILEFT,ispecabs)) then
+      if(codeabs(IEDGE4,ispecabs)) then
         i = 1
         do j = 1,NGLLZ
           iglob = ibool(i,j,ispec)
@@ -1551,7 +1555,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
        enddo
       endif
 !--- right absorbing boundary
-      if(codeabs(IRIGHT,ispecabs)) then
+      if(codeabs(IEDGE2,ispecabs)) then
         i = NGLLX
         do j = 1,NGLLZ
           iglob = ibool(i,j,ispec)
@@ -1562,7 +1566,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
       endif
 !--- bottom absorbing boundary
-      if(codeabs(IBOTTOM,ispecabs)) then
+      if(codeabs(IEDGE1,ispecabs)) then
         j = 1
 ! exclude corners to make sure there is no contradiction on the normal
         ibegin = 1
@@ -1575,7 +1579,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
         enddo
       endif
 !--- top absorbing boundary
-      if(codeabs(ITOP,ispecabs)) then
+      if(codeabs(IEDGE3,ispecabs)) then
         j = NGLLZ
 ! exclude corners to make sure there is no contradiction on the normal
         ibegin = 1

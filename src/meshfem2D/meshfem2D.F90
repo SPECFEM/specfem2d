@@ -397,7 +397,7 @@ program meshfem2D
   integer, dimension(:), allocatable  :: my_interfaces
   integer, dimension(:), allocatable  :: my_nb_interfaces
 
-  integer  :: num_start
+  integer  :: remove_min_to_start_at_zero
   integer  :: num_node
 
   ! variables used for tangential detection
@@ -429,7 +429,7 @@ program meshfem2D
 
   ! reads in mesh elements
   if ( read_external_mesh ) then
-     call read_external_mesh_file(mesh_file, num_start, ngnod)
+     call read_external_mesh_file(mesh_file, remove_min_to_start_at_zero, ngnod)
 
   else
      call read_interfaces_file(interfacesfile,max_npoints_interface, &
@@ -626,10 +626,10 @@ program meshfem2D
 
   if ( read_external_mesh ) then
      call read_acoustic_surface(free_surface_file, num_material, &
-                        ANISOTROPIC_MATERIAL, nb_materials, icodemat, phi, num_start)
+                        ANISOTROPIC_MATERIAL, nb_materials, icodemat, phi, remove_min_to_start_at_zero)
 
      if ( any_abs ) then
-        call read_abs_surface(absorbing_surface_file, num_start)
+        call read_abs_surface(absorbing_surface_file, remove_min_to_start_at_zero)
      endif
 
   else
@@ -742,7 +742,7 @@ program meshfem2D
      if(absleft) nelemabs = nelemabs + nzread
      if(absright) nelemabs = nelemabs + nzread
 
-     allocate(abs_surface(4,nelemabs))
+     allocate(abs_surface(5,nelemabs))
 
      ! generate the list of absorbing elements
      if(nelemabs > 0) then
@@ -756,6 +756,7 @@ program meshfem2D
                  abs_surface(2,nelemabs) = 2
                  abs_surface(3,nelemabs) = elmnts(0+ngnod*(inumelem-1))
                  abs_surface(4,nelemabs) = elmnts(1+ngnod*(inumelem-1))
+                 abs_surface(5,nelemabs) = IBOTTOM
               endif
               if(absright .and. ix == nxread) then
                  nelemabs = nelemabs + 1
@@ -763,6 +764,7 @@ program meshfem2D
                  abs_surface(2,nelemabs) = 2
                  abs_surface(3,nelemabs) = elmnts(1+ngnod*(inumelem-1))
                  abs_surface(4,nelemabs) = elmnts(2+ngnod*(inumelem-1))
+                 abs_surface(5,nelemabs) = IRIGHT
               endif
               if(abstop   .and. iz == nzread) then
                  nelemabs = nelemabs + 1
@@ -770,6 +772,7 @@ program meshfem2D
                  abs_surface(2,nelemabs) = 2
                  abs_surface(3,nelemabs) = elmnts(3+ngnod*(inumelem-1))
                  abs_surface(4,nelemabs) = elmnts(2+ngnod*(inumelem-1))
+                 abs_surface(5,nelemabs) = ITOP
               endif
               if(absleft .and. ix == 1) then
                  nelemabs = nelemabs + 1
@@ -777,6 +780,7 @@ program meshfem2D
                  abs_surface(2,nelemabs) = 2
                  abs_surface(3,nelemabs) = elmnts(0+ngnod*(inumelem-1))
                  abs_surface(4,nelemabs) = elmnts(3+ngnod*(inumelem-1))
+                 abs_surface(5,nelemabs) = ILEFT
               endif
            enddo
         enddo

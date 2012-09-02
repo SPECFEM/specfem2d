@@ -83,12 +83,12 @@ module part_unstruct
   integer :: nelemabs
   integer, dimension(:,:), allocatable  :: abs_surface
   logical, dimension(:,:), allocatable  :: abs_surface_char
-  integer, dimension(:), allocatable  :: abs_surface_merge
+  integer, dimension(:), allocatable  :: abs_surface_merge,abs_surface_type
   integer :: nelemabs_loc
 
   integer :: nelemabs_merge
-  integer, dimension(:), allocatable  :: ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
-       jbegin_left,jend_left,jbegin_right,jend_right
+  integer, dimension(:), allocatable  :: ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
+       ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2
 
   ! for acoustic/elastic coupled elements
   integer :: nedges_coupled
@@ -106,16 +106,16 @@ contains
 
   !-----------------------------------------------
   ! Read the mesh and storing it in array 'elmnts' (which is allocated here).
-  ! 'num_start' is used to have the numbering of the nodes starting at '0'.
+  ! 'remove_min_to_start_at_zero' is used to have the numbering of the nodes starting at '0'.
   ! 'nelmnts' is the number of elements, 'nnodes' is the number of nodes in the mesh.
   !-----------------------------------------------
-  subroutine read_external_mesh_file(filename, num_start, ngnod)
+  subroutine read_external_mesh_file(filename, remove_min_to_start_at_zero, ngnod)
 
   implicit none
   !include "constants.h"
 
   character(len=256), intent(in)  :: filename
-  integer, intent(out)  :: num_start
+  integer, intent(out)  :: remove_min_to_start_at_zero
   integer, intent(in)  :: ngnod
 
   integer  :: i,ier
@@ -143,8 +143,8 @@ contains
 
   close(990)
 
-  num_start = minval(elmnts)
-  elmnts(:) = elmnts(:) - num_start
+  remove_min_to_start_at_zero = minval(elmnts)
+  elmnts(:) = elmnts(:) - remove_min_to_start_at_zero
   nnodes = maxval(elmnts) + 1
 
   end subroutine read_external_mesh_file
@@ -209,7 +209,7 @@ contains
   ! 3/ first node on the free surface, 4/ second node on the free surface, if relevant (if 2/ is equal to 2)
   !-----------------------------------------------
   subroutine read_acoustic_surface(filename, num_material, &
-                ANISOTROPIC_MATERIAL, nb_materials, icodemat, phi, num_start)
+                ANISOTROPIC_MATERIAL, nb_materials, icodemat, phi, remove_min_to_start_at_zero)
 
   implicit none
 
@@ -221,7 +221,7 @@ contains
   integer, intent(in)  :: nb_materials
   integer, dimension(1:nb_materials), intent(in)  :: icodemat
   double precision, dimension(1:nb_materials), intent(in)  :: phi
-  integer, intent(in)  :: num_start
+  integer, intent(in)  :: remove_min_to_start_at_zero
 
 
   integer, dimension(:,:), allocatable  :: acoustic_surface_tmp
@@ -246,9 +246,9 @@ contains
   enddo
 
   close(993)
-  acoustic_surface_tmp(1,:) = acoustic_surface_tmp(1,:) - num_start
-  acoustic_surface_tmp(3,:) = acoustic_surface_tmp(3,:) - num_start
-  acoustic_surface_tmp(4,:) = acoustic_surface_tmp(4,:) - num_start
+  acoustic_surface_tmp(1,:) = acoustic_surface_tmp(1,:) - remove_min_to_start_at_zero
+  acoustic_surface_tmp(3,:) = acoustic_surface_tmp(3,:) - remove_min_to_start_at_zero
+  acoustic_surface_tmp(4,:) = acoustic_surface_tmp(4,:) - remove_min_to_start_at_zero
 
   nelem_acoustic_surface = 0
   do i = 1, nelmnts_surface
@@ -279,13 +279,13 @@ contains
   ! (which currently must always be equal to two, see comment below),
   ! 3/ first node on the abs surface, 4/ second node on the abs surface
   !-----------------------------------------------
-  subroutine read_abs_surface(filename, num_start)
+  subroutine read_abs_surface(filename, remove_min_to_start_at_zero)
 
   implicit none
   !include "constants.h"
 
   character(len=256), intent(in)  :: filename
-  integer, intent(in)  :: num_start
+  integer, intent(in)  :: remove_min_to_start_at_zero
 
   integer  :: i,ier
 
@@ -297,28 +297,35 @@ contains
 
   read(994,*) nelemabs
 
-  allocate(abs_surface(4,nelemabs))
+  allocate(abs_surface(5,nelemabs))
 
   do i = 1, nelemabs
-    read(994,*) abs_surface(1,i), abs_surface(2,i), abs_surface(3,i), abs_surface(4,i)
+    read(994,*) abs_surface(1,i), abs_surface(2,i), abs_surface(3,i), abs_surface(4,i), abs_surface(5,i)
+
     if (abs_surface(2,i) /= 2) then
-      print *,'The input format is currently limited: only two nodes per element can be listed.'
+      print *,'Only two nodes per absorbing element can be listed.'
       print *,'If one of your elements has more than one edge along a given absorbing contour'
       print *,'(e.g., if that contour has a corner) then list it twice,'
       print *,'putting the first edge on the first line and the second edge on the second line.'
-      print *,'if one of your elements has a single point along the absording contour rather than a full edge, do NOT list it'
+      print *,'If one of your elements has a single point along the absording contour rather than a full edge, do NOT list it'
       print *,'(it would have no weight in the contour integral anyway because it would consist of a single point).'
-      print *,'If you are using 9-node elements, list only the first and last points of the edge and not the intermediate point'
+      print *,'If you use 9-node elements, list only the first and last points of the edge and not the intermediate point'
       print *,'located around the middle of the edge; the right 9-node curvature will be restored automatically by the code.'
+
       stop 'only two nodes per element should be listed for absorbing edges'
     endif
+
+    if (abs_surface(5,i) < 1 .or. abs_surface(5,i) > 4) then
+      stop 'absorbing element type must be between 1 (IBOTTOM) and 4 (ILEFT)'
+    endif
+
   enddo
 
   close(994)
 
-  abs_surface(1,:) = abs_surface(1,:) - num_start
-  abs_surface(3,:) = abs_surface(3,:) - num_start
-  abs_surface(4,:) = abs_surface(4,:) - num_start
+  abs_surface(1,:) = abs_surface(1,:) - remove_min_to_start_at_zero
+  abs_surface(3,:) = abs_surface(3,:) - remove_min_to_start_at_zero
+  abs_surface(4,:) = abs_surface(4,:) - remove_min_to_start_at_zero
 
   end subroutine read_abs_surface
 
@@ -962,9 +969,10 @@ contains
 
   !--------------------------------------------------
   ! Set absorbing boundaries by elements instead of edges.
-  ! Excludes points that have both absorbing condition and coupled fluid/solid relation (this is the
-  ! reason arrays ibegin_..., iend_... were included here).
-  ! Under development : exluding points that have two different normals in two different elements.
+  ! Also excludes first or last GLL integration point
+  ! if it has both absorbing condition and coupled fluid/solid relation
+  ! (this is the reason why arrays ibegin_..., iend_... are included here).
+  ! Under development : excluding points that have two different normals in two different elements.
   !--------------------------------------------------
 
   subroutine merge_abs_boundaries(nb_materials, phi_material, num_material, ngnod)
@@ -987,111 +995,113 @@ contains
 
   allocate(abs_surface_char(4,nelemabs))
   allocate(abs_surface_merge(nelemabs))
+  allocate(abs_surface_type(nelemabs))
   abs_surface_char(:,:) = .false.
   abs_surface_merge(:) = -1
+  abs_surface_type(:) = -1
 
   nedge_bound = nelemabs
   nb_elmnts_abs = 0
 
   do num_edge = 1, nedge_bound
 
-    match = 0
-    do i = 1, nb_elmnts_abs
-       if ( abs_surface(1,num_edge) == abs_surface_merge(i) ) then
-          match = i
-          exit
-       endif
-    enddo
+!! DK DK Sept 2012: in order to fix the rotated elements issue in external mesh
+!! DK DK Sept 2012: we now use a type code and thus we must not merge elements that
+!! DK DK Sept 2012: appear twice in the list any more because each occurrence now appears with a different type code
+!! DK DK Sept 2012    match = 0
+!! DK DK Sept 2012    do i = 1, nb_elmnts_abs
+!! DK DK Sept 2012       if ( abs_surface(1,num_edge) == abs_surface_merge(i) ) then
+!! DK DK Sept 2012          match = i
+!! DK DK Sept 2012          exit
+!! DK DK Sept 2012       endif
+!! DK DK Sept 2012    enddo
 
-    if ( match == 0 ) then
+!! DK DK Sept 2012    if ( match == 0 ) then
        nb_elmnts_abs = nb_elmnts_abs + 1
        match = nb_elmnts_abs
-    endif
+!! DK DK Sept 2012    endif
 
     abs_surface_merge(match) = abs_surface(1,num_edge)
-
+!! DK DK Sept 2012 added the absorbing interface type for Stacey
+    abs_surface_type(match) = abs_surface(5,num_edge)
 
     if ( (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+0) .and. &
-         abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+1)) ) then
-       abs_surface_char(1,match) = .true.
-
+          abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+1)) ) then
+       abs_surface_char(IEDGE1,match) = .true.
     endif
 
     if ( (abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+0) .and. &
-         abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+1)) ) then
+          abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+1)) ) then
        temp = abs_surface(4,num_edge)
        abs_surface(4,num_edge) = abs_surface(3,num_edge)
        abs_surface(3,num_edge) = temp
-       abs_surface_char(1,match) = .true.
-
+       abs_surface_char(IEDGE1,match) = .true.
     endif
 
     if ( (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+0) .and. &
-         abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+3)) ) then
-       abs_surface_char(4,match) = .true.
-
+          abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+3)) ) then
+       abs_surface_char(IEDGE4,match) = .true.
     endif
 
     if ( (abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+0) .and. &
-         abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+3)) ) then
+          abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+3)) ) then
        temp = abs_surface(4,num_edge)
        abs_surface(4,num_edge) = abs_surface(3,num_edge)
        abs_surface(3,num_edge) = temp
-       abs_surface_char(4,match) = .true.
-
+       abs_surface_char(IEDGE4,match) = .true.
     endif
 
     if ( (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+1) .and. &
-         abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+2)) ) then
-       abs_surface_char(2,match) = .true.
-
+          abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+2)) ) then
+       abs_surface_char(IEDGE2,match) = .true.
     endif
 
     if ( (abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+1) .and. &
-         abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+2)) ) then
+          abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+2)) ) then
        temp = abs_surface(4,num_edge)
        abs_surface(4,num_edge) = abs_surface(3,num_edge)
        abs_surface(3,num_edge) = temp
-       abs_surface_char(2,match) = .true.
-
+       abs_surface_char(IEDGE2,match) = .true.
     endif
 
     if ( (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+2) .and. &
-         abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+3)) ) then
+          abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+3)) ) then
        temp = abs_surface(4,num_edge)
        abs_surface(4,num_edge) = abs_surface(3,num_edge)
        abs_surface(3,num_edge) = temp
-       abs_surface_char(3,match) = .true.
-
+       abs_surface_char(IEDGE3,match) = .true.
     endif
 
     if ( (abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+2) .and. &
-         abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+3)) ) then
-       abs_surface_char(3,match) = .true.
-
+          abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+3)) ) then
+       abs_surface_char(IEDGE3,match) = .true.
     endif
 
   enddo
 
   nelemabs_merge = nb_elmnts_abs
 
-  allocate(ibegin_bottom(nelemabs_merge))
-  allocate(iend_bottom(nelemabs_merge))
-  allocate(jbegin_right(nelemabs_merge))
-  allocate(jend_right(nelemabs_merge))
-  allocate(ibegin_top(nelemabs_merge))
-  allocate(iend_top(nelemabs_merge))
-  allocate(jbegin_left(nelemabs_merge))
-  allocate(jend_left(nelemabs_merge))
+! beware here and below that external meshes (for instance coming from CUBIT or Gmsh)
+! may have rotated elements and thus edge 1 may not correspond to the bottom,
+! edge 2 may not correspond to the right, edge 3 may not correspond to the top,
+! and edge 4 may not correspond to the left.
+  allocate(ibegin_edge1(nelemabs_merge))
+  allocate(iend_edge1(nelemabs_merge))
+  allocate(ibegin_edge2(nelemabs_merge))
+  allocate(iend_edge2(nelemabs_merge))
+  allocate(ibegin_edge3(nelemabs_merge))
+  allocate(iend_edge3(nelemabs_merge))
+  allocate(ibegin_edge4(nelemabs_merge))
+  allocate(iend_edge4(nelemabs_merge))
 
-  ibegin_bottom(:) = 1
-  jbegin_right(:) = 1
-  ibegin_top(:) = 1
-  jbegin_left(:) = 1
-  iend_bottom(:) = NGLLX
-  jend_right(:) = NGLLZ
-  iend_top(:) = NGLLX
-  jend_left(:) = NGLLZ
+  ibegin_edge1(:) = 1
+  ibegin_edge2(:) = 1
+  ibegin_edge3(:) = 1
+  ibegin_edge4(:) = 1
+  iend_edge1(:) = NGLLX
+  iend_edge2(:) = NGLLZ
+  iend_edge3(:) = NGLLX
+  iend_edge4(:) = NGLLZ
 
   is_acoustic(:) = .false.
 
@@ -1103,6 +1113,10 @@ contains
 
   do num_edge = 1, nedge_bound
 
+!! DK DK Sept 2012: in order to fix the rotated elements issue in external mesh
+!! DK DK Sept 2012: we now use a type code and thus we must not merge elements that
+!! DK DK Sept 2012: appear twice in the list any more because each occurrence now appears with a different type code.
+!! DK DK Sept 2012: But here I think we must leave it because we are just fixing the fluid/solid elements in postprocessing.
   match = 0
   do i = 1, nelemabs_merge
     if ( abs_surface(1,num_edge) == abs_surface_merge(i) ) then
@@ -1119,25 +1133,25 @@ contains
         if ( abs_surface(3,num_edge) == elmnts(ngnod*edges_coupled(1,iedge)+inode1) ) then
           do inode2 = 0, 3
             if ( abs_surface(3,num_edge) == elmnts(ngnod*edges_coupled(2,iedge)+inode2) ) then
-              if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
-                    abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) )  then
-                  ibegin_bottom(match) = 2
 
+              if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
+                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) )  then
+                  ibegin_edge1(match) = 2
               endif
+
               if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) .and. &
-                    abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2) )  then
-                  jbegin_right(match) = 2
-
+                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2) )  then
+                  ibegin_edge2(match) = 2
               endif
+
               if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) .and. &
-                    abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2) )  then
-                  ibegin_top(match) = 2
-
+                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2) )  then
+                  ibegin_edge3(match) = 2
               endif
-              if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
-                    abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) )  then
-                  jbegin_left(match) = 2
 
+              if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
+                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) )  then
+                  ibegin_edge4(match) = 2
               endif
 
             endif
@@ -1149,25 +1163,25 @@ contains
           do inode2 = 0, 3
             if ( abs_surface(4,num_edge) == elmnts(ngnod*edges_coupled(2,iedge)+inode2) ) then
               if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
-                    abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) )  then
-                  iend_bottom(match) = NGLLX - 1
-
+                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) )  then
+                  iend_edge1(match) = NGLLX - 1
               endif
+
               if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) .and. &
-                    abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2) )  then
-                  jend_right(match) = NGLLZ - 1
-
+                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2) )  then
+                  iend_edge2(match) = NGLLZ - 1
               endif
+
               if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) .and. &
-                    abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2) )  then
-                  iend_top(match) = NGLLX - 1
-
+                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2) )  then
+                  iend_edge3(match) = NGLLX - 1
               endif
+
               if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
-                    abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) )  then
-                  jend_left(match) = NGLLZ - 1
-
+                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) )  then
+                  iend_edge4(match) = NGLLZ - 1
               endif
+
             endif
           enddo
 
@@ -1210,12 +1224,20 @@ contains
     do i = 1, nelemabs_merge
        if ( part(abs_surface_merge(i)) == iproc ) then
 
+! beware here and below that external meshes (for instance coming from CUBIT or Gmsh)
+! may have rotated elements and thus edge 1 may not correspond to the bottom,
+! edge 2 may not correspond to the right, edge 3 may not correspond to the top,
+! and edge 4 may not correspond to the left.
+
+! we add +1 to the "glob2loc_elmnts" number because internally in parts of our code numbers start at zero instead of one
           write(IIN_database,*) glob2loc_elmnts(abs_surface_merge(i))+1, abs_surface_char(1,i), &
-               abs_surface_char(2,i), abs_surface_char(3,i), abs_surface_char(4,i), &
-               ibegin_bottom(i), iend_bottom(i), &
-               jbegin_right(i), jend_right(i), &
-               ibegin_top(i), iend_top(i), &
-               jbegin_left(i), jend_left(i)
+!! DK DK sept 2012: added absorbing element type
+!! DK DK sept 2012               abs_surface_char(2,i), abs_surface_char(3,i), abs_surface_char(4,i), &
+               abs_surface_char(2,i), abs_surface_char(3,i), abs_surface_char(4,i), abs_surface(5,i), &
+               ibegin_edge1(i), iend_edge1(i), &
+               ibegin_edge2(i), iend_edge2(i), &
+               ibegin_edge3(i), iend_edge3(i), &
+               ibegin_edge4(i), iend_edge4(i)
 
        endif
 
@@ -1244,14 +1266,14 @@ contains
 !   integer, dimension(0:4)  :: metis_options
 !
 !   integer  :: wgtflag
-!   integer  :: num_start
+!   integer  :: remove_min_to_start_at_zero
 !
-!   num_start = 0
+!   remove_min_to_start_at_zero = 0
 !   wgtflag = 0
 !
-!   call METIS_PartGraphRecursive(nelmnts, xadj(0), adjncy(0), vwgt(0), adjwgt(0), wgtflag, num_start, nparts, &
+!   call METIS_PartGraphRecursive(nelmnts, xadj(0), adjncy(0), vwgt(0), adjwgt(0), wgtflag, remove_min_to_start_at_zero, nparts, &
 !        metis_options, edgecut, part(0));
-!   !call METIS_PartGraphVKway(nelmnts, xadj(0), adjncy(0), vwgt(0), adjwgt(0), wgtflag, num_start, nparts, &
+!   !call METIS_PartGraphVKway(nelmnts, xadj(0), adjncy(0), vwgt(0), adjwgt(0), wgtflag, remove_min_to_start_at_zero, nparts, &
 !   !     options, edgecut, part(0));
 !
 ! end subroutine Part_metis

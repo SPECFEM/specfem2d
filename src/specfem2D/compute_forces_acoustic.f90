@@ -49,8 +49,8 @@
                density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                vpext,rhoext,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
-               ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
-               jbegin_left,jend_left,jbegin_right,jend_right, &
+               ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
+               ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
                SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right,&
                nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
@@ -71,8 +71,8 @@
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
   integer, dimension(nspec) :: kmato
-  integer, dimension(nelemabs) :: numabs,ibegin_bottom,iend_bottom,ibegin_top,iend_top, &
-               jbegin_left,jend_left,jbegin_right,jend_right
+  integer, dimension(nelemabs) :: numabs,ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
+               ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2
 
   logical, dimension(nspec) :: elastic,poroelastic
   logical, dimension(4,nelemabs)  :: codeabs
@@ -308,8 +308,8 @@
                       coef1 = ( 1.d0 - exp(- bb * deltat / 2.d0) ) / bb
                       coef2 = ( 1.d0 - exp(- bb * deltat / 2.d0) ) * exp(- bb * deltat / 2.d0) / bb
                     else
-                      coef1 = deltat / 2.0d0 
-                      coef2 = deltat / 2.0d0 
+                      coef1 = deltat / 2.0d0
+                      coef2 = deltat / 2.0d0
                     end if
 
                     rmemory_acoustic_dux_dz(i,j,ispec_PML) = coef0 * rmemory_acoustic_dux_dz(i,j,ispec_PML) &
@@ -338,7 +338,7 @@
                   rmemory_acoustic_dux_dx(i,j,ispec_PML) = coef0*rmemory_acoustic_dux_dx(i,j,ispec_PML) &
                   + PML_dux_dxl_new(i,j,ispec_PML) * coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
 
-                  dux_dxl = PML_dux_dxl(i,j,ispec_PML)  + A7 * rmemory_acoustic_dux_dx(i,j,ispec_PML) 
+                  dux_dxl = PML_dux_dxl(i,j,ispec_PML)  + A7 * rmemory_acoustic_dux_dx(i,j,ispec_PML)
 
                   !---------------------- A6 --------------------------
                   A6 = - d_z_store(i,j,ispec_PML) / ( k_z_store(i,j,ispec_PML) ** 2 )
@@ -404,7 +404,7 @@
                      coef1 = (1.0d0 - exp(- bb * deltat / 2.0d0) ) / bb
                      coef2 = (1.0d0 - exp(- bb * deltat / 2.0d0) ) * exp(- bb * deltat / 2.0d0) / bb
                   else
-                     coef1 = deltat / 2.0d0 
+                     coef1 = deltat / 2.0d0
                      coef2 = deltat / 2.0d0
                   end if
 
@@ -488,7 +488,7 @@
 !---------------------------- LEFT & RIGHT ------------------------------------
 !------------------------------------------------------------------------------
                    A0 = - alpha_x_store(i,j,ispec_PML) * d_x_store(i,j,ispec_PML)
-                   A1 = d_x_store(i,j,ispec_PML) 
+                   A1 = d_x_store(i,j,ispec_PML)
                    A2 = k_x_store(i,j,ispec_PML)
                    A3 = d_x_store(i,j,ispec_PML) * alpha_x_store(i,j,ispec_PML) ** 2
                    A4 = 0.d0
@@ -530,7 +530,7 @@
 !-------------------------------- TOP & BOTTOM --------------------------------
 !------------------------------------------------------------------------------
                    A0 = - alpha_z_store(i,j,ispec_PML) * d_z_store(i,j,ispec_PML)
-                   A1 = d_z_store(i,j,ispec_PML) 
+                   A1 = d_z_store(i,j,ispec_PML)
                    A2 = k_z_store(i,j,ispec_PML)
                    A3 = 0.d0
                    A4 = d_z_store(i,j,ispec_PML) * alpha_z_store(i,j,ispec_PML) ** 2
@@ -599,7 +599,7 @@
        if (is_PML(ispec)) then
       ispec_PML=spec_to_PML(ispec)
 !--- left absorbing boundary
-      if(codeabs(ILEFT,ispecabs)) then
+      if(codeabs(IEDGE4,ispecabs)) then
         i = 1
         do j = 1,NGLLZ
           iglob = ibool(i,j,ispec)
@@ -609,7 +609,7 @@
        enddo
       endif
 !--- right absorbing boundary
-      if(codeabs(IRIGHT,ispecabs)) then
+      if(codeabs(IEDGE2,ispecabs)) then
         i = NGLLX
         do j = 1,NGLLZ
           iglob = ibool(i,j,ispec)
@@ -620,7 +620,7 @@
 
       endif
 !--- bottom absorbing boundary
-      if(codeabs(IBOTTOM,ispecabs)) then
+      if(codeabs(IEDGE1,ispecabs)) then
         j = 1
 ! exclude corners to make sure there is no contradiction on the normal
         ibegin = 1
@@ -633,7 +633,7 @@
         enddo
       endif
 !--- top absorbing boundary
-      if(codeabs(ITOP,ispecabs)) then
+      if(codeabs(IEDGE3,ispecabs)) then
         j = NGLLZ
 ! exclude corners to make sure there is no contradiction on the normal
         ibegin = 1
@@ -671,10 +671,10 @@
         cpl = sqrt(kappal/rhol)
 
         !--- left absorbing boundary
-        if(codeabs(ILEFT,ispecabs)) then
+        if(codeabs(IEDGE4,ispecabs)) then
           i = 1
-          jbegin = jbegin_left(ispecabs)
-          jend = jend_left(ispecabs)
+          jbegin = ibegin_edge4(ispecabs)
+          jend = iend_edge4(ispecabs)
           do j = jbegin,jend
             iglob = ibool(i,j,ispec)
             ! external velocity model
@@ -717,10 +717,10 @@
         endif  !  end of left absorbing boundary
 
         !--- right absorbing boundary
-        if(codeabs(IRIGHT,ispecabs)) then
+        if(codeabs(IEDGE2,ispecabs)) then
           i = NGLLX
-          jbegin = jbegin_right(ispecabs)
-          jend = jend_right(ispecabs)
+          jbegin = ibegin_edge2(ispecabs)
+          jend = iend_edge2(ispecabs)
           do j = jbegin,jend
             iglob = ibool(i,j,ispec)
             ! external velocity model
@@ -761,13 +761,13 @@
         endif  !  end of right absorbing boundary
 
         !--- bottom absorbing boundary
-        if(codeabs(IBOTTOM,ispecabs)) then
+        if(codeabs(IEDGE1,ispecabs)) then
           j = 1
-          ibegin = ibegin_bottom(ispecabs)
-          iend = iend_bottom(ispecabs)
+          ibegin = ibegin_edge1(ispecabs)
+          iend = iend_edge1(ispecabs)
           ! exclude corners to make sure there is no contradiction on the normal
-          if(codeabs(ILEFT,ispecabs)) ibegin = 2
-          if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
+          if(codeabs(IEDGE4,ispecabs)) ibegin = 2
+          if(codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
           do i = ibegin,iend
             iglob = ibool(i,j,ispec)
             ! external velocity model
@@ -808,13 +808,13 @@
         endif  !  end of bottom absorbing boundary
 
         !--- top absorbing boundary
-        if(codeabs(ITOP,ispecabs)) then
+        if(codeabs(IEDGE3,ispecabs)) then
           j = NGLLZ
-          ibegin = ibegin_top(ispecabs)
-          iend = iend_top(ispecabs)
+          ibegin = ibegin_edge3(ispecabs)
+          iend = iend_edge3(ispecabs)
           ! exclude corners to make sure there is no contradiction on the normal
-          if(codeabs(ILEFT,ispecabs)) ibegin = 2
-          if(codeabs(IRIGHT,ispecabs)) iend = NGLLX-1
+          if(codeabs(IEDGE4,ispecabs)) ibegin = 2
+          if(codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
           do i = ibegin,iend
             iglob = ibool(i,j,ispec)
             ! external velocity model
