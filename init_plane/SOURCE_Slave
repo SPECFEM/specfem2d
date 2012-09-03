@@ -6,7 +6,7 @@ source_type                     = 1              # 1 for plane P waves, 2 for pl
 time_function_type              = 1              # Ricker = 1, first derivative = 2, Gaussian = 3, Dirac = 4, Heaviside = 5
 f0                              = 0.4          # dominant source frequency (Hz) if not Dirac or Heaviside
 tshift                          = 0.0            # time shift when multi sources (if one source, must be zero)
-angleforce                      = 23
+anglesource                     = 23
 Mxx                             = 1.             # Mxx component (for a moment tensor source only)
 Mzz                             = -1.            # Mzz component (for a moment tensor source only)
 Mxz                             = 0.             # Mxz component (for a moment tensor source only)
