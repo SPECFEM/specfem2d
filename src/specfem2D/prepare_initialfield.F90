@@ -131,20 +131,24 @@
   endif
 
   ! allow negative anglesource(1): incidence from the right side of the domain
+  ! anglesource has been converted from degrees to radians before
     anglesource_abs=abs(anglesource(1))
     if (anglesource_abs > pi/2.d0 .and. source_type(1) /= 3) &
       call exit_MPI("incorrect anglesource: must have 0 <= anglesource < 90")
 
-  ! only implemented for homogeneous media therefore only 1 material supported
+  ! only implemented for homogeneous media therefore only one material supported
   numat_local = numat
   if (numat /= 1) then
-!    if (myrank == 0) write(IOUT,*) 'not possible to have several materials with a plane wave, using the first material'
-!    numat_local = 1
      if (myrank == 0) then
-        print *, 'This is not a homogenous model while plane wave initial condition'
-        print *, '  is given by analytical formulae for a homogenous model.'
-        print *, 'Use at your own risk!'
+        write(IOUT,*)
+        write(IOUT,*) 'It is not possible to have several materials with a plane wave, thus using the first material.'
+        write(IOUT,*) 'This is not a homogenous model, it contains ',numat,' materials'
+        write(IOUT,*) 'but the plane wave initial and boundary fields'
+        write(IOUT,*) 'are computed by analytical formulas for a homogenous model.'
+        write(IOUT,*) 'Thus use at your own risk!'
+        write(IOUT,*)
      endif
+     numat_local = 1
   endif
 
   mu = poroelastcoef(2,1,numat_local)
@@ -233,9 +237,10 @@
     C_plane(1)=0.d0; C_plane(2)=0.d0
   endif
 
-   ! correct A_plane and B_plane according to incident direction
+   ! correct A_plane, B_plane and C_plane according to incident direction
   if (anglesource(1) < 0.) then
-     A_plane(1)=-A_plane(1); B_plane(1)=-B_plane(1)
+     A_plane(1)=-A_plane(1)
+     B_plane(1)=-B_plane(1)
      C_plane(1)=-C_plane(1)
   endif
 
@@ -264,16 +269,11 @@
 
   ! check if zs = zmax (free surface)
   if (myrank == 0 .and. abs(z_source(1)-zmax) > SMALLVALTOL) then
-     print *, 'It is easier to set zs in SOURCE = zmax in interfacefile to keep track of the initial wavefront'
+     print *, 'It is sometimes easier to set zs in SOURCE = zmax in interfacefile to keep track of the initial wavefront'
   endif
 
-  ! initialize the time offset to put the plane wave not too close to the irregularity on the free surface
-  ! add -t0 to match with the actual traveltime of plane waves
-  if (abs(anglesource(1))<1.d0*pi/180.d0 .and. source_type(1)/=3) then
-    time_offset = -1.d0*(zmax-zmin)/2.d0/c_inc - t0
-  else
-    time_offset = 0.d0 - t0
-  endif
+  ! add -t0 to match the actual (analytical) traveltime of plane waves
+  time_offset = 0.d0 - t0
 
   ! to correctly center the initial plane wave in the mesh
   x0_source = x_source(1)
@@ -282,7 +282,7 @@
   if (myrank == 0) then
     write(IOUT,*)
     write(IOUT,*) 'You can modify the location of the initial plane wave by changing xs and zs in DATA/SOURCE.'
-    write(IOUT,*) '   for instance: xs=',x_source(1),'   zs=',z_source(1), ' (zs must be the height of the free surface)'
+    write(IOUT,*) '   for instance: xs=',x_source(1),'   zs=',z_source(1), ' (zs can/should be the height of the free surface)'
     write(IOUT,*)
   endif
 

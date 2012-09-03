@@ -68,7 +68,6 @@ subroutine compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,
   double precision c_inc, c_refl, time_offset, f0
   double precision, dimension(NDIM) :: A_plane, B_plane, C_plane
 
-
 ! get the coordinates of the mesh point
   x = coord(1,iglob) - x0_source
   z = z0_source - coord(2,iglob)

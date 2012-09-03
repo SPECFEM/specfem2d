@@ -1025,10 +1025,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
         cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_unrelaxed_elastic/3._CUSTOM_REAL)/rhol)
         csl = sqrt(mul_unrelaxed_elastic/rhol)
 
-!!! DK DK
-   c_inc = csl
-!!! DK DK
-
         !--- left absorbing boundary
         if(codeabs(IEDGE4,ispecabs)) then
 
