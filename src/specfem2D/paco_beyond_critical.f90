@@ -14,7 +14,7 @@
 ! modified by Dimitri Komatitsch and Ronan Madec in March 2008
 ! in particular, converted to Fortran90 and to double precision
 
-subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,angleforce,&
+subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,anglesource,&
      f0,cp_local,cs_local,INCLUDE_ATTENUATION,QD,source_type,v0x_left,v0z_left,v0x_right,v0z_right,&
      v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot,left_bound,right_bound,&
      bot_bound,nleft,nright,nbot,displ_elastic,veloc_elastic,accel_elastic,x_source)
@@ -23,7 +23,7 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,angleforce,&
 
   include "constants.h"
 
-  double precision :: f0,cp_local,cs_local,deltat,dt,TP,angleforce,QD,delta_in_period
+  double precision :: f0,cp_local,cs_local,deltat,dt,TP,anglesource,QD,delta_in_period
   logical :: INCLUDE_ATTENUATION
   integer :: npt,NSTEP_global,source_type,nleft,nright,nbot,nglob
 
@@ -126,7 +126,7 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,angleforce,&
   UR=(1.0d0, 0.0d0)
 
 ! convert angle to radians
-  GAMR = angleforce
+  GAMR = anglesource
 
   BEALF=SQRT((1.0d0-2.0d0*ANU)/(2.0d0*(1.0d0-ANU)))
   ALFBE=1.0d0/BEALF

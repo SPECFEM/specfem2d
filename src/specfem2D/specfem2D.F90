@@ -367,7 +367,7 @@
   integer NSOURCES,i_source
   integer, dimension(:), allocatable :: source_type,time_function_type
   double precision, dimension(:), allocatable :: x_source,z_source,xi_source,gamma_source,&
-                  Mxx,Mzz,Mxz,f0,tshift_src,factor,angleforce
+                  Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource
   integer, dimension(:), allocatable :: ix_image_color_source,iy_image_color_source
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sourcearray
   double precision :: t0
@@ -804,7 +804,7 @@
   integer, dimension(:), allocatable :: recloc, which_proc_receiver
 
 ! to compute analytical initial plane wave field
-  double precision :: angleforce_refl, c_inc, c_refl, cploc, csloc
+  double precision :: anglesource_refl, c_inc, c_refl, cploc, csloc
   double precision, dimension(2) :: A_plane, B_plane, C_plane
   double precision :: time_offset
 
@@ -866,7 +866,7 @@
   integer  :: n1_tangential_detection_curve
   integer, dimension(4)  :: n_tangential_detection_curve
   integer, dimension(:), allocatable  :: rec_tangential_detection_curve
-  double precision :: distmin, dist_current, angleforce_recv
+  double precision :: distmin, dist_current, anglesource_recv
   double precision, dimension(:), allocatable :: dist_tangential_detection_curve
   double precision :: x_final_receiver_dummy, z_final_receiver_dummy
 
@@ -1103,7 +1103,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     allocate( f0(NSOURCES) )
     allocate( tshift_src(NSOURCES) )
     allocate( factor(NSOURCES) )
-    allocate( angleforce(NSOURCES) )
+    allocate( anglesource(NSOURCES) )
     allocate( Mxx(NSOURCES) )
     allocate( Mxz(NSOURCES) )
     allocate( Mzz(NSOURCES) )
@@ -1120,11 +1120,11 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
   ! reads in source infos
   call read_databases_sources(NSOURCES,source_type,time_function_type, &
-                      x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,angleforce)
+                      x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource)
 
   ! sets source parameters
   call set_sources(myrank,NSOURCES,source_type,time_function_type, &
-                      x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,angleforce,aval, &
+                      x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource,aval, &
                       t0,initialfield,ipass,deltat,USER_T0)
 
 
@@ -2345,7 +2345,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
           ! users can give an angle with respect to the normal to the topography surface,
           ! in which case we must compute the normal to the topography
           ! and add it the existing rotation angle
-          call compute_normal_vector( angleforce(i_source), &
+          call compute_normal_vector( anglesource(i_source), &
                             nodes_tangential_curve(1,n_tangential_detection_curve(1)), &
                             nodes_tangential_curve(1,n_tangential_detection_curve(2)), &
                             nodes_tangential_curve(1,n_tangential_detection_curve(3)), &
@@ -2358,24 +2358,24 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
           source_courbe_eros(i_source) = n1_tangential_detection_curve
           if ( myrank == 0 .and. is_proc_source(i_source) == 1 .and. nb_proc_source(i_source) == 1 ) then
             source_courbe_eros(i_source) = n1_tangential_detection_curve
-            angleforce_recv = angleforce(i_source)
+            anglesource_recv = anglesource(i_source)
 #ifdef USE_MPI
           else if ( myrank == 0 ) then
             do i = 1, nb_proc_source(i_source) - is_proc_source(i_source)
               call MPI_recv(source_courbe_eros(i_source),1,MPI_INTEGER, &
                           MPI_ANY_SOURCE,42,MPI_COMM_WORLD,request_mpi_status,ier)
-              call MPI_recv(angleforce_recv,1,MPI_DOUBLE_PRECISION, &
+              call MPI_recv(anglesource_recv,1,MPI_DOUBLE_PRECISION, &
                           MPI_ANY_SOURCE,43,MPI_COMM_WORLD,request_mpi_status,ier)
             enddo
           else if ( is_proc_source(i_source) == 1 ) then
             call MPI_send(n1_tangential_detection_curve,1,MPI_INTEGER,0,42,MPI_COMM_WORLD,ier)
-            call MPI_send(angleforce(i_source),1,MPI_DOUBLE_PRECISION,0,43,MPI_COMM_WORLD,ier)
+            call MPI_send(anglesource(i_source),1,MPI_DOUBLE_PRECISION,0,43,MPI_COMM_WORLD,ier)
 #endif
           endif
 
 #ifdef USE_MPI
-          call MPI_bcast(angleforce_recv,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-          angleforce(i_source) = angleforce_recv
+          call MPI_bcast(anglesource_recv,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+          anglesource(i_source) = anglesource_recv
 #endif
         endif !  if (is_proc_source(i_source) == 1)
       enddo ! do i_source=1,NSOURCES
@@ -3574,9 +3574,9 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     ! Calculation of the initial field for a plane wave
     if( any_elastic ) then
       call prepare_initialfield(myrank,any_acoustic,any_poroelastic,over_critical_angle, &
-                        NSOURCES,source_type,angleforce,x_source,z_source,f0,t0, &
+                        NSOURCES,source_type,anglesource,x_source,z_source,f0,t0, &
                         nglob,numat,poroelastcoef,density,coord, &
-                        angleforce_refl,c_inc,c_refl,cploc,csloc,time_offset, &
+                        anglesource_refl,c_inc,c_refl,cploc,csloc,time_offset, &
                         A_plane, B_plane, C_plane, &
                         accel_elastic,veloc_elastic,displ_elastic)
     endif
@@ -3608,7 +3608,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       allocate(t0z_bot(count_bottom,NSTEP))
 
       ! call Paco's routine to compute in frequency and convert to time by Fourier transform
-      call paco_beyond_critical(coord,nglob,deltat,NSTEP,angleforce(1),&
+      call paco_beyond_critical(coord,nglob,deltat,NSTEP,anglesource(1),&
               f0(1),cploc,csloc,ATTENUATION_VISCOELASTIC_SOLID,QKappa_attenuation(1),source_type(1),v0x_left,v0z_left, &
               v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right, &
               t0x_bot,t0z_bot,left_bound(1:count_left),right_bound(1:count_right),bot_bound(1:count_bottom), &
@@ -5363,7 +5363,7 @@ if(coupled_elastic_poro) then
       call compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
                source_type,it,NSTEP,anyabs,assign_external_model, &
-               initialfield,ATTENUATION_VISCOELASTIC_SOLID,angleforce,deltatcube, &
+               initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource,deltatcube, &
                deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,elastic,codeabs, &
                accel_elastic,veloc_elastic,displ_elastic,b_accel_elastic,b_displ_elastic, &
                density,poroelastcoef,xix,xiz,gammax,gammaz, &
@@ -5374,7 +5374,7 @@ if(coupled_elastic_poro) then
                hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1, &
                phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
                deltat,coord,add_Bielak_conditions, x_source(1), z_source(1), &
-               A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset, f0(1),&
+               A_plane, B_plane, C_plane, anglesource_refl, c_inc, c_refl, time_offset, f0(1),&
                v0x_left(1,it),v0z_left(1,it),v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
                t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it),t0x_bot(1,it),t0z_bot(1,it), &
                count_left,count_right,count_bottom,over_critical_angle, &
@@ -5871,9 +5871,9 @@ if(coupled_elastic_poro) then
                       iglob = ibool(i,j,ispec_selected_source(i_source))
                       hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
                       accel_elastic(1,iglob) = accel_elastic(1,iglob) &
-                        - sin(angleforce(i_source))*source_time_function(i_source,it,i_stage)*hlagrange
+                        - sin(anglesource(i_source))*source_time_function(i_source,it,i_stage)*hlagrange
                       accel_elastic(3,iglob) = accel_elastic(3,iglob) &
-                        + cos(angleforce(i_source))*source_time_function(i_source,it,i_stage)*hlagrange
+                        + cos(anglesource(i_source))*source_time_function(i_source,it,i_stage)*hlagrange
                     enddo
                   enddo
                 else    ! SH (membrane) calculation
@@ -5893,10 +5893,10 @@ if(coupled_elastic_poro) then
                       iglob = ibool(i,j,ispec_selected_source(i_source))
                       hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
                       b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) &
-                        - sin(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1) &
+                        - sin(anglesource(i_source))*source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1) &
                           *hlagrange
                       b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) &
-                        + cos(angleforce(i_source))*source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1) &
+                        + cos(anglesource(i_source))*source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1) &
                           *hlagrange
                     enddo
                   enddo
@@ -6645,14 +6645,14 @@ if(coupled_elastic_poro) then
                     hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
                     ! s
                     accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) - hlagrange * &
-                      (1._CUSTOM_REAL - phil/tortl)*sin(angleforce(i_source))*source_time_function(i_source,it,i_stage)
+                      (1._CUSTOM_REAL - phil/tortl)*sin(anglesource(i_source))*source_time_function(i_source,it,i_stage)
                     accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + hlagrange * &
-                      (1._CUSTOM_REAL - phil/tortl)*cos(angleforce(i_source))*source_time_function(i_source,it,i_stage)
+                      (1._CUSTOM_REAL - phil/tortl)*cos(anglesource(i_source))*source_time_function(i_source,it,i_stage)
                     ! w
                     accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - hlagrange * &
-                      (1._CUSTOM_REAL - rhol_f/rhol_bar)*sin(angleforce(i_source))*source_time_function(i_source,it,i_stage)
+                      (1._CUSTOM_REAL - rhol_f/rhol_bar)*sin(anglesource(i_source))*source_time_function(i_source,it,i_stage)
                     accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) + hlagrange * &
-                      (1._CUSTOM_REAL - rhol_f/rhol_bar)*cos(angleforce(i_source))*source_time_function(i_source,it,i_stage)
+                      (1._CUSTOM_REAL - rhol_f/rhol_bar)*cos(anglesource(i_source))*source_time_function(i_source,it,i_stage)
                   enddo
                 enddo
               else                   ! backward wavefield
@@ -6662,17 +6662,17 @@ if(coupled_elastic_poro) then
                     hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
                     ! b_s
                     b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - hlagrange * &
-                      (1._CUSTOM_REAL - phil/tortl)*sin(angleforce(i_source))* &
+                      (1._CUSTOM_REAL - phil/tortl)*sin(anglesource(i_source))* &
                       source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1)
                     b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) + hlagrange * &
-                      (1._CUSTOM_REAL - phil/tortl)*cos(angleforce(i_source))* &
+                      (1._CUSTOM_REAL - phil/tortl)*cos(anglesource(i_source))* &
                       source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1)
                     !b_w
                     b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) - hlagrange * &
-                      (1._CUSTOM_REAL - rhol_f/rhol_bar)*sin(angleforce(i_source))* &
+                      (1._CUSTOM_REAL - rhol_f/rhol_bar)*sin(anglesource(i_source))* &
                       source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1)
                     b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) + hlagrange * &
-                      (1._CUSTOM_REAL - rhol_f/rhol_bar)*cos(angleforce(i_source))* &
+                      (1._CUSTOM_REAL - rhol_f/rhol_bar)*cos(anglesource(i_source))* &
                       source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1)
                   enddo
                 enddo

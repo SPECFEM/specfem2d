@@ -45,7 +45,7 @@
 
 
   subroutine set_sources(myrank,NSOURCES,source_type,time_function_type, &
-                      x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,angleforce,aval, &
+                      x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource,aval, &
                       t0,initialfield,ipass,deltat,USER_T0)
 
 ! gets source parameters
@@ -57,7 +57,7 @@
   integer :: NSOURCES
   integer, dimension(NSOURCES) :: source_type,time_function_type
   double precision, dimension(NSOURCES) :: x_source,z_source, &
-    Mxx,Mzz,Mxz,f0,tshift_src,factor,angleforce
+    Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource
   double precision, dimension(NSOURCES) :: aval
   double precision :: t0
   double precision :: deltat
@@ -83,7 +83,7 @@
         if ( myrank == 0 .and. ipass == 1 ) then
           ! user output
           write(IOUT,212) x_source(i_source),z_source(i_source),f0(i_source),tshift_src(i_source), &
-                       factor(i_source),angleforce(i_source)
+                       factor(i_source),anglesource(i_source)
         endif
       else if(source_type(i_source) == 2) then
         if ( myrank == 0 .and. ipass == 1 ) then
@@ -120,7 +120,7 @@
     aval(i_source) = PI*PI*f0(i_source)*f0(i_source)
 
     ! convert angle from degrees to radians
-    angleforce(i_source) = angleforce(i_source) * PI / 180.d0
+    anglesource(i_source) = anglesource(i_source) * PI / 180.d0
 
   enddo ! do i_source=1,NSOURCES
 

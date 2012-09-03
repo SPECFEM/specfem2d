@@ -45,9 +45,9 @@
 
 
   subroutine prepare_initialfield(myrank,any_acoustic,any_poroelastic,over_critical_angle, &
-                        NSOURCES,source_type,angleforce,x_source,z_source,f0,t0, &
+                        NSOURCES,source_type,anglesource,x_source,z_source,f0,t0, &
                         nglob,numat,poroelastcoef,density,coord, &
-                        angleforce_refl,c_inc,c_refl,cploc,csloc,time_offset, &
+                        anglesource_refl,c_inc,c_refl,cploc,csloc,time_offset, &
                         A_plane, B_plane, C_plane, &
                         accel_elastic,veloc_elastic,displ_elastic)
 
@@ -62,7 +62,7 @@
 
   integer :: NSOURCES
   integer, dimension(NSOURCES) :: source_type
-  double precision, dimension(NSOURCES) :: angleforce,x_source,z_source,f0
+  double precision, dimension(NSOURCES) :: anglesource,x_source,z_source,f0
   double precision :: t0
 
   integer :: nglob,numat
@@ -70,7 +70,7 @@
   double precision, dimension(2,numat) :: density
   double precision, dimension(NDIM,nglob) :: coord
 
-  double precision :: angleforce_abs, angleforce_refl,c_inc,c_refl,cploc,csloc
+  double precision :: anglesource_abs, anglesource_refl,c_inc,c_refl,cploc,csloc
   double precision :: time_offset,x0_source,z0_source
   double precision, dimension(2) :: A_plane, B_plane, C_plane
 
@@ -114,26 +114,26 @@
     write(IOUT,*) '*** calculation of the initial plane wave ***'
     write(IOUT,*)
     write(IOUT,*)  'To change the initial plane wave, change source_type in DATA/SOURCE'
-    write(IOUT,*)  'and use 1 for a plane P wave, 2 for a plane SV wave, 3 for a Rayleigh wave'
+    write(IOUT,*)  'and use 1 or 4 for a plane P wave, 2 or 5 for a plane SV wave, 3 for a Rayleigh wave'
     write(IOUT,*)
 
   ! only implemented for one source
     if(NSOURCES > 1) call exit_MPI('calculation of the initial wave is only implemented for one source')
-    if (source_type(1) == 1) then
-      write(IOUT,*) 'initial P wave of', angleforce(1)*180.d0/pi, 'degrees introduced.'
-    else if (source_type(1) == 2) then
-      write(IOUT,*) 'initial SV wave of', angleforce(1)*180.d0/pi, ' degrees introduced.'
+    if (source_type(1) == 1 .or. source_type(1) == 4) then
+      write(IOUT,*) 'initial P wave of', anglesource(1)*180.d0/pi, 'degrees introduced.'
+    else if (source_type(1) == 2 .or. source_type(1) == 5) then
+      write(IOUT,*) 'initial SV wave of', anglesource(1)*180.d0/pi, ' degrees introduced.'
     else if (source_type(1) == 3) then
       write(IOUT,*) 'Rayleigh wave introduced.'
     else
-      call exit_MPI('Unrecognized source_type: should be 1 for plane P waves, 2 for plane SV waves, 3 for Rayleigh wave')
+      call exit_MPI('Unrecognized source_type: should be 1 or 4 for plane P waves, 2 or 5 for plane SV waves, 3 for Rayleigh wave')
     endif
   endif
 
-  ! allow negative angleforce(1): incidence from the right side of the domain
-    angleforce_abs=abs(angleforce(1))
-    if (angleforce_abs > pi/2.d0 .and. source_type(1) /= 3) &
-      call exit_MPI("incorrect angleforce: must have 0 <= angleforce < 90")
+  ! allow negative anglesource(1): incidence from the right side of the domain
+    anglesource_abs=abs(anglesource(1))
+    if (anglesource_abs > pi/2.d0 .and. source_type(1) /= 3) &
+      call exit_MPI("incorrect anglesource: must have 0 <= anglesource < 90")
 
   ! only implemented for homogeneous media therefore only 1 material supported
   numat_local = numat
@@ -155,75 +155,75 @@
   csloc = sqrt(mu/denst)
 
   ! P wave case
-  if (source_type(1) == 1) then
+  if (source_type(1) == 1 .or. source_type(1) == 4) then
 
-    p=sin(angleforce_abs)/cploc
+    p=sin(anglesource_abs)/cploc
     c_inc  = cploc
     c_refl = csloc
 
-    angleforce_refl = asin(p*c_refl)
+    anglesource_refl = asin(p*c_refl)
 
     ! from formulas (5.27) and (5.28) p 134 in Aki & Richards (2002)
-    PP = (- cos(2.d0*angleforce_refl)**2/csloc**3 &
-          + 4.d0*p**2*cos(angleforce_abs)*cos(angleforce_refl)/cploc) / &
-               (  cos(2.d0*angleforce_refl)**2/csloc**3 &
-                + 4.d0*p**2*cos(angleforce_abs)*cos(angleforce_refl)/cploc)
+    PP = (- cos(2.d0*anglesource_refl)**2/csloc**3 &
+          + 4.d0*p**2*cos(anglesource_abs)*cos(anglesource_refl)/cploc) / &
+               (  cos(2.d0*anglesource_refl)**2/csloc**3 &
+                + 4.d0*p**2*cos(anglesource_abs)*cos(anglesource_refl)/cploc)
 
-    PS = 4.d0*p*cos(angleforce_abs)*cos(2.d0*angleforce_refl) / &
-               (csloc**2*(cos(2.d0*angleforce_refl)**2/csloc**3 &
-               +4.d0*p**2*cos(angleforce_abs)*cos(angleforce_refl)/cploc))
+    PS = 4.d0*p*cos(anglesource_abs)*cos(2.d0*anglesource_refl) / &
+               (csloc**2*(cos(2.d0*anglesource_refl)**2/csloc**3 &
+               +4.d0*p**2*cos(anglesource_abs)*cos(anglesource_refl)/cploc))
 
     if (myrank == 0) then
-      write(IOUT,*) 'reflected convert plane wave angle: ', angleforce_refl*180.d0/pi
+      write(IOUT,*) 'reflected convert plane wave angle: ', anglesource_refl*180.d0/pi
     endif
 
     ! from Table 5.1 p141 in Aki & Richards (1980)
     ! we put the opposite sign on z coefficients because z axis is oriented from bottom to top
-    A_plane(1) = sin(angleforce_abs);           A_plane(2) = cos(angleforce_abs)
-    B_plane(1) = PP * sin(angleforce_abs);      B_plane(2) = - PP * cos(angleforce_abs)
-    C_plane(1) = PS * cos(angleforce_refl);     C_plane(2) = PS * sin(angleforce_refl)
+    A_plane(1) = sin(anglesource_abs);           A_plane(2) = cos(anglesource_abs)
+    B_plane(1) = PP * sin(anglesource_abs);      B_plane(2) = - PP * cos(anglesource_abs)
+    C_plane(1) = PS * cos(anglesource_refl);     C_plane(2) = PS * sin(anglesource_refl)
 
   ! SV wave case
-  else if (source_type(1) == 2) then
+  else if (source_type(1) == 2 .or. source_type(1) == 5) then
 
-    p=sin(angleforce_abs)/csloc
+    p=sin(anglesource_abs)/csloc
     c_inc  = csloc
     c_refl = cploc
 
     ! if this coefficient is greater than 1, we are beyond the critical SV wave angle and there cannot be a converted P wave
     if (p*c_refl<=1.d0) then
-      angleforce_refl = asin(p*c_refl)
+      anglesource_refl = asin(p*c_refl)
 
       ! from formulas (5.30) and (5.31) p 140 in Aki & Richards (1980)
-      SS = (cos(2.d0*angleforce_abs)**2/csloc**3 &
-          - 4.d0*p**2*cos(angleforce_abs)*cos(angleforce_refl)/cploc) / &
-            (cos(2.d0*angleforce_abs)**2/csloc**3 &
-              + 4.d0*p**2*cos(angleforce_abs)*cos(angleforce_refl)/cploc)
-      SP = 4.d0*p*cos(angleforce_abs)*cos(2*angleforce_abs) / &
-            (cploc*csloc*(cos(2.d0*angleforce_abs)**2/csloc**3&
-            +4.d0*p**2*cos(angleforce_refl)*cos(angleforce_abs)/cploc))
+      SS = (cos(2.d0*anglesource_abs)**2/csloc**3 &
+          - 4.d0*p**2*cos(anglesource_abs)*cos(anglesource_refl)/cploc) / &
+            (cos(2.d0*anglesource_abs)**2/csloc**3 &
+              + 4.d0*p**2*cos(anglesource_abs)*cos(anglesource_refl)/cploc)
+      SP = 4.d0*p*cos(anglesource_abs)*cos(2*anglesource_abs) / &
+            (cploc*csloc*(cos(2.d0*anglesource_abs)**2/csloc**3&
+            +4.d0*p**2*cos(anglesource_refl)*cos(anglesource_abs)/cploc))
 
       if (myrank == 0) then
-        write(IOUT,*) 'reflected convert plane wave angle: ', angleforce_refl*180.d0/pi
+        write(IOUT,*) 'reflected convert plane wave angle: ', anglesource_refl*180.d0/pi
       endif
 
     ! SV45 degree incident plane wave is a particular case
-    else if (angleforce_abs>pi/4.d0-1.0d-11 .and. angleforce_abs<pi/4.d0+1.0d-11) then
-      angleforce_refl = 0.d0
+    else if (anglesource_abs>pi/4.d0-1.0d-11 .and. anglesource_abs<pi/4.d0+1.0d-11) then
+      anglesource_refl = 0.d0
       SS = -1.0d0
       SP = 0.d0
     else
       over_critical_angle=.true.
-      angleforce_refl = 0.d0
+      anglesource_refl = 0.d0
       SS = 0.0d0
       SP = 0.d0
     endif
 
     ! from Table 5.1 p141 in Aki & Richards (1980)
     ! we put the opposite sign on z coefficients because z axis is oriented from bottom to top
-    A_plane(1) = cos(angleforce_abs);           A_plane(2) = - sin(angleforce_abs)
-    B_plane(1) = SS * cos(angleforce_abs);      B_plane(2) = SS * sin(angleforce_abs)
-    C_plane(1) = SP * sin(angleforce_refl);     C_plane(2) = - SP * cos(angleforce_refl)
+    A_plane(1) = cos(anglesource_abs);           A_plane(2) = - sin(anglesource_abs)
+    B_plane(1) = SS * cos(anglesource_abs);      B_plane(2) = SS * sin(anglesource_abs)
+    C_plane(1) = SP * sin(anglesource_refl);     C_plane(2) = - SP * cos(anglesource_refl)
 
   ! Rayleigh case
   else if (source_type(1) == 3) then
@@ -234,9 +234,15 @@
   endif
 
    ! correct A_plane and B_plane according to incident direction
-  if (angleforce(1) < 0.) then
+  if (anglesource(1) < 0.) then
      A_plane(1)=-A_plane(1); B_plane(1)=-B_plane(1)
      C_plane(1)=-C_plane(1)
+  endif
+
+! to suppress the reflected and converted plane wave fields
+  if(source_type(1) == 4 .or. source_type(1) == 5) then
+    B_plane(:) = 0
+    C_plane(:) = 0
   endif
 
   ! get minimum and maximum values of mesh coordinates
@@ -263,7 +269,7 @@
 
   ! initialize the time offset to put the plane wave not too close to the irregularity on the free surface
   ! add -t0 to match with the actual traveltime of plane waves
-  if (abs(angleforce(1))<1.d0*pi/180.d0 .and. source_type(1)/=3) then
+  if (abs(anglesource(1))<1.d0*pi/180.d0 .and. source_type(1)/=3) then
     time_offset = -1.d0*(zmax-zmin)/2.d0/c_inc - t0
   else
     time_offset = 0.d0 - t0
@@ -290,7 +296,7 @@
       ! z is from bottom to top therefore we take -z to make parallel with Aki & Richards
 
       z = z0_source - z
-      if (angleforce(1) >= 0.) then
+      if (anglesource(1) >= 0.) then
          x = x - x0_source
       else
          x = x0_source -x
@@ -300,33 +306,33 @@
 
       ! formulas for the initial displacement for a plane wave from Aki & Richards (1980)
       displ_elastic(1,i) = &
-          A_plane(1) * ricker_Bielak_displ(t - sin(angleforce_abs)*x/c_inc + cos(angleforce_abs)*z/c_inc,f0(1)) &
-        + B_plane(1) * ricker_Bielak_displ(t - sin(angleforce_abs)*x/c_inc - cos(angleforce_abs)*z/c_inc,f0(1)) &
-        + C_plane(1) * ricker_Bielak_displ(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0(1))
+          A_plane(1) * ricker_Bielak_displ(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0(1)) &
+        + B_plane(1) * ricker_Bielak_displ(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0(1)) &
+        + C_plane(1) * ricker_Bielak_displ(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0(1))
       displ_elastic(3,i) = &
-          A_plane(2) * ricker_Bielak_displ(t - sin(angleforce_abs)*x/c_inc + cos(angleforce_abs)*z/c_inc,f0(1)) &
-        + B_plane(2) * ricker_Bielak_displ(t - sin(angleforce_abs)*x/c_inc - cos(angleforce_abs)*z/c_inc,f0(1)) &
-        + C_plane(2) * ricker_Bielak_displ(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0(1))
+          A_plane(2) * ricker_Bielak_displ(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0(1)) &
+        + B_plane(2) * ricker_Bielak_displ(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0(1)) &
+        + C_plane(2) * ricker_Bielak_displ(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0(1))
 
       ! formulas for the initial velocity for a plane wave (first derivative in time of the displacement)
       veloc_elastic(1,i) = &
-          A_plane(1) * ricker_Bielak_veloc(t - sin(angleforce_abs)*x/c_inc + cos(angleforce_abs)*z/c_inc,f0(1)) &
-        + B_plane(1) * ricker_Bielak_veloc(t - sin(angleforce_abs)*x/c_inc - cos(angleforce_abs)*z/c_inc,f0(1)) &
-        + C_plane(1) * ricker_Bielak_veloc(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0(1))
+          A_plane(1) * ricker_Bielak_veloc(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0(1)) &
+        + B_plane(1) * ricker_Bielak_veloc(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0(1)) &
+        + C_plane(1) * ricker_Bielak_veloc(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0(1))
       veloc_elastic(3,i) = &
-          A_plane(2) * ricker_Bielak_veloc(t - sin(angleforce_abs)*x/c_inc + cos(angleforce_abs)*z/c_inc,f0(1)) &
-        + B_plane(2) * ricker_Bielak_veloc(t - sin(angleforce_abs)*x/c_inc - cos(angleforce_abs)*z/c_inc,f0(1)) &
-        + C_plane(2) * ricker_Bielak_veloc(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0(1))
+          A_plane(2) * ricker_Bielak_veloc(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0(1)) &
+        + B_plane(2) * ricker_Bielak_veloc(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0(1)) &
+        + C_plane(2) * ricker_Bielak_veloc(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0(1))
 
       ! formulas for the initial acceleration for a plane wave (second derivative in time of the displacement)
       accel_elastic(1,i) = &
-          A_plane(1) * ricker_Bielak_accel(t - sin(angleforce_abs)*x/c_inc + cos(angleforce_abs)*z/c_inc,f0(1)) &
-        + B_plane(1) * ricker_Bielak_accel(t - sin(angleforce_abs)*x/c_inc - cos(angleforce_abs)*z/c_inc,f0(1)) &
-        + C_plane(1) * ricker_Bielak_accel(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0(1))
+          A_plane(1) * ricker_Bielak_accel(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0(1)) &
+        + B_plane(1) * ricker_Bielak_accel(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0(1)) &
+        + C_plane(1) * ricker_Bielak_accel(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0(1))
       accel_elastic(3,i) = &
-          A_plane(2) * ricker_Bielak_accel(t - sin(angleforce_abs)*x/c_inc + cos(angleforce_abs)*z/c_inc,f0(1)) &
-        + B_plane(2) * ricker_Bielak_accel(t - sin(angleforce_abs)*x/c_inc - cos(angleforce_abs)*z/c_inc,f0(1)) &
-        + C_plane(2) * ricker_Bielak_accel(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0(1))
+          A_plane(2) * ricker_Bielak_accel(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0(1)) &
+        + B_plane(2) * ricker_Bielak_accel(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0(1)) &
+        + C_plane(2) * ricker_Bielak_accel(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0(1))
 
    enddo
 

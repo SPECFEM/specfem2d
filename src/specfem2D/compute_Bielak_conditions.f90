@@ -45,7 +45,7 @@
 ! compute analytical initial plane wave for Bielak's conditions
 
 subroutine compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-     x0_source, z0_source, A_plane, B_plane, C_plane, angleforce, angleforce_refl, &
+     x0_source, z0_source, A_plane, B_plane, C_plane, anglesource, anglesource_refl, &
      c_inc, c_refl, time_offset,f0)
 
   implicit none
@@ -64,7 +64,7 @@ subroutine compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,
 
   double precision, external :: ricker_Bielak_veloc
 
-  double precision x0_source, z0_source, angleforce, angleforce_refl
+  double precision x0_source, z0_source, anglesource, anglesource_refl
   double precision c_inc, c_refl, time_offset, f0
   double precision, dimension(NDIM) :: A_plane, B_plane, C_plane
 
@@ -124,25 +124,25 @@ subroutine compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,
 ! to compute the derivative of the displacement, we take the velocity ricker expression and we multiply by
 ! the derivative of the interior argument of ricker_Bielak_veloc
 
-  dxUx = A_plane(1) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) * (-sin(angleforce)/c_inc)&
-       + B_plane(1) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) * (-sin(angleforce)/c_inc)&
-       + C_plane(1) * ricker_Bielak_veloc(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)&
-       * (-sin(angleforce_refl)/c_refl)
+  dxUx = A_plane(1) * ricker_Bielak_veloc(t - sin(anglesource)*x/c_inc + cos(anglesource)*z/c_inc,f0) * (-sin(anglesource)/c_inc)&
+       + B_plane(1) * ricker_Bielak_veloc(t - sin(anglesource)*x/c_inc - cos(anglesource)*z/c_inc,f0) * (-sin(anglesource)/c_inc)&
+       + C_plane(1) * ricker_Bielak_veloc(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0)&
+       * (-sin(anglesource_refl)/c_refl)
 
-  dzUx = A_plane(1) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) * (-cos(angleforce)/c_inc)&
-       + B_plane(1) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) * (cos(angleforce)/c_inc)&
-       + C_plane(1) * ricker_Bielak_veloc(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)&
-       * (cos(angleforce_refl)/c_refl)
+  dzUx = A_plane(1) * ricker_Bielak_veloc(t - sin(anglesource)*x/c_inc + cos(anglesource)*z/c_inc,f0) * (-cos(anglesource)/c_inc)&
+       + B_plane(1) * ricker_Bielak_veloc(t - sin(anglesource)*x/c_inc - cos(anglesource)*z/c_inc,f0) * (cos(anglesource)/c_inc)&
+       + C_plane(1) * ricker_Bielak_veloc(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0)&
+       * (cos(anglesource_refl)/c_refl)
 
-  dxUz = A_plane(2) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) * (-sin(angleforce)/c_inc)&
-       + B_plane(2) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) * (-sin(angleforce)/c_inc)&
-       + C_plane(2) * ricker_Bielak_veloc(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)&
-       * (-sin(angleforce_refl)/c_refl)
+  dxUz = A_plane(2) * ricker_Bielak_veloc(t - sin(anglesource)*x/c_inc + cos(anglesource)*z/c_inc,f0) * (-sin(anglesource)/c_inc)&
+       + B_plane(2) * ricker_Bielak_veloc(t - sin(anglesource)*x/c_inc - cos(anglesource)*z/c_inc,f0) * (-sin(anglesource)/c_inc)&
+       + C_plane(2) * ricker_Bielak_veloc(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0)&
+       * (-sin(anglesource_refl)/c_refl)
 
-  dzUz = A_plane(2) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) * (-cos(angleforce)/c_inc)&
-       + B_plane(2) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) * (cos(angleforce)/c_inc)&
-       + C_plane(2) * ricker_Bielak_veloc(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)&
-       * (cos(angleforce_refl)/c_refl)
+  dzUz = A_plane(2) * ricker_Bielak_veloc(t - sin(anglesource)*x/c_inc + cos(anglesource)*z/c_inc,f0) * (-cos(anglesource)/c_inc)&
+       + B_plane(2) * ricker_Bielak_veloc(t - sin(anglesource)*x/c_inc - cos(anglesource)*z/c_inc,f0) * (cos(anglesource)/c_inc)&
+       + C_plane(2) * ricker_Bielak_veloc(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0)&
+       * (cos(anglesource_refl)/c_refl)
 
   t = time_veloc
 
@@ -154,12 +154,12 @@ subroutine compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,
 !!$      veloc_vert = - HALF * ricker_Bielak_veloc(t - x/2.d0 + (9 - z) * (sqrt(3.d0)/2.d0)) &
 !!$        + HALF * ricker_Bielak_veloc(t - x/2.d0 - (9 - z) * (sqrt(3.d0)/2.d0))
 
-  veloc_horiz = A_plane(1) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
-       + B_plane(1) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
-       + C_plane(1) * ricker_Bielak_veloc(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
-  veloc_vert = A_plane(2) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc + cos(angleforce)*z/c_inc,f0) &
-       + B_plane(2) * ricker_Bielak_veloc(t - sin(angleforce)*x/c_inc - cos(angleforce)*z/c_inc,f0) &
-       + C_plane(2) * ricker_Bielak_veloc(t - sin(angleforce_refl)*x/c_refl - cos(angleforce_refl)*z/c_refl,f0)
+  veloc_horiz = A_plane(1) * ricker_Bielak_veloc(t - sin(anglesource)*x/c_inc + cos(anglesource)*z/c_inc,f0) &
+       + B_plane(1) * ricker_Bielak_veloc(t - sin(anglesource)*x/c_inc - cos(anglesource)*z/c_inc,f0) &
+       + C_plane(1) * ricker_Bielak_veloc(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0)
+  veloc_vert = A_plane(2) * ricker_Bielak_veloc(t - sin(anglesource)*x/c_inc + cos(anglesource)*z/c_inc,f0) &
+       + B_plane(2) * ricker_Bielak_veloc(t - sin(anglesource)*x/c_inc - cos(anglesource)*z/c_inc,f0) &
+       + C_plane(2) * ricker_Bielak_veloc(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0)
 
 end subroutine compute_Bielak_conditions
 

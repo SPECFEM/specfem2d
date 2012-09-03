@@ -45,7 +45,7 @@
 subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
      ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
      source_type,it,NSTEP,anyabs,assign_external_model, &
-     initialfield,ATTENUATION_VISCOELASTIC_SOLID,angleforce,deltatcube, &
+     initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource,deltatcube, &
      deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,elastic,codeabs, &
      accel_elastic,veloc_elastic,displ_elastic,b_accel_elastic,b_displ_elastic, &
      density,poroelastcoef,xix,xiz,gammax,gammaz, &
@@ -55,7 +55,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
      dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
      hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
      deltat,coord,add_Bielak_conditions, &
-     x0_source, z0_source, A_plane, B_plane, C_plane, angleforce_refl, c_inc, c_refl, time_offset,f0, &
+     x0_source, z0_source, A_plane, B_plane, C_plane, anglesource_refl, c_inc, c_refl, time_offset,f0, &
      v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot,&
      nleft,nright,nbot,over_critical_angle,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,b_absorb_elastic_left,&
      b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top,nspec_left,nspec_right,&
@@ -95,7 +95,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   logical :: SAVE_FORWARD
 
   double precision :: deltatcube,deltatfourth,twelvedeltat,fourdeltatsquare
-  double precision, dimension(NSOURCES) :: angleforce
+  double precision, dimension(NSOURCES) :: anglesource
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
   integer, dimension(nspec) :: kmato
@@ -201,7 +201,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   ! for analytical initial plane wave for Bielak's conditions
   double precision :: veloc_horiz,veloc_vert,dxUx,dzUx,dxUz,dzUz,traction_x_t0,traction_z_t0,deltat
   double precision, dimension(NDIM,nglob), intent(in) :: coord
-  double precision x0_source, z0_source, angleforce_refl, c_inc, c_refl, time_offset, f0
+  double precision x0_source, z0_source, anglesource_refl, c_inc, c_refl, time_offset, f0
   double precision, dimension(NDIM) :: A_plane, B_plane, C_plane
   !over critical angle
   logical :: over_critical_angle
@@ -1025,9 +1025,9 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
         cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_unrelaxed_elastic/3._CUSTOM_REAL)/rhol)
         csl = sqrt(mul_unrelaxed_elastic/rhol)
 
-!!! DK DK 
+!!! DK DK
    c_inc = csl
-!!! DK DK 
+!!! DK DK
 
         !--- left absorbing boundary
         if(codeabs(IEDGE4,ispecabs)) then
@@ -1043,7 +1043,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
               if(add_Bielak_conditions .and. initialfield) then
                  if (.not.over_critical_angle) then
                     call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                         x0_source, z0_source, A_plane, B_plane, C_plane, angleforce(1), angleforce_refl, &
+                         x0_source, z0_source, A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
                          c_inc, c_refl, time_offset,f0)
                     traction_x_t0 = (lambdal_unrelaxed_elastic+2*mul_unrelaxed_elastic)*dxUx + lambdal_unrelaxed_elastic*dzUz
                     traction_z_t0 = mul_unrelaxed_elastic*(dxUz + dzUx)
@@ -1158,7 +1158,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
               if(add_Bielak_conditions .and. initialfield) then
                  if (.not.over_critical_angle) then
                     call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                         x0_source, z0_source, A_plane, B_plane, C_plane, angleforce(1), angleforce_refl, &
+                         x0_source, z0_source, A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
                          c_inc, c_refl, time_offset,f0)
                     traction_x_t0 = (lambdal_unrelaxed_elastic+2*mul_unrelaxed_elastic)*dxUx + lambdal_unrelaxed_elastic*dzUz
                     traction_z_t0 = mul_unrelaxed_elastic*(dxUz + dzUx)
@@ -1279,7 +1279,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
               if(add_Bielak_conditions .and. initialfield) then
                  if (.not.over_critical_angle) then
                     call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                         x0_source, z0_source, A_plane, B_plane, C_plane, angleforce(1), angleforce_refl, &
+                         x0_source, z0_source, A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
                          c_inc, c_refl, time_offset,f0)
                     traction_x_t0 = mul_unrelaxed_elastic*(dxUz + dzUx)
                     traction_z_t0 = lambdal_unrelaxed_elastic*dxUx + (lambdal_unrelaxed_elastic+2*mul_unrelaxed_elastic)*dzUz
@@ -1416,7 +1416,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
               ! top or bottom edge, vertical normal vector
               if(add_Bielak_conditions .and. initialfield) then
                  call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                      x0_source, z0_source, A_plane, B_plane, C_plane, angleforce(1), angleforce_refl, &
+                      x0_source, z0_source, A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
                       c_inc, c_refl, time_offset,f0)
                  traction_x_t0 = mul_unrelaxed_elastic*(dxUz + dzUx)
                  traction_z_t0 = lambdal_unrelaxed_elastic*dxUx + (lambdal_unrelaxed_elastic+2*mul_unrelaxed_elastic)*dzUz
