@@ -621,6 +621,9 @@ the source will be placed inside the medium
 
 \item[source\_type] Set this value equal to \texttt{1} for elastic forces or acoustic pressure,
 set this to \texttt{2} for moment tensor sources.
+For a plane wave including converted and reflected waves at the free surface, P wave = 1, S wave = 2, Rayleigh wave = 3;
+for a plane wave without converted nor reflected waves at the free surface, i.e. the incident wave only, P wave = 4, S wave = 5.
+(incident plane waves are turned on by parameter \texttt{initialfield} in \texttt{DATA/Par\_file}).
 
 \item[time\_function\_type] Choose a source-time function: set this value to \texttt{1} to use a Ricker,
 \texttt{2} the first derivative, \texttt{3} a Gaussian, \texttt{4} a Dirac or \texttt{5} a Heaviside source-time function.
@@ -668,7 +671,7 @@ The time shift parameter would simply apply
 an overall time shift to the synthetics (according to the time shift of the first source), something that can be done
 in the post-processing. This time shift parameter can be non-zero when using multiple sources.
 
-\item[angleforce] Angle of the source (for a force only)
+\item[anglesource] angle of the source (for a force only); for a plane wave, this is the incidence angle. For moment tensor sources this parameter is unused.
 
 \item[Mxx,Mzz,Mxz] Moment tensor components (valid only for moment tensor sources, source\_type "2").
 Note that the units for the components of a moment tensor source are different in SPECFEM2D and in SPECFEM3D:

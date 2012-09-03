@@ -48,7 +48,7 @@ module source_file
 
   ! source parameters
   integer, dimension(:),pointer ::  source_type,time_function_type
-  double precision, dimension(:),pointer :: xs,zs,f0,tshift_src,angleforce, &
+  double precision, dimension(:),pointer :: xs,zs,f0,tshift_src,anglesource, &
     Mxx,Mzz,Mxz,factor
   logical, dimension(:),pointer ::  source_surf
 
@@ -65,7 +65,7 @@ contains
 
   ! local parameters
   integer :: ios,icounter,i_source,num_sources
-  character(len=150) dummystring
+  character(len=150) string_read
   integer, parameter :: IIN_SOURCE = 22
 
   ! allocates memory arrays
@@ -76,7 +76,7 @@ contains
   allocate(time_function_type(NSOURCES))
   allocate(f0(NSOURCES))
   allocate(tshift_src(NSOURCES))
-  allocate(angleforce(NSOURCES))
+  allocate(anglesource(NSOURCES))
   allocate(Mxx(NSOURCES))
   allocate(Mxz(NSOURCES))
   allocate(Mzz(NSOURCES))
@@ -88,14 +88,28 @@ contains
 
   icounter = 0
   do while(ios == 0)
-     read(IIN_SOURCE,"(a)",iostat=ios) dummystring
-     if(ios == 0) icounter = icounter + 1
+     read(IIN_SOURCE,"(a)",iostat=ios) string_read
+
+     if(ios == 0) then
+
+! suppress trailing carriage return (ASCII code 13) if any (e.g. if input text file coming from Windows/DOS)
+       if(index(string_read,achar(13)) > 0) string_read = string_read(1:index(string_read,achar(13))-1)
+
+! suppress leading and trailing white spaces, if any
+       string_read = adjustl(string_read)
+       string_read = string_read(1:len_trim(string_read))
+
+! if the line is not empty and is not a comment, count it
+       if(len_trim(string_read) > 0 .and. (index(string_read,'#') == 0 .or. index(string_read,'#') > 1)) icounter = icounter + 1
+
+     endif
+
   enddo
   close(IIN_SOURCE)
 
   ! checks counter
   if(mod(icounter,NLINES_PER_SOURCE) /= 0) &
-    stop 'total number of lines in SOURCE file should be a multiple of NLINES_PER_SOURCE'
+    stop 'total number of non blank and non comment lines in SOURCE file should be a multiple of NLINES_PER_SOURCE'
 
   ! total number of sources
   num_sources = icounter / NLINES_PER_SOURCE
@@ -114,7 +128,7 @@ contains
     call read_value_integer(IIN_SOURCE,IGNORE_JUNK,time_function_type(i_source))
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,f0(i_source))
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,tshift_src(i_source))
-    call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,angleforce(i_source))
+    call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,anglesource(i_source))
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mxx(i_source))
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mzz(i_source))
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mxz(i_source))
@@ -129,7 +143,7 @@ contains
     print *,'Frequency, delay = ',f0(i_source),tshift_src(i_source)
     print *,'Source type (1=force, 2=explosion): ',source_type(i_source)
     print *,'Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside): ',time_function_type(i_source)
-    print *,'Angle of the source if force = ',angleforce(i_source)
+    print *,'Angle of the source if force = ',anglesource(i_source)
     print *,'Mxx of the source if moment tensor = ',Mxx(i_source)
     print *,'Mzz of the source if moment tensor = ',Mzz(i_source)
     print *,'Mxz of the source if moment tensor = ',Mxz(i_source)

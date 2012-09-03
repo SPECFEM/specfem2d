@@ -389,7 +389,7 @@
 !
 
   subroutine read_databases_sources(NSOURCES,source_type,time_function_type, &
-                      x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,angleforce)
+                      x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource)
 
 ! reads source parameters
 
@@ -399,7 +399,7 @@
   integer :: NSOURCES
   integer, dimension(NSOURCES) :: source_type,time_function_type
   double precision, dimension(NSOURCES) :: x_source,z_source, &
-    Mxx,Mzz,Mxz,f0,tshift_src,factor,angleforce
+    Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource
 
   ! local parameters
   integer :: i_source
@@ -416,14 +416,14 @@
   f0(:) = 0.d0
   tshift_src(:) = 0.d0
   factor(:) = 0.d0
-  angleforce(:) = 0.d0
+  anglesource(:) = 0.d0
 
   ! reads in source info from Database file
   do i_source=1,NSOURCES
      read(IIN,"(a80)") datlin
      read(IIN,*) source_type(i_source),time_function_type(i_source), &
                  x_source(i_source),z_source(i_source),f0(i_source),tshift_src(i_source), &
-                 factor(i_source),angleforce(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
+                 factor(i_source),anglesource(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
   enddo
 
   end subroutine read_databases_sources
