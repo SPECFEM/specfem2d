@@ -445,7 +445,7 @@
 
 
 !-----------------------------------------------
-! Assembling accel_elastic for elastic elements :
+! Assembling accel_elastic for poroelastic elements :
 ! the buffers are filled, the ISEND and IRECV are started here, then
 ! contributions are added.
 ! The previous version included communication overlap using persistent

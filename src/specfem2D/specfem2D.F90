@@ -2828,10 +2828,6 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       is_PML(:) = .false.
       which_PML_elem(:,:) = .false.
 
-
-      write(*,*)read_external_mesh,'read_external_mesh'
-      write(*,*)CPML_element_file,'CPML_element_file'
-
       call pml_init(nspec,nglob,anyabs,ibool,nelemabs,codeabs,numabs,&
                   nspec_PML,is_PML,which_PML_elem,spec_to_PML, &
                   icorner_iglob,NELEM_PML_THICKNESS,&
