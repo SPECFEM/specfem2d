@@ -101,7 +101,7 @@ nbmodels                        = 1              # nb of different models
 # III: (model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu).
 # For istropic elastic/acoustic material use I and set Vs to zero to make a given model acoustic, for anisotropic elastic use II,
 # and for isotropic poroelastic material use III. The mesh can contain acoustic, elastic, and poroelastic models simultaneously.
-1 1 2700.d0 3000.d0 0.d0 0 0 20. 10. 0 0 0 0 0 0
+1 1 2700.d0 3000.d0 1732.05d0 0 0 20. 10. 0 0 0 0 0 0
 
 # external mesh or not
 read_external_mesh              = .false.
