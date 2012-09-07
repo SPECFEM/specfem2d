@@ -173,7 +173,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 !! DK DK added this for Guenneau, March 2012
 #ifdef USE_GUENNEAU
   integer :: kmato_ispec_outside_Guenneau
-  real(kind=CUSTOM_REAL) :: ang, ct, st, r, a, inva, lambda, mu, x, y, &
+  real(kind=CUSTOM_REAL) :: ct, st, r, a, inva, lambda, mu, x, y, &
                             lambdaplus2mu, ct2 , ct3 , ct4 , twoct2 , st2 , st3 , st4
   real(kind=CUSTOM_REAL) :: epsilon_xx,epsilon_xz,epsilon_zx,epsilon_zz
   real(kind=CUSTOM_REAL) :: C1111, C1112, C1121, C1122, C1211, C1212, C1221, C1222, C2111, C2112, C2121, &
