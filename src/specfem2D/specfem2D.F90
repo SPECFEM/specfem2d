@@ -362,6 +362,7 @@
   include "constants.h"
 #ifdef USE_MPI
   include "mpif.h"
+  include "precision.h"
 #endif
 
   integer NSOURCES,i_source
@@ -549,6 +550,8 @@
   double precision, external :: netlib_specfun_erf
 
   double precision :: vpImin,vpImax,vpIImin,vpIImax
+
+  real(kind=CUSTOM_REAL) :: kinetic_energy,potential_energy,kinetic_energy_total,potential_energy_total
 
   integer :: colors,numbers,subsamp_postscript,imagetype_postscript, &
     NSTEP_BETWEEN_OUTPUT_INFO,seismotype,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP_BETWEEN_OUTPUT_IMAGES, &
@@ -4231,10 +4234,6 @@ if(coupled_elastic_poro) then
 
   endif
 
-#ifdef USE_MPI
-  if(output_energy) stop 'error: energy calculation currently serial only, should add an MPI_REDUCE in parallel'
-#endif
-
 !----  create a Gnuplot script to display the energy curve in log scale
   if(output_energy .and. myrank == 0) then
     close(IOUT_ENERGY)
@@ -7327,19 +7326,33 @@ if(coupled_elastic_poro) then
     endif
 
 !----  compute kinetic and potential energy
-    if(output_energy) &
+    if(output_energy) then
+
       call compute_energy(displ_elastic,veloc_elastic, &
                         displs_poroelastic,velocs_poroelastic, &
                         displw_poroelastic,velocw_poroelastic, &
                         xix,xiz,gammax,gammaz,jacobian,ibool,elastic,poroelastic,hprime_xx,hprime_zz, &
                         nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-                        assign_external_model,it,deltat,t0,kmato,poroelastcoef,density, &
-                        porosity,tortuosity, &
+                        assign_external_model,kmato,poroelastcoef,density,porosity,tortuosity, &
                         vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext, &
                         anisotropic,anisotropy,wxgll,wzgll,numat, &
                         pressure_element,vector_field_element,e1,e11, &
                         potential_dot_acoustic,potential_dot_dot_acoustic, &
-                        ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS,p_sv)
+                        ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS,p_sv,kinetic_energy,potential_energy)
+
+#ifdef USE_MPI
+      call MPI_REDUCE(kinetic_energy, kinetic_energy_total, 1, CUSTOM_MPI_TYPE, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+      call MPI_REDUCE(potential_energy, potential_energy_total, 1, CUSTOM_MPI_TYPE, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+#else
+      kinetic_energy_total = kinetic_energy 
+      potential_energy_total = potential_energy
+#endif
+
+! save kinetic, potential and total energy for this time step in external file
+      if(myrank == 0) write(IOUT_ENERGY,*) real(dble(it-1)*deltat - t0,4),real(kinetic_energy_total,4), &
+                     real(potential_energy_total,4),real(kinetic_energy_total + potential_energy_total,4)
+
+    endif
 
 !----  display time step and max of norm of displacement
     if(mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then

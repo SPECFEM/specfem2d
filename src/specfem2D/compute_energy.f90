@@ -48,13 +48,12 @@
                             xix,xiz,gammax,gammaz,jacobian,ibool, &
                             elastic,poroelastic,hprime_xx,hprime_zz, &
                             nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-                            assign_external_model,it,deltat,t0,kmato,poroelastcoef,density, &
-                            porosity,tortuosity, &
+                            assign_external_model,kmato,poroelastcoef,density,porosity,tortuosity, &
                             vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext, &
                             anisotropic,anisotropy,wxgll,wzgll,numat, &
                             pressure_element,vector_field_element,e1,e11, &
                             potential_dot_acoustic,potential_dot_dot_acoustic, &
-                            ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS,p_sv)
+                            ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS,p_sv,kinetic_energy,potential_energy)
 
 ! compute kinetic and potential energy in the solid (acoustic elements are excluded)
 
@@ -79,9 +78,6 @@
     potential_dot_acoustic,potential_dot_dot_acoustic
 
   logical :: ATTENUATION_VISCOELASTIC_SOLID,p_sv
-
-  integer :: it
-  double precision :: t0,deltat
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
 
@@ -394,10 +390,6 @@
     endif
 
   enddo
-
-  ! save kinetic, potential and total energy for this time step in external file
-  write(IOUT_ENERGY,*) real(dble(it-1)*deltat - t0,4),real(kinetic_energy,4), &
-                     real(potential_energy,4),real(kinetic_energy + potential_energy,4)
 
   end subroutine compute_energy
 
