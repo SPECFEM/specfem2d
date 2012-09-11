@@ -2232,6 +2232,7 @@ coorg_recv_ps_vector_field
   endif
 
 ! draw the Stacey absorbing boundary line segment in different colors depending on its type
+  if ( myrank == 0 ) then
   if(typeabs(inum) == IBOTTOM) then
     write(24,*) '0 1 0 RG'  ! Green
   else if(typeabs(inum) == IRIGHT) then
@@ -2242,6 +2243,7 @@ coorg_recv_ps_vector_field
     write(24,*) '1 0.6470 0 RG' ! Orange
   else
     call exit_MPI('Wrong typeabs() absorbing boundary code')
+  endif
   endif
 
   x1 = (coorg(1,knods(ideb,ispec))-xmin)*ratio_page + orig_x
