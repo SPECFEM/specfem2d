@@ -889,7 +889,9 @@
 
 !! DK DK for add spring to stacey absorbing boundary condition
   logical :: ADD_SPRING_TO_STACEY
-  double precision :: x_center_spring,z_center_spring,xmin_spring,xmax_spring,zmin_spring,zmax_spring
+  double precision :: x_center_spring,z_center_spring
+  double precision :: xmin,xmax,zmin,zmax
+  double precision :: xmin_local,xmax_local,zmin_local,zmax_local
 
 !! DK DK for horizontal periodic conditions: detect common points between left and right edges
   logical :: ADD_PERIODIC_CONDITIONS
@@ -1769,11 +1771,6 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
     deallocate(perm)
 
-!   print *
-!   print *,'Xmin,Xmax of the local mesh for proc ',myrank,' = ',minval(coord(1,:)),maxval(coord(1,:))
-!   print *,'Zmin,Zmax of the local mesh for proc ',myrank,' = ',minval(coord(2,:)),maxval(coord(2,:))
-!   print *
-
 !! DK DK for periodic conditions: detect common points between left and right edges
 
     if(ADD_PERIODIC_CONDITIONS) then
@@ -2088,13 +2085,43 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
   endif
 
-  xmin_spring = minval(coord(1,:))
-  xmax_spring = maxval(coord(1,:))
-  zmin_spring = minval(coord(2,:))
-  zmax_spring = maxval(coord(2,:))
+  xmin_local = minval(coord(1,:))
+  xmax_local = maxval(coord(1,:))
+  zmin_local = minval(coord(2,:))
+  zmax_local = maxval(coord(2,:))
 
-  x_center_spring=(xmax_spring+xmin_spring)/2.d0
-  z_center_spring=(zmax_spring+zmin_spring)/2.d0
+#ifdef USE_MPI
+  call MPI_REDUCE(xmin_local, xmin, 1, MPI_DOUBLE_PRECISION, MPI_MIN, 0, MPI_COMM_WORLD, ier)
+  call MPI_REDUCE(xmax_local, xmax, 1, MPI_DOUBLE_PRECISION, MPI_MAX, 0, MPI_COMM_WORLD, ier)
+  call MPI_REDUCE(zmin_local, zmin, 1, MPI_DOUBLE_PRECISION, MPI_MIN, 0, MPI_COMM_WORLD, ier)
+  call MPI_REDUCE(zmax_local, zmax, 1, MPI_DOUBLE_PRECISION, MPI_MAX, 0, MPI_COMM_WORLD, ier)
+#else
+  xmin = xmin_local
+  xmax = xmax_local
+  zmin = zmin_local
+  zmax = zmax_local
+#endif
+
+  if(myrank == 0) then
+    write(IOUT,*)
+    write(IOUT,*) 'Xmin,Xmax of the whole mesh = ',xmin,xmax
+    write(IOUT,*) 'Zmin,Zmax of the whole mesh = ',zmin,zmax
+    write(IOUT,*)
+
+! check that no source is located outside the mesh
+    do i = 1,NSOURCES
+      if(x_source(i) < xmin) stop 'error: at least one source has x < xmin of the mesh'
+      if(x_source(i) > xmax) stop 'error: at least one source has x > xmax of the mesh'
+
+      if(z_source(i) < zmin) stop 'error: at least one source has z < zmin of the mesh'
+      if(z_source(i) > zmax) stop 'error: at least one source has z > zmax of the mesh'
+    enddo
+
+  endif
+
+! use a spring to improve the stability of the Stacey condition
+  x_center_spring = (xmax + xmin)/2.d0
+  z_center_spring = (zmax + zmin)/2.d0
 
 !
 !--- save the grid of points in a file
@@ -7996,7 +8023,7 @@ if(coupled_elastic_poro) then
                       fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges,&
                       fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
                       solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,num_solid_poro_edges, &
-                      myrank,nproc,ier,&
+                      poroelastic,myrank,nproc,ier,&
                       d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
                       d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
                       d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model, &
@@ -8040,7 +8067,7 @@ if(coupled_elastic_poro) then
                       fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges,&
                       fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
                       solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,num_solid_poro_edges, &
-                      myrank,nproc,ier,&
+                      poroelastic,myrank,nproc,ier,&
                       d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
                       d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
                       d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model, &
@@ -8084,7 +8111,7 @@ if(coupled_elastic_poro) then
                       fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
                       fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
                       solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,num_solid_poro_edges, &
-                      myrank,nproc,ier,&
+                      poroelastic,myrank,nproc,ier,&
                       d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
                       d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
                       d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model, &

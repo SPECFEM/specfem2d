@@ -54,7 +54,7 @@
           fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
           fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
           solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,num_solid_poro_edges, &
-          myrank,nproc,ier, &
+          poroelastic,myrank,nproc,ier, &
           d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
           d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
           d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model, &
@@ -96,6 +96,7 @@
 
   integer kmato(nspec),knods(ngnod,nspec)
   integer ibool(NGLLX,NGLLZ,nspec)
+  logical, dimension(nspec) :: poroelastic
 
   double precision xinterp(pointsdisp,pointsdisp),zinterp(pointsdisp,pointsdisp)
   double precision shapeint(ngnod,pointsdisp,pointsdisp)
@@ -138,7 +139,7 @@
 ! US letter paper or European A4
   logical :: US_LETTER
 
-  double precision convert,x1,cpIloc,xa,za,xb,zb
+  double precision convert,x1,cpIloc,xa,za,xb,zb,lambdaplus2mu,denst
   double precision z1,x2,z2,d,d1,d2,dummy,theta,thetaup,thetadown
 
   double precision :: mul_s,kappal_s,rhol_s
@@ -1662,10 +1663,19 @@ coorg_recv_ps_vector_field
           do j=1,NGLLX-subsamp_postscript,subsamp_postscript
 
   if((vpmax-vpmin)/vpmin > 0.02d0) then
+
   if(assign_external_model) then
+
     x1 = (vpext(i,j,ispec)-vpmin) / (vpmax-vpmin)
+
   else
+
     material = kmato(ispec)
+
+    if(poroelastic(ispec)) then
+
+      ! poroelastic material
+
 ! get elastic parameters of current spectral element
     phil = porosity(kmato(ispec))
     tortl = tortuosity(kmato(ispec))
@@ -1691,8 +1701,19 @@ coorg_recv_ps_vector_field
       cfactor = phil/(tortl*rhol_f)*(H_biot*M_biot - C_biot*C_biot)
       cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
       cpIloc = sqrt(cpIsquare)
+
+    else
+
+      lambdaplus2mu  = poroelastcoef(3,1,material)
+      denst = density(1,material)
+      cpIloc = sqrt(lambdaplus2mu/denst)
+
+    endif
+
     x1 = (cpIloc-vpmin)/(vpmax-vpmin)
+
   endif
+
   else
     x1 = 0.5d0
   endif
