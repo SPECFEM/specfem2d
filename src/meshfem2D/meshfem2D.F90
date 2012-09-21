@@ -630,6 +630,9 @@ program meshfem2D
 
      if ( any_abs ) then
         call read_abs_surface(absorbing_surface_file, remove_min_to_start_at_zero)
+        if(initialfield) then
+          call rotate_mesh_for_abs(ngnod) 
+        endif
      endif
 
   else
