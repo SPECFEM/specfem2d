@@ -331,10 +331,8 @@
                  ty = rho_vs*vy
                  tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
 
-                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
-                    + (tx)*weight
-                rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)  &
-                    + (tz)*weight
+                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob) + tx*weight
+                rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_three(iglob) + tz*weight
 
               endif
            enddo
@@ -384,10 +382,8 @@
                  ty = rho_vs*vy
                  tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
 
-                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
-                    + (tx)*weight
-                rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)  &
-                    + (tz)*weight
+                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob) + tx*weight
+                rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_three(iglob) + tz*weight
 
               endif
 
@@ -443,13 +439,9 @@
                    tx = 0
                    ty = 0
                    tz = 0
-                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)
-                rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_three(iglob)
                  else
-                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
-                    + (tx)*weight
-                rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)  &
-                    + (tz)*weight
+                   rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob) + tx*weight
+                   rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_three(iglob) + tz*weight
                  endif
 
              endif
@@ -508,13 +500,9 @@
                    tx = 0
                    ty = 0
                    tz = 0
-                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)
-                rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_three(iglob)
                  else
-                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
-                    + (tx)*weight
-                rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)  &
-                    + (tz)*weight
+                   rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob) + tx*weight
+                   rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_three(iglob) + tz*weight
                  endif
             endif
 
@@ -582,3 +570,4 @@
     rmass_inverse_acoustic(:) = 1._CUSTOM_REAL / rmass_inverse_acoustic(:)
 
   end subroutine invert_mass_matrix
+
