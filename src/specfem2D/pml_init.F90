@@ -192,37 +192,37 @@
          which_PML_elem(IRIGHT,ispec)  = .false.
          which_PML_elem(ITOP,ispec)    = .false.
          which_PML_elem(IBOTTOM,ispec) = .false.
-       elseif(region_CPML(ispec)==2)then
+       else if(region_CPML(ispec)==2)then
          which_PML_elem(ILEFT,ispec)   = .false.
          which_PML_elem(IRIGHT,ispec)  = .true.
          which_PML_elem(ITOP,ispec)    = .false.
          which_PML_elem(IBOTTOM,ispec) = .false.
-       elseif(region_CPML(ispec)==4)then
+       else if(region_CPML(ispec)==4)then
          which_PML_elem(ILEFT,ispec)   = .false.
          which_PML_elem(IRIGHT,ispec)  = .false.
          which_PML_elem(ITOP,ispec)    = .true.
          which_PML_elem(IBOTTOM,ispec) = .false.
-       elseif(region_CPML(ispec)==5)then
+       else if(region_CPML(ispec)==5)then
          which_PML_elem(ILEFT,ispec)   = .true.
          which_PML_elem(IRIGHT,ispec)  = .false.
          which_PML_elem(ITOP,ispec)    = .true.
          which_PML_elem(IBOTTOM,ispec) = .false.
-       elseif(region_CPML(ispec)==6)then
+       else if(region_CPML(ispec)==6)then
          which_PML_elem(ILEFT,ispec)   = .false.
          which_PML_elem(IRIGHT,ispec)  = .true.
          which_PML_elem(ITOP,ispec)    = .true.
          which_PML_elem(IBOTTOM,ispec) = .false.
-       elseif(region_CPML(ispec)==8)then
+       else if(region_CPML(ispec)==8)then
          which_PML_elem(ILEFT,ispec)   = .false.
          which_PML_elem(IRIGHT,ispec)  = .false.
          which_PML_elem(ITOP,ispec)    = .false.
          which_PML_elem(IBOTTOM,ispec) = .true.
-       elseif(region_CPML(ispec)==9)then
+       else if(region_CPML(ispec)==9)then
          which_PML_elem(ILEFT,ispec)   = .true.
          which_PML_elem(IRIGHT,ispec)  = .false.
          which_PML_elem(ITOP,ispec)    = .false.
          which_PML_elem(IBOTTOM,ispec) = .true.
-       elseif(region_CPML(ispec)==10)then
+       else if(region_CPML(ispec)==10)then
          which_PML_elem(ILEFT,ispec)   = .false.
          which_PML_elem(IRIGHT,ispec)  = .true.
          which_PML_elem(ITOP,ispec)    = .false.

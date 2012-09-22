@@ -638,9 +638,9 @@ program meshfem2D
 
      if ( any_abs ) then
         call read_abs_surface(absorbing_surface_file, remove_min_to_start_at_zero)
-        if(initialfield) then
-          call rotate_mesh_for_abs(ngnod) 
-        endif
+! rotate the elements that are located on the edges of the mesh if needed
+! otherwise the plane wave and Bielak conditions may not be applied correctly
+        if(initialfield) call rotate_mesh_for_plane_wave(ngnod)
      endif
 
   else

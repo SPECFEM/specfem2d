@@ -362,12 +362,13 @@ contains
   end subroutine read_abs_surface
 
   !-----------------------------------------------
-  ! rotate_mesh_for_abs.
-  ! rotate mesh elements to make sure topological absorbing surface 
-  ! is aligned with physical absorbing surface
+  ! rotate_mesh_for_plane_wave.
+  ! rotate mesh elements to make sure topological absorbing surface
+  ! is aligned with physical absorbing surface, since this is the surface
+  ! that we use to impose the plane wave and Bielak boundary conditions.
   !-----------------------------------------------
 
- subroutine rotate_mesh_for_abs(ngnod)
+ subroutine rotate_mesh_for_plane_wave(ngnod)
 
  implicit none
 
@@ -375,9 +376,8 @@ contains
  integer :: i,j,ispec,i1,i2,inode,iswap
  logical :: found_this_point
  integer, dimension(:,:), allocatable :: ibool,ibool_rotated
-!! DK DK be careful here, "ibool" and "iglob" apply to the mesh corners (4 or 9 points) only,
+!! DK DK be careful here, "ibool" applies to the mesh corners (4 or 9 points) only,
 !! DK DK not to the GLL points because there are no GLL points in the Gmsh mesh files
-! integer, dimension(:), allocatable :: ielem,iglob1,iglob2
   integer :: index_rotation1,index_rotation2,index_rotation3,index_rotation4,&
              index_rotation5,index_rotation6,index_rotation7,index_rotation8,index_edge
 
@@ -390,7 +390,7 @@ contains
       ibool(2,ispec) = elmnts((ispec-1)*ngnod+1)
       ibool(3,ispec) = elmnts((ispec-1)*ngnod+2)
       ibool(4,ispec) = elmnts((ispec-1)*ngnod+3)
-    elseif(ngnod == 9) then
+    else if(ngnod == 9) then
       ibool(1,ispec) = elmnts((ispec-1)*ngnod)
       ibool(2,ispec) = elmnts((ispec-1)*ngnod+1)
       ibool(3,ispec) = elmnts((ispec-1)*ngnod+2)
@@ -410,13 +410,13 @@ do j = 1, 4
   if(j==1)then
     index_edge=3
     ibool_rotated(:,:) = ibool(:,:)
-  elseif(j==2)then
+  else if(j==2)then
     index_edge=1
     ibool(:,:) = ibool_rotated(:,:)
-  elseif(j==3)then
+  else if(j==3)then
     index_edge=4
     ibool(:,:) = ibool_rotated(:,:)
-  elseif(j==4)then
+  else if(j==4)then
     index_edge=2
     ibool(:,:) = ibool_rotated(:,:)
   else
@@ -433,8 +433,8 @@ do j = 1, 4
       index_rotation6 = 4
       index_rotation7 = 1
       index_rotation8 = 4
-   elseif(index_edge==2)then  
-! right edge 
+   else if(index_edge==2)then
+! right edge
       index_rotation1 = 2
       index_rotation2 = 3
       index_rotation3 = 3
@@ -443,8 +443,8 @@ do j = 1, 4
       index_rotation6 = 4
       index_rotation7 = 1
       index_rotation8 = 2
-   elseif(index_edge==3)then 
-! top edge 
+   else if(index_edge==3)then
+! top edge
       index_rotation1 = 3
       index_rotation2 = 4
       index_rotation3 = 1
@@ -453,8 +453,8 @@ do j = 1, 4
       index_rotation6 = 2
       index_rotation7 = 2
       index_rotation8 = 3
-   elseif(index_edge==4)then 
-! left edge 
+   else if(index_edge==4)then
+! left edge
       index_rotation1 = 1
       index_rotation2 = 4
       index_rotation3 = 1
@@ -469,7 +469,7 @@ do j = 1, 4
 
   do i = 1,nelemabs
    if(index_edge==abs_surface(5,i))then
-   ispec = abs_surface(1,i) + 1  !!!!be careful the ispec from abs_surface(1,i) begin from zero
+   ispec = abs_surface(1,i) + 1  !!!! be careful: ispec from abs_surface(1,i) start at zero
    found_this_point = .false.
    do inode = 1,ngnod
       if(ibool(inode,ispec) == abs_surface(3,i)) then
@@ -500,46 +500,47 @@ do j = 1, 4
 
 ! test orientation
    if(i1 == index_rotation1 .and. i2 == index_rotation2) then
-!    print *,'orientation of element ',i,' is already good'
+!   print *,'orientation of element ',i,' is already good'
+
    else if (i1 == index_rotation3 .and. i2 == index_rotation4) then ! for this one, remember that we have swapped, thus 4 1 is 1 4
-!    print *,'element ',i,' must be rotated 3 times'
+!   print *,'element ',i,' must be rotated 3 times'
     ibool_rotated(4,ispec) = ibool(1,ispec)
     ibool_rotated(1,ispec) = ibool(2,ispec)
     ibool_rotated(2,ispec) = ibool(3,ispec)
     ibool_rotated(3,ispec) = ibool(4,ispec)
     if(ngnod == 9) then
-    ibool_rotated(8,ispec) = ibool(5,ispec)
-    ibool_rotated(5,ispec) = ibool(6,ispec)
-    ibool_rotated(6,ispec) = ibool(7,ispec)
-    ibool_rotated(7,ispec) = ibool(8,ispec)
+      ibool_rotated(8,ispec) = ibool(5,ispec)
+      ibool_rotated(5,ispec) = ibool(6,ispec)
+      ibool_rotated(6,ispec) = ibool(7,ispec)
+      ibool_rotated(7,ispec) = ibool(8,ispec)
 ! 9th point is at the element center and thus never changes when we rotate an element
     endif
 
    else if (i1 == index_rotation5 .and. i2 == index_rotation6) then
-!    print *,'element ',i,ispec,' must be rotated 2 times top'
+!   print *,'element ',i,ispec,' must be rotated 2 times top'
     ibool_rotated(3,ispec) = ibool(1,ispec)
     ibool_rotated(4,ispec) = ibool(2,ispec)
     ibool_rotated(1,ispec) = ibool(3,ispec)
     ibool_rotated(2,ispec) = ibool(4,ispec)
     if(ngnod == 9) then
-    ibool_rotated(7,ispec) = ibool(5,ispec)
-    ibool_rotated(8,ispec) = ibool(6,ispec)
-    ibool_rotated(5,ispec) = ibool(7,ispec)
-    ibool_rotated(6,ispec) = ibool(8,ispec)
+      ibool_rotated(7,ispec) = ibool(5,ispec)
+      ibool_rotated(8,ispec) = ibool(6,ispec)
+      ibool_rotated(5,ispec) = ibool(7,ispec)
+      ibool_rotated(6,ispec) = ibool(8,ispec)
 ! 9th point is at the element center and thus never changes when we rotate an element
     endif
 
    else if (i1 == index_rotation7 .and. i2 == index_rotation8) then
-!    print *,'element ',i,' must be rotated 1 time'
+!   print *,'element ',i,' must be rotated 1 time'
     ibool_rotated(2,ispec) = ibool(1,ispec)
     ibool_rotated(3,ispec) = ibool(2,ispec)
     ibool_rotated(4,ispec) = ibool(3,ispec)
     ibool_rotated(1,ispec) = ibool(4,ispec)
     if(ngnod == 9) then
-    ibool_rotated(6,ispec) = ibool(5,ispec)
-    ibool_rotated(7,ispec) = ibool(6,ispec)
-    ibool_rotated(8,ispec) = ibool(7,ispec)
-    ibool_rotated(5,ispec) = ibool(8,ispec)
+      ibool_rotated(6,ispec) = ibool(5,ispec)
+      ibool_rotated(7,ispec) = ibool(6,ispec)
+      ibool_rotated(8,ispec) = ibool(7,ispec)
+      ibool_rotated(5,ispec) = ibool(8,ispec)
 ! 9th point is at the element center and thus never changes when we rotate an element
     endif
 
@@ -559,7 +560,7 @@ do j = 1, 4
       elmnts((ispec-1)*ngnod+1) = ibool_rotated(2,ispec)
       elmnts((ispec-1)*ngnod+2) = ibool_rotated(3,ispec)
       elmnts((ispec-1)*ngnod+3) = ibool_rotated(4,ispec)
-    elseif(ngnod == 9) then
+    else if(ngnod == 9) then
       elmnts((ispec-1)*ngnod)   = ibool_rotated(1,ispec)
       elmnts((ispec-1)*ngnod+1) = ibool_rotated(2,ispec)
       elmnts((ispec-1)*ngnod+2) = ibool_rotated(3,ispec)
@@ -574,7 +575,7 @@ do j = 1, 4
     endif
   enddo
 
-end  subroutine rotate_mesh_for_abs
+end  subroutine rotate_mesh_for_plane_wave
 
   !-----------------------------------------------
   ! Creating dual graph (adjacency is defined by 'ncommonnodes' between two elements).
@@ -841,7 +842,7 @@ end  subroutine rotate_mesh_for_abs
                 ! elastic element
                 is_acoustic_el = .false.
                 is_elastic_el = .true.
-              elseif ( phi_material(num_material(el+1)) >= 1.d0) then
+              else if ( phi_material(num_material(el+1)) >= 1.d0) then
                 ! acoustic element
                 is_acoustic_el = .true.
                 is_elastic_el = .false.
@@ -857,7 +858,7 @@ end  subroutine rotate_mesh_for_abs
                 if ( phi_material(num_material(adjncy_g(el_adj)+1)) < TINYVAL) then
                   is_acoustic_el_adj = .false.
                   is_elastic_el_adj = .true.
-                elseif ( phi_material(num_material(adjncy_g(el_adj)+1)) >= 1.d0) then
+                else if ( phi_material(num_material(adjncy_g(el_adj)+1)) >= 1.d0) then
                   is_acoustic_el_adj = .true.
                   is_elastic_el_adj = .false.
                 else
@@ -896,7 +897,7 @@ end  subroutine rotate_mesh_for_abs
           if ( phi_material(num_material(el+1)) < TINYVAL) then
             is_acoustic_el = .false.
             is_elastic_el = .true.
-          elseif ( phi_material(num_material(el+1)) >= 1.d0) then
+          else if ( phi_material(num_material(el+1)) >= 1.d0) then
             is_acoustic_el = .true.
             is_elastic_el = .false.
           else
@@ -907,7 +908,7 @@ end  subroutine rotate_mesh_for_abs
             if ( phi_material(num_material(adjncy_g(el_adj)+1)) < TINYVAL) then
               is_acoustic_el_adj = .false.
               is_elastic_el_adj = .true.
-            elseif ( phi_material(num_material(adjncy_g(el_adj)+1)) >= 1.d0) then
+            else if ( phi_material(num_material(adjncy_g(el_adj)+1)) >= 1.d0) then
               is_acoustic_el_adj = .true.
               is_elastic_el_adj = .false.
             else
