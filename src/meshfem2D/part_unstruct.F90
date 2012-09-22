@@ -201,6 +201,38 @@ contains
 
   end subroutine read_mat
 
+  !-----------------------------------------------
+  ! Read the position of pml element storing it in array 'is_pml'
+  !-----------------------------------------------
+  subroutine read_pml_element(filename, is_pml, nspec_cpml)
+
+  implicit none
+
+  character(len=256), intent(in)  :: filename
+  integer, dimension(1:nelmnts), intent(out)  :: is_pml
+  integer, intent(out)  :: nspec_cpml
+!  integer, dimension(:,:), allocatable  :: local_pml  
+
+  integer  :: i,j,k,ier
+
+  open(unit=992, file=trim(filename), form='formatted' , status='old', action='read',iostat=ier)
+  if( ier /= 0 ) then
+    print*,'error opening file: ',trim(filename)
+    stop 'error read external mat file'
+  endif
+
+  read(992,*) nspec_cpml
+
+  do i = 1, nspec_cpml
+     read(992,*) j, k
+     is_pml(j) = k
+  enddo
+
+  close(992)
+
+  end subroutine read_pml_element
+
+
 
   !-----------------------------------------------
   ! Read free surface.
@@ -330,13 +362,12 @@ contains
   end subroutine read_abs_surface
 
   !-----------------------------------------------
-  ! rotate_mesh_for_plane_wave.
-  ! rotate mesh elements to make sure topological absorbing surface
-  ! is aligned with physical absorbing surface, since this is the surface
-  ! that we use to impose the plane wave and Bielak boundary conditions.
+  ! rotate_mesh_for_abs.
+  ! rotate mesh elements to make sure topological absorbing surface 
+  ! is aligned with physical absorbing surface
   !-----------------------------------------------
 
- subroutine rotate_mesh_for_plane_wave(ngnod)
+ subroutine rotate_mesh_for_abs(ngnod)
 
  implicit none
 
@@ -344,8 +375,9 @@ contains
  integer :: i,j,ispec,i1,i2,inode,iswap
  logical :: found_this_point
  integer, dimension(:,:), allocatable :: ibool,ibool_rotated
-!! DK DK be careful here, "ibool" applies to the mesh corners (4 or 9 points) only,
+!! DK DK be careful here, "ibool" and "iglob" apply to the mesh corners (4 or 9 points) only,
 !! DK DK not to the GLL points because there are no GLL points in the Gmsh mesh files
+! integer, dimension(:), allocatable :: ielem,iglob1,iglob2
   integer :: index_rotation1,index_rotation2,index_rotation3,index_rotation4,&
              index_rotation5,index_rotation6,index_rotation7,index_rotation8,index_edge
 
@@ -358,7 +390,7 @@ contains
       ibool(2,ispec) = elmnts((ispec-1)*ngnod+1)
       ibool(3,ispec) = elmnts((ispec-1)*ngnod+2)
       ibool(4,ispec) = elmnts((ispec-1)*ngnod+3)
-    else if(ngnod == 9) then
+    elseif(ngnod == 9) then
       ibool(1,ispec) = elmnts((ispec-1)*ngnod)
       ibool(2,ispec) = elmnts((ispec-1)*ngnod+1)
       ibool(3,ispec) = elmnts((ispec-1)*ngnod+2)
@@ -378,13 +410,13 @@ do j = 1, 4
   if(j==1)then
     index_edge=3
     ibool_rotated(:,:) = ibool(:,:)
-  else if(j==2)then
+  elseif(j==2)then
     index_edge=1
     ibool(:,:) = ibool_rotated(:,:)
-  else if(j==3)then
+  elseif(j==3)then
     index_edge=4
     ibool(:,:) = ibool_rotated(:,:)
-  else if(j==4)then
+  elseif(j==4)then
     index_edge=2
     ibool(:,:) = ibool_rotated(:,:)
   else
@@ -401,8 +433,8 @@ do j = 1, 4
       index_rotation6 = 4
       index_rotation7 = 1
       index_rotation8 = 4
-   else if(index_edge==2)then
-! right edge
+   elseif(index_edge==2)then  
+! right edge 
       index_rotation1 = 2
       index_rotation2 = 3
       index_rotation3 = 3
@@ -411,8 +443,8 @@ do j = 1, 4
       index_rotation6 = 4
       index_rotation7 = 1
       index_rotation8 = 2
-   else if(index_edge==3)then
-! top edge
+   elseif(index_edge==3)then 
+! top edge 
       index_rotation1 = 3
       index_rotation2 = 4
       index_rotation3 = 1
@@ -421,8 +453,8 @@ do j = 1, 4
       index_rotation6 = 2
       index_rotation7 = 2
       index_rotation8 = 3
-   else if(index_edge==4)then
-! left edge
+   elseif(index_edge==4)then 
+! left edge 
       index_rotation1 = 1
       index_rotation2 = 4
       index_rotation3 = 1
@@ -437,7 +469,7 @@ do j = 1, 4
 
   do i = 1,nelemabs
    if(index_edge==abs_surface(5,i))then
-   ispec = abs_surface(1,i) + 1  !!!! be careful: ispec from abs_surface(1,i) start at zero
+   ispec = abs_surface(1,i) + 1  !!!!be careful the ispec from abs_surface(1,i) begin from zero
    found_this_point = .false.
    do inode = 1,ngnod
       if(ibool(inode,ispec) == abs_surface(3,i)) then
@@ -468,47 +500,46 @@ do j = 1, 4
 
 ! test orientation
    if(i1 == index_rotation1 .and. i2 == index_rotation2) then
-!   print *,'orientation of element ',i,' is already good'
-
+!    print *,'orientation of element ',i,' is already good'
    else if (i1 == index_rotation3 .and. i2 == index_rotation4) then ! for this one, remember that we have swapped, thus 4 1 is 1 4
-!   print *,'element ',i,' must be rotated 3 times'
+!    print *,'element ',i,' must be rotated 3 times'
     ibool_rotated(4,ispec) = ibool(1,ispec)
     ibool_rotated(1,ispec) = ibool(2,ispec)
     ibool_rotated(2,ispec) = ibool(3,ispec)
     ibool_rotated(3,ispec) = ibool(4,ispec)
     if(ngnod == 9) then
-      ibool_rotated(8,ispec) = ibool(5,ispec)
-      ibool_rotated(5,ispec) = ibool(6,ispec)
-      ibool_rotated(6,ispec) = ibool(7,ispec)
-      ibool_rotated(7,ispec) = ibool(8,ispec)
+    ibool_rotated(8,ispec) = ibool(5,ispec)
+    ibool_rotated(5,ispec) = ibool(6,ispec)
+    ibool_rotated(6,ispec) = ibool(7,ispec)
+    ibool_rotated(7,ispec) = ibool(8,ispec)
 ! 9th point is at the element center and thus never changes when we rotate an element
     endif
 
    else if (i1 == index_rotation5 .and. i2 == index_rotation6) then
-!   print *,'element ',i,ispec,' must be rotated 2 times top'
+!    print *,'element ',i,ispec,' must be rotated 2 times top'
     ibool_rotated(3,ispec) = ibool(1,ispec)
     ibool_rotated(4,ispec) = ibool(2,ispec)
     ibool_rotated(1,ispec) = ibool(3,ispec)
     ibool_rotated(2,ispec) = ibool(4,ispec)
     if(ngnod == 9) then
-      ibool_rotated(7,ispec) = ibool(5,ispec)
-      ibool_rotated(8,ispec) = ibool(6,ispec)
-      ibool_rotated(5,ispec) = ibool(7,ispec)
-      ibool_rotated(6,ispec) = ibool(8,ispec)
+    ibool_rotated(7,ispec) = ibool(5,ispec)
+    ibool_rotated(8,ispec) = ibool(6,ispec)
+    ibool_rotated(5,ispec) = ibool(7,ispec)
+    ibool_rotated(6,ispec) = ibool(8,ispec)
 ! 9th point is at the element center and thus never changes when we rotate an element
     endif
 
    else if (i1 == index_rotation7 .and. i2 == index_rotation8) then
-!   print *,'element ',i,' must be rotated 1 time'
+!    print *,'element ',i,' must be rotated 1 time'
     ibool_rotated(2,ispec) = ibool(1,ispec)
     ibool_rotated(3,ispec) = ibool(2,ispec)
     ibool_rotated(4,ispec) = ibool(3,ispec)
     ibool_rotated(1,ispec) = ibool(4,ispec)
     if(ngnod == 9) then
-      ibool_rotated(6,ispec) = ibool(5,ispec)
-      ibool_rotated(7,ispec) = ibool(6,ispec)
-      ibool_rotated(8,ispec) = ibool(7,ispec)
-      ibool_rotated(5,ispec) = ibool(8,ispec)
+    ibool_rotated(6,ispec) = ibool(5,ispec)
+    ibool_rotated(7,ispec) = ibool(6,ispec)
+    ibool_rotated(8,ispec) = ibool(7,ispec)
+    ibool_rotated(5,ispec) = ibool(8,ispec)
 ! 9th point is at the element center and thus never changes when we rotate an element
     endif
 
@@ -528,7 +559,7 @@ do j = 1, 4
       elmnts((ispec-1)*ngnod+1) = ibool_rotated(2,ispec)
       elmnts((ispec-1)*ngnod+2) = ibool_rotated(3,ispec)
       elmnts((ispec-1)*ngnod+3) = ibool_rotated(4,ispec)
-    else if(ngnod == 9) then
+    elseif(ngnod == 9) then
       elmnts((ispec-1)*ngnod)   = ibool_rotated(1,ispec)
       elmnts((ispec-1)*ngnod+1) = ibool_rotated(2,ispec)
       elmnts((ispec-1)*ngnod+2) = ibool_rotated(3,ispec)
@@ -543,7 +574,7 @@ do j = 1, 4
     endif
   enddo
 
-end  subroutine rotate_mesh_for_plane_wave
+end  subroutine rotate_mesh_for_abs
 
   !-----------------------------------------------
   ! Creating dual graph (adjacency is defined by 'ncommonnodes' between two elements).
@@ -810,7 +841,7 @@ end  subroutine rotate_mesh_for_plane_wave
                 ! elastic element
                 is_acoustic_el = .false.
                 is_elastic_el = .true.
-              else if ( phi_material(num_material(el+1)) >= 1.d0) then
+              elseif ( phi_material(num_material(el+1)) >= 1.d0) then
                 ! acoustic element
                 is_acoustic_el = .true.
                 is_elastic_el = .false.
@@ -826,7 +857,7 @@ end  subroutine rotate_mesh_for_plane_wave
                 if ( phi_material(num_material(adjncy_g(el_adj)+1)) < TINYVAL) then
                   is_acoustic_el_adj = .false.
                   is_elastic_el_adj = .true.
-                else if ( phi_material(num_material(adjncy_g(el_adj)+1)) >= 1.d0) then
+                elseif ( phi_material(num_material(adjncy_g(el_adj)+1)) >= 1.d0) then
                   is_acoustic_el_adj = .true.
                   is_elastic_el_adj = .false.
                 else
@@ -865,7 +896,7 @@ end  subroutine rotate_mesh_for_plane_wave
           if ( phi_material(num_material(el+1)) < TINYVAL) then
             is_acoustic_el = .false.
             is_elastic_el = .true.
-          else if ( phi_material(num_material(el+1)) >= 1.d0) then
+          elseif ( phi_material(num_material(el+1)) >= 1.d0) then
             is_acoustic_el = .true.
             is_elastic_el = .false.
           else
@@ -876,7 +907,7 @@ end  subroutine rotate_mesh_for_plane_wave
             if ( phi_material(num_material(adjncy_g(el_adj)+1)) < TINYVAL) then
               is_acoustic_el_adj = .false.
               is_elastic_el_adj = .true.
-            else if ( phi_material(num_material(adjncy_g(el_adj)+1)) >= 1.d0) then
+            elseif ( phi_material(num_material(adjncy_g(el_adj)+1)) >= 1.d0) then
               is_acoustic_el_adj = .true.
               is_elastic_el_adj = .false.
             else
@@ -959,7 +990,7 @@ end  subroutine rotate_mesh_for_plane_wave
   ! Write elements (their nodes) pertaining to iproc partition in the corresponding Database
   !--------------------------------------------------
   subroutine write_partition_database(IIN_database, iproc, nspec, &
-                                      num_modele, ngnod, num_phase)
+                                      num_modele, num_pml, ngnod, num_phase)
 
   implicit none
 
@@ -967,6 +998,7 @@ end  subroutine rotate_mesh_for_plane_wave
   integer, intent(in)  :: num_phase, iproc
   integer, intent(inout)  :: nspec
   integer, dimension(:)  :: num_modele
+  integer, dimension(:)  :: num_pml
   integer, intent(in)  :: ngnod
 
   integer  :: i,j,k
@@ -989,7 +1021,7 @@ end  subroutine rotate_mesh_for_plane_wave
                  if (glob2loc_nodes_parts(k) == iproc) loc_nodes(j) = glob2loc_nodes(k)
               enddo
            enddo
-           write(IIN_database,*) glob2loc_elmnts(i)+1, num_modele(i+1), (loc_nodes(k)+1, k=0,ngnod-1)
+           write(IIN_database,*) glob2loc_elmnts(i)+1, num_modele(i+1), (loc_nodes(k)+1, k=0,ngnod-1), num_pml(i+1)
         endif
      enddo
 

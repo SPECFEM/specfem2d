@@ -44,7 +44,7 @@
   subroutine pml_init(nspec,nglob,anyabs,ibool,nelemabs,codeabs,numabs,&
                     nspec_PML,is_PML,which_PML_elem,spec_to_PML, &
                     icorner_iglob,NELEM_PML_THICKNESS,&
-                  read_external_mesh,CPML_element_file)
+                  read_external_mesh,region_CPML)
 
 
   implicit none
@@ -70,10 +70,7 @@
 
 !! DK DK for CPML_element_file
   logical :: read_external_mesh
-  character(len=256)  :: CPML_element_file
-  integer :: ier,ispec_CPML
-  integer :: ispec_temp
-  integer, dimension(:), allocatable :: region_CPML
+  integer, dimension(nspec) :: region_CPML
 
   !!!detection of PML elements
 
@@ -178,60 +175,54 @@
   is_PML(:) = .false.
   which_PML_elem(:,:) = .false.
 
-  open(unit=9999, file=trim(CPML_element_file), form='formatted' , status='old', action='read',iostat=ier)
-  if( ier /= 0 ) then
-    print*,'error opening file: ',trim(CPML_element_file)
-    stop 'error read external CPML element file'
-  endif
-
-  read(9999,*)nspec_PML
-  allocate(region_CPML(nspec_PML))
-
-  do ispec_CPML=1,nspec_PML
-     read(9999,*)ispec_temp,region_CPML(ispec_CPML)
-     is_PML(ispec_temp)=.true.
-     spec_to_PML(ispec_temp)=ispec_CPML
+  nspec_PML = 0
+  do ispec=1,nspec
+     if(region_CPML(ispec) .ne. 0)then
+     nspec_PML = nspec_PML + 1
+     is_PML(ispec)=.true.
+     spec_to_PML(ispec)=nspec_PML
+     endif
   enddo
+
 
   do ispec=1,nspec
      if(is_PML(ispec))then
-     ispec_CPML=spec_to_PML(ispec)
-       if(region_CPML(ispec_CPML)==1)then
+       if(region_CPML(ispec)==1)then
          which_PML_elem(ILEFT,ispec)   = .true.
          which_PML_elem(IRIGHT,ispec)  = .false.
          which_PML_elem(ITOP,ispec)    = .false.
          which_PML_elem(IBOTTOM,ispec) = .false.
-       elseif(region_CPML(ispec_CPML)==2)then
+       elseif(region_CPML(ispec)==2)then
          which_PML_elem(ILEFT,ispec)   = .false.
          which_PML_elem(IRIGHT,ispec)  = .true.
          which_PML_elem(ITOP,ispec)    = .false.
          which_PML_elem(IBOTTOM,ispec) = .false.
-       elseif(region_CPML(ispec_CPML)==4)then
+       elseif(region_CPML(ispec)==4)then
          which_PML_elem(ILEFT,ispec)   = .false.
          which_PML_elem(IRIGHT,ispec)  = .false.
          which_PML_elem(ITOP,ispec)    = .true.
          which_PML_elem(IBOTTOM,ispec) = .false.
-       elseif(region_CPML(ispec_CPML)==5)then
+       elseif(region_CPML(ispec)==5)then
          which_PML_elem(ILEFT,ispec)   = .true.
          which_PML_elem(IRIGHT,ispec)  = .false.
          which_PML_elem(ITOP,ispec)    = .true.
          which_PML_elem(IBOTTOM,ispec) = .false.
-       elseif(region_CPML(ispec_CPML)==6)then
+       elseif(region_CPML(ispec)==6)then
          which_PML_elem(ILEFT,ispec)   = .false.
          which_PML_elem(IRIGHT,ispec)  = .true.
          which_PML_elem(ITOP,ispec)    = .true.
          which_PML_elem(IBOTTOM,ispec) = .false.
-       elseif(region_CPML(ispec_CPML)==8)then
+       elseif(region_CPML(ispec)==8)then
          which_PML_elem(ILEFT,ispec)   = .false.
          which_PML_elem(IRIGHT,ispec)  = .false.
          which_PML_elem(ITOP,ispec)    = .false.
          which_PML_elem(IBOTTOM,ispec) = .true.
-       elseif(region_CPML(ispec_CPML)==9)then
+       elseif(region_CPML(ispec)==9)then
          which_PML_elem(ILEFT,ispec)   = .true.
          which_PML_elem(IRIGHT,ispec)  = .false.
          which_PML_elem(ITOP,ispec)    = .false.
          which_PML_elem(IBOTTOM,ispec) = .true.
-       elseif(region_CPML(ispec_CPML)==10)then
+       elseif(region_CPML(ispec)==10)then
          which_PML_elem(ILEFT,ispec)   = .false.
          which_PML_elem(IRIGHT,ispec)  = .true.
          which_PML_elem(ITOP,ispec)    = .false.
