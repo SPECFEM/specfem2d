@@ -43,7 +43,7 @@
 !========================================================================
 
 
-  subroutine save_databases(nspec,num_material, &
+  subroutine save_databases(nspec,num_material,is_pml, &
                             my_interfaces,my_nb_interfaces, &
                             nnodes_tangential_curve,nodes_tangential_curve )
 
@@ -58,6 +58,7 @@
 
   integer :: nspec
   integer, dimension(nelmnts) :: num_material
+  integer, dimension(nelmnts) :: is_pml
 
   integer, dimension(0:ninterfaces-1) :: my_interfaces
   integer, dimension(0:ninterfaces-1) :: my_nb_interfaces
@@ -96,8 +97,9 @@
 
     call write_glob2loc_nodes_database(15, iproc, npgeo, 1)
 
-
-    call write_partition_database(15, iproc, nspec, num_material, ngnod, 1)
+!   DK DK add support for using pml in mpi mode with external mesh 
+!   call write_partition_database(15, iproc, nspec, num_material, ngnod, 1)
+    call write_partition_database(15, iproc, nspec, num_material, is_pml, ngnod, 1)
 
 
     write(15,*) 'npgeo nproc'
@@ -123,7 +125,8 @@
 
     if(read_external_mesh) then
     write(15,*) 'CPML_element_file'
-    write(15,"(a256)") trim(CPML_element_file)
+!    write(15,"(a256)") trim(CPML_element_file)
+    write(15,*) trim(CPML_element_file)
     endif
 
     write(15,*) 'NELEM_PML_THICKNESS'
@@ -284,7 +287,9 @@
 
     write(15,*) 'Arrays kmato and knods for each bloc:'
 
-    call write_partition_database(15, iproc, nspec, num_material, ngnod, 2)
+!   DK DK add support for using pml in mpi mode with external mesh 
+!   call write_partition_database(15, iproc, nspec, num_material, ngnod, 2)
+    call write_partition_database(15, iproc, nspec, num_material, is_pml, ngnod, 2)
 
     if ( nproc /= 1 ) then
       call write_interfaces_database(15, nproc, iproc, &

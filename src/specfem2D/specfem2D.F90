@@ -999,7 +999,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
 !PML parameters
   logical, dimension(:), allocatable :: is_PML
-
+  integer, dimension(:), allocatable :: region_CPML
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
                     K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
@@ -1226,8 +1226,12 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     allocate(antecedent_list(nspec))
     allocate(perm(nspec))
   endif
+
+  allocate(is_PML(nspec))       
+!   DK DK add support for using pml in mpi mode with external mesh  
+  allocate(region_CPML(nspec))    
   call read_databases_mato(ipass,nspec,ngnod,kmato,knods, &
-                                perm,antecedent_list)
+                                perm,antecedent_list,region_CPML)
 
 !! DK DK Dec 2011: add a small crack (discontinuity) in the medium manually
   if(ADD_A_SMALL_CRACK_IN_THE_MEDIUM) then
@@ -2850,19 +2854,18 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     if( PML_BOUNDARY_CONDITIONS .and. anyabs_glob ) then
 
       !PML code
-      allocate(is_PML(nspec))
       allocate(icorner_iglob(nglob))
       allocate(which_PML_elem(4,nspec))
       allocate(spec_to_PML(nspec))
 
       is_PML(:) = .false.
       which_PML_elem(:,:) = .false.
-
+!   DK DK add support for using pml in mpi mode with external mesh 
       call pml_init(nspec,nglob,anyabs,ibool,nelemabs,codeabs,numabs,&
                   nspec_PML,is_PML,which_PML_elem,spec_to_PML, &
                   icorner_iglob,NELEM_PML_THICKNESS,&
-                  read_external_mesh,CPML_element_file)
-
+                  read_external_mesh,region_CPML)
+      deallocate(region_CPML)
       deallocate(icorner_iglob)
 
       if (nspec_PML==0) nspec_PML=1

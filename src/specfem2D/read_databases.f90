@@ -193,7 +193,8 @@
 
   if(read_external_mesh)then
   read(IIN,"(a80)") datlin
-  read(IIN,"(a256)") CPML_element_file
+!  read(IIN,"(a256)") CPML_element_file
+  read(IIN,*) CPML_element_file
   endif
 
   read(IIN,"(a80)") datlin
@@ -537,7 +538,7 @@
 !
 
   subroutine read_databases_mato(ipass,nspec,ngnod,kmato,knods, &
-                                perm,antecedent_list)
+                                perm,antecedent_list,region_CPML)
 
 ! reads spectral macrobloc data
 
@@ -546,18 +547,20 @@
 
   integer :: ipass,ngnod,nspec
   integer, dimension(nspec) :: kmato
+  integer, dimension(nspec) :: region_CPML
   integer, dimension(ngnod,nspec) :: knods
 
   integer, dimension(nspec) :: perm,antecedent_list
 
   ! local parameters
-  integer :: n,k,ispec,kmato_read
+  integer :: n,k,ispec,kmato_read,pml_read
   integer, dimension(:), allocatable :: knods_read
   character(len=80) :: datlin
 
   ! initializes
   kmato(:) = 0
   knods(:,:) = 0
+  region_CPML(:) = 0
 
   ! reads spectral macrobloc data
   read(IIN,"(a80)") datlin
@@ -567,14 +570,16 @@
   n = 0
   do ispec = 1,nspec
     ! format: #element_id  #material_id #node_id1 #node_id2 #...
-    read(IIN,*) n,kmato_read,(knods_read(k), k=1,ngnod)
+    read(IIN,*) n,kmato_read,(knods_read(k), k=1,ngnod),pml_read
     if(ipass == 1) then
       ! material association
       kmato(n) = kmato_read
+      region_CPML(n) = pml_read
       ! element control node indices
       knods(:,n)= knods_read(:)
     else if(ipass == 2) then
       kmato(perm(antecedent_list(n))) = kmato_read
+      region_CPML(perm(antecedent_list(n))) = pml_read
       knods(:,perm(antecedent_list(n)))= knods_read(:)
     else
       call exit_MPI('error: maximum is 2 passes')
