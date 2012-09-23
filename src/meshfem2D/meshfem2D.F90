@@ -374,8 +374,9 @@ program meshfem2D
   ! to store density and velocity model
   integer, dimension(:), allocatable :: num_material
 
-  ! to store the position of pml element
-  integer, dimension(:), allocatable :: is_pml 
+  ! to store the position of pml element in array region_pml_external_mesh
+  ! this is only useful when using pml together with external mesh 
+  integer, dimension(:), allocatable :: region_pml_external_mesh 
   integer :: nspec_cpml                        
 
   ! interface data
@@ -445,13 +446,13 @@ program meshfem2D
   allocate(num_material(nelmnts))
   num_material(:) = 0
 
-  allocate(is_pml(nelmnts))         
-  is_pml(:) = 0                     
+  allocate(region_pml_external_mesh(nelmnts))         
+  region_pml_external_mesh(:) = 0                     
 
   ! assigns materials to mesh elements
   if ( read_external_mesh ) then
      call read_mat(materials_file, num_material)
-     call read_pml_element(CPML_element_file, is_pml, nspec_cpml)
+     call read_pml_element(CPML_element_file, region_pml_external_mesh, nspec_cpml)
   else
      call read_regions(nbregion,nb_materials,icodemat,cp,cs, &
                       rho_s,QKappa,Qmu,aniso3,aniso4,aniso5,aniso6,aniso7,aniso8, &
@@ -976,7 +977,7 @@ program meshfem2D
   endif
 
   ! *** generate the databases for the solver
-  call save_databases(nspec,num_material, is_pml, &
+  call save_databases(nspec,num_material, region_pml_external_mesh, &
                       my_interfaces,my_nb_interfaces, &
                       nnodes_tangential_curve,nodes_tangential_curve)
 

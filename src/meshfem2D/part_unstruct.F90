@@ -202,14 +202,14 @@ contains
   end subroutine read_mat
 
   !-----------------------------------------------
-  ! Read the position of pml element storing it in array 'is_pml'
+  ! Read the position of pml element storing it in array 'region_pml_external_mesh'
   !-----------------------------------------------
-  subroutine read_pml_element(filename, is_pml, nspec_cpml)
+  subroutine read_pml_element(filename, region_pml_external_mesh, nspec_cpml)
 
   implicit none
 
   character(len=256), intent(in)  :: filename
-  integer, dimension(1:nelmnts), intent(out)  :: is_pml
+  integer, dimension(1:nelmnts), intent(out)  :: region_pml_external_mesh
   integer, intent(out)  :: nspec_cpml
 !  integer, dimension(:,:), allocatable  :: local_pml  
 
@@ -218,14 +218,14 @@ contains
   open(unit=992, file=trim(filename), form='formatted' , status='old', action='read',iostat=ier)
   if( ier /= 0 ) then
     print*,'error opening file: ',trim(filename)
-    stop 'error read external mat file'
+    stop 'error read external CPML_element_file'
   endif
 
   read(992,*) nspec_cpml
 
   do i = 1, nspec_cpml
      read(992,*) j, k
-     is_pml(j) = k
+     region_pml_external_mesh(j) = k
   enddo
 
   close(992)
