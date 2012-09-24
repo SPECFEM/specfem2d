@@ -1225,8 +1225,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     allocate(antecedent_list(nspec))
     allocate(perm(nspec))
   endif
-
-  allocate(is_PML(nspec))       
+     
 !   DK DK add support for using pml in mpi mode with external mesh  
   allocate(region_CPML(nspec))    
   call read_databases_mato(ipass,nspec,ngnod,kmato,knods, &
@@ -2853,6 +2852,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     if( PML_BOUNDARY_CONDITIONS .and. anyabs_glob ) then
 
       !PML code
+      allocate(is_PML(nspec))  
       allocate(icorner_iglob(nglob))
       allocate(which_PML_elem(4,nspec))
       allocate(spec_to_PML(nspec))
