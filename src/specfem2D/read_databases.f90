@@ -59,7 +59,7 @@
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                   POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0,time_stepping_scheme,&
                   ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL,&
-                  read_external_mesh,CPML_element_file)
+                  read_external_mesh)
 
 ! starts reading in parameters from input Database file
 
@@ -131,9 +131,8 @@
 !! DK DK grid point detection tolerance for periodic conditions
   double precision :: PERIODIC_DETECT_TOL
 
-!! DK DK for CPML_element_file
-  logical :: read_external_mesh
-  character(len=256)  :: CPML_element_file
+!!! DK DK for CPML_element_file
+   logical :: read_external_mesh
 
   ! local parameters
   integer :: ier
@@ -190,12 +189,6 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,*) read_external_mesh
-
-  if(read_external_mesh)then
-  read(IIN,"(a80)") datlin
-!  read(IIN,"(a256)") CPML_element_file
-  read(IIN,*) CPML_element_file
-  endif
 
   read(IIN,"(a80)") datlin
   read(IIN,*) NELEM_PML_THICKNESS
