@@ -566,7 +566,6 @@
 
 !! DK DK for CPML_element_file
   logical :: read_external_mesh
-  character(len=256)  :: CPML_element_file
 
   double precision :: cutsnaps,sizemax_arrows,anglerec,xirec,gammarec
 
@@ -1052,7 +1051,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                   POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, time_stepping_scheme, &
                   ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL,&
-                  read_external_mesh,CPML_element_file)
+                  read_external_mesh)
   if(nproc_read_from_database < 1) stop 'should have nproc_read_from_database >= 1'
   if(SIMULATION_TYPE == 2 .and.(time_stepping_scheme == 2 .or. time_stepping_scheme == 3)) &
                                   stop 'RK and LDDRK time scheme not supported for adjoint inversion'
@@ -1093,7 +1092,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                       factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                       POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, time_stepping_scheme, &
                       ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL,&
-                      read_external_mesh,CPML_element_file)
+                      read_external_mesh)
 
   !
   !--- source information

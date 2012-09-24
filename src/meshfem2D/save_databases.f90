@@ -101,7 +101,6 @@
 !   call write_partition_database(15, iproc, nspec, num_material, ngnod, 1)
     call write_partition_database(15, iproc, nspec, num_material, region_pml_external_mesh, ngnod, 1)
 
-
     write(15,*) 'npgeo nproc'
     write(15,*) npgeo,nproc
 
@@ -122,12 +121,6 @@
 
     write(15,*) 'read_external_mesh'
     write(15,*) read_external_mesh
-
-    if(read_external_mesh) then
-    write(15,*) 'CPML_element_file'
-!    write(15,"(a256)") trim(CPML_element_file)
-    write(15,*) trim(CPML_element_file)
-    endif
 
     write(15,*) 'NELEM_PML_THICKNESS'
     write(15,*) NELEM_PML_THICKNESS
