@@ -327,6 +327,7 @@
 !DK,DK
   integer, dimension(nspec) :: spec_to_PML
   integer :: ispec_PML
+  double precision, parameter :: damping_modified_factor = 1.2d0
 
 ! reflection coefficient (INRIA report section 6.1) http://hal.inria.fr/docs/00/07/32/19/PDF/RR-3471.pdf
   Rcoef = 0.001d0
@@ -512,7 +513,7 @@
                 if(abscissa_in_PML >= 0.d0) then
                    abscissa_normalized = abscissa_in_PML / thickness_PML_z_bottom
 
-                   d_z = d0_z_bottom / 0.6d0 * abscissa_normalized**NPOWER
+                   d_z = d0_z_bottom / damping_modified_factor * abscissa_normalized**NPOWER
 
 !DK DK we keep the equation to define an nonconstant alpha_z in case user needed,
 !However for users who want to use nonconstant alpha_z, you also need to change
@@ -540,7 +541,7 @@
                 if(abscissa_in_PML >= 0.d0) then
                    abscissa_normalized = abscissa_in_PML / thickness_PML_z_top
 
-                   d_z = d0_z_top / 0.6d0 * abscissa_normalized**NPOWER
+                   d_z = d0_z_top / damping_modified_factor * abscissa_normalized**NPOWER
 
 !                   alpha_z = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
 !                   + ALPHA_MAX_PML / 2.d0
@@ -562,7 +563,7 @@
                 if(abscissa_in_PML >= 0.d0) then
                    abscissa_normalized = abscissa_in_PML / thickness_PML_x_right
 
-                   d_x = d0_x_right / 0.6d0 * abscissa_normalized**NPOWER
+                   d_x = d0_x_right / damping_modified_factor * abscissa_normalized**NPOWER
 
 !                   alpha_x = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
 !                   + ALPHA_MAX_PML / 2.d0
@@ -584,7 +585,7 @@
                 if(abscissa_in_PML >= 0.d0) then
                    abscissa_normalized = abscissa_in_PML / thickness_PML_x_left
 
-                   d_x = d0_x_left / 0.6d0 * abscissa_normalized**NPOWER
+                   d_x = d0_x_left / damping_modified_factor * abscissa_normalized**NPOWER
 
 !                   alpha_x = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
 !                   + ALPHA_MAX_PML / 2.d0
