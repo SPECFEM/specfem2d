@@ -473,6 +473,8 @@ contains
   call read_value_logical_p(ADD_SPRING_TO_STACEY, 'solver.ADD_SPRING_TO_STACEY')
   if(err_occurred() /= 0) stop 'error reading parameter 51a in Par_file'
 
+  if(add_Bielak_conditions .or. initialfield ) ADD_SPRING_TO_STACEY = .false.
+
   call read_value_logical_p(ADD_PERIODIC_CONDITIONS, 'solver.ADD_PERIODIC_CONDITIONS')
   if(err_occurred() /= 0) stop 'error reading parameter 51b in Par_file'
 
