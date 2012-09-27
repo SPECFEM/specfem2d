@@ -1336,6 +1336,18 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     stop 'PML boundary conditions not implemented for poroelastic simulations yet'
   endif
 
+  if(PML_BOUNDARY_CONDITIONS .and. time_stepping_scheme == 3) then
+    stop 'PML boundary conditions is not implemented with standard Runge Kutta scheme'
+  endif
+
+#ifdef USE_MPI
+  if(myrank == 0)then
+   if(time_stepping_scheme == 3) then
+    stop 'mpi support for standard Runge Kutta scheme is not implemented'
+   endif
+  endif
+#endif
+
   ! allocate memory variables for attenuation
   if(ipass == 1) then
     allocate(e1(NGLLX,NGLLZ,nspec_allocate,N_SLS))
@@ -5339,7 +5351,7 @@ if(coupled_elastic_poro) then
                     buffer_recv_faces_vector_ac, my_neighbours)
 
      if(time_stepping_scheme == 2)then
-      if(i_stage==1 .and. it == 1)then
+      if(i_stage==1 .and. it == 1 .and. (.not. initialfield))then
        potential_dot_acoustic_temp = potential_dot_acoustic
        call assemble_MPI_vector_ac(potential_dot_acoustic,nglob, &
                     ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
@@ -5392,7 +5404,7 @@ if(coupled_elastic_poro) then
         potential_acoustic_LDDRK = alpha_LDDRK(i_stage) * potential_acoustic_LDDRK &
                                        +deltat*potential_dot_acoustic
 
-        if(i_stage==1 .and. it == 1)then
+        if(i_stage==1 .and. it == 1 .and. (.not. initialfield))then
         potential_dot_acoustic_temp = potential_dot_acoustic_temp &
                                       + beta_LDDRK(i_stage) * potential_dot_acoustic_LDDRK
         potential_dot_acoustic = potential_dot_acoustic_temp
@@ -6066,7 +6078,7 @@ if(coupled_elastic_poro) then
 #ifdef USE_MPI
 
     if(time_stepping_scheme == 2)then
-    if(i_stage==1 .and. it == 1)then
+    if(i_stage==1 .and. it == 1 .and. (.not. initialfield))then
     veloc_elastic_LDDRK_temp = veloc_elastic
       if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
        call assemble_MPI_vector_el(veloc_elastic,nglob, &
@@ -6125,7 +6137,7 @@ if(coupled_elastic_poro) then
 
         veloc_elastic_LDDRK = alpha_LDDRK(i_stage) * veloc_elastic_LDDRK + deltat * accel_elastic
         displ_elastic_LDDRK = alpha_LDDRK(i_stage) * displ_elastic_LDDRK + deltat * veloc_elastic
-        if(i_stage==1 .and. it == 1)then
+        if(i_stage==1 .and. it == 1 .and. (.not. initialfield))then
         veloc_elastic_LDDRK_temp = veloc_elastic_LDDRK_temp + beta_LDDRK(i_stage) * veloc_elastic_LDDRK
         veloc_elastic = veloc_elastic_LDDRK_temp
         else
