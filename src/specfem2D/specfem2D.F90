@@ -467,7 +467,8 @@
   double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic,kappal
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic,veloc_elastic,displ_elastic
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: veloc_elastic_LDDRK,displ_elastic_LDDRK
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: veloc_elastic_LDDRK,displ_elastic_LDDRK,&
+                                                         veloc_elastic_LDDRK_temp
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: accel_elastic_rk,veloc_elastic_rk
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: veloc_elastic_initial_rk,displ_elastic_initial_rk
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic_adj_coupling
@@ -1005,10 +1006,14 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
    rmemory_dux_dx,rmemory_duz_dx,rmemory_dux_dz,rmemory_duz_dz
 
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
+   rmemory_dux_dx_LDDRK,rmemory_duz_dx_LDDRK,rmemory_dux_dz_LDDRK,rmemory_duz_dz_LDDRK
+
   integer, dimension(:), allocatable :: spec_to_PML,icorner_iglob
   logical, dimension(:,:), allocatable :: which_PML_elem
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_displ_elastic
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_displ_elastic_LDDRK
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_potential_acoustic
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
@@ -2595,6 +2600,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     if(time_stepping_scheme==2)then
     allocate(displ_elastic_LDDRK(3,nglob_elastic))
     allocate(veloc_elastic_LDDRK(3,nglob_elastic))
+    allocate(veloc_elastic_LDDRK_temp(3,nglob_elastic))
     endif
 
     if(time_stepping_scheme == 3)then
@@ -2909,11 +2915,33 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         allocate(rmemory_duz_dz(NGLLX,NGLLZ,nspec_PML),stat=ier)
         if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'
 
+        if(time_stepping_scheme == 2)then
+        allocate(rmemory_displ_elastic_LDDRK(2,3,NGLLX,NGLLZ,nspec_PML),stat=ier) 
+        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic' 
+        allocate(rmemory_dux_dx_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx'
+        allocate(rmemory_dux_dz_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz'
+        allocate(rmemory_duz_dx_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx'
+        allocate(rmemory_duz_dz_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'
+        endif
+
+
         rmemory_displ_elastic(:,:,:,:,:) = ZERO
         rmemory_dux_dx(:,:,:) = ZERO
         rmemory_dux_dz(:,:,:) = ZERO
         rmemory_duz_dx(:,:,:) = ZERO
         rmemory_duz_dz(:,:,:) = ZERO
+
+        if(time_stepping_scheme == 2)then
+        rmemory_displ_elastic_LDDRK(:,:,:,:,:) = ZERO
+        rmemory_dux_dx_LDDRK(:,:,:) = ZERO
+        rmemory_dux_dz_LDDRK(:,:,:) = ZERO
+        rmemory_duz_dx_LDDRK(:,:,:) = ZERO
+        rmemory_duz_dz_LDDRK(:,:,:) = ZERO
+        endif
 
       else
 
@@ -2922,6 +2950,14 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         allocate(rmemory_dux_dz(1,1,1))
         allocate(rmemory_duz_dx(1,1,1))
         allocate(rmemory_duz_dz(1,1,1))
+
+        if(time_stepping_scheme == 2)then
+        allocate(rmemory_displ_elastic_LDDRK(1,1,1,1,1))
+        allocate(rmemory_dux_dx_LDDRK(1,1,1))
+        allocate(rmemory_dux_dz_LDDRK(1,1,1))
+        allocate(rmemory_duz_dx_LDDRK(1,1,1))
+        allocate(rmemory_duz_dz_LDDRK(1,1,1))
+        endif
 
       end if
 
@@ -3361,6 +3397,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   if(time_stepping_scheme == 2) then
   displ_elastic_LDDRK = 0._CUSTOM_REAL
   veloc_elastic_LDDRK = 0._CUSTOM_REAL
+  veloc_elastic_LDDRK_temp = 0._CUSTOM_REAL
   endif
 
   if(time_stepping_scheme == 3)then
@@ -5405,12 +5442,14 @@ if(coupled_elastic_poro) then
                NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD, &
                b_absorb_elastic_left,b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top, &
                nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,mu_k,kappa_k, &
-               e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
+               e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, & 
                e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_rk, e11_force_rk, e13_force_rk, &
                stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring,max(1,nadj_rec_local), &
                is_PML,nspec_PML,spec_to_PML,which_PML_elem, &
                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
-               rmemory_displ_elastic, rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz,&
+               rmemory_displ_elastic,rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz, &
+               rmemory_displ_elastic_LDDRK,rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,&
+               rmemory_duz_dx_LDDRK,rmemory_duz_dz_LDDRK, &
                PML_BOUNDARY_CONDITIONS)
 
       if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
@@ -5970,6 +6009,23 @@ if(coupled_elastic_poro) then
 
 ! assembling accel_elastic for elastic elements
 #ifdef USE_MPI
+
+    if(time_stepping_scheme == 2)then
+    if(i_stage==1 .and. it == 1)then
+    veloc_elastic_LDDRK_temp = veloc_elastic
+      if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
+       call assemble_MPI_vector_el(veloc_elastic,nglob, &
+            ninterface, ninterface_elastic,inum_interfaces_elastic, &
+            max_interface_size, max_ibool_interfaces_size_el,&
+            ibool_interfaces_elastic, nibool_interfaces_elastic, &
+            tab_requests_send_recv_elastic,buffer_send_faces_vector_el, &
+            buffer_recv_faces_vector_el, my_neighbours)
+       endif
+    endif
+    endif
+
+    call MPI_BARRIER(MPI_COMM_WORLD,ier)
+
     if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
       call assemble_MPI_vector_el(accel_elastic,nglob, &
             ninterface, ninterface_elastic,inum_interfaces_elastic, &
@@ -5978,6 +6034,7 @@ if(coupled_elastic_poro) then
             tab_requests_send_recv_elastic,buffer_send_faces_vector_el, &
             buffer_recv_faces_vector_el, my_neighbours)
     endif
+
 
     if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0 .and. SIMULATION_TYPE == 2) then
       call assemble_MPI_vector_el(b_accel_elastic,nglob, &
@@ -6006,15 +6063,20 @@ if(coupled_elastic_poro) then
       endif
 
       if(time_stepping_scheme == 2)then
+
         accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic_one
         accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic_one
         accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic_three
 
-  veloc_elastic_LDDRK = alpha_LDDRK(i_stage) * veloc_elastic_LDDRK + deltat * accel_elastic
-  displ_elastic_LDDRK = alpha_LDDRK(i_stage) * displ_elastic_LDDRK + deltat * veloc_elastic
-
-  veloc_elastic = veloc_elastic + beta_LDDRK(i_stage) * veloc_elastic_LDDRK
-  displ_elastic = displ_elastic + beta_LDDRK(i_stage) * displ_elastic_LDDRK
+        veloc_elastic_LDDRK = alpha_LDDRK(i_stage) * veloc_elastic_LDDRK + deltat * accel_elastic
+        displ_elastic_LDDRK = alpha_LDDRK(i_stage) * displ_elastic_LDDRK + deltat * veloc_elastic
+        if(i_stage==1 .and. it == 1)then
+        veloc_elastic_LDDRK_temp = veloc_elastic_LDDRK_temp + beta_LDDRK(i_stage) * veloc_elastic_LDDRK
+        veloc_elastic = veloc_elastic_LDDRK_temp
+        else
+        veloc_elastic = veloc_elastic + beta_LDDRK(i_stage) * veloc_elastic_LDDRK
+        endif
+        displ_elastic = displ_elastic + beta_LDDRK(i_stage) * displ_elastic_LDDRK
 
       endif
 
