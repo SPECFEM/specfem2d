@@ -452,7 +452,9 @@ program meshfem2D
   ! assigns materials to mesh elements
   if ( read_external_mesh ) then
      call read_mat(materials_file, num_material)
-     call read_pml_element(CPML_element_file, region_pml_external_mesh, nspec_cpml)
+     if(PML_BOUNDARY_CONDITIONS)then
+      call read_pml_element(CPML_element_file, region_pml_external_mesh, nspec_cpml)
+     endif
   else
      call read_regions(nbregion,nb_materials,icodemat,cp,cs, &
                       rho_s,QKappa,Qmu,aniso3,aniso4,aniso5,aniso6,aniso7,aniso8, &
