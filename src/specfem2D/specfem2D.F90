@@ -1020,6 +1020,10 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
     rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz
 
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_potential_acoustic_LDDRK
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
+    rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK
+
   logical :: anyabs_glob
   integer :: nspec_PML
 
@@ -2964,7 +2968,6 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       end if
 
       if (any_acoustic .and. nspec_PML>0) then
-
         allocate(rmemory_potential_acoustic(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
         if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_potential_acoustic'
         allocate(rmemory_acoustic_dux_dx(NGLLX,NGLLZ,nspec_PML),stat=ier)
@@ -2976,8 +2979,22 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         rmemory_acoustic_dux_dx = ZERO
         rmemory_acoustic_dux_dz = ZERO
 
-      else
+        if(time_stepping_scheme == 2)then
 
+        allocate(rmemory_potential_acoustic_LDDRK(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_potential_acoustic'
+        allocate(rmemory_acoustic_dux_dx_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dx'
+        allocate(rmemory_acoustic_dux_dz_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dz'
+
+        rmemory_potential_acoustic_LDDRK = ZERO
+        rmemory_acoustic_dux_dx_LDDRK = ZERO
+        rmemory_acoustic_dux_dz_LDDRK = ZERO
+        endif
+
+
+      else
         allocate(rmemory_potential_acoustic(1,1,1,1))
         allocate(rmemory_acoustic_dux_dx(1,1,1))
         allocate(rmemory_acoustic_dux_dz(1,1,1))
@@ -2994,9 +3011,20 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       allocate(rmemory_duz_dx(1,1,1))
       allocate(rmemory_duz_dz(1,1,1))
       allocate(rmemory_displ_elastic(1,1,1,1,1))
+
+      allocate(rmemory_displ_elastic_LDDRK(1,1,1,1,1))
+      allocate(rmemory_dux_dx_LDDRK(1,1,1))
+      allocate(rmemory_dux_dz_LDDRK(1,1,1))
+      allocate(rmemory_duz_dx_LDDRK(1,1,1))
+      allocate(rmemory_duz_dz_LDDRK(1,1,1))
+
       allocate(rmemory_potential_acoustic(1,1,1,1))
       allocate(rmemory_acoustic_dux_dx(1,1,1))
       allocate(rmemory_acoustic_dux_dz(1,1,1))
+
+      allocate(rmemory_potential_acoustic_LDDRK(1,1,1,1))
+      allocate(rmemory_acoustic_dux_dx_LDDRK(1,1,1))
+      allocate(rmemory_acoustic_dux_dz_LDDRK(1,1,1))
 
       allocate(is_PML(1))
       allocate(spec_to_PML(1))
@@ -4944,7 +4972,7 @@ if(coupled_elastic_poro) then
       call compute_forces_acoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
                anyabs,assign_external_model,ibool,kmato,numabs, &
                elastic,poroelastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
-               potential_acoustic, &
+               potential_acoustic, stage_time_scheme, i_stage, &
                density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                vpext,rhoext,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
@@ -4954,16 +4982,18 @@ if(coupled_elastic_poro) then
                nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
                b_absorb_acoustic_bottom,b_absorb_acoustic_top,.false.,&
-            is_PML,nspec_PML,spec_to_PML,which_PML_elem,&
-            K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
-            rmemory_potential_acoustic,&
-            rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
-            deltat,PML_BOUNDARY_CONDITIONS)
+               is_PML,nspec_PML,spec_to_PML,which_PML_elem,&
+               K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
+               rmemory_potential_acoustic,&
+               rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
+               rmemory_potential_acoustic_LDDRK,alpha_LDDRK,beta_LDDRK, &
+               rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
+               deltat,PML_BOUNDARY_CONDITIONS)
       if( SIMULATION_TYPE == 2 ) then
         call compute_forces_acoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
                anyabs,assign_external_model,ibool,kmato,numabs, &
                elastic,poroelastic,codeabs,b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-               b_potential_acoustic, &
+               b_potential_acoustic, stage_time_scheme, i_stage, &
                density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                vpext,rhoext,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
@@ -4973,11 +5003,13 @@ if(coupled_elastic_poro) then
                nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
                b_absorb_acoustic_bottom,b_absorb_acoustic_top,.true.,&
-            is_PML,nspec_PML,spec_to_PML,which_PML_elem,&
-            K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
-            rmemory_potential_acoustic,&
-            rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
-            deltat,PML_BOUNDARY_CONDITIONS)
+               is_PML,nspec_PML,spec_to_PML,which_PML_elem,&
+               K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
+               rmemory_potential_acoustic,&
+               rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
+               rmemory_potential_acoustic_LDDRK,alpha_LDDRK,beta_LDDRK, &
+               rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
+               deltat,PML_BOUNDARY_CONDITIONS)
       endif
 
 

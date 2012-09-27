@@ -45,7 +45,7 @@
   subroutine compute_forces_acoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
                anyabs,assign_external_model,ibool,kmato,numabs, &
                elastic,poroelastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
-               potential_acoustic, &
+               potential_acoustic, stage_time_scheme, i_stage, &
                density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                vpext,rhoext,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
@@ -55,11 +55,13 @@
                nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
                b_absorb_acoustic_bottom,b_absorb_acoustic_top,IS_BACKWARD_FIELD,&
-            is_PML,nspec_PML,spec_to_PML,which_PML_elem,&
-            K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
-            rmemory_potential_acoustic,&
-            rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
-            deltat,PML_BOUNDARY_CONDITIONS)
+               is_PML,nspec_PML,spec_to_PML,which_PML_elem,&
+               K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
+               rmemory_potential_acoustic,&
+               rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
+               rmemory_potential_acoustic_LDDRK,alpha_LDDRK,beta_LDDRK, &
+               rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
+               deltat,PML_BOUNDARY_CONDITIONS)
 
 ! compute forces for the acoustic elements
 
@@ -145,6 +147,13 @@
   real(kind=CUSTOM_REAL) :: A0, A1, A2, A3, A4, A5, A6, A7, A8
 
   logical :: PML_BOUNDARY_CONDITIONS
+
+!coefficients and memory variables when using CPML with LDDRK
+  integer :: stage_time_scheme,i_stage
+  real(kind=CUSTOM_REAL), dimension(Nstages) :: alpha_LDDRK,beta_LDDRK
+  real(kind=CUSTOM_REAL), dimension(2,NGLLX,NGLLZ,nspec_PML) :: rmemory_potential_acoustic_LDDRK
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) :: &
+          rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK
 
   ifirstelem = 1
   ilastelem = nspec
@@ -235,6 +244,8 @@
                   !---------------------- A8 --------------------------
                   A8 = - d_x_store(i,j,ispec_PML) / (k_x_store(i,j,ispec_PML)**2)
                   bb = d_x_store(i,j,ispec_PML) / k_x_store(i,j,ispec_PML) + alpha_x_store(i,j,ispec_PML)
+
+                  if(stage_time_scheme == 1) then
                   coef0 = exp(-bb * deltat)
 
                   if ( abs(bb) > 1.d-3 ) then
@@ -244,9 +255,17 @@
                     coef1 = deltat / 2.0d0
                     coef2 = deltat / 2.0d0
                   end if
-
                   rmemory_acoustic_dux_dx(i,j,ispec_PML) = coef0*rmemory_acoustic_dux_dx(i,j,ispec_PML) &
                   + PML_dux_dxl_new(i,j,ispec_PML) * coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
+                  endif
+
+                  if(stage_time_scheme == 6) then
+                    rmemory_acoustic_dux_dx_LDDRK(i,j,ispec_PML) = &
+                      alpha_LDDRK(i_stage) * rmemory_acoustic_dux_dx_LDDRK(i,j,ispec_PML) &
+                    + deltat * (-bb * rmemory_acoustic_dux_dx(i,j,ispec_PML) + PML_dux_dxl(i,j,ispec_PML))
+                    rmemory_acoustic_dux_dx(i,j,ispec_PML) = rmemory_acoustic_dux_dx(i,j,ispec_PML) + &
+                    beta_LDDRK(i_stage) * rmemory_acoustic_dux_dx_LDDRK(i,j,ispec_PML)
+                  endif
 
                   dux_dxl = PML_dux_dxl(i,j,ispec_PML)  + A8 * rmemory_acoustic_dux_dx(i,j,ispec_PML)
 
@@ -254,6 +273,8 @@
                   A5 = d_x_store(i,j,ispec_PML)
 
                   bb = alpha_x_store(i,j,ispec_PML)
+
+                  if(stage_time_scheme == 1) then
                   coef0 = exp(- bb * deltat)
 
                   if ( abs( bb ) > 1.d-3) then
@@ -263,9 +284,17 @@
                     coef1 = deltat / 2.0d0
                     coef2 = deltat / 2.0d0
                   end if
-
                   rmemory_acoustic_dux_dz(i,j,ispec_PML) = coef0 * rmemory_acoustic_dux_dz(i,j,ispec_PML) &
                   + PML_dux_dzl_new(i,j,ispec_PML) *coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
+                  endif
+
+                  if(stage_time_scheme == 6) then
+                    rmemory_acoustic_dux_dz_LDDRK(i,j,ispec_PML) = &
+                      alpha_LDDRK(i_stage) * rmemory_acoustic_dux_dz_LDDRK(i,j,ispec_PML) &
+                    + deltat * (-bb * rmemory_acoustic_dux_dz(i,j,ispec_PML) + PML_dux_dzl(i,j,ispec_PML))
+                    rmemory_acoustic_dux_dz(i,j,ispec_PML) = rmemory_acoustic_dux_dz(i,j,ispec_PML) + &
+                    beta_LDDRK(i_stage) * rmemory_acoustic_dux_dz_LDDRK(i,j,ispec_PML)
+                  endif
 
                   dux_dzl = PML_dux_dzl(i,j,ispec_PML)  + A5 * rmemory_acoustic_dux_dz(i,j,ispec_PML)
 
@@ -281,6 +310,8 @@
                          / (k_x_store(i,j,ispec_PML)**2)
 
                     bb = d_x_store(i,j,ispec_PML) / k_x_store(i,j,ispec_PML) + alpha_x_store(i,j,ispec_PML)
+
+                   if(stage_time_scheme == 1) then
                     coef0 = exp(- bb * deltat)
 
                     if ( abs(bb) > 1.d-3 ) then
@@ -290,9 +321,17 @@
                       coef1 = deltat / 2.0d0
                       coef2 = deltat / 2.0d0
                     end if
-
                     rmemory_acoustic_dux_dx(i,j,ispec_PML) = coef0*rmemory_acoustic_dux_dx(i,j,ispec_PML) &
                     + PML_dux_dxl_new(i,j,ispec_PML) * coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
+                    end if
+
+                    if(stage_time_scheme == 6) then
+                      rmemory_acoustic_dux_dx_LDDRK(i,j,ispec_PML) = &
+                        alpha_LDDRK(i_stage) * rmemory_acoustic_dux_dx_LDDRK(i,j,ispec_PML) &
+                       + deltat * (-bb * rmemory_acoustic_dux_dx(i,j,ispec_PML) + PML_dux_dxl(i,j,ispec_PML))
+                      rmemory_acoustic_dux_dx(i,j,ispec_PML) = rmemory_acoustic_dux_dx(i,j,ispec_PML) + &
+                        beta_LDDRK(i_stage) * rmemory_acoustic_dux_dx_LDDRK(i,j,ispec_PML)
+                    endif
 
                     dux_dxl = PML_dux_dxl(i,j,ispec_PML)  + A8 * rmemory_acoustic_dux_dx(i,j,ispec_PML)
 
@@ -302,6 +341,8 @@
                           / (k_z_store(i,j,ispec_PML)**2)
 
                     bb = d_z_store(i,j,ispec_PML) / k_z_store(i,j,ispec_PML) + alpha_z_store(i,j,ispec_PML)
+
+                   if(stage_time_scheme == 1) then
                     coef0 = exp(- bb * deltat)
 
                     if ( abs(bb) > 1.d-3 ) then
@@ -315,6 +356,16 @@
                     rmemory_acoustic_dux_dz(i,j,ispec_PML) = coef0 * rmemory_acoustic_dux_dz(i,j,ispec_PML) &
                     + PML_dux_dzl_new(i,j,ispec_PML) *coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
 
+                    end if
+
+                    if(stage_time_scheme == 6) then
+                    rmemory_acoustic_dux_dz_LDDRK(i,j,ispec_PML) = &
+                      alpha_LDDRK(i_stage) * rmemory_acoustic_dux_dz_LDDRK(i,j,ispec_PML) &
+                    + deltat * (-bb * rmemory_acoustic_dux_dz(i,j,ispec_PML) + PML_dux_dzl(i,j,ispec_PML))
+                    rmemory_acoustic_dux_dz(i,j,ispec_PML) = rmemory_acoustic_dux_dz(i,j,ispec_PML) + &
+                    beta_LDDRK(i_stage) * rmemory_acoustic_dux_dz_LDDRK(i,j,ispec_PML)
+                    endif
+
                     dux_dzl = PML_dux_dzl(i,j,ispec_PML)  + A5 * rmemory_acoustic_dux_dz(i,j,ispec_PML)
 
                else
@@ -325,6 +376,8 @@
                   !---------------------- A7 --------------------------
                   A7 = d_z_store(i,j,ispec_PML)
                   bb = alpha_z_store(i,j,ispec_PML)
+
+                  if(stage_time_scheme == 1) then
                   coef0 = exp(- bb * deltat)
 
                   if ( abs( bb ) > 1.d-3) then
@@ -337,12 +390,23 @@
 
                   rmemory_acoustic_dux_dx(i,j,ispec_PML) = coef0*rmemory_acoustic_dux_dx(i,j,ispec_PML) &
                   + PML_dux_dxl_new(i,j,ispec_PML) * coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
+                  end if
+
+                  if(stage_time_scheme == 6) then
+                    rmemory_acoustic_dux_dx_LDDRK(i,j,ispec_PML) = &
+                      alpha_LDDRK(i_stage) * rmemory_acoustic_dux_dx_LDDRK(i,j,ispec_PML) &
+                    + deltat * (-bb * rmemory_acoustic_dux_dx(i,j,ispec_PML) + PML_dux_dxl(i,j,ispec_PML))
+                    rmemory_acoustic_dux_dx(i,j,ispec_PML) = rmemory_acoustic_dux_dx(i,j,ispec_PML) + &
+                    beta_LDDRK(i_stage) * rmemory_acoustic_dux_dx_LDDRK(i,j,ispec_PML)
+                  endif
 
                   dux_dxl = PML_dux_dxl(i,j,ispec_PML)  + A7 * rmemory_acoustic_dux_dx(i,j,ispec_PML)
 
                   !---------------------- A6 --------------------------
                   A6 = - d_z_store(i,j,ispec_PML) / ( k_z_store(i,j,ispec_PML) ** 2 )
                   bb = d_z_store(i,j,ispec_PML) / k_z_store(i,j,ispec_PML) + alpha_z_store(i,j,ispec_PML)
+
+                  if(stage_time_scheme == 1) then
                   coef0 = exp(-bb * deltat)
                   if ( abs(bb) > 1.d-3 ) then
                     coef1 = (1.d0 - exp(-bb * deltat / 2.d0)) / bb
@@ -354,6 +418,15 @@
 
                   rmemory_acoustic_dux_dz(i,j,ispec_PML) = coef0 * rmemory_acoustic_dux_dz(i,j,ispec_PML) &
                   + PML_dux_dzl_new(i,j,ispec_PML) *coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
+                  end if
+
+                  if(stage_time_scheme == 6) then
+                    rmemory_acoustic_dux_dz_LDDRK(i,j,ispec_PML) = &
+                      alpha_LDDRK(i_stage) * rmemory_acoustic_dux_dz_LDDRK(i,j,ispec_PML) &
+                    + deltat * (-bb * rmemory_acoustic_dux_dz(i,j,ispec_PML) + PML_dux_dzl(i,j,ispec_PML))
+                    rmemory_acoustic_dux_dz(i,j,ispec_PML) = rmemory_acoustic_dux_dz(i,j,ispec_PML) + &
+                    beta_LDDRK(i_stage) * rmemory_acoustic_dux_dz_LDDRK(i,j,ispec_PML)
+                  endif
 
                   dux_dzl = PML_dux_dzl(i,j,ispec_PML)  + A6 * rmemory_acoustic_dux_dz(i,j,ispec_PML)
 
@@ -389,7 +462,7 @@
              if(is_PML(ispec) .and. PML_BOUNDARY_CONDITIONS)then
                       ispec_PML=spec_to_PML(ispec)
                       iglob=ibool(i,j,ispec)
-
+              if(stage_time_scheme == 1) then
                if ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
                      .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
 !------------------------------------------------------------------------------
@@ -481,6 +554,8 @@
 
                endif
 
+              endif
+
 
                if ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
                      .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
@@ -492,6 +567,18 @@
                    A2 = k_x_store(i,j,ispec_PML)
                    A3 = d_x_store(i,j,ispec_PML) * alpha_x_store(i,j,ispec_PML) ** 2
                    A4 = 0.d0
+
+                   if(stage_time_scheme == 6) then
+                     bb = alpha_x_store(i,j,ispec_PML)
+
+                     rmemory_potential_acoustic_LDDRK(1,i,j,ispec_PML) = &
+                     alpha_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(1,i,j,ispec_PML) &
+                     + deltat * (-bb * rmemory_potential_acoustic(1,i,j,ispec_PML) + potential_acoustic(iglob))
+
+                     rmemory_potential_acoustic(1,i,j,ispec_PML) = rmemory_potential_acoustic(1,i,j,ispec_PML) + &
+                     beta_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(1,i,j,ispec_PML)
+                     rmemory_potential_acoustic(2,i,j,ispec_PML) =0.d0
+                  end if 
 
                    potential_dot_dot_acoustic_PML(i,j,ispec_PML)= wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * &
                     (A0 * potential_acoustic(iglob)                   + &
@@ -519,6 +606,39 @@
 
                    A4 = -alpha_x_store(i,j,ispec_PML) ** 2*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)
 
+                    if(stage_time_scheme == 6) then 
+                     A3 = alpha_x_store(i,j,ispec_PML) ** 2*(d_x_store(i,j,ispec_PML) * k_z_store(i,j,ispec_PML)+ &
+                            d_z_store(i,j,ispec_PML) * k_x_store(i,j,ispec_PML)) &
+                            -2.d0 * alpha_x_store(i,j,ispec_PML)*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)
+                     A4 = alpha_x_store(i,j,ispec_PML) ** 2*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)
+                    end if   
+
+                    if(stage_time_scheme == 6) then  
+
+                     bb = alpha_z_store(i,j,ispec_PML)
+                     if(bb < 0.0)then
+                        bb = alpha_x_store(i,j,ispec_PML)
+                     endif
+                     if(bb < 0.0)then
+                        stop "something wrong in alpha definition"
+                     endif
+
+                     rmemory_potential_acoustic_LDDRK(1,i,j,ispec_PML) = &
+                     alpha_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(1,i,j,ispec_PML) &
+                     + deltat * (-bb * rmemory_potential_acoustic(1,i,j,ispec_PML) + potential_acoustic(iglob))
+                     rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML) = &
+                     alpha_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML) &
+                     + deltat * (-bb * rmemory_potential_acoustic(2,i,j,ispec_PML) &
+                                 + rmemory_potential_acoustic(1,i,j,ispec_PML))
+
+                     rmemory_potential_acoustic(1,i,j,ispec_PML) = rmemory_potential_acoustic(1,i,j,ispec_PML) + &
+                     beta_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(1,i,j,ispec_PML)
+                     rmemory_potential_acoustic(2,i,j,ispec_PML) = rmemory_potential_acoustic(2,i,j,ispec_PML) + &
+                     beta_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML)
+
+                    end if
+
+
                    potential_dot_dot_acoustic_PML(i,j,ispec_PML)= wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * &
                     (A0 * potential_acoustic(iglob)                   + &
                      A1 * potential_dot_acoustic(iglob)               + &
@@ -534,6 +654,20 @@
                    A2 = k_z_store(i,j,ispec_PML)
                    A3 = 0.d0
                    A4 = d_z_store(i,j,ispec_PML) * alpha_z_store(i,j,ispec_PML) ** 2
+
+                   if(stage_time_scheme == 6) then
+                     bb = alpha_z_store(i,j,ispec_PML)
+
+                     rmemory_potential_acoustic(1,i,j,ispec_PML) =0.d0
+
+                     rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML) = &
+                     alpha_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML) &
+                     + deltat * (-bb * rmemory_potential_acoustic(2,i,j,ispec_PML) + potential_acoustic(iglob))
+
+                     rmemory_potential_acoustic(2,i,j,ispec_PML) = rmemory_potential_acoustic(2,i,j,ispec_PML) + &
+                     beta_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML)
+
+                  end if 
 
                    potential_dot_dot_acoustic_PML(i,j,ispec_PML)= wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * &
                     (A0 * potential_acoustic(iglob)                   + &

@@ -148,10 +148,10 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL), dimension(NGLLZ) :: wzgll
 
   ! Parameter for LDDRK time scheme
-  double precision, dimension(Nstages) :: alpha_LDDRK,beta_LDDRK
+  real(kind=CUSTOM_REAL), dimension(Nstages) :: alpha_LDDRK,beta_LDDRK
 
   !temp variable
-  double precision :: temp_time_scheme,temper_time_scheme,weight_rk
+  real(kind=CUSTOM_REAL) :: temp_time_scheme,temper_time_scheme,weight_rk
 
 
   !---
