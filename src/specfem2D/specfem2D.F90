@@ -510,6 +510,7 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
     potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_dot_acoustic_LDDRK, potential_acoustic_LDDRK
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_dot_acoustic_temp
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_acoustic_init_rk, potential_dot_acoustic_init_rk
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: potential_dot_dot_acoustic_rk, potential_dot_acoustic_rk
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_acoustic_adj_coupling
@@ -2806,6 +2807,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     if(time_stepping_scheme == 2) then
     allocate(potential_acoustic_LDDRK(nglob_acoustic))
     allocate(potential_dot_acoustic_LDDRK(nglob_acoustic))
+    allocate(potential_dot_acoustic_temp(nglob_acoustic))
     endif
 
     if(time_stepping_scheme == 3) then
@@ -3443,6 +3445,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   if(time_stepping_scheme == 2 )then
   potential_acoustic_LDDRK = 0._CUSTOM_REAL
   potential_dot_acoustic_LDDRK = 0._CUSTOM_REAL
+  potential_dot_acoustic_temp = 0._CUSTOM_REAL
   endif
 
   if(time_stepping_scheme == 3 )then
@@ -5303,6 +5306,18 @@ if(coupled_elastic_poro) then
                     tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac, &
                     buffer_recv_faces_vector_ac, my_neighbours)
 
+     if(time_stepping_scheme == 2)then
+      if(i_stage==1 .and. it == 1)then
+       potential_dot_acoustic_temp = potential_dot_acoustic
+       call assemble_MPI_vector_ac(potential_dot_acoustic,nglob, &
+                    ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
+                    max_interface_size, max_ibool_interfaces_size_ac,&
+                    ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
+                    tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac, &
+                    buffer_recv_faces_vector_ac, my_neighbours)
+      endif
+     endif
+
       if ( SIMULATION_TYPE == 2) then
         call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic,nglob, &
                      ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
@@ -5345,7 +5360,15 @@ if(coupled_elastic_poro) then
         potential_acoustic_LDDRK = alpha_LDDRK(i_stage) * potential_acoustic_LDDRK &
                                        +deltat*potential_dot_acoustic
 
+        if(i_stage==1 .and. it == 1)then
+        potential_dot_acoustic_temp = potential_dot_acoustic_temp &
+                                      + beta_LDDRK(i_stage) * potential_dot_acoustic_LDDRK
+        potential_dot_acoustic = potential_dot_acoustic_temp
+        else
         potential_dot_acoustic = potential_dot_acoustic + beta_LDDRK(i_stage) * potential_dot_acoustic_LDDRK
+        endif
+
+!        potential_dot_acoustic = potential_dot_acoustic + beta_LDDRK(i_stage) * potential_dot_acoustic_LDDRK
 
         potential_acoustic = potential_acoustic + beta_LDDRK(i_stage) * potential_acoustic_LDDRK
 
@@ -5353,7 +5376,7 @@ if(coupled_elastic_poro) then
 
       if(time_stepping_scheme == 3)then
 
-  potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
+        potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
 
         potential_dot_dot_acoustic_rk(:,i_stage) = deltat * potential_dot_dot_acoustic(:)
         potential_dot_acoustic_rk(:,i_stage) = deltat * potential_dot_acoustic(:)
