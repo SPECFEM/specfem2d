@@ -20,22 +20,22 @@ main (argc,argv)
 int argc; char **argv;
 {
   int             xmgr, n, i, j, plot, nu;
-  double          Q_s, target_Qp, target_Qs;
+  double          Q_sigma, target_QKappa, target_Qmu;
   double          f1, f2, Q, om0, Omega;
   double          a, b;
   double          kappa, mu, kappa0, mu0, kappaR, muR;
-  double         *tau_s, *tau_e;
+  double         *tau_sigma, *tau_epsilon;
   double         *dvector();
   void            constant_Q2_sub(),plot_modulus();
   void            free_dvector();
 
-  printf("target value of Qp: ");
-  scanf("%lf",&target_Qp);
-  printf("%lf\n",target_Qp);
+  printf("target value of QKappa: ");
+  scanf("%lf",&target_QKappa);
+  printf("%lf\n",target_QKappa);
 
-  printf("target value of Qs: ");
-  scanf("%lf",&target_Qs);
-  printf("%lf\n",target_Qs);
+  printf("target value of Qmu: ");
+  scanf("%lf",&target_Qmu);
+  printf("%lf\n",target_Qmu);
 
   printf("shortest frequency (Hz): ");
   scanf("%lf",&f1);
@@ -57,12 +57,12 @@ int argc; char **argv;
     printf("T2 > T1\n");
     exit; }
 
-  if (target_Qp <= 0.0001) {
-    printf("Qp cannot be negative or null\n");
+  if (target_QKappa <= 0.0001) {
+    printf("QKappa cannot be negative or null\n");
     exit; }
 
-  if (target_Qs <= 0.0001) {
-    printf("Qs cannot be negative or null\n");
+  if (target_Qmu <= 0.0001) {
+    printf("Qmu cannot be negative or null\n");
     exit; }
 
   if (n < 1) {
@@ -81,46 +81,46 @@ int argc; char **argv;
   printf("! frequency range: %lf Hz - %lf Hz\n", f1 , f2);
   printf("! central frequency in log scale in Hz = %20.15f\n",om0 / PI2);
 
-  printf("! target constant attenuation factor Qp = %20.10lf\n", target_Qp);
-  printf("! target constant attenuation factor Qs = %20.10lf\n\n", target_Qs);
+  printf("! target constant attenuation factor QKappa = %20.10lf\n", target_QKappa);
+  printf("! target constant attenuation factor Qmu = %20.10lf\n\n", target_Qmu);
 
-  printf("! tau_sigma evenly spaced in log frequency, do not depend on value of Q\n\n");
+  printf("! tau_sigmaigma evenly spaced in log frequency, do not depend on value of Q\n\n");
 
   plot = 0;
 
-/* loop on the Qp dilatation mode (nu = 1) and Qs shear mode (nu = 2) */
+/* loop on the QKappa dilatation mode (nu = 1) and Qmu shear mode (nu = 2) */
   for (nu = 1; nu <= 2; nu++) {
 
-/* assign Qp or Qs to generic variable Q_s which is used for the calculations */
-    if (nu == 1) { Q_s = target_Qp ; }
-    if (nu == 2) { Q_s = target_Qs ; }
+/* assign QKappa or Qmu to generic variable Q_sigma which is used for the calculations */
+    if (nu == 1) { Q_sigma = target_QKappa ; }
+    if (nu == 2) { Q_sigma = target_Qmu ; }
 
-    tau_s = dvector(1, n);
-    tau_e = dvector(1, n);
+    tau_sigma = dvector(1, n);
+    tau_epsilon = dvector(1, n);
 
-    constant_Q2_sub(f1, f2, n, Q_s, tau_s, tau_e, xmgr);
+    constant_Q2_sub(f1, f2, n, Q_sigma, tau_sigma, tau_epsilon, xmgr);
 
 /* output in Fortran90 format */
     for (i = 1; i <= n; i++) {
-      printf("  tau_sigma_nu%d(%1d) = %30.20lfd0\n", nu, i, tau_s[i]);
+      printf("  tau_sigmaigma_nu%d(%1d) = %30.20lfd0\n", nu, i, tau_sigma[i]);
       }
       printf("\n");
 
     for (i = 1; i <= n; i++) {
-      printf("  tau_epsilon_nu%d(%1d) = %30.20lfd0\n", nu, i, tau_e[i]);
+      printf("  tau_epsilonpsilon_nu%d(%1d) = %30.20lfd0\n", nu, i, tau_epsilon[i]);
       }
     printf("\n");
 
-    free_dvector(tau_s, 1, n);
-    free_dvector(tau_e, 1, n);
+    free_dvector(tau_sigma, 1, n);
+    free_dvector(tau_epsilon, 1, n);
 
   }
 
 }
 
-void   plot_modulus(f1, f2, n, m, mR, Q, tau_e, tau_s ,xmgr)
+void   plot_modulus(f1, f2, n, m, mR, Q, tau_epsilon, tau_sigma ,xmgr)
         int  n, xmgr;
-        double f1, f2, m, mR, Q, *tau_e, *tau_s;
+        double f1, f2, m, mR, Q, *tau_epsilon, *tau_sigma;
 {
 int             pid, i;
 double          exp1, exp2, dexp, expo;
@@ -151,10 +151,10 @@ for (expo = exp1; expo <= exp2; expo += dexp) {
         a = 1.0;
         b = 0.0;
         for (i = 1; i <= n; i++) {
-            a -= om * om * tau_e[i] * (tau_e[i] - tau_s[i]) /
-                (1.0 + om * om * tau_e[i] * tau_e[i]);
-          b += om * (tau_e[i] - tau_s[i]) /
-             (1.0 + om * om * tau_e[i] * tau_e[i]);
+            a -= om * om * tau_epsilon[i] * (tau_epsilon[i] - tau_sigma[i]) /
+                (1.0 + om * om * tau_epsilon[i] * tau_epsilon[i]);
+          b += om * (tau_epsilon[i] - tau_sigma[i]) /
+             (1.0 + om * om * tau_epsilon[i] * tau_epsilon[i]);
         }
         Omega=a*(sqrt(1.0+b*b/(a*a))-1.0);
         m_om = 2.0*mR* Omega/(b*b);
@@ -903,11 +903,11 @@ int m,n;
 #define PI 3.14159265358979
 #define PI2 6.28318530717958
 
-void constant_Q2_sub(f1, f2, n, Q, tau_s, tau_e, xmgr)
+void constant_Q2_sub(f1, f2, n, Q, tau_sigma, tau_epsilon, xmgr)
 
   int             n, xmgr;
   double          f1, f2, Q;
-  double         *tau_s, *tau_e;
+  double         *tau_sigma, *tau_epsilon;
 {
   int             i,j;
   double         *x1, *x2;
@@ -951,10 +951,10 @@ void constant_Q2_sub(f1, f2, n, Q, tau_s, tau_e, xmgr)
   free_dmatrix(hessian, 1, n, 1, n);
 
   for (i = 1; i <= n; i++) {
-          tau_e[i]=x1[i] + x2[i];
+          tau_epsilon[i]=x1[i] + x2[i];
   }
   for (i = 1; i <= n; i++) {
-          tau_s[i]=x2[i];
+          tau_sigma[i]=x2[i];
   }
 
   free_dvector(x1, 1, n);
@@ -967,13 +967,13 @@ void            initialize(f1, f2, n, Q, x1, x2)
   double          f1, f2, Q, *x1, *x2;
 {
 int             i;
-double          q, omega, *tau_e, *tau_s;
+double          q, omega, *tau_epsilon, *tau_sigma;
 double          exp1, exp2, dexp, expo;
 double         *dvector();
 void            free_dvector();
 
-tau_e = dvector(1, n);
-tau_s = dvector(1, n);
+tau_epsilon = dvector(1, n);
+tau_sigma = dvector(1, n);
 if (n > 1) {
   exp1 = log10(f1);
   exp2 = log10(f2);
@@ -981,8 +981,8 @@ if (n > 1) {
   q = 1.0 / ((n - 1.0) * Q);
   for (i = 1, expo = exp1; i <= n; i++, expo += dexp) {
     omega = PI2 * pow(10.0, expo);
-    tau_s[i] = 1.0 / omega;
-    tau_e[i] = tau_s[i] * (1.0 + q) / (1.0 - q);
+    tau_sigma[i] = 1.0 / omega;
+    tau_epsilon[i] = tau_sigma[i] * (1.0 + q) / (1.0 - q);
   }
 } else {
   q = 1.0 / Q;
@@ -990,19 +990,19 @@ if (n > 1) {
   exp2 = log10(f2);
     expo=(exp1+exp2)/2.0;
   omega = PI2 * pow(10.0, expo);
-  tau_s[1] = 1.0 / omega;
-  tau_e[1] = tau_s[1] * (1.0 + q) / (1.0 - q);
+  tau_sigma[1] = 1.0 / omega;
+  tau_epsilon[1] = tau_sigma[1] * (1.0 + q) / (1.0 - q);
 }
 /*
- * x1 denotes the parameter tau_e - tau_s and x2 denotes the parameter tau_s
+ * x1 denotes the parameter tau_epsilon - tau_sigma and x2 denotes the parameter tau_sigma
  */
 for (i = 1; i <= n; i++) {
-  x1[i] = tau_e[i] - tau_s[i];
-  x2[i] = tau_s[i];
+  x1[i] = tau_epsilon[i] - tau_sigma[i];
+  x2[i] = tau_sigma[i];
 }
 
-free_dvector(tau_e, 1, n);
-free_dvector(tau_s, 1, n);
+free_dvector(tau_epsilon, 1, n);
+free_dvector(tau_sigma, 1, n);
 }
 
 double          penalty(f1, f2, n, Q, x1, x2)
@@ -1013,7 +1013,7 @@ int             i;
 double          exp1, exp2, dexp, expo;
 double          pnlt;
 double          f, df, omega;
-double          tau_e, tau_s, a, b, Q_omega;
+double          tau_epsilon, tau_sigma, a, b, Q_omega;
 
 exp1 = log10(f1);
 exp2 = log10(f2);
@@ -1026,12 +1026,12 @@ for (expo = exp1; expo <= exp2; expo += dexp) {
   a = (double) (1 - n);
   b = 0.0;
   for (i = 1; i <= n; i++) {
-    tau_e = x1[i] + x2[i];
-    tau_s = x2[i];
-    a += (1.0 + omega * omega * tau_e * tau_s) /
-       (1.0 + omega * omega * tau_s * tau_s);
-    b += omega * (tau_e - tau_s) /
-       (1.0 + omega * omega * tau_s * tau_s);
+    tau_epsilon = x1[i] + x2[i];
+    tau_sigma = x2[i];
+    a += (1.0 + omega * omega * tau_epsilon * tau_sigma) /
+       (1.0 + omega * omega * tau_sigma * tau_sigma);
+    b += omega * (tau_epsilon - tau_sigma) /
+       (1.0 + omega * omega * tau_sigma * tau_sigma);
   }
   Q_omega = a / b;
   pnlt += pow(1.0 / Q - 1.0 / Q_omega, 2.0) * df;
@@ -1050,7 +1050,7 @@ int             i, j;
 double          exp1, exp2, dexp, expo;
 double          f, df, omega;
 double         *dadp, *dbdp, *dqdp, d2qdp2;
-double          tau_e, tau_s, a, b, Q_omega;
+double          tau_epsilon, tau_sigma, a, b, Q_omega;
 double         *dvector();
 void            free_dvector();
 
@@ -1074,14 +1074,14 @@ for (expo = exp1; expo <= exp2; expo += dexp) {
   a = (double) (1 - n);
   b = 0.0;
   for (i = 1; i <= n; i++) {
-    tau_e = x1[i] + x2[i];
-    tau_s = x2[i];
-    a += (1.0 + omega * omega * tau_e * tau_s) /
-       (1.0 + omega * omega * tau_s * tau_s);
-    b += omega * (tau_e - tau_s) /
-    (1.0 + omega * omega * tau_s * tau_s);
-    dadp[i] = omega * omega * tau_s / (1.0 + omega * omega * tau_s * tau_s);
-    dbdp[i] = omega / (1.0 + omega * omega * tau_s * tau_s);
+    tau_epsilon = x1[i] + x2[i];
+    tau_sigma = x2[i];
+    a += (1.0 + omega * omega * tau_epsilon * tau_sigma) /
+       (1.0 + omega * omega * tau_sigma * tau_sigma);
+    b += omega * (tau_epsilon - tau_sigma) /
+    (1.0 + omega * omega * tau_sigma * tau_sigma);
+    dadp[i] = omega * omega * tau_sigma / (1.0 + omega * omega * tau_sigma * tau_sigma);
+    dbdp[i] = omega / (1.0 + omega * omega * tau_sigma * tau_sigma);
   }
   Q_omega = a / b;
   for (i = 1; i <= n; i++) {
