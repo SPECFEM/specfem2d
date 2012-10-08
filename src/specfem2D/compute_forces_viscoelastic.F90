@@ -751,6 +751,15 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                  sigma_xz = sigma_xz + mul_relaxed_viscoelastic * e13_sum
                  sigma_zz = sigma_zz + (lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic) * e1_sum &
                                      - TWO * mul_relaxed_viscoelastic * e11_sum
+                 sigma_zx = sigma_xz
+
+                 if(PML_BOUNDARY_CONDITIONS .and. is_PML(ispec)) then
+                     ispec_PML=spec_to_PML(ispec)
+                     sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*PML_duz_dzl(i,j,ispec_PML)
+                     sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*PML_dux_dxl(i,j,ispec_PML)
+                     sigma_zx = mul_unrelaxed_elastic * (PML_duz_dxl(i,j,ispec_PML) + dux_dzl)
+                     sigma_xz = mul_unrelaxed_elastic * (PML_dux_dzl(i,j,ispec_PML) + duz_dxl)
+                 endif
 
               else
 
