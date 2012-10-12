@@ -59,7 +59,7 @@
                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
                rmemory_potential_acoustic,&
                rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
-               rmemory_potential_acoustic_LDDRK,alpha_LDDRK,beta_LDDRK, &
+               rmemory_potential_acoust_LDDRK,alpha_LDDRK,beta_LDDRK, &
                rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
                deltat,PML_BOUNDARY_CONDITIONS)
 
@@ -151,7 +151,7 @@
 !coefficients and memory variables when using CPML with LDDRK
   integer :: stage_time_scheme,i_stage
   real(kind=CUSTOM_REAL), dimension(Nstages) :: alpha_LDDRK,beta_LDDRK
-  real(kind=CUSTOM_REAL), dimension(2,NGLLX,NGLLZ,nspec_PML) :: rmemory_potential_acoustic_LDDRK
+  real(kind=CUSTOM_REAL), dimension(2,NGLLX,NGLLZ,nspec_PML) :: rmemory_potential_acoust_LDDRK
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) :: &
           rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK
 
@@ -571,12 +571,12 @@
                    if(stage_time_scheme == 6) then
                      bb = alpha_x_store(i,j,ispec_PML)
 
-                     rmemory_potential_acoustic_LDDRK(1,i,j,ispec_PML) = &
-                     alpha_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(1,i,j,ispec_PML) &
+                     rmemory_potential_acoust_LDDRK(1,i,j,ispec_PML) = &
+                     alpha_LDDRK(i_stage) * rmemory_potential_acoust_LDDRK(1,i,j,ispec_PML) &
                      + deltat * (-bb * rmemory_potential_acoustic(1,i,j,ispec_PML) + potential_acoustic(iglob))
 
                      rmemory_potential_acoustic(1,i,j,ispec_PML) = rmemory_potential_acoustic(1,i,j,ispec_PML) + &
-                     beta_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(1,i,j,ispec_PML)
+                     beta_LDDRK(i_stage) * rmemory_potential_acoust_LDDRK(1,i,j,ispec_PML)
                      rmemory_potential_acoustic(2,i,j,ispec_PML) =0.d0
                   end if 
 
@@ -623,18 +623,18 @@
                         stop "something wrong in alpha definition"
                      endif
 
-                     rmemory_potential_acoustic_LDDRK(1,i,j,ispec_PML) = &
-                     alpha_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(1,i,j,ispec_PML) &
+                     rmemory_potential_acoust_LDDRK(1,i,j,ispec_PML) = &
+                     alpha_LDDRK(i_stage) * rmemory_potential_acoust_LDDRK(1,i,j,ispec_PML) &
                      + deltat * (-bb * rmemory_potential_acoustic(1,i,j,ispec_PML) + potential_acoustic(iglob))
-                     rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML) = &
-                     alpha_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML) &
+                     rmemory_potential_acoust_LDDRK(2,i,j,ispec_PML) = &
+                     alpha_LDDRK(i_stage) * rmemory_potential_acoust_LDDRK(2,i,j,ispec_PML) &
                      + deltat * (-bb * rmemory_potential_acoustic(2,i,j,ispec_PML) &
                                  + rmemory_potential_acoustic(1,i,j,ispec_PML))
 
                      rmemory_potential_acoustic(1,i,j,ispec_PML) = rmemory_potential_acoustic(1,i,j,ispec_PML) + &
-                     beta_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(1,i,j,ispec_PML)
+                     beta_LDDRK(i_stage) * rmemory_potential_acoust_LDDRK(1,i,j,ispec_PML)
                      rmemory_potential_acoustic(2,i,j,ispec_PML) = rmemory_potential_acoustic(2,i,j,ispec_PML) + &
-                     beta_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML)
+                     beta_LDDRK(i_stage) * rmemory_potential_acoust_LDDRK(2,i,j,ispec_PML)
 
                     end if
 
@@ -660,12 +660,12 @@
 
                      rmemory_potential_acoustic(1,i,j,ispec_PML) =0.d0
 
-                     rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML) = &
-                     alpha_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML) &
+                     rmemory_potential_acoust_LDDRK(2,i,j,ispec_PML) = &
+                     alpha_LDDRK(i_stage) * rmemory_potential_acoust_LDDRK(2,i,j,ispec_PML) &
                      + deltat * (-bb * rmemory_potential_acoustic(2,i,j,ispec_PML) + potential_acoustic(iglob))
 
                      rmemory_potential_acoustic(2,i,j,ispec_PML) = rmemory_potential_acoustic(2,i,j,ispec_PML) + &
-                     beta_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML)
+                     beta_LDDRK(i_stage) * rmemory_potential_acoust_LDDRK(2,i,j,ispec_PML)
 
                   end if 
 
