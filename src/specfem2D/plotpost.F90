@@ -3102,7 +3102,7 @@ coorg_recv_ps_vector_field
 
  499 format(f8.3,1x,f8.3,' L')
  500 format(f8.3,1x,f8.3,' M')
- 502 format('fN (',i4,') Cshow')
+ 502 format('fN (',i7,') Cshow')
  679 format(f12.6,1x,f12.6,1x,f12.6,' RG fill stroke')
  680 format(f12.6,1x,f12.6,1x,f12.6,' RG GF')
  681 format(f6.2,1x,f6.2)
