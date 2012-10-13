@@ -1,0 +1,179 @@
+# title of job
+title                           = Salt dome model
+
+# forward or adjoint simulation
+SIMULATION_TYPE                 = 1   # 1 = forward, 2 = adjoint + kernels
+NOISE_TOMOGRAPHY                = 0   # 0 = earthquake simulation, 1/2/3 = noise simulation
+SAVE_FORWARD                    = .false.  # save the last frame, needed for adjoint simulation
+
+# parameters concerning partitioning
+nproc                           = 1              # number of processes
+partitioning_method             = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
+PERFORM_CUTHILL_MCKEE           = .false.        # perform inverse Cuthill-McKee (1969) optimization/permutation for mesh numbering (can be very costly and not very useful)
+
+ngnod                           = 4              # number of control nodes per element (4 or 9)
+initialfield                    = .false.        # use a plane wave as source or not
+add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
+assign_external_model           = .false.        # define external earth model or not
+READ_EXTERNAL_SEP_FILE          = .false.        # Read external model from DATA/model_velocity.dat_input, or use routine
+ATTENUATION_VISCOELASTIC_SOLID  = .false.        # turn attenuation (viscoelasticity) on or off for non-poroelastic solid parts of the model
+ATTENUATION_PORO_FLUID_PART     = .false.        # turn viscous attenuation on or off for the fluid part of poroelastic parts of the model
+Q0                              =  1             # quality factor for viscous attenuation
+freq0                           =  10            # frequency for viscous attenuation
+p_sv                            = .true.         # set the type of calculation (P-SV or SH/membrane waves)
+
+# time step parameters
+nt                              = 10000           # total number of time steps
+deltat                          = 4.25e-4         # duration of a time step
+USER_T0                         = 0.0d0          # use this t0 as earliest starting time rather than the automatically calculated one
+time_stepping_scheme            = 1              # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta), 3 = classical RK4 4th-order 4-stage Runge-Kutta
+
+# source parameters
+NSOURCES                        = 1              # number of sources (source info read from DATA/CMTSOLUTION file)
+force_normal_to_surface         = .false.        # angleforce normal to surface (external mesh and curve file needed)
+
+# constants for attenuation
+N_SLS                           = 2                      # number of standard linear solids for attenuation
+f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the CMTSOLUTION file
+
+# receiver set parameters for seismograms
+seismotype                      = 1              # record 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential
+NSTEP_BETWEEN_OUTPUT_SEISMOS    = 5000000        # every how many time steps we save the seismograms (costly, do not use a very small value; if you use a very large value that is larger than the total number of time steps of the run, the seismograms will automatically be saved once at the end of the run anyway)
+save_ASCII_seismograms          = .true.         # save seismograms in ASCII format or not
+save_binary_seismograms_single  = .true.         # save seismograms in single precision binary format or not (can be used jointly with ASCII above to save both)
+save_binary_seismograms_double  = .false.        # save seismograms in double precision binary format or not (can be used jointly with both flags above to save all)
+SU_FORMAT                       = .false.        # output single precision binary seismograms in Seismic Unix format (adjoint traces will be read in the same format)
+subsamp_seismos                 = 1              # subsampling of the seismograms to create smaller files (but less accurately sampled in time)
+generate_STATIONS               = .true.         # creates a STATION file in ./DATA
+nreceiversets                   = 1              # number of receiver sets
+anglerec                        = 0.d0           # angle to rotate components at receivers
+rec_normal_to_surface           = .false.        # base anglerec normal to surface (external mesh and curve file needed)
+
+# first receiver set (repeat these 6 lines and adjust nreceiversets accordingly)
+nrec                            = 1           # number of receivers
+xdeb                            = 1000.           # first receiver x in meters
+zdeb                            = 1100.  # first receiver z in meters
+xfin                            = 1000.          # last receiver x in meters (ignored if onlyone receiver)
+zfin                            = 1100.  # last receiver z in meters (ignored if onlyone receiver)
+enreg_surf_same_vertical        = .false.         # receivers inside the medium or at the surface
+
+# display parameters
+NSTEP_BETWEEN_OUTPUT_INFO       = 500           # every how many time steps we display information about the simulation (costly, do not use a very small value)
+####
+NSTEP_BETWEEN_OUTPUT_IMAGES     = 500           # every how many time steps we draw JPEG or PostScript pictures of the simulation (costly, do not use a very small value)
+cutsnaps                        = 1.             # minimum amplitude kept in % for the JPEG and PostScript snapshots; amplitudes below that are muted
+#### for JPEG color images ####
+output_color_image              = .true.         # output JPEG color image of the results every NSTEP_BETWEEN_OUTPUT_IMAGES time steps or not
+imagetype_JPEG                  = 2              # display 1=displ_Ux 2=displ_Uz 3=displ_norm 4=veloc_Vx 5=veloc_Vz 6=veloc_norm 7=accel_Ax 8=accel_Az 9=accel_norm 10=pressure
+factor_subsample_image          = 1              # factor to spatially subsample color JPEG images output by the code (useful for very large models)
+POWER_DISPLAY_COLOR             = 0.30d0         # non linear display to enhance small amplitudes in JPEG color images
+DRAW_SOURCES_AND_RECEIVERS      = .true.         # display sources as orange crosses and receivers as green squares in JPEG images or not
+DRAW_WATER_IN_BLUE              = .true.         # display acoustic layers as constant blue in JPEG images, because they likely correspond to water in the case of ocean acoustics or in the case of offshore oil industry experiments (if off, display them as greyscale, as for elastic or poroelastic elements, for instance for acoustic-only oil industry models of solid media)
+USE_SNAPSHOT_NUMBER_IN_FILENAME = .false.        # use snapshot number in the file name of JPEG color snapshots instead of the time step (for instance to create movies in an easier way later)
+#### for PostScript snapshots ####
+output_postscript_snapshot      = .true.         # output Postscript snapshot of the results every NSTEP_BETWEEN_OUTPUT_IMAGES time steps or not
+imagetype_postscript            = 1              # display 1=displ vector 2=veloc vector 3=accel vector; small arrows are displayed for the vectors
+meshvect                        = .true.         # display mesh on PostScript plots or not
+modelvect                       = .false.        # display velocity model on PostScript plots or not
+boundvect                       = .true.         # display boundary conditions on PostScript plots or not
+interpol                        = .true.         # interpolation of the PostScript display on a regular grid inside each spectral element, or use the non-evenly spaced GLL points
+pointsdisp                      = 6              # number of points in each direction for interpolation of PostScript snapshots (set to 1 for lower-left corner only)
+subsamp_postscript              = 1              # subsampling of background velocity model in PostScript snapshots
+sizemax_arrows                  = 1.d0           # maximum size of arrows on PostScript plots in centimeters
+US_LETTER                       = .false.        # use US letter or European A4 paper for PostScript plots
+####
+NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS = 100            # every how many time steps we dump results of the simulation as ASCII or binary files (costly, do not use a very small value)
+output_wavefield_dumps          = .false.        # output wave field to a text file every NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS time steps (creates very big files)
+imagetype_wavefield_dumps       = 1              # display 1=displ vector 2=veloc vector 3=accel vector 4=pressure
+use_binary_for_wavefield_dumps  = .false.        # use ASCII or single-precision binary format for the wave field dumps
+####
+output_grid_Gnuplot             = .false.        # generate a GNUPLOT file containing the grid, and a script to plot it
+output_grid_ASCII               = .false.        # dump the grid in an ASCII text file consisting of a set of X,Y,Z points or not
+output_energy                   = .false.        # compute and output total acoustic and elastic energy curves (slows down the code significantly)
+
+# velocity and density models
+nbmodels                        = 11              # nb of different models
+# define models as
+# I:   (model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0) or
+# II:  (model_number 2 rho c11 c13 c15 c33 c35 c55 0 0 0 0 0 0) or
+# III: (model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu).
+#
+# For istropic elastic/acoustic material use I and set Vs to zero to make a given model acoustic, for anisotropic elastic use II,
+# and for isotropic poroelastic material use III. The mesh can contain acoustic, elastic, and poroelastic models simultaneously.
+#
+# For anisotropic media in the most general 2D case we have the following convention for the stress-strain relationship:
+# ! implement anisotropy in 2D
+# sigma_xx = c11*dux_dx + c15*(duz_dx + dux_dz) + c13*duz_dz
+# sigma_zz = c13*dux_dx + c35*(duz_dx + dux_dz) + c33*duz_dz
+# sigma_xz = c15*dux_dx + c55*(duz_dx + dux_dz) + c35*duz_dz
+# where the notations are for instance duz_dx = d(Uz) / dx.
+#
+1 1 2000.d0 4000.d0 2300.d0 0 0 9999 9999 0 0 0 0 0 0
+2 1 1800.d0 2000.d0 1500.d0 0 0 9999 9999 0 0 0 0 0 0
+3 1 2000.d0 3500.d0 2000.d0 0 0 9999 9999 0 0 0 0 0 0
+4 1 1800.d0 2700.d0 1300.d0 0 0 9999 9999 0 0 0 0 0 0
+5 1 1800.d0 3000.d0 1500.d0 0 0 9999 9999 0 0 0 0 0 0
+6 1 1800.d0 2500.d0 1000.d0 0 0 9999 9999 0 0 0 0 0 0
+7 1 1800.d0 2700.d0 1300.d0 0 0 9999 9999 0 0 0 0 0 0
+8 1 1600.d0 5000.d0 3000.d0 0 0 9999 9999 0 0 0 0 0 0
+9 1 1800.d0 2500.d0 1000.d0 0 0 9999 9999 0 0 0 0 0 0
+10 1 1600.d0 2200.d0 800.d0 0 0 9999 9999 0 0 0 0 0 0
+11 1 1000.d0 1500.d0 0 0 0 9999 9999 0 0 0 0 0 0
+
+# external mesh or not
+read_external_mesh              = .true.
+
+# absorbing boundary active or not
+PML_BOUNDARY_CONDITIONS         = .false.
+NELEM_PML_THICKNESS             = 3
+STACEY_ABSORBING_CONDITIONS     = .true.
+ADD_SPRING_TO_STACEY            = .true.
+
+# for horizontal periodic conditions: detect common points between left and right edges
+ADD_PERIODIC_CONDITIONS         = .false.
+
+# horizontal periodicity distance for periodic conditions
+PERIODIC_horiz_dist             = 0.3597d0
+
+# grid point detection tolerance for periodic conditions
+PERIODIC_DETECT_TOL             = 3.3334d-6
+
+#-----------------------------------------------------------------------------
+# PARAMETERS FOR EXTERNAL MESHING
+
+# data concerning mesh, when generated using third-party app (more info in README)
+# (see also absorbing_conditions above)
+mesh_file                       = ./DATA/modelY1_mesh_file   # file containing the mesh
+nodes_coords_file               = ./DATA/modelY1_nodes_coords_file   # file containing the nodes coordinates
+materials_file                  = ./DATA/modelY1_materials_file   # file containing the material number for each element
+free_surface_file               = ./DATA/modelY1_free_surface_file   # file containing the free surface
+absorbing_surface_file          = ./DATA/modelY1_absorbing_surface_file   # file containing the absorbing surface
+CPML_element_file               = EltPML_xxxxxx  # file containing the CPML element numbers
+tangential_detection_curve_file = ./DATA/courbe_eros_nodes # file containing the curve delimiting the velocity model
+
+#-----------------------------------------------------------------------------
+# PARAMETERS FOR INTERNAL MESHING
+
+# file containing interfaces for internal mesh
+interfacesfile                  = interfaces_model5.dat
+
+# geometry of the model (origin lower-left corner = 0,0) and mesh description
+xmin                            = 0.d0           # abscissa of left side of the model
+xmax                            = 4000.d0        # abscissa of right side of the model
+nx                              = 80             # number of elements along X
+
+# absorbing boundary parameters (see absorbing_conditions above)
+absorbbottom                    = .true.
+absorbright                     = .true.
+absorbtop                       = .false.
+absorbleft                      = .true.
+
+# define the different regions of the model in the (nx,nz) spectral element mesh
+nbregions                       = 7              # nb of regions and model number for each
+1 50  1  40 1
+1 50  41 50 2
+1 50  51 70 3
+1 50  71 80 4
+1 50  81 90  5
+1 50  91 100 6
+1 50  101 130 7
