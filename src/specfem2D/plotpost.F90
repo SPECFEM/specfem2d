@@ -260,7 +260,7 @@ coorg_recv_ps_vector_field
   endif
 
 ! height of domain numbers in centimeters
-  height = 0.25d0
+  height = 0.05d0
 
 ! define color palette in random order
 
