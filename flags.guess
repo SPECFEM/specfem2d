@@ -40,17 +40,17 @@ case $FC in
         # standard options (leave option -ftz, which is *critical* for performance)
         # add -Winline to get information about routines that are inlined
         # add -vec-report2 to get information about loops that are vectorized or not
-            FLAGS_NO_CHECK="-O3 -xHost -funroll-loops -unroll5 -vec-report0 -std95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -ftz" # -DUSE_GUENNEAU -DCRISTINI_DO_NOT_DUMP_FICTITIOUS_REGIONS
+            FLAGS_NO_CHECK="-O3 -xHost -funroll-loops -unroll5 -vec-report0 -std03 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -ftz" # -DUSE_GUENNEAU -DCRISTINI_DO_NOT_DUMP_FICTITIOUS_REGIONS
             #FLAGS_NO_CHECK="-O3 -assume byterecl -check nobounds -ftz"
 
         fi
         if test x"$FLAGS_CHECK" = x; then
-            FLAGS_CHECK="-O0 -vec-report0 -std95 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check all -align sequence -assume byterecl -ftz -traceback -ftrapuv" # -DUSE_GUENNEAU -DCRISTINI_DO_NOT_DUMP_FICTITIOUS_REGIONS
+            FLAGS_CHECK="-O0 -vec-report0 -std03 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check all -align sequence -assume byterecl -ftz -traceback -ftrapuv" # -DUSE_GUENNEAU -DCRISTINI_DO_NOT_DUMP_FICTITIOUS_REGIONS
             #FLAGS_CHECK="-O3 -assume byterecl -traceback -ftrapuv -ftz"
 
 
             # ifort version 11 or 10.1 with these flags shows good performance
-            #FLAGS_CHECK="-O3 -ftz -xS -traceback -ftrapuv -vec-report0 -std95 -implicitnone -check nobounds -assume byterecl -static-intel -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage "
+            #FLAGS_CHECK="-O3 -ftz -xS -traceback -ftrapuv -vec-report0 -std03 -implicitnone -check nobounds -assume byterecl -static-intel -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage "
             #FLAGS_CHECK="-O3 -xS -static-intel -r8 -mcmodel=large -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -check nobounds -align sequence -assume byterecl -ftrapuv -ftz -traceback"
         # useful for debugging...
             # for debugging: change -check nobounds to -check all -debug -g -O0 -fp-stack-check -traceback -ftrapuv
