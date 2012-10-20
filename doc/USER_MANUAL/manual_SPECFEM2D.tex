@@ -858,7 +858,85 @@ To simulate propagation of incoming plane waves in the simulation domain, initia
   \end{itemize}
 \end{description}
 %------------------------------------------------------------------------------------------------%
+\section{How to choose time step}
+In current version of SPECFEM2D, three time schemes are implemented for elastic, acoustic(fluid) or elastic/acoustic
+(fluid).One is Newmark method, the other is Low-dissipation and low-dispersion fourth-order Runge-Kutta method presented in paper \cite{bbb_rk4} 
+and another is classical 4th-order 4-stage Runge-Kutta method. Unfortunately the last two methods are not implemented for simulation with poro-elastic material.
+According to results of paper \cite{DeSe10} and \cite{bbb_rk4}, with different degree(degree=NGLLX-1) of GLL basis funtions the CFL bounds are given in following tables.
+You can directly compared that with the value given behind sentence $'$Max stability for P wave velocity$'$ in file
+\texttt{output\_solve.txt} to see whether you set the correct deltat in \texttt{Par\_file} or not. For elastic simulation, remembering that the
+CFL value given in \texttt{output\_solve.txt} do not consider the ratio of Vp/Vs . And the CFL bound slight decreases with increased Vp/Vs. For viscoelastic simulation,
+the CFL bound condition do not change, since we use the rational approximation of const Q, which has no attenuation effect on zero frequency wave.
+Additionally, if you use CPML(implemented with Newmark and LDDRK46 method) in simulation, the CFL condition decrease to approximately $95\%$ for Newmark and $85\%$ for LDDRK46. 
+\begin{table}[hb]
+\caption{Upper CFL bound for Acoustic(Fluid) Simulation}
+% title of Table
+\centering
+% used for centering table
+\begin{tabular}{c c c c}
+% centered columns (4 columns)
+\hline\hline
+%inserts double horizontal lines
+Degree & Newmark & LDDRK4-6 & classical 4th-order 4-stage Runge-Kutta \\ [0.5ex]
+% inserts table
+%heading
+\hline
+% inserts single horizontal line
+1 & 0.709 & 1.349 & 1.003 \\
+% inserting body of the table
+2 & 0.577 & 1.098 & 0.816 \\
+3 & 0.593 & 1.129 & 0.839 \\
+4 & 0.604 & 1.150 & 0.854 \\
+5 & 0.608 & 1.157 & 0.860 \\
+6 & 0.608 & 1.157 & 0.860 \\
+7 & 0.608 & 1.157 & 0.860 \\
+8 & 0.607 & 1.155 & 0.858 \\
+9 & 0.607 & 1.155 & 0.858 \\
+10 & 0.607 & 1.155 & 0.858 \\ [1ex]
+% [1ex] adds vertical space
+\hline
+%inserts single line
+\end{tabular}
+\label{table:nonlin}
+% is used to refer this table in the text
+\end{table}
+%
+\clearpage
+\noindent
+\begin{table}[t]
+\caption{Upper CFL bound for Elastic Simulation with Vp/Vs=1.41 }
+% title of Table
+\centering
+% used for centering table
+\begin{tabular}{c c c c}
+% centered columns (4 columns)
+\hline\hline
+%inserts double horizontal lines
+Degree & Newmark & LDDRK4-6 & classical 4th-order 4-stage Runge-Kutta \\ [0.5ex]
+% inserts table
+%heading
+\hline
+% inserts single horizontal line
+1 & 0.816 & 1.553 & 1.154 \\
+% inserting body of the table
+2 & 0.666 & 1.268 & 0.942 \\
+3 & 0.684 & 1.302 & 0.967 \\
+4 & 0.697 & 1.327 & 0.986 \\
+5 & 0.700 & 1.332 & 0.990 \\
+6 & 0.700 & 1.332 & 0.990 \\
+7 & 0.700 & 1.332 & 0.990 \\
+8 & 0.699 & 1.330 & 0.989 \\
+9 & 0.698 & 1.328 & 0.987 \\
+10 & 0.698 & 1.328 & 0.987 \\ [1ex]
+% [1ex] adds vertical space
+\hline
+%inserts single line
+\end{tabular}
+\label{table:nonlin}
+% is used to refer this table in the text
+\end{table}
 
+%------------------------------------------------------------------------------------------------%
 
 %------------------------------------------------------------------------------------------------%
 
@@ -880,7 +958,7 @@ adjoint source. Note: if the user forgets it, the program corrects it when readi
 \texttt{SIMULATION\_TYPE} and \texttt{SAVE\_FORWARD} combination and a warning message appears in the ouput
 file)\\
 
-Important output files (for example, for the elastic case, P-SV waves): \\
+Important output files (for example, for the elastic case, P-SV waves): \\s
 \texttt{absorb\_elastic\_bottom*****.bin}\\
 \texttt{absorb\_elastic\_left*****.bin}\\
 \texttt{absorb\_elastic\_right*****.bin}\\
