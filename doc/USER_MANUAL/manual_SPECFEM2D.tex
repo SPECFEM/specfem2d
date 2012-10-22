@@ -79,6 +79,20 @@
 \newcommand{\nproceta}{\mbox{\texttt{NPROC\_ETA\/}}}
 \newcommand{\nchunks}{\mbox{\texttt{NCHUNKS\/}}}
 
+% colors to show the corrections
+\usepackage[dvipsnames,usenames]{color}
+
+% colors to show the corrections
+\newcommand{\red}[1]{\textbf{\textcolor{Red}{#1}}}
+\newcommand{\blue}[1]{\textbf{\textcolor{Blue}{#1}}}
+\newcommand{\cyan}[1]{\textbf{\textcolor{Cyan}{#1}}}
+\newcommand{\green}[1]{\textbf{\textcolor{Green}{#1}}}
+\newcommand{\magenta}[1]{\textbf{\textcolor{Magenta}{#1}}}
+\newcommand{\orange}[1]{\textbf{\textcolor{Orange}{#1}}}
+%\newcommand{\red}[1]{#1}
+%\newcommand{\blue}[1]{#1}
+%\newcommand{\cyan}[1]{#1}
+
 \usepackage{babel}
 \makeatother
 
@@ -857,19 +871,25 @@ To simulate propagation of incoming plane waves in the simulation domain, initia
   \item \verb+angleforce+ can be negative to indicate a plane wave incident from the right (instead of the left)
   \end{itemize}
 \end{description}
+
 %------------------------------------------------------------------------------------------------%
-\section{How to choose time step}
-In current version of SPECFEM2D, three time schemes are implemented for elastic, acoustic(fluid) or elastic/acoustic
-(fluid).One is Newmark method, the other is Low-dissipation and low-dispersion fourth-order Runge-Kutta method presented in paper \cite{bbb_rk4} 
-and another is classical 4th-order 4-stage Runge-Kutta method. Unfortunately the last two methods are not implemented for simulation with poro-elastic material.
-According to results of paper \cite{DeSe10} and \cite{bbb_rk4}, with different degree(degree=NGLLX-1) of GLL basis funtions the CFL bounds are given in following tables.
-You can directly compared that with the value given behind sentence $'$Max stability for P wave velocity$'$ in file
-\texttt{output\_solver.txt} to see whether you set the correct deltat in \texttt{Par\_file} or not. For elastic simulation, remembering that the
-CFL value given in \texttt{output\_solver.txt} do not consider the ratio of Vp/Vs . And the CFL bound slight decreases with increased Vp/Vs. For viscoelastic simulation,
-the CFL bound condition do not change, since we use the rational approximation of const Q, which has no attenuation effect on zero frequency wave.
-Additionally, if you use CPML(implemented with Newmark and LDDRK46 method) in simulation, the CFL condition decrease to approximately $95\%$ for Newmark and $85\%$ for LDDRK46. 
+\section{How to choose the time step}
+
+Three different explicit conditionally-stable time schemes can be used for elastic, acoustic (fluid) or coupled elastic/acoustic media:
+the Newmark method, the low-dissipation and low-dispersion fourth-order six-stage Runge-Kutta method (LDDRK4-6) presented in \cite{bbb_rk4},
+and the classical fourth-order four-stage Runge-Kutta (RK4) method.
+Currently the last two methods are not implemented for poro-elastic media.
+According to \cite{DeSe10} and \cite{bbb_rk4}, with different degrees $N=NGLLX-1$ of the GLL basis funtions the CFL bounds are given in the following tables.
+Note that by default the SPECFEM solver uses $NGLLX = 5$ and thus a degree $N = 4$, which is thus the value you should use
+in most cases in the following tables.
+You can directly compare these values with the value given in sentence 'Max stability for P wave velocity' in file
+\texttt{output\_solver.txt} to see whether you set the correct $\Delta_t$ in \texttt{Par\_file} or not.
+For elastic simulation, the
+CFL value given in \texttt{output\_solver.txt} does not consider the Vp/Vs ratio, but the CFL limit slight decreases when Vp/Vs increases.
+In viscoelastic simulations the CFL limit does not change compared to the elastic case because we use a rational approximation of a constant quality factor Q, which has no attenuation effect on zero-frequency waves.
+Additionally, if you use C-PML absorbing layers in your simulations, which are implemented for the Newmark and LDDRK4-6 techniques but not for the classical RK4), the CFL upper limit decreases to approximately $95\%$ of the limit without absorbing layers in the case of Newmark and to $85\%$ in the case of LDDRK4-6. 
 \begin{table}[hb]
-\caption{Upper CFL bound for Acoustic(Fluid) Simulation}
+\caption{CFL upper bound for an acoustic (fluid) simulation.}
 % title of Table
 \centering
 % used for centering table
@@ -877,16 +897,15 @@ Additionally, if you use CPML(implemented with Newmark and LDDRK46 method) in si
 % centered columns (4 columns)
 \hline\hline
 %inserts double horizontal lines
-Degree & Newmark & LDDRK4-6 & classical 4th-order 4-stage Runge-Kutta \\ [0.5ex]
+Degree $N$ & Newmark & LDDRK4-6 & RK4 \\ [0.5ex]
 % inserts table
 %heading
 \hline
 % inserts single horizontal line
 1 & 0.709 & 1.349 & 1.003 \\
-% inserting body of the table
 2 & 0.577 & 1.098 & 0.816 \\
 3 & 0.593 & 1.129 & 0.839 \\
-4 & 0.604 & 1.150 & 0.854 \\
+\red{4} & \red{0.604} & \red{1.150} & \red{0.854} \\
 5 & 0.608 & 1.157 & 0.860 \\
 6 & 0.608 & 1.157 & 0.860 \\
 7 & 0.608 & 1.157 & 0.860 \\
@@ -904,7 +923,7 @@ Degree & Newmark & LDDRK4-6 & classical 4th-order 4-stage Runge-Kutta \\ [0.5ex]
 \clearpage
 \noindent
 \begin{table}[t]
-\caption{Upper CFL bound for Elastic Simulation with Vp/Vs=1.41 }
+\caption{CFL upper bound for an elastic simulation with Vp/Vs = $\sqrt{2}$.}
 % title of Table
 \centering
 % used for centering table
@@ -912,16 +931,15 @@ Degree & Newmark & LDDRK4-6 & classical 4th-order 4-stage Runge-Kutta \\ [0.5ex]
 % centered columns (4 columns)
 \hline\hline
 %inserts double horizontal lines
-Degree & Newmark & LDDRK4-6 & classical 4th-order 4-stage Runge-Kutta \\ [0.5ex]
+Degree $N$ & Newmark & LDDRK4-6 & RK4 \\ [0.5ex]
 % inserts table
 %heading
 \hline
 % inserts single horizontal line
 1 & 0.816 & 1.553 & 1.154 \\
-% inserting body of the table
 2 & 0.666 & 1.268 & 0.942 \\
 3 & 0.684 & 1.302 & 0.967 \\
-4 & 0.697 & 1.327 & 0.986 \\
+\red{4} & \red{0.697} & \red{1.327} & \red{0.986} \\
 5 & 0.700 & 1.332 & 0.990 \\
 6 & 0.700 & 1.332 & 0.990 \\
 7 & 0.700 & 1.332 & 0.990 \\
