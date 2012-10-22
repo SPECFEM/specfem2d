@@ -459,8 +459,8 @@ def ProcessParfile_r20859(fic):
     for ilg, lig in enumerate(ligs):
         if lig.startswith('deltat'):
             ligs[ilg] = ligs[ilg].replace('# duration of a time step','#'+ \
-            ' duration of a time step (for the choice of deltat please refer'+ \
-            ' to section 4.5 of the user manual)')
+            ' duration of a time step (see section "How to choose the time step" of'+ \
+            ' the manual for how to do this)')
     #
     move(fic,fic+'.before_update_to_r20859')
     #
