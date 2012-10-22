@@ -864,8 +864,8 @@ In current version of SPECFEM2D, three time schemes are implemented for elastic,
 and another is classical 4th-order 4-stage Runge-Kutta method. Unfortunately the last two methods are not implemented for simulation with poro-elastic material.
 According to results of paper \cite{DeSe10} and \cite{bbb_rk4}, with different degree(degree=NGLLX-1) of GLL basis funtions the CFL bounds are given in following tables.
 You can directly compared that with the value given behind sentence $'$Max stability for P wave velocity$'$ in file
-\texttt{output\_solve.txt} to see whether you set the correct deltat in \texttt{Par\_file} or not. For elastic simulation, remembering that the
-CFL value given in \texttt{output\_solve.txt} do not consider the ratio of Vp/Vs . And the CFL bound slight decreases with increased Vp/Vs. For viscoelastic simulation,
+\texttt{output\_solver.txt} to see whether you set the correct deltat in \texttt{Par\_file} or not. For elastic simulation, remembering that the
+CFL value given in \texttt{output\_solver.txt} do not consider the ratio of Vp/Vs . And the CFL bound slight decreases with increased Vp/Vs. For viscoelastic simulation,
 the CFL bound condition do not change, since we use the rational approximation of const Q, which has no attenuation effect on zero frequency wave.
 Additionally, if you use CPML(implemented with Newmark and LDDRK46 method) in simulation, the CFL condition decrease to approximately $95\%$ for Newmark and $85\%$ for LDDRK46. 
 \begin{table}[hb]
