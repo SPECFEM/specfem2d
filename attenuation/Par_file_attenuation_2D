@@ -24,7 +24,7 @@ p_sv                            = .true.         # set the type of calculation (
 
 # time step parameters
 nt                              = 1400           # total number of time steps
-deltat                          = 1e-3         # duration of a time step
+deltat                          = 1e-3         # duration of a time step (for the choice of deltat please refer to section 4.5 of the user manual)
 USER_T0                         = 0.0d0          # use this t0 as earliest starting time rather than the automatically calculated one
 time_stepping_scheme            = 2              # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta), 3 = classical 4th-order 4-stage Runge-Kutta
 

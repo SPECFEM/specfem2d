@@ -444,6 +444,33 @@ def ProcessParfile_r20561(fic):
     print 'xxxxx------> '+fic+' processed to r20561'
     return
 #------------------------------------------------------------------------------
+def ProcessParfile_r20859(fic):
+    # Open the file and get all lines from Par_file
+    ligs= LoadLig(fic)
+
+    # Test if already processed
+    for lig in ligs:
+        if lig.endswith('section 4.5 of the user manual)\n'):
+            print '----> '+fic+' already processed to r20859'            
+            return
+    #--------------------------------------------------------------------------
+    # Add new parameters
+    # 
+    for ilg, lig in enumerate(ligs):
+        if lig.startswith('deltat'):
+            ligs[ilg] = ligs[ilg].replace('# duration of a time step','#'+ \
+            ' duration of a time step (for the choice of deltat please refer'+ \
+            ' to section 4.5 of the user manual)')
+    #
+    move(fic,fic+'.before_update_to_r20859')
+    #
+    fm = open(fic,'w')
+    fm.writelines(ligs)
+    fm.close()
+    #
+    print 'xxxxx------> '+fic+' processed to r20859'
+    return
+#------------------------------------------------------------------------------
 if __name__=='__main__':
     ## List of all files of current directory
     Fichiers=[]
@@ -468,6 +495,7 @@ if __name__=='__main__':
                     ProcessParfile_r20307(fic)
                     ProcessParfile_r20359(fic)
                     ProcessParfile_r20561(fic)
+                    ProcessParfile_r20859(fic)
                     print '~'*80
     #                
     print 'Number of Par_file analysed : ', Ct_Par_file   
