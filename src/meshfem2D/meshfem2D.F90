@@ -820,7 +820,7 @@ program meshfem2D
   ! partitioning
   !*****************************
 
-  ! allocates & initializes partioning of elements
+  ! allocates and initializes partioning of elements
   allocate(part(0:nelmnts-1))
   part(:) = -1
 
