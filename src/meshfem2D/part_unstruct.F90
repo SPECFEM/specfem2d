@@ -1546,7 +1546,7 @@ end  subroutine rotate_mesh_for_plane_wave
   double precision, dimension(SCOTCH_STRATDIM)  :: SCOTCHSTRAT
   integer  :: IERR
 
-  edgecut = vwgt(0)
+!!!!!!!  edgecut = vwgt(0)
   edgecut = 0
 
   ! we use the default strategy for partitioning
