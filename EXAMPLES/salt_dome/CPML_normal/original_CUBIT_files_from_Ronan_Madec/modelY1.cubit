@@ -282,3 +282,7 @@ export Abaqus "modelY1_Abaqus_format" dimension 2 block all overwrite
 
 export Acis "modelY1_ACIS_ascii_format.sat" dimension 2 block all Ascii overwrite
 
+export Iges "modelY1_IGES_ascii_format.iges" dimension 2 block all overwrite
+
+export Stl "modelY1_STL_ascii_format.txt" dimension 2 block all Ascii overwrite
+
