@@ -612,8 +612,6 @@ Please consider these following points, when running the solver:
 
 \item when compiling with Intel ifort, use "\texttt{-assume byterecl}" option to create binary PNM images displaying the wave field
 
-\item we do not have PML absorbing conditions implemented in the fluid/solid code yet. We use (older and less efficient) paraxial Clayton-Engquist or Sommerfeld equations instead. This is only by lack of time, we have a developer who is currently implementing PML but the code is not fully ready. For now, since the paraxial conditions are less efficient, please use a larger model
-
 \item there are a few useful scripts and Fortran routines in directory \texttt{UTILS/}.
 
 \item if you find bugs (or if you have comments or suggestions) please send an email to cig-seismo AT geodynamics.org and the developers will try to fix them and send you an updated version
