@@ -68,7 +68,7 @@
   real(kind=CUSTOM_REAL),dimension(NSOURCES,NSTEP,stage_time_scheme) :: source_time_function
 
   ! local parameters
-  double precision :: stf_used,time
+  double precision :: stf_used, time, DecT, Tc, omegat
   double precision, dimension(NSOURCES) :: hdur,hdur_gauss
   double precision, external :: netlib_specfun_erf
   integer :: it,i_source
@@ -152,6 +152,26 @@
         hdur_gauss(i_source) = hdur(i_source) * 5.d0 / 3.d0
         source_time_function(i_source,it,i_stage) = factor(i_source) * 0.5d0*(1.0d0 + &
             netlib_specfun_erf(SOURCE_DECAY_MIMIC_TRIANGLE*(time-t0-tshift_src(i_source))/hdur_gauss(i_source)))
+
+      else if(time_function_type(i_source) == 6) then
+
+        DecT = t0 + tshift_src(i_source)
+
+        Tc = 4.d0 / f0(i_source) + DecT
+
+        if ( time > DecT .and. time < Tc ) then
+
+           ! source time function from Computational Ocean Acoustics
+           omegat = TWO * PI * f0(i_source) * ( time - DecT )
+           source_time_function(i_source,it,i_stage) = factor(i_source) * HALF * &
+                 sin( omegat ) * ( ONE - cos( QUART * omegat ) )
+
+        else
+
+           source_time_function(i_source,it,i_stage) = ZERO
+
+        endif
+            
 
       else
         call exit_MPI('unknown source time function')
