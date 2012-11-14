@@ -532,7 +532,43 @@ indicated in the previous section are :
 \item \texttt{Surf\_free\_SqrCirc} is the \texttt{\textbf{free\_surface\_file}}
 \end{itemize}
 In addition, four files like \texttt{free\_surface\_file} corresponding
-to the sides of the model are generated.
+to the sides of the model are generated. If you use CPML, an additional file for 
+showing the position of elements inside CPML is needed,
+such a file should be arranged as following, the first line is the total number of 
+CPML elements, then you lists all the CPML elements line by line. The format of those lines
+is: in first column you give CPML element's global element index then in second column you give 
+its position index. The definition of position index
+is given in following table
+
+\begin{table}[hb]
+\caption{Definition of position index for CPML element}
+% title of Table
+\centering
+% used for centering table
+\begin{tabular}{c c}
+% centered columns (4 columns)
+\hline\hline
+%inserts double horizontal lines
+position index& position\\ [0.5ex]
+% inserts table
+%heading
+\hline
+% inserts single horizontal line
+1 & element is in the pure left CPML layer  \\
+2 & element is in the pure right CPML layer \\
+4 & element is in the pure top CPML layer \\
+5 & element is in the left-top CPML corner \\
+6 & element is in the right-top CPML corner \\
+8 & element is in the pure bottom CPML layer \\
+9 & element is in the left-bottom CPML corner \\
+10 & element is in the right-bottom CPML corner \\ [1ex]
+% [1ex] adds vertical space
+\hline
+%inserts single line
+\end{tabular}
+\label{table:nonlin}
+% is used to refer this table in the text
+\end{table}
 
 %------------------------------------------------------------------------------------------------%
 \section{Controlling the quality of an external mesh}
