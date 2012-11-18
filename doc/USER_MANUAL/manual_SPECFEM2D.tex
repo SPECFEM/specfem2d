@@ -532,36 +532,35 @@ indicated in the previous section are :
 \item \texttt{Surf\_free\_SqrCirc} is the \texttt{\textbf{free\_surface\_file}}
 \end{itemize}
 In addition, four files like \texttt{free\_surface\_file} corresponding
-to the sides of the model are generated. If you use CPML, an additional file for 
-showing the position of elements inside CPML is needed,
-such a file should be arranged as following, the first line is the total number of 
-CPML elements, then you lists all the CPML elements line by line. The format of those lines
-is: in first column you give CPML element's global element index then in second column you give 
-its position index. The definition of position index
-is given in following table
+to the sides of the model are generated.\\
+
+If you use CPML, an additional file listing the CPML elements is needed.
+Its first line is the total number of
+CPML elements, and then a list of all the CPML elements, one per line.
+The format of these lines is: in the first column the CPML element number, and in the second column a flag as follows:
 
 \begin{table}[hb]
-\caption{Definition of position index for CPML element}
+\caption{Definition of flags for CPML elements}
 % title of Table
 \centering
 % used for centering table
-\begin{tabular}{c c}
+\begin{tabular}{c l}
 % centered columns (4 columns)
 \hline\hline
 %inserts double horizontal lines
-position index& position\\ [0.5ex]
+flag& meaning\\ [0.5ex]
 % inserts table
 %heading
 \hline
 % inserts single horizontal line
-1 & element is in the pure left CPML layer  \\
-2 & element is in the pure right CPML layer \\
-4 & element is in the pure top CPML layer \\
-5 & element is in the left-top CPML corner \\
-6 & element is in the right-top CPML corner \\
-8 & element is in the pure bottom CPML layer \\
-9 & element is in the left-bottom CPML corner \\
-10 & element is in the right-bottom CPML corner \\ [1ex]
+1 & element belongs to a left CPML layer only\\
+2 & element belongs to a right CPML layer only\\
+3 & element belongs to a bottom CPML layer \\
+4 & element belongs to a top CPML layer only\\
+5 & element belongs to a top-left CPML corner \\
+6 & element belongs to a top-right CPML corner \\
+7 & element belongs to a bottom-left CPML corner \\
+8 & element belongs to a bottom-right CPML corner \\ [1ex]
 % [1ex] adds vertical space
 \hline
 %inserts single line
@@ -921,7 +920,7 @@ You can directly compare these values with the value given in sentence 'Max stab
 For elastic simulation, the
 CFL value given in \texttt{output\_solver.txt} does not consider the Vp/Vs ratio, but the CFL limit slight decreases when Vp/Vs increases.
 In viscoelastic simulations the CFL limit does not change compared to the elastic case because we use a rational approximation of a constant quality factor Q, which has no attenuation effect on zero-frequency waves.
-Additionally, if you use C-PML absorbing layers in your simulations, which are implemented for the Newmark and LDDRK4-6 techniques but not for the classical RK4), the CFL upper limit decreases to approximately $95\%$ of the limit without absorbing layers in the case of Newmark and to $85\%$ in the case of LDDRK4-6. 
+Additionally, if you use C-PML absorbing layers in your simulations, which are implemented for the Newmark and LDDRK4-6 techniques but not for the classical RK4), the CFL upper limit decreases to approximately $95\%$ of the limit without absorbing layers in the case of Newmark and to $85\%$ in the case of LDDRK4-6.
 \begin{table}[hb]
 \caption{CFL upper bound for an acoustic (fluid) simulation.}
 % title of Table
