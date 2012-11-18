@@ -171,7 +171,7 @@
            source_time_function(i_source,it,i_stage) = ZERO
 
         endif
-            
+
 
       else
         call exit_MPI('unknown source time function')
