@@ -101,7 +101,7 @@
 ! number of lines per source in SOURCE file
   integer, parameter :: NLINES_PER_SOURCE = 12
 
-! flags for absorbing boundaries
+! flags for Stacey absorbing boundaries
   integer, parameter :: IBOTTOM = 1
   integer, parameter :: IRIGHT = 2
   integer, parameter :: ITOP = 3
@@ -111,6 +111,16 @@
   integer, parameter :: IEDGE2 = 2
   integer, parameter :: IEDGE3 = 3
   integer, parameter :: IEDGE4 = 4
+
+! flags for CPML absorbing boundaries
+  integer, parameter :: CPML_left = 1
+  integer, parameter :: CPML_right = 2
+  integer, parameter :: CPML_bottom = 3
+  integer, parameter :: CPML_top = 4
+  integer, parameter :: CPML_top_left = 5
+  integer, parameter :: CPML_top_right = 6
+  integer, parameter :: CPML_bottom_left = 7
+  integer, parameter :: CPML_bottom_right = 8
 
 ! number of edges and corners of each element
   integer, parameter :: NEDGES = 4
