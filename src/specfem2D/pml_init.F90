@@ -74,7 +74,7 @@
 
   !!!detection of PML elements
 
-  if(.not. read_external_mesh)then
+  if(.not. read_external_mesh) then
   nspec_PML = 0
 
      !ibound is the side we are looking (bottom, right, top or left)
@@ -170,76 +170,82 @@
 
      endif
 
-  if(read_external_mesh)then
+  if(read_external_mesh) then
   is_PML(:) = .false.
   which_PML_elem(:,:) = .false.
 
   nspec_PML = 0
   do ispec=1,nspec
-     if(region_CPML(ispec) .ne. 0)then
-     nspec_PML = nspec_PML + 1
-     is_PML(ispec)=.true.
-     spec_to_PML(ispec)=nspec_PML
-     endif
+    if(region_CPML(ispec) /= 0) then
+      nspec_PML = nspec_PML + 1
+      is_PML(ispec)=.true.
+      spec_to_PML(ispec)=nspec_PML
+    endif
   enddo
 
-
   do ispec=1,nspec
-     if(is_PML(ispec))then
-       if(region_CPML(ispec)==1)then
-!element is in the left cpml layer
+     if(is_PML(ispec)) then
+
+! element is in the left cpml layer
+       if(region_CPML(ispec) == CPML_left) then
          which_PML_elem(ILEFT,ispec)   = .true.
          which_PML_elem(IRIGHT,ispec)  = .false.
          which_PML_elem(ITOP,ispec)    = .false.
          which_PML_elem(IBOTTOM,ispec) = .false.
-       else if(region_CPML(ispec)==2)then
-!element is in the right cpml layer
+
+! element is in the right cpml layer
+       else if(region_CPML(ispec) == CPML_right) then
          which_PML_elem(ILEFT,ispec)   = .false.
          which_PML_elem(IRIGHT,ispec)  = .true.
          which_PML_elem(ITOP,ispec)    = .false.
          which_PML_elem(IBOTTOM,ispec) = .false.
-       else if(region_CPML(ispec)==4)then
-!element is in the top cpml layer
+
+! element is in the top cpml layer
+       else if(region_CPML(ispec) == CPML_top) then
          which_PML_elem(ILEFT,ispec)   = .false.
          which_PML_elem(IRIGHT,ispec)  = .false.
          which_PML_elem(ITOP,ispec)    = .true.
          which_PML_elem(IBOTTOM,ispec) = .false.
-       else if(region_CPML(ispec)==5)then
-!element is in the left-top cpml corner
+
+! element is in the bottom cpml layer
+       else if(region_CPML(ispec) == CPML_bottom) then
+         which_PML_elem(ILEFT,ispec)   = .false.
+         which_PML_elem(IRIGHT,ispec)  = .false.
+         which_PML_elem(ITOP,ispec)    = .false.
+         which_PML_elem(IBOTTOM,ispec) = .true.
+
+! element is in the left-top cpml corner
+       else if(region_CPML(ispec) == CPML_top_left) then
          which_PML_elem(ILEFT,ispec)   = .true.
          which_PML_elem(IRIGHT,ispec)  = .false.
          which_PML_elem(ITOP,ispec)    = .true.
          which_PML_elem(IBOTTOM,ispec) = .false.
-       else if(region_CPML(ispec)==6)then
-!element is in the right-top cpml corner
+
+! element is in the right-top cpml corner
+       else if(region_CPML(ispec) == CPML_top_right) then
          which_PML_elem(ILEFT,ispec)   = .false.
          which_PML_elem(IRIGHT,ispec)  = .true.
          which_PML_elem(ITOP,ispec)    = .true.
          which_PML_elem(IBOTTOM,ispec) = .false.
-       else if(region_CPML(ispec)==8)then
-!element is in the bottom cpml layer
-         which_PML_elem(ILEFT,ispec)   = .false.
-         which_PML_elem(IRIGHT,ispec)  = .false.
-         which_PML_elem(ITOP,ispec)    = .false.
-         which_PML_elem(IBOTTOM,ispec) = .true.
-       else if(region_CPML(ispec)==9)then
-!element is in the left-bottom cpml corner
+
+! element is in the left-bottom cpml corner
+       else if(region_CPML(ispec) == CPML_bottom_left) then
          which_PML_elem(ILEFT,ispec)   = .true.
          which_PML_elem(IRIGHT,ispec)  = .false.
          which_PML_elem(ITOP,ispec)    = .false.
          which_PML_elem(IBOTTOM,ispec) = .true.
-       else if(region_CPML(ispec)==10)then
-!element is in the right-bottom cpml corner
+
+! element is in the right-bottom cpml corner
+       else if(region_CPML(ispec) == CPML_bottom_right) then
          which_PML_elem(ILEFT,ispec)   = .false.
          which_PML_elem(IRIGHT,ispec)  = .true.
          which_PML_elem(ITOP,ispec)    = .false.
          which_PML_elem(IBOTTOM,ispec) = .true.
+
        else
-!element is not in cpml domain
-         which_PML_elem(ILEFT,ispec)   = .false.
-         which_PML_elem(IRIGHT,ispec)  = .false.
-         which_PML_elem(ITOP,ispec)    = .false.
-         which_PML_elem(IBOTTOM,ispec) = .false.
+
+         stop 'incorrect CPML flag for a PML element'
+
        endif
      endif
   enddo

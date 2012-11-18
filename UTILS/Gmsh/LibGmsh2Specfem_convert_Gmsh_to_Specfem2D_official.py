@@ -216,7 +216,20 @@ def OuvreGmsh(Dir,Nom,Bords):
                 N1DBordRight+=1
             N1D+=1
         
-        #------------------------------------(---------------------------------
+        #----------------------------------------------------------------------
+
+#
+# flags for CPML absorbing boundaries:
+#  CPML_left = 1
+#  CPML_right = 2
+#  CPML_bottom = 3
+#  CPML_top = 4
+#  CPML_top_left = 5
+#  CPML_top_right = 6
+#  CPML_bottom_left = 7
+#  CPML_bottom_right = 8
+#
+
         if TypElem==SurfElem:
             Elements[N2D]= [int(val) for val in \
                             (string.split(lignes[Pos])[5:])]
@@ -224,7 +237,7 @@ def OuvreGmsh(Dir,Nom,Bords):
             if PML:
                 # PML Bottom
                 if ZonP==PML_bottom:
-                    ElementsPML[N2DPML,:] = [N2D+1, 8]
+                    ElementsPML[N2DPML,:] = [N2D+1, 3]
                     N2DPML+=1
                 # PML Right
                 if ZonP==PML_right:
@@ -241,7 +254,7 @@ def OuvreGmsh(Dir,Nom,Bords):
                 #--------------------------------------------------------------
                 # PML Corner Right Bottom
                 if ZonP==PML_right_bottom:
-                    ElementsPML[N2DPML,:] = [N2D+1, 10]
+                    ElementsPML[N2DPML,:] = [N2D+1, 8]
                     N2DPML+=1
                 # PML Corner Right Top
                 if ZonP==PML_right_top:
@@ -253,7 +266,7 @@ def OuvreGmsh(Dir,Nom,Bords):
                     N2DPML+=1
                 # PML Corner Left Bottom
                 if ZonP==PML_left_bottom:
-                    ElementsPML[N2DPML,:] = [N2D+1, 9]
+                    ElementsPML[N2DPML,:] = [N2D+1, 7]
                     N2DPML+=1
             N2D+=1
     #--------------------------------------------------------------------------

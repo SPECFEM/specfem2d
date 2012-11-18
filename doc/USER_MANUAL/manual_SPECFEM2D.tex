@@ -370,11 +370,11 @@ To create acoustic (fluid) regions, just set the S wave speed to zero and the co
 	\begin{description}
      \item[\texttt{mesh\_file}] is the file describing the mesh : first line is the number of elements, then a list of 4 nodes (quadrilaterals only) forming each elements on each line.
 
-     \item[\texttt{nodes\_coords\_file}] is the file containing the coordinates (x and z) of each nodes : number of nodes on the first line, then coordinates x and z on each line.
+     \item[\texttt{nodes\_coords\_file}] is the file containing the coordinates ($x$ and $z$) of each node: number of nodes on the first line, then coordinates x and z on each line.
 
      \item[\texttt{materials\_file}] is the number of the material for every elements : an integer ranging from 1 to nbmodels on each line.
 
-     \item[\texttt{free\_surface\_file}] is the file describing the edges forming the acoustic free surface : number of edges on the first line, then on each line: number of the element, number of nodes forming the free surface (1 for a point, 2 for an edge), the nodes forming the free surface for this element. If you do not want any free surface, just put 0 on the first line.
+     \item[\texttt{free\_surface\_file}] is the file describing the edges forming the acoustic free surface: number of edges on the first line, then on each line: number of the element, number of nodes forming the free surface (1 for a point, 2 for an edge), the nodes forming the free surface for this element. If you do not want any free surface, just put 0 on the first line.
 
      \item[\texttt{absorbing\_surface\_file}] is the file describing the edges forming the absorbing boundaries:
 number of edges on the first line, then on each line: number of the element, number of nodes forming the absorbing edge (must always be equal to 2),
