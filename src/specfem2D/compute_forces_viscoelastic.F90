@@ -1196,24 +1196,10 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             if(is_PML(ispec) .and. PML_BOUNDARY_CONDITIONS)then
                 ispec_PML=spec_to_PML(ispec)
-                if ((which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
-                       .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec))) then
                       accel_elastic(1,iglob) = accel_elastic(1,iglob) - accel_elastic_PML(1,i,j,ispec_PML)
                       accel_elastic(2,iglob) = accel_elastic(2,iglob)
                       accel_elastic(3,iglob) = accel_elastic(3,iglob) - accel_elastic_PML(3,i,j,ispec_PML)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!corner
-               elseif ((which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
-                        (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec))) then
-                      accel_elastic(1,iglob) = accel_elastic(1,iglob) - accel_elastic_PML(1,i,j,ispec_PML)
-                      accel_elastic(2,iglob) = accel_elastic(2,iglob)
-                      accel_elastic(3,iglob) = accel_elastic(3,iglob) - accel_elastic_PML(3,i,j,ispec_PML)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!corner
-               else
-                      accel_elastic(1,iglob) = accel_elastic(1,iglob) - accel_elastic_PML(1,i,j,ispec_PML)
-                      accel_elastic(2,iglob) = accel_elastic(2,iglob)
-                      accel_elastic(3,iglob) = accel_elastic(3,iglob) - accel_elastic_PML(3,i,j,ispec_PML)
-               endif
-          endif ! PML_BOUNDARY_CONDITIONS
+            endif ! PML_BOUNDARY_CONDITIONS
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
            enddo ! second loop over the GLL points
