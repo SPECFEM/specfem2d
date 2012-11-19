@@ -113,14 +113,14 @@
   integer, parameter :: IEDGE4 = 4
 
 ! flags for CPML absorbing boundaries
-  integer, parameter :: CPML_left = 1
-  integer, parameter :: CPML_right = 2
-  integer, parameter :: CPML_bottom = 3
-  integer, parameter :: CPML_top = 4
-  integer, parameter :: CPML_top_left = 5
-  integer, parameter :: CPML_top_right = 6
-  integer, parameter :: CPML_bottom_left = 7
-  integer, parameter :: CPML_bottom_right = 8
+  integer, parameter :: CPML_LEFT = 1
+  integer, parameter :: CPML_RIGHT = 2
+  integer, parameter :: CPML_BOTTOM = 3
+  integer, parameter :: CPML_TOP = 4
+  integer, parameter :: CPML_TOP_LEFT = 5
+  integer, parameter :: CPML_TOP_RIGHT = 6
+  integer, parameter :: CPML_BOTTOM_LEFT = 7
+  integer, parameter :: CPML_BOTTOM_RIGHT = 8
 
 ! number of edges and corners of each element
   integer, parameter :: NEDGES = 4
