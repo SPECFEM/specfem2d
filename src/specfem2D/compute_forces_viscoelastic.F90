@@ -63,7 +63,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
      e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, & 
      e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_RK, e11_force_RK, e13_force_RK, &
      stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring,nadj_rec_local, &
-     is_PML,nspec_PML,spec_to_PML,which_PML_elem, &
+     is_PML,nspec_PML,spec_to_PML,region_CPML, &
      K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
      rmemory_displ_elastic,rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz, &
      rmemory_displ_elastic_LDDRK,rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,& 
@@ -217,7 +217,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
 !CPML coefficients and memory variables
   integer :: nspec_PML,ispec_PML
-  logical, dimension(4,nspec) :: which_PML_elem
+  integer, dimension(nspec) :: region_CPML
   logical, dimension(nspec) :: is_PML
   integer, dimension(nspec) :: spec_to_PML
   logical :: PML_BOUNDARY_CONDITIONS
@@ -416,8 +416,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 !------------------------------------------------------------------------------
 !---------------------------- LEFT & RIGHT ------------------------------------
 !------------------------------------------------------------------------------
-                  if ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
-                       .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec))) then
+                   if (region_CPML(ispec) == CPML_LEFT .or. region_CPML(ispec) == CPML_RIGHT) then
 
                     !---------------------- A8--------------------------
                     A8 = - d_x_store(i,j,ispec_PML) / (k_x_store(i,j,ispec_PML) ** 2)
@@ -509,8 +508,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 !------------------------------------------------------------------------------
 !---------------------------- CORNER ------------------------------------------
 !------------------------------------------------------------------------------
-                   elseif ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
-                        (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
+                   elseif (region_CPML(ispec) == CPML_TOP_LEFT .or. region_CPML(ispec) == CPML_TOP_RIGHT .or. &
+                           region_CPML(ispec) == CPML_BOTTOM_LEFT .or. region_CPML(ispec) == CPML_BOTTOM_RIGHT) then
 
                     !---------------------- A8--------------------------
                     A8 = (k_x_store(i,j,ispec_PML) * d_z_store(i,j,ispec_PML) &
@@ -603,7 +602,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
 
 
-                  else
+                  elseif(region_CPML(ispec) == CPML_TOP .or. region_CPML(ispec) == CPML_BOTTOM) then
 !------------------------------------------------------------------------------
 !---------------------------- TOP & BOTTOM ------------------------------------
 !------------------------------------------------------------------------------
@@ -889,8 +888,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 !------------------------------------------------------------------------------
 !---------------------------- LEFT & RIGHT ------------------------------------
 !------------------------------------------------------------------------------
-                  if ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
-                       .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
+                   if (region_CPML(ispec) == CPML_LEFT .or. region_CPML(ispec) == CPML_RIGHT) then
 
                     bb = alpha_x_store(i,j,ispec_PML)
                     if(stage_time_scheme == 1) then  
@@ -916,8 +914,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 !------------------------------------------------------------------------------
 !-------------------------------- CORNER --------------------------------------
 !------------------------------------------------------------------------------
-                   elseif ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
-                       (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
+                   elseif (region_CPML(ispec) == CPML_TOP_LEFT .or. region_CPML(ispec) == CPML_TOP_RIGHT .or. &
+                           region_CPML(ispec) == CPML_BOTTOM_LEFT .or. region_CPML(ispec) == CPML_BOTTOM_RIGHT) then
 
                        !------------------------------------------------------------
                        bb = alpha_x_store(i,j,ispec_PML)
@@ -963,7 +961,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                         + displ_elastic(3,iglob)*(it-0.5)*deltat * coef2
                        end if
 
-                  else
+                  elseif(region_CPML(ispec) == CPML_TOP .or. region_CPML(ispec) == CPML_BOTTOM) then
 !------------------------------------------------------------------------------
 !-------------------------------- TOP & BOTTOM --------------------------------
 !------------------------------------------------------------------------------
@@ -994,8 +992,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                 endif
 
 
-                if ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
-                       .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec))) then
+                   if (region_CPML(ispec) == CPML_LEFT .or. region_CPML(ispec) == CPML_RIGHT) then
 
                      A0 = - alpha_x_store(i,j,ispec_PML) * d_x_store(i,j,ispec_PML)
                      A1 = d_x_store(i,j,ispec_PML)
@@ -1040,8 +1037,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                           )
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!corner
-               elseif ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
-                       (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec))) then
+                   elseif (region_CPML(ispec) == CPML_TOP_LEFT .or. region_CPML(ispec) == CPML_TOP_RIGHT .or. &
+                           region_CPML(ispec) == CPML_BOTTOM_LEFT .or. region_CPML(ispec) == CPML_BOTTOM_RIGHT) then
 
                      A0 = d_x_store(i,j,ispec_PML) * d_z_store(i,j,ispec_PML) &
                         - alpha_x_store(i,j,ispec_PML) * d_x_store(i,j,ispec_PML) * k_z_store(i,j,ispec_PML) &
@@ -1112,7 +1109,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!corner
-               else
+               elseif(region_CPML(ispec) == CPML_TOP .or. region_CPML(ispec) == CPML_BOTTOM) then
 
                      A0 = - alpha_z_store(i,j,ispec_PML) * d_z_store(i,j,ispec_PML)
                      A1 = d_z_store(i,j,ispec_PML)

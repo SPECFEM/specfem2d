@@ -114,7 +114,7 @@
      do i_coef=2,NELEM_PML_THICKNESS
 
         do ispec=1,nspec
-           if (.not.which_PML_elem(ibound,ispec)) then
+           if (.not. which_PML_elem(ibound,ispec)) then
               do j=1,NGLLZ,NGLLZ-1
                  do i=1,NGLLX,NGLLX-1
                     iglob=ibool(i,j,ispec)
@@ -156,6 +156,75 @@
 
      enddo ! end loop on the 4 boundaries
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  do ispec=1,nspec
+     if(is_PML(ispec)) then
+
+! element is in the left cpml layer
+       if( &
+         (which_PML_elem(ILEFT,ispec)   .eqv. .true.)  .and. &
+         (which_PML_elem(IRIGHT,ispec)  .eqv. .false.) .and. &
+         (which_PML_elem(ITOP,ispec)    .eqv. .false.) .and. &
+         (which_PML_elem(IBOTTOM,ispec) .eqv. .false.) ) then
+         region_CPML(ispec) = CPML_LEFT
+! element is in the right cpml layer
+       else if( &
+         (which_PML_elem(ILEFT,ispec)   .eqv. .false.) .and. &
+         (which_PML_elem(IRIGHT,ispec)  .eqv. .true.)  .and. &
+         (which_PML_elem(ITOP,ispec)    .eqv. .false.) .and. &
+         (which_PML_elem(IBOTTOM,ispec) .eqv. .false.) ) then
+         region_CPML(ispec) = CPML_RIGHT
+! element is in the top cpml layer
+       else if( &
+         (which_PML_elem(ILEFT,ispec)   .eqv. .false.) .and. &
+         (which_PML_elem(IRIGHT,ispec)  .eqv. .false.) .and. &
+         (which_PML_elem(ITOP,ispec)    .eqv. .true. ) .and. &
+         (which_PML_elem(IBOTTOM,ispec) .eqv. .false.) ) then
+         region_CPML(ispec) = CPML_TOP
+! element is in the bottom cpml layer
+       else if( &
+         (which_PML_elem(ILEFT,ispec)   .eqv. .false.) .and. &
+         (which_PML_elem(IRIGHT,ispec)  .eqv. .false.) .and. &
+         (which_PML_elem(ITOP,ispec)    .eqv. .false.) .and. &
+         (which_PML_elem(IBOTTOM,ispec) .eqv. .true. ) ) then
+         region_CPML(ispec) = CPML_BOTTOM
+! element is in the left-top cpml corner
+       else if( &
+         (which_PML_elem(ILEFT,ispec)   .eqv. .true.  ).and. &
+         (which_PML_elem(IRIGHT,ispec)  .eqv. .false. ).and. &
+         (which_PML_elem(ITOP,ispec)    .eqv. .true.  ).and. &
+         (which_PML_elem(IBOTTOM,ispec) .eqv. .false. )) then
+         region_CPML(ispec) = CPML_TOP_LEFT
+! element is in the right-top cpml corner
+       else if( &
+         (which_PML_elem(ILEFT,ispec)   .eqv. .false. ).and. &
+         (which_PML_elem(IRIGHT,ispec)  .eqv. .true.  ).and. &
+         (which_PML_elem(ITOP,ispec)    .eqv. .true.  ).and. &
+         (which_PML_elem(IBOTTOM,ispec) .eqv. .false. )) then
+         region_CPML(ispec) = CPML_TOP_RIGHT
+! element is in the left-bottom cpml corner
+       else if( &
+         (which_PML_elem(ILEFT,ispec)   .eqv. .true.  ).and. &
+         (which_PML_elem(IRIGHT,ispec)  .eqv. .false. ).and. &
+         (which_PML_elem(ITOP,ispec)    .eqv. .false. ).and. &
+         (which_PML_elem(IBOTTOM,ispec) .eqv. .true.  )) then
+         region_CPML(ispec) = CPML_BOTTOM_LEFT
+! element is in the right-bottom cpml corner
+       else if( &
+         (which_PML_elem(ILEFT,ispec)   .eqv. .false. ).and. &
+         (which_PML_elem(IRIGHT,ispec)  .eqv. .true.  ).and. &
+         (which_PML_elem(ITOP,ispec)    .eqv. .false. ).and. &
+         (which_PML_elem(IBOTTOM,ispec) .eqv. .true.  )) then
+         region_CPML(ispec) = CPML_BOTTOM_RIGHT
+       else
+
+         region_CPML(ispec) = 0
+
+       endif
+     endif
+  enddo
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
      !construction of table to use less memory for absorbing coefficients
      spec_to_PML=0
      nspec_PML=0
@@ -183,74 +252,7 @@
     endif
   enddo
 
-  do ispec=1,nspec
-     if(is_PML(ispec)) then
-
-! element is in the left cpml layer
-       if(region_CPML(ispec) == CPML_LEFT) then
-         which_PML_elem(ILEFT,ispec)   = .true.
-         which_PML_elem(IRIGHT,ispec)  = .false.
-         which_PML_elem(ITOP,ispec)    = .false.
-         which_PML_elem(IBOTTOM,ispec) = .false.
-
-! element is in the right cpml layer
-       else if(region_CPML(ispec) == CPML_RIGHT) then
-         which_PML_elem(ILEFT,ispec)   = .false.
-         which_PML_elem(IRIGHT,ispec)  = .true.
-         which_PML_elem(ITOP,ispec)    = .false.
-         which_PML_elem(IBOTTOM,ispec) = .false.
-
-! element is in the top cpml layer
-       else if(region_CPML(ispec) == CPML_TOP) then
-         which_PML_elem(ILEFT,ispec)   = .false.
-         which_PML_elem(IRIGHT,ispec)  = .false.
-         which_PML_elem(ITOP,ispec)    = .true.
-         which_PML_elem(IBOTTOM,ispec) = .false.
-
-! element is in the bottom cpml layer
-       else if(region_CPML(ispec) == CPML_BOTTOM) then
-         which_PML_elem(ILEFT,ispec)   = .false.
-         which_PML_elem(IRIGHT,ispec)  = .false.
-         which_PML_elem(ITOP,ispec)    = .false.
-         which_PML_elem(IBOTTOM,ispec) = .true.
-
-! element is in the left-top cpml corner
-       else if(region_CPML(ispec) == CPML_TOP_LEFT) then
-         which_PML_elem(ILEFT,ispec)   = .true.
-         which_PML_elem(IRIGHT,ispec)  = .false.
-         which_PML_elem(ITOP,ispec)    = .true.
-         which_PML_elem(IBOTTOM,ispec) = .false.
-
-! element is in the right-top cpml corner
-       else if(region_CPML(ispec) == CPML_TOP_RIGHT) then
-         which_PML_elem(ILEFT,ispec)   = .false.
-         which_PML_elem(IRIGHT,ispec)  = .true.
-         which_PML_elem(ITOP,ispec)    = .true.
-         which_PML_elem(IBOTTOM,ispec) = .false.
-
-! element is in the left-bottom cpml corner
-       else if(region_CPML(ispec) == CPML_BOTTOM_LEFT) then
-         which_PML_elem(ILEFT,ispec)   = .true.
-         which_PML_elem(IRIGHT,ispec)  = .false.
-         which_PML_elem(ITOP,ispec)    = .false.
-         which_PML_elem(IBOTTOM,ispec) = .true.
-
-! element is in the right-bottom cpml corner
-       else if(region_CPML(ispec) == CPML_BOTTOM_RIGHT) then
-         which_PML_elem(ILEFT,ispec)   = .false.
-         which_PML_elem(IRIGHT,ispec)  = .true.
-         which_PML_elem(ITOP,ispec)    = .false.
-         which_PML_elem(IBOTTOM,ispec) = .true.
-
-       else
-
-         stop 'incorrect CPML flag for a PML element'
-
-       endif
-     endif
-  enddo
-
-     write(IOUT,*) "number of PML spectral elements :", nspec_PML
+  write(IOUT,*) "number of PML spectral elements :", nspec_PML
 
   endif
 
@@ -261,7 +263,7 @@
 !
 
  subroutine define_PML_coefficients(npoin,nspec,is_PML,ibool,coord,&
-          which_PML_elem,kmato,density,poroelastcoef,numat,f0_temp,&
+          region_CPML,kmato,density,poroelastcoef,numat,f0_temp,&
           myrank,&
           K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
           nspec_PML,spec_to_PML)
@@ -278,7 +280,7 @@
   double precision :: f0_temp
 
   logical, dimension(nspec) :: is_PML
-  logical, dimension(4,nspec) :: which_PML_elem
+  integer, dimension(nspec) :: region_CPML
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) ::  &
                     K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
@@ -378,25 +380,29 @@
             do i=1,NGLLX
 
 !!!bottom_case
-               if (which_PML_elem(IBOTTOM,ispec)) then
+               if (region_CPML(ispec) == CPML_BOTTOM_RIGHT .or. region_CPML(ispec) == CPML_BOTTOM_LEFT .or. &
+                   region_CPML(ispec) == CPML_BOTTOM) then
                   thickness_PML_z_max_bottom=max(coord(2,ibool(i,j,ispec)),thickness_PML_z_max_bottom)
                   thickness_PML_z_min_bottom=min(coord(2,ibool(i,j,ispec)),thickness_PML_z_min_bottom)
                endif
 
 !!!right case
-               if (which_PML_elem(IRIGHT,ispec)) then
+               if (region_CPML(ispec) == CPML_BOTTOM_RIGHT .or. region_CPML(ispec) == CPML_TOP_RIGHT .or. &
+                   region_CPML(ispec) == CPML_RIGHT) then
                   thickness_PML_x_max_right=max(coord(1,ibool(i,j,ispec)),thickness_PML_x_max_right)
                   thickness_PML_x_min_right=min(coord(1,ibool(i,j,ispec)),thickness_PML_x_min_right)
                endif
 
 !!!top case
-               if (which_PML_elem(ITOP,ispec)) then
+               if (region_CPML(ispec) == CPML_TOP_RIGHT .or. region_CPML(ispec) == CPML_TOP_LEFT .or. &
+                   region_CPML(ispec) == CPML_TOP) then
                   thickness_PML_z_max_top=max(coord(2,ibool(i,j,ispec)),thickness_PML_z_max_top)
                   thickness_PML_z_min_top=min(coord(2,ibool(i,j,ispec)),thickness_PML_z_min_top)
                endif
 
 !!!left case
-               if (which_PML_elem(ILEFT,ispec)) then
+               if (region_CPML(ispec) == CPML_BOTTOM_LEFT .or. region_CPML(ispec) == CPML_TOP_LEFT .or. &
+                   region_CPML(ispec) == CPML_LEFT) then
                   thickness_PML_x_max_left=max(coord(1,ibool(i,j,ispec)),thickness_PML_x_max_left)
                   thickness_PML_x_min_left=min(coord(1,ibool(i,j,ispec)),thickness_PML_x_min_left)
                endif
@@ -513,7 +519,8 @@
              zval = coord(2,iglob)
 
 !!!! ---------- bottom edge
-             if (which_PML_elem(IBOTTOM,ispec)) then
+               if (region_CPML(ispec) == CPML_BOTTOM_RIGHT .or. region_CPML(ispec) == CPML_BOTTOM_LEFT .or. &
+                   region_CPML(ispec) == CPML_BOTTOM) then
                 ! define damping profile at the grid points
                 abscissa_in_PML = zoriginbottom - zval
                 if(abscissa_in_PML >= 0.d0) then
@@ -541,7 +548,8 @@
              endif
 
 !!!! ---------- top edge
-             if (which_PML_elem(ITOP,ispec)) then
+               if (region_CPML(ispec) == CPML_TOP_RIGHT .or. region_CPML(ispec) == CPML_TOP_LEFT .or. &
+                   region_CPML(ispec) == CPML_TOP) then
                 ! define damping profile at the grid points
                 abscissa_in_PML = zval - zorigintop
                 if(abscissa_in_PML >= 0.d0) then
@@ -563,7 +571,8 @@
              endif
 
 !!!! ---------- right edge
-             if (which_PML_elem(IRIGHT,ispec)) then
+               if (region_CPML(ispec) == CPML_BOTTOM_RIGHT .or. region_CPML(ispec) == CPML_TOP_RIGHT .or. &
+                   region_CPML(ispec) == CPML_RIGHT) then
                 ! define damping profile at the grid points
                 abscissa_in_PML = xval - xoriginright
                 if(abscissa_in_PML >= 0.d0) then
@@ -585,7 +594,8 @@
              endif
 
 !!!! ---------- left edge
-             if (which_PML_elem(ILEFT,ispec)) then
+               if (region_CPML(ispec) == CPML_BOTTOM_LEFT .or. region_CPML(ispec) == CPML_TOP_LEFT .or. &
+                   region_CPML(ispec) == CPML_LEFT) then
                 ! define damping profile at the grid points
                 abscissa_in_PML = xoriginleft - xval
                 if(abscissa_in_PML >= 0.d0) then

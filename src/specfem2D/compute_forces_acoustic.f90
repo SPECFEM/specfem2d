@@ -55,7 +55,7 @@
                nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
                b_absorb_acoustic_bottom,b_absorb_acoustic_top,IS_BACKWARD_FIELD,&
-               is_PML,nspec_PML,spec_to_PML,which_PML_elem,&
+               is_PML,nspec_PML,spec_to_PML,region_CPML, &
                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
                rmemory_potential_acoustic,&
                rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
@@ -130,7 +130,7 @@
 
 !CPML coefficients and memory variables
   integer :: nspec_PML,ispec_PML
-  logical, dimension(4,nspec) :: which_PML_elem
+  integer, dimension(nspec) :: region_CPML
   logical, dimension(nspec) :: is_PML
   integer, dimension(nspec) :: spec_to_PML
 
@@ -236,8 +236,7 @@
 
              if(PML_BOUNDARY_CONDITIONS .and. is_PML(ispec))then
                ispec_PML=spec_to_PML(ispec)
-               if ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
-                   .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
+                 if (region_CPML(ispec) == CPML_LEFT .or. region_CPML(ispec) == CPML_RIGHT) then
 !------------------------------------------------------------------------------
 !---------------------------- LEFT & RIGHT ------------------------------------
 !------------------------------------------------------------------------------
@@ -298,8 +297,8 @@
 
                   dux_dzl = PML_dux_dzl(i,j,ispec_PML)  + A5 * rmemory_acoustic_dux_dz(i,j,ispec_PML)
 
-                 elseif ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
-                        (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
+                   elseif (region_CPML(ispec) == CPML_TOP_LEFT .or. region_CPML(ispec) == CPML_TOP_RIGHT .or. &
+                           region_CPML(ispec) == CPML_BOTTOM_LEFT .or. region_CPML(ispec) == CPML_BOTTOM_RIGHT) then
 !------------------------------------------------------------------------------
 !---------------------------- CORNER ------------------------------------------
 !------------------------------------------------------------------------------
@@ -368,7 +367,7 @@
 
                     dux_dzl = PML_dux_dzl(i,j,ispec_PML)  + A5 * rmemory_acoustic_dux_dz(i,j,ispec_PML)
 
-               else
+               elseif(region_CPML(ispec) == CPML_TOP .or. region_CPML(ispec) == CPML_BOTTOM) then
 
 !------------------------------------------------------------------------------
 !---------------------------- TOP & BOTTOM ------------------------------------
@@ -437,7 +436,6 @@
 
           ! if external density model
           if(assign_external_model) rhol = rhoext(i,j,ispec)
-
           ! for acoustic medium
           ! also add GLL integration weights
           tempx1(i,j) = wzgll(j)*jacobianl*(xixl*dux_dxl + xizl*dux_dzl) / rhol
@@ -463,8 +461,7 @@
                       ispec_PML=spec_to_PML(ispec)
                       iglob=ibool(i,j,ispec)
               if(stage_time_scheme == 1) then
-               if ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
-                     .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
+                   if (region_CPML(ispec) == CPML_LEFT .or. region_CPML(ispec) == CPML_RIGHT) then
 !------------------------------------------------------------------------------
 !---------------------------- LEFT & RIGHT ------------------------------------
 !------------------------------------------------------------------------------
@@ -487,8 +484,8 @@
 
                   rmemory_potential_acoustic(2,i,j,ispec_PML)=0.0
 
-               elseif ((which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
-                     (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
+                   elseif (region_CPML(ispec) == CPML_TOP_LEFT .or. region_CPML(ispec) == CPML_TOP_RIGHT .or. &
+                           region_CPML(ispec) == CPML_BOTTOM_LEFT .or. region_CPML(ispec) == CPML_BOTTOM_RIGHT) then
 
 !------------------------------------------------------------------------------
 !-------------------------------- CORNER --------------------------------------
@@ -528,7 +525,7 @@
                      + (potential_acoustic(iglob)+deltat*potential_dot_acoustic(iglob))*(it+0.5)*deltat * coef1 &
                      + potential_acoustic(iglob) *(it-0.5)*deltat * coef2
 
-               else
+               elseif(region_CPML(ispec) == CPML_TOP .or. region_CPML(ispec) == CPML_BOTTOM) then
 
 !------------------------------------------------------------------------------
 !-------------------------------- TOP & BOTTOM --------------------------------
@@ -556,9 +553,7 @@
 
               endif
 
-
-               if ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
-                     .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
+                   if (region_CPML(ispec) == CPML_LEFT .or. region_CPML(ispec) == CPML_RIGHT) then
 !------------------------------------------------------------------------------
 !---------------------------- LEFT & RIGHT ------------------------------------
 !------------------------------------------------------------------------------
@@ -586,8 +581,8 @@
                      A3 * rmemory_potential_acoustic(1,i,j,ispec_PML) + &
                      A4 * rmemory_potential_acoustic(2,i,j,ispec_PML))
 
-                elseif ((which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
-                     (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec))) then
+                   elseif (region_CPML(ispec) == CPML_TOP_LEFT .or. region_CPML(ispec) == CPML_TOP_RIGHT .or. &
+                           region_CPML(ispec) == CPML_BOTTOM_LEFT .or. region_CPML(ispec) == CPML_BOTTOM_RIGHT) then
 !------------------------------------------------------------------------------
 !-------------------------------- CORNER --------------------------------------
 !------------------------------------------------------------------------------
@@ -645,7 +640,7 @@
                      A3 * rmemory_potential_acoustic(1,i,j,ispec_PML) + &
                      A4 * rmemory_potential_acoustic(2,i,j,ispec_PML))
 
-               else
+               elseif(region_CPML(ispec) == CPML_TOP .or. region_CPML(ispec) == CPML_BOTTOM) then
 !------------------------------------------------------------------------------
 !-------------------------------- TOP & BOTTOM --------------------------------
 !------------------------------------------------------------------------------
