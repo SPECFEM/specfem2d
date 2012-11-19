@@ -2888,7 +2888,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                   nspec_PML,is_PML,which_PML_elem,spec_to_PML, &
                   icorner_iglob,NELEM_PML_THICKNESS,&
                   read_external_mesh,region_CPML)
-      deallocate(region_CPML)
+      deallocate(which_PML_elem)
       deallocate(icorner_iglob)
 
       if (nspec_PML==0) nspec_PML=1
@@ -2912,7 +2912,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         alpha_z_store(:,:,:) = 0
 
         call define_PML_coefficients(nglob,nspec,is_PML,ibool,coord,&
-                which_PML_elem,kmato,density,poroelastcoef,numat,f0(1),&
+                region_CPML,kmato,density,poroelastcoef,numat,f0(1),&
                 myrank,&
                 K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
                 nspec_PML,spec_to_PML)
@@ -3075,7 +3075,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                                 ,coord &
 #endif
                                 ,K_x_store,K_z_store,is_PML,&
-                                d_x_store,d_z_store,PML_BOUNDARY_CONDITIONS,which_PML_elem,&
+                                d_x_store,d_z_store,PML_BOUNDARY_CONDITIONS,region_CPML, &
                 nspec_PML,spec_to_PML)
 
 #ifdef USE_MPI
@@ -4994,7 +4994,7 @@ if(coupled_elastic_poro) then
                nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
                b_absorb_acoustic_bottom,b_absorb_acoustic_top,.false.,&
-               is_PML,nspec_PML,spec_to_PML,which_PML_elem,&
+               is_PML,nspec_PML,spec_to_PML,region_CPML, &
                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
                rmemory_potential_acoustic,&
                rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
@@ -5015,7 +5015,7 @@ if(coupled_elastic_poro) then
                nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
                b_absorb_acoustic_bottom,b_absorb_acoustic_top,.true.,&
-               is_PML,nspec_PML,spec_to_PML,which_PML_elem,&
+               is_PML,nspec_PML,spec_to_PML,region_CPML, &
                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
                rmemory_potential_acoustic,&
                rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
@@ -5512,7 +5512,7 @@ if(coupled_elastic_poro) then
                e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, & 
                e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_rk, e11_force_rk, e13_force_rk, &
                stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring,max(1,nadj_rec_local), &
-               is_PML,nspec_PML,spec_to_PML,which_PML_elem, &
+               is_PML,nspec_PML,spec_to_PML, region_CPML, &
                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
                rmemory_displ_elastic,rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz, &
                rmemory_displ_elastic_LDDRK,rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,&
