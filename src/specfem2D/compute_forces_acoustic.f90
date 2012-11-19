@@ -699,90 +699,18 @@
                          (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
           enddo
 
-            if(is_PML(ispec) .and. PML_BOUNDARY_CONDITIONS)then
-                      ispec_PML=spec_to_PML(ispec)
-               if ((which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
-                     .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec))) then
-                    potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
-                                                     - potential_dot_dot_acoustic_PML(i,j,ispec_PML)
-               elseif ((which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
-                     (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec))) then
-                    potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
-                                                      - potential_dot_dot_acoustic_PML(i,j,ispec_PML)
-               else
-                    potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
-                                                     - potential_dot_dot_acoustic_PML(i,j,ispec_PML)
+          if(is_PML(ispec) .and. PML_BOUNDARY_CONDITIONS)then
+            ispec_PML=spec_to_PML(ispec)
+            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
+                                                - potential_dot_dot_acoustic_PML(i,j,ispec_PML)
 
-               endif
-             endif
-
+          endif
         enddo ! second loop over the GLL points
       enddo
 
     endif ! end of test if acoustic element
 
   enddo ! end of loop over all spectral elements
-
- if(PML_BOUNDARY_CONDITIONS .and. anyabs) then
-
-! we have to put Dirichlet on the boundary of the PML
-     do ispecabs = 1,nelemabs
-
-       ispec = numabs(ispecabs)
-
-       if (is_PML(ispec)) then
-      ispec_PML=spec_to_PML(ispec)
-!--- left absorbing boundary
-      if(codeabs(IEDGE4,ispecabs)) then
-        i = 1
-        do j = 1,NGLLZ
-          iglob = ibool(i,j,ispec)
-          potential_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
-       enddo
-      endif
-!--- right absorbing boundary
-      if(codeabs(IEDGE2,ispecabs)) then
-        i = NGLLX
-        do j = 1,NGLLZ
-          iglob = ibool(i,j,ispec)
-          potential_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
-        enddo
-
-      endif
-!--- bottom absorbing boundary
-      if(codeabs(IEDGE1,ispecabs)) then
-        j = 1
-! exclude corners to make sure there is no contradiction on the normal
-        ibegin = 1
-        iend = NGLLX
-        do i = ibegin,iend
-          iglob = ibool(i,j,ispec)
-          potential_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
-        enddo
-      endif
-!--- top absorbing boundary
-      if(codeabs(IEDGE3,ispecabs)) then
-        j = NGLLZ
-! exclude corners to make sure there is no contradiction on the normal
-        ibegin = 1
-        iend = NGLLX
-        do i = ibegin,iend
-          iglob = ibool(i,j,ispec)
-          potential_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
-        enddo
-      endif  !  end of top absorbing boundary
-      endif ! end of is_PML
-    enddo ! end specabs loop
-  endif  ! end of absorbing boundaries
-
 
 !
 !--- absorbing boundaries
