@@ -425,7 +425,7 @@ def ProcessParfile_r20561(fic):
             print '----> '+fic+' already processed to r20561'            
             return
     #
-    a1='CPML_element_file               = EltPML_xxxxxx  ' + \
+    a1='CPML_element_file               = Elements_CPML_list  ' + \
     '# file containing the CPML element numbers\n'
 
     #--------------------------------------------------------------------------
