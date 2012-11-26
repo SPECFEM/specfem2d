@@ -759,7 +759,10 @@
 
 ! check that a single edge is defined for each element cited
 ! (since elements with two absorbing edges MUST be cited twice, each time with a different "typeabs()" code
-      if(count(codeabs(:,inum) .eqv. .true.) /= 1) stop 'must have one and only one absorbing edge per absorbing line cited'
+      if(count(codeabs(:,inum) .eqv. .true.) /= 1) then
+        print *,'error for absorbing element inum = ',inum
+        stop 'must have one and only one absorbing edge per absorbing line cited'
+      endif
 
     enddo
 
