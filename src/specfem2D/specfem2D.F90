@@ -2181,7 +2181,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                 coord,kmato,rhoext,vpext,vsext, &
                 QKappa_attenuationext,Qmu_attenuationext, &
                 c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,READ_EXTERNAL_SEP_FILE)
-  end if
+  endif
 
 !
 !----  perform basic checks on parameters read
@@ -2194,7 +2194,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
   if(ATTENUATION_VISCOELASTIC_SOLID .and. all_anisotropic) then
     call exit_MPI('Cannot turn attenuation on in anisotropic materials')
-  end if
+  endif
 
   ! global domain flags
   any_elastic_glob = any_elastic
@@ -2934,18 +2934,23 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'
 
         if(time_stepping_scheme == 2)then
-        allocate(rmemory_displ_elastic_LDDRK(2,3,NGLLX,NGLLZ,nspec_PML),stat=ier) 
-        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic' 
-        allocate(rmemory_dux_dx_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx'
-        allocate(rmemory_dux_dz_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz'
-        allocate(rmemory_duz_dx_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx'
-        allocate(rmemory_duz_dz_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'
+          allocate(rmemory_displ_elastic_LDDRK(2,3,NGLLX,NGLLZ,nspec_PML),stat=ier) 
+          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic' 
+          allocate(rmemory_dux_dx_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
+          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx'
+          allocate(rmemory_dux_dz_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
+          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz'
+          allocate(rmemory_duz_dx_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
+          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx'
+          allocate(rmemory_duz_dz_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
+          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'
+        else
+          allocate(rmemory_displ_elastic_LDDRK(1,1,1,1,1),stat=ier)
+          allocate(rmemory_dux_dx_LDDRK(1,1,1),stat=ier)
+          allocate(rmemory_dux_dz_LDDRK(1,1,1),stat=ier)
+          allocate(rmemory_duz_dx_LDDRK(1,1,1),stat=ier)
+          allocate(rmemory_duz_dz_LDDRK(1,1,1),stat=ier)
         endif
-
 
         rmemory_displ_elastic(:,:,:,:,:) = ZERO
         rmemory_dux_dx(:,:,:) = ZERO
@@ -2977,7 +2982,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         allocate(rmemory_duz_dz_LDDRK(1,1,1))
         endif
 
-      end if
+      endif
 
       if (any_acoustic .and. nspec_PML>0) then
         allocate(rmemory_potential_acoustic(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
@@ -2992,26 +2997,27 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         rmemory_acoustic_dux_dz = ZERO
 
         if(time_stepping_scheme == 2)then
-
-        allocate(rmemory_potential_acoust_LDDRK(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_potential_acoustic'
-        allocate(rmemory_acoustic_dux_dx_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dx'
-        allocate(rmemory_acoustic_dux_dz_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dz'
+          allocate(rmemory_potential_acoust_LDDRK(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
+          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_potential_acoustic'
+          allocate(rmemory_acoustic_dux_dx_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
+          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dx'
+          allocate(rmemory_acoustic_dux_dz_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
+          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dz'
+        else
+          allocate(rmemory_potential_acoust_LDDRK(1,1,1,1),stat=ier)
+          allocate(rmemory_acoustic_dux_dx_LDDRK(1,1,1),stat=ier)
+          allocate(rmemory_acoustic_dux_dz_LDDRK(1,1,1),stat=ier)
+        endif
 
         rmemory_potential_acoust_LDDRK = ZERO
         rmemory_acoustic_dux_dx_LDDRK = ZERO
         rmemory_acoustic_dux_dz_LDDRK = ZERO
-        endif
-
 
       else
         allocate(rmemory_potential_acoustic(1,1,1,1))
         allocate(rmemory_acoustic_dux_dx(1,1,1))
         allocate(rmemory_acoustic_dux_dz(1,1,1))
-
-      end if
+      endif
 
     else
 
@@ -3040,7 +3046,6 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
       allocate(is_PML(1))
       allocate(spec_to_PML(1))
-      allocate(which_PML_elem(1,1))
 
       allocate(K_x_store(1,1,1))
       allocate(K_z_store(1,1,1))
@@ -3049,7 +3054,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       allocate(alpha_x_store(1,1,1))
       allocate(alpha_z_store(1,1,1))
 
-    end if ! PML_BOUNDARY_CONDITIONS
+    endif ! PML_BOUNDARY_CONDITIONS
 
 
 
@@ -5512,7 +5517,7 @@ if(coupled_elastic_poro) then
                e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, & 
                e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_rk, e11_force_rk, e13_force_rk, &
                stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring,max(1,nadj_rec_local), &
-               is_PML,nspec_PML,spec_to_PML, region_CPML, &
+               is_PML,nspec_PML,spec_to_PML,region_CPML, &
                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
                rmemory_displ_elastic,rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz, &
                rmemory_displ_elastic_LDDRK,rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,&
@@ -5905,7 +5910,7 @@ if(coupled_elastic_poro) then
               c33 = anisotropy(4,kmato(ispec_elastic))
               c35 = anisotropy(5,kmato(ispec_elastic))
               c55 = anisotropy(6,kmato(ispec_elastic))
-            end if
+            endif
 
             sigma_xx = sigma_xx + c11*dux_dxl + c15*(duz_dxl + dux_dzl) + c13*duz_dzl
             sigma_zz = sigma_zz + c13*dux_dxl + c35*(duz_dxl + dux_dzl) + c33*duz_dzl
@@ -6560,7 +6565,7 @@ if(coupled_elastic_poro) then
               c33 = anisotropy(4,kmato(ispec_elastic))
               c35 = anisotropy(5,kmato(ispec_elastic))
               c55 = anisotropy(6,kmato(ispec_elastic))
-            end if
+            endif
             sigma_xx = c11*dux_dxl + c15*(duz_dxl + dux_dzl) + c13*duz_dzl
             sigma_zz = c13*dux_dxl + c35*(duz_dxl + dux_dzl) + c33*duz_dzl
             sigma_xz = c15*dux_dxl + c55*(duz_dxl + dux_dzl) + c35*duz_dzl
@@ -8759,9 +8764,9 @@ if(coupled_elastic_poro) then
             vs_local(i,j,ispec) = sqrt(poroelastcoef(2,1,kmato(ispec))/density(1,kmato(ispec)))
             write(1001,'(I10, 5F13.4)') iglob, coord(1,iglob),coord(2,iglob),&
                                       rho_local(i,j,ispec),vp_local(i,j,ispec),vs_local(i,j,ispec)
-          end do
-        end do
-      end do
+          enddo
+        enddo
+      enddo
     else
       do ispec = 1,nspec
         do j = 1,NGLLZ
@@ -8769,9 +8774,9 @@ if(coupled_elastic_poro) then
             iglob = ibool(i,j,ispec)
             write(1001,'(I10,5F13.4)') iglob, coord(1,iglob),coord(2,iglob),&
                                        rhoext(i,j,ispec),vpext(i,j,ispec),vsext(i,j,ispec)
-          end do
-        end do
-      end do
+          enddo
+        enddo
+      enddo
     endif
     close(1001)
   endif
