@@ -47,6 +47,9 @@
 ! corresponding graphs.
 !
 
+! in the case of very large meshes, this option can be useful to switch from ASCII to binary for the mesh files
+! #define USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+
 module part_unstruct
 
   implicit none
@@ -120,22 +123,39 @@ contains
 
   integer  :: i,ier
 
+#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+  open(unit=990, file=trim(filename), form='unformatted' , status='old', action='read',iostat=ier)
+#else
   open(unit=990, file=trim(filename), form='formatted' , status='old', action='read',iostat=ier)
+#endif
   if( ier /= 0 ) then
-    print*,'error opening file: ',trim(filename)
+    print *,'error opening file: ',trim(filename)
     stop 'error read external mesh file'
   endif
 
+#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+  read(990) nelmnts
+#else
   read(990,*) nelmnts
+#endif
 
   allocate(elmnts(0:ngnod*nelmnts-1))
 
   do i = 0, nelmnts-1
     if(ngnod == 4) then
+#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+      read(990) elmnts(i*ngnod), elmnts(i*ngnod+1), elmnts(i*ngnod+2), elmnts(i*ngnod+3)
+#else
       read(990,*) elmnts(i*ngnod), elmnts(i*ngnod+1), elmnts(i*ngnod+2), elmnts(i*ngnod+3)
+#endif
     else if(ngnod == 9) then
+#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+      read(990) elmnts(i*ngnod), elmnts(i*ngnod+1), elmnts(i*ngnod+2), elmnts(i*ngnod+3), &
+                  elmnts(i*ngnod+4), elmnts(i*ngnod+5), elmnts(i*ngnod+6), elmnts(i*ngnod+7), elmnts(i*ngnod+8)
+#else
       read(990,*) elmnts(i*ngnod), elmnts(i*ngnod+1), elmnts(i*ngnod+2), elmnts(i*ngnod+3), &
                   elmnts(i*ngnod+4), elmnts(i*ngnod+5), elmnts(i*ngnod+6), elmnts(i*ngnod+7), elmnts(i*ngnod+8)
+#endif
     else
       stop 'error, ngnod should be either 4 or 9 for external meshes'
     endif
@@ -160,16 +180,29 @@ contains
 
   integer  :: i,ier
 
+#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+  open(unit=991, file=trim(filename), form='unformatted' , status='old', action='read', iostat=ier)
+#else
   open(unit=991, file=trim(filename), form='formatted' , status='old', action='read', iostat=ier)
+#endif
   if( ier /= 0 ) then
-    print*,'error opening file: ',trim(filename)
+    print *,'error opening file: ',trim(filename)
     stop 'error read external nodes coords file'
   endif
 
+#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+  read(991) nnodes
+#else
   read(991,*) nnodes
+#endif
+
   allocate(nodes_coords(2,nnodes))
   do i = 1, nnodes
+#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+     read(991) nodes_coords(1,i), nodes_coords(2,i)
+#else
      read(991,*) nodes_coords(1,i), nodes_coords(2,i)
+#endif
   enddo
   close(991)
 
@@ -188,14 +221,22 @@ contains
 
   integer  :: i,ier
 
+#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+  open(unit=992, file=trim(filename), form='unformatted' , status='old', action='read',iostat=ier)
+#else
   open(unit=992, file=trim(filename), form='formatted' , status='old', action='read',iostat=ier)
+#endif
   if( ier /= 0 ) then
-    print*,'error opening file: ',trim(filename)
+    print *,'error opening file: ',trim(filename)
     stop 'error read external mat file'
   endif
 
   do i = 1, nelmnts
+#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+     read(992) num_material(i)
+#else
      read(992,*) num_material(i)
+#endif
   enddo
   close(992)
 
@@ -211,20 +252,31 @@ contains
   character(len=256), intent(in)  :: filename
   integer, dimension(1:nelmnts), intent(out)  :: region_pml_external_mesh
   integer, intent(out)  :: nspec_cpml
-!  integer, dimension(:,:), allocatable  :: local_pml  
 
   integer  :: i,j,k,ier
 
+#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+  open(unit=992, file=trim(filename), form='unformatted' , status='old', action='read',iostat=ier)
+#else
   open(unit=992, file=trim(filename), form='formatted' , status='old', action='read',iostat=ier)
+#endif
   if( ier /= 0 ) then
-    print*,'error opening file: ',trim(filename)
+    print *,'error opening file: ',trim(filename)
     stop 'error read external CPML_element_file'
   endif
 
+#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+  read(992) nspec_cpml
+#else
   read(992,*) nspec_cpml
+#endif
 
   do i = 1, nspec_cpml
+#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+     read(992) j, k
+#else
      read(992,*) j, k
+#endif
      region_pml_external_mesh(j) = k
   enddo
 
@@ -262,22 +314,34 @@ contains
   integer  :: imaterial_number
 
 
+#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+  open(unit=993, file=trim(filename), form='unformatted' , status='old', action='read', iostat=ier)
+#else
   open(unit=993, file=trim(filename), form='formatted' , status='old', action='read', iostat=ier)
+#endif
   if( ier /= 0 ) then
-    print*,'error opening file: ',trim(filename)
+    print *,'error opening file: ',trim(filename)
     stop 'error read acoustic surface file'
   endif
 
+#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+  read(993) nelmnts_surface
+#else
   read(993,*) nelmnts_surface
+#endif
 
   allocate(acoustic_surface_tmp(4,nelmnts_surface))
 
   do i = 1, nelmnts_surface
+#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+     read(993) acoustic_surface_tmp(1,i), acoustic_surface_tmp(2,i), acoustic_surface_tmp(3,i), acoustic_surface_tmp(4,i)
+#else
      read(993,*) acoustic_surface_tmp(1,i), acoustic_surface_tmp(2,i), acoustic_surface_tmp(3,i), acoustic_surface_tmp(4,i)
-
+#endif
   enddo
 
   close(993)
+
   acoustic_surface_tmp(1,:) = acoustic_surface_tmp(1,:) - remove_min_to_start_at_zero
   acoustic_surface_tmp(3,:) = acoustic_surface_tmp(3,:) - remove_min_to_start_at_zero
   acoustic_surface_tmp(4,:) = acoustic_surface_tmp(4,:) - remove_min_to_start_at_zero
@@ -287,7 +351,6 @@ contains
      imaterial_number = num_material(acoustic_surface_tmp(1,i))
      if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0 ) then
         nelem_acoustic_surface = nelem_acoustic_surface + 1
-
      endif
   enddo
 
@@ -321,18 +384,30 @@ contains
 
   integer  :: i,ier
 
+#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+  open(unit=994, file=trim(filename), form='unformatted' , status='old', action='read', iostat=ier)
+#else
   open(unit=994, file=trim(filename), form='formatted' , status='old', action='read', iostat=ier)
+#endif
   if( ier /= 0 ) then
     print *,'error opening file: ',trim(filename)
     stop 'error read absorbing surface file'
   endif
 
+#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+  read(994) nelemabs
+#else
   read(994,*) nelemabs
+#endif
 
   allocate(abs_surface(5,nelemabs))
 
   do i = 1, nelemabs
+#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+    read(994) abs_surface(1,i), abs_surface(2,i), abs_surface(3,i), abs_surface(4,i), abs_surface(5,i)
+#else
     read(994,*) abs_surface(1,i), abs_surface(2,i), abs_surface(3,i), abs_surface(4,i), abs_surface(5,i)
+#endif
 
     if (abs_surface(2,i) /= 2) then
       print *,'Only two nodes per absorbing element can be listed.'
