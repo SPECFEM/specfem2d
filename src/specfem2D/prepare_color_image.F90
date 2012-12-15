@@ -58,7 +58,7 @@
   integer :: NX_IMAGE_color,NZ_IMAGE_color
 
 ! factor to subsample color images output by the code (useful for very large models)
-  integer :: factor_subsample_image
+  double precision :: factor_subsample_image
 
   integer :: nglob,npgeo
   double precision, dimension(NDIM,nglob) :: coord
@@ -109,19 +109,25 @@
 
   ! convert pixel sizes to even numbers because easier to reduce size,
   ! create MPEG movies in postprocessing
-  NX_IMAGE_color = 2 * (NX_IMAGE_color / 2 + 1) / factor_subsample_image
-  NZ_IMAGE_color = 2 * (NZ_IMAGE_color / 2 + 1) / factor_subsample_image
+  NX_IMAGE_color = 2 * nint((NX_IMAGE_color / 2 + 1) / factor_subsample_image)
+  NZ_IMAGE_color = 2 * nint((NZ_IMAGE_color / 2 + 1) / factor_subsample_image)
 
   ! check that image size is not too big
 ! because from http://www.jpegcameras.com/libjpeg/libjpeg-2.html
 ! we know that the size limit of the image in each dimension is 65535:
 ! "JPEG supports image dimensions of 1 to 64K pixels in either direction".
-  if (NX_IMAGE_color < 4) call exit_MPI('output image too big : NX_IMAGE_color < 4.')
-  if (NZ_IMAGE_color < 4) call exit_MPI('output image too big : NZ_IMAGE_color < 4.')
+  if (NX_IMAGE_color < 4) call exit_MPI('output image too small: NX_IMAGE_color < 4.')
+  if (NZ_IMAGE_color < 4) call exit_MPI('output image too small: NZ_IMAGE_color < 4.')
+
   if (NX_IMAGE_color > 65534) &
-    call exit_MPI('output image too big : NX_IMAGE_color > 65534; increase factor_subsample_image in DATA/Par_file.')
+    call exit_MPI('output image too big: NX_IMAGE_color > 65534; increase factor_subsample_image in DATA/Par_file.')
   if (NZ_IMAGE_color > 65534) &
-    call exit_MPI('output image too big : NZ_IMAGE_color > 65534; increase factor_subsample_image in DATA/Par_file.')
+    call exit_MPI('output image too big: NZ_IMAGE_color > 65534; increase factor_subsample_image in DATA/Par_file.')
+
+  if (NX_IMAGE_color > NX_NZ_IMAGE_MAX) call exit_MPI( &
+      'output image too big: NX_IMAGE_color > NX_NZ_IMAGE_MAX; increase factor_subsample_image or change NX_NZ_IMAGE_MAX.')
+  if (NZ_IMAGE_color > NX_NZ_IMAGE_MAX) call exit_MPI( &
+      'output image too big: NZ_IMAGE_color > NX_NZ_IMAGE_MAX; increase factor_subsample_image or change NX_NZ_IMAGE_MAX.')
 
   end subroutine prepare_color_image_init
 

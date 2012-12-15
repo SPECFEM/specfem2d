@@ -87,7 +87,7 @@
              subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps,NELEM_PML_THICKNESS
 
 ! factor to subsample color images output by the code (useful for very large models)
-  integer :: factor_subsample_image
+  double precision :: factor_subsample_image
 
 ! use snapshot number in the file name of JPG color snapshots instead of the time step
   logical :: USE_SNAPSHOT_NUMBER_IN_FILENAME
