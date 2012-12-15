@@ -450,7 +450,7 @@ def ProcessParfile_r20859(fic):
 
     # Test if already processed
     for lig in ligs:
-        if lig.endswith('section 4.5 of the user manual)\n'):
+        if lig.endswith(' for how to do this)\n'):
             print '----> '+fic+' already processed to r20859'            
             return
     #--------------------------------------------------------------------------
@@ -470,6 +470,36 @@ def ProcessParfile_r20859(fic):
     #
     print 'xxxxx------> '+fic+' processed to r20859'
     return
+#------------------------------------------------------------------------------
+def ProcessParfile_r21000(fic):
+    # define the release number
+    release_number='r21000'
+    # Open the file and get all lines from Par_file
+    ligs= LoadLig(fic)
+
+    # Test if already processed
+    for lig in ligs:
+        if lig.startswith('ROTATE'):
+            print '----> '+fic+' already processed to '+release_number          
+            return
+    #
+    a1='ROTATE_PML_ACTIVATE             = .false.\nROTATE_PML_ANGLE     '+ \
+       '           = 30.\n'
+    #--------------------------------------------------------------------------
+    # Add new parameters
+    # 
+    for ilg, lig in enumerate(ligs):
+        if lig.startswith('NELEM_PML_THICKNESS'):
+            ligs.insert(ilg+1,a1)
+    #
+    move(fic,fic+'.before_update_to_'+release_number)
+    #
+    fm = open(fic,'w')
+    fm.writelines(ligs)
+    fm.close()
+    #
+    print 'xxxxx------> '+fic+' processed to '+release_number
+    return   
 #------------------------------------------------------------------------------
 if __name__=='__main__':
     ## List of all files of current directory
@@ -496,8 +526,9 @@ if __name__=='__main__':
                     ProcessParfile_r20359(fic)
                     ProcessParfile_r20561(fic)
                     ProcessParfile_r20859(fic)
+                    ProcessParfile_r21000(fic)
                     print '~'*80
     #                
-    print 'Number of Par_file analysed : ', Ct_Par_file   
+    print 'Number of Par_file analysed : ', Ct_Par_file
     print 'END OF Par_file PROCESSING'
     
