@@ -106,49 +106,44 @@
           ! need to be modified to provide QKappa & Qmu values
           QKappa_attenuationext(i,j,ispec) = 10.d0
           Qmu_attenuationext(i,j,ispec) = 10.d0
-        end do
-      end do
-    end do
+        enddo
+      enddo
+    enddo
     close(1001)
 
   else
+
+    call define_external_model(coord,kmato,ibool,rhoext,vpext,vsext,QKappa_attenuationext,Qmu_attenuationext, &
+                               c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,nspec,nglob)
+
+! check that the external model that has just been defined makes sense
     do ispec = 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
-
-          iglob = ibool(i,j,ispec)
-          call define_external_model(coord(1,iglob),coord(2,iglob),kmato(ispec),&
-                                    rhoext(i,j,ispec),vpext(i,j,ispec),vsext(i,j,ispec), &
-                                    QKappa_attenuationext(i,j,ispec),Qmu_attenuationext(i,j,ispec),&
-                                    c11ext(i,j,ispec),c13ext(i,j,ispec),c15ext(i,j,ispec), &
-                                    c33ext(i,j,ispec),c35ext(i,j,ispec),c55ext(i,j,ispec))
 
           if(c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
              c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) then
             ! vp, vs : assign dummy values, trick to avoid floating point errors in the case of an anisotropic medium
             vpext(i,j,ispec) = 20.d0
             vsext(i,j,ispec) = 10.d0
-          end if
+          endif
 
 ! check that the element type is not redefined compared to what is defined initially in DATA/Par_file
           if((c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
               c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) &
-              .and. .not. anisotropic(ispec)) then
+              .and. .not. anisotropic(ispec)) &
       stop 'error: non anisotropic material in DATA/Par_file or external mesh redefined as anisotropic in define_external_model()'
-          endif
 
-          if(vsext(i,j,ispec) < TINYVAL .and. (elastic(ispec) .or. anisotropic(ispec))) then
+          if(vsext(i,j,ispec) < TINYVAL .and. (elastic(ispec) .or. anisotropic(ispec))) &
             stop 'error: non acoustic material in DATA/Par_file or external mesh redefined as acoustic in define_external_model()'
-          endif
 
-          if(vsext(i,j,ispec) > TINYVAL .and. .not. elastic(ispec)) then
+          if(vsext(i,j,ispec) > TINYVAL .and. .not. elastic(ispec)) &
             stop 'error: acoustic material in DATA/Par_file or external mesh redefined as non acoustic in define_external_model()'
-          endif
 
-        end do
-      end do
-    end do
-  end if
+        enddo
+      enddo
+    enddo
+  endif
 
   ! initializes
   any_acoustic = .false.
