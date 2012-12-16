@@ -2169,10 +2169,10 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     call plotgll(knods,ibool,coorg,coord,nglob,npgeo,ngnod,nspec)
 
   if(myrank == 0 .and. ipass == 1)  &
-    write(IOUT,*) 'assign_external_model = ', assign_external_model
+    write(IOUT,*) 'Assigning an external velocity and density model...'
 
-!if ( assign_external_model .and. ipass == 1) then
-  if ( assign_external_model) then
+! if (assign_external_model .and. ipass == 1) then
+  if (assign_external_model) then
     call read_external_model(any_acoustic,any_elastic,any_poroelastic, &
                 elastic,poroelastic,anisotropic,nspec,nglob,N_SLS,ibool, &
                 f0_attenuation,inv_tau_sigma_nu1_sent,phi_nu1_sent, &

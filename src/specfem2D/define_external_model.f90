@@ -42,57 +42,77 @@
 !
 !========================================================================
 
-
-  subroutine define_external_model(x,y,iflag_element,rho,vp,vs,QKappa_attenuation, &
-       Qmu_attenuation,c11,c13,c15,c33,c35,c55)
+  subroutine define_external_model(coord,material_element,ibool,rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
+                                             c11,c13,c15,c33,c35,c55,nspec,nglob)
 
   implicit none
 
   include "constants.h"
 
 ! user can modify this routine to assign any different external Earth model (rho, vp, vs)
-! based on the x and y coordinates of that grid point and the flag of the region it belongs to
+! based on the x and y coordinates of that grid point and the material number of the region it belongs to
 
-  integer, intent(in) :: iflag_element
+  integer, intent(in) :: nspec,nglob
 
-  double precision, intent(in) :: x,y
+  double precision, dimension(NDIM,nglob), intent(in) :: coord
 
-  double precision, intent(out) :: rho,vp,vs
-  double precision, intent(out) :: QKappa_attenuation,Qmu_attenuation
-  double precision, intent(out) :: c11,c15,c13,c33,c35,c55
+  integer, dimension(nspec), intent(in) :: material_element
+
+  integer, dimension(NGLLX,NGLLZ,nspec), intent(in) :: ibool
+
+  double precision, dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
+                                                                 c11,c15,c13,c33,c35,c55
+
+  integer :: i,j,ispec,iglob
+
+  double precision :: x,z
 
 ! completely dummy routine here, just to demonstrate how the model can be assigned
 ! and how such a routine can be written
 
-   if(iflag_element == 1 .or. x < 1700.d0 .or. y >= 2300.d0) then
-     rho = 2000.d0
-     vp = 3000.d0
-     vs = vp / sqrt(3.d0)
-     QKappa_attenuation = 9999. ! this means no attenuation
-     Qmu_attenuation    = 9999. ! this means no attenuation
-     c11 = 169.d9
-     c13 = 122.d9
-     c15 = 0.d0
-     c33 = c11
-     c35 = 0.d0
-     c55 = 75.3d9
+! loop on all the elements of the mesh, and inside each element loop on all the GLL points
+  do ispec = 1,nspec
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
 
-   else if(iflag_element == 2) then
-     rho = 2500.d0
-     vp = 3600.d0
-     vs = vp / 2.d0
-     QKappa_attenuation = 120.
-     Qmu_attenuation = 120.
-     c11 = 0.d0   ! this means no anisotropy
-     c13 = 0.d0
-     c15 = 0.d0
-     c33 = 0.d0
-     c35 = 0.d0
-     c55 = 0.d0
+   iglob = ibool(i,j,ispec)
+
+   x = coord(1,iglob)
+   z = coord(2,iglob)
+
+   if(material_element(ispec) == 1 .or. x < 1700.d0 .or. z >= 2300.d0) then
+     rho(i,j,ispec) = 2000.d0
+     vp(i,j,ispec) = 3000.d0
+     vs(i,j,ispec) = vp(i,j,ispec) / sqrt(3.d0)
+     QKappa_attenuation(i,j,ispec) = 9999. ! this means no attenuation
+     Qmu_attenuation(i,j,ispec)    = 9999. ! this means no attenuation
+     c11(i,j,ispec) = 169.d9
+     c13(i,j,ispec) = 122.d9
+     c15(i,j,ispec) = 0.d0
+     c33(i,j,ispec) = c11(i,j,ispec)
+     c35(i,j,ispec) = 0.d0
+     c55(i,j,ispec) = 75.3d9
+
+   else if(material_element(ispec) == 2) then
+     rho(i,j,ispec) = 2500.d0
+     vp(i,j,ispec) = 3600.d0
+     vs(i,j,ispec) = vp(i,j,ispec) / 2.d0
+     QKappa_attenuation(i,j,ispec) = 120.
+     Qmu_attenuation(i,j,ispec) = 120.
+     c11(i,j,ispec) = 0.d0   ! this means no anisotropy
+     c13(i,j,ispec) = 0.d0
+     c15(i,j,ispec) = 0.d0
+     c33(i,j,ispec) = 0.d0
+     c35(i,j,ispec) = 0.d0
+     c55(i,j,ispec) = 0.d0
 
    else
-     stop 'wrong flag number in external model'
+     stop 'wrong material number in external model'
    endif
+
+      enddo
+    enddo
+  enddo
 
   end subroutine define_external_model
 
@@ -103,30 +123,12 @@
 !
 !========================================================================
 
-  subroutine define_external_model_ak135f(x,y,iflag_element,rho,vp,vs,QKappa_attenuation, &
-       Qmu_attenuation,c11,c13,c15,c33,c35,c55)
+  subroutine define_external_model_ak135f(coord,material_element,ibool,rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
+                                             c11,c13,c15,c33,c35,c55,nspec,nglob)
 
   implicit none
 
   include "constants.h"
-
-! user can modify this routine to assign any different external Earth model (rho, vp, vs)
-! based on the x and y coordinates of that grid point and the flag of the region it belongs to
-
-  integer, intent(in) :: iflag_element
-
-  double precision, intent(in) :: x,y
-
-  double precision, intent(out) :: rho,vp,vs
-  double precision, intent(out) :: QKappa_attenuation,Qmu_attenuation
-  double precision, intent(out) :: c11,c15,c13,c33,c35,c55
-
-! routine to assign the AK135F_NO_MUD Earth model
-
-  integer, parameter :: IREGION_MANTLE_CRUST_ABOVE_d670 = 1
-  integer, parameter :: IREGION_MANTLE_BELOW_d670 = 2
-  integer, parameter :: IREGION_OUTER_CORE = 3
-  integer, parameter :: IREGION_INNER_CORE = 4
 
 !--------------------------------------------------------------------------------------------------
 !
@@ -156,24 +158,38 @@
 
 !--------------------------------------------------------------------------------------------------
 
-! number of layers in ak135-F
+  integer, intent(in) :: nspec,nglob
+
+  double precision, dimension(NDIM,nglob), intent(in) :: coord
+
+  integer, dimension(nspec), intent(in) :: material_element
+
+  integer, dimension(NGLLX,NGLLZ,nspec), intent(in) :: ibool
+
+  double precision, dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
+                                                                 c11,c15,c13,c33,c35,c55
+
+! number of layers in ak135-f
   integer, parameter :: NR_AK135F_NO_MUD = 136
 
-  double precision, dimension(NR_AK135F_NO_MUD), save :: radius_ak135
-  double precision, dimension(NR_AK135F_NO_MUD), save :: density_ak135
-  double precision, dimension(NR_AK135F_NO_MUD), save :: vp_ak135
-  double precision, dimension(NR_AK135F_NO_MUD), save :: vs_ak135
-  double precision, dimension(NR_AK135F_NO_MUD), save :: Qkappa_ak135
-  double precision, dimension(NR_AK135F_NO_MUD), save :: Qmu_ak135
+  double precision, dimension(NR_AK135F_NO_MUD) :: radius_ak135
+  double precision, dimension(NR_AK135F_NO_MUD) :: density_ak135
+  double precision, dimension(NR_AK135F_NO_MUD) :: vp_ak135
+  double precision, dimension(NR_AK135F_NO_MUD) :: vs_ak135
+  double precision, dimension(NR_AK135F_NO_MUD) :: Qkappa_ak135
+  double precision, dimension(NR_AK135F_NO_MUD) :: Qmu_ak135
 
-  logical, save :: first_call_to_this_routine = .true.
+! region flags to assign the AK135F_NO_MUD Earth model
+  integer, parameter :: IREGION_MANTLE_CRUST_ABOVE_d670 = 1
+  integer, parameter :: IREGION_MANTLE_BELOW_d670 = 2
+  integer, parameter :: IREGION_OUTER_CORE = 3
+  integer, parameter :: IREGION_INNER_CORE = 4
 
-  integer :: i
-  double precision :: r,frac
+  integer :: i,j,ispec,iglob,ii
+
+  double precision :: x,z,r,frac
 
 ! define all the values in the model once and for all
-
-  if(first_call_to_this_routine) then 
 
   radius_ak135(  1) =  0.000000000000000E+000
   radius_ak135(  2) =   50710.0000000000
@@ -1006,72 +1022,84 @@
 !   Qmu_ak135(133:136) = Qmu_ak135(132)
 ! endif
 
-    first_call_to_this_routine = .false.
+! loop on all the elements of the mesh, and inside each element loop on all the GLL points
+  do ispec = 1,nspec
 
-  endif  ! of definition of the model the first time this routine is called
+  if(material_element(ispec) /= IREGION_MANTLE_CRUST_ABOVE_d670 .and. &
+     material_element(ispec) /= IREGION_MANTLE_BELOW_d670 .and. &
+     material_element(ispec) /= IREGION_OUTER_CORE .and. &
+     material_element(ispec) /= IREGION_INNER_CORE) stop 'wrong flag number in external model'
 
-  if(iflag_element /= IREGION_MANTLE_CRUST_ABOVE_d670 .and. &
-     iflag_element /= IREGION_MANTLE_BELOW_d670 .and. &
-     iflag_element /= IREGION_OUTER_CORE .and. &
-     iflag_element /= IREGION_INNER_CORE) stop 'wrong flag number in external model'
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+
+   iglob = ibool(i,j,ispec)
+
+   x = coord(1,iglob)
+   z = coord(2,iglob)
 
 ! compute the radius
-  r = sqrt(x**2 + y**2)
+  r = sqrt(x**2 + z**2)
 
-  i = 1
-  do while(r >= radius_ak135(i) .and. i /= NR_AK135F_NO_MUD)
-    i = i + 1
+  ii = 1
+  do while(r >= radius_ak135(ii) .and. ii /= NR_AK135F_NO_MUD)
+    ii = ii + 1
   enddo
 
 ! make sure we stay in the right region and never take a point above
 ! and a point below the ICB or the CMB and interpolate between them,
 ! which would lead to a wrong value (keeping in mind that we interpolate
 ! between points i-1 and i below)
-  if(iflag_element == IREGION_INNER_CORE .and. i > 24) i = 24
+  if(material_element(ispec) == IREGION_INNER_CORE .and. ii > 24) ii = 24
 
-  if(iflag_element == IREGION_OUTER_CORE .and. i < 26) i = 26
-  if(iflag_element == IREGION_OUTER_CORE .and. i > 69) i = 69
+  if(material_element(ispec) == IREGION_OUTER_CORE .and. ii < 26) ii = 26
+  if(material_element(ispec) == IREGION_OUTER_CORE .and. ii > 69) ii = 69
 
-  if((iflag_element == IREGION_MANTLE_CRUST_ABOVE_d670 .or. iflag_element == IREGION_MANTLE_BELOW_d670) .and. i < 71) i = 71
+  if((material_element(ispec) == IREGION_MANTLE_CRUST_ABOVE_d670 .or. &
+      material_element(ispec) == IREGION_MANTLE_BELOW_d670) .and. ii < 71) ii = 71
 
-  if(i == 1) then
-    rho = density_ak135(i)
-    vp = vp_ak135(i)
-    vs = vs_ak135(i)
-    Qmu_attenuation = Qmu_ak135(i)
-    Qkappa_attenuation = Qkappa_ak135(i)
+  if(ii == 1) then
+    rho(i,j,ispec) = density_ak135(1)
+    vp(i,j,ispec) = vp_ak135(1)
+    vs(i,j,ispec) = vs_ak135(1)
+    Qmu_attenuation(i,j,ispec) = Qmu_ak135(1)
+    Qkappa_attenuation(i,j,ispec) = Qkappa_ak135(1)
   else
 
-! interpolate from radius_ak135(i-1) to r using the values at i-1 and i
-    frac = (r-radius_ak135(i-1))/(radius_ak135(i)-radius_ak135(i-1))
+! interpolate from radius_ak135(ii-1) to r using the values at ii-1 and ii
+    frac = (r-radius_ak135(ii-1))/(radius_ak135(ii)-radius_ak135(ii-1))
 
-    rho = density_ak135(i-1) + frac * (density_ak135(i)-density_ak135(i-1))
-    vp = vp_ak135(i-1) + frac * (vp_ak135(i)-vp_ak135(i-1))
-    vs = vs_ak135(i-1) + frac * (vs_ak135(i)-vs_ak135(i-1))
-    Qmu_attenuation = Qmu_ak135(i-1) + frac * (Qmu_ak135(i)-Qmu_ak135(i-1))
-    Qkappa_attenuation = Qkappa_ak135(i-1) + frac * (Qkappa_ak135(i)-Qkappa_ak135(i-1))
+    rho(i,j,ispec) = density_ak135(ii-1) + frac * (density_ak135(ii)-density_ak135(ii-1))
+    vp(i,j,ispec) = vp_ak135(ii-1) + frac * (vp_ak135(ii)-vp_ak135(ii-1))
+    vs(i,j,ispec) = vs_ak135(ii-1) + frac * (vs_ak135(ii)-vs_ak135(ii-1))
+    Qmu_attenuation(i,j,ispec) = Qmu_ak135(ii-1) + frac * (Qmu_ak135(ii)-Qmu_ak135(ii-1))
+    Qkappa_attenuation(i,j,ispec) = Qkappa_ak135(ii-1) + frac * (Qkappa_ak135(ii)-Qkappa_ak135(ii-1))
 
   endif
 
 ! make sure Vs is zero in the outer core even if roundoff errors on depth
 ! also set fictitious attenuation to a very high value (attenuation is not used in the fluid)
-  if(iflag_element == IREGION_OUTER_CORE) then
-    vs = 0.d0
-    Qkappa_attenuation = 9999.d0
-    Qmu_attenuation = 9999.d0
+  if(material_element(ispec) == IREGION_OUTER_CORE) then
+    vs(i,j,ispec) = 0.d0
+    Qkappa_attenuation(i,j,ispec) = 9999.d0
+    Qmu_attenuation(i,j,ispec) = 9999.d0
   endif
 
+      enddo
+    enddo
+  enddo
+
 ! convert to m/s
-  vp=vp*1000.0d0
-  vs=vs*1000.0d0
+  vp(:,:,:)=vp(:,:,:)*1000.0d0
+  vs(:,:,:)=vs(:,:,:)*1000.0d0
 
 ! no anisotropy
-  c11 = 0.d0  
-  c13 = 0.d0
-  c15 = 0.d0
-  c33 = 0.d0
-  c35 = 0.d0
-  c55 = 0.d0
+  c11(:,:,:) = 0.d0
+  c13(:,:,:) = 0.d0
+  c15(:,:,:) = 0.d0
+  c33(:,:,:) = 0.d0
+  c35(:,:,:) = 0.d0
+  c55(:,:,:) = 0.d0
 
   end subroutine define_external_model_ak135f
 
