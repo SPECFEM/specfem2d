@@ -3354,12 +3354,12 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                             coord,nglob,npgeo,factor_subsample_image)
 
     ! allocate an array for image data
-    allocate(image_color_data(NX_IMAGE_color,NZ_IMAGE_color))
-    allocate(image_color_vp_display(NX_IMAGE_color,NZ_IMAGE_color))
+    allocate(image_color_data(NX_IMAGE_color,NZ_IMAGE_color),stat=ier); if(ier /= 0) stop 'error in an allocate statement 1'
+    allocate(image_color_vp_display(NX_IMAGE_color,NZ_IMAGE_color),stat=ier); if(ier /= 0) stop 'error in an allocate statement 2'
 
     ! allocate an array for the grid point that corresponds to a given image data point
-    allocate(iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color))
-    allocate(copy_iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color))
+    allocate(iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color),stat=ier); if(ier /= 0) stop 'error in an allocate statement 3'
+    allocate(copy_iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color),stat=ier); if(ier /= 0) stop 'error in an allocate statement 4'
 
     ! creates pixels indexing
     call prepare_color_image_pixels(myrank,NX_IMAGE_color,NZ_IMAGE_color, &
