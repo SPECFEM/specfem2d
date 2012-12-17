@@ -326,6 +326,11 @@ to the configure options of CFLAGS, FCFLAGS and LDFLAGS otherwise the compiler w
 message (for instance \texttt{``relocation truncated to fit: R\_X86\_64\_PC32 against .bss''} or something similar);
 on an IBM machine with the \texttt{xlf} and \texttt{xlc} compilers, using \texttt{-q64} is usually sufficient.
 
+By default, the solver runs in single precision. This is fine for most application, but if for some reason
+you want to run the solver in double precision, run the \texttt{configure} script with option \texttt{``--enable-double-precision}''.
+Keep in mind that this will of course double total memory size and will also make the solver around 20 to 30\% slower
+on many processors.
+
 \section{Visualizing the subroutine calling tree of the source code}
 
 Packages such as \texttt{doxywizard} can be used to visualize the subroutine calling tree of the source code.

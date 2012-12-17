@@ -34,7 +34,7 @@ AC_ARG_ENABLE([double-precision],
     [AC_HELP_STRING([--enable-double-precision],
         [solver in double precision @<:@default=no@:>@])],
     [want_double_precision="$enableval"],
-    [want_double_precision=yes])
+    [want_double_precision=no])
 if test "$want_double_precision" = no; then
     CUSTOM_REAL=SIZE_REAL
     CUSTOM_MPI_TYPE=MPI_REAL

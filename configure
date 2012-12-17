@@ -2249,7 +2249,7 @@ fi
 if test "${enable_double_precision+set}" = set; then :
   enableval=$enable_double_precision; want_double_precision="$enableval"
 else
-  want_double_precision=yes
+  want_double_precision=no
 fi
 
 if test "$want_double_precision" = no; then
