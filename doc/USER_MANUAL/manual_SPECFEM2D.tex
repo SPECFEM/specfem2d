@@ -265,7 +265,9 @@ directory in which you want to install the package, type
 The directory \texttt{SPECFEM2D-7.0.0/} will then contain
 the source code. In the following, we will refer to this directory as the root directory \texttt{SPECFEM2D/}. \\
 
-To configure the software for your system, run the
+We recommend that you add {\texttt{ulimit -S -s unlimited}} to your {\texttt{.bash\_profile}} file and/or {\texttt{limit stacksize unlimited }} to your {\texttt{.cshrc}} file to suppress any potential limit to the size of the Unix stack.\\
+
+Then, to configure the software for your system, run the
 \texttt{configure} shell script. This script will attempt to guess
 the appropriate configuration values for your system. However, at
 a minimum, it is recommended that you explicitly specify the appropriate
