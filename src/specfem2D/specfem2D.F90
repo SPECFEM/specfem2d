@@ -1757,6 +1757,9 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 #endif
   if (myrank == 0 .and. ipass == 1) then
     write(IOUT,*)
+    write(IOUT,*) 'Total number of elements: ',nspec_total
+    write(IOUT,*) 'decomposed as follows:'
+    write(IOUT,*)
     write(IOUT,*) 'Total number of elastic/visco/poro elements: ',nspec_total - count_nspec_acoustic_total
     write(IOUT,*) 'Total number of acoustic elements: ',count_nspec_acoustic_total
     write(IOUT,*)
