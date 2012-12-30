@@ -1,0 +1,36 @@
+reset
+## create interfaces
+create vertex 0 0 0         # vertex 1
+create vertex 100000 0 0       # vertex 2
+create curve vertex 1 2   # curve 1 (bottom interface)
+
+# create surface 
+sweep curve 1 vector 0 0 1 distance 60000  # surface 1
+imprint surface 1 with curve 1 2 # surface 2 3 4
+delete curve 1 2   
+
+surf 1 size 1000.0 scheme map
+mesh surf 1
+
+block 1 face in surf 1
+block 1 name "CRUST"
+
+# define number of attributes
+block 1  attribute count 2
+# attribute 2
+block 1  attribute index 2 3000
+# attribute 1
+block 1 attribute index 1 1
+# element type
+block 1 element type QUAD4
+
+# boundary blocks 
+block 2 edge in curve 2
+block 2 name "topo"
+block 3 edge in curve  3
+block 3 name "abs_left"
+block 4 edge in curve  5
+block 4 name "abs_right"
+block 5 edge in curve 4
+block 5 name "abs_bottom" 
+
