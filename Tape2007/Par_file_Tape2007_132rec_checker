@@ -895,6 +895,8 @@ read_external_mesh              = .false.
 # absorbing boundary active or not
 PML_BOUNDARY_CONDITIONS         = .false.
 NELEM_PML_THICKNESS             = 3
+ROTATE_PML_ACTIVATE             = .false.
+ROTATE_PML_ANGLE                = 30.
 STACEY_ABSORBING_CONDITIONS     = .false.
 ADD_SPRING_TO_STACEY            = .true.
 
