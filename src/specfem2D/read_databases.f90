@@ -46,7 +46,7 @@
   subroutine read_databases_init(myrank,ipass, &
                   simulation_title,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo,nproc, &
                   output_grid_Gnuplot,interpol,NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP_BETWEEN_OUTPUT_IMAGES, &
-                  PML_BOUNDARY_CONDITIONS,NELEM_PML_THICKNESS, &
+                  PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,NELEM_PML_THICKNESS, &
                   NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS,subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps, &
                   output_postscript_snapshot,output_color_image,colors,numbers, &
                   meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows, &
@@ -75,9 +75,9 @@
   logical :: meshvect,modelvect,boundvect,initialfield,add_Bielak_conditions, &
     assign_external_model,READ_EXTERNAL_SEP_FILE, &
     output_grid_ASCII,output_energy,output_wavefield_dumps,p_sv,use_binary_for_wavefield_dumps
-  logical :: ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,PML_BOUNDARY_CONDITIONS, &
+  logical :: ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE, & 
              save_ASCII_seismograms,save_binary_seismograms_single,save_binary_seismograms_double,DRAW_SOURCES_AND_RECEIVERS
-
+  double precision :: ROTATE_PML_ANGLE 
   double precision :: cutsnaps,sizemax_arrows,anglerec
   double precision :: Q0,freq0
   double precision :: deltat
@@ -186,6 +186,12 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,*) PML_BOUNDARY_CONDITIONS
+
+  read(IIN,"(a80)") datlin          
+  read(IIN,*) ROTATE_PML_ACTIVATE   
+
+  read(IIN,"(a80)") datlin          
+  read(IIN,*) ROTATE_PML_ANGLE      
 
   read(IIN,"(a80)") datlin
   read(IIN,*) read_external_mesh

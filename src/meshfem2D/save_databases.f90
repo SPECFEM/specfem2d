@@ -119,6 +119,12 @@
     write(15,*) 'PML_BOUNDARY_CONDITIONS'
     write(15,*) PML_BOUNDARY_CONDITIONS
 
+    write(15,*) 'ROTATE_PML_ACTIVATE' 
+    write(15,*) ROTATE_PML_ACTIVATE   
+
+    write(15,*) 'ROTATE_PML_ANGLE' 
+    write(15,*) ROTATE_PML_ANGLE   
+
     write(15,*) 'read_external_mesh'
     write(15,*) read_external_mesh
 
