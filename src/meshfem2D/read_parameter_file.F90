@@ -101,7 +101,8 @@ module parameter_file
 
   integer :: NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP_BETWEEN_OUTPUT_IMAGES,NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS, &
              subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps,NELEM_PML_THICKNESS
-  logical :: output_postscript_snapshot,output_color_image,PML_BOUNDARY_CONDITIONS
+  logical :: output_postscript_snapshot,output_color_image,PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE 
+  double precision :: ROTATE_PML_ANGLE 
   integer :: imagetype_postscript
   double precision :: cutsnaps
   logical :: meshvect,modelvect,boundvect,interpol
@@ -459,6 +460,12 @@ contains
 
   call read_value_integer_p(NELEM_PML_THICKNESS, 'solver.NELEM_PML_THICKNESS')
   if(err_occurred() /= 0) stop 'error reading parameter 33zb in Par_file'
+
+  call read_value_logical_p(ROTATE_PML_ACTIVATE, 'solver.ROTATE_PML_ACTIVATE')  
+  if(err_occurred() /= 0) stop 'error reading parameter 51a in Par_file'
+
+  call read_value_double_precision_p(ROTATE_PML_ANGLE, 'solver.ROTATE_PML_ANGLE') 
+  if(err_occurred() /= 0) stop 'error reading parameter 51a in Par_file'
 
   ! boolean defining whether to use any absorbing boundaries
   call read_value_logical_p(any_abs, 'solver.STACEY_ABSORBING_CONDITIONS')

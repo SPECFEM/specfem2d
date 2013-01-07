@@ -564,7 +564,9 @@
   logical interpol,meshvect,modelvect,boundvect,assign_external_model,initialfield, &
     output_grid_ASCII,output_grid_Gnuplot,ATTENUATION_VISCOELASTIC_SOLID,output_postscript_snapshot,output_color_image, &
     plot_lowerleft_corner_only,add_Bielak_conditions,output_energy,READ_EXTERNAL_SEP_FILE, &
-    output_wavefield_dumps,use_binary_for_wavefield_dumps,PML_BOUNDARY_CONDITIONS
+    output_wavefield_dumps,use_binary_for_wavefield_dumps,PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE 
+
+  double precision :: ROTATE_PML_ANGLE 
 
 !! DK DK for CPML_element_file
   logical :: read_external_mesh
@@ -1007,6 +1009,9 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
    rmemory_dux_dx,rmemory_duz_dx,rmemory_dux_dz,rmemory_duz_dz
 
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &                            
+   rmemory_dux_dx_prime,rmemory_duz_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dz_prime  
+
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
    rmemory_dux_dx_LDDRK,rmemory_duz_dx_LDDRK,rmemory_dux_dz_LDDRK,rmemory_duz_dz_LDDRK
 
@@ -1047,7 +1052,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   call read_databases_init(myrank,ipass, &
                   simulation_title,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo,nproc_read_from_database, &
                   output_grid_Gnuplot,interpol,NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS, &
-                  NSTEP_BETWEEN_OUTPUT_IMAGES,PML_BOUNDARY_CONDITIONS,NELEM_PML_THICKNESS, &
+                  NSTEP_BETWEEN_OUTPUT_IMAGES,PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,NELEM_PML_THICKNESS, &
                   NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS,subsamp_seismos, &
                   imagetype_JPEG,imagetype_wavefield_dumps, &
                   output_postscript_snapshot,output_color_image,colors,numbers, &
@@ -1062,6 +1067,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                   POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, time_stepping_scheme, &
                   ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL,&
                   read_external_mesh)
+
   if(nproc_read_from_database < 1) stop 'should have nproc_read_from_database >= 1'
   if(SIMULATION_TYPE == 2 .and.(time_stepping_scheme == 2 .or. time_stepping_scheme == 3)) &
                                   stop 'RK and LDDRK time scheme not supported for adjoint inversion'
@@ -2936,6 +2942,17 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         allocate(rmemory_duz_dz(NGLLX,NGLLZ,nspec_PML),stat=ier)
         if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'
 
+        if(ROTATE_PML_ACTIVATE)then  
+          allocate(rmemory_dux_dx_prime(NGLLX,NGLLZ,nspec_PML),stat=ier)
+          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx_prime'
+          allocate(rmemory_dux_dz_prime(NGLLX,NGLLZ,nspec_PML),stat=ier)
+          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz_prime'
+          allocate(rmemory_duz_dx_prime(NGLLX,NGLLZ,nspec_PML),stat=ier)
+          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx_prime'
+          allocate(rmemory_duz_dz_prime(NGLLX,NGLLZ,nspec_PML),stat=ier)
+          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz_prime'
+        endif
+
         if(time_stepping_scheme == 2)then
           allocate(rmemory_displ_elastic_LDDRK(2,3,NGLLX,NGLLZ,nspec_PML),stat=ier) 
           if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic' 
@@ -2961,6 +2978,13 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         rmemory_duz_dx(:,:,:) = ZERO
         rmemory_duz_dz(:,:,:) = ZERO
 
+        if(ROTATE_PML_ACTIVATE)then 
+          rmemory_dux_dx_prime(:,:,:) = ZERO
+          rmemory_dux_dz_prime(:,:,:) = ZERO
+          rmemory_duz_dx_prime(:,:,:) = ZERO
+          rmemory_duz_dz_prime(:,:,:) = ZERO
+        endif
+
         if(time_stepping_scheme == 2)then
         rmemory_displ_elastic_LDDRK(:,:,:,:,:) = ZERO
         rmemory_dux_dx_LDDRK(:,:,:) = ZERO
@@ -2976,6 +3000,12 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         allocate(rmemory_dux_dz(1,1,1))
         allocate(rmemory_duz_dx(1,1,1))
         allocate(rmemory_duz_dz(1,1,1))
+
+        allocate(rmemory_dux_dx_prime(1,1,1)) 
+        allocate(rmemory_dux_dz_prime(1,1,1))
+        allocate(rmemory_duz_dx_prime(1,1,1))
+        allocate(rmemory_duz_dz_prime(1,1,1))
+       
 
         if(time_stepping_scheme == 2)then
         allocate(rmemory_displ_elastic_LDDRK(1,1,1,1,1))
@@ -3031,6 +3061,12 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       allocate(rmemory_dux_dz(1,1,1))
       allocate(rmemory_duz_dx(1,1,1))
       allocate(rmemory_duz_dz(1,1,1))
+
+      allocate(rmemory_dux_dx_prime(1,1,1)) 
+      allocate(rmemory_dux_dz_prime(1,1,1))
+      allocate(rmemory_duz_dx_prime(1,1,1))
+      allocate(rmemory_duz_dz_prime(1,1,1))
+
       allocate(rmemory_displ_elastic(1,1,1,1,1))
 
       allocate(rmemory_displ_elastic_LDDRK(1,1,1,1,1))
@@ -5523,9 +5559,11 @@ if(coupled_elastic_poro) then
                is_PML,nspec_PML,spec_to_PML,region_CPML, &
                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
                rmemory_displ_elastic,rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz, &
+               rmemory_dux_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dx_prime,rmemory_duz_dz_prime, &
                rmemory_displ_elastic_LDDRK,rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,&
                rmemory_duz_dx_LDDRK,rmemory_duz_dz_LDDRK, &
-               PML_BOUNDARY_CONDITIONS)
+               PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE)  
+
 
       if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
         !--- left absorbing boundary

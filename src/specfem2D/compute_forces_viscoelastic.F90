@@ -66,9 +66,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
      is_PML,nspec_PML,spec_to_PML,region_CPML, &
      K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
      rmemory_displ_elastic,rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz, &
+     rmemory_dux_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dx_prime,rmemory_duz_dz_prime, &
      rmemory_displ_elastic_LDDRK,rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,& 
      rmemory_duz_dx_LDDRK,rmemory_duz_dz_LDDRK, &  
-     PML_BOUNDARY_CONDITIONS)
+     PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE)  
+
 
   ! compute forces for the elastic elements
 
@@ -163,11 +165,14 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   ! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duy_dxi,duy_dgamma,duz_dxi,duz_dgamma
   real(kind=CUSTOM_REAL) :: dux_dxl,duy_dxl,duz_dxl,dux_dzl,duy_dzl,duz_dzl
+  real(kind=CUSTOM_REAL) :: dux_dxl_prime,duy_dxl_prime,duz_dxl_prime,dux_dzl_prime,duy_dzl_prime,duz_dzl_prime 
+  real(kind=CUSTOM_REAL) :: theta,ct,st 
   real(kind=CUSTOM_REAL) :: b_dux_dxi,b_dux_dgamma,b_duy_dxi,b_duy_dgamma,b_duz_dxi,b_duz_dgamma
   real(kind=CUSTOM_REAL) :: b_dux_dxl,b_duy_dxl,b_duz_dxl,b_dux_dzl,b_duy_dzl,b_duz_dzl
   real(kind=CUSTOM_REAL) :: dsxx,dsxz,dszz
   real(kind=CUSTOM_REAL) :: b_dsxx,b_dsxz,b_dszz
   real(kind=CUSTOM_REAL) :: sigma_xx,sigma_xy,sigma_xz,sigma_zy,sigma_zz,sigma_zx
+  real(kind=CUSTOM_REAL) :: sigma_xx_prime,sigma_xy_prime,sigma_xz_prime,sigma_zy_prime,sigma_zz_prime,sigma_zx_prime 
   real(kind=CUSTOM_REAL) :: b_sigma_xx,b_sigma_xy,b_sigma_xz,b_sigma_zy,b_sigma_zz,b_sigma_zx
   real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,rho_vp,rho_vs,tx,ty,tz,weight,xxi,zxi,xgamma,zgamma,jacobian1D
   real(kind=CUSTOM_REAL) :: displx,disply,displz,displn,spring_position,displtx,displty,displtz
@@ -220,12 +225,15 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   integer, dimension(nspec) :: region_CPML
   logical, dimension(nspec) :: is_PML
   integer, dimension(nspec) :: spec_to_PML
-  logical :: PML_BOUNDARY_CONDITIONS
+  logical :: PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE 
+  double precision ROTATE_PML_ANGLE                      
 
   real(kind=CUSTOM_REAL), dimension(2,3,NGLLX,NGLLZ,nspec_PML) :: rmemory_displ_elastic
   real(kind=CUSTOM_REAL), dimension(2,3,NGLLX,NGLLZ,nspec_PML) :: rmemory_displ_elastic_LDDRK
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) :: &
     rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) :: &   
+    rmemory_dux_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dx_prime,rmemory_duz_dz_prime
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) :: &
     rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,rmemory_duz_dx_LDDRK,rmemory_duz_dz_LDDRK
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) :: &
@@ -432,6 +440,24 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                       coef1 = deltat / 2.0d0
                       coef2 = deltat / 2.0d0
                     end if
+
+                    if(ROTATE_PML_ACTIVATE)then
+                    !! DK DK new from Wang eq (21)
+                    rmemory_dux_dx(i,j,ispec_PML) = coef0 * rmemory_dux_dx(i,j,ispec_PML) &
+                    + PML_dux_dxl_new(i,j,ispec_PML) * coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
+
+                    !! DK DK new from Wang eq (21)
+                    rmemory_dux_dz(i,j,ispec_PML) = coef0 * rmemory_dux_dz(i,j,ispec_PML) &
+                    + PML_dux_dzl_new(i,j,ispec_PML) * coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
+
+                    !! DK DK new from Wang eq (21)
+                    rmemory_duz_dx(i,j,ispec_PML) = coef0 * rmemory_duz_dx(i,j,ispec_PML) &
+                    + PML_duz_dxl_new(i,j,ispec_PML) * coef1 + PML_duz_dxl(i,j,ispec_PML) * coef2
+
+                    !! DK DK new from Wang eq (21)
+                    rmemory_duz_dz(i,j,ispec_PML) = coef0 * rmemory_duz_dz(i,j,ispec_PML) &
+                    + PML_duz_dzl_new(i,j,ispec_PML) * coef1 + PML_duz_dzl(i,j,ispec_PML) * coef2
+                    else
                     !! DK DK new from Wang eq (21)
                     rmemory_dux_dx(i,j,ispec_PML) = coef0 * rmemory_dux_dx(i,j,ispec_PML) &
                     + PML_dux_dxl_new(i,j,ispec_PML) * coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
@@ -439,6 +465,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     !! DK DK new from Wang eq (21)
                     rmemory_duz_dx(i,j,ispec_PML) = coef0 * rmemory_duz_dx(i,j,ispec_PML) &
                     + PML_duz_dxl_new(i,j,ispec_PML) * coef1 + PML_duz_dxl(i,j,ispec_PML) * coef2
+                    endif
 
                     endif 
 
@@ -454,10 +481,17 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                      rmemory_duz_dx(i,j,ispec_PML) = rmemory_duz_dx(i,j,ispec_PML) + &
                      beta_LDDRK(i_stage) * rmemory_duz_dx_LDDRK(i,j,ispec_PML)
 
-                    end if  
-
+                    end if 
+ 
+                    if(ROTATE_PML_ACTIVATE)then
+                    dux_dxl = PML_dux_dxl(i,j,ispec_PML)  + A8 * rmemory_dux_dx(i,j,ispec_PML)
+                    dux_dzl = PML_dux_dzl(i,j,ispec_PML)  + A8 * rmemory_dux_dz(i,j,ispec_PML)
+                    duz_dxl = PML_duz_dxl(i,j,ispec_PML)  + A8 * rmemory_duz_dx(i,j,ispec_PML)
+                    duz_dzl = PML_duz_dzl(i,j,ispec_PML)  + A8 * rmemory_duz_dz(i,j,ispec_PML)
+                    else
                     dux_dxl = PML_dux_dxl(i,j,ispec_PML)  + A8 * rmemory_dux_dx(i,j,ispec_PML)
                     duz_dxl = PML_duz_dxl(i,j,ispec_PML)  + A8 * rmemory_duz_dx(i,j,ispec_PML)
+                    endif
 
 
 
@@ -477,6 +511,23 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                       coef2 = deltat / 2.0d0
                     end if
 
+                    if(ROTATE_PML_ACTIVATE)then
+                    !! DK DK new from Wang eq (21)
+                    rmemory_dux_dx_prime(i,j,ispec_PML) = coef0 * rmemory_dux_dx_prime(i,j,ispec_PML) &
+                    + PML_dux_dxl_new(i,j,ispec_PML) *coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
+
+                    !! DK DK new from Wang eq (21)
+                    rmemory_dux_dz_prime(i,j,ispec_PML) = coef0 * rmemory_dux_dz_prime(i,j,ispec_PML) &
+                    + PML_dux_dzl_new(i,j,ispec_PML) *coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
+
+                    !! DK DK new from Wang eq (21)
+                    rmemory_duz_dx_prime(i,j,ispec_PML) = coef0 * rmemory_duz_dx_prime(i,j,ispec_PML) &
+                    + PML_duz_dxl_new(i,j,ispec_PML) *coef1 + PML_duz_dxl(i,j,ispec_PML) * coef2
+
+                    !! DK DK new from Wang eq (21)
+                    rmemory_duz_dz_prime(i,j,ispec_PML) = coef0 * rmemory_duz_dz_prime(i,j,ispec_PML) &
+                    + PML_duz_dzl_new(i,j,ispec_PML) *coef1 + PML_duz_dzl(i,j,ispec_PML) * coef2
+                    else
                     !! DK DK new from Wang eq (21)
                     rmemory_dux_dz(i,j,ispec_PML) = coef0 * rmemory_dux_dz(i,j,ispec_PML) &
                     + PML_dux_dzl_new(i,j,ispec_PML) *coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
@@ -484,6 +535,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     !! DK DK new from Wang eq (21)
                     rmemory_duz_dz(i,j,ispec_PML) = coef0 * rmemory_duz_dz(i,j,ispec_PML) &
                     + PML_duz_dzl_new(i,j,ispec_PML) *coef1 + PML_duz_dzl(i,j,ispec_PML) * coef2
+                    endif
 
                     end if
 
@@ -499,8 +551,15 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                      beta_LDDRK(i_stage) * rmemory_duz_dz_LDDRK(i,j,ispec_PML)
                     end if 
 
+                    if(ROTATE_PML_ACTIVATE)then
+                    dux_dxl_prime = PML_dux_dxl(i,j,ispec_PML)  + A5 * rmemory_dux_dx_prime(i,j,ispec_PML)
+                    dux_dzl_prime = PML_dux_dzl(i,j,ispec_PML)  + A5 * rmemory_dux_dz_prime(i,j,ispec_PML)
+                    duz_dxl_prime = PML_duz_dxl(i,j,ispec_PML)  + A5 * rmemory_duz_dx_prime(i,j,ispec_PML)
+                    duz_dzl_prime = PML_duz_dzl(i,j,ispec_PML)  + A5 * rmemory_duz_dz_prime(i,j,ispec_PML)
+                    else
                     dux_dzl = PML_dux_dzl(i,j,ispec_PML)  + A5 * rmemory_dux_dz(i,j,ispec_PML)
                     duz_dzl = PML_duz_dzl(i,j,ispec_PML)  + A5 * rmemory_duz_dz(i,j,ispec_PML)
+                    endif
 
 
 
@@ -530,6 +589,23 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                       coef2 = deltat / 2.0d0
                     end if
 
+                    if(ROTATE_PML_ACTIVATE)then
+                    !! DK DK new from Wang eq (21)
+                    rmemory_dux_dx(i,j,ispec_PML) = coef0 * rmemory_dux_dx(i,j,ispec_PML) &
+                    + PML_dux_dxl_new(i,j,ispec_PML) * coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
+
+                    !! DK DK new from Wang eq (21)
+                    rmemory_dux_dz(i,j,ispec_PML) = coef0 * rmemory_dux_dz(i,j,ispec_PML) &
+                    + PML_dux_dzl_new(i,j,ispec_PML) * coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
+
+                    !! DK DK new from Wang eq (21)
+                    rmemory_duz_dx(i,j,ispec_PML) = coef0 * rmemory_duz_dx(i,j,ispec_PML) &
+                    + PML_duz_dxl_new(i,j,ispec_PML) * coef1 + PML_duz_dxl(i,j,ispec_PML) * coef2
+
+                    !! DK DK new from Wang eq (21)
+                    rmemory_duz_dz(i,j,ispec_PML) = coef0 * rmemory_duz_dz(i,j,ispec_PML) &
+                    + PML_duz_dzl_new(i,j,ispec_PML) * coef1 + PML_duz_dzl(i,j,ispec_PML) * coef2
+                    else
                     !! DK DK new from Wang eq (21)
                     rmemory_dux_dx(i,j,ispec_PML) = coef0*rmemory_dux_dx(i,j,ispec_PML) &
                     + PML_dux_dxl_new(i,j,ispec_PML) * coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
@@ -537,6 +613,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     !! DK DK new from Wang eq (21)
                     rmemory_duz_dx(i,j,ispec_PML) = coef0*rmemory_duz_dx(i,j,ispec_PML) &
                     + PML_duz_dxl_new(i,j,ispec_PML) * coef1 + PML_duz_dxl(i,j,ispec_PML) * coef2
+                    endif
 
                     end if
 
@@ -552,8 +629,15 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                      beta_LDDRK(i_stage) * rmemory_duz_dx_LDDRK(i,j,ispec_PML)
                     end if  
 
+                    if(ROTATE_PML_ACTIVATE)then
+                    dux_dxl = PML_dux_dxl(i,j,ispec_PML)  + A8 * rmemory_dux_dx(i,j,ispec_PML)
+                    dux_dzl = PML_dux_dzl(i,j,ispec_PML)  + A8 * rmemory_dux_dz(i,j,ispec_PML)
+                    duz_dxl = PML_duz_dxl(i,j,ispec_PML)  + A8 * rmemory_duz_dx(i,j,ispec_PML)
+                    duz_dzl = PML_duz_dzl(i,j,ispec_PML)  + A8 * rmemory_duz_dz(i,j,ispec_PML)
+                    else
                     dux_dxl = PML_dux_dxl(i,j,ispec_PML)  + A8 * rmemory_dux_dx(i,j,ispec_PML)
                     duz_dxl = PML_duz_dxl(i,j,ispec_PML)  + A8 * rmemory_duz_dx(i,j,ispec_PML)
+                    endif
 
 
 
@@ -576,6 +660,26 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                       coef2 = deltat / 2.0d0
                     end if
 
+                    if(ROTATE_PML_ACTIVATE)then
+
+                    !! DK DK new from Wang eq (21)
+                    rmemory_dux_dx_prime(i,j,ispec_PML) = coef0 * rmemory_dux_dx_prime(i,j,ispec_PML) &
+                    + PML_dux_dxl_new(i,j,ispec_PML) *coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
+
+                    !! DK DK new from Wang eq (21)
+                    rmemory_dux_dz_prime(i,j,ispec_PML) = coef0 * rmemory_dux_dz_prime(i,j,ispec_PML) &
+                    + PML_dux_dzl_new(i,j,ispec_PML) *coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
+
+                    !! DK DK new from Wang eq (21)
+                    rmemory_duz_dx_prime(i,j,ispec_PML) = coef0 * rmemory_duz_dx_prime(i,j,ispec_PML) &
+                    + PML_duz_dxl_new(i,j,ispec_PML) *coef1 + PML_duz_dxl(i,j,ispec_PML) * coef2
+
+                    !! DK DK new from Wang eq (21)
+                    rmemory_duz_dz_prime(i,j,ispec_PML) = coef0 * rmemory_duz_dz_prime(i,j,ispec_PML) &
+                    + PML_duz_dzl_new(i,j,ispec_PML) *coef1 + PML_duz_dzl(i,j,ispec_PML) * coef2
+
+                    else
+
                     !! DK DK new from Wang eq (21)
                     rmemory_dux_dz(i,j,ispec_PML) = coef0 * rmemory_dux_dz(i,j,ispec_PML) &
                     + PML_dux_dzl_new(i,j,ispec_PML) *coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
@@ -583,6 +687,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     !! DK DK new from Wang eq (21)
                     rmemory_duz_dz(i,j,ispec_PML) = coef0 * rmemory_duz_dz(i,j,ispec_PML) &
                     + PML_duz_dzl_new(i,j,ispec_PML) *coef1 + PML_duz_dzl(i,j,ispec_PML) * coef2
+                    endif
+
                     end if
 
                     if(stage_time_scheme == 6) then  
@@ -597,8 +703,15 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                      beta_LDDRK(i_stage) * rmemory_duz_dz_LDDRK(i,j,ispec_PML)
                     end if   
 
+                    if(ROTATE_PML_ACTIVATE)then
+                    dux_dxl_prime = PML_dux_dxl(i,j,ispec_PML)  + A5 * rmemory_dux_dx_prime(i,j,ispec_PML)
+                    dux_dzl_prime = PML_dux_dzl(i,j,ispec_PML)  + A5 * rmemory_dux_dz_prime(i,j,ispec_PML)
+                    duz_dxl_prime = PML_duz_dxl(i,j,ispec_PML)  + A5 * rmemory_duz_dx_prime(i,j,ispec_PML)
+                    duz_dzl_prime = PML_duz_dzl(i,j,ispec_PML)  + A5 * rmemory_duz_dz_prime(i,j,ispec_PML)
+                    else
                     dux_dzl = PML_dux_dzl(i,j,ispec_PML)  + A5 * rmemory_dux_dz(i,j,ispec_PML)
                     duz_dzl = PML_duz_dzl(i,j,ispec_PML)  + A5 * rmemory_duz_dz(i,j,ispec_PML)
+                    endif
 
 
 
@@ -621,7 +734,23 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                       coef2 = deltat / 2.0d0
                     end if
 
+                    if(ROTATE_PML_ACTIVATE)then
+                    !! DK DK new from Wang eq (21)
+                    rmemory_dux_dx(i,j,ispec_PML) = coef0 * rmemory_dux_dx(i,j,ispec_PML) &
+                    + PML_dux_dxl_new(i,j,ispec_PML) * coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
 
+                    !! DK DK new from Wang eq (21)
+                    rmemory_dux_dz(i,j,ispec_PML) = coef0 * rmemory_dux_dz(i,j,ispec_PML) &
+                    + PML_dux_dzl_new(i,j,ispec_PML) * coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
+
+                    !! DK DK new from Wang eq (21)
+                    rmemory_duz_dx(i,j,ispec_PML) = coef0 * rmemory_duz_dx(i,j,ispec_PML) &
+                    + PML_duz_dxl_new(i,j,ispec_PML) * coef1 + PML_duz_dxl(i,j,ispec_PML) * coef2
+
+                    !! DK DK new from Wang eq (21)
+                    rmemory_duz_dz(i,j,ispec_PML) = coef0 * rmemory_duz_dz(i,j,ispec_PML) &
+                    + PML_duz_dzl_new(i,j,ispec_PML) * coef1 + PML_duz_dzl(i,j,ispec_PML) * coef2
+                    else
                     !! DK DK new from Wang eq (21)
                     rmemory_dux_dx(i,j,ispec_PML) = coef0*rmemory_dux_dx(i,j,ispec_PML) &
                     + PML_dux_dxl_new(i,j,ispec_PML) * coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
@@ -629,6 +758,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     !! DK DK new from Wang eq (21)
                     rmemory_duz_dx(i,j,ispec_PML) = coef0*rmemory_duz_dx(i,j,ispec_PML) &
                     + PML_duz_dxl_new(i,j,ispec_PML) * coef1 + PML_duz_dxl(i,j,ispec_PML) * coef2
+                    endif
+
                     end if  
 
                     if(stage_time_scheme == 6) then   
@@ -643,8 +774,15 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                      beta_LDDRK(i_stage) * rmemory_duz_dx_LDDRK(i,j,ispec_PML)
                     end if  
 
+                    if(ROTATE_PML_ACTIVATE)then
+                    dux_dxl = PML_dux_dxl(i,j,ispec_PML)  + A7 * rmemory_dux_dx(i,j,ispec_PML)
+                    dux_dzl = PML_dux_dzl(i,j,ispec_PML)  + A7 * rmemory_dux_dz(i,j,ispec_PML)
+                    duz_dxl = PML_duz_dxl(i,j,ispec_PML)  + A7 * rmemory_duz_dx(i,j,ispec_PML)
+                    duz_dzl = PML_duz_dzl(i,j,ispec_PML)  + A7 * rmemory_duz_dz(i,j,ispec_PML)
+                    else
                     dux_dxl = dux_dxl  + A7 * rmemory_dux_dx(i,j,ispec_PML)
                     duz_dxl = duz_dxl  + A7 * rmemory_duz_dx(i,j,ispec_PML)
+                    endif
 
 
 
@@ -663,6 +801,23 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                       coef2 = deltat / 2.0d0
                     end if
 
+                    if(ROTATE_PML_ACTIVATE)then
+                    !! DK DK new from Wang eq (21)
+                    rmemory_dux_dx_prime(i,j,ispec_PML) = coef0 * rmemory_dux_dx_prime(i,j,ispec_PML) &
+                    + PML_dux_dxl_new(i,j,ispec_PML) *coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
+
+                    !! DK DK new from Wang eq (21)
+                    rmemory_dux_dz_prime(i,j,ispec_PML) = coef0 * rmemory_dux_dz_prime(i,j,ispec_PML) &
+                    + PML_dux_dzl_new(i,j,ispec_PML) *coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
+
+                    !! DK DK new from Wang eq (21)
+                    rmemory_duz_dx_prime(i,j,ispec_PML) = coef0 * rmemory_duz_dx_prime(i,j,ispec_PML) &
+                    + PML_duz_dxl_new(i,j,ispec_PML) *coef1 + PML_duz_dxl(i,j,ispec_PML) * coef2
+
+                    !! DK DK new from Wang eq (21)
+                    rmemory_duz_dz_prime(i,j,ispec_PML) = coef0 * rmemory_duz_dz_prime(i,j,ispec_PML) &
+                    + PML_duz_dzl_new(i,j,ispec_PML) *coef1 + PML_duz_dzl(i,j,ispec_PML) * coef2
+                    else
                     !! DK DK new from Wang eq (21)
                     rmemory_dux_dz(i,j,ispec_PML) = coef0 * rmemory_dux_dz(i,j,ispec_PML) &
                     + PML_dux_dzl_new(i,j,ispec_PML) *coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
@@ -670,6 +825,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     !! DK DK new from Wang eq (21)
                     rmemory_duz_dz(i,j,ispec_PML) = coef0 * rmemory_duz_dz(i,j,ispec_PML) &
                     + PML_duz_dzl_new(i,j,ispec_PML) *coef1 + PML_duz_dzl(i,j,ispec_PML) * coef2
+                    endif
+
                     end if
 
                     if(stage_time_scheme == 6) then 
@@ -684,8 +841,15 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                      beta_LDDRK(i_stage) * rmemory_duz_dz_LDDRK(i,j,ispec_PML)
                     end if 
 
+                    if(ROTATE_PML_ACTIVATE)then
+                    dux_dxl_prime = PML_dux_dxl(i,j,ispec_PML)  + A6 * rmemory_dux_dx_prime(i,j,ispec_PML)
+                    dux_dzl_prime = PML_dux_dzl(i,j,ispec_PML)  + A6 * rmemory_dux_dz_prime(i,j,ispec_PML)
+                    duz_dxl_prime = PML_duz_dxl(i,j,ispec_PML)  + A6 * rmemory_duz_dx_prime(i,j,ispec_PML)
+                    duz_dzl_prime = PML_duz_dzl(i,j,ispec_PML)  + A6 * rmemory_duz_dz_prime(i,j,ispec_PML)
+                    else
                     dux_dzl = dux_dzl  + A6 * rmemory_dux_dz(i,j,ispec_PML)
                     duz_dzl = duz_dzl  + A6 * rmemory_duz_dz(i,j,ispec_PML)
+                    endif
 
 
 
@@ -778,10 +942,47 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                  if(PML_BOUNDARY_CONDITIONS .and. is_PML(ispec)) then
                      ispec_PML=spec_to_PML(ispec)
+                     if(ROTATE_PML_ACTIVATE)then
+                     theta = -ROTATE_PML_ANGLE/180.d0*Pi
+                     if(it==1)write(*,*)theta,ROTATE_PML_ACTIVATE,cos(theta),sin(theta)
+                     ct=cos(theta)
+                     st=sin(theta)
+                     sigma_xx_prime = lambdaplus2mu_unrelaxed_elastic*(ct**2*dux_dxl+ct*st*duz_dxl+ct*st*dux_dzl+st**2*duz_dzl) &
+                                      + lambdal_unrelaxed_elastic*(st**2*PML_dux_dxl(i,j,ispec_PML)&
+                                                                   -ct*st*PML_duz_dxl(i,j,ispec_PML)&
+                                                                   -ct*st*PML_dux_dzl(i,j,ispec_PML)&
+                                                                   +ct**2*PML_duz_dzl(i,j,ispec_PML))
+
+                     sigma_xz_prime = mul_unrelaxed_elastic * (-ct*st*dux_dxl+ct**2*duz_dxl-st**2*dux_dzl+ct*st*duz_dzl) &
+                                      +mul_unrelaxed_elastic * (-ct*st*PML_dux_dxl(i,j,ispec_PML)&
+                                                                   -st**2*PML_duz_dxl(i,j,ispec_PML)&
+                                                                   +ct**2*PML_dux_dzl(i,j,ispec_PML)&
+                                                                   +ct*st*PML_duz_dzl(i,j,ispec_PML))
+
+                     sigma_zx_prime = mul_unrelaxed_elastic * (-ct*st*PML_dux_dxl(i,j,ispec_PML)&
+                                                                   +ct**2*PML_duz_dxl(i,j,ispec_PML)&
+                                                                   -st**2*PML_dux_dzl(i,j,ispec_PML)&
+                                                                   +ct*st*PML_duz_dzl(i,j,ispec_PML)) &
+                                      +mul_unrelaxed_elastic * (-ct*st*dux_dxl_prime-st**2*duz_dxl_prime &
+                                                                 +ct**2*dux_dzl_prime+ct*st*duz_dzl_prime)
+
+                     sigma_zz_prime = lambdaplus2mu_unrelaxed_elastic*(st**2*dux_dxl_prime-ct*st*duz_dxl_prime&
+                                                                       -ct*st*dux_dzl_prime+ct**2*duz_dzl_prime) &
+                                      + lambdal_unrelaxed_elastic*(ct**2*PML_dux_dxl(i,j,ispec_PML)&
+                                                                   +ct*st*PML_duz_dxl(i,j,ispec_PML)&
+                                                                   +ct*st*PML_dux_dzl(i,j,ispec_PML)&
+                                                                   +st**2*PML_duz_dzl(i,j,ispec_PML))
+
+                     sigma_xx = ct**2*sigma_xx_prime-ct*st*sigma_xz_prime-ct*st*sigma_zx_prime+st**2*sigma_zz_prime
+                     sigma_xz = ct*st*sigma_xx_prime+ct**2*sigma_xz_prime-st**2*sigma_zx_prime-ct*st*sigma_zz_prime
+                     sigma_zx = ct*st*sigma_xx_prime-st**2*sigma_xz_prime+ct**2*sigma_zx_prime-ct*st*sigma_zz_prime
+                     sigma_zz = st**2*sigma_xx_prime+ct*st*sigma_xz_prime+ct*st*sigma_zx_prime+ct**2*sigma_zz_prime
+                     else
                      sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*PML_duz_dzl(i,j,ispec_PML)
                      sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*PML_dux_dxl(i,j,ispec_PML)
                      sigma_zx = mul_unrelaxed_elastic * (PML_duz_dxl(i,j,ispec_PML) + dux_dzl)
                      sigma_xz = mul_unrelaxed_elastic * (PML_dux_dzl(i,j,ispec_PML) + duz_dxl)
+                     endif
                  endif
 
                  if(SIMULATION_TYPE == 2) then ! Adjoint calculation, backward wavefield
