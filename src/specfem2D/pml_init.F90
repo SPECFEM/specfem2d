@@ -284,7 +284,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) ::  &
                     K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin) ::  coord
+  double precision, dimension(NDIM,npoin) ::  coord
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
   double precision, dimension(2,numat) ::  density
   double precision, dimension(4,3,numat) ::  poroelastcoef
