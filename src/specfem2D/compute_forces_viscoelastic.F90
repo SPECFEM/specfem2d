@@ -109,7 +109,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   logical, dimension(4,nelemabs)  :: codeabs
 
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic,veloc_elastic,displ_elastic
-  real(kind=CUSTOM_REAL), dimension(3,nglob) :: temp_displ_elastic
+  real(kind=CUSTOM_REAL), dimension(3,nglob) :: displ_elastic_np1
   double precision, dimension(2,numat) :: density
   double precision, dimension(4,3,numat) :: poroelastcoef
   double precision, dimension(6,numat) :: anisotropy
@@ -133,8 +133,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1_LDDRK,e11_LDDRK,e13_LDDRK
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1_initial_rk,e11_initial_rk,e13_initial_rk
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS,stage_time_scheme) :: e1_force_RK, e11_force_RK, e13_force_RK
-  double precision, dimension(NGLLX,NGLLZ,nspec,N_SLS) :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
   real(kind=CUSTOM_REAL) :: e1_sum,e11_sum,e13_sum
   integer :: i_sls
 
@@ -269,14 +269,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
     PML_duz_dxl_new = 0._CUSTOM_REAL
     PML_duz_dzl_new = 0._CUSTOM_REAL
     displ_elastic_new = displ_elastic + deltat * veloc_elastic
-  endif
-
-
-  ! compute Grad(displ_elastic) at time step n for attenuation
-  if(ATTENUATION_VISCOELASTIC_SOLID) then
-     temp_displ_elastic = displ_elastic + deltat * veloc_elastic + 0.5 * deltat**2 * accel_elastic
-     call compute_gradient_attenuation(displ_elastic,dux_dxl_n,duz_dxl_n, &
-          dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob)
   endif
 
   ifirstelem = 1
@@ -2070,9 +2062,16 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   ! implement attenuation
   if(ATTENUATION_VISCOELASTIC_SOLID) then
 
+     ! compute Grad(displ_elastic) at time step n for attenuation
+     call compute_gradient_attenuation(displ_elastic,dux_dxl_n,duz_dxl_n, &
+          dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob)
+
+     displ_elastic_np1 = displ_elastic + deltat * veloc_elastic
+
      ! compute Grad(displ_elastic) at time step n+1 for attenuation
-     call compute_gradient_attenuation(temp_displ_elastic,dux_dxl_np1,duz_dxl_np1, &
+     call compute_gradient_attenuation(displ_elastic_np1,dux_dxl_np1,duz_dxl_np1, &
           dux_dzl_np1,duz_dzl_np1,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob)
+
 
      ! update memory variables with fourth-order Runge-Kutta time scheme for attenuation
      ! loop over spectral elements

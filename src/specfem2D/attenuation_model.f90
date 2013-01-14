@@ -53,8 +53,8 @@
 
   integer :: N_SLS
   double precision :: QKappa_attenuation,Qmu_attenuation,f0_attenuation
-  double precision, dimension(N_SLS) :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
-  double precision :: Mu_nu1,Mu_nu2
+  real(kind=CUSTOM_REAL), dimension(N_SLS) :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
+  real(kind=CUSTOM_REAL) :: Mu_nu1,Mu_nu2
 
   integer :: i_sls
 
@@ -134,19 +134,35 @@
 !
 !--- other constants computed from the parameters above, do not modify
 !
-  inv_tau_sigma_nu1(:) = ONE / tau_sigma_nu1(:)
-  inv_tau_sigma_nu2(:) = ONE / tau_sigma_nu2(:)
+  if(CUSTOM_REAL == SIZE_REAL) then
+   inv_tau_sigma_nu1(:) = sngl(dble(ONE) / tau_sigma_nu1(:))
+   inv_tau_sigma_nu2(:) = sngl(dble(ONE) / tau_sigma_nu2(:))
 
-  phi_nu1(:) = (ONE - tau_epsilon_nu1(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:)
-  phi_nu2(:) = (ONE - tau_epsilon_nu2(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:)
+   phi_nu1(:) = sngl((dble(ONE) - tau_epsilon_nu1(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:))
+   phi_nu2(:) = sngl((dble(ONE) - tau_epsilon_nu2(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:))
 
-  Mu_nu1 = ONE
-  Mu_nu2 = ONE
+   Mu_nu1 = dble(ONE)
+   Mu_nu2 = dble(ONE)
 
-  do i_sls = 1,N_SLS
-    Mu_nu1 = Mu_nu1 - (ONE - tau_epsilon_nu1(i_sls)/tau_sigma_nu1(i_sls))
-    Mu_nu2 = Mu_nu2 - (ONE - tau_epsilon_nu2(i_sls)/tau_sigma_nu2(i_sls))
-  enddo
+   do i_sls = 1,N_SLS
+     Mu_nu1 = sngl(dble(Mu_nu1) - (dble(ONE) - tau_epsilon_nu1(i_sls)/tau_sigma_nu1(i_sls)))
+     Mu_nu2 = sngl(dble(Mu_nu2) - (dble(ONE) - tau_epsilon_nu2(i_sls)/tau_sigma_nu2(i_sls)))
+   enddo
+  else
+   inv_tau_sigma_nu1(:) = ONE / tau_sigma_nu1(:)
+   inv_tau_sigma_nu2(:) = ONE / tau_sigma_nu2(:)
+
+   phi_nu1(:) = (ONE - tau_epsilon_nu1(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:)
+   phi_nu2(:) = (ONE - tau_epsilon_nu2(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:)
+
+   Mu_nu1 = ONE
+   Mu_nu2 = ONE
+
+   do i_sls = 1,N_SLS
+     Mu_nu1 = Mu_nu1 - (ONE - tau_epsilon_nu1(i_sls)/tau_sigma_nu1(i_sls))
+     Mu_nu2 = Mu_nu2 - (ONE - tau_epsilon_nu2(i_sls)/tau_sigma_nu2(i_sls))
+   enddo
+  endif
 
   end subroutine attenuation_model
 
