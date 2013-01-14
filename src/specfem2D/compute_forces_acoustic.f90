@@ -141,9 +141,10 @@
               K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) :: potential_dot_dot_acoustic_PML
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) ::PML_dux_dxl,PML_dux_dzl,&
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) :: PML_dux_dxl,PML_dux_dzl,&
                          PML_dux_dxl_new,PML_dux_dzl_new
-  real(kind=CUSTOM_REAL) :: coef0, coef1, coef2,bb,deltat
+  real(kind=CUSTOM_REAL) :: coef0, coef1, coef2,bb
+  double precision :: deltat
   real(kind=CUSTOM_REAL) :: A0, A1, A2, A3, A4, A5, A6, A7, A8
 
   logical :: PML_BOUNDARY_CONDITIONS
@@ -166,15 +167,18 @@
     PML_dux_dzl_new = 0._CUSTOM_REAL
   endif
 
-! loop over spectral elements
+! loop over spectral elementsbb
   do ispec = ifirstelem,ilastelem
 
 !---
 !--- acoustic spectral element
 !---
     if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
-
-      rhol = density(1,kmato(ispec))
+      if(CUSTOM_REAL == SIZE_REAL) then
+        rhol = sngl(density(1,kmato(ispec)))
+      else
+        rhol = density(1,kmato(ispec))
+      endif
 
       ! first double loop over GLL points to compute and store gradients
       do j = 1,NGLLZ
@@ -201,7 +205,7 @@
           dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
 
 
-          ! derivative along x and along z
+          ! derivative along x and along zbb
           if(PML_BOUNDARY_CONDITIONS .and. is_PML(ispec))then
 
           ispec_PML=spec_to_PML(ispec)
@@ -224,7 +228,6 @@
           xizl = xiz(i,j,ispec)
           gammaxl = gammax(i,j,ispec)
           gammazl = gammaz(i,j,ispec)
-
           ! derivatives of potential
           dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
           dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
@@ -247,12 +250,12 @@
                   if(stage_time_scheme == 1) then
                   coef0 = exp(-bb * deltat)
 
-                  if ( abs(bb) > 1.d-3 ) then
-                    coef1 = (1.d0 - exp(-bb * deltat / 2.d0)) / bb
-                    coef2 = (1.d0 - exp(-bb* deltat / 2.d0)) * exp(-bb * deltat / 2.d0) / bb
+                  if ( abs(bb) > 0.001_CUSTOM_REAL ) then
+                    coef1 = (1._CUSTOM_REAL - exp(-bb * deltat / 2._CUSTOM_REAL)) / bb
+                    coef2 = (1._CUSTOM_REAL - exp(-bb* deltat / 2._CUSTOM_REAL)) * exp(-bb * deltat / 2._CUSTOM_REAL) / bb
                   else
-                    coef1 = deltat / 2.0d0
-                    coef2 = deltat / 2.0d0
+                    coef1 = deltat / 2.0_CUSTOM_REAL
+                    coef2 = deltat / 2.0_CUSTOM_REAL
                   end if
                   rmemory_acoustic_dux_dx(i,j,ispec_PML) = coef0*rmemory_acoustic_dux_dx(i,j,ispec_PML) &
                   + PML_dux_dxl_new(i,j,ispec_PML) * coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
@@ -276,12 +279,12 @@
                   if(stage_time_scheme == 1) then
                   coef0 = exp(- bb * deltat)
 
-                  if ( abs( bb ) > 1.d-3) then
-                    coef1 = (1.0d0 - exp(- bb * deltat / 2.0d0) ) / bb
-                    coef2 = (1.0d0 - exp(- bb * deltat / 2.0d0) ) * exp(- bb * deltat / 2.0d0) / bb
+                  if ( abs( bb ) > 0.001_CUSTOM_REAL) then
+                    coef1 = (1.0_CUSTOM_REAL - exp(- bb * deltat / 2.0_CUSTOM_REAL) ) / bb
+                    coef2 = (1.0_CUSTOM_REAL - exp(- bb * deltat / 2.0_CUSTOM_REAL) ) * exp(- bb * deltat / 2.0_CUSTOM_REAL) / bb
                   else
-                    coef1 = deltat / 2.0d0
-                    coef2 = deltat / 2.0d0
+                    coef1 = deltat / 2.0_CUSTOM_REAL
+                    coef2 = deltat / 2.0_CUSTOM_REAL
                   end if
                   rmemory_acoustic_dux_dz(i,j,ispec_PML) = coef0 * rmemory_acoustic_dux_dz(i,j,ispec_PML) &
                   + PML_dux_dzl_new(i,j,ispec_PML) *coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
@@ -313,12 +316,12 @@
                    if(stage_time_scheme == 1) then
                     coef0 = exp(- bb * deltat)
 
-                    if ( abs(bb) > 1.d-3 ) then
-                      coef1 = ( 1.d0 - exp(- bb * deltat / 2.d0) ) / bb
-                      coef2 = ( 1.d0 - exp(- bb * deltat / 2.d0) ) * exp(- bb * deltat / 2.d0) / bb
+                    if ( abs(bb) > 0.001_CUSTOM_REAL ) then
+                      coef1 = ( 1._CUSTOM_REAL - exp(- bb * deltat / 2._CUSTOM_REAL) ) / bb
+                      coef2 = ( 1._CUSTOM_REAL - exp(- bb * deltat / 2._CUSTOM_REAL) ) * exp(- bb * deltat / 2._CUSTOM_REAL) / bb
                     else
-                      coef1 = deltat / 2.0d0
-                      coef2 = deltat / 2.0d0
+                      coef1 = deltat / 2.0_CUSTOM_REAL
+                      coef2 = deltat / 2.0_CUSTOM_REAL
                     end if
                     rmemory_acoustic_dux_dx(i,j,ispec_PML) = coef0*rmemory_acoustic_dux_dx(i,j,ispec_PML) &
                     + PML_dux_dxl_new(i,j,ispec_PML) * coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
@@ -344,12 +347,12 @@
                    if(stage_time_scheme == 1) then
                     coef0 = exp(- bb * deltat)
 
-                    if ( abs(bb) > 1.d-3 ) then
-                      coef1 = ( 1.d0 - exp(- bb * deltat / 2.d0) ) / bb
-                      coef2 = ( 1.d0 - exp(- bb * deltat / 2.d0) ) * exp(- bb * deltat / 2.d0) / bb
+                    if ( abs(bb) > 0.001_CUSTOM_REAL ) then
+                      coef1 = ( 1._CUSTOM_REAL - exp(- bb * deltat / 2._CUSTOM_REAL) ) / bb
+                      coef2 = ( 1._CUSTOM_REAL - exp(- bb * deltat / 2._CUSTOM_REAL) ) * exp(- bb * deltat / 2._CUSTOM_REAL) / bb
                     else
-                      coef1 = deltat / 2.0d0
-                      coef2 = deltat / 2.0d0
+                      coef1 = deltat / 2.0_CUSTOM_REAL
+                      coef2 = deltat / 2.0_CUSTOM_REAL
                     end if
 
                     rmemory_acoustic_dux_dz(i,j,ispec_PML) = coef0 * rmemory_acoustic_dux_dz(i,j,ispec_PML) &
@@ -379,12 +382,12 @@
                   if(stage_time_scheme == 1) then
                   coef0 = exp(- bb * deltat)
 
-                  if ( abs( bb ) > 1.d-3) then
-                    coef1 = (1.0d0 - exp(- bb * deltat / 2.0d0) ) / bb
-                    coef2 = (1.0d0 - exp(- bb * deltat / 2.0d0) ) * exp(- bb * deltat / 2.0d0) / bb
+                  if ( abs( bb ) > 0.001_CUSTOM_REAL) then
+                    coef1 = (1.0_CUSTOM_REAL - exp(- bb * deltat / 2.0_CUSTOM_REAL) ) / bb
+                    coef2 = (1.0_CUSTOM_REAL - exp(- bb * deltat / 2.0_CUSTOM_REAL) ) * exp(- bb * deltat / 2.0_CUSTOM_REAL) / bb
                   else
-                    coef1 = deltat / 2.0d0
-                    coef2 = deltat / 2.0d0
+                    coef1 = deltat / 2.0_CUSTOM_REAL
+                    coef2 = deltat / 2.0_CUSTOM_REAL
                   end if
 
                   rmemory_acoustic_dux_dx(i,j,ispec_PML) = coef0*rmemory_acoustic_dux_dx(i,j,ispec_PML) &
@@ -407,12 +410,12 @@
 
                   if(stage_time_scheme == 1) then
                   coef0 = exp(-bb * deltat)
-                  if ( abs(bb) > 1.d-3 ) then
-                    coef1 = (1.d0 - exp(-bb * deltat / 2.d0)) / bb
-                    coef2 = (1.d0 - exp(-bb* deltat / 2.d0)) * exp(-bb * deltat / 2.d0) / bb
+                  if ( abs(bb) > 0.001_CUSTOM_REAL ) then
+                    coef1 = (1._CUSTOM_REAL - exp(-bb * deltat / 2._CUSTOM_REAL)) / bb
+                    coef2 = (1._CUSTOM_REAL - exp(-bb* deltat / 2._CUSTOM_REAL)) * exp(-bb * deltat / 2._CUSTOM_REAL) / bb
                   else
-                    coef1 = deltat / 2.0d0
-                    coef2 = deltat / 2.0d0
+                    coef1 = deltat / 2.0_CUSTOM_REAL
+                    coef2 = deltat / 2.0_CUSTOM_REAL
                   end if
 
                   rmemory_acoustic_dux_dz(i,j,ispec_PML) = coef0 * rmemory_acoustic_dux_dz(i,j,ispec_PML) &
@@ -435,7 +438,13 @@
           jacobianl = jacobian(i,j,ispec)
 
           ! if external density model
-          if(assign_external_model) rhol = rhoext(i,j,ispec)
+          if(assign_external_model)then
+            if(CUSTOM_REAL == SIZE_REAL) then
+              rhol = sngl(rhoext(i,j,ispec))
+            else
+              rhol = rhoext(i,j,ispec)
+            endif
+          endif
           ! for acoustic medium
           ! also add GLL integration weights
           tempx1(i,j) = wzgll(j)*jacobianl*(xixl*dux_dxl + xizl*dux_dzl) / rhol
@@ -448,11 +457,19 @@
         do j = 1,NGLLZ
            do i = 1,NGLLX
             if(assign_external_model) then
-              rhol = rhoext(i,j,ispec)
+              if(CUSTOM_REAL == SIZE_REAL) then
+                rhol = sngl(rhoext(i,j,ispec))
+              else
+                rhol = rhoext(i,j,ispec)
+              endif
             else
-!             rhol = density(1,kmato(ispec))
-              lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
-              mul_relaxed = poroelastcoef(2,1,kmato(ispec))
+              if(CUSTOM_REAL == SIZE_REAL) then
+                lambdal_relaxed = sngl(poroelastcoef(1,1,kmato(ispec)))
+                mul_relaxed = sngl(poroelastcoef(2,1,kmato(ispec)))
+              else
+                lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
+                mul_relaxed = poroelastcoef(2,1,kmato(ispec))
+              endif
               kappal  = lambdal_relaxed + TWO*mul_relaxed/3._CUSTOM_REAL
               rhol = density(1,kmato(ispec))
             endif
@@ -470,12 +487,12 @@
                   bb = alpha_x_store(i,j,ispec_PML)
                   coef0 = exp(- bb * deltat)
 
-                  if ( abs( bb ) > 1.d-3) then
-                     coef1 = (1.0d0 - exp(- bb * deltat / 2.0d0) ) / bb
-                     coef2 = (1.0d0 - exp(- bb * deltat / 2.0d0) ) * exp(- bb * deltat / 2.0d0) / bb
+                  if ( abs( bb ) > 0.001_CUSTOM_REAL) then
+                     coef1 = (1._CUSTOM_REAL - exp(- bb * deltat / 2.0_CUSTOM_REAL) ) / bb
+                     coef2 = (1._CUSTOM_REAL - exp(- bb * deltat / 2.0_CUSTOM_REAL) ) * exp(- bb * deltat / 2.0_CUSTOM_REAL) / bb
                   else
-                     coef1 = deltat / 2.0d0
-                     coef2 = deltat / 2.0d0
+                     coef1 = deltat / 2.0_CUSTOM_REAL
+                     coef2 = deltat / 2.0_CUSTOM_REAL
                   end if
 
                   rmemory_potential_acoustic(1,i,j,ispec_PML)=coef0 * rmemory_potential_acoustic(1,i,j,ispec_PML) &
@@ -495,12 +512,12 @@
                   bb = alpha_x_store(i,j,ispec_PML)
                   coef0 = exp(- bb * deltat)
 
-                  if ( abs(bb) > 1.d-3 ) then
-                     coef1 = ( 1 - exp(- bb * deltat / 2) ) / bb
-                     coef2 = ( 1 - exp(- bb * deltat / 2) ) * exp(- bb * deltat / 2) / bb
+                  if ( abs(bb) > 0.001_CUSTOM_REAL ) then
+                     coef1 = ( 1._CUSTOM_REAL - exp(- bb * deltat / 2) ) / bb
+                     coef2 = ( 1._CUSTOM_REAL - exp(- bb * deltat / 2) ) * exp(- bb * deltat / 2) / bb
                   else
-                     coef1 = deltat / 2.0d0
-                     coef2 = deltat / 2.0d0
+                     coef1 = deltat / 2.0_CUSTOM_REAL
+                     coef2 = deltat / 2.0_CUSTOM_REAL
                   end if
 
                     rmemory_potential_acoustic(1,i,j,ispec_PML)=&
@@ -512,12 +529,12 @@
                   bb = alpha_z_store(i,j,ispec_PML)
                   coef0 = exp(- bb * deltat)
 
-                  if ( abs(bb) > 1.d-3 ) then
-                     coef1 = ( 1 - exp(- bb * deltat / 2) ) / bb
-                     coef2 = ( 1 - exp(- bb * deltat / 2) ) * exp(- bb * deltat / 2) / bb
+                  if ( abs(bb) > 0.001_CUSTOM_REAL ) then
+                     coef1 = ( 1.0_CUSTOM_REAL - exp(- bb * deltat / 2) ) / bb
+                     coef2 = ( 1.0_CUSTOM_REAL - exp(- bb * deltat / 2) ) * exp(- bb * deltat / 2) / bb
                   else
-                     coef1 = deltat / 2.0d0
-                     coef2 = deltat / 2.0d0
+                     coef1 = deltat / 2.0_CUSTOM_REAL
+                     coef2 = deltat / 2.0_CUSTOM_REAL
                   end if
 
                     rmemory_potential_acoustic(2,i,j,ispec_PML)=&
@@ -535,16 +552,16 @@
                   bb = alpha_z_store(i,j,ispec_PML)
                   coef0 = exp(- bb * deltat)
 
-                  if ( abs( bb ) > 1.d-3) then
-                     coef1 = (1.0d0 - exp(- bb * deltat / 2.0d0) ) / bb
-                     coef2 = (1.0d0 - exp(- bb * deltat / 2.0d0) ) * exp(- bb * deltat / 2.0d0) / bb
+                  if ( abs( bb ) > 0.001_CUSTOM_REAL) then
+                     coef1 = (1._CUSTOM_REAL - exp(- bb * deltat / 2._CUSTOM_REAL) ) / bb
+                     coef2 = (1._CUSTOM_REAL - exp(- bb * deltat / 2._CUSTOM_REAL) ) * exp(- bb * deltat / 2._CUSTOM_REAL) / bb
                   else
-                     coef1 = deltat / 2.0d0
-                     coef2 = deltat / 2.0d0
+                     coef1 = deltat / 2._CUSTOM_REAL
+                     coef2 = deltat / 2._CUSTOM_REAL
                   end if
 
 
-                  rmemory_potential_acoustic(1,i,j,ispec_PML)=0.d0
+                  rmemory_potential_acoustic(1,i,j,ispec_PML)=0._CUSTOM_REAL
                   rmemory_potential_acoustic(2,i,j,ispec_PML)=coef0 * rmemory_potential_acoustic(2,i,j,ispec_PML) &
                        + (potential_acoustic(iglob)+deltat*potential_dot_acoustic(iglob)) * coef1 &
                        + potential_acoustic(iglob) * coef2
@@ -561,7 +578,7 @@
                    A1 = d_x_store(i,j,ispec_PML)
                    A2 = k_x_store(i,j,ispec_PML)
                    A3 = d_x_store(i,j,ispec_PML) * alpha_x_store(i,j,ispec_PML) ** 2
-                   A4 = 0.d0
+                   A4 = 0._CUSTOM_REAL
 
                    if(stage_time_scheme == 6) then
                      bb = alpha_x_store(i,j,ispec_PML)
@@ -572,7 +589,7 @@
 
                      rmemory_potential_acoustic(1,i,j,ispec_PML) = rmemory_potential_acoustic(1,i,j,ispec_PML) + &
                      beta_LDDRK(i_stage) * rmemory_potential_acoust_LDDRK(1,i,j,ispec_PML)
-                     rmemory_potential_acoustic(2,i,j,ispec_PML) =0.d0
+                     rmemory_potential_acoustic(2,i,j,ispec_PML) =0._CUSTOM_REAL
                   end if 
 
                    potential_dot_dot_acoustic_PML(i,j,ispec_PML)= wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * &
@@ -596,7 +613,7 @@
 
                    A3 = alpha_x_store(i,j,ispec_PML) ** 2*(d_x_store(i,j,ispec_PML) * k_z_store(i,j,ispec_PML)+ &
                           d_z_store(i,j,ispec_PML) * k_x_store(i,j,ispec_PML)) &
-                          -2.d0 * alpha_x_store(i,j,ispec_PML)*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)+ &
+                          -2._CUSTOM_REAL * alpha_x_store(i,j,ispec_PML)*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)+ &
                           (it+0.5)*deltat*alpha_x_store(i,j,ispec_PML)**2*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)
 
                    A4 = -alpha_x_store(i,j,ispec_PML) ** 2*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)
@@ -604,7 +621,7 @@
                     if(stage_time_scheme == 6) then 
                      A3 = alpha_x_store(i,j,ispec_PML) ** 2*(d_x_store(i,j,ispec_PML) * k_z_store(i,j,ispec_PML)+ &
                             d_z_store(i,j,ispec_PML) * k_x_store(i,j,ispec_PML)) &
-                            -2.d0 * alpha_x_store(i,j,ispec_PML)*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)
+                            -2._CUSTOM_REAL * alpha_x_store(i,j,ispec_PML)*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)
                      A4 = alpha_x_store(i,j,ispec_PML) ** 2*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)
                     end if   
 
@@ -647,13 +664,13 @@
                    A0 = - alpha_z_store(i,j,ispec_PML) * d_z_store(i,j,ispec_PML)
                    A1 = d_z_store(i,j,ispec_PML)
                    A2 = k_z_store(i,j,ispec_PML)
-                   A3 = 0.d0
+                   A3 = 0._CUSTOM_REAL
                    A4 = d_z_store(i,j,ispec_PML) * alpha_z_store(i,j,ispec_PML) ** 2
 
                    if(stage_time_scheme == 6) then
                      bb = alpha_z_store(i,j,ispec_PML)
 
-                     rmemory_potential_acoustic(1,i,j,ispec_PML) =0.d0
+                     rmemory_potential_acoustic(1,i,j,ispec_PML) =0._CUSTOM_REAL
 
                      rmemory_potential_acoust_LDDRK(2,i,j,ispec_PML) = &
                      alpha_LDDRK(i_stage) * rmemory_potential_acoust_LDDRK(2,i,j,ispec_PML) &

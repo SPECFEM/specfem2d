@@ -90,7 +90,7 @@
   ! inverse mass matrices
   integer :: nglob_elastic
 
- real(kind=CUSTOM_REAL), dimension(nglob_elastic) :: rmass_inverse_elastic_one,&
+  real(kind=CUSTOM_REAL), dimension(nglob_elastic) :: rmass_inverse_elastic_one,&
                                                      rmass_inverse_elastic_three
 
   integer :: nglob_acoustic
@@ -192,15 +192,11 @@
         if (this_element_has_PML) then
 
          ispec_PML=spec_to_PML(ispec)
-!                  if ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
-!                       .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec))) then
          if (region_CPML(ispec) == CPML_LEFT .or. region_CPML(ispec) == CPML_RIGHT) then
           rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
                   + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML)&
                   + d_x_store(i,j,ispec_PML) * deltat / 2.d0)
           rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
-!         elseif ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
-!                  (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
          elseif (region_CPML(ispec) == CPML_TOP_LEFT .or. region_CPML(ispec) == CPML_TOP_RIGHT .or. &
                  region_CPML(ispec) == CPML_BOTTOM_LEFT .or. region_CPML(ispec) == CPML_BOTTOM_RIGHT) then
           rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
@@ -245,14 +241,10 @@
         if (this_element_has_PML) then
 
           ispec_PML=spec_to_PML(ispec)
-!         if ((which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
-!             .not. (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
          if (region_CPML(ispec) == CPML_LEFT .or. region_CPML(ispec) == CPML_RIGHT) then
           rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
                   + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML)&
                   + d_x_store(i,j,ispec_PML) * deltat / 2.d0)
-!         elseif ( (which_PML_elem(ILEFT,ispec) .OR. which_PML_elem(IRIGHT,ispec)) .and. &
-!                  (which_PML_elem(ITOP,ispec) .OR. which_PML_elem(IBOTTOM,ispec)) ) then
          elseif (region_CPML(ispec) == CPML_TOP_LEFT .or. region_CPML(ispec) == CPML_TOP_RIGHT .or. &
                  region_CPML(ispec) == CPML_BOTTOM_LEFT .or. region_CPML(ispec) == CPML_BOTTOM_RIGHT) then
           rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &

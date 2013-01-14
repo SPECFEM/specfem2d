@@ -425,12 +425,12 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     if(stage_time_scheme == 1) then
 
                     coef0 = exp(-bb * deltat)
-                    if ( abs(bb) > 1.d-3 ) then
-                      coef1 = (1.d0 - exp(-bb * deltat / 2.d0)) / bb
-                      coef2 = (1.d0 - exp(-bb* deltat / 2.d0)) * exp(-bb * deltat / 2.d0)/ bb
+                    if ( abs(bb) > 0.001_CUSTOM_REAL ) then
+                      coef1 = (1._CUSTOM_REAL - exp(-bb * deltat / 2._CUSTOM_REAL)) / bb
+                      coef2 = (1._CUSTOM_REAL - exp(-bb* deltat / 2._CUSTOM_REAL)) * exp(-bb * deltat / 2._CUSTOM_REAL)/ bb
                     else
-                      coef1 = deltat / 2.0d0
-                      coef2 = deltat / 2.0d0
+                      coef1 = deltat / 2._CUSTOM_REAL
+                      coef2 = deltat / 2._CUSTOM_REAL
                     end if
 
                     if(ROTATE_PML_ACTIVATE)then
@@ -495,12 +495,12 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                     coef0 = exp(- bb * deltat)
 
-                    if ( abs( bb ) > 1.d-3) then
-                      coef1 = (1.0d0 - exp(- bb * deltat / 2.0d0) ) / bb
-                      coef2 = (1.0d0 - exp(- bb * deltat / 2.0d0) ) * exp(- bb * deltat / 2.0d0) / bb
+                    if ( abs( bb ) > 0.001_CUSTOM_REAL) then
+                      coef1 = (1._CUSTOM_REAL - exp(- bb * deltat / 2._CUSTOM_REAL) ) / bb
+                      coef2 = (1._CUSTOM_REAL - exp(- bb * deltat / 2._CUSTOM_REAL) ) * exp(- bb * deltat / 2._CUSTOM_REAL) / bb
                     else
-                      coef1 = deltat / 2.0d0
-                      coef2 = deltat / 2.0d0
+                      coef1 = deltat / 2._CUSTOM_REAL
+                      coef2 = deltat / 2._CUSTOM_REAL
                     end if
 
                     if(ROTATE_PML_ACTIVATE)then
@@ -573,12 +573,12 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                     coef0 = exp(- bb * deltat)
 
-                    if ( abs(bb) > 1.d-3 ) then
-                      coef1 = ( 1.d0 - exp(- bb * deltat / 2.d0) ) / bb
-                      coef2 = ( 1.d0 - exp(- bb * deltat / 2.d0) ) * exp(- bb * deltat / 2.d0) / bb
+                    if ( abs(bb) > 0.001_CUSTOM_REAL ) then
+                      coef1 = ( 1._CUSTOM_REAL - exp(- bb * deltat / 2._CUSTOM_REAL) ) / bb
+                      coef2 = ( 1._CUSTOM_REAL - exp(- bb * deltat / 2._CUSTOM_REAL) ) * exp(- bb * deltat / 2._CUSTOM_REAL) / bb
                     else
-                      coef1 = deltat / 2.0d0
-                      coef2 = deltat / 2.0d0
+                      coef1 = deltat / 2._CUSTOM_REAL
+                      coef2 = deltat / 2._CUSTOM_REAL
                     end if
 
                     if(ROTATE_PML_ACTIVATE)then
@@ -644,12 +644,12 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                     coef0 = exp(- bb * deltat)
 
-                    if ( abs(bb) > 1.d-3 ) then
-                      coef1 = ( 1.d0 - exp(- bb * deltat / 2.d0) ) / bb
-                      coef2 = ( 1.d0 - exp(- bb * deltat / 2.d0) ) * exp(- bb * deltat / 2.d0) / bb
+                    if ( abs(bb) > 0.001_CUSTOM_REAL ) then
+                      coef1 = ( 1._CUSTOM_REAL - exp(- bb * deltat / 2._CUSTOM_REAL) ) / bb
+                      coef2 = ( 1._CUSTOM_REAL - exp(- bb * deltat / 2._CUSTOM_REAL) ) * exp(- bb * deltat / 2._CUSTOM_REAL) / bb
                     else
-                      coef1 = deltat / 2.0d0
-                      coef2 = deltat / 2.0d0
+                      coef1 = deltat / 2._CUSTOM_REAL
+                      coef2 = deltat / 2._CUSTOM_REAL
                     end if
 
                     if(ROTATE_PML_ACTIVATE)then
@@ -718,12 +718,12 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     if(stage_time_scheme == 1) then 
                     coef0 = exp(- bb * deltat)
 
-                    if ( abs( bb ) > 1.d-3) then
-                      coef1 = (1.0d0 - exp(- bb * deltat / 2.0d0) ) / bb
-                      coef2 = (1.0d0 - exp(- bb * deltat / 2.0d0) ) * exp(- bb * deltat / 2.0d0) / bb
+                    if ( abs( bb ) > 0.001_CUSTOM_REAL) then
+                      coef1 = (1._CUSTOM_REAL - exp(- bb * deltat / 2._CUSTOM_REAL) ) / bb
+                      coef2 = (1._CUSTOM_REAL - exp(- bb * deltat / 2._CUSTOM_REAL) ) * exp(- bb * deltat / 2._CUSTOM_REAL) / bb
                     else
-                      coef1 = deltat / 2.0d0
-                      coef2 = deltat / 2.0d0
+                      coef1 = deltat / 2._CUSTOM_REAL
+                      coef2 = deltat / 2._CUSTOM_REAL
                     end if
 
                     if(ROTATE_PML_ACTIVATE)then
@@ -785,12 +785,12 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     if(stage_time_scheme == 1) then 
                     coef0 = exp(-bb * deltat)
 
-                    if ( abs(bb) > 1.d-3 ) then
-                      coef1 = (1.d0 - exp(-bb * deltat / 2.d0)) / bb
-                      coef2 = (1.d0 - exp(-bb* deltat / 2.d0)) * exp(-bb * deltat / 2.d0) / bb
+                    if ( abs(bb) > 0.001_CUSTOM_REAL ) then
+                      coef1 = (1._CUSTOM_REAL - exp(-bb * deltat / 2._CUSTOM_REAL)) / bb
+                      coef2 = (1._CUSTOM_REAL - exp(-bb* deltat / 2._CUSTOM_REAL)) * exp(-bb * deltat / 2._CUSTOM_REAL) / bb
                     else
-                      coef1 = deltat / 2.0d0
-                      coef2 = deltat / 2.0d0
+                      coef1 = deltat / 2._CUSTOM_REAL
+                      coef2 = deltat / 2._CUSTOM_REAL
                     end if
 
                     if(ROTATE_PML_ACTIVATE)then
@@ -935,7 +935,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                  if(PML_BOUNDARY_CONDITIONS .and. is_PML(ispec)) then
                      ispec_PML=spec_to_PML(ispec)
                      if(ROTATE_PML_ACTIVATE)then
-                     theta = -ROTATE_PML_ANGLE/180.d0*Pi
+                     theta = -ROTATE_PML_ANGLE/180._CUSTOM_REAL*Pi
                      if(it==1)write(*,*)theta,ROTATE_PML_ACTIVATE,cos(theta),sin(theta)
                      ct=cos(theta)
                      st=sin(theta)
@@ -1087,12 +1087,12 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     if(stage_time_scheme == 1) then  
                     coef0 = exp(- bb * deltat)
 
-                    if ( abs( bb ) > 1.d-3) then
-                       coef1 = (1.0d0 - exp(- bb * deltat / 2.0d0) ) / bb
-                       coef2 = (1.0d0 - exp(- bb * deltat / 2.0d0) ) * exp(- bb * deltat / 2.0d0) / bb
+                    if ( abs( bb ) > 0.001_CUSTOM_REAL) then
+                       coef1 = (1._CUSTOM_REAL - exp(- bb * deltat / 2._CUSTOM_REAL) ) / bb
+                       coef2 = (1._CUSTOM_REAL - exp(- bb * deltat / 2._CUSTOM_REAL) ) * exp(- bb * deltat / 2._CUSTOM_REAL) / bb
                     else
-                       coef1 = deltat / 2.0d0
-                       coef2 = deltat / 2.0d0
+                       coef1 = deltat / 2._CUSTOM_REAL
+                       coef2 = deltat / 2._CUSTOM_REAL
                     end if
 
                     rmemory_displ_elastic(1,1,i,j,ispec_PML)=coef0 * rmemory_displ_elastic(1,1,i,j,ispec_PML) &
@@ -1116,12 +1116,12 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                       if(stage_time_scheme == 1) then 
                        coef0 = exp(- bb * deltat)
 
-                       if ( abs(bb) > 1.d-3 ) then
+                       if ( abs(bb) > 0.001_CUSTOM_REAL ) then
                           coef1 = ( 1 - exp(- bb * deltat / 2) ) / bb
                           coef2 = ( 1 - exp(- bb * deltat / 2) ) * exp(- bb * deltat / 2) / bb
                        else
-                          coef1 = deltat / 2.0d0
-                          coef2 = deltat / 2.0d0
+                          coef1 = deltat / 2._CUSTOM_REAL
+                          coef2 = deltat / 2._CUSTOM_REAL
                        end if
 
                        rmemory_displ_elastic(1,1,i,j,ispec_PML)= &
@@ -1138,12 +1138,12 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                       if(stage_time_scheme == 1) then 
                        coef0 = exp(- bb * deltat)
 
-                       if ( abs(bb) > 1.d-3 ) then
+                       if ( abs(bb) > 0.001_CUSTOM_REAL ) then
                           coef1 = ( 1 - exp(- bb * deltat / 2) ) / bb
                           coef2 = ( 1 - exp(- bb * deltat / 2) ) * exp(- bb * deltat / 2) / bb
                        else
-                          coef1 = deltat / 2.0d0
-                          coef2 = deltat / 2.0d0
+                          coef1 = deltat / 2._CUSTOM_REAL
+                          coef2 = deltat / 2._CUSTOM_REAL
                        end if
 
                        rmemory_displ_elastic(2,1,i,j,ispec_PML)=coef0 * rmemory_displ_elastic(2,1,i,j,ispec_PML) &
@@ -1165,19 +1165,19 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                       if(stage_time_scheme == 1) then
                       coef0 = exp(- bb * deltat)
 
-                      if ( abs( bb ) > 1.d-3) then
-                         coef1 = (1.0d0 - exp(- bb * deltat / 2.0d0) ) / bb
-                         coef2 = (1.0d0 - exp(- bb * deltat / 2.0d0) ) * exp(- bb * deltat / 2.0d0) / bb
+                      if ( abs( bb ) > 0.001_CUSTOM_REAL) then
+                         coef1 = (1._CUSTOM_REAL - exp(- bb * deltat / 2._CUSTOM_REAL) ) / bb
+                         coef2 = (1._CUSTOM_REAL - exp(- bb * deltat / 2._CUSTOM_REAL) ) * exp(- bb * deltat / 2._CUSTOM_REAL) / bb
                       else
-                         coef1 = deltat / 2.0d0
-                         coef2 = deltat / 2.0d0
+                         coef1 = deltat / 2._CUSTOM_REAL
+                         coef2 = deltat / 2._CUSTOM_REAL
                       end if
 
-                      rmemory_displ_elastic(1,1,i,j,ispec_PML)=0.d0
+                      rmemory_displ_elastic(1,1,i,j,ispec_PML)=0._CUSTOM_REAL
                       rmemory_displ_elastic(2,1,i,j,ispec_PML)=coef0 * rmemory_displ_elastic(2,1,i,j,ispec_PML) &
                       + displ_elastic_new(1,iglob) * coef1 + displ_elastic(1,iglob) * coef2
 
-                      rmemory_displ_elastic(1,3,i,j,ispec_PML)=0.d0
+                      rmemory_displ_elastic(1,3,i,j,ispec_PML)=0._CUSTOM_REAL
                       rmemory_displ_elastic(2,3,i,j,ispec_PML)=coef0 * rmemory_displ_elastic(2,3,i,j,ispec_PML) &
                       + displ_elastic_new(3,iglob) * coef1 + displ_elastic(3,iglob) * coef2
                       end if
@@ -1191,7 +1191,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                      A1 = d_x_store(i,j,ispec_PML)
                      A2 = k_x_store(i,j,ispec_PML)
                      A3 = d_x_store(i,j,ispec_PML) * alpha_x_store(i,j,ispec_PML) ** 2
-                     A4 = 0.d0
+                     A4 = 0._CUSTOM_REAL
 
                     if(stage_time_scheme == 6) then
 
@@ -1202,7 +1202,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                      + deltat * (-bb * rmemory_displ_elastic(1,1,i,j,ispec_PML) + displ_elastic(1,iglob))
                      rmemory_displ_elastic(1,1,i,j,ispec_PML) = rmemory_displ_elastic(1,1,i,j,ispec_PML) + &
                      beta_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(1,1,i,j,ispec_PML)
-                     rmemory_displ_elastic(2,1,i,j,ispec_PML) =0.d0
+                     rmemory_displ_elastic(2,1,i,j,ispec_PML) =0._CUSTOM_REAL
 
                      rmemory_displ_elastic_LDDRK(1,3,i,j,ispec_PML) = &
                      alpha_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(1,3,i,j,ispec_PML) &
@@ -1210,7 +1210,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                      rmemory_displ_elastic(1,3,i,j,ispec_PML) = rmemory_displ_elastic(1,3,i,j,ispec_PML) + &
                      beta_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(1,3,i,j,ispec_PML)
-                     rmemory_displ_elastic(2,3,i,j,ispec_PML) =0.d0
+                     rmemory_displ_elastic(2,3,i,j,ispec_PML) =0._CUSTOM_REAL
 
                     end if 
 
@@ -1243,14 +1243,14 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                      A3 = alpha_x_store(i,j,ispec_PML) ** 2*(d_x_store(i,j,ispec_PML) * k_z_store(i,j,ispec_PML)+ &
                             d_z_store(i,j,ispec_PML) * k_x_store(i,j,ispec_PML)) &
-                            -2.d0 * alpha_x_store(i,j,ispec_PML)*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)+ &
+                            -2._CUSTOM_REAL * alpha_x_store(i,j,ispec_PML)*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)+ &
                             (it+0.5)*deltat*alpha_x_store(i,j,ispec_PML)**2*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)
                      A4 = -alpha_x_store(i,j,ispec_PML) ** 2*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)
 
                     if(stage_time_scheme == 6) then 
                      A3 = alpha_x_store(i,j,ispec_PML) ** 2*(d_x_store(i,j,ispec_PML) * k_z_store(i,j,ispec_PML)+ &
                             d_z_store(i,j,ispec_PML) * k_x_store(i,j,ispec_PML)) &
-                            -2.d0 * alpha_x_store(i,j,ispec_PML)*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)
+                            -2._CUSTOM_REAL * alpha_x_store(i,j,ispec_PML)*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)
                      A4 = alpha_x_store(i,j,ispec_PML) ** 2*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)
                     end if   
 
@@ -1307,21 +1307,21 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                      A0 = - alpha_z_store(i,j,ispec_PML) * d_z_store(i,j,ispec_PML)
                      A1 = d_z_store(i,j,ispec_PML)
                      A2 = k_z_store(i,j,ispec_PML)
-                     A3 = 0.d0
+                     A3 = 0._CUSTOM_REAL
                      A4 = d_z_store(i,j,ispec_PML) * alpha_z_store(i,j,ispec_PML) ** 2
 
                     if(stage_time_scheme == 6) then 
 
                      bb = alpha_z_store(i,j,ispec_PML)
 
-                     rmemory_displ_elastic(1,1,i,j,ispec_PML) =0.d0
+                     rmemory_displ_elastic(1,1,i,j,ispec_PML) =0._CUSTOM_REAL
                      rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML) = &
                      alpha_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML) &
                      + deltat * (-bb * rmemory_displ_elastic(2,1,i,j,ispec_PML) + displ_elastic(1,iglob))
                      rmemory_displ_elastic(2,1,i,j,ispec_PML) = rmemory_displ_elastic(2,1,i,j,ispec_PML) + &
                      beta_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML)
 
-                     rmemory_displ_elastic(1,3,i,j,ispec_PML) =0.d0
+                     rmemory_displ_elastic(1,3,i,j,ispec_PML) =0._CUSTOM_REAL
                      rmemory_displ_elastic_LDDRK(2,3,i,j,ispec_PML) = &
                      alpha_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,3,i,j,ispec_PML) &
                      + deltat * (-bb * rmemory_displ_elastic(2,3,i,j,ispec_PML) + displ_elastic(3,iglob))
@@ -1483,8 +1483,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                  ty = rho_vs*vy
                  tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
 
-                 displtx=0.0d0
-                 displtz=0.0d0
+                 displtx=0._CUSTOM_REAL
+                 displtz=0._CUSTOM_REAL
 
                  if(ADD_SPRING_TO_STACEY)then
 
@@ -1598,8 +1598,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                  ty = rho_vs*vy
                  tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
 
-                 displtx=0.0d0
-                 displtz=0.0d0
+                 displtx=0._CUSTOM_REAL
+                 displtz=0._CUSTOM_REAL
 
                  if(ADD_SPRING_TO_STACEY)then
 
@@ -1728,8 +1728,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                    tz = 0
                  endif
 
-                 displtx=0.0d0
-                 displtz=0.0d0
+                 displtx=0._CUSTOM_REAL
+                 displtz=0._CUSTOM_REAL
 
                  if(ADD_SPRING_TO_STACEY)then
 
@@ -1858,8 +1858,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                    tz = 0
                  endif
 
-                 displtx=0.0d0
-                 displtz=0.0d0
+                 displtx=0._CUSTOM_REAL
+                 displtz=0._CUSTOM_REAL
 
                  if(ADD_SPRING_TO_STACEY)then
 
@@ -2120,9 +2120,9 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     e1_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (theta_n * temp_time_scheme - Un * tauinv)
 
                     if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
-                       if(i_stage == 1)weight_rk = 0.5d0
-                       if(i_stage == 2)weight_rk = 0.5d0
-                       if(i_stage == 3)weight_rk = 1.0d0
+                       if(i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
+                       if(i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
+                       if(i_stage == 3)weight_rk = 1._CUSTOM_REAL
 
                        if(i_stage==1)then
                        e1_initial_rk(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls)
@@ -2133,9 +2133,9 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                     elseif(i_stage==4)then
 
-                       e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) + 1.0d0 / 6.0d0 * &
-                                             (e1_force_RK(i,j,ispec,i_sls,1) + 2.0d0 * e1_force_RK(i,j,ispec,i_sls,2) + &
-                                             2.0d0 * e1_force_RK(i,j,ispec,i_sls,3) + e1_force_RK(i,j,ispec,i_sls,4))
+                       e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
+                                             (e1_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e1_force_RK(i,j,ispec,i_sls,2) + &
+                                             2._CUSTOM_REAL * e1_force_RK(i,j,ispec,i_sls,3) + e1_force_RK(i,j,ispec,i_sls,4))
                     endif
                  endif
 
@@ -2173,18 +2173,18 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                                                e11(i,j,ispec,i_sls) * inv_tau_sigma_nu2(i,j,ispec,i_sls))
 
                     if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
-                       if(i_stage == 1)weight_rk = 0.5d0
-                       if(i_stage == 2)weight_rk = 0.5d0
-                       if(i_stage == 3)weight_rk = 1.0d0
+                       if(i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
+                       if(i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
+                       if(i_stage == 3)weight_rk = 1._CUSTOM_REAL
                        if(i_stage==1)then
                           e11_initial_rk(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)
                        endif
                        e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) &
                         + weight_rk * e11_force_RK(i,j,ispec,i_sls,i_stage)
                     elseif(i_stage==4)then
-                      e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + 1.0d0 / 6.0d0 * &
-                                             (e11_force_RK(i,j,ispec,i_sls,1) + 2.0d0 * e11_force_RK(i,j,ispec,i_sls,2) + &
-                                              2.0d0 * e11_force_RK(i,j,ispec,i_sls,3) + e11_force_RK(i,j,ispec,i_sls,4))
+                      e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
+                                             (e11_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e11_force_RK(i,j,ispec,i_sls,2) + &
+                                              2._CUSTOM_REAL * e11_force_RK(i,j,ispec,i_sls,3) + e11_force_RK(i,j,ispec,i_sls,4))
                     endif
                  endif
 
@@ -2219,18 +2219,18 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     e13_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (temp_time_scheme*temper_time_scheme- &
                                             e13(i,j,ispec,i_sls) * inv_tau_sigma_nu2(i,j,ispec,i_sls))
                     if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
-                       if(i_stage == 1)weight_rk = 0.5d0
-                       if(i_stage == 2)weight_rk = 0.5d0
-                       if(i_stage == 3)weight_rk = 1.0d0
+                       if(i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
+                       if(i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
+                       if(i_stage == 3)weight_rk = 1._CUSTOM_REAL
                        if(i_stage==1)then
                           e13_initial_rk(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)
                        endif
                           e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) &
                             + weight_rk * e13_force_RK(i,j,ispec,i_sls,i_stage)
                     elseif(i_stage==4)then
-                       e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + 1.0d0 / 6.0d0 * &
-                                              (e13_force_RK(i,j,ispec,i_sls,1) + 2.0d0 * e13_force_RK(i,j,ispec,i_sls,2) + &
-                                              2.0d0 * e13_force_RK(i,j,ispec,i_sls,3) + e13_force_RK(i,j,ispec,i_sls,4))
+                       e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
+                            (e13_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e13_force_RK(i,j,ispec,i_sls,2) + &
+                            2._CUSTOM_REAL * e13_force_RK(i,j,ispec,i_sls,3) + e13_force_RK(i,j,ispec,i_sls,4))
                     endif
                  endif
 
