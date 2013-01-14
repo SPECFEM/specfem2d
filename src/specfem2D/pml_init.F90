@@ -487,12 +487,12 @@
       write(IOUT,*) '     d0_left         =', d0_x_left
 !   endif
 
-   d_x = ZERO
-   d_z = ZERO
-   K_x = ZERO
-   K_z = ZERO
-   alpha_x = ZERO
-   alpha_z = ZERO
+   d_x = 0.d0
+   d_z = 0.d0
+   K_x = 0.d0
+   K_z = 0.d0
+   alpha_x = 0.d0
+   alpha_z = 0.d0
 
 ! origin of the PML layer (position of right edge minus thickness, in meters)
   xoriginleft = thickness_PML_x_left+xmin
@@ -506,12 +506,12 @@
     if (is_PML(ispec)) then
        do j=1,NGLLZ
           do i=1,NGLLX
-          K_x_store(i,j,ispec_PML) = 0.0
-          K_z_store(i,j,ispec_PML) = 0.0
-          d_x_store(i,j,ispec_PML) = 0.0
-          d_z_store(i,j,ispec_PML) = 0.0
-          alpha_x_store(i,j,ispec_PML) = 0.0
-          alpha_z_store(i,j,ispec_PML) = 0.0
+          K_x_store(i,j,ispec_PML) = 0._CUSTOM_REAL
+          K_z_store(i,j,ispec_PML) = 0._CUSTOM_REAL
+          d_x_store(i,j,ispec_PML) = 0._CUSTOM_REAL
+          d_z_store(i,j,ispec_PML) = 0._CUSTOM_REAL
+          alpha_x_store(i,j,ispec_PML) = 0._CUSTOM_REAL
+          alpha_z_store(i,j,ispec_PML) = 0._CUSTOM_REAL
 
              iglob=ibool(i,j,ispec)
              ! abscissa of current grid point along the damping profile
@@ -616,12 +616,21 @@
                 endif
              endif
 
+       if(CUSTOM_REAL == SIZE_REAL) then
+          K_x_store(i,j,ispec_PML) = sngl(K_x)
+          K_z_store(i,j,ispec_PML) = sngl(K_z)
+          d_x_store(i,j,ispec_PML) = sngl(d_x)
+          d_z_store(i,j,ispec_PML) = sngl(d_z)
+          alpha_x_store(i,j,ispec_PML) = sngl(alpha_x)
+          alpha_z_store(i,j,ispec_PML) = sngl(alpha_z)
+       else
           K_x_store(i,j,ispec_PML) = K_x
           K_z_store(i,j,ispec_PML) = K_z
           d_x_store(i,j,ispec_PML) = d_x
           d_z_store(i,j,ispec_PML) = d_z
           alpha_x_store(i,j,ispec_PML) = alpha_x
           alpha_z_store(i,j,ispec_PML) = alpha_z
+       endif
 
        enddo
      enddo
