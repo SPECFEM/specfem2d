@@ -71,12 +71,12 @@
 
   ! for attenuation
   integer :: N_SLS
-  double precision :: Mu_nu1_sent,Mu_nu2_sent
-  double precision, dimension(N_SLS) :: inv_tau_sigma_nu1_sent,phi_nu1_sent, &
+  real(kind=CUSTOM_REAL) :: Mu_nu1_sent,Mu_nu2_sent
+  real(kind=CUSTOM_REAL), dimension(N_SLS) :: inv_tau_sigma_nu1_sent,phi_nu1_sent, &
     inv_tau_sigma_nu2_sent,phi_nu2_sent
-  double precision, dimension(NGLLX,NGLLZ,nspec,N_SLS) :: inv_tau_sigma_nu1,phi_nu1, &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: inv_tau_sigma_nu1,phi_nu1, &
     inv_tau_sigma_nu2,phi_nu2
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
   double precision, dimension(NGLLX,NGLLZ,nspec) :: QKappa_attenuationext,Qmu_attenuationext
 
   ! for anisotropy
