@@ -1342,6 +1342,10 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     stop 'PML boundary conditions not implemented for poroelastic simulations yet'
   endif
 
+  if(PML_BOUNDARY_CONDITIONS .and. any_elastic .and. (.not. p_sv)) then
+    stop 'PML boundary conditions not implemented for SH simulations yet'
+  endif
+
   if(PML_BOUNDARY_CONDITIONS .and. time_stepping_scheme == 3) then
     stop 'PML boundary conditions is not implemented with standard Runge Kutta scheme'
   endif

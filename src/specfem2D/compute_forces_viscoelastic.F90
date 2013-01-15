@@ -165,14 +165,14 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   ! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duy_dxi,duy_dgamma,duz_dxi,duz_dgamma
   real(kind=CUSTOM_REAL) :: dux_dxl,duy_dxl,duz_dxl,dux_dzl,duy_dzl,duz_dzl
-  real(kind=CUSTOM_REAL) :: dux_dxl_prime,duy_dxl_prime,duz_dxl_prime,dux_dzl_prime,duy_dzl_prime,duz_dzl_prime 
+  real(kind=CUSTOM_REAL) :: dux_dxl_prime,duz_dxl_prime,dux_dzl_prime,duz_dzl_prime 
   real(kind=CUSTOM_REAL) :: theta,ct,st 
   real(kind=CUSTOM_REAL) :: b_dux_dxi,b_dux_dgamma,b_duy_dxi,b_duy_dgamma,b_duz_dxi,b_duz_dgamma
   real(kind=CUSTOM_REAL) :: b_dux_dxl,b_duy_dxl,b_duz_dxl,b_dux_dzl,b_duy_dzl,b_duz_dzl
   real(kind=CUSTOM_REAL) :: dsxx,dsxz,dszz
   real(kind=CUSTOM_REAL) :: b_dsxx,b_dsxz,b_dszz
   real(kind=CUSTOM_REAL) :: sigma_xx,sigma_xy,sigma_xz,sigma_zy,sigma_zz,sigma_zx
-  real(kind=CUSTOM_REAL) :: sigma_xx_prime,sigma_xy_prime,sigma_xz_prime,sigma_zy_prime,sigma_zz_prime,sigma_zx_prime 
+  real(kind=CUSTOM_REAL) :: sigma_xx_prime,sigma_xz_prime,sigma_zz_prime,sigma_zx_prime 
   real(kind=CUSTOM_REAL) :: b_sigma_xx,b_sigma_xy,b_sigma_xz,b_sigma_zy,b_sigma_zz,b_sigma_zx
   real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,rho_vp,rho_vs,tx,ty,tz,weight,xxi,zxi,xgamma,zgamma,jacobian1D
   real(kind=CUSTOM_REAL) :: displx,disply,displz,displn,spring_position,displtx,displty,displtz
