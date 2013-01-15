@@ -87,6 +87,26 @@
 ! use snapshot number in the file name of JPG color snapshots instead of the time step
   logical :: USE_SNAPSHOT_NUMBER_IN_FILENAME
 
+! size of cross and square in pixels drawn to represent the source and the receivers in JPEG pictures
+  integer :: half_width_cross, thickness_cross, half_size_square
+
+! make the size of the source and receiver symbols depend on the size of the picture
+! using a rule of thumb
+  thickness_cross = 1
+  if(NX > 2000 .or. NY > 2000) then
+    half_width_cross = 6
+    half_size_square = 4
+  else if(NX <= 100 .or. NY <= 100) then
+    half_width_cross = 2
+    half_size_square = 1
+  else if(NX <= 250 .or. NY <= 250) then
+    half_width_cross = 3
+    half_size_square = 2
+  else
+    half_width_cross = 5
+    half_size_square = 3
+  endif
+
 ! open the image file
 ! slightly change the beginning of the file name depending if we use the time step of the image number, to avoid confusion
   if(USE_SNAPSHOT_NUMBER_IN_FILENAME) then
@@ -204,7 +224,7 @@
     do i=1,NSOURCES
 
 ! avoid edge effects for source or receiver symbols that can be partly outside of the image
-      do iy = max(iy_image_color_source(i) - width_cross,1), min(iy_image_color_source(i) + width_cross,NY)
+      do iy = max(iy_image_color_source(i) - half_width_cross,1), min(iy_image_color_source(i) + half_width_cross,NY)
         do ix = max(ix_image_color_source(i) - thickness_cross,1), min(ix_image_color_source(i) + thickness_cross,NX)
 ! use orange color
           R = 255
@@ -219,7 +239,7 @@
 
 ! avoid edge effects for source or receiver symbols that can be partly outside of the image
       do iy = max(iy_image_color_source(i) - thickness_cross,1), min(iy_image_color_source(i) + thickness_cross,NY)
-        do ix = max(ix_image_color_source(i) - width_cross,1), min(ix_image_color_source(i) + width_cross,NX)
+        do ix = max(ix_image_color_source(i) - half_width_cross,1), min(ix_image_color_source(i) + half_width_cross,NX)
 ! use orange color
           R = 255
           G = 157
@@ -236,8 +256,8 @@
 ! draw position of the receivers with green squares
     do i=1,nrec
 ! avoid edge effects for source or receiver symbols that can be partly outside of the image
-      do iy = max(iy_image_color_receiver(i) - size_square,1), min(iy_image_color_receiver(i) + size_square,NY)
-        do ix = max(ix_image_color_receiver(i) - size_square,1), min(ix_image_color_receiver(i) + size_square,NX)
+      do iy = max(iy_image_color_receiver(i) - half_size_square,1), min(iy_image_color_receiver(i) + half_size_square,NY)
+        do ix = max(ix_image_color_receiver(i) - half_size_square,1), min(ix_image_color_receiver(i) + half_size_square,NX)
 ! use dark green color
           R = 30
           G = 180
