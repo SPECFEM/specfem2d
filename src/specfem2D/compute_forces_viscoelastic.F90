@@ -282,11 +282,10 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                                + deltat*e1_veloc(i,j,ispec,i_sls) &
                                + deltatsquareover2*e1_accel(i,j,ispec,i_sls)
                      e1_veloc(i,j,ispec,i_sls) = e1_veloc(i,j,ispec,i_sls) + deltatover2*e1_accel(i,j,ispec,i_sls)
-                     e1_accel(i,j,ispec,i_sls) = ZERO
                      phinu1 = phi_nu1(i,j,ispec,i_sls)
                      tauinvnu1 = inv_tau_sigma_nu1(i,j,ispec,i_sls)
-                     e1_accel(i,j,ispec,i_sls) = theta_n_v * phinu1 - e1_veloc(i,j,ispec,i_sls) * tauinvnu1
-                     e1_accel(i,j,ispec,i_sls) = e1_accel(i,j,ispec,i_sls)/(1._CUSTOM_REAL + 0.5_CUSTOM_REAL*tauinvnu1*deltat)
+                     e1_accel(i,j,ispec,i_sls) = (theta_n_v * phinu1 - e1_veloc(i,j,ispec,i_sls) * tauinvnu1) / &
+                                                 (1._CUSTOM_REAL + 0.5_CUSTOM_REAL*tauinvnu1*deltat)
                      e1_veloc(i,j,ispec,i_sls) = e1_veloc(i,j,ispec,i_sls) + deltatover2*e1_accel(i,j,ispec,i_sls)
                  endif
 
@@ -331,12 +330,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                                + deltat*e11_veloc(i,j,ispec,i_sls) &
                                + deltatsquareover2*e11_accel(i,j,ispec,i_sls)
                      e11_veloc(i,j,ispec,i_sls) = e11_veloc(i,j,ispec,i_sls) + deltatover2*e11_accel(i,j,ispec,i_sls)
-                     e11_accel(i,j,ispec,i_sls) = ZERO
                      phinu2 = phi_nu2(i,j,ispec,i_sls)
                      tauinvnu2 = inv_tau_sigma_nu2(i,j,ispec,i_sls)
-                     e11_accel(i,j,ispec,i_sls) = (dvx_dxl_n(i,j,ispec)-theta_n_v/TWO) * phinu2- &
-                                                  e11_veloc(i,j,ispec,i_sls)*tauinvnu2
-                     e11_accel(i,j,ispec,i_sls) = e11_accel(i,j,ispec,i_sls)/(1._CUSTOM_REAL + 0.5_CUSTOM_REAL*tauinvnu2*deltat)
+                     e11_accel(i,j,ispec,i_sls) = ((dvx_dxl_n(i,j,ispec)-theta_n_v/TWO) * phinu2- &
+                                                  e11_veloc(i,j,ispec,i_sls)*tauinvnu2) / &
+                                                  (1._CUSTOM_REAL + 0.5_CUSTOM_REAL*tauinvnu2*deltat)
                      e11_veloc(i,j,ispec,i_sls) = e11_veloc(i,j,ispec,i_sls) + deltatover2*e11_accel(i,j,ispec,i_sls)
                 endif
 
@@ -377,12 +375,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                                + deltat*e13_veloc(i,j,ispec,i_sls) &
                                + deltatsquareover2*e13_accel(i,j,ispec,i_sls)
                      e13_veloc(i,j,ispec,i_sls) = e13_veloc(i,j,ispec,i_sls) + deltatover2*e13_accel(i,j,ispec,i_sls)
-                     e13_accel(i,j,ispec,i_sls) = ZERO
                      phinu2 = phi_nu2(i,j,ispec,i_sls)
                      tauinvnu2 = inv_tau_sigma_nu2(i,j,ispec,i_sls)
-                     e13_accel(i,j,ispec,i_sls) = (dvx_dzl_n(i,j,ispec) + dvz_dxl_n(i,j,ispec)) * phinu2- &
-                                                  e13_veloc(i,j,ispec,i_sls)*tauinvnu2
-                     e13_accel(i,j,ispec,i_sls) = e13_accel(i,j,ispec,i_sls)/(1._CUSTOM_REAL + 0.5_CUSTOM_REAL*tauinvnu2*deltat)
+                     e13_accel(i,j,ispec,i_sls) = ((dvx_dzl_n(i,j,ispec) + dvz_dxl_n(i,j,ispec)) * phinu2- &
+                                                  e13_veloc(i,j,ispec,i_sls)*tauinvnu2) / &
+                                                  (1._CUSTOM_REAL + 0.5_CUSTOM_REAL*tauinvnu2*deltat)
                      e13_veloc(i,j,ispec,i_sls) = e13_veloc(i,j,ispec,i_sls) + deltatover2*e13_accel(i,j,ispec,i_sls)
                 endif
 
