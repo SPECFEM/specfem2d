@@ -586,9 +586,12 @@
   double precision, dimension(:), allocatable  :: Qmu_attenuation
   double precision  :: f0_attenuation
   integer nspec_allocate
-  double precision :: deltatsquare,deltatcube,deltatfourth,twelvedeltat,fourdeltatsquare
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1,e11,e13
+!DK DK e1_veloc,e11_veloc,e13_veloc denote first derivative of e1,e11,e13 respect to t
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_veloc,e11_veloc,e13_veloc 
+!DK DK e1_accel,e11_accel,e13_accel  denote second derivative of e1,e11,e13 respect to t
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_accel,e11_accel,e13_accel 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_LDDRK,e11_LDDRK,e13_LDDRK
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_initial_rk,e11_initial_rk,e13_initial_rk
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: e1_force_rk,e11_force_rk,e13_force_rk
@@ -597,8 +600,10 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:) , allocatable :: Mu_nu1,Mu_nu2
   real(kind=CUSTOM_REAL) :: Mu_nu1_sent,Mu_nu2_sent
 
+
+
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
-    dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n,dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1
+    dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n,dvx_dxl_n,dvz_dzl_n,dvz_dxl_n,dvx_dzl_n
 
 ! for viscous attenuation
   double precision, dimension(:,:,:), allocatable :: &
@@ -1363,9 +1368,26 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     allocate(e1(NGLLX,NGLLZ,nspec_allocate,N_SLS))
     allocate(e11(NGLLX,NGLLZ,nspec_allocate,N_SLS))
     allocate(e13(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+
+    allocate(e1_veloc(NGLLX,NGLLZ,nspec_allocate,N_SLS))  
+    allocate(e11_veloc(NGLLX,NGLLZ,nspec_allocate,N_SLS))  
+    allocate(e13_veloc(NGLLX,NGLLZ,nspec_allocate,N_SLS))  
+
+    allocate(e1_accel(NGLLX,NGLLZ,nspec_allocate,N_SLS))  
+    allocate(e11_accel(NGLLX,NGLLZ,nspec_allocate,N_SLS))  
+    allocate(e13_accel(NGLLX,NGLLZ,nspec_allocate,N_SLS))  
+
     e1(:,:,:,:) = 0._CUSTOM_REAL
     e11(:,:,:,:) = 0._CUSTOM_REAL
     e13(:,:,:,:) = 0._CUSTOM_REAL
+
+    e1_veloc(:,:,:,:) = 0._CUSTOM_REAL  
+    e11_veloc(:,:,:,:) = 0._CUSTOM_REAL  
+    e13_veloc(:,:,:,:) = 0._CUSTOM_REAL  
+
+    e1_accel(:,:,:,:) = 0._CUSTOM_REAL  
+    e11_accel(:,:,:,:) = 0._CUSTOM_REAL  
+    e13_accel(:,:,:,:) = 0._CUSTOM_REAL  
 
     if(time_stepping_scheme == 2)then
       allocate(e1_LDDRK(NGLLX,NGLLZ,nspec_allocate,N_SLS))
@@ -1406,10 +1428,10 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     allocate(duz_dzl_n(NGLLX,NGLLZ,nspec_allocate))
     allocate(duz_dxl_n(NGLLX,NGLLZ,nspec_allocate))
     allocate(dux_dzl_n(NGLLX,NGLLZ,nspec_allocate))
-    allocate(dux_dxl_np1(NGLLX,NGLLZ,nspec_allocate))
-    allocate(duz_dzl_np1(NGLLX,NGLLZ,nspec_allocate))
-    allocate(duz_dxl_np1(NGLLX,NGLLZ,nspec_allocate))
-    allocate(dux_dzl_np1(NGLLX,NGLLZ,nspec_allocate))
+    allocate(dvx_dxl_n(NGLLX,NGLLZ,nspec_allocate))  
+    allocate(dvz_dzl_n(NGLLX,NGLLZ,nspec_allocate))  
+    allocate(dvz_dxl_n(NGLLX,NGLLZ,nspec_allocate))  
+    allocate(dvx_dzl_n(NGLLX,NGLLZ,nspec_allocate))  
     allocate(Mu_nu1(NGLLX,NGLLZ,nspec))
     allocate(Mu_nu2(NGLLX,NGLLZ,nspec))
   endif
@@ -3787,13 +3809,6 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
   endif ! initialfield
 
-  deltatsquare = deltat * deltat
-  deltatcube = deltatsquare * deltat
-  deltatfourth = deltatsquare * deltatsquare
-
-  twelvedeltat = 12.d0 * deltat
-  fourdeltatsquare = 4.d0 * deltatsquare
-
 ! compute the source time function and store it in a text file
   if(.not. initialfield) then
 
@@ -5539,14 +5554,14 @@ if(coupled_elastic_poro) then
       call compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
                source_type,it,NSTEP,anyabs,assign_external_model, &
-               initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource,deltatcube, &
-               deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,elastic,codeabs, &
+               initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource, &  
+               deltatover2,deltatsquareover2,ibool,kmato,numabs,elastic,codeabs, &  
                accel_elastic,veloc_elastic,displ_elastic,b_accel_elastic,b_displ_elastic, &
                density,poroelastcoef,xix,xiz,gammax,gammaz, &
                jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy, &
                source_time_function,sourcearray,adj_sourcearrays, &
-               e1,e11,e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
-               dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
+               e1,e11,e13,e1_veloc,e11_veloc,e13_veloc,e1_accel,e11_accel,e13_accel,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
+               dvx_dxl_n,dvz_dzl_n,dvz_dxl_n,dvx_dzl_n,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1, &
                phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
                deltat,coord,add_Bielak_conditions, x_source(1), z_source(1), &
@@ -6295,14 +6310,14 @@ if(coupled_elastic_poro) then
       call compute_forces_poro_solid(nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                source_type,it,NSTEP,anyabs, &
-               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat,deltatcube, &
-               deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,poroelastic,codeabs, &
+               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat, & 
+               deltatover2,deltatsquareover2,ibool,kmato,numabs,poroelastic,codeabs, & 
                accels_poroelastic,velocs_poroelastic,velocw_poroelastic,displs_poroelastic,displw_poroelastic,&
                b_accels_poroelastic,b_displs_poroelastic,b_displw_poroelastic,&
                density,porosity,tortuosity,permeability,poroelastcoef,xix,xiz,gammax,gammaz, &
                jacobian,source_time_function,sourcearray,adj_sourcearrays,e11, &
-               e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
-               dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
+               e13,e11_veloc,e13_veloc,e11_accel,e13_accel,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, & 
+               dvx_dxl_n,dvz_dzl_n,dvz_dxl_n,dvx_dzl_n,hprime_xx,hprimewgll_xx, & 
                hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu2,&
                phi_nu2,Mu_nu2,N_SLS, &
                rx_viscous,rz_viscous,theta_e,theta_s,&
@@ -6319,14 +6334,14 @@ if(coupled_elastic_poro) then
       call compute_forces_poro_fluid(nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                source_type,it,NSTEP,anyabs, &
-               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat,deltatcube, &
-               deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,poroelastic,codeabs, &
+               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat, &  
+               deltatover2,deltatsquareover2,ibool,kmato,numabs,poroelastic,codeabs, & 
                accelw_poroelastic,velocw_poroelastic,displw_poroelastic,velocs_poroelastic,displs_poroelastic,&
                b_accelw_poroelastic,b_displw_poroelastic,b_displs_poroelastic,&
                density,porosity,tortuosity,permeability,poroelastcoef,xix,xiz,gammax,gammaz, &
                jacobian,source_time_function,sourcearray,adj_sourcearrays,e11, &
-               e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
-               dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
+               e13,e11_veloc,e13_veloc,e11_accel,e13_accel,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &  
+               dvx_dxl_n,dvz_dzl_n,dvz_dxl_n,dvx_dzl_n,hprime_xx,hprimewgll_xx, & 
                hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu2,&
                phi_nu2,Mu_nu2,N_SLS, &
                rx_viscous,rz_viscous,theta_e,theta_s,&

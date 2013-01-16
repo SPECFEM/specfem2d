@@ -45,14 +45,14 @@
 subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
      ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
      source_type,it,NSTEP,anyabs,assign_external_model, &
-     initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource,deltatcube, &
-     deltatfourth,twelvedeltat,fourdeltatsquare,ibool,kmato,numabs,elastic,codeabs, &
+     initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource, & 
+     deltatover2,deltatsquareover2,ibool,kmato,numabs,elastic,codeabs, &  
      accel_elastic,veloc_elastic,displ_elastic,b_accel_elastic,b_displ_elastic, &
      density,poroelastcoef,xix,xiz,gammax,gammaz, &
      jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy, &
      source_time_function,sourcearray,adj_sourcearrays,e1,e11, &
-     e13,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
-     dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1,hprime_xx,hprimewgll_xx, &
+     e13,e1_veloc,e11_veloc,e13_veloc,e1_accel,e11_accel,e13_accel,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, & 
+     dvx_dxl_n,dvz_dzl_n,dvz_dxl_n,dvx_dzl_n,hprime_xx,hprimewgll_xx, & 
      hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
      deltat,coord,add_Bielak_conditions, &
      x0_source, z0_source, A_plane, B_plane, C_plane, anglesource_refl, c_inc, c_refl, time_offset,f0, &
@@ -98,7 +98,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
   logical :: SAVE_FORWARD
 
-  double precision :: deltatcube,deltatfourth,twelvedeltat,fourdeltatsquare
+  double precision :: deltat,deltatover2,deltatsquareover2
   double precision, dimension(NSOURCES) :: anglesource
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
@@ -109,7 +109,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   logical, dimension(4,nelemabs)  :: codeabs
 
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic,veloc_elastic,displ_elastic
-  real(kind=CUSTOM_REAL), dimension(3,nglob) :: displ_elastic_np1
   double precision, dimension(2,numat) :: density
   double precision, dimension(4,3,numat) :: poroelastcoef
   double precision, dimension(6,numat) :: anisotropy
@@ -130,6 +129,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
   integer :: N_SLS
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11,e13
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1_veloc,e11_veloc,e13_veloc 
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1_accel,e11_accel,e13_accel 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1_LDDRK,e11_LDDRK,e13_LDDRK
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1_initial_rk,e11_initial_rk,e13_initial_rk
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS,stage_time_scheme) :: e1_force_RK, e11_force_RK, e13_force_RK
@@ -139,7 +140,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   integer :: i_sls
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: &
-       dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n,dux_dxl_np1,duz_dzl_np1,duz_dxl_np1,dux_dzl_np1
+       dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n,dvx_dxl_n,dvz_dzl_n,dvz_dxl_n,dvx_dzl_n
 
   ! derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
@@ -153,7 +154,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL), dimension(Nstages) :: alpha_LDDRK,beta_LDDRK
 
   !temp variable
-  real(kind=CUSTOM_REAL) :: temp_time_scheme,temper_time_scheme,weight_rk
+  real(kind=CUSTOM_REAL) :: weight_rk
 
 
   !---
@@ -200,13 +201,13 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
     lambdal_relaxed_viscoelastic,mul_relaxed_viscoelastic,lambdalplus2mul_relaxed_viscoel
 
   ! for attenuation
-  real(kind=CUSTOM_REAL) :: Un,Unp1,tauinv,Sn,Snp1,theta_n,theta_np1,tauinvsquare,tauinvcube,tauinvUn
+  real(kind=CUSTOM_REAL) :: phinu1,phinu2,tauinvnu1,tauinvnu2,theta_n_u,theta_n_v 
 
   ! for anisotropy
   double precision ::  c11,c15,c13,c33,c35,c55
 
   ! for analytical initial plane wave for Bielak's conditions
-  double precision :: veloc_horiz,veloc_vert,dxUx,dzUx,dxUz,dzUz,traction_x_t0,traction_z_t0,deltat
+  double precision :: veloc_horiz,veloc_vert,dxUx,dzUx,dxUz,dzUz,traction_x_t0,traction_z_t0
   double precision, dimension(NDIM,nglob), intent(in) :: coord
   double precision x0_source, z0_source, anglesource_refl, c_inc, c_refl, time_offset, f0
   double precision, dimension(NDIM) :: A_plane, B_plane, C_plane
@@ -248,6 +249,182 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL) :: dux_dxi_new,dux_dgamma_new,duz_dxi_new,duz_dgamma_new
   real(kind=CUSTOM_REAL) :: dux_dxl_new,dux_dzl_new,duz_dxl_new,duz_dzl_new
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: displ_elastic_new
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  ! implement attenuation
+  if(ATTENUATION_VISCOELASTIC_SOLID) then
+
+     ! compute Grad(displ_elastic) at time step n for attenuation
+     call compute_gradient_attenuation(displ_elastic,dux_dxl_n,duz_dxl_n, &
+          dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob)
+
+     ! compute Grad(veloc_elastic) at time step n for attenuation
+     call compute_gradient_attenuation(veloc_elastic,dvx_dxl_n,dvz_dxl_n, &
+          dvx_dzl_n,dvz_dzl_n,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob)
+
+
+     ! update memory variables with fourth-order Runge-Kutta time scheme for attenuation
+     ! loop over spectral elements
+     do ispec = 1,nspec
+
+        do j=1,NGLLZ
+           do i=1,NGLLX
+
+              theta_n_u = dux_dxl_n(i,j,ispec) + duz_dzl_n(i,j,ispec)
+              theta_n_v = dvx_dxl_n(i,j,ispec) + dvz_dzl_n(i,j,ispec)
+
+              ! loop on all the standard linear solids
+              do i_sls = 1,N_SLS
+
+                 ! evolution e1
+                 if(stage_time_scheme == 1) then
+                     e1(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls) &
+                               + deltat*e1_veloc(i,j,ispec,i_sls) &
+                               + deltatsquareover2*e1_accel(i,j,ispec,i_sls)
+                     e1_veloc(i,j,ispec,i_sls) = e1_veloc(i,j,ispec,i_sls) + deltatover2*e1_accel(i,j,ispec,i_sls)
+                     e1_accel(i,j,ispec,i_sls) = ZERO
+                     phinu1 = phi_nu1(i,j,ispec,i_sls)
+                     tauinvnu1 = inv_tau_sigma_nu1(i,j,ispec,i_sls)
+                     e1_accel(i,j,ispec,i_sls) = theta_n_v * phinu1 - e1_veloc(i,j,ispec,i_sls) * tauinvnu1
+                     e1_accel(i,j,ispec,i_sls) = e1_accel(i,j,ispec,i_sls)/(1._CUSTOM_REAL + 0.5_CUSTOM_REAL*tauinvnu1*deltat)
+                     e1_veloc(i,j,ispec,i_sls) = e1_veloc(i,j,ispec,i_sls) + deltatover2*e1_accel(i,j,ispec,i_sls)
+                 endif
+
+                 if(stage_time_scheme == 6) then
+                    tauinvnu1 = inv_tau_sigma_nu1(i,j,ispec,i_sls)
+                    phinu1 = phi_nu1(i,j,ispec,i_sls)
+                    e1_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls) + &
+                                              deltat * (theta_n_u * phinu1 - e1(i,j,ispec,i_sls) * tauinvnu1)
+                    e1(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls) + beta_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls)
+                 endif
+
+                 if(stage_time_scheme == 4) then
+
+                    tauinvnu1 = inv_tau_sigma_nu1(i,j,ispec,i_sls)
+                    phinu1 = phi_nu1(i,j,ispec,i_sls)
+                    e1_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (theta_n_u * phinu1 - e1(i,j,ispec,i_sls) * tauinvnu1)
+
+                    if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+                       if(i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
+                       if(i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
+                       if(i_stage == 3)weight_rk = 1._CUSTOM_REAL
+
+                       if(i_stage==1)then
+                       e1_initial_rk(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls)
+                       endif
+
+                       e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) &
+                        + weight_rk * e1_force_RK(i,j,ispec,i_sls,i_stage)
+
+                    elseif(i_stage==4)then
+
+                       e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
+                                             (e1_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e1_force_RK(i,j,ispec,i_sls,2) + &
+                                             2._CUSTOM_REAL * e1_force_RK(i,j,ispec,i_sls,3) + e1_force_RK(i,j,ispec,i_sls,4))
+                    endif
+                 endif
+
+
+                 ! evolution e11
+                 if(stage_time_scheme == 1) then
+                     e11(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls) &
+                               + deltat*e11_veloc(i,j,ispec,i_sls) &
+                               + deltatsquareover2*e11_accel(i,j,ispec,i_sls)
+                     e11_veloc(i,j,ispec,i_sls) = e11_veloc(i,j,ispec,i_sls) + deltatover2*e11_accel(i,j,ispec,i_sls)
+                     e11_accel(i,j,ispec,i_sls) = ZERO
+                     phinu2 = phi_nu2(i,j,ispec,i_sls)
+                     tauinvnu2 = inv_tau_sigma_nu2(i,j,ispec,i_sls)
+                     e11_accel(i,j,ispec,i_sls) = (dvx_dxl_n(i,j,ispec)-theta_n_v/TWO) * phinu2- &
+                                                  e11_veloc(i,j,ispec,i_sls)*tauinvnu2
+                     e11_accel(i,j,ispec,i_sls) = e11_accel(i,j,ispec,i_sls)/(1._CUSTOM_REAL + 0.5_CUSTOM_REAL*tauinvnu2*deltat)
+                     e11_veloc(i,j,ispec,i_sls) = e11_veloc(i,j,ispec,i_sls) + deltatover2*e11_accel(i,j,ispec,i_sls)
+                endif
+
+                 if(stage_time_scheme == 6) then
+                    phinu2 = phi_nu2(i,j,ispec,i_sls)
+                    tauinvnu2 = inv_tau_sigma_nu2(i,j,ispec,i_sls)
+                    e11_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e11_LDDRK(i,j,ispec,i_sls) &
+                                                 + deltat * ((dux_dxl_n(i,j,ispec)-theta_n_u/TWO) * phinu2) &
+                                                 - deltat * (e11(i,j,ispec,i_sls) * tauinvnu2)
+                    e11(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)+beta_LDDRK(i_stage)*e11_LDDRK(i,j,ispec,i_sls)
+                 endif
+
+                 if(stage_time_scheme == 4) then
+                    phinu2 = phi_nu2(i,j,ispec,i_sls)
+                    tauinvnu2 = inv_tau_sigma_nu2(i,j,ispec,i_sls)
+                    e11_force_RK(i,j,ispec,i_sls,i_stage) = deltat * ((dux_dxl_n(i,j,ispec)-theta_n_u/TWO) * phinu2- &
+                                                                       e11(i,j,ispec,i_sls) * tauinvnu2)
+
+                    if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+                       if(i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
+                       if(i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
+                       if(i_stage == 3)weight_rk = 1._CUSTOM_REAL
+                       if(i_stage==1)then
+                          e11_initial_rk(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)
+                       endif
+                       e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) &
+                        + weight_rk * e11_force_RK(i,j,ispec,i_sls,i_stage)
+                    elseif(i_stage==4)then
+                       e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
+                                        (e11_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e11_force_RK(i,j,ispec,i_sls,2) + &
+                                        2._CUSTOM_REAL * e11_force_RK(i,j,ispec,i_sls,3) + e11_force_RK(i,j,ispec,i_sls,4))
+                    endif
+                 endif
+
+                 ! evolution e13
+                 if(stage_time_scheme == 1) then
+                     e13(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls) &
+                               + deltat*e13_veloc(i,j,ispec,i_sls) &
+                               + deltatsquareover2*e13_accel(i,j,ispec,i_sls)
+                     e13_veloc(i,j,ispec,i_sls) = e13_veloc(i,j,ispec,i_sls) + deltatover2*e13_accel(i,j,ispec,i_sls)
+                     e13_accel(i,j,ispec,i_sls) = ZERO
+                     phinu2 = phi_nu2(i,j,ispec,i_sls)
+                     tauinvnu2 = inv_tau_sigma_nu2(i,j,ispec,i_sls)
+                     e13_accel(i,j,ispec,i_sls) = (dvx_dzl_n(i,j,ispec) + dvz_dxl_n(i,j,ispec)) * phinu2- &
+                                                  e13_veloc(i,j,ispec,i_sls)*tauinvnu2
+                     e13_accel(i,j,ispec,i_sls) = e13_accel(i,j,ispec,i_sls)/(1._CUSTOM_REAL + 0.5_CUSTOM_REAL*tauinvnu2*deltat)
+                     e13_veloc(i,j,ispec,i_sls) = e13_veloc(i,j,ispec,i_sls) + deltatover2*e13_accel(i,j,ispec,i_sls)
+                endif
+
+
+                 if(stage_time_scheme == 6) then
+                    phinu2=phi_nu2(i,j,ispec,i_sls)
+                    tauinvnu2 = inv_tau_sigma_nu2(i,j,ispec,i_sls)
+                    e13_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls) &
+                                             + deltat * ((dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec))*phinu2) &
+                                             - deltat * (e13(i,j,ispec,i_sls) * tauinvnu2)
+                    e13(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)+beta_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls)
+                 endif
+
+                 if(stage_time_scheme == 4) then
+                    phinu2=phi_nu2(i,j,ispec,i_sls)
+                    tauinvnu2 = inv_tau_sigma_nu2(i,j,ispec,i_sls)
+                    e13_force_RK(i,j,ispec,i_sls,i_stage) = deltat * ((dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec))*phinu2- &
+                                                                       e13(i,j,ispec,i_sls) * tauinvnu2)
+                    if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+                       if(i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
+                       if(i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
+                       if(i_stage == 3)weight_rk = 1._CUSTOM_REAL
+                       if(i_stage==1)then
+                          e13_initial_rk(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)
+                       endif
+                          e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) &
+                            + weight_rk * e13_force_RK(i,j,ispec,i_sls,i_stage)
+                    elseif(i_stage==4)then
+                       e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
+                            (e13_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e13_force_RK(i,j,ispec,i_sls,2) + &
+                            2._CUSTOM_REAL * e13_force_RK(i,j,ispec,i_sls,3) + e13_force_RK(i,j,ispec,i_sls,4))
+                    endif
+                 endif
+
+              enddo
+
+           enddo
+        enddo
+     enddo
+
+  endif ! end of test on attenuation
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! this to avoid a warning at execution time about an undefined variable being used
 ! for the SH component in the case of a P-SV calculation, and vice versa
@@ -2058,189 +2235,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
      endif ! if SIMULATION_TYPE == 2 adjoint wavefield
 
   endif ! if not using an initial field
-
-  ! implement attenuation
-  if(ATTENUATION_VISCOELASTIC_SOLID) then
-
-     ! compute Grad(displ_elastic) at time step n for attenuation
-     call compute_gradient_attenuation(displ_elastic,dux_dxl_n,duz_dxl_n, &
-          dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob)
-
-     displ_elastic_np1 = displ_elastic + deltat * veloc_elastic
-
-     ! compute Grad(displ_elastic) at time step n+1 for attenuation
-     call compute_gradient_attenuation(displ_elastic_np1,dux_dxl_np1,duz_dxl_np1, &
-          dux_dzl_np1,duz_dzl_np1,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob)
-
-
-     ! update memory variables with fourth-order Runge-Kutta time scheme for attenuation
-     ! loop over spectral elements
-     do ispec = 1,nspec
-
-        do j=1,NGLLZ
-           do i=1,NGLLX
-
-              theta_n   = dux_dxl_n(i,j,ispec) + duz_dzl_n(i,j,ispec)
-              theta_np1 = dux_dxl_np1(i,j,ispec) + duz_dzl_np1(i,j,ispec)
-
-              ! loop on all the standard linear solids
-              do i_sls = 1,N_SLS
-
-                 ! evolution e1
-                 if(stage_time_scheme == 1) then
-                    Un = e1(i,j,ispec,i_sls)
-                    tauinv = - inv_tau_sigma_nu1(i,j,ispec,i_sls)
-                    tauinvsquare = tauinv * tauinv
-                    tauinvcube = tauinvsquare * tauinv
-                    tauinvUn = tauinv * Un
-                    Sn   = theta_n * phi_nu1(i,j,ispec,i_sls)
-                    Snp1 = theta_np1 * phi_nu1(i,j,ispec,i_sls)
-                    Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
-                         twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
-                         fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
-                         deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
-                    e1(i,j,ispec,i_sls) = Unp1
-                 endif
-
-                 if(stage_time_scheme == 6) then
-
-                    tauinv = inv_tau_sigma_nu1(i,j,ispec,i_sls)
-                    Un = e1(i,j,ispec,i_sls)
-                    temp_time_scheme = phi_nu1(i,j,ispec,i_sls)
-                    e1_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls) + &
-                                              deltat * (theta_n * temp_time_scheme - Un * tauinv)
-                    e1(i,j,ispec,i_sls) = Un + beta_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls)
-                 endif
-
-                 if(stage_time_scheme == 4) then
-
-                    tauinv = inv_tau_sigma_nu1(i,j,ispec,i_sls)
-                    Un = e1(i,j,ispec,i_sls)
-                    temp_time_scheme = phi_nu1(i,j,ispec,i_sls)
-                    e1_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (theta_n * temp_time_scheme - Un * tauinv)
-
-                    if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
-                       if(i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
-                       if(i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
-                       if(i_stage == 3)weight_rk = 1._CUSTOM_REAL
-
-                       if(i_stage==1)then
-                       e1_initial_rk(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls)
-                       endif
-
-                       e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) &
-                        + weight_rk * e1_force_RK(i,j,ispec,i_sls,i_stage)
-
-                    elseif(i_stage==4)then
-
-                       e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
-                                             (e1_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e1_force_RK(i,j,ispec,i_sls,2) + &
-                                             2._CUSTOM_REAL * e1_force_RK(i,j,ispec,i_sls,3) + e1_force_RK(i,j,ispec,i_sls,4))
-                    endif
-                 endif
-
-
-                 ! evolution e11
-                 if(stage_time_scheme == 1) then
-                    Un = e11(i,j,ispec,i_sls)
-                    tauinv = - inv_tau_sigma_nu2(i,j,ispec,i_sls)
-                    tauinvsquare = tauinv * tauinv
-                    tauinvcube = tauinvsquare * tauinv
-                    tauinvUn = tauinv * Un
-                    Sn   = (dux_dxl_n(i,j,ispec) - theta_n/TWO) * phi_nu2(i,j,ispec,i_sls)
-                    Snp1 = (dux_dxl_np1(i,j,ispec) - theta_np1/TWO) * phi_nu2(i,j,ispec,i_sls)
-                    Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
-                         twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
-                         fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
-                         deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
-                    e11(i,j,ispec,i_sls) = Unp1
-                endif
-
-                 if(stage_time_scheme == 6) then
-                    temp_time_scheme = dux_dxl_n(i,j,ispec)-theta_n/TWO
-                    temper_time_scheme = phi_nu2(i,j,ispec,i_sls)
-                    e11_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e11_LDDRK(i,j,ispec,i_sls) &
-                                                 + deltat * (temp_time_scheme * temper_time_scheme)- &
-                                                 deltat * (e11(i,j,ispec,i_sls) * inv_tau_sigma_nu2(i,j,ispec,i_sls))
-                    e11(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)+beta_LDDRK(i_stage)*e11_LDDRK(i,j,ispec,i_sls)
-                 endif
-
-                 if(stage_time_scheme == 4) then
-
-                    temp_time_scheme = dux_dxl_n(i,j,ispec)-theta_n/TWO
-                    temper_time_scheme = phi_nu2(i,j,ispec,i_sls)
-                    e11_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (temp_time_scheme * temper_time_scheme- &
-                                               e11(i,j,ispec,i_sls) * inv_tau_sigma_nu2(i,j,ispec,i_sls))
-
-                    if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
-                       if(i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
-                       if(i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
-                       if(i_stage == 3)weight_rk = 1._CUSTOM_REAL
-                       if(i_stage==1)then
-                          e11_initial_rk(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)
-                       endif
-                       e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) &
-                        + weight_rk * e11_force_RK(i,j,ispec,i_sls,i_stage)
-                    elseif(i_stage==4)then
-                      e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
-                                             (e11_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e11_force_RK(i,j,ispec,i_sls,2) + &
-                                              2._CUSTOM_REAL * e11_force_RK(i,j,ispec,i_sls,3) + e11_force_RK(i,j,ispec,i_sls,4))
-                    endif
-                 endif
-
-                 ! evolution e13
-                 if(stage_time_scheme == 1) then
-                    Un = e13(i,j,ispec,i_sls)
-                    tauinv = - inv_tau_sigma_nu2(i,j,ispec,i_sls)
-                    tauinvsquare = tauinv * tauinv
-                    tauinvcube = tauinvsquare * tauinv
-                    tauinvUn = tauinv * Un
-                    Sn   = (dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)) * phi_nu2(i,j,ispec,i_sls)
-                    Snp1 = (dux_dzl_np1(i,j,ispec) + duz_dxl_np1(i,j,ispec)) * phi_nu2(i,j,ispec,i_sls)
-                    Unp1 = Un + (deltatfourth*tauinvcube*(Sn + tauinvUn) + &
-                         twelvedeltat*(Sn + Snp1 + 2*tauinvUn) + &
-                         fourdeltatsquare*tauinv*(2*Sn + Snp1 + 3*tauinvUn) + &
-                         deltatcube*tauinvsquare*(3*Sn + Snp1 + 4*tauinvUn))* ONE_OVER_24
-                    e13(i,j,ispec,i_sls) = Unp1
-                 endif
-
-                 if(stage_time_scheme == 6) then
-                    temp_time_scheme=dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)
-                    temper_time_scheme=phi_nu2(i,j,ispec,i_sls)
-                    e13_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls)+&
-                                             deltat * (temp_time_scheme*temper_time_scheme)- &
-                                            deltat * (e13(i,j,ispec,i_sls) * inv_tau_sigma_nu2(i,j,ispec,i_sls))
-                    e13(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)+beta_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls)
-                 endif
-
-                 if(stage_time_scheme == 4) then
-                    temp_time_scheme=dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)
-                    temper_time_scheme=phi_nu2(i,j,ispec,i_sls)
-                    e13_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (temp_time_scheme*temper_time_scheme- &
-                                            e13(i,j,ispec,i_sls) * inv_tau_sigma_nu2(i,j,ispec,i_sls))
-                    if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
-                       if(i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
-                       if(i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
-                       if(i_stage == 3)weight_rk = 1._CUSTOM_REAL
-                       if(i_stage==1)then
-                          e13_initial_rk(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)
-                       endif
-                          e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) &
-                            + weight_rk * e13_force_RK(i,j,ispec,i_sls,i_stage)
-                    elseif(i_stage==4)then
-                       e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
-                            (e13_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e13_force_RK(i,j,ispec,i_sls,2) + &
-                            2._CUSTOM_REAL * e13_force_RK(i,j,ispec,i_sls,3) + e13_force_RK(i,j,ispec,i_sls,4))
-                    endif
-                 endif
-
-              enddo
-
-           enddo
-        enddo
-     enddo
-
-  endif ! end of test on attenuation
 
 end subroutine compute_forces_viscoelastic
 
