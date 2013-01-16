@@ -222,6 +222,9 @@
 ! loop on all the standard linear solids
           do i_sls = 1,N_SLS
 
+          phinu2 = phi_nu2(i,j,ispec,i_sls)
+          tauinvnu2 = inv_tau_sigma_nu2(i,j,ispec,i_sls)
+
 ! evolution e1 ! no need since we are just considering shear attenuation
 !     if(stage_time_scheme == 1) then
 !                 Un = e11(i,j,ispec,i_sls)
@@ -239,23 +242,17 @@
 !     endif
 
                  if(stage_time_scheme == 1) then
-                     e11(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls) &
-                               + deltat*e11_veloc(i,j,ispec,i_sls) &
-                               + deltatsquareover2*e11_accel(i,j,ispec,i_sls)
+                     e11(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls) + deltat*e11_veloc(i,j,ispec,i_sls) &
+                                            + deltatsquareover2*e11_accel(i,j,ispec,i_sls)
                      e11_veloc(i,j,ispec,i_sls) = e11_veloc(i,j,ispec,i_sls) + deltatover2*e11_accel(i,j,ispec,i_sls)
-                     e11_accel(i,j,ispec,i_sls) = ZERO
-                     phinu2 = phi_nu2(i,j,ispec,i_sls)
-                     tauinvnu2 = inv_tau_sigma_nu2(i,j,ispec,i_sls)
-                     e11_accel(i,j,ispec,i_sls) = (dvx_dxl_n(i,j,ispec)-theta_n_v/TWO) * phinu2- &
-                                                  e11_veloc(i,j,ispec,i_sls)*tauinvnu2
-                     e11_accel(i,j,ispec,i_sls) = e11_accel(i,j,ispec,i_sls)/(1._CUSTOM_REAL + 0.5_CUSTOM_REAL*tauinvnu2*deltat)
+                     e11_accel(i,j,ispec,i_sls) = ((dvx_dxl_n(i,j,ispec)-theta_n_v/TWO) * phinu2- &
+                                                  e11_veloc(i,j,ispec,i_sls)*tauinvnu2) &
+                                                  /(1._CUSTOM_REAL + 0.5_CUSTOM_REAL*tauinvnu2*deltat)
                      e11_veloc(i,j,ispec,i_sls) = e11_veloc(i,j,ispec,i_sls) + deltatover2*e11_accel(i,j,ispec,i_sls)
                 endif
 
 
                 if(stage_time_scheme == 6) then
-                   phinu2 = phi_nu2(i,j,ispec,i_sls)
-                   tauinvnu2 = inv_tau_sigma_nu2(i,j,ispec,i_sls)
                    e11_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e11_LDDRK(i,j,ispec,i_sls) &
                                                 + deltat * ((dux_dxl_n(i,j,ispec)-theta_n_u/TWO) * phinu2) &
                                                 - deltat * (e11(i,j,ispec,i_sls) * tauinvnu2)
@@ -263,8 +260,6 @@
                  endif
 
                 if(stage_time_scheme == 4) then
-                    phinu2 = phi_nu2(i,j,ispec,i_sls)
-                    tauinvnu2 = inv_tau_sigma_nu2(i,j,ispec,i_sls)
                     e11_force_RK(i,j,ispec,i_sls,i_stage) = deltat * ((dux_dxl_n(i,j,ispec)-theta_n_u/TWO) * phinu2- &
                                                                        e11(i,j,ispec,i_sls) * tauinvnu2)
 
@@ -287,23 +282,17 @@
 
                  ! evolution e13
                  if(stage_time_scheme == 1) then
-                     e13(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls) &
-                               + deltat*e13_veloc(i,j,ispec,i_sls) &
-                               + deltatsquareover2*e13_accel(i,j,ispec,i_sls)
+                     e13(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls) + deltat*e13_veloc(i,j,ispec,i_sls) &
+                                            + deltatsquareover2*e13_accel(i,j,ispec,i_sls)
                      e13_veloc(i,j,ispec,i_sls) = e13_veloc(i,j,ispec,i_sls) + deltatover2*e13_accel(i,j,ispec,i_sls)
-                     e13_accel(i,j,ispec,i_sls) = ZERO
-                     phinu2 = phi_nu2(i,j,ispec,i_sls)
-                     tauinvnu2 = inv_tau_sigma_nu2(i,j,ispec,i_sls)
-                     e13_accel(i,j,ispec,i_sls) = (dvx_dzl_n(i,j,ispec) + dvz_dxl_n(i,j,ispec)) * phinu2- &
-                                                  e13_veloc(i,j,ispec,i_sls)*tauinvnu2
-                     e13_accel(i,j,ispec,i_sls) = e13_accel(i,j,ispec,i_sls)/(1._CUSTOM_REAL + 0.5_CUSTOM_REAL*tauinvnu2*deltat)
+                     e13_accel(i,j,ispec,i_sls) = ((dvx_dzl_n(i,j,ispec) + dvz_dxl_n(i,j,ispec)) * phinu2- &
+                                                  e13_veloc(i,j,ispec,i_sls)*tauinvnu2) &
+                                                  /(1._CUSTOM_REAL + 0.5_CUSTOM_REAL*tauinvnu2*deltat)
                      e13_veloc(i,j,ispec,i_sls) = e13_veloc(i,j,ispec,i_sls) + deltatover2*e13_accel(i,j,ispec,i_sls)
                 endif
 
 
                  if(stage_time_scheme == 6) then
-                    phinu2=phi_nu2(i,j,ispec,i_sls)
-                    tauinvnu2 = inv_tau_sigma_nu2(i,j,ispec,i_sls)
                     e13_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls) &
                                              + deltat * ((dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec))*phinu2) &
                                              - deltat * (e13(i,j,ispec,i_sls) * tauinvnu2)
@@ -311,8 +300,6 @@
                  endif
 
                  if(stage_time_scheme == 4) then
-                    phinu2=phi_nu2(i,j,ispec,i_sls)
-                    tauinvnu2 = inv_tau_sigma_nu2(i,j,ispec,i_sls)
                     e13_force_RK(i,j,ispec,i_sls,i_stage) = deltat * ((dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec))*phinu2- &
                                                                        e13(i,j,ispec,i_sls) * tauinvnu2)
                     if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
