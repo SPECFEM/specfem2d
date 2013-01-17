@@ -8540,9 +8540,6 @@ if(coupled_elastic_poro) then
         icounter = 0
         mask_ibool(:) = .false.
         do ispec = 1,nspec
-#ifdef CRISTINI_DO_NOT_DUMP_FICTITIOUS_REGIONS
-         if(kmato(ispec) > 2) cycle
-#endif
           do j = 1,NGLLZ
             do i = 1,NGLLX
                iglob = ibool(i,j,ispec)
@@ -8566,9 +8563,7 @@ if(coupled_elastic_poro) then
         open(unit=27,file=wavefield_file,status='unknown',action='write')
         write(27,*) icounter
         close(27)
-#ifndef CRISTINI_DO_NOT_DUMP_FICTITIOUS_REGIONS
         if(icounter /= nglob) stop 'error: should have icounter == nglob in wavefield dumps'
-#endif
 
         this_is_the_first_time_we_dump = .false.
 
@@ -8636,9 +8631,6 @@ if(coupled_elastic_poro) then
         icounter = 0
         mask_ibool(:) = .false.
         do ispec = 1,nspec
-#ifdef CRISTINI_DO_NOT_DUMP_FICTITIOUS_REGIONS
-         if(kmato(ispec) > 2) cycle
-#endif
           do j = 1,NGLLZ
             do i = 1,NGLLX
                iglob = ibool(i,j,ispec)
