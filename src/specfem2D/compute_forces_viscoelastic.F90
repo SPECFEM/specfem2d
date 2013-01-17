@@ -595,23 +595,18 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     rmemory_dux_dx(i,j,ispec_PML) = coef0 * rmemory_dux_dx(i,j,ispec_PML) &
                     + PML_dux_dxl_new(i,j,ispec_PML) * coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
 
-                    !! DK DK new from Wang eq (21)
                     rmemory_dux_dz(i,j,ispec_PML) = coef0 * rmemory_dux_dz(i,j,ispec_PML) &
                     + PML_dux_dzl_new(i,j,ispec_PML) * coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
 
-                    !! DK DK new from Wang eq (21)
                     rmemory_duz_dx(i,j,ispec_PML) = coef0 * rmemory_duz_dx(i,j,ispec_PML) &
                     + PML_duz_dxl_new(i,j,ispec_PML) * coef1 + PML_duz_dxl(i,j,ispec_PML) * coef2
 
-                    !! DK DK new from Wang eq (21)
                     rmemory_duz_dz(i,j,ispec_PML) = coef0 * rmemory_duz_dz(i,j,ispec_PML) &
                     + PML_duz_dzl_new(i,j,ispec_PML) * coef1 + PML_duz_dzl(i,j,ispec_PML) * coef2
                     else
-                    !! DK DK new from Wang eq (21)
                     rmemory_dux_dx(i,j,ispec_PML) = coef0 * rmemory_dux_dx(i,j,ispec_PML) &
                     + PML_dux_dxl_new(i,j,ispec_PML) * coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
 
-                    !! DK DK new from Wang eq (21)
                     rmemory_duz_dx(i,j,ispec_PML) = coef0 * rmemory_duz_dx(i,j,ispec_PML) &
                     + PML_duz_dxl_new(i,j,ispec_PML) * coef1 + PML_duz_dxl(i,j,ispec_PML) * coef2
                     endif
@@ -665,23 +660,18 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     rmemory_dux_dx_prime(i,j,ispec_PML) = coef0 * rmemory_dux_dx_prime(i,j,ispec_PML) &
                     + PML_dux_dxl_new(i,j,ispec_PML) *coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
 
-                    !! DK DK new from Wang eq (21)
                     rmemory_dux_dz_prime(i,j,ispec_PML) = coef0 * rmemory_dux_dz_prime(i,j,ispec_PML) &
                     + PML_dux_dzl_new(i,j,ispec_PML) *coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
 
-                    !! DK DK new from Wang eq (21)
                     rmemory_duz_dx_prime(i,j,ispec_PML) = coef0 * rmemory_duz_dx_prime(i,j,ispec_PML) &
                     + PML_duz_dxl_new(i,j,ispec_PML) *coef1 + PML_duz_dxl(i,j,ispec_PML) * coef2
 
-                    !! DK DK new from Wang eq (21)
                     rmemory_duz_dz_prime(i,j,ispec_PML) = coef0 * rmemory_duz_dz_prime(i,j,ispec_PML) &
                     + PML_duz_dzl_new(i,j,ispec_PML) *coef1 + PML_duz_dzl(i,j,ispec_PML) * coef2
                     else
-                    !! DK DK new from Wang eq (21)
                     rmemory_dux_dz(i,j,ispec_PML) = coef0 * rmemory_dux_dz(i,j,ispec_PML) &
                     + PML_dux_dzl_new(i,j,ispec_PML) *coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
 
-                    !! DK DK new from Wang eq (21)
                     rmemory_duz_dz(i,j,ispec_PML) = coef0 * rmemory_duz_dz(i,j,ispec_PML) &
                     + PML_duz_dzl_new(i,j,ispec_PML) *coef1 + PML_duz_dzl(i,j,ispec_PML) * coef2
                     endif
@@ -743,23 +733,18 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     rmemory_dux_dx(i,j,ispec_PML) = coef0 * rmemory_dux_dx(i,j,ispec_PML) &
                     + PML_dux_dxl_new(i,j,ispec_PML) * coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
 
-                    !! DK DK new from Wang eq (21)
                     rmemory_dux_dz(i,j,ispec_PML) = coef0 * rmemory_dux_dz(i,j,ispec_PML) &
                     + PML_dux_dzl_new(i,j,ispec_PML) * coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
 
-                    !! DK DK new from Wang eq (21)
                     rmemory_duz_dx(i,j,ispec_PML) = coef0 * rmemory_duz_dx(i,j,ispec_PML) &
                     + PML_duz_dxl_new(i,j,ispec_PML) * coef1 + PML_duz_dxl(i,j,ispec_PML) * coef2
 
-                    !! DK DK new from Wang eq (21)
                     rmemory_duz_dz(i,j,ispec_PML) = coef0 * rmemory_duz_dz(i,j,ispec_PML) &
                     + PML_duz_dzl_new(i,j,ispec_PML) * coef1 + PML_duz_dzl(i,j,ispec_PML) * coef2
                     else
-                    !! DK DK new from Wang eq (21)
                     rmemory_dux_dx(i,j,ispec_PML) = coef0*rmemory_dux_dx(i,j,ispec_PML) &
                     + PML_dux_dxl_new(i,j,ispec_PML) * coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
 
-                    !! DK DK new from Wang eq (21)
                     rmemory_duz_dx(i,j,ispec_PML) = coef0*rmemory_duz_dx(i,j,ispec_PML) &
                     + PML_duz_dxl_new(i,j,ispec_PML) * coef1 + PML_duz_dxl(i,j,ispec_PML) * coef2
                     endif
@@ -810,30 +795,23 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     end if
 
                     if(ROTATE_PML_ACTIVATE)then
-
                     !! DK DK new from Wang eq (21)
                     rmemory_dux_dx_prime(i,j,ispec_PML) = coef0 * rmemory_dux_dx_prime(i,j,ispec_PML) &
                     + PML_dux_dxl_new(i,j,ispec_PML) *coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
 
-                    !! DK DK new from Wang eq (21)
                     rmemory_dux_dz_prime(i,j,ispec_PML) = coef0 * rmemory_dux_dz_prime(i,j,ispec_PML) &
                     + PML_dux_dzl_new(i,j,ispec_PML) *coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
 
-                    !! DK DK new from Wang eq (21)
                     rmemory_duz_dx_prime(i,j,ispec_PML) = coef0 * rmemory_duz_dx_prime(i,j,ispec_PML) &
                     + PML_duz_dxl_new(i,j,ispec_PML) *coef1 + PML_duz_dxl(i,j,ispec_PML) * coef2
 
-                    !! DK DK new from Wang eq (21)
                     rmemory_duz_dz_prime(i,j,ispec_PML) = coef0 * rmemory_duz_dz_prime(i,j,ispec_PML) &
                     + PML_duz_dzl_new(i,j,ispec_PML) *coef1 + PML_duz_dzl(i,j,ispec_PML) * coef2
 
                     else
-
-                    !! DK DK new from Wang eq (21)
                     rmemory_dux_dz(i,j,ispec_PML) = coef0 * rmemory_dux_dz(i,j,ispec_PML) &
                     + PML_dux_dzl_new(i,j,ispec_PML) *coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
 
-                    !! DK DK new from Wang eq (21)
                     rmemory_duz_dz(i,j,ispec_PML) = coef0 * rmemory_duz_dz(i,j,ispec_PML) &
                     + PML_duz_dzl_new(i,j,ispec_PML) *coef1 + PML_duz_dzl(i,j,ispec_PML) * coef2
                     endif
@@ -888,23 +866,18 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     rmemory_dux_dx(i,j,ispec_PML) = coef0 * rmemory_dux_dx(i,j,ispec_PML) &
                     + PML_dux_dxl_new(i,j,ispec_PML) * coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
 
-                    !! DK DK new from Wang eq (21)
                     rmemory_dux_dz(i,j,ispec_PML) = coef0 * rmemory_dux_dz(i,j,ispec_PML) &
                     + PML_dux_dzl_new(i,j,ispec_PML) * coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
 
-                    !! DK DK new from Wang eq (21)
                     rmemory_duz_dx(i,j,ispec_PML) = coef0 * rmemory_duz_dx(i,j,ispec_PML) &
                     + PML_duz_dxl_new(i,j,ispec_PML) * coef1 + PML_duz_dxl(i,j,ispec_PML) * coef2
 
-                    !! DK DK new from Wang eq (21)
                     rmemory_duz_dz(i,j,ispec_PML) = coef0 * rmemory_duz_dz(i,j,ispec_PML) &
                     + PML_duz_dzl_new(i,j,ispec_PML) * coef1 + PML_duz_dzl(i,j,ispec_PML) * coef2
                     else
-                    !! DK DK new from Wang eq (21)
                     rmemory_dux_dx(i,j,ispec_PML) = coef0*rmemory_dux_dx(i,j,ispec_PML) &
                     + PML_dux_dxl_new(i,j,ispec_PML) * coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
 
-                    !! DK DK new from Wang eq (21)
                     rmemory_duz_dx(i,j,ispec_PML) = coef0*rmemory_duz_dx(i,j,ispec_PML) &
                     + PML_duz_dxl_new(i,j,ispec_PML) * coef1 + PML_duz_dxl(i,j,ispec_PML) * coef2
                     endif
@@ -955,23 +928,18 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     rmemory_dux_dx_prime(i,j,ispec_PML) = coef0 * rmemory_dux_dx_prime(i,j,ispec_PML) &
                     + PML_dux_dxl_new(i,j,ispec_PML) *coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
 
-                    !! DK DK new from Wang eq (21)
                     rmemory_dux_dz_prime(i,j,ispec_PML) = coef0 * rmemory_dux_dz_prime(i,j,ispec_PML) &
                     + PML_dux_dzl_new(i,j,ispec_PML) *coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
 
-                    !! DK DK new from Wang eq (21)
                     rmemory_duz_dx_prime(i,j,ispec_PML) = coef0 * rmemory_duz_dx_prime(i,j,ispec_PML) &
                     + PML_duz_dxl_new(i,j,ispec_PML) *coef1 + PML_duz_dxl(i,j,ispec_PML) * coef2
 
-                    !! DK DK new from Wang eq (21)
                     rmemory_duz_dz_prime(i,j,ispec_PML) = coef0 * rmemory_duz_dz_prime(i,j,ispec_PML) &
                     + PML_duz_dzl_new(i,j,ispec_PML) *coef1 + PML_duz_dzl(i,j,ispec_PML) * coef2
                     else
-                    !! DK DK new from Wang eq (21)
                     rmemory_dux_dz(i,j,ispec_PML) = coef0 * rmemory_dux_dz(i,j,ispec_PML) &
                     + PML_dux_dzl_new(i,j,ispec_PML) *coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
 
-                    !! DK DK new from Wang eq (21)
                     rmemory_duz_dz(i,j,ispec_PML) = coef0 * rmemory_duz_dz(i,j,ispec_PML) &
                     + PML_duz_dzl_new(i,j,ispec_PML) *coef1 + PML_duz_dzl(i,j,ispec_PML) * coef2
                     endif

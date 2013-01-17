@@ -365,6 +365,11 @@
   include "precision.h"
 #endif
 
+!! DK DK uncomment this in order to force vectorization of the loops
+!! DK DK using a trick that goes out of the array bounds
+!! DK DK (then array bound checking cannot be used, thus for instance do NOT use -check all in Intel ifort)
+! #define FORCE_VECTORIZATION
+
   integer NSOURCES,i_source
   integer, dimension(:), allocatable :: source_type,time_function_type
   double precision, dimension(:), allocatable :: x_source,z_source,xi_source,gamma_source,&
@@ -4785,25 +4790,28 @@ if(coupled_elastic_poro) then
     if(any_elastic) then
 
       if(time_stepping_scheme==1)then
+#ifdef FORCE_VECTORIZATION
+!! DK DK this allows for full vectorization by using a trick to see the 2D array as a 1D array
+!! DK DK whose dimension is the product of the two dimensions, the second dimension being equal to 1
+     do i = 1,3*nglob_elastic !! DK DK here change 3 to NDIM when/if we suppress the 2nd component of the arrays (the SH component)
+!    do i = 1,NDIM*nglob_elastic  !! DK DK this should be the correct size in principle, but not here because of the SH component
+      displ_elastic(i,1) = displ_elastic(i,1) &
+                    + deltat*veloc_elastic(i,1) &
+                    + deltatsquareover2*accel_elastic(i,1)
+      veloc_elastic(i,1) = veloc_elastic(i,1) + deltatover2*accel_elastic(i,1)
+     enddo
+#else
       displ_elastic = displ_elastic &
                     + deltat*veloc_elastic &
                     + deltatsquareover2*accel_elastic
       veloc_elastic = veloc_elastic + deltatover2*accel_elastic
+#endif
+      endif
       accel_elastic_adj_coupling = accel_elastic
       accel_elastic = ZERO
-      endif
-
-      if(time_stepping_scheme==2)then
-      accel_elastic_adj_coupling = accel_elastic
-      accel_elastic = ZERO
-      endif
-
-      if(time_stepping_scheme==3)then
-      accel_elastic_adj_coupling = accel_elastic
-      accel_elastic = ZERO
-      endif
 
       if(SIMULATION_TYPE == 2) then ! Adjoint calculation
+!! DK DK this should be fully vectorized
         b_displ_elastic = b_displ_elastic &
                         + b_deltat*b_veloc_elastic &
                         + b_deltatsquareover2*b_accel_elastic
@@ -5000,25 +5008,20 @@ if(coupled_elastic_poro) then
 
 !-----------------------------------------
     if(any_acoustic) then
+
       if(time_stepping_scheme==1)then
       ! Newmark time scheme
+!! DK DK this should be vectorized
       potential_acoustic = potential_acoustic &
                           + deltat*potential_dot_acoustic &
                           + deltatsquareover2*potential_dot_dot_acoustic
       potential_dot_acoustic = potential_dot_acoustic &
                               + deltatover2*potential_dot_dot_acoustic
-      potential_dot_dot_acoustic = ZERO
       endif
-
-      if(time_stepping_scheme==2)then
       potential_dot_dot_acoustic = ZERO
-      endif
-
-      if(time_stepping_scheme==3)then
-      potential_dot_dot_acoustic = ZERO
-      endif
 
       if(SIMULATION_TYPE == 2) then ! Adjoint calculation
+!! DK DK this should be vectorized
         b_potential_acoustic = b_potential_acoustic &
                             + b_deltat*b_potential_dot_acoustic &
                             + b_deltatsquareover2*b_potential_dot_dot_acoustic
@@ -5437,14 +5440,6 @@ if(coupled_elastic_poro) then
 
     endif
 
-!  if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0 .and. SIMULATION_TYPE == 2) then
-!    call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic,nglob, &
-!           ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
-!           max_interface_size, max_ibool_interfaces_size_ac,&
-!           ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
-!           tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac, &
-!           buffer_recv_faces_vector_ac, my_neighbours)
-!  endif
 #endif
 
 ! ************************************************************************************
@@ -5453,12 +5448,14 @@ if(coupled_elastic_poro) then
 
     if(any_acoustic) then
       if(time_stepping_scheme == 1)then
+!! DK DK this should be vectorized
       potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
       potential_dot_acoustic = potential_dot_acoustic + deltatover2*potential_dot_dot_acoustic
       endif
 
       if(time_stepping_scheme == 2)then
 
+!! DK DK this should be vectorized
         potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
 
         potential_dot_acoustic_LDDRK = alpha_LDDRK(i_stage) * potential_dot_acoustic_LDDRK &
@@ -5468,6 +5465,7 @@ if(coupled_elastic_poro) then
                                        +deltat*potential_dot_acoustic
 
         if(i_stage==1 .and. it == 1 .and. (.not. initialfield))then
+!! DK DK this should be vectorized
         potential_dot_acoustic_temp = potential_dot_acoustic_temp &
                                       + beta_LDDRK(i_stage) * potential_dot_acoustic_LDDRK
         potential_dot_acoustic = potential_dot_acoustic_temp
@@ -5475,14 +5473,14 @@ if(coupled_elastic_poro) then
         potential_dot_acoustic = potential_dot_acoustic + beta_LDDRK(i_stage) * potential_dot_acoustic_LDDRK
         endif
 
-!        potential_dot_acoustic = potential_dot_acoustic + beta_LDDRK(i_stage) * potential_dot_acoustic_LDDRK
-
+!! DK DK this should be vectorized
         potential_acoustic = potential_acoustic + beta_LDDRK(i_stage) * potential_acoustic_LDDRK
 
       endif
 
       if(time_stepping_scheme == 3)then
 
+!! DK DK this should be vectorized
         potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
 
         potential_dot_dot_acoustic_rk(:,i_stage) = deltat * potential_dot_dot_acoustic(:)
@@ -5496,20 +5494,24 @@ if(coupled_elastic_poro) then
 
         if(i_stage==1)then
 
-        potential_dot_acoustic_init_rk(:) = potential_dot_acoustic(:)
-        potential_acoustic_init_rk(:) = potential_acoustic(:)
+!! DK DK this should be vectorized
+        potential_dot_acoustic_init_rk = potential_dot_acoustic
+        potential_acoustic_init_rk = potential_acoustic
 
         endif
 
+!! DK DK this should be vectorized
         potential_dot_acoustic(:) = potential_dot_acoustic_init_rk(:) + weight_rk * potential_dot_dot_acoustic_rk(:,i_stage)
         potential_acoustic(:) = potential_acoustic_init_rk(:) + weight_rk * potential_dot_acoustic_rk(:,i_stage)
 
         elseif(i_stage==4)then
 
+!! DK DK this should be vectorized
         potential_dot_acoustic(:) = potential_dot_acoustic_init_rk(:) + 1.0d0 / 6.0d0 * &
         (potential_dot_dot_acoustic_rk(:,1) + 2.0d0 * potential_dot_dot_acoustic_rk(:,2) + &
          2.0d0 * potential_dot_dot_acoustic_rk(:,3) + potential_dot_dot_acoustic_rk(:,4))
 
+!! DK DK this should be vectorized
         potential_acoustic(:) = potential_acoustic_init_rk(:) + 1.0d0 / 6.0d0 * &
         (potential_dot_acoustic_rk(:,1) + 2.0d0 * potential_dot_acoustic_rk(:,2) + &
          2.0d0 * potential_dot_acoustic_rk(:,3) + potential_dot_acoustic_rk(:,4))
@@ -5519,6 +5521,7 @@ if(coupled_elastic_poro) then
       endif
 
       if(SIMULATION_TYPE ==2)then
+!! DK DK this should be vectorized
         b_potential_dot_dot_acoustic = b_potential_dot_dot_acoustic * rmass_inverse_acoustic
         b_potential_dot_acoustic = b_potential_dot_acoustic + b_deltatover2*b_potential_dot_dot_acoustic
       endif
@@ -6185,21 +6188,19 @@ if(coupled_elastic_poro) then
 
     if(any_elastic) then
 
+!! DK DK this should be vectorized
+      accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic_one
+      accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic_one
+      accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic_three
+
       if(time_stepping_scheme == 1)then
-
-        accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic_one
-        accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic_one
-        accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic_three
-
+!! DK DK this should be vectorized
         veloc_elastic = veloc_elastic + deltatover2 * accel_elastic
       endif
 
       if(time_stepping_scheme == 2)then
 
-        accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic_one
-        accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic_one
-        accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic_three
-
+!! DK DK this should be vectorized
         veloc_elastic_LDDRK = alpha_LDDRK(i_stage) * veloc_elastic_LDDRK + deltat * accel_elastic
         displ_elastic_LDDRK = alpha_LDDRK(i_stage) * displ_elastic_LDDRK + deltat * veloc_elastic
         if(i_stage==1 .and. it == 1 .and. (.not. initialfield))then
@@ -6214,10 +6215,7 @@ if(coupled_elastic_poro) then
 
       if(time_stepping_scheme == 3)then
 
-        accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic_one
-        accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic_one
-        accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic_three
-
+!! DK DK this should be vectorized
         accel_elastic_rk(1,:,i_stage) = deltat * accel_elastic(1,:)
         accel_elastic_rk(2,:,i_stage) = deltat * accel_elastic(2,:)
         accel_elastic_rk(3,:,i_stage) = deltat * accel_elastic(3,:)
@@ -6234,6 +6232,7 @@ if(coupled_elastic_poro) then
 
         if(i_stage==1)then
 
+!! DK DK this should be vectorized
         veloc_elastic_initial_rk(1,:) = veloc_elastic(1,:)
         veloc_elastic_initial_rk(2,:) = veloc_elastic(2,:)
         veloc_elastic_initial_rk(3,:) = veloc_elastic(3,:)
@@ -6244,16 +6243,18 @@ if(coupled_elastic_poro) then
 
         endif
 
+!! DK DK this should be vectorized
         veloc_elastic(1,:) = veloc_elastic_initial_rk(1,:) + weight_rk * accel_elastic_rk(1,:,i_stage)
-  veloc_elastic(2,:) = veloc_elastic_initial_rk(2,:) + weight_rk * accel_elastic_rk(2,:,i_stage)
-  veloc_elastic(3,:) = veloc_elastic_initial_rk(3,:) + weight_rk * accel_elastic_rk(3,:,i_stage)
+        veloc_elastic(2,:) = veloc_elastic_initial_rk(2,:) + weight_rk * accel_elastic_rk(2,:,i_stage)
+        veloc_elastic(3,:) = veloc_elastic_initial_rk(3,:) + weight_rk * accel_elastic_rk(3,:,i_stage)
 
         displ_elastic(1,:) = displ_elastic_initial_rk(1,:) + weight_rk * veloc_elastic_rk(1,:,i_stage)
-  displ_elastic(2,:) = displ_elastic_initial_rk(2,:) + weight_rk * veloc_elastic_rk(2,:,i_stage)
-  displ_elastic(3,:) = displ_elastic_initial_rk(3,:) + weight_rk * veloc_elastic_rk(3,:,i_stage)
+        displ_elastic(2,:) = displ_elastic_initial_rk(2,:) + weight_rk * veloc_elastic_rk(2,:,i_stage)
+        displ_elastic(3,:) = displ_elastic_initial_rk(3,:) + weight_rk * veloc_elastic_rk(3,:,i_stage)
 
         elseif(i_stage==4)then
 
+!! DK DK this should be vectorized
         veloc_elastic(1,:) = veloc_elastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
         (accel_elastic_rk(1,:,1) + 2.0d0 * accel_elastic_rk(1,:,2) + &
          2.0d0 * accel_elastic_rk(1,:,3) + accel_elastic_rk(1,:,4))
@@ -6283,6 +6284,7 @@ if(coupled_elastic_poro) then
       endif
 
       if(SIMULATION_TYPE == 2) then
+!! DK DK this should be vectorized
         b_accel_elastic(1,:) = b_accel_elastic(1,:) * rmass_inverse_elastic_one(:)
         b_accel_elastic(2,:) = b_accel_elastic(2,:) * rmass_inverse_elastic_one(:)
         b_accel_elastic(3,:) = b_accel_elastic(3,:) * rmass_inverse_elastic_three(:)
