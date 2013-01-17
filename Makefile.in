@@ -110,7 +110,6 @@ xadj_seismogram: required
 clean:
 	(rm -rf obj bin src/meshfem2D/*.mod src/specfem2D/*.mod )
 
-
 help:
 	@echo "usage: make [executable]"
 	@echo ""
@@ -121,3 +120,4 @@ help:
 	@echo "    xcheck_quality_external_mesh"
 	@echo "    xadj_seismogram"
 	@echo ""
+

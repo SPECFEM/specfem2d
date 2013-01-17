@@ -355,8 +355,7 @@ AC_ARG_VAR(SCOTCH_LIBDIR, [Directory where Scotch libraries are installed])
 AC_ARG_VAR(MPIFC, [MPI Fortran compiler command])
 AC_ARG_VAR(MPILIBS, [extra libraries for linking MPI programs])
 AC_ARG_VAR(MPICC, [MPI C compiler command])
-AC_ARG_VAR(FLAGS_CHECK, [Fortran compiler flags for non-critical subroutines])
-AC_ARG_VAR(FLAGS_NO_CHECK, [Fortran compiler flags for creating fast, production-run code for critical subroutines])
+AC_ARG_VAR(FLAGS_CHECK, [Fortran compiler flags])
 if test x"$MPIFC" = x; then
     MPIFC=mpif90
 fi
@@ -424,7 +423,7 @@ fi
 # Checks for header files.
 
 if test "$want_mpi" = yes; then
-    CIT_FC_MPI_HEADER([$MPIFC], [$FLAGS_NO_CHECK])
+    CIT_FC_MPI_HEADER([$MPIFC], [$FLAGS_CHECK])
 fi
 
 # Checks for typedefs, structures, and compiler characteristics.

@@ -2,6 +2,9 @@
 
 # Attempt to guess suitable flags for the Fortran compiler.
 
+# can add -DUSE_SERIAL_CASCADE_FOR_IOs to the compiler options to make the mesher output mesh data
+# to the disk for one MPI slice after the other, and to make the solver do the same thing when reading the files back from disk.
+
 # Use AC_CANONICAL_BUILD (and package config.guess, etc.) in the future?
 if test x"$UNAME_MS" = x; then
     UNAME_MACHINE=`(uname -m) 2>/dev/null` || UNAME_MACHINE=unknown
@@ -15,10 +18,8 @@ case $FC in
         # Cray Fortran
         #
         if test x"$FLAGS_CHECK" = x; then
-            FLAGS_CHECK="-eC -eD -hfp2"  # turn on full debugging and range checking
-        fi
-        if test x"$FLAGS_NO_CHECK" = x; then
-            FLAGS_NO_CHECK="-O3 -Onoaggress -Oipa0 -hfp2 -Ovector3 -Oscalar3 -Ocache2 -Ounroll2 -Ofusion2" # turn on optimization; -Oaggress -Oipa4 would make it even more aggressive
+            FLAGS_CHECK="-O3 -Onoaggress -Oipa0 -hfp2 -Ovector3 -Oscalar3 -Ocache2 -Ounroll2 -Ofusion2" # turn on optimization; -Oaggress -Oipa4 would make it even more aggressive
+        # -eC -eD -hfp2  # turn on full debugging and range checking
         fi
         ;;
     pgf95|*/pgf95|pgf90|*/pgf90)
@@ -26,52 +27,34 @@ case $FC in
         # Portland PGI
         #
         if test x"$FLAGS_CHECK" = x; then
-            FLAGS_CHECK="-fast -Mbounds -Mneginfo -Mdclchk -Minform=warn" # -mcmodel=medium
-        fi
-        if test x"$FLAGS_NO_CHECK" = x; then
-# -fastsse -tp amd64e -Msmart
-            FLAGS_NO_CHECK="-fast -Mnobounds -Minline -Mneginfo -Mdclchk -Knoieee -Minform=warn -Mdaz -Mflushz" # -mcmodel=medium
+            FLAGS_CHECK="-fast -Mnobounds -Minline -Mneginfo -Mdclchk -Knoieee -Minform=warn -Mdaz -Mflushz" # -mcmodel=medium
+        # -Mbounds
+        # -fastsse -tp amd64e -Msmart
         fi
         ;;
     ifort|*/ifort)
         #
-        # Intel ifort Fortran90
+        # Intel ifort Fortran90 for Linux
+        # check: http://software.intel.com/sites/products/documentation/hpc/compilerpro/en-us/fortran/lin/compiler_f/index.htm
         #
-        if test x"$FLAGS_NO_CHECK" = x; then
-        # standard options (leave option -ftz, which is *critical* for performance)
-        # add -Winline to get information about routines that are inlined
-        # add -vec-report2 to get information about loops that are vectorized or not
-            FLAGS_NO_CHECK="-O3 -xHost -vec-report0 -std03 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds -align sequence -assume byterecl -ftz" # -DUSE_GUENNEAU -DCRISTINI_DO_NOT_DUMP_FICTITIOUS_REGIONS  # -mcmodel=medium -shared-intel
-            #FLAGS_NO_CHECK="-O3 -assume byterecl -check nobounds -ftz"
-
-        fi
         if test x"$FLAGS_CHECK" = x; then
-            FLAGS_CHECK="-O0 -vec-report0 -std03 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check all -align sequence -assume byterecl -ftz -traceback -ftrapuv" # -DUSE_GUENNEAU -DCRISTINI_DO_NOT_DUMP_FICTITIOUS_REGIONS  # -mcmodel=medium -shared-intel
-            #FLAGS_CHECK="-O3 -assume byterecl -traceback -ftrapuv -ftz"
-
-
-            # ifort version 11 or 10.1 with these flags shows good performance
-            #FLAGS_CHECK="-O3 -ftz -xS -traceback -ftrapuv -vec-report0 -std03 -implicitnone -check nobounds -assume byterecl -static-intel -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage "
-            #FLAGS_CHECK="-O3 -xS -static-intel -r8 -mcmodel=large -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -check nobounds -align sequence -assume byterecl -ftrapuv -ftz -traceback"
-        # useful for debugging...
-            # for debugging: change -check nobounds to -check all -debug -g -O0 -fp-stack-check -traceback -ftrapuv
+            FLAGS_CHECK="-O3 -xHost -ftz -assume byterecl -align sequence -vec-report0 -std03 -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments -warn ignore_loc -warn usage -check nobounds" # -mcmodel=medium -shared-intel
         fi
+        # useful for debugging...
+        # for debugging: change -O3 -check nobounds to      -check all -debug -g -O0 -fp-stack-check -traceback -ftrapuv
+        #
         ;;
     gfortran|*/gfortran|f95|*/f95)
         #
         # GNU gfortran
         #
-        if test x"$FLAGS_NO_CHECK" = x; then
-            # works with: GNU Fortran (GCC) 4.1.2 20080704
-            FLAGS_NO_CHECK="-std=gnu -fimplicit-none -frange-check -O2 -pedantic -pedantic-errors -Waliasing -Wampersand -Wline-truncation -Wsurprising -Wunderflow -ffree-line-length-132"
-
-        #            FLAGS_NO_CHECK="-std=f95 -fimplicit-none -frange-check -O2 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -ffree-line-length-132" # -mcmodel=medium
-        # older gfortran syntax
-        #           FLAGS_NO_CHECK="-std=f95 -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow -ffree-line-length-132" # -mcmodel=medium
-        fi
         if test x"$FLAGS_CHECK" = x; then
-            FLAGS_CHECK="\$(FLAGS_NO_CHECK)" # -fbounds-check
+            FLAGS_CHECK="-std=f2003 -fimplicit-none -frange-check -O2 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow" # -mcmodel=medium
         fi
+        # useful for debugging... -ffpe-trap=underflow,overflow,zero -fbacktrace -fbounds-check
+        #
+        # older gfortran syntax
+        #   -std=f2003 -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow" # -mcmodel=medium
         ;;
     g95|*/g95)
         #
@@ -80,22 +63,15 @@ case $FC in
         if test x"$FLAGS_CHECK" = x; then
             FLAGS_CHECK="-O"
         fi
-        if test x"$FLAGS_NO_CHECK" = x; then
-            FLAGS_NO_CHECK="-O"
-        fi
         ;;
     f90|*/f90)
         case $UNAME_MS in
             i*86:Linux | x86_64:Linux)
-                ################ PC Linux #################
                 #
                 # AbSoft
                 #
                 if test x"$FLAGS_CHECK" = x; then
                     FLAGS_CHECK="-W132 -s -O3 -cpu:p7 -v -YDEALLOC=ALL"
-                fi
-                if test x"$FLAGS_NO_CHECK" = x; then
-                    FLAGS_NO_CHECK="\$(FLAGS_CHECK)"
                 fi
                 ;;
             *:IRIX*)
@@ -107,10 +83,8 @@ case $FC in
                     fi
                 fi
                 if test x"$FLAGS_CHECK" = x; then
-                    FLAGS_CHECK="\$(FLAGS_NO_CHECK) -check_bounds"
-                fi
-                if test x"$FLAGS_NO_CHECK" = x; then
-                    FLAGS_NO_CHECK="-ansi -u -64 -O3 -OPT:Olimit=0 -OPT:roundoff=3 -OPT:IEEE_arithmetic=3 -r10000 -mips4"
+                    FLAGS_CHECK="-ansi -u -64 -O3 -OPT:Olimit=0 -OPT:roundoff=3 -OPT:IEEE_arithmetic=3 -r10000 -mips4"
+                #   -check_bounds
                 fi
                 ;;
             SX-*:SUPER-UX | ES:ESOS)
@@ -121,9 +95,6 @@ case $FC in
                 if test x"$FLAGS_CHECK" = x; then
                     FLAGS_CHECK="-C hopt -R2 -Wf\" -L nostdout noinclist mrgmsg noeject -msg b -pvctl loopcnt=14000000 expand=10 fullmsg vecthreshold=20 -s\" -pi auto line=100 exp=swap_all,rank"
                 fi
-                if test x"$FLAGS_NO_CHECK" = x; then
-                    FLAGS_NO_CHECK="\$(FLAGS_CHECK)"
-                fi
                 ;;
         esac
         ;;
@@ -132,10 +103,8 @@ case $FC in
         # Lahey f90
         #
         if test x"$FLAGS_CHECK" = x; then
-            FLAGS_CHECK="--warn --wo --tpp --f95 --dal -O --chk"
-        fi
-        if test x"$FLAGS_NO_CHECK" = x; then
-            FLAGS_NO_CHECK="--warn --wo --tpp --f95 --dal -O"
+            FLAGS_CHECK="--warn --wo --tpp --f95 --dal -O"
+        #    --chk
         fi
         ;;
     ######## IBM ######
@@ -146,9 +115,9 @@ case $FC in
         ;;
     *xlf*|*/*xlf*)
         #
-        # do NOT remove option -qsave otherwise the IBM compiler allocates the
+        # on some (but not all) IBM machines one might need to add -qsave otherwise the IBM compiler allocates the
         # arrays in the stack and the code crashes if the stack size is too
-        # small (which is often the case)
+        # small (which is sometimes the case, but less often these days on large machines)
         #
         # on IBM with xlf one should also set
         #
@@ -162,22 +131,37 @@ case $FC in
         #
         # for the C compiler when using -q64 for the Fortran compiler
         #
-        if test x"$FLAGS_NO_CHECK" = x; then
+        # on IBM xlf90 compiler:
+        # when encountering errors: ...relocation truncated to fit: R_PPC_LOCAL24PC...
+        # one should also use additional flags:
+        # CFLAGS = -Wl,-relax
+        #
+        if test x"$FLAGS_CHECK" = x; then
 # deleted -qxflag=dvz because it requires handler function __xl_dzx and thus linking will fail 
-            FLAGS_NO_CHECK="-O3 -qsave -qstrict -q64 -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -qsuffix=f=f90 -qhalt=w -qlanglvl=90pure -qsuppress=1518-317 -Q -Q+rank,swap_all -Wl,-relax -qunroll=yes"
+            FLAGS_CHECK="-O3 -qsave -qstrict -q64 -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -qsuffix=f=f90 -qhalt=w -qlanglvl=90pure -qsuppress=1518-317 -Q -Q+rank,swap_all -Wl,-relax -qunroll=yes"
         # on MareNostrum at the Barcelona SuperComputing Center (Spain) one can use
         # -qtune=ppc970 -qarch=ppc64v instead of -qtune=auto -qarch=auto
         # on "Babel" IBM BlueGene at IDRIS (France) use:
         # -qtune=auto -qarch=450d -qsave     instead of -qtune=auto -qarch=auto
-        fi
-        if test x"$FLAGS_CHECK" = x; then
         #
         # to debug with IBM xlf, one can add this: -g -O0 -C -qddim -qfullpath
         # to debug, one can add these three flags: -qflttrap=overflow:zerodivide:invalid:enable -qfloat=nans -qinitauto=7FBFFFFF
         #
-            FLAGS_CHECK="\$(FLAGS_NO_CHECK) -g -C -qddim -qfullpath"
         fi
         ;;
+    pathf90|*/pathf90)
+        #
+        # pathscale
+        #
+        # one should also set
+        # CC = pathcc
+        # CFLAGS = -O2
+        #
+        if test x"$FLAGS_CHECK" = x; then
+            FLAGS_CHECK="-O3 -OPT:Ofast -fno-math-errno -ffast-math -LNO:fusion=2 -LNO:simd=2 -LNO:simd_verbose=ON -msse3 -march=auto -fno-second-underscore -align64"
+        fi
+        ;;
+
 esac
 
 case $UNAME_MS in
@@ -193,7 +177,16 @@ esac
 echo MPIFC=\"$MPIFC\" | sed 's/\$/\\\$/g'
 echo MPILIBS=\"$MPILIBS\" | sed 's/\$/\\\$/g'
 echo FLAGS_CHECK=\"$FLAGS_CHECK\" | sed 's/\$/\\\$/g'
-echo FLAGS_NO_CHECK=\"$FLAGS_NO_CHECK\" | sed 's/\$/\\\$/g'
 echo FCENV=\"$FCENV\" | sed 's/\$/\\\$/g'
+
+# Added by IDRIS: set to default values if not passed as arguments
+if [ "X${AR}" == "X" ]; then AR="ar"; fi
+if [ "X${RANLIB}" == "X" ]; then RANLIB="ranlib"; fi
+if [ "X${ARFLAGS}" == "X" ]; then ARFLAGS="cru"; fi
+
+# Added by IDRIS to crosscompile on BlueGene/P
+echo AR=\"$AR\" | sed 's/\$/\\\$/g'
+echo ARFLAGS=\"$ARFLAGS\" | sed 's/\$/\\\$/g'
+echo RANLIB=\"$RANLIB\" | sed 's/\$/\\\$/g'
 
 # end of file
