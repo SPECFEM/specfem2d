@@ -90,7 +90,7 @@ $(mandir)/man1			:	$(mandir)
 					-$(MKDIR) $(mandir)/man1
 
 scotch				:	required
-					(cd libscotch ;      $(MAKE) VERSION=$(VERSION) RELEASE=$(RELEASE) PATCHLEVEL=$(PATCHLEVEL) scotch && $(MAKE) install)
+					(cd libscotch ;      $(MAKE) VERSION=$(VERSION) RELEASE=$(RELEASE) PATCHLEVEL=$(PATCHLEVEL) scotch.h scotchf.h scotch && $(MAKE) install)
 					(cd scotch ;         $(MAKE) VERSION=$(VERSION) RELEASE=$(RELEASE) PATCHLEVEL=$(PATCHLEVEL) scotch && $(MAKE) install)
 					(cd libscotchmetis ; $(MAKE)                                                                scotch && $(MAKE) install)
 
