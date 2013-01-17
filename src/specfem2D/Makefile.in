@@ -56,7 +56,6 @@ MPIFC = @MPIFC@
 MPILIBS = @MPILIBS@
 
 FLAGS_CHECK = @FLAGS_CHECK@ -I../../setup
-FLAGS_NO_CHECK = @FLAGS_NO_CHECK@ -I../../setup
 
 CC = @CC@
 CPPFLAGS = @CPPFLAGS@ $(COND_MPI_CPPFLAGS)
@@ -201,9 +200,8 @@ help:
 ##
 ## solver
 ##
-### use optimized compilation option for solver only
 xspecfem2D: $(OBJS_SPECFEM2D)
-	$(LINK) $(FLAGS_NO_CHECK) -o ${E}/xspecfem2D $(OBJS_SPECFEM2D)
+	$(LINK) $(FLAGS_CHECK) -o ${E}/xspecfem2D $(OBJS_SPECFEM2D)
 
 ##
 ## convolve_source_timefunction
@@ -412,49 +410,40 @@ $O/sort_array_coordinates.o: ${S}/sort_array_coordinates.F90 ${SETUP}/constants.
 $O/write_seismograms.o: ${S}/write_seismograms.F90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/write_seismograms.o ${S}/write_seismograms.F90
 
-##
-## use optimized compilation option for solver only
-##
 $O/check_stability.o: ${S}/check_stability.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_NO_CHECK) -c -o $O/check_stability.o ${S}/check_stability.F90
+	${F90} $(FLAGS_CHECK) -c -o $O/check_stability.o ${S}/check_stability.F90
 
 $O/compute_energy.o: ${S}/compute_energy.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_NO_CHECK) -c -o $O/compute_energy.o ${S}/compute_energy.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/compute_energy.o ${S}/compute_energy.f90
 
 $O/compute_forces_acoustic.o: ${S}/compute_forces_acoustic.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_NO_CHECK) -c -o $O/compute_forces_acoustic.o ${S}/compute_forces_acoustic.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/compute_forces_acoustic.o ${S}/compute_forces_acoustic.f90
 
 $O/compute_forces_poro_fluid.o: ${S}/compute_forces_poro_fluid.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_NO_CHECK) -c -o $O/compute_forces_poro_fluid.o ${S}/compute_forces_poro_fluid.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/compute_forces_poro_fluid.o ${S}/compute_forces_poro_fluid.f90
 
 $O/compute_forces_poro_solid.o: ${S}/compute_forces_poro_solid.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_NO_CHECK) -c -o $O/compute_forces_poro_solid.o ${S}/compute_forces_poro_solid.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/compute_forces_poro_solid.o ${S}/compute_forces_poro_solid.f90
 
 $O/compute_forces_viscoelastic.o: ${S}/compute_forces_viscoelastic.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_NO_CHECK) -c -o $O/compute_forces_viscoelastic.o ${S}/compute_forces_viscoelastic.F90
+	${F90} $(FLAGS_CHECK) -c -o $O/compute_forces_viscoelastic.o ${S}/compute_forces_viscoelastic.F90
 
 $O/compute_gradient_attenuation.o: ${S}/compute_gradient_attenuation.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_NO_CHECK) -c -o $O/compute_gradient_attenuation.o ${S}/compute_gradient_attenuation.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/compute_gradient_attenuation.o ${S}/compute_gradient_attenuation.f90
 
 $O/compute_normal_vector.o: ${S}/compute_normal_vector.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_NO_CHECK) -c -o $O/compute_normal_vector.o ${S}/compute_normal_vector.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/compute_normal_vector.o ${S}/compute_normal_vector.f90
 
 $O/enforce_acoustic_free_surface.o: ${S}/enforce_acoustic_free_surface.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_NO_CHECK) -c -o $O/enforce_acoustic_free_surface.o ${S}/enforce_acoustic_free_surface.f90
+	${F90} $(FLAGS_CHECK) -c -o $O/enforce_acoustic_free_surface.o ${S}/enforce_acoustic_free_surface.f90
 
 $O/specfem2D.o: ${S}/specfem2D.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_NO_CHECK) -c -o $O/specfem2D.o ${S}/specfem2D.F90
+	${F90} $(FLAGS_CHECK) -c -o $O/specfem2D.o ${S}/specfem2D.F90
 
 
 ##
 ## shared
 ##
-#$O/read_value_parameters.o: ${SHARED}/read_value_parameters.f90
-#	${F90} $(FLAGS_CHECK) -c -o $O/read_value_parameters.o ${SHARED}/read_value_parameters.f90
-#
-#$O/param_reader.o: ${SHARED}/param_reader.c
-#	${CC} -c $(CFLAGS) -o $O/param_reader.o ${SHARED}/param_reader.c
-
 
 $O/jaricom.o: ${LIBJPEG}/jaricom.c
 	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jaricom.o ${LIBJPEG}/jaricom.c

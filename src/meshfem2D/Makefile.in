@@ -51,7 +51,6 @@ MPIFC = @MPIFC@
 MPILIBS = @MPILIBS@
 
 FLAGS_CHECK = @FLAGS_CHECK@ -I../../setup
-FLAGS_NO_CHECK = @FLAGS_NO_CHECK@ -I../../setup
 
 CC = @CC@
 CPPFLAGS = @CPPFLAGS@ $(COND_MPI_CPPFLAGS)
@@ -64,9 +63,6 @@ CFLAGS = @CFLAGS@ $(CPPFLAGS) -I../../setup
 ## scotch libraries
 @COND_MPI_TRUE@LIB = -L"@SCOTCH_LIBDIR@" -lscotch -lscotcherr
 @COND_MPI_FALSE@LIB =
-
-# optional: uncomment this to use more than one processor core, in which case the SCOTCH graph partitioner is needed
-#LIB = ../../scotch_5.1.10b/lib/libscotch.a ../../scotch_5.1.10b/lib/libscotcherr.a
 
 LINK = $(F90)
 
@@ -94,8 +90,6 @@ SETUP = ../../setup
 @COND_PYRE_FALSE@	meshfem2D \
 @COND_PYRE_FALSE@	check_quality_external_mesh \
 @COND_PYRE_FALSE@	$(EMPTY_MACRO)
-
-
 
 OBJS_MESHFEM2D = \
 	$O/get_node_number.o \
@@ -220,6 +214,4 @@ $O/read_value_parameters.o: ${SHARED}/read_value_parameters.f90
 
 $O/param_reader.o: ${SHARED}/param_reader.c
 	${CC} -c $(CFLAGS) -o $O/param_reader.o ${SHARED}/param_reader.c
-
-
 
