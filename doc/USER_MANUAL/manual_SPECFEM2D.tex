@@ -197,9 +197,9 @@ perfectly diagonal mass matrix, include \cite{CoJoTo93}, \cite{Kom97},
 whereas applications involving Chebyshev basis functions and a nondiagonal mass matrix
 include \cite{SePr94}, \cite{PrCaSe94} and \cite{SePrPr95}.\\
 
-All SPECFEM2D software is written in Fortran90 with full portability
-in mind, and conforms strictly to the Fortran95 standard. It uses
-no obsolete or obsolescent features of Fortran77. The package uses
+All SPECFEM2D software is written in Fortran2003 with full portability
+in mind, and conforms strictly to the Fortran2003 standard. It uses
+no obsolete or obsolescent features of Fortran. The package uses
 parallel programming based upon the Message Passing Interface (MPI)
 \citep{GrLuSk94,Pac97}.\\
 
@@ -271,7 +271,7 @@ Then, to configure the software for your system, run the
 \texttt{configure} shell script. This script will attempt to guess
 the appropriate configuration values for your system. However, at
 a minimum, it is recommended that you explicitly specify the appropriate
-command names for your Fortran90 compiler:
+command names for your Fortran compiler:
 \begin{lyxcode}
 ./configure~FC=ifort~
 \end{lyxcode}
