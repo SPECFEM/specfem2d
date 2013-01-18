@@ -89,7 +89,7 @@ module parameter_file
   double precision  :: f0_attenuation
 
   integer :: seismotype
-  logical :: generate_STATIONS
+  logical :: use_existing_STATIONS
 
   integer :: nreceiversets
   double precision :: anglerec
@@ -285,7 +285,7 @@ contains
   if(err_occurred() /= 0) stop 'error reading parameter 33e in Par_file'
   if(subsamp_seismos < 1) stop 'error: subsamp_seismos must be >= 1'
 
-  call read_value_logical_p(generate_STATIONS, 'solver.generate_STATIONS')
+  call read_value_logical_p(use_existing_STATIONS, 'solver.use_existing_STATIONS')
   if(err_occurred() /= 0) stop 'error reading parameter 23 in Par_file'
 
   call read_value_integer_p(nreceiversets, 'solver.nreceiversets')
