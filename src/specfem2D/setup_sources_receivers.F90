@@ -185,7 +185,7 @@
      close(14)
 
      ! write out actual station locations (compare with STATIONS from meshfem2D)
-     ! NOTE: this will be written out even if generate_STATIONS = .false.
+     ! NOTE: this will be written out even if use_existing_STATIONS = .true.
      open(unit=15,file='DATA/for_information_STATIONS_actually_used',status='unknown')
      do irec = 1,nrec
         write(15,"('S',i4.4,'    AA ',f20.7,1x,f20.7,'       0.0         0.0')") &

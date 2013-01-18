@@ -991,8 +991,7 @@ program meshfem2D
   enddo
 
   !--- compute position of the receivers and write the STATIONS file
-
-  if (generate_STATIONS) then
+  if (.not. use_existing_STATIONS) then
 
 !! DK DK for now we cannot use both enreg_surf_same_vertical and read_external_mesh
 !! DK DK because we need to know splines to define the shape of the surface of the model
