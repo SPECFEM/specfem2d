@@ -110,7 +110,7 @@ xadj_seismogram: required
 clean:
 	(rm -rf obj bin src/meshfem2D/*.mod src/specfem2D/*.mod)
 	(pushd src/meshfem2D/scotch/src ; make realclean ; popd)
-	(pushd src/meshfem2D/scotch/src/libscotch ; make scotch.h scotchf.h ; popd)
+	(pushd src/meshfem2D/scotch/src/libscotch ; make scotch.h scotchf.h ; cp -f scotch.h scotchf.h ../../include ; popd)
 
 help:
 	@echo "usage: make [executable]"
