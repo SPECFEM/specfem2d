@@ -107,7 +107,7 @@ OBJS_MESHFEM2D = \
 	$O/spline_routines.o \
 	$O/meshfem2D.o
 
-default: scotch $(DEFAULT)
+default: scotch_library $(DEFAULT)
 
 all: clean default
 
@@ -116,7 +116,7 @@ meshfem2D: xmeshfem2D
 check_quality_external_mesh: xcheck_quality_external_mesh
 
 
-scotch:
+scotch_library:
 ifeq (@USE_BUNDLED_SCOTCH@,1)
 	(echo "Using bundled Scotch")
 	(cd "@SCOTCH_DIR@/src"; make)
