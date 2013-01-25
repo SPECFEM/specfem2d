@@ -499,7 +499,34 @@ def ProcessParfile_r21000(fic):
     fm.close()
     #
     print 'xxxxx------> '+fic+' processed to '+release_number
-    return   
+    return
+#------------------------------------------------------------------------------
+def ProcessParfile_r21278(fic):
+    # Open the file and get all lines from Par_file
+    ligs= LoadLig(fic)
+    # Test if already processed
+    for lig in ligs:
+        if 'use_existing_STATIONS' in lig:
+            print '----> '+fic+' already processed to r21278'            
+            return
+    #--------------------------------------------------------------------------
+    # Add new parameters
+    # 
+    for ilg, lig in enumerate(ligs):
+        if lig.startswith('generate_STATIONS'):
+            ligs[ilg]=ligs[ilg].replace('generate_STATIONS     ', \
+                            'use_existing_STATIONS')
+            ligs[ilg]=ligs[ilg].replace('.false.','.true.')
+            ligs[ilg]=ligs[ilg].replace('.true.','.false.')
+    #
+    move(fic,fic+'.before_update_to_r21278')
+    #
+    fm = open(fic,'w')
+    fm.writelines(ligs)
+    fm.close()
+    #
+    print 'xxxxx------> '+fic+' processed to r21278'
+    return
 #------------------------------------------------------------------------------
 if __name__=='__main__':
     ## List of all files of current directory
@@ -527,6 +554,7 @@ if __name__=='__main__':
                     ProcessParfile_r20561(fic)
                     ProcessParfile_r20859(fic)
                     ProcessParfile_r21000(fic)
+                    ProcessParfile_r21278(fic)
                     print '~'*80
     #                
     print 'Number of Par_file analysed : ', Ct_Par_file
