@@ -198,7 +198,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   ! material properties of the elastic medium
   real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic, &
     lambdaplus2mu_unrelaxed_elastic,kappal,cpl,csl,rhol, &
-    lambdal_relaxed_viscoelastic,mul_relaxed_viscoelastic,lambdalplus2mul_relaxed_viscoel
+    lambdal_relaxed_viscoelastic,mul_relaxed_viscoelastic,lambdalplusmul_relaxed_viscoel
 
   ! for attenuation
   real(kind=CUSTOM_REAL) :: phinu1,phinu2,tauinvnu1,tauinvnu2,theta_n_u,theta_n_v 
@@ -1004,10 +1004,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                  ! and porous media, Elsevier, p. 124-125, 2007
 
                  ! compute unrelaxed elastic coefficients from formulas in Carcione 2007 page 125
-                 lambdal_relaxed_viscoelastic = (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) / Mu_nu1(i,j,ispec) &
-                                                - mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
+                 lambdal_relaxed_viscoelastic = (lambdal_unrelaxed_elastic + 2._CUSTOM_REAL*mul_unrelaxed_elastic/3._CUSTOM_REAL)&
+                                                / Mu_nu1(i,j,ispec) &
+                                                - (2._CUSTOM_REAL*mul_unrelaxed_elastic/3._CUSTOM_REAL) / Mu_nu2(i,j,ispec)
                  mul_relaxed_viscoelastic = mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
-                 lambdalplus2mul_relaxed_viscoel = lambdal_relaxed_viscoelastic + TWO*mul_relaxed_viscoelastic
+                 lambdalplusmul_relaxed_viscoel = lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic
 
                  ! compute the stress using the unrelaxed Lame parameters (Carcione 2007 page 125)
                  sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
@@ -1026,11 +1027,9 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     e13_sum = e13_sum + e13(i,j,ispec,i_sls)
                  enddo
 
-                 sigma_xx = sigma_xx + (lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic) * e1_sum &
-                                     + TWO * mul_relaxed_viscoelastic * e11_sum
+                 sigma_xx = sigma_xx + lambdalplusmul_relaxed_viscoel * e1_sum + TWO * mul_relaxed_viscoelastic * e11_sum
                  sigma_xz = sigma_xz + mul_relaxed_viscoelastic * e13_sum
-                 sigma_zz = sigma_zz + (lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic) * e1_sum &
-                                     - TWO * mul_relaxed_viscoelastic * e11_sum
+                 sigma_zz = sigma_zz + lambdalplusmul_relaxed_viscoel * e1_sum - TWO * mul_relaxed_viscoelastic * e11_sum
                  sigma_zx = sigma_xz
 
                  if(PML_BOUNDARY_CONDITIONS .and. is_PML(ispec)) then
