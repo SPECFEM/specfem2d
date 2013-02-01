@@ -131,16 +131,16 @@
         ! anisotropic materials
 
         rho_s(i) = val0read
-        cp(i) = val1read
-        cs(i) = val2read
-        aniso3(i) = val3read
-        aniso4(i) = val4read
-        aniso5(i) = val5read
-        aniso6(i) = val6read
-        aniso7(i) = val7read
-        aniso8(i) = val8read
-        QKappa(i) = val9read
-        Qmu(i) = val10read
+        aniso3(i) = val1read
+        aniso4(i) = val2read
+        aniso5(i) = val3read
+        aniso6(i) = val4read
+        aniso7(i) = val5read
+        aniso8(i) = val6read
+        QKappa(i) = val7read
+        Qmu(i) = val8read
+        cp(i) = sqrt(val4read/val0read)
+        cs(i) = sqrt(val6read/val0read)
      else
 
         ! poroelastic materials

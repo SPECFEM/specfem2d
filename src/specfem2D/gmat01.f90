@@ -133,10 +133,6 @@
 
         density(1) =val0
 
-        ! P and S velocity
-        cp = 20
-        cs = 10
-
         ! Anisotropy parameters
         c11 = val1
         c13 = val2
@@ -144,6 +140,10 @@
         c33 = val4
         c35 = val5
         c55 = val6
+
+        ! P and S velocity
+        cp = sqrt(c33/density(1))
+        cs = sqrt(c55/density(1))
 
         ! QKappa and Qmu values
         !QKappa = val9

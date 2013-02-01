@@ -278,9 +278,9 @@
                     permxx(i),permxz(i),permzz(i),kappa_s(i),&
                     kappa_f(i),kappa_fr(i),eta_f(i),mu_fr(i),Qmu(i)
       else
-         write(15,*) i,icodemat(i),rho_s(i),cp(i),cs(i), &
+         write(15,*) i,icodemat(i),rho_s(i), &
                     aniso3(i),aniso4(i),aniso5(i),aniso6(i),&
-                    aniso7(i),aniso8(i),QKappa(i),Qmu(i),0,0
+                    aniso7(i),aniso8(i),QKappa(i),Qmu(i),0,0,0,0
       endif
     enddo
 
