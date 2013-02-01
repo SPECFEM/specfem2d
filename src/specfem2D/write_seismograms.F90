@@ -52,6 +52,11 @@
 
   implicit none
 
+! uncomment this to save the ASCII *.sem* seismograms in binary instead, to save disk space and/or writing time
+! we could/should move this flag to DATA/Par_file one day.
+!
+! #define PAUL_SAVE_ASCII_IN_BINARY
+
   include "constants.h"
 #ifdef USE_MPI
   include "mpif.h"
@@ -288,14 +293,22 @@
                open(unit=11,file=sisname(1:len_trim(sisname)),status='unknown')
                close(11,status='delete')
              endif
+#ifndef PAUL_SAVE_ASCII_IN_BINARY
              open(unit=11,file=sisname(1:len_trim(sisname)),status='unknown',position='append')
+#else
+             open(unit=11,file=sisname(1:len_trim(sisname)),status='unknown',form='unformatted',position='append')
+#endif
 
              ! make sure we never write more than the maximum number of time steps
              ! subtract offset of the source to make sure travel time is correct
+#ifndef PAUL_SAVE_ASCII_IN_BINARY
              do isample = 1,seismo_current
                  write(11,*) sngl(dble(seismo_offset+isample-1)*deltat - t0),' ', &
                               sngl(buffer_binary(isample,iorientation))
              enddo
+#else
+                 write(11) sngl(buffer_binary(:,iorientation))
+#endif
 
              close(11)
           enddo
