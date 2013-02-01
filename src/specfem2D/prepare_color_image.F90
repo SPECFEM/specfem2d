@@ -323,6 +323,7 @@
   double precision, dimension(4,3,numat) :: poroelastcoef
   double precision, dimension(numat) :: porosity,tortuosity
   double precision, dimension(NGLLX,NGLLX,nspec) :: vpext
+  double precision :: vp_of_the_model
 
 ! display acoustic layers as constant blue, because they likely correspond to water in the case of ocean acoustics
 ! or in the case of offshore oil industry experiments.
@@ -427,7 +428,18 @@
     if(DRAW_WATER_IN_BLUE .and. .not. elastic(ispec) .and. .not. poroelastic(ispec)) then
       do j = 1,NGLLZ
         do i = 1,NGLLX
-          vp_display(ibool(i,j,ispec)) = -1
+
+          !--- if external medium, get elastic parameters of current grid point
+          if(assign_external_model) then
+            vp_of_the_model = vpext(i,j,ispec)
+          else
+            vp_of_the_model = sqrt((lambdal_relaxed + 2.d0*mul_relaxed) / rhol)
+          endif
+
+! test that water is indeed water and not an acoustic version of a sediment for instance
+! thus check that Vp is the typical Vp of water
+          if(abs(vp_of_the_model - 1500.d0) <= 45.d0) vp_display(ibool(i,j,ispec)) = -1
+
         enddo
       enddo
     endif
