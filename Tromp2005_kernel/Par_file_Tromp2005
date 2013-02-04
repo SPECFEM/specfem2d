@@ -25,7 +25,7 @@ p_sv                            = .true.         # set the type of calculation (
 # time step parameters
 nt                              = 3000           # total number of time steps
 deltat                          = 2.0d-2         # duration of a time step (see section "How to choose the time step" of the manual for how to do this)
-USER_T0                         = 0.0d0          # use this t0 as earliest starting time rather than the automatically calculated one
+USER_T0                         = 8.0d0          # use this t0 as earliest starting time rather than the automatically calculated one
 time_stepping_scheme            = 1   # 1 = Newmark (2nd order),     2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta),     3 = classical 4th-order 4-stage Runge-Kutta
 
 # source parameters
@@ -111,8 +111,8 @@ PML_BOUNDARY_CONDITIONS         = .false.
 NELEM_PML_THICKNESS             = 3
 ROTATE_PML_ACTIVATE             = .false.
 ROTATE_PML_ANGLE                = 30.
-STACEY_ABSORBING_CONDITIONS     = .false.
-ADD_SPRING_TO_STACEY            = .true.
+STACEY_ABSORBING_CONDITIONS     = .true.
+ADD_SPRING_TO_STACEY            = .false.
 
 # for horizontal periodic conditions: detect common points between left and right edges
 ADD_PERIODIC_CONDITIONS         = .false.
