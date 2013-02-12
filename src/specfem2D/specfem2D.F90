@@ -1042,6 +1042,8 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   logical :: anyabs_glob
   integer :: nspec_PML
 
+!ZN  logical :: backward_simulation !!for seprate adjoint simulation from backward simulation
+
 !***********************************************************************
 !
 !             i n i t i a l i z a t i o n    p h a s e
@@ -3511,6 +3513,12 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   veloc_elastic = 0._CUSTOM_REAL
   accel_elastic = 0._CUSTOM_REAL
 
+    if(SIMULATION_TYPE == 2 .and. any_elastic) then
+      b_displ_elastic = 0._CUSTOM_REAL
+      b_veloc_elastic = 0._CUSTOM_REAL
+      b_accel_elastic = 0._CUSTOM_REAL
+    endif
+
   if(time_stepping_scheme == 2) then
   displ_elastic_LDDRK = 0._CUSTOM_REAL
   veloc_elastic_LDDRK = 0._CUSTOM_REAL
@@ -5559,7 +5567,7 @@ if(coupled_elastic_poro) then
                source_type,it,NSTEP,anyabs,assign_external_model, &
                initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource, &  
                deltatover2,deltatsquareover2,ibool,kmato,numabs,elastic,codeabs, &  
-               accel_elastic,veloc_elastic,displ_elastic,b_accel_elastic,b_displ_elastic, &
+               accel_elastic,veloc_elastic,displ_elastic, &
                density,poroelastcoef,xix,xiz,gammax,gammaz, &
                jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy, &
                source_time_function,sourcearray,adj_sourcearrays, &
@@ -5574,7 +5582,7 @@ if(coupled_elastic_poro) then
                count_left,count_right,count_bottom,over_critical_angle, &
                NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD, &
                b_absorb_elastic_left,b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top, &
-               nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,mu_k,kappa_k, &
+               nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, & 
                e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_rk, e11_force_rk, e13_force_rk, &
                stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring,max(1,nadj_rec_local), &
@@ -5584,7 +5592,45 @@ if(coupled_elastic_poro) then
                rmemory_dux_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dx_prime,rmemory_duz_dz_prime, &
                rmemory_displ_elastic_LDDRK,rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,&
                rmemory_duz_dx_LDDRK,rmemory_duz_dz_LDDRK, &
-               PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE)  
+               PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.false.)  
+
+      if(SIMULATION_TYPE == 2)then
+
+      call compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
+               ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
+               source_type,it,NSTEP,anyabs,assign_external_model, &
+               initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource, &  
+               deltatover2,deltatsquareover2,ibool,kmato,numabs,elastic,codeabs, &  
+               b_accel_elastic,b_veloc_elastic,b_displ_elastic, &
+               density,poroelastcoef,xix,xiz,gammax,gammaz, &
+               jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy, &
+               source_time_function,sourcearray,adj_sourcearrays, &
+               e1,e11,e13,e1_veloc,e11_veloc,e13_veloc,e1_accel,e11_accel,e13_accel,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
+               dvx_dxl_n,dvz_dzl_n,dvz_dxl_n,dvx_dzl_n,hprime_xx,hprimewgll_xx, &
+               hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1, &
+               phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
+               deltat,coord,add_Bielak_conditions, x_source(1), z_source(1), &
+               A_plane, B_plane, C_plane, anglesource_refl, c_inc, c_refl, time_offset, f0(1),&
+               v0x_left(1,it),v0z_left(1,it),v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
+               t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it),t0x_bot(1,it),t0z_bot(1,it), &
+               count_left,count_right,count_bottom,over_critical_angle, &
+               NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD, &
+               b_absorb_elastic_left,b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top, &
+               nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
+               e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, & 
+               e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_rk, e11_force_rk, e13_force_rk, &
+               stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring,max(1,nadj_rec_local), &
+               is_PML,nspec_PML,spec_to_PML,region_CPML, &
+               K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
+               rmemory_displ_elastic,rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz, &
+               rmemory_dux_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dx_prime,rmemory_duz_dz_prime, &
+               rmemory_displ_elastic_LDDRK,rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,&
+               rmemory_duz_dx_LDDRK,rmemory_duz_dz_LDDRK, &
+               PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.true.)
+
+      call compute_forces_viscoelastic_pre_kernel(p_sv,nglob,nspec,displ_elastic,b_displ_elastic,&
+              mu_k,kappa_k,elastic,ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz,SIMULATION_TYPE)
+      endif
 
 
       if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
