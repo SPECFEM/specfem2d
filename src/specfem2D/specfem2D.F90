@@ -1028,6 +1028,14 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   integer, dimension(:), allocatable :: spec_to_PML,icorner_iglob
   logical, dimension(:,:), allocatable :: which_PML_elem
 
+!ZN defined for using PML in elastic simulation 
+  logical, dimension(:,:), allocatable :: PML_interior_interface
+  integer, dimension(:), allocatable :: point_interface
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interfeace_history_displ 
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interfeace_history_veloc 
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interfeace_history_accel 
+  integer :: nglob_interface
+
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_displ_elastic
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_displ_elastic_LDDRK
 
@@ -2923,13 +2931,57 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       allocate(which_PML_elem(4,nspec))
       allocate(spec_to_PML(nspec))
 
+      if(SIMULATION_TYPE == 2 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))then
+         allocate(PML_interior_interface(4,nspec))
+         PML_interior_interface = .false. 
+      else
+         allocate(PML_interior_interface(4,1))
+      endif
+
+
       is_PML(:) = .false.
       which_PML_elem(:,:) = .false.
 !   DK DK add support for using pml in mpi mode with external mesh 
       call pml_init(nspec,nglob,anyabs,ibool,nelemabs,codeabs,numabs,&
                   nspec_PML,is_PML,which_PML_elem,spec_to_PML, &
                   icorner_iglob,NELEM_PML_THICKNESS,&
-                  read_external_mesh,region_CPML)
+                  read_external_mesh,region_CPML,&
+                  SIMULATION_TYPE,PML_interior_interface,nglob_interface,SAVE_FORWARD)
+
+      if((SIMULATION_TYPE == 2 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS)then
+         allocate(point_interface(nglob_interface))
+         allocate(pml_interfeace_history_displ(3,nglob_interface,NSTEP))
+         allocate(pml_interfeace_history_veloc(3,nglob_interface,NSTEP))
+         allocate(pml_interfeace_history_accel(3,nglob_interface,NSTEP))
+
+         call determin_interface_pml_interior(nglob_interface,nspec,ibool,PML_interior_interface,&
+                                              which_PML_elem,point_interface)
+         deallocate(PML_interior_interface)
+         write(outputname,'(a,i6.6,a)') 'pml_elastic',myrank,'.bin'
+         open(unit=71,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')  
+      else
+           allocate(point_interface(1))
+           allocate(pml_interfeace_history_displ(3,1,1))
+           allocate(pml_interfeace_history_veloc(3,1,1))
+           allocate(pml_interfeace_history_accel(3,1,1))
+      endif
+
+      if(SIMULATION_TYPE == 2 .and. PML_BOUNDARY_CONDITIONS)then
+       do it = 1,NSTEP
+        do i = 1, nglob_interface 
+           read(71)pml_interfeace_history_accel(1,i,it),&
+                   pml_interfeace_history_accel(2,i,it),&
+                   pml_interfeace_history_accel(3,i,it),&
+                   pml_interfeace_history_veloc(1,i,it),&
+                   pml_interfeace_history_veloc(2,i,it),&
+                   pml_interfeace_history_veloc(3,i,it),&
+                   pml_interfeace_history_displ(1,i,it),&
+                   pml_interfeace_history_displ(2,i,it),&
+                   pml_interfeace_history_displ(3,i,it)  
+        enddo  
+       enddo   
+      endif
+
       deallocate(which_PML_elem)
       deallocate(icorner_iglob)
 
@@ -5596,6 +5648,17 @@ if(coupled_elastic_poro) then
 
       if(SIMULATION_TYPE == 2)then
 
+       if(PML_BOUNDARY_CONDITIONS)then
+          do i = 1, nglob_interface 
+           b_veloc_elastic(1,point_interface(i)) = pml_interfeace_history_veloc(1,i,NSTEP-it+1)
+           b_veloc_elastic(2,point_interface(i)) = pml_interfeace_history_veloc(2,i,NSTEP-it+1)
+           b_veloc_elastic(3,point_interface(i)) = pml_interfeace_history_veloc(3,i,NSTEP-it+1)
+           b_displ_elastic(1,point_interface(i)) = pml_interfeace_history_displ(1,i,NSTEP-it+1)
+           b_displ_elastic(2,point_interface(i)) = pml_interfeace_history_displ(2,i,NSTEP-it+1)
+           b_displ_elastic(3,point_interface(i)) = pml_interfeace_history_displ(3,i,NSTEP-it+1) 
+          enddo
+       endif
+
       call compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
                source_type,it,NSTEP,anyabs,assign_external_model, &
@@ -5626,7 +5689,29 @@ if(coupled_elastic_poro) then
                rmemory_dux_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dx_prime,rmemory_duz_dz_prime, &
                rmemory_displ_elastic_LDDRK,rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,&
                rmemory_duz_dx_LDDRK,rmemory_duz_dz_LDDRK, &
-               PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.true.)
+!ZN               PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.true.)
+               .false.,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.true.)
+
+          do ispec = 1,nspec 
+            do i = 1, NGLLX
+              do j = 1, NGLLZ
+                if(elastic(ispec) .and. is_pml(ispec))then
+                  b_accel_elastic(:,ibool(i,j,ispec)) = 0.
+                  b_veloc_elastic(:,ibool(i,j,ispec)) = 0.
+                  b_displ_elastic(:,ibool(i,j,ispec)) = 0.
+                endif
+               enddo
+            enddo
+          enddo 
+
+       if(PML_BOUNDARY_CONDITIONS)then 
+        do i = 1, nglob_interface
+           b_accel_elastic(1,point_interface(i)) = pml_interfeace_history_accel(1,i,NSTEP-it+1)
+           b_accel_elastic(2,point_interface(i)) = pml_interfeace_history_accel(2,i,NSTEP-it+1)
+           b_accel_elastic(3,point_interface(i)) = pml_interfeace_history_accel(3,i,NSTEP-it+1)
+        enddo
+       endif
+
 
       call compute_forces_viscoelastic_pre_kernel(p_sv,nglob,nspec,displ_elastic,b_displ_elastic,&
               mu_k,kappa_k,elastic,ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz,SIMULATION_TYPE)
@@ -5707,6 +5792,17 @@ if(coupled_elastic_poro) then
         endif
 
       endif ! if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)
+
+      if(PML_BOUNDARY_CONDITIONS .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)then
+        do i = 1, nglob_interface
+          write(71)accel_elastic(1,point_interface(i)),accel_elastic(2,point_interface(i)),&
+                   accel_elastic(3,point_interface(i)),&
+                   veloc_elastic(1,point_interface(i)),veloc_elastic(2,point_interface(i)),&
+                   veloc_elastic(3,point_interface(i)),&
+                   displ_elastic(1,point_interface(i)),displ_elastic(2,point_interface(i)),&
+                   displ_elastic(3,point_interface(i))
+        enddo
+      endif !(PML_BOUNDARY_CONDITIONS .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)
 
     endif !if(any_elastic)
 
@@ -8752,6 +8848,8 @@ if(coupled_elastic_poro) then
       close(36)
       close(37)
       close(38)
+      close(71)
+
     endif
     if(any_poroelastic) then
       close(25)
