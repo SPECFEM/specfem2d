@@ -5648,8 +5648,23 @@ if(coupled_elastic_poro) then
 
       if(SIMULATION_TYPE == 2)then
 
+          do ispec = 1,nspec 
+            do i = 1, NGLLX
+              do j = 1, NGLLZ
+                if(elastic(ispec) .and. is_pml(ispec))then
+                  b_accel_elastic(:,ibool(i,j,ispec)) = 0.
+                  b_veloc_elastic(:,ibool(i,j,ispec)) = 0.
+                  b_displ_elastic(:,ibool(i,j,ispec)) = 0.
+                endif
+               enddo
+            enddo
+          enddo 
+
        if(PML_BOUNDARY_CONDITIONS)then
           do i = 1, nglob_interface 
+           b_accel_elastic(1,point_interface(i)) = pml_interfeace_history_accel(1,i,NSTEP-it+1)
+           b_accel_elastic(2,point_interface(i)) = pml_interfeace_history_accel(2,i,NSTEP-it+1)
+           b_accel_elastic(3,point_interface(i)) = pml_interfeace_history_accel(3,i,NSTEP-it+1)
            b_veloc_elastic(1,point_interface(i)) = pml_interfeace_history_veloc(1,i,NSTEP-it+1)
            b_veloc_elastic(2,point_interface(i)) = pml_interfeace_history_veloc(2,i,NSTEP-it+1)
            b_veloc_elastic(3,point_interface(i)) = pml_interfeace_history_veloc(3,i,NSTEP-it+1)
@@ -5709,6 +5724,12 @@ if(coupled_elastic_poro) then
            b_accel_elastic(1,point_interface(i)) = pml_interfeace_history_accel(1,i,NSTEP-it+1)
            b_accel_elastic(2,point_interface(i)) = pml_interfeace_history_accel(2,i,NSTEP-it+1)
            b_accel_elastic(3,point_interface(i)) = pml_interfeace_history_accel(3,i,NSTEP-it+1)
+           b_veloc_elastic(1,point_interface(i)) = pml_interfeace_history_veloc(1,i,NSTEP-it+1)
+           b_veloc_elastic(2,point_interface(i)) = pml_interfeace_history_veloc(2,i,NSTEP-it+1)
+           b_veloc_elastic(3,point_interface(i)) = pml_interfeace_history_veloc(3,i,NSTEP-it+1)
+           b_displ_elastic(1,point_interface(i)) = pml_interfeace_history_displ(1,i,NSTEP-it+1)
+           b_displ_elastic(2,point_interface(i)) = pml_interfeace_history_displ(2,i,NSTEP-it+1)
+           b_displ_elastic(3,point_interface(i)) = pml_interfeace_history_displ(3,i,NSTEP-it+1) 
         enddo
        endif
 
