@@ -56,10 +56,10 @@
 #endif
 
   integer ::  SIMULATION_TYPE,nglob_interface
-  logical, dimension(4,nspec) :: PML_interior_interface
 
   integer :: nspec,nglob,nelemabs,nspec_PML,NELEM_PML_THICKNESS
   logical :: anyabs
+  logical, dimension(4,nspec) :: PML_interior_interface
 
   integer :: ibound,ispecabs,ncorner,ispec,iglob
   integer :: i,j,k,i_coef
