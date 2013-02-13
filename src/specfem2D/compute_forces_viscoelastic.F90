@@ -1430,10 +1430,10 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   enddo ! end of loop over all spectral elements
 
 
- !
+  !
   !--- absorbing boundaries
   !
-  if(anyabs .and. .not. PML_BOUNDARY_CONDITIONS) then
+  if(anyabs .and. .not. PML_BOUNDARY_CONDITIONS .and. backward_simulation) then
 
      count_left=1
      count_right=1
