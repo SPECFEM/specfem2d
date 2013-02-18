@@ -5647,7 +5647,7 @@ if(coupled_elastic_poro) then
                PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.false.)  
 
       if(SIMULATION_TYPE == 2)then
-
+       if(PML_BOUNDARY_CONDITIONS)then
           do ispec = 1,nspec 
             do i = 1, NGLLX
               do j = 1, NGLLZ
@@ -5659,6 +5659,7 @@ if(coupled_elastic_poro) then
                enddo
             enddo
           enddo 
+       endif
 
        if(PML_BOUNDARY_CONDITIONS)then
           do i = 1, nglob_interface 
@@ -5706,7 +5707,7 @@ if(coupled_elastic_poro) then
                rmemory_duz_dx_LDDRK,rmemory_duz_dz_LDDRK, &
 !ZN               PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.true.)
                .false.,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.true.)
-
+       if(PML_BOUNDARY_CONDITIONS)then
           do ispec = 1,nspec 
             do i = 1, NGLLX
               do j = 1, NGLLZ
@@ -5718,6 +5719,7 @@ if(coupled_elastic_poro) then
                enddo
             enddo
           enddo 
+       endif
 
        if(PML_BOUNDARY_CONDITIONS)then 
         do i = 1, nglob_interface
