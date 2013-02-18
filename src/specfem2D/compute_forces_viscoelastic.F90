@@ -1433,7 +1433,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   !
   !--- absorbing boundaries
   !
-  if(anyabs .and. .not. PML_BOUNDARY_CONDITIONS .and. backward_simulation) then
+!  if(anyabs .and. .not. PML_BOUNDARY_CONDITIONS .and. backward_simulation) then
+  if(anyabs .and. .not. PML_BOUNDARY_CONDITIONS) then
 
      count_left=1
      count_right=1
@@ -1537,9 +1538,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                  endif
 
-                 accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0+displtx)*weight
-                 accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
-                 accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0+displtz)*weight
+                 if((SIMULATION_TYPE == 2 .and. .not. backward_simulation) .or. SIMULATION_TYPE == 1) then
+                   accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0+displtx)*weight
+                   accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
+                   accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0+displtz)*weight
+                 endif
 
                  if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
                     if(p_sv)then !P-SV waves
@@ -1653,9 +1656,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                  endif
 
-                 accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx - traction_x_t0+displtx)*weight
-                 accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
-                 accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz - traction_z_t0+displtz)*weight
+                 if((SIMULATION_TYPE == 2 .and. .not. backward_simulation) .or. SIMULATION_TYPE == 1) then
+                    accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx - traction_x_t0+displtx)*weight
+                    accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
+                    accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz - traction_z_t0+displtz)*weight
+                 endif
 
                  if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
                     if(p_sv)then !P-SV waves
@@ -1791,9 +1796,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                  endif
 
-                 accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0+displtx)*weight
-                 accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
-                 accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0+displtz)*weight
+                 if((SIMULATION_TYPE == 2 .and. .not. backward_simulation) .or. SIMULATION_TYPE == 1) then
+                    accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0+displtx)*weight
+                    accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
+                    accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0+displtz)*weight
+                 endif
 
                  if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
                     if(p_sv)then !P-SV waves
@@ -1924,9 +1931,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                  endif
 
-                 accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0+displtx)*weight
-                 accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
-                 accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0+displtz)*weight
+                 if((SIMULATION_TYPE == 2 .and. .not. backward_simulation) .or. SIMULATION_TYPE == 1) then
+                    accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0+displtx)*weight
+                    accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
+                    accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0+displtz)*weight
+                 endif
 
                  if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
                     if(p_sv)then !P-SV waves
