@@ -81,6 +81,10 @@
 
 ! array index (1) is the first standard linear solid, (2) is the second etc.
 
+! When implementing viscoelasticity according to the Carcione 1993 paper, attenuation is
+! non-causal rather than causal. We fixed the problem by using equations in Carcione's
+! 2004 paper and his 2007 book. See also file doc/problem_attenuation_reference_Specfem2D_fixed_by_Xie_Zhinan.pdf
+
 ! from J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
 ! vol. 58(1), p. 110-120 (1993) for two memory-variable mechanisms (page 112).
 ! Beware: these values implement specific values of the quality factors:
