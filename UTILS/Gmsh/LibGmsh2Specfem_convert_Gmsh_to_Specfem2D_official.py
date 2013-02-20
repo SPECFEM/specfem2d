@@ -47,7 +47,7 @@ def OuvreGmsh(Dir,Nom,Bords):
     #
     # Open the file and get the lines
     # 
-    f = file(Dir+fic,'r')
+    f = file(Dir+fic,'rU')
     lignes= f.readlines()
     f.close()
     # Looking for positions
