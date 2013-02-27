@@ -4941,6 +4941,8 @@ if(coupled_elastic_poro) then
       ! loop over spectral elements
       do ispec = 1,nspec
 
+       if(poroelastic(ispec) .and. poroelastcoef(2,2,kmato(ispec)) >0.d0) then
+
         etal_f = poroelastcoef(2,2,kmato(ispec))
         permlxx = permeability(1,kmato(ispec))
         permlxz = permeability(2,kmato(ispec))
@@ -5062,6 +5064,8 @@ if(coupled_elastic_poro) then
         viscox(:,:,ispec) = viscox_loc(:,:)
         viscoz(:,:,ispec) = viscoz_loc(:,:)
         endif
+        
+       endif  ! end of poroelastic element loop
 
       enddo   ! end of spectral element loop
     endif ! end of viscous attenuation for porous media
