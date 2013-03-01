@@ -462,6 +462,10 @@
               else
                 rhol = rhoext(i,j,ispec)
               endif
+                cpl = vpext(i,j,ispec)
+                !assuming that in fluid(acoustic) part input cpl is defined by sqrt(kappal/rhol), &
+                !which is not the same as in cpl input in elastic part
+                kappal = rhol*cpl*cpl 
             else
               if(CUSTOM_REAL == SIZE_REAL) then
                 lambdal_relaxed = sngl(poroelastcoef(1,1,kmato(ispec)))
