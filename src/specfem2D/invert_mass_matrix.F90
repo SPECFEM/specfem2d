@@ -53,8 +53,11 @@
                                 assign_external_model,numat, &
                                 density,poroelastcoef,porosity,tortuosity, &
                                 vpext,rhoext,&
-   anyabs,numabs,deltat,codeabs,rmass_inverse_elastic_three,&
-   nelemabs,vsext,xix,xiz,gammaz,gammax &
+                                anyabs,numabs,deltat,codeabs,&
+                                ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
+                                ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
+                                rmass_inverse_elastic_three,&
+                                nelemabs,vsext,xix,xiz,gammaz,gammax &
 !! DK DK added this for Guenneau, March 2012
 #ifdef USE_GUENNEAU
                                 ,coord &
@@ -70,9 +73,10 @@
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   logical :: anyabs
-  integer :: nelemabs,ibegin,iend,ispecabs
+  integer :: nelemabs,ibegin,iend,ispecabs,jbegin,jend
 !  integer :: ispec,i,j,k,iglob,ispecabs,ibegin,iend,irec,irec_local
-  integer, dimension(nelemabs) :: numabs
+  integer, dimension(nelemabs) :: numabs,ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
+                                  ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2
   double precision :: deltat
   logical, dimension(4,nelemabs)  :: codeabs
 
@@ -509,6 +513,126 @@
            enddo
         endif  !  end of top absorbing boundary
      enddo
+  endif  ! end of absorbing boundaries
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  if(.not. PML_BOUNDARY_CONDITIONS .and. anyabs) then
+
+    do ispecabs=1,nelemabs
+
+      ispec = numabs(ispecabs)
+
+      ! Sommerfeld condition if acoustic
+      if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
+
+        ! get elastic parameters of current spectral element
+        lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
+        mul_relaxed = poroelastcoef(2,1,kmato(ispec))
+        kappal  = lambdal_relaxed + TWO*mul_relaxed/3._CUSTOM_REAL
+        rhol = density(1,kmato(ispec))
+
+        cpl = sqrt(kappal/rhol)
+
+        !--- left absorbing boundary
+        if(codeabs(IEDGE4,ispecabs)) then
+          i = 1
+          jbegin = ibegin_edge4(ispecabs)
+          jend = iend_edge4(ispecabs)
+          do j = jbegin,jend
+            iglob = ibool(i,j,ispec)
+            ! external velocity model
+            if(assign_external_model) then
+              cpl = vpext(i,j,ispec)
+              rhol = rhoext(i,j,ispec)
+            endif
+            xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
+            zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
+            jacobian1D = sqrt(xgamma**2 + zgamma**2)
+            weight = jacobian1D * wzgll(j)
+
+            rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
+                  + 1.0d0*deltat/2.0d0*weight/cpl/rhol
+
+          enddo
+
+        endif  !  end of left absorbing boundary
+
+        !--- right absorbing boundary
+        if(codeabs(IEDGE2,ispecabs)) then
+          i = NGLLX
+          jbegin = ibegin_edge2(ispecabs)
+          jend = iend_edge2(ispecabs)
+          do j = jbegin,jend
+            iglob = ibool(i,j,ispec)
+            ! external velocity model
+            if(assign_external_model) then
+              cpl = vpext(i,j,ispec)
+              rhol = rhoext(i,j,ispec)
+            endif
+            xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
+            zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
+            jacobian1D = sqrt(xgamma**2 + zgamma**2)
+            weight = jacobian1D * wzgll(j)
+
+            rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
+                  + 1.0d0*deltat/2.0d0*weight/cpl/rhol
+          enddo
+        endif  !  end of right absorbing boundary
+
+        !--- bottom absorbing boundary
+        if(codeabs(IEDGE1,ispecabs)) then
+          j = 1
+          ibegin = ibegin_edge1(ispecabs)
+          iend = iend_edge1(ispecabs)
+          ! exclude corners to make sure there is no contradiction on the normal
+          if(codeabs(IEDGE4,ispecabs)) ibegin = 2
+          if(codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
+          do i = ibegin,iend
+            iglob = ibool(i,j,ispec)
+            ! external velocity model
+            if(assign_external_model) then
+              cpl = vpext(i,j,ispec)
+              rhol = rhoext(i,j,ispec)
+            endif
+            xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+            zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
+            jacobian1D = sqrt(xxi**2 + zxi**2)
+            weight = jacobian1D * wxgll(i)
+
+            rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
+                 + 1.0d0*deltat/2.0d0*weight/cpl/rhol
+
+          enddo
+        endif  !  end of bottom absorbing boundary
+
+        !--- top absorbing boundary
+        if(codeabs(IEDGE3,ispecabs)) then
+          j = NGLLZ
+          ibegin = ibegin_edge3(ispecabs)
+          iend = iend_edge3(ispecabs)
+          ! exclude corners to make sure there is no contradiction on the normal
+          if(codeabs(IEDGE4,ispecabs)) ibegin = 2
+          if(codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
+          do i = ibegin,iend
+            iglob = ibool(i,j,ispec)
+            ! external velocity model
+            if(assign_external_model) then
+              cpl = vpext(i,j,ispec)
+              rhol = rhoext(i,j,ispec)
+            endif
+            xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+            zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
+            jacobian1D = sqrt(xxi**2 + zxi**2)
+            weight = jacobian1D * wxgll(i)
+
+            rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
+                 + 1.0d0*deltat/2.0d0*weight/cpl/rhol
+
+          enddo
+        endif  !  end of top absorbing boundary
+
+      endif ! acoustic ispec
+    enddo
   endif  ! end of absorbing boundaries
 
 

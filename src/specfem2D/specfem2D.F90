@@ -3197,8 +3197,11 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                                 assign_external_model,numat, &
                                 density,poroelastcoef,porosity,tortuosity, &
                                 vpext,rhoext,&
-  anyabs,numabs,deltat,codeabs,rmass_inverse_elastic_three,&
-  nelemabs,vsext,xix,xiz,gammaz,gammax &
+                                anyabs,numabs,deltat,codeabs,&
+                                ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
+                                ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
+                                rmass_inverse_elastic_three,&
+                                nelemabs,vsext,xix,xiz,gammaz,gammax &
 !! DK DK added this for Guenneau, March 2012
 #ifdef USE_GUENNEAU
                                 ,coord &
