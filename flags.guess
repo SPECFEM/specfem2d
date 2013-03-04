@@ -19,7 +19,7 @@ case $FC in
         #
         if test x"$FLAGS_CHECK" = x; then
             FLAGS_CHECK="-O3 -Onoaggress -Oipa0 -hfp2 -Ovector3 -Oscalar3 -Ocache2 -Ounroll2 -Ofusion2" # turn on optimization; -Oaggress -Oipa4 would make it even more aggressive
-        # -eC -eD -hfp2  # turn on full debugging and range checking
+        # -eC -eD -ec -en -eI -ea -g -G0  # turn on full debugging and range checking
         fi
         ;;
     pgf95|*/pgf95|pgf90|*/pgf90)
@@ -52,12 +52,9 @@ case $FC in
         # GNU gfortran
         #
         if test x"$FLAGS_CHECK" = x; then
-            FLAGS_CHECK="-std=f2003 -fimplicit-none -frange-check -O2 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow" # -mcmodel=medium
+            FLAGS_CHECK="-std=f2003 -fimplicit-none -frange-check -O2 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -Wunused-dummy-argument" # -mcmodel=medium
         fi
         # useful for debugging... -ffpe-trap=overflow,zero -fbacktrace -fbounds-check
-        #
-        # older gfortran syntax
-        #   -std=f2003 -fimplicit-none -frange-check -O2 -Wunused-labels -Waliasing -Wampersand -Wsurprising -Wline-truncation -Wunderflow" # -mcmodel=medium
         ;;
     g95|*/g95)
         #
