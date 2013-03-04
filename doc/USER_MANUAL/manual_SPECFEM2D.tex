@@ -576,19 +576,19 @@ Flag& Meaning\\ [0.5ex]
 % is used to refer this table in the text
 \end{table}
 
-If you use PML and an external velocity model (for instance setting flag "READ\_EXTERNAL\_SEP\_FILE" to .true.),
+If you use PML and an external velocity and density model (for instance setting flag "READ\_EXTERNAL\_SEP\_FILE" to .true.),
 you should be careful because mathematically a PML cannot handle heterogeneities along the
 normal to the PML edge inside the PML layer. This comes from the fact that the damping profile
-that is defined assumes a constant velocity model along the normal
+that is defined assumes a constant velocity and density model along the normal
 direction.
 
-Thus, you need to modify your velocity model in order for it to be 1D inside
+Thus, you need to modify your velocity and density model in order for it to be 1D inside
 the PML, as shown in Figure~\ref{fig:modify_external_velocity_model_to_use_PML}.
 
 This applies to the bottom layer as well; there you should make sure
 that your model is 1D and thus constant along the vertical direction.
 
-To summarize, only use a 2D velocity model inside the physical region, and in
+To summarize, only use a 2D velocity and density model inside the physical region, and in
 all the PML layers extend it by continuity from its values along the
 inner PML edge.
 
@@ -597,7 +597,7 @@ inner PML edge.
 \noindent \begin{centering}
 \includegraphics[width=3in]{figures/how_to_use_PML_when_READ_EXTERNAL_SEP_FILE_is_true.png}
 \par\end{centering}
-\caption{How to modify your external 2D velocity model in order to use PML.
+\caption{How to modify your external 2D velocity and density model in order to use PML.
 Such a modification is not needed when using Stacey absorbing boundary conditions (but such conditions
 are significantly less efficient).}
 \label{fig:modify_external_velocity_model_to_use_PML}
@@ -944,10 +944,10 @@ To simulate propagation of incoming plane waves in the simulation domain, initia
 \section{How to choose the time step}
 
 Three different explicit conditionally-stable time schemes can be used for elastic, acoustic (fluid) or coupled elastic/acoustic media:
-the Newmark method, the low-dissipation and low-dispersion fourth-order six-stage Runge-Kutta method (LDDRK4-6) presented in \cite{bbb_rk4},
+the Newmark method, the low-dissipation and low-dispersion fourth-order six-stage Runge-Kutta method (LDDRK4-6) presented in \cite{BeBoBa06},
 and the classical fourth-order four-stage Runge-Kutta (RK4) method.
 Currently the last two methods are not implemented for poro-elastic media.
-According to \cite{DeSe10} and \cite{bbb_rk4}, with different degrees $N=NGLLX-1$ of the GLL basis funtions the CFL bounds are given in the following tables.
+According to \cite{DeSe10} and \cite{BeBoBa06}, with different degrees $N=NGLLX-1$ of the GLL basis funtions the CFL bounds are given in the following tables.
 Note that by default the SPECFEM solver uses $NGLLX = 5$ and thus a degree $N = 4$, which is thus the value you should use
 in most cases in the following tables.
 You can directly compare these values with the value given in sentence 'Max stability for P wave velocity' in file
