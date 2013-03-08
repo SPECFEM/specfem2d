@@ -989,7 +989,7 @@
 
 ! for LDDRK46
   integer :: i_stage,stage_time_scheme
-  double precision, dimension(Nstages):: alpha_LDDRK,beta_LDDRK,c_LDDRK
+  real(kind=CUSTOM_REAL), dimension(Nstages):: alpha_LDDRK,beta_LDDRK,c_LDDRK
 
 Data alpha_LDDRK /0.0_CUSTOM_REAL,-0.737101392796_CUSTOM_REAL, &
      -1.634740794341_CUSTOM_REAL,-0.744739003780_CUSTOM_REAL, &
