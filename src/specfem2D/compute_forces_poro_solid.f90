@@ -44,14 +44,14 @@
   subroutine compute_forces_poro_solid(nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                source_type,it,NSTEP,anyabs, &
-               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat, & 
-               deltatover2,deltatsquareover2,ibool,kmato,numabs,poroelastic,codeabs, &  
+               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat, &
+               deltatover2,deltatsquareover2,ibool,kmato,numabs,poroelastic,codeabs, &
                accels_poroelastic,velocs_poroelastic,velocw_poroelastic,displs_poroelastic,displw_poroelastic,&
                b_accels_poroelastic,b_displs_poroelastic,b_displw_poroelastic,&
                density,porosity,tortuosity,permeability,poroelastcoef,xix,xiz,gammax,gammaz, &
                jacobian,source_time_function,sourcearray,adj_sourcearrays,e11, &
-               e13,e11_veloc,e13_veloc,e11_accel,e13_accel,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, & 
-               dvx_dxl_n,dvz_dzl_n,dvz_dxl_n,dvx_dzl_n,hprime_xx,hprimewgll_xx, & 
+               e13,e11_veloc,e13_veloc,e11_accel,e13_accel,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
+               dvx_dxl_n,dvz_dzl_n,dvz_dxl_n,dvx_dzl_n,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu2,&
                phi_nu2,Mu_nu2,N_SLS, &
                rx_viscous,rz_viscous,theta_e,theta_s,&
@@ -115,8 +115,8 @@
 
   integer :: N_SLS
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e11,e13
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e11_veloc,e13_veloc  
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e11_accel,e13_accel 
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e11_veloc,e13_veloc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e11_accel,e13_accel
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e11_LDDRK,e13_LDDRK
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e11_initial_rk,e13_initial_rk
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS,stage_time_scheme) :: e11_force_RK, e13_force_RK
@@ -125,8 +125,8 @@
   real(kind=CUSTOM_REAL) :: e11_sum,e13_sum
   integer :: i_sls
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: &   
-        dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n,dvx_dxl_n,dvz_dzl_n,dvz_dxl_n,dvx_dzl_n 
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: &
+        dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n,dvx_dxl_n,dvz_dzl_n,dvz_dxl_n,dvx_dzl_n
 
 ! viscous attenuation (poroelastic media)
   double precision, dimension(NGLLX,NGLLZ,nspec) :: rx_viscous
