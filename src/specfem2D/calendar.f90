@@ -429,10 +429,10 @@
 !
 ! Explanation of all internal variables.
 ! jdref   Julian Day on which 1 March begins in the reference year.
-! jmonth  Month counter which equals month+1 if month .gt. 2
-!          or month+13 if month .le. 2.
-! jyear   Year index,  jyear=iyear if iyear .gt. 0, jyear=iyear+1
-!            if iyear .lt. 0.  Thus, jyear does not skip year 0
+! jmonth  Month counter which equals month+1 if month > 2
+!          or month+13 if month <= 2.
+! jyear   Year index,  jyear=iyear if iyear > 0, jyear=iyear+1
+!            if iyear < 0.  Thus, jyear does not skip year 0
 !            like iyear does between BC and AD years.
 ! leap    =1 if the year is a leap year, =0 if not.
 ! n1yr    Number of complete individual years between iyear and
@@ -456,7 +456,7 @@
 !            this is 100*365 + 25 = 36525.
 ! nyrs    Number of years from the beginning of yr400
 !              to the beginning of jyear.  (Used for option +/-3).
-! yr400   The largest multiple of 400 years that is .le. jyear.
+! yr400   The largest multiple of 400 years that is <= jyear.
 !
 !
 !----------------------------------------------------------------
@@ -590,7 +590,7 @@
     jmonth = month +  1
   endif
 !
-!     Find the closest multiple of 400 years that is .le. jyear.
+!     Find the closest multiple of 400 years that is <= jyear.
   yr400 = (jyear/400)*400
 !           = multiple of 400 years at or less than jyear.
   if (jyear < yr400) then
@@ -717,7 +717,7 @@
    endif
   endif
 !
-!     Adjust the year if it is .le. 0, and hence BC (Before Christ).
+!     Adjust the year if it is <= 0, and hence BC (Before Christ).
   if (iyear <= 0) then
    iyear = iyear - 1
   endif

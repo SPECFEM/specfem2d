@@ -569,9 +569,9 @@
   logical interpol,meshvect,modelvect,boundvect,assign_external_model,initialfield, &
     output_grid_ASCII,output_grid_Gnuplot,ATTENUATION_VISCOELASTIC_SOLID,output_postscript_snapshot,output_color_image, &
     plot_lowerleft_corner_only,add_Bielak_conditions,output_energy,READ_EXTERNAL_SEP_FILE, &
-    output_wavefield_dumps,use_binary_for_wavefield_dumps,PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE 
+    output_wavefield_dumps,use_binary_for_wavefield_dumps,PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE
 
-  double precision :: ROTATE_PML_ANGLE 
+  double precision :: ROTATE_PML_ANGLE
 
 !! DK DK for CPML_element_file
   logical :: read_external_mesh
@@ -594,9 +594,9 @@
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1,e11,e13
 !DK DK e1_veloc,e11_veloc,e13_veloc denote first derivative of e1,e11,e13 respect to t
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_veloc,e11_veloc,e13_veloc 
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_veloc,e11_veloc,e13_veloc
 !DK DK e1_accel,e11_accel,e13_accel  denote second derivative of e1,e11,e13 respect to t
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_accel,e11_accel,e13_accel 
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_accel,e11_accel,e13_accel
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_LDDRK,e11_LDDRK,e13_LDDRK
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_initial_rk,e11_initial_rk,e13_initial_rk
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: e1_force_rk,e11_force_rk,e13_force_rk
@@ -1019,8 +1019,8 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
    rmemory_dux_dx,rmemory_duz_dx,rmemory_dux_dz,rmemory_duz_dz
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &                            
-   rmemory_dux_dx_prime,rmemory_duz_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dz_prime  
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
+   rmemory_dux_dx_prime,rmemory_duz_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dz_prime
 
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
    rmemory_dux_dx_LDDRK,rmemory_duz_dx_LDDRK,rmemory_dux_dz_LDDRK,rmemory_duz_dz_LDDRK
@@ -1028,12 +1028,12 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   integer, dimension(:), allocatable :: spec_to_PML,icorner_iglob
   logical, dimension(:,:), allocatable :: which_PML_elem
 
-!ZN defined for using PML in elastic simulation 
+!ZN defined for using PML in elastic simulation
   logical, dimension(:,:), allocatable :: PML_interior_interface
   integer, dimension(:), allocatable :: point_interface
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interfeace_history_displ 
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interfeace_history_veloc 
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interfeace_history_accel 
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interfeace_history_displ
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interfeace_history_veloc
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interfeace_history_accel
   integer :: nglob_interface
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_displ_elastic
@@ -1261,9 +1261,9 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     allocate(antecedent_list(nspec))
     allocate(perm(nspec))
   endif
-     
-!   DK DK add support for using pml in mpi mode with external mesh  
-  allocate(region_CPML(nspec))    
+
+!   DK DK add support for using pml in mpi mode with external mesh
+  allocate(region_CPML(nspec))
   call read_databases_mato(ipass,nspec,ngnod,kmato,knods, &
                                 perm,antecedent_list,region_CPML)
 
@@ -1384,25 +1384,25 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     allocate(e11(NGLLX,NGLLZ,nspec_allocate,N_SLS))
     allocate(e13(NGLLX,NGLLZ,nspec_allocate,N_SLS))
 
-    allocate(e1_veloc(NGLLX,NGLLZ,nspec_allocate,N_SLS))  
-    allocate(e11_veloc(NGLLX,NGLLZ,nspec_allocate,N_SLS))  
-    allocate(e13_veloc(NGLLX,NGLLZ,nspec_allocate,N_SLS))  
+    allocate(e1_veloc(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+    allocate(e11_veloc(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+    allocate(e13_veloc(NGLLX,NGLLZ,nspec_allocate,N_SLS))
 
-    allocate(e1_accel(NGLLX,NGLLZ,nspec_allocate,N_SLS))  
-    allocate(e11_accel(NGLLX,NGLLZ,nspec_allocate,N_SLS))  
-    allocate(e13_accel(NGLLX,NGLLZ,nspec_allocate,N_SLS))  
+    allocate(e1_accel(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+    allocate(e11_accel(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+    allocate(e13_accel(NGLLX,NGLLZ,nspec_allocate,N_SLS))
 
     e1(:,:,:,:) = 0._CUSTOM_REAL
     e11(:,:,:,:) = 0._CUSTOM_REAL
     e13(:,:,:,:) = 0._CUSTOM_REAL
 
-    e1_veloc(:,:,:,:) = 0._CUSTOM_REAL  
-    e11_veloc(:,:,:,:) = 0._CUSTOM_REAL  
-    e13_veloc(:,:,:,:) = 0._CUSTOM_REAL  
+    e1_veloc(:,:,:,:) = 0._CUSTOM_REAL
+    e11_veloc(:,:,:,:) = 0._CUSTOM_REAL
+    e13_veloc(:,:,:,:) = 0._CUSTOM_REAL
 
-    e1_accel(:,:,:,:) = 0._CUSTOM_REAL  
-    e11_accel(:,:,:,:) = 0._CUSTOM_REAL  
-    e13_accel(:,:,:,:) = 0._CUSTOM_REAL  
+    e1_accel(:,:,:,:) = 0._CUSTOM_REAL
+    e11_accel(:,:,:,:) = 0._CUSTOM_REAL
+    e13_accel(:,:,:,:) = 0._CUSTOM_REAL
 
     if(time_stepping_scheme == 2)then
       allocate(e1_LDDRK(NGLLX,NGLLZ,nspec_allocate,N_SLS))
@@ -1443,10 +1443,10 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     allocate(duz_dzl_n(NGLLX,NGLLZ,nspec_allocate))
     allocate(duz_dxl_n(NGLLX,NGLLZ,nspec_allocate))
     allocate(dux_dzl_n(NGLLX,NGLLZ,nspec_allocate))
-    allocate(dvx_dxl_n(NGLLX,NGLLZ,nspec_allocate))  
-    allocate(dvz_dzl_n(NGLLX,NGLLZ,nspec_allocate))  
-    allocate(dvz_dxl_n(NGLLX,NGLLZ,nspec_allocate))  
-    allocate(dvx_dzl_n(NGLLX,NGLLZ,nspec_allocate))  
+    allocate(dvx_dxl_n(NGLLX,NGLLZ,nspec_allocate))
+    allocate(dvz_dzl_n(NGLLX,NGLLZ,nspec_allocate))
+    allocate(dvz_dxl_n(NGLLX,NGLLZ,nspec_allocate))
+    allocate(dvx_dzl_n(NGLLX,NGLLZ,nspec_allocate))
     allocate(Mu_nu1(NGLLX,NGLLZ,nspec))
     allocate(Mu_nu2(NGLLX,NGLLZ,nspec))
   endif
@@ -2926,14 +2926,14 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     if( PML_BOUNDARY_CONDITIONS .and. anyabs_glob ) then
 
       !PML code
-      allocate(is_PML(nspec))  
+      allocate(is_PML(nspec))
       allocate(icorner_iglob(nglob))
       allocate(which_PML_elem(4,nspec))
       allocate(spec_to_PML(nspec))
 
       if(SIMULATION_TYPE == 2 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))then
          allocate(PML_interior_interface(4,nspec))
-         PML_interior_interface = .false. 
+         PML_interior_interface = .false.
       else
          allocate(PML_interior_interface(4,1))
       endif
@@ -2941,7 +2941,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
       is_PML(:) = .false.
       which_PML_elem(:,:) = .false.
-!   DK DK add support for using pml in mpi mode with external mesh 
+!   DK DK add support for using pml in mpi mode with external mesh
       call pml_init(nspec,nglob,anyabs,ibool,nelemabs,codeabs,numabs,&
                   nspec_PML,is_PML,which_PML_elem,spec_to_PML, &
                   icorner_iglob,NELEM_PML_THICKNESS,&
@@ -2958,7 +2958,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                                               which_PML_elem,point_interface)
          deallocate(PML_interior_interface)
          write(outputname,'(a,i6.6,a)') 'pml_elastic',myrank,'.bin'
-         open(unit=71,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')  
+         open(unit=71,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
       else
            allocate(point_interface(1))
            allocate(pml_interfeace_history_displ(3,1,1))
@@ -2968,7 +2968,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
       if(SIMULATION_TYPE == 2 .and. PML_BOUNDARY_CONDITIONS)then
        do it = 1,NSTEP
-        do i = 1, nglob_interface 
+        do i = 1, nglob_interface
            read(71)pml_interfeace_history_accel(1,i,it),&
                    pml_interfeace_history_accel(2,i,it),&
                    pml_interfeace_history_accel(3,i,it),&
@@ -2977,9 +2977,9 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                    pml_interfeace_history_veloc(3,i,it),&
                    pml_interfeace_history_displ(1,i,it),&
                    pml_interfeace_history_displ(2,i,it),&
-                   pml_interfeace_history_displ(3,i,it)  
-        enddo  
-       enddo   
+                   pml_interfeace_history_displ(3,i,it)
+        enddo
+       enddo
       endif
 
       deallocate(which_PML_elem)
@@ -3027,7 +3027,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         allocate(rmemory_duz_dz(NGLLX,NGLLZ,nspec_PML),stat=ier)
         if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'
 
-        if(ROTATE_PML_ACTIVATE)then  
+        if(ROTATE_PML_ACTIVATE)then
           allocate(rmemory_dux_dx_prime(NGLLX,NGLLZ,nspec_PML),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx_prime'
           allocate(rmemory_dux_dz_prime(NGLLX,NGLLZ,nspec_PML),stat=ier)
@@ -3039,8 +3039,8 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         endif
 
         if(time_stepping_scheme == 2)then
-          allocate(rmemory_displ_elastic_LDDRK(2,3,NGLLX,NGLLZ,nspec_PML),stat=ier) 
-          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic' 
+          allocate(rmemory_displ_elastic_LDDRK(2,3,NGLLX,NGLLZ,nspec_PML),stat=ier)
+          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic'
           allocate(rmemory_dux_dx_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx'
           allocate(rmemory_dux_dz_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
@@ -3063,7 +3063,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         rmemory_duz_dx(:,:,:) = ZERO
         rmemory_duz_dz(:,:,:) = ZERO
 
-        if(ROTATE_PML_ACTIVATE)then 
+        if(ROTATE_PML_ACTIVATE)then
           rmemory_dux_dx_prime(:,:,:) = ZERO
           rmemory_dux_dz_prime(:,:,:) = ZERO
           rmemory_duz_dx_prime(:,:,:) = ZERO
@@ -3086,11 +3086,11 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         allocate(rmemory_duz_dx(1,1,1))
         allocate(rmemory_duz_dz(1,1,1))
 
-        allocate(rmemory_dux_dx_prime(1,1,1)) 
+        allocate(rmemory_dux_dx_prime(1,1,1))
         allocate(rmemory_dux_dz_prime(1,1,1))
         allocate(rmemory_duz_dx_prime(1,1,1))
         allocate(rmemory_duz_dz_prime(1,1,1))
-       
+
 
         if(time_stepping_scheme == 2)then
         allocate(rmemory_displ_elastic_LDDRK(1,1,1,1,1))
@@ -3147,7 +3147,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       allocate(rmemory_duz_dx(1,1,1))
       allocate(rmemory_duz_dz(1,1,1))
 
-      allocate(rmemory_dux_dx_prime(1,1,1)) 
+      allocate(rmemory_dux_dx_prime(1,1,1))
       allocate(rmemory_dux_dz_prime(1,1,1))
       allocate(rmemory_duz_dx_prime(1,1,1))
       allocate(rmemory_duz_dz_prime(1,1,1))
@@ -3636,7 +3636,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 !
 !----- Files where viscous damping are saved during forward wavefield calculation
 !
-  if(any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE .eq. 2)) then
+  if(any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 2)) then
     allocate(b_viscodampx(nglob))
     allocate(b_viscodampz(nglob))
     write(outputname,'(a,i6.6,a)') 'viscodampingx',myrank,'.bin'
@@ -5067,7 +5067,7 @@ if(coupled_elastic_poro) then
         viscox(:,:,ispec) = viscox_loc(:,:)
         viscoz(:,:,ispec) = viscoz_loc(:,:)
         endif
-        
+
        endif  ! end of poroelastic element loop
 
       enddo   ! end of spectral element loop
@@ -5624,8 +5624,8 @@ if(coupled_elastic_poro) then
       call compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
                source_type,it,NSTEP,anyabs,assign_external_model, &
-               initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource, &  
-               deltatover2,deltatsquareover2,ibool,kmato,numabs,elastic,codeabs, &  
+               initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource, &
+               deltatover2,deltatsquareover2,ibool,kmato,numabs,elastic,codeabs, &
                accel_elastic,veloc_elastic,displ_elastic, &
                density,poroelastcoef,xix,xiz,gammax,gammaz, &
                jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy, &
@@ -5642,7 +5642,7 @@ if(coupled_elastic_poro) then
                NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD, &
                b_absorb_elastic_left,b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top, &
                nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
-               e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, & 
+               e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
                e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_rk, e11_force_rk, e13_force_rk, &
                stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring,max(1,nadj_rec_local), &
                is_PML,nspec_PML,spec_to_PML,region_CPML, &
@@ -5651,11 +5651,11 @@ if(coupled_elastic_poro) then
                rmemory_dux_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dx_prime,rmemory_duz_dz_prime, &
                rmemory_displ_elastic_LDDRK,rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,&
                rmemory_duz_dx_LDDRK,rmemory_duz_dz_LDDRK, &
-               PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.false.)  
+               PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.false.)
 
       if(SIMULATION_TYPE == 2)then
        if(PML_BOUNDARY_CONDITIONS)then
-          do ispec = 1,nspec 
+          do ispec = 1,nspec
             do i = 1, NGLLX
               do j = 1, NGLLZ
                 if(elastic(ispec) .and. is_pml(ispec))then
@@ -5665,11 +5665,11 @@ if(coupled_elastic_poro) then
                 endif
                enddo
             enddo
-          enddo 
+          enddo
        endif
 
        if(PML_BOUNDARY_CONDITIONS)then
-          do i = 1, nglob_interface 
+          do i = 1, nglob_interface
            b_accel_elastic(1,point_interface(i)) = pml_interfeace_history_accel(1,i,NSTEP-it+1)
            b_accel_elastic(2,point_interface(i)) = pml_interfeace_history_accel(2,i,NSTEP-it+1)
            b_accel_elastic(3,point_interface(i)) = pml_interfeace_history_accel(3,i,NSTEP-it+1)
@@ -5678,15 +5678,15 @@ if(coupled_elastic_poro) then
            b_veloc_elastic(3,point_interface(i)) = pml_interfeace_history_veloc(3,i,NSTEP-it+1)
            b_displ_elastic(1,point_interface(i)) = pml_interfeace_history_displ(1,i,NSTEP-it+1)
            b_displ_elastic(2,point_interface(i)) = pml_interfeace_history_displ(2,i,NSTEP-it+1)
-           b_displ_elastic(3,point_interface(i)) = pml_interfeace_history_displ(3,i,NSTEP-it+1) 
+           b_displ_elastic(3,point_interface(i)) = pml_interfeace_history_displ(3,i,NSTEP-it+1)
           enddo
        endif
 
       call compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
                source_type,it,NSTEP,anyabs,assign_external_model, &
-               initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource, &  
-               deltatover2,deltatsquareover2,ibool,kmato,numabs,elastic,codeabs, &  
+               initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource, &
+               deltatover2,deltatsquareover2,ibool,kmato,numabs,elastic,codeabs, &
                b_accel_elastic,b_veloc_elastic,b_displ_elastic, &
                density,poroelastcoef,xix,xiz,gammax,gammaz, &
                jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy, &
@@ -5703,7 +5703,7 @@ if(coupled_elastic_poro) then
                NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD, &
                b_absorb_elastic_left,b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top, &
                nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
-               e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, & 
+               e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
                e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_rk, e11_force_rk, e13_force_rk, &
                stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring,max(1,nadj_rec_local), &
                is_PML,nspec_PML,spec_to_PML,region_CPML, &
@@ -5715,7 +5715,7 @@ if(coupled_elastic_poro) then
 !ZN               PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.true.)
                .false.,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.true.)
        if(PML_BOUNDARY_CONDITIONS)then
-          do ispec = 1,nspec 
+          do ispec = 1,nspec
             do i = 1, NGLLX
               do j = 1, NGLLZ
                 if(elastic(ispec) .and. is_pml(ispec))then
@@ -5725,10 +5725,10 @@ if(coupled_elastic_poro) then
                 endif
                enddo
             enddo
-          enddo 
+          enddo
        endif
 
-       if(PML_BOUNDARY_CONDITIONS)then 
+       if(PML_BOUNDARY_CONDITIONS)then
         do i = 1, nglob_interface
            b_accel_elastic(1,point_interface(i)) = pml_interfeace_history_accel(1,i,NSTEP-it+1)
            b_accel_elastic(2,point_interface(i)) = pml_interfeace_history_accel(2,i,NSTEP-it+1)
@@ -5738,7 +5738,7 @@ if(coupled_elastic_poro) then
            b_veloc_elastic(3,point_interface(i)) = pml_interfeace_history_veloc(3,i,NSTEP-it+1)
            b_displ_elastic(1,point_interface(i)) = pml_interfeace_history_displ(1,i,NSTEP-it+1)
            b_displ_elastic(2,point_interface(i)) = pml_interfeace_history_displ(2,i,NSTEP-it+1)
-           b_displ_elastic(3,point_interface(i)) = pml_interfeace_history_displ(3,i,NSTEP-it+1) 
+           b_displ_elastic(3,point_interface(i)) = pml_interfeace_history_displ(3,i,NSTEP-it+1)
         enddo
        endif
 
@@ -6484,14 +6484,14 @@ if(coupled_elastic_poro) then
       call compute_forces_poro_solid(nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                source_type,it,NSTEP,anyabs, &
-               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat, & 
-               deltatover2,deltatsquareover2,ibool,kmato,numabs,poroelastic,codeabs, & 
+               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat, &
+               deltatover2,deltatsquareover2,ibool,kmato,numabs,poroelastic,codeabs, &
                accels_poroelastic,velocs_poroelastic,velocw_poroelastic,displs_poroelastic,displw_poroelastic,&
                b_accels_poroelastic,b_displs_poroelastic,b_displw_poroelastic,&
                density,porosity,tortuosity,permeability,poroelastcoef,xix,xiz,gammax,gammaz, &
                jacobian,source_time_function,sourcearray,adj_sourcearrays,e11, &
-               e13,e11_veloc,e13_veloc,e11_accel,e13_accel,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, & 
-               dvx_dxl_n,dvz_dzl_n,dvz_dxl_n,dvx_dzl_n,hprime_xx,hprimewgll_xx, & 
+               e13,e11_veloc,e13_veloc,e11_accel,e13_accel,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
+               dvx_dxl_n,dvz_dzl_n,dvz_dxl_n,dvx_dzl_n,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu2,&
                phi_nu2,Mu_nu2,N_SLS, &
                rx_viscous,rz_viscous,theta_e,theta_s,&
@@ -6508,14 +6508,14 @@ if(coupled_elastic_poro) then
       call compute_forces_poro_fluid(nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                source_type,it,NSTEP,anyabs, &
-               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat, &  
-               deltatover2,deltatsquareover2,ibool,kmato,numabs,poroelastic,codeabs, & 
+               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat, &
+               deltatover2,deltatsquareover2,ibool,kmato,numabs,poroelastic,codeabs, &
                accelw_poroelastic,velocw_poroelastic,displw_poroelastic,velocs_poroelastic,displs_poroelastic,&
                b_accelw_poroelastic,b_displw_poroelastic,b_displs_poroelastic,&
                density,porosity,tortuosity,permeability,poroelastcoef,xix,xiz,gammax,gammaz, &
                jacobian,source_time_function,sourcearray,adj_sourcearrays,e11, &
-               e13,e11_veloc,e13_veloc,e11_accel,e13_accel,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &  
-               dvx_dxl_n,dvz_dzl_n,dvz_dxl_n,dvx_dzl_n,hprime_xx,hprimewgll_xx, & 
+               e13,e11_veloc,e13_veloc,e11_accel,e13_accel,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
+               dvx_dxl_n,dvz_dzl_n,dvz_dxl_n,dvx_dzl_n,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu2,&
                phi_nu2,Mu_nu2,N_SLS, &
                rx_viscous,rz_viscous,theta_e,theta_s,&
@@ -7741,7 +7741,7 @@ if(coupled_elastic_poro) then
       call MPI_REDUCE(kinetic_energy, kinetic_energy_total, 1, CUSTOM_MPI_TYPE, MPI_SUM, 0, MPI_COMM_WORLD, ier)
       call MPI_REDUCE(potential_energy, potential_energy_total, 1, CUSTOM_MPI_TYPE, MPI_SUM, 0, MPI_COMM_WORLD, ier)
 #else
-      kinetic_energy_total = kinetic_energy 
+      kinetic_energy_total = kinetic_energy
       potential_energy_total = potential_energy
 #endif
 

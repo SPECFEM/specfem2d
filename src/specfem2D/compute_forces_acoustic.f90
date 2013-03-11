@@ -465,7 +465,7 @@
                 cpl = vpext(i,j,ispec)
                 !assuming that in fluid(acoustic) part input cpl is defined by sqrt(kappal/rhol), &
                 !which is not the same as in cpl input in elastic part
-                kappal = rhol*cpl*cpl 
+                kappal = rhol*cpl*cpl
             else
               if(CUSTOM_REAL == SIZE_REAL) then
                 lambdal_relaxed = sngl(poroelastcoef(1,1,kmato(ispec)))
@@ -594,7 +594,7 @@
                      rmemory_potential_acoustic(1,i,j,ispec_PML) = rmemory_potential_acoustic(1,i,j,ispec_PML) + &
                      beta_LDDRK(i_stage) * rmemory_potential_acoust_LDDRK(1,i,j,ispec_PML)
                      rmemory_potential_acoustic(2,i,j,ispec_PML) =0._CUSTOM_REAL
-                  end if 
+                  end if
 
                    potential_dot_dot_acoustic_PML(i,j,ispec_PML)= wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * &
                     (A0 * potential_acoustic(iglob)                   + &
@@ -622,14 +622,14 @@
 
                    A4 = -alpha_x_store(i,j,ispec_PML) ** 2*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)
 
-                    if(stage_time_scheme == 6) then 
+                    if(stage_time_scheme == 6) then
                      A3 = alpha_x_store(i,j,ispec_PML) ** 2*(d_x_store(i,j,ispec_PML) * k_z_store(i,j,ispec_PML)+ &
                             d_z_store(i,j,ispec_PML) * k_x_store(i,j,ispec_PML)) &
                             -2._CUSTOM_REAL * alpha_x_store(i,j,ispec_PML)*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)
                      A4 = alpha_x_store(i,j,ispec_PML) ** 2*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)
-                    end if   
+                    end if
 
-                    if(stage_time_scheme == 6) then  
+                    if(stage_time_scheme == 6) then
 
                      bb = alpha_z_store(i,j,ispec_PML)
                      if(bb < 0.0)then
@@ -683,7 +683,7 @@
                      rmemory_potential_acoustic(2,i,j,ispec_PML) = rmemory_potential_acoustic(2,i,j,ispec_PML) + &
                      beta_LDDRK(i_stage) * rmemory_potential_acoust_LDDRK(2,i,j,ispec_PML)
 
-                  end if 
+                  end if
 
                    potential_dot_dot_acoustic_PML(i,j,ispec_PML)= wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * &
                     (A0 * potential_acoustic(iglob)                   + &
