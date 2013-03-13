@@ -185,6 +185,7 @@ contains
   ! read type of simulation
   call read_value_integer_p(SIMULATION_TYPE, 'solver.SIMULATION_TYPE')
   if(err_occurred() /= 0) stop 'error reading parameter 2 in Par_file'
+  if(SIMULATION_TYPE /= 1 .and. SIMULATION_TYPE /= 3) stop 'SIMULATION_TYPE can only be set to 1 or 3 in the Par_file; exiting'
 
   call read_value_integer_p(NOISE_TOMOGRAPHY, 'solver.NOISE_TOMOGRAPHY')
   if(err_occurred() /= 0) stop 'error reading parameter NOISE_TOMOGRAPHY in Par_file'
