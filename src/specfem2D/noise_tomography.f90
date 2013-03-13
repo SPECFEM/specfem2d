@@ -131,43 +131,32 @@
   ispec_noise = ispec_selected_rec(irec_master)
   angle_noise = 0.d0
 
+! check simulation parameters
 
-  !check simulation parameters
+  if ((NOISE_TOMOGRAPHY /= 0) .and. (p_sv)) write(*,*) 'Warning: For P-SV case, noise tomography subroutines not yet fully tested'
 
-  if ((NOISE_TOMOGRAPHY/=0) .and. (p_sv)) write(*,*) 'Warning: For P-SV case, noise tomography subroutines not yet fully tested.'
-  if (NOISE_TOMOGRAPHY==1) then
-     if (SIMULATION_TYPE/=1) call exit_mpi('NOISE_TOMOGRAPHY=1 requires SIMULATION_TYPE=1    -> check DATA/Par_file')
+  if (NOISE_TOMOGRAPHY == 1) then
+     if (SIMULATION_TYPE /= 1) call exit_mpi('NOISE_TOMOGRAPHY=1 requires SIMULATION_TYPE=1    -> check DATA/Par_file')
 
-
-
-  else if (NOISE_TOMOGRAPHY==2) then
-     if (SIMULATION_TYPE/=1) call exit_mpi('NOISE_TOMOGRAPHY=2 requires SIMULATION_TYPE=1    -> check DATA/Par_file')
-
+  else if (NOISE_TOMOGRAPHY == 2) then
+     if (SIMULATION_TYPE /= 1) call exit_mpi('NOISE_TOMOGRAPHY=2 requires SIMULATION_TYPE=1    -> check DATA/Par_file')
      if (.not. SAVE_FORWARD) call exit_mpi('NOISE_TOMOGRAPHY=2 requires SAVE_FORWARD=.true.  -> check DATA/Par_file')
 
-
-
-  else if (NOISE_TOMOGRAPHY==3) then
-     if (SIMULATION_TYPE/=2) call exit_mpi('NOISE_TOMOGRAPHY=3 requires SIMULATION_TYPE=2    -> check DATA/Par_file')
-
+  else if (NOISE_TOMOGRAPHY == 3) then
+     if (SIMULATION_TYPE /= 3) call exit_mpi('NOISE_TOMOGRAPHY=3 requires SIMULATION_TYPE=3    -> check DATA/Par_file')
      if (SAVE_FORWARD)       call exit_mpi('NOISE_TOMOGRAPHY=3 requires SAVE_FORWARD=.false. -> check DATA/Par_file')
-
   endif
-
 
 !  check model parameters
    if (any_acoustic)    call exit_mpi('Acoustic models not yet implemented for noise simulations. Exiting.')
    if (any_poroelastic) call exit_mpi('Poroelastic models not yet implemented for noise simulations. Exiting.')
 
-
 !  moment tensor elements must be zero!
    do i=1,NSOURCES
-     if ( (Mxx(i) /= 0.d0) .or. (Mxz(i) /= 0.d0) .or. (Mzz(i) /= 0.d0) .or. &
-          (factor(i) /= 0.d0)) then
+     if (Mxx(i) /= 0.d0 .or. Mxz(i) /= 0.d0 .or. Mzz(i) /= 0.d0 .or. factor(i) /= 0.d0) then
        call exit_mpi('For noise simulations, all moment tensor elements must be zero. Exiting.')
      endif
    enddo
-
 
   end subroutine read_parameters_noise
 

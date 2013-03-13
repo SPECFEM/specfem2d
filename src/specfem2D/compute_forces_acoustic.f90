@@ -770,7 +770,7 @@
               potential_dot_dot_acoustic(iglob) = &
                   potential_dot_dot_acoustic(iglob) &
                   - potential_dot_acoustic(iglob)*weight/cpl/rhol
-            elseif(SIMULATION_TYPE == 2) then
+            elseif(SIMULATION_TYPE == 3) then
               if(IS_BACKWARD_FIELD) then
                 ! adds (previously) stored contribution
                 potential_dot_dot_acoustic(iglob) = &
@@ -816,7 +816,7 @@
               potential_dot_dot_acoustic(iglob) = &
                   potential_dot_dot_acoustic(iglob) &
                   - potential_dot_acoustic(iglob)*weight/cpl/rhol
-            elseif(SIMULATION_TYPE == 2) then
+            elseif(SIMULATION_TYPE == 3) then
               if(IS_BACKWARD_FIELD) then
                 ! adds (previously) stored contribution
                 potential_dot_dot_acoustic(iglob) = &
@@ -863,7 +863,7 @@
               potential_dot_dot_acoustic(iglob) = &
                   potential_dot_dot_acoustic(iglob) &
                   - potential_dot_acoustic(iglob)*weight/cpl/rhol
-            elseif(SIMULATION_TYPE == 2) then
+            elseif(SIMULATION_TYPE == 3) then
               if(IS_BACKWARD_FIELD) then
                 ! adds (previously) stored contribution
                 potential_dot_dot_acoustic(iglob) = &
@@ -910,7 +910,7 @@
               potential_dot_dot_acoustic(iglob) = &
                   potential_dot_dot_acoustic(iglob) &
                   - potential_dot_acoustic(iglob)*weight/cpl/rhol
-            elseif(SIMULATION_TYPE == 2) then
+            elseif(SIMULATION_TYPE == 3) then
               if(IS_BACKWARD_FIELD) then
                 ! adds (previously) stored contribution
                 potential_dot_dot_acoustic(iglob) = &

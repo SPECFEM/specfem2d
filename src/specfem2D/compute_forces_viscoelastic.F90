@@ -1547,7 +1547,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                  endif
 
-                 if((SIMULATION_TYPE == 2 .and. .not. backward_simulation) .or. SIMULATION_TYPE == 1) then
+                 if((SIMULATION_TYPE == 3 .and. .not. backward_simulation) .or. SIMULATION_TYPE == 1) then
                    accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0+displtx)*weight
                    accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
                    accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0+displtz)*weight
@@ -1562,7 +1562,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     endif
                  endif
                 else !else of backward_simulation
-                 if(SIMULATION_TYPE == 2 .and. backward_simulation) then
+                 if(SIMULATION_TYPE == 3 .and. backward_simulation) then
                     if(p_sv)then !P-SV waves
                        accel_elastic(1,iglob) = accel_elastic(1,iglob) - &
                             b_absorb_elastic_left(1,j,ib_left(ispecabs),NSTEP-it+1)
@@ -1665,7 +1665,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                  endif
 
-                 if((SIMULATION_TYPE == 2 .and. .not. backward_simulation) .or. SIMULATION_TYPE == 1) then
+                 if((SIMULATION_TYPE == 3 .and. .not. backward_simulation) .or. SIMULATION_TYPE == 1) then
                     accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx - traction_x_t0+displtx)*weight
                     accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
                     accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz - traction_z_t0+displtz)*weight
@@ -1680,7 +1680,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     endif
                  endif
                 else !else of backward_simulation
-                 if(SIMULATION_TYPE == 2 .and. backward_simulation) then
+                 if(SIMULATION_TYPE == 3 .and. backward_simulation) then
                     if(p_sv)then !P-SV waves
                        accel_elastic(1,iglob) = accel_elastic(1,iglob) - &
                             b_absorb_elastic_right(1,j,ib_right(ispecabs),NSTEP-it+1)
@@ -1805,7 +1805,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                  endif
 
-                 if((SIMULATION_TYPE == 2 .and. .not. backward_simulation) .or. SIMULATION_TYPE == 1) then
+                 if((SIMULATION_TYPE == 3 .and. .not. backward_simulation) .or. SIMULATION_TYPE == 1) then
                     accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0+displtx)*weight
                     accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
                     accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0+displtz)*weight
@@ -1822,7 +1822,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                 else  !else of backward_simulation
 
-                 if(SIMULATION_TYPE == 2 .and. backward_simulation) then
+                 if(SIMULATION_TYPE == 3 .and. backward_simulation) then
                     if(p_sv)then !P-SV waves
                        accel_elastic(1,iglob) = accel_elastic(1,iglob) - &
                             b_absorb_elastic_bottom(1,i,ib_bottom(ispecabs),NSTEP-it+1)
@@ -1940,7 +1940,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                  endif
 
-                 if((SIMULATION_TYPE == 2 .and. .not. backward_simulation) .or. SIMULATION_TYPE == 1) then
+                 if((SIMULATION_TYPE == 3 .and. .not. backward_simulation) .or. SIMULATION_TYPE == 1) then
                     accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0+displtx)*weight
                     accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
                     accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0+displtz)*weight
@@ -1957,7 +1957,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                 else  !else of backward_simulation
 
-                 if(SIMULATION_TYPE == 2 .and. backward_simulation) then
+                 if(SIMULATION_TYPE == 3 .and. backward_simulation) then
                     if(p_sv)then !P-SV waves
                        accel_elastic(1,iglob) = accel_elastic(1,iglob) - &
                           b_absorb_elastic_top(1,i,ib_top(ispecabs),NSTEP-it+1)
@@ -2069,7 +2069,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                             sourcearray(i_source,2,i,j)*source_time_function(i_source,it,i_stage)
                     enddo
                  enddo
-              elseif(SIMULATION_TYPE == 2 .and. backward_simulation) then     ! backward wavefield
+              elseif(SIMULATION_TYPE == 3 .and. backward_simulation) then     ! backward wavefield
                  do j=1,NGLLZ
                     do i=1,NGLLX
                        iglob = ibool(i,j,ispec_selected_source(i_source))
@@ -2086,7 +2086,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
         endif ! if this processor core carries the source and the source element is elastic
      enddo ! do i_source=1,NSOURCES
 
-     if(SIMULATION_TYPE == 2 .and. (.not. backward_simulation)) then   ! adjoint wavefield
+     if(SIMULATION_TYPE == 3 .and. (.not. backward_simulation)) then   ! adjoint wavefield
 
         irec_local = 0
         do irec = 1,nrec
@@ -2112,7 +2112,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
            endif ! if this processor core carries the adjoint source and the source element is elastic
         enddo ! irec = 1,nrec
 
-     endif ! if SIMULATION_TYPE == 2 adjoint wavefield
+     endif ! if SIMULATION_TYPE == 3 adjoint wavefield
 
   endif ! if not using an initial field
 
@@ -2165,7 +2165,7 @@ subroutine compute_forces_viscoelastic_pre_kernel(p_sv,nglob,nspec,displ_elastic
               duy_dgamma = ZERO
               duz_dgamma = ZERO
 
-              if(SIMULATION_TYPE == 2) then ! Adjoint calculation, backward wavefield
+              if(SIMULATION_TYPE == 3) then ! Adjoint calculation, backward wavefield
                  b_dux_dxi = ZERO
                  b_duy_dxi = ZERO
                  b_duz_dxi = ZERO
@@ -2185,7 +2185,7 @@ subroutine compute_forces_viscoelastic_pre_kernel(p_sv,nglob,nspec,displ_elastic
                  duy_dgamma = duy_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
                  duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
 
-                 if(SIMULATION_TYPE == 2) then ! Adjoint calculation, backward wavefield
+                 if(SIMULATION_TYPE == 3) then ! Adjoint calculation, backward wavefield
                     b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
                     b_duy_dxi = b_duy_dxi + b_displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
                     b_duz_dxi = b_duz_dxi + b_displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
@@ -2210,7 +2210,7 @@ subroutine compute_forces_viscoelastic_pre_kernel(p_sv,nglob,nspec,displ_elastic
               duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
               duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
-              if(SIMULATION_TYPE == 2) then ! Adjoint calculation, backward wavefield
+              if(SIMULATION_TYPE == 3) then ! Adjoint calculation, backward wavefield
                  b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
                  b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
 
@@ -2222,7 +2222,7 @@ subroutine compute_forces_viscoelastic_pre_kernel(p_sv,nglob,nspec,displ_elastic
               endif
 
               ! Pre-kernels calculation
-              if(SIMULATION_TYPE == 2) then
+              if(SIMULATION_TYPE == 3) then
                  iglob = ibool(i,j,ispec)
                  if(p_sv)then !P-SV waves
                     dsxx =  dux_dxl

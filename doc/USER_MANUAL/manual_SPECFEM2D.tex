@@ -175,7 +175,7 @@ In particular, it can accurately handle very distorted mesh elements \citep{OlSe
 It has very good accuracy and convergence properties \citep{MaPa89,SePr94,DeFiMu02,Coh02,DeSe07,SeOl08}.
 The spectral element approach admits spectral rates of convergence and allows exploiting $hp$-convergence schemes.
 It is also very well suited to parallel implementation on very large supercomputers \citep{KoTsChTr03,TsKoChTr03,KoLaMi08a,CaKoLaTiMiLeSnTr08,KoViCh10}
-as well as on clusters of GPU accelerating graphics cards \citep{KoMiEr09,KoGoErMi10,KoErGoMi10,Kom11}.
+as well as on clusters of GPU accelerating graphics cards \citep{KoMiEr09,KoErGoMi10,Kom11}.
 Tensor products inside each element can be optimized to reach very high efficiency \citep{DeFiMu02}, and mesh point and element numbering can be optimized to reduce processor cache misses and improve cache reuse \citep{KoLaMi08a}. The SEM can also handle triangular (in 2D) or tetrahedral (in 3D) elements \citep{WinBoyd96,TaWi00,KoMaTrTaWi01,Coh02,MeViSa06} as well as mixed meshes, although with increased cost and reduced accuracy in these elements, as in the discontinuous Galerkin method.\\
 
 Note that in many geological models in the context of seismic wave propagation studies
@@ -203,7 +203,7 @@ no obsolete or obsolescent features of Fortran. The package uses
 parallel programming based upon the Message Passing Interface (MPI)
 \citep{GrLuSk94,Pac97}.\\
 
-The next release of the code will include support for GPU graphics card acceleration \citep{KoMiEr09,KoGoErMi10,KoErGoMi10,MiKo10,Kom11}.\\
+The next release of the code will include support for GPU graphics card acceleration \citep{KoMiEr09,KoErGoMi10,MiKo10,Kom11}.\\
 
 %------------------------------------------------------------------------------------------------%
 \section{Citation}
@@ -214,7 +214,7 @@ written by the developers of the package, for instance:
 \newline
 \cite{TrKoLi08,PeKoLuMaLeCaLeMaLiBlNiBaTr11}
 or
-\cite{VaCaSaKoVi99, LeChKoHuTr09, LeChLiKoHuTr08, LeKoHuTr09, KoGoErMi10, KoErGoMi10, KoMiEr09,
+\cite{VaCaSaKoVi99, LeChKoHuTr09, LeChLiKoHuTr08, LeKoHuTr09, KoErGoMi10, KoMiEr09,
 LiPoKoTr04, ChKoViCaVaFe07, KoVi98, KoTr99, KoLiTrSuStSh04, MoTr08}
 and/or other articles from \url{http://komatitsch.free.fr/publications.html}
 \newline
@@ -860,7 +860,8 @@ see \cite{MoTr08}.
 \item In section {\bf "\# time step parameters"}:\\
 \texttt{SIMULATION\_TYPE} defines the type of simulations \\
 (1) forward simulation \\
-(2) adjoint method and kernels calculation
+(2) UNUSED (purposely, for compatibility with the numbering convention used in our 3D codes) \\
+(3) adjoint method and kernels calculation
 
 \item In section {\bf "\# source parameters"}:\\
 The code now support multi sources.
@@ -1067,7 +1068,7 @@ when running the adjoint simulation.\\
 \item[3.] Run the adjoint simulation: \\
 Make sure that the adjoint source files absorbing boundaries and last frame files are
 in the \texttt{OUTPUT\_FILES/} directory.\\
-=> \texttt{SIMULATION\_TYPE = 2}\\
+=> \texttt{SIMULATION\_TYPE = 3}\\
 => \texttt{SAVE\_FORWARD = .false.}\\
 
 Output files (for example for the elastic case):\\
