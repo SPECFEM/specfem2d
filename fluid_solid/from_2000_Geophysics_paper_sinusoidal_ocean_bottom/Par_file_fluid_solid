@@ -2,7 +2,7 @@
 title                           = Sinusoidal fluid/solid interface
 
 # forward or adjoint simulation
-SIMULATION_TYPE                 = 1   # 1 = forward, 2 = adjoint + kernels
+SIMULATION_TYPE                 = 1   # 1 = forward, 3 = adjoint + kernels
 NOISE_TOMOGRAPHY                = 0   # 0 = earthquake simulation, 1/2/3 = noise simulation
 SAVE_FORWARD                    = .false.  # save the last frame, needed for adjoint simulation
 

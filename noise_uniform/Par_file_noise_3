@@ -2,7 +2,7 @@
 title                           = Noise_2D
 
 # forward or adjoint simulation
-SIMULATION_TYPE                 = 2
+SIMULATION_TYPE                 = 3
 NOISE_TOMOGRAPHY                = 3
 SAVE_FORWARD                    = .false.
 
