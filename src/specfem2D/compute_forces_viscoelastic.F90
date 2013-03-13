@@ -260,6 +260,9 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
      ! loop over spectral elements
      do ispec = 1,nspec
 
+        if((.not. PML_BOUNDARY_CONDITIONS) .or. &
+          (PML_BOUNDARY_CONDITIONS .and. (.not. is_PML(ispec))))then
+
         do j=1,NGLLZ
            do i=1,NGLLX
 
@@ -394,6 +397,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
            enddo
         enddo
+       endif
      enddo
 
   endif ! end of test on attenuation
