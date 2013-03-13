@@ -159,7 +159,7 @@ Even mesh creation packages that generate triangles, for instance Delaunay-Voron
 With version 7.0, the 2D spectral-element solver accommodates Convolution PML absorbing layers and well as higher-order time schemes
 (4th order Runge-Kutta and LDDRK4-6).
 Convolution or Auxiliary Differential Equation Perfectly Matched absorbing Layers (C-PML or ADE-PML)
-are described in \cite{KoMa07,MaKoEz08,MaKoGe08,MaKo09,MaKoGeBr10}.\\
+are described in \cite{MaKoEz08,MaKoGe08,MaKo09,MaKoGeBr10,KoMa07}.\\
 
 The solver has adjoint capabilities and can
 calculate finite-frequency sensitivity kernels \citep{TrKoLi08,PeKoLuMaLeCaLeMaLiBlNiBaTr11} for acoustic,
@@ -575,6 +575,13 @@ Flag& Meaning\\ [0.5ex]
 \label{table:CPMLflags}
 % is used to refer this table in the text
 \end{table}
+
+If you use PML, the mesh elements that belong to the PML layers can be acoustic or elastic, but not viscoelastic nor poroelastic.
+Then, when defining your model, you should define these absorbing elements as either acoustic or elastic.
+In you forget to do that, the code will fix the problem by automatically converting the viscoelastic or poroelastic PML 
+elements to elastic. This means that strictly speaking the PML layer will not be perfectly matched any more, since the physical
+model will change from viscoelastic or poroelastic to elastic at the entrance of the PML, but in practice this is sufficient and
+produces only tiny / negligible spurious reflections.
 
 If you use PML and an external velocity and density model (for instance setting flag "READ\_EXTERNAL\_SEP\_FILE" to .true.),
 you should be careful because mathematically a PML cannot handle heterogeneities along the
