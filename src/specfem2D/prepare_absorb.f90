@@ -63,7 +63,7 @@
     !--- left absorbing boundary
     if( nspec_left >0 ) then
       write(outputname,'(a,i6.6,a)') 'absorb_elastic_left',myrank,'.bin'
-      if(SIMULATION_TYPE == 2) then
+      if(SIMULATION_TYPE == 3) then
         open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',&
               form='unformatted')
       else
@@ -76,7 +76,7 @@
     !--- right absorbing boundary
     if( nspec_right >0 ) then
       write(outputname,'(a,i6.6,a)') 'absorb_elastic_right',myrank,'.bin'
-      if(SIMULATION_TYPE == 2) then
+      if(SIMULATION_TYPE == 3) then
         open(unit=36,file='OUTPUT_FILES/'//outputname,status='old',&
               form='unformatted')
       else
@@ -89,7 +89,7 @@
     !--- bottom absorbing boundary
     if( nspec_bottom >0 ) then
       write(outputname,'(a,i6.6,a)') 'absorb_elastic_bottom',myrank,'.bin'
-      if(SIMULATION_TYPE == 2) then
+      if(SIMULATION_TYPE == 3) then
         open(unit=37,file='OUTPUT_FILES/'//outputname,status='old',&
               form='unformatted')
       else
@@ -102,7 +102,7 @@
     !--- top absorbing boundary
     if( nspec_top >0 ) then
         write(outputname,'(a,i6.6,a)') 'absorb_elastic_top',myrank,'.bin'
-      if(SIMULATION_TYPE == 2) then
+      if(SIMULATION_TYPE == 3) then
         open(unit=38,file='OUTPUT_FILES/'//outputname,status='old',&
               form='unformatted')
       else
@@ -120,7 +120,7 @@
     if( nspec_left >0 ) then
       write(outputname,'(a,i6.6,a)') 'absorb_poro_s_left',myrank,'.bin'
       write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_left',myrank,'.bin'
-      if(SIMULATION_TYPE == 2) then
+      if(SIMULATION_TYPE == 3) then
         open(unit=45,file='OUTPUT_FILES/'//outputname,status='old',&
               form='unformatted')
         open(unit=25,file='OUTPUT_FILES/'//outputname2,status='old',&
@@ -138,7 +138,7 @@
     if( nspec_right >0 ) then
       write(outputname,'(a,i6.6,a)') 'absorb_poro_s_right',myrank,'.bin'
       write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_right',myrank,'.bin'
-      if(SIMULATION_TYPE == 2) then
+      if(SIMULATION_TYPE == 3) then
         open(unit=46,file='OUTPUT_FILES/'//outputname,status='old',&
               form='unformatted')
         open(unit=26,file='OUTPUT_FILES/'//outputname2,status='old',&
@@ -156,7 +156,7 @@
     if( nspec_bottom >0 ) then
       write(outputname,'(a,i6.6,a)') 'absorb_poro_s_bottom',myrank,'.bin'
       write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_bottom',myrank,'.bin'
-      if(SIMULATION_TYPE == 2) then
+      if(SIMULATION_TYPE == 3) then
         open(unit=47,file='OUTPUT_FILES/'//outputname,status='old',&
               form='unformatted')
         open(unit=29,file='OUTPUT_FILES/'//outputname2,status='old',&
@@ -174,7 +174,7 @@
     if( nspec_top >0 ) then
       write(outputname,'(a,i6.6,a)') 'absorb_poro_s_top',myrank,'.bin'
       write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_top',myrank,'.bin'
-      if(SIMULATION_TYPE == 2) then
+      if(SIMULATION_TYPE == 3) then
         open(unit=48,file='OUTPUT_FILES/'//outputname,status='old',&
               form='unformatted')
         open(unit=28,file='OUTPUT_FILES/'//outputname2,status='old',&
@@ -195,7 +195,7 @@
     !--- left absorbing boundary
     if( nspec_left >0 ) then
       write(outputname,'(a,i6.6,a)') 'absorb_acoustic_left',myrank,'.bin'
-      if(SIMULATION_TYPE == 2) then
+      if(SIMULATION_TYPE == 3) then
         open(unit=65,file='OUTPUT_FILES/'//outputname,status='old',&
               form='unformatted')
       else
@@ -208,7 +208,7 @@
     !--- right absorbing boundary
     if( nspec_right >0 ) then
       write(outputname,'(a,i6.6,a)') 'absorb_acoustic_right',myrank,'.bin'
-      if(SIMULATION_TYPE == 2) then
+      if(SIMULATION_TYPE == 3) then
         open(unit=66,file='OUTPUT_FILES/'//outputname,status='old',&
               form='unformatted')
       else
@@ -221,7 +221,7 @@
     !--- bottom absorbing boundary
     if( nspec_bottom >0 ) then
       write(outputname,'(a,i6.6,a)') 'absorb_acoustic_bottom',myrank,'.bin'
-      if(SIMULATION_TYPE == 2) then
+      if(SIMULATION_TYPE == 3) then
         open(unit=67,file='OUTPUT_FILES/'//outputname,status='old',&
               form='unformatted')
       else
@@ -234,7 +234,7 @@
     !--- top absorbing boundary
     if( nspec_top >0 ) then
       write(outputname,'(a,i6.6,a)') 'absorb_acoustic_top',myrank,'.bin'
-      if(SIMULATION_TYPE == 2) then
+      if(SIMULATION_TYPE == 3) then
         open(unit=68,file='OUTPUT_FILES/'//outputname,status='old',&
               form='unformatted')
       else

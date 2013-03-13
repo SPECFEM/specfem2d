@@ -157,7 +157,7 @@
 
      end do !end nelem_thickness loop
 
-     if(SIMULATION_TYPE == 2 .or.  (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))then
+     if(SIMULATION_TYPE == 3 .or.  (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))then
 
       do i_coef=NELEM_PML_THICKNESS,NELEM_PML_THICKNESS+1
         do ispec=1,nspec
@@ -177,13 +177,13 @@
 
       end do !end nelem_thickness loop
 
-     endif !end of SIMULATION_TYPE == 2
+     endif !end of SIMULATION_TYPE == 3
 
      write(IOUT,*) "number of PML spectral elements on side ", ibound,":", nspec_PML
 
      enddo ! end loop on the 4 boundaries
 
- if(SIMULATION_TYPE == 2 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))then
+ if(SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))then
        nglob_interface = 0
        do ispec = 1,nspec
          if(PML_interior_interface(IBOTTOM,ispec) &

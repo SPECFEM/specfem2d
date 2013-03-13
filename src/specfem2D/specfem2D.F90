@@ -681,7 +681,7 @@
 
 ! for adjoint method
   logical :: SAVE_FORWARD ! whether or not the last frame is saved to reconstruct the forward field
-  integer :: SIMULATION_TYPE      ! 1 = forward wavefield, 2 = backward and adjoint wavefields and kernels
+  integer :: SIMULATION_TYPE      ! 1 = forward wavefield, 3 = backward and adjoint wavefields and kernels
   double precision :: b_deltatover2,b_deltatsquareover2,b_deltat ! coefficients of the explicit Newmark time scheme
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     b_accels_poroelastic,b_velocs_poroelastic,b_displs_poroelastic
@@ -1089,7 +1089,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                   read_external_mesh)
 
   if(nproc_read_from_database < 1) stop 'should have nproc_read_from_database >= 1'
-  if(SIMULATION_TYPE == 2 .and.(time_stepping_scheme == 2 .or. time_stepping_scheme == 3)) &
+  if(SIMULATION_TYPE == 3 .and.(time_stepping_scheme == 2 .or. time_stepping_scheme == 3)) &
                                   stop 'RK and LDDRK time scheme not supported for adjoint inversion'
   if(nproc /= nproc_read_from_database) stop 'must always have nproc == nproc_read_from_database'
 
@@ -1594,7 +1594,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   if( anyabs ) then
     ! Files to save absorbed waves needed to reconstruct backward wavefield for adjoint method
     if(ipass == 1) then
-      if(any_elastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 2)) then
+      if(any_elastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3)) then
         allocate(b_absorb_elastic_left(3,NGLLZ,nspec_left,NSTEP))
         allocate(b_absorb_elastic_right(3,NGLLZ,nspec_right,NSTEP))
         allocate(b_absorb_elastic_bottom(3,NGLLX,nspec_bottom,NSTEP))
@@ -1605,7 +1605,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         allocate(b_absorb_elastic_bottom(1,1,1,1))
         allocate(b_absorb_elastic_top(1,1,1,1))
       endif
-      if(any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 2)) then
+      if(any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3)) then
         allocate(b_absorb_poro_s_left(NDIM,NGLLZ,nspec_left,NSTEP))
         allocate(b_absorb_poro_s_right(NDIM,NGLLZ,nspec_right,NSTEP))
         allocate(b_absorb_poro_s_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
@@ -1624,7 +1624,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         allocate(b_absorb_poro_w_bottom(1,1,1,1))
         allocate(b_absorb_poro_w_top(1,1,1,1))
       endif
-      if(any_acoustic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 2)) then
+      if(any_acoustic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3)) then
         allocate(b_absorb_acoustic_left(NGLLZ,nspec_left,NSTEP))
         allocate(b_absorb_acoustic_right(NGLLZ,nspec_right,NSTEP))
         allocate(b_absorb_acoustic_bottom(NGLLX,nspec_bottom,NSTEP))
@@ -2275,7 +2275,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   deltatover2 = HALF*deltat
   deltatsquareover2 = HALF*deltat*deltat
 
-  if(SIMULATION_TYPE == 2) then
+  if(SIMULATION_TYPE == 3) then
 !  define coefficients of the Newmark time scheme for the backward wavefield
     b_deltat = - deltat
     b_deltatover2 = HALF*b_deltat
@@ -2295,7 +2295,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
 ! compute source array for adjoint source
   if(ipass == 1) nadj_rec_local = 0
-  if(SIMULATION_TYPE == 2) then  ! adjoint calculation
+  if(SIMULATION_TYPE == 3) then  ! adjoint calculation
 
     do irec = 1,nrec
       if(myrank == which_proc_receiver(irec)) then
@@ -2678,7 +2678,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     endif
 
     ! extra array if adjoint and kernels calculation
-    if(SIMULATION_TYPE == 2 .and. any_elastic) then
+    if(SIMULATION_TYPE == 3 .and. any_elastic) then
       allocate(b_displ_elastic(3,nglob))
       allocate(b_veloc_elastic(3,nglob))
       allocate(b_accel_elastic(3,nglob))
@@ -2756,7 +2756,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     endif
 
     ! extra array if adjoint and kernels calculation
-    if(SIMULATION_TYPE == 2 .and. any_poroelastic) then
+    if(SIMULATION_TYPE == 3 .and. any_poroelastic) then
       allocate(b_displs_poroelastic(NDIM,nglob))
       allocate(b_velocs_poroelastic(NDIM,nglob))
       allocate(b_accels_poroelastic(NDIM,nglob))
@@ -2884,7 +2884,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     endif
 
 
-    if(SIMULATION_TYPE == 2 .and. any_acoustic) then
+    if(SIMULATION_TYPE == 3 .and. any_acoustic) then
       allocate(b_potential_acoustic(nglob))
       allocate(b_potential_dot_acoustic(nglob))
       allocate(b_potential_dot_dot_acoustic(nglob))
@@ -2931,7 +2931,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       allocate(which_PML_elem(4,nspec))
       allocate(spec_to_PML(nspec))
 
-      if(SIMULATION_TYPE == 2 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))then
+      if(SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))then
          allocate(PML_interior_interface(4,nspec))
          PML_interior_interface = .false.
       else
@@ -2948,7 +2948,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                   read_external_mesh,region_CPML,&
                   SIMULATION_TYPE,PML_interior_interface,nglob_interface,SAVE_FORWARD)
 
-      if((SIMULATION_TYPE == 2 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS)then
+      if((SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS)then
          allocate(point_interface(nglob_interface))
          allocate(pml_interfeace_history_displ(3,nglob_interface,NSTEP))
          allocate(pml_interfeace_history_veloc(3,nglob_interface,NSTEP))
@@ -2966,7 +2966,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
            allocate(pml_interfeace_history_accel(3,1,1))
       endif
 
-      if(SIMULATION_TYPE == 2 .and. PML_BOUNDARY_CONDITIONS)then
+      if(SIMULATION_TYPE == 3 .and. PML_BOUNDARY_CONDITIONS)then
        do it = 1,NSTEP
         do i = 1, nglob_interface
            read(71)pml_interfeace_history_accel(1,i,it),&
@@ -3568,7 +3568,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   veloc_elastic = 0._CUSTOM_REAL
   accel_elastic = 0._CUSTOM_REAL
 
-    if(SIMULATION_TYPE == 2 .and. any_elastic) then
+    if(SIMULATION_TYPE == 3 .and. any_elastic) then
       b_displ_elastic = 0._CUSTOM_REAL
       b_veloc_elastic = 0._CUSTOM_REAL
       b_accel_elastic = 0._CUSTOM_REAL
@@ -3636,12 +3636,12 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 !
 !----- Files where viscous damping are saved during forward wavefield calculation
 !
-  if(any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 2)) then
+  if(any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3)) then
     allocate(b_viscodampx(nglob))
     allocate(b_viscodampz(nglob))
     write(outputname,'(a,i6.6,a)') 'viscodampingx',myrank,'.bin'
     write(outputname2,'(a,i6.6,a)') 'viscodampingz',myrank,'.bin'
-    if(SIMULATION_TYPE == 2) then
+    if(SIMULATION_TYPE == 3) then
       reclen = CUSTOM_REAL * nglob
       open(unit=23,file='OUTPUT_FILES/'//outputname,status='old',&
             action='read',form='unformatted',access='direct',&
@@ -3667,13 +3667,13 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 !----- Files where absorbing signal are saved during forward wavefield calculation
 !
 
-  if( ((SAVE_FORWARD .and. SIMULATION_TYPE ==1) .or. SIMULATION_TYPE == 2) .and. anyabs ) then
+  if( ((SAVE_FORWARD .and. SIMULATION_TYPE ==1) .or. SIMULATION_TYPE == 3) .and. anyabs ) then
     ! opens files for absorbing boundary data
     call prepare_absorb_files(myrank,any_elastic,any_poroelastic,any_acoustic, &
                       nspec_left,nspec_right,nspec_bottom,nspec_top,SIMULATION_TYPE)
   endif
 
-  if(anyabs .and. SIMULATION_TYPE == 2) then
+  if(anyabs .and. SIMULATION_TYPE == 3) then
 
     ! reads in absorbing boundary data
     if(any_elastic) then
@@ -3699,7 +3699,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                       b_absorb_acoustic_bottom,b_absorb_acoustic_top)
     endif
 
-  endif ! if(anyabs .and. SIMULATION_TYPE == 2)
+  endif ! if(anyabs .and. SIMULATION_TYPE == 3)
 
 
 
@@ -3707,7 +3707,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 !----- Read last frame for backward wavefield calculation
 !
 
-  if(SIMULATION_TYPE == 2) then
+  if(SIMULATION_TYPE == 3) then
 
     if(any_elastic) then
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_mu_kernel.dat'
@@ -3806,7 +3806,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       rhorho_ac_hessian_final1(:,:,:) = 0._CUSTOM_REAL
     endif
 
-  endif ! if(SIMULATION_TYPE == 2)
+  endif ! if(SIMULATION_TYPE == 3)
 
 !
 !----  read initial fields from external file if needed
@@ -4873,7 +4873,7 @@ if(coupled_elastic_poro) then
       accel_elastic_adj_coupling = accel_elastic
       accel_elastic = ZERO
 
-      if(SIMULATION_TYPE == 2) then ! Adjoint calculation
+      if(SIMULATION_TYPE == 3) then ! Adjoint calculation
 !! DK DK this should be fully vectorized
         b_displ_elastic = b_displ_elastic &
                         + b_deltat*b_veloc_elastic &
@@ -4920,7 +4920,7 @@ if(coupled_elastic_poro) then
       accelw_poroelastic = ZERO
       endif
 
-      if(SIMULATION_TYPE == 2) then ! Adjoint calculation
+      if(SIMULATION_TYPE == 3) then ! Adjoint calculation
         !for the solid
         b_displs_poroelastic = b_displs_poroelastic &
                              + b_deltat*b_velocs_poroelastic &
@@ -5087,7 +5087,7 @@ if(coupled_elastic_poro) then
       endif
       potential_dot_dot_acoustic = ZERO
 
-      if(SIMULATION_TYPE == 2) then ! Adjoint calculation
+      if(SIMULATION_TYPE == 3) then ! Adjoint calculation
 !! DK DK this should be vectorized
         b_potential_acoustic = b_potential_acoustic &
                             + b_deltat*b_potential_dot_acoustic &
@@ -5103,7 +5103,7 @@ if(coupled_elastic_poro) then
                                           potential_acoustic,acoustic_surface, &
                                           ibool,nelem_acoustic_surface,nglob,nspec)
 
-        if(SIMULATION_TYPE == 2) then ! Adjoint calculation
+        if(SIMULATION_TYPE == 3) then ! Adjoint calculation
           call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
                                             b_potential_acoustic,acoustic_surface, &
                                             ibool,nelem_acoustic_surface,nglob,nspec)
@@ -5134,7 +5134,7 @@ if(coupled_elastic_poro) then
                rmemory_potential_acoust_LDDRK,alpha_LDDRK,beta_LDDRK, &
                rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
                deltat,PML_BOUNDARY_CONDITIONS)
-      if( SIMULATION_TYPE == 2 ) then
+      if( SIMULATION_TYPE == 3 ) then
         call compute_forces_acoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
                anyabs,assign_external_model,ibool,kmato,numabs, &
                elastic,poroelastic,codeabs,b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
@@ -5223,7 +5223,7 @@ if(coupled_elastic_poro) then
           displ_x = displ_elastic(1,iglob)
           displ_z = displ_elastic(3,iglob)
 
-          if(SIMULATION_TYPE == 2) then
+          if(SIMULATION_TYPE == 3) then
             b_displ_x = b_displ_elastic(1,iglob)
             b_displ_z = b_displ_elastic(3,iglob)
             !<YANGL
@@ -5278,10 +5278,10 @@ if(coupled_elastic_poro) then
 
           potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
 
-          if(SIMULATION_TYPE == 2) then
+          if(SIMULATION_TYPE == 3) then
           b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) + &
                       weight*(b_displ_x*nx + b_displ_z*nz)
-          endif !if(SIMULATION_TYPE == 2) then
+          endif !if(SIMULATION_TYPE == 3) then
 
         enddo
 
@@ -5321,7 +5321,7 @@ if(coupled_elastic_poro) then
           displw_x = displw_poroelastic(1,iglob)
           displw_z = displw_poroelastic(2,iglob)
 
-          if(SIMULATION_TYPE == 2) then
+          if(SIMULATION_TYPE == 3) then
             b_displ_x = b_displs_poroelastic(1,iglob)
             b_displ_z = b_displs_poroelastic(2,iglob)
 
@@ -5382,7 +5382,7 @@ if(coupled_elastic_poro) then
 
           potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
 
-          if(SIMULATION_TYPE == 2) then
+          if(SIMULATION_TYPE == 3) then
             b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) &
                    + weight*((b_displ_x + b_displw_x)*nx + (b_displ_z + b_displw_z)*nz)
           endif
@@ -5445,7 +5445,7 @@ if(coupled_elastic_poro) then
           endif ! if this processor core carries the source and the source element is acoustic
         enddo ! do i_source=1,NSOURCES
 
-        if(SIMULATION_TYPE == 2) then   ! adjoint wavefield
+        if(SIMULATION_TYPE == 3) then   ! adjoint wavefield
           irec_local = 0
           do irec = 1,nrec
             !   add the source (only if this proc carries the source)
@@ -5466,7 +5466,7 @@ if(coupled_elastic_poro) then
 
             endif ! if this processor core carries the adjoint source
           enddo ! irec = 1,nrec
-        endif ! SIMULATION_TYPE == 2 adjoint wavefield
+        endif ! SIMULATION_TYPE == 3 adjoint wavefield
 
       endif ! if not using an initial field
 
@@ -5495,7 +5495,7 @@ if(coupled_elastic_poro) then
       endif
      endif
 
-      if ( SIMULATION_TYPE == 2) then
+      if ( SIMULATION_TYPE == 3) then
         call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic,nglob, &
                      ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
                      max_interface_size, max_ibool_interfaces_size_ac,&
@@ -5587,7 +5587,7 @@ if(coupled_elastic_poro) then
 
       endif
 
-      if(SIMULATION_TYPE ==2)then
+      if(SIMULATION_TYPE == 3)then
 !! DK DK this should be vectorized
         b_potential_dot_dot_acoustic = b_potential_dot_dot_acoustic * rmass_inverse_acoustic
         b_potential_dot_acoustic = b_potential_dot_acoustic + b_deltatover2*b_potential_dot_dot_acoustic
@@ -5600,7 +5600,7 @@ if(coupled_elastic_poro) then
                                         potential_acoustic,acoustic_surface, &
                                         ibool,nelem_acoustic_surface,nglob,nspec)
 
-        if(SIMULATION_TYPE == 2) then
+        if(SIMULATION_TYPE == 3) then
           call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
                                           b_potential_acoustic,acoustic_surface, &
                                           ibool,nelem_acoustic_surface,nglob,nspec)
@@ -5653,7 +5653,7 @@ if(coupled_elastic_poro) then
                rmemory_duz_dx_LDDRK,rmemory_duz_dz_LDDRK, &
                PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.false.)
 
-      if(SIMULATION_TYPE == 2)then
+      if(SIMULATION_TYPE == 3)then
        if(PML_BOUNDARY_CONDITIONS)then
           do ispec = 1,nspec
             do i = 1, NGLLX
@@ -5863,7 +5863,7 @@ if(coupled_elastic_poro) then
 
           ! compute pressure on the fluid/solid edge
           pressure = - potential_dot_dot_acoustic(iglob)
-          if(SIMULATION_TYPE == 2) then
+          if(SIMULATION_TYPE == 3) then
             b_pressure = - b_potential_dot_dot_acoustic(iglob)
             !<YANGL
             ! new definition of adjoint displacement and adjoint potential
@@ -5913,10 +5913,10 @@ if(coupled_elastic_poro) then
           accel_elastic(1,iglob) = accel_elastic(1,iglob) + weight*nx*pressure
           accel_elastic(3,iglob) = accel_elastic(3,iglob) + weight*nz*pressure
 
-          if(SIMULATION_TYPE == 2) then
+          if(SIMULATION_TYPE == 3) then
             b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) + weight*nx*b_pressure
             b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) + weight*nz*b_pressure
-          endif !if(SIMULATION_TYPE == 2) then
+          endif !if(SIMULATION_TYPE == 3) then
 
         enddo
 
@@ -5985,7 +5985,7 @@ if(coupled_elastic_poro) then
           dwx_dgamma = ZERO
           dwz_dgamma = ZERO
 
-          if(SIMULATION_TYPE == 2) then
+          if(SIMULATION_TYPE == 3) then
             b_dux_dxi = ZERO
             b_duz_dxi = ZERO
 
@@ -6011,7 +6011,7 @@ if(coupled_elastic_poro) then
             dwz_dxi = dwz_dxi + displw_poroelastic(2,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
             dwx_dgamma = dwx_dgamma + displw_poroelastic(1,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
             dwz_dgamma = dwz_dgamma + displw_poroelastic(2,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
-            if(SIMULATION_TYPE == 2) then
+            if(SIMULATION_TYPE == 3) then
               b_dux_dxi = b_dux_dxi + b_displs_poroelastic(1,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
               b_duz_dxi = b_duz_dxi + b_displs_poroelastic(2,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
               b_dux_dgamma = b_dux_dgamma + b_displs_poroelastic(1,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
@@ -6042,7 +6042,7 @@ if(coupled_elastic_poro) then
           dwz_dxl = dwz_dxi*xixl + dwz_dgamma*gammaxl
           dwz_dzl = dwz_dxi*xizl + dwz_dgamma*gammazl
 
-          if(SIMULATION_TYPE == 2) then
+          if(SIMULATION_TYPE == 3) then
             b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
             b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
 
@@ -6062,7 +6062,7 @@ if(coupled_elastic_poro) then
           sigma_xz = mul_G*(duz_dxl + dux_dzl)
           sigma_zz = lambdalplus2mul_G*duz_dzl + lambdal_G*dux_dxl + C_biot*(dwx_dxl + dwz_dzl)
 
-          if(SIMULATION_TYPE == 2) then
+          if(SIMULATION_TYPE == 3) then
             b_sigma_xx = lambdalplus2mul_G*b_dux_dxl + lambdal_G*b_duz_dzl + C_biot*(b_dwx_dxl + b_dwz_dzl)
             b_sigma_xz = mul_G*(b_duz_dxl + b_dux_dzl)
             b_sigma_zz = lambdalplus2mul_G*b_duz_dzl + lambdal_G*b_dux_dxl + C_biot*(b_dwx_dxl + b_dwz_dzl)
@@ -6084,7 +6084,7 @@ if(coupled_elastic_poro) then
           dux_dgamma = ZERO
           duz_dgamma = ZERO
 
-          if(SIMULATION_TYPE == 2) then
+          if(SIMULATION_TYPE == 3) then
             b_dux_dxi = ZERO
             b_duz_dxi = ZERO
 
@@ -6100,7 +6100,7 @@ if(coupled_elastic_poro) then
             dux_dgamma = dux_dgamma + displ_elastic(1,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
             duz_dgamma = duz_dgamma + displ_elastic(3,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
 
-            if(SIMULATION_TYPE == 2) then
+            if(SIMULATION_TYPE == 3) then
               b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
               b_duz_dxi = b_duz_dxi + b_displ_elastic(3,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
               b_dux_dgamma = b_dux_dgamma + b_displ_elastic(1,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
@@ -6120,7 +6120,7 @@ if(coupled_elastic_poro) then
           duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
           duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
-          if(SIMULATION_TYPE == 2) then
+          if(SIMULATION_TYPE == 3) then
             b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
             b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
 
@@ -6157,7 +6157,7 @@ if(coupled_elastic_poro) then
             sigma_zz = sigma_zz + lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
           endif
 
-          if(SIMULATION_TYPE == 2) then
+          if(SIMULATION_TYPE == 3) then
             b_sigma_xx = b_sigma_xx + lambdaplus2mu_unrelaxed_elastic*b_dux_dxl + lambdal_unrelaxed_elastic*b_duz_dzl
             b_sigma_xz = b_sigma_xz + mul_unrelaxed_elastic*(b_duz_dxl + b_dux_dzl)
             b_sigma_zz = b_sigma_zz + lambdaplus2mu_unrelaxed_elastic*b_duz_dzl + lambdal_unrelaxed_elastic*b_dux_dxl
@@ -6204,13 +6204,13 @@ if(coupled_elastic_poro) then
           accel_elastic(3,iglob) = accel_elastic(3,iglob) - weight* &
                 (sigma_xz*nx + sigma_zz*nz)/2.d0
 
-          if(SIMULATION_TYPE == 2) then
+          if(SIMULATION_TYPE == 3) then
             b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - weight* &
                 (b_sigma_xx*nx + b_sigma_xz*nz)/2.d0
 
             b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - weight* &
                 (b_sigma_xz*nx + b_sigma_zz*nz)/2.d0
-          endif !if(SIMULATION_TYPE == 2) then
+          endif !if(SIMULATION_TYPE == 3) then
 
         enddo
 
@@ -6343,7 +6343,7 @@ if(coupled_elastic_poro) then
     endif
 
 
-    if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0 .and. SIMULATION_TYPE == 2) then
+    if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0 .and. SIMULATION_TYPE == 3) then
       call assemble_MPI_vector_el(b_accel_elastic,nglob, &
             ninterface, ninterface_elastic,inum_interfaces_elastic, &
             max_interface_size, max_ibool_interfaces_size_el,&
@@ -6455,7 +6455,7 @@ if(coupled_elastic_poro) then
 
       endif
 
-      if(SIMULATION_TYPE == 2) then
+      if(SIMULATION_TYPE == 3) then
 !! DK DK this should be vectorized
         b_accel_elastic(1,:) = b_accel_elastic(1,:) * rmass_inverse_elastic_one(:)
         b_accel_elastic(2,:) = b_accel_elastic(2,:) * rmass_inverse_elastic_one(:)
@@ -6473,7 +6473,7 @@ if(coupled_elastic_poro) then
 
     if(any_poroelastic) then
 
-      if(SIMULATION_TYPE == 2) then
+      if(SIMULATION_TYPE == 3) then
         ! if inviscid fluid, comment the reading and uncomment the zeroing
         !     read(23,rec=NSTEP-it+1) b_viscodampx
         !     read(24,rec=NSTEP-it+1) b_viscodampz
@@ -6623,7 +6623,7 @@ if(coupled_elastic_poro) then
 
           ! compute pressure on the fluid/porous medium edge
           pressure = - potential_dot_dot_acoustic(iglob)
-          if(SIMULATION_TYPE == 2) then
+          if(SIMULATION_TYPE == 3) then
             b_pressure = - b_potential_dot_dot_acoustic(iglob)
             ! new definition of adjoint displacement and adjoint potential
             pressure = potential_acoustic_adj_coupling(iglob)
@@ -6681,7 +6681,7 @@ if(coupled_elastic_poro) then
           accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) &
             + weight*nz*pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)
 
-          if(SIMULATION_TYPE == 2) then
+          if(SIMULATION_TYPE == 3) then
             ! contribution to the solid phase
             b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) &
               + weight*nx*b_pressure*(1._CUSTOM_REAL-phil/tortl)
@@ -6693,7 +6693,7 @@ if(coupled_elastic_poro) then
               + weight*nx*b_pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)
             b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) &
               + weight*nz*b_pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)
-          endif !if(SIMULATION_TYPE == 2) then
+          endif !if(SIMULATION_TYPE == 3) then
 
         enddo ! do ipoin1D = 1,NGLLX
 
@@ -6738,7 +6738,7 @@ if(coupled_elastic_poro) then
           dux_dgamma = ZERO
           duz_dgamma = ZERO
 
-          if(SIMULATION_TYPE == 2) then
+          if(SIMULATION_TYPE == 3) then
             b_dux_dxi = ZERO
             b_duz_dxi = ZERO
 
@@ -6754,7 +6754,7 @@ if(coupled_elastic_poro) then
             dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
             duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
 
-            if(SIMULATION_TYPE == 2) then
+            if(SIMULATION_TYPE == 3) then
               b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,j,ispec_elastic))*hprime_xx(i,k)
               b_duz_dxi = b_duz_dxi + b_displ_elastic(3,ibool(k,j,ispec_elastic))*hprime_xx(i,k)
               b_dux_dgamma = b_dux_dgamma + b_displ_elastic(1,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
@@ -6774,7 +6774,7 @@ if(coupled_elastic_poro) then
           duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
           duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
-          if(SIMULATION_TYPE == 2) then
+          if(SIMULATION_TYPE == 3) then
             b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
             b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
 
@@ -6810,11 +6810,11 @@ if(coupled_elastic_poro) then
             sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
           endif
 
-          if(SIMULATION_TYPE == 2) then
+          if(SIMULATION_TYPE == 3) then
             b_sigma_xx = lambdaplus2mu_unrelaxed_elastic*b_dux_dxl + lambdal_unrelaxed_elastic*b_duz_dzl
             b_sigma_xz = mul_unrelaxed_elastic*(b_duz_dxl + b_dux_dzl)
             b_sigma_zz = lambdaplus2mu_unrelaxed_elastic*b_duz_dzl + lambdal_unrelaxed_elastic*b_dux_dxl
-          endif ! if(SIMULATION_TYPE == 2)
+          endif ! if(SIMULATION_TYPE == 3)
 
           ! get point values for the poroelastic side
           i = ivalue(ipoin1D,iedge_poroelastic)
@@ -6858,7 +6858,7 @@ if(coupled_elastic_poro) then
           dwx_dgamma = ZERO
           dwz_dgamma = ZERO
 
-          if(SIMULATION_TYPE == 2) then
+          if(SIMULATION_TYPE == 3) then
             b_dux_dxi = ZERO
             b_duz_dxi = ZERO
 
@@ -6884,7 +6884,7 @@ if(coupled_elastic_poro) then
             dwz_dxi = dwz_dxi + displw_poroelastic(2,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
             dwx_dgamma = dwx_dgamma + displw_poroelastic(1,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
             dwz_dgamma = dwz_dgamma + displw_poroelastic(2,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
-            if(SIMULATION_TYPE == 2) then
+            if(SIMULATION_TYPE == 3) then
               b_dux_dxi = b_dux_dxi + b_displs_poroelastic(1,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
               b_duz_dxi = b_duz_dxi + b_displs_poroelastic(2,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
               b_dux_dgamma = b_dux_dgamma + b_displs_poroelastic(1,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
@@ -6915,7 +6915,7 @@ if(coupled_elastic_poro) then
           dwz_dxl = dwz_dxi*xixl + dwz_dgamma*gammaxl
           dwz_dzl = dwz_dxi*xizl + dwz_dgamma*gammazl
 
-          if(SIMULATION_TYPE == 2) then
+          if(SIMULATION_TYPE == 3) then
             b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
             b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
 
@@ -6937,7 +6937,7 @@ if(coupled_elastic_poro) then
 
           sigmap = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl + dwz_dzl)
 
-          if(SIMULATION_TYPE == 2) then
+          if(SIMULATION_TYPE == 3) then
             b_sigma_xx = b_sigma_xx + lambdalplus2mul_G*b_dux_dxl + lambdal_G*b_duz_dzl + C_biot*(b_dwx_dxl + b_dwz_dzl)
             b_sigma_xz = b_sigma_xz + mul_G*(b_duz_dxl + b_dux_dzl)
             b_sigma_zz = b_sigma_zz + lambdalplus2mul_G*b_duz_dzl + lambdal_G*b_dux_dxl + C_biot*(b_dwx_dxl + b_dwz_dzl)
@@ -6989,7 +6989,7 @@ if(coupled_elastic_poro) then
           ! contribution to the fluid phase
           ! w = 0
 
-          if(SIMULATION_TYPE == 2) then
+          if(SIMULATION_TYPE == 3) then
             ! contribution to the solid phase
             b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) + &
                 weight*((b_sigma_xx*nx + b_sigma_xz*nz)/2.d0 -phil/tortl*b_sigmap*nx)
@@ -6999,7 +6999,7 @@ if(coupled_elastic_poro) then
 
             ! contribution to the fluid phase
             ! w = 0
-          endif !if(SIMULATION_TYPE == 2) then
+          endif !if(SIMULATION_TYPE == 3) then
 
         enddo
 
@@ -7089,7 +7089,7 @@ if(coupled_elastic_poro) then
             my_neighbours)
     endif
 
-    if (nproc > 1 .and. any_poroelastic .and. ninterface_poroelastic > 0 .and. SIMULATION_TYPE == 2) then
+    if (nproc > 1 .and. any_poroelastic .and. ninterface_poroelastic > 0 .and. SIMULATION_TYPE == 3) then
       call assemble_MPI_vector_po(b_accels_poroelastic,b_accelw_poroelastic,nglob, &
             ninterface, ninterface_poroelastic,inum_interfaces_poroelastic, &
             max_interface_size, max_ibool_interfaces_size_po,&
@@ -7229,7 +7229,7 @@ if(coupled_elastic_poro) then
       endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      if(SIMULATION_TYPE == 2) then
+      if(SIMULATION_TYPE == 3) then
         b_accels_poroelastic(1,:) = b_accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
         b_accels_poroelastic(2,:) = b_accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
         b_velocs_poroelastic = b_velocs_poroelastic + b_deltatover2*b_accels_poroelastic
@@ -7551,7 +7551,7 @@ if(coupled_elastic_poro) then
  !     endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-            if(SIMULATION_TYPE == 2) then
+            if(SIMULATION_TYPE == 3) then
               b_veloc_elastic(1,iglob) = b_veloc_elastic(1,iglob) - b_deltatover2*b_accel_elastic(1,iglob)
               b_veloc_elastic(3,iglob) = b_veloc_elastic(3,iglob) - b_deltatover2*b_accel_elastic(3,iglob)
               b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) / rmass_inverse_elastic_one(iglob)
@@ -7578,7 +7578,7 @@ if(coupled_elastic_poro) then
               b_accelw_poroelastic(2,iglob) = ZERO
               b_velocw_poroelastic(1,iglob) = ZERO
               b_velocw_poroelastic(2,iglob) = ZERO
-            endif !if(SIMULATION_TYPE == 2)
+            endif !if(SIMULATION_TYPE == 3)
 
           endif !if(icount(iglob) ==1)
 
@@ -7592,7 +7592,7 @@ if(coupled_elastic_poro) then
 ! ********************************************************************************************
 !                       reading lastframe for adjoint/kernels calculation
 ! ********************************************************************************************
-    if(it == 1 .and. SIMULATION_TYPE == 2) then
+    if(it == 1 .and. SIMULATION_TYPE == 3) then
 
       ! acoustic medium
       if(any_acoustic) then
@@ -7663,7 +7663,7 @@ if(coupled_elastic_poro) then
         close(56)
       endif
 
-    endif ! if(it == 1 .and. SIMULATION_TYPE == 2)
+    endif ! if(it == 1 .and. SIMULATION_TYPE == 3)
 
 !<NOISE_TOMOGRAPHY
 
@@ -7693,7 +7693,7 @@ if(coupled_elastic_poro) then
 ! ********************************************************************************************
 !                                      kernels calculation
 ! ********************************************************************************************
-    if(any_elastic .and. SIMULATION_TYPE == 2) then ! kernels calculation
+    if(any_elastic .and. SIMULATION_TYPE == 3) then ! kernels calculation
       do iglob = 1,nglob
         rho_k(iglob) =  accel_elastic(1,iglob)*b_displ_elastic(1,iglob) +&
                             accel_elastic(2,iglob)*b_displ_elastic(2,iglob) +&
@@ -7707,7 +7707,7 @@ if(coupled_elastic_poro) then
       enddo
     endif
 
-    if(any_poroelastic .and. SIMULATION_TYPE ==2) then
+    if(any_poroelastic .and. SIMULATION_TYPE == 3) then
       do iglob =1,nglob
         rhot_k(iglob) = accels_poroelastic(1,iglob) * b_displs_poroelastic(1,iglob) + &
                   accels_poroelastic(2,iglob) * b_displs_poroelastic(2,iglob)
@@ -7937,7 +7937,7 @@ if(coupled_elastic_poro) then
 
 !----- writing the kernels
     ! kernels output
-    if(SIMULATION_TYPE == 2) then
+    if(SIMULATION_TYPE == 3) then
 
       if(any_acoustic) then
 
@@ -8246,7 +8246,7 @@ if(coupled_elastic_poro) then
 
       endif ! if(any_poroelastic)
 
-    endif ! if(SIMULATION_TYPE == 2)
+    endif ! if(SIMULATION_TYPE == 3)
 
 
 !
@@ -8258,7 +8258,7 @@ if(coupled_elastic_poro) then
 ! kernels output files
 !
 
-      if(SIMULATION_TYPE == 2 .and. it == NSTEP) then
+      if(SIMULATION_TYPE == 3 .and. it == NSTEP) then
 
         if ( myrank == 0 ) then
           write(IOUT,*) 'Writing Kernels file'
@@ -8866,7 +8866,7 @@ if(coupled_elastic_poro) then
 
   if(output_wavefield_dumps) deallocate(mask_ibool)
 
-  if((SAVE_FORWARD .and. SIMULATION_TYPE==1) .or. SIMULATION_TYPE ==2) then
+  if((SAVE_FORWARD .and. SIMULATION_TYPE==1) .or. SIMULATION_TYPE == 3) then
     if(any_acoustic) then
       close(65)
       close(66)

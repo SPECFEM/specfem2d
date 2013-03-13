@@ -381,7 +381,7 @@
           dwx_dgamma = ZERO
           dwz_dgamma = ZERO
 
-          if(SIMULATION_TYPE == 2) then ! kernels calculation
+          if(SIMULATION_TYPE == 3) then ! kernels calculation
           b_dux_dxi = ZERO
           b_duz_dxi = ZERO
 
@@ -408,7 +408,7 @@
             dwx_dgamma = dwx_dgamma + displw_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
             dwz_dgamma = dwz_dgamma + displw_poroelastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
 
-          if(SIMULATION_TYPE == 2) then ! kernels calculation
+          if(SIMULATION_TYPE == 3) then ! kernels calculation
             b_dux_dxi = b_dux_dxi + b_displs_poroelastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
             b_duz_dxi = b_duz_dxi + b_displs_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
             b_dux_dgamma = b_dux_dgamma + b_displs_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
@@ -439,7 +439,7 @@
           dwz_dxl = dwz_dxi*xixl + dwz_dgamma*gammaxl
           dwz_dzl = dwz_dxi*xizl + dwz_dgamma*gammazl
 
-          if(SIMULATION_TYPE == 2) then ! kernels calculation
+          if(SIMULATION_TYPE == 3) then ! kernels calculation
           b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
           b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
 
@@ -511,7 +511,7 @@
 
     sigmap = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl + dwz_dzl)
 
-    if(SIMULATION_TYPE == 2) then ! kernels calculation
+    if(SIMULATION_TYPE == 3) then ! kernels calculation
       b_sigma_xx = lambdalplus2mul_G*b_dux_dxl + lambdal_G*b_duz_dzl + C_biot*(b_dwx_dxl + b_dwz_dzl)
       b_sigma_xz = mul_G*(b_duz_dxl + b_dux_dzl)
       b_sigma_zz = lambdalplus2mul_G*b_duz_dzl + lambdal_G*b_dux_dxl + C_biot*(b_dwx_dxl + b_dwz_dzl)
@@ -521,7 +521,7 @@
   endif
 
 ! kernels calculation
-   if(SIMULATION_TYPE == 2) then
+   if(SIMULATION_TYPE == 3) then
           iglob = ibool(i,j,ispec)
             dsxx =  dux_dxl
             dsxz = HALF * (duz_dxl + dux_dzl)
@@ -561,7 +561,7 @@
           tempx2p(i,j) = wxgll(i)*jacobianl*sigmap*gammaxl
           tempz2p(i,j) = wxgll(i)*jacobianl*sigmap*gammazl
 
-          if(SIMULATION_TYPE == 2) then ! kernels calculation
+          if(SIMULATION_TYPE == 3) then ! kernels calculation
           b_tempx1(i,j) = wzgll(j)*jacobianl*(b_sigma_xx*xixl+b_sigma_xz*xizl)
           b_tempz1(i,j) = wzgll(j)*jacobianl*(b_sigma_xz*xixl+b_sigma_zz*xizl)
 
@@ -597,7 +597,7 @@
     accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) - ( (tempz1(k,j) - phil/tortl*tempz1p(k,j)) &
            *hprimewgll_xx(k,i) + (tempz2(i,k) - phil/tortl*tempz2p(i,k))*hprimewgll_zz(k,j) )
 
-          if(SIMULATION_TYPE == 2) then ! kernels calculation
+          if(SIMULATION_TYPE == 3) then ! kernels calculation
     b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - ( (b_tempx1(k,j) - phil/tortl*b_tempx1p(k,j)) &
            *hprimewgll_xx(k,i) + (b_tempx2(i,k) - phil/tortl*b_tempx2p(i,k))*hprimewgll_zz(k,j) )
 
@@ -680,7 +680,7 @@
               viscodampz
 
 ! if SIMULATION_TYPE == 1 .and. SAVE_FORWARD then b_viscodamp is saved in compute_forces_poro_fluid.f90
-          if(SIMULATION_TYPE == 2) then ! kernels calculation
+          if(SIMULATION_TYPE == 3) then ! kernels calculation
         b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) + phil/tortl*b_viscodampx(iglob)
         b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) + phil/tortl*b_viscodampz(iglob)
           endif
@@ -778,7 +778,7 @@
             if(SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
               b_absorb_poro_s_left(1,j,ib_left(ispecabs),it) = tx*weight
               b_absorb_poro_s_left(2,j,ib_left(ispecabs),it) = tz*weight
-            elseif(SIMULATION_TYPE == 2) then
+            elseif(SIMULATION_TYPE == 3) then
               b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - &
                                               b_absorb_poro_s_left(1,j,ib_left(ispecabs),NSTEP-it+1)
               b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) - &
@@ -834,7 +834,7 @@
             if(SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
               b_absorb_poro_s_right(1,j,ib_right(ispecabs),it) = tx*weight
               b_absorb_poro_s_right(2,j,ib_right(ispecabs),it) = tz*weight
-            elseif(SIMULATION_TYPE == 2) then
+            elseif(SIMULATION_TYPE == 3) then
               b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - &
                                               b_absorb_poro_s_right(1,j,ib_right(ispecabs),NSTEP-it+1)
               b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) - &
@@ -894,7 +894,7 @@
             if(SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
               b_absorb_poro_s_bottom(1,i,ib_bottom(ispecabs),it) = tx*weight
               b_absorb_poro_s_bottom(2,i,ib_bottom(ispecabs),it) = tz*weight
-            elseif(SIMULATION_TYPE == 2) then
+            elseif(SIMULATION_TYPE == 3) then
               b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - &
                                               b_absorb_poro_s_bottom(1,i,ib_bottom(ispecabs),NSTEP-it+1)
               b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) - &
@@ -954,7 +954,7 @@
             if(SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
               b_absorb_poro_s_top(1,i,ib_top(ispecabs),it) = tx*weight
               b_absorb_poro_s_top(2,i,ib_top(ispecabs),it) = tz*weight
-            elseif(SIMULATION_TYPE == 2) then
+            elseif(SIMULATION_TYPE == 3) then
               b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - &
                                               b_absorb_poro_s_top(1,i,ib_top(ispecabs),NSTEP-it+1)
               b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) - &
@@ -1012,7 +1012,7 @@
      endif ! if this processor core carries the source and the source element is poroelastic
       enddo
 
-    if(SIMULATION_TYPE == 2) then   ! adjoint wavefield
+    if(SIMULATION_TYPE == 3) then   ! adjoint wavefield
       irec_local = 0
       do irec = 1,nrec
 !   add the source (only if this proc carries the source)
@@ -1032,7 +1032,7 @@
 
       endif ! if this processor core carries the adjoint source and the source element is poroelastic
       enddo ! irec = 1,nrec
-    endif ! SIMULATION_TYPE == 2 adjoint wavefield
+    endif ! SIMULATION_TYPE == 3 adjoint wavefield
 
   endif ! if not using an initial field
 
