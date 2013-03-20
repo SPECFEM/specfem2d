@@ -3036,6 +3036,15 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
           if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx_prime'
           allocate(rmemory_duz_dz_prime(NGLLX,NGLLZ,nspec_PML),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz_prime'
+        else
+          allocate(rmemory_dux_dx_prime(1,1,1),stat=ier)
+          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx_prime'
+          allocate(rmemory_dux_dz_prime(1,1,1),stat=ier)
+          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz_prime'
+          allocate(rmemory_duz_dx_prime(1,1,1),stat=ier)
+          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx_prime'
+          allocate(rmemory_duz_dz_prime(1,1,1),stat=ier)
+          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz_prime'
         endif
 
         if(time_stepping_scheme == 2)then
