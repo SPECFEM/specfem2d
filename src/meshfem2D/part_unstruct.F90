@@ -1735,6 +1735,8 @@ end  subroutine rotate_mesh_for_plane_wave
      endif
   enddo
 
+  print *, 'nedges_coupled (acoustic/elastic)', nedges_coupled
+
   allocate(edges_coupled(2,nedges_coupled))
 
   nedges_coupled = 0
