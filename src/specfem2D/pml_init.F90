@@ -76,23 +76,25 @@
   integer, dimension(nspec) :: region_CPML
   logical :: SAVE_FORWARD
 
+  integer :: nspec_PML_tot
+
 #ifdef USE_MPI
-  integer :: nspec_PML_tot,ier
+  integer :: ier
 #endif
 
-  !!!detection of PML elements
+  ! detection of PML elements
 
   if(.not. read_external_mesh) then
   nspec_PML = 0
 
-     !ibound is the side we are looking (bottom, right, top or left)
+     ! ibound is the side we are looking (bottom, right, top or left)
      do ibound=1,4
 
      icorner_iglob = ZERO
      ncorner=0
 
      if (anyabs) then
-     !mark any elements on the boundary as PML and list their corners
+     ! mark any elements on the boundary as PML and list their corners
      do ispecabs = 1,nelemabs
         ispec = numabs(ispecabs)
 
@@ -470,7 +472,9 @@ endif
 
  subroutine define_PML_coefficients(npoin,nspec,is_PML,ibool,coord,&
           region_CPML,kmato,density,poroelastcoef,numat,f0_temp,&
+#ifdef USE_MPI
           myrank,&
+#endif
           K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
           nspec_PML,spec_to_PML)
 
@@ -513,7 +517,8 @@ endif
 
 #ifdef USE_MPI
 ! for MPI and partitioning
-  integer  :: ier
+  integer :: ier
+  integer :: myrank
 
   double precision :: thickness_PML_z_min_bottom_glob,thickness_PML_z_max_bottom_glob,&
        thickness_PML_x_min_right_glob,thickness_PML_x_max_right_glob,&
@@ -522,9 +527,7 @@ endif
   double precision :: xmin_glob, xmax_glob, zmin_glob, zmax_glob, vpmax_glob
 #endif
 
-  integer :: myrank
-
-  !PML fixed parameters
+! PML fixed parameters
 
 ! power to compute d0 profile
   double precision, parameter :: NPOWER = 2.d0

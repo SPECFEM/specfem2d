@@ -707,8 +707,10 @@
   logical :: codeabsread(4)
   character(len=80) :: datlin
 
+  integer :: nelemabs_tot,nspec_left_tot,nspec_right_tot,nspec_bottom_tot,nspec_top_tot
+
 #ifdef USE_MPI
-  integer :: nelemabs_tot,nspec_left_tot,nspec_right_tot,nspec_bottom_tot,nspec_top_tot,ier
+  integer :: ier
 #endif
 
   ! initializes
