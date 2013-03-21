@@ -2946,7 +2946,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                   nspec_PML,is_PML,which_PML_elem,spec_to_PML, &
                   icorner_iglob,NELEM_PML_THICKNESS,&
                   read_external_mesh,region_CPML,&
-                  SIMULATION_TYPE,PML_interior_interface,nglob_interface,SAVE_FORWARD)
+                  SIMULATION_TYPE,PML_interior_interface,nglob_interface,SAVE_FORWARD,myrank)
 
       if((SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS)then
          allocate(point_interface(nglob_interface))

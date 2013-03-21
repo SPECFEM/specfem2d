@@ -45,8 +45,7 @@
                     nspec_PML,is_PML,which_PML_elem,spec_to_PML, &
                     icorner_iglob,NELEM_PML_THICKNESS,&
                     read_external_mesh,region_CPML,&
-                    SIMULATION_TYPE,PML_interior_interface,nglob_interface,SAVE_FORWARD)
-
+                    SIMULATION_TYPE,PML_interior_interface,nglob_interface,SAVE_FORWARD,myrank)
 
   implicit none
   include 'constants.h'
@@ -55,7 +54,7 @@
   include 'mpif.h'
 #endif
 
-  integer ::  SIMULATION_TYPE,nglob_interface
+  integer :: SIMULATION_TYPE,nglob_interface,myrank
 
   integer :: nspec,nglob,nelemabs,nspec_PML,NELEM_PML_THICKNESS
   logical :: anyabs
@@ -76,6 +75,10 @@
   logical :: read_external_mesh
   integer, dimension(nspec) :: region_CPML
   logical :: SAVE_FORWARD
+
+#ifdef USE_MPI
+  integer :: nspec_PML_tot,ier
+#endif
 
   !!!detection of PML elements
 
@@ -179,7 +182,12 @@
 
      endif !end of SIMULATION_TYPE == 3
 
-     write(IOUT,*) "number of PML spectral elements on side ", ibound,":", nspec_PML
+#ifdef USE_MPI
+     call MPI_REDUCE(nspec_PML, nspec_PML_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+#else
+     nspec_PML_tot = nspec_PML
+#endif
+     if(myrank == 0) write(IOUT,*) "number of PML spectral elements on side ",ibound,":",nspec_PML_tot
 
      enddo ! end loop on the 4 boundaries
 
@@ -305,7 +313,12 @@ endif
         end if
      enddo
 
-     write(IOUT,*) "number of PML spectral elements :", nspec_PML
+#ifdef USE_MPI
+     call MPI_REDUCE(nspec_PML, nspec_PML_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+#else
+     nspec_PML_tot = nspec_PML
+#endif
+     if(myrank == 0) write(IOUT,*) "number of PML spectral elements :", nspec_PML_tot
 
      endif
 
@@ -322,11 +335,17 @@ endif
     endif
   enddo
 
-  write(IOUT,*) "number of PML spectral elements :", nspec_PML
+#ifdef USE_MPI
+     call MPI_REDUCE(nspec_PML, nspec_PML_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+#else
+     nspec_PML_tot = nspec_PML
+#endif
+     if(myrank == 0) write(IOUT,*) "number of PML spectral elements :", nspec_PML_tot
 
   endif
 
   end subroutine pml_init
+
 !
 !-------------------------------------------------------------------------------------------------
 !
