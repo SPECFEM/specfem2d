@@ -805,6 +805,18 @@
       endif
     enddo
 
+  else ! if this MPI slice has no absorbing element at all
+
+    if (ipass == 1) then
+      nelemabs = 0
+      nspec_left = 0
+      nspec_right = 0
+      nspec_bottom = 0
+      nspec_top = 0
+    endif
+
+  endif
+
 #ifdef USE_MPI
     if (ipass == 1) then
       call MPI_REDUCE(nelemabs, nelemabs_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
@@ -832,8 +844,6 @@
       write(IOUT,*) '  nspec_top = ',nspec_top_tot
       write(IOUT,*)
     endif
-
-  endif
 
   end subroutine read_databases_absorbing
 
