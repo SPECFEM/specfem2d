@@ -374,8 +374,8 @@ $O/prepare_initialfield.o: ${S}/prepare_initialfield.F90 ${SETUP}/constants.h
 $O/prepare_source_time_function.o: ${S}/prepare_source_time_function.f90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/prepare_source_time_function.o ${S}/prepare_source_time_function.f90
 
-$O/read_databases.o: ${S}/read_databases.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/read_databases.o ${S}/read_databases.f90
+$O/read_databases.o: ${S}/read_databases.F90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/read_databases.o ${S}/read_databases.F90
 
 $O/read_external_model.o: ${S}/read_external_model.f90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/read_external_model.o ${S}/read_external_model.f90

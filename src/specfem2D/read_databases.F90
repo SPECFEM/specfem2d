@@ -518,7 +518,7 @@
   endif
 
   ! output formats
-107 format(/5x,'--> Spectral Elements <--',//)
+107 format(/5x,'--> Spectral Elements (for mesh slice 0 only if using MPI runs) <--',//)
 
 207 format(5x,'Number of spectral elements . . . . .  (nspec) =',i7,/5x, &
                'Number of control nodes per element .  (ngnod) =',i7,/5x, &
@@ -686,6 +686,10 @@
   implicit none
   include "constants.h"
 
+#ifdef USE_MPI
+  include 'mpif.h'
+#endif
+
   integer :: myrank,ipass,nspec
   integer :: nelemabs
   integer, dimension(nelemabs) :: numabs,ibegin_edge1,iend_edge1, &
@@ -702,6 +706,10 @@
   integer :: inum,numabsread,typeabsread
   logical :: codeabsread(4)
   character(len=80) :: datlin
+
+#ifdef USE_MPI
+  integer :: nelemabs_tot,nspec_left_tot,nspec_right_tot,nspec_bottom_tot,nspec_top_tot,ier
+#endif
 
   ! initializes
   codeabs(:,:) = .false.
@@ -795,13 +803,31 @@
       endif
     enddo
 
+#ifdef USE_MPI
+    if (ipass == 1) then
+      call MPI_REDUCE(nelemabs, nelemabs_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+      call MPI_REDUCE(nspec_left, nspec_left_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+      call MPI_REDUCE(nspec_right, nspec_right_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+      call MPI_REDUCE(nspec_bottom, nspec_bottom_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+      call MPI_REDUCE(nspec_top, nspec_top_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+    endif
+#else
+    if (ipass == 1) then
+      nelemabs_tot = nelemabs
+      nspec_left_tot = nspec_left
+      nspec_right_tot = nspec_right
+      nspec_bottom_tot = nspec_bottom
+      nspec_top_tot = nspec_top
+    endif
+#endif
+
     if (myrank == 0 .and. ipass == 1) then
       write(IOUT,*)
-      write(IOUT,*) 'Number of absorbing elements: ',nelemabs
-      write(IOUT,*) '  nspec_left = ',nspec_left
-      write(IOUT,*) '  nspec_right = ',nspec_right
-      write(IOUT,*) '  nspec_bottom = ',nspec_bottom
-      write(IOUT,*) '  nspec_top = ',nspec_top
+      write(IOUT,*) 'Number of absorbing elements: ',nelemabs_tot
+      write(IOUT,*) '  nspec_left = ',nspec_left_tot
+      write(IOUT,*) '  nspec_right = ',nspec_right_tot
+      write(IOUT,*) '  nspec_bottom = ',nspec_bottom_tot
+      write(IOUT,*) '  nspec_top = ',nspec_top_tot
       write(IOUT,*)
     endif
 
