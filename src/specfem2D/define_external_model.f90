@@ -107,7 +107,7 @@
      c55(i,j,ispec) = 0.d0
 
    else
-     write(IOUT,*) 'flag number in external model is equal to ',iflag_element
+     write(IOUT,*) 'flag number in external model is equal to ',material_element(ispec)
      stop 'wrong flag number in external model; exiting...'
    endif
 
