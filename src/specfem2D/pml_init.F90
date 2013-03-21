@@ -82,10 +82,11 @@
   integer :: ier
 #endif
 
+  nspec_PML = 0
+
   ! detection of PML elements
 
   if(.not. read_external_mesh) then
-  nspec_PML = 0
 
      ! ibound is the side we are looking (bottom, right, top or left)
      do ibound=1,4
@@ -184,14 +185,7 @@
 
      endif !end of SIMULATION_TYPE == 3
 
-#ifdef USE_MPI
-     call MPI_REDUCE(nspec_PML, nspec_PML_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-#else
-     nspec_PML_tot = nspec_PML
-#endif
-     if(myrank == 0) write(IOUT,*) "Number of PML spectral elements on side ",ibound,":",nspec_PML_tot
-
-     enddo ! end loop on the 4 boundaries
+     enddo ! end loop on the four boundaries
 
  if(SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))then
        nglob_interface = 0
@@ -315,13 +309,6 @@ endif
         end if
      enddo
 
-#ifdef USE_MPI
-     call MPI_REDUCE(nspec_PML, nspec_PML_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-#else
-     nspec_PML_tot = nspec_PML
-#endif
-     if(myrank == 0) write(IOUT,*) "Total number of PML spectral elements :", nspec_PML_tot
-
      endif
 
   if(read_external_mesh) then
@@ -337,14 +324,14 @@ endif
     endif
   enddo
 
-#ifdef USE_MPI
-     call MPI_REDUCE(nspec_PML, nspec_PML_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-#else
-     nspec_PML_tot = nspec_PML
-#endif
-     if(myrank == 0) write(IOUT,*) "Total number of PML spectral elements :", nspec_PML_tot
-
   endif
+
+#ifdef USE_MPI
+  call MPI_REDUCE(nspec_PML, nspec_PML_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+#else
+  nspec_PML_tot = nspec_PML
+#endif
+  if(myrank == 0) write(IOUT,*) "Total number of PML spectral elements: ", nspec_PML_tot
 
   end subroutine pml_init
 
