@@ -3007,7 +3007,9 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
         call define_PML_coefficients(nglob,nspec,is_PML,ibool,coord,&
                 region_CPML,kmato,density,poroelastcoef,numat,f0(1),&
+#ifdef USE_MPI
                 myrank,&
+#endif
                 K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
                 nspec_PML,spec_to_PML)
 
