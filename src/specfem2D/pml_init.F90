@@ -472,9 +472,6 @@ endif
 
  subroutine define_PML_coefficients(npoin,nspec,is_PML,ibool,coord,&
           region_CPML,kmato,density,poroelastcoef,numat,f0_temp,&
-#ifdef USE_MPI
-          myrank,&
-#endif
           K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
           nspec_PML,spec_to_PML)
 
@@ -518,7 +515,6 @@ endif
 #ifdef USE_MPI
 ! for MPI and partitioning
   integer :: ier
-  integer :: myrank
 
   double precision :: thickness_PML_z_min_bottom_glob,thickness_PML_z_max_bottom_glob,&
        thickness_PML_x_min_right_glob,thickness_PML_x_max_right_glob,&
