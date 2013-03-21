@@ -187,7 +187,7 @@
 #else
      nspec_PML_tot = nspec_PML
 #endif
-     if(myrank == 0) write(IOUT,*) "number of PML spectral elements on side ",ibound,":",nspec_PML_tot
+     if(myrank == 0) write(IOUT,*) "Number of PML spectral elements on side ",ibound,":",nspec_PML_tot
 
      enddo ! end loop on the 4 boundaries
 
@@ -318,7 +318,7 @@ endif
 #else
      nspec_PML_tot = nspec_PML
 #endif
-     if(myrank == 0) write(IOUT,*) "number of PML spectral elements :", nspec_PML_tot
+     if(myrank == 0) write(IOUT,*) "Total number of PML spectral elements :", nspec_PML_tot
 
      endif
 
@@ -340,7 +340,7 @@ endif
 #else
      nspec_PML_tot = nspec_PML
 #endif
-     if(myrank == 0) write(IOUT,*) "number of PML spectral elements :", nspec_PML_tot
+     if(myrank == 0) write(IOUT,*) "Total number of PML spectral elements :", nspec_PML_tot
 
   endif
 
@@ -679,18 +679,18 @@ endif
   d0_z_top = - (NPOWER + 1) * vpmax * log(Rcoef) / (2.d0 * thickness_PML_z_top)
 
 !   if (myrank == 0) then
-      write(IOUT,*)
-      write(IOUT,*) 'PML properties -------',myrank,'myrank'
-      write(IOUT,*) '     Vpmax=', vpmax
-      write(IOUT,*) '     log(Rcoef)=',log(Rcoef)
-      write(IOUT,*) '     thickness_PML_z_bottom =',thickness_PML_z_bottom
-      write(IOUT,*) '     thickness_PML_x_right  =',thickness_PML_x_right
-      write(IOUT,*) '     thickness_PML_z_top    =',thickness_PML_z_top
-      write(IOUT,*) '     thickness_PML_x_left   =',thickness_PML_x_left
-      write(IOUT,*) '     d0_bottom       =', d0_z_bottom
-      write(IOUT,*) '     d0_right        =', d0_x_right
-      write(IOUT,*) '     d0_top          =', d0_z_top
-      write(IOUT,*) '     d0_left         =', d0_x_left
+!     write(IOUT,*)
+!     write(IOUT,*) 'PML properties -------',myrank,'myrank'
+!     write(IOUT,*) '     Vpmax=', vpmax
+!     write(IOUT,*) '     log(Rcoef)=',log(Rcoef)
+!     write(IOUT,*) '     thickness_PML_z_bottom =',thickness_PML_z_bottom
+!     write(IOUT,*) '     thickness_PML_x_right  =',thickness_PML_x_right
+!     write(IOUT,*) '     thickness_PML_z_top    =',thickness_PML_z_top
+!     write(IOUT,*) '     thickness_PML_x_left   =',thickness_PML_x_left
+!     write(IOUT,*) '     d0_bottom       =', d0_z_bottom
+!     write(IOUT,*) '     d0_right        =', d0_x_right
+!     write(IOUT,*) '     d0_top          =', d0_z_top
+!     write(IOUT,*) '     d0_left         =', d0_x_left
 !   endif
 
    d_x = 0.d0
