@@ -86,7 +86,7 @@
 
     write(15,*) '#'
     write(15,*) '# Database for SPECFEM2D'
-    write(15,*) '# Dimitri Komatitsch, (c) University of Pau, France'
+    write(15,*) '# Dimitri Komatitsch, (c) CNRS, France'
     write(15,*) '#'
 
     write(15,*) 'Title of the simulation'
