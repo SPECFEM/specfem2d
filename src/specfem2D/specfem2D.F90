@@ -4483,7 +4483,7 @@ if(coupled_elastic_poro) then
 !----  create a Gnuplot script to display the energy curve in log scale
   if(output_energy .and. myrank == 0) then
     close(IOUT_ENERGY)
-    open(unit=IOUT_ENERGY,file='plot_energy.gnu',status='unknown')
+    open(unit=IOUT_ENERGY,file='plot_energy.gnu',status='unknown',action='write')
     write(IOUT_ENERGY,*) 'set term wxt'
     write(IOUT_ENERGY,*) '#set term postscript landscape color solid "Helvetica" 22'
     write(IOUT_ENERGY,*) '#set output "energy.ps"'
@@ -4498,7 +4498,7 @@ if(coupled_elastic_poro) then
   endif
 
 ! open the file in which we will store the energy curve
-  if(output_energy .and. myrank == 0) open(unit=IOUT_ENERGY,file='energy.dat',status='unknown')
+  if(output_energy .and. myrank == 0) open(unit=IOUT_ENERGY,file='energy.dat',status='unknown',action='write')
 
 !<NOISE_TOMOGRAPHY
 
