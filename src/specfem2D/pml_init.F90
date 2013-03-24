@@ -139,7 +139,7 @@
            end if
         end do
 
-        !list every corner of each PML elements detected
+        ! list every corner of each PML element detected
         ncorner=0
         icorner_iglob=ZERO
         nspec_PML=0
@@ -331,7 +331,10 @@ endif
 #else
   nspec_PML_tot = nspec_PML
 #endif
-  if(myrank == 0) write(IOUT,*) "Total number of PML spectral elements: ", nspec_PML_tot
+  if(myrank == 0) then
+    write(IOUT,*) "Total number of PML spectral elements: ", nspec_PML_tot
+    write(IOUT,*)
+  endif
 
   end subroutine pml_init
 
