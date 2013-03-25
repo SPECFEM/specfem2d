@@ -731,6 +731,15 @@
 !
 !--- absorbing boundaries
 !
+
+! The outer boundary condition to use for PML elements in fluid layers is Neumann for the potential
+! because we need Dirichlet conditions for the displacement vector, which means Neumann for the potential.
+! Thus, there is nothing to enforce explicitly here.
+! There is something to enforce explicitly only in the case of elastic elements, for which a Dirichlet
+! condition is needed for the displacement vector, which is the vectorial unknown for these elements.
+
+! for Stacey paraxial absorbing conditions (more precisely: Sommerfeld in the case of a fluid) we implement them here
+
   if(.not. PML_BOUNDARY_CONDITIONS .and. anyabs) then
 
     do ispecabs=1,nelemabs
