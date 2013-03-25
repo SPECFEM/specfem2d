@@ -120,7 +120,7 @@ module parameter_file
        permzz,kappa_s,kappa_f,kappa_fr,eta_f,mu_fr
 
 ! factor to subsample color images output by the code (useful for very large models)
-  integer :: factor_subsample_image
+  double precision :: factor_subsample_image
 
 ! use snapshot number in the file name of JPG color snapshots instead of the time step
   logical :: USE_SNAPSHOT_NUMBER_IN_FILENAME
@@ -350,7 +350,7 @@ contains
   call read_value_integer_p(imagetype_JPEG, 'solver.imagetype_JPEG')
   if(err_occurred() /= 0) stop 'error reading parameter 33f in Par_file'
 
-  call read_value_integer_p(factor_subsample_image, 'solver.factor_subsample_image')
+  call read_value_double_precision_p(factor_subsample_image, 'solver.factor_subsample_image')
   if(err_occurred() /= 0) stop 'error reading parameter 43b in Par_file'
 
   call read_value_double_precision_p(POWER_DISPLAY_COLOR, 'solver.POWER_DISPLAY_COLOR')
