@@ -1,6 +1,6 @@
 // PML addition to a homogeneous square
 
-Include "Square.geo";
+Include "simple_square_with_Gmsh.geo";
 
 // Define the PML structure
 // Only two configurations are implemented at the moment
