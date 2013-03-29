@@ -1,0 +1,7 @@
+
+To add PML absorbing layers to a mesh / model created with the "Gmsh" mesher, one needs to perform
+an extrusion from the lines that correspond to the outer edges of the model.
+In this directory you will find a simple example showing how to do this with a square.
+
+(Something similar is probably needed / feasible in the CUBIT mesher)
+
