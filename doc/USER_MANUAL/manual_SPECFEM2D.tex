@@ -576,6 +576,9 @@ Flag& Meaning\\ [0.5ex]
 % is used to refer this table in the text
 \end{table}
 
+In order to see how to add PML layers to a mesh / model created with an external mesher such as `Gmsh', see the examples in directory
+EXAMPLES/CPML\_absorbing\_layers.
+
 If you use PML, the mesh elements that belong to the PML layers can be acoustic or elastic, but not viscoelastic nor poroelastic.
 Then, when defining your model, you should define these absorbing elements as either acoustic or elastic.
 In you forget to do that, the code will fix the problem by automatically converting the viscoelastic or poroelastic PML 
