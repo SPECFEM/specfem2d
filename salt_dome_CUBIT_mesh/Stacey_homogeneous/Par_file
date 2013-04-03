@@ -119,7 +119,7 @@ NELEM_PML_THICKNESS             = 3
 ROTATE_PML_ACTIVATE             = .false.
 ROTATE_PML_ANGLE                = 30.
 STACEY_ABSORBING_CONDITIONS     = .true.
-ADD_SPRING_TO_STACEY            = .true.
+ADD_SPRING_TO_STACEY            = .false.
 
 # for horizontal periodic conditions: detect common points between left and right edges
 ADD_PERIODIC_CONDITIONS         = .false.

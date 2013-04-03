@@ -29,7 +29,7 @@ cp ../modelY1_nodes_coords_file modelY1_nodes_coords_file
 cp ../modelY1_materials_file modelY1_materials_file
 cp ../modelY1_free_surface_file modelY1_free_surface_file
 cp ../modelY1_absorbing_surface_file modelY1_absorbing_surface_file
-cp ../courbe_eros_nodes courbe_eros_nodes
+#cp ../courbe_eros_nodes courbe_eros_nodes
 cd ../
 
 # cleans output files
