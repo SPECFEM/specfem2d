@@ -784,19 +784,20 @@
 
     ! boundary element numbering
     do inum = 1,nelemabs
-      if (typeabs(inum) == IBOTTOM) then
+
+      if (codeabs(IEDGE1,inum)) then
         nspec_bottom = nspec_bottom + 1
         ib_bottom(inum) =  nspec_bottom
 
-      else if (typeabs(inum) == IRIGHT) then
+      else if (codeabs(IEDGE2,inum)) then
         nspec_right = nspec_right + 1
         ib_right(inum) =  nspec_right
 
-      else if (typeabs(inum) == ITOP) then
+      else if (codeabs(IEDGE3,inum)) then
         nspec_top = nspec_top + 1
         ib_top(inum) = nspec_top
 
-      else if (typeabs(inum) == ILEFT) then
+      else if (codeabs(IEDGE4,inum)) then
         nspec_left = nspec_left + 1
         ib_left(inum) =  nspec_left
 
