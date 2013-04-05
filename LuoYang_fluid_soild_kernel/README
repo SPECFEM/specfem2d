@@ -17,6 +17,7 @@ TO RUN:
    > ./process.sh
 
 3. compute adjoint source:
+   > if time history you get is pressure, please change it to its twice differentiation with time
    > rm -rf xadj_source ; gfortran adj_source.f90 -o xadj_source
    > xadj_source
 
