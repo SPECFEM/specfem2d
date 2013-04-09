@@ -1028,12 +1028,15 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   integer, dimension(:), allocatable :: spec_to_PML,icorner_iglob
   logical, dimension(:,:), allocatable :: which_PML_elem
 
-!ZN defined for using PML in elastic simulation
+! defined for using PML in elastic simulation
   logical, dimension(:,:), allocatable :: PML_interior_interface
   integer, dimension(:), allocatable :: point_interface
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interfeace_history_displ
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interfeace_history_veloc
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interfeace_history_accel
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: pml_interfeace_history_potential
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: pml_interfeace_history_potential_dot
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: pml_interfeace_history_potential_dot_dot
   integer :: nglob_interface
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_displ_elastic
@@ -1050,7 +1053,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   logical :: anyabs_glob
   integer :: nspec_PML
 
-!ZN  logical :: backward_simulation !!for seprate adjoint simulation from backward simulation
+!!  logical :: backward_simulation for seprate adjoint simulation from backward simulation
 
 !***********************************************************************
 !
@@ -1594,7 +1597,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   if( anyabs ) then
     ! Files to save absorbed waves needed to reconstruct backward wavefield for adjoint method
     if(ipass == 1) then
-      if(any_elastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3)) then
+      if(any_elastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3).and. (.not. PML_BOUNDARY_CONDITIONS)) then
         allocate(b_absorb_elastic_left(3,NGLLZ,nspec_left,NSTEP))
         allocate(b_absorb_elastic_right(3,NGLLZ,nspec_right,NSTEP))
         allocate(b_absorb_elastic_bottom(3,NGLLX,nspec_bottom,NSTEP))
@@ -1605,7 +1608,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         allocate(b_absorb_elastic_bottom(1,1,1,1))
         allocate(b_absorb_elastic_top(1,1,1,1))
       endif
-      if(any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3)) then
+      if(any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3).and. (.not. PML_BOUNDARY_CONDITIONS)) then
         allocate(b_absorb_poro_s_left(NDIM,NGLLZ,nspec_left,NSTEP))
         allocate(b_absorb_poro_s_right(NDIM,NGLLZ,nspec_right,NSTEP))
         allocate(b_absorb_poro_s_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
@@ -1624,7 +1627,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         allocate(b_absorb_poro_w_bottom(1,1,1,1))
         allocate(b_absorb_poro_w_top(1,1,1,1))
       endif
-      if(any_acoustic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3)) then
+      if(any_acoustic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. (.not. PML_BOUNDARY_CONDITIONS)) then
         allocate(b_absorb_acoustic_left(NGLLZ,nspec_left,NSTEP))
         allocate(b_absorb_acoustic_right(NGLLZ,nspec_right,NSTEP))
         allocate(b_absorb_acoustic_bottom(NGLLX,nspec_bottom,NSTEP))
@@ -2951,33 +2954,59 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
          allocate(pml_interfeace_history_displ(3,nglob_interface,NSTEP))
          allocate(pml_interfeace_history_veloc(3,nglob_interface,NSTEP))
          allocate(pml_interfeace_history_accel(3,nglob_interface,NSTEP))
+         allocate(pml_interfeace_history_potential(nglob_interface,NSTEP))
+         allocate(pml_interfeace_history_potential_dot(nglob_interface,NSTEP))
+         allocate(pml_interfeace_history_potential_dot_dot(nglob_interface,NSTEP))
 
          call determin_interface_pml_interior(nglob_interface,nspec,ibool,PML_interior_interface,&
                                               which_PML_elem,point_interface)
          deallocate(PML_interior_interface)
-         write(outputname,'(a,i6.6,a)') 'pml_elastic',myrank,'.bin'
-         open(unit=71,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
+
+         if(any_elastic .and. nglob_interface > 0)then
+           write(outputname,'(a,i6.6,a)') 'pml_interface_elastic',myrank,'.bin'
+           open(unit=71,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
+         endif
+
+         if(any_acoustic .and. nglob_interface > 0)then
+           write(outputname,'(a,i6.6,a)') 'pml_interface_acoustic',myrank,'.bin'
+           open(unit=72,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
+         endif
       else
            allocate(point_interface(1))
            allocate(pml_interfeace_history_displ(3,1,1))
            allocate(pml_interfeace_history_veloc(3,1,1))
            allocate(pml_interfeace_history_accel(3,1,1))
+           allocate(pml_interfeace_history_potential(1,1))
+           allocate(pml_interfeace_history_potential_dot(1,1))
+           allocate(pml_interfeace_history_potential_dot_dot(1,1))
       endif
 
       if(SIMULATION_TYPE == 3 .and. PML_BOUNDARY_CONDITIONS)then
-       do it = 1,NSTEP
-        do i = 1, nglob_interface
-           read(71)pml_interfeace_history_accel(1,i,it),&
-                   pml_interfeace_history_accel(2,i,it),&
-                   pml_interfeace_history_accel(3,i,it),&
-                   pml_interfeace_history_veloc(1,i,it),&
-                   pml_interfeace_history_veloc(2,i,it),&
-                   pml_interfeace_history_veloc(3,i,it),&
-                   pml_interfeace_history_displ(1,i,it),&
-                   pml_interfeace_history_displ(2,i,it),&
-                   pml_interfeace_history_displ(3,i,it)
-        enddo
-       enddo
+       if(any_elastic .and. nglob_interface > 0)then
+         do it = 1,NSTEP
+          do i = 1, nglob_interface
+            read(71)pml_interfeace_history_accel(1,i,it),&
+                    pml_interfeace_history_accel(2,i,it),&
+                    pml_interfeace_history_accel(3,i,it),&
+                    pml_interfeace_history_veloc(1,i,it),&
+                    pml_interfeace_history_veloc(2,i,it),&
+                    pml_interfeace_history_veloc(3,i,it),&
+                    pml_interfeace_history_displ(1,i,it),&
+                    pml_interfeace_history_displ(2,i,it),&
+                    pml_interfeace_history_displ(3,i,it)
+          enddo
+         enddo
+       endif
+
+       if(any_acoustic .and. nglob_interface > 0)then
+         do it = 1,NSTEP
+           do i = 1, nglob_interface
+             read(72)pml_interfeace_history_potential_dot_dot(i,it),&
+                     pml_interfeace_history_potential_dot(i,it),&
+                     pml_interfeace_history_potential(i,it)
+          enddo
+         enddo
+       endif
       endif
 
       deallocate(which_PML_elem)
@@ -3673,13 +3702,14 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 !----- Files where absorbing signal are saved during forward wavefield calculation
 !
 
-  if( ((SAVE_FORWARD .and. SIMULATION_TYPE ==1) .or. SIMULATION_TYPE == 3) .and. anyabs ) then
+  if( ((SAVE_FORWARD .and. SIMULATION_TYPE ==1) .or. SIMULATION_TYPE == 3) .and. anyabs &
+      .and. (.not. PML_BOUNDARY_CONDITIONS) ) then
     ! opens files for absorbing boundary data
     call prepare_absorb_files(myrank,any_elastic,any_poroelastic,any_acoustic, &
                       nspec_left,nspec_right,nspec_bottom,nspec_top,SIMULATION_TYPE)
   endif
 
-  if(anyabs .and. SIMULATION_TYPE == 3) then
+  if(anyabs .and. SIMULATION_TYPE == 3 .and. (.not. PML_BOUNDARY_CONDITIONS)) then
 
     ! reads in absorbing boundary data
     if(any_elastic) then
@@ -5140,7 +5170,31 @@ if(coupled_elastic_poro) then
                rmemory_potential_acoust_LDDRK,alpha_LDDRK,beta_LDDRK, &
                rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
                deltat,PML_BOUNDARY_CONDITIONS)
+
       if( SIMULATION_TYPE == 3 ) then
+
+       if(PML_BOUNDARY_CONDITIONS)then
+          do ispec = 1,nspec
+            do i = 1, NGLLX
+              do j = 1, NGLLZ
+                if(.not. elastic(ispec) .and. .not. poroelastic(ispec) .and. is_pml(ispec))then
+                  b_potential_dot_dot_acoustic(ibool(i,j,ispec)) = 0.
+                  b_potential_dot_acoustic(ibool(i,j,ispec)) = 0.
+                  b_potential_acoustic(ibool(i,j,ispec)) = 0.
+                endif
+               enddo
+            enddo
+          enddo
+       endif
+
+       if(PML_BOUNDARY_CONDITIONS)then
+          do i = 1, nglob_interface
+           b_potential_dot_dot_acoustic(point_interface(i)) = pml_interfeace_history_potential_dot_dot(i,NSTEP-it+1)
+           b_potential_dot_acoustic(point_interface(i)) = pml_interfeace_history_potential_dot(i,NSTEP-it+1)
+           b_potential_acoustic(point_interface(i)) = pml_interfeace_history_potential(i,NSTEP-it+1)
+          enddo
+       endif
+
         call compute_forces_acoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
                anyabs,assign_external_model,ibool,kmato,numabs, &
                elastic,poroelastic,codeabs,b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
@@ -5160,12 +5214,36 @@ if(coupled_elastic_poro) then
                rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
                rmemory_potential_acoust_LDDRK,alpha_LDDRK,beta_LDDRK, &
                rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
-               deltat,PML_BOUNDARY_CONDITIONS)
+!               deltat,PML_BOUNDARY_CONDITIONS)
+               deltat,.false.)
+
+       if(PML_BOUNDARY_CONDITIONS)then
+          do ispec = 1,nspec
+            do i = 1, NGLLX
+              do j = 1, NGLLZ
+                if(.not. elastic(ispec) .and. .not. poroelastic(ispec) .and. is_pml(ispec))then
+                  b_potential_dot_dot_acoustic(ibool(i,j,ispec)) = 0.
+                  b_potential_dot_acoustic(ibool(i,j,ispec)) = 0.
+                  b_potential_acoustic(ibool(i,j,ispec)) = 0.
+                endif
+               enddo
+            enddo
+          enddo
+       endif
+
+       if(PML_BOUNDARY_CONDITIONS)then
+          do i = 1, nglob_interface
+           b_potential_dot_dot_acoustic(point_interface(i)) = pml_interfeace_history_potential_dot_dot(i,NSTEP-it+1)
+           b_potential_dot_acoustic(point_interface(i)) = pml_interfeace_history_potential_dot(i,NSTEP-it+1)
+           b_potential_acoustic(point_interface(i)) = pml_interfeace_history_potential(i,NSTEP-it+1)
+          enddo
+       endif
+
       endif
 
 
       ! stores absorbing boundary contributions into files
-      if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
+      if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1 .and. (.not. PML_BOUNDARY_CONDITIONS)) then
         !--- left absorbing boundary
         if(nspec_left >0) then
           do ispec = 1,nspec_left
@@ -5199,6 +5277,16 @@ if(coupled_elastic_poro) then
           enddo
         endif
       endif ! if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)
+
+      if(PML_BOUNDARY_CONDITIONS .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)then
+       if(any_acoustic .and. nglob_interface > 0)then
+        do i = 1, nglob_interface
+          write(72)potential_dot_dot_acoustic(point_interface(i)),&
+                   potential_dot_acoustic(point_interface(i)),&
+                   potential_acoustic(point_interface(i))
+        enddo
+       endif
+      endif
 
     endif ! end of test if any acoustic element
 
@@ -5754,7 +5842,7 @@ if(coupled_elastic_poro) then
       endif
 
 
-      if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
+      if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1 .and. (.not. PML_BOUNDARY_CONDITIONS)) then
         !--- left absorbing boundary
         if(nspec_left >0) then
           do ispec = 1,nspec_left
@@ -5830,6 +5918,7 @@ if(coupled_elastic_poro) then
       endif ! if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)
 
       if(PML_BOUNDARY_CONDITIONS .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)then
+       if(any_elastic .and. nglob_interface > 0)then
         do i = 1, nglob_interface
           write(71)accel_elastic(1,point_interface(i)),accel_elastic(2,point_interface(i)),&
                    accel_elastic(3,point_interface(i)),&
@@ -5838,7 +5927,8 @@ if(coupled_elastic_poro) then
                    displ_elastic(1,point_interface(i)),displ_elastic(2,point_interface(i)),&
                    displ_elastic(3,point_interface(i))
         enddo
-      endif !(PML_BOUNDARY_CONDITIONS .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)
+       endif
+      endif
 
     endif !if(any_elastic)
 
@@ -8777,7 +8867,7 @@ if(coupled_elastic_poro) then
         else if(imagetype_wavefield_dumps == 4 .and. p_sv) then
 
           if (myrank == 0) write(IOUT,*) 'dumping the pressure field...'
-          call compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,&
+          call compute_pressure_whole_medium(potential_acoustic,displ_elastic,&
                      displs_poroelastic,displw_poroelastic,elastic,poroelastic,vector_field_display, &
                      xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
                      nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
@@ -8878,6 +8968,7 @@ if(coupled_elastic_poro) then
       close(66)
       close(67)
       close(68)
+      close(72)
     endif
     if(any_elastic) then
       close(35)
