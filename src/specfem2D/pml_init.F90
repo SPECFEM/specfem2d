@@ -45,7 +45,7 @@
                     nspec_PML,is_PML,which_PML_elem,spec_to_PML, &
                     icorner_iglob,NELEM_PML_THICKNESS,&
                     read_external_mesh,region_CPML,&
-                    SIMULATION_TYPE,PML_interior_interface,nglob_interface,SAVE_FORWARD,myrank)
+                    SIMULATION_TYPE,PML_interior_interface,nglob_interface,SAVE_FORWARD,myrank,mask_ibool)
 
   implicit none
   include 'constants.h'
@@ -81,6 +81,8 @@
 #ifdef USE_MPI
   integer :: ier
 #endif
+
+  logical, dimension(nglob) :: mask_ibool
 
   nspec_PML = 0
 
@@ -180,14 +182,13 @@
               end do
            end if
         end do
-
       end do !end nelem_thickness loop
 
      endif !end of SIMULATION_TYPE == 3
 
      enddo ! end loop on the four boundaries
 
- if(SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))then
+     if(SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))then
        nglob_interface = 0
        do ispec = 1,nspec
          if(PML_interior_interface(IBOTTOM,ispec) &
@@ -228,12 +229,10 @@
             nglob_interface = nglob_interface + 10
          endif
        enddo
-endif
+    endif
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  do ispec=1,nspec
+   do ispec=1,nspec
      if(is_PML(ispec)) then
-
 ! element is in the left cpml layer
        if( &
          (which_PML_elem(ILEFT,ispec)   .eqv. .true.)  .and. &
@@ -291,15 +290,12 @@ endif
          (which_PML_elem(IBOTTOM,ispec) .eqv. .true.  )) then
          region_CPML(ispec) = CPML_BOTTOM_RIGHT
        else
-
          region_CPML(ispec) = 0
-
        endif
      endif
-  enddo
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+   enddo
 
-     !construction of table to use less memory for absorbing coefficients
+   !construction of table to use less memory for absorbing coefficients
      spec_to_PML=0
      nspec_PML=0
      do ispec=1,nspec
@@ -309,52 +305,85 @@ endif
         end if
      enddo
 
-     endif
+  endif !end of detection of element inside PML layer for inner mesher
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   if(read_external_mesh) then
-  is_PML(:) = .false.
-  which_PML_elem(:,:) = .false.
+    is_PML(:) = .false.
+    which_PML_elem(:,:) = .false.
+    nspec_PML = 0
+    spec_to_PML=0
+    mask_ibool(:) = .false.
+    do ispec=1,nspec
+       if(region_CPML(ispec) /= 0) then
+        nspec_PML = nspec_PML + 1
+        is_PML(ispec)=.true.
+        spec_to_PML(ispec)=nspec_PML
+       endif
+       if(SIMULATION_TYPE == 3 .or.  (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))then
+        if(region_CPML(ispec) == 0) then
+         do i = 1, NGLLX
+           do j = 1, NGLLZ
+              iglob = ibool(i,j,ispec)
+              mask_ibool(iglob) = .true.
+           enddo
+         enddo
+        endif
+       endif
+    enddo
 
-  nspec_PML = 0
-  do ispec=1,nspec
-    if(region_CPML(ispec) /= 0) then
-      nspec_PML = nspec_PML + 1
-      is_PML(ispec)=.true.
-      spec_to_PML(ispec)=nspec_PML
-    endif
-  enddo
-
+    nglob_interface = 0
+   if(SIMULATION_TYPE == 3 .or.  (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))then
+    do ispec=1,nspec
+       if(region_CPML(ispec) /= 0) then
+        do i = 1, NGLLX
+          do j = 1, NGLLZ
+             iglob = ibool(i,j,ispec)
+             if(mask_ibool(iglob))nglob_interface = nglob_interface + 1
+          enddo
+        enddo
+       endif
+    enddo
+   endif
   endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 #ifdef USE_MPI
   call MPI_REDUCE(nspec_PML, nspec_PML_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
 #else
   nspec_PML_tot = nspec_PML
 #endif
+
   if(myrank == 0) then
     write(IOUT,*) "Total number of PML spectral elements: ", nspec_PML_tot
     write(IOUT,*)
   endif
 
-  end subroutine pml_init
+end subroutine pml_init
 
 !
 !-------------------------------------------------------------------------------------------------
 !
  subroutine determin_interface_pml_interior(nglob_interface,nspec,ibool,PML_interior_interface,&
-                                            which_PML_elem,point_interface)
+                                            which_PML_elem,point_interface,read_external_mesh,mask_ibool,region_CPML,nglob)
 
   implicit none
   include 'constants.h'
 
-  integer :: nglob_interface, nspec
+  integer :: nglob_interface, nspec,nglob
   logical, dimension(4,nspec) :: PML_interior_interface
   logical, dimension(4,nspec) :: which_PML_elem
   integer :: ispec
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
   integer, dimension(nglob_interface) :: point_interface
+  logical :: read_external_mesh
+  logical, dimension(nglob) :: mask_ibool
+  integer, dimension(nspec) :: region_CPML
+  integer :: i,j,iglob
 
   nglob_interface = 0
+
+  if(.not. read_external_mesh) then
        do ispec = 1,nspec
          if(PML_interior_interface(IBOTTOM,ispec) &
             .and. (.not. PML_interior_interface(IRIGHT,ispec)) &
@@ -454,6 +483,24 @@ endif
             nglob_interface = nglob_interface + 10
          endif
        enddo
+  endif
+
+  if(read_external_mesh) then
+
+    nglob_interface = 0
+
+    do ispec=1,nspec
+       if(region_CPML(ispec) /= 0) then
+        do i = 1, NGLLX
+          do j = 1, NGLLZ
+             iglob = ibool(i,j,ispec)
+             if(mask_ibool(iglob))nglob_interface = nglob_interface + 1
+             point_interface(nglob_interface)= iglob
+          enddo
+        enddo
+       endif
+     enddo
+  endif
 
  end subroutine determin_interface_pml_interior
 !

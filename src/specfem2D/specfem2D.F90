@@ -2943,11 +2943,19 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       is_PML(:) = .false.
       which_PML_elem(:,:) = .false.
 !   DK DK add support for using pml in mpi mode with external mesh
+      if((SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS)then
+        if(read_external_mesh)then
+            allocate(mask_ibool(nglob))
+        else
+            allocate(mask_ibool(1))
+        endif
+      endif
+
       call pml_init(nspec,nglob,anyabs,ibool,nelemabs,codeabs,numabs,&
                   nspec_PML,is_PML,which_PML_elem,spec_to_PML, &
                   icorner_iglob,NELEM_PML_THICKNESS,&
                   read_external_mesh,region_CPML,&
-                  SIMULATION_TYPE,PML_interior_interface,nglob_interface,SAVE_FORWARD,myrank)
+                  SIMULATION_TYPE,PML_interior_interface,nglob_interface,SAVE_FORWARD,myrank,mask_ibool)
 
       if((SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS)then
          allocate(point_interface(nglob_interface))
@@ -2959,8 +2967,10 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
          allocate(pml_interfeace_history_potential_dot_dot(nglob_interface,NSTEP))
 
          call determin_interface_pml_interior(nglob_interface,nspec,ibool,PML_interior_interface,&
-                                              which_PML_elem,point_interface)
+                                              which_PML_elem,point_interface,read_external_mesh,&
+                                              mask_ibool,region_CPML,nglob)
          deallocate(PML_interior_interface)
+         deallocate(mask_ibool)
 
          if(any_elastic .and. nglob_interface > 0)then
            write(outputname,'(a,i6.6,a)') 'pml_interface_elastic',myrank,'.bin'
