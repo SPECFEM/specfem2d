@@ -889,7 +889,7 @@
 ! to dump the wave field
   integer :: icounter,nb_of_values_to_save
   logical :: this_is_the_first_time_we_dump
-  logical, dimension(:), allocatable  :: mask_ibool
+  logical, dimension(:), allocatable  :: mask_ibool,mask_ibool_pml !zhinan
 
   double precision, dimension(:,:,:),allocatable:: rho_local,vp_local,vs_local
 !!!! hessian
@@ -2944,16 +2944,16 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       which_PML_elem(:,:) = .false.
 !   DK DK add support for using pml in mpi mode with external mesh
       if(read_external_mesh)then
-            allocate(mask_ibool(nglob))
+            allocate(mask_ibool_pml(nglob))
       else
-            allocate(mask_ibool(1))
+            allocate(mask_ibool_pml(1))
       endif
 
       call pml_init(nspec,nglob,anyabs,ibool,nelemabs,codeabs,numabs,&
                   nspec_PML,is_PML,which_PML_elem,spec_to_PML, &
                   icorner_iglob,NELEM_PML_THICKNESS,&
                   read_external_mesh,region_CPML,&
-                  SIMULATION_TYPE,PML_interior_interface,nglob_interface,SAVE_FORWARD,myrank,mask_ibool)
+                  SIMULATION_TYPE,PML_interior_interface,nglob_interface,SAVE_FORWARD,myrank,mask_ibool_pml)
 
       if((SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS)then
          allocate(point_interface(nglob_interface))
@@ -2966,9 +2966,9 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
          call determin_interface_pml_interior(nglob_interface,nspec,ibool,PML_interior_interface,&
                                               which_PML_elem,point_interface,read_external_mesh,&
-                                              mask_ibool,region_CPML,nglob)
+                                              mask_ibool_pml,region_CPML,nglob)
          deallocate(PML_interior_interface)
-         deallocate(mask_ibool)
+         deallocate(mask_ibool_pml)
 
          if(any_elastic .and. nglob_interface > 0)then
            write(outputname,'(a,i6.6,a)') 'pml_interface_elastic',myrank,'.bin'
