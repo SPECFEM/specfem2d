@@ -2943,12 +2943,10 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       is_PML(:) = .false.
       which_PML_elem(:,:) = .false.
 !   DK DK add support for using pml in mpi mode with external mesh
-      if((SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS)then
-        if(read_external_mesh)then
+      if(read_external_mesh)then
             allocate(mask_ibool(nglob))
-        else
+      else
             allocate(mask_ibool(1))
-        endif
       endif
 
       call pml_init(nspec,nglob,anyabs,ibool,nelemabs,codeabs,numabs,&
