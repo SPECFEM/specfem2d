@@ -494,8 +494,10 @@ end subroutine pml_init
         do i = 1, NGLLX
           do j = 1, NGLLZ
              iglob = ibool(i,j,ispec)
-             if(mask_ibool(iglob))nglob_interface = nglob_interface + 1
-             point_interface(nglob_interface)= iglob
+             if(mask_ibool(iglob))then
+              nglob_interface = nglob_interface + 1
+              point_interface(nglob_interface)= iglob
+             endif
           enddo
         enddo
        endif
