@@ -116,7 +116,8 @@
         QKappa(i) = val5read
         Qmu(i) = val6read
 
-        if(rho_s(i) <= 0.00000001d0 .or. cp(i) <= 0.00000001d0 .or. cs(i) < 0.00000001d0) &
+! for Cs we use a less restrictive test because acoustic media have Cs exactly equal to zero
+        if(rho_s(i) <= 0.00000001d0 .or. cp(i) <= 0.00000001d0 .or. cs(i) < 0.d0) &
             stop 'negative value of velocity or density'
         if(QKappa(i) <= 0.00000001d0 .or. Qmu(i) <= 0.00000001d0) stop 'non-positive value of QKappa or Qmu'
 
@@ -143,7 +144,8 @@
         cp(i) = sqrt(val4read/val0read)
         cs(i) = sqrt(val6read/val0read)
 
-        if(rho_s(i) <= 0.00000001d0 .or. cp(i) <= 0.00000001d0 .or. cs(i) < 0.00000001d0) &
+! for Cs we use a less restrictive test because acoustic media have Cs exactly equal to zero
+        if(rho_s(i) <= 0.00000001d0 .or. cp(i) <= 0.00000001d0 .or. cs(i) < 0.d0) &
             stop 'negative value of velocity or density'
         if(QKappa(i) <= 0.00000001d0 .or. Qmu(i) <= 0.00000001d0) stop 'non-positive value of QKappa or Qmu'
 
