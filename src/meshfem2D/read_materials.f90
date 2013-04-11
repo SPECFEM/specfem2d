@@ -77,8 +77,8 @@
   aniso6(:) = 0.d0
   aniso7(:) = 0.d0
   aniso8(:) = 0.d0
-  QKappa(:) = 0.d0
-  Qmu(:) = 0.d0
+  QKappa(:) = 9999.d0
+  Qmu(:) = 9999.d0
   rho_s(:) = 0.d0
   rho_f(:) = 0.d0
   phi(:) = 0.d0
@@ -116,8 +116,9 @@
         QKappa(i) = val5read
         Qmu(i) = val6read
 
-        if(rho_s(i) <= 0.d0 .or. cp(i) <= 0.d0 .or. cs(i) < 0.d0) stop 'negative value of velocity or density'
-        if(QKappa(i) <= 0.d0 .or. Qmu(i) <= 0.d0) stop 'non-positive value of QKappa or Qmu'
+        if(rho_s(i) <= 0.00000001d0 .or. cp(i) <= 0.00000001d0 .or. cs(i) < 0.00000001d0) &
+            stop 'negative value of velocity or density'
+        if(QKappa(i) <= 0.00000001d0 .or. Qmu(i) <= 0.00000001d0) stop 'non-positive value of QKappa or Qmu'
 
         aniso3(i) = val3read
         aniso4(i) = val4read
@@ -141,6 +142,11 @@
         Qmu(i) = val8read
         cp(i) = sqrt(val4read/val0read)
         cs(i) = sqrt(val6read/val0read)
+
+        if(rho_s(i) <= 0.00000001d0 .or. cp(i) <= 0.00000001d0 .or. cs(i) < 0.00000001d0) &
+            stop 'negative value of velocity or density'
+        if(QKappa(i) <= 0.00000001d0 .or. Qmu(i) <= 0.00000001d0) stop 'non-positive value of QKappa or Qmu'
+
      else
 
         ! poroelastic materials
@@ -163,8 +169,9 @@
         if(phi(i) <= 0.d0 .or. tortuosity(i) <= 0.d0) stop 'non-positive value of porosity or tortuosity'
         if(kappa_s(i) <= 0.d0 .or. kappa_f(i) <= 0.d0 .or. kappa_fr(i) <= 0.d0 .or. mu_fr(i) <= 0.d0) then
            stop 'non-positive value of modulus'
-        end if
-        if(Qmu(i) <= 0.d0) stop 'non-positive value of Qmu'
+        endif
+        if(Qmu(i) <= 0.00000001d0) stop 'non-positive value of Qmu'
+
      endif
   enddo
 

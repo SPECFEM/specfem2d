@@ -83,8 +83,8 @@
   aniso_array(:,:) = zero
   permeability(:,:) = zero
   poroelastcoef(:,:,:) = zero
-  QKappa_array(:) = zero
-  Qmu_array(:) = zero
+  QKappa_array(:) = 9999.
+  Qmu_array(:) = 9999.
 
   if(myrank == 0 .and. ipass == 1) write(IOUT,100) numat
 
@@ -109,8 +109,10 @@
         ! QKappa and Qmu values
         QKappa = val5
         Qmu = val6
+        if(QKappa <= 0.0000001 .or. Qmu <= 0.0000001) &
+          stop 'negative or null values of Q attenuation factor not allowed; set them equal to 9999 to indicate no attenuation'
 
-        ! Lam'e parameters
+        ! Lame parameters
         lambdaplus2mu = density(1)*cp*cp
         mu = density(1)*cs*cs
         two_mu = 2.d0*mu
@@ -145,11 +147,7 @@
         cp = sqrt(c33/density(1))
         cs = sqrt(c55/density(1))
 
-        ! QKappa and Qmu values
-        !QKappa = val9
-        !Qmu = val10
-
-        ! Lam'e parameters
+        ! Lame parameters
         lambdaplus2mu = density(1)*cp*cp
         mu = density(1)*cs*cs
         two_mu = 2.d0*mu
@@ -182,7 +180,7 @@
         ! Frame properties
         kappa_fr = val9
         mu_fr = val11
-        ! Lam'e parameters for the solid phase and the frame
+        ! Lame parameters for the solid phase and the frame
         lambdaplus2mu_s = kappa_s + FOUR_THIRDS*mu_s
         lambda_s = lambdaplus2mu_s - 2.d0*mu_s
         lambdaplus2mu_fr = kappa_fr + FOUR_THIRDS*mu_fr
