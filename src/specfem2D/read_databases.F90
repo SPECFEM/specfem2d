@@ -59,7 +59,7 @@
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                   POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0,time_stepping_scheme,&
                   ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL,&
-                  read_external_mesh)
+                  read_external_mesh,save_ASCII_kernels)
 
 ! starts reading in parameters from input Database file
 
@@ -76,7 +76,8 @@
     assign_external_model,READ_EXTERNAL_SEP_FILE, &
     output_grid_ASCII,output_energy,output_wavefield_dumps,p_sv,use_binary_for_wavefield_dumps
   logical :: ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE, &
-             save_ASCII_seismograms,save_binary_seismograms_single,save_binary_seismograms_double,DRAW_SOURCES_AND_RECEIVERS
+             save_ASCII_seismograms,save_binary_seismograms_single,save_binary_seismograms_double,DRAW_SOURCES_AND_RECEIVERS, &
+             save_ASCII_kernels
   double precision :: ROTATE_PML_ANGLE
   double precision :: cutsnaps,sizemax_arrows,anglerec
   double precision :: Q0,freq0
@@ -250,6 +251,9 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,*) save_binary_seismograms_single,save_binary_seismograms_double
+
+  read(IIN,"(a80)") datlin 
+  read(IIN,*) save_ASCII_kernels
 
   read(IIN,"(a80)") datlin
   read(IIN,*) DRAW_SOURCES_AND_RECEIVERS

@@ -627,7 +627,7 @@
   double precision :: Q0,freq0
   double precision :: alphaval,betaval,gammaval,thetainv
   logical :: ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms,save_binary_seismograms_single,save_binary_seismograms_double, &
-             DRAW_SOURCES_AND_RECEIVERS
+             DRAW_SOURCES_AND_RECEIVERS, save_ASCII_kernels
   double precision, dimension(NGLLX,NGLLZ) :: viscox_loc,viscoz_loc
   double precision :: Sn,Snp1,etal_f
   double precision, dimension(3):: bl_unrelaxed_elastic
@@ -1089,7 +1089,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                   POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, time_stepping_scheme, &
                   ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL,&
-                  read_external_mesh)
+                  read_external_mesh,save_ASCII_kernels)
 
   if(nproc_read_from_database < 1) stop 'should have nproc_read_from_database >= 1'
   if(SIMULATION_TYPE == 3 .and.(time_stepping_scheme == 2 .or. time_stepping_scheme == 3)) &
@@ -3754,12 +3754,26 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   if(SIMULATION_TYPE == 3) then
 
     if(any_elastic) then
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_mu_kernel.dat'
-      open(unit = 97, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing kernel file to disk'
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_alpha_beta_kernel.dat'
-      open(unit = 98, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing kernel file to disk'
+
+      if(.not. save_ASCII_kernels)then
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_mu_kernel.bin'
+        open(unit = 97, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
+        if (ios /= 0) stop 'Error writing kernel file to disk'
+      else
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_mu_kernel.dat'
+        open(unit = 97, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        if (ios /= 0) stop 'Error writing kernel file to disk'
+      endif
+
+      if(.not. save_ASCII_kernels)then
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_alpha_beta_kernel.bin'
+        open(unit = 98, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
+        if (ios /= 0) stop 'Error writing kernel file to disk'
+      else
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_alpha_beta_kernel.dat'
+        open(unit = 98, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        if (ios /= 0) stop 'Error writing kernel file to disk'
+      endif
 
       rho_kl(:,:,:) = 0._CUSTOM_REAL
       mu_kl(:,:,:) = 0._CUSTOM_REAL
@@ -3834,12 +3848,28 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     endif
 
     if(any_acoustic) then
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_kernel.dat'
-      open(unit = 95, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing kernel file to disk'
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_c_kernel.dat'
-      open(unit = 96, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing kernel file to disk'
+
+      if(.not. save_ASCII_kernels)then
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_kernel.bin'
+        open(unit = 95, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',&
+            iostat=ios)
+        if (ios /= 0) stop 'Error writing kernel file to disk'
+      else
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_kernel.dat'
+        open(unit = 95, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        if (ios /= 0) stop 'Error writing kernel file to disk'
+      endif
+
+      if(.not. save_ASCII_kernels)then
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_c_kernel.bin'
+        open(unit = 96, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',&
+            iostat=ios)
+        if (ios /= 0) stop 'Error writing kernel file to disk'
+      else
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_c_kernel.dat'
+        open(unit = 96, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
+        if (ios /= 0) stop 'Error writing kernel file to disk'
+      endif
 
       rho_ac_kl(:,:,:) = 0._CUSTOM_REAL
       kappa_ac_kl(:,:,:) = 0._CUSTOM_REAL
@@ -8369,37 +8399,57 @@ if(coupled_elastic_poro) then
         endif
 
         if(any_acoustic) then
-          do ispec = 1, nspec
-            do j = 1, NGLLZ
-              do i = 1, NGLLX
-                iglob = ibool(i,j,ispec)
-                xx = coord(1,iglob)
-                zz = coord(2,iglob)
-                write(95,'(4e15.5e4)')xx,zz,rho_ac_kl(i,j,ispec),kappa_ac_kl(i,j,ispec)
-                write(96,'(4e15.5e4)')xx,zz,rhop_ac_kl(i,j,ispec),alpha_ac_kl(i,j,ispec)
-                !write(96,'(4e15.5e4)')rhorho_ac_hessian_final1(i,j,ispec), rhorho_ac_hessian_final2(i,j,ispec),&
-                !                rhop_ac_kl(i,j,ispec),alpha_ac_kl(i,j,ispec)
+          if(.not. save_ASCII_kernels)then
+             write(95)coord
+             write(95)rho_ac_kl
+             write(95)kappa_ac_kl
+             write(96)coord
+             write(96)rho_ac_kl
+             write(96)alpha_ac_kl
+          else
+            do ispec = 1, nspec
+              do j = 1, NGLLZ
+                do i = 1, NGLLX
+                  iglob = ibool(i,j,ispec)
+                  xx = coord(1,iglob)
+                  zz = coord(2,iglob)
+                  write(95,'(4e15.5e4)')xx,zz,rho_ac_kl(i,j,ispec),kappa_ac_kl(i,j,ispec)
+                  write(96,'(4e15.5e4)')xx,zz,rhop_ac_kl(i,j,ispec),alpha_ac_kl(i,j,ispec)
+                  !write(96,'(4e15.5e4)')rhorho_ac_hessian_final1(i,j,ispec), rhorho_ac_hessian_final2(i,j,ispec),&
+                  !                rhop_ac_kl(i,j,ispec),alpha_ac_kl(i,j,ispec)
+                enddo
               enddo
             enddo
-          enddo
+          endif
           close(95)
           close(96)
         endif
 
         if(any_elastic) then
-          do ispec = 1, nspec
-            do j = 1, NGLLZ
-              do i = 1, NGLLX
-                iglob = ibool(i,j,ispec)
-                xx = coord(1,iglob)
-                zz = coord(2,iglob)
-                write(97,'(5e15.5e4)')xx,zz,rho_kl(i,j,ispec),kappa_kl(i,j,ispec),mu_kl(i,j,ispec)
-                write(98,'(5e15.5e4)')xx,zz,rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
-                !write(98,'(5e15.5e4)')rhorho_el_hessian_final1(i,j,ispec), rhorho_el_hessian_final2(i,j,ispec),&
-                !                    rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
+          if(.not. save_ASCII_kernels)then
+             write(97)coord
+             write(97)rho_kl
+             write(97)kappa_kl
+             write(97)mu_kl
+             write(98)coord
+             write(98)rhop_kl
+             write(98)alpha_kl
+             write(98)beta_kl
+          else
+            do ispec = 1, nspec
+              do j = 1, NGLLZ
+                do i = 1, NGLLX
+                  iglob = ibool(i,j,ispec)
+                  xx = coord(1,iglob)
+                  zz = coord(2,iglob)
+                  write(97,'(5e15.5e4)')xx,zz,rho_kl(i,j,ispec),kappa_kl(i,j,ispec),mu_kl(i,j,ispec)
+                  write(98,'(5e15.5e4)')xx,zz,rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
+                  !write(98,'(5e15.5e4)')rhorho_el_hessian_final1(i,j,ispec), rhorho_el_hessian_final2(i,j,ispec),&
+                  !                    rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
+                enddo
               enddo
             enddo
-          enddo
+          endif
           close(97)
           close(98)
         endif

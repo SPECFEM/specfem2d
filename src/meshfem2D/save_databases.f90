@@ -170,6 +170,9 @@
     write(15,*) 'save_binary_seismograms_single save_binary_seismograms_double'
     write(15,*) save_binary_seismograms_single,save_binary_seismograms_double
 
+    write(15,*) 'save_ASCII_kernels'
+    write(15,*) save_ASCII_kernels
+
     write(15,*) 'DRAW_SOURCES_AND_RECEIVERS'
     write(15,*) DRAW_SOURCES_AND_RECEIVERS
 
