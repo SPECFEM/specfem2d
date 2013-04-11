@@ -49,6 +49,7 @@ use_existing_STATIONS           = .false.        # use an existing STATION file 
 nreceiversets                   = 1              # number of receiver sets
 anglerec                        = 0.d0           # angle to rotate components at receivers
 rec_normal_to_surface           = .false.        # replace anglerec with the normal to the surface (external mesh and curve file needed, anglerec above ignored)
+save_ASCII_kernels              = .true.         # save sensitivity kernels in ASCII format (much bigger files, but compatible with current GMT scripts) or in binary format
 
 # first receiver set
 nrec                            = 11             # number of receivers
