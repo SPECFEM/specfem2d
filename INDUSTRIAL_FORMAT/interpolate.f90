@@ -3,7 +3,7 @@
   implicit none
   !include "constants.h"
   character(len=512),parameter :: sep_directory='./EXAMPLES/INDUSTRIAL_FORMAT/SEG_2D_SALT/'
-  character(len=512),parameter :: sep_header_file_vp='vp.H' 
+  character(len=512),parameter :: sep_header_file_vp='vp.H'
   character(len=512),parameter :: sep_header_file_vs='vs.H'   ! not used
   character(len=512),parameter :: sep_header_file_rho='rho.H' ! not used
   integer :: NX,NY,NZ,esize
