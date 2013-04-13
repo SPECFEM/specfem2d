@@ -358,10 +358,9 @@
 
       ! get density of current spectral element
       lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-      mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
       rhol  = density(1,kmato(ispec))
-      kappal  = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic/3._CUSTOM_REAL
-      cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_unrelaxed_elastic/3._CUSTOM_REAL)/rhol)
+      kappal  = lambdal_unrelaxed_elastic
+      cpl = sqrt(kappal/rhol)
 
       ! double loop over GLL points
       do j = 1,NGLLZ
