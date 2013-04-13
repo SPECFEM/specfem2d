@@ -111,7 +111,7 @@
               k=1
               do while(k<=ncorner .and. icorner_iglob(k)/=iglob)
                  k=k+1
-              end do
+              enddo
               ncorner=ncorner+1
               icorner_iglob(ncorner) = iglob
 
@@ -120,7 +120,7 @@
         endif ! we are on the good absorbing boundary
 
      enddo
-     end if
+     endif
 
      !find elements stuck to boundary elements to define the 4 elements PML thickness
      !we take 4 elements for the PML thickness
@@ -134,12 +134,12 @@
                     do k=1,ncorner
                        if (iglob==icorner_iglob(k)) then
                           which_PML_elem(ibound,ispec) = .true.
-                       end if
-                    end do
-                 end do
-              end do
-           end if
-        end do
+                       endif
+                    enddo
+                 enddo
+              enddo
+           endif
+        enddo
 
         ! list every corner of each PML element detected
         ncorner=0
@@ -154,16 +154,16 @@
                     k=1
                     do while(k<=ncorner .and. icorner_iglob(k)/=iglob)
                        k=k+1
-                    end do
+                    enddo
                     ncorner=ncorner+1
                     icorner_iglob(ncorner) = iglob
-                 end do
-              end do
+                 enddo
+              enddo
               nspec_PML=nspec_PML+1
-           end if
-        end do
+           endif
+        enddo
 
-     end do !end nelem_thickness loop
+     enddo !end nelem_thickness loop
 
      if(SIMULATION_TYPE == 3 .or.  (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))then
 
@@ -176,13 +176,13 @@
                     do k=1,ncorner
                        if (iglob==icorner_iglob(k)) then
                           PML_interior_interface(ibound,ispec) = .true.
-                       end if
-                    end do
-                 end do
-              end do
-           end if
-        end do
-      end do !end nelem_thickness loop
+                       endif
+                    enddo
+                 enddo
+              enddo
+           endif
+        enddo
+      enddo !end nelem_thickness loop
 
      endif !end of SIMULATION_TYPE == 3
 
@@ -197,34 +197,34 @@
             .and. (.not. which_PML_elem(IRIGHT,ispec)) &
             .and. (.not. which_PML_elem(ILEFT,ispec)))then
             nglob_interface = nglob_interface + 5
-         elseif(PML_interior_interface(ITOP,ispec) &
+         else if(PML_interior_interface(ITOP,ispec) &
             .and. (.not. PML_interior_interface(IRIGHT,ispec)) &
             .and. (.not. PML_interior_interface(ILEFT,ispec))  &
             .and. (.not. which_PML_elem(IRIGHT,ispec)) &
             .and. (.not. which_PML_elem(ILEFT,ispec)))then
             nglob_interface = nglob_interface + 5
-         elseif(PML_interior_interface(IRIGHT,ispec) &
+         else if(PML_interior_interface(IRIGHT,ispec) &
             .and. (.not. PML_interior_interface(IBOTTOM,ispec)) &
             .and. (.not. PML_interior_interface(ITOP,ispec))    &
             .and. (.not. which_PML_elem(IBOTTOM,ispec)) &
             .and. (.not. which_PML_elem(ITOP,ispec)))then
             nglob_interface = nglob_interface + 5
-         elseif(PML_interior_interface(ILEFT,ispec) &
+         else if(PML_interior_interface(ILEFT,ispec) &
             .and. (.not. PML_interior_interface(IBOTTOM,ispec)) &
             .and. (.not. PML_interior_interface(ITOP,ispec))    &
             .and. (.not. which_PML_elem(IBOTTOM,ispec)) &
             .and. (.not. which_PML_elem(ITOP,ispec)))then
             nglob_interface = nglob_interface + 5
-         elseif(PML_interior_interface(ILEFT,ispec) &
+         else if(PML_interior_interface(ILEFT,ispec) &
                 .and. PML_interior_interface(IBOTTOM,ispec))then
             nglob_interface = nglob_interface + 10
-         elseif(PML_interior_interface(IRIGHT,ispec) &
+         else if(PML_interior_interface(IRIGHT,ispec) &
                 .and. PML_interior_interface(IBOTTOM,ispec))then
             nglob_interface = nglob_interface + 10
-         elseif(PML_interior_interface(ILEFT,ispec) &
+         else if(PML_interior_interface(ILEFT,ispec) &
                 .and. PML_interior_interface(ITOP,ispec))then
             nglob_interface = nglob_interface + 10
-         elseif(PML_interior_interface(IRIGHT,ispec) &
+         else if(PML_interior_interface(IRIGHT,ispec) &
                 .and. PML_interior_interface(ITOP,ispec))then
             nglob_interface = nglob_interface + 10
          endif
@@ -302,7 +302,7 @@
         if (is_PML(ispec)) then
            nspec_PML=nspec_PML+1
            spec_to_PML(ispec)=nspec_PML
-        end if
+        endif
      enddo
 
   endif !end of detection of element inside PML layer for inner mesher
@@ -396,7 +396,7 @@ end subroutine pml_init
             point_interface(nglob_interface + 4) = ibool(4,1,ispec)
             point_interface(nglob_interface + 5) = ibool(5,1,ispec)
             nglob_interface = nglob_interface + 5
-         elseif(PML_interior_interface(ITOP,ispec) &
+         else if(PML_interior_interface(ITOP,ispec) &
             .and. (.not. PML_interior_interface(IRIGHT,ispec)) &
             .and. (.not. PML_interior_interface(ILEFT,ispec))  &
             .and. (.not. which_PML_elem(IRIGHT,ispec)) &
@@ -407,7 +407,7 @@ end subroutine pml_init
             point_interface(nglob_interface + 4) = ibool(4,NGLLZ,ispec)
             point_interface(nglob_interface + 5) = ibool(5,NGLLZ,ispec)
             nglob_interface = nglob_interface + 5
-         elseif(PML_interior_interface(IRIGHT,ispec) &
+         else if(PML_interior_interface(IRIGHT,ispec) &
             .and. (.not. PML_interior_interface(IBOTTOM,ispec)) &
             .and. (.not. PML_interior_interface(ITOP,ispec))    &
             .and. (.not. which_PML_elem(IBOTTOM,ispec)) &
@@ -418,7 +418,7 @@ end subroutine pml_init
             point_interface(nglob_interface + 4) = ibool(NGLLX,4,ispec)
             point_interface(nglob_interface + 5) = ibool(NGLLX,5,ispec)
             nglob_interface = nglob_interface + 5
-         elseif(PML_interior_interface(ILEFT,ispec) &
+         else if(PML_interior_interface(ILEFT,ispec) &
             .and. (.not. PML_interior_interface(IBOTTOM,ispec)) &
             .and. (.not. PML_interior_interface(ITOP,ispec))    &
             .and. (.not. which_PML_elem(IBOTTOM,ispec)) &
@@ -429,7 +429,7 @@ end subroutine pml_init
             point_interface(nglob_interface + 4) = ibool(1,4,ispec)
             point_interface(nglob_interface + 5) = ibool(1,5,ispec)
             nglob_interface = nglob_interface + 5
-         elseif(PML_interior_interface(ILEFT,ispec) &
+         else if(PML_interior_interface(ILEFT,ispec) &
                 .and. PML_interior_interface(IBOTTOM,ispec))then
             point_interface(nglob_interface + 1) = ibool(1,1,ispec)
             point_interface(nglob_interface + 2) = ibool(1,2,ispec)
@@ -442,7 +442,7 @@ end subroutine pml_init
             point_interface(nglob_interface + 9) = ibool(4,1,ispec)
             point_interface(nglob_interface + 10)= ibool(5,1,ispec)
             nglob_interface = nglob_interface + 10
-         elseif(PML_interior_interface(IRIGHT,ispec) &
+         else if(PML_interior_interface(IRIGHT,ispec) &
                 .and. PML_interior_interface(IBOTTOM,ispec))then
             point_interface(nglob_interface + 1) = ibool(NGLLX,1,ispec)
             point_interface(nglob_interface + 2) = ibool(NGLLX,2,ispec)
@@ -455,7 +455,7 @@ end subroutine pml_init
             point_interface(nglob_interface + 9) = ibool(4,1,ispec)
             point_interface(nglob_interface + 10)= ibool(5,1,ispec)
             nglob_interface = nglob_interface + 10
-         elseif(PML_interior_interface(ILEFT,ispec) &
+         else if(PML_interior_interface(ILEFT,ispec) &
                 .and. PML_interior_interface(ITOP,ispec))then
             point_interface(nglob_interface + 1) = ibool(1,1,ispec)
             point_interface(nglob_interface + 2) = ibool(1,2,ispec)
@@ -468,7 +468,7 @@ end subroutine pml_init
             point_interface(nglob_interface + 9) = ibool(4,NGLLZ,ispec)
             point_interface(nglob_interface + 10)= ibool(5,NGLLZ,ispec)
             nglob_interface = nglob_interface + 10
-         elseif(PML_interior_interface(IRIGHT,ispec) &
+         else if(PML_interior_interface(IRIGHT,ispec) &
                 .and. PML_interior_interface(ITOP,ispec))then
             point_interface(nglob_interface + 1) = ibool(NGLLX,1,ispec)
             point_interface(nglob_interface + 2) = ibool(NGLLX,2,ispec)

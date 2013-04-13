@@ -468,7 +468,7 @@
       write(IOUT,*)
       write(IOUT,*) '*** Max stability for P wave velocity = ',courant_stability_number_max
       write(IOUT,*)
-    end if
+    endif
 
     create_wavelength_histogram = .false.
 

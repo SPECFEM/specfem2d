@@ -58,10 +58,10 @@
   if (mon == 2) then
    if (is_leap_year(yr) .and. (day < 1 .or. day > 29)) then
       stop 'Error in convtime: February day out of range (1-29)'
-   elseif (.not. is_leap_year(yr) .and. (day < 1 .or. day > 28)) then
+   else if (.not. is_leap_year(yr) .and. (day < 1 .or. day > 28)) then
       stop 'Error in convtime: February day out of range (1-28)'
    endif
-  elseif (mon == 4 .or. mon == 6 .or. mon == 9 .or. mon == 11) then
+  else if (mon == 4 .or. mon == 6 .or. mon == 9 .or. mon == 11) then
    if (day < 1 .or. day > 30) stop 'Error in convtime: day out of range (1-30)'
   else
    if (day < 1 .or. day > 31) stop 'Error in convtime: day out of range (1-31)'
@@ -188,7 +188,7 @@
    tmon=itime-leap_mon(imon)
    if (tmon > 0) then
       goto 30
-   elseif (tmon < 0) then
+   else if (tmon < 0) then
       imon=imon-1
       itime=itime-month(imon)
    else

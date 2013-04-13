@@ -234,7 +234,7 @@
     close(55)
 
 
-  elseif( time_function_type == 1) then
+  else if( time_function_type == 1) then
     !Ricker (second derivative of a Gaussian) time function
     do it = 1,NSTEP
       t = it*deltat
@@ -243,7 +243,7 @@
     enddo
 
 
-  elseif( time_function_type == 2) then
+  else if( time_function_type == 2) then
     !first derivative of a Gaussian time function
     do it = 1,NSTEP
       t = it*deltat
@@ -251,7 +251,7 @@
     enddo
 
 
-  elseif( time_function_type == 3) then
+  else if( time_function_type == 3) then
     !Gaussian time function
     do it = 1,NSTEP
       t = it*deltat
@@ -259,7 +259,7 @@
     enddo
 
 
-  elseif( time_function_type == 4 ) then
+  else if( time_function_type == 4 ) then
     !reproduce time function from Figure 2a of Tromp et al. 2010
     do it = 1,NSTEP
       t = it*deltat
@@ -430,7 +430,7 @@
            recl=nglob*CUSTOM_REAL,action='write',iostat=ios)
       if( ios /= 0) call exit_mpi('Error saving generating wavefield.')
 
-    elseif (NOISE_TOMOGRAPHY == 2) then
+    else if (NOISE_TOMOGRAPHY == 2) then
 
       open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/phi',access='direct', &
            recl=nglob*CUSTOM_REAL,action='write',iostat=ios)

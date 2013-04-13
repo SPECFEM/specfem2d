@@ -118,7 +118,7 @@
         enddo
      enddo
 
-  elseif(poroelastic(ispec)) then
+  else if(poroelastic(ispec)) then
 
      do j = 1,NGLLZ
         do i = 1,NGLLX

@@ -104,7 +104,7 @@ SUBROUTINE SINTER(V,output_field,NSTEP,CR,RAIZ,NFREC,label,dt)
 ! coefficients to take time steps needed (t=i*deltat+1: one step on two starting at 1)
      mult=2
      delay=1
-  end if
+  endif
 
   do J=1,NSTEP
      CY(mult*J+delay)=CY(mult*J+delay)/RAIZ/dt
@@ -201,14 +201,14 @@ SUBROUTINE fourier_transform(LX,CX,SIGNI)
         CTEMP=CX(J)*SC
         CX(J)=CX(I)*SC
         CX(I)=CTEMP
-     end IF
+     endif
      M=LX/2
      do while (M>=1 .and. M<J)
         J=J-M
         M=M/2
-     end do
+     enddo
      J=J+M
-  end DO
+  enddo
   L=1
 
   do while(L<LX)
@@ -220,11 +220,11 @@ SUBROUTINE fourier_transform(LX,CX,SIGNI)
            CTEMP=CW*CX(I+L)
            CX(I+L)=CX(I)-CTEMP
            CX(I)=CX(I)+CTEMP
-        end DO
-     end DO
+        enddo
+     enddo
 
      L=ISTEP
-  end do
+  enddo
 
 END SUBROUTINE fourier_transform
 

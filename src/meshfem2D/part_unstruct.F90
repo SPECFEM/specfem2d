@@ -1628,13 +1628,13 @@ end  subroutine rotate_mesh_for_plane_wave
   ! we use the default strategy for partitioning
   ! thus no need to define an explicit strategy
   call scotchfstratinit (SCOTCHSTRAT(1), IERR)
-   IF (IERR .NE. 0) THEN
+   IF (IERR /= 0) THEN
      PRINT *, 'ERROR : MAIN : Cannot initialize strat'
      STOP
   ENDIF
 
   CALL SCOTCHFGRAPHINIT (SCOTCHGRAPH (1), IERR)
-  IF (IERR .NE. 0) THEN
+  IF (IERR /= 0) THEN
      PRINT *, 'ERROR : MAIN : Cannot initialize graph'
      STOP
   ENDIF
@@ -1650,31 +1650,31 @@ end  subroutine rotate_mesh_for_plane_wave
                           xadj_g(0), xadj_g(0), &
                           nb_edges, &
                           adjncy_g(0), adjwgt (0), IERR)
-  IF (IERR .NE. 0) THEN
+  IF (IERR /= 0) THEN
      PRINT *, 'ERROR : MAIN : Cannot build graph'
      STOP
   ENDIF
 
   CALL SCOTCHFGRAPHCHECK (SCOTCHGRAPH (1), IERR)
-  IF (IERR .NE. 0) THEN
+  IF (IERR /= 0) THEN
      PRINT *, 'ERROR : MAIN : Invalid check'
      STOP
   ENDIF
 
   call scotchfgraphpart (SCOTCHGRAPH (1), nparts, SCOTCHSTRAT(1), part(0), IERR)
-  IF (IERR .NE. 0) THEN
+  IF (IERR /= 0) THEN
      PRINT *, 'ERROR : MAIN : Cannot part graph'
      STOP
   ENDIF
 
   CALL SCOTCHFGRAPHEXIT (SCOTCHGRAPH (1), IERR)
-  IF (IERR .NE. 0) THEN
+  IF (IERR /= 0) THEN
      PRINT *, 'ERROR : MAIN : Cannot destroy graph'
      STOP
   ENDIF
 
   call scotchfstratexit (SCOTCHSTRAT(1), IERR)
-  IF (IERR .NE. 0) THEN
+  IF (IERR /= 0) THEN
      PRINT *, 'ERROR : MAIN : Cannot destroy strat'
      STOP
   ENDIF

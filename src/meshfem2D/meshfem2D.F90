@@ -375,9 +375,9 @@ program meshfem2D
   integer, dimension(:), allocatable :: num_material
 
   ! to store the position of pml element in array region_pml_external_mesh
-  ! this is only useful when using pml together with external mesh 
-  integer, dimension(:), allocatable :: region_pml_external_mesh 
-  integer :: nspec_cpml                        
+  ! this is only useful when using pml together with external mesh
+  integer, dimension(:), allocatable :: region_pml_external_mesh
+  integer :: nspec_cpml
 
   ! interface data
   integer :: max_npoints_interface,number_of_interfaces,npoints_interface_bottom, &
@@ -446,8 +446,8 @@ program meshfem2D
   allocate(num_material(nelmnts))
   num_material(:) = 0
 
-  allocate(region_pml_external_mesh(nelmnts))         
-  region_pml_external_mesh(:) = 0                     
+  allocate(region_pml_external_mesh(nelmnts))
+  region_pml_external_mesh(:) = 0
 
   ! assigns materials to mesh elements
   if ( read_external_mesh ) then

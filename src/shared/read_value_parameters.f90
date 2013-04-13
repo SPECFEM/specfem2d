@@ -232,7 +232,7 @@
   common /param_err_common/ ierr
 
   call param_read(string_read, len(string_read), name, len(name), ierr)
-  if (ierr .ne. 0) return
+  if (ierr /= 0) return
   read(string_read,*) value_to_read
 
   end subroutine read_value_integer_p
@@ -250,7 +250,7 @@
   common /param_err_common/ ierr
 
   call param_read(string_read, len(string_read), name, len(name), ierr)
-  if (ierr .ne. 0) return
+  if (ierr /= 0) return
   read(string_read,*) value_to_read
 
   end subroutine read_value_double_precision_p
@@ -268,7 +268,7 @@
   common /param_err_common/ ierr
 
   call param_read(string_read, len(string_read), name, len(name), ierr)
-  if (ierr .ne. 0) return
+  if (ierr /= 0) return
   read(string_read,*) value_to_read
 
   end subroutine read_value_logical_p
@@ -286,7 +286,7 @@
   common /param_err_common/ ierr
 
   call param_read(string_read, len(string_read), name, len(name), ierr)
-  if (ierr .ne. 0) return
+  if (ierr /= 0) return
   value_to_read = string_read
 
   end subroutine read_value_string_p
@@ -304,7 +304,7 @@
   common /param_err_common/ ierr
 
   call param_read_nextparam(string_read, len(string_read), name, len(name), ierr)
-  if (ierr .ne. 0) return
+  if (ierr /= 0) return
   read(string_read,*) value_to_read
 
   end subroutine read_value_integer_next_p
@@ -322,7 +322,7 @@
   common /param_err_common/ ierr
 
   call param_read_nextparam(string_read, len(string_read), name, len(name), ierr)
-  if (ierr .ne. 0) return
+  if (ierr /= 0) return
   read(string_read,*) value_to_read
 
   end subroutine read_value_double_prec_next_p
@@ -340,7 +340,7 @@
   common /param_err_common/ ierr
 
   call param_read_nextparam(string_read, len(string_read), name, len(name), ierr)
-  if (ierr .ne. 0) return
+  if (ierr /= 0) return
   read(string_read,*) value_to_read
 
   end subroutine read_value_logical_next_p
@@ -364,12 +364,12 @@
   common /param_err_common/ ierr
 
   call param_read_nextline(string_read, len(string_read), ierr)
-  if (ierr .ne. 0) stop 'error reading material parameter'
+  if (ierr /= 0) stop 'error reading material parameter'
   print*,trim(string_read)
   read(string_read,*,iostat=ierr) i,icodematread,val0read,val1read,val2read,val3read,val4read,val5read,&
                       val6read,val7read,val8read,val9read,val10read,val11read,val12read
 
-  if( ierr .ne. 0) stop 'error reading material parameters line'
+  if( ierr /= 0) stop 'error reading material parameters line'
 
   end subroutine read_material_parameters_p
 
@@ -386,12 +386,12 @@
   common /param_err_common/ ierr
 
   call param_read_nextline(string_read, len(string_read), ierr)
-  if (ierr .ne. 0) stop 'error reading region coordinates'
+  if (ierr /= 0) stop 'error reading region coordinates'
   !print*,string_read
 
   read(string_read,*,iostat=ierr) value_to_read_1,value_to_read_2,value_to_read_3,value_to_read_4,value_to_read_5
 
-  if( ierr .ne. 0) stop 'error reading region coordinates line'
+  if( ierr /= 0) stop 'error reading region coordinates line'
 
   end subroutine read_region_coordinates_p
 
@@ -415,7 +415,7 @@
   filename = 'DATA/Par_file'
 
   call param_open(filename, len_trim(filename), ierr)
-  if( ierr .ne. 0 ) stop 'error opening DATA/Par_file file'
+  if( ierr /= 0 ) stop 'error opening DATA/Par_file file'
 
   end subroutine open_parameter_file
 
