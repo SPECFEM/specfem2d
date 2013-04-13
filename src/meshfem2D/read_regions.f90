@@ -111,7 +111,7 @@
        if(poisson_ratio <= -1.00001d0 .or. poisson_ratio >= 0.50001d0) stop 'incorrect value of Poisson''s ratio'
        print *,'QKappa = ',QKappa(imaterial_number)
        print *,'Qmu = ',Qmu(imaterial_number)
-    elseif(icodemat(imaterial_number) == POROELASTIC_MATERIAL) then
+    else if(icodemat(imaterial_number) == POROELASTIC_MATERIAL) then
 
        ! poroelastic material
        print *,'Material # ',imaterial_number,' isotropic'

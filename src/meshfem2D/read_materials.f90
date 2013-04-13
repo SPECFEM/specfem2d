@@ -128,7 +128,7 @@
         else
            phi(i) = 1.d0           ! acoustic
         endif
-     elseif (icodemat(i) == ANISOTROPIC_MATERIAL) then
+     else if (icodemat(i) == ANISOTROPIC_MATERIAL) then
 
         ! anisotropic materials
 
@@ -190,7 +190,7 @@
         else
            print *,'Material is solid'
         endif
-     elseif(icodemat(i) == POROELASTIC_MATERIAL) then
+     else if(icodemat(i) == POROELASTIC_MATERIAL) then
         print *,'Material #',i,' isotropic'
         print *,'rho_s, kappa_s= ',rho_s(i),kappa_s(i)
         print *,'rho_f, kappa_f, eta_f= ',rho_f(i),kappa_f(i),eta_f(i)

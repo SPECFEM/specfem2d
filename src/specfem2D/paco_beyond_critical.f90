@@ -80,13 +80,13 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,anglesource,&
   delta_in_period=2.d0
   do while(delta_in_period<1.5*abs(xmax-xmin)/cs_local)
      delta_in_period=2.d0*delta_in_period
-  end do
+  enddo
 
 ! test Deltat compatibility
   DT=256.d0
   do while(DT>deltat)
      DT=DT/2.d0
-  end do
+  enddo
   if (abs(DT-deltat)>1.0d-13) then
      print *, "you must take a deltat that is a power of two (power can be negative)"
      print *, "for example you can take", DT
@@ -98,11 +98,11 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,anglesource,&
   N=2
   do while(N<2*NSTEP_global+1)
      N=2.d0*N
-  end do
+  enddo
 
   do while(DT<(delta_in_period/N))
      N=2.d0*N
-  end do
+  enddo
 
   print *,'N found to perform the frequency calculation:',N
   print *,'number of discrete frequencies = ',N/2
@@ -141,7 +141,7 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,anglesource,&
         allocate(local_pt(npt))
         do inode=1,npt
            local_pt(inode)=inode
-        end do
+        enddo
         NSTEP_local=1
      else if(FLAG==1) then
         print *,"calculation of every time step on the left absorbing boundary"
@@ -340,7 +340,7 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,anglesource,&
      deallocate(Field_Tx)
      deallocate(Field_Tz)
 
-  end do
+  enddo
 
 end subroutine paco_beyond_critical
 
@@ -420,13 +420,13 @@ SUBROUTINE FAFB(CA,CB,FA,FB)
      FA=-UI*SQRT(-A)
   else
      FA=SQRT(A)+ZER
-  end IF
+  endif
 
   IF (CB<1.0d0) then
      FB=-UI*SQRT(-B)
   else
      FB=CMPLX(SQRT(B),0.0d0)
-  end IF
+  endif
 
 END SUBROUTINE FAFB
 
@@ -463,7 +463,7 @@ SUBROUTINE ONDASP(GP,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
      A2=(-1.0d0+ZER)/AQB
      B2=ZER
      RETURN
-  end IF
+  endif
 
   CA=1.0d0/SIN(GP)
   CB=CA/BEALF
@@ -497,7 +497,7 @@ SUBROUTINE ONDASS(GS,AKB,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
      A2=ZER
      B2=(-1.0d0+ZER)/AKB
      return
-  end IF
+  endif
 
   CB=1.0d0/SIN(GS)
   CA=CB*BEALF
@@ -576,13 +576,13 @@ FUNCTION CRB(BEALF)
         F1=F1**U3
      else
         F1=-(-F1)**U3
-     end IF
+     endif
      F2=-SQRT(FIND)-Q/2.0d0
      IF (F2>0.0d0) then
         F2=F2**U3
      else
         F2=-(-F2)**U3
-     end IF
+     endif
      FACT=F1+F2+8.0d0/3.0d0
      CRB=SQRT(FACT)
   else
@@ -592,12 +592,12 @@ FUNCTION CRB(BEALF)
         F1=COS((PI-ACOS(F1))/3.0d0)
      else
         F1=COS(ACOS(F1)/3.0d0)
-     end IF
+     endif
      F2=-P/3.0d0
      F2=SQRT(F2)
      F12=-2.0d0*F1*F2+8.0d0/3.0d0
      CRB=SQRT(F12)
-  end IF
+  endif
 
 END FUNCTION CRB
 

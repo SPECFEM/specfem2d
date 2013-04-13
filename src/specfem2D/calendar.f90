@@ -476,7 +476,7 @@
   if (abs(ioptn) <= 3) then
    if (iyear > 0) then
       jyear = iyear
-   elseif (iyear == 0) then
+   else if (iyear == 0) then
       write(*,*) 'For calndr(), you specified the nonexistent year 0'
       stop
    else
@@ -559,7 +559,7 @@
 ! OPTIONS -2 and +2:
 ! Given the day number of the year (idayct) and the year (iyear),
 ! compute the day of the month (iday) and the month (month).
-  elseif (abs(ioptn) == 2) then
+  else if (abs(ioptn) == 2) then
 !
   if (idayct < 60+leap) then
    month  = (idayct-1)/31
@@ -578,7 +578,7 @@
 ! OPTIONS -3 and +3:
 ! Given a calendar date (iday,month,iyear), compute the Julian Day
 ! number (idayct) that starts at noon.
-  elseif (abs(ioptn) == 3) then
+  else if (abs(ioptn) == 3) then
 !
 !     Shift to a system where the year starts on 1 March, so January
 !     and February belong to the preceding year.

@@ -213,7 +213,7 @@
     !---
     !--- poroelastic spectral element
     !---
-    elseif(poroelastic(ispec)) then
+    else if(poroelastic(ispec)) then
 
       ! get unrelaxed elastic parameters of current spectral element
       !for now replaced by solid, fluid, and frame parameters of current spectral element

@@ -132,7 +132,7 @@
       ! element control node ids
       do k = 1, ngnod
         n(k) = knods(k,ispec)
-      end do
+      enddo
       ! common node ids
       e1 = my_interfaces(3,ispec_interface,num_interface)
       e2 = my_interfaces(4,ispec_interface,num_interface)
@@ -151,26 +151,26 @@
               mask_ibool_elastic(iglob) = .true.
               nglob_interface_elastic = nglob_interface_elastic + 1
               ibool_interfaces_elastic(nglob_interface_elastic,num_interface) = iglob
-            end if
+            endif
           else if ( poroelastic(ispec) ) then
             ! poroelastic element
             if(.not. mask_ibool_poroelastic(iglob)) then
               mask_ibool_poroelastic(iglob) = .true.
               nglob_interface_poroelastic = nglob_interface_poroelastic + 1
               ibool_interfaces_poroelastic(nglob_interface_poroelastic,num_interface) = iglob
-            end if
+            endif
           else
             ! acoustic element
             if(.not. mask_ibool_acoustic(iglob)) then
               mask_ibool_acoustic(iglob) = .true.
               nglob_interface_acoustic = nglob_interface_acoustic + 1
               ibool_interfaces_acoustic(nglob_interface_acoustic,num_interface) = iglob
-            end if
-          end if
-        end do
-      end do
+            endif
+          endif
+        enddo
+      enddo
 
-    end do
+    enddo
 
     ! stores counters for interface points
     nibool_interfaces_acoustic(num_interface) = nglob_interface_acoustic
@@ -191,7 +191,7 @@
       enddo
     enddo
 
-  end do
+  enddo
 
   ! sets number of interfaces for each material domain
   ninterface_acoustic = 0
@@ -204,18 +204,18 @@
     if ( nibool_interfaces_acoustic(num_interface) > 0 ) then
       ninterface_acoustic = ninterface_acoustic + 1
       inum_interfaces_acoustic(ninterface_acoustic) = num_interface
-    end if
+    endif
     ! elastic
     if ( nibool_interfaces_elastic(num_interface) > 0 ) then
       ninterface_elastic = ninterface_elastic + 1
       inum_interfaces_elastic(ninterface_elastic) = num_interface
-    end if
+    endif
     ! poroelastic
     if ( nibool_interfaces_poroelastic(num_interface) > 0 ) then
       ninterface_poroelastic = ninterface_poroelastic + 1
       inum_interfaces_poroelastic(ninterface_poroelastic) = num_interface
-    end if
-  end do
+    endif
+  enddo
 
   end subroutine prepare_assemble_MPI
 
@@ -246,25 +246,25 @@
         ixmax = 1
         izmin = 1
         izmax = 1
-    end if
+    endif
     if ( e1 == n(2) ) then
         ixmin = NGLLX
         ixmax = NGLLX
         izmin = 1
         izmax = 1
-    end if
+    endif
     if ( e1 == n(3) ) then
         ixmin = NGLLX
         ixmax = NGLLX
         izmin = NGLLZ
         izmax = NGLLZ
-    end if
+    endif
     if ( e1 == n(4) ) then
         ixmin = 1
         ixmax = 1
         izmin = NGLLZ
         izmax = NGLLZ
-    end if
+    endif
     sens = 1
 
   else if( itype == 2 ) then
@@ -279,13 +279,13 @@
            ixmax = NGLLX
            izmax = 1
            sens = 1
-        end if
+        endif
         if ( e2 == n(4) ) then
            ixmax = 1
            izmax = NGLLZ
            sens = 1
-        end if
-     end if
+        endif
+     endif
      if ( e1 == n(2) ) then
         ixmin = NGLLX
         izmin = 1
@@ -293,13 +293,13 @@
            ixmax = NGLLX
            izmax = NGLLZ
            sens = 1
-        end if
+        endif
         if ( e2 == n(1) ) then
            ixmax = 1
            izmax = 1
            sens = -1
-        end if
-     end if
+        endif
+     endif
      if ( e1 == n(3) ) then
         ixmin = NGLLX
         izmin = NGLLZ
@@ -307,13 +307,13 @@
            ixmax = 1
            izmax = NGLLZ
            sens = -1
-        end if
+        endif
         if ( e2 == n(2) ) then
            ixmax = NGLLX
            izmax = 1
            sens = -1
-        end if
-     end if
+        endif
+     endif
      if ( e1 == n(4) ) then
         ixmin = 1
         izmin = NGLLZ
@@ -321,19 +321,19 @@
            ixmax = 1
            izmax = 1
            sens = -1
-        end if
+        endif
         if ( e2 == n(3) ) then
            ixmax = NGLLX
            izmax = NGLLZ
            sens = 1
-        end if
-     end if
+        endif
+     endif
 
   else
 
     call exit_MPI('ERROR get_edge unknown type')
 
-  end if
+  endif
 
   end subroutine get_edge
 

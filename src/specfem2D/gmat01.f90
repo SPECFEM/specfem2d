@@ -238,7 +238,7 @@
         else
            porosity_array(n) = 1.d0
         endif
-     elseif (indic == 2) then
+     else if (indic == 2) then
         density_array(1,n) = density(1)
 ! dummy poroelastcoef values, trick to avoid floating invalid
         poroelastcoef(1,1,n) = lambda
@@ -252,7 +252,7 @@
         aniso_array(5,n) = c35
         aniso_array(6,n) = c55
         porosity_array(n) = 0.d0
-     elseif (indic == 3) then
+     else if (indic == 3) then
         density_array(1,n) = density(1)
         density_array(2,n) = density(2)
         poroelastcoef(1,1,n) = lambda_s
@@ -290,9 +290,9 @@
            else                                       ! acoustic
               write(IOUT,300) n,cp,density(1),kappa,QKappa,Qmu
            endif
-        elseif(indic == 2) then                      ! elastic (anisotropic)
+        else if(indic == 2) then                      ! elastic (anisotropic)
            write(IOUT,400) n,density(1),c11,c13,c15,c33,c35,c55
-        elseif(indic == 3) then
+        else if(indic == 3) then
            ! material is poroelastic (solid/fluid)
            write(iout,500) n,sqrt(cpIsquare),sqrt(cpIIsquare),sqrt(cssquare)
            write(iout,600) density(1),poisson_s,lambda_s,mu_s,kappa_s,young_s

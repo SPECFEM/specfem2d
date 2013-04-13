@@ -178,7 +178,7 @@
      if(save_binary_seismograms_single) then
      if(seismotype == 4 .or. seismotype == 6) then
         open(unit=12,file='OUTPUT_FILES/pressure_file_single.bin',status='unknown',access='direct',recl=4)
-     elseif(.not.p_sv) then
+     else if(.not.p_sv) then
         open(unit=12,file='OUTPUT_FILES/Uy_file_single.bin',status='unknown',access='direct',recl=4)
      else
         open(unit=12,file='OUTPUT_FILES/Ux_file_single.bin',status='unknown',access='direct',recl=4)
@@ -188,7 +188,7 @@
      if(save_binary_seismograms_double) then
      if(seismotype == 4 .or. seismotype == 6) then
         open(unit=13,file='OUTPUT_FILES/pressure_file_double.bin',status='unknown',access='direct',recl=8)
-     elseif(.not.p_sv) then
+     else if(.not.p_sv) then
         open(unit=13,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown',access='direct',recl=8)
      else
         open(unit=13,file='OUTPUT_FILES/Ux_file_double.bin',status='unknown',access='direct',recl=8)

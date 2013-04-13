@@ -274,7 +274,7 @@
                        endif
                        e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) &
                         + weight_rk * e11_force_RK(i,j,ispec,i_sls,i_stage)
-                    elseif(i_stage==4)then
+                    else if(i_stage==4)then
                        e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
                                         (e11_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e11_force_RK(i,j,ispec,i_sls,2) + &
                                         2._CUSTOM_REAL * e11_force_RK(i,j,ispec,i_sls,3) + e11_force_RK(i,j,ispec,i_sls,4))
@@ -313,7 +313,7 @@
                        endif
                           e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) &
                             + weight_rk * e13_force_RK(i,j,ispec,i_sls,i_stage)
-                    elseif(i_stage==4)then
+                    else if(i_stage==4)then
                        e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
                             (e13_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e13_force_RK(i,j,ispec,i_sls,2) + &
                             2._CUSTOM_REAL * e13_force_RK(i,j,ispec,i_sls,3) + e13_force_RK(i,j,ispec,i_sls,4))
@@ -778,7 +778,7 @@
             if(SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
               b_absorb_poro_s_left(1,j,ib_left(ispecabs),it) = tx*weight
               b_absorb_poro_s_left(2,j,ib_left(ispecabs),it) = tz*weight
-            elseif(SIMULATION_TYPE == 3) then
+            else if(SIMULATION_TYPE == 3) then
               b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - &
                                               b_absorb_poro_s_left(1,j,ib_left(ispecabs),NSTEP-it+1)
               b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) - &
@@ -834,7 +834,7 @@
             if(SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
               b_absorb_poro_s_right(1,j,ib_right(ispecabs),it) = tx*weight
               b_absorb_poro_s_right(2,j,ib_right(ispecabs),it) = tz*weight
-            elseif(SIMULATION_TYPE == 3) then
+            else if(SIMULATION_TYPE == 3) then
               b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - &
                                               b_absorb_poro_s_right(1,j,ib_right(ispecabs),NSTEP-it+1)
               b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) - &
@@ -894,7 +894,7 @@
             if(SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
               b_absorb_poro_s_bottom(1,i,ib_bottom(ispecabs),it) = tx*weight
               b_absorb_poro_s_bottom(2,i,ib_bottom(ispecabs),it) = tz*weight
-            elseif(SIMULATION_TYPE == 3) then
+            else if(SIMULATION_TYPE == 3) then
               b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - &
                                               b_absorb_poro_s_bottom(1,i,ib_bottom(ispecabs),NSTEP-it+1)
               b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) - &
@@ -954,7 +954,7 @@
             if(SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
               b_absorb_poro_s_top(1,i,ib_top(ispecabs),it) = tx*weight
               b_absorb_poro_s_top(2,i,ib_top(ispecabs),it) = tz*weight
-            elseif(SIMULATION_TYPE == 3) then
+            else if(SIMULATION_TYPE == 3) then
               b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - &
                                               b_absorb_poro_s_top(1,i,ib_top(ispecabs),NSTEP-it+1)
               b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) - &

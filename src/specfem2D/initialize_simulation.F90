@@ -155,14 +155,14 @@
       poroelastic(ispec) = .false.
       any_acoustic = .true.
       count_nspec_acoustic = count_nspec_acoustic + 1
-    elseif( porosity(kmato(ispec)) < TINYVAL) then
+    else if( porosity(kmato(ispec)) < TINYVAL) then
       ! elastic domain
       elastic(ispec) = .true.
       poroelastic(ispec) = .false.
       any_elastic = .true.
       if(any(anisotropy(:,kmato(ispec)) /= 0)) then
          anisotropic(ispec) = .true.
-      end if
+      endif
     else
       ! poroelastic domain
       elastic(ispec) = .false.

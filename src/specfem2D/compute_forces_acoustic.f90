@@ -256,7 +256,7 @@
                   else
                     coef1 = deltat / 2.0_CUSTOM_REAL
                     coef2 = deltat / 2.0_CUSTOM_REAL
-                  end if
+                  endif
                   rmemory_acoustic_dux_dx(i,j,ispec_PML) = coef0*rmemory_acoustic_dux_dx(i,j,ispec_PML) &
                   + PML_dux_dxl_new(i,j,ispec_PML) * coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
                   endif
@@ -285,7 +285,7 @@
                   else
                     coef1 = deltat / 2.0_CUSTOM_REAL
                     coef2 = deltat / 2.0_CUSTOM_REAL
-                  end if
+                  endif
                   rmemory_acoustic_dux_dz(i,j,ispec_PML) = coef0 * rmemory_acoustic_dux_dz(i,j,ispec_PML) &
                   + PML_dux_dzl_new(i,j,ispec_PML) *coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
                   endif
@@ -300,7 +300,7 @@
 
                   dux_dzl = PML_dux_dzl(i,j,ispec_PML)  + A5 * rmemory_acoustic_dux_dz(i,j,ispec_PML)
 
-                   elseif (region_CPML(ispec) == CPML_TOP_LEFT .or. region_CPML(ispec) == CPML_TOP_RIGHT .or. &
+                   else if (region_CPML(ispec) == CPML_TOP_LEFT .or. region_CPML(ispec) == CPML_TOP_RIGHT .or. &
                            region_CPML(ispec) == CPML_BOTTOM_LEFT .or. region_CPML(ispec) == CPML_BOTTOM_RIGHT) then
 !------------------------------------------------------------------------------
 !---------------------------- CORNER ------------------------------------------
@@ -322,10 +322,10 @@
                     else
                       coef1 = deltat / 2.0_CUSTOM_REAL
                       coef2 = deltat / 2.0_CUSTOM_REAL
-                    end if
+                    endif
                     rmemory_acoustic_dux_dx(i,j,ispec_PML) = coef0*rmemory_acoustic_dux_dx(i,j,ispec_PML) &
                     + PML_dux_dxl_new(i,j,ispec_PML) * coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
-                    end if
+                    endif
 
                     if(stage_time_scheme == 6) then
                       rmemory_acoustic_dux_dx_LDDRK(i,j,ispec_PML) = &
@@ -353,12 +353,12 @@
                     else
                       coef1 = deltat / 2.0_CUSTOM_REAL
                       coef2 = deltat / 2.0_CUSTOM_REAL
-                    end if
+                    endif
 
                     rmemory_acoustic_dux_dz(i,j,ispec_PML) = coef0 * rmemory_acoustic_dux_dz(i,j,ispec_PML) &
                     + PML_dux_dzl_new(i,j,ispec_PML) *coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
 
-                    end if
+                    endif
 
                     if(stage_time_scheme == 6) then
                     rmemory_acoustic_dux_dz_LDDRK(i,j,ispec_PML) = &
@@ -370,7 +370,7 @@
 
                     dux_dzl = PML_dux_dzl(i,j,ispec_PML)  + A5 * rmemory_acoustic_dux_dz(i,j,ispec_PML)
 
-               elseif(region_CPML(ispec) == CPML_TOP .or. region_CPML(ispec) == CPML_BOTTOM) then
+               else if(region_CPML(ispec) == CPML_TOP .or. region_CPML(ispec) == CPML_BOTTOM) then
 
 !------------------------------------------------------------------------------
 !---------------------------- TOP & BOTTOM ------------------------------------
@@ -388,11 +388,11 @@
                   else
                     coef1 = deltat / 2.0_CUSTOM_REAL
                     coef2 = deltat / 2.0_CUSTOM_REAL
-                  end if
+                  endif
 
                   rmemory_acoustic_dux_dx(i,j,ispec_PML) = coef0*rmemory_acoustic_dux_dx(i,j,ispec_PML) &
                   + PML_dux_dxl_new(i,j,ispec_PML) * coef1 + PML_dux_dxl(i,j,ispec_PML) * coef2
-                  end if
+                  endif
 
                   if(stage_time_scheme == 6) then
                     rmemory_acoustic_dux_dx_LDDRK(i,j,ispec_PML) = &
@@ -416,11 +416,11 @@
                   else
                     coef1 = deltat / 2.0_CUSTOM_REAL
                     coef2 = deltat / 2.0_CUSTOM_REAL
-                  end if
+                  endif
 
                   rmemory_acoustic_dux_dz(i,j,ispec_PML) = coef0 * rmemory_acoustic_dux_dz(i,j,ispec_PML) &
                   + PML_dux_dzl_new(i,j,ispec_PML) *coef1 + PML_dux_dzl(i,j,ispec_PML) * coef2
-                  end if
+                  endif
 
                   if(stage_time_scheme == 6) then
                     rmemory_acoustic_dux_dz_LDDRK(i,j,ispec_PML) = &
@@ -497,7 +497,7 @@
                   else
                      coef1 = deltat / 2.0_CUSTOM_REAL
                      coef2 = deltat / 2.0_CUSTOM_REAL
-                  end if
+                  endif
 
                   rmemory_potential_acoustic(1,i,j,ispec_PML)=coef0 * rmemory_potential_acoustic(1,i,j,ispec_PML) &
                        + (potential_acoustic(iglob)+deltat*potential_dot_acoustic(iglob)) * coef1 &
@@ -505,7 +505,7 @@
 
                   rmemory_potential_acoustic(2,i,j,ispec_PML)=0.0
 
-                   elseif (region_CPML(ispec) == CPML_TOP_LEFT .or. region_CPML(ispec) == CPML_TOP_RIGHT .or. &
+                   else if (region_CPML(ispec) == CPML_TOP_LEFT .or. region_CPML(ispec) == CPML_TOP_RIGHT .or. &
                            region_CPML(ispec) == CPML_BOTTOM_LEFT .or. region_CPML(ispec) == CPML_BOTTOM_RIGHT) then
 
 !------------------------------------------------------------------------------
@@ -522,7 +522,7 @@
                   else
                      coef1 = deltat / 2.0_CUSTOM_REAL
                      coef2 = deltat / 2.0_CUSTOM_REAL
-                  end if
+                  endif
 
                     rmemory_potential_acoustic(1,i,j,ispec_PML)=&
                        coef0 * rmemory_potential_acoustic(1,i,j,ispec_PML) &
@@ -539,14 +539,14 @@
                   else
                      coef1 = deltat / 2.0_CUSTOM_REAL
                      coef2 = deltat / 2.0_CUSTOM_REAL
-                  end if
+                  endif
 
                     rmemory_potential_acoustic(2,i,j,ispec_PML)=&
                        coef0 * rmemory_potential_acoustic(2,i,j,ispec_PML) &
                      + (potential_acoustic(iglob)+deltat*potential_dot_acoustic(iglob))*(it+0.5)*deltat * coef1 &
                      + potential_acoustic(iglob) *(it-0.5)*deltat * coef2
 
-               elseif(region_CPML(ispec) == CPML_TOP .or. region_CPML(ispec) == CPML_BOTTOM) then
+               else if(region_CPML(ispec) == CPML_TOP .or. region_CPML(ispec) == CPML_BOTTOM) then
 
 !------------------------------------------------------------------------------
 !-------------------------------- TOP & BOTTOM --------------------------------
@@ -562,7 +562,7 @@
                   else
                      coef1 = deltat / 2._CUSTOM_REAL
                      coef2 = deltat / 2._CUSTOM_REAL
-                  end if
+                  endif
 
 
                   rmemory_potential_acoustic(1,i,j,ispec_PML)=0._CUSTOM_REAL
@@ -594,7 +594,7 @@
                      rmemory_potential_acoustic(1,i,j,ispec_PML) = rmemory_potential_acoustic(1,i,j,ispec_PML) + &
                      beta_LDDRK(i_stage) * rmemory_potential_acoust_LDDRK(1,i,j,ispec_PML)
                      rmemory_potential_acoustic(2,i,j,ispec_PML) =0._CUSTOM_REAL
-                  end if
+                  endif
 
                    potential_dot_dot_acoustic_PML(i,j,ispec_PML)= wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * &
                     (A0 * potential_acoustic(iglob)                   + &
@@ -602,7 +602,7 @@
                      A3 * rmemory_potential_acoustic(1,i,j,ispec_PML) + &
                      A4 * rmemory_potential_acoustic(2,i,j,ispec_PML))
 
-                   elseif (region_CPML(ispec) == CPML_TOP_LEFT .or. region_CPML(ispec) == CPML_TOP_RIGHT .or. &
+                   else if (region_CPML(ispec) == CPML_TOP_LEFT .or. region_CPML(ispec) == CPML_TOP_RIGHT .or. &
                            region_CPML(ispec) == CPML_BOTTOM_LEFT .or. region_CPML(ispec) == CPML_BOTTOM_RIGHT) then
 !------------------------------------------------------------------------------
 !-------------------------------- CORNER --------------------------------------
@@ -627,7 +627,7 @@
                             d_z_store(i,j,ispec_PML) * k_x_store(i,j,ispec_PML)) &
                             -2._CUSTOM_REAL * alpha_x_store(i,j,ispec_PML)*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)
                      A4 = alpha_x_store(i,j,ispec_PML) ** 2*d_x_store(i,j,ispec_PML)*d_z_store(i,j,ispec_PML)
-                    end if
+                    endif
 
                     if(stage_time_scheme == 6) then
 
@@ -652,7 +652,7 @@
                      rmemory_potential_acoustic(2,i,j,ispec_PML) = rmemory_potential_acoustic(2,i,j,ispec_PML) + &
                      beta_LDDRK(i_stage) * rmemory_potential_acoust_LDDRK(2,i,j,ispec_PML)
 
-                    end if
+                    endif
 
 
                    potential_dot_dot_acoustic_PML(i,j,ispec_PML)= wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * &
@@ -661,7 +661,7 @@
                      A3 * rmemory_potential_acoustic(1,i,j,ispec_PML) + &
                      A4 * rmemory_potential_acoustic(2,i,j,ispec_PML))
 
-               elseif(region_CPML(ispec) == CPML_TOP .or. region_CPML(ispec) == CPML_BOTTOM) then
+               else if(region_CPML(ispec) == CPML_TOP .or. region_CPML(ispec) == CPML_BOTTOM) then
 !------------------------------------------------------------------------------
 !-------------------------------- TOP & BOTTOM --------------------------------
 !------------------------------------------------------------------------------
@@ -683,7 +683,7 @@
                      rmemory_potential_acoustic(2,i,j,ispec_PML) = rmemory_potential_acoustic(2,i,j,ispec_PML) + &
                      beta_LDDRK(i_stage) * rmemory_potential_acoust_LDDRK(2,i,j,ispec_PML)
 
-                  end if
+                  endif
 
                    potential_dot_dot_acoustic_PML(i,j,ispec_PML)= wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * &
                     (A0 * potential_acoustic(iglob)                   + &
@@ -779,7 +779,7 @@
               potential_dot_dot_acoustic(iglob) = &
                   potential_dot_dot_acoustic(iglob) &
                   - potential_dot_acoustic(iglob)*weight/cpl/rhol
-            elseif(SIMULATION_TYPE == 3) then
+            else if(SIMULATION_TYPE == 3) then
               if(IS_BACKWARD_FIELD) then
                 ! adds (previously) stored contribution
                 potential_dot_dot_acoustic(iglob) = &
@@ -825,7 +825,7 @@
               potential_dot_dot_acoustic(iglob) = &
                   potential_dot_dot_acoustic(iglob) &
                   - potential_dot_acoustic(iglob)*weight/cpl/rhol
-            elseif(SIMULATION_TYPE == 3) then
+            else if(SIMULATION_TYPE == 3) then
               if(IS_BACKWARD_FIELD) then
                 ! adds (previously) stored contribution
                 potential_dot_dot_acoustic(iglob) = &
@@ -872,7 +872,7 @@
               potential_dot_dot_acoustic(iglob) = &
                   potential_dot_dot_acoustic(iglob) &
                   - potential_dot_acoustic(iglob)*weight/cpl/rhol
-            elseif(SIMULATION_TYPE == 3) then
+            else if(SIMULATION_TYPE == 3) then
               if(IS_BACKWARD_FIELD) then
                 ! adds (previously) stored contribution
                 potential_dot_dot_acoustic(iglob) = &
@@ -919,7 +919,7 @@
               potential_dot_dot_acoustic(iglob) = &
                   potential_dot_dot_acoustic(iglob) &
                   - potential_dot_acoustic(iglob)*weight/cpl/rhol
-            elseif(SIMULATION_TYPE == 3) then
+            else if(SIMULATION_TYPE == 3) then
               if(IS_BACKWARD_FIELD) then
                 ! adds (previously) stored contribution
                 potential_dot_dot_acoustic(iglob) = &

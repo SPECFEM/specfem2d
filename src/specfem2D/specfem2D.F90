@@ -1176,9 +1176,9 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
   if(time_stepping_scheme == 1)then
     stage_time_scheme=1
-  elseif(time_stepping_scheme == 2)then
+  else if(time_stepping_scheme == 2)then
     stage_time_scheme=Nstages
-  elseif(time_stepping_scheme == 3)then
+  else if(time_stepping_scheme == 3)then
     stage_time_scheme=4
   endif
 
@@ -4655,10 +4655,10 @@ if(coupled_elastic_poro) then
       close(504)
     endif
 
-  elseif (NOISE_TOMOGRAPHY == 2) then
+  else if (NOISE_TOMOGRAPHY == 2) then
     call create_mask_noise(nglob,coord,mask_noise)
 
-  elseif (NOISE_TOMOGRAPHY == 3) then
+  else if (NOISE_TOMOGRAPHY == 3) then
 
     if (output_wavefields_noise) then
       call create_mask_noise(nglob,coord,mask_noise)
@@ -5098,7 +5098,7 @@ if(coupled_elastic_poro) then
       rx_viscous(i,j,ispec) = rx_viscous_initial_rk(i,j,ispec) + weight_rk * rx_viscous_force_RK(i,j,ispec,i_stage)
 
 
-                elseif(i_stage==4)then
+                else if(i_stage==4)then
 
             rx_viscous(i,j,ispec) = rx_viscous_initial_rk(i,j,ispec) + 1.0d0 / 6.0d0 * &
             (rx_viscous_force_RK(i,j,ispec,i_stage) + 2.0d0 * rx_viscous_force_RK(i,j,ispec,i_stage) + &
@@ -5123,7 +5123,7 @@ if(coupled_elastic_poro) then
       rz_viscous(i,j,ispec) = rz_viscous_initial_rk(i,j,ispec) + weight_rk * rz_viscous_force_RK(i,j,ispec,i_stage)
 
 
-                elseif(i_stage==4)then
+                else if(i_stage==4)then
 
             rz_viscous(i,j,ispec) = rz_viscous_initial_rk(i,j,ispec) + 1.0d0 / 6.0d0 * &
             (rz_viscous_force_RK(i,j,ispec,i_stage) + 2.0d0 * rz_viscous_force_RK(i,j,ispec,i_stage) + &
@@ -5382,21 +5382,21 @@ if(coupled_elastic_poro) then
             nx = - zxi / jacobian1D
             nz = + xxi / jacobian1D
             weight = jacobian1D * wxgll(i)
-          elseif(iedge_acoustic == IBOTTOM)then
+          else if(iedge_acoustic == IBOTTOM)then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = + zxi / jacobian1D
             nz = - xxi / jacobian1D
             weight = jacobian1D * wxgll(i)
-          elseif(iedge_acoustic ==ILEFT)then
+          else if(iedge_acoustic ==ILEFT)then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = - zgamma / jacobian1D
             nz = + xgamma / jacobian1D
             weight = jacobian1D * wzgll(j)
-          elseif(iedge_acoustic ==IRIGHT)then
+          else if(iedge_acoustic ==IRIGHT)then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
@@ -5486,21 +5486,21 @@ if(coupled_elastic_poro) then
             nx = - zxi / jacobian1D
             nz = + xxi / jacobian1D
             weight = jacobian1D * wxgll(i)
-          elseif(iedge_acoustic == IBOTTOM)then
+          else if(iedge_acoustic == IBOTTOM)then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = + zxi / jacobian1D
             nz = - xxi / jacobian1D
             weight = jacobian1D * wxgll(i)
-          elseif(iedge_acoustic ==ILEFT)then
+          else if(iedge_acoustic ==ILEFT)then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = - zgamma / jacobian1D
             nz = + xgamma / jacobian1D
             weight = jacobian1D * wzgll(j)
-          elseif(iedge_acoustic ==IRIGHT)then
+          else if(iedge_acoustic ==IRIGHT)then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
@@ -5703,7 +5703,7 @@ if(coupled_elastic_poro) then
         potential_dot_acoustic(:) = potential_dot_acoustic_init_rk(:) + weight_rk * potential_dot_dot_acoustic_rk(:,i_stage)
         potential_acoustic(:) = potential_acoustic_init_rk(:) + weight_rk * potential_dot_acoustic_rk(:,i_stage)
 
-        elseif(i_stage==4)then
+        else if(i_stage==4)then
 
 !! DK DK this should be vectorized
         potential_dot_acoustic(:) = potential_dot_acoustic_init_rk(:) + 1.0d0 / 6.0d0 * &
@@ -6021,21 +6021,21 @@ if(coupled_elastic_poro) then
             nx = - zxi / jacobian1D
             nz = + xxi / jacobian1D
             weight = jacobian1D * wxgll(i)
-          elseif(iedge_acoustic == IBOTTOM)then
+          else if(iedge_acoustic == IBOTTOM)then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = + zxi / jacobian1D
             nz = - xxi / jacobian1D
             weight = jacobian1D * wxgll(i)
-          elseif(iedge_acoustic ==ILEFT)then
+          else if(iedge_acoustic ==ILEFT)then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = - zgamma / jacobian1D
             nz = + xgamma / jacobian1D
             weight = jacobian1D * wzgll(j)
-          elseif(iedge_acoustic ==IRIGHT)then
+          else if(iedge_acoustic ==IRIGHT)then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
@@ -6309,21 +6309,21 @@ if(coupled_elastic_poro) then
             nx = - zxi / jacobian1D
             nz = + xxi / jacobian1D
             weight = jacobian1D * wxgll(i)
-          elseif(iedge_poroelastic == IBOTTOM)then
+          else if(iedge_poroelastic == IBOTTOM)then
             xxi = + gammaz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             zxi = - gammax(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = + zxi / jacobian1D
             nz = - xxi / jacobian1D
             weight = jacobian1D * wxgll(i)
-          elseif(iedge_poroelastic ==ILEFT)then
+          else if(iedge_poroelastic ==ILEFT)then
             xgamma = - xiz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             zgamma = + xix(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = - zgamma / jacobian1D
             nz = + xgamma / jacobian1D
             weight = jacobian1D * wzgll(j)
-          elseif(iedge_poroelastic ==IRIGHT)then
+          else if(iedge_poroelastic ==IRIGHT)then
             xgamma = - xiz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             zgamma = + xix(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
@@ -6429,12 +6429,12 @@ if(coupled_elastic_poro) then
           call  add_point_source_noise(p_sv,it,NSTEP,nglob,ibool,ispec_noise, &
                             accel_elastic,angle_noise,source_array_noise)
 
-        elseif (NOISE_TOMOGRAPHY == 2) then
+        else if (NOISE_TOMOGRAPHY == 2) then
           call add_surface_movie_noise(p_sv,NOISE_TOMOGRAPHY,it,NSTEP,nspec,nglob,ibool,accel_elastic, &
                             surface_movie_x_noise,surface_movie_y_noise, &
                             surface_movie_z_noise,mask_noise,jacobian,wxgll,wzgll)
 
-        elseif (NOISE_TOMOGRAPHY == 3) then
+        else if (NOISE_TOMOGRAPHY == 3) then
           if (.not. save_everywhere) then
             call add_surface_movie_noise(p_sv,NOISE_TOMOGRAPHY,it,NSTEP,nspec,nglob,ibool,b_accel_elastic, &
                               surface_movie_x_noise,surface_movie_y_noise, &
@@ -6558,7 +6558,7 @@ if(coupled_elastic_poro) then
         displ_elastic(2,:) = displ_elastic_initial_rk(2,:) + weight_rk * veloc_elastic_rk(2,:,i_stage)
         displ_elastic(3,:) = displ_elastic_initial_rk(3,:) + weight_rk * veloc_elastic_rk(3,:,i_stage)
 
-        elseif(i_stage==4)then
+        else if(i_stage==4)then
 
 !! DK DK this should be vectorized
         veloc_elastic(1,:) = veloc_elastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
@@ -6780,21 +6780,21 @@ if(coupled_elastic_poro) then
             nx = - zxi / jacobian1D
             nz = + xxi / jacobian1D
             weight = jacobian1D * wxgll(i)
-          elseif(iedge_acoustic == IBOTTOM)then
+          else if(iedge_acoustic == IBOTTOM)then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = + zxi / jacobian1D
             nz = - xxi / jacobian1D
             weight = jacobian1D * wxgll(i)
-          elseif(iedge_acoustic ==ILEFT)then
+          else if(iedge_acoustic ==ILEFT)then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = - zgamma / jacobian1D
             nz = + xgamma / jacobian1D
             weight = jacobian1D * wzgll(j)
-          elseif(iedge_acoustic ==IRIGHT)then
+          else if(iedge_acoustic ==IRIGHT)then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
@@ -7090,21 +7090,21 @@ if(coupled_elastic_poro) then
             nx = - zxi / jacobian1D
             nz = + xxi / jacobian1D
             weight = jacobian1D * wxgll(i)
-          elseif(iedge_poroelastic == IBOTTOM)then
+          else if(iedge_poroelastic == IBOTTOM)then
             xxi = + gammaz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             zxi = - gammax(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = + zxi / jacobian1D
             nz = - xxi / jacobian1D
             weight = jacobian1D * wxgll(i)
-          elseif(iedge_poroelastic ==ILEFT)then
+          else if(iedge_poroelastic ==ILEFT)then
             xgamma = - xiz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             zgamma = + xix(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = - zgamma / jacobian1D
             nz = + xgamma / jacobian1D
             weight = jacobian1D * wzgll(j)
-          elseif(iedge_poroelastic ==IRIGHT)then
+          else if(iedge_poroelastic ==IRIGHT)then
             xgamma = - xiz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             zgamma = + xix(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
@@ -7324,7 +7324,7 @@ if(coupled_elastic_poro) then
   displw_poroelastic(2,:) = displw_poroelastic_initial_rk(2,:) + weight_rk * velocw_poroelastic_rk(2,:,i_stage)
 
 
-        elseif(i_stage==4)then
+        else if(i_stage==4)then
 
         velocs_poroelastic(1,:) = velocs_poroelastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
         (accels_poroelastic_rk(1,:,1) + 2.0d0 * accels_poroelastic_rk(1,:,2) + &
@@ -7526,7 +7526,7 @@ if(coupled_elastic_poro) then
 !  displ_elastic(3,iglob) = displ_elastic_initial_rk(3,iglob) - weight_rk * veloc_elastic_rk(3,iglob,i_stage)
 
 
-!        elseif(i_stage==4)then
+!        else if(i_stage==4)then
 
 !        veloc_elastic(1,iglob) = veloc_elastic_initial_rk(1,iglob) - 1.0d0 / 6.0d0 * &
 !        (accel_elastic_rk(1,iglob,1) + 2.0d0 * accel_elastic_rk(1,iglob,2) + &
@@ -7568,7 +7568,7 @@ if(coupled_elastic_poro) then
 !  displs_poroelastic(2,iglob) = displs_poroelastic_initial_rk(2,iglob) - weight_rk * velocs_poroelastic_rk(2,iglob,i_stage)
 
 
-!        elseif(i_stage==4)then
+!        else if(i_stage==4)then
 
 !        velocs_poroelastic(1,iglob) = velocs_poroelastic_initial_rk(1,iglob) - 1.0d0 / 6.0d0 * &
 !        (accels_poroelastic_rk(1,iglob,1) + 2.0d0 * accels_poroelastic_rk(1,iglob,2) + &
@@ -7623,7 +7623,7 @@ if(coupled_elastic_poro) then
  ! displ_elastic(3,iglob) = displ_elastic_initial_rk(3,iglob) + weight_rk * veloc_elastic_rk(3,iglob,i_stage)
 
 
- !       elseif(i_stage==4)then
+ !       else if(i_stage==4)then
 
  !       veloc_elastic(1,iglob) = veloc_elastic_initial_rk(1,iglob) + 1.0d0 / 6.0d0 * &
  !       (accel_elastic_rk(1,iglob,1) + 2.0d0 * accel_elastic_rk(1,iglob,2) + &
@@ -7662,7 +7662,7 @@ if(coupled_elastic_poro) then
  ! displs_poroelastic(2,iglob) = displs_poroelastic_initial_rk(2,iglob) + weight_rk * velocs_poroelastic_rk(2,iglob,i_stage)
 
 
- !       elseif(i_stage==4)then
+ !       else if(i_stage==4)then
 
  !       velocs_poroelastic(1,iglob) = velocs_poroelastic_initial_rk(1,iglob) + 1.0d0 / 6.0d0 * &
  !       (accels_poroelastic_rk(1,iglob,1) + 2.0d0 * accels_poroelastic_rk(1,iglob,2) + &
@@ -7804,10 +7804,10 @@ if(coupled_elastic_poro) then
   if ( NOISE_TOMOGRAPHY == 1 ) then
     call save_surface_movie_noise(NOISE_TOMOGRAPHY,p_sv,it,NSTEP,nglob,displ_elastic)
 
-  elseif ( NOISE_TOMOGRAPHY == 2 .and. save_everywhere ) then
+  else if ( NOISE_TOMOGRAPHY == 2 .and. save_everywhere ) then
     call save_surface_movie_noise(NOISE_TOMOGRAPHY,p_sv,it,NSTEP,nglob,displ_elastic)
 
-  elseif ( NOISE_TOMOGRAPHY == 3 .and. save_everywhere ) then
+  else if ( NOISE_TOMOGRAPHY == 3 .and. save_everywhere ) then
     if (it==1) &
       open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/phi',access='direct', &
       recl=nglob*CUSTOM_REAL,action='write',iostat=ios)
@@ -7996,7 +7996,7 @@ if(coupled_elastic_poro) then
             if(poroelastic(ispec)) then
               dxd = displs_poroelastic(1,iglob)
               dzd = displs_poroelastic(2,iglob)
-            elseif(elastic(ispec)) then
+            else if(elastic(ispec)) then
               dxd = displ_elastic(1,iglob)
               dyd = displ_elastic(2,iglob)
               dzd = displ_elastic(3,iglob)
@@ -8007,7 +8007,7 @@ if(coupled_elastic_poro) then
             if(poroelastic(ispec)) then
               dxd = velocs_poroelastic(1,iglob)
               dzd = velocs_poroelastic(2,iglob)
-            elseif(elastic(ispec)) then
+            else if(elastic(ispec)) then
               dxd = veloc_elastic(1,iglob)
               dyd = veloc_elastic(2,iglob)
               dzd = veloc_elastic(3,iglob)
@@ -8018,7 +8018,7 @@ if(coupled_elastic_poro) then
             if(poroelastic(ispec)) then
               dxd = accels_poroelastic(1,iglob)
               dzd = accels_poroelastic(2,iglob)
-            elseif(elastic(ispec)) then
+            else if(elastic(ispec)) then
               dxd = accel_elastic(1,iglob)
               dyd = accel_elastic(2,iglob)
               dzd = accel_elastic(3,iglob)
@@ -8029,7 +8029,7 @@ if(coupled_elastic_poro) then
             if(poroelastic(ispec)) then
               dxd = displs_poroelastic(1,iglob)
               dzd = displs_poroelastic(2,iglob)
-            elseif(elastic(ispec)) then
+            else if(elastic(ispec)) then
               dxd = displ_elastic(1,iglob)
               dzd = displ_elastic(2,iglob)
             endif

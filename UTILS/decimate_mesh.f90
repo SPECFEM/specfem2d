@@ -51,14 +51,14 @@ program subdivide_mesh
   allocate(elmnts(4,nspec))
    do ispec = 1, nspec
      read(98,*) elmnts(1,ispec), elmnts(2,ispec), elmnts(3,ispec), elmnts(4,ispec)
-  end do
+  enddo
   close(98)
 
   open(unit=98, file='./mat', status='old', form='formatted')
   allocate(mat(nspec))
    do ispec = 1, nspec
      read(98,*) mat(ispec)
-  end do
+  enddo
   close(98)
 
   open(unit=98, file='./nodes_coords', status='old', form='formatted')
@@ -66,7 +66,7 @@ program subdivide_mesh
   allocate(nodes_coords(2,nnodes))
   do inode = 1, nnodes
      read(98,*) nodes_coords(1,inode), nodes_coords(2,inode)
-  end do
+  enddo
   close(98)
 
 ! set up local geometric tolerances
@@ -106,7 +106,7 @@ program subdivide_mesh
      write(98,*) nodes_coords(1,elmnts(1,ispec)), nodes_coords(2,elmnts(1,ispec))
      write(98,*) ' '
      write(98,*) ' '
-  end do
+  enddo
   close(98)
 
 
@@ -153,9 +153,9 @@ program subdivide_mesh
            temporary_nodes(2,ix,iz) =   temporary_nodes(2,ix,1) + &
                 (( temporary_nodes(2,ix,NSUB+1) - temporary_nodes(2,ix,1) ) / real(NSUB))  * (iz-1)
 
-        end do
+        enddo
 
-     end do
+     enddo
 
 
      temporary_nodes_lookup(:,:) = 0
@@ -175,16 +175,16 @@ program subdivide_mesh
                           temporary_nodes_lookup(ix,iz) = elmnts_new(inode,ispec_neighbours_new)
 
 
-                       end if
+                       endif
 
 
-                    end do
+                    enddo
 
-                 end do
-              end do
-           end do
-        end if
-     end do
+                 enddo
+              enddo
+           enddo
+        endif
+     enddo
 
   do ix = 1, NSUB+1
      do iz = 1, NSUB+1
@@ -193,9 +193,9 @@ program subdivide_mesh
            temporary_nodes_lookup(ix,iz) = num_nodes_new
            nodes_coords_new(1,num_nodes_new) = temporary_nodes(1,ix,iz)
            nodes_coords_new(2,num_nodes_new) = temporary_nodes(2,ix,iz)
-        end if
-     end do
-  end do
+        endif
+     enddo
+  enddo
 
      do i = 1, NSUB
         do j = 1, NSUB
@@ -206,24 +206,24 @@ program subdivide_mesh
            mat_new((ispec-1)*NSUB*NSUB+(i-1)*NSUB+j) = mat(ispec)
 
 
-        end do
-     end do
+        enddo
+     enddo
 
 
-  end do
+  enddo
 
 
   open(unit=99, file='./mesh_new', status='unknown', form='formatted')
   write(99,*) nspec*NSUB*NSUB
   do ispec = 1, nspec*NSUB*NSUB
      write(99,*) elmnts_new(1,ispec), elmnts_new(2,ispec), elmnts_new(3,ispec), elmnts_new(4,ispec)
-  end do
+  enddo
   close(99)
 
   open(unit=99, file='./mat_new', status='unknown', form='formatted')
   do ispec = 1, nspec*NSUB*NSUB
      write(99,*) mat_new(ispec)
-  end do
+  enddo
   close(99)
 
 
@@ -231,7 +231,7 @@ program subdivide_mesh
   write(99,*) num_nodes_new
   do inode = 1, num_nodes_new
      write(99,*) nodes_coords_new(1,inode), nodes_coords_new(2,inode)
-  end do
+  enddo
   close(99)
 
   open(unit=99, file='./check_new', status='unknown', form='formatted')
@@ -243,7 +243,7 @@ program subdivide_mesh
   write(99,*) nodes_coords_new(1,elmnts_new(1,ispec)), nodes_coords_new(2,elmnts_new(1,ispec))
      write(99,*) ' '
      write(99,*) ' '
-  end do
+  enddo
   close(99)
 
 
@@ -298,7 +298,7 @@ end program subdivide_mesh
        nodes_elmnts(elmnts(i)*nsize+nnodes_elmnts(elmnts(i))) = i/esize
        nnodes_elmnts(elmnts(i)) = nnodes_elmnts(elmnts(i)) + 1
 
-    end do
+    enddo
 
     print *, 'nnodes_elmnts'
 
@@ -315,9 +315,9 @@ end program subdivide_mesh
                 do m = 0, nnodes_elmnts(num_node)-1
                    if ( nodes_elmnts(m+num_node*nsize) == elem_target ) then
                       connectivity = connectivity + 1
-                   end if
-                end do
-             end do
+                   endif
+                enddo
+             enddo
 
              if ( connectivity >=  ncommonnodes) then
 
@@ -328,19 +328,19 @@ end program subdivide_mesh
                       if ( adjncy(nodes_elmnts(k+j*nsize)*max_neighbour+m) == nodes_elmnts(l+j*nsize) ) then
                          is_neighbour = .true.
 
-                      end if
-                   end if
-                end do
+                      endif
+                   endif
+                enddo
                 if ( .not.is_neighbour ) then
                    adjncy(nodes_elmnts(k+j*nsize)*max_neighbour+xadj(nodes_elmnts(k+j*nsize))) = nodes_elmnts(l+j*nsize)
                    xadj(nodes_elmnts(k+j*nsize)) = xadj(nodes_elmnts(k+j*nsize)) + 1
                    adjncy(nodes_elmnts(l+j*nsize)*max_neighbour+xadj(nodes_elmnts(l+j*nsize))) = nodes_elmnts(k+j*nsize)
                    xadj(nodes_elmnts(l+j*nsize)) = xadj(nodes_elmnts(l+j*nsize)) + 1
-                end if
-             end if
-          end do
-       end do
-    end do
+                endif
+             endif
+          enddo
+       enddo
+    enddo
 
     ! making adjacency arrays compact (to be used for partitioning)
     do i = 0, nelmnts-1
@@ -349,8 +349,8 @@ end program subdivide_mesh
        do j = 0, k-1
           adjncy(nb_edges) = adjncy(i*max_neighbour+j)
           nb_edges = nb_edges + 1
-       end do
-    end do
+       enddo
+    enddo
 
     xadj(nelmnts) = nb_edges
 

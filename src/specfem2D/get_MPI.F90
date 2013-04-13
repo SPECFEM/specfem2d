@@ -134,9 +134,9 @@
     num_interface = 0
     if( idomain == 1 ) then
       num_interface = ninterface_acoustic
-    elseif( idomain == 2 ) then
+    else if( idomain == 2 ) then
       num_interface = ninterface_elastic
-    elseif( idomain == 3 ) then
+    else if( idomain == 3 ) then
       num_interface = ninterface_poroelastic
     endif
     if( num_interface == 0 ) cycle
@@ -148,9 +148,9 @@
       num_nibool = 0
       if( idomain == 1 ) then
         num_nibool = nibool_interfaces_acoustic(iinterface)
-      elseif( idomain == 2 ) then
+      else if( idomain == 2 ) then
         num_nibool = nibool_interfaces_elastic(iinterface)
-      elseif( idomain == 3 ) then
+      else if( idomain == 3 ) then
         num_nibool = nibool_interfaces_poroelastic(iinterface)
       endif
       ! checks if anything to sort
@@ -170,9 +170,9 @@
       ! works with a copy of ibool array
       if( idomain == 1 ) then
         ibool_dummy(:) = ibool_interfaces_acoustic(1:num_nibool,iinterface)
-      elseif( idomain == 2 ) then
+      else if( idomain == 2 ) then
         ibool_dummy(:) = ibool_interfaces_elastic(1:num_nibool,iinterface)
-      elseif( idomain == 3 ) then
+      else if( idomain == 3 ) then
         ibool_dummy(:) = ibool_interfaces_poroelastic(1:num_nibool,iinterface)
       endif
 
@@ -204,9 +204,9 @@
       ! stores new order of ibool array
       if( idomain == 1 ) then
         ibool_interfaces_acoustic(1:num_nibool,iinterface) = ibool_dummy(:)
-      elseif( idomain == 2 ) then
+      else if( idomain == 2 ) then
         ibool_interfaces_elastic(1:num_nibool,iinterface) = ibool_dummy(:)
-      elseif( idomain == 3 ) then
+      else if( idomain == 3 ) then
         ibool_interfaces_poroelastic(1:num_nibool,iinterface) = ibool_dummy(:)
       endif
 

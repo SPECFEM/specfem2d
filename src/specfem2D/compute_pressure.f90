@@ -355,7 +355,7 @@
       enddo
     enddo
 
-  elseif(poroelastic(ispec)) then
+  else if(poroelastic(ispec)) then
 
     lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
     mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
