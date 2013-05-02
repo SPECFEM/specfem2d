@@ -253,7 +253,7 @@ contains
   integer, dimension(1:nelmnts), intent(out)  :: region_pml_external_mesh
   integer, intent(out)  :: nspec_cpml
 
-  integer  :: i,j,k,ier
+  integer  :: i,ier,ispec,pml_flag
 
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
   open(unit=992, file=trim(filename), form='unformatted' , status='old', action='read',iostat=ier)
@@ -273,11 +273,11 @@ contains
 
   do i = 1, nspec_cpml
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
-     read(992) j, k
+     read(992) ispec, pml_flag
 #else
-     read(992,*) j, k
+     read(992,*) ispec, pml_flag
 #endif
-     region_pml_external_mesh(j) = k
+     region_pml_external_mesh(ispec) = pml_flag
   enddo
 
   close(992)
