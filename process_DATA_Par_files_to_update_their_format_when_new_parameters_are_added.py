@@ -528,6 +528,37 @@ def ProcessParfile_r21278(fic):
     print 'xxxxx------> '+fic+' processed to r21278'
     return
 #------------------------------------------------------------------------------
+def ProcessParfile_r21820(fic):
+    # define the release number
+    release_number='r21820'
+    # Open the file and get all lines from Par_file
+    ligs= LoadLig(fic)
+
+    # Test if already processed
+    for lig in ligs:
+        if lig.startswith('save_ASCII_kernels'):
+            print '----> '+fic+' already processed to '+release_number          
+            return
+    #
+    a1='save_ASCII_kernels              = .true.         # save sensitivity'+ \
+           'kernels in ASCII format(much bigger files, but compatibles with'+ \
+           ' current GMT scripts) or in binary format\n'
+    #--------------------------------------------------------------------------
+    # Add new parameters
+    # 
+    for ilg, lig in enumerate(ligs):
+        if lig.startswith('rec_normal_to_surface'):
+            ligs.insert(ilg+1,a1)
+    #
+    move(fic,fic+'.before_update_to_'+release_number)
+    #
+    fm = open(fic,'w')
+    fm.writelines(ligs)
+    fm.close()
+    #
+    print 'xxxxx------> '+fic+' processed to '+release_number
+    return    
+#------------------------------------------------------------------------------
 if __name__=='__main__':
     ## List of all files of current directory
     Fichiers=[]
@@ -555,6 +586,7 @@ if __name__=='__main__':
                     ProcessParfile_r20859(fic)
                     ProcessParfile_r21000(fic)
                     ProcessParfile_r21278(fic)
+                    ProcessParfile_r21820(fic)
                     print '~'*80
     #                
     print 'Number of Par_file analysed : ', Ct_Par_file
