@@ -1031,12 +1031,12 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 ! defined for using PML in elastic simulation
   logical, dimension(:,:), allocatable :: PML_interior_interface
   integer, dimension(:), allocatable :: point_interface
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interfeace_history_displ
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interfeace_history_veloc
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interfeace_history_accel
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: pml_interfeace_history_potential
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: pml_interfeace_history_potential_dot
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: pml_interfeace_history_potential_dot_dot
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interface_history_displ
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interface_history_veloc
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interface_history_accel
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: pml_interface_history_potential
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: pml_interface_history_potential_dot
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: pml_interface_history_potential_dot_dot
   integer :: nglob_interface
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_displ_elastic
@@ -2957,12 +2957,12 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 
       if((SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS)then
          allocate(point_interface(nglob_interface))
-         allocate(pml_interfeace_history_displ(3,nglob_interface,NSTEP))
-         allocate(pml_interfeace_history_veloc(3,nglob_interface,NSTEP))
-         allocate(pml_interfeace_history_accel(3,nglob_interface,NSTEP))
-         allocate(pml_interfeace_history_potential(nglob_interface,NSTEP))
-         allocate(pml_interfeace_history_potential_dot(nglob_interface,NSTEP))
-         allocate(pml_interfeace_history_potential_dot_dot(nglob_interface,NSTEP))
+         allocate(pml_interface_history_displ(3,nglob_interface,NSTEP))
+         allocate(pml_interface_history_veloc(3,nglob_interface,NSTEP))
+         allocate(pml_interface_history_accel(3,nglob_interface,NSTEP))
+         allocate(pml_interface_history_potential(nglob_interface,NSTEP))
+         allocate(pml_interface_history_potential_dot(nglob_interface,NSTEP))
+         allocate(pml_interface_history_potential_dot_dot(nglob_interface,NSTEP))
 
          call determin_interface_pml_interior(nglob_interface,nspec,ibool,PML_interior_interface,&
                                               which_PML_elem,point_interface,read_external_mesh,&
@@ -2981,27 +2981,27 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
          endif
       else
            allocate(point_interface(1))
-           allocate(pml_interfeace_history_displ(3,1,1))
-           allocate(pml_interfeace_history_veloc(3,1,1))
-           allocate(pml_interfeace_history_accel(3,1,1))
-           allocate(pml_interfeace_history_potential(1,1))
-           allocate(pml_interfeace_history_potential_dot(1,1))
-           allocate(pml_interfeace_history_potential_dot_dot(1,1))
+           allocate(pml_interface_history_displ(3,1,1))
+           allocate(pml_interface_history_veloc(3,1,1))
+           allocate(pml_interface_history_accel(3,1,1))
+           allocate(pml_interface_history_potential(1,1))
+           allocate(pml_interface_history_potential_dot(1,1))
+           allocate(pml_interface_history_potential_dot_dot(1,1))
       endif
 
       if(SIMULATION_TYPE == 3 .and. PML_BOUNDARY_CONDITIONS)then
        if(any_elastic .and. nglob_interface > 0)then
          do it = 1,NSTEP
           do i = 1, nglob_interface
-            read(71)pml_interfeace_history_accel(1,i,it),&
-                    pml_interfeace_history_accel(2,i,it),&
-                    pml_interfeace_history_accel(3,i,it),&
-                    pml_interfeace_history_veloc(1,i,it),&
-                    pml_interfeace_history_veloc(2,i,it),&
-                    pml_interfeace_history_veloc(3,i,it),&
-                    pml_interfeace_history_displ(1,i,it),&
-                    pml_interfeace_history_displ(2,i,it),&
-                    pml_interfeace_history_displ(3,i,it)
+            read(71)pml_interface_history_accel(1,i,it),&
+                    pml_interface_history_accel(2,i,it),&
+                    pml_interface_history_accel(3,i,it),&
+                    pml_interface_history_veloc(1,i,it),&
+                    pml_interface_history_veloc(2,i,it),&
+                    pml_interface_history_veloc(3,i,it),&
+                    pml_interface_history_displ(1,i,it),&
+                    pml_interface_history_displ(2,i,it),&
+                    pml_interface_history_displ(3,i,it)
           enddo
          enddo
        endif
@@ -3009,9 +3009,9 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
        if(any_acoustic .and. nglob_interface > 0)then
          do it = 1,NSTEP
            do i = 1, nglob_interface
-             read(72)pml_interfeace_history_potential_dot_dot(i,it),&
-                     pml_interfeace_history_potential_dot(i,it),&
-                     pml_interfeace_history_potential(i,it)
+             read(72)pml_interface_history_potential_dot_dot(i,it),&
+                     pml_interface_history_potential_dot(i,it),&
+                     pml_interface_history_potential(i,it)
           enddo
          enddo
        endif
@@ -5227,9 +5227,9 @@ if(coupled_elastic_poro) then
 
        if(PML_BOUNDARY_CONDITIONS)then
           do i = 1, nglob_interface
-           b_potential_dot_dot_acoustic(point_interface(i)) = pml_interfeace_history_potential_dot_dot(i,NSTEP-it+1)
-           b_potential_dot_acoustic(point_interface(i)) = pml_interfeace_history_potential_dot(i,NSTEP-it+1)
-           b_potential_acoustic(point_interface(i)) = pml_interfeace_history_potential(i,NSTEP-it+1)
+           b_potential_dot_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot_dot(i,NSTEP-it+1)
+           b_potential_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot(i,NSTEP-it+1)
+           b_potential_acoustic(point_interface(i)) = pml_interface_history_potential(i,NSTEP-it+1)
           enddo
        endif
 
@@ -5271,9 +5271,9 @@ if(coupled_elastic_poro) then
 
        if(PML_BOUNDARY_CONDITIONS)then
           do i = 1, nglob_interface
-           b_potential_dot_dot_acoustic(point_interface(i)) = pml_interfeace_history_potential_dot_dot(i,NSTEP-it+1)
-           b_potential_dot_acoustic(point_interface(i)) = pml_interfeace_history_potential_dot(i,NSTEP-it+1)
-           b_potential_acoustic(point_interface(i)) = pml_interfeace_history_potential(i,NSTEP-it+1)
+           b_potential_dot_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot_dot(i,NSTEP-it+1)
+           b_potential_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot(i,NSTEP-it+1)
+           b_potential_acoustic(point_interface(i)) = pml_interface_history_potential(i,NSTEP-it+1)
           enddo
        endif
 
@@ -5802,15 +5802,15 @@ if(coupled_elastic_poro) then
 
        if(PML_BOUNDARY_CONDITIONS)then
           do i = 1, nglob_interface
-           b_accel_elastic(1,point_interface(i)) = pml_interfeace_history_accel(1,i,NSTEP-it+1)
-           b_accel_elastic(2,point_interface(i)) = pml_interfeace_history_accel(2,i,NSTEP-it+1)
-           b_accel_elastic(3,point_interface(i)) = pml_interfeace_history_accel(3,i,NSTEP-it+1)
-           b_veloc_elastic(1,point_interface(i)) = pml_interfeace_history_veloc(1,i,NSTEP-it+1)
-           b_veloc_elastic(2,point_interface(i)) = pml_interfeace_history_veloc(2,i,NSTEP-it+1)
-           b_veloc_elastic(3,point_interface(i)) = pml_interfeace_history_veloc(3,i,NSTEP-it+1)
-           b_displ_elastic(1,point_interface(i)) = pml_interfeace_history_displ(1,i,NSTEP-it+1)
-           b_displ_elastic(2,point_interface(i)) = pml_interfeace_history_displ(2,i,NSTEP-it+1)
-           b_displ_elastic(3,point_interface(i)) = pml_interfeace_history_displ(3,i,NSTEP-it+1)
+           b_accel_elastic(1,point_interface(i)) = pml_interface_history_accel(1,i,NSTEP-it+1)
+           b_accel_elastic(2,point_interface(i)) = pml_interface_history_accel(2,i,NSTEP-it+1)
+           b_accel_elastic(3,point_interface(i)) = pml_interface_history_accel(3,i,NSTEP-it+1)
+           b_veloc_elastic(1,point_interface(i)) = pml_interface_history_veloc(1,i,NSTEP-it+1)
+           b_veloc_elastic(2,point_interface(i)) = pml_interface_history_veloc(2,i,NSTEP-it+1)
+           b_veloc_elastic(3,point_interface(i)) = pml_interface_history_veloc(3,i,NSTEP-it+1)
+           b_displ_elastic(1,point_interface(i)) = pml_interface_history_displ(1,i,NSTEP-it+1)
+           b_displ_elastic(2,point_interface(i)) = pml_interface_history_displ(2,i,NSTEP-it+1)
+           b_displ_elastic(3,point_interface(i)) = pml_interface_history_displ(3,i,NSTEP-it+1)
           enddo
        endif
 
@@ -5862,15 +5862,15 @@ if(coupled_elastic_poro) then
 
        if(PML_BOUNDARY_CONDITIONS)then
         do i = 1, nglob_interface
-           b_accel_elastic(1,point_interface(i)) = pml_interfeace_history_accel(1,i,NSTEP-it+1)
-           b_accel_elastic(2,point_interface(i)) = pml_interfeace_history_accel(2,i,NSTEP-it+1)
-           b_accel_elastic(3,point_interface(i)) = pml_interfeace_history_accel(3,i,NSTEP-it+1)
-           b_veloc_elastic(1,point_interface(i)) = pml_interfeace_history_veloc(1,i,NSTEP-it+1)
-           b_veloc_elastic(2,point_interface(i)) = pml_interfeace_history_veloc(2,i,NSTEP-it+1)
-           b_veloc_elastic(3,point_interface(i)) = pml_interfeace_history_veloc(3,i,NSTEP-it+1)
-           b_displ_elastic(1,point_interface(i)) = pml_interfeace_history_displ(1,i,NSTEP-it+1)
-           b_displ_elastic(2,point_interface(i)) = pml_interfeace_history_displ(2,i,NSTEP-it+1)
-           b_displ_elastic(3,point_interface(i)) = pml_interfeace_history_displ(3,i,NSTEP-it+1)
+           b_accel_elastic(1,point_interface(i)) = pml_interface_history_accel(1,i,NSTEP-it+1)
+           b_accel_elastic(2,point_interface(i)) = pml_interface_history_accel(2,i,NSTEP-it+1)
+           b_accel_elastic(3,point_interface(i)) = pml_interface_history_accel(3,i,NSTEP-it+1)
+           b_veloc_elastic(1,point_interface(i)) = pml_interface_history_veloc(1,i,NSTEP-it+1)
+           b_veloc_elastic(2,point_interface(i)) = pml_interface_history_veloc(2,i,NSTEP-it+1)
+           b_veloc_elastic(3,point_interface(i)) = pml_interface_history_veloc(3,i,NSTEP-it+1)
+           b_displ_elastic(1,point_interface(i)) = pml_interface_history_displ(1,i,NSTEP-it+1)
+           b_displ_elastic(2,point_interface(i)) = pml_interface_history_displ(2,i,NSTEP-it+1)
+           b_displ_elastic(3,point_interface(i)) = pml_interface_history_displ(3,i,NSTEP-it+1)
         enddo
        endif
 
