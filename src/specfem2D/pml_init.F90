@@ -584,7 +584,7 @@ end subroutine pml_init
 ! reflection coefficient (INRIA report section 6.1) http://hal.inria.fr/docs/00/07/32/19/PDF/RR-3471.pdf
   Rcoef = 0.001d0
 
-  ALPHA_MAX_PML = 2.d0*PI*(f0_temp/2.d0) ! from Festa and Vilotte
+  ALPHA_MAX_PML = PI*f0_temp ! from Festa and Vilotte
 
 ! check that NPOWER is okay
   if(NPOWER < 1) stop 'NPOWER must be greater than 1'
@@ -731,13 +731,6 @@ end subroutine pml_init
 !     write(IOUT,*) '     d0_left         =', d0_x_left
 !   endif
 
-   d_x = 0.d0
-   d_z = 0.d0
-   K_x = 0.d0
-   K_z = 0.d0
-   alpha_x = 0.d0
-   alpha_z = 0.d0
-
 ! origin of the PML layer (position of right edge minus thickness, in meters)
   xoriginleft = thickness_PML_x_left+xmin
   xoriginright = xmax - thickness_PML_x_right
@@ -745,17 +738,25 @@ end subroutine pml_init
   zorigintop = zmax-thickness_PML_z_top
 
 
+  K_x_store = 0._CUSTOM_REAL
+  K_z_store = 0._CUSTOM_REAL
+  d_x_store = 0._CUSTOM_REAL
+  d_z_store = 0._CUSTOM_REAL
+  alpha_x_store = 0._CUSTOM_REAL
+  alpha_z_store = 0._CUSTOM_REAL
+
  do ispec = 1,nspec
   ispec_PML=spec_to_PML(ispec)
     if (is_PML(ispec)) then
        do j=1,NGLLZ
           do i=1,NGLLX
-          K_x_store(i,j,ispec_PML) = 0._CUSTOM_REAL
-          K_z_store(i,j,ispec_PML) = 0._CUSTOM_REAL
-          d_x_store(i,j,ispec_PML) = 0._CUSTOM_REAL
-          d_z_store(i,j,ispec_PML) = 0._CUSTOM_REAL
-          alpha_x_store(i,j,ispec_PML) = 0._CUSTOM_REAL
-          alpha_z_store(i,j,ispec_PML) = 0._CUSTOM_REAL
+
+             d_x = 0.d0
+             d_z = 0.d0
+             K_x = 0.d0
+             K_z = 0.d0
+             alpha_x = 0.d0
+             alpha_z = 0.d0
 
              iglob=ibool(i,j,ispec)
              ! abscissa of current grid point along the damping profile
@@ -789,6 +790,13 @@ end subroutine pml_init
                    alpha_z = 0.d0
                    K_z = 1.d0
                 endif
+
+                if(region_CPML(ispec) == CPML_BOTTOM)then
+                   d_x = 0.d0
+                   alpha_x = 0.d0
+                   K_x = 1.d0                   
+                endif
+
              endif
 
 !!!! ---------- top edge
@@ -812,6 +820,13 @@ end subroutine pml_init
                    alpha_z = 0.d0
                    K_z = 1.d0
                 endif
+
+                if(region_CPML(ispec) == CPML_TOP)then
+                   d_x = 0.d0
+                   alpha_x = 0.d0
+                   K_x = 1.d0                   
+                endif
+
              endif
 
 !!!! ---------- right edge
@@ -835,6 +850,13 @@ end subroutine pml_init
                    alpha_x = 0.d0
                    K_x = 1.d0
                 endif
+
+                if(region_CPML(ispec) == CPML_RIGHT)then
+                   d_z = 0.d0
+                   alpha_z = 0.d0
+                   K_z = 1.d0                   
+                endif
+
              endif
 
 !!!! ---------- left edge
@@ -858,6 +880,13 @@ end subroutine pml_init
                    alpha_x = 0.d0
                    K_x = 1.d0
                 endif
+
+                if(region_CPML(ispec) == CPML_LEFT)then
+                   d_z = 0.d0
+                   alpha_z = 0.d0
+                   K_z = 1.d0                   
+                endif
+
              endif
 
        if(CUSTOM_REAL == SIZE_REAL) then
@@ -875,6 +904,65 @@ end subroutine pml_init
           alpha_x_store(i,j,ispec_PML) = alpha_x
           alpha_z_store(i,j,ispec_PML) = alpha_z
        endif
+
+       enddo
+     enddo
+    endif
+ enddo
+
+ do ispec = 1,nspec
+  ispec_PML=spec_to_PML(ispec)
+    if (is_PML(ispec)) then
+       do j=1,NGLLZ
+          do i=1,NGLLX
+               iglob=ibool(i,j,ispec)
+!!!! ---------- bottom edge
+               if (region_CPML(ispec) == CPML_BOTTOM_RIGHT .or. region_CPML(ispec) == CPML_BOTTOM_LEFT .or. &
+                   region_CPML(ispec) == CPML_BOTTOM) then
+!                   write(*,*)K_x_store(i,j,ispec_PML), K_z_store(i,j,ispec_PML),&
+!                             d_x_store(i,j,ispec_PML), d_z_store(i,j,ispec_PML),&
+!                             alpha_x_store(i,j,ispec_PML), alpha_z_store(i,j,ispec_PML),& "zhinan_2"
+
+                   write(*,'(8f15.8,i2,1x,a30)')K_x_store(i,j,ispec_PML), K_z_store(i,j,ispec_PML),&
+                             d_x_store(i,j,ispec_PML), d_z_store(i,j,ispec_PML),&
+                             alpha_x_store(i,j,ispec_PML), alpha_z_store(i,j,ispec_PML),&
+                              coord(1,iglob),coord(2,iglob),region_CPML(ispec), &
+                            "zn_1,BOTTOM_RIGHT,BOTTOM_LEFT,BOTTOM"
+               endif
+
+!!!! ---------- top edge
+               if (region_CPML(ispec) == CPML_TOP_RIGHT .or. region_CPML(ispec) == CPML_TOP_LEFT .or. &
+                   region_CPML(ispec) == CPML_TOP) then
+
+                   write(*,'(8f15.8,i2,1x,a30)')K_x_store(i,j,ispec_PML), K_z_store(i,j,ispec_PML),&
+                             d_x_store(i,j,ispec_PML), d_z_store(i,j,ispec_PML),&
+                             alpha_x_store(i,j,ispec_PML), alpha_z_store(i,j,ispec_PML),&
+                              coord(1,iglob),coord(2,iglob),region_CPML(ispec), &
+                            "zn_2,TOP_RIGHT,TOP_LEFT,TOP"
+               endif
+
+!!!! ---------- right edge
+               if (region_CPML(ispec) == CPML_BOTTOM_RIGHT .or. region_CPML(ispec) == CPML_TOP_RIGHT .or. &
+                   region_CPML(ispec) == CPML_RIGHT) then
+
+                   write(*,'(8f15.8,i2,1x,a30)')K_x_store(i,j,ispec_PML), K_z_store(i,j,ispec_PML),&
+                             d_x_store(i,j,ispec_PML), d_z_store(i,j,ispec_PML),&
+                             alpha_x_store(i,j,ispec_PML), alpha_z_store(i,j,ispec_PML),&
+                              coord(1,iglob),coord(2,iglob),region_CPML(ispec), &
+                            "zn_3,BOTTOM_RIGHT,TOP_RIGHT,RIGHT"
+               endif
+
+!!!! ---------- left edge
+               if (region_CPML(ispec) == CPML_BOTTOM_LEFT .or. region_CPML(ispec) == CPML_TOP_LEFT .or. &
+                   region_CPML(ispec) == CPML_LEFT) then
+
+                   write(*,'(8f15.8,i2,1x,a30)')K_x_store(i,j,ispec_PML), K_z_store(i,j,ispec_PML),&
+                             d_x_store(i,j,ispec_PML), d_z_store(i,j,ispec_PML),&
+                             alpha_x_store(i,j,ispec_PML), alpha_z_store(i,j,ispec_PML),&
+                              coord(1,iglob),coord(2,iglob),region_CPML(ispec), &
+                            "zn_4,BOTTOM_LEFT,TOP_LEFT,LEFT"
+
+               endif
 
        enddo
      enddo
