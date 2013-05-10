@@ -479,12 +479,12 @@ contains
   if(add_Bielak_conditions .and. .not. any_abs) &
     stop 'need STACEY_ABSORBING_CONDITIONS set to .true. in order to use add_Bielak_conditions'
 
+  ! CPML and Stacey are mutually exclusive
+  if(any_abs .and. PML_BOUNDARY_CONDITIONS) &
+    stop 'STACEY_ABSORBING_CONDITIONS and PML_BOUNDARY_CONDITIONS are mutually exclusive but are both set to .true.'
+
   ! solve the conflict in value of PML_BOUNDARY_CONDITIONS and STACEY_ABSORBING_CONDITIONS
   if(PML_BOUNDARY_CONDITIONS) any_abs = .true.
-
-  ! CPML and Stacey are mutually exclusive
-  if(STACEY_ABSORBING_CONDITIONS .and. PML_BOUNDARY_CONDITIONS) &
-    stop 'STACEY_ABSORBING_CONDITIONS and PML_BOUNDARY_CONDITIONS are mutually exclusive but are both set to .true.'
 
   call read_value_logical_p(ADD_SPRING_TO_STACEY, 'solver.ADD_SPRING_TO_STACEY')
   if(err_occurred() /= 0) stop 'error reading parameter 51a in Par_file'
