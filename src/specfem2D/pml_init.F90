@@ -239,56 +239,56 @@
          (which_PML_elem(IRIGHT,ispec)  .eqv. .false.) .and. &
          (which_PML_elem(ITOP,ispec)    .eqv. .false.) .and. &
          (which_PML_elem(IBOTTOM,ispec) .eqv. .false.) ) then
-         region_CPML(ispec) = CPML_LEFT
+         region_CPML(ispec) = CPML_X_ONLY
 ! element is in the right cpml layer
        else if( &
          (which_PML_elem(ILEFT,ispec)   .eqv. .false.) .and. &
          (which_PML_elem(IRIGHT,ispec)  .eqv. .true.)  .and. &
          (which_PML_elem(ITOP,ispec)    .eqv. .false.) .and. &
          (which_PML_elem(IBOTTOM,ispec) .eqv. .false.) ) then
-         region_CPML(ispec) = CPML_RIGHT
+         region_CPML(ispec) = CPML_X_ONLY
 ! element is in the top cpml layer
        else if( &
          (which_PML_elem(ILEFT,ispec)   .eqv. .false.) .and. &
          (which_PML_elem(IRIGHT,ispec)  .eqv. .false.) .and. &
          (which_PML_elem(ITOP,ispec)    .eqv. .true. ) .and. &
          (which_PML_elem(IBOTTOM,ispec) .eqv. .false.) ) then
-         region_CPML(ispec) = CPML_TOP
+         region_CPML(ispec) = CPML_Y_ONLY
 ! element is in the bottom cpml layer
        else if( &
          (which_PML_elem(ILEFT,ispec)   .eqv. .false.) .and. &
          (which_PML_elem(IRIGHT,ispec)  .eqv. .false.) .and. &
          (which_PML_elem(ITOP,ispec)    .eqv. .false.) .and. &
          (which_PML_elem(IBOTTOM,ispec) .eqv. .true. ) ) then
-         region_CPML(ispec) = CPML_BOTTOM
+         region_CPML(ispec) = CPML_Y_ONLY
 ! element is in the left-top cpml corner
        else if( &
          (which_PML_elem(ILEFT,ispec)   .eqv. .true.  ).and. &
          (which_PML_elem(IRIGHT,ispec)  .eqv. .false. ).and. &
          (which_PML_elem(ITOP,ispec)    .eqv. .true.  ).and. &
          (which_PML_elem(IBOTTOM,ispec) .eqv. .false. )) then
-         region_CPML(ispec) = CPML_TOP_LEFT
+         region_CPML(ispec) = CPML_XY_ONLY
 ! element is in the right-top cpml corner
        else if( &
          (which_PML_elem(ILEFT,ispec)   .eqv. .false. ).and. &
          (which_PML_elem(IRIGHT,ispec)  .eqv. .true.  ).and. &
          (which_PML_elem(ITOP,ispec)    .eqv. .true.  ).and. &
          (which_PML_elem(IBOTTOM,ispec) .eqv. .false. )) then
-         region_CPML(ispec) = CPML_TOP_RIGHT
+         region_CPML(ispec) = CPML_XY_ONLY
 ! element is in the left-bottom cpml corner
        else if( &
          (which_PML_elem(ILEFT,ispec)   .eqv. .true.  ).and. &
          (which_PML_elem(IRIGHT,ispec)  .eqv. .false. ).and. &
          (which_PML_elem(ITOP,ispec)    .eqv. .false. ).and. &
          (which_PML_elem(IBOTTOM,ispec) .eqv. .true.  )) then
-         region_CPML(ispec) = CPML_BOTTOM_LEFT
+         region_CPML(ispec) = CPML_XY_ONLY
 ! element is in the right-bottom cpml corner
        else if( &
          (which_PML_elem(ILEFT,ispec)   .eqv. .false. ).and. &
          (which_PML_elem(IRIGHT,ispec)  .eqv. .true.  ).and. &
          (which_PML_elem(ITOP,ispec)    .eqv. .false. ).and. &
          (which_PML_elem(IBOTTOM,ispec) .eqv. .true.  )) then
-         region_CPML(ispec) = CPML_BOTTOM_RIGHT
+         region_CPML(ispec) = CPML_XY_ONLY
        else
          region_CPML(ispec) = 0
        endif
@@ -548,7 +548,7 @@ end subroutine pml_init
        thickness_PML_z_bottom,thickness_PML_x_right,&
        thickness_PML_z_top,thickness_PML_x_left
 
-  double precision :: xmin, xmax, zmin, zmax, vpmax, xval, zval
+  double precision :: xmin, xmax, zmin, zmax, xorigin, zorigin, vpmax, xval, zval
   double precision :: xoriginleft, xoriginright, zorigintop, zoriginbottom
 
 #ifdef USE_MPI
@@ -594,7 +594,9 @@ end subroutine pml_init
   zmin = minval(coord(2,:))
   xmax = maxval(coord(1,:))
   zmax = maxval(coord(2,:))
-
+  xorigin = xmin + (xmax - xmin)/2.d0
+  zorigin = zmin + (zmax - zmin)/2.d0
+  if(zmax - zmin < 0.0 .or. xmax - xmin < 0.0) stop 'there are errors in the mesh'
 #ifdef USE_MPI
   call MPI_ALLREDUCE (xmin, xmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE (zmin, zmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
@@ -603,7 +605,10 @@ end subroutine pml_init
   xmin = xmin_glob
   zmin = zmin_glob
   xmax = xmax_glob
-  zmax = zmax_glob
+  zmax = zmax_glob  
+  call MPI_BARRIER(MPI_COMM_WORLD,ier)
+  xorigin = xmin + (xmax - xmin)/2.d0
+  zorigin = zmin + (zmax - zmin)/2.d0  
 #endif
 
    thickness_PML_z_min_bottom=1.d30
@@ -624,31 +629,32 @@ end subroutine pml_init
             do i=1,NGLLX
 
 !!!bottom_case
-               if (region_CPML(ispec) == CPML_BOTTOM_RIGHT .or. region_CPML(ispec) == CPML_BOTTOM_LEFT .or. &
-                   region_CPML(ispec) == CPML_BOTTOM) then
-                  thickness_PML_z_max_bottom=max(coord(2,ibool(i,j,ispec)),thickness_PML_z_max_bottom)
-                  thickness_PML_z_min_bottom=min(coord(2,ibool(i,j,ispec)),thickness_PML_z_min_bottom)
-               endif
-
+               if(coord(2,ibool(i,j,ispec)) < zorigin) then
+                 if (region_CPML(ispec) == CPML_Y_ONLY  .or. region_CPML(ispec) == CPML_XY_ONLY) then
+                    thickness_PML_z_max_bottom=max(coord(2,ibool(i,j,ispec)),thickness_PML_z_max_bottom)
+                    thickness_PML_z_min_bottom=min(coord(2,ibool(i,j,ispec)),thickness_PML_z_min_bottom)
+                 endif
+               endif 
 !!!right case
-               if (region_CPML(ispec) == CPML_BOTTOM_RIGHT .or. region_CPML(ispec) == CPML_TOP_RIGHT .or. &
-                   region_CPML(ispec) == CPML_RIGHT) then
-                  thickness_PML_x_max_right=max(coord(1,ibool(i,j,ispec)),thickness_PML_x_max_right)
-                  thickness_PML_x_min_right=min(coord(1,ibool(i,j,ispec)),thickness_PML_x_min_right)
-               endif
-
+               if(coord(1,ibool(i,j,ispec)) > xorigin) then
+                 if (region_CPML(ispec) == CPML_X_ONLY  .or. region_CPML(ispec) == CPML_XY_ONLY) then
+                    thickness_PML_x_max_right=max(coord(1,ibool(i,j,ispec)),thickness_PML_x_max_right)
+                    thickness_PML_x_min_right=min(coord(1,ibool(i,j,ispec)),thickness_PML_x_min_right)
+                 endif
+               endif 
 !!!top case
-               if (region_CPML(ispec) == CPML_TOP_RIGHT .or. region_CPML(ispec) == CPML_TOP_LEFT .or. &
-                   region_CPML(ispec) == CPML_TOP) then
-                  thickness_PML_z_max_top=max(coord(2,ibool(i,j,ispec)),thickness_PML_z_max_top)
-                  thickness_PML_z_min_top=min(coord(2,ibool(i,j,ispec)),thickness_PML_z_min_top)
+               if(coord(2,ibool(i,j,ispec)) > zorigin) then
+                 if (region_CPML(ispec) == CPML_Y_ONLY  .or. region_CPML(ispec) == CPML_XY_ONLY) then
+                    thickness_PML_z_max_top=max(coord(2,ibool(i,j,ispec)),thickness_PML_z_max_top)
+                    thickness_PML_z_min_top=min(coord(2,ibool(i,j,ispec)),thickness_PML_z_min_top)
+                 endif
                endif
-
 !!!left case
-               if (region_CPML(ispec) == CPML_BOTTOM_LEFT .or. region_CPML(ispec) == CPML_TOP_LEFT .or. &
-                   region_CPML(ispec) == CPML_LEFT) then
-                  thickness_PML_x_max_left=max(coord(1,ibool(i,j,ispec)),thickness_PML_x_max_left)
-                  thickness_PML_x_min_left=min(coord(1,ibool(i,j,ispec)),thickness_PML_x_min_left)
+               if(coord(1,ibool(i,j,ispec)) < xorigin) then
+                 if (region_CPML(ispec) == CPML_X_ONLY  .or. region_CPML(ispec) == CPML_XY_ONLY) then
+                    thickness_PML_x_max_left=max(coord(1,ibool(i,j,ispec)),thickness_PML_x_max_left)
+                    thickness_PML_x_min_left=min(coord(1,ibool(i,j,ispec)),thickness_PML_x_min_left)
+                 endif
                endif
 
             enddo
@@ -764,129 +770,133 @@ end subroutine pml_init
              zval = coord(2,iglob)
 
 !!!! ---------- bottom edge
-               if (region_CPML(ispec) == CPML_BOTTOM_RIGHT .or. region_CPML(ispec) == CPML_BOTTOM_LEFT .or. &
-                   region_CPML(ispec) == CPML_BOTTOM) then
-                ! define damping profile at the grid points
-                abscissa_in_PML = zoriginbottom - zval
-                if(abscissa_in_PML >= 0.d0) then
-                   abscissa_normalized = abscissa_in_PML / thickness_PML_z_bottom
+               if(zval < zorigin) then
+                 if (region_CPML(ispec) == CPML_Y_ONLY  .or. region_CPML(ispec) == CPML_XY_ONLY) then
+                  ! define damping profile at the grid points
+                  abscissa_in_PML = zoriginbottom - zval
+                  if(abscissa_in_PML >= 0.d0) then
+                     abscissa_normalized = abscissa_in_PML / thickness_PML_z_bottom
 
-                   d_z = d0_z_bottom / damping_modified_factor * abscissa_normalized**NPOWER
+                     d_z = d0_z_bottom / damping_modified_factor * abscissa_normalized**NPOWER
 
 !DK DK we keep the equation to define an nonconstant alpha_z in case user needed,
 !However for users who want to use nonconstant alpha_z, you also need to change
 !routines for CMPL computation. For example in compute_forces_viscoelastic.f90
 
-!                   alpha_z = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
-!                   + ALPHA_MAX_PML / 2.d0
+!                     alpha_z = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
+!                     + ALPHA_MAX_PML / 2.d0
 
 !DK DK Here we set alpha_z=alpha_x=const where alpha_z or alpha_x is nonzero
 
-                   alpha_z = ALPHA_MAX_PML / 2.d0
+                     alpha_z = ALPHA_MAX_PML / 2.d0
 
-                   K_z = 1.d0 + (K_MAX_PML - 1.d0) * abscissa_normalized**NPOWER
-                else
-                   d_z = 0.d0
-                   alpha_z = 0.d0
-                   K_z = 1.d0
-                endif
+                     K_z = 1.d0 + (K_MAX_PML - 1.d0) * abscissa_normalized**NPOWER
+                  else
+                     d_z = 0.d0
+                     alpha_z = 0.d0
+                     K_z = 1.d0
+                  endif
 
-                if(region_CPML(ispec) == CPML_BOTTOM)then
-                   d_x = 0.d0
-                   alpha_x = 0.d0
-                   K_x = 1.d0                   
-                endif
+                  if(region_CPML(ispec) == CPML_Y_ONLY)then
+                     d_x = 0.d0
+                     alpha_x = 0.d0
+                     K_x = 1.d0                   
+                  endif
 
+               endif
              endif
 
 !!!! ---------- top edge
-               if (region_CPML(ispec) == CPML_TOP_RIGHT .or. region_CPML(ispec) == CPML_TOP_LEFT .or. &
-                   region_CPML(ispec) == CPML_TOP) then
-                ! define damping profile at the grid points
-                abscissa_in_PML = zval - zorigintop
-                if(abscissa_in_PML >= 0.d0) then
-                   abscissa_normalized = abscissa_in_PML / thickness_PML_z_top
+               if(zval > zorigin) then
+                 if (region_CPML(ispec) == CPML_Y_ONLY  .or. region_CPML(ispec) == CPML_XY_ONLY) then
+                  ! define damping profile at the grid points
+                  abscissa_in_PML = zval - zorigintop
+                  if(abscissa_in_PML >= 0.d0) then
+                     abscissa_normalized = abscissa_in_PML / thickness_PML_z_top
+  
+                     d_z = d0_z_top / damping_modified_factor * abscissa_normalized**NPOWER
 
-                   d_z = d0_z_top / damping_modified_factor * abscissa_normalized**NPOWER
+!                    alpha_z = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
+!                    + ALPHA_MAX_PML / 2.d0
 
-!                   alpha_z = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
-!                   + ALPHA_MAX_PML / 2.d0
+                     alpha_z = ALPHA_MAX_PML / 2.d0
 
-                   alpha_z = ALPHA_MAX_PML / 2.d0
+                     K_z = 1.d0 + (K_MAX_PML - 1.d0) * abscissa_normalized**NPOWER
+                  else
+                     d_z = 0.d0
+                     alpha_z = 0.d0
+                     K_z = 1.d0
+                  endif
 
-                   K_z = 1.d0 + (K_MAX_PML - 1.d0) * abscissa_normalized**NPOWER
-                else
-                   d_z = 0.d0
-                   alpha_z = 0.d0
-                   K_z = 1.d0
-                endif
+                  if(region_CPML(ispec) == CPML_Y_ONLY)then
+                     d_x = 0.d0
+                     alpha_x = 0.d0
+                     K_x = 1.d0                   
+                  endif
 
-                if(region_CPML(ispec) == CPML_TOP)then
-                   d_x = 0.d0
-                   alpha_x = 0.d0
-                   K_x = 1.d0                   
-                endif
-
+               endif
              endif
 
 !!!! ---------- right edge
-               if (region_CPML(ispec) == CPML_BOTTOM_RIGHT .or. region_CPML(ispec) == CPML_TOP_RIGHT .or. &
-                   region_CPML(ispec) == CPML_RIGHT) then
-                ! define damping profile at the grid points
-                abscissa_in_PML = xval - xoriginright
-                if(abscissa_in_PML >= 0.d0) then
-                   abscissa_normalized = abscissa_in_PML / thickness_PML_x_right
+               if(xval > xorigin) then
+                 if (region_CPML(ispec) == CPML_X_ONLY  .or. region_CPML(ispec) == CPML_XY_ONLY) then
+                  ! define damping profile at the grid points
+                  abscissa_in_PML = xval - xoriginright
+                  if(abscissa_in_PML >= 0.d0) then
+                     abscissa_normalized = abscissa_in_PML / thickness_PML_x_right
 
-                   d_x = d0_x_right / damping_modified_factor * abscissa_normalized**NPOWER
+                     d_x = d0_x_right / damping_modified_factor * abscissa_normalized**NPOWER
 
-!                   alpha_x = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
-!                   + ALPHA_MAX_PML / 2.d0
+!                    alpha_x = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
+!                    + ALPHA_MAX_PML / 2.d0
 
-                   alpha_x = ALPHA_MAX_PML / 2.d0
+                     alpha_x = ALPHA_MAX_PML / 2.d0
 
-                   K_x = 1.d0 + (K_MAX_PML - 1.d0) * abscissa_normalized**NPOWER
-                else
-                   d_x = 0.d0
-                   alpha_x = 0.d0
-                   K_x = 1.d0
-                endif
+                     K_x = 1.d0 + (K_MAX_PML - 1.d0) * abscissa_normalized**NPOWER
+                  else
+                     d_x = 0.d0
+                     alpha_x = 0.d0
+                     K_x = 1.d0
+                  endif
 
-                if(region_CPML(ispec) == CPML_RIGHT)then
-                   d_z = 0.d0
-                   alpha_z = 0.d0
-                   K_z = 1.d0                   
-                endif
+                  if(region_CPML(ispec) == CPML_X_ONLY)then
+                     d_z = 0.d0
+                     alpha_z = 0.d0
+                     K_z = 1.d0                   
+                  endif
 
+               endif
              endif
 
 !!!! ---------- left edge
-               if (region_CPML(ispec) == CPML_BOTTOM_LEFT .or. region_CPML(ispec) == CPML_TOP_LEFT .or. &
-                   region_CPML(ispec) == CPML_LEFT) then
-                ! define damping profile at the grid points
-                abscissa_in_PML = xoriginleft - xval
-                if(abscissa_in_PML >= 0.d0) then
-                   abscissa_normalized = abscissa_in_PML / thickness_PML_x_left
+               if(xval < xorigin) then
+                 if (region_CPML(ispec) == CPML_X_ONLY  .or. region_CPML(ispec) == CPML_XY_ONLY) then
+                  ! define damping profile at the grid points
+                  abscissa_in_PML = xoriginleft - xval
+                  if(abscissa_in_PML >= 0.d0) then
+                     abscissa_normalized = abscissa_in_PML / thickness_PML_x_left
 
-                   d_x = d0_x_left / damping_modified_factor * abscissa_normalized**NPOWER
+                     d_x = d0_x_left / damping_modified_factor * abscissa_normalized**NPOWER
 
-!                   alpha_x = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
-!                   + ALPHA_MAX_PML / 2.d0
+!                    alpha_x = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
+!                    + ALPHA_MAX_PML / 2.d0
 
-                   alpha_x = ALPHA_MAX_PML / 2.d0
+                     alpha_x = ALPHA_MAX_PML / 2.d0
 
-                   K_x = 1.d0 + (K_MAX_PML - 1.d0) * abscissa_normalized**NPOWER
-                else
-                   d_x = 0.d0
-                   alpha_x = 0.d0
-                   K_x = 1.d0
-                endif
+                     K_x = 1.d0 + (K_MAX_PML - 1.d0) * abscissa_normalized**NPOWER
+                  else
+                     d_x = 0.d0
+                     alpha_x = 0.d0
+                     K_x = 1.d0
+                  endif
 
-                if(region_CPML(ispec) == CPML_LEFT)then
-                   d_z = 0.d0
-                   alpha_z = 0.d0
-                   K_z = 1.d0                   
-                endif
+                  if(region_CPML(ispec) == CPML_X_ONLY)then
+                     d_z = 0.d0
+                     alpha_z = 0.d0
+                     K_z = 1.d0                   
+                  endif
 
+               endif
              endif
 
        if(CUSTOM_REAL == SIZE_REAL) then
