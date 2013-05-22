@@ -5046,93 +5046,81 @@ if(coupled_elastic_poro) then
           do i=1,NGLLX
 
             iglob = ibool(i,j,ispec)
-
             viscox_loc(i,j) = velocw_poroelastic(1,iglob)*bl_unrelaxed_elastic(1) + &
                                velocw_poroelastic(2,iglob) * bl_unrelaxed_elastic(2)
             viscoz_loc(i,j) = velocw_poroelastic(1,iglob)*bl_unrelaxed_elastic(2) + &
                                velocw_poroelastic(2,iglob)*bl_unrelaxed_elastic(3)
 
             if(time_stepping_scheme == 1) then
-            ! evolution rx_viscous
-            Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
-            Snp1 = - (1.d0 - theta_e/theta_s)/theta_s*viscox_loc(i,j)
-            rx_viscous(i,j,ispec) = alphaval * rx_viscous(i,j,ispec) &
-                                  + betaval * Sn + gammaval * Snp1
+              ! evolution rx_viscous
+              Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
+              Snp1 = - (1.d0 - theta_e/theta_s)/theta_s*viscox_loc(i,j)
+              rx_viscous(i,j,ispec) = alphaval * rx_viscous(i,j,ispec) &
+                                    + betaval * Sn + gammaval * Snp1
 
-            ! evolution rz_viscous
-            Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
-            Snp1 = - (1.d0 - theta_e/theta_s)/theta_s*viscoz_loc(i,j)
-            rz_viscous(i,j,ispec) = alphaval * rz_viscous(i,j,ispec) &
-                                  + betaval * Sn + gammaval * Snp1
+              ! evolution rz_viscous
+              Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
+              Snp1 = - (1.d0 - theta_e/theta_s)/theta_s*viscoz_loc(i,j)
+              rz_viscous(i,j,ispec) = alphaval * rz_viscous(i,j,ispec) &
+                                    + betaval * Sn + gammaval * Snp1
             endif
 
             if(time_stepping_scheme == 2) then
-            Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
-      rx_viscous_LDDRK(i,j,ispec)= alpha_LDDRK(i_stage) * rx_viscous_LDDRK(i,j,ispec)+&
-                                             deltat * (Sn + thetainv * rx_viscous(i,j,ispec))
-      rx_viscous(i,j,ispec)= rx_viscous(i,j,ispec)+beta_LDDRK(i_stage) * rx_viscous_LDDRK(i,j,ispec)
+              Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
+              rx_viscous_LDDRK(i,j,ispec) = alpha_LDDRK(i_stage) * rx_viscous_LDDRK(i,j,ispec) + &
+                                            deltat * (Sn + thetainv * rx_viscous(i,j,ispec))
+              rx_viscous(i,j,ispec)= rx_viscous(i,j,ispec)+beta_LDDRK(i_stage) * rx_viscous_LDDRK(i,j,ispec)
 
-            Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
-      rz_viscous_LDDRK(i,j,ispec)= alpha_LDDRK(i_stage) * rz_viscous_LDDRK(i,j,ispec)+&
-                                             deltat * (Sn + thetainv * rz_viscous(i,j,ispec))
-      rz_viscous(i,j,ispec)= rz_viscous(i,j,ispec)+beta_LDDRK(i_stage) * rz_viscous_LDDRK(i,j,ispec)
-
+              Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
+              rz_viscous_LDDRK(i,j,ispec)= alpha_LDDRK(i_stage) * rz_viscous_LDDRK(i,j,ispec)+&
+                                           deltat * (Sn + thetainv * rz_viscous(i,j,ispec))
+              rz_viscous(i,j,ispec)= rz_viscous(i,j,ispec)+beta_LDDRK(i_stage) * rz_viscous_LDDRK(i,j,ispec)
             endif
 
             if(time_stepping_scheme == 3) then
 
-                      Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
-                rx_viscous_force_RK(i,j,ispec,i_stage) = deltat * (Sn + thetainv * rx_viscous(i,j,ispec))
+              Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
+              rx_viscous_force_RK(i,j,ispec,i_stage) = deltat * (Sn + thetainv * rx_viscous(i,j,ispec))
 
-                      if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
-                        if(i_stage == 1)weight_rk = 0.5d0
-                        if(i_stage == 2)weight_rk = 0.5d0
-            if(i_stage == 3)weight_rk = 1.0d0
+              if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+                if(i_stage == 1)weight_rk = 0.5d0
+                if(i_stage == 2)weight_rk = 0.5d0
+                if(i_stage == 3)weight_rk = 1.0d0
 
-            if(i_stage==1)then
+                if(i_stage==1)then
+                  rx_viscous_initial_rk(i,j,ispec) = rx_viscous(i,j,ispec)
+                endif
+                  rx_viscous(i,j,ispec) = rx_viscous_initial_rk(i,j,ispec) + &
+                                          weight_rk * rx_viscous_force_RK(i,j,ispec,i_stage)
+              else if(i_stage==4)then
 
-            rx_viscous_initial_rk(i,j,ispec) = rx_viscous(i,j,ispec)
+                rx_viscous(i,j,ispec) = rx_viscous_initial_rk(i,j,ispec) + &
+                                        1.0d0 / 6.0d0 * (rx_viscous_force_RK(i,j,ispec,i_stage) + &
+                                        2.0d0 * rx_viscous_force_RK(i,j,ispec,i_stage) + &
+                                        2.0d0 * rx_viscous_force_RK(i,j,ispec,i_stage) + &
+                                        rx_viscous_force_RK(i,j,ispec,i_stage))
+              endif
 
+              Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
+              rz_viscous_force_RK(i,j,ispec,i_stage) = deltat * (Sn + thetainv * rz_viscous(i,j,ispec))
+
+              if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+                if(i_stage == 1)weight_rk = 0.5d0
+                if(i_stage == 2)weight_rk = 0.5d0
+                if(i_stage == 3)weight_rk = 1.0d0
+                if(i_stage==1)then
+                  rz_viscous_initial_rk(i,j,ispec) = rz_viscous(i,j,ispec)
+                endif
+                rz_viscous(i,j,ispec) = rz_viscous_initial_rk(i,j,ispec) + &
+                                        weight_rk * rz_viscous_force_RK(i,j,ispec,i_stage)
+              else if(i_stage==4)then
+                rz_viscous(i,j,ispec) = rz_viscous_initial_rk(i,j,ispec) + &
+                                        1.0d0 / 6.0d0 * (rz_viscous_force_RK(i,j,ispec,i_stage) + &
+                                        2.0d0 * rz_viscous_force_RK(i,j,ispec,i_stage) + &
+                                        2.0d0 * rz_viscous_force_RK(i,j,ispec,i_stage) + &
+                                        rz_viscous_force_RK(i,j,ispec,i_stage))
+              endif
             endif
-
-      rx_viscous(i,j,ispec) = rx_viscous_initial_rk(i,j,ispec) + weight_rk * rx_viscous_force_RK(i,j,ispec,i_stage)
-
-
-                else if(i_stage==4)then
-
-            rx_viscous(i,j,ispec) = rx_viscous_initial_rk(i,j,ispec) + 1.0d0 / 6.0d0 * &
-            (rx_viscous_force_RK(i,j,ispec,i_stage) + 2.0d0 * rx_viscous_force_RK(i,j,ispec,i_stage) + &
-             2.0d0 * rx_viscous_force_RK(i,j,ispec,i_stage) + rx_viscous_force_RK(i,j,ispec,i_stage))
-
-               endif
-
-                      Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
-                rz_viscous_force_RK(i,j,ispec,i_stage) = deltat * (Sn + thetainv * rz_viscous(i,j,ispec))
-
-                      if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
-                        if(i_stage == 1)weight_rk = 0.5d0
-                        if(i_stage == 2)weight_rk = 0.5d0
-            if(i_stage == 3)weight_rk = 1.0d0
-
-            if(i_stage==1)then
-
-            rz_viscous_initial_rk(i,j,ispec) = rz_viscous(i,j,ispec)
-
-            endif
-
-      rz_viscous(i,j,ispec) = rz_viscous_initial_rk(i,j,ispec) + weight_rk * rz_viscous_force_RK(i,j,ispec,i_stage)
-
-
-                else if(i_stage==4)then
-
-            rz_viscous(i,j,ispec) = rz_viscous_initial_rk(i,j,ispec) + 1.0d0 / 6.0d0 * &
-            (rz_viscous_force_RK(i,j,ispec,i_stage) + 2.0d0 * rz_viscous_force_RK(i,j,ispec,i_stage) + &
-             2.0d0 * rz_viscous_force_RK(i,j,ispec,i_stage) + rz_viscous_force_RK(i,j,ispec,i_stage))
-
-               endif
-
-            endif
-
           enddo
         enddo
 
