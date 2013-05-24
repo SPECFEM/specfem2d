@@ -68,7 +68,7 @@
   real(kind=CUSTOM_REAL),dimension(NSOURCES,NSTEP,stage_time_scheme) :: source_time_function
 
   ! local parameters
-  double precision :: stf_used, time, DecT, Tc, omegat
+  double precision :: stf_used, time, DecT, Tc, omegat, omega_coa
   double precision, dimension(NSOURCES) :: hdur,hdur_gauss
   double precision, external :: netlib_specfun_erf
   integer :: it,i_source
@@ -162,9 +162,12 @@
         if ( time > DecT .and. time < Tc ) then
 
            ! source time function from Computational Ocean Acoustics
-           omegat = TWO * PI * f0(i_source) * ( time - DecT )
+           omega_coa = TWO * PI * f0(i_source)
+           omegat =  omega_coa * ( time - DecT )
            source_time_function(i_source,it,i_stage) = factor(i_source) * HALF * &
                  sin( omegat ) * ( ONE - cos( QUART * omegat ) )
+           !source_time_function(i_source,it,i_stage) = - factor(i_source) * HALF / omega_coa / omega_coa * &
+           !      ( sin(omegat) - 8.d0 / 9.d0 * sin(3.d0/ 4.d0 * omegat) - 8.d0 / 25.d0 * sin(5.d0 / 4.d0 * omegat) )
 
         else
 
@@ -179,14 +182,15 @@
 
       stf_used = stf_used + source_time_function(i_source,it,i_stage)
 
+      ! output relative time in third column, in case user wants to check it as well
+      ! if (myrank == 0 .and. i_source == 1) write(55,*) sngl(time-t0-tshift_src(1)),real(source_time_function(1,it),4),sngl(time)
+      if (myrank == 0 .and. i_source == 1 .and. i_stage == 1) then
+          ! note: earliest start time of the simulation is: (it-1)*deltat - t0
+          write(55,*) sngl(time-t0),sngl(stf_used),sngl(time)
+      endif
+
     enddo
 
-    ! output relative time in third column, in case user wants to check it as well
-    ! if (myrank == 0 .and. i_source == 1) write(55,*) sngl(time-t0-tshift_src(1)),real(source_time_function(1,it),4),sngl(time)
-    if (myrank == 0 .and. i_source == 1 .and. i_stage == 1) then
-        ! note: earliest start time of the simulation is: (it-1)*deltat - t0
-        write(55,*) sngl(time-t0),sngl(stf_used),sngl(time)
-    endif
 
     enddo
 
