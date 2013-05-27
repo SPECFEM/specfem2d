@@ -941,5 +941,70 @@
     enddo
   endif  ! end of absorbing boundaries
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!--- absorbing boundaries
+!
+ if( PML_BOUNDARY_CONDITIONS .and. anyabs) then
+
+! we have to put Dirichlet on the boundary of the PML
+   do ispecabs = 1,nelemabs
+
+     ispec = numabs(ispecabs)
+
+     if (is_PML(ispec)) then
+      ispec_PML=spec_to_PML(ispec)  
+!--- left absorbing boundary
+      if(codeabs(IEDGE4,ispecabs)) then
+        i = 1
+        do j = 1,NGLLZ
+          iglob = ibool(i,j,ispec)
+          potential_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
+       enddo
+      endif
+!--- right absorbing boundary
+      if(codeabs(IEDGE2,ispecabs)) then
+        i = NGLLX
+        do j = 1,NGLLZ
+          iglob = ibool(i,j,ispec)
+          potential_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
+        enddo
+
+      endif
+!--- bottom absorbing boundary
+      if(codeabs(IEDGE1,ispecabs)) then
+        j = 1
+! exclude corners to make sure there is no contradiction on the normal
+        ibegin = 1
+        iend = NGLLX
+        do i = ibegin,iend
+          iglob = ibool(i,j,ispec)
+          potential_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
+        enddo
+      endif
+!--- top absorbing boundary
+      if(codeabs(IEDGE3,ispecabs)) then
+        j = NGLLZ
+! exclude corners to make sure there is no contradiction on the normal
+        ibegin = 1
+        iend = NGLLX
+        do i = ibegin,iend
+          iglob = ibool(i,j,ispec)
+          potential_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
+        enddo
+      endif  !  end of top absorbing boundary
+      endif ! end of is_PML
+    enddo ! end specabs loop
+  endif  ! end of absorbing boundaries PML_BOUNDARY_CONDITIONS
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
   end subroutine compute_forces_acoustic
 
