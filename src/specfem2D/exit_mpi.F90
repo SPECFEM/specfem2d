@@ -46,11 +46,11 @@
 !-----------------------------------------------
 subroutine exit_MPI(error_msg)
 
-  implicit none
 #ifdef USE_MPI
   ! standard include of the MPI library
-  include "mpif.h"
+  use :: mpi
 #endif
+  implicit none
 
   ! identifier for error message file
   integer, parameter :: IERROR = 30

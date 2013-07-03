@@ -59,10 +59,11 @@
 
 ! sets up the MPI interface for communication between partitions
 
+  use :: mpi
+
   implicit none
 
   include "constants.h"
-  include 'mpif.h'
 
   integer, intent(in)  :: nspec, nglob, ngnod
   logical, dimension(nspec), intent(in)  :: elastic, poroelastic

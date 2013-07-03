@@ -50,12 +50,13 @@
                ispec_selected_source,is_proc_source,nb_proc_source,nproc,myrank, &
                xi_source,gamma_source,coorg,knods,ngnod,npgeo,ipass,iglob_source)
 
+#ifdef USE_MPI
+  use :: mpi
+#endif
+
   implicit none
 
   include "constants.h"
-#ifdef USE_MPI
-  include "mpif.h"
-#endif
 
   integer nspec,nglob,ngnod,npgeo,ipass
 

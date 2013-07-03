@@ -53,11 +53,11 @@
 
 ! checks simulation stability and outputs timerun infos
 
+#ifdef USE_MPI
+  use :: mpi
+#endif
   implicit none
   include "constants.h"
-#ifdef USE_MPI
-  include "mpif.h"
-#endif
 
   integer :: myrank,it,NSTEP,NOISE_TOMOGRAPHY
 

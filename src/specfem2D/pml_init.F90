@@ -47,12 +47,12 @@
                     read_external_mesh,region_CPML,&
                     SIMULATION_TYPE,PML_interior_interface,nglob_interface,SAVE_FORWARD,myrank,mask_ibool)
 
+#ifdef USE_MPI
+  use :: mpi
+#endif
+
   implicit none
   include 'constants.h'
-
-#ifdef USE_MPI
-  include 'mpif.h'
-#endif
 
   integer :: SIMULATION_TYPE,nglob_interface,myrank
 

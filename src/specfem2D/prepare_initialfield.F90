@@ -51,11 +51,11 @@
                         A_plane, B_plane, C_plane, &
                         accel_elastic,veloc_elastic,displ_elastic)
 
+#ifdef USE_MPI
+  use :: mpi
+#endif
   implicit none
   include "constants.h"
-#ifdef USE_MPI
-  include "mpif.h"
-#endif
 
   integer :: myrank
   logical :: any_acoustic,any_poroelastic

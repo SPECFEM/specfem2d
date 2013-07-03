@@ -50,6 +50,10 @@
       st_zval,x_source,z_source,SU_FORMAT,save_ASCII_seismograms, &
       save_binary_seismograms_single,save_binary_seismograms_double,subsamp_seismos)
 
+#ifdef USE_MPI
+  use :: mpi
+#endif
+
   implicit none
 
 ! uncomment this to save the ASCII *.sem* seismograms in binary instead, to save disk space and/or writing time
@@ -58,9 +62,6 @@
 ! #define PAUL_SAVE_ASCII_IN_BINARY
 
   include "constants.h"
-#ifdef USE_MPI
-  include "mpif.h"
-#endif
 
   integer :: nrec,NSTEP,seismotype,subsamp_seismos
   integer :: NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current

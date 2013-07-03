@@ -65,10 +65,11 @@
                               nibool_interfaces_acoustic,nibool_interfaces_elastic, &
                               nibool_interfaces_poroelastic,my_neighbours)
 
+  use :: mpi
+
   implicit none
 
   include 'constants.h'
-  include 'mpif.h'
 
   integer, intent(in)  :: ninterface
   integer, intent(in)  :: max_interface_size
@@ -229,10 +230,11 @@
                                  buffer_recv_faces_vector_ac, &
                                  my_neighbours )
 
+  use :: mpi
+
   implicit none
 
   include 'constants.h'
-  include 'mpif.h'
   include 'precision.h'
 
   integer, intent(in)  :: npoin
@@ -358,10 +360,11 @@
                                    buffer_recv_faces_vector_el, &
                                    my_neighbours)
 
+  use :: mpi
+
   implicit none
 
   include 'constants.h'
-  include 'mpif.h'
   include 'precision.h'
 
   integer, intent(in)  :: npoin
@@ -465,10 +468,11 @@
                            buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
                            my_neighbours)
 
+  use :: mpi
+
   implicit none
 
   include 'constants.h'
-  include 'mpif.h'
   include 'precision.h'
 
   integer, intent(in)  :: npoin

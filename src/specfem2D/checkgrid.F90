@@ -54,12 +54,13 @@
 
 ! check the mesh, stability and number of points per wavelength
 
+#ifdef USE_MPI
+  use :: mpi
+#endif
+
   implicit none
 
   include "constants.h"
-#ifdef USE_MPI
-  include 'mpif.h'
-#endif
 
 ! option to display only part of the mesh and not the whole mesh,
 ! for instance to analyze Cuthill-McKee mesh partitioning etc.

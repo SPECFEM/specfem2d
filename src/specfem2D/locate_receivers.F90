@@ -54,12 +54,13 @@
                           coorg,knods,ngnod,npgeo,ipass, &
                           x_final_receiver, z_final_receiver)
 
+#ifdef USE_MPI
+  use :: mpi
+#endif
+
   implicit none
 
   include "constants.h"
-#ifdef USE_MPI
-  include "mpif.h"
-#endif
 
   integer nrec,nspec,nglob,ngnod,npgeo,ipass
   integer, intent(in)  :: nproc, myrank

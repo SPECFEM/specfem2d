@@ -687,12 +687,12 @@
 
 ! reads in absorbing edges
 
+#ifdef USE_MPI
+  use :: mpi
+#endif
+
   implicit none
   include "constants.h"
-
-#ifdef USE_MPI
-  include 'mpif.h'
-#endif
 
   integer :: myrank,ipass,nspec
   integer :: nelemabs
