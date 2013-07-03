@@ -47,11 +47,11 @@
   subroutine initialize_simulation(nproc,myrank,NUMBER_OF_PASSES, &
                   ninterface_acoustic,ninterface_elastic,ninterface_poroelastic)
 
+#ifdef USE_MPI
+  use :: mpi
+#endif
   implicit none
   include "constants.h"
-#ifdef USE_MPI
-  include "mpif.h"
-#endif
 
   integer :: nproc,myrank,NUMBER_OF_PASSES
   integer :: ninterface_acoustic, ninterface_elastic,ninterface_poroelastic

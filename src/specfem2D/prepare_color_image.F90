@@ -49,11 +49,11 @@
                             zmin_color_image,zmax_color_image, &
                             coord,nglob,npgeo,factor_subsample_image)
 
+#ifdef USE_MPI
+  use :: mpi
+#endif
   implicit none
   include "constants.h"
-#ifdef USE_MPI
-  include "mpif.h"
-#endif
 
   integer :: NX_IMAGE_color,NZ_IMAGE_color
 
@@ -297,11 +297,11 @@
 
 ! stores P-velocity model in image_color_vp_display
 
+#ifdef USE_MPI
+  use :: mpi
+#endif
   implicit none
   include "constants.h"
-#ifdef USE_MPI
-  include "mpif.h"
-#endif
 
   integer :: nglob,nspec
   integer :: NX_IMAGE_color,NZ_IMAGE_color

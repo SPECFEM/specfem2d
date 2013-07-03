@@ -80,12 +80,13 @@
 ! PostScript display routine
 !
 
+#ifdef USE_MPI
+  use :: mpi
+#endif
+
   implicit none
 
   include "constants.h"
-#ifdef USE_MPI
-  include 'mpif.h'
-#endif
 
 ! color palette
   integer, parameter :: NUM_COLORS = 236

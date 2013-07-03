@@ -149,11 +149,14 @@ AC_LANG_POP(Fortran)
 ])dnl CIT_FC_STREAM_IO
 
 
-# CIT_FC_MPI_MODULE(FILENAME, MPIFC, MPIFCFLAGS)
+# CIT_FC_MPI_MODULE(FILENAME, MPIFC, MPIFCFLAGS,
+#                   [ACTION-IF-FOUND], [ACTION-IF-NOT-FOUND])
 # -----------------------------------------------------
 AC_DEFUN([CIT_FC_MPI_MODULE], [
-# Use 'mpi' module or 'mpif.h', as appropriate.  UNFINISHED.  This
-# strategy doesn't play well with "implicit none": whether the
+# Use 'mpi' module or 'mpif.h', as appropriate.  UNFINISHED.
+# The default actions are to create FILENAME that either uses the
+# appropriate module or includes the existing mpif.h.
+# This strategy doesn't play well with "implicit none": whether the
 # generated header must be included before or after "implicit none"
 # depends upon the result of the test!  It might be possible to make
 # "use mpi" always work: simply generate an 'mpi' module if the MPI
@@ -166,6 +169,7 @@ cfgfile="${ofile}T"
 trap "rm \"$cfgfile\"; exit 1" 1 2 15
 rm -f "$cfgfile"
 
+cit_fc_header=none
 cit_fc_save_fc=$FC
 cit_fc_save_fcflags=$FCFLAGS
 FC=$2
@@ -181,9 +185,10 @@ AC_COMPILE_IFELSE([
 ]])
 ], [
     AC_MSG_RESULT(yes)
-    cit_fc_header="use mpi"
+    m4_default([$4], [cit_fc_header="use mpi"])
 ], [
     AC_MSG_RESULT(no)
+    m4_default([$5], [
     AC_MSG_CHECKING([whether mpif.h works])
     AC_COMPILE_IFELSE([
         AC_LANG_PROGRAM([], [[
@@ -206,7 +211,7 @@ dnl to override the system header.
         AC_MSG_RESULT(no)
         AC_MSG_FAILURE([cannot compile a trivial MPI program using $2])
     ])
-])
+])])
 
 if test "$cit_fc_header" != "none"; then
     AC_MSG_NOTICE([creating $ofile])

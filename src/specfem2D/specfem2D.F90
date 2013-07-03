@@ -356,12 +356,14 @@
 ! not work because it would be discontinuous at such an interface and would
 ! therefore not be consistent with the basis functions.
 
+#ifdef USE_MPI
+  use :: mpi
+#endif
 
   implicit none
 
   include "constants.h"
 #ifdef USE_MPI
-  include "mpif.h"
   include "precision.h"
 #endif
 
