@@ -1,3 +1,4 @@
+#include "config.h"
 #include <stdio.h>
 #include "libjpeg/jpeglib.h"
 #include <stdlib.h>
@@ -16,7 +17,12 @@
  *
  * "raw_image" points to the raw, uncompressed image
  */
-int write_jpeg_image_( unsigned char *raw_image, int *width_in, int *height_in, char *filename )
+int
+FC_FUNC_(write_jpeg_image,WRITE_JPEG_IMAGE)(
+  unsigned char *raw_image,
+  int *width_in,
+  int *height_in,
+  char *filename)
 {
 
   struct jpeg_compress_struct cinfo;
