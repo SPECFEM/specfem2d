@@ -3,6 +3,7 @@
 
 /* cleaned by Dimitri Komatitsch, University of Pau, France, July 2007 */
 
+#include "config.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
@@ -16,14 +17,14 @@
 #define PI 3.14159265358979
 #define PI2 6.28318530717958
 
-/* Underscores should or should not follow this function name, depending on the compiler and its options.
-   It is called in "attenuation_model.f90".
-*/
-void attenuation_compute_param_(int *nmech_in, double *Q1_in, double *Q2_in, double *f1_in, double *f2_in,
+/* It is called in "attenuation_model.f90". */
+void
+FC_FUNC_(attenuation_compute_param,ATTENUATION_COMPUTE_PARAM)(int *nmech_in,
+             double *Q1_in, double *Q2_in,
+             double *f1_in, double *f2_in,
              double *tau_sigma_nu1, double *tau_sigma_nu2,
              double *tau_epsilon_nu1, double *tau_epsilon_nu2
              )
-
 {
   int             xmgr, n, i, j, plot, nu;
   double          Q_value, target_Q1, target_Q2;
