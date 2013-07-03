@@ -79,36 +79,37 @@ obj:
 ## mesher
 ##
 xmeshfem2D:  required
-	     (cd src/meshfem2D; make )
+	$(MAKE) -C src/meshfem2D
 
 ##
 ## check_quality_external_mesh
 ##
 xcheck_quality_external_mesh: required
-	(cd src/meshfem2D ; make xcheck_quality_external_mesh)
+	$(MAKE) -C src/meshfem2D xcheck_quality_external_mesh
 
 ##
 ## solver
 ##
 xspecfem2D:  required
-	     (cd src/specfem2D; make specfem2D)
+	$(MAKE) -C src/specfem2D specfem2D
 
 ##
 ## convolve_source_timefunction
 ##
 xconvolve_source_timefunction: required
-	(cd src/specfem2D ; make xconvolve_source_timefunction)
+	$(MAKE) -C src/specfem2D xconvolve_source_timefunction
 
 
 ##
 ## adj_seismogram
 ##
 xadj_seismogram: required
-	(cd src/specfem2D ; make xadj_seismogram)
+	$(MAKE) -C src/specfem2D xadj_seismogram
 
 
 clean:
-	(rm -rf obj bin src/meshfem2D/*.mod src/specfem2D/*.mod ; cd src/meshfem2D/scotch/src ; make realclean)
+	rm -rf obj bin src/meshfem2D/*.mod src/specfem2D/*.mod
+	$(MAKE) -C src/meshfem2D/scotch/src realclean
 
 help:
 	@echo "usage: make [executable]"
