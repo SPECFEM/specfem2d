@@ -775,7 +775,7 @@ end  subroutine rotate_mesh_for_plane_wave
   !--------------------------------------------------
   ! construct local numbering for the elements in each partition
   !--------------------------------------------------
-  subroutine Construct_glob2loc_elmnts(nparts)
+  subroutine construct_glob2loc_elmnts(nparts)
 
   implicit none
   integer, intent(in)  :: nparts
@@ -798,13 +798,13 @@ end  subroutine rotate_mesh_for_plane_wave
     num_loc(num_part) = num_loc(num_part) + 1
   enddo
 
-  end subroutine Construct_glob2loc_elmnts
+  end subroutine construct_glob2loc_elmnts
 
 
   !--------------------------------------------------
   ! construct local numbering for the nodes in each partition
   !--------------------------------------------------
-  subroutine Construct_glob2loc_nodes(nparts)
+  subroutine construct_glob2loc_nodes(nparts)
 
   implicit none
   include "constants.h"
@@ -869,7 +869,7 @@ end  subroutine rotate_mesh_for_plane_wave
      enddo
   enddo
 
-  end subroutine Construct_glob2loc_nodes
+  end subroutine construct_glob2loc_nodes
 
 
   !--------------------------------------------------
@@ -879,7 +879,7 @@ end  subroutine rotate_mesh_for_plane_wave
   ! 5/ second node, if relevant.
   ! No interface between acoustic, elastic, and poroelastic elements.
   !--------------------------------------------------
-  subroutine Construct_interfaces(nparts, elmnts_l,  &
+  subroutine construct_interfaces(nparts, elmnts_l,  &
                                 nb_materials, phi_material, num_material)
 
   implicit none
@@ -1024,7 +1024,7 @@ end  subroutine rotate_mesh_for_plane_wave
     enddo
   enddo
 
-  end subroutine Construct_interfaces
+  end subroutine construct_interfaces
 
 
   !--------------------------------------------------
@@ -1060,7 +1060,7 @@ end  subroutine rotate_mesh_for_plane_wave
      enddo
   endif
 
-  end subroutine Write_glob2loc_nodes_database
+  end subroutine write_glob2loc_nodes_database
 
 
   !--------------------------------------------------
@@ -1110,7 +1110,7 @@ end  subroutine rotate_mesh_for_plane_wave
   !--------------------------------------------------
   ! Write interfaces (element and common nodes) pertaining to iproc partition in the corresponding Database
   !--------------------------------------------------
-  subroutine Write_interfaces_database(IIN_database, nparts, iproc, &
+  subroutine write_interfaces_database(IIN_database, nparts, iproc, &
                         my_ninterface, my_interfaces, my_nb_interfaces, num_phase)
 
   implicit none
@@ -1212,13 +1212,13 @@ end  subroutine rotate_mesh_for_plane_wave
 
   endif
 
-  end subroutine Write_interfaces_database
+  end subroutine write_interfaces_database
 
 
   !--------------------------------------------------
   ! Write a surface (elements and nodes on the surface) pertaining to iproc partition in the corresponding Database
   !--------------------------------------------------
-  subroutine Write_surface_database(IIN_database, nsurface, surface, &
+  subroutine write_surface_database(IIN_database, nsurface, surface, &
                                 nsurface_loc, iproc, num_phase)
 
   implicit none
@@ -1288,7 +1288,7 @@ end  subroutine rotate_mesh_for_plane_wave
 
   endif
 
-  end subroutine Write_surface_database
+  end subroutine write_surface_database
 
 
   !--------------------------------------------------
@@ -1576,7 +1576,7 @@ end  subroutine rotate_mesh_for_plane_wave
 ! !--------------------------------------------------
 ! ! Partitioning using METIS
 ! !--------------------------------------------------
-!    subroutine Part_metis(nelmnts, xadj, adjncy, vwgt, adjwgt, nparts, nb_edges, edgecut, part, metis_options)
+!    subroutine part_metis(nelmnts, xadj, adjncy, vwgt, adjwgt, nparts, nb_edges, edgecut, part, metis_options)
 !
 !   include "constants.h"
 !
@@ -1600,7 +1600,7 @@ end  subroutine rotate_mesh_for_plane_wave
 !   !call METIS_PartGraphVKway(nelmnts, xadj(0), adjncy(0), vwgt(0), adjwgt(0), wgtflag, remove_min_to_start_at_zero, nparts, &
 !   !     options, edgecut, part(0));
 !
-! end subroutine Part_metis
+! end subroutine part_metis
 !#endif
 
 
@@ -1608,7 +1608,7 @@ end  subroutine rotate_mesh_for_plane_wave
   !--------------------------------------------------
   ! Partitioning using SCOTCH
   !--------------------------------------------------
-  subroutine Part_scotch(nparts, edgecut)
+  subroutine part_scotch(nparts, edgecut)
 
   implicit none
   include "constants.h"
@@ -1679,7 +1679,7 @@ end  subroutine rotate_mesh_for_plane_wave
      STOP
   ENDIF
 
-  end subroutine Part_scotch
+  end subroutine part_scotch
 #endif
 
 
