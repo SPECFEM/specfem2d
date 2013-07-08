@@ -108,8 +108,7 @@
 \title{\textbf{SPECFEM2D}\\
 \textbf{User Manual}}
 
-\author{$\copyright$ Princeton University (USA) and\\
-CNRS and University of Marseille (France)\\
+\author{$\copyright$ Princeton University (USA) and CNRS and University of Marseille (France)\\
 Version 7.0
 }
 
@@ -305,7 +304,7 @@ Then, to configure the software for your system, run the
 \texttt{configure} shell script. This script will attempt to guess
 the appropriate configuration values for your system. However, at
 a minimum, it is recommended that you explicitly specify the appropriate
-command names for your Fortran compiler (another option is to define FC, CC and MPIF90 in your .bash\_profile 
+command names for your Fortran compiler (another option is to define FC, CC and MPIF90 in your .bash\_profile
 or your .cshrc file):
 \begin{lyxcode}
 ./configure~FC=ifort~
@@ -612,7 +611,7 @@ EXAMPLES/CPML\_absorbing\_layers.
 
 If you use PML, the mesh elements that belong to the PML layers can be acoustic or elastic, but not viscoelastic nor poroelastic.
 Then, when defining your model, you should define these absorbing elements as either acoustic or elastic.
-In you forget to do that, the code will fix the problem by automatically converting the viscoelastic or poroelastic PML 
+In you forget to do that, the code will fix the problem by automatically converting the viscoelastic or poroelastic PML
 elements to elastic. This means that strictly speaking the PML layer will not be perfectly matched any more, since the physical
 model will change from viscoelastic or poroelastic to elastic at the entrance of the PML, but in practice this is sufficient and
 produces only tiny / negligible spurious reflections.
