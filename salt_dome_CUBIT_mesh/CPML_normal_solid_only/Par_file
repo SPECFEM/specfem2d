@@ -93,7 +93,7 @@ output_grid_ASCII               = .false.        # dump the grid in an ASCII tex
 output_energy                   = .false.        # compute and output total acoustic and elastic energy curves (slows down the code significantly)
 
 # velocity and density models
-nbmodels                        = 8              # nb of different models
+nbmodels                        = 7              # nb of different models
 # define models as
 # I:   (model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0) or
 # II:  (model_number 2 rho c11 c13 c15 c33 c35 c55 0 0 0 0 0 0) or
@@ -113,10 +113,9 @@ nbmodels                        = 8              # nb of different models
 2 1 1800.d0 3000.d0 1500.d0 0 0 9999 9999 0 0 0 0 0 0
 3 1 2000.d0 3500.d0 2000.d0 0 0 9999 9999 0 0 0 0 0 0
 4 1 1800.d0 2700.d0 1300.d0 0 0 9999 9999 0 0 0 0 0 0
-5 1 1000.d0 1500.d0 0 0 0 9999 9999 0 0 0 0 0 0
+5 1 1600.d0 5000.d0 3000.d0 0 0 9999 9999 0 0 0 0 0 0
 6 1 1800.d0 2500.d0 1000.d0 0 0 9999 9999 0 0 0 0 0 0
 7 1 1600.d0 2200.d0 800.d0 0 0 9999 9999 0 0 0 0 0 0
-8 1 1600.d0 5000.d0 3000.d0 0 0 9999 9999 0 0 0 0 0 0
 
 # external mesh or not
 read_external_mesh              = .true.
