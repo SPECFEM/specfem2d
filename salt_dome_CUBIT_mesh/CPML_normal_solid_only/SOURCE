@@ -2,7 +2,7 @@
 # source 1
 source_surf                     = .false.        # source inside the medium or at the surface
 xs                              = 2500.          # source location x in meters
-zs                              = 4500.          # source location z in meters
+zs                              = 2500.          # source location z in meters
 source_type                     = 1              # elastic force or acoustic pressure = 1 or moment tensor = 2
 time_function_type              = 1              # Ricker = 1, first derivative = 2, Gaussian = 3, Dirac = 4, Heaviside = 5
 f0                              = 9.           # dominant source frequency (Hz) if not Dirac or Heaviside
