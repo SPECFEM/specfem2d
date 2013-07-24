@@ -69,7 +69,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
      rmemory_dux_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dx_prime,rmemory_duz_dz_prime, &
      rmemory_displ_elastic_LDDRK,rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,&
      rmemory_duz_dx_LDDRK,rmemory_duz_dz_LDDRK, &
-     PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,backward_simulation)
+     PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,backward_simulation,STACEY_BOUNDARY_CONDITIONS)
 
 
   ! compute forces for the elastic elements
@@ -92,7 +92,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   integer, dimension(nelemabs) :: ib_top
   integer :: stage_time_scheme,i_stage,nadj_rec_local
 
-  logical :: anyabs,assign_external_model,initialfield,ATTENUATION_VISCOELASTIC_SOLID,add_Bielak_conditions
+  logical :: anyabs,assign_external_model,initialfield,ATTENUATION_VISCOELASTIC_SOLID,add_Bielak_conditions,&
+             STACEY_BOUNDARY_CONDITIONS
   logical :: ADD_SPRING_TO_STACEY
   real(kind=CUSTOM_REAL) :: x_center_spring,z_center_spring
 
@@ -1390,8 +1391,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   !
   !--- absorbing boundaries
   !
-!  if(anyabs .and. .not. PML_BOUNDARY_CONDITIONS .and. backward_simulation) then
-  if(anyabs .and. .not. PML_BOUNDARY_CONDITIONS) then
+  if(STACEY_BOUNDARY_CONDITIONS) then
 
      count_left=1
      count_right=1

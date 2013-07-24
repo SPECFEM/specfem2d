@@ -571,7 +571,7 @@
   logical interpol,meshvect,modelvect,boundvect,assign_external_model,initialfield, &
     output_grid_ASCII,output_grid_Gnuplot,ATTENUATION_VISCOELASTIC_SOLID,output_postscript_snapshot,output_color_image, &
     plot_lowerleft_corner_only,add_Bielak_conditions,output_energy,READ_EXTERNAL_SEP_FILE, &
-    output_wavefield_dumps,use_binary_for_wavefield_dumps,PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE
+    output_wavefield_dumps,use_binary_for_wavefield_dumps,PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,STACEY_BOUNDARY_CONDITIONS
 
   double precision :: ROTATE_PML_ANGLE
 
@@ -1098,7 +1098,6 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                                   stop 'RK and LDDRK time scheme not supported for adjoint inversion'
   if(nproc /= nproc_read_from_database) stop 'must always have nproc == nproc_read_from_database'
 
-
 !! DK DK Dec 2011: add a small crack (discontinuity) in the medium manually
   npgeo_ori = npgeo
   if(ADD_A_SMALL_CRACK_IN_THE_MEDIUM) npgeo = npgeo + NB_POINTS_TO_ADD_TO_NPGEO
@@ -1594,6 +1593,12 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                             numabs,codeabs,typeabs,perm,antecedent_list, &
                             nspec_left,nspec_right,nspec_bottom,nspec_top, &
                             ib_right,ib_left,ib_bottom,ib_top)
+
+  if(anyabs .and. (.not. PML_BOUNDARY_CONDITIONS))then
+    STACEY_BOUNDARY_CONDITIONS = .true.
+  else
+    STACEY_BOUNDARY_CONDITIONS = .false.
+  endif
 
 
   if( anyabs ) then
@@ -5197,7 +5202,7 @@ if(coupled_elastic_poro) then
                rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
                rmemory_potential_acoust_LDDRK,alpha_LDDRK,beta_LDDRK, &
                rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
-               deltat,PML_BOUNDARY_CONDITIONS)
+               deltat,PML_BOUNDARY_CONDITIONS,STACEY_BOUNDARY_CONDITIONS)
 
       if( SIMULATION_TYPE == 3 ) then
 
@@ -5217,7 +5222,6 @@ if(coupled_elastic_poro) then
 
        if(PML_BOUNDARY_CONDITIONS)then
           do i = 1, nglob_interface
-           b_potential_dot_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot_dot(i,NSTEP-it+1)
            b_potential_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot(i,NSTEP-it+1)
            b_potential_acoustic(point_interface(i)) = pml_interface_history_potential(i,NSTEP-it+1)
           enddo
@@ -5243,14 +5247,13 @@ if(coupled_elastic_poro) then
                rmemory_potential_acoust_LDDRK,alpha_LDDRK,beta_LDDRK, &
                rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
 !               deltat,PML_BOUNDARY_CONDITIONS)
-               deltat,.false.)
+               deltat,.false.,STACEY_BOUNDARY_CONDITIONS)
 
        if(PML_BOUNDARY_CONDITIONS)then
           do ispec = 1,nspec
             do i = 1, NGLLX
               do j = 1, NGLLZ
                 if(.not. elastic(ispec) .and. .not. poroelastic(ispec) .and. is_pml(ispec))then
-                  b_potential_dot_dot_acoustic(ibool(i,j,ispec)) = 0.
                   b_potential_dot_acoustic(ibool(i,j,ispec)) = 0.
                   b_potential_acoustic(ibool(i,j,ispec)) = 0.
                 endif
@@ -5261,7 +5264,6 @@ if(coupled_elastic_poro) then
 
        if(PML_BOUNDARY_CONDITIONS)then
           do i = 1, nglob_interface
-           b_potential_dot_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot_dot(i,NSTEP-it+1)
            b_potential_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot(i,NSTEP-it+1)
            b_potential_acoustic(point_interface(i)) = pml_interface_history_potential(i,NSTEP-it+1)
           enddo
@@ -5305,16 +5307,6 @@ if(coupled_elastic_poro) then
           enddo
         endif
       endif ! if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)
-
-      if(PML_BOUNDARY_CONDITIONS .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)then
-       if(any_acoustic .and. nglob_interface > 0)then
-        do i = 1, nglob_interface
-          write(72)potential_dot_dot_acoustic(point_interface(i)),&
-                   potential_dot_acoustic(point_interface(i)),&
-                   potential_acoustic(point_interface(i))
-        enddo
-       endif
-      endif
 
     endif ! end of test if any acoustic element
 
@@ -5631,6 +5623,26 @@ if(coupled_elastic_poro) then
 
 #endif
 
+      if(PML_BOUNDARY_CONDITIONS .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)then
+       if(any_acoustic .and. nglob_interface > 0)then
+        do i = 1, nglob_interface
+          write(72)potential_dot_dot_acoustic(point_interface(i)),&
+                   potential_dot_acoustic(point_interface(i)),&
+                   potential_acoustic(point_interface(i))
+        enddo
+       endif
+      endif
+
+     if(SIMULATION_TYPE == 3)then
+       if(any_acoustic .and. nglob_interface > 0)then
+       if(PML_BOUNDARY_CONDITIONS)then
+          do i = 1, nglob_interface
+           b_potential_dot_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot_dot(i,NSTEP-it+1)
+          enddo
+       endif
+       endif
+     endif
+
 ! ************************************************************************************
 ! ************* multiply by the inverse of the mass matrix and update velocity
 ! ************************************************************************************
@@ -5773,7 +5785,7 @@ if(coupled_elastic_poro) then
                rmemory_dux_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dx_prime,rmemory_duz_dz_prime, &
                rmemory_displ_elastic_LDDRK,rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,&
                rmemory_duz_dx_LDDRK,rmemory_duz_dz_LDDRK, &
-               PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.false.)
+               PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.false.,STACEY_BOUNDARY_CONDITIONS)
 
       if(SIMULATION_TYPE == 3)then
        if(PML_BOUNDARY_CONDITIONS)then
@@ -5781,7 +5793,6 @@ if(coupled_elastic_poro) then
             do i = 1, NGLLX
               do j = 1, NGLLZ
                 if(elastic(ispec) .and. is_pml(ispec))then
-                  b_accel_elastic(:,ibool(i,j,ispec)) = 0.
                   b_veloc_elastic(:,ibool(i,j,ispec)) = 0.
                   b_displ_elastic(:,ibool(i,j,ispec)) = 0.
                 endif
@@ -5792,9 +5803,6 @@ if(coupled_elastic_poro) then
 
        if(PML_BOUNDARY_CONDITIONS)then
           do i = 1, nglob_interface
-           b_accel_elastic(1,point_interface(i)) = pml_interface_history_accel(1,i,NSTEP-it+1)
-           b_accel_elastic(2,point_interface(i)) = pml_interface_history_accel(2,i,NSTEP-it+1)
-           b_accel_elastic(3,point_interface(i)) = pml_interface_history_accel(3,i,NSTEP-it+1)
            b_veloc_elastic(1,point_interface(i)) = pml_interface_history_veloc(1,i,NSTEP-it+1)
            b_veloc_elastic(2,point_interface(i)) = pml_interface_history_veloc(2,i,NSTEP-it+1)
            b_veloc_elastic(3,point_interface(i)) = pml_interface_history_veloc(3,i,NSTEP-it+1)
@@ -5835,13 +5843,12 @@ if(coupled_elastic_poro) then
                rmemory_displ_elastic_LDDRK,rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,&
                rmemory_duz_dx_LDDRK,rmemory_duz_dz_LDDRK, &
 !ZN               PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.true.)
-               .false.,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.true.)
+               .false.,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.true.,STACEY_BOUNDARY_CONDITIONS)
        if(PML_BOUNDARY_CONDITIONS)then
           do ispec = 1,nspec
             do i = 1, NGLLX
               do j = 1, NGLLZ
                 if(elastic(ispec) .and. is_pml(ispec))then
-                  b_accel_elastic(:,ibool(i,j,ispec)) = 0.
                   b_veloc_elastic(:,ibool(i,j,ispec)) = 0.
                   b_displ_elastic(:,ibool(i,j,ispec)) = 0.
                 endif
@@ -5852,9 +5859,6 @@ if(coupled_elastic_poro) then
 
        if(PML_BOUNDARY_CONDITIONS)then
         do i = 1, nglob_interface
-           b_accel_elastic(1,point_interface(i)) = pml_interface_history_accel(1,i,NSTEP-it+1)
-           b_accel_elastic(2,point_interface(i)) = pml_interface_history_accel(2,i,NSTEP-it+1)
-           b_accel_elastic(3,point_interface(i)) = pml_interface_history_accel(3,i,NSTEP-it+1)
            b_veloc_elastic(1,point_interface(i)) = pml_interface_history_veloc(1,i,NSTEP-it+1)
            b_veloc_elastic(2,point_interface(i)) = pml_interface_history_veloc(2,i,NSTEP-it+1)
            b_veloc_elastic(3,point_interface(i)) = pml_interface_history_veloc(3,i,NSTEP-it+1)
@@ -5944,19 +5948,6 @@ if(coupled_elastic_poro) then
         endif
 
       endif ! if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)
-
-      if(PML_BOUNDARY_CONDITIONS .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)then
-       if(any_elastic .and. nglob_interface > 0)then
-        do i = 1, nglob_interface
-          write(71)accel_elastic(1,point_interface(i)),accel_elastic(2,point_interface(i)),&
-                   accel_elastic(3,point_interface(i)),&
-                   veloc_elastic(1,point_interface(i)),veloc_elastic(2,point_interface(i)),&
-                   veloc_elastic(3,point_interface(i)),&
-                   displ_elastic(1,point_interface(i)),displ_elastic(2,point_interface(i)),&
-                   displ_elastic(3,point_interface(i))
-        enddo
-       endif
-      endif
 
     endif !if(any_elastic)
 
@@ -6476,6 +6467,29 @@ if(coupled_elastic_poro) then
             buffer_recv_faces_vector_el, my_neighbours)
     endif
 #endif
+
+      if(PML_BOUNDARY_CONDITIONS .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)then
+       if(any_elastic .and. nglob_interface > 0)then
+        do i = 1, nglob_interface
+          write(71)accel_elastic(1,point_interface(i)),accel_elastic(2,point_interface(i)),&
+                   accel_elastic(3,point_interface(i)),&
+                   veloc_elastic(1,point_interface(i)),veloc_elastic(2,point_interface(i)),&
+                   veloc_elastic(3,point_interface(i)),&
+                   displ_elastic(1,point_interface(i)),displ_elastic(2,point_interface(i)),&
+                   displ_elastic(3,point_interface(i))
+        enddo
+       endif
+      endif
+
+      if(SIMULATION_TYPE == 3)then
+       if(PML_BOUNDARY_CONDITIONS)then
+        do i = 1, nglob_interface
+           b_accel_elastic(1,point_interface(i)) = pml_interface_history_accel(1,i,NSTEP-it+1)
+           b_accel_elastic(2,point_interface(i)) = pml_interface_history_accel(2,i,NSTEP-it+1)
+           b_accel_elastic(3,point_interface(i)) = pml_interface_history_accel(3,i,NSTEP-it+1)
+        enddo
+       endif
+      endif
 
 
 ! ************************************************************************************
