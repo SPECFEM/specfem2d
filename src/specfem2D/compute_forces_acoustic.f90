@@ -61,7 +61,7 @@
                rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
                rmemory_potential_acoust_LDDRK,alpha_LDDRK,beta_LDDRK, &
                rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
-               deltat,PML_BOUNDARY_CONDITIONS)
+               deltat,PML_BOUNDARY_CONDITIONS,STACEY_BOUNDARY_CONDITIONS)
 
 ! compute forces for the acoustic elements
 
@@ -147,7 +147,7 @@
   double precision :: deltat
   real(kind=CUSTOM_REAL) :: A0, A1, A2, A3, A4, A5, A6, A7, A8
 
-  logical :: PML_BOUNDARY_CONDITIONS
+  logical :: PML_BOUNDARY_CONDITIONS,STACEY_BOUNDARY_CONDITIONS
 
 !coefficients and memory variables when using CPML with LDDRK
   integer :: stage_time_scheme,i_stage
@@ -750,7 +750,7 @@
 
 ! for Stacey paraxial absorbing conditions (more precisely: Sommerfeld in the case of a fluid) we implement them here
 
-  if(.not. PML_BOUNDARY_CONDITIONS .and. anyabs) then
+  if(STACEY_BOUNDARY_CONDITIONS) then
 
     do ispecabs=1,nelemabs
 
