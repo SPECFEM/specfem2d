@@ -23,7 +23,7 @@ freq0                           =  10            # frequency for viscous attenua
 p_sv                            = .true.         # set the type of calculation (P-SV or SH/membrane waves)
 
 # time step parameters
-nt                              = 5000           # total number of time steps
+nt                              = 2000           # total number of time steps
 deltat                          = 4.25e-4         # duration of a time step (see section "How to choose the time step" of the manual for how to do this)
 USER_T0                         = 0.0d0          # use this t0 as earliest starting time rather than the automatically calculated one
 time_stepping_scheme            = 1              # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta), 3 = classical RK4 4th-order 4-stage Runge-Kutta
@@ -142,12 +142,12 @@ PERIODIC_DETECT_TOL             = 3.3334d-6
 
 # data concerning mesh, when generated using third-party app (more info in README)
 # (see also absorbing_conditions above)
-mesh_file                       = ./DATA/modelY1_mesh_file_new_final   # file containing the mesh
-nodes_coords_file               = ./DATA/modelY1_nodes_coords_file_new_final   # file containing the nodes coordinates
-materials_file                  = ./DATA/modelY1_materials_file_new_final   # file containing the material number for each element
-free_surface_file               = ./DATA/modelY1_free_surface_file_new_final   # file containing the free surface
-absorbing_surface_file          = ./DATA/modelY1_absorbing_surface_file_new_final   # file containing the absorbing surface
-CPML_element_file               = ./DATA/modelY1_elements_CPML_list_new_final  # file containing the CPML element numbers
+mesh_file                       = ./DATA/modelY1_mesh_file   # file containing the mesh
+nodes_coords_file               = ./DATA/modelY1_nodes_coords_file   # file containing the nodes coordinates
+materials_file                  = ./DATA/modelY1_materials_file   # file containing the material number for each element
+free_surface_file               = ./DATA/modelY1_free_surface_file   # file containing the free surface
+absorbing_surface_file          = ./DATA/modelY1_absorbing_surface_file   # file containing the absorbing surface
+CPML_element_file               = ./DATA/modelY1_elements_CPML_list  # file containing the CPML element numbers
 tangential_detection_curve_file = ./DATA/courbe_eros_nodes # file containing the curve delimiting the velocity model
 
 #-----------------------------------------------------------------------------
