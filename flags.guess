@@ -27,7 +27,7 @@ case $FC in
         # Portland PGI
         #
         if test x"$FLAGS_CHECK" = x; then
-            FLAGS_CHECK="-fast -Mnobounds -Minline -Mneginfo -Mdclchk -Knoieee -Minform=warn -Mdaz -Mflushz" # -mcmodel=medium
+            FLAGS_CHECK="-fast -Mnobounds -Minline -Mneginfo -Mdclchk -Knoieee -Minform=warn -Mdaz -Mflushz -Mvect" # -mcmodel=medium
         # -Mbounds
         # -fastsse -tp amd64e -Msmart
         fi
