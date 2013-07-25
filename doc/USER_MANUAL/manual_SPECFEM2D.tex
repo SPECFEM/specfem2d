@@ -368,6 +368,9 @@ you want to run the solver in double precision, run the \texttt{configure} scrip
 Keep in mind that this will of course double total memory size and will also make the solver around 20 to 30\% slower
 on many processors.
 
+If your compiler has problems with the \texttt{use mpi} statements that are used in the code, use the script called 
+\texttt{replace\_use\_mpi\_with\_include\_mpif\_dot\_h.pl} in the root directory to replace all of them with \texttt{include 'mpif.h'} automatically.
+
 \section{Visualizing the subroutine calling tree of the source code}
 
 Packages such as \texttt{doxywizard} can be used to visualize the subroutine calling tree of the source code.
