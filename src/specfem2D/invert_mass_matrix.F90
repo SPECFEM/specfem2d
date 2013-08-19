@@ -57,14 +57,14 @@
                                 ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
                                 ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
                                 rmass_inverse_elastic_three,&
-                                nelemabs,vsext,xix,xiz,gammaz,gammax &
+                                nelemabs,vsext,xix,xiz,gammaz,gammax, &
 !! DK DK added this for Guenneau, March 2012
 #ifdef USE_GUENNEAU
-                                ,coord &
+                                coord, &
 #endif
-                                ,K_x_store,K_z_store,is_PML,&
-                                d_x_store,d_z_store,PML_BOUNDARY_CONDITIONS,region_CPML, & !which_PML_elem, &
-                                nspec_PML,spec_to_PML)
+                                K_x_store,K_z_store,is_PML,&
+                                d_x_store,d_z_store,PML_BOUNDARY_CONDITIONS,region_CPML, &
+                                nspec_PML,spec_to_PML,time_stepping_scheme)
 
 !  builds the global mass matrix
 
@@ -93,9 +93,8 @@
 
   ! inverse mass matrices
   integer :: nglob_elastic
-
   real(kind=CUSTOM_REAL), dimension(nglob_elastic) :: rmass_inverse_elastic_one,&
-                                                     rmass_inverse_elastic_three
+                                                      rmass_inverse_elastic_three
 
   integer :: nglob_acoustic
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: rmass_inverse_acoustic
@@ -134,14 +133,17 @@
                   K_x_store,K_z_store,d_x_store,d_z_store
   logical, dimension(nspec) :: is_PML
   logical :: PML_BOUNDARY_CONDITIONS,this_element_has_PML
-!  logical, dimension(4,nspec) :: which_PML_elem
   integer, dimension(nspec) :: region_CPML
+
 !! DK DK added this for Guenneau, March 2012
 #ifdef USE_GUENNEAU
   double precision, dimension(NDIM,nglob_elastic), intent(in) :: coord
   real(kind=CUSTOM_REAL) :: r, epsr, epsfi, x, y
 #endif
 !! DK DK added this for Guenneau, March 2012
+
+!! time scheme
+  integer :: time_stepping_scheme
 
   ! initialize mass matrix
   if(any_elastic) rmass_inverse_elastic_one(:) = 0._CUSTOM_REAL
@@ -167,7 +169,6 @@
         endif
 
         if( poroelastic(ispec) ) then
-
           ! material is poroelastic
 
           rhol_s = density(1,kmato(ispec))
@@ -187,34 +188,48 @@
           ! for elastic medium
         else if( elastic(ispec) ) then
 
-        this_element_has_PML = .false.
-        if(PML_BOUNDARY_CONDITIONS .and. size(is_PML) > 1) then
+          this_element_has_PML = .false.
+          if(PML_BOUNDARY_CONDITIONS .and. size(is_PML) > 1) then
 ! do not merge this condition with the above line because array is_PML() sometimes has a dummy size of 1
-          if (is_PML(ispec)) this_element_has_PML = .true.
-        endif
+            if (is_PML(ispec)) this_element_has_PML = .true.
+          endif
 
-        if (this_element_has_PML) then
-
-         ispec_PML=spec_to_PML(ispec)
-         if (region_CPML(ispec) == CPML_X_ONLY) then
-          rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
-                  + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML)&
-                  + d_x_store(i,j,ispec_PML) * deltat / 2.d0)
-          rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
-         else if (region_CPML(ispec) == CPML_XY_ONLY) then
-          rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
-                  + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML)&
-                  + (d_x_store(i,j,ispec_PML)*k_z_store(i,j,ispec_PML)+&
-                     d_z_store(i,j,ispec_PML)*k_x_store(i,j,ispec_PML)) * deltat / 2.d0)
-          rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
-         else if(region_CPML(ispec) == CPML_Y_ONLY) then
-          rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
-                  + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML)&
-                  + d_z_store(i,j,ispec_PML)* deltat / 2.d0)
-          rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
-         endif
-
-        else
+          if(this_element_has_PML) then
+            ispec_PML=spec_to_PML(ispec)
+            if(time_stepping_scheme == 1)then
+              if(region_CPML(ispec) == CPML_X_ONLY) then
+                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                     + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML)&
+                     + d_x_store(i,j,ispec_PML) * deltat / 2.d0)
+                rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
+              else if (region_CPML(ispec) == CPML_XY_ONLY) then
+                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                     + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML)&
+                     + (d_x_store(i,j,ispec_PML)*k_z_store(i,j,ispec_PML)+&
+                       d_z_store(i,j,ispec_PML)*k_x_store(i,j,ispec_PML)) * deltat / 2.d0)
+                rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
+              else if(region_CPML(ispec) == CPML_Y_ONLY) then
+                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                     + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML)&
+                     + d_z_store(i,j,ispec_PML)* deltat / 2.d0)
+                rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
+              endif
+            else
+              if(region_CPML(ispec) == CPML_X_ONLY) then
+                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                     + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML))
+                rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
+              else if (region_CPML(ispec) == CPML_XY_ONLY) then
+                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                     + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML))
+                rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
+              else if(region_CPML(ispec) == CPML_Y_ONLY) then
+                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                     + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML))
+                rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
+              endif
+            endif
+          else
 
 !! DK DK added this for Guenneau, March 2012
 #ifdef USE_GUENNEAU
@@ -222,50 +237,58 @@
 #endif
 !! DK DK added this for Guenneau, March 2012
 
-          rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
-                  + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
-
+            rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                    + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
 #ifdef USE_GUENNEAU
   endif
 #endif
-          rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
-
-        endif
+            rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
+          endif
 
           ! for acoustic medium
         else
 
-        this_element_has_PML = .false.
-        if(PML_BOUNDARY_CONDITIONS .and. size(is_PML) > 1) then
+          this_element_has_PML = .false.
+          if(PML_BOUNDARY_CONDITIONS .and. size(is_PML) > 1) then
 ! do not merge this condition with the above line because array is_PML() sometimes has a dummy size of 1
-          if (is_PML(ispec)) this_element_has_PML = .true.
+            if (is_PML(ispec)) this_element_has_PML = .true.
+          endif
+
+          if(this_element_has_PML) then
+
+            ispec_PML=spec_to_PML(ispec)
+            if(time_stepping_scheme == 1)then
+              if(region_CPML(ispec) == CPML_X_ONLY) then
+                rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
+                     + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML)&
+                     + d_x_store(i,j,ispec_PML) * deltat / 2.d0)
+              else if (region_CPML(ispec) == CPML_XY_ONLY) then
+                rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
+                     + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML) &
+                     + (d_x_store(i,j,ispec_PML)*k_z_store(i,j,ispec_PML)&
+                        + d_z_store(i,j,ispec_PML)*k_x_store(i,j,ispec_PML)) * deltat / 2.d0)
+              else if(region_CPML(ispec) == CPML_Y_ONLY) then
+                rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
+                     + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML)&
+                     + d_z_store(i,j,ispec_PML)* deltat / 2.d0)
+              endif
+            else
+              if(region_CPML(ispec) == CPML_X_ONLY) then
+                rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
+                     + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML))
+              else if (region_CPML(ispec) == CPML_XY_ONLY) then
+                rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
+                     + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML))
+              else if(region_CPML(ispec) == CPML_Y_ONLY) then
+                rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
+                     + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML))
+              endif
+            endif
+          else
+            rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
+                 + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal
+          endif
         endif
-
-        if (this_element_has_PML) then
-
-          ispec_PML=spec_to_PML(ispec)
-         if (region_CPML(ispec) == CPML_X_ONLY) then
-          rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
-                  + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML)&
-                  + d_x_store(i,j,ispec_PML) * deltat / 2.d0)
-         else if (region_CPML(ispec) == CPML_XY_ONLY) then
-          rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
-                  + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML)&
-                  + (d_x_store(i,j,ispec_PML)*k_z_store(i,j,ispec_PML)&
-                     +d_z_store(i,j,ispec_PML)*k_x_store(i,j,ispec_PML)) * deltat / 2.d0)
-         else if(region_CPML(ispec) == CPML_Y_ONLY) then
-          rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
-                  + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML)&
-                  + d_z_store(i,j,ispec_PML)* deltat / 2.d0)
-         endif
-
-       else
-          rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                  + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal
-       endif
-
-        endif
-
       enddo
     enddo
   enddo ! of do ispec = 1,nspec
@@ -278,7 +301,7 @@
   !--- DK and Zhinan Xie: one per component of the wave field i.e. one per spatial dimension.
   !--- DK and Zhinan Xie: This was also suggested by Jean-Paul Ampuero in 2003.
   !
-  if(.not. PML_BOUNDARY_CONDITIONS .and. anyabs) then
+  if(.not. PML_BOUNDARY_CONDITIONS .and. anyabs .and. time_stepping_scheme /= 1) then
      count_left=1
      count_right=1
      count_bottom=1
@@ -296,11 +319,8 @@
         if(codeabs(IEDGE4,ispecabs)) then
 
            i = 1
-
            do j = 1,NGLLZ
-
               iglob = ibool(i,j,ispec)
-
               ! external velocity model
               if(assign_external_model) then
                  cpl = vpext(i,j,ispec)
@@ -514,7 +534,7 @@
   endif  ! end of absorbing boundaries
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  if(.not. PML_BOUNDARY_CONDITIONS .and. anyabs) then
+  if(.not. PML_BOUNDARY_CONDITIONS .and. anyabs .and. time_stepping_scheme /= 1) then
 
     do ispecabs=1,nelemabs
 
