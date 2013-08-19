@@ -584,7 +584,7 @@ end subroutine pml_init
 ! reflection coefficient (INRIA report section 6.1) http://hal.inria.fr/docs/00/07/32/19/PDF/RR-3471.pdf
   Rcoef = 0.001d0
 
-  ALPHA_MAX_PML = PI*f0_temp ! from Festa and Vilotte
+  ALPHA_MAX_PML = 0.25d0*PI*f0_temp ! from Festa and Vilotte
 
 ! check that NPOWER is okay
   if(NPOWER < 1) stop 'NPOWER must be greater than 1'

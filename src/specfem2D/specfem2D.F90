@@ -3251,14 +3251,14 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                                 ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
                                 ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
                                 rmass_inverse_elastic_three,&
-                                nelemabs,vsext,xix,xiz,gammaz,gammax &
+                                nelemabs,vsext,xix,xiz,gammaz,gammax, &
 !! DK DK added this for Guenneau, March 2012
 #ifdef USE_GUENNEAU
-                                ,coord &
+                                coord, &
 #endif
-                                ,K_x_store,K_z_store,is_PML,&
+                                K_x_store,K_z_store,is_PML,&
                                 d_x_store,d_z_store,PML_BOUNDARY_CONDITIONS,region_CPML, &
-                nspec_PML,spec_to_PML)
+                                nspec_PML,spec_to_PML,time_stepping_scheme)
 
 #ifdef USE_MPI
   if ( nproc > 1 ) then
