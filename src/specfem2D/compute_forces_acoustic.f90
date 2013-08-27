@@ -280,7 +280,8 @@
                     beta_LDDRK(i_stage) * rmemory_acoustic_dux_dx_LDDRK(i,j,ispec_PML)
                   endif
 
-                  dux_dxl = PML_dux_dxl(i,j)  + A8 * rmemory_acoustic_dux_dx(i,j,ispec_PML)
+                  dux_dxl = 1.0_CUSTOM_REAL/k_x_store(i,j,ispec_PML) * PML_dux_dxl(i,j)  &
+                            + A8 * rmemory_acoustic_dux_dx(i,j,ispec_PML)
 
                   !---------------------- A5 --------------------------
                   A5 = d_x_store(i,j,ispec_PML)
@@ -309,7 +310,7 @@
                     beta_LDDRK(i_stage) * rmemory_acoustic_dux_dz_LDDRK(i,j,ispec_PML)
                   endif
 
-                  dux_dzl = PML_dux_dzl(i,j)  + A5 * rmemory_acoustic_dux_dz(i,j,ispec_PML)
+                  dux_dzl = k_x_store(i,j,ispec_PML) * PML_dux_dzl(i,j)  + A5 * rmemory_acoustic_dux_dz(i,j,ispec_PML)
 
                    else if (region_CPML(ispec) == CPML_XY_ONLY) then
 !------------------------------------------------------------------------------
@@ -345,7 +346,8 @@
                         beta_LDDRK(i_stage) * rmemory_acoustic_dux_dx_LDDRK(i,j,ispec_PML)
                     endif
 
-                    dux_dxl = PML_dux_dxl(i,j)  + A8 * rmemory_acoustic_dux_dx(i,j,ispec_PML)
+                    dux_dxl = k_z_store(i,j,ispec_PML) / k_x_store(i,j,ispec_PML) * PML_dux_dxl(i,j) &
+                              + A8 * rmemory_acoustic_dux_dx(i,j,ispec_PML)
 
                     !---------------------------- A5 ----------------------------
                     A5 =(k_z_store(i,j,ispec_PML) * d_x_store(i,j,ispec_PML) &
@@ -378,7 +380,8 @@
                     beta_LDDRK(i_stage) * rmemory_acoustic_dux_dz_LDDRK(i,j,ispec_PML)
                     endif
 
-                    dux_dzl = PML_dux_dzl(i,j)  + A5 * rmemory_acoustic_dux_dz(i,j,ispec_PML)
+                    dux_dzl = k_x_store(i,j,ispec_PML) / k_z_store(i,j,ispec_PML) * PML_dux_dzl(i,j)  &
+                              + A5 * rmemory_acoustic_dux_dz(i,j,ispec_PML)
 
                else if(region_CPML(ispec) == CPML_Y_ONLY) then
 
@@ -412,7 +415,7 @@
                     beta_LDDRK(i_stage) * rmemory_acoustic_dux_dx_LDDRK(i,j,ispec_PML)
                   endif
 
-                  dux_dxl = PML_dux_dxl(i,j)  + A7 * rmemory_acoustic_dux_dx(i,j,ispec_PML)
+                  dux_dxl = k_z_store(i,j,ispec_PML) * PML_dux_dxl(i,j)  + A7 * rmemory_acoustic_dux_dx(i,j,ispec_PML)
 
                   !---------------------- A6 --------------------------
                   A6 = - d_z_store(i,j,ispec_PML) / ( k_z_store(i,j,ispec_PML) ** 2 )
@@ -440,7 +443,8 @@
                     beta_LDDRK(i_stage) * rmemory_acoustic_dux_dz_LDDRK(i,j,ispec_PML)
                   endif
 
-                  dux_dzl = PML_dux_dzl(i,j)  + A6 * rmemory_acoustic_dux_dz(i,j,ispec_PML)
+                  dux_dzl = 1.0_CUSTOM_REAL/k_z_store(i,j,ispec_PML) * PML_dux_dzl(i,j) &
+                            + A6 * rmemory_acoustic_dux_dz(i,j,ispec_PML)
 
                endif
              endif
