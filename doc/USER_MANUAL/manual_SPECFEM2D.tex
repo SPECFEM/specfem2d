@@ -411,7 +411,7 @@ but you can find useful information in the manuals of the 3D versions, since man
 \urlwithparentheses{http://geodynamics.org/wsvn/cig/seismo/3D} in subdirectories \texttt{USER\_MANUAL/}.
 To create acoustic (fluid) regions, just set the S wave speed to zero and the code will see that these elements are fluid and switch to the right equations there automatically, and automatically match them with the solid regions
 
-\item if you are using an external mesher (like GID or CUBIT), you should set \texttt{read\_external\_mesh} to \texttt{.true.}:
+\item if you are using an external mesher (like GID or CUBIT / Trelis), you should set \texttt{read\_external\_mesh} to \texttt{.true.}:
 	\begin{description}
      \item[\texttt{mesh\_file}] is the file describing the mesh : first line is the number of elements, then a list of 4 nodes (quadrilaterals only) forming each elements on each line.
 
@@ -719,7 +719,15 @@ Please consider these following points, when running the solver:
 \begin{itemize}
 \item the \texttt{DATA/Par\_file} given with the code works fine, you can use it without any modification to test the code
 
-\item the seismograms \texttt{OUTPUT\_FILES/*.sem*} are simple ASCII files with two columns: time in the first column and amplitude in the second, therefore they can be visualized with any tool you like, for instance "\texttt{gnuplot}"
+\item the seismograms \texttt{OUTPUT\_FILES/*.sem*} are simple ASCII files with two columns: time in the first column and amplitude in the second, therefore they can be visualized with any tool you like, for instance "\texttt{gnuplot}"; if you prefer to output binary seismograms in Seismic Unix format (which is a simple binary array dump) you can use parameter SU\_FORMAT, in which case all the seismograms will be written to a single file with the extension *.su.
+Depending on your installation of the Seismic Unix package you can use one of these two commands:
+
+surange < Uz\_file\_single.bin 
+
+suoldtonew < Uz\_file\_single.bin | surange
+
+to see the header info. 
+Replace \texttt{surange} with \texttt{suxwigb} to see wiggle plots for the seismograms.
 
 \item if you set flag \texttt{assign\_external\_model} to \texttt{.true.} in \texttt{DATA/Par\_file}, the velocity and density model that is given at the end of \texttt{DATA/Par\_file} is then ignored and overwritten by the external velocity and density model that you define yourself in \texttt{define\_external\_model.f90}
 
