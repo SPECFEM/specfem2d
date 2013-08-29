@@ -52,11 +52,11 @@ def createSU():
 	
 	# Create headers and Su file
 	if seismotype==4:
-		ordres=['suaddhead < pressure_file_single.bin ns='+str(nt)+' | sushw key=dt a='+str(int(deltat*1e6))+' > pressure_file.su']
+		ordres=['suaddhead < pressure_file_single.su ns='+str(nt)+' | sushw key=dt a='+str(int(deltat*1e6))+' > pressure_file.su']
 		ordres.append('suxwigb < pressure_file.su perc=96 '+labels+' title=" Pressure : '+title+'"&')
 	else:
-		ordres=['suaddhead < Ux_file_single.bin ns='+str(nt)+' | sushw key=dt a='+str(int(deltat*1e6))+' > Ux_file.su']
-		ordres.append('suaddhead < Uz_file_single.bin ns='+str(nt)+' | sushw key=dt a='+str(int(deltat*1e6))+' > Uz_file.su')
+		ordres=['suaddhead < Ux_file_single.su ns='+str(nt)+' | sushw key=dt a='+str(int(deltat*1e6))+' > Ux_file.su']
+		ordres.append('suaddhead < Uz_file_single.su ns='+str(nt)+' | sushw key=dt a='+str(int(deltat*1e6))+' > Uz_file.su')
 		ordres.append('supswigp < Ux_file.su > Ux_file.ps '+labels+' title=" Ux : '+title+'"&')
 		ordres.append('supswigp < Uz_file.su > Uz_file.ps '+labels+' title=" Uz : '+title+'"&')
 		ordres.append('suxwigb < Ux_file.su perc=96 '+labels+' title=" Ux : '+title+'"&')
