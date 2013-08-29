@@ -147,28 +147,28 @@
   if (save_binary_seismograms .and. myrank == 0 .and. seismo_offset == 0) then
 
 ! delete the old files
-     open(unit=12,file='OUTPUT_FILES/Ux_file_single.bin',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/Ux_file_single.su',status='unknown')
      close(12,status='delete')
 
-     open(unit=12,file='OUTPUT_FILES/Ux_file_double.bin',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/Ux_file_double.su',status='unknown')
      close(12,status='delete')
 
-     open(unit=12,file='OUTPUT_FILES/pressure_file_single.bin',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/pressure_file_single.su',status='unknown')
      close(12,status='delete')
 
-     open(unit=12,file='OUTPUT_FILES/pressure_file_double.bin',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/pressure_file_double.su',status='unknown')
      close(12,status='delete')
 
-     open(unit=12,file='OUTPUT_FILES/Uz_file_single.bin',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/Uz_file_single.su',status='unknown')
      close(12,status='delete')
 
-     open(unit=12,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/Uz_file_double.su',status='unknown')
      close(12,status='delete')
 
-     open(unit=12,file='OUTPUT_FILES/Curl_file_single.bin',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/Curl_file_single.su',status='unknown')
      close(12,status='delete')
 
-     open(unit=12,file='OUTPUT_FILES/Curl_file_double.bin',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/Curl_file_double.su',status='unknown')
      close(12,status='delete')
 
   endif
@@ -178,38 +178,38 @@
 ! write the new files
      if(save_binary_seismograms_single) then
      if(seismotype == 4 .or. seismotype == 6) then
-        open(unit=12,file='OUTPUT_FILES/pressure_file_single.bin',status='unknown',access='direct',recl=4)
+        open(unit=12,file='OUTPUT_FILES/pressure_file_single.su',status='unknown',access='direct',recl=4)
      else if(.not.p_sv) then
-        open(unit=12,file='OUTPUT_FILES/Uy_file_single.bin',status='unknown',access='direct',recl=4)
+        open(unit=12,file='OUTPUT_FILES/Uy_file_single.su',status='unknown',access='direct',recl=4)
      else
-        open(unit=12,file='OUTPUT_FILES/Ux_file_single.bin',status='unknown',access='direct',recl=4)
+        open(unit=12,file='OUTPUT_FILES/Ux_file_single.su',status='unknown',access='direct',recl=4)
      endif
      endif
 
      if(save_binary_seismograms_double) then
      if(seismotype == 4 .or. seismotype == 6) then
-        open(unit=13,file='OUTPUT_FILES/pressure_file_double.bin',status='unknown',access='direct',recl=8)
+        open(unit=13,file='OUTPUT_FILES/pressure_file_double.su',status='unknown',access='direct',recl=8)
      else if(.not.p_sv) then
-        open(unit=13,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown',access='direct',recl=8)
+        open(unit=13,file='OUTPUT_FILES/Uz_file_double.su',status='unknown',access='direct',recl=8)
      else
-        open(unit=13,file='OUTPUT_FILES/Ux_file_double.bin',status='unknown',access='direct',recl=8)
+        open(unit=13,file='OUTPUT_FILES/Ux_file_double.su',status='unknown',access='direct',recl=8)
      endif
      endif
 
 ! no Z component seismogram if pressure
      if(seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
        if(save_binary_seismograms_single) &
-        open(unit=14,file='OUTPUT_FILES/Uz_file_single.bin',status='unknown',access='direct',recl=4)
+        open(unit=14,file='OUTPUT_FILES/Uz_file_single.su',status='unknown',access='direct',recl=4)
        if(save_binary_seismograms_double) &
-        open(unit=15,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown',access='direct',recl=8)
+        open(unit=15,file='OUTPUT_FILES/Uz_file_double.su',status='unknown',access='direct',recl=8)
      endif
 
 ! curl output
      if(seismotype == 5) then
        if(save_binary_seismograms_single) &
-        open(unit=16,file='OUTPUT_FILES/Curl_file_single.bin',status='unknown',access='direct',recl=4)
+        open(unit=16,file='OUTPUT_FILES/Curl_file_single.su',status='unknown',access='direct',recl=4)
        if(save_binary_seismograms_double) &
-        open(unit=17,file='OUTPUT_FILES/Curl_file_double.bin',status='unknown',access='direct',recl=8)
+        open(unit=17,file='OUTPUT_FILES/Curl_file_double.su',status='unknown',access='direct',recl=8)
      endif
 
   endif
