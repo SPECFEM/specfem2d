@@ -218,8 +218,9 @@
 ! pressure = - trace(sigma) / 3 = - (lambda + 2/3 mu) trace(epsilon) = - kappa * trace(epsilon)
 !
 ! to compute pressure in 2D in an elastic solid in the plane strain convention i.e. in the P-SV case,
-! one still uses pressure = - trace(sigma) / 3 but taking into account that the off-plane strain epsilon_zz is zero
-! by definition of the plane strain convention but thus the off-plane stress sigma_zz is not equal to zero,
+! one still uses pressure = - trace(sigma) / 3 but taking into account the fact
+! that the off-plane strain epsilon_zz is zero by definition of the plane strain convention
+! but thus the off-plane stress sigma_zz is not equal to zero,
 ! one has instead:  sigma_zz = lambda * (epsilon_xx + epsilon_yy), thus
 ! sigma_ij = lambda delta_ij trace(epsilon) + 2 mu epsilon_ij
 !          = lambda (epsilon_xx + epsilon_yy) + 2 mu epsilon_ij
@@ -227,7 +228,6 @@
 ! sigma_yy = lambda (epsilon_xx + epsilon_yy) + 2 mu epsilon_yy
 ! sigma_zz = lambda * (epsilon_xx + epsilon_yy)
 ! pressure = - trace(sigma) / 3 = - (lambda + 2*mu/3) (epsilon_xx + epsilon_yy)
-!
 
   if(elastic(ispec)) then
 
