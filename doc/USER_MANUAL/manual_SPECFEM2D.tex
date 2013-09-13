@@ -238,6 +238,10 @@ parallel programming based upon the Message Passing Interface (MPI)
 
 The next release of the code will include support for GPU graphics card acceleration \citep{KoMiEr09,KoErGoMi10,MiKo10,Kom11}.\\
 
+The code uses the plane strain convention when the standard P-SV equation case is used, i.e.,
+the off-plane strain $\epsilon_{zz}$ is zero by definition of the plane strain convention but thus the off-plane stress $\sigma_{zz}$ is not equal to zero,
+one has $\sigma_{zz} = \lambda (\epsilon_{xx} + \epsilon_{yy})$.
+
 %------------------------------------------------------------------------------------------------%
 \section{Citation}
 %------------------------------------------------------------------------------------------------%

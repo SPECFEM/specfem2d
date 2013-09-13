@@ -217,14 +217,17 @@
 ! sigma_zz = lambda (epsilon_xx + epsilon_yy + epsilon_zz) + 2 mu epsilon_zz
 ! pressure = - trace(sigma) / 3 = - (lambda + 2/3 mu) trace(epsilon) = - kappa * trace(epsilon)
 !
-! to compute pressure in 2D in an elastic solid, one uses pressure = - trace(sigma) / 2
+! to compute pressure in 2D in an elastic solid in the plane strain convention i.e. in the P-SV case,
+! one still uses pressure = - trace(sigma) / 3 but taking into account that the off-plane strain epsilon_zz is zero
+! by definition of the plane strain convention but thus the off-plane stress sigma_zz is not equal to zero,
+! one has instead:  sigma_zz = lambda * (epsilon_xx + epsilon_yy), thus
 ! sigma_ij = lambda delta_ij trace(epsilon) + 2 mu epsilon_ij
 !          = lambda (epsilon_xx + epsilon_yy) + 2 mu epsilon_ij
 ! sigma_xx = lambda (epsilon_xx + epsilon_yy) + 2 mu epsilon_xx
 ! sigma_yy = lambda (epsilon_xx + epsilon_yy) + 2 mu epsilon_yy
-! pressure = - trace(sigma) / 2 = - (lambda + mu) trace(epsilon)
+! sigma_zz = lambda * (epsilon_xx + epsilon_yy)
+! pressure = - trace(sigma) / 3 = - (lambda + 2*mu/3) (epsilon_xx + epsilon_yy)
 !
-
 
   if(elastic(ispec)) then
 
@@ -284,10 +287,10 @@
 ! non-causal rather than causal. We fixed the problem by using equations in Carcione's
 ! 2004 paper and his 2007 book.
 
-!J. M. Carcione, H B. Helle, The physics and simulation of wave propagation at the ocean
-! bottom, Geophysics, vol. 69(3), p. 825-839, 2004
-!J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic
-! and porous media, Elsevier, p. 124-125, 2007
+! J. M. Carcione, H. B. Helle, The physics and simulation of wave propagation at the ocean
+!  bottom, Geophysics, vol. 69(3), p. 825-839, 2004
+! J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic
+!  and porous media, Elsevier, p. 124-125, 2007
 
           ! compute unrelaxed elastic coefficients from formulas in Carcione 2007 page 125
           lambdal_relaxed_viscoelastic = (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) / Mu_nu1(i,j,ispec) &
