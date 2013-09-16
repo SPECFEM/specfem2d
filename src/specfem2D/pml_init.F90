@@ -605,10 +605,10 @@ end subroutine pml_init
   xmin = xmin_glob
   zmin = zmin_glob
   xmax = xmax_glob
-  zmax = zmax_glob  
+  zmax = zmax_glob
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
   xorigin = xmin + (xmax - xmin)/2.d0
-  zorigin = zmin + (zmax - zmin)/2.d0  
+  zorigin = zmin + (zmax - zmin)/2.d0
 #endif
 
    thickness_PML_z_min_bottom=1.d30
@@ -634,14 +634,14 @@ end subroutine pml_init
                     thickness_PML_z_max_bottom=max(coord(2,ibool(i,j,ispec)),thickness_PML_z_max_bottom)
                     thickness_PML_z_min_bottom=min(coord(2,ibool(i,j,ispec)),thickness_PML_z_min_bottom)
                  endif
-               endif 
+               endif
 !!!right case
                if(coord(1,ibool(i,j,ispec)) > xorigin) then
                  if (region_CPML(ispec) == CPML_X_ONLY  .or. region_CPML(ispec) == CPML_XY_ONLY) then
                     thickness_PML_x_max_right=max(coord(1,ibool(i,j,ispec)),thickness_PML_x_max_right)
                     thickness_PML_x_min_right=min(coord(1,ibool(i,j,ispec)),thickness_PML_x_min_right)
                  endif
-               endif 
+               endif
 !!!top case
                if(coord(2,ibool(i,j,ispec)) > zorigin) then
                  if (region_CPML(ispec) == CPML_Y_ONLY  .or. region_CPML(ispec) == CPML_XY_ONLY) then
@@ -800,7 +800,7 @@ end subroutine pml_init
                   if(region_CPML(ispec) == CPML_Y_ONLY)then
                      d_x = 0.d0
                      alpha_x = 0.d0
-                     K_x = 1.d0                   
+                     K_x = 1.d0
                   endif
 
                endif
@@ -813,7 +813,7 @@ end subroutine pml_init
                   abscissa_in_PML = zval - zorigintop
                   if(abscissa_in_PML >= 0.d0) then
                      abscissa_normalized = abscissa_in_PML / thickness_PML_z_top
-  
+
                      d_z = d0_z_top / damping_modified_factor * abscissa_normalized**NPOWER
 
 !                    alpha_z = ALPHA_MAX_PML * (1.d0 - abscissa_normalized) &
@@ -831,7 +831,7 @@ end subroutine pml_init
                   if(region_CPML(ispec) == CPML_Y_ONLY)then
                      d_x = 0.d0
                      alpha_x = 0.d0
-                     K_x = 1.d0                   
+                     K_x = 1.d0
                   endif
 
                endif
@@ -862,7 +862,7 @@ end subroutine pml_init
                   if(region_CPML(ispec) == CPML_X_ONLY)then
                      d_z = 0.d0
                      alpha_z = 0.d0
-                     K_z = 1.d0                   
+                     K_z = 1.d0
                   endif
 
                endif
@@ -893,7 +893,7 @@ end subroutine pml_init
                   if(region_CPML(ispec) == CPML_X_ONLY)then
                      d_z = 0.d0
                      alpha_z = 0.d0
-                     K_z = 1.d0                   
+                     K_z = 1.d0
                   endif
 
                endif

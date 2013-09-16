@@ -49,7 +49,7 @@
                             elastic,poroelastic,hprime_xx,hprime_zz, &
                             nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                             assign_external_model,kmato,poroelastcoef,density,porosity,tortuosity, &
-                            vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext, &
+                            vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
                             anisotropic,anisotropy,wxgll,wzgll,numat, &
                             pressure_element,vector_field_element,e1,e11, &
                             potential_dot_acoustic,potential_dot_dot_acoustic, &
@@ -92,7 +92,7 @@
   double precision, dimension(4,3,numat) :: poroelastcoef
   double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,vsext,rhoext
   double precision, dimension(NGLLX,NGLLZ,nspec) ::  c11ext,c15ext,c13ext, &
-    c33ext,c35ext,c55ext
+    c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
 
   integer :: nglob_elastic
   real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: displ_elastic,veloc_elastic
@@ -345,7 +345,7 @@
                   xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
                   nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
                   numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
-                  c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,ispec,e1,e11, &
+                  c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,ispec,e1,e11, &
                   ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
       ! compute velocity vector field in this element

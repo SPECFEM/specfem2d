@@ -971,7 +971,7 @@
      ispec = numabs(ispecabs)
 
      if (is_PML(ispec)) then
-      ispec_PML=spec_to_PML(ispec)  
+      ispec_PML=spec_to_PML(ispec)
 !--- left absorbing boundary
       if(codeabs(IEDGE4,ispecabs)) then
         i = 1

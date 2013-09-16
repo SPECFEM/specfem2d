@@ -54,8 +54,8 @@ save_ASCII_kernels              = .true.         # save sensitivity kernels in A
 nrec                            = 11             # number of receivers
 xdeb                            = 300.           # first receiver x in meters
 zdeb                            = 2200.          # first receiver z in meters
-xfin                            = 3700.          # last receiver x in meters (ignored if onlyone receiver)
-zfin                            = 2200.          # last receiver z in meters (ignored if onlyone receiver)
+xfin                            = 3700.          # last receiver x in meters (ignored if only one receiver)
+zfin                            = 2200.          # last receiver z in meters (ignored if only one receiver)
 enreg_surf_same_vertical        = .true.         # receivers inside the medium or at the surface
 
 # display parameters
@@ -96,7 +96,7 @@ output_energy                   = .false.        # compute and output total acou
 nbmodels                        = 4              # nb of different models
 # define models as
 # I:   (model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0) or
-# II:  (model_number 2 rho c11 c13 c15 c33 c35 c55 0 0 0 0 0 0) or
+# II:  (model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0) or
 # III: (model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu).
 #
 # For istropic elastic/acoustic material use I and set Vs to zero to make a given model acoustic, for anisotropic elastic use II,
@@ -104,10 +104,19 @@ nbmodels                        = 4              # nb of different models
 #
 # For anisotropic media in the most general 2D case we have the following convention for the stress-strain relationship:
 # ! implement anisotropy in 2D
-# sigma_xx = c11*dux_dx + c15*(duz_dx + dux_dz) + c13*duz_dz
-# sigma_zz = c13*dux_dx + c35*(duz_dx + dux_dz) + c33*duz_dz
-# sigma_xz = c15*dux_dx + c55*(duz_dx + dux_dz) + c35*duz_dz
+# sigma_xx = c11*dux_dx + c13*duz_dz + c15*(duz_dx + dux_dz)
+# sigma_zz = c13*dux_dx + c33*duz_dz + c35*(duz_dx + dux_dz)
+# sigma_xz = c15*dux_dx + c35*duz_dz + c55*(duz_dx + dux_dz)
+# sigma_yy is not equal to zero in the plane strain formulation
+# but is used only in post-processing if needed,
+# to compute pressure for display or seismogram recording purposes
+# sigma_yy = c12*dux_dx + c23*duz_dz + c25*(duz_dx + dux_dz)
 # where the notations are for instance duz_dx = d(Uz) / dx.
+#
+# For anisotropic elastic media the last three parameters, c12 c23 c25, are used only when the user asks the code to compute pressure for display
+# or seismogram recording purposes. Thus, if you do not know these parameters for your anisotropic material and/or if you do not plan to display or record pressure you
+# can ignore them and set them to zero. When pressure is used these three parameters are needed because the code needs to compute sigma_yy,
+# which is not equal to zero in the plane strain formulation.
 #
 1 1 2700.d0 3000.d0 1732.051d0 0 0 9999 9999 0 0 0 0 0 0
 2 1 2500.d0 2700.d0 0 0 0 9999 9999 0 0 0 0 0 0

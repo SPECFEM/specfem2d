@@ -271,7 +271,7 @@
                 nedges_elporo_coupled_loc,nnodes_tangential_curve
 
     write(15,*) 'Material sets (num 1 rho vp vs 0 0 QKappa Qmu 0 0 0 0 0 0) or '
-    write(15,*) '(num 2 rho c11 c13 c33 c44 QKappa Qmu 0 0 0 0 0 0) or '
+    write(15,*) '(num 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0) or '
     write(15,*) '(num 3 rhos rhof phi c k_xx k_xz k_zz Ks Kf Kfr etaf mufr Qmu)'
     do i=1,nb_materials
       if (icodemat(i) == ISOTROPIC_MATERIAL) then
@@ -283,13 +283,13 @@
       else
          write(15,*) i,icodemat(i),rho_s(i), &
                     aniso3(i),aniso4(i),aniso5(i),aniso6(i),&
-                    aniso7(i),aniso8(i),QKappa(i),Qmu(i),0,0,0,0
+                    aniso7(i),aniso8(i),aniso9(i),aniso10(i),aniso11(i),0,0,0
       endif
     enddo
 
     write(15,*) 'Arrays kmato and knods for each bloc:'
 
-!   DK DK add support for using pml in mpi mode with external mesh
+!   DK DK add support for using pml in MPI mode with external mesh
 !   call write_partition_database(15, iproc, nspec, num_material, ngnod, 2)
     call write_partition_database(15, iproc, nspec, num_material, region_pml_external_mesh, ngnod, 2)
 

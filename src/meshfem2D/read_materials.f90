@@ -43,7 +43,7 @@
 !========================================================================
 
   subroutine read_materials(nb_materials,icodemat,cp,cs, &
-                            aniso3,aniso4,aniso5,aniso6,aniso7,aniso8, &
+                            aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11, &
                             QKappa,Qmu,rho_s,rho_f,phi,tortuosity, &
                             permxx,permxz,permzz,kappa_s,kappa_f,kappa_fr, &
                             eta_f,mu_fr)
@@ -58,7 +58,7 @@
   integer, dimension(nb_materials) :: icodemat
 
   double precision, dimension(nb_materials) :: rho_s,cp,cs, &
-    aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,QKappa,Qmu
+    aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,QKappa,Qmu
   double precision, dimension(nb_materials) :: rho_f,phi,tortuosity,permxx,permxz,&
        permzz,kappa_s,kappa_f,kappa_fr,eta_f,mu_fr
 
@@ -77,6 +77,9 @@
   aniso6(:) = 0.d0
   aniso7(:) = 0.d0
   aniso8(:) = 0.d0
+  aniso9(:) = 0.d0
+  aniso10(:) = 0.d0
+  aniso11(:) = 0.d0
   QKappa(:) = 9999.d0
   Qmu(:) = 9999.d0
   rho_s(:) = 0.d0
@@ -139,15 +142,9 @@
         aniso6(i) = val4read
         aniso7(i) = val5read
         aniso8(i) = val6read
-        QKappa(i) = val7read
-        Qmu(i) = val8read
-        cp(i) = sqrt(val4read/val0read)
-        cs(i) = sqrt(val6read/val0read)
-
-! for Cs we use a less restrictive test because acoustic media have Cs exactly equal to zero
-        if(rho_s(i) <= 0.00000001d0 .or. cp(i) <= 0.00000001d0 .or. cs(i) < 0.d0) &
-            stop 'negative value of velocity or density'
-        if(QKappa(i) <= 0.00000001d0 .or. Qmu(i) <= 0.00000001d0) stop 'non-positive value of QKappa or Qmu'
+        aniso9(i) = val7read
+        aniso10(i) = val8read
+        aniso11(i) = val9read
 
      else
 
@@ -200,7 +197,8 @@
      else
         print *,'Material #',i,' anisotropic'
         print *,'rho,cp,cs = ',rho_s(i),cp(i),cs(i)
-        print*,'c11,c13,c15,c33,c35,c55 = ',aniso3(i),aniso4(i),aniso5(i),aniso6(i),aniso7(i),aniso8(i)
+        print*,'c11,c13,c15,c33,c35,c55,c12,c23,c25 = ',aniso3(i),aniso4(i),aniso5(i),aniso6(i),aniso7(i),aniso8(i), &
+                                                        aniso9(i),aniso10(i),aniso11(i)
         print *,'QKappa,Qmu = ',QKappa(i),Qmu(i)
      endif
      print *
