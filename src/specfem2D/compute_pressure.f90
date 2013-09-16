@@ -185,7 +185,7 @@
 ! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
   real(kind=CUSTOM_REAL) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
-  real(kind=CUSTOM_REAL) :: sigma_xx,sigma_zz,sigmap
+  real(kind=CUSTOM_REAL) :: sigma_xx,sigma_yy,sigma_zz !! ,sigmap
   real(kind=CUSTOM_REAL) :: dwx_dxi,dwx_dgamma,dwz_dxi,dwz_dgamma
   real(kind=CUSTOM_REAL) :: dwx_dxl,dwz_dzl
 
@@ -300,6 +300,8 @@
 
           ! compute the stress using the unrelaxed Lame parameters (Carcione 2007 page 125)
           sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
+          ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
+          sigma_yy = lambdal_unrelaxed_elastic*(dux_dxl + duz_dzl)
           sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
 
           ! add the memory variables using the relaxed parameters (Carcione 2007 page 125)
@@ -314,6 +316,8 @@
 
           sigma_xx = sigma_xx + (lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic) * e1_sum &
                       + TWO * mul_unrelaxed_elastic * e11_sum
+          ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
+          sigma_yy = sigma_yy + (lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic) * e1_sum
           sigma_zz = sigma_zz + (lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic) * e1_sum &
                       - TWO * mul_relaxed_viscoelastic * e11_sum
 
@@ -321,6 +325,8 @@
 
           ! no attenuation
           sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
+          ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
+          sigma_yy = lambdal_unrelaxed_elastic*(dux_dxl + duz_dzl)
           sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
 
         endif
@@ -348,12 +354,15 @@
 
           ! implement anisotropy in 2D
           sigma_xx = c11*dux_dxl + c15*(duz_dxl + dux_dzl) + c13*duz_dzl
+          ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
+          sigma_yy = 0 !!!!        33333333333333333 YYYYYYYYYYYYYYYYYYYYYYYYY to define later
           sigma_zz = c13*dux_dxl + c35*(duz_dxl + dux_dzl) + c33*duz_dzl
 
         endif
 
         ! store pressure
-        pressure_element(i,j) = - (sigma_xx + sigma_zz) / 2.d0
+        ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
+        pressure_element(i,j) = - (sigma_xx + sigma_yy + sigma_zz) / 3.d0
 
       enddo
     enddo
@@ -366,26 +375,26 @@
     ! get poroelastic parameters of current spectral element
     phil = porosity(kmato(ispec))
     tortl = tortuosity(kmato(ispec))
-    !solid properties
+    ! solid properties
     mul_s = poroelastcoef(2,1,kmato(ispec))
     kappal_s = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS*mul_s
     rhol_s = density(1,kmato(ispec))
-    !fluid properties
+    ! fluid properties
     kappal_f = poroelastcoef(1,2,kmato(ispec))
     rhol_f = density(2,kmato(ispec))
-    !frame properties
+    ! frame properties
     mul_fr = poroelastcoef(2,3,kmato(ispec))
     kappal_fr = poroelastcoef(3,3,kmato(ispec)) - FOUR_THIRDS*mul_fr
     rhol_bar =  (1.d0 - phil)*rhol_s + phil*rhol_f
-    !Biot coefficients for the input phi
+    ! Biot coefficients for the input phi
     D_biot = kappal_s*(1.d0 + phil*(kappal_s/kappal_f - 1.d0))
     H_biot = (kappal_s - kappal_fr)*(kappal_s - kappal_fr)/(D_biot - kappal_fr) &
             + kappal_fr + FOUR_THIRDS*mul_fr
     C_biot = kappal_s*(kappal_s - kappal_fr)/(D_biot - kappal_fr)
     M_biot = kappal_s*kappal_s/(D_biot - kappal_fr)
-    !where T = G:grad u_s + C div w I
-    !and T_f = C div u_s I + M div w I
-    !we are expressing lambdaplus2mu, lambda, and mu for G, C, and M
+    ! where T = G:grad u_s + C div w I
+    ! and T_f = C div u_s I + M div w I
+    ! we are expressing lambdaplus2mu, lambda, and mu for G, C, and M
     mul_G = mul_fr
     lambdal_G = H_biot - TWO*mul_fr
     lambdalplus2mul_G = lambdal_G + TWO*mul_G
@@ -418,7 +427,6 @@
           dwz_dxi = dwz_dxi + displw_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
           dwx_dgamma = dwx_dgamma + displw_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
           dwz_dgamma = dwz_dgamma + displw_poroelastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
-
         enddo
 
         xixl = xix(i,j,ispec)
@@ -448,10 +456,10 @@
 ! non-causal rather than causal. We fixed the problem by using equations in Carcione's
 ! 2004 paper and his 2007 book.
 
-!J. M. Carcione, H B. Helle, The physics and simulation of wave propagation at the ocean
-! bottom, Geophysics, vol. 69(3), p. 825-839, 2004
-!J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic
-! and porous media, Elsevier, p. 124-125, 2007
+! J. M. Carcione, H B. Helle, The physics and simulation of wave propagation at the ocean
+!  bottom, Geophysics, vol. 69(3), p. 825-839, 2004
+! J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic
+!  and porous media, Elsevier, p. 124-125, 2007
 
           ! compute relaxed elastic coefficients from formulas in Carcione 2007 page 125
           lambdal_relaxed_viscoelastic = (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) / Mu_nu1(i,j,ispec) &
@@ -461,6 +469,9 @@
 
           ! compute the stress using the unrelaxed Lame parameters (Carcione 2007 page 125)
           sigma_xx = (lambdal_unrelaxed_elastic + 2.0 * mul_unrelaxed_elastic)*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
+          ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
+!         sigma_yy = ...  ! it is not zero because of the plane strain formulation, thus it should be computed here
+          stop 'pressure calculation not implemented for poroelastic media yet, you should compute sigma_yy here'
           sigma_zz = (lambdal_unrelaxed_elastic + 2.0 * mul_unrelaxed_elastic)*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
 
           ! add the memory variables using the relaxed parameters (Carcione 2007 page 125)
@@ -475,6 +486,9 @@
 
           sigma_xx = sigma_xx + (lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic) * e1_sum &
                     + TWO * mul_relaxed_viscoelastic * e11_sum
+          ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
+!         sigma_yy = ...  ! it is not zero because of the plane strain formulation, thus it should be computed here
+          stop 'pressure calculation not implemented for poroelastic media yet, you should compute sigma_yy here'
           sigma_zz = sigma_zz + (lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic) * e1_sum &
                     - TWO * mul_relaxed_viscoelastic * e11_sum
 
@@ -482,15 +496,23 @@
 
           ! no attenuation
           sigma_xx = lambdalplus2mul_G*dux_dxl + lambdal_G*duz_dzl + C_biot*(dwx_dxl + dwz_dzl)
+          ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
+!         sigma_yy = ...  ! it is not zero because of the plane strain formulation, thus it should be computed here
+          stop 'pressure calculation not implemented for poroelastic media yet, you should compute sigma_yy here'
           sigma_zz = lambdalplus2mul_G*duz_dzl + lambdal_G*dux_dxl + C_biot*(dwx_dxl + dwz_dzl)
 
-          sigmap = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl + dwz_dzl)
+!         sigmap = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl + dwz_dzl)
 
         endif
 
         ! store pressure
-        pressure_element(i,j) = - (sigma_xx + sigma_zz) / 2.d0
-!        pressure_element2(i,j) = - sigmap
+!! DK DK the formula on the line below is not correct because it does not take into account
+!! DK DK the fact that sigma_yy is not zero in the plane strain case
+!       pressure_element(i,j) = - (sigma_xx + sigma_zz) / 2.d0
+!! DK DK the right formula is
+        ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
+        pressure_element(i,j) = - (sigma_xx + sigma_yy + sigma_zz) / 3.d0
+!       pressure_element2(i,j) = - sigmap
       enddo
     enddo
 
