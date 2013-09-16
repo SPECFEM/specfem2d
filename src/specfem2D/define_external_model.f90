@@ -43,7 +43,7 @@
 !========================================================================
 
   subroutine define_external_model(coord,material_element,ibool,rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
-                                             c11,c13,c15,c33,c35,c55,nspec,nglob)
+                                             c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
 
   implicit none
 
@@ -61,7 +61,7 @@
   integer, dimension(NGLLX,NGLLZ,nspec), intent(in) :: ibool
 
   double precision, dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
-                                                                 c11,c15,c13,c33,c35,c55
+                                                                 c11,c15,c13,c33,c35,c55,c12,c23,c25
 
   integer :: i,j,ispec,iglob
 
@@ -92,6 +92,9 @@
      c33(i,j,ispec) = c11(i,j,ispec)
      c35(i,j,ispec) = 0.d0
      c55(i,j,ispec) = 75.3d9
+     c12(i,j,ispec) = 0.d0
+     c23(i,j,ispec) = 0.d0
+     c25(i,j,ispec) = 0.d0
 
    else if(material_element(ispec) == 2) then
      rho(i,j,ispec) = 2500.d0
@@ -105,6 +108,9 @@
      c33(i,j,ispec) = 0.d0
      c35(i,j,ispec) = 0.d0
      c55(i,j,ispec) = 0.d0
+     c12(i,j,ispec) = 0.d0
+     c23(i,j,ispec) = 0.d0
+     c25(i,j,ispec) = 0.d0
 
    else
      write(IOUT,*) 'flag number in external model is equal to ',material_element(ispec)
@@ -125,7 +131,7 @@
 !========================================================================
 
   subroutine define_external_model_ak135f(coord,material_element,ibool,rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
-                                             c11,c13,c15,c33,c35,c55,nspec,nglob)
+                                             c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
 
   implicit none
 
@@ -168,7 +174,7 @@
   integer, dimension(NGLLX,NGLLZ,nspec), intent(in) :: ibool
 
   double precision, dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
-                                                                 c11,c15,c13,c33,c35,c55
+                                                                 c11,c15,c13,c33,c35,c55,c12,c23,c25
 
 ! number of layers in ak135-f
   integer, parameter :: NR_AK135F_NO_MUD = 136
@@ -1101,6 +1107,9 @@
   c33(:,:,:) = 0.d0
   c35(:,:,:) = 0.d0
   c55(:,:,:) = 0.d0
+  c12(:,:,:) = 0.d0
+  c23(:,:,:) = 0.d0
+  c25(:,:,:) = 0.d0
 
   end subroutine define_external_model_ak135f
 

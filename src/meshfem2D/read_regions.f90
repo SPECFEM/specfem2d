@@ -43,7 +43,7 @@
 !========================================================================
 
   subroutine read_regions(nbregion,nb_materials,icodemat,cp,cs, &
-                          rho_s,QKappa,Qmu,aniso3,aniso4,aniso5,aniso6,aniso7,aniso8, &
+                          rho_s,QKappa,Qmu,aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11, &
                           nelmnts,num_material,nxread,nzread)
 
 ! reads in material definitions in DATA/Par_file
@@ -54,7 +54,7 @@
   integer :: nbregion,nb_materials
   integer, dimension(nb_materials) :: icodemat
   double precision, dimension(nb_materials) :: rho_s,cp,cs, &
-    aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,QKappa,Qmu
+    aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,QKappa,Qmu
 
   integer :: nelmnts
   integer,dimension(nelmnts) :: num_material
@@ -128,6 +128,9 @@
        print *,'c33 = ',aniso6(imaterial_number)
        print *,'c35 = ',aniso7(imaterial_number)
        print *,'c55 = ',aniso8(imaterial_number)
+       print *,'c12 = ',aniso9(imaterial_number)
+       print *,'c23 = ',aniso10(imaterial_number)
+       print *,'c25 = ',aniso11(imaterial_number)
        print *,'rho = ',rho_s(imaterial_number)
        print *,'QKappa = ',QKappa(imaterial_number)
        print *,'Qmu = ',Qmu(imaterial_number)

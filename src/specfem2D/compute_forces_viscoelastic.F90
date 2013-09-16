@@ -49,7 +49,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
      deltatover2,deltatsquareover2,ibool,kmato,numabs,elastic,codeabs, &
      accel_elastic,veloc_elastic,displ_elastic, &
      density,poroelastcoef,xix,xiz,gammax,gammaz, &
-     jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy, &
+     jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy, &
      source_time_function,sourcearray,adj_sourcearrays,e1,e11, &
      e13,e1_veloc,e11_veloc,e13_veloc,e1_accel,e11_accel,e13_accel,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
      dvx_dxl_n,dvz_dzl_n,dvz_dxl_n,dvx_dzl_n,hprime_xx,hprimewgll_xx, &
@@ -112,10 +112,10 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic,veloc_elastic,displ_elastic
   double precision, dimension(2,numat) :: density
   double precision, dimension(4,3,numat) :: poroelastcoef
-  double precision, dimension(6,numat) :: anisotropy
+  double precision, dimension(9,numat) :: anisotropy
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
   double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,vsext,rhoext
-  double precision, dimension(NGLLX,NGLLZ,nspec) ::  c11ext,c15ext,c13ext,c33ext,c35ext,c55ext
+  double precision, dimension(NGLLX,NGLLZ,nspec) ::  c11ext,c15ext,c13ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
 
   real(kind=CUSTOM_REAL), dimension(NSOURCES,NSTEP,stage_time_scheme) :: source_time_function
   real(kind=CUSTOM_REAL), dimension(NSOURCES,NDIM,NGLLX,NGLLZ) :: sourcearray
@@ -196,7 +196,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL) :: phinu1,phinu2,tauinvnu1,tauinvnu2,theta_n_u,theta_n_v
 
   ! for anisotropy
-  double precision ::  c11,c15,c13,c33,c35,c55
+  double precision ::  c11,c15,c13,c33,c35,c55,c12,c23,c25
 
   ! for analytical initial plane wave for Bielak's conditions
   double precision :: veloc_horiz,veloc_vert,dxUx,dzUx,dxUz,dzUz,traction_x_t0,traction_z_t0
@@ -685,7 +685,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                          rmemory_dux_dz(i,j,ispec_PML) = coef0 * rmemory_dux_dz(i,j,ispec_PML) &
                                 + PML_dux_dzl_new(i,j) * coef1 + PML_dux_dzl(i,j) * coef2
                          rmemory_duz_dx(i,j,ispec_PML) = coef0 * rmemory_duz_dx(i,j,ispec_PML) &
-                                + PML_duz_dxl_new(i,j) * coef1 + PML_duz_dxl(i,j) * coef2  
+                                + PML_duz_dxl_new(i,j) * coef1 + PML_duz_dxl(i,j) * coef2
                          rmemory_duz_dz(i,j,ispec_PML) = coef0 * rmemory_duz_dz(i,j,ispec_PML) &
                                 + PML_duz_dzl_new(i,j) * coef1 + PML_duz_dzl(i,j) * coef2
                       else
@@ -1023,6 +1023,9 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     c33 = c33ext(i,j,ispec)
                     c35 = c35ext(i,j,ispec)
                     c55 = c55ext(i,j,ispec)
+                    c12 = c12ext(i,j,ispec)
+                    c23 = c23ext(i,j,ispec)
+                    c25 = c25ext(i,j,ispec)
                  else
                     c11 = anisotropy(1,kmato(ispec))
                     c13 = anisotropy(2,kmato(ispec))
@@ -1030,12 +1033,15 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                     c33 = anisotropy(4,kmato(ispec))
                     c35 = anisotropy(5,kmato(ispec))
                     c55 = anisotropy(6,kmato(ispec))
+                    c12 = anisotropy(7,kmato(ispec))
+                    c23 = anisotropy(8,kmato(ispec))
+                    c25 = anisotropy(9,kmato(ispec))
                  endif
 
                  ! implement anisotropy in 2D
-                 sigma_xx = c11*dux_dxl + c15*(duz_dxl + dux_dzl) + c13*duz_dzl
-                 sigma_zz = c13*dux_dxl + c35*(duz_dxl + dux_dzl) + c33*duz_dzl
-                 sigma_xz = c15*dux_dxl + c55*(duz_dxl + dux_dzl) + c35*duz_dzl
+                 sigma_xx = c11*dux_dxl + c13*duz_dzl + c15*(duz_dxl + dux_dzl)
+                 sigma_zz = c13*dux_dxl + c33*duz_dzl + c35*(duz_dxl + dux_dzl)
+                 sigma_xz = c15*dux_dxl + c35*duz_dzl + c55*(duz_dxl + dux_dzl)
 
               endif
 

@@ -509,7 +509,7 @@
 
 ! anisotropy parameters
   logical :: all_anisotropic
-  double precision ::  c11,c13,c15,c33,c35,c55
+  double precision ::  c11,c13,c15,c33,c35,c55,c12,c23,c25
   logical, dimension(:), allocatable :: anisotropic
   double precision, dimension(:,:), allocatable :: anisotropy
 
@@ -540,7 +540,7 @@
 
   double precision, dimension(:,:,:), allocatable :: vpext,vsext,rhoext
   double precision, dimension(:,:,:), allocatable :: QKappa_attenuationext,Qmu_attenuationext
-  double precision, dimension(:,:,:), allocatable :: c11ext,c13ext,c15ext,c33ext,c35ext,c55ext
+  double precision, dimension(:,:,:), allocatable :: c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
 
   double precision, dimension(:,:,:), allocatable :: shape2D,shape2D_display
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable  :: xix,xiz,gammax,gammaz,jacobian
@@ -1230,7 +1230,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     allocate(Uxinterp(pointsdisp,pointsdisp))
     allocate(Uzinterp(pointsdisp,pointsdisp))
     allocate(density(2,numat))
-    allocate(anisotropy(6,numat))
+    allocate(anisotropy(9,numat))
     allocate(porosity(numat))
     allocate(tortuosity(numat))
     allocate(permeability(3,numat))
@@ -2083,9 +2083,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
 ! to display acoustic elements
     allocate(vector_field_display(3,nglob))
 
-!    if(assign_external_model) then
-
-! note: so far, full external array needed/defined in subroutine calls
+    if(assign_external_model) then
       allocate(vpext(NGLLX,NGLLZ,nspec))
       allocate(vsext(NGLLX,NGLLZ,nspec))
       allocate(rhoext(NGLLX,NGLLZ,nspec))
@@ -2097,17 +2095,25 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       allocate(c33ext(NGLLX,NGLLZ,nspec))
       allocate(c35ext(NGLLX,NGLLZ,nspec))
       allocate(c55ext(NGLLX,NGLLZ,nspec))
-!    else
-!      allocate(vpext(1,1,1))
-!      allocate(vsext(1,1,1))
-!      allocate(rhoext(1,1,1))
-!      allocate(c11ext(1,1,1))
-!      allocate(c13ext(1,1,1))
-!      allocate(c15ext(1,1,1))
-!      allocate(c33ext(1,1,1))
-!      allocate(c35ext(1,1,1))
-!      allocate(c55ext(1,1,1))
-!    endif
+      allocate(c12ext(NGLLX,NGLLZ,nspec))
+      allocate(c23ext(NGLLX,NGLLZ,nspec))
+      allocate(c25ext(NGLLX,NGLLZ,nspec))
+    else
+      allocate(vpext(1,1,1))
+      allocate(vsext(1,1,1))
+      allocate(rhoext(1,1,1))
+      allocate(QKappa_attenuationext(1,1,1))
+      allocate(Qmu_attenuationext(1,1,1))
+      allocate(c11ext(1,1,1))
+      allocate(c13ext(1,1,1))
+      allocate(c15ext(1,1,1))
+      allocate(c33ext(1,1,1))
+      allocate(c35ext(1,1,1))
+      allocate(c55ext(1,1,1))
+      allocate(c12ext(1,1,1))
+      allocate(c23ext(1,1,1))
+      allocate(c25ext(1,1,1))
+    endif
 
   endif
 
@@ -2238,7 +2244,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                 inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,&
                 coord,kmato,rhoext,vpext,vsext, &
                 QKappa_attenuationext,Qmu_attenuationext, &
-                c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,READ_EXTERNAL_SEP_FILE)
+                c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,READ_EXTERNAL_SEP_FILE)
   endif
 
 !
@@ -5762,7 +5768,7 @@ if(coupled_elastic_poro) then
                deltatover2,deltatsquareover2,ibool,kmato,numabs,elastic,codeabs, &
                accel_elastic,veloc_elastic,displ_elastic, &
                density,poroelastcoef,xix,xiz,gammax,gammaz, &
-               jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy, &
+               jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy, &
                source_time_function,sourcearray,adj_sourcearrays, &
                e1,e11,e13,e1_veloc,e11_veloc,e13_veloc,e1_accel,e11_accel,e13_accel,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                dvx_dxl_n,dvz_dzl_n,dvz_dxl_n,dvx_dzl_n,hprime_xx,hprimewgll_xx, &
@@ -5819,7 +5825,7 @@ if(coupled_elastic_poro) then
                deltatover2,deltatsquareover2,ibool,kmato,numabs,elastic,codeabs, &
                b_accel_elastic,b_veloc_elastic,b_displ_elastic, &
                density,poroelastcoef,xix,xiz,gammax,gammaz, &
-               jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy, &
+               jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy, &
                source_time_function,sourcearray,adj_sourcearrays, &
                e1,e11,e13,e1_veloc,e11_veloc,e13_veloc,e1_accel,e11_accel,e13_accel,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                dvx_dxl_n,dvz_dzl_n,dvz_dxl_n,dvx_dzl_n,hprime_xx,hprimewgll_xx, &
@@ -6253,6 +6259,9 @@ if(coupled_elastic_poro) then
               c33 = c33ext(ii2,jj2,ispec_elastic)
               c35 = c35ext(ii2,jj2,ispec_elastic)
               c55 = c55ext(ii2,jj2,ispec_elastic)
+              c12 = c12ext(ii2,jj2,ispec_elastic)
+              c23 = c23ext(ii2,jj2,ispec_elastic)
+              c25 = c25ext(ii2,jj2,ispec_elastic)
             else
               c11 = anisotropy(1,kmato(ispec_elastic))
               c13 = anisotropy(2,kmato(ispec_elastic))
@@ -6260,6 +6269,9 @@ if(coupled_elastic_poro) then
               c33 = anisotropy(4,kmato(ispec_elastic))
               c35 = anisotropy(5,kmato(ispec_elastic))
               c55 = anisotropy(6,kmato(ispec_elastic))
+              c12 = anisotropy(7,kmato(ispec_elastic))
+              c23 = anisotropy(8,kmato(ispec_elastic))
+              c25 = anisotropy(9,kmato(ispec_elastic))
             endif
 
             sigma_xx = sigma_xx + c11*dux_dxl + c15*(duz_dxl + dux_dzl) + c13*duz_dzl
@@ -6930,6 +6942,9 @@ if(coupled_elastic_poro) then
               c33 = c33ext(i,j,ispec_elastic)
               c35 = c35ext(i,j,ispec_elastic)
               c55 = c55ext(i,j,ispec_elastic)
+              c12 = c12ext(i,j,ispec_elastic)
+              c23 = c23ext(i,j,ispec_elastic)
+              c25 = c25ext(i,j,ispec_elastic)
             else
               c11 = anisotropy(1,kmato(ispec_elastic))
               c13 = anisotropy(2,kmato(ispec_elastic))
@@ -6937,6 +6952,9 @@ if(coupled_elastic_poro) then
               c33 = anisotropy(4,kmato(ispec_elastic))
               c35 = anisotropy(5,kmato(ispec_elastic))
               c55 = anisotropy(6,kmato(ispec_elastic))
+              c12 = anisotropy(7,kmato(ispec_elastic))
+              c23 = anisotropy(8,kmato(ispec_elastic))
+              c25 = anisotropy(9,kmato(ispec_elastic))
             endif
             sigma_xx = c11*dux_dxl + c15*(duz_dxl + dux_dzl) + c13*duz_dzl
             sigma_zz = c13*dux_dxl + c35*(duz_dxl + dux_dzl) + c33*duz_dzl
@@ -7869,7 +7887,7 @@ if(coupled_elastic_poro) then
                         xix,xiz,gammax,gammaz,jacobian,ibool,elastic,poroelastic,hprime_xx,hprime_zz, &
                         nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                         assign_external_model,kmato,poroelastcoef,density,porosity,tortuosity, &
-                        vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext, &
+                        vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
                         anisotropic,anisotropy,wxgll,wzgll,numat, &
                         pressure_element,vector_field_element,e1,e11, &
                         potential_dot_acoustic,potential_dot_dot_acoustic, &
@@ -7925,7 +7943,7 @@ if(coupled_elastic_poro) then
               xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
               nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
               numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
-              c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,ispec,e1,e11, &
+              c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,ispec,e1,e11, &
               ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
       else if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
@@ -8716,7 +8734,7 @@ if(coupled_elastic_poro) then
                      xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
                      nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
                      numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
-                     c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,e1,e11, &
+                     c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,e1,e11, &
                      ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
         else if(imagetype_JPEG == 10 .and. .not. p_sv) then
@@ -8934,7 +8952,7 @@ if(coupled_elastic_poro) then
                      xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
                      nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
                      numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
-                     c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,e1,e11, &
+                     c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,e1,e11, &
                      ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
         else if(imagetype_wavefield_dumps == 4 .and. .not. p_sv) then

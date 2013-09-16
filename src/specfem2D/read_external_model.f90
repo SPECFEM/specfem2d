@@ -43,7 +43,6 @@
 !
 !========================================================================
 
-
   subroutine read_external_model(any_acoustic,any_elastic,any_poroelastic, &
                 elastic,poroelastic,anisotropic,nspec,nglob,N_SLS,ibool, &
                 f0_attenuation,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
@@ -51,7 +50,7 @@
                 inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,&
                 coord,kmato,rhoext,vpext,vsext, &
                 QKappa_attenuationext,Qmu_attenuationext, &
-                c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,READ_EXTERNAL_SEP_FILE)
+                c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,READ_EXTERNAL_SEP_FILE)
 
   implicit none
   include "constants.h"
@@ -81,7 +80,7 @@
 
   ! for anisotropy
   logical, dimension(nspec) :: anisotropic
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: c11ext,c13ext,c15ext,c33ext,c35ext,c55ext
+  double precision, dimension(NGLLX,NGLLZ,nspec) :: c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
 
   ! Local variables
   integer :: i,j,ispec,iglob
@@ -114,7 +113,7 @@
   else
 
     call define_external_model(coord,kmato,ibool,rhoext,vpext,vsext,QKappa_attenuationext,Qmu_attenuationext, &
-                               c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,nspec,nglob)
+                               c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,nspec,nglob)
 
 ! check that the external model that has just been defined makes sense
     do ispec = 1,nspec

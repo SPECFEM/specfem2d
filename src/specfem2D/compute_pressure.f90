@@ -47,7 +47,7 @@
                   xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
                   nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
                   numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
-                  c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,e1,e11, &
+                  c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,e1,e11, &
                   ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
 ! compute pressure in acoustic elements and in elastic elements
@@ -65,9 +65,9 @@
   double precision, dimension(2,numat) :: density
   double precision, dimension(numat) :: porosity,tortuosity
   double precision, dimension(4,3,numat) :: poroelastcoef
-  double precision, dimension(6,numat) :: anisotropy
+  double precision, dimension(9,numat) :: anisotropy
   double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext
-  double precision, dimension(NGLLX,NGLLZ,nspec) ::  c11ext,c15ext,c13ext,c33ext,c35ext,c55ext
+  double precision, dimension(NGLLX,NGLLZ,nspec) ::  c11ext,c15ext,c13ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
 
@@ -106,7 +106,7 @@
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
          nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
          numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
-         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,ispec,e1,e11, &
+         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,ispec,e1,e11, &
          ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
 ! use vector_field_display as temporary storage, store pressure in its second component
@@ -130,7 +130,7 @@
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
          nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
          numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
-         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,anisotropic,anisotropy,ispec,e1,e11, &
+         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,ispec,e1,e11, &
          ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
 ! compute pressure in acoustic elements and in elastic elements
@@ -147,9 +147,9 @@
   double precision, dimension(2,numat) :: density
   double precision, dimension(numat) :: porosity,tortuosity
   double precision, dimension(4,3,numat) :: poroelastcoef
-  double precision, dimension(6,numat) :: anisotropy
+  double precision, dimension(9,numat) :: anisotropy
   double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext
-  double precision, dimension(NGLLX,NGLLZ,nspec) ::  c11ext,c15ext,c13ext,c33ext,c35ext,c55ext
+  double precision, dimension(NGLLX,NGLLZ,nspec) ::  c11ext,c15ext,c13ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
 
@@ -200,7 +200,7 @@
   real(kind=CUSTOM_REAL) :: mul_G,lambdal_G,lambdalplus2mul_G
 
 ! for anisotropy
-  double precision ::  c11,c15,c13,c33,c35,c55
+  double precision ::  c11,c15,c13,c33,c35,c55,c12,c23,c25
 
 ! if elastic element
 !
@@ -340,6 +340,9 @@
             c33 = c33ext(i,j,ispec)
             c35 = c35ext(i,j,ispec)
             c55 = c55ext(i,j,ispec)
+            c12 = c12ext(i,j,ispec)
+            c23 = c23ext(i,j,ispec)
+            c25 = c25ext(i,j,ispec)
           else
             c11 = anisotropy(1,kmato(ispec))
             c13 = anisotropy(2,kmato(ispec))
@@ -347,16 +350,20 @@
             c33 = anisotropy(4,kmato(ispec))
             c35 = anisotropy(5,kmato(ispec))
             c55 = anisotropy(6,kmato(ispec))
+            c12 = anisotropy(7,kmato(ispec))
+            c23 = anisotropy(8,kmato(ispec))
+            c25 = anisotropy(9,kmato(ispec))
           endif
 
           duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
           dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
 
           ! implement anisotropy in 2D
-          sigma_xx = c11*dux_dxl + c15*(duz_dxl + dux_dzl) + c13*duz_dzl
+          sigma_xx = c11*dux_dxl + c13*duz_dzl + c15*(duz_dxl + dux_dzl)
           ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
-          sigma_yy = 0 !!!!        33333333333333333 YYYYYYYYYYYYYYYYYYYYYYYYY to define later
-          sigma_zz = c13*dux_dxl + c35*(duz_dxl + dux_dzl) + c33*duz_dzl
+          if(c12 < 1.e-7 .or. c23 < 1.e-7) stop 'cannot compute pressure for an anisotropic material if c12 or c23 are zero'
+          sigma_yy = c12*dux_dxl + c23*duz_dzl + c25*(duz_dxl + dux_dzl)
+          sigma_zz = c13*dux_dxl + c33*duz_dzl + c35*(duz_dxl + dux_dzl)
 
         endif
 

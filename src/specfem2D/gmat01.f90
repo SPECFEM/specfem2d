@@ -54,7 +54,7 @@
 
   integer :: numat,myrank,ipass
   double precision :: density_array(2,numat),poroelastcoef(4,3,numat),porosity_array(numat)
-  double precision :: aniso_array(6,numat),tortuosity_array(numat),permeability(3,numat)
+  double precision :: aniso_array(9,numat),tortuosity_array(numat),permeability(3,numat)
   double precision :: QKappa_array(numat),Qmu_array(numat)
   double precision :: f0,Q0,freq0
   logical :: ATTENUATION_PORO_FLUID_PART
@@ -67,7 +67,7 @@
   double precision :: cpIsquare,cpIIsquare,cssquare,mu_s,mu_fr,eta_f,lambda_s,lambda_fr
   double precision :: val1,val2,val3,val4,val5,val6
   double precision :: val7,val8,val9,val10,val11,val12,val0
-  double precision ::  c11,c13,c15,c33,c35,c55
+  double precision ::  c11,c13,c15,c33,c35,c55,c12,c23,c25
   double precision :: D_biot,H_biot,C_biot,M_biot
   double precision :: w_c
   integer in,n,indic
@@ -142,6 +142,9 @@
         c33 = val4
         c35 = val5
         c55 = val6
+        c12 = val7
+        c23 = val8
+        c25 = val9
 
         ! P and S velocity
         cp = sqrt(c33/density(1))
@@ -251,6 +254,9 @@
         aniso_array(4,n) = c33
         aniso_array(5,n) = c35
         aniso_array(6,n) = c55
+        aniso_array(7,n) = c12
+        aniso_array(8,n) = c23
+        aniso_array(9,n) = c25
         porosity_array(n) = 0.d0
      else if (indic == 3) then
         density_array(1,n) = density(1)
@@ -291,7 +297,7 @@
               write(IOUT,300) n,cp,density(1),kappa,QKappa,Qmu
            endif
         else if(indic == 2) then                      ! elastic (anisotropic)
-           write(IOUT,400) n,density(1),c11,c13,c15,c33,c35,c55
+           write(IOUT,400) n,density(1),c11,c13,c15,c33,c35,c55,c12,c23,c25
         else if(indic == 3) then
            ! material is poroelastic (solid/fluid)
            write(iout,500) n,sqrt(cpIsquare),sqrt(cpIIsquare),sqrt(cssquare)
@@ -346,7 +352,7 @@
        'Qmu_attenuation. . . . . . . . . . .(Qmu) =',1pe15.8)
 
 400 format(//5x,'-------------------------------------',/5x, &
-       '-- Transverse anisotropic material --',/5x, &
+       '-- Anisotropic material --',/5x, &
        '-------------------------------------',/5x, &
        'Material set number. . . . . . . . (jmat) =',i6,/5x, &
        'Mass density. . . . . . . . . . (density) =',1pe15.8,/5x, &
@@ -355,7 +361,10 @@
        'c15 coefficient (Pascal). . . . . . (c15) =',1pe15.8,/5x, &
        'c33 coefficient (Pascal). . . . . . (c33) =',1pe15.8,/5x, &
        'c35 coefficient (Pascal). . . . . . (c35) =',1pe15.8,/5x, &
-       'c55 coefficient (Pascal). . . . . . (c55) =',1pe15.8,/5x)
+       'c55 coefficient (Pascal). . . . . . (c55) =',1pe15.8,/5x, &
+       'c12 coefficient (Pascal). . . . . . (c12) =',1pe15.8,/5x, &
+       'c23 coefficient (Pascal). . . . . . (c23) =',1pe15.8,/5x, &
+       'c25 coefficient (Pascal). . . . . . (c25) =',1pe15.8,/5x)
 
 500 format(//5x,'----------------------------------------',/5x, &
        '-- Poroelastic isotropic material --',/5x, &
