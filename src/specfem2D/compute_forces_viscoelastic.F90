@@ -155,7 +155,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   !temp variable
   real(kind=CUSTOM_REAL) :: weight_rk
 
-
   !---
   !--- local variables
   !---
@@ -214,7 +213,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
   integer :: ifirstelem,ilastelem
 
-!CPML coefficients and memory variables
+! CPML coefficients and memory variables
   integer :: nspec_PML,ispec_PML
   integer, dimension(nspec) :: region_CPML
   logical, dimension(nspec) :: is_PML
@@ -243,10 +242,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL) :: dux_dxl_new,dux_dzl_new,duz_dxl_new,duz_dzl_new
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: displ_elastic_new
   logical :: backward_simulation
-! real(kind=CUSTOM_REAL), dimension(6):: c_LDDRK
-! Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
-!               0.249351723343_CUSTOM_REAL,0.466911705055_CUSTOM_REAL,&
-!               0.582030414044_CUSTOM_REAL,0.847252983783_CUSTOM_REAL/
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! implement attenuation
