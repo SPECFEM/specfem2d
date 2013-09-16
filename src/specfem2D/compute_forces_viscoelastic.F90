@@ -424,7 +424,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
     PML_duz_dxl_new = 0._CUSTOM_REAL
     PML_duz_dzl_new = 0._CUSTOM_REAL
     if(stage_time_scheme == 6) then
-      displ_elastic_new = displ_elastic ! + c_LDDRK(i_stage) * deltat * veloc_elastic
+      displ_elastic_new = displ_elastic
     else
       displ_elastic_new = displ_elastic + deltat * veloc_elastic
     endif
