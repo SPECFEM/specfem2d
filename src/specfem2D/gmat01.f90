@@ -225,9 +225,6 @@
      !
      !----  set elastic coefficients and density
      !
-     !  Isotropic              :  lambda, mu, K (= lambda + 2*mu), zero
-     !  Transverse anisotropic :  c11, c13, c33, c44
-     !
      if(indic == 1) then
         density_array(1,n) = density(1)
         poroelastcoef(1,1,n) = lambda
