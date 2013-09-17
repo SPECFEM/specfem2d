@@ -372,7 +372,7 @@ you want to run the solver in double precision, run the \texttt{configure} scrip
 Keep in mind that this will of course double total memory size and will also make the solver around 20 to 30\% slower
 on many processors.
 
-If your compiler has problems with the \texttt{use mpi} statements that are used in the code, use the script called 
+If your compiler has problems with the \texttt{use mpi} statements that are used in the code, use the script called
 \texttt{replace\_use\_mpi\_with\_include\_mpif\_dot\_h.pl} in the root directory to replace all of them with \texttt{include 'mpif.h'} automatically.
 
 \section{Visualizing the subroutine calling tree of the source code}
@@ -726,11 +726,11 @@ Please consider these following points, when running the solver:
 \item the seismograms \texttt{OUTPUT\_FILES/*.sem*} are simple ASCII files with two columns: time in the first column and amplitude in the second, therefore they can be visualized with any tool you like, for instance "\texttt{gnuplot}"; if you prefer to output binary seismograms in Seismic Unix format (which is a simple binary array dump) you can use parameter SU\_FORMAT, in which case all the seismograms will be written to a single file with the extension *.su.
 Depending on your installation of the Seismic Unix package you can use one of these two commands:
 
-surange < Uz\_file\_single.bin 
+surange < Uz\_file\_single.bin
 
 suoldtonew < Uz\_file\_single.bin | surange
 
-to see the header info. 
+to see the header info.
 Replace \texttt{surange} with \texttt{suxwigb} to see wiggle plots for the seismograms.
 
 \item if you set flag \texttt{assign\_external\_model} to \texttt{.true.} in \texttt{DATA/Par\_file}, the velocity and density model that is given at the end of \texttt{DATA/Par\_file} is then ignored and overwritten by the external velocity and density model that you define yourself in \texttt{define\_external\_model.f90}
@@ -896,6 +896,7 @@ Thus in the most general 2D case we have the following convention for the stress
 sigma_xx = c11*dux_dx + c13*duz_dz + c15*(duz_dx + dux_dz)
 sigma_zz = c13*dux_dx + c33*duz_dz + c35*(duz_dx + dux_dz)
 sigma_xz = c15*dux_dx + c35*duz_dz + c55*(duz_dx + dux_dz)
+
 ! sigma_yy is not equal to zero in the plane strain formulation
 ! but is used only in post-processing if needed,
 ! to compute pressure for display or seismogram recording purposes
@@ -959,7 +960,7 @@ For istropic elastic/acoustic material use \texttt{I} and set Vs to zero to make
 and for isotropic poroelastic material use \texttt{III}. The mesh can contain acoustic, elastic, and poroelastic models simultaneously.
 
 For anisotropic elastic media the last three parameters, c12 c23 c25, are used only when the user asks the code to compute pressure for display
-or seismogram recording purposes. Thus, if you do not know these parameters for your anisotropic material and/or if you do not plan to display or record pressure you 
+or seismogram recording purposes. Thus, if you do not know these parameters for your anisotropic material and/or if you do not plan to display or record pressure you
 can ignore them and set them to zero. When pressure is used these three parameters are needed because the code needs to compute $\sigma_{yy}$,
 which is not equal to zero in the plane strain formulation.
 
