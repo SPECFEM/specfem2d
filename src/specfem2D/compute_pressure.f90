@@ -513,10 +513,6 @@
         endif
 
         ! store pressure
-!! DK DK the formula on the line below is not correct because it does not take into account
-!! DK DK the fact that sigma_yy is not zero in the plane strain case
-!       pressure_element(i,j) = - (sigma_xx + sigma_zz) / 2.d0
-!! DK DK the right formula is
         ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
         pressure_element(i,j) = - (sigma_xx + sigma_yy + sigma_zz) / 3.d0
 !       pressure_element2(i,j) = - sigmap
