@@ -2341,10 +2341,10 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
        enddo
     else
        irec_local = 0
-       write(filename, "('./SEM/Ux_file_single.su.adj')")
+       write(filename, "('./SEM/Ux_file_single.bin.adj')")
        open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ios)
                if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
-       write(filename, "('./SEM/Uz_file_single.su.adj')")
+       write(filename, "('./SEM/Uz_file_single.bin.adj')")
        open(113,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ios)
                if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
 

@@ -723,7 +723,7 @@ Please consider these following points, when running the solver:
 \begin{itemize}
 \item the \texttt{DATA/Par\_file} given with the code works fine, you can use it without any modification to test the code
 
-\item the seismograms \texttt{OUTPUT\_FILES/*.sem*} are simple ASCII files with two columns: time in the first column and amplitude in the second, therefore they can be visualized with any tool you like, for instance "\texttt{gnuplot}"; if you prefer to output binary seismograms in Seismic Unix format (which is a simple binary array dump) you can use parameter SU\_FORMAT, in which case all the seismograms will be written to a single file with the extension *.su.
+\item the seismograms \texttt{OUTPUT\_FILES/*.sem*} are simple ASCII files with two columns: time in the first column and amplitude in the second, therefore they can be visualized with any tool you like, for instance "\texttt{gnuplot}"; if you prefer to output binary seismograms in Seismic Unix format (which is a simple binary array dump) you can use parameter SU\_FORMAT, in which case all the seismograms will be written to a single file with the extension *.bin.
 Depending on your installation of the Seismic Unix package you can use one of these two commands:
 
 surange < Uz\_file\_single.bin
