@@ -41,11 +41,9 @@
 !
 !========================================================================
 
-  subroutine pml_init(nspec,nglob,anyabs,ibool,nelemabs,codeabs,numabs,&
-                    nspec_PML,is_PML,which_PML_elem,spec_to_PML, &
-                    icorner_iglob,NELEM_PML_THICKNESS,&
-                    read_external_mesh,region_CPML,&
-                    SIMULATION_TYPE,PML_interior_interface,nglob_interface,SAVE_FORWARD,myrank,mask_ibool)
+  subroutine pml_init(myrank,SIMULATION_TYPE,SAVE_FORWARD,nspec,nglob,ibool,anyabs,nelemabs,codeabs,numabs,&
+                      NELEM_PML_THICKNESS,nspec_PML,is_PML,which_PML_elem,spec_to_PML,region_CPML,&
+                      PML_interior_interface,nglob_interface,mask_ibool,read_external_mesh)
 
 #ifdef USE_MPI
   use :: mpi
@@ -54,139 +52,127 @@
   implicit none
   include 'constants.h'
 
-  integer :: SIMULATION_TYPE,nglob_interface,myrank
+  integer :: myrank,SIMULATION_TYPE,nspec,nglob,nglob_interface
 
-  integer :: nspec,nglob,nelemabs,nspec_PML,NELEM_PML_THICKNESS
-  logical :: anyabs
-  logical, dimension(4,nspec) :: PML_interior_interface
-
-  integer :: ibound,ispecabs,ncorner,ispec,iglob
-  integer :: i,j,k,i_coef
+  integer :: nelemabs,nspec_PML,NELEM_PML_THICKNESS
+  logical :: anyabs,SAVE_FORWARD,read_external_mesh
+  integer, dimension(nelemabs) :: numabs
+  logical, dimension(4,nelemabs) :: codeabs
 
   logical, dimension(4,nspec) :: which_PML_elem
   integer, dimension(nglob) ::   icorner_iglob
-  integer, dimension(nelemabs) :: numabs
-  logical, dimension(4,nelemabs) :: codeabs
+
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
   integer, dimension(nspec) :: spec_to_PML
   logical, dimension(nspec) :: is_PML
-
-!! DK DK for CPML_element_file
-  logical :: read_external_mesh
   integer, dimension(nspec) :: region_CPML
-  logical :: SAVE_FORWARD
 
-  integer :: nspec_PML_tot
+  logical, dimension(nglob) :: mask_ibool
+  logical, dimension(4,nspec) :: PML_interior_interface
 
 #ifdef USE_MPI
   integer :: ier
 #endif
 
-  logical, dimension(nglob) :: mask_ibool
+  integer :: nspec_PML_tot,ibound,ispecabs,ncorner,ispec,iglob,i,j,k,i_coef
 
   nspec_PML = 0
 
   ! detection of PML elements
-
   if(.not. read_external_mesh) then
 
-     ! ibound is the side we are looking (bottom, right, top or left)
-     do ibound=1,4
+    ! ibound is the side we are looking (bottom, right, top or left)
+    do ibound=1,4
+      icorner_iglob = ZERO
+      ncorner=0
 
-     icorner_iglob = ZERO
-     ncorner=0
-
-     if (anyabs) then
-     ! mark any elements on the boundary as PML and list their corners
-     do ispecabs = 1,nelemabs
-        ispec = numabs(ispecabs)
-
-        !array to know which PML it is
-        which_PML_elem(ibound,ispec)=codeabs(ibound,ispecabs)
-
-        if(codeabs(ibound,ispecabs)) then ! we are on the good absorbing boundary
-        do j=1,NGLLZ,NGLLZ-1
-           do i=1,NGLLX,NGLLX-1
-              iglob=ibool(i,j,ispec)
-              k=1
-              do while(k<=ncorner .and. icorner_iglob(k)/=iglob)
-                 k=k+1
+      if(anyabs) then
+        ! mark any elements on the boundary as PML and list their corners
+        do ispecabs = 1,nelemabs
+          ispec = numabs(ispecabs)
+          !array to know which PML it is
+          which_PML_elem(ibound,ispec)=codeabs(ibound,ispecabs)
+          if(codeabs(ibound,ispecabs)) then ! we are on the good absorbing boundary
+            do j=1,NGLLZ,NGLLZ-1
+              do i=1,NGLLX,NGLLX-1
+                iglob=ibool(i,j,ispec)
+                k=1
+                do while(k<=ncorner .and. icorner_iglob(k)/=iglob)
+                  k=k+1
+                enddo
+                ncorner=ncorner+1
+                icorner_iglob(ncorner) = iglob
               enddo
-              ncorner=ncorner+1
-              icorner_iglob(ncorner) = iglob
-
-           enddo
+            enddo
+          endif ! we are on the good absorbing boundary
         enddo
-        endif ! we are on the good absorbing boundary
-
-     enddo
-     endif
+      endif
 
      !find elements stuck to boundary elements to define the 4 elements PML thickness
      !we take 4 elements for the PML thickness
      do i_coef=2,NELEM_PML_THICKNESS
 
-        do ispec=1,nspec
-           if (.not. which_PML_elem(ibound,ispec)) then
-              do j=1,NGLLZ,NGLLZ-1
-                 do i=1,NGLLX,NGLLX-1
-                    iglob=ibool(i,j,ispec)
-                    do k=1,ncorner
-                       if (iglob==icorner_iglob(k)) then
-                          which_PML_elem(ibound,ispec) = .true.
-                       endif
-                    enddo
-                 enddo
-              enddo
-           endif
-        enddo
+       do ispec=1,nspec
+         if(.not. which_PML_elem(ibound,ispec)) then
+           do j=1,NGLLZ,NGLLZ-1
+             do i=1,NGLLX,NGLLX-1
+               iglob=ibool(i,j,ispec)
+               do k=1,ncorner
+                 if(iglob==icorner_iglob(k)) then
+                   which_PML_elem(ibound,ispec) = .true.
+                 endif
+               enddo
+             enddo
+           enddo
+         endif
+       enddo
 
-        ! list every corner of each PML element detected
-        ncorner=0
-        icorner_iglob=ZERO
-        nspec_PML=0
-        do ispec=1,nspec
-           if (which_PML_elem(ibound,ispec)) then
-              is_PML(ispec)=.true.
-              do j=1,NGLLZ,NGLLZ-1
-                 do i=1,NGLLX,NGLLX-1
-                    iglob=ibool(i,j,ispec)
-                    k=1
-                    do while(k<=ncorner .and. icorner_iglob(k)/=iglob)
-                       k=k+1
-                    enddo
-                    ncorner=ncorner+1
-                    icorner_iglob(ncorner) = iglob
-                 enddo
+       ! list every corner of each PML element detected
+       ncorner=0
+       icorner_iglob=ZERO
+       nspec_PML=0
+       do ispec=1,nspec
+          if(which_PML_elem(ibound,ispec)) then
+            is_PML(ispec)=.true.
+            do j=1,NGLLZ,NGLLZ-1
+              do i=1,NGLLX,NGLLX-1
+                iglob=ibool(i,j,ispec)
+                k=1
+                do while(k<=ncorner .and. icorner_iglob(k)/=iglob)
+                  k=k+1
+                enddo
+                ncorner=ncorner+1
+                icorner_iglob(ncorner) = iglob
               enddo
-              nspec_PML=nspec_PML+1
-           endif
-        enddo
+            enddo
+            nspec_PML=nspec_PML+1
+          endif
+       enddo
 
      enddo !end nelem_thickness loop
 
      if(SIMULATION_TYPE == 3 .or.  (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))then
 
-      do i_coef=NELEM_PML_THICKNESS,NELEM_PML_THICKNESS+1
-        do ispec=1,nspec
-           if (.not. which_PML_elem(ibound,ispec)) then
-              do j=1,NGLLZ,NGLLZ-1
-                 do i=1,NGLLX,NGLLX-1
-                    iglob=ibool(i,j,ispec)
-                    do k=1,ncorner
-                       if (iglob==icorner_iglob(k)) then
-                          PML_interior_interface(ibound,ispec) = .true.
-                       endif
-                    enddo
+       do i_coef=NELEM_PML_THICKNESS,NELEM_PML_THICKNESS+1
+         do ispec=1,nspec
+           if(.not. which_PML_elem(ibound,ispec)) then
+             do j=1,NGLLZ,NGLLZ-1
+               do i=1,NGLLX,NGLLX-1
+                 iglob=ibool(i,j,ispec)
+                 do k=1,ncorner
+                   if(iglob==icorner_iglob(k)) then
+                     PML_interior_interface(ibound,ispec) = .true.
+                   endif
                  enddo
-              enddo
+               enddo
+             enddo
            endif
-        enddo
-      enddo !end nelem_thickness loop
+         enddo
+       enddo !end nelem_thickness loop
 
      endif !end of SIMULATION_TYPE == 3
 
-     enddo ! end loop on the four boundaries
+   enddo ! end loop on the four boundaries
 
      if(SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))then
        nglob_interface = 0
@@ -544,7 +530,6 @@ end subroutine pml_init
   double precision, parameter :: K_MAX_PML = 1.d0 ! from Gedney page 8.11
   double precision :: ALPHA_MAX_PML
 
-
 ! material properties of the elastic medium
   integer i,j,ispec,iglob,ispec_PML
   double precision :: lambdalplus2mul_relaxed
@@ -648,35 +633,35 @@ end subroutine pml_init
   enddo
 
 #ifdef USE_MPI
-!!!bottom
+!!!bottom_case
   call MPI_ALLREDUCE (thickness_PML_z_max_bottom, thickness_PML_z_max_bottom_glob, &
-       1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+                      1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE (thickness_PML_z_min_bottom, thickness_PML_z_min_bottom_glob, &
-       1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+                      1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
   thickness_PML_z_max_bottom=thickness_PML_z_max_bottom_glob
   thickness_PML_z_min_bottom=thickness_PML_z_min_bottom_glob
 
-!!!right
+!!!right_case
   call MPI_ALLREDUCE (thickness_PML_x_max_right, thickness_PML_x_max_right_glob, &
-       1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+                      1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE (thickness_PML_x_min_right, thickness_PML_x_min_right_glob, &
-       1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+                      1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
   thickness_PML_x_max_right=thickness_PML_x_max_right_glob
   thickness_PML_x_min_right=thickness_PML_x_min_right_glob
 
-!!!top
+!!!top_case
   call MPI_ALLREDUCE (thickness_PML_z_max_top, thickness_PML_z_max_top_glob, &
-       1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+                      1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE (thickness_PML_z_min_top, thickness_PML_z_min_top_glob, &
-       1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+                      1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
   thickness_PML_z_max_top=thickness_PML_z_max_top_glob
   thickness_PML_z_min_top=thickness_PML_z_min_top_glob
 
-!!!left
+!!!left_case
   call MPI_ALLREDUCE (thickness_PML_x_max_left, thickness_PML_x_max_left_glob, &
-       1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+                      1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE (thickness_PML_x_min_left, thickness_PML_x_min_left_glob, &
-       1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+                      1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
   thickness_PML_x_max_left=thickness_PML_x_max_left_glob
   thickness_PML_x_min_left=thickness_PML_x_min_left_glob
 #endif
