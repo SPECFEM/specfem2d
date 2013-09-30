@@ -3053,10 +3053,9 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         alpha_x_store(:,:,:) = 0
         alpha_z_store(:,:,:) = 0
 
-        call define_PML_coefficients(nglob,nspec,is_PML,ibool,coord,&
-                region_CPML,kmato,density,poroelastcoef,numat,f0(1),&
-                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
-                nspec_PML,spec_to_PML)
+        call define_PML_coefficients(nglob,nspec,kmato,density,poroelastcoef,numat,f0(1),&
+                  ibool,coord,is_PML,region_CPML,spec_to_PML,nspec_PML,&
+                  K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store)
 
       endif
 
