@@ -993,15 +993,15 @@
   integer :: i_stage,stage_time_scheme
   real(kind=CUSTOM_REAL), dimension(Nstages):: alpha_LDDRK,beta_LDDRK,c_LDDRK
 
-Data alpha_LDDRK /0.0_CUSTOM_REAL,-0.737101392796_CUSTOM_REAL, &
-     -1.634740794341_CUSTOM_REAL,-0.744739003780_CUSTOM_REAL, &
-     -1.469897351522_CUSTOM_REAL,-2.813971388035_CUSTOM_REAL/
+  Data alpha_LDDRK /0.0_CUSTOM_REAL,-0.737101392796_CUSTOM_REAL, &
+                    -1.634740794341_CUSTOM_REAL,-0.744739003780_CUSTOM_REAL, &
+                    -1.469897351522_CUSTOM_REAL,-2.813971388035_CUSTOM_REAL/
 
-Data beta_LDDRK /0.032918605146_CUSTOM_REAL,0.823256998200_CUSTOM_REAL,&
+  Data beta_LDDRK /0.032918605146_CUSTOM_REAL,0.823256998200_CUSTOM_REAL,&
                    0.381530948900_CUSTOM_REAL,0.200092213184_CUSTOM_REAL,&
                    1.718581042715_CUSTOM_REAL,0.27_CUSTOM_REAL/
 
-Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
+  Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                 0.249351723343_CUSTOM_REAL,0.466911705055_CUSTOM_REAL,&
                 0.582030414044_CUSTOM_REAL,0.847252983783_CUSTOM_REAL/
 
@@ -1027,7 +1027,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
    rmemory_dux_dx_LDDRK,rmemory_duz_dx_LDDRK,rmemory_dux_dz_LDDRK,rmemory_duz_dz_LDDRK
 
-  integer, dimension(:), allocatable :: spec_to_PML,icorner_iglob
+  integer, dimension(:), allocatable :: spec_to_PML
   logical, dimension(:,:), allocatable :: which_PML_elem
 
 ! defined for using PML in elastic simulation
@@ -1171,10 +1171,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
                       x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource,aval, &
                       t0,initialfield,ipass,deltat,USER_T0)
 
-
-
   !----  define time stepping scheme
-
   if(time_stepping_scheme == 1)then
     stage_time_scheme=1
   else if(time_stepping_scheme == 2)then
@@ -1183,10 +1180,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     stage_time_scheme=4
   endif
 
-
-  !
   !----  read attenuation information
-  !
   call read_databases_atten(N_SLS,f0_attenuation)
 
   ! if source is not a Dirac or Heavyside then f0_attenuation is f0 of the first source
@@ -1194,26 +1188,20 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
     f0_attenuation = f0(1)
   endif
 
-
-  !
   !---- read the spectral macrobloc nodal coordinates
-  !
   if(ipass == 1) allocate(coorg(NDIM,npgeo))
 
   ! reads the spectral macrobloc nodal coordinates
   ! and basic properties of the spectral elements
-!! DK DK  call read_databases_coorg_elem(myrank,ipass,npgeo,coorg,numat,ngnod,nspec, &
-!! DK DK Dec 2011: added a crack manually
+  !! DK DK  call read_databases_coorg_elem(myrank,ipass,npgeo,coorg,numat,ngnod,nspec, &
+  !! DK DK Dec 2011: added a crack manually
   call read_databases_coorg_elem(myrank,ipass,npgeo_ori,coorg,numat,ngnod,nspec, &
                               pointsdisp,plot_lowerleft_corner_only, &
                               nelemabs,nelem_acoustic_surface, &
                               num_fluid_solid_edges,num_fluid_poro_edges, &
                               num_solid_poro_edges,nnodes_tangential_curve)
 
-
-  !
   !---- allocate arrays
-  !
   if(ipass == 1) then
     allocate(shape2D(ngnod,NGLLX,NGLLZ))
     allocate(dershape2D(NDIM,ngnod,NGLLX,NGLLZ))
@@ -2931,90 +2919,99 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       allocate(rhorho_ac_hessian_final1(1,1,1))
     endif
 
-    ! PML absorbing conditionds
+  ! PML absorbing conditionds
     anyabs_glob=anyabs
 #ifdef USE_MPI
     call MPI_ALLREDUCE(anyabs, anyabs_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
 #endif
 
-    if( PML_BOUNDARY_CONDITIONS .and. anyabs_glob ) then
-
-      !PML code
-      allocate(is_PML(nspec))
-      allocate(icorner_iglob(nglob))
-      allocate(which_PML_elem(4,nspec))
-      allocate(spec_to_PML(nspec))
-
-      if(SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))then
-         allocate(PML_interior_interface(4,nspec))
-         PML_interior_interface = .false.
-      else
-         allocate(PML_interior_interface(4,1))
-      endif
-
-
+    if(PML_BOUNDARY_CONDITIONS .and. anyabs_glob ) then
+      allocate(is_PML(nspec),stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array is_PML'
+      allocate(spec_to_PML(nspec),stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array spec_to_PML'
       is_PML(:) = .false.
       which_PML_elem(:,:) = .false.
-!   DK DK add support for using pml in mpi mode with external mesh
-      if(read_external_mesh)then
-            allocate(mask_ibool_pml(nglob))
+
+      allocate(which_PML_elem(4,nspec),stat=ier)
+      if(ier /= 0) stop 'error: not enough memory to allocate array which_PML_elem'
+
+      if(SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))then
+        allocate(PML_interior_interface(4,nspec),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array PML_interior_interface'
+        PML_interior_interface = .false.
       else
-            allocate(mask_ibool_pml(1))
+        allocate(PML_interior_interface(4,1))
       endif
 
-      call pml_init(nspec,nglob,anyabs,ibool,nelemabs,codeabs,numabs,&
-                  nspec_PML,is_PML,which_PML_elem,spec_to_PML, &
-                  icorner_iglob,NELEM_PML_THICKNESS,&
-                  read_external_mesh,region_CPML,&
-                  SIMULATION_TYPE,PML_interior_interface,nglob_interface,SAVE_FORWARD,myrank,mask_ibool_pml)
+!   DK DK add support for using pml in mpi mode with external mesh
+      if(read_external_mesh)then
+        allocate(mask_ibool_pml(nglob))
+      else
+        allocate(mask_ibool_pml(1))
+      endif
+
+      call pml_init(myrank,SIMULATION_TYPE,SAVE_FORWARD,nspec,nglob,ibool,anyabs,nelemabs,codeabs,numabs,&
+                    NELEM_PML_THICKNESS,nspec_PML,is_PML,which_PML_elem,spec_to_PML,region_CPML,&
+                    PML_interior_interface,nglob_interface,mask_ibool_pml,read_external_mesh)
 
       if((SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS)then
-         allocate(point_interface(nglob_interface))
-         allocate(pml_interface_history_displ(3,nglob_interface,NSTEP))
-         allocate(pml_interface_history_veloc(3,nglob_interface,NSTEP))
-         allocate(pml_interface_history_accel(3,nglob_interface,NSTEP))
-         allocate(pml_interface_history_potential(nglob_interface,NSTEP))
-         allocate(pml_interface_history_potential_dot(nglob_interface,NSTEP))
-         allocate(pml_interface_history_potential_dot_dot(nglob_interface,NSTEP))
+        if(any_elastic .and. nglob_interface > 0)then
+          allocate(point_interface(nglob_interface),stat=ier)
+          if(ier /= 0) stop 'error: not enough memory to allocate array point_interface'
+          allocate(pml_interface_history_displ(3,nglob_interface,NSTEP),stat=ier)
+          if(ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_displ'
+          allocate(pml_interface_history_veloc(3,nglob_interface,NSTEP),stat=ier)
+          if(ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_veloc'
+          allocate(pml_interface_history_accel(3,nglob_interface,NSTEP),stat=ier)
+        endif
 
-         call determin_interface_pml_interior(nglob_interface,nspec,ibool,PML_interior_interface,&
-                                              which_PML_elem,point_interface,read_external_mesh,&
-                                              mask_ibool_pml,region_CPML,nglob)
-         deallocate(PML_interior_interface)
-         deallocate(mask_ibool_pml)
+        if(any_acoustic .and. nglob_interface > 0)then
+          if(ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_accel'
+          allocate(pml_interface_history_potential(nglob_interface,NSTEP),stat=ier)
+          if(ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential'
+          allocate(pml_interface_history_potential_dot(nglob_interface,NSTEP),stat=ier)
+          if(ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential_dot'
+          allocate(pml_interface_history_potential_dot_dot(nglob_interface,NSTEP),stat=ier)
+          if(ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential_dot_dot'
+        endif
 
-         if(any_elastic .and. nglob_interface > 0)then
-           write(outputname,'(a,i6.6,a)') 'pml_interface_elastic',myrank,'.bin'
-           open(unit=71,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
-         endif
+        call determin_interface_pml_interior(nglob_interface,nspec,ibool,PML_interior_interface,&
+                                             which_PML_elem,point_interface,read_external_mesh,&
+                                             mask_ibool_pml,region_CPML,nglob)
+        deallocate(PML_interior_interface)
+        deallocate(mask_ibool_pml)
 
-         if(any_acoustic .and. nglob_interface > 0)then
-           write(outputname,'(a,i6.6,a)') 'pml_interface_acoustic',myrank,'.bin'
-           open(unit=72,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
-         endif
+        if(any_elastic .and. nglob_interface > 0)then
+          write(outputname,'(a,i6.6,a)') 'pml_interface_elastic',myrank,'.bin'
+          open(unit=71,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
+        endif
+
+        if(any_acoustic .and. nglob_interface > 0)then
+          write(outputname,'(a,i6.6,a)') 'pml_interface_acoustic',myrank,'.bin'
+          open(unit=72,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
+        endif
       else
-           allocate(point_interface(1))
-           allocate(pml_interface_history_displ(3,1,1))
-           allocate(pml_interface_history_veloc(3,1,1))
-           allocate(pml_interface_history_accel(3,1,1))
-           allocate(pml_interface_history_potential(1,1))
-           allocate(pml_interface_history_potential_dot(1,1))
-           allocate(pml_interface_history_potential_dot_dot(1,1))
+        allocate(point_interface(1))
+        allocate(pml_interface_history_displ(3,1,1))
+        allocate(pml_interface_history_veloc(3,1,1))
+        allocate(pml_interface_history_accel(3,1,1))
+        allocate(pml_interface_history_potential(1,1))
+        allocate(pml_interface_history_potential_dot(1,1))
+        allocate(pml_interface_history_potential_dot_dot(1,1))
       endif
 
       if(SIMULATION_TYPE == 3 .and. PML_BOUNDARY_CONDITIONS)then
-       if(any_elastic .and. nglob_interface > 0)then
-         do it = 1,NSTEP
-          do i = 1, nglob_interface
-            read(71)pml_interface_history_accel(1,i,it),&
-                    pml_interface_history_accel(2,i,it),&
-                    pml_interface_history_accel(3,i,it),&
-                    pml_interface_history_veloc(1,i,it),&
-                    pml_interface_history_veloc(2,i,it),&
-                    pml_interface_history_veloc(3,i,it),&
-                    pml_interface_history_displ(1,i,it),&
-                    pml_interface_history_displ(2,i,it),&
-                    pml_interface_history_displ(3,i,it)
+
+        if(any_elastic .and. nglob_interface > 0)then
+          do it = 1,NSTEP
+            do i = 1, nglob_interface
+              read(71)pml_interface_history_accel(1,i,it),pml_interface_history_accel(2,i,it),&
+                      pml_interface_history_accel(3,i,it),&
+                      pml_interface_history_veloc(1,i,it),pml_interface_history_veloc(2,i,it),&
+                      pml_interface_history_veloc(3,i,it),&
+                      pml_interface_history_displ(1,i,it),pml_interface_history_displ(2,i,it),&
+                      pml_interface_history_displ(3,i,it)
           enddo
          enddo
        endif
@@ -3022,46 +3019,43 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
        if(any_acoustic .and. nglob_interface > 0)then
          do it = 1,NSTEP
            do i = 1, nglob_interface
-             read(72)pml_interface_history_potential_dot_dot(i,it),&
-                     pml_interface_history_potential_dot(i,it),&
+             read(72)pml_interface_history_potential_dot_dot(i,it),pml_interface_history_potential_dot(i,it),&
                      pml_interface_history_potential(i,it)
-          enddo
+           enddo
          enddo
        endif
-      endif
+     endif
 
       deallocate(which_PML_elem)
-      deallocate(icorner_iglob)
 
-      if (nspec_PML==0) nspec_PML=1
-!!!!!!!!!!!!! DK DK added this
+      if (nspec_PML==0) nspec_PML=1 ! DK DK added this
 
       if (nspec_PML > 0) then
-
-        allocate(K_x_store(NGLLX,NGLLZ,nspec_PML))
-        allocate(K_z_store(NGLLX,NGLLZ,nspec_PML))
-        allocate(d_x_store(NGLLX,NGLLZ,nspec_PML))
-        allocate(d_z_store(NGLLX,NGLLZ,nspec_PML))
-        allocate(alpha_x_store(NGLLX,NGLLZ,nspec_PML))
-        allocate(alpha_z_store(NGLLX,NGLLZ,nspec_PML))
-
-        !! DK DK initialize to zero
-        K_x_store(:,:,:) = 0
-        K_z_store(:,:,:) = 0
-        d_x_store(:,:,:) = 0
-        d_z_store(:,:,:) = 0
-        alpha_x_store(:,:,:) = 0
-        alpha_z_store(:,:,:) = 0
-
+        allocate(K_x_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array K_x_store'
+        allocate(K_z_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array K_z_store'
+        allocate(d_x_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array d_x_store'
+        allocate(d_z_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array d_z_store'
+        allocate(alpha_x_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array alpha_x_store'
+        allocate(alpha_z_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array alpha_z_store'
+        K_x_store(:,:,:) = ZERO
+        K_z_store(:,:,:) = ZERO
+        d_x_store(:,:,:) = ZERO
+        d_z_store(:,:,:) = ZERO
+        alpha_x_store(:,:,:) = ZERO
+        alpha_z_store(:,:,:) = ZERO
         call define_PML_coefficients(nglob,nspec,kmato,density,poroelastcoef,numat,f0(1),&
                   ibool,coord,is_PML,region_CPML,spec_to_PML,nspec_PML,&
                   K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store)
-
       endif
 
       !elastic PML memory variables
       if (any_elastic .and. nspec_PML>0) then
-
         allocate(rmemory_displ_elastic(2,3,NGLLX,NGLLZ,nspec_PML),stat=ier)
         if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic'
         allocate(rmemory_dux_dx(NGLLX,NGLLZ,nspec_PML),stat=ier)
@@ -3126,11 +3120,11 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         endif
 
         if(time_stepping_scheme == 2)then
-        rmemory_displ_elastic_LDDRK(:,:,:,:,:) = ZERO
-        rmemory_dux_dx_LDDRK(:,:,:) = ZERO
-        rmemory_dux_dz_LDDRK(:,:,:) = ZERO
-        rmemory_duz_dx_LDDRK(:,:,:) = ZERO
-        rmemory_duz_dz_LDDRK(:,:,:) = ZERO
+          rmemory_displ_elastic_LDDRK(:,:,:,:,:) = ZERO
+          rmemory_dux_dx_LDDRK(:,:,:) = ZERO
+          rmemory_dux_dz_LDDRK(:,:,:) = ZERO
+          rmemory_duz_dx_LDDRK(:,:,:) = ZERO
+          rmemory_duz_dz_LDDRK(:,:,:) = ZERO
         endif
 
       else
@@ -3146,15 +3140,11 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
         allocate(rmemory_duz_dx_prime(1,1,1))
         allocate(rmemory_duz_dz_prime(1,1,1))
 
-
-        if(time_stepping_scheme == 2)then
         allocate(rmemory_displ_elastic_LDDRK(1,1,1,1,1))
         allocate(rmemory_dux_dx_LDDRK(1,1,1))
         allocate(rmemory_dux_dz_LDDRK(1,1,1))
         allocate(rmemory_duz_dx_LDDRK(1,1,1))
         allocate(rmemory_duz_dz_LDDRK(1,1,1))
-        endif
-
       endif
 
       if (any_acoustic .and. nspec_PML>0) then
@@ -3193,10 +3183,6 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       endif
 
     else
-
-
-!!!!!!!!!!!!! DK DK added this
-
       allocate(rmemory_dux_dx(1,1,1))
       allocate(rmemory_dux_dz(1,1,1))
       allocate(rmemory_duz_dx(1,1,1))
@@ -3232,11 +3218,7 @@ Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
       allocate(d_z_store(1,1,1))
       allocate(alpha_x_store(1,1,1))
       allocate(alpha_z_store(1,1,1))
-
     endif ! PML_BOUNDARY_CONDITIONS
-
-
-
   endif ! ipass == 1
 
   !
