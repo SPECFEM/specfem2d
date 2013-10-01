@@ -473,7 +473,7 @@
 ! material properties of the elastic medium
   double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic,kappal
 
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic,veloc_elastic,displ_elastic
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: veloc_elastic_LDDRK,displ_elastic_LDDRK,&
                                                          veloc_elastic_LDDRK_temp
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: accel_elastic_rk,veloc_elastic_rk
@@ -484,7 +484,7 @@
 
 ! material properties of the poroelastic medium (solid phase:s and fluid phase [defined as w=phi(u_f-u_s)]: w)
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
-    accels_poroelastic,velocs_poroelastic,displs_poroelastic
+    accels_poroelastic,velocs_poroelastic,displs_poroelastic, displs_poroelastic_old
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     velocs_poroelastic_LDDRK,displs_poroelastic_LDDRK
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
@@ -595,10 +595,6 @@
   integer nspec_allocate
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1,e11,e13
-!DK DK e1_veloc,e11_veloc,e13_veloc denote first derivative of e1,e11,e13 respect to t
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_veloc,e11_veloc,e13_veloc
-!DK DK e1_accel,e11_accel,e13_accel  denote second derivative of e1,e11,e13 respect to t
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_accel,e11_accel,e13_accel
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_LDDRK,e11_LDDRK,e13_LDDRK
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_initial_rk,e11_initial_rk,e13_initial_rk
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: e1_force_rk,e11_force_rk,e13_force_rk
@@ -606,11 +602,6 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: inv_tau_sigma_nu1_sent,phi_nu1_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent
   real(kind=CUSTOM_REAL), dimension(:,:,:) , allocatable :: Mu_nu1,Mu_nu2
   real(kind=CUSTOM_REAL) :: Mu_nu1_sent,Mu_nu2_sent
-
-
-
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
-    dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n,dvx_dxl_n,dvz_dzl_n,dvz_dxl_n,dvx_dzl_n
 
 ! for viscous attenuation
   double precision, dimension(:,:,:), allocatable :: &
@@ -993,6 +984,9 @@
   integer :: i_stage,stage_time_scheme
   real(kind=CUSTOM_REAL), dimension(Nstages):: alpha_LDDRK,beta_LDDRK,c_LDDRK
 
+  ! parameters used in LDDRK scheme, from equation (2) of
+  ! Berland, J., Bogey, C., & Bailly, C.
+  ! Low-dissipation and low-dispersion fourth-order Runge–Kutta algorithm, Computers & Fluids, 35(10), 1459-1463.
   Data alpha_LDDRK /0.0_CUSTOM_REAL,-0.737101392796_CUSTOM_REAL, &
                     -1.634740794341_CUSTOM_REAL,-0.744739003780_CUSTOM_REAL, &
                     -1.469897351522_CUSTOM_REAL,-2.813971388035_CUSTOM_REAL/
@@ -1376,25 +1370,9 @@
     allocate(e11(NGLLX,NGLLZ,nspec_allocate,N_SLS))
     allocate(e13(NGLLX,NGLLZ,nspec_allocate,N_SLS))
 
-    allocate(e1_veloc(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-    allocate(e11_veloc(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-    allocate(e13_veloc(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-
-    allocate(e1_accel(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-    allocate(e11_accel(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-    allocate(e13_accel(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-
     e1(:,:,:,:) = 0._CUSTOM_REAL
     e11(:,:,:,:) = 0._CUSTOM_REAL
     e13(:,:,:,:) = 0._CUSTOM_REAL
-
-    e1_veloc(:,:,:,:) = 0._CUSTOM_REAL
-    e11_veloc(:,:,:,:) = 0._CUSTOM_REAL
-    e13_veloc(:,:,:,:) = 0._CUSTOM_REAL
-
-    e1_accel(:,:,:,:) = 0._CUSTOM_REAL
-    e11_accel(:,:,:,:) = 0._CUSTOM_REAL
-    e13_accel(:,:,:,:) = 0._CUSTOM_REAL
 
     if(time_stepping_scheme == 2)then
       allocate(e1_LDDRK(NGLLX,NGLLZ,nspec_allocate,N_SLS))
@@ -1430,15 +1408,6 @@
     e1_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
     e11_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
     e13_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
-
-    allocate(dux_dxl_n(NGLLX,NGLLZ,nspec_allocate))
-    allocate(duz_dzl_n(NGLLX,NGLLZ,nspec_allocate))
-    allocate(duz_dxl_n(NGLLX,NGLLZ,nspec_allocate))
-    allocate(dux_dzl_n(NGLLX,NGLLZ,nspec_allocate))
-    allocate(dvx_dxl_n(NGLLX,NGLLZ,nspec_allocate))
-    allocate(dvz_dzl_n(NGLLX,NGLLZ,nspec_allocate))
-    allocate(dvz_dxl_n(NGLLX,NGLLZ,nspec_allocate))
-    allocate(dvx_dzl_n(NGLLX,NGLLZ,nspec_allocate))
     allocate(Mu_nu1(NGLLX,NGLLZ,nspec))
     allocate(Mu_nu2(NGLLX,NGLLZ,nspec))
   endif
@@ -2659,6 +2628,7 @@
       nglob_elastic = 1
     endif
     allocate(displ_elastic(3,nglob_elastic))
+    allocate(displ_elastic_old(3,nglob_elastic))
     allocate(veloc_elastic(3,nglob_elastic))
     allocate(accel_elastic(3,nglob_elastic))
     allocate(accel_elastic_adj_coupling(3,nglob_elastic))
@@ -2667,16 +2637,16 @@
     allocate(rmass_inverse_elastic_three(nglob_elastic))
 
     if(time_stepping_scheme==2)then
-    allocate(displ_elastic_LDDRK(3,nglob_elastic))
-    allocate(veloc_elastic_LDDRK(3,nglob_elastic))
-    allocate(veloc_elastic_LDDRK_temp(3,nglob_elastic))
+      allocate(displ_elastic_LDDRK(3,nglob_elastic))
+      allocate(veloc_elastic_LDDRK(3,nglob_elastic))
+      allocate(veloc_elastic_LDDRK_temp(3,nglob_elastic))
     endif
 
     if(time_stepping_scheme == 3)then
-    allocate(accel_elastic_rk(3,nglob_elastic,stage_time_scheme))
-    allocate(veloc_elastic_rk(3,nglob_elastic,stage_time_scheme))
-    allocate(veloc_elastic_initial_rk(3,nglob_elastic))
-    allocate(displ_elastic_initial_rk(3,nglob_elastic))
+      allocate(accel_elastic_rk(3,nglob_elastic,stage_time_scheme))
+      allocate(veloc_elastic_rk(3,nglob_elastic,stage_time_scheme))
+      allocate(veloc_elastic_initial_rk(3,nglob_elastic))
+      allocate(displ_elastic_initial_rk(3,nglob_elastic))
     endif
 
     ! extra array if adjoint and kernels calculation
@@ -2729,6 +2699,7 @@
       nglob_poroelastic = 1
     endif
     allocate(displs_poroelastic(NDIM,nglob_poroelastic))
+    allocate(displs_poroelastic_old(NDIM,nglob_poroelastic))
     allocate(velocs_poroelastic(NDIM,nglob_poroelastic))
     allocate(accels_poroelastic(NDIM,nglob_poroelastic))
     allocate(accels_poroelastic_adj_coupling(NDIM,nglob_poroelastic))
@@ -3602,6 +3573,7 @@
 
 ! initialize arrays to zero
   displ_elastic = 0._CUSTOM_REAL
+  displ_elastic_old = 0._CUSTOM_REAL
   veloc_elastic = 0._CUSTOM_REAL
   accel_elastic = 0._CUSTOM_REAL
 
@@ -3625,6 +3597,7 @@
   endif
 
   displs_poroelastic = 0._CUSTOM_REAL
+  displs_poroelastic_old = 0._CUSTOM_REAL
   velocs_poroelastic = 0._CUSTOM_REAL
   accels_poroelastic = 0._CUSTOM_REAL
   displw_poroelastic = 0._CUSTOM_REAL
@@ -3632,24 +3605,24 @@
   accelw_poroelastic = 0._CUSTOM_REAL
 
   if(time_stepping_scheme == 2) then
-  displs_poroelastic_LDDRK = 0._CUSTOM_REAL
-  velocs_poroelastic_LDDRK = 0._CUSTOM_REAL
-  displw_poroelastic_LDDRK = 0._CUSTOM_REAL
-  velocw_poroelastic_LDDRK = 0._CUSTOM_REAL
+    displs_poroelastic_LDDRK = 0._CUSTOM_REAL
+    velocs_poroelastic_LDDRK = 0._CUSTOM_REAL
+    displw_poroelastic_LDDRK = 0._CUSTOM_REAL
+    velocw_poroelastic_LDDRK = 0._CUSTOM_REAL
   endif
 
   if(time_stepping_scheme == 3) then
-  accels_poroelastic_rk = 0._CUSTOM_REAL
-  velocs_poroelastic_rk = 0._CUSTOM_REAL
+    accels_poroelastic_rk = 0._CUSTOM_REAL
+    velocs_poroelastic_rk = 0._CUSTOM_REAL
 
-  accelw_poroelastic_rk = 0._CUSTOM_REAL
-  velocw_poroelastic_rk = 0._CUSTOM_REAL
+    accelw_poroelastic_rk = 0._CUSTOM_REAL
+    velocw_poroelastic_rk = 0._CUSTOM_REAL
 
-  velocs_poroelastic_initial_rk = 0._CUSTOM_REAL
-  displs_poroelastic_initial_rk = 0._CUSTOM_REAL
+    velocs_poroelastic_initial_rk = 0._CUSTOM_REAL
+    displs_poroelastic_initial_rk = 0._CUSTOM_REAL
 
-  velocw_poroelastic_initial_rk = 0._CUSTOM_REAL
-  displw_poroelastic_initial_rk = 0._CUSTOM_REAL
+    velocw_poroelastic_initial_rk = 0._CUSTOM_REAL
+    displw_poroelastic_initial_rk = 0._CUSTOM_REAL
 
   endif
 
@@ -4926,12 +4899,14 @@ if(coupled_elastic_poro) then
 !! DK DK whose dimension is the product of the two dimensions, the second dimension being equal to 1
      do i = 1,3*nglob_elastic !! DK DK here change 3 to NDIM when/if we suppress the 2nd component of the arrays (the SH component)
 !    do i = 1,NDIM*nglob_elastic  !! DK DK this should be the correct size in principle, but not here because of the SH component
+      displ_elastic_old(i,1) = displ_elastic(i,1) + deltatsquareover2 * accel_elastic(i,1)
       displ_elastic(i,1) = displ_elastic(i,1) &
                     + deltat*veloc_elastic(i,1) &
                     + deltatsquareover2*accel_elastic(i,1)
       veloc_elastic(i,1) = veloc_elastic(i,1) + deltatover2*accel_elastic(i,1)
      enddo
 #else
+      displ_elastic_old = displ_elastic + deltatsquareover2 * accel_elastic
       displ_elastic = displ_elastic &
                     + deltat*veloc_elastic &
                     + deltatsquareover2*accel_elastic
@@ -4955,6 +4930,7 @@ if(coupled_elastic_poro) then
 
       if(time_stepping_scheme==1)then
       !for the solid
+      displs_poroelastic_old = displs_poroelastic + deltatover2 * accels_poroelastic
       displs_poroelastic = displs_poroelastic &
                          + deltat*velocs_poroelastic &
                          + deltatsquareover2*accels_poroelastic
@@ -5747,14 +5723,14 @@ if(coupled_elastic_poro) then
                source_type,it,NSTEP,anyabs,assign_external_model, &
                initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource, &
                deltatover2,deltatsquareover2,ibool,kmato,numabs,elastic,codeabs, &
-               accel_elastic,veloc_elastic,displ_elastic, &
+               accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
                density,poroelastcoef,xix,xiz,gammax,gammaz, &
                jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy, &
                source_time_function,sourcearray,adj_sourcearrays, &
-               e1,e11,e13,e1_veloc,e11_veloc,e13_veloc,e1_accel,e11_accel,e13_accel,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
-               dvx_dxl_n,dvz_dzl_n,dvz_dxl_n,dvx_dzl_n,hprime_xx,hprimewgll_xx, &
-               hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1, &
-               phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
+               e1,e11,e13,e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
+               e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_rk, e11_force_rk, e13_force_rk, &
+               hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll,&
+               inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
                deltat,coord,add_Bielak_conditions, x_source(1), z_source(1), &
                A_plane, B_plane, C_plane, anglesource_refl, c_inc, c_refl, time_offset, f0(1),&
                v0x_left(1,it),v0z_left(1,it),v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
@@ -5762,9 +5738,7 @@ if(coupled_elastic_poro) then
                count_left,count_right,count_bottom,over_critical_angle, &
                NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD, &
                b_absorb_elastic_left,b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top, &
-               nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
-               e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
-               e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_rk, e11_force_rk, e13_force_rk, &
+               nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &               
                stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring,max(1,nadj_rec_local), &
                is_PML,nspec_PML,spec_to_PML,region_CPML, &
                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
@@ -5804,14 +5778,14 @@ if(coupled_elastic_poro) then
                source_type,it,NSTEP,anyabs,assign_external_model, &
                initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource, &
                deltatover2,deltatsquareover2,ibool,kmato,numabs,elastic,codeabs, &
-               b_accel_elastic,b_veloc_elastic,b_displ_elastic, &
+               b_accel_elastic,b_veloc_elastic,b_displ_elastic,displ_elastic_old, &
                density,poroelastcoef,xix,xiz,gammax,gammaz, &
                jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy, &
                source_time_function,sourcearray,adj_sourcearrays, &
-               e1,e11,e13,e1_veloc,e11_veloc,e13_veloc,e1_accel,e11_accel,e13_accel,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
-               dvx_dxl_n,dvz_dzl_n,dvz_dxl_n,dvx_dzl_n,hprime_xx,hprimewgll_xx, &
-               hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu1, &
-               phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
+               e1,e11,e13,e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
+               e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_rk, e11_force_rk, e13_force_rk, &
+               hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
+               inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
                deltat,coord,add_Bielak_conditions, x_source(1), z_source(1), &
                A_plane, B_plane, C_plane, anglesource_refl, c_inc, c_refl, time_offset, f0(1),&
                v0x_left(1,it),v0z_left(1,it),v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
@@ -5819,9 +5793,7 @@ if(coupled_elastic_poro) then
                count_left,count_right,count_bottom,over_critical_angle, &
                NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD, &
                b_absorb_elastic_left,b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top, &
-               nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
-               e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
-               e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_rk, e11_force_rk, e13_force_rk, &
+               nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &               
                stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring,max(1,nadj_rec_local), &
                is_PML,nspec_PML,spec_to_PML,region_CPML, &
                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
@@ -6617,16 +6589,13 @@ if(coupled_elastic_poro) then
                source_type,it,NSTEP,anyabs, &
                initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat, &
                deltatover2,deltatsquareover2,ibool,kmato,numabs,poroelastic,codeabs, &
-               accels_poroelastic,velocs_poroelastic,velocw_poroelastic,displs_poroelastic,displw_poroelastic,&
-               b_accels_poroelastic,b_displs_poroelastic,b_displw_poroelastic,&
+               accels_poroelastic,velocs_poroelastic,velocw_poroelastic,displs_poroelastic,displs_poroelastic_old,&
+               displw_poroelastic,b_accels_poroelastic,b_displs_poroelastic,b_displw_poroelastic,&
                density,porosity,tortuosity,permeability,poroelastcoef,xix,xiz,gammax,gammaz, &
-               jacobian,source_time_function,sourcearray,adj_sourcearrays,e11, &
-               e13,e11_veloc,e13_veloc,e11_accel,e13_accel,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
-               dvx_dxl_n,dvz_dzl_n,dvz_dxl_n,dvx_dzl_n,hprime_xx,hprimewgll_xx, &
-               hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu2,&
-               phi_nu2,Mu_nu2,N_SLS, &
-               rx_viscous,rz_viscous,theta_e,theta_s,&
-               b_viscodampx,b_viscodampz,&
+               jacobian,source_time_function,sourcearray,adj_sourcearrays, &
+               e11,e13,hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll,&
+               inv_tau_sigma_nu2,phi_nu2,Mu_nu2,N_SLS, &
+               rx_viscous,rz_viscous,theta_e,theta_s,b_viscodampx,b_viscodampz,&
                ibegin_edge1_poro,iend_edge1_poro,ibegin_edge3_poro,iend_edge3_poro, &
                ibegin_edge4_poro,iend_edge4_poro,ibegin_edge2_poro,iend_edge2_poro,&
                mufr_k,B_k,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,&
@@ -6642,15 +6611,12 @@ if(coupled_elastic_poro) then
                initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat, &
                deltatover2,deltatsquareover2,ibool,kmato,numabs,poroelastic,codeabs, &
                accelw_poroelastic,velocw_poroelastic,displw_poroelastic,velocs_poroelastic,displs_poroelastic,&
-               b_accelw_poroelastic,b_displw_poroelastic,b_displs_poroelastic,&
+               displs_poroelastic_old,b_accelw_poroelastic,b_displw_poroelastic,b_displs_poroelastic,&
                density,porosity,tortuosity,permeability,poroelastcoef,xix,xiz,gammax,gammaz, &
-               jacobian,source_time_function,sourcearray,adj_sourcearrays,e11, &
-               e13,e11_veloc,e13_veloc,e11_accel,e13_accel,dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
-               dvx_dxl_n,dvz_dzl_n,dvz_dxl_n,dvx_dzl_n,hprime_xx,hprimewgll_xx, &
-               hprime_zz,hprimewgll_zz,wxgll,wzgll,inv_tau_sigma_nu2,&
-               phi_nu2,Mu_nu2,N_SLS, &
-               rx_viscous,rz_viscous,theta_e,theta_s,&
-               b_viscodampx,b_viscodampz,&
+               jacobian,source_time_function,sourcearray,adj_sourcearrays, &
+               e11,e13,hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll,&
+               inv_tau_sigma_nu2,phi_nu2,Mu_nu2,N_SLS, &
+               rx_viscous,rz_viscous,theta_e,theta_s,b_viscodampx,b_viscodampz,&
                ibegin_edge1_poro,iend_edge1_poro,ibegin_edge3_poro,iend_edge3_poro, &
                ibegin_edge4_poro,iend_edge4_poro,ibegin_edge2_poro,iend_edge2_poro,&
                C_k,M_k,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,&
