@@ -202,13 +202,13 @@
                      + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML)&
                      + d_x_store(i,j,ispec_PML) * deltat / 2.d0)
                 rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
-              else if (region_CPML(ispec) == CPML_XY_ONLY) then
+              else if (region_CPML(ispec) == CPML_XZ_ONLY) then
                 rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
                      + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML)&
                      + (d_x_store(i,j,ispec_PML)*k_z_store(i,j,ispec_PML)+&
                        d_z_store(i,j,ispec_PML)*k_x_store(i,j,ispec_PML)) * deltat / 2.d0)
                 rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
-              else if(region_CPML(ispec) == CPML_Y_ONLY) then
+              else if(region_CPML(ispec) == CPML_Z_ONLY) then
                 rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
                      + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML)&
                      + d_z_store(i,j,ispec_PML)* deltat / 2.d0)
@@ -219,11 +219,11 @@
                 rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
                      + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML))
                 rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
-              else if (region_CPML(ispec) == CPML_XY_ONLY) then
+              else if (region_CPML(ispec) == CPML_XZ_ONLY) then
                 rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
                      + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML))
                 rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
-              else if(region_CPML(ispec) == CPML_Y_ONLY) then
+              else if(region_CPML(ispec) == CPML_Z_ONLY) then
                 rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
                      + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML))
                 rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
@@ -262,12 +262,12 @@
                 rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
                      + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML)&
                      + d_x_store(i,j,ispec_PML) * deltat / 2.d0)
-              else if (region_CPML(ispec) == CPML_XY_ONLY) then
+              else if (region_CPML(ispec) == CPML_XZ_ONLY) then
                 rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
                      + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML) &
                      + (d_x_store(i,j,ispec_PML)*k_z_store(i,j,ispec_PML)&
                         + d_z_store(i,j,ispec_PML)*k_x_store(i,j,ispec_PML)) * deltat / 2.d0)
-              else if(region_CPML(ispec) == CPML_Y_ONLY) then
+              else if(region_CPML(ispec) == CPML_Z_ONLY) then
                 rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
                      + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML)&
                      + d_z_store(i,j,ispec_PML)* deltat / 2.d0)
@@ -276,10 +276,10 @@
               if(region_CPML(ispec) == CPML_X_ONLY) then
                 rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
                      + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML))
-              else if (region_CPML(ispec) == CPML_XY_ONLY) then
+              else if (region_CPML(ispec) == CPML_XZ_ONLY) then
                 rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
                      + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML))
-              else if(region_CPML(ispec) == CPML_Y_ONLY) then
+              else if(region_CPML(ispec) == CPML_Z_ONLY) then
                 rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
                      + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML))
               endif

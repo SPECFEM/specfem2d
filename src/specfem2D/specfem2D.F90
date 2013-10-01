@@ -1012,13 +1012,13 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
                     K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
    rmemory_dux_dx,rmemory_duz_dx,rmemory_dux_dz,rmemory_duz_dz
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
    rmemory_dux_dx_prime,rmemory_duz_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dz_prime
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
    rmemory_dux_dx_LDDRK,rmemory_duz_dx_LDDRK,rmemory_dux_dz_LDDRK,rmemory_duz_dz_LDDRK
 
   integer, dimension(:), allocatable :: spec_to_PML
@@ -2902,10 +2902,10 @@
       allocate(spec_to_PML(nspec),stat=ier)
       if(ier /= 0) stop 'error: not enough memory to allocate array spec_to_PML'
       is_PML(:) = .false.
-      which_PML_elem(:,:) = .false.
 
       allocate(which_PML_elem(4,nspec),stat=ier)
       if(ier /= 0) stop 'error: not enough memory to allocate array which_PML_elem'
+      which_PML_elem(:,:) = .false.
 
       if(SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))then
         allocate(PML_interior_interface(4,nspec),stat=ier)
@@ -2999,7 +2999,7 @@
 
       deallocate(which_PML_elem)
 
-      if (nspec_PML==0) nspec_PML=1 ! DK DK added this
+!      if (nspec_PML==0) nspec_PML=1 ! DK DK added this
 
       if (nspec_PML > 0) then
         allocate(K_x_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
@@ -3023,99 +3023,118 @@
         call define_PML_coefficients(nglob,nspec,kmato,density,poroelastcoef,numat,f0(1),&
                   ibool,coord,is_PML,region_CPML,spec_to_PML,nspec_PML,&
                   K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store)
+      else
+        allocate(K_x_store(NGLLX,NGLLZ,1),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array K_x_store'
+        allocate(K_z_store(NGLLX,NGLLZ,1),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array K_z_store'
+        allocate(d_x_store(NGLLX,NGLLZ,1),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array d_x_store'
+        allocate(d_z_store(NGLLX,NGLLZ,1),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array d_z_store'
+        allocate(alpha_x_store(NGLLX,NGLLZ,1),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array alpha_x_store'
+        allocate(alpha_z_store(NGLLX,NGLLZ,1),stat=ier)
+        if(ier /= 0) stop 'error: not enough memory to allocate array alpha_z_store'
+        K_x_store(:,:,:) = ZERO
+        K_z_store(:,:,:) = ZERO
+        d_x_store(:,:,:) = ZERO
+        d_z_store(:,:,:) = ZERO
+        alpha_x_store(:,:,:) = ZERO
+        alpha_z_store(:,:,:) = ZERO
       endif
 
       !elastic PML memory variables
       if (any_elastic .and. nspec_PML>0) then
         allocate(rmemory_displ_elastic(2,3,NGLLX,NGLLZ,nspec_PML),stat=ier)
         if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic'
-        allocate(rmemory_dux_dx(NGLLX,NGLLZ,nspec_PML),stat=ier)
+        allocate(rmemory_dux_dx(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
         if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx'
-        allocate(rmemory_dux_dz(NGLLX,NGLLZ,nspec_PML),stat=ier)
+        allocate(rmemory_dux_dz(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
         if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz'
-        allocate(rmemory_duz_dx(NGLLX,NGLLZ,nspec_PML),stat=ier)
+        allocate(rmemory_duz_dx(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
         if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx'
-        allocate(rmemory_duz_dz(NGLLX,NGLLZ,nspec_PML),stat=ier)
+        allocate(rmemory_duz_dz(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
         if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'
 
         if(ROTATE_PML_ACTIVATE)then
-          allocate(rmemory_dux_dx_prime(NGLLX,NGLLZ,nspec_PML),stat=ier)
+          allocate(rmemory_dux_dx_prime(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx_prime'
-          allocate(rmemory_dux_dz_prime(NGLLX,NGLLZ,nspec_PML),stat=ier)
+          allocate(rmemory_dux_dz_prime(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz_prime'
-          allocate(rmemory_duz_dx_prime(NGLLX,NGLLZ,nspec_PML),stat=ier)
+          allocate(rmemory_duz_dx_prime(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx_prime'
-          allocate(rmemory_duz_dz_prime(NGLLX,NGLLZ,nspec_PML),stat=ier)
+          allocate(rmemory_duz_dz_prime(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz_prime'
         else
-          allocate(rmemory_dux_dx_prime(1,1,1),stat=ier)
+          allocate(rmemory_dux_dx_prime(1,1,1,2),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx_prime'
-          allocate(rmemory_dux_dz_prime(1,1,1),stat=ier)
+          allocate(rmemory_dux_dz_prime(1,1,1,2),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz_prime'
-          allocate(rmemory_duz_dx_prime(1,1,1),stat=ier)
+          allocate(rmemory_duz_dx_prime(1,1,1,2),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx_prime'
-          allocate(rmemory_duz_dz_prime(1,1,1),stat=ier)
+          allocate(rmemory_duz_dz_prime(1,1,1,2),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz_prime'
         endif
 
         if(time_stepping_scheme == 2)then
           allocate(rmemory_displ_elastic_LDDRK(2,3,NGLLX,NGLLZ,nspec_PML),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic'
-          allocate(rmemory_dux_dx_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
+          allocate(rmemory_dux_dx_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx'
-          allocate(rmemory_dux_dz_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
+          allocate(rmemory_dux_dz_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz'
-          allocate(rmemory_duz_dx_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
+          allocate(rmemory_duz_dx_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx'
-          allocate(rmemory_duz_dz_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
+          allocate(rmemory_duz_dz_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'
         else
           allocate(rmemory_displ_elastic_LDDRK(1,1,1,1,1),stat=ier)
-          allocate(rmemory_dux_dx_LDDRK(1,1,1),stat=ier)
-          allocate(rmemory_dux_dz_LDDRK(1,1,1),stat=ier)
-          allocate(rmemory_duz_dx_LDDRK(1,1,1),stat=ier)
-          allocate(rmemory_duz_dz_LDDRK(1,1,1),stat=ier)
+          allocate(rmemory_dux_dx_LDDRK(1,1,1,2),stat=ier)
+          allocate(rmemory_dux_dz_LDDRK(1,1,1,2),stat=ier)
+          allocate(rmemory_duz_dx_LDDRK(1,1,1,2),stat=ier)
+          allocate(rmemory_duz_dz_LDDRK(1,1,1,2),stat=ier)
         endif
 
         rmemory_displ_elastic(:,:,:,:,:) = ZERO
-        rmemory_dux_dx(:,:,:) = ZERO
-        rmemory_dux_dz(:,:,:) = ZERO
-        rmemory_duz_dx(:,:,:) = ZERO
-        rmemory_duz_dz(:,:,:) = ZERO
+        rmemory_dux_dx(:,:,:,:) = ZERO
+        rmemory_dux_dz(:,:,:,:) = ZERO
+        rmemory_duz_dx(:,:,:,:) = ZERO
+        rmemory_duz_dz(:,:,:,:) = ZERO
 
         if(ROTATE_PML_ACTIVATE)then
-          rmemory_dux_dx_prime(:,:,:) = ZERO
-          rmemory_dux_dz_prime(:,:,:) = ZERO
-          rmemory_duz_dx_prime(:,:,:) = ZERO
-          rmemory_duz_dz_prime(:,:,:) = ZERO
+          rmemory_dux_dx_prime(:,:,:,:) = ZERO
+          rmemory_dux_dz_prime(:,:,:,:) = ZERO
+          rmemory_duz_dx_prime(:,:,:,:) = ZERO
+          rmemory_duz_dz_prime(:,:,:,:) = ZERO
         endif
 
         if(time_stepping_scheme == 2)then
           rmemory_displ_elastic_LDDRK(:,:,:,:,:) = ZERO
-          rmemory_dux_dx_LDDRK(:,:,:) = ZERO
-          rmemory_dux_dz_LDDRK(:,:,:) = ZERO
-          rmemory_duz_dx_LDDRK(:,:,:) = ZERO
-          rmemory_duz_dz_LDDRK(:,:,:) = ZERO
+          rmemory_dux_dx_LDDRK(:,:,:,:) = ZERO
+          rmemory_dux_dz_LDDRK(:,:,:,:) = ZERO
+          rmemory_duz_dx_LDDRK(:,:,:,:) = ZERO
+          rmemory_duz_dz_LDDRK(:,:,:,:) = ZERO
         endif
 
       else
 
         allocate(rmemory_displ_elastic(1,1,1,1,1))
-        allocate(rmemory_dux_dx(1,1,1))
-        allocate(rmemory_dux_dz(1,1,1))
-        allocate(rmemory_duz_dx(1,1,1))
-        allocate(rmemory_duz_dz(1,1,1))
+        allocate(rmemory_dux_dx(1,1,1,1))
+        allocate(rmemory_dux_dz(1,1,1,1))
+        allocate(rmemory_duz_dx(1,1,1,1))
+        allocate(rmemory_duz_dz(1,1,1,1))
 
-        allocate(rmemory_dux_dx_prime(1,1,1))
-        allocate(rmemory_dux_dz_prime(1,1,1))
-        allocate(rmemory_duz_dx_prime(1,1,1))
-        allocate(rmemory_duz_dz_prime(1,1,1))
+        allocate(rmemory_dux_dx_prime(1,1,1,1))
+        allocate(rmemory_dux_dz_prime(1,1,1,1))
+        allocate(rmemory_duz_dx_prime(1,1,1,1))
+        allocate(rmemory_duz_dz_prime(1,1,1,1))
 
         allocate(rmemory_displ_elastic_LDDRK(1,1,1,1,1))
-        allocate(rmemory_dux_dx_LDDRK(1,1,1))
-        allocate(rmemory_dux_dz_LDDRK(1,1,1))
-        allocate(rmemory_duz_dx_LDDRK(1,1,1))
-        allocate(rmemory_duz_dz_LDDRK(1,1,1))
+        allocate(rmemory_dux_dx_LDDRK(1,1,1,1))
+        allocate(rmemory_dux_dz_LDDRK(1,1,1,1))
+        allocate(rmemory_duz_dx_LDDRK(1,1,1,1))
+        allocate(rmemory_duz_dz_LDDRK(1,1,1,1))
       endif
 
       if (any_acoustic .and. nspec_PML>0) then
@@ -3154,23 +3173,23 @@
       endif
 
     else
-      allocate(rmemory_dux_dx(1,1,1))
-      allocate(rmemory_dux_dz(1,1,1))
-      allocate(rmemory_duz_dx(1,1,1))
-      allocate(rmemory_duz_dz(1,1,1))
+      allocate(rmemory_dux_dx(1,1,1,1))
+      allocate(rmemory_dux_dz(1,1,1,1))
+      allocate(rmemory_duz_dx(1,1,1,1))
+      allocate(rmemory_duz_dz(1,1,1,1))
 
-      allocate(rmemory_dux_dx_prime(1,1,1))
-      allocate(rmemory_dux_dz_prime(1,1,1))
-      allocate(rmemory_duz_dx_prime(1,1,1))
-      allocate(rmemory_duz_dz_prime(1,1,1))
+      allocate(rmemory_dux_dx_prime(1,1,1,1))
+      allocate(rmemory_dux_dz_prime(1,1,1,1))
+      allocate(rmemory_duz_dx_prime(1,1,1,1))
+      allocate(rmemory_duz_dz_prime(1,1,1,1))
 
       allocate(rmemory_displ_elastic(1,1,1,1,1))
 
       allocate(rmemory_displ_elastic_LDDRK(1,1,1,1,1))
-      allocate(rmemory_dux_dx_LDDRK(1,1,1))
-      allocate(rmemory_dux_dz_LDDRK(1,1,1))
-      allocate(rmemory_duz_dx_LDDRK(1,1,1))
-      allocate(rmemory_duz_dz_LDDRK(1,1,1))
+      allocate(rmemory_dux_dx_LDDRK(1,1,1,1))
+      allocate(rmemory_dux_dz_LDDRK(1,1,1,1))
+      allocate(rmemory_duz_dx_LDDRK(1,1,1,1))
+      allocate(rmemory_duz_dz_LDDRK(1,1,1,1))
 
       allocate(rmemory_potential_acoustic(1,1,1,1))
       allocate(rmemory_acoustic_dux_dx(1,1,1))
@@ -5747,6 +5766,7 @@ if(coupled_elastic_poro) then
                rmemory_displ_elastic_LDDRK,rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,&
                rmemory_duz_dx_LDDRK,rmemory_duz_dz_LDDRK, &
                PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.false.,STACEY_BOUNDARY_CONDITIONS)
+
 
       if(SIMULATION_TYPE == 3)then
        if(PML_BOUNDARY_CONDITIONS)then
