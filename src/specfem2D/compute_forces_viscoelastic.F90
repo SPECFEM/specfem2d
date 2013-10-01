@@ -247,7 +247,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
     call compute_gradient_attenuation(displ_elastic,dux_dxl_n,duz_dxl_n, &
           dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob)
 
-    ! compute Grad(veloc_elastic) at time step n for attenuation
+    ! compute Grad(disp_elastic_old) at time step n-1 for attenuation
     call compute_gradient_attenuation(displ_elastic_old,dux_dxl_nsub1,duz_dxl_nsub1, &
           dux_dzl_nsub1,duz_dzl_nsub1,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob)
 
@@ -273,24 +273,24 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
             ! IEEE Transactions on Antennas and Propagation, vol. 54, no. 1, (2006)
             if(stage_time_scheme == 1) then
               bb = tauinvnu1; coef0 = exp(- bb * deltat)
-              if ( abs(bb) > 1e-5_CUSTOM_REAL ) then
-                 coef1 = (1._CUSTOM_REAL - exp(-bb * deltat / 2._CUSTOM_REAL)) / bb
-                 coef2 = (1._CUSTOM_REAL - exp(-bb* deltat / 2._CUSTOM_REAL)) * exp(-bb * deltat / 2._CUSTOM_REAL)/ bb
+              if( abs(bb) > 1e-5_CUSTOM_REAL ) then
+                coef1 = (1._CUSTOM_REAL - exp(-bb * deltat / 2._CUSTOM_REAL)) / bb
+                coef2 = (1._CUSTOM_REAL - exp(-bb* deltat / 2._CUSTOM_REAL)) * exp(-bb * deltat / 2._CUSTOM_REAL)/ bb
               else
-                 coef1 = deltat / 2._CUSTOM_REAL
-                 coef2 = deltat / 2._CUSTOM_REAL
+                coef1 = deltat / 2._CUSTOM_REAL
+                coef2 = deltat / 2._CUSTOM_REAL
               endif
 
               e1(i,j,ispec,i_sls) = coef0 * e1(i,j,ispec,i_sls) + &
                                     phinu1 * (coef1 * theta_n_u + coef2 * theta_nsub1_u)
 
               bb = tauinvnu2; coef0 = exp(-bb * deltat)
-              if ( abs(bb) > 1e-5_CUSTOM_REAL ) then
-                 coef1 = (1._CUSTOM_REAL - exp(-bb * deltat / 2._CUSTOM_REAL)) / bb
-                 coef2 = (1._CUSTOM_REAL - exp(-bb* deltat / 2._CUSTOM_REAL)) * exp(-bb * deltat / 2._CUSTOM_REAL)/ bb
+              if( abs(bb) > 1e-5_CUSTOM_REAL ) then
+                coef1 = (1._CUSTOM_REAL - exp(-bb * deltat / 2._CUSTOM_REAL)) / bb
+                coef2 = (1._CUSTOM_REAL - exp(-bb* deltat / 2._CUSTOM_REAL)) * exp(-bb * deltat / 2._CUSTOM_REAL)/ bb
               else
-                 coef1 = deltat / 2._CUSTOM_REAL
-                 coef2 = deltat / 2._CUSTOM_REAL
+                coef1 = deltat / 2._CUSTOM_REAL
+                coef2 = deltat / 2._CUSTOM_REAL
               endif
 
               e11(i,j,ispec,i_sls) = coef0 * e11(i,j,ispec,i_sls) + &
