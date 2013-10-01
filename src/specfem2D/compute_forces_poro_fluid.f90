@@ -45,7 +45,7 @@
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                source_type,it,NSTEP,anyabs, &
                initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat, &
-               deltatover2,deltatsquareover2,ibool,kmato,numabs,poroelastic,codeabs, &
+               ibool,kmato,numabs,poroelastic,codeabs, &
                accelw_poroelastic,velocw_poroelastic,displw_poroelastic,velocs_poroelastic,displs_poroelastic,&
                displs_poroelastic_old,b_accelw_poroelastic,b_displw_poroelastic,b_displs_poroelastic,&
                density,porosity,tortuosity,permeability,poroelastcoef,xix,xiz,gammax,gammaz, &
@@ -82,7 +82,7 @@
   logical :: anyabs,initialfield,ATTENUATION_VISCOELASTIC_SOLID
   logical :: SAVE_FORWARD
 
-  double precision ::deltat,deltatover2,deltatsquareover2
+  double precision :: deltat
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
   integer, dimension(nspec) :: kmato

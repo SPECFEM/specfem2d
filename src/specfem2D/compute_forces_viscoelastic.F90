@@ -46,7 +46,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
      ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
      source_type,it,NSTEP,anyabs,assign_external_model, &
      initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource, &
-     deltatover2,deltatsquareover2,ibool,kmato,numabs,elastic,codeabs, &
+     ibool,kmato,numabs,elastic,codeabs, &
      accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
      density,poroelastcoef,xix,xiz,gammax,gammaz, &
      jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy, &
@@ -97,7 +97,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
   logical :: SAVE_FORWARD
 
-  double precision :: deltat,deltatover2,deltatsquareover2
+  double precision :: deltat
   double precision, dimension(NSOURCES) :: anglesource
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool

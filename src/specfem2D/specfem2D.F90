@@ -5722,7 +5722,7 @@ if(coupled_elastic_poro) then
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
                source_type,it,NSTEP,anyabs,assign_external_model, &
                initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource, &
-               deltatover2,deltatsquareover2,ibool,kmato,numabs,elastic,codeabs, &
+               ibool,kmato,numabs,elastic,codeabs, &
                accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
                density,poroelastcoef,xix,xiz,gammax,gammaz, &
                jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy, &
@@ -5777,7 +5777,7 @@ if(coupled_elastic_poro) then
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
                source_type,it,NSTEP,anyabs,assign_external_model, &
                initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource, &
-               deltatover2,deltatsquareover2,ibool,kmato,numabs,elastic,codeabs, &
+               ibool,kmato,numabs,elastic,codeabs, &
                b_accel_elastic,b_veloc_elastic,b_displ_elastic,displ_elastic_old, &
                density,poroelastcoef,xix,xiz,gammax,gammaz, &
                jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy, &
@@ -6588,7 +6588,7 @@ if(coupled_elastic_poro) then
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                source_type,it,NSTEP,anyabs, &
                initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat, &
-               deltatover2,deltatsquareover2,ibool,kmato,numabs,poroelastic,codeabs, &
+               ibool,kmato,numabs,poroelastic,codeabs, &
                accels_poroelastic,velocs_poroelastic,velocw_poroelastic,displs_poroelastic,displs_poroelastic_old,&
                displw_poroelastic,b_accels_poroelastic,b_displs_poroelastic,b_displw_poroelastic,&
                density,porosity,tortuosity,permeability,poroelastcoef,xix,xiz,gammax,gammaz, &
@@ -6609,7 +6609,7 @@ if(coupled_elastic_poro) then
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                source_type,it,NSTEP,anyabs, &
                initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat, &
-               deltatover2,deltatsquareover2,ibool,kmato,numabs,poroelastic,codeabs, &
+               ibool,kmato,numabs,poroelastic,codeabs, &
                accelw_poroelastic,velocw_poroelastic,displw_poroelastic,velocs_poroelastic,displs_poroelastic,&
                displs_poroelastic_old,b_accelw_poroelastic,b_displw_poroelastic,b_displs_poroelastic,&
                density,porosity,tortuosity,permeability,poroelastcoef,xix,xiz,gammax,gammaz, &
