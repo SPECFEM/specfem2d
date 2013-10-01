@@ -312,7 +312,7 @@
 
                   dux_dzl = k_x_store(i,j,ispec_PML) * PML_dux_dzl(i,j)  + A5 * rmemory_acoustic_dux_dz(i,j,ispec_PML)
 
-                   else if (region_CPML(ispec) == CPML_XY_ONLY) then
+                   else if (region_CPML(ispec) == CPML_XZ_ONLY) then
 !------------------------------------------------------------------------------
 !---------------------------- CORNER ------------------------------------------
 !------------------------------------------------------------------------------
@@ -383,7 +383,7 @@
                     dux_dzl = k_x_store(i,j,ispec_PML) / k_z_store(i,j,ispec_PML) * PML_dux_dzl(i,j)  &
                               + A5 * rmemory_acoustic_dux_dz(i,j,ispec_PML)
 
-               else if(region_CPML(ispec) == CPML_Y_ONLY) then
+               else if(region_CPML(ispec) == CPML_Z_ONLY) then
 
 !------------------------------------------------------------------------------
 !---------------------------- TOP & BOTTOM ------------------------------------
@@ -519,7 +519,7 @@
 
                   rmemory_potential_acoustic(2,i,j,ispec_PML)=0.0
 
-                   else if (region_CPML(ispec) == CPML_XY_ONLY) then
+                   else if (region_CPML(ispec) == CPML_XZ_ONLY) then
 !------------------------------------------------------------------------------
 !-------------------------------- CORNER --------------------------------------
 !------------------------------------------------------------------------------
@@ -558,7 +558,7 @@
                      + (potential_acoustic(iglob)+deltat*potential_dot_acoustic(iglob))*(it+0.5)*deltat * coef1 &
                      + potential_acoustic(iglob) *(it-0.5)*deltat * coef2
 
-               else if(region_CPML(ispec) == CPML_Y_ONLY) then
+               else if(region_CPML(ispec) == CPML_Z_ONLY) then
 
 !------------------------------------------------------------------------------
 !-------------------------------- TOP & BOTTOM --------------------------------
@@ -615,7 +615,7 @@
                      A3 * rmemory_potential_acoustic(1,i,j,ispec_PML) + &
                      A4 * rmemory_potential_acoustic(2,i,j,ispec_PML))
 
-                   else if (region_CPML(ispec) == CPML_XY_ONLY) then
+                   else if (region_CPML(ispec) == CPML_XZ_ONLY) then
 !------------------------------------------------------------------------------
 !-------------------------------- CORNER --------------------------------------
 !------------------------------------------------------------------------------
@@ -674,7 +674,7 @@
                      A3 * rmemory_potential_acoustic(1,i,j,ispec_PML) + &
                      A4 * rmemory_potential_acoustic(2,i,j,ispec_PML))
 
-               else if(region_CPML(ispec) == CPML_Y_ONLY) then
+               else if(region_CPML(ispec) == CPML_Z_ONLY) then
 !------------------------------------------------------------------------------
 !-------------------------------- TOP & BOTTOM --------------------------------
 !------------------------------------------------------------------------------
