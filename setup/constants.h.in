@@ -117,8 +117,8 @@
 
 ! flags for CPML absorbing boundaries
   integer, parameter :: CPML_X_ONLY = 1
-  integer, parameter :: CPML_Y_ONLY = 2
-  integer, parameter :: CPML_XY_ONLY = 3
+  integer, parameter :: CPML_Z_ONLY = 2
+  integer, parameter :: CPML_XZ_ONLY = 3
 
 ! number of edges and corners of each element
   integer, parameter :: NEDGES = 4
