@@ -515,7 +515,7 @@
 
 ! for acoustic medium
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
-    potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
+    potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic,potential_acoustic_old
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_dot_acoustic_LDDRK, potential_acoustic_LDDRK
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_dot_acoustic_temp
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_acoustic_init_rk, potential_dot_acoustic_init_rk
@@ -681,9 +681,9 @@
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     b_accelw_poroelastic,b_velocw_poroelastic,b_displw_poroelastic
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
-    b_accel_elastic,b_veloc_elastic,b_displ_elastic
+    b_accel_elastic,b_veloc_elastic,b_displ_elastic,b_displ_elastic_old
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
-    b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic
+    b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic,b_potential_acoustic_old
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_ac,b_displ_ac,b_accel_ac
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rho_kl, mu_kl, kappa_kl
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhol_global, mul_global, kappal_global
@@ -1039,12 +1039,12 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_displ_elastic_LDDRK
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_potential_acoustic
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
-    rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
+                          rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_potential_acoust_LDDRK
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
-    rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
+                          rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK
 
   logical :: anyabs_glob
   integer :: nspec_PML
@@ -2652,6 +2652,7 @@
     ! extra array if adjoint and kernels calculation
     if(SIMULATION_TYPE == 3 .and. any_elastic) then
       allocate(b_displ_elastic(3,nglob))
+      allocate(b_displ_elastic_old(3,nglob))
       allocate(b_veloc_elastic(3,nglob))
       allocate(b_accel_elastic(3,nglob))
       allocate(rho_kl(NGLLX,NGLLZ,nspec))
@@ -2672,6 +2673,7 @@
       allocate(rhorho_el_hessian_temp1(nglob))
     else
       allocate(b_displ_elastic(1,1))
+      allocate(b_displ_elastic_old(1,1))
       allocate(b_veloc_elastic(1,1))
       allocate(b_accel_elastic(1,1))
       allocate(rho_kl(1,1,1))
@@ -2839,6 +2841,7 @@
       nglob_acoustic = 1
     endif
     allocate(potential_acoustic(nglob_acoustic))
+    allocate(potential_acoustic_old(nglob_acoustic))
     allocate(potential_acoustic_adj_coupling(nglob_acoustic))
     allocate(potential_dot_acoustic(nglob_acoustic))
     allocate(potential_dot_dot_acoustic(nglob_acoustic))
@@ -2859,6 +2862,7 @@
 
     if(SIMULATION_TYPE == 3 .and. any_acoustic) then
       allocate(b_potential_acoustic(nglob))
+      allocate(b_potential_acoustic_old(nglob))
       allocate(b_potential_dot_acoustic(nglob))
       allocate(b_potential_dot_dot_acoustic(nglob))
       allocate(b_displ_ac(2,nglob))
@@ -2875,6 +2879,7 @@
     else
     ! allocate unused arrays with fictitious size
       allocate(b_potential_acoustic(1))
+      allocate(b_potential_acoustic_old(1))
       allocate(b_potential_dot_acoustic(1))
       allocate(b_potential_dot_dot_acoustic(1))
       allocate(b_displ_ac(1,1))
@@ -3140,9 +3145,9 @@
       if (any_acoustic .and. nspec_PML>0) then
         allocate(rmemory_potential_acoustic(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
         if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_potential_acoustic'
-        allocate(rmemory_acoustic_dux_dx(NGLLX,NGLLZ,nspec_PML),stat=ier)
+        allocate(rmemory_acoustic_dux_dx(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
         if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dx'
-        allocate(rmemory_acoustic_dux_dz(NGLLX,NGLLZ,nspec_PML),stat=ier)
+        allocate(rmemory_acoustic_dux_dz(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
         if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dz'
 
         rmemory_potential_acoustic = ZERO
@@ -3152,14 +3157,14 @@
         if(time_stepping_scheme == 2)then
           allocate(rmemory_potential_acoust_LDDRK(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_potential_acoustic'
-          allocate(rmemory_acoustic_dux_dx_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
+          allocate(rmemory_acoustic_dux_dx_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dx'
-          allocate(rmemory_acoustic_dux_dz_LDDRK(NGLLX,NGLLZ,nspec_PML),stat=ier)
+          allocate(rmemory_acoustic_dux_dz_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dz'
         else
           allocate(rmemory_potential_acoust_LDDRK(1,1,1,1),stat=ier)
-          allocate(rmemory_acoustic_dux_dx_LDDRK(1,1,1),stat=ier)
-          allocate(rmemory_acoustic_dux_dz_LDDRK(1,1,1),stat=ier)
+          allocate(rmemory_acoustic_dux_dx_LDDRK(1,1,1,1),stat=ier)
+          allocate(rmemory_acoustic_dux_dz_LDDRK(1,1,1,1),stat=ier)
         endif
 
         rmemory_potential_acoust_LDDRK = ZERO
@@ -3168,8 +3173,8 @@
 
       else
         allocate(rmemory_potential_acoustic(1,1,1,1))
-        allocate(rmemory_acoustic_dux_dx(1,1,1))
-        allocate(rmemory_acoustic_dux_dz(1,1,1))
+        allocate(rmemory_acoustic_dux_dx(1,1,1,1))
+        allocate(rmemory_acoustic_dux_dz(1,1,1,1))
       endif
 
     else
@@ -3192,12 +3197,12 @@
       allocate(rmemory_duz_dz_LDDRK(1,1,1,1))
 
       allocate(rmemory_potential_acoustic(1,1,1,1))
-      allocate(rmemory_acoustic_dux_dx(1,1,1))
-      allocate(rmemory_acoustic_dux_dz(1,1,1))
+      allocate(rmemory_acoustic_dux_dx(1,1,1,1))
+      allocate(rmemory_acoustic_dux_dz(1,1,1,1))
 
       allocate(rmemory_potential_acoust_LDDRK(1,1,1,1))
-      allocate(rmemory_acoustic_dux_dx_LDDRK(1,1,1))
-      allocate(rmemory_acoustic_dux_dz_LDDRK(1,1,1))
+      allocate(rmemory_acoustic_dux_dx_LDDRK(1,1,1,1))
+      allocate(rmemory_acoustic_dux_dz_LDDRK(1,1,1,1))
 
       allocate(is_PML(1))
       allocate(spec_to_PML(1))
@@ -3597,6 +3602,7 @@
   accel_elastic = 0._CUSTOM_REAL
 
     if(SIMULATION_TYPE == 3 .and. any_elastic) then
+      b_displ_elastic_old = 0._CUSTOM_REAL
       b_displ_elastic = 0._CUSTOM_REAL
       b_veloc_elastic = 0._CUSTOM_REAL
       b_accel_elastic = 0._CUSTOM_REAL
@@ -3646,20 +3652,21 @@
   endif
 
   potential_acoustic = 0._CUSTOM_REAL
+  potential_acoustic_old = 0._CUSTOM_REAL
   potential_dot_acoustic = 0._CUSTOM_REAL
   potential_dot_dot_acoustic = 0._CUSTOM_REAL
 
   if(time_stepping_scheme == 2 )then
-  potential_acoustic_LDDRK = 0._CUSTOM_REAL
-  potential_dot_acoustic_LDDRK = 0._CUSTOM_REAL
-  potential_dot_acoustic_temp = 0._CUSTOM_REAL
+    potential_acoustic_LDDRK = 0._CUSTOM_REAL
+    potential_dot_acoustic_LDDRK = 0._CUSTOM_REAL
+    potential_dot_acoustic_temp = 0._CUSTOM_REAL
   endif
 
   if(time_stepping_scheme == 3 )then
-  potential_acoustic_init_rk = 0._CUSTOM_REAL
-  potential_dot_acoustic_init_rk = 0._CUSTOM_REAL
-  potential_dot_dot_acoustic_rk = 0._CUSTOM_REAL
-  potential_dot_acoustic_rk = 0._CUSTOM_REAL
+    potential_acoustic_init_rk = 0._CUSTOM_REAL
+    potential_dot_acoustic_init_rk = 0._CUSTOM_REAL
+    potential_dot_dot_acoustic_rk = 0._CUSTOM_REAL
+    potential_dot_acoustic_rk = 0._CUSTOM_REAL
   endif
 
 !
@@ -4937,6 +4944,7 @@ if(coupled_elastic_poro) then
 
       if(SIMULATION_TYPE == 3) then ! Adjoint calculation
 !! DK DK this should be fully vectorized
+        b_displ_elastic_old = b_displ_elastic + deltatsquareover2 * b_accel_elastic
         b_displ_elastic = b_displ_elastic &
                         + b_deltat*b_veloc_elastic &
                         + b_deltatsquareover2*b_accel_elastic
@@ -5130,19 +5138,19 @@ if(coupled_elastic_poro) then
       if(time_stepping_scheme==1)then
       ! Newmark time scheme
 !! DK DK this should be vectorized
-      potential_acoustic = potential_acoustic &
-                          + deltat*potential_dot_acoustic &
-                          + deltatsquareover2*potential_dot_dot_acoustic
-      potential_dot_acoustic = potential_dot_acoustic &
-                              + deltatover2*potential_dot_dot_acoustic
+        potential_acoustic_old = potential_acoustic + deltatsquareover2*potential_dot_dot_acoustic
+        potential_acoustic = potential_acoustic + &
+                 deltat*potential_dot_acoustic + deltatsquareover2*potential_dot_dot_acoustic
+        potential_dot_acoustic = potential_dot_acoustic + deltatover2*potential_dot_dot_acoustic
+
       endif
       potential_dot_dot_acoustic = ZERO
 
       if(SIMULATION_TYPE == 3) then ! Adjoint calculation
 !! DK DK this should be vectorized
-        b_potential_acoustic = b_potential_acoustic &
-                            + b_deltat*b_potential_dot_acoustic &
-                            + b_deltatsquareover2*b_potential_dot_dot_acoustic
+        b_potential_acoustic_old = b_potential_acoustic + deltatsquareover2*b_potential_dot_dot_acoustic
+        b_potential_acoustic = b_potential_acoustic + b_deltat*b_potential_dot_acoustic + &
+                               b_deltatsquareover2*b_potential_dot_dot_acoustic
         b_potential_dot_acoustic = b_potential_dot_acoustic &
                                   + b_deltatover2*b_potential_dot_dot_acoustic
         b_potential_dot_dot_acoustic = ZERO
@@ -5164,11 +5172,10 @@ if(coupled_elastic_poro) then
 ! *********************************************************
 ! ************* compute forces for the acoustic elements
 ! *********************************************************
-
       call compute_forces_acoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
                anyabs,assign_external_model,ibool,kmato,numabs, &
                elastic,poroelastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
-               potential_acoustic, stage_time_scheme, i_stage, &
+               potential_acoustic,potential_acoustic_old,stage_time_scheme,i_stage, &
                density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                vpext,rhoext,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
@@ -5211,8 +5218,8 @@ if(coupled_elastic_poro) then
 
         call compute_forces_acoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
                anyabs,assign_external_model,ibool,kmato,numabs, &
-               elastic,poroelastic,codeabs,b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-               b_potential_acoustic, stage_time_scheme, i_stage, &
+               elastic,poroelastic,codeabs,b_potential_dot_dot_acoustic, &
+               b_potential_acoustic,b_potential_acoustic_old,stage_time_scheme, i_stage, &
                density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                vpext,rhoext,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
@@ -5229,7 +5236,7 @@ if(coupled_elastic_poro) then
                rmemory_potential_acoust_LDDRK,alpha_LDDRK,beta_LDDRK, &
                rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
 !               deltat,PML_BOUNDARY_CONDITIONS)
-               deltat,.false.,STACEY_BOUNDARY_CONDITIONS)
+               deltat,.false.,STACEY_BOUNDARY_CONDITIONS,b_potential_dot_acoustic)
 
        if(PML_BOUNDARY_CONDITIONS)then
           do ispec = 1,nspec
@@ -5501,17 +5508,14 @@ if(coupled_elastic_poro) then
 
         do i_source=1,NSOURCES
           ! if this processor core carries the source and the source element is acoustic
-          if (is_proc_source(i_source) == 1 .and. &
-            .not. elastic(ispec_selected_source(i_source)) .and. &
+          if (is_proc_source(i_source) == 1 .and. (.not. elastic(ispec_selected_source(i_source))) .and. &
             .not. poroelastic(ispec_selected_source(i_source))) then
-
             ! collocated force
             ! beware, for acoustic medium, source is: pressure divided by Kappa of the fluid
             ! the sign is negative because pressure p = - Chi_dot_dot therefore we need
             ! to add minus the source to Chi_dot_dot to get plus the source in pressure
             if(source_type(i_source) == 1) then
-
-              if(SIMULATION_TYPE == 1) then
+              if(SIMULATION_TYPE == 1) then    
                 ! forward wavefield
                 do j = 1,NGLLZ
                   do i = 1,NGLLX
@@ -5798,7 +5802,7 @@ if(coupled_elastic_poro) then
                source_type,it,NSTEP,anyabs,assign_external_model, &
                initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource, &
                ibool,kmato,numabs,elastic,codeabs, &
-               b_accel_elastic,b_veloc_elastic,b_displ_elastic,displ_elastic_old, &
+               b_accel_elastic,b_veloc_elastic,b_displ_elastic,b_displ_elastic_old, &
                density,poroelastcoef,xix,xiz,gammax,gammaz, &
                jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy, &
                source_time_function,sourcearray,adj_sourcearrays, &
