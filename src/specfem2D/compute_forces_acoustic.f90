@@ -165,10 +165,8 @@
 
   if( PML_BOUNDARY_CONDITIONS ) then
     potential_dot_dot_acoustic_PML = 0._CUSTOM_REAL
-    PML_dux_dxl = 0._CUSTOM_REAL
-    PML_dux_dzl = 0._CUSTOM_REAL
-    PML_dux_dxl_old = 0._CUSTOM_REAL
-    PML_dux_dzl_old = 0._CUSTOM_REAL
+    PML_dux_dxl = 0._CUSTOM_REAL;    PML_dux_dzl = 0._CUSTOM_REAL
+    PML_dux_dxl_old = 0._CUSTOM_REAL;PML_dux_dzl_old = 0._CUSTOM_REAL
   endif
 
 ! loop over spectral elements
@@ -187,8 +185,7 @@
       do j = 1,NGLLZ
         do i = 1,NGLLX
           ! derivative along x and along z
-          dux_dxi = ZERO
-          dux_dgamma = ZERO
+          dux_dxi = 0._CUSTOM_REAL; dux_dgamma = 0._CUSTOM_REAL
 
           ! first double loop over GLL points to compute and store gradients
           ! we can merge the two loops because NGLLX == NGLLZ
@@ -222,8 +219,7 @@
             PML_dux_dxl(i,j) = dux_dxl
             PML_dux_dzl(i,j) = dux_dzl
 
-            dux_dxi = ZERO
-            dux_dgamma = ZERO
+            dux_dxi = 0._CUSTOM_REAL; dux_dgamma = 0._CUSTOM_REAL
 
             ! first double loop over GLL points to compute and store gradients
             ! we can merge the two loops because NGLLX == NGLLZ
@@ -328,8 +324,7 @@
               rhol = rhoext(i,j,ispec)
             endif
           endif
-          ! for acoustic medium
-          ! also add GLL integration weights
+          ! for acoustic medium also add GLL integration weights
           tempx1(i,j) = wzgll(j)*jacobianl*(xixl*dux_dxl + xizl*dux_dzl) / rhol
           tempx2(i,j) = wxgll(i)*jacobianl*(gammaxl*dux_dxl + gammazl*dux_dzl) / rhol
         enddo
@@ -410,7 +405,6 @@
           endif
         enddo
       enddo
-
 !
 ! second double-loop over GLL to compute all the terms
 !
@@ -432,9 +426,6 @@
             
     endif ! end of test if acoustic element
   enddo ! end of loop over all spectral elements
-
-
-
 !
 !--- absorbing boundaries
 !
@@ -448,11 +439,8 @@
 ! for Stacey paraxial absorbing conditions (more precisely: Sommerfeld in the case of a fluid) we implement them here
 
   if(STACEY_BOUNDARY_CONDITIONS) then
-
     do ispecabs=1,nelemabs
-
       ispec = numabs(ispecabs)
-
       ! Sommerfeld condition if acoustic
       if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
 
@@ -481,33 +469,27 @@
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             weight = jacobian1D * wzgll(j)
 
-            if( SIMULATION_TYPE == 1 ) then
+            if(SIMULATION_TYPE == 1 ) then
               ! adds absorbing boundary contribution
-              potential_dot_dot_acoustic(iglob) = &
-                  potential_dot_dot_acoustic(iglob) &
-                  - potential_dot_acoustic(iglob)*weight/cpl/rhol
+              potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+                       potential_dot_acoustic(iglob)*weight/cpl/rhol
             else if(SIMULATION_TYPE == 3) then
               if(IS_BACKWARD_FIELD) then
                 ! adds (previously) stored contribution
-                potential_dot_dot_acoustic(iglob) = &
-                  potential_dot_dot_acoustic(iglob) &
-                  - b_absorb_acoustic_left(j,ib_left(ispecabs),NSTEP-it+1)
+                potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+                         b_absorb_acoustic_left(j,ib_left(ispecabs),NSTEP-it+1)
               else
                 ! adds absorbing boundary contribution
-                potential_dot_dot_acoustic(iglob) = &
-                  potential_dot_dot_acoustic(iglob) &
-                  - potential_dot_acoustic(iglob)*weight/cpl/rhol
+                potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+                         potential_dot_acoustic(iglob)*weight/cpl/rhol
               endif
             endif
 
             if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
               ! saves contribution
-              b_absorb_acoustic_left(j,ib_left(ispecabs),it) = &
-                  potential_dot_acoustic(iglob)*weight/cpl/rhol
+              b_absorb_acoustic_left(j,ib_left(ispecabs),it) = potential_dot_acoustic(iglob)*weight/cpl/rhol
             endif
-
           enddo
-
         endif  !  end of left absorbing boundary
 
         !--- right absorbing boundary
@@ -527,29 +509,25 @@
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             weight = jacobian1D * wzgll(j)
 
-            if( SIMULATION_TYPE == 1 ) then
+            if(SIMULATION_TYPE == 1) then
               ! adds absorbing boundary contribution
-              potential_dot_dot_acoustic(iglob) = &
-                  potential_dot_dot_acoustic(iglob) &
-                  - potential_dot_acoustic(iglob)*weight/cpl/rhol
+              potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+                       potential_dot_acoustic(iglob)*weight/cpl/rhol
             else if(SIMULATION_TYPE == 3) then
               if(IS_BACKWARD_FIELD) then
                 ! adds (previously) stored contribution
-                potential_dot_dot_acoustic(iglob) = &
-                  potential_dot_dot_acoustic(iglob) &
-                  - b_absorb_acoustic_right(j,ib_right(ispecabs),NSTEP-it+1)
+                potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+                         b_absorb_acoustic_right(j,ib_right(ispecabs),NSTEP-it+1)
               else
                 ! adds absorbing boundary contribution
-                potential_dot_dot_acoustic(iglob) = &
-                  potential_dot_dot_acoustic(iglob) &
-                  - potential_dot_acoustic(iglob)*weight/cpl/rhol
+                potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+                         potential_dot_acoustic(iglob)*weight/cpl/rhol
               endif
             endif
 
             if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
               ! saves contribution
-              b_absorb_acoustic_right(j,ib_right(ispecabs),it) = &
-                  potential_dot_acoustic(iglob)*weight/cpl/rhol
+              b_absorb_acoustic_right(j,ib_right(ispecabs),it) = potential_dot_acoustic(iglob)*weight/cpl/rhol
             endif
           enddo
         endif  !  end of right absorbing boundary
@@ -576,27 +554,23 @@
 
             if( SIMULATION_TYPE == 1 ) then
               ! adds absorbing boundary contribution
-              potential_dot_dot_acoustic(iglob) = &
-                  potential_dot_dot_acoustic(iglob) &
-                  - potential_dot_acoustic(iglob)*weight/cpl/rhol
+              potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+                       potential_dot_acoustic(iglob)*weight/cpl/rhol
             else if(SIMULATION_TYPE == 3) then
               if(IS_BACKWARD_FIELD) then
                 ! adds (previously) stored contribution
-                potential_dot_dot_acoustic(iglob) = &
-                  potential_dot_dot_acoustic(iglob) &
-                  - b_absorb_acoustic_bottom(i,ib_bottom(ispecabs),NSTEP-it+1)
+                potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+                         b_absorb_acoustic_bottom(i,ib_bottom(ispecabs),NSTEP-it+1)
               else
                 ! adds absorbing boundary contribution
-                potential_dot_dot_acoustic(iglob) = &
-                  potential_dot_dot_acoustic(iglob) &
-                  - potential_dot_acoustic(iglob)*weight/cpl/rhol
+                potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+                         potential_dot_acoustic(iglob)*weight/cpl/rhol
               endif
             endif
 
             if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
               ! saves contribution
-              b_absorb_acoustic_bottom(i,ib_bottom(ispecabs),it) = &
-                  potential_dot_acoustic(iglob)*weight/cpl/rhol
+              b_absorb_acoustic_bottom(i,ib_bottom(ispecabs),it) = potential_dot_acoustic(iglob)*weight/cpl/rhol
             endif
           enddo
         endif  !  end of bottom absorbing boundary
@@ -623,27 +597,23 @@
 
             if( SIMULATION_TYPE == 1 ) then
               ! adds absorbing boundary contribution
-              potential_dot_dot_acoustic(iglob) = &
-                  potential_dot_dot_acoustic(iglob) &
-                  - potential_dot_acoustic(iglob)*weight/cpl/rhol
+              potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+                       potential_dot_acoustic(iglob)*weight/cpl/rhol
             else if(SIMULATION_TYPE == 3) then
               if(IS_BACKWARD_FIELD) then
                 ! adds (previously) stored contribution
-                potential_dot_dot_acoustic(iglob) = &
-                  potential_dot_dot_acoustic(iglob) &
-                  - b_absorb_acoustic_top(i,ib_top(ispecabs),NSTEP-it+1)
+                potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+                         b_absorb_acoustic_top(i,ib_top(ispecabs),NSTEP-it+1)
               else
                 ! adds absorbing boundary contribution
-                potential_dot_dot_acoustic(iglob) = &
-                  potential_dot_dot_acoustic(iglob) &
-                  - potential_dot_acoustic(iglob)*weight/cpl/rhol
+                potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+                         potential_dot_acoustic(iglob)*weight/cpl/rhol
               endif
             endif
 
             if(SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
               ! saves contribution
-              b_absorb_acoustic_top(i,ib_top(ispecabs),it) = &
-                  potential_dot_acoustic(iglob)*weight/cpl/rhol
+              b_absorb_acoustic_top(i,ib_top(ispecabs),it) = potential_dot_acoustic(iglob)*weight/cpl/rhol
             endif
           enddo
         endif  !  end of top absorbing boundary
@@ -652,74 +622,56 @@
     enddo
   endif  ! end of absorbing boundaries
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!--- set Dirichelet boundary condition on outer boundary of CFS-PML
 !
-!--- absorbing boundaries
-!
- if( PML_BOUNDARY_CONDITIONS .and. anyabs) then
+  if( PML_BOUNDARY_CONDITIONS .and. anyabs) then
+    do ispecabs = 1,nelemabs
+      ispec = numabs(ispecabs)
 
-! we have to put Dirichlet on the boundary of the PML
-   do ispecabs = 1,nelemabs
-
-     ispec = numabs(ispecabs)
-
-     if (is_PML(ispec)) then
-      ispec_PML=spec_to_PML(ispec)
+      if(is_PML(ispec)) then
 !--- left absorbing boundary
-      if(codeabs(IEDGE4,ispecabs)) then
-        i = 1
-        do j = 1,NGLLZ
-          iglob = ibool(i,j,ispec)
-          potential_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
-       enddo
-      endif
+        if(codeabs(IEDGE4,ispecabs)) then
+          i = 1
+          do j = 1,NGLLZ
+            iglob = ibool(i,j,ispec)
+            potential_acoustic(iglob) = 0._CUSTOM_REAL; potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
+            potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
+          enddo
+        endif
 !--- right absorbing boundary
-      if(codeabs(IEDGE2,ispecabs)) then
-        i = NGLLX
-        do j = 1,NGLLZ
-          iglob = ibool(i,j,ispec)
-          potential_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
-        enddo
-
-      endif
+        if(codeabs(IEDGE2,ispecabs)) then
+          i = NGLLX
+          do j = 1,NGLLZ
+            iglob = ibool(i,j,ispec)
+            potential_acoustic(iglob) = 0._CUSTOM_REAL; potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
+            potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
+          enddo
+        endif
 !--- bottom absorbing boundary
-      if(codeabs(IEDGE1,ispecabs)) then
-        j = 1
-! exclude corners to make sure there is no contradiction on the normal
-        ibegin = 1
-        iend = NGLLX
-        do i = ibegin,iend
-          iglob = ibool(i,j,ispec)
-          potential_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
-        enddo
-      endif
+        if(codeabs(IEDGE1,ispecabs)) then
+          j = 1
+          ibegin = 1
+          iend = NGLLX
+          do i = ibegin,iend
+            iglob = ibool(i,j,ispec)
+            potential_acoustic(iglob) = 0._CUSTOM_REAL; potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
+            potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
+          enddo
+        endif
 !--- top absorbing boundary
-      if(codeabs(IEDGE3,ispecabs)) then
-        j = NGLLZ
+        if(codeabs(IEDGE3,ispecabs)) then
+          j = NGLLZ
 ! exclude corners to make sure there is no contradiction on the normal
-        ibegin = 1
-        iend = NGLLX
-        do i = ibegin,iend
-          iglob = ibool(i,j,ispec)
-          potential_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
-        enddo
-      endif  !  end of top absorbing boundary
+          ibegin = 1
+          iend = NGLLX
+          do i = ibegin,iend
+            iglob = ibool(i,j,ispec)
+            potential_acoustic(iglob) = 0._CUSTOM_REAL; potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
+            potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
+          enddo
+        endif  !  end of top absorbing boundary
       endif ! end of is_PML
     enddo ! end specabs loop
   endif  ! end of absorbing boundaries PML_BOUNDARY_CONDITIONS
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  end subroutine compute_forces_acoustic
-
-
-
-
-
+ end subroutine compute_forces_acoustic
