@@ -478,16 +478,14 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 !------------------------------------------------------------------------------
 !---------------------------- LEFT & RIGHT ------------------------------------
 !------------------------------------------------------------------------------
+            call lik_parameter_computation(time_n,deltat,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x,&
+                                           CPML_region_local,31,A5,A6,A7,singularity_type_zx,bb_zx_1,bb_zx_2,&
+                                           coef0_zx_1,coef1_zx_1,coef2_zx_1,coef0_zx_2,coef1_zx_2,coef2_zx_2)
+              
+            call lik_parameter_computation(time_n,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z,&
+                                           CPML_region_local,13,A8,A9,A10,singularity_type_xz,bb_xz_1,bb_xz_2,&
+                                           coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2)
             if(stage_time_scheme == 1) then
-              
-              call lik_parameter_computation(time_n,deltat,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x,&
-                                             CPML_region_local,31,A5,A6,A7,singularity_type_zx,bb_zx_1,bb_zx_2,&
-                                             coef0_zx_1,coef1_zx_1,coef2_zx_1,coef0_zx_2,coef1_zx_2,coef2_zx_2)
-              
-              call lik_parameter_computation(time_n,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z,&
-                                             CPML_region_local,13,A8,A9,A10,singularity_type_xz,bb_xz_1,bb_xz_2,&
-                                             coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2)
-
               if(ROTATE_PML_ACTIVATE)then
                 rmemory_dux_dx(i,j,ispec_PML,1) = coef0_zx_1 * rmemory_dux_dx(i,j,ispec_PML,1) + &
                                                   coef1_zx_1 * PML_dux_dxl(i,j) + coef2_zx_1 * PML_dux_dxl_old(i,j)
@@ -861,23 +859,25 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                                          CPML_region_local,A0,A1,A2,A3,A4,singularity_type,&
                                          bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
 
-            rmemory_displ_elastic(1,1,i,j,ispec_PML) = coef0_1 * rmemory_displ_elastic(1,1,i,j,ispec_PML) + &
-                                                       coef1_1 * displ_elastic(1,iglob) + coef2_1 * displ_elastic_old(1,iglob)
-            rmemory_displ_elastic(1,3,i,j,ispec_PML) = coef0_1 * rmemory_displ_elastic(1,3,i,j,ispec_PML) + &
-                                                       coef1_1 * displ_elastic(3,iglob) + coef2_1 * displ_elastic_old(3,iglob)
+            if(stage_time_scheme == 1) then
+              rmemory_displ_elastic(1,1,i,j,ispec_PML) = coef0_1 * rmemory_displ_elastic(1,1,i,j,ispec_PML) + &
+                                                         coef1_1 * displ_elastic(1,iglob) + coef2_1 * displ_elastic_old(1,iglob)
+              rmemory_displ_elastic(1,3,i,j,ispec_PML) = coef0_1 * rmemory_displ_elastic(1,3,i,j,ispec_PML) + &
+                                                         coef1_1 * displ_elastic(3,iglob) + coef2_1 * displ_elastic_old(3,iglob)
 
-            if(singularity_type == 0)then
-              rmemory_displ_elastic(2,1,i,j,ispec_PML) = coef0_2 * rmemory_displ_elastic(2,1,i,j,ispec_PML) + &
-                                                         coef1_2 * displ_elastic(1,iglob) + coef1_2 * displ_elastic_old(1,iglob)
-              rmemory_displ_elastic(2,3,i,j,ispec_PML) = coef0_2 * rmemory_displ_elastic(2,3,i,j,ispec_PML) + &
-                                                         coef1_2 * displ_elastic(3,iglob) + coef1_2 * displ_elastic_old(3,iglob)
-            else
-              rmemory_displ_elastic(2,1,i,j,ispec_PML) = coef0_2 * rmemory_displ_elastic(2,1,i,j,ispec_PML) + &
-                                                         coef1_2 * time_n * displ_elastic(1,iglob) + &
-                                                         coef2_2 * time_nsub1 * displ_elastic_old(1,iglob)
-              rmemory_displ_elastic(2,3,i,j,ispec_PML) = coef0_2 * rmemory_displ_elastic(2,3,i,j,ispec_PML) + &
-                                                         coef1_2 * time_n * displ_elastic(3,iglob) + &
-                                                         coef2_2 * time_nsub1 * displ_elastic_old(3,iglob)
+              if(singularity_type == 0)then
+                rmemory_displ_elastic(2,1,i,j,ispec_PML) = coef0_2 * rmemory_displ_elastic(2,1,i,j,ispec_PML) + &
+                                                           coef1_2 * displ_elastic(1,iglob) + coef2_2 * displ_elastic_old(1,iglob)
+                rmemory_displ_elastic(2,3,i,j,ispec_PML) = coef0_2 * rmemory_displ_elastic(2,3,i,j,ispec_PML) + &
+                                                           coef1_2 * displ_elastic(3,iglob) + coef2_2 * displ_elastic_old(3,iglob)
+              else
+                rmemory_displ_elastic(2,1,i,j,ispec_PML) = coef0_2 * rmemory_displ_elastic(2,1,i,j,ispec_PML) + &
+                                                           coef1_2 * time_n * displ_elastic(1,iglob) + &
+                                                           coef2_2 * time_nsub1 * displ_elastic_old(1,iglob)
+                rmemory_displ_elastic(2,3,i,j,ispec_PML) = coef0_2 * rmemory_displ_elastic(2,3,i,j,ispec_PML) + &
+                                                           coef1_2 * time_n * displ_elastic(3,iglob) + &
+                                                           coef2_2 * time_nsub1 * displ_elastic_old(3,iglob)
+              endif
             endif
 
             if(stage_time_scheme == 6) then
@@ -1655,7 +1655,8 @@ end subroutine compute_forces_viscoelastic
    implicit none
    include "constants.h"
 
-   real(kind=CUSTOM_REAL) :: bb,deltat,coef0,coef1,coef2
+   real(kind=CUSTOM_REAL) :: bb,coef0,coef1,coef2
+   double precision :: deltat
 
    coef0 = exp(- bb * deltat)
 
@@ -1675,7 +1676,8 @@ end subroutine compute_forces_viscoelastic
   implicit none
   include "constants.h"
 
-  real(kind=CUSTOM_REAL), intent(in) :: time,deltat
+  real(kind=CUSTOM_REAL), intent(in) :: time
+  double precision :: deltat
   real(kind=CUSTOM_REAL), intent(in) :: kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z
   integer, intent(in) :: CPML_region_local,index_ik
 
@@ -1775,7 +1777,8 @@ end subroutine compute_forces_viscoelastic
   implicit none
   include "constants.h"
 
-  real(kind=CUSTOM_REAL), intent(in) :: time,deltat
+  real(kind=CUSTOM_REAL), intent(in) :: time
+  double precision :: deltat
   real(kind=CUSTOM_REAL), intent(in) :: kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z
   integer, intent(in) :: CPML_region_local
 
@@ -1864,4 +1867,3 @@ end subroutine compute_forces_viscoelastic
 
  end subroutine l_parameter_computation
 !=====================================================================
-
