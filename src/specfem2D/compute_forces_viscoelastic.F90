@@ -718,9 +718,9 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
             ! 2004 paper and his 2007 book. See also file doc/problem_attenuation_reference_Specfem2D_fixed_by_Xie_Zhinan.pdf
             e1_sum = 0._CUSTOM_REAL; e11_sum = 0._CUSTOM_REAL;  e13_sum = 0._CUSTOM_REAL
             do i_sls = 1,N_SLS
-               e1_sum = e1_sum + e1(i,j,ispec,i_sls)
-               e11_sum = e11_sum + e11(i,j,ispec,i_sls)
-               e13_sum = e13_sum + e13(i,j,ispec,i_sls)
+              e1_sum = e1_sum + e1(i,j,ispec,i_sls)
+              e11_sum = e11_sum + e11(i,j,ispec,i_sls)
+              e13_sum = e13_sum + e13(i,j,ispec,i_sls)
             enddo
 
             sigma_xx = sigma_xx + lambdalplusmul_relaxed_viscoel * e1_sum + TWO * mul_relaxed_viscoelastic * e11_sum
@@ -729,10 +729,10 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
             sigma_zx = sigma_xz
 
             if(PML_BOUNDARY_CONDITIONS .and. is_PML(ispec)) then
-                sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*PML_duz_dzl(i,j)
-                sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*PML_dux_dxl(i,j)
-                sigma_zx = mul_unrelaxed_elastic * (PML_duz_dxl(i,j) + dux_dzl)
-                sigma_xz = mul_unrelaxed_elastic * (PML_dux_dzl(i,j) + duz_dxl)
+              sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*PML_duz_dzl(i,j)
+              sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*PML_dux_dxl(i,j)
+              sigma_zx = mul_unrelaxed_elastic * (PML_duz_dxl(i,j) + dux_dzl)
+              sigma_xz = mul_unrelaxed_elastic * (PML_dux_dzl(i,j) + duz_dxl)
             endif
           else
             ! no attenuation
@@ -1283,7 +1283,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                 if(p_sv)then !P-SV waves
                   b_absorb_elastic_bottom(1,i,ib_bottom(ispecabs),it) = (tx + traction_x_t0)*weight
                   b_absorb_elastic_bottom(3,i,ib_bottom(ispecabs),it) = (tz + traction_z_t0)*weight
-                else!SH (membrane) waves
+                else !SH (membrane) waves
                   b_absorb_elastic_bottom(2,i,ib_bottom(ispecabs),it) = ty*weight
                 endif
               endif
@@ -1394,7 +1394,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                 if(p_sv)then !P-SV waves
                   b_absorb_elastic_top(1,i,ib_top(ispecabs),it) = (tx- traction_x_t0)*weight
                   b_absorb_elastic_top(3,i,ib_top(ispecabs),it) = (tz- traction_z_t0)*weight
-                else!SH (membrane) waves
+                else !SH (membrane) waves
                   b_absorb_elastic_top(2,i,ib_top(ispecabs),it) = ty*weight
                 endif
               endif
@@ -1403,7 +1403,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                 if(p_sv)then !P-SV waves
                   accel_elastic(1,iglob) = accel_elastic(1,iglob) - b_absorb_elastic_top(1,i,ib_top(ispecabs),NSTEP-it+1)
                   accel_elastic(3,iglob) = accel_elastic(3,iglob) - b_absorb_elastic_top(3,i,ib_top(ispecabs),NSTEP-it+1)
-                else!SH (membrane) waves
+                else !SH (membrane) waves
                   accel_elastic(2,iglob) = accel_elastic(2,iglob) - b_absorb_elastic_top(2,i,ib_top(ispecabs),NSTEP-it+1)
                 endif
               endif
