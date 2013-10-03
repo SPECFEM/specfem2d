@@ -59,7 +59,7 @@
                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
                rmemory_potential_acoustic,&
                rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
-               rmemory_potential_acoust_LDDRK,alpha_LDDRK,beta_LDDRK, &
+               rmemory_potential_acoust_LDDRK,alpha_LDDRK,beta_LDDRK,c_LDDRK, &
                rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
                deltat,PML_BOUNDARY_CONDITIONS,STACEY_BOUNDARY_CONDITIONS)
 
@@ -154,14 +154,18 @@
 
 !coefficients and memory variables when using CPML with LDDRK
   integer :: stage_time_scheme,i_stage
-  real(kind=CUSTOM_REAL), dimension(Nstages) :: alpha_LDDRK,beta_LDDRK
+  real(kind=CUSTOM_REAL), dimension(Nstages) :: alpha_LDDRK,beta_LDDRK,c_LDDRK
   real(kind=CUSTOM_REAL), dimension(2,NGLLX,NGLLZ,nspec_PML) :: rmemory_potential_acoust_LDDRK
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML,2) :: rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK
 
   ifirstelem = 1
   ilastelem = nspec
-  time_n = (it-1) * deltat
-  time_nsub1 = (it-2) * deltat
+  if(stage_time_scheme == 1) then
+    time_n = (it-1) * deltat
+    time_nsub1 = (it-2) * deltat
+  elseif(stage_time_scheme == 6) then
+    time_n = (it-1) * deltat + c_LDDRK(i_stage) * deltat
+  endif
 
   if( PML_BOUNDARY_CONDITIONS ) then
     potential_dot_dot_acoustic_PML = 0._CUSTOM_REAL

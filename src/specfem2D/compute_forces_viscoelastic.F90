@@ -51,7 +51,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
      density,poroelastcoef,xix,xiz,gammax,gammaz, &
      jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy, &
      source_time_function,sourcearray,adj_sourcearrays, &
-     e1,e11,e13,e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
+     e1,e11,e13,e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK,c_LDDRK, &
      e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_RK, e11_force_RK, e13_force_RK, &
      hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
      inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
@@ -146,7 +146,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL), dimension(NGLLZ) :: wzgll
 
   ! Parameter for LDDRK time scheme
-  real(kind=CUSTOM_REAL), dimension(Nstages) :: alpha_LDDRK,beta_LDDRK
+  real(kind=CUSTOM_REAL), dimension(Nstages) :: alpha_LDDRK,beta_LDDRK,c_LDDRK
 
   !temp variable
   real(kind=CUSTOM_REAL) :: weight_rk
@@ -377,8 +377,12 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
   ifirstelem = 1
   ilastelem = nspec
-  time_n = (it-1) * deltat
-  time_nsub1 = (it-2) * deltat
+  if(stage_time_scheme == 1) then
+    time_n = (it-1) * deltat
+    time_nsub1 = (it-2) * deltat
+  elseif(stage_time_scheme == 6) then
+    time_n = (it-1) * deltat + c_LDDRK(i_stage) * deltat
+  endif
 
   ! loop over spectral elements
   do ispec = ifirstelem,ilastelem
