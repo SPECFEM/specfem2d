@@ -957,7 +957,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
     endif ! end of test if elastic element
   enddo ! end of loop over all spectral elements
 
-
   !
   !--- absorbing boundaries
   !
@@ -971,6 +970,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
       ! get elastic parameters of current spectral element
       lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
       mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
+      lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + 2._CUSTOM_REAL * mul_unrelaxed_elastic
       rhol  = density(1,kmato(ispec))
       kappal  = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic/3._CUSTOM_REAL
       cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_unrelaxed_elastic/3._CUSTOM_REAL)/rhol)
@@ -991,8 +991,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                   call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
                               x0_source, z0_source, A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
                               c_inc, c_refl, time_offset,f0)
-                  traction_x_t0 = (lambdal_unrelaxed_elastic+2*mul_unrelaxed_elastic)*dxUx + lambdal_unrelaxed_elastic*dzUz
-                  traction_z_t0 = mul_unrelaxed_elastic*(dxUz + dzUx)
+                  traction_x_t0 = lambdaplus2mu_unrelaxed_elastic * dxUx + lambdal_unrelaxed_elastic * dzUz
+                  traction_z_t0 = mul_unrelaxed_elastic * (dxUz + dzUx)
                 else
                   veloc_horiz=v0x_left(count_left)
                   veloc_vert=v0z_left(count_left)
@@ -1045,11 +1045,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                 displn = nx*displx+nz*displz
 
-                displtx = (lambdal_unrelaxed_elastic+2*mul_unrelaxed_elastic)/(2.0*spring_position)*displn*nx + &
-                          mul_unrelaxed_elastic/(2.0*spring_position)*(displx-displn*nx)
+                displtx = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * displn * nx + &
+                          mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displx-displn*nx)
                 displty = mul_unrelaxed_elastic*disply
-                displtz = (lambdal_unrelaxed_elastic+2*mul_unrelaxed_elastic)/(2.0*spring_position)*displn*nz + &
-                          mul_unrelaxed_elastic/(2.0*spring_position)*(displz-displn*nz)
+                displtz = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * displn * nz + &
+                          mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displz-displn*nz)
               endif
 
               if((SIMULATION_TYPE == 3 .and. .not. backward_simulation) .or. SIMULATION_TYPE == 1) then
@@ -1095,7 +1095,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                   call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
                               x0_source, z0_source, A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
                               c_inc, c_refl, time_offset,f0)
-                  traction_x_t0 = (lambdal_unrelaxed_elastic+2*mul_unrelaxed_elastic)*dxUx + lambdal_unrelaxed_elastic*dzUz
+                  traction_x_t0 = lambdaplus2mu_unrelaxed_elastic * dxUx + lambdal_unrelaxed_elastic * dzUz
                   traction_z_t0 = mul_unrelaxed_elastic*(dxUz + dzUx)
                 else
                   veloc_horiz=v0x_right(count_right)
@@ -1148,11 +1148,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                 displn = nx*displx+nz*displz
 
-                displtx = (lambdal_unrelaxed_elastic+2*mul_unrelaxed_elastic)/(2.0*spring_position)*displn*nx + &
-                           mul_unrelaxed_elastic/(2.0*spring_position)*(displx-displn*nx)
+                displtx = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * displn * nx + &
+                           mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displx-displn*nx)
                 displty = mul_unrelaxed_elastic*disply
-                displtz = (lambdal_unrelaxed_elastic+2*mul_unrelaxed_elastic)/(2.0*spring_position)*displn*nz + &
-                          mul_unrelaxed_elastic/(2.0*spring_position)*(displz-displn*nz)
+                displtz = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * displn * nz + &
+                          mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displz-displn*nz)
               endif
 
               if((SIMULATION_TYPE == 3 .and. .not. backward_simulation) .or. SIMULATION_TYPE == 1) then
@@ -1203,8 +1203,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                   call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
                               x0_source, z0_source, A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
                               c_inc, c_refl, time_offset,f0)
-                  traction_x_t0 = mul_unrelaxed_elastic*(dxUz + dzUx)
-                  traction_z_t0 = lambdal_unrelaxed_elastic*dxUx + (lambdal_unrelaxed_elastic+2*mul_unrelaxed_elastic)*dzUz
+                  traction_x_t0 = mul_unrelaxed_elastic * (dxUz + dzUx)
+                  traction_z_t0 = lambdal_unrelaxed_elastic * dxUx + lambdaplus2mu_unrelaxed_elastic * dzUz
                 else
                   veloc_horiz=v0x_bot(count_bottom)
                   veloc_vert=v0z_bot(count_bottom)
@@ -1262,11 +1262,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                 displn = nx*displx+nz*displz
 
-                displtx = (lambdal_unrelaxed_elastic+2.0*mul_unrelaxed_elastic)/(2.0*spring_position)*displn*nx + &
-                          mul_unrelaxed_elastic/(2.0*spring_position)*(displx-displn*nx)
+                displtx = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * displn * nx + &
+                          mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displx-displn*nx)
                 displty = mul_unrelaxed_elastic*disply
-                displtz = (lambdal_unrelaxed_elastic+2.0*mul_unrelaxed_elastic)/(2.0*spring_position)*displn*nz + &
-                           mul_unrelaxed_elastic/(2.0*spring_position)*(displz-displn*nz)
+                displtz = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * displn * nz + &
+                          mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displz-displn*nz)
 
                 if((codeabs(IEDGE4,ispecabs) .and. i == 1) .or. (codeabs(IEDGE2,ispecabs) .and. i == NGLLX)) then
                   displtx = 0._CUSTOM_REAL; displty = 0._CUSTOM_REAL; displtz = 0._CUSTOM_REAL
@@ -1321,8 +1321,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                 call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
                             x0_source, z0_source, A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
                             c_inc, c_refl, time_offset,f0)
-                traction_x_t0 = mul_unrelaxed_elastic*(dxUz + dzUx)
-                traction_z_t0 = lambdal_unrelaxed_elastic*dxUx + (lambdal_unrelaxed_elastic+2*mul_unrelaxed_elastic)*dzUz
+                traction_x_t0 = mul_unrelaxed_elastic * (dxUz + dzUx)
+                traction_z_t0 = lambdal_unrelaxed_elastic * dxUx + lambdaplus2mu_unrelaxed_elastic * dzUz
               else
                 veloc_horiz = 0._CUSTOM_REAL;   veloc_vert = 0._CUSTOM_REAL
                 traction_x_t0 = 0._CUSTOM_REAL; traction_z_t0 = 0._CUSTOM_REAL
@@ -1373,11 +1373,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
                 displn = nx*displx+nz*displz
 
-                displtx = (lambdal_unrelaxed_elastic+2*mul_unrelaxed_elastic)/(2.0*spring_position)*displn*nx + &
-                          mul_unrelaxed_elastic/(2.0*spring_position)*(displx-displn*nx)
-                displty = mul_unrelaxed_elastic*disply
-                displtz = (lambdal_unrelaxed_elastic+2*mul_unrelaxed_elastic)/(2.0*spring_position)*displn*nz + &
-                          mul_unrelaxed_elastic/(2.0*spring_position)*(displz-displn*nz)
+                displtx = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL * spring_position) * displn * nx + &
+                          mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displx-displn*nx)
+                displty = mul_unrelaxed_elastic * disply
+                displtz = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL * spring_position) * displn * nz + &
+                          mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displz-displn*nz)
 
                 if((codeabs(IEDGE4,ispecabs) .and. i == 1) .or. (codeabs(IEDGE2,ispecabs) .and. i == NGLLX)) then
                   displtx = 0._CUSTOM_REAL; displty = 0._CUSTOM_REAL; displtz = 0._CUSTOM_REAL
