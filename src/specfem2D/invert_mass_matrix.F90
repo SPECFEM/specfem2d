@@ -301,7 +301,7 @@
   !--- DK and Zhinan Xie: one per component of the wave field i.e. one per spatial dimension.
   !--- DK and Zhinan Xie: This was also suggested by Jean-Paul Ampuero in 2003.
   !
-  if(.not. PML_BOUNDARY_CONDITIONS .and. anyabs .and. time_stepping_scheme /= 1) then
+  if(.not. PML_BOUNDARY_CONDITIONS .and. anyabs .and. time_stepping_scheme == 1) then
      count_left=1
      count_right=1
      count_bottom=1
