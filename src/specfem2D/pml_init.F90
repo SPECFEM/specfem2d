@@ -460,7 +460,7 @@ end subroutine pml_init
 ! PML fixed parameters to compute parameter in PML
   double precision, parameter :: NPOWER = 2.d0
   double precision, parameter :: Rcoef = 0.001d0
-  double precision, parameter :: damping_modified_factor = 1.2d0
+  double precision, parameter :: damping_modified_factor = 1.0d0
   double precision, parameter :: K_MAX_PML = 1.d0 ! from Gedney page 8.11
   double precision :: ALPHA_MAX_PML
 
