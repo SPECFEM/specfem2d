@@ -3004,7 +3004,7 @@
 
       deallocate(which_PML_elem)
 
-!      if (nspec_PML==0) nspec_PML=1 ! DK DK added this
+      if (nspec_PML==0) nspec_PML=1 ! DK DK added this
 
       if (nspec_PML > 0) then
         allocate(K_x_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
