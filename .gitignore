@@ -1,0 +1,20 @@
+
+# Configure time
+aclocal.m4
+autom4te.cache
+config.log
+config.status
+Makefile
+src/meshfem2D/Makefile
+src/meshfem2D/scotch_5.1.12b/src/Makefile.inc
+src/specfem2D/Makefile
+
+setup/config.h
+setup/constants.h
+setup/precision.h
+
+# Build time
+bin
+obj
+*.mod
+
