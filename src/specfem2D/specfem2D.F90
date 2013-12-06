@@ -2932,18 +2932,22 @@
                     PML_interior_interface,nglob_interface,mask_ibool_pml,read_external_mesh)
 
       if((SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS)then
-        if(any_elastic .and. nglob_interface > 0)then
+
+        if(nglob_interface > 0) then
           allocate(point_interface(nglob_interface),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array point_interface'
+        endif
+
+        if(any_elastic .and. nglob_interface > 0)then
           allocate(pml_interface_history_displ(3,nglob_interface,NSTEP),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_displ'
           allocate(pml_interface_history_veloc(3,nglob_interface,NSTEP),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_veloc'
           allocate(pml_interface_history_accel(3,nglob_interface,NSTEP),stat=ier)
+          if(ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_accel'
         endif
 
         if(any_acoustic .and. nglob_interface > 0)then
-          if(ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_accel'
           allocate(pml_interface_history_potential(nglob_interface,NSTEP),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential'
           allocate(pml_interface_history_potential_dot(nglob_interface,NSTEP),stat=ier)
@@ -2952,11 +2956,13 @@
           if(ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential_dot_dot'
         endif
 
-        call determin_interface_pml_interior(nglob_interface,nspec,ibool,PML_interior_interface,&
-                                             which_PML_elem,point_interface,read_external_mesh,&
-                                             mask_ibool_pml,region_CPML,nglob)
-        deallocate(PML_interior_interface)
-        deallocate(mask_ibool_pml)
+        if(nglob_interface > 0) then
+          call determin_interface_pml_interior(nglob_interface,nspec,ibool,PML_interior_interface,&
+                                               which_PML_elem,point_interface,read_external_mesh,&
+                                               mask_ibool_pml,region_CPML,nglob)
+          deallocate(PML_interior_interface)
+          deallocate(mask_ibool_pml)
+        endif
 
         if(any_elastic .and. nglob_interface > 0)then
           write(outputname,'(a,i6.6,a)') 'pml_interface_elastic',myrank,'.bin'
