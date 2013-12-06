@@ -175,6 +175,33 @@
 
         endif
 
+       else if(time_function_type(i_source) == 7) then
+
+        DecT = t0 + tshift_src(i_source)
+        Tc = 4.d0 / f0(i_source) + DecT
+        omega_coa = TWO * PI * f0(i_source)
+
+        if ( time > DecT .and. time < Tc ) then
+          ! source time function from Computational Ocean Acoustics
+           omegat =  omega_coa * ( time - DecT )
+           !source_time_function(i_source,it,i_stage) = factor(i_source) * HALF / omega_coa / omega_coa * &
+           !      ( sin(omegat) - 8.d0 / 9.d0 * sin(3.d0/ 4.d0 * omegat) - &
+           !	   8.d0 / 25.d0 * sin(5.d0 / 4.d0 * omegat) -1./15.*( time - DecT ) + 1./15.*4./f0(i_source))
+
+           source_time_function(i_source,it,i_stage) = factor(i_source) * HALF / omega_coa / omega_coa * &
+                 ( - sin(omegat) + 8.d0 / 9.d0 * sin(3.d0 / 4.d0 * omegat) + &
+                  8.d0 / 25.d0 * sin(5.d0 / 4.d0 * omegat) - 1.d0 / 15.d0 * omegat )
+
+        else if ( time > DecT ) then
+
+           source_time_function(i_source,it,i_stage) = - factor(i_source) * HALF / omega_coa / 15.d0 * (4.d0 / f0(i_source))
+
+        else
+
+           source_time_function(i_source,it,i_stage) = ZERO
+
+        endif
+
 
       else
         call exit_MPI('unknown source time function')
