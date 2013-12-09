@@ -882,7 +882,7 @@
 ! to dump the wave field
   integer :: icounter,nb_of_values_to_save
   logical :: this_is_the_first_time_we_dump
-  logical, dimension(:), allocatable  :: mask_ibool,mask_ibool_pml !zhinan
+  logical, dimension(:), allocatable  :: mask_ibool,mask_ibool_pml
 
   double precision, dimension(:,:,:),allocatable:: rho_local,vp_local,vs_local
 !!!! hessian
@@ -5178,6 +5178,7 @@ if(coupled_elastic_poro) then
 ! *********************************************************
 ! ************* compute forces for the acoustic elements
 ! *********************************************************
+
       call compute_forces_acoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
                anyabs,assign_external_model,ibool,kmato,numabs, &
                elastic,poroelastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
@@ -5216,15 +5217,17 @@ if(coupled_elastic_poro) then
        endif
 
        if(PML_BOUNDARY_CONDITIONS)then
-          do i = 1, nglob_interface
-           b_potential_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot(i,NSTEP-it+1)
-           b_potential_acoustic(point_interface(i)) = pml_interface_history_potential(i,NSTEP-it+1)
-          enddo
+         if(any_acoustic .and. nglob_interface > 0)then
+           do i = 1, nglob_interface
+             b_potential_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot(i,NSTEP-it+1)
+             b_potential_acoustic(point_interface(i)) = pml_interface_history_potential(i,NSTEP-it+1)
+           enddo
+         endif
        endif
 
         call compute_forces_acoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
                anyabs,assign_external_model,ibool,kmato,numabs, &
-               elastic,poroelastic,codeabs,b_potential_dot_dot_acoustic, &
+               elastic,poroelastic,codeabs,b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
                b_potential_acoustic,b_potential_acoustic_old,stage_time_scheme, i_stage, &
                density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                vpext,rhoext,hprime_xx,hprimewgll_xx, &
@@ -5242,7 +5245,7 @@ if(coupled_elastic_poro) then
                rmemory_potential_acoustic_LDDRK,alpha_LDDRK,beta_LDDRK,c_LDDRK, &
                rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
 !               deltat,PML_BOUNDARY_CONDITIONS)
-               deltat,.false.,STACEY_BOUNDARY_CONDITIONS,b_potential_dot_acoustic)
+               deltat,.false.,STACEY_BOUNDARY_CONDITIONS)
 
        if(PML_BOUNDARY_CONDITIONS)then
           do ispec = 1,nspec
@@ -5258,10 +5261,12 @@ if(coupled_elastic_poro) then
        endif
 
        if(PML_BOUNDARY_CONDITIONS)then
-          do i = 1, nglob_interface
-           b_potential_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot(i,NSTEP-it+1)
-           b_potential_acoustic(point_interface(i)) = pml_interface_history_potential(i,NSTEP-it+1)
-          enddo
+         if(any_acoustic .and. nglob_interface > 0)then
+           do i = 1, nglob_interface
+             b_potential_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot(i,NSTEP-it+1)
+             b_potential_acoustic(point_interface(i)) = pml_interface_history_potential(i,NSTEP-it+1)
+           enddo
+         endif
        endif
 
       endif
@@ -5626,12 +5631,12 @@ if(coupled_elastic_poro) then
       endif
 
      if(SIMULATION_TYPE == 3)then
-       if(any_acoustic .and. nglob_interface > 0)then
        if(PML_BOUNDARY_CONDITIONS)then
-          do i = 1, nglob_interface
-           b_potential_dot_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot_dot(i,NSTEP-it+1)
-          enddo
-       endif
+         if(any_acoustic .and. nglob_interface > 0)then
+           do i = 1, nglob_interface
+             b_potential_dot_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot_dot(i,NSTEP-it+1)
+           enddo
+         endif
        endif
      endif
 
@@ -5793,14 +5798,16 @@ if(coupled_elastic_poro) then
        endif
 
        if(PML_BOUNDARY_CONDITIONS)then
-          do i = 1, nglob_interface
-           b_veloc_elastic(1,point_interface(i)) = pml_interface_history_veloc(1,i,NSTEP-it+1)
-           b_veloc_elastic(2,point_interface(i)) = pml_interface_history_veloc(2,i,NSTEP-it+1)
-           b_veloc_elastic(3,point_interface(i)) = pml_interface_history_veloc(3,i,NSTEP-it+1)
-           b_displ_elastic(1,point_interface(i)) = pml_interface_history_displ(1,i,NSTEP-it+1)
-           b_displ_elastic(2,point_interface(i)) = pml_interface_history_displ(2,i,NSTEP-it+1)
-           b_displ_elastic(3,point_interface(i)) = pml_interface_history_displ(3,i,NSTEP-it+1)
-          enddo
+         if(any_elastic .and. nglob_interface > 0)then
+           do i = 1, nglob_interface
+             b_veloc_elastic(1,point_interface(i)) = pml_interface_history_veloc(1,i,NSTEP-it+1)
+             b_veloc_elastic(2,point_interface(i)) = pml_interface_history_veloc(2,i,NSTEP-it+1)
+             b_veloc_elastic(3,point_interface(i)) = pml_interface_history_veloc(3,i,NSTEP-it+1)
+             b_displ_elastic(1,point_interface(i)) = pml_interface_history_displ(1,i,NSTEP-it+1)
+             b_displ_elastic(2,point_interface(i)) = pml_interface_history_displ(2,i,NSTEP-it+1)
+             b_displ_elastic(3,point_interface(i)) = pml_interface_history_displ(3,i,NSTEP-it+1)
+           enddo
+         endif
        endif
 
       call compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
@@ -5847,14 +5854,16 @@ if(coupled_elastic_poro) then
        endif
 
        if(PML_BOUNDARY_CONDITIONS)then
-        do i = 1, nglob_interface
-           b_veloc_elastic(1,point_interface(i)) = pml_interface_history_veloc(1,i,NSTEP-it+1)
-           b_veloc_elastic(2,point_interface(i)) = pml_interface_history_veloc(2,i,NSTEP-it+1)
-           b_veloc_elastic(3,point_interface(i)) = pml_interface_history_veloc(3,i,NSTEP-it+1)
-           b_displ_elastic(1,point_interface(i)) = pml_interface_history_displ(1,i,NSTEP-it+1)
-           b_displ_elastic(2,point_interface(i)) = pml_interface_history_displ(2,i,NSTEP-it+1)
-           b_displ_elastic(3,point_interface(i)) = pml_interface_history_displ(3,i,NSTEP-it+1)
-        enddo
+         if(any_elastic .and. nglob_interface > 0)then
+           do i = 1, nglob_interface
+             b_veloc_elastic(1,point_interface(i)) = pml_interface_history_veloc(1,i,NSTEP-it+1)
+             b_veloc_elastic(2,point_interface(i)) = pml_interface_history_veloc(2,i,NSTEP-it+1)
+             b_veloc_elastic(3,point_interface(i)) = pml_interface_history_veloc(3,i,NSTEP-it+1)
+             b_displ_elastic(1,point_interface(i)) = pml_interface_history_displ(1,i,NSTEP-it+1)
+             b_displ_elastic(2,point_interface(i)) = pml_interface_history_displ(2,i,NSTEP-it+1)
+             b_displ_elastic(3,point_interface(i)) = pml_interface_history_displ(3,i,NSTEP-it+1)
+           enddo
+         endif
        endif
 
 
@@ -6477,13 +6486,15 @@ if(coupled_elastic_poro) then
       endif
 
       if(SIMULATION_TYPE == 3)then
-       if(PML_BOUNDARY_CONDITIONS)then
-        do i = 1, nglob_interface
-           b_accel_elastic(1,point_interface(i)) = pml_interface_history_accel(1,i,NSTEP-it+1)
-           b_accel_elastic(2,point_interface(i)) = pml_interface_history_accel(2,i,NSTEP-it+1)
-           b_accel_elastic(3,point_interface(i)) = pml_interface_history_accel(3,i,NSTEP-it+1)
-        enddo
-       endif
+        if(PML_BOUNDARY_CONDITIONS)then
+          if(any_elastic .and. nglob_interface > 0)then
+            do i = 1, nglob_interface
+              b_accel_elastic(1,point_interface(i)) = pml_interface_history_accel(1,i,NSTEP-it+1)
+              b_accel_elastic(2,point_interface(i)) = pml_interface_history_accel(2,i,NSTEP-it+1)
+              b_accel_elastic(3,point_interface(i)) = pml_interface_history_accel(3,i,NSTEP-it+1)
+            enddo
+          endif
+        endif
       endif
 
 
@@ -8093,6 +8104,8 @@ if(coupled_elastic_poro) then
                 tempx2l = ZERO
                 b_tempx1l = ZERO
                 b_tempx2l = ZERO
+                bb_tempx1l = ZERO
+                bb_tempx2l = ZERO
                 do k = 1,NGLLX
                   ! derivative along x
                   !tempx1l = tempx1l + potential_dot_dot_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
