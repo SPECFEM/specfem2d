@@ -882,7 +882,7 @@
 ! to dump the wave field
   integer :: icounter,nb_of_values_to_save
   logical :: this_is_the_first_time_we_dump
-  logical, dimension(:), allocatable  :: mask_ibool,mask_ibool_pml !zhinan
+  logical, dimension(:), allocatable  :: mask_ibool,mask_ibool_pml
 
   double precision, dimension(:,:,:),allocatable:: rho_local,vp_local,vs_local
 !!!! hessian
@@ -4922,246 +4922,25 @@ if(coupled_elastic_poro) then
 
     do i_stage=1, stage_time_scheme
 
-! update displacement using finite-difference time scheme (Newmark)
-    if(any_elastic) then
+      call update_displacement_precondition_newmark(time_stepping_scheme,SIMULATION_TYPE,&
+                                                    nglob_acoustic,nglob_elastic,nglob_poroelastic,&
+                                                    any_acoustic,any_elastic,any_poroelastic,deltat,deltatover2,&
+                                                    deltatsquareover2,potential_acoustic,potential_dot_acoustic,&
+                                                    potential_dot_dot_acoustic,potential_acoustic_old,&
+                                                    displ_elastic,veloc_elastic,accel_elastic,displ_elastic_old,&
+                                                    displs_poroelastic,velocs_poroelastic,accels_poroelastic,&
+                                                    displs_poroelastic_old,displw_poroelastic,velocw_poroelastic,&
+                                                    accelw_poroelastic,b_deltat,b_deltatover2,b_deltatsquareover2,&
+                                                    b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic,&
+                                                    b_potential_acoustic_old,&
+                                                    b_displ_elastic,b_veloc_elastic,b_accel_elastic,b_displ_elastic_old,&
+                                                    accel_elastic_adj_coupling,&
+                                                    b_displs_poroelastic,b_velocs_poroelastic,b_accels_poroelastic,&
+                                                    accels_poroelastic_adj_coupling,&
+                                                    b_displw_poroelastic,b_velocw_poroelastic,b_accelw_poroelastic,&
+                                                    accelw_poroelastic_adj_coupling)
 
-      if(time_stepping_scheme==1)then
-#ifdef FORCE_VECTORIZATION
-!! DK DK this allows for full vectorization by using a trick to see the 2D array as a 1D array
-!! DK DK whose dimension is the product of the two dimensions, the second dimension being equal to 1
-     do i = 1,3*nglob_elastic !! DK DK here change 3 to NDIM when/if we suppress the 2nd component of the arrays (the SH component)
-!    do i = 1,NDIM*nglob_elastic  !! DK DK this should be the correct size in principle, but not here because of the SH component
-      displ_elastic_old(i,1) = displ_elastic(i,1) + deltatsquareover2 * accel_elastic(i,1)
-      displ_elastic(i,1) = displ_elastic(i,1) &
-                    + deltat*veloc_elastic(i,1) &
-                    + deltatsquareover2*accel_elastic(i,1)
-      veloc_elastic(i,1) = veloc_elastic(i,1) + deltatover2*accel_elastic(i,1)
-     enddo
-#else
-      displ_elastic_old = displ_elastic + deltatsquareover2 * accel_elastic
-      displ_elastic = displ_elastic &
-                    + deltat*veloc_elastic &
-                    + deltatsquareover2*accel_elastic
-      veloc_elastic = veloc_elastic + deltatover2*accel_elastic
-#endif
-      endif
-      accel_elastic_adj_coupling = accel_elastic
-      accel_elastic = ZERO
-
-      if(SIMULATION_TYPE == 3) then ! Adjoint calculation
-!! DK DK this should be fully vectorized
-        b_displ_elastic_old = b_displ_elastic + deltatsquareover2 * b_accel_elastic
-        b_displ_elastic = b_displ_elastic &
-                        + b_deltat*b_veloc_elastic &
-                        + b_deltatsquareover2*b_accel_elastic
-        b_veloc_elastic = b_veloc_elastic + b_deltatover2*b_accel_elastic
-        b_accel_elastic = ZERO
-      endif
-    endif
-
-    if(any_poroelastic) then
-
-      if(time_stepping_scheme==1)then
-      !for the solid
-      displs_poroelastic_old = displs_poroelastic + deltatover2 * accels_poroelastic
-      displs_poroelastic = displs_poroelastic &
-                         + deltat*velocs_poroelastic &
-                         + deltatsquareover2*accels_poroelastic
-      velocs_poroelastic = velocs_poroelastic + deltatover2*accels_poroelastic
-      accels_poroelastic_adj_coupling = accels_poroelastic
-      accels_poroelastic = ZERO
-      !for the fluid
-      displw_poroelastic = displw_poroelastic &
-                         + deltat*velocw_poroelastic &
-                         + deltatsquareover2*accelw_poroelastic
-      velocw_poroelastic = velocw_poroelastic + deltatover2*accelw_poroelastic
-      accelw_poroelastic_adj_coupling = accelw_poroelastic
-      accelw_poroelastic = ZERO
-      endif
-
-      if(time_stepping_scheme==2)then
-      !for the solid
-      accels_poroelastic_adj_coupling = accels_poroelastic
-      accels_poroelastic = ZERO
-      !for the fluid
-      accelw_poroelastic_adj_coupling = accelw_poroelastic
-      accelw_poroelastic = ZERO
-      endif
-
-      if(time_stepping_scheme==3)then
-      !for the solid
-      accels_poroelastic_adj_coupling = accels_poroelastic
-      accels_poroelastic = ZERO
-      !for the fluid
-      accelw_poroelastic_adj_coupling = accelw_poroelastic
-      accelw_poroelastic = ZERO
-      endif
-
-      if(SIMULATION_TYPE == 3) then ! Adjoint calculation
-        !for the solid
-        b_displs_poroelastic = b_displs_poroelastic &
-                             + b_deltat*b_velocs_poroelastic &
-                             + b_deltatsquareover2*b_accels_poroelastic
-        b_velocs_poroelastic = b_velocs_poroelastic + b_deltatover2*b_accels_poroelastic
-        b_accels_poroelastic = ZERO
-        !for the fluid
-        b_displw_poroelastic = b_displw_poroelastic &
-                             + b_deltat*b_velocw_poroelastic &
-                             + b_deltatsquareover2*b_accelw_poroelastic
-        b_velocw_poroelastic = b_velocw_poroelastic + b_deltatover2*b_accelw_poroelastic
-        b_accelw_poroelastic = ZERO
-      endif
-    endif
-
-!--------------------------------------------------------------------------------------------
-! implement viscous attenuation for poroelastic media
-!
-    if(ATTENUATION_PORO_FLUID_PART .and. any_poroelastic) then
-      ! update memory variables with fourth-order Runge-Kutta time scheme for attenuation
-      ! loop over spectral elements
-      do ispec = 1,nspec
-
-       if(poroelastic(ispec) .and. poroelastcoef(2,2,kmato(ispec)) >0.d0) then
-
-        etal_f = poroelastcoef(2,2,kmato(ispec))
-        permlxx = permeability(1,kmato(ispec))
-        permlxz = permeability(2,kmato(ispec))
-        permlzz = permeability(3,kmato(ispec))
-
-        ! calcul of the inverse of k
-
-        detk = permlxx*permlzz - permlxz*permlxz
-
-        if(detk /= ZERO) then
-          invpermlxx = permlzz/detk
-          invpermlxz = -permlxz/detk
-          invpermlzz = permlxx/detk
-        else
-          stop 'Permeability matrix is not invertible'
-        endif
-
-        ! relaxed viscous coef
-        bl_unrelaxed_elastic(1) = etal_f*invpermlxx
-        bl_unrelaxed_elastic(2) = etal_f*invpermlxz
-        bl_unrelaxed_elastic(3) = etal_f*invpermlzz
-
-        do j=1,NGLLZ
-          do i=1,NGLLX
-
-            iglob = ibool(i,j,ispec)
-            viscox_loc(i,j) = velocw_poroelastic(1,iglob)*bl_unrelaxed_elastic(1) + &
-                               velocw_poroelastic(2,iglob) * bl_unrelaxed_elastic(2)
-            viscoz_loc(i,j) = velocw_poroelastic(1,iglob)*bl_unrelaxed_elastic(2) + &
-                               velocw_poroelastic(2,iglob)*bl_unrelaxed_elastic(3)
-
-            if(time_stepping_scheme == 1) then
-              ! evolution rx_viscous
-              Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
-              Snp1 = - (1.d0 - theta_e/theta_s)/theta_s*viscox_loc(i,j)
-              rx_viscous(i,j,ispec) = alphaval * rx_viscous(i,j,ispec) &
-                                    + betaval * Sn + gammaval * Snp1
-
-              ! evolution rz_viscous
-              Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
-              Snp1 = - (1.d0 - theta_e/theta_s)/theta_s*viscoz_loc(i,j)
-              rz_viscous(i,j,ispec) = alphaval * rz_viscous(i,j,ispec) &
-                                    + betaval * Sn + gammaval * Snp1
-            endif
-
-            if(time_stepping_scheme == 2) then
-              Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
-              rx_viscous_LDDRK(i,j,ispec) = alpha_LDDRK(i_stage) * rx_viscous_LDDRK(i,j,ispec) + &
-                                            deltat * (Sn + thetainv * rx_viscous(i,j,ispec))
-              rx_viscous(i,j,ispec)= rx_viscous(i,j,ispec)+beta_LDDRK(i_stage) * rx_viscous_LDDRK(i,j,ispec)
-
-              Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
-              rz_viscous_LDDRK(i,j,ispec)= alpha_LDDRK(i_stage) * rz_viscous_LDDRK(i,j,ispec)+&
-                                           deltat * (Sn + thetainv * rz_viscous(i,j,ispec))
-              rz_viscous(i,j,ispec)= rz_viscous(i,j,ispec)+beta_LDDRK(i_stage) * rz_viscous_LDDRK(i,j,ispec)
-            endif
-
-            if(time_stepping_scheme == 3) then
-
-              Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
-              rx_viscous_force_RK(i,j,ispec,i_stage) = deltat * (Sn + thetainv * rx_viscous(i,j,ispec))
-
-              if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
-                if(i_stage == 1)weight_rk = 0.5d0
-                if(i_stage == 2)weight_rk = 0.5d0
-                if(i_stage == 3)weight_rk = 1.0d0
-
-                if(i_stage==1)then
-                  rx_viscous_initial_rk(i,j,ispec) = rx_viscous(i,j,ispec)
-                endif
-                  rx_viscous(i,j,ispec) = rx_viscous_initial_rk(i,j,ispec) + &
-                                          weight_rk * rx_viscous_force_RK(i,j,ispec,i_stage)
-              else if(i_stage==4)then
-
-                rx_viscous(i,j,ispec) = rx_viscous_initial_rk(i,j,ispec) + &
-                                        1.0d0 / 6.0d0 * (rx_viscous_force_RK(i,j,ispec,i_stage) + &
-                                        2.0d0 * rx_viscous_force_RK(i,j,ispec,i_stage) + &
-                                        2.0d0 * rx_viscous_force_RK(i,j,ispec,i_stage) + &
-                                        rx_viscous_force_RK(i,j,ispec,i_stage))
-              endif
-
-              Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
-              rz_viscous_force_RK(i,j,ispec,i_stage) = deltat * (Sn + thetainv * rz_viscous(i,j,ispec))
-
-              if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
-                if(i_stage == 1)weight_rk = 0.5d0
-                if(i_stage == 2)weight_rk = 0.5d0
-                if(i_stage == 3)weight_rk = 1.0d0
-                if(i_stage==1)then
-                  rz_viscous_initial_rk(i,j,ispec) = rz_viscous(i,j,ispec)
-                endif
-                rz_viscous(i,j,ispec) = rz_viscous_initial_rk(i,j,ispec) + &
-                                        weight_rk * rz_viscous_force_RK(i,j,ispec,i_stage)
-              else if(i_stage==4)then
-                rz_viscous(i,j,ispec) = rz_viscous_initial_rk(i,j,ispec) + &
-                                        1.0d0 / 6.0d0 * (rz_viscous_force_RK(i,j,ispec,i_stage) + &
-                                        2.0d0 * rz_viscous_force_RK(i,j,ispec,i_stage) + &
-                                        2.0d0 * rz_viscous_force_RK(i,j,ispec,i_stage) + &
-                                        rz_viscous_force_RK(i,j,ispec,i_stage))
-              endif
-            endif
-          enddo
-        enddo
-
-        if(stage_time_scheme == 1) then
-        ! save visco for Runge-Kutta scheme when used together with Newmark
-        viscox(:,:,ispec) = viscox_loc(:,:)
-        viscoz(:,:,ispec) = viscoz_loc(:,:)
-        endif
-
-       endif  ! end of poroelastic element loop
-
-      enddo   ! end of spectral element loop
-    endif ! end of viscous attenuation for porous media
-
-!-----------------------------------------
     if(any_acoustic) then
-
-      if(time_stepping_scheme==1)then
-      ! Newmark time scheme
-!! DK DK this should be vectorized
-        potential_acoustic_old = potential_acoustic + deltatsquareover2*potential_dot_dot_acoustic
-        potential_acoustic = potential_acoustic + &
-                 deltat*potential_dot_acoustic + deltatsquareover2*potential_dot_dot_acoustic
-        potential_dot_acoustic = potential_dot_acoustic + deltatover2*potential_dot_dot_acoustic
-
-      endif
-      potential_dot_dot_acoustic = ZERO
-
-      if(SIMULATION_TYPE == 3) then ! Adjoint calculation
-!! DK DK this should be vectorized
-        b_potential_acoustic_old = b_potential_acoustic + deltatsquareover2*b_potential_dot_dot_acoustic
-        b_potential_acoustic = b_potential_acoustic + b_deltat*b_potential_dot_acoustic + &
-                               b_deltatsquareover2*b_potential_dot_dot_acoustic
-        b_potential_dot_acoustic = b_potential_dot_acoustic &
-                                  + b_deltatover2*b_potential_dot_dot_acoustic
-        b_potential_dot_dot_acoustic = ZERO
-      endif
-
       ! free surface for an acoustic medium
       if ( nelem_acoustic_surface > 0 ) then
         call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
@@ -5178,6 +4957,7 @@ if(coupled_elastic_poro) then
 ! *********************************************************
 ! ************* compute forces for the acoustic elements
 ! *********************************************************
+
       call compute_forces_acoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
                anyabs,assign_external_model,ibool,kmato,numabs, &
                elastic,poroelastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
@@ -5216,15 +4996,17 @@ if(coupled_elastic_poro) then
        endif
 
        if(PML_BOUNDARY_CONDITIONS)then
-          do i = 1, nglob_interface
-           b_potential_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot(i,NSTEP-it+1)
-           b_potential_acoustic(point_interface(i)) = pml_interface_history_potential(i,NSTEP-it+1)
-          enddo
+         if(any_acoustic .and. nglob_interface > 0)then
+           do i = 1, nglob_interface
+             b_potential_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot(i,NSTEP-it+1)
+             b_potential_acoustic(point_interface(i)) = pml_interface_history_potential(i,NSTEP-it+1)
+           enddo
+         endif
        endif
 
         call compute_forces_acoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
                anyabs,assign_external_model,ibool,kmato,numabs, &
-               elastic,poroelastic,codeabs,b_potential_dot_dot_acoustic, &
+               elastic,poroelastic,codeabs,b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
                b_potential_acoustic,b_potential_acoustic_old,stage_time_scheme, i_stage, &
                density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                vpext,rhoext,hprime_xx,hprimewgll_xx, &
@@ -5242,7 +5024,7 @@ if(coupled_elastic_poro) then
                rmemory_potential_acoustic_LDDRK,alpha_LDDRK,beta_LDDRK,c_LDDRK, &
                rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
 !               deltat,PML_BOUNDARY_CONDITIONS)
-               deltat,.false.,STACEY_BOUNDARY_CONDITIONS,b_potential_dot_acoustic)
+               deltat,.false.,STACEY_BOUNDARY_CONDITIONS)
 
        if(PML_BOUNDARY_CONDITIONS)then
           do ispec = 1,nspec
@@ -5258,10 +5040,12 @@ if(coupled_elastic_poro) then
        endif
 
        if(PML_BOUNDARY_CONDITIONS)then
-          do i = 1, nglob_interface
-           b_potential_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot(i,NSTEP-it+1)
-           b_potential_acoustic(point_interface(i)) = pml_interface_history_potential(i,NSTEP-it+1)
-          enddo
+         if(any_acoustic .and. nglob_interface > 0)then
+           do i = 1, nglob_interface
+             b_potential_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot(i,NSTEP-it+1)
+             b_potential_acoustic(point_interface(i)) = pml_interface_history_potential(i,NSTEP-it+1)
+           enddo
+         endif
        endif
 
       endif
@@ -5626,12 +5410,12 @@ if(coupled_elastic_poro) then
       endif
 
      if(SIMULATION_TYPE == 3)then
-       if(any_acoustic .and. nglob_interface > 0)then
        if(PML_BOUNDARY_CONDITIONS)then
-          do i = 1, nglob_interface
-           b_potential_dot_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot_dot(i,NSTEP-it+1)
-          enddo
-       endif
+         if(any_acoustic .and. nglob_interface > 0)then
+           do i = 1, nglob_interface
+             b_potential_dot_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot_dot(i,NSTEP-it+1)
+           enddo
+         endif
        endif
      endif
 
@@ -5793,14 +5577,16 @@ if(coupled_elastic_poro) then
        endif
 
        if(PML_BOUNDARY_CONDITIONS)then
-          do i = 1, nglob_interface
-           b_veloc_elastic(1,point_interface(i)) = pml_interface_history_veloc(1,i,NSTEP-it+1)
-           b_veloc_elastic(2,point_interface(i)) = pml_interface_history_veloc(2,i,NSTEP-it+1)
-           b_veloc_elastic(3,point_interface(i)) = pml_interface_history_veloc(3,i,NSTEP-it+1)
-           b_displ_elastic(1,point_interface(i)) = pml_interface_history_displ(1,i,NSTEP-it+1)
-           b_displ_elastic(2,point_interface(i)) = pml_interface_history_displ(2,i,NSTEP-it+1)
-           b_displ_elastic(3,point_interface(i)) = pml_interface_history_displ(3,i,NSTEP-it+1)
-          enddo
+         if(any_elastic .and. nglob_interface > 0)then
+           do i = 1, nglob_interface
+             b_veloc_elastic(1,point_interface(i)) = pml_interface_history_veloc(1,i,NSTEP-it+1)
+             b_veloc_elastic(2,point_interface(i)) = pml_interface_history_veloc(2,i,NSTEP-it+1)
+             b_veloc_elastic(3,point_interface(i)) = pml_interface_history_veloc(3,i,NSTEP-it+1)
+             b_displ_elastic(1,point_interface(i)) = pml_interface_history_displ(1,i,NSTEP-it+1)
+             b_displ_elastic(2,point_interface(i)) = pml_interface_history_displ(2,i,NSTEP-it+1)
+             b_displ_elastic(3,point_interface(i)) = pml_interface_history_displ(3,i,NSTEP-it+1)
+           enddo
+         endif
        endif
 
       call compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
@@ -5847,14 +5633,16 @@ if(coupled_elastic_poro) then
        endif
 
        if(PML_BOUNDARY_CONDITIONS)then
-        do i = 1, nglob_interface
-           b_veloc_elastic(1,point_interface(i)) = pml_interface_history_veloc(1,i,NSTEP-it+1)
-           b_veloc_elastic(2,point_interface(i)) = pml_interface_history_veloc(2,i,NSTEP-it+1)
-           b_veloc_elastic(3,point_interface(i)) = pml_interface_history_veloc(3,i,NSTEP-it+1)
-           b_displ_elastic(1,point_interface(i)) = pml_interface_history_displ(1,i,NSTEP-it+1)
-           b_displ_elastic(2,point_interface(i)) = pml_interface_history_displ(2,i,NSTEP-it+1)
-           b_displ_elastic(3,point_interface(i)) = pml_interface_history_displ(3,i,NSTEP-it+1)
-        enddo
+         if(any_elastic .and. nglob_interface > 0)then
+           do i = 1, nglob_interface
+             b_veloc_elastic(1,point_interface(i)) = pml_interface_history_veloc(1,i,NSTEP-it+1)
+             b_veloc_elastic(2,point_interface(i)) = pml_interface_history_veloc(2,i,NSTEP-it+1)
+             b_veloc_elastic(3,point_interface(i)) = pml_interface_history_veloc(3,i,NSTEP-it+1)
+             b_displ_elastic(1,point_interface(i)) = pml_interface_history_displ(1,i,NSTEP-it+1)
+             b_displ_elastic(2,point_interface(i)) = pml_interface_history_displ(2,i,NSTEP-it+1)
+             b_displ_elastic(3,point_interface(i)) = pml_interface_history_displ(3,i,NSTEP-it+1)
+           enddo
+         endif
        endif
 
 
@@ -6477,13 +6265,15 @@ if(coupled_elastic_poro) then
       endif
 
       if(SIMULATION_TYPE == 3)then
-       if(PML_BOUNDARY_CONDITIONS)then
-        do i = 1, nglob_interface
-           b_accel_elastic(1,point_interface(i)) = pml_interface_history_accel(1,i,NSTEP-it+1)
-           b_accel_elastic(2,point_interface(i)) = pml_interface_history_accel(2,i,NSTEP-it+1)
-           b_accel_elastic(3,point_interface(i)) = pml_interface_history_accel(3,i,NSTEP-it+1)
-        enddo
-       endif
+        if(PML_BOUNDARY_CONDITIONS)then
+          if(any_elastic .and. nglob_interface > 0)then
+            do i = 1, nglob_interface
+              b_accel_elastic(1,point_interface(i)) = pml_interface_history_accel(1,i,NSTEP-it+1)
+              b_accel_elastic(2,point_interface(i)) = pml_interface_history_accel(2,i,NSTEP-it+1)
+              b_accel_elastic(3,point_interface(i)) = pml_interface_history_accel(3,i,NSTEP-it+1)
+            enddo
+          endif
+        endif
       endif
 
 
@@ -6605,6 +6395,133 @@ if(coupled_elastic_poro) then
 ! ******************************************************************************************************************
 
     if(any_poroelastic) then
+
+!--------------------------------------------------------------------------------------------
+! implement viscous attenuation for poroelastic media
+!
+    if(ATTENUATION_PORO_FLUID_PART) then
+      ! update memory variables with fourth-order Runge-Kutta time scheme for attenuation
+      ! loop over spectral elements
+      do ispec = 1,nspec
+
+       if(poroelastic(ispec) .and. poroelastcoef(2,2,kmato(ispec)) >0.d0) then
+
+        etal_f = poroelastcoef(2,2,kmato(ispec))
+        permlxx = permeability(1,kmato(ispec))
+        permlxz = permeability(2,kmato(ispec))
+        permlzz = permeability(3,kmato(ispec))
+
+        ! calcul of the inverse of k
+
+        detk = permlxx*permlzz - permlxz*permlxz
+
+        if(detk /= ZERO) then
+          invpermlxx = permlzz/detk
+          invpermlxz = -permlxz/detk
+          invpermlzz = permlxx/detk
+        else
+          stop 'Permeability matrix is not invertible'
+        endif
+
+        ! relaxed viscous coef
+        bl_unrelaxed_elastic(1) = etal_f*invpermlxx
+        bl_unrelaxed_elastic(2) = etal_f*invpermlxz
+        bl_unrelaxed_elastic(3) = etal_f*invpermlzz
+
+        do j=1,NGLLZ
+          do i=1,NGLLX
+
+            iglob = ibool(i,j,ispec)
+            viscox_loc(i,j) = velocw_poroelastic(1,iglob)*bl_unrelaxed_elastic(1) + &
+                               velocw_poroelastic(2,iglob) * bl_unrelaxed_elastic(2)
+            viscoz_loc(i,j) = velocw_poroelastic(1,iglob)*bl_unrelaxed_elastic(2) + &
+                               velocw_poroelastic(2,iglob)*bl_unrelaxed_elastic(3)
+
+            if(time_stepping_scheme == 1) then
+              ! evolution rx_viscous
+              Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
+              Snp1 = - (1.d0 - theta_e/theta_s)/theta_s*viscox_loc(i,j)
+              rx_viscous(i,j,ispec) = alphaval * rx_viscous(i,j,ispec) &
+                                    + betaval * Sn + gammaval * Snp1
+
+              ! evolution rz_viscous
+              Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
+              Snp1 = - (1.d0 - theta_e/theta_s)/theta_s*viscoz_loc(i,j)
+              rz_viscous(i,j,ispec) = alphaval * rz_viscous(i,j,ispec) &
+                                    + betaval * Sn + gammaval * Snp1
+            endif
+
+            if(time_stepping_scheme == 2) then
+              Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
+              rx_viscous_LDDRK(i,j,ispec) = alpha_LDDRK(i_stage) * rx_viscous_LDDRK(i,j,ispec) + &
+                                            deltat * (Sn + thetainv * rx_viscous(i,j,ispec))
+              rx_viscous(i,j,ispec)= rx_viscous(i,j,ispec)+beta_LDDRK(i_stage) * rx_viscous_LDDRK(i,j,ispec)
+
+              Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
+              rz_viscous_LDDRK(i,j,ispec)= alpha_LDDRK(i_stage) * rz_viscous_LDDRK(i,j,ispec)+&
+                                           deltat * (Sn + thetainv * rz_viscous(i,j,ispec))
+              rz_viscous(i,j,ispec)= rz_viscous(i,j,ispec)+beta_LDDRK(i_stage) * rz_viscous_LDDRK(i,j,ispec)
+            endif
+
+            if(time_stepping_scheme == 3) then
+
+              Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
+              rx_viscous_force_RK(i,j,ispec,i_stage) = deltat * (Sn + thetainv * rx_viscous(i,j,ispec))
+
+              if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+                if(i_stage == 1)weight_rk = 0.5d0
+                if(i_stage == 2)weight_rk = 0.5d0
+                if(i_stage == 3)weight_rk = 1.0d0
+
+                if(i_stage==1)then
+                  rx_viscous_initial_rk(i,j,ispec) = rx_viscous(i,j,ispec)
+                endif
+                  rx_viscous(i,j,ispec) = rx_viscous_initial_rk(i,j,ispec) + &
+                                          weight_rk * rx_viscous_force_RK(i,j,ispec,i_stage)
+              else if(i_stage==4)then
+
+                rx_viscous(i,j,ispec) = rx_viscous_initial_rk(i,j,ispec) + &
+                                        1.0d0 / 6.0d0 * (rx_viscous_force_RK(i,j,ispec,i_stage) + &
+                                        2.0d0 * rx_viscous_force_RK(i,j,ispec,i_stage) + &
+                                        2.0d0 * rx_viscous_force_RK(i,j,ispec,i_stage) + &
+                                        rx_viscous_force_RK(i,j,ispec,i_stage))
+              endif
+
+              Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
+              rz_viscous_force_RK(i,j,ispec,i_stage) = deltat * (Sn + thetainv * rz_viscous(i,j,ispec))
+
+              if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+                if(i_stage == 1)weight_rk = 0.5d0
+                if(i_stage == 2)weight_rk = 0.5d0
+                if(i_stage == 3)weight_rk = 1.0d0
+                if(i_stage==1)then
+                  rz_viscous_initial_rk(i,j,ispec) = rz_viscous(i,j,ispec)
+                endif
+                rz_viscous(i,j,ispec) = rz_viscous_initial_rk(i,j,ispec) + &
+                                        weight_rk * rz_viscous_force_RK(i,j,ispec,i_stage)
+              else if(i_stage==4)then
+                rz_viscous(i,j,ispec) = rz_viscous_initial_rk(i,j,ispec) + &
+                                        1.0d0 / 6.0d0 * (rz_viscous_force_RK(i,j,ispec,i_stage) + &
+                                        2.0d0 * rz_viscous_force_RK(i,j,ispec,i_stage) + &
+                                        2.0d0 * rz_viscous_force_RK(i,j,ispec,i_stage) + &
+                                        rz_viscous_force_RK(i,j,ispec,i_stage))
+              endif
+            endif
+          enddo
+        enddo
+
+        if(stage_time_scheme == 1) then
+        ! save visco for Runge-Kutta scheme when used together with Newmark
+        viscox(:,:,ispec) = viscox_loc(:,:)
+        viscoz(:,:,ispec) = viscoz_loc(:,:)
+        endif
+
+       endif  ! end of poroelastic element loop
+
+      enddo   ! end of spectral element loop
+    endif ! end of viscous attenuation for porous media
+
+!-----------------------------------------
 
       if(SIMULATION_TYPE == 3) then
         ! if inviscid fluid, comment the reading and uncomment the zeroing
@@ -8093,6 +8010,8 @@ if(coupled_elastic_poro) then
                 tempx2l = ZERO
                 b_tempx1l = ZERO
                 b_tempx2l = ZERO
+                bb_tempx1l = ZERO
+                bb_tempx2l = ZERO
                 do k = 1,NGLLX
                   ! derivative along x
                   !tempx1l = tempx1l + potential_dot_dot_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
