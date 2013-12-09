@@ -158,6 +158,7 @@ OBJS_SPECFEM2D = \
 	$O/set_sources.o \
 	$O/setup_sources_receivers.o \
 	$O/sort_array_coordinates.o \
+	$O/update_displacement_scheme.o \
 	$O/write_seismograms.o \
 	$O/specfem2D.o \
   $O/write_jpeg_image.o \
@@ -406,6 +407,9 @@ $O/spline_routines.o: ${S}/spline_routines.f90 ${SETUP}/constants.h
 
 $O/sort_array_coordinates.o: ${S}/sort_array_coordinates.F90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/sort_array_coordinates.o ${S}/sort_array_coordinates.F90
+
+$O/update_displacement_scheme.o: ${S}/update_displacement_scheme.F90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/update_displacement_scheme.o ${S}/update_displacement_scheme.F90
 
 $O/write_seismograms.o: ${S}/write_seismograms.F90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/write_seismograms.o ${S}/write_seismograms.F90
