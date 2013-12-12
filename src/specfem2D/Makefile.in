@@ -106,6 +106,7 @@ OBJS_SPECFEM2D = \
 	$O/compute_Bielak_conditions.o \
 	$O/compute_curl_one_element.o \
 	$O/compute_energy.o \
+	$O/compute_coupling_acoustic_el.o \
 	$O/compute_forces_acoustic.o \
 	$O/compute_forces_viscoelastic.o \
 	$O/compute_forces_poro_solid.o \
@@ -416,6 +417,9 @@ $O/write_seismograms.o: ${S}/write_seismograms.F90 ${SETUP}/constants.h
 
 $O/check_stability.o: ${S}/check_stability.F90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/check_stability.o ${S}/check_stability.F90
+
+$O/compute_coupling_acoustic_el.o: ${S}/compute_coupling_acoustic_el.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/compute_coupling_acoustic_el.o ${S}/compute_coupling_acoustic_el.f90
 
 $O/compute_energy.o: ${S}/compute_energy.f90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/compute_energy.o ${S}/compute_energy.f90
