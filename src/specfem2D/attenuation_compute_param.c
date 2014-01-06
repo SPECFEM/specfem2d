@@ -34,10 +34,9 @@ FC_FUNC_(attenuation_compute_param,ATTENUATION_COMPUTE_PARAM)(int *nmech_in,
              double *tau_epsilon_nu1, double *tau_epsilon_nu2
              )
 {
-  int             n, i, j, plot, nu;
+  int             n, i, nu;
   double          Q_value, target_Q1, target_Q2;
-  double          f1, f2, Q, om0, Omega;
-  double          a, b;
+  double          f1, f2;
   double         *tau_s, *tau_e;
 
   /* We get the arguments passed in fortran by adress. */
@@ -66,10 +65,6 @@ FC_FUNC_(attenuation_compute_param,ATTENUATION_COMPUTE_PARAM)(int *nmech_in,
     printf("n < 1\n");
     exit(1);
   }
-
-  om0 = PI2 * pow(10.0, 0.5 * (log10(f1) + log10(f2)));
-
-  plot = 0;
 
 /* loop on the Q1 dilatation mode (nu = 1) and Q2 shear mode (nu = 2) defined in Carcione's papers */
   for (nu = 1; nu <= 2; nu++) {
