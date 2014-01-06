@@ -68,8 +68,6 @@
 
 ! Call of C function that computes attenuation parameters (function in file "attenuation_compute_param.c";
 ! a main can be found in UTILS/attenuation directory).
-! Beware of underscores in this function name; depending on your compiler and compilation options, you will have to add or
-! delete underscores. Also look in file "attenuation_compute_param.c" for this issue.
   call attenuation_compute_param(N_SLS, QKappa_attenuation, Qmu_attenuation, &
        f1_attenuation,f2_attenuation, &
        tau_sigma_nu1, tau_sigma_nu2, tau_epsilon_nu1, tau_epsilon_nu2)
