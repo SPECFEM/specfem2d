@@ -14,8 +14,7 @@
 
 /* useful constants */
 
-#define PI 3.14159265358979
-#define PI2 6.28318530717958
+#define PI2 (2 * M_PI)
 
 /* It is called in "attenuation_model.f90". */
 void
@@ -378,11 +377,6 @@ int m,n;
 #include <sgtty.h>
 #include <signal.h>
 #include <stdlib.h>
-
-/* useful constants */
-
-#define PI 3.14159265358979
-#define PI2 6.28318530717958
 
 void constant_Q2_sub(f1, f2, n, Q, tau_s, tau_e)
 
