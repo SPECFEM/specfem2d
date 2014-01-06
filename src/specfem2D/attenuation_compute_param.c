@@ -40,7 +40,6 @@ FC_FUNC_(attenuation_compute_param,ATTENUATION_COMPUTE_PARAM)(int *nmech_in,
   double          a, b;
   double         *tau_s, *tau_e;
 
-
   /* We get the arguments passed in fortran by adress. */
   target_Q1 = *Q1_in; /* target value of Q1 */
   target_Q2 = *Q2_in; /* target value of Q2 */
@@ -50,19 +49,23 @@ FC_FUNC_(attenuation_compute_param,ATTENUATION_COMPUTE_PARAM)(int *nmech_in,
 
   if (f2 < f1) {
     printf("T2 > T1\n");
-    exit; }
+    exit(1);
+  }
 
   if (target_Q1 <= -0.0001) {
     printf("Q1 cannot be negative\n");
-    exit; }
+    exit(1);
+  }
 
   if (target_Q2 <= -0.0001) {
     printf("Q2 cannot be negative\n");
-    exit; }
+    exit(1);
+  }
 
   if (n < 1) {
     printf("n < 1\n");
-    exit; }
+    exit(1);
+  }
 
   om0 = PI2 * pow(10.0, 0.5 * (log10(f1) + log10(f2)));
 
@@ -120,15 +123,15 @@ void constant_Q2_sub(double f1, double f2, int n, double Q, double *tau_s, doubl
 
   if (f2 < f1) {
     printf("T2 > T1\n");
-    exit;
+    exit(1);
   }
   if (Q < 0.0) {
     printf("Q < 0\n");
-    exit;
+    exit(1);
   }
   if (n < 1) {
     printf("n < 1\n");
-    exit;
+    exit(1);
   }
 
   x1 = dvector(1, n);
@@ -160,7 +163,6 @@ void constant_Q2_sub(double f1, double f2, int n, double Q, double *tau_s, doubl
 
   free_dvector(x1, 1, n);
   free_dvector(x2, 1, n);
-
 }
 
 void initialize(double f1, double f2, int n, double Q, double *x1, double *x2)
