@@ -12,6 +12,19 @@
 
 #define PI2 (2 * M_PI)
 
+/* prototypes */
+
+void constant_Q2_sub(double f1, double f2, int n, double Q, double *tau_s, double *tau_e);
+void nrerror(const char *error_text);
+double *dvector(int nl, int nh);
+double **dmatrix(int nrl, int nrh, int ncl, int nch);
+void free_dvector(double *v, int nl, int nh);
+void free_dmatrix(double **m, int nrl, int nrh, int ncl, int nch);
+void dsvdcmp(double **a, int m, int n, double *w, double **v);
+void initialize(double f1, double f2, int n, double Q, double *x1, double *x2);
+void derivatives(double f1, double f2, int n, double Q, double *x1, double *x2, double *gradient, double **hessian);
+void invert(double *x, double *b, double **A, int n);
+
 /* It is called in "attenuation_model.f90". */
 void
 FC_FUNC_(attenuation_compute_param,ATTENUATION_COMPUTE_PARAM)(int *nmech_in,
@@ -26,9 +39,6 @@ FC_FUNC_(attenuation_compute_param,ATTENUATION_COMPUTE_PARAM)(int *nmech_in,
   double          f1, f2, Q, om0, Omega;
   double          a, b;
   double         *tau_s, *tau_e;
-  double         *dvector();
-  void            constant_Q2_sub();
-  void            free_dvector();
 
 
   /* We get the arguments passed in fortran by adress. */
@@ -102,19 +112,11 @@ FC_FUNC_(attenuation_compute_param,ATTENUATION_COMPUTE_PARAM)(int *nmech_in,
   }
 }
 
-void constant_Q2_sub(f1, f2, n, Q, tau_s, tau_e)
-
-  int             n;
-  double          f1, f2, Q;
-  double         *tau_s, *tau_e;
+void constant_Q2_sub(double f1, double f2, int n, double Q, double *tau_s, double *tau_e)
 {
   int             i,j;
   double         *x1, *x2;
   double         *gradient, **hessian;
-  double         *dvector(), **dmatrix();
-  void            derivatives();
-  void            initialize(), invert();
-  void            free_dvector(), free_dmatrix();
 
   if (f2 < f1) {
     printf("T2 > T1\n");
@@ -161,15 +163,11 @@ void constant_Q2_sub(f1, f2, n, Q, tau_s, tau_e)
 
 }
 
-void initialize(f1, f2, n, Q, x1, x2)
-  int             n;
-  double          f1, f2, Q, *x1, *x2;
+void initialize(double f1, double f2, int n, double Q, double *x1, double *x2)
 {
 int             i;
 double          q, omega, *tau_e, *tau_s;
 double          exp1, exp2, dexp, expo;
-double         *dvector();
-void            free_dvector();
 
 tau_e = dvector(1, n);
 tau_s = dvector(1, n);
@@ -204,18 +202,13 @@ free_dvector(tau_e, 1, n);
 free_dvector(tau_s, 1, n);
 }
 
-void derivatives(f1, f2, n, Q, x1, x2, gradient, hessian)
-  int             n;
-  double          f1, f2, Q, *x1, *x2;
-  double         *gradient, **hessian;
+void derivatives(double f1, double f2, int n, double Q, double *x1, double *x2, double *gradient, double **hessian)
 {
 int             i, j;
 double          exp1, exp2, dexp, expo;
 double          f, df, omega;
 double         *dadp, *dbdp, *dqdp, d2qdp2;
 double          tau_e, tau_s, a, b, Q_omega;
-double         *dvector();
-void            free_dvector();
 
 dadp = dvector(1, n);
 dbdp = dvector(1, n);
@@ -264,15 +257,10 @@ free_dvector(dbdp, 1, n);
 free_dvector(dqdp, 1, n);
 }
 
-void invert(x, b, A, n)
-  int             n;
-  double         *x;
-  double         *b, **A;
+void invert(double *x, double *b, double **A, int n)
 {
 int             i, j, k;
-double         *dvector(), **dmatrix();
 double         *xp, *W, **V, **A_inverse;
-void            free_dvector(), free_dmatrix(), dsvdcmp();
 
 xp = dvector(1, n);
 W = dvector(1, n);
@@ -302,19 +290,15 @@ free_dvector(xp, 1, n);
 free_dmatrix(A_inverse, 1, n, 1, n);
 }
 
-void nrerror(error_text)
-char error_text[];
+void nrerror(const char *error_text)
 {
-  void exit();
-
   fprintf(stderr,"Numerical Recipes run-time error...\n");
   fprintf(stderr,"%s\n",error_text);
   fprintf(stderr,"...now exiting to system...\n");
   exit(1);
 }
 
-double *dvector(nl,nh)
-int nl,nh;
+double *dvector(int nl, int nh)
 {
   double *v;
 
@@ -323,8 +307,7 @@ int nl,nh;
   return v-nl;
 }
 
-double **dmatrix(nrl,nrh,ncl,nch)
-int nrl,nrh,ncl,nch;
+double **dmatrix(int nrl, int nrh, int ncl, int nch)
 {
   int i;
   double **m;
@@ -341,16 +324,12 @@ int nrl,nrh,ncl,nch;
   return m;
 }
 
-void free_dvector(v,nl,nh)
-double *v;
-int nl,nh;
+void free_dvector(double *v, int nl, int nh)
 {
   free((char*) (v+nl));
 }
 
-void free_dmatrix(m,nrl,nrh,ncl,nch)
-double **m;
-int nrl,nrh,ncl,nch;
+void free_dmatrix(double **m, int nrl, int nrh, int ncl, int nch)
 {
   int i;
 
@@ -367,15 +346,12 @@ static double maxarg1,maxarg2;
   (maxarg1) : (maxarg2))
 #define SIGN(a,b) ((b) >= 0.0 ? fabs(a) : -fabs(a))
 
-void dsvdcmp(a,m,n,w,v)
-double **a,*w,**v;
-int m,n;
+void dsvdcmp(double **a, int m, int n, double *w, double **v)
 {
   int flag,i,its,j,jj,k,l,nm;
   double c,f,h,s,x,y,z;
   double anorm=0.0,g=0.0,scale=0.0;
-  double *rv1,*dvector();
-  void nrerror(),free_dvector();
+  double *rv1;
 
   if (m < n) nrerror("SVDCMP: You must augment A with extra zero rows");
   rv1=dvector(1,n);
