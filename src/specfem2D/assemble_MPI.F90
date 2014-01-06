@@ -162,7 +162,7 @@
           2*nibool_interfaces_poroelastic(num_interface), &
           MPI_DOUBLE_PRECISION, &
           my_neighbours(num_interface), 11, &
-          MPI_COMM_WORLD, msg_status(1), ier)
+          MPI_COMM_WORLD, msg_status, ier)
 
      ipoin = 0
      do i = 1, nibool_interfaces_acoustic(num_interface)
