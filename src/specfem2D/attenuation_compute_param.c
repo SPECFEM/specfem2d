@@ -6,6 +6,7 @@
 #include "config.h"
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 #include <stdlib.h>
 
 /* useful constants */
@@ -34,10 +35,9 @@ FC_FUNC_(attenuation_compute_param,ATTENUATION_COMPUTE_PARAM)(int *nmech_in,
              double *tau_epsilon_nu1, double *tau_epsilon_nu2
              )
 {
-  int             n, i, nu;
-  double          Q_value, target_Q1, target_Q2;
+  int             n;
+  double          target_Q1, target_Q2;
   double          f1, f2;
-  double         *tau_s, *tau_e;
 
   /* We get the arguments passed in fortran by adress. */
   target_Q1 = *Q1_in; /* target value of Q1 */
@@ -66,47 +66,16 @@ FC_FUNC_(attenuation_compute_param,ATTENUATION_COMPUTE_PARAM)(int *nmech_in,
     exit(1);
   }
 
-/* loop on the Q1 dilatation mode (nu = 0) and Q2 shear mode (nu = 1) defined in Carcione's papers */
-  for (nu = 0; nu < 2; nu++) {
-
-/* assign Q1 or Q2 to generic variable Q_value which is used for the calculations */
-    if (nu == 0) { Q_value = target_Q1 ; }
-    if (nu == 1) { Q_value = target_Q2 ; }
-
-/* no need to compute these parameters if there is no attenuation; it could lead to a division by zero in the code */
-    if (Q_value > 0.00001) {
-
-    tau_s = dvector(n);
-    tau_e = dvector(n);
-
-    constant_Q2_sub(f1, f2, n, Q_value, tau_s, tau_e);
-
-/* output in Fortran90 format */
-    for (i = 0; i < n; i++) {
-      /* We put the results in tau_sigma_nu to get them in fortran. */
-      if ( nu == 0 ) {
-        tau_sigma_nu1[i] = tau_s[i];
-      }
-      if ( nu == 1 ) {
-        tau_sigma_nu2[i] = tau_s[i];
-      }
-
-    }
-
-    for (i = 0; i < n; i++) {
-       /* We put the results in tau_epsilon_nu to get them in fortran. */
-      if ( nu == 0 ) {
-        tau_epsilon_nu1[i] = tau_e[i];
-      }
-      if ( nu == 1 ) {
-        tau_epsilon_nu2[i] = tau_e[i];
-      }
-
-    }
-
-    free_dvector(tau_s, n);
-    free_dvector(tau_e, n);
+  /* no need to compute these parameters if there is no attenuation; it could lead to a division by zero in the code */
+  if (target_Q1 > 0.00001) {
+    /* Q1 dilatation mode defined in Carcione's papers */
+    constant_Q2_sub(f1, f2, n, target_Q1, tau_sigma_nu1, tau_epsilon_nu1);
   }
+
+  /* no need to compute these parameters if there is no attenuation; it could lead to a division by zero in the code */
+  if (target_Q2 > 0.00001) {
+    /* Q2 shear mode defined in Carcione's papers */
+    constant_Q2_sub(f1, f2, n, target_Q2, tau_sigma_nu2, tau_epsilon_nu2);
   }
 }
 
@@ -133,11 +102,12 @@ void constant_Q2_sub(double f1, double f2, int n, double Q, double *tau_s, doubl
   x2 = dvector(n);
   gradient = dvector(n);
   hessian = dmatrix(n, n);
+  memset(x1, 0, n*sizeof(double));
+  memset(x2, 0, n*sizeof(double));
+  memset(gradient, 0, n*sizeof(double));
   for(i=0;i<n;i++) {
-    x1[i]=0.0;
-    x2[i]=0.0;
-    gradient[i]=0.0;
-    for(j=0;j<n;j++) hessian[i][j]=0.0;
+    for(j=0;j<n;j++)
+      memset(hessian[i], 0, n*sizeof(double));
   }
 
   initialize(f1, f2, n, Q, x1, x2);
@@ -150,10 +120,10 @@ void constant_Q2_sub(double f1, double f2, int n, double Q, double *tau_s, doubl
   free_dmatrix(hessian, n, n);
 
   for (i = 0; i < n; i++) {
-          tau_e[i]=x1[i] + x2[i];
+    tau_e[i] = x1[i] + x2[i];
   }
   for (i = 0; i < n; i++) {
-          tau_s[i]=x2[i];
+    tau_s[i] = x2[i];
   }
 
   free_dvector(x1, n);
@@ -257,9 +227,8 @@ free_dvector(dqdp, n);
 void invert(double *x, double *b, double **A, int n)
 {
 int             i, j, k;
-double         *xp, *W, **V, **A_inverse;
+double         *W, **V, **A_inverse;
 
-xp = dvector(n);
 W = dvector(n);
 V = dmatrix(n, n);
 A_inverse = dmatrix(n, n);
@@ -277,13 +246,10 @@ for (i = 0; i < n; i++) {
 free_dvector(W, n);
 free_dmatrix(V, n, n);
 for (i = 0; i < n; i++) {
-  xp[i] = x[i];
   for (j = 0; j < n; j++) {
-    xp[i] -= A_inverse[i][j] * b[j];
+    x[i] -= A_inverse[i][j] * b[j];
   }
-  x[i] = xp[i];
 }
-free_dvector(xp, n);
 free_dmatrix(A_inverse, n, n);
 }
 
