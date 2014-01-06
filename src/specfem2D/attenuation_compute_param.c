@@ -4,12 +4,8 @@
 /* cleaned by Dimitri Komatitsch, University of Pau, France, July 2007 */
 
 #include "config.h"
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <stdio.h>
 #include <math.h>
-#include <sgtty.h>
-#include <signal.h>
 #include <stdlib.h>
 
 /* useful constants */
@@ -106,8 +102,6 @@ FC_FUNC_(attenuation_compute_param,ATTENUATION_COMPUTE_PARAM)(int *nmech_in,
   }
 }
 
-#include <stdio.h>
-
 void nrerror(error_text)
 char error_text[];
 {
@@ -163,8 +157,6 @@ int nrl,nrh,ncl,nch;
   for(i=nrh;i>=nrl;i--) free((char*) (m[i]+ncl));
   free((char*) (m+nrl));
 }
-
-#include <math.h>
 
 static double at,bt,ct;
 #define PYTHAG(a,b) ((at=fabs(a)) > (bt=fabs(b)) ? \
@@ -370,13 +362,6 @@ int m,n;
 #undef SIGN
 #undef MAX
 #undef PYTHAG
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdio.h>
-#include <math.h>
-#include <sgtty.h>
-#include <signal.h>
-#include <stdlib.h>
 
 void constant_Q2_sub(f1, f2, n, Q, tau_s, tau_e)
 
