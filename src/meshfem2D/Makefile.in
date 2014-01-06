@@ -79,7 +79,7 @@ S = .
 SETUP = ../../setup
 
 
-##.PHONY: clean default all backup bak generate_databases specfem3D meshfem3D
+.PHONY: help clean default all check_quality_external_mesh xcheck_quality_external_mesh mesh meshfem2D xmeshfem2D
 
 ####
 #### targets
@@ -109,7 +109,7 @@ OBJS_MESHFEM2D = \
 
 default: scotch_library $(DEFAULT)
 
-all: clean default
+all: default
 
 mesh : meshfem2D
 meshfem2D: xmeshfem2D
@@ -136,7 +136,7 @@ help:
 	@echo "usage: make [executable]"
 	@echo ""
 	@echo "supported executables:"
-	@echo "    xmeshfem3D"
+	@echo "    xmeshfem2D"
 	@echo "    xcheck_quality_external_mesh"
 	@echo ""
 

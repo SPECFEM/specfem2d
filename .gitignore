@@ -14,7 +14,7 @@ setup/constants.h
 setup/precision.h
 
 # Build time
-bin
-obj
+bin/*
+obj/*
 *.mod
 
