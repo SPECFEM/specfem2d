@@ -334,15 +334,6 @@ void free_dmatrix(double **m, int nrl, int nrh, int ncl, int nch)
   free((char*) (m+nrl));
 }
 
-static double at,bt,ct;
-#define PYTHAG(a,b) ((at=fabs(a)) > (bt=fabs(b)) ? \
-(ct=bt/at,at*sqrt(1.0+ct*ct)) : (bt ? (ct=at/bt,bt*sqrt(1.0+ct*ct)): 0.0))
-
-static double maxarg1,maxarg2;
-#define MAX(a,b) (maxarg1=(a),maxarg2=(b),(maxarg1) > (maxarg2) ?\
-  (maxarg1) : (maxarg2))
-#define SIGN(a,b) ((b) >= 0.0 ? fabs(a) : -fabs(a))
-
 void dsvdcmp(double **a, int m, int n, double *w, double **v)
 {
   int flag,i,its,j,jj,k,l,nm;
@@ -364,7 +355,7 @@ void dsvdcmp(double **a, int m, int n, double *w, double **v)
           s += a[k][i]*a[k][i];
         }
         f=a[i][i];
-        g = -SIGN(sqrt(s),f);
+        g = -copysign(sqrt(s),f);
         h=f*g-s;
         a[i][i]=f-g;
         if (i != n) {
@@ -387,7 +378,7 @@ void dsvdcmp(double **a, int m, int n, double *w, double **v)
           s += a[i][k]*a[i][k];
         }
         f=a[i][l];
-        g = -SIGN(sqrt(s),f);
+        g = -copysign(sqrt(s),f);
         h=f*g-s;
         a[i][l]=f-g;
         for (k=l;k<=n;k++) rv1[k]=a[i][k]/h;
@@ -400,7 +391,7 @@ void dsvdcmp(double **a, int m, int n, double *w, double **v)
         for (k=l;k<=n;k++) a[i][k] *= scale;
       }
     }
-    anorm=MAX(anorm,(fabs(w[i])+fabs(rv1[i])));
+    anorm=fmax(anorm, fabs(w[i])+fabs(rv1[i]));
   }
   for (i=n;i>=1;i--) {
     if (i < n) {
@@ -456,7 +447,7 @@ void dsvdcmp(double **a, int m, int n, double *w, double **v)
           f=s*rv1[i];
           if (fabs(f)+anorm != anorm) {
             g=w[i];
-            h=PYTHAG(f,g);
+            h=hypot(f,g);
             w[i]=h;
             h=1.0/h;
             c=g*h;
@@ -485,8 +476,8 @@ void dsvdcmp(double **a, int m, int n, double *w, double **v)
       g=rv1[nm];
       h=rv1[k];
       f=((y-z)*(y+z)+(g-h)*(g+h))/(2.0*h*y);
-      g=PYTHAG(f,1.0);
-      f=((x-z)*(x+z)+h*((y/(f+SIGN(g,f)))-h))/x;
+      g=hypot(f,1.0);
+      f=((x-z)*(x+z)+h*((y/(f+copysign(g,f)))-h))/x;
       c=s=1.0;
       for (j=l;j<=nm;j++) {
         i=j+1;
@@ -494,7 +485,7 @@ void dsvdcmp(double **a, int m, int n, double *w, double **v)
         y=w[i];
         h=s*g;
         g=c*g;
-        z=PYTHAG(f,h);
+        z=hypot(f,h);
         rv1[j]=z;
         c=f/z;
         s=h/z;
@@ -508,7 +499,7 @@ void dsvdcmp(double **a, int m, int n, double *w, double **v)
           v[jj][j]=x*c+z*s;
           v[jj][i]=z*c-x*s;
         }
-        z=PYTHAG(f,h);
+        z=hypot(f,h);
         w[j]=z;
         if (z) {
           z=1.0/z;
@@ -531,8 +522,4 @@ void dsvdcmp(double **a, int m, int n, double *w, double **v)
   }
   free_dvector(rv1,1,n);
 }
-
-#undef SIGN
-#undef MAX
-#undef PYTHAG
 
