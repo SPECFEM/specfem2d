@@ -183,10 +183,10 @@ convolve_source_timefunction: xconvolve_source_timefunction
 
 
 clean:
-	(rm -rf $O/*.o $E/xspecfem2D $E/xspecfem2D.trace \
-	$O/*.o $O/*.il *.mod core \
+	-rm -rf $O/*.o $E/xspecfem2D \
+	$O/*.o $O/*.il *.mod \
 	$E/xconvolve_source_timefunction \
-	*.oo *.ipo)
+	*.oo *.ipo
 
 
 help:
@@ -202,19 +202,22 @@ help:
 ##
 ## solver
 ##
-xspecfem2D: $(OBJS_SPECFEM2D)
+xspecfem2D: $E/xspecfem2D
+$E/xspecfem2D: $(OBJS_SPECFEM2D)
 	$(LINK) $(FLAGS_CHECK) -o ${E}/xspecfem2D $(OBJS_SPECFEM2D)
 
 ##
 ## convolve_source_timefunction
 ##
-xconvolve_source_timefunction: $O/convolve_source_timefunction.o
+xconvolve_source_timefunction: $E/xconvolve_source_timefunction
+$E/xconvolve_source_timefunction: $O/convolve_source_timefunction.o
 	${F90} $(FLAGS_CHECK) -o ${E}/xconvolve_source_timefunction $O/convolve_source_timefunction.o
 
 ##
 ## adj_seismogram
 ##
-xadj_seismogram: $O/adj_seismogram.o
+xadj_seismogram: $E/xadj_seismogram
+$E/xadj_seismogram: $O/adj_seismogram.o
 	${F90} $(FLAGS_CHECK) -o ${E}/xadj_seismogram $O/adj_seismogram.o
 
 

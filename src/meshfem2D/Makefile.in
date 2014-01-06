@@ -126,10 +126,10 @@ endif
 
 
 clean:
-	(rm -rf $O/*.o $E/xmeshfem2D $E/xmeshfem2D.trace \
-	$O/*.il *.mod core \
+	-rm -rf $O/*.o $E/xmeshfem2D \
+	$O/*.il *.mod \
 	$E/xcheck_quality_external_mesh \
-	*.oo *.ipo)
+	*.oo *.ipo
 
 
 help:
@@ -143,13 +143,15 @@ help:
 ##
 ## mesher
 ##
-xmeshfem2D: $(OBJS_MESHFEM2D)
+xmeshfem2D: $E/xmeshfem2D
+$E/xmeshfem2D: $(OBJS_MESHFEM2D)
 	$(LINK) $(FLAGS_CHECK) -o ${E}/xmeshfem2D $(OBJS_MESHFEM2D) $(LIB)
 
 ##
 ## check_quality_external_mesh
 ##
-xcheck_quality_external_mesh: $O/check_quality_external_mesh.o $O/read_value_parameters.o $O/param_reader.o $O/define_shape_functions.o
+xcheck_quality_external_mesh: $E/xcheck_quality_external_mesh
+$E/xcheck_quality_external_mesh: $O/check_quality_external_mesh.o $O/read_value_parameters.o $O/param_reader.o $O/define_shape_functions.o
 	${F90} $(FLAGS_CHECK) -o ${E}/xcheck_quality_external_mesh $O/check_quality_external_mesh.o $O/read_value_parameters.o $O/param_reader.o $O/define_shape_functions.o
 
 $O/define_shape_functions.o: ${S}/../specfem2D/define_shape_functions.f90 ${SETUP}/constants.h
