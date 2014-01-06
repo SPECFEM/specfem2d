@@ -33,8 +33,7 @@ FC_FUNC_(write_jpeg_image,WRITE_JPEG_IMAGE)(
   int height = *height_in;
 
   int bytes_per_pixel = 3;   /* or 1 for GRAYSCALE images */
-// DK DK suppressed this to fix a warning
-//  int color_space = JCS_RGB; /* or JCS_GRAYSCALE for grayscale images */
+  J_COLOR_SPACE color_space = JCS_RGB; /* or JCS_GRAYSCALE for grayscale images */
 
   /* this is a pointer to one row of image data */
   JSAMPROW row_pointer[1];
@@ -45,13 +44,6 @@ FC_FUNC_(write_jpeg_image,WRITE_JPEG_IMAGE)(
 
   // Trim leading white spaces
   while(isspace(*filename)) filename++;
-
-// DK DK  // Trim trailing white spaces
-// DK DK  end = filename + strlen(filename) - 1;
-// DK DK  while(end > filename && isspace(*end)) end--;
-
-// DK DK  // Write new null terminator
-// DK DK  *(end+1) = 0;
 
   // find first white space after the end of the file name
   end = filename;
@@ -81,9 +73,7 @@ FC_FUNC_(write_jpeg_image,WRITE_JPEG_IMAGE)(
   cinfo.image_width = width;
   cinfo.image_height = height;
   cinfo.input_components = bytes_per_pixel;
-// DK DK changed this to fix a warning
-//  cinfo.in_color_space = color_space;
-  cinfo.in_color_space = JCS_RGB; /* or JCS_GRAYSCALE for grayscale images */
+  cinfo.in_color_space = color_space;
 
   /* default compression parameters, we should not be worried about these */
   jpeg_set_defaults( &cinfo );
