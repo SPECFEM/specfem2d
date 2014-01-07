@@ -19,7 +19,6 @@ src/meshfem2D/scotch_5.1.12b/include/
 src/meshfem2D/scotch_5.1.12b/lib/
 src/meshfem2D/scotch_5.1.12b/src/libscotch/*.o
 src/meshfem2D/scotch_5.1.12b/src/libscotch/*.a
-src/meshfem2D/scotch_5.1.12b/src/libscotch/Makefile.org
 src/meshfem2D/scotch_5.1.12b/src/libscotch/dummysizes
 src/meshfem2D/scotch_5.1.12b/src/libscotch/parser_ll.c
 src/meshfem2D/scotch_5.1.12b/src/libscotch/parser_ly.h
@@ -28,9 +27,7 @@ src/meshfem2D/scotch_5.1.12b/src/libscotch/scotch.h
 src/meshfem2D/scotch_5.1.12b/src/libscotch/scotchf.h
 src/meshfem2D/scotch_5.1.12b/src/libscotch/y.output
 src/meshfem2D/scotch_5.1.12b/src/libscotchmetis/*.o
-src/meshfem2D/scotch_5.1.12b/src/libscotchmetis/Makefile.org
 src/meshfem2D/scotch_5.1.12b/src/libscotchmetis/libscotchmetis.a
-src/meshfem2D/scotch_5.1.12b/src/scotch/Makefile.org
 src/meshfem2D/scotch_5.1.12b/src/scotch/acpl
 src/meshfem2D/scotch_5.1.12b/src/scotch/amk_ccc
 src/meshfem2D/scotch_5.1.12b/src/scotch/amk_fft2
