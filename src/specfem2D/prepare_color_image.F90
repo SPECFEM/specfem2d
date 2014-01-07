@@ -344,7 +344,6 @@
   double precision, dimension(:), allocatable  :: data_pixel_send
   integer, dimension(:,:), allocatable  :: num_pixel_recv
   integer, dimension(:), allocatable  :: nb_pixel_per_proc
-  integer, dimension(MPI_STATUS_SIZE)  :: request_mpi_status
   integer :: ier,iproc
 #else
   integer :: dummy
@@ -483,10 +482,10 @@
       do iproc = 1, nproc-1
 
         call MPI_RECV(num_pixel_recv(1,iproc+1),nb_pixel_per_proc(iproc+1), MPI_INTEGER, &
-                iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+                iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
         call MPI_RECV(data_pixel_recv(1),nb_pixel_per_proc(iproc+1), MPI_DOUBLE_PRECISION, &
-                iproc, 43, MPI_COMM_WORLD, request_mpi_status, ier)
+                iproc, 43, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
         do k = 1, nb_pixel_per_proc(iproc+1)
           j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))

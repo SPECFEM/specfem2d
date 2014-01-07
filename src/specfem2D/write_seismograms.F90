@@ -104,7 +104,6 @@
 
 #ifdef USE_MPI
   integer  :: ierror
-  integer, dimension(MPI_STATUS_SIZE)  :: status
 #endif
 
 !----
@@ -233,16 +232,16 @@
 #ifdef USE_MPI
         else
            call MPI_RECV(buffer_binary(1,1),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
-                which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
+                which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ierror)
            if ( number_of_components == 2 ) then
               call MPI_RECV(buffer_binary(1,2),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
-                   which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
+                   which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ierror)
            endif
            if ( number_of_components == 3 ) then
               call MPI_RECV(buffer_binary(1,2),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
-                   which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
+                   which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ierror)
               call MPI_RECV(buffer_binary(1,3),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
-                   which_proc_receiver(irec),irec,MPI_COMM_WORLD,status,ierror)
+                   which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ierror)
            endif
 #endif
         endif

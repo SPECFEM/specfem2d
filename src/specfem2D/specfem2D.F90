@@ -734,7 +734,6 @@
   character(len=150) :: wavefield_file
 
 #ifdef USE_MPI
-  integer, dimension(MPI_STATUS_SIZE)  :: request_mpi_status
   integer, dimension(:), allocatable  :: nb_pixel_per_proc
   integer, dimension(:,:), allocatable  :: num_pixel_recv
   double precision, dimension(:), allocatable  :: data_pixel_recv
@@ -2440,9 +2439,9 @@
           else if ( myrank == 0 ) then
             do i = 1, nb_proc_source(i_source) - is_proc_source(i_source)
               call MPI_recv(source_courbe_eros(i_source),1,MPI_INTEGER, &
-                          MPI_ANY_SOURCE,42,MPI_COMM_WORLD,request_mpi_status,ier)
+                          MPI_ANY_SOURCE,42,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
               call MPI_recv(anglesource_recv,1,MPI_DOUBLE_PRECISION, &
-                          MPI_ANY_SOURCE,43,MPI_COMM_WORLD,request_mpi_status,ier)
+                          MPI_ANY_SOURCE,43,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
             enddo
           else if ( is_proc_source(i_source) == 1 ) then
             call MPI_send(n1_tangential_detection_curve,1,MPI_INTEGER,0,42,MPI_COMM_WORLD,ier)
@@ -2515,11 +2514,11 @@
           else
 
             call MPI_RECV(n1_tangential_detection_curve,1,MPI_INTEGER,&
-               which_proc_receiver(irec),irec,MPI_COMM_WORLD,request_mpi_status,ier)
+               which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
             call MPI_RECV(x_final_receiver_dummy,1,MPI_DOUBLE_PRECISION,&
-               which_proc_receiver(irec),irec,MPI_COMM_WORLD,request_mpi_status,ier)
+               which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
             call MPI_RECV(z_final_receiver_dummy,1,MPI_DOUBLE_PRECISION,&
-               which_proc_receiver(irec),irec,MPI_COMM_WORLD,request_mpi_status,ier)
+               which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
 
 #endif
           endif
@@ -3582,7 +3581,7 @@
           do iproc = 1, nproc-1
 
              call MPI_RECV(num_pixel_recv(1,iproc+1),nb_pixel_per_proc(iproc+1), MPI_INTEGER, &
-                  iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+                  iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
              do k = 1, nb_pixel_per_proc(iproc+1)
                 j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
                 i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
@@ -8638,7 +8637,7 @@ if(coupled_elastic_poro) then
           if (myrank == 0) then
             do iproc = 1, nproc-1
               call MPI_RECV(data_pixel_recv(1),nb_pixel_per_proc(iproc+1), MPI_DOUBLE_PRECISION, &
-                  iproc, 43, MPI_COMM_WORLD, request_mpi_status, ier)
+                  iproc, 43, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
               do k = 1, nb_pixel_per_proc(iproc+1)
                 j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
