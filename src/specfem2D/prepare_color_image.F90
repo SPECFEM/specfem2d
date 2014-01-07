@@ -255,8 +255,8 @@
 
 ! find pixel position of the sources with orange crosses
     do i=1,NSOURCES
-      ix_image_color_source(i) = (x_source(i) - xmin_color_image) / size_pixel_horizontal + 1
-      iy_image_color_source(i) = (z_source(i) - zmin_color_image) / size_pixel_vertical + 1
+      ix_image_color_source(i) = int((x_source(i) - xmin_color_image) / size_pixel_horizontal) + 1
+      iy_image_color_source(i) = int((z_source(i) - zmin_color_image) / size_pixel_vertical) + 1
 
       ! avoid edge effects
       if(ix_image_color_source(i) < 1) ix_image_color_source(i) = 1
@@ -268,8 +268,8 @@
 
 ! find pixel position of the receivers with green squares
     do i=1,nrec
-      ix_image_color_receiver(i) = (st_xval(i) - xmin_color_image) / size_pixel_horizontal + 1
-      iy_image_color_receiver(i) = (st_zval(i) - zmin_color_image) / size_pixel_vertical + 1
+      ix_image_color_receiver(i) = int((st_xval(i) - xmin_color_image) / size_pixel_horizontal) + 1
+      iy_image_color_receiver(i) = int((st_zval(i) - zmin_color_image) / size_pixel_vertical) + 1
 
       ! avoid edge effects
       if(ix_image_color_receiver(i) < 1) ix_image_color_receiver(i) = 1

@@ -349,9 +349,9 @@
              write(12,rec=(irec-1)*60+(irec-1)*NSTEP+22) NINT(st_zval(irec))           ! receiver location zr
              if (nrec>1) write(12,rec=(irec-1)*60+(irec-1)*NSTEP+48) SNGL(st_xval(2)-st_xval(1)) ! receiver interval
              header2(1)=0  ! dummy
-             header2(2)=NSTEP
+             header2(2)=int(NSTEP, kind=2)
              write(12,rec=(irec-1)*60+(irec-1)*NSTEP+29) header2
-             header2(1)=NINT(deltat*1.0d6)  ! deltat (unit: 10^{-6} second)
+             header2(1)=NINT(deltat*1.0d6, kind=2)  ! deltat (unit: 10^{-6} second)
              header2(2)=0  ! dummy
              write(12,rec=(irec-1)*60+(irec-1)*NSTEP+30) header2
              if ( seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
@@ -365,9 +365,9 @@
                    write(14,rec=(irec-1)*60+(irec-1)*NSTEP+22) NINT(st_zval(irec))
                    if(nrec>1) write(14,rec=(irec-1)*60+(irec-1)*NSTEP+48) SNGL(st_xval(2)-st_xval(1))
                    header2(1)=0  ! dummy
-                   header2(2)=NSTEP
+                   header2(2)=int(NSTEP, kind=2)
                    write(14,rec=(irec-1)*60+(irec-1)*NSTEP+29) header2
-                   header2(1)=NINT(deltat*1.0d6)
+                   header2(1)=NINT(deltat*1.0d6, kind=2)
                    header2(2)=0  ! dummy
                    write(14,rec=(irec-1)*60+(irec-1)*NSTEP+30) header2
                 endif

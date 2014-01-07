@@ -97,11 +97,11 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,anglesource,&
 
   N=2
   do while(N<2*NSTEP_global+1)
-     N=2.d0*N
+     N=2*N
   enddo
 
   do while(DT<(delta_in_period/N))
-     N=2.d0*N
+     N=2*N
   enddo
 
   print *,'N found to perform the frequency calculation:',N

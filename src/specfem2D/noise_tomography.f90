@@ -221,8 +221,8 @@
 
   time_function_noise(:) = 0._CUSTOM_REAL
   t0   = ((NSTEP-1)/2.)*deltat
-  aval = 0.6d0
-  factor_noise = 1.d3
+  aval = 0.6_CUSTOM_REAL
+  factor_noise = 1.e3_CUSTOM_REAL
 
 
   if ( time_function_type == 0) then
