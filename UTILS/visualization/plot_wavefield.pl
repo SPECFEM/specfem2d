@@ -175,9 +175,9 @@ $srcz = $srcz/1000;
 
 print "\nsource at ($srcx, $srcz)\n";
 
-$cshfile = "plot_wavefield.csh";
-open(CSH,">$cshfile");
-print "\nWriting CSH file $cshfile\n";
+$shfile = "plot_wavefield.sh";
+open(CSH,">$shfile");
+print "\nWriting CSH file $shfile\n";
 print CSH "gmtset BASEMAP_TYPE plain PAPER_MEDIA letter MEASURE_UNIT inch PLOT_DEGREE_FORMAT D TICK_LENGTH $tick LABEL_FONT_SIZE $fsize2 ANOT_FONT_SIZE $fsize2  HEADER_FONT $fontno ANOT_FONT $fontno LABEL_FONT $fontno HEADER_FONT_SIZE $fsize1 CHAR_ENCODING Standard+ COLOR_NAN $cgray\n";
 
 $R = "-R$xmin/$xmax/$zmin/$zmax";
@@ -622,7 +622,7 @@ print CSH "pstext $J -R0/1/0/1 -O -V >>$psfile<<EOF\n 10 10 $fsize0 0 $fontno CM
 print CSH "echo output psfile: $psfile\n";
 
 close (CSH);
-system("csh -f $cshfile");
+system("sh -f $shfile");
 system("gv $psfile &");
 
 #=================================================================
