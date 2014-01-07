@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "libjpeg/jpeglib.h"
 #include <stdlib.h>
+#include <ctype.h>
 
 // DK DK sample code written by Junaed Sattar, Oct 2005  http://www.cim.mcgill.ca/~junaed/libjpeg.php
 // DK DK modified by Dimitri Komatitsch, CNRS Marseille, France, Oct 2011
