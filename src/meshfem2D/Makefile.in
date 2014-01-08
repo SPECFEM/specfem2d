@@ -107,7 +107,7 @@ OBJS_MESHFEM2D = \
 	$O/spline_routines.o \
 	$O/meshfem2D.o
 
-default: scotch_library $(DEFAULT)
+default: $(DEFAULT)
 
 all: default
 
@@ -115,7 +115,7 @@ mesh : meshfem2D
 meshfem2D: xmeshfem2D
 check_quality_external_mesh: xcheck_quality_external_mesh
 
-
+@SCOTCH_INCLUDEDIR@/scotchf.h: scotch_library
 scotch_library:
 ifeq (@USE_BUNDLED_SCOTCH@,1)
 	echo "Using bundled Scotch"
@@ -171,7 +171,8 @@ $O/get_node_number.o: ${S}/get_node_number.f90
 $O/meshfem2D.o: ${S}/meshfem2D.F90 $O/part_unstruct.o $O/read_interfaces_file.o $O/read_parameter_file.o $O/read_source_file.o ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/meshfem2D.o ${S}/meshfem2D.F90
 
-$O/part_unstruct.o: ${S}/part_unstruct.F90 ${SETUP}/constants.h
+@COND_MPI_TRUE@$O/part_unstruct.o: ${S}/part_unstruct.F90 ${SETUP}/constants.h @SCOTCH_INCLUDEDIR@/scotchf.h
+@COND_MPI_FALSE@$O/part_unstruct.o: ${S}/part_unstruct.F90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/part_unstruct.o ${S}/part_unstruct.F90
 
 $O/read_interfaces_file.o: ${S}/read_interfaces_file.f90 ${SETUP}/constants.h
