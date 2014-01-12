@@ -85,11 +85,10 @@ SETUP = ../../setup
 #### targets
 ####
 
-# default targets for the pure Fortran version
-@COND_PYRE_FALSE@DEFAULT = \
-@COND_PYRE_FALSE@	meshfem2D \
-@COND_PYRE_FALSE@	check_quality_external_mesh \
-@COND_PYRE_FALSE@	$(EMPTY_MACRO)
+DEFAULT = \
+	xmeshfem2D \
+	xcheck_quality_external_mesh \
+	$(EMPTY_MACRO)
 
 OBJS_MESHFEM2D = \
 	$O/get_node_number.o \

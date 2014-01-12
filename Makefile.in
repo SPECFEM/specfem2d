@@ -46,14 +46,13 @@
 #### targets
 ####
 
-# default targets for the pure Fortran version
-@COND_PYRE_FALSE@DEFAULT = \
-@COND_PYRE_FALSE@	meshfem2D \
-@COND_PYRE_FALSE@	specfem2D \
-@COND_PYRE_FALSE@	convolve_source_timefunction \
-@COND_PYRE_FALSE@	check_quality_external_mesh \
-@COND_PYRE_FALSE@	adj_seismogram \
-@COND_PYRE_FALSE@	$(EMPTY_MACRO)
+DEFAULT = \
+	xmeshfem2D \
+	xspecfem2D \
+	xconvolve_source_timefunction \
+	xcheck_quality_external_mesh \
+	xadj_seismogram \
+	$(EMPTY_MACRO)
 
 default: $(DEFAULT)
 

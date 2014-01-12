@@ -88,11 +88,10 @@ LIBJPEG = ./libjpeg
 #### targets
 ####
 
-# default targets for the pure Fortran version
-@COND_PYRE_FALSE@DEFAULT = \
-@COND_PYRE_FALSE@	specfem2D \
-@COND_PYRE_FALSE@	convolve_source_timefunction \
-@COND_PYRE_FALSE@	$(EMPTY_MACRO)
+DEFAULT = \
+	xspecfem2D \
+	xconvolve_source_timefunction \
+	$(EMPTY_MACRO)
 
 
 OBJS_SPECFEM2D = \
