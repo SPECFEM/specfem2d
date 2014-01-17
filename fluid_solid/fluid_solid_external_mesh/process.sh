@@ -29,7 +29,7 @@ cd ../
 rm -rf OUTPUT_FILES/*
 
 # compiles executables in root directory
-cd ../../
+cd ../../..
 make > tmp.log
 cd $currentdir
 
