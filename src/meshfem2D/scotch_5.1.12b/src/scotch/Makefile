@@ -55,7 +55,7 @@ include ../Makefile.inc
 
 .PHONY				:	ptscotch	scotch	ptinstall	install	clean	realclean
 
-scotch				:	clean
+scotch				:
 					$(MAKE) CC="$(CCS)" SCOTCHLIB=scotch	\
 					acpl$(EXE)				\
 					amk_ccc$(EXE)				\
@@ -86,7 +86,7 @@ scotch				:	clean
 					mord$(EXE)				\
 					mtst$(EXE)
 
-ptscotch			:	clean
+ptscotch			:
 					$(MAKE) CC="$(CCP)" SCOTCHLIB=ptscotch	\
 					dggath$(EXE)				\
 					dgmap$(EXE)				\
@@ -95,16 +95,38 @@ ptscotch			:	clean
 					dgscat$(EXE)				\
 					dgtst$(EXE)
 
-install				:
-					-$(CP) acpl$(EXE) amk_ccc$(EXE) amk_fft2$(EXE) amk_grf$(EXE) amk_hy$(EXE) amk_m2$(EXE) amk_p2$(EXE) atst$(EXE) gbase$(EXE) gcv$(EXE) gmap$(EXE) gmk_hy$(EXE) gmk_m2$(EXE) gmk_m3$(EXE) gmk_msh$(EXE) gmk_ub2$(EXE) gmtst$(EXE) gord$(EXE) gotst$(EXE) gout$(EXE) gpart$(EXE) *gtst$(EXE) gscat$(EXE) mcv$(EXE) mmk_m2$(EXE) mmk_m3$(EXE) mord$(EXE) mtst$(EXE) $(bindir)
+install				: \
+	$(bindir)/acpl$(EXE) $(bindir)/amk_ccc$(EXE) \
+	$(bindir)/amk_fft2$(EXE) $(bindir)/amk_grf$(EXE) \
+	$(bindir)/amk_hy$(EXE) $(bindir)/amk_m2$(EXE) \
+	$(bindir)/amk_p2$(EXE) $(bindir)/atst$(EXE) \
+	$(bindir)/gbase$(EXE) $(bindir)/gcv$(EXE) \
+	$(bindir)/gmap$(EXE) $(bindir)/gmk_hy$(EXE) \
+	$(bindir)/gmk_m2$(EXE) $(bindir)/gmk_m3$(EXE) \
+	$(bindir)/gmk_msh$(EXE) $(bindir)/gmk_ub2$(EXE) \
+	$(bindir)/gmtst$(EXE) $(bindir)/gord$(EXE) \
+	$(bindir)/gotst$(EXE) $(bindir)/gout$(EXE) \
+	$(bindir)/gpart$(EXE) $(bindir)/gscat$(EXE) \
+	$(bindir)/gtst$(EXE) $(bindir)/mcv$(EXE) \
+	$(bindir)/mmk_m2$(EXE) $(bindir)/mmk_m3$(EXE) \
+	$(bindir)/mord$(EXE) $(bindir)/mtst$(EXE)
 
-ptinstall			:
-					-$(CP) dggath$(EXE) dgmap$(EXE) dgord$(EXE) dgpart$(EXE) dgscat$(EXE) dgtst$(EXE) $(bindir)
+ptinstall			: \
+	$(bindir)/dggath$(EXE) $(bindir)/dgmap$(EXE) \
+	$(bindir)/dgord$(EXE) $(bindir)/dgpart$(EXE) \
+	$(bindir)/dgscat$(EXE) $(bindir)/dgtst$(EXE)
 
 clean				:
 					-$(RM) *~ *$(OBJ) acpl$(EXE) amk_ccc$(EXE) amk_fft2$(EXE) amk_grf$(EXE) amk_hy$(EXE) amk_m2$(EXE) amk_p2$(EXE) atst$(EXE) gbase$(EXE) gcv$(EXE) *ggath$(EXE) *gmap$(EXE) gmk_hy$(EXE) gmk_m2$(EXE) gmk_m3$(EXE) gmk_msh$(EXE) gmk_ub2$(EXE) gmtst$(EXE) *gord$(EXE) gotst$(EXE) gout$(EXE) *gpart$(EXE) *gscat$(EXE) *gtst$(EXE) mcv$(EXE) mmk_m2$(EXE) mmk_m3$(EXE) mord$(EXE) mtst$(EXE)
 
 realclean			:	clean
+
+##
+##  Installation dependencies.
+##
+
+$(bindir)/%$(EXE)		:	%$(EXE)
+					-$(CP) $? $@
 
 ##
 ##  Todo list.

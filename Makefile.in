@@ -46,20 +46,17 @@
 #### targets
 ####
 
-# default targets for the pure Fortran version
-@COND_PYRE_FALSE@DEFAULT = \
-@COND_PYRE_FALSE@	meshfem2D \
-@COND_PYRE_FALSE@	specfem2D \
-@COND_PYRE_FALSE@	convolve_source_timefunction \
-@COND_PYRE_FALSE@	check_quality_external_mesh \
-@COND_PYRE_FALSE@	adj_seismogram \
-@COND_PYRE_FALSE@	$(EMPTY_MACRO)
+DEFAULT = \
+	xmeshfem2D \
+	xspecfem2D \
+	xconvolve_source_timefunction \
+	xcheck_quality_external_mesh \
+	xadj_seismogram \
+	$(EMPTY_MACRO)
 
 default: $(DEFAULT)
 
 all: default
-
-required: obj bin
 
 mesh : meshfem2D
 spec : specfem2D
@@ -69,46 +66,40 @@ convolve_source_timefunction: xconvolve_source_timefunction
 check_quality_external_mesh: xcheck_quality_external_mesh
 adj_seismogram: xadj_seismogram
 
-bin:
-	mkdir -p bin
-
-obj:
-	mkdir -p obj
-
 ##
 ## mesher
 ##
-xmeshfem2D:  required
+xmeshfem2D:
 	$(MAKE) -C src/meshfem2D
 
 ##
 ## check_quality_external_mesh
 ##
-xcheck_quality_external_mesh: required
+xcheck_quality_external_mesh:
 	$(MAKE) -C src/meshfem2D xcheck_quality_external_mesh
 
 ##
 ## solver
 ##
-xspecfem2D:  required
+xspecfem2D:
 	$(MAKE) -C src/specfem2D specfem2D
 
 ##
 ## convolve_source_timefunction
 ##
-xconvolve_source_timefunction: required
+xconvolve_source_timefunction:
 	$(MAKE) -C src/specfem2D xconvolve_source_timefunction
 
 
 ##
 ## adj_seismogram
 ##
-xadj_seismogram: required
+xadj_seismogram:
 	$(MAKE) -C src/specfem2D xadj_seismogram
 
 
 clean:
-	rm -rf obj bin src/meshfem2D/*.mod src/specfem2D/*.mod
+	rm -rf obj/* bin/* src/meshfem2D/*.mod src/specfem2D/*.mod
 	$(MAKE) -C src/meshfem2D/scotch/src realclean
 
 help:
@@ -121,4 +112,11 @@ help:
 	@echo "    xcheck_quality_external_mesh"
 	@echo "    xadj_seismogram"
 	@echo ""
+
+.PHONY: default all clean help \
+	mesh meshfem2D xmeshfem2D \
+	spec specfem2D xspecfem2D \
+	convolve_source_timefunction xconvolve_source_timefunction \
+	check_quality_external_mesh xcheck_quality_external_mesh \
+	adj_seismogram xadj_seismogram
 

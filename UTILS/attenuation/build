@@ -1,4 +1,4 @@
-#!/bin/csh
+#!/bin/sh
 
 # code to compute attenuation constants for SPECFEM2D
 

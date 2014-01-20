@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 for file in imag*.gif; do
   jfile=`echo $file | sed 's/gif/jpg/'`

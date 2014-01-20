@@ -180,9 +180,6 @@
   integer  :: ier
   logical :: anyabs_glob, coupled_acoustic_elastic_glob, coupled_acoustic_poro_glob, &
              coupled_elastic_poro_glob
-#ifdef USE_MPI
-  integer, dimension(MPI_STATUS_SIZE)  :: request_mpi_status
-#endif
   integer  :: myrank, nproc
 
 ! plotpost arrays for postscript output
@@ -1798,13 +1795,13 @@ coorg_recv_ps_vector_field
   if (myrank == 0 ) then
 
      do iproc = 1, nproc-1
-        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         call MPI_RECV (coorg_recv_ps_velocity_model(1,1), &
              2*nspec_recv*((NGLLX-subsamp_postscript)/subsamp_postscript)*((NGLLX-subsamp_postscript)/subsamp_postscript)*4, &
-             MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+             MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         call MPI_RECV (RGB_recv_ps_velocity_model(1,1), nspec_recv*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
              ((NGLLX-subsamp_postscript)/subsamp_postscript), &
-             MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+             MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
         buffer_offset = 0
         RGB_offset = 0
@@ -2084,7 +2081,7 @@ coorg_recv_ps_vector_field
   if (myrank == 0 ) then
 
      do iproc = 1, nproc-1
-        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 43, MPI_COMM_WORLD, request_mpi_status, ier)
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 43, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         nb_coorg_per_elem = 1
         if ( numbers == 1 ) then
            nb_coorg_per_elem = nb_coorg_per_elem + 1
@@ -2103,9 +2100,9 @@ coorg_recv_ps_vector_field
         endif
 
         call MPI_RECV (coorg_recv_ps_element_mesh(1,1), 2*nspec_recv*nb_coorg_per_elem, &
-             MPI_DOUBLE_PRECISION, iproc, 43, MPI_COMM_WORLD, request_mpi_status, ier)
+             MPI_DOUBLE_PRECISION, iproc, 43, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         call MPI_RECV (color_recv_ps_element_mesh(1), nspec_recv*nb_coorg_per_elem, &
-             MPI_INTEGER, iproc, 43, MPI_COMM_WORLD, request_mpi_status, ier)
+             MPI_INTEGER, iproc, 43, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
         buffer_offset = 0
         RGB_offset = 0
@@ -2296,10 +2293,10 @@ coorg_recv_ps_vector_field
   if (myrank == 0 ) then
 
      do iproc = 1, nproc-1
-        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 44, MPI_COMM_WORLD, request_mpi_status, ier)
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 44, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         if ( nspec_recv > 0 ) then
         call MPI_RECV (coorg_recv_ps_abs(1,1), 4*nspec_recv, &
-             MPI_DOUBLE_PRECISION, iproc, 44, MPI_COMM_WORLD, request_mpi_status, ier)
+             MPI_DOUBLE_PRECISION, iproc, 44, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
         buffer_offset = 0
         do ispec = 1, nspec_recv
@@ -2373,10 +2370,10 @@ coorg_recv_ps_vector_field
   if (myrank == 0 ) then
 
      do iproc = 1, nproc-1
-        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 44, MPI_COMM_WORLD, request_mpi_status, ier)
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 44, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         if ( nspec_recv > 0 ) then
         call MPI_RECV (coorg_recv_ps_free_surface(1,1), 4*nspec_recv, &
-             MPI_DOUBLE_PRECISION, iproc, 44, MPI_COMM_WORLD, request_mpi_status, ier)
+             MPI_DOUBLE_PRECISION, iproc, 44, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
         buffer_offset = 0
         do ispec = 1, nspec_recv
@@ -2473,11 +2470,11 @@ coorg_recv_ps_vector_field
   if (myrank == 0 ) then
 
      do iproc = 1, nproc-1
-        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, MPI_COMM_WORLD, request_mpi_status, ier)
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         if ( nspec_recv > 0 ) then
         allocate(coorg_recv(4,nspec_recv))
         call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
-             MPI_DOUBLE_PRECISION, iproc, 45, MPI_COMM_WORLD, request_mpi_status, ier)
+             MPI_DOUBLE_PRECISION, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
         buffer_offset = 0
         do ispec = 1, nspec_recv
@@ -2578,11 +2575,11 @@ coorg_recv_ps_vector_field
   if (myrank == 0 ) then
 
      do iproc = 1, nproc-1
-        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, MPI_COMM_WORLD, request_mpi_status, ier)
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         if ( nspec_recv > 0 ) then
         allocate(coorg_recv(4,nspec_recv))
         call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
-             MPI_DOUBLE_PRECISION, iproc, 45, MPI_COMM_WORLD, request_mpi_status, ier)
+             MPI_DOUBLE_PRECISION, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
         buffer_offset = 0
         do ispec = 1, nspec_recv
@@ -2683,11 +2680,11 @@ coorg_recv_ps_vector_field
   if (myrank == 0 ) then
 
      do iproc = 1, nproc-1
-        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, MPI_COMM_WORLD, request_mpi_status, ier)
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         if ( nspec_recv > 0 ) then
         allocate(coorg_recv(4,nspec_recv))
         call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
-             MPI_DOUBLE_PRECISION, iproc, 45, MPI_COMM_WORLD, request_mpi_status, ier)
+             MPI_DOUBLE_PRECISION, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
         buffer_offset = 0
         do ispec = 1, nspec_recv
@@ -2865,10 +2862,10 @@ coorg_recv_ps_vector_field
   if (myrank == 0 ) then
 
      do iproc = 1, nproc-1
-        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 46, MPI_COMM_WORLD, request_mpi_status, ier)
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 46, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         if ( nspec_recv > 0 ) then
         call MPI_RECV (coorg_recv_ps_vector_field(1,1), 8*nspec_recv, &
-             MPI_DOUBLE_PRECISION, iproc, 46, MPI_COMM_WORLD, request_mpi_status, ier)
+             MPI_DOUBLE_PRECISION, iproc, 46, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
         buffer_offset = 0
         do ispec = 1, nspec_recv
@@ -2996,10 +2993,10 @@ coorg_recv_ps_vector_field
   if (myrank == 0 ) then
 
      do iproc = 1, nproc-1
-        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 47, MPI_COMM_WORLD, request_mpi_status, ier)
+        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 47, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         if ( nspec_recv > 0 ) then
         call MPI_RECV (coorg_recv_ps_vector_field(1,1), 8*nspec_recv, &
-             MPI_DOUBLE_PRECISION, iproc, 47, MPI_COMM_WORLD, request_mpi_status, ier)
+             MPI_DOUBLE_PRECISION, iproc, 47, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
         buffer_offset = 0
         do ispec = 1, nspec_recv

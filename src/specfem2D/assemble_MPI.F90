@@ -100,7 +100,6 @@
        2*max_ibool_interfaces_size_po, ninterface)  :: &
        buffer_send_faces_scalar, &
        buffer_recv_faces_scalar
-  integer, dimension(MPI_STATUS_SIZE) :: msg_status
   integer, dimension(ninterface)  :: msg_requests
 
   buffer_send_faces_scalar(:,:) = 0.d0
@@ -162,7 +161,7 @@
           2*nibool_interfaces_poroelastic(num_interface), &
           MPI_DOUBLE_PRECISION, &
           my_neighbours(num_interface), 11, &
-          MPI_COMM_WORLD, msg_status(1), ier)
+          MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
      ipoin = 0
      do i = 1, nibool_interfaces_acoustic(num_interface)
@@ -255,7 +254,6 @@
 
   ! local parameters
   integer  :: ipoin, num_interface,iinterface,ier,iglob
-  integer, dimension(MPI_STATUS_SIZE)  :: status_acoustic
 
   ! initializes buffers
   buffer_send_faces_vector_ac(:,:) = 0._CUSTOM_REAL
@@ -309,8 +307,8 @@
   ! waits for MPI requests to complete (recv)
   ! each wait returns once the specified MPI request completed
   do iinterface = 1, ninterface_acoustic
-    call MPI_Wait (tab_requests_send_recv_acoustic(ninterface_acoustic+iinterface), &
-                  status_acoustic, ier)
+    call MPI_Wait(tab_requests_send_recv_acoustic(ninterface_acoustic+iinterface), &
+                  MPI_STATUS_IGNORE, ier)
   enddo
 
   ! assembles the array values
@@ -332,7 +330,7 @@
   ! waits for MPI requests to complete (send)
   ! just to make sure that all sending is done
   do iinterface = 1, ninterface_acoustic
-    call MPI_Wait (tab_requests_send_recv_acoustic(iinterface), status_acoustic, ier)
+    call MPI_Wait(tab_requests_send_recv_acoustic(iinterface), MPI_STATUS_IGNORE, ier)
   enddo
 
 
@@ -384,8 +382,6 @@
   integer, dimension(ninterface), intent(in) :: my_neighbours
 
   integer  :: ipoin, num_interface, iinterface, ier, i
-  integer, dimension(MPI_STATUS_SIZE)  :: status_elastic
-
 
   do iinterface = 1, ninterface_elastic
 
@@ -426,7 +422,7 @@
 
   do iinterface = 1, ninterface_elastic*2
 
-    call MPI_Wait (tab_requests_send_recv_elastic(iinterface), status_elastic, ier)
+    call MPI_Wait(tab_requests_send_recv_elastic(iinterface), MPI_STATUS_IGNORE, ier)
 
   enddo
 
@@ -492,8 +488,6 @@
   integer, dimension(ninterface), intent(in) :: my_neighbours
 
   integer  :: ipoin, num_interface, iinterface, ier, i
-  integer, dimension(MPI_STATUS_SIZE)  :: status_poroelastic
-
 
   do iinterface = 1, ninterface_poroelastic
 
@@ -559,7 +553,7 @@
 
   do iinterface = 1, ninterface_poroelastic*4
 
-    call MPI_Wait (tab_requests_send_recv_poro(iinterface), status_poroelastic, ier)
+    call MPI_Wait (tab_requests_send_recv_poro(iinterface), MPI_STATUS_IGNORE, ier)
 
   enddo
 

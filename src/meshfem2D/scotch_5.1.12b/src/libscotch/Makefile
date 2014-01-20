@@ -51,7 +51,7 @@ include ../Makefile.inc
 
 .PHONY				:	ptscotch	scotch	ptinstall	install	clean	realclean
 
-scotch				:	clean
+scotch				:
 					$(MAKE) CC="$(CCS)" CCD="$(CCS)"	\
 					scotch.h				\
 					scotchf.h				\
@@ -59,7 +59,7 @@ scotch				:	clean
 					libscotcherr$(LIB)			\
 					libscotcherrexit$(LIB)
 
-ptscotch			:	clean
+ptscotch			:
 					$(MAKE) CFLAGS="$(CFLAGS) -DSCOTCH_PTSCOTCH" CC="$(CCP)"	\
 					scotch.h							\
 					scotchf.h							\
@@ -68,9 +68,11 @@ ptscotch			:	clean
 					libptscotcherr$(LIB)						\
 					libptscotcherrexit$(LIB)
 
-install				:
-					-$(CP) scotch.h scotchf.h $(includedir)
-					-$(CP) libscotch$(LIB) libscotcherr*$(LIB) $(libdir)
+install				:	$(includedir)/scotch.h		\
+					$(includedir)/scotchf.h			\
+					$(libdir)/libscotch$(LIB)		\
+					$(libdir)/libscotcherr$(LIB)		\
+					$(libdir)/libscotcherrexit$(LIB)
 
 ptinstall			:
 					-$(CP) scotch.h $(includedir)/ptscotch.h
@@ -81,6 +83,26 @@ clean				:
 					-$(RM) *~ *$(OBJ) lib*$(LIB) parser_yy.c parser_ly.h parser_ll.c *scotch.h *scotchf.h y.output dummysizes$(EXE)
 
 realclean			:	clean
+
+
+##
+##  Installation dependencies.
+##
+
+$(includedir)/scotch.h		:	scotch.h
+					-$(CP) scotch.h $(includedir)
+
+$(includedir)/scotchf.h	:	scotchf.h
+					-$(CP) scotchf.h $(includedir)
+
+$(libdir)/libscotch$(LIB)	:	libscotch$(LIB)
+					-$(CP) libscotch$(LIB) $(libdir)
+
+$(libdir)/libscotcherr$(LIB)	:	libscotcherr$(LIB)
+					-$(CP) libscotcherr$(LIB) $(libdir)
+
+$(libdir)/libscotcherrexit$(LIB):	libscotcherrexit$(LIB)
+					-$(CP) libscotcherrexit$(LIB) $(libdir)
 
 ##
 ##  Library dependencies.
