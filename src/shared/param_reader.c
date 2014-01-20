@@ -355,7 +355,6 @@ FC_FUNC_(param_read_nextline,PARAM_READ_NEXTLINE)(char * string_read, int * stri
   char line[LINE_MAX];
   int regret;
   regmatch_t parameter[1];
-  char * value;
 
   // Regular expression to skip any comment lines.
   char pattern[] = "^[ \t]*[^#]";

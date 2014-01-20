@@ -16,13 +16,6 @@ AC_CONFIG_MACRO_DIR([m4])
 
 # 'configure' options
 
-AC_ARG_WITH([pyre],
-    [AC_HELP_STRING([--with-pyre],
-        [build Pyrized version @<:@default=no@:>@])],
-    [want_pyre="$withval"],
-    [want_pyre=no])
-AM_CONDITIONAL([COND_PYRE], [test "$want_pyre" = yes])
-
 AC_ARG_WITH([mpi],
     [AC_HELP_STRING([--with-mpi],
         [build parallel version @<:@default=yes@:>@])],
@@ -47,11 +40,6 @@ AC_SUBST([CUSTOM_MPI_TYPE])
 
 
 # Checks for programs.
-
-if test "$want_pyre" = yes; then
-    AM_PATH_PYTHON([2.3])
-    CIT_PYTHON_SYSCONFIG
-fi
 
 # a courtesy to the installed base of users
 if test x"$FC" = x && test x"$F90" != x; then
@@ -193,153 +181,6 @@ else
  SCOTCH_LIBDIR="${SCOTCH_DIR}/lib"
  SCOTCH_INCLUDEDIR="${SCOTCH_DIR}/include"
 
- # the following modifies the default scotch Makefile such that the package
- # will only be compiled once (no recompilation) when calling make
- #
- builddir=`pwd`
- cd src/meshfem2D/
-
- if test ! -f "${SCOTCH_DIR}/src/scotch/Makefile.org"; then
-
-  # no Makefile backup files yet
-  # modifies Makefiles once
-
-  # creates backup copies of original Makefiles
-  # src/scotch/
-  cp ${SCOTCH_DIR}/src/scotch/Makefile ${SCOTCH_DIR}/src/scotch/Makefile.org
-  # src/libscotch/
-  cp ${SCOTCH_DIR}/src/libscotch/Makefile ${SCOTCH_DIR}/src/libscotch/Makefile.org
-  # src/libscotchmetis/
-  cp ${SCOTCH_DIR}/src/libscotchmetis/Makefile ${SCOTCH_DIR}/src/libscotchmetis/Makefile.org
-
- fi
-
-  # replacement text in the default scotch Makefiles
-  cat > conftmp.scotch.cmd <<_ACEOF
-# scotch replacement text for install line
-\$(bindir)/acpl\$(EXE): acpl\$(EXE)
-	-\$(CP) acpl\$(EXE) \$(bindir)/acpl\$(EXE)
-\$(bindir)/amk_ccc\$(EXE): amk_ccc\$(EXE)
-	-\$(CP) amk_ccc\$(EXE) \$(bindir)/amk_ccc\$(EXE)
-\$(bindir)/amk_fft2\$(EXE): amk_fft2\$(EXE)
-	-\$(CP) amk_fft2\$(EXE) \$(bindir)/amk_fft2\$(EXE)
-\$(bindir)/amk_grf\$(EXE): amk_grf\$(EXE)
-	-\$(CP) amk_grf\$(EXE) \$(bindir)/amk_grf\$(EXE)
-\$(bindir)/amk_hy\$(EXE): amk_hy\$(EXE)
-	-\$(CP) amk_hy\$(EXE) \$(bindir)/amk_hy\$(EXE)
-\$(bindir)/amk_m2\$(EXE): amk_m2\$(EXE)
-	-\$(CP) amk_m2\$(EXE) \$(bindir)/amk_m2\$(EXE)
-\$(bindir)/amk_p2\$(EXE): amk_p2\$(EXE)
-	-\$(CP) amk_p2\$(EXE) \$(bindir)/amk_p2\$(EXE)
-\$(bindir)/atst\$(EXE): atst\$(EXE)
-	-\$(CP) atst\$(EXE) \$(bindir)/atst\$(EXE)
-\$(bindir)/gbase\$(EXE): gbase\$(EXE)
-	-\$(CP) gbase\$(EXE) \$(bindir)/gbase\$(EXE)
-\$(bindir)/gcv\$(EXE): gcv\$(EXE)
-	-\$(CP) gcv\$(EXE) \$(bindir)/gcv\$(EXE)
-\$(bindir)/gmap\$(EXE): gmap\$(EXE)
-	-\$(CP) gmap\$(EXE) \$(bindir)/gmap\$(EXE)
-\$(bindir)/gmk_hy\$(EXE): gmk_hy\$(EXE)
-	-\$(CP) gmk_hy\$(EXE) \$(bindir)/gmk_hy\$(EXE)
-\$(bindir)/gmk_m2\$(EXE): gmk_m2\$(EXE)
-	-\$(CP) gmk_m2\$(EXE) \$(bindir)/gmk_m2\$(EXE)
-\$(bindir)/gmk_m3\$(EXE): gmk_m3\$(EXE)
-	-\$(CP) gmk_m3\$(EXE) \$(bindir)/gmk_m3\$(EXE)
-\$(bindir)/gmk_msh\$(EXE): gmk_msh\$(EXE)
-	-\$(CP) gmk_msh\$(EXE) \$(bindir)/gmk_msh\$(EXE)
-\$(bindir)/gmk_ub2\$(EXE): gmk_ub2\$(EXE)
-	-\$(CP) gmk_ub2\$(EXE) \$(bindir)/gmk_ub2\$(EXE)
-\$(bindir)/gmtst\$(EXE): gmtst\$(EXE)
-	-\$(CP) gmtst\$(EXE) \$(bindir)/gmtst\$(EXE)
-\$(bindir)/gord\$(EXE): gord\$(EXE)
-	-\$(CP) gord\$(EXE) \$(bindir)/gord\$(EXE)
-\$(bindir)/gotst\$(EXE): gotst\$(EXE)
-	-\$(CP) gotst\$(EXE) \$(bindir)/gotst\$(EXE)
-\$(bindir)/gout\$(EXE): gout\$(EXE)
-	-\$(CP) gout\$(EXE) \$(bindir)/gout\$(EXE)
-\$(bindir)/gpart\$(EXE): \$(bindir)/gmap\$(EXE)
-	-\$(RM) \$(bindir)/gpart\$(EXE)
-	-\$(LN) \$(bindir)/gmap\$(EXE) \$(bindir)/gpart\$(EXE)
-\$(bindir)/gscat\$(EXE): gscat\$(EXE)
-	-\$(CP) gscat\$(EXE) \$(bindir)/gscat\$(EXE)
-\$(bindir)/gtst\$(EXE): gtst\$(EXE)
-	-\$(CP) gtst\$(EXE) \$(bindir)/gtst\$(EXE)
-\$(bindir)/mcv\$(EXE): mcv\$(EXE)
-	-\$(CP) mcv\$(EXE) \$(bindir)/mcv\$(EXE)
-\$(bindir)/mmk_m2\$(EXE): mmk_m2\$(EXE)
-	-\$(CP) mmk_m2\$(EXE) \$(bindir)/mmk_m2\$(EXE)
-\$(bindir)/mmk_m3\$(EXE): mmk_m3\$(EXE)
-	-\$(CP) mmk_m3\$(EXE) \$(bindir)/mmk_m3\$(EXE)
-\$(bindir)/mord\$(EXE): mord\$(EXE)
-	-\$(CP) mord\$(EXE) \$(bindir)/mord\$(EXE)
-\$(bindir)/mtst\$(EXE): mtst\$(EXE)
-	-\$(CP) mtst\$(EXE) \$(bindir)/mtst\$(EXE)
-
-
-install				: \$(bindir)/acpl\$(EXE) \$(bindir)/amk_ccc\$(EXE) \\
-	\$(bindir)/amk_fft2\$(EXE) \$(bindir)/amk_grf\$(EXE) \\
-	\$(bindir)/amk_hy\$(EXE) \$(bindir)/amk_m2\$(EXE) \\
-	\$(bindir)/amk_p2\$(EXE) \$(bindir)/atst\$(EXE) \\
-	\$(bindir)/gbase\$(EXE) \$(bindir)/gcv\$(EXE) \\
-	\$(bindir)/gmap\$(EXE) \$(bindir)/gmk_hy\$(EXE) \\
-	\$(bindir)/gmk_m2\$(EXE) \$(bindir)/gmk_m3\$(EXE) \\
-	\$(bindir)/gmk_msh\$(EXE) \$(bindir)/gmk_ub2\$(EXE) \\
-	\$(bindir)/gmtst\$(EXE) \$(bindir)/gord\$(EXE) \\
-	\$(bindir)/gotst\$(EXE) \$(bindir)/gout\$(EXE) \\
-	\$(bindir)/gpart\$(EXE) \$(bindir)/gscat\$(EXE) \\
-	\$(bindir)/gtst\$(EXE) \$(bindir)/mcv\$(EXE) \\
-	\$(bindir)/mmk_m2\$(EXE) \$(bindir)/mmk_m3\$(EXE) \\
-	\$(bindir)/mord\$(EXE) \$(bindir)/mtst\$(EXE)
-
-_ACEOF
-
-  # avoids lines between 98 to 101, containing install lines, and replaces them
-  awk '{if(NR<98)print $0}' ${SCOTCH_DIR}/src/scotch/Makefile.org > ${SCOTCH_DIR}/src/scotch/Makefile
-  cat conftmp.scotch.cmd >> ${SCOTCH_DIR}/src/scotch/Makefile
-  awk '{if(NR>101)print $0}' ${SCOTCH_DIR}/src/scotch/Makefile.org >> ${SCOTCH_DIR}/src/scotch/Makefile
-  rm -f conftmp.scotch.cmd
-
-  # replacement text in the default libscotch Makefile
-  cat > conftmp.libscotch.cmd <<_ACEOF
-# libscotch replacement text for install line
-\$(libdir)/libscotch\$(LIB): libscotch\$(LIB)
-	-\$(CP) libscotch\$(LIB) \$(libdir)
-\$(libdir)/libscotcherr\$(LIB): libscotcherr\$(LIB)
-	-\$(CP) libscotcherr\$(LIB) \$(libdir)
-\$(libdir)/libscotcherrexit\$(LIB): libscotcherrexit\$(LIB)
-	-\$(CP) libscotcherrexit\$(LIB) \$(libdir)
-\$(includedir)/scotch.h: scotch.h
-	-\$(CP) scotch.h \$(includedir)
-\$(includedir)/scotchf.h: scotchf.h
-	-\$(CP) scotchf.h \$(includedir)
-
-install				: \$(libdir)/libscotch\$(LIB) \$(libdir)/libscotcherr\$(LIB) \\
-	\$(libdir)/libscotcherrexit\$(LIB)	\\
-	\$(includedir)/scotch.h \$(includedir)/scotchf.h
-
-_ACEOF
-
-  # avoids lines between 71 to 73, containing install lines, and replaces them
-  awk '{if(NR<71)print $0}' ${SCOTCH_DIR}/src/libscotch/Makefile.org > ${SCOTCH_DIR}/src/libscotch/Makefile
-  cat conftmp.libscotch.cmd >> ${SCOTCH_DIR}/src/libscotch/Makefile
-  awk '{if(NR>73)print $0}' ${SCOTCH_DIR}/src/libscotch/Makefile.org >> ${SCOTCH_DIR}/src/libscotch/Makefile
-  rm -f conftmp.libscotch.cmd
-
-  # replaces single scotch line in Makefiles
-  # src/scotch/
-  sed "s/^scotch.*clean/scotch     : /" ${SCOTCH_DIR}/src/scotch/Makefile > conftmp.libscotch.mk
-  mv conftmp.libscotch.mk ${SCOTCH_DIR}/src/scotch/Makefile
-  # src/libscotch/
-  sed "s/^scotch.*clean/scotch     : /" ${SCOTCH_DIR}/src/libscotch/Makefile > conftmp.libscotch.mk
-  mv conftmp.libscotch.mk ${SCOTCH_DIR}/src/libscotch/Makefile
-  # src/libscotchmetis/
-  sed "s/^scotch.*clean/scotch     : /" ${SCOTCH_DIR}/src/libscotchmetis/Makefile > conftmp.libscotch.mk
-  mv conftmp.libscotch.mk ${SCOTCH_DIR}/src/libscotchmetis/Makefile
-
- cd $builddir
-
- # done scotch Makefile modification
-
  else
 
  # no mpi support, scotch not needed
@@ -373,57 +214,7 @@ if test x"$LOCAL_PATH_IS_ALSO_GLOBAL" = x; then
     LOCAL_PATH_IS_ALSO_GLOBAL=true
 fi
 
-AC_ARG_VAR(PYTHON, [Python interpreter])
-AC_ARG_VAR(PYTHONPATH, [Python module search path])
-
-
-
-# Checks for Python modules and packages.
-
-AC_LANG(C)
-if test "$want_pyre" = yes; then
-    builddir=`pwd`
-    save_PYTHONPATH="$PYTHONPATH"
-    PYTHONPATH="$builddir/python:$PYTHONPATH"; export PYTHONPATH
-    # Cheap work-around for the inability of merlin/setuptools to control #! line.
-    rm -f pyspecfem2D
-    $as_ln_s $PYTHON pyspecfem2D
-    pyspecfem2D="$builddir/pyspecfem2D"
-    cd $srcdir
-
-    AC_MSG_NOTICE([downloading missing Python dependencies])
-    AS_IF([AC_TRY_COMMAND([$pyspecfem2D setup.py install_deps -zmxd $builddir/deps >&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD])],
-          [],
-          [AC_MSG_FAILURE([cannot download missing Python dependencies])])
-
-    AC_MSG_NOTICE([building Python dependencies])
-    AS_IF([AC_TRY_COMMAND([$pyspecfem2D setup.py develop -H None -f $builddir/deps -s $builddir -d $builddir/python >&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD])],
-          [],
-          [AC_MSG_FAILURE([building Python dependencies])])
-
-    AC_MSG_CHECKING([for egg-related flags])
-    AS_IF([AC_TRY_COMMAND([$pyspecfem2D setup.py egg_flags >&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD])],
-          [AC_MSG_RESULT(ok)
-           . egg-flags.sh
-           rm -f egg-flags.sh
-          ],
-          [AC_MSG_RESULT(failed)
-          AC_MSG_FAILURE([cannot scan Python eggs for flags])])
-
-    cd $builddir
-    rm -f pyspecfem2D
-    PYTHONPATH="$save_PYTHONPATH"
-    PYTHONPATH="${pythondir}:${pyexecdir}${save_PYTHONPATH:+:${save_PYTHONPATH}}"
-
-    AC_SUBST(PYTHONPATH)
-    AC_SUBST(PYTHON_EGG_CFLAGS)
-    AC_SUBST(PYTHON_EGG_CPPFLAGS)
-    AC_SUBST(PYTHON_EGG_LDFLAGS)
-fi
-
-
 # Checks for libraries.
-
 
 # Checks for header files.
 
@@ -435,13 +226,7 @@ fi
 
 # Checks for typedefs, structures, and compiler characteristics.
 
-if test "$want_pyre" = yes; then
-    CIT_FC_MAIN
-fi
-
-
 # Checks for library functions.
-
 
 AC_CONFIG_FILES([
 	Makefile

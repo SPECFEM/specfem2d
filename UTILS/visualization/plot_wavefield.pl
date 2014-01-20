@@ -139,7 +139,6 @@ $dY     = "-Y$dY0";
 $fsize0 = "18";
 $fsize1 = "10";
 $fsize2 = "10";
-$fsize3 = "4";
 $fontno = "1";
 $tick   = "0.1c";
 $cgray = 200;
@@ -159,13 +158,13 @@ if($irecsurf == 1) {$rdy = 6; $tdy = 15;}
 
 # -N or not
 $rec = "-W1p $rfill -Si10p -D${rdx}p/${rdy}p";
-$rec2 = "-W1p,0/255/255 $rfill -Si10p -D${rdx}p/${rdy}p";
+#$rec2 = "-W1p,0/255/255 $rfill -Si10p -D${rdx}p/${rdy}p";
 $textrec = "-D${tdx}p/${tdy}p -W255 -C1p -N";
 
 # source and receivers
 $srcfile = "$idir1/SOURCE";
 $recfile = "$idir1/STATIONS";
-$recfile2 = "$idir1/STATIONS_target";
+#$recfile2 = "$idir1/STATIONS_target";
 if (not -e $srcfile) {die("check if sfile $srcfile exist or not\n");}
 if (not -e $recfile) {die("check if rfile $recfile exist or not\n");}
 $srcx = `grep "xs                              =" $srcfile | awk '{print \$3}'`; chomp($srcx);
@@ -175,9 +174,9 @@ $srcz = $srcz/1000;
 
 print "\nsource at ($srcx, $srcz)\n";
 
-$cshfile = "plot_wavefield.csh";
-open(CSH,">$cshfile");
-print "\nWriting CSH file $cshfile\n";
+$shfile = "plot_wavefield.sh";
+open(CSH,">$shfile");
+print "\nWriting CSH file $shfile\n";
 print CSH "gmtset BASEMAP_TYPE plain PAPER_MEDIA letter MEASURE_UNIT inch PLOT_DEGREE_FORMAT D TICK_LENGTH $tick LABEL_FONT_SIZE $fsize2 ANOT_FONT_SIZE $fsize2  HEADER_FONT $fontno ANOT_FONT $fontno LABEL_FONT $fontno HEADER_FONT_SIZE $fsize1 CHAR_ENCODING Standard+ COLOR_NAN $cgray\n";
 
 $R = "-R$xmin/$xmax/$zmin/$zmax";
@@ -192,7 +191,7 @@ print "\n projection is $J \n";
 $scale_color = 21.0;
 $colorbar = "seis";
 @norm = ("1e$pwr[0]","1e$pwr[1]","1e$pwr[2]");
-$fac = 5;      # KEY: enhance the interaction field (increase for more contrast)
+#$fac = 5;      # KEY: enhance the interaction field (increase for more contrast)
 print "@norm \n";
 
 $numw = @cmax;
@@ -241,9 +240,9 @@ if ($itype != 0) {
 
 # color bars
 # NOTE: there seems to be a max LENGTH of the label string for the color bars
-$BscaleSx = sprintf("-B%2.2e:\"%s (x, z, t), 10\@+%2.2i\@+  m\":",$bs[0],$titles[0],$pwr[0]);
-$BscaleSy = sprintf("-B%2.2e:\"%s (x, z, t), 10\@+%2.2i\@+  m\":",$bs[1],$titles[1],$pwr[1]);
-$BscaleSz = sprintf("-B%2.2e:\"%s (x, z, t), 10\@+%2.2i\@+ m\":",$bs[2],$titles[2],$pwr[2]);
+#$BscaleSx = sprintf("-B%2.2e:\"%s (x, z, t), 10\@+%2.2i\@+  m\":",$bs[0],$titles[0],$pwr[0]);
+#$BscaleSy = sprintf("-B%2.2e:\"%s (x, z, t), 10\@+%2.2i\@+  m\":",$bs[1],$titles[1],$pwr[1]);
+#$BscaleSz = sprintf("-B%2.2e:\"%s (x, z, t), 10\@+%2.2i\@+ m\":",$bs[2],$titles[2],$pwr[2]);
 
 #$BscaleS1 = sprintf("-B%2.2e:\"s ($pt, t), 10\@+%2.2i\@+  m\":",$bs[0],$pwr[0]);  # $k = 0
 #$BscaleS2 = sprintf("-B%2.2e:\"s\@+\262\@+ ($pt, t), 10\@+%2.2i\@+ kg\@+-1\@+ s  [F]\":",$bs[1],$pwr[1]);   # $k = 1
@@ -388,7 +387,7 @@ for ($i = $imin; $i <= $imax; $i++) {
 
     # label the figures
    if (0==1) {
-     if ($i==imin) {
+     if ($i==$imin) {
        print CSH "pstext $J $R -K -O -V >>$psfile<<EOF\n -2 -0.5 14 0 $fontno CM rock\nEOF\n";
        print CSH "pstext $J $R -K -O -V >>$psfile<<EOF\n -1 0.75 14 0 $fontno CM ice\nEOF\n";
        print CSH "pstext $J $R -K -O -V >>$psfile<<EOF\n 1.0 0.75 14 0 $fontno CM water\nEOF\n";
@@ -622,7 +621,7 @@ print CSH "pstext $J -R0/1/0/1 -O -V >>$psfile<<EOF\n 10 10 $fsize0 0 $fontno CM
 print CSH "echo output psfile: $psfile\n";
 
 close (CSH);
-system("csh -f $cshfile");
+system("sh -f $shfile");
 system("gv $psfile &");
 
 #=================================================================

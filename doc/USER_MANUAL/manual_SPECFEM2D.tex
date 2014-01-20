@@ -776,13 +776,13 @@ that the noise generated in the simulation by using a step source
 time function may be safely filtered out afterward based upon a convolution
 with the desired source time function and/or low-pass filtering. Use
 the serial code \texttt{convolve\_source\_timefunction.f90} and the
-script \texttt{convolve\_source\_timefunction.csh} for this purpose,
+script \texttt{convolve\_source\_timefunction.sh} for this purpose,
 or alternatively use signal-processing software packages such as SAC \urlwithparentheses{www.llnl.gov/sac}.
 Type
 \begin{lyxcode}
 make~convolve\_source\_timefunction
 \end{lyxcode}
-to compile the code and then set the parameter \texttt{hdur} in \texttt{convolve\_source\_timefunction.csh}
+to compile the code and then set the parameter \texttt{hdur} in \texttt{convolve\_source\_timefunction.sh}
 to the desired half-duration.
 %%
 \begin{figure}[htbp]

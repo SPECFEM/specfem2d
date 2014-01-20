@@ -83,7 +83,7 @@
 
     ! ibound is the side we are looking (bottom, right, top or left)
     do ibound=1,4
-      icorner_iglob = ZERO
+      icorner_iglob = 0
       ncorner=0
 
       if(anyabs) then
@@ -123,7 +123,7 @@
 
        ! list every corner of each PML element detected
        ncorner=0
-       icorner_iglob=ZERO
+       icorner_iglob=0
        nspec_PML=0
        do ispec=1,nspec
           if(which_PML_elem(ibound,ispec)) then

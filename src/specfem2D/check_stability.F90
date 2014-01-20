@@ -273,7 +273,7 @@
       if(it < NSTEP) then
         ! compute date and time at which the run should finish (useful for long runs)
         ! add remaining minutes and get date and time of that future timestamp in minutes
-        timestamp = (timestamp_seconds_current + t_remain) / 60.d0
+        timestamp = nint((timestamp_seconds_current + t_remain) / 60.d0)
         call invtime(timestamp,year,mon,day,hr,minutes)
 
         ! convert to Julian day to get day of the week

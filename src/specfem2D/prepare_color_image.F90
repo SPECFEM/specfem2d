@@ -255,8 +255,8 @@
 
 ! find pixel position of the sources with orange crosses
     do i=1,NSOURCES
-      ix_image_color_source(i) = (x_source(i) - xmin_color_image) / size_pixel_horizontal + 1
-      iy_image_color_source(i) = (z_source(i) - zmin_color_image) / size_pixel_vertical + 1
+      ix_image_color_source(i) = int((x_source(i) - xmin_color_image) / size_pixel_horizontal) + 1
+      iy_image_color_source(i) = int((z_source(i) - zmin_color_image) / size_pixel_vertical) + 1
 
       ! avoid edge effects
       if(ix_image_color_source(i) < 1) ix_image_color_source(i) = 1
@@ -268,8 +268,8 @@
 
 ! find pixel position of the receivers with green squares
     do i=1,nrec
-      ix_image_color_receiver(i) = (st_xval(i) - xmin_color_image) / size_pixel_horizontal + 1
-      iy_image_color_receiver(i) = (st_zval(i) - zmin_color_image) / size_pixel_vertical + 1
+      ix_image_color_receiver(i) = int((st_xval(i) - xmin_color_image) / size_pixel_horizontal) + 1
+      iy_image_color_receiver(i) = int((st_zval(i) - zmin_color_image) / size_pixel_vertical) + 1
 
       ! avoid edge effects
       if(ix_image_color_receiver(i) < 1) ix_image_color_receiver(i) = 1
@@ -344,7 +344,6 @@
   double precision, dimension(:), allocatable  :: data_pixel_send
   integer, dimension(:,:), allocatable  :: num_pixel_recv
   integer, dimension(:), allocatable  :: nb_pixel_per_proc
-  integer, dimension(MPI_STATUS_SIZE)  :: request_mpi_status
   integer :: ier,iproc
 #else
   integer :: dummy
@@ -483,10 +482,10 @@
       do iproc = 1, nproc-1
 
         call MPI_RECV(num_pixel_recv(1,iproc+1),nb_pixel_per_proc(iproc+1), MPI_INTEGER, &
-                iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+                iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
         call MPI_RECV(data_pixel_recv(1),nb_pixel_per_proc(iproc+1), MPI_DOUBLE_PRECISION, &
-                iproc, 43, MPI_COMM_WORLD, request_mpi_status, ier)
+                iproc, 43, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
         do k = 1, nb_pixel_per_proc(iproc+1)
           j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))

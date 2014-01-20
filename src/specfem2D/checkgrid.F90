@@ -166,10 +166,6 @@
   logical :: create_wavelength_histogram
   double precision :: current_percent,total_percent
 
-#ifdef USE_MPI
-  integer, dimension(MPI_STATUS_SIZE)  :: request_mpi_status
-#endif
-
   ! check
   if(UPPER_LIMIT_DISPLAY > nspec) &
     call exit_MPI('cannot have UPPER_LIMIT_DISPLAY > nspec in checkgrid.F90')
@@ -1150,13 +1146,13 @@
 
     do iproc = 1, nproc-1
       call MPI_RECV (nspec_recv, 1, MPI_INTEGER, &
-              iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+              iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
       allocate(coorg_recv(2,nspec_recv*5))
       allocate(RGB_recv(nspec_recv))
       call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, &
-              iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+              iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
       call MPI_RECV (RGB_recv(1), nspec_recv, MPI_INTEGER, &
-              iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+              iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
       do ispec = 1, nspec_recv
         num_ispec = num_ispec + 1
@@ -1568,13 +1564,13 @@
 
      do iproc = 1, nproc-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, &
-            iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+            iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         allocate(coorg_recv(2,nspec_recv*5))
         allocate(RGB_recv(nspec_recv))
         call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, &
-            iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+            iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         call MPI_RECV (RGB_recv(1), nspec_recv, MPI_INTEGER, &
-            iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+            iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
         do ispec = 1, nspec_recv
            num_ispec = num_ispec + 1
@@ -1883,13 +1879,13 @@ endif
 
      do iproc = 1, nproc-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, &
-            iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+            iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         allocate(coorg_recv(2,nspec_recv*5))
         allocate(greyscale_recv(nspec_recv))
         call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, &
-            iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+            iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         call MPI_RECV (greyscale_recv(1), nspec_recv, MPI_REAL, &
-            iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+            iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
         do ispec = 1, nspec_recv
            num_ispec = num_ispec + 1
@@ -2144,10 +2140,10 @@ endif
         icol = mod(iproc, NUM_COLORS) + 1
 
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, &
-            iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+            iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         allocate(coorg_recv(2,nspec_recv*5))
         call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, &
-            iproc, 42, MPI_COMM_WORLD, request_mpi_status, ier)
+            iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
         do ispec = 1, nspec_recv
            num_ispec = num_ispec + 1
