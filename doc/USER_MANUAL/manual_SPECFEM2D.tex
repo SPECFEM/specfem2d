@@ -1,34 +1,39 @@
-%% LyX 1.5.1 created this file.  For more info, see http://www.lyx.org/.
-%% Do not edit unless you really know what you are doing.
-\documentclass[oneside,english,onecolumn]{book}
+\documentclass[oneside,english,onecolumn,letterpaper]{book}
 \usepackage[T1]{fontenc}
 \usepackage[latin1]{inputenc}
-\usepackage{geometry}
-\geometry{letterpaper,tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+\usepackage[margin=1in]{geometry}
 \setcounter{secnumdepth}{3}
 \setcounter{tocdepth}{3}
 \usepackage{float}
 \usepackage{textcomp}
 \usepackage{amsmath}
+\usepackage{amssymb}
 
 % figures
-\usepackage[pdftex]{graphicx}
+\usepackage{graphicx}
 
 % we are running pdflatex, so convert .eps files to .pdf
 \usepackage{epstopdf}
 
-\usepackage{amssymb}
 \IfFileExists{url.sty}{\usepackage{url}}
                       {\newcommand{\url}{\texttt}}
 \usepackage[authoryear]{natbib}
 
-\makeatletter
+% fonts
+\usepackage{times}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LyX specific LaTeX commands.
-\newcommand{\noun}[1]{\textsc{#1}}
-%% A simple dot to overcome graphicx limitations
-\newcommand{\lyxdot}{.}
+% hyperlinks to sections and references
+\usepackage[bookmarks=true,%
+            bookmarksnumbered=true,%
+            pdfborder={0 0 0},%
+            pdfstartview=FitH,%
+            pdfpagemode=UseNone,%
+            pdfpagelayout=SinglePage]{hyperref}
 
+% colors to show the corrections
+\usepackage[dvipsnames,usenames]{xcolor}
+
+\usepackage{babel}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Textclass specific LaTeX commands.
 \newenvironment{lyxcode}
@@ -43,19 +48,6 @@
 {\end{list}}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
-%\renewcommand{\baselinestretch}{1.5}
-
-% figures
-\usepackage[dvips]{epsfig}
-
-\usepackage{wrapfig}
-
-
-% fonts
-\usepackage{times}
-
-% hyperlinks to sections and references
-\usepackage[pdftex,bookmarks=true,bookmarksnumbered=true,pdfpagemode=None,pdfstartview=FitH,pdfpagelayout=SinglePage,pdfborder={0 0 0}]{hyperref}
 
 \newcommand{\urlwithparentheses}[1]{(\url{#1})}
 
@@ -73,15 +65,6 @@
 \newcommand{\toalessia}[1]{\textbf{*** Alessia: #1 ***}}
 \newcommand{\todimitri}[1]{\textbf{*** Dimitri: #1 ***}}
 
-\newcommand{\nexxi}{\mbox{\texttt{NEX\_XI\/}}}
-\newcommand{\nexeta}{\mbox{\texttt{NEX\_ETA\/}}}
-\newcommand{\nprocxi}{\mbox{\texttt{NPROC\_XI\/}}}
-\newcommand{\nproceta}{\mbox{\texttt{NPROC\_ETA\/}}}
-\newcommand{\nchunks}{\mbox{\texttt{NCHUNKS\/}}}
-
-% colors to show the corrections
-\usepackage[dvipsnames,usenames]{color}
-
 % colors to show the corrections
 \newcommand{\red}[1]{\textbf{\textcolor{Red}{#1}}}
 \newcommand{\blue}[1]{\textbf{\textcolor{Blue}{#1}}}
@@ -89,13 +72,8 @@
 \newcommand{\green}[1]{\textbf{\textcolor{Green}{#1}}}
 \newcommand{\magenta}[1]{\textbf{\textcolor{Magenta}{#1}}}
 \newcommand{\orange}[1]{\textbf{\textcolor{Orange}{#1}}}
-%\newcommand{\red}[1]{#1}
-%\newcommand{\blue}[1]{#1}
-%\newcommand{\cyan}[1]{#1}
 
-\usepackage{babel}
-\makeatother
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Start of document.
 \begin{document}
 \begin{center}
 \thispagestyle{empty}%
