@@ -35,18 +35,6 @@
 
 \usepackage{babel}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Textclass specific LaTeX commands.
-\newenvironment{lyxcode}
-{\begin{list}{}{
-\setlength{\rightmargin}{\leftmargin}
-\setlength{\listparindent}{0pt}% needed for AMS classes
-\raggedright
-\setlength{\itemsep}{0pt}
-\setlength{\parsep}{0pt}
-\normalfont\ttfamily}%
- \item[]}
-{\end{list}}
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
 
 \newcommand{\urlwithparentheses}[1]{(\url{#1})}
@@ -285,9 +273,9 @@ Marie Curie program.
 
 The SPECFEM2D software package comes in a gzipped tar ball. In the
 directory in which you want to install the package, type
-\begin{lyxcode}
-{\small tar~-zxvf~SPECFEM2D\_7.0.0.tar.gz}{\small \par}
-\end{lyxcode}
+\begin{verbatim}
+    tar -zxvf SPECFEM2D_7.0.0.tar.gz
+\end{verbatim}
 The directory \texttt{SPECFEM2D-7.0.0/} will then contain
 the source code. In the following, we will refer to this directory as the root directory \texttt{SPECFEM2D/}. \\
 
@@ -299,14 +287,14 @@ the appropriate configuration values for your system. However, at
 a minimum, it is recommended that you explicitly specify the appropriate
 command names for your Fortran compiler (another option is to define FC, CC and MPIF90 in your .bash\_profile
 or your .cshrc file):
-\begin{lyxcode}
-./configure~FC=ifort~
-\end{lyxcode}
+\begin{verbatim}
+    ./configure FC=ifort
+\end{verbatim}
 
 If you want to run in parallel, i.e., using more than one processor core, then you would type
-\begin{lyxcode}
-./configure~FC=ifort~MPIFC=mpif90~-{}-with-mpi
-\end{lyxcode}
+\begin{verbatim}
+    ./configure FC=ifort MPIFC=mpif90 --with-mpi
+\end{verbatim}
 
 Before running the \texttt{configure} script, you should probably edit file \texttt{flags.guess} to make sure that it contains the best compiler options for your system. Known issues or things to check are:
 
@@ -326,14 +314,14 @@ Fran\c{c}ois Pellegrini et al. from LaBRI and INRIA in Bordeaux, France, downloa
 In case no SCOTCH libraries can be found on the system, the configuration will bundle the version provided with the source code for compilation.
 The path to an existing SCOTCH installation can to be set explicitly with the option \texttt{-{}-with-scotch-dir}.
 Just as an example:
-\begin{lyxcode}
-./configure~FC=ifort~MPIFC=mpif90~-{}-with-mpi~-{}-with-scotch-dir=/opt/scotch
-\end{lyxcode}
+\begin{verbatim}
+    ./configure FC=ifort MPIFC=mpif90 --with-mpi --with-scotch-dir=/opt/scotch
+\end{verbatim}
 
 If you use the Intel ifort compiler to compile the code, we recommend that you use the Intel icc C compiler to compile Scotch, i.e., use:
-\begin{lyxcode}
-./configure~CC=icc~FC=ifort~MPIFC=mpif90
-\end{lyxcode}
+\begin{verbatim}
+    ./configure CC=icc FC=ifort MPIFC=mpif90
+\end{verbatim}
 
 For further details about the installation of SCOTCH,
 go to subdirectory \texttt{scotch\_5.1.11/} and read \texttt{INSTALL.txt}. You may want to download more recent versions of SCOTCH in the future from \urlwithparentheses{http://www.labri.fr/perso/pelegrin/scotch/scotch_en.html} . Support for the METIS graph partitioner has been discontinued because SCOTCH is more recent and performs better.
@@ -343,9 +331,9 @@ Edit the \texttt{Makefile} for more specific modifications. Especially, there ar
 \texttt{-DUSE\_SCOTCH} enables use of graph partitioner SCOTCH.
 
 After these steps, go back to the main directory of SPECFEM2D/ and type
-\begin{lyxcode}
-make
-\end{lyxcode}
+\begin{verbatim}
+    make
+\end{verbatim}
 to create all executables which will be placed into the folder \texttt{./bin/}.
 
 By default, the solver runs in single precision. This is fine for most application, but if for some reason
@@ -426,9 +414,9 @@ located around the middle of the edge; the right 9-node curvature will be restor
 
 \end{itemize}
 Then type
-\begin{lyxcode}
-./bin/xmeshfem2D
-\end{lyxcode}
+\begin{verbatim}
+    ./bin/xmeshfem2D
+\end{verbatim}
 to create the mesh (which will be stored in directory \texttt{OUTPUT\_FILES/}). \texttt{xmeshfem2D} is serial; it will output several files called \texttt{Database??????}, one for each process.
 
 %%
@@ -543,9 +531,9 @@ want a 4 or 9 node mesh. This operation will generate a \texttt{SqrCirc.msh}
 file which must be processed to get all the files required by SPECFEM2D
 when using an external mesh (see previous section). This is done by
 running a python script called LibGmsh2Specfem.py, located in directory UTILS/Gmsh:
-\begin{lyxcode}
-python~LibGmsh2Specfem.py~SqrCirc~-t~A~-b~A~-r~A~-l~A
-\end{lyxcode}
+\begin{verbatim}
+    python LibGmsh2Specfem.py SqrCirc -t A -b A -r A -l A
+\end{verbatim}
 Where the options \texttt{-t}, \texttt{-b},\texttt{ -r} and \texttt{-l}
 represent the different sides of the model (top, bottom, right and
 left) and can take the values \texttt{A} or \texttt{F} if the corresponding
@@ -634,17 +622,17 @@ are significantly less efficient).}
 %------------------------------------------------------------------------------------------------%
 
 To examine the quality of the elements in your externally build mesh, type
-\begin{lyxcode}
-./bin/xcheck\_quality\_external\_mesh
-\end{lyxcode}
+\begin{verbatim}
+    ./bin/xcheck_quality_external_mesh
+\end{verbatim}
 (and answer "3" to the first question asked).
 This code will tell you which element in the whole mesh has the worst quality (maximum skewness, i.e. maximum deformation of the element angles) and it should be enough to modify this element with the external software package used for the meshing, and
 to repeat the operation until the maximum skewness of the whole mesh is less or equal to about 0.75 (above is dangerous: from 0.75 to 0.80 could still work, but if there is a single element above 0.80 the mesh should be improved).
 
 The code also shows a histogram of 20 classes of skewness which tells how many element are above the skewness = 0.75, and to which percentage of the total this amounts. To see this histogram, you could type:
-\begin{lyxcode}
-gnuplot plot\_mesh\_quality\_histogram.gnu
-\end{lyxcode}
+\begin{verbatim}
+    gnuplot plot_mesh_quality_histogram.gnu
+\end{verbatim}
 This tool is useful to estimate the mesh quality and to see it evolve along the successive corrections.
 
 %------------------------------------------------------------------------------------------------%
@@ -652,20 +640,20 @@ This tool is useful to estimate the mesh quality and to see it evolve along the 
 %------------------------------------------------------------------------------------------------%
 
 To examine (using Gnuplot) how the mesh samples the wave field, type
-\begin{lyxcode}
-gnuplot plot\_points\_per\_wavelength\_histogram.gnu
-\end{lyxcode}
+\begin{verbatim}
+    gnuplot plot_points_per_wavelength_histogram.gnu
+\end{verbatim}
 %
 and also check the following histogram printed on the screen or in the output file:
 %
-\begin{lyxcode}
- histogram of min number of points per S wavelength
-   (P wavelength in acoustic regions)\\
- (too small: poor resolution of calculations -
-  too big = wasting memory and CPU time)\\
- (threshold value is around 4.5 points per wavelength
-  in elastic media and 5.5 in acoustic media)
-\end{lyxcode}
+\begin{verbatim}
+    histogram of min number of points per S wavelength (P wavelength in
+    acoustic regions)
+    (too small: poor resolution of calculations - too big = wasting
+    memory and CPU time)
+    (threshold value is around 4.5 points per wavelength in elastic media
+    and 5.5 in acoustic media)
+\end{verbatim}
 
 \noindent If you see that you have a significant number of mesh elements below the threshold indicated, then your simulations
 will not be accurate and you should create a denser mesh. Conversely, if you have a significant number of mesh elements above the threshold indicated,
@@ -678,9 +666,9 @@ the mesh your created is too dense, it will be extremely accurate but the simula
 %------------------------------------------------------------------------------------------------%
 
 To run the solver, type:
-\begin{lyxcode}
-./bin/xspecfem2D
-\end{lyxcode}
+\begin{verbatim}
+    ./bin/xspecfem2D
+\end{verbatim}
 to run the main solver (use \texttt{mpirun} or equivalent if you compiled with parallel support). This will output the seismograms and snapshots of the wave fronts at different time steps in directory \texttt{OUTPUT\_FILES/}. To visualize them, type "\texttt{gs OUTPUT\_FILES/vect*.ps}" to see the Postscript files (in which the wave field is represented with small arrows, fluid/solid matching interfaces with a thick pink line, and absorbing edges with a thick green line) and "\texttt{gimp OUTPUT\_FILES/image*.gif}" to see the color snapshot showing a pixelized image of one of the two components of the wave field (or pressure, depending on what you have selected for the output in \texttt{DATA/Par\_file}).
 
 
@@ -702,11 +690,12 @@ Please consider these following points, when running the solver:
 
 \item the seismograms \texttt{OUTPUT\_FILES/*.sem*} are simple ASCII files with two columns: time in the first column and amplitude in the second, therefore they can be visualized with any tool you like, for instance "\texttt{gnuplot}"; if you prefer to output binary seismograms in Seismic Unix format (which is a simple binary array dump) you can use parameter SU\_FORMAT, in which case all the seismograms will be written to a single file with the extension *.bin.
 Depending on your installation of the Seismic Unix package you can use one of these two commands:
-
-surange < Uz\_file\_single.bin
-
-suoldtonew < Uz\_file\_single.bin | surange
-
+%
+\begin{verbatim}
+    surange < Uz_file_single.bin
+    suoldtonew < Uz_file_single.bin | surange
+\end{verbatim}
+%
 to see the header info.
 Replace \texttt{surange} with \texttt{suxwigb} to see wiggle plots for the seismograms.
 
@@ -764,9 +753,9 @@ the serial code \texttt{convolve\_source\_timefunction.f90} and the
 script \texttt{convolve\_source\_timefunction.sh} for this purpose,
 or alternatively use signal-processing software packages such as SAC \urlwithparentheses{www.llnl.gov/sac}.
 Type
-\begin{lyxcode}
-make~convolve\_source\_timefunction
-\end{lyxcode}
+\begin{verbatim}
+    make convolve_source_timefunction
+\end{verbatim}
 to compile the code and then set the parameter \texttt{hdur} in \texttt{convolve\_source\_timefunction.sh}
 to the desired half-duration.
 %%
@@ -1121,7 +1110,7 @@ adjoint source. Note: if the user forgets it, the program corrects it when readi
 \texttt{SIMULATION\_TYPE} and \texttt{SAVE\_FORWARD} combination and a warning message appears in the ouput
 file)\\
 
-Important output files (for example, for the elastic case, P-SV waves): \\s
+Important output files (for example, for the elastic case, P-SV waves): \\
 \texttt{absorb\_elastic\_bottom*****.bin}\\
 \texttt{absorb\_elastic\_left*****.bin}\\
 \texttt{absorb\_elastic\_right*****.bin}\\
