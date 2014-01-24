@@ -75,14 +75,21 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Start of document.
 \begin{document}
-\begin{center}
-\thispagestyle{empty}%
-\vspace*{-1.8truecm}
-\noindent\makebox[\textwidth]{%
-\noindent\includegraphics[width=0.83\paperwidth]{figures/specfem_2d-cover.pdf}
+
+% Cover Page
+\newgeometry{margin=0pt}
+\thispagestyle{empty}
+\vspace*{\fill}
+\begingroup
+\centering
+\makebox[\textwidth]{%
+\includegraphics[width=0.83\paperwidth]{figures/specfem_2d-cover.pdf}
 }
-\end{center}
-%
+\endgroup
+\vspace*{\fill}
+\restoregeometry
+
+% Inner Title Page
 \title{\textbf{SPECFEM2D}\\
 \textbf{User Manual}}
 
