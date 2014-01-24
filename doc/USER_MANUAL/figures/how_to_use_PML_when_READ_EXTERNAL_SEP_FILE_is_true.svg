@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="254.7"
+   height="135"
+   id="svg3054"
+   version="1.1"
+   inkscape:version="0.48.4 r9939"
+   sodipodi:docname="how_to_use_PML_when_READ_EXTERNAL_SEP_FILE_is_true2.svg">
+  <title
+     id="title3180">SPECFEM2D: PML</title>
+  <defs
+     id="defs3056" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="2.8284271"
+     inkscape:cx="136.92574"
+     inkscape:cy="74.302868"
+     inkscape:document-units="pt"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     units="in"
+     inkscape:window-width="1366"
+     inkscape:window-height="702"
+     inkscape:window-x="0"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata3059">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>SPECFEM2D: PML</dc:title>
+        <dc:date>2014-01-24</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Elliott Sales de Andrade</dc:title>
+          </cc:Agent>
+        </dc:creator>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-917.35975)">
+    <path
+       inkscape:connector-curvature="0"
+       id="path3757"
+       d="m 3.3669359,957.65504 28.1443381,-0.10192 c 3.994505,-2.00648 14.234146,-5.74625 20.219862,-5.45424 11.971432,0.58382 33.248153,5.43965 39.055575,6.2865 7.007668,1.02192 10.170969,2.91288 27.300709,3.06578 16.35123,0.14611 40.73208,-6.27767 40.73208,-6.27767 0,0 12.44762,-1.88477 18.54113,-2.6279 5.98572,-0.72991 14.59931,-1.45985 17.51917,-1.45985 2.40778,0 10.5462,1.14087 18.21265,2.88332 6.42369,1.45985 14.99386,-3.68797 16.8257,-4.48925 2.16676,-0.94779 2.59511,-0.17911 3.21186,-0.29201 0.66923,-0.12253 1.61354,-0.50228 1.96065,-0.66316 0.34711,-0.16092 15.87527,-0.0989 15.87527,-0.0989"
+       style="fill:none;stroke:#000000;stroke-width:0.39973819;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       sodipodi:nodetypes="ccssscssssssc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.39973819;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 3.3207323,991.13092 c 0,0 23.9011947,-1.80542 27.9161107,-2.13061 4.019957,-6.52611 6.233497,-7.87902 12.102096,-8.08888 5.413009,-0.19369 24.745838,5.36527 28.24968,6.2411 5.693619,1.42345 25.936136,7.85225 42.994971,9.41663 16.71621,1.53284 26.43095,-0.50988 36.42529,-4.45288 9.99432,-3.94303 15.74686,-5.75424 20.804,-9.23395 7.95663,-5.47482 23.32453,-11.82846 28.14019,-11.86205 4.05391,-0.0282 7.98711,1.08191 15.36577,3.79593 3.17536,1.16782 5.56908,0.0479 9.16107,-1.46005 2.95637,-1.24097 2.8014,-1.7978 6.2777,-3.17531 1.93442,-0.7665 2.81039,-1.01273 3.20275,-1.0675 0.39234,-0.0548 16.25056,-0.53726 16.25056,-0.53726"
+       id="path3759"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccssszssssssc" />
+    <path
+       id="rect3761"
+       style="fill:none;stroke:#000000;stroke-width:0.39973819;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dashoffset:0"
+       d="m 251.42102,935.20653 -3.71638,113.50327 -244.3524129,0 0,-106.48344 27.9229419,-0.57223 c 0,0 0.8223,-5.24399 12.793739,-4.65997 11.971432,0.58382 27.154722,3.2117 32.994451,2.62767 5.83972,-0.58382 21.829621,-2.83414 36.720941,-11.30179 14.89129,-8.46766 33.93972,-2.71343 33.93972,-2.71343 0,0 19.85508,4.70573 25.98679,4.99774 6.1317,0.292 22.19095,-5.87376 24.52684,-6.45777 2.33588,-0.58382 11.00996,-0.35978 18.6016,1.68429 7.59163,2.04387 11.66476,5.37348 13.654,4.85902 3.77143,-0.97577 2.40543,-1.73346 4.53467,1.34032 1.3455,1.94253 1.78574,1.99069 1.78574,1.99069 z"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccccssscssssscc" />
+    <text
+       xml:space="preserve"
+       style="font-size:4.31857538px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="4.6539521"
+       y="965.76337"
+       id="text3765"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3767"
+         x="4.6539521"
+         y="965.76337">Use a</tspan><tspan
+         sodipodi:role="line"
+         x="4.6539521"
+         y="971.16156"
+         id="tspan3769">horizontally</tspan><tspan
+         sodipodi:role="line"
+         x="4.6539521"
+         y="976.55981"
+         id="tspan3773">1D velocity</tspan><tspan
+         sodipodi:role="line"
+         x="4.6539521"
+         y="981.95801"
+         id="tspan3777">model here</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.39973819;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dashoffset:0"
+       d="m 236.85229,934.05808 -4.83903,92.81922 -200.684435,0 -0.05163,-85.27034"
+       id="rect3783"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccc" />
+    <text
+       xml:space="preserve"
+       style="font-size:6.7177844px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="180.19321"
+       y="1040.0778"
+       id="text3787"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3789"
+         x="180.19321"
+         y="1040.0778">PML</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:6.7177844px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="9.9504271"
+       y="1014.6625"
+       id="text3791"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3793"
+         x="9.9504271"
+         y="1014.6625">PML</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.31857538px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="47.53743"
+       y="1040.7943"
+       id="text3795"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3797"
+         x="47.53743"
+         y="1040.7943">Use a vertically-1D velocity model here</tspan></text>
+  </g>
+</svg>
