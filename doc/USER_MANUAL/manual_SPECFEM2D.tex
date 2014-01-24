@@ -914,18 +914,18 @@ where the notations are for instance \texttt{duz\_dx = d(Uz) / dx}.
 
 Check the following new inputs in \texttt{Par\_file}:
 \begin{description}
-\item In section {\bf "\# geometry of model and mesh description"}:\\
+\item In section \textbf{"\# geometry of model and mesh description"}:\\
 \texttt{TURN\_VISCATTENUATION\_ON}, \texttt{Q0}, and \texttt{FREQ0} deal with viscous damping in a poroelastic medium.
 \texttt{Q0} is the quality factor set at the central frequency \texttt{FREQ0}. For more details
 see \cite{MoTr08}.
 
-\item In section {\bf "\# time step parameters"}:\\
+\item In section \textbf{"\# time step parameters"}:\\
 \texttt{SIMULATION\_TYPE} defines the type of simulations \\
 (1) forward simulation \\
 (2) UNUSED (purposely, for compatibility with the numbering convention used in our 3D codes) \\
 (3) adjoint method and kernels calculation
 
-\item In section {\bf "\# source parameters"}:\\
+\item In section \textbf{"\# source parameters"}:\\
 The code now support multi sources.
 \texttt{NSOURCE} is the number of source.
 Parameters of the sources are displayed in the file \texttt{SOURCE}, which must be
@@ -946,10 +946,10 @@ would be hdur1=1/f0\_1, hdur2=1/f0\_2, hdur3=1/f0\_3 for the sources 1, 2, 3 res
 %%%
 
 
-\item In section {\bf "\# receiver line parameters for seismograms"}:\\
+\item In section \textbf{"\# receiver line parameters for seismograms"}:\\
 \texttt{SAVE\_FORWARD} determines if the last frame of a forward simulation is saved (\texttt{.true.}) or not (\texttt{.false})
 
-\item In section {\bf "\# define models...."}:\\
+\item In section \textbf{"\# define models...."}:\\
 There are three possible types of models:\\
  \texttt{I}:   (model\_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0) or\\
  \texttt{II}:  (model\_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0) or\\
@@ -1265,14 +1265,14 @@ $\copyright$ Princeton University and CNRS / INRIA / University of Pau, July 201
 \begin{description}
 \item[Regarding the structure of some of the database files] : \newline
 
-{\bf Question:} Can anyone tell me what the columns of the SPECFEM2D boundary
+\textbf{Question:} Can anyone tell me what the columns of the SPECFEM2D boundary
 condition files in \texttt{SPECFEM2D/DATA/}~\\
 \texttt{Mesh\_canyon} are?\\
 
 \texttt{SPECFEM2D/DATA/Mesh\_canyon/canyon\_absorbing\_surface\_file} \\
 \texttt{SPECFEM2D/DATA/Mesh\_canyon/canyon\_free\_surface\_file}
 
-{\bf Answer:} \texttt{canyon\_absorbing\_surface\_file} refers to parameters related to the
+\textbf{Answer:} \texttt{canyon\_absorbing\_surface\_file} refers to parameters related to the
 absorbing conditions:
 The first number (180) is the number of absorbing elements (nelemabs in the
 code).
