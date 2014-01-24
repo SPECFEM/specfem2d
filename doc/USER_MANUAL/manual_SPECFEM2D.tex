@@ -128,36 +128,40 @@ Zhinan Xie.
 \section*{Current and past main participants or main sponsors}
 
 \begin{figure}[htbp]
-\noindent \begin{centering}
-\includegraphics[width=0.125\textwidth]{figures/logo_cnrs}\vspace*{2truemm}
-\includegraphics[width=0.125\textwidth]{figures/logo_princeton}\vspace*{2truemm}
-\includegraphics[width=0.15\textwidth]{figures/logo_aix_marseille_universite}\vspace*{0.02truemm}
-\includegraphics[width=0.12\textwidth]{figures/logo_CSC_China}\vspace*{0.02truemm}
-%%\includegraphics[width=0.15\textwidth]{figures/logo_ETH}\vspace*{2truemm}  %% did not work on the 2D version
-\includegraphics[width=0.15\textwidth]{figures/logo_inria}\vspace*{2truemm}
+\begin{center}
+\includegraphics[width=0.125\textwidth]{figures/logo_cnrs}
+\includegraphics[width=0.125\textwidth]{figures/logo_princeton}
+\includegraphics[width=0.15\textwidth]{figures/logo_aix_marseille_universite}
+\includegraphics[width=0.12\textwidth]{figures/logo_CSC_China}
+%%\includegraphics[width=0.15\textwidth]{figures/logo_ETH}  %% did not work on the 2D version
+\includegraphics[width=0.15\textwidth]{figures/logo_inria}
 \includegraphics[width=0.14\textwidth]{figures/logo_UPPA}
-\par\end{centering}
+\end{center}
 
-\noindent \begin{centering}
-%%\includegraphics[width=0.15\textwidth]{figures/logo_NVIDIA}\vspace*{2truemm}  %% did not work on the 2D version
-\includegraphics[width=0.125\textwidth]{figures/logo_IUF}\vspace*{2truemm}
-\includegraphics[width=0.135\textwidth]{figures/logo_Caltech}\vspace*{2truemm}
-\includegraphics[width=0.135\textwidth]{figures/logo_Harvard}\vspace*{2truemm}
-\includegraphics[width=0.135\textwidth]{figures/logo_IPGP}\vspace*{2truemm}
-\par\end{centering}
+\vspace*{2truemm}
 
-\noindent \begin{centering}
-\includegraphics[width=0.119\textwidth]{figures/logo_INGV}\vspace*{2truemm}
-\includegraphics[width=0.119\textwidth]{figures/logo_University_of_Toronto}\vspace*{2truemm}
-\includegraphics[width=0.112\textwidth]{figures/logo_Univ_Toulouse}\vspace*{2truemm}
-\includegraphics[width=0.112\textwidth]{figures/logo_TOTAL}\vspace*{2truemm}
+\begin{center}
+%%\includegraphics[width=0.15\textwidth]{figures/logo_NVIDIA}  %% did not work on the 2D version
+\includegraphics[width=0.125\textwidth]{figures/logo_IUF}
+\includegraphics[width=0.135\textwidth]{figures/logo_Caltech}
+\includegraphics[width=0.135\textwidth]{figures/logo_Harvard}
+\includegraphics[width=0.135\textwidth]{figures/logo_IPGP}
+\end{center}
+
+\vspace*{2truemm}
+
+\begin{center}
+\includegraphics[width=0.119\textwidth]{figures/logo_INGV}
+\includegraphics[width=0.119\textwidth]{figures/logo_University_of_Toronto}
+\includegraphics[width=0.112\textwidth]{figures/logo_Univ_Toulouse}
+\includegraphics[width=0.112\textwidth]{figures/logo_TOTAL}
 \includegraphics[width=0.130\textwidth]{figures/logo_Fairbanks}
-\par\end{centering}
+\end{center}
 \end{figure}
 
-\newpage{}
+\newpage
 
-\tableofcontents{}
+\tableofcontents
 
 %------------------------------------------------------------------------------------------------%
 
@@ -287,7 +291,7 @@ directory in which you want to install the package, type
 The directory \texttt{SPECFEM2D-7.0.0/} will then contain
 the source code. In the following, we will refer to this directory as the root directory \texttt{SPECFEM2D/}. \\
 
-We recommend that you add {\texttt{ulimit -S -s unlimited}} to your {\texttt{.bash\_profile}} file and/or {\texttt{limit stacksize unlimited }} to your {\texttt{.cshrc}} file to suppress any potential limit to the size of the Unix stack.\\
+We recommend that you add \texttt{ulimit -S -s unlimited} to your \texttt{.bash\_profile} file and/or \texttt{limit stacksize unlimited} to your \texttt{.cshrc} file to suppress any potential limit to the size of the Unix stack.\\
 
 Then, to configure the software for your system, run the
 \texttt{configure} shell script. This script will attempt to guess
@@ -307,18 +311,18 @@ If you want to run in parallel, i.e., using more than one processor core, then y
 Before running the \texttt{configure} script, you should probably edit file \texttt{flags.guess} to make sure that it contains the best compiler options for your system. Known issues or things to check are:
 
 \begin{description}
-\item [{\texttt{Intel ifort compiler}}] See if you need to add \texttt{-assume byterecl} for your machine.
-\item [{\texttt{IBM compiler}}] See if you need to add \texttt{-qsave} or \texttt{-qnosave} for your machine.
-\item [{\texttt{Mac OS}}] You will probably need to install \texttt{XCODE}.
+\item [\texttt{Intel ifort compiler}] See if you need to add \texttt{-assume byterecl} for your machine.
+\item [\texttt{IBM compiler}] See if you need to add \texttt{-qsave} or \texttt{-qnosave} for your machine.
+\item [\texttt{Mac OS}] You will probably need to install \texttt{XCODE}.
 In addition, the \texttt{clock\_gettime} routine, which is used by the \texttt{SCOTCH} library that we use, does not exist in Mac OS.
 You will need to replace it with \texttt{clock\_get\_time} if you want to use \texttt{SCOTCH}.
-\item [{\texttt{IBM Blue Gene machines}}] Please refer to the manual of SPECFEM3D\_Cartesian, which contains detailed instructions on how to run on Blue Gene.
+\item [\texttt{IBM Blue Gene machines}] Please refer to the manual of SPECFEM3D\_Cartesian, which contains detailed instructions on how to run on Blue Gene.
 \end{description}
 
 The SPECFEM2D software package relies on the SCOTCH library to partition meshes.
 The SCOTCH library \citep{PeRo96}
 provides efficent static mapping, graph and mesh partitioning routines. SCOTCH is a free software package developed by
-Fran\c {c}ois Pellegrini et al. from LaBRI and INRIA in Bordeaux, France, downloadable from the web page \url{https://gforge.inria.fr/projects/scotch/}.
+Fran\c{c}ois Pellegrini et al. from LaBRI and INRIA in Bordeaux, France, downloadable from the web page \url{https://gforge.inria.fr/projects/scotch/}.
 In case no SCOTCH libraries can be found on the system, the configuration will bundle the version provided with the source code for compilation.
 The path to an existing SCOTCH installation can to be set explicitly with the option \texttt{-{}-with-scotch-dir}.
 Just as an example:
@@ -368,9 +372,8 @@ Packages such as \texttt{doxywizard} can be used to visualize the subroutine cal
 %------------------------------------------------------------------------------------------------%
 
 \begin{figure}[htbp]
-\noindent \begin{centering}
+\centering
 \includegraphics[width=.6\textwidth]{figures/workflow}
-\par\end{centering}
 
 \caption{Schematic workflow for a SPECFEM2D simulation. The executable \texttt{xmeshfem2D} creates the GLL mesh points and assigns specific model parameters. The executable \texttt{xspecfem2D} solves the seismic wave propagation.}
 
@@ -430,9 +433,8 @@ to create the mesh (which will be stored in directory \texttt{OUTPUT\_FILES/}). 
 
 %%
 \begin{figure}[htbp]
-\noindent \begin{centering}
+\centering
 \includegraphics[width=3in]{figures/example-gridfile.pdf}
-\par\end{centering}
 \caption{Example of a grid file generated by \texttt{xmeshfem2D} and visualized with gnuplot
 (within gnuplot, type `\texttt{plot "OUTPUT\_FILES/gridfile.gnu" w l}`).}
 \label{fig:example.mesh}
@@ -474,55 +476,55 @@ Gmsh. The end of the \texttt{.geo} file contains several lines which
 are required in order to define the sides of the box and the media.
 This is done using the following conventions :
 
-\medskip{}
+\medskip
 
 
-\texttt{\textit{Physical Line(\textquotedbl{}Top\textquotedbl{}) =
-\{1\}; }}{\textsf{\textit{\small line corresponding
-to the top of the box}}}{\small \par}
+\texttt{\textit{Physical Line(\textquotedbl Top\textquotedbl)
+= \{1\}; }}
+\textsf{\textit{\small line corresponding to the top of the box}}
 
-\texttt{\textit{Physical Line(\textquotedbl{}Left\textquotedbl{})
-= \{2\}; }}{\textsf{\textit{\small line
-corresponding to the left side of the box}}}{\small \par}
+\texttt{\textit{Physical Line(\textquotedbl Left\textquotedbl)
+= \{2\}; }}
+\textsf{\textit{\small line corresponding to the left side of the box}}
 
-\texttt{\textit{Physical Line(\textquotedbl{}Bottom\textquotedbl{})
-= \{3\}; }}{\textsf{\textit{\small line
-corresponding to the bottom of the box}}}{\small \par}
+\texttt{\textit{Physical Line(\textquotedbl Bottom\textquotedbl)
+= \{3\}; }}
+\textsf{\textit{\small line corresponding to the bottom of the box}}
 
-\texttt{\textit{Physical Line(\textquotedbl{}Right\textquotedbl{})
-= \{4\}; }}{\textsf{\textit{\small line
-corresponding to the right side of the box}}}{\small \par}
+\texttt{\textit{Physical Line(\textquotedbl Right\textquotedbl)
+= \{4\}; }}
+\textsf{\textit{\small line corresponding to the right side of the box}}
 
-\texttt{\textit{Physical Surface(\textquotedbl{}M1\textquotedbl{})
-= \{10\}; }}{\textsf{\textit{\small surrounding
-medium}}}{\small \par}
+\texttt{\textit{Physical Surface(\textquotedbl M1\textquotedbl)
+= \{10\}; }}
+\textsf{\textit{\small surrounding medium}}
 
-\texttt{\textit{Physical Surface(\textquotedbl{}M2\textquotedbl{})
-= \{11,12\}; }}{\textsf{\textit{\small interior
-of the two circles}}}{\small \par}
+\texttt{\textit{Physical Surface(\textquotedbl M2\textquotedbl)
+= \{11,12\}; }}
+\textsf{\textit{\small interior of the two circles}}
 
-\medskip{}
+\medskip
 
 
 For instance, if you want to fill the two circles with two different
 materials, you will have to write :
 
-\medskip{}
+\medskip
 
 
-\texttt{\textit{Physical Surface(\textquotedbl{}M1\textquotedbl{})
-= \{10\}; }}{\textsf{\textit{\small surrounding
-medium}}}{\small \par}
+\texttt{\textit{Physical Surface(\textquotedbl M1\textquotedbl)
+= \{10\}; }}
+\textsf{\textit{\small surrounding medium}}
 
-\texttt{\textit{Physical Surface(\textquotedbl{}M2\textquotedbl{})
-= \{11\};}}{\textsf{\textit{\small{} interior
-of the big circle}}}{\small \par}
+\texttt{\textit{Physical Surface(\textquotedbl M2\textquotedbl)
+= \{11\}; }}
+\textsf{\textit{\small interior of the big circle}}
 
-\texttt{\textit{Physical Surface(\textquotedbl{}M3\textquotedbl{})
-= \{12\};}}{\textsf{\textit{\small{} interior
-of the small circle}}}{\small \par}
+\texttt{\textit{Physical Surface(\textquotedbl M3\textquotedbl)
+= \{12\}; }}
+\textsf{\textit{\small interior of the small circle}}
 
-\medskip{}
+\medskip
 
 
 and, consequently, you will have to define a new medium numbered \texttt{3}
@@ -618,9 +620,8 @@ inner PML edge.
 
 %%
 \begin{figure}[htbp]
-\noindent \begin{centering}
+\centering
 \includegraphics[width=3in]{figures/how_to_use_PML_when_READ_EXTERNAL_SEP_FILE_is_true}
-\par\end{centering}
 \caption{How to modify your external 2D velocity and density model in order to use PML.
 Such a modification is not needed when using Stacey absorbing boundary conditions (but such conditions
 are significantly less efficient).}
@@ -685,11 +686,10 @@ to run the main solver (use \texttt{mpirun} or equivalent if you compiled with p
 
 %%
 \begin{figure}[htbp]
-\noindent \begin{centering}
+\centering
 \includegraphics[width=2in]{figures/image0000300.jpg}
 \includegraphics[width=2in]{figures/image0000400.jpg}
 \includegraphics[width=2in]{figures/image0000500.jpg}
-\par\end{centering}
 \caption{Wavefield snapshots of the default example generated by \texttt{xspecfem2D} when parameter \texttt{output\_color\_image} is set to \texttt{.true.}. To create smaller (subsampled) images you can change double precision parameter \texttt{factor\_subsample\_image = 1.0} to a higher value in file \texttt{DATA/Par\_file}. This can be useful in the case of very large models. The number of pixels of the image in each direction must be smaller than parameter \texttt{NX\_NZ\_IMAGE\_MAX} defined in file \texttt{SETUP/constants.h.in}, again to avoid creating huge images in the case of very large models.}
 \label{fig:example.solver}
 \end{figure}
@@ -771,9 +771,8 @@ to compile the code and then set the parameter \texttt{hdur} in \texttt{convolve
 to the desired half-duration.
 %%
 \begin{figure}[htbp]
-\noindent \begin{centering}
+\centering
 \includegraphics[width=3in]{figures/gauss_vs_triangle_mod.pdf}
-\par\end{centering}
 \caption{Comparison of the shape of a triangle and the Gaussian function actually
 used.}
 \label{fig:gauss.vs.triangle}
@@ -873,9 +872,9 @@ It allows one to automatically save all the parameters and results of a given si
 Following \cite{CaKoKo88}, we use the classical reduced Voigt notation \citep{Hel94,Car07}:
 \end{flushleft}
 %%%
-\noindent \begin{centering}
-{\small \includegraphics[width=4.2in,trim=0 2.6cm 0 2.6cm]{figures/Carcione_et_al_aniso_1988_image.pdf} }
-\par\end{centering}{\small \par}
+\begin{center}
+\includegraphics[width=4.2in,trim=0 2.6cm 0 2.6cm]{figures/Carcione_et_al_aniso_1988_image.pdf}
+\end{center}
 %%%
 
 \noindent
@@ -920,20 +919,17 @@ Parameters of the sources are displayed in the file \texttt{SOURCE}, which must 
 in the directory \texttt{DATA/}. The components of a moment tensor source must be given in N.m,
 not in dyne.cm as in the \texttt{DATA/CMTSOLUTION} source file of the 3D version of the code.
 %%%
-{\small }%
 \begin{figure}[htbp]
-\noindent \begin{centering}
-{\small \includegraphics[width=5in]{figures/source_timing.pdf} }
-\par\end{centering}{\small \par}
+\centering
+\includegraphics[width=5in]{figures/source_timing.pdf}
 \caption{Example of timing for three sources. The center of the first source
 triangle is defined to be time zero. Note that this is NOT in general
 the hypocentral time, or the start time of the source (marked as tstart).
 The time shift parameter \texttt{t0} in the \texttt{SOURCE} file
 would be t1(=0), t2, t3 in this case, and the half-duration parameter, resp. \texttt{f0},
 would be hdur1=1/f0\_1, hdur2=1/f0\_2, hdur3=1/f0\_3 for the sources 1, 2, 3 respectively.}
-{\small \label{fig:source_timing} }
+\label{fig:source_timing}
 \end{figure}
-{\small \par}
 %%%
 
 
