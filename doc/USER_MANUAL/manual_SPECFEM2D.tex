@@ -869,13 +869,37 @@ It allows one to automatically save all the parameters and results of a given si
 %------------------------------------------------------------------------------------------------%
 
 \begin{flushleft}
-Following \cite{CaKoKo88}, we use the classical reduced Voigt notation \citep{Hel94,Car07}:
+Following \cite{CaKoKo88}, we use the classical reduced Voigt notation to represent symmetric
+tensors \citep{Hel94,Car07}:
 \end{flushleft}
 %%%
-\begin{center}
-\includegraphics[width=4.2in,trim=0 2.6cm 0 2.6cm]{figures/Carcione_et_al_aniso_1988_image.pdf}
-\end{center}
-%%%
+\begin{quotation}
+The constitutive relation of a heterogeneous anisotropic and elastic solid
+is expressed by the generalized Hooke's law, which can be written as
+%
+\begin{equation*}
+\sigma_{ij} = c_{ijkl} \varepsilon_{kl}, \qquad i, j, k = 1, \dots, 3,
+\end{equation*}
+%
+where $t$ is the time, $\mathbf{x}$ is the position vector, $\sigma_{ij}(\mathbf{x}, t)$ and $\varepsilon_{ij}(\mathbf{x}, t)$ are the
+Cartesian components of the stress and strain tensors respectively, and
+$c_{ijkl}(\mathbf{x})$ are the components of a fourth-order tensor called the elasticites of
+the medium. The Einstein convention for repeated indices is used.
+
+To express the stress-strain relation for a transversely isotropic medium
+we introduce a shortened matrix notation commonly used in the literature.
+With this convention, pairs of subscripts concerning the elasticities are
+replaced by a single number according to the following correspondence:
+%
+\begin{align*}
+(11) \rightarrow 1, &&
+(22) \rightarrow 2, &&
+(33) \rightarrow 3, \\
+(23) = (32) \rightarrow 4, &&
+(31) = (13) \rightarrow 5, &&
+(12) = (21) \rightarrow 6.
+\end{align*}
+\end{quotation}
 
 \noindent
 Thus in the most general 2D case we have the following convention for the stress-strain relationship:
