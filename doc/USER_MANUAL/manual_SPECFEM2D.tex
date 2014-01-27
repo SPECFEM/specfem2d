@@ -82,7 +82,7 @@
 \title{\textbf{SPECFEM2D}\\
 \textbf{User Manual}}
 
-\author{$\copyright$ Princeton University (USA) and CNRS and University of Marseille (France)\\
+\author{\copyright\ Princeton University (USA) and CNRS and University of Marseille (France)\\
 Version 7.0
 }
 
@@ -1226,13 +1226,13 @@ We also changed the relationship between adjoint potential and adjoint displacem
 The new definition is critical when there are adjoint sources (in other words, receivers) in the acoustic domain,
 and is the direct consequence of the optimization problem.
 %
-\begin{eqnarray*}
-\mathbf{s}&\equiv&\frac{1}{\rho}~\mathbf{\nabla}\phi \\
-p&\equiv&-\kappa(\nabla\cdot\mathbf{s}) =-\partial_t^2\phi \\
-\quad\\
-\partial_t^2\mathbf{s}^\dagger&\equiv&-\frac{1}{\rho}~\mathbf{\nabla}\phi^\dagger\\
-p^\dagger&\equiv&-\kappa(\nabla\cdot\mathbf{s}^\dagger)=\phi^\dagger
-\end{eqnarray*}
+\begin{align*}
+\mathbf{s} &\equiv \frac{1}{\rho} \: \mathbf{\nabla}\phi \\
+p &\equiv -\kappa\left(\nabla\cdot\mathbf{s}\right) = -\partial_t^2\phi \\
+&\\
+\partial_t^2\mathbf{s}^\dagger &\equiv -\frac{1}{\rho} \: \mathbf{\nabla}\phi^\dagger \\
+p^\dagger &\equiv -\kappa\left(\nabla\cdot\mathbf{s}^\dagger\right) = \phi^\dagger
+\end{align*}
 
 
 
@@ -1264,7 +1264,7 @@ Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 Princeton University, USA,
 and CNRS / INRIA / University of Pau, France
 
-$\copyright$ Princeton University and CNRS / INRIA / University of Pau, July 2012
+\copyright\ Princeton University and CNRS / INRIA / University of Pau, July 2012
 \end{quote}
 
 %------------------------------------------------------------------------------------------------%
