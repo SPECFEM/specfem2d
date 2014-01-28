@@ -36,9 +36,9 @@
       $line =~ s/\s*$//;
 
 # change the version number and copyright information
-      $line =~ s#!                   S P E C F E M 2 D  Version 6 \. 2#!                   S P E C F E M 2 D  Version 7 \. 0#og;
-      $line =~ s#!                   ------------------------------#!                   --------------------------------#og;
-      $line =~ s#! Copyright Universite de Pau, CNRS and INRIA, France,#! Copyright CNRS, INRIA and University of Pau, France,#og;
+      $line =~ s#!                   S P E C F E M 2 D  Version 7 \. 0#!                   S P E C F E M 2 D  Version 7 \. 0#og;
+      $line =~ s#!                   --------------------------------#!                   --------------------------------#og;
+      $line =~ s#! Copyright Universite de Pau, CNRS and INRIA, France,#! Copyright CNRS, Inria and University of Pau, France,#og;
 #     $line =~ s#rmass_sigma#rmass_time_integral_of_sigma#og;
 
 # write the modified line to the output file

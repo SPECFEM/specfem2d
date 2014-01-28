@@ -314,5 +314,5 @@
 ! > --
 ! > Dimitri Komatitsch - dimitri.komatitsch aT univ-pau.fr
 ! > Professor, University of Pau, Institut universitaire de France
-! > and INRIA Magique3D, France   http://www.univ-pau.fr/~dkomati1
+! > and Inria Magique3D, France   http://www.univ-pau.fr/~dkomati1
 ! >
