@@ -259,7 +259,7 @@ contains
   ! read constants for attenuation
   call read_value_integer_p(N_SLS, 'solver.N_SLS')
   if(err_occurred() /= 0) stop 'error reading parameter 20 in Par_file'
-  if(N_SLS < 1) stop 'must have N_SLS >= 1 even if attenuation if off because it is used to assign some arrays'
+  if(N_SLS < 2) stop 'must have N_SLS >= 2 even if attenuation if off because it is used to assign some arrays'
 
   call read_value_double_precision_p(f0_attenuation, 'solver.f0_attenuation')
   if(err_occurred() /= 0) stop 'error reading parameter 21 in Par_file'

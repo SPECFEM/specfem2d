@@ -451,7 +451,7 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,*) N_SLS, f0_attenuation
-  if(N_SLS < 1) stop 'must have N_SLS >= 1 even if attenuation if off because it is used to assign some arrays'
+  if(N_SLS < 2) stop 'must have N_SLS >= 2 even if attenuation if off because it is used to assign some arrays'
 
   end subroutine read_databases_atten
 
