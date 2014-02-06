@@ -4,7 +4,7 @@
 !                   S P E C F E M 2 D  Version 7 . 0
 !                   --------------------------------
 !
-! Copyright CNRS, INRIA and University of Pau, France,
+! Copyright CNRS, Inria and University of Pau, France,
 ! and Princeton University / California Institute of Technology, USA.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
@@ -19,7 +19,7 @@
 ! This software is governed by the CeCILL license under French law and
 ! abiding by the rules of distribution of free software. You can use,
 ! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and INRIA at the following URL
+! license as circulated by CEA, CNRS and Inria at the following URL
 ! "http://www.cecill.info".
 !
 ! As a counterpart to the access to the source code and rights to copy,

@@ -3,7 +3,7 @@
 !                   S P E C F E M 2 D  Version 7 . 0
 !                   --------------------------------
 !
-! Copyright CNRS, INRIA and University of Pau, France,
+! Copyright CNRS, Inria and University of Pau, France,
 ! and Princeton University / California Institute of Technology, USA.
 ! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
 !               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
@@ -17,7 +17,7 @@
 ! This software is governed by the CeCILL license under French law and
 ! abiding by the rules of distribution of free software. You can use,
 ! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and INRIA at the following URL
+! license as circulated by CEA, CNRS and Inria at the following URL
 ! "http://www.cecill.info".
 !
 ! As a counterpart to the access to the source code and rights to copy,
@@ -492,7 +492,7 @@ end subroutine pml_init
   double precision :: xmin_glob, xmax_glob, zmin_glob, zmax_glob, vpmax_glob
 #endif
 
-! reflection coefficient (INRIA report section 6.1) http://hal.inria.fr/docs/00/07/32/19/PDF/RR-3471.pdf
+! reflection coefficient (Inria report section 6.1) http://hal.inria.fr/docs/00/07/32/19/PDF/RR-3471.pdf
   ALPHA_MAX_PML = PI*f0_temp ! from Festa and Vilotte
 
 ! check that NPOWER is okay
@@ -611,7 +611,7 @@ end subroutine pml_init
   zoriginbottom = thickness_PML_z_bottom + zmin
   zorigintop = zmax-thickness_PML_z_top
 
-! compute d0 from INRIA report section 6.1 http://hal.inria.fr/docs/00/07/32/19/PDF/RR-3471.pdf
+! compute d0 from Inria report section 6.1 http://hal.inria.fr/docs/00/07/32/19/PDF/RR-3471.pdf
   vpmax = 0
   do ispec = 1,nspec
     if(is_PML(ispec)) then
