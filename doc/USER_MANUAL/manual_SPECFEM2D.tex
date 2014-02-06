@@ -8,6 +8,7 @@
 \usepackage{textcomp}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{enumitem}
 \usepackage{tocbibind}
 
 % figures
@@ -316,13 +317,13 @@ If you want to run in parallel, i.e., using more than one processor core, then y
 
 Before running the \texttt{configure} script, you should probably edit file \texttt{flags.guess} to make sure that it contains the best compiler options for your system. Known issues or things to check are:
 
-\begin{description}
-\item [\texttt{Intel ifort compiler}] See if you need to add \texttt{-assume byterecl} for your machine.
-\item [\texttt{IBM compiler}] See if you need to add \texttt{-qsave} or \texttt{-qnosave} for your machine.
-\item [\texttt{Mac OS}] You will probably need to install \texttt{XCODE}.
+\begin{description}[font=\ttfamily]
+\item [Intel ifort compiler] See if you need to add \texttt{-assume byterecl} for your machine.
+\item [IBM compiler] See if you need to add \texttt{-qsave} or \texttt{-qnosave} for your machine.
+\item [Mac OS] You will probably need to install \texttt{XCODE}.
 In addition, the \texttt{clock\_gettime} routine, which is used by the \texttt{SCOTCH} library that we use, does not exist in Mac OS.
 You will need to replace it with \texttt{clock\_get\_time} if you want to use \texttt{SCOTCH}.
-\item [\texttt{IBM Blue Gene machines}] Please refer to the manual of SPECFEM3D\_Cartesian, which contains detailed instructions on how to run on Blue Gene.
+\item [IBM Blue Gene machines] Please refer to the manual of SPECFEM3D\_Cartesian, which contains detailed instructions on how to run on Blue Gene.
 \end{description}
 
 The SPECFEM2D software package relies on the SCOTCH library to partition meshes.
@@ -362,12 +363,12 @@ After these steps, go back to the main directory of SPECFEM2D/ and type
 to create all executables which will be placed into the folder \texttt{./bin/}.
 
 By default, the solver runs in single precision. This is fine for most application, but if for some reason
-you want to run the solver in double precision, run the \texttt{configure} script with option \texttt{``--enable-double-precision}''.
+you want to run the solver in double precision, run the \texttt{configure} script with option ``\texttt{-{}-enable-double-precision}''.
 Keep in mind that this will of course double total memory size and will also make the solver around 20 to 30\% slower
 on many processors.
 
 If your compiler has problems with the \texttt{use mpi} statements that are used in the code, use the script called
-\texttt{replace\_use\_mpi\_with\_include\_mpif\_dot\_h.pl} in the root directory to replace all of them with \texttt{include 'mpif.h'} automatically.
+\texttt{replace\_use\_mpi\_with\_include\_mpif\_dot\_h.pl} in the root directory to replace all of them with \texttt{include `mpif.h'} automatically.
 
 \section{Visualizing the subroutine calling tree of the source code}
 
@@ -407,16 +408,16 @@ but you can find useful information in the manuals of the 3D versions, since man
 To create acoustic (fluid) regions, just set the S wave speed to zero and the code will see that these elements are fluid and switch to the right equations there automatically, and automatically match them with the solid regions
 
 \item if you are using an external mesher (like GiD or CUBIT / Trelis), you should set \texttt{read\_external\_mesh} to \texttt{.true.}:
-  \begin{description}
-     \item[\texttt{mesh\_file}] is the file describing the mesh : first line is the number of elements, then a list of 4 nodes (quadrilaterals only) forming each elements on each line.
+  \begin{description}[font=\ttfamily]
+     \item[mesh\_file] is the file describing the mesh : first line is the number of elements, then a list of 4 nodes (quadrilaterals only) forming each elements on each line.
 
-     \item[\texttt{nodes\_coords\_file}] is the file containing the coordinates ($x$ and $z$) of each node: number of nodes on the first line, then coordinates x and z on each line.
+     \item[nodes\_coords\_file] is the file containing the coordinates ($x$ and $z$) of each node: number of nodes on the first line, then coordinates x and z on each line.
 
-     \item[\texttt{materials\_file}] is the number of the material for every elements : an integer ranging from 1 to nbmodels on each line.
+     \item[materials\_file] is the number of the material for every element : an integer ranging from 1 to \texttt{nbmodels} on each line.
 
-     \item[\texttt{free\_surface\_file}] is the file describing the edges forming the acoustic free surface: number of edges on the first line, then on each line: number of the element, number of nodes forming the free surface (1 for a point, 2 for an edge), the nodes forming the free surface for this element. If you do not want any free surface, just put 0 on the first line.
+     \item[free\_surface\_file] is the file describing the edges forming the acoustic free surface: number of edges on the first line, then on each line: number of the element, number of nodes forming the free surface (1 for a point, 2 for an edge), the nodes forming the free surface for this element. If you do not want any free surface, just put 0 on the first line.
 
-     \item[\texttt{absorbing\_surface\_file}] is the file describing the edges forming the absorbing boundaries:
+     \item[absorbing\_surface\_file] is the file describing the edges forming the absorbing boundaries:
 number of edges on the first line, then on each line: number of the element, number of nodes forming the absorbing edge (must always be equal to 2),
 the two nodes forming the absorbing edge for this element, and then the type of absorbing edge: 1 for BOTTOM, 2 for RIGHT, 3 for TOP and 4 for LEFT.
 Only two nodes per element can be listed, i.e., the second parameter of each line must always be equal to 2.
@@ -430,7 +431,7 @@ If one of your elements has a single point along the absorbing contour rather th
 If you use 9-node elements, list only the first and last points of the edge and not the intermediate point
 located around the middle of the edge; the right 9-node curvature will be restored automatically by the code.
 
-     \item[\texttt{tangential\_detection\_curve\_file}] contains points describing the envelope, used for \texttt{source\_normal\_to\_surface} and \texttt{rec\_normal\_to\_surface}. Should be fine grained, and ordained clockwise. Number of points on the first line, then (x,z) coordinates on each line.
+     \item[tangential\_detection\_curve\_file] contains points describing the envelope, that are used for the \texttt{source\_normal\_to\_surface} and \texttt{rec\_normal\_to\_surface}. Should be fine grained, and ordained clockwise. Number of points on the first line, then (x,z) coordinates on each line.
   \end{description}
 
 \item if you have compiled with MPI, you must specify the number of processes.
@@ -450,7 +451,7 @@ to create the mesh (which will be stored in directory \texttt{OUTPUT\_FILES/}). 
 \centering
 \includegraphics[width=3in]{figures/example-gridfile.pdf}
 \caption{Example of a grid file generated by \texttt{xmeshfem2D} and visualized with gnuplot
-(within gnuplot, type `\texttt{plot "OUTPUT\_FILES/gridfile.gnu" w l}`).}
+(within gnuplot, type `\texttt{plot "OUTPUT\_FILES/gridfile.gnu" w l}').}
 \label{fig:example.mesh}
 \end{figure}
 
@@ -547,7 +548,8 @@ and \texttt{1} or \texttt{2} in \texttt{Element order} whether you
 want a 4 or 9 node mesh. This operation will generate a \texttt{SqrCirc.msh}
 file which must be processed to get all the files required by SPECFEM2D
 when using an external mesh (see previous section). This is done by
-running a python script called LibGmsh2Specfem.py, located in directory UTILS/Gmsh:
+running a python script called \texttt{LibGmsh2Specfem.py}, located in
+directory \texttt{UTILS/Gmsh}:
 %
 \begin{verbatim}
     python LibGmsh2Specfem.py SqrCirc -t A -b A -r A -l A
@@ -602,7 +604,7 @@ Flag& Meaning\\ [0.5ex]
 \end{table}
 
 In order to see how to add PML layers to a mesh / model created with an external mesher such as `Gmsh', see the examples in directory
-EXAMPLES/CPML\_absorbing\_layers.
+\texttt{EXAMPLES/CPML\_absorbing\_layers}.
 
 If you use PML, the mesh elements that belong to the PML layers can be acoustic or elastic, but not viscoelastic nor poroelastic.
 Then, when defining your model, you should define these absorbing elements as either acoustic or elastic.
@@ -611,7 +613,7 @@ elements to elastic. This means that strictly speaking the PML layer will not be
 model will change from viscoelastic or poroelastic to elastic at the entrance of the PML, but in practice this is sufficient and
 produces only tiny / negligible spurious reflections.
 
-If you use PML and an external velocity and density model (for instance setting flag "READ\_EXTERNAL\_SEP\_FILE" to .true.),
+If you use PML and an external velocity and density model (e.g., setting flag ``\texttt{READ\_EXTERNAL\_SEP\_FILE}'' to \texttt{.true.}),
 you should be careful because mathematically a PML cannot handle heterogeneities along the
 normal to the PML edge inside the PML layer. This comes from the fact that the damping profile
 that is defined assumes a constant velocity and density model along the normal
@@ -712,7 +714,7 @@ Please consider these following points, when running the solver:
 \begin{itemize}
 \item the \texttt{DATA/Par\_file} given with the code works fine, you can use it without any modification to test the code
 
-\item the seismograms \texttt{OUTPUT\_FILES/*.sem*} are simple ASCII files with two columns: time in the first column and amplitude in the second, therefore they can be visualized with any tool you like, for instance "\texttt{gnuplot}"; if you prefer to output binary seismograms in Seismic Unix format (which is a simple binary array dump) you can use parameter SU\_FORMAT, in which case all the seismograms will be written to a single file with the extension *.bin.
+\item the seismograms \texttt{OUTPUT\_FILES/*.sem*} are simple ASCII files with two columns: time in the first column and amplitude in the second, therefore they can be visualized with any tool you like, for instance ``\texttt{gnuplot}''; if you prefer to output binary seismograms in Seismic Unix format (which is a simple binary array dump) you can use parameter \texttt{SU\_FORMAT}, in which case all the seismograms will be written to a single file with the extension \texttt{*.bin}.
 Depending on your installation of the Seismic Unix package you can use one of these two commands:
 %
 \begin{verbatim}
@@ -725,7 +727,7 @@ Replace \texttt{surange} with \texttt{suxwigb} to see wiggle plots for the seism
 
 \item if you set flag \texttt{assign\_external\_model} to \texttt{.true.} in \texttt{DATA/Par\_file}, the velocity and density model that is given at the end of \texttt{DATA/Par\_file} is then ignored and overwritten by the external velocity and density model that you define yourself in \texttt{define\_external\_model.f90}
 
-\item when compiling with Intel ifort, use "\texttt{-assume byterecl}" option to create binary PNM images displaying the wave field
+\item when compiling with Intel ifort, use ``\texttt{-assume byterecl}'' option to create binary PNM images displaying the wave field
 
 \item there are a few useful scripts and Fortran routines in directory \texttt{UTILS/}.
 
@@ -738,13 +740,13 @@ Replace \texttt{surange} with \texttt{suxwigb} to see wiggle plots for the seism
 
 The \texttt{SOURCE} file located in the \texttt{DATA/} directory should be edited in the following way:
 %
-\begin{description}
+\begin{description}[font=\ttfamily]
 \item[source\_surf] Set this flag to \texttt{.true.} to force the source to be located at the surface of the model, otherwise
-the source will be placed inside the medium
+the sol be placed inside the medium
 
-\item[xs] source location x in meters
+\item[xs] source location $x$ in meters
 
-\item[zs] source location z in meters
+\item[zs] source location $z$ in meters
 
 \item[source\_type] Set this value equal to \texttt{1} for elastic forces or acoustic pressure,
 set this to \texttt{2} for moment tensor sources.
@@ -756,13 +758,13 @@ for a plane wave without converted nor reflected waves at the free surface, i.e.
 \texttt{2} the first derivative, \texttt{3} a Gaussian, \texttt{4} a Dirac or \texttt{5} a Heaviside source-time function.
 
 \item[f0] Set this to the dominant frequency of the source.
-For point-source simulations using a Heaviside source-time function (time\_function\_type "5"),
+For point-source simulations using a Heaviside source-time function (\texttt{time\_function\_type = 5}),
 we recommend setting the source frequency parameter \texttt{f0}
 equal to a high value, which corresponds to simulating a step source-time
 function, i.e., a moment-rate function that is a delta function.
 
-The \texttt{half duration} of a source is obtained by \texttt{1/f0}.
-If the code will use a Gaussian source-time function (time\_function\_type "3")
+The \texttt{half duration} of a source is obtained by $1/\mathtt{f0}$.
+If the code will use a Gaussian source-time function (\texttt{time\_function\_type = 3})
 (i.e., a signal with a shape similar to a `smoothed triangle', as
 explained in \citet{KoTr02a} and shown in Fig~\ref{fig:gauss.vs.triangle}), the
 source-time function uses a half-width of \texttt{half duration}. We prefer
@@ -801,7 +803,7 @@ in the post-processing. This time shift parameter can be non-zero when using mul
 
 \item[anglesource] angle of the source (for a force only); for a plane wave, this is the incidence angle. For moment tensor sources this parameter is unused.
 
-\item[Mxx,Mzz,Mxz] Moment tensor components (valid only for moment tensor sources, source\_type "2").
+\item[Mxx,Mzz,Mxz] Moment tensor components (valid only for moment tensor sources, \texttt{source\_type = 2}).
 Note that the units for the components of a moment tensor source are different in SPECFEM2D and in SPECFEM3D:
 %
 \begin{description}
@@ -828,9 +830,9 @@ Dunzhu Li, Don Helmberger, Robert W. Clayton and Daoyuan Sun, submitted to Geoph
 
 Note, the zero time of the simulation corresponds to the center of the triangle/Gaussian,
 or the centroid time of the earthquake. The start time of the simulation
-is $t=-1.2*\texttt{half duration} + \texttt{t0}$ (the factor 1.2 is to make sure the moment
+is $t=-1.2*\mathtt{half~duration} + \mathtt{t0}$ (the factor 1.2 is to make sure the moment
 rate function is very close to zero when starting the simulation; Heaviside functions use a factor 2.0),
-the half duration is obtained by 1/f0.
+the half duration is obtained by $1/\mathtt{f0}$.
 If you prefer, you can fix this start time by setting the parameter \texttt{USER\_T0} in the \texttt{constants.h} file
 to a positive, non-zero value. The simulation in that case would start at a starting time equal to \texttt{-USER\_T0}.
 
@@ -852,12 +854,12 @@ For elastic materials, you have these additional options:
 %
 \begin{description}
 \item[P-SV:]
-To run a P-SV waves calculation propagating in the x-z plane,
+To run a P-SV waves calculation propagating in the $x$-$z$ plane,
 set \texttt{p\_sv = .true.} in the \texttt{Par\_file}.
 
 \item[SH:]
-To run a SH (membrane) waves calculation travelling in the x-z plane with a
-y-component of motion, set \texttt{p\_sv = .false.}
+To run a SH (membrane) waves calculation travelling in the $x$-$z$ plane with a
+$y$-component of motion, set \texttt{p\_sv = .false.}
 
 \end{description}
 %
@@ -927,19 +929,21 @@ where the notations are for instance \texttt{duz\_dx = d(Uz) / dx}.
 
 Check the following new inputs in \texttt{Par\_file}:
 %
-\begin{description}
-\item In section \textbf{"\# geometry of model and mesh description"}:\\
+\begin{description}[style=nextline, labelindent=1em, font=\normalfont]
+\item[In section \textbf{"\# geometry of model and mesh description"}:]
 \texttt{TURN\_VISCATTENUATION\_ON}, \texttt{Q0}, and \texttt{FREQ0} deal with viscous damping in a poroelastic medium.
 \texttt{Q0} is the quality factor set at the central frequency \texttt{FREQ0}. For more details
 see \cite{MoTr08}.
 
-\item In section \textbf{"\# time step parameters"}:\\
-\texttt{SIMULATION\_TYPE} defines the type of simulations \\
-(1) forward simulation \\
-(2) UNUSED (purposely, for compatibility with the numbering convention used in our 3D codes) \\
-(3) adjoint method and kernels calculation
+\item[In section \textbf{"\# time step parameters"}:]
+\texttt{SIMULATION\_TYPE} defines the type of simulation
+  \begin{enumerate}[label=(\arabic*)]
+    \item forward simulation
+    \item UNUSED (purposely, for compatibility with the numbering convention used in our 3D codes)
+    \item adjoint method and kernels calculation
+  \end{enumerate}
 
-\item In section \textbf{"\# source parameters"}:\\
+\item[In section \textbf{"\# source parameters"}:]
 The code now support multiple sources.
 \texttt{NSOURCE} is the number of sources.
 Parameters of the sources are displayed in the file \texttt{SOURCE}, which must be
@@ -951,54 +955,59 @@ not in dyne.cm as in the \texttt{DATA/CMTSOLUTION} source file of the 3D version
 \includegraphics[width=5in]{figures/source_timing.pdf}
 \caption{Example of timing for three sources. The center of the first source
 triangle is defined to be time zero. Note that this is NOT in general
-the hypocentral time, or the start time of the source (marked as tstart).
+the hypocentral time, or the start time of the source (marked as \texttt{tstart}).
 The time shift parameter \texttt{t0} in the \texttt{SOURCE} file
-would be t1(=0), t2, t3 in this case, and the half-duration parameter, resp. \texttt{f0},
-would be hdur1=1/f0\_1, hdur2=1/f0\_2, hdur3=1/f0\_3 for the sources 1, 2, 3 respectively.}
+would be $t1(=0)$, $t2$, $t3$ in this case, and the half-duration parameter, \texttt{f0},
+would be $\mathtt{hdur1}=1/\mathtt{f0}_1$, $\mathtt{hdur2}=1/\mathtt{f0}_2$,
+$\mathtt{hdur3}=1/\mathtt{f0}_3$ for the sources 1, 2, 3 respectively.}
 \label{fig:source_timing}
 \end{figure}
 %%%
 
 
-\item In section \textbf{"\# receiver line parameters for seismograms"}:\\
+\item[In section \textbf{"\# receiver line parameters for seismograms"}:]
 \texttt{SAVE\_FORWARD} determines if the last frame of a forward simulation is saved (\texttt{.true.}) or not (\texttt{.false})
 
-\item In section \textbf{"\# define models...."}:\\
-There are three possible types of models:\\
- \texttt{I}:   (model\_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0) or\\
- \texttt{II}:  (model\_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0) or\\
- \texttt{III}: (model\_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu). \\
+\item[In section \textbf{"\# define models...."}:]
+There are three possible types of models:
+  \begin{enumerate}[label=\ttfamily \Roman*:]
+    \item (\texttt{model\_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0}) or
+    \item (\texttt{model\_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0}) or
+    \item (\texttt{model\_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu}).
+  \end{enumerate}
 
-For isotropic elastic/acoustic material use \texttt{I} and set Vs to zero to  make a given model acoustic, for anisotropic elastic use \texttt{II},
+For isotropic elastic/acoustic material use \texttt{I} and set \texttt{Vs} to zero to make a given model acoustic, for anisotropic elastic use \texttt{II},
 and for isotropic poroelastic material use \texttt{III}. The mesh can contain acoustic, elastic, and poroelastic models simultaneously.
 
-For anisotropic elastic media the last three parameters, c12 c23 c25, are used only when the user asks the code to compute pressure for display
+For anisotropic elastic media the last three parameters, \texttt{c12 c23 c25}, are used only when the user asks the code to compute pressure for display
 or seismogram recording purposes. Thus, if you do not know these parameters for your anisotropic material and/or if you do not plan to display or record pressure you
 can ignore them and set them to zero. When pressure is used these three parameters are needed because the code needs to compute $\sigma_{yy}$,
 which is not equal to zero in the plane strain formulation.
 
-rho\_s = solid density\\
-rho\_f = fluid density\\
-phi = porosity\\
-tort = tortuosity\\
-permxx = xx component of permeability tensor\\
-permxz = xz,zx components of permeability tensor\\
-permzz = zz component of permeability tensor\\
-kappa\_s = solid bulk modulus\\
-kappa\_f= fluid bulk modulus\\
-kappa\_fr= frame bulk modulus\\
-eta\_f = fluid viscosity\\
-mu\_fr = frame shear modulus\\
-Qmu = shear quality factor\\
+\begin{description}[font=\ttfamily, labelindent=1em, labelsep=1ex]
+\item[rho\_s] = solid density
+\item[rho\_f] = fluid density
+\item[phi] = porosity
+\item[tort] = tortuosity
+\item[permxx] = xx component of permeability tensor
+\item[permxz] = xz,zx components of permeability tensor
+\item[permzz] = zz component of permeability tensor
+\item[kappa\_s] = solid bulk modulus
+\item[kappa\_f] = fluid bulk modulus
+\item[kappa\_fr] = frame bulk modulus
+\item[eta\_f] = fluid viscosity
+\item[mu\_fr] = frame shear modulus
+\item[Qmu] = shear quality factor
+\end{description}
 
-Note: for the poroelastic case, mu\_s is irrelevant.
+Note: for the poroelastic case, \texttt{mu\_s} is irrelevant.
 For details on the poroelastic theory see \cite{MoTr08}.
 
 \end{description}
 
 \texttt{get\_poroelastic\_velocities.f90} allows to compute cpI, cpII, and cs function of
-the source dominant frequency. Notice that for this calculation we use permxx
-and the dominant frequency of the first source , f0(1). Caution if you use
+the source dominant frequency. Notice that for this calculation we use \texttt{permxx}
+and the dominant frequency of the first source, f0(1). Caution if you use
 several sources with different frequencies and if you consider anistropic
 permeability.
 
@@ -1015,7 +1024,7 @@ To simulate propagation of incoming plane waves in the simulation domain, initia
 \item{\verb+SOURCE+:}
   \begin{itemize}
   \item \verb+zs+ has to be the same as the height of the simulation domain defined in \verb+interfacesfile+.
-  \item \verb+xs+ is the x-coordinate of the intersection of the initial plane wave front with the free surface.
+  \item \verb+xs+ is the $x$-coordinate of the intersection of the initial plane wave front with the free surface.
   \item \verb+source_type+ = 1 for a plane P wave, 2 for a plane SV wave, 3 for a Rayleigh wave.
   \item \verb+angleforce+ can be negative to indicate a plane wave incident from the right (instead of the left)
   \end{itemize}
@@ -1031,13 +1040,13 @@ Currently the last two methods are not implemented for poroelastic media.
 According to \cite{DeSe10} and \cite{BeBoBa06}, with different degrees $N=NGLLX-1$ of the GLL basis functions the CFL bounds are given in the following tables.
 Note that by default the SPECFEM solver uses $NGLLX = 5$ and thus a degree $N = 4$, which is thus the value you should use
 in most cases in the following tables.
-You can directly compare these values with the value given in sentence 'Max stability for P wave velocity' in file
-\texttt{output\_solver.txt} to see whether you set the correct $\Delta_t$ in \texttt{Par\_file} or not.
+You can directly compare these values with the value given in sentence `Max stability for P wave velocity' in file
+\texttt{output\_solver.txt} to see whether you set the correct $\Delta t$ in \texttt{Par\_file} or not.
 For elastic simulation, the
-CFL value given in \texttt{output\_solver.txt} does not consider the Vp/Vs ratio, but the CFL limit slight decreases when Vp/Vs increases.
+CFL value given in \texttt{output\_solver.txt} does not consider the $V_p/V_s$ ratio, but the CFL limit slight decreases when $V_p/V_s$ increases.
 In viscoelastic simulations the CFL limit does not change compared to the elastic case because we use a rational approximation of a constant quality factor Q, which has no attenuation effect on zero-frequency waves.
-Additionally, if you use C-PML absorbing layers in your simulations, which are implemented for the Newmark and LDDRK4-6 techniques but not for the classical RK4), the CFL upper limit decreases to approximately $95\%$ of the limit without absorbing layers in the case of Newmark and to $85\%$ in the case of LDDRK4-6.
-\begin{table}[hb]
+Additionally, if you use C-PML absorbing layers in your simulations, which are implemented for the Newmark and LDDRK4-6 techniques but not for the classical RK4), the CFL upper limit decreases to approximately 95\% of the limit without absorbing layers in the case of Newmark and to 85\% in the case of LDDRK4-6.
+\begin{table}[ht]
 \caption{CFL upper bound for an acoustic (fluid) simulation.}
 % title of Table
 \centering
@@ -1069,8 +1078,8 @@ Degree $N$ & Newmark & LDDRK4-6 & RK4 \\ [0.5ex]
 % is used to refer this table in the text
 \end{table}
 %
-\begin{table}[t]
-\caption{CFL upper bound for an elastic simulation with Vp/Vs = $\sqrt{2}$.}
+\begin{table}[hb]
+\caption{CFL upper bound for an elastic simulation with $V_p/V_s = \sqrt{2}$.}
 % title of Table
 \centering
 % used for centering table
@@ -1163,7 +1172,7 @@ Output files (for example for the elastic case):
 \item \texttt{snapshot\_rhop\_alpha\_beta*****}
 \end{itemize}
 which are the primary moduli kernels and the phase velocities kernels respectively, in ascii format
-and at the local level, that is as "kernels(i,j,ispec)".
+and at the local level, that is as ``\texttt{kernels(i,j,ispec)}''.
 
 \end{enumerate}
 
@@ -1187,11 +1196,11 @@ The algorithm is simple:
 %
 That is all. Step 3 has some tricks in implementation, but which can be skipped by regular users.
 
-If you look into SPECFEM2D, besides "rhop\_ac\_kl" and "rho\_ac\_kl",
-there are more variables such as "kappa\_ac\_kl" and "rho\_el\_kl" etc.
-"rho" denotes density $\rho$ ("kappa" for bulk modulus $\kappa$ etc.),
-"ac" denotes acoustic ("el" for elastic),
-"kl" means kernel (and you may find "k" as well, which is the interaction at each time step, i.e., before doing time integration).
+If you look into SPECFEM2D, besides ``\texttt{rhop\_ac\_kl}'' and ``\texttt{rho\_ac\_kl}'',
+there are more variables such as ``\texttt{kappa\_ac\_kl}'' and ``\texttt{rho\_el\_kl}'' etc.
+``\texttt{rho}'' denotes density $\rho$ (``\texttt{kappa}'' for bulk modulus $\kappa$ etc.),
+``\texttt{ac}'' denotes acoustic (``\texttt{el}'' for elastic),
+``\texttt{kl}'' means kernel (and you may find ``\texttt{k}'' as well, which is the interaction at each time step, i.e., before doing time integration).
 
 \section{Caution}
 
@@ -1202,10 +1211,12 @@ Please note that:
 
 \item you will need \texttt{S****.AA.BXX.adj}, \texttt{S****.AA.BXY.adj} and \texttt{S****.AA.BXZ.adj}
 to be present in directory \texttt{SEM/} even if you are just running an acoustic or
-poroelastic adjoint simulation.\\
-\texttt{S****.AA.BXX.adj} is the only relevant component for an acoustic case.\\
-\texttt{S****.AA.BXX.adj} and \texttt{S****.AA.BXZ.adj} are the only relevant components for a
+poroelastic adjoint simulation.
+  \begin{itemize}
+    \item \texttt{S****.AA.BXX.adj} is the only relevant component for an acoustic case.
+    \item \texttt{S****.AA.BXX.adj} and \texttt{S****.AA.BXZ.adj} are the only relevant components for a
 poroelastic case.
+  \end{itemize}
 \end{itemize}
 
 
@@ -1219,7 +1230,7 @@ The SPECFEM2D package provides compatibility with industrial (oil and gas indust
 These features include importing Seismic Unix (SU) format wavespeed models into SPECFEM2D,
 output of seismograms in SU format with a few key parameters defined in the trace headers
 and reading adjoint sources in SU format etc.
-There is one example given in EXAMPLES/INDUSTRIAL\_FORMAT, which you can follow.
+There is one example given in \texttt{EXAMPLES/INDUSTRIAL\_FORMAT}, which you can follow.
 
 We also changed the relationship between adjoint potential and adjoint displacement in fluid region
 (the relationship between forward potential and forward displacement remains the same as previously defined).
@@ -1303,23 +1314,23 @@ absorbing conditions:
 The first number (180) is the number of absorbing elements (nelemabs in the
 code).
 Then the columns are:
-\begin{itemize}
-\item column 1 = the element number
-\item column 2 = the number of nodes of this element that form the absorbing surface
-\item column 3 = the first node
-\item column 4 = the second node
-\end{itemize}
+\begin{enumerate}[wide=1em, label=column \arabic*:]
+\item the element number
+\item the number of nodes of this element that form the absorbing surface
+\item the first node
+\item the second node
+\end{enumerate}
 
 \texttt{canyon\_free\_surface\_file} refers to the elements of the free surface
 (relevant for enforcing free surface condition for acoustic media):
 The first number (160) is the number of  elements of the free surface.
 Then the columns are (similar to the absorbing case):
-\begin{itemize}
-\item column 1 = the element number
-\item column 2 = the number of nodes of this element that form the absorbing surface
-\item column 3 = the first node
-\item column 4 = the second node
-\end{itemize}
+\begin{enumerate}[wide=1em, label=column \arabic*:]
+\item the element number
+\item the number of nodes of this element that form the absorbing surface
+\item the first node
+\item the second node
+\end{enumerate}
 
 Concerning the free surface description file, nodes/edges pertaining to
 elastic elements are discarded when the file is read (if for whatever
