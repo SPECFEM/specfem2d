@@ -92,20 +92,20 @@
        tm = t - ONE
 
 !----  corner nodes
-       shape2D(1) = QUART * sm * tm
-       shape2D(2) = - QUART * sp * tm
-       shape2D(3) = QUART * sp * tp
-       shape2D(4) = - QUART * sm * tp
+       shape2D(1) = QUARTER * sm * tm
+       shape2D(2) = - QUARTER * sp * tm
+       shape2D(3) = QUARTER * sp * tp
+       shape2D(4) = - QUARTER * sm * tp
 
-       dershape2D(1,1) = QUART * tm
-       dershape2D(1,2) = - QUART * tm
-       dershape2D(1,3) =  QUART * tp
-       dershape2D(1,4) = - QUART * tp
+       dershape2D(1,1) = QUARTER * tm
+       dershape2D(1,2) = - QUARTER * tm
+       dershape2D(1,3) =  QUARTER * tp
+       dershape2D(1,4) = - QUARTER * tp
 
-       dershape2D(2,1) = QUART * sm
-       dershape2D(2,2) = - QUART * sp
-       dershape2D(2,3) =  QUART * sp
-       dershape2D(2,4) = - QUART * sm
+       dershape2D(2,1) = QUARTER * sm
+       dershape2D(2,2) = - QUARTER * sp
+       dershape2D(2,3) =  QUARTER * sp
+       dershape2D(2,4) = - QUARTER * sm
 
 !----    9-node element
   else if(ngnod == 9) then
@@ -121,20 +121,20 @@
        st = s * t
 
 !----  corner nodes
-       shape2D(1) = QUART * sm * st * tm
-       shape2D(2) = QUART * sp * st * tm
-       shape2D(3) = QUART * sp * st * tp
-       shape2D(4) = QUART * sm * st * tp
+       shape2D(1) = QUARTER * sm * st * tm
+       shape2D(2) = QUARTER * sp * st * tm
+       shape2D(3) = QUARTER * sp * st * tp
+       shape2D(4) = QUARTER * sm * st * tp
 
-       dershape2D(1,1) = QUART * tm * t * (s2 - ONE)
-       dershape2D(1,2) = QUART * tm * t * (s2 + ONE)
-       dershape2D(1,3) = QUART * tp * t * (s2 + ONE)
-       dershape2D(1,4) = QUART * tp * t * (s2 - ONE)
+       dershape2D(1,1) = QUARTER * tm * t * (s2 - ONE)
+       dershape2D(1,2) = QUARTER * tm * t * (s2 + ONE)
+       dershape2D(1,3) = QUARTER * tp * t * (s2 + ONE)
+       dershape2D(1,4) = QUARTER * tp * t * (s2 - ONE)
 
-       dershape2D(2,1) = QUART * sm * s * (t2 - ONE)
-       dershape2D(2,2) = QUART * sp * s * (t2 - ONE)
-       dershape2D(2,3) = QUART * sp * s * (t2 + ONE)
-       dershape2D(2,4) = QUART * sm * s * (t2 + ONE)
+       dershape2D(2,1) = QUARTER * sm * s * (t2 - ONE)
+       dershape2D(2,2) = QUARTER * sp * s * (t2 - ONE)
+       dershape2D(2,3) = QUARTER * sp * s * (t2 + ONE)
+       dershape2D(2,4) = QUARTER * sm * s * (t2 + ONE)
 
 !----  midside nodes
        shape2D(5) = HALF * tm * t * (ONE - ss)

@@ -165,7 +165,7 @@
            omega_coa = TWO * PI * f0(i_source)
            omegat =  omega_coa * ( time - DecT )
            source_time_function(i_source,it,i_stage) = factor(i_source) * HALF * &
-                 sin( omegat ) * ( ONE - cos( QUART * omegat ) )
+                 sin( omegat ) * ( ONE - cos( QUARTER * omegat ) )
            !source_time_function(i_source,it,i_stage) = - factor(i_source) * HALF / omega_coa / omega_coa * &
            !      ( sin(omegat) - 8.d0 / 9.d0 * sin(3.d0/ 4.d0 * omegat) - 8.d0 / 25.d0 * sin(5.d0 / 4.d0 * omegat) )
 
