@@ -518,7 +518,7 @@
   !---- print element group main parameters
   if (myrank == 0 .and. ipass == 1) then
     write(IOUT,107)
-    write(IOUT,207) nspec,ngnod,NGLLX,NGLLZ,NGLLX*NGLLZ,pointsdisp,numat,nelemabs
+    write(IOUT,207) nspec,ngnod,NGLLX,NGLLZ,NGLLX*NGLLZ,pointsdisp,numat
   endif
 
   ! output formats
@@ -530,8 +530,7 @@
                'Number of points in Y-direction . . .  (NGLLZ) =',i7,/5x, &
                'Number of points per element. . .(NGLLX*NGLLZ) =',i7,/5x, &
                'Number of points for display . . .(pointsdisp) =',i7,/5x, &
-               'Number of element material sets . . .  (numat) =',i7,/5x, &
-               'Number of absorbing elements . . . .(nelemabs) =',i7)
+               'Number of element material sets . . .  (numat) =',i7)
 
   end subroutine read_databases_coorg_elem
 
@@ -683,7 +682,7 @@
                             ibegin_edge3,iend_edge3,ibegin_edge4,iend_edge4, &
                             numabs,codeabs,typeabs,perm,antecedent_list, &
                             nspec_left,nspec_right,nspec_bottom,nspec_top, &
-                            ib_right,ib_left,ib_bottom,ib_top)
+                            ib_right,ib_left,ib_bottom,ib_top,PML_BOUNDARY_CONDITIONS)
 
 ! reads in absorbing edges
 
@@ -700,7 +699,7 @@
     ibegin_edge3,iend_edge3,ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2
   logical, dimension(4,nelemabs) :: codeabs
   integer, dimension(nelemabs) :: typeabs
-  logical :: anyabs
+  logical :: anyabs,PML_BOUNDARY_CONDITIONS
   integer, dimension(nspec) :: perm,antecedent_list
   integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
 
@@ -840,7 +839,7 @@
     endif
 #endif
 
-    if (myrank == 0 .and. ipass == 1) then
+    if (myrank == 0 .and. ipass == 1 .and. .not. PML_BOUNDARY_CONDITIONS) then
       write(IOUT,*)
       write(IOUT,*) 'Number of absorbing elements: ',nelemabs_tot
       write(IOUT,*) '  nspec_left = ',nspec_left_tot
