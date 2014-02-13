@@ -124,10 +124,16 @@
   if (NZ_IMAGE_color > 65534) &
     call exit_MPI('output image too big: NZ_IMAGE_color > 65534; increase factor_subsample_image in DATA/Par_file.')
 
-  if (NX_IMAGE_color > NX_NZ_IMAGE_MAX) call exit_MPI( &
+  if (NX_IMAGE_color > NX_NZ_IMAGE_MAX) then
+    print *,'NX_IMAGE_color,NX_NZ_IMAGE_MAX = ',NX_IMAGE_color,NX_NZ_IMAGE_MAX
+    call exit_MPI( &
       'output image too big: NX_IMAGE_color > NX_NZ_IMAGE_MAX; increase factor_subsample_image or change NX_NZ_IMAGE_MAX.')
-  if (NZ_IMAGE_color > NX_NZ_IMAGE_MAX) call exit_MPI( &
+  endif
+  if (NZ_IMAGE_color > NX_NZ_IMAGE_MAX) then
+    print *,'NZ_IMAGE_color,NX_NZ_IMAGE_MAX = ',NZ_IMAGE_color,NX_NZ_IMAGE_MAX
+    call exit_MPI( &
       'output image too big: NZ_IMAGE_color > NX_NZ_IMAGE_MAX; increase factor_subsample_image or change NX_NZ_IMAGE_MAX.')
+  endif
 
   end subroutine prepare_color_image_init
 

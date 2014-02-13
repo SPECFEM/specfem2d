@@ -1550,7 +1550,7 @@
                             ibegin_edge3,iend_edge3,ibegin_edge4,iend_edge4, &
                             numabs,codeabs,typeabs,perm,antecedent_list, &
                             nspec_left,nspec_right,nspec_bottom,nspec_top, &
-                            ib_right,ib_left,ib_bottom,ib_top)
+                            ib_right,ib_left,ib_bottom,ib_top,PML_BOUNDARY_CONDITIONS)
 
   if(anyabs .and. (.not. PML_BOUNDARY_CONDITIONS))then
     STACEY_BOUNDARY_CONDITIONS = .true.
