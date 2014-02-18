@@ -3253,10 +3253,6 @@
                                 ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
                                 rmass_inverse_elastic_three,&
                                 nelemabs,vsext,xix,xiz,gammaz,gammax, &
-!! DK DK added this for Guenneau, March 2012
-#ifdef USE_GUENNEAU
-                                coord, &
-#endif
                                 K_x_store,K_z_store,is_PML,&
                                 d_x_store,d_z_store,PML_BOUNDARY_CONDITIONS,region_CPML, &
                                 nspec_PML,spec_to_PML,time_stepping_scheme)

@@ -58,10 +58,6 @@
                                 ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
                                 rmass_inverse_elastic_three,&
                                 nelemabs,vsext,xix,xiz,gammaz,gammax, &
-!! DK DK added this for Guenneau, March 2012
-#ifdef USE_GUENNEAU
-                                coord, &
-#endif
                                 K_x_store,K_z_store,is_PML,&
                                 d_x_store,d_z_store,PML_BOUNDARY_CONDITIONS,region_CPML, &
                                 nspec_PML,spec_to_PML,time_stepping_scheme)
@@ -135,14 +131,7 @@
   logical :: PML_BOUNDARY_CONDITIONS,this_element_has_PML
   integer, dimension(nspec) :: region_CPML
 
-!! DK DK added this for Guenneau, March 2012
-#ifdef USE_GUENNEAU
-  double precision, dimension(NDIM,nglob_elastic), intent(in) :: coord
-  real(kind=CUSTOM_REAL) :: r, epsr, epsfi, x, y
-#endif
-!! DK DK added this for Guenneau, March 2012
-
-!! time scheme
+  ! time scheme
   integer :: time_stepping_scheme
 
   ! initialize mass matrix
@@ -231,17 +220,8 @@
             endif
           else
 
-!! DK DK added this for Guenneau, March 2012
-#ifdef USE_GUENNEAU
-  include "include_mass_Guenneau.f90"
-#endif
-!! DK DK added this for Guenneau, March 2012
-
             rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
                     + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
-#ifdef USE_GUENNEAU
-  endif
-#endif
             rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
           endif
 

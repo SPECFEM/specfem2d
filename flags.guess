@@ -48,7 +48,7 @@ case $FC in
         # for debugging: change -O3 -check nobounds to      -check all -debug -g -O0 -fp-stack-check -traceback -ftrapuv
         #
 ## DK DK
-## DK DK two other flags that can be useful:    USE_BINARY_FOR_EXTERNAL_MESH_DATABASE        USE_GUENNEAU
+## DK DK another flag that can be useful:    USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
 ## DK DK
         ;;
     gfortran|*/gfortran|f95|*/f95)
