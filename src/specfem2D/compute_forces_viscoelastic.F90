@@ -167,17 +167,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,rho_vp,rho_vs,tx,ty,tz,weight,xxi,zxi,xgamma,zgamma,jacobian1D
   real(kind=CUSTOM_REAL) :: displx,disply,displz,displn,spring_position,displtx,displty,displtz
 
-!! DK DK added this for Guenneau, March 2012
-#ifdef USE_GUENNEAU
-  integer :: kmato_ispec_outside_Guenneau
-  real(kind=CUSTOM_REAL) :: ct, st, r, a, inva, lambda, mu, x, y, &
-                            lambdaplus2mu, ct2 , ct3 , ct4 , twoct2 , st2 , st3 , st4
-  real(kind=CUSTOM_REAL) :: epsilon_xx,epsilon_xz,epsilon_zx,epsilon_zz
-  real(kind=CUSTOM_REAL) :: C1111, C1112, C1121, C1122, C1211, C1212, C1221, C1222, C2111, C2112, C2121, &
-                            C2122, C2211, C2212, C2221, C2222
-#endif
-!! DK DK added this for Guenneau, March 2012
-
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: tempx1,tempx2,tempy1,tempy2,tempz1,tempz2
 
   ! Jacobian matrix and determinant
@@ -747,12 +736,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
             sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
             sigma_zx = sigma_xz
 
-!! DK DK added this for Guenneau, March 2012
-#ifdef USE_GUENNEAU
-  include "include_stiffness_Guenneau.f90"
-#endif
-!! DK DK added this for Guenneau, March 2012
-
             if(PML_BOUNDARY_CONDITIONS .and. is_PML(ispec) .and. nspec_PML > 0) then
               if(ROTATE_PML_ACTIVATE)then
                 theta = -ROTATE_PML_ANGLE/180._CUSTOM_REAL*Pi
@@ -819,11 +802,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
             sigma_zz = c13*dux_dxl + c33*duz_dzl + c35*(duz_dxl + dux_dzl)
             sigma_xz = c15*dux_dxl + c35*duz_dzl + c55*(duz_dxl + dux_dzl)
           endif
-
-! the stress tensor is symmetric by default, unless defined otherwise
-#ifdef USE_GUENNEAU
-          sigma_zx = sigma_xz
-#endif
 
           ! weak formulation term based on stress tensor (non-symmetric form)
           ! also add GLL integration weights
