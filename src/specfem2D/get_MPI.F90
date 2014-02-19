@@ -55,7 +55,7 @@
                     inum_interfaces_poroelastic, &
                     ninterface_acoustic, ninterface_elastic, ninterface_poroelastic, &
                     mask_ispec_inner_outer, &
-                    myrank,ipass,coord)
+                    myrank,coord)
 
 ! sets up the MPI interface for communication between partitions
 
@@ -85,7 +85,7 @@
 
   logical, dimension(nspec), intent(inout)  :: mask_ispec_inner_outer
 
-  integer :: myrank,ipass
+  integer :: myrank
   double precision, dimension(NDIM,nglob) :: coord
 
   !local parameters
@@ -231,7 +231,7 @@
   ! outputs total number of MPI interface points
   call MPI_REDUCE(num_points2, num_points1, 1, MPI_INTEGER, &
                     MPI_SUM, 0, MPI_COMM_WORLD, ier)
-  if( myrank == 0 .and. ipass == 1 ) then
+  if( myrank == 0 ) then
     write(IOUT,*) 'total MPI interface points: ',num_points1
   endif
 
@@ -276,7 +276,7 @@
   call MPI_REDUCE(inum, num_points1, 1, MPI_INTEGER, &
                     MPI_SUM, 0, MPI_COMM_WORLD, ier)
 
-  if( myrank == 0 .and. ipass == 1 ) then
+  if( myrank == 0 ) then
     write(IOUT,*) '       acoustic interface points: ',num_points1
   endif
 
@@ -310,9 +310,7 @@
                     MPI_SUM, 0, MPI_COMM_WORLD, ier)
 
   if( myrank == 0 ) then
-    if( ipass == 1 ) then
-      write(IOUT,*) '       assembly acoustic MPI interface points:',num_points2
-    endif
+    write(IOUT,*) '       assembly acoustic MPI interface points:',num_points2
 
     ! they don't need to fit, somehow..
     !if( num_points2 /= num_points1 ) then

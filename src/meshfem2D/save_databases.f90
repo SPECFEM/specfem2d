@@ -197,9 +197,6 @@
     write(15,*) 'POWER_DISPLAY_COLOR'
     write(15,*) POWER_DISPLAY_COLOR
 
-    write(15,*) 'PERFORM_CUTHILL_MCKEE'
-    write(15,*) PERFORM_CUTHILL_MCKEE
-
     write(15,*) 'SU_FORMAT'
     write(15,*) SU_FORMAT
 

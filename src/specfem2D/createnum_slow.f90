@@ -42,7 +42,7 @@
 !
 !========================================================================
 
-  subroutine createnum_slow(knods,ibool,nglob,nspec,ngnod,myrank,ipass)
+  subroutine createnum_slow(knods,ibool,nglob,nspec,ngnod,myrank)
 
 ! generate the global numbering
 
@@ -50,7 +50,7 @@
 
   include "constants.h"
 
-  integer nglob,nspec,ngnod,myrank,ipass
+  integer nglob,nspec,ngnod,myrank
 
   integer knods(ngnod,nspec),ibool(NGLLX,NGLLZ,nspec)
 
@@ -63,7 +63,7 @@
 
 
 !----  create global mesh numbering
-  if(myrank == 0 .and. ipass == 1) then
+  if(myrank == 0) then
     write(IOUT,*)
     write(IOUT,*) 'Generating global mesh numbering (slow version)...'
     write(IOUT,*)
@@ -310,15 +310,6 @@
 
 ! verification de la coherence de la numerotation generee
   if(minval(ibool) /= 1 .or. maxval(ibool) /= nglob) call exit_MPI('Error while generating global numbering')
-
-! if(myrank == 0 .and. ipass == 1) then
-!   write(IOUT,*) 'Total number of points of the global mesh on slice 0: ',nglob,' distributed as follows:'
-!   write(IOUT,*)
-!   write(IOUT,*) 'Number of interior points: ',nglob-npedge-npcorn
-!   write(IOUT,*) 'Number of edge points (without corners): ',npedge
-!   write(IOUT,*) 'Number of corner points: ',npcorn
-!   write(IOUT,*)
-! endif
 
   end subroutine createnum_slow
 

@@ -44,7 +44,7 @@
 
   subroutine gmat01(density_array,porosity_array,tortuosity_array, &
                     aniso_array,permeability,poroelastcoef, &
-                    numat,myrank,ipass,QKappa_array,Qmu_array, &
+                    numat,myrank,QKappa_array,Qmu_array, &
                     freq0,Q0,f0,ATTENUATION_PORO_FLUID_PART)
 
 ! reads properties of a 2D isotropic or anisotropic linear elastic element
@@ -52,7 +52,7 @@
   implicit none
   include "constants.h"
 
-  integer :: numat,myrank,ipass
+  integer :: numat,myrank
   double precision :: density_array(2,numat),poroelastcoef(4,3,numat),porosity_array(numat)
   double precision :: aniso_array(9,numat),tortuosity_array(numat),permeability(3,numat)
   double precision :: QKappa_array(numat),Qmu_array(numat)
@@ -86,7 +86,7 @@
   QKappa_array(:) = 9999.
   Qmu_array(:) = 9999.
 
-  if(myrank == 0 .and. ipass == 1) write(IOUT,100) numat
+  if(myrank == 0) write(IOUT,100) numat
 
   read(IIN,"(a80)") datlin
   read(IIN,"(a80)") datlin
@@ -277,7 +277,7 @@
      !
      !----    check what has been read
      !
-     if(myrank == 0 .and. ipass == 1) then
+     if(myrank == 0) then
         if(indic == 1) then
            ! material can be acoustic (fluid) or elastic (solid)
            if(poroelastcoef(2,1,n) > TINYVAL) then    ! elastic
