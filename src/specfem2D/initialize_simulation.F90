@@ -44,8 +44,7 @@
 !========================================================================
 
 
-  subroutine initialize_simulation(nproc,myrank,NUMBER_OF_PASSES, &
-                  ninterface_acoustic,ninterface_elastic,ninterface_poroelastic)
+  subroutine initialize_simulation(nproc,myrank,ninterface_acoustic,ninterface_elastic,ninterface_poroelastic)
 
 #ifdef USE_MPI
   use :: mpi
@@ -53,7 +52,7 @@
   implicit none
   include "constants.h"
 
-  integer :: nproc,myrank,NUMBER_OF_PASSES
+  integer :: nproc,myrank
   integer :: ninterface_acoustic, ninterface_elastic,ninterface_poroelastic
 
   ! local parameters
@@ -71,18 +70,9 @@
   call MPI_COMM_SIZE(MPI_COMM_WORLD,nproc,ier)
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
   if( ier /= 0 ) call exit_MPI('error MPI initialization')
-
-  ! this is only used in the case of MPI because it distinguishes between inner and outer element
-  ! in the MPI partitions, which is meaningless in the serial case
-  if(FURTHER_REDUCE_CACHE_MISSES) then
-    NUMBER_OF_PASSES = 2
-  else
-    NUMBER_OF_PASSES = 1
-  endif
 #else
   nproc = 1
   myrank = 0
-  NUMBER_OF_PASSES = 1   ! assign dummy value for now, will be changed later if needed
 #endif
 
   ninterface_acoustic = 0

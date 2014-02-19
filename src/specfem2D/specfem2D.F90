@@ -403,9 +403,6 @@
 ! non linear display to enhance small amplitudes in color images
   double precision :: POWER_DISPLAY_COLOR
 
-! perform inverse Cuthill-McKee (1969) permutation for mesh numbering
-  logical :: PERFORM_CUTHILL_MCKEE
-
 ! output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
   logical :: SU_FORMAT
 
@@ -823,10 +820,9 @@
   integer count_left,count_right,count_bottom
   logical :: over_critical_angle
 
-! further reduce cache misses inner/outer in two passes in the case of an MPI simulation
-  integer :: ipass,ispec_inner,ispec_outer,NUMBER_OF_PASSES
+! inner/outer elements in the case of an MPI simulation
+  integer :: ispec_inner,ispec_outer
   integer :: nglob_outer,nglob_inner
-  integer, dimension(:), allocatable :: perm,antecedent_list,check_perm
 
 ! arrays for plotpost
   integer :: d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
@@ -1061,15 +1057,11 @@
   ! force Flush-To-Zero if available to avoid very slow Gradual Underflow trapping
   call force_ftz()
 
-  call initialize_simulation(nproc,myrank,NUMBER_OF_PASSES, &
-                  ninterface_acoustic,ninterface_elastic,ninterface_poroelastic)
+  call initialize_simulation(nproc,myrank,ninterface_acoustic,ninterface_elastic,ninterface_poroelastic)
   if(nproc < 1) stop 'should have nproc >= 1'
 
   ! starts reading in Database file
-  ! it is necessary to duplicate this call before the loop on ipass = 1,NUMBER_OF_PASSES
-  ! because we need to read the value of logical flag PERFORM_CUTHILL_MCKEE
-  ipass = 1
-  call read_databases_init(myrank,ipass, &
+  call read_databases_init(myrank, &
                   simulation_title,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo,nproc_read_from_database, &
                   output_grid_Gnuplot,interpol,NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS, &
                   NSTEP_BETWEEN_OUTPUT_IMAGES,PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,NELEM_PML_THICKNESS, &
@@ -1084,7 +1076,7 @@
                   save_binary_seismograms_single,save_binary_seismograms_double,DRAW_SOURCES_AND_RECEIVERS, &
                   Q0,freq0,p_sv,NSTEP,deltat,NSOURCES, &
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
-                  POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, time_stepping_scheme, &
+                  POWER_DISPLAY_COLOR,SU_FORMAT,USER_T0, time_stepping_scheme, &
                   ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL,&
                   read_external_mesh,save_ASCII_kernels)
 
@@ -1097,42 +1089,9 @@
   npgeo_ori = npgeo
   if(ADD_A_SMALL_CRACK_IN_THE_MEDIUM) npgeo = npgeo + NB_POINTS_TO_ADD_TO_NPGEO
 
-#ifdef USE_MPI
-  if(PERFORM_CUTHILL_MCKEE) then
-    NUMBER_OF_PASSES = 2
-  else
-    NUMBER_OF_PASSES = 1
-  endif
-#endif
-
-  ! reduction of cache misses inner/outer in two passes
-  do ipass = 1,NUMBER_OF_PASSES
-
-  ! starts reading in Database file
-    if(ipass > 1) &
-       call read_databases_init(myrank,ipass, &
-                      simulation_title,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo,nproc_read_from_database, &
-                      output_grid_Gnuplot,interpol,NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS, &
-                      NSTEP_BETWEEN_OUTPUT_IMAGES,PML_BOUNDARY_CONDITIONS,NELEM_PML_THICKNESS, &
-                      NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS,subsamp_seismos, &
-                      imagetype_JPEG,imagetype_wavefield_dumps, &
-                      output_postscript_snapshot,output_color_image,colors,numbers, &
-                      meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows, &
-                      anglerec,initialfield,add_Bielak_conditions, &
-                      seismotype,imagetype_postscript,assign_external_model,READ_EXTERNAL_SEP_FILE, &
-                      output_grid_ASCII,output_energy,output_wavefield_dumps,use_binary_for_wavefield_dumps, &
-                      ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms, &
-                      save_binary_seismograms_single,save_binary_seismograms_double,DRAW_SOURCES_AND_RECEIVERS, &
-                      Q0,freq0,p_sv,NSTEP,deltat,NSOURCES, &
-                      factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
-                      POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0, time_stepping_scheme, &
-                      ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL,&
-                      read_external_mesh)
-
   !
   !--- source information
   !
-  if(ipass == 1) then
     allocate( source_type(NSOURCES) )
     allocate( time_function_type(NSOURCES) )
     allocate( x_source(NSOURCES) )
@@ -1155,7 +1114,6 @@
     allocate( is_proc_source(NSOURCES) )
     allocate( nb_proc_source(NSOURCES) )
     allocate( sourcearray(NSOURCES,NDIM,NGLLX,NGLLZ) )
-  endif
 
   ! reads in source infos
   call read_databases_sources(NSOURCES,source_type,time_function_type, &
@@ -1164,7 +1122,7 @@
   ! sets source parameters
   call set_sources(myrank,NSOURCES,source_type,time_function_type, &
                       x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource,aval, &
-                      t0,initialfield,ipass,deltat,USER_T0)
+                      t0,initialfield,deltat,USER_T0)
 
   !----  define time stepping scheme
   if(time_stepping_scheme == 1)then
@@ -1184,20 +1142,19 @@
   endif
 
   !---- read the spectral macrobloc nodal coordinates
-  if(ipass == 1) allocate(coorg(NDIM,npgeo))
+  allocate(coorg(NDIM,npgeo))
 
   ! reads the spectral macrobloc nodal coordinates
   ! and basic properties of the spectral elements
-  !! DK DK  call read_databases_coorg_elem(myrank,ipass,npgeo,coorg,numat,ngnod,nspec, &
+  !! DK DK  call read_databases_coorg_elem(myrank,npgeo,coorg,numat,ngnod,nspec, &
   !! DK DK Dec 2011: added a crack manually
-  call read_databases_coorg_elem(myrank,ipass,npgeo_ori,coorg,numat,ngnod,nspec, &
+  call read_databases_coorg_elem(myrank,npgeo_ori,coorg,numat,ngnod,nspec, &
                               pointsdisp,plot_lowerleft_corner_only, &
                               nelemabs,nelem_acoustic_surface, &
                               num_fluid_solid_edges,num_fluid_poro_edges, &
                               num_solid_poro_edges,nnodes_tangential_curve)
 
   !---- allocate arrays
-  if(ipass == 1) then
     allocate(shape2D(ngnod,NGLLX,NGLLZ))
     allocate(dershape2D(NDIM,ngnod,NGLLX,NGLLZ))
     allocate(shape2D_display(ngnod,pointsdisp,pointsdisp))
@@ -1234,25 +1191,19 @@
     allocate(inv_tau_sigma_nu2_sent(N_SLS))
     allocate(phi_nu1_sent(N_SLS))
     allocate(phi_nu2_sent(N_SLS))
-  endif
 
   !
   !---- read the material properties
   !
   call gmat01(density,porosity,tortuosity,anisotropy,permeability,poroelastcoef,numat,&
-              myrank,ipass,QKappa_attenuation,Qmu_attenuation,freq0,Q0,f0(1),ATTENUATION_PORO_FLUID_PART)
+              myrank,QKappa_attenuation,Qmu_attenuation,freq0,Q0,f0(1),ATTENUATION_PORO_FLUID_PART)
   !
   !----  read spectral macrobloc data
   !
-  if(ipass == 1) then
-    allocate(antecedent_list(nspec))
-    allocate(perm(nspec))
-  endif
 
 !   DK DK add support for using pml in mpi mode with external mesh
   allocate(region_CPML(nspec))
-  call read_databases_mato(ipass,nspec,ngnod,kmato,knods, &
-                                perm,antecedent_list,region_CPML)
+  call read_databases_mato(nspec,ngnod,kmato,knods,region_CPML)
 
 !! DK DK Dec 2011: add a small crack (discontinuity) in the medium manually
   if(ADD_A_SMALL_CRACK_IN_THE_MEDIUM) then
@@ -1270,8 +1221,6 @@
     stop 'must have check_nb_points_to_add_to_npgeo == NB_POINTS_TO_ADD_TO_NPGEO when adding a crack manually'
 
   if(ngnod /= 4) stop 'must currently have ngnod == 4 when adding a crack manually'
-
-  if(PERFORM_CUTHILL_MCKEE) stop 'must not have PERFORM_CUTHILL_MCKEE when adding a crack manually'
 
   if(FAST_NUMBERING) stop 'must not have FAST_NUMBERING when adding a crack manually'
 
@@ -1366,7 +1315,6 @@
 #endif
 
   ! allocate memory variables for attenuation
-  if(ipass == 1) then
     allocate(e1(NGLLX,NGLLZ,nspec_allocate,N_SLS))
     allocate(e11(NGLLX,NGLLZ,nspec_allocate,N_SLS))
     allocate(e13(NGLLX,NGLLZ,nspec_allocate,N_SLS))
@@ -1411,7 +1359,6 @@
     e13_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
     allocate(Mu_nu1(NGLLX,NGLLZ,nspec))
     allocate(Mu_nu2(NGLLX,NGLLZ,nspec))
-  endif
 
 ! define the attenuation quality factors.
 ! they can be different for each element.
@@ -1433,7 +1380,6 @@
  enddo
 
 ! allocate memory variables for viscous attenuation (poroelastic media)
-  if(ipass == 1) then
     if(ATTENUATION_PORO_FLUID_PART) then
       allocate(rx_viscous(NGLLX,NGLLZ,nspec))
       allocate(rz_viscous(NGLLX,NGLLZ,nspec))
@@ -1458,14 +1404,12 @@
       allocate(viscox(NGLLX,NGLLZ,1))
       allocate(viscoz(NGLLX,NGLLZ,1))
     endif
-  endif
 
   !
   !----  read interfaces data
   !
   call read_databases_ninterface(ninterface,max_interface_size)
   if ( ninterface > 0 ) then
-    if(ipass == 1) then
        allocate(my_neighbours(ninterface))
        allocate(my_nelmnts_neighbours(ninterface))
        allocate(my_interfaces(4,max_interface_size,ninterface))
@@ -1478,13 +1422,9 @@
        allocate(inum_interfaces_acoustic(ninterface))
        allocate(inum_interfaces_elastic(ninterface))
        allocate(inum_interfaces_poroelastic(ninterface))
-    endif
-   call read_databases_interfaces(ipass,ninterface,nspec,max_interface_size, &
-                              my_neighbours,my_nelmnts_neighbours,my_interfaces, &
-                              perm,antecedent_list)
+   call read_databases_interfaces(ninterface,max_interface_size,my_neighbours,my_nelmnts_neighbours,my_interfaces)
 
   else
-    if(ipass == 1) then
        allocate(my_neighbours(1))
        allocate(my_nelmnts_neighbours(1))
        allocate(my_interfaces(1,1,1))
@@ -1497,7 +1437,6 @@
        allocate(inum_interfaces_acoustic(1))
        allocate(inum_interfaces_elastic(1))
        allocate(inum_interfaces_poroelastic(1))
-    endif
   endif
 
 
@@ -1510,7 +1449,6 @@
     anyabs = .true.
   endif
 
-  if(ipass == 1) then
     allocate(numabs(nelemabs))
     allocate(codeabs(4,nelemabs))
     allocate(typeabs(nelemabs))
@@ -1540,15 +1478,13 @@
     allocate(ib_bottom(nelemabs))
     allocate(ib_top(nelemabs))
 
-  endif
-
   !
   !----  read absorbing boundary data
   !
-  call read_databases_absorbing(myrank,ipass,nelemabs,nspec,anyabs, &
+  call read_databases_absorbing(myrank,nelemabs,nspec,anyabs, &
                             ibegin_edge1,iend_edge1,ibegin_edge2,iend_edge2, &
                             ibegin_edge3,iend_edge3,ibegin_edge4,iend_edge4, &
-                            numabs,codeabs,typeabs,perm,antecedent_list, &
+                            numabs,codeabs,typeabs, &
                             nspec_left,nspec_right,nspec_bottom,nspec_top, &
                             ib_right,ib_left,ib_bottom,ib_top,PML_BOUNDARY_CONDITIONS)
 
@@ -1560,8 +1496,7 @@
 
 
   if( anyabs ) then
-    ! Files to save absorbed waves needed to reconstruct backward wavefield for adjoint method
-    if(ipass == 1) then
+    ! files to save absorbed waves needed to reconstruct backward wavefield for adjoint method
       if(any_elastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3).and. (.not. PML_BOUNDARY_CONDITIONS)) then
         allocate(b_absorb_elastic_left(3,NGLLZ,nspec_left,NSTEP))
         allocate(b_absorb_elastic_right(3,NGLLZ,nspec_right,NSTEP))
@@ -1603,7 +1538,6 @@
         allocate(b_absorb_acoustic_bottom(1,1,1))
         allocate(b_absorb_acoustic_top(1,1,1))
       endif
-    endif
 
   else
 
@@ -1643,12 +1577,9 @@
     any_acoustic_edges = .false.
     nelem_acoustic_surface = 1
   endif
-  if( ipass == 1 ) then
-    allocate(acoustic_edges(4,nelem_acoustic_surface))
-    allocate(acoustic_surface(5,nelem_acoustic_surface))
-  endif
-  call read_databases_free_surf(ipass,nelem_acoustic_surface,nspec, &
-                            acoustic_edges,perm,antecedent_list,any_acoustic_edges)
+  allocate(acoustic_edges(4,nelem_acoustic_surface))
+  allocate(acoustic_surface(5,nelem_acoustic_surface))
+  call read_databases_free_surf(nelem_acoustic_surface,acoustic_edges,any_acoustic_edges)
   ! resets nelem_acoustic_surface
   if( any_acoustic_edges .eqv. .false. ) nelem_acoustic_surface = 0
 
@@ -1656,7 +1587,7 @@
   if(nelem_acoustic_surface > 0) then
     call construct_acoustic_surface ( nspec, ngnod, knods, nelem_acoustic_surface, &
                                      acoustic_edges, acoustic_surface)
-    if (myrank == 0 .and. ipass == 1) then
+    if (myrank == 0) then
       write(IOUT,*)
       write(IOUT,*) 'Number of free surface elements: ',nelem_acoustic_surface
     endif
@@ -1672,44 +1603,37 @@
     any_fluid_solid_edges = .false.
     num_fluid_solid_edges = 1
   endif
-  if(ipass == 1) then
-    allocate(fluid_solid_acoustic_ispec(num_fluid_solid_edges))
-    allocate(fluid_solid_acoustic_iedge(num_fluid_solid_edges))
-    allocate(fluid_solid_elastic_ispec(num_fluid_solid_edges))
-    allocate(fluid_solid_elastic_iedge(num_fluid_solid_edges))
-  endif
+  allocate(fluid_solid_acoustic_ispec(num_fluid_solid_edges))
+  allocate(fluid_solid_acoustic_iedge(num_fluid_solid_edges))
+  allocate(fluid_solid_elastic_ispec(num_fluid_solid_edges))
+  allocate(fluid_solid_elastic_iedge(num_fluid_solid_edges))
   if( num_fluid_poro_edges > 0 ) then
     any_fluid_poro_edges = .true.
   else
     any_fluid_poro_edges = .false.
     num_fluid_poro_edges = 1
   endif
-  if(ipass == 1) then
-    allocate(fluid_poro_acoustic_ispec(num_fluid_poro_edges))
-    allocate(fluid_poro_acoustic_iedge(num_fluid_poro_edges))
-    allocate(fluid_poro_poroelastic_ispec(num_fluid_poro_edges))
-    allocate(fluid_poro_poroelastic_iedge(num_fluid_poro_edges))
-  endif
+  allocate(fluid_poro_acoustic_ispec(num_fluid_poro_edges))
+  allocate(fluid_poro_acoustic_iedge(num_fluid_poro_edges))
+  allocate(fluid_poro_poroelastic_ispec(num_fluid_poro_edges))
+  allocate(fluid_poro_poroelastic_iedge(num_fluid_poro_edges))
   if ( num_solid_poro_edges > 0 ) then
     any_solid_poro_edges = .true.
   else
     any_solid_poro_edges = .false.
     num_solid_poro_edges = 1
   endif
-  if(ipass == 1) then
-    allocate(solid_poro_elastic_ispec(num_solid_poro_edges))
-    allocate(solid_poro_elastic_iedge(num_solid_poro_edges))
-    allocate(solid_poro_poroelastic_ispec(num_solid_poro_edges))
-    allocate(solid_poro_poroelastic_iedge(num_solid_poro_edges))
-  endif
+  allocate(solid_poro_elastic_ispec(num_solid_poro_edges))
+  allocate(solid_poro_elastic_iedge(num_solid_poro_edges))
+  allocate(solid_poro_poroelastic_ispec(num_solid_poro_edges))
+  allocate(solid_poro_poroelastic_iedge(num_solid_poro_edges))
 
-  call read_databases_coupled(ipass,nspec,num_fluid_solid_edges,any_fluid_solid_edges, &
+  call read_databases_coupled(num_fluid_solid_edges,any_fluid_solid_edges, &
                             fluid_solid_acoustic_ispec,fluid_solid_elastic_ispec, &
                             num_fluid_poro_edges,any_fluid_poro_edges, &
                             fluid_poro_acoustic_ispec,fluid_poro_poroelastic_ispec, &
                             num_solid_poro_edges,any_solid_poro_edges, &
-                            solid_poro_elastic_ispec,solid_poro_poroelastic_ispec, &
-                            perm,antecedent_list)
+                            solid_poro_elastic_ispec,solid_poro_poroelastic_ispec)
 
   ! resets counters
   if( any_fluid_solid_edges .eqv. .false. ) num_fluid_solid_edges = 0
@@ -1727,10 +1651,8 @@
     any_tangential_curve = .false.
     nnodes_tangential_curve = 1
   endif
-  if (ipass == 1) then
-    allocate(nodes_tangential_curve(2,nnodes_tangential_curve))
-    allocate(dist_tangential_detection_curve(nnodes_tangential_curve))
-  endif
+  allocate(nodes_tangential_curve(2,nnodes_tangential_curve))
+  allocate(dist_tangential_detection_curve(nnodes_tangential_curve))
   call read_databases_final(nnodes_tangential_curve,nodes_tangential_curve, &
                                 force_normal_to_surface,rec_normal_to_surface, &
                                 any_tangential_curve)
@@ -1756,9 +1678,9 @@
 
 ! "slow and clean" or "quick and dirty" version
   if(FAST_NUMBERING) then
-    call createnum_fast(knods,ibool,shape2D,coorg,nglob,npgeo,nspec,ngnod,myrank,ipass)
+    call createnum_fast(knods,ibool,shape2D,coorg,nglob,npgeo,nspec,ngnod,myrank)
   else
-    call createnum_slow(knods,ibool,nglob,nspec,ngnod,myrank,ipass)
+    call createnum_slow(knods,ibool,nglob,nspec,ngnod,myrank)
   endif
 
 #ifdef USE_MPI
@@ -1770,7 +1692,7 @@
   nspec_total = nspec
   nglob_total = nglob
 #endif
-  if (myrank == 0 .and. ipass == 1) then
+  if (myrank == 0) then
     write(IOUT,*)
     write(IOUT,*) 'Total number of elements: ',nspec_total
     write(IOUT,*) 'decomposed as follows:'
@@ -1808,11 +1730,6 @@
     endif
   endif
 
-! create a new indirect addressing array to reduce cache misses in memory access in the solver
-  if(ipass == 2) then
-
-    deallocate(perm)
-
 !! DK DK for periodic conditions: detect common points between left and right edges
 
     if(ADD_PERIODIC_CONDITIONS) then
@@ -1823,9 +1740,6 @@
 
       if(any_poroelastic .or. any_acoustic) &
         stop 'periodic conditions currently implemented for purely elastic models only'
-
-      if(ACTUALLY_IMPLEMENT_PERM_OUT .or. ACTUALLY_IMPLEMENT_PERM_INN .or. ACTUALLY_IMPLEMENT_PERM_WHOLE) &
-        stop 'currently, all permutations should be off for periodic conditions'
 
       print *
       open(unit=123,file='DATA/Database00000_left_edge_only',status='old')
@@ -1957,13 +1871,7 @@
 !! DK DK end of periodic conditions: detect common points between left and right edges
 
     ! reduces cache misses
-    call get_global(nspec_outer,nspec,nglob,ibool)
-
-  else if(ipass /= 1) then
-
-    stop 'incorrect pass number for reduction of cache misses'
-
-  endif ! ipass
+    call get_global(nspec,nglob,ibool)
 
 !---- compute shape functions and their derivatives for regular interpolated display grid
   do j = 1,pointsdisp
@@ -1992,7 +1900,7 @@
   enddo
   close(IIN)
 
-  if (myrank == 0 .and. ipass == 1) then
+  if (myrank == 0) then
     write(IOUT,*)
     write(IOUT,*) 'Total number of receivers = ',nrec
     write(IOUT,*)
@@ -2001,8 +1909,6 @@
   if(nrec < 1) call exit_MPI('need at least one receiver')
 
 ! receiver information
-  if(ipass == 1) then
-
     allocate(ispec_selected_rec(nrec))
     allocate(st_xval(nrec))
     allocate(st_zval(nrec))
@@ -2072,8 +1978,6 @@
       allocate(c23ext(1,1,1))
       allocate(c25ext(1,1,1))
     endif
-
-  endif
 
 !
 !----  set the coordinates of the points of the global grid
@@ -2174,7 +2078,7 @@
 !
 !--- save the grid of points in a file
 !
-  if(output_grid_ASCII .and. myrank == 0 .and. ipass == 1) then
+  if(output_grid_ASCII .and. myrank == 0) then
      write(IOUT,*)
      write(IOUT,*) 'Saving the grid in an ASCII text file...'
      write(IOUT,*)
@@ -2189,12 +2093,11 @@
 !
 !-----   plot the GLL mesh in a Gnuplot file
 !
-  if(output_grid_Gnuplot .and. myrank == 0 .and. ipass == 1)  &
+  if(output_grid_Gnuplot .and. myrank == 0)  &
     call plotgll(knods,ibool,coorg,coord,nglob,npgeo,ngnod,nspec)
 
-! if (assign_external_model .and. ipass == 1) then
   if (assign_external_model) then
-    if(myrank == 0 .and. ipass == 1) write(IOUT,*) 'Assigning an external velocity and density model...'
+    if(myrank == 0) write(IOUT,*) 'Assigning an external velocity and density model...'
     call read_external_model(any_acoustic,any_elastic,any_poroelastic, &
                 elastic,poroelastic,anisotropic,nspec,nglob,N_SLS,ibool, &
                 f0_attenuation,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
@@ -2256,17 +2159,17 @@
 
 !---- define actual location of source and receivers
 
-  call setup_sources_receivers(NSOURCES,initialfield,source_type,&
+  call setup_sources_receivers(NSOURCES,initialfield,source_type, &
      coord,ibool,nglob,nspec,nelem_acoustic_surface,acoustic_surface,elastic,poroelastic, &
      x_source,z_source,ispec_selected_source,ispec_selected_rec, &
-     is_proc_source,nb_proc_source,ipass,&
-     sourcearray,Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,npgeo,&
+     is_proc_source,nb_proc_source, &
+     sourcearray,Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,npgeo, &
      nproc,myrank,xi_source,gamma_source,coorg,knods,ngnod, &
      nrec,nrecloc,recloc,which_proc_receiver,st_xval,st_zval, &
      xi_receiver,gamma_receiver,station_name,network_name,x_final_receiver,z_final_receiver,iglob_source)
 
 ! compute source array for adjoint source
-  if(ipass == 1) nadj_rec_local = 0
+  nadj_rec_local = 0
   if(SIMULATION_TYPE == 3) then  ! adjoint calculation
 
     do irec = 1,nrec
@@ -2277,10 +2180,10 @@
         nadj_rec_local = nadj_rec_local + 1
       endif
     enddo
-    if(ipass == 1) allocate(adj_sourcearray(NSTEP,3,NGLLX,NGLLZ))
-    if (nadj_rec_local > 0 .and. ipass == 1)  then
+    allocate(adj_sourcearray(NSTEP,3,NGLLX,NGLLZ))
+    if (nadj_rec_local > 0)  then
       allocate(adj_sourcearrays(nadj_rec_local,NSTEP,3,NGLLX,NGLLZ))
-    else if (ipass == 1) then
+    else
       allocate(adj_sourcearrays(1,1,1,1,1))
     endif
 
@@ -2332,11 +2235,10 @@
        close(113)
        deallocate(adj_src_s)
     endif
-  else if (ipass == 1) then
+  else
      allocate(adj_sourcearrays(1,1,1,1,1))
   endif
 
-  if (ipass == 1) then
     if (nrecloc > 0) then
       allocate(anglerec_irec(nrecloc))
       allocate(cosrot_irec(nrecloc))
@@ -2355,12 +2257,10 @@
     anglerec_irec(:) = anglerec * pi / 180.d0
     cosrot_irec(:) = cos(anglerec_irec(:))
     sinrot_irec(:) = sin(anglerec_irec(:))
-  endif
 
 !
 !--- tangential computation
 !
-  if (ipass == NUMBER_OF_PASSES) then
 
 ! for receivers
     if (rec_normal_to_surface) then
@@ -2549,18 +2449,14 @@
 
     endif ! force_normal_to_surface
 
-  endif ! ipass
-
 !
 !---
 !
 
 ! allocate seismogram arrays
-  if(ipass == 1) then
-    allocate(sisux(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc))
-    allocate(sisuz(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc))
-    allocate(siscurl(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc))
-  endif
+  allocate(sisux(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc))
+  allocate(sisuz(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc))
+  allocate(siscurl(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc))
 
 ! check if acoustic receiver is exactly on the free surface because pressure is zero there
   do ispec_acoustic_surface = 1,nelem_acoustic_surface
@@ -2620,8 +2516,6 @@
   enddo
 
 ! displacement, velocity, acceleration and inverse of the mass matrix for elastic elements
-  if(ipass == 1) then
-
     if(any_elastic) then
       nglob_elastic = nglob
     else
@@ -3233,7 +3127,6 @@
       allocate(alpha_x_store(1,1,1))
       allocate(alpha_z_store(1,1,1))
     endif ! PML_BOUNDARY_CONDITIONS
-  endif ! ipass == 1
 
   !
   !---- build the global mass matrix
@@ -3261,7 +3154,7 @@
   if ( nproc > 1 ) then
 
     ! preparing for MPI communications
-    if(ipass == 1) allocate(mask_ispec_inner_outer(nspec))
+    allocate(mask_ispec_inner_outer(nspec))
     mask_ispec_inner_outer(:) = .false.
 
     call get_MPI(nspec,ibool,knods,ngnod,nglob,elastic,poroelastic, &
@@ -3275,19 +3168,15 @@
                     inum_interfaces_poroelastic, &
                     ninterface_acoustic, ninterface_elastic, ninterface_poroelastic, &
                     mask_ispec_inner_outer, &
-                    myrank,ipass,coord)
-
+                    myrank,coord)
 
     nspec_outer = count(mask_ispec_inner_outer)
     nspec_inner = nspec - nspec_outer
 
-    if(ipass == 1) then
-      allocate(ispec_outer_to_glob(nspec_outer))
-      allocate(ispec_inner_to_glob(nspec_inner))
-    endif
+    allocate(ispec_outer_to_glob(nspec_outer))
+    allocate(ispec_inner_to_glob(nspec_inner))
 
     ! building of corresponding arrays between inner/outer elements and their global number
-    if(ipass == 1) then
       num_ispec_outer = 0
       num_ispec_inner = 0
       do ispec = 1, nspec
@@ -3299,13 +3188,11 @@
           ispec_inner_to_glob(num_ispec_inner) = ispec
         endif
       enddo
-    endif
 
     ! buffers for MPI communications
     max_ibool_interfaces_size_ac = maxval(nibool_interfaces_acoustic(:))
     max_ibool_interfaces_size_el = 3*maxval(nibool_interfaces_elastic(:))
     max_ibool_interfaces_size_po = NDIM*maxval(nibool_interfaces_poroelastic(:))
-    if(ipass == 1) then
       allocate(tab_requests_send_recv_acoustic(ninterface_acoustic*2))
       allocate(buffer_send_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic))
       allocate(buffer_recv_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic))
@@ -3317,7 +3204,6 @@
       allocate(buffer_recv_faces_vector_pos(max_ibool_interfaces_size_po,ninterface_poroelastic))
       allocate(buffer_send_faces_vector_pow(max_ibool_interfaces_size_po,ninterface_poroelastic))
       allocate(buffer_recv_faces_vector_pow(max_ibool_interfaces_size_po,ninterface_poroelastic))
-    endif
 
 ! assembling the mass matrix
     call assemble_MPI_scalar(rmass_inverse_acoustic,nglob_acoustic, &
@@ -3338,52 +3224,44 @@
 
     num_ispec_outer = 0
     num_ispec_inner = 0
-    if(ipass == 1) allocate(mask_ispec_inner_outer(1))
+    allocate(mask_ispec_inner_outer(1))
 
     nspec_outer = 0
     nspec_inner = nspec
 
-    if(ipass == 1) allocate(ispec_inner_to_glob(nspec_inner))
+    allocate(ispec_inner_to_glob(nspec_inner))
     do ispec = 1, nspec
       ispec_inner_to_glob(ispec) = ispec
     enddo
 
-  endif ! end of test on wether there is more than one process (nproc > 1)
+  endif ! end of test on whether there is more than one process (nproc > 1)
 
 #else
   num_ispec_outer = 0
   num_ispec_inner = 0
-  if(ipass == 1) allocate(mask_ispec_inner_outer(1))
+  allocate(mask_ispec_inner_outer(1))
 
   nspec_outer = 0
   nspec_inner = nspec
 
-  if(ipass == 1) then
-    allocate(ispec_outer_to_glob(1))
-    allocate(ispec_inner_to_glob(nspec_inner))
-  endif
+  allocate(ispec_outer_to_glob(1))
+  allocate(ispec_inner_to_glob(nspec_inner))
   do ispec = 1, nspec
      ispec_inner_to_glob(ispec) = ispec
   enddo
 
 #endif
 
-  if(ipass == 1) then
-
-    !  allocate(antecedent_list(nspec))
-
     ! loop over spectral elements
     do ispec_outer = 1,nspec_outer
     ! get global numbering for inner or outer elements
       ispec = ispec_outer_to_glob(ispec_outer)
-      antecedent_list(ispec) = ispec_outer
     enddo
 
     ! loop over spectral elements
     do ispec_inner = 1,nspec_inner
     ! get global numbering for inner or outer elements
       ispec = ispec_inner_to_glob(ispec_inner)
-      antecedent_list(ispec) = nspec_outer + ispec_inner
     enddo
 
     allocate(ibool_outer(NGLLX,NGLLZ,nspec_outer))
@@ -3412,84 +3290,14 @@
     ! reduces cache misses for inner elements
     call get_global_indirect_addressing(nspec_inner,nglob,ibool_inner)
 
-
     ! the total number of points without multiples in this region is now known
     nglob_inner = maxval(ibool_inner)
-
-    !allocate(perm(nspec))
-
-    ! use identity permutation by default
-    do ispec = 1,nspec
-      perm(ispec) = ispec
-    enddo
-
-    if(ACTUALLY_IMPLEMENT_PERM_WHOLE) then
-
-      allocate(check_perm(nspec))
-      call get_perm_cuthill_mckee(ibool,perm,LIMIT_MULTI_CUTHILL,nspec,nglob,PERFORM_CUTHILL_MCKEE)
-    ! check that the permutation obtained is bijective
-      check_perm(:) = -1
-      do ispec = 1,nspec
-        check_perm(perm(ispec)) = ispec
-      enddo
-      if(minval(check_perm) /= 1) stop 'minval check_perm is incorrect for whole'
-      if(maxval(check_perm) /= nspec) stop 'maxval check_perm is incorrect for whole'
-      deallocate(check_perm)
-    else
-
-    if(ACTUALLY_IMPLEMENT_PERM_OUT) then
-      allocate(check_perm(nspec_outer))
-      call get_perm_cuthill_mckee(ibool_outer,perm(1:nspec_outer),LIMIT_MULTI_CUTHILL,nspec_outer,nglob_outer,PERFORM_CUTHILL_MCKEE)
-    ! check that the permutation obtained is bijective
-      check_perm(:) = -1
-      do ispec = 1,nspec_outer
-        check_perm(perm(ispec)) = ispec
-      enddo
-      if(minval(check_perm) /= 1) stop 'minval check_perm is incorrect for outer'
-      if(maxval(check_perm) /= nspec_outer) stop 'maxval check_perm is incorrect for outer'
-      deallocate(check_perm)
-      deallocate(ibool_outer)
-    endif
-
-    if(ACTUALLY_IMPLEMENT_PERM_INN) then
-      allocate(check_perm(nspec_inner))
-      call get_perm_cuthill_mckee(ibool_inner,perm(nspec_outer+1:nspec),LIMIT_MULTI_CUTHILL,nspec_inner,nglob_inner, &
-                  PERFORM_CUTHILL_MCKEE)
-    ! check that the permutation obtained is bijective
-      check_perm(:) = -1
-      do ispec = 1,nspec_inner
-        check_perm(perm(nspec_outer+ispec)) = ispec
-      enddo
-      if(minval(check_perm) /= 1) stop 'minval check_perm is incorrect for inner'
-      if(maxval(check_perm) /= nspec_inner) stop 'maxval check_perm is incorrect for inner'
-      deallocate(check_perm)
-    ! add the right offset
-      perm(nspec_outer+1:nspec) = perm(nspec_outer+1:nspec) + nspec_outer
-      deallocate(ibool_inner)
-    endif
-
-    endif
-
-  endif
-
-  enddo ! end of further reduction of cache misses inner/outer in two passes
-
-!============================================
-!
-!            end inner/outer passes
-!
-!============================================
-
-!---
-!---  end of section performed in two passes
-!---
 
   call invert_mass_matrix(any_elastic,any_acoustic,any_poroelastic,&
               rmass_inverse_elastic_one,rmass_inverse_elastic_three,nglob_elastic, &
               rmass_inverse_acoustic,nglob_acoustic, &
               rmass_s_inverse_poroelastic, &
               rmass_w_inverse_poroelastic,nglob_poroelastic)
-
 
 ! check the mesh, stability and number of points per wavelength
   if(DISPLAY_SUBSET_OPTION == 1) then
@@ -4888,11 +4696,6 @@ if(coupled_elastic_poro) then
 
 ! to dump the wave field
   this_is_the_first_time_we_dump = .true.
-
-#ifdef USE_MPI
-! add a barrier if we generate traces of the run for analysis with "ParaVer"
-  if(GENERATE_PARAVER_TRACES) call MPI_BARRIER(MPI_COMM_WORLD,ier)
-#endif
 
 !
 !----          s t a r t   t i m e   i t e r a t i o n s
@@ -7759,10 +7562,6 @@ if(coupled_elastic_poro) then
                         any_acoustic_glob,any_acoustic,potential_acoustic, &
                         timestamp_seconds_start)
 
-#ifdef USE_MPI
-! add a barrier if we generate traces of the run for analysis with "ParaVer"
-      if(GENERATE_PARAVER_TRACES) call MPI_BARRIER(MPI_COMM_WORLD,ier)
-#endif
     endif
 
 !---- loop on all the receivers to compute and store the seismograms
@@ -8866,7 +8665,6 @@ if(coupled_elastic_poro) then
 !----  save temporary or final seismograms
 ! suppress seismograms if we generate traces of the run for analysis with "ParaVer", because time consuming
     if(mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
-      if(.not. GENERATE_PARAVER_TRACES) &
         call write_seismograms(sisux,sisuz,siscurl,station_name,network_name,NSTEP, &
                             nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
                             NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,p_sv, &

@@ -43,11 +43,11 @@
 !
 !========================================================================
 
-  subroutine setup_sources_receivers(NSOURCES,initialfield,source_type,&
+  subroutine setup_sources_receivers(NSOURCES,initialfield,source_type, &
      coord,ibool,nglob,nspec,nelem_acoustic_surface,acoustic_surface,elastic,poroelastic, &
      x_source,z_source,ispec_selected_source,ispec_selected_rec, &
-     is_proc_source,nb_proc_source,ipass,&
-     sourcearray,Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,npgeo,&
+     is_proc_source,nb_proc_source, &
+     sourcearray,Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,npgeo, &
      nproc,myrank,xi_source,gamma_source,coorg,knods,ngnod, &
      nrec,nrecloc,recloc,which_proc_receiver,st_xval,st_zval, &
      xi_receiver,gamma_receiver,station_name,network_name,x_final_receiver,z_final_receiver,iglob_source)
@@ -58,7 +58,7 @@
 
   logical :: initialfield
   integer :: NSOURCES
-  integer :: npgeo,ngnod,myrank,ipass,nproc
+  integer :: npgeo,ngnod,myrank,nproc
   integer :: nglob,nspec,nelem_acoustic_surface
 
   ! Gauss-Lobatto-Legendre points
@@ -104,8 +104,8 @@
 
       ! collocated force source
       call locate_source_force(ibool,coord,nspec,nglob,xigll,zigll,x_source(i_source),z_source(i_source), &
-          ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source),&
-          nproc,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo,ipass,&
+          ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source), &
+          nproc,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
           iglob_source(i_source))
 
       ! check that acoustic source is not exactly on the free surface because pressure is zero there
@@ -144,8 +144,8 @@
     else if(source_type(i_source) == 2) then
       ! moment-tensor source
       call locate_source_moment_tensor(ibool,coord,nspec,nglob,xigll,zigll,x_source(i_source),z_source(i_source), &
-             ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source),&
-             nproc,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo,ipass)
+             ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source), &
+             nproc,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo)
 
       ! compute source array for moment-tensor source
       call compute_arrays_source(ispec_selected_source(i_source),xi_source(i_source),gamma_source(i_source),&
@@ -166,14 +166,14 @@
                       st_xval,st_zval,ispec_selected_rec, &
                       xi_receiver,gamma_receiver,station_name,network_name, &
                       x_source(1),z_source(1), &
-                      coorg,knods,ngnod,npgeo,ipass, &
+                      coorg,knods,ngnod,npgeo, &
                       x_final_receiver,z_final_receiver)
 
 !! DK DK this below not supported in the case of MPI yet, we should do a MPI_GATHER() of the values
 !! DK DK and use "if(myrank == which_proc_receiver(irec)) then" to display the right sources
 !! DK DK and receivers carried by each mesh slice, and not fictitious values coming from other slices
 #ifndef USE_MPI
-  if (myrank == 0 .and. ipass == 1) then
+  if (myrank == 0) then
 
      ! write actual source locations to file
      ! note that these may differ from input values, especially if source_surf = .true. in SOURCE

@@ -43,7 +43,7 @@
 !
 !========================================================================
 
-  subroutine read_databases_init(myrank,ipass, &
+  subroutine read_databases_init(myrank, &
                   simulation_title,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo,nproc, &
                   output_grid_Gnuplot,interpol,NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP_BETWEEN_OUTPUT_IMAGES, &
                   PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,NELEM_PML_THICKNESS, &
@@ -57,7 +57,7 @@
                   save_binary_seismograms_single,save_binary_seismograms_double, &
                   DRAW_SOURCES_AND_RECEIVERS,Q0,freq0,p_sv,NSTEP,deltat,NSOURCES, &
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
-                  POWER_DISPLAY_COLOR,PERFORM_CUTHILL_MCKEE,SU_FORMAT,USER_T0,time_stepping_scheme,&
+                  POWER_DISPLAY_COLOR,SU_FORMAT,USER_T0,time_stepping_scheme,&
                   ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL,&
                   read_external_mesh,save_ASCII_kernels)
 
@@ -66,7 +66,7 @@
   implicit none
   include "constants.h"
 
-  integer :: myrank,ipass
+  integer :: myrank
   character(len=60) simulation_title
   integer :: SIMULATION_TYPE,NOISE_TOMOGRAPHY,npgeo,nproc
   integer :: colors,numbers,subsamp_postscript,seismotype,imagetype_postscript
@@ -103,9 +103,6 @@
 
 ! non linear display to enhance small amplitudes in color images
   double precision :: POWER_DISPLAY_COLOR
-
-! perform inverse Cuthill-McKee (1969) permutation for mesh numbering
-  logical :: PERFORM_CUTHILL_MCKEE
 
 ! output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
   logical :: SU_FORMAT
@@ -154,9 +151,9 @@
   read(IIN,"(a50)") simulation_title
 
   !---- print the date, time and start-up banner
-  if (myrank == 0 .and. ipass == 1) call datim(simulation_title)
+  if (myrank == 0) call datim(simulation_title)
 
-  if (myrank == 0 .and. ipass == 1) then
+  if (myrank == 0) then
     write(IOUT,*)
     write(IOUT,*)
     write(IOUT,*) '*********************'
@@ -280,9 +277,6 @@
   read(IIN,*) POWER_DISPLAY_COLOR
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) PERFORM_CUTHILL_MCKEE
-
-  read(IIN,"(a80)") datlin
   read(IIN,*) SU_FORMAT
 
   read(IIN,"(a80)") datlin
@@ -304,7 +298,7 @@
   read(IIN,*) PERIODIC_DETECT_TOL
 
   !---- check parameters read
-  if (myrank == 0 .and. ipass == 1) then
+  if (myrank == 0) then
     write(IOUT,200) npgeo,NDIM
     write(IOUT,600) NSTEP_BETWEEN_OUTPUT_INFO,colors,numbers
     write(IOUT,700) seismotype,anglerec
@@ -317,7 +311,7 @@
   !---- read time step
   read(IIN,"(a80)") datlin
   read(IIN,*) NSTEP,deltat
-  if (myrank == 0 .and. ipass == 1) write(IOUT,703) NSTEP,deltat,NSTEP*deltat
+  if (myrank == 0) write(IOUT,703) NSTEP,deltat,NSTEP*deltat
 
   if(SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. &
      (ATTENUATION_VISCOELASTIC_SOLID .or. ATTENUATION_PORO_FLUID_PART)) then
@@ -459,7 +453,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_databases_coorg_elem(myrank,ipass,npgeo,coorg,numat,ngnod,nspec, &
+  subroutine read_databases_coorg_elem(myrank,npgeo,coorg,numat,ngnod,nspec, &
                               pointsdisp,plot_lowerleft_corner_only, &
                               nelemabs,nelem_acoustic_surface, &
                               num_fluid_solid_edges,num_fluid_poro_edges, &
@@ -470,7 +464,7 @@
   implicit none
   include "constants.h"
 
-  integer :: myrank,ipass,npgeo
+  integer :: myrank,npgeo
   double precision, dimension(NDIM,npgeo) :: coorg
 
   integer :: numat,ngnod,nspec
@@ -516,7 +510,7 @@
               num_solid_poro_edges,nnodes_tangential_curve
 
   !---- print element group main parameters
-  if (myrank == 0 .and. ipass == 1) then
+  if (myrank == 0 ) then
     write(IOUT,107)
     write(IOUT,207) nspec,ngnod,NGLLX,NGLLZ,NGLLX*NGLLZ,pointsdisp,numat
   endif
@@ -539,20 +533,17 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_databases_mato(ipass,nspec,ngnod,kmato,knods, &
-                                perm,antecedent_list,region_CPML)
+  subroutine read_databases_mato(nspec,ngnod,kmato,knods,region_CPML)
 
 ! reads spectral macrobloc data
 
   implicit none
   include "constants.h"
 
-  integer :: ipass,ngnod,nspec
+  integer :: ngnod,nspec
   integer, dimension(nspec) :: kmato
   integer, dimension(nspec) :: region_CPML
   integer, dimension(ngnod,nspec) :: knods
-
-  integer, dimension(nspec) :: perm,antecedent_list
 
   ! local parameters
   integer :: n,k,ispec,kmato_read,pml_read
@@ -573,19 +564,11 @@
   do ispec = 1,nspec
     ! format: #element_id  #material_id #node_id1 #node_id2 #...
     read(IIN,*) n,kmato_read,(knods_read(k), k=1,ngnod),pml_read
-    if(ipass == 1) then
       ! material association
       kmato(n) = kmato_read
       region_CPML(n) = pml_read
       ! element control node indices
       knods(:,n)= knods_read(:)
-    else if(ipass == 2) then
-      kmato(perm(antecedent_list(n))) = kmato_read
-      region_CPML(perm(antecedent_list(n))) = pml_read
-      knods(:,perm(antecedent_list(n)))= knods_read(:)
-    else
-      call exit_MPI('error: maximum is 2 passes')
-    endif
   enddo
   deallocate(knods_read)
 
@@ -617,21 +600,16 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_databases_interfaces(ipass,ninterface,nspec,max_interface_size, &
-                              my_neighbours,my_nelmnts_neighbours,my_interfaces, &
-                              perm,antecedent_list)
+  subroutine read_databases_interfaces(ninterface,max_interface_size,my_neighbours,my_nelmnts_neighbours,my_interfaces)
 
 ! reads in interfaces
 
   implicit none
   include "constants.h"
 
-  integer :: ipass,nspec
   integer :: ninterface,max_interface_size
   integer, dimension(ninterface) :: my_neighbours,my_nelmnts_neighbours
   integer, dimension(4,max_interface_size,ninterface) :: my_interfaces
-
-  integer, dimension(nspec) :: perm,antecedent_list
 
   ! local parameters
   integer :: num_interface,ie,my_interfaces_read
@@ -659,13 +637,7 @@
       read(IIN,*) my_interfaces_read, my_interfaces(2,ie,num_interface), &
               my_interfaces(3,ie,num_interface), my_interfaces(4,ie,num_interface)
 
-      if(ipass == 1) then
-        my_interfaces(1,ie,num_interface) = my_interfaces_read
-      else if(ipass == 2) then
-        my_interfaces(1,ie,num_interface) = perm(antecedent_list(my_interfaces_read))
-      else
-        call exit_MPI('error: maximum number of passes is 2')
-      endif
+      my_interfaces(1,ie,num_interface) = my_interfaces_read
 
     enddo
   enddo
@@ -677,10 +649,10 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_databases_absorbing(myrank,ipass,nelemabs,nspec,anyabs, &
+  subroutine read_databases_absorbing(myrank,nelemabs,nspec,anyabs, &
                             ibegin_edge1,iend_edge1,ibegin_edge2,iend_edge2, &
                             ibegin_edge3,iend_edge3,ibegin_edge4,iend_edge4, &
-                            numabs,codeabs,typeabs,perm,antecedent_list, &
+                            numabs,codeabs,typeabs, &
                             nspec_left,nspec_right,nspec_bottom,nspec_top, &
                             ib_right,ib_left,ib_bottom,ib_top,PML_BOUNDARY_CONDITIONS)
 
@@ -693,14 +665,13 @@
   implicit none
   include "constants.h"
 
-  integer :: myrank,ipass,nspec
+  integer :: myrank,nspec
   integer :: nelemabs
   integer, dimension(nelemabs) :: numabs,ibegin_edge1,iend_edge1, &
     ibegin_edge3,iend_edge3,ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2
   logical, dimension(4,nelemabs) :: codeabs
   integer, dimension(nelemabs) :: typeabs
   logical :: anyabs,PML_BOUNDARY_CONDITIONS
-  integer, dimension(nspec) :: perm,antecedent_list
   integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
 
   integer, dimension(nelemabs) :: ib_right,ib_left,ib_bottom,ib_top
@@ -761,13 +732,7 @@
       if(numabsread < 1 .or. numabsread > nspec) &
         call exit_MPI('Wrong absorbing element number')
 
-      if(ipass == 1) then
-        numabs(inum) = numabsread
-      else if(ipass == 2) then
-        numabs(inum) = perm(antecedent_list(numabsread))
-      else
-        call exit_MPI('error: maximum number of passes is 2')
-      endif
+      numabs(inum) = numabsread
 
       codeabs(IEDGE1,inum) = codeabsread(1)
       codeabs(IEDGE2,inum) = codeabsread(2)
@@ -811,35 +776,29 @@
 
   else ! if this MPI slice has no absorbing element at all
 
-    if (ipass == 1) then
       nelemabs = 0
       nspec_left = 0
       nspec_right = 0
       nspec_bottom = 0
       nspec_top = 0
-    endif
 
   endif
 
 #ifdef USE_MPI
-    if (ipass == 1) then
       call MPI_REDUCE(nelemabs, nelemabs_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
       call MPI_REDUCE(nspec_left, nspec_left_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
       call MPI_REDUCE(nspec_right, nspec_right_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
       call MPI_REDUCE(nspec_bottom, nspec_bottom_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
       call MPI_REDUCE(nspec_top, nspec_top_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-    endif
 #else
-    if (ipass == 1) then
       nelemabs_tot = nelemabs
       nspec_left_tot = nspec_left
       nspec_right_tot = nspec_right
       nspec_bottom_tot = nspec_bottom
       nspec_top_tot = nspec_top
-    endif
 #endif
 
-    if (myrank == 0 .and. ipass == 1 .and. .not. PML_BOUNDARY_CONDITIONS) then
+    if (myrank == 0 .and. .not. PML_BOUNDARY_CONDITIONS) then
       write(IOUT,*)
       write(IOUT,*) 'Number of absorbing elements: ',nelemabs_tot
       write(IOUT,*) '  nspec_left = ',nspec_left_tot
@@ -855,20 +814,16 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_databases_free_surf(ipass,nelem_acoustic_surface,nspec, &
-                            acoustic_edges,perm,antecedent_list,any_acoustic_edges)
+  subroutine read_databases_free_surf(nelem_acoustic_surface,acoustic_edges,any_acoustic_edges)
 
 ! reads acoustic free surface data
 
   implicit none
   include "constants.h"
 
-  integer :: ipass,nspec
   integer :: nelem_acoustic_surface
   integer, dimension(4,nelem_acoustic_surface) :: acoustic_edges
   logical :: any_acoustic_edges
-
-  integer, dimension(nspec) :: perm,antecedent_list
 
   ! local parameters
   integer :: inum,acoustic_edges_read
@@ -885,13 +840,7 @@
       read(IIN,*) acoustic_edges_read, acoustic_edges(2,inum), acoustic_edges(3,inum), &
            acoustic_edges(4,inum)
 
-      if(ipass == 1) then
-        acoustic_edges(1,inum) = acoustic_edges_read
-      else if(ipass == 2) then
-        acoustic_edges(1,inum) = perm(antecedent_list(acoustic_edges_read))
-      else
-        call exit_MPI('error: maximum number of passes is 2')
-      endif
+      acoustic_edges(1,inum) = acoustic_edges_read
 
     enddo
 
@@ -903,13 +852,12 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_databases_coupled(ipass,nspec,num_fluid_solid_edges,any_fluid_solid_edges, &
+  subroutine read_databases_coupled(num_fluid_solid_edges,any_fluid_solid_edges, &
                             fluid_solid_acoustic_ispec,fluid_solid_elastic_ispec, &
                             num_fluid_poro_edges,any_fluid_poro_edges, &
                             fluid_poro_acoustic_ispec,fluid_poro_poroelastic_ispec, &
                             num_solid_poro_edges,any_solid_poro_edges, &
-                            solid_poro_elastic_ispec,solid_poro_poroelastic_ispec, &
-                            perm,antecedent_list)
+                            solid_poro_elastic_ispec,solid_poro_poroelastic_ispec)
 
 ! reads acoustic elastic coupled edges
 ! reads acoustic poroelastic coupled edges
@@ -917,8 +865,6 @@
 
   implicit none
   include "constants.h"
-
-  integer :: ipass,nspec
 
   integer :: num_fluid_solid_edges
   logical :: any_fluid_solid_edges
@@ -931,8 +877,6 @@
   integer :: num_solid_poro_edges
   logical :: any_solid_poro_edges
   integer, dimension(num_solid_poro_edges) :: solid_poro_elastic_ispec,solid_poro_poroelastic_ispec
-
-  integer, dimension(nspec) :: perm,antecedent_list
 
   ! local parameters
   integer :: inum
@@ -956,15 +900,8 @@
     do inum = 1, num_fluid_solid_edges
       read(IIN,*) fluid_solid_acoustic_ispec_read,fluid_solid_elastic_ispec_read
 
-      if(ipass == 1) then
-        fluid_solid_acoustic_ispec(inum) = fluid_solid_acoustic_ispec_read
-        fluid_solid_elastic_ispec(inum) = fluid_solid_elastic_ispec_read
-      else if(ipass == 2) then
-        fluid_solid_acoustic_ispec(inum) = perm(antecedent_list(fluid_solid_acoustic_ispec_read))
-        fluid_solid_elastic_ispec(inum) = perm(antecedent_list(fluid_solid_elastic_ispec_read))
-      else
-        call exit_MPI('error: maximum number of passes is 2')
-      endif
+      fluid_solid_acoustic_ispec(inum) = fluid_solid_acoustic_ispec_read
+      fluid_solid_elastic_ispec(inum) = fluid_solid_elastic_ispec_read
     enddo
   endif
 
@@ -975,15 +912,8 @@
     do inum = 1, num_fluid_poro_edges
       read(IIN,*) fluid_poro_acoustic_ispec_read,fluid_poro_poro_ispec_read
 
-      if(ipass == 1) then
-        fluid_poro_acoustic_ispec(inum) = fluid_poro_acoustic_ispec_read
-        fluid_poro_poroelastic_ispec(inum) = fluid_poro_poro_ispec_read
-      else if(ipass == 2) then
-        fluid_poro_acoustic_ispec(inum) = perm(antecedent_list(fluid_poro_acoustic_ispec_read))
-        fluid_poro_poroelastic_ispec(inum) = perm(antecedent_list(fluid_poro_poro_ispec_read))
-      else
-        call exit_MPI('error: maximum number of passes is 2')
-      endif
+      fluid_poro_acoustic_ispec(inum) = fluid_poro_acoustic_ispec_read
+      fluid_poro_poroelastic_ispec(inum) = fluid_poro_poro_ispec_read
     enddo
   endif
 
@@ -994,15 +924,8 @@
     do inum = 1, num_solid_poro_edges
       read(IIN,*) solid_poro_poro_ispec_read,solid_poro_elastic_ispec_read
 
-      if(ipass == 1) then
-        solid_poro_elastic_ispec(inum) = solid_poro_elastic_ispec_read
-        solid_poro_poroelastic_ispec(inum) = solid_poro_poro_ispec_read
-      else if(ipass == 2) then
-        solid_poro_elastic_ispec(inum) = perm(antecedent_list(solid_poro_elastic_ispec_read))
-        solid_poro_poroelastic_ispec(inum) = perm(antecedent_list(solid_poro_poro_ispec_read))
-      else
-        call exit_MPI('error: maximum number of passes is 2')
-      endif
+      solid_poro_elastic_ispec(inum) = solid_poro_elastic_ispec_read
+      solid_poro_poroelastic_ispec(inum) = solid_poro_poro_ispec_read
     enddo
   endif
 
@@ -1014,7 +937,7 @@
 
   subroutine read_databases_final(nnodes_tangential_curve,nodes_tangential_curve, &
                                 force_normal_to_surface,rec_normal_to_surface, &
-                                any_tangential_curve )
+                                any_tangential_curve)
 
 ! reads tangential detection curve
 ! and closes Database file

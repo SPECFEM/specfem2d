@@ -49,7 +49,7 @@
   subroutine locate_source_moment_tensor(ibool,coord,nspec,nglob, &
                xigll,zigll,x_source,z_source, &
                ispec_selected_source,is_proc_source,nb_proc_source,nproc,myrank, &
-               xi_source,gamma_source,coorg,knods,ngnod,npgeo,ipass)
+               xi_source,gamma_source,coorg,knods,ngnod,npgeo)
 
 #ifdef USE_MPI
   use :: mpi
@@ -59,7 +59,7 @@
 
   include "constants.h"
 
-  integer nspec,nglob,ngnod,npgeo,ipass
+  integer nspec,nglob,ngnod,npgeo
 
   integer knods(ngnod,nspec)
   double precision coorg(NDIM,npgeo)
@@ -92,10 +92,9 @@
   integer  :: ierror
 #endif
 
-
-
 ! **************
-  if ((myrank == 0 .or. nproc == 1) .and. ipass == 1) then
+
+  if (myrank == 0 .or. nproc == 1) then
     write(IOUT,*)
     write(IOUT,*) '*******************************'
     write(IOUT,*) ' locating moment-tensor source'
@@ -228,7 +227,7 @@
 ! compute final distance between asked and found
   final_distance = sqrt((x_source-x)**2 + (z_source-z)**2)
 
-  if (is_proc_source == 1 .and. ipass == 1) then
+  if (is_proc_source == 1) then
      write(IOUT,*)
      write(IOUT,*) 'Moment-tensor source:'
 

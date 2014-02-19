@@ -51,7 +51,7 @@
                           st_xval,st_zval,ispec_selected_rec, &
                           xi_receiver,gamma_receiver,station_name,network_name, &
                           x_source,z_source, &
-                          coorg,knods,ngnod,npgeo,ipass, &
+                          coorg,knods,ngnod,npgeo, &
                           x_final_receiver, z_final_receiver)
 
 #ifdef USE_MPI
@@ -62,7 +62,7 @@
 
   include "constants.h"
 
-  integer nrec,nspec,nglob,ngnod,npgeo,ipass
+  integer nrec,nspec,nglob,ngnod,npgeo
   integer, intent(in)  :: nproc, myrank
 
   integer knods(ngnod,nspec)
@@ -117,7 +117,7 @@
 
 ! **************
 
-  if (myrank == 0 .and. ipass == 1) then
+  if (myrank == 0) then
     write(IOUT,*)
     write(IOUT,*) '********************'
     write(IOUT,*) ' locating receivers'
@@ -271,7 +271,7 @@
     endif
   enddo
 
-  if (myrank == 0 .and. ipass == 1) then
+  if (myrank == 0) then
 
     do irec = 1, nrec
       write(IOUT,*)

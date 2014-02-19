@@ -137,9 +137,6 @@ module parameter_file
 ! non linear display to enhance small amplitudes in color images
   double precision :: POWER_DISPLAY_COLOR
 
-! perform inverse Cuthill-McKee (1969) permutation for mesh numbering
-  logical :: PERFORM_CUTHILL_MCKEE
-
 ! output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
   logical :: SU_FORMAT
 
@@ -200,9 +197,6 @@ contains
 
   call read_value_integer_p(partitioning_method, 'mesher.partitioning_method')
   if(err_occurred() /= 0) stop 'error reading parameter 5a in Par_file'
-
-  call read_value_logical_p(PERFORM_CUTHILL_MCKEE, 'mesher.PERFORM_CUTHILL_MCKEE')
-  if(err_occurred() /= 0) stop 'error reading parameter 5b in Par_file'
 
   call read_value_integer_p(ngnod, 'mesher.ngnod')
   if(err_occurred() /= 0) stop 'error reading parameter 6 in Par_file'

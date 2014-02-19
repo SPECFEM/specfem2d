@@ -128,7 +128,6 @@ OBJS_SPECFEM2D = \
 	$O/force_ftz.o \
 	$O/get_global.o \
 	$O/get_MPI.o \
-	$O/get_perm_cuthill_mckee.o \
 	$O/get_poroelastic_velocities.o \
 	$O/gll_library.o \
 	$O/gmat01.o \
@@ -308,9 +307,6 @@ $O/get_global.o: ${S}/get_global.f90 ${SETUP}/constants.h
 
 $O/get_MPI.o: ${S}/get_MPI.F90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/get_MPI.o ${S}/get_MPI.F90
-
-$O/get_perm_cuthill_mckee.o: ${S}/get_perm_cuthill_mckee.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/get_perm_cuthill_mckee.o ${S}/get_perm_cuthill_mckee.f90
 
 $O/get_poroelastic_velocities.o: ${S}/get_poroelastic_velocities.f90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/get_poroelastic_velocities.o ${S}/get_poroelastic_velocities.f90
