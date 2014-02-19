@@ -168,8 +168,3 @@
 ! maximum number of stages for optimized (for reduced storage) LDDRK4-6 Runge-Kutta time scheme
   integer, parameter :: Nstages = 6
 
-!! DK DK added this for Guenneau, March 2012
-! mettre la valeur souhaitee pour les rayons interieur et exterieur de la cape
-  real(kind=CUSTOM_REAL), parameter :: r0_guenneau = 0.20_CUSTOM_REAL
-  real(kind=CUSTOM_REAL), parameter :: r1_guenneau = 0.40_CUSTOM_REAL
-
