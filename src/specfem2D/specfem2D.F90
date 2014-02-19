@@ -1653,12 +1653,19 @@
   endif
   allocate(nodes_tangential_curve(2,nnodes_tangential_curve))
   allocate(dist_tangential_detection_curve(nnodes_tangential_curve))
-  call read_databases_final(nnodes_tangential_curve,nodes_tangential_curve, &
+  call read_tangential_detection_curve(nnodes_tangential_curve,nodes_tangential_curve, &
                                 force_normal_to_surface,rec_normal_to_surface, &
                                 any_tangential_curve)
   ! resets nnode_tangential_curve
   if( any_tangential_curve .eqv. .false. ) nnodes_tangential_curve = 0
 
+!                  
+!----  end of reading      
+!                                         
+
+! closes input Database file 
+ close(IIN) 
+ 
 !
 !---- compute shape functions and their derivatives for SEM grid
 !
@@ -1982,32 +1989,32 @@
 !
 !----  set the coordinates of the points of the global grid
 !
-  found_a_negative_jacobian = .false.
-  do ispec = 1,nspec
-    do j = 1,NGLLZ
-      do i = 1,NGLLX
+    found_a_negative_jacobian = .false.
+    do ispec = 1,nspec
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
 
-        xi = xigll(i)
-        gamma = zigll(j)
+          xi = xigll(i)
+          gamma = zigll(j)
 
-        call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl, &
-                        jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo, &
-                        .false.)
+          call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl, &
+                          jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo, &
+                          .false.)
 
-        if(jacobianl <= ZERO) found_a_negative_jacobian = .true.
+          if(jacobianl <= ZERO) found_a_negative_jacobian = .true.
 
-        coord(1,ibool(i,j,ispec)) = x
-        coord(2,ibool(i,j,ispec)) = z
+          coord(1,ibool(i,j,ispec)) = x
+          coord(2,ibool(i,j,ispec)) = z
 
-        xix(i,j,ispec) = xixl
-        xiz(i,j,ispec) = xizl
-        gammax(i,j,ispec) = gammaxl
-        gammaz(i,j,ispec) = gammazl
-        jacobian(i,j,ispec) = jacobianl
+          xix(i,j,ispec) = xixl
+          xiz(i,j,ispec) = xizl
+          gammax(i,j,ispec) = gammaxl
+          gammaz(i,j,ispec) = gammazl
+          jacobian(i,j,ispec) = jacobianl
 
+        enddo
       enddo
     enddo
-  enddo
 
 ! create an OpenDX file containing all the negative elements displayed in red, if any
 ! this allows users to locate problems in a mesh based on the OpenDX file created at the second iteration

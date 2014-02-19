@@ -917,25 +917,26 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
       !
       ! second double-loop over GLL to compute all the terms
       !
-      do j = 1,NGLLZ; do i = 1,NGLLX
-        iglob = ibool(i,j,ispec)
-        ! along x direction and z direction
-        ! and assemble the contributions
-        ! we can merge the two loops because NGLLX == NGLLZ
-        do k = 1,NGLLX
-          accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
-          accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tempy1(k,j)*hprimewgll_xx(k,i) + tempy2(i,k)*hprimewgll_zz(k,j))
-          accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tempz1(k,j)*hprimewgll_xx(k,i) + tempz2(i,k)*hprimewgll_zz(k,j))
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          iglob = ibool(i,j,ispec)
+          ! along x direction and z direction
+          ! and assemble the contributions
+          ! we can merge the two loops because NGLLX == NGLLZ
+          do k = 1,NGLLX
+            accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
+            accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tempy1(k,j)*hprimewgll_xx(k,i) + tempy2(i,k)*hprimewgll_zz(k,j))
+            accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tempz1(k,j)*hprimewgll_xx(k,i) + tempz2(i,k)*hprimewgll_zz(k,j))
+          enddo
+
+          !!! PML_BOUNDARY_CONDITIONS
+          if(is_PML(ispec) .and. PML_BOUNDARY_CONDITIONS)then
+            accel_elastic(1,iglob) = accel_elastic(1,iglob) - accel_elastic_PML(1,i,j)
+            accel_elastic(3,iglob) = accel_elastic(3,iglob) - accel_elastic_PML(3,i,j)
+          endif 
+     
         enddo
-
-        !!! PML_BOUNDARY_CONDITIONS
-        if(is_PML(ispec) .and. PML_BOUNDARY_CONDITIONS)then
-          accel_elastic(1,iglob) = accel_elastic(1,iglob) - accel_elastic_PML(1,i,j)
-          accel_elastic(3,iglob) = accel_elastic(3,iglob) - accel_elastic_PML(3,i,j)
-        endif 
-
-      enddo; enddo ! second loop over the GLL points      
-
+      enddo ! second loop over the GLL points      
     endif ! end of test if elastic element
   enddo ! end of loop over all spectral elements
 

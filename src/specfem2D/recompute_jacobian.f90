@@ -73,7 +73,7 @@
 
 ! recompute jacobian for any (xi,gamma) point, not necessarily a GLL point
 
-! create the 2D shape functions and the Jacobian
+! create the 2D shape functions and then the Jacobian
   call define_shape_functions(shape2D,dershape2D,xi,gamma,ngnod)
 
 ! compute coordinates and jacobian matrix

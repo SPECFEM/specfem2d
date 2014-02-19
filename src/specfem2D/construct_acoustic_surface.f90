@@ -48,39 +48,39 @@
 ! We chose to have ixmin <= ixmax and izmin <= izmax, so as to be able to have DO loops on it with
 ! an increment of +1.
 !
-subroutine construct_acoustic_surface ( nspec, ngnod, knods, nsurface, surface, tab_surface )
+subroutine construct_acoustic_surface ( nspec, ngnod, knods, nelem_acoustic_surface, acoustic_edges, acoustic_surface )
 
   implicit none
 
   integer, intent(in)  :: nspec
     integer, intent(in)  :: ngnod
   integer, dimension(ngnod,nspec), intent(in)  :: knods
-  integer, intent(in)  :: nsurface
-  integer, dimension(4,nsurface), intent(in)  :: surface
-  integer, dimension(5,nsurface), intent(out)  :: tab_surface
+  integer, intent(in)  :: nelem_acoustic_surface
+  integer, dimension(4,nelem_acoustic_surface), intent(in)  :: acoustic_edges
+  integer, dimension(5,nelem_acoustic_surface), intent(out)  :: acoustic_surface
 
   integer  :: i, k
   integer  :: ixmin, ixmax
   integer  :: izmin, izmax
   integer, dimension(ngnod)  :: n
   integer  :: e1, e2
-  integer  :: type
-
-  do i = 1, nsurface
-     tab_surface(1,i) = surface(1,i)
-     type = surface(2,i)
-     e1 = surface(3,i)
-     e2 = surface(4,i)
+  integer  :: type_acoust
+  
+  do i = 1, nelem_acoustic_surface
+     acoustic_surface(1,i) = acoustic_edges(1,i) ! Here we do a copy     
+     type_acoust = acoustic_edges(2,i)
+     e1 = acoustic_edges(3,i)
+     e2 = acoustic_edges(4,i)
      do k = 1, ngnod
-        n(k) = knods(k,tab_surface(1,i))
+        n(k) = knods(k,acoustic_surface(1,i))
      enddo
 
-     call get_acoustic_edge ( ngnod, n, type, e1, e2, ixmin, ixmax, izmin, izmax )
+     call get_acoustic_edge ( ngnod, n, type_acoust, e1, e2, ixmin, ixmax, izmin, izmax )
 
-     tab_surface(2,i) = ixmin
-     tab_surface(3,i) = ixmax
-     tab_surface(4,i) = izmin
-     tab_surface(5,i) = izmax
+     acoustic_surface(2,i) = ixmin
+     acoustic_surface(3,i) = ixmax
+     acoustic_surface(4,i) = izmin
+     acoustic_surface(5,i) = izmax
 
   enddo
 

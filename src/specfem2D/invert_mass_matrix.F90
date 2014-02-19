@@ -218,7 +218,7 @@
                 rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
               endif
             endif
-          else
+          else ! no PLM
 
             rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
                     + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
@@ -264,7 +264,7 @@
                      + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML))
               endif
             endif
-          else
+          else  ! no PLM
             rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
                  + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal
           endif
