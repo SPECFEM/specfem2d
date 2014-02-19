@@ -373,7 +373,7 @@ contains
   ! 'abs_surface' contains 1/ element number, 2/ number of nodes that form the absorbing edge
   ! (which currently must always be equal to two, see comment below),
   ! 3/ first node on the abs surface, 4/ second node on the abs surface
-  ! 5/ 1=IBOTTOME, 2=IRIGHT, 3=ITOP, 4=ILEFT
+  ! 5/ 1=IBOTTOM, 2=IRIGHT, 3=ITOP, 4=ILEFT
   !-----------------------------------------------
   subroutine read_abs_surface(filename, remove_min_to_start_at_zero)
 

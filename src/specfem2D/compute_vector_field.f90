@@ -222,9 +222,9 @@
         if(assign_external_model) rhol = rhoext(i,j,ispec)
 
 ! derivatives of potential
-        vector_field_element(1,i,j) = (tempx1l*xixl + tempx2l*gammaxl) / rhol
+        vector_field_element(1,i,j) = (tempx1l*xixl + tempx2l*gammaxl) / rhol        !u_x
         vector_field_element(2,i,j) = 0._CUSTOM_REAL
-        vector_field_element(3,i,j) = (tempx1l*xizl + tempx2l*gammazl) / rhol
+        vector_field_element(3,i,j) = (tempx1l*xizl + tempx2l*gammazl) / rhol        !u_z
 
       enddo
     enddo

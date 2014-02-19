@@ -110,26 +110,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,nspec_top,NSTEP) :: b_absorb_acoustic_top
   real(kind=CUSTOM_REAL), dimension(NGLLX,nspec_bottom,NSTEP) :: b_absorb_acoustic_bottom
 
-!---
-!--- local variables
-!---
-
-  integer :: ispec,i,j,k,iglob,ispecabs,ibegin,iend,jbegin,jend
-
-! spatial derivatives
-  real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,dux_dxl,dux_dzl
-  real(kind=CUSTOM_REAL) :: weight,xxi,zxi,xgamma,zgamma,jacobian1D
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: tempx1,tempx2
-
-! Jacobian matrix and determinant
-  real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
-
-! material properties of the elastic medium
-  real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,kappal,cpl,rhol
-
-  integer :: ifirstelem,ilastelem
-
-!CPML coefficients and memory variables
+! CPML coefficients and memory variables
   integer :: nspec_PML,ispec_PML
   integer, dimension(nspec) :: region_CPML
   logical, dimension(nspec) :: is_PML
@@ -141,6 +122,34 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) :: &
                           K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
+  logical :: PML_BOUNDARY_CONDITIONS,STACEY_BOUNDARY_CONDITIONS
+
+! coefficients and memory variables when using CPML with LDDRK
+  integer :: stage_time_scheme,i_stage
+  real(kind=CUSTOM_REAL), dimension(Nstages) :: alpha_LDDRK,beta_LDDRK,c_LDDRK
+  real(kind=CUSTOM_REAL), dimension(2,NGLLX,NGLLZ,nspec_PML) :: rmemory_potential_acoustic_LDDRK
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML,2) :: rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK
+
+!---
+!--- local variables
+!---
+
+  integer :: ispec,i,j,k,iglob,ispecabs,ibegin,iend,jbegin,jend
+
+! spatial derivatives
+  real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,dux_dxl,dux_dzl
+  real(kind=CUSTOM_REAL) :: weight,xxi,zxi,xgamma,zgamma,jacobian1D
+  
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: tempx1,tempx2
+
+! Jacobian matrix and determinant
+  real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
+
+! material properties of the elastic medium
+  real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,kappal,cpl,rhol
+
+  integer :: ifirstelem,ilastelem
+
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: potential_dot_dot_acoustic_PML
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: PML_dux_dxl,PML_dux_dzl,PML_dux_dxl_old,PML_dux_dzl_old
   real(kind=CUSTOM_REAL) :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z,time_n,time_nsub1,&                            
@@ -149,14 +158,6 @@
                             A0,A1,A2,A3,A4,bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2
   integer :: CPML_region_local,singularity_type_zx,singularity_type_xz,singularity_type
   double precision :: deltat
-
-  logical :: PML_BOUNDARY_CONDITIONS,STACEY_BOUNDARY_CONDITIONS
-
-!coefficients and memory variables when using CPML with LDDRK
-  integer :: stage_time_scheme,i_stage
-  real(kind=CUSTOM_REAL), dimension(Nstages) :: alpha_LDDRK,beta_LDDRK,c_LDDRK
-  real(kind=CUSTOM_REAL), dimension(2,NGLLX,NGLLZ,nspec_PML) :: rmemory_potential_acoustic_LDDRK
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML,2) :: rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK
 
   ifirstelem = 1
   ilastelem = nspec

@@ -935,12 +935,11 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_databases_final(nnodes_tangential_curve,nodes_tangential_curve, &
+  subroutine read_tangential_detection_curve(nnodes_tangential_curve,nodes_tangential_curve, &
                                 force_normal_to_surface,rec_normal_to_surface, &
                                 any_tangential_curve)
 
 ! reads tangential detection curve
-! and closes Database file
 
   implicit none
   include "constants.h"
@@ -971,9 +970,6 @@
     rec_normal_to_surface = .false.
   endif
 
-  ! closes input Database file
-  close(IIN)
-
-  end subroutine read_databases_final
+  end subroutine read_tangential_detection_curve
 
 
