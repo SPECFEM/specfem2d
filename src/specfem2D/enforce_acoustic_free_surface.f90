@@ -44,7 +44,7 @@
 
   subroutine enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
                                           potential_acoustic,acoustic_surface, &
-                                          ibool,nelem_acoustic_surface,nglob,nspec)
+                                          ibool,nelem_acoustic_surface,nglob,nspec,this_ibool_is_a_periodic_edge)
 
 ! free surface for an acoustic medium
 ! if acoustic, the free surface condition is a Dirichlet condition for the potential,
@@ -59,6 +59,8 @@
   integer, dimension(5,nelem_acoustic_surface) :: acoustic_surface
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
+
+  logical, dimension(nglob) :: this_ibool_is_a_periodic_edge
 
   real(kind=CUSTOM_REAL), dimension(nglob) :: &
     potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
@@ -76,9 +78,12 @@
     do j = acoustic_surface(4,ispec_acoustic_surface), acoustic_surface(5,ispec_acoustic_surface)
       do i = acoustic_surface(2,ispec_acoustic_surface), acoustic_surface(3,ispec_acoustic_surface)
         iglob = ibool(i,j,ispec)
-        potential_acoustic(iglob) = ZERO
-        potential_dot_acoustic(iglob) = ZERO
-        potential_dot_dot_acoustic(iglob) = ZERO
+        ! make sure that an acoustic free surface is not enforced on periodic edges
+        if(.not. this_ibool_is_a_periodic_edge(iglob)) then
+          potential_acoustic(iglob) = ZERO
+          potential_dot_acoustic(iglob) = ZERO
+          potential_dot_dot_acoustic(iglob) = ZERO
+        endif
       enddo
     enddo
 
