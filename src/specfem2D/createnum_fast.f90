@@ -62,11 +62,11 @@
   logical, dimension(:), allocatable :: ifseg
   double precision, dimension(:), allocatable :: xp,yp,work
 
-  integer ie,nseg,ioff,iseg,ig
-  integer nxyz,ntot,ispec,ieoff,ilocnum,iy,ix,in,nnum
+  integer :: ispec,nseg,ioff,iseg,ig
+  integer :: nxyz,ntot,ieoff,ilocnum,iy,ix,in,nnum
 
-  double precision xmaxval,xminval,ymaxval,yminval,xtol,xtypdist
-  double precision xcor,ycor
+  double precision :: xmaxval,xminval,ymaxval,yminval,xtol,xtypdist
+  double precision :: xcor,ycor
 
 
 !----  create global mesh numbering
@@ -91,7 +91,7 @@
   allocate(iwork(ntot))
 
 ! compute coordinates of the grid points
-  do ispec=1,nspec
+  do ispec = 1,nspec
    ieoff = nxyz*(ispec - 1)
    ilocnum = 0
 
@@ -119,29 +119,29 @@
 ! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 ! Establish initial pointers
-  do ie=1,nspec
-   ieoff = nxyz*(ie -1)
-   do ix=1,nxyz
+  do ispec = 1,nspec
+   ieoff = nxyz*(ispec -1)
+   do ix = 1,nxyz
       loc (ix+ieoff) = ix+ieoff
    enddo
   enddo
 
-! set up local geometric tolerances
+! set up a local geometric tolerance
 
-  xtypdist=+HUGEVAL
+  xtypdist = +HUGEVAL
 
-  do ie=1,nspec
+  do ispec = 1,nspec
 
-  xminval=+HUGEVAL
-  yminval=+HUGEVAL
-  xmaxval=-HUGEVAL
-  ymaxval=-HUGEVAL
-  ieoff=nxyz*(ie-1)
-  do ilocnum=1,nxyz
-    xmaxval=max(xp(ieoff+ilocnum),xmaxval)
-    xminval=min(xp(ieoff+ilocnum),xminval)
-    ymaxval=max(yp(ieoff+ilocnum),ymaxval)
-    yminval=min(yp(ieoff+ilocnum),yminval)
+  xminval = +HUGEVAL
+  yminval = +HUGEVAL
+  xmaxval = -HUGEVAL
+  ymaxval = -HUGEVAL
+  ieoff = nxyz*(ispec-1)
+  do ilocnum = 1,nxyz
+    xmaxval = max(xp(ieoff+ilocnum),xmaxval)
+    xminval = min(xp(ieoff+ilocnum),xminval)
+    ymaxval = max(yp(ieoff+ilocnum),ymaxval)
+    yminval = min(yp(ieoff+ilocnum),yminval)
   enddo
 
 ! compute the minimum typical "size" of an element in the mesh

@@ -150,14 +150,11 @@ module parameter_file
 ! 3 = classical 4th-order 4-stage Runge-Kutta
   integer :: time_stepping_scheme
 
-!! DK DK for horizontal periodic conditions: detect common points between left and right edges
+! for horizontal periodic conditions: detect common points between left and right edges
   logical :: ADD_PERIODIC_CONDITIONS
 
-!! DK DK horizontal periodicity distance for periodic conditions
-  double precision :: PERIODIC_horiz_dist
-
-!! DK DK grid point detection tolerance for periodic conditions
-  double precision :: PERIODIC_DETECT_TOL
+! horizontal periodicity distance for periodic conditions
+  double precision :: PERIODIC_HORIZ_DIST
 
 contains
 
@@ -491,11 +488,8 @@ contains
   call read_value_logical_p(ADD_PERIODIC_CONDITIONS, 'solver.ADD_PERIODIC_CONDITIONS')
   if(err_occurred() /= 0) stop 'error reading parameter 51b in Par_file'
 
-  call read_value_double_precision_p(PERIODIC_horiz_dist, 'solver.PERIODIC_horiz_dist')
+  call read_value_double_precision_p(PERIODIC_HORIZ_DIST, 'solver.PERIODIC_HORIZ_DIST')
   if(err_occurred() /= 0) stop 'error reading parameter 51c in Par_file'
-
-  call read_value_double_precision_p(PERIODIC_DETECT_TOL, 'solver.PERIODIC_DETECT_TOL')
-  if(err_occurred() /= 0) stop 'error reading parameter 51d in Par_file'
 
   !-----------------
   ! external mesh parameters
