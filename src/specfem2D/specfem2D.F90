@@ -879,6 +879,10 @@
   logical :: this_is_the_first_time_we_dump
   logical, dimension(:), allocatable  :: mask_ibool,mask_ibool_pml
 
+! to create a sorted version of the indirect addressing to reduce cache misses
+  integer, dimension(:,:,:), allocatable :: copy_ibool_ori
+  integer, dimension(:), allocatable :: integer_mask_ibool
+
   double precision, dimension(:,:,:),allocatable:: rho_local,vp_local,vs_local
 !!!! hessian
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhorho_el_hessian_final1, rhorho_el_hessian_final2
@@ -896,6 +900,7 @@
 
 ! for horizontal periodic conditions
   logical :: ADD_PERIODIC_CONDITIONS
+  logical, dimension(:), allocatable :: this_ibool_is_a_periodic_edge,copy_this_ibool_is_a_periodic
 
 ! horizontal periodicity distance for periodic conditions
   double precision :: PERIODIC_HORIZ_DIST
@@ -1863,7 +1868,6 @@
   x_center_spring = (xmax + xmin)/2.d0
   z_center_spring = (zmax + zmin)/2.d0
 
-! YYYYYYYYYYYYYYYYYYYYYYYYyyyyyyyyyyyyyyyyyyyy
 ! periodic conditions: detect common points between left and right edges and replace one of them with the other
     if(ADD_PERIODIC_CONDITIONS) then
 
@@ -1885,6 +1889,10 @@
 #ifdef USE_MPI
       stop 'periodic conditions currently implemented for a serial simulation only'
 #endif
+
+! allocate an array to make sure that an acoustic free surface is not enforced on periodic edges
+  allocate(this_ibool_is_a_periodic_edge(NGLOB))
+  allocate(copy_this_ibool_is_a_periodic(NGLOB))
 
 ! set up a local geometric tolerance
 
@@ -1931,6 +1939,7 @@
       if (myrank == 0) write(IOUT,*) &
         'start detecting points for periodic boundary conditions (the current algorithm can be slow and could be improved)...'
       counter = 0
+      this_ibool_is_a_periodic_edge(:) = .false.
       do iglob = 1,NGLOB-1
         do iglob2 = iglob + 1,NGLOB
           ! check if the two points have the exact same Z coordinate
@@ -1940,6 +1949,8 @@
               ! if so, they are the same point, thus replace the highest value of ibool with the lowest
               ! to make them the same global point and thus implement periodicity automatically
               counter = counter + 1
+              this_ibool_is_a_periodic_edge(iglob) = .true.
+              this_ibool_is_a_periodic_edge(iglob2) = .true.
               do ispec = 1,nspec
                 do j = 1,NGLLZ
                   do i = 1,NGLLX
@@ -1960,8 +1971,12 @@
 
       if(counter > 0) write(IOUT,*) 'implemented periodic conditions on ',counter,' grid points on proc ',myrank
 
+    else
+
+      ! dummy allocation just to be able to use this array as a subroutine argument later
+      allocate(this_ibool_is_a_periodic_edge(1))
+
     endif ! of if(ADD_PERIODIC_CONDITIONS)
-! end of periodic conditions
 
 #ifdef USE_MPI
   call MPI_REDUCE(count_nspec_acoustic, count_nspec_acoustic_total, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
@@ -2010,9 +2025,30 @@
     endif
   endif
 
+    ! allocate temporary arrays
+    allocate(integer_mask_ibool(nglob),stat=ier)
+    if( ier /= 0 ) stop 'error allocating mask_ibool'
+    allocate(copy_ibool_ori(NGLLX,NGLLZ,nspec),stat=ier)
+    if( ier /= 0 ) stop 'error allocating copy_ibool_ori'
+
     ! reduce cache misses by sorting the global numbering in the order in which it is accessed in the time loop.
     ! this speeds up the calculations significantly on modern processors
-    call get_global(nspec,nglob,ibool)
+    copy_ibool_ori(:,:,:) = ibool(:,:,:)
+    call get_global(nspec,nglob,ibool,copy_ibool_ori,integer_mask_ibool)
+
+    ! put the periodic edge flag in the new ibool order
+    if(ADD_PERIODIC_CONDITIONS) then
+      copy_this_ibool_is_a_periodic(:) = this_ibool_is_a_periodic_edge(:)
+      this_ibool_is_a_periodic_edge(:) = .false.
+      do ispec = 1,nspec
+        do j = 1,NGLLZ
+          do i = 1,NGLLX
+            ! if this point is on a periodic edge in the old numbering system, set the flag in the new numbering system
+            if(copy_this_ibool_is_a_periodic(copy_ibool_ori(i,j,ispec))) this_ibool_is_a_periodic_edge(ibool(i,j,ispec)) = .true.
+          enddo
+        enddo
+      enddo
+    endif
 
 !---- compute shape functions and their derivatives for regular interpolated display grid
   do j = 1,pointsdisp
@@ -3239,13 +3275,13 @@
     enddo
 
     ! reduces cache misses for outer elements
-    call get_global_indirect_addressing(nspec_outer,nglob,ibool_outer)
+    call get_global_indirect_addressing(nspec_outer,nglob,ibool_outer,copy_ibool_ori,integer_mask_ibool)
 
     ! the total number of points without multiples in this region is now known
     nglob_outer = maxval(ibool_outer)
 
     ! reduces cache misses for inner elements
-    call get_global_indirect_addressing(nspec_inner,nglob,ibool_inner)
+    call get_global_indirect_addressing(nspec_inner,nglob,ibool_inner,copy_ibool_ori,integer_mask_ibool)
 
     ! the total number of points without multiples in this region is now known
     nglob_inner = maxval(ibool_inner)
@@ -4714,12 +4750,12 @@ if(coupled_elastic_poro) then
       if ( nelem_acoustic_surface > 0 ) then
         call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
                                           potential_acoustic,acoustic_surface, &
-                                          ibool,nelem_acoustic_surface,nglob,nspec)
+                                          ibool,nelem_acoustic_surface,nglob,nspec,this_ibool_is_a_periodic_edge)
 
         if(SIMULATION_TYPE == 3) then ! Adjoint calculation
           call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
                                             b_potential_acoustic,acoustic_surface, &
-                                            ibool,nelem_acoustic_surface,nglob,nspec)
+                                            ibool,nelem_acoustic_surface,nglob,nspec,this_ibool_is_a_periodic_edge)
         endif
       endif
 
@@ -5216,12 +5252,12 @@ if(coupled_elastic_poro) then
       if ( nelem_acoustic_surface > 0 ) then
         call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
                                         potential_acoustic,acoustic_surface, &
-                                        ibool,nelem_acoustic_surface,nglob,nspec)
+                                        ibool,nelem_acoustic_surface,nglob,nspec,this_ibool_is_a_periodic_edge)
 
         if(SIMULATION_TYPE == 3) then
           call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
                                           b_potential_acoustic,acoustic_surface, &
-                                          ibool,nelem_acoustic_surface,nglob,nspec)
+                                          ibool,nelem_acoustic_surface,nglob,nspec,this_ibool_is_a_periodic_edge)
         endif
 
       endif
@@ -7367,7 +7403,7 @@ if(coupled_elastic_poro) then
         if ( nelem_acoustic_surface > 0 ) then
           call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
                                             b_potential_acoustic,acoustic_surface, &
-                                            ibool,nelem_acoustic_surface,nglob,nspec)
+                                            ibool,nelem_acoustic_surface,nglob,nspec,this_ibool_is_a_periodic_edge)
         endif
       endif
 

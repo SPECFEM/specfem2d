@@ -42,29 +42,23 @@
 !
 !========================================================================
 
-  subroutine get_global(nspec,nglob,ibool)
+! create a sorted version of the indirect addressing to reduce cache misses
+
+  subroutine get_global(nspec,nglob,ibool,copy_ibool_ori,integer_mask_ibool)
 
   implicit none
   include "constants.h"
 
   integer :: nspec,nglob
 
-  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
+  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool,copy_ibool_ori
+  integer, dimension(nglob) :: integer_mask_ibool
 
   ! local parameters
-  integer, dimension(:,:,:), allocatable :: copy_ibool_ori
-  integer, dimension(:), allocatable :: mask_ibool
-  integer :: inumber,ispec,i,j,ier
-
-  ! allocates temporary arrays
-  allocate(mask_ibool(nglob),stat=ier)
-  if( ier /= 0 ) stop 'error allocating mask_ibool'
-  allocate(copy_ibool_ori(NGLLX,NGLLZ,nspec),stat=ier)
-  if( ier /= 0 ) stop 'error allocating copy_ibool_ori'
+  integer :: inumber,ispec,i,j
 
   ! initializes temporary arrays
-  mask_ibool(:) = -1
-  copy_ibool_ori(:,:,:) = ibool(:,:,:)
+  integer_mask_ibool(:) = -1
 
   inumber = 0
 
@@ -73,51 +67,42 @@
     do ispec = 1,nspec
       do j=1,NGLLZ
         do i=1,NGLLX
-          if(mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
+          if(integer_mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
             ! create a new point
             inumber = inumber + 1
             ibool(i,j,ispec) = inumber
-            mask_ibool(copy_ibool_ori(i,j,ispec)) = inumber
+            integer_mask_ibool(copy_ibool_ori(i,j,ispec)) = inumber
           else
             ! use an existing point created previously
-            ibool(i,j,ispec) = mask_ibool(copy_ibool_ori(i,j,ispec))
+            ibool(i,j,ispec) = integer_mask_ibool(copy_ibool_ori(i,j,ispec))
           endif
         enddo
       enddo
     enddo
 
-  deallocate(mask_ibool,copy_ibool_ori)
-
   end subroutine get_global
-
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine get_global_indirect_addressing(nspec,nglob,ibool)
+! create a sorted version of the indirect addressing to reduce cache misses
 
-!- we can create a new indirect addressing to reduce cache misses
+  subroutine get_global_indirect_addressing(nspec,nglob,ibool,copy_ibool_ori,integer_mask_ibool)
 
   implicit none
   include "constants.h"
 
   integer :: nspec,nglob
-  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
+
+  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool,copy_ibool_ori
+  integer, dimension(nglob) :: integer_mask_ibool
 
   ! local parameters
-  integer, dimension(:,:,:), allocatable :: copy_ibool_ori
-  integer, dimension(:), allocatable :: mask_ibool
-  integer :: inumber,ispec,i,j,ier
-
-  ! allocates temporary arrays
-  allocate(mask_ibool(nglob),stat=ier)
-  if( ier /= 0 ) stop 'error allocating mask_ibool'
-  allocate(copy_ibool_ori(NGLLX,NGLLZ,nspec),stat=ier)
-  if( ier /= 0 ) stop 'error allocating copy_ibool_ori'
+  integer :: inumber,ispec,i,j
 
   ! initializes temporary arrays
-  mask_ibool(:) = -1
+  integer_mask_ibool(:) = -1
   copy_ibool_ori(:,:,:) = ibool(:,:,:)
 
   inumber = 0
@@ -125,19 +110,18 @@
   do ispec = 1,nspec
     do j=1,NGLLZ
       do i=1,NGLLX
-        if(mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
+        if(integer_mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
           ! create a new point
           inumber = inumber + 1
           ibool(i,j,ispec) = inumber
-          mask_ibool(copy_ibool_ori(i,j,ispec)) = inumber
+          integer_mask_ibool(copy_ibool_ori(i,j,ispec)) = inumber
         else
           ! use an existing point created previously
-          ibool(i,j,ispec) = mask_ibool(copy_ibool_ori(i,j,ispec))
+          ibool(i,j,ispec) = integer_mask_ibool(copy_ibool_ori(i,j,ispec))
         endif
       enddo
     enddo
   enddo
 
-  deallocate(mask_ibool,copy_ibool_ori)
-
   end subroutine get_global_indirect_addressing
+
