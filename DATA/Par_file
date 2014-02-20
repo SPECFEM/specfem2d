@@ -137,7 +137,7 @@ ADD_SPRING_TO_STACEY            = .false.
 ADD_PERIODIC_CONDITIONS         = .false.
 
 # horizontal periodicity distance for periodic conditions
-PERIODIC_HORIZ_DIST             = 0.3597d0
+PERIODIC_HORIZ_DIST             = 4000.d0 # 0.3597d0
 
 #-----------------------------------------------------------------------------
 # PARAMETERS FOR EXTERNAL MESHING
