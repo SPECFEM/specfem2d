@@ -57,8 +57,8 @@
                   save_binary_seismograms_single,save_binary_seismograms_double, &
                   DRAW_SOURCES_AND_RECEIVERS,Q0,freq0,p_sv,NSTEP,deltat,NSOURCES, &
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
-                  POWER_DISPLAY_COLOR,SU_FORMAT,USER_T0,time_stepping_scheme,&
-                  ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL,&
+                  POWER_DISPLAY_COLOR,SU_FORMAT,USER_T0,time_stepping_scheme, &
+                  ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_HORIZ_DIST, &
                   read_external_mesh,save_ASCII_kernels)
 
 ! starts reading in parameters from input Database file
@@ -117,19 +117,16 @@
 ! 3 = classical 4th-order 4-stage Runge-Kutta
   integer :: time_stepping_scheme
 
-!! DK DK for add spring to stacey absorbing boundary condition
+! add spring to Stacey absorbing boundary condition
   logical :: ADD_SPRING_TO_STACEY
 
-!! DK DK for horizontal periodic conditions: detect common points between left and right edges
+! for horizontal periodic conditions: detect common points between left and right edges
   logical :: ADD_PERIODIC_CONDITIONS
 
-!! DK DK horizontal periodicity distance for periodic conditions
-  double precision :: PERIODIC_horiz_dist
+! horizontal periodicity distance for periodic conditions
+  double precision :: PERIODIC_HORIZ_DIST
 
-!! DK DK grid point detection tolerance for periodic conditions
-  double precision :: PERIODIC_DETECT_TOL
-
-!!! DK DK for CPML_element_file
+! for CPML_element_file
    logical :: read_external_mesh
 
   ! local parameters
@@ -292,10 +289,7 @@
   read(IIN,*) ADD_PERIODIC_CONDITIONS
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) PERIODIC_horiz_dist
-
-  read(IIN,"(a80)") datlin
-  read(IIN,*) PERIODIC_DETECT_TOL
+  read(IIN,*) PERIODIC_HORIZ_DIST
 
   !---- check parameters read
   if (myrank == 0) then

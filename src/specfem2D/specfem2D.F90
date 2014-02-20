@@ -435,12 +435,12 @@
 ! curl in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: curl_element
 
-  integer :: i,j,k,it,irec,id,n,ispec,nglob,npgeo,iglob
+  integer :: i,j,k,it,irec,id,n,ispec,ispec2,nglob,npgeo,iglob
   integer :: nglob_acoustic
   integer :: nglob_elastic
   integer :: nglob_poroelastic
   logical :: anyabs
-  double precision :: dxd,dyd,dzd,dcurld,valux,valuy,valuz,valcurl,hlagrange,rhol,xi,gamma,x,z
+  double precision :: dxd,dyd,dzd,dcurld,valux,valuy,valuz,valcurl,hlagrange,xi,gamma,x,z
 
 !! DK DK Dec 2011: add a small crack (discontinuity) in the medium manually
   logical, parameter :: ADD_A_SMALL_CRACK_IN_THE_MEDIUM = .false.
@@ -468,7 +468,7 @@
   double precision :: xixl,xizl,gammaxl,gammazl,jacobianl
 
 ! material properties of the elastic medium
-  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic,kappal
+  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: veloc_elastic_LDDRK,displ_elastic_LDDRK,&
@@ -888,32 +888,21 @@
 ! to help locate elements with a negative Jacobian using OpenDX
   logical :: found_a_negative_jacobian
 
-!! DK DK for add spring to stacey absorbing boundary condition
+! add spring to Stacey absorbing boundary condition
   logical :: ADD_SPRING_TO_STACEY
   double precision :: x_center_spring,z_center_spring
   double precision :: xmin,xmax,zmin,zmax
   double precision :: xmin_local,xmax_local,zmin_local,zmax_local
 
-!! DK DK for horizontal periodic conditions: detect common points between left and right edges
+! for horizontal periodic conditions
   logical :: ADD_PERIODIC_CONDITIONS
 
-!! DK DK horizontal periodicity distance for periodic conditions
-  double precision :: PERIODIC_horiz_dist
+! horizontal periodicity distance for periodic conditions
+  double precision :: PERIODIC_HORIZ_DIST
 
-!! DK DK grid point detection tolerance for periodic conditions
-  double precision :: PERIODIC_DETECT_TOL
+  double precision :: xmaxval,xminval,ymaxval,yminval,xtol,xtypdist
+  integer :: counter
 
-  integer :: NSPEC_PERIO
-
-  integer, dimension(:), allocatable :: numperio_left
-  integer, dimension(:), allocatable :: numperio_right
-
-  logical, dimension(:,:), allocatable :: codeabs_perio_left
-  logical, dimension(:,:), allocatable :: codeabs_perio_right
-
-  integer :: idummy1, idummy2, idummy3, idummy4, idummy5, idummy6, idummy7, idummy8
-  integer :: ispecperio, ispecperio2, ispec2, i2, j2
-  integer :: iglob_target_to_replace, ispec3, i3, j3
   integer :: isnapshot_number = 0
 
 !<SU_FORMAT
@@ -1077,7 +1066,7 @@
                   Q0,freq0,p_sv,NSTEP,deltat,NSOURCES, &
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                   POWER_DISPLAY_COLOR,SU_FORMAT,USER_T0, time_stepping_scheme, &
-                  ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_horiz_dist,PERIODIC_DETECT_TOL,&
+                  ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_HORIZ_DIST, &
                   read_external_mesh,save_ASCII_kernels)
 
   if(nproc_read_from_database < 1) stop 'should have nproc_read_from_database >= 1'
@@ -1690,214 +1679,6 @@
     call createnum_slow(knods,ibool,nglob,nspec,ngnod,myrank)
   endif
 
-#ifdef USE_MPI
-  call MPI_REDUCE(count_nspec_acoustic, count_nspec_acoustic_total, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-  call MPI_REDUCE(nspec, nspec_total, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-  call MPI_REDUCE(nglob, nglob_total, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-#else
-  count_nspec_acoustic_total = count_nspec_acoustic
-  nspec_total = nspec
-  nglob_total = nglob
-#endif
-  if (myrank == 0) then
-    write(IOUT,*)
-    write(IOUT,*) 'Total number of elements: ',nspec_total
-    write(IOUT,*) 'decomposed as follows:'
-    write(IOUT,*)
-    write(IOUT,*) 'Total number of elastic/visco/poro elements: ',nspec_total - count_nspec_acoustic_total
-    write(IOUT,*) 'Total number of acoustic elements: ',count_nspec_acoustic_total
-    write(IOUT,*)
-#ifdef USE_MPI
-    write(IOUT,*) 'Approximate total number of grid points in the mesh'
-    write(IOUT,*) '(with a few duplicates coming from MPI buffers): ',nglob_total
-#else
-    write(IOUT,*) 'Exact total number of grid points in the mesh: ',nglob_total
-#endif
-
-! percentage of elements with 2 degrees of freedom per point
-    ratio_2DOFs = (nspec_total - count_nspec_acoustic_total) / dble(nspec_total)
-    ratio_1DOF  = count_nspec_acoustic_total / dble(nspec_total)
-    nb_acoustic_DOFs = nint(nglob_total*ratio_1DOF)
-! elastic elements have two degrees of freedom per point
-    nb_elastic_DOFs  = nint(nglob_total*ratio_2DOFs*2)
-
-    if(p_sv) then
-      write(IOUT,*)
-      write(IOUT,*) 'Approximate number of acoustic degrees of freedom in the mesh: ',nb_acoustic_DOFs
-      write(IOUT,*) 'Approximate number of elastic degrees of freedom in the mesh: ',nb_elastic_DOFs
-      write(IOUT,*) '  (there are 2 degrees of freedom per point for elastic elements)'
-      write(IOUT,*)
-      write(IOUT,*) 'Approximate total number of degrees of freedom in the mesh'
-      write(IOUT,*) '(sum of the two values above): ',nb_acoustic_DOFs + nb_elastic_DOFs
-      write(IOUT,*)
-      write(IOUT,*) ' (for simplicity viscoelastic or poroelastic elements, if any,'
-      write(IOUT,*) '  are counted as elastic in the above three estimates;'
-      write(IOUT,*) '  in reality they have more degrees of freedom)'
-      write(IOUT,*)
-    endif
-  endif
-
-!! DK DK for periodic conditions: detect common points between left and right edges
-
-    if(ADD_PERIODIC_CONDITIONS) then
-
-#ifdef USE_MPI
-      stop 'periodic conditions currently implemented for a serial simulation only (due e.g. to mass matrix rebuilding)'
-#endif
-
-      if(any_poroelastic .or. any_acoustic) &
-        stop 'periodic conditions currently implemented for purely elastic models only'
-
-      print *
-      open(unit=123,file='DATA/Database00000_left_edge_only',status='old')
-      read(123,*) NSPEC_PERIO
-      read(123,*) PERIODIC_horiz_dist
-      allocate(numperio_left(NSPEC_PERIO))
-      allocate(codeabs_perio_left(4,NSPEC_PERIO))
-      do ispecperio = 1,NSPEC_PERIO
-      read(123,*) numperio_left(ispecperio), &
-         codeabs_perio_left(IEDGE1,ispecperio), &
-         codeabs_perio_left(IEDGE2,ispecperio), &
-         codeabs_perio_left(IEDGE3,ispecperio), &
-         codeabs_perio_left(IEDGE4,ispecperio), &
-         idummy1, idummy2, idummy3, idummy4, idummy5, idummy6, idummy7, idummy8
-      enddo
-      close(123)
-      print *,'read ',NSPEC_PERIO,' elements for left periodic edge'
-      print *,'horizontal periodicity distance is ',PERIODIC_horiz_dist
-
-      open(unit=123,file='DATA/Database00000_right_edge_only',status='old')
-      read(123,*) NSPEC_PERIO
-      read(123,*) PERIODIC_horiz_dist
-      allocate(numperio_right(NSPEC_PERIO))
-      allocate(codeabs_perio_right(4,NSPEC_PERIO))
-      do ispecperio = 1,NSPEC_PERIO
-      read(123,*) numperio_right(ispecperio), &
-         codeabs_perio_right(IEDGE1,ispecperio), &
-         codeabs_perio_right(IEDGE2,ispecperio), &
-         codeabs_perio_right(IEDGE3,ispecperio), &
-         codeabs_perio_right(IEDGE4,ispecperio), &
-         idummy1, idummy2, idummy3, idummy4, idummy5, idummy6, idummy7, idummy8
-      enddo
-      close(123)
-      print *,'read ',NSPEC_PERIO,' elements for right periodic edge'
-      print *,'horizontal periodicity distance is ',PERIODIC_horiz_dist
-      print *
-
-      print *,'because of periodic conditions, values computed by checkgrid() are not reliable'
-      print *
-
-!---------------------------------------------------------------------------
-
-      do ispecperio = 1,NSPEC_PERIO
-
-        ispec = numperio_left(ispecperio)
-
-! print *,'dist of edge is ',sqrt((coord(2,ibool(1,1,ispec)) - coord(2,ibool(1,NGLLZ,ispec))) ** 2 + &
-!                                 (coord(1,ibool(1,1,ispec)) - coord(1,ibool(1,NGLLZ,ispec))) ** 2)
-
-        if(codeabs_perio_left(IEDGE4,ispecperio)) then
-           i = 1
-           do j = 1,NGLLZ
-              iglob = ibool(i,j,ispec)
-!----------------------------------------------------------------------
-              include "include_for_periodic_conditions.f90"
-!----------------------------------------------------------------------
-           enddo
-        endif
-
-        if(codeabs_perio_left(IEDGE2,ispecperio)) then
-           i = NGLLX
-           do j = 1,NGLLZ
-              iglob = ibool(i,j,ispec)
-!----------------------------------------------------------------------
-              include "include_for_periodic_conditions.f90"
-!----------------------------------------------------------------------
-           enddo
-        endif
-
-        if(codeabs_perio_left(IEDGE1,ispecperio)) then
-           j = 1
-           do i = 1,NGLLX
-              iglob = ibool(i,j,ispec)
-!----------------------------------------------------------------------
-              include "include_for_periodic_conditions.f90"
-!----------------------------------------------------------------------
-           enddo
-        endif
-
-        if(codeabs_perio_left(IEDGE3,ispecperio)) then
-           j = NGLLZ
-           do i = 1,NGLLX
-              iglob = ibool(i,j,ispec)
-!----------------------------------------------------------------------
-              include "include_for_periodic_conditions.f90"
-!----------------------------------------------------------------------
-           enddo
-        endif
-
-      enddo
-
-! rebuild the mass matrix based on this new numbering
-!
-!---- build the global mass matrix and invert it once and for all
-!
-      rmass_inverse_elastic_one(:) = 0._CUSTOM_REAL
-      do ispec = 1,nspec
-        do j = 1,NGLLZ
-          do i = 1,NGLLX
-            iglob = ibool(i,j,ispec)
-
-            ! if external density model (elastic or acoustic)
-            if(assign_external_model) then
-              rhol = rhoext(i,j,ispec)
-              kappal = rhol * vpext(i,j,ispec)**2
-            else
-              rhol = density(1,kmato(ispec))
-              lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-              mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
-              kappal = lambdal_unrelaxed_elastic + 2.d0/3.d0*mul_unrelaxed_elastic
-            endif
-
-             rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob) &
-                                + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
-
-          enddo
-        enddo
-      enddo ! do ispec = 1,nspec
-
-! invert the mass matrix once and for all
-! set entries that are equal to zero to something else, e.g. 1, to avoid division by zero
-! these degrees of freedom correspond to points that have been replaced with their periodic counterpart
-! and thus are not used any more
-      where(rmass_inverse_elastic_one == 0._CUSTOM_REAL) rmass_inverse_elastic_one = 1._CUSTOM_REAL
-      rmass_inverse_elastic_one(:) = 1._CUSTOM_REAL / rmass_inverse_elastic_one(:)
-
-    endif ! of if(ADD_PERIODIC_CONDITIONS)
-
-!! DK DK end of periodic conditions: detect common points between left and right edges
-
-    ! reduces cache misses
-    call get_global(nspec,nglob,ibool)
-
-!---- compute shape functions and their derivatives for regular interpolated display grid
-  do j = 1,pointsdisp
-    do i = 1,pointsdisp
-      xirec  = 2.d0*dble(i-1)/dble(pointsdisp-1) - 1.d0
-      gammarec  = 2.d0*dble(j-1)/dble(pointsdisp-1) - 1.d0
-      call define_shape_functions(shape2D_display(:,i,j),dershape2D_display(:,:,i,j),xirec,gammarec,ngnod)
-    enddo
-  enddo
-
-!---- compute Lagrange interpolants on a regular interpolated grid in (xi,gamma)
-!---- for display (assumes NGLLX = NGLLZ)
-  do j=1,NGLLX
-    do i=1,pointsdisp
-      xirec  = 2.d0*dble(i-1)/dble(pointsdisp-1) - 1.d0
-      flagrange(j,i) = hgll(j-1,xirec,xigll,NGLLX)
-    enddo
-  enddo
-
 ! get number of stations from receiver file
   open(unit=IIN,file='DATA/STATIONS',iostat=ios,status='old',action='read')
   nrec = 0
@@ -2081,6 +1862,175 @@
 ! use a spring to improve the stability of the Stacey condition
   x_center_spring = (xmax + xmin)/2.d0
   z_center_spring = (zmax + zmin)/2.d0
+
+! YYYYYYYYYYYYYYYYYYYYYYYYyyyyyyyyyyyyyyyyyyyy
+! periodic conditions: detect common points between left and right edges and replace one of them with the other
+    if(ADD_PERIODIC_CONDITIONS) then
+
+      if (myrank == 0) then
+        write(IOUT,*)
+        write(IOUT,*) 'implementing periodic boundary conditions'
+        write(IOUT,*) 'in the horizontal direction with a periodicity distance of ',PERIODIC_HORIZ_DIST,' m'
+        if(PERIODIC_HORIZ_DIST <= 0.d0) stop 'PERIODIC_HORIZ_DIST should be greater than zero when using ADD_PERIODIC_CONDITIONS'
+        write(IOUT,*)
+        write(IOUT,*) '*****************************************************************'
+        write(IOUT,*) '*****************************************************************'
+        write(IOUT,*) '**** BEWARE: because of periodic conditions, values computed ****'
+        write(IOUT,*) '****         by checkgrid() below will not be reliable       ****'
+        write(IOUT,*) '*****************************************************************'
+        write(IOUT,*) '*****************************************************************'
+        write(IOUT,*)
+      endif
+
+#ifdef USE_MPI
+      stop 'periodic conditions currently implemented for a serial simulation only'
+#endif
+
+! set up a local geometric tolerance
+
+  xtypdist = +HUGEVAL
+
+  do ispec = 1,nspec
+
+  xminval = +HUGEVAL
+  yminval = +HUGEVAL
+  xmaxval = -HUGEVAL
+  ymaxval = -HUGEVAL
+
+! only loop on the four corners of each element to get a typical size
+  do j = 1,NGLLZ,NGLLZ-1
+    do i = 1,NGLLX,NGLLX-1
+      iglob = ibool(i,j,ispec)
+      xmaxval = max(coord(1,iglob),xmaxval)
+      xminval = min(coord(1,iglob),xminval)
+      ymaxval = max(coord(2,iglob),ymaxval)
+      yminval = min(coord(2,iglob),yminval)
+    enddo
+  enddo
+
+! compute the minimum typical "size" of an element in the mesh
+  xtypdist = min(xtypdist,xmaxval-xminval)
+  xtypdist = min(xtypdist,ymaxval-yminval)
+
+  enddo
+
+! define a tolerance, small with respect to the minimum size
+  xtol = 1.d-4 * xtypdist
+
+! detect the points that are on the same horizontal line (i.e. at the same height Z)
+! and that have a value of the horizontal coordinate X that differs by exactly the periodicity length;
+! if so, make them all have the same global number, which will then implement periodic boundary conditions automatically.
+! We select the smallest value of iglob and assign it to all the points that are the same due to periodicity,
+! this way the maximum value of the ibool() array will remain as small as possible.
+!
+! *** IMPORTANT: this simple algorithm will be slow for large meshes because it has a cost of NGLOB^2 / 2
+! (where NGLOB is the number of points per MPI slice, not of the whole mesh though). This could be
+! reduced to O(NGLOB log(NGLOB)) by using a quicksort algorithm on the coordinates of the points to detect the multiples
+! (as implemented in routine createnum_fast() elsewhere in the code). This could be done one day if needed instead
+! of the very simple double loop below.
+      if (myrank == 0) write(IOUT,*) &
+        'start detecting points for periodic boundary conditions (the current algorithm can be slow and could be improved)...'
+      counter = 0
+      do iglob = 1,NGLOB-1
+        do iglob2 = iglob + 1,NGLOB
+          ! check if the two points have the exact same Z coordinate
+          if(abs(coord(2,iglob2) - coord(2,iglob)) < xtol) then
+            ! if so, check if their X coordinate differs by exactly the periodicity distance
+            if(abs(abs(coord(1,iglob2) - coord(1,iglob)) - PERIODIC_HORIZ_DIST) < xtol) then
+              ! if so, they are the same point, thus replace the highest value of ibool with the lowest
+              ! to make them the same global point and thus implement periodicity automatically
+              counter = counter + 1
+              do ispec = 1,nspec
+                do j = 1,NGLLZ
+                  do i = 1,NGLLX
+                    if(ibool(i,j,ispec) == iglob2) ibool(i,j,ispec) = iglob
+                  enddo
+                enddo
+              enddo
+            endif
+          endif
+        enddo
+      enddo
+
+#ifdef USE_MPI
+  call MPI_BARRIER(MPI_COMM_WORLD,ier)
+#endif
+
+      if (myrank == 0) write(IOUT,*) 'done detecting points for periodic boundary conditions.'
+
+      if(counter > 0) write(IOUT,*) 'implemented periodic conditions on ',counter,' grid points on proc ',myrank
+
+    endif ! of if(ADD_PERIODIC_CONDITIONS)
+! end of periodic conditions
+
+#ifdef USE_MPI
+  call MPI_REDUCE(count_nspec_acoustic, count_nspec_acoustic_total, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+  call MPI_REDUCE(nspec, nspec_total, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+  call MPI_REDUCE(nglob, nglob_total, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+#else
+  count_nspec_acoustic_total = count_nspec_acoustic
+  nspec_total = nspec
+  nglob_total = nglob
+#endif
+  if (myrank == 0) then
+    write(IOUT,*)
+    write(IOUT,*) 'Total number of elements: ',nspec_total
+    write(IOUT,*) 'decomposed as follows:'
+    write(IOUT,*)
+    write(IOUT,*) 'Total number of elastic/visco/poro elements: ',nspec_total - count_nspec_acoustic_total
+    write(IOUT,*) 'Total number of acoustic elements: ',count_nspec_acoustic_total
+    write(IOUT,*)
+#ifdef USE_MPI
+    write(IOUT,*) 'Approximate total number of grid points in the mesh'
+    write(IOUT,*) '(with a few duplicates coming from MPI buffers): ',nglob_total
+#else
+    write(IOUT,*) 'Exact total number of grid points in the mesh: ',nglob_total
+#endif
+
+! percentage of elements with 2 degrees of freedom per point
+    ratio_2DOFs = (nspec_total - count_nspec_acoustic_total) / dble(nspec_total)
+    ratio_1DOF  = count_nspec_acoustic_total / dble(nspec_total)
+    nb_acoustic_DOFs = nint(nglob_total*ratio_1DOF)
+! elastic elements have two degrees of freedom per point
+    nb_elastic_DOFs  = nint(nglob_total*ratio_2DOFs*2)
+
+    if(p_sv) then
+      write(IOUT,*)
+      write(IOUT,*) 'Approximate number of acoustic degrees of freedom in the mesh: ',nb_acoustic_DOFs
+      write(IOUT,*) 'Approximate number of elastic degrees of freedom in the mesh: ',nb_elastic_DOFs
+      write(IOUT,*) '  (there are 2 degrees of freedom per point for elastic elements)'
+      write(IOUT,*)
+      write(IOUT,*) 'Approximate total number of degrees of freedom in the mesh'
+      write(IOUT,*) '(sum of the two values above): ',nb_acoustic_DOFs + nb_elastic_DOFs
+      write(IOUT,*)
+      write(IOUT,*) ' (for simplicity viscoelastic or poroelastic elements, if any,'
+      write(IOUT,*) '  are counted as elastic in the above three estimates;'
+      write(IOUT,*) '  in reality they have more degrees of freedom)'
+      write(IOUT,*)
+    endif
+  endif
+
+    ! reduce cache misses by sorting the global numbering in the order in which it is accessed in the time loop.
+    ! this speeds up the calculations significantly on modern processors
+    call get_global(nspec,nglob,ibool)
+
+!---- compute shape functions and their derivatives for regular interpolated display grid
+  do j = 1,pointsdisp
+    do i = 1,pointsdisp
+      xirec  = 2.d0*dble(i-1)/dble(pointsdisp-1) - 1.d0
+      gammarec  = 2.d0*dble(j-1)/dble(pointsdisp-1) - 1.d0
+      call define_shape_functions(shape2D_display(:,i,j),dershape2D_display(:,:,i,j),xirec,gammarec,ngnod)
+    enddo
+  enddo
+
+!---- compute Lagrange interpolants on a regular interpolated grid in (xi,gamma)
+!---- for display (assumes NGLLX = NGLLZ)
+  do j=1,NGLLX
+    do i=1,pointsdisp
+      xirec  = 2.d0*dble(i-1)/dble(pointsdisp-1) - 1.d0
+      flagrange(j,i) = hgll(j-1,xirec,xigll,NGLLX)
+    enddo
+  enddo
 
 !
 !--- save the grid of points in a file
