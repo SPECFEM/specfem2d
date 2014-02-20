@@ -1297,7 +1297,7 @@
   endif
 
   if(PML_BOUNDARY_CONDITIONS .and. time_stepping_scheme == 3) then
-    stop 'PML boundary conditions is not implemented with standard Runge Kutta scheme'
+    stop 'PML boundary conditions not implemented with standard Runge Kutta scheme'
   endif
 
 #ifdef USE_MPI
