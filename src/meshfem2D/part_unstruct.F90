@@ -1684,11 +1684,10 @@ end  subroutine rotate_mesh_for_plane_wave
 
 
   !--------------------------------------------------
-  ! Repartitioning : two coupled acoustic/elastic elements are transfered to the same partition
+  ! repartitioning: coupled acoustic/elastic elements are transferred to the same partition
   !--------------------------------------------------
 
-  subroutine acoustic_elastic_repartitioning (elmnts_l, nb_materials, &
-                                          phi_material, num_material, nproc)
+  subroutine acoustic_elastic_repartitioning(elmnts_l, nb_materials, phi_material, num_material, nproc)
 
   implicit none
   include "constants.h"
@@ -1777,11 +1776,10 @@ end  subroutine rotate_mesh_for_plane_wave
 
 
   !--------------------------------------------------
-  ! Repartitioning : two coupled acoustic/poroelastic elements are transfered to the same partition
+  ! repartitioning: coupled acoustic/poroelastic elements are transferred to the same partition
   !--------------------------------------------------
 
-  subroutine acoustic_poro_repartitioning (elmnts_l, nb_materials, &
-                                        phi_material, num_material, nproc)
+  subroutine acoustic_poro_repartitioning(elmnts_l, nb_materials, phi_material, num_material, nproc)
 
   implicit none
   include "constants.h"
@@ -1871,11 +1869,10 @@ end  subroutine rotate_mesh_for_plane_wave
 
 
   !--------------------------------------------------
-  ! Repartitioning : two coupled poroelastic/elastic elements are transfered to the same partition
+  ! repartitioning: coupled poroelastic/elastic elements are transferred to the same partition
   !--------------------------------------------------
 
-  subroutine poro_elastic_repartitioning (elmnts_l, nb_materials, &
-                                        phi_material, num_material, nproc)
+  subroutine poro_elastic_repartitioning(elmnts_l, nb_materials, phi_material, num_material, nproc)
 
   implicit none
   include "constants.h"
