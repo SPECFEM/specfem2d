@@ -1886,10 +1886,6 @@
         write(IOUT,*)
       endif
 
-#ifdef USE_MPI
-      stop 'periodic conditions currently implemented for a serial simulation only'
-#endif
-
 ! allocate an array to make sure that an acoustic free surface is not enforced on periodic edges
   allocate(this_ibool_is_a_periodic_edge(NGLOB))
   allocate(copy_this_ibool_is_a_periodic(NGLOB))
@@ -2048,7 +2044,7 @@
           enddo
         enddo
       enddo
-    endif
+    endif ! of if(ADD_PERIODIC_CONDITIONS)
 
 !---- compute shape functions and their derivatives for regular interpolated display grid
   do j = 1,pointsdisp
