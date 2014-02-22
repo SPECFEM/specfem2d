@@ -1684,6 +1684,82 @@
     call createnum_slow(knods,ibool,nglob,nspec,ngnod,myrank)
   endif
 
+#ifdef USE_MPI
+  call MPI_REDUCE(count_nspec_acoustic, count_nspec_acoustic_total, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+  call MPI_REDUCE(nspec, nspec_total, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+  call MPI_REDUCE(nglob, nglob_total, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+#else
+  count_nspec_acoustic_total = count_nspec_acoustic
+  nspec_total = nspec
+  nglob_total = nglob
+#endif
+  if (myrank == 0) then
+    write(IOUT,*)
+    write(IOUT,*) 'Total number of elements: ',nspec_total
+    write(IOUT,*) 'decomposed as follows:'
+    write(IOUT,*)
+    write(IOUT,*) 'Total number of elastic/visco/poro elements: ',nspec_total - count_nspec_acoustic_total
+    write(IOUT,*) 'Total number of acoustic elements: ',count_nspec_acoustic_total
+    write(IOUT,*)
+#ifdef USE_MPI
+    write(IOUT,*) 'Approximate total number of grid points in the mesh'
+    write(IOUT,*) '(with a few duplicates coming from MPI buffers): ',nglob_total
+#else
+    write(IOUT,*) 'Exact total number of grid points in the mesh: ',nglob_total
+#endif
+
+! percentage of elements with 2 degrees of freedom per point
+    ratio_2DOFs = (nspec_total - count_nspec_acoustic_total) / dble(nspec_total)
+    ratio_1DOF  = count_nspec_acoustic_total / dble(nspec_total)
+    nb_acoustic_DOFs = nint(nglob_total*ratio_1DOF)
+! elastic elements have two degrees of freedom per point
+    nb_elastic_DOFs  = nint(nglob_total*ratio_2DOFs*2)
+
+    if(p_sv) then
+      write(IOUT,*)
+      write(IOUT,*) 'Approximate number of acoustic degrees of freedom in the mesh: ',nb_acoustic_DOFs
+      write(IOUT,*) 'Approximate number of elastic degrees of freedom in the mesh: ',nb_elastic_DOFs
+      write(IOUT,*) '  (there are 2 degrees of freedom per point for elastic elements)'
+      write(IOUT,*)
+      write(IOUT,*) 'Approximate total number of degrees of freedom in the mesh'
+      write(IOUT,*) '(sum of the two values above): ',nb_acoustic_DOFs + nb_elastic_DOFs
+      write(IOUT,*)
+      write(IOUT,*) ' (for simplicity viscoelastic or poroelastic elements, if any,'
+      write(IOUT,*) '  are counted as elastic in the above three estimates;'
+      write(IOUT,*) '  in reality they have more degrees of freedom)'
+      write(IOUT,*)
+    endif
+  endif
+
+    ! allocate temporary arrays
+    allocate(integer_mask_ibool(nglob),stat=ier)
+    if( ier /= 0 ) stop 'error allocating mask_ibool'
+    allocate(copy_ibool_ori(NGLLX,NGLLZ,nspec),stat=ier)
+    if( ier /= 0 ) stop 'error allocating copy_ibool_ori'
+
+    ! reduce cache misses by sorting the global numbering in the order in which it is accessed in the time loop.
+    ! this speeds up the calculations significantly on modern processors
+    copy_ibool_ori(:,:,:) = ibool(:,:,:)
+    call get_global(nspec,nglob,ibool,copy_ibool_ori,integer_mask_ibool)
+
+!---- compute shape functions and their derivatives for regular interpolated display grid
+  do j = 1,pointsdisp
+    do i = 1,pointsdisp
+      xirec  = 2.d0*dble(i-1)/dble(pointsdisp-1) - 1.d0
+      gammarec  = 2.d0*dble(j-1)/dble(pointsdisp-1) - 1.d0
+      call define_shape_functions(shape2D_display(:,i,j),dershape2D_display(:,:,i,j),xirec,gammarec,ngnod)
+    enddo
+  enddo
+
+!---- compute Lagrange interpolants on a regular interpolated grid in (xi,gamma)
+!---- for display (assumes NGLLX = NGLLZ)
+  do j=1,NGLLX
+    do i=1,pointsdisp
+      xirec  = 2.d0*dble(i-1)/dble(pointsdisp-1) - 1.d0
+      flagrange(j,i) = hgll(j-1,xirec,xigll,NGLLX)
+    enddo
+  enddo
+
 ! get number of stations from receiver file
   open(unit=IIN,file='DATA/STATIONS',iostat=ios,status='old',action='read')
   nrec = 0
@@ -1967,73 +2043,7 @@
 
       if(counter > 0) write(IOUT,*) 'implemented periodic conditions on ',counter,' grid points on proc ',myrank
 
-    else
-
-      ! dummy allocation just to be able to use this array as a subroutine argument later
-      allocate(this_ibool_is_a_periodic_edge(1))
-
-    endif ! of if(ADD_PERIODIC_CONDITIONS)
-
-#ifdef USE_MPI
-  call MPI_REDUCE(count_nspec_acoustic, count_nspec_acoustic_total, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-  call MPI_REDUCE(nspec, nspec_total, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-  call MPI_REDUCE(nglob, nglob_total, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-#else
-  count_nspec_acoustic_total = count_nspec_acoustic
-  nspec_total = nspec
-  nglob_total = nglob
-#endif
-  if (myrank == 0) then
-    write(IOUT,*)
-    write(IOUT,*) 'Total number of elements: ',nspec_total
-    write(IOUT,*) 'decomposed as follows:'
-    write(IOUT,*)
-    write(IOUT,*) 'Total number of elastic/visco/poro elements: ',nspec_total - count_nspec_acoustic_total
-    write(IOUT,*) 'Total number of acoustic elements: ',count_nspec_acoustic_total
-    write(IOUT,*)
-#ifdef USE_MPI
-    write(IOUT,*) 'Approximate total number of grid points in the mesh'
-    write(IOUT,*) '(with a few duplicates coming from MPI buffers): ',nglob_total
-#else
-    write(IOUT,*) 'Exact total number of grid points in the mesh: ',nglob_total
-#endif
-
-! percentage of elements with 2 degrees of freedom per point
-    ratio_2DOFs = (nspec_total - count_nspec_acoustic_total) / dble(nspec_total)
-    ratio_1DOF  = count_nspec_acoustic_total / dble(nspec_total)
-    nb_acoustic_DOFs = nint(nglob_total*ratio_1DOF)
-! elastic elements have two degrees of freedom per point
-    nb_elastic_DOFs  = nint(nglob_total*ratio_2DOFs*2)
-
-    if(p_sv) then
-      write(IOUT,*)
-      write(IOUT,*) 'Approximate number of acoustic degrees of freedom in the mesh: ',nb_acoustic_DOFs
-      write(IOUT,*) 'Approximate number of elastic degrees of freedom in the mesh: ',nb_elastic_DOFs
-      write(IOUT,*) '  (there are 2 degrees of freedom per point for elastic elements)'
-      write(IOUT,*)
-      write(IOUT,*) 'Approximate total number of degrees of freedom in the mesh'
-      write(IOUT,*) '(sum of the two values above): ',nb_acoustic_DOFs + nb_elastic_DOFs
-      write(IOUT,*)
-      write(IOUT,*) ' (for simplicity viscoelastic or poroelastic elements, if any,'
-      write(IOUT,*) '  are counted as elastic in the above three estimates;'
-      write(IOUT,*) '  in reality they have more degrees of freedom)'
-      write(IOUT,*)
-    endif
-  endif
-
-    ! allocate temporary arrays
-    allocate(integer_mask_ibool(nglob),stat=ier)
-    if( ier /= 0 ) stop 'error allocating mask_ibool'
-    allocate(copy_ibool_ori(NGLLX,NGLLZ,nspec),stat=ier)
-    if( ier /= 0 ) stop 'error allocating copy_ibool_ori'
-
-    ! reduce cache misses by sorting the global numbering in the order in which it is accessed in the time loop.
-    ! this speeds up the calculations significantly on modern processors
-    copy_ibool_ori(:,:,:) = ibool(:,:,:)
-    call get_global(nspec,nglob,ibool,copy_ibool_ori,integer_mask_ibool)
-
-    ! put the periodic edge flag in the new ibool order
-    if(ADD_PERIODIC_CONDITIONS) then
+      ! put the periodic edge flag in the new ibool order
       copy_this_ibool_is_a_periodic(:) = this_ibool_is_a_periodic_edge(:)
       this_ibool_is_a_periodic_edge(:) = .false.
       do ispec = 1,nspec
@@ -2044,25 +2054,13 @@
           enddo
         enddo
       enddo
+
+    else
+
+      ! dummy allocation just to be able to use this array as a subroutine argument later
+      allocate(this_ibool_is_a_periodic_edge(1))
+
     endif ! of if(ADD_PERIODIC_CONDITIONS)
-
-!---- compute shape functions and their derivatives for regular interpolated display grid
-  do j = 1,pointsdisp
-    do i = 1,pointsdisp
-      xirec  = 2.d0*dble(i-1)/dble(pointsdisp-1) - 1.d0
-      gammarec  = 2.d0*dble(j-1)/dble(pointsdisp-1) - 1.d0
-      call define_shape_functions(shape2D_display(:,i,j),dershape2D_display(:,:,i,j),xirec,gammarec,ngnod)
-    enddo
-  enddo
-
-!---- compute Lagrange interpolants on a regular interpolated grid in (xi,gamma)
-!---- for display (assumes NGLLX = NGLLZ)
-  do j=1,NGLLX
-    do i=1,pointsdisp
-      xirec  = 2.d0*dble(i-1)/dble(pointsdisp-1) - 1.d0
-      flagrange(j,i) = hgll(j-1,xirec,xigll,NGLLX)
-    enddo
-  enddo
 
 !
 !--- save the grid of points in a file
