@@ -820,7 +820,7 @@ program meshfem2D
   ! partitioning
   !*****************************
 
-  ! allocates and initializes partioning of elements
+  ! allocates and initializes partitioning of elements
   allocate(part(0:nelmnts-1))
   part(:) = -1
 
@@ -869,6 +869,10 @@ program meshfem2D
      nb_edges = xadj_g(nelmnts)
 
      ! giving weight to edges and vertices. Currently not used.
+!! DK DK
+!! DK DK could be used to define different weights for acoustic, elastic and poroelastic elements
+!! DK DK and also to define different weights for acoustic PML and elastic PML elements
+!! DK DK
      call read_weights()
 
      ! partitioning
@@ -906,23 +910,35 @@ program meshfem2D
 
   endif
 
-  ! beware of fluid solid edges : coupled elements are transferred to the same partition
+  ! fluid-solid edges: coupled elements are transferred to the same partition
   if ( ngnod == 9 ) then
      call acoustic_elastic_repartitioning(elmnts_bis, nb_materials, phi, num_material, nproc)
   else
      call acoustic_elastic_repartitioning(elmnts, nb_materials, phi, num_material, nproc)
   endif
-  ! beware of fluid porous edges : coupled elements are transferred to the same partition
+
+  ! fluid-porous edges: coupled elements are transferred to the same partition
   if ( ngnod == 9 ) then
      call acoustic_poro_repartitioning(elmnts_bis, nb_materials, phi, num_material, nproc)
   else
      call acoustic_poro_repartitioning(elmnts, nb_materials, phi, num_material, nproc)
   endif
-  ! beware of porous solid edges : coupled elements are transferred to the same partition
+
+  ! porous-solid edges: coupled elements are transferred to the same partition
   if ( ngnod == 9 ) then
      call poro_elastic_repartitioning(elmnts_bis, nb_materials, phi, num_material, nproc)
   else
      call poro_elastic_repartitioning(elmnts, nb_materials, phi, num_material, nproc)
+  endif
+
+! yyyyyyyyyyyyyyyyyy
+  ! periodic edges: coupled elements are transferred to the same partition
+  if(ADD_PERIODIC_CONDITIONS .and. nproc > 1) then
+    if ( ngnod == 9 ) then
+       call periodic_edges_repartitioning(elmnts_bis)
+    else
+       call periodic_edges_repartitioning(elmnts)
+    endif
   endif
 
   ! local number of each element for each partition
@@ -1022,3 +1038,4 @@ program meshfem2D
   print *
 
 end program meshfem2D
+

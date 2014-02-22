@@ -170,7 +170,7 @@ contains
   end subroutine read_external_mesh_file
 
   !-----------------------------------------------
-  ! Read the nodes coordinates and storing it in array 'nodes_coords'
+  ! read the node coordinates and store them in array 'nodes_coords'
   !-----------------------------------------------
   subroutine read_nodes_coords(filename)
 
@@ -1959,6 +1959,100 @@ end  subroutine rotate_mesh_for_plane_wave
   deallocate(xadj_l,adjncy_l)
 
   end subroutine poro_elastic_repartitioning
+
+
+!yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+  !--------------------------------------------------
+  ! repartitioning: coupled periodic elements are transferred to the same partition
+  !--------------------------------------------------
+
+  subroutine periodic_edges_repartitioning(elmnts_l)
+
+  implicit none
+  include "constants.h"
+
+  integer, dimension(0:NCORNERS*nelmnts-1), intent(in) :: elmnts_l
+
+  ! local parameters
+  logical, dimension(0:nelmnts-1) :: is_periodic
+
+  integer :: el,el2,icorner,icorner2,num_node,num_node2,ifirst_partition_found
+
+  double precision :: x,y,x2,y2
+
+! allocate(part(0:nelmnts-1))
+
+!    nnodes = (nz+1)*(nx+1)
+!    allocate(nodes_coords(2,nnodes))
+
+!       do j = 0, nz
+!          do i = 0, nx
+!             num_node = num_9(i,j,nxread,nzread)
+!             nodes_coords(1, num_node) = x(i,j)
+!             nodes_coords(2, num_node) = z(i,j)
+!          enddo
+!       enddo
+
+! print *,'Min and max value of X in the grid = ',minval(nodes_coords(1,:)),maxval(nodes_coords(1,:))
+
+!! DK DK put computation of xtol and put remark that cost is N^2 and could be N log(N)
+
+  is_periodic(:) = .false.
+
+! loop on all the elements
+  do el = 0, nelmnts-2 ! we stop one element before the end in order for the second loop to be OK in all cases
+!!!!!!!!!  do el = 0, nelmnts-1 ! we stop one element before the end in order for the second loop to be OK in all cases
+!!!!!!!!! DK DK this is a bug    if(is_periodic(el)) cycle
+    do el2 = el+1, nelmnts-1
+!!!!!!!!!!!!!    do el2 = 0, nelmnts-1
+!     if(el == el2) cycle !!!!!!!!! DK DK an element cannot be periodic with itself
+      if(is_periodic(el2)) cycle
+      ! it is sufficient to loop on the four corners to determine if this element has at least one periodic point
+      do icorner = 0,NCORNERS-1
+        num_node = elmnts_l(icorner + NCORNERS*el) + 1 ! the plus one is because elmnts_l() starts at zero
+        x = nodes_coords(1,num_node)
+        y = nodes_coords(2,num_node)
+        do icorner2 = 0,NCORNERS-1
+          num_node2 = elmnts_l(icorner2 + NCORNERS*el2) + 1 ! the plus one is because elmnts_l() starts at zero
+          x2 = nodes_coords(1,num_node2)
+          y2 = nodes_coords(2,num_node2)
+          ! if the two points are at the same height Y
+          if(abs(y2 - y) < 1.d-3) then
+            ! if in addition their X coordinates differ by exactly the periodicity distance
+            if(abs(abs(x2 - x) - 4000.d0) < 1.d-3) then
+              ! then these two elements are in contact by a periodic edge
+              is_periodic(el) = .true.
+              is_periodic(el2) = .true.
+              goto 100
+            endif
+          endif
+        enddo
+      enddo
+ 100  continue
+    enddo
+  enddo
+
+  print *,'number of periodic elements found and grouped in the same partition: ',count(is_periodic)
+
+! loop on all the elements to find the first partition that contains a periodic element
+  ifirst_partition_found = -1
+  do el = 0, nelmnts-1
+    if(is_periodic(el)) then
+      ifirst_partition_found = part(el)
+      exit
+    endif
+  enddo
+  if(ifirst_partition_found < 0) stop 'error: no periodic element found, even though ADD_PERIODIC_CONDITIONS is set'
+
+! loop on all the elements to move all periodic elements to the first partition found
+  do el = 0, nelmnts-1
+    if(is_periodic(el)) part(el) = ifirst_partition_found
+  enddo
+
+! yyyyyyyyyyyyyyyyyyyyy
+!             part(edges_elporo_coupled(1,num_edge)) = part(edges_elporo_coupled(2,num_edge))
+
+  end subroutine periodic_edges_repartitioning
 
 
   !--------------------------------------------------
