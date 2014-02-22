@@ -900,7 +900,7 @@
 
 ! for horizontal periodic conditions
   logical :: ADD_PERIODIC_CONDITIONS
-  logical, dimension(:), allocatable :: this_ibool_is_a_periodic_edge,copy_this_ibool_is_a_periodic
+  logical, dimension(:), allocatable :: this_ibool_is_a_periodic_edge
 
 ! horizontal periodicity distance for periodic conditions
   double precision :: PERIODIC_HORIZ_DIST
@@ -1739,7 +1739,6 @@
 
     ! reduce cache misses by sorting the global numbering in the order in which it is accessed in the time loop.
     ! this speeds up the calculations significantly on modern processors
-    copy_ibool_ori(:,:,:) = ibool(:,:,:)
     call get_global(nspec,nglob,ibool,copy_ibool_ori,integer_mask_ibool)
 
 !---- compute shape functions and their derivatives for regular interpolated display grid
@@ -1964,7 +1963,6 @@
 
 ! allocate an array to make sure that an acoustic free surface is not enforced on periodic edges
   allocate(this_ibool_is_a_periodic_edge(NGLOB))
-  allocate(copy_this_ibool_is_a_periodic(NGLOB))
 
 ! set up a local geometric tolerance
 
@@ -2042,18 +2040,6 @@
       if (myrank == 0) write(IOUT,*) 'done detecting points for periodic boundary conditions.'
 
       if(counter > 0) write(IOUT,*) 'implemented periodic conditions on ',counter,' grid points on proc ',myrank
-
-      ! put the periodic edge flag in the new ibool order
-      copy_this_ibool_is_a_periodic(:) = this_ibool_is_a_periodic_edge(:)
-      this_ibool_is_a_periodic_edge(:) = .false.
-      do ispec = 1,nspec
-        do j = 1,NGLLZ
-          do i = 1,NGLLX
-            ! if this point is on a periodic edge in the old numbering system, set the flag in the new numbering system
-            if(copy_this_ibool_is_a_periodic(copy_ibool_ori(i,j,ispec))) this_ibool_is_a_periodic_edge(ibool(i,j,ispec)) = .true.
-          enddo
-        enddo
-      enddo
 
     else
 
