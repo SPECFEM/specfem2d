@@ -59,6 +59,7 @@
 
   ! initializes temporary arrays
   integer_mask_ibool(:) = -1
+  copy_ibool_ori(:,:,:) = ibool(:,:,:)
 
   inumber = 0
 
