@@ -1761,6 +1761,7 @@ end  subroutine rotate_mesh_for_plane_wave
            else
               part(edges_coupled(1,num_edge)) = part(edges_coupled(2,num_edge))
            endif
+
            is_repartitioned = .true.
         endif
 
