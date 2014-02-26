@@ -1,4 +1,3 @@
-
   program specfem2D
 
 !========================================================================
@@ -8563,7 +8562,7 @@ if(coupled_elastic_poro) then
         else if(imagetype_wavefield_dumps == 4 .and. p_sv) then
 
           if (myrank == 0) write(IOUT,*) 'dumping the pressure field...'
-          call compute_pressure_whole_medium(potential_acoustic,displ_elastic,&
+          call compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,&
                      displs_poroelastic,displw_poroelastic,elastic,poroelastic,vector_field_display, &
                      xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
                      nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
