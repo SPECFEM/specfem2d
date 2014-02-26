@@ -2023,7 +2023,11 @@ coorg_recv_ps_vector_field
   icol = mod(imat - 1,NUM_COLORS) + 1
 
 ! display all the PML layers in a different (constant) color if needed
-  if(DISPLAY_PML_IN_DIFFERENT_COLOR .and. is_PML(ispec)) icol = ICOLOR_FOR_PML_DISPLAY
+  if(DISPLAY_PML_IN_DIFFERENT_COLOR .and. is_PML(ispec)) then
+    icol = ICOLOR_FOR_PML_DISPLAY
+    ! make sure that number exists
+    if(icol > NUM_COLORS) icol = NUM_COLORS
+  endif
 
   if (  myrank == 0 ) then
     if(meshvect) then
