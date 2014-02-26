@@ -126,7 +126,7 @@
                   displ_x = A8 * displ_elastic(1,iglob) + A9 * rmemory_fsb_displ_elastic(1,1,i,j,inum)
                   displ_z = A8 * displ_elastic(3,iglob) + A9 * rmemory_fsb_displ_elastic(1,3,i,j,inum)
                else
-                  stop 'PML do not support the fluid-solid boundary not inside CPML_X_ONLY'
+                  stop 'PML currently does not support a fluid-solid boundary located in a PML that is not CPML_X_ONLY'
                endif
              else
                displ_x = displ_elastic(1,iglob)

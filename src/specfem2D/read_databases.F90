@@ -127,7 +127,7 @@
   double precision :: PERIODIC_HORIZ_DIST
 
 ! for CPML_element_file
-   logical :: read_external_mesh
+  logical :: read_external_mesh
 
   ! local parameters
   integer :: ier
