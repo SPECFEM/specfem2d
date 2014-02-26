@@ -74,7 +74,7 @@
           coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
           d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field, &
           d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
-          coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER)
+          coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER,is_PML)
 
 !
 ! PostScript display routine
@@ -98,6 +98,8 @@
   integer kmato(nspec),knods(ngnod,nspec)
   integer ibool(NGLLX,NGLLZ,nspec)
   logical, dimension(nspec) :: poroelastic
+
+  logical, dimension(nspec) :: is_PML
 
   double precision xinterp(pointsdisp,pointsdisp),zinterp(pointsdisp,pointsdisp)
   double precision shapeint(ngnod,pointsdisp,pointsdisp)
@@ -2019,6 +2021,9 @@ coorg_recv_ps_vector_field
 ! use a different color for each material set
   imat = kmato(ispec)
   icol = mod(imat - 1,NUM_COLORS) + 1
+
+! display all the PML layers in a different (constant) color if needed
+  if(DISPLAY_PML_IN_DIFFERENT_COLOR .and. is_PML(ispec)) icol = ICOLOR_FOR_PML_DISPLAY
 
   if (  myrank == 0 ) then
     if(meshvect) then

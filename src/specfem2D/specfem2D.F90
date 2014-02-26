@@ -8203,7 +8203,7 @@ if(coupled_elastic_poro) then
                       coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
                       d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field, &
                       d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
-                      coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER)
+                      coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER,is_PML)
 
         else if(imagetype_postscript == 2 .and. p_sv) then
 
@@ -8247,7 +8247,7 @@ if(coupled_elastic_poro) then
                       coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
                       d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field, &
                       d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
-                      coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER)
+                      coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER,is_PML)
 
         else if(imagetype_postscript == 3 .and. p_sv) then
 
@@ -8291,7 +8291,7 @@ if(coupled_elastic_poro) then
                       coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
                       d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field, &
                       d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
-                      coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER)
+                      coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER,is_PML)
 
         else if(.not. p_sv) then
           call exit_MPI('cannot draw a SH scalar field as a vector plot, turn PostScript plots off')
