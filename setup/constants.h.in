@@ -39,6 +39,11 @@
 ! in PostScript files about mesh quality, show all elements above this threshold
   double precision, parameter :: THRESHOLD_POSTSCRIPT = 95.d0 / 100.d0
 
+! display all the PML layers in a different (constant) color in the PostScript vector plots if needed
+!! DK DK these two parameters could/should be moved to DATA/Par_file one day
+  logical, parameter :: DISPLAY_PML_IN_DIFFERENT_COLOR = .true.
+  integer, parameter :: ICOLOR_FOR_PML_DISPLAY = 100
+
 ! option to display only part of the mesh and not the whole mesh,
 ! for instance to analyze Cuthill-McKee mesh partitioning etc.
 ! Possible values are:
