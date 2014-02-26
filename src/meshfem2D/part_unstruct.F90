@@ -243,11 +243,13 @@ contains
   end subroutine read_mat
 
   !-----------------------------------------------
-  ! Read the position of pml element storing it in array 'region_pml_external_mesh'
+  ! Read the PML elements, storing them in array 'region_pml_external_mesh'
   !-----------------------------------------------
   subroutine read_pml_element(filename, region_pml_external_mesh, nspec_cpml)
 
   implicit none
+
+  include "constants.h"
 
   character(len=256), intent(in)  :: filename
   integer, dimension(1:nelmnts), intent(out)  :: region_pml_external_mesh
@@ -277,6 +279,8 @@ contains
 #else
      read(992,*) ispec, pml_flag
 #endif
+     if(pml_flag /= CPML_X_ONLY .and. pml_flag /= CPML_Z_ONLY .and. pml_flag /= CPML_XZ_ONLY) &
+       stop 'error: incorrect CPML element flag found, should be CPML_X_ONLY or CPML_Z_ONLY or CPML_XZ_ONLY only'
      region_pml_external_mesh(ispec) = pml_flag
   enddo
 

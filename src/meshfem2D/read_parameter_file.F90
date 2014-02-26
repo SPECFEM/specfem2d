@@ -58,8 +58,7 @@ module parameter_file
   logical :: SAVE_FORWARD,read_external_mesh
 
   character(len=256) :: mesh_file, nodes_coords_file, materials_file, &
-                        free_surface_file, absorbing_surface_file,&
-                        CPML_element_file
+                        free_surface_file, absorbing_surface_file, CPML_element_file
   character(len=256)  :: tangential_detection_curve_file
 
   ! variables used for partitioning

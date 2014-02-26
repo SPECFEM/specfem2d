@@ -571,7 +571,7 @@
 
   double precision :: ROTATE_PML_ANGLE
 
-!! DK DK for CPML_element_file
+! for CPML_element_file
   logical :: read_external_mesh
 
   double precision :: cutsnaps,sizemax_arrows,anglerec,xirec,gammarec
