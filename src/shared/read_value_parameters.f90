@@ -92,22 +92,6 @@
 
 !--------------------
 
-  subroutine read_value_string(iin,ignore_junk,value_to_read)
-
-  implicit none
-
-  integer iin
-  logical ignore_junk
-  character(len=*) value_to_read
-  character(len=100) string_read
-
-  call read_next_line(iin,ignore_junk,string_read)
-  value_to_read = string_read
-
-  end subroutine read_value_string
-
-!--------------------
-
   subroutine read_two_interface_points(iin,ignore_junk,value_to_read_1,value_to_read_2)
 
   implicit none
@@ -121,47 +105,6 @@
   read(string_read,*) value_to_read_1,value_to_read_2
 
   end subroutine read_two_interface_points
-
-!--------------------
-
-  subroutine read_region_coordinates(iin,ignore_junk,value_to_read_1,value_to_read_2, &
-                          value_to_read_3,value_to_read_4,value_to_read_5)
-
-  implicit none
-
-  integer iin
-  logical ignore_junk
-  integer value_to_read_1,value_to_read_2,value_to_read_3,value_to_read_4,value_to_read_5
-  character(len=100) string_read
-
-  call read_next_line(iin,ignore_junk,string_read)
-  read(string_read,*) value_to_read_1,value_to_read_2,value_to_read_3,value_to_read_4,value_to_read_5
-
-  end subroutine read_region_coordinates
-
-!--------------------
-
-  subroutine read_material_parameters(iin,ignore_junk,i,icodematread,val0read,val1read,val2read,val3read, &
-                         val4read,val5read,val6read,val7read,val8read,val9read,val10read,val11read,val12read)
-
-
-  implicit none
-
-  integer iin
-  logical ignore_junk
-  integer i,icodematread
-  double precision val0read,val1read,val2read,val3read,val4read,val5read,val6read,val7read,&
-                   val8read,val9read,val10read,val11read,val12read
-
-  character(len=100) string_read
-
-  call read_next_line(iin,ignore_junk,string_read)
-  print*,string_read
-  read(string_read,*) i,icodematread,val0read,val1read,val2read,val3read,val4read,val5read,&
-                      val6read,val7read,val8read,val9read,val10read,val11read,val12read
-
-
-  end subroutine read_material_parameters
 
 !--------------------
 
