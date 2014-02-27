@@ -49,7 +49,7 @@
 
   include "constants.h"
 
-! user can modify this routine to assign any different external Earth model (rho, vp, vs)
+! user can modify this routine to assign any different external model (rho, vp, vs)
 ! based on the x and y coordinates of that grid point and the material number of the region it belongs to
 
   integer, intent(in) :: nspec,nglob
