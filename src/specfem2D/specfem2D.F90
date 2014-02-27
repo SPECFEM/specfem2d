@@ -1,3 +1,4 @@
+
   program specfem2D
 
 !========================================================================
@@ -3099,6 +3100,11 @@
       allocate(alpha_x_store(1,1,1))
       allocate(alpha_z_store(1,1,1))
     endif ! PML_BOUNDARY_CONDITIONS
+
+  ! avoid a potential side effect owing to the "if" statements above: this array may be unallocated,
+  ! if so we need to allocate a dummy version in order to be able to use that array as an argument
+  ! in some subroutine calls below
+  if(.not. allocated(rmemory_fsb_displ_elastic)) allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,1))
 
   !
   !---- build the global mass matrix
