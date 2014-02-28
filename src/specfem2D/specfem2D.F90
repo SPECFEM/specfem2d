@@ -2033,6 +2033,8 @@
         enddo
       enddo
 
+!     NGLOB = NGLOB - counter !! DK DK added this yyyyyyyyyyyyyyyyyyy DK DK to fix postscript
+
 #ifdef USE_MPI
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
 #endif

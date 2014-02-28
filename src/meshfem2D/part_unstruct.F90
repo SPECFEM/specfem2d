@@ -2054,9 +2054,6 @@ end  subroutine rotate_mesh_for_plane_wave
     if(is_periodic(el)) part(el) = ifirst_partition_found
   enddo
 
-! yyyyyyyyyyyyyyyyyyyyy
-!             part(edges_elporo_coupled(1,num_edge)) = part(edges_elporo_coupled(2,num_edge))
-
   end subroutine periodic_edges_repartitioning
 
 

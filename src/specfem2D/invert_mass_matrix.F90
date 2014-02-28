@@ -67,37 +67,30 @@
   implicit none
   include 'constants.h'
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   logical :: anyabs
   integer :: nelemabs,ibegin,iend,ispecabs,jbegin,jend
-!  integer :: ispec,i,j,k,iglob,ispecabs,ibegin,iend,irec,irec_local
   integer, dimension(nelemabs) :: numabs,ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
                                   ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2
   double precision :: deltat
   logical, dimension(4,nelemabs)  :: codeabs
 
-!!local parameter
+  ! local parameter
   ! material properties of the elastic medium
   real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,cpl,csl
   integer count_left,count_right,count_bottom
   real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,rho_vp,rho_vs,tx,ty,tz,&
                             weight,xxi,zxi,xgamma,zgamma,jacobian1D
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-  logical any_elastic,any_acoustic,any_poroelastic
+  logical :: any_elastic,any_acoustic,any_poroelastic
 
   ! inverse mass matrices
   integer :: nglob_elastic
-  real(kind=CUSTOM_REAL), dimension(nglob_elastic) :: rmass_inverse_elastic_one,&
-                                                      rmass_inverse_elastic_three
+  real(kind=CUSTOM_REAL), dimension(nglob_elastic) :: rmass_inverse_elastic_one,rmass_inverse_elastic_three
 
   integer :: nglob_acoustic
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: rmass_inverse_acoustic
 
   integer :: nglob_poroelastic
-  real(kind=CUSTOM_REAL), dimension(nglob_poroelastic) :: &
-    rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic
+  real(kind=CUSTOM_REAL), dimension(nglob_poroelastic) :: rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic
 
   integer :: nspec
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
@@ -122,11 +115,9 @@
   double precision :: rhol,kappal,mul_relaxed,lambdal_relaxed
   double precision :: rhol_s,rhol_f,rhol_bar,phil,tortl
 
-!!!!!!!!!!!!! DK DK added this
   integer :: nspec_PML,ispec_PML
   integer, dimension(nspec) :: spec_to_PML
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) :: &
-                  K_x_store,K_z_store,d_x_store,d_z_store
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) :: K_x_store,K_z_store,d_x_store,d_z_store
   logical, dimension(nspec) :: is_PML
   logical :: PML_BOUNDARY_CONDITIONS,this_element_has_PML
   integer, dimension(nspec) :: region_CPML
@@ -662,11 +653,10 @@
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: rmass_inverse_acoustic
 
   integer :: nglob_poroelastic
-  real(kind=CUSTOM_REAL), dimension(nglob_poroelastic) :: &
-    rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic
-
+  real(kind=CUSTOM_REAL), dimension(nglob_poroelastic) :: rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic
 
 ! fill mass matrix with fictitious non-zero values to make sure it can be inverted globally
+! (this can happen when some degrees of freedom have been removed from some of the global arrays)
   if(any_elastic) &
     where(rmass_inverse_elastic_one <= 0._CUSTOM_REAL) rmass_inverse_elastic_one = 1._CUSTOM_REAL
   if(any_elastic) &
