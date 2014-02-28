@@ -931,13 +931,12 @@ program meshfem2D
      call poro_elastic_repartitioning(elmnts, nb_materials, phi, num_material, nproc)
   endif
 
-! yyyyyyyyyyyyyyyyyy
   ! periodic edges: coupled elements are transferred to the same partition
   if(ADD_PERIODIC_CONDITIONS .and. nproc > 1) then
     if ( ngnod == 9 ) then
-       call periodic_edges_repartitioning(elmnts_bis)
+       call periodic_edges_repartitioning(elmnts_bis,nnodes,nodes_coords,PERIODIC_HORIZ_DIST)
     else
-       call periodic_edges_repartitioning(elmnts)
+       call periodic_edges_repartitioning(elmnts,nnodes,nodes_coords,PERIODIC_HORIZ_DIST)
     endif
   endif
 

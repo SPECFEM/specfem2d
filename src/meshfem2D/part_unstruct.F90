@@ -1966,51 +1966,58 @@ end  subroutine rotate_mesh_for_plane_wave
   end subroutine poro_elastic_repartitioning
 
 
-!yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
   !--------------------------------------------------
   ! repartitioning: coupled periodic elements are transferred to the same partition
   !--------------------------------------------------
 
-  subroutine periodic_edges_repartitioning(elmnts_l)
+  subroutine periodic_edges_repartitioning(elmnts_l,nnodes,nodes_coords,PERIODIC_HORIZ_DIST)
 
   implicit none
   include "constants.h"
 
   integer, dimension(0:NCORNERS*nelmnts-1), intent(in) :: elmnts_l
 
+  integer :: nnodes
+  double precision, dimension(2,nnodes) :: nodes_coords
+  double precision :: PERIODIC_HORIZ_DIST
+
   ! local parameters
   logical, dimension(0:nelmnts-1) :: is_periodic
 
   integer :: el,el2,icorner,icorner2,num_node,num_node2,ifirst_partition_found
 
+  double precision :: xtol,xtypdist
   double precision :: x,y,x2,y2
 
-! allocate(part(0:nelmnts-1))
+! set up a local geometric tolerance by computing the typical horizontal size of an element.
+! the sqrt() assumes that the geometrical model is 'not too elongated' and thus 'not too far from a square'
+! and thus contains more or less the same number of points along X and Y. If this is not the case i.e.
+! if the model is very elongated then this trick will work anyway because we just want to have a rough idea
+! of a typical length in the mesh, even if it is not very accurate it will work anyway.
+  xtypdist = (maxval(nodes_coords(1,:)) - minval(nodes_coords(1,:))) / sqrt(dble(nnodes))
 
-!    nnodes = (nz+1)*(nx+1)
-!    allocate(nodes_coords(2,nnodes))
+! define a tolerance, small with respect to the minimum size
+  xtol = 1.d-4 * xtypdist
 
-!       do j = 0, nz
-!          do i = 0, nx
-!             num_node = num_9(i,j,nxread,nzread)
-!             nodes_coords(1, num_node) = x(i,j)
-!             nodes_coords(2, num_node) = z(i,j)
-!          enddo
-!       enddo
+! detect the points that are on the same horizontal line (i.e. at the same height Z)
+! and that have a value of the horizontal coordinate X that differs by exactly the periodicity length;
+! if so, make them all have the same global number, which will then implement periodic boundary conditions automatically.
+! We select the smallest value of iglob and assign it to all the points that are the same due to periodicity,
+! this way the maximum value of the ibool() array will remain as small as possible.
+!
+! *** IMPORTANT: this simple algorithm will be slow for large meshes because it has a cost of NGLOB^2 / 2
+! (where NGLOB is the number of points per MPI slice, not of the whole mesh though). This could be
+! reduced to O(NGLOB log(NGLOB)) by using a quicksort algorithm on the coordinates of the points to detect the multiples
+! (as implemented in routine createnum_fast() elsewhere in the code). This could be done one day if needed instead
+! of the very simple double loop below.
 
-! print *,'Min and max value of X in the grid = ',minval(nodes_coords(1,:)),maxval(nodes_coords(1,:))
-
-!! DK DK put computation of xtol and put remark that cost is N^2 and could be N log(N)
+  print *,'start detecting points for periodic boundary conditions (the current algorithm can be slow and could be improved)...'
 
   is_periodic(:) = .false.
 
 ! loop on all the elements
   do el = 0, nelmnts-2 ! we stop one element before the end in order for the second loop to be OK in all cases
-!!!!!!!!!  do el = 0, nelmnts-1 ! we stop one element before the end in order for the second loop to be OK in all cases
-!!!!!!!!! DK DK this is a bug    if(is_periodic(el)) cycle
     do el2 = el+1, nelmnts-1
-!!!!!!!!!!!!!    do el2 = 0, nelmnts-1
-!     if(el == el2) cycle !!!!!!!!! DK DK an element cannot be periodic with itself
       if(is_periodic(el2)) cycle
       ! it is sufficient to loop on the four corners to determine if this element has at least one periodic point
       do icorner = 0,NCORNERS-1
@@ -2022,9 +2029,9 @@ end  subroutine rotate_mesh_for_plane_wave
           x2 = nodes_coords(1,num_node2)
           y2 = nodes_coords(2,num_node2)
           ! if the two points are at the same height Y
-          if(abs(y2 - y) < 1.d-3) then
+          if(abs(y2 - y) < xtol) then
             ! if in addition their X coordinates differ by exactly the periodicity distance
-            if(abs(abs(x2 - x) - 4000.d0) < 1.d-3) then
+            if(abs(abs(x2 - x) - PERIODIC_HORIZ_DIST) < xtol) then
               ! then these two elements are in contact by a periodic edge
               is_periodic(el) = .true.
               is_periodic(el2) = .true.
@@ -2037,6 +2044,7 @@ end  subroutine rotate_mesh_for_plane_wave
     enddo
   enddo
 
+  print *,'done detecting points for periodic boundary conditions.'
   print *,'number of periodic elements found and grouped in the same partition: ',count(is_periodic)
 
 ! loop on all the elements to find the first partition that contains a periodic element

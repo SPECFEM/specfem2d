@@ -1812,8 +1812,15 @@
 ! allocate other global arrays
     allocate(coord(NDIM,nglob))
 
-! to display acoustic elements
+! to display the whole vector field (it needs to be computed from the potential in acoustic elements,
+! thus it does not exist as a whole it case of simulations that contain some acoustic elements
+! and it thus needs to be computed specifically for display purposes)
     allocate(vector_field_display(3,nglob))
+
+! when periodic boundary conditions are on, some global degrees of freedom are going to be removed,
+! thus we need to set this array to zero otherwise some of its locations may contain random values
+! if the memory is not cleaned
+    vector_field_display(:,:) = 0.d0
 
     if(assign_external_model) then
       allocate(vpext(NGLLX,NGLLZ,nspec))
@@ -2032,8 +2039,6 @@
           endif
         enddo
       enddo
-
-!     NGLOB = NGLOB - counter !! DK DK added this yyyyyyyyyyyyyyyyyyy DK DK to fix postscript
 
 #ifdef USE_MPI
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
@@ -4680,6 +4685,7 @@ if(coupled_elastic_poro) then
 !
 !----          s t a r t   t i m e   i t e r a t i o n s
 !
+
   if (myrank == 0) write(IOUT,400)
 
   ! count elapsed wall-clock time
