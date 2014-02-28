@@ -311,13 +311,6 @@
 
   if( myrank == 0 ) then
     write(IOUT,*) '       assembly acoustic MPI interface points:',num_points2
-
-    ! they don't need to fit, somehow..
-    !if( num_points2 /= num_points1 ) then
-    !  print*,'error acoustic assembly:' !,myrank
-    !  print*,'  total = ',num_points1,' not equal to assembled ',num_points2
-    !  call exit_MPI('error acoustic MPI assembly')
-    !endif
   endif
 
   end subroutine get_MPI
