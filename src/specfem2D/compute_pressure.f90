@@ -89,7 +89,7 @@
 
   integer :: N_SLS
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
 
 ! local variables
   integer :: i,j,ispec,iglob
@@ -173,7 +173,7 @@
   integer :: N_SLS
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11
   real(kind=CUSTOM_REAL) :: e1_sum,e11_sum
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
   integer :: i_sls
 
 ! local variables

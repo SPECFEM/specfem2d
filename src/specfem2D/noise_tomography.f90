@@ -57,7 +57,7 @@
 
   !input
   integer :: nglob
-  real(kind=CUSTOM_REAL), dimension(2,nglob) :: coord
+  double precision, dimension(2,nglob) :: coord
 
   !output
   real(kind=CUSTOM_REAL), dimension(nglob) :: mask_noise
@@ -174,7 +174,7 @@
   logical :: p_sv
   integer NSTEP, ispec_noise,nglob
   integer, dimension(NGLLX,NGLLZ,nglob) :: ibool
-  real(kind=CUSTOM_REAL) :: deltat, xi_noise, gamma_noise
+  double precision :: deltat, xi_noise, gamma_noise
 
   !output
   real(kind=CUSTOM_REAL), dimension(NSTEP) :: time_function_noise
@@ -183,10 +183,10 @@
   !local
   integer :: it,i,j,iglob
   real(kind=CUSTOM_REAL) :: t
-  real(kind=CUSTOM_REAL), dimension(NGLLX) :: xigll
-  real(kind=CUSTOM_REAL), dimension(NGLLZ) :: zigll
-  real(kind=CUSTOM_REAL), dimension(NGLLX) :: hxi, hpxi
-  real(kind=CUSTOM_REAL), dimension(NGLLZ) :: hgamma, hpgamma
+  double precision, dimension(NGLLX) :: xigll
+  double precision, dimension(NGLLZ) :: zigll
+  double precision, dimension(NGLLX) :: hxi, hpxi
+  double precision, dimension(NGLLZ) :: hgamma, hpgamma
   real(kind=CUSTOM_REAL) :: factor_noise, aval, t0
 
 ! ---------------------------------------------------------------------------------
@@ -312,7 +312,7 @@
   integer :: ispec_noise, nglob
   integer, dimension(NGLLX,NGLLZ,nglob) :: ibool
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic
-  real(kind=CUSTOM_REAL) :: angle_noise
+  double precision :: angle_noise
   real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLZ,NSTEP) :: source_array_noise
 
   !local

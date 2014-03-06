@@ -71,7 +71,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: pressure_element
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
 
   integer :: nglob_acoustic
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: &

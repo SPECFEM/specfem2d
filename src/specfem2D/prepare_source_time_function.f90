@@ -63,7 +63,7 @@
   integer,dimension(NSOURCES) :: nb_proc_source
   double precision :: deltat
   integer :: stage_time_scheme
-  double precision, dimension(Nstages) :: c_LDDRK
+  real(kind=CUSTOM_REAL), dimension(Nstages) :: c_LDDRK
 
   real(kind=CUSTOM_REAL),dimension(NSOURCES,NSTEP,stage_time_scheme) :: source_time_function
 

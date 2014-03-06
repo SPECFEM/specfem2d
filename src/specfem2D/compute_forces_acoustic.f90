@@ -245,7 +245,7 @@
             else
               stop 'only newmark and LDDRK have been implemented with PML'
             endif
-            ! the subroutine of lik_parameter_computation is presented at the end of compute_forces_viscoelastic.F90
+            ! the subroutine of lik_parameter_computation is located at the end of compute_forces_viscoelastic.F90
             call lik_parameter_computation(time_n,deltat,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x,&
                                            CPML_region_local,31,A5,A6,A7,singularity_type_zx,bb_zx_1,bb_zx_2,&
                                            coef0_zx_1,coef1_zx_1,coef2_zx_1,coef0_zx_2,coef1_zx_2,coef2_zx_2)
@@ -377,7 +377,7 @@
             alpha_z = alpha_z_store(i,j,ispec_PML)
             beta_x = alpha_x + d_x / kappa_x
             beta_z = alpha_z + d_z / kappa_z
-            ! the subroutine of l_parameter_computation is presented at the end of compute_forces_viscoelastic.F90
+            ! the subroutine of l_parameter_computation is located at the end of compute_forces_viscoelastic.F90
             call l_parameter_computation(time_n,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                          CPML_region_local,A0,A1,A2,A3,A4,singularity_type,&
                                          bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
