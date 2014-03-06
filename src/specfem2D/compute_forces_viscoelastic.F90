@@ -92,7 +92,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   logical :: anyabs,assign_external_model,initialfield,ATTENUATION_VISCOELASTIC_SOLID,add_Bielak_conditions,&
              STACEY_BOUNDARY_CONDITIONS
   logical :: ADD_SPRING_TO_STACEY
-  real(kind=CUSTOM_REAL) :: x_center_spring,z_center_spring
+  double precision :: x_center_spring,z_center_spring
 
   logical :: SAVE_FORWARD
 
@@ -223,10 +223,11 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL) :: dux_dxi_old,dux_dgamma_old,duz_dxi_old,duz_dgamma_old
   logical :: backward_simulation
 
-  real(kind=CUSTOM_REAL) :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z,time_n,time_nsub1,&                            
+  real(kind=CUSTOM_REAL) :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z, &                            
                             A5,A6,A7, bb_zx_1,bb_zx_2,coef0_zx_1,coef1_zx_1,coef2_zx_1,coef0_zx_2,coef1_zx_2,coef2_zx_2,&
                             A8,A9,A10,bb_xz_1,bb_xz_2,coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2,&
                             A0,A1,A2,A3,A4,bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2
+  double precision :: time_n,time_nsub1
   integer :: CPML_region_local,singularity_type_zx,singularity_type_xz,singularity_type
 
 !!!update momeory variable in viscoelastic simulation
@@ -1628,6 +1629,7 @@ end subroutine compute_forces_viscoelastic
  end subroutine compute_forces_viscoelastic_pre_kernel
 
 !========================================================================
+
  subroutine compute_coef_convolution(bb,deltat,coef0,coef1,coef2)
   ! compute coefficient used in second order convolution scheme, from
   ! second-order accurate convolution term calculation from equation (21) of
@@ -1652,15 +1654,16 @@ end subroutine compute_forces_viscoelastic
    endif
 
  end subroutine compute_coef_convolution
+
 !========================================================================
+
  subroutine lik_parameter_computation(time,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                      CPML_region_local,index_ik,A_0,A_1,A_2,singularity_type_2,bb_1,bb_2, &
                                      coef0_1,coef1_1,coef2_1,coef0_2,coef1_2,coef2_2)
   implicit none
   include "constants.h"
 
-  real(kind=CUSTOM_REAL), intent(in) :: time
-  double precision :: deltat
+  double precision, intent(in) :: time, deltat
   real(kind=CUSTOM_REAL), intent(in) :: kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z
   integer, intent(in) :: CPML_region_local,index_ik
 
@@ -1752,7 +1755,9 @@ end subroutine compute_forces_viscoelastic
   call compute_coef_convolution(bb_2,deltat,coef0_2,coef1_2,coef2_2)
 
  end subroutine lik_parameter_computation
+
 !========================================================================
+
  subroutine l_parameter_computation(time,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                     CPML_region_local,A_0,A_1,A_2,A_3,A_4,singularity_type,&
                                     bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
@@ -1760,8 +1765,7 @@ end subroutine compute_forces_viscoelastic
   implicit none
   include "constants.h"
 
-  real(kind=CUSTOM_REAL), intent(in) :: time
-  double precision :: deltat
+  double precision, intent(in) :: time, deltat
   real(kind=CUSTOM_REAL), intent(in) :: kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z
   integer, intent(in) :: CPML_region_local
 

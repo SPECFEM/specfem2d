@@ -116,8 +116,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e11_LDDRK,e13_LDDRK
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e11_initial_rk,e13_initial_rk
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS,stage_time_scheme) :: e11_force_RK, e13_force_RK
-  double precision, dimension(NGLLX,NGLLZ,nspec,N_SLS) :: inv_tau_sigma_nu2,phi_nu2
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: Mu_nu2
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: inv_tau_sigma_nu2,phi_nu2
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: Mu_nu2
   real(kind=CUSTOM_REAL) :: e11_sum,e13_sum
   integer :: i_sls
 
@@ -143,10 +143,10 @@
 !
   double precision :: f0,freq0,Q0,w_c
 
-! Parameter for LDDRK time scheme
-  double precision, dimension(Nstages) :: alpha_LDDRK,beta_LDDRK
+! parameters for the LDDRK time scheme
+  real(kind=CUSTOM_REAL), dimension(Nstages) :: alpha_LDDRK,beta_LDDRK
 
-!temp variable
+! temporary variable
   real(kind=CUSTOM_REAL) :: weight_rk
 
 !---
@@ -184,14 +184,15 @@
 
 ! material properties of the poroelastic medium
   real(kind=CUSTOM_REAL) :: mul_relaxed_viscoelastic,lambdal_relaxed_viscoelastic,lambdalplus2mul_relaxed_viscoel
-  real(kind=CUSTOM_REAL) :: mul_s,kappal_s,rhol_s
-  real(kind=CUSTOM_REAL) :: etal_f,kappal_f,rhol_f
-  real(kind=CUSTOM_REAL) :: mul_fr,kappal_fr,phil,tortl,viscodampx,viscodampz
-  real(kind=CUSTOM_REAL) :: permlxx,permlxz,permlzz,invpermlxx,invpermlxz,invpermlzz,detk
-  real(kind=CUSTOM_REAL) :: D_biot,H_biot,C_biot,M_biot,rhol_bar
+  double precision :: mul_s,kappal_s,rhol_s
+  double precision :: etal_f,kappal_f,rhol_f
+  double precision :: mul_fr,kappal_fr,phil,tortl,viscodampx,viscodampz
+  double precision :: permlxx,permlxz,permlzz,invpermlxx,invpermlxz,invpermlzz,detk
+  double precision :: D_biot,H_biot,C_biot,M_biot,rhol_bar
 
   real(kind=CUSTOM_REAL) :: mul_G,lambdal_G,lambdalplus2mul_G
-  real(kind=CUSTOM_REAL) :: cpIsquare,cpIIsquare,cssquare,cpIl,cpIIl,csl
+  real(kind=CUSTOM_REAL) :: cpIl,cpIIl,csl
+  double precision :: cpIsquare,cpIIsquare,cssquare
 
 ! for attenuation
   real(kind=CUSTOM_REAL) :: phinu2,tauinvnu2,theta_n_u,theta_nsub1_u

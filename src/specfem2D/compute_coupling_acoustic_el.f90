@@ -79,9 +79,9 @@
               ispec_PML,CPML_region_local,singularity_type_xz
    real(kind=CUSTOM_REAL) :: displ_x,displ_z,displ_n,&
                              xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
-   real(kind=CUSTOM_REAL) :: time,deltat,kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z,&
+   real(kind=CUSTOM_REAL) :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z,&
                              A8,A9,A10,bb_xz_1,bb_xz_2,coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2
-
+   double precision :: time,deltat
 
       ! loop on all the coupling edges
       

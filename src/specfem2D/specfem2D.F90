@@ -528,11 +528,11 @@
     rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic
 
 ! to evaluate cpI, cpII, and cs, and rI (poroelastic medium)
-  real(kind=CUSTOM_REAL) :: rhol_s,rhol_f,rhol_bar,phil,tortl
-  real(kind=CUSTOM_REAL) :: mul_s,kappal_s
-  real(kind=CUSTOM_REAL) :: kappal_f
-  real(kind=CUSTOM_REAL) :: mul_fr,kappal_fr
-  real(kind=CUSTOM_REAL) :: D_biot,H_biot,C_biot,M_biot,B_biot,cpIsquare,cpIIsquare,cssquare
+  double precision :: rhol_s,rhol_f,rhol_bar,phil,tortl
+  double precision :: mul_s,kappal_s
+  double precision :: kappal_f
+  double precision :: mul_fr,kappal_fr
+  double precision :: D_biot,H_biot,C_biot,M_biot,B_biot,cpIsquare,cpIIsquare,cssquare
   real(kind=CUSTOM_REAL) :: ratio,dd1
 
   double precision, dimension(:,:,:), allocatable :: vpext,vsext,rhoext
@@ -941,7 +941,7 @@
 
   integer :: NOISE_TOMOGRAPHY
   integer :: irec_master, ispec_noise
-  real(kind=CUSTOM_REAL) :: xi_noise, gamma_noise, angle_noise
+  double precision :: xi_noise, gamma_noise, angle_noise
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: time_function_noise
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: source_array_noise
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: mask_noise
