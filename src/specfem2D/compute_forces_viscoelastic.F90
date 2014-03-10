@@ -223,11 +223,10 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL) :: dux_dxi_old,dux_dgamma_old,duz_dxi_old,duz_dgamma_old
   logical :: backward_simulation
 
-  real(kind=CUSTOM_REAL) :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z, &                            
+  real(kind=CUSTOM_REAL) :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z,time_n,time_nsub1, &                            
                             A5,A6,A7, bb_zx_1,bb_zx_2,coef0_zx_1,coef1_zx_1,coef2_zx_1,coef0_zx_2,coef1_zx_2,coef2_zx_2,&
                             A8,A9,A10,bb_xz_1,bb_xz_2,coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2,&
                             A0,A1,A2,A3,A4,bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2
-  double precision :: time_n,time_nsub1
   integer :: CPML_region_local,singularity_type_zx,singularity_type_xz,singularity_type
 
 !!!update momeory variable in viscoelastic simulation
@@ -1663,7 +1662,8 @@ end subroutine compute_forces_viscoelastic
   implicit none
   include "constants.h"
 
-  double precision, intent(in) :: time, deltat
+  real(kind=CUSTOM_REAL), intent(in) :: time
+  double precision :: deltat
   real(kind=CUSTOM_REAL), intent(in) :: kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z
   integer, intent(in) :: CPML_region_local,index_ik
 
@@ -1765,7 +1765,8 @@ end subroutine compute_forces_viscoelastic
   implicit none
   include "constants.h"
 
-  double precision, intent(in) :: time, deltat
+  real(kind=CUSTOM_REAL), intent(in) :: time
+  double precision :: deltat
   real(kind=CUSTOM_REAL), intent(in) :: kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z
   integer, intent(in) :: CPML_region_local
 
