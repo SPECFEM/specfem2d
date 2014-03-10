@@ -1,3 +1,4 @@
+
 #========================================================================
 #
 #                   S P E C F E M 2 D  Version 7 . 0
@@ -98,7 +99,7 @@ xadj_seismogram:
 
 
 clean:
-	rm -rf obj/* bin/* src/meshfem2D/*.mod src/specfem2D/*.mod src/meshfem2D/*__genmod.f90 src/specfem2D/*__genmod.f90
+	rm -rf obj/* bin/* src/meshfem2D/*.mod src/specfem2D/*.mod
 	$(MAKE) -C src/meshfem2D/scotch/src realclean
 
 help:
