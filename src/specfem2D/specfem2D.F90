@@ -1950,6 +1950,10 @@
   x_center_spring = (xmax + xmin)/2.d0
   z_center_spring = (zmax + zmin)/2.d0
 
+! allocate an array to make sure that an acoustic free surface is not enforced on periodic edges
+  allocate(this_ibool_is_a_periodic_edge(NGLOB))
+  this_ibool_is_a_periodic_edge(:) = .false.
+
 ! periodic conditions: detect common points between left and right edges and replace one of them with the other
     if(ADD_PERIODIC_CONDITIONS) then
 
@@ -1967,9 +1971,6 @@
         write(IOUT,*) '*****************************************************************'
         write(IOUT,*)
       endif
-
-! allocate an array to make sure that an acoustic free surface is not enforced on periodic edges
-  allocate(this_ibool_is_a_periodic_edge(NGLOB))
 
 ! set up a local geometric tolerance
 
@@ -2016,7 +2017,6 @@
       if (myrank == 0) write(IOUT,*) &
         'start detecting points for periodic boundary conditions (the current algorithm can be slow and could be improved)...'
       counter = 0
-      this_ibool_is_a_periodic_edge(:) = .false.
       do iglob = 1,NGLOB-1
         do iglob2 = iglob + 1,NGLOB
           ! check if the two points have the exact same Z coordinate
@@ -2047,11 +2047,6 @@
       if (myrank == 0) write(IOUT,*) 'done detecting points for periodic boundary conditions.'
 
       if(counter > 0) write(IOUT,*) 'implemented periodic conditions on ',counter,' grid points on proc ',myrank
-
-    else
-
-      ! dummy allocation just to be able to use this array as a subroutine argument later
-      allocate(this_ibool_is_a_periodic_edge(1))
 
     endif ! of if(ADD_PERIODIC_CONDITIONS)
 
