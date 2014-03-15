@@ -117,7 +117,7 @@
 
   integer :: nspec_PML,ispec_PML
   integer, dimension(nspec) :: spec_to_PML
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) :: K_x_store,K_z_store,d_x_store,d_z_store
+  double precision, dimension(NGLLX,NGLLZ,nspec_PML) :: K_x_store,K_z_store,d_x_store,d_z_store 
   logical, dimension(nspec) :: is_PML
   logical :: PML_BOUNDARY_CONDITIONS,this_element_has_PML
   integer, dimension(nspec) :: region_CPML
