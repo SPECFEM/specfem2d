@@ -454,7 +454,7 @@ end subroutine pml_init
   logical, dimension(nspec) :: is_PML
   integer, dimension(nspec) :: region_CPML,spec_to_PML
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) ::  K_x_store,K_z_store,d_x_store,d_z_store,&
+  double precision, dimension(NGLLX,NGLLZ,nspec_PML) ::  K_x_store,K_z_store,d_x_store,d_z_store,& 
                                                                alpha_x_store,alpha_z_store
 
 ! PML fixed parameters to compute parameter in PML
@@ -631,24 +631,12 @@ end subroutine pml_init
   d0_z_bottom = - (NPOWER + 1) * vpmax * log(Rcoef) / (2.d0 * thickness_PML_z_bottom)
   d0_z_top = - (NPOWER + 1) * vpmax * log(Rcoef) / (2.d0 * thickness_PML_z_top)
 
-!   if (myrank == 0) then
-!     write(IOUT,*)
-!     write(IOUT,*) 'PML properties -------',myrank,'myrank'
-!     write(IOUT,*) '     Vpmax=', vpmax
-!     write(IOUT,*) '     log(Rcoef)=',log(Rcoef)
-!     write(IOUT,*) '     thickness_PML_z_bottom =',thickness_PML_z_bottom
-!     write(IOUT,*) '     thickness_PML_x_right  =',thickness_PML_x_right
-!     write(IOUT,*) '     thickness_PML_z_top    =',thickness_PML_z_top
-!     write(IOUT,*) '     thickness_PML_x_left   =',thickness_PML_x_left
-!     write(IOUT,*) '     d0_bottom       =', d0_z_bottom
-!     write(IOUT,*) '     d0_right        =', d0_x_right
-!     write(IOUT,*) '     d0_top          =', d0_z_top
-!     write(IOUT,*) '     d0_left         =', d0_x_left
-!   endif
-
-  d_x_store = 0._CUSTOM_REAL; d_z_store = 0._CUSTOM_REAL
-  K_x_store = 1._CUSTOM_REAL; K_z_store = 1._CUSTOM_REAL
-  alpha_x_store = 0._CUSTOM_REAL; alpha_z_store = 0._CUSTOM_REAL
+  d_x_store = 0.d0
+  d_z_store = 0.d0 
+  K_x_store = 1.d0
+  K_z_store = 1.d0 
+  alpha_x_store = 0.d0
+  alpha_z_store = 0.d0 
 
   ! define damping profile at the grid points
   do ispec = 1,nspec
@@ -745,21 +733,12 @@ end subroutine pml_init
           endif
         endif
 
-        if(CUSTOM_REAL == SIZE_REAL) then
-          d_x_store(i,j,ispec_PML) = sngl(d_x)
-          d_z_store(i,j,ispec_PML) = sngl(d_z)
-          K_x_store(i,j,ispec_PML) = sngl(K_x)
-          K_z_store(i,j,ispec_PML) = sngl(K_z)
-          alpha_x_store(i,j,ispec_PML) = sngl(alpha_x)
-          alpha_z_store(i,j,ispec_PML) = sngl(alpha_z)
-        else
-          d_x_store(i,j,ispec_PML) = d_x
-          d_z_store(i,j,ispec_PML) = d_z
-          K_x_store(i,j,ispec_PML) = K_x
-          K_z_store(i,j,ispec_PML) = K_z
-          alpha_x_store(i,j,ispec_PML) = alpha_x
-          alpha_z_store(i,j,ispec_PML) = alpha_z
-        endif
+        d_x_store(i,j,ispec_PML) = d_x
+        d_z_store(i,j,ispec_PML) = d_z
+        K_x_store(i,j,ispec_PML) = K_x
+        K_z_store(i,j,ispec_PML) = K_z
+        alpha_x_store(i,j,ispec_PML) = alpha_x
+        alpha_z_store(i,j,ispec_PML) = alpha_z
 
       enddo; enddo
     endif

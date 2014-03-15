@@ -80,9 +80,9 @@
         iglob = ibool(i,j,ispec)
         ! make sure that an acoustic free surface is not enforced on periodic edges
         if(.not. this_ibool_is_a_periodic_edge(iglob)) then
-          potential_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_acoustic(iglob) = ZERO
+          potential_dot_acoustic(iglob) = ZERO
+          potential_dot_dot_acoustic(iglob) = ZERO
         endif
       enddo
     enddo

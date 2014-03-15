@@ -65,7 +65,7 @@
    integer, dimension(num_fluid_solid_edges) :: fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
                                                 fluid_solid_elastic_ispec,fluid_solid_elastic_iedge
    integer :: nspec_PML
-   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) :: &
+   double precision, dimension(NGLLX,NGLLZ,nspec_PML) :: &
                   K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
    logical:: PML_BOUNDARY_CONDITIONS
    logical, dimension(nspec) :: is_PML
@@ -79,7 +79,8 @@
               ispec_PML,CPML_region_local,singularity_type_xz
    real(kind=CUSTOM_REAL) :: displ_x,displ_z,displ_n,&
                              xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
-   real(kind=CUSTOM_REAL) :: time,deltat,kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z,&
+   double precision :: time,deltat
+   double precision :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z, &
                              A8,A9,A10,bb_xz_1,bb_xz_2,coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2
 
       ! loop on all the coupling edges

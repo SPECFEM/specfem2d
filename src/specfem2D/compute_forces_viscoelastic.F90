@@ -135,7 +135,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) ::dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                                                          !nsub1 denote discrete time step n-1
                                                          dux_dxl_nsub1,duz_dzl_nsub1,duz_dxl_nsub1,dux_dzl_nsub1
-  real(kind=CUSTOM_REAL) :: coef0,coef1,coef2
+  double precision :: coef0,coef1,coef2
 
   ! derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
@@ -178,7 +178,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
     lambdal_relaxed_viscoelastic,mul_relaxed_viscoelastic,lambdalplusmul_relaxed_viscoel
 
   ! for attenuation
-  real(kind=CUSTOM_REAL) :: phinu1,phinu2,tauinvnu1,tauinvnu2,theta_n_u,theta_nsub1_u
+  real(kind=CUSTOM_REAL) :: phinu1,phinu2,theta_n_u,theta_nsub1_u
+  double precision :: tauinvnu1,tauinvnu2 
 
   ! for anisotropy
   double precision ::  c11,c15,c13,c33,c35,c55,c12,c23,c25
@@ -214,7 +215,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
     rmemory_dux_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dx_prime,rmemory_duz_dz_prime
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML,2) :: &
     rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,rmemory_duz_dx_LDDRK,rmemory_duz_dz_LDDRK
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) :: &
+  double precision, dimension(NGLLX,NGLLZ,nspec_PML) :: &
                   K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
   real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLZ) :: accel_elastic_PML
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) ::PML_dux_dxl,PML_dux_dzl,PML_duz_dxl,PML_duz_dzl,&
@@ -223,7 +224,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL) :: dux_dxi_old,dux_dgamma_old,duz_dxi_old,duz_dgamma_old
   logical :: backward_simulation
 
-  real(kind=CUSTOM_REAL) :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z,time_n,time_nsub1, &                            
+  double precision :: time_n,time_nsub1
+  double precision :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z, &                            
                             A5,A6,A7, bb_zx_1,bb_zx_2,coef0_zx_1,coef1_zx_1,coef2_zx_1,coef0_zx_2,coef1_zx_2,coef2_zx_2,&
                             A8,A9,A10,bb_xz_1,bb_xz_2,coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2,&
                             A0,A1,A2,A3,A4,bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2
@@ -1639,7 +1641,7 @@ end subroutine compute_forces_viscoelastic
    implicit none
    include "constants.h"
 
-   real(kind=CUSTOM_REAL) :: bb,coef0,coef1,coef2
+   double precision :: bb,coef0,coef1,coef2
    double precision :: deltat
 
    coef0 = exp(- bb * deltat)
@@ -1662,17 +1664,17 @@ end subroutine compute_forces_viscoelastic
   implicit none
   include "constants.h"
 
-  real(kind=CUSTOM_REAL), intent(in) :: time
+  double precision, intent(in) :: time
   double precision :: deltat
-  real(kind=CUSTOM_REAL), intent(in) :: kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z
+  double precision, intent(in) :: kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z
   integer, intent(in) :: CPML_region_local,index_ik
 
-  real(kind=CUSTOM_REAL), intent(out) :: A_0,A_1,A_2
-  real(kind=CUSTOM_REAL), intent(out) :: coef0_1,coef1_1,coef2_1,coef0_2,coef1_2,coef2_2
+  double precision, intent(out) :: A_0,A_1,A_2
+  double precision, intent(out) :: coef0_1,coef1_1,coef2_1,coef0_2,coef1_2,coef2_2
   integer, intent(out) :: singularity_type_2
 
   !local variable
-  real(kind=CUSTOM_REAL) :: bar_A_0,bar_A_1,bar_A_2,alpha_0,bb_1,bb_2
+  double precision :: bar_A_0,bar_A_1,bar_A_2,alpha_0,bb_1,bb_2
   integer :: CPML_X_ONLY_TEMP,CPML_Z_ONLY_TEMP,CPML_XZ_ONLY_TEMP
 
   logical,parameter :: FIRST_ORDER_CONVOLUTION = .false.
@@ -1765,18 +1767,18 @@ end subroutine compute_forces_viscoelastic
   implicit none
   include "constants.h"
 
-  real(kind=CUSTOM_REAL), intent(in) :: time
+  double precision :: time
   double precision :: deltat
-  real(kind=CUSTOM_REAL), intent(in) :: kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z
+  double precision, intent(in) :: kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z
   integer, intent(in) :: CPML_region_local
 
-  real(kind=CUSTOM_REAL), intent(out) :: A_0, A_1, A_2, A_3, A_4
-  real(kind=CUSTOM_REAL), intent(out) :: bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2
+  double precision, intent(out) :: A_0, A_1, A_2, A_3, A_4
+  double precision, intent(out) :: bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2
   integer, intent(out) :: singularity_type
 
   !local variable
-  real(kind=CUSTOM_REAL) :: bar_A_0, bar_A_1, bar_A_2, bar_A_3, bar_A_4
-  real(kind=CUSTOM_REAL) :: alpha_0, beta_xyz_1, beta_xyz_2
+  double precision :: bar_A_0, bar_A_1, bar_A_2, bar_A_3, bar_A_4
+  double precision :: alpha_0, beta_xyz_1, beta_xyz_2
 
   beta_xyz_1 = beta_x + beta_z
   beta_xyz_2 = beta_x * beta_z

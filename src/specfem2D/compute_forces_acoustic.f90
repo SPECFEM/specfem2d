@@ -119,7 +119,7 @@
   real(kind=CUSTOM_REAL), dimension(2,NGLLX,NGLLZ,nspec_PML) :: rmemory_potential_acoustic
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML,2) :: &
                           rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML) :: &
+  double precision, dimension(NGLLX,NGLLZ,nspec_PML) :: &
                           K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
   logical :: PML_BOUNDARY_CONDITIONS,STACEY_BOUNDARY_CONDITIONS
@@ -152,7 +152,7 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: potential_dot_dot_acoustic_PML
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: PML_dux_dxl,PML_dux_dzl,PML_dux_dxl_old,PML_dux_dzl_old
-  real(kind=CUSTOM_REAL) :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z,time_n,time_nsub1,&                            
+  double precision :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z,time_n,time_nsub1,&                            
                             A5,A6,A7, bb_zx_1,bb_zx_2,coef0_zx_1,coef1_zx_1,coef2_zx_1,coef0_zx_2,coef1_zx_2,coef2_zx_2,&
                             A8,A9,A10,bb_xz_1,bb_xz_2,coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2,&
                             A0,A1,A2,A3,A4,bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2

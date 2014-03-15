@@ -998,7 +998,7 @@
 !PML parameters
   logical, dimension(:), allocatable :: is_PML
   integer, dimension(:), allocatable :: region_CPML
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
+  double precision, dimension(:,:,:), allocatable :: &
                     K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
