@@ -42,12 +42,16 @@
 !
 !========================================================================
 
-  subroutine define_external_model(coord,material_element,ibool,rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
+  subroutine define_external_model_dummy(coord,material_element,ibool,rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
                                              c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
 
   implicit none
 
   include "constants.h"
+
+! -------------------------------------------------------------------------------------
+! Dummy example of this routine, to be used as a template that can be modified by users
+! -------------------------------------------------------------------------------------
 
 ! user can modify this routine to assign any different external model (rho, vp, vs)
 ! based on the x and y coordinates of that grid point and the material number of the region it belongs to
@@ -121,7 +125,7 @@
     enddo
   enddo
 
-  end subroutine define_external_model
+  end subroutine define_external_model_dummy
 
 
 !========================================================================
@@ -130,8 +134,12 @@
 !
 !========================================================================
 
-  subroutine define_external_model_ak135f(coord,material_element,ibool,rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
+  subroutine define_external_model(coord,material_element,ibool,rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
                                              c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
+
+! -------------------------------------------------------------------------------------
+! true example of this routine that implements the AK135F global Earth model
+! -------------------------------------------------------------------------------------
 
   implicit none
 
@@ -1111,5 +1119,5 @@
   c23(:,:,:) = 0.d0
   c25(:,:,:) = 0.d0
 
-  end subroutine define_external_model_ak135f
+  end subroutine define_external_model
 
