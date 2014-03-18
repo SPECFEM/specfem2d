@@ -35,7 +35,7 @@ rm -rf OUTPUT_FILES/*
 
 # compiles executables in root directory
 cd ../../../
-make > tmp.log
+make
 cd $currentdir
 
 # links executables
@@ -51,13 +51,13 @@ cp DATA/SOURCE OUTPUT_FILES/
 echo
 echo "  running mesher..."
 echo
-./xmeshfem2D > OUTPUT_FILES/output_mesher.txt
+./xmeshfem2D
 
 # runs simulation
 echo
 echo "  running solver..."
 echo
-./xspecfem2D > OUTPUT_FILES/output_solver.txt
+./xspecfem2D
 
 # stores output
 cp DATA/*SOURCE* DATA/*STATIONS* OUTPUT_FILES

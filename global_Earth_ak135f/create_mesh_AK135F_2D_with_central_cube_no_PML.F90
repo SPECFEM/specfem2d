@@ -13,7 +13,7 @@
   ! un doubling un peu au dessus du milieu du outer core, entre la CMB et l'ICB
 
 ! in the case of very large meshes, this option can be useful to switch from ASCII to binary for the mesh files
-#define USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+!!#define USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
 
 ! 1 = generate the whole mesh   2 = generate only half the mesh
   integer, parameter :: factor_divide_mesh = 2
@@ -1162,10 +1162,10 @@
 
 ! write the mesh points
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
-  open(unit=22,file='Nodes_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
+  open(unit=22,file='DATA/Nodes_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
   write(22) npoin
 #else
-  open(unit=22,file='Nodes_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
+  open(unit=22,file='DATA/Nodes_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
   write(22,*) npoin
 #endif
   do ipoin = 1,npoin
@@ -1179,10 +1179,10 @@
 
 ! write the mesh elements
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
-  open(unit=22,file='Mesh_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
+  open(unit=22,file='DATA/Mesh_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
   write(22) nspec
 #else
-  open(unit=22,file='Mesh_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
+  open(unit=22,file='DATA/Mesh_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
   write(22,*) nspec
 #endif
   do ispec = 1,nspec
@@ -1196,9 +1196,9 @@
 
 ! write the material properties
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
-  open(unit=22,file='Material_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
+  open(unit=22,file='DATA/Material_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
 #else
-  open(unit=22,file='Material_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
+  open(unit=22,file='DATA/Material_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
 #endif
   do ispec = 1,nspec
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
@@ -1211,20 +1211,20 @@
 
 ! write empty file for the absorbing boundary
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
-  open(unit=22,file='Surf_abs_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
+  open(unit=22,file='DATA/Surf_abs_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
   write(22) 0
 #else
-  open(unit=22,file='Surf_abs_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
+  open(unit=22,file='DATA/Surf_abs_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
   write(22,*) 0
 #endif
   close(22)
 
 ! write empty file for the acoustic free surface boundary (since there is no acoustic free surface in the 1D Earth without oceans)
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
-  open(unit=22,file='Surf_free_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
+  open(unit=22,file='DATA/Surf_free_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
   write(22) 0
 #else
-  open(unit=22,file='Surf_free_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
+  open(unit=22,file='DATA/Surf_free_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
   write(22,*) 0
 #endif
   close(22)
@@ -1259,10 +1259,10 @@
 
 ! then save them to a file and also save the (only) edge that is in contact
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
-  open(unit=22,file='Symmetry_axis_elements_and_edges_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
+  open(unit=22,file='DATA/Symmetry_axis_elements_and_edges_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
   write(22) ispec_count
 #else
-  open(unit=22,file='Symmetry_axis_elements_and_edges_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
+  open(unit=22,file='DATA/Symmetry_axis_elements_and_edges_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
   write(22,*) ispec_count
 #endif
 
