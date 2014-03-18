@@ -2,14 +2,13 @@
 title                           = AK135F for half a disk for axisymmetric runs
 
 # forward or adjoint simulation
-SIMULATION_TYPE                 = 1   # 1 = forward, 3 = adjoint + kernels
-NOISE_TOMOGRAPHY                = 0   # 0 = earthquake simulation, 1/2/3 = noise simulation
-SAVE_FORWARD                    = .false.  # save the last frame, needed for adjoint simulation
+SIMULATION_TYPE                 = 1  # 1 = forward, 3 = adjoint + kernels; 2 is purposely UNUSED (for compatibility with the numbering of our 3D codes)
+NOISE_TOMOGRAPHY                = 0  # 0 = earthquake simulation, 1/2/3 = noise simulation
+SAVE_FORWARD                    = .false. # save the last frame, needed for adjoint simulation
 
 # parameters concerning partitioning
-nproc                           = 4              # number of processes
-partitioning_method             = 3              # ascending order = 1, Scotch = 3
-PERFORM_CUTHILL_MCKEE           = .false.        # perform inverse Cuthill-McKee (1969) optimization/permutation for mesh numbering (can be very costly and not very useful)
+nproc                           = 1              # number of processes
+partitioning_method             = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
 
 ngnod                           = 9              # number of control nodes per element (4 or 9)
 initialfield                    = .false.        # use a plane wave as source or not
@@ -44,7 +43,7 @@ save_binary_seismograms_single  = .false.        # save seismograms in single pr
 save_binary_seismograms_double  = .false.        # save seismograms in double precision binary format or not (can be used jointly with both flags above to save all)
 SU_FORMAT                       = .false.        # output single precision binary seismograms in Seismic Unix format (adjoint traces will be read in the same format)
 subsamp_seismos                 = 1              # subsampling of the seismograms to create smaller files (but less accurately sampled in time)
-generate_STATIONS               = .true.         # creates a new STATION file in ./DATA from this file or use the existing one
+use_existing_STATIONS           = .false.        # use an existing STATION file found in ./DATA or create a new one from the receiver positions below in this Par_file
 nreceiversets                   = 1              # number of receiver sets
 anglerec                        = 0.d0           # angle to rotate components at receivers
 rec_normal_to_surface           = .false.        # replace anglerec with the normal to the surface (external mesh and curve file needed, anglerec above ignored)
@@ -125,10 +124,7 @@ ADD_SPRING_TO_STACEY            = .false.
 ADD_PERIODIC_CONDITIONS         = .false.
 
 # horizontal periodicity distance for periodic conditions
-PERIODIC_horiz_dist             = 0.3597d0
-
-# grid point detection tolerance for periodic conditions
-PERIODIC_DETECT_TOL             = 3.3334d-6
+PERIODIC_HORIZ_DIST             = 0.3597d0
 
 #-----------------------------------------------------------------------------
 # PARAMETERS FOR EXTERNAL MESHING

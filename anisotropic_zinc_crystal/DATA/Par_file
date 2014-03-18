@@ -10,7 +10,6 @@ SAVE_FORWARD                    = .false. # save the last frame, needed for adjo
 # parameters concerning partitioning
 nproc                           = 1              # number of processes
 partitioning_method             = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
-PERFORM_CUTHILL_MCKEE           = .false.        # perform inverse Cuthill-McKee (1969) optimization/permutation for mesh numbering (can be very costly and not very useful)
 
 ngnod                           = 4              # number of control nodes per element (4 or 9)
 initialfield                    = .false.        # use a plane wave as source or not
@@ -136,10 +135,7 @@ ADD_SPRING_TO_STACEY            = .false.
 ADD_PERIODIC_CONDITIONS         = .false.
 
 # horizontal periodicity distance for periodic conditions
-PERIODIC_horiz_dist             = 0.3597d0
-
-# grid point detection tolerance for periodic conditions
-PERIODIC_DETECT_TOL             = 3.3334d-6
+PERIODIC_HORIZ_DIST             = 0.3597d0
 
 #-----------------------------------------------------------------------------
 # PARAMETERS FOR EXTERNAL MESHING
