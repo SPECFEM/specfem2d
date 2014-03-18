@@ -37,20 +37,9 @@ TO RUN:
 
 5. check out the output files in the local directory OUTPUT_FILES
 
-   optional: try plotting the wavefield using the script plot_wavefield.pl
-   (note: you will need to change a path variable in plot_wavefield.pl)
-     cd OUTPUT_FILES
-     ln -s ../../../UTILS/visualization/plot_wavefield.pl .
-     plot_wavefield.pl 400/4800/400 400/2800/800 0/480/0/480 120/20/120/20 -3/-3/-3 6/6/6 -48.0/0.06 0/1/0/0/1 1.7/1/0 1/0/1/120 Tape2007 onerec_homo
-
 ---------------------------
 
 After running the example above, try the second example:
   ./process_checker.sh
-
-   optional: try plotting the wavefield using the script plot_wavefield.pl
-     cd OUTPUT_FILES
-     ln -s ../../../UTILS/visualization/plot_wavefield.pl .
-     plot_wavefield.pl 400/4800/400 800/2000/400 0/480/0/480 120/20/120/20 -3/-3/-3 6/6/6 -48.0/0.06 0/1/0/0/1 1.7/1/0 1/0/1/120 Tape2007 132rec_checker
 
 ---------------------------

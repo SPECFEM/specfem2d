@@ -29,7 +29,4 @@ TO RUN:
 7. run adjoint simulation:
    > ./process_kernel.sh
 
-   optional: try plotting the kernels using the script
-                SPECFEM2D/UTILS/visualization/plot_wavefield.pl
-
 ---------------------------

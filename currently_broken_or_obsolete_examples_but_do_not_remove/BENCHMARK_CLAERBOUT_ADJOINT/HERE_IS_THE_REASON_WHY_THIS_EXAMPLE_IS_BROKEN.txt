@@ -1,0 +1,3 @@
+
+* `BENCHMARK_CLAERBOUT_ADJOINT`: All the examples in this directory copy old versions of some files into the source and recompile. Needless to say, this doesn't work.
+

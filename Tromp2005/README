@@ -33,12 +33,6 @@ TO RUN:
 
    The seismograms (S0001.AA.BXX.semd,S0001.AA.BXZ.semd) will be similar to those in Tromp2005, Figure 7b, but with an 8-second time shift due to the difference in origin time convention.
 
-   optional: try plotting the wavefield using the script plot_wavefield.pl
-   (note: you will need to change a path variable in plot_wavefield.pl)
-     cd OUTPUT_FILES
-     ln -s ../../../UTILS/visualization/plot_wavefield.pl .
-     plot_wavefield.pl 400/2800/400 400/2000/400 0/200/0/80    50/10/40/10 -3/-3/-3 4/4/4  -8.0/0.02 1/0/1/1/1 3.0/1/0 1/0/1/200 Tromp2005 PSV_homo
-
 6. mv OUTPUT_FILES OUTPUT_FILES_PSV
 
 7. set p_sv = .false. in Par_file_Tromp2005
@@ -49,10 +43,5 @@ TO RUN:
 9. check out the output files in the local directory OUTPUT_FILES
 
    The seismogram (S0001.AA.BXY.semd) will be similar to those in Tromp2005, Figure 2b, but with an 8-second time shift due to the difference in origin time convention.
-
-   optional: try plotting the wavefield using the script plot_wavefield.pl
-     cd OUTPUT_FILES
-     ln -s ../../../UTILS/visualization/plot_wavefield.pl .
-     plot_wavefield.pl 400/2800/400 400/2000/400 0/200/0/80    50/10/40/10 -2/-2/-2 1/1/1  -8.0/0.02 0/1/0/0/1 3.0/1/0 1/0/1/200 Tromp2005 SH_homo
 
 ---------------------------
