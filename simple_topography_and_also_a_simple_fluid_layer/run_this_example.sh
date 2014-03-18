@@ -21,8 +21,8 @@ mkdir -p DATA
 
 # sets up local DATA/ directory
 cd DATA/
-cp ../Par_file_M2_UPPA Par_file
-cp ../SOURCE_M2_UPPA SOURCE
+cp ../Par_file_simple_topo Par_file
+cp ../SOURCE_simple_topo SOURCE
 cd ../
 
 # cleans output files

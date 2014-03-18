@@ -1,5 +1,5 @@
 # title of job
-title                           = Test for M2 UPPA
+title                           = Test for simple topography
 
 # forward or adjoint simulation
 SIMULATION_TYPE                 = 1   # 1 = forward, 3 = adjoint + kernels  
@@ -144,7 +144,7 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes # file containing the
 # PARAMETERS FOR INTERNAL MESHING
 
 # file containing interfaces for internal mesh
-interfacesfile                  = ../interfaces_M2_UPPA_curved.dat
+interfacesfile                  = ../interfaces_simple_topo_curved.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model

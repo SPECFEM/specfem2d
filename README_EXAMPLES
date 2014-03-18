@@ -2,28 +2,13 @@
 README
 ----------------------------------------------------------------------
 
-SPECFEM2D/EXAMPLES/README_EXAMPLES
-
 This directory contains a set of examples for testing purposes.
 
-1. M2_UPPA     -- internal mesh with smooth topographic interfaces
-2. fluid_solid -- external mesh, fluid, solid, and topography
-3. Tromp2005   -- internal mesh, from Tromp, Tape, Liu (GJI 2005)
-4. Tape2007    -- internal mesh, from Tape, Liu, Tromp (GJI 2007)
-
 Each example requires a Par_file, SOURCE, and either a file of interfaces
-OR an external mesh. The parameter files Par_file are written such that
-the examples can be run in the current example directory, using the
-processing script: ./process.sh
+OR an external mesh. The examples can be run in the current example directory, using the
+processing script:
 
-The default example is M2_UPPA. To setup a different example in the
-main directory SPECFEM2D/, you must over-write the DATA/SOURCE and DATA/Par_file.
-For example:
-cp EXAMPLES/fluid_solid/Par_file_fluid_soild DATA/Par_file
-cp EXAMPLES/fluid_solid/SOURCE_fluid_solid DATA/SOURCE
-cp -r EXAMPLES/fluid_solid/mesh ./
+./run_this_example.sh
 
-The directory DATA_to_sort contains additional examples that have yet
-to be sorted into folders as formal examples.
+The default example is simple_topography_and_also_a_simple_fluid_layer.
 
---

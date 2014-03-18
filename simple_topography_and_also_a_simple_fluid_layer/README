@@ -14,7 +14,7 @@ TO RUN:
 2. compile:
    make all
 
-3. cd EXAMPLES/M2_UPPA/
+3. cd EXAMPLES/simple_topography_and_also_a_simple_fluid_layer
 
 4. execute script to run mesher and solver for the PSV case:
    ./process.sh
