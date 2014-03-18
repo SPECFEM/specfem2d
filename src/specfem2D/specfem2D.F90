@@ -442,7 +442,7 @@
   logical :: anyabs
   double precision :: dxd,dyd,dzd,dcurld,valux,valuy,valuz,valcurl,hlagrange,xi,gamma,x,z
 
-!! DK DK Dec 2011: add a small crack (discontinuity) in the medium manually
+! add a small crack (discontinuity) in the medium manually
   logical, parameter :: ADD_A_SMALL_CRACK_IN_THE_MEDIUM = .false.
 !! must be set equal to the number of spectral elements on one vertical side of the crack
   integer :: NB_POINTS_TO_ADD_TO_NPGEO = 3
@@ -995,7 +995,7 @@
   integer :: count_nspec_acoustic,count_nspec_acoustic_total,nspec_total,nglob_total,nb_acoustic_DOFs,nb_elastic_DOFs
   double precision :: ratio_1DOF,ratio_2DOFs
 
-!PML parameters
+! PML parameters
   logical, dimension(:), allocatable :: is_PML
   integer, dimension(:), allocatable :: region_CPML
   double precision, dimension(:,:,:), allocatable :: &
@@ -1079,7 +1079,7 @@
                                   stop 'RK and LDDRK time scheme not supported for adjoint inversion'
   if(nproc /= nproc_read_from_database) stop 'must always have nproc == nproc_read_from_database'
 
-!! DK DK Dec 2011: add a small crack (discontinuity) in the medium manually
+! add a small crack (discontinuity) in the medium manually
   npgeo_ori = npgeo
   if(ADD_A_SMALL_CRACK_IN_THE_MEDIUM) npgeo = npgeo + NB_POINTS_TO_ADD_TO_NPGEO
 
@@ -1141,7 +1141,7 @@
   ! reads the spectral macrobloc nodal coordinates
   ! and basic properties of the spectral elements
   !! DK DK  call read_databases_coorg_elem(myrank,npgeo,coorg,numat,ngnod,nspec, &
-  !! DK DK Dec 2011: added a crack manually
+  !! DK DK  added a crack manually
   call read_databases_coorg_elem(myrank,npgeo_ori,coorg,numat,ngnod,nspec, &
                               pointsdisp,plot_lowerleft_corner_only, &
                               nelemabs,nelem_acoustic_surface, &
@@ -1195,11 +1195,11 @@
   !----  read spectral macrobloc data
   !
 
-!   DK DK add support for using pml in mpi mode with external mesh
+! add support for using PML in MPI mode with external mesh
   allocate(region_CPML(nspec))
   call read_databases_mato(nspec,ngnod,kmato,knods,region_CPML)
 
-!! DK DK Dec 2011: add a small crack (discontinuity) in the medium manually
+! add a small crack (discontinuity) in the medium manually
   if(ADD_A_SMALL_CRACK_IN_THE_MEDIUM) then
 
 #ifdef USE_MPI
