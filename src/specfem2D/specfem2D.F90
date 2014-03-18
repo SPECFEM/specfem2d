@@ -2771,12 +2771,14 @@
     call MPI_ALLREDUCE(anyabs, anyabs_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
 #endif
 
+    ! allocate this in all cases, even if PML is not set, because we use it for PostScript display as well
+    allocate(is_PML(nspec),stat=ier)
+    if(ier /= 0) stop 'error: not enough memory to allocate array is_PML'
+    is_PML(:) = .false.
+
     if(PML_BOUNDARY_CONDITIONS .and. anyabs_glob ) then
-      allocate(is_PML(nspec),stat=ier)
-      if(ier /= 0) stop 'error: not enough memory to allocate array is_PML'
       allocate(spec_to_PML(nspec),stat=ier)
       if(ier /= 0) stop 'error: not enough memory to allocate array spec_to_PML'
-      is_PML(:) = .false.
 
       allocate(which_PML_elem(4,nspec),stat=ier)
       if(ier /= 0) stop 'error: not enough memory to allocate array which_PML_elem'
@@ -3092,7 +3094,6 @@
       allocate(rmemory_acoustic_dux_dx_LDDRK(1,1,1,1))
       allocate(rmemory_acoustic_dux_dz_LDDRK(1,1,1,1))
 
-      allocate(is_PML(1))
       allocate(spec_to_PML(1))
 
       allocate(K_x_store(1,1,1))
