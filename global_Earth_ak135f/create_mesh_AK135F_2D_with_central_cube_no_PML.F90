@@ -1,6 +1,8 @@
 
   program generate_mesh_PREM
 
+! Dimitri Komatitsch, Harvard University, USA, around 1998: 2D mesh generator for the global Earth
+
   implicit none
 
 ! dans le code SPECFEM3D_GLOBE on fait :
@@ -204,9 +206,9 @@
   size_of_a_surface_element_in_km = delta_theta*R_EARTH/1000.
 
   print *
-  print *,'Nombre d''elements en surface du cercle complet = ',nspec_surf_whole_circle
+  print *,'Number of elements at the surface of the whole circle = ',nspec_surf_whole_circle
   print *
-  print *,'Taille d''un element spectral en surface = ',size_of_a_surface_element_in_km,' km'
+  print *,'Size of a spectral element at the surface = ',size_of_a_surface_element_in_km,' km'
   print *
   print *,'Since minimum S velocity in the crust is about ',cs_min_in_crust_in_km_per_s,' km/s'
   print *,'and since one spectral element is needed to resolve the shortest wavelength,'
@@ -220,7 +222,7 @@
 !---- generation de la grille pour SPECFEM90
 !
 
-  print *,'Generation de la grille pour Specfem...'
+  print *,'Generating the grid for SPECFEM2D...'
 
 ! generate only half the mesh or the whole mesh
   if(factor_divide_mesh < 1 .or. factor_divide_mesh > 2) stop 'incorrect value of factor_divide_mesh'
@@ -1018,7 +1020,7 @@
 !---- generation de la numerotation pour SPECFEM90
 !
 
-  print *,'Generation de la numerotation pour Specfem...'
+  print *,'Generating the global numbering...'
 
 ! get coordinates of the grid points
   xp(:) = 0.d0
@@ -1291,7 +1293,7 @@
   if(output_gnuplot_grid) then
 
   print *
-  print *,' Ecriture de la grille format GNUPLOT...'
+  print *,'Writing the grid in GNUPLOT format...'
 
   open(unit=20,file='gridfile.gnu',status='unknown')
 
@@ -1336,7 +1338,7 @@
   write(20,*) 'pause -1 "Hit any key..."'
   close(20)
 
-  print *,' Fin ecriture de la grille format GNUPLOT'
+  print *,'Done writing the grid in GNUPLOT format'
   print *
 
  10   format('')

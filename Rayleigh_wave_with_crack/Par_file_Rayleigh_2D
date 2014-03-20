@@ -1,6 +1,9 @@
 # title of job
 title                           = Rayleigh wave in a homogeneous medium with crack
 
+# axisymmetric (2.5D) or Cartesian planar (2D) simulation
+AXISYM                          = .false.
+
 # forward or adjoint simulation
 SIMULATION_TYPE                 = 1   # 1 = forward, 3 = adjoint + kernels
 NOISE_TOMOGRAPHY                = 0   # 0 = earthquake simulation, 1/2/3 = noise simulation
@@ -133,6 +136,7 @@ mesh_file                       = ./DATA/mesh/canyon_mesh_file   # file containi
 nodes_coords_file               = ./DATA/mesh/canyon_nodes_coords_file   # file containing the nodes coordinates
 materials_file                  = ./DATA/mesh/canyon_materials_file   # file containing the material number for each element
 free_surface_file               = ./DATA/mesh/canyon_free_surface_file   # file containing the free surface
+axial_elements_file             = ./DATA/axial_elements_file # file containing the axial elements if AXISYM is true
 absorbing_surface_file          = ./DATA/mesh/canyon_absorbing_surface_file   # file containing the absorbing surface
 CPML_element_file               = Elements_CPML_list  # file containing the CPML element numbers
 tangential_detection_curve_file = ./DATA/courbe_eros_nodes # file containing the curve delimiting the velocity model
