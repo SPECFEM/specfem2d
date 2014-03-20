@@ -572,22 +572,22 @@
 
   double precision :: ROTATE_PML_ANGLE
 
-! AXISYM parameters                                                                                                  !axisym
-                                                                                                                     !axisym
-  logical :: AXISYM ! .true. if we are performing a 2.5D simulation                                                  !axisym
-  ! Nember of elements on the symmetry axis                                                                          !axisym
-  integer :: nelem_on_the_axis                                                                                       !axisym
-  ! Flag to know if an element is on the axis                                                                        !axisym
-  logical, dimension(:), allocatable :: is_on_the_axis                                                               !axisym
-  integer, dimension(:), allocatable  ::ispec_of_axial_elements                                                      !axisym
-  ! Gauss-Lobatto-Jacobi points and weights                                                                          !axisym
-  double precision, dimension(NGLJ) :: xiglj                                                                         !axisym
-  real(kind=CUSTOM_REAL), dimension(NGLJ) :: wxglj                                                                   !axisym
-  ! derivatives of GLJ polynomials                                                                                   !axisym
-  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLJ) :: hprimeBar_xx,hprimeBarwglj_xx                                      !axisym
-  ! Shape functions (and their derivatives) evaluated at the GLJ points                                              !axisym
-  double precision, dimension(:,:), allocatable :: flagrange_GLJ                                                     !axisym
-  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1                                                         !axisym
+! AXISYM parameters
+
+  logical :: AXISYM ! .true. if we are performing a 2.5D simulation
+  ! Nember of elements on the symmetry axis
+  integer :: nelem_on_the_axis
+  ! Flag to know if an element is on the axis
+  logical, dimension(:), allocatable :: is_on_the_axis
+  integer, dimension(:), allocatable  ::ispec_of_axial_elements
+  ! Gauss-Lobatto-Jacobi points and weights
+  double precision, dimension(NGLJ) :: xiglj
+  real(kind=CUSTOM_REAL), dimension(NGLJ) :: wxglj
+  ! derivatives of GLJ polynomials
+  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLJ) :: hprimeBar_xx,hprimeBarwglj_xx
+  ! Shape functions (and their derivatives) evaluated at the GLJ points
+  double precision, dimension(:,:), allocatable :: flagrange_GLJ
+  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
 
 ! for CPML_element_file
   logical :: read_external_mesh
@@ -1166,18 +1166,18 @@
                               nelemabs,nelem_acoustic_surface, &
                               num_fluid_solid_edges,num_fluid_poro_edges, &
                               num_solid_poro_edges,nnodes_tangential_curve, &
-                              nelem_on_the_axis)                                                                     !axisym
+                              nelem_on_the_axis)
 
   !---- allocate arrays
     allocate(shape2D(ngnod,NGLLX,NGLLZ))
     allocate(dershape2D(NDIM,ngnod,NGLLX,NGLLZ))
     allocate(shape2D_display(ngnod,pointsdisp,pointsdisp))
     allocate(dershape2D_display(NDIM,ngnod,pointsdisp,pointsdisp))
-    if(AXISYM) then                                                                  !axisym
-      allocate(flagrange_GLJ(NGLJ,pointsdisp))                                       !axisym
-    else                                                                             !axisym
-      allocate(flagrange_GLJ(1,1))                                                   !axisym
-    endif                                                                            !axisym
+    if(AXISYM) then
+      allocate(flagrange_GLJ(NGLJ,pointsdisp))
+    else
+      allocate(flagrange_GLJ(1,1))
+    endif
     allocate(xix(NGLLX,NGLLZ,nspec))
     allocate(xiz(NGLLX,NGLLZ,nspec))
     allocate(gammax(NGLLX,NGLLZ,nspec))
@@ -1678,23 +1678,23 @@
   ! resets nnode_tangential_curve
   if( any_tangential_curve .eqv. .false. ) nnodes_tangential_curve = 0
 
-!                                                                                                                    !axisym
-!----  read axial elements data                                                                                      !axisym
-!                                                                                                                    !axisym
-  allocate(is_on_the_axis(nspec),stat=ier)                                                                           !axisym
-  if(ier /= 0) stop 'error: not enough memory to allocate array is_on_the_axis'                                      !axisym
-  is_on_the_axis(:) = .false.                                                                                        !axisym
-  if(nelem_on_the_axis == 0) then                                                                                    !axisym
-    allocate(ispec_of_axial_elements(1))                                                                             !axisym
-  else                                                                                                               !axisym
-    allocate(ispec_of_axial_elements(nelem_on_the_axis))                                                             !axisym
-    call read_databases_axial_elements(nelem_on_the_axis,ispec_of_axial_elements)                                    !axisym
-    call build_is_on_the_axis(nspec, nelem_on_the_axis, ispec_of_axial_elements, is_on_the_axis)                     !axisym
-  endif                                                                                                              !axisym
-  if (myrank == 0 .and. AXISYM) then                                                                                 !axisym
-    write(IOUT,*)                                                                                                    !axisym
-    write(IOUT,*) 'Number of elements on the axis: ',nelem_on_the_axis                                               !axisym
-  endif                                                                                                              !axisym
+!
+!----  read axial elements data
+!
+  allocate(is_on_the_axis(nspec),stat=ier)
+  if(ier /= 0) stop 'error: not enough memory to allocate array is_on_the_axis'
+  is_on_the_axis(:) = .false.
+  if(nelem_on_the_axis == 0) then
+    allocate(ispec_of_axial_elements(1))
+  else
+    allocate(ispec_of_axial_elements(nelem_on_the_axis))
+    call read_databases_axial_elements(nelem_on_the_axis,ispec_of_axial_elements)
+    call build_is_on_the_axis(nspec, nelem_on_the_axis, ispec_of_axial_elements, is_on_the_axis)
+  endif
+  if (myrank == 0 .and. AXISYM) then
+    write(IOUT,*)
+    write(IOUT,*) 'Number of elements on the axis: ',nelem_on_the_axis
+  endif
 
 !
 !----  end of reading
@@ -1710,10 +1710,10 @@
 ! set up Gauss-Lobatto-Legendre derivation matrices
   call define_derivation_matrices(xigll,zigll,wxgll,wzgll,hprime_xx,hprime_zz,hprimewgll_xx,hprimewgll_zz)
 
-  if (AXISYM) then                                                                                                   !axisym
-    ! set up Gauss-Lobatto-Jacobi derivation matrices                                                                !axisym
-    call define_GLJ_derivation_matrix(xiglj,wxglj,hprimeBar_xx,hprimeBarwglj_xx)                                     !axisym
-  endif                                                                                                              !axisym
+  if (AXISYM) then
+    ! set up Gauss-Lobatto-Jacobi derivation matrices
+    call define_GLJ_derivation_matrix(xiglj,wxglj,hprimeBar_xx,hprimeBarwglj_xx)
+  endif
 
   do j = 1,NGLLZ
     do i = 1,NGLLX
@@ -1804,7 +1804,7 @@
     do i=1,pointsdisp
       xirec  = 2.d0*dble(i-1)/dble(pointsdisp-1) - 1.d0
       flagrange(j,i) = hgll(j-1,xirec,xigll,NGLLX)
-      if(AXISYM) flagrange_GLJ(j,i) = hgll(j-1,xirec,xiglj,NGLJ)                                               !axisym
+      if(AXISYM) flagrange_GLJ(j,i) = hgll(j-1,xirec,xiglj,NGLJ)
     enddo
   enddo
 
@@ -1910,15 +1910,15 @@
     do ispec = 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
-          if(AXISYM) then                                                            !axisym
-            if (is_on_the_axis(ispec)) then                                          !axisym
-              xi = xiglj(i)                                                          !axisym
-            else                                                                     !axisym
-              xi = xigll(i)                                                          !axisym
-            endif                                                                    !axisym
-          else                                                                       !axisym
+          if(AXISYM) then
+            if (is_on_the_axis(ispec)) then
+              xi = xiglj(i)
+            else
+              xi = xigll(i)
+            endif
+          else
             xi = xigll(i)
-          endif                                                                      !axisym
+          endif
           gamma = zigll(j)
 
           call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl, &
@@ -1945,8 +1945,7 @@
 ! do not create OpenDX files if no negative Jacobian has been found, or if we are running in parallel
 ! (because writing OpenDX routines is much easier in serial)
   if(found_a_negative_jacobian .and. nproc == 1) then
-    call save_openDX_jacobian(nspec,npgeo,ngnod,knods,coorg,xigll,zigll, &
-                                  AXISYM,is_on_the_axis,xiglj)                                                      !axisym)
+    call save_openDX_jacobian(nspec,npgeo,ngnod,knods,coorg,xigll,zigll,AXISYM,is_on_the_axis,xiglj)
   endif
 
 ! stop the code at the first negative element found, because such a mesh cannot be computed
@@ -1955,15 +1954,15 @@
     do ispec = 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
-          if(AXISYM) then                                                            !axisym
-            if (is_on_the_axis(ispec)) then                                          !axisym
-              xi = xiglj(i)                                                          !axisym
-            else                                                                     !axisym
-              xi = xigll(i)                                                          !axisym
-            endif                                                                    !axisym
-          else                                                                       !axisym
+          if(AXISYM) then
+            if (is_on_the_axis(ispec)) then
+              xi = xiglj(i)
+            else
+              xi = xigll(i)
+            endif
+          else
             xi = xigll(i)
-          endif                                                                      !axisym
+          endif
           gamma = zigll(j)
 
           call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl, &
@@ -2549,14 +2548,14 @@
 ! define and store Lagrange interpolators at all the sources
   do i = 1,NSOURCES
     if (AXISYM) then
-      if((is_proc_source(i) == 1) .and. is_on_the_axis(ispec_selected_source(i))) then                    !axisym
-        call lagrange_any(xi_source(i),NGLJ,xiglj,hxis,hpxis)                                             !axisym
-      else                                                                                                !axisym
-        call lagrange_any(xi_source(i),NGLLX,xigll,hxis,hpxis)                                            !axisym
-      endif                                                                                               !axisym
+      if((is_proc_source(i) == 1) .and. is_on_the_axis(ispec_selected_source(i))) then
+        call lagrange_any(xi_source(i),NGLJ,xiglj,hxis,hpxis)
+      else
+        call lagrange_any(xi_source(i),NGLLX,xigll,hxis,hpxis)
+      endif
     else
       call lagrange_any(xi_source(i),NGLLX,xigll,hxis,hpxis)
-    endif                                                                                                 !axisym
+    endif
 
     call lagrange_any(gamma_source(i),NGLLZ,zigll,hgammas,hpgammas)
     hxis_store(i,:) = hxis(:)
@@ -2875,7 +2874,7 @@
       call pml_init(myrank,SIMULATION_TYPE,SAVE_FORWARD,nspec,nglob,ibool,anyabs,nelemabs,codeabs,numabs,&
                     NELEM_PML_THICKNESS,nspec_PML,is_PML,which_PML_elem,spec_to_PML,region_CPML,&
                     PML_interior_interface,nglob_interface,mask_ibool_pml,read_external_mesh, &
-                    AXISYM)                                                                                          !axisym
+                    AXISYM)
 
       if((SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS)then
 
@@ -3183,14 +3182,14 @@
   ! in some subroutine calls below
   if(.not. allocated(rmemory_fsb_displ_elastic)) allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,1))
 
-! Test compatibility with axisym.                                                                                    !axisym
-  if(AXISYM) then                                                                                                    !axisym
-    call check_compatibility_axisym(any_poroelastic, ATTENUATION_VISCOELASTIC_SOLID, anisotropic, &                  !axisym
-    ROTATE_PML_ACTIVATE, STACEY_BOUNDARY_CONDITIONS, SIMULATION_TYPE, SAVE_FORWARD, &                                !axisym
-    time_stepping_scheme, ADD_PERIODIC_CONDITIONS, NOISE_TOMOGRAPHY, NSOURCES, source_type, &                        !axisym
-    ispec_selected_source, xi_source, anglesource, nrec, ispec_selected_rec, xi_receiver, nspec, is_on_the_axis, &   !axisym
-    elastic, myrank, is_proc_source, which_proc_receiver)                                                            !axisym
-  endif                                                                                                              !axisym
+! Test compatibility with axisymmetric formulation
+  if(AXISYM) then
+    call check_compatibility_axisym(any_poroelastic, ATTENUATION_VISCOELASTIC_SOLID, anisotropic, &
+    ROTATE_PML_ACTIVATE, STACEY_BOUNDARY_CONDITIONS, SIMULATION_TYPE, SAVE_FORWARD, &
+    time_stepping_scheme, ADD_PERIODIC_CONDITIONS, NOISE_TOMOGRAPHY, NSOURCES, source_type, &
+    ispec_selected_source, xi_source, anglesource, nrec, ispec_selected_rec, xi_receiver, nspec, is_on_the_axis, &
+    elastic, myrank, is_proc_source, which_proc_receiver)
+  endif
 
   !
   !---- build the global mass matrix
@@ -3211,7 +3210,7 @@
                                 rmass_inverse_elastic_three,&
                                 nelemabs,vsext,xix,xiz,gammaz,gammax, &
                                 K_x_store,K_z_store,is_PML,&
-                                AXISYM,nglob,is_on_the_axis,coord,wxglj,xiglj, &                                     !axisym
+                                AXISYM,nglob,is_on_the_axis,coord,wxglj,xiglj, &
                                 d_x_store,d_z_store,PML_BOUNDARY_CONDITIONS,region_CPML, &
                                 nspec_PML,spec_to_PML,time_stepping_scheme)
 
@@ -4818,19 +4817,19 @@ if(coupled_elastic_poro) then
                                                     b_displw_poroelastic,b_velocw_poroelastic,b_accelw_poroelastic,&
                                                     accelw_poroelastic_adj_coupling)
 
-      if (AXISYM) then                                                    !axisym
-        do ispec=1,nspec                                                  !axisym
-          if (elastic(ispec) .and. is_on_the_axis(ispec)) then            !axisym
-            do j = 1,NGLLZ                                                !axisym
-              do i = 1,NGLJ                                               !axisym
-                if (abs(coord(1,ibool(i,j,ispec))) < TINYVAL) then        !axisym
-                  displ_elastic(1,ibool(i,j,ispec))=ZERO                  !axisym
-                endif                                                     !axisym
-              enddo                                                       !axisym
-            enddo                                                         !axisym
-          endif                                                           !axisym
-        enddo                                                             !axisym
-      endif                                                               !axisym
+      if (AXISYM) then
+        do ispec=1,nspec
+          if (elastic(ispec) .and. is_on_the_axis(ispec)) then
+            do j = 1,NGLLZ
+              do i = 1,NGLJ
+                if (abs(coord(1,ibool(i,j,ispec))) < TINYVAL) then
+                  displ_elastic(1,ibool(i,j,ispec))=ZERO
+                endif
+              enddo
+            enddo
+          endif
+        enddo
+      endif
 
     if(any_acoustic) then
       ! free surface for an acoustic medium
@@ -4857,7 +4856,7 @@ if(coupled_elastic_poro) then
                density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                vpext,rhoext,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
-               AXISYM,coord, is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &                             !axisym
+               AXISYM,coord, is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
                ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
                ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
                SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right,&
@@ -4904,7 +4903,7 @@ if(coupled_elastic_poro) then
                density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                vpext,rhoext,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
-               AXISYM,coord, is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &                             !axisym
+               AXISYM,coord, is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
                ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
                ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
                SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right,&
@@ -4994,7 +4993,7 @@ if(coupled_elastic_poro) then
                gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,displ_elastic,displ_elastic_old,&
                potential_dot_dot_acoustic,fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
                fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
-               AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &                                               !axisym
+               AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &
                PML_BOUNDARY_CONDITIONS,nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
                alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,time,deltat)
       endif
@@ -5004,7 +5003,7 @@ if(coupled_elastic_poro) then
                gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,-accel_elastic_adj_coupling,displ_elastic_old,&
                potential_dot_dot_acoustic,fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
                fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
-               AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &                                               !axisym
+               AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &
                PML_BOUNDARY_CONDITIONS,nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
                alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,time,deltat)
 
@@ -5012,7 +5011,7 @@ if(coupled_elastic_poro) then
                gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,b_displ_elastic,b_displ_elastic_old,&
                b_potential_dot_dot_acoustic,fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
                fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
-               AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &                                               !axisym
+               AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &
                PML_BOUNDARY_CONDITIONS,nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
                alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,time,deltat)
       endif
@@ -5381,7 +5380,7 @@ if(coupled_elastic_poro) then
                e1,e11,e13,e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK,c_LDDRK, &
                e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_rk, e11_force_rk, e13_force_rk, &
                hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
-               AXISYM,is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &                                   !axisym
+               AXISYM,is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
                inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
                deltat,coord,add_Bielak_conditions, x_source(1), z_source(1), &
                A_plane, B_plane, C_plane, anglesource_refl, c_inc, c_refl, time_offset, f0(1),&
@@ -5438,7 +5437,7 @@ if(coupled_elastic_poro) then
                e1,e11,e13,e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK,c_LDDRK, &
                e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_rk, e11_force_rk, e13_force_rk, &
                hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
-               AXISYM,is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &                                   !axisym
+               AXISYM,is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
                inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
                deltat,coord,add_Bielak_conditions, x_source(1), z_source(1), &
                A_plane, B_plane, C_plane, anglesource_refl, c_inc, c_refl, time_offset, f0(1),&
@@ -5611,14 +5610,14 @@ if(coupled_elastic_poro) then
           ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
           ! Blackwell Science, page 110, equation (4.60).
 
-          if (AXISYM) then                                                                                           !axisym
-            if (abs(coord(1,ibool(i,j,ispec_acoustic))) < TINYVAL) then                                              !axisym
-              xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)                                      !axisym
-              r_xiplus1(i,j) = xxi                                                                                   !axisym
-            else if (is_on_the_axis(ispec_acoustic)) then                                                            !axisym
-               r_xiplus1(i,j) = coord(1,ibool(i,j,ispec_acoustic))/(xiglj(i)+ONE)                                    !axisym
-            endif                                                                                                    !axisym
-          endif                                                                                                      !axisym
+          if (AXISYM) then
+            if (abs(coord(1,ibool(i,j,ispec_acoustic))) < TINYVAL) then
+              xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+              r_xiplus1(i,j) = xxi
+            else if (is_on_the_axis(ispec_acoustic)) then
+               r_xiplus1(i,j) = coord(1,ibool(i,j,ispec_acoustic))/(xiglj(i)+ONE)
+            endif
+          endif
 
           if(iedge_acoustic == ITOP)then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
@@ -5626,30 +5625,30 @@ if(coupled_elastic_poro) then
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = - zxi / jacobian1D
             nz = + xxi / jacobian1D
-            if (AXISYM) then                                                                                         !axisym
-              if (is_on_the_axis(ispec_acoustic)) then                                                               !axisym
-                weight = jacobian1D * wxglj(i) * r_xiplus1(i,j)                                                      !axisym
-              else                                                                                                   !axisym
-                weight = jacobian1D * wxgll(i) * coord(1,ibool(i,j,ispec_acoustic))                                  !axisym
-              endif                                                                                                  !axisym
-            else                                                                                                     !axisym
+            if (AXISYM) then
+              if (is_on_the_axis(ispec_acoustic)) then
+                weight = jacobian1D * wxglj(i) * r_xiplus1(i,j)
+              else
+                weight = jacobian1D * wxgll(i) * coord(1,ibool(i,j,ispec_acoustic))
+              endif
+            else
               weight = jacobian1D * wxgll(i)
-            endif                                                                                                    !axisym
+            endif
           else if(iedge_acoustic == IBOTTOM)then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = + zxi / jacobian1D
             nz = - xxi / jacobian1D
-            if (AXISYM) then                                                                                         !axisym
-              if (is_on_the_axis(ispec_acoustic)) then                                                               !axisym
-                weight = jacobian1D * wxglj(i) * r_xiplus1(i,j)                                                      !axisym
-              else                                                                                                   !axisym
-                weight = jacobian1D * wxgll(i) * coord(1,ibool(i,j,ispec_acoustic))                                  !axisym
-              endif                                                                                                  !axisym
-            else                                                                                                     !axisym
+            if (AXISYM) then
+              if (is_on_the_axis(ispec_acoustic)) then
+                weight = jacobian1D * wxglj(i) * r_xiplus1(i,j)
+              else
+                weight = jacobian1D * wxgll(i) * coord(1,ibool(i,j,ispec_acoustic))
+              endif
+            else
               weight = jacobian1D * wxgll(i)
-            endif                                                                                                    !axisym
+            endif
           else if(iedge_acoustic == ILEFT)then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
@@ -7643,7 +7642,7 @@ if(coupled_elastic_poro) then
                         displs_poroelastic,velocs_poroelastic, &
                         displw_poroelastic,velocw_poroelastic, &
                         xix,xiz,gammax,gammaz,jacobian,ibool,elastic,poroelastic,hprime_xx,hprime_zz, &
-                        AXISYM,nglob,coord,is_on_the_axis,hprimeBar_xx, &                                            !axisym
+                        AXISYM,nglob,coord,is_on_the_axis,hprimeBar_xx, &
                         nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                         assign_external_model,kmato,poroelastcoef,density,porosity,tortuosity, &
                         vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
@@ -7696,7 +7695,7 @@ if(coupled_elastic_poro) then
         call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,&
               displs_poroelastic,displw_poroelastic,elastic,poroelastic,&
               xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
-              AXISYM,nglob,coord,jacobian,is_on_the_axis,hprimeBar_xx, &                                             !axisym
+              AXISYM,nglob,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
               nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
               numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
               c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,ispec,e1,e11, &
@@ -7710,7 +7709,7 @@ if(coupled_elastic_poro) then
                               displ_elastic,displs_poroelastic,&
                               elastic,poroelastic,xix,xiz,gammax,gammaz, &
                               ibool,hprime_xx,hprime_zz, &
-                              AXISYM,is_on_the_axis,hprimeBar_xx, &                                                  !axisym
+                              AXISYM,is_on_the_axis,hprimeBar_xx, &
                               nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                               ispec,numat,kmato,density,rhoext,assign_external_model)
         else if(seismotype == 2) then
@@ -7718,7 +7717,7 @@ if(coupled_elastic_poro) then
                               veloc_elastic,velocs_poroelastic, &
                               elastic,poroelastic,xix,xiz,gammax,gammaz, &
                               ibool,hprime_xx,hprime_zz, &
-                              AXISYM,is_on_the_axis,hprimeBar_xx, &                                                  !axisym
+                              AXISYM,is_on_the_axis,hprimeBar_xx, &
                               nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                               ispec,numat,kmato,density,rhoext,assign_external_model)
         else if(seismotype == 3) then
@@ -7726,7 +7725,7 @@ if(coupled_elastic_poro) then
                               accel_elastic,accels_poroelastic, &
                               elastic,poroelastic,xix,xiz,gammax,gammaz, &
                               ibool,hprime_xx,hprime_zz, &
-                              AXISYM,is_on_the_axis,hprimeBar_xx, &                                                  !axisym
+                              AXISYM,is_on_the_axis,hprimeBar_xx, &
                               nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                               ispec,numat,kmato,density,rhoext,assign_external_model)
         endif
@@ -8314,14 +8313,14 @@ if(coupled_elastic_poro) then
           call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic,&
                           elastic,poroelastic,vector_field_display, &
                           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                          AXISYM,is_on_the_axis,hprimeBar_xx, &                                                      !axisym
+                          AXISYM,is_on_the_axis,hprimeBar_xx, &
                           nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                           numat,kmato,density,rhoext,assign_external_model)
 
           call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
                       it,deltat,coorg,xinterp,zinterp,shape2D_display, &
                       Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
-                      AXISYM,is_on_the_axis,flagrange_GLJ, &                                                        !axisym
+                      AXISYM,is_on_the_axis,flagrange_GLJ, &
                       poroelastcoef,knods,kmato,ibool, &
                       numabs,codeabs,typeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
                       simulation_title,nglob,npgeo,vpImin,vpImax,nrec,NSOURCES, &
@@ -8360,14 +8359,14 @@ if(coupled_elastic_poro) then
           call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,velocs_poroelastic,&
                           elastic,poroelastic,vector_field_display, &
                           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                          AXISYM,is_on_the_axis,hprimeBar_xx, &                                                      !axisym
+                          AXISYM,is_on_the_axis,hprimeBar_xx, &
                           nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                           numat,kmato,density,rhoext,assign_external_model)
 
           call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
                       it,deltat,coorg,xinterp,zinterp,shape2D_display, &
                       Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
-                      AXISYM,is_on_the_axis,flagrange_GLJ, &                                                        !axisym
+                      AXISYM,is_on_the_axis,flagrange_GLJ, &
                       poroelastcoef,knods,kmato,ibool, &
                       numabs,codeabs,typeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
                       simulation_title,nglob,npgeo,vpImin,vpImax,nrec,NSOURCES, &
@@ -8406,14 +8405,14 @@ if(coupled_elastic_poro) then
           call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,accels_poroelastic,&
                           elastic,poroelastic,vector_field_display, &
                           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                          AXISYM,is_on_the_axis,hprimeBar_xx, &                                                      !axisym
+                          AXISYM,is_on_the_axis,hprimeBar_xx, &
                           nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                           numat,kmato,density,rhoext,assign_external_model)
 
           call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
                       it,deltat,coorg,xinterp,zinterp,shape2D_display, &
                       Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
-                      AXISYM,is_on_the_axis,flagrange_GLJ, &                                                        !axisym
+                      AXISYM,is_on_the_axis,flagrange_GLJ, &
                       poroelastcoef,knods,kmato,ibool, &
                       numabs,codeabs,typeabs,anyabs,nelem_acoustic_surface,acoustic_edges, &
                       simulation_title,nglob,npgeo,vpImin,vpImax,nrec,NSOURCES, &
@@ -8472,7 +8471,7 @@ if(coupled_elastic_poro) then
           call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic,&
                           elastic,poroelastic,vector_field_display, &
                           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                          AXISYM,is_on_the_axis,hprimeBar_xx, &                                                      !axisym
+                          AXISYM,is_on_the_axis,hprimeBar_xx, &
                           nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                           numat,kmato,density,rhoext,assign_external_model)
 
@@ -8482,7 +8481,7 @@ if(coupled_elastic_poro) then
           call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,velocs_poroelastic,&
                           elastic,poroelastic,vector_field_display, &
                           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                          AXISYM,is_on_the_axis,hprimeBar_xx, &                                                      !axisym
+                          AXISYM,is_on_the_axis,hprimeBar_xx, &
                           nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                           numat,kmato,density,rhoext,assign_external_model)
 
@@ -8492,7 +8491,7 @@ if(coupled_elastic_poro) then
           call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,accels_poroelastic,&
                           elastic,poroelastic,vector_field_display, &
                           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                          AXISYM,is_on_the_axis,hprimeBar_xx, &                                                      !axisym
+                          AXISYM,is_on_the_axis,hprimeBar_xx, &
                           nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                           numat,kmato,density,rhoext,assign_external_model)
 
@@ -8502,7 +8501,7 @@ if(coupled_elastic_poro) then
           call compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,&
                      displs_poroelastic,displw_poroelastic,elastic,poroelastic,vector_field_display, &
                      xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
-                     AXISYM,coord,jacobian,is_on_the_axis,hprimeBar_xx, &                                            !axisym
+                     AXISYM,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
                      nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
                      numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
                      c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,e1,e11, &
@@ -8694,7 +8693,7 @@ if(coupled_elastic_poro) then
           call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic,&
                           elastic,poroelastic,vector_field_display, &
                           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                          AXISYM,is_on_the_axis,hprimeBar_xx, &                                                      !axisym
+                          AXISYM,is_on_the_axis,hprimeBar_xx, &
                           nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                           numat,kmato,density,rhoext,assign_external_model)
 
@@ -8704,7 +8703,7 @@ if(coupled_elastic_poro) then
           call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,velocs_poroelastic,&
                           elastic,poroelastic,vector_field_display, &
                           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                          AXISYM,is_on_the_axis,hprimeBar_xx, &                                                      !axisym
+                          AXISYM,is_on_the_axis,hprimeBar_xx, &
                           nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                           numat,kmato,density,rhoext,assign_external_model)
 
@@ -8714,7 +8713,7 @@ if(coupled_elastic_poro) then
           call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,accels_poroelastic,&
                           elastic,poroelastic,vector_field_display, &
                           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                          AXISYM,is_on_the_axis,hprimeBar_xx, &                                                      !axisym
+                          AXISYM,is_on_the_axis,hprimeBar_xx, &
                           nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                           numat,kmato,density,rhoext,assign_external_model)
 
@@ -8724,7 +8723,7 @@ if(coupled_elastic_poro) then
           call compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,&
                      displs_poroelastic,displw_poroelastic,elastic,poroelastic,vector_field_display, &
                      xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
-                     AXISYM,coord,jacobian,is_on_the_axis,hprimeBar_xx, &                                            !axisym
+                     AXISYM,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
                      nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
                      numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
                      c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,e1,e11, &

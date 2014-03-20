@@ -354,33 +354,33 @@
 !------------------------------------------------------------------------
 !
 
-  double precision function pnglj(z,n)                                    !axisym
-                                                                          !axisym
-!------------------------------------------------------------------------ !axisym
-!                                                                         !axisym
-!     Compute the value of the Nth order polynomial of the                !axisym
-!     Gauss-Lobatto-Jacobi (0,1) at Z. from Legendre polynomials.         !axisym
-!                                                                         !axisym
-!------------------------------------------------------------------------ !axisym
-                                                                          !axisym
-  implicit none                                                           !axisym
-  include 'constants.h'                                                   !axisym
-                                                                          !axisym
-  double precision z                                                      !axisym
-  integer n                                                               !axisym
-  double precision, external :: pnleg                                     !axisym
-                                                                          !axisym
-  if (abs(z+1.d0) > TINYVAL) then  ! if (z /= -1.d0)                      !axisym
-    pnglj = (pnleg(z,n)+pnleg(z,n+1))/(ONE+z)                             !axisym
-  else                                                                    !axisym
-    pnglj = (dble(n)+ONE)*(-1)**n                                         !axisym
-  endif                                                                   !axisym
-                                                                          !axisym
-  end function pnglj                                                      !axisym
-                                                                          !axisym
-!                                                                         !axisym
-!------------------------------------------------------------------------ !axisym
-!                                                                         !axisym
+  double precision function pnglj(z,n)
+
+!------------------------------------------------------------------------
+!
+!     Compute the value of the Nth order polynomial of the
+!     Gauss-Lobatto-Jacobi (0,1) at Z. from Legendre polynomials.
+!
+!------------------------------------------------------------------------
+
+  implicit none
+  include 'constants.h'
+
+  double precision z
+  integer n
+  double precision, external :: pnleg
+
+  if (abs(z+1.d0) > TINYVAL) then  ! if (z /= -1.d0)
+    pnglj = (pnleg(z,n)+pnleg(z,n+1))/(ONE+z)
+  else
+    pnglj = (dble(n)+ONE)*(-1)**n
+  endif
+
+  end function pnglj
+
+!
+!------------------------------------------------------------------------
+!
 
   double precision function pnormj (n,alpha,beta)
 

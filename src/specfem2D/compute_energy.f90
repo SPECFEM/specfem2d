@@ -47,7 +47,7 @@
                             displw_poroelastic,velocw_poroelastic, &
                             xix,xiz,gammax,gammaz,jacobian,ibool, &
                             elastic,poroelastic,hprime_xx,hprime_zz, &
-                            AXISYM,nglob,coord,is_on_the_axis,hprimeBar_xx, &                                        !axisym
+                            AXISYM,nglob,coord,is_on_the_axis,hprimeBar_xx, &
                             nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                             assign_external_model,kmato,poroelastcoef,density,porosity,tortuosity, &
                             vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
@@ -111,11 +111,11 @@
   real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
 
 ! axisym
-  logical :: AXISYM                                                                                                  !axisym
-  integer :: nglob                                                                                                   !axisym
-  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLJ) :: hprimeBar_xx                                                       !axisym
-  logical, dimension(nspec) :: is_on_the_axis                                                                        !axisym
-  double precision, dimension(NDIM,nglob), intent(in) :: coord                                                       !axisym
+  logical :: AXISYM
+  integer :: nglob
+  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLJ) :: hprimeBar_xx
+  logical, dimension(nspec) :: is_on_the_axis
+  double precision, dimension(NDIM,nglob), intent(in) :: coord
 
 ! local variables
   integer :: i,j,k,ispec
@@ -351,7 +351,7 @@
       call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic, &
                   displs_poroelastic,displw_poroelastic,elastic,poroelastic, &
                   xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
-                  AXISYM,nglob,coord,jacobian,is_on_the_axis,hprimeBar_xx, &                                         !axisym
+                  AXISYM,nglob,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
                   nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
                   numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
                   c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,ispec,e1,e11, &
@@ -362,7 +362,7 @@
                   veloc_elastic,velocs_poroelastic, &
                   elastic,poroelastic,xix,xiz,gammax,gammaz, &
                   ibool,hprime_xx,hprime_zz, &
-                  AXISYM,is_on_the_axis,hprimeBar_xx, &                                                              !axisym
+                  AXISYM,is_on_the_axis,hprimeBar_xx, &
                   nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                   ispec,numat,kmato,density,rhoext,assign_external_model)
 

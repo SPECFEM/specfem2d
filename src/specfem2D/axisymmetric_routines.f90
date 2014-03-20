@@ -44,7 +44,7 @@
 
 ! On this file we gather some subroutines related to the AXISYM option (some others can be found
 ! in gll_library.f90 and define_derivation_matrices.f90)
-!axisym!axisym!axisym!axisym!axisym!axisym!axisym!axisym!axisym!axisym!axisym!axisym
+!axisym!axisym!axisym!axisym!axisym!axisym!axisym!axisym!axisym!axisym!axisym
 
 subroutine  build_is_on_the_axis(nspec, nelem_on_the_axis, ispec_of_axial_elements, is_on_the_axis)
   ! This subroutine set the vector of logicals is_on_the_axis. is_on_the_axis(ispec)

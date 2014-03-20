@@ -44,7 +44,7 @@
 
   subroutine plotpost(displ,coord,vpext,x_source,z_source,st_xval,st_zval,it,dt,coorg, &
           xinterp,zinterp,shapeint,Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
-          AXISYM,is_on_the_axis,flagrange_GLJ, &                                                                     !axisym
+          AXISYM,is_on_the_axis,flagrange_GLJ, &
           poroelastcoef,knods,kmato,ibool, &
           numabs,codeabs,typeabs,anyabs,nelem_acoustic_surface, acoustic_edges, &
           simulation_title,nglob,npgeo,vpmin,vpmax,nrec,NSOURCES, &
@@ -109,8 +109,8 @@
   double precision Uxinterp(pointsdisp,pointsdisp)
   double precision Uzinterp(pointsdisp,pointsdisp)
   double precision flagrange(NGLLX,pointsdisp)
-  double precision flagrange_GLJ(NGLJ,pointsdisp)                                                                   !axisym
-  logical, dimension(nspec) :: is_on_the_axis                                                                       !axisym
+  double precision flagrange_GLJ(NGLJ,pointsdisp)
+  logical, dimension(nspec) :: is_on_the_axis
   double precision density(2,numat),poroelastcoef(4,3,numat),porosity(numat),tortuosity(numat)
 
   double precision dt,timeval
@@ -2789,18 +2789,18 @@ coorg_recv_ps_vector_field
 
   do k=1,NGLLX
   do l=1,NGLLX
-    if(AXISYM) then                                                                                                  !axisym
-      if(is_on_the_axis(ispec)) then                                                                                 !axisym
-        Uxinterp(i,j) = Uxinterp(i,j) + displ(1,ibool(k,l,ispec))*flagrange_GLJ(k,i)*flagrange_GLJ(l,j)              !axisym
-        Uzinterp(i,j) = Uzinterp(i,j) + displ(3,ibool(k,l,ispec))*flagrange_GLJ(k,i)*flagrange_GLJ(l,j)              !axisym
-      else                                                                                                           !axisym
-        Uxinterp(i,j) = Uxinterp(i,j) + displ(1,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)                      !axisym
-        Uzinterp(i,j) = Uzinterp(i,j) + displ(3,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)                      !axisym
-      endif                                                                                                          !axisym
-    else                                                                                                             !axisym
+    if(AXISYM) then
+      if(is_on_the_axis(ispec)) then
+        Uxinterp(i,j) = Uxinterp(i,j) + displ(1,ibool(k,l,ispec))*flagrange_GLJ(k,i)*flagrange_GLJ(l,j)
+        Uzinterp(i,j) = Uzinterp(i,j) + displ(3,ibool(k,l,ispec))*flagrange_GLJ(k,i)*flagrange_GLJ(l,j)
+      else
+        Uxinterp(i,j) = Uxinterp(i,j) + displ(1,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
+        Uzinterp(i,j) = Uzinterp(i,j) + displ(3,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
+      endif
+    else
       Uxinterp(i,j) = Uxinterp(i,j) + displ(1,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
       Uzinterp(i,j) = Uzinterp(i,j) + displ(3,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
-    endif                                                                                                            !axisym
+    endif
   enddo
   enddo
 

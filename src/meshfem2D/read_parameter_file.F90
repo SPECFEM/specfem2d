@@ -56,11 +56,11 @@ module parameter_file
 
   integer :: SIMULATION_TYPE, NOISE_TOMOGRAPHY
   logical :: SAVE_FORWARD,read_external_mesh
-  logical :: AXISYM                                                                                                  !axisym
+  logical :: AXISYM
 
   character(len=256) :: mesh_file, nodes_coords_file, materials_file, &
                         free_surface_file, absorbing_surface_file, CPML_element_file, &
-                        axial_elements_file                                                                          !axisym
+                        axial_elements_file
   character(len=256)  :: tangential_detection_curve_file
 
   ! variables used for partitioning
@@ -178,11 +178,11 @@ contains
   write(*,*) title
   print *
 
-  ! axisymmetric (2.5D) or Cartesian planar (2D) simulation                                                          !axisym
-  call read_value_logical_p(AXISYM, 'solver.AXISYM')                                                                 !axisym
-  if(err_occurred() /= 0) stop 'error reading parameter 2a in Par_file'                                              !axisym
-  if (AXISYM) write(*,*) 'Axisymmetric simulation'                                                                   !axisym
-  print *                                                                                                            !axisym
+  ! axisymmetric (2.5D) or Cartesian planar (2D) simulation
+  call read_value_logical_p(AXISYM, 'solver.AXISYM')
+  if(err_occurred() /= 0) stop 'error reading parameter 2a in Par_file'
+  if (AXISYM) write(*,*) 'Axisymmetric simulation'
+  print *
 
   ! read type of simulation
   call read_value_integer_p(SIMULATION_TYPE, 'solver.SIMULATION_TYPE')
@@ -516,8 +516,8 @@ contains
   call read_value_string_p(free_surface_file, 'mesher.free_surface_file')
   if(err_occurred() /= 0) stop 'error reading parameter 55 in Par_file'
 
-  call read_value_string_p(axial_elements_file, 'mesher.axial_elements_file')            !axisym
-  if(err_occurred() /= 0) stop 'error reading parameter 55b in Par_file'                 !axisym
+  call read_value_string_p(axial_elements_file, 'mesher.axial_elements_file')
+  if(err_occurred() /= 0) stop 'error reading parameter 55b in Par_file'
 
   call read_value_string_p(absorbing_surface_file, 'mesher.absorbing_surface_file')
   if(err_occurred() /= 0) stop 'error reading parameter 56 in Par_file'

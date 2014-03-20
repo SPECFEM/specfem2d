@@ -161,56 +161,56 @@
   end function lagrange_deriv_GLL
 
 !
-!=======================================================================                                             !axisym
-!                                                                                                                    !axisym
-                                                                                                                     !axisym
-! subroutine to compute the derivative of the interpolants of the GLJ                                                !axisym
-! quadrature at the GLJ points at any given GLJ point                                                                !axisym
-                                                                                                                     !axisym
-  double precision function poly_deriv_GLJ(I,j,ZGLJ,NZ)                                                              !axisym
-                                                                                                                     !axisym
-!------------------------------------------------------------------------                                            !axisym
-!                                                                                                                    !axisym
-!     Compute the value of the derivative of the I-th                                                                !axisym
-!     polynomial interpolant of the GLJ quadrature through the                                                       !axisym
-!     NZ Gauss-Lobatto-Jacobi (0,1) points ZGLJ at point ZGLJ(j)                                                     !axisym
-!                                                                                                                    !axisym
-!------------------------------------------------------------------------                                            !axisym
-                                                                                                                     !axisym
-  implicit none                                                                                                      !axisym
-                                                                                                                     !axisym
-  integer i,j,nz                                                                                                     !axisym
-  double precision zglj(0:nz-1)                                                                                      !axisym
-                                                                                                                     !axisym
-  integer degpoly                                                                                                    !axisym
-                                                                                                                     !axisym
-  double precision, external :: pnglj                                                                                !axisym
-                                                                                                                     !axisym
-  degpoly = nz - 1                                                                                                   !axisym
-                                                                                                                     !axisym
-  if (i == 0 .and. j == 0) then ! Case 1                                                                             !axisym
-    poly_deriv_GLJ = -dble(degpoly)*(dble(degpoly)+2.d0)/6.d0                                                        !axisym
-  else if (i == 0 .and. 0 < j .and. j < degpoly) then ! Case 2                                                       !axisym
-    poly_deriv_GLJ = 2.d0*(-1)**degpoly*pnglj(zglj(j),degpoly)/((1.d0+zglj(j))*(dble(degpoly)+1.d0))                 !axisym
-  else if (i == 0 .and. j == degpoly) then ! Case 3                                                                  !axisym
-    poly_deriv_GLJ = (-1)**degpoly/(dble(degpoly)+1.d0)                                                              !axisym
-  else if (0 < i .and. i < degpoly .and. j == 0) then ! Case 4                                                       !axisym
-    poly_deriv_GLJ = (-1)**(degpoly+1)*(dble(degpoly)+1.d0)/(2.d0*pnglj(zglj(i),degpoly)*(1.d0+zglj(i)))             !axisym
-  else if (0 < i .and. i < degpoly .and. 0 < j .and. j < degpoly .and. i /= j) then ! Case 5                         !axisym
-    poly_deriv_GLJ = 1.d0/(zglj(j)-zglj(i))*pnglj(zglj(j),degpoly)/pnglj(zglj(i),degpoly)                            !axisym
-  else if (0 < i .and. i < degpoly .and. i == j) then  ! Case 6                                                      !axisym
-    poly_deriv_GLJ = -1.d0/(2.d0*(1.d0+zglj(i)))                                                                     !axisym
-  else if (0 < i .and. i < degpoly .and. j == degpoly) then ! Case 7                                                 !axisym
-    poly_deriv_GLJ = 1.d0/(pnglj(zglj(i),degpoly)*(1.d0-zglj(i)))                                                    !axisym
-  else if (i == degpoly .and. j == 0) then ! Case 8                                                                  !axisym
-    poly_deriv_GLJ = (-1)**(degpoly+1)*(dble(degpoly)+1.d0)/4.d0                                                     !axisym
-  else if (i == degpoly .and. 0 < j .and. j < degpoly) then ! Case 9                                                 !axisym
-    poly_deriv_GLJ = -1.d0/(1.d0-zglj(j))*pnglj(zglj(j),degpoly)                                                     !axisym
-  else if (i == degpoly .and. j == degpoly) then ! Case 10                                                           !axisym
-    poly_deriv_GLJ = (dble(degpoly)*(dble(degpoly)+2.d0)-1.d0)/4.d0                                                  !axisym
-  else                                                                                                               !axisym
-    call exit_MPI("Problem in poly_deriv_GLJ : in a perfect world this would NEVER appear")                          !axisym
-  endif                                                                                                              !axisym
-                                                                                                                     !axisym
-  end function poly_deriv_GLJ                                                                                        !axisym
+!=======================================================================
+!
+
+! subroutine to compute the derivative of the interpolants of the GLJ
+! quadrature at the GLJ points at any given GLJ point
+
+  double precision function poly_deriv_GLJ(I,j,ZGLJ,NZ)
+
+!------------------------------------------------------------------------
+!
+!     Compute the value of the derivative of the I-th
+!     polynomial interpolant of the GLJ quadrature through the
+!     NZ Gauss-Lobatto-Jacobi (0,1) points ZGLJ at point ZGLJ(j)
+!
+!------------------------------------------------------------------------
+
+  implicit none
+
+  integer i,j,nz
+  double precision zglj(0:nz-1)
+
+  integer degpoly
+
+  double precision, external :: pnglj
+
+  degpoly = nz - 1
+
+  if (i == 0 .and. j == 0) then ! Case 1
+    poly_deriv_GLJ = -dble(degpoly)*(dble(degpoly)+2.d0)/6.d0
+  else if (i == 0 .and. 0 < j .and. j < degpoly) then ! Case 2
+    poly_deriv_GLJ = 2.d0*(-1)**degpoly*pnglj(zglj(j),degpoly)/((1.d0+zglj(j))*(dble(degpoly)+1.d0))
+  else if (i == 0 .and. j == degpoly) then ! Case 3
+    poly_deriv_GLJ = (-1)**degpoly/(dble(degpoly)+1.d0)
+  else if (0 < i .and. i < degpoly .and. j == 0) then ! Case 4
+    poly_deriv_GLJ = (-1)**(degpoly+1)*(dble(degpoly)+1.d0)/(2.d0*pnglj(zglj(i),degpoly)*(1.d0+zglj(i)))
+  else if (0 < i .and. i < degpoly .and. 0 < j .and. j < degpoly .and. i /= j) then ! Case 5
+    poly_deriv_GLJ = 1.d0/(zglj(j)-zglj(i))*pnglj(zglj(j),degpoly)/pnglj(zglj(i),degpoly)
+  else if (0 < i .and. i < degpoly .and. i == j) then  ! Case 6
+    poly_deriv_GLJ = -1.d0/(2.d0*(1.d0+zglj(i)))
+  else if (0 < i .and. i < degpoly .and. j == degpoly) then ! Case 7
+    poly_deriv_GLJ = 1.d0/(pnglj(zglj(i),degpoly)*(1.d0-zglj(i)))
+  else if (i == degpoly .and. j == 0) then ! Case 8
+    poly_deriv_GLJ = (-1)**(degpoly+1)*(dble(degpoly)+1.d0)/4.d0
+  else if (i == degpoly .and. 0 < j .and. j < degpoly) then ! Case 9
+    poly_deriv_GLJ = -1.d0/(1.d0-zglj(j))*pnglj(zglj(j),degpoly)
+  else if (i == degpoly .and. j == degpoly) then ! Case 10
+    poly_deriv_GLJ = (dble(degpoly)*(dble(degpoly)+2.d0)-1.d0)/4.d0
+  else
+    call exit_MPI("Problem in poly_deriv_GLJ : in a perfect world this would NEVER appear")
+  endif
+
+  end function poly_deriv_GLJ
 

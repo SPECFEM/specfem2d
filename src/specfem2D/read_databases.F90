@@ -44,7 +44,7 @@
 !========================================================================
 
   subroutine read_databases_init(myrank, &
-                  simulation_title,AXISYM,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo,nproc, &               !axisym
+                  simulation_title,AXISYM,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo,nproc, &
                   output_grid_Gnuplot,interpol,NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP_BETWEEN_OUTPUT_IMAGES, &
                   PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,NELEM_PML_THICKNESS, &
                   NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS,subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps, &
@@ -68,7 +68,7 @@
 
   integer :: myrank
   character(len=60) simulation_title
-  logical :: AXISYM                                                                                                  !axisym
+  logical :: AXISYM
   integer :: SIMULATION_TYPE,NOISE_TOMOGRAPHY,npgeo,nproc
   integer :: colors,numbers,subsamp_postscript,seismotype,imagetype_postscript
   logical :: SAVE_FORWARD,output_grid_Gnuplot,interpol,output_postscript_snapshot, &
@@ -162,13 +162,13 @@
   endif
 
   !---- read parameters from input file
-  read(IIN,"(a80)") datlin                                                                                           !axisym
-  read(IIN,*) AXISYM                                                                                                 !axisym
-  if (myrank == 0 .and. AXISYM) then                                                                                 !axisym
-    write(IOUT,*)                                                                                                    !axisym
-    write(IOUT,*)                                                                                                    !axisym
-    write(IOUT,*) '=== A x i s y m m e t r i c  S i m u l a t i o n ==='                                             !axisym
-  endif                                                                                                              !axisym
+  read(IIN,"(a80)") datlin
+  read(IIN,*) AXISYM
+  if (myrank == 0 .and. AXISYM) then
+    write(IOUT,*)
+    write(IOUT,*)
+    write(IOUT,*) '=== A x i s y m m e t r i c  S i m u l a t i o n ==='
+  endif
 
   read(IIN,"(a80)") datlin
   read(IIN,*) SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD
@@ -461,7 +461,7 @@
                               nelemabs,nelem_acoustic_surface, &
                               num_fluid_solid_edges,num_fluid_poro_edges, &
                               num_solid_poro_edges,nnodes_tangential_curve, &
-                              nelem_on_the_axis)                                                                     !axisym
+                              nelem_on_the_axis)
 
 ! reads the spectral macrobloc nodal coordinates
 
@@ -477,7 +477,7 @@
   integer :: nelemabs,nelem_acoustic_surface, &
     num_fluid_solid_edges,num_fluid_poro_edges, &
     num_solid_poro_edges,nnodes_tangential_curve, &
-    nelem_on_the_axis                                                                                                !axisym
+    nelem_on_the_axis
 
   ! local parameters
   integer :: ipoin,ip,id
@@ -512,7 +512,7 @@
   read(IIN,"(a80)") datlin
   read(IIN,"(a80)") datlin
   read(IIN,*) nelemabs,nelem_acoustic_surface,num_fluid_solid_edges,num_fluid_poro_edges,&
-              num_solid_poro_edges,nnodes_tangential_curve,nelem_on_the_axis                                        !axisym
+              num_solid_poro_edges,nnodes_tangential_curve,nelem_on_the_axis
 
   !---- print element group main parameters
   if (myrank == 0 ) then
@@ -977,33 +977,33 @@
 
   end subroutine read_tangential_detection_curve
 
-!                                                                                                                    !axisym
-!-------------------------------------------------------------------------------------------------                   !axisym
-!                                                                                                                    !axisym
-                                                                                                                     !axisym
-  subroutine read_databases_axial_elements(nelem_on_the_axis,ispec_of_axial_elements)                                !axisym
-                                                                                                                     !axisym
-! reads axial elements data                                                                                          !axisym
-                                                                                                                     !axisym
-  implicit none                                                                                                      !axisym
-  include "constants.h"                                                                                              !axisym
-                                                                                                                     !axisym
-  integer :: nelem_on_the_axis                                                                                       !axisym
-  integer, dimension(nelem_on_the_axis) :: ispec_of_axial_elements                                                   !axisym
-                                                                                                                     !axisym
-  ! local parameters                                                                                                 !axisym
-  integer :: i                                                                                                       !axisym
-  character(len=80) :: datlin                                                                                        !axisym
-                                                                                                                     !axisym
-  ! initializes                                                                                                      !axisym
-  ispec_of_axial_elements(:) = 0                                                                                     !axisym
-                                                                                                                     !axisym
-  ! reads in any possible axial elements                                                                             !axisym
-  read(IIN,"(a80)") datlin                                                                                           !axisym
-                                                                                                                     !axisym
-  do i = 1,nelem_on_the_axis                                                                                         !axisym
-    read(IIN,*) ispec_of_axial_elements(i)                                                                           !axisym
-  enddo                                                                                                              !axisym
-                                                                                                                     !axisym
-  end subroutine read_databases_axial_elements                                                                       !axisym
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine read_databases_axial_elements(nelem_on_the_axis,ispec_of_axial_elements)
+
+! reads axial elements data
+
+  implicit none
+  include "constants.h"
+
+  integer :: nelem_on_the_axis
+  integer, dimension(nelem_on_the_axis) :: ispec_of_axial_elements
+
+  ! local parameters
+  integer :: i
+  character(len=80) :: datlin
+
+  ! initializes
+  ispec_of_axial_elements(:) = 0
+
+  ! reads in any possible axial elements
+  read(IIN,"(a80)") datlin
+
+  do i = 1,nelem_on_the_axis
+    read(IIN,*) ispec_of_axial_elements(i)
+  enddo
+
+  end subroutine read_databases_axial_elements
 
