@@ -83,6 +83,10 @@ module part_unstruct
   integer, dimension(:,:), pointer  :: acoustic_surface
   integer :: nelem_acoustic_surface_loc
 
+  integer :: nelem_on_the_axis                                                                                       !axisym
+  integer :: nelem_on_the_axis_loc                                                                                   !axisym
+  integer, dimension(:), pointer  :: ispec_of_axial_elements                                                         !axisym
+
   integer :: nelemabs
   integer, dimension(:,:), allocatable  :: abs_surface
   logical, dimension(:,:), allocatable  :: abs_surface_char
@@ -371,6 +375,64 @@ contains
 
   end subroutine read_acoustic_surface
 
+  !-----------------------------------------------                                                                   !axisym
+  ! Read axial elements file.                                                                                        !axisym
+  ! The first line of this file must be the total number of axial elements then it contains                          !axisym
+  ! the ispec of each of these elements.                                                                             !axisym
+  ! 'axial_elements' contains the list of the ispec corresponding to axial elements                                  !axisym
+  !-----------------------------------------------                                                                   !axisym
+                                                                                                                     !axisym
+  subroutine read_axial_elements_file(axial_elements_file)                                                           !axisym
+                                                                                                                     !axisym
+  implicit none                                                                                                      !axisym
+                                                                                                                     !axisym
+  character(len=256), intent(in)  :: axial_elements_file                                                             !axisym
+                                                                                                                     !axisym
+  integer  :: i,j,ier                                                                                                !axisym
+                                                                                                                     !axisym
+#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE                                                                         !axisym
+  open(unit=994, file=trim(axial_elements_file), form='unformatted' , status='old', action='read', iostat=ier)       !axisym
+#else                                                                                                                !axisym
+  open(unit=994, file=trim(axial_elements_file), form='formatted' , status='old', action='read', iostat=ier)         !axisym
+#endif                                                                                                               !axisym
+  if( ier /= 0 ) then                                                                                                !axisym
+    print *,'error opening file: ',trim(axial_elements_file)                                                         !axisym
+    stop 'error read axial elements file'                                                                            !axisym
+  endif                                                                                                              !axisym
+                                                                                                                     !axisym
+#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE                                                                         !axisym
+  read(994) nelem_on_the_axis                                                                                        !axisym
+#else                                                                                                                !axisym
+  read(994,*) nelem_on_the_axis                                                                                      !axisym
+#endif                                                                                                               !axisym
+                                                                                                                     !axisym
+  allocate(ispec_of_axial_elements(nelem_on_the_axis))                                                               !axisym
+                                                                                                                     !axisym
+  do i = 1, nelem_on_the_axis                                                                                        !axisym
+#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE                                                                         !axisym
+    read(994) ispec_of_axial_elements(i)                                                                             !axisym
+#else                                                                                                                !axisym
+    read(994,*) ispec_of_axial_elements(i)                                                                           !axisym
+#endif                                                                                                               !axisym
+                                                                                                                     !axisym
+  enddo                                                                                                              !axisym
+                                                                                                                     !axisym
+  close(994)                                                                                                         !axisym
+                                                                                                                     !axisym
+  ! this has a cost of O(nelem_on_the_axis^2), could be reduced by using a quicksort algorithm                       !axisym
+  ! and checking the sorted list                                                                                     !axisym
+  print *,'testing for duplicates in the axial element input file...'                                                !axisym
+  do i = 1,nelem_on_the_axis                                                                                         !axisym
+    do j = i+1,nelem_on_the_axis                                                                                     !axisym
+      if (ispec_of_axial_elements(i) == ispec_of_axial_elements(j)) then                                             !axisym
+        stop 'At least one element appears twice in the axial element file'                                          !axisym
+      endif                                                                                                          !axisym
+    enddo                                                                                                            !axisym
+  enddo                                                                                                              !axisym
+  print *,'done testing for duplicates'                                                                              !axisym
+  print *                                                                                                            !axisym
+                                                                                                                     !axisym
+  end subroutine read_axial_elements_file                                                                            !axisym
 
   !-----------------------------------------------
   ! Read absorbing surface.
@@ -2100,5 +2162,40 @@ end  subroutine rotate_mesh_for_plane_wave
   endif
 
   end subroutine write_fluidsolid_edges_database
+
+  !--------------------------------------------------                                                                !axisym
+  ! Write ispec of axial elements pertaining to iproc partition in the corresponding Database                        !axisym
+  !--------------------------------------------------                                                                !axisym
+                                                                                                                     !axisym
+  subroutine write_axial_elements_database(IIN_database, nelem_on_the_axis, ispec_of_axial_elements, &               !axisym
+                                           nelem_on_the_axis_loc, iproc, num_phase)                                  !axisym
+                                                                                                                     !axisym
+  implicit none                                                                                                      !axisym
+                                                                                                                     !axisym
+  integer, intent(in)  :: IIN_database                                                                               !axisym
+  integer, intent(in)  :: nelem_on_the_axis                                                                          !axisym
+  integer, intent(inout)  :: nelem_on_the_axis_loc                                                                   !axisym
+  integer, dimension(:), pointer  :: ispec_of_axial_elements                                                         !axisym
+  integer, intent(in)  :: iproc                                                                                      !axisym
+  integer, intent(in)  :: num_phase                                                                                  !axisym
+                                                                                                                     !axisym
+  integer  :: i                                                                                                      !axisym
+                                                                                                                     !axisym
+  if ( num_phase == 1 ) then                                                                                         !axisym
+     nelem_on_the_axis_loc = 0                                                                                       !axisym
+     do i = 1, nelem_on_the_axis                                                                                     !axisym
+        if ( part(ispec_of_axial_elements(i)) == iproc ) then                                                        !axisym
+           nelem_on_the_axis_loc = nelem_on_the_axis_loc + 1                                                         !axisym
+        endif                                                                                                        !axisym
+     enddo                                                                                                           !axisym
+  else                                                                                                               !axisym
+     do i = 1, nelem_on_the_axis                                                                                     !axisym
+        if ( part(ispec_of_axial_elements(i)) == iproc ) then                                                        !axisym
+           write(IIN_database,*) glob2loc_elmnts(ispec_of_axial_elements(i))                                         !axisym
+        endif                                                                                                        !axisym
+     enddo                                                                                                           !axisym
+  endif                                                                                                              !axisym
+                                                                                                                     !axisym
+  end subroutine write_axial_elements_database                                                                       !axisym
 
 end module part_unstruct

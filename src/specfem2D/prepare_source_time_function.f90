@@ -186,7 +186,7 @@
            omegat =  omega_coa * ( time - DecT )
            !source_time_function(i_source,it,i_stage) = factor(i_source) * HALF / omega_coa / omega_coa * &
            !      ( sin(omegat) - 8.d0 / 9.d0 * sin(3.d0/ 4.d0 * omegat) - &
-           !	   8.d0 / 25.d0 * sin(5.d0 / 4.d0 * omegat) -1./15.*( time - DecT ) + 1./15.*4./f0(i_source))
+           !     8.d0 / 25.d0 * sin(5.d0 / 4.d0 * omegat) -1./15.*( time - DecT ) + 1./15.*4./f0(i_source))
 
            source_time_function(i_source,it,i_stage) = factor(i_source) * HALF / omega_coa / omega_coa * &
                  ( - sin(omegat) + 8.d0 / 9.d0 * sin(3.d0 / 4.d0 * omegat) + &

@@ -45,6 +45,7 @@
   subroutine compute_vector_whole_medium(potential_acoustic,veloc_elastic,velocs_poroelastic,&
                             elastic,poroelastic,vector_field_display, &
                             xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
+                            AXISYM,is_on_the_axis,hprimeBar_xx, &                                                    !axisym
                             nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                             numat,kmato,density,rhoext,assign_external_model)
 
@@ -78,6 +79,11 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
   real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
 
+  !axisym
+  logical :: AXISYM                                                                                                  !axisym
+  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLJ) :: hprimeBar_xx                                                       !axisym
+  logical, dimension(nspec) :: is_on_the_axis                                                                        !axisym
+
 ! local variables
   integer i,j,ispec,iglob
 
@@ -92,6 +98,7 @@
                                 veloc_elastic,velocs_poroelastic, &
                                 elastic,poroelastic,xix,xiz,gammax,gammaz, &
                                 ibool,hprime_xx,hprime_zz, &
+                                AXISYM,is_on_the_axis,hprimeBar_xx, &                                                !axisym
                                 nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                                 ispec,numat,kmato,density,rhoext,assign_external_model)
 
@@ -115,6 +122,7 @@
                                     veloc_elastic,velocs_poroelastic,&
                                     elastic,poroelastic,xix,xiz,gammax,gammaz, &
                                     ibool,hprime_xx,hprime_zz, &
+                                    AXISYM,is_on_the_axis,hprimeBar_xx, &                                            !axisym
                                     nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                                     ispec,numat,kmato,density,rhoext,assign_external_model)
 
@@ -152,6 +160,11 @@
 ! array with derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
   real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
+
+  !axisym
+  logical :: AXISYM                                                                                                  !axisym
+  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLJ) :: hprimeBar_xx                                                       !axisym
+  logical, dimension(nspec) :: is_on_the_axis                                                                        !axisym
 
 ! local variables
   integer i,j,k,iglob
@@ -200,11 +213,27 @@
 
 ! derivative along x
         tempx1l = 0._CUSTOM_REAL
-        do k = 1,NGLLX
-          hp1 = hprime_xx(i,k)
-          iglob = ibool(k,j,ispec)
-          tempx1l = tempx1l + potential_acoustic(iglob)*hp1
-        enddo
+        if (AXISYM) then                                                                                             !axisym
+          if (is_on_the_axis(ispec)) then                                                                            !axisym
+            do k = 1,NGLLX                                                                                           !axisym
+              hp1 = hprimeBar_xx(i,k)                                                                                !axisym
+              iglob = ibool(k,j,ispec)                                                                               !axisym
+              tempx1l = tempx1l + potential_acoustic(iglob)*hp1                                                      !axisym
+            enddo                                                                                                    !axisym
+          else !AXISYM but not on the axis                                                                           !axisym
+            do k = 1,NGLLX                                                                                           !axisym
+              hp1 = hprime_xx(i,k)                                                                                   !axisym
+              iglob = ibool(k,j,ispec)                                                                               !axisym
+              tempx1l = tempx1l + potential_acoustic(iglob)*hp1                                                      !axisym
+              enddo                                                                                                  !axisym
+          endif                                                                                                      !axisym
+        else !not AXISYM                                                                                             !axisym
+          do k = 1,NGLLX
+            hp1 = hprime_xx(i,k)
+            iglob = ibool(k,j,ispec)
+            tempx1l = tempx1l + potential_acoustic(iglob)*hp1
+          enddo
+        endif                                                                                                        !axisym
 
 ! derivative along z
         tempx2l = 0._CUSTOM_REAL

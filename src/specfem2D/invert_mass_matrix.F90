@@ -59,6 +59,7 @@
                                 rmass_inverse_elastic_three,&
                                 nelemabs,vsext,xix,xiz,gammaz,gammax, &
                                 K_x_store,K_z_store,is_PML,&
+                                AXISYM,nglob,is_on_the_axis,coord,wxglj,xiglj, &                                     !axisym
                                 d_x_store,d_z_store,PML_BOUNDARY_CONDITIONS,region_CPML, &
                                 nspec_PML,spec_to_PML,time_stepping_scheme)
 
@@ -67,8 +68,10 @@
   implicit none
   include 'constants.h'
 
+  logical :: AXISYM                                                                                                  !axisym
   logical :: anyabs
   integer :: nelemabs,ibegin,iend,ispecabs,jbegin,jend
+  integer :: nglob                                                                                                   !axisym
   integer, dimension(nelemabs) :: numabs,ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
                                   ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2
   double precision :: deltat
@@ -96,6 +99,10 @@
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
   integer, dimension(nspec) :: kmato
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
+! weights for the GLJ quadrature                                                     !axisym
+  real(kind=CUSTOM_REAL), dimension(NGLJ) :: wxglj                                   !axisym
+! Gauss-Lobatto-Jacobi points of integration                                         !axisym
+  double precision, dimension(NGLJ) :: xiglj                                         !axisym
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: wzgll
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: jacobian
 
@@ -115,9 +122,12 @@
   double precision :: rhol,kappal,mul_relaxed,lambdal_relaxed
   double precision :: rhol_s,rhol_f,rhol_bar,phil,tortl
 
+  logical, dimension(nspec) :: is_on_the_axis                                        !axisym
+  double precision, dimension(NDIM,nglob), intent(in) :: coord                       !axisym
+
   integer :: nspec_PML,ispec_PML
   integer, dimension(nspec) :: spec_to_PML
-  double precision, dimension(NGLLX,NGLLZ,nspec_PML) :: K_x_store,K_z_store,d_x_store,d_z_store 
+  double precision, dimension(NGLLX,NGLLZ,nspec_PML) :: K_x_store,K_z_store,d_x_store,d_z_store
   logical, dimension(nspec) :: is_PML
   logical :: PML_BOUNDARY_CONDITIONS,this_element_has_PML
   integer, dimension(nspec) :: region_CPML
@@ -177,24 +187,61 @@
           if(this_element_has_PML) then
             ispec_PML=spec_to_PML(ispec)
             if(time_stepping_scheme == 1)then
+
               if(region_CPML(ispec) == CPML_X_ONLY) then
-                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
-                     + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML)&
-                     + d_x_store(i,j,ispec_PML) * deltat / 2.d0)
-                rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
+                if (AXISYM) then  ! This PML can't be on the axis                                                     !axisym
+                   rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &                             !axisym
+                        + coord(1,iglob)*wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) &     !axisym
+                        + d_x_store(i,j,ispec_PML) * deltat / 2.d0)                                                   !axisym
+                 else ! not axisym                                                                                    !axisym
+                   rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                        + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML)&
+                        + d_x_store(i,j,ispec_PML) * deltat / 2.d0)
+                 endif                                                                                                !axisym
+                 rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
+
               else if (region_CPML(ispec) == CPML_XZ_ONLY) then
-                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
-                     + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML)&
-                     + (d_x_store(i,j,ispec_PML)*k_z_store(i,j,ispec_PML)+&
-                       d_z_store(i,j,ispec_PML)*k_x_store(i,j,ispec_PML)) * deltat / 2.d0)
-                rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
+                if (AXISYM) then  ! This corner can't be on the axis                                                  !axisym
+                   rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &                             !axisym
+                        + coord(1,iglob)*wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) &                                 !axisym
+                        * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML) &                                      !axisym
+                        + (d_x_store(i,j,ispec_PML)*k_z_store(i,j,ispec_PML) + &                                      !axisym
+                        d_z_store(i,j,ispec_PML)*k_x_store(i,j,ispec_PML)) * deltat / 2.d0)                           !axisym
+                 else ! not axisym                                                                                    !axisym
+                   rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                        + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML)&
+                        + (d_x_store(i,j,ispec_PML)*k_z_store(i,j,ispec_PML)+&
+                          d_z_store(i,j,ispec_PML)*k_x_store(i,j,ispec_PML)) * deltat / 2.d0)
+                 endif                                                                                                !axisym
+                 rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
+
               else if(region_CPML(ispec) == CPML_Z_ONLY) then
-                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
-                     + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML)&
-                     + d_z_store(i,j,ispec_PML)* deltat / 2.d0)
+                if (AXISYM) then                                                                                     !axisym
+                  if (is_on_the_axis(ispec)) then                                                                    !axisym
+                    if (abs(coord(1,iglob)) < TINYVAL) then ! First GLJ point                                        !axisym
+                      xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)                                                !axisym
+                      rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &                         !axisym
+                         + xxi*wxglj(i)*wzgll(j)*rhol*jacobian(i,j,ispec) &                                          !axisym
+                         * (K_z_store(i,j,ispec_PML) + d_z_store(i,j,ispec_PML)* deltat / 2.d0)                      !axisym
+                    else                                                                                             !axisym
+                      rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &                         !axisym
+                         + coord(1,iglob)/(xiglj(i)+ONE)*wxglj(i)*wzgll(j)*rhol*jacobian(i,j,ispec) &                !axisym
+                         * (K_z_store(i,j,ispec_PML) + d_z_store(i,j,ispec_PML)* deltat / 2.d0)                      !axisym
+                    endif                                                                                            !axisym
+                  else ! not on the axis                                                                             !axisym
+                    rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &                           !axisym
+                         + coord(1,iglob)*wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) &                               !axisym
+                         * (K_z_store(i,j,ispec_PML) + d_z_store(i,j,ispec_PML)* deltat / 2.d0)                      !axisym
+                  endif                                                                                              !axisym
+                else ! not axisym                                                                                    !axisym
+                  rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                       + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML)&
+                       + d_z_store(i,j,ispec_PML)* deltat / 2.d0)
+                endif                                                                                                !axisym
                 rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
               endif
-            else
+
+            else ! time_stepping_scheme /= 1
               if(region_CPML(ispec) == CPML_X_ONLY) then
                 rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
                      + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML))
@@ -211,8 +258,24 @@
             endif
           else ! no PLM
 
-            rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
-                    + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
+            if (AXISYM) then                                                                                         !axisym
+              if (is_on_the_axis(ispec)) then                                                                        !axisym
+                if (abs(coord(1,iglob)) < TINYVAL) then ! First GLJ point                                            !axisym
+                  xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)                                                    !axisym
+                  rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &                             !axisym
+                      + xxi*wxglj(i)*wzgll(j)*rhol*jacobian(i,j,ispec)                                               !axisym
+                else                                                                                                 !axisym
+                  rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &                             !axisym
+                      + coord(1,iglob)/(xiglj(i)+ONE)*wxglj(i)*wzgll(j)*rhol*jacobian(i,j,ispec)                     !axisym
+                endif                                                                                                !axisym
+              else ! not on the axis                                                                                 !axisym
+                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &                               !axisym
+                    + coord(1,iglob)*wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)                                      !axisym
+              endif                                                                                                  !axisym
+            else ! not axisym                                                                                        !axisym
+              rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                      + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
+            endif                                                                                                    !axisym
             rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
           endif
 
@@ -230,20 +293,55 @@
             ispec_PML=spec_to_PML(ispec)
             if(time_stepping_scheme == 1)then
               if(region_CPML(ispec) == CPML_X_ONLY) then
-                rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
-                     + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML)&
-                     + d_x_store(i,j,ispec_PML) * deltat / 2.d0)
+                if (AXISYM) then   !! AB AB : This PML can't be on the axis                                          !axisym
+                  rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &                                   !axisym
+                       + coord(1,iglob)*wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) &  !axisym
+                       + d_x_store(i,j,ispec_PML) * deltat / 2.d0)                                                   !axisym
+                else ! not axisym                                                                                    !axisym
+                  rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
+                       + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML)&
+                       + d_x_store(i,j,ispec_PML) * deltat / 2.d0)
+                endif                                                                                                !axisym
+
               else if (region_CPML(ispec) == CPML_XZ_ONLY) then
-                rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
-                     + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML) &
-                     + (d_x_store(i,j,ispec_PML)*k_z_store(i,j,ispec_PML)&
-                        + d_z_store(i,j,ispec_PML)*k_x_store(i,j,ispec_PML)) * deltat / 2.d0)
+                if (AXISYM) then   !! AB AB : This corner can't be on the axis                                       !axisym
+                  rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &                                   !axisym
+                       + coord(1,iglob)*wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) &                              !axisym
+                       *  (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML) &                                     !axisym
+                       + (d_x_store(i,j,ispec_PML)*k_z_store(i,j,ispec_PML) &                                        !axisym
+                        + d_z_store(i,j,ispec_PML)*k_x_store(i,j,ispec_PML)) * deltat / 2.d0)                        !axisym
+                else ! not axisym                                                                                    !axisym
+                  rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
+                       + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML) &
+                       + (d_x_store(i,j,ispec_PML)*k_z_store(i,j,ispec_PML)&
+                          + d_z_store(i,j,ispec_PML)*k_x_store(i,j,ispec_PML)) * deltat / 2.d0)
+                endif                                                                                                !axisym
+
               else if(region_CPML(ispec) == CPML_Z_ONLY) then
-                rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
-                     + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML)&
-                     + d_z_store(i,j,ispec_PML)* deltat / 2.d0)
+                if (AXISYM) then                                                                                     !axisym
+                  if (is_on_the_axis(ispec)) then                                                                    !axisym
+                    if (abs(coord(1,iglob)) < TINYVAL) then ! First GLJ point                                        !axisym
+                      xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)                                                !axisym
+                      rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &                               !axisym
+                         + xxi*wxglj(i)*wzgll(j)/kappal*jacobian(i,j,ispec) &                                        !axisym
+                         * (K_z_store(i,j,ispec_PML) + d_z_store(i,j,ispec_PML)* deltat / 2.d0)                      !axisym
+                    else                                                                                             !axisym
+                      rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &                               !axisym
+                         + coord(1,iglob)/(xiglj(i)+ONE)*wxglj(i)*wzgll(j)/kappal*jacobian(i,j,ispec) &              !axisym
+                         * (K_z_store(i,j,ispec_PML) + d_z_store(i,j,ispec_PML)* deltat / 2.d0)                      !axisym
+                    endif                                                                                            !axisym
+                  else ! not on the axis                                                                             !axisym
+                    rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &                                 !axisym
+                         + coord(1,iglob)*wxgll(i)*wzgll(j)/kappal*jacobian(i,j,ispec) &                             !axisym
+                         * (K_z_store(i,j,ispec_PML) + d_z_store(i,j,ispec_PML)* deltat / 2.d0)                      !axisym
+                  endif                                                                                              !axisym
+                else ! not axisym                                                                                    !axisym
+                  rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
+                       + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML)&
+                       + d_z_store(i,j,ispec_PML)* deltat / 2.d0)
+                endif                                                                                                !axisym
               endif
-            else
+            else  ! time_stepping_scheme /= 1
               if(region_CPML(ispec) == CPML_X_ONLY) then
                 rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
                      + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML))
@@ -256,8 +354,26 @@
               endif
             endif
           else  ! no PLM
-            rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                 + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal
+
+            if (AXISYM) then                                                                                         !axisym
+              if (is_on_the_axis(ispec)) then                                                                        !axisym
+                if (abs(coord(1,iglob)) < TINYVAL) then ! First GLJ point                                            !axisym
+                  xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)                                                    !axisym
+                  rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &                                    !axisym
+                      + xxi*wxglj(i)*wzgll(j)*jacobian(i,j,ispec) / kappal                                           !axisym
+                else                                                                                                 !axisym
+                  rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &                                    !axisym
+                      + coord(1,iglob)/(xiglj(i)+ONE)*wxglj(i)*wzgll(j)*jacobian(i,j,ispec) / kappal                 !axisym
+                endif                                                                                                !axisym
+              else ! not on the axis                                                                                 !axisym
+                rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &                                      !axisym
+                    + coord(1,iglob)*wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal                                  !axisym
+              endif                                                                                                  !axisym
+            else ! not axisym                                                                                        !axisym
+              rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
+                   + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal
+            endif                                                                                                    !axisym
+
           endif
         endif
       enddo
@@ -272,6 +388,7 @@
   !--- DK and Zhinan Xie: one per component of the wave field i.e. one per spatial dimension.
   !--- DK and Zhinan Xie: This was also suggested by Jean-Paul Ampuero in 2003.
   !
+
   if(.not. PML_BOUNDARY_CONDITIONS .and. anyabs .and. time_stepping_scheme == 1) then
      count_left=1
      count_right=1

@@ -98,6 +98,7 @@ OBJS_SPECFEM2D = \
 	$O/assemble_MPI.o \
 	$O/attenuation_model.o \
 	$O/attenuation_compute_param.o \
+	$O/axisymmetric_routines.o \
 	$O/calendar.o \
 	$O/checkgrid.o \
 	$O/check_stability.o \
@@ -246,6 +247,9 @@ $O/attenuation_compute_param.o: ${S}/attenuation_compute_param.c
 
 $O/attenuation_model.o: ${S}/attenuation_model.f90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/attenuation_model.o ${S}/attenuation_model.f90
+	
+$O/axisymmetric_routines.o: ${S}/axisymmetric_routines.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/axisymmetric_routines.o ${S}/axisymmetric_routines.f90
 
 $O/calendar.o: ${S}/calendar.f90
 	${F90} $(FLAGS_CHECK) -c -o $O/calendar.o ${S}/calendar.f90
