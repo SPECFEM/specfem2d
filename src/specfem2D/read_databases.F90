@@ -1003,8 +1003,7 @@
                                                                                                                      !axisym
   do i = 1,nelem_on_the_axis                                                                                         !axisym
     read(IIN,*) ispec_of_axial_elements(i)                                                                           !axisym
-  enddo                                                                                                              !axisym                                                                                                            !axisym
+  enddo                                                                                                              !axisym
                                                                                                                      !axisym
   end subroutine read_databases_axial_elements                                                                       !axisym
-
 
