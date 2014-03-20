@@ -92,6 +92,9 @@
     write(15,*) 'Title of the simulation'
     write(15,"(a100)") title
 
+    write(15,*) 'Axisymmetric (2.5D, .true.) or Cartesian planar (2D; .false.) simulation'                           !axisym
+    write(15,*) AXISYM                                                                                               !axisym
+
     write(15,*) 'Type of simulation'
     write(15,*) SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD
 
@@ -255,15 +258,18 @@
     call write_fluidsolid_edges_database(15, nedges_elporo_coupled, nedges_elporo_coupled_loc, &
                                         edges_elporo_coupled, iproc, 1)
 
+    call write_axial_elements_database(15, nelem_on_the_axis, ispec_of_axial_elements,nelem_on_the_axis_loc,iproc,1) !axisym
+
     if (.not. ( force_normal_to_surface .or. rec_normal_to_surface ) ) then
       nnodes_tangential_curve = 0
     endif
 
     write(15,*) 'nelemabs nelem_acoustic_surface num_fluid_solid_edges num_fluid_poro_edges'
-    write(15,*) 'num_solid_poro_edges nnodes_tangential_curve'
+    write(15,*) 'num_solid_poro_edges nnodes_tangential_curve,nelem_on_the_axis'                                     !axisym
     write(15,*) nelemabs_loc,nelem_acoustic_surface_loc, &
                 nedges_coupled_loc,nedges_acporo_coupled_loc,&
-                nedges_elporo_coupled_loc,nnodes_tangential_curve
+                nedges_elporo_coupled_loc,nnodes_tangential_curve, &
+                nelem_on_the_axis_loc                                                                                !axisym
 
     write(15,*) 'Material sets (num 1 rho vp vs 0 0 QKappa Qmu 0 0 0 0 0 0) or '
     write(15,*) '(num 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0) or '
@@ -335,6 +341,9 @@
         write(15,*) nodes_tangential_curve(1,i),nodes_tangential_curve(2,i)
       enddo
     endif
+
+    write(15,*) 'List of axial elements:'                                                                              !axisym
+    call write_axial_elements_database(15, nelem_on_the_axis, ispec_of_axial_elements, nelem_on_the_axis_loc, iproc, 2)!axisym
 
     ! closes Database file
     close(15)

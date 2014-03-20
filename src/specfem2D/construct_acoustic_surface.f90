@@ -65,9 +65,9 @@ subroutine construct_acoustic_surface ( nspec, ngnod, knods, nelem_acoustic_surf
   integer, dimension(ngnod)  :: n
   integer  :: e1, e2
   integer  :: type_acoust
-  
+
   do i = 1, nelem_acoustic_surface
-     acoustic_surface(1,i) = acoustic_edges(1,i) ! Here we do a copy     
+     acoustic_surface(1,i) = acoustic_edges(1,i) ! Here we do a copy
      type_acoust = acoustic_edges(2,i)
      e1 = acoustic_edges(3,i)
      e2 = acoustic_edges(4,i)

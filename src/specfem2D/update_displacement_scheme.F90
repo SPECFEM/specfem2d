@@ -61,11 +61,11 @@
 
   implicit none
   include 'constants.h'
-  
+
   integer :: time_stepping_scheme,SIMULATION_TYPE, nglob_acoustic, nglob_elastic,nglob_poroelastic
   logical :: any_acoustic, any_elastic, any_poroelastic
 
-! SIMULATIONTYPE == 1  
+! SIMULATIONTYPE == 1
   double precision :: deltat,deltatover2,deltatsquareover2
   real(kind=CUSTOM_REAL),dimension(nglob_acoustic) :: potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic,&
                                                       potential_acoustic_old
@@ -73,7 +73,7 @@
   real(kind=CUSTOM_REAL),dimension(NDIM,nglob_poroelastic) :: displs_poroelastic,velocs_poroelastic,accels_poroelastic,&
                                                               displs_poroelastic_old,&
                                                               displw_poroelastic,velocw_poroelastic,accelw_poroelastic
-  
+
 ! SIMULATIONTYPE == 3
   double precision :: b_deltat,b_deltatover2,b_deltatsquareover2
   real(kind=CUSTOM_REAL),dimension(nglob_acoustic) :: b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic,&
@@ -83,9 +83,9 @@
   real(kind=CUSTOM_REAL),dimension(NDIM,nglob_poroelastic) :: b_displs_poroelastic,b_velocs_poroelastic,b_accels_poroelastic,&
                                                               accels_poroelastic_adj_coupling, &
                                                               b_displw_poroelastic,b_velocw_poroelastic,b_accelw_poroelastic, &
-                                                              accelw_poroelastic_adj_coupling 
+                                                              accelw_poroelastic_adj_coupling
 
-  
+
 ! update displacement using finite-difference time scheme (Newmark)
 
     if(any_acoustic) then

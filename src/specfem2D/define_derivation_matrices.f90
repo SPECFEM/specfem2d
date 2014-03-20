@@ -60,14 +60,16 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
   real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz,hprimewgll_zz
 
+  double precision, parameter :: alphaGLL = 0.d0, betaGLL = 0.d0
+
 ! function for calculating derivatives of Lagrange polynomials
   double precision, external :: lagrange_deriv_GLL
 
   integer i1,i2,k1,k2
 
 ! set up coordinates of the Gauss-Lobatto-Legendre points
-  call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
-  call zwgljd(zigll,wzgll,NGLLZ,GAUSSALPHA,GAUSSBETA)
+  call zwgljd(xigll,wxgll,NGLLX,alphaGLL,betaGLL)
+  call zwgljd(zigll,wzgll,NGLLZ,alphaGLL,betaGLL)
 
 ! if number of points is odd, the middle abscissa is exactly zero
   if(mod(NGLLX,2) /= 0) xigll((NGLLX-1)/2+1) = ZERO
@@ -91,4 +93,49 @@
   enddo
 
   end subroutine define_derivation_matrices
+
+!____________________________________________________________________________________!axisym
+!                                                                                    !axisym
+!subroutine define_GLJ_derivation_matrix(xiglj,wxglj,hprimeBar_xx,hprimeBarwglj_xx)  !axisym
+! Calculate all that we need for the GLJ quadrature on axial elements :              !axisym
+! Weights, GLJ points and derivatives of polynomials at GLJ points.                  !axisym
+!____________________________________________________________________________________!axisym
+!                                                                                    !axisym
+                                                                                     !axisym
+  subroutine define_GLJ_derivation_matrix(xiglj,wxglj,hprimeBar_xx,hprimeBarwglj_xx) !axisym
+                                                                                     !axisym
+  implicit none                                                                      !axisym
+                                                                                     !axisym
+  include "constants.h"                                                              !axisym
+                                                                                     !axisym
+! Gauss-Lobatto-Jacobi points of integration                                         !axisym
+  double precision, dimension(NGLJ) :: xiglj                                         !axisym
+                                                                                     !axisym
+! weights for the GLJ quadrature                                                     !axisym
+  real(kind=CUSTOM_REAL), dimension(NGLJ) :: wxglj                                   !axisym
+                                                                                     !axisym
+! array with derivatives of GLJ polynomials                                          !axisym
+  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLJ) :: hprimeBar_xx,hprimeBarwglj_xx      !axisym
+                                                                                     !axisym
+  double precision, parameter    :: alphaGLJ=0.d0,betaGLJ=1.d0                       !axisym
+                                                                                     !axisym
+! function for calculating derivatives of GLJ polynomials                            !axisym
+  double precision, external :: poly_deriv_GLJ                                       !axisym
+                                                                                     !axisym
+  integer i1,i2                                                                      !axisym
+                                                                                     !axisym
+! set up coordinates of the Gauss-Lobatto-Jacobi points                              !axisym
+  call zwgljd(xiglj,wxglj,NGLJ,alphaGLJ,betaGLJ)                                     !axisym
+                                                                                     !axisym
+! calculate derivatives of the GLJ quadrature polynomials                            !axisym
+! and precalculate some products in double precision                                 !axisym
+! hprimeBar(i,j) = hBar'_j(xiglj_i) by definition of the derivation matrix           !axisym
+  do i1=1,NGLJ                                                                       !axisym
+    do i2=1,NGLJ                                                                     !axisym
+      hprimeBar_xx(i2,i1) = poly_deriv_GLJ(i1-1,i2-1,xiglj,NGLJ)                     !axisym
+      hprimeBarwglj_xx(i2,i1) = wxglj(i2) * hprimeBar_xx(i2,i1)                      !axisym
+    enddo                                                                            !axisym
+  enddo                                                                              !axisym
+                                                                                     !axisym
+  end subroutine define_GLJ_derivation_matrix                                        !axisym
 

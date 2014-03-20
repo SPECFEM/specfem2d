@@ -43,7 +43,8 @@
 
   subroutine pml_init(myrank,SIMULATION_TYPE,SAVE_FORWARD,nspec,nglob,ibool,anyabs,nelemabs,codeabs,numabs,&
                       NELEM_PML_THICKNESS,nspec_PML,is_PML,which_PML_elem,spec_to_PML,region_CPML,&
-                      PML_interior_interface,nglob_interface,mask_ibool,read_external_mesh)
+                      PML_interior_interface,nglob_interface,mask_ibool,read_external_mesh, &
+                      AXISYM)                                                                                        !axisym
 
 #ifdef USE_MPI
   use :: mpi
@@ -51,6 +52,8 @@
 
   implicit none
   include 'constants.h'
+
+  logical :: AXISYM                                                                                                  !axisym
 
   integer :: myrank,SIMULATION_TYPE,nspec,nglob,nglob_interface
 
@@ -230,6 +233,14 @@
        else
          region_CPML(ispec) = 0
        endif
+       if (AXISYM) then                                                                                                !axisym TODO
+         if ((which_PML_elem(IRIGHT,ispec) .eqv. .true.) &                                                             !axisym TODO
+        .or. (which_PML_elem(ILEFT,ispec) .eqv. .true.) &                                                              !axisym TODO
+        .or. (which_PML_elem(ITOP,ispec) .eqv. .true.)) &                                                              !axisym TODO
+        then                                                                                                           !axisym TODO
+           call exit_MPI('For the moment just the bottom PML works with axisymmetry')                                  !axisym TODO
+         endif                                                                                                         !axisym TODO
+       endif                                                                                                           !axisym TODO
      endif
    enddo
 
@@ -454,7 +465,7 @@ end subroutine pml_init
   logical, dimension(nspec) :: is_PML
   integer, dimension(nspec) :: region_CPML,spec_to_PML
 
-  double precision, dimension(NGLLX,NGLLZ,nspec_PML) ::  K_x_store,K_z_store,d_x_store,d_z_store,& 
+  double precision, dimension(NGLLX,NGLLZ,nspec_PML) ::  K_x_store,K_z_store,d_x_store,d_z_store,&
                                                                alpha_x_store,alpha_z_store
 
 ! PML fixed parameters to compute parameter in PML
@@ -632,11 +643,11 @@ end subroutine pml_init
   d0_z_top = - (NPOWER + 1) * vpmax * log(Rcoef) / (2.d0 * thickness_PML_z_top)
 
   d_x_store = 0.d0
-  d_z_store = 0.d0 
+  d_z_store = 0.d0
   K_x_store = 1.d0
-  K_z_store = 1.d0 
+  K_z_store = 1.d0
   alpha_x_store = 0.d0
-  alpha_z_store = 0.d0 
+  alpha_z_store = 0.d0
 
   ! define damping profile at the grid points
   do ispec = 1,nspec

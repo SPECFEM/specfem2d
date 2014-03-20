@@ -670,7 +670,8 @@ program meshfem2D
            endif
         enddo
      endif
-     if(.not. absleft) then
+     ! in the axisymmetric case if xmin == 0 the axis is a symmetry axis and thus cannot be a free surface as well   !axisym
+     if(.not. absleft .and. .not. (AXISYM .and. abs(xmin) < TINYVAL)) then
         i = 1
         do j = 1,nzread
            imaterial_number = num_material((j-1)*nxread+i)
@@ -720,7 +721,8 @@ program meshfem2D
            endif
         enddo
      endif
-     if(.not. absleft) then
+     ! in the axisymmetric case if xmin == 0 the axis is a symmetry axis and thus cannot be a free surface as well   !axisym
+     if(.not. absleft .and. .not. (AXISYM .and. abs(xmin) < TINYVAL)) then
         i = 1
         do j = 1,nzread
            imaterial_number = num_material((j-1)*nxread+i)
@@ -746,6 +748,44 @@ program meshfem2D
            endif
         enddo
      endif
+
+     if(AXISYM) then                                                                                                 !axisym
+       if ( read_external_mesh ) then  !! DK DK si maillage CUBIT externe                                            !axisym
+         call read_axial_elements_file(axial_elements_file)                                                          !axisym
+                                                                                                                     !axisym
+       else !! DK DK if the mesh has been made by the internal mesher                                                !axisym
+                                                                                                                     !axisym
+         if(xmin * xmax < 0) stop 'in axisymmetric mode xmin and xmax must have the same sign, they cannot cross the symmetry axis'
+         if(xmin < 0) stop 'in axisymmetric mode, case of symmetry axis on the right edge instead of left not supported yet'
+                                                                                                                     !axisym
+         ! count the number of axial elements                                                                        !axisym
+         nelem_on_the_axis = 0                                                                                       !axisym
+                                                                                                                     !axisym
+         ! test if the left edge is on the symmetry axis                                                             !axisym
+         if(abs(xmin) < TINYVAL) then                                                                                !axisym
+                                                                                                                     !axisym
+           ! if the surface is absorbing, it cannot be axial at the same time                                        !axisym
+           if(absleft) stop 'in axisymmetric mode, the left edge cannot be both axial and absorbing'                 !axisym
+           !all the elements on the left edge are axial because that edge is vertical and located in x = 0           !axisym
+           nelem_on_the_axis = nzread                                                                                !axisym
+           allocate(ispec_of_axial_elements(nelem_on_the_axis))                                                      !axisym
+           i = 1                                                                                                     !axisym
+           do j = 1,nzread                                                                                           !axisym
+             ispec_of_axial_elements(j) = (j-1)*nxread + (i-1) + 1                                                   !axisym
+           enddo                                                                                                     !axisym
+                                                                                                                     !axisym
+         else ! no elements on the symmetry axis                                                                     !axisym
+           allocate(ispec_of_axial_elements(1))                                                                      !axisym
+         endif                                                                                                       !axisym
+                                                                                                                     !axisym
+       endif ! of if(read_external_mesh) then                                                                        !axisym
+                                                                                                                     !axisym
+     else ! of AXISYM                                                                                                !axisym
+                                                                                                                     !axisym
+       nelem_on_the_axis = 0                                                                                         !axisym
+       allocate(ispec_of_axial_elements(1))                                                                          !axisym
+                                                                                                                     !axisym
+     endif                                                                                                           !axisym
 
      !
      !--- definition of absorbing boundaries

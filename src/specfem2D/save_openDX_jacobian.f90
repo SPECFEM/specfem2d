@@ -44,10 +44,13 @@
 !========================================================================
 
 
-  subroutine save_openDX_jacobian(nspec,npgeo,ngnod,knods,coorg,xigll,zigll)
+  subroutine save_openDX_jacobian(nspec,npgeo,ngnod,knods,coorg,xigll,zigll, &
+                                  AXISYM,is_on_the_axis,xiglj)                                                       !axisym
 
   implicit none
   include "constants.h"
+
+  logical :: AXISYM                                                                                                  !axisym
 
   integer :: nspec,npgeo,ngnod
   double precision, dimension(NDIM,npgeo) :: coorg
@@ -55,6 +58,9 @@
   double precision, dimension(NGLLZ) :: zigll
 
   integer, dimension(ngnod,nspec) :: knods
+
+  double precision, dimension(NGLJ) :: xiglj                                                                         !axisym
+  logical, dimension(nspec) :: is_on_the_axis                                                                        !axisym
 
   ! local parameters
   integer, dimension(:), allocatable :: ibool_OpenDX
@@ -114,7 +120,15 @@
     found_a_problem_in_this_element = .false.
     do j = 1,NGLLZ
       do i = 1,NGLLX
-        xi = xigll(i)
+        if(AXISYM) then                                                            !axisym
+          if (is_on_the_axis(ispec)) then                                          !axisym
+            xi = xiglj(i)                                                          !axisym
+          else                                                                     !axisym
+            xi = xigll(i)                                                          !axisym
+          endif                                                                    !axisym
+        else                                                                       !axisym
+            xi = xigll(i)
+        endif                                                                      !axisym
         gamma = zigll(j)
 
         call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl, &
