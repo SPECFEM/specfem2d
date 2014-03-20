@@ -45,12 +45,12 @@
 
 
   subroutine save_openDX_jacobian(nspec,npgeo,ngnod,knods,coorg,xigll,zigll, &
-                                  AXISYM,is_on_the_axis,xiglj)                                                       !axisym
+                                  AXISYM,is_on_the_axis,xiglj)
 
   implicit none
   include "constants.h"
 
-  logical :: AXISYM                                                                                                  !axisym
+  logical :: AXISYM
 
   integer :: nspec,npgeo,ngnod
   double precision, dimension(NDIM,npgeo) :: coorg
@@ -59,8 +59,8 @@
 
   integer, dimension(ngnod,nspec) :: knods
 
-  double precision, dimension(NGLJ) :: xiglj                                                                         !axisym
-  logical, dimension(nspec) :: is_on_the_axis                                                                        !axisym
+  double precision, dimension(NGLJ) :: xiglj
+  logical, dimension(nspec) :: is_on_the_axis
 
   ! local parameters
   integer, dimension(:), allocatable :: ibool_OpenDX
@@ -120,15 +120,15 @@
     found_a_problem_in_this_element = .false.
     do j = 1,NGLLZ
       do i = 1,NGLLX
-        if(AXISYM) then                                                            !axisym
-          if (is_on_the_axis(ispec)) then                                          !axisym
-            xi = xiglj(i)                                                          !axisym
-          else                                                                     !axisym
-            xi = xigll(i)                                                          !axisym
-          endif                                                                    !axisym
-        else                                                                       !axisym
+        if(AXISYM) then
+          if (is_on_the_axis(ispec)) then
+            xi = xiglj(i)
+          else
             xi = xigll(i)
-        endif                                                                      !axisym
+          endif
+        else
+            xi = xigll(i)
+        endif
         gamma = zigll(j)
 
         call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl, &

@@ -47,7 +47,7 @@
                               gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,displ_elastic,displ_elastic_old,&
                               potential_dot_dot_acoustic,fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
                               fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
-                              AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &                                       !axisym
+                              AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &
                               PML_BOUNDARY_CONDITIONS,nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
                               alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,time,deltat)
 
@@ -55,18 +55,18 @@
    include 'constants.h'
 
    integer :: nspec,nglob_elastic,nglob_acoustic,num_fluid_solid_edges
-   integer :: nglob                                                                                                   !axisym
-   logical :: AXISYM                                                                                                  !axisym
+   integer :: nglob
+   logical :: AXISYM
 
    integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
    real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll,wzgll
 
-   ! Gauss-Lobatto-Jacobi points and weights                                                                          !axisym
-   double precision, dimension(NGLJ) :: xiglj                                                                         !axisym
-   real(kind=CUSTOM_REAL), dimension(NGLJ) :: wxglj                                                                   !axisym
-   logical, dimension(nspec) :: is_on_the_axis                                                                        !axisym
-   double precision, dimension(NDIM,nglob), intent(in) :: coord                                                       !axisym
-   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1                                                         !axisym
+   ! Gauss-Lobatto-Jacobi points and weights
+   double precision, dimension(NGLJ) :: xiglj
+   real(kind=CUSTOM_REAL), dimension(NGLJ) :: wxglj
+   logical, dimension(nspec) :: is_on_the_axis
+   double precision, dimension(NDIM,nglob), intent(in) :: coord
+   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
 
    real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec)  :: xix,xiz,gammax,gammaz,jacobian
    integer, dimension(NGLLX,NEDGES) :: ivalue,jvalue,ivalue_inverse,jvalue_inverse
@@ -169,14 +169,14 @@
           ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
           ! Blackwell Science, page 110, equation (4.60).
 
-          if (AXISYM) then                                                                                           !axisym
-            if (abs(coord(1,iglob)) < TINYVAL) then                                                                  !axisym
-              xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)                                      !axisym
-              r_xiplus1(i,j) = xxi                                                                                   !axisym
-            else if (is_on_the_axis(ispec_acoustic)) then                                                            !axisym
-               r_xiplus1(i,j) = coord(1,iglob)/(xiglj(i)+ONE)                                                        !axisym
-            endif                                                                                                    !axisym
-          endif                                                                                                      !axisym
+          if (AXISYM) then
+            if (abs(coord(1,iglob)) < TINYVAL) then
+              xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+              r_xiplus1(i,j) = xxi
+            else if (is_on_the_axis(ispec_acoustic)) then
+               r_xiplus1(i,j) = coord(1,iglob)/(xiglj(i)+ONE)
+            endif
+          endif
 
           if(iedge_acoustic == ITOP)then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
@@ -184,30 +184,30 @@
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = - zxi / jacobian1D
             nz = + xxi / jacobian1D
-            if (AXISYM) then                                                                                         !axisym
-              if (is_on_the_axis(ispec_acoustic)) then                                                               !axisym
-                weight = jacobian1D * wxglj(i) * r_xiplus1(i,j)                                                      !axisym
-              else                                                                                                   !axisym
-                 weight = jacobian1D * wxgll(i) * coord(1,iglob)                                                     !axisym
-              endif                                                                                                  !axisym
-            else                                                                                                     !axisym
+            if (AXISYM) then
+              if (is_on_the_axis(ispec_acoustic)) then
+                weight = jacobian1D * wxglj(i) * r_xiplus1(i,j)
+              else
+                 weight = jacobian1D * wxgll(i) * coord(1,iglob)
+              endif
+            else
               weight = jacobian1D * wxgll(i)
-            endif                                                                                                    !axisym
+            endif
           else if(iedge_acoustic == IBOTTOM)then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = + zxi / jacobian1D
             nz = - xxi / jacobian1D
-            if (AXISYM) then                                                                                         !axisym
-              if (is_on_the_axis(ispec_acoustic)) then                                                               !axisym
-                weight = jacobian1D * wxglj(i) * r_xiplus1(i,j)                                                      !axisym
-              else                                                                                                   !axisym
-                weight = jacobian1D * wxgll(i) * coord(1,iglob)                                                      !axisym
-              endif                                                                                                  !axisym
-            else                                                                                                     !axisym
+            if (AXISYM) then
+              if (is_on_the_axis(ispec_acoustic)) then
+                weight = jacobian1D * wxglj(i) * r_xiplus1(i,j)
+              else
+                weight = jacobian1D * wxgll(i) * coord(1,iglob)
+              endif
+            else
               weight = jacobian1D * wxgll(i)
-            endif                                                                                                    !axisym
+            endif
           else if(iedge_acoustic ==ILEFT)then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)

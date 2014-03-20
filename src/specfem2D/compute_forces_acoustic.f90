@@ -49,7 +49,7 @@
                density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                vpext,rhoext,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
-               AXISYM,coord, is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &                            !axisym
+               AXISYM,coord, is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
                ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
                ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
                SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right,&
@@ -73,7 +73,7 @@
 
   integer :: nglob,nspec,nelemabs,numat,it,NSTEP,SIMULATION_TYPE
 
-  logical :: AXISYM                                                                                                  !axisym
+  logical :: AXISYM
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
   integer, dimension(nspec) :: kmato
@@ -97,17 +97,17 @@
 ! derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
   real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz,hprimewgll_zz
-! derivatives of GLJ polynomials                                                                                     !axisym
-  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLJ) :: hprimeBar_xx,hprimeBarwglj_xx                                      !axisym
+! derivatives of GLJ polynomials
+  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLJ) :: hprimeBar_xx,hprimeBarwglj_xx
 
 ! Gauss-Lobatto-Legendre weights
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
   real(kind=CUSTOM_REAL), dimension(NGLLZ) :: wzgll
-! Gauss-Lobatto-Jacobi points and weights                                                                            !axisym
-  double precision, dimension(NGLJ) :: xiglj                                                                         !axisym
-  real(kind=CUSTOM_REAL), dimension(NGLJ) :: wxglj                                                                   !axisym
-  logical, dimension(nspec) :: is_on_the_axis                                                                        !axisym
-  double precision, dimension(NDIM,nglob), intent(in) :: coord                                                       !axisym
+! Gauss-Lobatto-Jacobi points and weights
+  double precision, dimension(NGLJ) :: xiglj
+  real(kind=CUSTOM_REAL), dimension(NGLJ) :: wxglj
+  logical, dimension(nspec) :: is_on_the_axis
+  double precision, dimension(NDIM,nglob), intent(in) :: coord
 
   integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
   integer, dimension(nelemabs) :: ib_left
@@ -151,7 +151,7 @@
   real(kind=CUSTOM_REAL) :: weight,xxi,zxi,xgamma,zgamma,jacobian1D
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: tempx1,tempx2
-  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1                                                         !axisym
+  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
 
 ! Jacobian matrix and determinant
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
@@ -206,15 +206,15 @@
           ! first double loop over GLL points to compute and store gradients
           ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
-            if(AXISYM) then                                                                                         !axisym
-              if(is_on_the_axis(ispec)) then                                                                        !axisym
-                dux_dxi = dux_dxi + potential_acoustic(ibool(k,j,ispec))*hprimeBar_xx(i,k)                          !axisym
-              else                                                                                                  !axisym
-                dux_dxi = dux_dxi + potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)                             !axisym
-              endif                                                                                                 !axisym
-            else                                                                                                    !axisym
+            if(AXISYM) then
+              if(is_on_the_axis(ispec)) then
+                dux_dxi = dux_dxi + potential_acoustic(ibool(k,j,ispec))*hprimeBar_xx(i,k)
+              else
+                dux_dxi = dux_dxi + potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
+              endif
+            else
               dux_dxi = dux_dxi + potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
-            endif                                                                                                   !axisym
+            endif
             dux_dgamma = dux_dgamma + potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
           enddo
 
@@ -227,9 +227,9 @@
           dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
           dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
 
-          if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL)) then ! dchi/dr=rho*u_r=0 on the axis         !axisym
-            dux_dxl = ZERO                                                                                          !axisym
-          endif                                                                                                     !axisym
+          if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL)) then ! dchi/dr=rho*u_r=0 on the axis
+            dux_dxl = ZERO
+          endif
 
           ! derivative along x and along zbb
           if(PML_BOUNDARY_CONDITIONS .and. is_PML(ispec) .and. nspec_PML > 0)then
@@ -253,15 +253,15 @@
             ! we can merge the two loops because NGLLX == NGLLZ
             if(stage_time_scheme == 1)then
               do k = 1,NGLLX
-                if(AXISYM) then                                                                                         !axisym
-                  if(is_on_the_axis(ispec)) then                                                                        !axisym
-                    dux_dxi = dux_dxi + potential_acoustic_old(ibool(k,j,ispec))*hprimeBar_xx(i,k)                      !axisym
-                  else                                                                                                  !axisym
-                    dux_dxi = dux_dxi + potential_acoustic_old(ibool(k,j,ispec))*hprime_xx(i,k)                         !axisym
-                  endif                                                                                                 !axisym
-                else                                                                                                    !axisym
+                if(AXISYM) then
+                  if(is_on_the_axis(ispec)) then
+                    dux_dxi = dux_dxi + potential_acoustic_old(ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                  else
+                    dux_dxi = dux_dxi + potential_acoustic_old(ibool(k,j,ispec))*hprime_xx(i,k)
+                  endif
+                else
                   dux_dxi = dux_dxi + potential_acoustic_old(ibool(k,j,ispec)) * hprime_xx(i,k)
-                endif                                                                                                   !axisym
+                endif
                 dux_dgamma = dux_dgamma + potential_acoustic_old(ibool(i,k,ispec)) * hprime_zz(j,k)
               enddo
 
@@ -356,10 +356,10 @@
                                               A10 * rmemory_acoustic_dux_dz(i,j,ispec_PML,2)
           endif
 
-          if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL)) then ! dchi/dr=rho*u_r=0 on the axis         !axisym
-            PML_dux_dxl_old(i,j) = ZERO                                                                             !axisym
-            dux_dxl = ZERO                                                                                          !axisym
-          endif                                                                                                     !axisym
+          if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL)) then ! dchi/dr=rho*u_r=0 on the axis
+            PML_dux_dxl_old(i,j) = ZERO
+            dux_dxl = ZERO
+          endif
 
           jacobianl = jacobian(i,j,ispec)
 
@@ -372,28 +372,28 @@
             endif
           endif
 
-          if (AXISYM) then                                                                                           !axisym
-            if (abs(coord(1,ibool(i,j,ispec))) < TINYVAL) then                                                       !axisym
-              xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)                                                        !axisym
-              r_xiplus1(i,j) = xxi                                                                                   !axisym
-            else if (is_on_the_axis(ispec)) then                                                                     !axisym
-              r_xiplus1(i,j) = coord(1,ibool(i,j,ispec))/(xiglj(i)+ONE)                                              !axisym
-            endif                                                                                                    !axisym
-          endif                                                                                                      !axisym
+          if (AXISYM) then
+            if (abs(coord(1,ibool(i,j,ispec))) < TINYVAL) then
+              xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+              r_xiplus1(i,j) = xxi
+            else if (is_on_the_axis(ispec)) then
+              r_xiplus1(i,j) = coord(1,ibool(i,j,ispec))/(xiglj(i)+ONE)
+            endif
+          endif
 
           ! for acoustic medium also add integration weights
-          if(AXISYM) then                                                                                            !axisym
-            if (is_on_the_axis(ispec)) then                                                                          !axisym
-              tempx1(i,j) = wzgll(j)*r_xiplus1(i,j)*jacobianl*(xixl*dux_dxl + xizl*dux_dzl) / rhol                   !axisym
-              tempx2(i,j) = wxglj(i)*r_xiplus1(i,j)*jacobianl*(gammaxl*dux_dxl + gammazl*dux_dzl) / rhol             !axisym
-            else                                                                                                     !axisym
-              tempx1(i,j) = wzgll(j)*coord(1,ibool(i,j,ispec))*jacobianl*(xixl*dux_dxl + xizl*dux_dzl) / rhol        !axisym
-              tempx2(i,j) = wxgll(i)*coord(1,ibool(i,j,ispec))*jacobianl*(gammaxl*dux_dxl + gammazl*dux_dzl) / rhol  !axisym
-            endif                                                                                                    !axisym
-          else                                                                                                       !axisym
+          if(AXISYM) then
+            if (is_on_the_axis(ispec)) then
+              tempx1(i,j) = wzgll(j)*r_xiplus1(i,j)*jacobianl*(xixl*dux_dxl + xizl*dux_dzl) / rhol
+              tempx2(i,j) = wxglj(i)*r_xiplus1(i,j)*jacobianl*(gammaxl*dux_dxl + gammazl*dux_dzl) / rhol
+            else
+              tempx1(i,j) = wzgll(j)*coord(1,ibool(i,j,ispec))*jacobianl*(xixl*dux_dxl + xizl*dux_dzl) / rhol
+              tempx2(i,j) = wxgll(i)*coord(1,ibool(i,j,ispec))*jacobianl*(gammaxl*dux_dxl + gammazl*dux_dzl) / rhol
+            endif
+          else
             tempx1(i,j) = wzgll(j)*jacobianl*(xixl*dux_dxl + xizl*dux_dzl) / rhol
             tempx2(i,j) = wxgll(i)*jacobianl*(gammaxl*dux_dxl + gammazl*dux_dzl) / rhol
-          endif                                                                                                      !axisym
+          endif
         enddo
       enddo
 
@@ -473,24 +473,24 @@
               endif
             endif
 
-            if(AXISYM) then                                                                                          !axisym
-              if (is_on_the_axis(ispec)) then                                                                        !axisym
-                potential_dot_dot_acoustic_PML(i,j)= wxglj(i)*wzgll(j)/kappal*jacobian(i,j,ispec)*r_xiplus1(i,j) * & !axisym
-                         (A1 * potential_dot_acoustic(iglob) + A2 * potential_acoustic(iglob) + &                    !axisym
-                          A3 * rmemory_potential_acoustic(1,i,j,ispec_PML) + &                                       !axisym
-                          A4 * rmemory_potential_acoustic(2,i,j,ispec_PML))                                          !axisym
-              else                                                                                                   !axisym
-                potential_dot_dot_acoustic_PML(i,j)= wxgll(i)*wzgll(j)/kappal*jacobian(i,j,ispec) &                  !axisym
-                                                    * coord(1,ibool(i,j,ispec_PML)) * &                              !axisym
-                         (A1 * potential_dot_acoustic(iglob) + A2 * potential_acoustic(iglob) + &                    !axisym
-                          A3 * rmemory_potential_acoustic(1,i,j,ispec_PML) + &                                       !axisym
-                          A4 * rmemory_potential_acoustic(2,i,j,ispec_PML))                                          !axisym
-              endif                                                                                                  !axisym
-            else                                                                                                     !axisym
+            if(AXISYM) then
+              if (is_on_the_axis(ispec)) then
+                potential_dot_dot_acoustic_PML(i,j)= wxglj(i)*wzgll(j)/kappal*jacobian(i,j,ispec)*r_xiplus1(i,j) * &
+                         (A1 * potential_dot_acoustic(iglob) + A2 * potential_acoustic(iglob) + &
+                          A3 * rmemory_potential_acoustic(1,i,j,ispec_PML) + &
+                          A4 * rmemory_potential_acoustic(2,i,j,ispec_PML))
+              else
+                potential_dot_dot_acoustic_PML(i,j)= wxgll(i)*wzgll(j)/kappal*jacobian(i,j,ispec) &
+                                                    * coord(1,ibool(i,j,ispec_PML)) * &
+                         (A1 * potential_dot_acoustic(iglob) + A2 * potential_acoustic(iglob) + &
+                          A3 * rmemory_potential_acoustic(1,i,j,ispec_PML) + &
+                          A4 * rmemory_potential_acoustic(2,i,j,ispec_PML))
+              endif
+            else
                 potential_dot_dot_acoustic_PML(i,j)= wxgll(i)*wzgll(j)/kappal*jacobian(i,j,ispec) * &
                          (A1 * potential_dot_acoustic(iglob) + A2 * potential_acoustic(iglob) + &
                           A3 * rmemory_potential_acoustic(1,i,j,ispec_PML) + A4 * rmemory_potential_acoustic(2,i,j,ispec_PML))
-            endif                                                                                                    !axisym
+            endif
           endif
         enddo
       enddo
@@ -503,18 +503,18 @@
           ! along x direction and z direction
           ! and assemble the contributions
           do k = 1,NGLLX
-            if (AXISYM) then                                                                                           !axisym
-              if (is_on_the_axis(ispec)) then                                                                          !axisym
-                potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &                              !axisym
-                       (tempx1(k,j)*hprimeBarwglj_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))                            !axisym
-              else                                                                                                     !axisym
-                potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &                              !axisym
-                         (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))                             !axisym
-              endif                                                                                                    !axisym
-            else                                                                                                       !axisym
+            if (AXISYM) then
+              if (is_on_the_axis(ispec)) then
+                potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+                       (tempx1(k,j)*hprimeBarwglj_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
+              else
+                potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+                         (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
+              endif
+            else
               potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
                        (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
-            endif                                                                                                      !axisym
+            endif
           enddo
           if(PML_BOUNDARY_CONDITIONS .and. is_PML(ispec))then
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &

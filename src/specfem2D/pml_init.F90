@@ -44,7 +44,7 @@
   subroutine pml_init(myrank,SIMULATION_TYPE,SAVE_FORWARD,nspec,nglob,ibool,anyabs,nelemabs,codeabs,numabs,&
                       NELEM_PML_THICKNESS,nspec_PML,is_PML,which_PML_elem,spec_to_PML,region_CPML,&
                       PML_interior_interface,nglob_interface,mask_ibool,read_external_mesh, &
-                      AXISYM)                                                                                        !axisym
+                      AXISYM)
 
 #ifdef USE_MPI
   use :: mpi
@@ -53,7 +53,7 @@
   implicit none
   include 'constants.h'
 
-  logical :: AXISYM                                                                                                  !axisym
+  logical :: AXISYM
 
   integer :: myrank,SIMULATION_TYPE,nspec,nglob,nglob_interface
 

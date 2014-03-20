@@ -45,7 +45,7 @@
   subroutine compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,&
                   displs_poroelastic,displw_poroelastic,elastic,poroelastic,vector_field_display, &
                   xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
-                  AXISYM,coord,jacobian,is_on_the_axis,hprimeBar_xx, &                                               !axisym
+                  AXISYM,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
                   nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
                   numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
                   c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,e1,e11, &
@@ -86,12 +86,12 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
   real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
 
-  !axisym
-  logical :: AXISYM                                                                                                  !axisym
-  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLJ) :: hprimeBar_xx                                                       !axisym
-  logical, dimension(nspec) :: is_on_the_axis                                                                        !axisym
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: jacobian                                                   !axisym
-  double precision, dimension(NDIM,nglob), intent(in) :: coord                                                       !axisym
+
+  logical :: AXISYM
+  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLJ) :: hprimeBar_xx
+  logical, dimension(nspec) :: is_on_the_axis
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: jacobian
+  double precision, dimension(NDIM,nglob), intent(in) :: coord
 
   logical :: assign_external_model,ATTENUATION_VISCOELASTIC_SOLID
 
@@ -112,7 +112,7 @@
     call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,&
          displs_poroelastic,displw_poroelastic,elastic,poroelastic,&
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
-         AXISYM,nglob,coord,jacobian,is_on_the_axis,hprimeBar_xx, &                                                  !axisym
+         AXISYM,nglob,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
          nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
          numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,ispec,e1,e11, &
@@ -137,7 +137,7 @@
   subroutine compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,&
          displs_poroelastic,displw_poroelastic,elastic,poroelastic,&
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
-         AXISYM,nglob,coord,jacobian,is_on_the_axis,hprimeBar_xx, &                                                  !axisym
+         AXISYM,nglob,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
          nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
          numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,ispec,e1,e11, &
@@ -178,13 +178,13 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
   real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
 
-  !axisym
-  logical :: AXISYM                                                                                                  !axisym
-  integer :: nglob                                                                                                   !axisym
-  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLJ) :: hprimeBar_xx                                                       !axisym
-  logical, dimension(nspec) :: is_on_the_axis                                                                        !axisym
-  double precision, dimension(NDIM,nglob), intent(in) :: coord                                                       !axisym
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: jacobian                                                   !axisym
+
+  logical :: AXISYM
+  integer :: nglob
+  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLJ) :: hprimeBar_xx
+  logical, dimension(nspec) :: is_on_the_axis
+  double precision, dimension(NDIM,nglob), intent(in) :: coord
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: jacobian
 
   logical :: assign_external_model,ATTENUATION_VISCOELASTIC_SOLID
 
@@ -204,7 +204,7 @@
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
   real(kind=CUSTOM_REAL) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
   real(kind=CUSTOM_REAL) :: sigma_xx,sigma_yy,sigma_zz !! ,sigmap
-  real(kind=CUSTOM_REAL) :: sigma_thetatheta,xxi                                                                     !axisym
+  real(kind=CUSTOM_REAL) :: sigma_thetatheta,xxi
   real(kind=CUSTOM_REAL) :: dwx_dxi,dwx_dgamma,dwz_dxi,dwz_dgamma
   real(kind=CUSTOM_REAL) :: dwx_dxl,dwz_dzl
 
@@ -277,30 +277,30 @@
         ! first double loop over GLL points to compute and store gradients
         ! we can merge the two loops because NGLLX == NGLLZ
 
-        if(AXISYM) then                                                                                              !axisym
-          if (is_on_the_axis(ispec)) then                                                                            !axisym
-            do k = 1,NGLJ                                                                                            !axisym
-              dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)                                !axisym
-              duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprimeBar_xx(i,k)                                !axisym
-              dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)                             !axisym
-              duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)                             !axisym
-            enddo                                                                                                    !axisym
-          else                                                                                                       !axisym
-            do k = 1,NGLJ                                                                                            !axisym
-              dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)                                   !axisym
-              duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)                                   !axisym
-              dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)                             !axisym
-              duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)                             !axisym
-            enddo                                                                                                    !axisym
-          endif                                                                                                      !axisym
-        else                                                                                                         !axisym
+        if(AXISYM) then
+          if (is_on_the_axis(ispec)) then
+            do k = 1,NGLJ
+              dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+              duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+              dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
+              duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
+            enddo
+          else
+            do k = 1,NGLJ
+              dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
+              duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
+              dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
+              duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
+            enddo
+          endif
+        else
           do k = 1,NGLLX
             dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
             duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
             dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
             duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
           enddo
-        endif                                                                                                        !axisym
+        endif
 
         xixl = xix(i,j,ispec)
         xizl = xiz(i,j,ispec)
@@ -311,9 +311,9 @@
         dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
         duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
-        if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL)) then ! du_z/dr=0 on the axis                   !axisym
-          duz_dxl = 0.d0                                                                                            !axisym
-        endif                                                                                                       !axisym
+        if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL)) then ! du_z/dr=0 on the axis
+          duz_dxl = 0.d0
+        endif
 
 ! compute diagonal components of the stress tensor (include attenuation or anisotropy if needed)
 
@@ -367,49 +367,49 @@
 
           ! no attenuation
 
-          if(AXISYM) then                                                                                            !axisym
-            if (is_on_the_axis(ispec)) then                                                                          !axisym
-              if (abs(coord(1,ibool(i,j,ispec))) < TINYVAL) then ! First GLJ point                                   !axisym
-                sigma_xx = 0._CUSTOM_REAL                                                                            !axisym
-                sigma_zz = 0._CUSTOM_REAL                                                                            !axisym
-                sigma_thetatheta = 0._CUSTOM_REAL                                                                    !axisym
-                xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)                                                      !axisym
-                do k = 1,NGLJ                                                                                        !axisym
-                  sigma_xx = sigma_xx + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)                          !axisym
-                  sigma_zz = sigma_zz + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)                          !axisym
-                  sigma_thetatheta = sigma_thetatheta + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)          !axisym
-                enddo                                                                                                !axisym
-                sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl &             !axisym
-                           + lambdal_unrelaxed_elastic*sigma_xx/xxi                                                  !axisym
-                sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &             !axisym
-                           + lambdal_unrelaxed_elastic*sigma_zz/xxi                                                  !axisym
-                sigma_thetatheta = lambdal_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &           !axisym
-                                   + lambdaplus2mu_unrelaxed_elastic*sigma_thetatheta/xxi                            !axisym
-              else ! Not first GLJ point                                                                             !axisym
-                sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl &             !axisym
-                           + lambdal_unrelaxed_elastic*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))   !axisym
-                sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &             !axisym
-                           + lambdal_unrelaxed_elastic*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))   !axisym
-                sigma_thetatheta = lambdal_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &           !axisym
-                                        + lambdaplus2mu_unrelaxed_elastic &                                          !axisym
-                                        * displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))                !axisym
-              endif                                                                                                  !axisym
-            else ! Not on the axis                                                                                   !axisym
-              sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl &               !axisym
-                         + lambdal_unrelaxed_elastic*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))     !axisym
-              sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &               !axisym
-                         + lambdal_unrelaxed_elastic*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))     !axisym
-              sigma_thetatheta = lambdal_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &             !axisym
-                                      + lambdaplus2mu_unrelaxed_elastic &                                            !axisym
-                                      * displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))                  !axisym
-            endif                                                                                                    !axisym
-            sigma_yy = sigma_thetatheta                                                                              !axisym
-          else ! Not axisym                                                                                          !axisym
+          if(AXISYM) then
+            if (is_on_the_axis(ispec)) then
+              if (abs(coord(1,ibool(i,j,ispec))) < TINYVAL) then ! First GLJ point
+                sigma_xx = 0._CUSTOM_REAL
+                sigma_zz = 0._CUSTOM_REAL
+                sigma_thetatheta = 0._CUSTOM_REAL
+                xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+                do k = 1,NGLJ
+                  sigma_xx = sigma_xx + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                  sigma_zz = sigma_zz + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                  sigma_thetatheta = sigma_thetatheta + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                enddo
+                sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl &
+                           + lambdal_unrelaxed_elastic*sigma_xx/xxi
+                sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
+                           + lambdal_unrelaxed_elastic*sigma_zz/xxi
+                sigma_thetatheta = lambdal_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
+                                   + lambdaplus2mu_unrelaxed_elastic*sigma_thetatheta/xxi
+              else ! Not first GLJ point
+                sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl &
+                           + lambdal_unrelaxed_elastic*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
+                sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
+                           + lambdal_unrelaxed_elastic*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
+                sigma_thetatheta = lambdal_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
+                                        + lambdaplus2mu_unrelaxed_elastic &
+                                        * displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
+              endif
+            else ! Not on the axis
+              sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl &
+                         + lambdal_unrelaxed_elastic*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
+              sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
+                         + lambdal_unrelaxed_elastic*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
+              sigma_thetatheta = lambdal_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
+                                      + lambdaplus2mu_unrelaxed_elastic &
+                                      * displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
+            endif
+            sigma_yy = sigma_thetatheta
+          else ! Not axisym
             sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
             ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
             sigma_yy = lambdal_unrelaxed_elastic*(dux_dxl + duz_dzl)
             sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
-          endif                                                                                                      !axisym
+          endif
 
         endif
 
