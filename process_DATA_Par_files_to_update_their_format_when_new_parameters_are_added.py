@@ -557,7 +557,96 @@ def ProcessParfile_r21820(fic):
     fm.close()
     #
     print 'xxxxx------> '+fic+' processed to '+release_number
-    return    
+    return
+#------------------------------------------------------------------------------
+def ProcessParfile_axisym(fic):
+    # define the release number
+    release_number='axisym'
+    # Open the file and get all lines from Par_file
+    ligs= LoadLig(fic)
+
+    # Test if already processed
+    for lig in ligs:
+        if lig.startswith('AXISYM'):
+            print '----> '+fic+' already processed to '+release_number          
+            return
+    #
+    a1='\n# axisymmetric (2.5D) or Cartesian planar (2D) simulation\n'+ \
+    'AXISYM                          = .false.   \n'
+    #--------------------------------------------------------------------------
+    # Add new parameters
+    # 
+    for ilg, lig in enumerate(ligs):
+        if lig.startswith('title'):
+            ligs.insert(ilg+1,a1)
+    #
+    move(fic,fic+'.before_update_to_'+release_number)
+    #
+    fm = open(fic,'w')
+    fm.writelines(ligs)
+    fm.close()
+    #
+    print 'xxxxx------> '+fic+' processed to '+release_number
+    return
+#------------------------------------------------------------------------------
+def ProcessParfile_axisym_file(fic):
+    # define the release number
+    release_number='axisym_file'
+    # Open the file and get all lines from Par_file
+    ligs= LoadLig(fic)
+
+    # Test if already processed
+    for lig in ligs:
+        if lig.startswith('axial_elements_file'):
+            print '----> '+fic+' already processed to '+release_number          
+            return
+    #
+    a1='axial_elements_file             = Elements_Axial_list   '+ \
+    '# file containing the axial element numbers for axisymmetric simulations\n'
+    #--------------------------------------------------------------------------
+    # Add new parameters
+    # 
+    for ilg, lig in enumerate(ligs):
+        if lig.startswith('free_surface_file'):
+            ligs.insert(ilg+1,a1)
+    #
+    move(fic,fic+'.before_update_to_'+release_number)
+    #
+    fm = open(fic,'w')
+    fm.writelines(ligs)
+    fm.close()
+    #
+    print 'xxxxx------> '+fic+' processed to '+release_number
+    return 
+#------------------------------------------------------------------------------
+def ProcessParfile_correction_periodic(fic):
+    # define the release number
+    release_number='periodic_horiz_correction'
+    # Open the file and get all lines from Par_file
+    ligs= LoadLig(fic)
+
+    # Test if already processed
+    for lig in ligs:
+        if lig.startswith('PERIODIC_HORIZ_DIST'):
+            print '----> '+fic+' already processed to '+release_number          
+            return
+
+    #--------------------------------------------------------------------------
+    # Add new parameters
+    # 
+    for ilg, lig in enumerate(ligs):
+        if lig.startswith('PERIODIC_horiz_dist'):
+            ligs[ilg]=ligs[ilg].replace('PERIODIC_horiz_dist', \
+                            'PERIODIC_HORIZ_DIST')
+    #
+    move(fic,fic+'.before_update_to_'+release_number)
+    #
+    fm = open(fic,'w')
+    fm.writelines(ligs)
+    fm.close()
+    #
+    print 'xxxxx------> '+fic+' processed to '+release_number
+    return 
 #------------------------------------------------------------------------------
 if __name__=='__main__':
     ## List of all files of current directory
@@ -587,6 +676,9 @@ if __name__=='__main__':
                     ProcessParfile_r21000(fic)
                     ProcessParfile_r21278(fic)
                     ProcessParfile_r21820(fic)
+                    ProcessParfile_axisym(fic)
+                    ProcessParfile_axisym_file(fic)                    
+                    ProcessParfile_correction_periodic(fic)
                     print '~'*80
     #                
     print 'Number of Par_file analysed : ', Ct_Par_file
