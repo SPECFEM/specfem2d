@@ -423,7 +423,7 @@ program meshfem2D
   ! *** read the parameter file
   ! ***
 
-  print *,'Reading the parameter file ... '
+  print *,'Reading the parameter file...'
   print *
 
   ! opens file Par_file
@@ -749,44 +749,6 @@ program meshfem2D
         enddo
      endif
 
-     if(AXISYM) then
-       if ( read_external_mesh ) then  !! DK DK si maillage CUBIT externe
-         call read_axial_elements_file(axial_elements_file)
-
-       else !! DK DK if the mesh has been made by the internal mesher
-
-         if(xmin * xmax < 0) stop 'in axisymmetric mode xmin and xmax must have the same sign, they cannot cross the symmetry axis'
-         if(xmin < 0) stop 'in axisymmetric mode, case of symmetry axis on the right edge instead of left not supported yet'
-
-         ! count the number of axial elements
-         nelem_on_the_axis = 0
-
-         ! test if the left edge is on the symmetry axis
-         if(abs(xmin) < TINYVAL) then
-
-           ! if the surface is absorbing, it cannot be axial at the same time
-           if(absleft) stop 'in axisymmetric mode, the left edge cannot be both axial and absorbing'
-           !all the elements on the left edge are axial because that edge is vertical and located in x = 0
-           nelem_on_the_axis = nzread
-           allocate(ispec_of_axial_elements(nelem_on_the_axis))
-           i = 1
-           do j = 1,nzread
-             ispec_of_axial_elements(j) = (j-1)*nxread + (i-1) + 1
-           enddo
-
-         else ! no elements on the symmetry axis
-           allocate(ispec_of_axial_elements(1))
-         endif
-
-       endif ! of if(read_external_mesh) then
-
-     else ! of AXISYM
-
-       nelem_on_the_axis = 0
-       allocate(ispec_of_axial_elements(1))
-
-     endif
-
      !
      !--- definition of absorbing boundaries
      !
@@ -842,6 +804,43 @@ program meshfem2D
 
   endif
 
+  if(AXISYM) then                                                                                                 !axisym
+    if ( read_external_mesh ) then  !! DK DK si maillage CUBIT externe                                            !axisym
+      call read_axial_elements_file(axial_elements_file)                                                          !axisym
+                                                                                                                  !axisym
+    else !! DK DK if the mesh has been made by the internal mesher                                                !axisym
+                                                                                                                  !axisym
+      if(xmin * xmax < 0) stop 'in axisymmetric mode xmin and xmax must have the same sign, they cannot cross the symmetry axis'
+      if(xmin < 0) stop 'in axisymmetric mode, case of symmetry axis on the right edge instead of left not supported yet'
+                                                                                                                  !axisym
+      ! count the number of axial elements                                                                        !axisym
+      nelem_on_the_axis = 0                                                                                       !axisym
+                                                                                                                  !axisym
+      ! test if the left edge is on the symmetry axis                                                             !axisym
+      if(abs(xmin) < TINYVAL) then                                                                                !axisym
+                                                                                                                  !axisym
+        ! if the surface is absorbing, it cannot be axial at the same time                                        !axisym
+        if(absleft) stop 'in axisymmetric mode, the left edge cannot be both axial and absorbing'                 !axisym
+        !all the elements on the left edge are axial because that edge is vertical and located in x = 0           !axisym
+        nelem_on_the_axis = nzread                                                                                !axisym
+        allocate(ispec_of_axial_elements(nelem_on_the_axis))                                                      !axisym
+        i = 1                                                                                                     !axisym
+        do j = 1,nzread                                                                                           !axisym
+          ispec_of_axial_elements(j) = (j-1)*nxread + (i-1) + 1                                                   !axisym
+        enddo                                                                                                     !axisym
+                                                                                                                  !axisym
+      else ! no elements on the symmetry axis                                                                     !axisym
+        allocate(ispec_of_axial_elements(1))                                                                      !axisym
+      endif                                                                                                       !axisym
+                                                                                                                  !axisym
+    endif ! of if(read_external_mesh) then                                                                        !axisym
+                                                                                                                  !axisym
+  else ! of AXISYM                                                                                                !axisym
+                                                                                                                  !axisym
+    nelem_on_the_axis = 0                                                                                         !axisym
+    allocate(ispec_of_axial_elements(1))                                                                          !axisym
+                                                                                                                  !axisym
+  endif                                                                                                           !axisym
 
   ! compute min and max of X and Z in the grid
   print *
