@@ -249,12 +249,13 @@ contains
   !-----------------------------------------------
   ! Read the PML elements, storing them in array 'region_pml_external_mesh'
   !-----------------------------------------------
-  subroutine read_pml_element(filename, region_pml_external_mesh, nspec_cpml)
+  subroutine read_pml_element(filename, region_pml_external_mesh, nspec_cpml, AXISYM)
 
   implicit none
 
   include "constants.h"
 
+  logical :: AXISYM
   character(len=256), intent(in)  :: filename
   integer, dimension(1:nelmnts), intent(out)  :: region_pml_external_mesh
   integer, intent(out)  :: nspec_cpml
@@ -285,6 +286,12 @@ contains
 #endif
      if(pml_flag /= CPML_X_ONLY .and. pml_flag /= CPML_Z_ONLY .and. pml_flag /= CPML_XZ_ONLY) &
        stop 'error: incorrect CPML element flag found, should be CPML_X_ONLY or CPML_Z_ONLY or CPML_XZ_ONLY only'
+
+     if(AXISYM) then
+       if((pml_flag == CPML_X_ONLY) .or. (pml_flag == CPML_XZ_ONLY)) &
+         stop 'error: For the moment only the bottom PML works with axisymmetry'                                  !axisym TODO
+     endif
+
      region_pml_external_mesh(ispec) = pml_flag
   enddo
 
@@ -405,6 +412,8 @@ contains
 #else
   read(994,*) nelem_on_the_axis
 #endif
+
+  print *,"Number of elements on the axis: ", nelem_on_the_axis
 
   allocate(ispec_of_axial_elements(nelem_on_the_axis))
 
