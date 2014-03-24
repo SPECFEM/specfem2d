@@ -42,12 +42,12 @@
 !
 !========================================================================
 
-  subroutine compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,&
-                  displs_poroelastic,displw_poroelastic,elastic,poroelastic,vector_field_display, &
+  subroutine compute_pressure_whole_medium(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic,displ_elastic,&
+                  displs_poroelastic,displw_poroelastic,acoustic,gravitoacoustic,elastic,poroelastic,vector_field_display, &
                   xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
                   AXISYM,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
-                  nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
-                  numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
+                  nglob,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
+                  numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext,gravityext, &
                   c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,e1,e11, &
                   ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
@@ -67,14 +67,16 @@
   double precision, dimension(numat) :: porosity,tortuosity
   double precision, dimension(4,3,numat) :: poroelastcoef
   double precision, dimension(9,numat) :: anisotropy
-  double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext
+  double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext,gravityext
   double precision, dimension(NGLLX,NGLLZ,nspec) ::  c11ext,c15ext,c13ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
 
-  logical, dimension(nspec) :: elastic,poroelastic,anisotropic
+  logical, dimension(nspec) :: acoustic,gravitoacoustic,elastic,poroelastic,anisotropic
   integer :: nglob_acoustic
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: potential_dot_dot_acoustic
+  integer :: nglob_gravitoacoustic
+  real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: potential_dot_dot_gravitoacoustic
   integer :: nglob_elastic
   real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: displ_elastic
   integer :: nglob_poroelastic
@@ -109,12 +111,12 @@
   do ispec = 1,nspec
 
 ! compute pressure in this element
-    call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,&
-         displs_poroelastic,displw_poroelastic,elastic,poroelastic,&
+    call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic,displ_elastic,&
+         displs_poroelastic,displw_poroelastic,acoustic,gravitoacoustic,elastic,poroelastic,&
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
          AXISYM,nglob,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
-         nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
-         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
+         nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
+         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext,gravityext, &
          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,ispec,e1,e11, &
          ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
@@ -134,12 +136,13 @@
 !=====================================================================
 !
 
-  subroutine compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,&
-         displs_poroelastic,displw_poroelastic,elastic,poroelastic,&
+  subroutine compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic, &
+         potential_dot_dot_gravitoacoustic,displ_elastic,&
+         displs_poroelastic,displw_poroelastic,acoustic,gravitoacoustic,elastic,poroelastic,&
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
          AXISYM,nglob,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
-         nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
-         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
+         nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
+         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext,gravityext, &
          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,ispec,e1,e11, &
          ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
@@ -158,7 +161,7 @@
   double precision, dimension(numat) :: porosity,tortuosity
   double precision, dimension(4,3,numat) :: poroelastcoef
   double precision, dimension(9,numat) :: anisotropy
-  double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext
+  double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext,gravityext
   double precision, dimension(NGLLX,NGLLZ,nspec) ::  c11ext,c15ext,c13ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
@@ -166,9 +169,11 @@
 ! pressure in this element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: pressure_element
 
-  logical, dimension(nspec) :: elastic,poroelastic,anisotropic
+  logical, dimension(nspec) :: acoustic,gravitoacoustic,elastic,poroelastic,anisotropic
   integer :: nglob_acoustic
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: potential_dot_dot_acoustic
+  integer :: nglob_gravitoacoustic
+  real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: potential_dot_dot_gravitoacoustic
   integer :: nglob_elastic
   real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: displ_elastic
   integer :: nglob_poroelastic
@@ -602,7 +607,7 @@
     enddo
 
 ! pressure = - Chi_dot_dot if acoustic element
-  else
+  else if(acoustic(ispec)) then
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
@@ -615,7 +620,20 @@
       enddo
     enddo
 
-  endif ! end of test if acoustic or elastic element
+  else if(gravitoacoustic(ispec)) then
+
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+
+        iglob = ibool(i,j,ispec)
+
+        ! store pressure
+        pressure_element(i,j) = - potential_dot_dot_gravitoacoustic(iglob)
+
+      enddo
+    enddo
+
+  endif ! end of test if acoustic or elastic or gravito element
 
   end subroutine compute_pressure_one_element
 

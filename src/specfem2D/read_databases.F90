@@ -59,7 +59,7 @@
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                   POWER_DISPLAY_COLOR,SU_FORMAT,USER_T0,time_stepping_scheme, &
                   ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_HORIZ_DIST, &
-                  read_external_mesh,save_ASCII_kernels)
+                  read_external_mesh,ACOUSTIC_FORCING,save_ASCII_kernels)
 
 ! starts reading in parameters from input Database file
 
@@ -107,6 +107,9 @@
 
 ! output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
   logical :: SU_FORMAT
+
+! perform a forcing of an acoustic medium with a rigid boundary
+  logical :: ACOUSTIC_FORCING
 
 ! use this t0 as earliest starting time rather than the automatically calculated one
 ! (must be positive and bigger than the automatically one to be effective;
@@ -340,6 +343,10 @@
 ! output seismograms at least once at the end of the simulation
   NSTEP_BETWEEN_OUTPUT_SEISMOS = min(NSTEP,NSTEP_BETWEEN_OUTPUT_SEISMOS)
 
+! read the ACOUSTIC_FORCING flag
+  read(IIN,"(a80)") datlin
+  read(IIN,*) ACOUSTIC_FORCING
+
   !----  read source information
   read(IIN,"(a80)") datlin
   read(IIN,*) NSOURCES
@@ -458,7 +465,7 @@
 
   subroutine read_databases_coorg_elem(myrank,npgeo,coorg,numat,ngnod,nspec, &
                               pointsdisp,plot_lowerleft_corner_only, &
-                              nelemabs,nelem_acoustic_surface, &
+                              nelemabs,nelem_acforcing,nelem_acoustic_surface, &
                               num_fluid_solid_edges,num_fluid_poro_edges, &
                               num_solid_poro_edges,nnodes_tangential_curve, &
                               nelem_on_the_axis)
@@ -474,7 +481,7 @@
   integer :: numat,ngnod,nspec
   integer :: pointsdisp
   logical :: plot_lowerleft_corner_only
-  integer :: nelemabs,nelem_acoustic_surface, &
+  integer :: nelemabs,nelem_acforcing,nelem_acoustic_surface, &
     num_fluid_solid_edges,num_fluid_poro_edges, &
     num_solid_poro_edges,nnodes_tangential_curve, &
     nelem_on_the_axis
@@ -511,25 +518,27 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,"(a80)") datlin
-  read(IIN,*) nelemabs,nelem_acoustic_surface,num_fluid_solid_edges,num_fluid_poro_edges,&
-              num_solid_poro_edges,nnodes_tangential_curve,nelem_on_the_axis
-
+  read(IIN,"(a80)") datlin
+  read(IIN,*) nelemabs,nelem_acforcing,nelem_acoustic_surface,num_fluid_solid_edges, &
+              num_fluid_poro_edges,num_solid_poro_edges,nnodes_tangential_curve, &
+              nelem_on_the_axis
   !---- print element group main parameters
   if (myrank == 0 ) then
     write(IOUT,107)
-    write(IOUT,207) nspec,ngnod,NGLLX,NGLLZ,NGLLX*NGLLZ,pointsdisp,numat
+    write(IOUT,207) nspec,ngnod,NGLLX,NGLLZ,NGLLX*NGLLZ,pointsdisp,numat,nelem_acforcing
   endif
 
   ! output formats
 107 format(/5x,'--> Spectral Elements (for mesh slice 0 only if using MPI runs) <--',//)
 
-207 format(5x,'Number of spectral elements . . . . .  (nspec) =',i7,/5x, &
-               'Number of control nodes per element .  (ngnod) =',i7,/5x, &
-               'Number of points in X-direction . . .  (NGLLX) =',i7,/5x, &
-               'Number of points in Y-direction . . .  (NGLLZ) =',i7,/5x, &
-               'Number of points per element. . .(NGLLX*NGLLZ) =',i7,/5x, &
-               'Number of points for display . . .(pointsdisp) =',i7,/5x, &
-               'Number of element material sets . . .  (numat) =',i7)
+207 format(5x,'Number of spectral elements . . . . . . . . .  (nspec) =',i7,/5x, &
+               'Number of control nodes per element . . . . . (ngnod) =',i7,/5x, &
+               'Number of points in X-direction . . . . . . . (NGLLX) =',i7,/5x, &
+               'Number of points in Y-direction . . . . . . . (NGLLZ) =',i7,/5x, &
+               'Number of points per element. . . . . . (NGLLX*NGLLZ) =',i7,/5x, &
+               'Number of points for display . . . . . . (pointsdisp) =',i7,/5x, &
+               'Number of element material sets . . . . . . . (numat) =',i7,/5x, &
+               'Number of acoustic forcing elements (nelem_acforcing) =',i7)
 
   end subroutine read_databases_coorg_elem
 
@@ -814,6 +823,140 @@
     endif
 
   end subroutine read_databases_absorbing
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine read_databases_acoustic_forcing(myrank,nelem_acforcing,nspec,ACOUSTIC_FORCING, &
+                            ibegin_edge1_acforcing,iend_edge1_acforcing,ibegin_edge2_acforcing,iend_edge2_acforcing, &
+                            ibegin_edge3_acforcing,iend_edge3_acforcing,ibegin_edge4_acforcing,iend_edge4_acforcing, &
+                            numacforcing,codeacforcing,typeacforcing, &
+                            nspec_left_acforcing,nspec_right_acforcing,nspec_bottom_acforcing,nspec_top_acforcing, &
+                            ib_right_acforcing,ib_left_acforcing,ib_bottom_acforcing,ib_top_acforcing)
+
+! reads in absorbing edges
+
+  implicit none
+  include "constants.h"
+
+  integer :: myrank,nspec
+  integer :: nelem_acforcing
+  integer, dimension(nelem_acforcing) :: numacforcing,ibegin_edge1_acforcing,iend_edge1_acforcing, &
+    ibegin_edge3_acforcing,iend_edge3_acforcing,ibegin_edge4_acforcing,iend_edge4_acforcing, &
+    ibegin_edge2_acforcing,iend_edge2_acforcing
+  logical, dimension(4,nelem_acforcing) :: codeacforcing
+  integer, dimension(nelem_acforcing) :: typeacforcing
+  logical :: ACOUSTIC_FORCING
+  integer :: nspec_left_acforcing,nspec_right_acforcing,nspec_bottom_acforcing,nspec_top_acforcing
+
+  integer, dimension(nelem_acforcing) :: ib_right_acforcing,ib_left_acforcing,ib_bottom_acforcing,ib_top_acforcing
+
+  ! local parameters
+  integer :: inum,numacforcingread,typeacforcingread
+  logical :: codeacforcingread(4)
+  character(len=80) :: datlin
+
+  ! initializes
+  codeacforcing(:,:) = .false.
+  typeacforcing(:) = 0
+
+  ibegin_edge1_acforcing(:) = 0
+  iend_edge1_acforcing(:) = 0
+  ibegin_edge3_acforcing(:) = 0
+  iend_edge3_acforcing(:) = 0
+
+  ibegin_edge4_acforcing(:) = 0
+  iend_edge4_acforcing(:) = 0
+  ibegin_edge2_acforcing(:) = 0
+  iend_edge2_acforcing(:) = 0
+
+  nspec_left_acforcing = 0
+  nspec_right_acforcing = 0
+  nspec_bottom_acforcing = 0
+  nspec_top_acforcing = 0
+
+  ib_right_acforcing(:) = 0
+  ib_left_acforcing(:) = 0
+  ib_bottom_acforcing(:) = 0
+  ib_top_acforcing(:) = 0
+
+  ! reads in absorbing edges
+  read(IIN,"(a80)") datlin
+
+  ! reads in values
+  if( ACOUSTIC_FORCING ) then
+
+    ! reads absorbing boundaries
+    do inum = 1,nelem_acforcing
+
+! beware here and below that external meshes (for instance coming from CUBIT or Gmsh)
+! may have rotated elements and thus edge 1 may not correspond to the bottom,
+! edge 2 may not correspond to the right, edge 3 may not correspond to the top,
+! and edge 4 may not correspond to the left.
+      read(IIN,*) numacforcingread,codeacforcingread(1),codeacforcingread(2),codeacforcingread(3),&
+                  codeacforcingread(4), typeacforcingread, ibegin_edge1_acforcing(inum), iend_edge1_acforcing(inum), &
+                  ibegin_edge2_acforcing(inum), iend_edge2_acforcing(inum), ibegin_edge3_acforcing(inum), &
+                  iend_edge3_acforcing(inum), ibegin_edge4_acforcing(inum), iend_edge4_acforcing(inum)
+
+      if(numacforcingread < 1 .or. numacforcingread > nspec) &
+        call exit_MPI('Wrong absorbing element number')
+
+
+        numacforcing(inum) = numacforcingread
+
+      codeacforcing(IEDGE1,inum) = codeacforcingread(1)
+      codeacforcing(IEDGE2,inum) = codeacforcingread(2)
+      codeacforcing(IEDGE3,inum) = codeacforcingread(3)
+      codeacforcing(IEDGE4,inum) = codeacforcingread(4)
+
+      typeacforcing(inum) = typeacforcingread
+
+! check that a single edge is defined for each element cited
+! (since elements with two absorbing edges MUST be cited twice, each time with a different "typeacforcing()" code
+      if(count(codeacforcing(:,inum) .eqv. .true.) /= 1) then
+        print *,'error for absorbing element inum = ',inum
+        stop 'must have one and only one absorbing edge per absorbing line cited'
+      endif
+
+    enddo
+
+    ! boundary element numbering
+    do inum = 1,nelem_acforcing
+      if (typeacforcing(inum) == IBOTTOM) then
+        nspec_bottom_acforcing = nspec_bottom_acforcing + 1
+        ib_bottom_acforcing(inum) =  nspec_bottom_acforcing
+
+      else if (typeacforcing(inum) == IRIGHT) then
+        nspec_right_acforcing = nspec_right_acforcing + 1
+        ib_right_acforcing(inum) =  nspec_right_acforcing
+
+      else if (typeacforcing(inum) == ITOP) then
+        nspec_top_acforcing = nspec_top_acforcing + 1
+        ib_top_acforcing(inum) = nspec_top_acforcing
+
+      else if (typeacforcing(inum) == ILEFT) then
+        nspec_left_acforcing = nspec_left_acforcing + 1
+        ib_left_acforcing(inum) =  nspec_left_acforcing
+
+      else
+        stop 'incorrect absorbing boundary element type read'
+      endif
+    enddo
+
+    if (myrank == 0) then
+      write(IOUT,*)
+      write(IOUT,*) 'Number of acoustic forcing elements: ',nelem_acforcing
+      write(IOUT,*) '  nspec_left_acforcing = ',nspec_left_acforcing
+      write(IOUT,*) '  nspec_right_acforcing = ',nspec_right_acforcing
+      write(IOUT,*) '  nspec_bottom_acforcing = ',nspec_bottom_acforcing
+      write(IOUT,*) '  nspec_top_acforcing = ',nspec_top_acforcing
+      write(IOUT,*)
+    endif
+
+  endif
+
+  end subroutine read_databases_acoustic_forcing
 
 !
 !-------------------------------------------------------------------------------------------------

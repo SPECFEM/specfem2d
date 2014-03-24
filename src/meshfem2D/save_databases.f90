@@ -221,6 +221,9 @@
     write(15,*) 'nt deltat'
     write(15,*) nt,deltat
 
+    write(15,*) 'ACOUSTIC_FORCING'
+    write(15,*) ACOUSTIC_FORCING
+
     write(15,*) 'NSOURCES'
     write(15,*) NSOURCES
 
@@ -248,6 +251,12 @@
       nelemabs_loc = 0
     endif
 
+    if (ACOUSTIC_FORCING) then
+      call write_acoustic_forcing_merge_database(15, iproc, 1)
+    else
+      nelemacforcing_loc = 0
+    endif
+
     call write_surface_database(15, nelem_acoustic_surface, acoustic_surface, nelem_acoustic_surface_loc, &
                               iproc, 1)
 
@@ -264,9 +273,10 @@
       nnodes_tangential_curve = 0
     endif
 
-    write(15,*) 'nelemabs nelem_acoustic_surface num_fluid_solid_edges num_fluid_poro_edges'
-    write(15,*) 'num_solid_poro_edges nnodes_tangential_curve,nelem_on_the_axis'
-    write(15,*) nelemabs_loc,nelem_acoustic_surface_loc, &
+    write(15,*) 'nelemabs nelemacforcing nelem_acoustic_surface num_fluid_solid_edges'
+    write(15,*) 'num_fluid_poro_edges num_solid_poro_edges'
+    write(15,*) 'nnodes_tangential_curve nelem_on_the_axis'
+    write(15,*) nelemabs_loc,nelemacforcing_loc,nelem_acoustic_surface_loc, &
                 nedges_coupled_loc,nedges_acporo_coupled_loc,&
                 nedges_elporo_coupled_loc,nnodes_tangential_curve, &
                 nelem_on_the_axis_loc
@@ -313,6 +323,11 @@
     write(15,*) 'List of absorbing elements (edge1 edge2 edge3 edge4 type):'
     if ( any_abs ) then
       call write_abs_merge_database(15, iproc, 2)
+    endif
+
+    write(15,*) 'List of acoustic forcing elements (edge1 edge2 edge3 edge4 type):'
+    if ( ACOUSTIC_FORCING ) then
+      call write_acoustic_forcing_merge_database(15, iproc, 2)
     endif
 
     write(15,*) 'List of acoustic free-surface elements:'

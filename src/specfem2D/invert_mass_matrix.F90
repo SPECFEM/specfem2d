@@ -43,16 +43,18 @@
 !
 !========================================================================
 
-  subroutine invert_mass_matrix_init(any_elastic,any_acoustic,any_poroelastic, &
+  subroutine invert_mass_matrix_init(any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic, &
                                 rmass_inverse_elastic_one,nglob_elastic, &
                                 rmass_inverse_acoustic,nglob_acoustic, &
+                                rmass_inverse_gravitoacoustic, &
+                                rmass_inverse_gravito,nglob_gravitoacoustic, &
                                 rmass_s_inverse_poroelastic, &
                                 rmass_w_inverse_poroelastic,nglob_poroelastic, &
                                 nspec,ibool,kmato,wxgll,wzgll,jacobian, &
-                                elastic,poroelastic, &
+                                elastic,acoustic,gravitoacoustic,poroelastic, &
                                 assign_external_model,numat, &
                                 density,poroelastcoef,porosity,tortuosity, &
-                                vpext,rhoext,&
+                                vpext,rhoext,gravityext,Nsqext, &
                                 anyabs,numabs,deltat,codeabs,&
                                 ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
                                 ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
@@ -83,7 +85,7 @@
   integer count_left,count_right,count_bottom
   real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,rho_vp,rho_vs,tx,ty,tz,&
                             weight,xxi,zxi,xgamma,zgamma,jacobian1D
-  logical :: any_elastic,any_acoustic,any_poroelastic
+  logical :: any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic
 
   ! inverse mass matrices
   integer :: nglob_elastic
@@ -91,6 +93,10 @@
 
   integer :: nglob_acoustic
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: rmass_inverse_acoustic
+
+  integer :: nglob_gravitoacoustic
+  real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: rmass_inverse_gravitoacoustic
+  real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: rmass_inverse_gravito
 
   integer :: nglob_poroelastic
   real(kind=CUSTOM_REAL), dimension(nglob_poroelastic) :: rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic
@@ -106,14 +112,14 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: wzgll
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: jacobian
 
-  logical,dimension(nspec) :: elastic,poroelastic
+  logical,dimension(nspec) :: elastic,acoustic,gravitoacoustic,poroelastic
 
   logical :: assign_external_model
   integer :: numat
   double precision, dimension(2,numat) :: density
   double precision, dimension(4,3,numat) :: poroelastcoef
   double precision, dimension(numat) :: porosity,tortuosity
-  double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,rhoext,vsext
+  double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,rhoext,vsext,gravityext,Nsqext
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
 
@@ -141,6 +147,10 @@
   if(any_poroelastic) rmass_s_inverse_poroelastic(:) = 0._CUSTOM_REAL
   if(any_poroelastic) rmass_w_inverse_poroelastic(:) = 0._CUSTOM_REAL
   if(any_acoustic) rmass_inverse_acoustic(:) = 0._CUSTOM_REAL
+  if (any_gravitoacoustic) then
+      rmass_inverse_gravitoacoustic(:) = 0._CUSTOM_REAL
+      rmass_inverse_gravito(:) = 0._CUSTOM_REAL
+  endif
 
   do ispec = 1,nspec
     do j = 1,NGLLZ
@@ -280,7 +290,21 @@
           endif
 
           ! for acoustic medium
-        else
+          ! for gravitoacoustic medium
+          !!! PML NOT WORKING YET !!!
+        else if( gravitoacoustic(ispec) ) then
+
+        this_element_has_PML = .false.
+        if(PML_BOUNDARY_CONDITIONS .and. size(is_PML) > 1) then
+          if (is_PML(ispec)) stop 'PML not implemented yet for gravitoacoustic case'
+        endif
+
+          rmass_inverse_gravitoacoustic(iglob) = rmass_inverse_gravitoacoustic(iglob) &
+                  + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / (kappal/rhol)
+           rmass_inverse_gravito(iglob) = rmass_inverse_gravito(iglob) &
+                  + wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
+
+         else
 
           this_element_has_PML = .false.
           if(PML_BOUNDARY_CONDITIONS .and. size(is_PML) > 1) then
@@ -629,7 +653,7 @@
       ispec = numabs(ispecabs)
 
       ! Sommerfeld condition if acoustic
-      if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
+      if(acoustic(ispec)) then
 
         ! get elastic parameters of current spectral element
         lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
@@ -747,10 +771,12 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine invert_mass_matrix(any_elastic,any_acoustic,any_poroelastic, &
+  subroutine invert_mass_matrix(any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic, &
                                 rmass_inverse_elastic_one,rmass_inverse_elastic_three,&
                                 nglob_elastic, &
                                 rmass_inverse_acoustic,nglob_acoustic, &
+                                rmass_inverse_gravitoacoustic, &
+                                rmass_inverse_gravito,nglob_gravitoacoustic, &
                                 rmass_s_inverse_poroelastic, &
                                 rmass_w_inverse_poroelastic,nglob_poroelastic)
 
@@ -759,7 +785,7 @@
   implicit none
   include 'constants.h'
 
-  logical any_elastic,any_acoustic,any_poroelastic
+  logical any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic
 
 ! inverse mass matrices
   integer :: nglob_elastic
@@ -768,6 +794,10 @@
 
   integer :: nglob_acoustic
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: rmass_inverse_acoustic
+
+  integer :: nglob_gravitoacoustic
+  real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: rmass_inverse_gravitoacoustic
+  real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: rmass_inverse_gravito
 
   integer :: nglob_poroelastic
   real(kind=CUSTOM_REAL), dimension(nglob_poroelastic) :: rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic
@@ -784,6 +814,10 @@
     where(rmass_w_inverse_poroelastic <= 0._CUSTOM_REAL) rmass_w_inverse_poroelastic = 1._CUSTOM_REAL
   if(any_acoustic) &
     where(rmass_inverse_acoustic <= 0._CUSTOM_REAL) rmass_inverse_acoustic = 1._CUSTOM_REAL
+  if(any_gravitoacoustic) then
+    where(rmass_inverse_gravitoacoustic <= 0._CUSTOM_REAL) rmass_inverse_gravitoacoustic = 1._CUSTOM_REAL
+    where(rmass_inverse_gravito <= 0._CUSTOM_REAL) rmass_inverse_gravito = 1._CUSTOM_REAL
+  endif
 
 ! compute the inverse of the mass matrix
   if(any_elastic) &
@@ -796,6 +830,10 @@
     rmass_w_inverse_poroelastic(:) = 1._CUSTOM_REAL / rmass_w_inverse_poroelastic(:)
   if(any_acoustic) &
     rmass_inverse_acoustic(:) = 1._CUSTOM_REAL / rmass_inverse_acoustic(:)
+  if(any_gravitoacoustic) then
+    rmass_inverse_gravitoacoustic(:) = 1._CUSTOM_REAL / rmass_inverse_gravitoacoustic(:)
+    rmass_inverse_gravito(:) = 1._CUSTOM_REAL / rmass_inverse_gravito(:)
+  endif
 
   end subroutine invert_mass_matrix
 

@@ -59,7 +59,8 @@ module parameter_file
   logical :: AXISYM
 
   character(len=256) :: mesh_file, nodes_coords_file, materials_file, &
-                        free_surface_file, absorbing_surface_file, CPML_element_file, &
+                        free_surface_file, absorbing_surface_file, &
+                        acoustic_forcing_surface_file, CPML_element_file, &
                         axial_elements_file
   character(len=256)  :: tangential_detection_curve_file
 
@@ -145,6 +146,9 @@ module parameter_file
 ! (must be positive and bigger than the automatically one to be effective;
 !  simulation will start at t = - t0)
   double precision :: USER_T0
+
+! acoustic forcing of an acoustic medium at a rigid interface
+  logical :: ACOUSTIC_FORCING
 
 ! value of time_stepping_scheme to decide which time scheme will be used
 ! # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta)
@@ -246,6 +250,10 @@ contains
 
   call read_value_integer_p(time_stepping_scheme, 'solver.time_stepping_scheme')
   if(err_occurred() /= 0) stop 'error reading parameter 17c in Par_file'
+
+  ! read acoustic forcing flag
+  call read_value_logical_p(ACOUSTIC_FORCING, 'solver.ACOUSTIC_FORCING')
+  if(err_occurred() /= 0) stop 'error reading parameter 17d in Par_file'
 
   ! read source infos
   call read_value_integer_p(NSOURCES, 'solver.NSOURCES')
@@ -520,10 +528,13 @@ contains
   if(err_occurred() /= 0) stop 'error reading parameter 55b in Par_file'
 
   call read_value_string_p(absorbing_surface_file, 'mesher.absorbing_surface_file')
-  if(err_occurred() /= 0) stop 'error reading parameter 56 in Par_file'
+  if(err_occurred() /= 0) stop 'error reading parameter 56a in Par_file'
+
+  call read_value_string_p(acoustic_forcing_surface_file, 'mesher.acoustic_forcing_surface_file')
+  if(err_occurred() /= 0) stop 'error reading parameter 56b in Par_file'
 
   call read_value_string_p(CPML_element_file, 'mesher.CPML_element_file')
-  if(err_occurred() /= 0) stop 'error reading parameter 56 in Par_file'
+  if(err_occurred() /= 0) stop 'error reading parameter 56c in Par_file'
 
   call read_value_string_p(tangential_detection_curve_file, 'mesher.tangential_detection_curve_file')
   if(err_occurred() /= 0) stop 'error reading parameter 57 in Par_file'
