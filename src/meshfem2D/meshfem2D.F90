@@ -646,6 +646,13 @@ program meshfem2D
         if(initialfield) call rotate_mesh_for_plane_wave(ngnod)
      endif
 
+     if ( ACOUSTIC_FORCING ) then
+        call read_acoustic_forcing_surface(acoustic_forcing_surface_file, remove_min_to_start_at_zero)
+! rotate the elements that are located on the edges of the mesh if needed
+! otherwise the plane wave and Bielak conditions may not be applied correctly
+        if(initialfield) call rotate_mesh_for_plane_wave(ngnod)
+     endif
+
   else
 
      ! count the number of acoustic free-surface elements
@@ -1032,6 +1039,11 @@ program meshfem2D
      call merge_abs_boundaries(nb_materials, phi, num_material, ngnod)
   endif
 
+  ! setting acoustic forcing boundaries by elements instead of edges
+  if ( ACOUSTIC_FORCING ) then
+     call merge_acoustic_forcing_boundaries(ngnod)
+  endif
+
   ! *** generate the databases for the solver
   call save_databases(nspec,num_material, region_pml_external_mesh, &
                       my_interfaces,my_nb_interfaces, &
@@ -1076,4 +1088,5 @@ program meshfem2D
   print *
 
 end program meshfem2D
+
 

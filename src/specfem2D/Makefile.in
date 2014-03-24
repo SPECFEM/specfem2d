@@ -95,6 +95,7 @@ DEFAULT = \
 
 
 OBJS_SPECFEM2D = \
+	$O/acoustic_forcing_boundary.o \
 	$O/assemble_MPI.o \
 	$O/attenuation_model.o \
 	$O/attenuation_compute_param.o \
@@ -107,6 +108,7 @@ OBJS_SPECFEM2D = \
 	$O/compute_curl_one_element.o \
 	$O/compute_energy.o \
 	$O/compute_coupling_acoustic_el.o \
+    $O/compute_forces_gravitoacoustic.o \
 	$O/compute_forces_acoustic.o \
 	$O/compute_forces_viscoelastic.o \
 	$O/compute_forces_poro_solid.o \
@@ -244,6 +246,9 @@ $O/assemble_MPI.o: ${S}/assemble_MPI.F90 ${SETUP}/constants.h
 
 $O/attenuation_compute_param.o: ${S}/attenuation_compute_param.c
 	${CC} $(CFLAGS) -c -o $O/attenuation_compute_param.o ${S}/attenuation_compute_param.c
+
+$O/acoustic_forcing_boundary.o: ${S}/acoustic_forcing_boundary.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/acoustic_forcing_boundary.o ${S}/acoustic_forcing_boundary.f90
 
 $O/attenuation_model.o: ${S}/attenuation_model.f90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/attenuation_model.o ${S}/attenuation_model.f90
@@ -428,6 +433,9 @@ $O/compute_energy.o: ${S}/compute_energy.f90 ${SETUP}/constants.h
 
 $O/compute_forces_acoustic.o: ${S}/compute_forces_acoustic.f90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/compute_forces_acoustic.o ${S}/compute_forces_acoustic.f90
+
+$O/compute_forces_gravitoacoustic.o: ${S}/compute_forces_gravitoacoustic.f90 ${SETUP}/constants.h
+	${F90} $(FLAGS_CHECK) -c -o $O/compute_forces_gravitoacoustic.o ${S}/compute_forces_gravitoacoustic.f90
 
 $O/compute_forces_poro_fluid.o: ${S}/compute_forces_poro_fluid.f90 ${SETUP}/constants.h
 	${F90} $(FLAGS_CHECK) -c -o $O/compute_forces_poro_fluid.o ${S}/compute_forces_poro_fluid.f90

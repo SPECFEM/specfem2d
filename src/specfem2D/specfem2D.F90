@@ -372,7 +372,7 @@
 !! DK DK (then array bound checking cannot be used, thus for instance do NOT use -check all in Intel ifort)
 ! #define FORCE_VECTORIZATION
 
-  integer NSOURCES,i_source
+  integer NSOURCES,i_source,iglobout1,iglobout2,iglobzero
   integer, dimension(:), allocatable :: source_type,time_function_type
   double precision, dimension(:), allocatable :: x_source,z_source,xi_source,gamma_source,&
                   Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource
@@ -411,6 +411,9 @@
 !  simulation will start at t = - t0)
   double precision :: USER_T0
 
+! perform a forcing of an acoustic medium with a rigid boundary
+  logical :: ACOUSTIC_FORCING
+
 ! value of time_stepping_scheme to decide which time scheme will be used
 ! 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta)
 ! 3 = classical 4th-order 4-stage Runge-Kutta
@@ -437,11 +440,12 @@
 
   integer :: i,j,k,it,irec,id,n,ispec,ispec2,nglob,npgeo,iglob
   integer :: nglob_acoustic
+  integer :: nglob_gravitoacoustic
   integer :: nglob_elastic
   integer :: nglob_poroelastic
   logical :: anyabs
-  double precision :: dxd,dyd,dzd,dcurld,valux,valuy,valuz,valcurl,hlagrange,xi,gamma,x,z
-
+  double precision :: dxd,dyd,dzd,dcurld,valux,valuy,valuz,valcurl,hlagrange,rhol,xi,gamma,x,z
+  double precision :: gravityl,Nsql,hp1,hp2
 ! add a small crack (discontinuity) in the medium manually
   logical, parameter :: ADD_A_SMALL_CRACK_IN_THE_MEDIUM = .false.
 !! must be set equal to the number of spectral elements on one vertical side of the crack
@@ -468,7 +472,7 @@
   double precision :: xixl,xizl,gammaxl,gammazl,jacobianl
 
 ! material properties of the elastic medium
-  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic
+  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic,kappal
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: veloc_elastic_LDDRK,displ_elastic_LDDRK,&
@@ -519,11 +523,19 @@
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: potential_dot_dot_acoustic_rk, potential_dot_acoustic_rk
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_acoustic_adj_coupling
 
+! for gravitoacoustic medium
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
+    potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic,potential_gravitoacoustic
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
+    potential_dot_dot_gravito,potential_dot_gravito,potential_gravito
+
 ! inverse mass matrices
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_elastic_one
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_elastic_three
 
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_acoustic
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_gravitoacoustic
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_gravito
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
     rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic
 
@@ -535,7 +547,7 @@
   double precision :: D_biot,H_biot,C_biot,M_biot,B_biot,cpIsquare,cpIIsquare,cssquare
   real(kind=CUSTOM_REAL) :: ratio,dd1
 
-  double precision, dimension(:,:,:), allocatable :: vpext,vsext,rhoext
+  double precision, dimension(:,:,:), allocatable :: vpext,vsext,rhoext,gravityext,Nsqext
   double precision, dimension(:,:,:), allocatable :: QKappa_attenuationext,Qmu_attenuationext
   double precision, dimension(:,:,:), allocatable :: c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
 
@@ -563,7 +575,7 @@
     NSTEP_BETWEEN_OUTPUT_INFO,seismotype,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP_BETWEEN_OUTPUT_IMAGES, &
     NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS,subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps
   integer :: numat,ngnod,nspec,pointsdisp, &
-    nelemabs,nelem_acoustic_surface,ispecabs,UPPER_LIMIT_DISPLAY,NELEM_PML_THICKNESS
+    nelemabs,nelem_acforcing,nelem_acoustic_surface,ispecabs,UPPER_LIMIT_DISPLAY,NELEM_PML_THICKNESS
 
   logical interpol,meshvect,modelvect,boundvect,assign_external_model,initialfield, &
     output_grid_ASCII,output_grid_Gnuplot,ATTENUATION_VISCOELASTIC_SOLID,output_postscript_snapshot,output_color_image, &
@@ -642,6 +654,10 @@
 ! adjoint
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_viscodampx,b_viscodampz
   integer reclen
+
+! for acoustic and gravitoacoustic detection
+  logical, dimension(:), allocatable :: acoustic,gravitoacoustic
+  logical :: any_gravitoacoustic,any_gravitoacoustic_glob
 
 ! for fluid/solid coupling and edge detection
   logical, dimension(:), allocatable :: elastic
@@ -1059,6 +1075,26 @@
 
 !!  logical :: backward_simulation for seprate adjoint simulation from backward simulation
 
+! acoustic (and gravitoacoustic) forcing parameters
+  logical, dimension(:,:), allocatable  :: codeacforcing
+  integer, dimension(:), allocatable  :: typeacforcing
+
+  integer, dimension(:), allocatable :: numacforcing, &
+     ibegin_edge1_acforcing,iend_edge1_acforcing,ibegin_edge3_acforcing,iend_edge3_acforcing, &
+     ibegin_edge4_acforcing,iend_edge4_acforcing,ibegin_edge2_acforcing,iend_edge2_acforcing
+
+  integer :: nspec_left_acforcing,nspec_right_acforcing,nspec_bottom_acforcing,nspec_top_acforcing
+  integer, dimension(:), allocatable :: ib_left_acforcing,ib_right_acforcing,ib_bottom_acforcing,ib_top_acforcing
+
+  ! for image in case of atmospheric modelization
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
+    potential_dot_acoustic_normalized,potential_acoustic_normalized
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
+    potential_dot_gravitoacoustic_normalized,potential_gravitoacoustic_normalized
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
+    potential_dot_gravito_normalized,potential_gravito_normalized
+
+
 !***********************************************************************
 !
 !             i n i t i a l i z a t i o n    p h a s e
@@ -1089,7 +1125,7 @@
                   factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                   POWER_DISPLAY_COLOR,SU_FORMAT,USER_T0, time_stepping_scheme, &
                   ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_HORIZ_DIST, &
-                  read_external_mesh,save_ASCII_kernels)
+                  read_external_mesh,ACOUSTIC_FORCING,save_ASCII_kernels)
 
   if(nproc_read_from_database < 1) stop 'should have nproc_read_from_database >= 1'
   if(SIMULATION_TYPE == 3 .and.(time_stepping_scheme == 2 .or. time_stepping_scheme == 3)) &
@@ -1130,7 +1166,7 @@
   call read_databases_sources(NSOURCES,source_type,time_function_type, &
                       x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource)
 
-  !if(AXISYM) factor = factor/(TWO*PI)                                                                         !axisym TODO verify
+  !if(AXISYM) factor = factor/(TWO*PI)   !!!!!axisym TODO verify
 
   ! sets source parameters
   call set_sources(myrank,NSOURCES,source_type,time_function_type, &
@@ -1163,7 +1199,7 @@
   !! DK DK  added a crack manually
   call read_databases_coorg_elem(myrank,npgeo_ori,coorg,numat,ngnod,nspec, &
                               pointsdisp,plot_lowerleft_corner_only, &
-                              nelemabs,nelem_acoustic_surface, &
+                              nelemabs,nelem_acforcing,nelem_acoustic_surface, &
                               num_fluid_solid_edges,num_fluid_poro_edges, &
                               num_solid_poro_edges,nnodes_tangential_curve, &
                               nelem_on_the_axis)
@@ -1200,6 +1236,8 @@
     allocate(knods(ngnod,nspec))
     allocate(ibool(NGLLX,NGLLZ,nspec))
     allocate(elastic(nspec))
+    allocate(acoustic(nspec))
+    allocate(gravitoacoustic(nspec))
     allocate(poroelastic(nspec))
     allocate(anisotropic(nspec))
     allocate(inv_tau_sigma_nu1(NGLLX,NGLLZ,nspec,N_SLS))
@@ -1309,8 +1347,8 @@
 !-------------------------------------------------------------------------------
 !----  determine if each spectral element is elastic, poroelastic, or acoustic
 !-------------------------------------------------------------------------------
-  call initialize_simulation_domains(any_acoustic,any_elastic,any_poroelastic, &
-                                anisotropic,elastic,poroelastic,porosity,anisotropy,kmato,numat, &
+  call initialize_simulation_domains(any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic, &
+                                anisotropic,acoustic,gravitoacoustic,elastic,poroelastic,porosity,anisotropy,kmato,numat, &
                                 nspec,nspec_allocate,p_sv,ATTENUATION_VISCOELASTIC_SOLID,count_nspec_acoustic)
 
   if(PML_BOUNDARY_CONDITIONS .and. any_poroelastic) then
@@ -1586,6 +1624,41 @@
     endif
 
   endif
+
+! --- allocate arrays for acoustic forcing boundary conditions
+
+  if(.not. ACOUSTIC_FORCING) then
+    nelem_acforcing = 1
+  endif
+
+    allocate(numacforcing(nelem_acforcing))
+    allocate(codeacforcing(4,nelem_acforcing))
+    allocate(typeacforcing(nelem_acforcing))
+
+    allocate(ibegin_edge1_acforcing(nelem_acforcing))
+    allocate(iend_edge1_acforcing(nelem_acforcing))
+    allocate(ibegin_edge3_acforcing(nelem_acforcing))
+    allocate(iend_edge3_acforcing(nelem_acforcing))
+
+    allocate(ibegin_edge4_acforcing(nelem_acforcing))
+    allocate(iend_edge4_acforcing(nelem_acforcing))
+    allocate(ibegin_edge2_acforcing(nelem_acforcing))
+    allocate(iend_edge2_acforcing(nelem_acforcing))
+
+    allocate(ib_left_acforcing(nelem_acforcing))
+    allocate(ib_right_acforcing(nelem_acforcing))
+    allocate(ib_bottom_acforcing(nelem_acforcing))
+    allocate(ib_top_acforcing(nelem_acforcing))
+
+  !
+  !----  read acoustic forcing boundary data
+  !
+  call read_databases_acoustic_forcing(myrank,nelem_acforcing,nspec,ACOUSTIC_FORCING, &
+                            ibegin_edge1_acforcing,iend_edge1_acforcing,ibegin_edge2_acforcing,iend_edge2_acforcing, &
+                            ibegin_edge3_acforcing,iend_edge3_acforcing,ibegin_edge4_acforcing,iend_edge4_acforcing, &
+                            numacforcing,codeacforcing,typeacforcing, &
+                            nspec_left_acforcing,nspec_right_acforcing,nspec_bottom_acforcing,nspec_top_acforcing, &
+                            ib_right_acforcing,ib_left_acforcing,ib_bottom_acforcing,ib_top_acforcing)
 
 !
 !----  read acoustic free surface data
@@ -1875,6 +1948,8 @@
       allocate(vpext(NGLLX,NGLLZ,nspec))
       allocate(vsext(NGLLX,NGLLZ,nspec))
       allocate(rhoext(NGLLX,NGLLZ,nspec))
+      allocate(gravityext(NGLLX,NGLLZ,nspec))
+      allocate(Nsqext(NGLLX,NGLLZ,nspec))
       allocate(QKappa_attenuationext(NGLLX,NGLLZ,nspec))
       allocate(Qmu_attenuationext(NGLLX,NGLLZ,nspec))
       allocate(c11ext(NGLLX,NGLLZ,nspec))
@@ -1890,6 +1965,8 @@
       allocate(vpext(1,1,1))
       allocate(vsext(1,1,1))
       allocate(rhoext(1,1,1))
+      allocate(gravityext(1,1,1))
+      allocate(Nsqext(1,1,1))
       allocate(QKappa_attenuationext(1,1,1))
       allocate(Qmu_attenuationext(1,1,1))
       allocate(c11ext(1,1,1))
@@ -2136,12 +2213,12 @@
 
   if (assign_external_model) then
     if(myrank == 0) write(IOUT,*) 'Assigning an external velocity and density model...'
-    call read_external_model(any_acoustic,any_elastic,any_poroelastic, &
-                elastic,poroelastic,anisotropic,nspec,nglob,N_SLS,ibool, &
+    call read_external_model(any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic, &
+                acoustic,gravitoacoustic,elastic,poroelastic,anisotropic,nspec,nglob,N_SLS,ibool, &
                 f0_attenuation,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
                 inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent, &
                 inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,&
-                coord,kmato,rhoext,vpext,vsext, &
+                coord,kmato,rhoext,vpext,vsext,gravityext,Nsqext, &
                 QKappa_attenuationext,Qmu_attenuationext, &
                 c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,READ_EXTERNAL_SEP_FILE)
   endif
@@ -2175,6 +2252,12 @@
   any_acoustic_glob = any_acoustic
 #ifdef USE_MPI
   call MPI_ALLREDUCE(any_acoustic, any_acoustic_glob, 1, MPI_LOGICAL, &
+                    MPI_LOR, MPI_COMM_WORLD, ier)
+#endif
+
+   any_gravitoacoustic_glob = any_gravitoacoustic
+#ifdef USE_MPI
+  call MPI_ALLREDUCE(any_gravitoacoustic, any_gravitoacoustic_glob, 1, MPI_LOGICAL, &
                     MPI_LOR, MPI_COMM_WORLD, ier)
 #endif
 
@@ -2505,7 +2588,7 @@
     izmax = acoustic_surface(5,ispec_acoustic_surface)
     do irecloc = 1,nrecloc
       irec = recloc(irecloc)
-      if(.not. elastic(ispec) .and. .not. poroelastic(ispec) .and. ispec == ispec_selected_rec(irec)) then
+      if(acoustic(ispec) .and. ispec == ispec_selected_rec(irec)) then
         if ( (izmin==1 .and. izmax==1 .and. ixmin==1 .and. ixmax==NGLLX .and. &
         gamma_receiver(irec) < -0.99d0) .or.&
         (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==NGLLX .and. &
@@ -2801,7 +2884,6 @@
     allocate(potential_dot_acoustic_rk(nglob_acoustic,stage_time_scheme))
     endif
 
-
     if(SIMULATION_TYPE == 3 .and. any_acoustic) then
       allocate(b_potential_acoustic(nglob))
       allocate(b_potential_acoustic_old(nglob))
@@ -2836,6 +2918,22 @@
       allocate(rhorho_ac_hessian_final2(1,1,1))
       allocate(rhorho_ac_hessian_final1(1,1,1))
     endif
+
+    ! potential, its first and second derivative, and inverse of the mass matrix for gravitoacoustic elements
+    if(any_gravitoacoustic) then
+      nglob_gravitoacoustic = nglob
+    else
+      ! allocate unused arrays with fictitious size
+      nglob_gravitoacoustic = 1
+    endif
+    allocate(potential_gravitoacoustic(nglob_gravitoacoustic))
+    allocate(potential_dot_gravitoacoustic(nglob_gravitoacoustic))
+    allocate(potential_dot_dot_gravitoacoustic(nglob_gravitoacoustic))
+    allocate(rmass_inverse_gravitoacoustic(nglob_gravitoacoustic))
+    allocate(potential_gravito(nglob_gravitoacoustic))
+    allocate(potential_dot_gravito(nglob_gravitoacoustic))
+    allocate(potential_dot_dot_gravito(nglob_gravitoacoustic))
+    allocate(rmass_inverse_gravito(nglob_gravitoacoustic))
 
   ! PML absorbing conditionds
     anyabs_glob=anyabs
@@ -3194,16 +3292,18 @@
   !
   !---- build the global mass matrix
   !
-  call invert_mass_matrix_init(any_elastic,any_acoustic,any_poroelastic, &
+  call invert_mass_matrix_init(any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic, &
                                 rmass_inverse_elastic_one,nglob_elastic, &
                                 rmass_inverse_acoustic,nglob_acoustic, &
+                                rmass_inverse_gravitoacoustic, &
+                                rmass_inverse_gravito,nglob_gravitoacoustic, &
                                 rmass_s_inverse_poroelastic, &
                                 rmass_w_inverse_poroelastic,nglob_poroelastic, &
                                 nspec,ibool,kmato,wxgll,wzgll,jacobian, &
-                                elastic,poroelastic, &
+                                elastic,acoustic,gravitoacoustic,poroelastic, &
                                 assign_external_model,numat, &
                                 density,poroelastcoef,porosity,tortuosity, &
-                                vpext,rhoext,&
+                                vpext,rhoext,gravityext,Nsqext, &
                                 anyabs,numabs,deltat,codeabs,&
                                 ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
                                 ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
@@ -3357,9 +3457,11 @@
     ! the total number of points without multiples in this region is now known
     nglob_inner = maxval(ibool_inner)
 
-  call invert_mass_matrix(any_elastic,any_acoustic,any_poroelastic,&
+  call invert_mass_matrix(any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic, &
               rmass_inverse_elastic_one,rmass_inverse_elastic_three,nglob_elastic, &
               rmass_inverse_acoustic,nglob_acoustic, &
+              rmass_inverse_gravitoacoustic, &
+              rmass_inverse_gravito,nglob_gravitoacoustic, &
               rmass_s_inverse_poroelastic, &
               rmass_w_inverse_poroelastic,nglob_poroelastic)
 
@@ -3555,6 +3657,13 @@
     potential_dot_dot_acoustic_rk = 0._CUSTOM_REAL
     potential_dot_acoustic_rk = 0._CUSTOM_REAL
   endif
+
+  potential_gravitoacoustic = 0._CUSTOM_REAL
+  potential_dot_gravitoacoustic = 0._CUSTOM_REAL
+  potential_dot_dot_gravitoacoustic = 0._CUSTOM_REAL
+  potential_gravito = 0._CUSTOM_REAL
+  potential_dot_gravito = 0._CUSTOM_REAL
+  potential_dot_dot_gravito = 0._CUSTOM_REAL
 
 !
 !----- Files where viscous damping are saved during forward wavefield calculation
@@ -3846,6 +3955,46 @@
     ! dummy allocation
     allocate(source_time_function(1,1,1))
   endif
+
+! acoustic forcing edge detection
+! the elements forming an edge are already known (computed in meshfem2D),
+! the common nodes forming the edge are computed here
+  if(ACOUSTIC_FORCING) then
+
+    if (myrank == 0) then
+      print *
+      print *,'Acoustic forcing simulation'
+      print *
+      print *,'Beginning of acoustic forcing edge detection'
+    endif
+
+! define i and j points for each edge
+    do ipoin1D = 1,NGLLX
+
+      ivalue(ipoin1D,IBOTTOM) = NGLLX - ipoin1D + 1
+      ivalue_inverse(ipoin1D,IBOTTOM) = ipoin1D
+      jvalue(ipoin1D,IBOTTOM) = NGLLZ
+      jvalue_inverse(ipoin1D,IBOTTOM) = NGLLZ
+
+      ivalue(ipoin1D,IRIGHT) = 1
+      ivalue_inverse(ipoin1D,IRIGHT) = 1
+      jvalue(ipoin1D,IRIGHT) = NGLLZ - ipoin1D + 1
+      jvalue_inverse(ipoin1D,IRIGHT) = ipoin1D
+
+      ivalue(ipoin1D,ITOP) = ipoin1D
+      ivalue_inverse(ipoin1D,ITOP) = NGLLX - ipoin1D + 1
+      jvalue(ipoin1D,ITOP) = 1
+      jvalue_inverse(ipoin1D,ITOP) = 1
+
+      ivalue(ipoin1D,ILEFT) = NGLLX
+      ivalue_inverse(ipoin1D,ILEFT) = NGLLX
+      jvalue(ipoin1D,ILEFT) = ipoin1D
+      jvalue_inverse(ipoin1D,ILEFT) = NGLLZ - ipoin1D + 1
+
+    enddo
+
+  endif ! if(ACOUSTIC_FORCING)
+
 
 ! determine if coupled fluid-solid simulation
   coupled_acoustic_elastic = any_acoustic .and. any_elastic
@@ -4850,11 +4999,11 @@ if(coupled_elastic_poro) then
 ! *********************************************************
 
       call compute_forces_acoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
-               anyabs,assign_external_model,ibool,kmato,numabs, &
+               anyabs,assign_external_model,ibool,kmato,numabs,acoustic,gravitoacoustic, &
                elastic,poroelastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
                potential_acoustic,potential_acoustic_old,stage_time_scheme,i_stage, &
                density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
-               vpext,rhoext,hprime_xx,hprimewgll_xx, &
+               vpext,rhoext,gravityext,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                AXISYM,coord, is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
                ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
@@ -4877,7 +5026,7 @@ if(coupled_elastic_poro) then
           do ispec = 1,nspec
             do i = 1, NGLLX
               do j = 1, NGLLZ
-                if(.not. elastic(ispec) .and. .not. poroelastic(ispec) .and. is_pml(ispec))then
+                if(acoustic(ispec) .and. is_pml(ispec))then
                   b_potential_dot_dot_acoustic(ibool(i,j,ispec)) = 0.
                   b_potential_dot_acoustic(ibool(i,j,ispec)) = 0.
                   b_potential_acoustic(ibool(i,j,ispec)) = 0.
@@ -4897,11 +5046,11 @@ if(coupled_elastic_poro) then
        endif
 
         call compute_forces_acoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
-               anyabs,assign_external_model,ibool,kmato,numabs, &
+               anyabs,assign_external_model,ibool,kmato,numabs,acoustic,gravitoacoustic, &
                elastic,poroelastic,codeabs,b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
                b_potential_acoustic,b_potential_acoustic_old,stage_time_scheme, i_stage, &
                density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
-               vpext,rhoext,hprime_xx,hprimewgll_xx, &
+               vpext,rhoext,gravityext,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                AXISYM,coord, is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
                ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
@@ -4923,7 +5072,7 @@ if(coupled_elastic_poro) then
           do ispec = 1,nspec
             do i = 1, NGLLX
               do j = 1, NGLLZ
-                if(.not. elastic(ispec) .and. .not. poroelastic(ispec) .and. is_pml(ispec))then
+                if(acoustic(ispec) .and. is_pml(ispec))then
                   b_potential_dot_acoustic(ibool(i,j,ispec)) = 0.
                   b_potential_acoustic(ibool(i,j,ispec)) = 0.
                 endif
@@ -4979,6 +5128,201 @@ if(coupled_elastic_poro) then
           enddo
         endif
       endif ! if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)
+
+
+    ! *********************************************************
+    ! ************* add acoustic forcing at a rigid boundary
+    ! *********************************************************
+    if(ACOUSTIC_FORCING) then
+      ! loop on all the forced edges
+
+     do inum = 1,nelem_acforcing
+
+        ispec = numacforcing(inum)
+
+        !--- left acoustic forcing boundary
+        if(codeacforcing(IEDGE4,inum)) then
+
+           i = 1
+
+           do j = 1,NGLLZ
+
+              ! acoustic spectral element
+              if(acoustic(ispec)) then
+                 iglob = ibool(i,j,ispec)
+
+                 xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
+                 zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
+                 jacobian1D = sqrt(xgamma**2 + zgamma**2)
+                 nx = - zgamma / jacobian1D
+                 nz = + xgamma / jacobian1D
+
+                 weight = jacobian1D * wzgll(j)
+
+          ! define displacement components which will force the boundary
+
+            if(PML_BOUNDARY_CONDITIONS) then
+              if(is_PML(ispec)) then
+              displ_x = 0
+              displ_z = 0
+              else
+              call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,ispec,iglob,coord,nglob)
+              endif
+
+            else
+
+            call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,ispec,iglob,coord,nglob)
+            endif
+
+          ! compute dot product
+          displ_n = displ_x*nx + displ_z*nz
+
+          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
+
+              endif  !end of acoustic
+           enddo
+
+        endif  !  end of left acoustic forcing boundary
+
+        !--- right acoustic forcing boundary
+        if(codeacforcing(IEDGE2,inum)) then
+
+           i = NGLLX
+
+           do j = 1,NGLLZ
+
+              ! acoustic spectral element
+              if(acoustic(ispec)) then
+                 iglob = ibool(i,j,ispec)
+
+                 xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
+                 zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
+                 jacobian1D = sqrt(xgamma**2 + zgamma**2)
+                 nx = + zgamma / jacobian1D
+                 nz = - xgamma / jacobian1D
+
+                 weight = jacobian1D * wzgll(j)
+
+          ! define displacement components which will force the boundary
+
+            if(PML_BOUNDARY_CONDITIONS) then
+
+              if(is_PML(ispec)) then
+              displ_x = 0
+              displ_z = 0
+              else
+              call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,inum,iglob,coord,nglob)
+              endif
+
+            else
+
+            call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,inum,iglob,coord,nglob)
+
+            endif
+
+          ! compute dot product
+          displ_n = displ_x*nx + displ_z*nz
+
+          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
+
+              endif  !end of acoustic
+           enddo
+
+        endif  !  end of right acoustic forcing boundary
+
+        !--- bottom acoustic forcing boundary
+        if(codeacforcing(IEDGE1,inum)) then
+
+           j = 1
+
+           do i = 1,NGLLX
+
+              ! acoustic spectral element
+              if(acoustic(ispec)) then
+                 iglob = ibool(i,j,ispec)
+
+                 xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+                 zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
+                 jacobian1D = sqrt(xxi**2 + zxi**2)
+                 nx = + zxi / jacobian1D
+                 nz = - xxi / jacobian1D
+
+                 weight = jacobian1D * wxgll(i)
+
+          ! define displacement components which will force the boundary
+
+            if(PML_BOUNDARY_CONDITIONS) then
+              if(is_PML(ispec)) then
+              displ_x = 0
+              displ_z = 0
+              else
+              call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,inum,iglob,coord,nglob)
+              endif
+
+            else
+            call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,inum,iglob,coord,nglob)
+
+            endif
+
+          ! compute dot product
+          displ_n = displ_x*nx + displ_z*nz
+
+          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
+
+              endif  !end of acoustic
+           enddo
+
+        endif  !  end of bottom acoustic forcing boundary
+
+        !--- top acoustic forcing boundary
+        if(codeacforcing(IEDGE3,inum)) then
+
+           j = NGLLZ
+
+           do i = 1,NGLLX
+
+              ! acoustic spectral element
+              if(acoustic(ispec)) then
+                 iglob = ibool(i,j,ispec)
+
+                 xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+                 zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
+                 jacobian1D = sqrt(xxi**2 + zxi**2)
+                 nx = - zxi / jacobian1D
+                 nz = + xxi / jacobian1D
+
+                 weight = jacobian1D * wxgll(i)
+
+          ! define displacement components which will force the boundary
+
+            if(PML_BOUNDARY_CONDITIONS) then
+
+              if(is_PML(ispec)) then
+              displ_x = 0
+              displ_z = 0
+              else
+              call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,inum,iglob,coord,nglob)
+              endif
+
+            else
+
+            call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,inum,iglob,coord,nglob)
+
+            endif
+
+          ! compute dot product
+          displ_n = displ_x*nx + displ_z*nz
+
+          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
+
+              endif  !end of acoustic
+           enddo
+
+        endif  !  end of top acoustic forcing boundary
+
+     enddo
+
+     endif ! of if ACOUSTIC_FORCING
 
     endif ! end of test if any acoustic element
 
@@ -5134,8 +5478,8 @@ if(coupled_elastic_poro) then
 
         do i_source=1,NSOURCES
           ! if this processor core carries the source and the source element is acoustic
-          if (is_proc_source(i_source) == 1 .and. (.not. elastic(ispec_selected_source(i_source))) .and. &
-            .not. poroelastic(ispec_selected_source(i_source))) then
+          if (is_proc_source(i_source) == 1 .and. acoustic(ispec_selected_source(i_source))) then
+
             ! collocated force
             ! beware, for acoustic medium, source is: pressure divided by Kappa of the fluid
             ! the sign is negative because pressure p = - Chi_dot_dot therefore we need
@@ -5178,8 +5522,7 @@ if(coupled_elastic_poro) then
             if (myrank == which_proc_receiver(irec)) then
 
               irec_local = irec_local + 1
-              if (.not. elastic(ispec_selected_rec(irec)) .and. &
-                 .not. poroelastic(ispec_selected_rec(irec))) then
+              if (acoustic(ispec_selected_rec(irec))) then
                 ! add source array
                 do j=1,NGLLZ
                   do i=1,NGLLX
@@ -5360,6 +5703,548 @@ if(coupled_elastic_poro) then
                           + deltatsquareover2*potential_dot_dot_acoustic
 
     endif !if(any_acoustic)
+
+
+! *********************************************************
+! ************* main solver for the gravitoacoustic elements
+! *********************************************************
+! only SIMULATION_TYPE == 1, time_stepping_scheme == 1, and no PML or STACEY yet
+! NO MIX OF ACOUSTIC AND GRAVITOACOUTIC ELEMENTS
+! NO COUPLING TO ELASTIC AND POROELASTIC SIDES
+! *********************************************************
+!-----------------------------------------
+    if ((any_gravitoacoustic)) then
+
+      if(time_stepping_scheme==1)then
+      ! Newmark time scheme
+!! DK DK this should be vectorized
+      potential_gravitoacoustic = potential_gravitoacoustic &
+                          + deltat*potential_dot_gravitoacoustic &
+                          + deltatsquareover2*potential_dot_dot_gravitoacoustic
+      potential_dot_gravitoacoustic = potential_dot_gravitoacoustic &
+                              + deltatover2*potential_dot_dot_gravitoacoustic
+      potential_gravito = potential_gravito &
+                          + deltat*potential_dot_gravito &
+                          + deltatsquareover2*potential_dot_dot_gravito
+      potential_dot_gravito = potential_dot_gravito &
+                              + deltatover2*potential_dot_dot_gravito
+      else
+      stop 'Only time_stepping_scheme=1 for gravitoacoustic'
+      endif
+      potential_dot_dot_gravitoacoustic = ZERO
+      potential_dot_dot_gravito = ZERO
+
+! Impose displacements from boundary forcing here
+! because at this step the displacement (potentials) values
+! are already equal to value at n+1
+! equivalent to free surface condition
+! the contour integral u.n is computed after compute_forces_gravitoacoustic
+! *********************************************************
+! ** impose displacement from acoustic forcing at a rigid boundary
+! ** force potential_dot_dot_gravito by displacement
+! *********************************************************
+    if(ACOUSTIC_FORCING) then
+
+      ! loop on all the forced edges
+
+     do inum = 1,nelem_acforcing
+
+        ispec = numacforcing(inum)
+
+        !--- left acoustic forcing boundary
+        if(codeacforcing(IEDGE4,inum)) then
+
+           i = 1
+
+           do j = 1,NGLLZ
+
+              ! acoustic spectral element
+              if(gravitoacoustic(ispec)) then
+                 iglob = ibool(i,j,ispec)
+                 xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
+                 zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
+                 jacobian1D = sqrt(xgamma**2 + zgamma**2)
+                 nx = - zgamma / jacobian1D
+                 nz = + xgamma / jacobian1D
+
+                 weight = jacobian1D * wzgll(j)
+
+          ! define displacement components which will force the boundary
+
+            if(PML_BOUNDARY_CONDITIONS) then
+
+              if(is_PML(ispec)) then
+              displ_x = 0
+              displ_z = 0
+              else
+              call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,ispec,iglob,coord,nglob)
+              endif
+
+            else
+
+            call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,ispec,iglob,coord,nglob)
+
+            endif
+
+! compute displacement at this point
+        ! derivative along x
+        tempx1l = 0._CUSTOM_REAL
+        do k = 1,NGLLX
+          hp1 = hprime_xx(i,k)
+          iglob = ibool(k,j,ispec)
+          tempx1l = tempx1l + potential_gravitoacoustic(iglob)*hp1
+        enddo
+
+        ! derivative along z
+        tempx2l = 0._CUSTOM_REAL
+        do k = 1,NGLLZ
+          hp2 = hprime_zz(j,k)
+          iglob = ibool(i,k,ispec)
+          tempx2l = tempx2l + potential_gravitoacoustic(iglob)*hp2
+        enddo
+
+        xixl = xix(i,j,ispec)
+        xizl = xiz(i,j,ispec)
+        gammaxl = gammax(i,j,ispec)
+        gammazl = gammaz(i,j,ispec)
+
+          ! if external density model
+          if(assign_external_model)then
+            if(CUSTOM_REAL == SIZE_REAL) then
+              rhol = sngl(rhoext(i,j,ispec))
+              gravityl = sngl(gravityext(i,j,ispec))
+            else
+              rhol = rhoext(i,j,ispec)
+              gravityl = gravityext(i,j,ispec)
+            endif
+          endif
+
+! impose potential_gravito in order to have z displacement equal to forced
+! value
+          iglob = ibool(i,j,ispec)
+          displ_n = displ_x*nx + displ_z*nz
+        if (abs(nz) > TINYVAL) then
+          potential_gravito(iglob) = (rhol*displ_n - &
+          (tempx1l*xizl + tempx2l*gammazl)*nz - (tempx1l*xixl + tempx2l*gammaxl)*nx)/ &
+          (0.0 - gravityl*nz)
+        else
+          write(*,*) 'STOP : forcing surface element along z',i,j,ispec,iglob,nx,nz
+          stop
+        endif
+
+          ! compute dot product
+          displ_n = displ_x*nx + displ_z*nz
+          potential_dot_dot_gravito(iglob) = potential_dot_dot_gravito(iglob) - rhol*weight*displ_n
+
+              endif  !end of gravitoacoustic
+           enddo
+
+        endif  !  end of left acoustic forcing boundary
+
+        !--- right acoustic forcing boundary
+        if(codeacforcing(IEDGE2,inum)) then
+
+           i = NGLLX
+
+           do j = 1,NGLLZ
+
+              ! acoustic spectral element
+              if(gravitoacoustic(ispec)) then
+                 iglob = ibool(i,j,ispec)
+                 xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
+                 zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
+                 jacobian1D = sqrt(xgamma**2 + zgamma**2)
+                 nx = + zgamma / jacobian1D
+                 nz = - xgamma / jacobian1D
+
+                 weight = jacobian1D * wzgll(j)
+
+          ! define displacement components which will force the boundary
+
+            if(PML_BOUNDARY_CONDITIONS) then
+
+              if(is_PML(ispec)) then
+              displ_x = 0
+              displ_z = 0
+              else
+              call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,inum,iglob,coord,nglob)
+              endif
+
+            else
+
+            call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,inum,iglob,coord,nglob)
+
+            endif
+
+! compute displacement at this point
+        ! derivative along x
+        tempx1l = 0._CUSTOM_REAL
+        do k = 1,NGLLX
+          hp1 = hprime_xx(i,k)
+          iglob = ibool(k,j,ispec)
+          tempx1l = tempx1l + potential_gravitoacoustic(iglob)*hp1
+        enddo
+
+        ! derivative along z
+        tempx2l = 0._CUSTOM_REAL
+        do k = 1,NGLLZ
+          hp2 = hprime_zz(j,k)
+          iglob = ibool(i,k,ispec)
+          tempx2l = tempx2l + potential_gravitoacoustic(iglob)*hp2
+        enddo
+
+        xixl = xix(i,j,ispec)
+        xizl = xiz(i,j,ispec)
+        gammaxl = gammax(i,j,ispec)
+        gammazl = gammaz(i,j,ispec)
+
+          ! if external density model
+          if(assign_external_model)then
+            if(CUSTOM_REAL == SIZE_REAL) then
+              rhol = sngl(rhoext(i,j,ispec))
+              gravityl = sngl(gravityext(i,j,ispec))
+            else
+              rhol = rhoext(i,j,ispec)
+              gravityl = gravityext(i,j,ispec)
+            endif
+          endif
+
+! impose potential_gravito in order to have z displacement equal to forced
+! value
+          iglob = ibool(i,j,ispec)
+          displ_n = displ_x*nx + displ_z*nz
+        if (abs(nz) > TINYVAL) then
+          potential_gravito(iglob) = (rhol*displ_n - &
+          (tempx1l*xizl + tempx2l*gammazl)*nz - (tempx1l*xixl + tempx2l*gammaxl)*nx)/ &
+          (0.0-gravityl*nz)
+        else
+          write(*,*) 'STOP : forcing surface element along z',i,j,ispec,iglob,nx,nz
+          stop
+        endif
+
+          ! compute dot product
+          displ_n = displ_x*nx + displ_z*nz
+          potential_dot_dot_gravito(iglob) = potential_dot_dot_gravito(iglob) - rhol*weight*displ_n
+
+              endif  !end of gravitoacoustic
+           enddo
+
+        endif  !  end of right acoustic forcing boundary
+
+        !--- bottom acoustic forcing boundary
+        if(codeacforcing(IEDGE1,inum)) then
+
+           j = 1
+
+           do i = 1,NGLLX
+
+              ! acoustic spectral element
+              if(gravitoacoustic(ispec)) then
+                 iglob = ibool(i,j,ispec)
+                 xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+                 zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
+                 jacobian1D = sqrt(xxi**2 + zxi**2)
+                 nx = + zxi / jacobian1D
+                 nz = - xxi / jacobian1D
+
+                 weight = jacobian1D * wxgll(i)
+
+          ! define displacement components which will force the boundary
+
+            if(PML_BOUNDARY_CONDITIONS) then
+
+              if(is_PML(ispec)) then
+              displ_x = 0
+              displ_z = 0
+              else
+              call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,inum,iglob,coord,nglob)
+              endif
+
+            else
+
+            call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,inum,iglob,coord,nglob)
+
+            endif
+
+! compute displacement at this point
+        ! derivative along x
+        tempx1l = 0._CUSTOM_REAL
+        do k = 1,NGLLX
+          hp1 = hprime_xx(i,k)
+          iglob = ibool(k,j,ispec)
+          tempx1l = tempx1l + potential_gravitoacoustic(iglob)*hp1
+        enddo
+
+        ! derivative along z
+        tempx2l = 0._CUSTOM_REAL
+        do k = 1,NGLLZ
+          hp2 = hprime_zz(j,k)
+          iglob = ibool(i,k,ispec)
+          tempx2l = tempx2l + potential_gravitoacoustic(iglob)*hp2
+        enddo
+
+        xixl = xix(i,j,ispec)
+        xizl = xiz(i,j,ispec)
+        gammaxl = gammax(i,j,ispec)
+        gammazl = gammaz(i,j,ispec)
+
+          ! if external density model
+          if(assign_external_model)then
+            if(CUSTOM_REAL == SIZE_REAL) then
+              rhol = sngl(rhoext(i,j,ispec))
+              gravityl = sngl(gravityext(i,j,ispec))
+            else
+              rhol = rhoext(i,j,ispec)
+              gravityl = gravityext(i,j,ispec)
+            endif
+          endif
+
+! impose potential_gravito in order to have z displacement equal to forced
+! value
+          iglob = ibool(i,j,ispec)
+          displ_n = displ_x*nx + displ_z*nz
+        if (abs(nz) > TINYVAL) then
+          potential_gravito(iglob) = (rhol*displ_n - &
+          (tempx1l*xizl + tempx2l*gammazl)*nz - (tempx1l*xixl + tempx2l*gammaxl)*nx)/ &
+          (0.0 - gravityl*nz)
+        else
+          write(*,*) 'STOP : forcing surface element along z',i,j,ispec,iglob,nx,nz
+          stop
+        endif
+
+          ! compute dot product
+          displ_n = displ_x*nx + displ_z*nz
+          potential_dot_dot_gravito(iglob) = potential_dot_dot_gravito(iglob) - rhol*weight*displ_n
+
+              endif  !end of gravitoacoustic
+           enddo
+
+        endif  !  end of bottom acoustic forcing boundary
+
+        !--- top acoustic forcing boundary
+        if(codeacforcing(IEDGE3,inum)) then
+
+           j = NGLLZ
+
+           do i = 1,NGLLX
+
+              ! acoustic spectral element
+              if(gravitoacoustic(ispec)) then
+                 iglob = ibool(i,j,ispec)
+                 xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+                 zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
+                 jacobian1D = sqrt(xxi**2 + zxi**2)
+                 nx = - zxi / jacobian1D
+                 nz = + xxi / jacobian1D
+
+                 weight = jacobian1D * wxgll(i)
+
+          ! define displacement components which will force the boundary
+
+            if(PML_BOUNDARY_CONDITIONS) then
+
+              if(is_PML(ispec)) then
+              displ_x = 0
+              displ_z = 0
+              else
+              call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,inum,iglob,coord,nglob)
+              endif
+
+            else
+
+            call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,inum,iglob,coord,nglob)
+
+            endif
+
+! compute z displacement at this point
+        ! derivative along x
+        tempx1l = 0._CUSTOM_REAL
+        do k = 1,NGLLX
+          hp1 = hprime_xx(i,k)
+          iglob = ibool(k,j,ispec)
+          tempx1l = tempx1l + potential_gravitoacoustic(iglob)*hp1
+        enddo
+
+        ! derivative along z
+        tempx2l = 0._CUSTOM_REAL
+        do k = 1,NGLLZ
+          hp2 = hprime_zz(j,k)
+          iglob = ibool(i,k,ispec)
+          tempx2l = tempx2l + potential_gravitoacoustic(iglob)*hp2
+        enddo
+
+        xixl = xix(i,j,ispec)
+        xizl = xiz(i,j,ispec)
+        gammaxl = gammax(i,j,ispec)
+        gammazl = gammaz(i,j,ispec)
+
+          ! if external density model
+          if(assign_external_model)then
+            if(CUSTOM_REAL == SIZE_REAL) then
+              rhol = sngl(rhoext(i,j,ispec))
+              gravityl = sngl(gravityext(i,j,ispec))
+            else
+              rhol = rhoext(i,j,ispec)
+              gravityl = gravityext(i,j,ispec)
+              Nsql = Nsqext(i,j,ispec)
+            endif
+          endif
+
+! impose potential_gravito in order to have z displacement equal to forced
+! value on the boundary
+!!!! Passe deux fois sur le même iglob
+!!!! Mais vrai pour tous les points partagés entre deux elements
+          iglob = ibool(i,j,ispec)
+          displ_n = displ_x*nx + displ_z*nz
+        if (abs(nz) > TINYVAL) then
+          potential_gravito(iglob) = (rhol*displ_n - &
+          (tempx1l*xizl + tempx2l*gammazl)*nz - (tempx1l*xixl + tempx2l*gammaxl)*nx)/ &
+          (0.0 - gravityl*nz)
+        else
+          write(*,*) 'STOP : forcing surface element along z',i,j,ispec,iglob,nx,nz
+          stop
+        endif
+
+          ! compute dot product
+          displ_n = displ_x*nx + displ_z*nz
+          potential_dot_dot_gravito(iglob) = potential_dot_dot_gravito(iglob) - rhol*weight*displ_n
+
+              endif  !end of gravitoacoustic
+           enddo
+
+!       write(*,*) 'ispec detection =',ispec
+!       if ((ispec==2000).and.(mod(it,100)==0)) then
+       if ((ispec==800).and.(mod(it,100)==0)) then
+!       if ((ispec==800)) then
+       iglobzero=iglob
+       write(*,*) ispec,it,Nsql,rhol,displ_n, &
+       maxval(potential_dot_dot_gravito),potential_dot_dot_gravito(iglob), &
+       maxval(potential_gravitoacoustic),potential_gravitoacoustic(iglob), &
+       maxval(potential_gravito),potential_gravito(iglob)
+       endif
+
+        endif  !  end of top acoustic forcing boundary
+
+     enddo
+
+     endif ! end ACOUSTIC_FORCING !
+
+      ! free surface for a gravitoacoustic medium
+      !!! to be coded !!!
+!      if ( nelem_acoustic_surface > 0 ) then
+!        call enforce_acoustic_free_surface(potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
+!                                          potential_gravitoacoustic,acoustic_surface, &
+!                                          ibool,nelem_acoustic_surface,nglob,nspec)
+
+!        if(SIMULATION_TYPE == 3) then ! Adjoint calculation
+!          call enforce_acoustic_free_surface(b_potential_dot_dot_gravitoacoustic,b_potential_dot_gravitoacoustic, &
+!                                            b_potential_gravitoacoustic,acoustic_surface, &
+!                                            ibool,nelem_acoustic_surface,nglob,nspec)
+!        endif
+!      endif
+
+! *********************************************************
+! ************* compute forces for the gravitoacoustic elements
+! *********************************************************
+
+      call compute_forces_gravitoacoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
+               anyabs,assign_external_model,ibool,kmato,numabs,acoustic,gravitoacoustic, &
+               elastic,poroelastic,codeabs,potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
+               potential_gravitoacoustic, potential_dot_dot_gravito,potential_dot_gravito, &
+               potential_gravito,rmass_inverse_gravito,stage_time_scheme, i_stage, &
+               density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
+               vpext,rhoext,gravityext,Nsqext,hprime_xx,hprimewgll_xx, &
+               hprime_zz,hprimewgll_zz,wxgll,wzgll, &
+               ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
+               ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
+               SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right,&
+               nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
+               b_absorb_acoustic_left,b_absorb_acoustic_right, &
+               b_absorb_acoustic_bottom,b_absorb_acoustic_top,.false.,&
+               is_PML,nspec_PML,spec_to_PML,region_CPML, &
+               K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
+               rmemory_potential_acoustic,&
+               rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
+               alpha_LDDRK,beta_LDDRK, &
+               rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
+               deltat,PML_BOUNDARY_CONDITIONS&
+!               ,STACEY_BOUNDARY_CONDITIONS&
+                )
+       if ((mod(it,100)==0)) then
+         iglob=iglobzero
+         write(*,*) it,Nsql,gravityl, &
+         maxval(potential_dot_dot_gravito),potential_dot_dot_gravito(iglob), &
+         maxval(potential_dot_dot_gravitoacoustic),potential_dot_dot_gravitoacoustic(iglob)
+       endif
+
+    endif ! end of test if any gravitoacoustic element
+
+! *********************************************************
+! ************* add coupling with the elastic side
+! *********************************************************
+
+! *********************************************************
+! ************* add coupling with the poroelastic side
+! *********************************************************
+
+! ************************************************************************************
+! ************************************ add force source
+! ************************************************************************************
+
+! assembling potential_dot_dot for gravitoacoustic elements
+!#ifdef USE_MPI
+!    if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
+!      call assemble_MPI_vector_ac(potential_dot_dot_gravitoacoustic,nglob, &
+!                    ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
+!                    max_interface_size, max_ibool_interfaces_size_ac,&
+!                    ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
+!                    tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac, &
+!                    buffer_recv_faces_vector_ac, my_neighbours)
+!
+!    endif
+!
+!#endif
+
+! ************************************************************************************
+! ************* multiply by the inverse of the mass matrix and update velocity
+! ************************************************************************************
+
+    if((any_gravitoacoustic)) then
+      if(time_stepping_scheme == 1)then
+!! DK DK this should be vectorized
+
+      potential_dot_dot_gravitoacoustic = potential_dot_dot_gravitoacoustic * rmass_inverse_gravitoacoustic
+      potential_dot_gravitoacoustic = potential_dot_gravitoacoustic + deltatover2*potential_dot_dot_gravitoacoustic
+
+!! line below already done in compute_forces_gravitoacoustic, because necessary
+!! for the computation of potential_dot_dot_gravitoacoustic
+!      potential_dot_dot_gravito = potential_dot_dot_gravito * rmass_inverse_gravito
+      potential_dot_gravito = potential_dot_gravito + deltatover2*potential_dot_dot_gravito
+      else
+        stop 'Only time_stepping_scheme = 1 implemented for gravitoacoustic case'
+      endif
+
+      ! free surface for an acoustic medium
+!      if ( nelem_acoustic_surface > 0 ) then
+!        call enforce_acoustic_free_surface(potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
+!                                        potential_gravitoacoustic,acoustic_surface, &
+!                                        ibool,nelem_acoustic_surface,nglob,nspec)
+!
+!        if(SIMULATION_TYPE == 3) then
+!          call enforce_acoustic_free_surface(b_potential_dot_dot_gravitoacoustic,b_potential_dot_gravitoacoustic, &
+!                                          b_potential_gravitoacoustic,acoustic_surface, &
+!                                          ibool,nelem_acoustic_surface,nglob,nspec)
+!        endif
+!
+!      endif
+!
+      ! update the potential field (use a new array here) for coupling terms
+!      potential_gravitoacoustic_adj_coupling = potential_gravitoacoustic &
+!                          + deltat*potential_dot_gravitoacoustic &
+!                          + deltatsquareover2*potential_dot_dot_gravitoacoustic
+
+    endif ! of if(any_gravitoacoustic)
+
 
 
 ! *********************************************************
@@ -7692,42 +8577,72 @@ if(coupled_elastic_poro) then
       ! compute pressure in this element if needed
       if(seismotype == 4) then
 
-        call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,displ_elastic,&
-              displs_poroelastic,displw_poroelastic,elastic,poroelastic,&
+        call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic, &
+              potential_dot_dot_gravitoacoustic,displ_elastic,&
+              displs_poroelastic,displw_poroelastic,acoustic,gravitoacoustic,elastic,poroelastic,&
               xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
               AXISYM,nglob,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
-              nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
-              numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
+              nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
+              numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext,gravityext, &
               c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,ispec,e1,e11, &
               ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
-      else if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
+      else if(acoustic(ispec)) then
 
         ! for acoustic medium, compute vector field from gradient of potential for seismograms
-        if(seismotype == 1) then
-          call compute_vector_one_element(vector_field_element,potential_acoustic, &
-                              displ_elastic,displs_poroelastic,&
-                              elastic,poroelastic,xix,xiz,gammax,gammaz, &
+        if(seismotype == 1 .or. seismotype == 7) then
+          call compute_vector_one_element(vector_field_element,potential_acoustic,potential_gravitoacoustic, &
+                              potential_gravito,displ_elastic,displs_poroelastic,&
+                              acoustic,gravitoacoustic,elastic,poroelastic,xix,xiz,gammax,gammaz, &
                               ibool,hprime_xx,hprime_zz, &
                               AXISYM,is_on_the_axis,hprimeBar_xx, &
-                              nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-                              ispec,numat,kmato,density,rhoext,assign_external_model)
+                              nspec,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
+                              ispec,numat,kmato,density,rhoext,gravityext,assign_external_model)
         else if(seismotype == 2) then
-          call compute_vector_one_element(vector_field_element,potential_dot_acoustic, &
-                              veloc_elastic,velocs_poroelastic, &
-                              elastic,poroelastic,xix,xiz,gammax,gammaz, &
+          call compute_vector_one_element(vector_field_element,potential_dot_acoustic,potential_dot_gravitoacoustic, &
+                              potential_dot_gravito,veloc_elastic,velocs_poroelastic, &
+                              acoustic,gravitoacoustic,elastic,poroelastic,xix,xiz,gammax,gammaz, &
                               ibool,hprime_xx,hprime_zz, &
                               AXISYM,is_on_the_axis,hprimeBar_xx, &
-                              nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-                              ispec,numat,kmato,density,rhoext,assign_external_model)
+                              nspec,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
+                              ispec,numat,kmato,density,rhoext,gravityext,assign_external_model)
         else if(seismotype == 3) then
-          call compute_vector_one_element(vector_field_element,potential_dot_dot_acoustic, &
-                              accel_elastic,accels_poroelastic, &
-                              elastic,poroelastic,xix,xiz,gammax,gammaz, &
+          call compute_vector_one_element(vector_field_element,potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
+                              potential_dot_dot_gravito,accel_elastic,accels_poroelastic, &
+                              acoustic,gravitoacoustic,elastic,poroelastic,xix,xiz,gammax,gammaz, &
                               ibool,hprime_xx,hprime_zz, &
                               AXISYM,is_on_the_axis,hprimeBar_xx, &
-                              nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-                              ispec,numat,kmato,density,rhoext,assign_external_model)
+                              nspec,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
+                              ispec,numat,kmato,density,rhoext,gravityext,assign_external_model)
+        endif
+
+      else if(gravitoacoustic(ispec)) then
+
+        ! for acoustic medium, compute vector field from gradient of potential for seismograms
+        if(seismotype == 1 .or. seismotype == 7) then
+          call compute_vector_one_element(vector_field_element,potential_acoustic,potential_gravitoacoustic, &
+                              potential_gravito,displ_elastic,displs_poroelastic,&
+                              acoustic,gravitoacoustic,elastic,poroelastic,xix,xiz,gammax,gammaz, &
+                              ibool,hprime_xx,hprime_zz, &
+                              AXISYM,is_on_the_axis,hprimeBar_xx, &
+                              nspec,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
+                              ispec,numat,kmato,density,rhoext,gravityext,assign_external_model)
+        else if(seismotype == 2) then
+          call compute_vector_one_element(vector_field_element,potential_dot_acoustic,potential_dot_gravitoacoustic, &
+                              potential_dot_gravito,veloc_elastic,velocs_poroelastic, &
+                              acoustic,gravitoacoustic,elastic,poroelastic,xix,xiz,gammax,gammaz, &
+                              ibool,hprime_xx,hprime_zz, &
+                              AXISYM,is_on_the_axis,hprimeBar_xx, &
+                              nspec,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
+                              ispec,numat,kmato,density,rhoext,gravityext,assign_external_model)
+        else if(seismotype == 3) then
+          call compute_vector_one_element(vector_field_element,potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
+                              potential_dot_dot_gravito,accel_elastic,accels_poroelastic, &
+                              acoustic,gravitoacoustic,elastic,poroelastic,xix,xiz,gammax,gammaz, &
+                              ibool,hprime_xx,hprime_zz, &
+                              AXISYM,is_on_the_axis,hprimeBar_xx, &
+                              nspec,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
+                              ispec,numat,kmato,density,rhoext,gravityext,assign_external_model)
         endif
 
       else if(seismotype == 5) then
@@ -7761,12 +8676,17 @@ if(coupled_elastic_poro) then
             dxd = pressure_element(i,j)
             dzd = ZERO
 
-          else if(.not. elastic(ispec) .and. .not. poroelastic(ispec) .and.  seismotype /= 6) then
+          else if((acoustic(ispec) .or. gravitoacoustic(ispec)) .and.  seismotype /= 6) then
 
             dxd = vector_field_element(1,i,j)
             dzd = vector_field_element(3,i,j)
 
-          else if(seismotype == 6) then
+          else if(acoustic(ispec) .and. seismotype == 6) then
+
+            dxd = potential_acoustic(iglob)
+            dzd = ZERO
+
+          else if(gravitoacoustic(ispec) .and. seismotype == 6) then
 
             dxd = potential_acoustic(iglob)
             dzd = ZERO
@@ -7856,7 +8776,7 @@ if(coupled_elastic_poro) then
       if(any_acoustic) then
 
         do ispec = 1, nspec
-          if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
+          if(acoustic(ispec)) then
             do j = 1, NGLLZ
               do i = 1, NGLLX
                 iglob = ibool(i,j,ispec)
@@ -7910,7 +8830,7 @@ if(coupled_elastic_poro) then
         enddo
 
         do ispec = 1,nspec
-          if(.not. elastic(ispec) .and. .not. poroelastic(ispec)) then
+          if(acoustic(ispec)) then
             do j = 1, NGLLZ
               do i = 1, NGLLX
                 iglob = ibool(i,j,ispec)
@@ -8310,12 +9230,13 @@ if(coupled_elastic_poro) then
 
           if (myrank == 0) write(IOUT,*) 'drawing displacement vector as small arrows...'
 
-          call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic,&
-                          elastic,poroelastic,vector_field_display, &
+          call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
+                          potential_gravito,displ_elastic,displs_poroelastic,&
+                          acoustic,gravitoacoustic,elastic,poroelastic,vector_field_display, &
                           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
                           AXISYM,is_on_the_axis,hprimeBar_xx, &
-                          nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-                          numat,kmato,density,rhoext,assign_external_model)
+                          nspec,nglob,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
+                          numat,kmato,density,rhoext,gravityext,assign_external_model)
 
           call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
                       it,deltat,coorg,xinterp,zinterp,shape2D_display, &
@@ -8356,12 +9277,13 @@ if(coupled_elastic_poro) then
 
           if (myrank == 0) write(IOUT,*) 'drawing velocity vector as small arrows...'
 
-          call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,velocs_poroelastic,&
-                          elastic,poroelastic,vector_field_display, &
+          call compute_vector_whole_medium(potential_dot_acoustic,potential_dot_gravitoacoustic, &
+                          potential_dot_gravito,veloc_elastic,velocs_poroelastic, &
+                          acoustic,gravitoacoustic,elastic,poroelastic,vector_field_display, &
                           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
                           AXISYM,is_on_the_axis,hprimeBar_xx, &
-                          nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-                          numat,kmato,density,rhoext,assign_external_model)
+                          nspec,nglob,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
+                          numat,kmato,density,rhoext,gravityext,assign_external_model)
 
           call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
                       it,deltat,coorg,xinterp,zinterp,shape2D_display, &
@@ -8402,12 +9324,13 @@ if(coupled_elastic_poro) then
 
           if (myrank == 0) write(IOUT,*) 'drawing acceleration vector as small arrows...'
 
-          call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,accels_poroelastic,&
-                          elastic,poroelastic,vector_field_display, &
+          call compute_vector_whole_medium(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
+                          potential_dot_dot_gravito,accel_elastic,accels_poroelastic, &
+                          acoustic,gravitoacoustic,elastic,poroelastic,vector_field_display, &
                           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
                           AXISYM,is_on_the_axis,hprimeBar_xx, &
-                          nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-                          numat,kmato,density,rhoext,assign_external_model)
+                          nspec,nglob,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
+                          numat,kmato,density,rhoext,gravityext,assign_external_model)
 
           call plotpost(vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval, &
                       it,deltat,coorg,xinterp,zinterp,shape2D_display, &
@@ -8468,42 +9391,93 @@ if(coupled_elastic_poro) then
         if(imagetype_JPEG >= 1 .and. imagetype_JPEG <= 3) then
 
           if (myrank == 0) write(IOUT,*) 'drawing scalar image of part of the displacement vector...'
-          call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic,&
-                          elastic,poroelastic,vector_field_display, &
+          call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
+                          potential_gravito,displ_elastic,displs_poroelastic, &
+                          acoustic,gravitoacoustic,elastic,poroelastic,vector_field_display, &
                           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
                           AXISYM,is_on_the_axis,hprimeBar_xx, &
-                          nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-                          numat,kmato,density,rhoext,assign_external_model)
+                          nspec,nglob,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
+                          numat,kmato,density,rhoext,gravityext,assign_external_model)
 
         else if(imagetype_JPEG >= 4 .and. imagetype_JPEG <= 6) then
 
           if (myrank == 0) write(IOUT,*) 'drawing scalar image of part of the velocity vector...'
-          call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,velocs_poroelastic,&
-                          elastic,poroelastic,vector_field_display, &
+          call compute_vector_whole_medium(potential_dot_acoustic,potential_dot_gravitoacoustic, &
+                          potential_dot_gravito,veloc_elastic,velocs_poroelastic, &
+                          acoustic,gravitoacoustic,elastic,poroelastic,vector_field_display, &
                           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
                           AXISYM,is_on_the_axis,hprimeBar_xx, &
-                          nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-                          numat,kmato,density,rhoext,assign_external_model)
+                          nspec,nglob,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
+                          numat,kmato,density,rhoext,gravityext,assign_external_model)
 
         else if(imagetype_JPEG >= 7 .and. imagetype_JPEG <= 9) then
 
           if (myrank == 0) write(IOUT,*) 'drawing scalar image of part of the acceleration vector...'
-          call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,accels_poroelastic,&
-                          elastic,poroelastic,vector_field_display, &
+          call compute_vector_whole_medium(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
+                          potential_dot_dot_gravito,accel_elastic,accels_poroelastic, &
+                          acoustic,gravitoacoustic,elastic,poroelastic,vector_field_display, &
                           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
                           AXISYM,is_on_the_axis,hprimeBar_xx, &
-                          nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-                          numat,kmato,density,rhoext,assign_external_model)
+                          nspec,nglob,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
+                          numat,kmato,density,rhoext,gravityext,assign_external_model)
+
+        else if(imagetype_JPEG >= 11 .and. imagetype_JPEG <= 13) then
+! allocation for normalized representation in JPEG image
+! for an atmosphere model
+
+          if (myrank == 0) write(IOUT,*) 'drawing scalar image of part of normalized displacement vector...'
+
+          call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
+                          potential_gravito,displ_elastic,displs_poroelastic,&
+                          acoustic,gravitoacoustic,elastic,poroelastic,vector_field_display, &
+                          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
+                          AXISYM,is_on_the_axis,hprimeBar_xx, &
+                          nspec,nglob,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
+                          numat,kmato,density,rhoext,gravityext,assign_external_model)
+
+
+          do ispec = 1,nspec
+            do j = 1,NGLLZ
+              do i = 1,NGLLX
+                iglob = ibool(i,j,ispec)
+                vector_field_display(1,iglob) = sqrt(rhoext(i,j,ispec)) * vector_field_display(1,iglob)
+                vector_field_display(2,iglob) = sqrt(rhoext(i,j,ispec)) * vector_field_display(2,iglob)
+                vector_field_display(3,iglob) = sqrt(rhoext(i,j,ispec)) * vector_field_display(3,iglob)
+              enddo
+            enddo
+          enddo
+
+        else if(imagetype_JPEG >= 14 .and. imagetype_JPEG <= 16) then
+! allocation for normalized representation in JPEG image
+! for an atmosphere model
+          call compute_vector_whole_medium(potential_dot_acoustic,potential_dot_gravitoacoustic, &
+                          potential_dot_gravito,veloc_elastic,velocs_poroelastic,&
+                          acoustic,gravitoacoustic,elastic,poroelastic,vector_field_display, &
+                          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
+                          AXISYM,is_on_the_axis,hprimeBar_xx, &
+                          nspec,nglob,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
+                          numat,kmato,density,rhoext,gravityext,assign_external_model)
+
+          do ispec = 1,nspec
+            do j = 1,NGLLZ
+              do i = 1,NGLLX
+            iglob = ibool(i,j,ispec)
+            vector_field_display(1,iglob) = sqrt(rhoext(i,j,ispec)) * vector_field_display(1,iglob)
+            vector_field_display(2,iglob) = sqrt(rhoext(i,j,ispec)) * vector_field_display(2,iglob)
+            vector_field_display(3,iglob) = sqrt(rhoext(i,j,ispec)) * vector_field_display(3,iglob)
+              enddo
+            enddo
+          enddo
 
         else if(imagetype_JPEG == 10 .and. p_sv) then
 
           if (myrank == 0) write(IOUT,*) 'drawing image of pressure field...'
-          call compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,&
-                     displs_poroelastic,displw_poroelastic,elastic,poroelastic,vector_field_display, &
+          call compute_pressure_whole_medium(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic,displ_elastic, &
+                     displs_poroelastic,displw_poroelastic,acoustic,gravitoacoustic,elastic,poroelastic,vector_field_display, &
                      xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
                      AXISYM,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
-                     nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
-                     numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
+                     nglob,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
+                     numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext,gravityext, &
                      c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,e1,e11, &
                      ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
@@ -8529,13 +9503,15 @@ if(coupled_elastic_poro) then
 
           if(p_sv) then ! P-SH waves, plot a component of vector, its norm, or else pressure
             if(iglob_image_color(i,j) /= -1) then
-              if(imagetype_JPEG == 1 .or. imagetype_JPEG == 4 .or. imagetype_JPEG == 7) then
+              if(imagetype_JPEG == 1 .or. imagetype_JPEG == 4 .or. imagetype_JPEG == 7 .or. imagetype_JPEG == 11 &
+                                     .or. imagetype_JPEG == 14) then
                 image_color_data(i,j) = vector_field_display(1,iglob_image_color(i,j))  ! draw the X component of the vector
 
-              else if(imagetype_JPEG == 2 .or. imagetype_JPEG == 5 .or. imagetype_JPEG == 8) then
+              else if(imagetype_JPEG == 2 .or. imagetype_JPEG == 5 .or. imagetype_JPEG == 8 .or. imagetype_JPEG == 12 &
+                                          .or. imagetype_JPEG == 15) then
                 image_color_data(i,j) = vector_field_display(3,iglob_image_color(i,j))  ! draw the Z component of the vector
-
-              else if(imagetype_JPEG == 3 .or. imagetype_JPEG == 6 .or. imagetype_JPEG == 9) then
+              else if(imagetype_JPEG == 3 .or. imagetype_JPEG == 6 .or. imagetype_JPEG == 9 .or. imagetype_JPEG == 13 &
+                                          .or. imagetype_JPEG == 16) then
                 image_color_data(i,j) = sqrt(vector_field_display(1,iglob_image_color(i,j))**2 + &
                                              vector_field_display(3,iglob_image_color(i,j))**2)  ! draw the norm of the vector
 
@@ -8589,13 +9565,16 @@ if(coupled_elastic_poro) then
 
               if(p_sv) then ! P-SH waves, plot a component of vector, its norm, or else pressure
 
-                if(imagetype_JPEG == 1 .or. imagetype_JPEG == 4 .or. imagetype_JPEG == 7) then
+              if(imagetype_JPEG == 1 .or. imagetype_JPEG == 4 .or. imagetype_JPEG == 7 .or. imagetype_JPEG == 11 &
+                                     .or. imagetype_JPEG == 14) then
                   data_pixel_send(k) = vector_field_display(1,iglob_image_color(i,j))  ! draw the X component of the vector
 
-                else if(imagetype_JPEG == 2 .or. imagetype_JPEG == 5 .or. imagetype_JPEG == 8) then
+              else if(imagetype_JPEG == 2 .or. imagetype_JPEG == 5 .or. imagetype_JPEG == 8 .or. imagetype_JPEG == 12 &
+                                          .or. imagetype_JPEG == 15) then
                   data_pixel_send(k) = vector_field_display(3,iglob_image_color(i,j))  ! draw the Z component of the vector
 
-                else if(imagetype_JPEG == 3 .or. imagetype_JPEG == 6 .or. imagetype_JPEG == 9) then
+              else if(imagetype_JPEG == 3 .or. imagetype_JPEG == 6 .or. imagetype_JPEG == 9 .or. imagetype_JPEG == 13 &
+                                          .or. imagetype_JPEG == 16) then
                   data_pixel_send(k) = sqrt(vector_field_display(1,iglob_image_color(i,j))**2 + &
                                             vector_field_display(3,iglob_image_color(i,j))**2)  ! draw the norm of the vector
 
@@ -8690,42 +9669,44 @@ if(coupled_elastic_poro) then
         if(imagetype_wavefield_dumps == 1) then
 
           if (myrank == 0) write(IOUT,*) 'dumping the displacement vector...'
-          call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic,&
-                          elastic,poroelastic,vector_field_display, &
-                          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                          AXISYM,is_on_the_axis,hprimeBar_xx, &
-                          nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-                          numat,kmato,density,rhoext,assign_external_model)
-
+          call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
+                            potential_gravito,displ_elastic,displs_poroelastic, &
+                            acoustic,gravitoacoustic,elastic,poroelastic,vector_field_display, &
+                            xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
+                            AXISYM,is_on_the_axis,hprimeBar_xx, &
+                            nspec,nglob,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
+                            numat,kmato,density,rhoext,gravityext,assign_external_model)
         else if(imagetype_wavefield_dumps == 2) then
 
           if (myrank == 0) write(IOUT,*) 'dumping the velocity vector...'
-          call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,velocs_poroelastic,&
-                          elastic,poroelastic,vector_field_display, &
+          call compute_vector_whole_medium(potential_dot_acoustic,potential_gravitoacoustic, &
+                            potential_gravito,veloc_elastic,velocs_poroelastic, &
+                          acoustic,gravitoacoustic,elastic,poroelastic,vector_field_display, &
                           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
                           AXISYM,is_on_the_axis,hprimeBar_xx, &
-                          nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-                          numat,kmato,density,rhoext,assign_external_model)
+                          nspec,nglob,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
+                          numat,kmato,density,rhoext,gravityext,assign_external_model)
 
         else if(imagetype_wavefield_dumps == 3) then
 
           if (myrank == 0) write(IOUT,*) 'dumping the acceleration vector...'
-          call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,accels_poroelastic,&
-                          elastic,poroelastic,vector_field_display, &
+          call compute_vector_whole_medium(potential_dot_dot_acoustic,potential_gravitoacoustic, &
+                            potential_gravito,accel_elastic,accels_poroelastic, &
+                          acoustic,gravitoacoustic,elastic,poroelastic,vector_field_display, &
                           xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
                           AXISYM,is_on_the_axis,hprimeBar_xx, &
-                          nspec,nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-                          numat,kmato,density,rhoext,assign_external_model)
+                          nspec,nglob,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
+                          numat,kmato,density,rhoext,gravityext,assign_external_model)
 
         else if(imagetype_wavefield_dumps == 4 .and. p_sv) then
 
           if (myrank == 0) write(IOUT,*) 'dumping the pressure field...'
-          call compute_pressure_whole_medium(potential_dot_dot_acoustic,displ_elastic,&
-                     displs_poroelastic,displw_poroelastic,elastic,poroelastic,vector_field_display, &
+          call compute_pressure_whole_medium(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic,displ_elastic, &
+                     displs_poroelastic,displw_poroelastic,acoustic,gravitoacoustic,elastic,poroelastic,vector_field_display, &
                      xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
                      AXISYM,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
-                     nglob,nglob_acoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
-                     numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
+                     nglob,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
+                     numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext,gravityext, &
                      c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,e1,e11, &
                      ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 

@@ -43,12 +43,12 @@
 !
 !========================================================================
 
-  subroutine read_external_model(any_acoustic,any_elastic,any_poroelastic, &
-                elastic,poroelastic,anisotropic,nspec,nglob,N_SLS,ibool, &
+  subroutine read_external_model(any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic, &
+                acoustic,gravitoacoustic,elastic,poroelastic,anisotropic,nspec,nglob,N_SLS,ibool, &
                 f0_attenuation,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
                 inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent, &
                 inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,&
-                coord,kmato,rhoext,vpext,vsext, &
+                coord,kmato,rhoext,vpext,vsext,gravityext,Nsqext, &
                 QKappa_attenuationext,Qmu_attenuationext, &
                 c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,READ_EXTERNAL_SEP_FILE)
 
@@ -63,10 +63,10 @@
   double precision, dimension(NDIM,nglob) :: coord
 
   ! Material properties
-  logical :: any_acoustic,any_elastic,any_poroelastic,READ_EXTERNAL_SEP_FILE
+  logical :: any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic,READ_EXTERNAL_SEP_FILE
   integer, dimension(nspec) :: kmato
-  logical, dimension(nspec) :: elastic,poroelastic
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: rhoext,vpext,vsext
+  logical, dimension(nspec) :: acoustic,gravitoacoustic,elastic,poroelastic
+  double precision, dimension(NGLLX,NGLLZ,nspec) :: rhoext,vpext,vsext,gravityext,Nsqext
 
   ! for attenuation
   integer :: N_SLS
@@ -112,7 +112,7 @@
 
   else
 
-    call define_external_model(coord,kmato,ibool,rhoext,vpext,vsext,QKappa_attenuationext,Qmu_attenuationext, &
+    call define_external_model(coord,kmato,ibool,rhoext,vpext,vsext,QKappa_attenuationext,Qmu_attenuationext,gravityext,Nsqext, &
                                c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,nspec,nglob)
 
 ! check that the external model that has just been defined makes sense
@@ -146,9 +146,12 @@
 
   ! initializes
   any_acoustic = .false.
+  any_gravitoacoustic = .false.
   any_elastic = .false.
   any_poroelastic = .false.
 
+  acoustic(:) = .false.
+  gravitoacoustic(:) = .false.
   anisotropic(:) = .false.
   elastic(:) = .false.
   poroelastic(:) = .false.
@@ -171,10 +174,18 @@
           any_elastic = .true.
           QKappa_attenuationext(i,j,ispec) = 10.d0
           Qmu_attenuationext(i,j,ispec) = 10.d0
-        else if(vsext(i,j,ispec) < TINYVAL) then
+        else if((vsext(i,j,ispec) < TINYVAL).and.(gravityext(i,j,ispec) < TINYVAL)) then
           elastic(ispec) = .false.
           poroelastic(ispec) = .false.
+          gravitoacoustic(ispec)=.false.
+          acoustic(ispec)=.true.
           any_acoustic = .true.
+        else if((vsext(i,j,ispec) < TINYVAL).and.(gravityext(i,j,ispec) >= TINYVAL)) then
+          elastic(ispec) = .false.
+          poroelastic(ispec) = .false.
+          acoustic(ispec)=.false.
+          gravitoacoustic(ispec)=.true.
+          any_gravitoacoustic = .true.
         else
           poroelastic(ispec) = .false.
           elastic(ispec) = .true.
