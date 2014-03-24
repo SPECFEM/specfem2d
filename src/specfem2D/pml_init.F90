@@ -111,24 +111,24 @@
 
      !find elements stuck to boundary elements to define the 4 elements PML thickness
      !we take 4 elements for the PML thickness
-     do i_coef=2,NELEM_PML_THICKNESS
+      do i_coef=2,NELEM_PML_THICKNESS
 
-       do ispec=1,nspec
-         if(.not. which_PML_elem(ibound,ispec)) then
-           do j=1,NGLLZ,NGLLZ-1; do i=1,NGLLX,NGLLX-1
-             iglob=ibool(i,j,ispec)
-             do k=1,ncorner
-               if(iglob==icorner_iglob(k)) which_PML_elem(ibound,ispec) = .true.
-             enddo
-           enddo; enddo
-         endif
-       enddo
+        do ispec=1,nspec
+          if(.not. which_PML_elem(ibound,ispec)) then
+            do j=1,NGLLZ,NGLLZ-1; do i=1,NGLLX,NGLLX-1
+              iglob=ibool(i,j,ispec)
+              do k=1,ncorner
+                if(iglob==icorner_iglob(k)) which_PML_elem(ibound,ispec) = .true.
+              enddo
+            enddo; enddo
+          endif
+        enddo
 
-       ! list every corner of each PML element detected
-       ncorner=0
-       icorner_iglob=0
-       nspec_PML=0
-       do ispec=1,nspec
+      ! list every corner of each PML element detected
+        ncorner=0
+        icorner_iglob=0
+        nspec_PML=0
+        do ispec=1,nspec
           if(which_PML_elem(ibound,ispec)) then
             is_PML(ispec)=.true.
             do j=1,NGLLZ,NGLLZ-1; do i=1,NGLLX,NGLLX-1
@@ -142,117 +142,117 @@
             enddo; enddo
             nspec_PML=nspec_PML+1
           endif
-       enddo
+        enddo
 
-     enddo !end nelem_thickness loop
+      enddo !end nelem_thickness loop
 
-     if(SIMULATION_TYPE == 3 .or.  (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))then
+      if(SIMULATION_TYPE == 3 .or.  (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))then
 
-       do i_coef=NELEM_PML_THICKNESS,NELEM_PML_THICKNESS+1
-         do ispec=1,nspec
-           if(.not. which_PML_elem(ibound,ispec)) then
-             do j=1,NGLLZ,NGLLZ-1; do i=1,NGLLX,NGLLX-1
-               iglob=ibool(i,j,ispec)
-               do k=1,ncorner
-                 if(iglob==icorner_iglob(k)) PML_interior_interface(ibound,ispec) = .true.
-               enddo
-             enddo; enddo
-           endif
-         enddo
-       enddo !end nelem_thickness loop
+        do i_coef=NELEM_PML_THICKNESS,NELEM_PML_THICKNESS+1
+          do ispec=1,nspec
+            if(.not. which_PML_elem(ibound,ispec)) then
+              do j=1,NGLLZ,NGLLZ-1; do i=1,NGLLX,NGLLX-1
+                iglob=ibool(i,j,ispec)
+                do k=1,ncorner
+                  if(iglob==icorner_iglob(k)) PML_interior_interface(ibound,ispec) = .true.
+                enddo
+              enddo; enddo
+            endif
+          enddo
+        enddo !end nelem_thickness loop
 
-     endif !end of SIMULATION_TYPE == 3
+      endif !end of SIMULATION_TYPE == 3
 
-   enddo ! end loop on the four boundaries
+    enddo ! end loop on the four boundaries
 
-     if(SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))then
-       nglob_interface = 0
-       do ispec = 1,nspec
-         if(PML_interior_interface(IBOTTOM,ispec) .and. (.not. PML_interior_interface(IRIGHT,ispec)) .and. &
-            (.not. PML_interior_interface(ILEFT,ispec)) .and. (.not. which_PML_elem(IRIGHT,ispec)) .and. &
-            (.not. which_PML_elem(ILEFT,ispec)))then
-            nglob_interface = nglob_interface + 5
-         else if(PML_interior_interface(ITOP,ispec) .and. (.not. PML_interior_interface(IRIGHT,ispec)) .and. &
-                 (.not. PML_interior_interface(ILEFT,ispec)) .and. (.not. which_PML_elem(IRIGHT,ispec)) .and. &
-                 (.not. which_PML_elem(ILEFT,ispec)))then
-            nglob_interface = nglob_interface + 5
-         else if(PML_interior_interface(IRIGHT,ispec) .and. (.not. PML_interior_interface(IBOTTOM,ispec)) .and. &
-                 (.not. PML_interior_interface(ITOP,ispec)) .and. (.not. which_PML_elem(IBOTTOM,ispec)) .and. &
-                 (.not. which_PML_elem(ITOP,ispec)))then
-            nglob_interface = nglob_interface + 5
-         else if(PML_interior_interface(ILEFT,ispec) .and. (.not. PML_interior_interface(IBOTTOM,ispec)) .and. &
-                 (.not. PML_interior_interface(ITOP,ispec)) .and. (.not. which_PML_elem(IBOTTOM,ispec)) .and. &
-                 (.not. which_PML_elem(ITOP,ispec)))then
-            nglob_interface = nglob_interface + 5
-         else if(PML_interior_interface(ILEFT,ispec) .and. PML_interior_interface(IBOTTOM,ispec))then
-            nglob_interface = nglob_interface + 10
-         else if(PML_interior_interface(IRIGHT,ispec) .and. PML_interior_interface(IBOTTOM,ispec))then
-            nglob_interface = nglob_interface + 10
-         else if(PML_interior_interface(ILEFT,ispec) .and. PML_interior_interface(ITOP,ispec))then
-            nglob_interface = nglob_interface + 10
-         else if(PML_interior_interface(IRIGHT,ispec) .and. PML_interior_interface(ITOP,ispec))then
-            nglob_interface = nglob_interface + 10
-         endif
-       enddo
+    if(SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))then
+      nglob_interface = 0
+      do ispec = 1,nspec
+        if(PML_interior_interface(IBOTTOM,ispec) .and. (.not. PML_interior_interface(IRIGHT,ispec)) .and. &
+           (.not. PML_interior_interface(ILEFT,ispec)) .and. (.not. which_PML_elem(IRIGHT,ispec)) .and. &
+           (.not. which_PML_elem(ILEFT,ispec)))then
+          nglob_interface = nglob_interface + 5
+        else if(PML_interior_interface(ITOP,ispec) .and. (.not. PML_interior_interface(IRIGHT,ispec)) .and. &
+                (.not. PML_interior_interface(ILEFT,ispec)) .and. (.not. which_PML_elem(IRIGHT,ispec)) .and. &
+                (.not. which_PML_elem(ILEFT,ispec)))then
+          nglob_interface = nglob_interface + 5
+        else if(PML_interior_interface(IRIGHT,ispec) .and. (.not. PML_interior_interface(IBOTTOM,ispec)) .and. &
+                (.not. PML_interior_interface(ITOP,ispec)) .and. (.not. which_PML_elem(IBOTTOM,ispec)) .and. &
+                (.not. which_PML_elem(ITOP,ispec)))then
+          nglob_interface = nglob_interface + 5
+        else if(PML_interior_interface(ILEFT,ispec) .and. (.not. PML_interior_interface(IBOTTOM,ispec)) .and. &
+                (.not. PML_interior_interface(ITOP,ispec)) .and. (.not. which_PML_elem(IBOTTOM,ispec)) .and. &
+                (.not. which_PML_elem(ITOP,ispec)))then
+          nglob_interface = nglob_interface + 5
+        else if(PML_interior_interface(ILEFT,ispec) .and. PML_interior_interface(IBOTTOM,ispec))then
+          nglob_interface = nglob_interface + 10
+        else if(PML_interior_interface(IRIGHT,ispec) .and. PML_interior_interface(IBOTTOM,ispec))then
+          nglob_interface = nglob_interface + 10
+        else if(PML_interior_interface(ILEFT,ispec) .and. PML_interior_interface(ITOP,ispec))then
+          nglob_interface = nglob_interface + 10
+        else if(PML_interior_interface(IRIGHT,ispec) .and. PML_interior_interface(ITOP,ispec))then
+          nglob_interface = nglob_interface + 10
+        endif
+      enddo
     endif
 
-   do ispec=1,nspec
-     if(is_PML(ispec)) then
+    do ispec=1,nspec
+      if(is_PML(ispec)) then
 ! element is in the left cpml layer
-       if((which_PML_elem(ILEFT,ispec).eqv. .true.)   .and. (which_PML_elem(IRIGHT,ispec)  .eqv. .false.) .and. &
-          (which_PML_elem(ITOP,ispec)  .eqv. .false.) .and. (which_PML_elem(IBOTTOM,ispec).eqv. .false.)) then
-         region_CPML(ispec) = CPML_X_ONLY
+        if((which_PML_elem(ILEFT,ispec).eqv. .true.)   .and. (which_PML_elem(IRIGHT,ispec)  .eqv. .false.) .and. &
+           (which_PML_elem(ITOP,ispec)  .eqv. .false.) .and. (which_PML_elem(IBOTTOM,ispec).eqv. .false.)) then
+          region_CPML(ispec) = CPML_X_ONLY
 ! element is in the right cpml layer
-       else if((which_PML_elem(ILEFT,ispec).eqv. .false.) .and. (which_PML_elem(IRIGHT,ispec)  .eqv. .true.) .and. &
-               (which_PML_elem(ITOP,ispec) .eqv. .false.) .and. (which_PML_elem(IBOTTOM,ispec) .eqv. .false.)) then
-         region_CPML(ispec) = CPML_X_ONLY
+        else if((which_PML_elem(ILEFT,ispec).eqv. .false.) .and. (which_PML_elem(IRIGHT,ispec)  .eqv. .true.) .and. &
+                (which_PML_elem(ITOP,ispec) .eqv. .false.) .and. (which_PML_elem(IBOTTOM,ispec) .eqv. .false.)) then
+          region_CPML(ispec) = CPML_X_ONLY
 ! element is in the top cpml layer
-       else if((which_PML_elem(ILEFT,ispec).eqv. .false.) .and. (which_PML_elem(IRIGHT,ispec)  .eqv. .false.) .and. &
-               (which_PML_elem(ITOP,ispec) .eqv. .true. ) .and. (which_PML_elem(IBOTTOM,ispec) .eqv. .false.)) then
-         region_CPML(ispec) = CPML_Z_ONLY
+        else if((which_PML_elem(ILEFT,ispec).eqv. .false.) .and. (which_PML_elem(IRIGHT,ispec)  .eqv. .false.) .and. &
+                (which_PML_elem(ITOP,ispec) .eqv. .true. ) .and. (which_PML_elem(IBOTTOM,ispec) .eqv. .false.)) then
+          region_CPML(ispec) = CPML_Z_ONLY
 ! element is in the bottom cpml layer
-       else if((which_PML_elem(ILEFT,ispec).eqv. .false.) .and. (which_PML_elem(IRIGHT,ispec)  .eqv. .false.) .and. &
-               (which_PML_elem(ITOP,ispec) .eqv. .false.) .and. (which_PML_elem(IBOTTOM,ispec) .eqv. .true. )) then
-         region_CPML(ispec) = CPML_Z_ONLY
+        else if((which_PML_elem(ILEFT,ispec).eqv. .false.) .and. (which_PML_elem(IRIGHT,ispec)  .eqv. .false.) .and. &
+                (which_PML_elem(ITOP,ispec) .eqv. .false.) .and. (which_PML_elem(IBOTTOM,ispec) .eqv. .true. )) then
+          region_CPML(ispec) = CPML_Z_ONLY
 ! element is in the left-top cpml corner
-       else if((which_PML_elem(ILEFT,ispec).eqv. .true. ) .and. (which_PML_elem(IRIGHT,ispec)  .eqv. .false.).and. &
-               (which_PML_elem(ITOP,ispec) .eqv. .true. ) .and. (which_PML_elem(IBOTTOM,ispec) .eqv. .false.)) then
-         region_CPML(ispec) = CPML_XZ_ONLY
+        else if((which_PML_elem(ILEFT,ispec).eqv. .true. ) .and. (which_PML_elem(IRIGHT,ispec)  .eqv. .false.).and. &
+                (which_PML_elem(ITOP,ispec) .eqv. .true. ) .and. (which_PML_elem(IBOTTOM,ispec) .eqv. .false.)) then
+          region_CPML(ispec) = CPML_XZ_ONLY
 ! element is in the right-top cpml corner
-       else if((which_PML_elem(ILEFT,ispec).eqv. .false. ).and. (which_PML_elem(IRIGHT,ispec)  .eqv. .true. ).and. &
-               (which_PML_elem(ITOP,ispec) .eqv. .true.  ).and. (which_PML_elem(IBOTTOM,ispec) .eqv. .false.)) then
-         region_CPML(ispec) = CPML_XZ_ONLY
+        else if((which_PML_elem(ILEFT,ispec).eqv. .false. ).and. (which_PML_elem(IRIGHT,ispec)  .eqv. .true. ).and. &
+                (which_PML_elem(ITOP,ispec) .eqv. .true.  ).and. (which_PML_elem(IBOTTOM,ispec) .eqv. .false.)) then
+          region_CPML(ispec) = CPML_XZ_ONLY
 ! element is in the left-bottom cpml corner
-       else if((which_PML_elem(ILEFT,ispec).eqv. .true.  ).and. (which_PML_elem(IRIGHT,ispec)  .eqv. .false.).and. &
-               (which_PML_elem(ITOP,ispec) .eqv. .false. ).and. (which_PML_elem(IBOTTOM,ispec) .eqv. .true. )) then
-         region_CPML(ispec) = CPML_XZ_ONLY
+        else if((which_PML_elem(ILEFT,ispec).eqv. .true.  ).and. (which_PML_elem(IRIGHT,ispec)  .eqv. .false.).and. &
+                (which_PML_elem(ITOP,ispec) .eqv. .false. ).and. (which_PML_elem(IBOTTOM,ispec) .eqv. .true. )) then
+          region_CPML(ispec) = CPML_XZ_ONLY
 ! element is in the right-bottom cpml corner
-       else if((which_PML_elem(ILEFT,ispec).eqv. .false. ).and. (which_PML_elem(IRIGHT,ispec)  .eqv. .true.).and. &
-               (which_PML_elem(ITOP,ispec) .eqv. .false. ).and. (which_PML_elem(IBOTTOM,ispec) .eqv. .true.)) then
-         region_CPML(ispec) = CPML_XZ_ONLY
-       else
-         region_CPML(ispec) = 0
-       endif
-       if (AXISYM) then                                                                                                !axisym TODO
-         if ((which_PML_elem(IRIGHT,ispec) .eqv. .true.) &                                                             !axisym TODO
-        .or. (which_PML_elem(ILEFT,ispec) .eqv. .true.) &                                                              !axisym TODO
-        .or. (which_PML_elem(ITOP,ispec) .eqv. .true.)) &                                                              !axisym TODO
-        then                                                                                                           !axisym TODO
-           call exit_MPI('For the moment just the bottom PML works with axisymmetry')                                  !axisym TODO
-         endif                                                                                                         !axisym TODO
-       endif                                                                                                           !axisym TODO
-     endif
-   enddo
+        else if((which_PML_elem(ILEFT,ispec).eqv. .false. ).and. (which_PML_elem(IRIGHT,ispec)  .eqv. .true.).and. &
+                (which_PML_elem(ITOP,ispec) .eqv. .false. ).and. (which_PML_elem(IBOTTOM,ispec) .eqv. .true.)) then
+          region_CPML(ispec) = CPML_XZ_ONLY
+        else
+          region_CPML(ispec) = 0
+        endif
+   
+        if (AXISYM) then                                                                                                !axisym TODO
+          if ((which_PML_elem(IRIGHT,ispec) .eqv. .true.) &                                                             !axisym TODO
+          .or. (which_PML_elem(ILEFT,ispec) .eqv. .true.) &                                                             !axisym TODO
+          .or. (which_PML_elem(ITOP,ispec) .eqv. .true.)) then                                                          !axisym TODO
+            call exit_MPI('For the moment just the bottom PML works with axisymmetry')                                  !axisym TODO
+          endif                                                                                                         !axisym TODO
+        endif                                                                                                           !axisym TODO
+      endif
+    enddo
 
    !construction of table to use less memory for absorbing coefficients
-     spec_to_PML=0
-     nspec_PML=0
-     do ispec=1,nspec
-        if (is_PML(ispec)) then
-           nspec_PML=nspec_PML+1
-           spec_to_PML(ispec)=nspec_PML
-        endif
-     enddo
+    spec_to_PML=0
+    nspec_PML=0
+    do ispec=1,nspec
+      if (is_PML(ispec)) then
+        nspec_PML=nspec_PML+1
+        spec_to_PML(ispec)=nspec_PML
+      endif
+    enddo
 
   endif !end of detection of element inside PML layer for inner mesher
 
