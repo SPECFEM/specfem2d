@@ -30,6 +30,9 @@ deltat                          = 4e-4         # duration of a time step (see se
 USER_T0                         = 0.0d0          # use this t0 as earliest starting time rather than the automatically calculated one
 time_stepping_scheme            = 1              # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta), 3 = classical 4th-order 4-stage Runge-Kutta
 
+# acoustic forcing
+ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoustic medium with a rigid interface
+
 # source parameters
 NSOURCES                        = 1              # number of sources [source info read in CMTSOLUTION file]
 force_normal_to_surface         = .false.        # angleforce normal to surface (external mesh and curve file needed)
@@ -134,6 +137,7 @@ materials_file                  = ./DATA/Mesh_canyon/canyon_materials_file   # f
 free_surface_file               = ./DATA/Mesh_canyon/canyon_free_surface_file   # file containing the free surface
 axial_elements_file             = ./DATA/axial_elements_file # file containing the axial elements if AXISYM is true
 absorbing_surface_file          = ./DATA/Mesh_canyon/canyon_absorbing_surface_file   # file containing the absorbing surface
+acoustic_forcing_surface_file   = ./DATA/MSH/Surf_acforcing_Bottom_enforcing_mesh   # file containing the acoustic forcing surface
 CPML_element_file               = Elements_CPML_list  # file containing the CPML element numbers
 tangential_detection_curve_file = ./DATA/courbe_eros_nodes # file containing the curve delimiting the velocity model
 
