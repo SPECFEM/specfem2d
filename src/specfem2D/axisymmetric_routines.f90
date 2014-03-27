@@ -167,7 +167,7 @@ subroutine  build_is_on_the_axis(nspec, nelem_on_the_axis, ispec_of_axial_elemen
         endif
         if (is_on_the_axis(ispec_selected_source(isource))) then  !   If the source is on an axial element
           if ((xi_source(isource) > -1.d0) .and. (xi_source(isource) < 1.d0 )) then  !   ... but not exactly on the edges
-            call exit_MPI('Axisymmetry : a source has been set on the first element but not on the edges, this is not possible yet')
+            call exit_MPI('Axisymmetry : a source has been set on the first element but not on the axis, this is not possible yet')
           endif
           if (elastic(ispec_selected_source(isource))) then       !   ... or if the source is (at r=0) on an elastic axial element.
             if(((anglesource(isource) > TINYVAL) .and. (anglesource(isource) < PI)) &    ! ... and has a radial component.

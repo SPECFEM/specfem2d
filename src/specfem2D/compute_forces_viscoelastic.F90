@@ -1064,7 +1064,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
             if(AXISYM) then
               if (is_on_the_axis(ispec)) then
-              ! ispec == ispec_PML ?
                 accel_elastic_PML(1,i,j)= wxglj(i)*wzgll(j)*rhol*jacobian(i,j,ispec)*r_xiplus1(i,j) * &
                      ( A1 * veloc_elastic(1,iglob) + A2 * displ_elastic(1,iglob) + &
                        A3 * rmemory_displ_elastic(1,1,i,j,ispec_PML) + A4 * rmemory_displ_elastic(2,1,i,j,ispec_PML))
@@ -1072,10 +1071,10 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                      ( A1 * veloc_elastic(3,iglob) + A2 * displ_elastic(3,iglob) + &
                        A3 * rmemory_displ_elastic(1,3,i,j,ispec_PML) + A4 * rmemory_displ_elastic(2,3,i,j,ispec_PML))
               else
-                accel_elastic_PML(1,i,j)= wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)*coord(1,ibool(i,j,ispec_PML))* &
+                accel_elastic_PML(1,i,j)= wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)*coord(1,ibool(i,j,ispec))* &
                      ( A1 * veloc_elastic(1,iglob) + A2 * displ_elastic(1,iglob) + &
                        A3 * rmemory_displ_elastic(1,1,i,j,ispec_PML) + A4 * rmemory_displ_elastic(2,1,i,j,ispec_PML))
-                accel_elastic_PML(3,i,j)= wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)*coord(1,ibool(i,j,ispec_PML))* &
+                accel_elastic_PML(3,i,j)= wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)*coord(1,ibool(i,j,ispec))* &
                      ( A1 * veloc_elastic(3,iglob) + A2 * displ_elastic(3,iglob) + &
                        A3 * rmemory_displ_elastic(1,3,i,j,ispec_PML) + A4 * rmemory_displ_elastic(2,3,i,j,ispec_PML))
               endif
