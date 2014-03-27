@@ -85,7 +85,8 @@ module part_unstruct
 
   integer :: nelem_on_the_axis
   integer :: nelem_on_the_axis_loc
-  integer, dimension(:), pointer  :: ispec_of_axial_elements
+  integer, dimension(:), pointer  :: ispec_of_axial_elements, inode1_axial_elements, inode2_axial_elements, axisym_edge_type
+  integer :: dump
 
   integer :: nelemabs
   integer, dimension(:,:), allocatable  :: abs_surface
@@ -249,13 +250,12 @@ contains
   !-----------------------------------------------
   ! Read the PML elements, storing them in array 'region_pml_external_mesh'
   !-----------------------------------------------
-  subroutine read_pml_element(filename, region_pml_external_mesh, nspec_cpml, AXISYM)
+  subroutine read_pml_element(filename, region_pml_external_mesh, nspec_cpml)
 
   implicit none
 
   include "constants.h"
 
-  logical :: AXISYM
   character(len=256), intent(in)  :: filename
   integer, dimension(1:nelmnts), intent(out)  :: region_pml_external_mesh
   integer, intent(out)  :: nspec_cpml
@@ -287,11 +287,6 @@ contains
      if(pml_flag /= CPML_X_ONLY .and. pml_flag /= CPML_Z_ONLY .and. pml_flag /= CPML_XZ_ONLY) &
        stop 'error: incorrect CPML element flag found, should be CPML_X_ONLY or CPML_Z_ONLY or CPML_XZ_ONLY only'
 
-     if(AXISYM) then
-       if((pml_flag == CPML_X_ONLY) .or. (pml_flag == CPML_XZ_ONLY)) &
-         stop 'error: For the moment only the bottom PML works with axisymmetry'                                  !axisym TODO
-     endif
-
      region_pml_external_mesh(ispec) = pml_flag
   enddo
 
@@ -307,6 +302,7 @@ contains
   ! 'acoustic_surface' contains 1/ element number, 2/ number of nodes that form the free surface,
   ! 3/ first node on the free surface, 4/ second node on the free surface, if relevant (if 2/ is equal to 2)
   !-----------------------------------------------
+  
   subroutine read_acoustic_surface(filename, num_material, &
                 ANISOTROPIC_MATERIAL, nb_materials, icodemat, phi, remove_min_to_start_at_zero)
 
@@ -416,12 +412,15 @@ contains
   print *,"Number of elements on the axis: ", nelem_on_the_axis
 
   allocate(ispec_of_axial_elements(nelem_on_the_axis))
+  allocate(inode1_axial_elements(nelem_on_the_axis))
+  allocate(inode2_axial_elements(nelem_on_the_axis))
+  allocate(axisym_edge_type(nelem_on_the_axis))
 
-  do i = 1, nelem_on_the_axis
+  do i = 1, nelem_on_the_axis ! Dump is always 2 (old convention from absorbing surfaces)
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
-    read(994) ispec_of_axial_elements(i)
+    read(994) ispec_of_axial_elements(i), dump, inode1_axial_elements(i), inode2_axial_elements(i), axisym_edge_type(i)
 #else
-    read(994,*) ispec_of_axial_elements(i)
+    read(994,*) ispec_of_axial_elements(i), dump, inode1_axial_elements(i), inode2_axial_elements(i), axisym_edge_type(i)
 #endif
 
   enddo
@@ -440,6 +439,8 @@ contains
   enddo
   print *,'done testing for duplicates'
   print *
+  
+  !axisym TODO : Test if the informations supplied are compatible with axisym 
 
   end subroutine read_axial_elements_file
 
@@ -519,7 +520,7 @@ contains
   ! that we use to impose the plane wave and Bielak boundary conditions.
   !-----------------------------------------------
 
- subroutine rotate_mesh_for_plane_wave(ngnod)
+subroutine rotate_mesh_for_plane_wave(ngnod)
 
  implicit none
 
@@ -535,198 +536,418 @@ contains
  allocate(ibool(ngnod,nelmnts))
  allocate(ibool_rotated(ngnod,nelmnts))
 
-  do ispec = 1, nelmnts
-    if(ngnod == 4) then
-      ibool(1,ispec) = elmnts((ispec-1)*ngnod)
-      ibool(2,ispec) = elmnts((ispec-1)*ngnod+1)
-      ibool(3,ispec) = elmnts((ispec-1)*ngnod+2)
-      ibool(4,ispec) = elmnts((ispec-1)*ngnod+3)
-    else if(ngnod == 9) then
-      ibool(1,ispec) = elmnts((ispec-1)*ngnod)
-      ibool(2,ispec) = elmnts((ispec-1)*ngnod+1)
-      ibool(3,ispec) = elmnts((ispec-1)*ngnod+2)
-      ibool(4,ispec) = elmnts((ispec-1)*ngnod+3)
-      ibool(5,ispec) = elmnts((ispec-1)*ngnod+4)
-      ibool(6,ispec) = elmnts((ispec-1)*ngnod+5)
-      ibool(7,ispec) = elmnts((ispec-1)*ngnod+6)
-      ibool(8,ispec) = elmnts((ispec-1)*ngnod+7)
-      ibool(9,ispec) = elmnts((ispec-1)*ngnod+8)
-    else
-      stop 'error, ngnod should be either 4 or 9 for external meshes'
-    endif
-  enddo
+ do ispec = 1, nelmnts
+   if(ngnod == 4) then
+     ibool(1,ispec) = elmnts((ispec-1)*ngnod)
+     ibool(2,ispec) = elmnts((ispec-1)*ngnod+1)
+     ibool(3,ispec) = elmnts((ispec-1)*ngnod+2)
+     ibool(4,ispec) = elmnts((ispec-1)*ngnod+3)
+   else if(ngnod == 9) then
+     ibool(1,ispec) = elmnts((ispec-1)*ngnod)
+     ibool(2,ispec) = elmnts((ispec-1)*ngnod+1)
+     ibool(3,ispec) = elmnts((ispec-1)*ngnod+2)
+     ibool(4,ispec) = elmnts((ispec-1)*ngnod+3)
+     ibool(5,ispec) = elmnts((ispec-1)*ngnod+4)
+     ibool(6,ispec) = elmnts((ispec-1)*ngnod+5)
+     ibool(7,ispec) = elmnts((ispec-1)*ngnod+6)
+     ibool(8,ispec) = elmnts((ispec-1)*ngnod+7)
+     ibool(9,ispec) = elmnts((ispec-1)*ngnod+8)
+   else
+     stop 'error, ngnod should be either 4 or 9 for external meshes'
+   endif
+ enddo
 
+ do j = 1, 4
+   if(j == 1) then
+     index_edge=3
+     ibool_rotated(:,:) = ibool(:,:)
+   else if(j == 2) then
+     index_edge=1
+     ibool(:,:) = ibool_rotated(:,:)
+   else if(j == 3) then
+     index_edge=4
+     ibool(:,:) = ibool_rotated(:,:)
+   else if(j == 4) then
+     index_edge=2
+     ibool(:,:) = ibool_rotated(:,:)
+   else
+     stop 'j should be >=1 and <=4'
+   endif
 
-do j = 1, 4
-  if(j==1)then
-    index_edge=3
-    ibool_rotated(:,:) = ibool(:,:)
-  else if(j==2)then
-    index_edge=1
-    ibool(:,:) = ibool_rotated(:,:)
-  else if(j==3)then
-    index_edge=4
-    ibool(:,:) = ibool_rotated(:,:)
-  else if(j==4)then
-    index_edge=2
-    ibool(:,:) = ibool_rotated(:,:)
-  else
-    stop 'j should be >=1 and <=4'
-  endif
-
-   if(index_edge==1)then
-! bottome edge
-      index_rotation1 = 1
-      index_rotation2 = 2
-      index_rotation3 = 2
-      index_rotation4 = 3
-      index_rotation5 = 3
-      index_rotation6 = 4
-      index_rotation7 = 1
-      index_rotation8 = 4
-   else if(index_edge==2)then
-! right edge
-      index_rotation1 = 2
-      index_rotation2 = 3
-      index_rotation3 = 3
-      index_rotation4 = 4
-      index_rotation5 = 1
-      index_rotation6 = 4
-      index_rotation7 = 1
-      index_rotation8 = 2
-   else if(index_edge==3)then
-! top edge
-      index_rotation1 = 3
-      index_rotation2 = 4
-      index_rotation3 = 1
-      index_rotation4 = 4
-      index_rotation5 = 1
-      index_rotation6 = 2
-      index_rotation7 = 2
-      index_rotation8 = 3
-   else if(index_edge==4)then
-! left edge
-      index_rotation1 = 1
-      index_rotation2 = 4
-      index_rotation3 = 1
-      index_rotation4 = 2
-      index_rotation5 = 2
-      index_rotation6 = 3
-      index_rotation7 = 3
-      index_rotation8 = 4
+   if(index_edge == 1) then
+   ! bottom edge
+     index_rotation1 = 1
+     index_rotation2 = 2
+     index_rotation3 = 2
+     index_rotation4 = 3
+     index_rotation5 = 3
+     index_rotation6 = 4
+     index_rotation7 = 1
+     index_rotation8 = 4
+   else if(index_edge == 2) then
+   ! right edge
+     index_rotation1 = 2
+     index_rotation2 = 3
+     index_rotation3 = 3
+     index_rotation4 = 4
+     index_rotation5 = 1
+     index_rotation6 = 4
+     index_rotation7 = 1
+     index_rotation8 = 2
+   else if(index_edge == 3) then
+   ! top edge
+     index_rotation1 = 3
+     index_rotation2 = 4
+     index_rotation3 = 1
+     index_rotation4 = 4
+     index_rotation5 = 1
+     index_rotation6 = 2
+     index_rotation7 = 2
+     index_rotation8 = 3
+   else if(index_edge == 4) then
+   ! left edge
+     index_rotation1 = 1
+     index_rotation2 = 4
+     index_rotation3 = 1
+     index_rotation4 = 2
+     index_rotation5 = 2
+     index_rotation6 = 3
+     index_rotation7 = 3
+     index_rotation8 = 4
    else
      stop 'The edge on which abs_nodes is located should be defined'
    endif
 
-  do i = 1,nelemabs
-   if(index_edge==abs_surface(5,i))then
-   ispec = abs_surface(1,i) + 1  !!!! be careful: ispec from abs_surface(1,i) start at zero
-   found_this_point = .false.
-   do inode = 1,ngnod
-      if(ibool(inode,ispec) == abs_surface(3,i)) then
-       i1 = inode
-       found_this_point = .true.
-      exit
-    endif
+   do i = 1,nelemabs
+     if(index_edge == abs_surface(5,i)) then 
+       ispec = abs_surface(1,i) + 1  !!!! be careful: ispec from abs_surface(1,i) start at zero
+       found_this_point = .false.
+       do inode = 1,ngnod
+         if(ibool(inode,ispec) == abs_surface(3,i)) then
+           i1 = inode
+           found_this_point = .true.
+           exit
+         endif
+       enddo
+
+       if(.not. found_this_point) stop 'point not found'
+
+       found_this_point = .false.
+       do inode = 1,4
+         if(ibool(inode,ispec) == abs_surface(4,i)) then
+           i2 = inode
+           found_this_point = .true.
+           exit
+         endif
+       enddo
+       if(.not. found_this_point) stop 'point not found'
+
+       ! swap points if needed for clarity, to avoid testing both cases each time below
+       if(i1 > i2) then
+         iswap = i1
+         i1 = i2
+         i2 = iswap
+       endif
+       ! test orientation
+       if(i1 == index_rotation1 .and. i2 == index_rotation2) then
+       ! print *,'orientation of element ',i,' is already good'
+
+       else if (i1 == index_rotation3 .and. i2 == index_rotation4) then !for this one, remember that we have swapped, thus 41 is 14
+       ! print *,'element ',i,' must be rotated 3 times'
+         ibool_rotated(4,ispec) = ibool(1,ispec)
+         ibool_rotated(1,ispec) = ibool(2,ispec)
+         ibool_rotated(2,ispec) = ibool(3,ispec)
+         ibool_rotated(3,ispec) = ibool(4,ispec)
+         if(ngnod == 9) then
+           ibool_rotated(8,ispec) = ibool(5,ispec)
+           ibool_rotated(5,ispec) = ibool(6,ispec)
+           ibool_rotated(6,ispec) = ibool(7,ispec)
+           ibool_rotated(7,ispec) = ibool(8,ispec)
+          ! 9th point is at the element center and thus never changes when we rotate an element
+         endif
+
+       else if (i1 == index_rotation5 .and. i2 == index_rotation6) then
+       ! print *,'element ',i,ispec,' must be rotated 2 times top'
+         ibool_rotated(3,ispec) = ibool(1,ispec)
+         ibool_rotated(4,ispec) = ibool(2,ispec)
+         ibool_rotated(1,ispec) = ibool(3,ispec)
+         ibool_rotated(2,ispec) = ibool(4,ispec)
+         if(ngnod == 9) then
+           ibool_rotated(7,ispec) = ibool(5,ispec)
+           ibool_rotated(8,ispec) = ibool(6,ispec)
+           ibool_rotated(5,ispec) = ibool(7,ispec)
+           ibool_rotated(6,ispec) = ibool(8,ispec)
+           ! 9th point is at the element center and thus never changes when we rotate an element
+         endif
+
+       else if (i1 == index_rotation7 .and. i2 == index_rotation8) then
+       ! print *,'element ',i,' must be rotated 1 time'
+         ibool_rotated(2,ispec) = ibool(1,ispec)
+         ibool_rotated(3,ispec) = ibool(2,ispec)
+         ibool_rotated(4,ispec) = ibool(3,ispec)
+         ibool_rotated(1,ispec) = ibool(4,ispec)
+         if(ngnod == 9) then
+           ibool_rotated(6,ispec) = ibool(5,ispec)
+           ibool_rotated(7,ispec) = ibool(6,ispec)
+           ibool_rotated(8,ispec) = ibool(7,ispec)
+           ibool_rotated(5,ispec) = ibool(8,ispec)
+           ! 9th point is at the element center and thus never changes when we rotate an element
+         endif
+       else
+         stop 'problem in an element'
+       endif
+     endif
    enddo
-
-  if(.not. found_this_point) stop 'point not found'
-
-  found_this_point = .false.
-  do inode = 1,4
-    if(ibool(inode,ispec) == abs_surface(4,i)) then
-      i2 = inode
-      found_this_point = .true.
-      exit
-    endif
-  enddo
-  if(.not. found_this_point) stop 'point not found'
-
-! swap points if needed for clarity, to avoid testing both cases each time below
-  if(i1 > i2) then
-    iswap = i1
-    i1 = i2
-    i2 = iswap
-  endif
-
-! test orientation
-   if(i1 == index_rotation1 .and. i2 == index_rotation2) then
-!   print *,'orientation of element ',i,' is already good'
-
-   else if (i1 == index_rotation3 .and. i2 == index_rotation4) then ! for this one, remember that we have swapped, thus 4 1 is 1 4
-!   print *,'element ',i,' must be rotated 3 times'
-    ibool_rotated(4,ispec) = ibool(1,ispec)
-    ibool_rotated(1,ispec) = ibool(2,ispec)
-    ibool_rotated(2,ispec) = ibool(3,ispec)
-    ibool_rotated(3,ispec) = ibool(4,ispec)
-    if(ngnod == 9) then
-      ibool_rotated(8,ispec) = ibool(5,ispec)
-      ibool_rotated(5,ispec) = ibool(6,ispec)
-      ibool_rotated(6,ispec) = ibool(7,ispec)
-      ibool_rotated(7,ispec) = ibool(8,ispec)
-! 9th point is at the element center and thus never changes when we rotate an element
-    endif
-
-   else if (i1 == index_rotation5 .and. i2 == index_rotation6) then
-!   print *,'element ',i,ispec,' must be rotated 2 times top'
-    ibool_rotated(3,ispec) = ibool(1,ispec)
-    ibool_rotated(4,ispec) = ibool(2,ispec)
-    ibool_rotated(1,ispec) = ibool(3,ispec)
-    ibool_rotated(2,ispec) = ibool(4,ispec)
-    if(ngnod == 9) then
-      ibool_rotated(7,ispec) = ibool(5,ispec)
-      ibool_rotated(8,ispec) = ibool(6,ispec)
-      ibool_rotated(5,ispec) = ibool(7,ispec)
-      ibool_rotated(6,ispec) = ibool(8,ispec)
-! 9th point is at the element center and thus never changes when we rotate an element
-    endif
-
-   else if (i1 == index_rotation7 .and. i2 == index_rotation8) then
-!   print *,'element ',i,' must be rotated 1 time'
-    ibool_rotated(2,ispec) = ibool(1,ispec)
-    ibool_rotated(3,ispec) = ibool(2,ispec)
-    ibool_rotated(4,ispec) = ibool(3,ispec)
-    ibool_rotated(1,ispec) = ibool(4,ispec)
-    if(ngnod == 9) then
-      ibool_rotated(6,ispec) = ibool(5,ispec)
-      ibool_rotated(7,ispec) = ibool(6,ispec)
-      ibool_rotated(8,ispec) = ibool(7,ispec)
-      ibool_rotated(5,ispec) = ibool(8,ispec)
-! 9th point is at the element center and thus never changes when we rotate an element
-    endif
-
-   else
-     stop 'problem in an element'
-   endif
-
-  endif
-
-  enddo
-
  enddo
 
-  do ispec = 1, nelmnts
-    if(ngnod == 4) then
-      elmnts((ispec-1)*ngnod)   = ibool_rotated(1,ispec)
-      elmnts((ispec-1)*ngnod+1) = ibool_rotated(2,ispec)
-      elmnts((ispec-1)*ngnod+2) = ibool_rotated(3,ispec)
-      elmnts((ispec-1)*ngnod+3) = ibool_rotated(4,ispec)
-    else if(ngnod == 9) then
-      elmnts((ispec-1)*ngnod)   = ibool_rotated(1,ispec)
-      elmnts((ispec-1)*ngnod+1) = ibool_rotated(2,ispec)
-      elmnts((ispec-1)*ngnod+2) = ibool_rotated(3,ispec)
-      elmnts((ispec-1)*ngnod+3) = ibool_rotated(4,ispec)
-      elmnts((ispec-1)*ngnod+4) = ibool_rotated(5,ispec)
-      elmnts((ispec-1)*ngnod+5) = ibool_rotated(6,ispec)
-      elmnts((ispec-1)*ngnod+6) = ibool_rotated(7,ispec)
-      elmnts((ispec-1)*ngnod+7) = ibool_rotated(8,ispec)
-      elmnts((ispec-1)*ngnod+8) = ibool_rotated(9,ispec)
-    else
-      stop 'error, ngnod should be either 4 or 9 for external meshes'
-    endif
-  enddo
+ do ispec = 1, nelmnts
+   if(ngnod == 4) then
+     elmnts((ispec-1)*ngnod)   = ibool_rotated(1,ispec)
+     elmnts((ispec-1)*ngnod+1) = ibool_rotated(2,ispec)
+     elmnts((ispec-1)*ngnod+2) = ibool_rotated(3,ispec)
+     elmnts((ispec-1)*ngnod+3) = ibool_rotated(4,ispec)
+   else if(ngnod == 9) then
+     elmnts((ispec-1)*ngnod)   = ibool_rotated(1,ispec)
+     elmnts((ispec-1)*ngnod+1) = ibool_rotated(2,ispec)
+     elmnts((ispec-1)*ngnod+2) = ibool_rotated(3,ispec)
+     elmnts((ispec-1)*ngnod+3) = ibool_rotated(4,ispec)
+     elmnts((ispec-1)*ngnod+4) = ibool_rotated(5,ispec)
+     elmnts((ispec-1)*ngnod+5) = ibool_rotated(6,ispec)
+     elmnts((ispec-1)*ngnod+6) = ibool_rotated(7,ispec)
+     elmnts((ispec-1)*ngnod+7) = ibool_rotated(8,ispec)
+     elmnts((ispec-1)*ngnod+8) = ibool_rotated(9,ispec)
+   else
+     stop 'error, ngnod should be either 4 or 9 for external meshes'
+   endif
+ enddo
 
-end  subroutine rotate_mesh_for_plane_wave
+end subroutine rotate_mesh_for_plane_wave
+
+subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and change its name
+! They are the same by replacing :
+!   nelem_on_the_axis          <-> nelemabs
+!   ispec_of_axial_elements(i) <-> abs_surface(1,i) + 1
+!   axisym_edge_type(i)        <-> abs_surface(5,i)       (type of edge : bottom, right, top, left)
+!   inode1_axial_elements(i)   <-> abs_surface(3,i)       (inode of the first anchor node of the edge)
+!   inode2_axial_elements(i)   <-> abs_surface(4,i)       (inode of the second anchor node of the edge)
+! When we are using external mesher for axisymmetric simulations we do not control how the elements
+! will be orientated. Sometimes "i<->j". We could have code everything taking that into account but we have prefered
+! to rotate the mesh
+
+ implicit none
+
+ integer, intent(in)  :: ngnod
+ integer :: i,j,ispec,i1,i2,inode,iswap
+ logical :: found_this_point
+ integer, dimension(:,:), allocatable :: ibool,ibool_rotated
+!! DK DK be careful here, "ibool" applies to the mesh corners (4 or 9 points) only,
+!! DK DK not to the GLL points because there are no GLL points in the Gmsh mesh files
+  integer :: index_rotation1,index_rotation2,index_rotation3,index_rotation4,&
+             index_rotation5,index_rotation6,index_rotation7,index_rotation8,index_edge
+
+ allocate(ibool(ngnod,nelmnts))
+ allocate(ibool_rotated(ngnod,nelmnts))
+ 
+ do ispec = 1, nelmnts ! Loop on the elements
+ ! At the end of the loop, thank to ibool we can access to the global number of
+ ! each node from the ispec of the element to which it belongs and from its 
+ ! geometrical position :
+ !            4 . . 7 . . 3
+ !            .           .
+ !            .           .
+ !            8     9     6
+ !            .           .
+ !            .           .
+ !            1 . . 5 . . 2
+   if(ngnod == 4) then
+     ibool(1,ispec) = elmnts((ispec-1)*ngnod)+1
+     ibool(2,ispec) = elmnts((ispec-1)*ngnod+1)+1
+     ibool(3,ispec) = elmnts((ispec-1)*ngnod+2)+1
+     ibool(4,ispec) = elmnts((ispec-1)*ngnod+3)+1
+   else if(ngnod == 9) then
+     ibool(1,ispec) = elmnts((ispec-1)*ngnod)+1
+     ibool(2,ispec) = elmnts((ispec-1)*ngnod+1)+1
+     ibool(3,ispec) = elmnts((ispec-1)*ngnod+2)+1
+     ibool(4,ispec) = elmnts((ispec-1)*ngnod+3)+1
+     ibool(5,ispec) = elmnts((ispec-1)*ngnod+4)+1
+     ibool(6,ispec) = elmnts((ispec-1)*ngnod+5)+1
+     ibool(7,ispec) = elmnts((ispec-1)*ngnod+6)+1
+     ibool(8,ispec) = elmnts((ispec-1)*ngnod+7)+1
+     ibool(9,ispec) = elmnts((ispec-1)*ngnod+8)+1
+   else
+     stop 'rotate_mesh_for_axisym: error, ngnod should be either 4 or 9 for external meshes'
+   endif
+ enddo
+ 
+ ! do ispec = 1, nelmnts  !TODO remove
+ !   write(*,'(A8,I3)', advance='yes') "ispec = ",ispec
+ !   do i=1,9
+ !     write(*,'(I5)', advance='no') ibool(i,ispec) 
+ !   enddo
+ !   print *,""
+ ! enddo
+
+ do j = 1, 4 ! Loop on the corners
+   if(j == 1) then
+     index_edge = 3 ! top edge
+     ibool_rotated(:,:) = ibool(:,:)
+   else if(j == 2) then
+     index_edge = 1 ! bottom edge
+     ibool(:,:) = ibool_rotated(:,:)
+   else if(j == 3) then
+     index_edge = 4 ! left edge
+     ibool(:,:) = ibool_rotated(:,:)
+   else if(j == 4) then
+     index_edge = 2 ! right edge
+     ibool(:,:) = ibool_rotated(:,:)
+   else
+     stop 'rotate_mesh_for_axisym: j should be >=1 and <=4'
+   endif
+
+   if(index_edge == 1) then
+   ! bottom edge
+     index_rotation1 = 1
+     index_rotation2 = 2
+     index_rotation3 = 2
+     index_rotation4 = 3
+     index_rotation5 = 3
+     index_rotation6 = 4
+     index_rotation7 = 1
+     index_rotation8 = 4
+   else if(index_edge == 2) then
+   ! right edge
+     index_rotation1 = 2
+     index_rotation2 = 3
+     index_rotation3 = 3
+     index_rotation4 = 4
+     index_rotation5 = 1
+     index_rotation6 = 4
+     index_rotation7 = 1
+     index_rotation8 = 2
+   else if(index_edge == 3) then
+   ! top edge
+     index_rotation1 = 3
+     index_rotation2 = 4
+     index_rotation3 = 1
+     index_rotation4 = 4
+     index_rotation5 = 1
+     index_rotation6 = 2
+     index_rotation7 = 2
+     index_rotation8 = 3
+   else if(index_edge == 4) then
+   ! left edge
+     index_rotation1 = 1
+     index_rotation2 = 4
+     index_rotation3 = 1
+     index_rotation4 = 2
+     index_rotation5 = 2
+     index_rotation6 = 3
+     index_rotation7 = 3
+     index_rotation8 = 4
+   else
+     stop 'rotate_mesh_for_axisym: the edge on which axisym_edge is located should be defined'
+   endif
+   
+   do i = 1,nelem_on_the_axis ! Loop on the elements on the axis (red on the axisym file)
+     if(index_edge == axisym_edge_type(i)) then
+       ispec=ispec_of_axial_elements(i)
+       found_this_point = .false.
+       do inode = 1,ngnod ! loop on the control points on the axial element ispec_of_axial_elements(i)
+         if(ibool(inode,ispec) == inode1_axial_elements(i)) then
+           i1 = inode
+           found_this_point = .true.
+           exit
+         endif
+       enddo
+       if(.not. found_this_point) stop 'rotate_mesh_for_axisym: point not found 1'
+       found_this_point = .false.
+       do inode = 1,4
+         if(ibool(inode,ispec) == inode2_axial_elements(i)) then
+           i2 = inode
+           found_this_point = .true.
+           exit
+         endif
+       enddo
+       if(.not. found_this_point) stop 'rotate_mesh_for_axisym: point not found 2'
+       ! swap points if needed for clarity, to avoid testing both cases each time below
+       if(i1 > i2) then
+         iswap = i1
+         i1 = i2
+         i2 = iswap
+       endif
+       ! test orientation
+       if(i1 == index_rotation1 .and. i2 == index_rotation2) then
+        print *,'orientation of element ',i,' is already good'
+       else if (i1 == index_rotation3 .and. i2 == index_rotation4) then !for this one, remember that we have swapped, thus 41 is 14
+        print *,'element ',i,' must be rotated 3 times'
+         ibool_rotated(4,ispec) = ibool(1,ispec)
+         ibool_rotated(1,ispec) = ibool(2,ispec)
+         ibool_rotated(2,ispec) = ibool(3,ispec)
+         ibool_rotated(3,ispec) = ibool(4,ispec)
+         if(ngnod == 9) then
+           ibool_rotated(8,ispec) = ibool(5,ispec)
+           ibool_rotated(5,ispec) = ibool(6,ispec)
+           ibool_rotated(6,ispec) = ibool(7,ispec)
+           ibool_rotated(7,ispec) = ibool(8,ispec)
+          ! 9th point is at the element center and thus never changes when we rotate an element
+         endif
+
+       else if (i1 == index_rotation5 .and. i2 == index_rotation6) then
+        print *,'element ',i,ispec,' must be rotated 2 times top'
+         ibool_rotated(3,ispec) = ibool(1,ispec)
+         ibool_rotated(4,ispec) = ibool(2,ispec)
+         ibool_rotated(1,ispec) = ibool(3,ispec)
+         ibool_rotated(2,ispec) = ibool(4,ispec)
+         if(ngnod == 9) then
+           ibool_rotated(7,ispec) = ibool(5,ispec)
+           ibool_rotated(8,ispec) = ibool(6,ispec)
+           ibool_rotated(5,ispec) = ibool(7,ispec)
+           ibool_rotated(6,ispec) = ibool(8,ispec)
+           ! 9th point is at the element center and thus never changes when we rotate an element
+         endif
+
+       else if (i1 == index_rotation7 .and. i2 == index_rotation8) then
+        print *,'element ',i,' must be rotated 1 time'
+         ibool_rotated(2,ispec) = ibool(1,ispec)
+         ibool_rotated(3,ispec) = ibool(2,ispec)
+         ibool_rotated(4,ispec) = ibool(3,ispec)
+         ibool_rotated(1,ispec) = ibool(4,ispec)
+         if(ngnod == 9) then
+           ibool_rotated(6,ispec) = ibool(5,ispec)
+           ibool_rotated(7,ispec) = ibool(6,ispec)
+           ibool_rotated(8,ispec) = ibool(7,ispec)
+           ibool_rotated(5,ispec) = ibool(8,ispec)
+           ! 9th point is at the element center and thus never changes when we rotate an element
+         endif
+       else
+         stop 'rotate_mesh_for_axisym: problem in an element'
+       endif
+     endif
+   enddo
+ enddo
+
+ do ispec = 1, nelmnts
+   if(ngnod == 4) then
+     elmnts((ispec-1)*ngnod)   = ibool_rotated(1,ispec)-1
+     elmnts((ispec-1)*ngnod+1) = ibool_rotated(2,ispec)-1
+     elmnts((ispec-1)*ngnod+2) = ibool_rotated(3,ispec)-1
+     elmnts((ispec-1)*ngnod+3) = ibool_rotated(4,ispec)-1
+   else if(ngnod == 9) then
+     elmnts((ispec-1)*ngnod)   = ibool_rotated(1,ispec)-1
+     elmnts((ispec-1)*ngnod+1) = ibool_rotated(2,ispec)-1
+     elmnts((ispec-1)*ngnod+2) = ibool_rotated(3,ispec)-1
+     elmnts((ispec-1)*ngnod+3) = ibool_rotated(4,ispec)-1
+     elmnts((ispec-1)*ngnod+4) = ibool_rotated(5,ispec)-1
+     elmnts((ispec-1)*ngnod+5) = ibool_rotated(6,ispec)-1
+     elmnts((ispec-1)*ngnod+6) = ibool_rotated(7,ispec)-1
+     elmnts((ispec-1)*ngnod+7) = ibool_rotated(8,ispec)-1
+     elmnts((ispec-1)*ngnod+8) = ibool_rotated(9,ispec)-1
+   else
+     stop 'rotate_mesh_for_axisym: error, ngnod should be either 4 or 9 for external meshes'
+   endif
+ enddo
+
+end subroutine rotate_mesh_for_axisym
 
   !-----------------------------------------------
   ! Creating dual graph (adjacency is defined by 'ncommonnodes' between two elements).

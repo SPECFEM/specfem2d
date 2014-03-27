@@ -481,7 +481,7 @@
                           A4 * rmemory_potential_acoustic(2,i,j,ispec_PML))
               else
                 potential_dot_dot_acoustic_PML(i,j)= wxgll(i)*wzgll(j)/kappal*jacobian(i,j,ispec) &
-                                                    * coord(1,ibool(i,j,ispec_PML)) * &
+                                                    * coord(1,ibool(i,j,ispec)) * &
                          (A1 * potential_dot_acoustic(iglob) + A2 * potential_acoustic(iglob) + &
                           A3 * rmemory_potential_acoustic(1,i,j,ispec_PML) + &
                           A4 * rmemory_potential_acoustic(2,i,j,ispec_PML))

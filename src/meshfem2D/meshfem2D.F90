@@ -453,7 +453,7 @@ program meshfem2D
   if ( read_external_mesh ) then
      call read_mat(materials_file, num_material)
      if(PML_BOUNDARY_CONDITIONS)then
-      call read_pml_element(CPML_element_file, region_pml_external_mesh, nspec_cpml, AXISYM)
+      call read_pml_element(CPML_element_file, region_pml_external_mesh, nspec_cpml)
      endif
   else
      call read_regions(nbregion,nb_materials,icodemat,cp,cs, &
@@ -801,14 +801,13 @@ program meshfem2D
            enddo
         enddo
      endif
-
   endif
 
   if(AXISYM) then
-    if ( read_external_mesh ) then  !! DK DK si maillage CUBIT externe
+    if(read_external_mesh) then
       call read_axial_elements_file(axial_elements_file)
-
-    else !! DK DK if the mesh has been made by the internal mesher
+      call rotate_mesh_for_axisym(ngnod) ! Sometimes the mesher supplies meshes with "i<->j" : this routine fix that
+    else ! if the mesh has been made by the internal mesher
 
       if(xmin * xmax < 0) stop 'in axisymmetric mode xmin and xmax must have the same sign, they cannot cross the symmetry axis'
       if(xmin < 0) stop 'in axisymmetric mode, case of symmetry axis on the right edge instead of left not supported yet'
