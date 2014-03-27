@@ -102,8 +102,8 @@
 !
 
 
-  subroutine initialize_simulation_domains(any_acoustic,any_elastic,any_poroelastic, &
-                                anisotropic,elastic,poroelastic,porosity,anisotropy,kmato,numat, &
+  subroutine initialize_simulation_domains(any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic, &
+                                anisotropic,acoustic,gravitoacoustic,elastic,poroelastic,porosity,anisotropy,kmato,numat, &
                                 nspec,nspec_allocate,p_sv,ATTENUATION_VISCOELASTIC_SOLID,count_nspec_acoustic)
 
   implicit none
@@ -112,6 +112,8 @@
   integer :: nspec,nspec_allocate
 
   logical, dimension(nspec) :: anisotropic
+  logical, dimension(nspec) :: acoustic
+  logical, dimension(nspec) :: gravitoacoustic
   logical, dimension(nspec) :: elastic
   logical, dimension(nspec) :: poroelastic
 
@@ -120,7 +122,7 @@
   double precision, dimension(6,numat) :: anisotropy
   integer, dimension(nspec) :: kmato
 
-  logical :: any_acoustic,any_elastic,any_poroelastic
+  logical :: any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic
   logical :: p_sv,ATTENUATION_VISCOELASTIC_SOLID
 
   ! local parameters
@@ -128,10 +130,13 @@
 
   ! initializes
   any_acoustic = .false.
+  any_gravitoacoustic = .false.
   any_elastic = .false.
   any_poroelastic = .false.
 
   anisotropic(:) = .false.
+  acoustic(:) = .false.
+  gravitoacoustic(:) = .false.
   elastic(:) = .false.
   poroelastic(:) = .false.
 
@@ -140,13 +145,17 @@
   do ispec = 1,nspec
 
     if( nint(porosity(kmato(ispec))) == 1 ) then
-      ! acoustic domain
+      ! assume acoustic domain
+      ! if gravitoacoustic -> set by read_external_model
+      acoustic(ispec) = .true.
       elastic(ispec) = .false.
       poroelastic(ispec) = .false.
       any_acoustic = .true.
+      gravitoacoustic(ispec) = .false.
+      any_gravitoacoustic = .false.
       count_nspec_acoustic = count_nspec_acoustic + 1
     else if( porosity(kmato(ispec)) < TINYVAL) then
-      ! elastic domain
+      ! assume elastic domain
       elastic(ispec) = .true.
       poroelastic(ispec) = .false.
       any_elastic = .true.
@@ -154,7 +163,7 @@
          anisotropic(ispec) = .true.
       endif
     else
-      ! poroelastic domain
+      ! assume poroelastic domain
       elastic(ispec) = .false.
       poroelastic(ispec) = .true.
       any_poroelastic = .true.

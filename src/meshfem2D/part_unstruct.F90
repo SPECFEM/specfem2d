@@ -110,6 +110,18 @@ module part_unstruct
   integer :: nedges_elporo_coupled
   integer, dimension(:,:), pointer  :: edges_elporo_coupled
 
+  ! for acoustic forcing elements
+  integer :: nelemacforcing
+  integer, dimension(:,:), allocatable :: acforcing_surface
+  logical, dimension(:,:), allocatable  :: acforcing_surface_char
+  integer, dimension(:), allocatable  :: acforcing_surface_merge,acforcing_surface_type
+  integer :: nelemacforcing_loc
+
+  integer :: nelemacforcing_merge
+  integer, dimension(:), allocatable  :: ibegin_edge1_acforcing,iend_edge1_acforcing, &
+       ibegin_edge3_acforcing,iend_edge3_acforcing,ibegin_edge4_acforcing,iend_edge4_acforcing, &
+       ibegin_edge2_acforcing,iend_edge2_acforcing
+
 contains
 
   !-----------------------------------------------
@@ -512,6 +524,77 @@ contains
   abs_surface(4,:) = abs_surface(4,:) - remove_min_to_start_at_zero
 
   end subroutine read_abs_surface
+
+  !-----------------------------------------------
+  ! Read acoustic forcing surface.
+  ! 'acforcing_surface' contains 1/ element number, 2/ number of nodes that form the acoustic forcing edge
+  ! (which currently must always be equal to two, see comment below),
+  ! 3/ first node on the acforcing surface, 4/ second node on the acforcing surface
+  ! 5/ 1=IBOTTOME, 2=IRIGHT, 3=ITOP, 4=ILEFT
+  !-----------------------------------------------
+  subroutine read_acoustic_forcing_surface(filename, remove_min_to_start_at_zero)
+
+  implicit none
+  !include "constants.h"
+
+  character(len=256), intent(in)  :: filename
+  integer, intent(in)  :: remove_min_to_start_at_zero
+
+  integer  :: i,ier
+
+#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+  open(unit=995, file=trim(filename), form='unformatted' , status='old', action='read', iostat=ier)
+#else
+  open(unit=995, file=trim(filename), form='formatted' , status='old', action='read', iostat=ier)
+#endif
+  if( ier /= 0 ) then
+    print *,'error opening file: ',trim(filename)
+    stop 'error read acoustic forcing surface file'
+  endif
+
+#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+  read(995) nelemacforcing
+#else
+  read(995,*) nelemacforcing
+#endif
+
+  allocate(acforcing_surface(5,nelemacforcing))
+
+  do i = 1, nelemacforcing
+#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
+    read(995) acforcing_surface(1,i), acforcing_surface(2,i), acforcing_surface(3,i), acforcing_surface(4,i), &
+                acforcing_surface(5,i)
+#else
+    read(995,*) acforcing_surface(1,i), acforcing_surface(2,i), acforcing_surface(3,i), acforcing_surface(4,i), &
+                acforcing_surface(5,i)
+#endif
+
+    if (acforcing_surface(2,i) /= 2) then
+      print *,'Only two nodes per acoustic forcing element can be listed.'
+      print *,'If one of your elements has more than one edge along a given acoustic forcing contour'
+      print *,'(e.g., if that contour has a corner) then list it twice,'
+      print *,'putting the first edge on the first line and the second edge on the second line.'
+      print *,'If one of your elements has a single point along the acoustic forcing contour rather than a full edge, do NOT'
+      print *,'list it (it would have no weight in the contour integral anyway because it would consist of a single point).'
+      print *,'If you use 9-node elements, list only the first and last points of the edge and not the intermediate point'
+      print *,'located around the middle of the edge; the right 9-node curvature will be restored automatically by the code.'
+
+      stop 'only two nodes per element should be listed for absorbing edges'
+    endif
+
+    if (acforcing_surface(5,i) < 1 .or. acforcing_surface(5,i) > 4) then
+      stop 'absorbing element type must be between 1 (IBOTTOM) and 4 (ILEFT)'
+    endif
+
+  enddo
+
+  close(995)
+
+  acforcing_surface(1,:) = acforcing_surface(1,:) - remove_min_to_start_at_zero
+  acforcing_surface(3,:) = acforcing_surface(3,:) - remove_min_to_start_at_zero
+  acforcing_surface(4,:) = acforcing_surface(4,:) - remove_min_to_start_at_zero
+
+  end subroutine read_acoustic_forcing_surface
 
   !-----------------------------------------------
   ! rotate_mesh_for_plane_wave.
@@ -1866,6 +1949,169 @@ end subroutine rotate_mesh_for_axisym
 
   end subroutine write_abs_merge_database
 
+  !--------------------------------------------------
+  ! Set acoustic forcing boundaries by elements instead of edges.
+  ! inspired by merge_abs_boundaries upper in this file
+  !--------------------------------------------------
+
+  subroutine merge_acoustic_forcing_boundaries(ngnod)
+
+  implicit none
+  include "constants.h"
+
+  integer, intent(in)  :: ngnod
+
+  integer  :: num_edge, nedge_bound
+  integer  :: match
+  integer  :: nb_elmnts_acforcing
+  integer  :: i
+  integer  :: temp
+
+  allocate(acforcing_surface_char(4,nelemacforcing))
+  allocate(acforcing_surface_merge(nelemacforcing))
+  allocate(acforcing_surface_type(nelemacforcing))
+  acforcing_surface_char(:,:) = .false.
+  acforcing_surface_merge(:) = -1
+  acforcing_surface_type(:) = -1
+
+  nedge_bound = nelemacforcing
+  nb_elmnts_acforcing = 0
+  do num_edge = 1, nedge_bound
+
+       nb_elmnts_acforcing = nb_elmnts_acforcing + 1
+       match = nb_elmnts_acforcing
+
+    acforcing_surface_merge(match) = acforcing_surface(1,num_edge)
+    acforcing_surface_type(match) = acforcing_surface(5,num_edge)
+
+    if ( (acforcing_surface(3,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+0) .and. &
+          acforcing_surface(4,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+1)) ) then
+       acforcing_surface_char(IEDGE1,match) = .true.
+    endif
+
+    if ( (acforcing_surface(4,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+0) .and. &
+          acforcing_surface(3,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+1)) ) then
+       temp = acforcing_surface(4,num_edge)
+       acforcing_surface(4,num_edge) = acforcing_surface(3,num_edge)
+       acforcing_surface(3,num_edge) = temp
+       acforcing_surface_char(IEDGE1,match) = .true.
+    endif
+
+    if ( (acforcing_surface(3,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+0) .and. &
+          acforcing_surface(4,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+3)) ) then
+       acforcing_surface_char(IEDGE4,match) = .true.
+    endif
+
+    if ( (acforcing_surface(4,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+0) .and. &
+          acforcing_surface(3,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+3)) ) then
+       temp = acforcing_surface(4,num_edge)
+       acforcing_surface(4,num_edge) = acforcing_surface(3,num_edge)
+       acforcing_surface(3,num_edge) = temp
+       acforcing_surface_char(IEDGE4,match) = .true.
+    endif
+
+    if ( (acforcing_surface(3,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+1) .and. &
+          acforcing_surface(4,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+2)) ) then
+       acforcing_surface_char(IEDGE2,match) = .true.
+    endif
+
+    if ( (acforcing_surface(4,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+1) .and. &
+          acforcing_surface(3,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+2)) ) then
+       temp = acforcing_surface(4,num_edge)
+       acforcing_surface(4,num_edge) = acforcing_surface(3,num_edge)
+       acforcing_surface(3,num_edge) = temp
+       acforcing_surface_char(IEDGE2,match) = .true.
+    endif
+
+    if ( (acforcing_surface(3,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+2) .and. &
+          acforcing_surface(4,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+3)) ) then
+       temp = acforcing_surface(4,num_edge)
+       acforcing_surface(4,num_edge) = acforcing_surface(3,num_edge)
+       acforcing_surface(3,num_edge) = temp
+       acforcing_surface_char(IEDGE3,match) = .true.
+    endif
+
+    if ( (acforcing_surface(4,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+2) .and. &
+          acforcing_surface(3,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+3)) ) then
+       acforcing_surface_char(IEDGE3,match) = .true.
+    endif
+
+  enddo
+
+  nelemacforcing_merge = nb_elmnts_acforcing
+
+! beware here and below that external meshes (for instance coming from CUBIT or Gmsh)
+! may have rotated elements and thus edge 1 may not correspond to the bottom,
+! edge 2 may not correspond to the right, edge 3 may not correspond to the top,
+! and edge 4 may not correspond to the left.
+  allocate(ibegin_edge1_acforcing(nelemacforcing_merge))
+  allocate(iend_edge1_acforcing(nelemacforcing_merge))
+  allocate(ibegin_edge2_acforcing(nelemacforcing_merge))
+  allocate(iend_edge2_acforcing(nelemacforcing_merge))
+  allocate(ibegin_edge3_acforcing(nelemacforcing_merge))
+  allocate(iend_edge3_acforcing(nelemacforcing_merge))
+  allocate(ibegin_edge4_acforcing(nelemacforcing_merge))
+  allocate(iend_edge4_acforcing(nelemacforcing_merge))
+
+  ibegin_edge1_acforcing(:) = 1
+  iend_edge1_acforcing(:) = 1
+  ibegin_edge3_acforcing(:) = 1
+  ibegin_edge4_acforcing(:) = 1
+  iend_edge1_acforcing(:) = NGLLX
+  iend_edge2_acforcing(:) = NGLLZ
+  iend_edge3_acforcing(:) = NGLLX
+  iend_edge4_acforcing(:) = NGLLZ
+
+
+  end subroutine merge_acoustic_forcing_boundaries
+
+
+  !--------------------------------------------------
+  ! Write abs surface (elements and nodes on the surface) pertaining to iproc partition in the corresponding Database
+  ! inspired by write_abs_merge_database upper in this file
+  !--------------------------------------------------
+
+  subroutine write_acoustic_forcing_merge_database(IIN_database, iproc, num_phase)
+
+  implicit none
+
+  integer, intent(in)  :: IIN_database
+  integer, intent(in)  :: iproc
+  integer, intent(in)  :: num_phase
+
+  integer  :: i
+
+  if ( num_phase == 1 ) then
+    nelemacforcing_loc = 0
+    do i = 1, nelemacforcing_merge
+       if ( part(acforcing_surface_merge(i)) == iproc ) then
+          nelemacforcing_loc = nelemacforcing_loc + 1
+       endif
+    enddo
+  else
+    do i = 1, nelemacforcing_merge
+       if ( part(acforcing_surface_merge(i)) == iproc ) then
+
+! beware here and below that external meshes (for instance coming from CUBIT or Gmsh)
+! may have rotated elements and thus edge 1 may not correspond to the bottom,
+! edge 2 may not correspond to the right, edge 3 may not correspond to the top,
+! and edge 4 may not correspond to the left.
+
+! we add +1 to the "glob2loc_elmnts" number because internally in parts of our code numbers start at zero instead of one
+          write(IIN_database,*) glob2loc_elmnts(acforcing_surface_merge(i))+1, acforcing_surface_char(1,i), &
+
+               acforcing_surface_char(2,i), acforcing_surface_char(3,i), acforcing_surface_char(4,i), acforcing_surface(5,i), &
+               ibegin_edge1_acforcing(i), iend_edge1_acforcing(i), &
+               ibegin_edge2_acforcing(i), iend_edge2_acforcing(i), &
+               ibegin_edge3_acforcing(i), iend_edge3_acforcing(i), &
+               ibegin_edge4_acforcing(i), iend_edge4_acforcing(i)
+
+       endif
+
+    enddo
+  endif
+
+  end subroutine write_acoustic_forcing_merge_database
 
 !! DK DK support for METIS now removed, we use SCOTCH instead
 !#ifdef USE_METIS
