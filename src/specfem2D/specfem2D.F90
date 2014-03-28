@@ -372,7 +372,7 @@
 !! DK DK (then array bound checking cannot be used, thus for instance do NOT use -check all in Intel ifort)
 ! #define FORCE_VECTORIZATION
 
-  integer NSOURCES,i_source,iglobout1,iglobout2,iglobzero
+  integer NSOURCES,i_source,iglobzero
   integer, dimension(:), allocatable :: source_type,time_function_type
   double precision, dimension(:), allocatable :: x_source,z_source,xi_source,gamma_source,&
                   Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource
@@ -472,7 +472,7 @@
   double precision :: xixl,xizl,gammaxl,gammazl,jacobianl
 
 ! material properties of the elastic medium
-  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic,kappal
+  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: veloc_elastic_LDDRK,displ_elastic_LDDRK,&
@@ -1085,15 +1085,6 @@
 
   integer :: nspec_left_acforcing,nspec_right_acforcing,nspec_bottom_acforcing,nspec_top_acforcing
   integer, dimension(:), allocatable :: ib_left_acforcing,ib_right_acforcing,ib_bottom_acforcing,ib_top_acforcing
-
-  ! for image in case of atmospheric modelization
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
-    potential_dot_acoustic_normalized,potential_acoustic_normalized
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
-    potential_dot_gravitoacoustic_normalized,potential_gravitoacoustic_normalized
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
-    potential_dot_gravito_normalized,potential_gravito_normalized
-
 
 !***********************************************************************
 !
@@ -2969,10 +2960,9 @@
         allocate(mask_ibool_pml(1))
       endif
 
-      call pml_init(myrank,SIMULATION_TYPE,SAVE_FORWARD,nspec,nglob,ibool,anyabs,nelemabs,codeabs,numabs,&
-                    NELEM_PML_THICKNESS,nspec_PML,is_PML,which_PML_elem,spec_to_PML,region_CPML,&
-                    PML_interior_interface,nglob_interface,mask_ibool_pml,read_external_mesh, &
-                    AXISYM)
+      call pml_init(myrank,SIMULATION_TYPE,SAVE_FORWARD,nspec,nglob,ibool,anyabs,nelemabs,codeabs,numabs, &
+                    NELEM_PML_THICKNESS,nspec_PML,is_PML,which_PML_elem,spec_to_PML,region_CPML, &
+                    PML_interior_interface,nglob_interface,mask_ibool_pml,read_external_mesh)
 
       if((SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS)then
 
@@ -3303,7 +3293,7 @@
                                 elastic,acoustic,gravitoacoustic,poroelastic, &
                                 assign_external_model,numat, &
                                 density,poroelastcoef,porosity,tortuosity, &
-                                vpext,rhoext,gravityext,Nsqext, &
+                                vpext,rhoext, &
                                 anyabs,numabs,deltat,codeabs,&
                                 ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
                                 ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
@@ -4999,11 +4989,12 @@ if(coupled_elastic_poro) then
 ! *********************************************************
 
       call compute_forces_acoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
-               anyabs,assign_external_model,ibool,kmato,numabs,acoustic,gravitoacoustic, &
-               elastic,poroelastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
+               anyabs,assign_external_model,ibool,kmato,numabs,acoustic, &
+               codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
                potential_acoustic,potential_acoustic_old,stage_time_scheme,i_stage, &
                density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
-               vpext,rhoext,gravityext,hprime_xx,hprimewgll_xx, &
+               vpext,rhoext, &
+               hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                AXISYM,coord, is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
                ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
@@ -5046,11 +5037,12 @@ if(coupled_elastic_poro) then
        endif
 
         call compute_forces_acoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
-               anyabs,assign_external_model,ibool,kmato,numabs,acoustic,gravitoacoustic, &
-               elastic,poroelastic,codeabs,b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
+               anyabs,assign_external_model,ibool,kmato,numabs,acoustic, &
+               codeabs,b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
                b_potential_acoustic,b_potential_acoustic_old,stage_time_scheme, i_stage, &
                density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
-               vpext,rhoext,gravityext,hprime_xx,hprimewgll_xx, &
+               vpext,rhoext, &
+               hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                AXISYM,coord, is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
                ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
@@ -5065,7 +5057,6 @@ if(coupled_elastic_poro) then
                rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
                rmemory_potential_acoustic_LDDRK,alpha_LDDRK,beta_LDDRK,c_LDDRK, &
                rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
-!               deltat,PML_BOUNDARY_CONDITIONS)
                deltat,.false.,STACEY_BOUNDARY_CONDITIONS)
 
        if(PML_BOUNDARY_CONDITIONS)then
@@ -5166,12 +5157,12 @@ if(coupled_elastic_poro) then
               displ_x = 0
               displ_z = 0
               else
-              call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,ispec,iglob,coord,nglob)
+              call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,iglob,coord,nglob)
               endif
 
             else
 
-            call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,ispec,iglob,coord,nglob)
+            call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,iglob,coord,nglob)
             endif
 
           ! compute dot product
@@ -5211,12 +5202,12 @@ if(coupled_elastic_poro) then
               displ_x = 0
               displ_z = 0
               else
-              call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,inum,iglob,coord,nglob)
+              call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,iglob,coord,nglob)
               endif
 
             else
 
-            call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,inum,iglob,coord,nglob)
+            call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,iglob,coord,nglob)
 
             endif
 
@@ -5256,11 +5247,11 @@ if(coupled_elastic_poro) then
               displ_x = 0
               displ_z = 0
               else
-              call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,inum,iglob,coord,nglob)
+              call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,iglob,coord,nglob)
               endif
 
             else
-            call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,inum,iglob,coord,nglob)
+            call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,iglob,coord,nglob)
 
             endif
 
@@ -5301,12 +5292,12 @@ if(coupled_elastic_poro) then
               displ_x = 0
               displ_z = 0
               else
-              call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,inum,iglob,coord,nglob)
+              call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,iglob,coord,nglob)
               endif
 
             else
 
-            call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,inum,iglob,coord,nglob)
+            call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,iglob,coord,nglob)
 
             endif
 
@@ -5702,7 +5693,7 @@ if(coupled_elastic_poro) then
                           + deltat*potential_dot_acoustic &
                           + deltatsquareover2*potential_dot_dot_acoustic
 
-    endif !if(any_acoustic)
+    endif ! of if(any_acoustic)
 
 
 ! *********************************************************
@@ -5777,12 +5768,12 @@ if(coupled_elastic_poro) then
               displ_x = 0
               displ_z = 0
               else
-              call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,ispec,iglob,coord,nglob)
+              call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,iglob,coord,nglob)
               endif
 
             else
 
-            call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,ispec,iglob,coord,nglob)
+            call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,iglob,coord,nglob)
 
             endif
 
@@ -5867,12 +5858,12 @@ if(coupled_elastic_poro) then
               displ_x = 0
               displ_z = 0
               else
-              call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,inum,iglob,coord,nglob)
+              call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,iglob,coord,nglob)
               endif
 
             else
 
-            call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,inum,iglob,coord,nglob)
+            call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,iglob,coord,nglob)
 
             endif
 
@@ -5957,12 +5948,12 @@ if(coupled_elastic_poro) then
               displ_x = 0
               displ_z = 0
               else
-              call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,inum,iglob,coord,nglob)
+              call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,iglob,coord,nglob)
               endif
 
             else
 
-            call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,inum,iglob,coord,nglob)
+            call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,iglob,coord,nglob)
 
             endif
 
@@ -6047,12 +6038,12 @@ if(coupled_elastic_poro) then
               displ_x = 0
               displ_z = 0
               else
-              call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,inum,iglob,coord,nglob)
+              call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,iglob,coord,nglob)
               endif
 
             else
 
-            call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,inum,iglob,coord,nglob)
+            call acoustic_forcing_boundary(it,deltat,t0,displ_x,displ_z,iglob,coord,nglob)
 
             endif
 
@@ -6148,10 +6139,10 @@ if(coupled_elastic_poro) then
 ! *********************************************************
 
       call compute_forces_gravitoacoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
-               anyabs,assign_external_model,ibool,kmato,numabs,acoustic,gravitoacoustic, &
-               elastic,poroelastic,codeabs,potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
-               potential_gravitoacoustic, potential_dot_dot_gravito,potential_dot_gravito, &
-               potential_gravito,rmass_inverse_gravito,stage_time_scheme, i_stage, &
+               anyabs,assign_external_model,ibool,kmato,numabs,gravitoacoustic, &
+               codeabs,potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
+               potential_gravitoacoustic, potential_dot_dot_gravito, &
+               potential_gravito,rmass_inverse_gravito, &
                density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                vpext,rhoext,gravityext,Nsqext,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
@@ -6161,15 +6152,7 @@ if(coupled_elastic_poro) then
                nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
                b_absorb_acoustic_bottom,b_absorb_acoustic_top,.false.,&
-               is_PML,nspec_PML,spec_to_PML,region_CPML, &
-               K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
-               rmemory_potential_acoustic,&
-               rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
-               alpha_LDDRK,beta_LDDRK, &
-               rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
-               deltat,PML_BOUNDARY_CONDITIONS&
-!               ,STACEY_BOUNDARY_CONDITIONS&
-                )
+               is_PML,PML_BOUNDARY_CONDITIONS)
        if ((mod(it,100)==0)) then
          iglob=iglobzero
          write(*,*) it,Nsql,gravityl, &
@@ -8583,7 +8566,7 @@ if(coupled_elastic_poro) then
               xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
               AXISYM,nglob,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
               nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
-              numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext,gravityext, &
+              numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
               c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,ispec,e1,e11, &
               ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
@@ -9477,7 +9460,7 @@ if(coupled_elastic_poro) then
                      xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
                      AXISYM,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
                      nglob,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
-                     numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext,gravityext, &
+                     numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
                      c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,e1,e11, &
                      ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
@@ -9706,7 +9689,7 @@ if(coupled_elastic_poro) then
                      xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
                      AXISYM,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
                      nglob,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
-                     numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext,gravityext, &
+                     numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
                      c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,e1,e11, &
                      ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 

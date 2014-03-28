@@ -47,7 +47,7 @@
                   xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
                   AXISYM,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
                   nglob,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
-                  numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext,gravityext, &
+                  numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
                   c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,e1,e11, &
                   ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
@@ -67,7 +67,7 @@
   double precision, dimension(numat) :: porosity,tortuosity
   double precision, dimension(4,3,numat) :: poroelastcoef
   double precision, dimension(9,numat) :: anisotropy
-  double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext,gravityext
+  double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext
   double precision, dimension(NGLLX,NGLLZ,nspec) ::  c11ext,c15ext,c13ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
@@ -116,7 +116,7 @@
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
          AXISYM,nglob,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
          nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
-         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext,gravityext, &
+         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,ispec,e1,e11, &
          ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
@@ -142,7 +142,7 @@
          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
          AXISYM,nglob,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
          nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
-         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext,gravityext, &
+         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,ispec,e1,e11, &
          ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
 
@@ -161,7 +161,7 @@
   double precision, dimension(numat) :: porosity,tortuosity
   double precision, dimension(4,3,numat) :: poroelastcoef
   double precision, dimension(9,numat) :: anisotropy
-  double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext,gravityext
+  double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext
   double precision, dimension(NGLLX,NGLLZ,nspec) ::  c11ext,c15ext,c13ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
