@@ -200,6 +200,10 @@
 
   double precision :: x,z,r,frac
 
+! remove gravity
+  gravity(:,:,:) = 0.d0
+  Nsq(:,:,:)     = 0.d0
+
 ! define all the values in the model once and for all
 
   radius_ak135(  1) =  0.000000000000000E+000
@@ -1119,7 +1123,6 @@
 
 
 !========================================================================
-!
 ! another example below, to read data from a 1D atmosphere model
 ! including gravity
 !========================================================================
@@ -1166,9 +1169,9 @@
 ! region flag to assign the Atmosphere model
   integer, parameter :: IREGION_AIR = 1
 
-  integer :: i,j,ispec,iglob,ii,j1,j2,iglob1,iglob2
+  integer :: i,j,ispec,iglob,ii,iglob1
 
-  double precision :: x,z,frac,tmp1,tmp2,Nsqtest
+  double precision :: x,z,frac,tmp2
 
 ! read all the values in the 1D model once and for all
   open(10,file='EXAMPLES/gravitoacoustic_forcing_bottom/1D_isothermal_atmosphere_model_N2const.txt', &
@@ -1246,5 +1249,4 @@
   c25(:,:,:) = 0.d0
 
   end subroutine define_external_model_atmos_tabular_gravitoacoustic
-
 

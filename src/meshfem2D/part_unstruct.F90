@@ -314,7 +314,7 @@ contains
   ! 'acoustic_surface' contains 1/ element number, 2/ number of nodes that form the free surface,
   ! 3/ first node on the free surface, 4/ second node on the free surface, if relevant (if 2/ is equal to 2)
   !-----------------------------------------------
-  
+
   subroutine read_acoustic_surface(filename, num_material, &
                 ANISOTROPIC_MATERIAL, nb_materials, icodemat, phi, remove_min_to_start_at_zero)
 
@@ -451,8 +451,8 @@ contains
   enddo
   print *,'done testing for duplicates'
   print *
-  
-  !axisym TODO : Test if the informations supplied are compatible with axisym 
+
+  !axisym TODO : Test if the informations supplied are compatible with axisym
 
   end subroutine read_axial_elements_file
 
@@ -603,7 +603,7 @@ contains
   ! that we use to impose the plane wave and Bielak boundary conditions.
   !-----------------------------------------------
 
-subroutine rotate_mesh_for_plane_wave(ngnod)
+ subroutine rotate_mesh_for_plane_wave(ngnod)
 
  implicit none
 
@@ -702,7 +702,7 @@ subroutine rotate_mesh_for_plane_wave(ngnod)
    endif
 
    do i = 1,nelemabs
-     if(index_edge == abs_surface(5,i)) then 
+     if(index_edge == abs_surface(5,i)) then
        ispec = abs_surface(1,i) + 1  !!!! be careful: ispec from abs_surface(1,i) start at zero
        found_this_point = .false.
        do inode = 1,ngnod
@@ -830,10 +830,10 @@ subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and
 
  allocate(ibool(ngnod,nelmnts))
  allocate(ibool_rotated(ngnod,nelmnts))
- 
+
  do ispec = 1, nelmnts ! Loop on the elements
  ! At the end of the loop, thank to ibool we can access to the global number of
- ! each node from the ispec of the element to which it belongs and from its 
+ ! each node from the ispec of the element to which it belongs and from its
  ! geometrical position :
  !            4 . . 7 . . 3
  !            .           .
@@ -861,14 +861,6 @@ subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and
      stop 'rotate_mesh_for_axisym: error, ngnod should be either 4 or 9 for external meshes'
    endif
  enddo
- 
- ! do ispec = 1, nelmnts  !TODO remove
- !   write(*,'(A8,I3)', advance='yes') "ispec = ",ispec
- !   do i=1,9
- !     write(*,'(I5)', advance='no') ibool(i,ispec) 
- !   enddo
- !   print *,""
- ! enddo
 
  do j = 1, 4 ! Loop on the corners
    if(j == 1) then
@@ -930,7 +922,7 @@ subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and
    else
      stop 'rotate_mesh_for_axisym: the edge on which axisym_edge is located should be defined'
    endif
-   
+
    do i = 1,nelem_on_the_axis ! Loop on the elements on the axis (red on the axisym file)
      if(index_edge == axisym_edge_type(i)) then
        ispec=ispec_of_axial_elements(i)
@@ -1964,7 +1956,6 @@ end subroutine rotate_mesh_for_axisym
   integer  :: num_edge, nedge_bound
   integer  :: match
   integer  :: nb_elmnts_acforcing
-  integer  :: i
   integer  :: temp
 
   allocate(acforcing_surface_char(4,nelemacforcing))

@@ -43,11 +43,12 @@
 !========================================================================
 
   subroutine compute_forces_acoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
-               anyabs,assign_external_model,ibool,kmato,numabs,acoustic,gravitoacoustic, &
-               elastic,poroelastic,codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
+               anyabs,assign_external_model,ibool,kmato,numabs,acoustic, &
+               codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
                potential_acoustic,potential_acoustic_old,stage_time_scheme,i_stage, &
                density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
-               vpext,rhoext,gravityext,hprime_xx,hprimewgll_xx, &
+               vpext,rhoext, &
+               hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                AXISYM,coord, is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
                ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
@@ -80,7 +81,7 @@
   integer, dimension(nelemabs) :: numabs,ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
                ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2
 
-  logical, dimension(nspec) :: acoustic,gravitoacoustic,elastic,poroelastic
+  logical, dimension(nspec) :: acoustic
   logical, dimension(4,nelemabs)  :: codeabs
 
   real(kind=CUSTOM_REAL), dimension(nglob) :: &
@@ -89,7 +90,7 @@
   double precision, dimension(2,numat) :: density
   double precision, dimension(4,3,numat) :: poroelastcoef
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,rhoext,gravityext
+  double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,rhoext
 
   logical :: anyabs,assign_external_model
   logical :: SAVE_FORWARD,IS_BACKWARD_FIELD

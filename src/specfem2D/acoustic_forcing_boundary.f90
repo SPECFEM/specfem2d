@@ -4,7 +4,7 @@
 ! variable forcing_type should be passed as a parameter
 ! in future versions
 
-  subroutine acoustic_forcing_boundary(it,deltat,t0,accel_x,accel_z,ielem_acforcing,iglob,coord,nglob)
+  subroutine acoustic_forcing_boundary(it,deltat,t0,accel_x,accel_z,iglob,coord,nglob)
 
   implicit none
 
@@ -16,7 +16,7 @@
   double precision, dimension(NDIM,nglob), intent(in) :: coord
   double precision :: deltat
   double precision :: t0
-  integer :: it,ielem_acforcing,iglob
+  integer :: it,iglob
 ! These variables are in fact displacements of the boundary
   real(kind=CUSTOM_REAL) :: accel_x,accel_z
 
@@ -24,13 +24,12 @@
 
 ! local variables
   real, parameter :: pigrec = 3.1415927
-  real :: alpha,tho,A,c,x,delayed,delta_x,xo,lambdo
+  real :: alpha,tho,A,c,x,delayed,delta_x
   integer :: forcing_type,k,ngoce_time_step,n_models,kk,ll
 
   double precision, dimension(:), allocatable :: goce_time,distance
   double precision, dimension(:,:), allocatable ::syn
-  double precision :: t,signal_x1,signal_x2,fracx,fract,dist
-
+  double precision :: t,signal_x1,signal_x2,fracx,fract
 
   forcing_type = 1
 
