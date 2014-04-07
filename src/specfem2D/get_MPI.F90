@@ -101,7 +101,7 @@
   integer :: iinterface,ilocnum
   integer :: num_points1, num_points2
   ! assembly test
-  integer :: i,j,ispec,iglob,count,inum,ier,idomain
+  integer :: i,j,ispec,iglob,countval,inum,ier,idomain
   integer :: max_nibool_interfaces,num_nibool,num_interface
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: test_flag_cr
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_send_faces_vector_ac
@@ -237,13 +237,14 @@
 
   ! checks interfaces in acoustic domains
   inum = 0
-  count = 0
+  countval = 0
+
   if ( ninterface_acoustic > 0) then
 
     ! checks with assembly of test fields
     allocate(test_flag_cr(nglob))
     test_flag_cr(:) = 0._CUSTOM_REAL
-    count = 0
+    countval = 0
     do ispec = 1, nspec
       ! sets flags on global points
       do j = 1, NGLLZ
@@ -252,7 +253,7 @@
           iglob = ibool(i,j,ispec)
 
           ! counts number of unique global points to set
-          if( nint(test_flag_cr(iglob)) == 0 ) count = count+1
+          if( nint(test_flag_cr(iglob)) == 0 ) countval = countval + 1
 
           ! sets identifier
           test_flag_cr(iglob) = myrank + 1.0
@@ -306,8 +307,7 @@
   endif
 
   ! note: this mpi reduction awaits information from all processes.
-  call MPI_REDUCE(inum, num_points2, 1, MPI_INTEGER, &
-                    MPI_SUM, 0, MPI_COMM_WORLD, ier)
+  call MPI_REDUCE(inum, num_points2, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
 
   if( myrank == 0 ) then
     write(IOUT,*) '       assembly acoustic MPI interface points:',num_points2

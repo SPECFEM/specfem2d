@@ -1,4 +1,47 @@
 
+!========================================================================
+!
+!                   S P E C F E M 2 D  Version 7 . 0
+!                   --------------------------------
+!
+! Copyright CNRS, Inria and University of Pau, France,
+! and Princeton University / California Institute of Technology, USA.
+! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
+!               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
+!               Roland Martin, roland DOT martin aT univ-pau DOT fr
+!               Christina Morency, cmorency aT princeton DOT edu
+!
+! This software is a computer program whose purpose is to solve
+! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
+! using a spectral-element method (SEM).
+!
+! This software is governed by the CeCILL license under French law and
+! abiding by the rules of distribution of free software. You can use,
+! modify and/or redistribute the software under the terms of the CeCILL
+! license as circulated by CEA, CNRS and Inria at the following URL
+! "http://www.cecill.info".
+!
+! As a counterpart to the access to the source code and rights to copy,
+! modify and redistribute granted by the license, users are provided only
+! with a limited warranty and the software's author, the holder of the
+! economic rights, and the successive licensors have only limited
+! liability.
+!
+! In this respect, the user's attention is drawn to the risks associated
+! with loading, using, modifying and/or developing or reproducing the
+! software by the user in light of its specific status of free software,
+! that may mean that it is complicated to manipulate, and that also
+! therefore means that it is reserved for developers and experienced
+! professionals having in-depth computer knowledge. Users are therefore
+! encouraged to load and test the software's suitability as regards their
+! requirements in conditions enabling the security of their systems and/or
+! data to be ensured and, more generally, to use and operate it in the
+! same conditions as regards security.
+!
+! The full text of the license is available in file "LICENSE".
+!
+!========================================================================
+
 ! open-source subroutines taken from the World Ocean Circulation Experiment (WOCE)
 ! web site at http://www.coaps.fsu.edu/woce/html/wcdtools.htm
 
@@ -9,7 +52,7 @@
 ! extended by Dimitri Komatitsch, University of Toulouse, France, April 2011,
 ! to go beyond the year 2020; I extended that to the year 3000 and thus had to write a loop to fill array "year()".
 
-  subroutine convtime(timestamp,yr,mon,day,hr,min)
+  subroutine convtime(timestamp,yr,mon,day,hr,minvalue)
 
 ! Originally written by Shawn Smith (ssmith AT coaps.fsu.edu)
 ! Updated Spring 1999 for Y2K compliance by Anthony Arguez (anthony AT coaps.fsu.edu).
@@ -23,7 +66,7 @@
 
   integer, intent(out) :: timestamp
 
-  integer, intent(in) :: yr,mon,day,hr,min
+  integer, intent(in) :: yr,mon,day,hr,minvalue
 
   integer :: year(1980:MAX_YEAR),month(12),leap_mon(12)
 
@@ -69,13 +112,13 @@
 
   if (hr < 0 .or. hr > 23) stop 'Error in convtime: hour out of range (0-23)'
 
-  if (min < 0 .or. min > 60) stop 'Error in convtime: minute out of range (0-60)'
+  if (minvalue < 0 .or. minvalue > 60) stop 'Error in convtime: minute out of range (0-60)'
 
 ! convert time (test if leap year)
   if (is_leap_year(yr)) then
-   timestamp = year(yr)+leap_mon(mon)+((day-1)*min_day)+(hr*min_hr)+min
+   timestamp = year(yr)+leap_mon(mon)+((day-1)*min_day)+(hr*min_hr)+minvalue
   else
-   timestamp = year(yr)+month(mon)+((day-1)*min_day)+(hr*min_hr)+min
+   timestamp = year(yr)+month(mon)+((day-1)*min_day)+(hr*min_hr)+minvalue
   endif
 
   end subroutine convtime
@@ -84,7 +127,7 @@
 !----
 !
 
-  subroutine invtime(timestamp,yr,mon,day,hr,min)
+  subroutine invtime(timestamp,yr,mon,day,hr,minvalue)
 
 ! This subroutine will convert a minutes timestamp to a year/month
 ! date. Based on the function convtime by Shawn Smith (COAPS).
@@ -104,7 +147,7 @@
 
   integer, intent(in) :: timestamp
 
-  integer, intent(out) :: yr,mon,day,hr,min
+  integer, intent(out) :: yr,mon,day,hr,minvalue
 
   integer :: year(1980:MAX_YEAR),month(13),leap_mon(13)
 
@@ -176,7 +219,7 @@
       mon=imon
       day=1
       hr=0
-      min=0
+      minvalue=0
       return
    endif
 
@@ -199,7 +242,7 @@
       mon=imon
       day=1
       hr=0
-      min=0
+      minvalue=0
       return
    endif
   endif
@@ -237,7 +280,7 @@
   hr=ihour
 
 ! the remainder at this point is the minutes, so return them directly
-  min=itime
+  minvalue=itime
 
   end subroutine invtime
 

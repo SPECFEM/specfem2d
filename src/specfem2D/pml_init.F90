@@ -433,13 +433,13 @@ end subroutine pml_init
                   ibool,coord,is_PML,region_CPML,spec_to_PML,nspec_PML,&
                   K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store)
 
+#ifdef USE_MPI
+  use mpi
+#endif
+
   implicit none
 
   include "constants.h"
-
-#ifdef USE_MPI
-  include "mpif.h"
-#endif
 
   integer nspec,npoin,numat,nspec_PML
   double precision :: f0_temp

@@ -49,7 +49,7 @@
                               fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
                               AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &
                               PML_BOUNDARY_CONDITIONS,nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
-                              alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,time,deltat)
+                              alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,timeval,deltat)
 
    implicit none
    include 'constants.h'
@@ -90,7 +90,7 @@
               ispec_PML,CPML_region_local,singularity_type_xz
    real(kind=CUSTOM_REAL) :: displ_x,displ_z,displ_n,&
                              xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
-   double precision :: time,deltat
+   double precision :: timeval,deltat
    double precision :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z, &
                              A8,A9,A10,bb_xz_1,bb_xz_2,coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2
 
@@ -127,7 +127,7 @@
                   alpha_z = alpha_z_store(i,j,ispec_PML)
                   beta_x = alpha_x + d_x / kappa_x
                   beta_z = alpha_z + d_z / kappa_z
-                  call lik_parameter_computation(time,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z,&
+                  call lik_parameter_computation(timeval,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z,&
                                            CPML_region_local,13,A8,A9,A10,singularity_type_xz,bb_xz_1,bb_xz_2,&
                                            coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2)
                   rmemory_fsb_displ_elastic(1,1,i,j,inum) = coef0_xz_1 * rmemory_fsb_displ_elastic(1,1,i,j,inum) + &

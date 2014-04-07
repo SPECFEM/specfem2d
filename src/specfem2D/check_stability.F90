@@ -43,7 +43,7 @@
 !========================================================================
 
 
-  subroutine check_stability(myrank,time,it,NSTEP,NOISE_TOMOGRAPHY, &
+  subroutine check_stability(myrank,timeval,it,NSTEP,NOISE_TOMOGRAPHY, &
                         nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                         any_elastic_glob,any_elastic,displ_elastic, &
                         any_poroelastic_glob,any_poroelastic, &
@@ -61,7 +61,7 @@
 
   integer :: myrank,it,NSTEP,NOISE_TOMOGRAPHY
 
-  double precision :: time
+  double precision :: timeval
 
   logical :: any_elastic_glob,any_elastic
   integer :: nglob_elastic
@@ -102,10 +102,10 @@
   ! user output
   if (myrank == 0) then
     write(IOUT,*)
-    if(time >= 1.d-3 .and. time < 1000.d0) then
-      write(IOUT,"('Time step number ',i7,'   t = ',f9.4,' s out of ',i7)") it,time,NSTEP
+    if(timeval >= 1.d-3 .and. timeval < 1000.d0) then
+      write(IOUT,"('Time step number ',i7,'   t = ',f9.4,' s out of ',i7)") it,timeval,NSTEP
     else
-      write(IOUT,"('Time step number ',i7,'   t = ',1pe13.6,' s out of ',i7)") it,time,NSTEP
+      write(IOUT,"('Time step number ',i7,'   t = ',1pe13.6,' s out of ',i7)") it,timeval,NSTEP
     endif
     write(IOUT,*) 'We have done ',sngl(100.d0*dble(it-1)/dble(NSTEP-1)),'% of the total'
   endif

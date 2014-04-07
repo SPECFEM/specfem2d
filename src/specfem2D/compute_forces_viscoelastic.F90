@@ -208,9 +208,10 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL) :: e1_sum,e11_sum,e13_sum
   integer :: i_sls
 
+  ! nsub1 denotes discrete time step n-1
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                                                         dux_dxl_nsub1,duz_dzl_nsub1,duz_dxl_nsub1,dux_dzl_nsub1
-                                                         !nsub1 denote discrete time step n-1
+
   double precision :: coef0,coef1,coef2
 
   ! material properties of the elastic medium
@@ -1855,13 +1856,13 @@ end subroutine compute_forces_viscoelastic
 
 !========================================================================
 
- subroutine lik_parameter_computation(time,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+ subroutine lik_parameter_computation(timeval,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                      CPML_region_local,index_ik,A_0,A_1,A_2,singularity_type_2,bb_1,bb_2, &
                                      coef0_1,coef1_1,coef2_1,coef0_2,coef1_2,coef2_2)
   implicit none
   include "constants.h"
 
-  double precision, intent(in) :: time
+  double precision, intent(in) :: timeval
   double precision :: deltat
   double precision, intent(in) :: kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z
   integer, intent(in) :: CPML_region_local,index_ik
@@ -1910,7 +1911,7 @@ end subroutine compute_forces_viscoelastic
       bar_A_1 = bar_A_0 * (-2._CUSTOM_REAL * alpha_0 + (alpha_z + beta_x))
       bar_A_2 = bar_A_0 * (alpha_0 - alpha_z) * (alpha_0-beta_x)
 
-      A_1 = bar_A_1 + time * bar_A_2
+      A_1 = bar_A_1 + timeval * bar_A_2
       A_2 = -bar_A_2
 
       singularity_type_2 = 1 ! 0 means no singularity, 1 means first order singularity
@@ -1957,14 +1958,14 @@ end subroutine compute_forces_viscoelastic
 
 !========================================================================
 
- subroutine l_parameter_computation(time,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+ subroutine l_parameter_computation(timeval,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                     CPML_region_local,A_0,A_1,A_2,A_3,A_4,singularity_type,&
                                     bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
 
   implicit none
   include "constants.h"
 
-  double precision :: time
+  double precision :: timeval
   double precision :: deltat
   double precision, intent(in) :: kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z
   integer, intent(in) :: CPML_region_local
@@ -2007,7 +2008,7 @@ end subroutine compute_forces_viscoelastic
                            + 3._CUSTOM_REAL * alpha_0**2 * beta_xyz_1 - 2._CUSTOM_REAL * alpha_0 * beta_xyz_2)
       bar_A_4 = bar_A_0 * alpha_0**2 * (beta_x - alpha_0) * (beta_z - alpha_0)
 
-      A_3 = bar_A_3 + time * bar_A_4
+      A_3 = bar_A_3 + timeval * bar_A_4
       A_4 = -bar_A_4
 
       singularity_type = 1

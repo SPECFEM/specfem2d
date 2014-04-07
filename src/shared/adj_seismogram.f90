@@ -56,8 +56,8 @@ program adj_seismogram
   double precision, parameter :: deltat = 0.06
   double precision, parameter :: EPS = 1.d-40
 
-  integer :: itime,icomp,istart,iend,nlen,irec,NDIM,NDIMr,adj_comp
-  double precision :: time,tstart(nrec),tend(nrec)
+  integer :: itime,icomp,istart,iend,nlenval,irec,NDIM,NDIMr,adj_comp
+  double precision :: timeval,tstart(nrec),tend(nrec)
   character(len=150), dimension(nrec) :: station_name
   double precision, dimension(NSTEP) :: time_window
   double precision :: seism(NSTEP,3),Nnorm,seism_win(NSTEP)
@@ -91,7 +91,7 @@ program adj_seismogram
         open(unit = 10, file = trim(filename))
 
         do itime = 1,NSTEP
-           read(10,*) time , seism(itime,icomp)
+           read(10,*) timeval , seism(itime,icomp)
         enddo
 
      enddo
@@ -113,7 +113,7 @@ program adj_seismogram
      print*,'istart =',istart, 'iend =', iend
      print*,'tstart =',istart*deltat, 'tend =', iend*deltat
      if(istart >= iend) stop 'check istart,iend'
-     nlen = iend - istart +1
+     nlenval = iend - istart +1
 
      do icomp = 1, NDIM
 
