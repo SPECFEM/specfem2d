@@ -42,7 +42,7 @@
 !
 !========================================================================
 
-  subroutine createnum_fast(knods,ibool,shape,coorg,nglob,npgeo,nspec,ngnod,myrank)
+  subroutine createnum_fast(knods,ibool,shapeval,coorg,nglob,npgeo,nspec,ngnod,myrank)
 
 ! same as subroutine "createnum_slow" but with a faster algorithm
 
@@ -52,13 +52,13 @@
 
   integer nglob,npgeo,nspec,ngnod,myrank
   integer knods(ngnod,nspec),ibool(NGLLX,NGLLZ,nspec)
-  double precision shape(ngnod,NGLLX,NGLLX)
+  double precision shapeval(ngnod,NGLLX,NGLLX)
   double precision coorg(NDIM,npgeo)
 
   integer i,j
 
 ! additional arrays needed for this fast version
-  integer, dimension(:), allocatable :: loc,ind,ninseg,iglob,iwork
+  integer, dimension(:), allocatable :: locval,ind,ninseg,iglob,iwork
   logical, dimension(:), allocatable :: ifseg
   double precision, dimension(:), allocatable :: xp,yp,work
 
@@ -80,7 +80,7 @@
   nxyz = NGLLX*NGLLZ
   ntot = nxyz*nspec
 
-  allocate(loc(ntot))
+  allocate(locval(ntot))
   allocate(ind(ntot))
   allocate(ninseg(ntot))
   allocate(iglob(ntot))
@@ -104,8 +104,8 @@
     ycor = zero
     do in = 1,ngnod
         nnum = knods(in,ispec)
-        xcor = xcor + shape(in,ix,iy)*coorg(1,nnum)
-        ycor = ycor + shape(in,ix,iy)*coorg(2,nnum)
+        xcor = xcor + shapeval(in,ix,iy)*coorg(1,nnum)
+        ycor = ycor + shapeval(in,ix,iy)*coorg(2,nnum)
     enddo
 
     xp(ilocnum + ieoff) = xcor
@@ -122,7 +122,7 @@
   do ispec = 1,nspec
    ieoff = nxyz*(ispec -1)
    do ix = 1,nxyz
-      loc (ix+ieoff) = ix+ieoff
+      locval (ix+ieoff) = ix+ieoff
    enddo
   enddo
 
@@ -169,7 +169,7 @@
       endif
       call swap(xp(ioff),work,ind,ninseg(iseg))
       call swap(yp(ioff),work,ind,ninseg(iseg))
-      call iswap(loc(ioff),iwork,ind,ninseg(iseg))
+      call iswap(locval(ioff),iwork,ind,ninseg(iseg))
       ioff=ioff+ninseg(iseg)
    enddo
 !  Check for jumps in current coordinate
@@ -199,7 +199,7 @@
   ig = 0
   do i=1,ntot
    if (ifseg(i)) ig=ig+1
-   iglob(loc(i)) = ig
+   iglob(locval(i)) = ig
   enddo
 
   nglob = ig
@@ -218,7 +218,7 @@
   enddo
   enddo
 
-  deallocate(loc)
+  deallocate(locval)
   deallocate(ind)
   deallocate(ninseg)
   deallocate(iglob)

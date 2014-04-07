@@ -455,7 +455,7 @@
 
 ! coefficients of the explicit Newmark time scheme
   integer NSTEP
-  double precision :: deltatover2,deltatsquareover2,time
+  double precision :: deltatover2,deltatsquareover2,timeval
   double precision :: deltat
 
 ! Gauss-Lobatto-Legendre points and weights
@@ -4934,7 +4934,7 @@ if(coupled_elastic_poro) then
   do it = 1,NSTEP
 
 ! compute current time
-    time = (it-1)*deltat
+    timeval = (it-1)*deltat
 
     do i_stage=1, stage_time_scheme
 
@@ -5330,7 +5330,7 @@ if(coupled_elastic_poro) then
                fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
                AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &
                PML_BOUNDARY_CONDITIONS,nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
-               alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,time,deltat)
+               alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,timeval,deltat)
       endif
 
       if(SIMULATION_TYPE == 3)then
@@ -5340,7 +5340,7 @@ if(coupled_elastic_poro) then
                fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
                AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &
                PML_BOUNDARY_CONDITIONS,nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
-               alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,time,deltat)
+               alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,timeval,deltat)
 
         call compute_coupling_acoustic_el(nspec,nglob_elastic,nglob_acoustic,num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz,&
                gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,b_displ_elastic,b_displ_elastic_old,&
@@ -5348,7 +5348,7 @@ if(coupled_elastic_poro) then
                fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
                AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &
                PML_BOUNDARY_CONDITIONS,nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
-               alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,time,deltat)
+               alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,timeval,deltat)
       endif
 
     endif
@@ -8535,7 +8535,7 @@ if(coupled_elastic_poro) then
 
 !----  display time step and max of norm of displacement
     if(mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
-      call check_stability(myrank,time,it,NSTEP,NOISE_TOMOGRAPHY, &
+      call check_stability(myrank,timeval,it,NSTEP,NOISE_TOMOGRAPHY, &
                         nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                         any_elastic_glob,any_elastic,displ_elastic, &
                         any_poroelastic_glob,any_poroelastic, &

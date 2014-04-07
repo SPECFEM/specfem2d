@@ -65,6 +65,7 @@ CFLAGS = @CFLAGS@ $(CPPFLAGS) -I../../setup
 @COND_MPI_TRUE@F90 = $(MPIFC) $(FCFLAGS) @FC_DEFINE@USE_MPI $(MPILIBS)
 @COND_MPI_FALSE@F90 = $(FC) $(FCFLAGS)
 
+LIB = 
 
 LINK = $(F90)
 
@@ -171,7 +172,7 @@ OBJS_SPECFEM2D = \
   $O/jddctmgr.o $O/jdhuff.o $O/jdinput.o $O/jdmainct.o $O/jdmarker.o $O/jdmaster.o \
   $O/jdmerge.o $O/jdpostct.o $O/jdsample.o $O/jdtrans.o $O/jerror.o $O/jfdctflt.o \
   $O/jfdctfst.o $O/jfdctint.o $O/jidctflt.o $O/jidctfst.o $O/jidctint.o $O/jquant1.o \
-  $O/jquant2.o $O/jutils.o $O/jmemmgr.o $O/jmemnobs.o
+  $O/jquant2.o $O/jutils.o $O/jmemmgr.o $O/jmemnobs.o $(LIB)
 
 
 default: $(DEFAULT)

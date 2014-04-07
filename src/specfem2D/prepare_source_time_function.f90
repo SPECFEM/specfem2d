@@ -68,7 +68,7 @@
   real(kind=CUSTOM_REAL),dimension(NSOURCES,NSTEP,stage_time_scheme) :: source_time_function
 
   ! local parameters
-  double precision :: stf_used, time, DecT, Tc, omegat, omega_coa
+  double precision :: stf_used, timeval, DecT, Tc, omegat, omega_coa
   double precision, dimension(NSOURCES) :: hdur,hdur_gauss
   double precision, external :: netlib_specfun_erf
   integer :: it,i_source
@@ -103,18 +103,11 @@
     do i_stage = 1,stage_time_scheme
 
     ! compute current time
-    if(stage_time_scheme == 1)then
-    time = (it-1)*deltat
-    endif
+    if(stage_time_scheme == 1) timeval = (it-1)*deltat
 
-    if(stage_time_scheme == 4)then
-     time = (it-1)*deltat+c_RK(i_stage)*deltat
-    endif
+    if(stage_time_scheme == 4) timeval = (it-1)*deltat+c_RK(i_stage)*deltat
 
-    if(stage_time_scheme == 6)then
-     time = (it-1)*deltat+c_LDDRK(i_stage)*deltat
-    endif
-
+    if(stage_time_scheme == 6) timeval = (it-1)*deltat+c_LDDRK(i_stage)*deltat
 
     stf_used = 0.d0
 
@@ -125,25 +118,25 @@
 
         ! Ricker (second derivative of a Gaussian) source time function
         source_time_function(i_source,it,i_stage) = - factor(i_source) * &
-                  (ONE-TWO*aval(i_source)*(time-t0-tshift_src(i_source))**2) * &
-                  exp(-aval(i_source)*(time-t0-tshift_src(i_source))**2)
+                  (ONE-TWO*aval(i_source)*(timeval-t0-tshift_src(i_source))**2) * &
+                  exp(-aval(i_source)*(timeval-t0-tshift_src(i_source))**2)
 
         ! source_time_function(i_source,it) = - factor(i_source) *  &
         !               TWO*aval(i_source)*sqrt(aval(i_source))*&
-        !               (time-t0-tshift_src(i_source))/pi * exp(-aval(i_source)*(time-t0-tshift_src(i_source))**2)
+        !               (timeval-t0-tshift_src(i_source))/pi * exp(-aval(i_source)*(timeval-t0-tshift_src(i_source))**2)
 
       else if( time_function_type(i_source) == 2 ) then
 
         ! first derivative of a Gaussian source time function
         source_time_function(i_source,it,i_stage) = - factor(i_source) * &
-                  TWO*aval(i_source)*(time-t0-tshift_src(i_source)) * &
-                  exp(-aval(i_source)*(time-t0-tshift_src(i_source))**2)
+                  TWO*aval(i_source)*(timeval-t0-tshift_src(i_source)) * &
+                  exp(-aval(i_source)*(timeval-t0-tshift_src(i_source))**2)
 
       else if(time_function_type(i_source) == 3 .or. time_function_type(i_source) == 4) then
 
         ! Gaussian or Dirac (we use a very thin Gaussian instead) source time function
         source_time_function(i_source,it,i_stage) = factor(i_source) * &
-                  exp(-aval(i_source)*(time-t0-tshift_src(i_source))**2)
+                  exp(-aval(i_source)*(timeval-t0-tshift_src(i_source))**2)
 
       else if(time_function_type(i_source) == 5) then
 
@@ -151,7 +144,7 @@
         hdur(i_source) = 1.d0 / f0(i_source)
         hdur_gauss(i_source) = hdur(i_source) * 5.d0 / 3.d0
         source_time_function(i_source,it,i_stage) = factor(i_source) * 0.5d0*(1.0d0 + &
-            netlib_specfun_erf(SOURCE_DECAY_MIMIC_TRIANGLE*(time-t0-tshift_src(i_source))/hdur_gauss(i_source)))
+            netlib_specfun_erf(SOURCE_DECAY_MIMIC_TRIANGLE*(timeval-t0-tshift_src(i_source))/hdur_gauss(i_source)))
 
       else if(time_function_type(i_source) == 6) then
 
@@ -159,11 +152,11 @@
 
         Tc = 4.d0 / f0(i_source) + DecT
 
-        if ( time > DecT .and. time < Tc ) then
+        if ( timeval > DecT .and. timeval < Tc ) then
 
            ! source time function from Computational Ocean Acoustics
            omega_coa = TWO * PI * f0(i_source)
-           omegat =  omega_coa * ( time - DecT )
+           omegat =  omega_coa * ( timeval - DecT )
            source_time_function(i_source,it,i_stage) = factor(i_source) * HALF * &
                  sin( omegat ) * ( ONE - cos( QUARTER * omegat ) )
            !source_time_function(i_source,it,i_stage) = - factor(i_source) * HALF / omega_coa / omega_coa * &
@@ -181,18 +174,18 @@
         Tc = 4.d0 / f0(i_source) + DecT
         omega_coa = TWO * PI * f0(i_source)
 
-        if ( time > DecT .and. time < Tc ) then
+        if ( timeval > DecT .and. timeval < Tc ) then
           ! source time function from Computational Ocean Acoustics
-           omegat =  omega_coa * ( time - DecT )
+           omegat =  omega_coa * ( timeval - DecT )
            !source_time_function(i_source,it,i_stage) = factor(i_source) * HALF / omega_coa / omega_coa * &
            !      ( sin(omegat) - 8.d0 / 9.d0 * sin(3.d0/ 4.d0 * omegat) - &
-           !     8.d0 / 25.d0 * sin(5.d0 / 4.d0 * omegat) -1./15.*( time - DecT ) + 1./15.*4./f0(i_source))
+           !     8.d0 / 25.d0 * sin(5.d0 / 4.d0 * omegat) -1./15.*( timeval - DecT ) + 1./15.*4./f0(i_source))
 
            source_time_function(i_source,it,i_stage) = factor(i_source) * HALF / omega_coa / omega_coa * &
                  ( - sin(omegat) + 8.d0 / 9.d0 * sin(3.d0 / 4.d0 * omegat) + &
                   8.d0 / 25.d0 * sin(5.d0 / 4.d0 * omegat) - 1.d0 / 15.d0 * omegat )
 
-        else if ( time > DecT ) then
+        else if ( timeval > DecT ) then
 
            source_time_function(i_source,it,i_stage) = - factor(i_source) * HALF / omega_coa / 15.d0 * (4.d0 / f0(i_source))
 
@@ -210,10 +203,10 @@
       stf_used = stf_used + source_time_function(i_source,it,i_stage)
 
       ! output relative time in third column, in case user wants to check it as well
-      ! if (myrank == 0 .and. i_source == 1) write(55,*) sngl(time-t0-tshift_src(1)),real(source_time_function(1,it),4),sngl(time)
+! if (myrank == 0 .and. i_source == 1) write(55,*) sngl(timeval-t0-tshift_src(1)),real(source_time_function(1,it),4),sngl(timeval)
       if (myrank == 0 .and. i_source == 1 .and. i_stage == 1) then
           ! note: earliest start time of the simulation is: (it-1)*deltat - t0
-          write(55,*) sngl(time-t0),sngl(stf_used),sngl(time)
+          write(55,*) sngl(timeval-t0),sngl(stf_used),sngl(timeval)
       endif
 
     enddo
