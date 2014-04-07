@@ -148,16 +148,6 @@
             displ_z = displ_elastic(3,iglob)
           endif
 
-!          if(SIMULATION_TYPE == 3) then
-!            b_displ_x = b_displ_elastic(1,iglob)
-!            b_displ_z = b_displ_elastic(3,iglob)
-            !<YANGL
-            ! new definition of adjoint displacement and adjoint potential
-!            displ_x = -accel_elastic_adj_coupling(1,iglob)
-!            displ_z = -accel_elastic_adj_coupling(3,iglob)
-            !>YANGL
-!          endif
-
           ! get point values for the acoustic side
           i = ivalue(ipoin1D,iedge_acoustic)
           j = jvalue(ipoin1D,iedge_acoustic)
@@ -229,15 +219,9 @@
 
           potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
 
-!          if(SIMULATION_TYPE == 3) then
-!          b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) + &
-!                      weight*(b_displ_x*nx + b_displ_z*nz)
-!          endif !if(SIMULATION_TYPE == 3) then
-
         enddo
 
       enddo
 
   end subroutine compute_coupling_acoustic_el
-
 
