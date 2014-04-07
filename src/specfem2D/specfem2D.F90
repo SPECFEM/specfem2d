@@ -479,7 +479,7 @@
                                                          veloc_elastic_LDDRK_temp
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: accel_elastic_rk,veloc_elastic_rk
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: veloc_elastic_initial_rk,displ_elastic_initial_rk
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic_adj_coupling
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic_adj_coupling,accel_elastic_adj_coupling2
   double precision, dimension(:,:), allocatable :: &
     coord, flagrange,xinterp,zinterp,Uxinterp,Uzinterp,vector_field_display
 
@@ -2648,6 +2648,7 @@
     allocate(veloc_elastic(3,nglob_elastic))
     allocate(accel_elastic(3,nglob_elastic))
     allocate(accel_elastic_adj_coupling(3,nglob_elastic))
+    allocate(accel_elastic_adj_coupling2(3,nglob_elastic))
 
     allocate(rmass_inverse_elastic_one(nglob_elastic))
     allocate(rmass_inverse_elastic_three(nglob_elastic))
@@ -5334,8 +5335,13 @@ if(coupled_elastic_poro) then
       endif
 
       if(SIMULATION_TYPE == 3)then
+
+! Zhinan Xie's new fluid-solid coupling formulation for adjoint runs
+! involves a change of sign compared to Yang Luo's initial formulation
+        accel_elastic_adj_coupling2 = - accel_elastic_adj_coupling
+
         call compute_coupling_acoustic_el(nspec,nglob_elastic,nglob_acoustic,num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz,&
-               gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,-accel_elastic_adj_coupling,displ_elastic_old,&
+               gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,accel_elastic_adj_coupling2,displ_elastic_old,&
                potential_dot_dot_acoustic,fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
                fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
                AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &
