@@ -1221,7 +1221,7 @@
     Nsq(i,j,ispec) = Nsq_atmos(ii-1) + frac * (Nsq_atmos(ii)-Nsq_atmos(ii-1))
     if (Nsq(i,j,ispec) <= 0.0) then
        write(*,*) 'STOP Negative Nsquare !!! :', &
-       i,j,coord(1,iglob1),coord(2,iglob1),Nsq(i,j,ispec),gravity(i,j,ispec),vp(i,j,ispec)
+       i,j,coord(1,iglob),coord(2,iglob),Nsq(i,j,ispec),gravity(i,j,ispec),vp(i,j,ispec)
        stop
     endif
     vs(i,j,ispec) = 0.d0

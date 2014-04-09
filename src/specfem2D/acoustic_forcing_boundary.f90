@@ -58,6 +58,8 @@
   x = coord(1,iglob)
   delayed = 0
 
+! speed of light
+  c = 300000000.
 
   if(forcing_type == 1) then !! First test function : same forcing for the whole boundary
 !  print *, ispec_acoustic
@@ -69,7 +71,6 @@
 
 ! infrasounds / seismic
   accel_x = 0 !* Apo
- ! accel_z = 1000000000000
   accel_z = A * (exp(-(alpha*(deltat*it-40-t0)/tho)**2) &
             - exp(-(alpha*(deltat*it-70-t0)/tho)**2)) !* Apo
 
@@ -80,7 +81,6 @@
 !            (exp(-(alpha*(deltat*it+1000-t0)/tho)**2) &
 !            - exp(-(alpha*(deltat*it-1300-t0)/tho)**2)) !* Apo
 
-!WRITE(6,*) "acoustic_forcing.90 --> ACELL_Z : ", accel_z
 ! gravity wave /tsunami
 !  accel_x = 0 !* Apo
 !  accel_z = A * (exp(-(alpha*(deltat*it-1000-t0)/tho)**2) &
