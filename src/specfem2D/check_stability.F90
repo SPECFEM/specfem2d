@@ -54,7 +54,7 @@
 ! checks simulation stability and outputs timerun infos
 
 #ifdef USE_MPI
-  use :: mpi
+  use mpi
 #endif
   implicit none
   include "constants.h"

@@ -47,7 +47,7 @@
   subroutine initialize_simulation(nproc,myrank,ninterface_acoustic,ninterface_elastic,ninterface_poroelastic)
 
 #ifdef USE_MPI
-  use :: mpi
+  use mpi
 #endif
   implicit none
   include "constants.h"

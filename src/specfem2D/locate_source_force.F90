@@ -51,7 +51,7 @@
                xi_source,gamma_source,coorg,knods,ngnod,npgeo,iglob_source)
 
 #ifdef USE_MPI
-  use :: mpi
+  use mpi
 #endif
 
   implicit none

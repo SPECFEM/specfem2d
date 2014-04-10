@@ -51,7 +51,7 @@
       save_binary_seismograms_single,save_binary_seismograms_double,subsamp_seismos)
 
 #ifdef USE_MPI
-  use :: mpi
+  use mpi
 #endif
 
   implicit none

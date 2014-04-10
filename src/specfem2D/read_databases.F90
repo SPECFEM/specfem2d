@@ -673,7 +673,7 @@
 ! reads in absorbing edges
 
 #ifdef USE_MPI
-  use :: mpi
+  use mpi
 #endif
 
   implicit none

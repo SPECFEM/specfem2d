@@ -46,7 +46,7 @@
                       PML_interior_interface,nglob_interface,mask_ibool,read_external_mesh)
 
 #ifdef USE_MPI
-  use :: mpi
+  use mpi
 #endif
 
   implicit none

@@ -47,8 +47,7 @@
 subroutine exit_MPI(error_msg)
 
 #ifdef USE_MPI
-  ! standard include of the MPI library
-  use :: mpi
+  use mpi
 #endif
   implicit none
 

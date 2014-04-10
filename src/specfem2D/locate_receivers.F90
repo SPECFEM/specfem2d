@@ -55,7 +55,7 @@
                           x_final_receiver, z_final_receiver)
 
 #ifdef USE_MPI
-  use :: mpi
+  use mpi
 #endif
 
   implicit none

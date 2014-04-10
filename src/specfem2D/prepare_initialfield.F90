@@ -52,7 +52,7 @@
                         accel_elastic,veloc_elastic,displ_elastic)
 
 #ifdef USE_MPI
-  use :: mpi
+  use mpi
 #endif
   implicit none
   include "constants.h"

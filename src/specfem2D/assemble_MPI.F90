@@ -65,7 +65,7 @@
                               nibool_interfaces_acoustic,nibool_interfaces_elastic, &
                               nibool_interfaces_poroelastic,my_neighbours)
 
-  use :: mpi
+  use mpi
 
   implicit none
 
@@ -229,7 +229,7 @@
                                  buffer_recv_faces_vector_ac, &
                                  my_neighbours )
 
-  use :: mpi
+  use mpi
 
   implicit none
 
@@ -358,7 +358,7 @@
                                    buffer_recv_faces_vector_el, &
                                    my_neighbours)
 
-  use :: mpi
+  use mpi
 
   implicit none
 
@@ -464,7 +464,7 @@
                            buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
                            my_neighbours)
 
-  use :: mpi
+  use mpi
 
   implicit none
 

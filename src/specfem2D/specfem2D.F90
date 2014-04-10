@@ -357,7 +357,7 @@
 ! therefore not be consistent with the basis functions.
 
 #ifdef USE_MPI
-  use :: mpi
+  use mpi
 #endif
 
   implicit none
