@@ -55,7 +55,7 @@
 ! check the mesh, stability and number of points per wavelength
 
 #ifdef USE_MPI
-  use :: mpi
+  use mpi
 #endif
 
   implicit none

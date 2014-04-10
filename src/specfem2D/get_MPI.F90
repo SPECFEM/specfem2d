@@ -59,7 +59,7 @@
 
 ! sets up the MPI interface for communication between partitions
 
-  use :: mpi
+  use mpi
 
   implicit none
 

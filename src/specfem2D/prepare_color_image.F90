@@ -50,7 +50,7 @@
                             coord,nglob,npgeo,factor_subsample_image)
 
 #ifdef USE_MPI
-  use :: mpi
+  use mpi
 #endif
   implicit none
   include "constants.h"
@@ -304,7 +304,7 @@
 ! stores P-velocity model in image_color_vp_display
 
 #ifdef USE_MPI
-  use :: mpi
+  use mpi
 #endif
   implicit none
   include "constants.h"
