@@ -50,7 +50,7 @@ FCFLAGS = #@FCFLAGS@
 MPIFC = @MPIFC@
 MPILIBS = @MPILIBS@
 
-FLAGS_CHECK = @FLAGS_CHECK@ -I../../setup
+DEF_FFLAGS = @DEF_FFLAGS@ -I../../setup
 
 CC = @CC@
 CPPFLAGS = @CPPFLAGS@ $(COND_MPI_CPPFLAGS)
@@ -146,17 +146,17 @@ help:
 ##
 xmeshfem2D: $E/xmeshfem2D
 $E/xmeshfem2D: $(OBJS_MESHFEM2D)
-	$(LINK) $(FLAGS_CHECK) -o ${E}/xmeshfem2D $(OBJS_MESHFEM2D) $(LIB)
+	$(LINK) $(DEF_FFLAGS) -o ${E}/xmeshfem2D $(OBJS_MESHFEM2D) $(LIB)
 
 ##
 ## check_quality_external_mesh
 ##
 xcheck_quality_external_mesh: $E/xcheck_quality_external_mesh
 $E/xcheck_quality_external_mesh: $O/check_quality_external_mesh.o $O/read_value_parameters.o $O/param_reader.o $O/define_shape_functions.o
-	${F90} $(FLAGS_CHECK) -o ${E}/xcheck_quality_external_mesh $O/check_quality_external_mesh.o $O/read_value_parameters.o $O/param_reader.o $O/define_shape_functions.o
+	${F90} $(DEF_FFLAGS) -o ${E}/xcheck_quality_external_mesh $O/check_quality_external_mesh.o $O/read_value_parameters.o $O/param_reader.o $O/define_shape_functions.o
 
 $O/define_shape_functions.o: ${S}/../specfem2D/define_shape_functions.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/define_shape_functions.o ${S}/../specfem2D/define_shape_functions.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/define_shape_functions.o ${S}/../specfem2D/define_shape_functions.f90
 
 ##
 ## object files
@@ -167,54 +167,54 @@ $O/define_shape_functions.o: ${S}/../specfem2D/define_shape_functions.f90 ${SETU
 ##
 
 $O/get_node_number.o: ${S}/get_node_number.f90
-	${F90} $(FLAGS_CHECK) -c -o $O/get_node_number.o ${S}/get_node_number.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/get_node_number.o ${S}/get_node_number.f90
 
 $O/meshfem2D.o: ${S}/meshfem2D.F90 $O/part_unstruct.o $O/read_interfaces_file.o $O/read_parameter_file.o $O/read_source_file.o ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/meshfem2D.o ${S}/meshfem2D.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/meshfem2D.o ${S}/meshfem2D.F90
 
 @COND_MPI_TRUE@$O/part_unstruct.o: ${S}/part_unstruct.F90 ${SETUP}/constants.h @SCOTCH_INCLUDEDIR@/scotchf.h
 @COND_MPI_FALSE@$O/part_unstruct.o: ${S}/part_unstruct.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/part_unstruct.o ${S}/part_unstruct.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/part_unstruct.o ${S}/part_unstruct.F90
 
 $O/read_interfaces_file.o: ${S}/read_interfaces_file.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/read_interfaces_file.o ${S}/read_interfaces_file.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/read_interfaces_file.o ${S}/read_interfaces_file.f90
 
 $O/read_materials.o: ${S}/read_materials.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/read_materials.o ${S}/read_materials.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/read_materials.o ${S}/read_materials.f90
 
 $O/read_parameter_file.o: ${S}/read_parameter_file.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/read_parameter_file.o ${S}/read_parameter_file.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/read_parameter_file.o ${S}/read_parameter_file.F90
 
 $O/read_regions.o: ${S}/read_regions.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/read_regions.o ${S}/read_regions.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/read_regions.o ${S}/read_regions.f90
 
 $O/read_source_file.o: ${S}/read_source_file.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/read_source_file.o ${S}/read_source_file.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/read_source_file.o ${S}/read_source_file.f90
 
 $O/save_databases.o: ${S}/save_databases.f90 $O/part_unstruct.o $O/read_parameter_file.o $O/read_source_file.o ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/save_databases.o ${S}/save_databases.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/save_databases.o ${S}/save_databases.f90
 
 $O/save_gnuplot_file.o: ${S}/save_gnuplot_file.f90
-	${F90} $(FLAGS_CHECK) -c -o $O/save_gnuplot_file.o ${S}/save_gnuplot_file.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/save_gnuplot_file.o ${S}/save_gnuplot_file.f90
 
 $O/save_stations_file.o: ${S}/save_stations_file.f90
-	${F90} $(FLAGS_CHECK) -c -o $O/save_stations_file.o ${S}/save_stations_file.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/save_stations_file.o ${S}/save_stations_file.f90
 
 $O/spline_routines.o: ${S}/spline_routines.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/spline_routines.o ${S}/spline_routines.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/spline_routines.o ${S}/spline_routines.f90
 
 ##
 ## check_quality_external_mesh
 ##
 
 $O/check_quality_external_mesh.o: ${SHARED}/check_quality_external_mesh.f90
-	${F90} $(FLAGS_CHECK) -c -o $O/check_quality_external_mesh.o ${SHARED}/check_quality_external_mesh.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/check_quality_external_mesh.o ${SHARED}/check_quality_external_mesh.f90
 
 ##
 ## shared
 ##
 $O/read_value_parameters.o: ${SHARED}/read_value_parameters.f90
-	${F90} $(FLAGS_CHECK) -c -o $O/read_value_parameters.o ${SHARED}/read_value_parameters.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/read_value_parameters.o ${SHARED}/read_value_parameters.f90
 
 $O/param_reader.o: ${SHARED}/param_reader.c
 	${CC} -c $(CFLAGS) -o $O/param_reader.o ${SHARED}/param_reader.c
