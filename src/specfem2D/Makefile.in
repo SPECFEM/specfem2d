@@ -55,7 +55,7 @@ FCFLAGS = #@FCFLAGS@
 MPIFC = @MPIFC@
 MPILIBS = @MPILIBS@
 
-FLAGS_CHECK = @FLAGS_CHECK@ -I../../setup
+DEF_FFLAGS = @DEF_FFLAGS@ -I../../setup
 
 CC = @CC@
 CPPFLAGS = @CPPFLAGS@ $(COND_MPI_CPPFLAGS)
@@ -206,21 +206,21 @@ help:
 ##
 xspecfem2D: $E/xspecfem2D
 $E/xspecfem2D: $(OBJS_SPECFEM2D)
-	$(LINK) $(FLAGS_CHECK) -o ${E}/xspecfem2D $(OBJS_SPECFEM2D)
+	$(LINK) $(DEF_FFLAGS) -o ${E}/xspecfem2D $(OBJS_SPECFEM2D)
 
 ##
 ## convolve_source_timefunction
 ##
 xconvolve_source_timefunction: $E/xconvolve_source_timefunction
 $E/xconvolve_source_timefunction: $O/convolve_source_timefunction.o
-	${F90} $(FLAGS_CHECK) -o ${E}/xconvolve_source_timefunction $O/convolve_source_timefunction.o
+	${F90} $(DEF_FFLAGS) -o ${E}/xconvolve_source_timefunction $O/convolve_source_timefunction.o
 
 ##
 ## adj_seismogram
 ##
 xadj_seismogram: $E/xadj_seismogram
 $E/xadj_seismogram: $O/adj_seismogram.o
-	${F90} $(FLAGS_CHECK) -o ${E}/xadj_seismogram $O/adj_seismogram.o
+	${F90} $(DEF_FFLAGS) -o ${E}/xadj_seismogram $O/adj_seismogram.o
 
 
 ##
@@ -231,233 +231,233 @@ $E/xadj_seismogram: $O/adj_seismogram.o
 ## convolve_source_timefunction
 ##
 $O/convolve_source_timefunction.o: ${SHARED}/convolve_source_timefunction.f90
-	${F90} $(FLAGS_CHECK) -c -o $O/convolve_source_timefunction.o ${SHARED}/convolve_source_timefunction.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/convolve_source_timefunction.o ${SHARED}/convolve_source_timefunction.f90
 
 ##
 ## adj_seismogram
 ##
 $O/adj_seismogram.o: ${SHARED}/adj_seismogram.f90
-	${F90} $(FLAGS_CHECK) -c -o $O/adj_seismogram.o ${SHARED}/adj_seismogram.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/adj_seismogram.o ${SHARED}/adj_seismogram.f90
 
 ##
 ## specfem2D
 ##
 $O/assemble_MPI.o: ${S}/assemble_MPI.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/assemble_MPI.o ${S}/assemble_MPI.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/assemble_MPI.o ${S}/assemble_MPI.F90
 
 $O/attenuation_compute_param.o: ${S}/attenuation_compute_param.c
 	${CC} $(CFLAGS) -c -o $O/attenuation_compute_param.o ${S}/attenuation_compute_param.c
 
 $O/acoustic_forcing_boundary.o: ${S}/acoustic_forcing_boundary.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/acoustic_forcing_boundary.o ${S}/acoustic_forcing_boundary.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/acoustic_forcing_boundary.o ${S}/acoustic_forcing_boundary.f90
 
 $O/attenuation_model.o: ${S}/attenuation_model.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/attenuation_model.o ${S}/attenuation_model.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/attenuation_model.o ${S}/attenuation_model.f90
 	
 $O/axisymmetric_routines.o: ${S}/axisymmetric_routines.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/axisymmetric_routines.o ${S}/axisymmetric_routines.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/axisymmetric_routines.o ${S}/axisymmetric_routines.f90
 
 $O/calendar.o: ${S}/calendar.f90
-	${F90} $(FLAGS_CHECK) -c -o $O/calendar.o ${S}/calendar.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/calendar.o ${S}/calendar.f90
 
 $O/checkgrid.o: ${S}/checkgrid.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/checkgrid.o ${S}/checkgrid.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/checkgrid.o ${S}/checkgrid.F90
 
 $O/compute_arrays_source.o: ${S}/compute_arrays_source.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/compute_arrays_source.o ${S}/compute_arrays_source.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/compute_arrays_source.o ${S}/compute_arrays_source.f90
 
 $O/compute_Bielak_conditions.o: ${S}/compute_Bielak_conditions.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/compute_Bielak_conditions.o ${S}/compute_Bielak_conditions.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/compute_Bielak_conditions.o ${S}/compute_Bielak_conditions.f90
 
 $O/compute_curl_one_element.o: ${S}/compute_curl_one_element.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/compute_curl_one_element.o ${S}/compute_curl_one_element.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/compute_curl_one_element.o ${S}/compute_curl_one_element.f90
 
 $O/compute_vector_field.o: ${S}/compute_vector_field.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/compute_vector_field.o ${S}/compute_vector_field.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/compute_vector_field.o ${S}/compute_vector_field.f90
 
 $O/compute_pressure.o: ${S}/compute_pressure.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/compute_pressure.o ${S}/compute_pressure.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/compute_pressure.o ${S}/compute_pressure.f90
 
 $O/construct_acoustic_surface.o: ${S}/construct_acoustic_surface.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/construct_acoustic_surface.o ${S}/construct_acoustic_surface.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/construct_acoustic_surface.o ${S}/construct_acoustic_surface.f90
 
 $O/convert_time.o: ${S}/convert_time.f90
-	${F90} $(FLAGS_CHECK) -c -o $O/convert_time.o ${S}/convert_time.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/convert_time.o ${S}/convert_time.f90
 
 $O/create_color_image.o: ${S}/create_color_image.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/create_color_image.o ${S}/create_color_image.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/create_color_image.o ${S}/create_color_image.f90
 
 $O/createnum_fast.o: ${S}/createnum_fast.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/createnum_fast.o ${S}/createnum_fast.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/createnum_fast.o ${S}/createnum_fast.f90
 
 $O/createnum_slow.o: ${S}/createnum_slow.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/createnum_slow.o ${S}/createnum_slow.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/createnum_slow.o ${S}/createnum_slow.f90
 
 $O/datim.o: ${S}/datim.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/datim.o ${S}/datim.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/datim.o ${S}/datim.f90
 
 $O/define_derivation_matrices.o: ${S}/define_derivation_matrices.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/define_derivation_matrices.o ${S}/define_derivation_matrices.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/define_derivation_matrices.o ${S}/define_derivation_matrices.f90
 
 $O/define_external_model.o: ${S}/define_external_model.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/define_external_model.o ${S}/define_external_model.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/define_external_model.o ${S}/define_external_model.f90
 
 $O/define_shape_functions.o: ${S}/define_shape_functions.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/define_shape_functions.o ${S}/define_shape_functions.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/define_shape_functions.o ${S}/define_shape_functions.f90
 
 $O/exit_mpi.o: ${S}/exit_mpi.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/exit_mpi.o ${S}/exit_mpi.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/exit_mpi.o ${S}/exit_mpi.F90
 
 ### C compilation
 $O/force_ftz.o: ${SHARED}/force_ftz.c ${SETUP}/config.h
 	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $O/force_ftz.o ${SHARED}/force_ftz.c
 
 $O/get_global.o: ${S}/get_global.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/get_global.o ${S}/get_global.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/get_global.o ${S}/get_global.f90
 
 $O/get_MPI.o: ${S}/get_MPI.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/get_MPI.o ${S}/get_MPI.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/get_MPI.o ${S}/get_MPI.F90
 
 $O/get_poroelastic_velocities.o: ${S}/get_poroelastic_velocities.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/get_poroelastic_velocities.o ${S}/get_poroelastic_velocities.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/get_poroelastic_velocities.o ${S}/get_poroelastic_velocities.f90
 
 $O/gll_library.o: ${S}/gll_library.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/gll_library.o ${S}/gll_library.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/gll_library.o ${S}/gll_library.f90
 
 $O/gmat01.o: ${S}/gmat01.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/gmat01.o ${S}/gmat01.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/gmat01.o ${S}/gmat01.f90
 
 $O/invert_mass_matrix.o: ${S}/invert_mass_matrix.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/invert_mass_matrix.o ${S}/invert_mass_matrix.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/invert_mass_matrix.o ${S}/invert_mass_matrix.F90
 
 $O/initialize_simulation.o: ${S}/initialize_simulation.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/initialize_simulation.o ${S}/initialize_simulation.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/initialize_simulation.o ${S}/initialize_simulation.F90
 
 $O/is_in_convex_quadrilateral.o: ${S}/is_in_convex_quadrilateral.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/is_in_convex_quadrilateral.o ${S}/is_in_convex_quadrilateral.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/is_in_convex_quadrilateral.o ${S}/is_in_convex_quadrilateral.f90
 
 $O/lagrange_poly.o: ${S}/lagrange_poly.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/lagrange_poly.o ${S}/lagrange_poly.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/lagrange_poly.o ${S}/lagrange_poly.f90
 
 $O/locate_receivers.o: ${S}/locate_receivers.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/locate_receivers.o ${S}/locate_receivers.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/locate_receivers.o ${S}/locate_receivers.F90
 
 $O/locate_source_force.o: ${S}/locate_source_force.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/locate_source_force.o ${S}/locate_source_force.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/locate_source_force.o ${S}/locate_source_force.F90
 
 $O/locate_source_moment_tensor.o: ${S}/locate_source_moment_tensor.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/locate_source_moment_tensor.o ${S}/locate_source_moment_tensor.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/locate_source_moment_tensor.o ${S}/locate_source_moment_tensor.F90
 
 $O/netlib_specfun_erf.o: ${S}/netlib_specfun_erf.f90
-	${F90} $(FLAGS_CHECK) -c -o $O/netlib_specfun_erf.o ${S}/netlib_specfun_erf.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/netlib_specfun_erf.o ${S}/netlib_specfun_erf.f90
 
 $O/noise_tomography.o: ${S}/noise_tomography.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/noise_tomography.o ${S}/noise_tomography.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/noise_tomography.o ${S}/noise_tomography.f90
 
 $O/paco_beyond_critical.o: ${S}/paco_beyond_critical.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/paco_beyond_critical.o ${S}/paco_beyond_critical.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/paco_beyond_critical.o ${S}/paco_beyond_critical.f90
 
 $O/paco_convolve_fft.o: ${S}/paco_convolve_fft.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/paco_convolve_fft.o ${S}/paco_convolve_fft.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/paco_convolve_fft.o ${S}/paco_convolve_fft.f90
 
 $O/plotgll.o: ${S}/plotgll.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/plotgll.o ${S}/plotgll.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/plotgll.o ${S}/plotgll.f90
 
 $O/plotpost.o: ${S}/plotpost.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/plotpost.o ${S}/plotpost.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/plotpost.o ${S}/plotpost.F90
 
 $O/pml_init.o: ${S}/pml_init.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/pml_init.o ${S}/pml_init.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/pml_init.o ${S}/pml_init.F90
   
 $O/prepare_absorb.o: ${S}/prepare_absorb.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/prepare_absorb.o ${S}/prepare_absorb.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/prepare_absorb.o ${S}/prepare_absorb.f90
 
 $O/prepare_assemble_MPI.o: ${S}/prepare_assemble_MPI.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/prepare_assemble_MPI.o ${S}/prepare_assemble_MPI.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/prepare_assemble_MPI.o ${S}/prepare_assemble_MPI.F90
 
 $O/prepare_color_image.o: ${S}/prepare_color_image.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/prepare_color_image.o ${S}/prepare_color_image.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/prepare_color_image.o ${S}/prepare_color_image.F90
 
 $O/prepare_initialfield.o: ${S}/prepare_initialfield.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/prepare_initialfield.o ${S}/prepare_initialfield.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/prepare_initialfield.o ${S}/prepare_initialfield.F90
 
 $O/prepare_source_time_function.o: ${S}/prepare_source_time_function.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/prepare_source_time_function.o ${S}/prepare_source_time_function.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/prepare_source_time_function.o ${S}/prepare_source_time_function.f90
 
 $O/read_databases.o: ${S}/read_databases.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/read_databases.o ${S}/read_databases.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/read_databases.o ${S}/read_databases.F90
 
 $O/read_external_model.o: ${S}/read_external_model.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/read_external_model.o ${S}/read_external_model.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/read_external_model.o ${S}/read_external_model.f90
 
 $O/recompute_jacobian.o: ${S}/recompute_jacobian.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/recompute_jacobian.o ${S}/recompute_jacobian.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/recompute_jacobian.o ${S}/recompute_jacobian.f90
 
 $O/save_databases.o: ${S}/save_databases.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/save_databases.o ${S}/save_databases.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/save_databases.o ${S}/save_databases.f90
 
 $O/save_gnuplot_file.o: ${S}/save_gnuplot_file.f90
-	${F90} $(FLAGS_CHECK) -c -o $O/save_gnuplot_file.o ${S}/save_gnuplot_file.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/save_gnuplot_file.o ${S}/save_gnuplot_file.f90
 
 $O/save_openDX_jacobian.o: ${S}/save_openDX_jacobian.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/save_openDX_jacobian.o ${S}/save_openDX_jacobian.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/save_openDX_jacobian.o ${S}/save_openDX_jacobian.f90
 
 $O/save_stations_file.o: ${S}/save_stations_file.f90
-	${F90} $(FLAGS_CHECK) -c -o $O/save_stations_file.o ${S}/save_stations_file.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/save_stations_file.o ${S}/save_stations_file.f90
 
 $O/set_sources.o: ${S}/set_sources.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/set_sources.o ${S}/set_sources.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/set_sources.o ${S}/set_sources.f90
 
 $O/setup_sources_receivers.o: ${S}/setup_sources_receivers.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/setup_sources_receivers.o ${S}/setup_sources_receivers.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/setup_sources_receivers.o ${S}/setup_sources_receivers.F90
 
 $O/spline_routines.o: ${S}/spline_routines.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/spline_routines.o ${S}/spline_routines.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/spline_routines.o ${S}/spline_routines.f90
 
 $O/sort_array_coordinates.o: ${S}/sort_array_coordinates.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/sort_array_coordinates.o ${S}/sort_array_coordinates.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/sort_array_coordinates.o ${S}/sort_array_coordinates.F90
 
 $O/update_displacement_scheme.o: ${S}/update_displacement_scheme.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/update_displacement_scheme.o ${S}/update_displacement_scheme.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/update_displacement_scheme.o ${S}/update_displacement_scheme.F90
 
 $O/write_seismograms.o: ${S}/write_seismograms.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/write_seismograms.o ${S}/write_seismograms.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/write_seismograms.o ${S}/write_seismograms.F90
 
 $O/check_stability.o: ${S}/check_stability.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/check_stability.o ${S}/check_stability.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/check_stability.o ${S}/check_stability.F90
 
 $O/compute_coupling_acoustic_el.o: ${S}/compute_coupling_acoustic_el.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/compute_coupling_acoustic_el.o ${S}/compute_coupling_acoustic_el.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/compute_coupling_acoustic_el.o ${S}/compute_coupling_acoustic_el.f90
 
 $O/compute_energy.o: ${S}/compute_energy.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/compute_energy.o ${S}/compute_energy.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/compute_energy.o ${S}/compute_energy.f90
 
 $O/compute_forces_acoustic.o: ${S}/compute_forces_acoustic.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/compute_forces_acoustic.o ${S}/compute_forces_acoustic.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/compute_forces_acoustic.o ${S}/compute_forces_acoustic.f90
 
 $O/compute_forces_gravitoacoustic.o: ${S}/compute_forces_gravitoacoustic.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/compute_forces_gravitoacoustic.o ${S}/compute_forces_gravitoacoustic.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/compute_forces_gravitoacoustic.o ${S}/compute_forces_gravitoacoustic.f90
 
 $O/compute_forces_poro_fluid.o: ${S}/compute_forces_poro_fluid.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/compute_forces_poro_fluid.o ${S}/compute_forces_poro_fluid.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/compute_forces_poro_fluid.o ${S}/compute_forces_poro_fluid.f90
 
 $O/compute_forces_poro_solid.o: ${S}/compute_forces_poro_solid.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/compute_forces_poro_solid.o ${S}/compute_forces_poro_solid.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/compute_forces_poro_solid.o ${S}/compute_forces_poro_solid.f90
 
 $O/compute_forces_viscoelastic.o: ${S}/compute_forces_viscoelastic.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/compute_forces_viscoelastic.o ${S}/compute_forces_viscoelastic.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/compute_forces_viscoelastic.o ${S}/compute_forces_viscoelastic.F90
 
 $O/compute_gradient_attenuation.o: ${S}/compute_gradient_attenuation.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/compute_gradient_attenuation.o ${S}/compute_gradient_attenuation.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/compute_gradient_attenuation.o ${S}/compute_gradient_attenuation.f90
 
 $O/compute_normal_vector.o: ${S}/compute_normal_vector.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/compute_normal_vector.o ${S}/compute_normal_vector.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/compute_normal_vector.o ${S}/compute_normal_vector.f90
 
 $O/enforce_acoustic_free_surface.o: ${S}/enforce_acoustic_free_surface.f90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/enforce_acoustic_free_surface.o ${S}/enforce_acoustic_free_surface.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/enforce_acoustic_free_surface.o ${S}/enforce_acoustic_free_surface.f90
 
 $O/specfem2D.o: ${S}/specfem2D.F90 ${SETUP}/constants.h
-	${F90} $(FLAGS_CHECK) -c -o $O/specfem2D.o ${S}/specfem2D.F90
+	${F90} $(DEF_FFLAGS) -c -o $O/specfem2D.o ${S}/specfem2D.F90
 
 
 ##
