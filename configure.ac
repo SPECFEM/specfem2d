@@ -218,11 +218,11 @@ fi
 
 # Checks for header files.
 
-if test "$want_mpi" = yes; then
-    CIT_FC_MPI_MODULE([mpif.h], [$MPIFC], [$DEF_FFLAGS], [], [
-        AC_MSG_FAILURE([cannot compile a trivial MPI program using $MPIFC])
-    ])
-fi
+# if test "$want_mpi" = yes; then
+#     CIT_FC_MPI_MODULE([mpif.h], [$MPIFC], [$DEF_FFLAGS], [], [
+#         AC_MSG_FAILURE([cannot compile a trivial MPI program using $MPIFC])
+#     ])
+# fi
 
 # Checks for typedefs, structures, and compiler characteristics.
 
