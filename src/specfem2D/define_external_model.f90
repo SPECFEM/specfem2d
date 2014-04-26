@@ -1169,7 +1169,7 @@
 ! region flag to assign the Atmosphere model
   integer, parameter :: IREGION_AIR = 1
 
-  integer :: i,j,ispec,iglob,ii,iglob1
+  integer :: i,j,ispec,iglob,ii
 
   double precision :: x,z,frac,tmp2
 
