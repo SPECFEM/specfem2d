@@ -4,12 +4,11 @@
 !                   S P E C F E M 2 D  Version 7 . 0
 !                   --------------------------------
 !
-! Copyright CNRS, Inria and University of Pau, France,
-! and Princeton University / California Institute of Technology, USA.
-! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
-!               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
-!               Roland Martin, roland DOT martin aT univ-pau DOT fr
-!               Christina Morency, cmorency aT princeton DOT edu
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This software is a computer program whose purpose is to solve
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
@@ -2164,13 +2163,13 @@ end subroutine rotate_mesh_for_axisym
    IF (IERR /= 0) THEN
      PRINT *, 'ERROR : MAIN : Cannot initialize strat'
      STOP
-  ENDIF
+  endif
 
   CALL SCOTCHFGRAPHINIT (SCOTCHGRAPH (1), IERR)
   IF (IERR /= 0) THEN
      PRINT *, 'ERROR : MAIN : Cannot initialize graph'
      STOP
-  ENDIF
+  endif
 
   ! fills graph structure : see user manual (scotch_user5.1.pdf, page 72/73)
   ! arguments: #(1) graph_structure       #(2) baseval(either 0/1)    #(3) number_of_vertices
@@ -2186,31 +2185,31 @@ end subroutine rotate_mesh_for_axisym
   IF (IERR /= 0) THEN
      PRINT *, 'ERROR : MAIN : Cannot build graph'
      STOP
-  ENDIF
+  endif
 
   CALL SCOTCHFGRAPHCHECK (SCOTCHGRAPH (1), IERR)
   IF (IERR /= 0) THEN
      PRINT *, 'ERROR : MAIN : Invalid check'
      STOP
-  ENDIF
+  endif
 
   call scotchfgraphpart (SCOTCHGRAPH (1), nparts, SCOTCHSTRAT(1), part(0), IERR)
   IF (IERR /= 0) THEN
      PRINT *, 'ERROR : MAIN : Cannot part graph'
      STOP
-  ENDIF
+  endif
 
   CALL SCOTCHFGRAPHEXIT (SCOTCHGRAPH (1), IERR)
   IF (IERR /= 0) THEN
      PRINT *, 'ERROR : MAIN : Cannot destroy graph'
      STOP
-  ENDIF
+  endif
 
   call scotchfstratexit (SCOTCHSTRAT(1), IERR)
   IF (IERR /= 0) THEN
      PRINT *, 'ERROR : MAIN : Cannot destroy strat'
      STOP
-  ENDIF
+  endif
 
   end subroutine part_scotch
 #endif

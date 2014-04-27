@@ -4,12 +4,11 @@
 !                   S P E C F E M 2 D  Version 7 . 0
 !                   --------------------------------
 !
-! Copyright CNRS, Inria and University of Pau, France,
-! and Princeton University / California Institute of Technology, USA.
-! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
-!               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
-!               Roland Martin, roland DOT martin aT univ-pau DOT fr
-!               Christina Morency, cmorency aT princeton DOT edu
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !               Pieyre Le Loher, pieyre DOT le-loher aT inria.fr
 !
 ! This software is a computer program whose purpose is to solve
