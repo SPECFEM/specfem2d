@@ -83,7 +83,7 @@
 \title{\textbf{SPECFEM2D}\\
 \textbf{User Manual}}
 
-\author{\copyright\ Princeton University (USA) and CNRS and University of Marseille (France)\\
+\author{\copyright\ Princeton University (USA) and CNRS / University of Marseille (France)\\
 Version 7.0
 }
 
@@ -187,7 +187,7 @@ In particular, it can accurately handle very distorted mesh elements \citep{OlSe
 It has very good accuracy and convergence properties \citep{MaPa89,SePr94,DeFiMu02,Coh02,DeSe07,SeOl08,AiWa09,AiWa10,MeStTh12}.
 The spectral element approach admits spectral rates of convergence and allows exploiting $hp$-convergence schemes.
 It is also very well suited to parallel implementation on very large supercomputers \citep{KoTsChTr03,TsKoChTr03,KoLaMi08a,CaKoLaTiMiLeSnTr08,KoViCh10}
-as well as on clusters of GPU accelerating graphics cards \citep{KoMiEr09,KoErGoMi10,Kom11}.
+as well as on clusters of GPU accelerating graphics cards \citep{Kom11,MiKo10,KoMiEr09,KoErGoMi10}.
 Tensor products inside each element can be optimized to reach very high efficiency \citep{DeFiMu02}, and mesh point and element numbering can be optimized to reduce processor cache misses and improve cache reuse \citep{KoLaMi08a}. The SEM can also handle triangular (in 2D) or tetrahedral (in 3D) elements \citep{WinBoyd96,TaWi00,KoMaTrTaWi01,Coh02,MeViSa06} as well as mixed meshes, although with increased cost and reduced accuracy in these elements, as in the discontinuous Galerkin method.
 
 Note that in many geological models in the context of seismic wave propagation studies
@@ -215,11 +215,13 @@ no obsolete or obsolescent features of Fortran. The package uses
 parallel programming based upon the Message Passing Interface (MPI)
 \citep{GrLuSk94,Pac97}.
 
-The next release of the code will include support for GPU graphics card acceleration \citep{KoMiEr09,KoErGoMi10,MiKo10,Kom11}.
+The next release of the code will include support for GPU graphics card acceleration \citep{Kom11,MiKo10,KoMiEr09,KoErGoMi10}.
 
 The code uses the plane strain convention when the standard P-SV equation case is used, i.e.,
 the off-plane strain $\epsilon_{zz}$ is zero by definition of the plane strain convention but the off-plane stress $\sigma_{zz}$ is not equal to zero,
 one has $\sigma_{zz} = \lambda (\epsilon_{xx} + \epsilon_{yy})$.
+This implies, as in any plain strain software package, that the P-SV source is a line source along the direction perpendicular to the plane (see file
+discussion\_of\_2D\_sources\_and\_approximations\_from\_Pilant\_1979.pdf for more details).
 
 %------------------------------------------------------------------------------------------------%
 \section{Citation}
@@ -1278,9 +1280,9 @@ to Jeroen Tromp \urlwithparentheses{jtromp-AT-princeton.edu} or to the CIG Compu
 Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 
 Princeton University, USA,
-and CNRS / Inria / University of Pau, France
+and CNRS / University of Marseille, France
 
-\copyright\ Princeton University and CNRS / Inria / University of Pau, July 2012
+\copyright\ Princeton University and CNRS / University of Marseille, July 2012
 \end{quote}
 
 %------------------------------------------------------------------------------------------------%
