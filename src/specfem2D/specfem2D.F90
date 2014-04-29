@@ -9476,6 +9476,23 @@ if(coupled_elastic_poro) then
           call exit_MPI('wrong type for JPEG snapshots')
         endif
 
+!! DK DK quick hack to remove the PMLs from JPEG images if needed: set the vector field to zero there
+        if(PML_BOUNDARY_CONDITIONS .and. REMOVE_PMLS_FROM_JPEG_IMAGES) then
+          do ispec = 1,nspec
+            if(is_PML(ispec)) then
+              do j = 1,NGLLZ
+                do i = 1,NGLLX
+                  iglob = ibool(i,j,ispec)
+                  vector_field_display(1,iglob) = 0.d0
+                  vector_field_display(2,iglob) = 0.d0
+                  vector_field_display(3,iglob) = 0.d0
+                enddo
+              enddo
+            endif
+          enddo
+        endif
+!! DK DK quick hack to remove the PMLs from JPEG images if needed
+
         image_color_data(:,:) = 0.d0
 
         do k = 1, nb_pixel_loc
