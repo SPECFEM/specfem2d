@@ -24,6 +24,9 @@
 
 !----------- parameters that can be changed by the user -----------
 
+!! DK DK quick hack to remove the PMLs from JPEG images if needed: set the vector field to zero there
+  logical, parameter :: REMOVE_PMLS_FROM_JPEG_IMAGES = .true.
+
 ! number of Gauss-Lobatto-Legendre (GLL) points (i.e., polynomial degree + 1)
   integer, parameter :: NGLLX = 5
 ! number of Gauss-Lobatto-Jacobi (GLJ) points in the axial elements (i.e., polynomial degree + 1) !axisym
