@@ -44,6 +44,50 @@
                       NELEM_PML_THICKNESS,nspec_PML,is_PML,which_PML_elem,spec_to_PML,region_CPML,&
                       PML_interior_interface,nglob_interface,mask_ibool,read_external_mesh)
 
+! explanations from Zhinan Xie about how to select PML damping parameters efficiently:
+
+! Date: Thu, 8 May 2014 11:22:30
+! From: xiezhinan
+! To: cristini
+! CC: Dimitri Komatitsch
+
+! Here is the new results without side reflection from xPML by allowing
+! different k, d, alpha in different space direction.
+
+! My strategy to select the PML damping parameters is as follows:
+
+! In order to achieve absorbing for gradient incident  wave for zPML:
+! I use K>1 to bending the wavefront aside from its tangential propagation
+! direction (here it is x direction) in zPML.
+! Then a bigger damping factor d and alpha could help damping out the
+! bended wave along its propagation close to normal direction(here is z direction).
+
+! Keeping in mind, with K>1, we decrease the absorbing efficiency a little
+! bit in normal direction.
+! Though not exact, you can thought like this: for example with K_x>1, you
+! scale the element size in x direction with a big factor.
+! Then the resolution decrease in PML but not in interior, thus you can
+! see reflections due to different resolutions in two sides of PML interface.
+! However if the resolution is already very accurate, that is you have a
+! relatively fine grid, then the above effect is not bigger enough for you
+! to detect, in particular, we cut the noise below 1% in our snapshot.
+
+! For your example, I use the fact that the resolution is higher in bottom
+! layer compared with the top layer,
+! which allow me to use a bigger K in z direction without decreasing the
+! absorbing effiency too much in zPML for normal incident.
+! As I side before, a bigger damping factor d and alpha also needed.
+
+! While for xPML, the grazing incident waves are not as significant as in
+! z direction. Moreover the resolution in top layer element does not allow
+! me to use a big K in xPML. Then a smaller K than in z direction is good
+! enough to achieve good absorbing efficiency for waves with incident angle
+! a little far from the grazing incident.
+
+! Best regards,
+! Zhinan
+
+
 #ifdef USE_MPI
   use mpi
 #endif
