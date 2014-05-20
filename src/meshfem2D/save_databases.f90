@@ -187,6 +187,12 @@
     write(15,*) 'factor_subsample_image'
     write(15,*) factor_subsample_image
 
+    write(15,*) 'USE_CONSTANT_MAX_AMPLITUDE'
+    write(15,*) USE_CONSTANT_MAX_AMPLITUDE
+
+    write(15,*) 'CONSTANT_MAX_AMPLITUDE_TO_USE'
+    write(15,*) CONSTANT_MAX_AMPLITUDE_TO_USE
+
     write(15,*) 'USE_SNAPSHOT_NUMBER_IN_FILENAME'
     write(15,*) USE_SNAPSHOT_NUMBER_IN_FILENAME
 

@@ -124,6 +124,12 @@ module parameter_file
 ! factor to subsample color images output by the code (useful for very large models)
   double precision :: factor_subsample_image
 
+! by default the code normalizes each image independently to its maximum; use this option to use the global maximum below instead
+  logical :: USE_CONSTANT_MAX_AMPLITUDE
+
+! constant maximum amplitude to use for all color images if the USE_CONSTANT_MAX_AMPLITUDE option is true
+  double precision :: CONSTANT_MAX_AMPLITUDE_TO_USE
+
 ! use snapshot number in the file name of JPG color snapshots instead of the time step
   logical :: USE_SNAPSHOT_NUMBER_IN_FILENAME
 
@@ -361,6 +367,14 @@ contains
 
   call read_value_double_precision_p(factor_subsample_image, 'solver.factor_subsample_image')
   if(err_occurred() /= 0) stop 'error reading parameter 43b in Par_file'
+
+  call read_value_double_precision_p(USE_CONSTANT_MAX_AMPLITUDE, 'solver.USE_CONSTANT_MAX_AMPLITUDE')
+  if(err_occurred() /= 0) stop 'error reading parameter 43bb in Par_file'
+
+  call read_value_double_precision_p(CONSTANT_MAX_AMPLITUDE_TO_USE, 'solver.CONSTANT_MAX_AMPLITUDE_TO_USE')
+  if(err_occurred() /= 0) stop 'error reading parameter 43bbb in Par_file'
+  if(output_color_image .and. USE_CONSTANT_MAX_AMPLITUDE .and. CONSTANT_MAX_AMPLITUDE_TO_USE < 0.d0) &
+      stop 'CONSTANT_MAX_AMPLITUDE_TO_USE must be strictly positive'
 
   call read_value_double_precision_p(POWER_DISPLAY_COLOR, 'solver.POWER_DISPLAY_COLOR')
   if(err_occurred() /= 0) stop 'error reading parameter 43c in Par_file'

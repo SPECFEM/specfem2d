@@ -45,7 +45,8 @@
                                   NX,NY,it,isnapshot_number,cutsnaps,image_color_vp_display, &
                                   USE_SNAPSHOT_NUMBER_IN_FILENAME,POWER_DISPLAY_COLOR, &
                                   DRAW_SOURCES_AND_RECEIVERS,NSOURCES,nrec, &
-                                  ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver)
+                                  ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver, &
+                                  USE_CONSTANT_MAX_AMPLITUDE,CONSTANT_MAX_AMPLITUDE_TO_USE)
 
 ! display a given field as a red and blue color JPEG image
 
@@ -57,7 +58,8 @@
 
   integer :: NX,NY,it,isnapshot_number
 
-  double precision :: cutsnaps
+  double precision :: cutsnaps,CONSTANT_MAX_AMPLITUDE_TO_USE
+  logical :: USE_CONSTANT_MAX_AMPLITUDE
 
   integer, dimension(NX,NY) :: iglob_image_color_2D
 
@@ -116,7 +118,15 @@
   endif
 
 ! compute maximum amplitude
-  amplitude_max = maxval(abs(color_image_2D_data))
+  if(.not. USE_CONSTANT_MAX_AMPLITUDE) then
+    amplitude_max = maxval(abs(color_image_2D_data))
+  else
+    amplitude_max = CONSTANT_MAX_AMPLITUDE_TO_USE
+!   in case of a pre-defined and constant maximum, truncate all values that are outside that constant range
+    where(color_image_2D_data > +CONSTANT_MAX_AMPLITUDE_TO_USE) color_image_2D_data = +CONSTANT_MAX_AMPLITUDE_TO_USE
+    where(color_image_2D_data < -CONSTANT_MAX_AMPLITUDE_TO_USE) color_image_2D_data = -CONSTANT_MAX_AMPLITUDE_TO_USE
+  endif
+
   vpmin = HUGEVAL
   vpmax = TINYVAL
   do iy=1,NY
@@ -171,9 +181,9 @@
 ! negative values in image_color_vp_display are a flag indicating a water layer to color in light blue
         if (image_color_vp_display(ix,iy) < 0) then
 ! use light blue to display water
-!!!!!!          R = 204
-!!!!!!          G = 255
-!!!!!!          B = 255
+!!!!!!    R = 204
+!!!!!!    G = 255
+!!!!!!    B = 255
           R = 135 !!! LightSkyBlue
           G = 206
           B = 250
