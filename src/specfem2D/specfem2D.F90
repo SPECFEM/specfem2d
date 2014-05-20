@@ -387,6 +387,12 @@
 ! factor to subsample color images output by the code (useful for very large models)
   double precision :: factor_subsample_image
 
+! by default the code normalizes each image independently to its maximum; use this option to use the global maximum below instead
+  logical :: USE_CONSTANT_MAX_AMPLITUDE
+
+! constant maximum amplitude to use for all color images if the USE_CONSTANT_MAX_AMPLITUDE option is true
+  double precision :: CONSTANT_MAX_AMPLITUDE_TO_USE
+
 ! use snapshot number in the file name of JPG color snapshots instead of the time step
   logical :: USE_SNAPSHOT_NUMBER_IN_FILENAME
 
@@ -1112,7 +1118,8 @@
                   ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms, &
                   save_binary_seismograms_single,save_binary_seismograms_double,DRAW_SOURCES_AND_RECEIVERS, &
                   Q0,freq0,p_sv,NSTEP,deltat,NSOURCES, &
-                  factor_subsample_image,USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
+                  factor_subsample_image,USE_CONSTANT_MAX_AMPLITUDE,CONSTANT_MAX_AMPLITUDE_TO_USE, &
+                  USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                   POWER_DISPLAY_COLOR,SU_FORMAT,USER_T0, time_stepping_scheme, &
                   ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_HORIZ_DIST, &
                   read_external_mesh,ACOUSTIC_FORCING,save_ASCII_kernels)
@@ -9606,7 +9613,8 @@ if(coupled_elastic_poro) then
                   NX_IMAGE_color,NZ_IMAGE_color,it,isnapshot_number,cutsnaps,image_color_vp_display, &
                   USE_SNAPSHOT_NUMBER_IN_FILENAME,POWER_DISPLAY_COLOR, &
                   DRAW_SOURCES_AND_RECEIVERS,NSOURCES,nrec, &
-                  ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver)
+                  ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver, &
+                  USE_CONSTANT_MAX_AMPLITUDE,CONSTANT_MAX_AMPLITUDE_TO_USE)
           write(IOUT,*) 'Color image created'
         endif
 
