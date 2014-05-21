@@ -121,6 +121,9 @@
 ! pi
   double precision, parameter :: PI = 3.141592653589793d0
 
+! 2/3
+  double precision, parameter :: TWO_THIRDS = 2.d0/3.d0
+
 ! 4/3
   double precision, parameter :: FOUR_THIRDS = 4.d0/3.d0
 

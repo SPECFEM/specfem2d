@@ -12,19 +12,19 @@
 ! This software is a computer program whose purpose is to solve
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
-! 
+!
 ! This software is governed by the CeCILL license under French law and
 ! abiding by the rules of distribution of free software. You can use,
 ! modify and/or redistribute the software under the terms of the CeCILL
 ! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info". 
+! "http://www.cecill.info".
 !
 ! As a counterpart to the access to the source code and rights to copy,
 ! modify and redistribute granted by the license, users are provided only
 ! with a limited warranty and the software's author, the holder of the
 ! economic rights, and the successive licensors have only limited
 ! liability.
-! 
+!
 ! In this respect, the user's attention is drawn to the risks associated
 ! with loading, using, modifying and/or developing or reproducing the
 ! software by the user in light of its specific status of free software,
@@ -37,7 +37,7 @@
 ! same conditions as regards security.
 !
 ! The full text of the license is available in file "LICENSE".
-! 
+!
 !========================================================================
 
 ! define the forcing applied at the bottom boundary

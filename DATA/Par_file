@@ -37,9 +37,15 @@ ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoust
 NSOURCES                        = 1              # number of sources (source info read from DATA/CMTSOLUTION file)
 force_normal_to_surface         = .false.        # angleforce normal to surface (external mesh and curve file needed)
 
-# constants for attenuation
+# for viscoelastic attenuation
 N_SLS                           = 2                      # number of standard linear solids for attenuation
 f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the CMTSOLUTION file
+# shift (i.e. change) velocities read from the input file to take average physical dispersion into account,
+# i.e. if needed change the reference frequency at which these velocities are defined internally in the code:
+# by default, the seismic velocity values that are read at the end of this Par_file of the code are supposed to be the unrelaxed values,
+# i.e. the velocities at infinite frequency. We may want to change this and impose that the values read are those for a given frequency (here f0_attenuation).
+# (when we do this, velocities will then slightly decrease and waves will thus slightly slow down)
+READ_VELOCITIES_AT_f0           = .false.
 
 # receiver set parameters for seismograms
 seismotype                      = 1              # record 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential
@@ -71,7 +77,7 @@ cutsnaps                        = 1.             # minimum amplitude kept in % f
 #### for JPEG color images ####
 output_color_image              = .true.         # output JPEG color image of the results every NSTEP_BETWEEN_OUTPUT_IMAGES time steps or not
 imagetype_JPEG                  = 2              # display 1=displ_Ux 2=displ_Uz 3=displ_norm 4=veloc_Vx 5=veloc_Vz 6=veloc_norm 7=accel_Ax 8=accel_Az 9=accel_norm 10=pressure
-factor_subsample_image          = 1.0            # (double precision) factor to subsample color images output by the code (useful for very large models)
+factor_subsample_image          = 1.0d0          # (double precision) factor to subsample color images output by the code (useful for very large models)
 USE_CONSTANT_MAX_AMPLITUDE      = .false.        # by default the code normalizes each image independently to its maximum; use this option to use the global maximum below instead
 CONSTANT_MAX_AMPLITUDE_TO_USE   = 1.17d4         # constant maximum amplitude to use for all color images if the above USE_CONSTANT_MAX_AMPLITUDE option is true
 POWER_DISPLAY_COLOR             = 0.30d0         # non linear display to enhance small amplitudes in JPEG color images

@@ -452,7 +452,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_databases_atten(N_SLS,f0_attenuation)
+  subroutine read_databases_atten(N_SLS,f0_attenuation,READ_VELOCITIES_AT_f0)
 
 ! reads attenuation information
 
@@ -461,12 +461,13 @@
 
   integer :: N_SLS
   double precision :: f0_attenuation
+  logical :: READ_VELOCITIES_AT_f0
 
   ! local parameters
   character(len=80) :: datlin
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) N_SLS, f0_attenuation
+  read(IIN,*) N_SLS, f0_attenuation, READ_VELOCITIES_AT_f0
   if(N_SLS < 2) stop 'must have N_SLS >= 2 even if attenuation if off because it is used to assign some arrays'
 
   end subroutine read_databases_atten

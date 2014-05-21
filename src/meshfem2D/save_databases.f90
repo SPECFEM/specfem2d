@@ -241,7 +241,7 @@
     enddo
 
     write(15,*) 'attenuation'
-    write(15,*) N_SLS, f0_attenuation
+    write(15,*) N_SLS, f0_attenuation, READ_VELOCITIES_AT_f0
 
     write(15,*) 'Coordinates of macrobloc mesh (coorg):'
 
