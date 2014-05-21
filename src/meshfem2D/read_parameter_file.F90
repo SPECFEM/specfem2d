@@ -368,7 +368,7 @@ contains
   call read_value_double_precision_p(factor_subsample_image, 'solver.factor_subsample_image')
   if(err_occurred() /= 0) stop 'error reading parameter 43b in Par_file'
 
-  call read_value_double_precision_p(USE_CONSTANT_MAX_AMPLITUDE, 'solver.USE_CONSTANT_MAX_AMPLITUDE')
+  call read_value_logical_p(USE_CONSTANT_MAX_AMPLITUDE, 'solver.USE_CONSTANT_MAX_AMPLITUDE')
   if(err_occurred() /= 0) stop 'error reading parameter 43bb in Par_file'
 
   call read_value_double_precision_p(CONSTANT_MAX_AMPLITUDE_TO_USE, 'solver.CONSTANT_MAX_AMPLITUDE_TO_USE')
