@@ -89,6 +89,7 @@ module parameter_file
   ! variables used for attenuation
   integer  :: N_SLS
   double precision  :: f0_attenuation
+  logical :: READ_VELOCITIES_AT_f0
 
   integer :: seismotype
   logical :: use_existing_STATIONS
@@ -274,6 +275,9 @@ contains
 
   call read_value_double_precision_p(f0_attenuation, 'solver.f0_attenuation')
   if(err_occurred() /= 0) stop 'error reading parameter 21 in Par_file'
+
+  call read_value_logical_p(READ_VELOCITIES_AT_f0, 'solver.READ_VELOCITIES_AT_f0')
+  if(err_occurred() /= 0) stop 'error reading parameter 21b in Par_file'
 
   ! read receiver line parameters
   call read_value_integer_p(seismotype, 'solver.seismotype')

@@ -512,6 +512,7 @@
 
 ! poroelastic and elastic coefficients
   double precision, dimension(:,:,:), allocatable :: poroelastcoef
+  logical, dimension(:), allocatable :: already_shifted_velocity
 
 ! anisotropy parameters
   logical :: all_anisotropic
@@ -623,6 +624,7 @@
   double precision, dimension(:), allocatable  :: QKappa_attenuation
   double precision, dimension(:), allocatable  :: Qmu_attenuation
   double precision  :: f0_attenuation
+  logical :: READ_VELOCITIES_AT_f0
   integer nspec_allocate
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1,e11,e13
@@ -630,7 +632,8 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_initial_rk,e11_initial_rk,e13_initial_rk
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: e1_force_rk,e11_force_rk,e13_force_rk
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: inv_tau_sigma_nu1_sent,phi_nu1_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: tau_epsilon_nu1,tau_epsilon_nu2, &
+                              inv_tau_sigma_nu1_sent,phi_nu1_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent
   real(kind=CUSTOM_REAL), dimension(:,:,:) , allocatable :: Mu_nu1,Mu_nu2
   real(kind=CUSTOM_REAL) :: Mu_nu1_sent,Mu_nu2_sent
 
@@ -1078,8 +1081,6 @@
   logical :: anyabs_glob
   integer :: nspec_PML
 
-!!  logical :: backward_simulation for seprate adjoint simulation from backward simulation
-
 ! acoustic (and gravitoacoustic) forcing parameters
   logical, dimension(:,:), allocatable  :: codeacforcing
   integer, dimension(:), allocatable  :: typeacforcing
@@ -1090,6 +1091,9 @@
 
   integer :: nspec_left_acforcing,nspec_right_acforcing,nspec_bottom_acforcing,nspec_top_acforcing
   integer, dimension(:), allocatable :: ib_left_acforcing,ib_right_acforcing,ib_bottom_acforcing,ib_top_acforcing
+
+! for shifting of velocities if needed in the case of viscoelasticity
+  double precision :: vp,vs,rho,mu,lambda
 
 !***********************************************************************
 !
@@ -1180,7 +1184,7 @@
   endif
 
   !----  read attenuation information
-  call read_databases_atten(N_SLS,f0_attenuation)
+  call read_databases_atten(N_SLS,f0_attenuation,READ_VELOCITIES_AT_f0)
 
   ! if source is not a Dirac or Heavyside then f0_attenuation is f0 of the first source
   if(.not. (time_function_type(1) == 4 .or. time_function_type(1) == 5)) then
@@ -1227,6 +1231,7 @@
     allocate(tortuosity(numat))
     allocate(permeability(3,numat))
     allocate(poroelastcoef(4,3,numat))
+    allocate(already_shifted_velocity(numat))
     allocate(QKappa_attenuation(numat))
     allocate(Qmu_attenuation(numat))
     allocate(kmato(nspec))
@@ -1241,10 +1246,14 @@
     allocate(inv_tau_sigma_nu2(NGLLX,NGLLZ,nspec,N_SLS))
     allocate(phi_nu1(NGLLX,NGLLZ,nspec,N_SLS))
     allocate(phi_nu2(NGLLX,NGLLZ,nspec,N_SLS))
+    allocate(tau_epsilon_nu1(N_SLS))
+    allocate(tau_epsilon_nu2(N_SLS))
     allocate(inv_tau_sigma_nu1_sent(N_SLS))
     allocate(inv_tau_sigma_nu2_sent(N_SLS))
     allocate(phi_nu1_sent(N_SLS))
     allocate(phi_nu2_sent(N_SLS))
+
+    already_shifted_velocity(:) = .false.
 
   !
   !---- read the material properties
@@ -1419,7 +1428,7 @@
 !! DK DK if needed in the future, here the quality factor could be different for each point
   do ispec = 1,nspec
     call attenuation_model(N_SLS,QKappa_attenuation(kmato(ispec)),Qmu_attenuation(kmato(ispec)), &
-            f0_attenuation,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
+            f0_attenuation,tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
             inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent)
     do j = 1,NGLLZ
       do i = 1,NGLLX
@@ -1431,6 +1440,27 @@
         Mu_nu2(i,j,ispec) = Mu_nu2_sent
       enddo
     enddo
+
+    if(ATTENUATION_VISCOELASTIC_SOLID .and. READ_VELOCITIES_AT_F0 .and. .not. assign_external_model) then
+      if(anisotropic(ispec) .or. poroelastic(ispec) .or. gravitoacoustic(ispec)) &
+         stop 'READ_VELOCITIES_AT_F0 only implemented for non anisotropic, non poroelastic, non gravitoacoustic materials for now'
+      n = kmato(ispec)
+      if(.not. already_shifted_velocity(n)) then
+        rho = density(1,n)
+        lambda = poroelastcoef(1,1,n)
+        mu = poroelastcoef(2,1,n)
+        vp = dsqrt((lambda + TWO * mu) / rho)
+        vs = dsqrt(mu / rho)
+        call shift_velocities_from_f0(vp,vs,rho,mu,lambda,f0_attenuation, &
+                             tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent,N_SLS)
+        poroelastcoef(1,1,n) = lambda
+        poroelastcoef(2,1,n) = mu
+        poroelastcoef(3,1,n) = lambda + TWO*mu
+        already_shifted_velocity(n) = .true.
+      endif
+
+    endif
+
  enddo
 
 ! allocate memory variables for viscous attenuation (poroelastic media)
@@ -2212,12 +2242,13 @@
     if(myrank == 0) write(IOUT,*) 'Assigning an external velocity and density model...'
     call read_external_model(any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic, &
                 acoustic,gravitoacoustic,elastic,poroelastic,anisotropic,nspec,nglob,N_SLS,ibool, &
-                f0_attenuation,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
+                f0_attenuation,READ_VELOCITIES_AT_f0,tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
                 inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent, &
                 inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,&
                 coord,kmato,rhoext,vpext,vsext,gravityext,Nsqext, &
                 QKappa_attenuationext,Qmu_attenuationext, &
-                c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,READ_EXTERNAL_SEP_FILE)
+                c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
+                READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID)
   endif
 
 !
@@ -2736,21 +2767,21 @@
     allocate(rmass_w_inverse_poroelastic(nglob_poroelastic))
 
     if(time_stepping_scheme == 2)then
-    allocate(displs_poroelastic_LDDRK(NDIM,nglob_poroelastic))
-    allocate(velocs_poroelastic_LDDRK(NDIM,nglob_poroelastic))
-    allocate(displw_poroelastic_LDDRK(NDIM,nglob_poroelastic))
-    allocate(velocw_poroelastic_LDDRK(NDIM,nglob_poroelastic))
+      allocate(displs_poroelastic_LDDRK(NDIM,nglob_poroelastic))
+      allocate(velocs_poroelastic_LDDRK(NDIM,nglob_poroelastic))
+      allocate(displw_poroelastic_LDDRK(NDIM,nglob_poroelastic))
+      allocate(velocw_poroelastic_LDDRK(NDIM,nglob_poroelastic))
     endif
 
     if(time_stepping_scheme == 3)then
-    allocate(accels_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme))
-    allocate(velocs_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme))
-    allocate(accelw_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme))
-    allocate(velocw_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme))
-    allocate(displs_poroelastic_initial_rk(NDIM,nglob_poroelastic))
-    allocate(velocs_poroelastic_initial_rk(NDIM,nglob_poroelastic))
-    allocate(displw_poroelastic_initial_rk(NDIM,nglob_poroelastic))
-    allocate(velocw_poroelastic_initial_rk(NDIM,nglob_poroelastic))
+      allocate(accels_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme))
+      allocate(velocs_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme))
+      allocate(accelw_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme))
+      allocate(velocw_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme))
+      allocate(displs_poroelastic_initial_rk(NDIM,nglob_poroelastic))
+      allocate(velocs_poroelastic_initial_rk(NDIM,nglob_poroelastic))
+      allocate(displw_poroelastic_initial_rk(NDIM,nglob_poroelastic))
+      allocate(velocw_poroelastic_initial_rk(NDIM,nglob_poroelastic))
     endif
 
     ! extra array if adjoint and kernels calculation
@@ -2870,16 +2901,16 @@
     allocate(potential_dot_dot_acoustic(nglob_acoustic))
     allocate(rmass_inverse_acoustic(nglob_acoustic))
     if(time_stepping_scheme == 2) then
-    allocate(potential_acoustic_LDDRK(nglob_acoustic))
-    allocate(potential_dot_acoustic_LDDRK(nglob_acoustic))
-    allocate(potential_dot_acoustic_temp(nglob_acoustic))
+      allocate(potential_acoustic_LDDRK(nglob_acoustic))
+      allocate(potential_dot_acoustic_LDDRK(nglob_acoustic))
+      allocate(potential_dot_acoustic_temp(nglob_acoustic))
     endif
 
     if(time_stepping_scheme == 3) then
-    allocate(potential_acoustic_init_rk(nglob_acoustic))
-    allocate(potential_dot_acoustic_init_rk(nglob_acoustic))
-    allocate(potential_dot_dot_acoustic_rk(nglob_acoustic,stage_time_scheme))
-    allocate(potential_dot_acoustic_rk(nglob_acoustic,stage_time_scheme))
+      allocate(potential_acoustic_init_rk(nglob_acoustic))
+      allocate(potential_dot_acoustic_init_rk(nglob_acoustic))
+      allocate(potential_dot_dot_acoustic_rk(nglob_acoustic,stage_time_scheme))
+      allocate(potential_dot_acoustic_rk(nglob_acoustic,stage_time_scheme))
     endif
 
     if(SIMULATION_TYPE == 3 .and. any_acoustic) then
@@ -2960,7 +2991,7 @@
         allocate(PML_interior_interface(4,1))
       endif
 
-!   DK DK add support for using pml in mpi mode with external mesh
+! add support for using PML in MPI mode with external mesh
       if(read_external_mesh)then
         allocate(mask_ibool_pml(nglob))
       else
@@ -3095,7 +3126,7 @@
         alpha_z_store(:,:,:) = ZERO
       endif
 
-      !elastic PML memory variables
+      ! elastic PML memory variables
       if (any_elastic .and. nspec_PML>0) then
         allocate(rmemory_displ_elastic(2,3,NGLLX,NGLLZ,nspec_PML),stat=ier)
         if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic'
@@ -4627,8 +4658,7 @@ if(coupled_elastic_poro) then
         do j = 1, NGLLZ
           do i = 1, NGLLX
             iglob = ibool(i,j,ispec)
-            write(504,'(1pe11.3,1pe11.3,2i3,i7)') &
-              coord(1,iglob), coord(2,iglob), i, j, ispec
+            write(504,'(1pe11.3,1pe11.3,2i3,i7)') coord(1,iglob), coord(2,iglob), i, j, ispec
          enddo
         enddo
       enddo
@@ -4636,8 +4666,7 @@ if(coupled_elastic_poro) then
 
     open(unit=504,file='OUTPUT_FILES/mesh_glob',status='unknown',action='write')
       do iglob = 1, nglob
-        write(504,'(1pe11.3,1pe11.3,i7)') &
-          coord(1,iglob), coord(2,iglob), iglob
+        write(504,'(1pe11.3,1pe11.3,i7)') coord(1,iglob), coord(2,iglob), iglob
       enddo
     close(504)
 
@@ -4645,8 +4674,7 @@ if(coupled_elastic_poro) then
     call create_mask_noise(nglob,coord,mask_noise)
     open(unit=504,file='OUTPUT_FILES/mask_noise',status='unknown',action='write')
       do iglob = 1, nglob
-            write(504,'(1pe11.3,1pe11.3,1pe11.3)') &
-              coord(1,iglob), coord(2,iglob), mask_noise(iglob)
+            write(504,'(1pe11.3,1pe11.3,1pe11.3)') coord(1,iglob), coord(2,iglob), mask_noise(iglob)
       enddo
     close(504)
 
@@ -4658,8 +4686,7 @@ if(coupled_elastic_poro) then
             do i = 1, NGLLX
               iglob = ibool(i,j,ispec)
               write(504,'(1pe11.3,1pe11.3,1pe11.3,1pe11.3,1pe11.3)') &
-                coord(1,iglob), coord(2,iglob), &
-                rhoext(i,j,ispec), vpext(i,j,ispec), vsext(i,j,ispec)
+                coord(1,iglob), coord(2,iglob), rhoext(i,j,ispec), vpext(i,j,ispec), vsext(i,j,ispec)
             enddo
           enddo
         enddo
