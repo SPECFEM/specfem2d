@@ -40,6 +40,12 @@ force_normal_to_surface         = .false.        # angleforce normal to surface 
 # constants for attenuation
 N_SLS                           = 2                      # number of standard linear solids for attenuation
 f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, else it is f0
+# shift (i.e. change) velocities read from the input file to take average physical dispersion into account,
+# i.e. if needed change the reference frequency at which these velocities are defined internally in the code:
+# by default, the seismic velocity values that are read at the end of this Par_file of the code are supposed to be the unrelaxed values,
+# i.e. the velocities at infinite frequency. We may want to change this and impose that the values read are those for a given frequency (here f0_attenuation).
+# (when we do this, velocities will then slightly decrease and waves will thus slightly slow down)
+READ_VELOCITIES_AT_f0           = .false.
 
 # receiver set parameters for seismograms
 seismotype                      = 6              # record 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential 6=potential
