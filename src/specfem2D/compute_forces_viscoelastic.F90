@@ -746,6 +746,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
             ! J. M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation in a linear
             ! viscoelastic medium, Geophysical Journal International, vol. 95, p. 597-611 (1988).
 
+            ! Compute unrelaxed elastic coefficients from formulas in Carcione 2007 page 125.
             ! When implementing viscoelasticity according to the Carcione 1993 paper, attenuation is
             ! non-causal rather than causal. We fixed the problem by using equations in Carcione's
             ! 2004 paper and his 2007 book. See also file doc/problem_attenuation_reference_Specfem2D_fixed_by_Xie_Zhinan.pdf
@@ -755,10 +756,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
             ! J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic
             ! and porous media, Elsevier, p. 124-125, 2007
 
-            ! compute unrelaxed elastic coefficients from formulas in Carcione 2007 page 125.
-            ! When implementing viscoelasticity according to the Carcione 1993 paper, attenuation is
-            ! non-causal rather than causal. We fixed the problem by using equations in Carcione's
-            ! 2004 paper and his 2007 book. See also file doc/problem_attenuation_reference_Specfem2D_fixed_by_Xie_Zhinan.pdf
             lambdal_relaxed_viscoelastic = (lambdal_unrelaxed_elastic + 2._CUSTOM_REAL*mul_unrelaxed_elastic/3._CUSTOM_REAL)&
                                            / Mu_nu1(i,j,ispec) &
                                            - (2._CUSTOM_REAL*mul_unrelaxed_elastic/3._CUSTOM_REAL) / Mu_nu2(i,j,ispec)
