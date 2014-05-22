@@ -67,7 +67,7 @@ def ProcessParfile_r19201(fic):
     # Test if already processed
     for lig in ligs:
         if 'ADD_PERIODIC_CONDITIONS' in lig:
-            print '----> '+fic+' already processed to r19201'
+            print '----> '+fic+' already processed to r19201'            
             return
     # New additions to the Par_file
     a1='PERFORM_CUTHILL_MCKEE           = .false.        # perform ' + \
@@ -94,10 +94,10 @@ def ProcessParfile_r19201(fic):
     '# horizontal periodicity distance for periodic conditions\n'+ \
     'PERIODIC_horiz_dist             = 0.3597d0\n\n'+ \
     '# grid point detection tolerance for periodic conditions\n'+ \
-    'PERIODIC_DETECT_TOL             = 3.3334d-6\n'
+    'PERIODIC_DETECT_TOL             = 3.3334d-6\n'  
     #--------------------------------------------------------------------------
     # Add new parameters
-    #
+    # 
     for ilg, lig in enumerate(ligs):
         if lig.startswith('partitioning'):
             ligs.insert(ilg+1,a1)
@@ -114,7 +114,7 @@ def ProcessParfile_r19201(fic):
 
         if lig.startswith('sizemax'):
             ligs.insert(ilg+1,a5)
-
+            
         if lig.startswith('absorbing_conditions'):
             ligs.insert(ilg+1,a6)
     #
@@ -132,11 +132,11 @@ def ProcessParfile_r19340(fic):
     # Test if already processed
     for lig in ligs:
         if 'nreceiversets' in lig:
-            print '----> '+fic+' already processed to r19340'
+            print '----> '+fic+' already processed to r19340'            
             return
     #
     # Add new parameters
-    #
+    # 
     for ilg, lig in enumerate(ligs):
         if lig.startswith('nreceiverlines'):
             ligs[ilg]=ligs[ilg].replace('lines','sets ')
@@ -156,11 +156,11 @@ def ProcessParfile_r19346(fic):
     # Test if already processed
     for lig in ligs:
         if 'ATTENUATION_PORO_FLUID_PART' in lig:
-            print '----> '+fic+' already processed to r19346'
+            print '----> '+fic+' already processed to r19346'            
             return
     #--------------------------------------------------------------------------
     # Add new parameters
-    #
+    # 
     for ilg, lig in enumerate(ligs):
         if lig.startswith('TURN_ATTENUATION_ON'):
             ligs[ilg]=ligs[ilg].replace('TURN_ATTENUATION_ON           ', \
@@ -184,7 +184,7 @@ def ProcessParfile_r19521(fic):
     # Test if already processed
     for lig in ligs:
         if 'time_stepping_scheme' in lig:
-            print '----> '+fic+' already processed to r19521'
+            print '----> '+fic+' already processed to r19521'            
             return
     #
     a1='time_stepping_scheme            = 1   # 1 = Newmark (2nd order), \
@@ -193,7 +193,7 @@ def ProcessParfile_r19521(fic):
 
     #--------------------------------------------------------------------------
     # Add new parameters
-    #
+    # 
     for ilg, lig in enumerate(ligs):
         if lig.startswith('USER_T0'):
             ligs.insert(ilg+1,a1)
@@ -210,7 +210,7 @@ def ProcessParfile_r19521(fic):
 def ProcessParfile_r19804(fic):
     # Open the file and get all lines from Par_file
     ligs= LoadLig(fic)
-
+    
     for ilg, lig in enumerate(ligs):
         if lig.startswith('PERFORM_CUTHILL_MCKEE'):
             ligs[ilg]=ligs[ilg].replace('.true.','.false.')
@@ -218,14 +218,14 @@ def ProcessParfile_r19804(fic):
     # Test if already processed
     for lig in ligs:
         if 'ADD_SPRING_TO_STACEY' in lig:
-            print '----> '+fic+' already processed to r19804'
+            print '----> '+fic+' already processed to r19804'            
             return
     #
     a1='ADD_SPRING_TO_STACEY            = .true.\n'
 
     #--------------------------------------------------------------------------
     # Add new parameters
-    #
+    # 
     for ilg, lig in enumerate(ligs):
         if lig.startswith('absorbing_conditions'):
             ligs.insert(ilg+1,a1)
@@ -242,22 +242,22 @@ def ProcessParfile_r19804(fic):
 def ProcessParfile_r20307(fic):
     # Open the file and get all lines from Par_file
     ligs= LoadLig(fic)
-
+    
     # Test if already processed
     for lig in ligs:
         if 'NSTEP_BETWEEN_OUTPUT_SEISMOS' in lig:
-            print '----> '+fic+' already processed to r20307'
+            print '----> '+fic+' already processed to r20307'            
             return
-
+            
     # Change the jpeg imagetype accordingly to the original values
-    if Data.imagetype==1: imagetype_new = 3
+    if Data.imagetype==1: imagetype_new = 3  
     if Data.imagetype==2: imagetype_new = 6
     if Data.imagetype==3: imagetype_new = 9
     if Data.imagetype==4: imagetype_new = 10
-
+    
     # Change first line
     ligs[0]='# title of job\n'
-
+    
     # New parameters
     a0='NSTEP_BETWEEN_OUTPUT_SEISMOS    = 5000000        # every how many' + \
     ' time steps we save the seismograms (costly, do not use a very small' + \
@@ -314,13 +314,13 @@ def ProcessParfile_r20307(fic):
             '4=pressure 5=curl of displ 6=the fluid potential')
             ligs.insert(ilg+1,a0)
             ligs.insert(ilg+2,a1)
-
+        
         if lig.startswith('SU_FORMAT'):
             ligs[ilg] = ligs[ilg].replace('# output seismograms in Seismic' + \
             ' Unix format','# output single precision binary seismograms' + \
             ' in Seismic Unix format')
             ligs.insert(ilg-5,ligs.pop(ilg))
-
+            
         if lig.startswith('NTSTEP_BETWEEN_OUTPUT_INFO'):
             ligs[ilg] = ligs[ilg].replace('NTSTEP','NSTEP')
             ligs[ilg] = ligs[ilg].replace('# display frequency in time ' + \
@@ -344,20 +344,20 @@ def ProcessParfile_r20307(fic):
             ligs.insert(ilg+10,ligs.pop(ilg+19)) # move USE_SNAPSHOT-NUMBER_IN
             ligs.insert(ilg+11,'\n#### for PostScript snapshots ####\n')
             ligs.insert(ilg+13,a5)
-
+            
         if lig.startswith('US_LETTER'):
             ligs.insert(ilg+1,'\n#### for wavefield dumps ####\n')
             ligs.insert(ilg+2,a6)
-
+            
         if lig.startswith('gnuplot                         ='):
             ligs.pop(ilg)
-
+            
     for ilg, lig in enumerate(ligs):
         if lig.startswith('cutsnaps                        ='):
             ligs[ilg] = ligs[ilg].replace('# minimum amplitude in % for' + \
             ' snapshots','# minimum amplitude kept in % for the JPEG and' + \
             ' PostScript snapshots; amplitudes below that are muted')
-
+            
         if lig.startswith('DRAW_WATER_IN_BLUE              ='):
             ligs[ilg] = ligs[ilg].replace('# display acoustic layers as' + \
             ' constant blue in JPEG images, because they likely correspond' + \
@@ -367,14 +367,14 @@ def ProcessParfile_r20307(fic):
             ' experiments (if off, display them as greyscale, as for ' + \
             'elastic or poroelastic elements, for instance for acoustic-' + \
             'only oil industry models of solid media)')
-
+            
         if lig.startswith('output_grid '):
             ligs[ilg] = ligs[ilg].replace('output_grid        ','output_grid_Gnuplot')
             ligs.insert(ilg+1,a7)
-
+            
         if lig.startswith('output_wavefield_snapshot       ='):
             ligs.pop(ilg)
-
+              
     #
     move(fic,fic+'.before_update_to_r20307')
     #
@@ -392,7 +392,7 @@ def ProcessParfile_r20359(fic):
     # Test if already processed
     for lig in ligs:
         if 'NELEM_PML_THICKNESS' in lig:
-            print '----> '+fic+' already processed to r20359'
+            print '----> '+fic+' already processed to r20359'            
             return
     #
     a1='PML_BOUNDARY_CONDITIONS         = .true.\nNELEM_PML_THICKNESS  ' + \
@@ -400,7 +400,7 @@ def ProcessParfile_r20359(fic):
 
     #--------------------------------------------------------------------------
     # Add new parameters
-    #
+    # 
     for ilg, lig in enumerate(ligs):
         if lig.startswith('absorbing_conditions'):
             ligs.pop(ilg)
@@ -422,7 +422,7 @@ def ProcessParfile_r20561(fic):
     # Test if already processed
     for lig in ligs:
         if 'CPML_element_file' in lig:
-            print '----> '+fic+' already processed to r20561'
+            print '----> '+fic+' already processed to r20561'            
             return
     #
     a1='CPML_element_file               = Elements_CPML_list  ' + \
@@ -430,7 +430,7 @@ def ProcessParfile_r20561(fic):
 
     #--------------------------------------------------------------------------
     # Add new parameters
-    #
+    # 
     for ilg, lig in enumerate(ligs):
         if lig.startswith('absorbing_surface'):
             ligs.insert(ilg+1,a1)
@@ -451,11 +451,11 @@ def ProcessParfile_r20859(fic):
     # Test if already processed
     for lig in ligs:
         if lig.endswith(' for how to do this)\n'):
-            print '----> '+fic+' already processed to r20859'
+            print '----> '+fic+' already processed to r20859'            
             return
     #--------------------------------------------------------------------------
     # Add new parameters
-    #
+    # 
     for ilg, lig in enumerate(ligs):
         if lig.startswith('deltat'):
             ligs[ilg] = ligs[ilg].replace('# duration of a time step','#'+ \
@@ -480,14 +480,14 @@ def ProcessParfile_r21000(fic):
     # Test if already processed
     for lig in ligs:
         if lig.startswith('ROTATE'):
-            print '----> '+fic+' already processed to '+release_number
+            print '----> '+fic+' already processed to '+release_number          
             return
     #
     a1='ROTATE_PML_ACTIVATE             = .false.\nROTATE_PML_ANGLE     '+ \
        '           = 30.\n'
     #--------------------------------------------------------------------------
     # Add new parameters
-    #
+    # 
     for ilg, lig in enumerate(ligs):
         if lig.startswith('NELEM_PML_THICKNESS'):
             ligs.insert(ilg+1,a1)
@@ -507,11 +507,11 @@ def ProcessParfile_r21278(fic):
     # Test if already processed
     for lig in ligs:
         if 'use_existing_STATIONS' in lig:
-            print '----> '+fic+' already processed to r21278'
+            print '----> '+fic+' already processed to r21278'            
             return
     #--------------------------------------------------------------------------
     # Add new parameters
-    #
+    # 
     for ilg, lig in enumerate(ligs):
         if lig.startswith('generate_STATIONS'):
             ligs[ilg]=ligs[ilg].replace('generate_STATIONS     ', \
@@ -537,7 +537,7 @@ def ProcessParfile_r21820(fic):
     # Test if already processed
     for lig in ligs:
         if lig.startswith('save_ASCII_kernels'):
-            print '----> '+fic+' already processed to '+release_number
+            print '----> '+fic+' already processed to '+release_number          
             return
     #
     a1='save_ASCII_kernels              = .true.         # save sensitivity'+ \
@@ -545,7 +545,7 @@ def ProcessParfile_r21820(fic):
            ' current GMT scripts) or in binary format\n'
     #--------------------------------------------------------------------------
     # Add new parameters
-    #
+    # 
     for ilg, lig in enumerate(ligs):
         if lig.startswith('rec_normal_to_surface'):
             ligs.insert(ilg+1,a1)
@@ -568,14 +568,14 @@ def ProcessParfile_axisym(fic):
     # Test if already processed
     for lig in ligs:
         if lig.startswith('AXISYM'):
-            print '----> '+fic+' already processed to '+release_number
+            print '----> '+fic+' already processed to '+release_number          
             return
     #
     a1='\n# axisymmetric (2.5D) or Cartesian planar (2D) simulation\n'+ \
     'AXISYM                          = .false.   \n'
     #--------------------------------------------------------------------------
     # Add new parameters
-    #
+    # 
     for ilg, lig in enumerate(ligs):
         if lig.startswith('title'):
             ligs.insert(ilg+1,a1)
@@ -598,14 +598,14 @@ def ProcessParfile_axisym_file(fic):
     # Test if already processed
     for lig in ligs:
         if lig.startswith('axial_elements_file'):
-            print '----> '+fic+' already processed to '+release_number
+            print '----> '+fic+' already processed to '+release_number          
             return
     #
     a1='axial_elements_file             = Elements_Axial_list   '+ \
     '# file containing the axial element numbers for axisymmetric simulations\n'
     #--------------------------------------------------------------------------
     # Add new parameters
-    #
+    # 
     for ilg, lig in enumerate(ligs):
         if lig.startswith('free_surface_file'):
             ligs.insert(ilg+1,a1)
@@ -619,56 +619,30 @@ def ProcessParfile_axisym_file(fic):
     print 'xxxxx------> '+fic+' processed to '+release_number
     return
 #------------------------------------------------------------------------------
-def ProcessParfile_acoustic_forcing(fic):
+def ProcessParfile_force_acoustic(fic):
     # define the release number
-    release_number='forcing'
+    release_number='force_acoustic'
     # Open the file and get all lines from Par_file
     ligs= LoadLig(fic)
 
     # Test if already processed
     for lig in ligs:
         if lig.startswith('ACOUSTIC_FORCING'):
-            print '----> '+fic+' already processed to '+release_number
+            print '----> '+fic+' already processed to '+release_number          
             return
     #
     a1='\n# acoustic forcing\n'+ \
-    'ACOUSTIC_FORCING                = .false.   \n'
+    'ACOUSTIC_FORCING                  = .false.   \n'
+    a2='acoustic_forcing_surface_file   = ./DATA/MSH/Surface_forcing_'+\
+    'Bottom_enforcing_mesh   # file containing the acoustic forcing surface\n'
     #--------------------------------------------------------------------------
     # Add new parameters
-    #
+    # 
     for ilg, lig in enumerate(ligs):
         if lig.startswith('time_stepping_scheme'):
             ligs.insert(ilg+1,a1)
-    #
-    move(fic,fic+'.before_update_to_'+release_number)
-    #
-    fm = open(fic,'w')
-    fm.writelines(ligs)
-    fm.close()
-    #
-    print 'xxxxx------> '+fic+' processed to '+release_number
-    return
-#------------------------------------------------------------------------------
-def ProcessParfile_acoustic_forcing_file(fic):
-    # define the release number
-    release_number='forcing_file'
-    # Open the file and get all lines from Par_file
-    ligs= LoadLig(fic)
-
-    # Test if already processed
-    for lig in ligs:
-        if lig.startswith('acoustic_forcing_surface_file'):
-            print '----> '+fic+' already processed to '+release_number
-            return
-    #
-    a1='acoustic_forcing_surface_file   = Surf_acforcing   '+ \
-    '# file containing the axial element numbers for axisymmetric simulations\n'
-    #--------------------------------------------------------------------------
-    # Add new parameters
-    #
-    for ilg, lig in enumerate(ligs):
         if lig.startswith('absorbing_surface_file'):
-            ligs.insert(ilg+1,a1)
+            ligs.insert(ilg+1,a2)
     #
     move(fic,fic+'.before_update_to_'+release_number)
     #
@@ -688,12 +662,12 @@ def ProcessParfile_correction_periodic(fic):
     # Test if already processed
     for lig in ligs:
         if lig.startswith('PERIODIC_HORIZ_DIST'):
-            print '----> '+fic+' already processed to '+release_number
+            print '----> '+fic+' already processed to '+release_number          
             return
 
     #--------------------------------------------------------------------------
     # Add new parameters
-    #
+    # 
     for ilg, lig in enumerate(ligs):
         if lig.startswith('PERIODIC_horiz_dist'):
             ligs[ilg]=ligs[ilg].replace('PERIODIC_horiz_dist', \
@@ -707,6 +681,80 @@ def ProcessParfile_correction_periodic(fic):
     #
     print 'xxxxx------> '+fic+' processed to '+release_number
     return
+#------------------------------------------------------------------------------
+def ProcessParfile_max_amplitude(fic):
+    # define the release number
+    release_number='max_amplitude'
+    # Open the file and get all lines from Par_file
+    ligs= LoadLig(fic)
+
+    # Test if already processed
+    for lig in ligs:
+        if lig.startswith('USE_CONSTANT_MAX_AMPLITUDE'):
+            print '----> '+fic+' already processed to '+release_number          
+            return
+    #
+    a1='USE_CONSTANT_MAX_AMPLITUDE      = .false.        # by default the'+\
+    ' code normalizes each image independently to its maximum; use this '+\
+    'option to use the global maximum below '+\
+    'instead\nCONSTANT_MAX_AMPLITUDE_TO_USE   = 1.17d4         # constant'+\
+    ' maximum amplitude to use for all color images if the above '+\
+    'USE_CONSTANT_MAX_AMPLITUDE option is true\n'
+
+    #--------------------------------------------------------------------------
+    # Add new parameters
+    # 
+    for ilg, lig in enumerate(ligs):
+        if lig.startswith('factor_subsample_image'):
+            ligs.insert(ilg+1,a1)
+    #
+    move(fic,fic+'.before_update_to_'+release_number)
+    #
+    fm = open(fic,'w')
+    fm.writelines(ligs)
+    fm.close()
+    #
+    print 'xxxxx------> '+fic+' processed to '+release_number
+    return
+#------------------------------------------------------------------------------
+def ProcessParfile_read_velocities_at_f0(fic):
+    # define the release number
+    release_number='read_velocities_at_f'
+    # Open the file and get all lines from Par_file
+    ligs= LoadLig(fic)
+
+    # Test if already processed
+    for lig in ligs:
+        if lig.startswith('READ_VELOCITIES_AT_f0'):
+            print '----> '+fic+' already processed to '+release_number          
+            return
+    #
+    a1='# shift (i.e. change) velocities read from the input file to take '+\
+    'average physical dispersion into account,\n# i.e. if needed change the '+\
+    'reference frequency at which these velocities are defined internally in'+\
+    ' the code:\n# by default, the seismic velocity values that are read at '+\
+    'the end of this Par_file of the code are supposed to be the unrelaxed '+\
+    'values,\n# i.e. the velocities at infinite frequency. We may want to '+\
+    'change this and impose that the values read are those for a given '+\
+    'frequency (here f0_attenuation).\n# (when we do this, velocities will '+\
+    'then slightly decrease and waves will thus slightly slow '+\
+    'down)\nREAD_VELOCITIES_AT_f0           = .false.\n'
+    #--------------------------------------------------------------------------
+    # Add new parameters
+    # 
+    for ilg, lig in enumerate(ligs):
+        if lig.startswith('f0_attenuation'):
+            ligs.insert(ilg+1,a1)
+    #
+    move(fic,fic+'.before_update_to_'+release_number)
+    #
+    fm = open(fic,'w')
+    fm.writelines(ligs)
+    fm.close()
+    #
+    print 'xxxxx------> '+fic+' processed to '+release_number
+    return
+
 #------------------------------------------------------------------------------
 if __name__=='__main__':
     ## List of all files of current directory
@@ -737,12 +785,13 @@ if __name__=='__main__':
                     ProcessParfile_r21278(fic)
                     ProcessParfile_r21820(fic)
                     ProcessParfile_axisym(fic)
-                    ProcessParfile_axisym_file(fic)
-                    ProcessParfile_acoustic_forcing(fic)
-                    ProcessParfile_acoustic_forcing_file(fic)
+                    ProcessParfile_axisym_file(fic)                    
                     ProcessParfile_correction_periodic(fic)
+                    ProcessParfile_force_acoustic(fic)
+                    ProcessParfile_max_amplitude(fic)
+                    ProcessParfile_read_velocities_at_f0(fic)
                     print '~'*80
-    #
+    #                
     print 'Number of Par_file analysed : ', Ct_Par_file
     print 'END OF Par_file PROCESSING'
-
+    
