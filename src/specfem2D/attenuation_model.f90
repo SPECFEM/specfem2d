@@ -72,6 +72,12 @@
        f1_attenuation,f2_attenuation, &
        tau_sigma_nu1, tau_sigma_nu2, tau_epsilon_nu1, tau_epsilon_nu2)
 
+! make sure no negative relaxation times have been found; Emmerich and Korn (1987) or similar
+! can sometimes lead to negative values for very small values of Q (i.e. very high attenuation, say Q = 5 or Q = 10 or so)
+  if(minval(tau_sigma_nu1) <= 0.d0 .or. minval(tau_sigma_nu2) <= 0.d0 .or. &
+     minval(tau_epsilon_nu1) <= 0.d0 .or.  minval(tau_epsilon_nu2) <= 0.d0) &
+       stop 'error: negative relaxation time found, the code will be unstable'
+
 ! attenuation constants for standard linear solids
 
 ! nu1 is the dilatation/incompressibility mode (QKappa)
