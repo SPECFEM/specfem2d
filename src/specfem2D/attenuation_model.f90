@@ -117,6 +117,9 @@
 
   endif
 
+  if(any(tau_sigma_nu1 < 0.d0) .or. any(tau_sigma_nu2 < 0.d0) .or. any(tau_epsilon_nu1 < 0.d0) .or. any(tau_epsilon_nu2 < 0.d0)) &
+       stop 'error: negative relaxation time found for a viscoelastic material'
+
 ! When implementing viscoelasticity according to the Carcione 1993 paper, attenuation is
 ! non-causal rather than causal. We fixed the problem by using equations in Carcione's
 ! 2004 paper and his 2007 book. See also file doc/problem_attenuation_reference_Specfem2D_fixed_by_Xie_Zhinan.pdf
