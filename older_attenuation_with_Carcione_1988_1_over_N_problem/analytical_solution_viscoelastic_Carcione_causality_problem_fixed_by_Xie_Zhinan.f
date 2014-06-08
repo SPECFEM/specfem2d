@@ -55,27 +55,14 @@
      .  tau_sigma_nu1_mech2, tau_epsilon_nu2_mech2,
      .  tau_sigma_nu2_mech2
 
-!! DK DK June 2014: these old values from Carcione (1988) are not correct because a 1/N
-!! DK DK June 2014: factor is missing in his formulas; see the comment at the beginning of the "SolvOpt"
-!! DK DK June 2014: routine in file src/specfem2D/attenuation_model.f90 for more details about this.
-!     parameter(tau_epsilon_nu1_mech1 = 0.0325305d0)
-!     parameter(tau_epsilon_nu1_mech2 = 0.0032530d0)
-!     parameter(tau_sigma_nu1_mech1   = 0.0311465d0)
-!     parameter(tau_sigma_nu1_mech2   = 0.0031146d0)
-!     parameter(tau_epsilon_nu2_mech1 = 0.0332577d0)
-!     parameter(tau_epsilon_nu2_mech2 = 0.0033257d0)
-!     parameter(tau_sigma_nu2_mech1   = 0.0304655d0)
-!     parameter(tau_sigma_nu2_mech2   = 0.0030465d0)
-
-!! DK DK June 2014: these new values are right
-      parameter(tau_epsilon_nu1_mech1 = 3.470783959228110d-002)
-      parameter(tau_epsilon_nu1_mech2 = 2.924500064948241d-003)
-      parameter(tau_sigma_nu1_mech1   = 3.062938307898845d-002)
-      parameter(tau_sigma_nu1_mech2   = 2.552448589915705d-003)
-      parameter(tau_epsilon_nu2_mech1 = 3.617058445840252d-002)
-      parameter(tau_epsilon_nu2_mech2 = 3.074217760094914d-003)
-      parameter(tau_sigma_nu2_mech1   = 3.062938307898845d-002)
-      parameter(tau_sigma_nu2_mech2   = 2.552448589915705d-003)
+      parameter(tau_epsilon_nu1_mech1 = 0.0325305d0)
+      parameter(tau_sigma_nu1_mech1   = 0.0311465d0)
+      parameter(tau_epsilon_nu2_mech1 = 0.0332577d0)
+      parameter(tau_sigma_nu2_mech1   = 0.0304655d0)
+      parameter(tau_epsilon_nu1_mech2 = 0.0032530d0)
+      parameter(tau_sigma_nu1_mech2   = 0.0031146d0)
+      parameter(tau_epsilon_nu2_mech2 = 0.0033257d0)
+      parameter(tau_sigma_nu2_mech2   = 0.0030465d0)
 
       integer Lnu
 

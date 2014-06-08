@@ -55,27 +55,14 @@
      .  tau_sigma_nu1_mech2, tau_epsilon_nu2_mech2,
      .  tau_sigma_nu2_mech2
 
-!! DK DK June 2014: these old values from Carcione (1988) are not correct because a 1/N
-!! DK DK June 2014: factor is missing in his formulas; see the comment at the beginning of the "SolvOpt"
-!! DK DK June 2014: routine in file src/specfem2D/attenuation_model.f90 for more details about this.
-!     parameter(tau_epsilon_nu1_mech1 = 0.0325305d0)
-!     parameter(tau_epsilon_nu1_mech2 = 0.0032530d0)
-!     parameter(tau_sigma_nu1_mech1   = 0.0311465d0)
-!     parameter(tau_sigma_nu1_mech2   = 0.0031146d0)
-!     parameter(tau_epsilon_nu2_mech1 = 0.0332577d0)
-!     parameter(tau_epsilon_nu2_mech2 = 0.0033257d0)
-!     parameter(tau_sigma_nu2_mech1   = 0.0304655d0)
-!     parameter(tau_sigma_nu2_mech2   = 0.0030465d0)
-
-!! DK DK June 2014: these new values are right
-      parameter(tau_epsilon_nu1_mech1 = 3.470783959228110d-002)
-      parameter(tau_epsilon_nu1_mech2 = 2.924500064948241d-003)
-      parameter(tau_sigma_nu1_mech1   = 3.062938307898845d-002)
-      parameter(tau_sigma_nu1_mech2   = 2.552448589915705d-003)
-      parameter(tau_epsilon_nu2_mech1 = 3.617058445840252d-002)
-      parameter(tau_epsilon_nu2_mech2 = 3.074217760094914d-003)
-      parameter(tau_sigma_nu2_mech1   = 3.062938307898845d-002)
-      parameter(tau_sigma_nu2_mech2   = 2.552448589915705d-003)
+      parameter(tau_epsilon_nu1_mech1 = 0.0325305d0)
+      parameter(tau_sigma_nu1_mech1   = 0.0311465d0)
+      parameter(tau_epsilon_nu2_mech1 = 0.0332577d0)
+      parameter(tau_sigma_nu2_mech1   = 0.0304655d0)
+      parameter(tau_epsilon_nu1_mech2 = 0.0032530d0)
+      parameter(tau_sigma_nu1_mech2   = 0.0031146d0)
+      parameter(tau_epsilon_nu2_mech2 = 0.0033257d0)
+      parameter(tau_sigma_nu2_mech2   = 0.0030465d0)
 
       integer Lnu
 
@@ -170,15 +157,11 @@
 
 ! modules elastiques complexes
       Lnu = 2
-      M1C = M1 /(1.d0 - Lnu+tau_epsilon_nu1_mech1/tau_sigma_nu1_mech1+
-     . tau_epsilon_nu1_mech2/tau_sigma_nu1_mech2)
-     .      * (1.d0 - Lnu + dcmplx(1.d0,omega*tau_epsilon_nu1_mech1)
+      M1C = M1 * (1.d0 - Lnu + dcmplx(1.d0,omega*tau_epsilon_nu1_mech1)
      .                  / dcmplx(1.d0,omega*tau_sigma_nu1_mech1)
      .            + dcmplx(1.d0,omega*tau_epsilon_nu1_mech2)
      .                  / dcmplx(1.d0,omega*tau_sigma_nu1_mech2) )
-      M2C = M2 /(1.d0 - Lnu+tau_epsilon_nu2_mech1/tau_sigma_nu2_mech1+
-     .tau_epsilon_nu2_mech2/tau_sigma_nu2_mech2)
-     .* (1.d0 - Lnu + dcmplx(1.d0,omega*tau_epsilon_nu2_mech1)
+      M2C = M2 * (1.d0 - Lnu + dcmplx(1.d0,omega*tau_epsilon_nu2_mech1)
      .                  / dcmplx(1.d0,omega*tau_sigma_nu2_mech1)
      .            + dcmplx(1.d0,omega*tau_epsilon_nu2_mech2)
      .                  / dcmplx(1.d0,omega*tau_sigma_nu2_mech2) )
@@ -252,7 +235,7 @@
       deltat = 1.d0 / (freqmax*dble(iratio))
 
 ! save time result inverse FFT for Ux
-      open(unit=11,file='Ux_time_analytical_solution_viscoelastic.dat',
+      open(unit=11,file='Ux_time_analytical_solution.dat',
      .                           status='unknown')
       do it=1,nt
 !c DK DK Dec 2011: subtract t0 to be consistent with the SPECFEM2D code
@@ -278,7 +261,7 @@
       call cfftb(nt,c,wsave)
 
 ! save time result inverse FFT for Uz
-      open(unit=11,file='Uz_time_analytical_solution_viscoelastic.dat',
+      open(unit=11,file='Uz_time_analytical_solution.dat',
      .                           status='unknown')
       do it=1,nt
 !c DK DK Dec 2011: subtract t0 to be consistent with the SPECFEM2D code
@@ -7577,7 +7560,7 @@
 !
       REAL CONX02
 !bc      DATA CONX02 /0000006220426276611547B /
-      DATA CONX02 / 2.708212596942E-123 /
+      DATA CONX02 / 2.708212596942E-1233 /
 !     .. Executable Statements ..
       X02ANE = CONX02
       RETURN
