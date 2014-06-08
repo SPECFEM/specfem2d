@@ -21,12 +21,15 @@ double *dvector(int n);
 double **dmatrix(int nr, int nc);
 void free_dvector(double *v, int n);
 void free_dmatrix(double **m, int nr, int nc);
+
+/* SVD: Singular value decomposition, see e.g. http://en.wikipedia.org/wiki/Singular_value_decomposition */
 void dsvdcmp(double **a, int m, int n, double *w, double **v);
+
 void initialize(double f1, double f2, int n, double Q, double *x1, double *x2);
 void derivatives(double f1, double f2, int n, double Q, double *x1, double *x2, double *gradient, double **hessian);
 void invert(double *x, double *b, double **A, int n);
 
-/* It is called in "attenuation_model.f90". */
+/* This is called from file "attenuation_model.f90" */
 void
 FC_FUNC_(attenuation_compute_param,ATTENUATION_COMPUTE_PARAM)(int *nmech_in,
              double *Q1_in, double *Q2_in,
@@ -39,7 +42,7 @@ FC_FUNC_(attenuation_compute_param,ATTENUATION_COMPUTE_PARAM)(int *nmech_in,
   double          target_Q1, target_Q2;
   double          f1, f2;
 
-  /* We get the arguments passed in fortran by adress. */
+  /* We get the arguments passed from Fortran by address */
   target_Q1 = *Q1_in; /* target value of Q1 */
   target_Q2 = *Q2_in; /* target value of Q2 */
   n = *nmech_in;      /* number of mechanisms */
@@ -152,7 +155,7 @@ if (n > 1) {
   q = 1.0 / Q;
   exp1 = log10(f1);
   exp2 = log10(f2);
-    expo=(exp1+exp2)/2.0;
+  expo=(exp1+exp2)/2.0;
   omega = PI2 * pow(10.0, expo);
   tau_s[0] = 1.0 / omega;
   tau_e[0] = tau_s[0] * (1.0 + q) / (1.0 - q);
