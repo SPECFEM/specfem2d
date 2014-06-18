@@ -1,0 +1,26 @@
+#
+# number of interfaces
+#
+ 2
+#
+# for each interface below, we give the number of points and then x,y for each point
+#
+#
+# interface number 1 (bottom of the mesh)
+#
+ 2
+ 0 0
+ 300000 0
+#
+# interface number 2
+#
+ 2
+ 0 240000
+ 300000 240000
+#
+# for each layer, we give the number of spectral elements in the vertical direction
+#
+#
+# layer number 1
+#
+ 80

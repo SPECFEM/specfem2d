@@ -1,0 +1,28 @@
+  subroutine create_mask_noise(nglob,coord,mask_noise)
+
+  implicit none
+  include "constants.h"
+
+  !input
+  integer :: nglob
+  real(kind=CUSTOM_REAL), dimension(2,nglob) :: coord
+
+  !output
+  real(kind=CUSTOM_REAL), dimension(nglob) :: mask_noise
+
+  !local
+  integer :: iglob
+  real(kind=CUSTOM_REAL) :: xx,zz
+
+  !specify distribution of noise sources as a function of xx, zz
+  do iglob = 1,nglob
+    xx = coord(1,iglob)
+    zz = coord(2,iglob)
+
+    !below, the noise is assumed to be uniform; users are free to
+    !to change this expression to one involving xx, zz
+    mask_noise(iglob) = 1.0
+
+  enddo
+
+  end subroutine create_mask_noise
