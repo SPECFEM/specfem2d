@@ -40,7 +40,7 @@
 ! For more details, see the comment about this at the beginning of the "SolvOpt" routine
 ! in file src/specfem2D/attenuation_model.f90.
 ! We thus strongly discourage using the old routine.
-  logical, parameter :: USE_NEW_SOLVOPT_ROUTINE = .true.
+  logical, parameter :: USE_NEW_SOLVOPT_ROUTINE = .false. !! .true.
 
 ! use SolvOpt nonlinear optimization with constraints or classical linear least squares
   logical, parameter :: USE_SOLVOPT_INSTEAD_OF_LINEAR = .true.
