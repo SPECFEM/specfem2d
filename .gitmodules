@@ -1,3 +1,0 @@
-[submodule "EXAMPLES"]
-	path = EXAMPLES
-	url = git://vcs.geodynamics.org/specfem2d_examples
