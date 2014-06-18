@@ -1,0 +1,32 @@
+----------------------------------------------------------------------
+README
+----------------------------------------------------------------------
+
+Kernel example for Tromp-Tape-Liu (GJI 2005).
+
+TO RUN:
+
+0. Read the user manual in SPECFEM2D/doc/manual_SPECFEM2D.pdf
+
+1. in SPECFEM2D root directory, configure, e.g., 
+   > ./configure FC=gfortran
+
+2. modify setup/constants.h file, setting USER_TO = 48.0 s
+
+3. compile:
+   > make all
+
+4. run mesher and solver for forward wavefield:
+   > cd EXAMPLES/Tromp2005_kernel/
+   > ./process.sh
+
+5. compute adjoint source:
+   > rm -rf xadj_seismogram ; gfortran adj_seismogram_Tromp2005.f90 -o xadj_seismogram
+   > xadj_seismogram
+
+6. change Par_file with save_forward = .false. and SIMULATION_TYPE = 2
+
+7. run adjoint simulation:
+   > ./process_kernel.sh
+
+---------------------------

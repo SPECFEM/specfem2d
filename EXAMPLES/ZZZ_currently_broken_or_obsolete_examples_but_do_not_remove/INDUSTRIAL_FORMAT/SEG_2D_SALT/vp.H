@@ -1,0 +1,12 @@
+in=./vp.bin
+n1=645
+n2=1
+n3=150
+o1=0
+o2=0
+o3=0
+d1=80
+d2=80
+d3=80
+esize=4
+data_format="native_float"

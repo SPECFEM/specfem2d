@@ -1,0 +1,72 @@
+#!/bin/bash
+#
+# runs first and second noise tomography simulations
+#
+
+if [ $# -ne 2 ]; then echo "Usage:  run_fwd  nrec  irec"; exit 1; fi
+
+
+NREC=$1
+IREC=$2
+
+RUNDIR=$PWD
+CODE_MASK=$PWD/`basename $PWD`.f90
+
+
+# prepare directories
+rm -rf   DATA SEM OUTPUT_FILES OUTPUT_ALL
+mkdir -p DATA SEM OUTPUT_FILES OUTPUT_ALL DATA/NOISE_TOMOGRAPHY OUTPUT_FILES/NOISE_TOMOGRAPHY
+
+
+# prepare files
+../changerec . $NREC &> /dev/null
+
+cp SOURCE_noise DATA/SOURCE
+cp interfaces*  DATA/
+echo $IREC >    DATA/NOISE_TOMOGRAPHY/irec_master
+if [ -f model* ]; then cp model* DATA/; fi
+if [ -f S_squared ]; then cp S_squared DATA/NOISE_TOMOGRAPHY; fi
+
+
+# compile
+echo "Compiling."
+cd ../../..
+cp $RUNDIR/Par_file_noise_1  DATA/Par_file
+if [ -f $CODE_MASK ]; then cp $CODE_MASK src/specfem2D/noise_tomography.f90; fi
+make > $RUNDIR/log.make
+ln -s $PWD/bin/xmeshfem2D -t $RUNDIR
+ln -s $PWD/bin/xspecfem2D -t $RUNDIR
+cd $RUNDIR
+
+
+
+########## SIMULATION 1 ##########
+echo "Simulation 1"
+cp Par_file_noise_1  DATA/Par_file
+./xmeshfem2D > log.mesh1
+./xspecfem2D > log.spec1
+
+# save results
+mkdir OUTPUT_ALL/step_1
+mv log.*                  OUTPUT_ALL/step_1
+mv DATA/Par_file          OUTPUT_ALL/step_1
+#mv OUTPUT_FILES/image*    OUTPUT_ALL/step_1
+mv OUTPUT_FILES/*Y.semd   OUTPUT_ALL/step_1
+mv OUTPUT_FILES/mask_*    OUTPUT_ALL/
+mv OUTPUT_FILES/mesh_???? OUTPUT_ALL/
+
+
+
+########## NOISE SIMULATION 2 ##########
+echo "Simulation 2"
+cp Par_file_noise_2  DATA/Par_file
+./xmeshfem2D > log.mesh2
+./xspecfem2D > log.spec2
+
+# save results
+mkdir OUTPUT_ALL/step_2
+cp log.*                  OUTPUT_ALL/step_2
+cp DATA/Par_file          OUTPUT_ALL/step_2
+#cp OUTPUT_FILES/image*    OUTPUT_ALL/step_2
+cp OUTPUT_FILES/*Y.semd   OUTPUT_ALL/step_2
+

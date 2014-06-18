@@ -1,0 +1,13 @@
+#!/bin/bash
+#
+# runs all three noise tomography simulations
+#
+
+echo "Cleaning up."
+
+rm -rf DATA SEM NOISE_TOMOGRAPHY OUTPUT_FILES OUTPUT_ALL &> /dev/null
+rm xmeshfem2D xspecfem2D &> /dev/null
+rm adj_run &> /dev/null
+rm log.* &> /dev/null
+
+

@@ -1,0 +1,45 @@
+----------------------------------------------------------------------
+README
+----------------------------------------------------------------------
+
+Example for Tape-Liu-Tromp (GJI 2007)
+
+Par_file_Tape2007_onerec
+1 source, 1 receiver
+Source index: 1
+Receiver index: 126
+homogeneous model
+
+Par_file_Tape2007_132rec_checker
+1 source, 132 receivers
+Source index: 5
+Receiver index: 1-132
+checkerboard model (external file model_velocity.dat_checker)
+
+---------------------------
+
+The examples in Tape-Liu-Tromp (GJI 2007) assume a simulation start time of t=0, and a source start time of t = t0 = 48 s. SPECFEM2D assumes that the simulation starts at t = -t0 and the source start time is t = 0. Thus, USER_T0 is set to 48.0 in the Par_file
+
+TO RUN:
+
+0. Read the user manual in SPECFEM2D/doc/manual_SPECFEM2D.pdf
+
+1. in SPECFEM2D root directory, configure, e.g., 
+   ./configure FC=gfortran
+
+2. compile:
+   make all
+
+3. cd EXAMPLES/Tape2007/
+
+4. execute script to run mesher and solver for the SH/membrane case:
+   ./process.sh
+
+5. check out the output files in the local directory OUTPUT_FILES
+
+---------------------------
+
+After running the example above, try the second example:
+  ./process_checker.sh
+
+---------------------------
