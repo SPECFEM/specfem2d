@@ -1,7 +1,7 @@
 
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 7 . 0 YYYYYYYYY
+!                   S P E C F E M 2 D  Version 7 . 0
 !                   --------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
