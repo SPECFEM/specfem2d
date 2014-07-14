@@ -106,8 +106,8 @@
           !     vsext(i,j,ispec)=0.0
           ! QKappa, Qmu : dummy values. If attenuation needed than the "read" line and model_velocity.dat_input
           ! need to be modified to provide QKappa & Qmu values
-          QKappa_attenuationext(i,j,ispec) = 10.d0
-          Qmu_attenuationext(i,j,ispec) = 10.d0
+          QKappa_attenuationext(i,j,ispec) = 9999.d0
+          Qmu_attenuationext(i,j,ispec) = 9999.d0
         enddo
       enddo
     enddo
@@ -160,6 +160,15 @@
   elastic(:) = .false.
   poroelastic(:) = .false.
 
+! initialize to dummy values
+! convention to indicate that Q = 9999 in that element i.e. that there is no viscoelasticity in that element
+  inv_tau_sigma_nu1(:,:,:,:) = -1._CUSTOM_REAL
+  phi_nu1(:,:,:,:) = -1._CUSTOM_REAL
+  inv_tau_sigma_nu2(:,:,:,:) = -1._CUSTOM_REAL
+  phi_nu2(:,:,:,:) = -1._CUSTOM_REAL
+  Mu_nu1(:,:,:) = -1._CUSTOM_REAL
+  Mu_nu2(:,:,:) = -1._CUSTOM_REAL
+
   do ispec = 1,nspec
 
     previous_vsext = -1.d0
@@ -178,8 +187,8 @@
           poroelastic(ispec) = .false.
           elastic(ispec) = .true.
           any_elastic = .true.
-          QKappa_attenuationext(i,j,ispec) = 10.d0
-          Qmu_attenuationext(i,j,ispec) = 10.d0
+          QKappa_attenuationext(i,j,ispec) = 9999.d0
+          Qmu_attenuationext(i,j,ispec) = 9999.d0
         else if((vsext(i,j,ispec) < TINYVAL) .and. (gravityext(i,j,ispec) < TINYVAL)) then
           elastic(ispec) = .false.
           poroelastic(ispec) = .false.
@@ -197,6 +206,17 @@
           elastic(ispec) = .true.
           any_elastic = .true.
         endif
+
+!       attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
+        if(acoustic(ispec)) cycle
+
+!       check that attenuation values entered by the user make sense
+        if((QKappa_attenuationext(i,j,ispec) <= 9998.999d0 .and. Qmu_attenuationext(i,j,ispec) >  9998.999d0) .or. &
+           (QKappa_attenuationext(i,j,ispec) >  9998.999d0 .and. Qmu_attenuationext(i,j,ispec) <= 9998.999d0)) stop &
+     'need to have Qkappa and Qmu both above or both below 9999 for a given material; trick: use 9998 if you want to turn off one'
+
+!       if no attenuation in that elastic element
+        if(QKappa_attenuationext(i,j,ispec) > 9998.999d0) cycle
 
         call attenuation_model(N_SLS,QKappa_attenuationext(i,j,ispec),Qmu_attenuationext(i,j,ispec), &
                               f0_attenuation,tau_epsilon_nu1,tau_epsilon_nu2, &

@@ -174,7 +174,6 @@ contains
 
   endif
 
-
   end subroutine read_interfaces_file
 
 end module interfaces_file

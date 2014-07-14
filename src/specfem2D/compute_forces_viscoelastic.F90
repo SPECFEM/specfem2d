@@ -67,7 +67,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
      rmemory_displ_elastic,rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz, &
      rmemory_dux_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dx_prime,rmemory_duz_dz_prime, &
      rmemory_displ_elastic_LDDRK,rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,rmemory_duz_dx_LDDRK,rmemory_duz_dz_LDDRK, &
-     PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,backward_simulation,STACEY_BOUNDARY_CONDITIONS)
+     PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,backward_simulation,STACEY_BOUNDARY_CONDITIONS,acoustic)
 
   ! compute forces for the elastic elements
 
@@ -83,6 +83,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
   integer :: nrec,SIMULATION_TYPE
   integer, dimension(nrec) :: ispec_selected_rec,which_proc_receiver
+  logical, dimension(nspec) :: acoustic
   integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
   integer, dimension(nelemabs) :: ib_left
   integer, dimension(nelemabs) :: ib_right
@@ -263,8 +264,17 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
     ! loop over spectral elements
     do ispec = 1,nspec
+
+!     attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
+      if(acoustic(ispec)) cycle
+
       if((.not. PML_BOUNDARY_CONDITIONS) .or. (PML_BOUNDARY_CONDITIONS .and. (.not. is_PML(ispec))))then
-        do j=1,NGLLZ; do i=1,NGLLX
+        do j=1,NGLLZ
+        do i=1,NGLLX
+
+          ! convention to indicate that Q = 9999 in that element i.e. that there is no viscoelasticity in that element
+          if(inv_tau_sigma_nu1(i,j,ispec,1) < 0.) cycle
+
           theta_n_u = dux_dxl_n(i,j,ispec) + duz_dzl_n(i,j,ispec)
           theta_nsub1_u = dux_dxl_nsub1(i,j,ispec) + duz_dzl_nsub1(i,j,ispec)
 
@@ -363,7 +373,8 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
               endif
             endif
           enddo
-        enddo; enddo
+        enddo
+        enddo
       endif
     enddo
   endif

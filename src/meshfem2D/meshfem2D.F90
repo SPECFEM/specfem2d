@@ -1090,6 +1090,9 @@ program meshfem2D
   endif
   print *
 
+  if(associated(nz_layer)) deallocate(nz_layer)
+  if(associated(elmnts)) deallocate(elmnts)
+
 end program meshfem2D
 
 

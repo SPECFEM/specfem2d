@@ -1372,7 +1372,7 @@
 #ifdef USE_MPI
   if(myrank == 0)then
    if(time_stepping_scheme == 3) then
-    stop 'mpi support for standard Runge Kutta scheme is not implemented'
+    stop 'MPI support for standard Runge-Kutta scheme is not implemented'
    endif
   endif
 #endif
@@ -1423,13 +1423,35 @@
     allocate(Mu_nu1(NGLLX,NGLLZ,nspec))
     allocate(Mu_nu2(NGLLX,NGLLZ,nspec))
 
+! initialize to dummy values
+! convention to indicate that Q = 9999 in that element i.e. that there is no viscoelasticity in that element
+  inv_tau_sigma_nu1(:,:,:,:) = -1._CUSTOM_REAL
+  phi_nu1(:,:,:,:) = -1._CUSTOM_REAL
+  inv_tau_sigma_nu2(:,:,:,:) = -1._CUSTOM_REAL
+  phi_nu2(:,:,:,:) = -1._CUSTOM_REAL
+  Mu_nu1(:,:,:) = -1._CUSTOM_REAL
+  Mu_nu2(:,:,:) = -1._CUSTOM_REAL
+
 ! define the attenuation quality factors.
 ! they can be different for each element.
 !! DK DK if needed in the future, here the quality factor could be different for each point
   do ispec = 1,nspec
+
+!   attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
+    if(acoustic(ispec)) cycle
+
+!   check that attenuation values entered by the user make sense
+    if((QKappa_attenuation(kmato(ispec)) <= 9998.999d0 .and. Qmu_attenuation(kmato(ispec)) >  9998.999d0) .or. &
+       (QKappa_attenuation(kmato(ispec)) >  9998.999d0 .and. Qmu_attenuation(kmato(ispec)) <= 9998.999d0)) stop &
+     'need to have Qkappa and Qmu both above or both below 9999 for a given material; trick: use 9998 if you want to turn off one'
+
+!   if no attenuation in that elastic element
+    if(QKappa_attenuation(kmato(ispec)) > 9998.999d0) cycle
+
     call attenuation_model(N_SLS,QKappa_attenuation(kmato(ispec)),Qmu_attenuation(kmato(ispec)), &
             f0_attenuation,tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
             inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent)
+
     do j = 1,NGLLZ
       do i = 1,NGLLX
         inv_tau_sigma_nu1(i,j,ispec,:) = inv_tau_sigma_nu1_sent(:)
@@ -1458,7 +1480,6 @@
         poroelastcoef(3,1,n) = lambda + TWO*mu
         already_shifted_velocity(n) = .true.
       endif
-
     endif
 
  enddo
@@ -6303,7 +6324,7 @@ if(coupled_elastic_poro) then
                rmemory_dux_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dx_prime,rmemory_duz_dz_prime, &
                rmemory_displ_elastic_LDDRK,rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,&
                rmemory_duz_dx_LDDRK,rmemory_duz_dz_LDDRK, &
-               PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.false.,STACEY_BOUNDARY_CONDITIONS)
+               PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.false.,STACEY_BOUNDARY_CONDITIONS,acoustic)
 
       if(SIMULATION_TYPE == 3)then
        if(PML_BOUNDARY_CONDITIONS)then
@@ -6361,7 +6382,7 @@ if(coupled_elastic_poro) then
                rmemory_dux_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dx_prime,rmemory_duz_dz_prime, &
                rmemory_displ_elastic_LDDRK,rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,&
                rmemory_duz_dx_LDDRK,rmemory_duz_dz_LDDRK, &
-               .false.,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.true.,STACEY_BOUNDARY_CONDITIONS)
+               .false.,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.true.,STACEY_BOUNDARY_CONDITIONS,acoustic)
 
        if(PML_BOUNDARY_CONDITIONS)then
           do ispec = 1,nspec

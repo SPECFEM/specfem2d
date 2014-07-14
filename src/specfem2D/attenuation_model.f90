@@ -835,6 +835,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
       if (n<2) then
           print *, 'SolvOpt error:'
           print *, 'Improper space dimension.'
+         stop 'error in allocate statement in SolvOpt'
         options(9)=-one
         goto 999
       endif
@@ -844,71 +845,85 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
       if (allocerr/=0) then
          options(9)=-one
          print *,allocerrstr,allocerr
+         stop 'error in allocate statement in SolvOpt'
       endif
       allocate (g(n),stat=allocerr)
       if (allocerr/=0) then
          options(9)=-one
          print *,allocerrstr,allocerr
+         stop 'error in allocate statement in SolvOpt'
       endif
       allocate (g0(n),stat=allocerr)
       if (allocerr/=0) then
          options(9)=-one
          print *,allocerrstr,allocerr
+         stop 'error in allocate statement in SolvOpt'
       endif
       allocate (g1(n),stat=allocerr)
       if (allocerr/=0) then
          options(9)=-one
          print *,allocerrstr,allocerr
+         stop 'error in allocate statement in SolvOpt'
       endif
       allocate (gt(n),stat=allocerr)
       if (allocerr/=0) then
          options(9)=-one
          print *,allocerrstr,allocerr
+         stop 'error in allocate statement in SolvOpt'
       endif
       allocate (gc(n),stat=allocerr)
       if (allocerr/=0) then
          options(9)=-one
          print *,allocerrstr,allocerr
+         stop 'error in allocate statement in SolvOpt'
       endif
       allocate (z(n),stat=allocerr)
       if (allocerr/=0) then
          options(9)=-one
          print *,allocerrstr,allocerr
+         stop 'error in allocate statement in SolvOpt'
       endif
       allocate (x1(n),stat=allocerr)
       if (allocerr/=0) then
          options(9)=-one
          print *,allocerrstr,allocerr
+         stop 'error in allocate statement in SolvOpt'
       endif
       allocate (xopt(n),stat=allocerr)
       if (allocerr/=0) then
          options(9)=-one
          print *,allocerrstr,allocerr
+         stop 'error in allocate statement in SolvOpt'
       endif
       allocate (xrec(n),stat=allocerr)
       if (allocerr/=0) then
          options(9)=-one
          print *,allocerrstr,allocerr
+         stop 'error in allocate statement in SolvOpt'
       endif
       allocate (grec(n),stat=allocerr)
       if (allocerr/=0) then
          options(9)=-one
          print *,allocerrstr,allocerr
+         stop 'error in allocate statement in SolvOpt'
       endif
       allocate (xx(n),stat=allocerr)
       if (allocerr/=0) then
          options(9)=-one
          print *,allocerrstr,allocerr
+         stop 'error in allocate statement in SolvOpt'
       endif
       allocate (deltax(n),stat=allocerr)
       if (allocerr/=0) then
          options(9)=-one
          print *,allocerrstr,allocerr
+         stop 'error in allocate statement in SolvOpt'
       endif
       allocate (idx(n),stat=allocerr)
       if (allocerr/=0) then
          options(9)=-one
          print *,allocerrstr,allocerr
+         stop 'error in allocate statement in SolvOpt'
       endif
 
 ! store flags:
@@ -1943,7 +1958,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
 999   continue
 
 ! deallocate working arrays:
-       deallocate (idx,deltax,xx,grec,xrec,xopt,x1,z,gc,gt,g1,g0,g,B)
+      deallocate (idx,deltax,xx,grec,xrec,xopt,x1,z,gc,gt,g1,g0,g,B)
 
 END SUBROUTINE solvopt
 
