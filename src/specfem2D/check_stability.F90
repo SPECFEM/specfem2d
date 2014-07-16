@@ -245,7 +245,7 @@
       iminutes = (int_tCPU - 3600*ihours) / 60
       iseconds = int_tCPU - 3600*ihours - 60*iminutes
       write(IOUT,*) 'Elapsed time in seconds = ',tCPU
-      write(IOUT,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+      write(IOUT,"(' Elapsed time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
       write(IOUT,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
 
       ! compute estimated remaining simulation time
@@ -256,7 +256,7 @@
       iseconds_remain = int_t_remain - 3600*ihours_remain - 60*iminutes_remain
       write(IOUT,*) 'Time steps remaining = ',NSTEP - it
       write(IOUT,*) 'Estimated remaining time in seconds = ',t_remain
-      write(IOUT,"(' Estimated remaining time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+      write(IOUT,"(' Estimated remaining time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") &
              ihours_remain,iminutes_remain,iseconds_remain
 
       ! compute estimated total simulation time
@@ -266,7 +266,7 @@
       iminutes_total = (int_t_total - 3600*ihours_total) / 60
       iseconds_total = int_t_total - 3600*ihours_total - 60*iminutes_total
       write(IOUT,*) 'Estimated total run time in seconds = ',t_total
-      write(IOUT,"(' Estimated total run time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+      write(IOUT,"(' Estimated total run time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") &
              ihours_total,iminutes_total,iseconds_total
 
       if(it < NSTEP) then
