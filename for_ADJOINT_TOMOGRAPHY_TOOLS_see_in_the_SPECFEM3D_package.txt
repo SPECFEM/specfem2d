@@ -1,0 +1,3 @@
+
+To avoid duplicating the source codes, which are constantly improved by developers, the ADJOINT_TOMOGRAPHY_TOOLS are located and maintained in the home directory of the SPECFEM3D package, thus please download it from our GitHub repository and get them from there. Thank you.
+
