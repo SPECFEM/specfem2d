@@ -1046,6 +1046,7 @@
    rmemory_dux_dx,rmemory_duz_dx,rmemory_dux_dz,rmemory_duz_dz
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_fsb_displ_elastic
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_sfb_potential_ddot_acoustic
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
    rmemory_dux_dx_prime,rmemory_duz_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dz_prime
@@ -3162,6 +3163,8 @@
         if(any_acoustic .and. num_fluid_solid_edges > 0)then
           allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
+          allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
+          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
         endif
 
         if(ROTATE_PML_ACTIVATE)then
@@ -3211,6 +3214,7 @@
 
         if(any_acoustic .and. num_fluid_solid_edges > 0)then
           rmemory_fsb_displ_elastic(:,:,:,:,:) = ZERO
+          rmemory_sfb_potential_ddot_acoustic(:,:,:,:) = ZERO
         endif
 
         if(ROTATE_PML_ACTIVATE)then
@@ -3237,6 +3241,7 @@
         allocate(rmemory_duz_dz(1,1,1,1))
         if(any_acoustic .and. num_fluid_solid_edges > 0)then
           allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,1))
+          allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1))
         endif
 
         allocate(rmemory_dux_dx_prime(1,1,1,1))
@@ -3292,6 +3297,7 @@
       allocate(rmemory_duz_dx(1,1,1,1))
       allocate(rmemory_duz_dz(1,1,1,1))
       allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,1))
+      allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1)) 
 
       allocate(rmemory_dux_dx_prime(1,1,1,1))
       allocate(rmemory_dux_dz_prime(1,1,1,1))
@@ -3328,6 +3334,7 @@
   ! if so we need to allocate a dummy version in order to be able to use that array as an argument
   ! in some subroutine calls below
   if(.not. allocated(rmemory_fsb_displ_elastic)) allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,1))
+  if(.not. allocated(rmemory_sfb_potential_ddot_acoustic)) allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1))
 
 ! Test compatibility with axisymmetric formulation
   if(AXISYM) then
@@ -5390,8 +5397,6 @@ if(coupled_elastic_poro) then
 
       if(SIMULATION_TYPE == 3)then
 
-! Zhinan Xie's new fluid-solid coupling formulation for adjoint runs
-! involves a change of sign compared to Yang Luo's initial formulation
         accel_elastic_adj_coupling2 = - accel_elastic_adj_coupling
 
         call compute_coupling_acoustic_el(nspec,nglob_elastic,nglob_acoustic,num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz,&
@@ -5407,7 +5412,7 @@ if(coupled_elastic_poro) then
                b_potential_dot_dot_acoustic,fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
                fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
                AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &
-               PML_BOUNDARY_CONDITIONS,nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
+               .false.,nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
                alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,timeval,deltat)
       endif
 
@@ -5669,7 +5674,7 @@ if(coupled_elastic_poro) then
                                        + deltat * potential_dot_dot_acoustic
 
         potential_acoustic_LDDRK = alpha_LDDRK(i_stage) * potential_acoustic_LDDRK &
-                                       +deltat*potential_dot_acoustic
+                                   + deltat*potential_dot_acoustic
 
         if(i_stage==1 .and. it == 1 .and. (.not. initialfield))then
 !! DK DK this should be vectorized
@@ -6498,112 +6503,14 @@ if(coupled_elastic_poro) then
 ! *********************************************************
 
     if(coupled_acoustic_elastic) then
-
-      ! loop on all the coupling edges
-      do inum = 1,num_fluid_solid_edges
-
-        ! get the edge of the acoustic element
-        ispec_acoustic = fluid_solid_acoustic_ispec(inum)
-        iedge_acoustic = fluid_solid_acoustic_iedge(inum)
-
-        ! get the corresponding edge of the elastic element
-        ispec_elastic = fluid_solid_elastic_ispec(inum)
-        iedge_elastic = fluid_solid_elastic_iedge(inum)
-
-        ! implement 1D coupling along the edge
-        do ipoin1D = 1,NGLLX
-
-          ! get point values for the acoustic side, which matches our side in the inverse direction
-          i = ivalue_inverse(ipoin1D,iedge_acoustic)
-          j = jvalue_inverse(ipoin1D,iedge_acoustic)
-          iglob = ibool(i,j,ispec_acoustic)
-
-          ! compute pressure on the fluid/solid edge
-          pressure = - potential_dot_dot_acoustic(iglob)
-          if(SIMULATION_TYPE == 3) then
-            b_pressure = - b_potential_dot_dot_acoustic(iglob)
-            !<YANGL
-            ! new definition of adjoint displacement and adjoint potential
-            pressure = potential_acoustic_adj_coupling(iglob)
-            !>YANGL
-          endif
-          ! get point values for the elastic side
-          ii2 = ivalue(ipoin1D,iedge_elastic)
-          jj2 = jvalue(ipoin1D,iedge_elastic)
-          iglob = ibool(ii2,jj2,ispec_elastic)
-
-          ! compute the 1D Jacobian and the normal to the edge: for their expression see for instance
-          ! O. C. Zienkiewicz and R. L. Taylor, The Finite Element Method for Solid and Structural Mechanics,
-          ! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
-          ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
-          ! Blackwell Science, page 110, equation (4.60).
-
-          if (AXISYM) then
-            if (abs(coord(1,ibool(i,j,ispec_acoustic))) < TINYVAL) then
-              xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-              r_xiplus1(i,j) = xxi
-            else if (is_on_the_axis(ispec_acoustic)) then
-               r_xiplus1(i,j) = coord(1,ibool(i,j,ispec_acoustic))/(xiglj(i)+ONE)
-            endif
-          endif
-
-          if(iedge_acoustic == ITOP)then
-            xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-            zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-            jacobian1D = sqrt(xxi**2 + zxi**2)
-            nx = - zxi / jacobian1D
-            nz = + xxi / jacobian1D
-            if (AXISYM) then
-              if (is_on_the_axis(ispec_acoustic)) then
-                weight = jacobian1D * wxglj(i) * r_xiplus1(i,j)
-              else
-                weight = jacobian1D * wxgll(i) * coord(1,ibool(i,j,ispec_acoustic))
-              endif
-            else
-              weight = jacobian1D * wxgll(i)
-            endif
-          else if(iedge_acoustic == IBOTTOM)then
-            xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-            zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-            jacobian1D = sqrt(xxi**2 + zxi**2)
-            nx = + zxi / jacobian1D
-            nz = - xxi / jacobian1D
-            if (AXISYM) then
-              if (is_on_the_axis(ispec_acoustic)) then
-                weight = jacobian1D * wxglj(i) * r_xiplus1(i,j)
-              else
-                weight = jacobian1D * wxgll(i) * coord(1,ibool(i,j,ispec_acoustic))
-              endif
-            else
-              weight = jacobian1D * wxgll(i)
-            endif
-          else if(iedge_acoustic == ILEFT)then
-            xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-            zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-            jacobian1D = sqrt(xgamma**2 + zgamma**2)
-            nx = - zgamma / jacobian1D
-            nz = + xgamma / jacobian1D
-            weight = jacobian1D * wzgll(j)
-          else if(iedge_acoustic == IRIGHT)then
-            xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-            zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-            jacobian1D = sqrt(xgamma**2 + zgamma**2)
-            nx = + zgamma / jacobian1D
-            nz = - xgamma / jacobian1D
-            weight = jacobian1D * wzgll(j)
-          endif
-
-          accel_elastic(1,iglob) = accel_elastic(1,iglob) + weight*nx*pressure
-          accel_elastic(3,iglob) = accel_elastic(3,iglob) + weight*nz*pressure
-
-          if(SIMULATION_TYPE == 3) then
-            b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) + weight*nx*b_pressure
-            b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) + weight*nz*b_pressure
-          endif !if(SIMULATION_TYPE == 3) then
-
-        enddo
-
-      enddo
+        call compute_coupling_viscoelastic_ac(SIMULATION_TYPE,nspec,nglob_elastic,nglob_acoustic,num_fluid_solid_edges,&
+                              ibool,wxgll,wzgll,xix,xiz,gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,&
+                              potential_acoustic,potential_acoustic_old,potential_dot_acoustic,potential_dot_dot_acoustic,&
+                              b_potential_dot_dot_acoustic,accel_elastic,b_accel_elastic,fluid_solid_acoustic_ispec, &
+                              fluid_solid_acoustic_iedge,fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
+                              potential_acoustic_adj_coupling,AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &
+                              PML_BOUNDARY_CONDITIONS,nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
+                              alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_sfb_potential_ddot_acoustic,timeval,deltat)
 
     endif
 

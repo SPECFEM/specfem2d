@@ -108,6 +108,7 @@ OBJS_SPECFEM2D = \
 	$O/compute_curl_one_element.o \
 	$O/compute_energy.o \
 	$O/compute_coupling_acoustic_el.o \
+	$O/compute_coupling_viscoelastic_ac.o \
     $O/compute_forces_gravitoacoustic.o \
 	$O/compute_forces_acoustic.o \
 	$O/compute_forces_viscoelastic.o \
@@ -427,6 +428,8 @@ $O/check_stability.o: ${S}/check_stability.F90 ${SETUP}/constants.h
 
 $O/compute_coupling_acoustic_el.o: ${S}/compute_coupling_acoustic_el.f90 ${SETUP}/constants.h
 	${F90} $(DEF_FFLAGS) -c -o $O/compute_coupling_acoustic_el.o ${S}/compute_coupling_acoustic_el.f90
+$O/compute_coupling_viscoelastic_ac.o: ${S}/compute_coupling_viscoelastic_ac.f90 ${SETUP}/constants.h
+	${F90} $(DEF_FFLAGS) -c -o $O/compute_coupling_viscoelastic_ac.o ${S}/compute_coupling_viscoelastic_ac.f90
 
 $O/compute_energy.o: ${S}/compute_energy.f90 ${SETUP}/constants.h
 	${F90} $(DEF_FFLAGS) -c -o $O/compute_energy.o ${S}/compute_energy.f90
