@@ -58,7 +58,7 @@
   double precision, parameter :: zmin = -27.d0, zmax = +34.d0
 
 ! spectral elements
-  integer, parameter :: NXE = 280, NZE = 400
+  integer, parameter :: NEX_XI = 280, NEX_ETA = 400
 
 ! physical location of the receiver at which we compute the gradient of the displacement vector below
   double precision, parameter :: x_receiver = 14.378d0, z_receiver = + 2.674d0
@@ -66,15 +66,15 @@
 ! "size" of the whole model and of each spectral element in the topologically-regular grid
   double precision, parameter :: sizex = xmax - xmin
   double precision, parameter :: sizez = zmax - zmin
-  double precision, parameter :: deltax = sizex / NXE
-  double precision, parameter :: deltaz = sizez / NZE
+  double precision, parameter :: deltax = sizex / NEX_XI
+  double precision, parameter :: deltaz = sizez / NEX_ETA
 
 ! number of spectral elements
-  integer, parameter :: nspec = NXE * NZE
+  integer, parameter :: nspec = NEX_XI * NEX_ETA
 
 ! intermediate variables needed for the calculation of NGLOB below
-  integer, parameter :: number_of_unique_points_along_x = (NXE * (NGLLX-1) + 1)
-  integer, parameter :: number_of_unique_points_along_z = (NZE * (NGLLZ-1) + 1)
+  integer, parameter :: number_of_unique_points_along_x = (NEX_XI * (NGLLX-1) + 1)
+  integer, parameter :: number_of_unique_points_along_z = (NEX_ETA * (NGLLZ-1) + 1)
 
 ! number of unique points in the global vector of unknowns
   integer, parameter :: nglob = number_of_unique_points_along_x * number_of_unique_points_along_z
@@ -138,8 +138,8 @@
   ibool(:,:,:) = 0
 
   ! loop on all the spectral elements to create in the mesh
-  do ize = 1,NZE
-    do ixe = 1,NXE
+  do ize = 1,NEX_ETA
+    do ixe = 1,NEX_XI
 
       ispec = ispec + 1
 

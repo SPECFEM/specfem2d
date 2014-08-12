@@ -57,8 +57,10 @@
   double precision, parameter :: delta_min =  +21.d0 * DEGREES_TO_RADIANS, delta_max = +23.d0 * DEGREES_TO_RADIANS
   double precision, parameter :: r_min = 0.96d0 * R_EARTH, r_max = R_EARTH
 
-! spectral elements
-  integer, parameter :: NXE = 280, NZE = 400
+! spectral elements:
+! number of elements along the edge of the mesh at the surface
+! and number of elements along the radial direction of the mesh
+  integer, parameter :: NEX_XI = 280, NEX_RADIAL = 400
 
 ! physical location of the receiver at which we compute the gradient of the displacement vector below
   double precision, parameter :: delta_receiver = +22.7368 * DEGREES_TO_RADIANS, r_receiver = + 0.9849d0 * R_EARTH
@@ -66,15 +68,15 @@
 ! "size" of the whole model and of each spectral element in the topologically-regular grid
   double precision, parameter :: size_delta = delta_max - delta_min
   double precision, parameter :: size_r = r_max - r_min
-  double precision, parameter :: step_delta = size_delta / NXE
-  double precision, parameter :: step_r = size_r / NZE
+  double precision, parameter :: step_delta = size_delta / NEX_XI
+  double precision, parameter :: step_r = size_r / NEX_RADIAL
 
 ! number of spectral elements
-  integer, parameter :: nspec = NXE * NZE
+  integer, parameter :: nspec = NEX_XI * NEX_RADIAL
 
 ! intermediate variables needed for the calculation of NGLOB below
-  integer, parameter :: number_of_points_along_xi = (NXE * (NGLLX-1) + 1)
-  integer, parameter :: number_of_points_along_gamma = (NZE * (NGLLZ-1) + 1)
+  integer, parameter :: number_of_points_along_xi = (NEX_XI * (NGLLX-1) + 1)
+  integer, parameter :: number_of_points_along_gamma = (NEX_RADIAL * (NGLLZ-1) + 1)
 
 ! number of unique points in the global vector of unknowns
   integer, parameter :: nglob = number_of_points_along_xi * number_of_points_along_gamma
@@ -139,8 +141,8 @@
   ibool(:,:,:) = 0
 
   ! loop on all the spectral elements to create in the mesh
-  do ize = 1,NZE
-    do ixe = 1,NXE
+  do ize = 1,NEX_RADIAL
+    do ixe = 1,NEX_XI
 
       ispec = ispec + 1
 
