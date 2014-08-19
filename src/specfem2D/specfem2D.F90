@@ -593,7 +593,7 @@
 ! AXISYM parameters
 
   logical :: AXISYM ! .true. if we are performing a 2.5D simulation
-  ! Nember of elements on the symmetry axis
+  ! Number of elements on the symmetry axis
   integer :: nelem_on_the_axis
   ! Flag to know if an element is on the axis
   logical, dimension(:), allocatable :: is_on_the_axis
@@ -605,7 +605,6 @@
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLJ) :: hprimeBar_xx,hprimeBarwglj_xx
   ! Shape functions (and their derivatives) evaluated at the GLJ points
   double precision, dimension(:,:), allocatable :: flagrange_GLJ
-  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
 
 ! for CPML_element_file
   logical :: read_external_mesh
