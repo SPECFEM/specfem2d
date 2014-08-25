@@ -1619,7 +1619,9 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
           i = 1
           do j = 1,NGLLZ
             iglob = ibool(i,j,ispec)
-            displ_elastic(:,iglob) = 0._CUSTOM_REAL; veloc_elastic(:,iglob) = 0._CUSTOM_REAL
+            displ_elastic_old(:,iglob) = 0._CUSTOM_REAL
+            displ_elastic(:,iglob) = 0._CUSTOM_REAL
+            veloc_elastic(:,iglob) = 0._CUSTOM_REAL
             accel_elastic(:,iglob) = 0._CUSTOM_REAL
           enddo
         endif
@@ -1629,7 +1631,9 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
           i = NGLLX
           do j = 1,NGLLZ
             iglob = ibool(i,j,ispec)
-            displ_elastic(:,iglob) = 0._CUSTOM_REAL; veloc_elastic(:,iglob) = 0._CUSTOM_REAL
+            displ_elastic_old(:,iglob) = 0._CUSTOM_REAL
+            displ_elastic(:,iglob) = 0._CUSTOM_REAL
+            veloc_elastic(:,iglob) = 0._CUSTOM_REAL
             accel_elastic(:,iglob) = 0._CUSTOM_REAL
           enddo
         endif
@@ -1641,7 +1645,9 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
           iend = NGLLX
           do i = ibegin,iend
             iglob = ibool(i,j,ispec)
-            displ_elastic(:,iglob) = 0._CUSTOM_REAL; veloc_elastic(:,iglob) = 0._CUSTOM_REAL
+            displ_elastic_old(:,iglob) = 0._CUSTOM_REAL
+            displ_elastic(:,iglob) = 0._CUSTOM_REAL
+            veloc_elastic(:,iglob) = 0._CUSTOM_REAL
             accel_elastic(:,iglob) = 0._CUSTOM_REAL
           enddo
         endif
@@ -1653,7 +1659,9 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
           iend = NGLLX
           do i = ibegin,iend
             iglob = ibool(i,j,ispec)
-            displ_elastic(:,iglob) = 0._CUSTOM_REAL; veloc_elastic(:,iglob) = 0._CUSTOM_REAL
+            displ_elastic_old(:,iglob) = 0._CUSTOM_REAL
+            displ_elastic(:,iglob) = 0._CUSTOM_REAL
+            veloc_elastic(:,iglob) = 0._CUSTOM_REAL
             accel_elastic(:,iglob) = 0._CUSTOM_REAL
           enddo
         endif

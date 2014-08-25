@@ -50,7 +50,8 @@
                               fluid_solid_acoustic_iedge,fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
                               potential_acoustic_adj_coupling,AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &
                               PML_BOUNDARY_CONDITIONS,nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
-                              alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_sfb_potential_ddot_acoustic,timeval,deltat)
+                              alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_sfb_potential_ddot_acoustic,timeval,deltat,&
+                              rmemory_sfb_potential_ddot_acoustic_LDDRK,i_stage,stage_time_scheme,alpha_LDDRK,beta_LDDRK) 
 
    implicit none
    include 'constants.h'
@@ -85,6 +86,11 @@
    integer, dimension(nspec) :: spec_to_PML
    integer, dimension(nspec) :: region_CPML
    real(kind=CUSTOM_REAL),dimension(1,NGLLX,NGLLZ,num_fluid_solid_edges) :: rmemory_sfb_potential_ddot_acoustic
+
+! for ADE_PML with LDDRK scheme
+   integer :: i_stage,stage_time_scheme
+   real(kind=CUSTOM_REAL), dimension(Nstages) :: alpha_LDDRK,beta_LDDRK
+   real(kind=CUSTOM_REAL),dimension(1,NGLLX,NGLLZ,num_fluid_solid_edges) :: rmemory_sfb_potential_ddot_acoustic_LDDRK
 
 !local variable
 
@@ -135,9 +141,22 @@
                   call l_parameter_computation(timeval,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                               CPML_region_local,A0,A1,A2,A3,A4,singularity_type,&
                                               bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
-                  rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) = &
+
+                  if(stage_time_scheme == 1) then
+                    rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) = &
                                 coef0_1 * rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) + &
                                 coef1_1 * potential_acoustic(iglob) + coef2_1 * potential_acoustic_old(iglob)
+                  endif
+
+                  if(stage_time_scheme == 6) then
+                    rmemory_sfb_potential_ddot_acoustic_LDDRK(1,i,j,inum) = &
+                           alpha_LDDRK(i_stage) * rmemory_sfb_potential_ddot_acoustic_LDDRK(1,i,j,inum) + &
+                           deltat * (-bb_1 * rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) + potential_acoustic(iglob))
+                    rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) = rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) + &
+                           beta_LDDRK(i_stage) * rmemory_sfb_potential_ddot_acoustic_LDDRK(1,i,j,inum)
+
+                  endif
+
                   pressure = - (A0 * potential_dot_dot_acoustic(iglob) + A1 * potential_dot_acoustic(iglob) + &
                                 A2 * potential_acoustic(iglob) + A3 * rmemory_sfb_potential_ddot_acoustic(1,i,j,inum))
 

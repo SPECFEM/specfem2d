@@ -734,7 +734,9 @@
           i = 1
           do j = 1,NGLLZ
             iglob = ibool(i,j,ispec)
-            potential_acoustic(iglob) = 0._CUSTOM_REAL; potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
+            potential_acoustic_old(iglob) = 0._CUSTOM_REAL
+            potential_acoustic(iglob) = 0._CUSTOM_REAL
+            potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
             potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
           enddo
         endif
@@ -743,7 +745,9 @@
           i = NGLLX
           do j = 1,NGLLZ
             iglob = ibool(i,j,ispec)
-            potential_acoustic(iglob) = 0._CUSTOM_REAL; potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
+            potential_acoustic_old(iglob) = 0._CUSTOM_REAL
+            potential_acoustic(iglob) = 0._CUSTOM_REAL
+            potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
             potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
           enddo
         endif
@@ -754,7 +758,9 @@
           iend = NGLLX
           do i = ibegin,iend
             iglob = ibool(i,j,ispec)
-            potential_acoustic(iglob) = 0._CUSTOM_REAL; potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
+            potential_acoustic_old(iglob) = 0._CUSTOM_REAL
+            potential_acoustic(iglob) = 0._CUSTOM_REAL
+            potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
             potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
           enddo
         endif
@@ -766,7 +772,9 @@
           iend = NGLLX
           do i = ibegin,iend
             iglob = ibool(i,j,ispec)
-            potential_acoustic(iglob) = 0._CUSTOM_REAL; potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
+            potential_acoustic_old(iglob) = 0._CUSTOM_REAL
+            potential_acoustic(iglob) = 0._CUSTOM_REAL
+            potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
             potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
           enddo
         endif  !  end of top absorbing boundary
