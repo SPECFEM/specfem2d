@@ -27,7 +27,7 @@ case $FC in
         # Portland PGI
         #
         if test x"$DEF_FFLAGS" = x; then
-            DEF_FFLAGS="-Mdclchk -Minform=warn -mcmodel=medium -Mnobounds -fast -Mipa=fast,inline -mcmodel=medium"
+            DEF_FFLAGS="-Mdclchk -Minform=warn -mcmodel=medium -Mnobounds -fast -mcmodel=medium"
         # -Mbounds
         fi
         ;;
