@@ -44,7 +44,7 @@
 
   subroutine save_databases(nspec,num_material,region_pml_external_mesh, &
                             my_interfaces,my_nb_interfaces, &
-                            nnodes_tangential_curve,nodes_tangential_curve )
+                            nnodes_tangential_curve,nodes_tangential_curve,remove_min_to_start_at_zero)
 
 
 ! generates the databases for the solver
@@ -55,7 +55,7 @@
   implicit none
   include "constants.h"
 
-  integer :: nspec
+  integer :: nspec,remove_min_to_start_at_zero
   integer, dimension(nelmnts) :: num_material
   integer, dimension(nelmnts) :: region_pml_external_mesh
 
@@ -272,7 +272,8 @@
     call write_fluidsolid_edges_database(15, nedges_elporo_coupled, nedges_elporo_coupled_loc, &
                                         edges_elporo_coupled, iproc, 1)
 
-    call write_axial_elements_database(15, nelem_on_the_axis, ispec_of_axial_elements,nelem_on_the_axis_loc,iproc,1)
+    call write_axial_elements_database(15, nelem_on_the_axis, ispec_of_axial_elements,nelem_on_the_axis_loc,iproc,1, &
+                                        remove_min_to_start_at_zero)
 
     if (.not. ( force_normal_to_surface .or. rec_normal_to_surface ) ) then
       nnodes_tangential_curve = 0
@@ -363,7 +364,8 @@
     endif
 
     write(15,*) 'List of axial elements:'
-    call write_axial_elements_database(15, nelem_on_the_axis, ispec_of_axial_elements, nelem_on_the_axis_loc, iproc, 2)
+    call write_axial_elements_database(15, nelem_on_the_axis, ispec_of_axial_elements, nelem_on_the_axis_loc, iproc, 2, &
+                                       remove_min_to_start_at_zero)
 
     ! closes Database file
     close(15)
