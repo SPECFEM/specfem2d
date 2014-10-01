@@ -455,8 +455,8 @@ contains
   !axisym TODO : Test if the informations supplied are compatible with axisym
 
   ispec_of_axial_elements(:) = ispec_of_axial_elements(:) - remove_min_to_start_at_zero
-  inode1_axial_elements(:) = inode1_axial_elements(:) - remove_min_to_start_at_zero 
-  inode2_axial_elements(:) = inode2_axial_elements(:) - remove_min_to_start_at_zero 
+  inode1_axial_elements(:) = inode1_axial_elements(:) - remove_min_to_start_at_zero
+  inode2_axial_elements(:) = inode2_axial_elements(:) - remove_min_to_start_at_zero
 
   end subroutine read_axial_elements_file
 
@@ -847,20 +847,20 @@ subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and
  !            .           .
  !            1 . . 5 . . 2
    if(ngnod == 4) then
-     ibool(1,ispec) = elmnts((ispec-1)*ngnod)   
-     ibool(2,ispec) = elmnts((ispec-1)*ngnod+1) 
-     ibool(3,ispec) = elmnts((ispec-1)*ngnod+2) 
-     ibool(4,ispec) = elmnts((ispec-1)*ngnod+3) 
+     ibool(1,ispec) = elmnts((ispec-1)*ngnod)
+     ibool(2,ispec) = elmnts((ispec-1)*ngnod+1)
+     ibool(3,ispec) = elmnts((ispec-1)*ngnod+2)
+     ibool(4,ispec) = elmnts((ispec-1)*ngnod+3)
    else if(ngnod == 9) then
-     ibool(1,ispec) = elmnts((ispec-1)*ngnod)   
-     ibool(2,ispec) = elmnts((ispec-1)*ngnod+1) 
-     ibool(3,ispec) = elmnts((ispec-1)*ngnod+2) 
-     ibool(4,ispec) = elmnts((ispec-1)*ngnod+3) 
-     ibool(5,ispec) = elmnts((ispec-1)*ngnod+4) 
-     ibool(6,ispec) = elmnts((ispec-1)*ngnod+5) 
-     ibool(7,ispec) = elmnts((ispec-1)*ngnod+6) 
-     ibool(8,ispec) = elmnts((ispec-1)*ngnod+7) 
-     ibool(9,ispec) = elmnts((ispec-1)*ngnod+8) 
+     ibool(1,ispec) = elmnts((ispec-1)*ngnod)
+     ibool(2,ispec) = elmnts((ispec-1)*ngnod+1)
+     ibool(3,ispec) = elmnts((ispec-1)*ngnod+2)
+     ibool(4,ispec) = elmnts((ispec-1)*ngnod+3)
+     ibool(5,ispec) = elmnts((ispec-1)*ngnod+4)
+     ibool(6,ispec) = elmnts((ispec-1)*ngnod+5)
+     ibool(7,ispec) = elmnts((ispec-1)*ngnod+6)
+     ibool(8,ispec) = elmnts((ispec-1)*ngnod+7)
+     ibool(9,ispec) = elmnts((ispec-1)*ngnod+8)
    else
      stop 'rotate_mesh_for_axisym: error, ngnod should be either 4 or 9 for external meshes'
    endif
@@ -927,15 +927,15 @@ subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and
    else
      stop 'rotate_mesh_for_axisym: the edge on which axisym_edge is located should be defined'
    endif
-   
-   
+
+
   ! print *,"    Loop on the elements on the axis... : "
    do i = 1,nelem_on_the_axis ! Loop on the elements on the axis (red on the axisym file)
   !   print *,"        Element ",i
      if(index_edge == axisym_edge_type(i)) then
        ispec=ispec_of_axial_elements(i)+1
        found_this_point = .false.
-     !  print *,"        Loop on the control points and look for ", inode1_axial_elements(i) 
+     !  print *,"        Loop on the control points and look for ", inode1_axial_elements(i)
        do inode = 1,ngnod ! loop on the control points on the axial element ispec_of_axial_elements(i)
       !   print *,ibool(inode,ispec)
          if(ibool(inode,ispec) == inode1_axial_elements(i)) then
@@ -2669,7 +2669,7 @@ end subroutine rotate_mesh_for_axisym
   else
      do i = 1, nelem_on_the_axis
        ! if (part(ispec_of_axial_elements(i)) == 0 .and. iproc == 1) then
-        !  print *,"ispec_of_axial_elements :",ispec_of_axial_elements(i)," -----> glob2loc_elmnts :", & 
+        !  print *,"ispec_of_axial_elements :",ispec_of_axial_elements(i)," -----> glob2loc_elmnts :", &
        !     glob2loc_elmnts(ispec_of_axial_elements(i))
        ! endif
         if ( part(ispec_of_axial_elements(i)) == iproc ) then
