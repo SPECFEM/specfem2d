@@ -89,7 +89,7 @@ module parameter_file
   double precision  :: f0_attenuation
 
   integer :: seismotype
-	logical :: seismo_p
+  logical :: seismo_p
   logical :: generate_STATIONS
 
   integer :: nreceiversets

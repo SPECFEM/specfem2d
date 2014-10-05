@@ -948,7 +948,7 @@
             KHI=K
       ELSE
             KLO=K
-      ENDIF
+      endif
   enddo
   H=XA(KHI)-XA(KLO)
   IF (H == 0.d0) stop 'Bad input in spline evaluation'
