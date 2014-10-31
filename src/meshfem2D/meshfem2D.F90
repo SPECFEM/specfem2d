@@ -401,7 +401,7 @@ program meshfem2D
   integer, dimension(:), allocatable  :: my_interfaces
   integer, dimension(:), allocatable  :: my_nb_interfaces
 
-  integer  :: remove_min_to_start_at_zero 
+  integer  :: remove_min_to_start_at_zero
   integer  :: num_node
 
   ! variables used for tangential detection
@@ -819,8 +819,6 @@ program meshfem2D
       call rotate_mesh_for_axisym(ngnod)
 
     else ! if the mesh has been made by the internal mesher
-      
-      remove_min_to_start_at_zero = 0 !TODO
 
       if(xmin * xmax < 0) stop 'in axisymmetric mode xmin and xmax must have the same sign, they cannot cross the symmetry axis'
       if(xmin < 0) stop 'in axisymmetric mode, case of symmetry axis on the right edge instead of left not supported yet'
