@@ -123,7 +123,18 @@
         ! source_time_function(i_source,it) = - factor(i_source) *  &
         !               TWO*aval(i_source)*sqrt(aval(i_source))*&
         !               (timeval-t0-tshift_src(i_source))/pi * exp(-aval(i_source)*(timeval-t0-tshift_src(i_source))**2)
+        
+      else if( time_function_type(i_source) == 42 ) then
 
+        ! Dummy source for tests
+        if ((timeval-t0-tshift_src(i_source) .ge. ZERO) .and. (timeval-t0-tshift_src(i_source) .le. ONE/f0(i_source))) then
+          source_time_function(i_source,it,i_stage) = - factor(i_source) * &
+                                              (3.0d0/4.0d0-cos(TWO*PI*f0(i_source)*(timeval-t0-tshift_src(i_source))) + &
+                                               1.0d0/4.0d0*cos(TWO*TWO*PI*f0(i_source)*(timeval-t0-tshift_src(i_source))))
+        else          
+          source_time_function(i_source,it,i_stage) = ZERO        
+        endif
+        
       else if( time_function_type(i_source) == 2 ) then
 
         ! first derivative of a Gaussian source time function

@@ -41,7 +41,8 @@ case $FC in
 # I/O throughput lingers at 2.5 MB/s, with it it can increase to ~44 MB/s
 # However it does not make much of a difference on NFS mounted volumes or with SFS 3.1.1 / Lustre 1.6.7.1 
         if test x"$DEF_FFLAGS" = x; then
-            DEF_FFLAGS="-O3 -check nobounds -xHost -fpe0 -ftz -assume buffered_io -assume byterecl -align sequence -vec-report0 -std03 -implicitnone -gen-interfaces -warn all"
+            DEF_FFLAGS="-check all -debug -g -O0 -fp-stack-check -traceback -ftrapuv -xHost -fpe0 -ftz -assume buffered_io -assume byterecl -align sequence -vec-report0 -std03 -implicitnone -gen-interfaces -warn all"
+#            DEF_FFLAGS="-O3 -check nobounds -xHost -fpe0 -ftz -assume buffered_io -assume byterecl -align sequence -vec-report0 -std03 -implicitnone -gen-interfaces -warn all"
         fi
         # useful for debugging...
         # for debugging: change -O3 -check nobounds to      -check all -debug -g -O0 -fp-stack-check -traceback -ftrapuv

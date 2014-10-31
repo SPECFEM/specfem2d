@@ -124,7 +124,6 @@
 
           ! compute pressure on the fluid/solid edge
           pressure = - potential_dot_dot_acoustic(iglob)
-
           if(PML_BOUNDARY_CONDITIONS)then
              if(is_PML(ispec_acoustic) .and. nspec_PML > 0) then
                ispec_PML = spec_to_PML(ispec_acoustic)
