@@ -8515,7 +8515,9 @@ if(coupled_elastic_poro) then
                         anisotropic,anisotropy,wxgll,wzgll,numat, &
                         pressure_element,vector_field_element,e1,e11, &
                         potential_dot_acoustic,potential_dot_dot_acoustic, &
-                        ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS,p_sv,kinetic_energy,potential_energy)
+                        ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS,p_sv,kinetic_energy,potential_energy, &
+                        potential_dot_gravitoacoustic,potential_dot_dot_gravitoacoustic,acoustic,gravitoacoustic, &
+                        gravityext,potential_dot_gravito,nglob_gravitoacoustic)
 
 #ifdef USE_MPI
       call MPI_REDUCE(kinetic_energy, kinetic_energy_total, 1, CUSTOM_MPI_TYPE, MPI_SUM, 0, MPI_COMM_WORLD, ier)
