@@ -1045,9 +1045,9 @@
    rmemory_dux_dx,rmemory_duz_dx,rmemory_dux_dz,rmemory_duz_dz
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_fsb_displ_elastic
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_fsb_displ_elastic_LDDRK  
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_fsb_displ_elastic_LDDRK
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_sfb_potential_ddot_acoustic
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_sfb_potential_ddot_acoustic_LDDRK  
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_sfb_potential_ddot_acoustic_LDDRK
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
    rmemory_dux_dx_prime,rmemory_duz_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dz_prime
@@ -3199,24 +3199,24 @@
           if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx'
           allocate(rmemory_duz_dz_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
           if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'
-          if(any_acoustic .and. num_fluid_solid_edges > 0)then  
-            allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)    
-            if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'  
-            allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)  
-            if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'  
-          endif  
+          if(any_acoustic .and. num_fluid_solid_edges > 0)then
+            allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
+            if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
+            allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
+            if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
+          endif
         else
           allocate(rmemory_displ_elastic_LDDRK(1,1,1,1,1),stat=ier)
           allocate(rmemory_dux_dx_LDDRK(1,1,1,2),stat=ier)
           allocate(rmemory_dux_dz_LDDRK(1,1,1,2),stat=ier)
           allocate(rmemory_duz_dx_LDDRK(1,1,1,2),stat=ier)
           allocate(rmemory_duz_dz_LDDRK(1,1,1,2),stat=ier)
-          if(any_acoustic .and. num_fluid_solid_edges > 0)then  
-            allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,1),stat=ier)    
-            if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'  
-            allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1),stat=ier)  
-            if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'  
-          endif  
+          if(any_acoustic .and. num_fluid_solid_edges > 0)then
+            allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,1),stat=ier)
+            if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
+            allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1),stat=ier)
+            if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
+          endif
         endif
 
         rmemory_displ_elastic(:,:,:,:,:) = ZERO
@@ -3243,10 +3243,10 @@
           rmemory_dux_dz_LDDRK(:,:,:,:) = ZERO
           rmemory_duz_dx_LDDRK(:,:,:,:) = ZERO
           rmemory_duz_dz_LDDRK(:,:,:,:) = ZERO
-          if(any_acoustic .and. num_fluid_solid_edges > 0)then  
-            rmemory_fsb_displ_elastic_LDDRK(:,:,:,:,:) = ZERO  
-            rmemory_sfb_potential_ddot_acoustic_LDDRK(:,:,:,:) = ZERO  
-          endif  
+          if(any_acoustic .and. num_fluid_solid_edges > 0)then
+            rmemory_fsb_displ_elastic_LDDRK(:,:,:,:,:) = ZERO
+            rmemory_sfb_potential_ddot_acoustic_LDDRK(:,:,:,:) = ZERO
+          endif
         endif
 
       else
@@ -3259,8 +3259,8 @@
         if(any_acoustic .and. num_fluid_solid_edges > 0)then
           allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,1))
           allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1))
-          allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,1))  
-          allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1))  
+          allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,1))
+          allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1))
         endif
 
         allocate(rmemory_dux_dx_prime(1,1,1,1))
@@ -3316,9 +3316,9 @@
       allocate(rmemory_duz_dx(1,1,1,1))
       allocate(rmemory_duz_dz(1,1,1,1))
       allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,1))
-      allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1)) 
+      allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1))
       allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,1))
-      allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1)) 
+      allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1))
 
       allocate(rmemory_dux_dx_prime(1,1,1,1))
       allocate(rmemory_dux_dz_prime(1,1,1,1))
@@ -5419,8 +5419,8 @@ if(coupled_elastic_poro) then
                fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
                AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &
                PML_BOUNDARY_CONDITIONS,nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
-               alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,timeval,deltat,&  
-               rmemory_fsb_displ_elastic_LDDRK,i_stage,stage_time_scheme,alpha_LDDRK,beta_LDDRK)  
+               alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,timeval,deltat,&
+               rmemory_fsb_displ_elastic_LDDRK,i_stage,stage_time_scheme,alpha_LDDRK,beta_LDDRK)
       endif
 
       if(SIMULATION_TYPE == 3)then
@@ -5433,8 +5433,8 @@ if(coupled_elastic_poro) then
                fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
                AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &
                PML_BOUNDARY_CONDITIONS,nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
-               alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,timeval,deltat,&  
-               rmemory_fsb_displ_elastic_LDDRK,i_stage,stage_time_scheme,alpha_LDDRK,beta_LDDRK)  
+               alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,timeval,deltat,&
+               rmemory_fsb_displ_elastic_LDDRK,i_stage,stage_time_scheme,alpha_LDDRK,beta_LDDRK)
 
         call compute_coupling_acoustic_el(nspec,nglob_elastic,nglob_acoustic,num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz,&
                gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,b_displ_elastic,b_displ_elastic_old,&
@@ -5442,8 +5442,8 @@ if(coupled_elastic_poro) then
                fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
                AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &
                .false.,nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
-               alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,timeval,deltat,&  
-               rmemory_fsb_displ_elastic_LDDRK,i_stage,stage_time_scheme,alpha_LDDRK,beta_LDDRK)  
+               alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,timeval,deltat,&
+               rmemory_fsb_displ_elastic_LDDRK,i_stage,stage_time_scheme,alpha_LDDRK,beta_LDDRK)
       endif
 
     endif
@@ -6540,8 +6540,8 @@ if(coupled_elastic_poro) then
                               fluid_solid_acoustic_iedge,fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
                               potential_acoustic_adj_coupling,AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &
                               PML_BOUNDARY_CONDITIONS,nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
-                              alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_sfb_potential_ddot_acoustic,timeval,deltat,& 
-                              rmemory_sfb_potential_ddot_acoustic_LDDRK,i_stage,stage_time_scheme,alpha_LDDRK,beta_LDDRK) 
+                              alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_sfb_potential_ddot_acoustic,timeval,deltat,&
+                              rmemory_sfb_potential_ddot_acoustic_LDDRK,i_stage,stage_time_scheme,alpha_LDDRK,beta_LDDRK)
 
     endif
 
@@ -8515,7 +8515,9 @@ if(coupled_elastic_poro) then
                         anisotropic,anisotropy,wxgll,wzgll,numat, &
                         pressure_element,vector_field_element,e1,e11, &
                         potential_dot_acoustic,potential_dot_dot_acoustic, &
-                        ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS,p_sv,kinetic_energy,potential_energy)
+                        ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS,p_sv,kinetic_energy,potential_energy, &
+                        potential_dot_gravitoacoustic,potential_dot_dot_gravitoacoustic,acoustic,gravitoacoustic, &
+                        gravityext,potential_dot_gravito,nglob_gravitoacoustic)
 
 #ifdef USE_MPI
       call MPI_REDUCE(kinetic_energy, kinetic_energy_total, 1, CUSTOM_MPI_TYPE, MPI_SUM, 0, MPI_COMM_WORLD, ier)

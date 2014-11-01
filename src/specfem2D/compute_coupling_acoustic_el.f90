@@ -48,8 +48,8 @@
                               fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
                               AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &
                               PML_BOUNDARY_CONDITIONS,nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
-                              alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,timeval,deltat,&  
-                              rmemory_fsb_displ_elastic_LDDRK,i_stage,stage_time_scheme,alpha_LDDRK,beta_LDDRK)  
+                              alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,timeval,deltat,&
+                              rmemory_fsb_displ_elastic_LDDRK,i_stage,stage_time_scheme,alpha_LDDRK,beta_LDDRK)
 
    implicit none
    include 'constants.h'

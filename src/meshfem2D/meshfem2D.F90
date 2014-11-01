@@ -811,7 +811,7 @@ program meshfem2D
 
   if(AXISYM) then
     if(read_external_mesh) then
-      call read_axial_elements_file(axial_elements_file)
+      call read_axial_elements_file(axial_elements_file,remove_min_to_start_at_zero)
 ! the mesh can have elements that are rotated, but for our GLJ axisymmetric implementation
 ! we assume that the r axis is along the i direction;
 ! thus this routine fixes that by rotating the elements backwards if needed to make sure
@@ -819,6 +819,8 @@ program meshfem2D
       call rotate_mesh_for_axisym(ngnod)
 
     else ! if the mesh has been made by the internal mesher
+
+      remove_min_to_start_at_zero = 0
 
       if(xmin * xmax < 0) stop 'in axisymmetric mode xmin and xmax must have the same sign, they cannot cross the symmetry axis'
       if(xmin < 0) stop 'in axisymmetric mode, case of symmetry axis on the right edge instead of left not supported yet'
@@ -1050,7 +1052,7 @@ program meshfem2D
   ! *** generate the databases for the solver
   call save_databases(nspec,num_material, region_pml_external_mesh, &
                       my_interfaces,my_nb_interfaces, &
-                      nnodes_tangential_curve,nodes_tangential_curve)
+                      nnodes_tangential_curve,nodes_tangential_curve,remove_min_to_start_at_zero)
 
   ! print position of the source
   do i_source=1,NSOURCES

@@ -97,7 +97,7 @@
 
     call write_glob2loc_nodes_database(15, iproc, npgeo, 1)
 
-!   DK DK add support for using pml in mpi mode with external mesh 
+!   DK DK add support for using pml in mpi mode with external mesh
 !   call write_partition_database(15, iproc, nspec, num_material, ngnod, 1)
     call write_partition_database(15, iproc, nspec, num_material, region_pml_external_mesh, ngnod, 1)
 
@@ -267,7 +267,7 @@
     do i=1,nb_materials
       if (icodemat(i) == ISOTROPIC_MATERIAL) then
          write(15,*) i,icodemat(i),rho_s(i),cp(i),cs(i),0,0,QKappa(i),Qmu(i),0,0,0,0,0,0
-      elseif(icodemat(i) == POROELASTIC_MATERIAL) then
+      else if(icodemat(i) == POROELASTIC_MATERIAL) then
          write(15,*) i,icodemat(i),rho_s(i),rho_f(i),phi(i),tortuosity(i), &
                     permxx(i),permxz(i),permzz(i),kappa_s(i),&
                     kappa_f(i),kappa_fr(i),eta_f(i),mu_fr(i),Qmu(i)
@@ -280,7 +280,7 @@
 
     write(15,*) 'Arrays kmato and knods for each bloc:'
 
-!   DK DK add support for using pml in mpi mode with external mesh 
+!   DK DK add support for using pml in mpi mode with external mesh
 !   call write_partition_database(15, iproc, nspec, num_material, ngnod, 2)
     call write_partition_database(15, iproc, nspec, num_material, region_pml_external_mesh, ngnod, 2)
 
