@@ -59,7 +59,7 @@
                   USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                   POWER_DISPLAY_COLOR,SU_FORMAT,USER_T0,time_stepping_scheme, &
                   ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_HORIZ_DIST, &
-                  read_external_mesh,ACOUSTIC_FORCING,save_ASCII_kernels)
+                  read_external_mesh,ACOUSTIC_FORCING,save_ASCII_kernels,GPU_MODE)
 
 ! starts reading in parameters from input Database file
 
@@ -78,7 +78,7 @@
     output_grid_ASCII,output_energy,output_wavefield_dumps,p_sv,use_binary_for_wavefield_dumps
   logical :: ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE, &
              save_ASCII_seismograms,save_binary_seismograms_single,save_binary_seismograms_double,DRAW_SOURCES_AND_RECEIVERS, &
-             save_ASCII_kernels
+             save_ASCII_kernels,GPU_MODE
   double precision :: ROTATE_PML_ANGLE
   double precision :: cutsnaps,sizemax_arrows,anglerec
   double precision :: Q0,freq0
@@ -243,7 +243,7 @@
     print*, 'seismotype =',seismotype
     print*, 'Save forward wavefield => seismogram must be in displacement for (poro)elastic or potential for acoustic'
     print*, 'Seismotype must be changed to 1 (elastic/poroelastic adjoint source) or 6 (acoustic adjoint source)'
-    stop
+  !  stop
   endif
 
   read(IIN,"(a80)") datlin
@@ -314,6 +314,9 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,*) PERIODIC_HORIZ_DIST
+
+  read(IIN,"(a80)") datlin!!!Ajout Etienne GPU
+  read(IIN,*) GPU_MODE
 
   !---- check parameters read
   if (myrank == 0) then

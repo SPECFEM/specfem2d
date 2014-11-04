@@ -49,13 +49,17 @@
                 inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,&
                 coord,kmato,rhoext,vpext,vsext,gravityext,Nsqext, &
                 QKappa_attenuationext,Qmu_attenuationext, &
+<<<<<<< HEAD
+                c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,READ_EXTERNAL_SEP_FILE,myrank)
+=======
                 c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
                 READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID)
+>>>>>>> 45885c74aa097e0e213ca64a34ea439404ecc385
 
   implicit none
   include "constants.h"
 
-  integer :: nspec,nglob
+  integer :: nspec,nglob,myrank
   double precision  :: f0_attenuation
   logical :: READ_VELOCITIES_AT_f0
 
@@ -87,6 +91,17 @@
   integer :: i,j,ispec,iglob
   double precision :: previous_vsext
   double precision :: tmp1, tmp2,tmp3
+  character(len=256) outputname
+
+  c11ext=0.0d0
+  c13ext=0.0d0
+  c15ext=0.0d0
+  c33ext=0.0d0
+  c35ext=0.0d0
+  c55ext=0.0d0
+  c12ext=0.0d0
+  c23ext=0.0d0
+  c25ext=0.0d0
 
   double precision :: mu_dummy,lambda_dummy
 
@@ -96,8 +111,9 @@
     write(IOUT,*) 'Assigning external velocity and density model (elastic (no attenuation) and/or acoustic)...'
     write(IOUT,*) 'Read outside SEG model...'
     write(IOUT,*) '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-
-    open(unit=1001,file='DATA/model_velocity.dat_input',status='unknown')
+    
+    write(outputname,'(a,i6.6,a)') 'model_velocity',myrank,'.dat_output'
+    open(unit=1001,file='DATA/'//outputname,status='unknown')
     do ispec = 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
@@ -207,6 +223,17 @@
           any_elastic = .true.
         endif
 
+<<<<<<< HEAD
+  !      call attenuation_model(N_SLS,QKappa_attenuationext(i,j,ispec),Qmu_attenuationext(i,j,ispec), &
+   !                           f0_attenuation,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
+    !                          inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent)
+!        inv_tau_sigma_nu1(i,j,ispec,:) = inv_tau_sigma_nu1_sent(:)
+ !       phi_nu1(i,j,ispec,:) = phi_nu1_sent(:)
+  !      inv_tau_sigma_nu2(i,j,ispec,:) = inv_tau_sigma_nu2_sent(:)
+   !     phi_nu2(i,j,ispec,:) = phi_nu2_sent(:)
+    !    Mu_nu1(i,j,ispec) = Mu_nu1_sent
+     !   Mu_nu2(i,j,ispec) = Mu_nu2_sent
+=======
 !       attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
         if(acoustic(ispec)) cycle
 
@@ -235,6 +262,7 @@
                        f0_attenuation,tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent,N_SLS)
         endif
 
+>>>>>>> 45885c74aa097e0e213ca64a34ea439404ecc385
         previous_vsext = vsext(i,j,ispec)
 
       enddo

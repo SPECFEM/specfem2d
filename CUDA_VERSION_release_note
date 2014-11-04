@@ -1,0 +1,24 @@
+
+
+From : Etienne Bachmann
+Date : 29/10/2014
+
+
+The current CUDA Version of specfem2D stands for : 
+
+
+AXISYM                          = .false.
+ATTENUATION_VISCOELASTIC_SOLID  = .false. 
+ATTENUATION_PORO_FLUID_PART     = .false.
+p_sv                            = .true.
+ACOUSTIC_FORCING                = .false.
+seismotype                      = 1 2 3 or 4
+
+model material type I or II ( poroelasticity not implemented ) 
+
+PML_BOUNDARY_CONDITIONS         = .false.
+
+
+
+
+

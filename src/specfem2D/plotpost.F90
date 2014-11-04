@@ -2841,7 +2841,6 @@ coorg_recv_ps_vector_field
   zb = zb * centim
   if ( myrank == 0 ) then
   write(postscript_line,700) xb,zb,xa,za,x2,z2,x1,z1
-
 ! suppress useless white spaces to make PostScript file smaller
 ! suppress leading white spaces again, if any
   postscript_line = adjustl(postscript_line)

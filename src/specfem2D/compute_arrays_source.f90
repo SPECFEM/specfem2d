@@ -129,15 +129,16 @@
 ! ------------------------------------------------------------------------------------------------------
 
 
-  subroutine compute_arrays_adj_source(adj_source_file,xi_receiver,gamma_receiver,adj_sourcearray, &
-                                      xigll,zigll,NSTEP)
+  subroutine compute_arrays_adj_source(seismotype,adj_source_file,xi_receiver,gamma_receiver,adj_sourcearray, &
+                                      xigll,zigll,NSTEP,irec_local)
+ 
+ use constants
+ use specfem_par, only: source_adjointe
 
-  implicit none
-
-  include 'constants.h'
+ implicit none
 
 ! input
-  integer NSTEP
+  integer NSTEP,seismotype
 
   double precision xi_receiver, gamma_receiver
 
@@ -159,10 +160,15 @@
   character(len=3) :: comp(3)
   character(len=150) :: filename
 
+  integer :: irec_local   !! Ajout Etienne GPU 
+
   call lagrange_any(xi_receiver,NGLLX,xigll,hxir,hpxir)
   call lagrange_any(gamma_receiver,NGLLZ,zigll,hgammar,hpgammar)
 
   adj_sourcearray(:,:,:,:) = 0.
+
+
+  if(seismotype == 1 .or. seismotype == 2 .or. seismotype == 3) then
 
   comp = (/"BXX","BXY","BXZ"/)
 
@@ -178,6 +184,25 @@
     close(IIN)
 
   enddo
+  source_adjointe(irec_local,:,2) = adj_src_s(:,3)    !! Ajout Etienne GPU 
+
+  else if (seismotype == 4 ) then
+
+    filename = 'SEM/'//trim(adj_source_file) // '.PRE.adj'
+    open(unit = IIN, file = trim(filename), iostat = ios)
+    if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
+
+    do itime = 1, NSTEP
+      read(IIN,*) junk, adj_src_s(itime,1)
+    enddo
+    close(IIN)
+
+
+
+
+  endif
+
+  source_adjointe(irec_local,:,1) = adj_src_s(:,1)    !! Ajout Etienne GPU 
 
   do k = 1, NGLLZ
       do i = 1, NGLLX
