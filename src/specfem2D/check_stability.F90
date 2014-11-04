@@ -288,3 +288,131 @@
 
   end subroutine check_stability
 
+
+
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
+
+
+  subroutine check_stability_acoustic(myrank, nglob_acoustic, &
+                        any_acoustic_glob,any_acoustic,potential_acoustic, &
+                        potential_dot_acoustic,potential_dot_dot_acoustic)
+
+! checks simulation stability and outputs timerun infos
+
+#ifdef USE_MPI
+  use mpi
+#endif
+  implicit none
+  include "constants.h"
+
+  integer :: myrank
+
+
+
+
+  logical :: any_acoustic_glob,any_acoustic
+  integer :: nglob_acoustic
+  real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic
+
+  
+
+  ! local parameters
+  double precision displnorm_all
+  double precision displnorm_all_dot
+  double precision displnorm_all_dot_dot
+  ! timer to count elapsed time
+
+
+  ! acoustic wavefield
+  if(any_acoustic_glob) then
+    if(any_acoustic) then
+      displnorm_all = maxval(abs(potential_acoustic(:)))
+      displnorm_all_dot = maxval(abs(potential_dot_acoustic(:)))
+      displnorm_all_dot_dot = maxval(abs(potential_dot_dot_acoustic(:)))
+    else
+      displnorm_all = 0.d0
+    endif
+
+
+
+      write(IOUT,*) 'Max absolute value of scalar field  +num processus ',displnorm_all,myrank
+      write(IOUT,*) 'Max absolute value of scalar field dot  +num processus ',displnorm_all_dot,myrank
+      write(IOUT,*) 'Max absolute value of scalar field dot dot +num processus ',displnorm_all_dot_dot,myrank
+
+
+  endif
+
+  end subroutine check_stability_acoustic
+
+
+
+
+
+
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
+
+
+
+
+
+
+
+
+
+  subroutine check_stability_elastic(myrank, nglob_elastic, &
+                        any_elastic,displ_elastic, &
+                        veloc_elastic,accel_elastic)
+
+! checks simulation stability and outputs timerun infos
+
+#ifdef USE_MPI
+  use mpi
+#endif
+  implicit none
+  include "constants.h"
+
+  integer :: myrank
+  logical :: any_elastic
+  integer :: nglob_elastic
+  real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: displ_elastic, veloc_elastic,accel_elastic
+
+  ! local parameters
+  double precision displnorm_all
+  double precision displnorm_all_dot
+  double precision displnorm_all_dot_dot
+  ! timer to count elapsed time
+
+
+
+ if(any_elastic) then
+      displnorm_all = maxval(sqrt(displ_elastic(1,:)**2 &
+                                + displ_elastic(3,:)**2))
+      displnorm_all_dot = maxval(sqrt(veloc_elastic(1,:)**2 &
+                                + veloc_elastic(3,:)**2))
+      displnorm_all_dot_dot = maxval(sqrt(accel_elastic(1,:)**2 &
+                                + accel_elastic(3,:)**2))
+    else
+      displnorm_all = 0.d0
+      displnorm_all_dot = 0.d0
+      displnorm_all_dot_dot = 0.d0
+    endif
+
+
+      write(IOUT,*) 'Max norm of vector field displ in solid (elastic) +num processus ', displnorm_all,myrank
+      write(IOUT,*) 'Max norm of vector field veloc in solid (elastic) +num processus ', displnorm_all_dot,myrank
+      write(IOUT,*) 'Max norm of vector field accel in solid (elastic) +num processus ', displnorm_all_dot_dot,myrank
+
+
+
+  end subroutine check_stability_elastic
+

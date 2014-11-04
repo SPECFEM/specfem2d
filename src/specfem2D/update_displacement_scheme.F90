@@ -42,13 +42,13 @@
 
   subroutine update_displacement_precondition_newmark(time_stepping_scheme,SIMULATION_TYPE,&
                                                       nglob_acoustic,nglob_elastic,nglob_poroelastic,&
-                                                      any_acoustic,any_elastic,any_poroelastic,deltat,deltatover2,&
-                                                      deltatsquareover2,potential_acoustic,potential_dot_acoustic,&
+                                                      any_acoustic,any_elastic,any_poroelastic,&
+                                                      potential_acoustic,potential_dot_acoustic,&
                                                       potential_dot_dot_acoustic,potential_acoustic_old,&
                                                       displ_elastic,veloc_elastic,accel_elastic,displ_elastic_old,&
                                                       displs_poroelastic,velocs_poroelastic,accels_poroelastic,&
                                                       displs_poroelastic_old,displw_poroelastic,velocw_poroelastic,&
-                                                      accelw_poroelastic,b_deltat,b_deltatover2,b_deltatsquareover2,&
+                                                      accelw_poroelastic,&
                                                       b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic,&
                                                       b_potential_acoustic_old,&
                                                       b_displ_elastic,b_veloc_elastic,b_accel_elastic,b_displ_elastic_old,&
@@ -56,16 +56,23 @@
                                                       b_displs_poroelastic,b_velocs_poroelastic,b_accels_poroelastic,&
                                                       accels_poroelastic_adj_coupling,&
                                                       b_displw_poroelastic,b_velocw_poroelastic,b_accelw_poroelastic,&
-                                                      accelw_poroelastic_adj_coupling)
+                                                      accelw_poroelastic_adj_coupling,PML_BOUNDARY_CONDITIONS)
+
+  use specfem_par, only : deltat,deltatover2,deltatsquareover2,b_deltat,b_deltatover2,b_deltatsquareover2, GPU_MODE, &
+                          Mesh_pointer,myrank,deltatf,deltatover2f,deltatsquareover2f,b_deltatf,b_deltatover2f,&
+                           b_deltatsquareover2f
+                               
 
   implicit none
-  include 'constants.h'
+
+  include "constants.h"
+  
 
   integer :: time_stepping_scheme,SIMULATION_TYPE, nglob_acoustic, nglob_elastic,nglob_poroelastic
-  logical :: any_acoustic, any_elastic, any_poroelastic
+  logical :: any_acoustic, any_elastic, any_poroelastic, PML_BOUNDARY_CONDITIONS !!!Ajout Etienne GPU
 
 ! SIMULATIONTYPE == 1
-  double precision :: deltat,deltatover2,deltatsquareover2
+
   real(kind=CUSTOM_REAL),dimension(nglob_acoustic) :: potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic,&
                                                       potential_acoustic_old
   real(kind=CUSTOM_REAL),dimension(3,nglob_elastic) :: displ_elastic,veloc_elastic,accel_elastic,displ_elastic_old
@@ -73,8 +80,10 @@
                                                               displs_poroelastic_old,&
                                                               displw_poroelastic,velocw_poroelastic,accelw_poroelastic
 
+
+
 ! SIMULATIONTYPE == 3
-  double precision :: b_deltat,b_deltatover2,b_deltatsquareover2
+
   real(kind=CUSTOM_REAL),dimension(nglob_acoustic) :: b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic,&
                                                       b_potential_acoustic_old
   real(kind=CUSTOM_REAL),dimension(3,nglob_elastic) :: b_displ_elastic,b_veloc_elastic,b_accel_elastic,b_displ_elastic_old,&
@@ -85,9 +94,17 @@
                                                               accelw_poroelastic_adj_coupling
 
 
+
+
+
+
+     
 ! update displacement using finite-difference time scheme (Newmark)
 
-    if(any_acoustic) then
+    if(any_acoustic) then 
+   
+    if (.not. GPU_MODE ) then       !!!Ajout Etienne GPU
+
 
       if(time_stepping_scheme==1)then
       ! Newmark time scheme
@@ -110,9 +127,29 @@
         b_potential_dot_dot_acoustic = ZERO
       endif
 
+    
+
+    else  !!!Ajout Etienne GPU
+    ! wavefields on GPU
+    ! check
+    if( SIMULATION_TYPE == 3 ) then
+      if( PML_BOUNDARY_CONDITIONS )then
+        call exit_MPI(myrank,'acoustic time marching scheme with PML_CONDITIONS on GPU not implemented yet...')
+      endif
     endif
 
+    ! updates acoustic potentials
+    call it_update_displacement_ac_cuda(Mesh_pointer,deltatf,deltatsquareover2f,deltatover2f,&
+             b_deltatf,b_deltatsquareover2f,b_deltatover2f)
+  endif ! GPU_MODE
+
+
+  endif
+
     if(any_elastic) then
+   
+    if (.not. GPU_MODE ) then       !!!Ajout Etienne GPU
+
 
       if(time_stepping_scheme==1)then
 #ifdef FORCE_VECTORIZATION
@@ -146,9 +183,36 @@
         b_veloc_elastic = b_veloc_elastic + b_deltatover2*b_accel_elastic
         b_accel_elastic = ZERO
       endif
+
+
+  else      !!!Ajout Etienne GPU
+    ! wavefields on GPU
+
+    ! check
+    if( SIMULATION_TYPE == 3 ) then
+      if( PML_BOUNDARY_CONDITIONS )then
+       
+          call exit_MPI(myrank,'elastic time marching scheme with PML_CONDITIONS on GPU not implemented yet...')
+   
+      endif
     endif
 
+    ! updates elastic displacement and velocity
+    ! Includes SIM_TYPE 1 & 3 (for noise tomography)
+    call update_displacement_cuda(Mesh_pointer,deltatf,deltatsquareover2f,&
+                                  deltatover2f,b_deltatf,b_deltatsquareover2f,b_deltatover2f)
+  endif ! GPU_MODE
+
+ endif
+
+
+
     if(any_poroelastic) then
+
+
+    if (.not. GPU_MODE ) then       !!!Ajout Etienne GPU
+
+
 
       if(time_stepping_scheme==1)then
       !for the solid
@@ -200,6 +264,15 @@
         b_velocw_poroelastic = b_velocw_poroelastic + b_deltatover2*b_accelw_poroelastic
         b_accelw_poroelastic = ZERO
       endif
-    endif
+   
+
+   else
+    ! wavefields on GPU
+    call exit_MPI(myrank,'poroelastic time marching scheme on GPU not implemented yet...')
+  endif ! GPU_MODE  
+
+
+  endif
+
 
   end subroutine update_displacement_precondition_newmark

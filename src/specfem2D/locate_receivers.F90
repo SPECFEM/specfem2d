@@ -53,6 +53,8 @@
                           coorg,knods,ngnod,npgeo, &
                           x_final_receiver, z_final_receiver)
 
+use specfem_par, only : gather_ispec_selected_rec
+
 #ifdef USE_MPI
   use mpi
 #endif
@@ -104,11 +106,11 @@
 
   double precision, dimension(nrec,nproc)  :: gather_final_distance
   double precision, dimension(nrec,nproc)  :: gather_xi_receiver, gather_gamma_receiver
-  integer, dimension(nrec,nproc)  :: gather_ispec_selected_rec
+
   integer, dimension(nrec), intent(inout)  :: which_proc_receiver
   integer  :: ierror
 
-
+  allocate(gather_ispec_selected_rec(nrec,nproc)) !!!Ajout Etienne GPU
   ierror = 0
 #ifdef USE_MPI
   call MPI_BARRIER(MPI_COMM_WORLD,ierror)

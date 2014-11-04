@@ -622,6 +622,19 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+CUDA_LIBS
+CUDA_LDFLAGS
+CUDA_CPPFLAGS
+NVCC_PROG
+CUDA_LIB
+CUDA_INC
+CUDA_FLAGS
+NVCC
+COND_CUDA5_FALSE
+COND_CUDA5_TRUE
+COND_CUDA_FALSE
+COND_CUDA_TRUE
+LIBOBJS
 LOCAL_PATH_IS_ALSO_GLOBAL
 DEF_FFLAGS
 MPICC
@@ -708,6 +721,7 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 with_mpi
+with_cuda
 enable_double_precision
 with_scotch_dir
 with_scotch_includedir
@@ -734,7 +748,11 @@ MPIFC
 MPILIBS
 MPICC
 DEF_FFLAGS
-LOCAL_PATH_IS_ALSO_GLOBAL'
+LOCAL_PATH_IS_ALSO_GLOBAL
+NVCC
+CUDA_FLAGS
+CUDA_INC
+CUDA_LIB'
 
 
 # Initialize some variables set by options.
@@ -1355,6 +1373,7 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-mpi              build parallel version [default=yes]
+  --with-cuda             build CUDA GPU enabled version [default=no]
   --with-scotch-dir       define the root path to Scotch (e.g. /opt/scotch/)
   --with-scotch-includedir
                           define the path to the Scotch headers (e.g.
@@ -1393,6 +1412,11 @@ Some influential environment variables:
   LOCAL_PATH_IS_ALSO_GLOBAL
               files on a local path on each node are also seen as global with
               same path [default=true]
+  NVCC        NVIDIA CUDA compiler command
+  CUDA_FLAGS  CUDA compiler flags
+  CUDA_INC    Location of CUDA include files
+  CUDA_LIB    Location of CUDA library libcudart
+
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -2216,6 +2240,37 @@ else
   COND_MPI_TRUE='#'
   COND_MPI_FALSE=
 fi
+
+
+###
+### CUDA
+###
+
+
+# Check whether --with-cuda was given.
+if test "${with_cuda+set}" = set; then :
+  withval=$with_cuda; want_cuda="$withval"
+else
+  want_cuda=no
+fi
+
+ if test "$want_cuda" != no; then
+  COND_CUDA_TRUE=
+  COND_CUDA_FALSE='#'
+else
+  COND_CUDA_TRUE='#'
+  COND_CUDA_FALSE=
+fi
+
+ if test "$want_cuda" = cuda5; then
+  COND_CUDA5_TRUE=
+  COND_CUDA5_FALSE='#'
+else
+  COND_CUDA5_TRUE='#'
+  COND_CUDA5_FALSE=
+fi
+
+
 
 
 # Check whether --enable-double-precision was given.
@@ -5776,6 +5831,300 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 
 fi
+
+
+
+
+
+
+
+
+
+
+
+###
+### CUDA
+###
+
+if test "$want_cuda" != no; then
+
+
+
+  # influential environment variables
+
+
+
+
+
+  # tests NVCC variable
+  if test x"$NVCC" = x; then :
+
+    NVCC=nvcc
+
+fi
+
+  # Check for compiler
+  # checks if program in path
+  # Extract the first word of "$NVCC", so it can be a program name with args.
+set dummy $NVCC; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_NVCC_PROG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $NVCC_PROG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_NVCC_PROG="$NVCC_PROG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_NVCC_PROG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+NVCC_PROG=$ac_cv_path_NVCC_PROG
+if test -n "$NVCC_PROG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NVCC_PROG" >&5
+$as_echo "$NVCC_PROG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  if test -z "$NVCC_PROG" ; then
+    as_fn_error $? "cannot find '$NVCC' program, please check your PATH." "$LINENO" 5
+  fi
+
+  # Checks for compiling and linking
+  ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+
+  CFLAGS_save="$CFLAGS"
+  LDFLAGS_save="$LDFLAGS"
+  LIBS_save="$LIBS"
+
+  # uses nvcc compiler
+  CFLAGS="$CUDA_FLAGS"
+  if test "x$CUDA_INC" != "x"; then
+    CUDA_CPPFLAGS="-I$CUDA_INC"
+    CFLAGS="$CFLAGS $CUDA_CPPFLAGS"
+  fi
+
+  # Check for CUDA headers
+  # runs test with nvcc
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for cuda_runtime.h" >&5
+$as_echo_n "checking for cuda_runtime.h... " >&6; }
+  ac_compile='$NVCC -c $CFLAGS conftest.$ac_ext >&5'
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <cuda.h>
+#include <cuda_runtime.h>
+#ifdef FC_DUMMY_MAIN
+#ifndef FC_DUMMY_MAIN_EQ_F77
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int FC_DUMMY_MAIN() { return 1; }
+#endif
+#endif
+int
+main ()
+{
+void* ptr = 0;
+  ;
+  return 0;
+}
+
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+else
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    as_fn_error $? "CUDA runtime header not found; try setting CUDA_INC." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+  # Check fo CUDA library
+  if test "x$CUDA_LIB" != "x"; then
+    CUDA_LDFLAGS="-L$CUDA_LIB"
+    LDFLAGS="$CUDA_LDFLAGS $LDFLAGS"
+  fi
+  CUDA_LIBS="-lcudart -lcuda -lcublas"
+  LIBS="$CUDA_LIBS $LIBS"
+
+  # runs compilation test with nvcc
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking nvcc compilation with cudaMalloc in -lcudart" >&5
+$as_echo_n "checking nvcc compilation with cudaMalloc in -lcudart... " >&6; }
+  ac_compile='$NVCC -c $CFLAGS conftest.$ac_ext >&5'
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <cuda.h>
+#include <cuda_runtime.h>
+#ifdef FC_DUMMY_MAIN
+#ifndef FC_DUMMY_MAIN_EQ_F77
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int FC_DUMMY_MAIN() { return 1; }
+#endif
+#endif
+int
+main ()
+{
+void* ptr = 0;cudaMalloc(&ptr, 1);
+  ;
+  return 0;
+}
+
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+else
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    as_fn_error $? "CUDA library function with nvcc compilation failed; try setting CUDA_INC." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+  # runs linking test with nvcc
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking nvcc linking with cudaMalloc in -lcudart" >&5
+$as_echo_n "checking nvcc linking with cudaMalloc in -lcudart... " >&6; }
+  ac_link='$NVCC -o conftest$ac_exeext $CFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <stdio.h>
+#include <cuda.h>
+#include <cuda_runtime.h>
+#ifdef FC_DUMMY_MAIN
+#ifndef FC_DUMMY_MAIN_EQ_F77
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int FC_DUMMY_MAIN() { return 1; }
+#endif
+#endif
+int
+main ()
+{
+void* ptr = 0;cudaMalloc(&ptr, 1);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+     as_fn_error $? "CUDA library linking with nvcc failed; try setting CUDA_LIB." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+  # runs linking test with standard compiler
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking linking with cudaMalloc in -lcudart" >&5
+$as_echo_n "checking linking with cudaMalloc in -lcudart... " >&6; }
+  # C compiler linking
+  ac_link='$NVCC -c $CFLAGS conftest.$ac_ext >&5; $CC -o conftest$ac_exeext $LDFLAGS conftest.$ac_objext $LIBS >&5'
+  # Fortran compiler linking
+  # note: fortran linking with ifort would need -nofor-main to succeed
+  #ac_link='$NVCC -c $CFLAGS conftest.$ac_ext >&5; $FC -o conftest$ac_exeext $LDFLAGS conftest.$ac_objext $LIBS >&5'
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <stdio.h>
+#include <cuda.h>
+#include <cuda_runtime.h>
+#ifdef FC_DUMMY_MAIN
+#ifndef FC_DUMMY_MAIN_EQ_F77
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int FC_DUMMY_MAIN() { return 1; }
+#endif
+#endif
+int
+main ()
+{
+void* ptr = 0;cudaMalloc(&ptr, 1);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+     as_fn_error $? "CUDA library linking failed; try setting CUDA_LIB." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+  CFLAGS="$CFLAGS_save"
+  LDFLAGS="$LDFLAGS_save"
+  LIBS="$LIBS_save"
+  ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+
+
+
+
+
+fi
+
+
+
+
+
+
+
+
+
+
+
 
 # Checks for typedefs, structures, and compiler characteristics.
 

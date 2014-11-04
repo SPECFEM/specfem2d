@@ -252,6 +252,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
 
 !!!update momeory variable in viscoelastic simulation
 
+
   if(ATTENUATION_VISCOELASTIC_SOLID) then
 
     ! compute Grad(displ_elastic) at time step n for attenuation
@@ -1485,7 +1486,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                   accel_elastic(2,iglob) = accel_elastic(2,iglob) - b_absorb_elastic_bottom(2,i,ib_bottom(ispecabs),NSTEP-it+1)
                 endif
               endif
-
             endif  !end of backward_simulation
           endif  !end of elasitic
         enddo
@@ -1734,7 +1734,7 @@ end subroutine compute_forces_viscoelastic
 !========================================================================
 
  subroutine compute_forces_viscoelastic_pre_kernel(p_sv,nglob,nspec,displ_elastic,b_displ_elastic,&
-         mu_k,kappa_k,elastic,ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz,SIMULATION_TYPE)
+         mu_k,kappa_k,elastic,ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz)
   ! precompution of kernel
    implicit none
    include "constants.h"
@@ -1767,10 +1767,10 @@ end subroutine compute_forces_viscoelastic
          dux_dxi = 0._CUSTOM_REAL; duy_dxi = 0._CUSTOM_REAL; duz_dxi = 0._CUSTOM_REAL
          dux_dgamma = 0._CUSTOM_REAL; duy_dgamma = 0._CUSTOM_REAL; duz_dgamma = 0._CUSTOM_REAL
 
-         if(SIMULATION_TYPE == 3) then ! Adjoint calculation, backward wavefield
+
            b_dux_dxi = 0._CUSTOM_REAL; b_duy_dxi = 0._CUSTOM_REAL; b_duz_dxi = 0._CUSTOM_REAL
            b_dux_dgamma = 0._CUSTOM_REAL; b_duy_dgamma = 0._CUSTOM_REAL; b_duz_dgamma = 0._CUSTOM_REAL
-         endif
+
 
          ! first double loop over GLL points to compute and store gradients
          ! we can merge the two loops because NGLLX == NGLLZ
@@ -1783,7 +1783,7 @@ end subroutine compute_forces_viscoelastic
            duy_dgamma = duy_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
            duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
 
-           if(SIMULATION_TYPE == 3) then ! Adjoint calculation, backward wavefield
+
              b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
              b_duy_dxi = b_duy_dxi + b_displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
              b_duz_dxi = b_duz_dxi + b_displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
@@ -1791,7 +1791,7 @@ end subroutine compute_forces_viscoelastic
              b_dux_dgamma = b_dux_dgamma + b_displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
              b_duy_dgamma = b_duy_dgamma + b_displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
              b_duz_dgamma = b_duz_dgamma + b_displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
-           endif
+
          enddo
 
          xixl = xix(i,j,ispec); xizl = xiz(i,j,ispec)
@@ -1807,7 +1807,7 @@ end subroutine compute_forces_viscoelastic
          duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
          duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
-         if(SIMULATION_TYPE == 3) then ! Adjoint calculation, backward wavefield
+
            b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
            b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
 
@@ -1816,10 +1816,8 @@ end subroutine compute_forces_viscoelastic
 
            b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
            b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
-         endif
 
-         ! Pre-kernels calculation
-         if(SIMULATION_TYPE == 3) then
+
            iglob = ibool(i,j,ispec)
            if(p_sv)then !P-SV waves
              dsxx =  dux_dxl
@@ -1836,7 +1834,6 @@ end subroutine compute_forces_viscoelastic
            else !SH (membrane) waves
              mu_k(iglob) = duy_dxl * b_duy_dxl + duy_dzl * b_duy_dzl
            endif
-         endif
        enddo; enddo
      endif
    enddo

@@ -48,6 +48,8 @@
 
 ! reads properties of a 2D isotropic or anisotropic linear elastic element
 
+  use specfem_par, only : ANY_ANISOTROPY    !!!!!! Ajout Etienne GPU
+
   implicit none
   include "constants.h"
 
@@ -72,6 +74,8 @@
   integer in,n,indic
   character(len=80) datlin
 
+
+  ANY_ANISOTROPY = .false.    !!!!!! Ajout Etienne GPU 
 
   !
   !---- loop over the different material sets
@@ -163,6 +167,9 @@
 
         ! Poisson's ratio
         poisson = half*(3.d0*kappa-two_mu)/(3.d0*kappa+mu)
+
+        ANY_ANISOTROPY = .true.   !!!!!! Ajout Etienne GPU
+        
 
         !---- isotropic material, moduli are given, allows for declaration of poroelastic material
         !---- poroelastic (0<phi<1)

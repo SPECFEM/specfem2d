@@ -51,8 +51,11 @@
                               alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,timeval,deltat,&
                               rmemory_fsb_displ_elastic_LDDRK,i_stage,stage_time_scheme,alpha_LDDRK,beta_LDDRK)
 
+
    implicit none
    include 'constants.h'
+
+
 
    integer :: nspec,nglob_elastic,nglob_acoustic,num_fluid_solid_edges
    integer :: nglob
@@ -60,7 +63,7 @@
 
    integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
    real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll,wzgll
-
+   integer, dimension(NGLLX,NEDGES) :: ivalue,jvalue,ivalue_inverse,jvalue_inverse
    ! Gauss-Lobatto-Jacobi points and weights
    double precision, dimension(NGLJ) :: xiglj
    real(kind=CUSTOM_REAL), dimension(NGLJ) :: wxglj
@@ -69,7 +72,6 @@
    real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
 
    real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec)  :: xix,xiz,gammax,gammaz,jacobian
-   integer, dimension(NGLLX,NEDGES) :: ivalue,jvalue,ivalue_inverse,jvalue_inverse
 
    real(kind=CUSTOM_REAL),dimension(3,nglob_elastic) :: displ_elastic,displ_elastic_old
    real(kind=CUSTOM_REAL),dimension(nglob_acoustic) :: potential_dot_dot_acoustic
@@ -98,6 +100,8 @@
    double precision :: timeval,deltat
    double precision :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z, &
                              A8,A9,A10,bb_xz_1,bb_xz_2,coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2
+
+
 
       ! loop on all the coupling edges
 
@@ -244,6 +248,8 @@
         enddo
 
       enddo
+
+
 
   end subroutine compute_coupling_acoustic_el
 

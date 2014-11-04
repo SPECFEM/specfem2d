@@ -223,6 +223,9 @@
     write(15,*) 'PERIODIC_HORIZ_DIST'
     write(15,*) PERIODIC_HORIZ_DIST
 
+    write(15,*) 'GPU_MODE'   !!!Ajout Etienne GPU
+    write(15,*) GPU_MODE
+
     write(15,*) 'nt deltat'
     write(15,*) nt,deltat
 

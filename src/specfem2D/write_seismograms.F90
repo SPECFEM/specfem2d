@@ -94,7 +94,7 @@
   double precision, parameter :: FACTORXSU = 1.d0
 
 
-  integer  :: irecloc
+  integer  :: irecloc,i
 
 !<SU_FORMAT
   double precision :: st_zval(nrec),x_source,z_source
@@ -106,6 +106,7 @@
 #endif
 
 !----
+
 
 ! see if we need to save any seismogram in binary format
   save_binary_seismograms = save_binary_seismograms_single .or. save_binary_seismograms_double

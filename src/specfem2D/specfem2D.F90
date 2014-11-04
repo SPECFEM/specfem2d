@@ -1,6 +1,8 @@
 
   program specfem2D
 
+  use specfem_par
+
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -361,7 +363,6 @@
 
   implicit none
 
-  include "constants.h"
 #ifdef USE_MPI
   include "precision.h"
 #endif
@@ -371,13 +372,12 @@
 !! DK DK (then array bound checking cannot be used, thus for instance do NOT use -check all in Intel ifort)
 ! #define FORCE_VECTORIZATION
 
-  integer NSOURCES,i_source,iglobzero
-  integer, dimension(:), allocatable :: source_type,time_function_type
-  double precision, dimension(:), allocatable :: x_source,z_source,xi_source,gamma_source,&
-                  Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource
+  integer i_source,iglobzero
+  integer, dimension(:), allocatable :: time_function_type
+  double precision, dimension(:), allocatable :: x_source,z_source,&
+                  f0,factor,anglesource
   integer, dimension(:), allocatable :: ix_image_color_source,iy_image_color_source
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sourcearray
-  double precision :: t0
+
 
   double precision, dimension(:,:), allocatable :: coorg
 
@@ -425,11 +425,9 @@
   integer :: time_stepping_scheme
 
 ! receiver information
-  integer :: nrec,ios
-  integer, dimension(:), allocatable :: ispec_selected_rec
-  double precision, dimension(:), allocatable :: xi_receiver,gamma_receiver,st_xval,st_zval
-  character(len=150) dummystring
-
+  integer :: ios
+  double precision, dimension(:), allocatable :: st_xval,st_zval
+ 
 ! for seismograms
   double precision, dimension(:,:), allocatable :: sisux,sisuz,siscurl
   integer :: seismo_offset, seismo_current
@@ -443,7 +441,7 @@
 ! curl in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: curl_element
 
-  integer :: i,j,k,it,irec,id,n,ispec,ispec2,nglob,npgeo,iglob
+  integer :: i,j,k,irec,id,n,ispec,ispec2,nglob,npgeo,iglob
   integer :: nglob_acoustic
   integer :: nglob_gravitoacoustic
   integer :: nglob_elastic
@@ -459,25 +457,16 @@
   logical :: already_found_a_crack_element
 
 ! coefficients of the explicit Newmark time scheme
-  integer NSTEP
-  double precision :: deltatover2,deltatsquareover2,timeval
-  double precision :: deltat
 
-! Gauss-Lobatto-Legendre points and weights
-  double precision, dimension(NGLLX) :: xigll
-  real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
-  double precision, dimension(NGLLZ) :: zigll
-  real(kind=CUSTOM_REAL), dimension(NGLLX) :: wzgll
+  double precision :: timeval
 
-! derivatives of Lagrange polynomials
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
-  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz,hprimewgll_zz
+
 
 ! Jacobian matrix and determinant
-  double precision :: xixl,xizl,gammaxl,gammazl,jacobianl
+  double precision :: jacobianl
 
 ! material properties of the elastic medium
-  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic
+  double precision :: lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: veloc_elastic_LDDRK,displ_elastic_LDDRK,&
@@ -558,19 +547,18 @@
   double precision, dimension(:,:,:), allocatable :: c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
 
   double precision, dimension(:,:,:), allocatable :: shape2D,shape2D_display
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable  :: xix,xiz,gammax,gammaz,jacobian
+
 
   double precision, dimension(:,:,:,:), allocatable :: dershape2D,dershape2D_display
 
-  integer, dimension(:,:,:), allocatable :: ibool,ibool_outer,ibool_inner
+  integer, dimension(:,:,:), allocatable :: ibool_outer,ibool_inner
   integer, dimension(:,:), allocatable  :: knods
   integer, dimension(:), allocatable :: kmato,numabs, &
      ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3,ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2
 
-  integer, dimension(:), allocatable :: ispec_selected_source,iglob_source,&
+  integer, dimension(:), allocatable :: iglob_source,&
                                         is_proc_source,nb_proc_source
   double precision, dimension(:), allocatable :: aval
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: source_time_function
   double precision, external :: netlib_specfun_erf
 
   double precision :: vpImin,vpImax,vpIImin,vpIImax
@@ -580,13 +568,13 @@
   integer :: colors,numbers,subsamp_postscript,imagetype_postscript, &
     NSTEP_BETWEEN_OUTPUT_INFO,seismotype,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP_BETWEEN_OUTPUT_IMAGES, &
     NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS,subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps
-  integer :: numat,ngnod,nspec,pointsdisp, &
-    nelemabs,nelem_acforcing,nelem_acoustic_surface,ispecabs,UPPER_LIMIT_DISPLAY,NELEM_PML_THICKNESS
+  integer :: numat,nspec,pointsdisp, &
+    nelemabs,nelem_acforcing,ispecabs,UPPER_LIMIT_DISPLAY,NELEM_PML_THICKNESS
 
   logical interpol,meshvect,modelvect,boundvect,assign_external_model,initialfield, &
     output_grid_ASCII,output_grid_Gnuplot,ATTENUATION_VISCOELASTIC_SOLID,output_postscript_snapshot,output_color_image, &
     plot_lowerleft_corner_only,add_Bielak_conditions,output_energy,READ_EXTERNAL_SEP_FILE, &
-    output_wavefield_dumps,use_binary_for_wavefield_dumps,PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,STACEY_BOUNDARY_CONDITIONS
+    output_wavefield_dumps,use_binary_for_wavefield_dumps,ROTATE_PML_ACTIVATE,STACEY_BOUNDARY_CONDITIONS
 
   double precision :: ROTATE_PML_ANGLE
 
@@ -669,19 +657,18 @@
 ! for fluid/solid coupling and edge detection
   logical, dimension(:), allocatable :: elastic
   integer, dimension(NEDGES) :: i_begin,j_begin,i_end,j_end
-  integer, dimension(NGLLX,NEDGES) :: ivalue,jvalue,ivalue_inverse,jvalue_inverse
   integer, dimension(:), allocatable :: fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
                                         fluid_solid_elastic_ispec,fluid_solid_elastic_iedge
-  integer :: num_fluid_solid_edges,ispec_acoustic,ispec_elastic, &
+  integer :: ispec_acoustic,ispec_elastic, &
              iedge_acoustic,iedge_elastic,ipoin1D,iglob2
-  logical :: any_acoustic,any_acoustic_glob,any_elastic,any_elastic_glob,coupled_acoustic_elastic
+  logical :: any_acoustic_glob,any_elastic_glob,coupled_acoustic_elastic
   real(kind=CUSTOM_REAL) :: displ_x,displ_z,displ_n,displw_x,displw_z,zxi,xgamma,jacobian1D,pressure
   real(kind=CUSTOM_REAL) :: b_displ_x,b_displ_z,b_displw_x,b_displw_z,b_pressure
   logical :: any_fluid_solid_edges
 
 ! for fluid/porous medium coupling and edge detection
   logical, dimension(:), allocatable :: poroelastic
-  logical :: any_poroelastic,any_poroelastic_glob
+  logical :: any_poroelastic_glob
   integer, dimension(:), allocatable :: fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge, &
                                         fluid_poro_poroelastic_ispec,fluid_poro_poroelastic_iedge
   integer :: num_fluid_poro_edges,iedge_poroelastic
@@ -710,9 +697,8 @@
   logical :: any_solid_poro_edges
 
 ! for adjoint method
-  logical :: SAVE_FORWARD ! whether or not the last frame is saved to reconstruct the forward field
-  integer :: SIMULATION_TYPE      ! 1 = forward wavefield, 3 = backward and adjoint wavefields and kernels
-  double precision :: b_deltatover2,b_deltatsquareover2,b_deltat ! coefficients of the explicit Newmark time scheme
+
+
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     b_accels_poroelastic,b_velocs_poroelastic,b_displs_poroelastic
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
@@ -738,24 +724,17 @@
     rhol_s_global,rhol_f_global,rhol_bar_global, &
     tortl_global,mulfr_global
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: permlxx_global,permlxz_global,permlzz_global
-  character(len=150) :: adj_source_file
-  integer :: irec_local,nadj_rec_local
+  integer :: irec_local
   double precision :: xx,zz,rholb,tempx1l,tempx2l,b_tempx1l,b_tempx2l,bb_tempx1l,bb_tempx2l
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: adj_sourcearray
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: adj_sourcearrays
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
-    b_absorb_elastic_left,b_absorb_poro_s_left,b_absorb_poro_w_left
+    b_absorb_poro_s_left,b_absorb_poro_w_left
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
-    b_absorb_elastic_right,b_absorb_poro_s_right,b_absorb_poro_w_right
+    b_absorb_poro_s_right,b_absorb_poro_w_right
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
-    b_absorb_elastic_bottom,b_absorb_poro_s_bottom,b_absorb_poro_w_bottom
+    b_absorb_poro_s_bottom,b_absorb_poro_w_bottom
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
-    b_absorb_elastic_top,b_absorb_poro_s_top,b_absorb_poro_w_top
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable ::  &
-    b_absorb_acoustic_left,b_absorb_acoustic_right,&
-    b_absorb_acoustic_bottom, b_absorb_acoustic_top
-  integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
-  integer, dimension(:), allocatable :: ib_left,ib_right,ib_bottom,ib_top
+    b_absorb_poro_s_top,b_absorb_poro_w_top
+
 
 ! for color images
   integer :: NX_IMAGE_color,NZ_IMAGE_color
@@ -778,15 +757,11 @@
 #endif
 
 ! timing information for the stations
-  character(len=MAX_LENGTH_STATION_NAME), allocatable, dimension(:) :: station_name
-  character(len=MAX_LENGTH_NETWORK_NAME), allocatable, dimension(:) :: network_name
+
 
 ! title of the plot
   character(len=60) simulation_title
 
-! Lagrange interpolators at receivers
-  double precision, dimension(:), allocatable :: hxir,hgammar,hpxir,hpgammar
-  double precision, dimension(:,:), allocatable :: hxir_store,hgammar_store
 
 ! Lagrange interpolators at sources
   double precision, dimension(:), allocatable :: hxis,hgammas,hpxis,hpgammas
@@ -805,13 +780,10 @@
 
 ! for MPI and partitioning
   integer  :: ier
-  integer  :: nproc,nproc_read_from_database
-  integer  :: myrank
-  character(len=150) :: outputname,outputname2
+
 
   integer  :: ninterface
   integer  :: max_interface_size
-  integer, dimension(:), allocatable  :: my_neighbours
   integer, dimension(:), allocatable  :: my_nelmnts_neighbours
   integer, dimension(:,:,:), allocatable  :: my_interfaces
   integer, dimension(:,:), allocatable  :: ibool_interfaces_acoustic,ibool_interfaces_elastic,ibool_interfaces_poroelastic
@@ -839,7 +811,7 @@
   integer, dimension(:), allocatable  :: ispec_outer_to_glob, ispec_inner_to_glob
   logical, dimension(:), allocatable  :: mask_ispec_inner_outer
 
-  integer, dimension(:,:), allocatable  :: acoustic_surface
+
   integer, dimension(:,:), allocatable  :: acoustic_edges
   logical :: any_acoustic_edges
 
@@ -979,12 +951,10 @@
   ! al., 2011, Noise Cross-Correlation Sensitivity Kernels, Geophysical Journal
   ! International"
 
-  integer :: NOISE_TOMOGRAPHY
   integer :: irec_master, ispec_noise
   double precision :: xi_noise, gamma_noise, angle_noise
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: time_function_noise
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: source_array_noise
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: mask_noise
 
   ! The following three arrays are used to hold snapshots of the generating
   ! wavefield or of the ensemble forward wavefield, depending on the type of
@@ -1094,8 +1064,20 @@
   integer :: nspec_left_acforcing,nspec_right_acforcing,nspec_bottom_acforcing,nspec_top_acforcing
   integer, dimension(:), allocatable :: ib_left_acforcing,ib_right_acforcing,ib_bottom_acforcing,ib_top_acforcing
 
+<<<<<<< HEAD
+
+  !!! Début Ajout Etienne GPU
+  integer :: ncuda_devices,ncuda_devices_min,ncuda_devices_max
+  real :: t1,t2
+
+
+
+!!! Fin Ajout Etienne GPU
+
+=======
 ! for shifting of velocities if needed in the case of viscoelasticity
   double precision :: vp,vs,rho,mu,lambda
+>>>>>>> 45885c74aa097e0e213ca64a34ea439404ecc385
 
 !***********************************************************************
 !
@@ -1103,11 +1085,39 @@
 !
 !***********************************************************************
 
+
   ! force Flush-To-Zero if available to avoid very slow Gradual Underflow trapping
   call force_ftz()
 
+
+  if ( CUDA_AWARE_MPI ) then
+
+  ! CUDA_AWARE_MPI now set to true in constants.h
+
+    write(IOUT,*)
+    write(IOUT,*) "CUDA_AWARE_MPI Active."
+    call flush_IOUT()
+
+  ! check for GPU runs
+    if( NGLLX /= 5 .or. NGLLZ /= 5 ) &
+    stop 'GPU mode can only be used if NGLLX == NGLLZ == 5'
+    if( CUSTOM_REAL /= 4 ) &
+    stop 'GPU mode runs only with CUSTOM_REAL == 4'
+
+    call initialize_cuda_aware_mpi()
+
+    write(IOUT,*) "GPU number of devices per node: min =",ncuda_devices_min
+    write(IOUT,*) "                                max =",ncuda_devices_max
+    write(IOUT,*)
+    call flush_IOUT()
+
+  endif
+
+
   call initialize_simulation(nproc,myrank,ninterface_acoustic,ninterface_elastic,ninterface_poroelastic)
   if(nproc < 1) stop 'should have nproc >= 1'
+
+
 
   ! starts reading in Database file
   call read_databases_init(myrank, &
@@ -1128,7 +1138,52 @@
                   USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                   POWER_DISPLAY_COLOR,SU_FORMAT,USER_T0, time_stepping_scheme, &
                   ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_HORIZ_DIST, &
-                  read_external_mesh,ACOUSTIC_FORCING,save_ASCII_kernels)
+                  read_external_mesh,ACOUSTIC_FORCING,save_ASCII_kernels,GPU_MODE)
+
+
+!!! Début Ajout Etienne GPU
+! initializes GPU cards
+  if(GPU_MODE .and. ( .not. CUDA_AWARE_MPI ) ) then
+
+! initialization for GPU cards
+
+  ! local parameters
+
+
+  ! GPU_MODE now defined in Par_file
+  if(myrank == 0 ) then
+    write(IOUT,*)
+    write(IOUT,*) "GPU_MODE Active."
+    call flush_IOUT()
+  endif
+
+  ! check for GPU runs
+  if( NGLLX /= 5 .or. NGLLZ /= 5 ) &
+    stop 'GPU mode can only be used if NGLLX == NGLLZ == 5'
+  if( CUSTOM_REAL /= 4 ) &
+    stop 'GPU mode runs only with CUSTOM_REAL == 4'
+
+
+  ! initializes GPU and outputs info to files for all processes
+  call initialize_cuda_device(myrank,ncuda_devices)
+
+  ! collects min/max of local devices found for statistics
+  call sync_all()
+  call min_all_i(ncuda_devices,ncuda_devices_min)
+  call max_all_i(ncuda_devices,ncuda_devices_max)
+
+  if( myrank == 0 ) then
+    write(IOUT,*) "GPU number of devices per node: min =",ncuda_devices_min
+    write(IOUT,*) "                                max =",ncuda_devices_max
+    write(IOUT,*)
+    call flush_IOUT()
+  endif
+
+  endif
+
+!!! Fin Ajout Etienne GPU
+
+
 
   if(nproc_read_from_database < 1) stop 'should have nproc_read_from_database >= 1'
   if(SIMULATION_TYPE == 3 .and.(time_stepping_scheme == 2 .or. time_stepping_scheme == 3)) &
@@ -1523,9 +1578,11 @@
        allocate(ibool_interfaces_acoustic(NGLLX*max_interface_size,ninterface))
        allocate(ibool_interfaces_elastic(NGLLX*max_interface_size,ninterface))
        allocate(ibool_interfaces_poroelastic(NGLLX*max_interface_size,ninterface))
+       allocate(ibool_interfaces_ext_mesh_init(NGLLX*max_interface_size,ninterface))   !!Ajout Etienne GPU
        allocate(nibool_interfaces_acoustic(ninterface))
        allocate(nibool_interfaces_elastic(ninterface))
        allocate(nibool_interfaces_poroelastic(ninterface))
+       allocate(nibool_interfaces_ext_mesh(ninterface))   !!Ajout Etienne GPU
        allocate(inum_interfaces_acoustic(ninterface))
        allocate(inum_interfaces_elastic(ninterface))
        allocate(inum_interfaces_poroelastic(ninterface))
@@ -1538,9 +1595,11 @@
        allocate(ibool_interfaces_acoustic(1,1))
        allocate(ibool_interfaces_elastic(1,1))
        allocate(ibool_interfaces_poroelastic(1,1))
+       allocate(ibool_interfaces_ext_mesh_init(1,1))   !!Ajout Etienne GPU
        allocate(nibool_interfaces_acoustic(1))
        allocate(nibool_interfaces_elastic(1))
        allocate(nibool_interfaces_poroelastic(1))
+       allocate(nibool_interfaces_ext_mesh(1))   !!Ajout Etienne GPU
        allocate(inum_interfaces_acoustic(1))
        allocate(inum_interfaces_elastic(1))
        allocate(inum_interfaces_poroelastic(1))
@@ -2030,6 +2089,9 @@
       allocate(c25ext(1,1,1))
     endif
 
+
+
+
 !
 !----  set the coordinates of the points of the global grid
 !
@@ -2270,8 +2332,12 @@
                 inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,&
                 coord,kmato,rhoext,vpext,vsext,gravityext,Nsqext, &
                 QKappa_attenuationext,Qmu_attenuationext, &
+<<<<<<< HEAD
+                c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,READ_EXTERNAL_SEP_FILE,myrank)
+=======
                 c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
                 READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID)
+>>>>>>> 45885c74aa097e0e213ca64a34ea439404ecc385
   endif
 
 !
@@ -2344,6 +2410,10 @@
   nadj_rec_local = 0
   if(SIMULATION_TYPE == 3) then  ! adjoint calculation
 
+  allocate(source_adjointe(nrecloc,NSTEP,2))  !!Ajout Etienne GPU
+
+
+  
     do irec = 1,nrec
       if(myrank == which_proc_receiver(irec)) then
         ! check that the source proc number is okay
@@ -2359,6 +2429,8 @@
       allocate(adj_sourcearrays(1,1,1,1,1))
     endif
 
+  if(seismotype == 1 .or. seismotype == 2 .or. seismotype == 3) then
+
     if (.not. SU_FORMAT) then
        irec_local = 0
        do irec = 1, nrec
@@ -2366,9 +2438,9 @@
          if(myrank == which_proc_receiver(irec))then
            irec_local = irec_local + 1
            adj_source_file = trim(station_name(irec))//'.'//trim(network_name(irec))
-           call compute_arrays_adj_source(adj_source_file, &
+           call compute_arrays_adj_source(seismotype,adj_source_file, &
                                xi_receiver(irec), gamma_receiver(irec), &
-                               adj_sourcearray, xigll,zigll,NSTEP)
+                               adj_sourcearray, xigll,zigll,NSTEP,irec_local)
            adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
          endif
        enddo
@@ -2382,7 +2454,7 @@
                if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
 
        allocate(adj_src_s(NSTEP,3))
-
+write(iout,*) "valeur de nrec", nrec,nrecloc,myrank
        do irec = 1, nrec
          if(myrank == which_proc_receiver(irec))then
           irec_local = irec_local + 1
@@ -2395,21 +2467,83 @@
           if (irec==1) print*, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
           call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
           call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
+          source_adjointe(irec_local,:,1) = adj_src_s(:,1)    !! Ajout Etienne GPU
+          source_adjointe(irec_local,:,2) = adj_src_s(:,3)    !! Ajout Etienne GPU 
+
+      if ( .not. GPU_MODE ) then 
           do k = 1, NGLLZ
               do i = 1, NGLLX
                 adj_sourcearray(:,:,i,k) = hxir(i) * hgammar(k) * adj_src_s(:,:)
               enddo
           enddo
+
           adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
+       endif
+
          endif !  if(myrank == which_proc_receiver(irec))
        enddo ! irec
        close(111)
        close(113)
        deallocate(adj_src_s)
     endif
+write(iout,*) "lo4l"
+  else if (seismotype == 4 ) then
+
+    if (.not. SU_FORMAT) then
+       irec_local = 0
+       do irec = 1, nrec
+         ! compute only adjoint source arrays in the local proc
+         if(myrank == which_proc_receiver(irec))then
+           irec_local = irec_local + 1
+           adj_source_file = trim(station_name(irec))//'.'//trim(network_name(irec))
+           call compute_arrays_adj_source(seismotype,adj_source_file, &
+                               xi_receiver(irec), gamma_receiver(irec), &
+                               adj_sourcearray, xigll,zigll,NSTEP,irec_local)
+           adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
+         endif
+       enddo
+    else
+       irec_local = 0
+       write(filename, "('./SEM/pressure_file_single.bin.adj')")
+       open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ios)
+               if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
+       allocate(adj_src_s(NSTEP,3))
+
+       do irec = 1, nrec
+         if(myrank == which_proc_receiver(irec))then
+          irec_local = irec_local + 1
+          adj_sourcearray(:,:,:,:) = 0.0
+          read(111,rec=irec,iostat=ios) r4head, adj_src_s(:,1)
+               if (ios /= 0) call exit_MPI(' file '//trim(filename)//' read error')
+          if (irec==1) print*, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
+          call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
+          call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
+          source_adjointe(irec_local,:,1) = adj_src_s(:,1)    !! Ajout Etienne GPU
+
+      if ( .not. GPU_MODE ) then 
+          do k = 1, NGLLZ
+              do i = 1, NGLLX
+                adj_sourcearray(:,:,i,k) = hxir(i) * hgammar(k) * adj_src_s(:,:)
+              enddo
+          enddo
+          adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
+      endif
+
+
+         endif !  if(myrank == which_proc_receiver(irec))
+       enddo ! irec
+       close(111)
+       deallocate(adj_src_s)
+    endif
+
+  endif
+
+
   else
      allocate(adj_sourcearrays(1,1,1,1,1))
-  endif
+  endif  ! Simulation type
+
+
 
     if (nrecloc > 0) then
       allocate(anglerec_irec(nrecloc))
@@ -2671,12 +2805,28 @@
     enddo
   enddo
 
+  allocate(xir_store_loc(nrecloc,NGLLX))
+  allocate(gammar_store_loc(nrecloc,NGLLX))
+
+
 ! define and store Lagrange interpolators at all the receivers
+
+  irec_local=0          !Ajout Etienne GPU
   do irec = 1,nrec
+
+
     call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
     call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
     hxir_store(irec,:) = hxir(:)
     hgammar_store(irec,:) = hgammar(:)
+    if(myrank == which_proc_receiver(irec))then                                             !Ajout Etienne GPU
+           irec_local = irec_local + 1                                                      !Ajout Etienne GPU
+                                                                                            !Ajout Etienne GPU
+      do i = 1, NGLLX                                                                       !Ajout Etienne GPU
+    xir_store_loc(irec_local,i)    = sngl(hxir(i))                                          !Ajout Etienne GPU
+    gammar_store_loc(irec_local,i) = sngl(hgammar(i))                                       !Ajout Etienne GPU
+      enddo
+    endif
   enddo
 
 ! define and store Lagrange interpolators at all the sources
@@ -2695,6 +2845,40 @@
     hxis_store(i,:) = hxis(:)
     hgammas_store(i,:) = hgammas(:)
   enddo
+
+      !!! Début ajout Etienne GPU
+
+  do i_source=1,NSOURCES
+
+    if(source_type(i_source) == 1) then
+
+
+      if( acoustic(ispec_selected_source(i_source)) ) then
+        do j = 1,NGLLZ
+                    do i = 1,NGLLX
+
+        sourcearray(i_source,1,i,j) = hxis_store(i_source,i) * hgammas_store(i_source,j)
+
+                    enddo
+        enddo
+
+      else if ( elastic(ispec_selected_source(i_source)) ) then
+        do j = 1,NGLLZ
+                    do i = 1,NGLLX
+
+        sourcearray(i_source,1,i,j) = - sngl(sin(anglesource(i_source))) * hxis_store(i_source,i) * hgammas_store(i_source,j)
+        sourcearray(i_source,2,i,j) = sngl(cos(anglesource(i_source))) * hxis_store(i_source,i) * hgammas_store(i_source,j)
+
+                    enddo
+        enddo
+      endif
+
+     endif
+
+  enddo
+
+    !!! Fin ajout Etienne GPU
+
 
 ! displacement, velocity, acceleration and inverse of the mass matrix for elastic elements
     if(any_elastic) then
@@ -3375,6 +3559,8 @@
   !
   !---- build the global mass matrix
   !
+
+
   call invert_mass_matrix_init(any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic, &
                                 rmass_inverse_elastic_one,nglob_elastic, &
                                 rmass_inverse_acoustic,nglob_acoustic, &
@@ -3397,13 +3583,13 @@
                                 d_x_store,d_z_store,PML_BOUNDARY_CONDITIONS,region_CPML, &
                                 nspec_PML,spec_to_PML,time_stepping_scheme)
 
+
 #ifdef USE_MPI
   if ( nproc > 1 ) then
 
     ! preparing for MPI communications
     allocate(mask_ispec_inner_outer(nspec))
     mask_ispec_inner_outer(:) = .false.
-
     call get_MPI(nspec,ibool,knods,ngnod,nglob,elastic,poroelastic, &
                     ninterface, max_interface_size, &
                     my_nelmnts_neighbours,my_interfaces,my_neighbours, &
@@ -3440,6 +3626,7 @@
     max_ibool_interfaces_size_ac = maxval(nibool_interfaces_acoustic(:))
     max_ibool_interfaces_size_el = 3*maxval(nibool_interfaces_elastic(:))
     max_ibool_interfaces_size_po = NDIM*maxval(nibool_interfaces_poroelastic(:))
+    max_nibool_interfaces_ext_mesh = maxval(nibool_interfaces_ext_mesh(:)) !!Ajout Etienne GPU
       allocate(tab_requests_send_recv_acoustic(ninterface_acoustic*2))
       allocate(buffer_send_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic))
       allocate(buffer_recv_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic))
@@ -3513,6 +3700,8 @@
 
     allocate(ibool_outer(NGLLX,NGLLZ,nspec_outer))
     allocate(ibool_inner(NGLLX,NGLLZ,nspec_inner))
+    allocate(ispec_is_inner(nspec))                  !!! Ajout Etienne GPU
+    ispec_is_inner(:) = .false.                      !!! Ajout Etienne GPU
 
     ! loop over spectral elements
     do ispec_outer = 1,nspec_outer
@@ -3526,6 +3715,7 @@
     ! get global numbering for inner or outer elements
       ispec = ispec_inner_to_glob(ispec_inner)
       ibool_inner(:,:,ispec_inner) = ibool(:,:,ispec)
+      ispec_is_inner(ispec) = .true.                       !!! Ajout Etienne GPU
     enddo
 
     ! reduces cache misses for outer elements
@@ -5016,11 +5206,44 @@ if(coupled_elastic_poro) then
   ! convert to seconds instead of minutes, to be more precise for 2D runs, which can be fast
   timestamp_seconds_start = timestamp*60.d0 + time_values(7) + time_values(8)/1000.d0
 
+
+!!Début AJout Etienne GPU
+
+if (GPU_MODE) then
+
+
+call init_host_to_dev_variable(nspec,nglob,poroelastcoef,numat,ninterface,nelemabs,numabs,STACEY_BOUNDARY_CONDITIONS, &
+       codeabs,is_proc_source,density,acoustic,elastic,kmato,anisotropy&
+         ,which_proc_receiver,fluid_solid_acoustic_ispec, fluid_solid_acoustic_iedge,&
+          fluid_solid_elastic_ispec, fluid_solid_elastic_iedge,anisotropic,nrecloc,cosrot_irec,sinrot_irec,displ_elastic&
+         ,veloc_elastic,accel_elastic,b_displ_elastic,b_veloc_elastic,b_accel_elastic,nglob_elastic,assign_external_model,&
+          vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext)
+
+
+call prepare_timerun_GPU(nspec,nglob,numat,ninterface,nelemabs,numabs,nrecloc,recloc,&
+                          count_nspec_acoustic,rmass_inverse_acoustic,nglob_acoustic,acoustic,STACEY_BOUNDARY_CONDITIONS,&
+                          nglob_elastic,rmass_inverse_elastic_one,rmass_inverse_elastic_three,elastic,&
+                          which_proc_receiver,b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic,&
+        potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic,ninterface_elastic,inum_interfaces_elastic,&
+                 ninterface_acoustic,inum_interfaces_acoustic)
+
+
+endif
+
+
+call CPU_TIME( t1 )
+
+!!Fin AJout Etienne GPU
+
+
 ! *********************************************************
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
 ! *********************************************************
 
   do it = 1,NSTEP
+
+! write(IOUT,*) 'iteration', it, "processus", myrank
+
 
 ! compute current time
     timeval = (it-1)*deltat
@@ -5029,13 +5252,13 @@ if(coupled_elastic_poro) then
 
       call update_displacement_precondition_newmark(time_stepping_scheme,SIMULATION_TYPE,&
                                                     nglob_acoustic,nglob_elastic,nglob_poroelastic,&
-                                                    any_acoustic,any_elastic,any_poroelastic,deltat,deltatover2,&
-                                                    deltatsquareover2,potential_acoustic,potential_dot_acoustic,&
+                                                    any_acoustic,any_elastic,any_poroelastic,&
+                                                    potential_acoustic,potential_dot_acoustic,&
                                                     potential_dot_dot_acoustic,potential_acoustic_old,&
                                                     displ_elastic,veloc_elastic,accel_elastic,displ_elastic_old,&
                                                     displs_poroelastic,velocs_poroelastic,accels_poroelastic,&
                                                     displs_poroelastic_old,displw_poroelastic,velocw_poroelastic,&
-                                                    accelw_poroelastic,b_deltat,b_deltatover2,b_deltatsquareover2,&
+                                                    accelw_poroelastic,&
                                                     b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic,&
                                                     b_potential_acoustic_old,&
                                                     b_displ_elastic,b_veloc_elastic,b_accel_elastic,b_displ_elastic_old,&
@@ -5043,7 +5266,11 @@ if(coupled_elastic_poro) then
                                                     b_displs_poroelastic,b_velocs_poroelastic,b_accels_poroelastic,&
                                                     accels_poroelastic_adj_coupling,&
                                                     b_displw_poroelastic,b_velocw_poroelastic,b_accelw_poroelastic,&
-                                                    accelw_poroelastic_adj_coupling)
+                                                    accelw_poroelastic_adj_coupling,PML_BOUNDARY_CONDITIONS)
+
+
+  if (.NOT. GPU_MODE) then    !!! Ajout Etienne GPU
+
 
       if (AXISYM) then
         do ispec=1,nspec
@@ -5099,6 +5326,7 @@ if(coupled_elastic_poro) then
                rmemory_potential_acoustic_LDDRK,alpha_LDDRK,beta_LDDRK,c_LDDRK, &
                rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
                deltat,PML_BOUNDARY_CONDITIONS,STACEY_BOUNDARY_CONDITIONS)
+
 
       if( SIMULATION_TYPE == 3 ) then
 
@@ -5173,41 +5401,7 @@ if(coupled_elastic_poro) then
       endif
 
 
-      ! stores absorbing boundary contributions into files
-      if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1 .and. (.not. PML_BOUNDARY_CONDITIONS)) then
-        !--- left absorbing boundary
-        if(nspec_left >0) then
-          do ispec = 1,nspec_left
-            do i=1,NGLLZ
-              write(65) b_absorb_acoustic_left(i,ispec,it)
-            enddo
-          enddo
-        endif
-        !--- right absorbing boundary
-        if(nspec_right >0) then
-          do ispec = 1,nspec_right
-            do i=1,NGLLZ
-              write(66) b_absorb_acoustic_right(i,ispec,it)
-            enddo
-          enddo
-        endif
-        !--- bottom absorbing boundary
-        if(nspec_bottom >0) then
-          do ispec = 1,nspec_bottom
-            do i=1,NGLLX
-              write(67) b_absorb_acoustic_bottom(i,ispec,it)
-            enddo
-          enddo
-        endif
-        !--- top absorbing boundary
-        if(nspec_top >0) then
-          do ispec = 1,nspec_top
-            do i=1,NGLLX
-              write(68) b_absorb_acoustic_top(i,ispec,it)
-            enddo
-          enddo
-        endif
-      endif ! if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)
+      
 
 
     ! *********************************************************
@@ -5428,7 +5622,7 @@ if(coupled_elastic_poro) then
         accel_elastic_adj_coupling2 = - accel_elastic_adj_coupling
 
         call compute_coupling_acoustic_el(nspec,nglob_elastic,nglob_acoustic,num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz,&
-               gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,accel_elastic_adj_coupling2,displ_elastic_old,&
+               gammax,gammaz,jacobian,accel_elastic_adj_coupling2,displ_elastic_old,&
                potential_dot_dot_acoustic,fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
                fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
                AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &
@@ -5437,7 +5631,7 @@ if(coupled_elastic_poro) then
                rmemory_fsb_displ_elastic_LDDRK,i_stage,stage_time_scheme,alpha_LDDRK,beta_LDDRK)
 
         call compute_coupling_acoustic_el(nspec,nglob_elastic,nglob_acoustic,num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz,&
-               gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,b_displ_elastic,b_displ_elastic_old,&
+               gammax,gammaz,jacobian,b_displ_elastic,b_displ_elastic_old,&
                b_potential_dot_dot_acoustic,fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
                fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
                AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &
@@ -5579,6 +5773,7 @@ if(coupled_elastic_poro) then
                     hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
                     potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
                                             - source_time_function(i_source,it,i_stage)*hlagrange
+
                   enddo
                 enddo
               else
@@ -5600,6 +5795,8 @@ if(coupled_elastic_poro) then
             endif
           endif ! if this processor core carries the source and the source element is acoustic
         enddo ! do i_source=1,NSOURCES
+
+
 
         if(SIMULATION_TYPE == 3) then   ! adjoint wavefield
           irec_local = 0
@@ -5636,7 +5833,7 @@ if(coupled_elastic_poro) then
                     max_interface_size, max_ibool_interfaces_size_ac,&
                     ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
                     tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac, &
-                    buffer_recv_faces_vector_ac, my_neighbours)
+                    buffer_recv_faces_vector_ac, my_neighbours,myrank)
 
      if(time_stepping_scheme == 2)then
       if(i_stage==1 .and. it == 1 .and. (.not. initialfield))then
@@ -5646,7 +5843,7 @@ if(coupled_elastic_poro) then
                     max_interface_size, max_ibool_interfaces_size_ac,&
                     ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
                     tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac, &
-                    buffer_recv_faces_vector_ac, my_neighbours)
+                    buffer_recv_faces_vector_ac, my_neighbours,myrank)
       endif
      endif
 
@@ -5656,7 +5853,7 @@ if(coupled_elastic_poro) then
                      max_interface_size, max_ibool_interfaces_size_ac,&
                      ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
                      tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac, &
-                     buffer_recv_faces_vector_ac, my_neighbours)
+                     buffer_recv_faces_vector_ac, my_neighbours,myrank)
 
       endif
 
@@ -5788,7 +5985,17 @@ if(coupled_elastic_poro) then
                           + deltat*potential_dot_acoustic &
                           + deltatsquareover2*potential_dot_dot_acoustic
 
+
+
+
     endif ! of if(any_acoustic)
+
+   else !!!! GPU_MODE
+
+    if(any_acoustic) call compute_forces_acoustic_GPU(STACEY_BOUNDARY_CONDITIONS,nspec,nelemabs,ninterface,&
+                                            ninterface_acoustic,inum_interfaces_acoustic)
+                                                
+   endif   !!!Fin GPU MODE acoustic
 
 
 ! *********************************************************
@@ -5799,7 +6006,10 @@ if(coupled_elastic_poro) then
 ! NO COUPLING TO ELASTIC AND POROELASTIC SIDES
 ! *********************************************************
 !-----------------------------------------
-    if ((any_gravitoacoustic)) then
+    
+ if (.NOT. GPU_MODE) then    !!! Ajout Etienne GPU 
+
+if ((any_gravitoacoustic)) then
 
       if(time_stepping_scheme==1)then
       ! Newmark time scheme
@@ -6321,13 +6531,27 @@ if(coupled_elastic_poro) then
 !                          + deltat*potential_dot_gravitoacoustic &
 !                          + deltatsquareover2*potential_dot_dot_gravitoacoustic
 
-    endif ! of if(any_gravitoacoustic)
+  endif ! of if(any_gravitoacoustic)
 
+else !!!! GPU_MODE
+
+ if ((any_gravitoacoustic)) call exit_mpi('gravitoacoustic not implemented in GPU MODE yet')
+   
+endif   !!!Fin GPU MODE gravitoacoustic
+
+
+
+  
 
 
 ! *********************************************************
 ! ************* main solver for the elastic elements
 ! *********************************************************
+
+
+   if (.NOT. GPU_MODE) then    !!! Ajout Etienne GPU 
+
+
 
     if(any_elastic) then
 
@@ -6361,6 +6585,8 @@ if(coupled_elastic_poro) then
                rmemory_duz_dx_LDDRK,rmemory_duz_dz_LDDRK, &
                PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.false.,STACEY_BOUNDARY_CONDITIONS,acoustic)
 
+
+
       if(SIMULATION_TYPE == 3)then
        if(PML_BOUNDARY_CONDITIONS)then
           do ispec = 1,nspec
@@ -6387,6 +6613,7 @@ if(coupled_elastic_poro) then
            enddo
          endif
        endif
+
 
       call compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
@@ -6419,6 +6646,8 @@ if(coupled_elastic_poro) then
                rmemory_duz_dx_LDDRK,rmemory_duz_dz_LDDRK, &
                .false.,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,.true.,STACEY_BOUNDARY_CONDITIONS,acoustic)
 
+
+
        if(PML_BOUNDARY_CONDITIONS)then
           do ispec = 1,nspec
             do i = 1, NGLLX
@@ -6447,84 +6676,9 @@ if(coupled_elastic_poro) then
 
 
       call compute_forces_viscoelastic_pre_kernel(p_sv,nglob,nspec,displ_elastic,b_displ_elastic,&
-              mu_k,kappa_k,elastic,ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz,SIMULATION_TYPE)
+              mu_k,kappa_k,elastic,ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz)
       endif
 
-
-      if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1 .and. (.not. PML_BOUNDARY_CONDITIONS)) then
-        !--- left absorbing boundary
-        if(nspec_left >0) then
-          do ispec = 1,nspec_left
-            if(p_sv)then!P-SV waves
-              do i=1,NGLLZ
-                write(35) b_absorb_elastic_left(1,i,ispec,it)
-              enddo
-              do i=1,NGLLZ
-                write(35) b_absorb_elastic_left(3,i,ispec,it)
-              enddo
-            else!SH (membrane) waves
-              do i=1,NGLLZ
-                write(35) b_absorb_elastic_left(2,i,ispec,it)
-              enddo
-            endif
-          enddo
-        endif
-
-        !--- right absorbing boundary
-        if(nspec_right >0) then
-          do ispec = 1,nspec_right
-            if(p_sv)then!P-SV waves
-              do i=1,NGLLZ
-                write(36) b_absorb_elastic_right(1,i,ispec,it)
-              enddo
-              do i=1,NGLLZ
-                write(36) b_absorb_elastic_right(3,i,ispec,it)
-              enddo
-            else!SH (membrane) waves
-              do i=1,NGLLZ
-                write(36) b_absorb_elastic_right(2,i,ispec,it)
-              enddo
-            endif
-          enddo
-        endif
-
-        !--- bottom absorbing boundary
-        if(nspec_bottom >0) then
-          do ispec = 1,nspec_bottom
-            if(p_sv)then!P-SV waves
-              do i=1,NGLLX
-                write(37) b_absorb_elastic_bottom(1,i,ispec,it)
-              enddo
-              do i=1,NGLLX
-                write(37) b_absorb_elastic_bottom(3,i,ispec,it)
-              enddo
-            else!SH (membrane) waves
-              do i=1,NGLLX
-                write(37) b_absorb_elastic_bottom(2,i,ispec,it)
-              enddo
-            endif
-          enddo
-        endif
-
-        !--- top absorbing boundary
-        if(nspec_top >0) then
-          do ispec = 1,nspec_top
-            if(p_sv)then!P-SV waves
-              do i=1,NGLLX
-                write(38) b_absorb_elastic_top(1,i,ispec,it)
-              enddo
-              do i=1,NGLLX
-                write(38) b_absorb_elastic_top(3,i,ispec,it)
-              enddo
-            else!SH (membrane) waves
-              do i=1,NGLLX
-                write(38) b_absorb_elastic_top(2,i,ispec,it)
-              enddo
-            endif
-          enddo
-        endif
-
-      endif ! if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)
 
     endif !if(any_elastic)
 
@@ -6854,7 +7008,6 @@ if(coupled_elastic_poro) then
 
       ! --- add the source if it is a collocated force
       if(.not. initialfield) then
-
         do i_source=1,NSOURCES
           ! if this processor core carries the source and the source element is elastic
           if (is_proc_source(i_source) == 1 .and. elastic(ispec_selected_source(i_source))) then
@@ -6913,6 +7066,7 @@ if(coupled_elastic_poro) then
 
           endif ! if this processor core carries the source and the source element is elastic
         enddo ! do i_source=1,NSOURCES
+
 
 !<NOISE_TOMOGRAPHY
 
@@ -7119,9 +7273,21 @@ if(coupled_elastic_poro) then
     endif !if(any_elastic)
 
 
+
+ else !!!! GPU_MODE
+
+  if(any_elastic)  call compute_forces_elastic_GPU(STACEY_BOUNDARY_CONDITIONS,ninterface,nelemabs&
+                                                    ,ninterface_elastic,inum_interfaces_elastic)
+   
+ endif   !!!Fin GPU MODE elastic
+
+
 ! ******************************************************************************************************************
 ! ************* main solver for the poroelastic elements: first the solid (u_s) then the fluid (w)
 ! ******************************************************************************************************************
+
+
+  if ( .NOT. GPU_MODE) then
 
     if(any_poroelastic) then
 
@@ -8018,6 +8184,7 @@ if(coupled_elastic_poro) then
         b_velocw_poroelastic = b_velocw_poroelastic + b_deltatover2*b_accelw_poroelastic
       endif
 
+
     endif !if(any_poroelastic)
 
 !*******************************************************************************
@@ -8366,7 +8533,18 @@ if(coupled_elastic_poro) then
       enddo
     endif
 
+else !!GPU_MODE
+
+    if(any_poroelastic)   call exit_mpi('poroelastic not implemented in GPU MODE yet')
+   
+endif   !!!Fin GPU MODE poroelastic
+
+
+
    enddo !LDDRK or RK
+
+
+  
 
 ! ********************************************************************************************
 !                       reading lastframe for adjoint/kernels calculation
@@ -8384,12 +8562,24 @@ if(coupled_elastic_poro) then
           enddo
         close(55)
 
+ !!!Début Ajout Etienne GPU         
+      if(GPU_MODE) then
+    ! transfers fields onto GPU
+      call transfer_b_fields_ac_to_device(NGLOB_AB,b_potential_acoustic, &
+                                          b_potential_dot_acoustic,      &
+                                          b_potential_dot_dot_acoustic,  &
+                                          Mesh_pointer)
+
+      else
         ! free surface for an acoustic medium
         if ( nelem_acoustic_surface > 0 ) then
           call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
                                             b_potential_acoustic,acoustic_surface, &
                                             ibool,nelem_acoustic_surface,nglob,nspec,this_ibool_is_a_periodic_edge)
-        endif
+      endif
+
+     endif
+  !!!Fin Ajout Etienne GPU
       endif
 
       ! elastic medium
@@ -8402,12 +8592,27 @@ if(coupled_elastic_poro) then
                       (b_veloc_elastic(i,j), i=1,NDIM), &
                       (b_accel_elastic(i,j), i=1,NDIM)
           enddo
-          b_displ_elastic(3,:) = b_displ_elastic(2,:)
-          b_displ_elastic(2,:) = 0._CUSTOM_REAL
-          b_veloc_elastic(3,:) = b_veloc_elastic(2,:)
-          b_veloc_elastic(2,:) = 0._CUSTOM_REAL
-          b_accel_elastic(3,:) = b_accel_elastic(2,:)
-          b_accel_elastic(2,:) = 0._CUSTOM_REAL
+ !!!Début Ajout Etienne GPU         
+          if(GPU_MODE) then
+            b_displ_2D(1,:) = b_displ_elastic(1,:)
+            b_displ_2D(2,:) = b_displ_elastic(2,:)
+            b_veloc_2D(1,:) = b_veloc_elastic(1,:)
+            b_veloc_2D(2,:) = b_veloc_elastic(2,:)
+            b_accel_2D(1,:) = b_accel_elastic(1,:)
+            b_accel_2D(2,:) = b_accel_elastic(2,:)
+
+            call transfer_b_fields_to_device(NDIM*NGLOB_AB,b_displ_2D,b_veloc_2D,b_accel_2D,Mesh_pointer)
+          else
+            b_displ_elastic(3,:) = b_displ_elastic(2,:)
+            b_displ_elastic(2,:) = 0._CUSTOM_REAL
+            b_veloc_elastic(3,:) = b_veloc_elastic(2,:)
+            b_veloc_elastic(2,:) = 0._CUSTOM_REAL
+            b_accel_elastic(3,:) = b_accel_elastic(2,:)
+            b_accel_elastic(2,:) = 0._CUSTOM_REAL
+
+
+          endif
+!!!Fin Ajout Etienne GPU
         else !SH (membrane) waves
           do j=1,nglob
             read(55) b_displ_elastic(2,j), &
@@ -8465,9 +8670,124 @@ if(coupled_elastic_poro) then
 
   endif
 
-
-
 !>NOISE_TOMOGRAPHY
+
+
+
+
+!!!!Début Ajout Etienne GPU
+
+if (GPU_MODE) then
+
+
+! Calcul des noyaux
+if (SIMULATION_TYPE == 3) then
+
+  if (any_acoustic) call compute_kernels_acoustic_cuda(Mesh_pointer)
+
+  if (any_elastic) call compute_kernels_elastic_cuda(Mesh_pointer)
+
+  if ( APPROXIMATE_HESS_KL ) then
+     ! computes contribution to density and bulk modulus kernel
+    call compute_kernels_hess_cuda(Mesh_pointer, &
+                                  any_elastic,any_acoustic)
+  endif
+
+
+! Transfert des noyaux
+
+   if(it == NSTEP) then
+
+     if( any_acoustic ) then
+       call transfer_kernels_ac_to_host(Mesh_pointer,rho_ac_kl,kappa_ac_kl,NSPEC_AB)
+       rho_ac_kl(:,:,:)=rho_ac_kl(:,:,:)*deltat 
+       kappa_ac_kl(:,:,:)=kappa_ac_kl(:,:,:)*deltat 
+     endif
+
+     if( any_elastic ) then
+       call transfer_kernels_el_to_host(Mesh_pointer,rho_kl,mu_kl,kappa_kl,NSPEC_AB)
+
+
+     !!! On multiplie chaque point du noyau par le coefficient local et le pas de temps
+        do ispec = 1, nspec
+          if(elastic(ispec)) then
+            do j = 1, NGLLZ
+              do i = 1, NGLLX
+                iglob = ibool(i,j,ispec)
+                if (.not. assign_external_model) then
+                   mul_global(iglob) = poroelastcoef(2,1,kmato(ispec))
+                   kappal_global(iglob) = poroelastcoef(3,1,kmato(ispec)) &
+                                       - 4._CUSTOM_REAL*mul_global(iglob)/3._CUSTOM_REAL
+                   rhol_global(iglob) = density(1,kmato(ispec))
+                else
+                   rhol_global(iglob)   = rhoext(i,j,ispec)
+                   mul_global(iglob)    = rhoext(i,j,ispec)*vsext(i,j,ispec)*vsext(i,j,ispec)
+                   kappal_global(iglob) = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec) &
+                                       -4._CUSTOM_REAL*mul_global(iglob)/3._CUSTOM_REAL
+                endif
+
+                rho_kl(i,j,ispec) = - rhol_global(iglob) * deltat * rho_kl(i,j,ispec)
+                mu_kl(i,j,ispec) =  - TWO * mul_global(iglob) * deltat * mu_kl(i,j,ispec)
+                kappa_kl(i,j,ispec) = - kappal_global(iglob) * deltat * kappa_kl(i,j,ispec)
+
+              enddo
+            enddo
+          endif
+        enddo
+
+       endif  !!Fin elastic
+
+   endif  !! Fin NSTEP
+
+
+endif  !! Fin Sim 3
+
+
+! Simulation du fonctionnement des sismogrammes
+
+   if(mod(it-1,subsamp_seismos) == 0) then
+
+
+    seismo_current = seismo_current + 1
+
+    if ( nrecloc > 0 ) call compute_seismograms_cuda(Mesh_pointer,seismotype,sisux,&
+                       sisuz,seismo_current,NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,any_elastic_glob,any_acoustic_glob)
+
+   endif
+
+
+! Transfert des champs pour imager
+
+    if(output_color_image .and. (mod(it,NSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5 .or. it == NSTEP) ) then
+
+
+    if( any_acoustic ) &
+      call transfer_fields_ac_from_device(NGLOB_AB,potential_acoustic, &
+                                          potential_dot_acoustic, potential_dot_dot_acoustic, &
+                                          Mesh_pointer)
+
+
+    if( any_elastic ) then
+      call transfer_fields_el_from_device(NDIM*NGLOB_AB,displ_2D,veloc_2D,accel_2D,Mesh_pointer)
+      displ_elastic(1,:) = displ_2D(1,:)
+      veloc_elastic(1,:) = veloc_2D(1,:)
+      accel_elastic(1,:) = accel_2D(1,:)
+      displ_elastic(3,:) = displ_2D(2,:)
+      veloc_elastic(3,:) = veloc_2D(2,:)
+      accel_elastic(3,:) = accel_2D(2,:)
+    endif
+
+
+   endif !If transfert
+
+
+endif !If GPU Mode
+
+
+!!!!Fin Ajout Etienne GPU
+
+
+if (.NOT. GPU_MODE) then
 
 ! ********************************************************************************************
 !                                      kernels calculation
@@ -8722,6 +9042,7 @@ if(coupled_elastic_poro) then
 
           ! compute interpolated field
           valux = valux + dxd*hlagrange
+            
           if(elastic(ispec))  valuy = valuy + dyd*hlagrange
           valuz = valuz + dzd*hlagrange
           valcurl = valcurl + dcurld*hlagrange
@@ -9068,6 +9389,9 @@ if(coupled_elastic_poro) then
     endif ! if(SIMULATION_TYPE == 3)
 
 
+endif !!!Not GPU_MODE
+
+
 !
 !----  display results at given time steps
 !
@@ -9088,9 +9412,9 @@ if(coupled_elastic_poro) then
              write(95)coord
              write(95)rho_ac_kl
              write(95)kappa_ac_kl
-             write(96)coord
-             write(96)rho_ac_kl
-             write(96)alpha_ac_kl
+     !        write(96)coord
+     !        write(96)rho_ac_kl
+     !        write(96)alpha_ac_kl
           else
             do ispec = 1, nspec
               do j = 1, NGLLZ
@@ -9099,7 +9423,7 @@ if(coupled_elastic_poro) then
                   xx = coord(1,iglob)
                   zz = coord(2,iglob)
                   write(95,'(4e15.5e4)')xx,zz,rho_ac_kl(i,j,ispec),kappa_ac_kl(i,j,ispec)
-                  write(96,'(4e15.5e4)')xx,zz,rhop_ac_kl(i,j,ispec),alpha_ac_kl(i,j,ispec)
+       !          write(96,'(4e15.5e4)')xx,zz,rhop_ac_kl(i,j,ispec),alpha_ac_kl(i,j,ispec)
                   !write(96,'(4e15.5e4)')rhorho_ac_hessian_final1(i,j,ispec), rhorho_ac_hessian_final2(i,j,ispec),&
                   !                rhop_ac_kl(i,j,ispec),alpha_ac_kl(i,j,ispec)
                 enddo
@@ -9117,9 +9441,9 @@ if(coupled_elastic_poro) then
              write(97)kappa_kl
              write(97)mu_kl
              write(98)coord
-             write(98)rhop_kl
-             write(98)alpha_kl
-             write(98)beta_kl
+   !          write(98)rhop_kl
+   !          write(98)alpha_kl
+   !          write(98)beta_kl
           else
             do ispec = 1, nspec
               do j = 1, NGLLZ
@@ -9128,7 +9452,7 @@ if(coupled_elastic_poro) then
                   xx = coord(1,iglob)
                   zz = coord(2,iglob)
                   write(97,'(5e15.5e4)')xx,zz,rho_kl(i,j,ispec),kappa_kl(i,j,ispec),mu_kl(i,j,ispec)
-                  write(98,'(5e15.5e4)')xx,zz,rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
+    !              write(98,'(5e15.5e4)')xx,zz,rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
                   !write(98,'(5e15.5e4)')rhorho_el_hessian_final1(i,j,ispec), rhorho_el_hessian_final2(i,j,ispec),&
                   !                    rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
                 enddo
@@ -9138,6 +9462,9 @@ if(coupled_elastic_poro) then
           close(97)
           close(98)
         endif
+
+
+if (.NOT. GPU_MODE )  then !!! Ajout Etienne GPU
 
         if(any_poroelastic) then
           do ispec = 1, nspec
@@ -9169,9 +9496,17 @@ if(coupled_elastic_poro) then
           close(22)
         endif
 
+
+endif    !!! Ajout Etienne GPU
+
       endif
 
 !<NOISE_TOMOGRAPHY
+
+
+if (.NOT. GPU_MODE ) then  !!! Ajout Etienne GPU
+
+
 
       if (NOISE_TOMOGRAPHY == 3 .and. output_wavefields_noise) then
 
@@ -9195,6 +9530,9 @@ if(coupled_elastic_poro) then
         call snapshots_noise(noise_output_ncol,nglob,noise_output_file,noise_output_array)
 
       endif
+
+
+endif   !!! Ajout Etienne GPU
 
 !>NOISE_TOMOGRAPHY
 
@@ -9795,10 +10133,73 @@ if(coupled_elastic_poro) then
 ! ************* END MAIN LOOP OVER THE TIME STEPS *********
 ! *********************************************************
 
+
+call CPU_TIME( t2 )
+
+write(iout,*) "temps de calcul :", t2-t1
+
+if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer, &
+                              any_acoustic,any_elastic, &
+                              STACEY_BOUNDARY_CONDITIONS, &
+                              ANISOTROPY, &
+                              APPROXIMATE_HESS_KL)
+
+
+
+
   if(output_wavefield_dumps) deallocate(mask_ibool)
 
   if((SAVE_FORWARD .and. SIMULATION_TYPE==1) .or. SIMULATION_TYPE == 3) then
     if(any_acoustic) then
+
+!!!! Deplacement Etienne GPU
+
+! stores absorbing boundary contributions into files
+      if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1 .and. (.not. PML_BOUNDARY_CONDITIONS)) then
+
+        !--- left absorbing boundary
+        if(nspec_left >0) then
+         do it =1,NSTEP
+          do ispec = 1,nspec_left
+            do i=1,NGLLZ
+              write(65) b_absorb_acoustic_left(i,ispec,it)
+            enddo
+          enddo
+         enddo
+        endif
+        !--- right absorbing boundary
+        if(nspec_right >0) then
+         do it =1,NSTEP
+          do ispec = 1,nspec_right
+            do i=1,NGLLZ
+              write(66) b_absorb_acoustic_right(i,ispec,it)
+            enddo
+          enddo
+         enddo
+        endif
+        !--- bottom absorbing boundary
+        if(nspec_bottom >0) then
+         do it =1,NSTEP
+          do ispec = 1,nspec_bottom
+            do i=1,NGLLX
+              write(67) b_absorb_acoustic_bottom(i,ispec,it)
+            enddo
+          enddo
+         enddo
+        endif
+        !--- top absorbing boundary
+        if(nspec_top >0) then
+         do it =1,NSTEP
+          do ispec = 1,nspec_top
+            do i=1,NGLLX
+              write(68) b_absorb_acoustic_top(i,ispec,it)
+            enddo
+          enddo
+         enddo
+        endif
+
+      endif ! if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)
+
       close(65)
       close(66)
       close(67)
@@ -9806,6 +10207,93 @@ if(coupled_elastic_poro) then
       close(72)
     endif
     if(any_elastic) then
+!!!! Deplacement Etienne GPU
+      if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1 .and. (.not. PML_BOUNDARY_CONDITIONS)) then
+
+        !--- left absorbing boundary
+        if(nspec_left >0) then
+         do it =1,NSTEP
+          do ispec = 1,nspec_left
+            if(p_sv)then!P-SV waves
+              do i=1,NGLLZ
+                write(35) b_absorb_elastic_left(1,i,ispec,it)
+              enddo
+              do i=1,NGLLZ
+                write(35) b_absorb_elastic_left(3,i,ispec,it)
+              enddo
+            else!SH (membrane) waves
+              do i=1,NGLLZ
+                write(35) b_absorb_elastic_left(2,i,ispec,it)
+              enddo
+            endif
+          enddo
+         enddo
+        endif
+
+        !--- right absorbing boundary
+        if(nspec_right >0) then
+         do it =1,NSTEP
+          do ispec = 1,nspec_right
+            if(p_sv)then!P-SV waves
+              do i=1,NGLLZ
+                write(36) b_absorb_elastic_right(1,i,ispec,it)
+              enddo
+              do i=1,NGLLZ
+                write(36) b_absorb_elastic_right(3,i,ispec,it)
+              enddo
+            else!SH (membrane) waves
+              do i=1,NGLLZ
+                write(36) b_absorb_elastic_right(2,i,ispec,it)
+              enddo
+            endif
+          enddo
+         enddo
+        endif
+
+        !--- bottom absorbing boundary
+        if(nspec_bottom >0) then
+         do it =1,NSTEP
+          do ispec = 1,nspec_bottom
+            if(p_sv)then!P-SV waves
+              do i=1,NGLLX
+                write(37) b_absorb_elastic_bottom(1,i,ispec,it)
+              enddo
+              do i=1,NGLLX
+                write(37) b_absorb_elastic_bottom(3,i,ispec,it)
+              enddo
+            else!SH (membrane) waves
+              do i=1,NGLLX
+                write(37) b_absorb_elastic_bottom(2,i,ispec,it)
+              enddo
+            endif
+          enddo
+         enddo
+        endif
+
+        !--- top absorbing boundary
+        if(nspec_top >0) then
+         do it =1,NSTEP
+          do ispec = 1,nspec_top
+            if(p_sv)then!P-SV waves
+              do i=1,NGLLX
+                write(38) b_absorb_elastic_top(1,i,ispec,it)
+              enddo
+              do i=1,NGLLX
+                write(38) b_absorb_elastic_top(3,i,ispec,it)
+              enddo
+            else!SH (membrane) waves
+              do i=1,NGLLX
+                write(38) b_absorb_elastic_top(2,i,ispec,it)
+              enddo
+            endif
+          enddo
+         enddo
+        endif
+
+      endif ! if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)
+
+
+
       close(35)
       close(36)
       close(37)
@@ -9910,7 +10398,8 @@ if(coupled_elastic_poro) then
   if(output_energy .and. myrank == 0) close(IOUT_ENERGY)
 
   if (OUTPUT_MODEL_VELOCITY_FILE .and. .not. any_poroelastic) then
-    open(unit=1001,file='DATA/model_velocity.dat_output',status='unknown')
+    write(outputname,'(a,i6.6,a)') 'model_velocity',myrank,'.dat_output'
+    open(unit=1001,file='DATA/'//outputname,status='unknown')
     if ( .NOT. assign_external_model) then
       allocate(rho_local(ngllx,ngllz,nspec)); rho_local=0.
       allocate(vp_local(ngllx,ngllz,nspec)); vp_local=0.
