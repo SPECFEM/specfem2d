@@ -62,3 +62,7 @@ bin/*
 obj/*
 *.mod
 
+# Trash files
+.*swp
+.*swo
+*~
