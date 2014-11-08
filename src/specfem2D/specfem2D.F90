@@ -2365,7 +2365,7 @@
          ! compute only adjoint source arrays in the local proc
          if(myrank == which_proc_receiver(irec))then
            irec_local = irec_local + 1
-           adj_source_file = trim(station_name(irec))//'.'//trim(network_name(irec))
+           adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec))
            call compute_arrays_adj_source(adj_source_file, &
                                xi_receiver(irec), gamma_receiver(irec), &
                                adj_sourcearray, xigll,zigll,NSTEP)
