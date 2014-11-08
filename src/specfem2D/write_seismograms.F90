@@ -280,8 +280,8 @@
                call exit_MPI('wrong length of network name')
             endif
 
-             write(sisname,"('OUTPUT_FILES/',a,'.',a,'.',a3,'.sem',a1)") station_name(irec)(1:length_station_name),&
-                  network_name(irec)(1:length_network_name),chn,component
+             write(sisname,"('OUTPUT_FILES/',a,'.',a,'.',a3,'.sem',a1)") &
+                  network_name(irec)(1:length_network_name),station_name(irec)(1:length_station_name),chn,component
 
              ! save seismograms in text format with no subsampling.
              ! Because we do not subsample the output, this can result in large files
