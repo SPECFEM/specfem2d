@@ -147,12 +147,8 @@
     allocate(distance(n_models))
     allocate(syn(n_models,ngoce_time_step))
 
-!    open(1000,file='/home/etudiant/SPECFEM2D/infile_specfem2D/along_goce_orbit/distance.txt', &
-    open(1000,file='../../EXAMPLES/acoustic_forcing_bottom/distance.txt', &
-                form='formatted')
-!    open(1001,file='/home/etudiant/SPECFEM2D/infile_specfem2D/along_goce_orbit/forcing_signals.txt', &
-    open(1001,file='../../EXAMPLES/acoustic_forcing_bottom/forcing_signals.txt', &
-                  form='formatted')
+    open(1000,file='../../EXAMPLES/acoustic_forcing_bottom/distance.txt',form='formatted')
+    open(1001,file='../../EXAMPLES/acoustic_forcing_bottom/forcing_signals.txt',form='formatted')
 
     read(1001,*) goce_time(:)
 
