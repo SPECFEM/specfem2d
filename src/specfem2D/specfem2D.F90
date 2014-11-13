@@ -2377,6 +2377,9 @@
        write(filename, "('./SEM/Ux_file_single.bin.adj')")
        open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ios)
                if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
+       write(filename, "('./SEM/Uy_file_single.bin.adj')")
+       open(112,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ios)
+               if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
        write(filename, "('./SEM/Uz_file_single.bin.adj')")
        open(113,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ios)
                if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
@@ -2388,6 +2391,8 @@
           irec_local = irec_local + 1
           adj_sourcearray(:,:,:,:) = 0.0
           read(111,rec=irec,iostat=ios) r4head, adj_src_s(:,1)
+               if (ios /= 0) call exit_MPI(' file '//trim(filename)//' read error')
+          read(112,rec=irec,iostat=ios) r4head, adj_src_s(:,2)
                if (ios /= 0) call exit_MPI(' file '//trim(filename)//' read error')
           read(113,rec=irec,iostat=ios) r4head, adj_src_s(:,3)
                if (ios /= 0) call exit_MPI(' file '//trim(filename)//' read error')
@@ -2404,6 +2409,7 @@
          endif !  if(myrank == which_proc_receiver(irec))
        enddo ! irec
        close(111)
+       close(112)
        close(113)
        deallocate(adj_src_s)
     endif
