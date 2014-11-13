@@ -68,6 +68,7 @@
 
 ! output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
   logical :: SU_FORMAT
+  integer :: deltat_int2
 
   logical :: p_sv,save_ASCII_seismograms,save_binary_seismograms,save_binary_seismograms_single,save_binary_seismograms_double
 
@@ -339,6 +340,13 @@
         else ! if SU_FORMAT
 
           if (seismo_offset==0) then
+
+             if (deltat*1.0d6 > 2**15) then
+                deltat_int2 = 0
+             else
+                deltat_int2 = NINT(deltat*1.0d6, kind=2) ! deltat (unit: 10^{-6} second)
+             endif
+
              ! write SU headers (refer to Seismic Unix for details)
              write(12,rec=(irec-1)*60+(irec-1)*NSTEP+1)  irec                          ! receiver ID
              write(12,rec=(irec-1)*60+(irec-1)*NSTEP+10) NINT(st_xval(irec)-x_source)  ! offset
@@ -350,7 +358,7 @@
              header2(1)=0  ! dummy
              header2(2)=int(NSTEP, kind=2)
              write(12,rec=(irec-1)*60+(irec-1)*NSTEP+29) header2
-             header2(1)=NINT(deltat*1.0d6, kind=2)  ! deltat (unit: 10^{-6} second)
+             header2(1)=deltat_int2
              header2(2)=0  ! dummy
              write(12,rec=(irec-1)*60+(irec-1)*NSTEP+30) header2
              if ( seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
@@ -366,7 +374,7 @@
                    header2(1)=0  ! dummy
                    header2(2)=int(NSTEP, kind=2)
                    write(14,rec=(irec-1)*60+(irec-1)*NSTEP+29) header2
-                   header2(1)=NINT(deltat*1.0d6, kind=2)
+                   header2(1)=deltat_int2
                    header2(2)=0  ! dummy
                    write(14,rec=(irec-1)*60+(irec-1)*NSTEP+30) header2
                 endif
