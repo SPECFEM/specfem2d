@@ -50,7 +50,7 @@
                 coord,kmato,rhoext,vpext,vsext,gravityext,Nsqext, &
                 QKappa_attenuationext,Qmu_attenuationext, &
                 c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
-                READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID)
+                READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID,p_sv)
 
   implicit none
   include "constants.h"
@@ -64,7 +64,7 @@
   double precision, dimension(NDIM,nglob) :: coord
 
   ! Material properties
-  logical :: any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic,READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID
+  logical :: any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic,READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID,p_sv
   integer, dimension(nspec) :: kmato
   logical, dimension(nspec) :: acoustic,gravitoacoustic,elastic,poroelastic
   double precision, dimension(NGLLX,NGLLZ,nspec) :: rhoext,vpext,vsext,gravityext,Nsqext
@@ -176,7 +176,9 @@
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
-        if(.not. (i == 1 .and. j == 1) .and. &
+
+
+        if(p_sv .and. (.not. (i == 1 .and. j == 1)) .and. &
           ((vsext(i,j,ispec) >= TINYVAL .and. previous_vsext < TINYVAL) .or. &
            (vsext(i,j,ispec) < TINYVAL  .and. previous_vsext >= TINYVAL)))  &
           call exit_MPI('external velocity model cannot be both fluid and solid inside the same spectral element')

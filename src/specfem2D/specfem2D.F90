@@ -2271,7 +2271,7 @@
                 coord,kmato,rhoext,vpext,vsext,gravityext,Nsqext, &
                 QKappa_attenuationext,Qmu_attenuationext, &
                 c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
-                READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID)
+                READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID,p_sv)
   endif
 
 !
