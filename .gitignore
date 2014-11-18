@@ -61,6 +61,7 @@ src/meshfem2D/scotch_5.1.12b/src/scotch/mtst
 bin/*
 obj/*
 *.mod
+*__genmod.f90
 
 # Trash files
 .*swp
