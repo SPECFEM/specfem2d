@@ -41,17 +41,15 @@
 !
 !========================================================================
 
-  subroutine createnum_slow(knods,ibool,nglob,nspec,ngnod,myrank)
+  subroutine createnum_slow()
 
 ! generate the global numbering
+
+  use specfem_par, only : knods,ibool,nglob,nspec,ngnod,myrank
 
   implicit none
 
   include "constants.h"
-
-  integer nglob,nspec,ngnod,myrank
-
-  integer knods(ngnod,nspec),ibool(NGLLX,NGLLZ,nspec)
 
   integer i,j,num2,i2,j2,ipos,ipos2,iloc,jloc,kloc
   integer ngnodloc,ngnodother,nedgeloc,nedgeother,npedge,numelem,npcorn

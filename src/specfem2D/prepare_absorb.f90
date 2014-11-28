@@ -43,15 +43,14 @@
 !========================================================================
 
 
-  subroutine prepare_absorb_files(myrank,any_elastic,any_poroelastic,any_acoustic, &
-                      nspec_left,nspec_right,nspec_bottom,nspec_top,SIMULATION_TYPE)
+  subroutine prepare_absorb_files()
+
+  use specfem_par, only: myrank,any_elastic,any_poroelastic,any_acoustic, &
+                         nspec_left,nspec_right,nspec_bottom,nspec_top,SIMULATION_TYPE
+
 
   implicit none
   include "constants.h"
-
-  integer :: myrank,SIMULATION_TYPE
-  integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
-  logical :: any_elastic,any_poroelastic,any_acoustic
 
   ! local parameters
   character(len=150) :: outputname,outputname2
@@ -253,21 +252,15 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine prepare_absorb_elastic(NSTEP,p_sv, &
-                      nspec_left,nspec_right,nspec_bottom,nspec_top, &
-                      b_absorb_elastic_left,b_absorb_elastic_right, &
-                      b_absorb_elastic_bottom,b_absorb_elastic_top)
+  subroutine prepare_absorb_elastic()
+
+  use specfem_par, only: NSTEP,p_sv, &
+                         nspec_left,nspec_right,nspec_bottom,nspec_top, &
+                         b_absorb_elastic_left,b_absorb_elastic_right, &
+                         b_absorb_elastic_bottom,b_absorb_elastic_top
 
   implicit none
   include "constants.h"
-
-  logical :: p_sv
-  integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
-  integer :: NSTEP
-  real(kind=CUSTOM_REAL) :: b_absorb_elastic_left(3,NGLLZ,nspec_left,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_elastic_right(3,NGLLZ,nspec_right,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_elastic_bottom(3,NGLLX,nspec_bottom,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_elastic_top(3,NGLLX,nspec_top,NSTEP)
 
   ! local parameters
   integer :: ispec,i,it
@@ -374,27 +367,17 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine prepare_absorb_poroelastic(NSTEP, &
-                      nspec_left,nspec_right,nspec_bottom,nspec_top, &
-                      b_absorb_poro_s_left,b_absorb_poro_w_left, &
-                      b_absorb_poro_s_right,b_absorb_poro_w_right, &
-                      b_absorb_poro_s_bottom,b_absorb_poro_w_bottom, &
-                      b_absorb_poro_s_top,b_absorb_poro_w_top)
+  subroutine prepare_absorb_poroelastic()
+
+  use specfem_par, only:NSTEP, &
+                        nspec_left,nspec_right,nspec_bottom,nspec_top, &
+                        b_absorb_poro_s_left,b_absorb_poro_w_left, &
+                        b_absorb_poro_s_right,b_absorb_poro_w_right, &
+                        b_absorb_poro_s_bottom,b_absorb_poro_w_bottom, &
+                        b_absorb_poro_s_top,b_absorb_poro_w_top
 
   implicit none
   include "constants.h"
-
-  integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
-
-  integer :: NSTEP
-  real(kind=CUSTOM_REAL) :: b_absorb_poro_s_left(NDIM,NGLLZ,nspec_left,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_poro_s_right(NDIM,NGLLZ,nspec_right,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_poro_s_bottom(NDIM,NGLLX,nspec_bottom,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_poro_s_top(NDIM,NGLLX,nspec_top,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_poro_w_left(NDIM,NGLLZ,nspec_left,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_poro_w_right(NDIM,NGLLZ,nspec_right,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_poro_w_bottom(NDIM,NGLLX,nspec_bottom,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_poro_w_top(NDIM,NGLLX,nspec_top,NSTEP)
 
   ! local parameters
   integer :: ispec,i,it,id
@@ -457,22 +440,15 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine prepare_absorb_acoustic(NSTEP, &
-                      nspec_left,nspec_right,nspec_bottom,nspec_top, &
-                      b_absorb_acoustic_left,b_absorb_acoustic_right, &
-                      b_absorb_acoustic_bottom,b_absorb_acoustic_top)
+  subroutine prepare_absorb_acoustic()
+
+  use specfem_par, only: NSTEP, &
+                         nspec_left,nspec_right,nspec_bottom,nspec_top, &
+                         b_absorb_acoustic_left,b_absorb_acoustic_right, &
+                         b_absorb_acoustic_bottom,b_absorb_acoustic_top
 
   implicit none
   include "constants.h"
-
-  integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
-
-  integer :: NSTEP
-  real(kind=CUSTOM_REAL) :: b_absorb_acoustic_left(NGLLZ,nspec_left,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_acoustic_right(NGLLZ,nspec_right,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_acoustic_bottom(NGLLX,nspec_bottom,NSTEP)
-  real(kind=CUSTOM_REAL) :: b_absorb_acoustic_top(NGLLX,nspec_top,NSTEP)
-
 
   ! local parameters
   integer :: ispec,i,it

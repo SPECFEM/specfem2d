@@ -49,17 +49,11 @@
 ! =============================================================================================================
 ! specify spatial distribution of microseismic noise sources
 ! USERS need to modify this subroutine to suit their own needs
-  subroutine create_mask_noise(nglob,coord,mask_noise)
+  subroutine create_mask_noise()
 
+  use specfem_par, only: nglob,coord,mask_noise
   implicit none
   include "constants.h"
-
-  !input
-  integer :: nglob
-  double precision, dimension(2,nglob) :: coord
-
-  !output
-  real(kind=CUSTOM_REAL), dimension(nglob) :: mask_noise
 
   !local
   integer :: iglob
@@ -81,30 +75,16 @@
 
 ! =============================================================================================================
 ! read noise parameters and check for consistency
-  subroutine read_parameters_noise(NOISE_TOMOGRAPHY,SIMULATION_TYPE,SAVE_FORWARD, &
+  subroutine read_parameters_noise()
+
+  use specfem_par, only: NOISE_TOMOGRAPHY,SIMULATION_TYPE,SAVE_FORWARD, &
                                      any_acoustic,any_poroelastic,p_sv,irec_master, &
                                      Mxx,Mxz,Mzz,factor,NSOURCES, &
                                      xi_receiver,gamma_receiver,ispec_selected_rec,nrec, &
-                                     xi_noise,gamma_noise,ispec_noise,angle_noise)
+                                     xi_noise,gamma_noise,ispec_noise,angle_noise
 
   implicit none
   include "constants.h"
-
-  !input
-  integer :: NOISE_TOMOGRAPHY, SIMULATION_TYPE
-  logical :: SAVE_FORWARD
-  logical :: any_acoustic, any_poroelastic
-  logical :: p_sv
-  integer :: NSOURCES, nrec
-  double precision, dimension(NSOURCES) :: Mxx, Mxz, Mzz, factor
-  double precision, dimension(nrec) :: xi_receiver, gamma_receiver
-  integer, dimension(nrec) :: ispec_selected_rec
-  double precision :: xi_noise, gamma_noise, angle_noise
-  integer :: ispec_noise
-
-
-  !output
-  integer :: irec_master
 
   !local
   integer :: i,ios
@@ -162,28 +142,18 @@
 
 ! =============================================================================================================
 ! read in time series based on noise spectrum and construct noise "source" array
-  subroutine compute_source_array_noise(p_sv,NSTEP,deltat,nglob,ibool,ispec_noise, &
+  subroutine compute_source_array_noise()
+
+  use specfem_par, only: p_sv,NSTEP,deltat,nglob,ibool,ispec_noise, &
                        xi_noise,gamma_noise,xigll,zigll, &
-                       time_function_noise,source_array_noise)
+                       time_function_noise,source_array_noise
 
   implicit none
   include "constants.h"
 
-  !input
-  logical :: p_sv
-  integer NSTEP, ispec_noise,nglob
-  integer, dimension(NGLLX,NGLLZ,nglob) :: ibool
-  double precision :: deltat, xi_noise, gamma_noise
-
-  !output
-  real(kind=CUSTOM_REAL), dimension(NSTEP) :: time_function_noise
-  real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLZ,NSTEP) :: source_array_noise
-
   !local
   integer :: it,i,j,iglob
   real(kind=CUSTOM_REAL) :: t
-  double precision, dimension(NGLLX) :: xigll
-  double precision, dimension(NGLLZ) :: zigll
   double precision, dimension(NGLLX) :: hxi, hpxi
   double precision, dimension(NGLLZ) :: hgamma, hpgamma
   real(kind=CUSTOM_REAL) :: factor_noise, aval, t0
@@ -300,19 +270,12 @@
 
 ! =============================================================================================================
 ! inject the "source" that drives the "generating wavefield"
-  subroutine add_point_source_noise(p_sv,it,NSTEP,nglob,ibool,ispec_noise, &
-                                   accel_elastic,angle_noise,source_array_noise)
+  subroutine add_point_source_noise()
+
+  use specfem_par, only: p_sv,it,NSTEP,nglob,ibool,ispec_noise, &
+                         accel_elastic,angle_noise,source_array_noise
   implicit none
   include "constants.h"
-
-  !input
-  logical :: p_sv
-  integer :: it, NSTEP
-  integer :: ispec_noise, nglob
-  integer, dimension(NGLLX,NGLLZ,nglob) :: ibool
-  real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic
-  double precision :: angle_noise
-  real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLZ,NSTEP) :: source_array_noise
 
   !local
   integer :: i,j,iglob
@@ -342,25 +305,16 @@
 ! =============================================================================================================
 ! read in and inject the "source" that drives the "enemble forward wavefield"
 ! (recall that the ensemble forward wavefield has a spatially distributed source)
-  subroutine add_surface_movie_noise(p_sv,NOISE_TOMOGRAPHY,it,NSTEP,nspec,nglob,ibool, &
-      accel_elastic,surface_movie_x_noise,surface_movie_y_noise, &
-      surface_movie_z_noise,mask_noise,jacobian,wxgll,wzgll)
+  subroutine add_surface_movie_noise(accel_elastic)
+
+  use specfem_par, only: p_sv,NOISE_TOMOGRAPHY,it,NSTEP,nspec,nglob,ibool, &
+                         surface_movie_x_noise,surface_movie_y_noise, &
+                         surface_movie_z_noise,mask_noise,jacobian,wxgll,wzgll
 
   implicit none
   include "constants.h"
 
-  !input
-  logical :: p_sv
-  integer :: NOISE_TOMOGRAPHY
-  integer :: it, NSTEP
-  integer :: nspec, nglob
-  integer :: ibool(NGLLX,NGLLZ,nspec)
-
-  real(kind=CUSTOM_REAL), dimension(nglob) :: mask_noise
-  real(kind=CUSTOM_REAL), dimension(nglob) :: &
-    surface_movie_x_noise, surface_movie_y_noise, surface_movie_z_noise
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic
-  real(kind=CUSTOM_REAL) :: wxgll(NGLLX), wzgll(NGLLZ), jacobian(NGLLX,NGLLZ,nspec)
 
   !local
   integer :: ios, i, j, ispec, iglob
@@ -407,16 +361,12 @@
 ! =============================================================================================================
 ! save a snapshot of the "generating wavefield" eta that will be used to drive
 ! the "ensemble forward wavefield"
-  subroutine save_surface_movie_noise(NOISE_TOMOGRAPHY,p_sv,it,NSTEP,nglob,displ_elastic)
+  subroutine save_surface_movie_noise()
+
+  use specfem_par, only: NOISE_TOMOGRAPHY,p_sv,it,NSTEP,nglob,displ_elastic
 
   implicit none
   include "constants.h"
-
-  !input
-  integer :: NOISE_TOMOGRAPHY
-  logical :: p_sv
-  integer :: it, NSTEP, nglob
-  real(kind=CUSTOM_REAL), dimension(3,nglob) :: displ_elastic
 
   !local
   integer :: ios

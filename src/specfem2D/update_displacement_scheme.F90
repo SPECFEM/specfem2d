@@ -40,49 +40,30 @@
 !
 !========================================================================
 
-  subroutine update_displacement_precondition_newmark(time_stepping_scheme,SIMULATION_TYPE,&
-                                                      nglob_acoustic,nglob_elastic,nglob_poroelastic,&
-                                                      any_acoustic,any_elastic,any_poroelastic,deltat,deltatover2,&
-                                                      deltatsquareover2,potential_acoustic,potential_dot_acoustic,&
-                                                      potential_dot_dot_acoustic,potential_acoustic_old,&
-                                                      displ_elastic,veloc_elastic,accel_elastic,displ_elastic_old,&
-                                                      displs_poroelastic,velocs_poroelastic,accels_poroelastic,&
-                                                      displs_poroelastic_old,displw_poroelastic,velocw_poroelastic,&
-                                                      accelw_poroelastic,b_deltat,b_deltatover2,b_deltatsquareover2,&
-                                                      b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic,&
-                                                      b_potential_acoustic_old,&
-                                                      b_displ_elastic,b_veloc_elastic,b_accel_elastic,b_displ_elastic_old,&
-                                                      accel_elastic_adj_coupling,&
-                                                      b_displs_poroelastic,b_velocs_poroelastic,b_accels_poroelastic,&
-                                                      accels_poroelastic_adj_coupling,&
-                                                      b_displw_poroelastic,b_velocw_poroelastic,b_accelw_poroelastic,&
-                                                      accelw_poroelastic_adj_coupling)
+
+  subroutine update_displacement_precondition_newmark()
+
+  use specfem_par, only : deltat,deltatover2,deltatsquareover2,b_deltat,b_deltatover2,b_deltatsquareover2, &
+                          myrank,time_stepping_scheme,SIMULATION_TYPE,&
+                          nglob_acoustic,nglob_elastic,nglob_poroelastic,&
+                          any_acoustic,any_elastic,any_poroelastic,&
+                          potential_acoustic,potential_dot_acoustic,&
+                          potential_dot_dot_acoustic,potential_acoustic_old,&
+                          displ_elastic,veloc_elastic,accel_elastic,displ_elastic_old,&
+                          displs_poroelastic,velocs_poroelastic,accels_poroelastic,&
+                          displs_poroelastic_old,displw_poroelastic,velocw_poroelastic,&
+                          accelw_poroelastic,&
+                          b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic,&
+                          b_potential_acoustic_old,&
+                          b_displ_elastic,b_veloc_elastic,b_accel_elastic,b_displ_elastic_old,&
+                          accel_elastic_adj_coupling,&
+                          b_displs_poroelastic,b_velocs_poroelastic,b_accels_poroelastic,&
+                          accels_poroelastic_adj_coupling,&
+                          b_displw_poroelastic,b_velocw_poroelastic,b_accelw_poroelastic,&
+                          accelw_poroelastic_adj_coupling,PML_BOUNDARY_CONDITIONS
 
   implicit none
   include 'constants.h'
-
-  integer :: time_stepping_scheme,SIMULATION_TYPE, nglob_acoustic, nglob_elastic,nglob_poroelastic
-  logical :: any_acoustic, any_elastic, any_poroelastic
-
-! SIMULATIONTYPE == 1
-  double precision :: deltat,deltatover2,deltatsquareover2
-  real(kind=CUSTOM_REAL),dimension(nglob_acoustic) :: potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic,&
-                                                      potential_acoustic_old
-  real(kind=CUSTOM_REAL),dimension(3,nglob_elastic) :: displ_elastic,veloc_elastic,accel_elastic,displ_elastic_old
-  real(kind=CUSTOM_REAL),dimension(NDIM,nglob_poroelastic) :: displs_poroelastic,velocs_poroelastic,accels_poroelastic,&
-                                                              displs_poroelastic_old,&
-                                                              displw_poroelastic,velocw_poroelastic,accelw_poroelastic
-
-! SIMULATIONTYPE == 3
-  double precision :: b_deltat,b_deltatover2,b_deltatsquareover2
-  real(kind=CUSTOM_REAL),dimension(nglob_acoustic) :: b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic,&
-                                                      b_potential_acoustic_old
-  real(kind=CUSTOM_REAL),dimension(3,nglob_elastic) :: b_displ_elastic,b_veloc_elastic,b_accel_elastic,b_displ_elastic_old,&
-                                                       accel_elastic_adj_coupling
-  real(kind=CUSTOM_REAL),dimension(NDIM,nglob_poroelastic) :: b_displs_poroelastic,b_velocs_poroelastic,b_accels_poroelastic,&
-                                                              accels_poroelastic_adj_coupling, &
-                                                              b_displw_poroelastic,b_velocw_poroelastic,b_accelw_poroelastic, &
-                                                              accelw_poroelastic_adj_coupling
 
 
 ! update displacement using finite-difference time scheme (Newmark)

@@ -129,27 +129,16 @@
 ! ------------------------------------------------------------------------------------------------------
 
 
-  subroutine compute_arrays_adj_source(adj_source_file,xi_receiver,gamma_receiver,adj_sourcearray, &
-                                      xigll,zigll,NSTEP)
+  subroutine compute_arrays_adj_source(xi_receiver,gamma_receiver)
 
-  implicit none
+ use constants
+ use specfem_par, only: seismotype,adj_source_file,adj_sourcearray, &
+                        xigll,zigll,NSTEP,irec_local
 
-  include 'constants.h'
+ implicit none
 
-! input
-  integer NSTEP
 
   double precision xi_receiver, gamma_receiver
-
-  character(len=*) adj_source_file
-
-! output
-    real(kind=CUSTOM_REAL), dimension(NSTEP,3,NGLLX,NGLLZ) :: adj_sourcearray
-
-! Gauss-Lobatto-Legendre points of integration and weights
-  double precision, dimension(NGLLX) :: xigll
-  double precision, dimension(NGLLZ) :: zigll
-
 
   double precision :: hxir(NGLLX), hpxir(NGLLX), hgammar(NGLLZ), hpgammar(NGLLZ)
   real(kind=CUSTOM_REAL) :: adj_src_s(NSTEP,3)
@@ -163,6 +152,9 @@
   call lagrange_any(gamma_receiver,NGLLZ,zigll,hgammar,hpgammar)
 
   adj_sourcearray(:,:,:,:) = 0.
+
+
+  if(seismotype == 1 .or. seismotype == 2 .or. seismotype == 3) then
 
   comp = (/"BXX","BXY","BXZ"/)
 
@@ -179,9 +171,22 @@
 
   enddo
 
+  else if (seismotype == 4 ) then
+
+    filename = 'SEM/'//trim(adj_source_file) // '.PRE.adj'
+    open(unit = IIN, file = trim(filename), iostat = ios)
+    if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
+
+    do itime = 1, NSTEP
+      read(IIN,*) junk, adj_src_s(itime,1)
+    enddo
+    close(IIN)
+
+  endif
+
   do k = 1, NGLLZ
       do i = 1, NGLLX
-        adj_sourcearray(:,:,i,k) = hxir(i) * hgammar(k) * adj_src_s(:,:)
+        adj_sourcearray(:,:,i,k) = sngl(hxir(i) * hgammar(k)) * adj_src_s(:,:)
       enddo
   enddo
 

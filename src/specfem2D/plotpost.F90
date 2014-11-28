@@ -41,40 +41,7 @@
 !
 !========================================================================
 
-  subroutine plotpost(displ,coord,vpext,x_source,z_source,st_xval,st_zval,it,dt,coorg, &
-          xinterp,zinterp,shapeint,Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
-          AXISYM,is_on_the_axis,flagrange_GLJ, &
-          poroelastcoef,knods,kmato,ibool, &
-          numabs,codeabs,typeabs,anyabs,nelem_acoustic_surface, acoustic_edges, &
-          simulation_title,nglob,npgeo,vpmin,vpmax,nrec,NSOURCES, &
-          colors,numbers,subsamp_postscript,imagetype_postscript,interpol,meshvect,modelvect, &
-          boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
-          nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
-          any_acoustic,any_poroelastic,plot_lowerleft_corner_only, &
-          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
-          fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
-          solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,num_solid_poro_edges, &
-          poroelastic,myrank,nproc,ier, &
-          d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
-          d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
-          d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model, &
-          d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model, &
-          coorg_send_ps_velocity_model,RGB_send_ps_velocity_model, &
-          coorg_recv_ps_velocity_model,RGB_recv_ps_velocity_model,&
-          d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh, &
-          d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh, &
-          d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh, &
-          coorg_send_ps_element_mesh,color_send_ps_element_mesh, &
-          coorg_recv_ps_element_mesh,color_recv_ps_element_mesh, &
-          d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs, &
-          d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs, &
-          coorg_send_ps_abs,coorg_recv_ps_abs, &
-          d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface, &
-          d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface, &
-          coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
-          d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field, &
-          d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
-          coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER,is_PML)
+  subroutine plotpost()
 
 !
 ! PostScript display routine
@@ -84,153 +51,81 @@
   use mpi
 #endif
 
+  use specfem_par, only: vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval,it,deltat,coorg, &
+                         xinterp,zinterp,shape2D_display,Uxinterp,Uzinterp,flagrange,density,porosity,tortuosity,&
+                         AXISYM,is_on_the_axis,flagrange_GLJ, &
+                         poroelastcoef,knods,kmato,ibool, &
+                         numabs,codeabs,typeabs,anyabs,nelem_acoustic_surface, acoustic_edges, &
+                         simulation_title,nglob,npgeo,vpImin,vpImax,nrec,NSOURCES, &
+                         colors,numbers,subsamp_postscript,imagetype_postscript,interpol,meshvect,modelvect, &
+                         boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
+                         nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
+                         any_acoustic,any_poroelastic,plot_lowerleft_corner_only, &
+                         fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
+                         fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
+                         solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,num_solid_poro_edges, &
+                         poroelastic,myrank,nproc,ier, &
+                         d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
+                         d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
+                         d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model, &
+                         d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model, &
+                         coorg_send_ps_velocity_model,RGB_send_ps_velocity_model, &
+                         coorg_recv_ps_velocity_model,RGB_recv_ps_velocity_model,&
+                         d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh, &
+                         d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh, &
+                         d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh, &
+                         coorg_send_ps_element_mesh,color_send_ps_element_mesh, &
+                         coorg_recv_ps_element_mesh,color_recv_ps_element_mesh, &
+                         d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs, &
+                         d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs, &
+                         coorg_send_ps_abs,coorg_recv_ps_abs, &
+                         d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface, &
+                         d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface, &
+                         coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
+                         d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field, &
+                         d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
+                         coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER,is_PML,i,iproc
+
   implicit none
 
   include "constants.h"
 
-  logical :: AXISYM
 
 ! color palette
   integer, parameter :: NUM_COLORS = 236
   double precision, dimension(NUM_COLORS) :: red,green,blue
 
-  integer it,nrec,nelemabs,numat,pointsdisp,pointsdisp_loop,nspec
-  integer i,nglob,npgeo,ngnod,NSOURCES
-
-  integer kmato(nspec),knods(ngnod,nspec)
-  integer ibool(NGLLX,NGLLZ,nspec)
-  logical, dimension(nspec) :: poroelastic
-
-  logical, dimension(nspec) :: is_PML
-
-  double precision xinterp(pointsdisp,pointsdisp),zinterp(pointsdisp,pointsdisp)
-  double precision shapeint(ngnod,pointsdisp,pointsdisp)
-  double precision Uxinterp(pointsdisp,pointsdisp)
-  double precision Uzinterp(pointsdisp,pointsdisp)
-  double precision flagrange(NGLLX,pointsdisp)
-  double precision flagrange_GLJ(NGLJ,pointsdisp)
-  logical, dimension(nspec) :: is_on_the_axis
-  double precision density(2,numat),poroelastcoef(4,3,numat),porosity(numat),tortuosity(numat)
-
-  double precision dt,timeval
-  double precision, dimension(NSOURCES) :: x_source,z_source
-  double precision displ(3,nglob),coord(NDIM,nglob)
-  double precision vpext(NGLLX,NGLLZ,nspec)
-
-  double precision coorg(NDIM,npgeo)
-  double precision, dimension(nrec) :: st_xval,st_zval
-
-  integer numabs(nelemabs)
-  logical codeabs(4,nelemabs)
-  integer typeabs(nelemabs)
-  logical anyabs,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
-          any_acoustic,any_poroelastic,plot_lowerleft_corner_only
-
-! for fluid/solid edge detection
-  integer :: num_fluid_solid_edges,num_fluid_poro_edges,num_solid_poro_edges
-  integer, dimension(num_fluid_solid_edges) :: fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge
-  integer, dimension(num_fluid_poro_edges) :: fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge
-  integer, dimension(num_solid_poro_edges) :: solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge
-
-  double precision xmax,zmax,height,xw,zw,usoffset,sizex,sizez,vpmin,vpmax
-
+  double precision, dimension(:,:), allocatable  :: coorg_send
+  double precision, dimension(:,:), allocatable  :: coorg_recv
+  integer k,j,ispec,material,is,ir,imat,icol,l,line_length
+  integer index_char,ii,ipoin,in,nnum,inum,ideb,ifin,iedge
 ! for the file name
   character(len=100) :: file_name
+  integer  :: buffer_offset, RGB_offset
+  double precision convert,x1,cpIloc,xa,za,xb,zb,lambdaplus2mu,denst
+  double precision z1,x2,z2,d,d1,d2,dummy,theta,thetaup,thetadown
+  double precision :: cpIsquare
+  double precision :: mul_s,kappal_s,rhol_s
+  double precision :: kappal_f,rhol_f
+  double precision :: mul_fr,kappal_fr,phil,tortl
+  double precision ratio_page,dispmax,xmin,zmin
+  logical :: anyabs_glob, coupled_acoustic_elastic_glob, coupled_acoustic_poro_glob, &
+             coupled_elastic_poro_glob
 
+  integer  :: nspec_recv,num_spec,pointsdisp_loop
+  integer  :: nb_coorg_per_elem, nb_color_per_elem
 ! to suppress useless white spaces in postscript lines
   character(len=100) :: postscript_line
   character(len=1), dimension(100) :: ch1,ch2
   equivalence (postscript_line,ch1)
   logical :: first
 
-! US letter paper or European A4
-  logical :: US_LETTER
-
-  double precision convert,x1,cpIloc,xa,za,xb,zb,lambdaplus2mu,denst
-  double precision z1,x2,z2,d,d1,d2,dummy,theta,thetaup,thetadown
-
-  double precision :: mul_s,kappal_s,rhol_s
-  double precision :: kappal_f,rhol_f
-  double precision :: mul_fr,kappal_fr,phil,tortl
   double precision :: afactor,bfactor,cfactor,D_biot,H_biot,C_biot,M_biot,rhol_bar
-  double precision :: cpIsquare
-
-  integer k,j,ispec,material,is,ir,imat,icol,l,line_length
-  integer index_char,ii,ipoin,in,nnum,inum,ideb,ifin,iedge
-
-  integer colors,numbers,subsamp_postscript,imagetype_postscript
-  logical interpol,meshvect,modelvect,boundvect,assign_external_model
-  double precision cutsnaps,sizemax_arrows
-
-  double precision ratio_page,dispmax,xmin,zmin
-
-! title of the plot
-  character(len=60) simulation_title
-
-! for free surface output
-  integer  :: nelem_acoustic_surface
-  integer, dimension(4,max(1,nelem_acoustic_surface))  :: acoustic_edges
-
+  double precision xmax,zmax,height,xw,zw,usoffset,sizex,sizez,timeval
 #ifdef USE_MPI
   double precision  :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
   double precision  :: dispmax_glob
 #endif
-
-  double precision, dimension(:,:), allocatable  :: coorg_send
-  double precision, dimension(:,:), allocatable  :: coorg_recv
-  integer  :: nspec_recv
-  integer  :: buffer_offset, RGB_offset
-
-  integer  :: nb_coorg_per_elem, nb_color_per_elem
-  integer  :: iproc, num_spec
-  integer  :: ier
-  logical :: anyabs_glob, coupled_acoustic_elastic_glob, coupled_acoustic_poro_glob, &
-             coupled_elastic_poro_glob
-  integer  :: myrank, nproc
-
-! plotpost arrays for postscript output
-  integer :: d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
-          d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
-          d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model, &
-          d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model
-  double precision, dimension(d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model) :: &
-coorg_send_ps_velocity_model
-  double precision, dimension(d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model) :: &
-coorg_recv_ps_velocity_model
-  double precision, dimension(d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model) :: &
-RGB_send_ps_velocity_model
-  double precision, dimension(d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model) :: &
-RGB_recv_ps_velocity_model
-  integer :: d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh, &
-          d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh, &
-          d1_color_send_ps_element_mesh, &
-          d1_color_recv_ps_element_mesh
-  double precision, dimension(d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh) :: &
-coorg_send_ps_element_mesh
-  double precision, dimension(d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh) :: &
-coorg_recv_ps_element_mesh
-  integer, dimension(d1_color_send_ps_element_mesh) :: &
-color_send_ps_element_mesh
-  integer, dimension(d1_color_recv_ps_element_mesh) :: &
-color_recv_ps_element_mesh
-  integer :: d1_coorg_send_ps_abs, d1_coorg_recv_ps_abs, &
-          d2_coorg_send_ps_abs, d2_coorg_recv_ps_abs
-  double precision, dimension(d1_coorg_send_ps_abs,d2_coorg_send_ps_abs) :: &
-coorg_send_ps_abs
-  double precision, dimension(d1_coorg_recv_ps_abs,d2_coorg_recv_ps_abs) :: &
-coorg_recv_ps_abs
-  integer :: d1_coorg_send_ps_free_surface, d1_coorg_recv_ps_free_surface, &
-          d2_coorg_send_ps_free_surface, d2_coorg_recv_ps_free_surface
-  double precision, dimension(d1_coorg_send_ps_free_surface,d2_coorg_send_ps_free_surface) :: &
-coorg_send_ps_free_surface
-  double precision, dimension(d1_coorg_recv_ps_free_surface,d2_coorg_recv_ps_free_surface) :: &
-coorg_recv_ps_free_surface
-  integer :: d1_coorg_send_ps_vector_field, d1_coorg_recv_ps_vector_field, &
-          d2_coorg_send_ps_vector_field, d2_coorg_recv_ps_vector_field
-  double precision, dimension(d1_coorg_send_ps_vector_field,d2_coorg_send_ps_vector_field) :: &
-coorg_send_ps_vector_field
-  double precision, dimension(d1_coorg_recv_ps_vector_field,d2_coorg_recv_ps_vector_field) :: &
-coorg_recv_ps_vector_field
 
 #ifndef USE_MPI
 ! this to avoid warnings by the compiler about unused variables in the case
@@ -1474,7 +1369,7 @@ coorg_recv_ps_vector_field
   ratio_page = min(rpercentz*sizez/(zmax-zmin),rpercentx*sizex/(xmax-xmin)) / 100.d0
 
 ! compute the maximum of the norm of the vector
-  dispmax = maxval(sqrt(displ(1,:)**2 + displ(3,:)**2))
+  dispmax = maxval(sqrt(vector_field_display(1,:)**2 + vector_field_display(3,:)**2))
 #ifdef USE_MPI
   call MPI_ALLREDUCE (dispmax, dispmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
   dispmax = dispmax_glob
@@ -1575,7 +1470,7 @@ coorg_recv_ps_vector_field
   write(24,*) '%'
 
   write(24,*) '24. CM 1.95 CM MV'
-  timeval = it*dt
+  timeval = it*deltat
   if(timeval >= 1.d-3 .and. timeval < 1000.d0) then
     write(24,600) usoffset,timeval
   else
@@ -1666,11 +1561,11 @@ coorg_recv_ps_vector_field
     do i=1,NGLLX-subsamp_postscript,subsamp_postscript
           do j=1,NGLLX-subsamp_postscript,subsamp_postscript
 
-  if((vpmax-vpmin)/vpmin > 0.02d0) then
+  if((vpImax-vpImin)/vpImin > 0.02d0) then
 
   if(assign_external_model) then
 
-    x1 = (vpext(i,j,ispec)-vpmin) / (vpmax-vpmin)
+    x1 = (vpext(i,j,ispec)-vpImin) / (vpImax-vpImin)
 
   else
 
@@ -1714,7 +1609,7 @@ coorg_recv_ps_vector_field
 
     endif
 
-    x1 = (cpIloc-vpmin)/(vpmax-vpmin)
+    x1 = (cpIloc-vpImin)/(vpImax-vpImin)
 
   endif
 
@@ -1726,7 +1621,7 @@ coorg_recv_ps_vector_field
   x1 = x1*0.7 + 0.2
   if(x1 > 1.d0) x1=1.d0
 
-! invert scale: white = vpmin, dark gray = vpmax
+! invert scale: white = vpImin, dark gray = vpImax
   x1 = 1.d0 - x1
 
   xw = coord(1,ibool(i,j,ispec))
@@ -1872,8 +1767,8 @@ coorg_recv_ps_vector_field
   zinterp(i,j) = 0.d0
   do in = 1,ngnod
     nnum = knods(in,ispec)
-      xinterp(i,j) = xinterp(i,j) + shapeint(in,i,j)*coorg(1,nnum)
-      zinterp(i,j) = zinterp(i,j) + shapeint(in,i,j)*coorg(2,nnum)
+      xinterp(i,j) = xinterp(i,j) + shape2D_display(in,i,j)*coorg(1,nnum)
+      zinterp(i,j) = zinterp(i,j) + shape2D_display(in,i,j)*coorg(2,nnum)
   enddo
   enddo
   enddo
@@ -2779,8 +2674,8 @@ coorg_recv_ps_vector_field
   zinterp(i,j) = 0.d0
   do in = 1,ngnod
     nnum = knods(in,ispec)
-      xinterp(i,j) = xinterp(i,j) + shapeint(in,i,j)*coorg(1,nnum)
-      zinterp(i,j) = zinterp(i,j) + shapeint(in,i,j)*coorg(2,nnum)
+      xinterp(i,j) = xinterp(i,j) + shape2D_display(in,i,j)*coorg(1,nnum)
+      zinterp(i,j) = zinterp(i,j) + shape2D_display(in,i,j)*coorg(2,nnum)
   enddo
 
   Uxinterp(i,j) = 0.d0
@@ -2790,15 +2685,15 @@ coorg_recv_ps_vector_field
   do l=1,NGLLX
     if(AXISYM) then
       if(is_on_the_axis(ispec)) then
-        Uxinterp(i,j) = Uxinterp(i,j) + displ(1,ibool(k,l,ispec))*flagrange_GLJ(k,i)*flagrange_GLJ(l,j)
-        Uzinterp(i,j) = Uzinterp(i,j) + displ(3,ibool(k,l,ispec))*flagrange_GLJ(k,i)*flagrange_GLJ(l,j)
+        Uxinterp(i,j) = Uxinterp(i,j) + vector_field_display(1,ibool(k,l,ispec))*flagrange_GLJ(k,i)*flagrange_GLJ(l,j)
+        Uzinterp(i,j) = Uzinterp(i,j) + vector_field_display(3,ibool(k,l,ispec))*flagrange_GLJ(k,i)*flagrange_GLJ(l,j)
       else
-        Uxinterp(i,j) = Uxinterp(i,j) + displ(1,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
-        Uzinterp(i,j) = Uzinterp(i,j) + displ(3,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
+        Uxinterp(i,j) = Uxinterp(i,j) + vector_field_display(1,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
+        Uzinterp(i,j) = Uzinterp(i,j) + vector_field_display(3,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
       endif
     else
-      Uxinterp(i,j) = Uxinterp(i,j) + displ(1,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
-      Uzinterp(i,j) = Uzinterp(i,j) + displ(3,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
+      Uxinterp(i,j) = Uxinterp(i,j) + vector_field_display(1,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
+      Uzinterp(i,j) = Uzinterp(i,j) + vector_field_display(3,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
     endif
   enddo
   enddo
@@ -2841,7 +2736,6 @@ coorg_recv_ps_vector_field
   zb = zb * centim
   if ( myrank == 0 ) then
   write(postscript_line,700) xb,zb,xa,za,x2,z2,x1,z1
-
 ! suppress useless white spaces to make PostScript file smaller
 ! suppress leading white spaces again, if any
   postscript_line = adjustl(postscript_line)
@@ -2940,8 +2834,8 @@ coorg_recv_ps_vector_field
   x1 =(coord(1,ipoin)-xmin)*ratio_page
   z1 =(coord(2,ipoin)-zmin)*ratio_page
 
-  x2 = displ(1,ipoin)*sizemax_arrows/dispmax
-  z2 = displ(3,ipoin)*sizemax_arrows/dispmax
+  x2 = vector_field_display(1,ipoin)*sizemax_arrows/dispmax
+  z2 = vector_field_display(3,ipoin)*sizemax_arrows/dispmax
 
   d = sqrt(x2**2 + z2**2)
 

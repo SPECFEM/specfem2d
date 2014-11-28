@@ -45,18 +45,16 @@
 ! in gll_library.f90 and define_derivation_matrices.f90)
 !axisym!axisym!axisym!axisym!axisym!axisym!axisym!axisym!axisym!axisym!axisym
 
-subroutine  build_is_on_the_axis(nspec, nelem_on_the_axis, ispec_of_axial_elements, is_on_the_axis)
+subroutine  build_is_on_the_axis()
   ! This subroutine set the vector of logicals is_on_the_axis. is_on_the_axis(ispec)
   ! should be .true. if the element number ispec is located near the axis.
   ! The vector build_is_on_the_axis has been initialized to .false. before.
 
+    use specfem_par, only: nspec, nelem_on_the_axis, ispec_of_axial_elements, is_on_the_axis
+
     implicit none
 
     ! include "constants.h"
-
-    integer :: nspec, nelem_on_the_axis
-    integer, dimension(nelem_on_the_axis) :: ispec_of_axial_elements
-    logical, dimension(nspec) :: is_on_the_axis
 
     ! local parameters
     integer :: ispec
@@ -94,11 +92,7 @@ subroutine  build_is_on_the_axis(nspec, nelem_on_the_axis, ispec_of_axial_elemen
 
   end subroutine build_is_on_the_axis
 
-  subroutine check_compatibility_axisym(any_poroelastic, ATTENUATION_VISCOELASTIC_SOLID, anisotropic, &
-    ROTATE_PML_ACTIVATE, STACEY_BOUNDARY_CONDITIONS, SIMULATION_TYPE, SAVE_FORWARD, &
-    time_stepping_scheme, ADD_PERIODIC_CONDITIONS, NOISE_TOMOGRAPHY, NSOURCES, source_type, ispec_selected_source, xi_source, &
-    anglesource, nrec, ispec_selected_rec, xi_receiver, nspec, is_on_the_axis, elastic, myrank, is_proc_source, &
-    which_proc_receiver)
+  subroutine check_compatibility_axisym()
   ! This subroutine check the parameters of the run and stop the program (or display a warning) if the configuration is not
   ! compatible with axisymetric simulations.
   ! _Not compatible fundamentaly :
@@ -109,19 +103,15 @@ subroutine  build_is_on_the_axis(nspec, nelem_on_the_axis, ispec_of_axial_elemen
   !   simulations, periodic conditions, noise tomographies, source and receivers on the elements along the axis but not
   !   exactly on the axis.
 
+    use specfem_par, only: any_poroelastic, ATTENUATION_VISCOELASTIC_SOLID, anisotropic,ROTATE_PML_ACTIVATE, &
+                           STACEY_BOUNDARY_CONDITIONS, SIMULATION_TYPE, SAVE_FORWARD,time_stepping_scheme, &
+                           NOISE_TOMOGRAPHY, NSOURCES, source_type, ispec_selected_source, xi_source, ADD_PERIODIC_CONDITIONS, &
+                           anglesource, nrec, ispec_selected_rec, xi_receiver, nspec, is_on_the_axis, elastic, myrank, &
+                           is_proc_source, which_proc_receiver
+
     implicit none
 
     include "constants.h"
-
-    logical :: any_poroelastic, ATTENUATION_VISCOELASTIC_SOLID, ROTATE_PML_ACTIVATE, STACEY_BOUNDARY_CONDITIONS, &
-               SAVE_FORWARD, ADD_PERIODIC_CONDITIONS
-    integer :: SIMULATION_TYPE, NOISE_TOMOGRAPHY, time_stepping_scheme, NSOURCES, nrec, nspec, myrank
-    logical, dimension(nspec) :: anisotropic, elastic, is_on_the_axis
-    integer, dimension(NSOURCES) :: source_type, ispec_selected_source, is_proc_source
-    integer, dimension(nrec) :: ispec_selected_rec, which_proc_receiver
-    double precision, dimension(NSOURCES) :: xi_source, anglesource
-    double precision, dimension(nrec) :: xi_receiver
-
 
     ! Local parameters
     integer :: irec, isource

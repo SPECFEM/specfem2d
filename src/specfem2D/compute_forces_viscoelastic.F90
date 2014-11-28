@@ -41,144 +41,62 @@
 !
 !========================================================================
 
-subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
-     ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
-     source_type,it,NSTEP,anyabs,assign_external_model, &
-     initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource, &
-     ibool,kmato,numabs,elastic,codeabs, &
-     accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
-     density,poroelastcoef,xix,xiz,gammax,gammaz, &
-     jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy, &
-     source_time_function,sourcearray,adj_sourcearrays, &
-     e1,e11,e13,e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK,c_LDDRK, &
-     e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_RK, e11_force_RK, e13_force_RK, &
-     hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
-     AXISYM,is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
-     inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
-     deltat,coord,add_Bielak_conditions, &
-     x0_source, z0_source, A_plane, B_plane, C_plane, anglesource_refl, c_inc, c_refl, time_offset,f0, &
-     v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot,&
-     nleft,nright,nbot,over_critical_angle,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,b_absorb_elastic_left,&
-     b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top,nspec_left,nspec_right,&
-     nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,&
-     stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring,nadj_rec_local, &
-     is_PML,nspec_PML,spec_to_PML,region_CPML, &
-     K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
-     rmemory_displ_elastic,rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz, &
-     rmemory_dux_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dx_prime,rmemory_duz_dz_prime, &
-     rmemory_displ_elastic_LDDRK,rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,rmemory_duz_dx_LDDRK,rmemory_duz_dz_LDDRK, &
-     PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,backward_simulation,STACEY_BOUNDARY_CONDITIONS,acoustic)
+subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
+                                       x0_source, z0_source,f0,v0x_left,v0z_left,v0x_right,v0z_right,&
+                                       v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot,&
+                                       nleft,nright,nbot,PML_BOUNDARY_CONDITIONS,backward_simulation)
 
   ! compute forces for the elastic elements
+
+  use specfem_par, only: p_sv,nglob,nspec,myrank,nelemabs,numat, &
+                         ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
+                         source_type,it,NSTEP,anyabs,assign_external_model, &
+                         initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource, &
+                         ibool,kmato,numabs,elastic,codeabs, &
+                         density,poroelastcoef,xix,xiz,gammax,gammaz, &
+                         jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,&
+                         source_time_function,sourcearray,adj_sourcearrays,anisotropic,anisotropy, &
+                         e1,e11,e13,e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK,c_LDDRK, &
+                         e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_RK, e11_force_RK, e13_force_RK, &
+                         hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
+                         AXISYM,is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
+                         inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
+                         deltat,coord,add_Bielak_conditions, &
+                         A_plane, B_plane, C_plane, anglesource_refl, c_inc, c_refl, time_offset, &
+                         over_critical_angle,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,b_absorb_elastic_left,&
+                         b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top,nspec_left,nspec_right,&
+                         nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,&
+                         stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring,&
+                         is_PML,nspec_PML,spec_to_PML,region_CPML,rmemory_duz_dz_LDDRK, &
+                         K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
+                         rmemory_displ_elastic,rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz, &
+                         rmemory_dux_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dx_prime,rmemory_duz_dz_prime, &
+                         rmemory_displ_elastic_LDDRK,rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,rmemory_duz_dx_LDDRK,&
+                         ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,STACEY_BOUNDARY_CONDITIONS,acoustic
+
+
+
+
 
   implicit none
 
   include "constants.h"
 
-  logical :: AXISYM
-  logical :: p_sv
-  integer :: NSOURCES
-  integer :: nglob,nspec,myrank,nelemabs,numat,it,NSTEP
-  integer, dimension(NSOURCES) :: ispec_selected_source,is_proc_source,source_type
-
-  integer :: nrec,SIMULATION_TYPE
-  integer, dimension(nrec) :: ispec_selected_rec,which_proc_receiver
-  logical, dimension(nspec) :: acoustic
-  integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
-  integer, dimension(nelemabs) :: ib_left
-  integer, dimension(nelemabs) :: ib_right
-  integer, dimension(nelemabs) :: ib_bottom
-  integer, dimension(nelemabs) :: ib_top
-  integer :: stage_time_scheme,i_stage,nadj_rec_local
-
-  logical :: anyabs,assign_external_model,initialfield,ATTENUATION_VISCOELASTIC_SOLID,add_Bielak_conditions,&
-             STACEY_BOUNDARY_CONDITIONS
-  logical :: ADD_SPRING_TO_STACEY
-  double precision :: x_center_spring,z_center_spring
-
-  logical :: SAVE_FORWARD
-
-  double precision :: deltat
-  double precision, dimension(NSOURCES) :: anglesource
-
-  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
-  integer, dimension(nspec) :: kmato
-  integer, dimension(nelemabs) :: numabs
-
-  logical, dimension(nspec) :: elastic,anisotropic
-  logical, dimension(4,nelemabs)  :: codeabs
-
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old
-  double precision, dimension(2,numat) :: density
-  double precision, dimension(4,3,numat) :: poroelastcoef
-  double precision, dimension(9,numat) :: anisotropy
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,vsext,rhoext
-  double precision, dimension(NGLLX,NGLLZ,nspec) ::  c11ext,c15ext,c13ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
-
-  real(kind=CUSTOM_REAL), dimension(NSOURCES,NSTEP,stage_time_scheme) :: source_time_function
-  real(kind=CUSTOM_REAL), dimension(NSOURCES,NDIM,NGLLX,NGLLZ) :: sourcearray
-
-  real(kind=CUSTOM_REAL), dimension(nadj_rec_local,NSTEP,3,NGLLX,NGLLZ) :: adj_sourcearrays
-  real(kind=CUSTOM_REAL), dimension(3,NGLLZ,nspec_left,NSTEP) :: b_absorb_elastic_left
-  real(kind=CUSTOM_REAL), dimension(3,NGLLZ,nspec_right,NSTEP) :: b_absorb_elastic_right
-  real(kind=CUSTOM_REAL), dimension(3,NGLLX,nspec_top,NSTEP) :: b_absorb_elastic_top
-  real(kind=CUSTOM_REAL), dimension(3,NGLLX,nspec_bottom,NSTEP) :: b_absorb_elastic_bottom
-
-  integer :: N_SLS
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11,e13
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1_LDDRK,e11_LDDRK,e13_LDDRK
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1_initial_rk,e11_initial_rk,e13_initial_rk
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS,stage_time_scheme) :: e1_force_RK, e11_force_RK, e13_force_RK
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
-
-  ! derivatives of Lagrange polynomials
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
-  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz,hprimewgll_zz
-  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLJ) :: hprimeBar_xx,hprimeBarwglj_xx
-
-  ! Gauss-Lobatto-Legendre weights
-  real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
-  real(kind=CUSTOM_REAL), dimension(NGLLZ) :: wzgll
-  ! Gauss-Lobatto-Jacobi points and weights
-  double precision, dimension(NGLJ) :: xiglj
-  real(kind=CUSTOM_REAL), dimension(NGLJ) :: wxglj
-  logical, dimension(nspec) :: is_on_the_axis
-
-  ! Parameter for LDDRK time scheme
-  real(kind=CUSTOM_REAL), dimension(Nstages) :: alpha_LDDRK,beta_LDDRK,c_LDDRK
 
   ! for analytical initial plane wave for Bielak's conditions
-  double precision, dimension(NDIM,nglob), intent(in) :: coord
-  double precision x0_source, z0_source, anglesource_refl, c_inc, c_refl, time_offset, f0
-  double precision, dimension(NDIM) :: A_plane, B_plane, C_plane
-  !over critical angle
-  logical :: over_critical_angle
+  double precision x0_source, z0_source,f0
+
   integer :: nleft, nright, nbot
   double precision, dimension(nleft) :: v0x_left,v0z_left,t0x_left,t0z_left
   double precision, dimension(nright) :: v0x_right,v0z_right,t0x_right,t0z_right
   double precision, dimension(nbot) :: v0x_bot,v0z_bot,t0x_bot,t0z_bot
 
   ! CPML coefficients and memory variables
-  integer :: nspec_PML
-  integer, dimension(nspec) :: region_CPML
-  logical, dimension(nspec) :: is_PML
-  integer, dimension(nspec) :: spec_to_PML
-  logical :: PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE
-  logical :: backward_simulation
-  double precision ROTATE_PML_ANGLE
 
-  real(kind=CUSTOM_REAL), dimension(2,3,NGLLX,NGLLZ,nspec_PML) :: rmemory_displ_elastic
-  real(kind=CUSTOM_REAL), dimension(2,3,NGLLX,NGLLZ,nspec_PML) :: rmemory_displ_elastic_LDDRK
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML,2) :: &
-    rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML,2) :: &
-    rmemory_dux_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dx_prime,rmemory_duz_dz_prime
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML,2) :: &
-    rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,rmemory_duz_dx_LDDRK,rmemory_duz_dz_LDDRK
-  double precision, dimension(NGLLX,NGLLZ,nspec_PML) :: &
-                  K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
+  logical :: PML_BOUNDARY_CONDITIONS
+  logical :: backward_simulation
+
 
   !---
   !--- local variables
@@ -251,6 +169,7 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
   real(kind=CUSTOM_REAL) :: weight_rk
 
 !!!update momeory variable in viscoelastic simulation
+
 
   if(ATTENUATION_VISCOELASTIC_SOLID) then
 
@@ -1485,7 +1404,6 @@ subroutine compute_forces_viscoelastic(p_sv,nglob,nspec,myrank,nelemabs,numat, &
                   accel_elastic(2,iglob) = accel_elastic(2,iglob) - b_absorb_elastic_bottom(2,i,ib_bottom(ispecabs),NSTEP-it+1)
                 endif
               endif
-
             endif  !end of backward_simulation
           endif  !end of elasitic
         enddo
@@ -1733,32 +1651,26 @@ end subroutine compute_forces_viscoelastic
 
 !========================================================================
 
- subroutine compute_forces_viscoelastic_pre_kernel(p_sv,nglob,nspec,displ_elastic,b_displ_elastic,&
-         mu_k,kappa_k,elastic,ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz,SIMULATION_TYPE)
+ subroutine compute_forces_viscoelastic_pre_kernel()
+
   ! precompution of kernel
+
+  use specfem_par, only: p_sv,nglob,nspec,displ_elastic,b_displ_elastic,&
+                         mu_k,kappa_k,elastic,ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz
+
    implicit none
    include "constants.h"
 
-   logical :: p_sv
-   integer :: nglob,nspec,i,j,k,ispec,iglob,SIMULATION_TYPE
-   logical, dimension(nspec) :: elastic
-   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
-   real(kind=CUSTOM_REAL), dimension(3,nglob) :: displ_elastic,b_displ_elastic
+   integer :: i,j,k,ispec,iglob
    real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duy_dxi,duy_dgamma,duz_dxi,duz_dgamma
    real(kind=CUSTOM_REAL) :: dux_dxl,duy_dxl,duz_dxl,dux_dzl,duy_dzl,duz_dzl
    real(kind=CUSTOM_REAL) :: b_dux_dxi,b_dux_dgamma,b_duy_dxi,b_duy_dgamma,b_duz_dxi,b_duz_dgamma
    real(kind=CUSTOM_REAL) :: b_dux_dxl,b_duy_dxl,b_duz_dxl,b_dux_dzl,b_duy_dzl,b_duz_dzl
    real(kind=CUSTOM_REAL) :: dsxx,dsxz,dszz
    real(kind=CUSTOM_REAL) :: b_dsxx,b_dsxz,b_dszz
-   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
 
    ! Jacobian matrix and determinant
    real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl
-
-   ! derivatives of Lagrange polynomials
-   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprime_zz
-
-   real(kind=CUSTOM_REAL), dimension(nglob) :: mu_k,kappa_k
 
    do ispec = 1,nspec
      if(elastic(ispec))then
@@ -1767,10 +1679,10 @@ end subroutine compute_forces_viscoelastic
          dux_dxi = 0._CUSTOM_REAL; duy_dxi = 0._CUSTOM_REAL; duz_dxi = 0._CUSTOM_REAL
          dux_dgamma = 0._CUSTOM_REAL; duy_dgamma = 0._CUSTOM_REAL; duz_dgamma = 0._CUSTOM_REAL
 
-         if(SIMULATION_TYPE == 3) then ! Adjoint calculation, backward wavefield
+
            b_dux_dxi = 0._CUSTOM_REAL; b_duy_dxi = 0._CUSTOM_REAL; b_duz_dxi = 0._CUSTOM_REAL
            b_dux_dgamma = 0._CUSTOM_REAL; b_duy_dgamma = 0._CUSTOM_REAL; b_duz_dgamma = 0._CUSTOM_REAL
-         endif
+
 
          ! first double loop over GLL points to compute and store gradients
          ! we can merge the two loops because NGLLX == NGLLZ
@@ -1783,7 +1695,7 @@ end subroutine compute_forces_viscoelastic
            duy_dgamma = duy_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
            duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
 
-           if(SIMULATION_TYPE == 3) then ! Adjoint calculation, backward wavefield
+
              b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
              b_duy_dxi = b_duy_dxi + b_displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
              b_duz_dxi = b_duz_dxi + b_displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
@@ -1791,7 +1703,7 @@ end subroutine compute_forces_viscoelastic
              b_dux_dgamma = b_dux_dgamma + b_displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
              b_duy_dgamma = b_duy_dgamma + b_displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
              b_duz_dgamma = b_duz_dgamma + b_displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
-           endif
+
          enddo
 
          xixl = xix(i,j,ispec); xizl = xiz(i,j,ispec)
@@ -1807,7 +1719,7 @@ end subroutine compute_forces_viscoelastic
          duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
          duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
-         if(SIMULATION_TYPE == 3) then ! Adjoint calculation, backward wavefield
+
            b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
            b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
 
@@ -1816,10 +1728,8 @@ end subroutine compute_forces_viscoelastic
 
            b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
            b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
-         endif
 
-         ! Pre-kernels calculation
-         if(SIMULATION_TYPE == 3) then
+
            iglob = ibool(i,j,ispec)
            if(p_sv)then !P-SV waves
              dsxx =  dux_dxl
@@ -1836,7 +1746,6 @@ end subroutine compute_forces_viscoelastic
            else !SH (membrane) waves
              mu_k(iglob) = duy_dxl * b_duy_dxl + duy_dzl * b_duy_dzl
            endif
-         endif
        enddo; enddo
      endif
    enddo

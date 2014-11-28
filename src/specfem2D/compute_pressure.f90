@@ -41,67 +41,22 @@
 !
 !========================================================================
 
-  subroutine compute_pressure_whole_medium(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic,displ_elastic,&
-                  displs_poroelastic,displw_poroelastic,acoustic,gravitoacoustic,elastic,poroelastic,vector_field_display, &
-                  xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
-                  AXISYM,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
-                  nglob,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
-                  numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
-                  c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,e1,e11, &
-                  ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
+  subroutine compute_pressure_whole_medium()
 
 ! compute pressure in acoustic elements and in elastic elements
+
+  use specfem_par, only: potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic,displ_elastic,&
+                         displs_poroelastic,displw_poroelastic,acoustic,gravitoacoustic,elastic,poroelastic,vector_field_display, &
+                         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
+                         AXISYM,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
+                         nglob,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
+                         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
+                         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,e1,e11, &
+                         ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS,i,j,ispec,iglob
 
   implicit none
 
   include "constants.h"
-
-  integer :: nspec,nglob,numat
-
-
-  integer, dimension(nspec) :: kmato
-  integer, dimension(NGLLX,NGLLX,nspec) :: ibool
-
-  double precision, dimension(2,numat) :: density
-  double precision, dimension(numat) :: porosity,tortuosity
-  double precision, dimension(4,3,numat) :: poroelastcoef
-  double precision, dimension(9,numat) :: anisotropy
-  double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext
-  double precision, dimension(NGLLX,NGLLZ,nspec) ::  c11ext,c15ext,c13ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
-
-  logical, dimension(nspec) :: acoustic,gravitoacoustic,elastic,poroelastic,anisotropic
-  integer :: nglob_acoustic
-  real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: potential_dot_dot_acoustic
-  integer :: nglob_gravitoacoustic
-  real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: potential_dot_dot_gravitoacoustic
-  integer :: nglob_elastic
-  real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: displ_elastic
-  integer :: nglob_poroelastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: displs_poroelastic,displw_poroelastic
-
-  double precision, dimension(3,nglob) :: vector_field_display
-
-! array with derivatives of Lagrange polynomials
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
-  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
-
-
-  logical :: AXISYM
-  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLJ) :: hprimeBar_xx
-  logical, dimension(nspec) :: is_on_the_axis
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: jacobian
-  double precision, dimension(NDIM,nglob), intent(in) :: coord
-
-  logical :: assign_external_model,ATTENUATION_VISCOELASTIC_SOLID
-
-  integer :: N_SLS
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
-
-! local variables
-  integer :: i,j,ispec,iglob
 
 ! pressure in this element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: pressure_element
@@ -110,14 +65,7 @@
   do ispec = 1,nspec
 
 ! compute pressure in this element
-    call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic,displ_elastic,&
-         displs_poroelastic,displw_poroelastic,acoustic,gravitoacoustic,elastic,poroelastic,&
-         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
-         AXISYM,nglob,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
-         nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
-         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
-         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,ispec,e1,e11, &
-         ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
+    call compute_pressure_one_element()
 
 ! use vector_field_display as temporary storage, store pressure in its second component
     do j = 1,NGLLZ
@@ -135,67 +83,27 @@
 !=====================================================================
 !
 
-  subroutine compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic, &
-         potential_dot_dot_gravitoacoustic,displ_elastic,&
-         displs_poroelastic,displw_poroelastic,acoustic,gravitoacoustic,elastic,poroelastic,&
-         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
-         AXISYM,nglob,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
-         nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
-         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
-         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,ispec,e1,e11, &
-         ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
+  subroutine compute_pressure_one_element()
+
 
 ! compute pressure in acoustic elements and in elastic elements
+
+  use specfem_par, only: pressure_element,potential_dot_dot_acoustic, &
+                         potential_dot_dot_gravitoacoustic,displ_elastic,&
+                         displs_poroelastic,displw_poroelastic,acoustic,gravitoacoustic,elastic,poroelastic,&
+                         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
+                         AXISYM,nglob,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
+                         nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
+                         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
+                         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,ispec,e1,e11, &
+                         ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS
 
   implicit none
 
   include "constants.h"
 
-  integer nspec,numat,ispec
-
-  integer, dimension(nspec) :: kmato
-  integer, dimension(NGLLX,NGLLX,nspec) :: ibool
-
-  double precision, dimension(2,numat) :: density
-  double precision, dimension(numat) :: porosity,tortuosity
-  double precision, dimension(4,3,numat) :: poroelastcoef
-  double precision, dimension(9,numat) :: anisotropy
-  double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext
-  double precision, dimension(NGLLX,NGLLZ,nspec) ::  c11ext,c15ext,c13ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
-
-! pressure in this element
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: pressure_element
-
-  logical, dimension(nspec) :: acoustic,gravitoacoustic,elastic,poroelastic,anisotropic
-  integer :: nglob_acoustic
-  real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: potential_dot_dot_acoustic
-  integer :: nglob_gravitoacoustic
-  real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: potential_dot_dot_gravitoacoustic
-  integer :: nglob_elastic
-  real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: displ_elastic
-  integer :: nglob_poroelastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: displs_poroelastic,displw_poroelastic
-
-! array with derivatives of Lagrange polynomials
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
-  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
-
-
-  logical :: AXISYM
-  integer :: nglob
-  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLJ) :: hprimeBar_xx
-  logical, dimension(nspec) :: is_on_the_axis
-  double precision, dimension(NDIM,nglob), intent(in) :: coord
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: jacobian
-
-  logical :: assign_external_model,ATTENUATION_VISCOELASTIC_SOLID
-
-  integer :: N_SLS
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11
   real(kind=CUSTOM_REAL) :: e1_sum,e11_sum
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
+
   integer :: i_sls
 
 ! local variables

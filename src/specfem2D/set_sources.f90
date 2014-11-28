@@ -43,29 +43,16 @@
 !========================================================================
 
 
-  subroutine set_sources(myrank,NSOURCES,source_type,time_function_type, &
-                      x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource,aval, &
-                      t0,initialfield,deltat,USER_T0)
+  subroutine set_sources()
 
 ! gets source parameters
 
+  use specfem_par, only : myrank,NSOURCES,source_type,time_function_type, &
+                          x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource,aval, &
+                          t0,initialfield,deltat,USER_T0
+
   implicit none
   include "constants.h"
-
-  integer :: myrank
-  integer :: NSOURCES
-  integer, dimension(NSOURCES) :: source_type,time_function_type
-  double precision, dimension(NSOURCES) :: x_source,z_source, &
-    Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource
-  double precision, dimension(NSOURCES) :: aval
-  double precision :: t0
-  double precision :: deltat
-  logical :: initialfield
-
-! use this t0 as earliest starting time rather than the automatically calculated one
-! (must be positive and bigger than the automatically one to be effective;
-!  simulation will start at t = - t0)
-  double precision :: USER_T0
 
   ! local parameters
   integer :: i_source

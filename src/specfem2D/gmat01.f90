@@ -41,28 +41,25 @@
 !
 !========================================================================
 
-  subroutine gmat01(density_array,porosity_array,tortuosity_array, &
-                    aniso_array,permeability,poroelastcoef, &
-                    numat,myrank,QKappa_array,Qmu_array, &
-                    freq0,Q0,f0,ATTENUATION_PORO_FLUID_PART)
+  subroutine gmat01(f0)
 
 ! reads properties of a 2D isotropic or anisotropic linear elastic element
+
+  use specfem_par, only : density,porosity,tortuosity, &
+                          anisotropy,permeability,poroelastcoef, &
+                          numat,myrank,QKappa_attenuation,Qmu_attenuation, &
+                          freq0,Q0,ATTENUATION_PORO_FLUID_PART
 
   implicit none
   include "constants.h"
 
-  integer :: numat,myrank
-  double precision :: density_array(2,numat),poroelastcoef(4,3,numat),porosity_array(numat)
-  double precision :: aniso_array(9,numat),tortuosity_array(numat),permeability(3,numat)
-  double precision :: QKappa_array(numat),Qmu_array(numat)
-  double precision :: f0,Q0,freq0
-  logical :: ATTENUATION_PORO_FLUID_PART
+  double precision f0
 
   ! local parameters
   double precision :: lambdaplus2mu,kappa
   double precision :: young,poisson,cp,cs,mu,two_mu,lambda,QKappa,Qmu
   double precision :: lambdaplus2mu_s,lambdaplus2mu_fr,kappa_s,kappa_f,kappa_fr
-  double precision :: young_s,poisson_s,density(2),phi,tortuosity
+  double precision :: young_s,poisson_s,density_mat(2),phi,tortuosity_mat
   double precision :: cpIsquare,cpIIsquare,cssquare,mu_s,mu_fr,eta_f,lambda_s,lambda_fr
   double precision :: val1,val2,val3,val4,val5,val6
   double precision :: val7,val8,val9,val10,val11,val12,val0
@@ -73,17 +70,18 @@
   character(len=80) datlin
 
 
+
   !
   !---- loop over the different material sets
   !
-  density_array(:,:) = zero
-  porosity_array(:) = zero
-  tortuosity_array(:) = zero
-  aniso_array(:,:) = zero
+  density(:,:) = zero
+  porosity(:) = zero
+  tortuosity(:) = zero
+  anisotropy(:,:) = zero
   permeability(:,:) = zero
   poroelastcoef(:,:,:) = zero
-  QKappa_array(:) = 9999.
-  Qmu_array(:) = 9999.
+  QKappa_attenuation(:) = 9999.
+  Qmu_attenuation(:) = 9999.
 
   if(myrank == 0) write(IOUT,100) numat
 
@@ -99,7 +97,7 @@
      !---- isotropic material, P and S velocities given, allows for declaration of elastic/acoustic material
      !---- elastic (cs/=0) and acoustic (cs=0)
      if(indic == 1) then
-        density(1) = val0
+        density_mat(1) = val0
 
         ! P and S velocity
         cp = val1
@@ -112,8 +110,8 @@
           stop 'negative or null values of Q attenuation factor not allowed; set them equal to 9999 to indicate no attenuation'
 
         ! Lame parameters
-        lambdaplus2mu = density(1)*cp*cp
-        mu = density(1)*cs*cs
+        lambdaplus2mu = density_mat(1)*cp*cp
+        mu = density_mat(1)*cs*cs
         two_mu = 2.d0*mu
         lambda = lambdaplus2mu - two_mu
 
@@ -132,7 +130,7 @@
         !---- anisotropic material, c11, c13, c33 and c44 given in Pascal
      else if (indic == 2) then
 
-        density(1) =val0
+        density_mat(1) =val0
 
         ! Anisotropy parameters
         c11 = val1
@@ -146,12 +144,12 @@
         c25 = val9
 
         ! P and S velocity
-        cp = sqrt(c33/density(1))
-        cs = sqrt(c55/density(1))
+        cp = sqrt(c33/density_mat(1))
+        cs = sqrt(c55/density_mat(1))
 
         ! Lame parameters
-        lambdaplus2mu = density(1)*cp*cp
-        mu = density(1)*cs*cs
+        lambdaplus2mu = density_mat(1)*cp*cp
+        mu = density_mat(1)*cs*cs
         two_mu = 2.d0*mu
         lambda = lambdaplus2mu - two_mu
 
@@ -164,14 +162,15 @@
         ! Poisson's ratio
         poisson = half*(3.d0*kappa-two_mu)/(3.d0*kappa+mu)
 
+
         !---- isotropic material, moduli are given, allows for declaration of poroelastic material
         !---- poroelastic (0<phi<1)
      else if (indic == 3) then
         ! Qmu values
         Qmu = val12
 
-        density(1) =val0
-        density(2) =val1
+        density_mat(1) =val0
+        density_mat(2) =val1
 
         ! Solid properties
         kappa_s = val7
@@ -188,7 +187,7 @@
         lambdaplus2mu_fr = kappa_fr + FOUR_THIRDS*mu_fr
         lambda_fr = lambdaplus2mu_fr - 2.d0*mu_fr
         phi = val2
-        tortuosity = val3
+        tortuosity_mat = val3
 
         ! Biot coefficients for the input phi
         D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
@@ -198,11 +197,11 @@
 
         call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare, &
                                   H_biot,C_biot,M_biot,mu_fr,phi, &
-                                  tortuosity,density(1),density(2),eta_f, &
+                                  tortuosity_mat,density_mat(1),density_mat(2),eta_f, &
                                   val4,f0,freq0,Q0,w_c,ATTENUATION_PORO_FLUID_PART)
 
-        porosity_array(n) = val2
-        tortuosity_array(n) = val3
+        porosity(n) = val2
+        tortuosity(n) = val3
         permeability(1,n) = val4
         permeability(2,n) = val5
         permeability(3,n) = val6
@@ -225,38 +224,38 @@
      !----  set elastic coefficients and density
      !
      if(indic == 1) then
-        density_array(1,n) = density(1)
+        density(1,n) = density_mat(1)
         poroelastcoef(1,1,n) = lambda
         poroelastcoef(2,1,n) = mu
         poroelastcoef(3,1,n) = lambdaplus2mu
         poroelastcoef(4,1,n) = zero
-        QKappa_array(n) = QKappa
-        Qmu_array(n) = Qmu
+        QKappa_attenuation(n) = QKappa
+        Qmu_attenuation(n) = Qmu
         if(mu > TINYVAL) then
-           porosity_array(n) = 0.d0
+           porosity(n) = 0.d0
         else
-           porosity_array(n) = 1.d0
+           porosity(n) = 1.d0
         endif
      else if (indic == 2) then
-        density_array(1,n) = density(1)
+        density(1,n) = density_mat(1)
 ! dummy poroelastcoef values, trick to avoid floating invalid
         poroelastcoef(1,1,n) = lambda
         poroelastcoef(2,1,n) = mu
         poroelastcoef(3,1,n) = lambdaplus2mu
         poroelastcoef(4,1,n) = zero
-        aniso_array(1,n) = c11
-        aniso_array(2,n) = c13
-        aniso_array(3,n) = c15
-        aniso_array(4,n) = c33
-        aniso_array(5,n) = c35
-        aniso_array(6,n) = c55
-        aniso_array(7,n) = c12
-        aniso_array(8,n) = c23
-        aniso_array(9,n) = c25
-        porosity_array(n) = 0.d0
+        anisotropy(1,n) = c11
+        anisotropy(2,n) = c13
+        anisotropy(3,n) = c15
+        anisotropy(4,n) = c33
+        anisotropy(5,n) = c35
+        anisotropy(6,n) = c55
+        anisotropy(7,n) = c12
+        anisotropy(8,n) = c23
+        anisotropy(9,n) = c25
+        porosity(n) = 0.d0
      else if (indic == 3) then
-        density_array(1,n) = density(1)
-        density_array(2,n) = density(2)
+        density(1,n) = density_mat(1)
+        density(2,n) = density_mat(2)
         poroelastcoef(1,1,n) = lambda_s
         poroelastcoef(2,1,n) = mu_s    ! = mu_fr
         poroelastcoef(3,1,n) = lambdaplus2mu_s
@@ -280,7 +279,7 @@
         if(indic == 1) then
            ! material can be acoustic (fluid) or elastic (solid)
            if(poroelastcoef(2,1,n) > TINYVAL) then    ! elastic
-              write(IOUT,200) n,cp,cs,density(1),poisson,lambda,mu,kappa,young,QKappa,Qmu
+              write(IOUT,200) n,cp,cs,density_mat(1),poisson,lambda,mu,kappa,young,QKappa,Qmu
               if(poisson < 0.d0) then
                 write(IOUT,*)
                 write(IOUT,*) 'Materials with a negative Poisson''s ratio can exist,'
@@ -290,14 +289,14 @@
                 write(IOUT,*)
               endif
            else                                       ! acoustic
-              write(IOUT,300) n,cp,density(1),kappa,QKappa,Qmu
+              write(IOUT,300) n,cp,density_mat(1),kappa,QKappa,Qmu
            endif
         else if(indic == 2) then                      ! elastic (anisotropic)
-           write(IOUT,400) n,density(1),c11,c13,c15,c33,c35,c55,c12,c23,c25
+           write(IOUT,400) n,density_mat(1),c11,c13,c15,c33,c35,c55,c12,c23,c25
         else if(indic == 3) then
            ! material is poroelastic (solid/fluid)
            write(iout,500) n,sqrt(cpIsquare),sqrt(cpIIsquare),sqrt(cssquare)
-           write(iout,600) density(1),poisson_s,lambda_s,mu_s,kappa_s,young_s
+           write(iout,600) density_mat(1),poisson_s,lambda_s,mu_s,kappa_s,young_s
            if(poisson_s < 0.d0) then
              write(IOUT,*)
              write(IOUT,*) 'Materials with a negative Poisson''s ratio can exist,'
@@ -306,8 +305,8 @@
              write(IOUT,*) 'Hope you know what you are doing...'
              write(IOUT,*)
            endif
-           write(iout,700) density(2),kappa_f,eta_f
-           write(iout,800) lambda_fr,mu_fr,kappa_fr,porosity_array(n),tortuosity_array(n),&
+           write(iout,700) density_mat(2),kappa_f,eta_f
+           write(iout,800) lambda_fr,mu_fr,kappa_fr,porosity(n),tortuosity(n),&
                 permeability(1,n),permeability(2,n),permeability(3,n),Qmu
            write(iout,900) D_biot,H_biot,C_biot,M_biot,w_c
         endif

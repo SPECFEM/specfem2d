@@ -42,62 +42,36 @@
 
 ! for acoustic solver
 
-  subroutine compute_coupling_acoustic_el(nspec,nglob_elastic,nglob_acoustic,num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz,&
-                              gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,displ_elastic,displ_elastic_old,&
-                              potential_dot_dot_acoustic,fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
-                              fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
-                              AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &
-                              PML_BOUNDARY_CONDITIONS,nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
-                              alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,timeval,deltat,&
-                              rmemory_fsb_displ_elastic_LDDRK,i_stage,stage_time_scheme,alpha_LDDRK,beta_LDDRK)
+  subroutine compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic,PML_BOUNDARY_CONDITIONS)
+
+
+  use specfem_par, only: nspec,nglob_elastic,nglob_acoustic,num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz,&
+                         gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,&
+                         fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
+                         fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
+                         AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj,&
+                         nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
+                         alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,timeval,deltat,&
+                         rmemory_fsb_displ_elastic_LDDRK,i_stage,stage_time_scheme,alpha_LDDRK,beta_LDDRK
+
 
    implicit none
    include 'constants.h'
 
-   integer :: nspec,nglob_elastic,nglob_acoustic,num_fluid_solid_edges
-   integer :: nglob
-   logical :: AXISYM
-
-   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
-   real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll,wzgll
-
-   ! Gauss-Lobatto-Jacobi points and weights
-   double precision, dimension(NGLJ) :: xiglj
-   real(kind=CUSTOM_REAL), dimension(NGLJ) :: wxglj
-   logical, dimension(nspec) :: is_on_the_axis
-   double precision, dimension(NDIM,nglob), intent(in) :: coord
-   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
-
-   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec)  :: xix,xiz,gammax,gammaz,jacobian
-   integer, dimension(NGLLX,NEDGES) :: ivalue,jvalue,ivalue_inverse,jvalue_inverse
-
    real(kind=CUSTOM_REAL),dimension(3,nglob_elastic) :: displ_elastic,displ_elastic_old
    real(kind=CUSTOM_REAL),dimension(nglob_acoustic) :: potential_dot_dot_acoustic
-   integer, dimension(num_fluid_solid_edges) :: fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
-                                                fluid_solid_elastic_ispec,fluid_solid_elastic_iedge
-   integer :: nspec_PML
-   double precision, dimension(NGLLX,NGLLZ,nspec_PML) :: &
-                  K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
    logical:: PML_BOUNDARY_CONDITIONS
-   logical, dimension(nspec) :: is_PML
-   integer, dimension(nspec) :: spec_to_PML
-   integer, dimension(nspec) :: region_CPML
-   real(kind=CUSTOM_REAL),dimension(1,3,NGLLX,NGLLZ,num_fluid_solid_edges) :: rmemory_fsb_displ_elastic
-
-! for ADE_PML with LDDRK scheme
-   integer :: i_stage,stage_time_scheme
-   real(kind=CUSTOM_REAL), dimension(Nstages) :: alpha_LDDRK,beta_LDDRK
-   real(kind=CUSTOM_REAL),dimension(1,3,NGLLX,NGLLZ,num_fluid_solid_edges) :: rmemory_fsb_displ_elastic_LDDRK
 
 !local variable
-
+   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
    integer :: inum,ispec_acoustic,ispec_elastic,iedge_acoustic,iedge_elastic,ipoin1D,i,j,iglob,&
               ispec_PML,CPML_region_local,singularity_type_xz
    real(kind=CUSTOM_REAL) :: displ_x,displ_z,displ_n,&
                              xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
-   double precision :: timeval,deltat
    double precision :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z, &
                              A8,A9,A10,bb_xz_1,bb_xz_2,coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2
+
+
 
       ! loop on all the coupling edges
 
@@ -244,6 +218,8 @@
         enddo
 
       enddo
+
+
 
   end subroutine compute_coupling_acoustic_el
 

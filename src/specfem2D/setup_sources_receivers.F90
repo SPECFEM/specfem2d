@@ -42,57 +42,24 @@
 !
 !========================================================================
 
-  subroutine setup_sources_receivers(NSOURCES,initialfield,source_type, &
-     coord,ibool,nglob,nspec,nelem_acoustic_surface,acoustic_surface,elastic,poroelastic, &
-     x_source,z_source,ispec_selected_source,ispec_selected_rec, &
-     is_proc_source,nb_proc_source, &
-     sourcearray,Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,npgeo, &
-     nproc,myrank,xi_source,gamma_source,coorg,knods,ngnod, &
-     nrec,nrecloc,recloc,which_proc_receiver,st_xval,st_zval, &
-     xi_receiver,gamma_receiver,station_name,network_name,x_final_receiver,z_final_receiver,iglob_source)
+  subroutine setup_sources_receivers()
 
+  use specfem_par, only: NSOURCES,initialfield,source_type, &
+                         coord,ibool,nglob,nspec,nelem_acoustic_surface,acoustic_surface,elastic,poroelastic, &
+                         x_source,z_source,ispec_selected_source,ispec_selected_rec, &
+                         is_proc_source,nb_proc_source, &
+                         sourcearray,Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,npgeo, &
+                         nproc,myrank,xi_source,gamma_source,coorg,knods,ngnod, &
+                         nrec,nrecloc,recloc,which_proc_receiver,st_xval,st_zval, &
+                         xi_receiver,gamma_receiver,station_name,network_name,x_final_receiver,&
+                         z_final_receiver,iglob_source,i_source,ispec
   implicit none
 
   include "constants.h"
 
-  logical :: initialfield
-  integer :: NSOURCES
-  integer :: npgeo,ngnod,myrank,nproc
-  integer :: nglob,nspec,nelem_acoustic_surface
-
-  ! Gauss-Lobatto-Legendre points
-  double precision, dimension(NGLLX) :: xigll
-  double precision, dimension(NGLLZ) :: zigll
-
-  ! for receivers
-  integer  :: nrec,nrecloc
-  integer, dimension(nrec) :: recloc, which_proc_receiver
-  integer, dimension(nrec) :: ispec_selected_rec
-  double precision, dimension(nrec) :: xi_receiver,gamma_receiver,st_xval,st_zval
-  double precision, dimension(nrec) :: x_final_receiver, z_final_receiver
-
-  ! timing information for the stations
-  character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
-  character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name
-
-  ! for sources
-  integer, dimension(NSOURCES) :: source_type
-  integer, dimension(NSOURCES) :: ispec_selected_source,is_proc_source,nb_proc_source,iglob_source
-  real(kind=CUSTOM_REAL), dimension(NSOURCES,NDIM,NGLLX,NGLLZ) :: sourcearray
-  double precision, dimension(NSOURCES) :: x_source,z_source,xi_source,gamma_source,Mxx,Mzz,Mxz
-
-  logical, dimension(nspec) :: elastic,poroelastic
-  integer, dimension(ngnod,nspec) :: knods
-  integer, dimension(5,nelem_acoustic_surface) :: acoustic_surface
-  integer, dimension(NGLLX,NGLLZ,nspec)  :: ibool
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec)  :: xix,xiz,gammax,gammaz
-  double precision, dimension(NDIM,npgeo) :: coorg
-  double precision, dimension(NDIM,nglob) :: coord
-
-  integer  :: ixmin, ixmax, izmin, izmax
-
   ! Local variables
-  integer i_source,ispec,ispec_acoustic_surface
+  integer ispec_acoustic_surface
+  integer  :: ixmin, ixmax, izmin, izmax
 #ifndef USE_MPI
   integer irec
 #endif

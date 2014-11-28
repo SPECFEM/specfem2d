@@ -95,6 +95,7 @@ DEFAULT = \
 
 
 OBJS_SPECFEM2D = \
+	$O/specfem2D_par.o \
 	$O/acoustic_forcing_boundary.o \
 	$O/assemble_MPI.o \
 	$O/attenuation_model.o \
@@ -239,9 +240,71 @@ $O/convolve_source_timefunction.o: ${SHARED}/convolve_source_timefunction.f90
 $O/adj_seismogram.o: ${SHARED}/adj_seismogram.f90
 	${F90} $(DEF_FFLAGS) -c -o $O/adj_seismogram.o ${SHARED}/adj_seismogram.f90
 
+
+###
+### Module dependencies
+###
+$O/specfem2D.o: $O/specfem2D_par.o
+$O/acoustic_cuda.o: $O/specfem2D_par.o
+$O/elastic_cuda.o: $O/specfem2D_par.o
+$O/init_host_to_dev_variable.o: $O/specfem2D_par.o
+$O/prepare_timerun_gpu.o: $O/specfem2D_par.o
+$O/compute_arrays_source.o: $O/specfem2D_par.o 
+$O/gmat01.o: $O/specfem2D_par.o
+$O/get_MPI.o: $O/specfem2D_par.o
+$O/compute_coupling_acoustic_el.o: $O/specfem2D_par.o
+$O/locate_receivers.o: $O/specfem2D_par.o
+$O/prepare_assemble_MPI.o: $O/specfem2D_par.o
+$O/update_displacement_scheme.o: $O/specfem2D_par.o
+$O/read_databases.o: $O/specfem2D_par.o
+$O/set_sources.o: $O/specfem2D_par.o
+$O/initialize_simulation.o: $O/specfem2D_par.o
+$O/define_derivation_matrices.o: $O/specfem2D_par.o
+$O/createnum_fast.o: $O/specfem2D_par.o
+$O/createnum_slow.o: $O/specfem2D_par.o
+$O/read_external_model.o: $O/specfem2D_par.o
+$O/plotgll.o: $O/specfem2D_par.o
+$O/setup_sources_receivers.o: $O/specfem2D_par.o
+$O/compute_arrays_source.o: $O/specfem2D_par.o
+$O/pml_init.o: $O/specfem2D_par.o
+$O/axisymmetric_routines.o: $O/specfem2D_par.o
+$O/invert_mass_matrix.o: $O/specfem2D_par.o
+$O/assemble_mpi.o: $O/specfem2D_par.o
+$O/checkgrid.o: $O/specfem2D_par.o
+$O/prepare_absorb.o: $O/specfem2D_par.o
+$O/prepare_initial_field.o: $O/specfem2D_par.o
+$O/paco_beyond_critical.o: $O/specfem2D_par.o
+$O/prepare_source_time_function.o: $O/specfem2D_par.o
+$O/noise_tomography.o: $O/specfem2D_par.o
+$O/update_displacement_scheme.o: $O/specfem2D_par.o
+$O/enforce_acoustic_free_surface.o: $O/specfem2D_par.o
+$O/compute_forces_acoustic.o: $O/specfem2D_par.o
+$O/acoustic_forcing_boundary.o: $O/specfem2D_par.o
+$O/compute_forces_gravitoacoustic.o: $O/specfem2D_par.o
+$O/compute_forces_viscoelastic.o: $O/specfem2D_par.o
+$O/compute_coupling_viscoelastic_ac.o: $O/specfem2D_par.o
+$O/compute_forces_poro_fluid.o: $O/specfem2D_par.o
+$O/compute_forces_poro_solid.o: $O/specfem2D_par.o
+$O/compute_energy.o: $O/specfem2D_par.o
+$O/check_stability.o: $O/specfem2D_par.o
+$O/compute_curl_one_element.o: $O/specfem2D_par.o
+$O/compute_pressure.o: $O/specfem2D_par.o
+$O/compute_vector_field.o: $O/specfem2D_par.o
+$O/create_color_image.o: $O/specfem2D_par.o
+$O/write_seismograms.o: $O/specfem2D_par.o
+$O/plotpost.o: $O/specfem2D_par.o
+$O/prepare_color_image.o: $O/specfem2D_par.o
+$O/attenuation_model.o: $O/specfem2D_par.o
+$O/construct_acoustic_surfaces.o: $O/specfem2D_par.o
+$O/get_global.o: $O/specfem2D_par.o
+$O/recompute_jacobian.o: $O/specfem2D_par.o
+
 ##
 ## specfem2D
 ##
+$O/specfem2D_par.o:  ${S}/specfem2D_par.f90 ${SETUP}/constants.h
+	${F90} $(DEF_FFLAGS) -c -o $O/specfem2D_par.o ${S}/specfem2D_par.f90
+
 $O/assemble_MPI.o: ${S}/assemble_MPI.F90 ${SETUP}/constants.h
 	${F90} $(DEF_FFLAGS) -c -o $O/assemble_MPI.o ${S}/assemble_MPI.F90
 

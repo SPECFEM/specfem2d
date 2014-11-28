@@ -42,7 +42,11 @@
 !
 !========================================================================
 
-  subroutine invert_mass_matrix_init(any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic, &
+  subroutine invert_mass_matrix_init()
+
+!  builds the global mass matrix
+
+  use specfem_par, only: any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic, &
                                 rmass_inverse_elastic_one,nglob_elastic, &
                                 rmass_inverse_acoustic,nglob_acoustic, &
                                 rmass_inverse_gravitoacoustic, &
@@ -62,21 +66,14 @@
                                 K_x_store,K_z_store,is_PML,&
                                 AXISYM,nglob,is_on_the_axis,coord,wxglj,xiglj, &
                                 d_x_store,d_z_store,PML_BOUNDARY_CONDITIONS,region_CPML, &
-                                nspec_PML,spec_to_PML,time_stepping_scheme)
-
-!  builds the global mass matrix
+                                nspec_PML,spec_to_PML,time_stepping_scheme,ispec,i,j,iglob
 
   implicit none
   include 'constants.h'
 
-  logical :: AXISYM
-  logical :: anyabs
-  integer :: nelemabs,ibegin,iend,ispecabs,jbegin,jend
-  integer :: nglob
-  integer, dimension(nelemabs) :: numabs,ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
-                                  ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2
-  double precision :: deltat
-  logical, dimension(4,nelemabs)  :: codeabs
+
+  integer :: ibegin,iend,ispecabs,jbegin,jend
+
 
   ! local parameter
   ! material properties of the elastic medium
@@ -84,61 +81,10 @@
   integer count_left,count_right,count_bottom
   real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,rho_vp,rho_vs,tx,ty,tz,&
                             weight,xxi,zxi,xgamma,zgamma,jacobian1D
-  logical :: any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic
-
-  ! inverse mass matrices
-  integer :: nglob_elastic
-  real(kind=CUSTOM_REAL), dimension(nglob_elastic) :: rmass_inverse_elastic_one,rmass_inverse_elastic_three
-
-  integer :: nglob_acoustic
-  real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: rmass_inverse_acoustic
-
-  integer :: nglob_gravitoacoustic
-  real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: rmass_inverse_gravitoacoustic
-  real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: rmass_inverse_gravito
-
-  integer :: nglob_poroelastic
-  real(kind=CUSTOM_REAL), dimension(nglob_poroelastic) :: rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic
-
-  integer :: nspec
-  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
-  integer, dimension(nspec) :: kmato
-  real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
-! weights for the GLJ quadrature
-  real(kind=CUSTOM_REAL), dimension(NGLJ) :: wxglj
-! Gauss-Lobatto-Jacobi points of integration
-  double precision, dimension(NGLJ) :: xiglj
-  real(kind=CUSTOM_REAL), dimension(NGLLX) :: wzgll
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: jacobian
-
-  logical,dimension(nspec) :: elastic,acoustic,gravitoacoustic,poroelastic
-
-  logical :: assign_external_model
-  integer :: numat
-  double precision, dimension(2,numat) :: density
-  double precision, dimension(4,3,numat) :: poroelastcoef
-  double precision, dimension(numat) :: porosity,tortuosity
-  double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,rhoext,vsext
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
-
-  ! local parameters
-  integer :: ispec,i,j,iglob
   double precision :: rhol,kappal,mul_relaxed,lambdal_relaxed
   double precision :: rhol_s,rhol_f,rhol_bar,phil,tortl
-
-  logical, dimension(nspec) :: is_on_the_axis
-  double precision, dimension(NDIM,nglob), intent(in) :: coord
-
-  integer :: nspec_PML,ispec_PML
-  integer, dimension(nspec) :: spec_to_PML
-  double precision, dimension(NGLLX,NGLLZ,nspec_PML) :: K_x_store,K_z_store,d_x_store,d_z_store
-  logical, dimension(nspec) :: is_PML
-  logical :: PML_BOUNDARY_CONDITIONS,this_element_has_PML
-  integer, dimension(nspec) :: region_CPML
-
-  ! time scheme
-  integer :: time_stepping_scheme
+  integer :: ispec_PML
+  logical :: this_element_has_PML
 
   ! initialize mass matrix
   if(any_elastic) rmass_inverse_elastic_one(:) = 0._CUSTOM_REAL
@@ -770,36 +716,21 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine invert_mass_matrix(any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic, &
+  subroutine invert_mass_matrix()
+
+! inverts the global mass matrix
+
+  use specfem_par, only: any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic, &
                                 rmass_inverse_elastic_one,rmass_inverse_elastic_three,&
                                 nglob_elastic, &
                                 rmass_inverse_acoustic,nglob_acoustic, &
                                 rmass_inverse_gravitoacoustic, &
                                 rmass_inverse_gravito,nglob_gravitoacoustic, &
                                 rmass_s_inverse_poroelastic, &
-                                rmass_w_inverse_poroelastic,nglob_poroelastic)
-
-! inverts the global mass matrix
-
+                                rmass_w_inverse_poroelastic,nglob_poroelastic
   implicit none
   include 'constants.h'
 
-  logical any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic
-
-! inverse mass matrices
-  integer :: nglob_elastic
-  real(kind=CUSTOM_REAL), dimension(nglob_elastic) :: rmass_inverse_elastic_one,&
-                                                      rmass_inverse_elastic_three
-
-  integer :: nglob_acoustic
-  real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: rmass_inverse_acoustic
-
-  integer :: nglob_gravitoacoustic
-  real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: rmass_inverse_gravitoacoustic
-  real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: rmass_inverse_gravito
-
-  integer :: nglob_poroelastic
-  real(kind=CUSTOM_REAL), dimension(nglob_poroelastic) :: rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic
 
 ! fill mass matrix with fictitious non-zero values to make sure it can be inverted globally
 ! (this can happen when some degrees of freedom have been removed from some of the global arrays)

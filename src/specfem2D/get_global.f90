@@ -43,15 +43,12 @@
 
 ! create a sorted version of the indirect addressing to reduce cache misses
 
-  subroutine get_global(nspec,nglob,ibool,copy_ibool_ori,integer_mask_ibool)
+  subroutine get_global()
+
+  use specfem_par, only : nspec,nglob,ibool,copy_ibool_ori,integer_mask_ibool
 
   implicit none
   include "constants.h"
-
-  integer :: nspec,nglob
-
-  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool,copy_ibool_ori
-  integer, dimension(nglob) :: integer_mask_ibool
 
   ! local parameters
   integer :: inumber,ispec,i,j

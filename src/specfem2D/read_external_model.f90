@@ -42,46 +42,21 @@
 !
 !========================================================================
 
-  subroutine read_external_model(any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic, &
-                acoustic,gravitoacoustic,elastic,poroelastic,anisotropic,nspec,nglob,N_SLS,ibool, &
-                f0_attenuation,READ_VELOCITIES_AT_f0,tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
-                inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent, &
-                inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,&
-                coord,kmato,rhoext,vpext,vsext,gravityext,Nsqext, &
-                QKappa_attenuationext,Qmu_attenuationext, &
-                c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
-                READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID,p_sv)
+  subroutine read_external_model()
+
+  use specfem_par, only: any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic, &
+                         acoustic,gravitoacoustic,elastic,poroelastic,anisotropic,nspec,nglob,N_SLS,ibool, &
+                         f0_attenuation,READ_VELOCITIES_AT_f0,tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,&
+                         phi_nu1_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent, &
+                         inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,&
+                         coord,kmato,rhoext,vpext,vsext,gravityext,Nsqext, &
+                         QKappa_attenuationext,Qmu_attenuationext, &
+                         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
+                         READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID,p_sv
 
   implicit none
   include "constants.h"
 
-  integer :: nspec,nglob
-  double precision  :: f0_attenuation
-  logical :: READ_VELOCITIES_AT_f0
-
-  ! Mesh
-  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
-  double precision, dimension(NDIM,nglob) :: coord
-
-  ! Material properties
-  logical :: any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic,READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID,p_sv
-  integer, dimension(nspec) :: kmato
-  logical, dimension(nspec) :: acoustic,gravitoacoustic,elastic,poroelastic
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: rhoext,vpext,vsext,gravityext,Nsqext
-
-  ! for attenuation
-  integer :: N_SLS
-  real(kind=CUSTOM_REAL) :: Mu_nu1_sent,Mu_nu2_sent
-  real(kind=CUSTOM_REAL), dimension(N_SLS) :: tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
-    inv_tau_sigma_nu2_sent,phi_nu2_sent
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: inv_tau_sigma_nu1,phi_nu1, &
-    inv_tau_sigma_nu2,phi_nu2
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: QKappa_attenuationext,Qmu_attenuationext
-
-  ! for anisotropy
-  logical, dimension(nspec) :: anisotropic
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
 
   ! Local variables
   integer :: i,j,ispec,iglob
@@ -220,9 +195,8 @@
 !       if no attenuation in that elastic element
         if(QKappa_attenuationext(i,j,ispec) > 9998.999d0) cycle
 
-        call attenuation_model(N_SLS,QKappa_attenuationext(i,j,ispec),Qmu_attenuationext(i,j,ispec), &
-                              f0_attenuation,tau_epsilon_nu1,tau_epsilon_nu2, &
-                              inv_tau_sigma_nu1_sent,phi_nu1_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent)
+        call attenuation_model(QKappa_attenuationext(i,j,ispec),Qmu_attenuationext(i,j,ispec))
+
         inv_tau_sigma_nu1(i,j,ispec,:) = inv_tau_sigma_nu1_sent(:)
         phi_nu1(i,j,ispec,:) = phi_nu1_sent(:)
         inv_tau_sigma_nu2(i,j,ispec,:) = inv_tau_sigma_nu2_sent(:)
@@ -233,8 +207,8 @@
         if(ATTENUATION_VISCOELASTIC_SOLID .and. READ_VELOCITIES_AT_F0) then
           if(anisotropic(ispec) .or. poroelastic(ispec) .or. gravitoacoustic(ispec)) stop &
              'READ_VELOCITIES_AT_F0 only implemented for non anisotropic, non poroelastic, non gravitoacoustic materials for now'
-          call shift_velocities_from_f0(vpext(i,j,ispec),vsext(i,j,ispec),rhoext(i,j,ispec),mu_dummy,lambda_dummy, &
-                       f0_attenuation,tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent,N_SLS)
+          call shift_velocities_from_f0(vpext(i,j,ispec),vsext(i,j,ispec),rhoext(i,j,ispec),mu_dummy,lambda_dummy)
+
         endif
 
         previous_vsext = vsext(i,j,ispec)

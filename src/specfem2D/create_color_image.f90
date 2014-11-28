@@ -7,7 +7,7 @@
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !                and CNRS / University of Marseille, France
-!                 (there are currently many more authors!)
+!                 (there are currently maNZ_IMAGE_color more authors!)
 ! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This software is a computer program whose purpose is to solve
@@ -41,40 +41,28 @@
 !
 !========================================================================
 
-  subroutine create_color_image(color_image_2D_data,iglob_image_color_2D, &
-                                  NX,NY,it,isnapshot_number,cutsnaps,image_color_vp_display, &
-                                  USE_SNAPSHOT_NUMBER_IN_FILENAME,POWER_DISPLAY_COLOR, &
-                                  DRAW_SOURCES_AND_RECEIVERS,NSOURCES,nrec, &
-                                  ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver, &
-                                  USE_CONSTANT_MAX_AMPLITUDE,CONSTANT_MAX_AMPLITUDE_TO_USE)
+  subroutine create_color_image()
+
 
 ! display a given field as a red and blue color JPEG image
 
 ! to display the snapshots : display image*.jpg
 
+  use specfem_par, only: image_color_data,iglob_image_color, &
+                         NX_IMAGE_color,NZ_IMAGE_color,it,isnapshot_number,cutsnaps,image_color_vp_display, &
+                         USE_SNAPSHOT_NUMBER_IN_FILENAME,POWER_DISPLAY_COLOR, &
+                         DRAW_SOURCES_AND_RECEIVERS,NSOURCES,nrec, &
+                         ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver, &
+                         USE_CONSTANT_MAX_AMPLITUDE,CONSTANT_MAX_AMPLITUDE_TO_USE
+
   implicit none
 
   include "constants.h"
 
-  integer :: NX,NY,it,isnapshot_number
-
-  double precision :: cutsnaps,CONSTANT_MAX_AMPLITUDE_TO_USE
-  logical :: USE_CONSTANT_MAX_AMPLITUDE
-
-  integer, dimension(NX,NY) :: iglob_image_color_2D
-
-  double precision, dimension(NX,NY) :: color_image_2D_data
-  double precision, dimension(NX,NY) :: image_color_vp_display
-
-! to draw the sources and receivers
-  integer, intent(in) :: NSOURCES,nrec
-  logical, intent(in) :: DRAW_SOURCES_AND_RECEIVERS
-  integer, dimension(NSOURCES), intent(in) :: ix_image_color_source,iy_image_color_source
-  integer, dimension(nrec), intent(in) :: ix_image_color_receiver,iy_image_color_receiver
   integer :: i
 
 ! for the JPEG library
-  character(len=1), dimension(3,NX,NY) :: JPEG_raw_image
+  character(len=1), dimension(3,NX_IMAGE_color,NZ_IMAGE_color) :: JPEG_raw_image
 
   integer :: ix,iy,R,G,B
 
@@ -82,11 +70,6 @@
 
   character(len=100) :: filename
 
-! non linear display to enhance small amplitudes in color images
-  double precision :: POWER_DISPLAY_COLOR
-
-! use snapshot number in the file name of JPG color snapshots instead of the time step
-  logical :: USE_SNAPSHOT_NUMBER_IN_FILENAME
 
 ! size of cross and square in pixels drawn to represent the source and the receivers in JPEG pictures
   integer :: half_width_cross, thickness_cross, half_size_square
@@ -94,13 +77,13 @@
 ! make the size of the source and receiver symbols depend on the size of the picture
 ! using a rule of thumb
   thickness_cross = 1
-  if(NX > 2000 .or. NY > 2000) then
+  if(NX_IMAGE_color > 2000 .or. NZ_IMAGE_color > 2000) then
     half_width_cross = 6
     half_size_square = 4
-  else if(NX <= 100 .or. NY <= 100) then
+  else if(NX_IMAGE_color <= 100 .or. NZ_IMAGE_color <= 100) then
     half_width_cross = 2
     half_size_square = 1
-  else if(NX <= 250 .or. NY <= 250) then
+  else if(NX_IMAGE_color <= 250 .or. NZ_IMAGE_color <= 250) then
     half_width_cross = 3
     half_size_square = 2
   else
@@ -119,20 +102,20 @@
 
 ! compute maximum amplitude
   if(.not. USE_CONSTANT_MAX_AMPLITUDE) then
-    amplitude_max = maxval(abs(color_image_2D_data))
+    amplitude_max = maxval(abs(image_color_data))
   else
     amplitude_max = CONSTANT_MAX_AMPLITUDE_TO_USE
 !   in case of a pre-defined and constant maximum, truncate all values that are outside that constant range
-    where(color_image_2D_data > +CONSTANT_MAX_AMPLITUDE_TO_USE) color_image_2D_data = +CONSTANT_MAX_AMPLITUDE_TO_USE
-    where(color_image_2D_data < -CONSTANT_MAX_AMPLITUDE_TO_USE) color_image_2D_data = -CONSTANT_MAX_AMPLITUDE_TO_USE
+    where(image_color_data > +CONSTANT_MAX_AMPLITUDE_TO_USE) image_color_data = +CONSTANT_MAX_AMPLITUDE_TO_USE
+    where(image_color_data < -CONSTANT_MAX_AMPLITUDE_TO_USE) image_color_data = -CONSTANT_MAX_AMPLITUDE_TO_USE
   endif
 
   vpmin = HUGEVAL
   vpmax = TINYVAL
-  do iy=1,NY
-    do ix=1,NX
+  do iy=1,NZ_IMAGE_color
+    do ix=1,NX_IMAGE_color
 ! negative values in image_color_vp_display are a flag indicating a water layer to color in light blue later
-      if ( iglob_image_color_2D(ix,iy) > -1 .and. image_color_vp_display(ix,iy) >= 0) then
+      if ( iglob_image_color(ix,iy) > -1 .and. image_color_vp_display(ix,iy) >= 0) then
         vpmin = min(vpmin,image_color_vp_display(ix,iy))
         vpmax = max(vpmax,image_color_vp_display(ix,iy))
       endif
@@ -141,11 +124,11 @@
   enddo
 
 ! in the image format, the image starts in the upper-left corner
-  do iy=NY,1,-1
-    do ix=1,NX
+  do iy=NZ_IMAGE_color,1,-1
+    do ix=1,NX_IMAGE_color
 
 ! check if pixel is defined or not (can be above topography for instance)
-      if(iglob_image_color_2D(ix,iy) == -1) then
+      if(iglob_image_color(ix,iy) == -1) then
 
 ! use white to display undefined region above topography to avoid visual confusion with a water layer
         R = 255
@@ -153,7 +136,7 @@
         B = 255
 
 ! suppress small amplitudes considered as noise and display the background velocity model instead
-      else if (abs(color_image_2D_data(ix,iy)) < amplitude_max * cutsnaps) then
+      else if (abs(image_color_data(ix,iy)) < amplitude_max * cutsnaps) then
 
 ! use P velocity model as background where amplitude is negligible
         if((vpmax-vpmin)/vpmin > 0.02d0) then
@@ -194,9 +177,9 @@
 ! define normalized image data in [-1:1] and convert to nearest integer
 ! keeping in mind that data values can be negative
         if( amplitude_max >= TINYVAL ) then
-          normalized_value = color_image_2D_data(ix,iy) / amplitude_max
+          normalized_value = image_color_data(ix,iy) / amplitude_max
         else
-          normalized_value = color_image_2D_data(ix,iy) / TINYVAL
+          normalized_value = image_color_data(ix,iy) / TINYVAL
         endif
 
 ! suppress values outside of [-1:+1]
@@ -217,9 +200,9 @@
       endif
 
 ! for JPEG
-     JPEG_raw_image(1,ix,NY-iy+1) = char(R)
-     JPEG_raw_image(2,ix,NY-iy+1) = char(G)
-     JPEG_raw_image(3,ix,NY-iy+1) = char(B)
+     JPEG_raw_image(1,ix,NZ_IMAGE_color-iy+1) = char(R)
+     JPEG_raw_image(2,ix,NZ_IMAGE_color-iy+1) = char(G)
+     JPEG_raw_image(3,ix,NZ_IMAGE_color-iy+1) = char(B)
 
     enddo
   enddo
@@ -233,30 +216,30 @@
     do i=1,NSOURCES
 
 ! avoid edge effects for source or receiver symbols that can be partly outside of the image
-      do iy = max(iy_image_color_source(i) - half_width_cross,1), min(iy_image_color_source(i) + half_width_cross,NY)
-        do ix = max(ix_image_color_source(i) - thickness_cross,1), min(ix_image_color_source(i) + thickness_cross,NX)
+      do iy = max(iy_image_color_source(i) - half_width_cross,1), min(iy_image_color_source(i) + half_width_cross,NZ_IMAGE_color)
+        do ix = max(ix_image_color_source(i) - thickness_cross,1), min(ix_image_color_source(i) + thickness_cross,NX_IMAGE_color)
 ! use orange color
           R = 255
           G = 157
           B = 0
 ! for JPEG
-          JPEG_raw_image(1,ix,NY-iy+1) = char(R)
-          JPEG_raw_image(2,ix,NY-iy+1) = char(G)
-          JPEG_raw_image(3,ix,NY-iy+1) = char(B)
+          JPEG_raw_image(1,ix,NZ_IMAGE_color-iy+1) = char(R)
+          JPEG_raw_image(2,ix,NZ_IMAGE_color-iy+1) = char(G)
+          JPEG_raw_image(3,ix,NZ_IMAGE_color-iy+1) = char(B)
         enddo
       enddo
 
 ! avoid edge effects for source or receiver symbols that can be partly outside of the image
-      do iy = max(iy_image_color_source(i) - thickness_cross,1), min(iy_image_color_source(i) + thickness_cross,NY)
-        do ix = max(ix_image_color_source(i) - half_width_cross,1), min(ix_image_color_source(i) + half_width_cross,NX)
+      do iy = max(iy_image_color_source(i) - thickness_cross,1), min(iy_image_color_source(i) + thickness_cross,NZ_IMAGE_color)
+        do ix = max(ix_image_color_source(i) - half_width_cross,1), min(ix_image_color_source(i) + half_width_cross,NX_IMAGE_color)
 ! use orange color
           R = 255
           G = 157
           B = 0
 ! for JPEG
-          JPEG_raw_image(1,ix,NY-iy+1) = char(R)
-          JPEG_raw_image(2,ix,NY-iy+1) = char(G)
-          JPEG_raw_image(3,ix,NY-iy+1) = char(B)
+          JPEG_raw_image(1,ix,NZ_IMAGE_color-iy+1) = char(R)
+          JPEG_raw_image(2,ix,NZ_IMAGE_color-iy+1) = char(G)
+          JPEG_raw_image(3,ix,NZ_IMAGE_color-iy+1) = char(B)
         enddo
       enddo
 
@@ -265,16 +248,18 @@
 ! draw position of the receivers with green squares
     do i=1,nrec
 ! avoid edge effects for source or receiver symbols that can be partly outside of the image
-      do iy = max(iy_image_color_receiver(i) - half_size_square,1), min(iy_image_color_receiver(i) + half_size_square,NY)
-        do ix = max(ix_image_color_receiver(i) - half_size_square,1), min(ix_image_color_receiver(i) + half_size_square,NX)
+      do iy = max(iy_image_color_receiver(i) - half_size_square,1),&
+                                          min(iy_image_color_receiver(i) + half_size_square,NZ_IMAGE_color)
+        do ix = max(ix_image_color_receiver(i) - half_size_square,1), &
+                                          min(ix_image_color_receiver(i) + half_size_square,NX_IMAGE_color)
 ! use dark green color
           R = 30
           G = 180
           B = 60
 ! for JPEG
-          JPEG_raw_image(1,ix,NY-iy+1) = char(R)
-          JPEG_raw_image(2,ix,NY-iy+1) = char(G)
-          JPEG_raw_image(3,ix,NY-iy+1) = char(B)
+          JPEG_raw_image(1,ix,NZ_IMAGE_color-iy+1) = char(R)
+          JPEG_raw_image(2,ix,NZ_IMAGE_color-iy+1) = char(G)
+          JPEG_raw_image(3,ix,NZ_IMAGE_color-iy+1) = char(B)
         enddo
       enddo
     enddo
@@ -282,7 +267,7 @@
   endif
 
 ! for JPEG
-  call write_jpeg_image(JPEG_raw_image,NX,NY,filename)
+  call write_jpeg_image(JPEG_raw_image,NX_IMAGE_color,NZ_IMAGE_color,filename)
 
   end subroutine create_color_image
 

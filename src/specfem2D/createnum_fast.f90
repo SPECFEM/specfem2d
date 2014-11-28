@@ -41,20 +41,14 @@
 !
 !========================================================================
 
-  subroutine createnum_fast(knods,ibool,shapeval,coorg,nglob,npgeo,nspec,ngnod,myrank)
+  subroutine createnum_fast()
 
 ! same as subroutine "createnum_slow" but with a faster algorithm
 
+  use specfem_par, only: knods,ibool,shape2D,coorg,nglob,npgeo,nspec,ngnod,myrank,i,j
   implicit none
 
   include "constants.h"
-
-  integer nglob,npgeo,nspec,ngnod,myrank
-  integer knods(ngnod,nspec),ibool(NGLLX,NGLLZ,nspec)
-  double precision shapeval(ngnod,NGLLX,NGLLX)
-  double precision coorg(NDIM,npgeo)
-
-  integer i,j
 
 ! additional arrays needed for this fast version
   integer, dimension(:), allocatable :: locval,ind,ninseg,iglob,iwork
@@ -103,8 +97,8 @@
     ycor = zero
     do in = 1,ngnod
         nnum = knods(in,ispec)
-        xcor = xcor + shapeval(in,ix,iy)*coorg(1,nnum)
-        ycor = ycor + shapeval(in,ix,iy)*coorg(2,nnum)
+        xcor = xcor + shape2D(in,ix,iy)*coorg(1,nnum)
+        ycor = ycor + shape2D(in,ix,iy)*coorg(2,nnum)
     enddo
 
     xp(ilocnum + ieoff) = xcor

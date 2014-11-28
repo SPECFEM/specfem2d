@@ -43,16 +43,16 @@
 !========================================================================
 
 
-  subroutine initialize_simulation(nproc,myrank,ninterface_acoustic,ninterface_elastic,ninterface_poroelastic)
+  subroutine initialize_simulation()
 
 #ifdef USE_MPI
   use mpi
 #endif
+
+  use specfem_par, only : nproc,myrank,ninterface_acoustic,ninterface_elastic,ninterface_poroelastic
+
   implicit none
   include "constants.h"
-
-  integer :: nproc,myrank
-  integer :: ninterface_acoustic, ninterface_elastic,ninterface_poroelastic
 
   ! local parameters
   integer :: ier
@@ -101,28 +101,13 @@
 !
 
 
-  subroutine initialize_simulation_domains(any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic, &
-                                anisotropic,acoustic,gravitoacoustic,elastic,poroelastic,porosity,anisotropy,kmato,numat, &
-                                nspec,nspec_allocate,p_sv,ATTENUATION_VISCOELASTIC_SOLID,count_nspec_acoustic)
+  subroutine initialize_simulation_domains()
 
+  use specfem_par, only : any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic, &
+                          anisotropic,acoustic,gravitoacoustic,elastic,poroelastic,porosity,anisotropy,kmato,numat, &
+                          nspec,nspec_allocate,p_sv,ATTENUATION_VISCOELASTIC_SOLID,count_nspec_acoustic
   implicit none
   include "constants.h"
-
-  integer :: nspec,nspec_allocate
-
-  logical, dimension(nspec) :: anisotropic
-  logical, dimension(nspec) :: acoustic
-  logical, dimension(nspec) :: gravitoacoustic
-  logical, dimension(nspec) :: elastic
-  logical, dimension(nspec) :: poroelastic
-
-  integer :: numat,count_nspec_acoustic
-  double precision, dimension(numat) :: porosity
-  double precision, dimension(6,numat) :: anisotropy
-  integer, dimension(nspec) :: kmato
-
-  logical :: any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic
-  logical :: p_sv,ATTENUATION_VISCOELASTIC_SOLID
 
   ! local parameters
   integer :: ispec

@@ -41,39 +41,19 @@
 !
 !========================================================================
 
-  subroutine compute_curl_one_element(curl_element,displ_elastic, &
-                              displs_poroelastic,elastic,poroelastic, &
-                              xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                              nspec,nglob_elastic,nglob_poroelastic,ispec)
+  subroutine compute_curl_one_element()
 
   ! compute curl in (poro)elastic elements (for rotational study)
+
+  use specfem_par, only: curl_element,displ_elastic, &
+                         displs_poroelastic,elastic,poroelastic, &
+                         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
+                         nspec,nglob_elastic,nglob_poroelastic,ispec,i,j,k
+
 
   implicit none
 
   include "constants.h"
-
-  integer nspec,ispec
-
-  integer, dimension(NGLLX,NGLLX,nspec) :: ibool
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
-
-  ! curl in this element
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: curl_element
-
-  logical, dimension(nspec) :: elastic,poroelastic
-
-  integer :: nglob_elastic
-  real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: displ_elastic
-  integer :: nglob_poroelastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: displs_poroelastic
-
-  ! array with derivatives of Lagrange polynomials
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
-  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
-
-  ! local variables
-  integer :: i,j,k
 
   ! jacobian
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl
