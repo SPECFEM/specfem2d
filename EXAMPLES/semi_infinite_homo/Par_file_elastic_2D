@@ -5,9 +5,9 @@ title                           = Test for 2D P-SV elastic
 AXISYM                          = .false.
 
 # forward or adjoint simulation
-SIMULATION_TYPE                 = 1   # 1 = forward, 3 = adjoint + kernels
-NOISE_TOMOGRAPHY                = 0   # 0 = earthquake simulation, 1/2/3 = noise simulation
-SAVE_FORWARD                    = .false.  # save the last frame, needed for adjoint simulation
+SIMULATION_TYPE                 = 1  # 1 = forward, 3 = adjoint + kernels; 2 is purposely UNUSED (for compatibility with the numbering of our 3D codes)
+NOISE_TOMOGRAPHY                = 0  # 0 = earthquake simulation, 1/2/3 = noise simulation
+SAVE_FORWARD                    = .false. # save the last frame, needed for adjoint simulation
 
 # parameters concerning partitioning
 nproc                           = 1              # number of processes
@@ -17,7 +17,7 @@ ngnod                           = 4              # number of control nodes per e
 initialfield                    = .false.        # use a plane wave as source or not
 add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
 assign_external_model           = .false.        # define external earth model or not
-READ_EXTERNAL_SEP_FILE          = .false.        # Read external SEP file from DATA/model_velocity.dat_input, or use routine
+READ_EXTERNAL_SEP_FILE          = .false.        # Read external model from DATA/model_velocity.dat_input, or use routine
 ATTENUATION_VISCOELASTIC_SOLID  = .false.        # turn attenuation (viscoelasticity) on or off for non-poroelastic solid parts of the model
 ATTENUATION_PORO_FLUID_PART     = .false.        # turn viscous attenuation on or off for the fluid part of poroelastic parts of the model
 Q0                              =  1             # quality factor for viscous attenuation
@@ -34,12 +34,12 @@ time_stepping_scheme            = 1              # 1 = Newmark (2nd order), 2 = 
 ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoustic medium with a rigid interface
 
 # source parameters
-NSOURCES                        = 1              # number of sources [source info read in CMTSOLUTION file]
+NSOURCES                        = 1              # number of sources (source info read from DATA/CMTSOLUTION file)
 force_normal_to_surface         = .false.        # angleforce normal to surface (external mesh and curve file needed)
 
-# constants for attenuation
+# for viscoelastic attenuation
 N_SLS                           = 2                      # number of standard linear solids for attenuation
-f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, else it is f0
+f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the CMTSOLUTION file
 # shift (i.e. change) velocities read from the input file to take average physical dispersion into account,
 # i.e. if needed change the reference frequency at which these velocities are defined internally in the code:
 # by default, the seismic velocity values that are read at the end of this Par_file of the code are supposed to be the unrelaxed values,
@@ -61,60 +61,76 @@ anglerec                        = 0.d0           # angle to rotate components at
 rec_normal_to_surface           = .false.        # base anglerec normal to surface (external mesh and curve file needed)
 save_ASCII_kernels              = .true.         # save sensitivity kernels in ASCII format (much bigger files, but compatible with current GMT scripts) or in binary format
 
-# first receiver set
+# first receiver set (repeat these 6 lines and adjust nreceiversets accordingly)
 nrec                            = 1              # number of receivers
-xdeb                            = 1400.d0
-zdeb                            = -800.d0
-xfin                            = 99999.d0       # ignored because only one receiver
-zfin                            = 99999.d0       # ignored because only one receiver
+xdeb                            = 1400.d0        # first receiver x in meters
+zdeb                            = -800.d0        # first receiver z in meters
+xfin                            = 99999.d0       # last receiver x in meters (ignored if only one receiver)
+zfin                            = 99999.d0       # last receiver z in meters (ignored if only one receiver)
 enreg_surf_same_vertical        = .false.        # receivers inside the medium or at the surface
 
 # display parameters
 NSTEP_BETWEEN_OUTPUT_INFO      = 100            # every how many time steps we display information about the simulation (costly, do not use a very small value)
+####
 NSTEP_BETWEEN_OUTPUT_IMAGES     = 100            # every how many time steps we draw JPEG or PostScript pictures of the simulation (costly, do not use a very small value)
 cutsnaps                        = 1.             # minimum amplitude kept in % for the JPEG and PostScript snapshots; amplitudes below that are muted
-
 #### for JPEG color images ####
 output_color_image              = .true.         # output JPEG color image of the results every NSTEP_BETWEEN_OUTPUT_IMAGES time steps or not
 imagetype_JPEG                  = 3              # display 1=displ_Ux 2=displ_Uz 3=displ_norm 4=veloc_Vx 5=veloc_Vz 6=veloc_norm 7=accel_Ax 8=accel_Az 9=accel_norm 10=pressure
-factor_subsample_image          = 1              # factor to subsample color images output by the code (useful for very large models)
+factor_subsample_image          = 1.0d0          # (double precision) factor to subsample color images output by the code (useful for very large models)
 USE_CONSTANT_MAX_AMPLITUDE      = .false.        # by default the code normalizes each image independently to its maximum; use this option to use the global maximum below instead
 CONSTANT_MAX_AMPLITUDE_TO_USE   = 1.17d4         # constant maximum amplitude to use for all color images if the above USE_CONSTANT_MAX_AMPLITUDE option is true
-POWER_DISPLAY_COLOR             = 0.30d0         # non linear display to enhance small amplitudes in color images
+POWER_DISPLAY_COLOR             = 0.30d0         # non linear display to enhance small amplitudes in JPEG color images
 DRAW_SOURCES_AND_RECEIVERS      = .true.         # display sources as orange crosses and receivers as green squares in JPEG images or not
 DRAW_WATER_IN_BLUE              = .true.         # display acoustic layers as constant blue in JPEG images, because they likely correspond to water in the case of ocean acoustics or in the case of offshore oil industry experiments (if off, display them as greyscale, as for elastic or poroelastic elements, for instance for acoustic-only oil industry models of solid media)
-USE_SNAPSHOT_NUMBER_IN_FILENAME = .false.        # use snapshot number in the file name of JPEG color snapshots instead of the time step
-
+USE_SNAPSHOT_NUMBER_IN_FILENAME = .false.        # use snapshot number in the file name of JPEG color snapshots instead of the time step (for instance to create movies in an easier way later)
 #### for PostScript snapshots ####
-output_postscript_snapshot      = .true.         # output Postscript snapshot of the results
+output_postscript_snapshot      = .true.         # output Postscript snapshot of the results every NSTEP_BETWEEN_OUTPUT_IMAGES time steps or not
 imagetype_postscript            = 1              # display 1=displ vector 2=veloc vector 3=accel vector; small arrows are displayed for the vectors
-meshvect                        = .true.         # display mesh on vector plots or not
-modelvect                       = .false.        # display velocity model on vector plots
-boundvect                       = .true.         # display boundary conditions on plots
-interpol                        = .true.         # interpolation of the display or not
-pointsdisp                      = 6              # points for interpolation of display (set to 1 for lower-left corner only)
-subsamp_postscript              = 1              # subsampling of color snapshots
-sizemax_arrows                  = 1.d0           # maximum size of arrows on vector plots in cm
-US_LETTER                       = .false.        # US letter paper or European A4
-
+meshvect                        = .true.         # display mesh on PostScript plots or not
+modelvect                       = .false.        # display velocity model on PostScript plots or not
+boundvect                       = .true.         # display boundary conditions on PostScript plots or not
+interpol                        = .true.         # interpolation of the PostScript display on a regular grid inside each spectral element, or use the non-evenly spaced GLL points
+pointsdisp                      = 6              # number of points in each direction for interpolation of PostScript snapshots (set to 1 for lower-left corner only)
+subsamp_postscript              = 1              # subsampling of background velocity model in PostScript snapshots
+sizemax_arrows                  = 1.d0           # maximum size of arrows on PostScript plots in centimeters
+US_LETTER                       = .false.        # use US letter or European A4 paper for PostScript plots
 #### for wavefield dumps ####
 NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS = 100            # every how many time steps we dump results of the simulation as ASCII or binary files (costly, do not use a very small value)
 output_wavefield_dumps          = .false.        # output wave field to a text file every NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS time steps (creates very big files)
 imagetype_wavefield_dumps       = 1              # display 1=displ vector 2=veloc vector 3=accel vector 4=pressure
 use_binary_for_wavefield_dumps  = .false.        # use ASCII or single-precision binary format for the wave field dumps
 ####
-output_grid_Gnuplot              = .false.        # save the grid in a text file or not
+output_grid_Gnuplot             = .false.        # generate a GNUPLOT file containing the grid, and a script to plot it
 output_grid_ASCII               = .false.        # dump the grid in an ASCII text file consisting of a set of X,Y,Z points or not
-output_energy                   = .true.        # compute and output acoustic and elastic energy (slows down the code significantly)
+output_energy                   = .false.        # compute and output total acoustic and elastic energy curves (slows down the code significantly)
 
 # velocity and density models
 nbmodels                        = 1              # nb of different models
 # define models as
 # I:   (model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0) or
-# II:  (model_number 2 rho c11 c13 c15 c33 c35 c55 0 0 0 0 0 0) or
+# II:  (model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0) or
 # III: (model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu).
+#
 # For istropic elastic/acoustic material use I and set Vs to zero to make a given model acoustic, for anisotropic elastic use II,
 # and for isotropic poroelastic material use III. The mesh can contain acoustic, elastic, and poroelastic models simultaneously.
+#
+# For anisotropic media in the most general 2D case we have the following convention for the stress-strain relationship:
+# ! implement anisotropy in 2D
+# sigma_xx = c11*dux_dx + c13*duz_dz + c15*(duz_dx + dux_dz)
+# sigma_zz = c13*dux_dx + c33*duz_dz + c35*(duz_dx + dux_dz)
+# sigma_xz = c15*dux_dx + c35*duz_dz + c55*(duz_dx + dux_dz)
+# sigma_yy is not equal to zero in the plane strain formulation
+# but is used only in post-processing if needed,
+# to compute pressure for display or seismogram recording purposes
+# sigma_yy = c12*dux_dx + c23*duz_dz + c25*(duz_dx + dux_dz)
+# where the notations are for instance duz_dx = d(Uz) / dx.
+#
+# For anisotropic elastic media the last three parameters, c12 c23 c25, are used only when the user asks the code to compute pressure for display
+# or seismogram recording purposes. Thus, if you do not know these parameters for your anisotropic material and/or if you do not plan to display or record pressure you
+# can ignore them and set them to zero. When pressure is used these three parameters are needed because the code needs to compute sigma_yy,
+# which is not equal to zero in the plane strain formulation.
+#
 1 1 2700.d0 3000.d0 1732.05d0 0 0 20. 10. 0 0 0 0 0 0
 
 # external mesh or not
