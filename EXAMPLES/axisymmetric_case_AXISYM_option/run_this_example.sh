@@ -26,12 +26,6 @@ cd ../
 # Clean output files
 rm -rf OUTPUT_FILES/*
 
-# Compile executables in root directory 
-cd ../..
-#make clean
-#./configure MPIFC=mpif90 --with-mpi # With MPI
-#./configure # Without MPI
-#make
 cd $currentdir
 
 # Link executables
