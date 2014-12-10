@@ -227,9 +227,9 @@
 #endif
         endif
 
-    end if
+    endif
 
-  end do
+  enddo
 
   irecloc = 0
   do irec = 1,nrec
