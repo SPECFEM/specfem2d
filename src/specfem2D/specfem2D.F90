@@ -8406,7 +8406,7 @@ if(coupled_elastic_poro) then
 ! suppress seismograms if we generate traces of the run for analysis with "ParaVer", because time consuming
     if(mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
 
-      call write_seismograms(x_source(1),z_source(1))
+      call write_seismograms_to_file(x_source(1),z_source(1))
 
       seismo_offset = seismo_offset + seismo_current
       seismo_current = 0

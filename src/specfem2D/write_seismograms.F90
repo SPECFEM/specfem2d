@@ -44,7 +44,7 @@
 ! write seismograms to text files
 
 
-  subroutine write_seismograms(x_source,z_source)
+  subroutine write_seismograms_to_file(x_source,z_source)
 
 #ifdef USE_MPI
   use mpi
@@ -369,5 +369,5 @@
 
   deallocate(buffer_binary)
 
-  end subroutine write_seismograms
+  end subroutine write_seismograms_to_file
 
