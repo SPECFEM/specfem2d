@@ -146,7 +146,7 @@
 
   do ispec = 1,nspec
 
-    previous_vsext = -1.d0
+    previous_vsext = vsext(1,1,ispec)
 
     do j = 1,NGLLZ
       do i = 1,NGLLX

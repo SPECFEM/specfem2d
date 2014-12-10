@@ -41,8 +41,9 @@
 !
 !========================================================================
 
-  subroutine define_external_model_dummy(coord,material_element,ibool,rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
-                                             c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
+  subroutine define_external_model_dummy(coord,material_element,ibool, &
+              rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
+              c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
 
   implicit none
 
@@ -63,7 +64,7 @@
 
   integer, dimension(NGLLX,NGLLZ,nspec), intent(in) :: ibool
 
-  double precision, dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
+  double precision, dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
                                                                  c11,c15,c13,c33,c35,c55,c12,c23,c25
 
   integer :: i,j,ispec,iglob
@@ -72,6 +73,10 @@
 
 ! completely dummy routine here, just to demonstrate how the model can be assigned
 ! and how such a routine can be written
+
+! leave these arrays here even if you do not assign them to use them because they need to be cleared
+  gravity(:,:,:) = 0.d0
+  Nsq(:,:,:) = 0.d0
 
 ! loop on all the elements of the mesh, and inside each element loop on all the GLL points
   do ispec = 1,nspec
