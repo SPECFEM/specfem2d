@@ -122,7 +122,7 @@
      number_of_components = NDIM
   endif
 
-  allocate(buffer_binary(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,number_of_components))
+  allocate(buffer_binary(number_of_components,NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos))
 
   if (save_binary_seismograms .and. myrank == 0 .and. seismo_offset == 0) then
 
@@ -202,12 +202,12 @@
 
         if ( which_proc_receiver(irec) == myrank ) then
            irecloc = irecloc + 1
-           buffer_binary(:,1) = sisux(:,irecloc)
+           buffer_binary(1,:) = sisux(:,irecloc)
            if ( number_of_components == 2 ) then
-              buffer_binary(:,2) = sisuz(:,irecloc)
+              buffer_binary(2,:) = sisuz(:,irecloc)
            else if ( number_of_components == 3 ) then
-              buffer_binary(:,2) = sisuz(:,irecloc)
-              buffer_binary(:,3) = siscurl(:,irecloc)
+              buffer_binary(2,:) = sisuz(:,irecloc)
+              buffer_binary(3,:) = siscurl(:,irecloc)
            endif
 
 #ifdef USE_MPI
@@ -215,13 +215,13 @@
            call MPI_RECV(buffer_binary(1,1),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
                 which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ierror)
            if ( number_of_components == 2 ) then
-              call MPI_RECV(buffer_binary(1,2),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
+              call MPI_RECV(buffer_binary(2,1),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
                    which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ierror)
            endif
            if ( number_of_components == 3 ) then
-              call MPI_RECV(buffer_binary(1,2),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
+              call MPI_RECV(buffer_binary(2,1),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
                    which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ierror)
-              call MPI_RECV(buffer_binary(1,3),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
+              call MPI_RECV(buffer_binary(3,1),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
                    which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ierror)
            endif
 #endif
@@ -285,10 +285,10 @@
 #ifndef PAUL_SAVE_ASCII_IN_BINARY
              do isample = 1,seismo_current
                  write(11,*) sngl(dble(seismo_offset+isample-1)*deltat - t0),' ', &
-                              sngl(buffer_binary(isample,iorientation))
+                              sngl(buffer_binary(iorientation,isample))
              enddo
 #else
-                 write(11) sngl(buffer_binary(:,iorientation))
+                 write(11) sngl(buffer_binary(iorientation,:))
 #endif
 
              close(11)
@@ -300,20 +300,20 @@
           if(save_binary_seismograms) then
           do isample = 1, seismo_current
             if(save_binary_seismograms_single) &
-              write(12,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,1))
+              write(12,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(1,isample))
               if(save_binary_seismograms_double) &
-              write(13,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,1)
+              write(13,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(1,isample)
             if ( seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
               if(save_binary_seismograms_single) &
-                write(14,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,2))
+                write(14,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(2,isample))
               if(save_binary_seismograms_double) &
-                write(15,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,2)
+                write(15,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(2,isample)
             endif
             if ( seismotype == 5 ) then
               if(save_binary_seismograms_single) &
-                write(16,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,3))
+                write(16,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(3,isample))
               if(save_binary_seismograms_double) &
-                write(17,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,3)
+                write(17,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(3,isample)
             endif
           enddo
           endif
