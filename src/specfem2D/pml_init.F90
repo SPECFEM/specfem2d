@@ -40,9 +40,8 @@
 !
 !========================================================================
 
-  subroutine pml_init(myrank,SIMULATION_TYPE,SAVE_FORWARD,nspec,nglob,ibool,anyabs,nelemabs,codeabs,numabs,&
-                      NELEM_PML_THICKNESS,nspec_PML,is_PML,which_PML_elem,spec_to_PML,region_CPML,&
-                      PML_interior_interface,nglob_interface,mask_ibool,read_external_mesh)
+  subroutine pml_init()
+
 
 ! explanations from Zhinan Xie about how to select PML damping parameters efficiently:
 
@@ -92,32 +91,16 @@
   use mpi
 #endif
 
+use specfem_par, only: myrank,SIMULATION_TYPE,SAVE_FORWARD,nspec,nglob,ibool,anyabs,nelemabs,codeabs,numabs,&
+                       NELEM_PML_THICKNESS,nspec_PML,is_PML,which_PML_elem,spec_to_PML,region_CPML,&
+                       PML_interior_interface,nglob_interface,mask_ibool,read_external_mesh,ier,i,j,k,ispec,iglob
+
   implicit none
   include 'constants.h'
 
-  integer :: myrank,SIMULATION_TYPE,nspec,nglob,nglob_interface
-
-  integer :: nelemabs,nspec_PML,NELEM_PML_THICKNESS
-  logical :: anyabs,SAVE_FORWARD,read_external_mesh
-  integer, dimension(nelemabs) :: numabs
-  logical, dimension(4,nelemabs) :: codeabs
-
-  logical, dimension(4,nspec) :: which_PML_elem
   integer, dimension(nglob) ::   icorner_iglob
 
-  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
-  integer, dimension(nspec) :: spec_to_PML
-  logical, dimension(nspec) :: is_PML
-  integer, dimension(nspec) :: region_CPML
-
-  logical, dimension(nglob) :: mask_ibool
-  logical, dimension(4,nspec) :: PML_interior_interface
-
-#ifdef USE_MPI
-  integer :: ier
-#endif
-
-  integer :: nspec_PML_tot,ibound,ispecabs,ncorner,ispec,iglob,i,j,k,i_coef
+  integer :: nspec_PML_tot,ibound,ispecabs,ncorner,i_coef
 
   nspec_PML = 0
 
@@ -343,22 +326,12 @@ end subroutine pml_init
 !
 !-------------------------------------------------------------------------------------------------
 !
- subroutine determin_interface_pml_interior(nglob_interface,nspec,ibool,PML_interior_interface,&
-                                            which_PML_elem,point_interface,read_external_mesh,mask_ibool,region_CPML,nglob)
+ subroutine determin_interface_pml_interior()
 
+  use specfem_par, only: nglob_interface,nspec,ibool,PML_interior_interface,i,j,iglob,ispec,&
+                         which_PML_elem,point_interface,read_external_mesh,mask_ibool,region_CPML,nglob
   implicit none
   include 'constants.h'
-
-  integer :: nglob_interface, nspec,nglob
-  logical, dimension(4,nspec) :: PML_interior_interface
-  logical, dimension(4,nspec) :: which_PML_elem
-  integer :: ispec
-  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
-  integer, dimension(nglob_interface) :: point_interface
-  logical :: read_external_mesh
-  logical, dimension(nglob) :: mask_ibool
-  integer, dimension(nspec) :: region_CPML
-  integer :: i,j,iglob
 
   nglob_interface = 0
 
@@ -472,33 +445,22 @@ end subroutine pml_init
 !-------------------------------------------------------------------------------------------------
 !
 
- subroutine define_PML_coefficients(npoin,nspec,kmato,density,poroelastcoef,numat,f0_temp,&
-                  ibool,coord,is_PML,region_CPML,spec_to_PML,nspec_PML,&
-                  K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store)
+ subroutine define_PML_coefficients(f0_temp)
 
 #ifdef USE_MPI
   use mpi
 #endif
 
+  use specfem_par, only: nspec,kmato,density,poroelastcoef,numat,&
+                         ibool,coord,is_PML,region_CPML,spec_to_PML,nspec_PML,&
+                         K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
+
   implicit none
 
   include "constants.h"
 
-  integer nspec,npoin,numat,nspec_PML
+
   double precision :: f0_temp
-
-  double precision, dimension(NDIM,npoin) ::  coord
-  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
-
-  integer, dimension(nspec) :: kmato
-  double precision, dimension(2,numat) ::  density
-  double precision, dimension(4,3,numat) ::  poroelastcoef
-
-  logical, dimension(nspec) :: is_PML
-  integer, dimension(nspec) :: region_CPML,spec_to_PML
-
-  double precision, dimension(NGLLX,NGLLZ,nspec_PML) ::  K_x_store,K_z_store,d_x_store,d_z_store,&
-                                                               alpha_x_store,alpha_z_store
 
 ! PML fixed parameters to compute parameter in PML
   double precision, parameter :: NPOWER = 2.d0

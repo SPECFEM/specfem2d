@@ -41,23 +41,12 @@
 !
 !========================================================================
 
-  subroutine define_derivation_matrices(xigll,zigll,wxgll,wzgll,hprime_xx,hprime_zz,hprimewgll_xx,hprimewgll_zz)
+  subroutine define_derivation_matrices()
 
+  use specfem_par, only: xigll,zigll,wxgll,wzgll,hprime_xx,hprime_zz,hprimewgll_xx,hprimewgll_zz
   implicit none
 
   include "constants.h"
-
-! Gauss-Lobatto-Legendre points of integration
-  double precision, dimension(NGLLX) :: xigll
-  double precision, dimension(NGLLZ) :: zigll
-
-! weights
-  real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
-  real(kind=CUSTOM_REAL), dimension(NGLLZ) :: wzgll
-
-! array with derivatives of Lagrange polynomials
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
-  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz,hprimewgll_zz
 
   double precision, parameter :: alphaGLL = 0.d0, betaGLL = 0.d0
 
@@ -101,20 +90,12 @@
 !____________________________________________________________________________________
 !
 
-  subroutine define_GLJ_derivation_matrix(xiglj,wxglj,hprimeBar_xx,hprimeBarwglj_xx)
+  subroutine define_GLJ_derivation_matrix()
 
+  use specfem_par, only: xiglj,wxglj,hprimeBar_xx,hprimeBarwglj_xx
   implicit none
 
   include "constants.h"
-
-! Gauss-Lobatto-Jacobi points of integration
-  double precision, dimension(NGLJ) :: xiglj
-
-! weights for the GLJ quadrature
-  real(kind=CUSTOM_REAL), dimension(NGLJ) :: wxglj
-
-! array with derivatives of GLJ polynomials
-  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLJ) :: hprimeBar_xx,hprimeBarwglj_xx
 
   double precision, parameter    :: alphaGLJ=0.d0,betaGLJ=1.d0
 

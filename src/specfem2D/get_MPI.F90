@@ -43,7 +43,15 @@
 
 #ifdef USE_MPI
 
-  subroutine get_MPI(nspec,ibool,knods,ngnod,nglob,elastic,poroelastic, &
+  subroutine get_MPI()
+
+
+
+! sets up the MPI interface for communication between partitions
+
+  use mpi
+
+  use specfem_par, only: nspec,ibool,knods,ngnod,nglob,elastic,poroelastic, &
                     ninterface, max_interface_size, &
                     my_nelmnts_neighbours,my_interfaces,my_neighbours, &
                     ibool_interfaces_acoustic, ibool_interfaces_elastic, &
@@ -54,38 +62,12 @@
                     inum_interfaces_poroelastic, &
                     ninterface_acoustic, ninterface_elastic, ninterface_poroelastic, &
                     mask_ispec_inner_outer, &
-                    myrank,coord)
-
-! sets up the MPI interface for communication between partitions
-
-  use mpi
+                    myrank,coord,buffer_send_faces_vector_ac,buffer_recv_faces_vector_ac,&
+                    tab_requests_send_recv_acoustic
 
   implicit none
 
   include "constants.h"
-
-  integer, intent(in)  :: nspec, nglob, ngnod
-  logical, dimension(nspec), intent(in)  :: elastic, poroelastic
-  integer, dimension(ngnod,nspec), intent(in)  :: knods
-  integer, dimension(NGLLX,NGLLZ,nspec), intent(in)  :: ibool
-
-  integer  :: ninterface
-  integer  :: max_interface_size
-  integer, dimension(ninterface)  :: my_nelmnts_neighbours,my_neighbours
-  integer, dimension(4,max_interface_size,ninterface)  :: my_interfaces
-
-  integer, dimension(NGLLX*max_interface_size,ninterface)  :: &
-       ibool_interfaces_acoustic,ibool_interfaces_elastic,ibool_interfaces_poroelastic
-  integer, dimension(ninterface)  :: &
-       nibool_interfaces_acoustic,nibool_interfaces_elastic,nibool_interfaces_poroelastic
-  integer, dimension(ninterface), intent(out)  :: &
-       inum_interfaces_acoustic, inum_interfaces_elastic, inum_interfaces_poroelastic
-  integer, intent(out)  :: ninterface_acoustic, ninterface_elastic, ninterface_poroelastic
-
-  logical, dimension(nspec), intent(inout)  :: mask_ispec_inner_outer
-
-  integer :: myrank
-  double precision, dimension(NDIM,nglob) :: coord
 
   !local parameters
   double precision, dimension(:), allocatable :: xp,zp
@@ -103,24 +85,11 @@
   integer :: i,j,ispec,iglob,countval,inum,ier,idomain
   integer :: max_nibool_interfaces,num_nibool,num_interface
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: test_flag_cr
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_send_faces_vector_ac
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_recv_faces_vector_ac
-  integer, dimension(:), allocatable  :: tab_requests_send_recv_acoustic
 
   ! gets global indices for points on MPI interfaces
   ! (defined by my_interfaces) between different partitions
   ! and stores them in ibool_interfaces*** & nibool_interfaces*** (number of total points)
-  call prepare_assemble_MPI(nspec,ibool,knods, ngnod,nglob, elastic, poroelastic, &
-                                ninterface, max_interface_size, &
-                                my_nelmnts_neighbours, my_interfaces, &
-                                ibool_interfaces_acoustic, ibool_interfaces_elastic, &
-                                ibool_interfaces_poroelastic, &
-                                nibool_interfaces_acoustic, nibool_interfaces_elastic, &
-                                nibool_interfaces_poroelastic, &
-                                inum_interfaces_acoustic, inum_interfaces_elastic, &
-                                inum_interfaces_poroelastic, &
-                                ninterface_acoustic, ninterface_elastic, ninterface_poroelastic, &
-                                mask_ispec_inner_outer )
+  call prepare_assemble_MPI()
 
 
   ! sorts ibool comm buffers lexicographically for all MPI interfaces
@@ -285,12 +254,7 @@
   if( ninterface_acoustic > 0 ) then
     ! adds contributions from different partitions to flag arrays
     ! custom_real arrays
-    call assemble_MPI_vector_ac(test_flag_cr,nglob, &
-                    ninterface, ninterface_acoustic,inum_interfaces_acoustic, &
-                    max_interface_size, max_nibool_interfaces,&
-                    ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
-                    tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac, &
-                    buffer_recv_faces_vector_ac, my_neighbours)
+    call assemble_MPI_vector_ac(test_flag_cr)
 
     ! checks number of interface points
     inum = 0

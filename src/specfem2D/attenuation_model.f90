@@ -41,24 +41,23 @@
 !
 !========================================================================
 
-  subroutine attenuation_model(N_SLS,QKappa_attenuation,Qmu_attenuation,f0_attenuation, &
-       tau_epsilon_nu1_custom_real,tau_epsilon_nu2_custom_real,inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2)
+  subroutine attenuation_model(QKappa_attenuation,Qmu_attenuation)
 
 ! define the attenuation constants
+
+  use specfem_par, only :  N_SLS, f0_attenuation,tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
+                           inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent
+
 
   implicit none
 
   include "constants.h"
 
-  integer :: N_SLS
-  double precision :: QKappa_attenuation,Qmu_attenuation,f0_attenuation
-  real(kind=CUSTOM_REAL), dimension(N_SLS) :: tau_epsilon_nu1_custom_real,tau_epsilon_nu2_custom_real, &
-              inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
-  real(kind=CUSTOM_REAL) :: Mu_nu1,Mu_nu2
+  double precision :: QKappa_attenuation,Qmu_attenuation
 
   integer :: i_sls
 
-  double precision, dimension(N_SLS) :: tau_epsilon_nu1,tau_sigma_nu1,tau_epsilon_nu2,tau_sigma_nu2
+  double precision, dimension(N_SLS) :: tau_epsilon_nu1_d,tau_sigma_nu1,tau_epsilon_nu2_d,tau_sigma_nu2
 
   double precision :: f_min_attenuation, f_max_attenuation
 
@@ -81,19 +80,19 @@
   if(USE_NEW_SOLVOPT_ROUTINE) then
 
     call determination_coef(N_SLS,QKappa_attenuation,f0_attenuation,f_min_attenuation,f_max_attenuation, &
-                                  tau_epsilon_nu1,tau_sigma_nu1)
+                                  tau_epsilon_nu1_d,tau_sigma_nu1)
 
     call determination_coef(N_SLS,Qmu_attenuation,f0_attenuation,f_min_attenuation,f_max_attenuation, &
-                                  tau_epsilon_nu2,tau_sigma_nu2)
+                                  tau_epsilon_nu2_d,tau_sigma_nu2)
 
 !   print *
 !   print *,'with new SolvOpt:'
 !   print *
 !   print *,'N_SLS, QKappa_attenuation, Qmu_attenuation = ',N_SLS, QKappa_attenuation, Qmu_attenuation
 !   print *,'f0_attenuation,f_min_attenuation,f_max_attenuation = ',f0_attenuation,f_min_attenuation,f_max_attenuation
-!   print *,'tau_epsilon_nu1 = ',tau_epsilon_nu1
+!   print *,'tau_epsilon_nu1 = ',tau_epsilon_nu1_d
 !   print *,'tau_sigma_nu1 = ',tau_sigma_nu1
-!   print *,'tau_epsilon_nu2 = ',tau_epsilon_nu2
+!   print *,'tau_epsilon_nu2 = ',tau_epsilon_nu2_d
 !   print *,'tau_sigma_nu2 = ',tau_sigma_nu2
 !   print *
 
@@ -102,22 +101,24 @@
 ! call a C function that computes attenuation parameters (function in file "attenuation_compute_param.c";
 ! a main can be found in UTILS/attenuation directory).
     call attenuation_compute_param(N_SLS, QKappa_attenuation, Qmu_attenuation, &
-         f_min_attenuation,f_max_attenuation,tau_sigma_nu1, tau_sigma_nu2, tau_epsilon_nu1, tau_epsilon_nu2)
+         f_min_attenuation,f_max_attenuation,tau_sigma_nu1, tau_sigma_nu2, tau_epsilon_nu1_d, tau_epsilon_nu2_d)
 
 !   print *
 !   print *,'with old C routine:'
 !   print *
 !   print *,'N_SLS, QKappa_attenuation, Qmu_attenuation = ',N_SLS, QKappa_attenuation, Qmu_attenuation
 !   print *,'f0_attenuation,f_min_attenuation,f_max_attenuation = ',f0_attenuation,f_min_attenuation,f_max_attenuation
-!   print *,'tau_epsilon_nu1 = ',tau_epsilon_nu1
+!   print *,'tau_epsilon_nu1 = ',tau_epsilon_nu1_d
 !   print *,'tau_sigma_nu1 = ',tau_sigma_nu1
-!   print *,'tau_epsilon_nu2 = ',tau_epsilon_nu2
+!   print *,'tau_epsilon_nu2 = ',tau_epsilon_nu2_d
 !   print *,'tau_sigma_nu2 = ',tau_sigma_nu2
 !   print *
 
   endif
 
-  if(any(tau_sigma_nu1 < 0.d0) .or. any(tau_sigma_nu2 < 0.d0) .or. any(tau_epsilon_nu1 < 0.d0) .or. any(tau_epsilon_nu2 < 0.d0)) &
+  if(any(tau_sigma_nu1 < 0.d0) .or. any(tau_sigma_nu2 < 0.d0) .or. &
+     any(tau_epsilon_nu1_d < 0.d0) .or. any(tau_epsilon_nu2_d < 0.d0)) &
+
        stop 'error: negative relaxation time found for a viscoelastic material'
 
 ! When implementing viscoelasticity according to the Carcione 1993 paper, attenuation is
@@ -160,40 +161,40 @@
 !
   if(CUSTOM_REAL == SIZE_REAL) then
 
-   tau_epsilon_nu1_custom_real(:) = sngl(tau_epsilon_nu1(:))
-   tau_epsilon_nu2_custom_real(:) = sngl(tau_epsilon_nu2(:))
+   tau_epsilon_nu1(:) = sngl(tau_epsilon_nu1_d(:))
+   tau_epsilon_nu2(:) = sngl(tau_epsilon_nu2_d(:))
 
-   inv_tau_sigma_nu1(:) = sngl(dble(ONE) / tau_sigma_nu1(:))
-   inv_tau_sigma_nu2(:) = sngl(dble(ONE) / tau_sigma_nu2(:))
+   inv_tau_sigma_nu1_sent(:) = sngl(dble(ONE) / tau_sigma_nu1(:))
+   inv_tau_sigma_nu2_sent(:) = sngl(dble(ONE) / tau_sigma_nu2(:))
 
-   phi_nu1(:) = sngl((dble(ONE) - tau_epsilon_nu1(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:))
-   phi_nu2(:) = sngl((dble(ONE) - tau_epsilon_nu2(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:))
+   phi_nu1_sent(:) = sngl((dble(ONE) - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:))
+   phi_nu2_sent(:) = sngl((dble(ONE) - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:))
 
-   Mu_nu1 = dble(ONE)
-   Mu_nu2 = dble(ONE)
+   Mu_nu1_sent = dble(ONE)
+   Mu_nu2_sent = dble(ONE)
 
    do i_sls = 1,N_SLS
-     Mu_nu1 = sngl(dble(Mu_nu1) - (dble(ONE) - tau_epsilon_nu1(i_sls)/tau_sigma_nu1(i_sls)))
-     Mu_nu2 = sngl(dble(Mu_nu2) - (dble(ONE) - tau_epsilon_nu2(i_sls)/tau_sigma_nu2(i_sls)))
+     Mu_nu1_sent = sngl(dble(Mu_nu1_sent) - (dble(ONE) - tau_epsilon_nu1_d(i_sls)/tau_sigma_nu1(i_sls)))
+     Mu_nu2_sent = sngl(dble(Mu_nu2_sent) - (dble(ONE) - tau_epsilon_nu2_d(i_sls)/tau_sigma_nu2(i_sls)))
    enddo
 
   else
 
-   tau_epsilon_nu1_custom_real(:) = tau_epsilon_nu1(:)
-   tau_epsilon_nu2_custom_real(:) = tau_epsilon_nu2(:)
+   tau_epsilon_nu1(:) = tau_epsilon_nu1_d(:)
+   tau_epsilon_nu2(:) = tau_epsilon_nu2_d(:)
 
-   inv_tau_sigma_nu1(:) = ONE / tau_sigma_nu1(:)
-   inv_tau_sigma_nu2(:) = ONE / tau_sigma_nu2(:)
+   inv_tau_sigma_nu1_sent(:) = ONE / tau_sigma_nu1(:)
+   inv_tau_sigma_nu2_sent(:) = ONE / tau_sigma_nu2(:)
 
-   phi_nu1(:) = (ONE - tau_epsilon_nu1(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:)
-   phi_nu2(:) = (ONE - tau_epsilon_nu2(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:)
+   phi_nu1_sent(:) = (ONE - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:)
+   phi_nu2_sent(:) = (ONE - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:)
 
-   Mu_nu1 = ONE
-   Mu_nu2 = ONE
+   Mu_nu1_sent = ONE
+   Mu_nu2_sent = ONE
 
    do i_sls = 1,N_SLS
-     Mu_nu1 = Mu_nu1 - (ONE - tau_epsilon_nu1(i_sls)/tau_sigma_nu1(i_sls))
-     Mu_nu2 = Mu_nu2 - (ONE - tau_epsilon_nu2(i_sls)/tau_sigma_nu2(i_sls))
+     Mu_nu1_sent = Mu_nu1_sent - (ONE - tau_epsilon_nu1_d(i_sls)/tau_sigma_nu1(i_sls))
+     Mu_nu2_sent = Mu_nu2_sent - (ONE - tau_epsilon_nu2_d(i_sls)/tau_sigma_nu2(i_sls))
    enddo
 
   endif
@@ -204,8 +205,8 @@
 !--------------------------------------------------------------------------------
 !
 
-  subroutine shift_velocities_from_f0(vp,vs,rho,mu,lambda,f0_attenuation, &
-                              tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1,inv_tau_sigma_nu2,N_SLS)
+  subroutine shift_velocities_from_f0(vp,vs,rho,mu,lambda)
+
 
 ! From Emmanuel Chaljub, CNRS Grenoble, France:
 
@@ -225,16 +226,16 @@
 !     Sum_k   { [  w*tau_k*Q(w) - (w*tau_k)^2 ] / [ 1 + (w*tau_k)^2 ] }  ak  = 1
 !                  where tau_k = tau_epsilon_k
 
+  use specfem_par, only : f0_attenuation,tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent,N_SLS
+
   implicit none
 
   include "constants.h"
 
 ! arguments
-  integer, intent(in) :: N_SLS
-  double precision, intent(in) :: rho,f0_attenuation
+  double precision, intent(in) :: rho
   double precision, intent(inout) :: vp,vs
   double precision, intent(out) :: mu,lambda
-  real(kind=CUSTOM_REAL), dimension(N_SLS), intent(in) :: tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1,inv_tau_sigma_nu2
 
 ! local variables
   integer :: i_sls
@@ -251,12 +252,12 @@
 
   do i_sls = 1,N_SLS
 !! DK DK changed this to the pre-computed inverse     xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)/tau_sigma_nu2(i_sls) - ONE
-     xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)*inv_tau_sigma_nu2(i_sls) - ONE
+     xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)*inv_tau_sigma_nu2_sent(i_sls) - ONE
      xtmp1_nu2 = xtmp1_nu2 + xtmp_ak_nu2/(ONE + (TWO * PI * f0_attenuation * tau_epsilon_nu2(i_sls))**2)
      xtmp2_nu2 = xtmp2_nu2 + xtmp_ak_nu2
 
 !! DK DK changed this to the pre-computed inverse     xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)/tau_sigma_nu1(i_sls) - ONE
-     xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)*inv_tau_sigma_nu1(i_sls) - ONE
+     xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)*inv_tau_sigma_nu1_sent(i_sls) - ONE
      xtmp1_nu1 = xtmp1_nu1 + xtmp_ak_nu1/(ONE + (TWO * PI * f0_attenuation * tau_epsilon_nu1(i_sls))**2)
      xtmp2_nu1 = xtmp2_nu1 + xtmp_ak_nu1
   enddo

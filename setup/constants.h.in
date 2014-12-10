@@ -154,7 +154,9 @@
   integer, parameter :: MAX_LENGTH_NETWORK_NAME = 8
 
 ! number of iterations to solve the system for xi and eta
-  integer, parameter :: NUM_ITER = 4
+! setting it to 5 instead of 4 ensures that the result obtained is not compiler dependent
+! (when using 4 only some small discrepancies were observed)
+  integer, parameter :: NUM_ITER = 5
 
 ! we mimic a triangle of half duration equal to half_duration_triangle
 ! using a Gaussian having a very close shape, as explained in Figure 4.2

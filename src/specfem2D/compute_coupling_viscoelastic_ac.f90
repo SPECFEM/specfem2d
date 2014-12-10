@@ -43,54 +43,20 @@
 
 ! for acoustic solver
 
-  subroutine compute_coupling_viscoelastic_ac(SIMULATION_TYPE,nspec,nglob_elastic,nglob_acoustic,num_fluid_solid_edges,&
-                              ibool,wxgll,wzgll,xix,xiz,gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,&
-                              potential_acoustic,potential_acoustic_old,potential_dot_acoustic,potential_dot_dot_acoustic,&
-                              b_potential_dot_dot_acoustic,accel_elastic,b_accel_elastic,fluid_solid_acoustic_ispec, &
-                              fluid_solid_acoustic_iedge,fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
-                              potential_acoustic_adj_coupling,AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &
-                              PML_BOUNDARY_CONDITIONS,nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
-                              alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_sfb_potential_ddot_acoustic,timeval,deltat,&
-                              rmemory_sfb_potential_ddot_acoustic_LDDRK,i_stage,stage_time_scheme,alpha_LDDRK,beta_LDDRK)
+  subroutine compute_coupling_viscoelastic_ac()
+
+  use specfem_par, only: SIMULATION_TYPE,nspec,nglob_elastic,nglob_acoustic,num_fluid_solid_edges,&
+                         ibool,wxgll,wzgll,xix,xiz,gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,&
+                         potential_acoustic,potential_acoustic_old,potential_dot_acoustic,potential_dot_dot_acoustic,&
+                         b_potential_dot_dot_acoustic,accel_elastic,b_accel_elastic,fluid_solid_acoustic_ispec, &
+                         fluid_solid_acoustic_iedge,fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
+                         potential_acoustic_adj_coupling,AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj, &
+                         PML_BOUNDARY_CONDITIONS,nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
+                         alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_sfb_potential_ddot_acoustic,timeval,deltat,&
+                         rmemory_sfb_potential_ddot_acoustic_LDDRK,i_stage,stage_time_scheme,alpha_LDDRK,beta_LDDRK
 
    implicit none
    include 'constants.h'
-
-   integer :: SIMULATION_TYPE,nspec,nglob_elastic,nglob_acoustic,num_fluid_solid_edges
-   integer :: nglob
-   logical :: AXISYM
-
-   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
-   real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll,wzgll
-   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec)  :: xix,xiz,gammax,gammaz,jacobian
-   integer, dimension(NGLLX,NEDGES) :: ivalue,jvalue,ivalue_inverse,jvalue_inverse
-
-   ! Gauss-Lobatto-Jacobi points and weights
-   double precision, dimension(NGLJ) :: xiglj
-   real(kind=CUSTOM_REAL), dimension(NGLJ) :: wxglj
-   logical, dimension(nspec) :: is_on_the_axis
-   double precision, dimension(NDIM,nglob), intent(in) :: coord
-   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
-
-   real(kind=CUSTOM_REAL),dimension(3,nglob_elastic) :: accel_elastic,b_accel_elastic
-   real(kind=CUSTOM_REAL),dimension(nglob_acoustic) :: potential_acoustic,potential_acoustic_old,potential_dot_acoustic,&
-                                                       potential_dot_dot_acoustic,b_potential_dot_dot_acoustic,&
-                                                       potential_acoustic_adj_coupling
-   integer, dimension(num_fluid_solid_edges) :: fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
-                                                fluid_solid_elastic_ispec,fluid_solid_elastic_iedge
-   integer :: nspec_PML
-   double precision, dimension(NGLLX,NGLLZ,nspec_PML) :: &
-                  K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
-   logical:: PML_BOUNDARY_CONDITIONS
-   logical, dimension(nspec) :: is_PML
-   integer, dimension(nspec) :: spec_to_PML
-   integer, dimension(nspec) :: region_CPML
-   real(kind=CUSTOM_REAL),dimension(1,NGLLX,NGLLZ,num_fluid_solid_edges) :: rmemory_sfb_potential_ddot_acoustic
-
-! for ADE_PML with LDDRK scheme
-   integer :: i_stage,stage_time_scheme
-   real(kind=CUSTOM_REAL), dimension(Nstages) :: alpha_LDDRK,beta_LDDRK
-   real(kind=CUSTOM_REAL),dimension(1,NGLLX,NGLLZ,num_fluid_solid_edges) :: rmemory_sfb_potential_ddot_acoustic_LDDRK
 
 !local variable
 
@@ -98,7 +64,7 @@
               ispec_PML,CPML_region_local,singularity_type
    real(kind=CUSTOM_REAL) :: pressure,b_pressure,&
                              xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
-   double precision :: timeval,deltat
+   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
    double precision :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z,&
                              A0,A1,A2,A3,A4,bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2
 

@@ -55,30 +55,22 @@
 !-----------------------------------------------
   subroutine assemble_MPI_scalar(array_val1,npoin_val1, &
                               array_val2,array_val5,npoin_val2, &
-                              array_val3,array_val4,npoin_val3, &
-                              ninterface, max_interface_size, max_ibool_interfaces_size_ac, &
+                              array_val3,array_val4,npoin_val3)
+
+  use mpi
+  use specfem_par, only:ninterface, max_interface_size, max_ibool_interfaces_size_ac, &
                               max_ibool_interfaces_size_el, &
                               max_ibool_interfaces_size_po, &
                               ibool_interfaces_acoustic,ibool_interfaces_elastic, &
                               ibool_interfaces_poroelastic, &
                               nibool_interfaces_acoustic,nibool_interfaces_elastic, &
-                              nibool_interfaces_poroelastic,my_neighbours)
+                              nibool_interfaces_poroelastic,my_neighbours,i,ier
 
-  use mpi
 
   implicit none
 
   include 'constants.h'
 
-  integer, intent(in)  :: ninterface
-  integer, intent(in)  :: max_interface_size
-  integer, intent(in)  :: max_ibool_interfaces_size_ac,max_ibool_interfaces_size_el, &
-    max_ibool_interfaces_size_po
-  integer, dimension(NGLLX*max_interface_size,ninterface), intent(in)  :: &
-    ibool_interfaces_acoustic,ibool_interfaces_elastic,ibool_interfaces_poroelastic
-  integer, dimension(ninterface), intent(in)  :: nibool_interfaces_acoustic,nibool_interfaces_elastic, &
-    nibool_interfaces_poroelastic
-  integer, dimension(ninterface), intent(in)  :: my_neighbours
   ! array to assemble
   ! acoustic
   integer :: npoin_val1
@@ -91,8 +83,6 @@
   real(kind=CUSTOM_REAL), dimension(npoin_val3), intent(inout) :: array_val3,array_val4
 
   integer  :: ipoin, num_interface
-  integer  :: ier
-  integer  :: i
 ! there are now two different mass matrices for the elastic case
 ! in order to handle the C deltat / 2 contribution of the Stacey conditions to the mass matrix
   double precision, dimension(max_ibool_interfaces_size_ac+2*max_ibool_interfaces_size_el+&
@@ -218,41 +208,30 @@
 ! Particular care should be taken concerning possible optimisations of the
 ! communication scheme.
 !-----------------------------------------------
-  subroutine assemble_MPI_vector_ac(array_val1,npoin, &
-                                 ninterface, ninterface_acoustic, &
-                                 inum_interfaces_acoustic, &
-                                 max_interface_size, max_ibool_interfaces_size_ac,&
-                                 ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
-                                 tab_requests_send_recv_acoustic, &
-                                 buffer_send_faces_vector_ac, &
-                                 buffer_recv_faces_vector_ac, &
-                                 my_neighbours )
+  subroutine assemble_MPI_vector_ac(array_val1)
 
   use mpi
+
+  use specfem_par, only: nglob,ninterface, ninterface_acoustic, &
+                         inum_interfaces_acoustic, &
+                         max_interface_size, max_ibool_interfaces_size_ac,&
+                         ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
+                         tab_requests_send_recv_acoustic, &
+                         buffer_send_faces_vector_ac, &
+                         buffer_recv_faces_vector_ac, &
+                         my_neighbours,myrank,iglob,ier
 
   implicit none
 
   include 'constants.h'
   include 'precision.h'
 
-  integer, intent(in)  :: npoin
-  integer, intent(in)  :: ninterface, ninterface_acoustic
-  integer, dimension(ninterface), intent(in)  :: inum_interfaces_acoustic
-  integer, intent(in)  :: max_interface_size
-  integer, intent(in)  :: max_ibool_interfaces_size_ac
-  integer, dimension(NGLLX*max_interface_size,ninterface), intent(in)  :: ibool_interfaces_acoustic
-  integer, dimension(ninterface), intent(in)  :: nibool_interfaces_acoustic
-  integer, dimension(ninterface_acoustic*2), intent(inout)  :: tab_requests_send_recv_acoustic
-  real(kind=CUSTOM_REAL), dimension(max_ibool_interfaces_size_ac,ninterface_acoustic), intent(inout)  :: &
-       buffer_send_faces_vector_ac
-  real(kind=CUSTOM_REAL), dimension(max_ibool_interfaces_size_ac,ninterface_acoustic), intent(inout)  :: &
-       buffer_recv_faces_vector_ac
-  ! array to assemble
-  real(kind=CUSTOM_REAL), dimension(npoin), intent(inout) :: array_val1
-  integer, dimension(ninterface), intent(in) :: my_neighbours
+
+
+  real(kind=CUSTOM_REAL), dimension(nglob), intent(inout) :: array_val1
 
   ! local parameters
-  integer  :: ipoin, num_interface,iinterface,ier,iglob
+  integer  :: ipoin, num_interface,iinterface
 
   ! initializes buffers
   buffer_send_faces_vector_ac(:,:) = 0._CUSTOM_REAL
@@ -279,6 +258,7 @@
 
     ! gets global interface index
     num_interface = inum_interfaces_acoustic(iinterface)
+
 
     ! non-blocking send
     call MPI_ISEND( buffer_send_faces_vector_ac(1,iinterface), &
@@ -347,38 +327,27 @@
 ! Particular care should be taken concerning possible optimisations of the
 ! communication scheme.
 !-----------------------------------------------
-  subroutine assemble_MPI_vector_el(array_val2,npoin, &
-                                   ninterface, ninterface_elastic, &
-                                   inum_interfaces_elastic, &
-                                   max_interface_size, max_ibool_interfaces_size_el,&
-                                   ibool_interfaces_elastic, nibool_interfaces_elastic, &
-                                   tab_requests_send_recv_elastic, &
-                                   buffer_send_faces_vector_el, &
-                                   buffer_recv_faces_vector_el, &
-                                   my_neighbours)
+  subroutine assemble_MPI_vector_el(array_val2)
 
   use mpi
+
+  use specfem_par, only: nglob,ninterface, ninterface_elastic, &
+                         inum_interfaces_elastic, &
+                         max_interface_size, max_ibool_interfaces_size_el,&
+                         ibool_interfaces_elastic, nibool_interfaces_elastic, &
+                         tab_requests_send_recv_elastic, &
+                         buffer_send_faces_vector_el, &
+                         buffer_recv_faces_vector_el, &
+                         my_neighbours
 
   implicit none
 
   include 'constants.h'
   include 'precision.h'
 
-  integer, intent(in)  :: npoin
-  integer, intent(in)  :: ninterface, ninterface_elastic
-  integer, dimension(ninterface), intent(in)  :: inum_interfaces_elastic
-  integer, intent(in)  :: max_interface_size
-  integer, intent(in)  :: max_ibool_interfaces_size_el
-  integer, dimension(NGLLX*max_interface_size,ninterface), intent(in)  :: ibool_interfaces_elastic
-  integer, dimension(ninterface), intent(in)  :: nibool_interfaces_elastic
-  integer, dimension(ninterface_elastic*2), intent(inout)  :: tab_requests_send_recv_elastic
-  real(CUSTOM_REAL), dimension(max_ibool_interfaces_size_el,ninterface_elastic), intent(inout)  :: &
-       buffer_send_faces_vector_el
-  real(CUSTOM_REAL), dimension(max_ibool_interfaces_size_el,ninterface_elastic), intent(inout)  :: &
-       buffer_recv_faces_vector_el
   ! array to assemble
-  real(kind=CUSTOM_REAL), dimension(3,npoin), intent(inout) :: array_val2
-  integer, dimension(ninterface), intent(in) :: my_neighbours
+  real(kind=CUSTOM_REAL), dimension(3,nglob), intent(inout) :: array_val2
+
 
   integer  :: ipoin, num_interface, iinterface, ier, i
 
@@ -453,40 +422,26 @@
 ! Particular care should be taken concerning possible optimisations of the
 ! communication scheme.
 !-----------------------------------------------
-  subroutine assemble_MPI_vector_po(array_val3,array_val4,npoin, &
-                           ninterface, ninterface_poroelastic, &
-                           inum_interfaces_poroelastic, &
-                           max_interface_size, max_ibool_interfaces_size_po,&
-                           ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
-                           tab_requests_send_recv_poro, &
-                           buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
-                           buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
-                           my_neighbours)
+  subroutine assemble_MPI_vector_po(array_val3,array_val4)
 
   use mpi
+
+  use specfem_par, only: nglob, &
+                         ninterface, ninterface_poroelastic,inum_interfaces_poroelastic, &
+                         max_interface_size, max_ibool_interfaces_size_po,&
+                         ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
+                         tab_requests_send_recv_poro,buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
+                         buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, my_neighbours,ier,i
+
 
   implicit none
 
   include 'constants.h'
   include 'precision.h'
 
-  integer, intent(in)  :: npoin
-  integer, intent(in)  :: ninterface, ninterface_poroelastic
-  integer, dimension(ninterface), intent(in)  :: inum_interfaces_poroelastic
-  integer, intent(in)  :: max_interface_size
-  integer, intent(in)  :: max_ibool_interfaces_size_po
-  integer, dimension(NGLLX*max_interface_size,ninterface), intent(in)  :: ibool_interfaces_poroelastic
-  integer, dimension(ninterface), intent(in)  :: nibool_interfaces_poroelastic
-  integer, dimension(ninterface_poroelastic*4), intent(inout)  :: tab_requests_send_recv_poro
-  real(CUSTOM_REAL), dimension(max_ibool_interfaces_size_po,ninterface_poroelastic), intent(inout)  :: &
-       buffer_send_faces_vector_pos,buffer_send_faces_vector_pow
-  real(CUSTOM_REAL), dimension(max_ibool_interfaces_size_po,ninterface_poroelastic), intent(inout)  :: &
-       buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow
-  ! array to assemble
-  real(kind=CUSTOM_REAL), dimension(NDIM,npoin), intent(inout) :: array_val3,array_val4
-  integer, dimension(ninterface), intent(in) :: my_neighbours
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob), intent(inout) :: array_val3,array_val4
 
-  integer  :: ipoin, num_interface, iinterface, ier, i
+  integer  :: ipoin, num_interface, iinterface
 
   do iinterface = 1, ninterface_poroelastic
 
@@ -580,4 +535,6 @@
 
   end subroutine assemble_MPI_vector_po
 
+
 #endif
+

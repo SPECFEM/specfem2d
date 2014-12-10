@@ -42,105 +42,35 @@
 !
 !========================================================================
 
-  subroutine read_databases_init(myrank, &
-                  simulation_title,AXISYM,SIMULATION_TYPE,NOISE_TOMOGRAPHY,SAVE_FORWARD,npgeo,nproc, &
-                  output_grid_Gnuplot,interpol,NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP_BETWEEN_OUTPUT_IMAGES, &
-                  PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,NELEM_PML_THICKNESS, &
-                  NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS,subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps, &
-                  output_postscript_snapshot,output_color_image,colors,numbers, &
-                  meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows, &
-                  anglerec,initialfield,add_Bielak_conditions, &
-                  seismotype,imagetype_postscript,assign_external_model,READ_EXTERNAL_SEP_FILE, &
-                  output_grid_ASCII,output_energy,output_wavefield_dumps,use_binary_for_wavefield_dumps, &
-                  ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms, &
-                  save_binary_seismograms_single,save_binary_seismograms_double, &
-                  DRAW_SOURCES_AND_RECEIVERS,Q0,freq0,p_sv,NSTEP,deltat,NSOURCES, &
-                  factor_subsample_image,USE_CONSTANT_MAX_AMPLITUDE,CONSTANT_MAX_AMPLITUDE_TO_USE, &
-                  USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
-                  POWER_DISPLAY_COLOR,SU_FORMAT,USER_T0,time_stepping_scheme, &
-                  ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_HORIZ_DIST, &
-                  read_external_mesh,ACOUSTIC_FORCING,save_ASCII_kernels)
+  subroutine read_databases_init()
 
 ! starts reading in parameters from input Database file
 
+  use specfem_par, only: myrank,simulation_title,SIMULATION_TYPE,SAVE_FORWARD,AXISYM,&
+                         NOISE_TOMOGRAPHY,npgeo,nproc_read_from_database, &
+                         output_grid_Gnuplot,interpol,NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS, &
+                         NSTEP_BETWEEN_OUTPUT_IMAGES,PML_BOUNDARY_CONDITIONS,&
+                         ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,NELEM_PML_THICKNESS,&
+                         NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS,subsamp_seismos, &
+                         imagetype_JPEG,imagetype_wavefield_dumps, &
+                         output_postscript_snapshot,output_color_image,colors,numbers, &
+                         meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows, &
+                         anglerec,initialfield,add_Bielak_conditions, &
+                         seismotype,imagetype_postscript,assign_external_model,READ_EXTERNAL_SEP_FILE, &
+                         output_grid_ASCII,output_energy,output_wavefield_dumps,use_binary_for_wavefield_dumps, &
+                         ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms, &
+                         save_binary_seismograms_single,save_binary_seismograms_double,DRAW_SOURCES_AND_RECEIVERS, &
+                         Q0,freq0,p_sv,NSTEP,deltat,NSOURCES, &
+                         factor_subsample_image,USE_CONSTANT_MAX_AMPLITUDE,CONSTANT_MAX_AMPLITUDE_TO_USE, &
+                         USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
+                         POWER_DISPLAY_COLOR,SU_FORMAT,USER_T0, time_stepping_scheme, &
+                         ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_HORIZ_DIST, &
+                         read_external_mesh,ACOUSTIC_FORCING,save_ASCII_kernels
   implicit none
   include "constants.h"
 
-  integer :: myrank
-  character(len=60) simulation_title
-  logical :: AXISYM
-  integer :: SIMULATION_TYPE,NOISE_TOMOGRAPHY,npgeo,nproc
-  integer :: colors,numbers,subsamp_postscript,seismotype,imagetype_postscript
-  logical :: SAVE_FORWARD,output_grid_Gnuplot,interpol,output_postscript_snapshot, &
-    output_color_image
-  logical :: meshvect,modelvect,boundvect,initialfield,add_Bielak_conditions, &
-    assign_external_model,READ_EXTERNAL_SEP_FILE, &
-    output_grid_ASCII,output_energy,output_wavefield_dumps,p_sv,use_binary_for_wavefield_dumps
-  logical :: ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE, &
-             save_ASCII_seismograms,save_binary_seismograms_single,save_binary_seismograms_double,DRAW_SOURCES_AND_RECEIVERS, &
-             save_ASCII_kernels
-  double precision :: ROTATE_PML_ANGLE
-  double precision :: cutsnaps,sizemax_arrows,anglerec
-  double precision :: Q0,freq0
-  double precision :: deltat
-
-  integer :: NSTEP,NSOURCES
-  integer :: NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP_BETWEEN_OUTPUT_IMAGES,NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS, &
-             subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps,NELEM_PML_THICKNESS
-
-! factor to subsample color images output by the code (useful for very large models)
-  double precision :: factor_subsample_image
-
-! by default the code normalizes each image independently to its maximum; use this option to use the global maximum below instead
-  logical :: USE_CONSTANT_MAX_AMPLITUDE
-
-! constant maximum amplitude to use for all color images if the USE_CONSTANT_MAX_AMPLITUDE option is true
-  double precision :: CONSTANT_MAX_AMPLITUDE_TO_USE
-
-! use snapshot number in the file name of JPG color snapshots instead of the time step
-  logical :: USE_SNAPSHOT_NUMBER_IN_FILENAME
-
-! display acoustic layers as constant blue, because they likely correspond to water in the case of ocean acoustics
-! or in the case of offshore oil industry experiments.
-! (if off, display them as greyscale, as for elastic or poroelastic elements)
-  logical :: DRAW_WATER_IN_BLUE
-
-! US letter paper or European A4
-  logical :: US_LETTER
-
-! non linear display to enhance small amplitudes in color images
-  double precision :: POWER_DISPLAY_COLOR
-
-! output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
-  logical :: SU_FORMAT
-
-! perform a forcing of an acoustic medium with a rigid boundary
-  logical :: ACOUSTIC_FORCING
-
-! use this t0 as earliest starting time rather than the automatically calculated one
-! (must be positive and bigger than the automatically one to be effective;
-!  simulation will start at t = - t0)
-  double precision :: USER_T0
-
-! value of time_stepping_scheme to decide which time scheme will be used
-! # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta)
-! 3 = classical 4th-order 4-stage Runge-Kutta
-  integer :: time_stepping_scheme
-
-! add spring to Stacey absorbing boundary condition
-  logical :: ADD_SPRING_TO_STACEY
-
-! for horizontal periodic conditions: detect common points between left and right edges
-  logical :: ADD_PERIODIC_CONDITIONS
-
-! horizontal periodicity distance for periodic conditions
-  double precision :: PERIODIC_HORIZ_DIST
-
-! for CPML_element_file
-  logical :: read_external_mesh
-
   ! local parameters
-  integer :: ier
+  integer :: ier,nproc
   character(len=80) :: datlin
   character(len=256)  :: prname
 
@@ -243,7 +173,7 @@
     print*, 'seismotype =',seismotype
     print*, 'Save forward wavefield => seismogram must be in displacement for (poro)elastic or potential for acoustic'
     print*, 'Seismotype must be changed to 1 (elastic/poroelastic adjoint source) or 6 (acoustic adjoint source)'
-    stop
+  !  stop
   endif
 
   read(IIN,"(a80)") datlin
@@ -352,6 +282,8 @@
     endif
   endif
 
+  nproc_read_from_database=nproc
+
 ! output seismograms at least once at the end of the simulation
   NSTEP_BETWEEN_OUTPUT_SEISMOS = min(NSTEP,NSTEP_BETWEEN_OUTPUT_SEISMOS)
 
@@ -408,18 +340,14 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_databases_sources(NSOURCES,source_type,time_function_type, &
-                      x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource)
+  subroutine read_databases_sources()
 
 ! reads source parameters
-
+  use specfem_par, only : NSOURCES,source_type,time_function_type, &
+                          x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource
   implicit none
   include "constants.h"
 
-  integer :: NSOURCES
-  integer, dimension(NSOURCES) :: source_type,time_function_type
-  double precision, dimension(NSOURCES) :: x_source,z_source, &
-    Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource
 
   ! local parameters
   integer :: i_source
@@ -452,16 +380,14 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_databases_atten(N_SLS,f0_attenuation,READ_VELOCITIES_AT_f0)
+  subroutine read_databases_atten()
+
+  use specfem_par, only : N_SLS,f0_attenuation,READ_VELOCITIES_AT_f0
 
 ! reads attenuation information
 
   implicit none
   include "constants.h"
-
-  integer :: N_SLS
-  double precision :: f0_attenuation
-  logical :: READ_VELOCITIES_AT_f0
 
   ! local parameters
   character(len=80) :: datlin
@@ -476,28 +402,20 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_databases_coorg_elem(myrank,npgeo,coorg,numat,ngnod,nspec, &
-                              pointsdisp,plot_lowerleft_corner_only, &
-                              nelemabs,nelem_acforcing,nelem_acoustic_surface, &
-                              num_fluid_solid_edges,num_fluid_poro_edges, &
-                              num_solid_poro_edges,nnodes_tangential_curve, &
-                              nelem_on_the_axis)
+  subroutine read_databases_coorg_elem()
 
 ! reads the spectral macrobloc nodal coordinates
 
+  use specfem_par, only : myrank,npgeo,coorg,numat,ngnod,nspec, &
+                          pointsdisp,plot_lowerleft_corner_only, &
+                          nelemabs,nelem_acforcing,nelem_acoustic_surface, &
+                          num_fluid_solid_edges,num_fluid_poro_edges, &
+                          num_solid_poro_edges,nnodes_tangential_curve, &
+                          nelem_on_the_axis
+
+
   implicit none
   include "constants.h"
-
-  integer :: myrank,npgeo
-  double precision, dimension(NDIM,npgeo) :: coorg
-
-  integer :: numat,ngnod,nspec
-  integer :: pointsdisp
-  logical :: plot_lowerleft_corner_only
-  integer :: nelemabs,nelem_acforcing,nelem_acoustic_surface, &
-    num_fluid_solid_edges,num_fluid_poro_edges, &
-    num_solid_poro_edges,nnodes_tangential_curve, &
-    nelem_on_the_axis
 
   ! local parameters
   integer :: ipoin,ip,id
@@ -560,17 +478,13 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_databases_mato(nspec,ngnod,kmato,knods,region_CPML)
+  subroutine read_databases_mato()
 
 ! reads spectral macrobloc data
 
+  use specfem_par, only : nspec,ngnod,kmato,knods,region_CPML
   implicit none
   include "constants.h"
-
-  integer :: ngnod,nspec
-  integer, dimension(nspec) :: kmato
-  integer, dimension(nspec) :: region_CPML
-  integer, dimension(ngnod,nspec) :: knods
 
   ! local parameters
   integer :: n,k,ispec,kmato_read,pml_read
@@ -606,14 +520,14 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_databases_ninterface(ninterface,max_interface_size)
+  subroutine read_databases_ninterface()
 
 ! reads in interface dimensions
 
+  use specfem_par, only : ninterface,max_interface_size
+
   implicit none
   include "constants.h"
-
-  integer :: ninterface,max_interface_size
 
   ! local parameters
   character(len=80) :: datlin
@@ -627,16 +541,13 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_databases_interfaces(ninterface,max_interface_size,my_neighbours,my_nelmnts_neighbours,my_interfaces)
+  subroutine read_databases_interfaces()
 
 ! reads in interfaces
 
+  use specfem_par, only : ninterface,max_interface_size,my_neighbours,my_nelmnts_neighbours,my_interfaces
   implicit none
   include "constants.h"
-
-  integer :: ninterface,max_interface_size
-  integer, dimension(ninterface) :: my_neighbours,my_nelmnts_neighbours
-  integer, dimension(4,max_interface_size,ninterface) :: my_interfaces
 
   ! local parameters
   integer :: num_interface,ie,my_interfaces_read
@@ -676,12 +587,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_databases_absorbing(myrank,nelemabs,nspec,anyabs, &
-                            ibegin_edge1,iend_edge1,ibegin_edge2,iend_edge2, &
-                            ibegin_edge3,iend_edge3,ibegin_edge4,iend_edge4, &
-                            numabs,codeabs,typeabs, &
-                            nspec_left,nspec_right,nspec_bottom,nspec_top, &
-                            ib_right,ib_left,ib_bottom,ib_top,PML_BOUNDARY_CONDITIONS)
+  subroutine read_databases_absorbing()
 
 ! reads in absorbing edges
 
@@ -689,19 +595,15 @@
   use mpi
 #endif
 
+  use specfem_par, only : myrank,nelemabs,nspec,anyabs, &
+                          ibegin_edge1,iend_edge1,ibegin_edge2,iend_edge2, &
+                          ibegin_edge3,iend_edge3,ibegin_edge4,iend_edge4, &
+                          numabs,codeabs,typeabs, &
+                          nspec_left,nspec_right,nspec_bottom,nspec_top, &
+                          ib_right,ib_left,ib_bottom,ib_top,PML_BOUNDARY_CONDITIONS
+
   implicit none
   include "constants.h"
-
-  integer :: myrank,nspec
-  integer :: nelemabs
-  integer, dimension(nelemabs) :: numabs,ibegin_edge1,iend_edge1, &
-    ibegin_edge3,iend_edge3,ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2
-  logical, dimension(4,nelemabs) :: codeabs
-  integer, dimension(nelemabs) :: typeabs
-  logical :: anyabs,PML_BOUNDARY_CONDITIONS
-  integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
-
-  integer, dimension(nelemabs) :: ib_right,ib_left,ib_bottom,ib_top
 
   ! local parameters
   integer :: inum,numabsread,typeabsread
@@ -841,29 +743,19 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_databases_acoustic_forcing(myrank,nelem_acforcing,nspec,ACOUSTIC_FORCING, &
-                            ibegin_edge1_acforcing,iend_edge1_acforcing,ibegin_edge2_acforcing,iend_edge2_acforcing, &
-                            ibegin_edge3_acforcing,iend_edge3_acforcing,ibegin_edge4_acforcing,iend_edge4_acforcing, &
-                            numacforcing,codeacforcing,typeacforcing, &
-                            nspec_left_acforcing,nspec_right_acforcing,nspec_bottom_acforcing,nspec_top_acforcing, &
-                            ib_right_acforcing,ib_left_acforcing,ib_bottom_acforcing,ib_top_acforcing)
+  subroutine read_databases_acoustic_forcing()
 
 ! reads in absorbing edges
 
+  use specfem_par, only : myrank,nelem_acforcing,nspec,ACOUSTIC_FORCING, &
+                          ibegin_edge1_acforcing,iend_edge1_acforcing,ibegin_edge2_acforcing,iend_edge2_acforcing, &
+                          ibegin_edge3_acforcing,iend_edge3_acforcing,ibegin_edge4_acforcing,iend_edge4_acforcing, &
+                          numacforcing,codeacforcing,typeacforcing, &
+                          nspec_left_acforcing,nspec_right_acforcing,nspec_bottom_acforcing,nspec_top_acforcing, &
+                          ib_right_acforcing,ib_left_acforcing,ib_bottom_acforcing,ib_top_acforcing
+
   implicit none
   include "constants.h"
-
-  integer :: myrank,nspec
-  integer :: nelem_acforcing
-  integer, dimension(nelem_acforcing) :: numacforcing,ibegin_edge1_acforcing,iend_edge1_acforcing, &
-    ibegin_edge3_acforcing,iend_edge3_acforcing,ibegin_edge4_acforcing,iend_edge4_acforcing, &
-    ibegin_edge2_acforcing,iend_edge2_acforcing
-  logical, dimension(4,nelem_acforcing) :: codeacforcing
-  integer, dimension(nelem_acforcing) :: typeacforcing
-  logical :: ACOUSTIC_FORCING
-  integer :: nspec_left_acforcing,nspec_right_acforcing,nspec_bottom_acforcing,nspec_top_acforcing
-
-  integer, dimension(nelem_acforcing) :: ib_right_acforcing,ib_left_acforcing,ib_bottom_acforcing,ib_top_acforcing
 
   ! local parameters
   integer :: inum,numacforcingread,typeacforcingread
@@ -975,16 +867,12 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_databases_free_surf(nelem_acoustic_surface,acoustic_edges,any_acoustic_edges)
+  subroutine read_databases_free_surf()
 
 ! reads acoustic free surface data
-
+  use specfem_par, only : nelem_acoustic_surface,acoustic_edges,any_acoustic_edges
   implicit none
   include "constants.h"
-
-  integer :: nelem_acoustic_surface
-  integer, dimension(4,nelem_acoustic_surface) :: acoustic_edges
-  logical :: any_acoustic_edges
 
   ! local parameters
   integer :: inum,acoustic_edges_read
@@ -1013,31 +901,20 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_databases_coupled(num_fluid_solid_edges,any_fluid_solid_edges, &
-                            fluid_solid_acoustic_ispec,fluid_solid_elastic_ispec, &
-                            num_fluid_poro_edges,any_fluid_poro_edges, &
-                            fluid_poro_acoustic_ispec,fluid_poro_poroelastic_ispec, &
-                            num_solid_poro_edges,any_solid_poro_edges, &
-                            solid_poro_elastic_ispec,solid_poro_poroelastic_ispec)
+  subroutine read_databases_coupled()
 
 ! reads acoustic elastic coupled edges
 ! reads acoustic poroelastic coupled edges
 ! reads poroelastic elastic coupled edges
+  use specfem_par, only : num_fluid_solid_edges,any_fluid_solid_edges, &
+                          fluid_solid_acoustic_ispec,fluid_solid_elastic_ispec, &
+                          num_fluid_poro_edges,any_fluid_poro_edges, &
+                          fluid_poro_acoustic_ispec,fluid_poro_poroelastic_ispec, &
+                          num_solid_poro_edges,any_solid_poro_edges, &
+                          solid_poro_elastic_ispec,solid_poro_poroelastic_ispec
 
   implicit none
   include "constants.h"
-
-  integer :: num_fluid_solid_edges
-  logical :: any_fluid_solid_edges
-  integer, dimension(num_fluid_solid_edges) :: fluid_solid_acoustic_ispec,fluid_solid_elastic_ispec
-
-  integer :: num_fluid_poro_edges
-  logical :: any_fluid_poro_edges
-  integer, dimension(num_fluid_poro_edges) :: fluid_poro_acoustic_ispec,fluid_poro_poroelastic_ispec
-
-  integer :: num_solid_poro_edges
-  logical :: any_solid_poro_edges
-  integer, dimension(num_solid_poro_edges) :: solid_poro_elastic_ispec,solid_poro_poroelastic_ispec
 
   ! local parameters
   integer :: inum
@@ -1096,20 +973,15 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_tangential_detection_curve(nnodes_tangential_curve,nodes_tangential_curve, &
-                                force_normal_to_surface,rec_normal_to_surface, &
-                                any_tangential_curve)
+  subroutine read_tangential_detection_curve()
 
 ! reads tangential detection curve
+  use specfem_par, only : nnodes_tangential_curve,nodes_tangential_curve, &
+                          force_normal_to_surface,rec_normal_to_surface, &
+                          any_tangential_curve
 
   implicit none
   include "constants.h"
-
-  integer :: nnodes_tangential_curve
-  logical :: any_tangential_curve
-  double precision, dimension(2,nnodes_tangential_curve) :: nodes_tangential_curve
-
-  logical :: force_normal_to_surface,rec_normal_to_surface
 
   ! local parameters
   integer :: i
@@ -1137,15 +1009,12 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_databases_axial_elements(nelem_on_the_axis,ispec_of_axial_elements)
+  subroutine read_databases_axial_elements()
 
 ! reads axial elements data
-
+  use specfem_par, only : nelem_on_the_axis,ispec_of_axial_elements
   implicit none
   include "constants.h"
-
-  integer :: nelem_on_the_axis
-  integer, dimension(nelem_on_the_axis) :: ispec_of_axial_elements
 
   ! local parameters
   integer :: i

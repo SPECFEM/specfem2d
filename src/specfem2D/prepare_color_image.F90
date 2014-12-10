@@ -43,27 +43,20 @@
 !========================================================================
 
 
-  subroutine prepare_color_image_init(NX_IMAGE_color,NZ_IMAGE_color, &
-                            xmin_color_image,xmax_color_image, &
-                            zmin_color_image,zmax_color_image, &
-                            coord,nglob,npgeo,factor_subsample_image)
+  subroutine prepare_color_image_init()
 
 #ifdef USE_MPI
   use mpi
 #endif
+
+  use specfem_par, only : NX_IMAGE_color,NZ_IMAGE_color, &
+                          xmin_color_image,xmax_color_image, &
+                          zmin_color_image,zmax_color_image, &
+                          coord,nglob,npgeo,factor_subsample_image
+
   implicit none
   include "constants.h"
 
-  integer :: NX_IMAGE_color,NZ_IMAGE_color
-
-! factor to subsample color images output by the code (useful for very large models)
-  double precision :: factor_subsample_image
-
-  integer :: nglob,npgeo
-  double precision, dimension(NDIM,nglob) :: coord
-
-  double precision :: xmin_color_image,xmax_color_image, &
-    zmin_color_image,zmax_color_image
 
   ! local parameters
   integer  :: npgeo_glob
@@ -141,39 +134,18 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine prepare_color_image_pixels(myrank,NX_IMAGE_color,NZ_IMAGE_color, &
+  subroutine prepare_color_image_pixels()
+
+  use specfem_par, only : myrank,NX_IMAGE_color,NZ_IMAGE_color, &
                             xmin_color_image,xmax_color_image, &
                             zmin_color_image,zmax_color_image, &
                             coord,nglob,coorg,npgeo,nspec,ngnod,knods,ibool, &
                             nb_pixel_loc,iglob_image_color, &
                             DRAW_SOURCES_AND_RECEIVERS,NSOURCES,nrec,x_source,z_source,st_xval,st_zval, &
-                            ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver)
+                            ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver
 
   implicit none
   include "constants.h"
-
-  integer :: myrank
-  integer :: NX_IMAGE_color,NZ_IMAGE_color
-  double precision :: xmin_color_image,xmax_color_image, &
-    zmin_color_image,zmax_color_image
-
-  integer :: nglob,nspec,npgeo,ngnod
-  double precision, dimension(NDIM,nglob) :: coord
-  double precision, dimension(NDIM,npgeo) :: coorg
-
-  integer, dimension(ngnod,nspec) :: knods
-  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
-
-  integer :: nb_pixel_loc
-  integer, dimension(NX_IMAGE_color,NZ_IMAGE_color) :: iglob_image_color
-
-! to draw the sources and receivers
-  integer, intent(in) :: NSOURCES,nrec
-  logical, intent(in) :: DRAW_SOURCES_AND_RECEIVERS
-  double precision, dimension(NSOURCES), intent(in) :: x_source,z_source
-  double precision, dimension(nrec), intent(in) :: st_xval,st_zval
-  integer, dimension(NSOURCES), intent(out) :: ix_image_color_source,iy_image_color_source
-  integer, dimension(nrec), intent(out) :: ix_image_color_receiver,iy_image_color_receiver
 
   ! local parameters
   double precision  :: size_pixel_horizontal,size_pixel_vertical
@@ -294,48 +266,25 @@
 !
 
 
-  subroutine prepare_color_image_vp(nglob,image_color_vp_display,iglob_image_color, &
-                            NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc, &
-                            num_pixel_loc,nspec,elastic,poroelastic,ibool,kmato, &
-                            numat,density,poroelastcoef,porosity,tortuosity, &
-                            nproc,myrank,assign_external_model,vpext,DRAW_WATER_IN_BLUE)
+  subroutine prepare_color_image_vp()
 
 ! stores P-velocity model in image_color_vp_display
 
 #ifdef USE_MPI
   use mpi
 #endif
+
+  use specfem_par, only : nglob,image_color_vp_display,iglob_image_color, &
+                            NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc, &
+                            num_pixel_loc,nspec,elastic,poroelastic,ibool,kmato, &
+                            numat,density,poroelastcoef,porosity,tortuosity, &
+                            nproc,myrank,assign_external_model,vpext,DRAW_WATER_IN_BLUE
+
   implicit none
   include "constants.h"
 
-  integer :: nglob,nspec
-  integer :: NX_IMAGE_color,NZ_IMAGE_color
-  double precision, dimension(NX_IMAGE_color,NZ_IMAGE_color) :: image_color_vp_display
-  integer, dimension(NX_IMAGE_color,NZ_IMAGE_color) :: iglob_image_color
-
-  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
-  integer, dimension(nspec) :: kmato
-
-  logical, dimension(nspec) :: elastic,poroelastic
-
-  integer :: nb_pixel_loc
-  integer, dimension(nb_pixel_loc) :: num_pixel_loc
-
-  logical :: assign_external_model
-  integer :: nproc,myrank
-  integer :: numat
-  double precision, dimension(2,numat) :: density
-  double precision, dimension(4,3,numat) :: poroelastcoef
-  double precision, dimension(numat) :: porosity,tortuosity
-  double precision, dimension(NGLLX,NGLLX,nspec) :: vpext
-  double precision :: vp_of_the_model
-
-! display acoustic layers as constant blue, because they likely correspond to water in the case of ocean acoustics
-! or in the case of offshore oil industry experiments.
-! (if off, display them as greyscale, as for elastic or poroelastic elements)
-  logical :: DRAW_WATER_IN_BLUE
-
   ! local parameters
+  double precision :: vp_of_the_model
   double precision, dimension(:), allocatable :: vp_display
   double precision :: rhol,mul_relaxed,lambdal_relaxed
   double precision :: rhol_s,rhol_f,rhol_bar,phil,tortl,mul_s,kappal_s,kappal_f, &

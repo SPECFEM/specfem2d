@@ -41,40 +41,24 @@
 !
 !========================================================================
 
-
-  subroutine check_stability(myrank,timeval,it,NSTEP,NOISE_TOMOGRAPHY, &
-                        nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-                        any_elastic_glob,any_elastic,displ_elastic, &
-                        any_poroelastic_glob,any_poroelastic, &
-                        displs_poroelastic,displw_poroelastic, &
-                        any_acoustic_glob,any_acoustic,potential_acoustic, &
-                        timestamp_seconds_start)
+  subroutine check_stability()
 
 ! checks simulation stability and outputs timerun infos
 
 #ifdef USE_MPI
   use mpi
 #endif
+
+  use specfem_par, only: myrank,timeval,it,NSTEP,NOISE_TOMOGRAPHY, &
+                         nglob_acoustic,nglob_elastic,nglob_poroelastic, &
+                         any_elastic_glob,any_elastic,displ_elastic, &
+                         any_poroelastic_glob,any_poroelastic, &
+                         displs_poroelastic,displw_poroelastic, &
+                         any_acoustic_glob,any_acoustic,potential_acoustic, &
+                         timestamp_seconds_start
+
   implicit none
   include "constants.h"
-
-  integer :: myrank,it,NSTEP,NOISE_TOMOGRAPHY
-
-  double precision :: timeval
-
-  logical :: any_elastic_glob,any_elastic
-  integer :: nglob_elastic
-  real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: displ_elastic
-
-  logical :: any_poroelastic_glob,any_poroelastic
-  integer :: nglob_poroelastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: displs_poroelastic,displw_poroelastic
-
-  logical :: any_acoustic_glob,any_acoustic
-  integer :: nglob_acoustic
-  real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: potential_acoustic
-
-  double precision :: timestamp_seconds_start
 
   ! local parameters
   double precision displnorm_all,displnorm_all_glob
@@ -97,6 +81,7 @@
 #ifdef USE_MPI
   integer :: ier
 #endif
+
 
   ! user output
   if (myrank == 0) then

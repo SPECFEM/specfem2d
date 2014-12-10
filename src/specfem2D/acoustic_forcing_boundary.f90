@@ -46,22 +46,13 @@
 ! variable forcing_type should be passed as a parameter
 ! in future versions
 
-  subroutine acoustic_forcing_boundary(it,deltat,t0,accel_x,accel_z,iglob,coord,nglob)
+  subroutine acoustic_forcing_boundary()
+
+  use specfem_par, only: it,deltat,t0,displ_x,displ_z,iglob,coord,nglob
 
   implicit none
 
   include "constants.h"
-
-! input variables
-  integer, intent(in) :: nglob
-
-  double precision, dimension(NDIM,nglob), intent(in) :: coord
-  double precision :: deltat
-  double precision :: t0
-  integer :: it,iglob
-! These variables are in fact displacements of the boundary
-  real(kind=CUSTOM_REAL) :: accel_x,accel_z
-
 
 
 ! local variables
@@ -107,34 +98,34 @@
 !  print *, ispec_acoustic
 !  print *, is_PML(ispec_acoustic)
 !  if(is_PML(ispec_acoustic)) then
-!  accel_x = 0
-!  accel_z = 0
+!  displ_x = 0
+!  displ_z = 0
 !  else
 
 ! infrasounds / seismic
-  accel_x = 0 !* Apo
-  accel_z = A * (exp(-(alpha*(deltat*it-40-t0)/tho)**2) &
+  displ_x = 0 !* Apo
+  displ_z = A * (exp(-(alpha*(deltat*it-40-t0)/tho)**2) &
             - exp(-(alpha*(deltat*it-70-t0)/tho)**2)) !* Apo
 
 ! gravity wave test function
-!  accel_x = 0 !* Apo
-!  accel_z = A * ( exp(-(alpha*(x-(xo-lambdo/2))/lambdo)**2) - &
+!  displ_x = 0 !* Apo
+!  displ_z = A * ( exp(-(alpha*(x-(xo-lambdo/2))/lambdo)**2) - &
 !                  exp(-(alpha*(x-(xo+lambdo/2))/lambdo)**2) ) * &
 !            (exp(-(alpha*(deltat*it+1000-t0)/tho)**2) &
 !            - exp(-(alpha*(deltat*it-1300-t0)/tho)**2)) !* Apo
 
 ! gravity wave /tsunami
-!  accel_x = 0 !* Apo
-!  accel_z = A * (exp(-(alpha*(deltat*it-1000-t0)/tho)**2) &
+!  displ_x = 0 !* Apo
+!  displ_z = A * (exp(-(alpha*(deltat*it-1000-t0)/tho)**2) &
 !            - exp(-(alpha*(deltat*it-1600-t0)/tho)**2)) !* Apo
 
 
   endif
 
   if(forcing_type == 2) then !! Second test function : moving forcing
-  accel_x = 0 !* Apo
+  displ_x = 0 !* Apo
 
-  accel_z = A * (exp(-(alpha*(deltat*it-40-t0-(x-delayed)/c)/tho)**2) &
+  displ_z = A * (exp(-(alpha*(deltat*it-40-t0-(x-delayed)/c)/tho)**2) &
             - exp(-(alpha*(deltat*it-70-t0-(x-delayed)/c)/tho)**2)) !* Apo
   endif
 
@@ -147,12 +138,8 @@
     allocate(distance(n_models))
     allocate(syn(n_models,ngoce_time_step))
 
-!    open(1000,file='/home/etudiant/SPECFEM2D/infile_specfem2D/along_goce_orbit/distance.txt', &
-    open(1000,file='../../EXAMPLES/acoustic_forcing_bottom/distance.txt', &
-                form='formatted')
-!    open(1001,file='/home/etudiant/SPECFEM2D/infile_specfem2D/along_goce_orbit/forcing_signals.txt', &
-    open(1001,file='../../EXAMPLES/acoustic_forcing_bottom/forcing_signals.txt', &
-                  form='formatted')
+    open(1000,file='../../EXAMPLES/acoustic_forcing_bottom/distance.txt',form='formatted')
+    open(1001,file='../../EXAMPLES/acoustic_forcing_bottom/forcing_signals.txt',form='formatted')
 
     read(1001,*) goce_time(:)
 
@@ -175,15 +162,15 @@
     enddo
 
       if(x==0 .and. it==1) then
-        accel_z =  syn(1,1)
+        displ_z =  syn(1,1)
       else
         if(x==0) then
           fract = (t-goce_time(ll-1))/(goce_time(ll)-goce_time(ll-1))
-          accel_z =  (syn(1,ll-1) + fract * (syn(1,ll)-syn(1,ll-1)))
+          displ_z =  (syn(1,ll-1) + fract * (syn(1,ll)-syn(1,ll-1)))
         else
           if(it==1) then
             fracx = (x-distance(kk-1))/(distance(kk)-distance(kk-1))
-            accel_z =  (syn(kk-1,1) + fracx * (syn(kk,1)-syn(kk-1,1)))
+            displ_z =  (syn(kk-1,1) + fracx * (syn(kk,1)-syn(kk-1,1)))
           else
     ! interpolation in time
     fract = (t-goce_time(ll-1))/(goce_time(ll)-goce_time(ll-1))
@@ -194,17 +181,17 @@
 
     ! spatial interpolation
     fracx = (x-distance(kk-1))/(distance(kk)-distance(kk-1))
-    accel_z =  (signal_x1 + fracx * (signal_x2 - signal_x1))
+    displ_z =  (signal_x1 + fracx * (signal_x2 - signal_x1))
           endif
         endif
       endif
 
-  accel_x = 0
+  displ_x = 0
 
   endif
 
-  if (abs(accel_x) < TINYVAL) accel_x=ZERO
-  if (abs(accel_z) < TINYVAL) accel_z=ZERO
+  if (abs(displ_x) < TINYVAL) displ_x=ZERO
+  if (abs(displ_z) < TINYVAL) displ_z=ZERO
 
 
   end subroutine acoustic_forcing_boundary

@@ -36,9 +36,6 @@ cd ../
 # cleans output files
 rm -rf OUTPUT_FILES/*
 
-# compiles executables in root directory
-cd ../../../
-make
 cd $currentdir
 
 # links executables

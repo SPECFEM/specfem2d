@@ -43,44 +43,26 @@
 !========================================================================
 
 
-  subroutine prepare_initialfield(myrank,any_acoustic,any_poroelastic,over_critical_angle, &
-                        NSOURCES,source_type,anglesource,x_source,z_source,f0,t0, &
-                        nglob,numat,poroelastcoef,density,coord, &
-                        anglesource_refl,c_inc,c_refl,cploc,csloc,time_offset, &
-                        A_plane, B_plane, C_plane, &
-                        accel_elastic,veloc_elastic,displ_elastic)
+  subroutine prepare_initialfield()
 
 #ifdef USE_MPI
   use mpi
 #endif
+
+  use specfem_par, only: myrank,any_acoustic,any_poroelastic,over_critical_angle, &
+                         NSOURCES,source_type,anglesource,x_source,z_source,f0,t0, &
+                         nglob,numat,poroelastcoef,density,coord, &
+                         anglesource_refl,c_inc,c_refl,cploc,csloc,time_offset, &
+                         A_plane, B_plane, C_plane, &
+                         accel_elastic,veloc_elastic,displ_elastic,i
+
   implicit none
   include "constants.h"
 
-  integer :: myrank
-  logical :: any_acoustic,any_poroelastic
-
-  integer :: NSOURCES
-  integer, dimension(NSOURCES) :: source_type
-  double precision, dimension(NSOURCES) :: anglesource,x_source,z_source,f0
-  double precision :: t0
-
-  integer :: nglob,numat
-  double precision, dimension(4,3,numat) :: poroelastcoef
-  double precision, dimension(2,numat) :: density
-  double precision, dimension(NDIM,nglob) :: coord
-
-  double precision :: anglesource_abs, anglesource_refl,c_inc,c_refl,cploc,csloc
-  double precision :: time_offset,x0_source,z0_source
-  double precision, dimension(2) :: A_plane, B_plane, C_plane
-
-  real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic,veloc_elastic,displ_elastic
-
-  logical :: over_critical_angle
-
   ! local parameters
-  integer :: numat_local,i
-  double precision :: denst,lambdaplus2mu,mu,p
-  double precision :: PP,PS,SP,SS
+  integer :: numat_local
+  double precision :: denst,lambdaplus2mu,mu,p,x0_source,z0_source
+  double precision :: PP,PS,SP,SS,anglesource_abs
   double precision :: xmax, xmin, zmax, zmin,x,z,t
 #ifdef USE_MPI
   double precision :: xmax_glob, xmin_glob, zmax_glob, zmin_glob
@@ -343,32 +325,15 @@ end subroutine prepare_initialfield
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine prepare_initialfield_paco(myrank,nelemabs,left_bound,right_bound,bot_bound, &
+  subroutine prepare_initialfield_paco()
+
+  use specfem_par, only: myrank,nelemabs,left_bound,right_bound,bot_bound, &
                                     numabs,codeabs,ibool,nspec, &
                                     source_type,NSOURCES,c_inc,c_refl, &
-                                    count_bottom,count_left,count_right)
+                                    count_bottom,count_left,count_right
 
   implicit none
   include "constants.h"
-
-  integer :: myrank
-
-  integer :: nelemabs
-  integer :: left_bound(nelemabs*NGLLX)
-  integer :: right_bound(nelemabs*NGLLX)
-  integer :: bot_bound(nelemabs*NGLLZ)
-  integer,dimension(nelemabs) :: numabs
-  logical, dimension(4,nelemabs) :: codeabs
-
-  integer :: nspec
-  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
-
-  integer :: NSOURCES
-  integer :: source_type(NSOURCES)
-
-  double precision :: c_inc,c_refl
-
-  integer :: count_bottom,count_left,count_right
 
   ! local parameters
   integer :: ispecabs,ispec,i,j,iglob,ibegin,iend

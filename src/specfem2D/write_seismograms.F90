@@ -43,15 +43,18 @@
 
 ! write seismograms to text files
 
-  subroutine write_seismograms(sisux,sisuz,siscurl,station_name,network_name, &
-      NSTEP,nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
-      NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,p_sv, &
-      st_zval,x_source,z_source,SU_FORMAT,save_ASCII_seismograms, &
-      save_binary_seismograms_single,save_binary_seismograms_double,subsamp_seismos)
+
+  subroutine write_seismograms(x_source,z_source)
 
 #ifdef USE_MPI
   use mpi
 #endif
+
+  use specfem_par, only : sisux,sisuz,siscurl,station_name,network_name, &
+                          NSTEP,nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
+                          NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,p_sv, &
+                          st_zval,SU_FORMAT,save_ASCII_seismograms, &
+                          save_binary_seismograms_single,save_binary_seismograms_double,subsamp_seismos
 
   implicit none
 
@@ -62,25 +65,8 @@
 
   include "constants.h"
 
-  integer :: nrec,NSTEP,seismotype,subsamp_seismos
-  integer :: NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current
-  double precision :: t0,deltat
-
-! output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
-  logical :: SU_FORMAT
-
-  logical :: p_sv,save_ASCII_seismograms,save_binary_seismograms,save_binary_seismograms_single,save_binary_seismograms_double
-
-  integer, intent(in) :: nrecloc,myrank
-  integer, dimension(nrec),intent(in) :: which_proc_receiver
-
-  double precision, dimension(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc), intent(in) :: sisux,sisuz,siscurl
-
-  double precision :: st_xval(nrec)
-
-  character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
-  character(len=MAX_LENGTH_NETWORK_NAME), dimension(nrec) :: network_name
-
+  integer :: deltat_int2
+  logical :: save_binary_seismograms
   integer irec,length_station_name,length_network_name,iorientation,isample,number_of_components
 
   character(len=4) chn
@@ -97,7 +83,7 @@
   integer  :: irecloc
 
 !<SU_FORMAT
-  double precision :: st_zval(nrec),x_source,z_source
+  double precision :: x_source,z_source
   integer(kind=2) :: header2(2)
 !>SU_FORMAT
 
@@ -280,8 +266,8 @@
                call exit_MPI('wrong length of network name')
             endif
 
-             write(sisname,"('OUTPUT_FILES/',a,'.',a,'.',a3,'.sem',a1)") station_name(irec)(1:length_station_name),&
-                  network_name(irec)(1:length_network_name),chn,component
+             write(sisname,"('OUTPUT_FILES/',a,'.',a,'.',a3,'.sem',a1)") &
+                  network_name(irec)(1:length_network_name),station_name(irec)(1:length_station_name),chn,component
 
              ! save seismograms in text format with no subsampling.
              ! Because we do not subsample the output, this can result in large files
@@ -339,6 +325,13 @@
         else ! if SU_FORMAT
 
           if (seismo_offset==0) then
+
+             if (deltat*1.0d6 > 2**15) then
+                deltat_int2 = 0
+             else
+                deltat_int2 = NINT(deltat*1.0d6, kind=2) ! deltat (unit: 10^{-6} second)
+             endif
+
              ! write SU headers (refer to Seismic Unix for details)
              write(12,rec=(irec-1)*60+(irec-1)*NSTEP+1)  irec                          ! receiver ID
              write(12,rec=(irec-1)*60+(irec-1)*NSTEP+10) NINT(st_xval(irec)-x_source)  ! offset
@@ -350,7 +343,7 @@
              header2(1)=0  ! dummy
              header2(2)=int(NSTEP, kind=2)
              write(12,rec=(irec-1)*60+(irec-1)*NSTEP+29) header2
-             header2(1)=NINT(deltat*1.0d6, kind=2)  ! deltat (unit: 10^{-6} second)
+             header2(1)=deltat_int2
              header2(2)=0  ! dummy
              write(12,rec=(irec-1)*60+(irec-1)*NSTEP+30) header2
              if ( seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
@@ -366,7 +359,7 @@
                    header2(1)=0  ! dummy
                    header2(2)=int(NSTEP, kind=2)
                    write(14,rec=(irec-1)*60+(irec-1)*NSTEP+29) header2
-                   header2(1)=NINT(deltat*1.0d6, kind=2)
+                   header2(1)=deltat_int2
                    header2(2)=0  ! dummy
                    write(14,rec=(irec-1)*60+(irec-1)*NSTEP+30) header2
                 endif

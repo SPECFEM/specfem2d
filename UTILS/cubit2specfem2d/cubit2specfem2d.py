@@ -124,7 +124,7 @@ class mesh_tools(block_tools):
             return the length of a edge
         """
         from math import sqrt
-        nodes=cubit.get_connectivity('Edge',edge)
+        nodes=cubit.get_connectivity('edge',edge)
         x0,y0,z0=cubit.get_nodal_coordinates(nodes[0])
         x1,y1,z1=cubit.get_nodal_coordinates(nodes[1])
         d=sqrt((x1-x0)**2+(y1-y0)**2+(z1-z0)**2)
@@ -309,7 +309,7 @@ class mesh(object,mesh_tools):
         for block,flag in zip(self.block_mat,self.block_flag):
             quads=cubit.get_block_faces(block)
             for inum,quad in enumerate(quads):
-                nodes=cubit.get_connectivity('Face',quad)
+                nodes=cubit.get_connectivity('face',quad)
                 nodes=self.jac_check(nodes)
                 txt=('%10i %10i %10i %10i\n')% nodes
                 meshfile.write(txt)
@@ -363,8 +363,8 @@ class mesh(object,mesh_tools):
                     intersection=edges & edges_all
                     if len(intersection) != 0:
                         for e in intersection:
-                            node_edge=cubit.get_connectivity('Edge',e)
-                            nodes=cubit.get_connectivity('Face',quad)
+                            node_edge=cubit.get_connectivity('edge',e)
+                            nodes=cubit.get_connectivity('face',quad)
                             nodes=self.jac_check(list(nodes))
                             nodes_ok=[]
                             for i in nodes:
@@ -406,8 +406,8 @@ class mesh(object,mesh_tools):
                         if len(intersection) != 0:
                             #print intersection, iabs
                             for e in intersection:
-                                node_edge=cubit.get_connectivity('Edge',e)
-                                nodes=cubit.get_connectivity('Face',quad)
+                                node_edge=cubit.get_connectivity('edge',e)
+                                nodes=cubit.get_connectivity('face',quad)
                                 nodes=self.jac_check(list(nodes))
                                 nodes_ok=[]
                                 for i in nodes:

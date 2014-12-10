@@ -42,68 +42,33 @@
 !========================================================================
 
   subroutine compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
-                            potential_gravito,veloc_elastic,velocs_poroelastic, &
-                            acoustic,gravitoacoustic,elastic,poroelastic,vector_field_display, &
-                            xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                            AXISYM,is_on_the_axis,hprimeBar_xx, &
-                            nspec,nglob,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
-                            numat,kmato,density,rhoext,gravityext,assign_external_model)
+                                         potential_gravito,veloc_elastic,velocs_poroelastic)
 
 ! compute Grad(potential) in acoustic elements
 ! and combine with existing velocity vector field in elastic elements
+
+  use specfem_par, only: acoustic,gravitoacoustic,elastic,poroelastic,vector_field_display, &
+                         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
+                         AXISYM,is_on_the_axis,hprimeBar_xx, &
+                         nspec,nglob,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
+                         numat,kmato,density,rhoext,gravityext,assign_external_model,i,j,ispec,iglob,vector_field_element
 
   implicit none
 
   include "constants.h"
 
-  integer nspec,nglob,numat
-
-  logical :: assign_external_model
-  integer, dimension(nspec) :: kmato
-  double precision, dimension(NGLLX,NGLLX,nspec) :: rhoext,gravityext
-  double precision, dimension(2,numat) :: density
-  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
-
-  logical, dimension(nspec) :: acoustic,gravitoacoustic,elastic,poroelastic
-  integer :: nglob_acoustic
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: potential_acoustic
-  integer :: nglob_gravitoacoustic
   real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: potential_gravitoacoustic
   real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: potential_gravito
-  integer :: nglob_elastic
   real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: veloc_elastic
-  integer :: nglob_poroelastic
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: velocs_poroelastic
-
-  double precision, dimension(3,nglob) :: vector_field_display
-
-! array with derivatives of Lagrange polynomials
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
-  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
-
-
-  logical :: AXISYM
-  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLJ) :: hprimeBar_xx
-  logical, dimension(nspec) :: is_on_the_axis
-
-! local variables
-  integer i,j,ispec,iglob
-
-! vector field in this element
-  real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLX) :: vector_field_element
 
 ! loop over spectral elements
   do ispec = 1,nspec
 
 ! compute vector field in this element
-    call compute_vector_one_element(vector_field_element,potential_acoustic,potential_gravitoacoustic, &
-                                potential_gravito,veloc_elastic,velocs_poroelastic, &
-                                acoustic,gravitoacoustic,elastic,poroelastic,xix,xiz,gammax,gammaz, &
-                                ibool,hprime_xx,hprime_zz, &
-                                AXISYM,is_on_the_axis,hprimeBar_xx, &
-                                nspec,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
-                                ispec,numat,kmato,density,rhoext,gravityext,assign_external_model)
+    call compute_vector_one_element(potential_acoustic,potential_gravitoacoustic, &
+                                    potential_gravito,veloc_elastic,velocs_poroelastic)
 
 ! store the result
     do j = 1,NGLLZ
@@ -121,56 +86,26 @@
 !=====================================================================
 !
 
-  subroutine compute_vector_one_element(vector_field_element,potential_acoustic,potential_gravitoacoustic, &
-                                    potential_gravito,veloc_elastic,velocs_poroelastic, &
-                                    acoustic,gravitoacoustic,elastic,poroelastic,xix,xiz,gammax,gammaz, &
-                                    ibool,hprime_xx,hprime_zz, &
-                                    AXISYM,is_on_the_axis,hprimeBar_xx, &
-                                    nspec,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
-                                    ispec,numat,kmato,density,rhoext,gravityext,assign_external_model)
+  subroutine compute_vector_one_element(potential_acoustic,potential_gravitoacoustic, &
+                                        potential_gravito,veloc_elastic,velocs_poroelastic)
 
 ! compute Grad(potential) if acoustic element or copy existing vector if elastic element
+
+  use specfem_par, only: vector_field_element,acoustic,gravitoacoustic,elastic,poroelastic,xix,xiz,gammax,gammaz, &
+                         ibool,hprime_xx,hprime_zz, &
+                         AXISYM,is_on_the_axis,hprimeBar_xx, &
+                         nspec,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
+                         ispec,numat,kmato,density,rhoext,gravityext,assign_external_model
 
   implicit none
 
   include "constants.h"
 
-  integer nspec,ispec,numat
-
-  logical :: assign_external_model
-
-  integer, dimension(nspec) :: kmato
-
-  double precision, dimension(NGLLX,NGLLX,nspec) :: rhoext,gravityext
-
-  double precision, dimension(2,numat) :: density
-
-  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
-
-! vector field in this element
-  real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLX) :: vector_field_element
-
-  logical, dimension(nspec) :: acoustic,gravitoacoustic,elastic,poroelastic
-  integer :: nglob_acoustic
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: potential_acoustic
-  integer :: nglob_gravitoacoustic
   real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: potential_gravitoacoustic
   real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: potential_gravito
-  integer :: nglob_elastic
   real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: veloc_elastic
-  integer :: nglob_poroelastic
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: velocs_poroelastic
-
-! array with derivatives of Lagrange polynomials
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
-  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
-
-
-  logical :: AXISYM
-  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLJ) :: hprimeBar_xx
-  logical, dimension(nspec) :: is_on_the_axis
 
 ! local variables
   integer i,j,k,iglob

@@ -41,15 +41,7 @@
 !
 !========================================================================
 
-  subroutine checkgrid(vpext,vsext,rhoext,density,poroelastcoef, &
-                      porosity,tortuosity,permeability,ibool,kmato, &
-                      coord,nglob,vpImin,vpImax,vpIImin,vpIImax, &
-                      assign_external_model,nspec,UPPER_LIMIT_DISPLAY,numat,deltat, &
-                      f0,initialfield,time_function_type, &
-                      coorg,xinterp,zinterp,shapeint,knods,simulation_title, &
-                      npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic, &
-                      myrank,nproc,NSOURCES,poroelastic, &
-                      freq0,Q0,ATTENUATION_PORO_FLUID_PART,US_LETTER,output_postscript_snapshot)
+  subroutine checkgrid()
 
 ! check the mesh, stability and number of points per wavelength
 
@@ -57,61 +49,28 @@
   use mpi
 #endif
 
+  use specfem_par, only: vpext,vsext,rhoext,density,poroelastcoef, &
+                      porosity,tortuosity,permeability,ibool,kmato, &
+                      coord,nglob,vpImin,vpImax,vpIImin,vpIImax, &
+                      assign_external_model,nspec,UPPER_LIMIT_DISPLAY,numat,deltat, &
+                      f0,initialfield,time_function_type, &
+                      coorg,xinterp,zinterp,shape2D_display,knods,simulation_title, &
+                      npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic, &
+                      myrank,nproc,NSOURCES,poroelastic, &
+                      freq0,Q0,ATTENUATION_PORO_FLUID_PART,US_LETTER,output_postscript_snapshot
   implicit none
 
   include "constants.h"
 
 ! option to display only part of the mesh and not the whole mesh,
 ! for instance to analyze Cuthill-McKee mesh partitioning etc.
-  integer :: UPPER_LIMIT_DISPLAY
-
-  integer :: nglob,nspec,numat
-  integer, dimension(nspec) :: kmato
-  logical, dimension(nspec) :: poroelastic
-  integer, dimension(NGLLX,NGLLX,nspec) :: ibool
-
-  double precision, dimension(2,numat) :: density
-  double precision, dimension(4,3,numat) :: poroelastcoef
-  double precision, dimension(numat) :: porosity,tortuosity
-  double precision, dimension(3,numat) :: permeability
-  double precision, dimension(NGLLX,NGLLX,nspec) :: vpext,vsext,rhoext
-
-  double precision coord(NDIM,nglob)
-
-  integer :: NSOURCES
-  integer, dimension(NSOURCES) :: time_function_type
-  double precision, dimension(NSOURCES) :: f0
-
-  integer :: pointsdisp,npgeo,ngnod
-
-  integer :: knods(ngnod,nspec)
-
-  double precision :: xinterp(pointsdisp,pointsdisp),zinterp(pointsdisp,pointsdisp)
-  double precision :: shapeint(ngnod,pointsdisp,pointsdisp)
-
-  double precision :: coorg(NDIM,npgeo)
-
-! US letter paper or European A4
-  logical :: US_LETTER
-
-! title of the plot
-  character(len=60) :: simulation_title
-
-  double precision :: vpImin,vpImax
-  double precision :: vpIImin,vpIImax
-  double precision :: deltat
-
-  logical :: assign_external_model,initialfield,any_elastic,any_poroelastic,all_anisotropic, &
-          ATTENUATION_PORO_FLUID_PART,output_postscript_snapshot
-
-  integer :: myrank,nproc
 
   ! local parameters
   double precision vpIImax_local,vpIImin_local
   double precision vsmin,vsmax,densmin,densmax,vpImax_local,vpImin_local,vsmin_local
   double precision kappa_s,kappa_f,kappa_fr,mu_s,mu_fr,denst_s,denst_f,denst,phi,tort,cpIloc,cpIIloc,csloc
   double precision D_biot,H_biot,C_biot,M_biot,cpIsquare,cpIIsquare,cssquare
-  double precision f0max,freq0,Q0,w_c,eta_f,perm
+  double precision f0max,w_c,eta_f,perm
   double precision lambdaplus2mu,mu
   double precision distance_min,distance_max,distance_min_local,distance_max_local,lambdaS_local,lambdaPI_local
   double precision courant_stability_number_max,lambdaPImin,lambdaPImax,lambdaPIImin,lambdaPIImax,lambdaSmin,lambdaSmax
@@ -970,8 +929,8 @@
         zinterp(i,j) = 0.d0
         do in = 1,ngnod
           nnum = knods(in,ispec)
-          xinterp(i,j) = xinterp(i,j) + shapeint(in,i,j)*coorg(1,nnum)
-          zinterp(i,j) = zinterp(i,j) + shapeint(in,i,j)*coorg(2,nnum)
+          xinterp(i,j) = xinterp(i,j) + shape2D_display(in,i,j)*coorg(1,nnum)
+          zinterp(i,j) = zinterp(i,j) + shape2D_display(in,i,j)*coorg(2,nnum)
         enddo
       enddo
     enddo
@@ -1327,8 +1286,8 @@
   zinterp(i,j) = 0.d0
   do in = 1,ngnod
     nnum = knods(in,ispec)
-      xinterp(i,j) = xinterp(i,j) + shapeint(in,i,j)*coorg(1,nnum)
-      zinterp(i,j) = zinterp(i,j) + shapeint(in,i,j)*coorg(2,nnum)
+      xinterp(i,j) = xinterp(i,j) + shape2D_display(in,i,j)*coorg(1,nnum)
+      zinterp(i,j) = zinterp(i,j) + shape2D_display(in,i,j)*coorg(2,nnum)
   enddo
   enddo
   enddo
@@ -1742,8 +1701,8 @@ endif
   zinterp(i,j) = 0.d0
   do in = 1,ngnod
     nnum = knods(in,ispec)
-      xinterp(i,j) = xinterp(i,j) + shapeint(in,i,j)*coorg(1,nnum)
-      zinterp(i,j) = zinterp(i,j) + shapeint(in,i,j)*coorg(2,nnum)
+      xinterp(i,j) = xinterp(i,j) + shape2D_display(in,i,j)*coorg(1,nnum)
+      zinterp(i,j) = zinterp(i,j) + shape2D_display(in,i,j)*coorg(2,nnum)
   enddo
   enddo
   enddo
@@ -2050,8 +2009,8 @@ endif
   zinterp(i,j) = 0.d0
   do in = 1,ngnod
     nnum = knods(in,ispec)
-      xinterp(i,j) = xinterp(i,j) + shapeint(in,i,j)*coorg(1,nnum)
-      zinterp(i,j) = zinterp(i,j) + shapeint(in,i,j)*coorg(2,nnum)
+      xinterp(i,j) = xinterp(i,j) + shape2D_display(in,i,j)*coorg(1,nnum)
+      zinterp(i,j) = zinterp(i,j) + shape2D_display(in,i,j)*coorg(2,nnum)
   enddo
   enddo
   enddo

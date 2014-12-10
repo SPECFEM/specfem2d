@@ -41,89 +41,31 @@
 !
 !========================================================================
 
-  subroutine compute_energy(displ_elastic,veloc_elastic, &
-                        displs_poroelastic,velocs_poroelastic, &
-                        displw_poroelastic,velocw_poroelastic, &
-                        xix,xiz,gammax,gammaz,jacobian,ibool,elastic,poroelastic,hprime_xx,hprime_zz, &
-                        AXISYM,nglob,coord,is_on_the_axis,hprimeBar_xx, &
-                        nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-                        assign_external_model,kmato,poroelastcoef,density,porosity,tortuosity, &
-                        vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
-                        anisotropic,anisotropy,wxgll,wzgll,numat, &
-                        pressure_element,vector_field_element,e1,e11, &
-                        potential_dot_acoustic,potential_dot_dot_acoustic, &
-                        ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS,p_sv,kinetic_energy,potential_energy, &
-                        potential_dot_gravitoacoustic,potential_dot_dot_gravitoacoustic,acoustic,gravitoacoustic, &
-                        gravityext,potential_dot_gravito,nglob_gravitoacoustic)
+  subroutine compute_energy()
 
 ! compute kinetic and potential energy in the solid (acoustic elements are excluded)
+
+  use specfem_par, only : displ_elastic,veloc_elastic, &
+                          displs_poroelastic,velocs_poroelastic, &
+                          displw_poroelastic,velocw_poroelastic, &
+                          xix,xiz,gammax,gammaz,jacobian,ibool,elastic,poroelastic,hprime_xx,hprime_zz, &
+                          AXISYM,nglob,coord,is_on_the_axis,hprimeBar_xx, &
+                          nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
+                          assign_external_model,kmato,poroelastcoef,density,porosity,tortuosity, &
+                          vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
+                          anisotropic,anisotropy,wxgll,wzgll,numat, &
+                          pressure_element,vector_field_element,e1,e11, &
+                          potential_dot_acoustic,potential_dot_dot_acoustic, &
+                          ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS,p_sv,kinetic_energy,potential_energy, &
+                          potential_dot_gravitoacoustic,potential_dot_dot_gravitoacoustic,acoustic,gravitoacoustic, &
+                          gravityext,potential_dot_gravito,nglob_gravitoacoustic,ispec
 
   implicit none
 
   include "constants.h"
 
-  integer :: nspec,numat
-
-! vector field in an element
-  real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLX) :: vector_field_element
-
-! pressure in an element
-  integer :: N_SLS
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: pressure_element
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e1,e11
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: Mu_nu1,Mu_nu2
-
-  integer :: nglob_acoustic
-  real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: &
-    potential_dot_acoustic,potential_dot_dot_acoustic
-
-  integer :: nglob_gravitoacoustic
-  real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: potential_dot_gravitoacoustic,potential_dot_dot_gravitoacoustic, &
-                                                   potential_dot_gravito
-  logical, dimension(nspec) :: acoustic,gravitoacoustic
-
-  logical :: ATTENUATION_VISCOELASTIC_SOLID,p_sv
-
-  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
-
-  logical, dimension(nspec) :: elastic,poroelastic,anisotropic
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
-  integer, dimension(nspec) :: kmato
-  logical :: assign_external_model
-  double precision, dimension(2,numat) :: density
-  double precision, dimension(numat) :: porosity,tortuosity
-  double precision, dimension(6,numat) :: anisotropy
-  double precision, dimension(4,3,numat) :: poroelastcoef
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,vsext,rhoext,gravityext
-  double precision, dimension(NGLLX,NGLLZ,nspec) ::  c11ext,c15ext,c13ext, &
-    c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
-
-  integer :: nglob_elastic
-  real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: displ_elastic,veloc_elastic
-
-  integer :: nglob_poroelastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: displs_poroelastic,velocs_poroelastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: displw_poroelastic,velocw_poroelastic
-
-! Gauss-Lobatto-Legendre points and weights
-  real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
-  real(kind=CUSTOM_REAL), dimension(NGLLZ) :: wzgll
-
-! array with derivatives of Lagrange polynomials
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
-  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
-
-! axisym
-  logical :: AXISYM
-  integer :: nglob
-  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLJ) :: hprimeBar_xx
-  logical, dimension(nspec) :: is_on_the_axis
-  double precision, dimension(NDIM,nglob), intent(in) :: coord
-
 ! local variables
-  integer :: i,j,k,ispec
+  integer :: i,j,k
 
 ! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
@@ -134,7 +76,6 @@
 ! jacobian
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
 
-  real(kind=CUSTOM_REAL) :: kinetic_energy,potential_energy
   real(kind=CUSTOM_REAL) :: cpl,csl,rhol,mul_unrelaxed_elastic,lambdal_unrelaxed_elastic, &
     lambdaplus2mu_unrelaxed_elastic,kappal
   real(kind=CUSTOM_REAL) :: mul_s,kappal_s,rhol_s
@@ -353,24 +294,11 @@
       ! and pressure is: p = - Chi_dot_dot  (Chi_dot_dot being the time second derivative of Chi).
 
       ! compute pressure in this element
-      call compute_pressure_one_element(pressure_element,potential_dot_dot_acoustic, &
-              potential_dot_dot_gravitoacoustic,displ_elastic,&
-              displs_poroelastic,displw_poroelastic,acoustic,gravitoacoustic,elastic,poroelastic,&
-              xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
-              AXISYM,nglob,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
-              nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
-              numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
-              c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,ispec,e1,e11, &
-              ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS)
+      call compute_pressure_one_element()
 
       ! compute velocity vector field in this element
-      call compute_vector_one_element(vector_field_element,potential_dot_acoustic,potential_dot_gravitoacoustic, &
-                              potential_dot_gravito,veloc_elastic,velocs_poroelastic, &
-                              acoustic,gravitoacoustic,elastic,poroelastic,xix,xiz,gammax,gammaz, &
-                              ibool,hprime_xx,hprime_zz, &
-                              AXISYM,is_on_the_axis,hprimeBar_xx, &
-                              nspec,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
-                              ispec,numat,kmato,density,rhoext,gravityext,assign_external_model)
+      call compute_vector_one_element(potential_dot_acoustic,potential_dot_gravitoacoustic, &
+                              potential_dot_gravito,veloc_elastic,velocs_poroelastic)
 
       ! get density of current spectral element
       lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))

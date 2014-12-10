@@ -43,28 +43,16 @@
 !========================================================================
 
 
-  subroutine prepare_source_time_function(myrank,NSTEP,NSOURCES,source_time_function, &
-                          time_function_type,f0,tshift_src,factor,aval, &
-                          t0,nb_proc_source,deltat,stage_time_scheme,c_LDDRK)
+  subroutine prepare_source_time_function()
 
 ! prepares source_time_function array
 
+  use specfem_par, only: myrank,NSTEP,NSOURCES,source_time_function, &
+                         time_function_type,f0,tshift_src,factor,aval, &
+                         t0,nb_proc_source,deltat,stage_time_scheme,c_LDDRK,is_proc_source
+
   implicit none
   include "constants.h"
-
-  integer :: myrank,NSTEP
-
-  integer :: NSOURCES
-  integer, dimension(NSOURCES) :: time_function_type
-  double precision, dimension(NSOURCES) :: f0,tshift_src,factor
-  double precision, dimension(NSOURCES) :: aval
-  double precision :: t0
-  integer,dimension(NSOURCES) :: nb_proc_source
-  double precision :: deltat
-  integer :: stage_time_scheme
-  real(kind=CUSTOM_REAL), dimension(Nstages) :: c_LDDRK
-
-  real(kind=CUSTOM_REAL),dimension(NSOURCES,NSTEP,stage_time_scheme) :: source_time_function
 
   ! local parameters
   double precision :: stf_used, timeval, DecT, Tc, omegat, omega_coa
@@ -82,26 +70,27 @@
   endif
 
   ! user output
-  if (myrank == 0) then
+  if (is_proc_source(1) == 1) then
     write(IOUT,*)
     write(IOUT,*) 'Saving the source time function in a text file...'
     write(IOUT,*)
     open(unit=55,file='OUTPUT_FILES/source.txt',status='unknown')
   endif
 
-  !    ! loop on all the sources
-  !    do i_source=1,NSOURCES
 
-  ! loop on all the time steps
-
-
-  do it = 1,NSTEP
+    ! loop on all the sources
+    do i_source=1,NSOURCES
 
     ! note: t0 is the simulation start time, tshift_src is the time shift of the source
     !          relative to this start time
     do i_stage = 1,stage_time_scheme
 
-    ! compute current time
+
+
+ ! loop on all the time steps
+    do it=1,NSTEP
+
+! compute current time
     if(stage_time_scheme == 1) timeval = (it-1)*deltat
 
     if(stage_time_scheme == 4) timeval = (it-1)*deltat+c_RK(i_stage)*deltat
@@ -110,8 +99,7 @@
 
     stf_used = 0.d0
 
-    ! loop on all the sources
-    do i_source=1,NSOURCES
+    if(is_proc_source(i_source) == 1) then
 
       if( time_function_type(i_source) == 1 ) then
 
@@ -194,7 +182,6 @@
 
         endif
 
-
       else
         call exit_MPI('unknown source time function')
       endif
@@ -203,10 +190,12 @@
 
       ! output relative time in third column, in case user wants to check it as well
 ! if (myrank == 0 .and. i_source == 1) write(55,*) sngl(timeval-t0-tshift_src(1)),real(source_time_function(1,it),4),sngl(timeval)
-      if (myrank == 0 .and. i_source == 1 .and. i_stage == 1) then
+      if (i_source == 1 .and. i_stage == 1) then
           ! note: earliest start time of the simulation is: (it-1)*deltat - t0
           write(55,*) sngl(timeval-t0),sngl(stf_used),sngl(timeval)
       endif
+
+    endif
 
     enddo
 
@@ -215,7 +204,7 @@
 
   enddo
 
-  if (myrank == 0) close(55)
+  if (is_proc_source(1) == 1) close(55)
 
   ! nb_proc_source is the number of processes that own the source (the nearest point). It can be greater
   ! than one if the nearest point is on the interface between several partitions with an explosive source.

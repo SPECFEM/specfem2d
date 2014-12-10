@@ -37,7 +37,7 @@ ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoust
 NSOURCES                        = 1              # number of sources (source info read from DATA/CMTSOLUTION file)
 force_normal_to_surface         = .false.        # angleforce normal to surface (external mesh and curve file needed)
 
-# constants for attenuation
+# for viscoelastic attenuation
 N_SLS                           = 2                      # number of standard linear solids for attenuation
 f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the CMTSOLUTION file
 # shift (i.e. change) velocities read from the input file to take average physical dispersion into account,
@@ -67,7 +67,7 @@ xdeb                            = 0.05           # first receiver x in meters
 zdeb                            = 0.2640         # first receiver z in meters
 xfin                            = 0.28           # last receiver x in meters (ignored if only one receiver)
 zfin                            = 0.2640         # last receiver z in meters (ignored if only one receiver)
-enreg_surf_same_vertical        = .false.         # receivers inside the medium or at the surface
+enreg_surf_same_vertical        = .false.        # receivers inside the medium or at the surface
 
 # display parameters
 NSTEP_BETWEEN_OUTPUT_INFO       = 100            # every how many time steps we display information about the simulation (costly, do not use a very small value)
@@ -77,7 +77,7 @@ cutsnaps                        = 1.             # minimum amplitude kept in % f
 #### for JPEG color images ####
 output_color_image              = .true.         # output JPEG color image of the results every NSTEP_BETWEEN_OUTPUT_IMAGES time steps or not
 imagetype_JPEG                  = 2              # display 1=displ_Ux 2=displ_Uz 3=displ_norm 4=veloc_Vx 5=veloc_Vz 6=veloc_norm 7=accel_Ax 8=accel_Az 9=accel_norm 10=pressure
-factor_subsample_image          = 1.0            # (double precision) factor to subsample color images output by the code (useful for very large models)
+factor_subsample_image          = 1.0d0          # (double precision) factor to subsample color images output by the code (useful for very large models)
 USE_CONSTANT_MAX_AMPLITUDE      = .false.        # by default the code normalizes each image independently to its maximum; use this option to use the global maximum below instead
 CONSTANT_MAX_AMPLITUDE_TO_USE   = 1.17d4         # constant maximum amplitude to use for all color images if the above USE_CONSTANT_MAX_AMPLITUDE option is true
 POWER_DISPLAY_COLOR             = 0.30d0         # non linear display to enhance small amplitudes in JPEG color images
@@ -95,7 +95,7 @@ pointsdisp                      = 6              # number of points in each dire
 subsamp_postscript              = 1              # subsampling of background velocity model in PostScript snapshots
 sizemax_arrows                  = 1.d0           # maximum size of arrows on PostScript plots in centimeters
 US_LETTER                       = .false.        # use US letter or European A4 paper for PostScript plots
-####
+#### for wavefield dumps ####
 NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS = 100            # every how many time steps we dump results of the simulation as ASCII or binary files (costly, do not use a very small value)
 output_wavefield_dumps          = .false.        # output wave field to a text file every NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS time steps (creates very big files)
 imagetype_wavefield_dumps       = 1              # display 1=displ vector 2=veloc vector 3=accel vector 4=pressure
@@ -172,7 +172,7 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes # file containing the
 interfacesfile                  = topoaniso.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
-xmin                            = 0.0d0          # abscissa of left side of the model
+xmin                            = 0.d0           # abscissa of left side of the model
 xmax                            = 0.33           # abscissa of right side of the model
 nx                              = 60             # number of elements along X
 

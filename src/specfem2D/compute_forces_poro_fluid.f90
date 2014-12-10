@@ -41,111 +41,37 @@
 !
 !========================================================================
 
-  subroutine compute_forces_poro_fluid(nglob,nspec,myrank,nelemabs,numat, &
-               ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
-               source_type,it,NSTEP,anyabs, &
-               initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat, &
-               ibool,kmato,numabs,poroelastic,codeabs, &
-               accelw_poroelastic,velocw_poroelastic,displw_poroelastic,velocs_poroelastic,displs_poroelastic,&
-               displs_poroelastic_old,b_accelw_poroelastic,b_displw_poroelastic,b_displs_poroelastic,&
-               density,porosity,tortuosity,permeability,poroelastcoef,xix,xiz,gammax,gammaz, &
-               jacobian,source_time_function,sourcearray,adj_sourcearrays, &
-               e11,e13,hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll,&
-               inv_tau_sigma_nu2,phi_nu2,Mu_nu2,N_SLS, &
-               rx_viscous,rz_viscous,theta_e,theta_s,b_viscodampx,b_viscodampz,&
-               ibegin_edge1_poro,iend_edge1_poro,ibegin_edge3_poro,iend_edge3_poro, &
-               ibegin_edge4_poro,iend_edge4_poro,ibegin_edge2_poro,iend_edge2_poro,&
-               C_k,M_k,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,&
-               b_absorb_poro_w_left,b_absorb_poro_w_right,b_absorb_poro_w_bottom,b_absorb_poro_w_top,&
-               nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,f0,freq0,Q0, &
-               e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
-               e11_initial_rk,e13_initial_rk,e11_force_RK, e13_force_RK, &
-               stage_time_scheme,i_stage)
+  subroutine compute_forces_poro_fluid(f0)
 
 ! compute forces for the fluid poroelastic part
+
+  use specfem_par, only: nglob,nspec,myrank,nelemabs,numat, &
+                         ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
+                         source_type,it,NSTEP,anyabs, &
+                         initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat, &
+                         ibool,kmato,numabs,poroelastic,codeabs, &
+                         accelw_poroelastic,velocw_poroelastic,displw_poroelastic,velocs_poroelastic,displs_poroelastic,&
+                         displs_poroelastic_old,b_accelw_poroelastic,b_displw_poroelastic,b_displs_poroelastic,&
+                         density,porosity,tortuosity,permeability,poroelastcoef,xix,xiz,gammax,gammaz, &
+                         jacobian,source_time_function,sourcearray,adj_sourcearrays, &
+                         e11,e13,hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll,&
+                         inv_tau_sigma_nu2,phi_nu2,Mu_nu2,N_SLS, &
+                         rx_viscous,rz_viscous,theta_e,theta_s,b_viscodampx,b_viscodampz,&
+                         ibegin_edge1_poro,iend_edge1_poro,ibegin_edge3_poro,iend_edge3_poro, &
+                         ibegin_edge4_poro,iend_edge4_poro,ibegin_edge2_poro,iend_edge2_poro,&
+                         C_k,M_k,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,&
+                         b_absorb_poro_w_left,b_absorb_poro_w_right,b_absorb_poro_w_bottom,b_absorb_poro_w_top,&
+                         nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,freq0,Q0, &
+                         e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
+                         e11_initial_rk,e13_initial_rk,e11_force_RK, e13_force_RK, &
+                         stage_time_scheme,i_stage,i_source
 
   implicit none
 
   include "constants.h"
-  integer :: NSOURCES, i_source
-  integer, dimension(NSOURCES) ::ispec_selected_source,source_type,is_proc_source
-  integer :: nglob,nspec,nelemabs,numat,it,NSTEP
-  integer :: nrec,SIMULATION_TYPE,myrank
-  integer, dimension(nrec) :: ispec_selected_rec,which_proc_receiver
-  integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
-  integer, dimension(nelemabs) :: ib_left
-  integer, dimension(nelemabs) :: ib_right
-  integer, dimension(nelemabs) :: ib_bottom
-  integer, dimension(nelemabs) :: ib_top
-  integer :: stage_time_scheme,i_stage
 
-  logical :: anyabs,initialfield,ATTENUATION_VISCOELASTIC_SOLID
-  logical :: SAVE_FORWARD
 
-  double precision :: deltat
-
-  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
-  integer, dimension(nspec) :: kmato
-  integer, dimension(nelemabs) :: numabs,ibegin_edge4_poro,iend_edge4_poro,ibegin_edge2_poro,iend_edge2_poro,&
-                                  ibegin_edge1_poro,iend_edge1_poro,ibegin_edge3_poro,iend_edge3_poro
-
-  logical, dimension(nspec) :: poroelastic
-  logical, dimension(4,nelemabs)  :: codeabs
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: accelw_poroelastic,velocw_poroelastic,displw_poroelastic,&
-                                            displs_poroelastic,displs_poroelastic_old,velocs_poroelastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: b_accelw_poroelastic,b_displw_poroelastic,b_displs_poroelastic
-  double precision, dimension(2,numat) :: density
-  double precision, dimension(3,numat) :: permeability
-  double precision, dimension(numat) :: porosity,tortuosity
-  double precision, dimension(4,3,numat) :: poroelastcoef
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
-  real(kind=CUSTOM_REAL), dimension(NSOURCES,NSTEP,stage_time_scheme) :: source_time_function
-  real(kind=CUSTOM_REAL), dimension(NSOURCES,NDIM,NGLLX,NGLLZ) :: sourcearray
-  real(kind=CUSTOM_REAL), dimension(nrec,NSTEP,3,NGLLX,NGLLZ) :: adj_sourcearrays
-  real(kind=CUSTOM_REAL), dimension(nglob) :: C_k,M_k
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLZ,nspec_left,NSTEP) :: b_absorb_poro_w_left
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLZ,nspec_right,NSTEP) :: b_absorb_poro_w_right
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,nspec_top,NSTEP) :: b_absorb_poro_w_top
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,nspec_bottom,NSTEP) :: b_absorb_poro_w_bottom
-  real(kind=CUSTOM_REAL), dimension(nglob) :: b_viscodampx,b_viscodampz
-
-  integer :: N_SLS
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e11,e13
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e11_LDDRK,e13_LDDRK
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: e11_initial_rk,e13_initial_rk
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS,stage_time_scheme) :: e11_force_RK, e13_force_RK
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec,N_SLS) :: inv_tau_sigma_nu2,phi_nu2
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: Mu_nu2
-  real(kind=CUSTOM_REAL) :: e11_sum,e13_sum
-  integer :: i_sls
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) ::dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
-                                                         !nsub1 denote discrete time step n-1
-                                                         dux_dxl_nsub1,duz_dzl_nsub1,duz_dxl_nsub1,dux_dzl_nsub1
-
-! viscous attenuation
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: rx_viscous
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: rz_viscous
-  double precision :: theta_e,theta_s
-  logical ATTENUATION_PORO_FLUID_PART
-  double precision, dimension(3):: bl_relaxed_viscoelastic,bl_unrelaxed_elastic
-
-! derivatives of Lagrange polynomials
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
-  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz,hprimewgll_zz
-
-! Gauss-Lobatto-Legendre weights
-  real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
-  real(kind=CUSTOM_REAL), dimension(NGLLZ) :: wzgll
-
-  double precision :: f0,freq0,Q0,w_c
-
-  ! parameters for the LDDRK time scheme
-  real(kind=CUSTOM_REAL), dimension(Nstages) :: alpha_LDDRK,beta_LDDRK
-
-  ! temporary variable
-  real(kind=CUSTOM_REAL) :: weight_rk
+  double precision :: f0,w_c
 
 
 !---
@@ -153,6 +79,17 @@
 !---
 
   integer :: ispec,i,j,k,iglob,ispecabs,ibegin,iend,jbegin,jend,irec,irec_local
+  real(kind=CUSTOM_REAL) :: weight_rk
+  real(kind=CUSTOM_REAL) :: e11_sum,e13_sum
+  integer :: i_sls
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) ::dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
+                                                         !nsub1 denote discrete time step n-1
+                                                         dux_dxl_nsub1,duz_dzl_nsub1,duz_dxl_nsub1,dux_dzl_nsub1
+
+
+  double precision, dimension(3):: bl_relaxed_viscoelastic,bl_unrelaxed_elastic
+
 
 ! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma

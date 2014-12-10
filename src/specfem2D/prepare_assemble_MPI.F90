@@ -57,7 +57,9 @@
 ! We have both acoustic and (poro)elastic buffers, for coupling between acoustic and (poro)elastic elements
 ! led us to have two sets of communications.
 !-----------------------------------------------
-  subroutine prepare_assemble_MPI(nspec,ibool,knods, ngnod,nglob, elastic, poroelastic, &
+  subroutine prepare_assemble_MPI()
+
+  use specfem_par, only: nspec,ibool,knods, ngnod,nglob, elastic, poroelastic, &
                                 ninterface, max_interface_size, &
                                 my_nelmnts_neighbours, my_interfaces, &
                                 ibool_interfaces_acoustic, ibool_interfaces_elastic, &
@@ -67,31 +69,10 @@
                                 inum_interfaces_acoustic, inum_interfaces_elastic, &
                                 inum_interfaces_poroelastic, &
                                 ninterface_acoustic, ninterface_elastic, ninterface_poroelastic, &
-                                mask_ispec_inner_outer )
-
+                                mask_ispec_inner_outer
   implicit none
 
   include 'constants.h'
-
-  integer, intent(in)  :: nspec, nglob, ngnod
-  logical, dimension(nspec), intent(in)  :: elastic, poroelastic
-  integer, dimension(ngnod,nspec), intent(in)  :: knods
-  integer, dimension(NGLLX,NGLLZ,nspec), intent(in)  :: ibool
-
-  integer  :: ninterface
-  integer  :: max_interface_size
-  integer, dimension(ninterface)  :: my_nelmnts_neighbours
-  integer, dimension(4,max_interface_size,ninterface)  :: my_interfaces
-  integer, dimension(NGLLX*max_interface_size,ninterface)  :: &
-       ibool_interfaces_acoustic,ibool_interfaces_elastic,ibool_interfaces_poroelastic
-  integer, dimension(ninterface)  :: &
-       nibool_interfaces_acoustic,nibool_interfaces_elastic,nibool_interfaces_poroelastic
-
-  integer, dimension(ninterface), intent(out)  :: &
-       inum_interfaces_acoustic, inum_interfaces_elastic, inum_interfaces_poroelastic
-  integer, intent(out)  :: ninterface_acoustic, ninterface_elastic, ninterface_poroelastic
-
-  logical, dimension(nspec), intent(inout)  :: mask_ispec_inner_outer
 
   ! local parameters
   integer  :: num_interface
@@ -105,6 +86,9 @@
   integer  :: nglob_interface_acoustic
   integer  :: nglob_interface_elastic
   integer  :: nglob_interface_poroelastic
+
+
+
 
   ! initializes
   ibool_interfaces_acoustic(:,:) = 0
@@ -143,6 +127,7 @@
           ! global index
           iglob = ibool(ix,iz,ispec)
 
+
           ! checks to which material this common interface belongs
           if ( elastic(ispec) ) then
             ! elastic element
@@ -175,12 +160,13 @@
     nibool_interfaces_acoustic(num_interface) = nglob_interface_acoustic
     nibool_interfaces_elastic(num_interface) = nglob_interface_elastic
     nibool_interfaces_poroelastic(num_interface) = nglob_interface_poroelastic
-
     ! sets inner/outer element flags
     do ispec = 1, nspec
       do iz = 1, NGLLZ
         do ix = 1, NGLLX
-          if ( mask_ibool_acoustic(ibool(ix,iz,ispec)) &
+
+
+           if ( mask_ibool_acoustic(ibool(ix,iz,ispec)) &
             .or. mask_ibool_elastic(ibool(ix,iz,ispec)) &
             .or. mask_ibool_poroelastic(ibool(ix,iz,ispec)) ) then
                mask_ispec_inner_outer(ispec) = .true.

@@ -14,31 +14,24 @@
 ! modified by Dimitri Komatitsch and Ronan Madec in March 2008
 ! in particular, converted to Fortran90 and to double precision
 
-subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,anglesource,&
-     f0,cp_local,cs_local,INCLUDE_ATTENUATION,QD,source_type,v0x_left,v0z_left,v0x_right,v0z_right,&
-     v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot,left_bound,right_bound,&
-     bot_bound,nleft,nright,nbot,displ_elastic,veloc_elastic,accel_elastic,x_source)
+subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_bound,&
+                                bot_bound,nleft,nright,nbot,x_source)
+
+  use specfem_par,only : coord,nglob,deltat,NSTEP,cploc,csloc,ATTENUATION_VISCOELASTIC_SOLID,v0x_left,&
+                         v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot,&
+                         displ_elastic,veloc_elastic,accel_elastic
+
 
   implicit none
 
   include "constants.h"
 
-  double precision :: f0,cp_local,cs_local,deltat,dt,TP,anglesource,QD,delta_in_period
-  logical :: INCLUDE_ATTENUATION
-  integer :: npt,NSTEP_global,source_type,nleft,nright,nbot,nglob
+  double precision :: f0,dt,TP,anglesource,QD,delta_in_period
+  integer :: npt,source_type,nleft,nright,nbot
 
   integer, dimension(nleft) :: left_bound
   integer, dimension(nright) :: right_bound
   integer, dimension(nbot) :: bot_bound
-
-  double precision, dimension(nleft,NSTEP_global) :: v0x_left,v0z_left, t0x_left,t0z_left
-  double precision, dimension(nright,NSTEP_global) :: v0x_right,v0z_right, t0x_right,t0z_right
-  double precision, dimension(nbot,NSTEP_global) :: v0x_bot,v0z_bot, t0x_bot,t0z_bot
-
-  double precision, dimension(2,nglob) :: coord
-  real(kind=CUSTOM_REAL), dimension(3,nglob) :: displ_elastic
-  real(kind=CUSTOM_REAL), dimension(3,nglob) :: veloc_elastic
-  real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic
 
   integer, dimension(:),allocatable :: local_pt
 
@@ -78,7 +71,7 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,anglesource,&
 ! find optimal period
 ! if period is too small, you should see several initial plane wave on your initial field
   delta_in_period=2.d0
-  do while(delta_in_period<1.5*abs(xmax-xmin)/cs_local)
+  do while(delta_in_period<1.5*abs(xmax-xmin)/csloc)
      delta_in_period=2.d0*delta_in_period
   enddo
 
@@ -96,7 +89,7 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,anglesource,&
   DT=deltat/2.d0
 
   N=2
-  do while(N<2*NSTEP_global+1)
+  do while(N<2*NSTEP+1)
      N=2*N
   enddo
 
@@ -119,7 +112,7 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,anglesource,&
 !
 
 ! calculation of Poisson's ratio
-  ANU = (cp_local*cp_local-2.d0*cs_local*cs_local)/(2.d0*(cp_local*cp_local-cs_local*cs_local))
+  ANU = (cploc*cploc-2.d0*csloc*csloc)/(2.d0*(cploc*cploc-csloc*csloc))
   print *,"Poisson's ratio = ",ANU
 
   UI=(0.0d0, 1.0d0)
@@ -148,19 +141,19 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,anglesource,&
         npt=nleft
         allocate(local_pt(npt))
         local_pt=left_bound
-        NSTEP_local=NSTEP_global
+        NSTEP_local=NSTEP
      else if(FLAG==2) then
         print *,"calculation of every time step on the right absorbing boundary"
         npt=nright
         allocate(local_pt(npt))
         local_pt=right_bound
-        NSTEP_local=NSTEP_global
+        NSTEP_local=NSTEP
      else if(FLAG==3) then
         print *,"calculation of every time step on the bottom absorbing boundary"
         npt=nbot
         allocate(local_pt(npt))
         local_pt=bot_bound
-        NSTEP_local=NSTEP_global
+        NSTEP_local=NSTEP
      endif
 
 ! to distinguish all model case and boundary case
@@ -249,7 +242,7 @@ subroutine paco_beyond_critical(coord,nglob,deltat,NSTEP_global,anglesource,&
            AQA=AKA*BEALF
 
 ! exclude attenuation completely if needed
-           if(INCLUDE_ATTENUATION) then
+           if(ATTENUATION_VISCOELASTIC_SOLID) then
               CAKA=CMPLX(AKA,-AKA/(2.0d0*QD))
               CAQA=CMPLX(AQA,-AQA/(2.0d0*QD))
            else

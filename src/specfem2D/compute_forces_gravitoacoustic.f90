@@ -42,37 +42,30 @@
 !
 !========================================================================
 
-  subroutine compute_forces_gravitoacoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
-               anyabs,assign_external_model,ibool,kmato,numabs,gravitoacoustic, &
-               codeabs,potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
+  subroutine compute_forces_gravitoacoustic(potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
                potential_gravitoacoustic,potential_dot_dot_gravito, &
-               potential_gravito,rmass_inverse_gravito, &
-               density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
-               vpext,rhoext,gravityext,Nsqext,hprime_xx,hprimewgll_xx, &
-               hprime_zz,hprimewgll_zz,wxgll,wzgll, &
-               ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
-               ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
-               SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right,&
-               nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
-               b_absorb_acoustic_left,b_absorb_acoustic_right, &
-               b_absorb_acoustic_bottom,b_absorb_acoustic_top,IS_BACKWARD_FIELD, &
-               is_PML,PML_BOUNDARY_CONDITIONS)
+               potential_gravito,IS_BACKWARD_FIELD,PML_BOUNDARY_CONDITIONS)
 
 ! compute forces for the gravitoacoustic elements
+
+
+  use specfem_par, only: codeabs,gravitoacoustic,nglob,nspec,nelemabs,numat,it,NSTEP, &
+                         anyabs,assign_external_model,ibool,kmato,numabs, &
+                         rmass_inverse_gravito, &
+                         density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
+                         vpext,rhoext,gravityext,Nsqext,hprime_xx,hprimewgll_xx, &
+                         hprime_zz,hprimewgll_zz,wxgll,wzgll, &
+                         ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
+                         ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
+                         SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right,&
+                         nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
+                         b_absorb_acoustic_left,b_absorb_acoustic_right, &
+                         b_absorb_acoustic_bottom,b_absorb_acoustic_top,is_PML
 
   implicit none
 
   include "constants.h"
 
-  integer :: nglob,nspec,nelemabs,numat,it,NSTEP,SIMULATION_TYPE
-
-  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
-  integer, dimension(nspec) :: kmato
-  integer, dimension(nelemabs) :: numabs,ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
-               ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2
-
-  logical, dimension(nspec) :: gravitoacoustic
-  logical, dimension(4,nelemabs)  :: codeabs
 
 ! Chi potential
   real(kind=CUSTOM_REAL), dimension(nglob) :: &
@@ -81,37 +74,8 @@
   real(kind=CUSTOM_REAL), dimension(nglob) :: &
     potential_dot_dot_gravito,potential_gravito
 ! rho*u=grad(Chi)+xi*gravity_vector
-  real(kind=CUSTOM_REAL), dimension(nglob) :: rmass_inverse_gravito
 
-  double precision, dimension(2,numat) :: density
-  double precision, dimension(4,3,numat) :: poroelastcoef
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,rhoext,gravityext,Nsqext
-
-  logical :: anyabs,assign_external_model
-  logical :: SAVE_FORWARD,IS_BACKWARD_FIELD
-
-! derivatives of Lagrange polynomials
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
-  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz,hprimewgll_zz
-
-! Gauss-Lobatto-Legendre weights
-  real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
-  real(kind=CUSTOM_REAL), dimension(NGLLZ) :: wzgll
-
-  integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
-  integer, dimension(nelemabs) :: ib_left
-  integer, dimension(nelemabs) :: ib_right
-  integer, dimension(nelemabs) :: ib_bottom
-  integer, dimension(nelemabs) :: ib_top
-
-  real(kind=CUSTOM_REAL), dimension(NGLLZ,nspec_left,NSTEP) :: b_absorb_acoustic_left
-  real(kind=CUSTOM_REAL), dimension(NGLLZ,nspec_right,NSTEP) :: b_absorb_acoustic_right
-  real(kind=CUSTOM_REAL), dimension(NGLLX,nspec_top,NSTEP) :: b_absorb_acoustic_top
-  real(kind=CUSTOM_REAL), dimension(NGLLX,nspec_bottom,NSTEP) :: b_absorb_acoustic_bottom
-
-! CPML coefficients and memory variables
-  logical, dimension(nspec) :: is_PML
+  logical :: IS_BACKWARD_FIELD
   logical :: PML_BOUNDARY_CONDITIONS
 
 !---

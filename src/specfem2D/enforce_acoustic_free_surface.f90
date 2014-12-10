@@ -42,27 +42,19 @@
 !========================================================================
 
   subroutine enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                          potential_acoustic,acoustic_surface, &
-                                          ibool,nelem_acoustic_surface,nglob,nspec,this_ibool_is_a_periodic_edge)
+                                          potential_acoustic)
 
 ! free surface for an acoustic medium
 ! if acoustic, the free surface condition is a Dirichlet condition for the potential,
 ! not Neumann, in order to impose zero pressure at the surface
 
+  use specfem_par, only: acoustic_surface,ibool,nelem_acoustic_surface,nglob,nspec,this_ibool_is_a_periodic_edge
+
   implicit none
 
   include "constants.h"
 
-  integer :: nelem_acoustic_surface,nglob,nspec
-
-  integer, dimension(5,nelem_acoustic_surface) :: acoustic_surface
-
-  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
-
-  logical, dimension(nglob) :: this_ibool_is_a_periodic_edge
-
-  real(kind=CUSTOM_REAL), dimension(nglob) :: &
-    potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
+  real(kind=CUSTOM_REAL), dimension(nglob) :: potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
 
 !---
 !--- local variables

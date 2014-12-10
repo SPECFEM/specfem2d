@@ -41,110 +41,49 @@
 !
 !========================================================================
 
-  subroutine compute_forces_acoustic(nglob,nspec,nelemabs,numat,it,NSTEP, &
-               anyabs,assign_external_model,ibool,kmato,numabs,acoustic, &
-               codeabs,potential_dot_dot_acoustic,potential_dot_acoustic, &
-               potential_acoustic,potential_acoustic_old,stage_time_scheme,i_stage, &
-               density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
-               vpext,rhoext, &
-               hprime_xx,hprimewgll_xx, &
-               hprime_zz,hprimewgll_zz,wxgll,wzgll, &
-               AXISYM,coord, is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
-               ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
-               ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
-               SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right,&
-               nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
-               b_absorb_acoustic_left,b_absorb_acoustic_right, &
-               b_absorb_acoustic_bottom,b_absorb_acoustic_top,IS_BACKWARD_FIELD,&
-               is_PML,nspec_PML,spec_to_PML,region_CPML, &
-               K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
-               rmemory_potential_acoustic,&
-               rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
-               rmemory_potential_acoustic_LDDRK,alpha_LDDRK,beta_LDDRK,c_LDDRK, &
-               rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
-               deltat,PML_BOUNDARY_CONDITIONS,STACEY_BOUNDARY_CONDITIONS)
+  subroutine compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic, &
+               potential_acoustic,potential_acoustic_old,IS_BACKWARD_FIELD,PML_BOUNDARY_CONDITIONS)
 
 
 ! compute forces for the acoustic elements
+
+  use specfem_par, only: nglob,nspec,nelemabs,numat,it,NSTEP, &
+                         anyabs,assign_external_model,ibool,kmato,numabs,acoustic, &
+                         codeabs,stage_time_scheme,i_stage, &
+                         density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
+                         vpext,rhoext, &
+                         hprime_xx,hprimewgll_xx, &
+                         hprime_zz,hprimewgll_zz,wxgll,wzgll, &
+                         AXISYM,coord, is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
+                         ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
+                         ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
+                         SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right,&
+                         nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
+                         b_absorb_acoustic_left,b_absorb_acoustic_right, &
+                         b_absorb_acoustic_bottom,b_absorb_acoustic_top,&
+                         is_PML,nspec_PML,spec_to_PML,region_CPML, &
+                         K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
+                         rmemory_potential_acoustic,&
+                         rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
+                         rmemory_potential_acoustic_LDDRK,alpha_LDDRK,beta_LDDRK,c_LDDRK, &
+                         rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
+                         deltat,STACEY_BOUNDARY_CONDITIONS,ispec,i,j,k,iglob,ispecabs
 
   implicit none
 
   include "constants.h"
 
-  integer :: nglob,nspec,nelemabs,numat,it,NSTEP,SIMULATION_TYPE
-
-  logical :: AXISYM
-
-  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
-  integer, dimension(nspec) :: kmato
-  integer, dimension(nelemabs) :: numabs,ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
-               ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2
-
-  logical, dimension(nspec) :: acoustic
-  logical, dimension(4,nelemabs)  :: codeabs
 
   real(kind=CUSTOM_REAL), dimension(nglob) :: &
     potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic,potential_acoustic_old
 
-  double precision, dimension(2,numat) :: density
-  double precision, dimension(4,3,numat) :: poroelastcoef
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz,jacobian
-  double precision, dimension(NGLLX,NGLLZ,nspec) :: vpext,rhoext
-
-  logical :: anyabs,assign_external_model
-  logical :: SAVE_FORWARD,IS_BACKWARD_FIELD
-
-! derivatives of Lagrange polynomials
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
-  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz,hprimewgll_zz
-! derivatives of GLJ polynomials
-  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLJ) :: hprimeBar_xx,hprimeBarwglj_xx
-
-! Gauss-Lobatto-Legendre weights
-  real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
-  real(kind=CUSTOM_REAL), dimension(NGLLZ) :: wzgll
-! Gauss-Lobatto-Jacobi points and weights
-  double precision, dimension(NGLJ) :: xiglj
-  real(kind=CUSTOM_REAL), dimension(NGLJ) :: wxglj
-  logical, dimension(nspec) :: is_on_the_axis
-  double precision, dimension(NDIM,nglob), intent(in) :: coord
-
-  integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
-  integer, dimension(nelemabs) :: ib_left
-  integer, dimension(nelemabs) :: ib_right
-  integer, dimension(nelemabs) :: ib_bottom
-  integer, dimension(nelemabs) :: ib_top
-
-  real(kind=CUSTOM_REAL), dimension(NGLLZ,nspec_left,NSTEP) :: b_absorb_acoustic_left
-  real(kind=CUSTOM_REAL), dimension(NGLLZ,nspec_right,NSTEP) :: b_absorb_acoustic_right
-  real(kind=CUSTOM_REAL), dimension(NGLLX,nspec_top,NSTEP) :: b_absorb_acoustic_top
-  real(kind=CUSTOM_REAL), dimension(NGLLX,nspec_bottom,NSTEP) :: b_absorb_acoustic_bottom
-
-! CPML coefficients and memory variables
-  integer :: nspec_PML,ispec_PML
-  integer, dimension(nspec) :: region_CPML
-  logical, dimension(nspec) :: is_PML
-  integer, dimension(nspec) :: spec_to_PML
-
-  real(kind=CUSTOM_REAL), dimension(2,NGLLX,NGLLZ,nspec_PML) :: rmemory_potential_acoustic
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML,2) :: &
-                          rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz
-  double precision, dimension(NGLLX,NGLLZ,nspec_PML) :: &
-                          K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
-
-  logical :: PML_BOUNDARY_CONDITIONS,STACEY_BOUNDARY_CONDITIONS
-
-! coefficients and memory variables when using CPML with LDDRK
-  integer :: stage_time_scheme,i_stage
-  real(kind=CUSTOM_REAL), dimension(Nstages) :: alpha_LDDRK,beta_LDDRK,c_LDDRK
-  real(kind=CUSTOM_REAL), dimension(2,NGLLX,NGLLZ,nspec_PML) :: rmemory_potential_acoustic_LDDRK
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_PML,2) :: rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK
+  logical :: PML_BOUNDARY_CONDITIONS,IS_BACKWARD_FIELD
 
 !---
 !--- local variables
 !---
 
-  integer :: ispec,i,j,k,iglob,ispecabs,ibegin,iend,jbegin,jend
+  integer :: ispec_PML,ibegin,iend,jbegin,jend
 
 ! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,dux_dxl,dux_dzl
@@ -168,7 +107,9 @@
                             A8,A9,A10,bb_xz_1,bb_xz_2,coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2,&
                             A0,A1,A2,A3,A4,bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2
   integer :: CPML_region_local,singularity_type_zx,singularity_type_xz,singularity_type
-  double precision :: deltat
+
+
+
 
   ifirstelem = 1
   ilastelem = nspec
