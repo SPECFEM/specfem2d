@@ -43,6 +43,196 @@
 
 ! write seismograms to text files
 
+  subroutine write_seismograms
+
+  use specfem_par, only : ibool, sisux,sisuz,siscurl,station_name,network_name, &
+                          NSTEP,nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
+                          NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,p_sv, &
+                          st_zval,SU_FORMAT,save_ASCII_seismograms, &
+                          save_binary_seismograms_single,save_binary_seismograms_double,subsamp_seismos, &
+                          recloc, ispec_selected_rec, cosrot_irec, sinrot_irec, &
+                          hxir_store, hgammar_store, &
+                          pressure_element, vector_field_element, curl_element, &
+                          acoustic, potential_acoustic, potential_dot_acoustic, potential_dot_dot_acoustic, &
+                          gravitoacoustic, potential_gravitoacoustic,&
+                          potential_dot_gravitoacoustic, potential_dot_dot_gravitoacoustic, &
+                          potential_gravito, potential_dot_gravito, potential_dot_dot_gravito, &
+                          elastic, accel_elastic, veloc_elastic, displ_elastic, &
+                          poroelastic, accels_poroelastic, velocs_poroelastic, displs_poroelastic
+
+  include "constants.h"
+
+  integer :: i, j, iglob, ispec, irecloc, irec
+  double precision :: dxd,dyd,dzd !,vxd,vyd,vzd,axd,ayd,azd
+  double precision :: valux, valuy, valuz
+  double precision :: valcurl, dcurld, hlagrange
+
+
+! update position in seismograms
+    seismo_current = seismo_current + 1
+
+    do irecloc = 1,nrecloc
+
+      irec = recloc(irecloc)
+
+      ispec = ispec_selected_rec(irec)
+
+      ! compute pressure in this element if needed
+      if(seismotype == 4) then
+
+        call compute_pressure_one_element()
+
+      else if(acoustic(ispec)) then
+
+        ! for acoustic medium, compute vector field from gradient of potential for seismograms
+        if(seismotype == 1 .or. seismotype == 7) then
+          call compute_vector_one_element(potential_acoustic,potential_gravitoacoustic, &
+                              potential_gravito,displ_elastic,displs_poroelastic)
+        else if(seismotype == 2) then
+          call compute_vector_one_element(potential_dot_acoustic,potential_dot_gravitoacoustic, &
+                              potential_dot_gravito,veloc_elastic,velocs_poroelastic)
+        else if(seismotype == 3) then
+          call compute_vector_one_element(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
+                              potential_dot_dot_gravito,accel_elastic,accels_poroelastic)
+        endif
+
+      else if(gravitoacoustic(ispec)) then
+
+        ! for acoustic medium, compute vector field from gradient of potential for seismograms
+        if(seismotype == 1 .or. seismotype == 7) then
+          call compute_vector_one_element(potential_acoustic,potential_gravitoacoustic, &
+                              potential_gravito,displ_elastic,displs_poroelastic)
+        else if(seismotype == 2) then
+          call compute_vector_one_element(potential_dot_acoustic,potential_dot_gravitoacoustic, &
+                              potential_dot_gravito,veloc_elastic,velocs_poroelastic)
+        else if(seismotype == 3) then
+          call compute_vector_one_element(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
+                              potential_dot_dot_gravito,accel_elastic,accels_poroelastic)
+        endif
+
+      else if(seismotype == 5) then
+        call compute_curl_one_element()
+      endif
+
+      ! perform the general interpolation using Lagrange polynomials
+      valux = ZERO
+      valuy = ZERO
+      valuz = ZERO
+
+      valcurl = ZERO
+
+      dxd = 0
+      dyd = 0
+      dzd = 0
+
+      dcurld = 0
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          iglob = ibool(i,j,ispec)
+          hlagrange = hxir_store(irec,i)*hgammar_store(irec,j)
+          dcurld=ZERO
+
+          if(seismotype == 4) then
+
+            dxd = pressure_element(i,j)
+            dzd = ZERO
+
+          else if((acoustic(ispec) .or. gravitoacoustic(ispec)) .and.  seismotype /= 6) then
+
+            dxd = vector_field_element(1,i,j)
+            dzd = vector_field_element(3,i,j)
+
+          else if(acoustic(ispec) .and. seismotype == 6) then
+
+            dxd = potential_acoustic(iglob)
+            dzd = ZERO
+
+          else if(gravitoacoustic(ispec) .and. seismotype == 6) then
+
+            dxd = potential_acoustic(iglob)
+            dzd = ZERO
+
+          else if(seismotype == 1) then
+
+            if(poroelastic(ispec)) then
+              dxd = displs_poroelastic(1,iglob)
+              dzd = displs_poroelastic(2,iglob)
+            else if(elastic(ispec)) then
+              dxd = displ_elastic(1,iglob)
+              dyd = displ_elastic(2,iglob)
+              dzd = displ_elastic(3,iglob)
+            endif
+
+          else if(seismotype == 2) then
+
+            if(poroelastic(ispec)) then
+              dxd = velocs_poroelastic(1,iglob)
+              dzd = velocs_poroelastic(2,iglob)
+            else if(elastic(ispec)) then
+              dxd = veloc_elastic(1,iglob)
+              dyd = veloc_elastic(2,iglob)
+              dzd = veloc_elastic(3,iglob)
+            endif
+
+          else if(seismotype == 3) then
+
+            if(poroelastic(ispec)) then
+              dxd = accels_poroelastic(1,iglob)
+              dzd = accels_poroelastic(2,iglob)
+            else if(elastic(ispec)) then
+              dxd = accel_elastic(1,iglob)
+              dyd = accel_elastic(2,iglob)
+              dzd = accel_elastic(3,iglob)
+            endif
+
+          else if(seismotype == 5) then
+
+            if(poroelastic(ispec)) then
+              dxd = displs_poroelastic(1,iglob)
+              dzd = displs_poroelastic(2,iglob)
+            else if(elastic(ispec)) then
+              dxd = displ_elastic(1,iglob)
+              dzd = displ_elastic(2,iglob)
+            endif
+            dcurld = curl_element(i,j)
+
+          endif
+
+          ! compute interpolated field
+          valux = valux + dxd*hlagrange
+          if(elastic(ispec))  valuy = valuy + dyd*hlagrange
+          valuz = valuz + dzd*hlagrange
+          valcurl = valcurl + dcurld*hlagrange
+
+        enddo
+      enddo
+
+      ! check for edge effects
+      if(seismo_current < 1 .or. seismo_current > NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos) &
+        stop 'error: seismo_current out of bounds in recording of seismograms'
+
+      ! rotate seismogram components if needed, except if recording pressure, which is a scalar
+      if(seismotype /= 4 .and. seismotype /= 6) then
+        if(p_sv) then
+          sisux(seismo_current,irecloc) =   cosrot_irec(irecloc)*valux + sinrot_irec(irecloc)*valuz
+          sisuz(seismo_current,irecloc) = - sinrot_irec(irecloc)*valux + cosrot_irec(irecloc)*valuz
+        else
+          sisux(seismo_current,irecloc) = valuy
+          sisuz(seismo_current,irecloc) = ZERO
+        endif
+      else
+        sisux(seismo_current,irecloc) = valux
+        sisuz(seismo_current,irecloc) = ZERO
+      endif
+      siscurl(seismo_current,irecloc) = valcurl
+
+    enddo
+
+  end subroutine write_seismograms
+
+
+
+
 
   subroutine write_seismograms_to_file(x_source,z_source)
 
