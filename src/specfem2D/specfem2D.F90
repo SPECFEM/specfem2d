@@ -1582,46 +1582,8 @@
            adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
          endif
        enddo
-    else
-       irec_local = 0
-       write(filename, "('./SEM/Ux_file_single.bin.adj')")
-       open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ios)
-               if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
-       write(filename, "('./SEM/Uy_file_single.bin.adj')")
-       open(112,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ios)
-               if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
-       write(filename, "('./SEM/Uz_file_single.bin.adj')")
-       open(113,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ios)
-               if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
-
-       allocate(adj_src_s(NSTEP,3))
-
-       do irec = 1, nrec
-         if(myrank == which_proc_receiver(irec))then
-          irec_local = irec_local + 1
-          adj_sourcearray(:,:,:,:) = 0.0
-          read(111,rec=irec,iostat=ios) r4head, adj_src_s(:,1)
-               if (ios /= 0) call exit_MPI(' file '//trim(filename)//' read error')
-          read(112,rec=irec,iostat=ios) r4head, adj_src_s(:,2)
-               if (ios /= 0) call exit_MPI(' file '//trim(filename)//' read error')
-          read(113,rec=irec,iostat=ios) r4head, adj_src_s(:,3)
-               if (ios /= 0) call exit_MPI(' file '//trim(filename)//' read error')
-          header2=int(r4head(29), kind=2)
-          if (irec==1) print*, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
-          call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
-          call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
-          do k = 1, NGLLZ
-              do i = 1, NGLLX
-                adj_sourcearray(:,:,i,k) = hxir(i) * hgammar(k) * adj_src_s(:,:)
-              enddo
-          enddo
-          adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
-         endif !  if(myrank == which_proc_receiver(irec))
-       enddo ! irec
-       close(111)
-       close(112)
-       close(113)
-       deallocate(adj_src_s)
+    else ! (SU_FORMAT)
+        call add_adjoint_sources_SU()
     endif
   else
      allocate(adj_sourcearrays(1,1,1,1,1))
