@@ -184,13 +184,13 @@ subroutine add_adjoint_sources_SU
   integer :: ios
 
    irec_local = 0
-   write(filename, "('./SEM/Ux_file_single.bin.adj')")
+   write(filename, "('./SEM/Ux_file_single.su.adj')")
    open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ios)
            if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
-   write(filename, "('./SEM/Uy_file_single.bin.adj')")
+   write(filename, "('./SEM/Uy_file_single.su.adj')")
    open(112,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ios)
            if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
-   write(filename, "('./SEM/Uz_file_single.bin.adj')")
+   write(filename, "('./SEM/Uz_file_single.su.adj')")
    open(113,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ios)
            if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
 
