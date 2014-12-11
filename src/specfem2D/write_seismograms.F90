@@ -232,7 +232,7 @@
 
 
 
-
+!================================================================
 
   subroutine write_seismograms_to_file(x_source,z_source)
 
