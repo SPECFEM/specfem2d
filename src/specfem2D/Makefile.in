@@ -158,6 +158,7 @@ OBJS_SPECFEM2D = \
 	$O/read_databases.o \
 	$O/read_external_model.o \
 	$O/recompute_jacobian.o \
+	$O/save_adjoint_kernels.o \
 	$O/save_openDX_jacobian.o \
 	$O/set_sources.o \
 	$O/setup_sources_receivers.o \
@@ -293,6 +294,7 @@ $O/compute_pressure.o: $O/specfem2D_par.o
 $O/compute_vector_field.o: $O/specfem2D_par.o
 $O/create_color_image.o: $O/specfem2D_par.o
 $O/write_output_SU.o: $O/specfem2D_par.o
+$O/save_adjoint_kernels.o: $O/specfem2D_par.o
 $O/write_seismograms.o: $O/specfem2D_par.o
 $O/plotpost.o: $O/specfem2D_par.o
 $O/prepare_color_image.o: $O/specfem2D_par.o
@@ -457,6 +459,9 @@ $O/read_external_model.o: ${S}/read_external_model.f90 ${SETUP}/constants.h
 
 $O/recompute_jacobian.o: ${S}/recompute_jacobian.f90 ${SETUP}/constants.h
 	${F90} $(DEF_FFLAGS) -c -o $O/recompute_jacobian.o ${S}/recompute_jacobian.f90
+
+$O/save_adjoint_kernels.o:  ${S}/save_adjoint_kernels.f90 ${SETUP}/constants.h
+	${F90} $(DEF_FFLAGS) -c -o $O/save_adjoint_kernels.o ${S}/save_adjoint_kernels.f90
 
 $O/save_databases.o: ${S}/save_databases.f90 ${SETUP}/constants.h
 	${F90} $(DEF_FFLAGS) -c -o $O/save_databases.o ${S}/save_databases.f90
