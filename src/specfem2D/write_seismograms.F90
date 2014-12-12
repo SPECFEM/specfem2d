@@ -256,9 +256,9 @@
   logical :: save_binary_seismograms
   integer irec,length_station_name,length_network_name,iorientation,isample,number_of_components
 
-  character(len=4) chn
+  character(len=4) channel
   character(len=1) component
-  character(len=4) sfx
+  character(len=4) suffix
   character(len=150) sisname
 
 ! to write seismograms in single precision SEP and double precision binary format
@@ -314,9 +314,9 @@
 
 ! filename extension
   if (.not. SU_FORMAT) then
-    sfx = '.bin'
+    suffix = '.bin'
   else
-    sfx = '.su'
+    suffix = '.su'
   endif
 
   allocate(buffer_binary(number_of_components,NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrec))
@@ -324,66 +324,34 @@
   if (save_binary_seismograms .and. myrank == 0 .and. seismo_offset == 0) then
 
 ! delete old files
-     open(unit=12,file='OUTPUT_FILES/Ux_file_single.bin',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/Ux_file_single'//suffix,status='unknown')
      close(12,status='delete')
 
-     open(unit=12,file='OUTPUT_FILES/Ux_file_double.bin',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/Ux_file_double'//suffix,status='unknown')
      close(12,status='delete')
 
-     open(unit=12,file='OUTPUT_FILES/Uy_file_single.bin',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/Uy_file_single'//suffix,status='unknown')
      close(12,status='delete')
 
-     open(unit=12,file='OUTPUT_FILES/Uy_file_double.bin',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/Uy_file_double'//suffix,status='unknown')
      close(12,status='delete')
 
-     open(unit=12,file='OUTPUT_FILES/Uz_file_single.bin',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/Uz_file_single'//suffix,status='unknown')
      close(12,status='delete')
 
-     open(unit=12,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/Uz_file_double'//suffix,status='unknown')
      close(12,status='delete')
 
-     open(unit=12,file='OUTPUT_FILES/Up_file_single.bin',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/Up_file_single'//suffix,status='unknown')
      close(12,status='delete')
 
-     open(unit=12,file='OUTPUT_FILES/Up_file_double.bin',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/Up_file_double'//suffix,status='unknown')
      close(12,status='delete')
 
-     open(unit=12,file='OUTPUT_FILES/Uc_file_single.bin',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/Uc_file_single'//suffix,status='unknown')
      close(12,status='delete')
 
-     open(unit=12,file='OUTPUT_FILES/Uc_file_double.bin',status='unknown')
-     close(12,status='delete')
-
-
-! delete old Seismic Unix files
-     open(unit=12,file='OUTPUT_FILES/Ux_file_single.su',status='unknown')
-     close(12,status='delete')
-
-     open(unit=12,file='OUTPUT_FILES/Ux_file_double.su',status='unknown')
-     close(12,status='delete')
-
-     open(unit=12,file='OUTPUT_FILES/Uy_file_single.su',status='unknown')
-     close(12,status='delete')
-
-     open(unit=12,file='OUTPUT_FILES/Uy_file_double.su',status='unknown')
-     close(12,status='delete')
-
-     open(unit=12,file='OUTPUT_FILES/Uz_file_single.su',status='unknown')
-     close(12,status='delete')
-
-     open(unit=12,file='OUTPUT_FILES/Uz_file_double.su',status='unknown')
-     close(12,status='delete')
-
-     open(unit=12,file='OUTPUT_FILES/Up_file_single.su',status='unknown')
-     close(12,status='delete')
-
-     open(unit=12,file='OUTPUT_FILES/Up_file_double.su',status='unknown')
-     close(12,status='delete')
-
-     open(unit=12,file='OUTPUT_FILES/Uc_file_single.su',status='unknown')
-     close(12,status='delete')
-
-     open(unit=12,file='OUTPUT_FILES/Uc_file_double.su',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/Uc_file_double'//suffix,status='unknown')
      close(12,status='delete')
 
   endif
@@ -394,38 +362,37 @@
      ! write the new files
      if(save_binary_seismograms_single) then
      if(seismotype == 4 .or. seismotype == 6) then
-        open(unit=12,file='OUTPUT_FILES/Up_file_single'//sfx,status='unknown',access='direct',recl=4)
+        open(unit=12,file='OUTPUT_FILES/Up_file_single'//suffix,status='unknown',access='direct',recl=4)
      else if(.not.p_sv) then
-        open(unit=12,file='OUTPUT_FILES/Uy_file_single'//sfx,status='unknown',access='direct',recl=4)
+        open(unit=12,file='OUTPUT_FILES/Uy_file_single'//suffix,status='unknown',access='direct',recl=4)
      else
-        open(unit=12,file='OUTPUT_FILES/Ux_file_single'//sfx,status='unknown',access='direct',recl=4)
+        open(unit=12,file='OUTPUT_FILES/Ux_file_single'//suffix,status='unknown',access='direct',recl=4)
      endif
      endif
 
      if(save_binary_seismograms_double) then
      if(seismotype == 4 .or. seismotype == 6) then
-        open(unit=13,file='OUTPUT_FILES/Up_file_double'//sfx,status='unknown',access='direct',recl=8)
      else if(.not.p_sv) then
-        open(unit=13,file='OUTPUT_FILES/Uz_file_double'//sfx,status='unknown',access='direct',recl=8)
+        open(unit=13,file='OUTPUT_FILES/Uz_file_double'//suffix,status='unknown',access='direct',recl=8)
      else
-        open(unit=13,file='OUTPUT_FILES/Ux_file_double'//sfx,status='unknown',access='direct',recl=8)
+        open(unit=13,file='OUTPUT_FILES/Ux_file_double'//suffix,status='unknown',access='direct',recl=8)
      endif
      endif
 
      ! no Z component seismogram if pressure
      if(seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
        if(save_binary_seismograms_single) &
-        open(unit=14,file='OUTPUT_FILES/Uz_file_single'//sfx,status='unknown',access='direct',recl=4)
+        open(unit=14,file='OUTPUT_FILES/Uz_file_single'//suffix,status='unknown',access='direct',recl=4)
        if(save_binary_seismograms_double) &
-        open(unit=15,file='OUTPUT_FILES/Uz_file_double'//sfx,status='unknown',access='direct',recl=8)
+        open(unit=15,file='OUTPUT_FILES/Uz_file_double'//suffix,status='unknown',access='direct',recl=8)
      endif
 
      ! curl output
      if(seismotype == 5) then
        if(save_binary_seismograms_single) &
-        open(unit=16,file='OUTPUT_FILES/Uc_file_single'//sfx,status='unknown',access='direct',recl=4)
+        open(unit=16,file='OUTPUT_FILES/Uc_file_single'//suffix,status='unknown',access='direct',recl=4)
        if(save_binary_seismograms_double) &
-        open(unit=17,file='OUTPUT_FILES/Uc_file_double'//sfx,status='unknown',access='direct',recl=8)
+        open(unit=17,file='OUTPUT_FILES/Uc_file_double'//suffix,status='unknown',access='direct',recl=8)
      endif
 
   endif
@@ -480,19 +447,19 @@
           do iorientation = 1,number_of_components
 
              if(iorientation == 1) then
-                chn = 'BXX'
+                channel = 'BXX'
              else if(iorientation == 2) then
-                chn = 'BXZ'
+                channel = 'BXZ'
              else if(iorientation == 3) then
-                chn = 'cur'
+                channel = 'cur'
              else
                 call exit_MPI('incorrect channel value')
              endif
 
              ! in case of pressure, use different abbreviation
-             if(seismotype == 4 .or. seismotype == 6) chn = 'PRE'
+             if(seismotype == 4 .or. seismotype == 6) channel = 'PRE'
              ! in case of SH (membrane) waves, use different abbreviation
-             if(.not.p_sv) chn = 'BXY'
+             if(.not.p_sv) channel = 'BXY'
 
              ! create the name of the seismogram file for each slice
              ! file name includes the name of the station, the network and the component
@@ -508,7 +475,7 @@
             endif
 
              write(sisname,"('OUTPUT_FILES/',a,'.',a,'.',a3,'.sem',a1)") &
-                  network_name(irec)(1:length_network_name),station_name(irec)(1:length_station_name),chn,component
+                  network_name(irec)(1:length_network_name),station_name(irec)(1:length_station_name),channel,component
 
              ! save seismograms in text format with no subsampling.
              ! Because we do not subsample the output, this can result in large files
