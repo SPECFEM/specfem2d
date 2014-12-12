@@ -2885,7 +2885,7 @@
   endif
 
 !
-!----- Files where absorbing signal are saved during forward wavefield calculation
+!----- Read last frame for forward wavefield reconstruction
 !
 
   if( ((SAVE_FORWARD .and. SIMULATION_TYPE ==1) .or. SIMULATION_TYPE == 3) .and. anyabs &
@@ -2909,7 +2909,7 @@
 
 
 !
-!----- Read last frame for backward wavefield calculation
+!----- Allocate sensitivity kernel arrays
 !
 
   if(SIMULATION_TYPE == 3) then
