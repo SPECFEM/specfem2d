@@ -699,7 +699,7 @@
 
              endif
            endif
-        enddo 
+        enddo
       endif
 
       if (codeabs(IEDGE3,inum)) then
@@ -718,12 +718,12 @@
 
              endif
            endif
-        enddo 
+        enddo
       endif
-      
+
     enddo
 
-! detection of the corner element 
+! detection of the corner element
 
     ! boundary element numbering
     do inum = 1,nelemabs

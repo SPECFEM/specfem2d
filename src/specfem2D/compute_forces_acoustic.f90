@@ -49,7 +49,7 @@
 
   use specfem_par, only: nglob,nspec,nelemabs,numat,it,NSTEP, &
                          anyabs,assign_external_model,ibool,kmato,numabs,acoustic, &
-                         codeabs,codeabs_corner,stage_time_scheme,i_stage, & 
+                         codeabs,codeabs_corner,stage_time_scheme,i_stage, &
                          density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                          vpext,rhoext, &
                          hprime_xx,hprimewgll_xx, &
@@ -622,8 +622,8 @@
           ibegin = ibegin_edge3(ispecabs)
           iend = iend_edge3(ispecabs)
           ! exclude corners to make sure there is no contradiction on the normal
-          if(codeabs_corner(3,ispecabs)) ibegin = 2  
-          if(codeabs_corner(4,ispecabs)) iend = NGLLX-1  
+          if(codeabs_corner(3,ispecabs)) ibegin = 2
+          if(codeabs_corner(4,ispecabs)) iend = NGLLX-1
           do i = ibegin,iend
             iglob = ibool(i,j,ispec)
             ! external velocity model

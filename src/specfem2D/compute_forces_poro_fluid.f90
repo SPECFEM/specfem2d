@@ -803,8 +803,8 @@
         iend = iend_edge3_poro(ispecabs)
 
 ! exclude corners to make sure there is no contradiction on the normal
-        if(codeabs_corner(3,ispecabs)) ibegin = 2  
-        if(codeabs_corner(4,ispecabs)) iend = NGLLX-1 
+        if(codeabs_corner(3,ispecabs)) ibegin = 2
+        if(codeabs_corner(4,ispecabs)) iend = NGLLX-1
 
         do i = ibegin,iend
 
