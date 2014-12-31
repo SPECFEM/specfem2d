@@ -110,7 +110,7 @@
                call lik_parameter_computation(timeval,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z,&
                                         CPML_region_local,13,A8,A9,A10,singularity_type_xz,bb_xz_1,bb_xz_2,&
                                         coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2)
-               elseif(CPML_region_local == CPML_Z_ONLY)then
+               else if(CPML_region_local == CPML_Z_ONLY)then
                call lik_parameter_computation(timeval,deltat,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x,&
                                         CPML_region_local,31,A8,A9,A10,singularity_type_xz,bb_xz_1,bb_xz_2,&
                                         coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2)
