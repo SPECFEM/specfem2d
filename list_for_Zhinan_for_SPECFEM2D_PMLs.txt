@@ -95,26 +95,6 @@ Best regards,
 
 Dimitri.
 
-On 04/09/2014 04:45, xiezhinan wrote:
-> Dear Dimitri and Ying,
->
-> An initial tests show the problem is that:
->
-> Even for forward simulation with a purely fluid model, when turning the
-> bottom and top Stacey BC on, the simulation quickly blow up.
-> But for tests with right and left Stacey BC only, the simulation is fine.
->
-> While for forward simulation with a purely solid model,everything is fine.
->
-> Thus, I will first focus on solving the following problem:
-> Fixing Stacey BC for a purely fluid model with Stacey BC imposed on its
-> four out-edge boundaries.
->
-> Thank you so much.
->
-> Best regards,
-> Zhinan
->
 >
 > At 2014-09-04 05:56:50, "Dimitri Komatitsch" wrote:
 >>
@@ -396,22 +376,15 @@ Zhinan
 
              Hi Zhinan,
 
-             I agree with you that the process of selecting the PML
-        parameters
-             should be as automatic as possible, i.e. if possible the
-        code itself
-             should decide and the user should not have to enter all the
-        damping
+             I agree with you that the process of selecting the PML parameters
+             should be as automatic as possible, i.e. if possible the code itself
+             should decide and the user should not have to enter all the damping
              parameters.
 
-             However in the automatic decisions made by the code I think
-        it makes
-             sense to distinguish the thickness and the damping
-        parameters along
-             X from those along Z, since it is very common to have very
-        elongated
-             models (for instance in ocean acoustics, but also in oil
-        industry
+             However in the automatic decisions made by the code I think it makes
+             sense to distinguish the thickness and the damping parameters along
+             X from those along Z, since it is very common to have very elongated
+             models (for instance in ocean acoustics, but also in oil industry
              large-offset models).
 
              Thanks a lot,
@@ -424,20 +397,12 @@ Zhinan
 
                  Hi Dimitri,
                  Thank you so much.
-                 After I get a more clean solution  to Paul's problem, I
-        will
-                 commit the
-                 change but set the streching function in different
-        direction
-                 equal in
-                 default and leave a comment.
-                 Due to the fact that there is no clear guideline on
-        choosing the
-                 parameters inside streching function, maybe it is
-        useless to
-                 leave the
-                 general user a flexible choice to define the streching
-        function.
+                 After I get a more clean solution  to Paul's problem, I will commit the
+                 change but set the streching function in different direction
+                 equal in default and leave a comment.
+                 Due to the fact that there is no clear guideline on choosing the
+                 parameters inside streching function, maybe it is useless to
+                 leave the general user a flexible choice to define the streching function.
                  If not, please correct me, Sir.
                  Thanks again.
                  Best regards,
@@ -447,18 +412,12 @@ Zhinan
 
                       Hi Zhinan,
 
-                      Thank you so much. Could you please commit the
-        changes to GIT?
+                      Thank you so much. Could you please commit the changes to GIT?
 
-                      (if you think these changes are only useful for
-        Paul but not in
-                      general, then please commit them as comments, i.e.
-        leave
-                 the current
-                      values but put the new lines (the modified lines) as
-                 comments in the
-                      routines, and then please create a Pull Request on
-        GitHub.
+                      (if you think these changes are only useful for Paul but not in
+                      general, then please commit them as comments, i.e. leave the current
+                      values but put the new lines (the modified lines) as comments in the
+                      routines, and then please create a Pull Request on GitHub.
                       (otherwise the changes will quickly be lost)
 
                       Thank you very much,
@@ -471,47 +430,21 @@ Zhinan
 
                           Hi Paul,
 
-                          I confirmed this problem comes from the grazing
-                 incident of wave.
+                          I confirmed this problem comes from the grazing incident of wave.
 
-                          As suggested in our solid PML paper, the idea is
-                 originally from the
-                          paper of Zhang, we need to carefully design
-        the stretching
-                          function to
-                          achieve an excellent absorption. I.E. we need
-        to carefully
-                          choose both
-                          d, k, and alpha.
+                          As suggested in our solid PML paper, the idea is originally from the
+                          paper of Zhang, we need to carefully design the stretching function to
+                          achieve an excellent absorption. I.E. we need to carefully
+                          choose both d, k, and alpha.
 
-                          I have tuned the parameter inside pml_init.F90 to
-                 achieve a good
-                          result
-                          for the example you send to me. Both the
-        result and
-                 pml_init.F90
-                          have
-                          been attached.
+                          I have tuned the parameter inside pml_init.F90 to achieve a good
+                          result  for the example you send to me. Both the result and pml_init.F90 have been attached.
 
-                          Currently the solution is not perfect, since I
-        still
-                 have small
-                          reflection from the side PML due to the use of
-        varying
-                 K, which is
-                          bigger than 1.
-                          But I think this problem can be solved by
-        admitting
-                 different
-                          choice of
-                          d_max, k_max,, and alpha_max, along difference
-        space
-                 coordinate,
-                          which
-                          is not allowed in our current implementation.
-        I will
-                 keep you
-                          confirmed.
+                          Currently the solution is not perfect, since I still have small
+                          reflection from the side PML due to the use of varying K, which is bigger than 1.
+                          But I think this problem can be solved by admitting different choice of
+                          d_max, k_max,, and alpha_max, along difference space coordinate, which
+                          is not allowed in our current implementation. I will keep you confirmed.
 
                           Thanks again,
                           Best regards,
@@ -525,17 +458,12 @@ Zhinan
 
                                I am really sorry that I missed this email.
 
-                               The reflection come from the bottom PML,
-        but seems
-                 work
-                          fine for
+                               The reflection come from the bottom PML, but seems work fine for
                                side PML and the corner PML.
-                               Thus the problem may come from the wrong
-                 definition of the PML
+                               Thus the problem may come from the wrong definition of the PML
                                element in the bottom
 
-                               I will have a test today and keep you
-        confirmed.
+                               I will have a test today and keep you confirmed.
 
                                Best regards,
                                Zhinan
@@ -545,34 +473,14 @@ Zhinan
                                    Dear Zhinan,
 
 
-                                   I am in the process of adding a new
-        example in              the EXAMPLES
-                                   directory corresponding of our Jasa
-        Express
-                 Letter on
-                          underwater
-                                   acoustics and I am facing a problem
-        with CPML
-                 in fluid
-                          domains.
-                                   The configuration is a fluid layer
-        overlying a
-                 sediment
-                          which
-                                   can be either fluid or elastic but
-        with the same
-                          velocity for P
-                                   waves. As you can see in the attached
-        file the
-                 CMPL is
-                          working
-                                   when the sediment is elastic but when
-        it is
-                 fluid there
-                          is a
-                                   spurious reflection.
-                                   Do you have any ideas of what's going
-        on ?
+                                   I am in the process of adding a new example in the EXAMPLES
+                                   directory corresponding of our Jasa Express Letter on underwater
+                                   acoustics and I am facing a problem with CPML in fluid domains.
+                                   The configuration is a fluid layer overlying a sediment which
+                                   can be either fluid or elastic but with the same velocity for P
+                                   waves. As you can see in the attached file the CMPL is working
+                                   when the sediment is elastic but when it is fluid there is a spurious reflection.
+                                   Do you have any ideas of what's going on ?
 
                                    Thanks
 

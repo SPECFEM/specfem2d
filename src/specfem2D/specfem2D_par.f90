@@ -305,6 +305,10 @@ module specfem_par
   logical, dimension(:,:), allocatable  :: codeabs
   integer, dimension(:), allocatable  :: typeabs
 
+! for detection of corner element on absorbing boundary
+  logical, dimension(:,:), allocatable  :: codeabs_corner 
+
+
 ! for attenuation
   integer  :: N_SLS
   double precision, dimension(:), allocatable  :: QKappa_attenuation

@@ -49,7 +49,7 @@
                          ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
                          source_type,it,NSTEP,anyabs, &
                          initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat, &
-                         ibool,kmato,numabs,poroelastic,codeabs, &
+                         ibool,kmato,numabs,poroelastic,codeabs,codeabs_corner, &
                          accelw_poroelastic,velocw_poroelastic,displw_poroelastic,velocs_poroelastic,displs_poroelastic,&
                          displs_poroelastic_old,b_accelw_poroelastic,b_displw_poroelastic,b_displs_poroelastic,&
                          density,porosity,tortuosity,permeability,poroelastcoef,xix,xiz,gammax,gammaz, &
@@ -743,8 +743,8 @@
         iend = iend_edge1_poro(ispecabs)
 
 ! exclude corners to make sure there is no contradiction on the normal
-        if(codeabs(IEDGE4,ispecabs)) ibegin = 2
-        if(codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
+        if(codeabs_corner(1,ispecabs)) ibegin = 2
+        if(codeabs_corner(2,ispecabs)) iend = NGLLX-1
 
         do i = ibegin,iend
 
@@ -803,8 +803,8 @@
         iend = iend_edge3_poro(ispecabs)
 
 ! exclude corners to make sure there is no contradiction on the normal
-        if(codeabs(IEDGE4,ispecabs)) ibegin = 2
-        if(codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
+        if(codeabs_corner(3,ispecabs)) ibegin = 2  
+        if(codeabs_corner(4,ispecabs)) iend = NGLLX-1 
 
         do i = ibegin,iend
 
