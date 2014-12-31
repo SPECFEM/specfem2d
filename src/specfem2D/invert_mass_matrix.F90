@@ -58,7 +58,7 @@
                                 assign_external_model,numat, &
                                 density,poroelastcoef,porosity,tortuosity, &
                                 vpext,rhoext, &
-                                anyabs,numabs,deltat,codeabs,&
+                                anyabs,numabs,deltat,codeabs,codeabs_corner,&
                                 ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
                                 ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
                                 rmass_inverse_elastic_three,&
@@ -513,7 +513,7 @@
 ! exclude corners to make sure there is no contradiction on the normal
 ! for Stacey absorbing conditions but not for incident plane waves;
 ! thus subtract nothing i.e. zero in that case
-                 if((codeabs(IEDGE4,ispecabs) .and. i == 1) .or. (codeabs(IEDGE2,ispecabs) .and. i == NGLLX)) then
+                 if((codeabs_corner(1,ispecabs) .and. i == 1) .or. (codeabs_corner(2,ispecabs) .and. i == NGLLX)) then
                    tx = 0
                    ty = 0
                    tz = 0
@@ -574,7 +574,7 @@
 ! exclude corners to make sure there is no contradiction on the normal
 ! for Stacey absorbing conditions but not for incident plane waves;
 ! thus subtract nothing i.e. zero in that case
-                 if((codeabs(IEDGE4,ispecabs) .and. i == 1) .or. (codeabs(IEDGE2,ispecabs) .and. i == NGLLX)) then
+                 if((codeabs_corner(3,ispecabs) .and. i == 1) .or. (codeabs_corner(4,ispecabs) .and. i == NGLLX)) then
                    tx = 0
                    ty = 0
                    tz = 0
@@ -660,8 +660,8 @@
           ibegin = ibegin_edge1(ispecabs)
           iend = iend_edge1(ispecabs)
           ! exclude corners to make sure there is no contradiction on the normal
-          if(codeabs(IEDGE4,ispecabs)) ibegin = 2
-          if(codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
+          if(codeabs_corner(1,ispecabs)) ibegin = 2
+          if(codeabs_corner(2,ispecabs)) iend = NGLLX-1
           do i = ibegin,iend
             iglob = ibool(i,j,ispec)
             ! external velocity model
@@ -686,8 +686,8 @@
           ibegin = ibegin_edge3(ispecabs)
           iend = iend_edge3(ispecabs)
           ! exclude corners to make sure there is no contradiction on the normal
-          if(codeabs(IEDGE4,ispecabs)) ibegin = 2
-          if(codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
+          if(codeabs_corner(3,ispecabs)) ibegin = 2
+          if(codeabs_corner(4,ispecabs)) iend = NGLLX-1
           do i = ibegin,iend
             iglob = ibool(i,j,ispec)
             ! external velocity model

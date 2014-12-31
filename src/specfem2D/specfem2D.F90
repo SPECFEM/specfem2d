@@ -802,6 +802,12 @@
 
     allocate(numabs(nelemabs))
     allocate(codeabs(4,nelemabs))
+
+!---codeabs_corner(1,nelemabs) denotes whether element is on bottom-left corner of absorbing boundary or not
+!---codeabs_corner(2,nelemabs) denotes whether element is on bottom-right corner of absorbing boundary or not 
+!---codeabs_corner(3,nelemabs) denotes whether element is on top-left corner of absorbing boundary or not
+!---codeabs_corner(4,nelemabs) denotes whether element is on top-right corner of absorbing boundary or not
+    allocate(codeabs_corner(4,nelemabs))
     allocate(typeabs(nelemabs))
 
     allocate(ibegin_edge1(nelemabs))

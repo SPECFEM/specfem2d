@@ -598,7 +598,7 @@
   use specfem_par, only : myrank,nelemabs,nspec,anyabs, &
                           ibegin_edge1,iend_edge1,ibegin_edge2,iend_edge2, &
                           ibegin_edge3,iend_edge3,ibegin_edge4,iend_edge4, &
-                          numabs,codeabs,typeabs, &
+                          numabs,codeabs,codeabs_corner,typeabs, &
                           nspec_left,nspec_right,nspec_bottom,nspec_top, &
                           ib_right,ib_left,ib_bottom,ib_top,PML_BOUNDARY_CONDITIONS
 
@@ -606,7 +606,7 @@
   include "constants.h"
 
   ! local parameters
-  integer :: inum,numabsread,typeabsread
+  integer :: inum,inum_duplicate,numabsread,typeabsread
   logical :: codeabsread(4)
   character(len=80) :: datlin
 
@@ -618,6 +618,7 @@
 
   ! initializes
   codeabs(:,:) = .false.
+  codeabs_corner(:,:) = .false.
   typeabs(:) = 0
 
   ibegin_edge1(:) = 0
@@ -678,6 +679,51 @@
       endif
 
     enddo
+
+! detection of the corner element
+    do inum = 1,nelemabs
+
+      if (codeabs(IEDGE1,inum)) then
+        do inum_duplicate = 1,nelemabs
+           if (inum == inum_duplicate) then
+             ! left for blank, since no operation is needed.
+           else
+             if (numabs(inum) == numabs(inum_duplicate)) then
+                if (codeabs(IEDGE4,inum_duplicate)) then
+                   codeabs_corner(1,inum) = .true.
+                endif
+
+                if (codeabs(IEDGE2,inum_duplicate)) then
+                   codeabs_corner(2,inum) = .true.
+                endif
+
+             endif
+           endif
+        enddo 
+      endif
+
+      if (codeabs(IEDGE3,inum)) then
+        do inum_duplicate = 1,nelemabs
+           if (inum == inum_duplicate) then
+             ! left for blank, since no operation is needed.
+           else
+             if (numabs(inum) == numabs(inum_duplicate)) then
+                if (codeabs(IEDGE4,inum_duplicate)) then
+                   codeabs_corner(3,inum) = .true.
+                endif
+
+                if (codeabs(IEDGE2,inum_duplicate)) then
+                   codeabs_corner(4,inum) = .true.
+                endif
+
+             endif
+           endif
+        enddo 
+      endif
+      
+    enddo
+
+! detection of the corner element 
 
     ! boundary element numbering
     do inum = 1,nelemabs
