@@ -182,6 +182,17 @@
     enddo
     close(IIN)
 
+  else if (seismotype == 6 ) then
+
+    filename = 'SEM/'//trim(adj_source_file) // '.POT.adj'
+    open(unit = IIN, file = trim(filename), iostat = ios)
+    if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
+
+    do itime = 1, NSTEP
+      read(IIN,*) junk, adj_src_s(itime,1)
+    enddo
+    close(IIN)
+
   endif
 
   do k = 1, NGLLZ
