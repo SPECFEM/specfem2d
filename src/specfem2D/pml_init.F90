@@ -43,23 +43,13 @@
   subroutine pml_init()
 
 
-! explanations from Zhinan Xie about how to select PML damping parameters efficiently:
+! Rough strategy to select the PML damping parameters:
 
-! Date: Thu, 8 May 2014 11:22:30
-! From: xiezhinan
-! To: cristini
-! CC: Dimitri Komatitsch
-
-! Here is the new results without side reflection from xPML by allowing
-! different k, d, alpha in different space direction.
-
-! My strategy to select the PML damping parameters is as follows:
-
-! In order to achieve absorbing for gradient incident  wave for zPML:
-! I use K>1 to bending the wavefront aside from its tangential propagation
-! direction (here it is x direction) in zPML.
+! In order to achieve absorbing for gradient incident wave for zPML:
+! we need to set K>1 to bending the wavefront aside from its tangential propagation
+! direction.
 ! Then a bigger damping factor d and alpha could help damping out the
-! bended wave along its propagation close to normal direction(here is z direction).
+! bended wave along its propagation close to normal direction.
 
 ! Keeping in mind, with K>1, we decrease the absorbing efficiency a little
 ! bit in normal direction.
@@ -68,23 +58,7 @@
 ! Then the resolution decrease in PML but not in interior, thus you can
 ! see reflections due to different resolutions in two sides of PML interface.
 ! However if the resolution is already very accurate, that is you have a
-! relatively fine grid, then the above effect is not bigger enough for you
-! to detect, in particular, we cut the noise below 1% in our snapshot.
-
-! For your example, I use the fact that the resolution is higher in bottom
-! layer compared with the top layer,
-! which allow me to use a bigger K in z direction without decreasing the
-! absorbing effiency too much in zPML for normal incident.
-! As I said before, a bigger damping factor d and alpha also needed.
-
-! While for xPML, the grazing incident waves are not as significant as in
-! z direction. Moreover the resolution in top layer element does not allow
-! me to use a big K in xPML. Then a smaller K than in z direction is good
-! enough to achieve good absorbing efficiency for waves with incident angle
-! a little far from the grazing incident.
-
-! Best regards,
-! Zhinan
+! relatively fine grid, then the above effect will be small.
 
 
 #ifdef USE_MPI
@@ -482,16 +456,18 @@ end subroutine pml_init
 ! PML fixed parameters to compute parameter in PML
   double precision, parameter :: NPOWER = 2.d0
   double precision, parameter :: Rcoef = 0.001d0
+
+! PML flexible parameters to compute parameter in PML
   double precision :: damping_modified_factor_acoustic,damping_modified_factor_elastic
   double precision :: K_MAX_PML,K_MIN_PML
   double precision :: ALPHA_MAX_PML
 
 ! material properties of the elastic medium
   integer i,j,ispec,iglob,ispec_PML
-  double precision :: lambdalplus2mul_relaxed,rhol
+  double precision :: lambdalplus2mul_relaxed,rhol 
   double precision :: d_x, d_z, K_x, K_z, alpha_x, alpha_z
 ! define an alias for y and z variable names (which are the same)
-  double precision :: d0_z_bottom_acoustic, d0_x_right_acoustic, d0_z_top_acoustic, d0_x_left_acoustic
+  double precision :: d0_z_bottom_acoustic, d0_x_right_acoustic, d0_z_top_acoustic, d0_x_left_acoustic 
   double precision :: d0_z_bottom_elastic, d0_x_right_elastic, d0_z_top_elastic, d0_x_left_elastic
   double precision :: abscissa_in_PML, abscissa_normalized
 
@@ -503,38 +479,40 @@ end subroutine pml_init
                       thickness_PML_z_top,thickness_PML_x_left
 
   double precision :: xmin, xmax, zmin, zmax, xorigin, zorigin, xval, zval
-  double precision :: vpmax_acoustic, vpmax_elastic
+  double precision :: vpmax_acoustic, vpmax_elastic 
   double precision :: xoriginleft, xoriginright, zorigintop, zoriginbottom
 
-  integer :: NSOURCES_glob
-  double precision :: averagex_source, averagez_source, averagex_source_sum, averagez_source_sum
-  double precision :: rough_estimate_incident_angle,averagex_per_element, averagez_per_element
+  integer :: NSOURCES_glob 
+  double precision :: averagex_source, averagez_source, averagex_source_sum, averagez_source_sum  
+  double precision :: rough_estimate_incident_angle 
 
 #ifdef USE_MPI
 ! for MPI and partitioning
   integer :: ier
-  double precision :: f0_max_glob
+  double precision :: f0_max_glob  
   double precision :: thickness_PML_z_min_bottom_glob,thickness_PML_z_max_bottom_glob,&
                       thickness_PML_x_min_right_glob,thickness_PML_x_max_right_glob,&
                       thickness_PML_z_min_top_glob,thickness_PML_z_max_top_glob,&
                       thickness_PML_x_min_left_glob,thickness_PML_x_max_left_glob
-  double precision :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
-  double precision :: vpmax_glob_acoustic, vpmax_glob_elastic
+  double precision :: xmin_glob, xmax_glob, zmin_glob, zmax_glob 
+  double precision :: vpmax_glob_acoustic, vpmax_glob_elastic 
 #endif
 
 ! compute the maximum dominant frequency of all sources
-  f0_max = maxval(f0(:))
-#ifdef USE_MPI
+  f0_max = maxval(f0(:)) 
+#ifdef USE_MPI 
   call MPI_ALLREDUCE (f0_max, f0_max_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
   f0_max = f0_max_glob
 #endif
 ! finish the computation of the maximum dominant frequency of all sources
 
 ! reflection coefficient (Inria report section 6.1) http://hal.inria.fr/docs/00/07/32/19/PDF/RR-3471.pdf
-  ALPHA_MAX_PML = PI*f0_max ! from Festa and Vilotte
-  K_MAX_PML = 1.0d0 ! from Gedney page 8.11
+  ALPHA_MAX_PML = PI*f0_max ! from Festa and Vilotte 
+  K_MAX_PML = 1.0d0 ! from Gedney page 8.11 
   K_MIN_PML = 1.0d0
-  damping_modified_factor_acoustic = 0.5d0
+!Due to experience, the d parameter defition according to Festa and Vilotte is small, thus we use damping_modified_factor_acoustic
+!to increase the d parameter for PML implementation for acoustic simulation.
+  damping_modified_factor_acoustic = 0.5d0 
   damping_modified_factor_elastic = 1.0d0
 
 ! check that NPOWER is okay
@@ -885,19 +863,6 @@ end subroutine pml_init
       ispec_PML = spec_to_PML(ispec)
       if(is_PML(ispec)) then
 
-        averagex_per_element = 0.0d0
-        averagez_per_element = 0.0d0
-
-        do i = 1, NGLLX
-          do j = 1, NGLLZ
-             averagex_per_element = averagex_per_element + coord(1,ibool(i,j,ispec))
-             averagez_per_element = averagez_per_element + coord(2,ibool(i,j,ispec))
-          enddo
-        enddo
-
-        averagex_per_element = averagex_per_element/(NGLLX*NGLLZ)
-        averagez_per_element = averagez_per_element/(NGLLX*NGLLZ)
-
         do j=1,NGLLZ; do i=1,NGLLX
           d_x = 0.d0; d_z = 0.d0
           K_x = 1.0d0; K_z = 1.0d0
@@ -939,7 +904,7 @@ end subroutine pml_init
                        rough_estimate_incident_angle <= 6.0d0 )then
 
                   damping_modified_factor_acoustic = 0.5d0
-                  damping_modified_factor_elastic = 1.0d0
+                  damping_modified_factor_elastic = 0.8d0
                   K_MAX_PML = 2.0d0
                   K_MIN_PML = 1.0d0
                   ALPHA_MAX_PML = 2.5d0
@@ -958,7 +923,7 @@ end subroutine pml_init
                 else if(rough_estimate_incident_angle > 6.0d0 )then
 
                   damping_modified_factor_acoustic = 0.4d0
-                  damping_modified_factor_elastic = 0.8d0
+                  damping_modified_factor_elastic = 0.7d0
                   K_MAX_PML = 3.5d0
                   K_MIN_PML = 1.5d0
                   ALPHA_MAX_PML = 4.0d0
@@ -1016,7 +981,7 @@ end subroutine pml_init
                        rough_estimate_incident_angle <= 6.0d0 )then
 
                   damping_modified_factor_acoustic = 0.5d0
-                  damping_modified_factor_elastic = 1.0d0
+                  damping_modified_factor_elastic = 0.8d0
                   K_MAX_PML = 2.0d0
                   K_MIN_PML = 1.0d0
                   ALPHA_MAX_PML = 2.5d0
@@ -1035,7 +1000,7 @@ end subroutine pml_init
                 else if(rough_estimate_incident_angle > 6.0d0 )then
 
                   damping_modified_factor_acoustic = 0.4d0
-                  damping_modified_factor_elastic = 0.8d0
+                  damping_modified_factor_elastic = 0.7d0
                   K_MAX_PML = 3.5d0
                   K_MIN_PML = 1.5d0
                   ALPHA_MAX_PML = 4.0d0
@@ -1093,7 +1058,7 @@ end subroutine pml_init
                        rough_estimate_incident_angle <= 6.0d0 )then
 
                   damping_modified_factor_acoustic = 0.5d0
-                  damping_modified_factor_elastic = 1.0d0
+                  damping_modified_factor_elastic = 0.8d0
                   K_MAX_PML = 2.0d0
                   K_MIN_PML = 1.0d0
                   ALPHA_MAX_PML = 2.5d0
@@ -1112,7 +1077,7 @@ end subroutine pml_init
                 else if(rough_estimate_incident_angle > 6.0d0 )then
 
                   damping_modified_factor_acoustic = 0.4d0
-                  damping_modified_factor_elastic = 0.8d0
+                  damping_modified_factor_elastic = 0.7d0
                   K_MAX_PML = 3.5d0
                   K_MIN_PML = 1.5d0
                   ALPHA_MAX_PML = 4.0d0
@@ -1170,7 +1135,7 @@ end subroutine pml_init
                        rough_estimate_incident_angle <= 6.0d0 )then
 
                   damping_modified_factor_acoustic = 0.5d0
-                  damping_modified_factor_elastic = 1.0d0
+                  damping_modified_factor_elastic = 0.8d0
                   K_MAX_PML = 2.0d0
                   K_MIN_PML = 1.0d0
                   ALPHA_MAX_PML = 2.5d0
@@ -1189,7 +1154,7 @@ end subroutine pml_init
                 else if(rough_estimate_incident_angle > 6.0d0 )then
 
                   damping_modified_factor_acoustic = 0.4d0
-                  damping_modified_factor_elastic = 0.8d0
+                  damping_modified_factor_elastic = 0.7d0
                   K_MAX_PML = 3.5d0
                   K_MIN_PML = 1.5d0
                   ALPHA_MAX_PML = 4.0d0
