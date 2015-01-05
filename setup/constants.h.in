@@ -122,6 +122,9 @@
   integer, parameter :: CPML_Z_ONLY = 2
   integer, parameter :: CPML_XZ_ONLY = 3
 
+! flags decide that do PML_parameter_adjustment implemented in pml_init.F90 or not
+  logical, parameter :: PML_parameter_adjustment = .false.
+
 ! number of edges and corners of each element
   integer, parameter :: NEDGES = 4
   integer, parameter :: NCORNERS = 4
