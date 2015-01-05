@@ -2305,7 +2305,7 @@
         d_z_store(:,:,:) = ZERO
         alpha_x_store(:,:,:) = ZERO
         alpha_z_store(:,:,:) = ZERO
-        call define_PML_coefficients(f0(1))
+        call define_PML_coefficients()
       else
         allocate(K_x_store(NGLLX,NGLLZ,1),stat=ier)
         if(ier /= 0) stop 'error: not enough memory to allocate array K_x_store'
