@@ -451,8 +451,8 @@ end subroutine pml_init
   use mpi
 #endif
 
-  use specfem_par, only: f0,NELEM_PML_THICKNESS,elastic,acoustic,& !ZN
-                         NSOURCES,ispec_selected_source,i_source,& !ZN
+  use specfem_par, only: f0,NELEM_PML_THICKNESS,elastic,acoustic,&
+                         NSOURCES,ispec_selected_source,i_source,&
                          nspec,kmato,density,poroelastcoef,numat,&
                          ibool,coord,is_PML,region_CPML,spec_to_PML,nspec_PML,&
                          K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
