@@ -232,6 +232,7 @@ AC_CONFIG_FILES([
 	Makefile
 	src/meshfem2D/Makefile
 	src/specfem2D/Makefile
+	src/auxiliaries/Makefile
 	setup/constants.h
 	setup/precision.h
 	src/meshfem2D/scotch_5.1.12b/src/Makefile.inc

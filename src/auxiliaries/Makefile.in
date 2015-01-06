@@ -55,14 +55,10 @@ CPPFLAGS = @CPPFLAGS@ $(COND_MPI_CPPFLAGS)
 CFLAGS = @CFLAGS@ $(CPPFLAGS) -I../../setup
 
 ## serial or parallel
-@COND_MPI_TRUE@F90 = $(MPIFC) $(FCFLAGS) @FC_DEFINE@USE_MPI @FC_DEFINE@USE_SCOTCH -I"@SCOTCH_INCLUDEDIR@" $(MPILIBS)
+@COND_MPI_TRUE@F90 = $(MPIFC) $(FCFLAGS) @FC_DEFINE@USE_MPI $(MPILIBS)
 @COND_MPI_FALSE@F90 = $(FC) $(FCFLAGS)
 
 LIB = 
-
-## scotch libraries
-@COND_MPI_TRUE@LIB += -L"@SCOTCH_LIBDIR@" -lscotch -lscotcherr
-@COND_MPI_FALSE@LIB +=
 
 LINK = $(F90)
 
@@ -79,52 +75,33 @@ S = .
 SETUP = ../../setup
 
 
-.PHONY: help clean default all mesh meshfem2D xmeshfem2D
+.PHONY: help clean default all \
+	check_quality_external_mesh xcheck_quality_external_mesh \
+	xadj_seismogram convolve_source_timefunction xconvolve_source_timefunction
 
 ####
 #### targets
 ####
 
 DEFAULT = \
-	xmeshfem2D \
+	xadj_seismogram \
+	xcheck_quality_external_mesh \
+	xconvolve_source_timefunction \
 	$(EMPTY_MACRO)
-
-OBJS_MESHFEM2D = \
-	$O/get_node_number.o \
-	$O/param_reader.o \
-	$O/part_unstruct.o \
-	$O/read_interfaces_file.o \
-	$O/read_materials.o \
-	$O/read_parameter_file.o \
-	$O/read_regions.o \
-	$O/read_source_file.o \
-	$O/read_value_parameters.o \
-	$O/save_databases.o \
-	$O/save_gnuplot_file.o \
-	$O/save_stations_file.o \
-	$O/spline_routines.o \
-	$O/meshfem2D.o
 
 default: $(DEFAULT)
 
 all: default
 
-mesh : meshfem2D
-meshfem2D: xmeshfem2D
-
-@SCOTCH_INCLUDEDIR@/scotchf.h: scotch_library
-scotch_library:
-ifeq (@USE_BUNDLED_SCOTCH@,1)
-	echo "Using bundled Scotch"
-	$(MAKE) -C "@SCOTCH_DIR@/src"
-else
-	echo "Not using bundled Scotch"
-endif
+check_quality_external_mesh: xcheck_quality_external_mesh
+convolve_source_timefunction: xconvolve_source_timefunction
 
 
 clean:
-	-rm -rf $O/*.o $E/xmeshfem2D \
+	-rm -rf $O/*.o \
 	$O/*.il *.mod \
+	$E/xcheck_quality_external_mesh \
+	$E/xconvolve_source_timefunction \
 	*.oo *.ipo
 
 
@@ -132,64 +109,53 @@ help:
 	@echo "usage: make [executable]"
 	@echo ""
 	@echo "supported executables:"
-	@echo "    xmeshfem2D"
+	@echo "    xcheck_quality_external_mesh"
+	@echo "    xconvolve_source_timefunction"
+	@echo "    xadj_seismogram"
 	@echo ""
 
 ##
-## mesher
+## check_quality_external_mesh
 ##
-xmeshfem2D: $E/xmeshfem2D
-$E/xmeshfem2D: $(OBJS_MESHFEM2D)
-	$(LINK) $(DEF_FFLAGS) -o ${E}/xmeshfem2D $(OBJS_MESHFEM2D) $(LIB)
+xcheck_quality_external_mesh: $E/xcheck_quality_external_mesh
+$E/xcheck_quality_external_mesh: $O/check_quality_external_mesh.o $O/read_value_parameters.o $O/param_reader.o $O/define_shape_functions.o
+	${F90} $(DEF_FFLAGS) -o ${E}/xcheck_quality_external_mesh $O/check_quality_external_mesh.o $O/read_value_parameters.o $O/param_reader.o $O/define_shape_functions.o
+
+##
+## convolve_source_timefunction
+##
+xconvolve_source_timefunction: $E/xconvolve_source_timefunction
+$E/xconvolve_source_timefunction: $O/convolve_source_timefunction.o
+	${F90} $(DEF_FFLAGS) -o ${E}/xconvolve_source_timefunction $O/convolve_source_timefunction.o
+
+##
+## adj_seismogram
+##
+xadj_seismogram: $E/xadj_seismogram
+$E/xadj_seismogram: $O/adj_seismogram.o
+	${F90} $(DEF_FFLAGS) -o ${E}/xadj_seismogram $O/adj_seismogram.o
+
 
 ##
 ## object files
 ##
 
-##
-## meshfem2D
-##
+$O/adj_seismogram.o: $S/adj_seismogram.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/adj_seismogram.o $S/adj_seismogram.f90
 
-$O/get_node_number.o: ${S}/get_node_number.f90
-	${F90} $(DEF_FFLAGS) -c -o $O/get_node_number.o ${S}/get_node_number.f90
+$O/check_quality_external_mesh.o: $S/check_quality_external_mesh.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/check_quality_external_mesh.o $S/check_quality_external_mesh.f90
 
-$O/meshfem2D.o: ${S}/meshfem2D.F90 $O/part_unstruct.o $O/read_interfaces_file.o $O/read_parameter_file.o $O/read_source_file.o ${SETUP}/constants.h
-	${F90} $(DEF_FFLAGS) -c -o $O/meshfem2D.o ${S}/meshfem2D.F90
-
-@COND_MPI_TRUE@$O/part_unstruct.o: ${S}/part_unstruct.F90 ${SETUP}/constants.h @SCOTCH_INCLUDEDIR@/scotchf.h
-@COND_MPI_FALSE@$O/part_unstruct.o: ${S}/part_unstruct.F90 ${SETUP}/constants.h
-	${F90} $(DEF_FFLAGS) -c -o $O/part_unstruct.o ${S}/part_unstruct.F90
-
-$O/read_interfaces_file.o: ${S}/read_interfaces_file.f90 ${SETUP}/constants.h
-	${F90} $(DEF_FFLAGS) -c -o $O/read_interfaces_file.o ${S}/read_interfaces_file.f90
-
-$O/read_materials.o: ${S}/read_materials.f90 ${SETUP}/constants.h
-	${F90} $(DEF_FFLAGS) -c -o $O/read_materials.o ${S}/read_materials.f90
-
-$O/read_parameter_file.o: ${S}/read_parameter_file.F90 ${SETUP}/constants.h
-	${F90} $(DEF_FFLAGS) -c -o $O/read_parameter_file.o ${S}/read_parameter_file.F90
-
-$O/read_regions.o: ${S}/read_regions.f90 ${SETUP}/constants.h
-	${F90} $(DEF_FFLAGS) -c -o $O/read_regions.o ${S}/read_regions.f90
-
-$O/read_source_file.o: ${S}/read_source_file.f90 ${SETUP}/constants.h
-	${F90} $(DEF_FFLAGS) -c -o $O/read_source_file.o ${S}/read_source_file.f90
-
-$O/save_databases.o: ${S}/save_databases.f90 $O/part_unstruct.o $O/read_parameter_file.o $O/read_source_file.o ${SETUP}/constants.h
-	${F90} $(DEF_FFLAGS) -c -o $O/save_databases.o ${S}/save_databases.f90
-
-$O/save_gnuplot_file.o: ${S}/save_gnuplot_file.f90
-	${F90} $(DEF_FFLAGS) -c -o $O/save_gnuplot_file.o ${S}/save_gnuplot_file.f90
-
-$O/save_stations_file.o: ${S}/save_stations_file.f90
-	${F90} $(DEF_FFLAGS) -c -o $O/save_stations_file.o ${S}/save_stations_file.f90
-
-$O/spline_routines.o: ${S}/spline_routines.f90 ${SETUP}/constants.h
-	${F90} $(DEF_FFLAGS) -c -o $O/spline_routines.o ${S}/spline_routines.f90
+$O/convolve_source_timefunction.o: $S/convolve_source_timefunction.f90
+	${F90} $(DEF_FFLAGS) -c -o $O/convolve_source_timefunction.o $S/convolve_source_timefunction.f90
 
 ##
 ## shared
 ##
+
+$O/define_shape_functions.o: ${SHARED}/define_shape_functions.f90 ${SETUP}/constants.h
+	${F90} $(DEF_FFLAGS) -c -o $O/define_shape_functions.o ${SHARED}/define_shape_functions.f90
+
 $O/read_value_parameters.o: ${SHARED}/read_value_parameters.f90
 	${F90} $(DEF_FFLAGS) -c -o $O/read_value_parameters.o ${SHARED}/read_value_parameters.f90
 

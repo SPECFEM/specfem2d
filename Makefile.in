@@ -71,29 +71,29 @@ xmeshfem2D:
 	$(MAKE) -C src/meshfem2D
 
 ##
-## check_quality_external_mesh
-##
-xcheck_quality_external_mesh:
-	$(MAKE) -C src/meshfem2D xcheck_quality_external_mesh
-
-##
 ## solver
 ##
 xspecfem2D:
 	$(MAKE) -C src/specfem2D specfem2D
 
 ##
+## check_quality_external_mesh
+##
+xcheck_quality_external_mesh:
+	$(MAKE) -C src/auxiliaries xcheck_quality_external_mesh
+
+##
 ## convolve_source_timefunction
 ##
 xconvolve_source_timefunction:
-	$(MAKE) -C src/specfem2D xconvolve_source_timefunction
+	$(MAKE) -C src/auxiliaries xconvolve_source_timefunction
 
 
 ##
 ## adj_seismogram
 ##
 xadj_seismogram:
-	$(MAKE) -C src/specfem2D xadj_seismogram
+	$(MAKE) -C src/auxiliaries xadj_seismogram
 
 
 clean:

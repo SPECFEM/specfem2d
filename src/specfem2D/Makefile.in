@@ -1,4 +1,3 @@
-
 #========================================================================
 #
 #                   S P E C F E M 2 D  Version 7 . 0
@@ -82,7 +81,7 @@ SETUP = ../../setup
 
 LIBJPEG = ./libjpeg
 
-.PHONY: help clean default all xadj_seismogram convolve_source_timefunction xconvolve_source_timefunction spec specfem2D xspecfem2D
+.PHONY: help clean default all spec specfem2D xspecfem2D
 
 ####
 #### targets
@@ -90,7 +89,6 @@ LIBJPEG = ./libjpeg
 
 DEFAULT = \
 	xspecfem2D \
-	xconvolve_source_timefunction \
 	$(EMPTY_MACRO)
 
 
@@ -184,13 +182,11 @@ all: default
 
 spec : specfem2D
 specfem2D: xspecfem2D
-convolve_source_timefunction: xconvolve_source_timefunction
 
 
 clean:
 	-rm -rf $O/*.o $E/xspecfem2D \
 	$O/*.o $O/*.il *.mod \
-	$E/xconvolve_source_timefunction \
 	*.oo *.ipo
 
 
@@ -199,8 +195,6 @@ help:
 	@echo ""
 	@echo "supported executables:"
 	@echo "    xspecfem2D"
-	@echo "    xconvolve_source_timefunction"
-	@echo "    xadj_seismogram"
 	@echo ""
 
 
@@ -210,37 +204,6 @@ help:
 xspecfem2D: $E/xspecfem2D
 $E/xspecfem2D: $(OBJS_SPECFEM2D)
 	$(LINK) $(DEF_FFLAGS) -o ${E}/xspecfem2D $(OBJS_SPECFEM2D)
-
-##
-## convolve_source_timefunction
-##
-xconvolve_source_timefunction: $E/xconvolve_source_timefunction
-$E/xconvolve_source_timefunction: $O/convolve_source_timefunction.o
-	${F90} $(DEF_FFLAGS) -o ${E}/xconvolve_source_timefunction $O/convolve_source_timefunction.o
-
-##
-## adj_seismogram
-##
-xadj_seismogram: $E/xadj_seismogram
-$E/xadj_seismogram: $O/adj_seismogram.o
-	${F90} $(DEF_FFLAGS) -o ${E}/xadj_seismogram $O/adj_seismogram.o
-
-
-##
-## object files
-##
-
-##
-## convolve_source_timefunction
-##
-$O/convolve_source_timefunction.o: ${SHARED}/convolve_source_timefunction.f90
-	${F90} $(DEF_FFLAGS) -c -o $O/convolve_source_timefunction.o ${SHARED}/convolve_source_timefunction.f90
-
-##
-## adj_seismogram
-##
-$O/adj_seismogram.o: ${SHARED}/adj_seismogram.f90
-	${F90} $(DEF_FFLAGS) -c -o $O/adj_seismogram.o ${SHARED}/adj_seismogram.f90
 
 
 ###
@@ -302,6 +265,11 @@ $O/attenuation_model.o: $O/specfem2D_par.o
 $O/construct_acoustic_surfaces.o: $O/specfem2D_par.o
 $O/get_global.o: $O/specfem2D_par.o
 $O/recompute_jacobian.o: $O/specfem2D_par.o
+
+
+##
+## object files
+##
 
 ##
 ## specfem2D
@@ -368,9 +336,6 @@ $O/define_derivation_matrices.o: ${S}/define_derivation_matrices.f90 ${SETUP}/co
 
 $O/define_external_model.o: ${S}/define_external_model.f90 ${SETUP}/constants.h
 	${F90} $(DEF_FFLAGS) -c -o $O/define_external_model.o ${S}/define_external_model.f90
-
-$O/define_shape_functions.o: ${S}/define_shape_functions.f90 ${SETUP}/constants.h
-	${F90} $(DEF_FFLAGS) -c -o $O/define_shape_functions.o ${S}/define_shape_functions.f90
 
 $O/exit_mpi.o: ${S}/exit_mpi.F90 ${SETUP}/constants.h
 	${F90} $(DEF_FFLAGS) -c -o $O/exit_mpi.o ${S}/exit_mpi.F90
@@ -538,6 +503,9 @@ $O/specfem2D.o: ${S}/specfem2D.F90 ${SETUP}/constants.h
 ##
 ## shared
 ##
+
+$O/define_shape_functions.o: ${SHARED}/define_shape_functions.f90 ${SETUP}/constants.h
+	${F90} $(DEF_FFLAGS) -c -o $O/define_shape_functions.o ${SHARED}/define_shape_functions.f90
 
 $O/jaricom.o: ${LIBJPEG}/jaricom.c
 	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $O/jaricom.o ${LIBJPEG}/jaricom.c

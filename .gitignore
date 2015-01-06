@@ -7,6 +7,7 @@ config.status
 ./Makefile
 src/meshfem2D/Makefile
 src/specfem2D/Makefile
+src/auxiliaries/Makefile
 
 setup/config.h
 setup/constants.h
