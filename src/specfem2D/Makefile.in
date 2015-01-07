@@ -341,8 +341,8 @@ $O/exit_mpi.o: ${S}/exit_mpi.F90 ${SETUP}/constants.h
 	${F90} $(DEF_FFLAGS) -c -o $O/exit_mpi.o ${S}/exit_mpi.F90
 
 ### C compilation
-$O/force_ftz.o: ${SHARED}/force_ftz.c ${SETUP}/config.h
-	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $O/force_ftz.o ${SHARED}/force_ftz.c
+$O/force_ftz.o: ${S}/force_ftz.c ${SETUP}/config.h
+	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $O/force_ftz.o ${S}/force_ftz.c
 
 $O/get_global.o: ${S}/get_global.f90 ${SETUP}/constants.h
 	${F90} $(DEF_FFLAGS) -c -o $O/get_global.o ${S}/get_global.f90
