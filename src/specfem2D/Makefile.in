@@ -100,7 +100,7 @@ OBJS_SPECFEM2D = \
 	$O/attenuation_compute_param.o \
 	$O/axisymmetric_routines.o \
 	$O/calendar.o \
-	$O/checkgrid.o \
+	$O/check_grid.o \
 	$O/check_stability.o \
 	$O/compute_arrays_source.o \
 	$O/compute_Bielak_conditions.o \
@@ -145,13 +145,13 @@ OBJS_SPECFEM2D = \
   $O/noise_tomography.o \
 	$O/paco_beyond_critical.o \
 	$O/paco_convolve_fft.o \
-	$O/plotgll.o \
-	$O/plotpost.o \
+	$O/plot_gll.o \
+	$O/plot_post.o \
 	$O/pml_init.o \
 	$O/prepare_absorb.o \
 	$O/prepare_assemble_MPI.o \
 	$O/prepare_color_image.o \
-	$O/prepare_initialfield.o \
+	$O/prepare_initial_field.o \
 	$O/prepare_source_time_function.o \
 	$O/read_databases.o \
 	$O/read_external_model.o \
@@ -228,14 +228,14 @@ $O/define_derivation_matrices.o: $O/specfem2D_par.o
 $O/createnum_fast.o: $O/specfem2D_par.o
 $O/createnum_slow.o: $O/specfem2D_par.o
 $O/read_external_model.o: $O/specfem2D_par.o
-$O/plotgll.o: $O/specfem2D_par.o
+$O/plot_gll.o: $O/specfem2D_par.o
 $O/setup_sources_receivers.o: $O/specfem2D_par.o
 $O/compute_arrays_source.o: $O/specfem2D_par.o
 $O/pml_init.o: $O/specfem2D_par.o
 $O/axisymmetric_routines.o: $O/specfem2D_par.o
 $O/invert_mass_matrix.o: $O/specfem2D_par.o
 $O/assemble_mpi.o: $O/specfem2D_par.o
-$O/checkgrid.o: $O/specfem2D_par.o
+$O/check_grid.o: $O/specfem2D_par.o
 $O/prepare_absorb.o: $O/specfem2D_par.o
 $O/prepare_initial_field.o: $O/specfem2D_par.o
 $O/paco_beyond_critical.o: $O/specfem2D_par.o
@@ -259,7 +259,7 @@ $O/create_color_image.o: $O/specfem2D_par.o
 $O/write_output_SU.o: $O/specfem2D_par.o
 $O/save_adjoint_kernels.o: $O/specfem2D_par.o
 $O/write_seismograms.o: $O/specfem2D_par.o
-$O/plotpost.o: $O/specfem2D_par.o
+$O/plot_post.o: $O/specfem2D_par.o
 $O/prepare_color_image.o: $O/specfem2D_par.o
 $O/attenuation_model.o: $O/specfem2D_par.o
 $O/construct_acoustic_surfaces.o: $O/specfem2D_par.o
@@ -295,8 +295,8 @@ $O/axisymmetric_routines.o: ${S}/axisymmetric_routines.f90 ${SETUP}/constants.h
 $O/calendar.o: ${S}/calendar.f90
 	${F90} $(DEF_FFLAGS) -c -o $O/calendar.o ${S}/calendar.f90
 
-$O/checkgrid.o: ${S}/checkgrid.F90 ${SETUP}/constants.h
-	${F90} $(DEF_FFLAGS) -c -o $O/checkgrid.o ${S}/checkgrid.F90
+$O/check_grid.o: ${S}/check_grid.F90 ${SETUP}/constants.h
+	${F90} $(DEF_FFLAGS) -c -o $O/check_grid.o ${S}/check_grid.F90
 
 $O/compute_arrays_source.o: ${S}/compute_arrays_source.f90 ${SETUP}/constants.h
 	${F90} $(DEF_FFLAGS) -c -o $O/compute_arrays_source.o ${S}/compute_arrays_source.f90
@@ -392,11 +392,11 @@ $O/paco_beyond_critical.o: ${S}/paco_beyond_critical.f90 ${SETUP}/constants.h
 $O/paco_convolve_fft.o: ${S}/paco_convolve_fft.f90 ${SETUP}/constants.h
 	${F90} $(DEF_FFLAGS) -c -o $O/paco_convolve_fft.o ${S}/paco_convolve_fft.f90
 
-$O/plotgll.o: ${S}/plotgll.f90 ${SETUP}/constants.h
-	${F90} $(DEF_FFLAGS) -c -o $O/plotgll.o ${S}/plotgll.f90
+$O/plot_gll.o: ${S}/plot_gll.f90 ${SETUP}/constants.h
+	${F90} $(DEF_FFLAGS) -c -o $O/plot_gll.o ${S}/plot_gll.f90
 
-$O/plotpost.o: ${S}/plotpost.F90 ${SETUP}/constants.h
-	${F90} $(DEF_FFLAGS) -c -o $O/plotpost.o ${S}/plotpost.F90
+$O/plot_post.o: ${S}/plot_post.F90 ${SETUP}/constants.h
+	${F90} $(DEF_FFLAGS) -c -o $O/plot_post.o ${S}/plot_post.F90
 
 $O/pml_init.o: ${S}/pml_init.F90 ${SETUP}/constants.h
 	${F90} $(DEF_FFLAGS) -c -o $O/pml_init.o ${S}/pml_init.F90
@@ -410,8 +410,8 @@ $O/prepare_assemble_MPI.o: ${S}/prepare_assemble_MPI.F90 ${SETUP}/constants.h
 $O/prepare_color_image.o: ${S}/prepare_color_image.F90 ${SETUP}/constants.h
 	${F90} $(DEF_FFLAGS) -c -o $O/prepare_color_image.o ${S}/prepare_color_image.F90
 
-$O/prepare_initialfield.o: ${S}/prepare_initialfield.F90 ${SETUP}/constants.h
-	${F90} $(DEF_FFLAGS) -c -o $O/prepare_initialfield.o ${S}/prepare_initialfield.F90
+$O/prepare_initial_field.o: ${S}/prepare_initial_field.F90 ${SETUP}/constants.h
+	${F90} $(DEF_FFLAGS) -c -o $O/prepare_initial_field.o ${S}/prepare_initial_field.F90
 
 $O/prepare_source_time_function.o: ${S}/prepare_source_time_function.f90 ${SETUP}/constants.h
 	${F90} $(DEF_FFLAGS) -c -o $O/prepare_source_time_function.o ${S}/prepare_source_time_function.f90
