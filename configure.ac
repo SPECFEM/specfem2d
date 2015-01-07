@@ -57,7 +57,7 @@ FFLAGS="$FCFLAGS"
 AC_PROVIDE([AC_PROG_F77])
 AC_SUBST([FCENV])
 
-flags_guess="$SHELL flags.guess"
+flags_guess="$SHELL $srcdir/flags.guess"
 AC_MSG_NOTICE([running $flags_guess])
 flags=`$flags_guess` ||
     AC_MSG_ERROR([$flags_guess failed])
@@ -243,6 +243,10 @@ if test "$USE_BUNDLED_SCOTCH" = 1; then
 	  ${SCOTCH_DIR}/src/Makefile.inc
   ])
 fi
+
+AC_CONFIG_COMMANDS([bin], [AS_MKDIR_P(bin)])
+AC_CONFIG_COMMANDS([obj], [AS_MKDIR_P(obj)])
+AC_CONFIG_COMMANDS([OUTPUT_FILES], [AS_MKDIR_P(OUTPUT_FILES)])
 
 AC_OUTPUT
 

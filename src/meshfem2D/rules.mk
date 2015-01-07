@@ -84,10 +84,10 @@ meshfem2D_SHARED_OBJECTS = \
 $(SCOTCH_INCLUDEDIR)/scotchf.h: scotch_library
 scotch_library:
 ifeq ($(USE_BUNDLED_SCOTCH),1)
-	echo "Using bundled Scotch"
+	@echo "Using bundled Scotch"
 	$(MAKE) -C "$(SCOTCH_DIR)/src"
 else
-	echo "Not using bundled Scotch"
+	@echo "Not using bundled Scotch"
 endif
 
 
