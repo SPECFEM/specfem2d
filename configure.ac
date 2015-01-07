@@ -85,36 +85,32 @@ export SCOTCH_INCLUDEDIR
 export USE_BUNDLED_SCOTCH
 
 AC_ARG_WITH([scotch-dir],
-AC_HELP_STRING([--with-scotch-dir],[define the root path to Scotch (e.g. /opt/scotch/)]),
+AS_HELP_STRING([--with-scotch-dir=DIR],[define the root path to Scotch (e.g. /opt/scotch/)]),
 [
  ac_scotch_dir="$withval";
 ])
 
 AC_ARG_WITH([scotch-includedir],
-AC_HELP_STRING([--with-scotch-includedir],[define the path to the Scotch headers (e.g. /opt/scotch/include)]),
+AS_HELP_STRING([--with-scotch-includedir=DIR],[define the path to the Scotch headers (e.g. /opt/scotch/include)]),
 [
  ac_scotch_include_dir="$withval";
 ])
 
 AC_ARG_WITH([scotch-libdir],
-AC_HELP_STRING([--with-scotch-libdir],[define the path to the Scotch libraries (e.g. /opt/scotch/lib)]),
+AS_HELP_STRING([--with-scotch-libdir=DIR],[define the path to the Scotch libraries (e.g. /opt/scotch/lib)]),
 [
  ac_scotch_lib_dir="$withval";
 ])
 
 if test "${USE_BUNDLED_SCOTCH}" != "1"; then
 
-#daniel: scotch will be needed in directory src/meshfem2D/
-  builddir=`pwd`
-  cd src/meshfem2D/
-
-  if test -z "${ac_scotch_lib_dir}"; then
-    if test -n "${ac_scotch_dir}"; then
-        ac_scotch_lib_dir="${ac_scotch_dir}/lib";
-    else
+   if test -z "${ac_scotch_lib_dir}"; then
+      if test -n "${ac_scotch_dir}"; then
+         ac_scotch_lib_dir="${ac_scotch_dir}/lib";
+      else
         ac_scotch_lib_dir="/usr/lib";
-    fi
-  fi
+      fi
+   fi
 
   if test -z "${ac_scotch_include_dir}"; then
     if test -n "${ac_scotch_dir}"; then
@@ -145,9 +141,6 @@ dnl AC_CHECK_HEADER(scotchf.h,[scotch_include="yes";],[scotch_include="no";CPPFL
 
   scotch_usable="${scotch_lib}"
 
-  # back to root directory
-  cd $builddir
-
 fi
 
 AC_MSG_CHECKING([whether Scotch is usable])
@@ -169,15 +162,16 @@ else
  if test -z "$YACC" || test "X$YACC" = "Xno"; then
    AC_MSG_ERROR([No suitable yacc or bison found])
  fi
+ ACX_PTHREAD(AC_MSG_RESULT([pthread found]), AC_MSG_ERROR([pthread not found]))
 
  # scotch only needed with mpi support
  if test "$want_mpi" = yes; then
 
  #daniel: scotch bundle
- # uses bundled scotch: current version 5.1.12b
+ # uses bundled scotch: current version pointed to by symbolic link scotch/
  USE_BUNDLED_SCOTCH=1
 
- SCOTCH_DIR="scotch_5.1.12b"
+ SCOTCH_DIR="scotch"
  SCOTCH_LIBDIR="${SCOTCH_DIR}/lib"
  SCOTCH_INCLUDEDIR="${SCOTCH_DIR}/include"
 
@@ -187,7 +181,6 @@ else
  USE_BUNDLED_SCOTCH=0
 
  fi # want_mpi
-
 
 fi
 LDFLAGS=${ac_save_ldflags}
@@ -235,8 +228,14 @@ AC_CONFIG_FILES([
 	src/auxiliaries/Makefile
 	setup/constants.h
 	setup/precision.h
-	src/meshfem2D/scotch_5.1.12b/src/Makefile.inc
 ])
+
+if test "$USE_BUNDLED_SCOTCH" = 1; then
+  AC_CONFIG_FILES([
+	  ${SCOTCH_DIR}/src/Makefile.inc
+  ])
+fi
+
 AC_OUTPUT
 
 

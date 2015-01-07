@@ -632,6 +632,10 @@ SCOTCH_LIBDIR
 SCOTCH_INCLUDEDIR
 SCOTCH_DIR
 USE_BUNDLED_SCOTCH
+PTHREAD_CFLAGS
+PTHREAD_LIBS
+PTHREAD_CC
+acx_pthread_config
 YFLAGS
 YACC
 LEXLIB
@@ -1356,11 +1360,12 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-mpi              build parallel version [default=yes]
-  --with-scotch-dir       define the root path to Scotch (e.g. /opt/scotch/)
-  --with-scotch-includedir
+  --with-scotch-dir=DIR   define the root path to Scotch (e.g. /opt/scotch/)
+  --with-scotch-includedir=DIR
                           define the path to the Scotch headers (e.g.
                           /opt/scotch/include)
-  --with-scotch-libdir    define the path to the Scotch libraries (e.g.
+  --with-scotch-libdir=DIR
+                          define the path to the Scotch libraries (e.g.
                           /opt/scotch/lib)
 
 Some influential environment variables:
@@ -5350,17 +5355,13 @@ fi
 
 if test "${USE_BUNDLED_SCOTCH}" != "1"; then
 
-#daniel: scotch will be needed in directory src/meshfem2D/
-  builddir=`pwd`
-  cd src/meshfem2D/
-
-  if test -z "${ac_scotch_lib_dir}"; then
-    if test -n "${ac_scotch_dir}"; then
-        ac_scotch_lib_dir="${ac_scotch_dir}/lib";
-    else
+   if test -z "${ac_scotch_lib_dir}"; then
+      if test -n "${ac_scotch_dir}"; then
+         ac_scotch_lib_dir="${ac_scotch_dir}/lib";
+      else
         ac_scotch_lib_dir="/usr/lib";
-    fi
-  fi
+      fi
+   fi
 
   if test -z "${ac_scotch_include_dir}"; then
     if test -n "${ac_scotch_dir}"; then
@@ -5414,9 +5415,6 @@ fi
 
 
   scotch_usable="${scotch_lib}"
-
-  # back to root directory
-  cd $builddir
 
 fi
 
@@ -5645,14 +5643,382 @@ test -n "$YACC" || YACC="yacc"
    as_fn_error $? "No suitable yacc or bison found" "$LINENO" 5
  fi
 
+
+
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+acx_pthread_ok=no
+
+# We used to check for pthread.h first, but this fails if pthread.h
+# requires special compiler flags (e.g. on True64 or Sequent).
+# It gets checked for in the link test anyway.
+
+# First of all, check if the user has set any of the PTHREAD_LIBS,
+# etcetera environment variables, and if threads linking works using
+# them:
+if test x"$PTHREAD_LIBS$PTHREAD_CFLAGS" != x; then
+        save_CFLAGS="$CFLAGS"
+        CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+        save_LIBS="$LIBS"
+        LIBS="$PTHREAD_LIBS $LIBS"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pthread_join in LIBS=$PTHREAD_LIBS with CFLAGS=$PTHREAD_CFLAGS" >&5
+$as_echo_n "checking for pthread_join in LIBS=$PTHREAD_LIBS with CFLAGS=$PTHREAD_CFLAGS... " >&6; }
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char pthread_join ();
+#ifdef FC_DUMMY_MAIN
+#ifndef FC_DUMMY_MAIN_EQ_F77
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int FC_DUMMY_MAIN() { return 1; }
+#endif
+#endif
+int
+main ()
+{
+return pthread_join ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  acx_pthread_ok=yes
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $acx_pthread_ok" >&5
+$as_echo "$acx_pthread_ok" >&6; }
+        if test x"$acx_pthread_ok" = xno; then
+                PTHREAD_LIBS=""
+                PTHREAD_CFLAGS=""
+        fi
+        LIBS="$save_LIBS"
+        CFLAGS="$save_CFLAGS"
+fi
+
+# We must check for the threads library under a number of different
+# names; the ordering is very important because some systems
+# (e.g. DEC) have both -lpthread and -lpthreads, where one of the
+# libraries is broken (non-POSIX).
+
+# Create a list of thread flags to try.  Items starting with a "-" are
+# C compiler flags, and other items are library names, except for "none"
+# which indicates that we try without any flags at all, and "pthread-config"
+# which is a program returning the flags for the Pth emulation library.
+
+acx_pthread_flags="pthreads none -Kthread -kthread lthread -pthread -pthreads -mthreads pthread --thread-safe -mt pthread-config"
+
+# The ordering *is* (sometimes) important.  Some notes on the
+# individual items follow:
+
+# pthreads: AIX (must check this before -lpthread)
+# none: in case threads are in libc; should be tried before -Kthread and
+#       other compiler flags to prevent continual compiler warnings
+# -Kthread: Sequent (threads in libc, but -Kthread needed for pthread.h)
+# -kthread: FreeBSD kernel threads (preferred to -pthread since SMP-able)
+# lthread: LinuxThreads port on FreeBSD (also preferred to -pthread)
+# -pthread: Linux/gcc (kernel threads), BSD/gcc (userland threads)
+# -pthreads: Solaris/gcc
+# -mthreads: Mingw32/gcc, Lynx/gcc
+# -mt: Sun Workshop C (may only link SunOS threads [-lthread], but it
+#      doesn't hurt to check since this sometimes defines pthreads too;
+#      also defines -D_REENTRANT)
+#      ... -mt is also the pthreads flag for HP/aCC
+# pthread: Linux, etcetera
+# --thread-safe: KAI C++
+# pthread-config: use pthread-config program (for GNU Pth library)
+
+case "${host_cpu}-${host_os}" in
+        *solaris*)
+
+        # On Solaris (at least, for some versions), libc contains stubbed
+        # (non-functional) versions of the pthreads routines, so link-based
+        # tests will erroneously succeed.  (We need to link with -pthreads/-mt/
+        # -lpthread.)  (The stubs are missing pthread_cleanup_push, or rather
+        # a function called by this macro, so we could check for that, but
+        # who knows whether they'll stub that too in a future libc.)  So,
+        # we'll just look for -pthreads and -lpthread first:
+
+        acx_pthread_flags="-pthreads pthread -mt -pthread $acx_pthread_flags"
+        ;;
+esac
+
+if test x"$acx_pthread_ok" = xno; then
+for flag in $acx_pthread_flags; do
+
+        case $flag in
+                none)
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether pthreads work without any flags" >&5
+$as_echo_n "checking whether pthreads work without any flags... " >&6; }
+                ;;
+
+                -*)
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether pthreads work with $flag" >&5
+$as_echo_n "checking whether pthreads work with $flag... " >&6; }
+                PTHREAD_CFLAGS="$flag"
+                ;;
+
+		pthread-config)
+		# Extract the first word of "pthread-config", so it can be a program name with args.
+set dummy pthread-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_acx_pthread_config+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$acx_pthread_config"; then
+  ac_cv_prog_acx_pthread_config="$acx_pthread_config" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_acx_pthread_config="yes"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_acx_pthread_config" && ac_cv_prog_acx_pthread_config="no"
+fi
+fi
+acx_pthread_config=$ac_cv_prog_acx_pthread_config
+if test -n "$acx_pthread_config"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $acx_pthread_config" >&5
+$as_echo "$acx_pthread_config" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+		if test x"$acx_pthread_config" = xno; then continue; fi
+		PTHREAD_CFLAGS="`pthread-config --cflags`"
+		PTHREAD_LIBS="`pthread-config --ldflags` `pthread-config --libs`"
+		;;
+
+                *)
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for the pthreads library -l$flag" >&5
+$as_echo_n "checking for the pthreads library -l$flag... " >&6; }
+                PTHREAD_LIBS="-l$flag"
+                ;;
+        esac
+
+        save_LIBS="$LIBS"
+        save_CFLAGS="$CFLAGS"
+        LIBS="$PTHREAD_LIBS $LIBS"
+        CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+
+        # Check for various functions.  We must include pthread.h,
+        # since some functions may be macros.  (On the Sequent, we
+        # need a special flag -Kthread to make this header compile.)
+        # We check for pthread_join because it is in -lpthread on IRIX
+        # while pthread_create is in libc.  We check for pthread_attr_init
+        # due to DEC craziness with -lpthreads.  We check for
+        # pthread_cleanup_push because it is one of the few pthread
+        # functions on Solaris that doesn't have a non-functional libc stub.
+        # We try pthread_create on general principles.
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <pthread.h>
+#ifdef FC_DUMMY_MAIN
+#ifndef FC_DUMMY_MAIN_EQ_F77
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int FC_DUMMY_MAIN() { return 1; }
+#endif
+#endif
+int
+main ()
+{
+pthread_t th; pthread_join(th, 0);
+                     pthread_attr_init(0); pthread_cleanup_push(0, 0);
+                     pthread_create(0,0,0,0); pthread_cleanup_pop(0);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  acx_pthread_ok=yes
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+        LIBS="$save_LIBS"
+        CFLAGS="$save_CFLAGS"
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $acx_pthread_ok" >&5
+$as_echo "$acx_pthread_ok" >&6; }
+        if test "x$acx_pthread_ok" = xyes; then
+                break;
+        fi
+
+        PTHREAD_LIBS=""
+        PTHREAD_CFLAGS=""
+done
+fi
+
+# Various other checks:
+if test "x$acx_pthread_ok" = xyes; then
+        save_LIBS="$LIBS"
+        LIBS="$PTHREAD_LIBS $LIBS"
+        save_CFLAGS="$CFLAGS"
+        CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+
+        # Detect AIX lossage: JOINABLE attribute is called UNDETACHED.
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for joinable pthread attribute" >&5
+$as_echo_n "checking for joinable pthread attribute... " >&6; }
+	attr_name=unknown
+	for attr in PTHREAD_CREATE_JOINABLE PTHREAD_CREATE_UNDETACHED; do
+	    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <pthread.h>
+#ifdef FC_DUMMY_MAIN
+#ifndef FC_DUMMY_MAIN_EQ_F77
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int FC_DUMMY_MAIN() { return 1; }
+#endif
+#endif
+int
+main ()
+{
+int attr=$attr; return attr;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  attr_name=$attr; break
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+	done
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $attr_name" >&5
+$as_echo "$attr_name" >&6; }
+        if test "$attr_name" != PTHREAD_CREATE_JOINABLE; then
+
+cat >>confdefs.h <<_ACEOF
+#define PTHREAD_CREATE_JOINABLE $attr_name
+_ACEOF
+
+        fi
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking if more special flags are required for pthreads" >&5
+$as_echo_n "checking if more special flags are required for pthreads... " >&6; }
+        flag=no
+        case "${host_cpu}-${host_os}" in
+            *-aix* | *-freebsd* | *-darwin*) flag="-D_THREAD_SAFE";;
+            *solaris* | *-osf* | *-hpux*) flag="-D_REENTRANT";;
+        esac
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${flag}" >&5
+$as_echo "${flag}" >&6; }
+        if test "x$flag" != xno; then
+            PTHREAD_CFLAGS="$flag $PTHREAD_CFLAGS"
+        fi
+
+        LIBS="$save_LIBS"
+        CFLAGS="$save_CFLAGS"
+
+        # More AIX lossage: must compile with xlc_r or cc_r
+	if test x"$GCC" != xyes; then
+          for ac_prog in xlc_r cc_r
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_PTHREAD_CC+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$PTHREAD_CC"; then
+  ac_cv_prog_PTHREAD_CC="$PTHREAD_CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_PTHREAD_CC="$ac_prog"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+PTHREAD_CC=$ac_cv_prog_PTHREAD_CC
+if test -n "$PTHREAD_CC"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PTHREAD_CC" >&5
+$as_echo "$PTHREAD_CC" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$PTHREAD_CC" && break
+done
+test -n "$PTHREAD_CC" || PTHREAD_CC="${CC}"
+
+        else
+          PTHREAD_CC=$CC
+	fi
+else
+        PTHREAD_CC="$CC"
+fi
+
+
+
+
+
+# Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
+if test x"$acx_pthread_ok" = xyes; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: pthread found" >&5
+$as_echo "pthread found" >&6; }
+        :
+else
+        acx_pthread_ok=no
+        as_fn_error $? "pthread not found" "$LINENO" 5
+fi
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+
  # scotch only needed with mpi support
  if test "$want_mpi" = yes; then
 
  #daniel: scotch bundle
- # uses bundled scotch: current version 5.1.12b
+ # uses bundled scotch: current version pointed to by symbolic link scotch/
  USE_BUNDLED_SCOTCH=1
 
- SCOTCH_DIR="scotch_5.1.12b"
+ SCOTCH_DIR="scotch"
  SCOTCH_LIBDIR="${SCOTCH_DIR}/lib"
  SCOTCH_INCLUDEDIR="${SCOTCH_DIR}/include"
 
@@ -5662,7 +6028,6 @@ test -n "$YACC" || YACC="yacc"
  USE_BUNDLED_SCOTCH=0
 
  fi # want_mpi
-
 
 fi
 LDFLAGS=${ac_save_ldflags}
@@ -5746,10 +6111,10 @@ else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
-#         { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-# $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-# as_fn_error $? "cannot compile a trivial MPI program using $MPIFC
-# See \`config.log' for more details" "$LINENO" 5; }
+        { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot compile a trivial MPI program using $MPIFC
+See \`config.log' for more details" "$LINENO" 5; }
 
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
@@ -5783,7 +6148,13 @@ fi
 
 # Checks for library functions.
 
-ac_config_files="$ac_config_files Makefile src/meshfem2D/Makefile src/specfem2D/Makefile src/auxiliaries/Makefile setup/constants.h setup/precision.h src/meshfem2D/scotch_5.1.12b/src/Makefile.inc"
+ac_config_files="$ac_config_files Makefile src/meshfem2D/Makefile src/specfem2D/Makefile src/auxiliaries/Makefile setup/constants.h setup/precision.h"
+
+
+if test "$USE_BUNDLED_SCOTCH" = 1; then
+  ac_config_files="$ac_config_files ${SCOTCH_DIR}/src/Makefile.inc"
+
+fi
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -6485,7 +6856,7 @@ do
     "src/auxiliaries/Makefile") CONFIG_FILES="$CONFIG_FILES src/auxiliaries/Makefile" ;;
     "setup/constants.h") CONFIG_FILES="$CONFIG_FILES setup/constants.h" ;;
     "setup/precision.h") CONFIG_FILES="$CONFIG_FILES setup/precision.h" ;;
-    "src/meshfem2D/scotch_5.1.12b/src/Makefile.inc") CONFIG_FILES="$CONFIG_FILES src/meshfem2D/scotch_5.1.12b/src/Makefile.inc" ;;
+    "${SCOTCH_DIR}/src/Makefile.inc") CONFIG_FILES="$CONFIG_FILES ${SCOTCH_DIR}/src/Makefile.inc" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
