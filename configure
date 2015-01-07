@@ -644,6 +644,11 @@ LEX
 EGREP
 GREP
 CPP
+FC_MODDIR
+FC_MODOUT
+ac_empty
+FC_MODINC
+FC_MODEXT
 FC_DEFINE
 FCFLAGS_F
 FCFLAGS_f90
@@ -4306,6 +4311,203 @@ ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Fortran 90 module extension" >&5
+$as_echo_n "checking Fortran 90 module extension... " >&6; }
+if ${ac_cv_fc_module_ext+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+mkdir conftest.dir
+cd conftest.dir
+ac_cv_fc_module_ext=unknown
+cat > conftest.$ac_ext <<_ACEOF
+
+      module conftest_module
+      contains
+      subroutine conftest_routine
+      write(*,'(a)') 'gotcha!'
+      end subroutine
+      end module
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+  ac_cv_fc_module_ext=`ls | sed -n 's,conftest_module\.,,p'`
+   if test x$ac_cv_fc_module_ext = x; then
+     ac_cv_fc_module_ext=`ls | sed -n 's,CONFTEST_MODULE\.,,p'`
+   fi
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+cd ..
+rm -rf conftest.dir
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_fc_module_ext" >&5
+$as_echo "$ac_cv_fc_module_ext" >&6; }
+FC_MODEXT=$ac_cv_fc_module_ext
+if test "$FC_MODEXT" = unknown; then
+  FC_MODEXT=
+fi
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Fortran 90 module inclusion flag" >&5
+$as_echo_n "checking Fortran 90 module inclusion flag... " >&6; }
+if ${ac_cv_fc_module_flag+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+ac_cv_fc_module_flag=unknown
+mkdir conftest.dir
+cd conftest.dir
+cat > conftest.$ac_ext <<_ACEOF
+
+      module conftest_module
+      contains
+      subroutine conftest_routine
+      write(*,'(a)') 'gotcha!'
+      end subroutine
+      end module
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+  cd ..
+   ac_fc_module_flag_FCFLAGS_save=$FCFLAGS
+   # Flag ordering is significant for gfortran and Sun.
+   for ac_flag in -M -I '-I ' '-M ' -p '-mod ' '-module ' '-Am -I'; do
+     # Add the flag twice to prevent matching an output flag.
+     FCFLAGS="$ac_fc_module_flag_FCFLAGS_save ${ac_flag}conftest.dir ${ac_flag}conftest.dir"
+     cat > conftest.$ac_ext <<_ACEOF
+
+      program main
+      use conftest_module
+      call conftest_routine
+      end program
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+  ac_cv_fc_module_flag="$ac_flag"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+     if test "$ac_cv_fc_module_flag" != unknown; then
+       break
+     fi
+   done
+   FCFLAGS=$ac_fc_module_flag_FCFLAGS_save
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+rm -rf conftest.dir
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_fc_module_flag" >&5
+$as_echo "$ac_cv_fc_module_flag" >&6; }
+if test "$ac_cv_fc_module_flag" != unknown; then
+  FC_MODINC=$ac_cv_fc_module_flag
+
+else
+  FC_MODINC=
+  as_fn_error $? "unable to find compiler flag for module search path" "$LINENO" 5
+fi
+
+# Ensure trailing whitespace is preserved in a Makefile.
+ac_empty=""
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Fortran 90 module output flag" >&5
+$as_echo_n "checking Fortran 90 module output flag... " >&6; }
+if ${ac_cv_fc_module_output_flag+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+mkdir conftest.dir conftest.dir/sub
+cd conftest.dir
+ac_cv_fc_module_output_flag=unknown
+ac_fc_module_output_flag_FCFLAGS_save=$FCFLAGS
+# Flag ordering is significant: put flags late which some compilers use
+# for the search path.
+for ac_flag in -J '-J ' -fmod= -moddir= +moddir= -qmoddir= '-mod ' \
+	      '-module ' -M '-Am -M' '-e m -J '; do
+  FCFLAGS="$ac_fc_module_output_flag_FCFLAGS_save ${ac_flag}sub"
+  cat > conftest.$ac_ext <<_ACEOF
+
+      module conftest_module
+      contains
+      subroutine conftest_routine
+      write(*,'(a)') 'gotcha!'
+      end subroutine
+      end module
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+  cd sub
+     cat > conftest.$ac_ext <<_ACEOF
+
+      program main
+      use conftest_module
+      call conftest_routine
+      end program
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+  ac_cv_fc_module_output_flag="$ac_flag"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+     cd ..
+     if test "$ac_cv_fc_module_output_flag" != unknown; then
+       break
+     fi
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+done
+FCFLAGS=$ac_fc_module_output_flag_FCFLAGS_save
+cd ..
+rm -rf conftest.dir
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_fc_module_output_flag" >&5
+$as_echo "$ac_cv_fc_module_output_flag" >&6; }
+if test "$ac_cv_fc_module_output_flag" != unknown; then
+  FC_MODOUT=$ac_cv_fc_module_output_flag
+
+    DEF_FFLAGS="$FC_MODOUT./obj $FC_MODINC./obj $FC_MODINC. $DEF_FFLAGS"
+    FC_MODDIR=./obj
+
+else
+  FC_MODOUT=
+
+    FC_MODDIR=.
+
+fi
+
+# Ensure trailing whitespace is preserved in a Makefile.
+ac_empty=""
+
+
+
+
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -6018,7 +6220,7 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
  # uses bundled scotch: current version pointed to by symbolic link scotch/
  USE_BUNDLED_SCOTCH=1
 
- SCOTCH_DIR="scotch"
+ SCOTCH_DIR="$srcdir/src/meshfem2D/scotch"
  SCOTCH_LIBDIR="${SCOTCH_DIR}/lib"
  SCOTCH_INCLUDEDIR="${SCOTCH_DIR}/include"
 
@@ -6148,7 +6350,7 @@ fi
 
 # Checks for library functions.
 
-ac_config_files="$ac_config_files Makefile src/meshfem2D/Makefile src/specfem2D/Makefile src/auxiliaries/Makefile setup/constants.h setup/precision.h"
+ac_config_files="$ac_config_files Makefile setup/constants.h setup/precision.h"
 
 
 if test "$USE_BUNDLED_SCOTCH" = 1; then
@@ -6269,6 +6471,12 @@ if test -z "${COND_MPI_TRUE}" && test -z "${COND_MPI_FALSE}"; then
   as_fn_error $? "conditional \"COND_MPI\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+case $FC_MODINC in #(
+  *\ ) FC_MODINC=$FC_MODINC'${ac_empty}' ;;
+esac
+case $FC_MODOUT in #(
+  *\ ) FC_MODOUT=$FC_MODOUT'${ac_empty}' ;;
+esac
 
 : "${CONFIG_STATUS=./config.status}"
 ac_write_fail=0
@@ -6851,9 +7059,6 @@ do
   case $ac_config_target in
     "setup/config.h") CONFIG_HEADERS="$CONFIG_HEADERS setup/config.h" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
-    "src/meshfem2D/Makefile") CONFIG_FILES="$CONFIG_FILES src/meshfem2D/Makefile" ;;
-    "src/specfem2D/Makefile") CONFIG_FILES="$CONFIG_FILES src/specfem2D/Makefile" ;;
-    "src/auxiliaries/Makefile") CONFIG_FILES="$CONFIG_FILES src/auxiliaries/Makefile" ;;
     "setup/constants.h") CONFIG_FILES="$CONFIG_FILES setup/constants.h" ;;
     "setup/precision.h") CONFIG_FILES="$CONFIG_FILES setup/precision.h" ;;
     "${SCOTCH_DIR}/src/Makefile.inc") CONFIG_FILES="$CONFIG_FILES ${SCOTCH_DIR}/src/Makefile.inc" ;;

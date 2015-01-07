@@ -69,6 +69,17 @@ AC_FC_SRCEXT(f90)
 AC_FC_FREEFORM()
 AC_FC_PP_DEFINE()
 AC_SUBST([FC_DEFINE])
+AC_FC_MODULE_EXTENSION
+AC_SUBST([FC_MODEXT])
+AC_FC_MODULE_FLAG([], [])
+AC_FC_MODULE_OUTPUT_FLAG([
+    DEF_FFLAGS="$FC_MODOUT./obj $FC_MODINC./obj $FC_MODINC. $DEF_FFLAGS"
+    FC_MODDIR=./obj
+], [
+    FC_MODDIR=.
+])
+AC_SUBST([FC_MODDIR])
+
 
 AC_PROG_CC
 
@@ -171,7 +182,7 @@ else
  # uses bundled scotch: current version pointed to by symbolic link scotch/
  USE_BUNDLED_SCOTCH=1
 
- SCOTCH_DIR="scotch"
+ SCOTCH_DIR="$srcdir/src/meshfem2D/scotch"
  SCOTCH_LIBDIR="${SCOTCH_DIR}/lib"
  SCOTCH_INCLUDEDIR="${SCOTCH_DIR}/include"
 
@@ -223,9 +234,6 @@ fi
 
 AC_CONFIG_FILES([
 	Makefile
-	src/meshfem2D/Makefile
-	src/specfem2D/Makefile
-	src/auxiliaries/Makefile
 	setup/constants.h
 	setup/precision.h
 ])
