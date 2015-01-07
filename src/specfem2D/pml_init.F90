@@ -675,7 +675,7 @@ end subroutine pml_init
   if (PML_parameter_adjustment) then
     call MPI_ALLREDUCE (averagex_source, averagex_source_sum, 1, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ier)
     call MPI_ALLREDUCE (averagez_source, averagez_source_sum, 1, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ier)
-    call MPI_ALLREDUCE (NSOURCES, NSOURCES_glob, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD, ier)
+    call MPI_ALLREDUCE (NSOURCES, NSOURCES_glob, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD, ier)
   endif
 #endif
 
