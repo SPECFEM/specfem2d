@@ -90,6 +90,7 @@ specfem2D_OBJECTS = \
 	$O/define_external_model.spec.o \
 	$O/enforce_acoustic_free_surface.spec.o \
 	$O/exit_mpi.spec.o \
+	$O/finalize_simulation.spec.o \
 	$O/force_ftz.cc.o \
 	$O/get_MPI.spec.o \
 	$O/get_global.spec.o \
@@ -99,6 +100,7 @@ specfem2D_OBJECTS = \
 	$O/initialize_simulation.spec.o \
 	$O/invert_mass_matrix.spec.o \
 	$O/is_in_convex_quadrilateral.spec.o \
+	$O/iterate_time.spec.o \
 	$O/lagrange_poly.spec.o \
 	$O/locate_receivers.spec.o \
 	$O/locate_source_force.spec.o \
@@ -115,6 +117,8 @@ specfem2D_OBJECTS = \
 	$O/prepare_color_image.spec.o \
 	$O/prepare_initial_field.spec.o \
 	$O/prepare_source_time_function.spec.o \
+	$O/prepare_timerun.spec.o \
+	$O/prepare_timerun_body.spec.o \
 	$O/read_databases.spec.o \
 	$O/read_external_model.spec.o \
 	$O/recompute_jacobian.spec.o \
@@ -237,11 +241,13 @@ $O/createnum_fast.spec.o: $O/specfem2D_par.spec.o
 $O/createnum_slow.spec.o: $O/specfem2D_par.spec.o
 $O/define_derivation_matrices.spec.o: $O/specfem2D_par.spec.o
 $O/enforce_acoustic_free_surface.spec.o: $O/specfem2D_par.spec.o
+$O/finalize_simulation.spec.o: $O/specfem2D_par.spec.o
 $O/get_MPI.spec.o: $O/specfem2D_par.spec.o
 $O/get_global.spec.o: $O/specfem2D_par.spec.o
 $O/gmat01.spec.o: $O/specfem2D_par.spec.o
 $O/initialize_simulation.spec.o: $O/specfem2D_par.spec.o
 $O/invert_mass_matrix.spec.o: $O/specfem2D_par.spec.o
+$O/iterate_time.spec.o: $O/specfem2D_par.spec.o
 $O/locate_receivers.spec.o: $O/specfem2D_par.spec.o
 $O/noise_tomography.spec.o: $O/specfem2D_par.spec.o
 $O/paco_beyond_critical.spec.o: $O/specfem2D_par.spec.o
@@ -253,7 +259,8 @@ $O/prepare_assemble_MPI.spec.o: $O/specfem2D_par.spec.o
 $O/prepare_color_image.spec.o: $O/specfem2D_par.spec.o
 $O/prepare_initial_field.spec.o: $O/specfem2D_par.spec.o
 $O/prepare_source_time_function.spec.o: $O/specfem2D_par.spec.o
-$O/prepare_timerun_gpu.spec.o: $O/specfem2D_par.spec.o
+$O/prepare_timerun.spec.o: $O/specfem2D_par.spec.o
+$O/prepare_timerun_body.spec.o: $O/specfem2D_par.spec.o
 $O/read_databases.spec.o: $O/specfem2D_par.spec.o
 $O/read_external_model.spec.o: $O/specfem2D_par.spec.o
 $O/recompute_jacobian.spec.o: $O/specfem2D_par.spec.o

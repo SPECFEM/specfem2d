@@ -52,14 +52,11 @@
                          nglob,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
                          numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
                          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,e1,e11, &
-                         ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS,i,j,ispec,iglob
+                         ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS,i,j,ispec,iglob,pressure_element
 
   implicit none
 
   include "constants.h"
-
-! pressure in this element
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: pressure_element
 
 ! loop over spectral elements
   do ispec = 1,nspec
