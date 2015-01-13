@@ -35,7 +35,7 @@ make_the_code : $(DIRS) $(OBJS)
 make_the_code2 : $(DIRS) $(OBJS2)
 	$(LINK) $(OBJS2) -o $(EXEC2)
 
-all : $(OBJS) $(OBJS2) make_the_code make_the_code cleanmods
+all : $(OBJS) $(OBJS2) make_the_code make_the_code2 cleanmods
 
 clean :
 	/bin/rm -f $(EXEC) $(EXEC).trace $(EXEC2) $(EXEC2).trace $O/*.o *.o *.mod core *__genmod.*;
