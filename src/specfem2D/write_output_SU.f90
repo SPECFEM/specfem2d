@@ -53,7 +53,7 @@
 
 ! to write seismograms in single precision SEP and double precision binary
 ! format
-  double precision, dimension(number_of_components,NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrec) :: buffer_binary
+  double precision, dimension(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrec,number_of_components) :: buffer_binary
 
 ! scaling factor for Seismic Unix xsu dislay
   double precision, parameter :: FACTORXSU = 1.d0
@@ -113,9 +113,9 @@
 
           ! the "60" in the following corresponds to 240 bytes header (note the reclength is 4 bytes)
           do isample = 1, seismo_current
-             write(12,rec=irec*60+(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(1,isample,irec))
+             write(12,rec=irec*60+(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,irec,1))
              if ( seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
-                write(14,rec=irec*60+(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(2,isample,irec))
+                write(14,rec=irec*60+(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,irec,2))
              endif
           enddo
 
