@@ -23,6 +23,24 @@ AC_ARG_WITH([mpi],
     [want_mpi=no])
 AM_CONDITIONAL([COND_MPI], [test "$want_mpi" = yes])
 
+
+
+###
+### CUDA
+###
+
+AC_ARG_WITH([cuda],
+    [AS_HELP_STRING([--with-cuda],
+        [build CUDA GPU enabled version @<:@default=no@:>@])],
+    [want_cuda="$withval"],
+    [want_cuda=no])
+AM_CONDITIONAL([COND_CUDA], [test "$want_cuda" != no])
+AM_CONDITIONAL([COND_CUDA5], [test "$want_cuda" = cuda5])
+
+
+
+
+
 AC_ARG_ENABLE([double-precision],
     [AC_HELP_STRING([--enable-double-precision],
         [solver in double precision @<:@default=no@:>@])],
@@ -195,6 +213,22 @@ else
 
 fi
 LDFLAGS=${ac_save_ldflags}
+
+
+
+###
+### CUDA
+###
+
+if test "$want_cuda" != no; then
+    AS_BOX([CUDA])
+    CIT_CUDA_CONFIG
+fi
+
+
+
+
+
 
 # influential environment variables
 

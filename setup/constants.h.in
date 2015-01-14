@@ -197,3 +197,8 @@
 ! maximum number of stages for optimized (for reduced storage) LDDRK4-6 Runge-Kutta time scheme
   integer, parameter :: Nstages = 6
 
+! For CUDA mode
+  logical, parameter :: USE_MESH_COLORING_GPU = .false.
+  integer, parameter :: itag = 0
+  logical, parameter :: APPROXIMATE_HESS_KL = .false.
+

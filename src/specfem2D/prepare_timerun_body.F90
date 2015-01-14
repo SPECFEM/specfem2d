@@ -30,6 +30,44 @@ subroutine prepare_timerun()
   call prepare_timerun_read()
 
 
+  if(GPU_MODE) then
+
+! initialization for GPU cards
+
+  ! local parameters
+
+
+  ! GPU_MODE now defined in Par_file
+  if(myrank == 0 ) then
+    write(IOUT,*)
+    write(IOUT,*) "GPU_MODE Active."
+    call flush_IOUT()
+  endif
+
+  ! check for GPU runs
+  if( NGLLX /= 5 .or. NGLLZ /= 5 ) &
+    stop 'GPU mode can only be used if NGLLX == NGLLZ == 5'
+  if( CUSTOM_REAL /= 4 ) &
+    stop 'GPU mode runs only with CUSTOM_REAL == 4'
+
+
+  ! initializes GPU and outputs info to files for all processes
+  call initialize_cuda_device(myrank,ncuda_devices)
+
+  ! collects min/max of local devices found for statistics
+  call sync_all()
+  call min_all_i(ncuda_devices,ncuda_devices_min)
+  call max_all_i(ncuda_devices,ncuda_devices_max)
+
+  if( myrank == 0 ) then
+    write(IOUT,*) "GPU number of devices per node: min =",ncuda_devices_min
+    write(IOUT,*) "                                max =",ncuda_devices_max
+    write(IOUT,*)
+    call flush_IOUT()
+  endif
+
+  endif
+
 !
 !---- compute shape functions and their derivatives for SEM grid
 !
@@ -533,6 +571,8 @@ subroutine prepare_timerun()
   nadj_rec_local = 0
   if(SIMULATION_TYPE == 3) then  ! adjoint calculation
 
+  allocate(source_adjointe(nrecloc,NSTEP,2))
+
     do irec = 1,nrec
       if(myrank == which_proc_receiver(irec)) then
         ! check that the source proc number is okay
@@ -548,6 +588,8 @@ subroutine prepare_timerun()
       allocate(adj_sourcearrays(1,1,1,1,1))
     endif
 
+  if(seismotype == 1 .or. seismotype == 2 .or. seismotype == 3) then
+
     if (.not. SU_FORMAT) then
        irec_local = 0
        do irec = 1, nrec
@@ -562,9 +604,59 @@ subroutine prepare_timerun()
     else ! (SU_FORMAT)
         call add_adjoint_sources_SU()
     endif
+
+  else if (seismotype == 4 ) then
+
+    if (.not. SU_FORMAT) then
+       irec_local = 0
+       do irec = 1, nrec
+         ! compute only adjoint source arrays in the local proc
+         if(myrank == which_proc_receiver(irec))then
+           irec_local = irec_local + 1
+           adj_source_file = trim(station_name(irec))//'.'//trim(network_name(irec))
+           call compute_arrays_adj_source(xi_receiver(irec), gamma_receiver(irec))
+           adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
+         endif
+       enddo
+    else
+       irec_local = 0
+       write(filename, "('./SEM/pressure_file_single.bin.adj')")
+       open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ios)
+               if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
+       allocate(adj_src_s(NSTEP,3))
+
+       do irec = 1, nrec
+         if(myrank == which_proc_receiver(irec))then
+          irec_local = irec_local + 1
+          adj_sourcearray(:,:,:,:) = 0.0
+          read(111,rec=irec,iostat=ios) r4head, adj_src_s(:,1)
+               if (ios /= 0) call exit_MPI(' file '//trim(filename)//' read error')
+          if (irec==1) print*, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
+          call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
+          call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
+          source_adjointe(irec_local,:,1) = adj_src_s(:,1)
+
+      if ( .not. GPU_MODE ) then 
+          do k = 1, NGLLZ
+              do i = 1, NGLLX
+                adj_sourcearray(:,:,i,k) = hxir(i) * hgammar(k) * adj_src_s(:,:)
+              enddo
+          enddo
+          adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
+      endif
+
+         endif !  if(myrank == which_proc_receiver(irec))
+       enddo ! irec
+       close(111)
+       deallocate(adj_src_s)
+
+    endif ! SU_format
+
+  endif ! seismotype
+
   else
      allocate(adj_sourcearrays(1,1,1,1,1))
-  endif
+  endif ! SIMULATION_TYPE
 
     if (nrecloc > 0) then
       allocate(anglerec_irec(nrecloc))
@@ -826,12 +918,26 @@ subroutine prepare_timerun()
     enddo
   enddo
 
+
+
+  allocate(xir_store_loc(nrecloc,NGLLX))
+  allocate(gammar_store_loc(nrecloc,NGLLX))
+
 ! define and store Lagrange interpolators at all the receivers
+  irec_local=0 
   do irec = 1,nrec
     call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
     call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
     hxir_store(irec,:) = hxir(:)
     hgammar_store(irec,:) = hgammar(:)
+    if(myrank == which_proc_receiver(irec))then  
+           irec_local = irec_local + 1                             
+                                                                                 
+      do i = 1, NGLLX                                                            
+    xir_store_loc(irec_local,i)    = sngl(hxir(i))                    
+    gammar_store_loc(irec_local,i) = sngl(hgammar(i))        
+      enddo
+    endif
   enddo
 
 ! define and store Lagrange interpolators at all the sources
@@ -1145,10 +1251,7 @@ subroutine prepare_timerun()
 
 
 
-
   call prepare_timerun_pml()
-
-
 
 
 ! Test compatibility with axisymmetric formulation
@@ -2049,6 +2152,18 @@ if(coupled_elastic_poro) then
 
 
   call prepare_timerun_attenuation()
+
+
+  if (GPU_MODE) then
+
+    call init_host_to_dev_variable()
+
+    call prepare_timerun_GPU()
+
+  endif
+
+
+
 
 end subroutine prepare_timerun
 

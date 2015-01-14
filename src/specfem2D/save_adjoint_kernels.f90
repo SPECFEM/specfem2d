@@ -49,7 +49,7 @@ subroutine save_adjoint_kernels()
                           rho_kl, kappa_kl, mu_kl, rhop_kl, alpha_kl, beta_kl, &
                           rhot_kl, rhof_kl, sm_kl, eta_kl, mufr_kl, B_kl, &
                           C_kl, M_kl, rhob_kl, rhofb_kl, phi_kl, Bb_kl, Cb_kl, Mb_kl, mufrb_kl, &
-                          rhobb_kl, rhofbb_kl, phib_kl, cpI_kl, cpII_kl, cs_kl, ratio_kl
+                          rhobb_kl, rhofbb_kl, phib_kl, cpI_kl, cpII_kl, cs_kl, ratio_kl, GPU_MODE
 
   include "constants.h"
 
@@ -118,6 +118,8 @@ subroutine save_adjoint_kernels()
     close(98)
   endif
 
+if (.NOT. GPU_MODE )  then
+
   if(any_poroelastic) then
     do ispec = 1, nspec
       do j = 1, NGLLZ
@@ -147,6 +149,8 @@ subroutine save_adjoint_kernels()
     close(21)
     close(22)
   endif
+
+endif
 
 end subroutine save_adjoint_kernels
 

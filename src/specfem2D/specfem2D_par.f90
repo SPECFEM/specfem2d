@@ -111,6 +111,9 @@ module specfem_par
 ! 3 = classical 4th-order 4-stage Runge-Kutta
   integer :: time_stepping_scheme
 
+! Global GPU toggle. Set in Par_file
+  logical :: GPU_MODE
+
 ! receiver information
   integer :: nrec,ios
   integer, dimension(:), allocatable :: ispec_selected_rec
@@ -447,6 +450,8 @@ module specfem_par
     b_absorb_acoustic_bottom, b_absorb_acoustic_top
   integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
   integer, dimension(:), allocatable :: ib_left,ib_right,ib_bottom,ib_top
+  real(kind=CUSTOM_REAL),  dimension(:,:,:), allocatable :: source_adjointe
+  real(kind=CUSTOM_REAL),  dimension(:,:), allocatable :: xir_store_loc, gammar_store_loc
 
 ! for color images
   integer :: NX_IMAGE_color,NZ_IMAGE_color
@@ -507,6 +512,9 @@ module specfem_par
   integer, dimension(:,:,:), allocatable  :: my_interfaces
   integer, dimension(:,:), allocatable  :: ibool_interfaces_acoustic,ibool_interfaces_elastic,ibool_interfaces_poroelastic
   integer, dimension(:), allocatable  :: nibool_interfaces_acoustic,nibool_interfaces_elastic,nibool_interfaces_poroelastic
+  integer, dimension(:), allocatable :: nibool_interfaces_ext_mesh
+  integer, dimension(:,:), allocatable :: ibool_interfaces_ext_mesh_init, ibool_interfaces_ext_mesh
+  integer :: max_nibool_interfaces_ext_mesh
 
   integer  :: ninterface_acoustic, ninterface_elastic,ninterface_poroelastic
   integer, dimension(:), allocatable  :: inum_interfaces_acoustic, inum_interfaces_elastic, inum_interfaces_poroelastic
@@ -786,5 +794,19 @@ module specfem_par
 
 ! for shifting of velocities if needed in the case of viscoelasticity
   double precision :: vp,vs,rho,mu,lambda
+
+! CUDA mesh pointer<->integer wrapper
+  integer(kind=8) :: Mesh_pointer
+
+! for GPU_MODE
+  integer :: ncuda_devices,ncuda_devices_min,ncuda_devices_max
+  logical, dimension(:), allocatable :: ispec_is_inner
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: displ_2D,veloc_2D,accel_2D
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_displ_2D,b_veloc_2D,b_accel_2D
+  integer :: NGLOB_AB, NSPEC_AB
+  real(kind=CUSTOM_REAL) deltatf,deltatover2f,deltatsquareover2f
+  logical :: ANY_ANISOTROPY
+  integer, dimension(:,:), allocatable  :: gather_ispec_selected_rec
+  real(kind=CUSTOM_REAL) b_deltatf,b_deltatover2f,b_deltatsquareover2f
 
 end module specfem_par

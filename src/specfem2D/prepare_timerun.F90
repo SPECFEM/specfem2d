@@ -51,6 +51,7 @@ subroutine prepare_timerun_mass_matrix()
     max_ibool_interfaces_size_ac = maxval(nibool_interfaces_acoustic(:))
     max_ibool_interfaces_size_el = 3*maxval(nibool_interfaces_elastic(:))
     max_ibool_interfaces_size_po = NDIM*maxval(nibool_interfaces_poroelastic(:))
+    max_nibool_interfaces_ext_mesh = maxval(nibool_interfaces_ext_mesh(:))
       allocate(tab_requests_send_recv_acoustic(ninterface_acoustic*2))
       allocate(buffer_send_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic))
       allocate(buffer_recv_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic))
@@ -117,6 +118,8 @@ subroutine prepare_timerun_mass_matrix()
 
     allocate(ibool_outer(NGLLX,NGLLZ,nspec_outer))
     allocate(ibool_inner(NGLLX,NGLLZ,nspec_inner))
+    allocate(ispec_is_inner(nspec))
+    ispec_is_inner(:) = .false.      
 
     ! loop over spectral elements
     do ispec_outer = 1,nspec_outer
@@ -130,6 +133,7 @@ subroutine prepare_timerun_mass_matrix()
     ! get global numbering for inner or outer elements
       ispec = ispec_inner_to_glob(ispec_inner)
       ibool_inner(:,:,ispec_inner) = ibool(:,:,ispec)
+      ispec_is_inner(ispec) = .true.
     enddo
 
     ! reduces cache misses for outer elements
@@ -1237,9 +1241,11 @@ subroutine prepare_timerun_read()
        allocate(ibool_interfaces_acoustic(NGLLX*max_interface_size,ninterface))
        allocate(ibool_interfaces_elastic(NGLLX*max_interface_size,ninterface))
        allocate(ibool_interfaces_poroelastic(NGLLX*max_interface_size,ninterface))
+       allocate(ibool_interfaces_ext_mesh_init(NGLLX*max_interface_size,ninterface))
        allocate(nibool_interfaces_acoustic(ninterface))
        allocate(nibool_interfaces_elastic(ninterface))
        allocate(nibool_interfaces_poroelastic(ninterface))
+       allocate(nibool_interfaces_ext_mesh(ninterface))
        allocate(inum_interfaces_acoustic(ninterface))
        allocate(inum_interfaces_elastic(ninterface))
        allocate(inum_interfaces_poroelastic(ninterface))
@@ -1252,9 +1258,11 @@ subroutine prepare_timerun_read()
        allocate(ibool_interfaces_acoustic(1,1))
        allocate(ibool_interfaces_elastic(1,1))
        allocate(ibool_interfaces_poroelastic(1,1))
+       allocate(ibool_interfaces_ext_mesh_init(1,1)) 
        allocate(nibool_interfaces_acoustic(1))
        allocate(nibool_interfaces_elastic(1))
        allocate(nibool_interfaces_poroelastic(1))
+       allocate(nibool_interfaces_ext_mesh(1))  
        allocate(inum_interfaces_acoustic(1))
        allocate(inum_interfaces_elastic(1))
        allocate(inum_interfaces_poroelastic(1))

@@ -173,7 +173,7 @@ subroutine add_adjoint_sources_SU
   use specfem_par, only: myrank, NSTEP, nrec, xi_receiver, gamma_receiver, which_proc_receiver, &
                          xigll,zigll,hxir,hgammar,hpxir,hpgammar, &
                          adj_sourcearray, adj_sourcearrays, &
-                         r4head, header2, filename
+                         r4head, header2, filename, source_adjointe, GPU_MODE
 
   include "constants.h"
 
@@ -211,12 +211,18 @@ subroutine add_adjoint_sources_SU
       if (irec==1) print*, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
       call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
       call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
-      do k = 1, NGLLZ
-          do i = 1, NGLLX
-            adj_sourcearray(:,:,i,k) = hxir(i) * hgammar(k) * adj_src_s(:,:)
-          enddo
-      enddo
-      adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
+      source_adjointe(irec_local,:,1) = adj_src_s(:,1) 
+      source_adjointe(irec_local,:,2) = adj_src_s(:,3)
+
+      if ( .not. GPU_MODE ) then   
+        do k = 1, NGLLZ
+            do i = 1, NGLLX
+              adj_sourcearray(:,:,i,k) = hxir(i) * hgammar(k) * adj_src_s(:,:)
+            enddo
+        enddo
+        adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
+      endif
+
      endif !  if(myrank == which_proc_receiver(irec))
    enddo ! irec
    close(111)

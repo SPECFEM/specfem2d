@@ -132,7 +132,7 @@
   subroutine compute_arrays_adj_source(xi_receiver,gamma_receiver)
 
  use constants
- use specfem_par, only: seismotype,adj_source_file,adj_sourcearray, &
+ use specfem_par, only: source_adjointe,seismotype,adj_source_file,adj_sourcearray, &
                         xigll,zigll,NSTEP,irec_local
 
  implicit none
@@ -171,6 +171,8 @@
 
   enddo
 
+  source_adjointe(irec_local,:,2) = adj_src_s(:,3)
+
   else if (seismotype == 4 ) then
 
     filename = 'SEM/'//trim(adj_source_file) // '.PRE.adj'
@@ -194,6 +196,8 @@
     close(IIN)
 
   endif
+
+  source_adjointe(irec_local,:,1) = adj_src_s(:,1)    
 
   do k = 1, NGLLZ
       do i = 1, NGLLX

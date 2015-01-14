@@ -54,6 +54,8 @@ if (myrank == 0) write(IOUT,400)
 
     do i_stage=1, stage_time_scheme
 
+      if (.NOT. GPU_MODE) then  
+
       call update_displacement_precondition_newmark()
       if (AXISYM) then
         do ispec=1,nspec
@@ -139,43 +141,6 @@ if (myrank == 0) write(IOUT,400)
        endif
 
       endif
-
-
-      ! stores absorbing boundary contributions into files
-      if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1 .and. (.not. PML_BOUNDARY_CONDITIONS)) then
-        !--- left absorbing boundary
-        if(nspec_left >0) then
-          do ispec = 1,nspec_left
-            do i=1,NGLLZ
-              write(65) b_absorb_acoustic_left(i,ispec,it)
-            enddo
-          enddo
-        endif
-        !--- right absorbing boundary
-        if(nspec_right >0) then
-          do ispec = 1,nspec_right
-            do i=1,NGLLZ
-              write(66) b_absorb_acoustic_right(i,ispec,it)
-            enddo
-          enddo
-        endif
-        !--- bottom absorbing boundary
-        if(nspec_bottom >0) then
-          do ispec = 1,nspec_bottom
-            do i=1,NGLLX
-              write(67) b_absorb_acoustic_bottom(i,ispec,it)
-            enddo
-          enddo
-        endif
-        !--- top absorbing boundary
-        if(nspec_top >0) then
-          do ispec = 1,nspec_top
-            do i=1,NGLLX
-              write(68) b_absorb_acoustic_top(i,ispec,it)
-            enddo
-          enddo
-        endif
-      endif ! if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)
 
 
     ! *********************************************************
@@ -723,6 +688,13 @@ if (myrank == 0) write(IOUT,400)
     endif ! of if(any_acoustic)
 
 
+   else ! GPU_MODE
+
+    if(any_acoustic) call compute_forces_acoustic_GPU()
+                                                
+   endif   
+
+
 ! *********************************************************
 ! ************* main solver for the gravitoacoustic elements
 ! *********************************************************
@@ -731,6 +703,9 @@ if (myrank == 0) write(IOUT,400)
 ! NO COUPLING TO ELASTIC AND POROELASTIC SIDES
 ! *********************************************************
 !-----------------------------------------
+
+ if (.NOT. GPU_MODE) then 
+
     if ((any_gravitoacoustic)) then
 
       if(time_stepping_scheme==1)then
@@ -1236,10 +1211,19 @@ if (myrank == 0) write(IOUT,400)
     endif ! of if(any_gravitoacoustic)
 
 
+  else ! GPU_MODE
+
+    if ((any_gravitoacoustic)) call exit_mpi('gravitoacoustic not implemented in GPU MODE yet')
+   
+  endif 
+
+
 
 ! *********************************************************
 ! ************* main solver for the elastic elements
 ! *********************************************************
+
+   if (.NOT. GPU_MODE) then 
 
     if(any_elastic) then
 
@@ -1949,10 +1933,18 @@ if (myrank == 0) write(IOUT,400)
 
     endif !if(any_elastic)
 
+ else ! GPU_MODE
+
+  if(any_elastic)  call compute_forces_elastic_GPU()
+   
+ endif 
+
 
 ! ******************************************************************************************************************
 ! ************* main solver for the poroelastic elements: first the solid (u_s) then the fluid (w)
 ! ******************************************************************************************************************
+
+  if ( .NOT. GPU_MODE) then
 
     if(any_poroelastic) then
 
@@ -3148,6 +3140,12 @@ if (myrank == 0) write(IOUT,400)
       enddo
     endif
 
+  else !GPU_MODE
+
+    if(any_poroelastic)   call exit_mpi('poroelastic not implemented in GPU MODE yet')
+   
+  endif
+
    enddo !LDDRK or RK
 
 ! ********************************************************************************************
@@ -3166,12 +3164,29 @@ if (myrank == 0) write(IOUT,400)
           enddo
         close(55)
 
-        ! free surface for an acoustic medium
-        if ( nelem_acoustic_surface > 0 ) then
-          call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
+
+      
+        if(GPU_MODE) then
+        ! transfers fields onto GPU
+        call transfer_b_fields_ac_to_device(NGLOB_AB,b_potential_acoustic, &
+                                            b_potential_dot_acoustic,      &
+                                            b_potential_dot_dot_acoustic,  &
+                                            Mesh_pointer)
+
+        else
+          ! free surface for an acoustic medium
+          if ( nelem_acoustic_surface > 0 ) then
+            call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
                                             b_potential_acoustic)
+          endif
+
         endif
-      endif
+
+
+       endif
+
+
+ 
 
       ! elastic medium
       if(any_elastic) then
@@ -3183,12 +3198,24 @@ if (myrank == 0) write(IOUT,400)
                       (b_veloc_elastic(i,j), i=1,NDIM), &
                       (b_accel_elastic(i,j), i=1,NDIM)
           enddo
-          b_displ_elastic(3,:) = b_displ_elastic(2,:)
-          b_displ_elastic(2,:) = 0._CUSTOM_REAL
-          b_veloc_elastic(3,:) = b_veloc_elastic(2,:)
-          b_veloc_elastic(2,:) = 0._CUSTOM_REAL
-          b_accel_elastic(3,:) = b_accel_elastic(2,:)
-          b_accel_elastic(2,:) = 0._CUSTOM_REAL
+        
+          if(GPU_MODE) then
+            b_displ_2D(1,:) = b_displ_elastic(1,:)
+            b_displ_2D(2,:) = b_displ_elastic(2,:)
+            b_veloc_2D(1,:) = b_veloc_elastic(1,:)
+            b_veloc_2D(2,:) = b_veloc_elastic(2,:)
+            b_accel_2D(1,:) = b_accel_elastic(1,:)
+            b_accel_2D(2,:) = b_accel_elastic(2,:)
+            call transfer_b_fields_to_device(NDIM*NGLOB_AB,b_displ_2D,b_veloc_2D,b_accel_2D,Mesh_pointer)
+          else
+            b_displ_elastic(3,:) = b_displ_elastic(2,:)
+            b_displ_elastic(2,:) = 0._CUSTOM_REAL
+            b_veloc_elastic(3,:) = b_veloc_elastic(2,:)
+            b_veloc_elastic(2,:) = 0._CUSTOM_REAL
+            b_accel_elastic(3,:) = b_accel_elastic(2,:)
+            b_accel_elastic(2,:) = 0._CUSTOM_REAL
+          endif
+
         else !SH (membrane) waves
           do j=1,nglob
             read(55) b_displ_elastic(2,j), &
@@ -3249,6 +3276,113 @@ if (myrank == 0) write(IOUT,400)
 
 
 !>NOISE_TOMOGRAPHY
+
+
+if (GPU_MODE) then
+
+
+! Kernel calculation
+if (SIMULATION_TYPE == 3) then
+
+  if (any_acoustic) call compute_kernels_acoustic_cuda(Mesh_pointer,deltatf)
+
+  if (any_elastic) call compute_kernels_elastic_cuda(Mesh_pointer,deltatf)
+
+  if ( APPROXIMATE_HESS_KL ) then
+     ! computes contribution to density and bulk modulus kernel
+    call compute_kernels_hess_cuda(Mesh_pointer,any_elastic,any_acoustic)
+  endif
+
+
+! Kernel transfer
+
+   if(it == NSTEP) then
+
+     if( any_acoustic ) then
+       call transfer_kernels_ac_to_host(Mesh_pointer,rho_ac_kl,kappa_ac_kl,NSPEC_AB)
+     endif
+
+     if( any_elastic ) then
+       call transfer_kernels_el_to_host(Mesh_pointer,rho_kl,mu_kl,kappa_kl,NSPEC_AB)
+
+
+     ! Multiply each kernel point with the local coefficient
+        do ispec = 1, nspec
+          if(elastic(ispec)) then
+            do j = 1, NGLLZ
+              do i = 1, NGLLX
+                iglob = ibool(i,j,ispec)
+                if (.not. assign_external_model) then
+                   mul_global(iglob) = poroelastcoef(2,1,kmato(ispec))
+                   kappal_global(iglob) = poroelastcoef(3,1,kmato(ispec)) &
+                                       - 4._CUSTOM_REAL*mul_global(iglob)/3._CUSTOM_REAL
+                   rhol_global(iglob) = density(1,kmato(ispec))
+                else
+                   rhol_global(iglob)   = rhoext(i,j,ispec)
+                   mul_global(iglob)    = rhoext(i,j,ispec)*vsext(i,j,ispec)*vsext(i,j,ispec)
+                   kappal_global(iglob) = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec) &
+                                       -4._CUSTOM_REAL*mul_global(iglob)/3._CUSTOM_REAL
+                endif
+
+                rho_kl(i,j,ispec) = - rhol_global(iglob) * rho_kl(i,j,ispec)
+                mu_kl(i,j,ispec) =  - TWO * mul_global(iglob) * mu_kl(i,j,ispec)
+                kappa_kl(i,j,ispec) = - kappal_global(iglob) * kappa_kl(i,j,ispec)
+
+              enddo
+            enddo
+          endif
+        enddo
+
+       endif  !!End elastic
+
+   endif  !! End NSTEP
+
+
+endif  !! End Sim 3
+
+
+! Simulating seismograms
+
+   if(mod(it-1,subsamp_seismos) == 0 .and. SIMULATION_TYPE == 1) then
+
+
+    seismo_current = seismo_current + 1
+
+    if ( nrecloc > 0 ) call compute_seismograms_cuda(Mesh_pointer,seismotype,sisux,&
+                       sisuz,seismo_current,NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,any_elastic_glob,any_acoustic_glob)
+
+   endif
+
+
+! Fields transfer for imaging
+
+    if( (output_color_image .and. ( (mod(it,NSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5)) .or. it == NSTEP) ) then
+
+
+    if( any_acoustic ) &
+      call transfer_fields_ac_from_device(NGLOB_AB,potential_acoustic, &
+                                          potential_dot_acoustic, potential_dot_dot_acoustic, &
+                                          Mesh_pointer)
+
+
+    if( any_elastic ) then
+      call transfer_fields_el_from_device(NDIM*NGLOB_AB,displ_2D,veloc_2D,accel_2D,Mesh_pointer)
+      displ_elastic(1,:) = displ_2D(1,:)
+      veloc_elastic(1,:) = veloc_2D(1,:)
+      accel_elastic(1,:) = accel_2D(1,:)
+      displ_elastic(3,:) = displ_2D(2,:)
+      veloc_elastic(3,:) = veloc_2D(2,:)
+      accel_elastic(3,:) = accel_2D(2,:)
+    endif
+
+
+   endif !If transfer
+
+
+endif !If GPU Mode
+
+
+if (.NOT. GPU_MODE) then
 
 ! ********************************************************************************************
 !                                      kernels calculation
@@ -3628,6 +3762,8 @@ if (myrank == 0) write(IOUT,400)
     endif ! if(SIMULATION_TYPE == 3)
 
 
+  endif !Not GPU_MODE
+
 !
 !----  display results at given time steps
 !
@@ -3641,7 +3777,10 @@ if (myrank == 0) write(IOUT,400)
           call save_adjoint_kernels()
       endif
 
+
 !<NOISE_TOMOGRAPHY
+
+if (.NOT. GPU_MODE ) then
 
       if (NOISE_TOMOGRAPHY == 3 .and. output_wavefields_noise) then
 
@@ -3666,7 +3805,11 @@ if (myrank == 0) write(IOUT,400)
 
       endif
 
+endif
+
 !>NOISE_TOMOGRAPHY
+
+
 
 
 !

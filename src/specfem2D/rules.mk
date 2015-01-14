@@ -196,7 +196,25 @@ JPEGLIB_OBJECTS = \
 specfem2D_OBJECTS += $(JPEGLIB_OBJECTS)
 
 
+###
+### CUDA
+###
+
+cuda_specfem2D_OBJECTS = \
+	$(EMPTY_MACRO)
+
+
+cuda_specfem2D_STUBS = \
+	$O/specfem2D_gpu_cuda_method_stubs.cudacc.o \
+	$O/specfem2D_wrapper_cuda_method_stubs.cudaf90.o \
+	$(EMPTY_MACRO)
+
+cuda_specfem2D_DEVICE_OBJ = \
+	$O/cuda_device_obj.o \
+	$(EMPTY_MACRO)
+
 #######################################
+
 
 ####
 #### rules for executables
@@ -207,8 +225,45 @@ spec: $(specfem2D_TARGETS)
 specfem2D: xspecfem2D
 xspecfem2D: $E/xspecfem2D
 
-$E/xspecfem2D: $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS)
-	$(LINK) $(DEF_FFLAGS) -o ${E}/xspecfem2D $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS)
+
+#ifeq ($(CUDA),yes)
+## cuda version
+
+#ifeq ($(CUDA5),yes)
+
+## cuda 5 version
+#${E}/xspecfem2D: $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS) $(cuda_specfem2D_OBJECTS) $(cuda_specfem2D_DEVICE_OBJ)
+#	@echo ""
+#	@echo "building xspecfem2D with CUDA 5 support"
+#	@echo ""
+#	$(LINK) $(DEF_FFLAGS) -o ${E}/xspecfem2D $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS) $(cuda_specfem2D_OBJECTS) $(cuda_specfem2D_DEVICE_OBJ) $(MPILIBS) $(CUDA_LINK)
+#	@echo ""
+
+#else
+
+## cuda 4 version
+#${E}/xspecfem2D: $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS) $(cuda_specfem2D_OBJECTS)
+#	@echo ""
+#	@echo "building xspecfem2D with CUDA 4 support"
+#	@echo ""
+#	$(LINK) $(DEF_FFLAGS) -o ${E}/xspecfem2D $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS) $(cuda_specfem2D_OBJECTS) $(MPILIBS) $(CUDA_LINK)
+#	@echo ""
+
+#endif
+
+#else
+
+## non-cuda version
+${E}/xspecfem2D: $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS) $(cuda_specfem2D_STUBS)
+	@echo ""
+	@echo "building xspecfem2D without CUDA support"
+	@echo ""
+	$(LINK) $(DEF_FFLAGS) -o ${E}/xspecfem2D $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS) $(cuda_specfem2D_STUBS) $(MPILIBS)
+	@echo ""
+
+#endif
+
+
 
 
 #######################################
@@ -289,6 +344,14 @@ $O/%.spec.o: $S/%.F90 ${SETUP}/constants.h
 
 $O/%.cc.o: $S/%.c ${SETUP}/config.h
 	${CC} ${CFLAGS} -c -o $@ $<
+
+
+###
+### CUDA 5 only
+###
+
+$(cuda_specfem2D_DEVICE_OBJ): $(cuda_OBJECTS)
+	${NVCCLINK} -o $(cuda_specfem2D_DEVICE_OBJ) $(cuda_OBJECTS)
 
 
 ##

@@ -13,24 +13,161 @@ subroutine finalize_simulation()
   include "precision.h"
 #endif
 
+
+if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer, &
+                              any_acoustic,any_elastic, &
+                              STACEY_BOUNDARY_CONDITIONS, &
+                              ANISOTROPY, &
+                              APPROXIMATE_HESS_KL)
+
+
   if(output_wavefield_dumps) deallocate(mask_ibool)
 
-  if((SAVE_FORWARD .and. SIMULATION_TYPE==1) .or. SIMULATION_TYPE == 3) then
-    if(any_acoustic) then
+
+!!!! Deplacement Etienne GPU
+
+! stores absorbing boundary contributions into files
+      if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1 .and. (.not. PML_BOUNDARY_CONDITIONS)) then
+
+      if (any_acoustic) then
+
+        !--- left absorbing boundary
+        if(nspec_left >0) then
+         do it =1,NSTEP
+          do ispec = 1,nspec_left
+            do i=1,NGLLZ
+              write(65) b_absorb_acoustic_left(i,ispec,it)
+            enddo
+          enddo
+         enddo
+        endif
+        !--- right absorbing boundary
+        if(nspec_right >0) then
+         do it =1,NSTEP
+          do ispec = 1,nspec_right
+            do i=1,NGLLZ
+              write(66) b_absorb_acoustic_right(i,ispec,it)
+            enddo
+          enddo
+         enddo
+        endif
+        !--- bottom absorbing boundary
+        if(nspec_bottom >0) then
+         do it =1,NSTEP
+          do ispec = 1,nspec_bottom
+            do i=1,NGLLX
+              write(67) b_absorb_acoustic_bottom(i,ispec,it)
+            enddo
+          enddo
+         enddo
+        endif
+        !--- top absorbing boundary
+        if(nspec_top >0) then
+         do it =1,NSTEP
+          do ispec = 1,nspec_top
+            do i=1,NGLLX
+              write(68) b_absorb_acoustic_top(i,ispec,it)
+            enddo
+          enddo
+         enddo
+        endif
+
+    endif !any acoustic
+   
       close(65)
       close(66)
       close(67)
       close(68)
       close(72)
-    endif
-    if(any_elastic) then
+
+ if(any_elastic) then
+
+        !--- left absorbing boundary
+        if(nspec_left >0) then
+         do it =1,NSTEP
+          do ispec = 1,nspec_left
+            if(p_sv)then!P-SV waves
+              do i=1,NGLLZ
+                write(35) b_absorb_elastic_left(1,i,ispec,it)
+              enddo
+              do i=1,NGLLZ
+                write(35) b_absorb_elastic_left(3,i,ispec,it)
+              enddo
+            else!SH (membrane) waves
+              do i=1,NGLLZ
+                write(35) b_absorb_elastic_left(2,i,ispec,it)
+              enddo
+            endif
+          enddo
+         enddo
+        endif
+        !--- right absorbing boundary
+        if(nspec_right >0) then
+         do it =1,NSTEP
+          do ispec = 1,nspec_right
+            if(p_sv)then!P-SV waves
+              do i=1,NGLLZ
+                write(36) b_absorb_elastic_right(1,i,ispec,it)
+              enddo
+              do i=1,NGLLZ
+                write(36) b_absorb_elastic_right(3,i,ispec,it)
+              enddo
+            else!SH (membrane) waves
+              do i=1,NGLLZ
+                write(36) b_absorb_elastic_right(2,i,ispec,it)
+              enddo
+            endif
+          enddo
+         enddo
+        endif
+        !--- bottom absorbing boundary
+        if(nspec_bottom >0) then
+         do it =1,NSTEP
+          do ispec = 1,nspec_bottom
+            if(p_sv)then!P-SV waves
+              do i=1,NGLLX
+                write(37) b_absorb_elastic_bottom(1,i,ispec,it)
+              enddo
+              do i=1,NGLLX
+                write(37) b_absorb_elastic_bottom(3,i,ispec,it)
+              enddo
+            else!SH (membrane) waves
+              do i=1,NGLLX
+                write(37) b_absorb_elastic_bottom(2,i,ispec,it)
+              enddo
+            endif
+          enddo
+         enddo
+        endif
+        !--- top absorbing boundary
+        if(nspec_top >0) then
+         do it =1,NSTEP
+          do ispec = 1,nspec_top
+            if(p_sv)then!P-SV waves
+              do i=1,NGLLX
+                write(38) b_absorb_elastic_top(1,i,ispec,it)
+              enddo
+              do i=1,NGLLX
+                write(38) b_absorb_elastic_top(3,i,ispec,it)
+              enddo
+            else!SH (membrane) waves
+              do i=1,NGLLX
+                write(38) b_absorb_elastic_top(2,i,ispec,it)
+              enddo
+            endif
+          enddo
+         enddo
+        endif
+
+   endif !any elastic
+
       close(35)
       close(36)
       close(37)
       close(38)
       close(71)
 
-    endif
+
     if(any_poroelastic) then
       close(25)
       close(45)
@@ -41,6 +178,7 @@ subroutine finalize_simulation()
       close(28)
       close(48)
     endif
+
   endif
 
 !

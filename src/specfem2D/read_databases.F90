@@ -65,7 +65,7 @@
                          USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                          POWER_DISPLAY_COLOR,SU_FORMAT,USER_T0, time_stepping_scheme, &
                          ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_HORIZ_DIST, &
-                         read_external_mesh,ACOUSTIC_FORCING,save_ASCII_kernels
+                         read_external_mesh,ACOUSTIC_FORCING,save_ASCII_kernels,GPU_MODE
   implicit none
   include "constants.h"
 
@@ -244,6 +244,9 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,*) PERIODIC_HORIZ_DIST
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) GPU_MODE
 
   !---- check parameters read
   if (myrank == 0) then
