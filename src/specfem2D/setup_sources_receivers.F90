@@ -211,10 +211,10 @@ subroutine add_adjoint_sources_SU
       if (irec==1) print*, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
       call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
       call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
-      source_adjointe(irec_local,:,1) = adj_src_s(:,1) 
+      source_adjointe(irec_local,:,1) = adj_src_s(:,1)
       source_adjointe(irec_local,:,2) = adj_src_s(:,3)
 
-      if ( .not. GPU_MODE ) then   
+      if ( .not. GPU_MODE ) then
         do k = 1, NGLLZ
             do i = 1, NGLLX
               adj_sourcearray(:,:,i,k) = hxir(i) * hgammar(k) * adj_src_s(:,:)

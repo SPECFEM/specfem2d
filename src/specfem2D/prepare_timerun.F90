@@ -119,7 +119,7 @@ subroutine prepare_timerun_mass_matrix()
     allocate(ibool_outer(NGLLX,NGLLZ,nspec_outer))
     allocate(ibool_inner(NGLLX,NGLLZ,nspec_inner))
     allocate(ispec_is_inner(nspec))
-    ispec_is_inner(:) = .false.      
+    ispec_is_inner(:) = .false.
 
     ! loop over spectral elements
     do ispec_outer = 1,nspec_outer
@@ -1258,11 +1258,11 @@ subroutine prepare_timerun_read()
        allocate(ibool_interfaces_acoustic(1,1))
        allocate(ibool_interfaces_elastic(1,1))
        allocate(ibool_interfaces_poroelastic(1,1))
-       allocate(ibool_interfaces_ext_mesh_init(1,1)) 
+       allocate(ibool_interfaces_ext_mesh_init(1,1))
        allocate(nibool_interfaces_acoustic(1))
        allocate(nibool_interfaces_elastic(1))
        allocate(nibool_interfaces_poroelastic(1))
-       allocate(nibool_interfaces_ext_mesh(1))  
+       allocate(nibool_interfaces_ext_mesh(1))
        allocate(inum_interfaces_acoustic(1))
        allocate(inum_interfaces_elastic(1))
        allocate(inum_interfaces_poroelastic(1))

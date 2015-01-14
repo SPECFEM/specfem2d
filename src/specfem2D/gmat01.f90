@@ -164,7 +164,7 @@
         poisson = half*(3.d0*kappa-two_mu)/(3.d0*kappa+mu)
 
         ANY_ANISOTROPY = .true.
-        
+
 
         !---- isotropic material, moduli are given, allows for declaration of poroelastic material
         !---- poroelastic (0<phi<1)

@@ -70,7 +70,7 @@
 ! update displacement using finite-difference time scheme (Newmark)
 
     if(any_acoustic) then
-   
+
     if (.not. GPU_MODE ) then
 
 
@@ -95,7 +95,7 @@
         b_potential_dot_dot_acoustic = ZERO
       endif
 
-    
+
 
     else
     ! wavefields on GPU
@@ -115,7 +115,7 @@
   endif
 
     if(any_elastic) then
-   
+
     if (.not. GPU_MODE ) then
 
 
@@ -159,9 +159,9 @@
     ! check
     if( SIMULATION_TYPE == 3 ) then
       if( PML_BOUNDARY_CONDITIONS )then
-       
+
           call exit_MPI('elastic time marching scheme with PML_CONDITIONS on GPU not implemented yet...')
-   
+
       endif
     endif
 
@@ -232,12 +232,12 @@
         b_velocw_poroelastic = b_velocw_poroelastic + b_deltatover2*b_accelw_poroelastic
         b_accelw_poroelastic = ZERO
       endif
-   
+
 
    else
     ! wavefields on GPU
     call exit_MPI('poroelastic time marching scheme on GPU not implemented yet...')
-  endif ! GPU_MODE  
+  endif ! GPU_MODE
 
 
   endif

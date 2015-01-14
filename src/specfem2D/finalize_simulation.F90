@@ -73,7 +73,7 @@ if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer, &
         endif
 
     endif !any acoustic
-   
+
       close(65)
       close(66)
       close(67)

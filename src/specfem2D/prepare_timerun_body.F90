@@ -636,7 +636,7 @@ subroutine prepare_timerun()
           call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
           source_adjointe(irec_local,:,1) = adj_src_s(:,1)
 
-      if ( .not. GPU_MODE ) then 
+      if ( .not. GPU_MODE ) then
           do k = 1, NGLLZ
               do i = 1, NGLLX
                 adj_sourcearray(:,:,i,k) = hxir(i) * hgammar(k) * adj_src_s(:,:)
@@ -924,18 +924,18 @@ subroutine prepare_timerun()
   allocate(gammar_store_loc(nrecloc,NGLLX))
 
 ! define and store Lagrange interpolators at all the receivers
-  irec_local=0 
+  irec_local=0
   do irec = 1,nrec
     call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
     call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
     hxir_store(irec,:) = hxir(:)
     hgammar_store(irec,:) = hgammar(:)
-    if(myrank == which_proc_receiver(irec))then  
-           irec_local = irec_local + 1                             
-                                                                                 
-      do i = 1, NGLLX                                                            
-    xir_store_loc(irec_local,i)    = sngl(hxir(i))                    
-    gammar_store_loc(irec_local,i) = sngl(hgammar(i))        
+    if(myrank == which_proc_receiver(irec))then
+           irec_local = irec_local + 1
+
+      do i = 1, NGLLX
+    xir_store_loc(irec_local,i)    = sngl(hxir(i))
+    gammar_store_loc(irec_local,i) = sngl(hgammar(i))
       enddo
     endif
   enddo

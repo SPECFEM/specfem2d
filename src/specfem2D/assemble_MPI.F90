@@ -770,7 +770,7 @@ do iinterface = 1, ninterface_elastic
 enddo
 
 
-   
+
     ! adding contributions of neighbours
     call transfer_asmbl_accel_to_device(Mesh_pointer, &
                                         buffer_recv_vector_ext_mesh, &

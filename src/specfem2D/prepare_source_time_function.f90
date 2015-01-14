@@ -184,7 +184,7 @@
            source_time_function(i_source,it,i_stage) = ZERO
 
         endif
-       
+
        else if(time_function_type(i_source) == 8) then
 
         if (it == 1 ) then
@@ -193,7 +193,7 @@
           open(unit=num_file,file=name_of_file,iostat=ier)
           if( ier /= 0 ) call exit_MPI('error opening file source_custom*****')
         endif
-        
+
         read(num_file,*) time, source_time_function(i_source,it,i_stage)
 
         if (it == NSTEP ) close(num_file)

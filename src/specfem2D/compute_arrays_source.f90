@@ -197,7 +197,7 @@
 
   endif
 
-  source_adjointe(irec_local,:,1) = adj_src_s(:,1)    
+  source_adjointe(irec_local,:,1) = adj_src_s(:,1)
 
   do k = 1, NGLLZ
       do i = 1, NGLLX

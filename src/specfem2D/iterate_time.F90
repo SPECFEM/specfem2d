@@ -54,7 +54,7 @@ if (myrank == 0) write(IOUT,400)
 
     do i_stage=1, stage_time_scheme
 
-      if (.NOT. GPU_MODE) then  
+      if (.NOT. GPU_MODE) then
 
       call update_displacement_precondition_newmark()
       if (AXISYM) then
@@ -691,8 +691,8 @@ if (myrank == 0) write(IOUT,400)
    else ! GPU_MODE
 
     if(any_acoustic) call compute_forces_acoustic_GPU()
-                                                
-   endif   
+
+   endif
 
 
 ! *********************************************************
@@ -704,7 +704,7 @@ if (myrank == 0) write(IOUT,400)
 ! *********************************************************
 !-----------------------------------------
 
- if (.NOT. GPU_MODE) then 
+ if (.NOT. GPU_MODE) then
 
     if ((any_gravitoacoustic)) then
 
@@ -1214,8 +1214,8 @@ if (myrank == 0) write(IOUT,400)
   else ! GPU_MODE
 
     if ((any_gravitoacoustic)) call exit_mpi('gravitoacoustic not implemented in GPU MODE yet')
-   
-  endif 
+
+  endif
 
 
 
@@ -1223,7 +1223,7 @@ if (myrank == 0) write(IOUT,400)
 ! ************* main solver for the elastic elements
 ! *********************************************************
 
-   if (.NOT. GPU_MODE) then 
+   if (.NOT. GPU_MODE) then
 
     if(any_elastic) then
 
@@ -1936,8 +1936,8 @@ if (myrank == 0) write(IOUT,400)
  else ! GPU_MODE
 
   if(any_elastic)  call compute_forces_elastic_GPU()
-   
- endif 
+
+ endif
 
 
 ! ******************************************************************************************************************
@@ -3143,7 +3143,7 @@ if (myrank == 0) write(IOUT,400)
   else !GPU_MODE
 
     if(any_poroelastic)   call exit_mpi('poroelastic not implemented in GPU MODE yet')
-   
+
   endif
 
    enddo !LDDRK or RK
@@ -3165,7 +3165,7 @@ if (myrank == 0) write(IOUT,400)
         close(55)
 
 
-      
+
         if(GPU_MODE) then
         ! transfers fields onto GPU
         call transfer_b_fields_ac_to_device(NGLOB_AB,b_potential_acoustic, &
@@ -3186,7 +3186,7 @@ if (myrank == 0) write(IOUT,400)
        endif
 
 
- 
+
 
       ! elastic medium
       if(any_elastic) then
@@ -3198,7 +3198,7 @@ if (myrank == 0) write(IOUT,400)
                       (b_veloc_elastic(i,j), i=1,NDIM), &
                       (b_accel_elastic(i,j), i=1,NDIM)
           enddo
-        
+
           if(GPU_MODE) then
             b_displ_2D(1,:) = b_displ_elastic(1,:)
             b_displ_2D(2,:) = b_displ_elastic(2,:)

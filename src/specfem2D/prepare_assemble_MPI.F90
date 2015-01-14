@@ -58,7 +58,7 @@
 ! led us to have two sets of communications.
 !-----------------------------------------------
   subroutine prepare_assemble_MPI()
-  
+
   use specfem_par, only: nspec,ibool,knods, ngnod,nglob, elastic, poroelastic, &
                                 ninterface, max_interface_size, &
                                 my_nelmnts_neighbours, my_interfaces, &
