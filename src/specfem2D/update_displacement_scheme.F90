@@ -102,7 +102,7 @@
     ! check
     if( SIMULATION_TYPE == 3 ) then
       if( PML_BOUNDARY_CONDITIONS )then
-        call exit_MPI(myrank,'acoustic time marching scheme with PML_CONDITIONS on GPU not implemented yet...')
+        call exit_MPI('acoustic time marching scheme with PML_CONDITIONS on GPU not implemented yet...')
       endif
     endif
 
@@ -160,7 +160,7 @@
     if( SIMULATION_TYPE == 3 ) then
       if( PML_BOUNDARY_CONDITIONS )then
        
-          call exit_MPI(myrank,'elastic time marching scheme with PML_CONDITIONS on GPU not implemented yet...')
+          call exit_MPI('elastic time marching scheme with PML_CONDITIONS on GPU not implemented yet...')
    
       endif
     endif
@@ -236,7 +236,7 @@
 
    else
     ! wavefields on GPU
-    call exit_MPI(myrank,'poroelastic time marching scheme on GPU not implemented yet...')
+    call exit_MPI('poroelastic time marching scheme on GPU not implemented yet...')
   endif ! GPU_MODE  
 
 
