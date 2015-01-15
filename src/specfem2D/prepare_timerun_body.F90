@@ -2197,7 +2197,7 @@ do ispec=1,nspec
               do i = 1,NGLLX
 
             if(CUSTOM_REAL == SIZE_REAL) then
-            
+
               rhostore(i,j,ispec)       = sngl(density(1,kmato(ispec)))
               lambdal_unrelaxed_elastic = sngl(poroelastcoef(1,1,kmato(ispec)))
               mul_unrelaxed_elastic     = sngl(poroelastcoef(2,1,kmato(ispec)))
@@ -2211,13 +2211,13 @@ do ispec=1,nspec
               rhostore(i,j,ispec)       = density(1,kmato(ispec))
               lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
               mul_unrelaxed_elastic     = poroelastcoef(2,1,kmato(ispec))
-              mustore(i,j,ispec)        = mul_unrelaxed_elastic   
+              mustore(i,j,ispec)        = mul_unrelaxed_elastic
               kappastore(i,j,ispec)     = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic/3._CUSTOM_REAL
               rho_vp(i,j,ispec)         = density(1,kmato(ispec)) * sqrt((kappastore(i,j,ispec) + &
                                           4._CUSTOM_REAL*mul_unrelaxed_elastic/ &
                                           3._CUSTOM_REAL)/density(1,kmato(ispec)))
               rho_vs(i,j,ispec)         = density(1,kmato(ispec)) * sqrt(mul_unrelaxed_elastic/density(1,kmato(ispec)))
-            endif    
+            endif
 
 
                 enddo

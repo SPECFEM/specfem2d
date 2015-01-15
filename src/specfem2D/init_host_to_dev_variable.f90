@@ -41,14 +41,14 @@
 !========================================================================
 
 
- 
+
 subroutine init_host_to_dev_variable()
 
   use specfem_par
   implicit none
 
-  integer :: i_spec_free, ipoint1D 
-  
+  integer :: i_spec_free, ipoint1D
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! Initialisation variables pour routine prepare_constants_device
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -114,9 +114,9 @@ free_ac_ispec(:)=acoustic_surface(1,:)
         if(codeabs(IEDGE4,ispecabs)) then
         i = 1
         do j = 1,NGLLZ
-  
+
             abs_boundary_ij(1,j,ispecabs) = i
-            abs_boundary_ij(2,j,ispecabs) = j 
+            abs_boundary_ij(2,j,ispecabs) = j
 
             xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
             zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
@@ -128,7 +128,7 @@ free_ac_ispec(:)=acoustic_surface(1,:)
             abs_boundary_jacobian1Dw(j,ispecabs) = jacobian1D * wzgll(j)
 
             cote_abs(ispecabs) = 4
-       
+
           enddo
 
         !--- right absorbing boundary
@@ -137,19 +137,19 @@ free_ac_ispec(:)=acoustic_surface(1,:)
            do j = 1,NGLLZ
 
             abs_boundary_ij(1,j,ispecabs) = i
-            abs_boundary_ij(2,j,ispecabs) = j 
+            abs_boundary_ij(2,j,ispecabs) = j
 
             xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
             zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
-  
+
             abs_boundary_normal(1,j,ispecabs) = + zgamma / jacobian1D
             abs_boundary_normal(2,j,ispecabs) = - xgamma / jacobian1D
 
             abs_boundary_jacobian1Dw(j,ispecabs) = jacobian1D * wzgll(j)
 
             cote_abs(ispecabs) = 2
-       
+
           enddo
 
            !--- bottom absorbing boundary
@@ -158,7 +158,7 @@ free_ac_ispec(:)=acoustic_surface(1,:)
          do i = 1,NGLLX
 
             abs_boundary_ij(1,i,ispecabs) = i
-            abs_boundary_ij(2,i,ispecabs) = j 
+            abs_boundary_ij(2,i,ispecabs) = j
 
               xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
               zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
@@ -170,7 +170,7 @@ free_ac_ispec(:)=acoustic_surface(1,:)
               abs_boundary_jacobian1Dw(i,ispecabs) = jacobian1D * wxgll(i)
 
               cote_abs(ispecabs) = 1
-       
+
           enddo
 
               !--- top absorbing boundary
@@ -179,22 +179,22 @@ free_ac_ispec(:)=acoustic_surface(1,:)
         do i = 1,NGLLX
 
             abs_boundary_ij(1,i,ispecabs) = i
-            abs_boundary_ij(2,i,ispecabs) = j 
+            abs_boundary_ij(2,i,ispecabs) = j
 
               xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
               zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
               jacobian1D = sqrt(xxi**2 + zxi**2)
-              
+
               abs_boundary_normal(1,i,ispecabs) = - zxi / jacobian1D
               abs_boundary_normal(2,i,ispecabs) = + xxi / jacobian1D
 
               abs_boundary_jacobian1Dw(i,ispecabs) = jacobian1D * wxgll(i)
 
               cote_abs(ispecabs) = 3
-       
+
          enddo
- 
-        endif  
+
+        endif
       enddo
    endif
 
@@ -204,8 +204,8 @@ free_ac_ispec(:)=acoustic_surface(1,:)
 
    do i = 1, NSOURCES
 
-      if (is_proc_source(i) == 1) then 
-      nsources_local = nsources_local +1 
+      if (is_proc_source(i) == 1) then
+      nsources_local = nsources_local +1
       endif
    enddo
 
@@ -215,7 +215,7 @@ free_ac_ispec(:)=acoustic_surface(1,:)
 
   j=0
   do i = 1, NSOURCES
-      if (is_proc_source(i) == 1) then 
+      if (is_proc_source(i) == 1) then
         if (j>nsources_local) stop 'error with the number of local sources'
         j=j+1
         source_time_function_loc(j,:) = source_time_function(i,:,1)
@@ -225,16 +225,16 @@ free_ac_ispec(:)=acoustic_surface(1,:)
 
 
   if ( nsources_local > 0 ) then
-    allocate(sourcearray_loc(nsources_local,NDIM,NGLLX,NGLLX))  
-  else 
+    allocate(sourcearray_loc(nsources_local,NDIM,NGLLX,NGLLX))
+  else
     allocate(sourcearray_loc(1,1,1,1))
-  endif 
+  endif
 
   k=0
   do i_source=1,NSOURCES
 
-    if (is_proc_source(i_source) == 1) then 
-    
+    if (is_proc_source(i_source) == 1) then
+
     k = k + 1
 
     if(source_type(i_source) == 1) then
@@ -243,7 +243,7 @@ free_ac_ispec(:)=acoustic_surface(1,:)
 
         do j = 1,NGLLZ
                     do i = 1,NGLLX
-       
+
         sourcearray_loc(k,1,i,j) = sngl(hxis_store(i_source,i) * hgammas_store(i_source,j))
 
                     enddo
@@ -260,7 +260,7 @@ free_ac_ispec(:)=acoustic_surface(1,:)
         enddo
       endif ! is elastic
 
-     else 
+     else
 
          sourcearray_loc(k,:,:,:) = sourcearray(i_source,:,:,:)
          sourcearray_loc(k,:,:,:) = sourcearray(i_source,:,:,:)
@@ -332,7 +332,7 @@ free_ac_ispec(:)=acoustic_surface(1,:)
 
   do i_spec_free = 1, nelem_acoustic_surface
 
- 
+
 if (acoustic_surface(2,i_spec_free) ==acoustic_surface(3,i_spec_free)) then
 
      do j=1,5
@@ -340,12 +340,12 @@ if (acoustic_surface(2,i_spec_free) ==acoustic_surface(3,i_spec_free)) then
      enddo
 
 
-else 
+else
 
       j=1
 
       do i = acoustic_surface(2,i_spec_free), acoustic_surface(3,i_spec_free)
-   
+
       free_surface_ij(1,j,i_spec_free) = i
 
       j=j+1
@@ -361,7 +361,7 @@ if (acoustic_surface(4,i_spec_free) ==acoustic_surface(5,i_spec_free)) then
      enddo
 
 
-else 
+else
 
     j=1
 
@@ -370,7 +370,7 @@ else
       free_surface_ij(2,j,i_spec_free) = i
 
       j=j+1
-      
+
       enddo
 endif
 
@@ -378,7 +378,7 @@ endif
 
 
 !
-  
+
  allocate(coupling_ac_el_ispec(num_fluid_solid_edges))
  allocate(coupling_ac_el_ij(2,NGLLX,num_fluid_solid_edges))
  allocate(coupling_ac_el_normal(2,NGLLX,num_fluid_solid_edges))
@@ -398,13 +398,13 @@ endif
         do ipoint1D = 1,NGLLX
 
           ! get point values for the elastic side, which matches our side in the inverse direction
-        coupling_ac_el_ij(1,ipoint1D,inum) = ivalue(ipoint1D,iedge_acoustic) 
-        coupling_ac_el_ij(2,ipoint1D,inum) = jvalue(ipoint1D,iedge_acoustic) 
+        coupling_ac_el_ij(1,ipoint1D,inum) = ivalue(ipoint1D,iedge_acoustic)
+        coupling_ac_el_ij(2,ipoint1D,inum) = jvalue(ipoint1D,iedge_acoustic)
 
         i = ivalue(ipoint1D,iedge_acoustic)
         j = jvalue(ipoint1D,iedge_acoustic)
 
- 
+
 
 
           if(iedge_acoustic == ITOP)then
@@ -414,7 +414,7 @@ endif
             coupling_ac_el_normal(1,ipoint1D,inum) = - zxi / jacobian1D
             coupling_ac_el_normal(2,ipoint1D,inum) = + xxi / jacobian1D
             coupling_ac_el_jacobian1Dw(ipoint1D,inum) = jacobian1D * wxgll(i)
-           
+
           else if(iedge_acoustic == IBOTTOM)then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
@@ -422,7 +422,7 @@ endif
             coupling_ac_el_normal(1,ipoint1D,inum) = + zxi / jacobian1D
             coupling_ac_el_normal(2,ipoint1D,inum) = - xxi / jacobian1D
             coupling_ac_el_jacobian1Dw(ipoint1D,inum) = jacobian1D * wxgll(i)
-  
+
           else if(iedge_acoustic ==ILEFT)then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
@@ -442,15 +442,15 @@ endif
 
 
         enddo
-      
+
       enddo
 
 
 !!
 
 
-num_colors_outer_acoustic = 0            
-num_colors_inner_acoustic = 0          
+num_colors_outer_acoustic = 0
+num_colors_inner_acoustic = 0
 allocate(num_elem_colors_acoustic(1))
 num_elem_colors_acoustic(1)=0
 
@@ -508,8 +508,8 @@ num_elem_colors_acoustic(1)=0
 !
 
 
-num_colors_outer_elastic = 0            
-num_colors_inner_elastic = 0          
+num_colors_outer_elastic = 0
+num_colors_inner_elastic = 0
 allocate(num_elem_colors_elastic(1))
 num_elem_colors_elastic(1)=0
 
@@ -552,7 +552,7 @@ do ispec=1,nspec
                enddo
        enddo
 enddo
- 
+
 else
 
 do ispec=1,nspec

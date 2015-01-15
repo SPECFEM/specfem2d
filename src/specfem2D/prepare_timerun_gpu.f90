@@ -39,9 +39,9 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
- 
+
  subroutine prepare_timerun_GPU()
-  
+
   use specfem_par
 
   implicit none
@@ -49,7 +49,7 @@
   ! local parameters
   real :: free_mb,used_mb,total_mb
   integer :: nspec_elastic
- 
+
   nspec_elastic = nspec - count_nspec_acoustic
 
   ! GPU_MODE now defined in Par_file
@@ -63,24 +63,24 @@
 
 ! ibool(i,j,ispec)                       : convertisseur numero du point GLL local (i,j) de l'element ispec => global (iglob)
 ! ninterface                             : nombre d'interfaces de la partition locale avec les autres partitions
-! max_nibool_interfaces_ext_mesh         : nombre maximum de points GLL contenus sur une interface 
+! max_nibool_interfaces_ext_mesh         : nombre maximum de points GLL contenus sur une interface
 ! nibool_interfaces_ext_mesh(i)          : nombre de points GLL contenus sur l'interface i
 ! ibool_interfaces_ext_mesh(iGGL,i)      : numero global iglob du ieme point GLL (iGLL) de l'interface i
 ! numabs                                 : tableau des elements spectraux situes en zone absorbante
 ! abs_boundary_ij(i,j,ispecabs)          : coordonnee locale i de j eme point GLL de l'element absorbant ispecabs
 ! abs_boundary_normal(i,j,ispecabs)      : i eme coordonnee du vecteur normal du j eme point GLL de l'element absorbant ispecabs
 ! abs_boundary_jacobian1Dw(i,ispecabs)   : i eme jacobienne ponderee de l'element absorbant jspecabs
-! nelemabs                               : nombre d'elements absorbant 
+! nelemabs                               : nombre d'elements absorbant
 ! cote_abs(ispecabs)                     : numero du cote (1=b, 2=r, 3=t, 4=l ) auquel appartient l'element absorbant ispecabs
 ! ib_left                                : correspondance entre le numero d'element absorbant global et son numero sur le cote
 ! ispec_is_inner                         : booleen vrai si l'element est a l'interieur d'une partition
-! sourcearray_loc(i_src,dim,i,j)         : tableau de ponderation de l'intensite de la source pour chaque point GLL (i,j) 
-!                                          de l'element spectral qui contient la source locale i_src  
+! sourcearray_loc(i_src,dim,i,j)         : tableau de ponderation de l'intensite de la source pour chaque point GLL (i,j)
+!                                          de l'element spectral qui contient la source locale i_src
 ! ispec_selected_source(i)               : numero d'element spectral contenant la source locale i
 ! recloc(i)                              : convertisseur numero rec local i => numero rec global
 ! ispec_selected_rec(i)                  : numero d'element spectral du receveur i
 ! nrecloc                                : nombre de receveurs locaux
-! count_nspec_acoustic                   : nombre local d'elements spectraux acoustiques 
+! count_nspec_acoustic                   : nombre local d'elements spectraux acoustiques
 
   ! prepares general fields on GPU
   !§!§ JC JC here we will need to add GPU support for the new C-PML routines
@@ -137,7 +137,7 @@
 ! b_reclen_potential                     : place en octet prise par b_nelem_acoustic_surface * GLLX
 ! any_elastic                            : vrai s'il existe des elements elastiques
 ! num_fluid_solid_edges                  : nombre d'élements spectraux sur une frontiere elastique/acoustique
-! coupling_ac_el_ispec                   : tableau des elements spectraux frontiere ACOUSTIQUE 
+! coupling_ac_el_ispec                   : tableau des elements spectraux frontiere ACOUSTIQUE
 ! coupling_ac_el_ij                      : coordonnees locales des points GLL sur la frontiere elastique/acoustique
 ! coupling_ac_el_normal(i,j,ispec)       : i eme coordonne de la normale au point GLL j de l'element frontiere ispec
 ! coupling_ac_el_jacobian1Dw(i,ispec)    : jacobienne ponderee du i eme point GLL de l'element frontiere ispec
@@ -188,7 +188,7 @@
                                 nspec_left,&
                                 nspec_right,&
                                 nspec_top,&
-                                nspec_bottom,&      
+                                nspec_bottom,&
                                 any_acoustic, &
                                 num_colors_outer_elastic,num_colors_inner_elastic, &
                                 num_elem_colors_elastic, &
@@ -220,7 +220,7 @@
   ! synchronizes processes
   call sync_all()
 
-                   
+
   ! puts acoustic initial fields onto GPU
   if( any_acoustic ) then
     call transfer_fields_ac_to_device(NGLOB_AB,potential_acoustic, &

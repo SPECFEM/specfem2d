@@ -115,10 +115,10 @@ __global__ void compute_stacey_acoustic_kernel(realw* potential_dot_acoustic,
 
       cpl = sqrt( kappal / rhol );
 
-     
+
         // uses a potential definition of: s = 1/rho grad(chi)
         vel = potential_dot_acoustic[iglob] / rhol;
-      
+
 
       // gets associated, weighted jacobian
       jacobianw = abs_boundary_jacobian1Dw[INDEX2(NGLLX,igll,iface)];
@@ -137,7 +137,7 @@ else if (cote_abs[iface] == 3){ num_local = ib_top[iface] -1 ; atomicAdd(&b_pote
                                      -b_absorb_potential_top[INDEX2(NGLLX,igll,num_local)]);}
 else if (cote_abs[iface] == 4){ num_local = ib_left[iface] -1 ; atomicAdd(&b_potential_dot_dot_acoustic[iglob],
                                      -b_absorb_potential_left[INDEX2(NGLLX,igll,num_local)]);}
-      
+
 }else if( SIMULATION_TYPE == 1 && SAVE_FORWARD ){
         // saves boundary values
 if (cote_abs[iface] == 1) { num_local = ib_bottom[iface] -1 ; b_absorb_potential_bottom[INDEX2(NGLLX,igll,num_local)] = vel*jacobianw/cpl;}
@@ -185,7 +185,7 @@ TRACE("compute_stacey_acoustic_cuda");
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-  
+
 
 
   //  adjoint simulations: reads in absorbing boundary

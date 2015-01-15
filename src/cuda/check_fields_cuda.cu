@@ -522,7 +522,7 @@ void FC_FUNC_(get_norm_acoustic_from_device,
   //initializes
   *norm = 0.0f;
 
- 
+
   // way 2 b: timing Elapsed time: 1.236916e-03
   // launch simple reduction kernel
   realw* h_max,* h_max2,* h_max3;

@@ -228,7 +228,7 @@ void FC_FUNC_(transfer_kernels_el_to_host,
                                        cudaMemcpyDeviceToHost),40102);
     print_CUDA_error_if_any(cudaMemcpy(h_kappa_kl,mp->d_kappa_kl,*NSPEC_AB*NGLL2*sizeof(realw),
                                        cudaMemcpyDeviceToHost),40103);
-  
+
 }
 
 

@@ -74,7 +74,7 @@ __global__ void prepare_boundary_accel_on_device(realw* d_accel, realw* d_send_a
   int ientry,iglob,num_int;
 
   for( int iinterface=0; iinterface < ninterface_el; iinterface++) {
-  
+
      num_int=inum_inter_elastic[iinterface]-1;
 
       if( id < d_nibool_interfaces_ext_mesh[num_int] ) {
@@ -295,7 +295,7 @@ __global__ void assemble_boundary_accel_on_device(realw* d_accel, realw* d_send_
   int ientry,iglob,num_int;
 
   for( int iinterface=0; iinterface < ninterface_el; iinterface++) {
-  
+
      num_int=inum_inter_elastic[iinterface]-1;
 
      if( id < d_nibool_interfaces_ext_mesh[num_int] ) {
@@ -356,7 +356,7 @@ TRACE("\ttransfer_asmbl_accel_to_device");
     }
 
 
-    
+
 
     int blocksize = BLOCKSIZE_TRANSFER;
     int size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_ext_mesh)/((double)blocksize)))*blocksize;

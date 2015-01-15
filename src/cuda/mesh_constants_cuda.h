@@ -302,7 +302,7 @@ typedef struct mesh_ {
   int absorbing_conditions;
 
 
-  
+
 
 
   // ------------------------------------------------------------------ //
@@ -403,7 +403,7 @@ typedef struct mesh_ {
   realw* d_b_absorb_potential_bottom;
   realw* d_b_absorb_potential_left;
   realw* d_b_absorb_potential_right;
-  realw* d_b_absorb_potential_top; 
+  realw* d_b_absorb_potential_top;
   int d_nspec_bottom;
   int d_nspec_left;
   int d_nspec_right;
@@ -411,7 +411,7 @@ typedef struct mesh_ {
   realw* d_b_absorb_elastic_bottom;
   realw* d_b_absorb_elastic_left;
   realw* d_b_absorb_elastic_right;
-  realw* d_b_absorb_elastic_top; 
+  realw* d_b_absorb_elastic_top;
 
 
 

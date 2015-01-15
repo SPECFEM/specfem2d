@@ -102,10 +102,10 @@ void copy_todevice_realw(void** d_array_addr_ptr,realw* h_array,int size){
 
 
 /*
-__global__ void check_field(int* ibool,int* nibool, int max_nibool,int num_interfaces_ext_mesh) 
+__global__ void check_field(int* ibool,int* nibool, int max_nibool,int num_interfaces_ext_mesh)
 {
 
- 
+
   int id = threadIdx.x + blockIdx.x*blockDim.x + blockIdx.y*gridDim.x*blockDim.x;
   int ientry,iglob;
 
@@ -147,11 +147,11 @@ void FC_FUNC_(prepare_constants_device,
                                         realw* h_abs_boundary_normal,
                                         realw* h_abs_boundary_jacobian1Dw,
                                         int* h_num_abs_boundary_faces,
-                                        int* h_cote_abs, 
-                                        int* h_ib_bottom, 
-                                        int* h_ib_left, 
-                                        int* h_ib_right, 
-                                        int* h_ib_top, 
+                                        int* h_cote_abs,
+                                        int* h_ib_bottom,
+                                        int* h_ib_left,
+                                        int* h_ib_right,
+                                        int* h_ib_top,
                                         int* h_ispec_is_inner,
                                         int* nsources_local_f,
                                         realw* h_sourcearrays, realw * h_source_time_function,
@@ -427,7 +427,7 @@ void FC_FUNC_(prepare_fields_acoustic_device,
       copy_todevice_int((void**)&mp->d_free_surface_ispec,free_surface_ispec,mp->num_free_surface_faces);
       copy_todevice_int((void**)&mp->d_free_surface_ijk,free_surface_ijk,
                         2*NGLLX*mp->num_free_surface_faces);
-    
+
   }
 
   // absorbing boundaries
@@ -655,7 +655,7 @@ void FC_FUNC_(prepare_fields_elastic_device,
 
       mp->d_nspec_top = *h_nspec_top;
       print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_elastic_top,2*mp->d_nspec_top*sizeof(realw)*NGLLX),2201);
-      
+
       mp->d_nspec_bottom = *h_nspec_bottom;
       print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_elastic_bottom,2*mp->d_nspec_bottom*sizeof(realw)*NGLLX),2201);
 
@@ -794,7 +794,7 @@ void FC_FUNC_(prepare_fields_elastic_adj_dev,
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_kappa_kl),size*sizeof(realw)),5207);
     print_CUDA_error_if_any(cudaMemset(mp->d_mu_kl,0,size*sizeof(realw)),5216);
     print_CUDA_error_if_any(cudaMemset(mp->d_kappa_kl,0,size*sizeof(realw)),5217);
-  
+
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_dsxx),size*sizeof(realw)),5207);
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_dsxz),size*sizeof(realw)),5207);
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_dszz),size*sizeof(realw)),5207);
@@ -946,11 +946,11 @@ TRACE("prepare_cleanup_device");
 
 
   // receivers
-  if( mp->nrec_local > 0 ){ 
+  if( mp->nrec_local > 0 ){
   cudaFree(mp->d_number_receiver_global);cudaFree(mp->d_seismograms);
   cudaFree(mp->d_cosrot),cudaFree(mp->d_sinrot);
   }
- 
+
   cudaFree(mp->d_ispec_selected_rec);
 
   cudaFree(mp->d_gammar_store_loc);
@@ -1013,7 +1013,7 @@ TRACE("prepare_cleanup_device");
       cudaFree(mp->d_b_absorb_elastic_bottom);
       cudaFree(mp->d_b_absorb_elastic_left);
       cudaFree(mp->d_b_absorb_elastic_right);
-      cudaFree(mp->d_b_absorb_elastic_top); 
+      cudaFree(mp->d_b_absorb_elastic_top);
 
     }
 

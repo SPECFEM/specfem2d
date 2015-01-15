@@ -141,7 +141,7 @@ subroutine compute_forces_elastic_GPU()
 
     ! assemble all the contributions between slices using MPI
     if( phase_is_inner .eqv. .false. ) then
-  
+
 
         ! sends accel values to corresponding MPI interface neighbors
 
@@ -167,7 +167,7 @@ subroutine compute_forces_elastic_GPU()
                         b_tab_requests_send_recv_vector,ninterface_elastic,inum_interfaces_elastic)
         endif !adjoint
 
-      
+
 
     else
 
@@ -195,8 +195,8 @@ subroutine compute_forces_elastic_GPU()
 
  ! multiplies with inverse of mass matrix (note: rmass has been inverted already)
  call kernel_3_a_cuda(Mesh_pointer,deltatover2f,b_deltatover2f)
-  
- 
+
+
 
 end subroutine compute_forces_elastic_GPU
 
@@ -236,7 +236,7 @@ if( SIMULATION_TYPE == 3 ) then
     b_absorb_elastic_left_slice(2,:,:)=b_absorb_elastic_left(3,:,:,NSTEP-it+1)
     b_absorb_elastic_right_slice(2,:,:)=b_absorb_elastic_right(3,:,:,NSTEP-it+1)
     b_absorb_elastic_top_slice(2,:,:)=b_absorb_elastic_top(3,:,:,NSTEP-it+1)
- 
+
     endif
 endif
 

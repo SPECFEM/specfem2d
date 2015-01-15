@@ -495,7 +495,7 @@ if (myrank == 0) write(IOUT,400)
                     hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
                     potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
                                             - source_time_function(i_source,it,i_stage)*hlagrange &
-                                               / kappastore(i,j,ispec_selected_source(i_source)) 
+                                               / kappastore(i,j,ispec_selected_source(i_source))
                   enddo
                 enddo
               else
@@ -506,7 +506,7 @@ if (myrank == 0) write(IOUT,400)
                     hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
                     b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) &
                                           - source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1)*hlagrange &
-                                            / kappastore(i,j,ispec_selected_source(i_source)) 
+                                            / kappastore(i,j,ispec_selected_source(i_source))
                   enddo
                 enddo
               endif
@@ -532,7 +532,7 @@ if (myrank == 0) write(IOUT,400)
                   do i=1,NGLLX
                     iglob = ibool(i,j,ispec_selected_rec(irec))
                     potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
-                                  + adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j) / kappastore(i,j,ispec_selected_rec(irec)) 
+                                  + adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j) / kappastore(i,j,ispec_selected_rec(irec))
                   enddo
                 enddo
               endif ! if element acoustic

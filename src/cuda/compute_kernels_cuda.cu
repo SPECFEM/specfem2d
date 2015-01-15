@@ -204,10 +204,10 @@ __global__ void compute_kernels_cudakernel(int* ispec_is_elastic,
       realw prod = (dsxx[iglob] + dszz[iglob]) *  (b_dsxx[iglob] + b_dszz[iglob]);
 
       // shear modulus kernel
-      mu_kl[ij_ispec] += (dsxx[iglob] * b_dsxx[iglob] + dszz[iglob] * b_dszz[iglob] + 
-                           0.5* dsxz[iglob] * b_dsxz[iglob] - 
-                           prod/3) * deltat; 
-                                
+      mu_kl[ij_ispec] += (dsxx[iglob] * b_dsxx[iglob] + dszz[iglob] * b_dszz[iglob] +
+                           0.5* dsxz[iglob] * b_dsxz[iglob] -
+                           prod/3) * deltat;
+
       // bulk modulus kernel
       kappa_kl[ij_ispec] += prod * deltat;
 
@@ -248,7 +248,7 @@ void FC_FUNC_(compute_kernels_elastic_cuda,
                                                  mp->d_b_dsxz,
                                                  mp->d_b_dszz,
                                                  *deltat);
-  
+
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("compute_kernels_elastic_cuda");

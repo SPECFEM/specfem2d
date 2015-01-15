@@ -95,7 +95,7 @@ __global__ void compute_add_sources_kernel(realw* accel,
         atomicAdd(&accel[iglob*2+1],sourcearrays[INDEX4(nsources_local,NDIM,NGLLX,isource, 1,i,j)]*stf);
 
 
-      
+
     }
   }
 
@@ -106,7 +106,7 @@ __global__ void compute_add_sources_kernel(realw* accel,
 
 extern "C"
 void FC_FUNC_(compute_add_sources_el_cuda,
-              COMPUTE_ADD_SOURCES_EL_CUDA)(long* Mesh_pointer, 
+              COMPUTE_ADD_SOURCES_EL_CUDA)(long* Mesh_pointer,
                                            int* h_phase_is_inner,
                                            int* itf) {
 

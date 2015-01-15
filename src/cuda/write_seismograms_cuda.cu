@@ -172,7 +172,7 @@ int iglob;
     hlagrange = hxir[irec_local + nrec_local*I]*hgammar[irec_local + nrec_local*J];
     sh_dxd[tx] = hlagrange*pressure[iglob];
     __syncthreads();}
- 
+
 for (unsigned int s=1; s<NGLL2_PADDED ; s *= 2) {
   if(tx % (2*s) == 0) sh_dxd[tx] += sh_dxd[tx + s];
   __syncthreads();}
@@ -182,7 +182,7 @@ for (unsigned int s=1; s<NGLL2_PADDED ; s *= 2) {
   if ( tx == 0 ){seismograms[irec_local] = -sh_dxd[0];}
   if ( tx == 1 ){seismograms[irec_local+nrec_local] = 0;}
 
-    } 
+    }
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -207,7 +207,7 @@ void FC_FUNC_(compute_seismograms_cuda,
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(NGLL2_PADDED,1,1);
 
- 
+
  switch (seismotype){
 
 
@@ -256,7 +256,7 @@ void FC_FUNC_(compute_seismograms_cuda,
   break;
 
  case 4 :  //Pression
- 
+
   if (! *any_acoustic_glob) printf("\nWrong type of seismogram for a pure elasticsimulation, use displ veloc or accel in seismotype\n");
   compute_acoustic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(      mp->nrec_local,
                                                                                   mp->d_potential_dot_dot_acoustic,

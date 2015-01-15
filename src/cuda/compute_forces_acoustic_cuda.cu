@@ -261,7 +261,7 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
   gammazl = d_gammaz[offset];
 
   jacobianl = 1.f / (xixl*gammazl-gammaxl*xizl);
-                    
+
 
   // density (reciproc)
   rho_invl = 1.f / d_rhostore[offset];
@@ -274,7 +274,7 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
   // loads hprime into shared memory
   if (threadIdx.x < NGLL2) {
 #ifdef USE_TEXTURES_CONSTANTS
-    sh_hprime_xx[tx] = tex1Dfetch(d_hprime_xx_tex,tx);    
+    sh_hprime_xx[tx] = tex1Dfetch(d_hprime_xx_tex,tx);
 #else
     sh_hprime_xx[tx] = d_hprime_xx[tx];
 #endif
@@ -283,7 +283,7 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
   }
   else if (threadIdx.x < NGLL2 + NGLLX) {
 #ifdef USE_TEXTURES_CONSTANTS
-    sh_wxgll[tx] = tex1Dfetch(d_wxgll_xx_tex,tx);   
+    sh_wxgll[tx] = tex1Dfetch(d_wxgll_xx_tex,tx);
 #else
     // changing iglob indexing to match fortran row changes fast style
     sh_wxgll[tx] = wxgll[tx];
@@ -482,7 +482,7 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
         // coloring
         flops = 15559 * nb_blocks_to_compute;
       }
-    
+
     printf("  performance: %f GFlop/s\n", flops/time * 1.e-9);
   }
 
@@ -730,7 +730,7 @@ TRACE("acoustic_enforce_free_surf_cuda");
                                                                                mp->d_ibool,
                                                                                mp->d_ispec_is_acoustic);
     }
-  
+
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("enforce_free_surface_cuda");

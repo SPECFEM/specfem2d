@@ -115,7 +115,7 @@ TRACE("transfer_boun_pot_from_device");
 
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
-  
+
     if(*FORWARD_OR_ADJOINT == 1) {
 
      prepare_boundary_potential_on_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_dot_dot_acoustic,

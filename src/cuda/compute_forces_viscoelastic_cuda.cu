@@ -991,7 +991,7 @@ void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
                                                                               mp->d_dsxx,
                                                                               mp->d_dsxz,
                                                                               mp->d_dszz);
-  
+
 
             // backward/reconstructed wavefield
             if(mp->simulation_type == 3) {
@@ -1019,12 +1019,12 @@ void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
 
   // Cuda timing
   if( CUDA_TIMING ){
-    
+
       if( ANISOTROPY ){
         stop_timing_cuda(&start,&stop,"Kernel_2_noatt_ani_impl");
        }else{
-        
-          
+
+
             realw time;
             stop_timing_cuda(&start,&stop,"Kernel_2_noatt_iso_impl",&time);
             // time in seconds
@@ -1034,11 +1034,11 @@ void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
             // hand-counts: 89344 * number-of-blocks
             realw flops = 89344 * nb_blocks_to_compute;
             printf("  performance: %f GFlops/s\n", flops/time *(1./1000./1000./1000.));
-          
+
         }
       }
-    
-  
+
+
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("Kernel_2_impl");
@@ -1088,7 +1088,7 @@ void FC_FUNC_(compute_forces_viscoelastic_cuda,
       print_CUDA_error_if_any(cudaBindTexture(0, d_b_accel_tex_ref_ptr, mp->d_b_accel, &channelDesc, sizeof(realw)*size), 4003);
                                    }}
     #else
-      cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();   
+      cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
       print_CUDA_error_if_any(cudaBindTexture(0, &d_displ_tex, mp->d_displ, &channelDesc, sizeof(realw)*size), 4001);
       if( mp->use_mesh_coloring_gpu ) print_CUDA_error_if_any(cudaBindTexture(0, &d_accel_tex, mp->d_accel, &channelDesc, sizeof(realw)*size), 4003);
 

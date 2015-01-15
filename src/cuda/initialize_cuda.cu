@@ -305,7 +305,7 @@ void FC_FUNC_(initialize_cuda_device,
 /*                                  Init for CUDA aware MPI ( done before MPI Init )                                               */
 
 /***********************************************************************************************************************************/
-   
+
 
 extern "C"
 void FC_FUNC_(initialize_cuda_aware_mpi,
@@ -318,7 +318,7 @@ void FC_FUNC_(initialize_cuda_aware_mpi,
 
   int myrank;
 
-  if ((localRankStr = getenv(ENV_LOCAL_RANK)) != NULL) myrank = atoi(localRankStr);	
+  if ((localRankStr = getenv(ENV_LOCAL_RANK)) != NULL) myrank = atoi(localRankStr);
 
   device_count = 0;
   cudaGetDeviceCount(&device_count);

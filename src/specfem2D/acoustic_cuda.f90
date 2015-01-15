@@ -180,15 +180,15 @@ subroutine compute_forces_acoustic_GPU()
     endif !phase_is_inner
 
   endif !interface_acoustic
-  
+
 
   enddo
 
 
  ! divides pressure with mass matrix
   call kernel_3_a_acoustic_cuda(Mesh_pointer)
- 
-    
+
+
 ! corrector:
 ! updates the chi_dot term which requires chi_dot_dot(t+delta)
   call kernel_3_b_acoustic_cuda(Mesh_pointer,deltatover2f,b_deltatover2f)
@@ -227,7 +227,7 @@ end subroutine compute_forces_acoustic_GPU
 
   ! checks if anything to do
   if( nelemabs == 0 ) return
-  
+
 
 if( SIMULATION_TYPE == 3 ) then
     if( phase_is_inner .eqv. .false. ) then
@@ -247,7 +247,7 @@ endif
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD ) then
     ! writes out absorbing boundary value only when second phase is running
     if( phase_is_inner .eqv. .true. ) then
-      
+
     b_absorb_acoustic_bottom(:,:,it) = b_absorb_potential_bottom_slice(:,:)
     b_absorb_acoustic_right(:,:,it) = b_absorb_potential_right_slice(:,:)
     b_absorb_acoustic_top(:,:,it) = b_absorb_potential_top_slice(:,:)
@@ -265,7 +265,7 @@ endif
 
   use constants
   use specfem_par,only: it,SIMULATION_TYPE,NSTEP, nadj_rec_local,Mesh_pointer
-                        
+
   implicit none
 
 ! communication overlap

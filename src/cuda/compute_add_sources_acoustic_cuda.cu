@@ -90,13 +90,13 @@ __global__ void compute_add_sources_acoustic_kernel(realw* potential_dot_dot_aco
         iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)] - 1;
 
         kappal = kappastore[INDEX3(NGLLX,NGLLX,i,j,ispec)];
-   
+
         stf = source_time_function[INDEX2(nsources_local,isource,it)]/kappal;
         atomicAdd(&potential_dot_dot_acoustic[iglob],
                   -sourcearrays[INDEX4(nsources_local,NDIM,NGLLX,isource, 0,i,j)]*stf);
 
-       
-      
+
+
     }
   }
 }
@@ -238,7 +238,7 @@ __global__ void add_sources_ac_SIM_TYPE_2_OR_3_kernel(realw* potential_dot_dot_a
         realw  gammar = gammar_store[INDEX2(nadj_rec_local,irec_local,j)];
 
         realw  source_adj = source_adjointe[INDEX3(nadj_rec_local,NSTEP,irec_local,it,0)];
- 
+
 
         // beware, for acoustic medium, a pressure source would be taking the negative
         // and divide by Kappa of the fluid;
@@ -247,11 +247,11 @@ __global__ void add_sources_ac_SIM_TYPE_2_OR_3_kernel(realw* potential_dot_dot_a
         //          the idea is to have e.g. a pressure source, where all 3 components would be the same
 
 
-        realw stf = source_adj * gammar * xir / kappal ; 
+        realw stf = source_adj * gammar * xir / kappal ;
 
         atomicAdd(&potential_dot_dot_acoustic[iglob],stf);
 
-    
+
       }
     }
   }
