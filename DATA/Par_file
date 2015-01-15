@@ -72,11 +72,11 @@ enreg_surf_same_vertical        = .true.         # receivers inside the medium o
 # display parameters
 NSTEP_BETWEEN_OUTPUT_INFO       = 100            # every how many time steps we display information about the simulation (costly, do not use a very small value)
 ####
-NSTEP_BETWEEN_OUTPUT_IMAGES     = 30            # every how many time steps we draw JPEG or PostScript pictures of the simulation (costly, do not use a very small value)
+NSTEP_BETWEEN_OUTPUT_IMAGES     = 100            # every how many time steps we draw JPEG or PostScript pictures of the simulation (costly, do not use a very small value)
 cutsnaps                        = 1.             # minimum amplitude kept in % for the JPEG and PostScript snapshots; amplitudes below that are muted
 #### for JPEG color images ####
 output_color_image              = .true.         # output JPEG color image of the results every NSTEP_BETWEEN_OUTPUT_IMAGES time steps or not
-imagetype_JPEG                  = 10              # display 1=displ_Ux 2=displ_Uz 3=displ_norm 4=veloc_Vx 5=veloc_Vz 6=veloc_norm 7=accel_Ax 8=accel_Az 9=accel_norm 10=pressure
+imagetype_JPEG                  = 2              # display 1=displ_Ux 2=displ_Uz 3=displ_norm 4=veloc_Vx 5=veloc_Vz 6=veloc_norm 7=accel_Ax 8=accel_Az 9=accel_norm 10=pressure
 factor_subsample_image          = 1.0d0          # (double precision) factor to subsample color images output by the code (useful for very large models)
 USE_CONSTANT_MAX_AMPLITUDE      = .false.        # by default the code normalizes each image independently to its maximum; use this option to use the global maximum below instead
 CONSTANT_MAX_AMPLITUDE_TO_USE   = 1.17d4         # constant maximum amplitude to use for all color images if the above USE_CONSTANT_MAX_AMPLITUDE option is true
@@ -85,7 +85,7 @@ DRAW_SOURCES_AND_RECEIVERS      = .true.         # display sources as orange cro
 DRAW_WATER_IN_BLUE              = .true.         # display acoustic layers as constant blue in JPEG images, because they likely correspond to water in the case of ocean acoustics or in the case of offshore oil industry experiments (if off, display them as greyscale, as for elastic or poroelastic elements, for instance for acoustic-only oil industry models of solid media)
 USE_SNAPSHOT_NUMBER_IN_FILENAME = .false.        # use snapshot number in the file name of JPEG color snapshots instead of the time step (for instance to create movies in an easier way later)
 #### for PostScript snapshots ####
-output_postscript_snapshot      = .false.         # output Postscript snapshot of the results every NSTEP_BETWEEN_OUTPUT_IMAGES time steps or not
+output_postscript_snapshot      = .true.         # output Postscript snapshot of the results every NSTEP_BETWEEN_OUTPUT_IMAGES time steps or not
 imagetype_postscript            = 1              # display 1=displ vector 2=veloc vector 3=accel vector; small arrows are displayed for the vectors
 meshvect                        = .true.         # display mesh on PostScript plots or not
 modelvect                       = .false.        # display velocity model on PostScript plots or not
