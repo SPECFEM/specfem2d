@@ -201,16 +201,32 @@ specfem2D_OBJECTS += $(JPEGLIB_OBJECTS)
 ###
 
 cuda_specfem2D_OBJECTS = \
+	$O/assemble_MPI_scalar_cuda.cuda.o \
+	$O/assemble_MPI_vector_cuda.cuda.o \
+	$O/check_fields_cuda.cuda.o \
+	$O/compute_add_sources_acoustic_cuda.cuda.o \
+	$O/compute_add_sources_viscoelastic_cuda.cuda.o \
+	$O/compute_coupling_cuda.cuda.o \
+	$O/compute_forces_acoustic_cuda.cuda.o \
+	$O/compute_forces_viscoelastic_cuda.cuda.o \
+	$O/compute_kernels_cuda.cuda.o \
+	$O/compute_stacey_acoustic_cuda.cuda.o \
+	$O/compute_stacey_viscoelastic_cuda.cuda.o \
+	$O/initialize_cuda.cuda.o \
+	$O/prepare_mesh_constants_cuda.cuda.o \
+	$O/transfer_fields_cuda.cuda.o \
+	$O/update_displacement_cuda.cuda.o \
+	$O/write_seismograms_cuda.cuda.o \
+	$O/acoustic_cuda.spec.o \
+	$O/elastic_cuda.spec.o \
+	$O/init_host_to_dev_variable.spec.o \
+	$O/prepare_timerun_gpu.spec.o \
 	$(EMPTY_MACRO)
 
 
 cuda_specfem2D_STUBS = \
-	$O/specfem2D_gpu_cuda_method_stubs.cudacc.o \
 	$O/specfem2D_wrapper_cuda_method_stubs.cudaf90.o \
-	$(EMPTY_MACRO)
-
-cuda_specfem2D_DEVICE_OBJ = \
-	$O/cuda_device_obj.o \
+	$O/specfem2D_gpu_cuda_method_stubs.cudacc.o \
 	$(EMPTY_MACRO)
 
 #######################################
@@ -226,32 +242,24 @@ specfem2D: xspecfem2D
 xspecfem2D: $E/xspecfem2D
 
 
-#ifeq ($(CUDA),yes)
+ifeq ($(CUDA),yes)
 ## cuda version
+${E}/xspecfem2D: $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS) $(cuda_specfem2D_OBJECTS)
 
-#ifeq ($(CUDA5),yes)
-
+ifeq ($(CUDA5),yes)
 ## cuda 5 version
-#${E}/xspecfem2D: $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS) $(cuda_specfem2D_OBJECTS) $(cuda_specfem2D_DEVICE_OBJ)
-#	@echo ""
-#	@echo "building xspecfem2D with CUDA 5 support"
-#	@echo ""
-#	$(LINK) $(DEF_FFLAGS) -o ${E}/xspecfem2D $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS) $(cuda_specfem2D_OBJECTS) $(cuda_specfem2D_DEVICE_OBJ) $(MPILIBS) $(CUDA_LINK)
-#	@echo ""
-
-#else
-
+	@echo ""
+	@echo "building xspecfem2D with CUDA 5 support"
+	@echo ""
+else
 ## cuda 4 version
-#${E}/xspecfem2D: $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS) $(cuda_specfem2D_OBJECTS)
-#	@echo ""
-#	@echo "building xspecfem2D with CUDA 4 support"
-#	@echo ""
-#	$(LINK) $(DEF_FFLAGS) -o ${E}/xspecfem2D $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS) $(cuda_specfem2D_OBJECTS) $(MPILIBS) $(CUDA_LINK)
-#	@echo ""
-
-#endif
-
-#else
+	@echo ""
+	@echo "building xspecfem2D with CUDA 4 support"
+	@echo ""
+endif
+	$(LINK) $(DEF_FFLAGS) -o ${E}/xspecfem2D $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS) $(cuda_specfem2D_OBJECTS) $(MPILIBS) $(CUDA_LINK)
+	@echo ""
+else
 
 ## non-cuda version
 ${E}/xspecfem2D: $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS) $(cuda_specfem2D_STUBS)
@@ -261,7 +269,7 @@ ${E}/xspecfem2D: $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS) $(cuda_specfem
 	$(LINK) $(DEF_FFLAGS) -o ${E}/xspecfem2D $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS) $(cuda_specfem2D_STUBS) $(MPILIBS)
 	@echo ""
 
-#endif
+endif
 
 
 
@@ -326,6 +334,10 @@ $O/specfem2D.spec.o: $O/specfem2D_par.spec.o
 $O/update_displacement_scheme.spec.o: $O/specfem2D_par.spec.o
 $O/write_output_SU.spec.o: $O/specfem2D_par.spec.o
 $O/write_seismograms.spec.o: $O/specfem2D_par.spec.o
+$O/acoutic_cuda.spec.o: $O/specfem2D_par.spec.o
+$O/elastic_cuda.spec.o: $O/specfem2D_par.spec.o
+$O/init_host_to_dev_variable.spec.o: $O/specfem2D_par.spec.o
+$O/prepare_timerun_gpu.spec.o: $O/specfem2D_par.spec.o
 
 
 ##
@@ -344,14 +356,6 @@ $O/%.spec.o: $S/%.F90 ${SETUP}/constants.h
 
 $O/%.cc.o: $S/%.c ${SETUP}/config.h
 	${CC} ${CFLAGS} -c -o $@ $<
-
-
-###
-### CUDA 5 only
-###
-
-$(cuda_specfem2D_DEVICE_OBJ): $(cuda_OBJECTS)
-	${NVCCLINK} -o $(cuda_specfem2D_DEVICE_OBJ) $(cuda_OBJECTS)
 
 
 ##

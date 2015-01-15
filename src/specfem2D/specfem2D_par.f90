@@ -808,5 +808,48 @@ module specfem_par
   logical :: ANY_ANISOTROPY
   integer, dimension(:,:), allocatable  :: gather_ispec_selected_rec
   real(kind=CUSTOM_REAL) b_deltatf,b_deltatover2f,b_deltatsquareover2f
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: kappastore,mustore, rhostore
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rho_vp,rho_vs
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: abs_boundary_normal
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: abs_boundary_jacobian1Dw
+  integer, dimension(:,:,:), allocatable :: abs_boundary_ij
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable ::  source_time_function_loc
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: free_surface_normal
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: free_surface_jacobian2Dw
+  integer, dimension(:,:,:), allocatable :: free_surface_ij
+  integer, dimension(:), allocatable :: free_ac_ispec
+  integer :: num_free_surface_faces
+  integer, dimension(:), allocatable :: cote_abs
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
+            c11store,c12store,c13store,c15store,c23store,c25store,c33store,c35store,c55store
+  integer :: num_colors_outer_acoustic,num_colors_inner_acoustic
+  integer, dimension(:), allocatable :: num_elem_colors_acoustic
+  integer :: num_colors_outer_elastic,num_colors_inner_elastic
+  integer, dimension(:), allocatable :: num_elem_colors_elastic
+  integer :: nsources_local
+  integer :: num_phase_ispec_elastic,nspec_inner_elastic,nspec_outer_elastic
+  integer, dimension(:,:), allocatable :: phase_ispec_inner_elastic
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: cosrot_irecf, sinrot_irecf
+  integer, dimension(:), allocatable :: coupling_ac_el_ispec
+  integer, dimension(:,:,:), allocatable :: coupling_ac_el_ij
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: coupling_ac_el_normal
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: coupling_ac_el_jacobian1Dw
+  integer, dimension(:), allocatable :: ispec_selected_source_loc
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: sourcearray_loc
+  integer, dimension(:,:), allocatable :: phase_ispec_inner_acoustic
+  integer, dimension(:), allocatable  :: tab_requests_send_recv_scalar
+  integer, dimension(:), allocatable  :: b_tab_requests_send_recv_scalar
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_scalar_ext_mesh
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_buffer_send_scalar_ext_mesh
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_recv_scalar_ext_mesh
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_buffer_recv_scalar_ext_mesh
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_send_vector_ext_mesh
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_buffer_send_vector_ext_mesh
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_recv_vector_ext_mesh
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_buffer_recv_vector_ext_mesh
+  integer, dimension(:), allocatable  :: tab_requests_send_recv_vector
+  integer, dimension(:), allocatable  :: b_tab_requests_send_recv_vector
+  integer :: num_phase_ispec_acoustic,nspec_inner_acoustic,nspec_outer_acoustic
+
 
 end module specfem_par

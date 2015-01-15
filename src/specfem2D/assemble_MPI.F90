@@ -584,14 +584,14 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
 
 
 
-      call isend_cr(buffer_send_scalar_ext_mesh(1:nibool_interfaces_ext_mesh(num_interface),num_interface), &
+      call isend_cr(buffer_send_scalar_ext_mesh(1,num_interface), &
                     nibool_interfaces_ext_mesh(num_interface), &
                     my_neighbours_ext_mesh(num_interface), &
                     itag, &
                     tab_requests_send_recv_ext_mesh(num_interface) )
 
       ! receive request
-      call irecv_cr(buffer_recv_scalar_ext_mesh(1:nibool_interfaces_ext_mesh(num_interface),num_interface), &
+      call irecv_cr(buffer_recv_scalar_ext_mesh(1,num_interface), &
                     nibool_interfaces_ext_mesh(num_interface), &
                     my_neighbours_ext_mesh(num_interface), &
                     itag, &
@@ -606,7 +606,7 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine assemble_MPI_scalar_write_cuda(NPROC,NGLOB_AB, &
+  subroutine assemble_MPI_scalar_write_cuda(NPROC, &
                         Mesh_pointer, &
                         buffer_recv_scalar_ext_mesh,num_interfaces_ext_mesh, &
                         max_nibool_interfaces_ext_mesh, &
@@ -620,7 +620,7 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
   implicit none
 
   integer :: NPROC
-  integer :: NGLOB_AB,ninterface_acoustic
+  integer :: ninterface_acoustic
   integer(kind=8) :: Mesh_pointer
 
   integer :: num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh

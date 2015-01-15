@@ -54,9 +54,11 @@ if (myrank == 0) write(IOUT,400)
 
     do i_stage=1, stage_time_scheme
 
+
+     call update_displacement_precondition_newmark()
+
       if (.NOT. GPU_MODE) then
 
-      call update_displacement_precondition_newmark()
       if (AXISYM) then
         do ispec=1,nspec
           if (elastic(ispec) .and. is_on_the_axis(ispec)) then
@@ -492,7 +494,8 @@ if (myrank == 0) write(IOUT,400)
                     iglob = ibool(i,j,ispec_selected_source(i_source))
                     hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
                     potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
-                                            - source_time_function(i_source,it,i_stage)*hlagrange
+                                            - source_time_function(i_source,it,i_stage)*hlagrange &
+                                               / kappastore(i,j,ispec_selected_source(i_source)) 
                   enddo
                 enddo
               else
@@ -502,7 +505,8 @@ if (myrank == 0) write(IOUT,400)
                     iglob = ibool(i,j,ispec_selected_source(i_source))
                     hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
                     b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) &
-                                          - source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1)*hlagrange
+                                          - source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1)*hlagrange &
+                                            / kappastore(i,j,ispec_selected_source(i_source)) 
                   enddo
                 enddo
               endif
@@ -528,7 +532,7 @@ if (myrank == 0) write(IOUT,400)
                   do i=1,NGLLX
                     iglob = ibool(i,j,ispec_selected_rec(irec))
                     potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
-                                  + adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
+                                  + adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j) / kappastore(i,j,ispec_selected_rec(irec)) 
                   enddo
                 enddo
               endif ! if element acoustic

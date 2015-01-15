@@ -457,7 +457,7 @@ subroutine prepare_timerun_pml()
   include "precision.h"
 #endif
 
-
+if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'error : PML not implemented on GPU mode. Please use Stacey instead'
 
   ! PML absorbing conditions
     anyabs_glob=anyabs

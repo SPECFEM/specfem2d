@@ -52,6 +52,22 @@ cuda_TARGETS = \
 	$(EMPTY_MACRO)
 
 cuda_OBJECTS = \
+	$O/assemble_MPI_scalar_cuda.cuda.o \
+	$O/assemble_MPI_vector_cuda.cuda.o \
+	$O/check_fields_cuda.cuda.o \
+	$O/compute_add_sources_acoustic_cuda.cuda.o \
+	$O/compute_add_sources_viscoelastic_cuda.cuda.o \
+	$O/compute_coupling_cuda.cuda.o \
+	$O/compute_forces_acoustic_cuda.cuda.o \
+	$O/compute_forces_viscoelastic_cuda.cuda.o \
+	$O/compute_kernels_cuda.cuda.o \
+	$O/compute_stacey_acoustic_cuda.cuda.o \
+	$O/compute_stacey_viscoelastic_cuda.cuda.o \
+	$O/initialize_cuda.cuda.o \
+	$O/prepare_mesh_constants_cuda.cuda.o \
+	$O/transfer_fields_cuda.cuda.o \
+	$O/update_displacement_cuda.cuda.o \
+	$O/write_seismograms_cuda.cuda.o \
 	$(EMPTY_MACRO)
 
 
@@ -61,10 +77,6 @@ cuda_specfem2D_STUBS = \
 	$(EMPTY_MACRO)
 
 
-
-cuda_DEVICE_OBJ = \
-	$O/cuda_device_obj.o \
-	$(EMPTY_MACRO)
 
 
 #######################################
