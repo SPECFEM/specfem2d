@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
     while ( strcmp(&chaine[0], &nodes[0]) != 0)
     {
       fscanf(fichier, "%s", &chaine[0]);
-    }             // Lorsque l'on sort de cette boucle, on a trouvé $Nodes
+    }             // Lorsque l'on sort de cette boucle, on a trouve $Nodes
 
   /* FDEBUT DE L'ECRITURE DE NODE */
     fichierNode = fopen("nodes", "r+");
@@ -44,47 +44,47 @@ int main(int argc, char *argv[])
       fprintf(fichierNode, "%li \n", infos[0]);     // on note le nombre de noeuds
 int nbrNode = infos[0];
       car = fgetc(fichier);
-      while(  car != 36)        // Boucle permettant l'écriture du fichier contenant les coordonées des noeuds§.
+      while(  car != 36)        // Boucle permettant l'ecriture du fichier contenant les coordonees des noeuds?.
       {
         fseek(fichier, -1, SEEK_CUR);
         fscanf(fichier, "%f %f %f %f", &coordNoeud[0], &coordNoeud[1], &coordNoeud[2], &coordNoeud[3]);
         fprintf(fichierNode, "%f %f \n", coordNoeud[1], coordNoeud[2]);
 
-      if(coordNoeud[2] == 0)    // Calcul du nombre d'éléments suivant x.
+      if(coordNoeud[2] == 0)    // Calcul du nombre d'elements suivant x.
       {
         x++;
       }
 
 int etat = ((coordNoeud[0]*100) / nbrNode);
-printf("\r- Ecriture des coordonées des noeuds : %d %%", etat);
+printf("\r- Ecriture des coordonees des noeuds : %d %%", etat);
         car = fgetc(fichier);
         car = fgetc(fichier);
       }
 
       fclose(fichierNode);
     }
-    else {printf("!!! Erreur : Problème à l'ouverture du fichier nodes. \n"); return 0;}
+    else {printf("!!! Erreur : Probleme a l'ouverture du fichier nodes. \n"); return 0;}
  /* FIN DE L'ECRITURE DE NODE */
 
-    printf("\n- Ecriture du fichier node terminée. \n");
+    printf("\n- Ecriture du fichier node terminee. \n");
     x--;
-    printf("- Nombre d'éléments suivant x = %d \n", x);
+    printf("- Nombre d'elements suivant x = %d \n", x);
 
 /* DEBUT DE L'ECRITURE DE ELEMENT ET METERIAL */
     fichierElem = fopen("element", "r+");
     if (fichierElem != NULL)
           {
-// printf("début écriture element et material \n");
+// printf("debut ecriture element et material \n");
       fichierMat = fopen("material", "r+");
       if (fichierMat != NULL)
         {
         fscanf(fichier, "%s", &chaine[0]); // pour sauter une ligne
         fscanf(fichier, "%s", &chaine[0]);
         fscanf(fichier, "%li", &infos[0]);
-        fprintf(fichierElem, "%li \n", infos[0]); // on note le nombre d'éléments
+        fprintf(fichierElem, "%li \n", infos[0]); // on note le nombre d'elements
 int nbrElem = infos[0];
         car = fgetc(fichier);
-        while(  car != 36)      // Pour s'arrêter au prochain $.
+        while(  car != 36)      // Pour s'arreter au prochain $.
           {
           fseek(fichier, -1, SEEK_CUR);
           fscanf(fichier, "%li %li %li", &infos[0], &infos[1], &infos[2]);
@@ -96,7 +96,7 @@ int nbrElem = infos[0];
               fscanf(fichier, "%li", &numNode[i]);
               }
 int etat = ((infos[0]*100) / nbrElem);
-printf("\r- Ecriture des éléments et materiaux : %d %%", etat);
+printf("\r- Ecriture des elements et materiaux : %d %%", etat);
             fprintf(fichierMat, "%li \n", numNode[0]);    //on note le numero du matos
             fscanf(fichier, "%li %li %li %li", &numNode[0], &numNode[1], &numNode[2], &numNode[3]);
             fprintf(fichierElem, "%li %li %li %li\n", numNode[0], numNode[1], numNode[2], numNode[3]); // on note les ID des nodes
@@ -130,7 +130,7 @@ else
   {
   printf("Erreur ouverture fichier \n"); return 0;
   }
-printf("\n- Ecriture des fichiers element et material terminée. \n");
+printf("\n- Ecriture des fichiers element et material terminee. \n");
 return 0;
 }
 

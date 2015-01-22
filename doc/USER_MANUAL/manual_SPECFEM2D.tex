@@ -369,8 +369,8 @@ If you use the Intel ifort compiler to compile the code, we recommend that you u
 For further details about the installation of SCOTCH,
 go to subdirectory \texttt{scotch\_5.1.11/} and read \texttt{INSTALL.txt}. You may want to download more recent versions of SCOTCH in the future from \urlwithparentheses{http://www.labri.fr/perso/pelegrin/scotch/scotch_en.html} . Support for the METIS graph partitioner has been discontinued because SCOTCH is more recent and performs better.
 
-When compiling the SCOTCH source code, if you get a message such as: "ld: cannot find -lz", 
-the Zlib compression development library is probably missing on your machine and you will need to install it or ask your system administrator to 
+When compiling the SCOTCH source code, if you get a message such as: "ld: cannot find -lz",
+the Zlib compression development library is probably missing on your machine and you will need to install it or ask your system administrator to
 do so. On Linux machines the package is often called "zlib1g-dev" or similar. (thus "sudo apt-get install zlib1g-dev" would install it)
 
 You may edit the \texttt{Makefile} for more specific modifications. Especially, there are several options available:
@@ -848,7 +848,7 @@ To go from strike / dip / slip to CMTSOLUTION moment-tensor format using the cla
 but then it is another story to make a good 2D approximation of that, because in plain-strain P-SV what you get is the equivalent of a line source in the third direction (orthogonal to the plane) rather than a 3D point source
 For more details on this see e.g. Section 7.3 "Two-dimensional point sources" of the book of \cite{Pil79}. That book being hard to find, we scanned the related pages in file\\
 \texttt{discussion\_of\_2D\_sources\_and\_approximations\_from\_Pilant\_1979.pdf} in the same directory as this users manual.
-Another very useful reference addressing that is \cite{HeVi88} and its recent extension 
+Another very useful reference addressing that is \cite{HeVi88} and its recent extension
 (Global synthetic seismograms using a 2D finite-difference method,
 Dunzhu Li, Don Helmberger, Robert W. Clayton and Daoyuan Sun, submitted to Geophys. J. Int, 2014).
 
