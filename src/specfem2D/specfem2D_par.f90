@@ -713,7 +713,7 @@ module specfem_par
 
   ! parameters used in LDDRK scheme, from equation (2) of
   ! Berland, J., Bogey, C., & Bailly, C.
-  ! Low-dissipation and low-dispersion fourth-order Runge–Kutta algorithm, Computers & Fluids, 35(10), 1459-1463.
+  ! Low-dissipation and low-dispersion fourth-order Runge-Kutta algorithm, Computers & Fluids, 35(10), 1459-1463.
   Data alpha_LDDRK /0.0_CUSTOM_REAL,-0.737101392796_CUSTOM_REAL, &
                     -1.634740794341_CUSTOM_REAL,-0.744739003780_CUSTOM_REAL, &
                     -1.469897351522_CUSTOM_REAL,-2.813971388035_CUSTOM_REAL/

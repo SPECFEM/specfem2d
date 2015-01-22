@@ -83,7 +83,7 @@
 ! count_nspec_acoustic                   : nombre local d'elements spectraux acoustiques
 
   ! prepares general fields on GPU
-  !§!§ JC JC here we will need to add GPU support for the new C-PML routines
+  !! JC JC here we will need to add GPU support for the C-PML routines
 
 
   call prepare_constants_device(Mesh_pointer, &
@@ -127,7 +127,7 @@
 
 !!! Parametres fournis
 
-! rmass_inverse_acoustic                 : matrice acoustique inversée de taille nglob (nglob_acoustic = nglob s'il existe des elements acoustiques)
+! rmass_inverse_acoustic                 : matrice acoustique inversee de taille nglob (nglob_acoustic = nglob s'il existe des elements acoustiques)
 ! num_phase_ispec_acoustic               : max entre nb d'element spectraux acoustiques interieur et exterieur
 ! phase_ispec_inner_acoustic(i,j)        : i eme element spectral acoustique interieur si j=2 exterieur si j=1
 ! acoustic(i)                            : vrai si l'element spectral i est acoustique
@@ -136,14 +136,14 @@
 ! free_surface_ij(i,j,ispec)             : i eme coordonnee du j eme point GLL de l'element spectral libre ispec
 ! b_reclen_potential                     : place en octet prise par b_nelem_acoustic_surface * GLLX
 ! any_elastic                            : vrai s'il existe des elements elastiques
-! num_fluid_solid_edges                  : nombre d'élements spectraux sur une frontiere elastique/acoustique
+! num_fluid_solid_edges                  : nombre d'elements spectraux sur une frontiere elastique/acoustique
 ! coupling_ac_el_ispec                   : tableau des elements spectraux frontiere ACOUSTIQUE
 ! coupling_ac_el_ij                      : coordonnees locales des points GLL sur la frontiere elastique/acoustique
 ! coupling_ac_el_normal(i,j,ispec)       : i eme coordonne de la normale au point GLL j de l'element frontiere ispec
 ! coupling_ac_el_jacobian1Dw(i,ispec)    : jacobienne ponderee du i eme point GLL de l'element frontiere ispec
-! num_colors_outer_acoustic              : a initialiser plus tard quand USE_COLOR_MESH sera implementé
-! num_colors_inner_acoustic              : a initialiser plus tard quand USE_COLOR_MESH sera implementé
-! num_elem_colors_acoustic               : a initialiser plus tard quand USE_COLOR_MESH sera implementé
+! num_colors_outer_acoustic              : a initialiser plus tard quand USE_COLOR_MESH sera implemente
+! num_colors_inner_acoustic              : a initialiser plus tard quand USE_COLOR_MESH sera implemente
+! num_elem_colors_acoustic               : a initialiser plus tard quand USE_COLOR_MESH sera implemente
 
 
   ! prepares fields on GPU for acoustic simulations
@@ -169,16 +169,16 @@
 
 !!! Parametres fournis
 
-! rmass_inverse_elastic                 : matrice elastique inversée de taille nglob_acoustic (nglob_acoustic = nglob s'il existe des elements acoustiques)
+! rmass_inverse_elastic                 : matrice elastique inversee de taille nglob_acoustic (nglob_acoustic = nglob s'il existe des elements acoustiques)
 ! num_phase_ispec_elastic               : max entre nb d'element spectraux elastiques interieur et exterieur
 ! phase_ispec_inner_elastic(i,j)        : i eme element spectral elastique interieur si j=2 exterieur si j=1
 ! elastic(i)                            : vrai si l'element spectral i est elastique
-! num_colors_outer_elastic              : a initialiser plus tard quand USE_COLOR_MESH sera implementé
-! num_colors_inner_elastic              : a initialiser plus tard quand USE_COLOR_MESH sera implementé
-! num_elem_colors_elastic               : a initialiser plus tard quand USE_COLOR_MESH sera implementé
+! num_colors_outer_elastic              : a initialiser plus tard quand USE_COLOR_MESH sera implemente
+! num_colors_inner_elastic              : a initialiser plus tard quand USE_COLOR_MESH sera implemente
+! num_elem_colors_elastic               : a initialiser plus tard quand USE_COLOR_MESH sera implemente
 
   ! prepares fields on GPU for elastic simulations
-  !§!§ JC JC here we will need to add GPU support for the new C-PML routines
+  !?!? JC JC here we will need to add GPU support for the new C-PML routines
   if( any_elastic ) then
     call prepare_fields_elastic_device(Mesh_pointer, &
                                 rmass_inverse_elastic_one,rmass_inverse_elastic_three, &

@@ -211,7 +211,7 @@ void FC_FUNC_(compute_seismograms_cuda,
  switch (seismotype){
 
 
-  case 1 :  //Déplacement
+  case 1 :  //Deplacement
 
   if (! *any_elastic_glob) printf("\nWrong type of seismogram for a pure fluid simulation, use pressure in seismotype\n");
   compute_elastic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(       mp->nrec_local,
@@ -241,7 +241,7 @@ void FC_FUNC_(compute_seismograms_cuda,
                                                                                   );
   break;
 
-  case 3 :  //Accélération
+  case 3 :  //Acceleration
   if (! *any_elastic_glob) printf("\nWrong type of seismogram for a pure fluid simulation, use pressure in seismotype\n");
   compute_elastic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(       mp->nrec_local,
                                                                                   mp->d_accel,

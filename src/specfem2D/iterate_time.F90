@@ -1089,8 +1089,8 @@ if (myrank == 0) write(IOUT,400)
 
 ! impose potential_gravito in order to have z displacement equal to forced
 ! value on the boundary
-!!!! Passe deux fois sur le même iglob
-!!!! Mais vrai pour tous les points partagés entre deux elements
+!!!! Passe deux fois sur le meme iglob
+!!!! Mais vrai pour tous les points partages entre deux elements
           iglob = ibool(i,j,ispec)
           displ_n = displ_x*nx + displ_z*nz
         if (abs(nz) > TINYVAL) then
