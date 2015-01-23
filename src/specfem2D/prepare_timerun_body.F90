@@ -55,9 +55,14 @@ subroutine prepare_timerun()
   call initialize_cuda_device(myrank,ncuda_devices)
 
   ! collects min/max of local devices found for statistics
+#ifdef USE_MPI
   call sync_all()
   call min_all_i(ncuda_devices,ncuda_devices_min)
   call max_all_i(ncuda_devices,ncuda_devices_max)
+#else
+  ncuda_devices_min = ncuda_devices
+  ncuda_devices_max = ncuda_devices
+#endif
 
   if( myrank == 0 ) then
     write(IOUT,*) "GPU number of devices per node: min =",ncuda_devices_min

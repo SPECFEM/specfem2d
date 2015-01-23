@@ -172,7 +172,7 @@ subroutine compute_forces_elastic_GPU()
     else
 
 !       waits for send/receive requests to be completed and assembles values
-         call assemble_MPI_vector_write_cuda(NPROC,NGLOB_AB, Mesh_pointer,&
+         call assemble_MPI_vector_write_cuda(NPROC,Mesh_pointer,&
                       buffer_recv_vector_ext_mesh,ninterface,&
                       max_nibool_interfaces_ext_mesh, &
                       nibool_interfaces_ext_mesh,ibool_interfaces_ext_mesh, &
@@ -180,7 +180,7 @@ subroutine compute_forces_elastic_GPU()
                       1,ninterface_elastic,inum_interfaces_elastic)
          ! adjoint simulations
          if( SIMULATION_TYPE == 3 ) then
-         call assemble_MPI_vector_write_cuda(NPROC,NGLOB_AB, Mesh_pointer,&
+           call assemble_MPI_vector_write_cuda(NPROC,Mesh_pointer,&
                               b_buffer_recv_vector_ext_mesh,ninterface,&
                               max_nibool_interfaces_ext_mesh, &
                               nibool_interfaces_ext_mesh,ibool_interfaces_ext_mesh, &

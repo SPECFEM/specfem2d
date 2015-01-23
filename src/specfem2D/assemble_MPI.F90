@@ -539,6 +539,7 @@
 #endif
 
 
+#ifdef USE_MPI
  subroutine assemble_MPI_scalar_send_cuda(NPROC, &
                                            buffer_send_scalar_ext_mesh,buffer_recv_scalar_ext_mesh, &
                                            num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh, &
@@ -565,7 +566,7 @@
   integer, dimension(2*num_interfaces_ext_mesh) :: tab_requests_send_recv_ext_mesh
 integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acoustic
   ! local parameters
-  integer :: iinterface,i,num_interface
+  integer :: iinterface,num_interface
 
   tab_requests_send_recv_ext_mesh(:) = 0
 
@@ -580,9 +581,6 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
     do iinterface = 1, ninterface_acoustic
 
      num_interface=inum_interfaces_acoustic(iinterface)
-
-
-
 
       call isend_cr(buffer_send_scalar_ext_mesh(1,num_interface), &
                     nibool_interfaces_ext_mesh(num_interface), &
@@ -601,6 +599,7 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
   endif
 
   end subroutine assemble_MPI_scalar_send_cuda
+#endif
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -642,11 +641,13 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
     do iinterface = 1, ninterface_acoustic
    num_interface=inum_interfaces_acoustic(iinterface)
 
+#ifdef USE_MPI
       call wait_req(tab_requests_send_recv_ext_mesh(num_interface+num_interfaces_ext_mesh))
+#else
+!! DK DK this dummy statement just to avoid a compiler warning about an unused variable
+      tab_requests_send_recv_ext_mesh(num_interface+num_interfaces_ext_mesh) = 0
+#endif
     enddo
-
-
-
 
     ! adding contributions of neighbours
     call transfer_asmbl_pot_to_device(Mesh_pointer,buffer_recv_scalar_ext_mesh,FORWARD_OR_ADJOINT)
@@ -655,7 +656,9 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
      do iinterface = 1, ninterface_acoustic
        num_interface=inum_interfaces_acoustic(iinterface)
 
+#ifdef USE_MPI
       call wait_req(tab_requests_send_recv_ext_mesh(num_interface))
+#endif
     enddo
 
   endif
@@ -669,6 +672,7 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
 !
 
 
+#ifdef USE_MPI
   subroutine assemble_MPI_vector_send_cuda(NPROC, &
                                           buffer_send_vector_ext_mesh,buffer_recv_vector_ext_mesh, &
                                           num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh, &
@@ -683,7 +687,7 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
 
   implicit none
 
-  integer :: NPROC,i
+  integer :: NPROC
 
   integer :: num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh,ninterface_elastic
 
@@ -719,13 +723,14 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
   endif
 
   end subroutine assemble_MPI_vector_send_cuda
+#endif
 
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine assemble_MPI_vector_write_cuda(NPROC,NGLOB_AB, Mesh_pointer, &
+  subroutine assemble_MPI_vector_write_cuda(NPROC,Mesh_pointer, &
                                             buffer_recv_vector_ext_mesh, &
                                             num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh, &
                                             nibool_interfaces_ext_mesh,ibool_interfaces_ext_mesh, &
@@ -739,7 +744,6 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
   implicit none
 
   integer :: NPROC
-  integer :: NGLOB_AB
   integer(kind=8) :: Mesh_pointer
 
 
@@ -766,7 +770,12 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
     ! wait for communications completion (recv)
 do iinterface = 1, ninterface_elastic
        num_interface=inum_interfaces_elastic(iinterface)
+#ifdef USE_MPI
       call wait_req(tab_requests_send_recv_vector(num_interface + num_interfaces_ext_mesh))
+#else
+!! DK DK this dummy statement just to avoid a compiler warning about an unused variable
+      tab_requests_send_recv_vector(num_interface + num_interfaces_ext_mesh) = 0
+#endif
 enddo
 
 
@@ -789,7 +798,9 @@ enddo
     ! wait for communications completion (send)
     do iinterface = 1, ninterface_elastic
        num_interface=inum_interfaces_elastic(iinterface)
+#ifdef USE_MPI
       call wait_req(tab_requests_send_recv_vector(num_interface))
+#endif
     enddo
 
   endif
@@ -826,7 +837,6 @@ enddo
        buffer_recv_vector_ext_mesh
 
   integer, dimension(2*num_interfaces_ext_mesh) :: tab_requests_send_recv_vector
-  integer, dimension(num_interfaces_ext_mesh) :: nibool_interfaces_ext_mesh
   integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_elastic
   ! local parameters
   integer :: iinterface,num_interface
@@ -842,7 +852,12 @@ enddo
     !write(IMAIN,*) "sending MPI_wait"
     do iinterface = 1, ninterface_elastic
        num_interface=inum_interfaces_elastic(iinterface)
+#ifdef USE_MPI
       call wait_req(tab_requests_send_recv_vector(num_interface+num_interfaces_ext_mesh))
+#else
+!! DK DK this dummy statement just to avoid a compiler warning about an unused variable
+      tab_requests_send_recv_vector(num_interface+num_interfaces_ext_mesh) = 0
+#endif
     enddo
 
 

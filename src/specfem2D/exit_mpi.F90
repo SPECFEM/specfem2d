@@ -72,9 +72,6 @@ subroutine exit_MPI(error_msg)
 
 end subroutine exit_MPI
 
-
-
-
 !-------------------------------------------------------------------------------------------------
 !
 ! I/O wrapper function
@@ -106,31 +103,26 @@ end subroutine exit_MPI
 !----
 !
 
+#ifdef USE_MPI
 
   subroutine isend_cr(sendbuf, sendcount, dest, sendtag, req)
 
 ! standard include of the MPI library
-#ifdef USE_MPI
   use mpi
-#endif
 
   implicit none
 
   include "constants.h"
 
-#ifdef USE_MPI
   include "precision.h"
-#endif
 
   integer sendcount, dest, sendtag, req
   real(kind=CUSTOM_REAL), dimension(sendcount) :: sendbuf
 
   integer ier
 
-#ifdef USE_MPI
-  call MPI_ISEND(sendbuf,sendcount,CUSTOM_MPI_TYPE,dest,sendtag, &
-                  MPI_COMM_WORLD,req,ier)
-#endif
+  call MPI_ISEND(sendbuf,sendcount,CUSTOM_MPI_TYPE,dest,sendtag,MPI_COMM_WORLD,req,ier)
+
   end subroutine isend_cr
 
 !
@@ -140,25 +132,20 @@ end subroutine exit_MPI
   subroutine irecv_cr(recvbuf, recvcount, dest, recvtag, req)
 
 ! standard include of the MPI library
-#ifdef USE_MPI
   use mpi
-#endif
 
   implicit none
 
   include "constants.h"
-#ifdef USE_MPI
   include "precision.h"
-#endif
 
   integer recvcount, dest, recvtag, req
   real(kind=CUSTOM_REAL), dimension(recvcount) :: recvbuf
 
   integer ier
-#ifdef USE_MPI
-  call MPI_IRECV(recvbuf,recvcount,CUSTOM_MPI_TYPE,dest,recvtag, &
-                  MPI_COMM_WORLD,req,ier)
-#endif
+
+  call MPI_IRECV(recvbuf,recvcount,CUSTOM_MPI_TYPE,dest,recvtag,MPI_COMM_WORLD,req,ier)
+
   end subroutine irecv_cr
 
 !
@@ -168,23 +155,18 @@ end subroutine exit_MPI
   subroutine wait_req(req)
 
 ! standard include of the MPI library
-#ifdef USE_MPI
   use mpi
-#endif
 
   implicit none
 
   integer :: req
 
-#ifdef USE_MPI
   integer, dimension(MPI_STATUS_SIZE) :: req_mpi_status
-#endif
-
 
   integer :: ier
-#ifdef USE_MPI
+
   call mpi_wait(req,req_mpi_status,ier)
-#endif
+
   end subroutine wait_req
 
 !
@@ -194,19 +176,15 @@ end subroutine exit_MPI
   subroutine sync_all()
 
 ! standard include of the MPI library
-#ifdef USE_MPI
   use mpi
-#endif
 
   implicit none
 
   integer ier
-#ifdef USE_MPI
+
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
-#endif
 
   end subroutine sync_all
-
 
 !
 !----
@@ -215,25 +193,18 @@ end subroutine exit_MPI
   subroutine min_all_i(sendbuf, recvbuf)
 
 ! standard include of the MPI library
-#ifdef USE_MPI
   use mpi
-#endif
 
   implicit none
 
   include "constants.h"
 
-#ifdef USE_MPI
   include "precision.h"
-#endif
 
   integer:: sendbuf, recvbuf
   integer ier
 
-#ifdef USE_MPI
-  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER, &
-                  MPI_MIN,0,MPI_COMM_WORLD,ier)
-#endif
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_MIN,0,MPI_COMM_WORLD,ier)
 
   end subroutine min_all_i
 
@@ -244,25 +215,20 @@ end subroutine exit_MPI
   subroutine max_all_i(sendbuf, recvbuf)
 
 ! standard include of the MPI library
-#ifdef USE_MPI
   use mpi
-#endif
 
   implicit none
 
   include "constants.h"
 
-#ifdef USE_MPI
   include "precision.h"
-#endif
 
   integer :: sendbuf, recvbuf
   integer :: ier
 
-#ifdef USE_MPI
-  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER, &
-                  MPI_MAX,0,MPI_COMM_WORLD,ier)
-#endif
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_MAX,0,MPI_COMM_WORLD,ier)
 
   end subroutine max_all_i
+
+#endif
 
