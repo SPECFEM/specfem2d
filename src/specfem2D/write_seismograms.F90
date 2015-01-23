@@ -58,11 +58,17 @@
                           potential_dot_gravitoacoustic, potential_dot_dot_gravitoacoustic, &
                           potential_gravito, potential_dot_gravito, potential_dot_dot_gravito, &
                           elastic, accel_elastic, veloc_elastic, displ_elastic, &
-                          poroelastic, accels_poroelastic, velocs_poroelastic, displs_poroelastic
+                          poroelastic, accels_poroelastic, velocs_poroelastic, displs_poroelastic, &
+                          acoustic,gravitoacoustic,elastic,poroelastic,vector_field_display, &
+                          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
+                          ispec,hprime_xx,hprime_zz, &
+                          AXISYM,is_on_the_axis,hprimeBar_xx, &
+                          nspec,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
+                          numat,kmato,density,rhoext,gravityext,assign_external_model
 
   include "constants.h"
 
-  integer :: i, j, iglob, ispec, irecloc, irec
+  integer :: i, j, iglob, irecloc, irec
   double precision :: dxd,dyd,dzd !,vxd,vyd,vzd,axd,ayd,azd
   double precision :: valux, valuy, valuz
   double precision :: valcurl, dcurld, hlagrange
