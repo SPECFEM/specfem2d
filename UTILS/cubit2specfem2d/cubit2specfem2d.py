@@ -440,20 +440,14 @@ class mesh(object,mesh_tools):
         # if not absname: absname=self.absname
         absedge=open(absname,'w')
         print 'Writing '+absname+'.....'
-        print 'OK1'
         edges_abs=[Set()]*self.nabs # edges_abs[0] will be a Set containing the nodes describing bottom adsorbing boundary 
         # (index 0 : bottom, index 1 : right, index 2 : top, index 3 : left)
         nedges_all=0 # To count the total number of absorbing edges 
-        print 'OK2'
         for block,flag in zip(self.block_bc,self.block_bc_flag): # For each 1D block
-            print block
             for iabs in range(0, self.nabs): # iabs = 0,1,2,3 : for each absorbing boundaries
-                print iabs
-                print self.abs_boun
                 if block == self.abs_boun[iabs]: # If the block considered correspond to the boundary
                     edges_abs[iabs]=Set(cubit.get_block_edges(block)) # Store each edge on edges_abs
                     nedges_all=nedges_all+len(edges_abs[iabs]); # add the number of edges to nedges_all
-        print 'OK3'
         absedge.write('%10i\n' % nedges_all) # Write the total number of absorbing edges to the first line of file
         print 'Number of edges', nedges_all
         id_element=0
