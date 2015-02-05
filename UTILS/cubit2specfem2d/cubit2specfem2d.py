@@ -24,9 +24,16 @@
 #      cubit.cmd('block 3 edge in surf all with z_coord > -0.1') # topo
 #      cubit.cmd('block 3 name "topo"')
 #
+#_ One block per pml layer (pml_x, pml_z, pml_xz). !! Warning !! pml_x, pml_z and pml_xz don't have faces in common!
 #
 # Ideas to improve that script (ctrl+f for TODO also): _Make a real module
 #                                                      _Allow 2D models built in XY and ZY planes
+#
+# The names of the block and the entities types must match the one given during the definition of the class mesh on this file :
+# Below :
+# class mesh(object,mesh_tools):
+#     """ A class to store the mesh """
+#     def __init__(self):
 #
 #!! Warning : a block in cubit != quad !! A block is a group of something (quads, edges, volumes, surfaces...) 
 # On this case the blocks are used to gather faces corresponding to different materials and edges corresponding to free surfaces,
@@ -249,19 +256,23 @@ class mesh(object,mesh_tools):
     def __init__(self):
         super(mesh, self).__init__()
         self.mesh_name='mesh_file'
-        self.axisymmetric_mesh=False
-        self.nodecoord_name='nodes_coords_file'
-        self.material_name='materials_file'
+        self.axisymmetric_mesh=False # Will be set to true if a group self.pml_boun_name is found
+        self.pml_layers=False # Will be set to true if a group self.axisname is found
+        self.nodecoord_name='nodes_coords_file' # Name of nodes coordinates file to create
+        self.material_name='materials_file' # Name of material file to create
         self.nummaterial_name='nummaterial_velocity_file'
-        self.absname='absorbing_surface_file'
-        self.freename='free_surface_file'
-        self.axisname='axis'
+        self.absname='absorbing_surface_file' # Name of absorbing surface file to create
+        self.freename='free_surface_file' # Name of free surface file to create
+        self.pmlname='elements_cpml_list' # Name of cpml file to create
+        self.axisname='elements_axis' # Name of axial elements file to create and name of the block containing axial edges
         self.recname='STATIONS'
-        self.face='QUAD4'
-        self.edge='BAR2'
-        self.topo='topo'
-        self.abs_boun_name=['abs_bottom','abs_right','abs_top','abs_left']
-        self.abs_boun=[]  # block numbers for abs bouns
+        self.face='QUAD4'  # Faces' type
+        self.edge='BAR2'   # Edges' type
+        self.topo='topo'   # Name of the block containing topography edges
+        self.pml_boun_name=['pml_x','pml_z','pml_xz']  # Name of the block containing pml layers elements
+        self.abs_boun_name=['abs_bottom','abs_right','abs_top','abs_left'] # Name of the block containing absorbing layer edges
+        self.abs_boun=[]  # block numbers for abs boundaries
+        self.pml_boun=[]  # block numbers for pml boundaries
         self.nabs=4 # Maximum number of absorbing surfaces (4)
         self.rec='receivers'
         self.block_definition() # import blocks features from Cubit
@@ -278,6 +289,7 @@ class mesh(object,mesh_tools):
         block_bc=[] # Will contain edge block ids
         block_bc_flag=[] # Will contain edge id -> 2
         abs_boun=[-1] * self.nabs # total 4 sides of absorbing boundaries (index 0 : bottom, index 1 : right, index 2 : top, index 3 : left)
+        pml_boun=[-1] * 3 # To store pml layers id (for each pml layer (x, z, xz))
         material={} # Will contain each material name and their properties
         bc={} # Will contains each boundary name and their connectivity -> 2
         blocks=cubit.get_block_id_list() # Load the blocks list
@@ -296,6 +308,10 @@ class mesh(object,mesh_tools):
                 # Store (material_id,rho,velP,velS,Qflag,anisotropy_flag) in par :
                 par=tuple([flag,rho,velP,velS,qFlag,anisotropy_flag])
                 material[name]=par # associate the name of the block to its id and properties
+                if name in self.pml_boun_name : # If the block considered refered to one of the pml layer
+                    self.pml_layers=True
+                    pml_boun[self.pml_boun_name.index(name)]=block 
+                    # -> Put it at the correct position in abs_boun (index 0 : pml_x, index 1 : pml_z, index 2 : pml_xz)
             elif ty == self.edge: # If we are dealing with a block containing edges
                 block_bc_flag.append(2) # Append "2" to block_bc_flag
                 block_bc.append(block) # Append block id to block_bc
@@ -331,6 +347,8 @@ class mesh(object,mesh_tools):
             self.abs_boun=abs_boun
             if self.axisymmetric_mesh:
                 self.axisId=axisId
+            if self.pml_layers:
+                self.pml_boun=pml_boun
         except:
             print 'blocks not properly defined'
 #    def tomo(self,flag,vel):
@@ -378,6 +396,25 @@ class mesh(object,mesh_tools):
                 for quad in quads: # For each quad
                     mat.write(('%10i\n') % flag) # Write its id in the file
         mat.close()
+        print 'Ok'
+    def pmls_write(self,pml_name):
+        """ Write pml elements on file : mat_name """ 
+        pml_file=open(pml_name,'w+')
+        print 'Writing '+pml_name+'.....'
+        npml_element=0
+        for block,flag in zip(self.block_mat,self.block_flag): # for each 2D block
+            for ipml in range(0, 3): # iabs = 0,1,2 : for each pml layer (x, z, xz)
+                if block == self.pml_boun[ipml]: # If the block considered correspond to the pml
+                    quads=cubit.get_block_faces(block) # Import quads id
+                    for quad in quads: # For each quad
+                        pml_file.write(('%10i %10i\n') % (quad,ipml+1)) # Write its id in the file next to its type
+                        npml_element=npml_element+1
+        #def line_prepender(pml_file, line):
+        #with open(pml_file, 'r+') as pml_file:
+        content = pml_file.read()
+        pml_file.seek(0, 0)
+        pml_file.write(str(npml_element).rstrip('\r\n') + '\n' + content)
+        pml_file.close()
         print 'Ok'
     def nodescoord_write(self,nodecoord_name):
         """ Write nodes coordinates on file : nodecoord_name """ 
@@ -477,12 +514,6 @@ class mesh(object,mesh_tools):
         cubit.cmd('set echo on') # Turn on echo of Cubit commands
     def axis_write(self,axis_name):
         """ Write axis on file """
-        #18
-        #1434 2 19 20 4
-        #1438 2 20 21 4
-        #1455 2 18 19 4
-        #1485 2 17 18 4
-        #1536 2 16 17 4
         cubit.cmd('set info off') # Turn off return messages from Cubit commands
         cubit.cmd('set echo off') # Turn off echo of Cubit commands
         cubit.cmd('set journal off') # Do not save journal file
@@ -542,6 +573,8 @@ class mesh(object,mesh_tools):
         self.abs_write(path+self.absname) # Write absorbing surface file
         if self.axisymmetric_mesh:
             self.axis_write(path+self.axisname) # Write axis on file
+        if self.pml_layers:
+            self.pmls_write(path+self.pmlname) # Write axis on file
         self.nummaterial_write(path+self.nummaterial_name) # Write nummaterial file
         if self.receivers: self.rec_write(path+self.recname) # If receivers has been set (as nodeset) write receiver file as well
         cubit.cmd('set info on') # Turn on return messages from Cubit commands
