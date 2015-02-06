@@ -1,16 +1,15 @@
-#!python
 #!/usr/bin/env python
 #
 # Script to export a Cubit13+/Trelis 2D mesh in specfem2d format 
-# Author unknown, comments and modifications by alexis dot bottero At gmail dot com
+# Author unknown, comments and modifications by Alexis Bottero (alexis dot bottero At gmail dot com)
 #
-# Create your mesh in Cubit and play this script within Cubit as a Python journal file.
+# Create your mesh in Cubit (or build the simpleAxisym2dMesh.py example) and play this script within Cubit as a Python journal file.
 # Instructions for mesh creation :
 # _The mesh must be in XZ plane!
 # _One block per material :
 #      cubit.cmd('block 1 name "Acoustic channel" ') # acoustic material region
 #      cubit.cmd('block 1 attribute count 6')        # number of attributes
-#      cubit.cmd('block 1 attribute index 1 1  ')    # material index
+#      cubit.cmd('block 1 attribute index 1 1')    # material index
 #      cubit.cmd('block 1 attribute index 2 1500 ')  # vp
 #      cubit.cmd('block 1 attribute index 3 0 ')     # vs
 #      cubit.cmd('block 1 attribute index 4 1000 ')  # rho
@@ -18,7 +17,7 @@
 #      cubit.cmd('block 1 attribute index 6 0 ')     # anisotropy_flag
 #      cubit.cmd('block 1 element type QUAD4')
 #
-# _One block for each absorbing border (abs_bottom, abs_right, abs_left, abs_top, topo, axis). If axisymmetric simulation don't create a block 
+# _One block per border (abs_bottom, abs_right, abs_left, abs_top, topo, axis). If axisymmetric simulation don't create a block 
 #  abs_left but a block axis.
 #  Ex:
 #      cubit.cmd('block 3 edge in surf all with z_coord > -0.1') # topo
@@ -28,10 +27,10 @@
 #      !! Warning !! pml_x, pml_z and pml_xz don't have faces in common
 #      !! Warning !! you must create the corresponding absorbing surface blocks!
 #
-# Ideas to improve that script (ctrl+f for TODO also): _Make a real module
+# Ideas to improve that script (ctrl+f for TODO also): _Make a real python module
 #                                                      _Allow 2D models built in XY and ZY planes
 #
-# The names of the block and the entities types must match the one given during the definition of the class mesh on this file :
+# The names of the block and the entities types must match the ones given during the definition of the class mesh on this file :
 # Below :
 # class mesh(object,mesh_tools):
 #     """ A class to store the mesh """
@@ -39,7 +38,7 @@
 #
 #!! Warning : a block in cubit != quad !! A block is a group of something (quads, edges, volumes, surfaces...) 
 # On this case the blocks are used to gather faces corresponding to different materials and edges corresponding to free surfaces,
-# absorbing surfaces or axis
+# absorbing surfaces, topography or axis
 
 class mtools(object):
     """docstring for mtools"""
