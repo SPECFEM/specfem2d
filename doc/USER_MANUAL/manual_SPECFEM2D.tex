@@ -580,7 +580,7 @@ want a 4 or 9 node mesh. This operation will generate a \texttt{SqrCirc.msh}
 file which must be processed to get all the files required by SPECFEM2D
 when using an external mesh (see previous section). This is done by
 running a python script called \texttt{LibGmsh2Specfem.py}, located in
-directory \texttt{UTILS/Gmsh}:
+directory \texttt{utils/Gmsh}:
 %
 \begin{verbatim}
     python LibGmsh2Specfem.py SqrCirc -t A -b A -r A -l A
@@ -650,6 +650,14 @@ i.e. ideally non-deformed rectangles obtained by `extrusion' of the edge mesh el
 outer edges of the computational domain without PML; by doing so, the PMLs obtained will be far more stable
 in time (PML being weakly unstable from a mathematical point of view, very deformed mesh elements
 inside the PMLs can trigger instabilities much more quickly).
+
+When you have an existing CUBIT (or similar) mesh stored in SPECFEM2D
+format but do not know how to assign CPML flags to it, in the 3D version of the code (SPECFEM3D)
+we have created a small serial Fortran program that will do that automatically for you, thus you can adapt that program to SPECFEM2D.
+That program is utils/CPML/convert\_external\_layers\_of\_a\_given\_mesh\_to\_CPML\_layers.f90 in the source code of SPECFEM3D,
+and a small Makefile is provided in that directory (utils/CPML).
+Note from Dimitri: we will soon provide a clean 2D version in utils/CPML of the SPECFEM2D source code;
+Andrea Colombi from CNRS Grenoble, France, is currently working on that.
 
 If you use PML and an external velocity and density model (e.g., setting flag ``\texttt{READ\_EXTERNAL\_SEP\_FILE}'' to \texttt{.true.}),
 you should be careful because mathematically a PML cannot handle heterogeneities along the
@@ -767,7 +775,7 @@ Replace \texttt{surange} with \texttt{suxwigb} to see wiggle plots for the seism
 
 \item when compiling with Intel ifort, use ``\texttt{-assume byterecl}'' option to create binary PNM images displaying the wave field
 
-\item there are a few useful scripts and Fortran routines in directory \texttt{UTILS/}.
+\item there are a few useful scripts and Fortran routines in directory \texttt{utils/}.
 
 \item you can find a Fortran code to compute the analytical solution for simple media that we use as a reference in benchmarks in many of our articles at
 \urlwithparentheses{http://www.spice-rtn.org/library/software/EX2DDIR}. That code is described in: \cite{BeIfNiSk94}
