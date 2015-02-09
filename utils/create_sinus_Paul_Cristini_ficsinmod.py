@@ -76,7 +76,7 @@ title('Interface sinusoidale')
 #
 NbElemSpec=150
 #
-# Format d'ecriture en ascii des coordonnées
+# Format d'ecriture en ascii des coordonnees
 fmt='%f'
 #
 SEM_DIR='/home/cristini/SEM/SEM_2D_Dimitri'

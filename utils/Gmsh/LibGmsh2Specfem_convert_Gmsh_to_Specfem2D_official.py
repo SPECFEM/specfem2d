@@ -90,7 +90,7 @@ def OuvreGmsh(Dir,Nom,Bords):
     PhysCar=zeros((NbPhysNames,), dtype=dt)
     Med=zeros(NbPhysNames+1)   # Les milieux: domaines dont le nom commence par M
     #--------------------------------------------------------------------------
-    # Initialisation des zones (celles qui ne seront pas affectées auront 
+    # Initialisation des zones (celles qui ne seront pas affectees auront 
     #  une valeur nulle)
     PML_right, PML_right_bottom, PML_right_top = 0, 0, 0
     PML_left, PML_left_bottom, PML_left_top = 0, 0, 0
@@ -180,7 +180,7 @@ def OuvreGmsh(Dir,Nom,Bords):
     Elements1DBordLeft   = empty((NbElements,len1D),dtype=int)
     #--------------------------------------------------------------------------
     if PML:
-        ElementsPML      = empty((NbElements,2),dtype=int)  # éléments + codage
+        ElementsPML      = empty((NbElements,2),dtype=int)  # elements + codage
     DecElem+=1  #
     #--------------------------------------------------------------------------
     # Initialization of counters
