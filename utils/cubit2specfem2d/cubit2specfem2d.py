@@ -261,6 +261,7 @@ class mesh(object,mesh_tools):
         self.topo_mesh=False # Will be set to true if a group self.topo is found
         self.abs_mesh=False # Will be set to true if a group self.pml_boun_name or self.abs_boun_name is found
         self.pml_layers=False # Will be set to true if a group self.pml_boun_name is found
+        self.write_nummaterial_velocity_file=False # Will be set to True if 2d blocks have 6 attributes
         self.nodecoord_name='nodes_coords_file' # Name of nodes coordinates file to create
         self.material_name='materials_file' # Name of material file to create
         self.nummaterial_name='nummaterial_velocity_file'
@@ -300,17 +301,24 @@ class mesh(object,mesh_tools):
             name=cubit.get_exodus_entity_name('block',block) # Contains the name of the blocks
             ty=cubit.get_block_element_type(block) # Contains the block element type (QUAD4...)
             if ty == self.face: # If we are dealing with a block containing faces
+                nAttributes = cubit.get_block_attribute_count(block)
+                if (nAttributes != 1 and nAttributes != 6):
+                    print 'Blocks not properly defined, 2d blocks must have one attribute (material id) or 6 attributes'
+                    return None,None,None,None,None,None,None,None
                 flag=int(cubit.get_block_attribute_value(block,0)) # Fetch the first attribute value (containing material id)
-                velP=cubit.get_block_attribute_value(block,1)  # Fetch the first attribute value (containing P wave velocity)
-                velS=cubit.get_block_attribute_value(block,2)  # Fetch the second attribute value (containing S wave velocity)
-                rho=cubit.get_block_attribute_value(block,3)  # Fetch the third attribute value (containing material density)
-                qFlag=cubit.get_block_attribute_value(block,4)  # Fetch the first attribute value (containing Qflag)
-                anisotropy_flag=cubit.get_block_attribute_value(block,5)  # Fetch the first attribute value (containing anisotropy_flag)
+                print "nAttributes : ",nAttributes
+                if nAttributes == 6:
+                    self.write_nummaterial_velocity_file=True
+                    velP=cubit.get_block_attribute_value(block,1)  # Fetch the first attribute value (containing P wave velocity)
+                    velS=cubit.get_block_attribute_value(block,2)  # Fetch the second attribute value (containing S wave velocity)
+                    rho=cubit.get_block_attribute_value(block,3)  # Fetch the third attribute value (containing material density)
+                    qFlag=cubit.get_block_attribute_value(block,4)  # Fetch the first attribute value (containing Qflag)
+                    anisotropy_flag=cubit.get_block_attribute_value(block,5)  # Fetch the first attribute value (containing anisotropy_flag) 
+                    # Store (material_id,rho,velP,velS,Qflag,anisotropy_flag) in par :
+                    par=tuple([flag,rho,velP,velS,qFlag,anisotropy_flag])
+                    material[name]=par # associate the name of the block to its id and properties
                 block_flag.append(int(flag)) # Append material id to block_flag
                 block_mat.append(block)  # Append block id to block_mat
-                # Store (material_id,rho,velP,velS,Qflag,anisotropy_flag) in par :
-                par=tuple([flag,rho,velP,velS,qFlag,anisotropy_flag])
-                material[name]=par # associate the name of the block to its id and properties
                 if name in self.pml_boun_name : # If the block considered refered to one of the pml layer
                     self.abs_mesh=True
                     self.pml_layers=True
@@ -350,8 +358,9 @@ class mesh(object,mesh_tools):
             self.block_flag=block_flag
             self.block_bc=block_bc
             self.block_bc_flag=block_bc_flag
-            self.material=material
             self.bc=bc
+            if self.write_nummaterial_velocity_file:
+                self.material=material
             if self.abs_mesh:
                 self.abs_boun=abs_boun
             if self.topo_mesh:
@@ -594,8 +603,10 @@ class mesh(object,mesh_tools):
             self.axis_write(path+self.axisname) # Write axis on file
         if self.pml_layers:
             self.pmls_write(path+self.pmlname) # Write axis on file
-        self.nummaterial_write(path+self.nummaterial_name) # Write nummaterial file
-        if self.receivers: self.rec_write(path+self.recname) # If receivers has been set (as nodeset) write receiver file as well
+        if self.write_nummaterial_velocity_file:
+            self.nummaterial_write(path+self.nummaterial_name) # Write nummaterial file
+        if self.receivers: 
+            self.rec_write(path+self.recname) # If receivers has been set (as nodeset) write receiver file as well
         print 'Mesh files has been writen in '+path
         cubit.cmd('set info on') # Turn on return messages from Cubit commands
         cubit.cmd('set echo on') # Turn on echo of Cubit commands

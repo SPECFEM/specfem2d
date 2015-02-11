@@ -32,13 +32,8 @@ cubit.cmd('mesh surface 1') # Mesh the surface
 cubit.cmd('#### DEFINE MATERIAL PROPERTIES #######################')
 cubit.cmd(' block 1 face in surface 1')
 cubit.cmd('block 1 name "Elastic region"')    # elastic region
-cubit.cmd('block 1 attribute count 6')        # number of attributes
+cubit.cmd('block 1 attribute count 1')        # number of attributes
 cubit.cmd('block 1 attribute index 1 1')      # material index
-cubit.cmd('block 1 attribute index 2 2500 ')  # vp
-cubit.cmd('block 1 attribute index 3 1000 ')  # vs
-cubit.cmd('block 1 attribute index 4 2200 ')  # rho
-cubit.cmd('block 1 attribute index 5 0 ')     # Q_flag
-cubit.cmd('block 1 attribute index 6 0 ')     # anisotropy_flag
 cubit.cmd('block 1 element type QUAD4')       # element type. Must be QUAD4 for cubit2specfem2d
 
 ### Create PMLs quads :
@@ -67,35 +62,20 @@ cubit.cmd('delete block 100 101 102 200 201')
 # z pmls :
 cubit.cmd('block 1000 face in surf 2 3)')
 cubit.cmd('block 1000 name "pml_z_elast"')
-cubit.cmd('block 1000 attribute count 6')        # number of attributes
+cubit.cmd('block 1000 attribute count 1')        # number of attributes
 cubit.cmd('block 1000 attribute index 1 1')      # material index
-cubit.cmd('block 1000 attribute index 2 2500 ')  # vp
-cubit.cmd('block 1000 attribute index 3 1000 ')  # vs
-cubit.cmd('block 1000 attribute index 4 2200 ')  # rho
-cubit.cmd('block 1000 attribute index 5 0 ')     # Q_flag
-cubit.cmd('block 1000 attribute index 6 0 ')     # anisotropy_flag
 cubit.cmd('block 1000 element type QUAD4')
 # x pmls :
 cubit.cmd('block 1001 face in surf 4)')
 cubit.cmd('block 1001 name "pml_x_elast"')
-cubit.cmd('block 1001 attribute count 6')        # number of attributes
+cubit.cmd('block 1001 attribute count 1')        # number of attributes
 cubit.cmd('block 1001 attribute index 1 1')      # material index
-cubit.cmd('block 1001 attribute index 2 2500 ')  # vp
-cubit.cmd('block 1001 attribute index 3 1000 ')  # vs
-cubit.cmd('block 1001 attribute index 4 2200 ')  # rho
-cubit.cmd('block 1001 attribute index 5 0 ')     # Q_flag
-cubit.cmd('block 1001 attribute index 6 0 ')     # anisotropy_flag
 cubit.cmd('block 1001 element type QUAD4')
 # xz pmls :
 cubit.cmd('block 1002 face in surf 5 6)')
 cubit.cmd('block 1002 name "pml_xz_elast"')
-cubit.cmd('block 1002 attribute count 6')        # number of attributes
+cubit.cmd('block 1002 attribute count 1')        # number of attributes
 cubit.cmd('block 1002 attribute index 1 1')      # material index
-cubit.cmd('block 1002 attribute index 2 2500 ')  # vp
-cubit.cmd('block 1002 attribute index 3 1000 ')  # vs
-cubit.cmd('block 1002 attribute index 4 2200 ')  # rho
-cubit.cmd('block 1002 attribute index 5 0 ')     # Q_flag
-cubit.cmd('block 1002 attribute index 6 0 ')     # anisotropy_flag
 cubit.cmd('block 1002 element type QUAD4')
 
 ### Creating absorbing surfaces
