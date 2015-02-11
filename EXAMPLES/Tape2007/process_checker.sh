@@ -24,7 +24,7 @@ mkdir DATA
 cd DATA/
 ln -s ../Par_file_Tape2007_132rec_checker Par_file
 ln -s ../SOURCE_005 SOURCE
-ln -s ../model_velocity.dat_checker model_velocity.dat_input 
+ln -s ../model_velocity.dat_checker model_velocity.dat_input
 cd ../
 
 # cleans output files

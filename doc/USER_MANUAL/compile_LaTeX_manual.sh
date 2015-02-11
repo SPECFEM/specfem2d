@@ -15,12 +15,12 @@
 /bin/rm -rf *.tit >  /dev/null
 /bin/rm -rf *.spl >  /dev/null
 
-	pdflatex --shell-escape manual_SPECFEM2D
-	bibtex manual_SPECFEM2D
-	pdflatex --shell-escape manual_SPECFEM2D
-	pdflatex --shell-escape manual_SPECFEM2D
-	pdflatex --shell-escape manual_SPECFEM2D
-	pdflatex --shell-escape manual_SPECFEM2D
+  pdflatex --shell-escape manual_SPECFEM2D
+  bibtex manual_SPECFEM2D
+  pdflatex --shell-escape manual_SPECFEM2D
+  pdflatex --shell-escape manual_SPECFEM2D
+  pdflatex --shell-escape manual_SPECFEM2D
+  pdflatex --shell-escape manual_SPECFEM2D
 
 /bin/rm -rf *.dvi >  /dev/null
 /bin/rm -rf *.log >  /dev/null

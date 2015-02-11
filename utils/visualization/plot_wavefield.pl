@@ -328,16 +328,16 @@ for ($i = $imin; $i <= $imax; $i++) {
 
      #if ($kmin==$kmax) {
      #  $shift = $dY; $B = "$B0:WeSn";
-     #}				# one column only
+     #}       # one column only
      ##if ($i == $imin) {$B = "$B0:weSn";} else {$B = "$B0:wesn";}    # temp, zcomp
      ##if ($i == $imin) {$B = $B_row1;} else {$B = "$B0:weSn";}    # temp
      #if ($i == $imin && $k == 1) {
      #  $B = "$B0:weSn";
-     #}				# temp
+     #}       # temp
 
      if ($i == $imin && $k==1) {
        print CSH "psbasemap $J $R $B $BG -K -V $orient $origin > $psfile\n";
-     }				# START
+     }        # START
      else {
        print CSH "psbasemap $J $R $B $BG -K -O -V $shift >> $psfile\n";
      }
@@ -345,19 +345,19 @@ for ($i = $imin; $i <= $imax; $i++) {
      # PLOT THE FORWARD WAVEFIELD
      if ($icolor==1) {
        if ($igrd==1) {
-	 #print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2) / $nm}' $snapshot_f > dfile\n";
-	 #print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2) / $nm}' $snapshot_f | nearneighbor -G$grdfile $R $interp\n";
-	 print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2) / $nm}' $snapshot_f | xyz2grd -G$grdfile $R $interp\n";
-	 print CSH "grdimage $grdfile -C$cfile $J -K -O -V -Q >> $psfile\n";
+   #print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2) / $nm}' $snapshot_f > dfile\n";
+   #print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2) / $nm}' $snapshot_f | nearneighbor -G$grdfile $R $interp\n";
+   print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2) / $nm}' $snapshot_f | xyz2grd -G$grdfile $R $interp\n";
+   print CSH "grdimage $grdfile -C$cfile $J -K -O -V -Q >> $psfile\n";
        } else {
-	 print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2) / $nm}' $snapshot_f | psxy $R $J $minfo -C$cfile -K -O -V >> $psfile\n";
+   print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2) / $nm}' $snapshot_f | psxy $R $J $minfo -C$cfile -K -O -V >> $psfile\n";
        }
 
        # mask points above topography
        if ($imask==1) {
-	 #print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2)}' $snapshot_f > maskpts\n";
-	 printf CSH "grep NaN $snapshot_f > maskpts\n";
-	 print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2)}' maskpts | psxy $R $J $minfo -C$cfile -K -O -V >> $psfile\n";
+   #print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2)}' $snapshot_f > maskpts\n";
+   printf CSH "grep NaN $snapshot_f > maskpts\n";
+   print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2)}' maskpts | psxy $R $J $minfo -C$cfile -K -O -V >> $psfile\n";
        }
      }
 
@@ -377,7 +377,7 @@ for ($i = $imin; $i <= $imax; $i++) {
     if ($iseis==1 && $i==$imin) {
       $bfile = "/home/carltape/PROJECTS/yakutat/data/yakutat_p1_seis_km_xyz.dat";
       if (not -f $bfile) {
-	die("check if bfile $bfile exist or not\n");
+  die("check if bfile $bfile exist or not\n");
       }
       print CSH "awk '{print \$1,\$2}' $bfile | psxy $J $R -Sc3p -G0 -K -O -V >> $psfile\n";
     }
@@ -464,7 +464,7 @@ $plabel = "plot_wavefield.pl";
 $ux = -$xwid;
 $ux = 0;
 $uy = $ywid + 0.3;
-$Utag = "-U/$ux/$uy/$plabel";	# GMT header
+$Utag = "-U/$ux/$uy/$plabel"; # GMT header
 $shift = "-X0i -Y0.7i";
 if($ncol==2) {$shift = "-X-${dX0}i -Y0.7i";}
 if($ipsv==1) {$tlab0 = "PSV"} else {$tlab0 = "SH"}
@@ -513,7 +513,7 @@ print CSH "pstext -N $J $R $Utag -K -O -V $shift >>$psfile<<EOF\n $xmin $zmax $f
 
   #$j1 = $frames[$i];           # forward frame
   $j1 = $pfirst + $i*$pint;
-  $j2 = $rend + $rfirst - $j1;	# corresponding adjoint frame
+  $j2 = $rend + $rfirst - $j1;  # corresponding adjoint frame
   $snap1 = sprintf("%07d",$j1);
   $snap2 = sprintf("%07d",$j2);
   #$time = sprintf("%04d",$j1*$dt);
@@ -604,7 +604,7 @@ print CSH "pstext -N $J $R $Utag -K -O -V $shift >>$psfile<<EOF\n $xmin $zmax $f
   $plabel = "plot_wavefield.pl";
   $ux = 0;
   $uy = $ywid + 0.3;
-  $Utag = "-U/$ux/$uy/$plabel";	# GMT header
+  $Utag = "-U/$ux/$uy/$plabel"; # GMT header
   $shift = "-X0i -Y0.7i";
   if ($ipsv==1) {$tlab0 = "PSV";} else {$tlab0 = "SH";}
   $title = "$tlab0 kernel -- $tlab";

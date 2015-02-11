@@ -15,8 +15,8 @@
 # The current limit on the number of processes is 99 for this script.
 # The host of the scp from iplmas014 should be changed according to the user's lab (can be ipigps014 for MIGP).
 # Many unnecessary copies should be disposed of as soon as FS sync issues have been addressed.
-# The call to clean_scratch_UPPA.sh should be replaced when an alternate way to do this becomes available, like "rsh" 
-# or "shmux" for instance (according to OpenMPI manual it can be used, but beware of other MPI libraries since it is non-standard, 
+# The call to clean_scratch_UPPA.sh should be replaced when an alternate way to do this becomes available, like "rsh"
+# or "shmux" for instance (according to OpenMPI manual it can be used, but beware of other MPI libraries since it is non-standard,
 # and it is in fact ugly). It also generates errors when multiple process are running on the same node (except with -f option).
 
 
@@ -26,9 +26,9 @@
 PeHostfile2MachineFile()
 {
     cat $1
-    
+
     j=0
-    
+
     host0=`head -n 1 $1 | cut -f1 -d" "|cut -f1 -d"."`
 
     cat $1 | while read line; do
@@ -36,7 +36,7 @@ PeHostfile2MachineFile()
       host=`echo $line|cut -f1 -d" "|cut -f1 -d"."`
       nslots=`echo $line|cut -f2 -d" "`
       i=1
-      
+
       scp -r ../$3$4 $host.univ-pau.fr:/scratch/$2
       scp ../$3$4/clean_scratch_UPPA.sh $host.univ-pau.fr:/scratch/$2/
 
@@ -44,18 +44,18 @@ PeHostfile2MachineFile()
          echo $host
          i=`expr $i + 1`
 
-	 if [ $j -lt 10 ] 
-	     then
-	     scp ../OUTPUT_FILES$3$4/Database0000$j $host.univ-pau.fr:/scratch/$2/$3$4/OUTPUT_FILES/
-	 else
-	     if [ $j -lt 100 ]
-		 then
-		 scp ../OUTPUT_FILES$3$4/Database000$j $host.univ-pau.fr:/scratch/$2/$3$4/OUTPUT_FILES/
-	     fi  
-	 fi
+   if [ $j -lt 10 ]
+       then
+       scp ../OUTPUT_FILES$3$4/Database0000$j $host.univ-pau.fr:/scratch/$2/$3$4/OUTPUT_FILES/
+   else
+       if [ $j -lt 100 ]
+     then
+     scp ../OUTPUT_FILES$3$4/Database000$j $host.univ-pau.fr:/scratch/$2/$3$4/OUTPUT_FILES/
+       fi
+   fi
 
-	 j=`expr $j + 1`	 
-	 
+   j=`expr $j + 1`
+
 
       done
     done
