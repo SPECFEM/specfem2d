@@ -298,10 +298,8 @@ class mesh(object,mesh_tools):
         blocks=cubit.get_block_id_list() # Load the blocks list
         for block in blocks: # Loop on the blocks
             name=cubit.get_exodus_entity_name('block',block) # Contains the name of the blocks
-            print name#AXISYM
             ty=cubit.get_block_element_type(block) # Contains the block element type (QUAD4...)
             if ty == self.face: # If we are dealing with a block containing faces
-                print "it contains faces"#AXISYM
                 flag=int(cubit.get_block_attribute_value(block,0)) # Fetch the first attribute value (containing material id)
                 velP=cubit.get_block_attribute_value(block,1)  # Fetch the first attribute value (containing P wave velocity)
                 velS=cubit.get_block_attribute_value(block,2)  # Fetch the second attribute value (containing S wave velocity)
@@ -321,7 +319,6 @@ class mesh(object,mesh_tools):
                     # (index 0 : pml_x_acoust, index 1 : pml_z_acoust, index 2 : pml_xz_acoust, 
                     #  index 3 : pml_x_elast, index 4 : pml_z_elast, index 5 : pml_xz_elast)
             elif ty == self.edge: # If we are dealing with a block containing edges
-                print "it contains edges"#AXISYM
                 block_bc_flag.append(2) # Append "2" to block_bc_flag
                 block_bc.append(block) # Append block id to block_bc
                 bc[name]=2 # Associate the name of the block with its connectivity : an edge has connectivity = 2
@@ -363,7 +360,6 @@ class mesh(object,mesh_tools):
                 self.axisId=axisId
             if self.pml_layers:
                 self.pml_boun=pml_boun
-            print "blocks properly defined" #AXISYM
         except: 
             print 'Blocks not properly defined'
 #    def tomo(self,flag,vel):
@@ -425,7 +421,7 @@ class mesh(object,mesh_tools):
                         pml_file.write(('%10i %10i\n') % (quad,ipml%3+1)) # Write its id in the file next to its type
                         npml_element=npml_element+1
         # ipml%3+1 = 1 -> element belongs to a X CPML layer only (either in Xmin or in Xmax)
-        # ipml%3+1 = 2 -> element belongs to a Y CPML layer only (either in Ymin or in Ymax)
+        # ipml%3+1 = 2 -> element belongs to a Z CPML layer only (either in Zmin or in Zmax)
         # ipml%3+1 = 3 -> element belongs to both a X and a Y CPML layer (i.e., to a CPML corner)
         # Write the number of pml elements at the beginning of the file :
         content = pml_file.read()
