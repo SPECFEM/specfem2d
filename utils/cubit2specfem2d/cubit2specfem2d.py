@@ -1,16 +1,15 @@
-#!python
 #!/usr/bin/env python
 #
 # Script to export a Cubit13+/Trelis 2D mesh in specfem2d format 
-# Author unknown, comments and modifications by alexis dot bottero At gmail dot com
+# Author unknown, comments and modifications by Alexis Bottero (alexis dot bottero At gmail dot com)
 #
-# Create your mesh in Cubit and play this script within Cubit as a Python journal file.
+# Create your mesh in Cubit (or build the simpleAxisym2dMesh.py example) and play this script within Cubit as a Python journal file.
 # Instructions for mesh creation :
 # _The mesh must be in XZ plane!
 # _One block per material :
 #      cubit.cmd('block 1 name "Acoustic channel" ') # acoustic material region
 #      cubit.cmd('block 1 attribute count 6')        # number of attributes
-#      cubit.cmd('block 1 attribute index 1 1  ')    # material index
+#      cubit.cmd('block 1 attribute index 1 1')    # material index
 #      cubit.cmd('block 1 attribute index 2 1500 ')  # vp
 #      cubit.cmd('block 1 attribute index 3 0 ')     # vs
 #      cubit.cmd('block 1 attribute index 4 1000 ')  # rho
@@ -18,18 +17,20 @@
 #      cubit.cmd('block 1 attribute index 6 0 ')     # anisotropy_flag
 #      cubit.cmd('block 1 element type QUAD4')
 #
-# _One block for each border (abs_bottom, abs_right, abs_left, abs_top, topo, axis). If axisymmetric simulation don't create a block 
+# _One block per border (abs_bottom, abs_right, abs_left, abs_top, topo, axis). If axisymmetric simulation don't create a block 
 #  abs_left but a block axis.
 #  Ex:
 #      cubit.cmd('block 3 edge in surf all with z_coord > -0.1') # topo
 #      cubit.cmd('block 3 name "topo"')
 #
-#_ One block per pml layer (pml_x, pml_z, pml_xz). !! Warning !! pml_x, pml_z and pml_xz don't have faces in common!
+#_ One block per pml layer of a given type (acoustic or elastic) : pml_x_acoust,pml_z_acoust,pml_xz_acoust,pml_x_elast,pml_z_elast,pml_xz_elast
+#      !! Warning !! pml blocks don't have faces in common
+#      !! Warning !! you must create the corresponding absorbing surface blocks (abs_bottom, abs_right, abs_left, abs_top)!
 #
-# Ideas to improve that script (ctrl+f for TODO also): _Make a real module
+# Ideas to improve that script (ctrl+f for TODO also): _Make a real python module
 #                                                      _Allow 2D models built in XY and ZY planes
 #
-# The names of the block and the entities types must match the one given during the definition of the class mesh on this file :
+# The names of the block and the entities types must match the ones given during the definition of the class mesh on this file :
 # Below :
 # class mesh(object,mesh_tools):
 #     """ A class to store the mesh """
@@ -37,7 +38,7 @@
 #
 #!! Warning : a block in cubit != quad !! A block is a group of something (quads, edges, volumes, surfaces...) 
 # On this case the blocks are used to gather faces corresponding to different materials and edges corresponding to free surfaces,
-# absorbing surfaces or axis
+# absorbing surfaces, topography or axis
 
 class mtools(object):
     """docstring for mtools"""
@@ -257,7 +258,9 @@ class mesh(object,mesh_tools):
         super(mesh, self).__init__()
         self.mesh_name='mesh_file'
         self.axisymmetric_mesh=False # Will be set to true if a group self.pml_boun_name is found
-        self.pml_layers=False # Will be set to true if a group self.axisname is found
+        self.topo_mesh=False # Will be set to true if a group self.topo is found
+        self.abs_mesh=False # Will be set to true if a group self.pml_boun_name or self.abs_boun_name is found
+        self.pml_layers=False # Will be set to true if a group self.pml_boun_name is found
         self.nodecoord_name='nodes_coords_file' # Name of nodes coordinates file to create
         self.material_name='materials_file' # Name of material file to create
         self.nummaterial_name='nummaterial_velocity_file'
@@ -269,7 +272,7 @@ class mesh(object,mesh_tools):
         self.face='QUAD4'  # Faces' type
         self.edge='BAR2'   # Edges' type
         self.topo='topo'   # Name of the block containing topography edges
-        self.pml_boun_name=['pml_x','pml_z','pml_xz']  # Name of the block containing pml layers elements
+        self.pml_boun_name=['pml_x_acoust','pml_z_acoust','pml_xz_acoust','pml_x_elast','pml_z_elast','pml_xz_elast']  # Name of the block containing pml layers elements
         self.abs_boun_name=['abs_bottom','abs_right','abs_top','abs_left'] # Name of the block containing absorbing layer edges
         self.abs_boun=[]  # block numbers for abs boundaries
         self.pml_boun=[]  # block numbers for pml boundaries
@@ -289,14 +292,16 @@ class mesh(object,mesh_tools):
         block_bc=[] # Will contain edge block ids
         block_bc_flag=[] # Will contain edge id -> 2
         abs_boun=[-1] * self.nabs # total 4 sides of absorbing boundaries (index 0 : bottom, index 1 : right, index 2 : top, index 3 : left)
-        pml_boun=[-1] * 3 # To store pml layers id (for each pml layer (x, z, xz))
+        pml_boun=[-1] * 6 # To store pml layers id (for each pml layer : x_acoust, z_acoust, xz_acoust, x_elast, z_elast, xz_elast)
         material={} # Will contain each material name and their properties
         bc={} # Will contains each boundary name and their connectivity -> 2
         blocks=cubit.get_block_id_list() # Load the blocks list
         for block in blocks: # Loop on the blocks
             name=cubit.get_exodus_entity_name('block',block) # Contains the name of the blocks
+            print name#AXISYM
             ty=cubit.get_block_element_type(block) # Contains the block element type (QUAD4...)
             if ty == self.face: # If we are dealing with a block containing faces
+                print "it contains faces"#AXISYM
                 flag=int(cubit.get_block_attribute_value(block,0)) # Fetch the first attribute value (containing material id)
                 velP=cubit.get_block_attribute_value(block,1)  # Fetch the first attribute value (containing P wave velocity)
                 velS=cubit.get_block_attribute_value(block,2)  # Fetch the second attribute value (containing S wave velocity)
@@ -309,18 +314,25 @@ class mesh(object,mesh_tools):
                 par=tuple([flag,rho,velP,velS,qFlag,anisotropy_flag])
                 material[name]=par # associate the name of the block to its id and properties
                 if name in self.pml_boun_name : # If the block considered refered to one of the pml layer
+                    self.abs_mesh=True
                     self.pml_layers=True
                     pml_boun[self.pml_boun_name.index(name)]=block 
-                    # -> Put it at the correct position in abs_boun (index 0 : pml_x, index 1 : pml_z, index 2 : pml_xz)
+                    # -> Put it at the correct position in pml_boun 
+                    # (index 0 : pml_x_acoust, index 1 : pml_z_acoust, index 2 : pml_xz_acoust, 
+                    #  index 3 : pml_x_elast, index 4 : pml_z_elast, index 5 : pml_xz_elast)
             elif ty == self.edge: # If we are dealing with a block containing edges
+                print "it contains edges"#AXISYM
                 block_bc_flag.append(2) # Append "2" to block_bc_flag
                 block_bc.append(block) # Append block id to block_bc
                 bc[name]=2 # Associate the name of the block with its connectivity : an edge has connectivity = 2
-                if name == self.topo: topography=block # If the block considered refered to topography store its id in "topography"
+                if name == self.topo: 
+                    self.topo_mesh=True
+                    topography=block # If the block considered refered to topography store its id in "topography"
                 if name == self.axisname:
                     self.axisymmetric_mesh=True
                     axisId=block # AXISYM If the block considered refered to the axis store its id in "axisId"
                 if name in self.abs_boun_name : # If the block considered refered to one of the boundaries
+                    self.abs_mesh=True
                     abs_boun[self.abs_boun_name.index(name)]=block 
                     # -> Put it at the correct position in abs_boun (index 0 : bottom, index 1 : right, index 2 : top, index 3 : left)
             else:
@@ -343,14 +355,17 @@ class mesh(object,mesh_tools):
             self.block_bc_flag=block_bc_flag
             self.material=material
             self.bc=bc
-            self.topography=topography
-            self.abs_boun=abs_boun
+            if self.abs_mesh:
+                self.abs_boun=abs_boun
+            if self.topo_mesh:
+                self.topography=topography
             if self.axisymmetric_mesh:
                 self.axisId=axisId
             if self.pml_layers:
                 self.pml_boun=pml_boun
-        except:
-            print 'blocks not properly defined'
+            print "blocks properly defined" #AXISYM
+        except: 
+            print 'Blocks not properly defined'
 #    def tomo(self,flag,vel):
 #        vp=vel/1000
 #        rho=(1.6612*vp-0.472*vp**2+0.0671*vp**3-0.0043*vp**4+0.000106*vp**4)*1000
@@ -384,7 +399,7 @@ class mesh(object,mesh_tools):
                 txt=('%10i %10i %10i %10i\n')% nodes
                 meshfile.write(txt) # Write a line to mesh file
             num_write=num_write+inum+1
-            print 'block', block, 'number of ',self.face,' : ', inum
+            print 'block', block, 'number of ',self.face,' : ', inum+1
         meshfile.close()
         print 'Ok num elements/write=',str(num_elems), str(num_write)
     def material_write(self,mat_name):
@@ -403,14 +418,16 @@ class mesh(object,mesh_tools):
         print 'Writing '+pml_name+'.....'
         npml_element=0
         for block,flag in zip(self.block_mat,self.block_flag): # for each 2D block
-            for ipml in range(0, 3): # iabs = 0,1,2 : for each pml layer (x, z, xz)
+            for ipml in range(0, 6): # iabs = 0,1,2,3,4,5 : for each pml layer (x_acoust, z_acoust, xz_acoust,x_elast, z_elast, xz_elast)
                 if block == self.pml_boun[ipml]: # If the block considered correspond to the pml
                     quads=cubit.get_block_faces(block) # Import quads id
                     for quad in quads: # For each quad
-                        pml_file.write(('%10i %10i\n') % (quad,ipml+1)) # Write its id in the file next to its type
+                        pml_file.write(('%10i %10i\n') % (quad,ipml%3+1)) # Write its id in the file next to its type
                         npml_element=npml_element+1
-        #def line_prepender(pml_file, line):
-        #with open(pml_file, 'r+') as pml_file:
+        # ipml%3+1 = 1 -> element belongs to a X CPML layer only (either in Xmin or in Xmax)
+        # ipml%3+1 = 2 -> element belongs to a Y CPML layer only (either in Ymin or in Ymax)
+        # ipml%3+1 = 3 -> element belongs to both a X and a Y CPML layer (i.e., to a CPML corner)
+        # Write the number of pml elements at the beginning of the file :
         content = pml_file.read()
         pml_file.seek(0, 0)
         pml_file.write(str(npml_element).rstrip('\r\n') + '\n' + content)
@@ -438,33 +455,35 @@ class mesh(object,mesh_tools):
         # if not freename: freename=self.freename
         freeedge=open(freename,'w')
         print 'Writing '+freename+'.....'
-        for block,flag in zip(self.block_bc,self.block_bc_flag): # For each 1D block
-            if block == self.topography: # If the block correspond to topography
-                edges_all=Set(cubit.get_block_edges(block)) # Import all topo edges id as a Set
-        freeedge.write('%10i\n' % len(edges_all)) # Print the number of edges on the free surface
-        print 'Number of edges in free surface :',len(edges_all)
-        id_element=0
-        for block,flag in zip(self.block_mat,self.block_flag): # For each 2D block
-                quads=cubit.get_block_faces(block) # Import quads id
-                for quad in quads: # For each quad
-                    id_element=id_element+1 # id of this quad
-                    edges=Set(cubit.get_sub_elements("face", quad, 1)) # Get the lower dimension entities associated with a higher dimension entities. 
-                    # Here it gets the 1D edges associates with the face of id "quad". Store it as a Set 
-                    intersection=edges & edges_all # Contains the edges of the considered quad that is on the free surface
-                    if len(intersection) != 0: # If this quad touch the free surface
-                        nodes=cubit.get_connectivity('face',quad) # Import the nodes describing the quad
-                        nodes=self.jac_check(list(nodes)) # Check the jacobian of the quad
-                        for e in intersection: # For each edge on the free surface
-                            node_edge=cubit.get_connectivity('edge',e) # Import the nodes describing the edge
-                            nodes_ok=[]
-                            for i in nodes: # ??? TODO nodes_ok == node_edge ???
-                                if i in node_edge:
-                                    nodes_ok.append(i)
-                            txt='%10i %10i %10i %10i\n' % (id_element,2,nodes_ok[0],nodes_ok[1]) 
-                            # Write the id of the quad, 2 (number of nodes describing a free surface elements), and the nodes
-                            freeedge.write(txt)
+        if self.topo_mesh:
+            for block,flag in zip(self.block_bc,self.block_bc_flag): # For each 1D block
+                if block == self.topography: # If the block correspond to topography
+                    edges_all=Set(cubit.get_block_edges(block)) # Import all topo edges id as a Set
+            freeedge.write('%10i\n' % len(edges_all)) # Print the number of edges on the free surface
+            print 'Number of edges in free surface :',len(edges_all)
+            id_element=0
+            for block,flag in zip(self.block_mat,self.block_flag): # For each 2D block
+                    quads=cubit.get_block_faces(block) # Import quads id
+                    for quad in quads: # For each quad
+                        id_element=id_element+1 # id of this quad
+                        edges=Set(cubit.get_sub_elements("face", quad, 1)) # Get the lower dimension entities associated with a higher dimension entities. 
+                        # Here it gets the 1D edges associates with the face of id "quad". Store it as a Set 
+                        intersection=edges & edges_all # Contains the edges of the considered quad that is on the free surface
+                        if len(intersection) != 0: # If this quad touch the free surface
+                            nodes=cubit.get_connectivity('face',quad) # Import the nodes describing the quad
+                            nodes=self.jac_check(list(nodes)) # Check the jacobian of the quad
+                            for e in intersection: # For each edge on the free surface
+                                node_edge=cubit.get_connectivity('edge',e) # Import the nodes describing the edge
+                                nodes_ok=[]
+                                for i in nodes: # ??? TODO nodes_ok == node_edge ???
+                                    if i in node_edge:
+                                        nodes_ok.append(i)
+                                txt='%10i %10i %10i %10i\n' % (id_element,2,nodes_ok[0],nodes_ok[1]) 
+                                # Write the id of the quad, 2 (number of nodes describing a free surface elements), and the nodes
+                                freeedge.write(txt)
+        else:
+            freeedge.write('0') # Even without any free surface specfem2d need a file with a 0 in first line
         freeedge.close()
-#        print edges_all
         print 'Ok'
         cubit.cmd('set info on') # Turn on return messages from Cubit commands
         cubit.cmd('set echo on') # Turn on echo of Cubit commands
@@ -561,22 +580,27 @@ class mesh(object,mesh_tools):
         print 'Ok'
     def write(self,path=''):
         """ Write mesh in specfem2d format """
+        import os
         cubit.cmd('set info off') # Turn off return messages from Cubit commands
         cubit.cmd('set echo off') # Turn off echo of Cubit commands
         cubit.cmd('set journal off') # Do not save journal file
         if len(path) != 0: # If a path is supplied add a / at the end if needed
             if path[-1] != '/': path=path+'/'
+        else:
+            path=os.getcwd()+'/'
         self.mesh_write(path+self.mesh_name) # Write mesh file 
         self.material_write(path+self.material_name) # Write material file
         self.nodescoord_write(path+self.nodecoord_name) # Write nodes coord file
-        self.free_write(path+self.freename) # Write free surface file
-        self.abs_write(path+self.absname) # Write absorbing surface file
+        self.free_write(path+self.freename) # Write free surface file (specfem2d needs it even if there is no free surface)
+        if self.abs_mesh:
+            self.abs_write(path+self.absname) # Write absorbing surface file
         if self.axisymmetric_mesh:
             self.axis_write(path+self.axisname) # Write axis on file
         if self.pml_layers:
             self.pmls_write(path+self.pmlname) # Write axis on file
         self.nummaterial_write(path+self.nummaterial_name) # Write nummaterial file
         if self.receivers: self.rec_write(path+self.recname) # If receivers has been set (as nodeset) write receiver file as well
+        print 'Mesh files has been writen in '+path
         cubit.cmd('set info on') # Turn on return messages from Cubit commands
         cubit.cmd('set echo on') # Turn on echo of Cubit commands
 
