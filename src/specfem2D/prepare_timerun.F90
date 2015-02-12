@@ -188,10 +188,11 @@ subroutine prepare_timerun_image_coloring()
 
   implicit none
 
-  integer i,j,k
+  integer i,j
 
 #ifdef USE_MPI
   include "precision.h"
+  integer k
 #endif
 
 
