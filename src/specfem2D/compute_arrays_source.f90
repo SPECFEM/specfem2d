@@ -129,27 +129,23 @@
 ! ------------------------------------------------------------------------------------------------------
 
 
-  subroutine compute_arrays_adj_source(xi_receiver,gamma_receiver)
+  subroutine compute_arrays_adj_source(xi_rec,gamma_rec)
 
  use constants
- use specfem_par, only: seismotype,adj_source_file,adj_sourcearray, &
-                        xigll,zigll,NSTEP,irec_local
+ use specfem_par
 
  implicit none
 
 
-  double precision xi_receiver, gamma_receiver
 
-  double precision :: hxir(NGLLX), hpxir(NGLLX), hgammar(NGLLZ), hpgammar(NGLLZ)
-  real(kind=CUSTOM_REAL) :: adj_src_s(NSTEP,3)
+  double precision xi_rec, gamma_rec
 
-  integer icomp, itime, i, k, ios
+  integer icomp, itime, i, k
   double precision :: junk
   character(len=3) :: comp(3)
-  character(len=150) :: filename
 
-  call lagrange_any(xi_receiver,NGLLX,xigll,hxir,hpxir)
-  call lagrange_any(gamma_receiver,NGLLZ,zigll,hgammar,hpgammar)
+  call lagrange_any(xi_rec,NGLLX,xigll,hxir,hpxir)
+  call lagrange_any(gamma_rec,NGLLZ,zigll,hgammar,hpgammar)
 
   adj_sourcearray(:,:,:,:) = 0.
 
@@ -171,6 +167,8 @@
 
   enddo
 
+  source_adjointe(irec_local,:,2) = adj_src_s(:,3)
+
   else if (seismotype == 4 ) then
 
     filename = 'SEM/'//trim(adj_source_file) // '.PRE.adj'
@@ -182,7 +180,20 @@
     enddo
     close(IIN)
 
+  else if (seismotype == 6 ) then
+
+    filename = 'SEM/'//trim(adj_source_file) // '.POT.adj'
+    open(unit = IIN, file = trim(filename), iostat = ios)
+    if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
+
+    do itime = 1, NSTEP
+      read(IIN,*) junk, adj_src_s(itime,1)
+    enddo
+    close(IIN)
+
   endif
+
+  source_adjointe(irec_local,:,1) = adj_src_s(:,1)
 
   do k = 1, NGLLZ
       do i = 1, NGLLX

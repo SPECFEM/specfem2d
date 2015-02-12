@@ -141,14 +141,17 @@ PML_BOUNDARY_CONDITIONS         = .false.
 NELEM_PML_THICKNESS             = 3
 ROTATE_PML_ACTIVATE             = .false.
 ROTATE_PML_ANGLE                = 30.
-STACEY_ABSORBING_CONDITIONS     = .false.
-ADD_SPRING_TO_STACEY            = .true.
+STACEY_ABSORBING_CONDITIONS     = .true.
+ADD_SPRING_TO_STACEY            = .false.
 
 # for horizontal periodic conditions: detect common points between left and right edges
 ADD_PERIODIC_CONDITIONS         = .false.
 
 # horizontal periodicity distance for periodic conditions
 PERIODIC_HORIZ_DIST             = 0.3597d0
+
+# set to true to use GPUs
+GPU_MODE                        = .false.
 
 #-----------------------------------------------------------------------------
 # PARAMETERS FOR EXTERNAL MESHING

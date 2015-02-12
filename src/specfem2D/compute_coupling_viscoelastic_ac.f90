@@ -95,40 +95,35 @@
              if(is_PML(ispec_acoustic) .and. nspec_PML > 0) then
                ispec_PML = spec_to_PML(ispec_acoustic)
                CPML_region_local = region_CPML(ispec_acoustic)
-               if(CPML_region_local == CPML_X_ONLY)then
-                  kappa_x = K_x_store(i,j,ispec_PML)
-                  kappa_z = K_z_store(i,j,ispec_PML)
-                  d_x = d_x_store(i,j,ispec_PML)
-                  d_z = d_z_store(i,j,ispec_PML)
-                  alpha_x = alpha_x_store(i,j,ispec_PML)
-                  alpha_z = alpha_z_store(i,j,ispec_PML)
-                  beta_x = alpha_x + d_x / kappa_x
-                  beta_z = alpha_z + d_z / kappa_z
-                  call l_parameter_computation(timeval,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
-                                              CPML_region_local,A0,A1,A2,A3,A4,singularity_type,&
-                                              bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
+               kappa_x = K_x_store(i,j,ispec_PML)
+               kappa_z = K_z_store(i,j,ispec_PML)
+               d_x = d_x_store(i,j,ispec_PML)
+               d_z = d_z_store(i,j,ispec_PML)
+               alpha_x = alpha_x_store(i,j,ispec_PML)
+               alpha_z = alpha_z_store(i,j,ispec_PML)
+               beta_x = alpha_x + d_x / kappa_x
+               beta_z = alpha_z + d_z / kappa_z
+               call l_parameter_computation(timeval,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+                                           CPML_region_local,A0,A1,A2,A3,A4,singularity_type,&
+                                           bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
 
-                  if(stage_time_scheme == 1) then
-                    rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) = &
-                                coef0_1 * rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) + &
-                                coef1_1 * potential_acoustic(iglob) + coef2_1 * potential_acoustic_old(iglob)
-                  endif
-
-                  if(stage_time_scheme == 6) then
-                    rmemory_sfb_potential_ddot_acoustic_LDDRK(1,i,j,inum) = &
-                           alpha_LDDRK(i_stage) * rmemory_sfb_potential_ddot_acoustic_LDDRK(1,i,j,inum) + &
-                           deltat * (-bb_1 * rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) + potential_acoustic(iglob))
-                    rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) = rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) + &
-                           beta_LDDRK(i_stage) * rmemory_sfb_potential_ddot_acoustic_LDDRK(1,i,j,inum)
-
-                  endif
-
-                  pressure = - (A0 * potential_dot_dot_acoustic(iglob) + A1 * potential_dot_acoustic(iglob) + &
-                                A2 * potential_acoustic(iglob) + A3 * rmemory_sfb_potential_ddot_acoustic(1,i,j,inum))
-
-               else
-                  stop 'PML do not support the fluid-solid boundary not inside CPML_X_ONLY'
+               if(stage_time_scheme == 1) then
+                 rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) = &
+                             coef0_1 * rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) + &
+                             coef1_1 * potential_acoustic(iglob) + coef2_1 * potential_acoustic_old(iglob)
                endif
+
+               if(stage_time_scheme == 6) then
+                 rmemory_sfb_potential_ddot_acoustic_LDDRK(1,i,j,inum) = &
+                        alpha_LDDRK(i_stage) * rmemory_sfb_potential_ddot_acoustic_LDDRK(1,i,j,inum) + &
+                        deltat * (-bb_1 * rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) + potential_acoustic(iglob))
+                 rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) = rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) + &
+                        beta_LDDRK(i_stage) * rmemory_sfb_potential_ddot_acoustic_LDDRK(1,i,j,inum)
+
+               endif
+
+               pressure = - (A0 * potential_dot_dot_acoustic(iglob) + A1 * potential_dot_acoustic(iglob) + &
+                             A2 * potential_acoustic(iglob) + A3 * rmemory_sfb_potential_ddot_acoustic(1,i,j,inum))
              else
                pressure = - potential_dot_dot_acoustic(iglob)
              endif

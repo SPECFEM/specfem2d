@@ -50,10 +50,10 @@
   include "constants.h"
 
 ! -------------------------------------------------------------------------------------
-! Dummy example of this routine, to be used as a template that can be modified by users
+! Dummy example of this routine, to be used as a template that users can modify
 ! -------------------------------------------------------------------------------------
 
-! user can modify this routine to assign any different external model (rho, vp, vs)
+! users can modify this routine to assign any different external model (rho, vp, vs)
 ! based on the x and y coordinates of that grid point and the material number of the region it belongs to
 
   integer, intent(in) :: nspec,nglob
@@ -71,9 +71,10 @@
 
   double precision :: x,z
 
-! completely dummy routine here, just to demonstrate how the model can be assigned
+! dummy routine here, just to demonstrate how the model can be assigned
 ! and how such a routine can be written
 
+! remove gravity
 ! leave these arrays here even if you do not assign them to use them because they need to be cleared
   gravity(:,:,:) = 0.d0
   Nsq(:,:,:) = 0.d0
@@ -205,6 +206,7 @@
   double precision :: x,z,r,frac
 
 ! remove gravity
+! leave these arrays here even if you do not assign them to use them because they need to be cleared
   gravity(:,:,:) = 0.d0
   Nsq(:,:,:)     = 0.d0
 

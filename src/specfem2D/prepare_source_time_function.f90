@@ -55,12 +55,13 @@
   include "constants.h"
 
   ! local parameters
-  double precision :: stf_used, timeval, DecT, Tc, omegat, omega_coa
+  double precision :: stf_used, timeval, DecT, Tc, omegat, omega_coa,time,facteur
   double precision, dimension(NSOURCES) :: hdur,hdur_gauss
   double precision, external :: netlib_specfun_erf
-  integer :: it,i_source
+  integer :: it,i_source,ier,num_file
   integer :: i_stage
   double precision, dimension(4) :: c_RK
+  character(len=256) :: name_of_file
 
   if(stage_time_scheme == 4)then
    c_RK(1)=0.0d0*deltat
@@ -80,6 +81,8 @@
 
     ! loop on all the sources
     do i_source=1,NSOURCES
+
+    num_file = 800 + i_source
 
     ! note: t0 is the simulation start time, tshift_src is the time shift of the source
     !          relative to this start time
@@ -181,6 +184,19 @@
            source_time_function(i_source,it,i_stage) = ZERO
 
         endif
+
+       else if(time_function_type(i_source) == 8) then
+
+        if (it == 1 ) then
+          facteur = factor(i_source)
+          write(name_of_file,"(a,i3.3,a)") 'DATA/source_custom',int(facteur),'.txt'
+          open(unit=num_file,file=name_of_file,iostat=ier)
+          if( ier /= 0 ) call exit_MPI('error opening file source_custom*****')
+        endif
+
+        read(num_file,*) time, source_time_function(i_source,it,i_stage)
+
+        if (it == NSTEP ) close(num_file)
 
       else
         call exit_MPI('unknown source time function')

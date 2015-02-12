@@ -151,6 +151,9 @@ ADD_PERIODIC_CONDITIONS         = .false.
 # horizontal periodicity distance for periodic conditions
 PERIODIC_HORIZ_DIST             = 0.3597d0
 
+# set to true to use GPUs
+GPU_MODE                        = .false.
+
 #-----------------------------------------------------------------------------
 # PARAMETERS FOR EXTERNAL MESHING
 

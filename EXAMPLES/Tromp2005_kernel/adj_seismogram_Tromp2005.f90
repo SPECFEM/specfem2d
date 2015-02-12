@@ -87,7 +87,7 @@ program adj_seismogram
 
      do icomp = 1, NDIMr
 
-        filename = 'OUTPUT_FILES/'//trim(station_name(irec))//'.AA.'// compr(icomp) // '.semd'
+        filename = 'OUTPUT_FILES/'//'AA.'//trim(station_name(irec))//'.'// compr(icomp) // '.semd'
         open(unit = 10, file = trim(filename))
 
         do itime = 1,NSTEP
@@ -119,7 +119,7 @@ program adj_seismogram
 
         print*,comp(icomp)
 
-        filename = 'SEM/'//trim(station_name(irec))//'.AA.'// comp(icomp) // '.adj'
+        filename = 'SEM/'//'AA.'//trim(station_name(irec))//'.'// comp(icomp) // '.adj'
         open(unit = 11, file = trim(filename))
 
         time_window(:) = 0.d0

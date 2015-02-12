@@ -1,0 +1,5 @@
+SPECFEM2D/UTILS/cubit2specfem2d/README
+
+The preferred version for using cubit to output files specific for SPECFEM2D would be to use the python script cubit2specfem2d.py, similar to the procedure used for SPECFEM3D. Read comments in the file cubit2specfem2d.py itself.
+
+An alternative is to use the matlab scripts in the folder matlab.

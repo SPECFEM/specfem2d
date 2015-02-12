@@ -97,44 +97,52 @@
              if(is_PML(ispec_elastic) .and. nspec_PML > 0) then
                ispec_PML = spec_to_PML(ispec_elastic)
                CPML_region_local = region_CPML(ispec_elastic)
+               kappa_x = K_x_store(i,j,ispec_PML)
+               kappa_z = K_z_store(i,j,ispec_PML)
+               d_x = d_x_store(i,j,ispec_PML)
+               d_z = d_z_store(i,j,ispec_PML)
+               alpha_x = alpha_x_store(i,j,ispec_PML)
+               alpha_z = alpha_z_store(i,j,ispec_PML)
+               beta_x = alpha_x + d_x / kappa_x
+               beta_z = alpha_z + d_z / kappa_z
+
                if(CPML_region_local == CPML_X_ONLY)then
-                  kappa_x = K_x_store(i,j,ispec_PML)
-                  kappa_z = K_z_store(i,j,ispec_PML)
-                  d_x = d_x_store(i,j,ispec_PML)
-                  d_z = d_z_store(i,j,ispec_PML)
-                  alpha_x = alpha_x_store(i,j,ispec_PML)
-                  alpha_z = alpha_z_store(i,j,ispec_PML)
-                  beta_x = alpha_x + d_x / kappa_x
-                  beta_z = alpha_z + d_z / kappa_z
-                  call lik_parameter_computation(timeval,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z,&
-                                           CPML_region_local,13,A8,A9,A10,singularity_type_xz,bb_xz_1,bb_xz_2,&
-                                           coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2)
-                  if(stage_time_scheme == 1) then
-                    rmemory_fsb_displ_elastic(1,1,i,j,inum) = coef0_xz_1 * rmemory_fsb_displ_elastic(1,1,i,j,inum) + &
-                                  coef1_xz_1 * displ_elastic(1,iglob) + coef2_xz_1 * displ_elastic_old(1,iglob)
-                    rmemory_fsb_displ_elastic(1,3,i,j,inum) = coef0_xz_1 * rmemory_fsb_displ_elastic(1,3,i,j,inum) + &
-                                  coef1_xz_1 * displ_elastic(3,iglob) + coef2_xz_1 * displ_elastic_old(3,iglob)
-                  endif
+               call lik_parameter_computation(timeval,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z,&
+                                        CPML_region_local,13,A8,A9,A10,singularity_type_xz,bb_xz_1,bb_xz_2,&
+                                        coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2)
+               else if(CPML_region_local == CPML_Z_ONLY)then
+               call lik_parameter_computation(timeval,deltat,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x,&
+                                        CPML_region_local,31,A8,A9,A10,singularity_type_xz,bb_xz_1,bb_xz_2,&
+                                        coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2)
 
-                  if(stage_time_scheme == 6) then
-                    rmemory_fsb_displ_elastic_LDDRK(1,1,i,j,inum) = &
-                           alpha_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,1,i,j,inum) + &
-                           deltat * ( - bb_xz_1 * rmemory_fsb_displ_elastic(1,1,i,j,inum) + displ_elastic(1,iglob) )
-                    rmemory_fsb_displ_elastic(1,1,i,j,inum) = rmemory_fsb_displ_elastic(1,1,i,j,inum) + &
-                           beta_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,1,i,j,inum)
-
-                    rmemory_fsb_displ_elastic_LDDRK(1,3,i,j,inum) = &
-                           alpha_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,3,i,j,inum) + &
-                           deltat * ( - bb_xz_1 * rmemory_fsb_displ_elastic(1,3,i,j,inum) + displ_elastic(3,iglob) )
-                    rmemory_fsb_displ_elastic(1,3,i,j,inum) = rmemory_fsb_displ_elastic(1,3,i,j,inum) + &
-                           beta_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,3,i,j,inum)
-                  endif
-
-                  displ_x = A8 * displ_elastic(1,iglob) + A9 * rmemory_fsb_displ_elastic(1,1,i,j,inum)
-                  displ_z = A8 * displ_elastic(3,iglob) + A9 * rmemory_fsb_displ_elastic(1,3,i,j,inum)
                else
-                  stop 'PML currently does not support a fluid-solid boundary located in a PML that is not CPML_X_ONLY'
+                 stop 'PML do not support a fluid-solid boundary in corner PML region'
                endif
+
+
+               if(stage_time_scheme == 1) then
+                 rmemory_fsb_displ_elastic(1,1,i,j,inum) = coef0_xz_1 * rmemory_fsb_displ_elastic(1,1,i,j,inum) + &
+                               coef1_xz_1 * displ_elastic(1,iglob) + coef2_xz_1 * displ_elastic_old(1,iglob)
+                 rmemory_fsb_displ_elastic(1,3,i,j,inum) = coef0_xz_1 * rmemory_fsb_displ_elastic(1,3,i,j,inum) + &
+                               coef1_xz_1 * displ_elastic(3,iglob) + coef2_xz_1 * displ_elastic_old(3,iglob)
+               endif
+
+               if(stage_time_scheme == 6) then
+                 rmemory_fsb_displ_elastic_LDDRK(1,1,i,j,inum) = &
+                        alpha_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,1,i,j,inum) + &
+                        deltat * ( - bb_xz_1 * rmemory_fsb_displ_elastic(1,1,i,j,inum) + displ_elastic(1,iglob) )
+                 rmemory_fsb_displ_elastic(1,1,i,j,inum) = rmemory_fsb_displ_elastic(1,1,i,j,inum) + &
+                        beta_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,1,i,j,inum)
+
+                 rmemory_fsb_displ_elastic_LDDRK(1,3,i,j,inum) = &
+                        alpha_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,3,i,j,inum) + &
+                        deltat * ( - bb_xz_1 * rmemory_fsb_displ_elastic(1,3,i,j,inum) + displ_elastic(3,iglob) )
+                 rmemory_fsb_displ_elastic(1,3,i,j,inum) = rmemory_fsb_displ_elastic(1,3,i,j,inum) + &
+                        beta_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,3,i,j,inum)
+               endif
+
+               displ_x = A8 * displ_elastic(1,iglob) + A9 * rmemory_fsb_displ_elastic(1,1,i,j,inum)
+               displ_z = A8 * displ_elastic(3,iglob) + A9 * rmemory_fsb_displ_elastic(1,3,i,j,inum)
              else
                displ_x = displ_elastic(1,iglob)
                displ_z = displ_elastic(3,iglob)

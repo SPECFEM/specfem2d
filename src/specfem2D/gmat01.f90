@@ -45,7 +45,7 @@
 
 ! reads properties of a 2D isotropic or anisotropic linear elastic element
 
-  use specfem_par, only : density,porosity,tortuosity, &
+  use specfem_par, only : ANY_ANISOTROPY,density,porosity,tortuosity, &
                           anisotropy,permeability,poroelastcoef, &
                           numat,myrank,QKappa_attenuation,Qmu_attenuation, &
                           freq0,Q0,ATTENUATION_PORO_FLUID_PART
@@ -70,6 +70,7 @@
   character(len=80) datlin
 
 
+  ANY_ANISOTROPY = .false.
 
   !
   !---- loop over the different material sets
@@ -161,6 +162,8 @@
 
         ! Poisson's ratio
         poisson = half*(3.d0*kappa-two_mu)/(3.d0*kappa+mu)
+
+        ANY_ANISOTROPY = .true.
 
 
         !---- isotropic material, moduli are given, allows for declaration of poroelastic material

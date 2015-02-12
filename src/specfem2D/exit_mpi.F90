@@ -71,3 +71,164 @@ subroutine exit_MPI(error_msg)
   stop 'error, program ended in exit_MPI'
 
 end subroutine exit_MPI
+
+!-------------------------------------------------------------------------------------------------
+!
+! I/O wrapper function
+!
+!-------------------------------------------------------------------------------------------------
+
+  subroutine flush_IOUT()
+
+  implicit none
+
+  include "constants.h"
+
+  ! only master process writes out to main output file
+  ! file I/O in fortran is buffered by default
+  !
+  ! note: Fortran2003 includes a FLUSH statement
+  !          which is implemented by most compilers by now
+  !
+  ! otherwise:
+  !   a) comment out the line below
+  !   b) try to use instead: call flush(IOUT)
+
+  flush(IOUT)
+
+  end subroutine flush_IOUT
+
+
+!
+!----
+!
+
+#ifdef USE_MPI
+
+  subroutine isend_cr(sendbuf, sendcount, dest, sendtag, req)
+
+! standard include of the MPI library
+  use mpi
+
+  implicit none
+
+  include "constants.h"
+
+  include "precision.h"
+
+  integer sendcount, dest, sendtag, req
+  real(kind=CUSTOM_REAL), dimension(sendcount) :: sendbuf
+
+  integer ier
+
+  call MPI_ISEND(sendbuf,sendcount,CUSTOM_MPI_TYPE,dest,sendtag,MPI_COMM_WORLD,req,ier)
+
+  end subroutine isend_cr
+
+!
+!----
+!
+
+  subroutine irecv_cr(recvbuf, recvcount, dest, recvtag, req)
+
+! standard include of the MPI library
+  use mpi
+
+  implicit none
+
+  include "constants.h"
+  include "precision.h"
+
+  integer recvcount, dest, recvtag, req
+  real(kind=CUSTOM_REAL), dimension(recvcount) :: recvbuf
+
+  integer ier
+
+  call MPI_IRECV(recvbuf,recvcount,CUSTOM_MPI_TYPE,dest,recvtag,MPI_COMM_WORLD,req,ier)
+
+  end subroutine irecv_cr
+
+!
+!----
+!
+
+  subroutine wait_req(req)
+
+! standard include of the MPI library
+  use mpi
+
+  implicit none
+
+  integer :: req
+
+  integer, dimension(MPI_STATUS_SIZE) :: req_mpi_status
+
+  integer :: ier
+
+  call mpi_wait(req,req_mpi_status,ier)
+
+  end subroutine wait_req
+
+!
+!----
+!
+
+  subroutine sync_all()
+
+! standard include of the MPI library
+  use mpi
+
+  implicit none
+
+  integer ier
+
+  call MPI_BARRIER(MPI_COMM_WORLD,ier)
+
+  end subroutine sync_all
+
+!
+!----
+!
+
+  subroutine min_all_i(sendbuf, recvbuf)
+
+! standard include of the MPI library
+  use mpi
+
+  implicit none
+
+  include "constants.h"
+
+  include "precision.h"
+
+  integer:: sendbuf, recvbuf
+  integer ier
+
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_MIN,0,MPI_COMM_WORLD,ier)
+
+  end subroutine min_all_i
+
+!
+!----
+!
+
+  subroutine max_all_i(sendbuf, recvbuf)
+
+! standard include of the MPI library
+  use mpi
+
+  implicit none
+
+  include "constants.h"
+
+  include "precision.h"
+
+  integer :: sendbuf, recvbuf
+  integer :: ier
+
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_MAX,0,MPI_COMM_WORLD,ier)
+
+  end subroutine max_all_i
+
+#endif
+

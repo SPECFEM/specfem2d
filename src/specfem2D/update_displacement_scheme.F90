@@ -43,8 +43,9 @@
 
   subroutine update_displacement_precondition_newmark()
 
-  use specfem_par, only : deltat,deltatover2,deltatsquareover2,b_deltat,b_deltatover2,b_deltatsquareover2, &
-                          myrank,time_stepping_scheme,SIMULATION_TYPE,&
+  use specfem_par, only : deltat,deltatover2,deltatsquareover2,b_deltat,b_deltatover2,b_deltatsquareover2, GPU_MODE, &
+                          Mesh_pointer,myrank,deltatf,deltatover2f,deltatsquareover2f,b_deltatf,b_deltatover2f,&
+                          b_deltatsquareover2f,time_stepping_scheme,SIMULATION_TYPE,&
                           nglob_acoustic,nglob_elastic,nglob_poroelastic,&
                           any_acoustic,any_elastic,any_poroelastic,&
                           potential_acoustic,potential_dot_acoustic,&
@@ -70,6 +71,9 @@
 
     if(any_acoustic) then
 
+    if (.not. GPU_MODE ) then
+
+
       if(time_stepping_scheme==1)then
       ! Newmark time scheme
 !! DK DK this should be vectorized
@@ -91,9 +95,29 @@
         b_potential_dot_dot_acoustic = ZERO
       endif
 
+
+
+    else
+    ! wavefields on GPU
+    ! check
+    if( SIMULATION_TYPE == 3 ) then
+      if( PML_BOUNDARY_CONDITIONS )then
+        call exit_MPI('acoustic time marching scheme with PML_CONDITIONS on GPU not implemented yet...')
+      endif
     endif
 
+    ! updates acoustic potentials
+    call it_update_displacement_ac_cuda(Mesh_pointer,deltatf,deltatsquareover2f,deltatover2f,&
+             b_deltatf,b_deltatsquareover2f,b_deltatover2f)
+  endif ! GPU_MODE
+
+
+  endif
+
     if(any_elastic) then
+
+    if (.not. GPU_MODE ) then
+
 
       if(time_stepping_scheme==1)then
 #ifdef FORCE_VECTORIZATION
@@ -127,9 +151,36 @@
         b_veloc_elastic = b_veloc_elastic + b_deltatover2*b_accel_elastic
         b_accel_elastic = ZERO
       endif
+
+
+  else ! GPU_MODE
+    ! wavefields on GPU
+
+    ! check
+    if( SIMULATION_TYPE == 3 ) then
+      if( PML_BOUNDARY_CONDITIONS )then
+
+          call exit_MPI('elastic time marching scheme with PML_CONDITIONS on GPU not implemented yet...')
+
+      endif
     endif
 
+    ! updates elastic displacement and velocity
+    ! Includes SIM_TYPE 1 & 3 (for noise tomography)
+    call update_displacement_cuda(Mesh_pointer,deltatf,deltatsquareover2f,&
+                                  deltatover2f,b_deltatf,b_deltatsquareover2f,b_deltatover2f)
+  endif ! GPU_MODE
+
+ endif
+
+
+
     if(any_poroelastic) then
+
+
+    if (.not. GPU_MODE ) then
+
+
 
       if(time_stepping_scheme==1)then
       !for the solid
@@ -181,6 +232,15 @@
         b_velocw_poroelastic = b_velocw_poroelastic + b_deltatover2*b_accelw_poroelastic
         b_accelw_poroelastic = ZERO
       endif
-    endif
+
+
+   else
+    ! wavefields on GPU
+    call exit_MPI('poroelastic time marching scheme on GPU not implemented yet...')
+  endif ! GPU_MODE
+
+
+  endif
+
 
   end subroutine update_displacement_precondition_newmark

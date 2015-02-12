@@ -41,19 +41,16 @@
 !
 !========================================================================
 
-  subroutine attenuation_model(QKappa_attenuation,Qmu_attenuation)
+  subroutine attenuation_model(QKappa_att,QMu_att)
 
 ! define the attenuation constants
 
-  use specfem_par, only :  N_SLS, f0_attenuation,tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
-                           inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent
+  use specfem_par
 
 
   implicit none
 
-  include "constants.h"
-
-  double precision :: QKappa_attenuation,Qmu_attenuation
+  double precision :: QKappa_att,QMu_att
 
   integer :: i_sls
 
@@ -79,16 +76,16 @@
 ! We thus strongly discourage using the old routine.
   if(USE_NEW_SOLVOPT_ROUTINE) then
 
-    call determination_coef(N_SLS,QKappa_attenuation,f0_attenuation,f_min_attenuation,f_max_attenuation, &
+    call determination_coef(N_SLS,QKappa_att,f0_attenuation,f_min_attenuation,f_max_attenuation, &
                                   tau_epsilon_nu1_d,tau_sigma_nu1)
 
-    call determination_coef(N_SLS,Qmu_attenuation,f0_attenuation,f_min_attenuation,f_max_attenuation, &
+    call determination_coef(N_SLS,QMu_att,f0_attenuation,f_min_attenuation,f_max_attenuation, &
                                   tau_epsilon_nu2_d,tau_sigma_nu2)
 
 !   print *
 !   print *,'with new SolvOpt:'
 !   print *
-!   print *,'N_SLS, QKappa_attenuation, Qmu_attenuation = ',N_SLS, QKappa_attenuation, Qmu_attenuation
+!   print *,'N_SLS, QKappa_att, QMu_att = ',N_SLS, QKappa_att, QMu_att
 !   print *,'f0_attenuation,f_min_attenuation,f_max_attenuation = ',f0_attenuation,f_min_attenuation,f_max_attenuation
 !   print *,'tau_epsilon_nu1 = ',tau_epsilon_nu1_d
 !   print *,'tau_sigma_nu1 = ',tau_sigma_nu1
@@ -100,13 +97,13 @@
 
 ! call a C function that computes attenuation parameters (function in file "attenuation_compute_param.c";
 ! a main can be found in UTILS/attenuation directory).
-    call attenuation_compute_param(N_SLS, QKappa_attenuation, Qmu_attenuation, &
+    call attenuation_compute_param(N_SLS, QKappa_att, QMu_att, &
          f_min_attenuation,f_max_attenuation,tau_sigma_nu1, tau_sigma_nu2, tau_epsilon_nu1_d, tau_epsilon_nu2_d)
 
 !   print *
 !   print *,'with old C routine:'
 !   print *
-!   print *,'N_SLS, QKappa_attenuation, Qmu_attenuation = ',N_SLS, QKappa_attenuation, Qmu_attenuation
+!   print *,'N_SLS, QKappa_att, QMu_att = ',N_SLS, QKappa_att, QMu_att
 !   print *,'f0_attenuation,f_min_attenuation,f_max_attenuation = ',f0_attenuation,f_min_attenuation,f_max_attenuation
 !   print *,'tau_epsilon_nu1 = ',tau_epsilon_nu1_d
 !   print *,'tau_sigma_nu1 = ',tau_sigma_nu1
@@ -302,16 +299,16 @@
 ! Lombard and Piraux, Numerical modeling of transient two-dimensional viscoelastic waves,
 ! Journal of Computational Physics, Volume 230, Issue 15, Pages 6099-6114 (2011)
 
-! Suivant les compilateurs et les options de compilation utilisées,
-! il peut y avoir des différences au 4ème chiffre significatif. C'est sans conséquences sur la précision du calcul :
-! l'erreur est de 0.015 % avec optimisation non linéaire, à comparer à 1.47 % avec Emmerich and Korn (1987).
-! Si je relance le calcul en initialisant avec le résultat précédent, ce chiffre varie à nouveau très légèrement.
+! Suivant les compilateurs et les options de compilation utilisees,
+! il peut y avoir des differences au 4eme chiffre significatif. C'est sans consequences sur la precision du calcul :
+! l'erreur est de 0.015 % avec optimisation non lineaire, a comparer a 1.47 % avec Emmerich and Korn (1987).
+! Si je relance le calcul en initialisant avec le resultat precedent, ce chiffre varie a nouveau tres legerement.
 
 !-------------------------------------------------------------------------
 
 ! From Bruno Lombard, June 2014:
 
-! j'ai relu en détail :
+! j'ai relu en detail :
 
 ! [1] Carcione, Kosslof, Kosslof, "Viscoacoustic wave propagation simulation in the Earth",
 !            Geophysics 53-6 (1988), 769-777
@@ -322,24 +319,24 @@
 ! [3] Moczo, Kristek, "On the rheological models used for time-domain methods of seismic wave propagation",
 !            Geophysical Research Letters 32 (2005).
 
-! Le problème provient probablement d'une erreur récurrente dans [1,2] et datant de Liu et al 1976 :
-! l'oubli du facteur 1/N dans la fonction de relaxation d'un modèle de Zener à N éléments.
-! Il est effectivement facile de faire l'erreur. Voir l'équation (12) de [3], et le paragraphe qui suit.
+! Le probleme provient probablement d'une erreur recurrente dans [1,2] et datant de Liu et al 1976 :
+! l'oubli du facteur 1/N dans la fonction de relaxation d'un modele de Zener a N elements.
+! Il est effectivement facile de faire l'erreur. Voir l'equation (12) de [3], et le paragraphe qui suit.
 
-! Du coup le module de viscoélasticité est faux dans [1,2], et donc le facteur de qualité,
+! Du coup le module de viscoelasticite est faux dans [1,2], et donc le facteur de qualite,
 ! et donc les temps de relaxation tau_sigma...
 
-! Après, [2] calcule une solution analytique juste, mais avec des coefficients sans sens physique.
-! Et quand SPECFEM2D obtient un bon accord avec cette solution analytique, ça valide SPECFEM, mais pas le calcul des coefficients.
+! Apres, [2] calcule une solution analytique juste, mais avec des coefficients sans sens physique.
+! Et quand SPECFEM2D obtient un bon accord avec cette solution analytique, ca valide SPECFEM, mais pas le calcul des coefficients.
 
 ! Il y a donc une erreur dans [1,2], et [3] a raison.
 
-! Sa solution analytique découle d'un travail sur ses fonctions de relaxation (A4),
+! Sa solution analytique decoule d'un travail sur ses fonctions de relaxation (A4),
 ! qu'il injecte ensuite dans la relation de comportement (A1) et travaille en Fourier.
 
-! Le problème est que sa fonction de relaxation (A4) est fausse : il manque 1/N.
-! De ce fait, sa solution analytique est cohérente avec sa solution numérique.
-! Dans les deux cas, ce sont les mêmes temps de relaxation qui sont utilisés. Mais ces temps sont calculés de façon erronée.
+! Le probleme est que sa fonction de relaxation (A4) est fausse : il manque 1/N.
+! De ce fait, sa solution analytique est coherente avec sa solution numerique.
+! Dans les deux cas, ce sont les memes temps de relaxation qui sont utilises. Mais ces temps sont calcules de facon erronee.
 
 !-------------------------------------------------------------------------
 
@@ -354,36 +351,36 @@
 
 ! From Emilie Blanc, April 2014:
 
-! le programme SolvOpt d'optimisation non-linéaire
-! avec contrainte. Ce programme prend quatre fonctions en entrée :
+! le programme SolvOpt d'optimisation non-lineaire
+! avec contrainte. Ce programme prend quatre fonctions en entree :
 
-! - fun() est la fonction à minimiser
+! - fun() est la fonction a minimiser
 
-! - grad() est le gradient de la fonction à minimiser par rapport à chaque paramètre
+! - grad() est le gradient de la fonction a minimiser par rapport a chaque parametre
 
-! - func() est le maximum des résidus (= 0 si toutes les contraintes sont satisfaites)
+! - func() est le maximum des residus (= 0 si toutes les contraintes sont satisfaites)
 
-! - gradc() est le gradient du maximum des résidus (= 0 si toutes les
+! - gradc() est le gradient du maximum des residus (= 0 si toutes les
 ! contraintes sont satisfaites)
 
-! Ce programme a été développé par Kappel et Kuntsevich. Leur article décrit l'algorithme.
+! Ce programme a ete developpe par Kappel et Kuntsevich. Leur article decrit l'algorithme.
 
-! J'ai utilisé ce code pour la poroélasticité haute-fréquence, et aussi en
-! viscoélasticité fractionnaire (modèle d'Andrade, avec Bruno Lombard et
-! Cédric Bellis). Nous pouvons interagir sur l'algorithme d'optimisation
-! pour votre modèle visco, et étudier l'effet des coefficients ainsi obtenus.
+! J'ai utilise ce code pour la poroelasticite haute-frequence, et aussi en
+! viscoelasticite fractionnaire (modele d'Andrade, avec Bruno Lombard et
+! Cedric Bellis). Nous pouvons interagir sur l'algorithme d'optimisation
+! pour votre modele visco, et etudier l'effet des coefficients ainsi obtenus.
 
 !---------------------------------------------------
 
 ! From Emilie Blanc, March 2014:
 
-! Les entrées du programme principal sont le nombre de variables
-! diffusives, le facteur de qualité voulu Qref et la fréquence centrale f0.
+! Les entrees du programme principal sont le nombre de variables
+! diffusives, le facteur de qualite voulu Qref et la frequence centrale f0.
 
-! Cependant, pour l'optimisation non-linéaire, j'ai mis theta_max=100*f0
+! Cependant, pour l'optimisation non-lineaire, j'ai mis theta_max=100*f0
 ! et non pas theta_max=2*pi*100*f0. En effet, dans le programme, on
-! travaille sur les fréquences, et non pas sur les fréquences angulaires.
-! Cela dit, dans les deux cas j'obtiens les mêmes coefficients...
+! travaille sur les frequences, et non pas sur les frequences angulaires.
+! Cela dit, dans les deux cas j'obtiens les memes coefficients...
 
 
 !---------------------------------------------------

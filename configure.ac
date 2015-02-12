@@ -23,6 +23,24 @@ AC_ARG_WITH([mpi],
     [want_mpi=no])
 AM_CONDITIONAL([COND_MPI], [test "$want_mpi" = yes])
 
+
+
+###
+### CUDA
+###
+
+AC_ARG_WITH([cuda],
+    [AS_HELP_STRING([--with-cuda],
+        [build CUDA GPU enabled version @<:@default=no@:>@])],
+    [want_cuda="$withval"],
+    [want_cuda=no])
+AM_CONDITIONAL([COND_CUDA], [test "$want_cuda" != no])
+AM_CONDITIONAL([COND_CUDA5], [test "$want_cuda" = cuda5])
+
+
+
+
+
 AC_ARG_ENABLE([double-precision],
     [AC_HELP_STRING([--enable-double-precision],
         [solver in double precision @<:@default=no@:>@])],
@@ -57,7 +75,7 @@ FFLAGS="$FCFLAGS"
 AC_PROVIDE([AC_PROG_F77])
 AC_SUBST([FCENV])
 
-flags_guess="$SHELL flags.guess"
+flags_guess="$SHELL $srcdir/flags.guess"
 AC_MSG_NOTICE([running $flags_guess])
 flags=`$flags_guess` ||
     AC_MSG_ERROR([$flags_guess failed])
@@ -67,8 +85,19 @@ AC_FC_WRAPPERS
 AC_LANG(Fortran)
 AC_FC_SRCEXT(f90)
 AC_FC_FREEFORM()
-CIT_FC_PP_DEFINE()
+AC_FC_PP_DEFINE()
 AC_SUBST([FC_DEFINE])
+AC_FC_MODULE_EXTENSION
+AC_SUBST([FC_MODEXT])
+AC_FC_MODULE_FLAG([], [])
+AC_FC_MODULE_OUTPUT_FLAG([
+    DEF_FFLAGS="$FC_MODOUT./obj $FC_MODINC./obj $FC_MODINC. $DEF_FFLAGS"
+    FC_MODDIR=./obj
+], [
+    FC_MODDIR=.
+])
+AC_SUBST([FC_MODDIR])
+
 
 AC_PROG_CC
 
@@ -85,36 +114,32 @@ export SCOTCH_INCLUDEDIR
 export USE_BUNDLED_SCOTCH
 
 AC_ARG_WITH([scotch-dir],
-AC_HELP_STRING([--with-scotch-dir],[define the root path to Scotch (e.g. /opt/scotch/)]),
+AS_HELP_STRING([--with-scotch-dir=DIR],[define the root path to Scotch (e.g. /opt/scotch/)]),
 [
  ac_scotch_dir="$withval";
 ])
 
 AC_ARG_WITH([scotch-includedir],
-AC_HELP_STRING([--with-scotch-includedir],[define the path to the Scotch headers (e.g. /opt/scotch/include)]),
+AS_HELP_STRING([--with-scotch-includedir=DIR],[define the path to the Scotch headers (e.g. /opt/scotch/include)]),
 [
  ac_scotch_include_dir="$withval";
 ])
 
 AC_ARG_WITH([scotch-libdir],
-AC_HELP_STRING([--with-scotch-libdir],[define the path to the Scotch libraries (e.g. /opt/scotch/lib)]),
+AS_HELP_STRING([--with-scotch-libdir=DIR],[define the path to the Scotch libraries (e.g. /opt/scotch/lib)]),
 [
  ac_scotch_lib_dir="$withval";
 ])
 
 if test "${USE_BUNDLED_SCOTCH}" != "1"; then
 
-#daniel: scotch will be needed in directory src/meshfem2D/
-  builddir=`pwd`
-  cd src/meshfem2D/
-
-  if test -z "${ac_scotch_lib_dir}"; then
-    if test -n "${ac_scotch_dir}"; then
-        ac_scotch_lib_dir="${ac_scotch_dir}/lib";
-    else
+   if test -z "${ac_scotch_lib_dir}"; then
+      if test -n "${ac_scotch_dir}"; then
+         ac_scotch_lib_dir="${ac_scotch_dir}/lib";
+      else
         ac_scotch_lib_dir="/usr/lib";
-    fi
-  fi
+      fi
+   fi
 
   if test -z "${ac_scotch_include_dir}"; then
     if test -n "${ac_scotch_dir}"; then
@@ -145,9 +170,6 @@ dnl AC_CHECK_HEADER(scotchf.h,[scotch_include="yes";],[scotch_include="no";CPPFL
 
   scotch_usable="${scotch_lib}"
 
-  # back to root directory
-  cd $builddir
-
 fi
 
 AC_MSG_CHECKING([whether Scotch is usable])
@@ -169,15 +191,16 @@ else
  if test -z "$YACC" || test "X$YACC" = "Xno"; then
    AC_MSG_ERROR([No suitable yacc or bison found])
  fi
+ ACX_PTHREAD(AC_MSG_RESULT([pthread found]), AC_MSG_ERROR([pthread not found]))
 
  # scotch only needed with mpi support
  if test "$want_mpi" = yes; then
 
  #daniel: scotch bundle
- # uses bundled scotch: current version 5.1.12b
+ # uses bundled scotch: current version pointed to by symbolic link scotch/
  USE_BUNDLED_SCOTCH=1
 
- SCOTCH_DIR="scotch_5.1.12b"
+ SCOTCH_DIR="$srcdir/src/meshfem2D/scotch"
  SCOTCH_LIBDIR="${SCOTCH_DIR}/lib"
  SCOTCH_INCLUDEDIR="${SCOTCH_DIR}/include"
 
@@ -188,9 +211,24 @@ else
 
  fi # want_mpi
 
-
 fi
 LDFLAGS=${ac_save_ldflags}
+
+
+
+###
+### CUDA
+###
+
+if test "$want_cuda" != no; then
+    AS_BOX([CUDA])
+    CIT_CUDA_CONFIG
+fi
+
+
+
+
+
 
 # influential environment variables
 
@@ -230,12 +268,20 @@ fi
 
 AC_CONFIG_FILES([
 	Makefile
-	src/meshfem2D/Makefile
-	src/specfem2D/Makefile
 	setup/constants.h
 	setup/precision.h
-	src/meshfem2D/scotch_5.1.12b/src/Makefile.inc
 ])
+
+if test "$USE_BUNDLED_SCOTCH" = 1; then
+  AC_CONFIG_FILES([
+	  ${SCOTCH_DIR}/src/Makefile.inc
+  ])
+fi
+
+AC_CONFIG_COMMANDS([bin], [AS_MKDIR_P(bin)])
+AC_CONFIG_COMMANDS([obj], [AS_MKDIR_P(obj)])
+AC_CONFIG_COMMANDS([OUTPUT_FILES], [AS_MKDIR_P(OUTPUT_FILES)])
+
 AC_OUTPUT
 
 

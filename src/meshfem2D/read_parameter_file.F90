@@ -167,6 +167,9 @@ module parameter_file
 ! horizontal periodicity distance for periodic conditions
   double precision :: PERIODIC_HORIZ_DIST
 
+
+  logical :: GPU_MODE
+
 contains
 
   subroutine read_parameter_file()
@@ -522,6 +525,9 @@ contains
 
   call read_value_double_precision_p(PERIODIC_HORIZ_DIST, 'solver.PERIODIC_HORIZ_DIST')
   if(err_occurred() /= 0) stop 'error reading parameter 51c in Par_file'
+
+  call read_value_logical_p(GPU_MODE, 'solver.GPU_MODE')
+  if(err_occurred() /= 0) stop 'error reading parameter gpu in Par_file'
 
   !-----------------
   ! external mesh parameters

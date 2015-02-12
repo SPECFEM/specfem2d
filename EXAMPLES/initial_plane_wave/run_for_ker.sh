@@ -10,7 +10,7 @@ fi
 forward=$1
 kernel=$2
 echo ' '
-echo `date`
+date
 if [ $forward -eq 1 ] ; then
 currentdir=`pwd`
 mkdir -p OUTPUT_FILES
@@ -66,4 +66,4 @@ fi
 
 
 echo "done"
-echo `date`
+date

@@ -49,7 +49,7 @@
 
   use specfem_par, only: nglob,nspec,nelemabs,numat,it,NSTEP, &
                          anyabs,assign_external_model,ibool,kmato,numabs,acoustic, &
-                         codeabs,stage_time_scheme,i_stage, &
+                         codeabs,codeabs_corner,stage_time_scheme,i_stage, &
                          density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                          vpext,rhoext, &
                          hprime_xx,hprimewgll_xx, &
@@ -67,7 +67,7 @@
                          rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
                          rmemory_potential_acoustic_LDDRK,alpha_LDDRK,beta_LDDRK,c_LDDRK, &
                          rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
-                         deltat,STACEY_BOUNDARY_CONDITIONS,ispec,i,j,k,iglob,ispecabs
+                         deltat,STACEY_BOUNDARY_CONDITIONS
 
   implicit none
 
@@ -84,6 +84,7 @@
 !---
 
   integer :: ispec_PML,ibegin,iend,jbegin,jend
+  integer :: ispec,i,j,k,iglob,ispecabs
 
 ! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,dux_dxl,dux_dzl
@@ -579,8 +580,8 @@
           ibegin = ibegin_edge1(ispecabs)
           iend = iend_edge1(ispecabs)
           ! exclude corners to make sure there is no contradiction on the normal
-          if(codeabs(IEDGE4,ispecabs)) ibegin = 2
-          if(codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
+          if(codeabs_corner(1,ispecabs)) ibegin = 2
+          if(codeabs_corner(2,ispecabs)) iend = NGLLX-1
           do i = ibegin,iend
             iglob = ibool(i,j,ispec)
             ! external velocity model
@@ -622,8 +623,8 @@
           ibegin = ibegin_edge3(ispecabs)
           iend = iend_edge3(ispecabs)
           ! exclude corners to make sure there is no contradiction on the normal
-          if(codeabs(IEDGE4,ispecabs)) ibegin = 2
-          if(codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
+          if(codeabs_corner(3,ispecabs)) ibegin = 2
+          if(codeabs_corner(4,ispecabs)) iend = NGLLX-1
           do i = ibegin,iend
             iglob = ibool(i,j,ispec)
             ! external velocity model

@@ -58,7 +58,7 @@ module specfem_par
   implicit none
 
 
-  integer NSOURCES,i_source,iglobzero
+  integer NSOURCES,iglobzero
   integer, dimension(:), allocatable :: source_type,time_function_type
   double precision, dimension(:), allocatable :: x_source,z_source,xi_source,gamma_source,&
                   Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource
@@ -111,6 +111,9 @@ module specfem_par
 ! 3 = classical 4th-order 4-stage Runge-Kutta
   integer :: time_stepping_scheme
 
+! Global GPU toggle. Set in Par_file
+  logical :: GPU_MODE
+
 ! receiver information
   integer :: nrec,ios
   integer, dimension(:), allocatable :: ispec_selected_rec
@@ -130,7 +133,7 @@ module specfem_par
 ! curl in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: curl_element
 
-  integer :: i,j,k,it,irec,id,n,ispec,ispec2,nglob,npgeo,iglob
+  integer :: it,id,n,nglob,npgeo
   integer :: nglob_acoustic
   integer :: nglob_gravitoacoustic
   integer :: nglob_elastic
@@ -268,7 +271,7 @@ module specfem_par
     NSTEP_BETWEEN_OUTPUT_INFO,seismotype,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP_BETWEEN_OUTPUT_IMAGES, &
     NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS,subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps
   integer :: numat,ngnod,nspec,pointsdisp, &
-    nelemabs,nelem_acforcing,nelem_acoustic_surface,ispecabs,UPPER_LIMIT_DISPLAY,NELEM_PML_THICKNESS
+    nelemabs,nelem_acforcing,nelem_acoustic_surface,UPPER_LIMIT_DISPLAY,NELEM_PML_THICKNESS
 
   logical interpol,meshvect,modelvect,boundvect,assign_external_model,initialfield, &
     output_grid_ASCII,output_grid_Gnuplot,ATTENUATION_VISCOELASTIC_SOLID,output_postscript_snapshot,output_color_image, &
@@ -304,6 +307,10 @@ module specfem_par
 
   logical, dimension(:,:), allocatable  :: codeabs
   integer, dimension(:), allocatable  :: typeabs
+
+! for detection of corner element on absorbing boundary
+  logical, dimension(:,:), allocatable  :: codeabs_corner
+
 
 ! for attenuation
   integer  :: N_SLS
@@ -443,6 +450,8 @@ module specfem_par
     b_absorb_acoustic_bottom, b_absorb_acoustic_top
   integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
   integer, dimension(:), allocatable :: ib_left,ib_right,ib_bottom,ib_top
+  real(kind=CUSTOM_REAL),  dimension(:,:,:), allocatable :: source_adjointe
+  real(kind=CUSTOM_REAL),  dimension(:,:), allocatable :: xir_store_loc, gammar_store_loc
 
 ! for color images
   integer :: NX_IMAGE_color,NZ_IMAGE_color
@@ -503,6 +512,9 @@ module specfem_par
   integer, dimension(:,:,:), allocatable  :: my_interfaces
   integer, dimension(:,:), allocatable  :: ibool_interfaces_acoustic,ibool_interfaces_elastic,ibool_interfaces_poroelastic
   integer, dimension(:), allocatable  :: nibool_interfaces_acoustic,nibool_interfaces_elastic,nibool_interfaces_poroelastic
+  integer, dimension(:), allocatable :: nibool_interfaces_ext_mesh
+  integer, dimension(:,:), allocatable :: ibool_interfaces_ext_mesh_init, ibool_interfaces_ext_mesh
+  integer :: max_nibool_interfaces_ext_mesh
 
   integer  :: ninterface_acoustic, ninterface_elastic,ninterface_poroelastic
   integer, dimension(:), allocatable  :: inum_interfaces_acoustic, inum_interfaces_elastic, inum_interfaces_poroelastic
@@ -531,7 +543,7 @@ module specfem_par
 
   integer  :: ixmin, ixmax, izmin, izmax
 
-  integer  :: nrecloc, irecloc
+  integer  :: nrecloc
   integer, dimension(:), allocatable :: recloc, which_proc_receiver
 
 ! to compute analytical initial plane wave field
@@ -547,7 +559,6 @@ module specfem_par
   logical :: over_critical_angle
 
 ! inner/outer elements in the case of an MPI simulation
-  integer :: ispec_inner,ispec_outer
   integer :: nglob_outer,nglob_inner
 
 ! arrays for plotpost
@@ -701,7 +712,7 @@ module specfem_par
 
   ! parameters used in LDDRK scheme, from equation (2) of
   ! Berland, J., Bogey, C., & Bailly, C.
-  ! Low-dissipation and low-dispersion fourth-order Runge–Kutta algorithm, Computers & Fluids, 35(10), 1459-1463.
+  ! Low-dissipation and low-dispersion fourth-order Runge-Kutta algorithm, Computers & Fluids, 35(10), 1459-1463.
   Data alpha_LDDRK /0.0_CUSTOM_REAL,-0.737101392796_CUSTOM_REAL, &
                     -1.634740794341_CUSTOM_REAL,-0.744739003780_CUSTOM_REAL, &
                     -1.469897351522_CUSTOM_REAL,-2.813971388035_CUSTOM_REAL/
@@ -782,5 +793,62 @@ module specfem_par
 
 ! for shifting of velocities if needed in the case of viscoelasticity
   double precision :: vp,vs,rho,mu,lambda
+
+! CUDA mesh pointer<->integer wrapper
+  integer(kind=8) :: Mesh_pointer
+
+! for GPU_MODE
+  integer :: ncuda_devices,ncuda_devices_min,ncuda_devices_max
+  logical, dimension(:), allocatable :: ispec_is_inner
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: displ_2D,veloc_2D,accel_2D
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_displ_2D,b_veloc_2D,b_accel_2D
+  integer :: NGLOB_AB, NSPEC_AB
+  real(kind=CUSTOM_REAL) deltatf,deltatover2f,deltatsquareover2f
+  logical :: ANY_ANISOTROPY
+  integer, dimension(:,:), allocatable  :: gather_ispec_selected_rec
+  real(kind=CUSTOM_REAL) b_deltatf,b_deltatover2f,b_deltatsquareover2f
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: kappastore,mustore, rhostore
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rho_vp,rho_vs
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: abs_boundary_normal
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: abs_boundary_jacobian1Dw
+  integer, dimension(:,:,:), allocatable :: abs_boundary_ij
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable ::  source_time_function_loc
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: free_surface_normal
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: free_surface_jacobian2Dw
+  integer, dimension(:,:,:), allocatable :: free_surface_ij
+  integer, dimension(:), allocatable :: free_ac_ispec
+  integer :: num_free_surface_faces
+  integer, dimension(:), allocatable :: cote_abs
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
+            c11store,c12store,c13store,c15store,c23store,c25store,c33store,c35store,c55store
+  integer :: num_colors_outer_acoustic,num_colors_inner_acoustic
+  integer, dimension(:), allocatable :: num_elem_colors_acoustic
+  integer :: num_colors_outer_elastic,num_colors_inner_elastic
+  integer, dimension(:), allocatable :: num_elem_colors_elastic
+  integer :: nsources_local
+  integer :: num_phase_ispec_elastic,nspec_inner_elastic,nspec_outer_elastic
+  integer, dimension(:,:), allocatable :: phase_ispec_inner_elastic
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: cosrot_irecf, sinrot_irecf
+  integer, dimension(:), allocatable :: coupling_ac_el_ispec
+  integer, dimension(:,:,:), allocatable :: coupling_ac_el_ij
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: coupling_ac_el_normal
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: coupling_ac_el_jacobian1Dw
+  integer, dimension(:), allocatable :: ispec_selected_source_loc
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: sourcearray_loc
+  integer, dimension(:,:), allocatable :: phase_ispec_inner_acoustic
+  integer, dimension(:), allocatable  :: tab_requests_send_recv_scalar
+  integer, dimension(:), allocatable  :: b_tab_requests_send_recv_scalar
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_scalar_ext_mesh
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_buffer_send_scalar_ext_mesh
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_recv_scalar_ext_mesh
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_buffer_recv_scalar_ext_mesh
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_send_vector_ext_mesh
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_buffer_send_vector_ext_mesh
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_recv_vector_ext_mesh
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_buffer_recv_vector_ext_mesh
+  integer, dimension(:), allocatable  :: tab_requests_send_recv_vector
+  integer, dimension(:), allocatable  :: b_tab_requests_send_recv_vector
+  integer :: num_phase_ispec_acoustic,nspec_inner_acoustic,nspec_outer_acoustic
+
 
 end module specfem_par
