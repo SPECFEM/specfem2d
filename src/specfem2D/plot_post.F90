@@ -84,7 +84,7 @@
                          coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
                          d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field, &
                          d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
-                         coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER,is_PML,i,iproc
+                         coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER,is_PML
 
   implicit none
 
@@ -113,7 +113,7 @@
              coupled_elastic_poro_glob
 
   integer  :: nspec_recv,num_spec,pointsdisp_loop
-  integer  :: nb_coorg_per_elem, nb_color_per_elem
+  integer  :: nb_coorg_per_elem, nb_color_per_elem,i,iproc
 ! to suppress useless white spaces in postscript lines
   character(len=100) :: postscript_line
   character(len=1), dimension(100) :: ch1,ch2

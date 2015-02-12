@@ -64,14 +64,14 @@
                          nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,freq0,Q0,&
                          e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
                          e11_initial_rk,e13_initial_rk,e11_force_RK, e13_force_RK, &
-                         stage_time_scheme,i_stage, i_source
+                         stage_time_scheme,i_stage
 
   implicit none
 
   include "constants.h"
 
   real(kind=CUSTOM_REAL) :: e11_sum,e13_sum
-  integer :: i_sls
+  integer :: i_sls, i_source
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) ::dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                                                          !nsub1 denote discrete time step n-1

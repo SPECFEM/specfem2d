@@ -64,7 +64,7 @@
                               ibool_interfaces_acoustic,ibool_interfaces_elastic, &
                               ibool_interfaces_poroelastic, &
                               nibool_interfaces_acoustic,nibool_interfaces_elastic, &
-                              nibool_interfaces_poroelastic,my_neighbours,i,ier
+                              nibool_interfaces_poroelastic,my_neighbours,ier
 
 
   implicit none
@@ -82,7 +82,7 @@
   integer :: npoin_val3
   real(kind=CUSTOM_REAL), dimension(npoin_val3), intent(inout) :: array_val3,array_val4
 
-  integer  :: ipoin, num_interface
+  integer  :: ipoin, num_interface,i
 ! there are now two different mass matrices for the elastic case
 ! in order to handle the C deltat / 2 contribution of the Stacey conditions to the mass matrix
   double precision, dimension(max_ibool_interfaces_size_ac+2*max_ibool_interfaces_size_el+&
@@ -219,7 +219,7 @@
                          tab_requests_send_recv_acoustic, &
                          buffer_send_faces_vector_ac, &
                          buffer_recv_faces_vector_ac, &
-                         my_neighbours,myrank,iglob,ier
+                         my_neighbours,myrank,ier
 
   implicit none
 
@@ -231,7 +231,7 @@
   real(kind=CUSTOM_REAL), dimension(nglob), intent(inout) :: array_val1
 
   ! local parameters
-  integer  :: ipoin, num_interface,iinterface
+  integer  :: ipoin, num_interface,iinterface, iglob
 
   ! initializes buffers
   buffer_send_faces_vector_ac(:,:) = 0._CUSTOM_REAL
@@ -426,22 +426,16 @@
 
   use mpi
 
-  use specfem_par, only: nglob, &
-                         ninterface, ninterface_poroelastic,inum_interfaces_poroelastic, &
-                         max_interface_size, max_ibool_interfaces_size_po,&
-                         ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
-                         tab_requests_send_recv_poro,buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
-                         buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, my_neighbours,ier,i
+  use specfem_par
 
 
   implicit none
 
-  include 'constants.h'
   include 'precision.h'
 
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob), intent(inout) :: array_val3,array_val4
 
-  integer  :: ipoin, num_interface, iinterface
+  integer  :: ipoin, num_interface, iinterface,i
 
   do iinterface = 1, ninterface_poroelastic
 

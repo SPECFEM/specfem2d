@@ -45,44 +45,16 @@
 
 ! compute kinetic and potential energy in the solid (acoustic elements are excluded)
 
-  use specfem_par, only : displ_elastic,veloc_elastic, &
-                          displs_poroelastic,velocs_poroelastic, &
-                          displw_poroelastic,velocw_poroelastic, &
-                          xix,xiz,gammax,gammaz,jacobian,ibool,elastic,poroelastic,hprime_xx,hprime_zz, &
-                          AXISYM,nglob,coord,is_on_the_axis,hprimeBar_xx, &
-                          nspec,nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-                          assign_external_model,kmato,poroelastcoef,density,porosity,tortuosity, &
-                          vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
-                          anisotropic,anisotropy,wxgll,wzgll,numat, &
-                          pressure_element,vector_field_element,e1,e11, &
-                          potential_dot_acoustic,potential_dot_dot_acoustic, &
-                          ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS,p_sv,kinetic_energy,potential_energy, &
-                          potential_dot_gravitoacoustic,potential_dot_dot_gravitoacoustic,acoustic,gravitoacoustic, &
-                          gravityext,potential_dot_gravito,nglob_gravitoacoustic,ispec
+  use specfem_par
 
   implicit none
 
-  include "constants.h"
 
 ! local variables
-  integer :: i,j,k
+  integer :: i,j,k,ispec
 
-! spatial derivatives
-  real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
-  real(kind=CUSTOM_REAL) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
-  real(kind=CUSTOM_REAL) :: dwx_dxi,dwx_dgamma,dwz_dxi,dwz_dgamma
-  real(kind=CUSTOM_REAL) :: dwx_dxl,dwz_dxl,dwx_dzl,dwz_dzl
+  real(kind=CUSTOM_REAL) :: cpl,csl,kappal
 
-! jacobian
-  real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
-
-  real(kind=CUSTOM_REAL) :: cpl,csl,rhol,mul_unrelaxed_elastic,lambdal_unrelaxed_elastic, &
-    lambdaplus2mu_unrelaxed_elastic,kappal
-  real(kind=CUSTOM_REAL) :: mul_s,kappal_s,rhol_s
-  real(kind=CUSTOM_REAL) :: kappal_f,rhol_f
-  real(kind=CUSTOM_REAL) :: mul_fr,kappal_fr,phil,tortl
-  real(kind=CUSTOM_REAL) :: D_biot,H_biot,C_biot,M_biot,rhol_bar
-  real(kind=CUSTOM_REAL) :: mul_G,lambdal_G,lambdalplus2mul_G
 
   kinetic_energy = ZERO
   potential_energy = ZERO
@@ -294,11 +266,11 @@
       ! and pressure is: p = - Chi_dot_dot  (Chi_dot_dot being the time second derivative of Chi).
 
       ! compute pressure in this element
-      call compute_pressure_one_element()
+      call compute_pressure_one_element(ispec)
 
       ! compute velocity vector field in this element
       call compute_vector_one_element(potential_dot_acoustic,potential_dot_gravitoacoustic, &
-                              potential_dot_gravito,veloc_elastic,velocs_poroelastic)
+                              potential_dot_gravito,veloc_elastic,velocs_poroelastic,ispec)
 
       ! get density of current spectral element
       lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))

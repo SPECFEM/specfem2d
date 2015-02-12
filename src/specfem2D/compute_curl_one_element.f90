@@ -41,19 +41,21 @@
 !
 !========================================================================
 
-  subroutine compute_curl_one_element()
+  subroutine compute_curl_one_element(ispec)
 
   ! compute curl in (poro)elastic elements (for rotational study)
 
   use specfem_par, only: curl_element,displ_elastic, &
                          displs_poroelastic,elastic,poroelastic, &
                          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                         nspec,nglob_elastic,nglob_poroelastic,ispec,i,j,k
+                         nspec,nglob_elastic,nglob_poroelastic
 
 
   implicit none
 
   include "constants.h"
+
+  integer ispec
 
   ! jacobian
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl
@@ -61,6 +63,7 @@
   ! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
   real(kind=CUSTOM_REAL) :: duz_dxl,dux_dzl
+  integer :: i,j,k
 
   if(elastic(ispec)) then
 

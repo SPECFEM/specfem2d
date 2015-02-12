@@ -52,14 +52,14 @@
                          nproc,myrank,xi_source,gamma_source,coorg,knods,ngnod, &
                          nrec,nrecloc,recloc,which_proc_receiver,st_xval,st_zval, &
                          xi_receiver,gamma_receiver,station_name,network_name,x_final_receiver,&
-                         z_final_receiver,iglob_source,i_source,ispec
+                         z_final_receiver,iglob_source
   implicit none
 
   include "constants.h"
 
   ! Local variables
   integer ispec_acoustic_surface
-  integer  :: ixmin, ixmax, izmin, izmax
+  integer  :: ixmin, ixmax, izmin, izmax,i_source,ispec
 #ifndef USE_MPI
   integer irec
 #endif

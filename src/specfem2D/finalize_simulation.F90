@@ -9,6 +9,9 @@ subroutine finalize_simulation()
 
   implicit none
 
+integer i,ispec,j,iglob
+
+
 #ifdef USE_MPI
   include "precision.h"
 #endif

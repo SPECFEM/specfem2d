@@ -129,27 +129,23 @@
 ! ------------------------------------------------------------------------------------------------------
 
 
-  subroutine compute_arrays_adj_source(xi_receiver,gamma_receiver)
+  subroutine compute_arrays_adj_source(xi_rec,gamma_rec)
 
  use constants
- use specfem_par, only: source_adjointe,seismotype,adj_source_file,adj_sourcearray, &
-                        xigll,zigll,NSTEP,irec_local
+ use specfem_par
 
  implicit none
 
 
-  double precision xi_receiver, gamma_receiver
 
-  double precision :: hxir(NGLLX), hpxir(NGLLX), hgammar(NGLLZ), hpgammar(NGLLZ)
-  real(kind=CUSTOM_REAL) :: adj_src_s(NSTEP,3)
+  double precision xi_rec, gamma_rec
 
-  integer icomp, itime, i, k, ios
+  integer icomp, itime, i, k
   double precision :: junk
   character(len=3) :: comp(3)
-  character(len=150) :: filename
 
-  call lagrange_any(xi_receiver,NGLLX,xigll,hxir,hpxir)
-  call lagrange_any(gamma_receiver,NGLLZ,zigll,hgammar,hpgammar)
+  call lagrange_any(xi_rec,NGLLX,xigll,hxir,hpxir)
+  call lagrange_any(gamma_rec,NGLLZ,zigll,hgammar,hpgammar)
 
   adj_sourcearray(:,:,:,:) = 0.
 

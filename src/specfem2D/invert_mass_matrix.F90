@@ -66,13 +66,13 @@
                                 K_x_store,K_z_store,is_PML,&
                                 AXISYM,nglob,is_on_the_axis,coord,wxglj,xiglj, &
                                 d_x_store,d_z_store,PML_BOUNDARY_CONDITIONS,region_CPML, &
-                                nspec_PML,spec_to_PML,time_stepping_scheme,ispec,i,j,iglob
+                                nspec_PML,spec_to_PML,time_stepping_scheme
 
   implicit none
   include 'constants.h'
 
 
-  integer :: ibegin,iend,ispecabs,jbegin,jend
+  integer :: ibegin,iend,ispecabs,jbegin,jend,ispec,i,j,iglob
 
 
   ! local parameter

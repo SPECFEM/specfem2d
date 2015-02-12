@@ -48,17 +48,14 @@
 
   subroutine acoustic_forcing_boundary()
 
-  use specfem_par, only: it,deltat,t0,displ_x,displ_z,iglob,coord,nglob
+  use specfem_par
 
   implicit none
 
-  include "constants.h"
-
-
 ! local variables
   real, parameter :: pigrec = 3.1415927
-  real :: alpha,tho,A,c,x,delayed,delta_x
-  integer :: forcing_type,k,ngoce_time_step,n_models,kk,ll
+  real :: alpha,tho,A,c,delayed,delta_x
+  integer :: forcing_type,k,ngoce_time_step,n_models,kk,ll,iglob
 
   double precision, dimension(:), allocatable :: goce_time,distance
   double precision, dimension(:,:), allocatable ::syn

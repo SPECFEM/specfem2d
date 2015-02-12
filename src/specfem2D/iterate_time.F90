@@ -9,6 +9,8 @@ subroutine iterate_time()
 
   implicit none
 
+integer i,j,ispec,i_source,iglob,irec,k
+
 #ifdef USE_MPI
   include "precision.h"
 #endif
