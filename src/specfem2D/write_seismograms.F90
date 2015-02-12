@@ -45,33 +45,12 @@
 
   subroutine write_seismograms
 
-  use specfem_par, only : ibool, sisux,sisuz,siscurl,station_name,network_name, &
-                          NSTEP,nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
-                          NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,p_sv, &
-                          st_zval,SU_FORMAT,save_ASCII_seismograms, &
-                          save_binary_seismograms_single,save_binary_seismograms_double,subsamp_seismos, &
-                          recloc, ispec_selected_rec, cosrot_irec, sinrot_irec, &
-                          hxir_store, hgammar_store, &
-                          pressure_element, vector_field_element, curl_element, &
-                          acoustic, potential_acoustic, potential_dot_acoustic, potential_dot_dot_acoustic, &
-                          gravitoacoustic, potential_gravitoacoustic,&
-                          potential_dot_gravitoacoustic, potential_dot_dot_gravitoacoustic, &
-                          potential_gravito, potential_dot_gravito, potential_dot_dot_gravito, &
-                          elastic, accel_elastic, veloc_elastic, displ_elastic, &
-                          poroelastic, accels_poroelastic, velocs_poroelastic, displs_poroelastic, &
-                          acoustic,gravitoacoustic,elastic,poroelastic,vector_field_display, &
-                          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                          ispec,hprime_xx,hprime_zz, &
-                          AXISYM,is_on_the_axis,hprimeBar_xx, &
-                          nspec,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
-                          numat,kmato,density,rhoext,gravityext,assign_external_model
+  use specfem_par
 
-  include "constants.h"
+  implicit none
 
-  integer :: i, j, iglob, irecloc, irec
-  double precision :: dxd,dyd,dzd !,vxd,vyd,vzd,axd,ayd,azd
-  double precision :: valux, valuy, valuz
-  double precision :: valcurl, dcurld, hlagrange
+  integer :: i, j, iglob, irecloc, irec, ispec
+
 
 
 ! update position in seismograms
@@ -86,20 +65,20 @@
       ! compute pressure in this element if needed
       if(seismotype == 4) then
 
-        call compute_pressure_one_element()
+        call compute_pressure_one_element(ispec)
 
       else if(acoustic(ispec)) then
 
         ! for acoustic medium, compute vector field from gradient of potential for seismograms
         if(seismotype == 1 .or. seismotype == 7) then
           call compute_vector_one_element(potential_acoustic,potential_gravitoacoustic, &
-                              potential_gravito,displ_elastic,displs_poroelastic)
+                              potential_gravito,displ_elastic,displs_poroelastic,ispec)
         else if(seismotype == 2) then
           call compute_vector_one_element(potential_dot_acoustic,potential_dot_gravitoacoustic, &
-                              potential_dot_gravito,veloc_elastic,velocs_poroelastic)
+                              potential_dot_gravito,veloc_elastic,velocs_poroelastic,ispec)
         else if(seismotype == 3) then
           call compute_vector_one_element(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
-                              potential_dot_dot_gravito,accel_elastic,accels_poroelastic)
+                              potential_dot_dot_gravito,accel_elastic,accels_poroelastic,ispec)
         endif
 
       else if(gravitoacoustic(ispec)) then
@@ -107,17 +86,17 @@
         ! for acoustic medium, compute vector field from gradient of potential for seismograms
         if(seismotype == 1 .or. seismotype == 7) then
           call compute_vector_one_element(potential_acoustic,potential_gravitoacoustic, &
-                              potential_gravito,displ_elastic,displs_poroelastic)
+                              potential_gravito,displ_elastic,displs_poroelastic,ispec)
         else if(seismotype == 2) then
           call compute_vector_one_element(potential_dot_acoustic,potential_dot_gravitoacoustic, &
-                              potential_dot_gravito,veloc_elastic,velocs_poroelastic)
+                              potential_dot_gravito,veloc_elastic,velocs_poroelastic,ispec)
         else if(seismotype == 3) then
           call compute_vector_one_element(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
-                              potential_dot_dot_gravito,accel_elastic,accels_poroelastic)
+                              potential_dot_dot_gravito,accel_elastic,accels_poroelastic,ispec)
         endif
 
       else if(seismotype == 5) then
-        call compute_curl_one_element()
+        call compute_curl_one_element(ispec)
       endif
 
       ! perform the general interpolation using Lagrange polynomials

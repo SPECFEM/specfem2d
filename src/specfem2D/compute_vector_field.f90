@@ -41,34 +41,29 @@
 !
 !========================================================================
 
-  subroutine compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
-                                         potential_gravito,veloc_elastic,velocs_poroelastic)
+  subroutine compute_vector_whole_medium(field_acoustic,field_gravitoacoustic, &
+                                         field_gravito,field_elastic,fields_poroelastic)
 
 ! compute Grad(potential) in acoustic elements
 ! and combine with existing velocity vector field in elastic elements
 
-  use specfem_par, only: acoustic,gravitoacoustic,elastic,poroelastic,vector_field_display, &
-                         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                         AXISYM,is_on_the_axis,hprimeBar_xx, &
-                         nspec,nglob,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
-                         numat,kmato,density,rhoext,gravityext,assign_external_model,i,j,ispec,iglob,vector_field_element
+  use specfem_par
 
   implicit none
 
-  include "constants.h"
-
-  real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: potential_acoustic
-  real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: potential_gravitoacoustic
-  real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: potential_gravito
-  real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: veloc_elastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: velocs_poroelastic
+  integer :: i,j,ispec,iglob
+  real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: field_acoustic
+  real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: field_gravitoacoustic
+  real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: field_gravito
+  real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: field_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: fields_poroelastic
 
 ! loop over spectral elements
   do ispec = 1,nspec
 
 ! compute vector field in this element
-    call compute_vector_one_element(potential_acoustic,potential_gravitoacoustic, &
-                                    potential_gravito,veloc_elastic,velocs_poroelastic)
+    call compute_vector_one_element(field_acoustic,field_gravitoacoustic, &
+                                    field_gravito,field_elastic,fields_poroelastic,ispec)
 
 ! store the result
     do j = 1,NGLLZ
@@ -86,39 +81,25 @@
 !=====================================================================
 !
 
-  subroutine compute_vector_one_element(potential_acoustic,potential_gravitoacoustic, &
-                                        potential_gravito,veloc_elastic,velocs_poroelastic)
+  subroutine compute_vector_one_element(field_acoustic,field_gravitoacoustic, &
+                                        field_gravito,field_elastic,fields_poroelastic,ispec)
 
 ! compute Grad(potential) if acoustic element or copy existing vector if elastic element
 
-  use specfem_par, only: vector_field_element,acoustic,gravitoacoustic,elastic,poroelastic,xix,xiz,gammax,gammaz, &
-                         ibool,hprime_xx,hprime_zz, &
-                         AXISYM,is_on_the_axis,hprimeBar_xx, &
-                         nspec,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic, &
-                         ispec,numat,kmato,density,rhoext,gravityext,assign_external_model
+  use specfem_par
 
   implicit none
 
-  include "constants.h"
 
-  real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: potential_acoustic
-  real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: potential_gravitoacoustic
-  real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: potential_gravito
-  real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: veloc_elastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: velocs_poroelastic
+  real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: field_acoustic
+  real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: field_gravitoacoustic
+  real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: field_gravito
+  real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: field_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: fields_poroelastic
+  integer ispec
 
 ! local variables
   integer i,j,k,iglob
-
-! space derivatives
-  real(kind=CUSTOM_REAL) tempx1l,tempx2l
-  real(kind=CUSTOM_REAL) hp1,hp2
-
-! jacobian
-  real(kind=CUSTOM_REAL) xixl,xizl,gammaxl,gammazl
-
-! material properties of the elastic medium
-  real(kind=CUSTOM_REAL) :: rhol,gravityl
 
 ! simple copy of existing vector if elastic element
   if(elastic(ispec)) then
@@ -126,9 +107,9 @@
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
-        vector_field_element(1,i,j) = veloc_elastic(1,iglob)
-        vector_field_element(2,i,j) = veloc_elastic(2,iglob)
-        vector_field_element(3,i,j) = veloc_elastic(3,iglob)
+        vector_field_element(1,i,j) = field_elastic(1,iglob)
+        vector_field_element(2,i,j) = field_elastic(2,iglob)
+        vector_field_element(3,i,j) = field_elastic(3,iglob)
       enddo
     enddo
 
@@ -136,9 +117,9 @@
      do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
-        vector_field_element(1,i,j) = velocs_poroelastic(1,iglob)
+        vector_field_element(1,i,j) = fields_poroelastic(1,iglob)
         vector_field_element(2,i,j) = 0._CUSTOM_REAL
-        vector_field_element(3,i,j) = velocs_poroelastic(2,iglob)
+        vector_field_element(3,i,j) = fields_poroelastic(2,iglob)
       enddo
     enddo
 
@@ -159,20 +140,20 @@
             do k = 1,NGLLX
               hp1 = hprimeBar_xx(i,k)
               iglob = ibool(k,j,ispec)
-              tempx1l = tempx1l + potential_acoustic(iglob)*hp1
+              tempx1l = tempx1l + field_acoustic(iglob)*hp1
             enddo
           else !AXISYM but not on the axis
             do k = 1,NGLLX
               hp1 = hprime_xx(i,k)
               iglob = ibool(k,j,ispec)
-              tempx1l = tempx1l + potential_acoustic(iglob)*hp1
+              tempx1l = tempx1l + field_acoustic(iglob)*hp1
               enddo
           endif
         else !not AXISYM
           do k = 1,NGLLX
             hp1 = hprime_xx(i,k)
             iglob = ibool(k,j,ispec)
-            tempx1l = tempx1l + potential_acoustic(iglob)*hp1
+            tempx1l = tempx1l + field_acoustic(iglob)*hp1
           enddo
         endif
 
@@ -181,7 +162,7 @@
         do k = 1,NGLLZ
           hp2 = hprime_zz(j,k)
           iglob = ibool(i,k,ispec)
-          tempx2l = tempx2l + potential_acoustic(iglob)*hp2
+          tempx2l = tempx2l + field_acoustic(iglob)*hp2
         enddo
 
         xixl = xix(i,j,ispec)
@@ -213,7 +194,7 @@
         do k = 1,NGLLX
           hp1 = hprime_xx(i,k)
           iglob = ibool(k,j,ispec)
-          tempx1l = tempx1l + potential_gravitoacoustic(iglob)*hp1
+          tempx1l = tempx1l + field_gravitoacoustic(iglob)*hp1
         enddo
 
 ! derivative along z
@@ -221,7 +202,7 @@
         do k = 1,NGLLZ
           hp2 = hprime_zz(j,k)
           iglob = ibool(i,k,ispec)
-          tempx2l = tempx2l + potential_gravitoacoustic(iglob)*hp2
+          tempx2l = tempx2l + field_gravitoacoustic(iglob)*hp2
         enddo
 
         xixl = xix(i,j,ispec)
@@ -243,7 +224,7 @@
         iglob=ibool(i,j,ispec)
 ! remove gravito contribution
 ! sign gravito correction
-        vector_field_element(3,i,j) = vector_field_element(3,i,j) - (potential_gravito(iglob)*gravityl) / rhol
+        vector_field_element(3,i,j) = vector_field_element(3,i,j) - (field_gravito(iglob)*gravityl) / rhol
 
       enddo
     enddo

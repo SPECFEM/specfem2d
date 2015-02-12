@@ -41,19 +41,16 @@
 !
 !========================================================================
 
-  subroutine attenuation_model(QKappa_attenuation,Qmu_attenuation)
+  subroutine attenuation_model(QKappa_att,QMu_att)
 
 ! define the attenuation constants
 
-  use specfem_par, only :  N_SLS, f0_attenuation,tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
-                           inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent
+  use specfem_par
 
 
   implicit none
 
-  include "constants.h"
-
-  double precision :: QKappa_attenuation,Qmu_attenuation
+  double precision :: QKappa_att,QMu_att
 
   integer :: i_sls
 
@@ -79,16 +76,16 @@
 ! We thus strongly discourage using the old routine.
   if(USE_NEW_SOLVOPT_ROUTINE) then
 
-    call determination_coef(N_SLS,QKappa_attenuation,f0_attenuation,f_min_attenuation,f_max_attenuation, &
+    call determination_coef(N_SLS,QKappa_att,f0_attenuation,f_min_attenuation,f_max_attenuation, &
                                   tau_epsilon_nu1_d,tau_sigma_nu1)
 
-    call determination_coef(N_SLS,Qmu_attenuation,f0_attenuation,f_min_attenuation,f_max_attenuation, &
+    call determination_coef(N_SLS,QMu_att,f0_attenuation,f_min_attenuation,f_max_attenuation, &
                                   tau_epsilon_nu2_d,tau_sigma_nu2)
 
 !   print *
 !   print *,'with new SolvOpt:'
 !   print *
-!   print *,'N_SLS, QKappa_attenuation, Qmu_attenuation = ',N_SLS, QKappa_attenuation, Qmu_attenuation
+!   print *,'N_SLS, QKappa_att, QMu_att = ',N_SLS, QKappa_att, QMu_att
 !   print *,'f0_attenuation,f_min_attenuation,f_max_attenuation = ',f0_attenuation,f_min_attenuation,f_max_attenuation
 !   print *,'tau_epsilon_nu1 = ',tau_epsilon_nu1_d
 !   print *,'tau_sigma_nu1 = ',tau_sigma_nu1
@@ -100,13 +97,13 @@
 
 ! call a C function that computes attenuation parameters (function in file "attenuation_compute_param.c";
 ! a main can be found in UTILS/attenuation directory).
-    call attenuation_compute_param(N_SLS, QKappa_attenuation, Qmu_attenuation, &
+    call attenuation_compute_param(N_SLS, QKappa_att, QMu_att, &
          f_min_attenuation,f_max_attenuation,tau_sigma_nu1, tau_sigma_nu2, tau_epsilon_nu1_d, tau_epsilon_nu2_d)
 
 !   print *
 !   print *,'with old C routine:'
 !   print *
-!   print *,'N_SLS, QKappa_attenuation, Qmu_attenuation = ',N_SLS, QKappa_attenuation, Qmu_attenuation
+!   print *,'N_SLS, QKappa_att, QMu_att = ',N_SLS, QKappa_att, QMu_att
 !   print *,'f0_attenuation,f_min_attenuation,f_max_attenuation = ',f0_attenuation,f_min_attenuation,f_max_attenuation
 !   print *,'tau_epsilon_nu1 = ',tau_epsilon_nu1_d
 !   print *,'tau_sigma_nu1 = ',tau_sigma_nu1

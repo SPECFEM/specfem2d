@@ -45,12 +45,12 @@
 
 ! output the Gauss-Lobatto-Legendre mesh in a gnuplot file
 
-  use specfem_par, only: knods,ibool,coorg,coord,nglob,npgeo,ngnod,nspec,ispec
+  use specfem_par, only: knods,ibool,coorg,coord,nglob,npgeo,ngnod,nspec
   implicit none
 
   include "constants.h"
 
-  integer iy,ix,iglobnum,iglobnum2,ibloc,inode
+  integer iy,ix,iglobnum,iglobnum2,ibloc,inode,ispec
 
 ! coordinates of the nodes for Gnuplot file
   integer, parameter :: MAXNGNOD = 9

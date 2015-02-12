@@ -54,13 +54,13 @@
                          nglob,numat,poroelastcoef,density,coord, &
                          anglesource_refl,c_inc,c_refl,cploc,csloc,time_offset, &
                          A_plane, B_plane, C_plane, &
-                         accel_elastic,veloc_elastic,displ_elastic,i
+                         accel_elastic,veloc_elastic,displ_elastic
 
   implicit none
   include "constants.h"
 
   ! local parameters
-  integer :: numat_local
+  integer :: numat_local,i
   double precision :: denst,lambdaplus2mu,mu,p,x0_source,z0_source
   double precision :: PP,PS,SP,SS,anglesource_abs
   double precision :: xmax, xmin, zmax, zmin,x,z,t

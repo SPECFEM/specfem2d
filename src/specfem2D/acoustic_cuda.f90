@@ -53,7 +53,6 @@ subroutine compute_forces_acoustic_GPU()
 
   implicit none
 
-  real, dimension(3) :: norm
 
   ! local parameters
   integer:: iphase

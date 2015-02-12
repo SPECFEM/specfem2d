@@ -9,6 +9,10 @@ subroutine prepare_timerun_mass_matrix()
 
   implicit none
 
+integer ispec
+! inner/outer elements in the case of an MPI simulation
+  integer :: ispec_inner,ispec_outer
+
 #ifdef USE_MPI
   include "precision.h"
 #endif
@@ -183,6 +187,8 @@ subroutine prepare_timerun_image_coloring()
   use specfem_par
 
   implicit none
+
+  integer i,j,k
 
 #ifdef USE_MPI
   include "precision.h"
@@ -453,6 +459,8 @@ subroutine prepare_timerun_pml()
 
   implicit none
 
+  integer i
+  
 #ifdef USE_MPI
   include "precision.h"
 #endif
@@ -851,6 +859,8 @@ subroutine prepare_timerun_read()
   use specfem_par
 
   implicit none
+
+  integer i,ispec,ispec2,j
 
 #ifdef USE_MPI
   include "precision.h"
@@ -1555,6 +1565,8 @@ subroutine prepare_timerun_noise()
   use specfem_par
 
   implicit none
+
+  integer i,j,iglob,ispec
 
 #ifdef USE_MPI
   include "precision.h"

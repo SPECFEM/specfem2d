@@ -58,7 +58,7 @@ module specfem_par
   implicit none
 
 
-  integer NSOURCES,i_source,iglobzero
+  integer NSOURCES,iglobzero
   integer, dimension(:), allocatable :: source_type,time_function_type
   double precision, dimension(:), allocatable :: x_source,z_source,xi_source,gamma_source,&
                   Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource
@@ -133,7 +133,7 @@ module specfem_par
 ! curl in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: curl_element
 
-  integer :: i,j,k,it,irec,id,n,ispec,ispec2,nglob,npgeo,iglob
+  integer :: it,id,n,nglob,npgeo
   integer :: nglob_acoustic
   integer :: nglob_gravitoacoustic
   integer :: nglob_elastic
@@ -271,7 +271,7 @@ module specfem_par
     NSTEP_BETWEEN_OUTPUT_INFO,seismotype,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP_BETWEEN_OUTPUT_IMAGES, &
     NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS,subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps
   integer :: numat,ngnod,nspec,pointsdisp, &
-    nelemabs,nelem_acforcing,nelem_acoustic_surface,ispecabs,UPPER_LIMIT_DISPLAY,NELEM_PML_THICKNESS
+    nelemabs,nelem_acforcing,nelem_acoustic_surface,UPPER_LIMIT_DISPLAY,NELEM_PML_THICKNESS
 
   logical interpol,meshvect,modelvect,boundvect,assign_external_model,initialfield, &
     output_grid_ASCII,output_grid_Gnuplot,ATTENUATION_VISCOELASTIC_SOLID,output_postscript_snapshot,output_color_image, &
@@ -543,7 +543,7 @@ module specfem_par
 
   integer  :: ixmin, ixmax, izmin, izmax
 
-  integer  :: nrecloc, irecloc
+  integer  :: nrecloc
   integer, dimension(:), allocatable :: recloc, which_proc_receiver
 
 ! to compute analytical initial plane wave field
@@ -559,7 +559,6 @@ module specfem_par
   logical :: over_critical_angle
 
 ! inner/outer elements in the case of an MPI simulation
-  integer :: ispec_inner,ispec_outer
   integer :: nglob_outer,nglob_inner
 
 ! arrays for plotpost

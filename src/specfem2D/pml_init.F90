@@ -67,14 +67,14 @@
 
 use specfem_par, only: myrank,SIMULATION_TYPE,SAVE_FORWARD,nspec,nglob,ibool,anyabs,nelemabs,codeabs,numabs,&
                        NELEM_PML_THICKNESS,nspec_PML,is_PML,which_PML_elem,spec_to_PML,region_CPML,&
-                       PML_interior_interface,nglob_interface,mask_ibool,read_external_mesh,ier,i,j,k,ispec,iglob
+                       PML_interior_interface,nglob_interface,mask_ibool,read_external_mesh,ier
 
   implicit none
   include 'constants.h'
 
   integer, dimension(nglob) ::   icorner_iglob
 
-  integer :: nspec_PML_tot,ibound,ispecabs,ncorner,i_coef
+  integer :: nspec_PML_tot,ibound,ispecabs,ncorner,i_coef,i,j,k,ispec,iglob
 
   nspec_PML = 0
 
@@ -302,9 +302,11 @@ end subroutine pml_init
 !
  subroutine determin_interface_pml_interior()
 
-  use specfem_par, only: nglob_interface,nspec,ibool,PML_interior_interface,i,j,iglob,ispec,&
+  use specfem_par, only: nglob_interface,nspec,ibool,PML_interior_interface,&
                          which_PML_elem,point_interface,read_external_mesh,mask_ibool,region_CPML,nglob
   implicit none
+
+  integer i,j,iglob,ispec
   include 'constants.h'
 
   nglob_interface = 0
@@ -426,7 +428,7 @@ end subroutine pml_init
 #endif
 
   use specfem_par, only: f0,NELEM_PML_THICKNESS,elastic,acoustic,&
-                         NSOURCES,ispec_selected_source,i_source,&
+                         NSOURCES,ispec_selected_source,&
                          nspec,kmato,density,poroelastcoef,numat,&
                          ibool,coord,is_PML,region_CPML,spec_to_PML,nspec_PML,&
                          K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
@@ -463,7 +465,7 @@ end subroutine pml_init
   double precision :: ALPHA_MAX_PML
 
 ! material properties of the elastic medium
-  integer i,j,ispec,iglob,ispec_PML
+  integer i,j,ispec,iglob,ispec_PML,i_source
   double precision :: lambdalplus2mul_relaxed,rhol
   double precision :: d_x, d_z, K_x, K_z, alpha_x, alpha_z
 ! define an alias for y and z variable names (which are the same)

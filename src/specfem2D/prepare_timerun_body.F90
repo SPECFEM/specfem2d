@@ -9,6 +9,8 @@ subroutine prepare_timerun()
 
   implicit none
 
+integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
+
 #ifdef USE_MPI
   include "precision.h"
 #endif

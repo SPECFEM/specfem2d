@@ -67,7 +67,7 @@
                          rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
                          rmemory_potential_acoustic_LDDRK,alpha_LDDRK,beta_LDDRK,c_LDDRK, &
                          rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
-                         deltat,STACEY_BOUNDARY_CONDITIONS,ispec,i,j,k,iglob,ispecabs
+                         deltat,STACEY_BOUNDARY_CONDITIONS
 
   implicit none
 
@@ -84,6 +84,7 @@
 !---
 
   integer :: ispec_PML,ibegin,iend,jbegin,jend
+  integer :: ispec,i,j,k,iglob,ispecabs
 
 ! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,dux_dxl,dux_dzl
