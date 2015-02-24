@@ -42,8 +42,9 @@
 !========================================================================
 
   subroutine compute_gradient_attenuation(displ_elastic,dux_dxl,duz_dxl,dux_dzl,duz_dzl, &
-         xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob, &
-         AXISYM,is_on_the_axis,hprimeBar_xx)
+         xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob)
+         
+  use specfem_par, only:coord,AXISYM,is_on_the_axis,hprimeBar_xx
 
 ! compute Grad(displ_elastic) for attenuation
 
@@ -51,13 +52,13 @@
 
   include "constants.h"
 
-  logical :: AXISYM
+  !logical :: AXISYM
   
   integer :: nspec,nglob
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
 
-  logical, dimension(nspec) :: elastic,is_on_the_axis
+  logical, dimension(nspec) :: elastic!,is_on_the_axis
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec)  :: xix,xiz,gammax,gammaz
@@ -65,7 +66,7 @@
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: displ_elastic
 
 ! array with derivatives of Lagrange polynomials
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimeBar_xx
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx!,hprimeBar_xx
   real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
 
 ! local variables
@@ -135,6 +136,10 @@
 
           duz_dxl(i,j,ispec) = duz_dxi*xixl + duz_dgamma*gammaxl
           duz_dzl(i,j,ispec) = duz_dxi*xizl + duz_dgamma*gammazl
+          
+          if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL)) then ! du_z/dr=0 on the axis
+            duz_dxl = 0.d0
+          endif
 
         enddo
       enddo

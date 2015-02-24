@@ -171,13 +171,11 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
 
     ! compute Grad(displ_elastic) at time step n for attenuation
     call compute_gradient_attenuation(displ_elastic,dux_dxl_n,duz_dxl_n, &
-          dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob, &
-          AXISYM,is_on_the_axis,hprimeBar_xx)
+          dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob)
 
     ! compute Grad(disp_elastic_old) at time step n-1 for attenuation
     call compute_gradient_attenuation(displ_elastic_old,dux_dxl_nsub1,duz_dxl_nsub1, &
-          dux_dzl_nsub1,duz_dzl_nsub1,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob, &
-          AXISYM,is_on_the_axis,hprimeBar_xx)
+          dux_dzl_nsub1,duz_dzl_nsub1,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob)
 
     ! loop over spectral elements
     do ispec = 1,nspec
@@ -454,6 +452,10 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
             xizl = xiz(i,j,ispec)
             gammaxl = gammax(i,j,ispec)
             gammazl = gammaz(i,j,ispec)
+
+            if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL)) then ! du_z/dr=0 on the axis
+              duz_dxi_old = 0.d0
+            endif
 
             ! derivatives of displacement
             PML_dux_dxl_old(i,j) = dux_dxi_old*xixl + dux_dgamma_old*gammaxl !dux_dxl_old

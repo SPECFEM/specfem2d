@@ -137,13 +137,11 @@
 
 ! compute Grad(displs_poroelastic) at time step n for attenuation
     call compute_gradient_attenuation(displs_poroelastic,dux_dxl_n,duz_dxl_n, &
-           dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,poroelastic,hprime_xx,hprime_zz,nspec,nglob, &
-           AXISYM,is_on_the_axis,hprimeBar_xx)
+           dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,poroelastic,hprime_xx,hprime_zz,nspec,nglob)
 
 ! compute Grad(displs_poroelastic) at time step n-1 for attenuation
     call compute_gradient_attenuation(displs_poroelastic_old,dux_dxl_nsub1,duz_dxl_nsub1, &
-           dux_dzl_nsub1,duz_dzl_nsub1,xix,xiz,gammax,gammaz,ibool,poroelastic,hprime_xx,hprime_zz,nspec,nglob, &
-           AXISYM,is_on_the_axis,hprimeBar_xx)
+           dux_dzl_nsub1,duz_dzl_nsub1,xix,xiz,gammax,gammaz,ibool,poroelastic,hprime_xx,hprime_zz,nspec,nglob)
 
 ! update memory variables with fourth-order Runge-Kutta time scheme for attenuation
 ! loop over spectral elements
