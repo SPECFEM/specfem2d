@@ -42,7 +42,8 @@
 !========================================================================
 
   subroutine compute_gradient_attenuation(displ_elastic,dux_dxl,duz_dxl,dux_dzl,duz_dzl, &
-         xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob)
+         xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob, &
+         AXISYM,is_on_the_axis,hprimeBar_xx)
 
 ! compute Grad(displ_elastic) for attenuation
 
@@ -50,11 +51,13 @@
 
   include "constants.h"
 
+  logical :: AXISYM
+  
   integer :: nspec,nglob
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
 
-  logical, dimension(nspec) :: elastic
+  logical, dimension(nspec) :: elastic,is_on_the_axis
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec)  :: xix,xiz,gammax,gammaz
@@ -62,7 +65,7 @@
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: displ_elastic
 
 ! array with derivatives of Lagrange polynomials
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimeBar_xx
   real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
 
 ! local variables
@@ -95,12 +98,31 @@
 
 ! first double loop over GLL points to compute and store gradients
 ! we can merge the two loops because NGLLX == NGLLZ
-          do k = 1,NGLLX
-            dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-            duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
-            dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-            duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
-          enddo
+
+          if(AXISYM) then
+            if (is_on_the_axis(ispec)) then
+              do k = 1,NGLJ
+                dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
+                duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
+              enddo
+            else
+              do k = 1,NGLJ
+                dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
+                duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
+                dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
+                duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
+              enddo
+            endif
+          else
+            do k = 1,NGLLX
+              dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
+              duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
+              dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
+              duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
+            enddo
+          endif
 
           xixl = xix(i,j,ispec)
           xizl = xiz(i,j,ispec)

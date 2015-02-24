@@ -1538,7 +1538,7 @@ subroutine prepare_timerun_read()
   endif
   if (myrank == 0 .and. AXISYM) then
     write(IOUT,*)
-    write(IOUT,*) 'Number of elements on the axis: ',nelem_on_the_axis
+    write(IOUT,*) 'Number of elements on the axis (for process 0): ',nelem_on_the_axis
   endif
 
 !

@@ -147,7 +147,7 @@
               hp1 = hprime_xx(i,k)
               iglob = ibool(k,j,ispec)
               tempx1l = tempx1l + field_acoustic(iglob)*hp1
-              enddo
+            enddo
           endif
         else !not AXISYM
           do k = 1,NGLLX

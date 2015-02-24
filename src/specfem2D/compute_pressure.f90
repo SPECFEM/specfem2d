@@ -220,11 +220,50 @@
           mul_relaxed_viscoelastic = mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
           lambdalplus2mul_relaxed_viscoel = lambdal_relaxed_viscoelastic + TWO*mul_relaxed_viscoelastic
 
-          ! compute the stress using the unrelaxed Lame parameters (Carcione 2007 page 125)
-          sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
-          ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
-          sigma_yy = lambdal_unrelaxed_elastic*(dux_dxl + duz_dzl)
-          sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
+          if(AXISYM) then
+            if (is_on_the_axis(ispec)) then
+              if (abs(coord(1,ibool(i,j,ispec))) < TINYVAL) then ! First GLJ point
+                sigma_xx = 0._CUSTOM_REAL
+                sigma_zz = 0._CUSTOM_REAL
+                sigma_thetatheta = 0._CUSTOM_REAL
+                xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+                do k = 1,NGLJ
+                  sigma_xx = sigma_xx + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                  sigma_zz = sigma_zz + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                  sigma_thetatheta = sigma_thetatheta + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                enddo
+                sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl &
+                           + lambdal_unrelaxed_elastic*sigma_xx/xxi
+                sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
+                           + lambdal_unrelaxed_elastic*sigma_zz/xxi
+                sigma_thetatheta = lambdal_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
+                                   + lambdaplus2mu_unrelaxed_elastic*sigma_thetatheta/xxi
+              else ! Not first GLJ point
+                sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl &
+                           + lambdal_unrelaxed_elastic*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
+                sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
+                           + lambdal_unrelaxed_elastic*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
+                sigma_thetatheta = lambdal_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
+                                        + lambdaplus2mu_unrelaxed_elastic &
+                                        * displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
+              endif
+            else ! Not on the axis
+              sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl &
+                         + lambdal_unrelaxed_elastic*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
+              sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
+                         + lambdal_unrelaxed_elastic*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
+              sigma_thetatheta = lambdal_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
+                                      + lambdaplus2mu_unrelaxed_elastic &
+                                      * displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
+            endif
+            sigma_yy = sigma_thetatheta
+          else ! Not axisym
+            ! compute the stress using the unrelaxed Lame parameters (Carcione 2007 page 125)
+            sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
+            ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
+            sigma_yy = lambdal_unrelaxed_elastic*(dux_dxl + duz_dzl)
+            sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
+          endif
 
           ! add the memory variables using the relaxed parameters (Carcione 2007 page 125)
           ! beware: there is a bug in Carcione's equation (2c) of his 1993 paper for sigma_zz, we fixed it in the code below

@@ -118,8 +118,8 @@ subroutine  build_is_on_the_axis()
 
     if (any_poroelastic) &
       call exit_MPI('Poroelasticity is presently not implemented for axisymmetric simulations')
-    if (ATTENUATION_VISCOELASTIC_SOLID) &
-      call exit_MPI('Attenuation (ATTENUATION_VISCOELASTIC_SOLID) is presently not implemented for axisymmetric simulations')
+    !if (ATTENUATION_VISCOELASTIC_SOLID) &
+    !  call exit_MPI('Attenuation (ATTENUATION_VISCOELASTIC_SOLID) is presently not implemented for axisymmetric simulations')
     if (any(anisotropic(:) .eqv. .true.)) &
       call exit_MPI('Anisotropy is presently not implemented for axisymmetric simulations')
     if (ROTATE_PML_ACTIVATE) &
