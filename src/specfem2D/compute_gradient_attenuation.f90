@@ -52,7 +52,7 @@
   include "constants.h"
 
   logical :: AXISYM
-  
+
   integer :: nspec,nglob
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
