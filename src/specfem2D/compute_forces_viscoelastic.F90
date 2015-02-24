@@ -696,7 +696,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
             ! When implementing viscoelasticity according to the Carcione 1993 paper, attenuation is
             ! non-causal rather than causal. We fixed the problem by using equations in Carcione's
             ! 2004 paper and his 2007 book. See also file doc/problem_attenuation_reference_Specfem2D_fixed_by_Xie_Zhinan.pdf
-            
+
             if(AXISYM) then
               if (is_on_the_axis(ispec)) then
                 if (abs(coord(1,ibool(i,j,ispec))) < TINYVAL) then ! First GLJ point
@@ -734,7 +734,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
               sigma_xz = mul_unrelaxed_elastic*(duz_dxl + dux_dzl)
               sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
             endif
-            
+
             ! add the memory variables using the relaxed parameters (Carcione 2007 page 125)
             ! beware: there is a bug in Carcione's equation (2c) of his 1993 paper for sigma_zz, we fixed it in the code below.
             ! When implementing viscoelasticity according to the Carcione 1993 paper, attenuation is

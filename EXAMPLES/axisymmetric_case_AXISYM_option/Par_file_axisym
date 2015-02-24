@@ -10,7 +10,7 @@ NOISE_TOMOGRAPHY                = 0  # 0 = earthquake simulation, 1/2/3 = noise 
 SAVE_FORWARD                    = .false. # save the last frame, needed for adjoint simulation
 
 # parameters concerning partitioning
-nproc                           = 20              # number of processes
+nproc                           = 1              # number of processes
 partitioning_method             = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
 
 ngnod                           = 4              # number of control nodes per element (4 or 9)
