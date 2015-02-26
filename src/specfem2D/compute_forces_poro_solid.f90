@@ -45,7 +45,7 @@
 
 ! compute forces for the solid poroelastic part
 
-  use specfem_par, only: nglob,nspec,myrank,nelemabs,numat, &
+  use specfem_par, only: nglob,nspec,myrank,nelemabs, &
                          ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
                          source_type,it,NSTEP,anyabs, &
                          initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat, &
@@ -55,14 +55,13 @@
                          density,porosity,tortuosity,permeability,poroelastcoef,xix,xiz,gammax,gammaz, &
                          jacobian,source_time_function,sourcearray,adj_sourcearrays, &
                          e11,e13,hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
-                         AXISYM,is_on_the_axis,hprimeBar_xx, &
                          inv_tau_sigma_nu2,phi_nu2,Mu_nu2,N_SLS, &
                          rx_viscous,rz_viscous,theta_e,theta_s,b_viscodampx,b_viscodampz, &
                          ibegin_edge1_poro,iend_edge1_poro,ibegin_edge3_poro,iend_edge3_poro, &
                          ibegin_edge4_poro,iend_edge4_poro,ibegin_edge2_poro,iend_edge2_poro, &
                          mufr_k,B_k,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD, &
                          b_absorb_poro_s_left,b_absorb_poro_s_right,b_absorb_poro_s_bottom,b_absorb_poro_s_top, &
-                         nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,freq0,Q0, &
+                         ib_left,ib_right,ib_bottom,ib_top,freq0,Q0, &
                          e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
                          e11_initial_rk,e13_initial_rk,e11_force_RK, e13_force_RK, &
                          stage_time_scheme,i_stage

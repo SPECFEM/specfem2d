@@ -45,7 +45,7 @@
 
 ! same as subroutine "createnum_slow" but with a faster algorithm
 
-  use specfem_par, only: knods,ibool,shape2D,coorg,nglob,npgeo,nspec,ngnod,myrank
+  use specfem_par, only: knods,ibool,shape2D,coorg,nglob,nspec,ngnod,myrank
   implicit none
 
   include "constants.h"

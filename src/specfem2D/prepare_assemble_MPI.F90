@@ -60,7 +60,7 @@
   subroutine prepare_assemble_MPI()
 
   use specfem_par, only: nspec,ibool,knods, ngnod,nglob, elastic, poroelastic, &
-                                ninterface, max_interface_size, &
+                                ninterface, &
                                 my_nelmnts_neighbours, my_interfaces, &
                                 ibool_interfaces_acoustic, ibool_interfaces_elastic, &
                                 ibool_interfaces_poroelastic, &

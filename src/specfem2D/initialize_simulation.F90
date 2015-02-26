@@ -104,7 +104,7 @@
   subroutine initialize_simulation_domains()
 
   use specfem_par, only : any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic, &
-                          anisotropic,acoustic,gravitoacoustic,elastic,poroelastic,porosity,anisotropy,kmato,numat, &
+                          anisotropic,acoustic,gravitoacoustic,elastic,poroelastic,porosity,anisotropy,kmato, &
                           nspec,nspec_allocate,p_sv,ATTENUATION_VISCOELASTIC_SOLID,count_nspec_acoustic
   implicit none
   include "constants.h"

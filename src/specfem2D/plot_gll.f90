@@ -45,7 +45,7 @@
 
 ! output the Gauss-Lobatto-Legendre mesh in a gnuplot file
 
-  use specfem_par, only: knods,ibool,coorg,coord,nglob,npgeo,ngnod,nspec
+  use specfem_par, only: knods,ibool,coorg,coord,ngnod,nspec
   implicit none
 
   include "constants.h"

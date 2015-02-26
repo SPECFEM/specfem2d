@@ -45,8 +45,8 @@
   subroutine read_external_model()
 
   use specfem_par, only: any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic, &
-                         acoustic,gravitoacoustic,elastic,poroelastic,anisotropic,nspec,nglob,N_SLS,ibool, &
-                         f0_attenuation,READ_VELOCITIES_AT_f0,tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,&
+                         acoustic,gravitoacoustic,elastic,poroelastic,anisotropic,nspec,nglob,ibool, &
+                         READ_VELOCITIES_AT_f0,inv_tau_sigma_nu1_sent,&
                          phi_nu1_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent, &
                          inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,&
                          coord,kmato,rhoext,vpext,vsext,gravityext,Nsqext, &

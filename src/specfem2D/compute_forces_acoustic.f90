@@ -47,7 +47,7 @@
 
 ! compute forces for the acoustic elements
 
-  use specfem_par, only: nglob,nspec,nelemabs,numat,it,NSTEP, &
+  use specfem_par, only: nglob,nspec,nelemabs,it,NSTEP, &
                          anyabs,assign_external_model,ibool,kmato,numabs,acoustic, &
                          codeabs,codeabs_corner,stage_time_scheme,i_stage, &
                          density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
@@ -57,8 +57,8 @@
                          AXISYM,coord, is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
                          ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
                          ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
-                         SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right,&
-                         nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
+                         SIMULATION_TYPE,SAVE_FORWARD,&
+                         ib_left,ib_right,ib_bottom,ib_top, &
                          b_absorb_acoustic_left,b_absorb_acoustic_right, &
                          b_absorb_acoustic_bottom,b_absorb_acoustic_top,&
                          is_PML,nspec_PML,spec_to_PML,region_CPML, &

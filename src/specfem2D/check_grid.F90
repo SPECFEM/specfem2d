@@ -51,11 +51,11 @@
 
   use specfem_par, only: vpext,vsext,rhoext,density,poroelastcoef, &
                       porosity,tortuosity,permeability,ibool,kmato, &
-                      coord,nglob,vpImin,vpImax,vpIImin,vpIImax, &
-                      assign_external_model,nspec,UPPER_LIMIT_DISPLAY,numat,deltat, &
+                      coord,vpImin,vpImax,vpIImin,vpIImax, &
+                      assign_external_model,nspec,UPPER_LIMIT_DISPLAY,deltat, &
                       f0,initialfield,time_function_type, &
                       coorg,xinterp,zinterp,shape2D_display,knods,simulation_title, &
-                      npgeo,pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic, &
+                      pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic, &
                       myrank,nproc,NSOURCES,poroelastic, &
                       freq0,Q0,ATTENUATION_PORO_FLUID_PART,US_LETTER,output_postscript_snapshot
   implicit none

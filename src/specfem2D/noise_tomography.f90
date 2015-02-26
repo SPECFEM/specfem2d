@@ -144,7 +144,7 @@
 ! read in time series based on noise spectrum and construct noise "source" array
   subroutine compute_source_array_noise()
 
-  use specfem_par, only: p_sv,NSTEP,deltat,nglob,ibool,ispec_noise, &
+  use specfem_par, only: p_sv,NSTEP,deltat,ibool,ispec_noise, &
                        xi_noise,gamma_noise,xigll,zigll, &
                        time_function_noise,source_array_noise
 
@@ -272,7 +272,7 @@
 ! inject the "source" that drives the "generating wavefield"
   subroutine add_point_source_noise()
 
-  use specfem_par, only: p_sv,it,NSTEP,nglob,ibool,ispec_noise, &
+  use specfem_par, only: p_sv,it,ibool,ispec_noise, &
                          accel_elastic,angle_noise,source_array_noise
   implicit none
   include "constants.h"

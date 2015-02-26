@@ -44,19 +44,19 @@
 
   subroutine compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic,PML_BOUNDARY_CONDITIONS)
 
-
-  use specfem_par, only: nglob_elastic,nglob_acoustic,num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz,&
+  use specfem_par, only: num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz,&
                          gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,&
                          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
                          fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
-                         AXISYM,nglob,coord,is_on_the_axis,xiglj,wxglj,&
+                         AXISYM,coord,is_on_the_axis,xiglj,wxglj,&
                          nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
                          alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,timeval,deltat,&
-                         rmemory_fsb_displ_elastic_LDDRK,i_stage,stage_time_scheme,alpha_LDDRK,beta_LDDRK
-
+                         rmemory_fsb_displ_elastic_LDDRK,i_stage,stage_time_scheme,alpha_LDDRK,beta_LDDRK, &
+                         nglob_acoustic,nglob_elastic
 
    implicit none
-   include 'constants.h'
+
+   include "constants.h"
 
    real(kind=CUSTOM_REAL),dimension(3,nglob_elastic) :: displ_elastic,displ_elastic_old
    real(kind=CUSTOM_REAL),dimension(nglob_acoustic) :: potential_dot_dot_acoustic
@@ -70,8 +70,6 @@
                              xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
    double precision :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z, &
                              A8,A9,A10,bb_xz_1,bb_xz_2,coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2
-
-
 
       ! loop on all the coupling edges
 

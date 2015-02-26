@@ -43,11 +43,9 @@
 
   subroutine write_output_SU(x_source,z_source,irec,buffer_binary,number_of_components)
 
-  use specfem_par, only : sisux,sisuz,siscurl,station_name,network_name, &
-                          NSTEP,nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
+  use specfem_par, only : NSTEP,nrec,deltat,seismotype,st_xval, &
                           NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,p_sv, &
-                          st_zval,SU_FORMAT,save_ASCII_seismograms, &
-                          save_binary_seismograms_double,subsamp_seismos
+                          st_zval,subsamp_seismos
   integer :: deltat_int2
   integer :: irec,isample,number_of_components
 

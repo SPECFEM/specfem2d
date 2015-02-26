@@ -328,8 +328,8 @@ end subroutine prepare_initialfield
   subroutine prepare_initialfield_paco()
 
   use specfem_par, only: myrank,nelemabs,left_bound,right_bound,bot_bound, &
-                                    numabs,codeabs,ibool,nspec, &
-                                    source_type,NSOURCES,c_inc,c_refl, &
+                                    numabs,codeabs,ibool, &
+                                    source_type,c_inc,c_refl, &
                                     count_bottom,count_left,count_right
 
   implicit none

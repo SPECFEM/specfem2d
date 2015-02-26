@@ -58,7 +58,7 @@
                               array_val3,array_val4,npoin_val3)
 
   use mpi
-  use specfem_par, only:ninterface, max_interface_size, max_ibool_interfaces_size_ac, &
+  use specfem_par, only:ninterface,max_ibool_interfaces_size_ac, &
                               max_ibool_interfaces_size_el, &
                               max_ibool_interfaces_size_po, &
                               ibool_interfaces_acoustic,ibool_interfaces_elastic, &
@@ -212,21 +212,18 @@
 
   use mpi
 
-  use specfem_par, only: nglob,ninterface, ninterface_acoustic, &
+  use specfem_par, only: nglob,ninterface_acoustic, &
                          inum_interfaces_acoustic, &
-                         max_interface_size, max_ibool_interfaces_size_ac,&
                          ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
                          tab_requests_send_recv_acoustic, &
                          buffer_send_faces_vector_ac, &
                          buffer_recv_faces_vector_ac, &
-                         my_neighbours,myrank,ier
+                         my_neighbours,ier
 
   implicit none
 
   include 'constants.h'
   include 'precision.h'
-
-
 
   real(kind=CUSTOM_REAL), dimension(nglob), intent(inout) :: array_val1
 
@@ -331,9 +328,8 @@
 
   use mpi
 
-  use specfem_par, only: nglob,ninterface, ninterface_elastic, &
+  use specfem_par, only: nglob,ninterface_elastic, &
                          inum_interfaces_elastic, &
-                         max_interface_size, max_ibool_interfaces_size_el,&
                          ibool_interfaces_elastic, nibool_interfaces_elastic, &
                          tab_requests_send_recv_elastic, &
                          buffer_send_faces_vector_el, &

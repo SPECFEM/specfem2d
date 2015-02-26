@@ -50,7 +50,7 @@ subroutine  build_is_on_the_axis()
   ! should be .true. if the element number ispec is located near the axis.
   ! The vector build_is_on_the_axis has been initialized to .false. before.
 
-    use specfem_par, only: nspec, nelem_on_the_axis, ispec_of_axial_elements, is_on_the_axis
+    use specfem_par, only: nspec, ispec_of_axial_elements, is_on_the_axis
 
     implicit none
 
@@ -103,10 +103,10 @@ subroutine  build_is_on_the_axis()
   !   simulations, periodic conditions, noise tomographies, source and receivers on the elements along the axis but not
   !   exactly on the axis.
 
-    use specfem_par, only: any_poroelastic, ATTENUATION_VISCOELASTIC_SOLID, anisotropic,ROTATE_PML_ACTIVATE, &
+    use specfem_par, only: any_poroelastic, anisotropic,ROTATE_PML_ACTIVATE, &
                            STACEY_BOUNDARY_CONDITIONS, SIMULATION_TYPE, SAVE_FORWARD,time_stepping_scheme, &
                            NOISE_TOMOGRAPHY, NSOURCES, source_type, ispec_selected_source, xi_source, ADD_PERIODIC_CONDITIONS, &
-                           anglesource, nrec, ispec_selected_rec, xi_receiver, nspec, is_on_the_axis, elastic, myrank, &
+                           anglesource, nrec, ispec_selected_rec, xi_receiver, is_on_the_axis, elastic, myrank, &
                            is_proc_source, which_proc_receiver
 
     implicit none

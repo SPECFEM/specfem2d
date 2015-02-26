@@ -49,7 +49,7 @@
 !
 subroutine construct_acoustic_surface ()
 
-  use specfem_par, only : nspec, ngnod, knods, nelem_acoustic_surface, acoustic_edges, acoustic_surface
+  use specfem_par, only : ngnod, knods, nelem_acoustic_surface, acoustic_edges, acoustic_surface
 
   implicit none
 

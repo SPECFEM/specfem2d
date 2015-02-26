@@ -50,7 +50,6 @@
 #endif
 
   use specfem_par, only: myrank,timeval,it,NSTEP,NOISE_TOMOGRAPHY, &
-                         nglob_acoustic,nglob_elastic,nglob_poroelastic, &
                          any_elastic_glob,any_elastic,displ_elastic, &
                          any_poroelastic_glob,any_poroelastic, &
                          displs_poroelastic,displw_poroelastic, &

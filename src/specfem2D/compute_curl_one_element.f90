@@ -47,9 +47,7 @@
 
   use specfem_par, only: curl_element,displ_elastic, &
                          displs_poroelastic,elastic,poroelastic, &
-                         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz, &
-                         nspec,nglob_elastic,nglob_poroelastic
-
+                         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz
 
   implicit none
 

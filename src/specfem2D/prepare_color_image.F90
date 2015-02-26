@@ -52,7 +52,7 @@
   use specfem_par, only : NX_IMAGE_color,NZ_IMAGE_color, &
                           xmin_color_image,xmax_color_image, &
                           zmin_color_image,zmax_color_image, &
-                          coord,nglob,npgeo,factor_subsample_image
+                          coord,npgeo,factor_subsample_image
 
   implicit none
   include "constants.h"
@@ -139,7 +139,7 @@
   use specfem_par, only : myrank,NX_IMAGE_color,NZ_IMAGE_color, &
                             xmin_color_image,xmax_color_image, &
                             zmin_color_image,zmax_color_image, &
-                            coord,nglob,coorg,npgeo,nspec,ngnod,knods,ibool, &
+                            coord,coorg,nspec,knods,ibool, &
                             nb_pixel_loc,iglob_image_color, &
                             DRAW_SOURCES_AND_RECEIVERS,NSOURCES,nrec,x_source,z_source,st_xval,st_zval, &
                             ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver
@@ -277,7 +277,7 @@
   use specfem_par, only : nglob,image_color_vp_display,iglob_image_color, &
                             NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc, &
                             num_pixel_loc,nspec,elastic,poroelastic,ibool,kmato, &
-                            numat,density,poroelastcoef,porosity,tortuosity, &
+                            density,poroelastcoef,porosity,tortuosity, &
                             nproc,myrank,assign_external_model,vpext,DRAW_WATER_IN_BLUE
 
   implicit none

@@ -548,7 +548,7 @@
 
 ! reads in interfaces
 
-  use specfem_par, only : ninterface,max_interface_size,my_neighbours,my_nelmnts_neighbours,my_interfaces
+  use specfem_par, only : ninterface,my_neighbours,my_nelmnts_neighbours,my_interfaces
   implicit none
   include "constants.h"
 

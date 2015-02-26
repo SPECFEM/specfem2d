@@ -56,34 +56,21 @@
                          AXISYM,is_on_the_axis,flagrange_GLJ, &
                          poroelastcoef,knods,kmato,ibool, &
                          numabs,codeabs,typeabs,anyabs,nelem_acoustic_surface, acoustic_edges, &
-                         simulation_title,nglob,npgeo,vpImin,vpImax,nrec,NSOURCES, &
+                         simulation_title,nglob,vpImin,vpImax,nrec,NSOURCES, &
                          colors,numbers,subsamp_postscript,imagetype_postscript,interpol,meshvect,modelvect, &
-                         boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,numat,pointsdisp, &
+                         boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,pointsdisp, &
                          nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
                          any_acoustic,any_poroelastic,plot_lowerleft_corner_only, &
                          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
                          fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
                          solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,num_solid_poro_edges, &
                          poroelastic,myrank,nproc,ier, &
-                         d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
-                         d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
-                         d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model, &
-                         d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model, &
                          coorg_send_ps_velocity_model,RGB_send_ps_velocity_model, &
                          coorg_recv_ps_velocity_model,RGB_recv_ps_velocity_model,&
-                         d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh, &
-                         d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh, &
-                         d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh, &
                          coorg_send_ps_element_mesh,color_send_ps_element_mesh, &
                          coorg_recv_ps_element_mesh,color_recv_ps_element_mesh, &
-                         d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs, &
-                         d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs, &
                          coorg_send_ps_abs,coorg_recv_ps_abs, &
-                         d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface, &
-                         d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface, &
                          coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
-                         d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field, &
-                         d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field, &
                          coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER,is_PML
 
   implicit none

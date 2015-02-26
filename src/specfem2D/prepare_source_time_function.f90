@@ -47,7 +47,7 @@
 
 ! prepares source_time_function array
 
-  use specfem_par, only: myrank,NSTEP,NSOURCES,source_time_function, &
+  use specfem_par, only: NSTEP,NSOURCES,source_time_function, &
                          time_function_type,f0,tshift_src,factor,aval, &
                          t0,nb_proc_source,deltat,stage_time_scheme,c_LDDRK,is_proc_source
 

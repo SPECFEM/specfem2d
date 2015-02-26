@@ -226,9 +226,9 @@
 #endif
 
   use specfem_par, only : sisux,sisuz,siscurl,station_name,network_name, &
-                          NSTEP,nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
+                          NSTEP,which_proc_receiver,nrec,myrank,deltat,seismotype,t0, &
                           NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,p_sv, &
-                          st_zval,SU_FORMAT,save_ASCII_seismograms, &
+                          SU_FORMAT,save_ASCII_seismograms, &
                           save_binary_seismograms_single,save_binary_seismograms_double,subsamp_seismos
 
 ! uncomment this to save the ASCII *.sem* seismograms in binary instead, to save disk space and/or writing time

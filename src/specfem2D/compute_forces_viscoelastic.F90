@@ -48,7 +48,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
 
   ! compute forces for the elastic elements
 
-  use specfem_par, only: p_sv,nglob,nspec,myrank,nelemabs,numat, &
+  use specfem_par, only: p_sv,nglob,nspec,myrank,nelemabs, &
                          ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
                          source_type,it,NSTEP,anyabs,assign_external_model, &
                          initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource, &
@@ -64,8 +64,8 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
                          deltat,coord,add_Bielak_conditions, &
                          A_plane, B_plane, C_plane, anglesource_refl, c_inc, c_refl, time_offset, &
                          over_critical_angle,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,b_absorb_elastic_left,&
-                         b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top,nspec_left,nspec_right,&
-                         nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,&
+                         b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top,&
+                         ib_left,ib_right,ib_bottom,ib_top,&
                          stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring,&
                          is_PML,nspec_PML,spec_to_PML,region_CPML,rmemory_duz_dz_LDDRK, &
                          K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
@@ -1690,7 +1690,7 @@ end subroutine compute_forces_viscoelastic
 
   ! precompution of kernel
 
-  use specfem_par, only: p_sv,nglob,nspec,displ_elastic,b_displ_elastic,&
+  use specfem_par, only: p_sv,nspec,displ_elastic,b_displ_elastic,&
                          mu_k,kappa_k,elastic,ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz
 
    implicit none

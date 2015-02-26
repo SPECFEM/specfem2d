@@ -47,15 +47,15 @@
 !  builds the global mass matrix
 
   use specfem_par, only: any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic, &
-                                rmass_inverse_elastic_one,nglob_elastic, &
-                                rmass_inverse_acoustic,nglob_acoustic, &
+                                rmass_inverse_elastic_one, &
+                                rmass_inverse_acoustic, &
                                 rmass_inverse_gravitoacoustic, &
-                                rmass_inverse_gravito,nglob_gravitoacoustic, &
+                                rmass_inverse_gravito, &
                                 rmass_s_inverse_poroelastic, &
-                                rmass_w_inverse_poroelastic,nglob_poroelastic, &
+                                rmass_w_inverse_poroelastic, &
                                 nspec,ibool,kmato,wxgll,wzgll,jacobian, &
                                 elastic,acoustic,gravitoacoustic,poroelastic, &
-                                assign_external_model,numat, &
+                                assign_external_model, &
                                 density,poroelastcoef,porosity,tortuosity, &
                                 vpext,rhoext, &
                                 anyabs,numabs,deltat,codeabs,codeabs_corner,&
@@ -64,9 +64,9 @@
                                 rmass_inverse_elastic_three,&
                                 nelemabs,vsext,xix,xiz,gammaz,gammax, &
                                 K_x_store,K_z_store,is_PML,&
-                                AXISYM,nglob,is_on_the_axis,coord,wxglj,xiglj, &
+                                AXISYM,is_on_the_axis,coord,wxglj,xiglj, &
                                 d_x_store,d_z_store,PML_BOUNDARY_CONDITIONS,region_CPML, &
-                                nspec_PML,spec_to_PML,time_stepping_scheme
+                                spec_to_PML,time_stepping_scheme
 
   implicit none
   include 'constants.h'
@@ -722,12 +722,11 @@
 
   use specfem_par, only: any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic, &
                                 rmass_inverse_elastic_one,rmass_inverse_elastic_three,&
-                                nglob_elastic, &
-                                rmass_inverse_acoustic,nglob_acoustic, &
+                                rmass_inverse_acoustic, &
                                 rmass_inverse_gravitoacoustic, &
-                                rmass_inverse_gravito,nglob_gravitoacoustic, &
+                                rmass_inverse_gravito, &
                                 rmass_s_inverse_poroelastic, &
-                                rmass_w_inverse_poroelastic,nglob_poroelastic
+                                rmass_w_inverse_poroelastic
   implicit none
   include 'constants.h'
 

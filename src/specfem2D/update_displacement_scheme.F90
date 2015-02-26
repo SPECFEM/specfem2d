@@ -44,9 +44,8 @@
   subroutine update_displacement_precondition_newmark()
 
   use specfem_par, only : deltat,deltatover2,deltatsquareover2,b_deltat,b_deltatover2,b_deltatsquareover2, GPU_MODE, &
-                          Mesh_pointer,myrank,deltatf,deltatover2f,deltatsquareover2f,b_deltatf,b_deltatover2f,&
+                          Mesh_pointer,deltatf,deltatover2f,deltatsquareover2f,b_deltatf,b_deltatover2f,&
                           b_deltatsquareover2f,time_stepping_scheme,SIMULATION_TYPE,&
-                          nglob_acoustic,nglob_elastic,nglob_poroelastic,&
                           any_acoustic,any_elastic,any_poroelastic,&
                           potential_acoustic,potential_dot_acoustic,&
                           potential_dot_dot_acoustic,potential_acoustic_old,&

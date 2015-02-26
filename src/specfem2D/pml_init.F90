@@ -67,7 +67,10 @@
 
 use specfem_par, only: myrank,SIMULATION_TYPE,SAVE_FORWARD,nspec,nglob,ibool,anyabs,nelemabs,codeabs,numabs,&
                        NELEM_PML_THICKNESS,nspec_PML,is_PML,which_PML_elem,spec_to_PML,region_CPML,&
-                       PML_interior_interface,nglob_interface,mask_ibool,read_external_mesh,ier
+#ifdef USE_MPI
+  ier, &
+#endif
+                       PML_interior_interface,nglob_interface,mask_ibool,read_external_mesh
 
   implicit none
   include 'constants.h'
@@ -303,7 +306,7 @@ end subroutine pml_init
  subroutine determin_interface_pml_interior()
 
   use specfem_par, only: nglob_interface,nspec,ibool,PML_interior_interface,&
-                         which_PML_elem,point_interface,read_external_mesh,mask_ibool,region_CPML,nglob
+                         which_PML_elem,point_interface,read_external_mesh,mask_ibool,region_CPML
   implicit none
 
   integer i,j,iglob,ispec
@@ -427,10 +430,10 @@ end subroutine pml_init
   use mpi
 #endif
 
-  use specfem_par, only: f0,NELEM_PML_THICKNESS,elastic,acoustic,&
+  use specfem_par, only: f0,elastic,acoustic,&
                          NSOURCES,ispec_selected_source,&
-                         nspec,kmato,density,poroelastcoef,numat,&
-                         ibool,coord,is_PML,region_CPML,spec_to_PML,nspec_PML,&
+                         nspec,kmato,density,poroelastcoef,&
+                         ibool,coord,is_PML,region_CPML,spec_to_PML,&
                          K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
   implicit none
