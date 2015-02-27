@@ -661,7 +661,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
               dux_dzl = A8 * PML_dux_dzl(i,j) + A9 * rmemory_dux_dz(i,j,ispec_PML,1) + A10 * rmemory_dux_dz(i,j,ispec_PML,2)
               duz_dzl = A8 * PML_duz_dzl(i,j) + A9 * rmemory_duz_dz(i,j,ispec_PML,1) + A10 * rmemory_duz_dz(i,j,ispec_PML,2)
             endif
-            
+
             if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec_PML))) < TINYVAL)) then ! du_z/dr=0 on the axis
               rmemory_duz_dx(i,j,ispec_PML,1) = 0.d0
               rmemory_duz_dx_prime(i,j,ispec_PML,1) = 0.d0
@@ -669,7 +669,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
               rmemory_duz_dx_prime(i,j,ispec_PML,2) = 0.d0
             endif
           endif ! PML_BOUNDARY_CONDITIONS
-          
+
           if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL)) then ! du_z/dr=0 on the axis
             duz_dxl = 0.d0
           endif
