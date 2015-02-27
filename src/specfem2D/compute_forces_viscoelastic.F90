@@ -395,7 +395,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
           duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
           duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
-         if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL)) then ! du_z/dr=0 on the axis
+          if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL)) then ! du_z/dr=0 on the axis
             duz_dxl = 0.d0
           endif
 
@@ -453,10 +453,6 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
             gammaxl = gammax(i,j,ispec)
             gammazl = gammaz(i,j,ispec)
 
-            if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL)) then ! du_z/dr=0 on the axis
-              duz_dxi_old = 0.d0
-            endif
-
             ! derivatives of displacement
             PML_dux_dxl_old(i,j) = dux_dxi_old*xixl + dux_dgamma_old*gammaxl !dux_dxl_old
             PML_dux_dzl_old(i,j) = dux_dxi_old*xizl + dux_dgamma_old*gammazl !dux_dzl_old
@@ -495,7 +491,6 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
                                                         coef1_xz_1 * PML_duz_dxl(i,j) + coef2_xz_1 * PML_duz_dxl_old(i,j)
                 rmemory_duz_dz_prime(i,j,ispec_PML,1) = coef0_xz_1 * rmemory_duz_dz_prime(i,j,ispec_PML,1) + &
                                                         coef1_xz_1 * PML_duz_dzl(i,j) + coef2_xz_1 * PML_duz_dzl_old(i,j)
-
                 if(singularity_type_zx == 0)then
                   rmemory_dux_dx(i,j,ispec_PML,2) = coef0_zx_2 * rmemory_dux_dx(i,j,ispec_PML,2) + &
                                                     coef1_zx_2 * PML_dux_dxl(i,j) + coef2_zx_2 * PML_dux_dxl_old(i,j)
@@ -666,7 +661,18 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
               dux_dzl = A8 * PML_dux_dzl(i,j) + A9 * rmemory_dux_dz(i,j,ispec_PML,1) + A10 * rmemory_dux_dz(i,j,ispec_PML,2)
               duz_dzl = A8 * PML_duz_dzl(i,j) + A9 * rmemory_duz_dz(i,j,ispec_PML,1) + A10 * rmemory_duz_dz(i,j,ispec_PML,2)
             endif
+            
+            if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec_PML))) < TINYVAL)) then ! du_z/dr=0 on the axis
+              rmemory_duz_dx(i,j,ispec_PML,1) = 0.d0
+              rmemory_duz_dx_prime(i,j,ispec_PML,1) = 0.d0
+              rmemory_duz_dx(i,j,ispec_PML,2) = 0.d0
+              rmemory_duz_dx_prime(i,j,ispec_PML,2) = 0.d0
+            endif
           endif ! PML_BOUNDARY_CONDITIONS
+          
+          if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL)) then ! du_z/dr=0 on the axis
+            duz_dxl = 0.d0
+          endif
 
           ! compute stress tensor (include attenuation or anisotropy if needed)
           if(ATTENUATION_VISCOELASTIC_SOLID) then
@@ -708,18 +714,24 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
                   do k = 1,NGLJ
                     sigma_xx = sigma_xx + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
                     sigma_zz = sigma_zz + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                    sigma_thetatheta(i,j) = sigma_thetatheta(i,j) + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
                   enddo
                   sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl &
                              + lambdal_unrelaxed_elastic*sigma_xx/xxi
                   sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
                              + lambdal_unrelaxed_elastic*sigma_zz/xxi
                   sigma_xz = mul_unrelaxed_elastic*(duz_dxl + dux_dzl)
+                  sigma_thetatheta(i,j) = lambdal_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
+                                     + lambdaplus2mu_unrelaxed_elastic*sigma_thetatheta(i,j)/xxi
                 else ! Not first GLJ point
                   sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl &
                              + lambdal_unrelaxed_elastic*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
                   sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
                              + lambdal_unrelaxed_elastic*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
                   sigma_xz = mul_unrelaxed_elastic*(duz_dxl + dux_dzl)
+                  sigma_thetatheta(i,j) = lambdal_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
+                                          + lambdaplus2mu_unrelaxed_elastic &
+                                          * displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
                   r_xiplus1(i,j) = coord(1,ibool(i,j,ispec))/(xiglj(i)+ONE)
                 endif
               else ! Not on the axis
@@ -728,6 +740,9 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
                 sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
                            + lambdal_unrelaxed_elastic*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
                 sigma_xz = mul_unrelaxed_elastic*(duz_dxl + dux_dzl)
+                sigma_thetatheta(i,j) = lambdal_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
+                                        + lambdaplus2mu_unrelaxed_elastic &
+                                        * displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
               endif
             else ! Not axisym
               sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl

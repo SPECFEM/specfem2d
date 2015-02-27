@@ -358,6 +358,10 @@
 
           duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
           dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
+          
+          if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL)) then ! du_z/dr=0 on the axis
+            duz_dxl = 0.d0
+          endif
 
           ! implement anisotropy in 2D
           sigma_xx = c11*dux_dxl + c13*duz_dzl + c15*(duz_dxl + dux_dzl)
