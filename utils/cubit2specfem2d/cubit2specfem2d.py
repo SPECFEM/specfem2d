@@ -382,7 +382,7 @@ class mesh(object,mesh_tools):
         nummaterial=open(nummaterial_name,'w')  # Create the file "nummaterial_name" and open it
         for block in self.block_mat: # For each 2D block 
             name=cubit.get_exodus_entity_name('block',block) # Extract the name of the block
-            lineToWrite= str(self.material[name][0])+" 1 "+str(self.material[name][1])+" " \ 
+            lineToWrite= str(self.material[name][0])+" 1 "+str(self.material[name][1])+" " \
                         +str(self.material[name][2])+" "+str(self.material[name][3])+" "+str(self.material[name][4])+" " \
                         +str(self.material[name][5])+"\n" # flag rho vp vs rho Qflag anisotropy_flag
             nummaterial.write(lineToWrite)
@@ -419,25 +419,39 @@ class mesh(object,mesh_tools):
         print 'Ok'
     def pmls_write(self,pml_name):
         """ Write pml elements on file : mat_name """ 
-        pml_file=open(pml_name,'w+')
+        cubit.cmd('set info off') # Turn off return messages from Cubit commands
+        cubit.cmd('set echo off') # Turn off echo of Cubit commands
+        pml_file=open(pml_name,'w')
         print 'Writing '+pml_name+'.....'
-        npml_element=0
-        for block,flag in zip(self.block_mat,self.block_flag): # for each 2D block
+        npml_elements=0
+        id_element=0 # Global id
+        faces_all=[0]*6
+        for block,flag in zip(self.block_mat,self.block_flag): # For each 2D block
             for ipml in range(0, 6): # iabs = 0,1,2,3,4,5 : for each pml layer (x_acoust, z_acoust, xz_acoust,x_elast, z_elast, xz_elast)
-                if block == self.pml_boun[ipml]: # If the block considered correspond to the pml
-                    quads=cubit.get_block_faces(block) # Import quads id
-                    for quad in quads: # For each quad
-                        pml_file.write(('%10i %10i\n') % (quad,ipml%3+1)) # Write its id in the file next to its type
-                        npml_element=npml_element+1
+               if block == self.pml_boun[ipml]: # If the block considered correspond to the pml
+                    faces_all[ipml]=cubit.get_block_faces(block) # Import all pml faces id as a Set
+                    print npml_elements," ",len(faces_all[ipml])
+                    npml_elements=npml_elements+len(faces_all[ipml])
+        pml_file.write('%10i\n' % npml_elements) # Print the number of faces on the pmls
+        print 'Number of elements in all PMLs :',npml_elements
+        print faces_all
+        for block,flag in zip(self.block_mat,self.block_flag): # For each 2D block
+            quads=cubit.get_block_faces(block) # Import quads id
+            for quad in quads: # For each quad
+                id_element=id_element+1 # global id of this quad
+                for ipml in range(0, 6): # iabs = 0,1,2,3,4,5 : for each pml layer (x_acoust, z_acoust, xz_acoust,x_elast, z_elast, xz_elast)
+                    if type(faces_all[ipml]) is not int: # ~ if there are elements in that pml
+                        if quad in faces_all[ipml]: # If this quad is belong to that pml
+                            nodes=cubit.get_connectivity('face',quad) # Import the nodes describing the quad
+                            nodes=self.jac_check(list(nodes)) # Check the jacobian of the quad
+                            pml_file.write(('%10i %10i\n') % (id_element,ipml%3+1)) # Write its id in the file next to its type
         # ipml%3+1 = 1 -> element belongs to a X CPML layer only (either in Xmin or in Xmax)
         # ipml%3+1 = 2 -> element belongs to a Z CPML layer only (either in Zmin or in Zmax)
         # ipml%3+1 = 3 -> element belongs to both a X and a Y CPML layer (i.e., to a CPML corner)
-        # Write the number of pml elements at the beginning of the file :
-        content = pml_file.read()
-        pml_file.seek(0, 0)
-        pml_file.write(str(npml_element).rstrip('\r\n') + '\n' + content)
         pml_file.close()
         print 'Ok'
+        cubit.cmd('set info on') # Turn on return messages from Cubit commands
+        cubit.cmd('set echo on') # Turn on echo of Cubit commands
     def nodescoord_write(self,nodecoord_name):
         """ Write nodes coordinates on file : nodecoord_name """ 
         nodecoord=open(nodecoord_name,'w')
