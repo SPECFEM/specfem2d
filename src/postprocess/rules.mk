@@ -42,7 +42,7 @@
 
 ## compilation directories
 S := ${S_TOP}/src/postprocess
-$(postprocess_OBJECTS): S := ${S_TOP}/src/auxiliaries
+$(postprocess_OBJECTS): S := ${S_TOP}/src/postprocess
 
 #######################################
 
@@ -72,8 +72,8 @@ sum_kernels_ascii_postprocess_OBJECTS = \
 sum_kernels_ascii_postprocess_SHARED_OBJECTS = \
 	$(EMPTY_MACRO)
 
-postprocess_OBJECTS += $(sum_kernels_ascii_auxiliaries_OBJECTS)
-postprocess_SHARED_OBJECTS += $(sum_kernels_ascii_auxiliaries_SHARED_OBJECTS)
+postprocess_OBJECTS += $(sum_kernels_ascii_postprocess_OBJECTS)
+postprocess_SHARED_OBJECTS += $(sum_kernels_ascii_postprocess_SHARED_OBJECTS)
 
 
 #######################################
@@ -87,7 +87,7 @@ aux: $(postprocess_TARGETS)
 sum_kernels_ascii: xsum_kernels_ascii
 xsum_kernels_ascii: $E/xsum_kernels_ascii
 
-$E/xsum_kernels_ascii: $(sum_kernels_ascii_postprocess_OBJECTS) $(sum_kernels_ascii_auxiliaries_SHARED_OBJECTS)
+$E/xsum_kernels_ascii: $(sum_kernels_ascii_postprocess_OBJECTS) $(sum_kernels_ascii_postprocess_SHARED_OBJECTS)
 	${LINK} $(DEF_FFLAGS) -o $@ $+
 
 #######################################
