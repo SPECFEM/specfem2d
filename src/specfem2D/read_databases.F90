@@ -60,7 +60,7 @@
                          output_grid_ASCII,output_energy,output_wavefield_dumps,use_binary_for_wavefield_dumps, &
                          ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms, &
                          save_binary_seismograms_single,save_binary_seismograms_double,DRAW_SOURCES_AND_RECEIVERS, &
-                         Q0,freq0,p_sv,NSTEP,deltat,NSOURCES, &
+                         Q0,freq0,p_sv,NSTEP,deltat,NSOURCES,USE_TRICK_FOR_BETTER_PRESSURE, &
                          factor_subsample_image,USE_CONSTANT_MAX_AMPLITUDE,CONSTANT_MAX_AMPLITUDE_TO_USE, &
                          USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                          POWER_DISPLAY_COLOR,SU_FORMAT,USER_T0, time_stepping_scheme, &
@@ -193,6 +193,9 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,*) save_binary_seismograms_single,save_binary_seismograms_double
+  
+  read(IIN,"(a80)") datlin
+  read(IIN,*) USE_TRICK_FOR_BETTER_PRESSURE
 
   read(IIN,"(a80)") datlin
   read(IIN,*) save_ASCII_kernels

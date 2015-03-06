@@ -118,8 +118,23 @@
           dcurld=ZERO
 
           if(seismotype == 4) then
-
-            dxd = pressure_element(i,j)
+            if (USE_TRICK_FOR_BETTER_PRESSURE .and. (acoustic(ispec) .or. gravitoacoustic(ispec))) then 
+              ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
+              ! use the second derivative of the source for the source time function instead of the source itself,
+              ! and then record -potential_acoustic() as pressure seismograms instead of -potential_dot_dot_acoustic();
+              ! this is mathematically equivalent, but numerically significantly more accurate because in the explicit
+              ! Newmark time scheme acceleration is accurate at zeroth order while displacement is accurate at second order,
+              ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
+              ! is accurate at second order and thus contains significantly less numerical noise.
+              ! compute pressure on the fluid/porous medium edge
+              if(gravitoacoustic(ispec)) then
+                dxd = - potential_gravitoacoustic(iglob)
+              else
+                dxd = - potential_acoustic(iglob)
+              endif
+            else
+              dxd = pressure_element(i,j) ! == potential_dot_dot_acoustic(iglob) (or potential_dot_dot_gravitoacoustic(iglob))
+            endif 
             dzd = ZERO
 
           else if((acoustic(ispec) .or. gravitoacoustic(ispec)) .and.  seismotype /= 6) then

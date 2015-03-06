@@ -123,6 +123,7 @@ module specfem_par
 ! for seismograms
   double precision, dimension(:,:), allocatable :: sisux,sisuz,siscurl
   integer :: seismo_offset, seismo_current
+  logical :: USE_TRICK_FOR_BETTER_PRESSURE
 
 ! vector field in an element
   real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLX) :: vector_field_element
