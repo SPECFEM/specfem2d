@@ -118,7 +118,7 @@
           dcurld=ZERO
 
           if(seismotype == 4) then
-            if (USE_TRICK_FOR_BETTER_PRESSURE .and. (acoustic(ispec) .or. gravitoacoustic(ispec))) then 
+            if (USE_TRICK_FOR_BETTER_PRESSURE .and. (acoustic(ispec) .or. gravitoacoustic(ispec))) then
               ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
               ! use the second derivative of the source for the source time function instead of the source itself,
               ! and then record -potential_acoustic() as pressure seismograms instead of -potential_dot_dot_acoustic();
@@ -134,7 +134,7 @@
               endif
             else
               dxd = pressure_element(i,j) ! == potential_dot_dot_acoustic(iglob) (or potential_dot_dot_gravitoacoustic(iglob))
-            endif 
+            endif
             dzd = ZERO
 
           else if((acoustic(ispec) .or. gravitoacoustic(ispec)) .and.  seismotype /= 6) then

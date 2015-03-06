@@ -86,8 +86,8 @@
 
     ! note: t0 is the simulation start time, tshift_src is the time shift of the source
     !          relative to this start time
-    
-    if (time_function_type(i_source) >= 5 .and. USE_TRICK_FOR_BETTER_PRESSURE) then 
+
+    if (time_function_type(i_source) >= 5 .and. USE_TRICK_FOR_BETTER_PRESSURE) then
       call exit_MPI('USE_TRICK_FOR_BETTER_PRESSURE is not compatible yet with the type of source you want to use')
     endif
 
@@ -102,7 +102,7 @@
     if(stage_time_scheme == 4) timeval = (it-1)*deltat+c_RK(i_stage)*deltat
 
     if(stage_time_scheme == 6) timeval = (it-1)*deltat+c_LDDRK(i_stage)*deltat
-    
+
     t_used =(timeval-t0-tshift_src(i_source))
 
     stf_used = 0.d0
@@ -110,8 +110,8 @@
     if(is_proc_source(i_source) == 1) then
 
       if( time_function_type(i_source) == 1 ) then
-  
-        if (USE_TRICK_FOR_BETTER_PRESSURE) then 
+
+        if (USE_TRICK_FOR_BETTER_PRESSURE) then
           ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
           ! use the second derivative of the source for the source time function instead of the source itself,
           ! and then record -potential_acoustic() as pressure seismograms instead of -potential_dot_dot_acoustic();
@@ -119,7 +119,7 @@
           ! Newmark time scheme acceleration is accurate at zeroth order while displacement is accurate at second order,
           ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
           ! is accurate at second order and thus contains significantly less numerical noise.
-          
+
           ! Second derivative of Ricker source time function :
           source_time_function(i_source,it,i_stage) = factor(i_source) * &
                     2.0d0*aval(i_source) * (3.0d0 - 12.0d0*aval(i_source)*t_used**2 + 4.0d0*aval(i_source)**2*t_used**4) * &
@@ -136,7 +136,7 @@
         endif
 
       else if( time_function_type(i_source) == 2 ) then
-        if (USE_TRICK_FOR_BETTER_PRESSURE) then 
+        if (USE_TRICK_FOR_BETTER_PRESSURE) then
           ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
           ! use the second derivative of the source for the source time function instead of the source itself,
           ! and then record -potential_acoustic() as pressure seismograms instead of -potential_dot_dot_acoustic();
@@ -144,7 +144,7 @@
           ! Newmark time scheme acceleration is accurate at zeroth order while displacement is accurate at second order,
           ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
           ! is accurate at second order and thus contains significantly less numerical noise.
-          
+
           ! Third derivative of Gaussian source time function :
           source_time_function(i_source,it,i_stage) = factor(i_source) * &
                     4.0d0*aval(i_source)**2*t_used * (3.0d0 - 2.0d0*aval(i_source)*t_used**2) * &
@@ -157,7 +157,7 @@
         endif
 
       else if(time_function_type(i_source) == 3 .or. time_function_type(i_source) == 4) then
-        if (USE_TRICK_FOR_BETTER_PRESSURE) then 
+        if (USE_TRICK_FOR_BETTER_PRESSURE) then
           ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
           ! use the second derivative of the source for the source time function instead of the source itself,
           ! and then record -potential_acoustic() as pressure seismograms instead of -potential_dot_dot_acoustic();
@@ -166,7 +166,7 @@
           ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
           ! is accurate at second order and thus contains significantly less numerical noise.
           ! Second derivative of Gaussian :
-          source_time_function(i_source,it,i_stage) = factor(i_source) * & 
+          source_time_function(i_source,it,i_stage) = factor(i_source) * &
                     2.0d0 * aval(i_source) * (2.0d0 * aval(i_source) * t_used**2 - 1.0d0) * &
                     exp(-aval(i_source)*t_used**2)
         else

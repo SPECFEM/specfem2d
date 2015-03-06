@@ -193,7 +193,7 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,*) save_binary_seismograms_single,save_binary_seismograms_double
-  
+
   read(IIN,"(a80)") datlin
   read(IIN,*) USE_TRICK_FOR_BETTER_PRESSURE
 

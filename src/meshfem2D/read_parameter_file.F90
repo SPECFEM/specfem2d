@@ -285,9 +285,9 @@ contains
   ! read receiver line parameters
   call read_value_integer_p(seismotype, 'solver.seismotype')
   if(err_occurred() /= 0) stop 'error reading parameter 22 in Par_file'
-  
+
   call read_value_logical_p(USE_TRICK_FOR_BETTER_PRESSURE, 'solver.USE_TRICK_FOR_BETTER_PRESSURE')
-  if(err_occurred() /= 0) stop 'error reading parameter 22b in Par_file'  
+  if(err_occurred() /= 0) stop 'error reading parameter 22b in Par_file'
 
   call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_SEISMOS, 'solver.NSTEP_BETWEEN_OUTPUT_SEISMOS')
   if(err_occurred() /= 0) stop 'error reading parameter 33b in Par_file'
