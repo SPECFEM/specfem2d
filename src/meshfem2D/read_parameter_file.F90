@@ -72,7 +72,7 @@ module parameter_file
   logical :: initialfield,add_Bielak_conditions,assign_external_model, &
             READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART, &
             save_ASCII_seismograms,save_binary_seismograms_single,save_binary_seismograms_double,&
-            DRAW_SOURCES_AND_RECEIVERS,save_ASCII_kernels
+            DRAW_SOURCES_AND_RECEIVERS,save_ASCII_kernels,USE_TRICK_FOR_BETTER_PRESSURE
 
   double precision :: Q0,freq0
 
@@ -285,6 +285,9 @@ contains
   ! read receiver line parameters
   call read_value_integer_p(seismotype, 'solver.seismotype')
   if(err_occurred() /= 0) stop 'error reading parameter 22 in Par_file'
+  
+  call read_value_logical_p(USE_TRICK_FOR_BETTER_PRESSURE, 'solver.USE_TRICK_FOR_BETTER_PRESSURE')
+  if(err_occurred() /= 0) stop 'error reading parameter 22b in Par_file'  
 
   call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_SEISMOS, 'solver.NSTEP_BETWEEN_OUTPUT_SEISMOS')
   if(err_occurred() /= 0) stop 'error reading parameter 33b in Par_file'
