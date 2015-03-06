@@ -51,29 +51,15 @@ postprocess_TARGETS = \
 	$(EMPTY_MACRO)
 
 postprocess_OBJECTS = \
+	$(xsum_kernels_ascii_OBJECTS) \
 	$(EMPTY_MACRO)
 
 postprocess_MODULES = \
+	$(FC_MODDIR)/postprocess_par.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
-# These files come from the shared directory
 postprocess_SHARED_OBJECTS = \
 	$(EMPTY_MACRO)
-
-#######################################
-
-##
-## sum_kernels_ascii
-##
-sum_kernels_ascii_postprocess_OBJECTS = \
-	$O/sum_kernels_ascii.aux.o \
-	$(EMPTY_MACRO)
-
-sum_kernels_ascii_postprocess_SHARED_OBJECTS = \
-	$(EMPTY_MACRO)
-
-postprocess_OBJECTS += $(sum_kernels_ascii_postprocess_OBJECTS)
-postprocess_SHARED_OBJECTS += $(sum_kernels_ascii_postprocess_SHARED_OBJECTS)
 
 
 #######################################
@@ -82,13 +68,29 @@ postprocess_SHARED_OBJECTS += $(sum_kernels_ascii_postprocess_SHARED_OBJECTS)
 #### rules for executables
 ####
 
-aux: $(postprocess_TARGETS)
+postprocess: $(postprocess_TARGETS)
 
 sum_kernels_ascii: xsum_kernels_ascii
 xsum_kernels_ascii: $E/xsum_kernels_ascii
 
-$E/xsum_kernels_ascii: $(sum_kernels_ascii_postprocess_OBJECTS) $(sum_kernels_ascii_postprocess_SHARED_OBJECTS)
+
+#######################################
+
+##
+## sum_kernels_ascii
+##
+
+xsum_kernels_ascii_OBJECTS = \
+	$O/postprocess_par.postprocess_module.o \
+	$O/sum_kernels_ascii.postprocess.o \
+	$(EMPTY_MACRO)
+
+xsum_kernels_ascii_SHARED_OBJECTS = \
+	$(EMPTY_MACRO)
+
+${E}/xsum_kernels_ascii: $(xsum_kernels_ascii_OBJECTS) $(xsum_kernels_ascii_SHARED_OBJECTS)
 	${LINK} $(DEF_FFLAGS) -o $@ $+
+
 
 #######################################
 
@@ -100,6 +102,9 @@ $E/xsum_kernels_ascii: $(sum_kernels_ascii_postprocess_OBJECTS) $(sum_kernels_as
 ## postprocess
 ##
 
-$O/%.aux.o: $S/%.f90
+$O/%.postprocess_module.o: $S/%.f90 ${SETUP}/constants.h $O/specfem2D_par.spec.o
+	${F90} ${DEF_FFLAGS} -c -o $@ $<
+
+$O/%.postprocess.o: $S/%.f90
 	${F90} ${DEF_FFLAGS} -c -o $@ $<
 
