@@ -1,3 +1,46 @@
+
+!========================================================================
+!
+!                   S P E C F E M 2 D  Version 7 . 0
+!                   --------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This software is a computer program whose purpose is to solve
+! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
+! using a spectral-element method (SEM).
+!
+! This software is governed by the CeCILL license under French law and
+! abiding by the rules of distribution of free software. You can use,
+! modify and/or redistribute the software under the terms of the CeCILL
+! license as circulated by CEA, CNRS and Inria at the following URL
+! "http://www.cecill.info".
+!
+! As a counterpart to the access to the source code and rights to copy,
+! modify and redistribute granted by the license, users are provided only
+! with a limited warranty and the software's author, the holder of the
+! economic rights, and the successive licensors have only limited
+! liability.
+!
+! In this respect, the user's attention is drawn to the risks associated
+! with loading, using, modifying and/or developing or reproducing the
+! software by the user in light of its specific status of free software,
+! that may mean that it is complicated to manipulate, and that also
+! therefore means that it is reserved for developers and experienced
+! professionals having in-depth computer knowledge. Users are therefore
+! encouraged to load and test the software's suitability as regards their
+! requirements in conditions enabling the security of their systems and/or
+! data to be ensured and, more generally, to use and operate it in the
+! same conditions as regards security.
+!
+! The full text of the license is available in file "LICENSE".
+!
+!========================================================================
+
 ! XSUM_KERNELS_ASCII
 !
 ! USAGE
@@ -23,21 +66,18 @@
 !
 !   This routine is modeled after xsum_kernels in SPECFEM3D, in so far as
 !   similarities between 2D and 3D packages allow.
-!
-!   TO DO: Move parameter definitions to postprocess_par module.
 
 
 program sum_kernels_ascii
 
+  use postprocess_par, only: MAX_STRING_LEN, MAX_KERNEL_PATHS, MAX_KERNEL_NAMES, &
+    IIN
+
   implicit none
 
-  integer, parameter :: MAX_KERNEL_PATHS = 65535
-  integer, parameter :: MAX_STRING_LEN = 255
-
   integer, parameter :: NARGS = 2
-  integer, parameter :: IIN = 20
 
-  integer :: ipath, npath, iker, NLOCAL, i,j
+  integer :: ipath, npath, iker, nlines, i,j
   double precision, allocatable, dimension(:) :: kernel1, kernel2, kernel3
   double precision, allocatable, dimension(:) :: kernel_sum1, kernel_sum2, kernel_sum3
   double precision, allocatable, dimension(:,:) :: coord
@@ -89,14 +129,14 @@ program sum_kernels_ascii
   write(*,*)
 
   ! allocate arrays
-  call get_number_gll_points((kernel_paths(1)), NLOCAL)
-  allocate( coord(2,NLOCAL) )
-  allocate( kernel1(NLOCAL) )
-  allocate( kernel2(NLOCAL) )
-  allocate( kernel3(NLOCAL) )
-  allocate( kernel_sum1(NLOCAL) )
-  allocate( kernel_sum2(NLOCAL) )
-  allocate( kernel_sum3(NLOCAL) )
+  call get_number_gll_points((kernel_paths(1)), nlines)
+  allocate( coord(2,nlines) )
+  allocate( kernel1(nlines) )
+  allocate( kernel2(nlines) )
+  allocate( kernel3(nlines) )
+  allocate( kernel_sum1(nlines) )
+  allocate( kernel_sum2(nlines) )
+  allocate( kernel_sum3(nlines) )
   kernel1(:) = 0.0d0
   kernel2(:) = 0.0d0
   kernel3(:) = 0.0d0
@@ -114,7 +154,7 @@ program sum_kernels_ascii
     do ipath = 1, npath
        filename = trim(kernel_paths(ipath)) //'/'// trim(kernel_name)
        open(unit=3,file=filename, status='old', action='read')
-       do j = 1,nlocal
+       do j = 1,nlines
           read(3,*) dummy1, dummy2, kernel1(j), kernel2(j), kernel3(j)
        enddo
        close(3)
@@ -133,7 +173,7 @@ program sum_kernels_ascii
     ! save result
     filename = trim(output_dir) //'/'// trim(kernel_name)
     open(unit=4,file=filename,status='unknown',action='write')
-    do j = 1, NLOCAL
+    do j = 1, nlines
           write(4,'(5e11.3)') coord(1,j),coord(2,j),kernel_sum1(j),kernel_sum2(j),kernel_sum3(j)
     enddo
     close(4)
@@ -148,26 +188,25 @@ end program sum_kernels_ascii
 
 ! ------------------------------------------------------------------------------
 
-subroutine get_number_gll_points(kernel_path, NLOCAL)
+subroutine get_number_gll_points(kernel_path, nlines)
+
+  use postprocess_par, only: MAX_STRING_LEN, MAX_LINES
 
   implicit none
-
-  integer, parameter :: MAX_KERNEL_PATHS = 65535
-  integer, parameter :: MAX_STRING_LEN = 255
 
   double precision :: dummy1, dummy2, dummy3, dummy4, dummy5
 
   character(len=MAX_STRING_LEN) :: kernel_path, filename
 
-  integer :: j, ios, NLOCAL
+  integer :: j, ios, nlines
 
   filename = trim(kernel_path)//'/'//'proc000000_rhop_alpha_beta_kernel.dat'
   open(unit=3,file=filename,status='old',action='read')
-  NLOCAL = 0
-  do j=1,MAX_KERNEL_PATHS
+  nlines = 0
+  do j=1,MAX_LINES
      read(3,*,iostat=ios) dummy1, dummy2, dummy3, dummy4, dummy5
      if (ios /= 0) exit
-     NLOCAL=NLOCAL+1
+     nlines=nlines+1
   enddo
   close(3)
 
