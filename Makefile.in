@@ -161,6 +161,7 @@ SUBDIRS = \
 	shared \
 	cuda \
 	specfem2D \
+	postprocess \
 	auxiliaries \
 	$(EMPTY_MACRO)
 
