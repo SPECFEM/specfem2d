@@ -89,7 +89,7 @@
     write(15,*) '#'
 
     write(15,*) 'Title of the simulation'
-    write(15,"(a100)") title
+    write(15,'(a100)') title
 
     write(15,*) 'Axisymmetric (2.5D, .true.) or Cartesian planar (2D; .false.) simulation'
     write(15,*) AXISYM
@@ -154,8 +154,8 @@
     write(15,*) 'seismotype imagetype_postscript'
     write(15,*) seismotype,imagetype_postscript
 
-    !write(15,*) 'assign_external_model READ_EXTERNAL_SEP_FILE'
-    !write(15,*) .true.,.true.
+    write(15,*) 'MODEL'
+    write(15,'(a100)') MODEL
 
     write(15,*) 'output_grid_ASCII output_energy output_wavefield_dumps'
     write(15,*) output_grid_ASCII,output_energy,output_wavefield_dumps

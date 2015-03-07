@@ -47,7 +47,7 @@
 ! starts reading in parameters from input Database file
 
   use specfem_par, only: myrank,simulation_title,SIMULATION_TYPE,SAVE_FORWARD,AXISYM,&
-                         NOISE_TOMOGRAPHY,npgeo,nproc_read_from_database, &
+                         NOISE_TOMOGRAPHY,MODEL,npgeo,nproc_read_from_database, &
                          output_grid_Gnuplot,interpol,NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS, &
                          NSTEP_BETWEEN_OUTPUT_IMAGES,PML_BOUNDARY_CONDITIONS,&
                          ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,NELEM_PML_THICKNESS,&
@@ -176,8 +176,8 @@
   !  stop
   endif
 
-  !read(IIN,"(a80)") datlin
-  !read(IIN,*) assign_external_model,READ_EXTERNAL_SEP_FILE
+  read(IIN,"(a80)") datlin
+  read(IIN,'(a100)') MODEL
   assign_external_model = .true.
   READ_EXTERNAL_SEP_FILE = .true.
 
