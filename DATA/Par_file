@@ -18,11 +18,11 @@ initialfield                    = .false.        # use a plane wave as source or
 add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
 
 # available models
-#   default: model described by nbmodels (see below)
-#   ascii: reads model from ascii database file
-#   binary: reads model from binary databse file
-#   external: calls define_external_model subroutine
-#   legacy: reads model from 'model_velocity.dat_input'
+#   default: define model using nbmodels (see below)
+#   ascii: read model from ascii database file
+#   binary: read model from binary databse file
+#   external: define model using define_external_model subroutine
+#   legacy: read model from 'model_velocity.dat_input'
 MODEL                           = default
 
 ATTENUATION_VISCOELASTIC_SOLID  = .false.        # turn attenuation (viscoelasticity) on or off for non-poroelastic solid parts of the model
