@@ -636,6 +636,15 @@ contains
      stop
   endif
 
+
+  ! checks model
+  select case (MODEL)
+  case ('default','ascii','binary','external','gll')
+    print * ! do nothing
+  case default
+    stop 'Bad value: MODEL'
+  end select
+
   ! checks absorbing boundaries
   if ( .not. any_abs ) then
      absbottom = .false.

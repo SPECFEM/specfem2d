@@ -178,7 +178,6 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,'(a100)') MODEL
-  assign_external_model = .true.
 
   read(IIN,"(a80)") datlin
   read(IIN,*) output_grid_ASCII,output_energy,output_wavefield_dumps
@@ -261,6 +260,14 @@
                     ATTENUATION_VISCOELASTIC_SOLID, &
                     output_grid_ASCII,output_energy
     write(IOUT,800) imagetype_postscript,100.d0*cutsnaps,subsamp_postscript
+  endif
+
+
+  !---- check model
+  if (trim(MODEL) == 'default') then
+      assign_external_model = .false.
+  else
+      assign_external_model = .true.
   endif
 
   !---- read time step
