@@ -81,7 +81,7 @@
     close(1001)
 
 
-  elseif(trim(MODEL)=='ascii') then
+  else if(trim(MODEL)=='ascii') then
     open(unit=1001,file='DATA/proc000000_rho_vp_vs.dat',status='unknown')
     do ispec = 1,nspec
       do j = 1,NGLLZ
@@ -95,7 +95,7 @@
     enddo
     close(1001)
 
-  elseif((trim(MODEL) == 'binary') .or. (trim(MODEL) == 'gll')) then
+  else if((trim(MODEL) == 'binary') .or. (trim(MODEL) == 'gll')) then
       write(inputname,'(a)') 'DATA/proc000000_rho.bin'
       open(unit = 1001, file = inputname, status='old',action='read',form='unformatted', iostat=ios)
       if (ios /= 0) stop 'Error opening rho.bin file.'
@@ -122,7 +122,7 @@
       Qmu_attenuationext(:,:,:) = 9999.d0
 
 
-  elseif(trim(MODEL)=='external') then
+  else if(trim(MODEL)=='external') then
     call define_external_model(coord,kmato,ibool,rhoext,vpext,vsext,QKappa_attenuationext,Qmu_attenuationext,gravityext,Nsqext, &
                                c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,nspec,nglob)
 
