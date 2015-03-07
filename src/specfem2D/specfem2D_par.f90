@@ -504,7 +504,7 @@ module specfem_par
   integer  :: ier
   integer  :: nproc,nproc_read_from_database
   integer  :: myrank
-  character(len=150) :: outputname,outputname2
+  character(len=150) :: inputname,outputname,outputname2
 
   integer  :: ninterface
   integer  :: max_interface_size

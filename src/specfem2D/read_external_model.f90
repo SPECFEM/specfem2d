@@ -52,7 +52,8 @@
                          coord,kmato,rhoext,vpext,vsext,gravityext,Nsqext, &
                          QKappa_attenuationext,Qmu_attenuationext, &
                          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
-                         READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID,p_sv
+                         READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID,p_sv,&
+                         inputname,ios
 
   implicit none
   include "constants.h"
@@ -62,15 +63,9 @@
   integer :: i,j,ispec,iglob
   double precision :: previous_vsext
   double precision :: tmp1, tmp2,tmp3
-
   double precision :: mu_dummy,lambda_dummy
 
-  if(READ_EXTERNAL_SEP_FILE) then
-    write(IOUT,*)
-    write(IOUT,*) '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-    write(IOUT,*) 'Assigning external velocity and density model (elastic (no attenuation) and/or acoustic)...'
-    write(IOUT,*) 'Read outside SEG model...'
-    write(IOUT,*) '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+  if(READ_EXTERNAL_SEP_FILE) then !   if(trim(MODEL) == 'legacy') then
 
     open(unit=1001,file='DATA/model_velocity.dat_input',status='unknown')
     do ispec = 1,nspec
@@ -78,9 +73,6 @@
         do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
           read(1001,*) tmp1,tmp2,tmp3,rhoext(i,j,ispec),vpext(i,j,ispec),vsext(i,j,ispec)
-          !     vsext(i,j,ispec)=0.0
-          ! QKappa, Qmu : dummy values. If attenuation needed than the "read" line and model_velocity.dat_input
-          ! need to be modified to provide QKappa & Qmu values
           QKappa_attenuationext(i,j,ispec) = 9999.d0
           Qmu_attenuationext(i,j,ispec) = 9999.d0
         enddo
@@ -88,8 +80,49 @@
     enddo
     close(1001)
 
-  else
 
+  elseif (.false.) then !elseif(trim(MODEL)=='ascii') then
+    open(unit=1001,file='DATA/proc000000_rho_vp_vs.dat',status='unknown')
+    do ispec = 1,nspec
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          iglob = ibool(i,j,ispec)
+          read(1001,*) tmp1,tmp2,rhoext(i,j,ispec),vpext(i,j,ispec),vsext(i,j,ispec)
+          QKappa_attenuationext(i,j,ispec) = 9999.d0
+          Qmu_attenuationext(i,j,ispec) = 9999.d0
+        enddo
+      enddo
+    enddo
+    close(1001)
+
+  elseif (.false.) then !elseif((trim(MODEL) == 'binary') .or. (trim(MODEL) == 'gll')) then
+      write(inputname,'(a)') 'DATA/proc000000_rho.bin'
+      open(unit = 1001, file = inputname, status='old',action='read',form='unformatted', iostat=ios)
+      if (ios /= 0) stop 'Error opening rho.bin file.'
+
+      read(1001) rhoext
+      close(1001)
+      print *, 'rho', minval(rhoext), maxval(rhoext)
+
+      write(inputname,'(a)') 'DATA/proc000000_vp.bin'
+      open(unit = 1001, file = inputname, status='old',action='read',form='unformatted', iostat=ios)
+      if (ios /= 0) stop 'Error opening vp.bin file.'
+
+      read(1001) vpext
+      close(1001)
+
+      write(inputname,'(a)') 'DATA/proc000000_vs.bin'
+      open(unit = 1001, file = inputname, status='old',action='read',form='unformatted', iostat=ios)
+      if (ios /= 0) stop 'Error opening vs.bin file.'
+
+      read(1001) vsext
+      close(1001)
+
+      QKappa_attenuationext(:,:,:) = 9999.d0
+      Qmu_attenuationext(:,:,:) = 9999.d0
+
+
+  else !elseif(trim(MODEL)=='external') then
     call define_external_model(coord,kmato,ibool,rhoext,vpext,vsext,QKappa_attenuationext,Qmu_attenuationext,gravityext,Nsqext, &
                                c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,nspec,nglob)
 
