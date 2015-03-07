@@ -90,14 +90,31 @@ subroutine save_adjoint_kernels()
 
   if(any_elastic) then
     if(.not. save_ASCII_kernels)then
-       write(97)coord
-       write(97)rho_kl
-       write(97)kappa_kl
-       write(97)mu_kl
-       write(98)coord
-       write(98)rhop_kl
-       write(98)alpha_kl
-       write(98)beta_kl
+       if (NEW_BINARY_FORMAT) then
+         write(200)rho_kl
+         write(201)kappa_kl
+         write(202)mu_kl
+         write(203)rhop_kl
+         write(204)alpha_kl
+         write(205)beta_kl
+         close(200)
+         close(201)
+         close(202)
+         close(203)
+         close(204)
+         close(205)
+       else
+         write(97)coord
+         write(97)rho_kl
+         write(97)kappa_kl
+         write(97)mu_kl
+         write(98)coord
+         write(98)rhop_kl
+         write(98)alpha_kl
+         write(98)beta_kl
+         close(97)
+         close(98)
+       endif
     else
       do ispec = 1, nspec
         do j = 1, NGLLZ
@@ -110,12 +127,12 @@ subroutine save_adjoint_kernels()
             !write(98,'(5e15.5e4)')rhorho_el_hessian_final1(i,j,ispec),
             !rhorho_el_hessian_final2(i,j,ispec),&
             !                    rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
+            close(97)
+            close(98)
           enddo
         enddo
       enddo
     endif
-    close(97)
-    close(98)
   endif
 
 if (.NOT. GPU_MODE )  then
