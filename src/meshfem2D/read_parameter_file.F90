@@ -51,11 +51,15 @@ module parameter_file
   !            (like #ifndef USE_MPI) working properly
 
   implicit none
-  character(len=100) :: interfacesfile,title
+  character(len=100) :: title
+
+  character(len=100) :: MODEL
 
   integer :: SIMULATION_TYPE, NOISE_TOMOGRAPHY
   logical :: SAVE_FORWARD,read_external_mesh
   logical :: AXISYM
+
+  character(len=100) :: interfacesfile
 
   character(len=256) :: mesh_file, nodes_coords_file, materials_file, &
                         free_surface_file, absorbing_surface_file, &
@@ -69,8 +73,8 @@ module parameter_file
   double precision :: xmin,xmax
   integer :: nx,ngnod
 
-  logical :: initialfield,add_Bielak_conditions,assign_external_model, &
-            READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART, &
+  logical :: initialfield,add_Bielak_conditions, &
+            ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART, &
             save_ASCII_seismograms,save_binary_seismograms_single,save_binary_seismograms_double,&
             DRAW_SOURCES_AND_RECEIVERS,save_ASCII_kernels,USE_TRICK_FOR_BETTER_PRESSURE
 
@@ -224,11 +228,8 @@ contains
   call read_value_logical_p(add_Bielak_conditions, 'solver.add_Bielak_conditions')
   if(err_occurred() /= 0) stop 'error reading parameter 8 in Par_file'
 
-  !call read_value_logical_p(assign_external_model, 'mesher.assign_external_model')
-  !if(err_occurred() /= 0) stop 'error reading parameter 9 in Par_file'
-
-  !call read_value_logical_p(READ_EXTERNAL_SEP_FILE, 'mesher.READ_EXTERNAL_SEP_FILE')
-  !if(err_occurred() /= 0) stop 'error reading parameter 10 in Par_file'
+  call read_value_string_p(MODEL, 'mesher.MODEL')
+  if(err_occurred() /= 0) stop 'error reading parameter 9 in Par_file'
 
   call read_value_logical_p(ATTENUATION_VISCOELASTIC_SOLID, 'solver.ATTENUATION_VISCOELASTIC_SOLID')
   if(err_occurred() /= 0) stop 'error reading parameter 11 in Par_file'

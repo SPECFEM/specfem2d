@@ -68,6 +68,8 @@ module specfem_par
 
   double precision, dimension(:,:), allocatable :: coorg
 
+  character(len=100) :: MODEL
+
 ! for P-SV or SH (membrane) waves calculation
   logical :: p_sv
 
