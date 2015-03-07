@@ -56,7 +56,7 @@
                          output_postscript_snapshot,output_color_image,colors,numbers, &
                          meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows, &
                          anglerec,initialfield,add_Bielak_conditions, &
-                         seismotype,imagetype_postscript,assign_external_model,READ_EXTERNAL_SEP_FILE, &
+                         seismotype,imagetype_postscript,assign_external_model, &
                          output_grid_ASCII,output_energy,output_wavefield_dumps,use_binary_for_wavefield_dumps, &
                          ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms, &
                          save_binary_seismograms_single,save_binary_seismograms_double,DRAW_SOURCES_AND_RECEIVERS, &
@@ -179,7 +179,6 @@
   read(IIN,"(a80)") datlin
   read(IIN,'(a100)') MODEL
   assign_external_model = .true.
-  READ_EXTERNAL_SEP_FILE = .true.
 
   read(IIN,"(a80)") datlin
   read(IIN,*) output_grid_ASCII,output_energy,output_wavefield_dumps

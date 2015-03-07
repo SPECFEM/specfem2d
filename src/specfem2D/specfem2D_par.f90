@@ -278,7 +278,7 @@ module specfem_par
 
   logical interpol,meshvect,modelvect,boundvect,assign_external_model,initialfield, &
     output_grid_ASCII,output_grid_Gnuplot,ATTENUATION_VISCOELASTIC_SOLID,output_postscript_snapshot,output_color_image, &
-    plot_lowerleft_corner_only,add_Bielak_conditions,output_energy,READ_EXTERNAL_SEP_FILE, &
+    plot_lowerleft_corner_only,add_Bielak_conditions,output_energy, &
     output_wavefield_dumps,use_binary_for_wavefield_dumps,PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,STACEY_BOUNDARY_CONDITIONS
 
   double precision :: ROTATE_PML_ANGLE

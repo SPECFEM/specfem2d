@@ -52,7 +52,7 @@
                          coord,kmato,rhoext,vpext,vsext,gravityext,Nsqext, &
                          QKappa_attenuationext,Qmu_attenuationext, &
                          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
-                         READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID,p_sv,&
+                         MODEL,ATTENUATION_VISCOELASTIC_SOLID,p_sv,&
                          inputname,ios
 
   implicit none
@@ -65,7 +65,7 @@
   double precision :: tmp1, tmp2,tmp3
   double precision :: mu_dummy,lambda_dummy
 
-  if(.false.) then !   if(trim(MODEL) == 'legacy') then
+  if(trim(MODEL) == 'legacy') then
 
     open(unit=1001,file='DATA/model_velocity.dat_input',status='unknown')
     do ispec = 1,nspec
@@ -81,7 +81,7 @@
     close(1001)
 
 
-  elseif (.true.) then !elseif(trim(MODEL)=='ascii') then
+  elseif(trim(MODEL)=='ascii') then
     open(unit=1001,file='DATA/proc000000_rho_vp_vs.dat',status='unknown')
     do ispec = 1,nspec
       do j = 1,NGLLZ
@@ -95,7 +95,7 @@
     enddo
     close(1001)
 
-  elseif (.false.) then !elseif((trim(MODEL) == 'binary') .or. (trim(MODEL) == 'gll')) then
+  elseif((trim(MODEL) == 'binary') .or. (trim(MODEL) == 'gll')) then
       write(inputname,'(a)') 'DATA/proc000000_rho.bin'
       open(unit = 1001, file = inputname, status='old',action='read',form='unformatted', iostat=ios)
       if (ios /= 0) stop 'Error opening rho.bin file.'
@@ -122,7 +122,7 @@
       Qmu_attenuationext(:,:,:) = 9999.d0
 
 
-  else !elseif(trim(MODEL)=='external') then
+  elseif(trim(MODEL)=='external') then
     call define_external_model(coord,kmato,ibool,rhoext,vpext,vsext,QKappa_attenuationext,Qmu_attenuationext,gravityext,Nsqext, &
                                c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,nspec,nglob)
 
