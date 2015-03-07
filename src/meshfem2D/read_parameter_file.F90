@@ -224,11 +224,11 @@ contains
   call read_value_logical_p(add_Bielak_conditions, 'solver.add_Bielak_conditions')
   if(err_occurred() /= 0) stop 'error reading parameter 8 in Par_file'
 
-  call read_value_logical_p(assign_external_model, 'mesher.assign_external_model')
-  if(err_occurred() /= 0) stop 'error reading parameter 9 in Par_file'
+  !call read_value_logical_p(assign_external_model, 'mesher.assign_external_model')
+  !if(err_occurred() /= 0) stop 'error reading parameter 9 in Par_file'
 
-  call read_value_logical_p(READ_EXTERNAL_SEP_FILE, 'mesher.READ_EXTERNAL_SEP_FILE')
-  if(err_occurred() /= 0) stop 'error reading parameter 10 in Par_file'
+  !call read_value_logical_p(READ_EXTERNAL_SEP_FILE, 'mesher.READ_EXTERNAL_SEP_FILE')
+  !if(err_occurred() /= 0) stop 'error reading parameter 10 in Par_file'
 
   call read_value_logical_p(ATTENUATION_VISCOELASTIC_SOLID, 'solver.ATTENUATION_VISCOELASTIC_SOLID')
   if(err_occurred() /= 0) stop 'error reading parameter 11 in Par_file'

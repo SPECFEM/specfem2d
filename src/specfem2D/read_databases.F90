@@ -176,8 +176,10 @@
   !  stop
   endif
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) assign_external_model,READ_EXTERNAL_SEP_FILE
+  !read(IIN,"(a80)") datlin
+  !read(IIN,*) assign_external_model,READ_EXTERNAL_SEP_FILE
+  assign_external_model = .true.
+  READ_EXTERNAL_SEP_FILE = .true.
 
   read(IIN,"(a80)") datlin
   read(IIN,*) output_grid_ASCII,output_energy,output_wavefield_dumps
@@ -256,8 +258,8 @@
     write(IOUT,200) npgeo,NDIM
     write(IOUT,600) NSTEP_BETWEEN_OUTPUT_INFO,colors,numbers
     write(IOUT,700) seismotype,anglerec
-    write(IOUT,750) initialfield,add_Bielak_conditions,assign_external_model,&
-                    READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID, &
+    write(IOUT,750) initialfield,add_Bielak_conditions,&
+                    ATTENUATION_VISCOELASTIC_SOLID, &
                     output_grid_ASCII,output_energy
     write(IOUT,800) imagetype_postscript,100.d0*cutsnaps,subsamp_postscript
   endif
@@ -324,8 +326,6 @@
 750 format(//1x,'C o n t r o l',/1x,13('='),//5x, &
   'Read external initial field. . . . . .(initialfield) = ',l6/5x, &
   'Add Bielak conditions . . . .(add_Bielak_conditions) = ',l6/5x, &
-  'Assign external model . . . .(assign_external_model) = ',l6/5x, &
-  'Read external SEP file . . .(READ_EXTERNAL_SEP_FILE) = ',l6/5x, &
   'Attenuation on/off .(ATTENUATION_VISCOELASTIC_SOLID) = ',l6/5x, &
   'Save grid in ASCII file or not . (output_grid_ASCII) = ',l6/5x, &
   'Save a file with total energy or not.(output_energy) = ',l6)

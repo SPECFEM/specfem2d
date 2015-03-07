@@ -65,7 +65,7 @@
   double precision :: tmp1, tmp2,tmp3
   double precision :: mu_dummy,lambda_dummy
 
-  if(READ_EXTERNAL_SEP_FILE) then !   if(trim(MODEL) == 'legacy') then
+  if(.false.) then !   if(trim(MODEL) == 'legacy') then
 
     open(unit=1001,file='DATA/model_velocity.dat_input',status='unknown')
     do ispec = 1,nspec
@@ -81,7 +81,7 @@
     close(1001)
 
 
-  elseif (.false.) then !elseif(trim(MODEL)=='ascii') then
+  elseif (.true.) then !elseif(trim(MODEL)=='ascii') then
     open(unit=1001,file='DATA/proc000000_rho_vp_vs.dat',status='unknown')
     do ispec = 1,nspec
       do j = 1,NGLLZ
