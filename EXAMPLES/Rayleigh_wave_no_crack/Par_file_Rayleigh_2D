@@ -16,8 +16,16 @@ partitioning_method             = 3              # SCOTCH = 3, ascending order (
 ngnod                           = 4              # number of control nodes per element (4 or 9)
 initialfield                    = .true.         # use a plane wave as source or not
 add_Bielak_conditions           = .true.         # add Bielak conditions or not if initial plane wave
-assign_external_model           = .false.        # define external earth model or not
-READ_EXTERNAL_SEP_FILE          = .false.        # Read external model from DATA/model_velocity.dat_input, or use routine
+
+# available models
+#   default: define model using nbmodels below
+#   ascii: read model from ascii database file
+#   binary: read model from binary databse file
+#   external: define model using define_external_model subroutine
+#   legacy: read model from model_velocity.dat_input
+MODEL                           = default
+
+
 ATTENUATION_VISCOELASTIC_SOLID  = .false.        # turn attenuation (viscoelasticity) on or off for non-poroelastic solid parts of the model
 ATTENUATION_PORO_FLUID_PART     = .false.        # turn viscous attenuation on or off for the fluid part of poroelastic parts of the model
 Q0                              =  1             # quality factor for viscous attenuation
