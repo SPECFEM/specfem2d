@@ -269,7 +269,7 @@ if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer, &
   if(output_energy .and. myrank == 0) close(IOUT_ENERGY)
 
   if (OUTPUT_MODEL_VELOCITY_FILE .and. .not. any_poroelastic) then
-    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_vp_vs.dat_output'
+    write(outputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho_vp_vs.dat_output'
     open(unit=1001,file=outputname,status='unknown')
     if ( .NOT. assign_external_model) then
       allocate(rho_local(ngllx,ngllz,nspec)); rho_local=0.
