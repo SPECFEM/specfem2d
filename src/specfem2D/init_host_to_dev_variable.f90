@@ -47,7 +47,7 @@ subroutine init_host_to_dev_variable()
   use specfem_par
   implicit none
 
-  integer :: i_spec_free, ipoint1D
+  integer :: i_spec_free, ipoint1D, i, j, k, ispec, ispecabs, i_source, ispec_inner, ispec_outer
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! Initialisation variables pour routine prepare_constants_device
