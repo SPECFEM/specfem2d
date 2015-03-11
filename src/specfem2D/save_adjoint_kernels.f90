@@ -127,11 +127,11 @@ subroutine save_adjoint_kernels()
             !write(98,'(5e15.5e4)')rhorho_el_hessian_final1(i,j,ispec),
             !rhorho_el_hessian_final2(i,j,ispec),&
             !                    rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
-            close(97)
-            close(98)
           enddo
         enddo
       enddo
+      close(97)
+      close(98)
     endif
   endif
 

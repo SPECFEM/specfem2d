@@ -63,7 +63,7 @@ seismotype                      = 1              # record 1=displ 2=veloc 3=acce
 # Newmark time scheme acceleration is accurate at zeroth order while displacement is accurate at second order,
 # thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
 # is accurate at second order and thus contains significantly less numerical noise.
-USE_TRICK_FOR_BETTER_PRESSURE   = .true.
+USE_TRICK_FOR_BETTER_PRESSURE   = .false.
 NSTEP_BETWEEN_OUTPUT_SEISMOS    = 5000000        # every how many time steps we save the seismograms (costly, do not use a very small value; if you use a very large value that is larger than the total number of time steps of the run, the seismograms will automatically be saved once at the end of the run anyway)
 save_ASCII_seismograms          = .true.         # save seismograms in ASCII format or not
 save_binary_seismograms_single  = .true.         # save seismograms in single precision binary format or not (can be used jointly with ASCII above to save both)

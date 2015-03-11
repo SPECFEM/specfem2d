@@ -342,8 +342,8 @@ subroutine prepare_timerun_kernel()
           open(unit = 97, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
           if (ios /= 0) stop 'Error writing kernel file to disk'
 
-          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_alpha_beta_kernel.bin'
-          open(unit = 97, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
+          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_mu_kernel.bin'
+          open(unit = 98, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
           if (ios /= 0) stop 'Error writing kernel file to disk'
         endif
 
@@ -352,7 +352,7 @@ subroutine prepare_timerun_kernel()
         open(unit = 97, file = 'OUTPUT_FILES/'//outputname,status='unknown',iostat=ios)
         if (ios /= 0) stop 'Error writing kernel file to disk'
 
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_alpha_beta_kernel.dat'
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_mu_kernel.dat'
         open(unit = 98, file = 'OUTPUT_FILES/'//outputname,status='unknown',iostat=ios)
         if (ios /= 0) stop 'Error writing kernel file to disk'
       endif
