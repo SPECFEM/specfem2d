@@ -157,9 +157,6 @@
     write(15,*) 'MODEL'
     write(15,'(a100)') MODEL
 
-    write(15,*) 'TOMOGRAPHY_FILE'
-    write(15,'(a100)') TOMOGRAPHY_FILE
-
     write(15,*) 'output_grid_ASCII output_energy output_wavefield_dumps'
     write(15,*) output_grid_ASCII,output_energy,output_wavefield_dumps
 
@@ -302,19 +299,15 @@
     do i=1,nb_materials
       if (icodemat(i) == ISOTROPIC_MATERIAL) then
          write(15,*) i,icodemat(i),rho_s(i),cp(i),cs(i),0,0,QKappa(i),Qmu(i),0,0,0,0,0,0
-      else if (icodemat(i) == ANISOTROPIC_MATERIAL) then
-         write(15,*) i,icodemat(i),rho_s(i), &
-                    aniso3(i),aniso4(i),aniso5(i),aniso6(i),&
-                    aniso7(i),aniso8(i),aniso9(i),aniso10(i),aniso11(i),0,0,0
       else if(icodemat(i) == POROELASTIC_MATERIAL) then
          write(15,*) i,icodemat(i),rho_s(i),rho_f(i),phi(i),tortuosity(i), &
                     permxx(i),permxz(i),permzz(i),kappa_s(i),&
                     kappa_f(i),kappa_fr(i),eta_f(i),mu_fr(i),Qmu(i)
-      else if (icodemat(i) <= 0) then ! The values will be read from an external tomo file
-         write(15,*) i,icodemat(i),rho_s(i),cp(i),cs(i),0,0,QKappa(i),Qmu(i),0,0,0,0,0,0
       else
-        stop 'Unknown material code'
-      endif   
+         write(15,*) i,icodemat(i),rho_s(i), &
+                    aniso3(i),aniso4(i),aniso5(i),aniso6(i),&
+                    aniso7(i),aniso8(i),aniso9(i),aniso10(i),aniso11(i),0,0,0
+      endif
     enddo
 
     write(15,*) 'Arrays kmato and knods for each bloc:'

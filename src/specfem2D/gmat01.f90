@@ -48,8 +48,7 @@
   use specfem_par, only : ANY_ANISOTROPY,density,porosity,tortuosity, &
                           anisotropy,permeability,poroelastcoef, &
                           numat,myrank,QKappa_attenuation,Qmu_attenuation, &
-                          freq0,Q0,ATTENUATION_PORO_FLUID_PART,assign_external_model, &
-                          tomo_material
+                          freq0,Q0,ATTENUATION_PORO_FLUID_PART
 
   implicit none
   include "constants.h"
@@ -84,7 +83,6 @@
   poroelastcoef(:,:,:) = zero
   QKappa_attenuation(:) = 9999.
   Qmu_attenuation(:) = 9999.
-  tomo_material = 0 ! Index of the material that will be defined by an external tomo file if needed (TOMOGRAPHY_FILE)
 
   if(myrank == 0) write(IOUT,100) numat
 
@@ -219,10 +217,7 @@
 
         ! Poisson's ratio must be between -1 and +1/2
         if (poisson_s < -1.d0 .or. poisson_s > 0.5d0) stop 'Poisson''s ratio for the solid phase out of range'
-     else if (indic <= 0) then
-       assign_external_model =.true.
-       tomo_material = n
-       mu = val2 ! for acoustic medium vs must be 0 anyway
+
      else
         call exit_MPI('wrong model flag read')
 
@@ -278,22 +273,6 @@
         poroelastcoef(2,3,n) = mu_fr
         poroelastcoef(3,3,n) = lambdaplus2mu_fr
         poroelastcoef(4,3,n) = zero
-     else if (indic <= 0) then
-        ! Assign dummy values for now (for acoustic medium vs must be 0 anyway), these values will be read in read_external_model
-        density(1,n) = -1.0d0
-        poroelastcoef(1,1,n) = -1.0d0
-        poroelastcoef(2,1,n) = mu
-        poroelastcoef(3,1,n) = -1.0d0
-        poroelastcoef(4,1,n) = zero
-        QKappa_attenuation(n) = 9999.
-        Qmu_attenuation(n) = 9999.
-        if(mu > TINYVAL) then
-           porosity(n) = 0.d0
-        else
-           porosity(n) = 1.d0
-        endif
-     else
-        call exit_MPI('wrong model flag read')
      endif
 
      !
@@ -333,8 +312,6 @@
            write(iout,800) lambda_fr,mu_fr,kappa_fr,porosity(n),tortuosity(n),&
                 permeability(1,n),permeability(2,n),permeability(3,n),Qmu
            write(iout,900) D_biot,H_biot,C_biot,M_biot,w_c
-        else if (indic <= 0) then
-          write(IOUT,1000) n
         endif
      endif
 
@@ -422,7 +399,7 @@
        'Permeability zz component. . . . . . . . . . =',1pe15.8,/5x,&
        'Qmu_attenuation. . . . . . . . . . . . (Qmu) =',1pe15.8)
 
-900 format(//5x,'-------------------------------',/5x, &
+900   format(//5x,'-------------------------------',/5x, &
          '-- Biot coefficients --',/5x, &
          '-------------------------------',/5x, &
          'D. . . . . . . . . .=',1pe15.8,/5x, &
@@ -430,11 +407,6 @@
          'C. . . . . . . . . .=',1pe15.8,/5x, &
          'M. . . . . . . . . .=',1pe15.8,/5x, &
          'Characteristic freq =',1pe15.8)
-
-1000 format(//5x,'----------------------------------------------------',/5x, &
-       '-- Material described by external tomography file --',/5x, &
-       '----------------------------------------------------',/5x, &
-       'Material set number. . . . . . . . (jmat) =',i6,/5x)
 
   end subroutine gmat01
 

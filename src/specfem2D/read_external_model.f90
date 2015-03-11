@@ -53,7 +53,7 @@
                          QKappa_attenuationext,Qmu_attenuationext, &
                          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
                          MODEL,ATTENUATION_VISCOELASTIC_SOLID,p_sv,&
-                         inputname,ios,tomo_material
+                         inputname,ios
 
   implicit none
   include "constants.h"
@@ -64,8 +64,6 @@
   double precision :: previous_vsext
   double precision :: tmp1, tmp2,tmp3
   double precision :: mu_dummy,lambda_dummy
-  
-  if (tomo_material > 0) MODEL = 'tomo'
 
   if(trim(MODEL) == 'legacy') then
 
@@ -127,13 +125,8 @@
   else if(trim(MODEL)=='external') then
     call define_external_model(coord,kmato,ibool,rhoext,vpext,vsext,QKappa_attenuationext,Qmu_attenuationext,gravityext,Nsqext, &
                                c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,nspec,nglob)
-  else if(trim(MODEL)=='tomo') then
-    call define_external_model_from_tomo_file()
-  endif
-  
-  if(trim(MODEL)=='external' .or. trim(MODEL)=='tomo') then
 
-    ! check that the external model that has just been defined makes sense
+! check that the external model that has just been defined makes sense
     do ispec = 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
@@ -145,7 +138,7 @@
             vsext(i,j,ispec) = 10.d0
           endif
 
-          ! check that the element type is not redefined compared to what is defined initially in DATA/Par_file
+! check that the element type is not redefined compared to what is defined initially in DATA/Par_file
           if((c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
               c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) &
               .and. .not. anisotropic(ispec)) &

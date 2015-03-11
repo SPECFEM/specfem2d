@@ -1194,7 +1194,7 @@
 ! loop on all the elements of the mesh, and inside each element loop on all the GLL points
   do ispec = 1,nspec
 
-  if(material_element(ispec) /= IREGION_AIR ) stop 'Wrong flag number in external model'
+  if(material_element(ispec) /= IREGION_AIR ) stop '1wrong flag number in external model'
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
