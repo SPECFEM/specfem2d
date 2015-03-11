@@ -272,7 +272,7 @@ module specfem_par
 
   integer :: colors,numbers,subsamp_postscript,imagetype_postscript, &
     NSTEP_BETWEEN_OUTPUT_INFO,seismotype,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP_BETWEEN_OUTPUT_IMAGES, &
-    NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS,subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps
+    NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS,subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps,tomo_material
   integer :: numat,ngnod,nspec,pointsdisp, &
     nelemabs,nelem_acforcing,nelem_acoustic_surface,UPPER_LIMIT_DISPLAY,NELEM_PML_THICKNESS
 
@@ -280,6 +280,8 @@ module specfem_par
     output_grid_ASCII,output_grid_Gnuplot,ATTENUATION_VISCOELASTIC_SOLID,output_postscript_snapshot,output_color_image, &
     plot_lowerleft_corner_only,add_Bielak_conditions,output_energy, &
     output_wavefield_dumps,use_binary_for_wavefield_dumps,PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,STACEY_BOUNDARY_CONDITIONS
+  
+  character(len=100) TOMOGRAPHY_FILE
 
   double precision :: ROTATE_PML_ANGLE
 
@@ -287,7 +289,7 @@ module specfem_par
 
   logical :: AXISYM ! .true. if we are performing a 2.5D simulation
   ! Number of elements on the symmetry axis
-  integer :: nelem_on_the_axis
+  integer :: nelem_on_the_axis,nelem_on_the_axis_total
   ! Flag to know if an element is on the axis
   logical, dimension(:), allocatable :: is_on_the_axis
   integer, dimension(:), allocatable  ::ispec_of_axial_elements
