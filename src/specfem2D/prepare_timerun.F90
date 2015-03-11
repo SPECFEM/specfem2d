@@ -1562,9 +1562,14 @@ subroutine prepare_timerun_read()
     call read_databases_axial_elements()
     call build_is_on_the_axis()
   endif
+#ifdef USE_MPI
+  call MPI_REDUCE(nelem_on_the_axis, nelem_on_the_axis_total, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+#else
+  nelem_on_the_axis_total = nelem_on_the_axis
+#endif
   if (myrank == 0 .and. AXISYM) then
     write(IOUT,*)
-    write(IOUT,*) 'Number of elements on the axis (for process 0): ',nelem_on_the_axis
+    write(IOUT,*) 'Total number of elements on the axis : ',nelem_on_the_axis_total
   endif
 
 !
