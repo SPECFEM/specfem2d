@@ -51,9 +51,7 @@ module parameter_file
   !            (like #ifndef USE_MPI) working properly
 
   implicit none
-  character(len=100) :: title
-
-  character(len=100) :: MODEL
+  character(len=100) :: title,MODEL,TOMOGRAPHY_FILE
 
   integer :: SIMULATION_TYPE, NOISE_TOMOGRAPHY
   logical :: SAVE_FORWARD,read_external_mesh
@@ -488,6 +486,9 @@ contains
                       QKappa,Qmu,rho_s,rho_f,phi,tortuosity, &
                       permxx,permxz,permzz,kappa_s,kappa_f,kappa_fr, &
                       eta_f,mu_fr)
+ 
+  call read_value_string_p(TOMOGRAPHY_FILE, 'solver.TOMOGRAPHY_FILE')
+  if(err_occurred() /= 0) stop 'error reading parameter 49b in Par_file'
 
   ! boolean defining whether internal or external mesh
   call read_value_logical_p(read_external_mesh, 'mesher.read_external_mesh')
