@@ -88,6 +88,7 @@ specfem2D_OBJECTS = \
 	$O/datim.spec.o \
 	$O/define_derivation_matrices.spec.o \
 	$O/define_external_model.spec.o \
+	$O/define_external_model_from_tomo_file.spec.o \
 	$O/enforce_acoustic_free_surface.spec.o \
 	$O/exit_mpi.spec.o \
 	$O/finalize_simulation.spec.o \
@@ -303,6 +304,7 @@ $O/create_color_image.spec.o: $O/specfem2D_par.spec.o
 $O/createnum_fast.spec.o: $O/specfem2D_par.spec.o
 $O/createnum_slow.spec.o: $O/specfem2D_par.spec.o
 $O/define_derivation_matrices.spec.o: $O/specfem2D_par.spec.o
+$O/define_external_model_from_tomo_file.spec.o: $O/specfem2D_par.spec.o
 $O/enforce_acoustic_free_surface.spec.o: $O/specfem2D_par.spec.o
 $O/finalize_simulation.spec.o: $O/specfem2D_par.spec.o
 $O/get_MPI.spec.o: $O/specfem2D_par.spec.o
