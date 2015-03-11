@@ -627,7 +627,7 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
        enddo
     else
        irec_local = 0
-       write(filename, "('./SEM/pressure_file_single.bin.adj')")
+       write(filename, "('./SEM/Up_file_single.su.adj')")
        open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ios)
                if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
        allocate(adj_src_s(NSTEP,3))
