@@ -208,6 +208,7 @@ subroutine read_tomo_file()
 
   integer :: ier,irecord,i,j
   character(len=150) :: string_read
+  
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: x_tomography,z_tomography,vp_tomography,vs_tomography,rho_tomography
 
   ! opens file for reading
@@ -380,11 +381,12 @@ module interpolation
       endif
       middle = nint((left+right) / 2.0)
       if ( abs(array(middle) - value) <= d) then
-        if(binarysearch == length) then
-          binarysearch = middle - 1
-        else
-          binarysearch = middle
-        endif
+        binarySearch = middle
+      if(binarysearch == length) then
+        binarysearch = middle - 1
+      else
+        binarysearch = middle
+      endif
         return
       else if (array(middle) > value) then
         right = middle - 1
@@ -392,15 +394,14 @@ module interpolation
         left = middle + 1
       end if
     end do
- !   if(binarysearch == length) then
- !     binarysearch = right - 1
- !   else
- !     binarysearch = right
- !   endif
 
   end function binarysearch
+  
+  !
+  !-------------------------------------------------------------------------------------------------
+  !
 
-  real(kind=CUSTOM_REAL) function interpolate(x_len, x_array, y_len, y_array, f, x, y, vs,delta)
+  real(kind=CUSTOM_REAL) function interpolate(x_len, x_array, y_len, y_array, f, x, y, delta)
     ! This function uses bilinear interpolation to estimate the value
     ! of a function f at point (x,y)
     ! f is assumed to be sampled on a regular grid, with the grid x values specified
@@ -409,7 +410,6 @@ module interpolation
 
     implicit none
     integer, intent(in) :: x_len, y_len
-    logical,intent(in) ::vs !TODO
     real(kind=CUSTOM_REAL), dimension(x_len), intent(in) :: x_array
     real(kind=CUSTOM_REAL), dimension(y_len), intent(in) :: y_array
     real(kind=CUSTOM_REAL), dimension(x_len, y_len), intent(in) :: f
