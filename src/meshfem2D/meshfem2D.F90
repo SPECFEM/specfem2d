@@ -812,10 +812,10 @@ program meshfem2D
   if(AXISYM) then
     if(read_external_mesh) then
       call read_axial_elements_file(axial_elements_file,remove_min_to_start_at_zero)
-! the mesh can have elements that are rotated, but for our GLJ axisymmetric implementation
-! we assume that the r axis is along the i direction;
-! thus this routine fixes that by rotating the elements backwards if needed to make sure
-! this assumption is always true
+      ! the mesh can have elements that are rotated, but for our GLJ axisymmetric implementation
+      ! we assume that the r axis is along the i direction;
+      ! thus this routine fixes that by rotating the elements backwards if needed to make sure
+      ! this assumption is always true
       call rotate_mesh_for_axisym(ngnod)
 
     else ! if the mesh has been made by the internal mesher
