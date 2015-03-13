@@ -10,12 +10,12 @@ STEPS TO ADD A SOURCE FILE TO SPECFEM2D
 
         implicit none
         include "constants.h"
-        
+
         integer, intent(in) :: nothing_funnier_than_that_int
 
         ! Local variables
         integer :: i,j,ispec,iglob
-        
+
         do ispec = 1,nspec
           do j = 1,NGLLZ
             do i = 1,NGLLX
@@ -23,14 +23,14 @@ STEPS TO ADD A SOURCE FILE TO SPECFEM2D
             enddo
           enddo
         enddo
-      
+
       end subroutine my_sexy_subroutine
-      
+
 2. Add your file in rules.mk (mind alphabetical order) :
                    ...
-      specfem2D_OBJECTS = \ 
+      specfem2D_OBJECTS = \
                    ...
-        $O/locate_source_moment_tensor.spec.o \ 
+        $O/locate_source_moment_tensor.spec.o \
         $O/my_sexy_subroutine.spec.o \
         $O/netlib_specfun_erf.spec.o \
                        ...
