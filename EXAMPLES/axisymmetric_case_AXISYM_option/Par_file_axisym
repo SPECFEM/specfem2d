@@ -64,6 +64,7 @@ seismotype                      = 1              # record 1=displ 2=veloc 3=acce
 # Newmark time scheme acceleration is accurate at zeroth order while displacement is accurate at second order,
 # thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
 # is accurate at second order and thus contains significantly less numerical noise.
+# This option can only be used so far if all the receivers record pressure and are in acoustic elements.
 USE_TRICK_FOR_BETTER_PRESSURE   = .false.
 NSTEP_BETWEEN_OUTPUT_SEISMOS    = 5000000        # every how many time steps we save the seismograms (costly, do not use a very small value; if you use a very large value that is larger than the total number of time steps of the run, the seismograms will automatically be saved once at the end of the run anyway)
 save_ASCII_seismograms          = .true.         # save seismograms in ASCII format or not
@@ -143,8 +144,9 @@ nbmodels                        = 2              # nb of different models
 # I:   (model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0) or
 # II:  (model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0) or
 # III: (model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu).
+# <0: (model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0)
 #
-# For istropic elastic/acoustic material use I and set Vs to zero to make a given model acoustic, for anisotropic elastic use II,
+# For isotropic elastic/acoustic material use I and set Vs to zero to make a given model acoustic, for anisotropic elastic use II,
 # and for isotropic poroelastic material use III. The mesh can contain acoustic, elastic, and poroelastic models simultaneously.
 #
 # For anisotropic media in the most general 2D case we have the following convention for the stress-strain relationship:
@@ -162,9 +164,15 @@ nbmodels                        = 2              # nb of different models
 # or seismogram recording purposes. Thus, if you do not know these parameters for your anisotropic material and/or if you do not plan to display or record pressure you
 # can ignore them and set them to zero. When pressure is used these three parameters are needed because the code needs to compute sigma_yy,
 # which is not equal to zero in the plane strain formulation.
+# Use <0 to read density and velocities from the external tomo file TOMOGRAPHY_FILE. See comments in
+# define_external_model_from_tomo_file.f90
+# A > 0 if elastic material, A <= 0 if acoustic material. Just one <0 material for now!
 #
 1 1 2500.d0 3400.d0 1963.d0 0 0 100 100 0 0 0 0 0 0
 2 1 1020.d0 1500.d0 0.d0 0 0 9999 9999 0 0 0 0 0 0
+
+# External tomography file defining <0 material
+TOMOGRAPHY_FILE                 = ./DATA/essai.xyz
 
 # external mesh or not
 read_external_mesh              = .false.
