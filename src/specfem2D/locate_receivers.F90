@@ -53,7 +53,7 @@
                           coorg,knods,ngnod,npgeo, &
                           x_final_receiver, z_final_receiver)
 
-use specfem_par, only : gather_ispec_selected_rec
+use specfem_par, only : gather_ispec_selected_rec,acoustic,USE_TRICK_FOR_BETTER_PRESSURE
 
 #ifdef USE_MPI
   use mpi
@@ -227,6 +227,8 @@ use specfem_par, only : gather_ispec_selected_rec
 
     x_final_receiver(irec) = x
     z_final_receiver(irec) = z
+    
+
 
   enddo
 
@@ -259,10 +261,17 @@ use specfem_par, only : gather_ispec_selected_rec
   gather_xi_receiver(:,1) = xi_receiver(:)
   gather_gamma_receiver(:,1) = gamma_receiver(:)
   gather_ispec_selected_rec(:,1) = ispec_selected_rec(:)
-
   which_proc_receiver(:) = 0
 
 #endif
+
+  if ((myrank == 0) .and. USE_TRICK_FOR_BETTER_PRESSURE) then
+    do irec=1,nrec
+      if (.not. acoustic(ispec_selected_rec(irec))) then
+        call exit_MPI('USE_TRICK_FOR_BETTER_PRESSURE : receivers must be in acoustic elements')
+      endif
+    enddo
+  endif
 
   nrecloc = 0
   do irec = 1, nrec
