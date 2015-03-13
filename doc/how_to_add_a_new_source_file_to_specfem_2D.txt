@@ -1,0 +1,50 @@
+STEPS TO ADD A SOURCE FILE TO SPECFEM2D
+=======================================
+
+1. Create your source file, for example my_sexy_subroutine.f90 :
+
+      ! Comment here to explain why your subroutine is sexy
+      subroutine my_sexy_subroutine(nothing_funnier_than_that_int)
+
+        use specfem_par, only: nspec,nglob,ibool,coord
+
+        implicit none
+        include "constants.h"
+        
+        integer, intent(in) :: nothing_funnier_than_that_int
+
+        ! Local variables
+        integer :: i,j,ispec,iglob
+        
+        do ispec = 1,nspec
+          do j = 1,NGLLZ
+            do i = 1,NGLLX
+              write(IOUT,*) 'That is a funny ',material_element(ispec),' isn't it?'
+            enddo
+          enddo
+        enddo
+      
+      end subroutine my_sexy_subroutine
+      
+2. Add your file in rules.mk (mind alphabetical order) :
+                   ...
+      specfem2D_OBJECTS = \ 
+                   ...
+        $O/locate_source_moment_tensor.spec.o \ 
+        $O/my_sexy_subroutine.spec.o \
+        $O/netlib_specfun_erf.spec.o \
+                       ...
+      ###
+      ### Module dependencies
+      ###
+                       ...
+      $O/locate_receivers.spec.o: $O/specfem2D_par.spec.o
+      $O/my_sexy_subroutine.spec.o: $O/specfem2D_par.spec.o    ---> Add this line if your subroutine use the module specfem_par
+      $O/noise_tomography.spec.o: $O/specfem2D_par.spec.o
+                       ...
+
+3. Call your subroutine from anywhere with :
+     call my_sexy_subroutine(nothing_funnier_than_that_int) ! Comment to explain why your subroutine is sexy
+
+4. Don't forget to add your file before commiting : git add my_sexy_subroutine.f90
+
