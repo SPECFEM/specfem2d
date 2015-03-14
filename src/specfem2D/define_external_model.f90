@@ -50,7 +50,9 @@
   include "constants.h"
 
 ! -------------------------------------------------------------------------------------
-! Dummy example of this routine, to be used as a template that users can modify
+! Dummy example of this routine, to be used as a template that users can modify.
+! To use it you will need to rename it as define_external_model() (i.e., get rid of "_dummy")
+! and suppress the existing define_external_model() routine provided below for the AK135F global Earth model.
 ! -------------------------------------------------------------------------------------
 
 ! users can modify this routine to assign any different external model (rho, vp, vs)
