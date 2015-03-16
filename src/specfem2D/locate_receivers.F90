@@ -227,7 +227,7 @@ use specfem_par, only : gather_ispec_selected_rec,acoustic,USE_TRICK_FOR_BETTER_
 
     x_final_receiver(irec) = x
     z_final_receiver(irec) = z
-    
+
 
 
   enddo
