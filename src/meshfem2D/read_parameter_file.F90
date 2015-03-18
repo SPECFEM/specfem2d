@@ -60,8 +60,8 @@ module parameter_file
 
   ! simulation type
   integer :: SIMULATION_TYPE,NOISE_TOMOGRAPHY
-  logical :: SAVE_FORWARD 
-  logical :: AXISYM 
+  logical :: SAVE_FORWARD
+  logical :: AXISYM
   logical :: p_sv
 
   ! computational platform type
@@ -70,13 +70,13 @@ module parameter_file
   ! input file name of TOMOGRAPHY
   character(len=100) :: TOMOGRAPHY_FILE
 
-  ! input parameter for inner mesher 
-  double precision :: xmin,xmax 
+  ! input parameter for inner mesher
+  double precision :: xmin,xmax
   integer :: nx, ngnod
   character(len=100) :: interfacesfile
   logical, dimension(:), pointer :: enreg_surf_same_vertical
 
-  ! mesh files when using external mesh 
+  ! mesh files when using external mesh
   character(len=100) :: MODEL
   logical :: read_external_mesh
   ! integer ::  ngnod 'the node of element in meshfile must match with ngnod'
@@ -87,9 +87,9 @@ module parameter_file
                         axial_elements_file
   character(len=256)  :: tangential_detection_curve_file
 
-  ! material file for changing the model parameter for inner mesh or updating the 
+  ! material file for changing the model parameter for inner mesh or updating the
   ! the material for an existed mesh
-  logical :: assign_external_model, READ_EXTERNAL_SEP_FILE 
+  logical :: assign_external_model, READ_EXTERNAL_SEP_FILE
 
   !--------------------------------------------------------------
   ! variables for compuation
@@ -159,12 +159,12 @@ module parameter_file
   ! general information during the computation
   integer :: NSTEP_BETWEEN_OUTPUT_INFO
 
-  ! for plotting the curve of energy 
+  ! for plotting the curve of energy
   logical :: output_energy
 
   ! kernel output in case of adjoint simulation
   logical :: save_ASCII_kernels
-  
+
   ! seismogram
   integer :: seismotype,NSTEP_BETWEEN_OUTPUT_SEISMOS
   integer :: subsamp_seismos
