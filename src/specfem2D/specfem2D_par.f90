@@ -57,7 +57,6 @@ module specfem_par
 
   implicit none
 
-
   integer NSOURCES,i_source,iglobzero
   integer, dimension(:), allocatable :: source_type,time_function_type
   double precision, dimension(:), allocatable :: x_source,z_source,xi_source,gamma_source,&
@@ -274,7 +273,8 @@ module specfem_par
     nelemabs,nelem_acforcing,nelem_acoustic_surface,ispecabs,UPPER_LIMIT_DISPLAY,NELEM_PML_THICKNESS
 
   logical interpol,meshvect,modelvect,boundvect,assign_external_model,initialfield, &
-    output_grid_ASCII,output_grid_Gnuplot,ATTENUATION_VISCOELASTIC_SOLID,output_postscript_snapshot,output_color_image, &
+    output_grid_ASCII,output_grid_Gnuplot,ATTENUATION_VISCOELASTIC_SOLID,&
+    output_postscript_snapshot,output_color_image
     plot_lowerleft_corner_only,add_Bielak_conditions,output_energy,READ_EXTERNAL_SEP_FILE, &
     output_wavefield_dumps,use_binary_for_wavefield_dumps,PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE,STACEY_BOUNDARY_CONDITIONS
 
