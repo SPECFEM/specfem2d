@@ -47,10 +47,12 @@ $(postprocess_OBJECTS): S := ${S_TOP}/src/postprocess
 #######################################
 
 postprocess_TARGETS = \
+	$E/xcombine_sem \
 	$E/xsum_kernels_ascii \
 	$(EMPTY_MACRO)
 
 postprocess_OBJECTS = \
+	$(xcombine_sem_OBJECTS) \
 	$(xsum_kernels_ascii_OBJECTS) \
 	$(EMPTY_MACRO)
 
@@ -70,8 +72,29 @@ postprocess_SHARED_OBJECTS = \
 
 postprocess: $(postprocess_TARGETS)
 
+combine_sem: xcombine_sem
+xcombine_sem: $E/xcombine_sem
+
 sum_kernels_ascii: xsum_kernels_ascii
 xsum_kernels_ascii: $E/xsum_kernels_ascii
+
+
+#######################################
+
+##
+## combine_sem
+##
+
+xcombine_sem_OBJECTS = \
+	$O/postprocess_par.postprocess_module.o \
+	$O/combine_sem.postprocess.o \
+	$(EMPTY_MACRO)
+
+xcombine_sem_SHARED_OBJECTS = \
+	$(EMPTY_MACRO)
+
+${E}/xcombine_sem: $(xcombine_sem_OBJECTS) $(xcombine_sem_SHARED_OBJECTS)
+	${LINK} $(DEF_FFLAGS) -o $@ $+
 
 
 #######################################

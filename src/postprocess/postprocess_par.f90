@@ -53,7 +53,8 @@ end module constants
 
 module postprocess_par
 
-  use constants,only : IIN,IOUT,NGLLX,NGLLZ
+  use constants,only : IIN,IOUT,NGLLX,NGLLZ,&
+    CUSTOM_REAL,NGLLX,NGLLZ
 
   implicit none
 
