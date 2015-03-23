@@ -659,7 +659,7 @@ and a small Makefile is provided in that directory (utils/CPML).
 Note from Dimitri: we will soon provide a clean 2D version in utils/CPML of the SPECFEM2D source code;
 Andrea Colombi from CNRS Grenoble, France, is currently working on that.
 
-If you use PML and an external velocity and density model (e.g., setting flag ``\texttt{READ\_EXTERNAL\_SEP\_FILE}'' to \texttt{.true.}),
+If you use PML and an external velocity and density model (e.g., setting flag ``\texttt{MODEL}'' to \texttt{tomography}),
 you should be careful because mathematically a PML cannot handle heterogeneities along the
 normal to the PML edge inside the PML layer. This comes from the fact that the damping profile
 that is defined assumes a constant velocity and density model along the normal
@@ -675,7 +675,7 @@ inner PML edge.
 %%
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=3in]{figures/how_to_use_PML_when_READ_EXTERNAL_SEP_FILE_is_true}
+\includegraphics[width=3in]{figures/how_to_use_PML_with_external_velocity_model}
 \caption{How to modify your external 2D velocity and density model in order to use PML.
 Such a modification is not needed when using Stacey absorbing boundary conditions (but such conditions
 are significantly less efficient).}
@@ -771,7 +771,7 @@ Depending on your installation of the Seismic Unix package you can use one of th
 to see the header info.
 Replace \texttt{surange} with \texttt{suxwigb} to see wiggle plots for the seismograms.
 
-\item if you set flag \texttt{assign\_external\_model} to \texttt{.true.} in \texttt{DATA/Par\_file}, the velocity and density model that is given at the end of \texttt{DATA/Par\_file} is then ignored and overwritten by the external velocity and density model that you define yourself in \texttt{define\_external\_model.f90}
+\item if flag \texttt{MODEL} in \texttt{DATA/Par\_file} is set to \texttt{default}, the velocity and density model is determined using the \texttt{nbmodels} and \texttt{nbregions} devices.  Otherwise, \texttt{nbmodels} values are ignored and the velocity and density model is determined from a user supplied file or subroutine.
 
 \item when compiling with Intel ifort, use ``\texttt{-assume byterecl}'' option to create binary PNM images displaying the wave field
 

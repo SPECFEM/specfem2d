@@ -64,7 +64,7 @@ module specfem_par
   !---------------------------------------------------------------------
   !for model description
   !---------------------------------------------------------------------
-  character(len=100) :: MODEL 
+  character(len=100) :: MODEL
   integer :: SIMULATION_TYPE  ! 1 = forward wavefield, 3 = backward and adjoint wavefields and kernels
   logical :: p_sv   ! for P-SV or SH (membrane) waves calculation
   logical :: SAVE_FORWARD ! whether or not the last frame is saved to reconstruct the forward field
@@ -428,7 +428,7 @@ module specfem_par
     b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic,b_potential_acoustic_old
 
   ! store potential, potential_dot, potential_dot_dot along interior interface of PML, shared by interior compuational domain
-  integer :: nglob_interface !can be optimized 
+  integer :: nglob_interface !can be optimized
   integer, dimension(:), allocatable :: point_interface
   logical, dimension(:,:), allocatable :: PML_interior_interface
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: pml_interface_history_potential
@@ -478,7 +478,7 @@ module specfem_par
 
   ! store potential, potential_dot, potential_dot_dot along interior interface of PML, shared by interior compuational domain
   ! for backward simulation in adjoint inversion
-  ! integer :: nglob_interface !can be optimized 
+  ! integer :: nglob_interface !can be optimized
   ! integer, dimension(:), allocatable :: point_interface
   ! logical, dimension(:,:), allocatable :: PML_interior_interface
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interface_history_displ
@@ -544,7 +544,7 @@ module specfem_par
 
 
   !---------------------------------------------------------------------
-  !for fluid/solid coupling 
+  !for fluid/solid coupling
   !---------------------------------------------------------------------
   integer :: ispec_acoustic,ispec_elastic,iedge_acoustic,iedge_elastic,ipoin1D,iglob2
   real(kind=CUSTOM_REAL) :: displ_x,displ_z,displ_n,displw_x,displw_z,zxi,xgamma,jacobian1D,pressure
@@ -558,7 +558,7 @@ module specfem_par
   real(kind=CUSTOM_REAL) :: b_displ_x,b_displ_z,b_displw_x,b_displw_z,b_pressure
 
   !---------------------------------------------------------------------
-  !for fluid/porous coupling 
+  !for fluid/porous coupling
   !---------------------------------------------------------------------
   integer :: iedge_poroelastic
   double precision :: mul_G,lambdal_G,lambdalplus2mul_G
@@ -574,7 +574,7 @@ module specfem_par
   double precision :: b_dwx_dxl,b_dwz_dxl,b_dwx_dzl,b_dwz_dzl
 
   !---------------------------------------------------------------------
-  !for solid/porous coupling 
+  !for solid/porous coupling
   !---------------------------------------------------------------------
   integer :: ispec_poroelastic,ii2,jj2
   double precision :: sigma_xx,sigma_xz,sigma_zz,sigmap
@@ -597,8 +597,8 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhol_ac_global, kappal_ac_global
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhop_ac_kl, alpha_ac_kl
 
-  double precision, dimension(:,:,:),allocatable:: rho_local,vp_local,vs_local 
- 
+  double precision, dimension(:,:,:),allocatable:: rho_local,vp_local,vs_local
+
   !!!! hessian
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhorho_el_hessian_final1, rhorho_el_hessian_final2
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhorho_el_hessian_temp1, rhorho_el_hessian_temp2
@@ -698,7 +698,7 @@ module specfem_par
   logical, dimension(:), allocatable  :: mask_ispec_inner_outer
 
   ! inner/outer elements in the case of an MPI simulation
-  integer :: nglob_outer,nglob_inner 
+  integer :: nglob_outer,nglob_inner
 
   ! to create a sorted version of the indirect addressing to reduce cache misses
   integer, dimension(:,:,:), allocatable :: copy_ibool_ori
