@@ -109,7 +109,7 @@
   if( stage_time_scheme == 1 ) then
     time_n = (it-1) * deltat
     time_nsub1 = (it-2) * deltat
-  elseif( stage_time_scheme == 6 ) then
+  else if( stage_time_scheme == 6 ) then
     time_n = (it-1) * deltat + c_LDDRK(i_stage) * deltat
   endif
 
@@ -203,7 +203,7 @@
               PML_dux_dxl_old(i,j) = dux_dxi * xixl + dux_dgamma * gammaxl
               PML_dux_dzl_old(i,j) = dux_dxi * xizl + dux_dgamma * gammazl
             endif
-            
+
             ! the subroutine of lik_parameter_computation is located at the end of compute_forces_viscoelastic.F90
             call lik_parameter_computation(time_n,deltat,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x,&
                                            CPML_region_local,31,A5,A6,A7,singularity_type_zx,bb_zx_1,bb_zx_2,&
@@ -304,7 +304,7 @@
             if( abs(coord(1,ibool(i,j,ispec))) < TINYVAL ) then
               xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
               r_xiplus1(i,j) = xxi
-            elseif( is_on_the_axis(ispec) ) then
+            else if( is_on_the_axis(ispec) ) then
               r_xiplus1(i,j) = coord(1,ibool(i,j,ispec))/(xiglj(i)+ONE)
             endif
           endif
