@@ -91,9 +91,6 @@ if (myrank == 0) write(IOUT,400)
 ! ************* compute forces for the acoustic elements
 ! *********************************************************
 
-!ZN      call compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic, &
-!ZN               potential_acoustic,potential_acoustic_old,.false.,PML_BOUNDARY_CONDITIONS)
-
       call compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic, &
                                    potential_acoustic,potential_acoustic_old,PML_BOUNDARY_CONDITIONS)
 
@@ -122,11 +119,8 @@ if (myrank == 0) write(IOUT,400)
          endif
        endif
 
-!ZN        call compute_forces_acoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-!ZN               b_potential_acoustic,b_potential_acoustic_old,.true.,.false.)
-
        call compute_forces_acoustic_backward(b_potential_dot_dot_acoustic,b_potential_acoustic)
-                                             !b_potential_dot_acoustic
+
        if(PML_BOUNDARY_CONDITIONS)then
           do ispec = 1,nspec
             do i = 1, NGLLX

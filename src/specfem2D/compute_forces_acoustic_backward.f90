@@ -65,8 +65,7 @@
   implicit none
   include "constants.h"
 
-  real(kind=CUSTOM_REAL), dimension(nglob) :: b_potential_dot_dot_acoustic, & !b_potential_dot_acoustic, 
-                                              b_potential_acoustic
+  real(kind=CUSTOM_REAL), dimension(nglob) :: b_potential_dot_dot_acoustic, b_potential_acoustic
 
   ! local parameters
   integer :: ispec,i,j,k,iglob,ispecabs,ibegin,iend,jbegin,jend
@@ -74,7 +73,7 @@
 
   ! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,dux_dxl,dux_dzl
-  real(kind=CUSTOM_REAL) :: xxi !weight,,zxi,xgamma,zgamma,jacobian1D
+  real(kind=CUSTOM_REAL) :: xxi
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: tempx1,tempx2
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
