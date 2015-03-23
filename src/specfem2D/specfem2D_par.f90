@@ -58,11 +58,11 @@ module specfem_par
   implicit none
 
   !=====================================================================
-  ! 1. input for simulation (its beginning)
+  !input for simulation (its beginning)
   !=====================================================================
 
   !---------------------------------------------------------------------
-  ! 1.1 for model description
+  !for model description
   !---------------------------------------------------------------------
   character(len=100) :: MODEL 
   integer :: SIMULATION_TYPE  ! 1 = forward wavefield, 3 = backward and adjoint wavefields and kernels
@@ -114,7 +114,7 @@ module specfem_par
   real(kind=CUSTOM_REAL) :: Mu_nu1_sent,Mu_nu2_sent
 
   !---------------------------------------------------------------------
-  ! 1.3 for boundary condition (physical BC or artificial BC)
+  !for boundary condition (physical BC or artificial BC)
   !---------------------------------------------------------------------
   logical :: anyabs_glob
 
@@ -176,7 +176,7 @@ module specfem_par
             iend_edge3_poro,ibegin_edge4_poro,iend_edge4_poro,ibegin_edge2_poro,iend_edge2_poro
 
   !---------------------------------------------------------------------
-  ! 1.3 for source-receiver information
+  !for source-receiver information
   !---------------------------------------------------------------------
   ! source description
   integer NSOURCES
