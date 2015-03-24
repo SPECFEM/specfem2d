@@ -120,7 +120,7 @@ program combine_sem
   enddo
   close(IIN)
 
-  ! Attempt to determine NSPEC directly from Fortran binary file. 
+  ! Attempt to determine NSPEC directly from Fortran binary file.
   ! Advantage of this approach is that the utility doesn't have to be recompiled
   ! whenever mech changes, and avoids dealing with SPECFEM2D database system,
   ! which is a bit messy. Disadvantage of this approach is that it is a hack and
