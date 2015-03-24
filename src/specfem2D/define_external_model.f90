@@ -66,7 +66,7 @@
 
   integer, dimension(NGLLX,NGLLZ,nspec), intent(in) :: ibool
 
-  double precision, dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
                                                                  c11,c15,c13,c33,c35,c55,c12,c23,c25
 
   integer :: i,j,ispec,iglob
@@ -184,7 +184,7 @@
 
   integer, dimension(NGLLX,NGLLZ,nspec), intent(in) :: ibool
 
-  double precision, dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
                                                                  c11,c15,c13,c33,c35,c55,c12,c23,c25
 
 ! number of layers in ak135-f
@@ -1162,7 +1162,7 @@
 
   integer, dimension(NGLLX,NGLLZ,nspec), intent(in) :: ibool
 
-  double precision, dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
                                               c11,c15,c13,c33,c35,c55,c12,c23,c25
 
 ! number of layers in the model
