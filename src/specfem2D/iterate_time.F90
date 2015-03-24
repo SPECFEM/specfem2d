@@ -808,13 +808,8 @@ if (myrank == 0) write(IOUT,400)
 
           ! if external density model
           if(assign_external_model)then
-            if(CUSTOM_REAL == SIZE_REAL) then
-              rhol = sngl(rhoext(i,j,ispec))
-              gravityl = sngl(gravityext(i,j,ispec))
-            else
-              rhol = rhoext(i,j,ispec)
-              gravityl = gravityext(i,j,ispec)
-            endif
+            rhol = rhoext(i,j,ispec)
+            gravityl = gravityext(i,j,ispec)
           endif
 
 ! impose potential_gravito in order to have z displacement equal to forced
@@ -898,13 +893,8 @@ if (myrank == 0) write(IOUT,400)
 
           ! if external density model
           if(assign_external_model)then
-            if(CUSTOM_REAL == SIZE_REAL) then
-              rhol = sngl(rhoext(i,j,ispec))
-              gravityl = sngl(gravityext(i,j,ispec))
-            else
-              rhol = rhoext(i,j,ispec)
-              gravityl = gravityext(i,j,ispec)
-            endif
+            rhol = rhoext(i,j,ispec)
+            gravityl = gravityext(i,j,ispec)
           endif
 
 ! impose potential_gravito in order to have z displacement equal to forced
@@ -988,13 +978,8 @@ if (myrank == 0) write(IOUT,400)
 
           ! if external density model
           if(assign_external_model)then
-            if(CUSTOM_REAL == SIZE_REAL) then
-              rhol = sngl(rhoext(i,j,ispec))
-              gravityl = sngl(gravityext(i,j,ispec))
-            else
-              rhol = rhoext(i,j,ispec)
-              gravityl = gravityext(i,j,ispec)
-            endif
+            rhol = rhoext(i,j,ispec)
+            gravityl = gravityext(i,j,ispec)
           endif
 
 ! impose potential_gravito in order to have z displacement equal to forced
@@ -1078,14 +1063,9 @@ if (myrank == 0) write(IOUT,400)
 
           ! if external density model
           if(assign_external_model)then
-            if(CUSTOM_REAL == SIZE_REAL) then
-              rhol = sngl(rhoext(i,j,ispec))
-              gravityl = sngl(gravityext(i,j,ispec))
-            else
-              rhol = rhoext(i,j,ispec)
-              gravityl = gravityext(i,j,ispec)
-              Nsql = Nsqext(i,j,ispec)
-            endif
+            rhol = rhoext(i,j,ispec)
+            gravityl = gravityext(i,j,ispec)
+            Nsql = Nsqext(i,j,ispec)
           endif
 
 ! impose potential_gravito in order to have z displacement equal to forced
