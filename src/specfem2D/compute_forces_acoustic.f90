@@ -195,10 +195,6 @@
                 dux_dgamma = dux_dgamma + potential_acoustic_old(ibool(i,k,ispec)) * hprime_zz(j,k)
               enddo
 
-              xixl = xix(i,j,ispec)
-              xizl = xiz(i,j,ispec)
-              gammaxl = gammax(i,j,ispec)
-              gammazl = gammaz(i,j,ispec)
               ! derivatives of potential
               PML_dux_dxl_old(i,j) = dux_dxi * xixl + dux_dgamma * gammaxl
               PML_dux_dzl_old(i,j) = dux_dxi * xizl + dux_dgamma * gammazl

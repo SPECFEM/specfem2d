@@ -1235,7 +1235,7 @@ if (myrank == 0) write(IOUT,400)
       call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old,x_source(1),z_source(1), &
                f0(1),v0x_left(1,it),v0z_left(1,it),v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
                t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it),t0x_bot(1,it),t0z_bot(1,it), &
-               count_left,count_right,count_bottom,PML_BOUNDARY_CONDITIONS,.false.)
+              count_left,count_right,count_bottom,PML_BOUNDARY_CONDITIONS)
 
       if(SIMULATION_TYPE == 3)then
        if(PML_BOUNDARY_CONDITIONS)then
@@ -1264,11 +1264,8 @@ if (myrank == 0) write(IOUT,400)
          endif
        endif
 
-      call compute_forces_viscoelastic(b_accel_elastic,b_veloc_elastic,b_displ_elastic,&
-               b_displ_elastic_old,x_source(1),z_source(1),f0(1),&
-               v0x_left(1,it),v0z_left(1,it),v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
-               t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it),t0x_bot(1,it),t0z_bot(1,it), &
-               count_left,count_right,count_bottom,.false.,.true.)
+      call compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,b_displ_elastic_old, &
+                                                PML_BOUNDARY_CONDITIONS)
 
        if(PML_BOUNDARY_CONDITIONS)then
           do ispec = 1,nspec

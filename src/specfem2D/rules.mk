@@ -77,6 +77,7 @@ specfem2D_OBJECTS = \
 	$O/compute_forces_poro_fluid.spec.o \
 	$O/compute_forces_poro_solid.spec.o \
 	$O/compute_forces_viscoelastic.spec.o \
+	$O/compute_forces_viscoelastic_backward.spec.o \
 	$O/compute_gradient_attenuation.spec.o \
 	$O/compute_normal_vector.spec.o \
 	$O/compute_pressure.spec.o \
@@ -299,6 +300,7 @@ $O/compute_forces_gravitoacoustic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_poro_fluid.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_poro_solid.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_viscoelastic.spec.o: $O/specfem2D_par.spec.o
+$O/compute_forces_viscoelastic_backward.spec.o: $O/specfem2D_par.spec.o
 $O/compute_pressure.spec.o: $O/specfem2D_par.spec.o
 $O/compute_vector_field.spec.o: $O/specfem2D_par.spec.o
 $O/construct_acoustic_surface.spec.o: $O/specfem2D_par.spec.o

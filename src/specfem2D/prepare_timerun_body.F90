@@ -599,6 +599,7 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
 
     if (.not. SU_FORMAT) then
        irec_local = 0
+       allocate(adj_src_s(NSTEP,3))
        do irec = 1, nrec
          ! compute only adjoint source arrays in the local proc
          if(myrank == which_proc_receiver(irec))then
@@ -616,6 +617,7 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
 
     if (.not. SU_FORMAT) then
        irec_local = 0
+       allocate(adj_src_s(NSTEP,3))
        do irec = 1, nrec
          ! compute only adjoint source arrays in the local proc
          if(myrank == which_proc_receiver(irec))then
@@ -643,14 +645,14 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
           call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
           source_adjointe(irec_local,:,1) = adj_src_s(:,1)
 
-      if ( .not. GPU_MODE ) then
-          do k = 1, NGLLZ
+          if( .not. GPU_MODE )then
+            do k = 1, NGLLZ
               do i = 1, NGLLX
                 adj_sourcearray(:,:,i,k) = hxir(i) * hgammar(k) * adj_src_s(:,:)
               enddo
-          enddo
-          adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
-      endif
+            enddo
+            adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
+          endif
 
          endif !  if(myrank == which_proc_receiver(irec))
        enddo ! irec
