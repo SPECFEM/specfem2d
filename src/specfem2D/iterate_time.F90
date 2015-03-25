@@ -495,8 +495,11 @@ if (myrank == 0) write(IOUT,400)
                     iglob = ibool(i,j,ispec_selected_source(i_source))
                     hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
                     potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
-                                            - source_time_function(i_source,it,i_stage)*hlagrange !ZN &
-                                              !ZN  / kappastore(i,j,ispec_selected_source(i_source))
+                                            - source_time_function(i_source,it,i_stage)*hlagrange &
+                                              !ZN becareful the following line is new added, thus when do comparison
+                                              !ZN of the new code with the old code, you will have big difference if you
+                                              !ZN do not tune the source
+                                              / kappastore(i,j,ispec_selected_source(i_source))
                   enddo
                 enddo
               else
@@ -506,8 +509,11 @@ if (myrank == 0) write(IOUT,400)
                     iglob = ibool(i,j,ispec_selected_source(i_source))
                     hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
                     b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) &
-                                          - source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1)*hlagrange !ZN &
-                                            !ZN / kappastore(i,j,ispec_selected_source(i_source))
+                                          - source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1)*hlagrange &
+                                            !ZN becareful the following line is new added, thus when do comparison
+                                            !ZN of the new code with the old code, you will have big difference if you
+                                            !ZN do not tune the source
+                                            / kappastore(i,j,ispec_selected_source(i_source))
                   enddo
                 enddo
               endif
@@ -533,7 +539,11 @@ if (myrank == 0) write(IOUT,400)
                   do i=1,NGLLX
                     iglob = ibool(i,j,ispec_selected_rec(irec))
                     potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
-                                  + adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j) !ZN / kappastore(i,j,ispec_selected_rec(irec))
+                                  + adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j) &
+                                  !ZN becareful the following line is new added, thus when do comparison
+                                  !ZN of the new code with the old code, you will have big difference if you
+                                  !ZN do not tune the source
+                                  / kappastore(i,j,ispec_selected_rec(irec))
                   enddo
                 enddo
               endif ! if element acoustic
@@ -3352,7 +3362,7 @@ if (.NOT. GPU_MODE) then
     if(any_elastic .and. SIMULATION_TYPE == 3) then ! kernels calculation
       do iglob = 1,nglob
         rho_k(iglob) =  accel_elastic(1,iglob)*b_displ_elastic(1,iglob) + &
-!ZN                        accel_elastic(2,iglob)*b_displ_elastic(2,iglob) + &
+                        accel_elastic(2,iglob)*b_displ_elastic(2,iglob) + &
                         accel_elastic(3,iglob)*b_displ_elastic(3,iglob)
         rhorho_el_hessian_temp1(iglob) = accel_elastic(1,iglob)*accel_elastic(1,iglob) + &
                                          accel_elastic(2,iglob)*accel_elastic(2,iglob) + &
