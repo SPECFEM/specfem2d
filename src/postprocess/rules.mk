@@ -88,6 +88,7 @@ xsum_kernels_ascii: $E/xsum_kernels_ascii
 xcombine_sem_OBJECTS = \
 	$O/postprocess_par.postprocess_module.o \
 	$O/combine_sem.postprocess.o \
+	$O/parse_kernel_names.postprocess.o \
 	$(EMPTY_MACRO)
 
 xcombine_sem_SHARED_OBJECTS = \

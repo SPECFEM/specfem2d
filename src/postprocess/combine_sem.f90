@@ -76,7 +76,7 @@ program combine_sem
 
   implicit none
 
-  character(len=MAX_STRING_LEN) :: kernel_paths(MAX_KERNEL_PATHS)
+  character(len=MAX_STRING_LEN) :: kernel_paths(MAX_KERNEL_PATHS), kernel_names(MAX_KERNEL_NAMES)
   character(len=MAX_STRING_LEN) :: kernel_name, kernel_names_comma_delimited
   character(len=MAX_STRING_LEN) :: line,filename,output_dir,input_file
   character(len=MAX_STRING_LEN) :: arg(3)
