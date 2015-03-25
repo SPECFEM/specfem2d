@@ -736,13 +736,13 @@ the mesh your created is too dense, it will be extremely accurate but the simula
 
 %------------------------------------------------------------------------------------------------%
 
-To run the solver, type:
+To run the solver, type
 %
 \begin{verbatim}
-    ./bin/xspecfem2D
+    bin/xspecfem2D
 \end{verbatim}
 %
-to run the main solver (use \texttt{mpirun} or equivalent if you compiled with parallel support). This will output the seismograms and snapshots of the wave fronts at different time steps in directory \texttt{OUTPUT\_FILES/}. To visualize them, type "\texttt{gs OUTPUT\_FILES/vect*.ps}" to see the Postscript files (in which the wave field is represented with small arrows, fluid/solid matching interfaces with a thick pink line, and absorbing edges with a thick green line) and "\texttt{gimp OUTPUT\_FILES/image*.gif}" to see the colour snapshot showing a pixelized image of one of the two components of the wave field (or pressure, depending on what you have selected for the output in \texttt{DATA/Par\_file}).
+from within the main working directory (use \texttt{mpirun} or equivalent if you compiled with parallel support). This will output the seismograms and snapshots of the wave fronts at different time steps in directory \texttt{OUTPUT\_FILES/}. To visualize them, type "\texttt{gs OUTPUT\_FILES/vect*.ps}" to see the Postscript files (in which the wave field is represented with small arrows, fluid/solid matching interfaces with a thick pink line, and absorbing edges with a thick green line) and "\texttt{gimp OUTPUT\_FILES/image*.gif}" to see the colour snapshot showing a pixelized image of one of the two components of the wave field (or pressure, depending on what you have selected for the output in \texttt{DATA/Par\_file}).
 
 %%
 \begin{figure}[htbp]
@@ -781,6 +781,63 @@ Replace \texttt{surange} with \texttt{suxwigb} to see wiggle plots for the seism
 \urlwithparentheses{http://www.spice-rtn.org/library/software/EX2DDIR}. That code is described in: \cite{BeIfNiSk94}
 
 \end{itemize}
+
+%------------------------------------------------------------------------------------------------%
+\section*{Notes about \texttt{DATA/Par\_file} parameters}
+%------------------------------------------------------------------------------------------------%
+
+\begin{description}[font=\ttfamily]
+
+\item[USE\_TRICK\_FOR\_BETTER\_PRESSURE]
+
+This option can only be used so far if all the receivers record pressure and are in acoustic elements.
+Use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
+use the second derivative of the source for the source time function instead of the source itself,
+and then record \texttt{potential\_acoustic()} as pressure seismograms instead of \texttt{potential\_dot\_dot\_acoustic()};
+this is mathematically equivalent, but numerically significantly more accurate because in the explicit
+Newmark time scheme acceleration is accurate at zeroth order while displacement is accurate at second order,
+thus in fluid elements \texttt{potential\_dot\_dot\_acoustic()} is accurate at zeroth order while \texttt{potential\_acoustic()}
+is accurate at second order and thus contains significantly less numerical noise.
+
+
+\item[READ\_VELOCITIES\_AT\_f0]
+
+ shift (i.e. change) velocities read from the input file to take average physical dispersion into account, i.e. if needed change the reference frequency at which these velocities are defined internally in the code: by default, the seismic velocity values that are read at the end of this Par\_file of the code are supposed to be the unrelaxed values, i.e. the velocities at infinite frequency. We may want to change this and impose that the values read are those for a given frequency (here f0\_attenuation). (when we do this, velocities will then slightly decrease and waves will thus slightly slow down)
+
+
+%use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements: use the second derivative of the source for the source time function instead of the source itself, and then record -potential\_acoustic() as pressure seismograms instead of -potential\_dot\_dot_acoustic(); this is mathematically equivalent, but numerically significantly more accurate because in the explicit Newmark time scheme acceleration is accurate at zeroth order while displacement is accurate at second order, thus in fluid elements potential\_dot\_dot_acoustic() is accurate at zeroth order while potential\_acoustic() is accurate at second order and thus contains significantly less numerical noise.
+
+
+\item[nbmodels]  With \texttt{MODEL = default} chosen, a variety of simple velocity and density models can be defined using the \texttt{nbmodels} device.
+
+%
+\begin{verbatim}
+I:  model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0
+II:  model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0
+III: model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu
+IV: model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0
+\end{verbatim}
+%
+
+To make a given region acoustic, use I and make \texttt{Vs} be zero.
+
+To make a given region isotropic elastic, use I and make \texttt{Vs} be nonzero.  See Section 4.1 for more details.
+
+To make a given region anisotropic, use II.  See Section 4.2 for more details.
+
+To make a given region poroeslatic, use III.  See Section 4.3 for more details.
+
+
+\item[nbregions]  With \texttt{MODEL = default} chosen, a variety of simple layered model configurations can be specified using the \texttt{nbregions} device.
+
+
+
+\end{description}
+
+%------------------------------------------------------------------------------------------------%
+\section*{Notes about \texttt{DATA/SOURCE} parameters}
+%------------------------------------------------------------------------------------------------%
+
 
 The \texttt{SOURCE} file located in the \texttt{DATA/} directory should be edited in the following way:
 %
@@ -878,21 +935,12 @@ the half duration is obtained by $1/\mathtt{f0}$.
 If you prefer, you can fix this start time by setting the parameter \texttt{USER\_T0} in the \texttt{constants.h} file
 to a positive, non-zero value. The simulation in that case would start at a starting time equal to \texttt{-USER\_T0}.
 
-%------------------------------------------------------------------------------------------------%
-\subsection*{Coupled Simulations}
-%------------------------------------------------------------------------------------------------%
-
-The code supports acoustic/elastic, acoustic/poroelastic, elastic/poroelastic,
-and acoustic, elastic/poroelastic simulations.
-Elastic/poroelastic coupling supports anisotropy, but not attenuation for the
-elastic material.
-
 
 %------------------------------------------------------------------------------------------------%
-\section{How to run P-SV or SH (membrane) wave simulations}
+\section{How to run elastic wave simulations}
 %------------------------------------------------------------------------------------------------%
 
-For elastic materials, you have these additional options:
+For isotropic elastic materials, there are two options:
 %
 \begin{description}
 \item[P-SV:]
@@ -914,7 +962,7 @@ Laboratoire de Mecanique et d'Acoustique, CNRS, Marseille, France, is provided.
 It allows one to automatically save all the parameters and results of a given simulation.
 
 %------------------------------------------------------------------------------------------------%
-\section{How to use anisotropy}
+\section{How to run anisotropic wave simulations}
 %------------------------------------------------------------------------------------------------%
 
 Following \cite{CaKoKo88}, we use the classical reduced Voigt notation to represent symmetric
@@ -966,7 +1014,7 @@ where the notations are for instance \texttt{duz\_dx = d(Uz) / dx}.
 
 
 %------------------------------------------------------------------------------------------------%
-\section{How to use poroelasticity}
+\section{How to run poroelastic wave simulations}
 %------------------------------------------------------------------------------------------------%
 
 Check the following new inputs in \texttt{Par\_file}:
@@ -1054,23 +1102,14 @@ several sources with different frequencies and if you consider anistropic
 permeability.
 
 %------------------------------------------------------------------------------------------------%
-\section{How to set plane waves as initial conditions}
-To simulate propagation of incoming plane waves in the simulation domain, initial conditions based on analytical formulae of plane waves in homogeneous model need to be set. No additional body or boundary forces are required. To set up this scenario:
-%
-\begin{description}
-\item{\verb+Par_file+:}
-  \begin{itemize}
-  \item switch on \verb+initialfield = .true. +
-  \item at this point setting \verb+add_bielak_condition+ does not seem to help with absorbing boundaries, therefore, it should be turned off.
-  \end{itemize}
-\item{\verb+SOURCE+:}
-  \begin{itemize}
-  \item \verb+zs+ has to be the same as the height of the simulation domain defined in \verb+interfacesfile+.
-  \item \verb+xs+ is the $x$-coordinate of the intersection of the initial plane wave front with the free surface.
-  \item \verb+source_type+ = 1 for a plane P wave, 2 for a plane SV wave, 3 for a Rayleigh wave.
-  \item \verb+angleforce+ can be negative to indicate a plane wave incident from the right (instead of the left)
-  \end{itemize}
-\end{description}
+\section{Coupled simulations}
+%------------------------------------------------------------------------------------------------%
+
+The code supports acoustic/elastic, acoustic/poroelastic, elastic/poroelastic,
+and acoustic, elastic/poroelastic simulations.
+Elastic/poroelastic coupling supports anisotropy, but not attenuation for the
+elastic material.
+
 
 %------------------------------------------------------------------------------------------------%
 \section{How to choose the time step}
@@ -1151,6 +1190,26 @@ Degree $N$ & Newmark & LDDRK4-6 & RK4 \\ [0.5ex]
 \label{table:CFLelastic}
 % is used to refer this table in the text
 \end{table}
+
+%------------------------------------------------------------------------------------------------%
+\section{How to set plane waves as initial conditions}
+To simulate propagation of incoming plane waves in the simulation domain, initial conditions based on analytical formulae of plane waves in homogeneous model need to be set. No additional body or boundary forces are required. To set up this scenario:
+%
+\begin{description}
+\item{\verb+Par_file+:}
+  \begin{itemize}
+  \item switch on \verb+initialfield = .true. +
+  \item at this point setting \verb+add_bielak_condition+ does not seem to help with absorbing boundaries, therefore, it should be turned off.
+  \end{itemize}
+\item{\verb+SOURCE+:}
+  \begin{itemize}
+  \item \verb+zs+ has to be the same as the height of the simulation domain defined in \verb+interfacesfile+.
+  \item \verb+xs+ is the $x$-coordinate of the intersection of the initial plane wave front with the free surface.
+  \item \verb+source_type+ = 1 for a plane P wave, 2 for a plane SV wave, 3 for a Rayleigh wave.
+  \item \verb+angleforce+ can be negative to indicate a plane wave incident from the right (instead of the left)
+  \end{itemize}
+\end{description}
+
 
 %------------------------------------------------------------------------------------------------%
 

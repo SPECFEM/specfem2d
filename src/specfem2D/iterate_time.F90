@@ -3921,8 +3921,8 @@ endif
         if(imagetype_JPEG >= 1 .and. imagetype_JPEG <= 3) then
 
           if (myrank == 0) write(IOUT,*) 'drawing scalar image of part of the displacement vector...'
-          call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, & 
-                          potential_gravito,displ_elastic,displs_poroelastic) 
+          call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
+                          potential_gravito,displ_elastic,displs_poroelastic)
 
         else if(imagetype_JPEG >= 4 .and. imagetype_JPEG <= 6) then
 
@@ -3933,7 +3933,7 @@ endif
         else if(imagetype_JPEG >= 7 .and. imagetype_JPEG <= 9) then
 
           if (myrank == 0) write(IOUT,*) 'drawing scalar image of part of the acceleration vector...'
-          call compute_vector_whole_medium(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, & 
+          call compute_vector_whole_medium(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
                           potential_dot_dot_gravito,accel_elastic,accels_poroelastic)
 
         else if(imagetype_JPEG >= 11 .and. imagetype_JPEG <= 13) then
@@ -3942,8 +3942,8 @@ endif
 
           if (myrank == 0) write(IOUT,*) 'drawing scalar image of part of normalized displacement vector...'
 
-          call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, & 
-                          potential_gravito,displ_elastic,displs_poroelastic) 
+          call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
+                          potential_gravito,displ_elastic,displs_poroelastic)
 
 
           do ispec = 1,nspec
@@ -3960,8 +3960,8 @@ endif
         else if(imagetype_JPEG >= 14 .and. imagetype_JPEG <= 16) then
 ! allocation for normalized representation in JPEG image
 ! for an atmosphere model
-          call compute_vector_whole_medium(potential_dot_acoustic,potential_dot_gravitoacoustic, &  
-                          potential_dot_gravito,veloc_elastic,velocs_poroelastic)  
+          call compute_vector_whole_medium(potential_dot_acoustic,potential_dot_gravitoacoustic, &
+                          potential_dot_gravito,veloc_elastic,velocs_poroelastic)
 
           do ispec = 1,nspec
             do j = 1,NGLLZ
