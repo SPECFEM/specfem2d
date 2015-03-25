@@ -95,7 +95,7 @@ subroutine update_displacement_precondition_newmark_elastic(deltat,deltatover2,d
   double precision :: deltat,deltatover2,deltatsquareover2
   real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: accel_elastic,veloc_elastic, &
                                                         displ_elastic,displ_elastic_old
-                                                        
+
   logical :: PML_BOUNDARY_CONDITIONS
 
 #ifdef FORCE_VECTORIZATION
@@ -135,7 +135,7 @@ subroutine update_displacement_precondition_newmark_poroelastic(deltat,deltatove
                                                                 accels_poroelastic,velocs_poroelastic,&
                                                                 displs_poroelastic,accelw_poroelastic,&
                                                                 velocw_poroelastic,displw_poroelastic)
-  
+
   use specfem_par, only : nglob_poroelastic
   implicit none
   include 'constants.h'
