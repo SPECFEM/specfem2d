@@ -151,7 +151,7 @@
             if( abs(coord(1,ibool(i,j,ispec))) < TINYVAL ) then
               xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
               r_xiplus1(i,j) = xxi
-            else if( is_on_the_axis(ispec) ) then
+            elseif( is_on_the_axis(ispec) ) then
               r_xiplus1(i,j) = coord(1,ibool(i,j,ispec))/(xiglj(i)+ONE)
             endif
           endif

@@ -79,7 +79,7 @@ module specfem_par
   logical :: read_external_mesh
 
   !---------------------------------------------------------------------
-  ! 1.2 for material information
+  ! for material information
   !---------------------------------------------------------------------
   integer :: numat
   logical :: assign_external_model
@@ -114,7 +114,7 @@ module specfem_par
   real(kind=CUSTOM_REAL) :: Mu_nu1_sent,Mu_nu2_sent
 
   !---------------------------------------------------------------------
-  !for boundary condition (physical BC or artificial BC)
+  ! for boundary condition (physical BC or artificial BC)
   !---------------------------------------------------------------------
   logical :: anyabs_glob
 
@@ -176,7 +176,7 @@ module specfem_par
             iend_edge3_poro,ibegin_edge4_poro,iend_edge4_poro,ibegin_edge2_poro,iend_edge2_poro
 
   !---------------------------------------------------------------------
-  !for source-receiver information
+  ! for source-receiver information
   !---------------------------------------------------------------------
   ! source description
   integer NSOURCES

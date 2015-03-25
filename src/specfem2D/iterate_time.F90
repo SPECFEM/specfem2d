@@ -495,8 +495,8 @@ if (myrank == 0) write(IOUT,400)
                     iglob = ibool(i,j,ispec_selected_source(i_source))
                     hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
                     potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
-                                            - source_time_function(i_source,it,i_stage)*hlagrange &
-                                               / kappastore(i,j,ispec_selected_source(i_source))
+                                            - source_time_function(i_source,it,i_stage)*hlagrange !ZN &
+                                              !ZN  / kappastore(i,j,ispec_selected_source(i_source))
                   enddo
                 enddo
               else
@@ -506,8 +506,8 @@ if (myrank == 0) write(IOUT,400)
                     iglob = ibool(i,j,ispec_selected_source(i_source))
                     hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
                     b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) &
-                                          - source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1)*hlagrange &
-                                            / kappastore(i,j,ispec_selected_source(i_source))
+                                          - source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1)*hlagrange !ZN &
+                                            !ZN / kappastore(i,j,ispec_selected_source(i_source))
                   enddo
                 enddo
               endif
@@ -533,7 +533,7 @@ if (myrank == 0) write(IOUT,400)
                   do i=1,NGLLX
                     iglob = ibool(i,j,ispec_selected_rec(irec))
                     potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
-                                  + adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j) / kappastore(i,j,ispec_selected_rec(irec))
+                                  + adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j) !ZN / kappastore(i,j,ispec_selected_rec(irec))
                   enddo
                 enddo
               endif ! if element acoustic
@@ -717,10 +717,10 @@ if (myrank == 0) write(IOUT,400)
       ! Newmark time scheme
 !! DK DK this should be vectorized
       potential_gravitoacoustic = potential_gravitoacoustic &
-                          + deltat*potential_dot_gravitoacoustic &
-                          + deltatsquareover2*potential_dot_dot_gravitoacoustic
+                                  + deltat*potential_dot_gravitoacoustic &
+                                  + deltatsquareover2*potential_dot_dot_gravitoacoustic
       potential_dot_gravitoacoustic = potential_dot_gravitoacoustic &
-                              + deltatover2*potential_dot_dot_gravitoacoustic
+                                      + deltatover2*potential_dot_dot_gravitoacoustic
       potential_gravito = potential_gravito &
                           + deltat*potential_dot_gravito &
                           + deltatsquareover2*potential_dot_dot_gravito
@@ -1235,7 +1235,7 @@ if (myrank == 0) write(IOUT,400)
       call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old,x_source(1),z_source(1), &
                f0(1),v0x_left(1,it),v0z_left(1,it),v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
                t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it),t0x_bot(1,it),t0z_bot(1,it), &
-              count_left,count_right,count_bottom,PML_BOUNDARY_CONDITIONS)
+               count_left,count_right,count_bottom,PML_BOUNDARY_CONDITIONS)
 
       if(SIMULATION_TYPE == 3)then
        if(PML_BOUNDARY_CONDITIONS)then
@@ -3161,34 +3161,25 @@ if (myrank == 0) write(IOUT,400)
         open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
         do j=1,nglob
           read(55) b_potential_acoustic(j),&
-                  b_potential_dot_acoustic(j),&
-                  b_potential_dot_dot_acoustic(j)
+                   b_potential_dot_acoustic(j),&
+                   b_potential_dot_dot_acoustic(j)
           enddo
         close(55)
 
-
-
-        if(GPU_MODE) then
-        ! transfers fields onto GPU
-        call transfer_b_fields_ac_to_device(NGLOB_AB,b_potential_acoustic, &
-                                            b_potential_dot_acoustic,      &
-                                            b_potential_dot_dot_acoustic,  &
-                                            Mesh_pointer)
-
+        if( GPU_MODE ) then
+          ! transfers fields onto GPU
+          call transfer_b_fields_ac_to_device(NGLOB_AB,b_potential_acoustic, &
+                                              b_potential_dot_acoustic,      &
+                                              b_potential_dot_dot_acoustic,  &
+                                              Mesh_pointer)
         else
           ! free surface for an acoustic medium
           if ( nelem_acoustic_surface > 0 ) then
             call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                                            b_potential_acoustic)
+                                               b_potential_acoustic)
           endif
-
         endif
-
-
-       endif
-
-
-
+      endif
 
       ! elastic medium
       if(any_elastic) then
@@ -3197,8 +3188,8 @@ if (myrank == 0) write(IOUT,400)
         if(p_sv)then !P-SV waves
           do j=1,nglob
             read(55) (b_displ_elastic(i,j), i=1,NDIM), &
-                      (b_veloc_elastic(i,j), i=1,NDIM), &
-                      (b_accel_elastic(i,j), i=1,NDIM)
+                     (b_veloc_elastic(i,j), i=1,NDIM), &
+                     (b_accel_elastic(i,j), i=1,NDIM)
           enddo
 
           if(GPU_MODE) then
@@ -3221,8 +3212,8 @@ if (myrank == 0) write(IOUT,400)
         else !SH (membrane) waves
           do j=1,nglob
             read(55) b_displ_elastic(2,j), &
-                      b_veloc_elastic(2,j), &
-                      b_accel_elastic(2,j)
+                     b_veloc_elastic(2,j), &
+                     b_accel_elastic(2,j)
           enddo
           b_displ_elastic(1,:) = 0._CUSTOM_REAL
           b_displ_elastic(3,:) = 0._CUSTOM_REAL
@@ -3242,11 +3233,11 @@ if (myrank == 0) write(IOUT,400)
         open(unit=56,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
         do j=1,nglob
           read(55) (b_displs_poroelastic(i,j), i=1,NDIM), &
-                    (b_velocs_poroelastic(i,j), i=1,NDIM), &
-                    (b_accels_poroelastic(i,j), i=1,NDIM)
+                   (b_velocs_poroelastic(i,j), i=1,NDIM), &
+                   (b_accels_poroelastic(i,j), i=1,NDIM)
           read(56) (b_displw_poroelastic(i,j), i=1,NDIM), &
-                    (b_velocw_poroelastic(i,j), i=1,NDIM), &
-                    (b_accelw_poroelastic(i,j), i=1,NDIM)
+                   (b_velocw_poroelastic(i,j), i=1,NDIM), &
+                   (b_accelw_poroelastic(i,j), i=1,NDIM)
         enddo
         close(55)
         close(56)
@@ -3346,27 +3337,20 @@ endif  !! End Sim 3
 ! Simulating seismograms
 
    if(mod(it-1,subsamp_seismos) == 0 .and. SIMULATION_TYPE == 1) then
-
-
-    seismo_current = seismo_current + 1
-
-    if ( nrecloc > 0 ) call compute_seismograms_cuda(Mesh_pointer,seismotype,sisux,&
-                       sisuz,seismo_current,NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,any_elastic_glob,any_acoustic_glob)
-
+     seismo_current = seismo_current + 1
+     if( nrecloc > 0 ) call compute_seismograms_cuda(Mesh_pointer,seismotype,sisux,&
+                                                     sisuz,seismo_current,NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, &
+                                                     any_elastic_glob,any_acoustic_glob)
    endif
-
 
 ! Fields transfer for imaging
 
     if( (output_color_image .and. ( (mod(it,NSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5)) .or. it == NSTEP) ) then
 
-
     if( any_acoustic ) &
       call transfer_fields_ac_from_device(NGLOB_AB,potential_acoustic, &
                                           potential_dot_acoustic, potential_dot_dot_acoustic, &
                                           Mesh_pointer)
-
-
     if( any_elastic ) then
       call transfer_fields_el_from_device(NDIM*NGLOB_AB,displ_2D,veloc_2D,accel_2D,Mesh_pointer)
       displ_elastic(1,:) = displ_2D(1,:)
@@ -3376,11 +3360,7 @@ endif  !! End Sim 3
       veloc_elastic(3,:) = veloc_2D(2,:)
       accel_elastic(3,:) = accel_2D(2,:)
     endif
-
-
    endif !If transfer
-
-
 endif !If GPU Mode
 
 
@@ -3391,15 +3371,15 @@ if (.NOT. GPU_MODE) then
 ! ********************************************************************************************
     if(any_elastic .and. SIMULATION_TYPE == 3) then ! kernels calculation
       do iglob = 1,nglob
-        rho_k(iglob) =  accel_elastic(1,iglob)*b_displ_elastic(1,iglob) +&
-                            accel_elastic(2,iglob)*b_displ_elastic(2,iglob) +&
-                            accel_elastic(3,iglob)*b_displ_elastic(3,iglob)
-        rhorho_el_hessian_temp1(iglob) = accel_elastic(1,iglob)*accel_elastic(1,iglob) +&
-                                            accel_elastic(2,iglob)*accel_elastic(2,iglob)  +&
-                                            accel_elastic(3,iglob)*accel_elastic(3,iglob)
-        rhorho_el_hessian_temp2(iglob) = accel_elastic(1,iglob)*b_accel_elastic(1,iglob) +&
-                                            accel_elastic(2,iglob)*b_accel_elastic(2,iglob)  +&
-                                            accel_elastic(3,iglob)*b_accel_elastic(3,iglob)
+        rho_k(iglob) =  accel_elastic(1,iglob)*b_displ_elastic(1,iglob) + &
+!ZN                        accel_elastic(2,iglob)*b_displ_elastic(2,iglob) + &
+                        accel_elastic(3,iglob)*b_displ_elastic(3,iglob)
+        rhorho_el_hessian_temp1(iglob) = accel_elastic(1,iglob)*accel_elastic(1,iglob) + &
+                                         accel_elastic(2,iglob)*accel_elastic(2,iglob) + &
+                                         accel_elastic(3,iglob)*accel_elastic(3,iglob)
+        rhorho_el_hessian_temp2(iglob) = accel_elastic(1,iglob)*b_accel_elastic(1,iglob) + &
+                                         accel_elastic(2,iglob)*b_accel_elastic(2,iglob) + &
+                                         accel_elastic(3,iglob)*b_accel_elastic(3,iglob)
       enddo
     endif
 
@@ -3552,13 +3532,13 @@ if (.NOT. GPU_MODE) then
                 if (.not. assign_external_model) then
                    mul_global(iglob) = poroelastcoef(2,1,kmato(ispec))
                    kappal_global(iglob) = poroelastcoef(3,1,kmato(ispec)) &
-                                       - 4._CUSTOM_REAL*mul_global(iglob)/3._CUSTOM_REAL
+                                          - 4._CUSTOM_REAL*mul_global(iglob)/3._CUSTOM_REAL
                    rhol_global(iglob) = density(1,kmato(ispec))
                 else
                    rhol_global(iglob)   = rhoext(i,j,ispec)
                    mul_global(iglob)    = rhoext(i,j,ispec)*vsext(i,j,ispec)*vsext(i,j,ispec)
                    kappal_global(iglob) = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec) &
-                                       -4._CUSTOM_REAL*mul_global(iglob)/3._CUSTOM_REAL
+                                          -4._CUSTOM_REAL*mul_global(iglob)/3._CUSTOM_REAL
                 endif
 
                 rho_kl(i,j,ispec) = rho_kl(i,j,ispec) - rhol_global(iglob)  * rho_k(iglob) * deltat
@@ -3571,9 +3551,9 @@ if (.NOT. GPU_MODE) then
                 alpha_kl(i,j,ispec) = TWO * (1._CUSTOM_REAL + 4._CUSTOM_REAL * mul_global(iglob)/&
                      (3._CUSTOM_REAL * kappal_global(iglob))) * kappa_kl(i,j,ispec)
                 rhorho_el_hessian_final1(i,j,ispec) = rhorho_el_hessian_final1(i,j,ispec) &
-                                                  + rhorho_el_hessian_temp1(iglob) * deltat
+                                                      + rhorho_el_hessian_temp1(iglob) * deltat
                 rhorho_el_hessian_final2(i,j,ispec) = rhorho_el_hessian_final2(i,j,ispec) &
-                                                  + rhorho_el_hessian_temp2(iglob) * deltat
+                                                      + rhorho_el_hessian_temp2(iglob) * deltat
 
               enddo
             enddo
@@ -3875,8 +3855,8 @@ endif
         if(imagetype_JPEG >= 1 .and. imagetype_JPEG <= 3) then
 
           if (myrank == 0) write(IOUT,*) 'drawing scalar image of part of the displacement vector...'
-          call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
-                          potential_gravito,displ_elastic,displs_poroelastic)
+          call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, & 
+                          potential_gravito,displ_elastic,displs_poroelastic) 
 
         else if(imagetype_JPEG >= 4 .and. imagetype_JPEG <= 6) then
 
@@ -3887,7 +3867,7 @@ endif
         else if(imagetype_JPEG >= 7 .and. imagetype_JPEG <= 9) then
 
           if (myrank == 0) write(IOUT,*) 'drawing scalar image of part of the acceleration vector...'
-          call compute_vector_whole_medium(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
+          call compute_vector_whole_medium(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, & 
                           potential_dot_dot_gravito,accel_elastic,accels_poroelastic)
 
         else if(imagetype_JPEG >= 11 .and. imagetype_JPEG <= 13) then
@@ -3896,8 +3876,8 @@ endif
 
           if (myrank == 0) write(IOUT,*) 'drawing scalar image of part of normalized displacement vector...'
 
-          call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
-                          potential_gravito,displ_elastic,displs_poroelastic)
+          call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, & 
+                          potential_gravito,displ_elastic,displs_poroelastic) 
 
 
           do ispec = 1,nspec
@@ -3914,8 +3894,8 @@ endif
         else if(imagetype_JPEG >= 14 .and. imagetype_JPEG <= 16) then
 ! allocation for normalized representation in JPEG image
 ! for an atmosphere model
-          call compute_vector_whole_medium(potential_dot_acoustic,potential_dot_gravitoacoustic, &
-                          potential_dot_gravito,veloc_elastic,velocs_poroelastic)
+          call compute_vector_whole_medium(potential_dot_acoustic,potential_dot_gravitoacoustic, &  
+                          potential_dot_gravito,veloc_elastic,velocs_poroelastic)  
 
           do ispec = 1,nspec
             do j = 1,NGLLZ
