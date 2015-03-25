@@ -788,9 +788,9 @@ Replace \texttt{surange} with \texttt{suxwigb} to see wiggle plots for the seism
 
 \begin{description}[font=\ttfamily]
 
-\item[USE\_TRICK\_FOR\_BETTER\_PRESSURE] 
+\item[USE\_TRICK\_FOR\_BETTER\_PRESSURE]
 
-This option can only be used so far if all the receivers record pressure and are in acoustic elements.  
+This option can only be used so far if all the receivers record pressure and are in acoustic elements.
 Use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
 use the second derivative of the source for the source time function instead of the source itself,
 and then record \texttt{potential\_acoustic()} as pressure seismograms instead of \texttt{potential\_dot\_dot\_acoustic()};
