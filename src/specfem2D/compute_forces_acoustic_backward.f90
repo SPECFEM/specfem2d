@@ -42,7 +42,6 @@
 !========================================================================
 
   subroutine compute_forces_acoustic_backward(b_potential_dot_dot_acoustic,b_potential_acoustic)
-                                              !b_potential_dot_acoustic, &
 
 
   ! compute forces in the acoustic elements in forward simulation and in adjoint simulation in adjoint inversion
@@ -228,7 +227,6 @@
       ispec = numabs(ispecabs)
       ! Sommerfeld condition if acoustic
       if( acoustic(ispec) ) then
-
         !--- left absorbing boundary
         if( codeabs(IEDGE4,ispecabs) ) then
           i = 1
@@ -285,7 +283,6 @@
                                                   b_absorb_acoustic_top(i,ib_top(ispecabs),NSTEP-it+1)
           enddo
         endif  !  end of top absorbing boundary
-
       endif ! acoustic ispec
     enddo
   endif  ! end of absorbing boundaries
