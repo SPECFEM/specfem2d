@@ -123,8 +123,8 @@ if (myrank == 0) write(IOUT,400)
           if( time_stepping_scheme == 1 )then
             call update_displacement_precondition_newmark_poroelastic(deltat,deltatover2,deltatsquareover2,&
                                                                       accels_poroelastic,velocs_poroelastic,&
-                                                                      displs_poroelastic,accels_poroelastic,&
-                                                                      velocs_poroelastic,displs_poroelastic)
+                                                                      displs_poroelastic,accelw_poroelastic,&
+                                                                      velocw_poroelastic,displw_poroelastic)
           endif
 
           if( SIMULATION_TYPE == 3 )then
@@ -132,8 +132,8 @@ if (myrank == 0) write(IOUT,400)
               !PML did not implemented for poroelastic simulation
               call update_displacement_precondition_newmark_poroelastic(b_deltat,b_deltatover2,b_deltatsquareover2,&
                                                                         b_accels_poroelastic,b_velocs_poroelastic,&
-                                                                        b_displs_poroelastic,b_accels_poroelastic,&
-                                                                        b_velocs_poroelastic,b_displs_poroelastic) 
+                                                                        b_displs_poroelastic,b_accelw_poroelastic,&
+                                                                        b_velocw_poroelastic,b_displw_poroelastic) 
             endif        
           endif
         endif
