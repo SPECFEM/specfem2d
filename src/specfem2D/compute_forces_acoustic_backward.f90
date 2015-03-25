@@ -91,11 +91,7 @@
   do ispec = ifirstelem,ilastelem
     ! acoustic spectral element
     if( acoustic(ispec) ) then
-      if( CUSTOM_REAL == SIZE_REAL ) then
-        rhol = sngl(density(1,kmato(ispec)))
-      else
-        rhol = density(1,kmato(ispec))
-      endif
+      rhol = density(1,kmato(ispec))
 
       ! first double loop over GLL points to compute and store gradients
       do j = 1,NGLLZ
@@ -140,11 +136,7 @@
 
           ! if external density model
           if( assign_external_model ) then
-            if( CUSTOM_REAL == SIZE_REAL ) then
-              rhol = sngl(rhoext(i,j,ispec))
-            else
-              rhol = rhoext(i,j,ispec)
-            endif
+            rhol = rhoext(i,j,ispec)
           endif
 
           if( AXISYM ) then
@@ -177,23 +169,14 @@
         do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
           if( assign_external_model ) then
-            if( CUSTOM_REAL == SIZE_REAL ) then
-              rhol = sngl(rhoext(i,j,ispec))
-            else
-              rhol = rhoext(i,j,ispec)
-            endif
+            rhol = rhoext(i,j,ispec)
             cpl = vpext(i,j,ispec)
             !assuming that in fluid(acoustic) part input cpl is defined by sqrt(kappal/rhol), &
             !which is not the same as in cpl input in elastic part
             kappal = rhol * cpl * cpl
           else
-            if( CUSTOM_REAL == SIZE_REAL ) then
-              lambdal_relaxed = sngl(poroelastcoef(1,1,kmato(ispec)))
-              mul_relaxed = sngl(poroelastcoef(2,1,kmato(ispec)))
-            else
-              lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
-              mul_relaxed = poroelastcoef(2,1,kmato(ispec))
-            endif
+            lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
+            mul_relaxed = poroelastcoef(2,1,kmato(ispec))
             kappal  = lambdal_relaxed + TWO * mul_relaxed/3._CUSTOM_REAL
             rhol = density(1,kmato(ispec))
           endif

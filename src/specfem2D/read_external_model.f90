@@ -61,9 +61,9 @@
 
   ! Local variables
   integer :: i,j,ispec,iglob
-  double precision :: previous_vsext
-  double precision :: tmp1, tmp2,tmp3
-  double precision :: mu_dummy,lambda_dummy
+  real(kind=CUSTOM_REAL) :: previous_vsext
+  real(kind=CUSTOM_REAL) :: tmp1, tmp2,tmp3
+  double precision :: rho_dummy,vp_dummy,vs_dummy,mu_dummy,lambda_dummy
 
   if (tomo_material > 0) MODEL = 'tomo'
 
@@ -235,7 +235,7 @@
 !       if no attenuation in that elastic element
         if(QKappa_attenuationext(i,j,ispec) > 9998.999d0) cycle
 
-        call attenuation_model(QKappa_attenuationext(i,j,ispec),Qmu_attenuationext(i,j,ispec))
+        call attenuation_model(dble(QKappa_attenuationext(i,j,ispec)),dble(Qmu_attenuationext(i,j,ispec)))
 
         inv_tau_sigma_nu1(i,j,ispec,:) = inv_tau_sigma_nu1_sent(:)
         phi_nu1(i,j,ispec,:) = phi_nu1_sent(:)
@@ -247,7 +247,12 @@
         if(ATTENUATION_VISCOELASTIC_SOLID .and. READ_VELOCITIES_AT_F0) then
           if(anisotropic(ispec) .or. poroelastic(ispec) .or. gravitoacoustic(ispec)) stop &
              'READ_VELOCITIES_AT_F0 only implemented for non anisotropic, non poroelastic, non gravitoacoustic materials for now'
-          call shift_velocities_from_f0(vpext(i,j,ispec),vsext(i,j,ispec),rhoext(i,j,ispec),mu_dummy,lambda_dummy)
+
+          vp_dummy = dble(vpext(i,j,ispec))
+          vs_dummy = dble(vpext(i,j,ispec))
+          rho_dummy = dble(rhoext(i,j,ispec))
+
+          call shift_velocities_from_f0(vp_dummy,vs_dummy,rho_dummy,mu_dummy,lambda_dummy)
 
         endif
 

@@ -2177,26 +2177,14 @@ do ispec=1,nspec
           do j = 1,NGLLZ
               do i = 1,NGLLX
 
-            if(CUSTOM_REAL == SIZE_REAL) then
-
-              rhostore(i,j,ispec)    = sngl (rhoext(i,j,ispec))
-              rho_vp(i,j,ispec)      = rhostore(i,j,ispec) * sngl (vpext(i,j,ispec))
-              rho_vs(i,j,ispec)      = rhostore(i,j,ispec) * sngl (vsext(i,j,ispec))
-              mustore(i,j,ispec)     = rho_vs(i,j,ispec) * sngl (vsext(i,j,ispec))
-              kappastore(i,j,ispec)  = rho_vp(i,j,ispec) * sngl (vpext(i,j,ispec))-TWO*TWO*mustore(i,j,ispec)/3._CUSTOM_REAL
-
-            else
-
               rhostore(i,j,ispec)    = rhoext(i,j,ispec)
               rho_vp(i,j,ispec)      = rhostore(i,j,ispec) * vpext(i,j,ispec)
               rho_vs(i,j,ispec)      = rhostore(i,j,ispec) * vsext(i,j,ispec)
               mustore(i,j,ispec)     = rho_vs(i,j,ispec) * vsext(i,j,ispec)
               kappastore(i,j,ispec)  = rho_vp(i,j,ispec) * vpext(i,j,ispec)-TWO*TWO*mustore(i,j,ispec)/3._CUSTOM_REAL
 
-            endif
-
-                enddo
-        enddo
+              enddo
+          enddo
 enddo
 
 else ! Internal rho vp vs model
@@ -2205,18 +2193,6 @@ do ispec=1,nspec
           do j = 1,NGLLZ
               do i = 1,NGLLX
 
-            if(CUSTOM_REAL == SIZE_REAL) then
-
-              rhostore(i,j,ispec)       = sngl(density(1,kmato(ispec)))
-              lambdal_unrelaxed_elastic = sngl(poroelastcoef(1,1,kmato(ispec)))
-              mul_unrelaxed_elastic     = sngl(poroelastcoef(2,1,kmato(ispec)))
-              mustore(i,j,ispec)        = mul_unrelaxed_elastic
-              kappastore(i,j,ispec)     = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic/3._CUSTOM_REAL
-              rho_vp(i,j,ispec)         = sngl(density(1,kmato(ispec)) * sqrt((kappastore(i,j,ispec) + &
-                                          4._CUSTOM_REAL*mul_unrelaxed_elastic/ &
-                                          3._CUSTOM_REAL)/density(1,kmato(ispec))))
-              rho_vs(i,j,ispec)         = sngl(density(1,kmato(ispec)) * sqrt(mul_unrelaxed_elastic/density(1,kmato(ispec))))
-            else
               rhostore(i,j,ispec)       = density(1,kmato(ispec))
               lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
               mul_unrelaxed_elastic     = poroelastcoef(2,1,kmato(ispec))
@@ -2226,10 +2202,7 @@ do ispec=1,nspec
                                           4._CUSTOM_REAL*mul_unrelaxed_elastic/ &
                                           3._CUSTOM_REAL)/density(1,kmato(ispec)))
               rho_vs(i,j,ispec)         = density(1,kmato(ispec)) * sqrt(mul_unrelaxed_elastic/density(1,kmato(ispec)))
-            endif
-
-
-                enddo
+              enddo
         enddo
 enddo
 

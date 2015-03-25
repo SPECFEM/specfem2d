@@ -87,12 +87,12 @@ module specfem_par
   ! poroelastic and elastic coefficients
   double precision, dimension(:,:,:), allocatable :: poroelastcoef
   logical, dimension(:), allocatable :: already_shifted_velocity
-  double precision, dimension(:,:,:), allocatable :: vpext,vsext,rhoext,gravityext,Nsqext
-  double precision, dimension(:,:,:), allocatable :: QKappa_attenuationext,Qmu_attenuationext
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: vpext,vsext,rhoext,gravityext,Nsqext
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: QKappa_attenuationext,Qmu_attenuationext
 
   ! anisotropy parameters
   logical :: all_anisotropic
-  double precision, dimension(:,:,:), allocatable :: c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
   double precision ::  c11,c13,c15,c33,c35,c55,c12,c23,c25
   logical, dimension(:), allocatable :: anisotropic
   double precision, dimension(:,:), allocatable :: anisotropy
