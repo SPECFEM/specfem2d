@@ -248,7 +248,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
 
                 if( i_stage==1) e1_initial_rk(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls)
                 e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) + weight_rk * e1_force_RK(i,j,ispec,i_sls,i_stage)
-              elseif( i_stage==4 ) then
+              else if( i_stage==4 ) then
                 e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
                                       (e1_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e1_force_RK(i,j,ispec,i_sls,2) + &
                                        2._CUSTOM_REAL * e1_force_RK(i,j,ispec,i_sls,3) + e1_force_RK(i,j,ispec,i_sls,4))
@@ -264,7 +264,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
 
                 if( i_stage==1) e11_initial_rk(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)
                 e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + weight_rk * e11_force_RK(i,j,ispec,i_sls,i_stage)
-              elseif( i_stage==4 ) then
+              else if( i_stage==4 ) then
                 e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
                                        (e11_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e11_force_RK(i,j,ispec,i_sls,2) + &
                                         2._CUSTOM_REAL * e11_force_RK(i,j,ispec,i_sls,3) + e11_force_RK(i,j,ispec,i_sls,4))
@@ -279,7 +279,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
 
                 if( i_stage==1) e13_initial_rk(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)
                 e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + weight_rk * e13_force_RK(i,j,ispec,i_sls,i_stage)
-              elseif( i_stage==4 ) then
+              else if( i_stage==4 ) then
                 e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
                                        (e13_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e13_force_RK(i,j,ispec,i_sls,2) + &
                                         2._CUSTOM_REAL * e13_force_RK(i,j,ispec,i_sls,3) + e13_force_RK(i,j,ispec,i_sls,4))
@@ -313,7 +313,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
   if( stage_time_scheme == 1 ) then
     time_n = (it-1) * deltat
     time_nsub1 = (it-2) * deltat
-  elseif( stage_time_scheme == 6 ) then
+  else if( stage_time_scheme == 6 ) then
     time_n = (it-1) * deltat + c_LDDRK(i_stage) * deltat
   endif
 
@@ -1134,7 +1134,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
       if( codeabs(IEDGE4,ispecabs) ) then
         i = 1
         do j = 1,NGLLZ
-          
+
           iglob = ibool(i,j,ispec)
           ! for analytical initial plane wave for Bielak's conditions
          ! left or right edge, horizontal normal vector
@@ -1782,7 +1782,7 @@ end subroutine compute_forces_viscoelastic
     CPML_X_ONLY_TEMP = CPML_X_ONLY
     CPML_Z_ONLY_TEMP = CPML_Z_ONLY
     CPML_XZ_ONLY_TEMP = CPML_XZ_ONLY
-  elseif( index_ik == 31 ) then
+  else if( index_ik == 31 ) then
     CPML_X_ONLY_TEMP = CPML_Z_ONLY
     CPML_Z_ONLY_TEMP = CPML_X_ONLY
     CPML_XZ_ONLY_TEMP = CPML_XZ_ONLY
@@ -1805,7 +1805,7 @@ end subroutine compute_forces_viscoelastic
 
       singularity_type_2 = 0 ! 0 means no singularity, 1 means first order singularity
 
-    elseif( abs(alpha_x-beta_z) < 1.e-5_CUSTOM_REAL ) then
+    else if( abs(alpha_x-beta_z) < 1.e-5_CUSTOM_REAL ) then
       !----------------A1,2,3-------------------------
       alpha_0 = max(alpha_x,beta_z)
 
@@ -1821,7 +1821,7 @@ end subroutine compute_forces_viscoelastic
       stop 'error in lik_parameter_computation'
     endif
 
-  elseif( CPML_region_local == CPML_X_ONLY_TEMP ) then
+  else if( CPML_region_local == CPML_X_ONLY_TEMP ) then
   !----------------A0-------------------------
     bar_A_0 = kappa_x
     A_0 = bar_A_0
@@ -1834,7 +1834,7 @@ end subroutine compute_forces_viscoelastic
 
     singularity_type_2 = 0 ! 0 means no singularity, 1 means first order singularity
 
-  elseif( CPML_region_local == CPML_Z_ONLY_TEMP ) then
+  else if( CPML_region_local == CPML_Z_ONLY_TEMP ) then
   !----------------A0-------------------------
     bar_A_0 = 1._CUSTOM_REAL / kappa_z
     A_0 = bar_A_0
@@ -1903,7 +1903,7 @@ end subroutine compute_forces_viscoelastic
       A_4 = bar_A_4
 
       singularity_type = 0
-    elseif ( abs( alpha_x - alpha_z ) < 1.e-5_CUSTOM_REAL ) then
+    else if ( abs( alpha_x - alpha_z ) < 1.e-5_CUSTOM_REAL ) then
       alpha_0 = alpha_x
       bar_A_3 = bar_A_0 * (- 4._CUSTOM_REAL * alpha_0**3  &
                            + 3._CUSTOM_REAL * alpha_0**2 * beta_xyz_1 - 2._CUSTOM_REAL * alpha_0 * beta_xyz_2)
@@ -1914,7 +1914,7 @@ end subroutine compute_forces_viscoelastic
 
       singularity_type = 1
     endif
-  elseif ( CPML_region_local == CPML_X_ONLY ) then
+  else if ( CPML_region_local == CPML_X_ONLY ) then
     bar_A_0 = kappa_x
     bar_A_1 = bar_A_0 * (beta_x - alpha_x)
     bar_A_2 = - bar_A_0 * alpha_x * (beta_x - alpha_x)
@@ -1930,7 +1930,7 @@ end subroutine compute_forces_viscoelastic
     A_4 = bar_A_4
 
     singularity_type = 0
-  elseif ( CPML_region_local == CPML_Z_ONLY ) then
+  else if ( CPML_region_local == CPML_Z_ONLY ) then
     bar_A_0 = kappa_z
     bar_A_1 = bar_A_0 * (beta_z - alpha_z)
     bar_A_2 = - bar_A_0 * alpha_z * (beta_z - alpha_z)
