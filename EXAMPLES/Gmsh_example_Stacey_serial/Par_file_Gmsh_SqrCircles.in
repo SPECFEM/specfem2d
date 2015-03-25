@@ -121,6 +121,9 @@ nbmodels                        = 2
 1 1 2000.d0 1680.d0 0.0d0 0 0 10.d0 10.d0 0 0 0 0 0 0
 2 1 1000.d0 1477.d0 0.0d0 0 0 10.d0 10.d0 0 0 0 0 0 0
 
+# external tomography file
+TOMOGRAPHY_FILE                 = ./DATA/tomo_file.xyz
+
 # external mesh or not
 read_external_mesh              = .true.
 
