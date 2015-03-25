@@ -613,7 +613,7 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
         call add_adjoint_sources_SU()
     endif
 
-  else if (seismotype == 4 .or. seismotype == 6) then !ZN
+  else if (seismotype == 4 .or. seismotype == 6) then
 
     if (.not. SU_FORMAT) then
        irec_local = 0
@@ -622,7 +622,7 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
          ! compute only adjoint source arrays in the local proc
          if(myrank == which_proc_receiver(irec))then
            irec_local = irec_local + 1
-           adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec)) !ZN
+           adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec))
            call compute_arrays_adj_source(xi_receiver(irec), gamma_receiver(irec))
            adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
          endif

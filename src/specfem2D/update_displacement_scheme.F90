@@ -39,9 +39,128 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
+subroutine update_displacement_precondition_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
+                                                             potential_dot_dot_acoustic,potential_dot_acoustic,&
+                                                             potential_acoustic,potential_acoustic_old,&
+                                                             PML_BOUNDARY_CONDITIONS)
+  use specfem_par, only : nglob_acoustic
+  implicit none
+  include 'constants.h'
+
+  double precision :: deltat,deltatover2,deltatsquareover2
+  real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: potential_acoustic,potential_dot_acoustic,&
+                                                       potential_dot_dot_acoustic,potential_acoustic_old
+  logical :: PML_BOUNDARY_CONDITIONS
+
+#ifdef FORCE_VECTORIZATION
+  integer :: i
+
+  if( PML_BOUNDARY_CONDITIONS ) then
+    do i = 1,nglob_acoustic
+      potential_acoustic_old(i) = potential_acoustic(i) + deltatsquareover2/TWO*potential_dot_dot_acoustic(i)
+    enddo
+  endif
+
+  do i = 1,nglob_acoustic
+    potential_acoustic(i) = potential_acoustic(i) + deltat*potential_dot_acoustic(i) + &
+                            deltatsquareover2*potential_dot_dot_acoustic(i)
+    potential_dot_acoustic(i) = potential_dot_acoustic(i) + deltatover2*potential_dot_dot_acoustic(i)
+    potential_dot_dot_acoustic(i) = ZERO
+  enddo
+
+#else
+
+  if( PML_BOUNDARY_CONDITIONS ) then
+    potential_acoustic_old = potential_acoustic + deltatsquareover2*potential_dot_dot_acoustic
+  endif
+
+  potential_acoustic = potential_acoustic + deltat*potential_dot_acoustic + deltatsquareover2*potential_dot_dot_acoustic
+  potential_dot_acoustic = potential_dot_acoustic + deltatover2*potential_dot_dot_acoustic
+  potential_dot_dot_acoustic = ZERO
+
+#endif
+
+end subroutine update_displacement_precondition_newmark_acoustic
+!========================================================================
+
+!========================================================================
+subroutine update_displacement_precondition_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
+                                                            accel_elastic,veloc_elastic,&
+                                                            displ_elastic,displ_elastic_old,&
+                                                            PML_BOUNDARY_CONDITIONS)
+  use specfem_par, only : nglob_elastic
+  implicit none
+  include 'constants.h'
+
+  double precision :: deltat,deltatover2,deltatsquareover2
+  real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: accel_elastic,veloc_elastic, &
+                                                        displ_elastic,displ_elastic_old
+                                                        
+  logical :: PML_BOUNDARY_CONDITIONS
+
+#ifdef FORCE_VECTORIZATION
+  integer :: i
+
+  if( PML_BOUNDARY_CONDITIONS ) then
+    do i = 1,3*nglob_elastic
+      displ_elastic_old(i,1) = displ_elastic(i,1) + deltatsquareover2/TWO * accel_elastic(i,1)
+    enddo
+  endif
+
+  !! DK DK this allows for full vectorization by using a trick to see the 2D array as a 1D array
+  !! DK DK whose dimension is the product of the two dimensions, the second dimension being equal to 1
+  do i = 1,3*nglob_elastic !! DK DK here change 3 to NDIM when/if we suppress the 2nd component of the arrays (the SH component)
+  !do i = 1,NDIM*nglob_elastic  !! DK DK this should be the correct size in principle, but not here because of the SH component
+    displ_elastic(i,1) = displ_elastic(i,1) + deltat*veloc_elastic(i,1) + deltatsquareover2*accel_elastic(i,1)
+    veloc_elastic(i,1) = veloc_elastic(i,1) + deltatover2*accel_elastic(i,1)
+    accel_elastic(i,1) = ZERO
+  enddo
+#else
+
+  if( PML_BOUNDARY_CONDITIONS ) then
+    displ_elastic_old = displ_elastic + deltatsquareover2/TWO * accel_elastic
+  endif
+
+  displ_elastic = displ_elastic + deltat*veloc_elastic + deltatsquareover2*accel_elastic
+  veloc_elastic = veloc_elastic + deltatover2*accel_elastic
+  accel_elastic = ZERO
+
+#endif
+
+end subroutine update_displacement_precondition_newmark_elastic
+!========================================================================
+
+!========================================================================
+subroutine update_displacement_precondition_newmark_poroelastic(deltat,deltatover2,deltatsquareover2,&
+                                                                accels_poroelastic,velocs_poroelastic,&
+                                                                displs_poroelastic,accelw_poroelastic,&
+                                                                velocw_poroelastic,displw_poroelastic)
+  
+  use specfem_par, only : nglob_poroelastic
+  implicit none
+  include 'constants.h'
+
+  double precision :: deltat,deltatover2,deltatsquareover2
+  real(kind=CUSTOM_REAL), dimension(3,nglob_poroelastic) :: accels_poroelastic,velocs_poroelastic,displs_poroelastic,&
+                                                            accelw_poroelastic,velocw_poroelastic,displw_poroelastic
+
+  !PML did not implemented for poroelastic simulation
+
+  !for the solid
+  displs_poroelastic = displs_poroelastic + deltat*velocs_poroelastic + deltatsquareover2*accels_poroelastic
+  velocs_poroelastic = velocs_poroelastic + deltatover2*accels_poroelastic
+  accels_poroelastic = ZERO
+
+  !for the fluid
+  displw_poroelastic = displw_poroelastic + deltat*velocw_poroelastic + deltatsquareover2*accelw_poroelastic
+  velocw_poroelastic = velocw_poroelastic + deltatover2*accelw_poroelastic
+  accelw_poroelastic = ZERO
+
+end subroutine update_displacement_precondition_newmark_poroelastic
+!========================================================================
 
 
-  subroutine update_displacement_precondition_newmark()
+  subroutine update_displacement_precondition_newmark_GPU()
 
   use specfem_par, only : deltat,deltatover2,deltatsquareover2,b_deltat,b_deltatover2,b_deltatsquareover2, GPU_MODE, &
                           Mesh_pointer,deltatf,deltatover2f,deltatsquareover2f,b_deltatf,b_deltatover2f,&
@@ -68,35 +187,8 @@
 
 ! update displacement using finite-difference time scheme (Newmark)
 
-    if(any_acoustic) then
+  if(any_acoustic) then
 
-    if (.not. GPU_MODE ) then
-
-
-      if(time_stepping_scheme==1)then
-      ! Newmark time scheme
-!! DK DK this should be vectorized
-        potential_acoustic_old = potential_acoustic + deltatsquareover2*potential_dot_dot_acoustic
-        potential_acoustic = potential_acoustic + &
-                 deltat*potential_dot_acoustic + deltatsquareover2*potential_dot_dot_acoustic
-        potential_dot_acoustic = potential_dot_acoustic + deltatover2*potential_dot_dot_acoustic
-
-      endif
-      potential_dot_dot_acoustic = ZERO
-
-      if(SIMULATION_TYPE == 3) then ! Adjoint calculation
-!! DK DK this should be vectorized
-        b_potential_acoustic_old = b_potential_acoustic + b_deltatsquareover2*b_potential_dot_dot_acoustic
-        b_potential_acoustic = b_potential_acoustic + b_deltat*b_potential_dot_acoustic + &
-                               b_deltatsquareover2*b_potential_dot_dot_acoustic
-        b_potential_dot_acoustic = b_potential_dot_acoustic &
-                                  + b_deltatover2*b_potential_dot_dot_acoustic
-        b_potential_dot_dot_acoustic = ZERO
-      endif
-
-
-
-    else
     ! wavefields on GPU
     ! check
     if( SIMULATION_TYPE == 3 ) then
@@ -108,53 +200,11 @@
     ! updates acoustic potentials
     call it_update_displacement_ac_cuda(Mesh_pointer,deltatf,deltatsquareover2f,deltatover2f,&
              b_deltatf,b_deltatsquareover2f,b_deltatover2f)
-  endif ! GPU_MODE
-
 
   endif
 
-    if(any_elastic) then
-
-    if (.not. GPU_MODE ) then
-
-
-      if(time_stepping_scheme==1)then
-#ifdef FORCE_VECTORIZATION
-!! DK DK this allows for full vectorization by using a trick to see the 2D array as a 1D array
-!! DK DK whose dimension is the product of the two dimensions, the second dimension being equal to 1
-     do i = 1,3*nglob_elastic !! DK DK here change 3 to NDIM when/if we suppress the 2nd component of the arrays (the SH component)
-!    do i = 1,NDIM*nglob_elastic  !! DK DK this should be the correct size in principle, but not here because of the SH component
-      displ_elastic_old(i,1) = displ_elastic(i,1) + deltatsquareover2 * accel_elastic(i,1)
-      displ_elastic(i,1) = displ_elastic(i,1) &
-                    + deltat*veloc_elastic(i,1) &
-                    + deltatsquareover2*accel_elastic(i,1)
-      veloc_elastic(i,1) = veloc_elastic(i,1) + deltatover2*accel_elastic(i,1)
-     enddo
-#else
-      displ_elastic_old = displ_elastic + deltatsquareover2 * accel_elastic
-      displ_elastic = displ_elastic &
-                    + deltat*veloc_elastic &
-                    + deltatsquareover2*accel_elastic
-      veloc_elastic = veloc_elastic + deltatover2*accel_elastic
-#endif
-      endif
-      accel_elastic_adj_coupling = accel_elastic
-      accel_elastic = ZERO
-
-      if(SIMULATION_TYPE == 3) then ! Adjoint calculation
-!! DK DK this should be fully vectorized
-        b_displ_elastic_old = b_displ_elastic + b_deltatsquareover2 * b_accel_elastic
-        b_displ_elastic = b_displ_elastic &
-                        + b_deltat*b_veloc_elastic &
-                        + b_deltatsquareover2*b_accel_elastic
-        b_veloc_elastic = b_veloc_elastic + b_deltatover2*b_accel_elastic
-        b_accel_elastic = ZERO
-      endif
-
-
-  else ! GPU_MODE
+  if(any_elastic) then
     ! wavefields on GPU
-
     ! check
     if( SIMULATION_TYPE == 3 ) then
       if( PML_BOUNDARY_CONDITIONS )then
@@ -163,83 +213,15 @@
 
       endif
     endif
-
     ! updates elastic displacement and velocity
     ! Includes SIM_TYPE 1 & 3 (for noise tomography)
     call update_displacement_cuda(Mesh_pointer,deltatf,deltatsquareover2f,&
                                   deltatover2f,b_deltatf,b_deltatsquareover2f,b_deltatover2f)
-  endif ! GPU_MODE
-
- endif
-
-
-
-    if(any_poroelastic) then
-
-
-    if (.not. GPU_MODE ) then
-
-
-
-      if(time_stepping_scheme==1)then
-      !for the solid
-      displs_poroelastic_old = displs_poroelastic + deltatover2 * accels_poroelastic
-      displs_poroelastic = displs_poroelastic &
-                         + deltat*velocs_poroelastic &
-                         + deltatsquareover2*accels_poroelastic
-      velocs_poroelastic = velocs_poroelastic + deltatover2*accels_poroelastic
-      accels_poroelastic_adj_coupling = accels_poroelastic
-      accels_poroelastic = ZERO
-      !for the fluid
-      displw_poroelastic = displw_poroelastic &
-                         + deltat*velocw_poroelastic &
-                         + deltatsquareover2*accelw_poroelastic
-      velocw_poroelastic = velocw_poroelastic + deltatover2*accelw_poroelastic
-      accelw_poroelastic_adj_coupling = accelw_poroelastic
-      accelw_poroelastic = ZERO
-      endif
-
-      if(time_stepping_scheme==2)then
-      !for the solid
-      accels_poroelastic_adj_coupling = accels_poroelastic
-      accels_poroelastic = ZERO
-      !for the fluid
-      accelw_poroelastic_adj_coupling = accelw_poroelastic
-      accelw_poroelastic = ZERO
-      endif
-
-      if(time_stepping_scheme==3)then
-      !for the solid
-      accels_poroelastic_adj_coupling = accels_poroelastic
-      accels_poroelastic = ZERO
-      !for the fluid
-      accelw_poroelastic_adj_coupling = accelw_poroelastic
-      accelw_poroelastic = ZERO
-      endif
-
-      if(SIMULATION_TYPE == 3) then ! Adjoint calculation
-        !for the solid
-        b_displs_poroelastic = b_displs_poroelastic &
-                             + b_deltat*b_velocs_poroelastic &
-                             + b_deltatsquareover2*b_accels_poroelastic
-        b_velocs_poroelastic = b_velocs_poroelastic + b_deltatover2*b_accels_poroelastic
-        b_accels_poroelastic = ZERO
-        !for the fluid
-        b_displw_poroelastic = b_displw_poroelastic &
-                             + b_deltat*b_velocw_poroelastic &
-                             + b_deltatsquareover2*b_accelw_poroelastic
-        b_velocw_poroelastic = b_velocw_poroelastic + b_deltatover2*b_accelw_poroelastic
-        b_accelw_poroelastic = ZERO
-      endif
-
-
-   else
-    ! wavefields on GPU
-    call exit_MPI('poroelastic time marching scheme on GPU not implemented yet...')
-  endif ! GPU_MODE
-
 
   endif
 
+  if(any_poroelastic) then
+    call exit_MPI('poroelastic time marching scheme on GPU not implemented yet...')
+  endif
 
-  end subroutine update_displacement_precondition_newmark
+  end subroutine update_displacement_precondition_newmark_GPU
