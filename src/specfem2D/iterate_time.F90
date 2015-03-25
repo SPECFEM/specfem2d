@@ -56,86 +56,88 @@ if (myrank == 0) write(IOUT,400)
 
     do i_stage=1, stage_time_scheme
 
-
-      if( any_acoustic ) then
-        if( time_stepping_scheme == 1 )then
-          call update_displacement_precondition_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
-                                                                 potential_dot_dot_acoustic,potential_dot_acoustic,&
-                                                                 potential_acoustic,potential_acoustic_old, &
-                                                                 PML_BOUNDARY_CONDITIONS)
-        endif
-
-        if( SIMULATION_TYPE == 3 )then
-          !Since we do not do anything in PML region in case of backward simulation, thus we set 
-          !PML_BOUNDARY_CONDITIONS = .false.
-          if( time_stepping_scheme == 1 )then
-            call update_displacement_precondition_newmark_acoustic(b_deltat,b_deltatover2,b_deltatsquareover2,&
-                                                                   b_potential_dot_dot_acoustic,b_potential_dot_acoustic,&
-                                                                   b_potential_acoustic,b_potential_acoustic_old, &
-                                                                   .false.) 
-          endif
-        endif
-      endif
-
-      if( any_elastic ) then
-        if( time_stepping_scheme == 1 )then
-          if( SIMULATION_TYPE == 3 )then
-#ifdef FORCE_VECTORIZATION
-            do i = 1,3*nglob_elastic
-              accel_elastic_adj_coupling(i,1) = accel_elastic(i,1) 
-            enddo
-#else
-            accel_elastic_adj_coupling = accel_elastic 
-#endif  
-          endif
-
-          if( time_stepping_scheme == 1 )then
-            call update_displacement_precondition_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
-                                                                  accel_elastic,veloc_elastic,&
-                                                                  displ_elastic,displ_elastic_old,&
-                                                                  PML_BOUNDARY_CONDITIONS)
-          endif
-        endif
-
-        if( SIMULATION_TYPE == 3 )then
-          !Since we do not do anything in PML region in case of backward simulation, thus we set 
-          !PML_BOUNDARY_CONDITIONS = .false.  
-
-          if( time_stepping_scheme == 1 )then
-            call update_displacement_precondition_newmark_elastic(b_deltat,b_deltatover2,b_deltatsquareover2,&
-                                                                  b_accel_elastic,b_veloc_elastic,&
-                                                                  b_displ_elastic,b_displ_elastic_old,&
-                                                                  .false.) 
-          endif       
-        endif
-      endif
-
-      if( any_poroelastic ) then
-        if( SIMULATION_TYPE == 3 )then
-          accels_poroelastic_adj_coupling = accels_poroelastic
-          accelw_poroelastic_adj_coupling = accelw_poroelastic 
-        endif
-
-        if( time_stepping_scheme == 1 )then
-          call update_displacement_precondition_newmark_poroelastic(deltat,deltatover2,deltatsquareover2,&
-                                                                    accels_poroelastic,velocs_poroelastic,&
-                                                                    displs_poroelastic,accels_poroelastic,&
-                                                                    velocs_poroelastic,displs_poroelastic)
-        endif
-
-        if( SIMULATION_TYPE == 3 )then
-
-          if( time_stepping_scheme == 1 )then
-            !PML did not implemented for poroelastic simulation
-            call update_displacement_precondition_newmark_poroelastic(b_deltat,b_deltatover2,b_deltatsquareover2,&
-                                                                      b_accels_poroelastic,b_velocs_poroelastic,&
-                                                                      b_displs_poroelastic,b_accels_poroelastic,&
-                                                                      b_velocs_poroelastic,b_displs_poroelastic) 
-          endif        
-        endif
+      if ( GPU_MODE ) then
+        call update_displacement_precondition_newmark_GPU()
       endif
 
       if (.NOT. GPU_MODE) then
+
+        if( any_acoustic ) then
+          if( time_stepping_scheme == 1 )then
+            call update_displacement_precondition_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
+                                                                   potential_dot_dot_acoustic,potential_dot_acoustic,&
+                                                                   potential_acoustic,potential_acoustic_old, &
+                                                                   PML_BOUNDARY_CONDITIONS)
+          endif
+
+          if( SIMULATION_TYPE == 3 )then
+            !Since we do not do anything in PML region in case of backward simulation, thus we set 
+            !PML_BOUNDARY_CONDITIONS = .false.
+            if( time_stepping_scheme == 1 )then
+              call update_displacement_precondition_newmark_acoustic(b_deltat,b_deltatover2,b_deltatsquareover2,&
+                                                                     b_potential_dot_dot_acoustic,b_potential_dot_acoustic,&
+                                                                     b_potential_acoustic,b_potential_acoustic_old, &
+                                                                     .false.) 
+            endif
+          endif
+        endif
+
+        if( any_elastic ) then
+          if( time_stepping_scheme == 1 )then
+            if( SIMULATION_TYPE == 3 )then
+#ifdef FORCE_VECTORIZATION
+              do i = 1,3*nglob_elastic
+                accel_elastic_adj_coupling(i,1) = accel_elastic(i,1) 
+              enddo
+#else
+              accel_elastic_adj_coupling = accel_elastic 
+#endif  
+            endif
+
+            if( time_stepping_scheme == 1 )then
+              call update_displacement_precondition_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
+                                                                    accel_elastic,veloc_elastic,&
+                                                                    displ_elastic,displ_elastic_old,&
+                                                                    PML_BOUNDARY_CONDITIONS)
+            endif
+          endif
+
+          if( SIMULATION_TYPE == 3 )then
+            !Since we do not do anything in PML region in case of backward simulation, thus we set 
+            !PML_BOUNDARY_CONDITIONS = .false.  
+            if( time_stepping_scheme == 1 )then
+              call update_displacement_precondition_newmark_elastic(b_deltat,b_deltatover2,b_deltatsquareover2,&
+                                                                    b_accel_elastic,b_veloc_elastic,&
+                                                                    b_displ_elastic,b_displ_elastic_old,&
+                                                                    .false.) 
+            endif       
+          endif
+        endif
+
+        if( any_poroelastic ) then
+          if( SIMULATION_TYPE == 3 )then
+            accels_poroelastic_adj_coupling = accels_poroelastic
+            accelw_poroelastic_adj_coupling = accelw_poroelastic 
+          endif
+
+          if( time_stepping_scheme == 1 )then
+            call update_displacement_precondition_newmark_poroelastic(deltat,deltatover2,deltatsquareover2,&
+                                                                      accels_poroelastic,velocs_poroelastic,&
+                                                                      displs_poroelastic,accels_poroelastic,&
+                                                                      velocs_poroelastic,displs_poroelastic)
+          endif
+
+          if( SIMULATION_TYPE == 3 )then
+            if( time_stepping_scheme == 1 )then
+              !PML did not implemented for poroelastic simulation
+              call update_displacement_precondition_newmark_poroelastic(b_deltat,b_deltatover2,b_deltatsquareover2,&
+                                                                        b_accels_poroelastic,b_velocs_poroelastic,&
+                                                                        b_displs_poroelastic,b_accels_poroelastic,&
+                                                                        b_velocs_poroelastic,b_displs_poroelastic) 
+            endif        
+          endif
+        endif
+
 
       if (AXISYM) then
         do ispec=1,nspec
