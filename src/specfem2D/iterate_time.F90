@@ -94,10 +94,12 @@ if (myrank == 0) write(IOUT,400)
 #endif
             endif
 
-            call update_displacement_precondition_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
-                                                                  accel_elastic,veloc_elastic,&
-                                                                  displ_elastic,displ_elastic_old,&
-                                                                  PML_BOUNDARY_CONDITIONS)
+            if( time_stepping_scheme == 1 ) then
+              call update_displacement_precondition_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
+                                                                    accel_elastic,veloc_elastic,&
+                                                                    displ_elastic,displ_elastic_old,&
+                                                                    PML_BOUNDARY_CONDITIONS)
+            endif
           endif
 
           if( SIMULATION_TYPE == 3 )then
