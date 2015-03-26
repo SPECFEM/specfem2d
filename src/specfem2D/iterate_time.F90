@@ -71,13 +71,13 @@ if (myrank == 0) write(IOUT,400)
           endif
 
           if( SIMULATION_TYPE == 3 )then
-            !Since we do not do anything in PML region in case of backward simulation, thus we set 
+            !Since we do not do anything in PML region in case of backward simulation, thus we set
             !PML_BOUNDARY_CONDITIONS = .false.
             if( time_stepping_scheme == 1 )then
               call update_displacement_precondition_newmark_acoustic(b_deltat,b_deltatover2,b_deltatsquareover2,&
                                                                      b_potential_dot_dot_acoustic,b_potential_dot_acoustic,&
                                                                      b_potential_acoustic,b_potential_acoustic_old, &
-                                                                     .false.) 
+                                                                     .false.)
             endif
           endif
         endif
@@ -87,11 +87,11 @@ if (myrank == 0) write(IOUT,400)
             if( SIMULATION_TYPE == 3 )then
 #ifdef FORCE_VECTORIZATION
               do i = 1,3*nglob_elastic
-                accel_elastic_adj_coupling(i,1) = accel_elastic(i,1) 
+                accel_elastic_adj_coupling(i,1) = accel_elastic(i,1)
               enddo
 #else
-              accel_elastic_adj_coupling = accel_elastic 
-#endif  
+              accel_elastic_adj_coupling = accel_elastic
+#endif
             endif
 
             call update_displacement_precondition_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
@@ -117,7 +117,7 @@ if (myrank == 0) write(IOUT,400)
         if( any_poroelastic ) then
           if( SIMULATION_TYPE == 3 )then
             accels_poroelastic_adj_coupling = accels_poroelastic
-            accelw_poroelastic_adj_coupling = accelw_poroelastic 
+            accelw_poroelastic_adj_coupling = accelw_poroelastic
           endif
 
           if( time_stepping_scheme == 1 )then
@@ -133,8 +133,8 @@ if (myrank == 0) write(IOUT,400)
               call update_displacement_precondition_newmark_poroelastic(b_deltat,b_deltatover2,b_deltatsquareover2,&
                                                                         b_accels_poroelastic,b_velocs_poroelastic,&
                                                                         b_displs_poroelastic,b_accelw_poroelastic,&
-                                                                        b_velocw_poroelastic,b_displw_poroelastic) 
-            endif        
+                                                                        b_velocw_poroelastic,b_displw_poroelastic)
+            endif
           endif
         endif
 
