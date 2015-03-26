@@ -103,16 +103,16 @@ if (myrank == 0) write(IOUT,400)
           endif
 
           if( SIMULATION_TYPE == 3 )then
-            !Since we do not do anything in PML region in case of backward simulation, thus we set 
-            !PML_BOUNDARY_CONDITIONS = .false.  
+            !Since we do not do anything in PML region in case of backward simulation, thus we set
+            !PML_BOUNDARY_CONDITIONS = .false.
             if( time_stepping_scheme == 1 ) then
               call update_displacement_precondition_newmark_elastic(b_deltat,b_deltatover2,b_deltatsquareover2,&
                                                                     b_accel_elastic,b_veloc_elastic,&
                                                                     b_displ_elastic,b_displ_elastic_old,&
-                                                                    .false.) 
-            endif   
+                                                                    .false.)
+            endif
 
-            call compute_forces_viscoelastic_pre_kernel()    
+            call compute_forces_viscoelastic_pre_kernel()
           endif
         endif
 
