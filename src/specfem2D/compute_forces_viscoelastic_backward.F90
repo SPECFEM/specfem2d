@@ -265,6 +265,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
 
   ! loop over spectral elements
   do ispec = ifirstelem,ilastelem
+
     tempx1(:,:) = 0._CUSTOM_REAL; tempy1(:,:) = 0._CUSTOM_REAL; tempz1(:,:) = 0._CUSTOM_REAL
     tempx2(:,:) = 0._CUSTOM_REAL; tempy2(:,:) = 0._CUSTOM_REAL; tempz2(:,:) = 0._CUSTOM_REAL
     tempx3(:,:) = 0._CUSTOM_REAL
@@ -338,10 +339,6 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
 
           duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
           duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
-
-          if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL) ) then ! du_z/dr=0 on the axis
-            duz_dxl = 0.d0
-          endif
 
           if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL) ) then ! du_z/dr=0 on the axis
             duz_dxl = 0.d0
@@ -525,6 +522,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
             sigma_xx = c11*dux_dxl + c13*duz_dzl + c15*(duz_dxl + dux_dzl)
             sigma_zz = c13*dux_dxl + c33*duz_dzl + c35*(duz_dxl + dux_dzl)
             sigma_xz = c15*dux_dxl + c35*duz_dzl + c55*(duz_dxl + dux_dzl)
+            sigma_zx = sigma_xz  !ZN
           endif
 
           ! weak formulation term based on stress tensor (non-symmetric form)

@@ -310,6 +310,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
 
   ifirstelem = 1
   ilastelem = nspec
+
   if( stage_time_scheme == 1 ) then
     time_n = (it-1) * deltat
     time_nsub1 = (it-2) * deltat
@@ -1134,10 +1135,9 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
       if( codeabs(IEDGE4,ispecabs) ) then
         i = 1
         do j = 1,NGLLZ
-
           iglob = ibool(i,j,ispec)
           ! for analytical initial plane wave for Bielak's conditions
-         ! left or right edge, horizontal normal vector
+          ! left or right edge, horizontal normal vector
           if( add_Bielak_conditions .and. initialfield ) then
             if( .not.over_critical_angle ) then
               call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
@@ -1657,8 +1657,8 @@ end subroutine compute_forces_viscoelastic
          dux_dgamma = 0._CUSTOM_REAL; duy_dgamma = 0._CUSTOM_REAL; duz_dgamma = 0._CUSTOM_REAL
 
 
-           b_dux_dxi = 0._CUSTOM_REAL; b_duy_dxi = 0._CUSTOM_REAL; b_duz_dxi = 0._CUSTOM_REAL
-           b_dux_dgamma = 0._CUSTOM_REAL; b_duy_dgamma = 0._CUSTOM_REAL; b_duz_dgamma = 0._CUSTOM_REAL
+         b_dux_dxi = 0._CUSTOM_REAL; b_duy_dxi = 0._CUSTOM_REAL; b_duz_dxi = 0._CUSTOM_REAL
+         b_dux_dgamma = 0._CUSTOM_REAL; b_duy_dgamma = 0._CUSTOM_REAL; b_duz_dgamma = 0._CUSTOM_REAL
 
 
          ! first double loop over GLL points to compute and store gradients
@@ -1673,13 +1673,13 @@ end subroutine compute_forces_viscoelastic
            duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
 
 
-             b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-             b_duy_dxi = b_duy_dxi + b_displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
-             b_duz_dxi = b_duz_dxi + b_displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
+           b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
+           b_duy_dxi = b_duy_dxi + b_displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+           b_duz_dxi = b_duz_dxi + b_displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
 
-             b_dux_dgamma = b_dux_dgamma + b_displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-             b_duy_dgamma = b_duy_dgamma + b_displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
-             b_duz_dgamma = b_duz_dgamma + b_displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
+           b_dux_dgamma = b_dux_dgamma + b_displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
+           b_duy_dgamma = b_duy_dgamma + b_displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
+           b_duz_dgamma = b_duz_dgamma + b_displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
 
          enddo
 
@@ -1697,32 +1697,32 @@ end subroutine compute_forces_viscoelastic
          duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
 
-           b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
-           b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
+         b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
+         b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
 
-           b_duy_dxl = b_duy_dxi*xixl + b_duy_dgamma*gammaxl
-           b_duy_dzl = b_duy_dxi*xizl + b_duy_dgamma*gammazl
+         b_duy_dxl = b_duy_dxi*xixl + b_duy_dgamma*gammaxl
+         b_duy_dzl = b_duy_dxi*xizl + b_duy_dgamma*gammazl
 
-           b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
-           b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
+         b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
+         b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
 
 
-           iglob = ibool(i,j,ispec)
-           if( p_sv ) then !P-SV waves
-             dsxx =  dux_dxl
-             dsxz = HALF * (duz_dxl + dux_dzl)
-             dszz =  duz_dzl
+         iglob = ibool(i,j,ispec)
+         if( p_sv ) then !P-SV waves
+           dsxx =  dux_dxl
+           dsxz = HALF * (duz_dxl + dux_dzl)
+           dszz =  duz_dzl
 
-             b_dsxx =  b_dux_dxl
-             b_dsxz = HALF * (b_duz_dxl + b_dux_dzl)
-             b_dszz =  b_duz_dzl
+           b_dsxx =  b_dux_dxl
+           b_dsxz = HALF * (b_duz_dxl + b_dux_dzl)
+           b_dszz =  b_duz_dzl
 
-             kappa_k(iglob) = (dux_dxl + duz_dzl) *  (b_dux_dxl + b_duz_dzl)
-             mu_k(iglob) = dsxx * b_dsxx + dszz * b_dszz + &
-                           2._CUSTOM_REAL * dsxz * b_dsxz - 1._CUSTOM_REAL/3._CUSTOM_REAL * kappa_k(iglob)
-           else !SH (membrane) waves
-             mu_k(iglob) = duy_dxl * b_duy_dxl + duy_dzl * b_duy_dzl
-           endif
+           kappa_k(iglob) = (dux_dxl + duz_dzl) *  (b_dux_dxl + b_duz_dzl)
+           mu_k(iglob) = dsxx * b_dsxx + dszz * b_dszz + &
+                         2._CUSTOM_REAL * dsxz * b_dsxz - 1._CUSTOM_REAL/3._CUSTOM_REAL * kappa_k(iglob)
+         else !SH (membrane) waves
+           mu_k(iglob) = duy_dxl * b_duy_dxl + duy_dzl * b_duy_dzl
+         endif
        enddo; enddo
      endif
    enddo

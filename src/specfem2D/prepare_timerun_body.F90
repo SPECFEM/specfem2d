@@ -1600,19 +1600,18 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
 ! loop on the four edges of the two elements
           do iedge_acoustic = 1,NEDGES
             do iedge_elastic = 1,NEDGES
-
 ! store the matching topology if the two edges match in inverse order
-              if(ibool(i_begin(iedge_acoustic),j_begin(iedge_acoustic),ispec_acoustic) == &
-                   ibool(i_end(iedge_elastic),j_end(iedge_elastic),ispec_elastic) .and. &
-                   ibool(i_end(iedge_acoustic),j_end(iedge_acoustic),ispec_acoustic) == &
-                   ibool(i_begin(iedge_elastic),j_begin(iedge_elastic),ispec_elastic)) then
+              if( ibool(i_begin(iedge_acoustic),j_begin(iedge_acoustic),ispec_acoustic) == &
+                  ibool(i_end(iedge_elastic),j_end(iedge_elastic),ispec_elastic) .and. &
+                  ibool(i_end(iedge_acoustic),j_end(iedge_acoustic),ispec_acoustic) == &
+                  ibool(i_begin(iedge_elastic),j_begin(iedge_elastic),ispec_elastic)) then
                  fluid_solid_acoustic_iedge(inum) = iedge_acoustic
                  fluid_solid_elastic_iedge(inum) = iedge_elastic
 !                  print *,'edge ',iedge_acoustic,' of acoustic element ',ispec_acoustic, &
 !                          ' is in contact with edge ',iedge_elastic,' of elastic element ',ispec_elastic
-                endif
+              endif
 
-             enddo
+            enddo
           enddo
 
        endif

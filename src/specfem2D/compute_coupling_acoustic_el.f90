@@ -69,7 +69,7 @@
    real(kind=CUSTOM_REAL) :: displ_x,displ_z,displ_n,&
                              xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
    double precision :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z, &
-                             A8,A9,A10,bb_xz_1,bb_xz_2,coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2
+                       A8,A9,A10,bb_xz_1,bb_xz_2,coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2
 
       ! loop on all the coupling edges
 

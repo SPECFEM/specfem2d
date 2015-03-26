@@ -94,23 +94,23 @@ if (myrank == 0) write(IOUT,400)
 #endif  
             endif
 
-            if( time_stepping_scheme == 1 )then
-              call update_displacement_precondition_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
-                                                                    accel_elastic,veloc_elastic,&
-                                                                    displ_elastic,displ_elastic_old,&
-                                                                    PML_BOUNDARY_CONDITIONS)
-            endif
+            call update_displacement_precondition_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
+                                                                  accel_elastic,veloc_elastic,&
+                                                                  displ_elastic,displ_elastic_old,&
+                                                                  PML_BOUNDARY_CONDITIONS)
           endif
 
           if( SIMULATION_TYPE == 3 )then
             !Since we do not do anything in PML region in case of backward simulation, thus we set 
             !PML_BOUNDARY_CONDITIONS = .false.  
-            if( time_stepping_scheme == 1 )then
+            if( time_stepping_scheme == 1 ) then
               call update_displacement_precondition_newmark_elastic(b_deltat,b_deltatover2,b_deltatsquareover2,&
                                                                     b_accel_elastic,b_veloc_elastic,&
                                                                     b_displ_elastic,b_displ_elastic_old,&
                                                                     .false.) 
-            endif       
+            endif   
+
+            call compute_forces_viscoelastic_pre_kernel()    
           endif
         endif
 
@@ -157,11 +157,11 @@ if (myrank == 0) write(IOUT,400)
       ! free surface for an acoustic medium
       if ( nelem_acoustic_surface > 0 ) then
         call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                          potential_acoustic)
+                                           potential_acoustic)
 
         if(SIMULATION_TYPE == 3) then ! Adjoint calculation
           call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                                            b_potential_acoustic)
+                                             b_potential_acoustic)
         endif
       endif
 
@@ -1301,9 +1301,9 @@ if (myrank == 0) write(IOUT,400)
     if(any_elastic) then
 
       call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old,x_source(1),z_source(1), &
-               f0(1),v0x_left(1,it),v0z_left(1,it),v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
-               t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it),t0x_bot(1,it),t0z_bot(1,it), &
-               count_left,count_right,count_bottom,PML_BOUNDARY_CONDITIONS)
+                   f0(1),v0x_left(1,it),v0z_left(1,it),v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
+                   t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it),t0x_bot(1,it),t0z_bot(1,it), &
+                   count_left,count_right,count_bottom,PML_BOUNDARY_CONDITIONS)
 
       if(SIMULATION_TYPE == 3)then
        if(PML_BOUNDARY_CONDITIONS)then
@@ -1360,9 +1360,6 @@ if (myrank == 0) write(IOUT,400)
            enddo
          endif
        endif
-
-
-      call compute_forces_viscoelastic_pre_kernel()
 
       endif
 

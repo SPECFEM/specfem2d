@@ -360,13 +360,13 @@
 !! DK DK (then array bound checking cannot be used, thus for instance do NOT use -check all in Intel ifort)
 ! #define FORCE_VECTORIZATION
 
-call prepare_timerun()
+  call prepare_timerun()
 
 
-call iterate_time()
+  call iterate_time()
 
 
-call finalize_simulation()
+  call finalize_simulation()
 
 
   end program specfem2D
