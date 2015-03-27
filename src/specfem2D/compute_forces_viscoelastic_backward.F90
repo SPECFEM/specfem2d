@@ -46,14 +46,12 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
 
   ! compute forces for the elastic elements
 
-  use specfem_par, only: p_sv,nglob,nspec,myrank,nelemabs, &
-                         ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
-                         source_type,it,NSTEP,anyabs,assign_external_model, &
-                         initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource, &
+  use specfem_par, only: p_sv,nglob,nspec,myrank,nelemabs,it,NSTEP,anyabs,assign_external_model, &
+                         ATTENUATION_VISCOELASTIC_SOLID, &
                          ibool,kmato,numabs,elastic,codeabs,codeabs_corner, &
                          density,poroelastcoef,xix,xiz,gammax,gammaz, &
                          jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,&
-                         source_time_function,sourcearray,anisotropic,anisotropy, &
+                         anisotropic,anisotropy, &
                          e1,e11,e13,e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK,c_LDDRK, &
                          e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_RK, e11_force_RK, e13_force_RK, &
                          hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
@@ -62,8 +60,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
                          deltat,coord, NSOURCES,b_absorb_elastic_left,&
                          b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top,&
                          ib_left,ib_right,ib_bottom,ib_top,&
-                         stage_time_scheme,i_stage,&
-                         is_PML,STACEY_BOUNDARY_CONDITIONS,acoustic
+                         stage_time_scheme,i_stage,is_PML,STACEY_BOUNDARY_CONDITIONS,acoustic
 
   implicit none
 
@@ -82,7 +79,6 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
   !---
 
   integer :: ispec,i,j,k,iglob,ispecabs,ibegin,iend
-  integer :: i_source
 
   ! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duy_dxi,duy_dgamma,duz_dxi,duz_dgamma
@@ -590,7 +586,6 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
           ! along x direction and z direction
           ! and assemble the contributions
           ! we can merge the two loops because NGLLX == NGLLZ
-
           if (AXISYM ) then
             if (is_on_the_axis(ispec) ) then
               do k = 1,NGLJ
@@ -629,7 +624,6 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
   !--- Clayton-Engquist condition if elastic
   !
   if( STACEY_BOUNDARY_CONDITIONS ) then
-
     do ispecabs = 1,nelemabs
 
       ispec = numabs(ispecabs)
@@ -703,27 +697,6 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
       endif  !  end of top absorbing boundary
     enddo
   endif  ! end of absorbing boundaries
-
-  ! --- add the source if it is a moment tensor
-  if( .not. initialfield ) then
-    do i_source=1,NSOURCES
-      ! if this processor core carries the source and the source element is elastic
-      if( is_proc_source(i_source) == 1 .and. elastic(ispec_selected_source(i_source)) ) then
-        ! moment tensor
-        if( source_type(i_source) == 2 ) then
-          if( .not. p_sv)  call exit_MPI('cannot have moment tensor source in SH (membrane) waves calculation')
-          do j=1,NGLLZ; do i=1,NGLLX
-            iglob = ibool(i,j,ispec_selected_source(i_source))
-            b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) + &
-                 sourcearray(i_source,1,i,j) * source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1)
-            b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) + &
-                 sourcearray(i_source,2,i,j) * source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1)
-          enddo; enddo
-        endif !if( source_type(i_source) == 2)
-      endif ! if this processor core carries the source and the source element is elastic
-    enddo ! do i_source=1,NSOURCES
-
-  endif ! if not using an initial field
 
 end subroutine compute_forces_viscoelastic_backward
 

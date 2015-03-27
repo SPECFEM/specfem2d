@@ -48,14 +48,12 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
 
   ! compute forces for the elastic elements
 
-  use specfem_par, only: p_sv,nglob,nspec,myrank,nelemabs, &
-                         ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
-                         source_type,it,NSTEP,anyabs,assign_external_model, &
+  use specfem_par, only: p_sv,nglob,nspec,nelemabs,it,NSTEP,anyabs,assign_external_model, &
                          initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource, &
                          ibool,kmato,numabs,elastic,codeabs,codeabs_corner, &
                          density,poroelastcoef,xix,xiz,gammax,gammaz, &
                          jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,&
-                         source_time_function,sourcearray,adj_sourcearrays,anisotropic,anisotropy, &
+                         anisotropic,anisotropy, &
                          e1,e11,e13,e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK,c_LDDRK, &
                          e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_RK, e11_force_RK, e13_force_RK, &
                          hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
@@ -63,7 +61,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
                          inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
                          deltat,coord,add_Bielak_conditions, &
                          A_plane, B_plane, C_plane, anglesource_refl, c_inc, c_refl, time_offset, &
-                         over_critical_angle,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,b_absorb_elastic_left,&
+                         over_critical_angle,SIMULATION_TYPE,SAVE_FORWARD,b_absorb_elastic_left,&
                          b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top,&
                          ib_left,ib_right,ib_bottom,ib_top,&
                          stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring,&
@@ -89,7 +87,6 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
   double precision, dimension(nbot) :: v0x_bot,v0z_bot,t0x_bot,t0z_bot
 
   ! CPML coefficients and memory variables
-
   logical :: PML_BOUNDARY_CONDITIONS
 
 
@@ -97,8 +94,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
   !--- local variables
   !---
 
-  integer :: ispec,i,j,k,iglob,ispecabs,ibegin,iend,irec,irec_local
-  integer :: i_source
+  integer :: ispec,i,j,k,iglob,ispecabs,ibegin,iend
 
   ! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duy_dxi,duy_dgamma,duz_dxi,duz_dgamma
@@ -155,9 +151,9 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
 
   double precision :: time_n,time_nsub1
   double precision :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z, &
-                            A5,A6,A7, bb_zx_1,bb_zx_2,coef0_zx_1,coef1_zx_1,coef2_zx_1,coef0_zx_2,coef1_zx_2,coef2_zx_2,&
-                            A8,A9,A10,bb_xz_1,bb_xz_2,coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2,&
-                            A0,A1,A2,A3,A4,bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2
+                      A5,A6,A7, bb_zx_1,bb_zx_2,coef0_zx_1,coef1_zx_1,coef2_zx_1,coef0_zx_2,coef1_zx_2,coef2_zx_2,&
+                      A8,A9,A10,bb_xz_1,bb_xz_2,coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2,&
+                      A0,A1,A2,A3,A4,bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2
   integer :: CPML_region_local,singularity_type_zx,singularity_type_xz,singularity_type
 
   ! temp variable RK
@@ -1572,57 +1568,6 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
       endif ! end of is_PML
     enddo ! end specabs loop
   endif  ! end of PML_BOUNDARY_CONDITIONS
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  ! --- add the source if it is a moment tensor
-  if( .not. initialfield ) then
-    do i_source=1,NSOURCES
-      ! if this processor core carries the source and the source element is elastic
-      if( is_proc_source(i_source) == 1 .and. elastic(ispec_selected_source(i_source)) ) then
-
-        ! moment tensor
-        if( source_type(i_source) == 2 ) then
-          if( .not. p_sv )  call exit_MPI('cannot have moment tensor source in SH (membrane) waves calculation')
-          if( SIMULATION_TYPE == 1 ) then  ! forward wavefield
-            ! add source array
-            do j=1,NGLLZ; do i=1,NGLLX
-              iglob = ibool(i,j,ispec_selected_source(i_source))
-              accel_elastic(1,iglob) = accel_elastic(1,iglob) + &
-                                       sourcearray(i_source,1,i,j) * source_time_function(i_source,it,i_stage)
-              accel_elastic(3,iglob) = accel_elastic(3,iglob) + &
-                                       sourcearray(i_source,2,i,j) * source_time_function(i_source,it,i_stage)
-            enddo; enddo
-          endif
-        endif !if( source_type(i_source) == 2)
-
-      endif ! if this processor core carries the source and the source element is elastic
-    enddo ! do i_source=1,NSOURCES
-
-    if( SIMULATION_TYPE == 3 ) then   ! adjoint wavefield
-
-      irec_local = 0
-      do irec = 1,nrec
-        !   add the source (only if this proc carries the source)
-        if( myrank == which_proc_receiver(irec) ) then
-          irec_local = irec_local + 1
-          if( elastic(ispec_selected_rec(irec)) ) then
-            ! add source array
-            do j=1,NGLLZ; do i=1,NGLLX
-              iglob = ibool(i,j,ispec_selected_rec(irec))
-              if( p_sv ) then !P-SH waves
-                accel_elastic(1,iglob) = accel_elastic(1,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
-                accel_elastic(3,iglob) = accel_elastic(3,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,3,i,j)
-              else !SH (membrane) wavescompute_forces_v
-                accel_elastic(2,iglob) = accel_elastic(2,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,2,i,j)
-              endif
-            enddo; enddo
-          endif ! if element is elastic
-        endif ! if this processor core carries the adjoint source and the source element is elastic
-
-      enddo ! irec = 1,nrec
-    endif ! if SIMULATION_TYPE == 3 adjoint wavefield
-
-  endif ! if not using an initial field
 
 end subroutine compute_forces_viscoelastic
 

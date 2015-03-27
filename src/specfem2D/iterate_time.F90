@@ -1111,14 +1111,11 @@ integer i,j,ispec,i_source,iglob,k
 
     endif ! of if(any_gravitoacoustic)
 
-
   else ! GPU_MODE
 
     if ((any_gravitoacoustic)) call exit_mpi('gravitoacoustic not implemented in GPU MODE yet')
 
   endif
-
-
 
 ! *********************************************************
 ! ************* main solver for the elastic elements
@@ -1581,73 +1578,20 @@ integer i,j,ispec,i_source,iglob,k
 ! ************************************************************************************
 
     if(any_elastic) then
-
-      ! --- add the source if it is a collocated force
+      ! --- add the source
       if(.not. initialfield) then
+        if( SIMULATION_TYPE == 1) then
+           call compute_add_sources_viscoelastic(accel_elastic,it,i_stage)
+        endif
 
-        do i_source=1,NSOURCES
-          ! if this processor core carries the source and the source element is elastic
-          if (is_proc_source(i_source) == 1 .and. elastic(ispec_selected_source(i_source))) then
+        if(SIMULATION_TYPE == 3) then   ! adjoint and backward wavefield
+           call compute_add_sources_viscoelastic_adjoint()
+           call compute_add_sources_viscoelastic(b_accel_elastic,NSTEP-it+1,stage_time_scheme-i_stage+1)
 
-            ! collocated force
-            if(source_type(i_source) == 1) then
-              if(SIMULATION_TYPE == 1) then  ! forward wavefield
-                if(p_sv) then ! P-SV calculation
-                  do j = 1,NGLLZ
-                    do i = 1,NGLLX
-                      iglob = ibool(i,j,ispec_selected_source(i_source))
-                      hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-                      accel_elastic(1,iglob) = accel_elastic(1,iglob) &
-                        - sin(anglesource(i_source))*source_time_function(i_source,it,i_stage)*hlagrange
-                      accel_elastic(3,iglob) = accel_elastic(3,iglob) &
-                        + cos(anglesource(i_source))*source_time_function(i_source,it,i_stage)*hlagrange
-                    enddo
-                  enddo
-                else    ! SH (membrane) calculation
-                  do j = 1,NGLLZ
-                    do i = 1,NGLLX
-                      iglob = ibool(i,j,ispec_selected_source(i_source))
-                      hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-                      accel_elastic(2,iglob) = accel_elastic(2,iglob) &
-                            + source_time_function(i_source,it,i_stage)*hlagrange
-                    enddo
-                  enddo
-                endif
-              else                   ! backward wavefield
-                if(p_sv) then ! P-SV calculation
-                  do j = 1,NGLLZ
-                    do i = 1,NGLLX
-                      iglob = ibool(i,j,ispec_selected_source(i_source))
-                      hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-                      b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) &
-                        - sin(anglesource(i_source))*source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1) &
-                          *hlagrange
-                      b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) &
-                        + cos(anglesource(i_source))*source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1) &
-                          *hlagrange
-                    enddo
-                  enddo
-                else    ! SH (membrane) calculation
-                  do j = 1,NGLLZ
-                    do i = 1,NGLLX
-                      iglob = ibool(i,j,ispec_selected_source(i_source))
-                      hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-                      b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) &
-                            + source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1)*hlagrange
-                    enddo
-                  enddo
-                endif
-
-              endif  !endif SIMULATION_TYPE == 1
-            endif
-
-          endif ! if this processor core carries the source and the source element is elastic
-        enddo ! do i_source=1,NSOURCES
+        endif ! SIMULATION_TYPE == 3 ! adjoint and backward wavefield
 
 !<NOISE_TOMOGRAPHY
-
         ! inject wavefield sources for noise simulations
-
         if (NOISE_TOMOGRAPHY == 1) then
           call  add_point_source_noise()
 
@@ -1659,10 +1603,7 @@ integer i,j,ispec,i_source,iglob,k
             call add_surface_movie_noise(b_accel_elastic)
           endif
         endif
-
 !>NOISE_TOMOGRAPHY
-
-
       endif ! if not using an initial field
     endif !if(any_elastic)
 
