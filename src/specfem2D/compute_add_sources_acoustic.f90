@@ -44,7 +44,7 @@
 ! for acoustic solver
 
   subroutine compute_add_sources_acoustic(potential_dot_dot_acoustic,it,i_stage)
- 
+
   use specfem_par, only: acoustic,nglob_acoustic,&
                          NSOURCES,source_type,source_time_function,&
                          is_proc_source,ispec_selected_source,&
@@ -81,7 +81,7 @@
           enddo
         enddo
       ! moment tensor
-      elseif(source_type(i_source) == 2) then
+      else if(source_type(i_source) == 2) then
          call exit_MPI('cannot have moment tensor source in acoustic element')
       endif
     endif ! if this processor core carries the source and the source element is acoustic
@@ -153,7 +153,7 @@
     !--- left acoustic forcing boundary
     if( codeacforcing(IEDGE4,inum) ) then
       i = 1
-      do j = 1,NGLLZ        
+      do j = 1,NGLLZ
         iglob = ibool(i,j,ispec)
 
         xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)

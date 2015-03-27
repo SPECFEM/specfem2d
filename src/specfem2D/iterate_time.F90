@@ -137,7 +137,7 @@ integer i,j,ispec,i_source,iglob,k
               b_potential_dot_dot_acoustic = 0._CUSTOM_REAL
 #endif
             endif
-         
+
           endif
         endif
 
@@ -170,13 +170,13 @@ integer i,j,ispec,i_source,iglob,k
           endif
 
           if( SIMULATION_TYPE == 3 )then
-            !Since we do not do anything in PML region in case of backward simulation, thus we set 
-            !PML_BOUNDARY_CONDITIONS = .false.  
+            !Since we do not do anything in PML region in case of backward simulation, thus we set
+            !PML_BOUNDARY_CONDITIONS = .false.
             if( time_stepping_scheme == 1 ) then
               call update_displacement_precondition_newmark_elastic(b_deltat,b_deltatover2,b_deltatsquareover2,&
                                                                     b_accel_elastic,b_veloc_elastic,&
                                                                     b_displ_elastic,b_displ_elastic_old,&
-                                                                    .false.) 
+                                                                    .false.)
             else
 #ifdef FORCE_VECTORIZATION
               do i = 1,3*nglob_elastic
@@ -185,9 +185,9 @@ integer i,j,ispec,i_source,iglob,k
 #else
               b_accel_elastic = 0._CUSTOM_REAL
 #endif
-            endif   
+            endif
 
-            call compute_forces_viscoelastic_pre_kernel()    
+            call compute_forces_viscoelastic_pre_kernel()
           endif
         endif
 
@@ -205,7 +205,7 @@ integer i,j,ispec,i_source,iglob,k
           else
             accels_poroelastic = 0._CUSTOM_REAL
             accelw_poroelastic = 0._CUSTOM_REAL
-          endif   
+          endif
 
           if( SIMULATION_TYPE == 3 )then
             if( time_stepping_scheme == 1 )then
@@ -217,7 +217,7 @@ integer i,j,ispec,i_source,iglob,k
             else
               b_accels_poroelastic = 0._CUSTOM_REAL
               b_accelw_poroelastic = 0._CUSTOM_REAL
-            endif 
+            endif
           endif
         endif
 
