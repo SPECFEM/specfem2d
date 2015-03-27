@@ -1,4 +1,46 @@
 
+!========================================================================
+!
+!                   S P E C F E M 2 D  Version 7 . 0
+!                   --------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This software is a computer program whose purpose is to solve
+! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
+! using a spectral-element method (SEM).
+!
+! This software is governed by the CeCILL license under French law and
+! abiding by the rules of distribution of free software. You can use,
+! modify and/or redistribute the software under the terms of the CeCILL
+! license as circulated by CEA, CNRS and Inria at the following URL
+! "http://www.cecill.info".
+!
+! As a counterpart to the access to the source code and rights to copy,
+! modify and redistribute granted by the license, users are provided only
+! with a limited warranty and the software's author, the holder of the
+! economic rights, and the successive licensors have only limited
+! liability.
+!
+! In this respect, the user's attention is drawn to the risks associated
+! with loading, using, modifying and/or developing or reproducing the
+! software by the user in light of its specific status of free software,
+! that may mean that it is complicated to manipulate, and that also
+! therefore means that it is reserved for developers and experienced
+! professionals having in-depth computer knowledge. Users are therefore
+! encouraged to load and test the software's suitability as regards their
+! requirements in conditions enabling the security of their systems and/or
+! data to be ensured and, more generally, to use and operate it in the
+! same conditions as regards security.
+!
+! The full text of the license is available in file "LICENSE".
+!
+!========================================================================
+
 subroutine iterate_time()
 
 #ifdef USE_MPI
@@ -9,14 +51,14 @@ subroutine iterate_time()
 
   implicit none
 
-integer i,j,ispec,i_source,iglob,irec,k
+integer i,j,ispec,i_source,iglob,k
 
 #ifdef USE_MPI
   include "precision.h"
 #endif
 
 
-if (myrank == 0) write(IOUT,400)
+  if (myrank == 0) write(IOUT,400)
 
 
 
@@ -68,6 +110,14 @@ if (myrank == 0) write(IOUT,400)
                                                                    potential_dot_dot_acoustic,potential_dot_acoustic,&
                                                                    potential_acoustic,potential_acoustic_old, &
                                                                    PML_BOUNDARY_CONDITIONS)
+          else
+#ifdef FORCE_VECTORIZATION
+            do i = 1,nglob_acoustic
+              potential_dot_dot_acoustic(i) = 0._CUSTOM_REAL
+            enddo
+#else
+            potential_dot_dot_acoustic = 0._CUSTOM_REAL
+#endif
           endif
 
           if( SIMULATION_TYPE == 3 )then
@@ -78,7 +128,16 @@ if (myrank == 0) write(IOUT,400)
                                                                      b_potential_dot_dot_acoustic,b_potential_dot_acoustic,&
                                                                      b_potential_acoustic,b_potential_acoustic_old, &
                                                                      .false.)
+            else
+#ifdef FORCE_VECTORIZATION
+              do i = 1,nglob_acoustic
+                b_potential_dot_dot_acoustic(i) = 0._CUSTOM_REAL
+              enddo
+#else
+              b_potential_dot_dot_acoustic = 0._CUSTOM_REAL
+#endif
             endif
+         
           endif
         endif
 
@@ -99,20 +158,36 @@ if (myrank == 0) write(IOUT,400)
                                                                     accel_elastic,veloc_elastic,&
                                                                     displ_elastic,displ_elastic_old,&
                                                                     PML_BOUNDARY_CONDITIONS)
+            else
+#ifdef FORCE_VECTORIZATION
+              do i = 1,3*nglob_elastic
+                accel_elastic(i,1) = 0._CUSTOM_REAL
+              enddo
+#else
+              accel_elastic = 0._CUSTOM_REAL
+#endif
             endif
           endif
 
           if( SIMULATION_TYPE == 3 )then
-            !Since we do not do anything in PML region in case of backward simulation, thus we set
-            !PML_BOUNDARY_CONDITIONS = .false.
+            !Since we do not do anything in PML region in case of backward simulation, thus we set 
+            !PML_BOUNDARY_CONDITIONS = .false.  
             if( time_stepping_scheme == 1 ) then
               call update_displacement_precondition_newmark_elastic(b_deltat,b_deltatover2,b_deltatsquareover2,&
                                                                     b_accel_elastic,b_veloc_elastic,&
                                                                     b_displ_elastic,b_displ_elastic_old,&
-                                                                    .false.)
-            endif
+                                                                    .false.) 
+            else
+#ifdef FORCE_VECTORIZATION
+              do i = 1,3*nglob_elastic
+                b_accel_elastic(i,1) = 0._CUSTOM_REAL
+              enddo
+#else
+              b_accel_elastic = 0._CUSTOM_REAL
+#endif
+            endif   
 
-            call compute_forces_viscoelastic_pre_kernel()
+            call compute_forces_viscoelastic_pre_kernel()    
           endif
         endif
 
@@ -127,7 +202,10 @@ if (myrank == 0) write(IOUT,400)
                                                                       accels_poroelastic,velocs_poroelastic,&
                                                                       displs_poroelastic,accelw_poroelastic,&
                                                                       velocw_poroelastic,displw_poroelastic)
-          endif
+          else
+            accels_poroelastic = 0._CUSTOM_REAL
+            accelw_poroelastic = 0._CUSTOM_REAL
+          endif   
 
           if( SIMULATION_TYPE == 3 )then
             if( time_stepping_scheme == 1 )then
@@ -136,7 +214,10 @@ if (myrank == 0) write(IOUT,400)
                                                                         b_accels_poroelastic,b_velocs_poroelastic,&
                                                                         b_displs_poroelastic,b_accelw_poroelastic,&
                                                                         b_velocw_poroelastic,b_displw_poroelastic)
-            endif
+            else
+              b_accels_poroelastic = 0._CUSTOM_REAL
+              b_accelw_poroelastic = 0._CUSTOM_REAL
+            endif 
           endif
         endif
 
@@ -229,202 +310,15 @@ if (myrank == 0) write(IOUT,400)
     ! *********************************************************
     ! ************* add acoustic forcing at a rigid boundary
     ! *********************************************************
-    if(ACOUSTIC_FORCING) then
-      ! loop on all the forced edges
-
-     do inum = 1,nelem_acforcing
-
-        ispec = numacforcing(inum)
-
-        !--- left acoustic forcing boundary
-        if(codeacforcing(IEDGE4,inum)) then
-
-           i = 1
-
-           do j = 1,NGLLZ
-
-              ! acoustic spectral element
-              if(acoustic(ispec)) then
-                 iglob = ibool(i,j,ispec)
-
-                 xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
-                 zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-                 jacobian1D = sqrt(xgamma**2 + zgamma**2)
-                 nx = - zgamma / jacobian1D
-                 nz = + xgamma / jacobian1D
-
-                 weight = jacobian1D * wzgll(j)
-
-          ! define displacement components which will force the boundary
-
-            if(PML_BOUNDARY_CONDITIONS) then
-              if(is_PML(ispec)) then
-              displ_x = 0
-              displ_z = 0
-              else
-              call acoustic_forcing_boundary()
-              endif
-
-            else
-
-            call acoustic_forcing_boundary()
-            endif
-
-          ! compute dot product
-          displ_n = displ_x*nx + displ_z*nz
-
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
-
-              endif  !end of acoustic
-           enddo
-
-        endif  !  end of left acoustic forcing boundary
-
-        !--- right acoustic forcing boundary
-        if(codeacforcing(IEDGE2,inum)) then
-
-           i = NGLLX
-
-           do j = 1,NGLLZ
-
-              ! acoustic spectral element
-              if(acoustic(ispec)) then
-                 iglob = ibool(i,j,ispec)
-
-                 xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
-                 zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-                 jacobian1D = sqrt(xgamma**2 + zgamma**2)
-                 nx = + zgamma / jacobian1D
-                 nz = - xgamma / jacobian1D
-
-                 weight = jacobian1D * wzgll(j)
-
-          ! define displacement components which will force the boundary
-
-            if(PML_BOUNDARY_CONDITIONS) then
-
-              if(is_PML(ispec)) then
-              displ_x = 0
-              displ_z = 0
-              else
-              call acoustic_forcing_boundary()
-              endif
-
-            else
-
-            call acoustic_forcing_boundary()
-
-            endif
-
-          ! compute dot product
-          displ_n = displ_x*nx + displ_z*nz
-
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
-
-              endif  !end of acoustic
-           enddo
-
-        endif  !  end of right acoustic forcing boundary
-
-        !--- bottom acoustic forcing boundary
-        if(codeacforcing(IEDGE1,inum)) then
-
-           j = 1
-
-           do i = 1,NGLLX
-
-              ! acoustic spectral element
-              if(acoustic(ispec)) then
-                 iglob = ibool(i,j,ispec)
-
-                 xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-                 zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
-                 jacobian1D = sqrt(xxi**2 + zxi**2)
-                 nx = + zxi / jacobian1D
-                 nz = - xxi / jacobian1D
-
-                 weight = jacobian1D * wxgll(i)
-
-          ! define displacement components which will force the boundary
-
-            if(PML_BOUNDARY_CONDITIONS) then
-              if(is_PML(ispec)) then
-              displ_x = 0
-              displ_z = 0
-              else
-              call acoustic_forcing_boundary()
-              endif
-
-            else
-            call acoustic_forcing_boundary()
-
-            endif
-
-          ! compute dot product
-          displ_n = displ_x*nx + displ_z*nz
-
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
-
-              endif  !end of acoustic
-           enddo
-
-        endif  !  end of bottom acoustic forcing boundary
-
-        !--- top acoustic forcing boundary
-        if(codeacforcing(IEDGE3,inum)) then
-
-           j = NGLLZ
-
-           do i = 1,NGLLX
-
-              ! acoustic spectral element
-              if(acoustic(ispec)) then
-                 iglob = ibool(i,j,ispec)
-
-                 xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-                 zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
-                 jacobian1D = sqrt(xxi**2 + zxi**2)
-                 nx = - zxi / jacobian1D
-                 nz = + xxi / jacobian1D
-
-                 weight = jacobian1D * wxgll(i)
-
-          ! define displacement components which will force the boundary
-
-            if(PML_BOUNDARY_CONDITIONS) then
-
-              if(is_PML(ispec)) then
-              displ_x = 0
-              displ_z = 0
-              else
-              call acoustic_forcing_boundary()
-              endif
-
-            else
-
-            call acoustic_forcing_boundary()
-
-            endif
-
-          ! compute dot product
-          displ_n = displ_x*nx + displ_z*nz
-
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
-
-              endif  !end of acoustic
-           enddo
-
-        endif  !  end of top acoustic forcing boundary
-
-     enddo
-
-     endif ! of if ACOUSTIC_FORCING
+    if( ACOUSTIC_FORCING ) then
+      call add_acoustic_forcing_at_rigid_boundary(potential_dot_dot_acoustic)
+    endif
 
     endif ! end of test if any acoustic element
 
-! *********************************************************
-! ************* add coupling with the elastic side
-! *********************************************************
+   ! *********************************************************
+   ! ************* add coupling with the elastic side
+   ! *********************************************************
 
     if(coupled_acoustic_elastic) then
 
@@ -555,87 +449,20 @@ if (myrank == 0) write(IOUT,400)
 ! ************************************************************************************
 
     if(any_acoustic) then
-
       ! --- add the source
       if(.not. initialfield) then
+        if( SIMULATION_TYPE == 1) then
+           call compute_add_sources_acoustic(potential_dot_dot_acoustic,it,i_stage)
+        endif
 
-        do i_source=1,NSOURCES
-          ! if this processor core carries the source and the source element is acoustic
-          if (is_proc_source(i_source) == 1 .and. acoustic(ispec_selected_source(i_source))) then
+        if(SIMULATION_TYPE == 3) then   ! adjoint and backward wavefield
 
-            ! collocated force
-            ! beware, for acoustic medium, source is: pressure divided by Kappa of the fluid
-            ! the sign is negative because pressure p = - Chi_dot_dot therefore we need
-            ! to add minus the source to Chi_dot_dot to get plus the source in pressure
-            if(source_type(i_source) == 1) then
-              if(SIMULATION_TYPE == 1) then
-                ! forward wavefield
-                do j = 1,NGLLZ
-                  do i = 1,NGLLX
-                    iglob = ibool(i,j,ispec_selected_source(i_source))
-                    hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-                    potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
-                                            - source_time_function(i_source,it,i_stage)*hlagrange &
-                                              !ZN becareful the following line is new added, thus when do comparison
-                                              !ZN of the new code with the old code, you will have big difference if you
-                                              !ZN do not tune the source
-                                              / kappastore(i,j,ispec_selected_source(i_source))
-                  enddo
-                enddo
-              else
-                ! backward wavefield
-                do j = 1,NGLLZ
-                  do i = 1,NGLLX
-                    iglob = ibool(i,j,ispec_selected_source(i_source))
-                    hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-                    b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) &
-                                          - source_time_function(i_source,NSTEP-it+1,stage_time_scheme-i_stage+1)*hlagrange &
-                                            !ZN becareful the following line is new added, thus when do comparison
-                                            !ZN of the new code with the old code, you will have big difference if you
-                                            !ZN do not tune the source
-                                            / kappastore(i,j,ispec_selected_source(i_source))
-                  enddo
-                enddo
-              endif
+           call compute_add_sources_acoustic_adjoint()
+           call compute_add_sources_acoustic(b_potential_dot_dot_acoustic,NSTEP-it+1,stage_time_scheme-i_stage+1)
 
-            ! moment tensor
-            else if(source_type(i_source) == 2) then
-              call exit_MPI('cannot have moment tensor source in acoustic element')
-
-            endif
-          endif ! if this processor core carries the source and the source element is acoustic
-        enddo ! do i_source=1,NSOURCES
-
-        if(SIMULATION_TYPE == 3) then   ! adjoint wavefield
-          irec_local = 0
-          do irec = 1,nrec
-            !   add the source (only if this proc carries the source)
-            if (myrank == which_proc_receiver(irec)) then
-
-              irec_local = irec_local + 1
-              if (acoustic(ispec_selected_rec(irec))) then
-                ! add source array
-                do j=1,NGLLZ
-                  do i=1,NGLLX
-                    iglob = ibool(i,j,ispec_selected_rec(irec))
-                    potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
-                                  + adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j) &
-                                  !ZN becareful the following line is new added, thus when do comparison
-                                  !ZN of the new code with the old code, you will have big difference if you
-                                  !ZN do not tune the source
-                                  / kappastore(i,j,ispec_selected_rec(irec))
-                  enddo
-                enddo
-              endif ! if element acoustic
-
-            endif ! if this processor core carries the adjoint source
-          enddo ! irec = 1,nrec
         endif ! SIMULATION_TYPE == 3 adjoint wavefield
-
       endif ! if not using an initial field
-
     endif !if(any_acoustic)
-
 
 ! assembling potential_dot_dot for acoustic elements
 #ifdef USE_MPI
@@ -770,15 +597,14 @@ if (myrank == 0) write(IOUT,400)
 
         if(SIMULATION_TYPE == 3) then
           call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                                          b_potential_acoustic)
+                                             b_potential_acoustic)
         endif
 
       endif
 
       ! update the potential field (use a new array here) for coupling terms
-      potential_acoustic_adj_coupling = potential_acoustic &
-                          + deltat*potential_dot_acoustic &
-                          + deltatsquareover2*potential_dot_dot_acoustic
+      potential_acoustic_adj_coupling = potential_acoustic + deltat*potential_dot_acoustic + &
+                                        deltatsquareover2*potential_dot_dot_acoustic
 
     endif ! of if(any_acoustic)
 
