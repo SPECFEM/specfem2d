@@ -91,7 +91,7 @@
       if( source_type(i_source) == 2 ) then
         if( .not. p_sv )  call exit_MPI('cannot have moment tensor source in SH (membrane) waves calculation')
         ! add source array
-        do j=1,NGLLZ; 
+        do j=1,NGLLZ;
           do i=1,NGLLX
             iglob = ibool(i,j,ispec_selected_source(i_source))
             accel_elastic(1,iglob) = accel_elastic(1,iglob) + &
