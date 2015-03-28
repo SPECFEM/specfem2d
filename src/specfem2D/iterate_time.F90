@@ -319,29 +319,22 @@ integer i,j,ispec,i_source,iglob,k
    ! *********************************************************
    ! ************* add coupling with the elastic side
    ! *********************************************************
-
-    if(coupled_acoustic_elastic) then
-
-      if(SIMULATION_TYPE == 1)then
+    if( coupled_acoustic_elastic ) then
+      if( SIMULATION_TYPE == 1 )then
         call compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic, PML_BOUNDARY_CONDITIONS)
       endif
 
-      if(SIMULATION_TYPE == 3)then
-
+      if( SIMULATION_TYPE == 3 )then
         accel_elastic_adj_coupling2 = - accel_elastic_adj_coupling
-
         call compute_coupling_acoustic_el(accel_elastic_adj_coupling2,displ_elastic_old,potential_dot_dot_acoustic,&
                                           PML_BOUNDARY_CONDITIONS)
 
-        call compute_coupling_acoustic_el(b_displ_elastic,b_displ_elastic_old,b_potential_dot_dot_acoustic,.false.)
-
+        call compute_coupling_acoustic_el_backward(b_displ_elastic,b_potential_dot_dot_acoustic)
       endif
-
     endif
-
-! *********************************************************
-! ************* add coupling with the poroelastic side
-! *********************************************************
+   ! *********************************************************
+   ! ************* add coupling with the poroelastic side
+   ! *********************************************************
 
     if(coupled_acoustic_poro) then
 
