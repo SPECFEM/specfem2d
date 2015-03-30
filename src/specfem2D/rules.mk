@@ -68,18 +68,21 @@ specfem2D_OBJECTS = \
 	$O/compute_Bielak_conditions.spec.o \
 	$O/compute_arrays_source.spec.o \
 	$O/compute_coupling_acoustic_el.spec.o \
-	$O/compute_coupling_viscoelastic_ac.spec.o \
 	$O/compute_coupling_acoustic_po.spec.o \
 	$O/compute_curl_one_element.spec.o \
 	$O/compute_energy.spec.o \
 	$O/compute_forces_acoustic.spec.o \
 	$O/compute_forces_acoustic_backward.spec.o \
+	$O/compute_stacey_acoustic.spec.o \
 	$O/compute_add_sources_acoustic.spec.o \
 	$O/compute_forces_gravitoacoustic.spec.o \
 	$O/compute_forces_poro_fluid.spec.o \
 	$O/compute_forces_poro_solid.spec.o \
 	$O/compute_forces_viscoelastic.spec.o \
 	$O/compute_forces_viscoelastic_backward.spec.o \
+	$O/compute_coupling_viscoelastic_ac.spec.o \
+	$O/compute_coupling_viscoelastic_po.spec.o \
+	$O/compute_stacey_viscoelastic.spec.o \
 	$O/compute_add_sources_viscoelastic.spec.o \
 	$O/compute_gradient_attenuation.spec.o \
 	$O/compute_normal_vector.spec.o \
@@ -295,18 +298,21 @@ $O/check_grid.spec.o: $O/specfem2D_par.spec.o
 $O/check_stability.spec.o: $O/specfem2D_par.spec.o
 $O/compute_arrays_source.spec.o: $O/specfem2D_par.spec.o
 $O/compute_coupling_acoustic_el.spec.o: $O/specfem2D_par.spec.o
-$O/compute_coupling_viscoelastic_ac.spec.o: $O/specfem2D_par.spec.o
 $O/compute_coupling_acoustic_po.spec.o: $O/specfem2D_par.spec.o
 $O/compute_curl_one_element.spec.o: $O/specfem2D_par.spec.o
 $O/compute_energy.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_acoustic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_add_sources_acoustic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_acoustic_backward.spec.o: $O/specfem2D_par.spec.o
+$O/compute_stacey_acoustic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_gravitoacoustic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_poro_fluid.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_poro_solid.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_viscoelastic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_viscoelastic_backward.spec.o: $O/specfem2D_par.spec.o
+$O/compute_coupling_viscoelastic_ac.spec.o: $O/specfem2D_par.spec.o
+$O/compute_coupling_viscoelastic_po.spec.o: $O/specfem2D_par.spec.o
+$O/compute_stacey_viscoelastic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_add_sources_viscoelastic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_pressure.spec.o: $O/specfem2D_par.spec.o
 $O/compute_vector_field.spec.o: $O/specfem2D_par.spec.o
