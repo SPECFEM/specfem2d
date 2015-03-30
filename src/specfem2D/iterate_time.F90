@@ -379,7 +379,7 @@ subroutine iterate_time()
 
           if( time_stepping_scheme == 2 ) then
             !! DK DK this should be vectorized
-            potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic  
+            potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
             potential_dot_acoustic_LDDRK = alpha_LDDRK(i_stage) * potential_dot_acoustic_LDDRK + &
                                          deltat * potential_dot_dot_acoustic
             potential_acoustic_LDDRK = alpha_LDDRK(i_stage) * potential_acoustic_LDDRK + &
@@ -418,9 +418,9 @@ subroutine iterate_time()
               potential_dot_acoustic(:) = potential_dot_acoustic_init_rk(:) + &
                                           weight_rk * potential_dot_dot_acoustic_rk(:,i_stage)
               potential_acoustic(:) = potential_acoustic_init_rk(:) + weight_rk * potential_dot_acoustic_rk(:,i_stage)
-            elseif( i_stage==4 ) then
+            else if( i_stage==4 ) then
 !! DK DK this should be vectorized
-              potential_dot_acoustic(:) = potential_dot_acoustic_init_rk(:) + &                                          
+              potential_dot_acoustic(:) = potential_dot_acoustic_init_rk(:) + &
                                           1.0d0 / 6.0d0 * ( potential_dot_dot_acoustic_rk(:,1) + &
                                                             2.0d0 * potential_dot_dot_acoustic_rk(:,2) + &
                                                             2.0d0 * potential_dot_dot_acoustic_rk(:,3) + &

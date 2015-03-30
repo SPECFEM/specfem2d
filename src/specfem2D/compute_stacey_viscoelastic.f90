@@ -47,7 +47,7 @@
                          b_absorb_elastic_bottom,b_absorb_elastic_top,it
   implicit none
   include "constants.h"
-  
+
   !local variable
   integer :: i,ispec
 

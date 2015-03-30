@@ -80,7 +80,7 @@
   real(kind=CUSTOM_REAL) :: b_sigma_xx,b_sigma_xz,b_sigma_zz
   real(kind=CUSTOM_REAL) :: xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl
-  
+
 
 
   ! loop on all the coupling edges
