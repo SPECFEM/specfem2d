@@ -48,10 +48,9 @@ subroutine iterate_time()
 #endif
 
   use specfem_par
-
   implicit none
 
-integer i,j,ispec,i_source,iglob,k
+  integer i,j,ispec,i_source,iglob,k
 
 #ifdef USE_MPI
   include "precision.h"
@@ -59,9 +58,6 @@ integer i,j,ispec,i_source,iglob,k
 
 
   if (myrank == 0) write(IOUT,400)
-
-
-
 !
 !----          s t a r t   t i m e   i t e r a t i o n s
 !
@@ -245,7 +241,6 @@ integer i,j,ispec,i_source,iglob,k
                                        potential_acoustic,potential_acoustic_old,PML_BOUNDARY_CONDITIONS)
 
           if( SIMULATION_TYPE == 3 ) then
-
             if( PML_BOUNDARY_CONDITIONS ) then
               call rebuild_value_on_PML_interface_acoustic()
             endif
@@ -257,206 +252,99 @@ integer i,j,ispec,i_source,iglob,k
             if( PML_BOUNDARY_CONDITIONS ) then
               call rebuild_value_on_PML_interface_acoustic()
             endif
-
           endif
 
+          ! *********************************************************
+          ! ************* add acoustic forcing at a rigid boundary
+          ! *********************************************************
+          if( ACOUSTIC_FORCING ) then
+            call add_acoustic_forcing_at_rigid_boundary(potential_dot_dot_acoustic)
+          endif
+        endif ! end of test if any acoustic element
 
-    ! *********************************************************
-    ! ************* add acoustic forcing at a rigid boundary
-    ! *********************************************************
-    if( ACOUSTIC_FORCING ) then
-      call add_acoustic_forcing_at_rigid_boundary(potential_dot_dot_acoustic)
-    endif
-
-    endif ! end of test if any acoustic element
-
-   ! *********************************************************
-   ! ************* add coupling with the elastic side
-   ! *********************************************************
-    if( coupled_acoustic_elastic ) then
-      if( SIMULATION_TYPE == 1 ) then
-        call compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic, PML_BOUNDARY_CONDITIONS)
-      endif
-
-      if( SIMULATION_TYPE == 3 ) then
-        accel_elastic_adj_coupling2 = - accel_elastic_adj_coupling
-        call compute_coupling_acoustic_el(accel_elastic_adj_coupling2,displ_elastic_old,potential_dot_dot_acoustic,&
-                                          PML_BOUNDARY_CONDITIONS)
-
-        call compute_coupling_acoustic_el_backward(b_displ_elastic,b_potential_dot_dot_acoustic)
-      endif
-    endif
-   ! *********************************************************
-   ! ************* add coupling with the poroelastic side
-   ! *********************************************************
-
-    if(coupled_acoustic_poro) then
-
-      ! loop on all the coupling edges
-      do inum = 1,num_fluid_poro_edges
-
-        ! get the edge of the acoustic element
-        ispec_acoustic = fluid_poro_acoustic_ispec(inum)
-        iedge_acoustic = fluid_poro_acoustic_iedge(inum)
-
-        ! get the corresponding edge of the poroelastic element
-        ispec_poroelastic = fluid_poro_poroelastic_ispec(inum)
-        iedge_poroelastic = fluid_poro_poroelastic_iedge(inum)
-
-        ! implement 1D coupling along the edge
-        do ipoin1D = 1,NGLLX
-
-          ! get point values for the poroelastic side, which matches our side in the inverse direction
-          i = ivalue_inverse(ipoin1D,iedge_poroelastic)
-          j = jvalue_inverse(ipoin1D,iedge_poroelastic)
-          iglob = ibool(i,j,ispec_poroelastic)
-
-          displ_x = displs_poroelastic(1,iglob)
-          displ_z = displs_poroelastic(2,iglob)
-
-          phil = porosity(kmato(ispec_poroelastic))
-          displw_x = displw_poroelastic(1,iglob)
-          displw_z = displw_poroelastic(2,iglob)
-
-          if(SIMULATION_TYPE == 3) then
-            b_displ_x = b_displs_poroelastic(1,iglob)
-            b_displ_z = b_displs_poroelastic(2,iglob)
-
-            b_displw_x = b_displw_poroelastic(1,iglob)
-            b_displw_z = b_displw_poroelastic(2,iglob)
-
-            ! new definition of adjoint displacement and adjoint potential
-            displ_x = -accels_poroelastic_adj_coupling(1,iglob)
-            displ_z = -accels_poroelastic_adj_coupling(2,iglob)
-
-            displw_x = -accelw_poroelastic_adj_coupling(1,iglob)
-            displw_z = -accelw_poroelastic_adj_coupling(2,iglob)
+        ! *********************************************************
+        ! ************* add coupling with the elastic side
+        ! *********************************************************
+        if( coupled_acoustic_elastic ) then
+          if( SIMULATION_TYPE == 1 ) then
+            call compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic, &
+                                              PML_BOUNDARY_CONDITIONS)
           endif
 
-          ! get point values for the acoustic side
-          ! get point values for the acoustic side
-          i = ivalue(ipoin1D,iedge_acoustic)
-          j = jvalue(ipoin1D,iedge_acoustic)
-          iglob = ibool(i,j,ispec_acoustic)
+          if( SIMULATION_TYPE == 3 ) then
+            accel_elastic_adj_coupling2 = - accel_elastic_adj_coupling
+            call compute_coupling_acoustic_el(accel_elastic_adj_coupling2,displ_elastic_old,potential_dot_dot_acoustic,&
+                                              PML_BOUNDARY_CONDITIONS)
 
-          ! compute the 1D Jacobian and the normal to the edge: for their expression see for instance
-          ! O. C. Zienkiewicz and R. L. Taylor, The Finite Element Method for Solid and Structural Mechanics,
-          ! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
-          ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
-          ! Blackwell Science, page 110, equation (4.60).
-          if(iedge_acoustic == ITOP) then
-            xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-            zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-            jacobian1D = sqrt(xxi**2 + zxi**2)
-            nx = - zxi / jacobian1D
-            nz = + xxi / jacobian1D
-            weight = jacobian1D * wxgll(i)
-          else if(iedge_acoustic == IBOTTOM) then
-            xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-            zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-            jacobian1D = sqrt(xxi**2 + zxi**2)
-            nx = + zxi / jacobian1D
-            nz = - xxi / jacobian1D
-            weight = jacobian1D * wxgll(i)
-          else if(iedge_acoustic ==ILEFT) then
-            xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-            zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-            jacobian1D = sqrt(xgamma**2 + zgamma**2)
-            nx = - zgamma / jacobian1D
-            nz = + xgamma / jacobian1D
-            weight = jacobian1D * wzgll(j)
-          else if(iedge_acoustic ==IRIGHT) then
-            xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-            zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-            jacobian1D = sqrt(xgamma**2 + zgamma**2)
-            nx = + zgamma / jacobian1D
-            nz = - xgamma / jacobian1D
-            weight = jacobian1D * wzgll(j)
+            call compute_coupling_acoustic_el_backward(b_displ_elastic,b_potential_dot_dot_acoustic)
           endif
-
-          ! compute dot product [u_s + w]*n
-          displ_n = (displ_x + displw_x)*nx + (displ_z + displw_z)*nz
-
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
-
-          if(SIMULATION_TYPE == 3) then
-            b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) &
-                   + weight*((b_displ_x + b_displw_x)*nx + (b_displ_z + b_displw_z)*nz)
-          endif
-
-        enddo
-
-      enddo
-
-    endif
-
-
-! ************************************************************************************
-! ************************************ add force source
-! ************************************************************************************
-
-    if(any_acoustic) then
-      ! --- add the source
-      if(.not. initialfield) then
-        if( SIMULATION_TYPE == 1) then
-           call compute_add_sources_acoustic(potential_dot_dot_acoustic,it,i_stage)
         endif
 
-        if(SIMULATION_TYPE == 3) then   ! adjoint and backward wavefield
+        ! *********************************************************
+        ! ************* add coupling with the poroelastic side
+        ! *********************************************************
+        if( coupled_acoustic_poro) then
+          call compute_coupling_acoustic_po()
+        endif
 
-           call compute_add_sources_acoustic_adjoint()
-           call compute_add_sources_acoustic(b_potential_dot_dot_acoustic,NSTEP-it+1,stage_time_scheme-i_stage+1)
+        ! ************************************************************************************
+        ! ************************************ add force source
+        ! ************************************************************************************
+        if( any_acoustic ) then
+          if( .not. initialfield ) then
+            if( SIMULATION_TYPE == 1 ) then
+              call compute_add_sources_acoustic(potential_dot_dot_acoustic,it,i_stage)
+            endif
 
-        endif ! SIMULATION_TYPE == 3 adjoint wavefield
-      endif ! if not using an initial field
-    endif !if(any_acoustic)
-
-! assembling potential_dot_dot for acoustic elements
+            if( SIMULATION_TYPE == 3 ) then   ! adjoint and backward wavefield
+              call compute_add_sources_acoustic_adjoint()
+              call compute_add_sources_acoustic(b_potential_dot_dot_acoustic,NSTEP-it+1,stage_time_scheme-i_stage+1)
+            endif ! SIMULATION_TYPE == 3 adjoint wavefield
+          endif ! if not using an initial field
+        endif !if(any_acoustic)
+       
+        ! ************************************************************************************
+        ! ********** assembling potential_dot_dot or b_potential_dot_dot for acoustic elements 
+        ! ************************************************************************************
 #ifdef USE_MPI
-    if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
-      call assemble_MPI_vector_ac(potential_dot_dot_acoustic)
+        if( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0 ) then
+          call assemble_MPI_vector_ac(potential_dot_dot_acoustic)
 
-     if(time_stepping_scheme == 2) then
-      if(i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
-       potential_dot_acoustic_temp = potential_dot_acoustic
-       call assemble_MPI_vector_ac(potential_dot_acoustic)
-      endif
-     endif
+          if( time_stepping_scheme == 2 ) then
+            if( i_stage==1 .and. it == 1 .and. (.not. initialfield) ) then
+              potential_dot_acoustic_temp = potential_dot_acoustic
+              call assemble_MPI_vector_ac(potential_dot_acoustic)
+            endif
+          endif
 
-      if ( SIMULATION_TYPE == 3) then
-        call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic)
-
-      endif
-
-    endif
-
+          if( SIMULATION_TYPE == 3) then
+            call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic)
+          endif
+        endif
 #endif
 
-      if(PML_BOUNDARY_CONDITIONS .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
-       if(any_acoustic .and. nglob_interface > 0) then
-        do i = 1, nglob_interface
-          write(72)potential_dot_dot_acoustic(point_interface(i)),&
-                   potential_dot_acoustic(point_interface(i)),&
-                   potential_acoustic(point_interface(i))
-        enddo
-       endif
-      endif
+        if( PML_BOUNDARY_CONDITIONS ) then
+          if( any_acoustic .and. nglob_interface > 0 ) then
+            if( SAVE_FORWARD .and. SIMULATION_TYPE == 1 ) then          
+              do i = 1, nglob_interface
+                write(72)potential_dot_dot_acoustic(point_interface(i)),&
+                         potential_dot_acoustic(point_interface(i)),&
+                         potential_acoustic(point_interface(i))
+              enddo
+            endif
 
-     if(SIMULATION_TYPE == 3) then
-       if(PML_BOUNDARY_CONDITIONS) then
-         if(any_acoustic .and. nglob_interface > 0) then
-           do i = 1, nglob_interface
-             b_potential_dot_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot_dot(i,NSTEP-it+1)
-           enddo
-         endif
-       endif
-     endif
-
+            if( SIMULATION_TYPE == 3 ) then
+              do i = 1, nglob_interface
+                b_potential_dot_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot_dot(i,NSTEP-it+1)
+              enddo
+            endif
+          endif
+        endif
 ! ************************************************************************************
 ! ************* multiply by the inverse of the mass matrix and update velocity
 ! ************************************************************************************
 
-    if(any_acoustic) then
+     if(any_acoustic) then
       if(time_stepping_scheme == 1) then
 !! DK DK this should be vectorized
       potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
