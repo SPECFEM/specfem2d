@@ -581,7 +581,6 @@
   endif  ! end of absorbing boundaries
 
 !--- set Dirichelet boundary condition on outer boundary of CFS-PML
-!
   if( PML_BOUNDARY_CONDITIONS .and. anyabs ) then
     do ispecabs = 1,nelemabs
       ispec = numabs(ispecabs)

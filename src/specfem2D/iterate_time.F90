@@ -344,112 +344,94 @@ subroutine iterate_time()
 ! ************* multiply by the inverse of the mass matrix and update velocity
 ! ************************************************************************************
 
-     if(any_acoustic) then
-      if(time_stepping_scheme == 1) then
+        if( any_acoustic ) then
+          ! free surface for an acoustic medium
+          if( nelem_acoustic_surface > 0 ) then
+            call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
+                                               potential_acoustic)
+            if( SIMULATION_TYPE == 3 ) then
+              call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
+                                                 b_potential_acoustic)
+            endif
+          endif
+
+          if( time_stepping_scheme == 1 ) then
+            !! DK DK this should be vectorized
+            potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
+            potential_dot_acoustic = potential_dot_acoustic + deltatover2*potential_dot_dot_acoustic
+
+            if( SIMULATION_TYPE == 3 ) then
+            !! DK DK this should be vectorized
+              b_potential_dot_dot_acoustic = b_potential_dot_dot_acoustic * rmass_inverse_acoustic
+              b_potential_dot_acoustic = b_potential_dot_acoustic + b_deltatover2*b_potential_dot_dot_acoustic
+            endif
+
+            ! update the potential field (use a new array here) for coupling terms
+            potential_acoustic_adj_coupling = potential_acoustic + deltat*potential_dot_acoustic + &
+                                              deltatsquareover2*potential_dot_dot_acoustic
+          endif
+
+          if( time_stepping_scheme == 2 ) then
+            !! DK DK this should be vectorized
+            potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic  
+            potential_dot_acoustic_LDDRK = alpha_LDDRK(i_stage) * potential_dot_acoustic_LDDRK + &
+                                         deltat * potential_dot_dot_acoustic
+            potential_acoustic_LDDRK = alpha_LDDRK(i_stage) * potential_acoustic_LDDRK + &
+                                       deltat*potential_dot_acoustic
+
+            if( i_stage==1 .and. it == 1 .and. (.not. initialfield) ) then
+              !! DK DK this should be vectorized
+              potential_dot_acoustic_temp = potential_dot_acoustic_temp + &
+                                            beta_LDDRK(i_stage) * potential_dot_acoustic_LDDRK
+              potential_dot_acoustic = potential_dot_acoustic_temp
+            else
+              potential_dot_acoustic = potential_dot_acoustic + beta_LDDRK(i_stage) * potential_dot_acoustic_LDDRK
+            endif
+
+            !! DK DK this should be vectorized
+            potential_acoustic = potential_acoustic + beta_LDDRK(i_stage) * potential_acoustic_LDDRK
+          endif
+
+          if( time_stepping_scheme == 3 ) then
+            !! DK DK this should be vectorized
+            potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
+            potential_dot_dot_acoustic_rk(:,i_stage) = deltat * potential_dot_dot_acoustic(:)
+            potential_dot_acoustic_rk(:,i_stage) = deltat * potential_dot_acoustic(:)
+
+            if( i_stage==1 .or. i_stage==2 .or. i_stage==3 ) then
+              if( i_stage == 1 )weight_rk = 0.5d0
+              if( i_stage == 2 )weight_rk = 0.5d0
+              if( i_stage == 3 )weight_rk = 1.0d0
+
+              if( i_stage==1 ) then
 !! DK DK this should be vectorized
-      potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
-      potential_dot_acoustic = potential_dot_acoustic + deltatover2*potential_dot_dot_acoustic
-      endif
-
-      if(time_stepping_scheme == 2) then
+                potential_dot_acoustic_init_rk = potential_dot_acoustic
+                potential_acoustic_init_rk = potential_acoustic
+              endif
+!! DK DK this should be vectorized
+              potential_dot_acoustic(:) = potential_dot_acoustic_init_rk(:) + &
+                                          weight_rk * potential_dot_dot_acoustic_rk(:,i_stage)
+              potential_acoustic(:) = potential_acoustic_init_rk(:) + weight_rk * potential_dot_acoustic_rk(:,i_stage)
+            elseif( i_stage==4 ) then
+!! DK DK this should be vectorized
+              potential_dot_acoustic(:) = potential_dot_acoustic_init_rk(:) + &                                          
+                                          1.0d0 / 6.0d0 * ( potential_dot_dot_acoustic_rk(:,1) + &
+                                                            2.0d0 * potential_dot_dot_acoustic_rk(:,2) + &
+                                                            2.0d0 * potential_dot_dot_acoustic_rk(:,3) + &
+                                                            potential_dot_dot_acoustic_rk(:,4) )
 
 !! DK DK this should be vectorized
-        potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
-
-        potential_dot_acoustic_LDDRK = alpha_LDDRK(i_stage) * potential_dot_acoustic_LDDRK &
-                                       + deltat * potential_dot_dot_acoustic
-
-        potential_acoustic_LDDRK = alpha_LDDRK(i_stage) * potential_acoustic_LDDRK &
-                                   + deltat*potential_dot_acoustic
-
-        if(i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
-!! DK DK this should be vectorized
-        potential_dot_acoustic_temp = potential_dot_acoustic_temp &
-                                      + beta_LDDRK(i_stage) * potential_dot_acoustic_LDDRK
-        potential_dot_acoustic = potential_dot_acoustic_temp
-        else
-        potential_dot_acoustic = potential_dot_acoustic + beta_LDDRK(i_stage) * potential_dot_acoustic_LDDRK
-        endif
-
-!! DK DK this should be vectorized
-        potential_acoustic = potential_acoustic + beta_LDDRK(i_stage) * potential_acoustic_LDDRK
-
-      endif
-
-      if(time_stepping_scheme == 3) then
-
-!! DK DK this should be vectorized
-        potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
-
-        potential_dot_dot_acoustic_rk(:,i_stage) = deltat * potential_dot_dot_acoustic(:)
-        potential_dot_acoustic_rk(:,i_stage) = deltat * potential_dot_acoustic(:)
-
-        if(i_stage==1 .or. i_stage==2 .or. i_stage==3) then
-
-        if(i_stage == 1)weight_rk = 0.5d0
-        if(i_stage == 2)weight_rk = 0.5d0
-        if(i_stage == 3)weight_rk = 1.0d0
-
-        if(i_stage==1) then
-
-!! DK DK this should be vectorized
-        potential_dot_acoustic_init_rk = potential_dot_acoustic
-        potential_acoustic_init_rk = potential_acoustic
-
-        endif
-
-!! DK DK this should be vectorized
-        potential_dot_acoustic(:) = potential_dot_acoustic_init_rk(:) + weight_rk * potential_dot_dot_acoustic_rk(:,i_stage)
-        potential_acoustic(:) = potential_acoustic_init_rk(:) + weight_rk * potential_dot_acoustic_rk(:,i_stage)
-
-        else if(i_stage==4) then
-
-!! DK DK this should be vectorized
-        potential_dot_acoustic(:) = potential_dot_acoustic_init_rk(:) + 1.0d0 / 6.0d0 * &
-        (potential_dot_dot_acoustic_rk(:,1) + 2.0d0 * potential_dot_dot_acoustic_rk(:,2) + &
-         2.0d0 * potential_dot_dot_acoustic_rk(:,3) + potential_dot_dot_acoustic_rk(:,4))
-
-!! DK DK this should be vectorized
-        potential_acoustic(:) = potential_acoustic_init_rk(:) + 1.0d0 / 6.0d0 * &
-        (potential_dot_acoustic_rk(:,1) + 2.0d0 * potential_dot_acoustic_rk(:,2) + &
-         2.0d0 * potential_dot_acoustic_rk(:,3) + potential_dot_acoustic_rk(:,4))
-
-        endif
-
-      endif
-
-      if(SIMULATION_TYPE == 3) then
-!! DK DK this should be vectorized
-        b_potential_dot_dot_acoustic = b_potential_dot_dot_acoustic * rmass_inverse_acoustic
-        b_potential_dot_acoustic = b_potential_dot_acoustic + b_deltatover2*b_potential_dot_dot_acoustic
-      endif
-
-
-      ! free surface for an acoustic medium
-      if ( nelem_acoustic_surface > 0 ) then
-        call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                        potential_acoustic)
-
-        if(SIMULATION_TYPE == 3) then
-          call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                                             b_potential_acoustic)
-        endif
-
-      endif
-
-      ! update the potential field (use a new array here) for coupling terms
-      potential_acoustic_adj_coupling = potential_acoustic + deltat*potential_dot_acoustic + &
-                                        deltatsquareover2*potential_dot_dot_acoustic
-
-    endif ! of if(any_acoustic)
-
-
-   else ! GPU_MODE
-
-    if(any_acoustic) call compute_forces_acoustic_GPU()
-
-   endif
-
+              potential_acoustic(:) = potential_acoustic_init_rk(:) + &
+                                      1.0d0 / 6.0d0 * ( potential_dot_acoustic_rk(:,1) + &
+                                                        2.0d0 * potential_dot_acoustic_rk(:,2) + &
+                                                        2.0d0 * potential_dot_acoustic_rk(:,3) + &
+                                                        potential_dot_acoustic_rk(:,4) )
+            endif
+          endif
+        endif ! of if(any_acoustic)
+      else ! GPU_MODE
+        if(any_acoustic) call compute_forces_acoustic_GPU()
+      endif ! GPU_MODE
 
 ! *********************************************************
 ! ************* main solver for the gravitoacoustic elements
@@ -458,27 +440,24 @@ subroutine iterate_time()
 ! NO MIX OF ACOUSTIC AND GRAVITOACOUTIC ELEMENTS
 ! NO COUPLING TO ELASTIC AND POROELASTIC SIDES
 ! *********************************************************
-!-----------------------------------------
+      if( .NOT. GPU_MODE ) then
+        if( (any_gravitoacoustic) ) then
+          if( time_stepping_scheme==1 ) then
+            ! Newmark time scheme
+            !! DK DK this should be vectorized
+            potential_gravitoacoustic = potential_gravitoacoustic + deltat*potential_dot_gravitoacoustic + &
+                                        deltatsquareover2*potential_dot_dot_gravitoacoustic
+            potential_dot_gravitoacoustic = potential_dot_gravitoacoustic + &
+                                            deltatover2*potential_dot_dot_gravitoacoustic
+            potential_gravito = potential_gravito + deltat*potential_dot_gravito + &
+                                deltatsquareover2*potential_dot_dot_gravito
+            potential_dot_gravito = potential_dot_gravito + deltatover2*potential_dot_dot_gravito
+          else
+            stop 'Only time_stepping_scheme=1 for gravitoacoustic'
+          endif
 
- if( .NOT. GPU_MODE ) then
-
-    if( (any_gravitoacoustic) ) then
-      if( time_stepping_scheme==1 ) then
-        ! Newmark time scheme
-        !! DK DK this should be vectorized
-        potential_gravitoacoustic = potential_gravitoacoustic + deltat*potential_dot_gravitoacoustic + &
-                                    deltatsquareover2*potential_dot_dot_gravitoacoustic
-        potential_dot_gravitoacoustic = potential_dot_gravitoacoustic &
-                                        + deltatover2*potential_dot_dot_gravitoacoustic
-        potential_gravito = potential_gravito + deltat*potential_dot_gravito + &
-                            deltatsquareover2*potential_dot_dot_gravito
-        potential_dot_gravito = potential_dot_gravito + deltatover2*potential_dot_dot_gravito
-      else
-        stop 'Only time_stepping_scheme=1 for gravitoacoustic'
-      endif
-
-      potential_dot_dot_gravitoacoustic = ZERO
-      potential_dot_dot_gravito = ZERO
+          potential_dot_dot_gravitoacoustic = ZERO
+          potential_dot_dot_gravito = ZERO
 
 ! Impose displacements from boundary forcing here
 ! because at this step the displacement (potentials) values
@@ -489,12 +468,12 @@ subroutine iterate_time()
 ! ** impose displacement from acoustic forcing at a rigid boundary
 ! ** force potential_dot_dot_gravito by displacement
 ! *********************************************************
-      if( ACOUSTIC_FORCING ) then
-        call add_acoustic_forcing_at_rigid_boundary_gravitoacoustic()
-      endif ! end ACOUSTIC_FORCING !
+          if( ACOUSTIC_FORCING ) then
+            call add_acoustic_forcing_at_rigid_boundary_gravitoacoustic()
+          endif ! end ACOUSTIC_FORCING !
 
-      ! free surface for a gravitoacoustic medium
-      !!! to be coded !!!
+! free surface for a gravitoacoustic medium
+!!! to be coded !!!
 !      if ( nelem_acoustic_surface > 0 ) then
 !        call enforce_acoustic_free_surface(potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
 !                                          potential_gravitoacoustic)
@@ -509,17 +488,17 @@ subroutine iterate_time()
 ! ************* compute forces for the gravitoacoustic elements
 ! *********************************************************
 
-      call compute_forces_gravitoacoustic(potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
-                   potential_gravitoacoustic, potential_dot_dot_gravito, &
-                   potential_gravito,.false.,PML_BOUNDARY_CONDITIONS)
+          call compute_forces_gravitoacoustic(potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
+                       potential_gravitoacoustic, potential_dot_dot_gravito, &
+                       potential_gravito,.false.,PML_BOUNDARY_CONDITIONS)
 
-      if( (mod(it,100)==0) ) then
-        iglob=iglobzero
-        write(*,*) it,Nsql,gravityl, &
-                   maxval(potential_dot_dot_gravito),potential_dot_dot_gravito(iglob), &
-                   maxval(potential_dot_dot_gravitoacoustic),potential_dot_dot_gravitoacoustic(iglob)
-      endif
-    endif ! end of test if any gravitoacoustic element
+          if( (mod(it,100)==0) ) then
+            iglob=iglobzero
+            write(*,*)it,Nsql,gravityl, &
+                      maxval(potential_dot_dot_gravito),potential_dot_dot_gravito(iglob), &
+                      maxval(potential_dot_dot_gravitoacoustic),potential_dot_dot_gravitoacoustic(iglob)
+          endif
+        endif ! end of test if any gravitoacoustic element
 
 ! *********************************************************
 ! ************* add coupling with the elastic side
@@ -546,22 +525,22 @@ subroutine iterate_time()
 ! ************* multiply by the inverse of the mass matrix and update velocity
 ! ************************************************************************************
 
-    if((any_gravitoacoustic)) then
-      if(time_stepping_scheme == 1) then
-!! DK DK this should be vectorized
-
-      potential_dot_dot_gravitoacoustic = potential_dot_dot_gravitoacoustic * rmass_inverse_gravitoacoustic
-      potential_dot_gravitoacoustic = potential_dot_gravitoacoustic + deltatover2*potential_dot_dot_gravitoacoustic
+        if( (any_gravitoacoustic) ) then
+          if( time_stepping_scheme == 1 ) then
+          !! DK DK this should be vectorized
+          potential_dot_dot_gravitoacoustic = potential_dot_dot_gravitoacoustic * rmass_inverse_gravitoacoustic
+          potential_dot_gravitoacoustic = potential_dot_gravitoacoustic + &
+                                          deltatover2*potential_dot_dot_gravitoacoustic
 
 !! line below already done in compute_forces_gravitoacoustic, because necessary
 !! for the computation of potential_dot_dot_gravitoacoustic
 !      potential_dot_dot_gravito = potential_dot_dot_gravito * rmass_inverse_gravito
-      potential_dot_gravito = potential_dot_gravito + deltatover2*potential_dot_dot_gravito
-      else
-        stop 'Only time_stepping_scheme = 1 implemented for gravitoacoustic case'
-      endif
+          potential_dot_gravito = potential_dot_gravito + deltatover2*potential_dot_dot_gravito
+        else
+          stop 'Only time_stepping_scheme = 1 implemented for gravitoacoustic case'
+        endif
 
-      ! free surface for an acoustic medium
+! free surface for an acoustic medium
 !      if ( nelem_acoustic_surface > 0 ) then
 !        call enforce_acoustic_free_surface(potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
 !                                        potential_gravitoacoustic)
@@ -578,116 +557,41 @@ subroutine iterate_time()
 !                          + deltat*potential_dot_gravitoacoustic &
 !                          + deltatsquareover2*potential_dot_dot_gravitoacoustic
 
-    endif ! of if(any_gravitoacoustic)
-
-  else ! GPU_MODE
-
-    if ((any_gravitoacoustic)) call exit_mpi('gravitoacoustic not implemented in GPU MODE yet')
-
-  endif
+        endif ! of if(any_gravitoacoustic)
+      else ! GPU_MODE
+        if ((any_gravitoacoustic)) call exit_mpi('gravitoacoustic not implemented in GPU MODE yet')
+      endif
 
 ! *********************************************************
 ! ************* main solver for the elastic elements
 ! *********************************************************
 
-   if (.NOT. GPU_MODE) then
+      if(.NOT. GPU_MODE ) then
+        if(any_elastic) then
 
-    if(any_elastic) then
+          call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old,x_source(1),z_source(1), &
+                       f0(1),v0x_left(1,it),v0z_left(1,it),v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
+                       t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it),t0x_bot(1,it),t0z_bot(1,it), &
+                       count_left,count_right,count_bottom,PML_BOUNDARY_CONDITIONS)
 
-      call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old,x_source(1),z_source(1), &
-                   f0(1),v0x_left(1,it),v0z_left(1,it),v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
-                   t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it),t0x_bot(1,it),t0z_bot(1,it), &
-                   count_left,count_right,count_bottom,PML_BOUNDARY_CONDITIONS)
-
-      if( SIMULATION_TYPE == 3 ) then
-        if( PML_BOUNDARY_CONDITIONS ) then
-          call rebuild_value_on_PML_interface_viscoelastic()
-        endif
-
-        call compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,b_displ_elastic_old, &
-                                                  PML_BOUNDARY_CONDITIONS)
-        if( PML_BOUNDARY_CONDITIONS ) then
-          call rebuild_value_on_PML_interface_viscoelastic()
-        endif
-      endif
-
-
-      if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1 .and. (.not. PML_BOUNDARY_CONDITIONS)) then
-        !--- left absorbing boundary
-        if(nspec_left >0) then
-          do ispec = 1,nspec_left
-            if(p_sv) then!P-SV waves
-              do i=1,NGLLZ
-                write(35) b_absorb_elastic_left(1,i,ispec,it)
-              enddo
-              do i=1,NGLLZ
-                write(35) b_absorb_elastic_left(3,i,ispec,it)
-              enddo
-            else!SH (membrane) waves
-              do i=1,NGLLZ
-                write(35) b_absorb_elastic_left(2,i,ispec,it)
-              enddo
+          if( SIMULATION_TYPE == 3 ) then
+            if( PML_BOUNDARY_CONDITIONS ) then
+              call rebuild_value_on_PML_interface_viscoelastic()
             endif
-          enddo
-        endif
 
-        !--- right absorbing boundary
-        if(nspec_right >0) then
-          do ispec = 1,nspec_right
-            if(p_sv) then!P-SV waves
-              do i=1,NGLLZ
-                write(36) b_absorb_elastic_right(1,i,ispec,it)
-              enddo
-              do i=1,NGLLZ
-                write(36) b_absorb_elastic_right(3,i,ispec,it)
-              enddo
-            else!SH (membrane) waves
-              do i=1,NGLLZ
-                write(36) b_absorb_elastic_right(2,i,ispec,it)
-              enddo
+            call compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,b_displ_elastic_old, &
+                                                      PML_BOUNDARY_CONDITIONS)
+            if( PML_BOUNDARY_CONDITIONS ) then
+              call rebuild_value_on_PML_interface_viscoelastic()
             endif
-          enddo
-        endif
+          endif
 
-        !--- bottom absorbing boundary
-        if(nspec_bottom >0) then
-          do ispec = 1,nspec_bottom
-            if(p_sv) then!P-SV waves
-              do i=1,NGLLX
-                write(37) b_absorb_elastic_bottom(1,i,ispec,it)
-              enddo
-              do i=1,NGLLX
-                write(37) b_absorb_elastic_bottom(3,i,ispec,it)
-              enddo
-            else!SH (membrane) waves
-              do i=1,NGLLX
-                write(37) b_absorb_elastic_bottom(2,i,ispec,it)
-              enddo
+          if( anyabs .and. STACEY_BOUNDARY_CONDITIONS) then
+            if( SAVE_FORWARD .and. SIMULATION_TYPE == 1 ) then
+              call store_stacey_BC_effect_term_viscoelastic()
             endif
-          enddo
-        endif
-
-        !--- top absorbing boundary
-        if(nspec_top >0) then
-          do ispec = 1,nspec_top
-            if(p_sv) then!P-SV waves
-              do i=1,NGLLX
-                write(38) b_absorb_elastic_top(1,i,ispec,it)
-              enddo
-              do i=1,NGLLX
-                write(38) b_absorb_elastic_top(3,i,ispec,it)
-              enddo
-            else!SH (membrane) waves
-              do i=1,NGLLX
-                write(38) b_absorb_elastic_top(2,i,ispec,it)
-              enddo
-            endif
-          enddo
-        endif
-
-      endif ! if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)
-
-    endif !if(any_elastic)
+          endif
+      endif !if(any_elastic)
 
 ! *********************************************************
 ! ************* add coupling with the acoustic side
