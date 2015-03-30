@@ -302,9 +302,9 @@ subroutine iterate_time()
             endif ! SIMULATION_TYPE == 3 adjoint wavefield
           endif ! if not using an initial field
         endif !if(any_acoustic)
-       
+
         ! ************************************************************************************
-        ! ********** assembling potential_dot_dot or b_potential_dot_dot for acoustic elements 
+        ! ********** assembling potential_dot_dot or b_potential_dot_dot for acoustic elements
         ! ************************************************************************************
 #ifdef USE_MPI
         if( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0 ) then
@@ -325,7 +325,7 @@ subroutine iterate_time()
 
         if( PML_BOUNDARY_CONDITIONS ) then
           if( any_acoustic .and. nglob_interface > 0 ) then
-            if( SAVE_FORWARD .and. SIMULATION_TYPE == 1 ) then          
+            if( SAVE_FORWARD .and. SIMULATION_TYPE == 1 ) then
               do i = 1, nglob_interface
                 write(72)potential_dot_dot_acoustic(point_interface(i)),&
                          potential_dot_acoustic(point_interface(i)),&
