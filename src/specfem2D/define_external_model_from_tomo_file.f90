@@ -194,7 +194,7 @@ subroutine define_external_model_from_tomo_file()
 ! Read a tomo file and loop over all GLL points to set the values of vp,vs and rho
 ! ----------------------------------------------------------------------------------------
 
-  use specfem_par, only: tomo_material,coord,nspec,ibool,kmato,rhoext,vpext,vsext,gravityext, &
+  use specfem_par, only: tomo_material,coord,nspec,ibool,kmato,rhoext,vpext,vsext, &
                        QKappa_attenuationext,Qmu_attenuationext,poroelastcoef,density, &
                        c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
 

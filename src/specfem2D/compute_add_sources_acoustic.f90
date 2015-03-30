@@ -280,8 +280,8 @@
 ! *********************************************************
   subroutine add_acoustic_forcing_at_rigid_boundary_gravitoacoustic()
 
-  use specfem_par, only: nelem_acforcing,codeacforcing,numacforcing,acoustic, &
-                         gravitoacoustic,potential_dot_dot_gravito,potential_dot_gravito, &
+  use specfem_par, only: nelem_acforcing,codeacforcing,numacforcing, &
+                         gravitoacoustic,potential_dot_dot_gravito, &
                          potential_gravitoacoustic,potential_gravito, &
                          it,ibool,xix,xiz,jacobian,gammax,gammaz,wxgll,wzgll,hprime_xx,hprime_zz, &
                          iglobzero,assign_external_model,rhoext,gravityext,Nsqext, &

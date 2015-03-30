@@ -48,7 +48,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
 
   ! compute forces for the elastic elements
 
-  use specfem_par, only: p_sv,nglob,nspec,nelemabs,it,NSTEP,anyabs,assign_external_model, &
+  use specfem_par, only: p_sv,nglob,nspec,nelemabs,it,anyabs,assign_external_model, &
                          initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource, &
                          ibool,kmato,numabs,elastic,codeabs,codeabs_corner, &
                          density,poroelastcoef,xix,xiz,gammax,gammaz, &

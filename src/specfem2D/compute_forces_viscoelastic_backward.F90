@@ -46,18 +46,18 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
 
   ! compute forces for the elastic elements
 
-  use specfem_par, only: p_sv,nglob,nspec,myrank,nelemabs,it,NSTEP,anyabs,assign_external_model, &
+  use specfem_par, only: p_sv,nglob,nspec,nelemabs,it,NSTEP,assign_external_model, &
                          ATTENUATION_VISCOELASTIC_SOLID, &
-                         ibool,kmato,numabs,elastic,codeabs,codeabs_corner, &
-                         density,poroelastcoef,xix,xiz,gammax,gammaz, &
+                         ibool,kmato,numabs,elastic,codeabs, &
+                         poroelastcoef,xix,xiz,gammax,gammaz, &
                          jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,&
                          anisotropic,anisotropy, &
-                         e1,e11,e13,e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK,c_LDDRK, &
+                         e1,e11,e13,e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
                          e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_RK, e11_force_RK, e13_force_RK, &
                          hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                          AXISYM,is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
                          inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,Mu_nu1,Mu_nu2,N_SLS, &
-                         deltat,coord, NSOURCES,b_absorb_elastic_left,&
+                         deltat,coord,b_absorb_elastic_left,&
                          b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top,&
                          ib_left,ib_right,ib_bottom,ib_top,&
                          stage_time_scheme,i_stage,is_PML,STACEY_BOUNDARY_CONDITIONS,acoustic

@@ -42,7 +42,7 @@
 !========================================================================
  subroutine store_stacey_BC_effect_term_acoustic()
 
-  use specfem_par, only: p_sv,nspec_left,nspec_right,nspec_bottom,nspec_top, &
+  use specfem_par, only: nspec_left,nspec_right,nspec_bottom,nspec_top, &
                          b_absorb_acoustic_left,b_absorb_acoustic_right, &
                          b_absorb_acoustic_bottom,b_absorb_acoustic_top,it
   implicit none
