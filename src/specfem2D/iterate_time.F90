@@ -92,20 +92,18 @@ integer i,j,ispec,i_source,iglob,k
 ! *********************************************************
 
   do it = 1,NSTEP
-
-! compute current time
+    ! compute current time
     timeval = (it-1)*deltat
 
     do i_stage=1, stage_time_scheme
 
-      if ( GPU_MODE ) then
+      if( GPU_MODE ) then
         call update_displacement_precondition_newmark_GPU()
       endif
 
-      if (.NOT. GPU_MODE) then
-
+      if( .NOT. GPU_MODE ) then
         if( any_acoustic ) then
-          if( time_stepping_scheme == 1 )then
+          if( time_stepping_scheme == 1 ) then
             call update_displacement_precondition_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
                                                                    potential_dot_dot_acoustic,potential_dot_acoustic,&
                                                                    potential_acoustic,potential_acoustic_old, &
@@ -120,10 +118,10 @@ integer i,j,ispec,i_source,iglob,k
 #endif
           endif
 
-          if( SIMULATION_TYPE == 3 )then
+          if( SIMULATION_TYPE == 3 ) then
             !Since we do not do anything in PML region in case of backward simulation, thus we set
             !PML_BOUNDARY_CONDITIONS = .false.
-            if( time_stepping_scheme == 1 )then
+            if( time_stepping_scheme == 1 ) then
               call update_displacement_precondition_newmark_acoustic(b_deltat,b_deltatover2,b_deltatsquareover2,&
                                                                      b_potential_dot_dot_acoustic,b_potential_dot_acoustic,&
                                                                      b_potential_acoustic,b_potential_acoustic_old, &
@@ -137,13 +135,12 @@ integer i,j,ispec,i_source,iglob,k
               b_potential_dot_dot_acoustic = 0._CUSTOM_REAL
 #endif
             endif
-
           endif
         endif
 
         if( any_elastic ) then
-          if( time_stepping_scheme == 1 )then
-            if( SIMULATION_TYPE == 3 )then
+          if( time_stepping_scheme == 1 ) then
+            if( SIMULATION_TYPE == 3 ) then
 #ifdef FORCE_VECTORIZATION
               do i = 1,3*nglob_elastic
                 accel_elastic_adj_coupling(i,1) = accel_elastic(i,1)
@@ -169,7 +166,21 @@ integer i,j,ispec,i_source,iglob,k
             endif
           endif
 
-          if( SIMULATION_TYPE == 3 )then
+          if( AXISYM ) then
+            do ispec=1,nspec
+              if(elastic(ispec) .and. is_on_the_axis(ispec) ) then
+                do j = 1,NGLLZ
+                  do i = 1,NGLJ
+                    if( abs(coord(1,ibool(i,j,ispec))) < TINYVAL ) then
+                      displ_elastic(1,ibool(i,j,ispec))=ZERO
+                    endif
+                  enddo
+                enddo
+              endif
+            enddo
+          endif
+
+          if( SIMULATION_TYPE == 3 ) then
             !Since we do not do anything in PML region in case of backward simulation, thus we set
             !PML_BOUNDARY_CONDITIONS = .false.
             if( time_stepping_scheme == 1 ) then
@@ -192,12 +203,12 @@ integer i,j,ispec,i_source,iglob,k
         endif
 
         if( any_poroelastic ) then
-          if( SIMULATION_TYPE == 3 )then
+          if( SIMULATION_TYPE == 3 ) then
             accels_poroelastic_adj_coupling = accels_poroelastic
             accelw_poroelastic_adj_coupling = accelw_poroelastic
           endif
 
-          if( time_stepping_scheme == 1 )then
+          if( time_stepping_scheme == 1 ) then
             call update_displacement_precondition_newmark_poroelastic(deltat,deltatover2,deltatsquareover2,&
                                                                       accels_poroelastic,velocs_poroelastic,&
                                                                       displs_poroelastic,accelw_poroelastic,&
@@ -207,8 +218,8 @@ integer i,j,ispec,i_source,iglob,k
             accelw_poroelastic = 0._CUSTOM_REAL
           endif
 
-          if( SIMULATION_TYPE == 3 )then
-            if( time_stepping_scheme == 1 )then
+          if( SIMULATION_TYPE == 3 ) then
+            if( time_stepping_scheme == 1 ) then
               !PML did not implemented for poroelastic simulation
               call update_displacement_precondition_newmark_poroelastic(b_deltat,b_deltatover2,b_deltatsquareover2,&
                                                                         b_accels_poroelastic,b_velocs_poroelastic,&
@@ -220,83 +231,59 @@ integer i,j,ispec,i_source,iglob,k
             endif
           endif
         endif
-
-
-      if (AXISYM) then
-        do ispec=1,nspec
-          if (elastic(ispec) .and. is_on_the_axis(ispec)) then
-            do j = 1,NGLLZ
-              do i = 1,NGLJ
-                if (abs(coord(1,ibool(i,j,ispec))) < TINYVAL) then
-                  displ_elastic(1,ibool(i,j,ispec))=ZERO
-                endif
-              enddo
-            enddo
-          endif
-        enddo
-      endif
-
-    if(any_acoustic) then
-      ! free surface for an acoustic medium
-      if ( nelem_acoustic_surface > 0 ) then
-        call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                           potential_acoustic)
-
-        if(SIMULATION_TYPE == 3) then ! Adjoint calculation
-          call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                                             b_potential_acoustic)
-        endif
-      endif
-
 ! *********************************************************
 ! ************* compute forces for the acoustic elements
 ! *********************************************************
+        if( any_acoustic ) then
+          ! free surface for an acoustic medium
+          if( nelem_acoustic_surface > 0 ) then
+            call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
+                                               potential_acoustic)
+          endif
 
-      call compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                   potential_acoustic,potential_acoustic_old,PML_BOUNDARY_CONDITIONS)
+          call compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic, &
+                                       potential_acoustic,potential_acoustic_old,PML_BOUNDARY_CONDITIONS)
 
-      if( SIMULATION_TYPE == 3 ) then
+          if( SIMULATION_TYPE == 3 ) then
+            if( PML_BOUNDARY_CONDITIONS ) then
+              do ispec = 1,nspec
+                do i = 1, NGLLX
+                  do j = 1, NGLLZ
+                    if( acoustic(ispec) .and. is_pml(ispec)) then
+                      b_potential_dot_acoustic(ibool(i,j,ispec)) = 0.
+                      b_potential_acoustic(ibool(i,j,ispec)) = 0.
+                    endif
+                 enddo
+                enddo
+              enddo
 
-       if(PML_BOUNDARY_CONDITIONS)then
-          do ispec = 1,nspec
-            do i = 1, NGLLX
-              do j = 1, NGLLZ
-                if(acoustic(ispec) .and. is_pml(ispec))then
-                  b_potential_dot_dot_acoustic(ibool(i,j,ispec)) = 0.
-                  b_potential_dot_acoustic(ibool(i,j,ispec)) = 0.
-                  b_potential_acoustic(ibool(i,j,ispec)) = 0.
-                endif
-               enddo
-            enddo
-          enddo
-       endif
+              if( any_acoustic .and. nglob_interface > 0 ) then
+                do i = 1, nglob_interface
+                  b_potential_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot(i,NSTEP-it+1)
+                  b_potential_acoustic(point_interface(i)) = pml_interface_history_potential(i,NSTEP-it+1)
+                enddo
+              endif
+            endif
 
-       if(PML_BOUNDARY_CONDITIONS)then
-         if(any_acoustic .and. nglob_interface > 0)then
-           do i = 1, nglob_interface
-             b_potential_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot(i,NSTEP-it+1)
-             b_potential_acoustic(point_interface(i)) = pml_interface_history_potential(i,NSTEP-it+1)
-           enddo
-         endif
-       endif
+            call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
+                                               b_potential_acoustic)
+            call compute_forces_acoustic_backward(b_potential_dot_dot_acoustic,b_potential_acoustic)
 
-       call compute_forces_acoustic_backward(b_potential_dot_dot_acoustic,b_potential_acoustic)
+            if( PML_BOUNDARY_CONDITIONS ) then
+              do ispec = 1,nspec
+                do i = 1, NGLLX
+                  do j = 1, NGLLZ
+                    if( acoustic(ispec) .and. is_pml(ispec) ) then
+                      b_potential_dot_acoustic(ibool(i,j,ispec)) = 0.
+                      b_potential_acoustic(ibool(i,j,ispec)) = 0.
+                    endif
+                  enddo
+                enddo
+              enddo
+            endif
 
-       if(PML_BOUNDARY_CONDITIONS)then
-          do ispec = 1,nspec
-            do i = 1, NGLLX
-              do j = 1, NGLLZ
-                if(acoustic(ispec) .and. is_pml(ispec))then
-                  b_potential_dot_acoustic(ibool(i,j,ispec)) = 0.
-                  b_potential_acoustic(ibool(i,j,ispec)) = 0.
-                endif
-               enddo
-            enddo
-          enddo
-       endif
-
-       if(PML_BOUNDARY_CONDITIONS)then
-         if(any_acoustic .and. nglob_interface > 0)then
+       if(PML_BOUNDARY_CONDITIONS) then
+         if(any_acoustic .and. nglob_interface > 0) then
            do i = 1, nglob_interface
              b_potential_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot(i,NSTEP-it+1)
              b_potential_acoustic(point_interface(i)) = pml_interface_history_potential(i,NSTEP-it+1)
@@ -320,11 +307,11 @@ integer i,j,ispec,i_source,iglob,k
    ! ************* add coupling with the elastic side
    ! *********************************************************
     if( coupled_acoustic_elastic ) then
-      if( SIMULATION_TYPE == 1 )then
+      if( SIMULATION_TYPE == 1 ) then
         call compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic, PML_BOUNDARY_CONDITIONS)
       endif
 
-      if( SIMULATION_TYPE == 3 )then
+      if( SIMULATION_TYPE == 3 ) then
         accel_elastic_adj_coupling2 = - accel_elastic_adj_coupling
         call compute_coupling_acoustic_el(accel_elastic_adj_coupling2,displ_elastic_old,potential_dot_dot_acoustic,&
                                           PML_BOUNDARY_CONDITIONS)
@@ -390,28 +377,28 @@ integer i,j,ispec,i_source,iglob,k
           ! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
           ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
           ! Blackwell Science, page 110, equation (4.60).
-          if(iedge_acoustic == ITOP)then
+          if(iedge_acoustic == ITOP) then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = - zxi / jacobian1D
             nz = + xxi / jacobian1D
             weight = jacobian1D * wxgll(i)
-          else if(iedge_acoustic == IBOTTOM)then
+          else if(iedge_acoustic == IBOTTOM) then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = + zxi / jacobian1D
             nz = - xxi / jacobian1D
             weight = jacobian1D * wxgll(i)
-          else if(iedge_acoustic ==ILEFT)then
+          else if(iedge_acoustic ==ILEFT) then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = - zgamma / jacobian1D
             nz = + xgamma / jacobian1D
             weight = jacobian1D * wzgll(j)
-          else if(iedge_acoustic ==IRIGHT)then
+          else if(iedge_acoustic ==IRIGHT) then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
@@ -462,8 +449,8 @@ integer i,j,ispec,i_source,iglob,k
     if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
       call assemble_MPI_vector_ac(potential_dot_dot_acoustic)
 
-     if(time_stepping_scheme == 2)then
-      if(i_stage==1 .and. it == 1 .and. (.not. initialfield))then
+     if(time_stepping_scheme == 2) then
+      if(i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
        potential_dot_acoustic_temp = potential_dot_acoustic
        call assemble_MPI_vector_ac(potential_dot_acoustic)
       endif
@@ -478,8 +465,8 @@ integer i,j,ispec,i_source,iglob,k
 
 #endif
 
-      if(PML_BOUNDARY_CONDITIONS .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)then
-       if(any_acoustic .and. nglob_interface > 0)then
+      if(PML_BOUNDARY_CONDITIONS .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
+       if(any_acoustic .and. nglob_interface > 0) then
         do i = 1, nglob_interface
           write(72)potential_dot_dot_acoustic(point_interface(i)),&
                    potential_dot_acoustic(point_interface(i)),&
@@ -488,9 +475,9 @@ integer i,j,ispec,i_source,iglob,k
        endif
       endif
 
-     if(SIMULATION_TYPE == 3)then
-       if(PML_BOUNDARY_CONDITIONS)then
-         if(any_acoustic .and. nglob_interface > 0)then
+     if(SIMULATION_TYPE == 3) then
+       if(PML_BOUNDARY_CONDITIONS) then
+         if(any_acoustic .and. nglob_interface > 0) then
            do i = 1, nglob_interface
              b_potential_dot_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot_dot(i,NSTEP-it+1)
            enddo
@@ -503,13 +490,13 @@ integer i,j,ispec,i_source,iglob,k
 ! ************************************************************************************
 
     if(any_acoustic) then
-      if(time_stepping_scheme == 1)then
+      if(time_stepping_scheme == 1) then
 !! DK DK this should be vectorized
       potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
       potential_dot_acoustic = potential_dot_acoustic + deltatover2*potential_dot_dot_acoustic
       endif
 
-      if(time_stepping_scheme == 2)then
+      if(time_stepping_scheme == 2) then
 
 !! DK DK this should be vectorized
         potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
@@ -520,7 +507,7 @@ integer i,j,ispec,i_source,iglob,k
         potential_acoustic_LDDRK = alpha_LDDRK(i_stage) * potential_acoustic_LDDRK &
                                    + deltat*potential_dot_acoustic
 
-        if(i_stage==1 .and. it == 1 .and. (.not. initialfield))then
+        if(i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
 !! DK DK this should be vectorized
         potential_dot_acoustic_temp = potential_dot_acoustic_temp &
                                       + beta_LDDRK(i_stage) * potential_dot_acoustic_LDDRK
@@ -534,7 +521,7 @@ integer i,j,ispec,i_source,iglob,k
 
       endif
 
-      if(time_stepping_scheme == 3)then
+      if(time_stepping_scheme == 3) then
 
 !! DK DK this should be vectorized
         potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
@@ -542,13 +529,13 @@ integer i,j,ispec,i_source,iglob,k
         potential_dot_dot_acoustic_rk(:,i_stage) = deltat * potential_dot_dot_acoustic(:)
         potential_dot_acoustic_rk(:,i_stage) = deltat * potential_dot_acoustic(:)
 
-        if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+        if(i_stage==1 .or. i_stage==2 .or. i_stage==3) then
 
         if(i_stage == 1)weight_rk = 0.5d0
         if(i_stage == 2)weight_rk = 0.5d0
         if(i_stage == 3)weight_rk = 1.0d0
 
-        if(i_stage==1)then
+        if(i_stage==1) then
 
 !! DK DK this should be vectorized
         potential_dot_acoustic_init_rk = potential_dot_acoustic
@@ -560,7 +547,7 @@ integer i,j,ispec,i_source,iglob,k
         potential_dot_acoustic(:) = potential_dot_acoustic_init_rk(:) + weight_rk * potential_dot_dot_acoustic_rk(:,i_stage)
         potential_acoustic(:) = potential_acoustic_init_rk(:) + weight_rk * potential_dot_acoustic_rk(:,i_stage)
 
-        else if(i_stage==4)then
+        else if(i_stage==4) then
 
 !! DK DK this should be vectorized
         potential_dot_acoustic(:) = potential_dot_acoustic_init_rk(:) + 1.0d0 / 6.0d0 * &
@@ -576,7 +563,7 @@ integer i,j,ispec,i_source,iglob,k
 
       endif
 
-      if(SIMULATION_TYPE == 3)then
+      if(SIMULATION_TYPE == 3) then
 !! DK DK this should be vectorized
         b_potential_dot_dot_acoustic = b_potential_dot_dot_acoustic * rmass_inverse_acoustic
         b_potential_dot_acoustic = b_potential_dot_acoustic + b_deltatover2*b_potential_dot_dot_acoustic
@@ -618,26 +605,23 @@ integer i,j,ispec,i_source,iglob,k
 ! *********************************************************
 !-----------------------------------------
 
- if (.NOT. GPU_MODE) then
+ if( .NOT. GPU_MODE ) then
 
-    if ((any_gravitoacoustic)) then
-
-      if(time_stepping_scheme==1)then
-      ! Newmark time scheme
-!! DK DK this should be vectorized
-      potential_gravitoacoustic = potential_gravitoacoustic &
-                                  + deltat*potential_dot_gravitoacoustic &
-                                  + deltatsquareover2*potential_dot_dot_gravitoacoustic
-      potential_dot_gravitoacoustic = potential_dot_gravitoacoustic &
-                                      + deltatover2*potential_dot_dot_gravitoacoustic
-      potential_gravito = potential_gravito &
-                          + deltat*potential_dot_gravito &
-                          + deltatsquareover2*potential_dot_dot_gravito
-      potential_dot_gravito = potential_dot_gravito &
-                              + deltatover2*potential_dot_dot_gravito
+    if( (any_gravitoacoustic) ) then
+      if( time_stepping_scheme==1 ) then
+        ! Newmark time scheme
+        !! DK DK this should be vectorized
+        potential_gravitoacoustic = potential_gravitoacoustic + deltat*potential_dot_gravitoacoustic + &
+                                    deltatsquareover2*potential_dot_dot_gravitoacoustic
+        potential_dot_gravitoacoustic = potential_dot_gravitoacoustic &
+                                        + deltatover2*potential_dot_dot_gravitoacoustic
+        potential_gravito = potential_gravito + deltat*potential_dot_gravito + &
+                            deltatsquareover2*potential_dot_dot_gravito
+        potential_dot_gravito = potential_dot_gravito + deltatover2*potential_dot_dot_gravito
       else
-      stop 'Only time_stepping_scheme=1 for gravitoacoustic'
+        stop 'Only time_stepping_scheme=1 for gravitoacoustic'
       endif
+
       potential_dot_dot_gravitoacoustic = ZERO
       potential_dot_dot_gravito = ZERO
 
@@ -650,371 +634,9 @@ integer i,j,ispec,i_source,iglob,k
 ! ** impose displacement from acoustic forcing at a rigid boundary
 ! ** force potential_dot_dot_gravito by displacement
 ! *********************************************************
-    if(ACOUSTIC_FORCING) then
-
-      ! loop on all the forced edges
-
-     do inum = 1,nelem_acforcing
-
-        ispec = numacforcing(inum)
-
-        !--- left acoustic forcing boundary
-        if(codeacforcing(IEDGE4,inum)) then
-
-           i = 1
-
-           do j = 1,NGLLZ
-
-              ! acoustic spectral element
-              if(gravitoacoustic(ispec)) then
-                 iglob = ibool(i,j,ispec)
-                 xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
-                 zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-                 jacobian1D = sqrt(xgamma**2 + zgamma**2)
-                 nx = - zgamma / jacobian1D
-                 nz = + xgamma / jacobian1D
-
-                 weight = jacobian1D * wzgll(j)
-
-          ! define displacement components which will force the boundary
-
-            if(PML_BOUNDARY_CONDITIONS) then
-
-              if(is_PML(ispec)) then
-              displ_x = 0
-              displ_z = 0
-              else
-              call acoustic_forcing_boundary()
-              endif
-
-            else
-
-            call acoustic_forcing_boundary()
-
-            endif
-
-! compute displacement at this point
-        ! derivative along x
-        tempx1l = 0._CUSTOM_REAL
-        do k = 1,NGLLX
-          hp1 = hprime_xx(i,k)
-          iglob = ibool(k,j,ispec)
-          tempx1l = tempx1l + potential_gravitoacoustic(iglob)*hp1
-        enddo
-
-        ! derivative along z
-        tempx2l = 0._CUSTOM_REAL
-        do k = 1,NGLLZ
-          hp2 = hprime_zz(j,k)
-          iglob = ibool(i,k,ispec)
-          tempx2l = tempx2l + potential_gravitoacoustic(iglob)*hp2
-        enddo
-
-        xixl = xix(i,j,ispec)
-        xizl = xiz(i,j,ispec)
-        gammaxl = gammax(i,j,ispec)
-        gammazl = gammaz(i,j,ispec)
-
-          ! if external density model
-          if(assign_external_model)then
-            rhol = rhoext(i,j,ispec)
-            gravityl = gravityext(i,j,ispec)
-          endif
-
-! impose potential_gravito in order to have z displacement equal to forced
-! value
-          iglob = ibool(i,j,ispec)
-          displ_n = displ_x*nx + displ_z*nz
-        if (abs(nz) > TINYVAL) then
-          potential_gravito(iglob) = (rhol*displ_n - &
-          (tempx1l*xizl + tempx2l*gammazl)*nz - (tempx1l*xixl + tempx2l*gammaxl)*nx)/ &
-          (0.0 - gravityl*nz)
-        else
-          write(*,*) 'STOP : forcing surface element along z',i,j,ispec,iglob,nx,nz
-          stop
-        endif
-
-          ! compute dot product
-          displ_n = displ_x*nx + displ_z*nz
-          potential_dot_dot_gravito(iglob) = potential_dot_dot_gravito(iglob) - rhol*weight*displ_n
-
-              endif  !end of gravitoacoustic
-           enddo
-
-        endif  !  end of left acoustic forcing boundary
-
-        !--- right acoustic forcing boundary
-        if(codeacforcing(IEDGE2,inum)) then
-
-           i = NGLLX
-
-           do j = 1,NGLLZ
-
-              ! acoustic spectral element
-              if(gravitoacoustic(ispec)) then
-                 iglob = ibool(i,j,ispec)
-                 xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
-                 zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-                 jacobian1D = sqrt(xgamma**2 + zgamma**2)
-                 nx = + zgamma / jacobian1D
-                 nz = - xgamma / jacobian1D
-
-                 weight = jacobian1D * wzgll(j)
-
-          ! define displacement components which will force the boundary
-
-            if(PML_BOUNDARY_CONDITIONS) then
-
-              if(is_PML(ispec)) then
-              displ_x = 0
-              displ_z = 0
-              else
-              call acoustic_forcing_boundary()
-              endif
-
-            else
-
-            call acoustic_forcing_boundary()
-
-            endif
-
-! compute displacement at this point
-        ! derivative along x
-        tempx1l = 0._CUSTOM_REAL
-        do k = 1,NGLLX
-          hp1 = hprime_xx(i,k)
-          iglob = ibool(k,j,ispec)
-          tempx1l = tempx1l + potential_gravitoacoustic(iglob)*hp1
-        enddo
-
-        ! derivative along z
-        tempx2l = 0._CUSTOM_REAL
-        do k = 1,NGLLZ
-          hp2 = hprime_zz(j,k)
-          iglob = ibool(i,k,ispec)
-          tempx2l = tempx2l + potential_gravitoacoustic(iglob)*hp2
-        enddo
-
-        xixl = xix(i,j,ispec)
-        xizl = xiz(i,j,ispec)
-        gammaxl = gammax(i,j,ispec)
-        gammazl = gammaz(i,j,ispec)
-
-          ! if external density model
-          if(assign_external_model)then
-            rhol = rhoext(i,j,ispec)
-            gravityl = gravityext(i,j,ispec)
-          endif
-
-! impose potential_gravito in order to have z displacement equal to forced
-! value
-          iglob = ibool(i,j,ispec)
-          displ_n = displ_x*nx + displ_z*nz
-        if (abs(nz) > TINYVAL) then
-          potential_gravito(iglob) = (rhol*displ_n - &
-          (tempx1l*xizl + tempx2l*gammazl)*nz - (tempx1l*xixl + tempx2l*gammaxl)*nx)/ &
-          (0.0-gravityl*nz)
-        else
-          write(*,*) 'STOP : forcing surface element along z',i,j,ispec,iglob,nx,nz
-          stop
-        endif
-
-          ! compute dot product
-          displ_n = displ_x*nx + displ_z*nz
-          potential_dot_dot_gravito(iglob) = potential_dot_dot_gravito(iglob) - rhol*weight*displ_n
-
-              endif  !end of gravitoacoustic
-           enddo
-
-        endif  !  end of right acoustic forcing boundary
-
-        !--- bottom acoustic forcing boundary
-        if(codeacforcing(IEDGE1,inum)) then
-
-           j = 1
-
-           do i = 1,NGLLX
-
-              ! acoustic spectral element
-              if(gravitoacoustic(ispec)) then
-                 iglob = ibool(i,j,ispec)
-                 xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-                 zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
-                 jacobian1D = sqrt(xxi**2 + zxi**2)
-                 nx = + zxi / jacobian1D
-                 nz = - xxi / jacobian1D
-
-                 weight = jacobian1D * wxgll(i)
-
-          ! define displacement components which will force the boundary
-
-            if(PML_BOUNDARY_CONDITIONS) then
-
-              if(is_PML(ispec)) then
-              displ_x = 0
-              displ_z = 0
-              else
-              call acoustic_forcing_boundary()
-              endif
-
-            else
-
-            call acoustic_forcing_boundary()
-
-            endif
-
-! compute displacement at this point
-        ! derivative along x
-        tempx1l = 0._CUSTOM_REAL
-        do k = 1,NGLLX
-          hp1 = hprime_xx(i,k)
-          iglob = ibool(k,j,ispec)
-          tempx1l = tempx1l + potential_gravitoacoustic(iglob)*hp1
-        enddo
-
-        ! derivative along z
-        tempx2l = 0._CUSTOM_REAL
-        do k = 1,NGLLZ
-          hp2 = hprime_zz(j,k)
-          iglob = ibool(i,k,ispec)
-          tempx2l = tempx2l + potential_gravitoacoustic(iglob)*hp2
-        enddo
-
-        xixl = xix(i,j,ispec)
-        xizl = xiz(i,j,ispec)
-        gammaxl = gammax(i,j,ispec)
-        gammazl = gammaz(i,j,ispec)
-
-          ! if external density model
-          if(assign_external_model)then
-            rhol = rhoext(i,j,ispec)
-            gravityl = gravityext(i,j,ispec)
-          endif
-
-! impose potential_gravito in order to have z displacement equal to forced
-! value
-          iglob = ibool(i,j,ispec)
-          displ_n = displ_x*nx + displ_z*nz
-        if (abs(nz) > TINYVAL) then
-          potential_gravito(iglob) = (rhol*displ_n - &
-          (tempx1l*xizl + tempx2l*gammazl)*nz - (tempx1l*xixl + tempx2l*gammaxl)*nx)/ &
-          (0.0 - gravityl*nz)
-        else
-          write(*,*) 'STOP : forcing surface element along z',i,j,ispec,iglob,nx,nz
-          stop
-        endif
-
-          ! compute dot product
-          displ_n = displ_x*nx + displ_z*nz
-          potential_dot_dot_gravito(iglob) = potential_dot_dot_gravito(iglob) - rhol*weight*displ_n
-
-              endif  !end of gravitoacoustic
-           enddo
-
-        endif  !  end of bottom acoustic forcing boundary
-
-        !--- top acoustic forcing boundary
-        if(codeacforcing(IEDGE3,inum)) then
-
-           j = NGLLZ
-
-           do i = 1,NGLLX
-
-              ! acoustic spectral element
-              if(gravitoacoustic(ispec)) then
-                 iglob = ibool(i,j,ispec)
-                 xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-                 zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
-                 jacobian1D = sqrt(xxi**2 + zxi**2)
-                 nx = - zxi / jacobian1D
-                 nz = + xxi / jacobian1D
-
-                 weight = jacobian1D * wxgll(i)
-
-          ! define displacement components which will force the boundary
-
-            if(PML_BOUNDARY_CONDITIONS) then
-
-              if(is_PML(ispec)) then
-              displ_x = 0
-              displ_z = 0
-              else
-              call acoustic_forcing_boundary()
-              endif
-
-            else
-
-            call acoustic_forcing_boundary()
-
-            endif
-
-! compute z displacement at this point
-        ! derivative along x
-        tempx1l = 0._CUSTOM_REAL
-        do k = 1,NGLLX
-          hp1 = hprime_xx(i,k)
-          iglob = ibool(k,j,ispec)
-          tempx1l = tempx1l + potential_gravitoacoustic(iglob)*hp1
-        enddo
-
-        ! derivative along z
-        tempx2l = 0._CUSTOM_REAL
-        do k = 1,NGLLZ
-          hp2 = hprime_zz(j,k)
-          iglob = ibool(i,k,ispec)
-          tempx2l = tempx2l + potential_gravitoacoustic(iglob)*hp2
-        enddo
-
-        xixl = xix(i,j,ispec)
-        xizl = xiz(i,j,ispec)
-        gammaxl = gammax(i,j,ispec)
-        gammazl = gammaz(i,j,ispec)
-
-          ! if external density model
-          if(assign_external_model)then
-            rhol = rhoext(i,j,ispec)
-            gravityl = gravityext(i,j,ispec)
-            Nsql = Nsqext(i,j,ispec)
-          endif
-
-! impose potential_gravito in order to have z displacement equal to forced
-! value on the boundary
-!!!! Passe deux fois sur le meme iglob
-!!!! Mais vrai pour tous les points partages entre deux elements
-          iglob = ibool(i,j,ispec)
-          displ_n = displ_x*nx + displ_z*nz
-        if (abs(nz) > TINYVAL) then
-          potential_gravito(iglob) = (rhol*displ_n - &
-          (tempx1l*xizl + tempx2l*gammazl)*nz - (tempx1l*xixl + tempx2l*gammaxl)*nx)/ &
-          (0.0 - gravityl*nz)
-        else
-          write(*,*) 'STOP : forcing surface element along z',i,j,ispec,iglob,nx,nz
-          stop
-        endif
-
-          ! compute dot product
-          displ_n = displ_x*nx + displ_z*nz
-          potential_dot_dot_gravito(iglob) = potential_dot_dot_gravito(iglob) - rhol*weight*displ_n
-
-              endif  !end of gravitoacoustic
-           enddo
-
-!       write(*,*) 'ispec detection =',ispec
-!       if ((ispec==2000).and.(mod(it,100)==0)) then
-       if ((ispec==800).and.(mod(it,100)==0)) then
-!       if ((ispec==800)) then
-       iglobzero=iglob
-       write(*,*) ispec,it,Nsql,rhol,displ_n, &
-       maxval(potential_dot_dot_gravito),potential_dot_dot_gravito(iglob), &
-       maxval(potential_gravitoacoustic),potential_gravitoacoustic(iglob), &
-       maxval(potential_gravito),potential_gravito(iglob)
-       endif
-
-        endif  !  end of top acoustic forcing boundary
-
-     enddo
-
-     endif ! end ACOUSTIC_FORCING !
+      if( ACOUSTIC_FORCING ) then
+        call add_acoustic_forcing_at_rigid_boundary_gravitoacoustic()
+      endif ! end ACOUSTIC_FORCING !
 
       ! free surface for a gravitoacoustic medium
       !!! to be coded !!!
@@ -1033,16 +655,15 @@ integer i,j,ispec,i_source,iglob,k
 ! *********************************************************
 
       call compute_forces_gravitoacoustic(potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
-               potential_gravitoacoustic, potential_dot_dot_gravito, &
-               potential_gravito,.false.,PML_BOUNDARY_CONDITIONS)
+                   potential_gravitoacoustic, potential_dot_dot_gravito, &
+                   potential_gravito,.false.,PML_BOUNDARY_CONDITIONS)
 
-       if ((mod(it,100)==0)) then
-         iglob=iglobzero
-         write(*,*) it,Nsql,gravityl, &
-         maxval(potential_dot_dot_gravito),potential_dot_dot_gravito(iglob), &
-         maxval(potential_dot_dot_gravitoacoustic),potential_dot_dot_gravitoacoustic(iglob)
-       endif
-
+      if( (mod(it,100)==0) ) then
+        iglob=iglobzero
+        write(*,*) it,Nsql,gravityl, &
+                   maxval(potential_dot_dot_gravito),potential_dot_dot_gravito(iglob), &
+                   maxval(potential_dot_dot_gravitoacoustic),potential_dot_dot_gravitoacoustic(iglob)
+      endif
     endif ! end of test if any gravitoacoustic element
 
 ! *********************************************************
@@ -1071,7 +692,7 @@ integer i,j,ispec,i_source,iglob,k
 ! ************************************************************************************
 
     if((any_gravitoacoustic)) then
-      if(time_stepping_scheme == 1)then
+      if(time_stepping_scheme == 1) then
 !! DK DK this should be vectorized
 
       potential_dot_dot_gravitoacoustic = potential_dot_dot_gravitoacoustic * rmass_inverse_gravitoacoustic
@@ -1123,12 +744,12 @@ integer i,j,ispec,i_source,iglob,k
                    t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it),t0x_bot(1,it),t0z_bot(1,it), &
                    count_left,count_right,count_bottom,PML_BOUNDARY_CONDITIONS)
 
-      if(SIMULATION_TYPE == 3)then
-       if(PML_BOUNDARY_CONDITIONS)then
+      if(SIMULATION_TYPE == 3) then
+       if(PML_BOUNDARY_CONDITIONS) then
           do ispec = 1,nspec
             do i = 1, NGLLX
               do j = 1, NGLLZ
-                if(elastic(ispec) .and. is_pml(ispec))then
+                if(elastic(ispec) .and. is_pml(ispec)) then
                   b_veloc_elastic(:,ibool(i,j,ispec)) = 0.
                   b_displ_elastic(:,ibool(i,j,ispec)) = 0.
                 endif
@@ -1137,8 +758,8 @@ integer i,j,ispec,i_source,iglob,k
           enddo
        endif
 
-       if(PML_BOUNDARY_CONDITIONS)then
-         if(any_elastic .and. nglob_interface > 0)then
+       if(PML_BOUNDARY_CONDITIONS) then
+         if(any_elastic .and. nglob_interface > 0) then
            do i = 1, nglob_interface
              b_veloc_elastic(1,point_interface(i)) = pml_interface_history_veloc(1,i,NSTEP-it+1)
              b_veloc_elastic(2,point_interface(i)) = pml_interface_history_veloc(2,i,NSTEP-it+1)
@@ -1153,11 +774,11 @@ integer i,j,ispec,i_source,iglob,k
       call compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,b_displ_elastic_old, &
                                                 PML_BOUNDARY_CONDITIONS)
 
-       if(PML_BOUNDARY_CONDITIONS)then
+       if(PML_BOUNDARY_CONDITIONS) then
           do ispec = 1,nspec
             do i = 1, NGLLX
               do j = 1, NGLLZ
-                if(elastic(ispec) .and. is_pml(ispec))then
+                if(elastic(ispec) .and. is_pml(ispec)) then
                   b_veloc_elastic(:,ibool(i,j,ispec)) = 0.
                   b_displ_elastic(:,ibool(i,j,ispec)) = 0.
                 endif
@@ -1166,8 +787,8 @@ integer i,j,ispec,i_source,iglob,k
           enddo
        endif
 
-       if(PML_BOUNDARY_CONDITIONS)then
-         if(any_elastic .and. nglob_interface > 0)then
+       if(PML_BOUNDARY_CONDITIONS) then
+         if(any_elastic .and. nglob_interface > 0) then
            do i = 1, nglob_interface
              b_veloc_elastic(1,point_interface(i)) = pml_interface_history_veloc(1,i,NSTEP-it+1)
              b_veloc_elastic(2,point_interface(i)) = pml_interface_history_veloc(2,i,NSTEP-it+1)
@@ -1186,7 +807,7 @@ integer i,j,ispec,i_source,iglob,k
         !--- left absorbing boundary
         if(nspec_left >0) then
           do ispec = 1,nspec_left
-            if(p_sv)then!P-SV waves
+            if(p_sv) then!P-SV waves
               do i=1,NGLLZ
                 write(35) b_absorb_elastic_left(1,i,ispec,it)
               enddo
@@ -1204,7 +825,7 @@ integer i,j,ispec,i_source,iglob,k
         !--- right absorbing boundary
         if(nspec_right >0) then
           do ispec = 1,nspec_right
-            if(p_sv)then!P-SV waves
+            if(p_sv) then!P-SV waves
               do i=1,NGLLZ
                 write(36) b_absorb_elastic_right(1,i,ispec,it)
               enddo
@@ -1222,7 +843,7 @@ integer i,j,ispec,i_source,iglob,k
         !--- bottom absorbing boundary
         if(nspec_bottom >0) then
           do ispec = 1,nspec_bottom
-            if(p_sv)then!P-SV waves
+            if(p_sv) then!P-SV waves
               do i=1,NGLLX
                 write(37) b_absorb_elastic_bottom(1,i,ispec,it)
               enddo
@@ -1240,7 +861,7 @@ integer i,j,ispec,i_source,iglob,k
         !--- top absorbing boundary
         if(nspec_top >0) then
           do ispec = 1,nspec_top
-            if(p_sv)then!P-SV waves
+            if(p_sv) then!P-SV waves
               do i=1,NGLLX
                 write(38) b_absorb_elastic_top(1,i,ispec,it)
               enddo
@@ -1515,28 +1136,28 @@ integer i,j,ispec,i_source,iglob,k
           ! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
           ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
           ! Blackwell Science, page 110, equation (4.60).
-          if(iedge_poroelastic == ITOP)then
+          if(iedge_poroelastic == ITOP) then
             xxi = + gammaz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             zxi = - gammax(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = - zxi / jacobian1D
             nz = + xxi / jacobian1D
             weight = jacobian1D * wxgll(i)
-          else if(iedge_poroelastic == IBOTTOM)then
+          else if(iedge_poroelastic == IBOTTOM) then
             xxi = + gammaz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             zxi = - gammax(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = + zxi / jacobian1D
             nz = - xxi / jacobian1D
             weight = jacobian1D * wxgll(i)
-          else if(iedge_poroelastic ==ILEFT)then
+          else if(iedge_poroelastic ==ILEFT) then
             xgamma = - xiz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             zgamma = + xix(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = - zgamma / jacobian1D
             nz = + xgamma / jacobian1D
             weight = jacobian1D * wzgll(j)
-          else if(iedge_poroelastic ==IRIGHT)then
+          else if(iedge_poroelastic ==IRIGHT) then
             xgamma = - xiz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             zgamma = + xix(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
@@ -1603,8 +1224,8 @@ integer i,j,ispec,i_source,iglob,k
 ! assembling accel_elastic for elastic elements
 #ifdef USE_MPI
 
-    if(time_stepping_scheme == 2)then
-    if(i_stage==1 .and. it == 1 .and. (.not. initialfield))then
+    if(time_stepping_scheme == 2) then
+    if(i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
     veloc_elastic_LDDRK_temp = veloc_elastic
       if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
        call assemble_MPI_vector_el(veloc_elastic)
@@ -1624,8 +1245,8 @@ integer i,j,ispec,i_source,iglob,k
     endif
 #endif
 
-      if(PML_BOUNDARY_CONDITIONS .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)then
-       if(any_elastic .and. nglob_interface > 0)then
+      if(PML_BOUNDARY_CONDITIONS .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
+       if(any_elastic .and. nglob_interface > 0) then
         do i = 1, nglob_interface
           write(71)accel_elastic(1,point_interface(i)),accel_elastic(2,point_interface(i)),&
                    accel_elastic(3,point_interface(i)),&
@@ -1637,9 +1258,9 @@ integer i,j,ispec,i_source,iglob,k
        endif
       endif
 
-      if(SIMULATION_TYPE == 3)then
-        if(PML_BOUNDARY_CONDITIONS)then
-          if(any_elastic .and. nglob_interface > 0)then
+      if(SIMULATION_TYPE == 3) then
+        if(PML_BOUNDARY_CONDITIONS) then
+          if(any_elastic .and. nglob_interface > 0) then
             do i = 1, nglob_interface
               b_accel_elastic(1,point_interface(i)) = pml_interface_history_accel(1,i,NSTEP-it+1)
               b_accel_elastic(2,point_interface(i)) = pml_interface_history_accel(2,i,NSTEP-it+1)
@@ -1661,17 +1282,17 @@ integer i,j,ispec,i_source,iglob,k
       accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic_one
       accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic_three
 
-      if(time_stepping_scheme == 1)then
+      if(time_stepping_scheme == 1) then
 !! DK DK this should be vectorized
         veloc_elastic = veloc_elastic + deltatover2 * accel_elastic
       endif
 
-      if(time_stepping_scheme == 2)then
+      if(time_stepping_scheme == 2) then
 
 !! DK DK this should be vectorized
         veloc_elastic_LDDRK = alpha_LDDRK(i_stage) * veloc_elastic_LDDRK + deltat * accel_elastic
         displ_elastic_LDDRK = alpha_LDDRK(i_stage) * displ_elastic_LDDRK + deltat * veloc_elastic
-        if(i_stage==1 .and. it == 1 .and. (.not. initialfield))then
+        if(i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
         veloc_elastic_LDDRK_temp = veloc_elastic_LDDRK_temp + beta_LDDRK(i_stage) * veloc_elastic_LDDRK
         veloc_elastic = veloc_elastic_LDDRK_temp
         else
@@ -1681,7 +1302,7 @@ integer i,j,ispec,i_source,iglob,k
 
       endif
 
-      if(time_stepping_scheme == 3)then
+      if(time_stepping_scheme == 3) then
 
 !! DK DK this should be vectorized
         accel_elastic_rk(1,:,i_stage) = deltat * accel_elastic(1,:)
@@ -1692,13 +1313,13 @@ integer i,j,ispec,i_source,iglob,k
         veloc_elastic_rk(2,:,i_stage) = deltat * veloc_elastic(2,:)
         veloc_elastic_rk(3,:,i_stage) = deltat * veloc_elastic(3,:)
 
-        if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+        if(i_stage==1 .or. i_stage==2 .or. i_stage==3) then
 
         if(i_stage == 1)weight_rk = 0.5d0
         if(i_stage == 2)weight_rk = 0.5d0
         if(i_stage == 3)weight_rk = 1.0d0
 
-        if(i_stage==1)then
+        if(i_stage==1) then
 
 !! DK DK this should be vectorized
         veloc_elastic_initial_rk(1,:) = veloc_elastic(1,:)
@@ -1720,7 +1341,7 @@ integer i,j,ispec,i_source,iglob,k
         displ_elastic(2,:) = displ_elastic_initial_rk(2,:) + weight_rk * veloc_elastic_rk(2,:,i_stage)
         displ_elastic(3,:) = displ_elastic_initial_rk(3,:) + weight_rk * veloc_elastic_rk(3,:,i_stage)
 
-        else if(i_stage==4)then
+        else if(i_stage==4) then
 
 !! DK DK this should be vectorized
         veloc_elastic(1,:) = veloc_elastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
@@ -1849,17 +1470,17 @@ integer i,j,ispec,i_source,iglob,k
               Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
               rx_viscous_force_RK(i,j,ispec,i_stage) = deltat * (Sn + thetainv * rx_viscous(i,j,ispec))
 
-              if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+              if(i_stage==1 .or. i_stage==2 .or. i_stage==3) then
                 if(i_stage == 1)weight_rk = 0.5d0
                 if(i_stage == 2)weight_rk = 0.5d0
                 if(i_stage == 3)weight_rk = 1.0d0
 
-                if(i_stage==1)then
+                if(i_stage==1) then
                   rx_viscous_initial_rk(i,j,ispec) = rx_viscous(i,j,ispec)
                 endif
                   rx_viscous(i,j,ispec) = rx_viscous_initial_rk(i,j,ispec) + &
                                           weight_rk * rx_viscous_force_RK(i,j,ispec,i_stage)
-              else if(i_stage==4)then
+              else if(i_stage==4) then
 
                 rx_viscous(i,j,ispec) = rx_viscous_initial_rk(i,j,ispec) + &
                                         1.0d0 / 6.0d0 * (rx_viscous_force_RK(i,j,ispec,i_stage) + &
@@ -1871,16 +1492,16 @@ integer i,j,ispec,i_source,iglob,k
               Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
               rz_viscous_force_RK(i,j,ispec,i_stage) = deltat * (Sn + thetainv * rz_viscous(i,j,ispec))
 
-              if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+              if(i_stage==1 .or. i_stage==2 .or. i_stage==3) then
                 if(i_stage == 1)weight_rk = 0.5d0
                 if(i_stage == 2)weight_rk = 0.5d0
                 if(i_stage == 3)weight_rk = 1.0d0
-                if(i_stage==1)then
+                if(i_stage==1) then
                   rz_viscous_initial_rk(i,j,ispec) = rz_viscous(i,j,ispec)
                 endif
                 rz_viscous(i,j,ispec) = rz_viscous_initial_rk(i,j,ispec) + &
                                         weight_rk * rz_viscous_force_RK(i,j,ispec,i_stage)
-              else if(i_stage==4)then
+              else if(i_stage==4) then
                 rz_viscous(i,j,ispec) = rz_viscous_initial_rk(i,j,ispec) + &
                                         1.0d0 / 6.0d0 * (rz_viscous_force_RK(i,j,ispec,i_stage) + &
                                         2.0d0 * rz_viscous_force_RK(i,j,ispec,i_stage) + &
@@ -2027,28 +1648,28 @@ integer i,j,ispec,i_source,iglob,k
           ! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
           ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
           ! Blackwell Science, page 110, equation (4.60).
-          if(iedge_acoustic == ITOP)then
+          if(iedge_acoustic == ITOP) then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = - zxi / jacobian1D
             nz = + xxi / jacobian1D
             weight = jacobian1D * wxgll(i)
-          else if(iedge_acoustic == IBOTTOM)then
+          else if(iedge_acoustic == IBOTTOM) then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = + zxi / jacobian1D
             nz = - xxi / jacobian1D
             weight = jacobian1D * wxgll(i)
-          else if(iedge_acoustic ==ILEFT)then
+          else if(iedge_acoustic ==ILEFT) then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = - zgamma / jacobian1D
             nz = + xgamma / jacobian1D
             weight = jacobian1D * wzgll(j)
-          else if(iedge_acoustic ==IRIGHT)then
+          else if(iedge_acoustic ==IRIGHT) then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
@@ -2343,28 +1964,28 @@ integer i,j,ispec,i_source,iglob,k
           ! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
           ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
           ! Blackwell Science, page 110, equation (4.60).
-          if(iedge_poroelastic == ITOP)then
+          if(iedge_poroelastic == ITOP) then
             xxi = + gammaz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             zxi = - gammax(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = - zxi / jacobian1D
             nz = + xxi / jacobian1D
             weight = jacobian1D * wxgll(i)
-          else if(iedge_poroelastic == IBOTTOM)then
+          else if(iedge_poroelastic == IBOTTOM) then
             xxi = + gammaz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             zxi = - gammax(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
             nx = + zxi / jacobian1D
             nz = - xxi / jacobian1D
             weight = jacobian1D * wxgll(i)
-          else if(iedge_poroelastic ==ILEFT)then
+          else if(iedge_poroelastic ==ILEFT) then
             xgamma = - xiz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             zgamma = + xix(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
             nx = - zgamma / jacobian1D
             nz = + xgamma / jacobian1D
             weight = jacobian1D * wzgll(j)
-          else if(iedge_poroelastic ==IRIGHT)then
+          else if(iedge_poroelastic ==IRIGHT) then
             xgamma = - xiz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             zgamma = + xix(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
@@ -2489,7 +2110,7 @@ integer i,j,ispec,i_source,iglob,k
 
     if(any_poroelastic) then
 
-      if(time_stepping_scheme == 1)then
+      if(time_stepping_scheme == 1) then
 
       accels_poroelastic(1,:) = accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
       accels_poroelastic(2,:) = accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
@@ -2501,7 +2122,7 @@ integer i,j,ispec,i_source,iglob,k
 
       endif
 
-      if(time_stepping_scheme == 2)then
+      if(time_stepping_scheme == 2) then
 
         accels_poroelastic(1,:) = accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
         accels_poroelastic(2,:) = accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
@@ -2523,7 +2144,7 @@ integer i,j,ispec,i_source,iglob,k
 
       endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      if(time_stepping_scheme == 3)then
+      if(time_stepping_scheme == 3) then
 
         accels_poroelastic(1,:) = accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
         accels_poroelastic(2,:) = accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
@@ -2541,13 +2162,13 @@ integer i,j,ispec,i_source,iglob,k
         velocw_poroelastic_rk(1,:,i_stage) = deltat * velocw_poroelastic(1,:)
         velocw_poroelastic_rk(2,:,i_stage) = deltat * velocw_poroelastic(2,:)
 
-        if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+        if(i_stage==1 .or. i_stage==2 .or. i_stage==3) then
 
         if(i_stage == 1)weight_rk = 0.5d0
         if(i_stage == 2)weight_rk = 0.5d0
         if(i_stage == 3)weight_rk = 1.0d0
 
-        if(i_stage==1)then
+        if(i_stage==1) then
 
         velocs_poroelastic_initial_rk(1,:) = velocs_poroelastic(1,:)
         velocs_poroelastic_initial_rk(2,:) = velocs_poroelastic(2,:)
@@ -2572,7 +2193,7 @@ integer i,j,ispec,i_source,iglob,k
   displw_poroelastic(2,:) = displw_poroelastic_initial_rk(2,:) + weight_rk * velocw_poroelastic_rk(2,:,i_stage)
 
 
-        else if(i_stage==4)then
+        else if(i_stage==4) then
 
         velocs_poroelastic(1,:) = velocs_poroelastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
         (accels_poroelastic_rk(1,:,1) + 2.0d0 * accels_poroelastic_rk(1,:,2) + &
@@ -2681,9 +2302,9 @@ integer i,j,ispec,i_source,iglob,k
           iglob = ibool(i,j,ispec_poroelastic)
           icount(iglob) = icount(iglob) + 1
 
-          if(icount(iglob) ==1)then
+          if(icount(iglob) ==1) then
 
-            if(time_stepping_scheme == 1)then
+            if(time_stepping_scheme == 1) then
 
             veloc_elastic(1,iglob) = veloc_elastic(1,iglob) - deltatover2*accel_elastic(1,iglob)
             veloc_elastic(3,iglob) = veloc_elastic(3,iglob) - deltatover2*accel_elastic(3,iglob)
@@ -2714,7 +2335,7 @@ integer i,j,ispec,i_source,iglob,k
 
             endif
 
-!            if(time_stepping_scheme == 2)then
+!            if(time_stepping_scheme == 2) then
             ! recovering original velocities and accelerations on boundaries (elastic side)
 !      veloc_elastic = veloc_elastic - beta_LDDRK(i_stage) * veloc_elastic_LDDRK
 !      displ_elastic = displ_elastic - beta_LDDRK(i_stage) * displ_elastic_LDDRK
@@ -2759,10 +2380,10 @@ integer i,j,ispec,i_source,iglob,k
 !            endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!      if(time_stepping_scheme == 3)then
+!      if(time_stepping_scheme == 3) then
 
         ! recovering original velocities and accelerations on boundaries (elastic side)
-!        if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+!        if(i_stage==1 .or. i_stage==2 .or. i_stage==3) then
 
 !        if(i_stage == 1)weight_rk = 0.5d0
 !        if(i_stage == 2)weight_rk = 0.5d0
@@ -2774,7 +2395,7 @@ integer i,j,ispec,i_source,iglob,k
 !  displ_elastic(3,iglob) = displ_elastic_initial_rk(3,iglob) - weight_rk * veloc_elastic_rk(3,iglob,i_stage)
 
 
-!        else if(i_stage==4)then
+!        else if(i_stage==4) then
 
 !        veloc_elastic(1,iglob) = veloc_elastic_initial_rk(1,iglob) - 1.0d0 / 6.0d0 * &
 !        (accel_elastic_rk(1,iglob,1) + 2.0d0 * accel_elastic_rk(1,iglob,2) + &
@@ -2804,7 +2425,7 @@ integer i,j,ispec,i_source,iglob,k
 
 
         ! recovering original velocities and accelerations on boundaries (poro side)
-!        if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+!        if(i_stage==1 .or. i_stage==2 .or. i_stage==3) then
 
 !        if(i_stage == 1)weight_rk = 0.5d0
 !        if(i_stage == 2)weight_rk = 0.5d0
@@ -2816,7 +2437,7 @@ integer i,j,ispec,i_source,iglob,k
 !  displs_poroelastic(2,iglob) = displs_poroelastic_initial_rk(2,iglob) - weight_rk * velocs_poroelastic_rk(2,iglob,i_stage)
 
 
-!        else if(i_stage==4)then
+!        else if(i_stage==4) then
 
 !        velocs_poroelastic(1,iglob) = velocs_poroelastic_initial_rk(1,iglob) - 1.0d0 / 6.0d0 * &
 !        (accels_poroelastic_rk(1,iglob,1) + 2.0d0 * accels_poroelastic_rk(1,iglob,2) + &
@@ -2859,7 +2480,7 @@ integer i,j,ispec,i_source,iglob,k
  !       accel_elastic_rk(1,iglob,i_stage) = accel_elastic(1,iglob) * deltat
  !       accel_elastic_rk(3,iglob,i_stage) = accel_elastic(3,iglob) * deltat
 
- !       if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+ !       if(i_stage==1 .or. i_stage==2 .or. i_stage==3) then
 
  !       if(i_stage == 1)weight_rk = 0.5d0
  !       if(i_stage == 2)weight_rk = 0.5d0
@@ -2871,7 +2492,7 @@ integer i,j,ispec,i_source,iglob,k
  ! displ_elastic(3,iglob) = displ_elastic_initial_rk(3,iglob) + weight_rk * veloc_elastic_rk(3,iglob,i_stage)
 
 
- !       else if(i_stage==4)then
+ !       else if(i_stage==4) then
 
  !       veloc_elastic(1,iglob) = veloc_elastic_initial_rk(1,iglob) + 1.0d0 / 6.0d0 * &
  !       (accel_elastic_rk(1,iglob,1) + 2.0d0 * accel_elastic_rk(1,iglob,2) + &
@@ -2898,7 +2519,7 @@ integer i,j,ispec,i_source,iglob,k
  !       velocs_poroelastic_rk(2,iglob,i_stage) = deltat * velocs_poroelastic(2,iglob)
 
 
- !       if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
+ !       if(i_stage==1 .or. i_stage==2 .or. i_stage==3) then
 
  !       if(i_stage == 1)weight_rk = 0.5d0
  !       if(i_stage == 2)weight_rk = 0.5d0
@@ -2910,7 +2531,7 @@ integer i,j,ispec,i_source,iglob,k
  ! displs_poroelastic(2,iglob) = displs_poroelastic_initial_rk(2,iglob) + weight_rk * velocs_poroelastic_rk(2,iglob,i_stage)
 
 
- !       else if(i_stage==4)then
+ !       else if(i_stage==4) then
 
  !       velocs_poroelastic(1,iglob) = velocs_poroelastic_initial_rk(1,iglob) + 1.0d0 / 6.0d0 * &
  !       (accels_poroelastic_rk(1,iglob,1) + 2.0d0 * accels_poroelastic_rk(1,iglob,2) + &
@@ -3012,7 +2633,7 @@ integer i,j,ispec,i_source,iglob,k
       if(any_elastic) then
         write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
         open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
-        if(p_sv)then !P-SV waves
+        if(p_sv) then !P-SV waves
           do j=1,nglob
             read(55) (b_displ_elastic(i,j), i=1,NDIM), &
                      (b_veloc_elastic(i,j), i=1,NDIM), &
