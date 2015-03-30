@@ -245,24 +245,9 @@ integer i,j,ispec,i_source,iglob,k
                                        potential_acoustic,potential_acoustic_old,PML_BOUNDARY_CONDITIONS)
 
           if( SIMULATION_TYPE == 3 ) then
-            if( PML_BOUNDARY_CONDITIONS ) then
-              do ispec = 1,nspec
-                do i = 1, NGLLX
-                  do j = 1, NGLLZ
-                    if( acoustic(ispec) .and. is_pml(ispec)) then
-                      b_potential_dot_acoustic(ibool(i,j,ispec)) = 0.
-                      b_potential_acoustic(ibool(i,j,ispec)) = 0.
-                    endif
-                 enddo
-                enddo
-              enddo
 
-              if( any_acoustic .and. nglob_interface > 0 ) then
-                do i = 1, nglob_interface
-                  b_potential_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot(i,NSTEP-it+1)
-                  b_potential_acoustic(point_interface(i)) = pml_interface_history_potential(i,NSTEP-it+1)
-                enddo
-              endif
+            if( PML_BOUNDARY_CONDITIONS ) then
+              call rebuild_value_on_PML_interface_acoustic()
             endif
 
             call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
@@ -270,28 +255,10 @@ integer i,j,ispec,i_source,iglob,k
             call compute_forces_acoustic_backward(b_potential_dot_dot_acoustic,b_potential_acoustic)
 
             if( PML_BOUNDARY_CONDITIONS ) then
-              do ispec = 1,nspec
-                do i = 1, NGLLX
-                  do j = 1, NGLLZ
-                    if( acoustic(ispec) .and. is_pml(ispec) ) then
-                      b_potential_dot_acoustic(ibool(i,j,ispec)) = 0.
-                      b_potential_acoustic(ibool(i,j,ispec)) = 0.
-                    endif
-                  enddo
-                enddo
-              enddo
+              call rebuild_value_on_PML_interface_acoustic()
             endif
 
-       if(PML_BOUNDARY_CONDITIONS) then
-         if(any_acoustic .and. nglob_interface > 0) then
-           do i = 1, nglob_interface
-             b_potential_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot(i,NSTEP-it+1)
-             b_potential_acoustic(point_interface(i)) = pml_interface_history_potential(i,NSTEP-it+1)
-           enddo
-         endif
-       endif
-
-      endif
+          endif
 
 
     ! *********************************************************
@@ -744,62 +711,16 @@ integer i,j,ispec,i_source,iglob,k
                    t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it),t0x_bot(1,it),t0z_bot(1,it), &
                    count_left,count_right,count_bottom,PML_BOUNDARY_CONDITIONS)
 
-      if(SIMULATION_TYPE == 3) then
-       if(PML_BOUNDARY_CONDITIONS) then
-          do ispec = 1,nspec
-            do i = 1, NGLLX
-              do j = 1, NGLLZ
-                if(elastic(ispec) .and. is_pml(ispec)) then
-                  b_veloc_elastic(:,ibool(i,j,ispec)) = 0.
-                  b_displ_elastic(:,ibool(i,j,ispec)) = 0.
-                endif
-               enddo
-            enddo
-          enddo
-       endif
+      if( SIMULATION_TYPE == 3 ) then
+        if( PML_BOUNDARY_CONDITIONS ) then
+          call rebuild_value_on_PML_interface_viscoelastic()
+        endif
 
-       if(PML_BOUNDARY_CONDITIONS) then
-         if(any_elastic .and. nglob_interface > 0) then
-           do i = 1, nglob_interface
-             b_veloc_elastic(1,point_interface(i)) = pml_interface_history_veloc(1,i,NSTEP-it+1)
-             b_veloc_elastic(2,point_interface(i)) = pml_interface_history_veloc(2,i,NSTEP-it+1)
-             b_veloc_elastic(3,point_interface(i)) = pml_interface_history_veloc(3,i,NSTEP-it+1)
-             b_displ_elastic(1,point_interface(i)) = pml_interface_history_displ(1,i,NSTEP-it+1)
-             b_displ_elastic(2,point_interface(i)) = pml_interface_history_displ(2,i,NSTEP-it+1)
-             b_displ_elastic(3,point_interface(i)) = pml_interface_history_displ(3,i,NSTEP-it+1)
-           enddo
-         endif
-       endif
-
-      call compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,b_displ_elastic_old, &
-                                                PML_BOUNDARY_CONDITIONS)
-
-       if(PML_BOUNDARY_CONDITIONS) then
-          do ispec = 1,nspec
-            do i = 1, NGLLX
-              do j = 1, NGLLZ
-                if(elastic(ispec) .and. is_pml(ispec)) then
-                  b_veloc_elastic(:,ibool(i,j,ispec)) = 0.
-                  b_displ_elastic(:,ibool(i,j,ispec)) = 0.
-                endif
-               enddo
-            enddo
-          enddo
-       endif
-
-       if(PML_BOUNDARY_CONDITIONS) then
-         if(any_elastic .and. nglob_interface > 0) then
-           do i = 1, nglob_interface
-             b_veloc_elastic(1,point_interface(i)) = pml_interface_history_veloc(1,i,NSTEP-it+1)
-             b_veloc_elastic(2,point_interface(i)) = pml_interface_history_veloc(2,i,NSTEP-it+1)
-             b_veloc_elastic(3,point_interface(i)) = pml_interface_history_veloc(3,i,NSTEP-it+1)
-             b_displ_elastic(1,point_interface(i)) = pml_interface_history_displ(1,i,NSTEP-it+1)
-             b_displ_elastic(2,point_interface(i)) = pml_interface_history_displ(2,i,NSTEP-it+1)
-             b_displ_elastic(3,point_interface(i)) = pml_interface_history_displ(3,i,NSTEP-it+1)
-           enddo
-         endif
-       endif
-
+        call compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,b_displ_elastic_old, &
+                                                  PML_BOUNDARY_CONDITIONS)
+        if( PML_BOUNDARY_CONDITIONS ) then
+          call rebuild_value_on_PML_interface_viscoelastic()
+        endif
       endif
 
 

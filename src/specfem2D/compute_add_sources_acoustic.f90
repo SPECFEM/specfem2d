@@ -295,7 +295,7 @@
   real(kind=CUSTOM_REAL) :: xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight,&
                             tempx1l,hp1,tempx2l,hp2,xixl,xizl,gammaxl,gammazl, &
                             rhol,gravityl,Nsql,displ_x,displ_z,displ_n
-                             
+
 
   ! loop on all the forced edges
   do inum = 1,nelem_acforcing
@@ -360,7 +360,7 @@
         iglob = ibool(i,j,ispec)
         displ_n = displ_x*nx + displ_z*nz
         if( abs(nz) > TINYVAL ) then
-          potential_gravito(iglob) = ( rhol*displ_n -(tempx1l*xizl + tempx2l*gammazl)*nz - & 
+          potential_gravito(iglob) = ( rhol*displ_n -(tempx1l*xizl + tempx2l*gammazl)*nz - &
                                        (tempx1l*xixl + tempx2l*gammaxl)*nx ) / (0._CUSTOM_REAL - gravityl*nz)
         else
           write(*,*) 'STOP : forcing surface element along z',i,j,ispec,iglob,nx,nz
