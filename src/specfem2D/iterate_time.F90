@@ -254,6 +254,12 @@ subroutine iterate_time()
             endif
           endif
 
+          if( anyabs .and. STACEY_BOUNDARY_CONDITIONS) then
+            if( SAVE_FORWARD .and. SIMULATION_TYPE == 1 ) then
+              call store_stacey_BC_effect_term_acoustic()
+            endif
+          endif
+
           ! *********************************************************
           ! ************* add acoustic forcing at a rigid boundary
           ! *********************************************************

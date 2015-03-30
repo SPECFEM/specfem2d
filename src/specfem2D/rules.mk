@@ -74,6 +74,7 @@ specfem2D_OBJECTS = \
 	$O/compute_energy.spec.o \
 	$O/compute_forces_acoustic.spec.o \
 	$O/compute_forces_acoustic_backward.spec.o \
+	$O/compute_stacey_acoustic.spec.o \
 	$O/compute_add_sources_acoustic.spec.o \
 	$O/compute_forces_gravitoacoustic.spec.o \
 	$O/compute_forces_poro_fluid.spec.o \
@@ -303,6 +304,7 @@ $O/compute_energy.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_acoustic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_add_sources_acoustic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_acoustic_backward.spec.o: $O/specfem2D_par.spec.o
+$O/compute_stacey_acoustic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_gravitoacoustic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_poro_fluid.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_poro_solid.spec.o: $O/specfem2D_par.spec.o

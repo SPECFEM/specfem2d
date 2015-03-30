@@ -40,11 +40,11 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
- subroutine store_stacey_BC_effect_term_viscoelastic()
+ subroutine store_stacey_BC_effect_term_acoustic()
 
   use specfem_par, only: p_sv,nspec_left,nspec_right,nspec_bottom,nspec_top, &
-                         b_absorb_elastic_left,b_absorb_elastic_right, &
-                         b_absorb_elastic_bottom,b_absorb_elastic_top,it
+                         b_absorb_acoustic_left,b_absorb_acoustic_right, &
+                         b_absorb_acoustic_bottom,b_absorb_acoustic_top,it
   implicit none
   include "constants.h"
   
@@ -52,76 +52,37 @@
   integer :: i,ispec
 
   !--- left absorbing boundary
-  if( nspec_left >0 ) then
-    do ispec = 1, nspec_left
-      if( p_sv ) then!P-SV waves
-        do i=1,NGLLZ
-          write(35) b_absorb_elastic_left(1,i,ispec,it)
-        enddo
-        do i=1,NGLLZ
-          write(35) b_absorb_elastic_left(3,i,ispec,it)
-        enddo
-      else!SH (membrane) waves
-        do i=1,NGLLZ
-          write(35) b_absorb_elastic_left(2,i,ispec,it)
-        enddo
-      endif
+  if(nspec_left >0) then
+    do ispec = 1,nspec_left
+      do i=1,NGLLZ
+        write(65) b_absorb_acoustic_left(i,ispec,it)
+      enddo
     enddo
   endif
-
   !--- right absorbing boundary
-  if( nspec_right >0 ) then
+  if(nspec_right >0) then
     do ispec = 1,nspec_right
-      if( p_sv ) then!P-SV waves
-        do i=1,NGLLZ
-          write(36) b_absorb_elastic_right(1,i,ispec,it)
-        enddo
-        do i=1,NGLLZ
-          write(36) b_absorb_elastic_right(3,i,ispec,it)
-        enddo
-      else!SH (membrane) waves
-        do i=1,NGLLZ
-          write(36) b_absorb_elastic_right(2,i,ispec,it)
-        enddo
-      endif
+      do i=1,NGLLZ
+        write(66) b_absorb_acoustic_right(i,ispec,it)
+      enddo
     enddo
   endif
-
   !--- bottom absorbing boundary
   if(nspec_bottom >0) then
     do ispec = 1,nspec_bottom
-      if(p_sv) then!P-SV waves
-        do i=1,NGLLX
-          write(37) b_absorb_elastic_bottom(1,i,ispec,it)
-        enddo
-        do i=1,NGLLX
-          write(37) b_absorb_elastic_bottom(3,i,ispec,it)
-        enddo
-      else!SH (membrane) waves
-        do i=1,NGLLX
-          write(37) b_absorb_elastic_bottom(2,i,ispec,it)
-        enddo
-      endif
+      do i=1,NGLLX
+        write(67) b_absorb_acoustic_bottom(i,ispec,it)
+      enddo
     enddo
   endif
-
   !--- top absorbing boundary
   if(nspec_top >0) then
     do ispec = 1,nspec_top
-      if(p_sv) then!P-SV waves
-        do i=1,NGLLX
-          write(38) b_absorb_elastic_top(1,i,ispec,it)
-        enddo
-        do i=1,NGLLX
-          write(38) b_absorb_elastic_top(3,i,ispec,it)
-        enddo
-      else!SH (membrane) waves
-        do i=1,NGLLX
-          write(38) b_absorb_elastic_top(2,i,ispec,it)
-        enddo
-      endif
+      do i=1,NGLLX
+        write(68) b_absorb_acoustic_top(i,ispec,it)
+      enddo
     enddo
   endif
 
- end subroutine store_stacey_BC_effect_term_viscoelastic
+ end subroutine store_stacey_BC_effect_term_acoustic
 
