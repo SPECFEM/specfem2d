@@ -117,6 +117,7 @@ specfem2D_OBJECTS = \
 	$O/plot_gll.spec.o \
 	$O/plot_post.spec.o \
 	$O/pml_init.spec.o \
+	$O/pml_compute.spec.o \
 	$O/prepare_absorb.spec.o \
 	$O/prepare_assemble_MPI.spec.o \
 	$O/prepare_color_image.spec.o \
@@ -327,6 +328,7 @@ $O/paco_beyond_critical.spec.o: $O/specfem2D_par.spec.o
 $O/plot_gll.spec.o: $O/specfem2D_par.spec.o
 $O/plot_post.spec.o: $O/specfem2D_par.spec.o
 $O/pml_init.spec.o: $O/specfem2D_par.spec.o
+$O/pml_compute.spec.o: $O/specfem2D_par.spec.o
 $O/prepare_absorb.spec.o: $O/specfem2D_par.spec.o
 $O/prepare_assemble_MPI.spec.o: $O/specfem2D_par.spec.o
 $O/prepare_color_image.spec.o: $O/specfem2D_par.spec.o

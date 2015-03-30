@@ -47,6 +47,7 @@
 ! in future versions
 
   subroutine acoustic_forcing_boundary()
+  !ZNZN It seems we have to define a dummy for iglob.
 
   use specfem_par
 
