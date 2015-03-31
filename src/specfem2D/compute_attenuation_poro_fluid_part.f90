@@ -47,7 +47,7 @@
                          velocw_poroelastic,time_stepping_scheme,deltat,i_stage,stage_time_scheme, &
                          rx_viscous,rz_viscous,viscox,viscoz, &
                          rx_viscous_force_RK,rx_viscous_initial_rk,rz_viscous_force_RK,rz_viscous_initial_rk, &
-                         rx_viscous_LDDRK,rz_viscous_LDDRK,alpha_LDDRK,beta_LDDRK, &                          
+                         rx_viscous_LDDRK,rz_viscous_LDDRK,alpha_LDDRK,beta_LDDRK, &
                          alphaval,betaval,gammaval,theta_e,theta_s,thetainv
 
   implicit none
@@ -129,7 +129,7 @@
               endif
                   rx_viscous(i,j,ispec) = rx_viscous_initial_rk(i,j,ispec) + &
                                           weight_rk * rx_viscous_force_RK(i,j,ispec,i_stage)
-            elseif( i_stage==4 ) then
+            else if( i_stage==4 ) then
                 rx_viscous(i,j,ispec) = rx_viscous_initial_rk(i,j,ispec) + &
                                         1.0d0 / 6.0d0 * (rx_viscous_force_RK(i,j,ispec,i_stage) + &
                                         2.0d0 * rx_viscous_force_RK(i,j,ispec,i_stage) + &

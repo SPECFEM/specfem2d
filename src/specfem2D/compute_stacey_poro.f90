@@ -49,7 +49,7 @@
                          b_absorb_poro_s_top,b_absorb_poro_w_top,it
   implicit none
   include "constants.h"
-  
+
   !local variable
   integer :: i,id,ispec
 

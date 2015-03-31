@@ -629,9 +629,9 @@ subroutine iterate_time()
             ! inject wavefield sources for noise simulations
             if( NOISE_TOMOGRAPHY == 1 ) then
               call  add_point_source_noise()
-            elseif( NOISE_TOMOGRAPHY == 2 ) then
+            else if( NOISE_TOMOGRAPHY == 2 ) then
               call add_surface_movie_noise(accel_elastic)
-            elseif( NOISE_TOMOGRAPHY == 3 ) then
+            else if( NOISE_TOMOGRAPHY == 3 ) then
               if( .not. save_everywhere ) then
                 call add_surface_movie_noise(b_accel_elastic)
               endif
@@ -672,7 +672,7 @@ subroutine iterate_time()
                          displ_elastic(1,point_interface(i)),displ_elastic(2,point_interface(i)),&
                          displ_elastic(3,point_interface(i))
               enddo
-            endif 
+            endif
 
             if( SIMULATION_TYPE == 3 ) then
               do i = 1, nglob_interface
@@ -747,7 +747,7 @@ subroutine iterate_time()
               displ_elastic(2,:) = displ_elastic_initial_rk(2,:) + weight_rk * veloc_elastic_rk(2,:,i_stage)
               displ_elastic(3,:) = displ_elastic_initial_rk(3,:) + weight_rk * veloc_elastic_rk(3,:,i_stage)
 
-            elseif( i_stage==4 ) then
+            else if( i_stage==4 ) then
               !! DK DK this should be vectorized
               veloc_elastic(1,:) = veloc_elastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
                                    ( accel_elastic_rk(1,:,1) + 2.0d0 * accel_elastic_rk(1,:,2) + &
