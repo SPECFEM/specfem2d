@@ -145,6 +145,7 @@ specfem2D_OBJECTS = \
 	$O/specfem2D.spec.o \
 	$O/specfem2D_par.spec.o \
 	$O/update_displacement_scheme.spec.o \
+	$O/compute_kernels.spec.o \
 	$O/write_jpeg_image.cc.o \
 	$O/write_output_SU.spec.o \
 	$O/write_seismograms.spec.o \
@@ -362,6 +363,7 @@ $O/set_sources.spec.o: $O/specfem2D_par.spec.o
 $O/setup_sources_receivers.spec.o: $O/specfem2D_par.spec.o
 $O/specfem2D.spec.o: $O/specfem2D_par.spec.o
 $O/update_displacement_scheme.spec.o: $O/specfem2D_par.spec.o
+$O/compute_kernels.spec.o: $O/specfem2D_par.spec.o
 $O/write_output_SU.spec.o: $O/specfem2D_par.spec.o
 $O/write_seismograms.spec.o: $O/specfem2D_par.spec.o
 $O/acoutic_cuda.spec.o: $O/specfem2D_par.spec.o
