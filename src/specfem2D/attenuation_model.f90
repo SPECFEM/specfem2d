@@ -204,10 +204,9 @@
 
   subroutine shift_velocities_from_f0(vp,vs,rho,mu,lambda)
 
-
 ! From Emmanuel Chaljub, CNRS Grenoble, France:
 
-! shift (i.e. change) velocities read from the input file to take average physical dispersion into account,
+! Shift (i.e. change) velocities read from the input file to take average physical dispersion into account,
 ! i.e. if needed change the reference frequency at which these velocities are defined internally in the code:
 
 !  by default, the velocity values that are read in the Par_file of the code are supposed to be the unrelaxed values,
@@ -222,6 +221,11 @@
 !
 !     Sum_k   { [  w*tau_k*Q(w) - (w*tau_k)^2 ] / [ 1 + (w*tau_k)^2 ] }  ak  = 1
 !                  where tau_k = tau_epsilon_k
+!
+! (to see how to obtain these formulas, see for instance equations (8), (9) and (10) of
+!  P. Moczo, E. Bystricky, J. Kristek, J. M. Carcione and M. Bouchon,
+!  Hybrid modeling of P-SV seismic motion at inhomogeneous viscoelastic topographic structures,
+!  Bulletin of the Seismological Society of Americal, vol. 87, p. 1305-1323 (1997).
 
   use specfem_par, only : f0_attenuation,tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent,N_SLS
 
