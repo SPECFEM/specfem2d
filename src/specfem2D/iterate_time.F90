@@ -575,10 +575,12 @@ subroutine iterate_time()
       if(.NOT. GPU_MODE ) then
         if(any_elastic) then
 
-          call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old,x_source(1),z_source(1), &
-                       f0(1),v0x_left(1,it),v0z_left(1,it),v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
-                       t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it),t0x_bot(1,it),t0z_bot(1,it), &
-                       count_left,count_right,count_bottom,PML_BOUNDARY_CONDITIONS)
+          call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
+                                           x_source(1),z_source(1),f0(1),v0x_left(1,it),v0z_left(1,it), &
+                                           v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
+                                           t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it), &
+                                           t0x_bot(1,it),t0z_bot(1,it),count_left,count_right,count_bottom, &
+                                           PML_BOUNDARY_CONDITIONS)
 
           if( SIMULATION_TYPE == 3 ) then
             if( PML_BOUNDARY_CONDITIONS ) then
@@ -602,431 +604,226 @@ subroutine iterate_time()
         ! *********************************************************
         ! ************* add coupling with the acoustic side
         ! *********************************************************
-
         if( coupled_acoustic_elastic ) call compute_coupling_viscoelastic_ac()
 
         ! ****************************************************************************
         ! ************* add coupling with the poroelastic side
         ! ****************************************************************************
-        if( coupled_elastic_poro ) then
-          call compute_coupling_viscoelastic_po()
-        endif
-! ************************************************************************************
-! ************************************ add force source
-! ************************************************************************************
+        if( coupled_elastic_poro ) call compute_coupling_viscoelastic_po()
 
-    if(any_elastic) then
-      ! --- add the source
-      if(.not. initialfield) then
-        if( SIMULATION_TYPE == 1) then
-           call compute_add_sources_viscoelastic(accel_elastic,it,i_stage)
-        endif
+        ! ************************************************************************************
+        ! ************************************ add force source
+        ! ************************************************************************************
+        if( any_elastic ) then
+          if( .not. initialfield ) then
+            if( SIMULATION_TYPE == 1 ) then
+              call compute_add_sources_viscoelastic(accel_elastic,it,i_stage)
+            endif
 
-        if(SIMULATION_TYPE == 3) then   ! adjoint and backward wavefield
-           call compute_add_sources_viscoelastic_adjoint()
-           call compute_add_sources_viscoelastic(b_accel_elastic,NSTEP-it+1,stage_time_scheme-i_stage+1)
+            if( SIMULATION_TYPE == 3 ) then   ! adjoint and backward wavefield
+              call compute_add_sources_viscoelastic_adjoint()
+              call compute_add_sources_viscoelastic(b_accel_elastic,NSTEP-it+1,stage_time_scheme-i_stage+1)
+            endif ! SIMULATION_TYPE == 3 ! adjoint and backward wavefield
 
-        endif ! SIMULATION_TYPE == 3 ! adjoint and backward wavefield
+            !<NOISE_TOMOGRAPHY
+            ! inject wavefield sources for noise simulations
+            if( NOISE_TOMOGRAPHY == 1 ) then
+              call  add_point_source_noise()
+            elseif( NOISE_TOMOGRAPHY == 2 ) then
+              call add_surface_movie_noise(accel_elastic)
+            elseif( NOISE_TOMOGRAPHY == 3 ) then
+              if( .not. save_everywhere ) then
+                call add_surface_movie_noise(b_accel_elastic)
+              endif
+            endif
+            !>NOISE_TOMOGRAPHY
+          endif ! if not using an initial field
+        endif !if(any_elastic)
 
-!<NOISE_TOMOGRAPHY
-        ! inject wavefield sources for noise simulations
-        if (NOISE_TOMOGRAPHY == 1) then
-          call  add_point_source_noise()
+        ! ************************************************************************************
+        ! ************************************ assembling accel_elastic for elastic elements
+        ! ************************************************************************************
+#ifdef USE_MPI
+        if( nproc > 1 .and. any_elastic .and. ninterface_elastic > 0 ) then
+          if( time_stepping_scheme == 2 ) then
+            if( i_stage==1 .and. it == 1 .and. (.not. initialfield) ) then
+              veloc_elastic_LDDRK_temp = veloc_elastic
+              call assemble_MPI_vector_el(veloc_elastic)
+            endif
+          endif
 
-        else if (NOISE_TOMOGRAPHY == 2) then
-          call add_surface_movie_noise(accel_elastic)
+          call MPI_BARRIER(MPI_COMM_WORLD,ier)
+          call assemble_MPI_vector_el(accel_elastic)
 
-        else if (NOISE_TOMOGRAPHY == 3) then
-          if (.not. save_everywhere) then
-            call add_surface_movie_noise(b_accel_elastic)
+          if( SIMULATION_TYPE == 3 ) then
+            call assemble_MPI_vector_el(b_accel_elastic)
           endif
         endif
-!>NOISE_TOMOGRAPHY
-      endif ! if not using an initial field
-    endif !if(any_elastic)
-
-! assembling accel_elastic for elastic elements
-#ifdef USE_MPI
-
-    if(time_stepping_scheme == 2) then
-    if(i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
-    veloc_elastic_LDDRK_temp = veloc_elastic
-      if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
-       call assemble_MPI_vector_el(veloc_elastic)
-       endif
-    endif
-    endif
-
-    call MPI_BARRIER(MPI_COMM_WORLD,ier)
-
-    if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
-      call assemble_MPI_vector_el(accel_elastic)
-    endif
-
-
-    if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0 .and. SIMULATION_TYPE == 3) then
-      call assemble_MPI_vector_el(b_accel_elastic)
-    endif
 #endif
 
-      if(PML_BOUNDARY_CONDITIONS .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
-       if(any_elastic .and. nglob_interface > 0) then
-        do i = 1, nglob_interface
-          write(71)accel_elastic(1,point_interface(i)),accel_elastic(2,point_interface(i)),&
-                   accel_elastic(3,point_interface(i)),&
-                   veloc_elastic(1,point_interface(i)),veloc_elastic(2,point_interface(i)),&
-                   veloc_elastic(3,point_interface(i)),&
-                   displ_elastic(1,point_interface(i)),displ_elastic(2,point_interface(i)),&
-                   displ_elastic(3,point_interface(i))
-        enddo
-       endif
-      endif
+        if( PML_BOUNDARY_CONDITIONS ) then
+          if( any_elastic .and. nglob_interface > 0 ) then
+            if( SAVE_FORWARD .and. SIMULATION_TYPE == 1)then
+              do i = 1, nglob_interface
+                write(71)accel_elastic(1,point_interface(i)),accel_elastic(2,point_interface(i)),&
+                         accel_elastic(3,point_interface(i)),&
+                         veloc_elastic(1,point_interface(i)),veloc_elastic(2,point_interface(i)),&
+                         veloc_elastic(3,point_interface(i)),&
+                         displ_elastic(1,point_interface(i)),displ_elastic(2,point_interface(i)),&
+                         displ_elastic(3,point_interface(i))
+              enddo
+            endif 
 
-      if(SIMULATION_TYPE == 3) then
-        if(PML_BOUNDARY_CONDITIONS) then
-          if(any_elastic .and. nglob_interface > 0) then
-            do i = 1, nglob_interface
-              b_accel_elastic(1,point_interface(i)) = pml_interface_history_accel(1,i,NSTEP-it+1)
-              b_accel_elastic(2,point_interface(i)) = pml_interface_history_accel(2,i,NSTEP-it+1)
-              b_accel_elastic(3,point_interface(i)) = pml_interface_history_accel(3,i,NSTEP-it+1)
-            enddo
+            if( SIMULATION_TYPE == 3 ) then
+              do i = 1, nglob_interface
+                b_accel_elastic(1,point_interface(i)) = pml_interface_history_accel(1,i,NSTEP-it+1)
+                b_accel_elastic(2,point_interface(i)) = pml_interface_history_accel(2,i,NSTEP-it+1)
+                b_accel_elastic(3,point_interface(i)) = pml_interface_history_accel(3,i,NSTEP-it+1)
+              enddo
+            endif
           endif
         endif
+
+        ! ************************************************************************************
+        ! ************* multiply by the inverse of the mass matrix and update velocity
+        ! ************************************************************************************
+        if( any_elastic ) then
+          !! DK DK this should be vectorized
+          accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic_one
+          accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic_one
+          accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic_three
+
+          if( time_stepping_scheme == 1 ) then
+            !! DK DK this should be vectorized
+            veloc_elastic = veloc_elastic + deltatover2 * accel_elastic
+          endif
+
+          if( time_stepping_scheme == 2 ) then
+            !! DK DK this should be vectorized
+            veloc_elastic_LDDRK = alpha_LDDRK(i_stage) * veloc_elastic_LDDRK + deltat * accel_elastic
+            displ_elastic_LDDRK = alpha_LDDRK(i_stage) * displ_elastic_LDDRK + deltat * veloc_elastic
+            if( i_stage==1 .and. it == 1 .and. (.not. initialfield) ) then
+              veloc_elastic_LDDRK_temp = veloc_elastic_LDDRK_temp + beta_LDDRK(i_stage) * veloc_elastic_LDDRK
+              veloc_elastic = veloc_elastic_LDDRK_temp
+            else
+              veloc_elastic = veloc_elastic + beta_LDDRK(i_stage) * veloc_elastic_LDDRK
+            endif
+            displ_elastic = displ_elastic + beta_LDDRK(i_stage) * displ_elastic_LDDRK
+          endif
+
+          if( time_stepping_scheme == 3 ) then
+            !! DK DK this should be vectorized
+            accel_elastic_rk(1,:,i_stage) = deltat * accel_elastic(1,:)
+            accel_elastic_rk(2,:,i_stage) = deltat * accel_elastic(2,:)
+            accel_elastic_rk(3,:,i_stage) = deltat * accel_elastic(3,:)
+
+            veloc_elastic_rk(1,:,i_stage) = deltat * veloc_elastic(1,:)
+            veloc_elastic_rk(2,:,i_stage) = deltat * veloc_elastic(2,:)
+            veloc_elastic_rk(3,:,i_stage) = deltat * veloc_elastic(3,:)
+
+            if( i_stage==1 .or. i_stage==2 .or. i_stage==3 ) then
+
+              if(i_stage == 1)weight_rk = 0.5d0
+              if(i_stage == 2)weight_rk = 0.5d0
+              if(i_stage == 3)weight_rk = 1.0d0
+
+              if( i_stage==1 ) then
+                !! DK DK this should be vectorized
+                veloc_elastic_initial_rk(1,:) = veloc_elastic(1,:)
+                veloc_elastic_initial_rk(2,:) = veloc_elastic(2,:)
+                veloc_elastic_initial_rk(3,:) = veloc_elastic(3,:)
+
+                displ_elastic_initial_rk(1,:) = displ_elastic(1,:)
+                displ_elastic_initial_rk(2,:) = displ_elastic(2,:)
+                displ_elastic_initial_rk(3,:) = displ_elastic(3,:)
+              endif
+
+              !! DK DK this should be vectorized
+              veloc_elastic(1,:) = veloc_elastic_initial_rk(1,:) + weight_rk * accel_elastic_rk(1,:,i_stage)
+              veloc_elastic(2,:) = veloc_elastic_initial_rk(2,:) + weight_rk * accel_elastic_rk(2,:,i_stage)
+              veloc_elastic(3,:) = veloc_elastic_initial_rk(3,:) + weight_rk * accel_elastic_rk(3,:,i_stage)
+
+              displ_elastic(1,:) = displ_elastic_initial_rk(1,:) + weight_rk * veloc_elastic_rk(1,:,i_stage)
+              displ_elastic(2,:) = displ_elastic_initial_rk(2,:) + weight_rk * veloc_elastic_rk(2,:,i_stage)
+              displ_elastic(3,:) = displ_elastic_initial_rk(3,:) + weight_rk * veloc_elastic_rk(3,:,i_stage)
+
+            elseif( i_stage==4 ) then
+              !! DK DK this should be vectorized
+              veloc_elastic(1,:) = veloc_elastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
+                                   ( accel_elastic_rk(1,:,1) + 2.0d0 * accel_elastic_rk(1,:,2) + &
+                                     2.0d0 * accel_elastic_rk(1,:,3) + accel_elastic_rk(1,:,4) )
+              veloc_elastic(2,:) = veloc_elastic_initial_rk(2,:) + 1.0d0 / 6.0d0 * &
+                                   ( accel_elastic_rk(2,:,1) + 2.0d0 * accel_elastic_rk(2,:,2) + &
+                                     2.0d0 * accel_elastic_rk(2,:,3) + accel_elastic_rk(2,:,4) )
+              veloc_elastic(3,:) = veloc_elastic_initial_rk(3,:) + 1.0d0 / 6.0d0 * &
+                                   ( accel_elastic_rk(3,:,1) + 2.0d0 * accel_elastic_rk(3,:,2) + &
+                                     2.0d0 * accel_elastic_rk(3,:,3) + accel_elastic_rk(3,:,4) )
+
+              displ_elastic(1,:) = displ_elastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
+                                   ( veloc_elastic_rk(1,:,1) + 2.0d0 * veloc_elastic_rk(1,:,2) + &
+                                     2.0d0 * veloc_elastic_rk(1,:,3) + veloc_elastic_rk(1,:,4) )
+              displ_elastic(2,:) = displ_elastic_initial_rk(2,:) + 1.0d0 / 6.0d0 * &
+                                   ( veloc_elastic_rk(2,:,1) + 2.0d0 * veloc_elastic_rk(2,:,2) + &
+                                     2.0d0 * veloc_elastic_rk(2,:,3) + veloc_elastic_rk(2,:,4))
+              displ_elastic(3,:) = displ_elastic_initial_rk(3,:) + 1.0d0 / 6.0d0 * &
+                                   ( veloc_elastic_rk(3,:,1) + 2.0d0 * veloc_elastic_rk(3,:,2) + &
+                                     2.0d0 * veloc_elastic_rk(3,:,3) + veloc_elastic_rk(3,:,4))
+            endif
+          endif
+
+          if( SIMULATION_TYPE == 3 ) then
+            !! DK DK this should be vectorized
+            b_accel_elastic(1,:) = b_accel_elastic(1,:) * rmass_inverse_elastic_one(:)
+            b_accel_elastic(2,:) = b_accel_elastic(2,:) * rmass_inverse_elastic_one(:)
+            b_accel_elastic(3,:) = b_accel_elastic(3,:) * rmass_inverse_elastic_three(:)
+
+            b_veloc_elastic = b_veloc_elastic + b_deltatover2*b_accel_elastic
+          endif
+
+        endif !if(any_elastic)
+
+      else ! GPU_MODE
+        if(any_elastic)  call compute_forces_elastic_GPU()
       endif
-
-
-! ************************************************************************************
-! ************* multiply by the inverse of the mass matrix and update velocity
-! ************************************************************************************
-
-    if(any_elastic) then
-
-!! DK DK this should be vectorized
-      accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic_one
-      accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic_one
-      accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic_three
-
-      if(time_stepping_scheme == 1) then
-!! DK DK this should be vectorized
-        veloc_elastic = veloc_elastic + deltatover2 * accel_elastic
-      endif
-
-      if(time_stepping_scheme == 2) then
-
-!! DK DK this should be vectorized
-        veloc_elastic_LDDRK = alpha_LDDRK(i_stage) * veloc_elastic_LDDRK + deltat * accel_elastic
-        displ_elastic_LDDRK = alpha_LDDRK(i_stage) * displ_elastic_LDDRK + deltat * veloc_elastic
-        if(i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
-        veloc_elastic_LDDRK_temp = veloc_elastic_LDDRK_temp + beta_LDDRK(i_stage) * veloc_elastic_LDDRK
-        veloc_elastic = veloc_elastic_LDDRK_temp
-        else
-        veloc_elastic = veloc_elastic + beta_LDDRK(i_stage) * veloc_elastic_LDDRK
-        endif
-        displ_elastic = displ_elastic + beta_LDDRK(i_stage) * displ_elastic_LDDRK
-
-      endif
-
-      if(time_stepping_scheme == 3) then
-
-!! DK DK this should be vectorized
-        accel_elastic_rk(1,:,i_stage) = deltat * accel_elastic(1,:)
-        accel_elastic_rk(2,:,i_stage) = deltat * accel_elastic(2,:)
-        accel_elastic_rk(3,:,i_stage) = deltat * accel_elastic(3,:)
-
-        veloc_elastic_rk(1,:,i_stage) = deltat * veloc_elastic(1,:)
-        veloc_elastic_rk(2,:,i_stage) = deltat * veloc_elastic(2,:)
-        veloc_elastic_rk(3,:,i_stage) = deltat * veloc_elastic(3,:)
-
-        if(i_stage==1 .or. i_stage==2 .or. i_stage==3) then
-
-        if(i_stage == 1)weight_rk = 0.5d0
-        if(i_stage == 2)weight_rk = 0.5d0
-        if(i_stage == 3)weight_rk = 1.0d0
-
-        if(i_stage==1) then
-
-!! DK DK this should be vectorized
-        veloc_elastic_initial_rk(1,:) = veloc_elastic(1,:)
-        veloc_elastic_initial_rk(2,:) = veloc_elastic(2,:)
-        veloc_elastic_initial_rk(3,:) = veloc_elastic(3,:)
-
-        displ_elastic_initial_rk(1,:) = displ_elastic(1,:)
-        displ_elastic_initial_rk(2,:) = displ_elastic(2,:)
-        displ_elastic_initial_rk(3,:) = displ_elastic(3,:)
-
-        endif
-
-!! DK DK this should be vectorized
-        veloc_elastic(1,:) = veloc_elastic_initial_rk(1,:) + weight_rk * accel_elastic_rk(1,:,i_stage)
-        veloc_elastic(2,:) = veloc_elastic_initial_rk(2,:) + weight_rk * accel_elastic_rk(2,:,i_stage)
-        veloc_elastic(3,:) = veloc_elastic_initial_rk(3,:) + weight_rk * accel_elastic_rk(3,:,i_stage)
-
-        displ_elastic(1,:) = displ_elastic_initial_rk(1,:) + weight_rk * veloc_elastic_rk(1,:,i_stage)
-        displ_elastic(2,:) = displ_elastic_initial_rk(2,:) + weight_rk * veloc_elastic_rk(2,:,i_stage)
-        displ_elastic(3,:) = displ_elastic_initial_rk(3,:) + weight_rk * veloc_elastic_rk(3,:,i_stage)
-
-        else if(i_stage==4) then
-
-!! DK DK this should be vectorized
-        veloc_elastic(1,:) = veloc_elastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
-        (accel_elastic_rk(1,:,1) + 2.0d0 * accel_elastic_rk(1,:,2) + &
-         2.0d0 * accel_elastic_rk(1,:,3) + accel_elastic_rk(1,:,4))
-
-        veloc_elastic(2,:) = veloc_elastic_initial_rk(2,:) + 1.0d0 / 6.0d0 * &
-        (accel_elastic_rk(2,:,1) + 2.0d0 * accel_elastic_rk(2,:,2) + &
-         2.0d0 * accel_elastic_rk(2,:,3) + accel_elastic_rk(2,:,4))
-
-         veloc_elastic(3,:) = veloc_elastic_initial_rk(3,:) + 1.0d0 / 6.0d0 * &
-        (accel_elastic_rk(3,:,1) + 2.0d0 * accel_elastic_rk(3,:,2) + &
-         2.0d0 * accel_elastic_rk(3,:,3) + accel_elastic_rk(3,:,4))
-
-        displ_elastic(1,:) = displ_elastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
-        (veloc_elastic_rk(1,:,1) + 2.0d0 * veloc_elastic_rk(1,:,2) + &
-         2.0d0 * veloc_elastic_rk(1,:,3) + veloc_elastic_rk(1,:,4))
-
-        displ_elastic(2,:) = displ_elastic_initial_rk(2,:) + 1.0d0 / 6.0d0 * &
-        (veloc_elastic_rk(2,:,1) + 2.0d0 * veloc_elastic_rk(2,:,2) + &
-         2.0d0 * veloc_elastic_rk(2,:,3) + veloc_elastic_rk(2,:,4))
-
-        displ_elastic(3,:) = displ_elastic_initial_rk(3,:) + 1.0d0 / 6.0d0 * &
-        (veloc_elastic_rk(3,:,1) + 2.0d0 * veloc_elastic_rk(3,:,2) + &
-         2.0d0 * veloc_elastic_rk(3,:,3) + veloc_elastic_rk(3,:,4))
-
-        endif
-
-      endif
-
-      if(SIMULATION_TYPE == 3) then
-!! DK DK this should be vectorized
-        b_accel_elastic(1,:) = b_accel_elastic(1,:) * rmass_inverse_elastic_one(:)
-        b_accel_elastic(2,:) = b_accel_elastic(2,:) * rmass_inverse_elastic_one(:)
-        b_accel_elastic(3,:) = b_accel_elastic(3,:) * rmass_inverse_elastic_three(:)
-
-        b_veloc_elastic = b_veloc_elastic + b_deltatover2*b_accel_elastic
-      endif
-
-    endif !if(any_elastic)
-
- else ! GPU_MODE
-
-  if(any_elastic)  call compute_forces_elastic_GPU()
-
- endif
-
 
 ! ******************************************************************************************************************
 ! ************* main solver for the poroelastic elements: first the solid (u_s) then the fluid (w)
 ! ******************************************************************************************************************
+      if( .NOT. GPU_MODE) then
+        if( any_poroelastic ) then
+          !--------------------------------------------------------------------------------------------
+          ! implement viscous attenuation for poroelastic media
+          !--------------------------------------------------------------------------------------------
+          if( ATTENUATION_PORO_FLUID_PART ) then
+            call compute_attenuation_poro_fluid_part()
+          endif
 
-  if ( .NOT. GPU_MODE) then
+          if( SIMULATION_TYPE == 3 ) then
+            ! if inviscid fluid, comment the reading and uncomment the zeroing
+            !     read(23,rec=NSTEP-it+1) b_viscodampx
+            !     read(24,rec=NSTEP-it+1) b_viscodampz
+            b_viscodampx(:) = ZERO
+            b_viscodampz(:) = ZERO
+          endif
 
-    if(any_poroelastic) then
+          call compute_forces_poro_solid(f0(1))
+          call compute_forces_poro_fluid(f0(1))
 
-!--------------------------------------------------------------------------------------------
-! implement viscous attenuation for poroelastic media
-!
-    if(ATTENUATION_PORO_FLUID_PART) then
-      ! update memory variables with fourth-order Runge-Kutta time scheme for attenuation
-      ! loop over spectral elements
-      do ispec = 1,nspec
+          if( SAVE_FORWARD .and. SIMULATION_TYPE == 1 ) then
+            ! if inviscid fluid, comment
+            !     write(23,rec=it) b_viscodampx
+            !     write(24,rec=it) b_viscodampz
+          endif
 
-       if(poroelastic(ispec) .and. poroelastcoef(2,2,kmato(ispec)) >0.d0) then
+          if( anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1 ) then
+            call store_stacey_BC_effect_term_poro()
+          endif
+        endif !if(any_poroelastic) then
 
-        etal_f = poroelastcoef(2,2,kmato(ispec))
-        permlxx = permeability(1,kmato(ispec))
-        permlxz = permeability(2,kmato(ispec))
-        permlzz = permeability(3,kmato(ispec))
-
-        ! calcul of the inverse of k
-
-        detk = permlxx*permlzz - permlxz*permlxz
-
-        if(detk /= ZERO) then
-          invpermlxx = permlzz/detk
-          invpermlxz = -permlxz/detk
-          invpermlzz = permlxx/detk
-        else
-          stop 'Permeability matrix is not invertible'
-        endif
-
-        ! relaxed viscous coef
-        bl_unrelaxed_elastic(1) = etal_f*invpermlxx
-        bl_unrelaxed_elastic(2) = etal_f*invpermlxz
-        bl_unrelaxed_elastic(3) = etal_f*invpermlzz
-
-        do j=1,NGLLZ
-          do i=1,NGLLX
-
-            iglob = ibool(i,j,ispec)
-            viscox_loc(i,j) = velocw_poroelastic(1,iglob)*bl_unrelaxed_elastic(1) + &
-                               velocw_poroelastic(2,iglob) * bl_unrelaxed_elastic(2)
-            viscoz_loc(i,j) = velocw_poroelastic(1,iglob)*bl_unrelaxed_elastic(2) + &
-                               velocw_poroelastic(2,iglob)*bl_unrelaxed_elastic(3)
-
-            if(time_stepping_scheme == 1) then
-              ! evolution rx_viscous
-              Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
-              Snp1 = - (1.d0 - theta_e/theta_s)/theta_s*viscox_loc(i,j)
-              rx_viscous(i,j,ispec) = alphaval * rx_viscous(i,j,ispec) &
-                                    + betaval * Sn + gammaval * Snp1
-
-              ! evolution rz_viscous
-              Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
-              Snp1 = - (1.d0 - theta_e/theta_s)/theta_s*viscoz_loc(i,j)
-              rz_viscous(i,j,ispec) = alphaval * rz_viscous(i,j,ispec) &
-                                    + betaval * Sn + gammaval * Snp1
-            endif
-
-            if(time_stepping_scheme == 2) then
-              Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
-              rx_viscous_LDDRK(i,j,ispec) = alpha_LDDRK(i_stage) * rx_viscous_LDDRK(i,j,ispec) + &
-                                            deltat * (Sn + thetainv * rx_viscous(i,j,ispec))
-              rx_viscous(i,j,ispec)= rx_viscous(i,j,ispec)+beta_LDDRK(i_stage) * rx_viscous_LDDRK(i,j,ispec)
-
-              Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
-              rz_viscous_LDDRK(i,j,ispec)= alpha_LDDRK(i_stage) * rz_viscous_LDDRK(i,j,ispec)+&
-                                           deltat * (Sn + thetainv * rz_viscous(i,j,ispec))
-              rz_viscous(i,j,ispec)= rz_viscous(i,j,ispec)+beta_LDDRK(i_stage) * rz_viscous_LDDRK(i,j,ispec)
-            endif
-
-            if(time_stepping_scheme == 3) then
-
-              Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
-              rx_viscous_force_RK(i,j,ispec,i_stage) = deltat * (Sn + thetainv * rx_viscous(i,j,ispec))
-
-              if(i_stage==1 .or. i_stage==2 .or. i_stage==3) then
-                if(i_stage == 1)weight_rk = 0.5d0
-                if(i_stage == 2)weight_rk = 0.5d0
-                if(i_stage == 3)weight_rk = 1.0d0
-
-                if(i_stage==1) then
-                  rx_viscous_initial_rk(i,j,ispec) = rx_viscous(i,j,ispec)
-                endif
-                  rx_viscous(i,j,ispec) = rx_viscous_initial_rk(i,j,ispec) + &
-                                          weight_rk * rx_viscous_force_RK(i,j,ispec,i_stage)
-              else if(i_stage==4) then
-
-                rx_viscous(i,j,ispec) = rx_viscous_initial_rk(i,j,ispec) + &
-                                        1.0d0 / 6.0d0 * (rx_viscous_force_RK(i,j,ispec,i_stage) + &
-                                        2.0d0 * rx_viscous_force_RK(i,j,ispec,i_stage) + &
-                                        2.0d0 * rx_viscous_force_RK(i,j,ispec,i_stage) + &
-                                        rx_viscous_force_RK(i,j,ispec,i_stage))
-              endif
-
-              Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
-              rz_viscous_force_RK(i,j,ispec,i_stage) = deltat * (Sn + thetainv * rz_viscous(i,j,ispec))
-
-              if(i_stage==1 .or. i_stage==2 .or. i_stage==3) then
-                if(i_stage == 1)weight_rk = 0.5d0
-                if(i_stage == 2)weight_rk = 0.5d0
-                if(i_stage == 3)weight_rk = 1.0d0
-                if(i_stage==1) then
-                  rz_viscous_initial_rk(i,j,ispec) = rz_viscous(i,j,ispec)
-                endif
-                rz_viscous(i,j,ispec) = rz_viscous_initial_rk(i,j,ispec) + &
-                                        weight_rk * rz_viscous_force_RK(i,j,ispec,i_stage)
-              else if(i_stage==4) then
-                rz_viscous(i,j,ispec) = rz_viscous_initial_rk(i,j,ispec) + &
-                                        1.0d0 / 6.0d0 * (rz_viscous_force_RK(i,j,ispec,i_stage) + &
-                                        2.0d0 * rz_viscous_force_RK(i,j,ispec,i_stage) + &
-                                        2.0d0 * rz_viscous_force_RK(i,j,ispec,i_stage) + &
-                                        rz_viscous_force_RK(i,j,ispec,i_stage))
-              endif
-            endif
-          enddo
-        enddo
-
-        if(stage_time_scheme == 1) then
-        ! save visco for Runge-Kutta scheme when used together with Newmark
-        viscox(:,:,ispec) = viscox_loc(:,:)
-        viscoz(:,:,ispec) = viscoz_loc(:,:)
-        endif
-
-       endif  ! end of poroelastic element loop
-
-      enddo   ! end of spectral element loop
-    endif ! end of viscous attenuation for porous media
-
-!-----------------------------------------
-
-      if(SIMULATION_TYPE == 3) then
-        ! if inviscid fluid, comment the reading and uncomment the zeroing
-        !     read(23,rec=NSTEP-it+1) b_viscodampx
-        !     read(24,rec=NSTEP-it+1) b_viscodampz
-        b_viscodampx(:) = ZERO
-        b_viscodampz(:) = ZERO
-      endif
-
-      call compute_forces_poro_solid(f0(1))
-
-      call compute_forces_poro_fluid(f0(1))
-
-
-      if(SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
-        ! if inviscid fluid, comment
-        !     write(23,rec=it) b_viscodampx
-        !     write(24,rec=it) b_viscodampz
-      endif
-
-      if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
-
-        !--- left absorbing boundary
-        if(nspec_left >0) then
-          do ispec = 1,nspec_left
-            do id =1,2
-              do i=1,NGLLZ
-                write(45) b_absorb_poro_s_left(id,i,ispec,it)
-                write(25) b_absorb_poro_w_left(id,i,ispec,it)
-              enddo
-            enddo
-          enddo
-        endif
-
-        !--- right absorbing boundary
-        if(nspec_right >0) then
-          do ispec = 1,nspec_right
-            do id =1,2
-              do i=1,NGLLZ
-                write(46) b_absorb_poro_s_right(id,i,ispec,it)
-                write(26) b_absorb_poro_w_right(id,i,ispec,it)
-              enddo
-            enddo
-          enddo
-        endif
-
-        !--- bottom absorbing boundary
-        if(nspec_bottom >0) then
-          do ispec = 1,nspec_bottom
-            do id =1,2
-              do i=1,NGLLX
-                write(47) b_absorb_poro_s_bottom(id,i,ispec,it)
-                write(29) b_absorb_poro_w_bottom(id,i,ispec,it)
-              enddo
-            enddo
-          enddo
-        endif
-
-        !--- top absorbing boundary
-        if(nspec_top >0) then
-          do ispec = 1,nspec_top
-            do id =1,2
-              do i=1,NGLLX
-                write(48) b_absorb_poro_s_top(id,i,ispec,it)
-                write(28) b_absorb_poro_w_top(id,i,ispec,it)
-              enddo
-            enddo
-          enddo
-        endif
-
-      endif ! if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1)
-
-    endif !if(any_poroelastic) then
-
-! *********************************************************
-! ************* add coupling with the acoustic side
-! *********************************************************
-
-    if(coupled_acoustic_poro) then
+        ! *********************************************************
+        ! ************* add coupling with the acoustic side
+        ! *********************************************************
+        if(coupled_acoustic_poro) then
 
       ! loop on all the coupling edges
       do inum = 1,num_fluid_poro_edges
