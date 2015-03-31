@@ -110,21 +110,21 @@
         nx = - zxi / jacobian1D
         nz = + xxi / jacobian1D
         weight = jacobian1D * wxgll(i)
-      elseif( iedge_acoustic == IBOTTOM ) then
+      else if( iedge_acoustic == IBOTTOM ) then
         xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         jacobian1D = sqrt(xxi**2 + zxi**2)
         nx = + zxi / jacobian1D
         nz = - xxi / jacobian1D
         weight = jacobian1D * wxgll(i)
-      elseif( iedge_acoustic ==ILEFT ) then
+      else if( iedge_acoustic ==ILEFT ) then
         xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         jacobian1D = sqrt(xgamma**2 + zgamma**2)
         nx = - zgamma / jacobian1D
         nz = + xgamma / jacobian1D
         weight = jacobian1D * wzgll(j)
-      elseif( iedge_acoustic ==IRIGHT ) then
+      else if( iedge_acoustic ==IRIGHT ) then
         xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         jacobian1D = sqrt(xgamma**2 + zgamma**2)

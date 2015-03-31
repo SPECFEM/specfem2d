@@ -830,7 +830,7 @@ subroutine iterate_time()
         ! **********************************************************
         if( coupled_elastic_poro ) then
           call compute_coupling_poro_viscoelastic()
-        endif 
+        endif
 
         ! ***********************************************************
         ! ******************************** add force source
@@ -843,7 +843,7 @@ subroutine iterate_time()
             endif
 
             if( SIMULATION_TYPE == 3 ) then   ! adjoint and backward wavefield
-!ZNZN the add force source for adjoint simulation in poro medium are inside compute_forces_poro_solid 
+!ZNZN the add force source for adjoint simulation in poro medium are inside compute_forces_poro_solid
 !ZNZN and compute_forces_poro_fluid,
               call compute_add_sources_poro(b_accels_poroelastic,b_accelw_poroelastic,NSTEP-it+1,stage_time_scheme-i_stage+1)
             endif
@@ -946,7 +946,7 @@ subroutine iterate_time()
               displw_poroelastic(1,:) = displw_poroelastic_initial_rk(1,:) + weight_rk * velocw_poroelastic_rk(1,:,i_stage)
               displw_poroelastic(2,:) = displw_poroelastic_initial_rk(2,:) + weight_rk * velocw_poroelastic_rk(2,:,i_stage)
 
-            elseif( i_stage==4 ) then
+            else if( i_stage==4 ) then
 
               velocs_poroelastic(1,:) = velocs_poroelastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
               (accels_poroelastic_rk(1,:,1) + 2.0d0 * accels_poroelastic_rk(1,:,2) + &
@@ -1125,9 +1125,9 @@ subroutine iterate_time()
 !<NOISE_TOMOGRAPHY
    if( NOISE_TOMOGRAPHY == 1 ) then
       call save_surface_movie_noise()
-   elseif( NOISE_TOMOGRAPHY == 2 .and. save_everywhere ) then
+   else if( NOISE_TOMOGRAPHY == 2 .and. save_everywhere ) then
       call save_surface_movie_noise()
-   elseif( NOISE_TOMOGRAPHY == 3 .and. save_everywhere ) then
+   else if( NOISE_TOMOGRAPHY == 3 .and. save_everywhere ) then
      if( it==1 ) open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/phi',access='direct', &
                       recl=nglob*CUSTOM_REAL,action='write',iostat=ios)
      if( ios /= 0 ) write(*,*) 'Error retrieving ensemble forward wavefield.'
@@ -1288,7 +1288,7 @@ subroutine iterate_time()
                  permlxz_global(iglob) = permeability(2,kmato(ispec))
                  permlzz_global(iglob) = permeability(3,kmato(ispec))
                  mulfr_global(iglob) = poroelastcoef(2,3,kmato(ispec))
- 
+
                  rhot_kl(i,j,ispec) = rhot_kl(i,j,ispec) - deltat * rhol_bar_global(iglob) * rhot_k(iglob)
                  rhof_kl(i,j,ispec) = rhof_kl(i,j,ispec) - deltat * rhol_f_global(iglob) * rhof_k(iglob)
                  sm_kl(i,j,ispec) = sm_kl(i,j,ispec) - &
