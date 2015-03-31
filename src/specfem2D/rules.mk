@@ -80,6 +80,9 @@ specfem2D_OBJECTS = \
 	$O/compute_attenuation_poro_fluid_part.spec.o \
 	$O/compute_forces_poro_solid.spec.o \
 	$O/compute_stacey_poro.spec.o \
+	$O/compute_coupling_poro_ac.spec.o \
+	$O/compute_coupling_poro_viscoelastic.spec.o \
+	$O/compute_add_sources_poro.spec.o \
 	$O/compute_forces_viscoelastic.spec.o \
 	$O/compute_forces_viscoelastic_backward.spec.o \
 	$O/compute_coupling_viscoelastic_ac.spec.o \
@@ -312,6 +315,9 @@ $O/compute_forces_poro_fluid.spec.o: $O/specfem2D_par.spec.o
 $O/compute_attenuation_poro_fluid_part.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_poro_solid.spec.o: $O/specfem2D_par.spec.o
 $O/compute_stacey_poro.spec.o: $O/specfem2D_par.spec.o
+$O/compute_coupling_poro_ac.spec.o: $O/specfem2D_par.spec.o
+$O/compute_coupling_poro_viscoelastic.spec.o: $O/specfem2D_par.spec.o
+$O/compute_add_sources_poro.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_viscoelastic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_viscoelastic_backward.spec.o: $O/specfem2D_par.spec.o
 $O/compute_coupling_viscoelastic_ac.spec.o: $O/specfem2D_par.spec.o
