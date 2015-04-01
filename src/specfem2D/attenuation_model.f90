@@ -204,7 +204,6 @@
 
   subroutine shift_velocities_from_f0(vp,vs,rho,mu,lambda)
 
-
 ! From Emmanuel Chaljub, CNRS Grenoble, France:
 
 ! shift (i.e. change) velocities read from the input file to take average physical dispersion into account,
@@ -223,10 +222,34 @@
 !     Sum_k   { [  w*tau_k*Q(w) - (w*tau_k)^2 ] / [ 1 + (w*tau_k)^2 ] }  ak  = 1
 !                  where tau_k = tau_epsilon_k
 !
-! (to see how to obtain these formulas, see for instance equations (8), (9) and (10) of
+!  To see how to obtain these formulas, see for instance equations (8), (9) and (10) of
 !  P. Moczo, E. Bystricky, J. Kristek, J. M. Carcione and M. Bouchon,
 !  Hybrid modeling of P-SV seismic motion at inhomogeneous viscoelastic topographic structures,
 !  Bulletin of the Seismological Society of Americal, vol. 87, p. 1305-1323 (1997).
+!
+!  See also file notes_from_Emmanuel_Chaljub_about_how_to_shift_a_Zener_body_from_a_frequency_f0_to_a_frequency_f1.pdf
+!  in the "doc/" directory of the code.
+!  If one wants to shift the Vp and Vs velocities from a frequency f0 to another frequency f1 instead of
+!  shifting them to infinite frequency (i.e., to the unrelaxed state) as in the routine below, an easy way
+!  of doing that is to use the complex modulus and use the unrelaxed modulus Mu as an intermediate step:
+!
+!       M(f1)/M(f2) = ( M(f1)/Mu ) * ( Mu/M(f2) )
+!
+!  and use equation (9) from notes_from_Emmanuel_Chaljub_about_how_to_shift_a_Zener_body_from_a_frequency_f0_to_a_frequency_f1.pdf
+!  to compute the M(f)/Mu values, and equations (6) and (7) to convert that to what is needed in SPECFEM.
+!
+!  The above formulas are for a Zener-body approximation of a constant Q model, which is what SPECFEM uses.
+!  If one wants to use exact formulas for a truly constant Q model instead (i.e., not approximated by a set of Zener bodies),
+!  the expression of the scaling can be found for instance in equation (49) of Komatitsch and Tromp,
+!  Spectral-Element Simulations of Global Seismic Wave Propagation-I. Validation, Geophys. J. Int. vol. 149 p. 390-412 (2002),
+!  which is also in file "doc/exact_formula_to_scale_mu_from_a_frequency_f0_to_a_frequency_f1_from_Komatitsch_Tromp_GJI_2002.pdf":
+!
+!       mu(omega_c) = mu(omega_0) * (1 + 2 * ln(omega_c/omega_0) / (PI * Q_mu))
+!
+!  (the formula to scale Vs is the same except for the factor of 2, which needs to be removed because mu is related to Vs squared.
+!
+!  A similar expression can then be established for Q_Kappa, and conversion from Q_Kappa and Q_mu to Q_P and Q_S (if needed)
+!  can be found for instance in equations (9.59) and (9.60) of the book of Dahlen and Tromp (1998).
 
   use specfem_par, only : f0_attenuation,tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent,N_SLS
 
