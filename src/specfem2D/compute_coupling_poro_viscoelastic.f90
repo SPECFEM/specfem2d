@@ -391,16 +391,10 @@
 
  subroutine compute_coupling_poro_viscoelastic_for_stabilization()
 
-  use specfem_par, only: SIMULATION_TYPE,num_solid_poro_edges,&
-                         ibool,wxgll,wzgll,xix,xiz,gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse, &
-                         hprime_xx,hprime_zz, &
+  use specfem_par, only: SIMULATION_TYPE,num_solid_poro_edges,ibool,ivalue,jvalue, &
                          solid_poro_elastic_ispec,solid_poro_elastic_iedge, &
                          solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,&
-                         kmato,porosity,tortuosity,poroelastcoef,density, &
-                         assign_external_model,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropy, &
-                         displ_elastic,b_displ_elastic,veloc_elastic,b_veloc_elastic,accel_elastic,b_accel_elastic, &
-                         displs_poroelastic,displw_poroelastic, &
-                         b_displs_poroelastic,b_displw_poroelastic, &
+                         veloc_elastic,b_veloc_elastic,accel_elastic,b_accel_elastic, &
                          accels_poroelastic,b_accels_poroelastic, &
                          velocs_poroelastic,b_velocs_poroelastic, &
                          accelw_poroelastic,b_accelw_poroelastic, &

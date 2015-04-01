@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -7,7 +6,7 @@
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
 !                and CNRS / University of Marseille, France
-!                 (there are currently many more authors!)
+!                 (there are currently maNZ_IMAGE_color more authors!)
 ! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This software is a computer program whose purpose is to solve
@@ -40,66 +39,55 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
- subroutine store_stacey_BC_effect_term_poro()
+  subroutine write_postscript_snapshot()
 
-  use specfem_par, only: nspec_left,nspec_right,nspec_bottom,nspec_top, &
-                         b_absorb_poro_s_left,b_absorb_poro_w_left, &
-                         b_absorb_poro_s_right,b_absorb_poro_w_right, &
-                         b_absorb_poro_s_bottom,b_absorb_poro_w_bottom, &
-                         b_absorb_poro_s_top,b_absorb_poro_w_top,it
+  use specfem_par, only: myrank,p_sv,it,imagetype_postscript, &
+                         potential_acoustic,potential_gravitoacoustic, &
+                         potential_gravito,displ_elastic,displs_poroelastic, &
+                         potential_dot_acoustic,potential_dot_gravitoacoustic, &
+                         potential_dot_gravito,veloc_elastic,velocs_poroelastic, &
+                         potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
+                         potential_dot_dot_gravito,accel_elastic,accels_poroelastic
+
   implicit none
   include "constants.h"
 
-  !local variable
-  integer :: i,id,ispec
-
-  !--- left absorbing boundary
-  if(nspec_left >0) then
-    do ispec = 1,nspec_left
-      do id =1,2
-        do i=1,NGLLZ
-          write(45) b_absorb_poro_s_left(id,i,ispec,it)
-          write(25) b_absorb_poro_w_left(id,i,ispec,it)
-        enddo
-      enddo
-    enddo
+  if( myrank == 0 ) then
+    write(IOUT,*)
+    write(IOUT,*) 'Writing PostScript vector plot for time step ',it
   endif
 
-  !--- right absorbing boundary
-  if(nspec_right >0) then
-    do ispec = 1,nspec_right
-      do id =1,2
-        do i=1,NGLLZ
-          write(46) b_absorb_poro_s_right(id,i,ispec,it)
-          write(26) b_absorb_poro_w_right(id,i,ispec,it)
-        enddo
-      enddo
-    enddo
+  if( imagetype_postscript == 1 .and. p_sv ) then
+
+    if( myrank == 0 ) write(IOUT,*) 'drawing displacement vector as small arrows...'
+    call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
+                 potential_gravito,displ_elastic,displs_poroelastic)
+
+    call plotpost()
+
+  else if( imagetype_postscript == 2 .and. p_sv ) then
+
+    if( myrank == 0 ) write(IOUT,*) 'drawing velocity vector as small arrows...'
+    call compute_vector_whole_medium(potential_dot_acoustic,potential_dot_gravitoacoustic, &
+                 potential_dot_gravito,veloc_elastic,velocs_poroelastic)
+
+    call plotpost()
+
+  else if( imagetype_postscript == 3 .and. p_sv ) then
+
+    if( myrank == 0) write(IOUT,*) 'drawing acceleration vector as small arrows...'
+    call compute_vector_whole_medium(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
+                 potential_dot_dot_gravito,accel_elastic,accels_poroelastic)
+
+    call plotpost()
+
+  else if( .not. p_sv ) then
+    call exit_MPI('cannot draw a SH scalar field as a vector plot, turn PostScript plots off')
+  else
+    call exit_MPI('wrong type for PostScript snapshots')
   endif
 
-  !--- bottom absorbing boundary
-  if(nspec_bottom >0) then
-    do ispec = 1,nspec_bottom
-      do id =1,2
-        do i=1,NGLLX
-          write(47) b_absorb_poro_s_bottom(id,i,ispec,it)
-          write(29) b_absorb_poro_w_bottom(id,i,ispec,it)
-        enddo
-      enddo
-    enddo
-  endif
+  if( myrank == 0 .and. imagetype_postscript /= 4 .and. p_sv ) write(IOUT,*) 'PostScript file written'
 
-  !--- top absorbing boundary
-  if(nspec_top >0) then
-    do ispec = 1,nspec_top
-      do id =1,2
-        do i=1,NGLLX
-          write(48) b_absorb_poro_s_top(id,i,ispec,it)
-          write(28) b_absorb_poro_w_top(id,i,ispec,it)
-        enddo
-      enddo
-    enddo
-  endif
-
- end subroutine store_stacey_BC_effect_term_poro
+  end subroutine write_postscript_snapshot
 

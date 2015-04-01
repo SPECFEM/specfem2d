@@ -50,7 +50,7 @@ subroutine iterate_time()
   use specfem_par
   implicit none
 
-  integer i,j,ispec,iglob,k
+  integer i,j,ispec,iglob
 
 #ifdef USE_MPI
   include "precision.h"
@@ -1148,8 +1148,8 @@ subroutine iterate_time()
    if( GPU_MODE ) then
      ! Kernel calculation
      if(SIMULATION_TYPE == 3 ) then
-       if(any_acoustic ) call compute_kernels_acoustic_cuda(Mesh_pointer,deltatf)
-       if(any_elastic ) call compute_kernels_elastic_cuda(Mesh_pointer,deltatf)
+       if( any_acoustic ) call compute_kernels_acoustic_cuda(Mesh_pointer,deltatf)
+       if( any_elastic ) call compute_kernels_elastic_cuda(Mesh_pointer,deltatf)
 
        if( APPROXIMATE_HESS_KL ) then
          ! computes contribution to density and bulk modulus kernel
@@ -1259,660 +1259,77 @@ subroutine iterate_time()
        endif
 
        if(any_poroelastic) then
-         do iglob =1,nglob
-           rhot_k(iglob) = accels_poroelastic(1,iglob) * b_displs_poroelastic(1,iglob) + &
-                           accels_poroelastic(2,iglob) * b_displs_poroelastic(2,iglob)
-           rhof_k(iglob) = accelw_poroelastic(1,iglob) * b_displs_poroelastic(1,iglob) + &
-                           accelw_poroelastic(2,iglob) * b_displs_poroelastic(2,iglob) + &
-                           accels_poroelastic(1,iglob) * b_displw_poroelastic(1,iglob) + &
-                           accels_poroelastic(2,iglob) * b_displw_poroelastic(2,iglob)
-            sm_k(iglob)  = accelw_poroelastic(1,iglob) * b_displw_poroelastic(1,iglob) + &
-                           accelw_poroelastic(2,iglob) * b_displw_poroelastic(2,iglob)
-            eta_k(iglob) = velocw_poroelastic(1,iglob) * b_displw_poroelastic(1,iglob) + &
-                           velocw_poroelastic(2,iglob) * b_displw_poroelastic(2,iglob)
-         enddo
-
-         do ispec = 1, nspec
-           if( poroelastic(ispec) ) then
-             do j = 1, NGLLZ
-               do i = 1, NGLLX
-                 iglob = ibool(i,j,ispec)
-                 phil_global(iglob) = porosity(kmato(ispec))
-                 tortl_global(iglob) = tortuosity(kmato(ispec))
-                 rhol_s_global(iglob) = density(1,kmato(ispec))
-                 rhol_f_global(iglob) = density(2,kmato(ispec))
-                 rhol_bar_global(iglob) =  (1._CUSTOM_REAL - phil_global(iglob))*rhol_s_global(iglob) + &
-                                           phil_global(iglob)*rhol_f_global(iglob)
-                 etal_f_global(iglob) = poroelastcoef(2,2,kmato(ispec))
-                 permlxx_global(iglob) = permeability(1,kmato(ispec))
-                 permlxz_global(iglob) = permeability(2,kmato(ispec))
-                 permlzz_global(iglob) = permeability(3,kmato(ispec))
-                 mulfr_global(iglob) = poroelastcoef(2,3,kmato(ispec))
-
-                 rhot_kl(i,j,ispec) = rhot_kl(i,j,ispec) - deltat * rhol_bar_global(iglob) * rhot_k(iglob)
-                 rhof_kl(i,j,ispec) = rhof_kl(i,j,ispec) - deltat * rhol_f_global(iglob) * rhof_k(iglob)
-                 sm_kl(i,j,ispec) = sm_kl(i,j,ispec) - &
-                         deltat * rhol_f_global(iglob)*tortl_global(iglob)/phil_global(iglob) * sm_k(iglob)
-                 !at the moment works with constant permeability
-                 eta_kl(i,j,ispec) = eta_kl(i,j,ispec) - deltat * etal_f_global(iglob)/permlxx_global(iglob) * eta_k(iglob)
-                 B_kl(i,j,ispec) = B_kl(i,j,ispec) - deltat * B_k(iglob)
-                 C_kl(i,j,ispec) = C_kl(i,j,ispec) - deltat * C_k(iglob)
-                 M_kl(i,j,ispec) = M_kl(i,j,ispec) - deltat * M_k(iglob)
-                 mufr_kl(i,j,ispec) = mufr_kl(i,j,ispec) - TWO * deltat * mufr_k(iglob)
-                 ! density kernels
-                 rholb = rhol_bar_global(iglob) - phil_global(iglob)*rhol_f_global(iglob)/tortl_global(iglob)
-                 rhob_kl(i,j,ispec) = rhot_kl(i,j,ispec) + B_kl(i,j,ispec) + mufr_kl(i,j,ispec)
-                 rhofb_kl(i,j,ispec) = rhof_kl(i,j,ispec) + C_kl(i,j,ispec) + M_kl(i,j,ispec) + sm_kl(i,j,ispec)
-                 Bb_kl(i,j,ispec) = B_kl(i,j,ispec)
-                 Cb_kl(i,j,ispec) = C_kl(i,j,ispec)
-                 Mb_kl(i,j,ispec) = M_kl(i,j,ispec)
-                 mufrb_kl(i,j,ispec) = mufr_kl(i,j,ispec)
-                 phi_kl(i,j,ispec) = - sm_kl(i,j,ispec) - M_kl(i,j,ispec)
-                 ! wave speed kernels
-                 dd1 = (1._CUSTOM_REAL+rholb/rhol_f_global(iglob))*ratio**2 + &
-                       2._CUSTOM_REAL*ratio + tortl_global(iglob)/phil_global(iglob)
-
-                 rhobb_kl(i,j,ispec) = rhob_kl(i,j,ispec) - &
-                       phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*B_biot) * &
-                       (cpIIsquare + (cpIsquare - cpIIsquare)*( (phil_global(iglob) / &
-                       tortl_global(iglob)*ratio +1._CUSTOM_REAL)/dd1 + &
-                       (rhol_bar_global(iglob)**2*ratio**2/rhol_f_global(iglob)**2*(phil_global(iglob) / &
-                       tortl_global(iglob)*ratio+1)*(phil_global(iglob)/tortl_global(iglob)*ratio + &
-                       phil_global(iglob)/tortl_global(iglob) * &
-                       (1+rhol_f_global(iglob)/rhol_bar_global(iglob))-1) )/dd1**2 ) - &
-                       FOUR_THIRDS*cssquare )*Bb_kl(i,j,ispec) - &
-                       rhol_bar_global(iglob)*ratio**2/M_biot * (cpIsquare - cpIIsquare)* &
-                       (phil_global(iglob)/tortl_global(iglob)*ratio + &
-                       1._CUSTOM_REAL)**2/dd1**2*Mb_kl(i,j,ispec) + &
-                       rhol_bar_global(iglob)*ratio/C_biot * (cpIsquare - cpIIsquare)* (&
-                       (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1 - &
-                       phil_global(iglob)*ratio/tortl_global(iglob)*(phil_global(iglob) / &
-                       tortl_global(iglob)*ratio+1._CUSTOM_REAL)*&
-                       (1+rhol_bar_global(iglob)*ratio/rhol_f_global(iglob))/dd1**2)*Cb_kl(i,j,ispec)+ &
-                       phil_global(iglob)*rhol_f_global(iglob)*cssquare / &
-                       (tortl_global(iglob)*mulfr_global(iglob))*mufrb_kl(i,j,ispec)
-                 rhofbb_kl(i,j,ispec) = rhofb_kl(i,j,ispec) + &
-                        phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*B_biot) * &
-                        (cpIIsquare + (cpIsquare - cpIIsquare)*( (phil_global(iglob)/ &
-                        tortl_global(iglob)*ratio +1._CUSTOM_REAL)/dd1+&
-                        (rhol_bar_global(iglob)**2*ratio**2/rhol_f_global(iglob)**2*(phil_global(iglob)/ &
-                        tortl_global(iglob)*ratio+1)*(phil_global(iglob)/tortl_global(iglob)*ratio+ &
-                        phil_global(iglob)/tortl_global(iglob)*&
-                        (1._CUSTOM_REAL+rhol_f_global(iglob)/rhol_bar_global(iglob))-1) )/dd1**2 )- &
-                        FOUR_THIRDS*cssquare )*Bb_kl(i,j,ispec) + &
-                        rhol_bar_global(iglob)*ratio**2/M_biot * (cpIsquare - cpIIsquare)* &
-                        (phil_global(iglob)/tortl_global(iglob)*ratio + &
-                        1._CUSTOM_REAL)**2/dd1**2*Mb_kl(i,j,ispec) - &
-                        rhol_bar_global(iglob)*ratio/C_biot * (cpIsquare - cpIIsquare)* (&
-                        (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1 - &
-                        phil_global(iglob)*ratio/tortl_global(iglob)*(phil_global(iglob)/ &
-                        tortl_global(iglob)*ratio+1._CUSTOM_REAL)*&
-                        (1._CUSTOM_REAL+rhol_bar_global(iglob)*ratio/rhol_f_global(iglob))/dd1**2)*Cb_kl(i,j,ispec)- &
-                        phil_global(iglob)*rhol_f_global(iglob)*cssquare/ &
-                        (tortl_global(iglob)*mulfr_global(iglob))*mufrb_kl(i,j,ispec)
-                 phib_kl(i,j,ispec) = phi_kl(i,j,ispec) - &
-                        phil_global(iglob)*rhol_bar_global(iglob)/(tortl_global(iglob)*B_biot) &
-                        * ( cpIsquare - rhol_f_global(iglob)/rhol_bar_global(iglob)*cpIIsquare- &
-                        (cpIsquare-cpIIsquare)*( (TWO*ratio**2*phil_global(iglob)/ &
-                        tortl_global(iglob) + (1._CUSTOM_REAL+&
-                        rhol_f_global(iglob)/rhol_bar_global(iglob))* &
-                        (TWO*ratio*phil_global(iglob)/tortl_global(iglob)+&
-                        1._CUSTOM_REAL))/dd1 + (phil_global(iglob)/tortl_global(iglob)*ratio+ &
-                        1._CUSTOM_REAL)*(phil_global(iglob)*&
-                        ratio/tortl_global(iglob)+phil_global(iglob)/tortl_global(iglob)* &
-                        (1._CUSTOM_REAL+rhol_f_global(iglob)/&
-                        rhol_bar_global(iglob))-1._CUSTOM_REAL)*((1._CUSTOM_REAL+ &
-                        rhol_bar_global(iglob)/rhol_f_global(iglob)-&
-                        TWO*phil_global(iglob)/tortl_global(iglob))*ratio**2+TWO*ratio)/dd1**2 ) - &
-                        FOUR_THIRDS*rhol_f_global(iglob)*cssquare/rhol_bar_global(iglob) )*Bb_kl(i,j,ispec) + &
-                        rhol_f_global(iglob)/M_biot * (cpIsquare-cpIIsquare)*(&
-                        TWO*ratio*(phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1 - &
-                        (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)**2*( &
-                        (1._CUSTOM_REAL+rhol_bar_global(iglob)/&
-                        rhol_f_global(iglob)-TWO*phil_global(iglob)/tortl_global(iglob))*ratio**2+TWO*ratio)/dd1**2 &
-                        )*Mb_kl(i,j,ispec) + &
-                        phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*C_biot)* &
-                        (cpIsquare-cpIIsquare)*ratio* (&
-                        (1._CUSTOM_REAL+rhol_f_global(iglob)/rhol_bar_global(iglob)*ratio)/dd1 - &
-                        (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)* &
-                        (1._CUSTOM_REAL+rhol_bar_global(iglob)/&
-                        rhol_f_global(iglob)*ratio)*((1._CUSTOM_REAL+rhol_bar_global(iglob)/rhol_f_global(iglob)-TWO*&
-                        phil_global(iglob)/tortl_global(iglob))*ratio+TWO)/dd1**2&
-                         )*Cb_kl(i,j,ispec) -&
-                        phil_global(iglob)*rhol_f_global(iglob)*cssquare &
-                        /(tortl_global(iglob)*mulfr_global(iglob))*mufrb_kl(i,j,ispec)
-                 cpI_kl(i,j,ispec) = 2._CUSTOM_REAL*cpIsquare/B_biot*rhol_bar_global(iglob)*( &
-                        1._CUSTOM_REAL-phil_global(iglob)/tortl_global(iglob) + &
-                        (phil_global(iglob)/tortl_global(iglob)*ratio+ &
-                        1._CUSTOM_REAL)*(phil_global(iglob)/tortl_global(iglob)*&
-                        ratio+phil_global(iglob)/tortl_global(iglob)* &
-                        (1._CUSTOM_REAL+rhol_f_global(iglob)/rhol_bar_global(iglob))-&
-                        1._CUSTOM_REAL)/dd1 &
-                         )* Bb_kl(i,j,ispec) +&
-                        2._CUSTOM_REAL*cpIsquare*rhol_f_global(iglob)*tortl_global(iglob)/(phil_global(iglob)*M_biot) *&
-                        (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)**2/dd1*Mb_kl(i,j,ispec)+&
-                        2._CUSTOM_REAL*cpIsquare*rhol_f_global(iglob)/C_biot * &
-                        (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)* &
-                        (1._CUSTOM_REAL+rhol_bar_global(iglob)/&
-                        rhol_f_global(iglob)*ratio)/dd1*Cb_kl(i,j,ispec)
-                 cpII_kl(i,j,ispec) = 2._CUSTOM_REAL*cpIIsquare*rhol_bar_global(iglob)/B_biot * (&
-                        phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)*rhol_bar_global(iglob)) - &
-                        (phil_global(iglob)/tortl_global(iglob)*ratio+ &
-                        1._CUSTOM_REAL)*(phil_global(iglob)/tortl_global(iglob)*&
-                        ratio+phil_global(iglob)/tortl_global(iglob)* &
-                        (1._CUSTOM_REAL+rhol_f_global(iglob)/rhol_bar_global(iglob))-&
-                        1._CUSTOM_REAL)/dd1  ) * Bb_kl(i,j,ispec) +&
-                        2._CUSTOM_REAL*cpIIsquare*rhol_f_global(iglob)*tortl_global(iglob)/(phil_global(iglob)*M_biot) * (&
-                        1._CUSTOM_REAL - (phil_global(iglob)/tortl_global(iglob)*ratio+ &
-                        1._CUSTOM_REAL)**2/dd1  )*Mb_kl(i,j,ispec) + &
-                        2._CUSTOM_REAL*cpIIsquare*rhol_f_global(iglob)/C_biot * (&
-                        1._CUSTOM_REAL - (phil_global(iglob)/tortl_global(iglob)*ratio+ &
-                        1._CUSTOM_REAL)*(1._CUSTOM_REAL+&
-                        rhol_bar_global(iglob)/rhol_f_global(iglob)*ratio)/dd1  )*Cb_kl(i,j,ispec)
-                 cs_kl(i,j,ispec) = - 8._CUSTOM_REAL/3._CUSTOM_REAL*cssquare* &
-                        rhol_bar_global(iglob)/B_biot*(1._CUSTOM_REAL-&
-                        phil_global(iglob)*rhol_f_global(iglob)/(tortl_global(iglob)* &
-                        rhol_bar_global(iglob)))*Bb_kl(i,j,ispec) + &
-                        2._CUSTOM_REAL*(rhol_bar_global(iglob)-rhol_f_global(iglob)*&
-                        phil_global(iglob)/tortl_global(iglob))/&
-                        mulfr_global(iglob)*cssquare*mufrb_kl(i,j,ispec)
-                 ratio_kl(i,j,ispec) = ratio*rhol_bar_global(iglob)*phil_global(iglob)/(tortl_global(iglob)*B_biot) * &
-                        (cpIsquare-cpIIsquare) * ( &
-                        phil_global(iglob)/tortl_global(iglob)*(2._CUSTOM_REAL*ratio+1._CUSTOM_REAL+rhol_f_global(iglob)/ &
-                        rhol_bar_global(iglob))/dd1 - (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)*&
-                        (phil_global(iglob)/tortl_global(iglob)*ratio+phil_global(iglob)/tortl_global(iglob)*(&
-                        1._CUSTOM_REAL+rhol_f_global(iglob)/rhol_bar_global(iglob))-1._CUSTOM_REAL)*(2._CUSTOM_REAL*ratio*(&
-                        1._CUSTOM_REAL+rhol_bar_global(iglob)/rhol_f_global(iglob)-phil_global(iglob)/tortl_global(iglob)) +&
-                        2._CUSTOM_REAL)/dd1**2  )*Bb_kl(i,j,ispec) + &
-                        ratio*rhol_f_global(iglob)*tortl_global(iglob)/(phil_global(iglob)*M_biot)*(cpIsquare-cpIIsquare) * &
-                        2._CUSTOM_REAL*phil_global(iglob)/tortl_global(iglob) * (&
-                        (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)/dd1 - &
-                        (phil_global(iglob)/tortl_global(iglob)*ratio+1._CUSTOM_REAL)**2*( &
-                        (1._CUSTOM_REAL+rhol_bar_global(iglob)/&
-                        rhol_f_global(iglob)-phil_global(iglob)/tortl_global(iglob))*ratio+ &
-                        1._CUSTOM_REAL)/dd1**2 )*Mb_kl(i,j,ispec) +&
-                        ratio*rhol_f_global(iglob)/C_biot*(cpIsquare-cpIIsquare) * (&
-                        (2._CUSTOM_REAL*phil_global(iglob)*rhol_bar_global(iglob)* &
-                        ratio/(tortl_global(iglob)*rhol_f_global(iglob))+&
-                        phil_global(iglob)/tortl_global(iglob)+rhol_bar_global(iglob)/rhol_f_global(iglob))/dd1 - &
-                        2._CUSTOM_REAL*phil_global(iglob)/tortl_global(iglob)*(phil_global(iglob)/tortl_global(iglob)*ratio+&
-                        1._CUSTOM_REAL)*(1._CUSTOM_REAL+rhol_bar_global(iglob)/rhol_f_global(iglob)*ratio)*((1._CUSTOM_REAL+&
-                        rhol_bar_global(iglob)/rhol_f_global(iglob)- &
-                        phil_global(iglob)/tortl_global(iglob))*ratio+1._CUSTOM_REAL)/&
-                        dd1**2 )*Cb_kl(i,j,ispec)
-               enddo
-             enddo
-           endif
-         enddo
+         call compute_kernels_po()
        endif ! if(any_poroelastic)
      endif ! if(SIMULATION_TYPE == 3)
-
-  endif !Not GPU_MODE
-
-!
-!----  display results at given time steps
-!
-    if(mod(it,NSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5 .or. it == NSTEP) then
-
-!
-! write kernel files
-!
-
-      if(SIMULATION_TYPE == 3 .and. it == NSTEP) then
-          call save_adjoint_kernels()
-      endif
-
-
-!<NOISE_TOMOGRAPHY
-
-if (.NOT. GPU_MODE ) then
-
-      if (NOISE_TOMOGRAPHY == 3 .and. output_wavefields_noise) then
-
-        !load ensemble forward source
-        inquire(unit=500,exist=ex,opened=od)
-        if (.not. od) &
-          open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/eta',access='direct', &
-          recl=nglob*CUSTOM_REAL,action='write',iostat=ios)
-        read(unit=500,rec=it) surface_movie_y_noise
-
-        !load product of fwd, adj wavefields
-        call spec2glob(nspec,nglob,ibool,rho_kl,noise_output_rhokl)
-
-        !write text file
-        noise_output_array(1,:) = surface_movie_y_noise(:) * mask_noise(:)
-        noise_output_array(2,:) = b_displ_elastic(2,:)
-        noise_output_array(3,:) = accel_elastic(2,:)
-        noise_output_array(4,:) = rho_k(:)
-        noise_output_array(5,:) = noise_output_rhokl(:)
-        write(noise_output_file,"('OUTPUT_FILES/snapshot_all_',i6.6)") it
-        call snapshots_noise(noise_output_ncol,nglob,noise_output_file,noise_output_array)
-
-      endif
-
-endif
-
-!>NOISE_TOMOGRAPHY
-
-
-
-
-!
-!----  PostScript display
-!
-      if(output_postscript_snapshot) then
-
-        if (myrank == 0) then
-          write(IOUT,*)
-          write(IOUT,*) 'Writing PostScript vector plot for time step ',it
-        endif
-
-        if(imagetype_postscript == 1 .and. p_sv) then
-
-          if (myrank == 0) write(IOUT,*) 'drawing displacement vector as small arrows...'
-
-          call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
-                          potential_gravito,displ_elastic,displs_poroelastic)
-
-          call plotpost()
-
-        else if(imagetype_postscript == 2 .and. p_sv) then
-
-          if (myrank == 0) write(IOUT,*) 'drawing velocity vector as small arrows...'
-
-          call compute_vector_whole_medium(potential_dot_acoustic,potential_dot_gravitoacoustic, &
-                          potential_dot_gravito,veloc_elastic,velocs_poroelastic)
-
-          call plotpost()
-
-        else if(imagetype_postscript == 3 .and. p_sv) then
-
-          if (myrank == 0) write(IOUT,*) 'drawing acceleration vector as small arrows...'
-
-          call compute_vector_whole_medium(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
-                          potential_dot_dot_gravito,accel_elastic,accels_poroelastic)
-
-          call plotpost()
-
-        else if(.not. p_sv) then
-          call exit_MPI('cannot draw a SH scalar field as a vector plot, turn PostScript plots off')
-
-        else
-          call exit_MPI('wrong type for PostScript snapshots')
-        endif
-
-        if (myrank == 0 .and. imagetype_postscript /= 4 .and. p_sv) write(IOUT,*) 'PostScript file written'
-
-      endif
-
-!
-!----  display color image
-!
-      if(output_color_image) then
-
-        if (myrank == 0) then
-          write(IOUT,*)
-          write(IOUT,*) 'Creating color image of size ',NX_IMAGE_color,' x ',NZ_IMAGE_color,' for time step ',it
-        endif
-
-        if(imagetype_JPEG >= 1 .and. imagetype_JPEG <= 3) then
-
-          if (myrank == 0) write(IOUT,*) 'drawing scalar image of part of the displacement vector...'
-          call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
-                          potential_gravito,displ_elastic,displs_poroelastic)
-
-        else if(imagetype_JPEG >= 4 .and. imagetype_JPEG <= 6) then
-
-          if (myrank == 0) write(IOUT,*) 'drawing scalar image of part of the velocity vector...'
-          call compute_vector_whole_medium(potential_dot_acoustic,potential_dot_gravitoacoustic, &
-                          potential_dot_gravito,veloc_elastic,velocs_poroelastic)
-
-        else if(imagetype_JPEG >= 7 .and. imagetype_JPEG <= 9) then
-
-          if (myrank == 0) write(IOUT,*) 'drawing scalar image of part of the acceleration vector...'
-          call compute_vector_whole_medium(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
-                          potential_dot_dot_gravito,accel_elastic,accels_poroelastic)
-
-        else if(imagetype_JPEG >= 11 .and. imagetype_JPEG <= 13) then
-! allocation for normalized representation in JPEG image
-! for an atmosphere model
-
-          if (myrank == 0) write(IOUT,*) 'drawing scalar image of part of normalized displacement vector...'
-
-          call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
-                          potential_gravito,displ_elastic,displs_poroelastic)
-
-
-          do ispec = 1,nspec
-            do j = 1,NGLLZ
-              do i = 1,NGLLX
-                iglob = ibool(i,j,ispec)
-                vector_field_display(1,iglob) = sqrt(rhoext(i,j,ispec)) * vector_field_display(1,iglob)
-                vector_field_display(2,iglob) = sqrt(rhoext(i,j,ispec)) * vector_field_display(2,iglob)
-                vector_field_display(3,iglob) = sqrt(rhoext(i,j,ispec)) * vector_field_display(3,iglob)
-              enddo
-            enddo
-          enddo
-
-        else if(imagetype_JPEG >= 14 .and. imagetype_JPEG <= 16) then
-! allocation for normalized representation in JPEG image
-! for an atmosphere model
-          call compute_vector_whole_medium(potential_dot_acoustic,potential_dot_gravitoacoustic, &
-                          potential_dot_gravito,veloc_elastic,velocs_poroelastic)
-
-          do ispec = 1,nspec
-            do j = 1,NGLLZ
-              do i = 1,NGLLX
-            iglob = ibool(i,j,ispec)
-            vector_field_display(1,iglob) = sqrt(rhoext(i,j,ispec)) * vector_field_display(1,iglob)
-            vector_field_display(2,iglob) = sqrt(rhoext(i,j,ispec)) * vector_field_display(2,iglob)
-            vector_field_display(3,iglob) = sqrt(rhoext(i,j,ispec)) * vector_field_display(3,iglob)
-              enddo
-            enddo
-          enddo
-
-        else if(imagetype_JPEG == 10 .and. p_sv) then
-
-          if (myrank == 0) write(IOUT,*) 'drawing image of pressure field...'
-          call compute_pressure_whole_medium()
-
-        else if(imagetype_JPEG == 10 .and. .not. p_sv) then
-          call exit_MPI('cannot draw pressure field for SH (membrane) waves')
-
-        else
-          call exit_MPI('wrong type for JPEG snapshots')
-        endif
-
-!! DK DK quick hack to remove the PMLs from JPEG images if needed: set the vector field to zero there
-        if(PML_BOUNDARY_CONDITIONS .and. REMOVE_PMLS_FROM_JPEG_IMAGES) then
-          do ispec = 1,nspec
-            if(is_PML(ispec)) then
-              do j = 1,NGLLZ
-                do i = 1,NGLLX
-                  iglob = ibool(i,j,ispec)
-                  vector_field_display(1,iglob) = 0.d0
-                  vector_field_display(2,iglob) = 0.d0
-                  vector_field_display(3,iglob) = 0.d0
-                enddo
-              enddo
-            endif
-          enddo
-        endif
-!! DK DK quick hack to remove the PMLs from JPEG images if needed
-
-        image_color_data(:,:) = 0.d0
-
-        do k = 1, nb_pixel_loc
-          j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
-          i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
-
-          ! avoid edge effects
-          if(i < 1) i = 1
-          if(j < 1) j = 1
-
-          if(i > NX_IMAGE_color) i = NX_IMAGE_color
-          if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
-
-          if(p_sv) then ! P-SH waves, plot a component of vector, its norm, or else pressure
-            if(iglob_image_color(i,j) /= -1) then
-              if(imagetype_JPEG == 1 .or. imagetype_JPEG == 4 .or. imagetype_JPEG == 7 .or. imagetype_JPEG == 11 &
-                                     .or. imagetype_JPEG == 14) then
-                image_color_data(i,j) = vector_field_display(1,iglob_image_color(i,j))  ! draw the X component of the vector
-
-              else if(imagetype_JPEG == 2 .or. imagetype_JPEG == 5 .or. imagetype_JPEG == 8 .or. imagetype_JPEG == 12 &
-                                          .or. imagetype_JPEG == 15) then
-                image_color_data(i,j) = vector_field_display(3,iglob_image_color(i,j))  ! draw the Z component of the vector
-              else if(imagetype_JPEG == 3 .or. imagetype_JPEG == 6 .or. imagetype_JPEG == 9 .or. imagetype_JPEG == 13 &
-                                          .or. imagetype_JPEG == 16) then
-                image_color_data(i,j) = sqrt(vector_field_display(1,iglob_image_color(i,j))**2 + &
-                                             vector_field_display(3,iglob_image_color(i,j))**2)  ! draw the norm of the vector
-
-              else if(imagetype_JPEG == 10) then
-! by convention we have stored pressure in the third component of the array
-                image_color_data(i,j) = vector_field_display(3,iglob_image_color(i,j))
-
-              else
-                call exit_MPI('wrong type for JPEG snapshots')
-              endif
-            endif
-
-          else ! SH (membrane) waves, plot y-component
-            if(iglob_image_color(i,j) /= -1) image_color_data(i,j) = vector_field_display(2,iglob_image_color(i,j))
-          endif
-        enddo
-
-! assembling array image_color_data on process zero for color output
-#ifdef USE_MPI
-
-        if (nproc > 1) then
-          if (myrank == 0) then
-            do iproc = 1, nproc-1
-              call MPI_RECV(data_pixel_recv(1),nb_pixel_per_proc(iproc+1), MPI_DOUBLE_PRECISION, &
-                  iproc, 43, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
-
-              do k = 1, nb_pixel_per_proc(iproc+1)
-                j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
-                i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
-
-                ! avoid edge effects
-                if(i < 1) i = 1
-                if(j < 1) j = 1
-
-                if(i > NX_IMAGE_color) i = NX_IMAGE_color
-                if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
-
-                image_color_data(i,j) = data_pixel_recv(k)
-              enddo
-            enddo
-          else
-            do k = 1, nb_pixel_loc
-              j = ceiling(real(num_pixel_loc(k)) / real(NX_IMAGE_color))
-              i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
-
-              ! avoid edge effects
-              if(i < 1) i = 1
-              if(j < 1) j = 1
-
-              if(i > NX_IMAGE_color) i = NX_IMAGE_color
-              if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
-
-              if(p_sv) then ! P-SH waves, plot a component of vector, its norm, or else pressure
-
-              if(imagetype_JPEG == 1 .or. imagetype_JPEG == 4 .or. imagetype_JPEG == 7 .or. imagetype_JPEG == 11 &
-                                     .or. imagetype_JPEG == 14) then
-                  data_pixel_send(k) = vector_field_display(1,iglob_image_color(i,j))  ! draw the X component of the vector
-
-              else if(imagetype_JPEG == 2 .or. imagetype_JPEG == 5 .or. imagetype_JPEG == 8 .or. imagetype_JPEG == 12 &
-                                          .or. imagetype_JPEG == 15) then
-                  data_pixel_send(k) = vector_field_display(3,iglob_image_color(i,j))  ! draw the Z component of the vector
-
-              else if(imagetype_JPEG == 3 .or. imagetype_JPEG == 6 .or. imagetype_JPEG == 9 .or. imagetype_JPEG == 13 &
-                                          .or. imagetype_JPEG == 16) then
-                  data_pixel_send(k) = sqrt(vector_field_display(1,iglob_image_color(i,j))**2 + &
-                                            vector_field_display(3,iglob_image_color(i,j))**2)  ! draw the norm of the vector
-
-                else if(imagetype_JPEG == 10) then
-! by convention we have stored pressure in the third component of the array
-
-                  data_pixel_send(k) = vector_field_display(3,iglob_image_color(i,j))
-
-                else
-                  call exit_MPI('wrong type for JPEG snapshots')
-                endif
-
-              else ! SH (membrane) waves, plot y-component
-                if(iglob_image_color(i,j) /= -1) data_pixel_send(k) = vector_field_display(2,iglob_image_color(i,j))
-              endif
-            enddo
-
-            call MPI_SEND(data_pixel_send(1),nb_pixel_loc,MPI_DOUBLE_PRECISION, 0, 43, MPI_COMM_WORLD, ier)
-          endif
-        endif
-#endif
-
-        if (myrank == 0) then
-          call create_color_image()
-          write(IOUT,*) 'Color image created'
-        endif
-
-      endif
-
-    endif  ! of display images at a given time step
-
-!----------------------------------------------
-
-! dump the full (local) wavefield to a file
-! note: in the case of MPI, in the future it would be more convenient to output a single file rather than one for each myrank
-
-    if(output_wavefield_dumps .and. (mod(it,NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS) == 0 .or. it == 5 .or. it == NSTEP)) then
-
-      if (myrank == 0) then
-        write(IOUT,*)
-        write(IOUT,*) 'Dumping the wave field to a file for time step ',it
-      endif
-
-      if(this_is_the_first_time_we_dump) then
-
-        allocate(mask_ibool(nglob))
-
-! save the grid separately once and for all
-        if(use_binary_for_wavefield_dumps) then
-          write(wavefield_file,"('OUTPUT_FILES/wavefield_grid_for_dumps_',i3.3,'.bin')") myrank
-          open(unit=27,file=wavefield_file,form='unformatted',access='direct',status='unknown', &
-               action='write',recl=2*SIZE_REAL)
-        else
-          write(wavefield_file,"('OUTPUT_FILES/wavefield_grid_for_dumps_',i3.3,'.txt')") myrank
-          open(unit=27,file=wavefield_file,status='unknown',action='write')
-        endif
-
-        icounter = 0
-        mask_ibool(:) = .false.
-        do ispec = 1,nspec
-          do j = 1,NGLLZ
-            do i = 1,NGLLX
-               iglob = ibool(i,j,ispec)
-               if(.not. mask_ibool(iglob)) then
-                 icounter = icounter + 1
-                 mask_ibool(iglob) = .true.
-                 if(use_binary_for_wavefield_dumps) then
-                   write(27,rec=icounter) sngl(coord(1,iglob)),sngl(coord(2,iglob))
-                 else
-                   write(27,'(2e16.6)') coord(1,iglob),coord(2,iglob)
-                 endif
-               endif
-            enddo
-          enddo
-        enddo
-
-        close(27)
-
-! save nglob to a file once and for all
-        write(wavefield_file,"('OUTPUT_FILES/wavefield_grid_value_of_nglob_',i3.3,'.txt')") myrank
-        open(unit=27,file=wavefield_file,status='unknown',action='write')
-        write(27,*) icounter
-        close(27)
-        if(icounter /= nglob) stop 'error: should have icounter == nglob in wavefield dumps'
-
-        this_is_the_first_time_we_dump = .false.
-
-      endif
-
-        if(imagetype_wavefield_dumps == 1) then
-
-          if (myrank == 0) write(IOUT,*) 'dumping the displacement vector...'
-          call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
-                            potential_gravito,displ_elastic,displs_poroelastic)
-        else if(imagetype_wavefield_dumps == 2) then
-
-          if (myrank == 0) write(IOUT,*) 'dumping the velocity vector...'
-          call compute_vector_whole_medium(potential_dot_acoustic,potential_gravitoacoustic, &
-                            potential_gravito,veloc_elastic,velocs_poroelastic)
-
-        else if(imagetype_wavefield_dumps == 3) then
-
-          if (myrank == 0) write(IOUT,*) 'dumping the acceleration vector...'
-          call compute_vector_whole_medium(potential_dot_dot_acoustic,potential_gravitoacoustic, &
-                            potential_gravito,accel_elastic,accels_poroelastic)
-
-        else if(imagetype_wavefield_dumps == 4 .and. p_sv) then
-
-          if (myrank == 0) write(IOUT,*) 'dumping the pressure field...'
-          call compute_pressure_whole_medium()
-
-        else if(imagetype_wavefield_dumps == 4 .and. .not. p_sv) then
-          call exit_MPI('cannot dump the pressure field for SH (membrane) waves')
-
-        else
-          call exit_MPI('wrong type of flag for wavefield dumping')
-        endif
-
-        if(use_binary_for_wavefield_dumps) then
-          if(p_sv .and. .not. imagetype_wavefield_dumps == 4) then
-            nb_of_values_to_save = 2
-          else
-            nb_of_values_to_save = 1
-          endif
-          write(wavefield_file,"('OUTPUT_FILES/wavefield',i7.7,'_',i2.2,'_',i3.3,'.bin')") it,SIMULATION_TYPE,myrank
-          open(unit=27,file=wavefield_file,form='unformatted',access='direct',status='unknown', &
-                       action='write',recl=nb_of_values_to_save*SIZE_REAL)
-        else
-          write(wavefield_file,"('OUTPUT_FILES/wavefield',i7.7,'_',i2.2,'_',i3.3,'.txt')") it,SIMULATION_TYPE,myrank
-          open(unit=27,file=wavefield_file,status='unknown',action='write')
-        endif
-
-        icounter = 0
-        mask_ibool(:) = .false.
-        do ispec = 1,nspec
-          do j = 1,NGLLZ
-            do i = 1,NGLLX
-               iglob = ibool(i,j,ispec)
-               if(.not. mask_ibool(iglob)) then
-                 icounter = icounter + 1
-                 mask_ibool(iglob) = .true.
-                 if(use_binary_for_wavefield_dumps) then
-
-                   if(p_sv .and. .not. imagetype_wavefield_dumps == 4) then
-                     write(27,rec=icounter) sngl(vector_field_display(1,iglob)),sngl(vector_field_display(3,iglob))
-                   else if(p_sv .and. imagetype_wavefield_dumps == 4) then
-! by convention we use the third component of the array to store the pressure above
-                     write(27,rec=icounter) sngl(vector_field_display(3,iglob))
-                   else ! SH case
-                     write(27,rec=icounter) sngl(vector_field_display(2,iglob))
-                   endif
-
-                 else
-
-                   if(p_sv .and. .not. imagetype_wavefield_dumps == 4) then
-                     write(27,*) sngl(vector_field_display(1,iglob)),sngl(vector_field_display(3,iglob))
-                   else if(p_sv .and. imagetype_wavefield_dumps == 4) then
-! by convention we use the third component of the array to store the pressure above
-                     write(27,*) sngl(vector_field_display(3,iglob))
-                   else ! SH case
-                     write(27,*) sngl(vector_field_display(2,iglob))
-                   endif
-
-                 endif
-               endif
-            enddo
-          enddo
-        enddo
-
-        close(27)
-
-        if(myrank ==0) write(IOUT,*) 'Wave field dumped'
-
-    endif  ! of display wavefield dumps at a given time step
-
-!----  save temporary or final seismograms
-! suppress seismograms if we generate traces of the run for analysis with "ParaVer", because time consuming
-    if(mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
-
-      call write_seismograms_to_file(x_source(1),z_source(1))
-
-      seismo_offset = seismo_offset + seismo_current
-      seismo_current = 0
-
-    endif  ! of display images at a given time step
+   endif !Not GPU_MODE
+
+   !
+   !----  display results at given time steps
+   !
+   if( mod(it,NSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5 .or. it == NSTEP ) then
+     ! write kernel files
+     if(SIMULATION_TYPE == 3 .and. it == NSTEP) then
+        call save_adjoint_kernels()
+     endif
+
+     !<NOISE_TOMOGRAPHY
+     if(.NOT. GPU_MODE ) then
+       if(NOISE_TOMOGRAPHY == 3 .and. output_wavefields_noise) then
+
+         !load ensemble forward source
+         inquire(unit=500,exist=ex,opened=od)
+         if (.not. od) &
+           open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/eta',access='direct', &
+           recl=nglob*CUSTOM_REAL,action='write',iostat=ios)
+         read(unit=500,rec=it) surface_movie_y_noise
+
+         !load product of fwd, adj wavefields
+         call spec2glob(nspec,nglob,ibool,rho_kl,noise_output_rhokl)
+
+         !write text file
+         noise_output_array(1,:) = surface_movie_y_noise(:) * mask_noise(:)
+         noise_output_array(2,:) = b_displ_elastic(2,:)
+         noise_output_array(3,:) = accel_elastic(2,:)
+         noise_output_array(4,:) = rho_k(:)
+         noise_output_array(5,:) = noise_output_rhokl(:)
+         write(noise_output_file,"('OUTPUT_FILES/snapshot_all_',i6.6)") it
+         call snapshots_noise(noise_output_ncol,nglob,noise_output_file,noise_output_array)
+       endif
+     endif
+     !>NOISE_TOMOGRAPHY
+
+     ! ********************************************************************************************
+     ! output_postscript_snapshot
+     ! ********************************************************************************************
+     if( output_postscript_snapshot ) then
+       call write_postscript_snapshot()
+     endif
+
+     ! ********************************************************************************************
+     ! display color image
+     ! ********************************************************************************************
+     if( output_color_image ) then
+       call write_color_image_snaphot()
+     endif  ! of display images at a given time step
+
+     ! ********************************************************************************************
+     ! dump the full (local) wavefield to a file
+     ! note: in the case of MPI, in the future it would be more convenient to output a single file
+     !       rather than one for each myrank
+     ! ********************************************************************************************
+     if( output_wavefield_dumps ) then
+       call write_wavefield_dumps()
+     endif  ! of display wavefield dumps at a given time step
+   endif
+
+   !----  save temporary or final seismograms
+   ! suppress seismograms if we generate traces of the run for analysis with "ParaVer", because time consuming
+   if( mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP ) then
+     call write_seismograms_to_file(x_source(1),z_source(1))
+     seismo_offset = seismo_offset + seismo_current
+     seismo_current = 0
+   endif  ! of display images at a given time step
 
   enddo ! end of the main time loop
 

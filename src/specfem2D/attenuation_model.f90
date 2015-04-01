@@ -204,9 +204,10 @@
 
   subroutine shift_velocities_from_f0(vp,vs,rho,mu,lambda)
 
+
 ! From Emmanuel Chaljub, CNRS Grenoble, France:
 
-! Shift (i.e. change) velocities read from the input file to take average physical dispersion into account,
+! shift (i.e. change) velocities read from the input file to take average physical dispersion into account,
 ! i.e. if needed change the reference frequency at which these velocities are defined internally in the code:
 
 !  by default, the velocity values that are read in the Par_file of the code are supposed to be the unrelaxed values,

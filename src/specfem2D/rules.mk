@@ -149,6 +149,9 @@ specfem2D_OBJECTS = \
 	$O/write_jpeg_image.cc.o \
 	$O/write_output_SU.spec.o \
 	$O/write_seismograms.spec.o \
+	$O/write_postscript_snapshot.spec.o \
+	$O/write_color_image_snaphot.spec.o \
+	$O/write_wavefield_dumps.spec.o \
 	$(EMPTY_MACRO)
 
 specfem2D_MODULES = \
@@ -366,6 +369,9 @@ $O/update_displacement_scheme.spec.o: $O/specfem2D_par.spec.o
 $O/compute_kernels.spec.o: $O/specfem2D_par.spec.o
 $O/write_output_SU.spec.o: $O/specfem2D_par.spec.o
 $O/write_seismograms.spec.o: $O/specfem2D_par.spec.o
+$O/write_postscript_snapshot.spec.o: $O/specfem2D_par.spec.o
+$O/write_color_image_snaphot.spec.o: $O/specfem2D_par.spec.o
+$O/write_wavefield_dumps.spec.o: $O/specfem2D_par.spec.o
 $O/acoutic_cuda.spec.o: $O/specfem2D_par.spec.o
 $O/elastic_cuda.spec.o: $O/specfem2D_par.spec.o
 $O/init_host_to_dev_variable.spec.o: $O/specfem2D_par.spec.o
