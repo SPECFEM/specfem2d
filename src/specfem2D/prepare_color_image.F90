@@ -391,7 +391,7 @@
 
 ! test that water is indeed water and not an acoustic version of a sediment for instance
 ! thus check that Vp is the typical Vp of water
-          if(abs(vp_of_the_model - 1500.d0) <= 45.d0) vp_display(ibool(i,j,ispec)) = -1
+          if(abs(vp_of_the_model - 1500.d0) <= 5.d0) vp_display(ibool(i,j,ispec)) = -1
 
         enddo
       enddo

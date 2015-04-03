@@ -99,7 +99,6 @@ module interpolation
 
     integer, intent(in) :: length
     real(kind=CUSTOM_REAL), dimension(length), intent(in) :: array
-    !f2py depend(length) array
     double precision, intent(in) :: value
     double precision, intent(in), optional :: delta
 
@@ -158,15 +157,14 @@ module interpolation
     real(kind=CUSTOM_REAL), dimension(x_len, y_len), intent(in) :: f
     double precision, intent(in) :: x,y
     double precision, intent(in), optional :: delta
-    !f2py depend(x_len) x_array, f
-    !f2py depend(y_len) y_array, f
 
     ! Local variables
     real(kind=CUSTOM_REAL) :: denom, x1, x2, y1, y2
     integer :: i,j
     real(kind=CUSTOM_REAL) :: d
-
-    if (present(delta) .eqv. .true.) then
+    
+    write(*,'(A1)', advance='no') "" ! TODO segmentation fault without that line!!!!! WHY???
+    if (present(delta)) then
       d = delta
     else
       d = 1e-9
@@ -364,7 +362,7 @@ subroutine read_tomo_file()
   ! allocate models parameter records
   allocate(x_tomography(nrecord),z_tomography(nrecord),vp_tomography(nrecord),vs_tomography(nrecord), &
            rho_tomography(nrecord),stat=ier)
-  allocate(x_tomo(NX),z_tomo(NX),vp_tomo(NX,NZ),vs_tomo(NX,NZ),rho_tomo(NX,NZ),stat=ier)
+  allocate(x_tomo(NX),z_tomo(NZ),vp_tomo(NX,NZ),vs_tomo(NX,NZ),rho_tomo(NX,NZ),stat=ier)
   if (ier /= 0) call exit_MPI('not enough memory to allocate tomo arrays')
 
   ! Checks the number of records for points definition while storing them
