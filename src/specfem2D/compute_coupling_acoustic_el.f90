@@ -224,9 +224,6 @@
   end subroutine compute_coupling_acoustic_el
 
 !========================================================================
-
-! for acoustic solver: backward simulation in adjoint inversion
-
 ! for acoustic solver: backward simulation in adjoint inversion
 
   subroutine compute_coupling_acoustic_el_backward(b_displ_elastic,b_potential_dot_dot_acoustic)

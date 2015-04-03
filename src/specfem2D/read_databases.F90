@@ -46,7 +46,7 @@
 
 ! starts reading in parameters from input Database file
 
-  use specfem_par, only: myrank,simulation_title,SIMULATION_TYPE,SAVE_FORWARD,AXISYM,&
+  use specfem_par, only: myrank,simulation_title,SIMULATION_TYPE,SAVE_FORWARD,UNDO_ATTENUATION,AXISYM,&
                          NOISE_TOMOGRAPHY,MODEL,npgeo,nproc_read_from_database, &
                          output_grid_Gnuplot,interpol,NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS, &
                          NSTEP_BETWEEN_OUTPUT_IMAGES,PML_BOUNDARY_CONDITIONS,&
@@ -60,7 +60,7 @@
                          output_grid_ASCII,output_energy,output_wavefield_dumps,use_binary_for_wavefield_dumps, &
                          ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms, &
                          save_binary_seismograms_single,save_binary_seismograms_double,DRAW_SOURCES_AND_RECEIVERS, &
-                         Q0,freq0,p_sv,NSTEP,deltat,NSOURCES,USE_TRICK_FOR_BETTER_PRESSURE, &
+                         Q0,freq0,p_sv,NSTEP,deltat,NT_DUMP_ATTENUATION,NSOURCES,USE_TRICK_FOR_BETTER_PRESSURE, &
                          factor_subsample_image,USE_CONSTANT_MAX_AMPLITUDE,CONSTANT_MAX_AMPLITUDE_TO_USE, &
                          USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                          POWER_DISPLAY_COLOR,SU_FORMAT,USER_T0, time_stepping_scheme, &
@@ -110,7 +110,7 @@
   endif
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD
+  read(IIN,*) SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD, UNDO_ATTENUATION
 
   read(IIN,"(a80)") datlin
   read(IIN,*) npgeo,nproc
@@ -276,12 +276,21 @@
   !---- read time step
   read(IIN,"(a80)") datlin
   read(IIN,*) NSTEP,deltat
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) NT_DUMP_ATTENUATION
   if (myrank == 0) write(IOUT,703) NSTEP,deltat,NSTEP*deltat
 
   if(SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. &
-     (ATTENUATION_VISCOELASTIC_SOLID .or. ATTENUATION_PORO_FLUID_PART)) then
+     (ATTENUATION_PORO_FLUID_PART)) then
     print *, '*************** error ***************'
-    stop 'Anisotropy & Attenuation & Viscous damping are not presently implemented for adjoint calculations'
+    stop 'Anisotropy & Viscous damping are not presently implemented for adjoint calculations'
+  endif
+
+  if(SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. &
+     ATTENUATION_PORO_FLUID_PART .and. (.not. UNDO_ATTENUATION)) then
+    print *, '*************** error ***************'
+    stop 'attenuation is only implemented for adjoint calculations with UNDO_ATTENUATION'
   endif
 
 ! make sure NSTEP_BETWEEN_OUTPUT_SEISMOS is a multiple of subsamp_seismos
