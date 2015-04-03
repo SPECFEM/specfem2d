@@ -133,15 +133,14 @@ subroutine iterate_time_undoatt()
   ! synchronize all processes to make sure everybody is ready to start time loop
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
   if( ier /= 0 ) stop 'error synchronize MPI processes'
-#endif
-
 
   if( myrank == 0 ) then
     write(IOUT,*)
     write(IOUT,*) 'Starting time iteration loop in undoing attenuation...'
     write(IOUT,*)
-    call flush_IOUT(IOUT)
+    call flush_IOUT()
   endif
+#endif
 
   ! initialize variables for writing seismograms
   seismo_offset = it_begin-1
