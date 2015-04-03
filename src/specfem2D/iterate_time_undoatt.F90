@@ -638,7 +638,7 @@ subroutine iterate_time_undoatt()
               call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
                                                  potential_acoustic)
             endif
- 
+
             call update_displacement_precondition_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
                                                                    potential_dot_dot_acoustic,potential_dot_acoustic,&
                                                                    potential_acoustic,potential_acoustic_old, &
@@ -847,7 +847,7 @@ subroutine iterate_time_undoatt()
           ! ********************************************************************************************
           if( output_wavefield_dumps ) then
             call write_wavefield_dumps()
-          endif  
+          endif
         endif ! of display wavefield dumps at a given time step
 
         !----  save temporary or final seismograms

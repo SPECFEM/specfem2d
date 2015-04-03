@@ -69,7 +69,7 @@ module specfem_par
   logical :: p_sv   ! for P-SV or SH (membrane) waves calculation
   logical :: SAVE_FORWARD ! whether or not the last frame is saved to reconstruct the forward field
   logical :: UNDO_ATTENUATION !for adjoint inversion with attenuation
-  integer :: NT_DUMP_ATTENUATION 
+  integer :: NT_DUMP_ATTENUATION
 
   ! add a small crack (discontinuity) in the medium manually
   logical, parameter :: ADD_A_SMALL_CRACK_IN_THE_MEDIUM = .false.
