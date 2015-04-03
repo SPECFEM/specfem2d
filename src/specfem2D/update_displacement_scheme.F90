@@ -88,7 +88,7 @@ subroutine update_displacement_precondition_newmark_elastic(deltat,deltatover2,d
                                                             accel_elastic,veloc_elastic,&
                                                             displ_elastic,displ_elastic_old,&
                                                             PML_BOUNDARY_CONDITIONS)
-  use specfem_par, only : nglob_elastic
+  use specfem_par, only : nglob_elastic,ATTENUATION_VISCOELASTIC_SOLID
   implicit none
   include 'constants.h'
 
@@ -101,7 +101,7 @@ subroutine update_displacement_precondition_newmark_elastic(deltat,deltatover2,d
 #ifdef FORCE_VECTORIZATION
   integer :: i
 
-  if( PML_BOUNDARY_CONDITIONS ) then
+  if( PML_BOUNDARY_CONDITIONS .or. ATTENUATION_VISCOELASTIC_SOLID ) then
     do i = 1,3*nglob_elastic
       displ_elastic_old(i,1) = displ_elastic(i,1) + deltatsquareover2/TWO * accel_elastic(i,1)
     enddo
@@ -117,7 +117,7 @@ subroutine update_displacement_precondition_newmark_elastic(deltat,deltatover2,d
   enddo
 #else
 
-  if( PML_BOUNDARY_CONDITIONS ) then
+  if( PML_BOUNDARY_CONDITIONS .or. ATTENUATION_VISCOELASTIC_SOLID  ) then
     displ_elastic_old = displ_elastic + deltatsquareover2/TWO * accel_elastic
   endif
 

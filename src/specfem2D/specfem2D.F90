@@ -360,10 +360,15 @@
 !! DK DK (then array bound checking cannot be used, thus for instance do NOT use -check all in Intel ifort)
 ! #define FORCE_VECTORIZATION
 
+  use specfem_par, only: undo_attenuation
+
   call prepare_timerun()
 
-
-  call iterate_time()
+  if( undo_attenuation ) then
+    call iterate_time_undoatt()
+  else
+    call iterate_time()
+  endif
 
 
   call finalize_simulation()

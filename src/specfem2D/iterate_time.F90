@@ -50,7 +50,7 @@ subroutine iterate_time()
   use specfem_par
   implicit none
 
-  integer i,j,ispec,iglob
+  integer i,j,ispec,iglob,it_temp
 
 #ifdef USE_MPI
   include "precision.h"
@@ -99,6 +99,11 @@ subroutine iterate_time()
 
       if( .NOT. GPU_MODE ) then
         if( any_acoustic ) then
+          ! free surface for an acoustic medium
+          if( nelem_acoustic_surface > 0 ) then
+            call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
+                                               potential_acoustic)
+          endif
           if( time_stepping_scheme == 1 ) then
             call update_displacement_precondition_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
                                                                    potential_dot_dot_acoustic,potential_dot_acoustic,&
@@ -226,21 +231,16 @@ subroutine iterate_time()
           endif
         endif
 ! *********************************************************
-! ************* compute forces for the acoustic elements
+! ************* main solver for the acoustic elements
 ! *********************************************************
         if( any_acoustic ) then
-          ! free surface for an acoustic medium
-          if( nelem_acoustic_surface > 0 ) then
-            call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                               potential_acoustic)
-          endif
-
           call compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic, &
                                        potential_acoustic,potential_acoustic_old,PML_BOUNDARY_CONDITIONS)
 
           if( SIMULATION_TYPE == 3 ) then
             if( PML_BOUNDARY_CONDITIONS ) then
-              call rebuild_value_on_PML_interface_acoustic()
+              it_temp = NSTEP-it+1
+              call rebuild_value_on_PML_interface_acoustic(it_temp)
             endif
 
             call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
@@ -248,7 +248,8 @@ subroutine iterate_time()
             call compute_forces_acoustic_backward(b_potential_dot_dot_acoustic,b_potential_acoustic)
 
             if( PML_BOUNDARY_CONDITIONS ) then
-              call rebuild_value_on_PML_interface_acoustic()
+              it_temp = NSTEP-it+1
+              call rebuild_value_on_PML_interface_acoustic(it_temp)
             endif
           endif
 
@@ -257,10 +258,12 @@ subroutine iterate_time()
               call store_stacey_BC_effect_term_acoustic()
             endif
           endif
+        endif ! end of test if any acoustic element
 
-          ! *********************************************************
-          ! ************* add acoustic forcing at a rigid boundary
-          ! *********************************************************
+        ! *********************************************************
+        ! ************* add acoustic forcing at a rigid boundary
+        ! *********************************************************
+        if( any_acoustic ) then
           if( ACOUSTIC_FORCING ) then
             call add_acoustic_forcing_at_rigid_boundary(potential_dot_dot_acoustic)
           endif
@@ -288,7 +291,14 @@ subroutine iterate_time()
         ! ************* add coupling with the poroelastic side
         ! *********************************************************
         if( coupled_acoustic_poro) then
-          call compute_coupling_acoustic_po()
+          if( SIMULATION_TYPE == 1 ) then
+            call compute_coupling_acoustic_po()
+          endif
+
+          if( SIMULATION_TYPE == 3 ) then
+            call compute_coupling_acoustic_po()
+            call compute_coupling_acoustic_po_backward()
+          endif
         endif
 
         ! ************************************************************************************
@@ -360,6 +370,7 @@ subroutine iterate_time()
           endif
 
           if( time_stepping_scheme == 1 ) then
+
             !! DK DK this should be vectorized
             potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
             potential_dot_acoustic = potential_dot_acoustic + deltatover2*potential_dot_dot_acoustic
@@ -572,23 +583,34 @@ subroutine iterate_time()
 
       if(.NOT. GPU_MODE ) then
         if(any_elastic) then
-
-          call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
-                                           x_source(1),z_source(1),f0(1),v0x_left(1,it),v0z_left(1,it), &
-                                           v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
-                                           t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it), &
-                                           t0x_bot(1,it),t0z_bot(1,it),count_left,count_right,count_bottom, &
-                                           PML_BOUNDARY_CONDITIONS)
+          if( SIMULATION_TYPE == 1 ) then
+            call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
+                                             x_source(1),z_source(1),f0(1),v0x_left(1,it),v0z_left(1,it), &
+                                             v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
+                                             t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it), &
+                                             t0x_bot(1,it),t0z_bot(1,it),count_left,count_right,count_bottom, &
+                                             PML_BOUNDARY_CONDITIONS,e1,e11,e13)
+          endif
 
           if( SIMULATION_TYPE == 3 ) then
+            !ZN currently we do not support plane wave source in adjoint inversion
+            call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
+                                             x_source(1),z_source(1),f0(1),v0x_left(1,it),v0z_left(1,it), &
+                                             v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
+                                             t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it), &
+                                             t0x_bot(1,it),t0z_bot(1,it),count_left,count_right,count_bottom, &
+                                             PML_BOUNDARY_CONDITIONS,e1,e11,e13)
+
             if( PML_BOUNDARY_CONDITIONS ) then
-              call rebuild_value_on_PML_interface_viscoelastic()
+              it_temp = NSTEP-it+1
+              call rebuild_value_on_PML_interface_viscoelastic(it_temp)
             endif
 
             call compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,b_displ_elastic_old, &
-                                                      PML_BOUNDARY_CONDITIONS)
+                                                      PML_BOUNDARY_CONDITIONS,e1,e11,e13)
             if( PML_BOUNDARY_CONDITIONS ) then
-              call rebuild_value_on_PML_interface_viscoelastic()
+              it_temp = NSTEP-it+1
+              call rebuild_value_on_PML_interface_viscoelastic(it_temp)
             endif
           endif
 
@@ -602,12 +624,29 @@ subroutine iterate_time()
         ! *********************************************************
         ! ************* add coupling with the acoustic side
         ! *********************************************************
-        if( coupled_acoustic_elastic ) call compute_coupling_viscoelastic_ac()
+        if( coupled_acoustic_elastic ) then
+          if( SIMULATION_TYPE == 1 ) then
+            call compute_coupling_viscoelastic_ac()
+          endif
 
+          if( SIMULATION_TYPE == 3 ) then
+            call compute_coupling_viscoelastic_ac()
+            call compute_coupling_viscoelastic_ac_backward()
+          endif
+        endif
         ! ****************************************************************************
         ! ************* add coupling with the poroelastic side
         ! ****************************************************************************
-        if( coupled_elastic_poro ) call compute_coupling_viscoelastic_po()
+        if( coupled_acoustic_elastic ) then
+          if( SIMULATION_TYPE == 1 ) then
+            call compute_coupling_viscoelastic_po()
+          endif
+
+          if( SIMULATION_TYPE == 3 ) then
+            call compute_coupling_viscoelastic_po()
+            call compute_coupling_viscoelastic_po_backward()
+          endif
+        endif
 
         ! ************************************************************************************
         ! ************************************ add force source

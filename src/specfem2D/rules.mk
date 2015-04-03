@@ -115,6 +115,7 @@ specfem2D_OBJECTS = \
 	$O/invert_mass_matrix.spec.o \
 	$O/is_in_convex_quadrilateral.spec.o \
 	$O/iterate_time.spec.o \
+	$O/iterate_time_undoatt.spec.o \
 	$O/lagrange_poly.spec.o \
 	$O/locate_receivers.spec.o \
 	$O/locate_source_force.spec.o \
@@ -152,6 +153,7 @@ specfem2D_OBJECTS = \
 	$O/write_postscript_snapshot.spec.o \
 	$O/write_color_image_snaphot.spec.o \
 	$O/write_wavefield_dumps.spec.o \
+	$O/save_read_array_for_undoatt.spec.o \
 	$(EMPTY_MACRO)
 
 specfem2D_MODULES = \
@@ -344,6 +346,7 @@ $O/gmat01.spec.o: $O/specfem2D_par.spec.o
 $O/initialize_simulation.spec.o: $O/specfem2D_par.spec.o
 $O/invert_mass_matrix.spec.o: $O/specfem2D_par.spec.o
 $O/iterate_time.spec.o: $O/specfem2D_par.spec.o
+$O/iterate_time_undoatt.spec.o: $O/specfem2D_par.spec.o
 $O/locate_receivers.spec.o: $O/specfem2D_par.spec.o
 $O/noise_tomography.spec.o: $O/specfem2D_par.spec.o
 $O/paco_beyond_critical.spec.o: $O/specfem2D_par.spec.o
@@ -372,6 +375,7 @@ $O/write_seismograms.spec.o: $O/specfem2D_par.spec.o
 $O/write_postscript_snapshot.spec.o: $O/specfem2D_par.spec.o
 $O/write_color_image_snaphot.spec.o: $O/specfem2D_par.spec.o
 $O/write_wavefield_dumps.spec.o: $O/specfem2D_par.spec.o
+$O/save_read_array_for_undoatt.spec.o: $O/specfem2D_par.spec.o
 $O/acoutic_cuda.spec.o: $O/specfem2D_par.spec.o
 $O/elastic_cuda.spec.o: $O/specfem2D_par.spec.o
 $O/init_host_to_dev_variable.spec.o: $O/specfem2D_par.spec.o

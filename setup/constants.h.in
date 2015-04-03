@@ -105,6 +105,8 @@
   integer, parameter :: IOUT = ISTANDARD_OUTPUT
 ! uncomment this to write to file instead
 ! integer, parameter :: IOUT = 41
+  integer, parameter :: IOUT_UNDO_ATT = 42
+  integer, parameter :: IIN_UNDO_ATT = IOUT_UNDO_ATT
 
 ! number of lines per source in SOURCE file
   integer, parameter :: NLINES_PER_SOURCE = 12

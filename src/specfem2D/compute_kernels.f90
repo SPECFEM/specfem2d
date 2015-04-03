@@ -165,7 +165,7 @@
             rhol_global(iglob) = density(1,kmato(ispec))
             mul_global(iglob) = poroelastcoef(2,1,kmato(ispec))
             kappal_global(iglob) = poroelastcoef(3,1,kmato(ispec)) - &
-                                          4._CUSTOM_REAL*mul_global(iglob) / 3._CUSTOM_REAL
+                                   4._CUSTOM_REAL*mul_global(iglob) / 3._CUSTOM_REAL
           else
             rhol_global(iglob)   = rhoext(i,j,ispec)
             mul_global(iglob)    = rhoext(i,j,ispec)*vsext(i,j,ispec)*vsext(i,j,ispec)

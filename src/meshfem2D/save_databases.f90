@@ -95,7 +95,7 @@
     write(15,*) AXISYM
 
     write(15,*) 'Type of simulation'
-    write(15,*) SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD
+    write(15,*) SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD, UNDO_ATTENUATION
 
     call write_glob2loc_nodes_database(15, iproc, npgeo, 1)
 
@@ -234,6 +234,9 @@
 
     write(15,*) 'nt deltat'
     write(15,*) nt,deltat
+
+    write(15,*) 'NT_DUMP_ATTENUATION'
+    write(15,*) NT_DUMP_ATTENUATION
 
     write(15,*) 'ACOUSTIC_FORCING'
     write(15,*) ACOUSTIC_FORCING
