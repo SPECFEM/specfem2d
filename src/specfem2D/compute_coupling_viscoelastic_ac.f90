@@ -40,15 +40,14 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
-
-! for acoustic solver
+! for viscoelastic solver
 
   subroutine compute_coupling_viscoelastic_ac()
 
   use specfem_par, only: SIMULATION_TYPE,num_fluid_solid_edges,&
                          ibool,wxgll,wzgll,xix,xiz,gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,&
                          potential_acoustic,potential_acoustic_old,potential_dot_acoustic,potential_dot_dot_acoustic,&
-                         b_potential_dot_dot_acoustic,accel_elastic,b_accel_elastic,fluid_solid_acoustic_ispec, &
+                         accel_elastic,fluid_solid_acoustic_ispec, &
                          fluid_solid_acoustic_iedge,fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
                          potential_acoustic_adj_coupling,AXISYM,coord,is_on_the_axis,xiglj,wxglj, &
                          PML_BOUNDARY_CONDITIONS,nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
@@ -60,7 +59,7 @@
   !local variable
   integer :: inum,ispec_acoustic,ispec_elastic,iedge_acoustic,iedge_elastic,ipoin1D,i,j,iglob,ii2,jj2,&
              ispec_PML,CPML_region_local,singularity_type
-  real(kind=CUSTOM_REAL) :: pressure,b_pressure,xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
+  real(kind=CUSTOM_REAL) :: pressure,xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
   double precision :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z,&
                       A0,A1,A2,A3,A4,bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2
@@ -127,7 +126,6 @@
       endif
 
       if( SIMULATION_TYPE == 3 ) then
-        b_pressure = - b_potential_dot_dot_acoustic(iglob)
         !<YANGL
         ! new definition of adjoint displacement and adjoint potential
         pressure = potential_acoustic_adj_coupling(iglob)
@@ -203,14 +201,122 @@
       accel_elastic(1,iglob) = accel_elastic(1,iglob) + weight*nx*pressure
       accel_elastic(3,iglob) = accel_elastic(3,iglob) + weight*nz*pressure
 
-      if( SIMULATION_TYPE == 3 ) then
-        b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) + weight*nx*b_pressure
-        b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) + weight*nz*b_pressure
-      endif !if( SIMULATION_TYPE == 3 ) then
-
     enddo
   enddo
 
   end subroutine compute_coupling_viscoelastic_ac
+
+!========================================================================
+! for viscoelastic solver
+
+  subroutine compute_coupling_viscoelastic_ac_backward()
+
+  use specfem_par, only: num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz,gammax,gammaz, &
+                         jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse, &
+                         b_potential_dot_dot_acoustic,b_accel_elastic,fluid_solid_acoustic_ispec, &
+                         fluid_solid_acoustic_iedge,fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
+                         AXISYM,coord,is_on_the_axis,xiglj,wxglj
+  implicit none
+  include 'constants.h'
+
+  !local variable
+  integer :: inum,ispec_acoustic,ispec_elastic,iedge_acoustic,iedge_elastic,ipoin1D,i,j,iglob,ii2,jj2
+  real(kind=CUSTOM_REAL) :: b_pressure,xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
+  real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
+
+  ! loop on all the coupling edges
+  do inum = 1,num_fluid_solid_edges
+
+    ! get the edge of the acoustic element
+    ispec_acoustic = fluid_solid_acoustic_ispec(inum)
+    iedge_acoustic = fluid_solid_acoustic_iedge(inum)
+
+    ! get the corresponding edge of the elastic element
+    ispec_elastic = fluid_solid_elastic_ispec(inum)
+    iedge_elastic = fluid_solid_elastic_iedge(inum)
+
+    ! implement 1D coupling along the edge
+    do ipoin1D = 1,NGLLX
+
+      ! get point values for the acoustic side, which matches our side in the inverse direction
+      i = ivalue_inverse(ipoin1D,iedge_acoustic)
+      j = jvalue_inverse(ipoin1D,iedge_acoustic)
+      iglob = ibool(i,j,ispec_acoustic)
+
+      b_pressure = - b_potential_dot_dot_acoustic(iglob)
+
+      ! get point values for the elastic side
+      ii2 = ivalue(ipoin1D,iedge_elastic)
+      jj2 = jvalue(ipoin1D,iedge_elastic)
+      iglob = ibool(ii2,jj2,ispec_elastic)
+
+      ! compute the 1D Jacobian and the normal to the edge: for their expression see for instance
+      ! O. C. Zienkiewicz and R. L. Taylor, The Finite Element Method for Solid and Structural Mechanics,
+      ! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
+      ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
+      ! Blackwell Science, page 110, equation (4.60).
+
+      if( AXISYM ) then
+        if( abs(coord(1,ibool(i,j,ispec_acoustic))) < TINYVAL ) then
+          xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+          r_xiplus1(i,j) = xxi
+        else if(is_on_the_axis(ispec_acoustic) ) then
+           r_xiplus1(i,j) = coord(1,ibool(i,j,ispec_acoustic))/(xiglj(i)+ONE)
+        endif
+      endif
+
+      if( iedge_acoustic == ITOP  ) then
+        xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+        zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+        jacobian1D = sqrt(xxi**2 + zxi**2)
+        nx = - zxi / jacobian1D
+        nz = + xxi / jacobian1D
+        if( AXISYM ) then
+          if( is_on_the_axis(ispec_acoustic) ) then
+            weight = jacobian1D * wxglj(i) * r_xiplus1(i,j)
+          else
+            weight = jacobian1D * wxgll(i) * coord(1,ibool(i,j,ispec_acoustic))
+          endif
+        else
+          weight = jacobian1D * wxgll(i)
+        endif
+      else if( iedge_acoustic == IBOTTOM  ) then
+        xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+        zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+        jacobian1D = sqrt(xxi**2 + zxi**2)
+        nx = + zxi / jacobian1D
+        nz = - xxi / jacobian1D
+        if( AXISYM ) then
+          if( is_on_the_axis(ispec_acoustic) ) then
+            weight = jacobian1D * wxglj(i) * r_xiplus1(i,j)
+          else
+            weight = jacobian1D * wxgll(i) * coord(1,ibool(i,j,ispec_acoustic))
+          endif
+        else
+          weight = jacobian1D * wxgll(i)
+        endif
+      else if( iedge_acoustic == ILEFT  ) then
+        xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+        zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+        jacobian1D = sqrt(xgamma**2 + zgamma**2)
+        nx = - zgamma / jacobian1D
+        nz = + xgamma / jacobian1D
+        weight = jacobian1D * wzgll(j)
+      else if( iedge_acoustic ==IRIGHT  ) then
+        xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+        zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+        jacobian1D = sqrt(xgamma**2 + zgamma**2)
+        nx = + zgamma / jacobian1D
+        nz = - xgamma / jacobian1D
+        weight = jacobian1D * wzgll(j)
+      endif
+
+      b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) + weight*nx*b_pressure
+      b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) + weight*nz*b_pressure
+
+    enddo
+  enddo
+
+  end subroutine compute_coupling_viscoelastic_ac_backward
 
 

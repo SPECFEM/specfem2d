@@ -68,6 +68,8 @@ module specfem_par
   integer :: SIMULATION_TYPE  ! 1 = forward wavefield, 3 = backward and adjoint wavefields and kernels
   logical :: p_sv   ! for P-SV or SH (membrane) waves calculation
   logical :: SAVE_FORWARD ! whether or not the last frame is saved to reconstruct the forward field
+  logical :: UNDO_ATTENUATION !for adjoint inversion with attenuation
+  integer :: NT_DUMP_ATTENUATION
 
   ! add a small crack (discontinuity) in the medium manually
   logical, parameter :: ADD_A_SMALL_CRACK_IN_THE_MEDIUM = .false.
@@ -456,6 +458,7 @@ module specfem_par
 
   ! variable for viscoelastic medium (also shared by solid in poroelastic-simulation)
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1,e11,e13
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: b_e1,b_e11,b_e13 !for undo_attenuation
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_LDDRK,e11_LDDRK,e13_LDDRK
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_initial_rk,e11_initial_rk,e13_initial_rk
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: e1_force_rk,e11_force_rk,e13_force_rk

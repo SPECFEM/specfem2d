@@ -68,18 +68,26 @@ specfem2D_OBJECTS = \
 	$O/compute_Bielak_conditions.spec.o \
 	$O/compute_arrays_source.spec.o \
 	$O/compute_coupling_acoustic_el.spec.o \
-	$O/compute_coupling_viscoelastic_ac.spec.o \
 	$O/compute_coupling_acoustic_po.spec.o \
 	$O/compute_curl_one_element.spec.o \
 	$O/compute_energy.spec.o \
 	$O/compute_forces_acoustic.spec.o \
 	$O/compute_forces_acoustic_backward.spec.o \
+	$O/compute_stacey_acoustic.spec.o \
 	$O/compute_add_sources_acoustic.spec.o \
 	$O/compute_forces_gravitoacoustic.spec.o \
 	$O/compute_forces_poro_fluid.spec.o \
+	$O/compute_attenuation_poro_fluid_part.spec.o \
 	$O/compute_forces_poro_solid.spec.o \
+	$O/compute_stacey_poro.spec.o \
+	$O/compute_coupling_poro_ac.spec.o \
+	$O/compute_coupling_poro_viscoelastic.spec.o \
+	$O/compute_add_sources_poro.spec.o \
 	$O/compute_forces_viscoelastic.spec.o \
 	$O/compute_forces_viscoelastic_backward.spec.o \
+	$O/compute_coupling_viscoelastic_ac.spec.o \
+	$O/compute_coupling_viscoelastic_po.spec.o \
+	$O/compute_stacey_viscoelastic.spec.o \
 	$O/compute_add_sources_viscoelastic.spec.o \
 	$O/compute_gradient_attenuation.spec.o \
 	$O/compute_normal_vector.spec.o \
@@ -107,6 +115,7 @@ specfem2D_OBJECTS = \
 	$O/invert_mass_matrix.spec.o \
 	$O/is_in_convex_quadrilateral.spec.o \
 	$O/iterate_time.spec.o \
+	$O/iterate_time_undoatt.spec.o \
 	$O/lagrange_poly.spec.o \
 	$O/locate_receivers.spec.o \
 	$O/locate_source_force.spec.o \
@@ -137,9 +146,14 @@ specfem2D_OBJECTS = \
 	$O/specfem2D.spec.o \
 	$O/specfem2D_par.spec.o \
 	$O/update_displacement_scheme.spec.o \
+	$O/compute_kernels.spec.o \
 	$O/write_jpeg_image.cc.o \
 	$O/write_output_SU.spec.o \
 	$O/write_seismograms.spec.o \
+	$O/write_postscript_snapshot.spec.o \
+	$O/write_color_image_snaphot.spec.o \
+	$O/write_wavefield_dumps.spec.o \
+	$O/save_read_array_for_undoatt.spec.o \
 	$(EMPTY_MACRO)
 
 specfem2D_MODULES = \
@@ -295,18 +309,26 @@ $O/check_grid.spec.o: $O/specfem2D_par.spec.o
 $O/check_stability.spec.o: $O/specfem2D_par.spec.o
 $O/compute_arrays_source.spec.o: $O/specfem2D_par.spec.o
 $O/compute_coupling_acoustic_el.spec.o: $O/specfem2D_par.spec.o
-$O/compute_coupling_viscoelastic_ac.spec.o: $O/specfem2D_par.spec.o
 $O/compute_coupling_acoustic_po.spec.o: $O/specfem2D_par.spec.o
 $O/compute_curl_one_element.spec.o: $O/specfem2D_par.spec.o
 $O/compute_energy.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_acoustic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_add_sources_acoustic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_acoustic_backward.spec.o: $O/specfem2D_par.spec.o
+$O/compute_stacey_acoustic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_gravitoacoustic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_poro_fluid.spec.o: $O/specfem2D_par.spec.o
+$O/compute_attenuation_poro_fluid_part.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_poro_solid.spec.o: $O/specfem2D_par.spec.o
+$O/compute_stacey_poro.spec.o: $O/specfem2D_par.spec.o
+$O/compute_coupling_poro_ac.spec.o: $O/specfem2D_par.spec.o
+$O/compute_coupling_poro_viscoelastic.spec.o: $O/specfem2D_par.spec.o
+$O/compute_add_sources_poro.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_viscoelastic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_viscoelastic_backward.spec.o: $O/specfem2D_par.spec.o
+$O/compute_coupling_viscoelastic_ac.spec.o: $O/specfem2D_par.spec.o
+$O/compute_coupling_viscoelastic_po.spec.o: $O/specfem2D_par.spec.o
+$O/compute_stacey_viscoelastic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_add_sources_viscoelastic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_pressure.spec.o: $O/specfem2D_par.spec.o
 $O/compute_vector_field.spec.o: $O/specfem2D_par.spec.o
@@ -324,6 +346,7 @@ $O/gmat01.spec.o: $O/specfem2D_par.spec.o
 $O/initialize_simulation.spec.o: $O/specfem2D_par.spec.o
 $O/invert_mass_matrix.spec.o: $O/specfem2D_par.spec.o
 $O/iterate_time.spec.o: $O/specfem2D_par.spec.o
+$O/iterate_time_undoatt.spec.o: $O/specfem2D_par.spec.o
 $O/locate_receivers.spec.o: $O/specfem2D_par.spec.o
 $O/noise_tomography.spec.o: $O/specfem2D_par.spec.o
 $O/paco_beyond_critical.spec.o: $O/specfem2D_par.spec.o
@@ -346,8 +369,13 @@ $O/set_sources.spec.o: $O/specfem2D_par.spec.o
 $O/setup_sources_receivers.spec.o: $O/specfem2D_par.spec.o
 $O/specfem2D.spec.o: $O/specfem2D_par.spec.o
 $O/update_displacement_scheme.spec.o: $O/specfem2D_par.spec.o
+$O/compute_kernels.spec.o: $O/specfem2D_par.spec.o
 $O/write_output_SU.spec.o: $O/specfem2D_par.spec.o
 $O/write_seismograms.spec.o: $O/specfem2D_par.spec.o
+$O/write_postscript_snapshot.spec.o: $O/specfem2D_par.spec.o
+$O/write_color_image_snaphot.spec.o: $O/specfem2D_par.spec.o
+$O/write_wavefield_dumps.spec.o: $O/specfem2D_par.spec.o
+$O/save_read_array_for_undoatt.spec.o: $O/specfem2D_par.spec.o
 $O/acoutic_cuda.spec.o: $O/specfem2D_par.spec.o
 $O/elastic_cuda.spec.o: $O/specfem2D_par.spec.o
 $O/init_host_to_dev_variable.spec.o: $O/specfem2D_par.spec.o

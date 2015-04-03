@@ -60,7 +60,7 @@ module parameter_file
 
   ! simulation type
   integer :: SIMULATION_TYPE,NOISE_TOMOGRAPHY
-  logical :: SAVE_FORWARD
+  logical :: SAVE_FORWARD,UNDO_ATTENUATION
   logical :: AXISYM
   logical :: p_sv
 
@@ -132,7 +132,7 @@ module parameter_file
   double precision, dimension(:), pointer :: xdeb,zdeb,xfin,zfin
 
   ! variables used for iteration
-  integer :: nt
+  integer :: nt,NT_DUMP_ATTENUATION
   double precision :: deltat
   ! value of time_stepping_scheme to decide which time scheme will be used
   ! # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta)
@@ -245,7 +245,10 @@ contains
   if(err_occurred() /= 0) stop 'error reading parameter NOISE_TOMOGRAPHY in Par_file'
 
   call read_value_logical_p(SAVE_FORWARD, 'solver.SAVE_FORWARD')
-  if(err_occurred() /= 0) stop 'error reading parameter 3 in Par_file'
+  if(err_occurred() /= 0) stop 'error reading parameter 3a in Par_file'
+
+  call read_value_logical_p(UNDO_ATTENUATION, 'solver.UNDO_ATTENUATION')
+  if(err_occurred() /= 0) stop 'error reading parameter 3b in Par_file'
 
   ! read info about partitioning
   call read_value_integer_p(nproc, 'solver.nproc')
@@ -286,6 +289,9 @@ contains
   ! read time step parameters
   call read_value_integer_p(nt, 'solver.nt')
   if(err_occurred() /= 0) stop 'error reading parameter 16 in Par_file'
+
+  call read_value_integer_p(NT_DUMP_ATTENUATION, 'solver.NT_DUMP_ATTENUATION')
+  if(err_occurred() /= 0) stop 'error reading parameter 16a in Par_file'
 
   call read_value_double_precision_p(deltat, 'solver.deltat')
   if(err_occurred() /= 0) stop 'error reading parameter 17a in Par_file'

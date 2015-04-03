@@ -47,8 +47,8 @@
   ! compute forces in the acoustic elements in forward simulation and in adjoint simulation in adjoint inversion
 
   use specfem_par, only: nglob,nspec,nelemabs,it,NSTEP, &
-                         anyabs,assign_external_model,ibool,kmato,numabs,acoustic, &
-                         codeabs,codeabs_corner,stage_time_scheme,i_stage, &
+                         assign_external_model,ibool,kmato,numabs,acoustic, &
+                         codeabs,codeabs_corner, &
                          density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                          vpext,rhoext, &
                          hprime_xx,hprimewgll_xx, &

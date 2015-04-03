@@ -47,7 +47,7 @@
 
   ! compute forces in the acoustic elements in forward simulation and in adjoint simulation in adjoint inversion
 
-  use specfem_par, only: nglob,nspec,nelemabs,it,NSTEP, &
+  use specfem_par, only: nglob,nspec,nelemabs,it, &
                          anyabs,assign_external_model,ibool,kmato,numabs,acoustic, &
                          codeabs,codeabs_corner,stage_time_scheme,i_stage, &
                          density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
@@ -581,7 +581,6 @@
   endif  ! end of absorbing boundaries
 
 !--- set Dirichelet boundary condition on outer boundary of CFS-PML
-!
   if( PML_BOUNDARY_CONDITIONS .and. anyabs ) then
     do ispecabs = 1,nelemabs
       ispec = numabs(ispecabs)

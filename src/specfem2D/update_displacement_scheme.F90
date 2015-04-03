@@ -88,7 +88,7 @@ subroutine update_displacement_precondition_newmark_elastic(deltat,deltatover2,d
                                                             accel_elastic,veloc_elastic,&
                                                             displ_elastic,displ_elastic_old,&
                                                             PML_BOUNDARY_CONDITIONS)
-  use specfem_par, only : nglob_elastic
+  use specfem_par, only : nglob_elastic,ATTENUATION_VISCOELASTIC_SOLID
   implicit none
   include 'constants.h'
 
@@ -101,7 +101,7 @@ subroutine update_displacement_precondition_newmark_elastic(deltat,deltatover2,d
 #ifdef FORCE_VECTORIZATION
   integer :: i
 
-  if( PML_BOUNDARY_CONDITIONS ) then
+  if( PML_BOUNDARY_CONDITIONS .or. ATTENUATION_VISCOELASTIC_SOLID ) then
     do i = 1,3*nglob_elastic
       displ_elastic_old(i,1) = displ_elastic(i,1) + deltatsquareover2/TWO * accel_elastic(i,1)
     enddo
@@ -117,7 +117,7 @@ subroutine update_displacement_precondition_newmark_elastic(deltat,deltatover2,d
   enddo
 #else
 
-  if( PML_BOUNDARY_CONDITIONS ) then
+  if( PML_BOUNDARY_CONDITIONS .or. ATTENUATION_VISCOELASTIC_SOLID  ) then
     displ_elastic_old = displ_elastic + deltatsquareover2/TWO * accel_elastic
   endif
 
@@ -162,24 +162,10 @@ end subroutine update_displacement_precondition_newmark_poroelastic
 
   subroutine update_displacement_precondition_newmark_GPU()
 
-  use specfem_par, only : deltat,deltatover2,deltatsquareover2,b_deltat,b_deltatover2,b_deltatsquareover2, GPU_MODE, &
-                          Mesh_pointer,deltatf,deltatover2f,deltatsquareover2f,b_deltatf,b_deltatover2f,&
-                          b_deltatsquareover2f,time_stepping_scheme,SIMULATION_TYPE,&
+  use specfem_par, only : Mesh_pointer,deltatf,deltatover2f,deltatsquareover2f,b_deltatf,b_deltatover2f,&
+                          b_deltatsquareover2f,SIMULATION_TYPE,&
                           any_acoustic,any_elastic,any_poroelastic,&
-                          potential_acoustic,potential_dot_acoustic,&
-                          potential_dot_dot_acoustic,potential_acoustic_old,&
-                          displ_elastic,veloc_elastic,accel_elastic,displ_elastic_old,&
-                          displs_poroelastic,velocs_poroelastic,accels_poroelastic,&
-                          displs_poroelastic_old,displw_poroelastic,velocw_poroelastic,&
-                          accelw_poroelastic,&
-                          b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic,&
-                          b_potential_acoustic_old,&
-                          b_displ_elastic,b_veloc_elastic,b_accel_elastic,b_displ_elastic_old,&
-                          accel_elastic_adj_coupling,&
-                          b_displs_poroelastic,b_velocs_poroelastic,b_accels_poroelastic,&
-                          accels_poroelastic_adj_coupling,&
-                          b_displw_poroelastic,b_velocw_poroelastic,b_accelw_poroelastic,&
-                          accelw_poroelastic_adj_coupling,PML_BOUNDARY_CONDITIONS
+                          PML_BOUNDARY_CONDITIONS
 
   implicit none
   include 'constants.h'

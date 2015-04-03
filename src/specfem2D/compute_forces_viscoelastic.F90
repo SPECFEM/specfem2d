@@ -44,17 +44,17 @@
 subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
                                        x0_source, z0_source,f0,v0x_left,v0z_left,v0x_right,v0z_right,&
                                        v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot,&
-                                       nleft,nright,nbot,PML_BOUNDARY_CONDITIONS)
+                                       nleft,nright,nbot,PML_BOUNDARY_CONDITIONS,e1,e11,e13)
 
   ! compute forces for the elastic elements
 
-  use specfem_par, only: p_sv,nglob,nspec,nelemabs,it,NSTEP,anyabs,assign_external_model, &
-                         initialfield,ATTENUATION_VISCOELASTIC_SOLID,anglesource, &
+  use specfem_par, only: p_sv,nglob,nspec,nelemabs,it,anyabs,assign_external_model, &
+                         initialfield,ATTENUATION_VISCOELASTIC_SOLID,nspec_allocate,N_SLS,anglesource, &
                          ibool,kmato,numabs,elastic,codeabs,codeabs_corner, &
                          density,poroelastcoef,xix,xiz,gammax,gammaz, &
                          jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,&
                          anisotropic,anisotropy, &
-                         e1,e11,e13,e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK,c_LDDRK, &
+                         e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK,c_LDDRK, &
                          e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_RK, e11_force_RK, e13_force_RK, &
                          hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                          AXISYM,is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
@@ -73,10 +73,10 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
                          ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,STACEY_BOUNDARY_CONDITIONS,acoustic
 
   implicit none
-
   include "constants.h"
 
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_allocate,N_SLS) :: e1,e11,e13
 
   ! for analytical initial plane wave for Bielak's conditions
   double precision x0_source, z0_source,f0
@@ -88,7 +88,6 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
 
   ! CPML coefficients and memory variables
   logical :: PML_BOUNDARY_CONDITIONS
-
 
   !---
   !--- local variables
@@ -1570,108 +1569,6 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
   endif  ! end of PML_BOUNDARY_CONDITIONS
 
 end subroutine compute_forces_viscoelastic
-
-!========================================================================
-
- subroutine compute_forces_viscoelastic_pre_kernel()
-
-  ! precompution of kernel
-
-  use specfem_par, only: p_sv,nspec,displ_elastic,b_displ_elastic,&
-                         mu_k,kappa_k,elastic,ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz
-
-   implicit none
-   include "constants.h"
-
-   integer :: i,j,k,ispec,iglob
-   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duy_dxi,duy_dgamma,duz_dxi,duz_dgamma
-   real(kind=CUSTOM_REAL) :: dux_dxl,duy_dxl,duz_dxl,dux_dzl,duy_dzl,duz_dzl
-   real(kind=CUSTOM_REAL) :: b_dux_dxi,b_dux_dgamma,b_duy_dxi,b_duy_dgamma,b_duz_dxi,b_duz_dgamma
-   real(kind=CUSTOM_REAL) :: b_dux_dxl,b_duy_dxl,b_duz_dxl,b_dux_dzl,b_duy_dzl,b_duz_dzl
-   real(kind=CUSTOM_REAL) :: dsxx,dsxz,dszz
-   real(kind=CUSTOM_REAL) :: b_dsxx,b_dsxz,b_dszz
-
-   ! Jacobian matrix and determinant
-   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl
-
-   do ispec = 1,nspec
-     if( elastic(ispec) ) then
-       do j=1,NGLLZ; do i=1,NGLLX
-         ! derivative along x and along z
-         dux_dxi = 0._CUSTOM_REAL; duy_dxi = 0._CUSTOM_REAL; duz_dxi = 0._CUSTOM_REAL
-         dux_dgamma = 0._CUSTOM_REAL; duy_dgamma = 0._CUSTOM_REAL; duz_dgamma = 0._CUSTOM_REAL
-
-
-         b_dux_dxi = 0._CUSTOM_REAL; b_duy_dxi = 0._CUSTOM_REAL; b_duz_dxi = 0._CUSTOM_REAL
-         b_dux_dgamma = 0._CUSTOM_REAL; b_duy_dgamma = 0._CUSTOM_REAL; b_duz_dgamma = 0._CUSTOM_REAL
-
-
-         ! first double loop over GLL points to compute and store gradients
-         ! we can merge the two loops because NGLLX == NGLLZ
-         do k = 1,NGLLX
-           dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-           duy_dxi = duy_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
-           duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
-
-           dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-           duy_dgamma = duy_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
-           duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
-
-
-           b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-           b_duy_dxi = b_duy_dxi + b_displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
-           b_duz_dxi = b_duz_dxi + b_displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
-
-           b_dux_dgamma = b_dux_dgamma + b_displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-           b_duy_dgamma = b_duy_dgamma + b_displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
-           b_duz_dgamma = b_duz_dgamma + b_displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
-
-         enddo
-
-         xixl = xix(i,j,ispec); xizl = xiz(i,j,ispec)
-         gammaxl = gammax(i,j,ispec); gammazl = gammaz(i,j,ispec)
-
-         ! derivatives of displacement
-         dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
-         dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
-
-         duy_dxl = duy_dxi*xixl + duy_dgamma*gammaxl
-         duy_dzl = duy_dxi*xizl + duy_dgamma*gammazl
-
-         duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
-         duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
-
-
-         b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
-         b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
-
-         b_duy_dxl = b_duy_dxi*xixl + b_duy_dgamma*gammaxl
-         b_duy_dzl = b_duy_dxi*xizl + b_duy_dgamma*gammazl
-
-         b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
-         b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
-
-
-         iglob = ibool(i,j,ispec)
-         if( p_sv ) then !P-SV waves
-           dsxx =  dux_dxl
-           dsxz = HALF * (duz_dxl + dux_dzl)
-           dszz =  duz_dzl
-
-           b_dsxx =  b_dux_dxl
-           b_dsxz = HALF * (b_duz_dxl + b_dux_dzl)
-           b_dszz =  b_duz_dzl
-
-           kappa_k(iglob) = (dux_dxl + duz_dzl) *  (b_dux_dxl + b_duz_dzl)
-           mu_k(iglob) = dsxx * b_dsxx + dszz * b_dszz + &
-                         2._CUSTOM_REAL * dsxz * b_dsxz - 1._CUSTOM_REAL/3._CUSTOM_REAL * kappa_k(iglob)
-         else !SH (membrane) waves
-           mu_k(iglob) = duy_dxl * b_duy_dxl + duy_dzl * b_duy_dzl
-         endif
-       enddo; enddo
-     endif
-   enddo
- end subroutine compute_forces_viscoelastic_pre_kernel
 
 !========================================================================
 

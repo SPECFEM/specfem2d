@@ -269,13 +269,14 @@
 
 !=====================================================================
 
- subroutine rebuild_value_on_PML_interface_acoustic()
+ subroutine rebuild_value_on_PML_interface_acoustic(it)
 
-  use specfem_par, only: nspec,acoustic,any_acoustic,is_pml,ibool,nglob_interface,point_interface,it,NSTEP, &
+  use specfem_par, only: nspec,acoustic,any_acoustic,is_pml,ibool,nglob_interface,point_interface, &
                          b_potential_dot_acoustic,b_potential_acoustic,&
                          pml_interface_history_potential_dot,pml_interface_history_potential
   implicit none
   include "constants.h"
+  integer :: it
 
   !local variables
   integer :: i,j,ispec
@@ -293,21 +294,22 @@
 
   if( any_acoustic .and. nglob_interface > 0 ) then
     do i = 1, nglob_interface
-      b_potential_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot(i,NSTEP-it+1)
-      b_potential_acoustic(point_interface(i)) = pml_interface_history_potential(i,NSTEP-it+1)
+      b_potential_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot(i,it)
+      b_potential_acoustic(point_interface(i)) = pml_interface_history_potential(i,it)
     enddo
   endif
 
  end subroutine rebuild_value_on_PML_interface_acoustic
 !========================================================================
 
- subroutine rebuild_value_on_PML_interface_viscoelastic()
+ subroutine rebuild_value_on_PML_interface_viscoelastic(it)
 
-  use specfem_par, only: nspec,elastic,any_elastic,is_pml,ibool,nglob_interface,point_interface,it,NSTEP, &
+  use specfem_par, only: nspec,elastic,any_elastic,is_pml,ibool,nglob_interface,point_interface, &
                          b_veloc_elastic,b_displ_elastic,&
                          pml_interface_history_veloc,pml_interface_history_displ
   implicit none
   include "constants.h"
+  integer :: it
 
   !local variables
   integer :: i,j,ispec
@@ -325,12 +327,12 @@
 
   if(any_elastic .and. nglob_interface > 0) then
      do i = 1, nglob_interface
-       b_veloc_elastic(1,point_interface(i)) = pml_interface_history_veloc(1,i,NSTEP-it+1)
-       b_veloc_elastic(2,point_interface(i)) = pml_interface_history_veloc(2,i,NSTEP-it+1)
-       b_veloc_elastic(3,point_interface(i)) = pml_interface_history_veloc(3,i,NSTEP-it+1)
-       b_displ_elastic(1,point_interface(i)) = pml_interface_history_displ(1,i,NSTEP-it+1)
-       b_displ_elastic(2,point_interface(i)) = pml_interface_history_displ(2,i,NSTEP-it+1)
-       b_displ_elastic(3,point_interface(i)) = pml_interface_history_displ(3,i,NSTEP-it+1)
+       b_veloc_elastic(1,point_interface(i)) = pml_interface_history_veloc(1,i,it)
+       b_veloc_elastic(2,point_interface(i)) = pml_interface_history_veloc(2,i,it)
+       b_veloc_elastic(3,point_interface(i)) = pml_interface_history_veloc(3,i,it)
+       b_displ_elastic(1,point_interface(i)) = pml_interface_history_displ(1,i,it)
+       b_displ_elastic(2,point_interface(i)) = pml_interface_history_displ(2,i,it)
+       b_displ_elastic(3,point_interface(i)) = pml_interface_history_displ(3,i,it)
      enddo
   endif
 
