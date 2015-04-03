@@ -7,8 +7,13 @@ AXISYM                          = .false.
 # forward or adjoint simulation
 SIMULATION_TYPE                 = 1  # 1 = forward, 3 = adjoint + kernels; 2 is purposely UNUSED (for compatibility with the numbering of our 3D codes)
 NOISE_TOMOGRAPHY                = 0  # 0 = earthquake simulation, 1/2/3 = noise simulation
-UNDO_ATTENUATION = .false.
 SAVE_FORWARD                    = .false. # save the last frame, needed for adjoint simulation
+# to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
+# use the flag below. It performs undoing of attenuation in an exact way for sensitivity kernel calculations
+# but requires disk space for temporary storage, and uses a significant amount of memory used as buffers for temporary storage.
+# When that option is on the second parameter indicates how often the code dumps restart files to disk (if in doubt, use something between 100 and 1000).
+UNDO_ATTENUATION                = .false.
+NT_DUMP_ATTENUATION             = 500
 
 # parameters concerning partitioning
 nproc                           = 1              # number of processes
@@ -34,7 +39,6 @@ p_sv                            = .true.         # set the type of calculation (
 
 # time step parameters
 nt                              = 1600           # total number of time steps
-NT_DUMP_ATTENUATION             = 0
 deltat                          = 1.1d-3         # duration of a time step (see section "How to choose the time step" of the manual for how to do this)
 USER_T0                         = 0.0d0          # use this t0 as earliest starting time rather than the automatically calculated one
 time_stepping_scheme            = 1              # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta), 3 = classical RK4 4th-order 4-stage Runge-Kutta
