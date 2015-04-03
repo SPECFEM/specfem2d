@@ -52,11 +52,6 @@
   !local variables
   integer :: i,j,k,ispec,iglob
 
-#ifdef USE_MPI
-  integer :: iproc,ier
-#endif
-
-
   if( myrank == 0 ) then
     write(IOUT,*)
     write(IOUT,*) 'Creating color image of size ',NX_IMAGE_color,' x ',NZ_IMAGE_color,' for time step ',it
