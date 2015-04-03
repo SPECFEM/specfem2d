@@ -162,7 +162,7 @@ module interpolation
     real(kind=CUSTOM_REAL) :: denom, x1, x2, y1, y2
     integer :: i,j
     real(kind=CUSTOM_REAL) :: d
-    
+
     write(*,'(A1)', advance='no') "" ! TODO segmentation fault without that line!!!!! WHY???
     if (present(delta)) then
       d = delta
