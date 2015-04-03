@@ -45,26 +45,12 @@
   use mpi
 #endif
 
-  use specfem_par, only: myrank,p_sv,nspec,ibool,NX_IMAGE_color,NZ_IMAGE_color,it, &
-                         nb_pixel_loc,num_pixel_loc,iglob_image_color, &
-                         imagetype_JPEG,image_color_data,vector_field_display, &
-                         density,kmato,assign_external_model,rhoext, &
-                         PML_BOUNDARY_CONDITIONS,is_PML, &
-                         potential_acoustic,potential_gravitoacoustic, &
-                         potential_gravito,displ_elastic,displs_poroelastic, &
-                         potential_dot_acoustic,potential_dot_gravitoacoustic, &
-                         potential_dot_gravito,veloc_elastic,velocs_poroelastic, &
-                         potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
-                         potential_dot_dot_gravito,accel_elastic,accels_poroelastic, &
-                         nproc,data_pixel_recv,nb_pixel_per_proc,num_pixel_recv, &
-                         data_pixel_send
+  use specfem_par
 
   implicit none
-  include "constants.h"
 
   !local variables
   integer :: i,j,k,ispec,iglob
-  real(kind=CUSTOM_REAL) :: rhol
 
 #ifdef USE_MPI
   integer :: iproc,ier

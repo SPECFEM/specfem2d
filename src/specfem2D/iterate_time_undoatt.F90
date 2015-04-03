@@ -140,7 +140,7 @@ subroutine iterate_time_undoatt()
     write(IOUT,*)
     write(IOUT,*) 'Starting time iteration loop in undoing attenuation...'
     write(IOUT,*)
-    call flush(IOUT)
+    call flush_IOUT(IOUT)
   endif
 
   ! initialize variables for writing seismograms
