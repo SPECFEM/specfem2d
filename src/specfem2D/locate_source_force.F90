@@ -67,7 +67,7 @@
 ! array containing coordinates of the points
   double precision coord(NDIM,nglob)
 
-  integer i,j,ispec,iglob,iter_loop,ix_initial_guess,iz_initial_guess
+  integer i,j,ispec,iglob,iter_loop,ix_initial_guess,iz_initial_guess,number_of_iterations
 
   double precision x_source,z_source,dist
   double precision xi,gamma,dx,dz,dxi,dgamma
@@ -184,6 +184,12 @@
   gamma = zigll(iz_initial_guess)
 
 ! iterate to solve the non linear system
+  if(USE_BEST_LOCATION_FOR_SOURCE) then
+    number_of_iterations = NUM_ITER
+  else
+    number_of_iterations = 0 ! this means that the loop below will not be executed, i.e. we will not iterate
+  endif
+
   do iter_loop = 1,NUM_ITER
 
 ! recompute jacobian for the new point
