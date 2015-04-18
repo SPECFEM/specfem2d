@@ -2,6 +2,12 @@
 README
 ----------------------------------------------------------------------
 
+##################
+##################  IMPORTANT: for this example (only) do not change nproc = 1 in DATA/Par_file to any other value because
+##################  IMPORTANT: this example with a crack in the mesh can ony run in serial mode (I use a trick
+##################  IMPORTANT: inside the code to create a mathematical crack, and that trick is not ported to MPI yet)
+##################
+
 This example propagates an initial (incident) Rayleigh wave along the surface of a 2D homogeneous medium with a crack, similar to Figure 3 of Komatitsch and Tromp (1999) but with a crack instead of a canyon.
 
 *********************************************************************************************************
