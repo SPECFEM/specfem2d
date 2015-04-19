@@ -201,7 +201,7 @@
 
         ! user output
         if( myrank == 0 ) then
-          write(IOUT,*) '    Onset time. . . . . . = ',t0+tshift_src(i_source)
+          write(IOUT,*) '    Onset time. . . . . . = ',- (t0+tshift_src(i_source))
           write(IOUT,*) '    Fundamental period. . = ',1.d0/f0(i_source)
           write(IOUT,*) '    Fundamental frequency = ',f0(i_source)
         endif
