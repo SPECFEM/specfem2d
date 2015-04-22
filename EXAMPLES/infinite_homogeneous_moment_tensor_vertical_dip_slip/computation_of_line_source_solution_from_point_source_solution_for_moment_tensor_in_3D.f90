@@ -10,7 +10,7 @@
 !            te_integrate: end time of the integration
 !            deltat: time step used in output
 !
-! we compute the seismic response for a line source from the integration of the seismic responce of the point source along the 
+! we compute the seismic response for a line source from the integration of the seismic responce of the point source along the
 ! line.
 ! thus V_2D(x,z,t) = Int_{y_min}^{y_max} V_3D(x,y,z,t) dy
 
@@ -66,17 +66,17 @@ te_stf = 1.d0/dominant_frequency * 5.0 + ts_stf
 !!!!!!!!!!!!!!!!!!!!!!!!!!!
 !position_receiver
 displacement_direction_index = 1
-position_receiver(1) = 500.0 
-position_receiver(2) = 0.0 
-position_receiver(3) = 500.0 
-ts_receiver = ts_stf 
+position_receiver(1) = 500.0
+position_receiver(2) = 0.0
+position_receiver(3) = 500.0
+ts_receiver = ts_stf
 te_receiver = 2.0d0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!
 !Ricker wavelet source
 deltat = 0.002d0
-y_direction_step = 1.0d0/(4.d0*dominant_frequency) * c_s / 5.d0  ! we ensure that the smallest wavelength include four element 
+y_direction_step = 1.0d0/(4.d0*dominant_frequency) * c_s / 5.d0  ! we ensure that the smallest wavelength include four element
 ys_direction_integration = - c_p * te_receiver * 1.5d0
 ye_direction_integration = c_p * te_receiver * 1.5d0
 nys_direction_integration = int(ys_direction_integration/y_direction_step) - 1
@@ -109,58 +109,58 @@ do k = ns_integration, ne_integration
 
     distance_source_receiver = 0.d0
     do i = 1, 3
-      distance_source_receiver = distance_source_receiver + (position_receiver(i) - position_source(i))**2 
+      distance_source_receiver = distance_source_receiver + (position_receiver(i) - position_source(i))**2
     enddo
     distance_source_receiver = dsqrt(distance_source_receiver)
 
     do i = 1,3
       gamma(i) = (position_receiver(i) - position_source(i)) / distance_source_receiver
     enddo
-							    
-    distance_divided_by_c_p = distance_source_receiver / c_p
-    distance_divided_by_c_s = distance_source_receiver / c_s 
 
-    ndistance_divided_by_c_p = int(distance_divided_by_c_p / deltat) + 1 
-    ndistance_divided_by_c_s = int(distance_divided_by_c_s / deltat) + 1 
+    distance_divided_by_c_p = distance_source_receiver / c_p
+    distance_divided_by_c_s = distance_source_receiver / c_s
+
+    ndistance_divided_by_c_p = int(distance_divided_by_c_p / deltat) + 1
+    ndistance_divided_by_c_s = int(distance_divided_by_c_s / deltat) + 1
 
     numerical_convolution_temp = 0.d0
     do i = ndistance_divided_by_c_p, ndistance_divided_by_c_s
       time = (dble(k-i)-1.d0)*deltat
       numerical_convolution_temp = numerical_convolution_temp + &
-	                               stf(ts_stf,te_stf,amplitude,time,dominant_frequency)*(dble(i)-1.d0)*deltat*deltat
+                                 stf(ts_stf,te_stf,amplitude,time,dominant_frequency)*(dble(i)-1.d0)*deltat*deltat
     enddo
     time_p_wave = (dble(k)-1.d0)*deltat - distance_source_receiver / c_p
-	time_s_wave = (dble(k)-1.d0)*deltat - distance_source_receiver / c_s 
-   
+  time_s_wave = (dble(k)-1.d0)*deltat - distance_source_receiver / c_s
+
     do p = 1,3
-	  do q = 1,3
+    do q = 1,3
         displacement = displacement + &
-		               !!!!!!!!!!
+                   !!!!!!!!!!
 ( 1.d0/(4.d0*rho*pi) * (15.0d0*gamma(displacement_direction_index)*gamma(p)*gamma(q) -  &
-			3.0d0*gamma(displacement_direction_index)*dirac_function(p,q) - &
-			3.0d0*gamma(p)*dirac_function(displacement_direction_index,q) - &
-			3.0d0*gamma(q)*dirac_function(displacement_direction_index,p)) & 
+      3.0d0*gamma(displacement_direction_index)*dirac_function(p,q) - &
+      3.0d0*gamma(p)*dirac_function(displacement_direction_index,q) - &
+      3.0d0*gamma(q)*dirac_function(displacement_direction_index,p)) &
                          * 1.0d0/(distance_source_receiver**4) * numerical_convolution_temp * moment_tensor(p,q) + &
 1.d0/(4.d0*rho*pi*c_p**2) * (6.0d0*gamma(displacement_direction_index)*gamma(p)*gamma(q) -  &
-			     1.0d0*gamma(displacement_direction_index)*dirac_function(p,q) - &
-			     1.0d0*gamma(p)*dirac_function(displacement_direction_index,q) - &
-			     1.0d0*gamma(q)*dirac_function(displacement_direction_index,p)) & 
+           1.0d0*gamma(displacement_direction_index)*dirac_function(p,q) - &
+           1.0d0*gamma(p)*dirac_function(displacement_direction_index,q) - &
+           1.0d0*gamma(q)*dirac_function(displacement_direction_index,p)) &
                           * 1.0d0/(distance_source_receiver**2) * moment_tensor(p,q) &
-			  * stf(ts_stf,te_stf,amplitude,time_p_wave,dominant_frequency) - & 
+        * stf(ts_stf,te_stf,amplitude,time_p_wave,dominant_frequency) - &
 1.d0/(4.d0*rho*pi*c_s**2) * (6.0d0*gamma(displacement_direction_index)*gamma(p)*gamma(q) -  &
-			     1.0d0*gamma(displacement_direction_index)*dirac_function(p,q) - &
-			     1.0d0*gamma(p)*dirac_function(displacement_direction_index,q) - &
-			     2.0d0*gamma(q)*dirac_function(displacement_direction_index,p)) & 
+           1.0d0*gamma(displacement_direction_index)*dirac_function(p,q) - &
+           1.0d0*gamma(p)*dirac_function(displacement_direction_index,q) - &
+           2.0d0*gamma(q)*dirac_function(displacement_direction_index,p)) &
                           * 1.0d0/(distance_source_receiver**2) * moment_tensor(p,q) &
-			  * stf(ts_stf,te_stf,amplitude,time_s_wave,dominant_frequency) + &
+        * stf(ts_stf,te_stf,amplitude,time_s_wave,dominant_frequency) + &
 1.d0/(4.d0*rho*pi*c_p**3) * 1.0d0/(distance_source_receiver) * gamma(displacement_direction_index)*gamma(p)*gamma(q)  &
-	                  * moment_tensor(p,q) * stf_differential(ts_stf,te_stf,amplitude,time_p_wave,dominant_frequency) - &
+                    * moment_tensor(p,q) * stf_differential(ts_stf,te_stf,amplitude,time_p_wave,dominant_frequency) - &
 1.d0/(4.d0*rho*pi*c_s**3) * (gamma(displacement_direction_index)*gamma(p) - dirac_function(displacement_direction_index,p)) &
-	                  * gamma(q) * 1.0d0/(distance_source_receiver) * moment_tensor(p,q) &
-			  * stf_differential(ts_stf,te_stf,amplitude,time_s_wave,dominant_frequency) ) * y_direction_step
-	  enddo
-	enddo
-    
+                    * gamma(q) * 1.0d0/(distance_source_receiver) * moment_tensor(p,q) &
+        * stf_differential(ts_stf,te_stf,amplitude,time_s_wave,dominant_frequency) ) * y_direction_step
+    enddo
+  enddo
+
   enddo
 
   write(20,*)(dble(k)-1.d0)*deltat + ts_stf, displacement
