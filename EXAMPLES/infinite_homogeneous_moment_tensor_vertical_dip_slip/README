@@ -1,0 +1,9 @@
+
+Example designed by Zhinan Xie, Harbin, China:
+
+adds an example to show that the code is ready and accurate for seismic simulation with a moment-tensor source.
+
+The analytical line source solution is obtained by integrating the analytical point source solutions
+(available in Aki and Richards, Quantitative Seismology, 2nd edition Eq.(4.29)) along the y-direction,
+using numerical integration based on the natural definition of integration.
+
