@@ -161,7 +161,7 @@ SUBDIRS = \
 	shared \
 	cuda \
 	specfem2D \
-	postprocess \
+	tomography/postprocess_sensitivity_kernels \
 	auxiliaries \
 	$(EMPTY_MACRO)
 
@@ -177,7 +177,7 @@ DEFAULT = \
 
 default: $(DEFAULT)
 
-all: default auxiliaries postprocess
+all: default auxiliaries tomography/postprocess_sensitivity_kernels
 
 
 ifdef CLEAN

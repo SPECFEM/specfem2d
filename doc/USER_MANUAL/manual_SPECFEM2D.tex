@@ -184,8 +184,9 @@ The code is released open-source under the CeCILL version 2 license, see the lic
 
 %------------------------------------------------------------------------------------------------%
 
-SPECFEM2D facilitates 2D simulations of
-acoustic, (an)elastic, and poroelastic seismic wave propagation.
+SPECFEM2D allows users to perform 2D and 2.5D (i.e., axisymmetric) simulations of
+acoustic, elastic, viscoelastic, and poroelastic seismic wave propagation
+as well as full waveform imaging (FWI) or adjoint tomography.
 The 2D spectral-element solver accommodates
 regular and unstructured meshes, generated for example by Cubit
 \urlwithparentheses{http://cubit.sandia.gov},
@@ -1356,6 +1357,23 @@ p^\dagger &\equiv -\kappa\left(\nabla\cdot\mathbf{s}^\dagger\right) = \phi^\dagg
 \end{align*}
 
 
+%------------------------------------------------------------------------------------------------%
+
+\chapter{Information for developers of the code, and for people who want to learn how the technique works}
+
+%------------------------------------------------------------------------------------------------%
+
+You can get a very simple 1D version of a demo code (there is one in Fortran and one in Python):\\
+
+git clone --recursive https://github.com/geodynamics/specfem1d.git\\
+
+\noindent We also have simple 3D demo source codes that implement the SEM in a single, small program, in directory\\
+utils/small\_SEM\_solvers\_in\_Fortran\_and\_C\_without\_MPI\_to\_learn of the specfem3d package.
+They are useful to learn how the spectral-element method works, and how to write or modify a code to implement it.
+Also useful to test new ideas by modifying these simple codes to run some tests.\\
+
+\noindent For information on how to contribute to the code, i.e., for how to make your modifications, additions or improvements part of the
+official package, see https://github.com/geodynamics/specfem3d/wiki .
 
 %------------------------------------------------------------------------------------------------%
 
