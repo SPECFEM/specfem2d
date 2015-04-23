@@ -628,26 +628,10 @@ DEF_FFLAGS
 MPICC
 MPILIBS
 MPIFC
-CUDA_LIBS
-CUDA_LDFLAGS
-CUDA_CPPFLAGS
-NVCC_PROG
-CUDA_LIB
-CUDA_INC
-CUDA_FLAGS
-NVCC
-COND_CUDA5_FALSE
-COND_CUDA5_TRUE
-COND_CUDA_FALSE
-COND_CUDA_TRUE
 SCOTCH_LIBDIR
 SCOTCH_INCLUDEDIR
 SCOTCH_DIR
 USE_BUNDLED_SCOTCH
-PTHREAD_CFLAGS
-PTHREAD_LIBS
-PTHREAD_CC
-acx_pthread_config
 YFLAGS
 YACC
 LEXLIB
@@ -686,6 +670,12 @@ FCFLAGS
 FC
 CUSTOM_MPI_TYPE
 CUSTOM_REAL
+COND_DEBUG_FALSE
+COND_DEBUG_TRUE
+COND_CUDA5_FALSE
+COND_CUDA5_TRUE
+COND_CUDA_FALSE
+COND_CUDA_TRUE
 COND_MPI_FALSE
 COND_MPI_TRUE
 target_alias
@@ -731,6 +721,7 @@ ac_user_opts='
 enable_option_checking
 with_mpi
 with_cuda
+enable_debug
 enable_double_precision
 with_scotch_dir
 with_scotch_includedir
@@ -756,10 +747,6 @@ SCOTCH_LIBDIR
 MPIFC
 MPILIBS
 MPICC
-NVCC
-CUDA_FLAGS
-CUDA_INC
-CUDA_LIB
 DEF_FFLAGS
 LOCAL_PATH_IS_ALSO_GLOBAL'
 
@@ -1375,6 +1362,7 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --enable-debug          build with debugging options enabled [default=no]
   --enable-double-precision
                           solver in double precision [default=no]
 
@@ -1422,10 +1410,6 @@ Some influential environment variables:
   LOCAL_PATH_IS_ALSO_GLOBAL
               files on a local path on each node are also seen as global with
               same path [default=true]
-  NVCC        NVIDIA CUDA compiler command
-  CUDA_FLAGS  CUDA compiler flags
-  CUDA_INC    Location of CUDA include files
-  CUDA_LIB    Location of CUDA library libcudart
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -2253,6 +2237,12 @@ fi
 
 
 
+
+###
+### CUDA
+###
+
+
 # Check whether --with-cuda was given.
 if test "${with_cuda+set}" = set; then :
   withval=$with_cuda; want_cuda="$withval"
@@ -2275,6 +2265,30 @@ else
   COND_CUDA5_TRUE='#'
   COND_CUDA5_FALSE=
 fi
+
+
+
+###
+### debugging
+###
+
+# Check whether --enable-debug was given.
+if test "${enable_debug+set}" = set; then :
+  enableval=$enable_debug; want_debug="$enableval"
+else
+  want_debug=no
+fi
+
+ if test x"$want_debug" != xno; then
+  COND_DEBUG_TRUE=
+  COND_DEBUG_FALSE='#'
+else
+  COND_DEBUG_TRUE='#'
+  COND_DEBUG_FALSE=
+fi
+
+export COND_DEBUG_FALSE
+export COND_DEBUG_TRUE
 
 
 
@@ -5892,374 +5906,7 @@ test -n "$YACC" || YACC="yacc"
  if test -z "$YACC" || test "X$YACC" = "Xno"; then
    as_fn_error $? "No suitable yacc or bison found" "$LINENO" 5
  fi
-
-
-
-ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-acx_pthread_ok=no
-
-# We used to check for pthread.h first, but this fails if pthread.h
-# requires special compiler flags (e.g. on True64 or Sequent).
-# It gets checked for in the link test anyway.
-
-# First of all, check if the user has set any of the PTHREAD_LIBS,
-# etcetera environment variables, and if threads linking works using
-# them:
-if test x"$PTHREAD_LIBS$PTHREAD_CFLAGS" != x; then
-        save_CFLAGS="$CFLAGS"
-        CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-        save_LIBS="$LIBS"
-        LIBS="$PTHREAD_LIBS $LIBS"
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pthread_join in LIBS=$PTHREAD_LIBS with CFLAGS=$PTHREAD_CFLAGS" >&5
-$as_echo_n "checking for pthread_join in LIBS=$PTHREAD_LIBS with CFLAGS=$PTHREAD_CFLAGS... " >&6; }
-        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char pthread_join ();
-#ifdef FC_DUMMY_MAIN
-#ifndef FC_DUMMY_MAIN_EQ_F77
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int FC_DUMMY_MAIN() { return 1; }
-#endif
-#endif
-int
-main ()
-{
-return pthread_join ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  acx_pthread_ok=yes
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $acx_pthread_ok" >&5
-$as_echo "$acx_pthread_ok" >&6; }
-        if test x"$acx_pthread_ok" = xno; then
-                PTHREAD_LIBS=""
-                PTHREAD_CFLAGS=""
-        fi
-        LIBS="$save_LIBS"
-        CFLAGS="$save_CFLAGS"
-fi
-
-# We must check for the threads library under a number of different
-# names; the ordering is very important because some systems
-# (e.g. DEC) have both -lpthread and -lpthreads, where one of the
-# libraries is broken (non-POSIX).
-
-# Create a list of thread flags to try.  Items starting with a "-" are
-# C compiler flags, and other items are library names, except for "none"
-# which indicates that we try without any flags at all, and "pthread-config"
-# which is a program returning the flags for the Pth emulation library.
-
-acx_pthread_flags="pthreads none -Kthread -kthread lthread -pthread -pthreads -mthreads pthread --thread-safe -mt pthread-config"
-
-# The ordering *is* (sometimes) important.  Some notes on the
-# individual items follow:
-
-# pthreads: AIX (must check this before -lpthread)
-# none: in case threads are in libc; should be tried before -Kthread and
-#       other compiler flags to prevent continual compiler warnings
-# -Kthread: Sequent (threads in libc, but -Kthread needed for pthread.h)
-# -kthread: FreeBSD kernel threads (preferred to -pthread since SMP-able)
-# lthread: LinuxThreads port on FreeBSD (also preferred to -pthread)
-# -pthread: Linux/gcc (kernel threads), BSD/gcc (userland threads)
-# -pthreads: Solaris/gcc
-# -mthreads: Mingw32/gcc, Lynx/gcc
-# -mt: Sun Workshop C (may only link SunOS threads [-lthread], but it
-#      doesn't hurt to check since this sometimes defines pthreads too;
-#      also defines -D_REENTRANT)
-#      ... -mt is also the pthreads flag for HP/aCC
-# pthread: Linux, etcetera
-# --thread-safe: KAI C++
-# pthread-config: use pthread-config program (for GNU Pth library)
-
-case "${host_cpu}-${host_os}" in
-        *solaris*)
-
-        # On Solaris (at least, for some versions), libc contains stubbed
-        # (non-functional) versions of the pthreads routines, so link-based
-        # tests will erroneously succeed.  (We need to link with -pthreads/-mt/
-        # -lpthread.)  (The stubs are missing pthread_cleanup_push, or rather
-        # a function called by this macro, so we could check for that, but
-        # who knows whether they'll stub that too in a future libc.)  So,
-        # we'll just look for -pthreads and -lpthread first:
-
-        acx_pthread_flags="-pthreads pthread -mt -pthread $acx_pthread_flags"
-        ;;
-esac
-
-if test x"$acx_pthread_ok" = xno; then
-for flag in $acx_pthread_flags; do
-
-        case $flag in
-                none)
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether pthreads work without any flags" >&5
-$as_echo_n "checking whether pthreads work without any flags... " >&6; }
-                ;;
-
-                -*)
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether pthreads work with $flag" >&5
-$as_echo_n "checking whether pthreads work with $flag... " >&6; }
-                PTHREAD_CFLAGS="$flag"
-                ;;
-
-		pthread-config)
-		# Extract the first word of "pthread-config", so it can be a program name with args.
-set dummy pthread-config; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_acx_pthread_config+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$acx_pthread_config"; then
-  ac_cv_prog_acx_pthread_config="$acx_pthread_config" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_acx_pthread_config="yes"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_prog_acx_pthread_config" && ac_cv_prog_acx_pthread_config="no"
-fi
-fi
-acx_pthread_config=$ac_cv_prog_acx_pthread_config
-if test -n "$acx_pthread_config"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $acx_pthread_config" >&5
-$as_echo "$acx_pthread_config" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-		if test x"$acx_pthread_config" = xno; then continue; fi
-		PTHREAD_CFLAGS="`pthread-config --cflags`"
-		PTHREAD_LIBS="`pthread-config --ldflags` `pthread-config --libs`"
-		;;
-
-                *)
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for the pthreads library -l$flag" >&5
-$as_echo_n "checking for the pthreads library -l$flag... " >&6; }
-                PTHREAD_LIBS="-l$flag"
-                ;;
-        esac
-
-        save_LIBS="$LIBS"
-        save_CFLAGS="$CFLAGS"
-        LIBS="$PTHREAD_LIBS $LIBS"
-        CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-
-        # Check for various functions.  We must include pthread.h,
-        # since some functions may be macros.  (On the Sequent, we
-        # need a special flag -Kthread to make this header compile.)
-        # We check for pthread_join because it is in -lpthread on IRIX
-        # while pthread_create is in libc.  We check for pthread_attr_init
-        # due to DEC craziness with -lpthreads.  We check for
-        # pthread_cleanup_push because it is one of the few pthread
-        # functions on Solaris that doesn't have a non-functional libc stub.
-        # We try pthread_create on general principles.
-        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <pthread.h>
-#ifdef FC_DUMMY_MAIN
-#ifndef FC_DUMMY_MAIN_EQ_F77
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int FC_DUMMY_MAIN() { return 1; }
-#endif
-#endif
-int
-main ()
-{
-pthread_t th; pthread_join(th, 0);
-                     pthread_attr_init(0); pthread_cleanup_push(0, 0);
-                     pthread_create(0,0,0,0); pthread_cleanup_pop(0);
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  acx_pthread_ok=yes
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-
-        LIBS="$save_LIBS"
-        CFLAGS="$save_CFLAGS"
-
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $acx_pthread_ok" >&5
-$as_echo "$acx_pthread_ok" >&6; }
-        if test "x$acx_pthread_ok" = xyes; then
-                break;
-        fi
-
-        PTHREAD_LIBS=""
-        PTHREAD_CFLAGS=""
-done
-fi
-
-# Various other checks:
-if test "x$acx_pthread_ok" = xyes; then
-        save_LIBS="$LIBS"
-        LIBS="$PTHREAD_LIBS $LIBS"
-        save_CFLAGS="$CFLAGS"
-        CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-
-        # Detect AIX lossage: JOINABLE attribute is called UNDETACHED.
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for joinable pthread attribute" >&5
-$as_echo_n "checking for joinable pthread attribute... " >&6; }
-	attr_name=unknown
-	for attr in PTHREAD_CREATE_JOINABLE PTHREAD_CREATE_UNDETACHED; do
-	    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <pthread.h>
-#ifdef FC_DUMMY_MAIN
-#ifndef FC_DUMMY_MAIN_EQ_F77
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int FC_DUMMY_MAIN() { return 1; }
-#endif
-#endif
-int
-main ()
-{
-int attr=$attr; return attr;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  attr_name=$attr; break
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-	done
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $attr_name" >&5
-$as_echo "$attr_name" >&6; }
-        if test "$attr_name" != PTHREAD_CREATE_JOINABLE; then
-
-cat >>confdefs.h <<_ACEOF
-#define PTHREAD_CREATE_JOINABLE $attr_name
-_ACEOF
-
-        fi
-
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking if more special flags are required for pthreads" >&5
-$as_echo_n "checking if more special flags are required for pthreads... " >&6; }
-        flag=no
-        case "${host_cpu}-${host_os}" in
-            *-aix* | *-freebsd* | *-darwin*) flag="-D_THREAD_SAFE";;
-            *solaris* | *-osf* | *-hpux*) flag="-D_REENTRANT";;
-        esac
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${flag}" >&5
-$as_echo "${flag}" >&6; }
-        if test "x$flag" != xno; then
-            PTHREAD_CFLAGS="$flag $PTHREAD_CFLAGS"
-        fi
-
-        LIBS="$save_LIBS"
-        CFLAGS="$save_CFLAGS"
-
-        # More AIX lossage: must compile with xlc_r or cc_r
-	if test x"$GCC" != xyes; then
-          for ac_prog in xlc_r cc_r
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_PTHREAD_CC+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$PTHREAD_CC"; then
-  ac_cv_prog_PTHREAD_CC="$PTHREAD_CC" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_PTHREAD_CC="$ac_prog"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-PTHREAD_CC=$ac_cv_prog_PTHREAD_CC
-if test -n "$PTHREAD_CC"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PTHREAD_CC" >&5
-$as_echo "$PTHREAD_CC" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  test -n "$PTHREAD_CC" && break
-done
-test -n "$PTHREAD_CC" || PTHREAD_CC="${CC}"
-
-        else
-          PTHREAD_CC=$CC
-	fi
-else
-        PTHREAD_CC="$CC"
-fi
-
-
-
-
-
-# Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
-if test x"$acx_pthread_ok" = xyes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: pthread found" >&5
-$as_echo "pthread found" >&6; }
-        :
-else
-        acx_pthread_ok=no
-        as_fn_error $? "pthread not found" "$LINENO" 5
-fi
-ac_ext=${ac_fc_srcext-f}
-ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
-
+## DK DK removed that because created errors ACX_PTHREAD(AC_MSG_RESULT([pthread found]), AC_MSG_ERROR([pthread not found]))
 
  # scotch only needed with mpi support
  if test "$want_mpi" = yes; then
@@ -6281,6 +5928,24 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 fi
 LDFLAGS=${ac_save_ldflags}
+
+
+
+###
+### CUDA
+###
+
+if test "$want_cuda" != no; then
+    $as_echo "## ---- ##
+## CUDA ##
+## ---- ##"
+    CIT_CUDA_CONFIG
+fi
+
+
+
+
+
 
 # influential environment variables
 
@@ -6308,357 +5973,11 @@ fi
 
 # Checks for header files.
 
-if test "$want_mpi" = yes; then
-
-# Use 'mpi' module or 'mpif.h', as appropriate.  UNFINISHED.
-# The default actions are to create FILENAME that either uses the
-# appropriate module or includes the existing mpif.h.
-# This strategy doesn't play well with "implicit none": whether the
-# generated header must be included before or after "implicit none"
-# depends upon the result of the test!  It might be possible to make
-# "use mpi" always work: simply generate an 'mpi' module if the MPI
-# library doesn't provide one.  The generated module would simply
-# "include 'mpif.h'".
-ac_ext=${ac_fc_srcext-f}
-ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
-
-ofile=mpif.h
-cfgfile="${ofile}T"
-trap "rm \"$cfgfile\"; exit 1" 1 2 15
-rm -f "$cfgfile"
-
-cit_fc_header=none
-cit_fc_save_fc=$FC
-cit_fc_save_fcflags=$FCFLAGS
-FC=$MPIFC
-FCFLAGS="$FCFLAGS $DEF_FFLAGS"
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether \"use mpi\" works" >&5
-$as_echo_n "checking whether \"use mpi\" works... " >&6; }
-cat > conftest.$ac_ext <<_ACEOF
-
-          program main
-
-      use mpi
-      integer ier
-      call MPI_INIT(ier)
-      call MPI_FINALIZE(ier)
-
-      end
-
-_ACEOF
-if ac_fn_fc_try_compile "$LINENO"; then :
-
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-    cit_fc_header="use mpi"
-
-else
-
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-        { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "cannot compile a trivial MPI program using $MPIFC
-See \`config.log' for more details" "$LINENO" 5; }
-
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
-if test "$cit_fc_header" != "none"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: creating $ofile" >&5
-$as_echo "$as_me: creating $ofile" >&6;}
-    cat >"$cfgfile" <<END_OF_HEADER
-! $ofile.  Generated by configure.
-
-      $cit_fc_header
-
-END_OF_HEADER
-    mv -f "$cfgfile" "$ofile" || \
-        (rm -f "$ofile" && cp "$cfgfile" "$ofile" && rm -f "$cfgfile")
-fi
-
-
-FC=$cit_fc_save_fc
-FCFLAGS=$cit_fc_save_fcflags
-
-ac_ext=${ac_fc_srcext-f}
-ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
-
-fi
-
-
-###
-### CUDA
-###
-
-if test "$want_cuda" != no; then
-
-
-  # influential environment variables
-
-
-  # tests NVCC variable
-  if test x"$NVCC" = x; then :
-
-    NVCC=nvcc
-
-fi
-
-  # Check for compiler
-  # checks if program in path
-  # Extract the first word of "$NVCC", so it can be a program name with args.
-set dummy $NVCC; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_NVCC_PROG+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $NVCC_PROG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_NVCC_PROG="$NVCC_PROG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_NVCC_PROG="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-NVCC_PROG=$ac_cv_path_NVCC_PROG
-if test -n "$NVCC_PROG"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NVCC_PROG" >&5
-$as_echo "$NVCC_PROG" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  if test -z "$NVCC_PROG" ; then
-    as_fn_error $? "cannot find '$NVCC' program, please check your PATH." "$LINENO" 5
-  fi
-
-  # Checks for compiling and linking
-  ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-
-  CFLAGS_save="$CFLAGS"
-  LDFLAGS_save="$LDFLAGS"
-  LIBS_save="$LIBS"
-
-  # uses nvcc compiler
-  CFLAGS="$CUDA_FLAGS"
-  if test "x$CUDA_INC" != "x"; then
-    CUDA_CPPFLAGS="-I$CUDA_INC"
-    CFLAGS="$CFLAGS $CUDA_CPPFLAGS"
-  fi
-
-  # Check for CUDA headers
-  # runs test with nvcc
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for cuda_runtime.h" >&5
-$as_echo_n "checking for cuda_runtime.h... " >&6; }
-  ac_compile='$NVCC -c $CFLAGS conftest.$ac_ext >&5'
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-
-#include <cuda.h>
-#include <cuda_runtime.h>
-#ifdef FC_DUMMY_MAIN
-#ifndef FC_DUMMY_MAIN_EQ_F77
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int FC_DUMMY_MAIN() { return 1; }
-#endif
-#endif
-int
-main ()
-{
-void* ptr = 0;
-  ;
-  return 0;
-}
-
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-else
-
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-    as_fn_error $? "CUDA runtime header not found; try setting CUDA_INC." "$LINENO" 5
-
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
-  # Check fo CUDA library
-  if test "x$CUDA_LIB" != "x"; then
-    CUDA_LDFLAGS="-L$CUDA_LIB"
-    LDFLAGS="$CUDA_LDFLAGS $LDFLAGS"
-  fi
-  CUDA_LIBS="-lcudart -lcuda -lcublas"
-  LIBS="$CUDA_LIBS $LIBS"
-
-  # runs compilation test with nvcc
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking nvcc compilation with cudaMalloc in -lcudart" >&5
-$as_echo_n "checking nvcc compilation with cudaMalloc in -lcudart... " >&6; }
-  ac_compile='$NVCC -c $CFLAGS conftest.$ac_ext >&5'
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-
-#include <cuda.h>
-#include <cuda_runtime.h>
-#ifdef FC_DUMMY_MAIN
-#ifndef FC_DUMMY_MAIN_EQ_F77
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int FC_DUMMY_MAIN() { return 1; }
-#endif
-#endif
-int
-main ()
-{
-void* ptr = 0;cudaMalloc(&ptr, 1);
-  ;
-  return 0;
-}
-
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-
-else
-
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-    as_fn_error $? "CUDA library function with nvcc compilation failed; try setting CUDA_INC." "$LINENO" 5
-
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
-  # runs linking test with nvcc
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking nvcc linking with cudaMalloc in -lcudart" >&5
-$as_echo_n "checking nvcc linking with cudaMalloc in -lcudart... " >&6; }
-  ac_link='$NVCC -o conftest$ac_exeext $CFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <stdio.h>
-#include <cuda.h>
-#include <cuda_runtime.h>
-#ifdef FC_DUMMY_MAIN
-#ifndef FC_DUMMY_MAIN_EQ_F77
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int FC_DUMMY_MAIN() { return 1; }
-#endif
-#endif
-int
-main ()
-{
-void* ptr = 0;cudaMalloc(&ptr, 1);
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-     as_fn_error $? "CUDA library linking with nvcc failed; try setting CUDA_LIB." "$LINENO" 5
-
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-
-  # runs linking test with standard compiler
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking linking with cudaMalloc in -lcudart" >&5
-$as_echo_n "checking linking with cudaMalloc in -lcudart... " >&6; }
-  # C compiler linking
-  ac_link='$NVCC -c $CFLAGS conftest.$ac_ext >&5; $CC -o conftest$ac_exeext $LDFLAGS conftest.$ac_objext $LIBS >&5'
-  # Fortran compiler linking
-  # note: fortran linking with ifort would need -nofor-main to succeed
-  #ac_link='$NVCC -c $CFLAGS conftest.$ac_ext >&5; $FC -o conftest$ac_exeext $LDFLAGS conftest.$ac_objext $LIBS >&5'
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <stdio.h>
-#include <cuda.h>
-#include <cuda_runtime.h>
-#ifdef FC_DUMMY_MAIN
-#ifndef FC_DUMMY_MAIN_EQ_F77
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int FC_DUMMY_MAIN() { return 1; }
-#endif
-#endif
-int
-main ()
-{
-void* ptr = 0;cudaMalloc(&ptr, 1);
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-     as_fn_error $? "CUDA library linking failed; try setting CUDA_LIB." "$LINENO" 5
-
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-
-  CFLAGS="$CFLAGS_save"
-  LDFLAGS="$LDFLAGS_save"
-  LIBS="$LIBS_save"
-  ac_ext=${ac_fc_srcext-f}
-ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
-
-fi
-
+# if test "$want_mpi" = yes; then
+#     CIT_FC_MPI_MODULE([mpif.h], [$MPIFC], [$DEF_FFLAGS], [], [
+#         AC_MSG_FAILURE([cannot compile a trivial MPI program using $MPIFC])
+#     ])
+# fi
 
 # Checks for typedefs, structures, and compiler characteristics.
 
@@ -6790,6 +6109,18 @@ LTLIBOBJS=$ac_ltlibobjs
 
 if test -z "${COND_MPI_TRUE}" && test -z "${COND_MPI_FALSE}"; then
   as_fn_error $? "conditional \"COND_MPI\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_CUDA_TRUE}" && test -z "${COND_CUDA_FALSE}"; then
+  as_fn_error $? "conditional \"COND_CUDA\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_CUDA5_TRUE}" && test -z "${COND_CUDA5_FALSE}"; then
+  as_fn_error $? "conditional \"COND_CUDA5\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_DEBUG_TRUE}" && test -z "${COND_DEBUG_FALSE}"; then
+  as_fn_error $? "conditional \"COND_DEBUG\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 case $FC_MODINC in #(
