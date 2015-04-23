@@ -653,7 +653,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
 
             if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec_PML))) < TINYVAL) ) then ! du_z/dr=0 on the axis
               rmemory_duz_dx(i,j,ispec_PML,1) = 0.d0
-              if (stage_time_scheme > 1) then 
+              if (stage_time_scheme > 1) then
                 rmemory_duz_dx_LDDRK(i,j,ispec_PML,1) = 0.d0
                 rmemory_duz_dx_LDDRK(i,j,ispec_PML,2) = 0.d0
               endif
