@@ -57,7 +57,7 @@ subroutine iterate_time()
 #endif
 
 
-  if (myrank == 0) write(IOUT,400)
+  if (myrank == 0) write(IOUT,400) ! Write = T i m e  e v o l u t i o n  l o o p =
 !
 !----          s t a r t   t i m e   i t e r a t i o n s
 !

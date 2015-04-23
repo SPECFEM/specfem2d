@@ -653,14 +653,21 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
 
             if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec_PML))) < TINYVAL) ) then ! du_z/dr=0 on the axis
               rmemory_duz_dx(i,j,ispec_PML,1) = 0.d0
-              rmemory_duz_dx_prime(i,j,ispec_PML,1) = 0.d0
+              if (stage_time_scheme > 1) then 
+                rmemory_duz_dx_LDDRK(i,j,ispec_PML,1) = 0.d0
+                rmemory_duz_dx_LDDRK(i,j,ispec_PML,2) = 0.d0
+              endif
+              if( ROTATE_PML_ACTIVATE ) then
+                rmemory_duz_dx_prime(i,j,ispec_PML,1) = 0.d0
+                rmemory_duz_dx_prime(i,j,ispec_PML,2) = 0.d0
+              endif
               rmemory_duz_dx(i,j,ispec_PML,2) = 0.d0
-              rmemory_duz_dx_prime(i,j,ispec_PML,2) = 0.d0
             endif
           endif ! PML_BOUNDARY_CONDITIONS
 
           if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL) ) then ! du_z/dr=0 on the axis
             duz_dxl = 0.d0
+            duz_dxl_prime = 0.d0
           endif
 
           ! compute stress tensor (include attenuation or anisotropy if needed)
