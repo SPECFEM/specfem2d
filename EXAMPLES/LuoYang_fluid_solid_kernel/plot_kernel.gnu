@@ -1,5 +1,5 @@
 set term png
-set output "rho_kappa kernel.png"
+set output "rho_kappa_kernel.png"
 
 set palette defined ( -8e+16 "red", 0 "yellow", 8e+16 "blue")
 set pm3d map

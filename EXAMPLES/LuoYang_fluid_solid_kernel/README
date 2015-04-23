@@ -26,7 +26,6 @@ TO RUN:
 5. run adjoint simulation:
    > ./process_kernel.sh
 
-   optional: try plotting the kernels using the script
-                plot_kernel with command gnuplot plot_kernel
+   optional: you can then plot the kernels using Gnuplot; just type " gnuplot plot_kernel.gnu "
 
 ---------------------------
