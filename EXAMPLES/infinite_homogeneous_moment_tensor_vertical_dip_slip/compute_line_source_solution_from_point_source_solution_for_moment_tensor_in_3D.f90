@@ -1,3 +1,23 @@
+
+! programmed by Zhinan Xie, Harbin, China:
+!
+! The analytical line source solution is obtained by integrating the analytical point source solutions
+! (available in Aki and Richards, Quantitative Seismology, 2nd edition Eq.(4.29)) along the y-direction,
+! using numerical integration based on the natural definition of integration.
+!
+! Zhinan also converted the 2D line source solution to a point source solution for an infinite homogeneous model.
+! To do so he followed the work done in:
+!
+! Dunzhu Li, Don Helmberger, Robert W. Clayton and Daoyuan Sun,
+! Global synthetic seismograms using a 2-D finite-difference method
+!
+! and:
+!
+! Thomas Forbriger, Lisa Groos and Martin Schafer,
+! Line-source simulation for shallow-seismic data. Part 1: theoretical background.
+
+program compute_solution
+
 ! The algorithm for computation of convolution
 ! y_k = sumi_p1^p2 (h_i*x_{k-i})
 ! The meaning of the variable
@@ -168,7 +188,7 @@ enddo
 
 close(20)
 
-end
+end program compute_solution
 
 
 double precision function dirac_function(i,j)
