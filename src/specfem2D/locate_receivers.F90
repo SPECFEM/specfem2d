@@ -112,9 +112,6 @@ use specfem_par, only : gather_ispec_selected_rec,acoustic,USE_TRICK_FOR_BETTER_
 
   allocate(gather_ispec_selected_rec(nrec,nproc))
   ierror = 0
-#ifdef USE_MPI
-  call MPI_BARRIER(MPI_COMM_WORLD,ierror)
-#endif
 
 ! **************
 
@@ -310,10 +307,6 @@ use specfem_par, only : gather_ispec_selected_rec,acoustic,USE_TRICK_FOR_BETTER_
 
   ! deallocate arrays
   deallocate(final_distance)
-
-#ifdef USE_MPI
-  call MPI_BARRIER(MPI_COMM_WORLD,ierror)
-#endif
 
   end subroutine locate_receivers
 

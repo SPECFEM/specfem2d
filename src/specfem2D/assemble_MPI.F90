@@ -191,9 +191,6 @@
 
   enddo
 
-  ! synchronizes MPI processes
-  call MPI_BARRIER(mpi_comm_world,ier)
-
   end subroutine assemble_MPI_scalar
 
 

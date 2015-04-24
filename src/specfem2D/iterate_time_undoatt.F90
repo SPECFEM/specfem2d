@@ -131,7 +131,7 @@ subroutine iterate_time_undoatt()
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #ifdef USE_MPI
   ! synchronize all processes to make sure everybody is ready to start time loop
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
+  call sync_all()
   if( ier /= 0 ) stop 'error synchronize MPI processes'
 
   if( myrank == 0 ) then
@@ -293,7 +293,6 @@ subroutine iterate_time_undoatt()
           ! ************************************************************************************
 #ifdef USE_MPI
           if( nproc > 1 .and. any_elastic .and. ninterface_elastic > 0 ) then
-            call MPI_BARRIER(MPI_COMM_WORLD,ier)
             call assemble_MPI_vector_el(accel_elastic)
           endif
 #endif

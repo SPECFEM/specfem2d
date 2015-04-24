@@ -689,7 +689,6 @@ subroutine iterate_time()
             endif
           endif
 
-          call MPI_BARRIER(MPI_COMM_WORLD,ier)
           call assemble_MPI_vector_el(accel_elastic)
 
           if( SIMULATION_TYPE == 3 ) then

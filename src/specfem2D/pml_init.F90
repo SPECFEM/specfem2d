@@ -536,7 +536,6 @@ end subroutine pml_init
   call MPI_ALLREDUCE (zmax, zmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
   xmin = xmin_glob; zmin = zmin_glob
   xmax = xmax_glob; zmax = zmax_glob
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
 #endif
 
 ! get the center(origin) of mesh coordinates

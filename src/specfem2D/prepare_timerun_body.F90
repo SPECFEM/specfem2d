@@ -479,10 +479,6 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
         enddo
       enddo
 
-#ifdef USE_MPI
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
-#endif
-
       if (myrank == 0) write(IOUT,*) 'done detecting points for periodic boundary conditions.'
 
       if(counter > 0) write(IOUT,*) 'implemented periodic conditions on ',counter,' grid points on proc ',myrank

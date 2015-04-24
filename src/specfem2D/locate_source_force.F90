@@ -255,9 +255,5 @@
      write(IOUT,*)
   endif
 
-#ifdef USE_MPI
-  call MPI_BARRIER(MPI_COMM_WORLD,ierror)
-#endif
-
   end subroutine locate_source_force
 
