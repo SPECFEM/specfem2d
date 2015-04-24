@@ -45,7 +45,7 @@ def compare_images(imageA, imageB, title):
 
   # setup the figure
   fig = plt.figure(title)
-  plt.suptitle("MSE: %.2f, SSIM: %.2f" % (m, s))
+  plt.suptitle("MSE: %.5f, SSIM: %.5f" % (m, s))
 
   # show first image
   ax = fig.add_subplot(1, 2, 1)

@@ -203,7 +203,8 @@ else
  if test -z "$YACC" || test "X$YACC" = "Xno"; then
    AC_MSG_ERROR([No suitable yacc or bison found])
  fi
-## DK DK removed that because created errors ACX_PTHREAD(AC_MSG_RESULT([pthread found]), AC_MSG_ERROR([pthread not found]))
+ ACX_PTHREAD(AC_MSG_RESULT([pthread found]), AC_MSG_ERROR([pthread not found]))
+
 
  # scotch only needed with mpi support
  if test "$want_mpi" = yes; then
