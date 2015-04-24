@@ -70,7 +70,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
                          rmemory_displ_elastic,rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz, &
                          rmemory_dux_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dx_prime,rmemory_duz_dz_prime, &
                          rmemory_displ_elastic_LDDRK,rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,rmemory_duz_dx_LDDRK,&
-                         ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,STACEY_BOUNDARY_CONDITIONS,acoustic
+                         ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,STACEY_BOUNDARY_CONDITIONS,acoustic,time_stepping_scheme
 
   implicit none
   include "constants.h"
@@ -653,7 +653,8 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
 
             if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec_PML))) < TINYVAL) ) then ! du_z/dr=0 on the axis
               rmemory_duz_dx(i,j,ispec_PML,1) = 0.d0
-              if (stage_time_scheme > 1) then
+              rmemory_duz_dx(i,j,ispec_PML,2) = 0.d0
+              if (time_stepping_scheme /= 1) then
                 rmemory_duz_dx_LDDRK(i,j,ispec_PML,1) = 0.d0
                 rmemory_duz_dx_LDDRK(i,j,ispec_PML,2) = 0.d0
               endif
@@ -661,7 +662,6 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
                 rmemory_duz_dx_prime(i,j,ispec_PML,1) = 0.d0
                 rmemory_duz_dx_prime(i,j,ispec_PML,2) = 0.d0
               endif
-              rmemory_duz_dx(i,j,ispec_PML,2) = 0.d0
             endif
           endif ! PML_BOUNDARY_CONDITIONS
 
