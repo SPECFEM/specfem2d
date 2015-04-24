@@ -76,11 +76,11 @@
 ! We thus strongly discourage using the old routine.
   if(USE_NEW_SOLVOPT_ROUTINE) then
 
-    call determination_coef(N_SLS,QKappa_att,f0_attenuation,f_min_attenuation,f_max_attenuation, &
-                                  tau_epsilon_nu1_d,tau_sigma_nu1)
+    call compute_attenuation_coeffs(N_SLS,QKappa_att,f0_attenuation,f_min_attenuation,f_max_attenuation, &
+                                        tau_epsilon_nu1_d,tau_sigma_nu1)
 
-    call determination_coef(N_SLS,QMu_att,f0_attenuation,f_min_attenuation,f_max_attenuation, &
-                                  tau_epsilon_nu2_d,tau_sigma_nu2)
+    call compute_attenuation_coeffs(N_SLS,QMu_att,f0_attenuation,f_min_attenuation,f_max_attenuation, &
+                                        tau_epsilon_nu2_d,tau_sigma_nu2)
 
 !   print *
 !   print *,'with new SolvOpt:'
@@ -304,13 +304,23 @@
 !
 
 ! use of SolvOpt to compute attenuation relaxation mechanisms,
-! from Emilie Blanc and Bruno Lombard, CNRS Marseille, France, for a Generalized Zener body model.
+! from Emilie Blanc, Bruno Lombard and Dimitri Komatitsch, CNRS Marseille, France, for a Generalized Zener body model.
 
 ! The SolvOpt algorithm was developed by Franz Kappel and Alexei V. Kuntsevich
 ! and is available open source at http://www.uni-graz.at/imawww/kuntsevich/solvopt
 !
 ! It is described in Kappel and Kuntsevich, An Implementation of Shor's r-Algorithm,
 ! Computational Optimization and Applications, vol. 15, p. 193-205 (2000).
+
+! If you use this code for your own research, please cite some (or all) of these articles:
+!
+! @Article{BlKoChLoXi15,
+! Title   = {Positivity-preserving highly-accurate optimization of the {Z}ener viscoelastic model, with application
+!            to wave propagation in the presence of strong attenuation},
+! Author  = {\'Emilie Blanc and Dimitri Komatitsch and Emmanuel Chaljub and Bruno Lombard and Zhinan Xie},
+! Journal = {Geophysical Journal International},
+! Year    = {2015},
+! Note    = {in press.}}
 
 !-------------------------------------------------------------------------
 
@@ -413,7 +423,58 @@
 
 !---------------------------------------------------
 
-! Calcul classique des coefficients par moindres carres lineaires
+SUBROUTINE compute_attenuation_coeffs(N,Qref,f0,f_min,f_max,tau_epsilon,tau_sigma)
+
+  IMPLICIT NONE
+
+! pi
+  double precision, parameter :: PI = 3.141592653589793d0
+  double precision, parameter :: TWO_PI = 2.d0 * PI
+
+  integer, intent(in) :: N
+  double precision, intent(in) :: Qref,f_min,f_max,f0
+  double precision, dimension(1:N), intent(out) :: tau_epsilon,tau_sigma
+
+  integer i
+  double precision, dimension(1:N) :: point,weight
+
+! nonlinear optimization with constraints
+  call nonlinear_optimization(N,Qref,f0,point,weight,f_min,f_max)
+
+  do i = 1,N
+    tau_sigma(i) = 1.d0 / point(i)
+    tau_epsilon(i) = tau_sigma(i) * (1.d0 + N * weight(i))
+  enddo
+
+! print *,'points = '
+! do i = 1,N
+!   print *,point(i)
+! enddo
+! print *
+
+! print *,'weights = '
+! do i = 1,N
+!   print *,weight(i)
+! enddo
+! print *
+
+! print *,'tau_epsilon = '
+! do i = 1,N
+!   print *,tau_epsilon(i)
+! enddo
+! print *
+
+! print *,'tau_sigma = '
+! do i = 1,N
+!   print *,tau_sigma(i)
+! enddo
+! print *
+
+END SUBROUTINE compute_attenuation_coeffs
+
+!---------------------------------------------------
+
+! classical calculation of the coefficients based on linear least squares
 
 SUBROUTINE decomposition_LU(a,i_min,n,indx,d)
 
@@ -2183,7 +2244,7 @@ SUBROUTINE grad_max_residu(x,grad,N,Nopt,theta_min,theta_max)
 
 END SUBROUTINE grad_max_residu
 
-SUBROUTINE opti_nonlineaire(N,Qref,f0,point,poids,f_min,f_max)
+SUBROUTINE nonlinear_optimization(N,Qref,f0,point,poids,f_min,f_max)
 
   IMPLICIT NONE
 
@@ -2228,57 +2289,5 @@ SUBROUTINE opti_nonlineaire(N,Qref,f0,point,poids,f_min,f_max)
     poids(i) = x(N+i)*x(N+i)
   enddo
 
-END SUBROUTINE opti_nonlineaire
-
-SUBROUTINE determination_coef(N,Qref,f0,f_min,f_max,tau_epsilon,tau_sigma)
-
-  IMPLICIT NONE
-
-  include "constants.h"
-
-  integer, intent(in) :: N
-  double precision, intent(in) :: Qref,f_min,f_max,f0
-  double precision, dimension(1:N), intent(out) :: tau_epsilon,tau_sigma
-
-  integer i
-  double precision, dimension(1:N) :: point,poids
-
-  if(USE_SOLVOPT_INSTEAD_OF_LINEAR) then
-!   nonlinear optimization with constraints
-    call opti_nonlineaire(N,Qref,f0,point,poids,f_min,f_max)
-  else
-!   classical linear least squares
-    call classical_linear_least_squares(Qref,poids,point,N,f_min,f_max)
-  endif
-
-  do i = 1,N
-    tau_sigma(i) = 1.d0 / point(i)
-    tau_epsilon(i) = tau_sigma(i) * (1.d0 + N * poids(i))
-  enddo
-
-! print *,'points = '
-! do i = 1,N
-!   print *,point(i)
-! enddo
-! print *
-
-! print *,'poids = '
-! do i = 1,N
-!   print *,poids(i)
-! enddo
-! print *
-
-! print *,'tau_epsilon = '
-! do i = 1,N
-!   print *,tau_epsilon(i)
-! enddo
-! print *
-
-! print *,'tau_sigma = '
-! do i = 1,N
-!   print *,tau_sigma(i)
-! enddo
-! print *
-
-END SUBROUTINE determination_coef
+END SUBROUTINE nonlinear_optimization
 
