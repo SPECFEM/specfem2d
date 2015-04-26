@@ -22,6 +22,7 @@ TO RUN:
 
 3. compute the adjoint source:
    > rm -f xadj_source ; gfortran adj_source.f90 -o xadj_source ; ./xadj_source
+!! Comment from Zhinan Xie to himself, others can safely ignore it: "if time history you get is pressure, please change it to its twice differentiation with time"
 
 4. run the adjoint simulation:
    > cp Par_file_adjoint Par_file
