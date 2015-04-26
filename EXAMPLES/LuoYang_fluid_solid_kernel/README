@@ -21,7 +21,6 @@ TO RUN:
    > ./run_a_single_run_of_this_two_step_example.sh
 
 3. compute the adjoint source:
-   (if time history you get is pressure, please change it to its twice differentiation with time)
    > rm -f xadj_source ; gfortran adj_source.f90 -o xadj_source ; ./xadj_source
 
 4. run the adjoint simulation:

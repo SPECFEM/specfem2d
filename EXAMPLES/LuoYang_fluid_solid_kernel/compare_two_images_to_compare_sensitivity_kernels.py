@@ -60,20 +60,17 @@ def compare_images(imageA, imageB, title):
   # show the images
   plt.show()
 
-# load the images -- the original, the exact copy,
-# and the original + photoshop
-original = cv2.imread("rho_kappa_kernel.png")
-exact_copy = cv2.imread("rho_kappa_kernel_exact_copy.png")
-shopped = cv2.imread("rho_kappa_kernel_modified.png")
+# load the images
+original_reference = cv2.imread("rho_and_kappa_kernels_acoustic_and_elastic_only_no_caption_reference.png")
+image_from_new_calculation = cv2.imread("rho_and_kappa_kernels_acoustic_and_elastic_only_no_caption.png")
 
 # convert the images to grayscale
-original = cv2.cvtColor(original, cv2.COLOR_BGR2GRAY)
-exact_copy = cv2.cvtColor(exact_copy, cv2.COLOR_BGR2GRAY)
-shopped = cv2.cvtColor(shopped, cv2.COLOR_BGR2GRAY)
+original_reference = cv2.cvtColor(original_reference, cv2.COLOR_BGR2GRAY)
+image_from_new_calculation = cv2.cvtColor(image_from_new_calculation, cv2.COLOR_BGR2GRAY)
 
 # initialize the figure
 fig = plt.figure("Images")
-images = ("Original", original), ("Exact copy", exact_copy), ("Photoshopped", shopped)
+images = ("Original reference", original_reference), ("Image from new calculation", image_from_new_calculation)
 
 # loop over the images
 for (i, (name, image)) in enumerate(images):
@@ -87,6 +84,5 @@ for (i, (name, image)) in enumerate(images):
 plt.show()
 
 # compare the images
-compare_images(original, exact_copy, "Original vs. Exact copy")
-compare_images(original, shopped, "Original vs. Photoshopped")
+compare_images(original_reference, image_from_new_calculation, "Original reference vs. image from new calculation")
 
