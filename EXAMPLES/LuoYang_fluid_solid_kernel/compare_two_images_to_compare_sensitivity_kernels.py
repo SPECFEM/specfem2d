@@ -1,5 +1,7 @@
 #! /usr/bin/python
 
+from __future__ import (absolute_import, division, print_function)
+
 # taken from http://www.pyimagesearch.com/2014/09/15/python-compare-two-images/
 # in April 2015
 
