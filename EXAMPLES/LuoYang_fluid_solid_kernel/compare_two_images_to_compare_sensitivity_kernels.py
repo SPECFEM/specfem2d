@@ -69,19 +69,19 @@ original_reference = cv2.cvtColor(original_reference, cv2.COLOR_BGR2GRAY)
 image_from_new_calculation = cv2.cvtColor(image_from_new_calculation, cv2.COLOR_BGR2GRAY)
 
 # initialize the figure
-fig = plt.figure("Images")
+#fig = plt.figure("Images")
 images = ("Original reference", original_reference), ("Image from new calculation", image_from_new_calculation)
 
 # loop over the images
-for (i, (name, image)) in enumerate(images):
-  # show the image
-  ax = fig.add_subplot(1, 3, i + 1)
-  ax.set_title(name)
-  plt.imshow(image, cmap = plt.cm.gray)
-  plt.axis("off")
+#for (i, (name, image)) in enumerate(images):
+#  # show the image
+#  ax = fig.add_subplot(1, 3, i + 1)
+#  ax.set_title(name)
+#  plt.imshow(image, cmap = plt.cm.gray)
+#  plt.axis("off")
 
 # show the figure
-plt.show()
+#plt.show()
 
 # compare the images
 compare_images(original_reference, image_from_new_calculation, "Original reference vs. image from new calculation")
