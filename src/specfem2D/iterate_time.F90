@@ -140,6 +140,19 @@ subroutine iterate_time()
         endif
 
         if( any_elastic ) then
+          if( AXISYM ) then
+            do ispec=1,nspec
+              if(elastic(ispec) .and. is_on_the_axis(ispec) ) then
+                do j = 1,NGLLZ
+                  do i = 1,NGLJ
+                    if( abs(coord(1,ibool(i,j,ispec))) < TINYVAL ) then
+                      displ_elastic(1,ibool(i,j,ispec))=ZERO
+                    endif
+                  enddo
+                enddo
+              endif
+            enddo
+          endif
           if( time_stepping_scheme == 1 ) then
             if( SIMULATION_TYPE == 3 ) then
 #ifdef FORCE_VECTORIZATION
@@ -165,20 +178,6 @@ subroutine iterate_time()
               accel_elastic = 0._CUSTOM_REAL
 #endif
             endif
-          endif
-
-          if( AXISYM ) then
-            do ispec=1,nspec
-              if(elastic(ispec) .and. is_on_the_axis(ispec) ) then
-                do j = 1,NGLLZ
-                  do i = 1,NGLJ
-                    if( abs(coord(1,ibool(i,j,ispec))) < TINYVAL ) then
-                      displ_elastic(1,ibool(i,j,ispec))=ZERO
-                    endif
-                  enddo
-                enddo
-              endif
-            enddo
           endif
 
           if( SIMULATION_TYPE == 3 ) then
