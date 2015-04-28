@@ -98,6 +98,7 @@ subroutine iterate_time()
       endif
 
       if( .NOT. GPU_MODE ) then
+      
         if( any_acoustic ) then
           ! free surface for an acoustic medium
           if( nelem_acoustic_surface > 0 ) then
@@ -166,21 +167,7 @@ subroutine iterate_time()
 #endif
             endif
           endif
-
-          if( AXISYM ) then
-            do ispec=1,nspec
-              if(elastic(ispec) .and. is_on_the_axis(ispec) ) then
-                do j = 1,NGLLZ
-                  do i = 1,NGLJ
-                    if( abs(coord(1,ibool(i,j,ispec))) < TINYVAL ) then
-                      displ_elastic(1,ibool(i,j,ispec))=ZERO
-                    endif
-                  enddo
-                enddo
-              endif
-            enddo
-          endif
-
+          
           if( SIMULATION_TYPE == 3 ) then
             !Since we do not do anything in PML region in case of backward simulation, thus we set
             !PML_BOUNDARY_CONDITIONS = .false.
@@ -199,6 +186,10 @@ subroutine iterate_time()
 #endif
             endif
           endif
+        endif
+
+        if( AXISYM ) then
+          call enforce_zero_radial_displacements_on_the_axis()
         endif
 
         if( any_poroelastic ) then
@@ -621,6 +612,10 @@ subroutine iterate_time()
           endif
         endif !if(any_elastic)
 
+        if( AXISYM ) then
+          call enforce_zero_radial_displacements_on_the_axis()
+        endif
+
         ! *********************************************************
         ! ************* add coupling with the acoustic side
         ! *********************************************************
@@ -647,7 +642,10 @@ subroutine iterate_time()
             call compute_coupling_viscoelastic_po_backward()
           endif
         endif
-
+       
+        if( AXISYM ) then
+          call enforce_zero_radial_displacements_on_the_axis()
+        endif
         ! ************************************************************************************
         ! ************************************ add force source
         ! ************************************************************************************
@@ -676,7 +674,10 @@ subroutine iterate_time()
             !>NOISE_TOMOGRAPHY
           endif ! if not using an initial field
         endif !if(any_elastic)
-
+        
+        if( AXISYM ) then
+          call enforce_zero_radial_displacements_on_the_axis()
+        endif
         ! ************************************************************************************
         ! ************************************ assembling accel_elastic for elastic elements
         ! ************************************************************************************
@@ -1368,7 +1369,7 @@ subroutine iterate_time()
      seismo_offset = seismo_offset + seismo_current
      seismo_current = 0
    endif  ! of display images at a given time step
-
+   
   enddo ! end of the main time loop
 
 ! *********************************************************
