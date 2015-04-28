@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov 15 09:00:00 2011
-Updated on Fri Jun 5 2012
+Updated on Tue Apr 28 2015
 
 Processing of Par_file to update them to new format
 
@@ -784,6 +784,142 @@ def ProcessParfile_gpu(fic):
     print 'xxxxx------> '+fic+' processed to '+release_number
     return
 #------------------------------------------------------------------------------
+def ProcessParfile_undo_attenuation(fic):
+    # define the release number
+    release_number='undo_attenuation'
+    # Open the file and get all lines from Par_file
+    ligs= LoadLig(fic)
+
+    # Test if already processed
+    for lig in ligs:
+        if lig.startswith('UNDO_ATTENUATION'):
+            print '----> '+fic+' already processed to '+release_number
+            return
+    #
+    a1='\n# to undo attenuation for sensitivity kernel calculations or '+\
+    'forward runs with SAVE_FORWARD\n# use the flag below. It performs undoing'+\
+    ' of attenuation in an exact way for sensitivity kernel calculations\n# '+\
+    'but requires disk space for temporary storage, and uses a significant '+\
+    'amount of memory used as buffers for temporary storage.\n# When that '+\
+    'option is on the second parameter indicates how often the code dumps'+\
+    ' restart files to disk (if in doubt, use something between 100 and '+\
+    '1000).\nUNDO_ATTENUATION                = .false.\nNT_DUMP_ATTENUATION'+\
+    '             = 500\n'
+    #--------------------------------------------------------------------------
+    # Add new parameters
+    #
+    for ilg, lig in enumerate(ligs):
+        if lig.startswith('SAVE_FORWARD'):
+            ligs.insert(ilg+1,a1)
+    #
+    move(fic,fic+'.before_update_to_'+release_number)
+    #
+    fm = open(fic,'w')
+    fm.writelines(ligs)
+    fm.close()
+    #
+    print 'xxxxx------> '+fic+' processed to '+release_number
+    return
+#------------------------------------------------------------------------------
+def ProcessParfile_external_model(fic):
+    # define the release number
+    release_number='external_model'
+    # Open the file and get all lines from Par_file
+    ligs= LoadLig(fic)
+
+    # Test if already processed
+    for lig in ligs:
+        if lig.startswith('MODEL'):
+            print '----> '+fic+' already processed to '+release_number
+            return
+    #
+    a1='\n# available models\n#   default: define model using nbmodels '+\
+    'below\n#   ascii: read model from ascii database file\n#   binary:'+\
+    ' read model from binary database file\n#   external: define model'+\
+    ' using define_external_model subroutine\n#   legacy: read model from'+\
+    ' model_velocity.dat_input\nMODEL                           = default\n\n'
+    #--------------------------------------------------------------------------
+    # Add new parameters
+    #
+    for ilg, lig in enumerate(ligs):
+        if lig.startswith('add_Bielak'):
+            del ligs[ilg+1]
+            del ligs[ilg+1]
+            ligs.insert(ilg+1,a1)
+            break
+    #
+    move(fic,fic+'.before_update_to_'+release_number)
+    #
+    fm = open(fic,'w')
+    fm.writelines(ligs)
+    fm.close()
+    #
+    print 'xxxxx------> '+fic+' processed to '+release_number
+    return
+#------------------------------------------------------------------------------
+def ProcessParfile_pressure_trick(fic):
+    # define the release number
+    release_number='pressure_trick'
+    # Open the file and get all lines from Par_file
+    ligs= LoadLig(fic)
+
+    # Test if already processed
+    for lig in ligs:
+        if lig.startswith('USE_TRICK_FOR_BETTER_PRESSURE'):
+            print '----> '+fic+' already processed to '+release_number
+            return
+    #
+    a1='USE_TRICK_FOR_BETTER_PRESSURE   = .false.        # so far, '+\
+    'this option can only be used if all the receivers are in acoustic'+\
+    ' elements\n'
+    #--------------------------------------------------------------------------
+    # Add new parameters
+    #
+    for ilg, lig in enumerate(ligs):
+        if lig.startswith('seismotype'):
+            ligs.insert(ilg+1,a1)
+            break
+    #
+    move(fic,fic+'.before_update_to_'+release_number)
+    #
+    fm = open(fic,'w')
+    fm.writelines(ligs)
+    fm.close()
+    #
+    print 'xxxxx------> '+fic+' processed to '+release_number
+    return
+#------------------------------------------------------------------------------
+def ProcessParfile_tomography_file(fic):
+    # define the release number
+    release_number='tomography_file'
+    # Open the file and get all lines from Par_file
+    ligs= LoadLig(fic)
+
+    # Test if already processed
+    for lig in ligs:
+        if lig.startswith('TOMOGRAPHY_FILE'):
+            print '----> '+fic+' already processed to '+release_number
+            return
+    #
+    a1='\n# external tomography file\nTOMOGRAPHY_FILE                 = '+\
+    './DATA/tomo_file.xyz\n'
+    #--------------------------------------------------------------------------
+    # Add new parameters
+    #
+    for ilg, lig in enumerate(ligs):
+        if lig.startswith('read_external_mesh'):
+            ligs.insert(ilg-2,a1)
+            break
+    #
+    move(fic,fic+'.before_update_to_'+release_number)
+    #
+    fm = open(fic,'w')
+    fm.writelines(ligs)
+    fm.close()
+    #
+    print 'xxxxx------> '+fic+' processed to '+release_number
+    return
+#------------------------------------------------------------------------------
 if __name__=='__main__':
     ## List of all files of current directory
     Fichiers=[]
@@ -819,6 +955,10 @@ if __name__=='__main__':
                     ProcessParfile_max_amplitude(fic)
                     ProcessParfile_read_velocities_at_f0(fic)
                     ProcessParfile_gpu(fic)
+                    ProcessParfile_undo_attenuation(fic)
+                    ProcessParfile_external_model(fic)
+                    ProcessParfile_pressure_trick(fic)
+                    ProcessParfile_tomography_file(fic)
                     print '~'*80
     #
     print 'Number of Par_file analysed : ', Ct_Par_file
