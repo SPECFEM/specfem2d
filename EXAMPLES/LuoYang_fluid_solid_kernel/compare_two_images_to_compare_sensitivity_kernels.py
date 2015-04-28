@@ -2,17 +2,16 @@
 
 from __future__ import (absolute_import, division, print_function)
 
-# taken from http://www.pyimagesearch.com/2014/09/15/python-compare-two-images/
-# in April 2015
+# taken from http://www.pyimagesearch.com/2014/09/15/python-compare-two-images in April 2015
 
 # computes the Mean Squared Error (MSE) and the Structural Similarity Index
 # (SSIM) between two images (having the exact same size)
 
-# Slightly modified by Dimitri Komatitsch, April 2015
+# Slightly modified by Dimitri Komatitsch and Elliott Sales de Andrade, April 2015
 
-############################################################################
-# requires the "python-skimage" and "python-opencv" packages to be installed
-############################################################################
+#########################################################
+# requires the "python-skimage" package to be installed
+#########################################################
 
 # In 3D comparing kernels i.e. volumetric stuff would be a bit difficult,
 # however in 2D we can see them as images if we draw them and then we can use
