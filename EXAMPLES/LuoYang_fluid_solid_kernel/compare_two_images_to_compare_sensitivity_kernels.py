@@ -56,18 +56,16 @@ def compare_images(imageA, imageB, title):
     s = ssim(imageA, imageB)
 
     # setup the figure
-    fig = plt.figure(title)
-    plt.suptitle("MSE: %.5f, SSIM: %.5f" % (m, s))
+    fig, ax = plt.subplots(1, 2)
+    fig.suptitle("%s\nMSE: %.5f, SSIM: %.5f" % (title, m, s))
 
     # show first image
-    ax = fig.add_subplot(1, 2, 1)
-    plt.imshow(imageA, cmap=plt.cm.gray)
-    plt.axis("off")
+    ax[0].imshow(imageA, cmap=plt.cm.gray)
+    ax[0].axis("off")
 
     # show the second image
-    ax = fig.add_subplot(1, 2, 2)
-    plt.imshow(imageB, cmap=plt.cm.gray)
-    plt.axis("off")
+    ax[1].imshow(imageB, cmap=plt.cm.gray)
+    ax[1].axis("off")
 
     # show the images
     plt.show()
@@ -82,22 +80,6 @@ image_from_new_calculation = imread(
 # convert the images to grayscale
 original_reference = rgb2grey(original_reference)
 image_from_new_calculation = rgb2grey(image_from_new_calculation)
-
-# initialize the figure
-# fig = plt.figure("Images")
-images = [("Original reference", original_reference),
-          ("Image from new calculation", image_from_new_calculation)]
-
-# loop over the images
-# for (i, (name, image)) in enumerate(images):
-#     # show the image
-#     ax = fig.add_subplot(1, 3, i + 1)
-#     ax.set_title(name)
-#     plt.imshow(image, cmap = plt.cm.gray)
-#     plt.axis("off")
-
-# show the figure
-# plt.show()
 
 # compare the images
 compare_images(original_reference, image_from_new_calculation,
