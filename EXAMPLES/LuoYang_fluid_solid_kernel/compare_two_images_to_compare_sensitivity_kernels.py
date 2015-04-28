@@ -30,10 +30,11 @@ from __future__ import (absolute_import, division, print_function)
 # planes and use that script as well. Better than nothing.
 
 # import the necessary packages
-from skimage.measure import structural_similarity as ssim
 import matplotlib.pyplot as plt
 import numpy as np
-import cv2
+from skimage.color import rgb2grey
+from skimage.data import imread
+from skimage.measure import structural_similarity as ssim
 
 
 def mse(imageA, imageB):
@@ -73,15 +74,14 @@ def compare_images(imageA, imageB, title):
 
 
 # load the images
-original_reference = cv2.imread(
+original_reference = imread(
     "rho_and_kappa_kernels_acoustic_and_elastic_only_no_caption_reference.png")
-image_from_new_calculation = cv2.imread(
+image_from_new_calculation = imread(
     "rho_and_kappa_kernels_acoustic_and_elastic_only_no_caption.png")
 
 # convert the images to grayscale
-original_reference = cv2.cvtColor(original_reference, cv2.COLOR_BGR2GRAY)
-image_from_new_calculation = cv2.cvtColor(image_from_new_calculation,
-                                          cv2.COLOR_BGR2GRAY)
+original_reference = rgb2grey(original_reference)
+image_from_new_calculation = rgb2grey(image_from_new_calculation)
 
 # initialize the figure
 # fig = plt.figure("Images")
