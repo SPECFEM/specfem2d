@@ -249,9 +249,9 @@ subroutine  build_is_on_the_axis()
     ! _For acoustic elements rho*u = grad(potential) hence the two elements near the axis need to share the same values
     !  of potential
 
-    use specfem_par, only: nglob_acoustic, acoustic, elastic, coord, ibool, nelem_on_the_axis, ispec_of_axial_elements, &
+    use specfem_par, only: acoustic, elastic, coord, ibool, nelem_on_the_axis, ispec_of_axial_elements, &
                            potential_acoustic, potential_dot_acoustic, potential_dot_dot_acoustic, displ_elastic, veloc_elastic, &
-                           accel_elastic,myrank
+                           accel_elastic
     use qsort_c_module
 
     implicit none
