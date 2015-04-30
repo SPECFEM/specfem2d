@@ -266,6 +266,7 @@ subroutine  build_is_on_the_axis()
     do i_on_the_axis = 1,nelem_on_the_axis ! Loop on the elements on the axis
       ispec_axis = ispec_of_axial_elements(i_on_the_axis)
       if ( acoustic(ispec_axis) ) then ! If the element is acoustic
+        ! TODO : For the moment we don't do anything
         do j = 1,NGLLZ ! For each depth 
           ! For each depth we have NGLJ points (say 4) : *  *  *  *
           ! We have to know which on is the first one, and which one is at its side
@@ -284,9 +285,9 @@ subroutine  build_is_on_the_axis()
           !print *, "coord_line :",coord_line
           !print *, "coord_line_sorted :",coord_line_sorted
           !print *, "indices :", indices
-          potential_acoustic(ibool(i_2,j,ispec_axis)) = potential_acoustic(ibool(i_1,j,ispec_axis))
-          potential_dot_acoustic(ibool(i_2,j,ispec_axis)) = potential_dot_acoustic(ibool(i_1,j,ispec_axis))
-          potential_dot_dot_acoustic(ibool(i_2,j,ispec_axis)) = potential_dot_dot_acoustic(ibool(i_1,j,ispec_axis))
+          potential_acoustic(ibool(i_1,j,ispec_axis)) = potential_acoustic(ibool(i_2,j,ispec_axis))
+          !potential_dot_acoustic(ibool(i_2,j,ispec_axis)) = potential_dot_acoustic(ibool(i_1,j,ispec_axis))
+          !potential_dot_dot_acoustic(ibool(i_2,j,ispec_axis)) = potential_dot_dot_acoustic(ibool(i_1,j,ispec_axis))
         enddo
 
       else if ( elastic(ispec_axis) ) then ! Else if the element is elastic
@@ -295,11 +296,8 @@ subroutine  build_is_on_the_axis()
           do i = 1,NGLJ
             if( abs(coord(1,ibool(i,j,ispec_axis))) < TINYVAL ) then ! If the point scanned is on the axis
               displ_elastic(1,ibool(i,j,ispec_axis)) = ZERO ! We enforce the radial displacement to zero
-              veloc_elastic(1,ibool(i,j,ispec_axis)) = ZERO ! We enforce the radial displacement to zero
-              accel_elastic(1,ibool(i,j,ispec_axis)) = ZERO ! We enforce the radial displacement to zero
-              displ_elastic(2,ibool(i,j,ispec_axis)) = ZERO ! We enforce the radial displacement to zero
-              veloc_elastic(2,ibool(i,j,ispec_axis)) = ZERO ! We enforce the radial displacement to zero
-              accel_elastic(2,ibool(i,j,ispec_axis)) = ZERO ! We enforce the radial displacement to zero
+              !veloc_elastic(1,ibool(i,j,ispec_axis)) = ZERO ! We enforce the radial displacement to zero
+              !accel_elastic(1,ibool(i,j,ispec_axis)) = ZERO ! We enforce the radial displacement to zero
             endif
           enddo
         enddo

@@ -26,6 +26,8 @@ cd ../
 # Clean output files
 rm -rf OUTPUT_FILES/*
 
+cd ../../
+make -j 8
 cd $currentdir
 
 # Link executables

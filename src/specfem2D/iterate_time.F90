@@ -612,10 +612,6 @@ subroutine iterate_time()
           endif
         endif !if(any_elastic)
 
-        if( AXISYM ) then
-          call enforce_zero_radial_displacements_on_the_axis()
-        endif
-
         ! *********************************************************
         ! ************* add coupling with the acoustic side
         ! *********************************************************
@@ -643,9 +639,6 @@ subroutine iterate_time()
           endif
         endif
        
-        if( AXISYM ) then
-          call enforce_zero_radial_displacements_on_the_axis()
-        endif
         ! ************************************************************************************
         ! ************************************ add force source
         ! ************************************************************************************
