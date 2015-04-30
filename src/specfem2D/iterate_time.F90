@@ -98,7 +98,7 @@ subroutine iterate_time()
       endif
 
       if( .NOT. GPU_MODE ) then
-      
+
         if( any_acoustic ) then
           ! free surface for an acoustic medium
           if( nelem_acoustic_surface > 0 ) then
@@ -167,7 +167,7 @@ subroutine iterate_time()
 #endif
             endif
           endif
-          
+
           if( SIMULATION_TYPE == 3 ) then
             !Since we do not do anything in PML region in case of backward simulation, thus we set
             !PML_BOUNDARY_CONDITIONS = .false.
@@ -638,7 +638,11 @@ subroutine iterate_time()
             call compute_coupling_viscoelastic_po_backward()
           endif
         endif
-       
+
+        if( AXISYM ) then
+          call enforce_zero_radial_displacements_on_the_axis()
+        endif
+        
         ! ************************************************************************************
         ! ************************************ add force source
         ! ************************************************************************************
@@ -667,7 +671,7 @@ subroutine iterate_time()
             !>NOISE_TOMOGRAPHY
           endif ! if not using an initial field
         endif !if(any_elastic)
-        
+
         if( AXISYM ) then
           call enforce_zero_radial_displacements_on_the_axis()
         endif
@@ -1362,7 +1366,7 @@ subroutine iterate_time()
      seismo_offset = seismo_offset + seismo_current
      seismo_current = 0
    endif  ! of display images at a given time step
-   
+
   enddo ! end of the main time loop
 
 ! *********************************************************

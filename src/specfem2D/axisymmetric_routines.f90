@@ -86,25 +86,25 @@
          do
             if (A(j) <= x) exit
             j = j-1
-         end do
+         enddo
          i = i+1
          do
             if (A(i) >= x) exit
             i = i+1
-         end do
+         enddo
          if (i < j) then
             ! exchange A(i) and A(j)
             temp = A(i)
             A(i) = A(j)
             A(j) = temp
-         elseif (i == j) then
+         else if (i == j) then
             marker = i+1
             return
          else
             marker = i
             return
          endif
-      end do
+      enddo
 
     end subroutine partition
 
@@ -156,8 +156,8 @@ subroutine  build_is_on_the_axis()
   ! enddo
 
   end subroutine build_is_on_the_axis
-  
-  
+
+
 
   subroutine check_compatibility_axisym()
   ! This subroutine check the parameters of the run and stop the program (or display a warning) if the configuration is not
@@ -241,23 +241,23 @@ subroutine  build_is_on_the_axis()
       endif
     enddo
 
-  end subroutine check_compatibility_axisym  
+  end subroutine check_compatibility_axisym
 
   subroutine enforce_zero_radial_displacements_on_the_axis()
-    ! This subroutine enforce zero displacement on the axis 
+    ! This subroutine enforce zero displacement on the axis
     ! _For elastic elements it is straight forward : displ_elastic(1,ibool(i,j,ispec))=ZERO
     ! _For acoustic elements rho*u = grad(potential) hence the two elements near the axis need to share the same values
     !  of potential
-  
-    use specfem_par, only: nglob_acoustic, acoustic, elastic, coord, ibool, nelem_on_the_axis, ispec_of_axial_elements, &
+
+    use specfem_par, only: acoustic, elastic, coord, ibool, nelem_on_the_axis, ispec_of_axial_elements, &
                            potential_acoustic, potential_dot_acoustic, potential_dot_dot_acoustic, displ_elastic, veloc_elastic, &
-                           accel_elastic,myrank
+                           accel_elastic
     use qsort_c_module
 
     implicit none
 
     include "constants.h"
-    
+
     ! Local :
     integer i_on_the_axis,ispec_axis,i,j,i_1,i_2
     double precision, dimension(NGLJ) :: coord_line, coord_line_sorted
@@ -266,11 +266,15 @@ subroutine  build_is_on_the_axis()
     do i_on_the_axis = 1,nelem_on_the_axis ! Loop on the elements on the axis
       ispec_axis = ispec_of_axial_elements(i_on_the_axis)
       if ( acoustic(ispec_axis) ) then ! If the element is acoustic
+<<<<<<< HEAD
         ! TODO : For the moment we don't do anything
         do j = 1,NGLLZ ! For each depth 
+=======
+        do j = 1,NGLLZ ! For each depth
+>>>>>>> 08f151d776f685550d25519cda04f72c0cd5bbc9
           ! For each depth we have NGLJ points (say 4) : *  *  *  *
           ! We have to know which on is the first one, and which one is at its side
-          do i = 1,NGLJ 
+          do i = 1,NGLJ
             coord_line(i) = coord(1,ibool(i,j,ispec_axis)) ! Ex : coord_line = (8.12 3.68 15.42 0.0)
           enddo
           coord_line_sorted = coord_line
@@ -291,7 +295,7 @@ subroutine  build_is_on_the_axis()
         enddo
 
       else if ( elastic(ispec_axis) ) then ! Else if the element is elastic
-      
+
         do j = 1,NGLLZ ! Loop on the GLL/GLJ points
           do i = 1,NGLJ
             if( abs(coord(1,ibool(i,j,ispec_axis))) < TINYVAL ) then ! If the point scanned is on the axis
@@ -307,4 +311,4 @@ subroutine  build_is_on_the_axis()
     enddo
 
   end subroutine enforce_zero_radial_displacements_on_the_axis
-  
+
