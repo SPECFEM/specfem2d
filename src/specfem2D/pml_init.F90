@@ -250,6 +250,9 @@ use specfem_par, only: myrank,SIMULATION_TYPE,SAVE_FORWARD,nspec,nglob,ibool,any
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   if(read_external_mesh) then
+
+    if(.not. allocated(mask_ibool)) allocate(mask_ibool(nglob))
+
     is_PML(:) = .false.
     which_PML_elem(:,:) = .false.
     nspec_PML = 0
