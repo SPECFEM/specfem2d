@@ -46,8 +46,6 @@ module model_tomography_par
 ! Contains the variables needed to read an ASCII tomo file
 ! ----------------------------------------------------------------------------------------
 
-  use constants,only: CUSTOM_REAL
-
   implicit none
 
   ! for external tomography:
@@ -60,8 +58,8 @@ module model_tomography_par
   double precision :: SPACING_X,SPACING_Z
 
   ! models parameter records
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: x_tomo,z_tomo
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: vp_tomo,vs_tomo,rho_tomo
+  double precision, dimension(:), allocatable :: x_tomo,z_tomo
+  double precision, dimension(:,:), allocatable :: vp_tomo,vs_tomo,rho_tomo
 
   ! models entries
   integer :: NX,NZ
@@ -82,7 +80,6 @@ module interpolation
 ! (modified from http://www.shocksolution.com)
 ! ----------------------------------------------------------------------------------------
 
-
   contains
 
   ! ====================== Implementation part ===============
@@ -95,18 +92,16 @@ module interpolation
     ! if ( abs(x1 - x2) <= delta) then assume x1 = x2
     ! endif
 
-    use constants,only: CUSTOM_REAL
-  
     implicit none
 
     integer, intent(in) :: length
-    real(kind=CUSTOM_REAL), dimension(length), intent(in) :: array
+    double precision, dimension(length), intent(in) :: array
     double precision, intent(in) :: value
     double precision, intent(in), optional :: delta
     
     ! Local variables
     integer :: left, middle, right
-    real(kind=CUSTOM_REAL) :: d
+    double precision :: d
     
     binarysearch = -1
     if (present(delta) .eqv. .true.) then
@@ -147,28 +142,26 @@ module interpolation
   !-------------------------------------------------------------------------------------------------
   !
 
-  real(kind=CUSTOM_REAL) function interpolate(x_len, x_array, y_len, y_array, f, x, y, delta)
+  double precision function interpolate(x_len, x_array, y_len, y_array, f, x, y, delta)
     ! This function uses bilinear interpolation to estimate the value
     ! of a function f at point (x,y)
     ! f is assumed to be sampled on a regular grid, with the grid x values specified
     ! by x_array and the grid y values specified by y_array
     ! Reference: http://en.wikipedia.org/wiki/Bilinear_interpolation
 
-    use constants,only: CUSTOM_REAL
-
     implicit none
 
     integer, intent(in) :: x_len, y_len
-    real(kind=CUSTOM_REAL), dimension(x_len), intent(in) :: x_array
-    real(kind=CUSTOM_REAL), dimension(y_len), intent(in) :: y_array
-    real(kind=CUSTOM_REAL), dimension(x_len, y_len), intent(in) :: f
+    double precision, dimension(x_len), intent(in) :: x_array
+    double precision, dimension(y_len), intent(in) :: y_array
+    double precision, dimension(x_len, y_len), intent(in) :: f
     double precision, intent(in) :: x,y
     double precision, intent(in), optional :: delta
     
     ! Local variables
-    real(kind=CUSTOM_REAL) :: denom, x1, x2, y1, y2
+    double precision :: denom, x1, x2, y1, y2
     integer :: i,j
-    real(kind=CUSTOM_REAL) :: d
+    double precision :: d
 
     if (present(delta)) then
       d = delta
@@ -327,7 +320,7 @@ subroutine read_tomo_file()
   use specfem_par, only: myrank,TOMOGRAPHY_FILE
 
   use model_tomography_par
-  use constants,only: IIN,IOUT,CUSTOM_REAL
+  use constants,only: IIN,IOUT
 
   implicit none
 
@@ -336,7 +329,7 @@ subroutine read_tomo_file()
   integer :: ier,irecord,i,j
   character(len=150) :: string_read
 
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: x_tomography,z_tomography,vp_tomography,vs_tomography,rho_tomography
+  double precision, dimension(:), allocatable :: x_tomography,z_tomography,vp_tomography,vs_tomography,rho_tomography
 
   ! opens file for reading
   open(unit=IIN,file=trim(TOMOGRAPHY_FILE),status='old',action='read',iostat=ier)
