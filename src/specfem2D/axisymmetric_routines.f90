@@ -267,7 +267,7 @@ subroutine  build_is_on_the_axis()
       ispec_axis = ispec_of_axial_elements(i_on_the_axis)
       if ( acoustic(ispec_axis) ) then ! If the element is acoustic
         ! TODO : For the moment we don't do anything
-        do j = 1,NGLLZ ! For each depth 
+        do j = 1,NGLLZ ! For each depth
           ! For each depth we have NGLJ points (say 4) : *  *  *  *
           ! We have to know which on is the first one, and which one is at its side
           do i = 1,NGLJ

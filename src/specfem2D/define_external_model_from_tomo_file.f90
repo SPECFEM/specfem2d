@@ -98,11 +98,11 @@ module interpolation
     double precision, dimension(length), intent(in) :: array
     double precision, intent(in) :: value
     double precision, intent(in), optional :: delta
-    
+
     ! Local variables
     integer :: left, middle, right
     double precision :: d
-    
+
     binarysearch = -1
     if (present(delta) .eqv. .true.) then
       d = delta
@@ -157,7 +157,7 @@ module interpolation
     double precision, dimension(x_len, y_len), intent(in) :: f
     double precision, intent(in) :: x,y
     double precision, intent(in), optional :: delta
-    
+
     ! Local variables
     double precision :: denom, x1, x2, y1, y2
     integer :: i,j
