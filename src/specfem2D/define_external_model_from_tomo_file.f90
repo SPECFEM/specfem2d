@@ -81,32 +81,34 @@ module interpolation
 ! This module contains two functions for bilinear interpolation
 ! (modified from http://www.shocksolution.com)
 ! ----------------------------------------------------------------------------------------
-  use constants,only: CUSTOM_REAL
+
 
   contains
 
   ! ====================== Implementation part ===============
 
-  function binarysearch(length, array, value, delta)
-    ! Given an array and a value, returns the index of the element that
+  integer function binarysearch(length, array, value, delta)
+    ! Given a sorted array and a value, returns the index of the element that
     ! is closest to, but less than, the given value.
     ! Uses a binary search algorithm.
     ! "delta" is the tolerance used to determine if two values are equal
     ! if ( abs(x1 - x2) <= delta) then assume x1 = x2
     ! endif
 
+    use constants,only: CUSTOM_REAL
+  
     implicit none
 
     integer, intent(in) :: length
     real(kind=CUSTOM_REAL), dimension(length), intent(in) :: array
     double precision, intent(in) :: value
     double precision, intent(in), optional :: delta
-
+    
     ! Local variables
-    integer :: binarysearch
     integer :: left, middle, right
     real(kind=CUSTOM_REAL) :: d
-
+    
+    binarysearch = -1
     if (present(delta) .eqv. .true.) then
       d = delta
     else
@@ -116,16 +118,21 @@ module interpolation
     right = length
     do
       if (left > right) then
-        exit
+        if (right > 0) then
+          binarysearch = right
+        else ! Value is inferior to the lowest value of array
+          binarysearch = left ! We return the first value of the array
+        endif
+        return
       endif
       middle = nint((left+right) / 2.0)
       if ( abs(array(middle) - value) <= d) then
-        binarySearch = middle
-      if(binarysearch == length) then
-        binarysearch = middle - 1
-      else
         binarysearch = middle
-      endif
+        if(binarysearch == length) then
+          binarysearch = middle - 1
+        else
+          binarysearch = middle
+        endif
         return
       else if (array(middle) > value) then
         right = middle - 1
@@ -157,24 +164,33 @@ module interpolation
     real(kind=CUSTOM_REAL), dimension(x_len, y_len), intent(in) :: f
     double precision, intent(in) :: x,y
     double precision, intent(in), optional :: delta
-
+    
     ! Local variables
     real(kind=CUSTOM_REAL) :: denom, x1, x2, y1, y2
     integer :: i,j
     real(kind=CUSTOM_REAL) :: d
 
-    write(*,'(A1)', advance='no') "" ! TODO segmentation fault without that line!!!!! WHY???
     if (present(delta)) then
       d = delta
     else
       d = 1e-9
     endif
-    i = binarysearch(x_len, x_array, x, delta) ! binarysearch(x_len, x_array, x)
-    j = binarysearch(y_len, y_array, y, delta) ! binarysearch(y_len, y_array, y)
-    x1 = x_array(i)
-    x2 = x_array(i+1)
-    y1 = y_array(j)
-    y2 = y_array(j+1)
+    i = binarysearch(x_len, x_array, x, delta)
+    j = binarysearch(y_len, y_array, y, delta)
+    if (i < x_len) then
+      x1 = x_array(i)
+      x2 = x_array(i+1)
+    else
+      x1 = x_array(i-1)
+      x2 = x_array(i)
+    endif
+    if (j < y_len) then
+      y1 = y_array(j)
+      y2 = y_array(j+1)
+    else
+      y1 = y_array(j-1)
+      y2 = y_array(j)
+    endif
     denom = (x2 - x1)*(y2 - y1)
     interpolate = (f(i,j)*(x2-x)*(y2-y) + f(i+1,j)*(x-x1)*(y2-y) + &
                   f(i,j+1)*(x2-x)*(y-y1) + f(i+1, j+1)*(x-x1)*(y-y1))/denom
@@ -367,12 +383,13 @@ subroutine read_tomo_file()
 
   ! Checks the number of records for points definition while storing them
   irecord = 0
-  do while (ier == 0)
-    read(IIN,*,iostat=ier) x_tomography(irecord+1),z_tomography(irecord+1),vp_tomography(irecord+1),vs_tomography(irecord+1), &
+  do while (irecord < nrecord)
+    call tomo_read_next_line(IIN,string_read)
+    read(string_read,*) x_tomography(irecord+1),z_tomography(irecord+1),vp_tomography(irecord+1),vs_tomography(irecord+1), &
            rho_tomography(irecord+1)
     if (irecord < NX) x_tomo(irecord+1) = x_tomography(irecord+1)
 
-    if (ier == 0) irecord = irecord + 1
+    irecord = irecord + 1
   enddo
 
   z_tomo = z_tomography(::NX)
