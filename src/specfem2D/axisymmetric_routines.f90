@@ -285,7 +285,7 @@ subroutine  build_is_on_the_axis()
           !print *, "coord_line :",coord_line
           !print *, "coord_line_sorted :",coord_line_sorted
           !print *, "indices :", indices
-          potential_acoustic(ibool(i_1,j,ispec_axis)) = potential_acoustic(ibool(i_2,j,ispec_axis))
+          potential_acoustic(ibool(i_2,j,ispec_axis)) = potential_acoustic(ibool(i_1,j,ispec_axis))
           !potential_dot_acoustic(ibool(i_2,j,ispec_axis)) = potential_dot_acoustic(ibool(i_1,j,ispec_axis))
           !potential_dot_dot_acoustic(ibool(i_2,j,ispec_axis)) = potential_dot_dot_acoustic(ibool(i_1,j,ispec_axis))
         enddo

@@ -194,6 +194,10 @@
               ! derivatives of potential
               PML_dux_dxl_old(i,j) = dux_dxi * xixl + dux_dgamma * gammaxl
               PML_dux_dzl_old(i,j) = dux_dxi * xizl + dux_dgamma * gammazl
+              
+              if( AXISYM .and. (abs(coord(1,ibool(i,j,ispec_PML))) < TINYVAL) ) then ! du_r/dr = 0 on the axis
+                PML_dux_dxl_old(i,j) = ZERO
+              endif
             endif
 
             ! the subroutine of lik_parameter_computation is located at the end of compute_forces_viscoelastic.F90
@@ -276,8 +280,7 @@
                                               A10 * rmemory_acoustic_dux_dz(i,j,ispec_PML,2)
           endif
 
-          if( AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL) ) then ! dchi/dr=rho * u_r=0 on the axis
-            PML_dux_dxl_old(i,j) = ZERO
+          if( AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL) ) then ! du_r/dr=0 on the axis
             dux_dxl = ZERO
           endif
 
