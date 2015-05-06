@@ -372,6 +372,8 @@ subroutine prepare_timerun_kernel()
 
     if(any_poroelastic) then
 
+      if (.not. SAVE_ASCII_KERNELS) stop 'poroelastic simulations must use SAVE_ASCII_KERNELS'
+
       ! Primary kernels
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mu_B_C_kernel.dat'
       open(unit = 144, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
