@@ -2,7 +2,7 @@
 title                           = AK135F for half a disk for axisymmetric runs
 
 # axisymmetric (2.5D) or Cartesian planar (2D) simulation
-AXISYM                          = .false.
+AXISYM                          = .true.
 
 # forward or adjoint simulation
 SIMULATION_TYPE                 = 1  # 1 = forward, 3 = adjoint + kernels; 2 is purposely UNUSED (for compatibility with the numbering of our 3D codes)

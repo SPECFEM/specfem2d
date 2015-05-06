@@ -211,7 +211,8 @@
                 rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
               endif
             endif
-          else ! no PLM
+
+          else ! no PML
 
             if (AXISYM) then
               if (is_on_the_axis(ispec)) then
@@ -322,7 +323,7 @@
                      + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML))
               endif
             endif
-          else  ! no PLM
+          else  ! no PML
 
             if (AXISYM) then
               if (is_on_the_axis(ispec)) then
