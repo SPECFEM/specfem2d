@@ -101,6 +101,8 @@
   double precision, dimension(ngnod,nspec_exact) :: xcoord,ycoord
 
   double precision, dimension(npoin_max) :: xp,yp,work
+  integer, dimension(npoin_max) :: iwork
+  equivalence(work,iwork)
   integer, dimension(npoin_max) :: loc,ind,ninseg,iglob
   logical, dimension(npoin_max) :: ifseg
 
@@ -1090,7 +1092,7 @@
       endif
       call swap(xp(ioff),work,ind,ninseg(iseg))
       call swap(yp(ioff),work,ind,ninseg(iseg))
-      call iswap(loc(ioff),work,ind,ninseg(iseg))
+      call iswap(loc(ioff),iwork,ind,ninseg(iseg))
       ioff=ioff+ninseg(iseg)
    enddo
 !  Check for jumps in current coordinate
