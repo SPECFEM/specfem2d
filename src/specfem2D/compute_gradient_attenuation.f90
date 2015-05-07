@@ -44,7 +44,7 @@
   subroutine compute_gradient_attenuation(displ_elastic,dux_dxl,duz_dxl,dux_dzl,duz_dzl, &
          xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob)
 
-  use specfem_par, only:coord,AXISYM,is_on_the_axis,hprimeBar_xx
+  use specfem_par, only: AXISYM,is_on_the_axis,hprimeBar_xx
 
 ! compute Grad(displ_elastic) for attenuation
 
