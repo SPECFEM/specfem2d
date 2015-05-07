@@ -819,7 +819,7 @@ subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and
 !   inode1_axial_elements(i)   <-> abs_surface(3,i)       (inode of the first anchor node of the edge)
 !   inode2_axial_elements(i)   <-> abs_surface(4,i)       (inode of the second anchor node of the edge)
 ! When we are using external mesher for axisymmetric simulations we do not control how the elements
-! will be orientated. Sometimes "i<->j". We could have code everything taking that into account but we have prefered
+! will be orientated. Sometimes "i<->j". We could have code everything taking that into account but we have preferred
 ! to rotate the mesh
 
  implicit none

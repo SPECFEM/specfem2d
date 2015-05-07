@@ -106,7 +106,9 @@
   if (myrank == 0 .and. AXISYM) then
     write(IOUT,*)
     write(IOUT,*)
-    write(IOUT,*) '=== A x i s y m m e t r i c  S i m u l a t i o n ==='
+    write(IOUT,*) '====================================================='
+    write(IOUT,*) '=== A x i s y m m e t r i c   S i m u l a t i o n ==='
+    write(IOUT,*) '====================================================='
   endif
 
   read(IIN,"(a80)") datlin
