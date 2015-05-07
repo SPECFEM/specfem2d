@@ -907,8 +907,8 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
               tempx3(i,j) = wzgll(j)*jacobian(1,j,ispec)*sigma_thetatheta(1,j)*hprimeBarwglj_xx(1,i)
               !wxglj(1)*hprimeBar_xx(1,i)
 
-              if (i > 1) then ! Not first GLJ point
-                if (i==1 ) then
+              if ( abs(coord(1,ibool(i,j,ispec))) > TINYVAL ) then ! Not first GLJ point
+                if ( i == 1 ) then
                   call exit_MPI('AB AB: axial element found is rotated. The code should have been stopped before ')
                 endif
                 tempx3(i,j) = tempx3(i,j) + wzgll(j)*wxglj(i)*jacobian(i,j,ispec) &
