@@ -1263,10 +1263,10 @@
 
 ! then save them to a file and also save the (only) edge that is in contact
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
-  open(unit=22,file='DATA/Symmetry_axis_elements_and_edges_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
+  open(unit=22,file='DATA/Symmetry_axis_elements_AK135F_NO_MUD',form='unformatted',status='unknown',action='write')
   write(22) ispec_count
 #else
-  open(unit=22,file='DATA/Symmetry_axis_elements_and_edges_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
+  open(unit=22,file='DATA/Symmetry_axis_elements_AK135F_NO_MUD',form='formatted',status='unknown',action='write')
   write(22,*) ispec_count
 #endif
 
