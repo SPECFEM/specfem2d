@@ -160,7 +160,7 @@
       ! Blackwell Science, page 110, equation (4.60).
 
       if( AXISYM ) then
-        if( abs(coord(1,iglob)) < TINYVAL ) then
+        if( is_on_the_axis(ispec_acoustic) .and. i == 1 ) then
           xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
           r_xiplus1(i,j) = xxi
         else if( is_on_the_axis(ispec_acoustic) ) then
@@ -283,7 +283,7 @@
       ! Blackwell Science, page 110, equation (4.60).
 
       if( AXISYM ) then
-        if( abs(coord(1,iglob)) < TINYVAL ) then
+        if( is_on_the_axis(ispec_acoustic) .and. i == 1 ) then
           xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
           r_xiplus1(i,j) = xxi
         else if( is_on_the_axis(ispec_acoustic) ) then

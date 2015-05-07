@@ -191,7 +191,7 @@
         dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
         duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
-        if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL)) then ! du_z/dr=0 on the axis
+        if (AXISYM .and. is_on_the_axis(ispec) .and. i == 1) then ! du_z/dr=0 on the axis
           duz_dxl = 0.d0
         endif
 
@@ -222,7 +222,7 @@
 
           if(AXISYM) then
             if (is_on_the_axis(ispec)) then
-              if (abs(coord(1,ibool(i,j,ispec))) < TINYVAL) then ! First GLJ point
+              if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
                 sigma_xx = 0._CUSTOM_REAL
                 sigma_zz = 0._CUSTOM_REAL
                 sigma_thetatheta = 0._CUSTOM_REAL
@@ -288,7 +288,7 @@
 
           if(AXISYM) then
             if (is_on_the_axis(ispec)) then
-              if (abs(coord(1,ibool(i,j,ispec))) < TINYVAL) then ! First GLJ point
+              if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
                 sigma_xx = 0._CUSTOM_REAL
                 sigma_zz = 0._CUSTOM_REAL
                 sigma_thetatheta = 0._CUSTOM_REAL
@@ -359,7 +359,7 @@
           duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
           dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
 
-          if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL)) then ! du_z/dr=0 on the axis
+          if (AXISYM .and. is_on_the_axis(ispec) .and. i == 1) then ! du_z/dr=0 on the axis
             duz_dxl = 0.d0
           endif
 

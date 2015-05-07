@@ -930,9 +930,11 @@ subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and
 
 
   ! print *,"    Loop on the elements on the axis... : "
-   do i = 1,nelem_on_the_axis ! Loop on the elements on the axis (red on the axisym file)
-  !   print *,"        Element ",i
+   do i = 1,nelem_on_the_axis ! Loop on the elements on the axis (read from the axisym file)
+     print *
+     print *,"        Element on the axis",i
      if(index_edge == axisym_edge_type(i)) then
+      print *,"       rotating that axial element"
        ispec=ispec_of_axial_elements(i)+1
        found_this_point = .false.
      !  print *,"        Loop on the control points and look for ", inode1_axial_elements(i)
@@ -962,9 +964,9 @@ subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and
        endif
        ! test orientation
        if(i1 == index_rotation1 .and. i2 == index_rotation2) then
-     !   print *,'orientation of element ',i,' is already good'
+         print *,'orientation of element ',i,' is already good'
        else if (i1 == index_rotation3 .and. i2 == index_rotation4) then !for this one, remember that we have swapped, thus 41 is 14
-     !   print *,'element ',i,' must be rotated 3 times'
+         print *,'element ',i,' must be rotated 3 times'
          ibool_rotated(4,ispec) = ibool(1,ispec)
          ibool_rotated(1,ispec) = ibool(2,ispec)
          ibool_rotated(2,ispec) = ibool(3,ispec)
@@ -978,7 +980,7 @@ subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and
          endif
 
        else if (i1 == index_rotation5 .and. i2 == index_rotation6) then
-      !  print *,'element ',i,ispec,' must be rotated 2 times top'
+         print *,'element ',i,ispec,' must be rotated 2 times top'
          ibool_rotated(3,ispec) = ibool(1,ispec)
          ibool_rotated(4,ispec) = ibool(2,ispec)
          ibool_rotated(1,ispec) = ibool(3,ispec)
@@ -992,7 +994,7 @@ subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and
          endif
 
        else if (i1 == index_rotation7 .and. i2 == index_rotation8) then
-     !   print *,'element ',i,' must be rotated 1 time'
+         print *,'element ',i,' must be rotated 1 time'
          ibool_rotated(2,ispec) = ibool(1,ispec)
          ibool_rotated(3,ispec) = ibool(2,ispec)
          ibool_rotated(4,ispec) = ibool(3,ispec)
@@ -1007,7 +1009,9 @@ subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and
        else
          stop 'rotate_mesh_for_axisym: problem in an element'
        endif
-     endif
+     else ! of if(index_edge == axisym_edge_type(i))
+      print *,"       NOT rotating that axial element"
+     endif ! of if(index_edge == axisym_edge_type(i))
    enddo
  enddo
 

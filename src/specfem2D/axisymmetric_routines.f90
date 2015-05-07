@@ -249,7 +249,7 @@ subroutine  build_is_on_the_axis()
     ! _For acoustic elements rho*u = grad(potential) hence the two elements near the axis need to share the same values
     !  of potential
 
-    use specfem_par, only: acoustic, elastic, coord, ibool, nelem_on_the_axis, ispec_of_axial_elements, &
+    use specfem_par, only: acoustic, elastic, coord, ibool, nelem_on_the_axis, ispec_of_axial_elements, is_on_the_axis, &
                            potential_acoustic, displ_elastic!, potential_dot_acoustic, potential_dot_dot_acoustic, veloc_elastic, &
                            !accel_elastic
     use qsort_c_module
@@ -294,7 +294,7 @@ subroutine  build_is_on_the_axis()
 
         do j = 1,NGLLZ ! Loop on the GLL/GLJ points
           do i = 1,NGLJ
-            if( abs(coord(1,ibool(i,j,ispec_axis))) < TINYVAL ) then ! If the point scanned is on the axis
+            if( is_on_the_axis(ispec_axis) .and. i == 1 ) then ! If the point scanned is on the axis
               displ_elastic(1,ibool(i,j,ispec_axis)) = ZERO ! We enforce the radial displacement to zero
               !veloc_elastic(1,ibool(i,j,ispec_axis)) = ZERO ! We enforce the radial displacement to zero
               !accel_elastic(1,ibool(i,j,ispec_axis)) = ZERO ! We enforce the radial displacement to zero

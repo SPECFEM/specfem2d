@@ -173,7 +173,7 @@
               else if(region_CPML(ispec) == CPML_Z_ONLY) then
                 if (AXISYM) then
                   if (is_on_the_axis(ispec)) then
-                    if (abs(coord(1,iglob)) < TINYVAL) then ! First GLJ point
+                    if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
                       xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
                       rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
                          + xxi*wxglj(i)*wzgll(j)*rhol*jacobian(i,j,ispec) &
@@ -211,11 +211,12 @@
                 rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
               endif
             endif
-          else ! no PLM
+
+          else ! no PML
 
             if (AXISYM) then
               if (is_on_the_axis(ispec)) then
-                if (abs(coord(1,iglob)) < TINYVAL) then ! First GLJ point
+                if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
                   xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
                   rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
                       + xxi*wxglj(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
@@ -289,7 +290,7 @@
               else if(region_CPML(ispec) == CPML_Z_ONLY) then
                 if (AXISYM) then
                   if (is_on_the_axis(ispec)) then
-                    if (abs(coord(1,iglob)) < TINYVAL) then ! First GLJ point
+                    if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
                       xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
                       rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
                          + xxi*wxglj(i)*wzgll(j)/kappal*jacobian(i,j,ispec) &
@@ -322,11 +323,11 @@
                      + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML))
               endif
             endif
-          else  ! no PLM
+          else  ! no PML
 
             if (AXISYM) then
               if (is_on_the_axis(ispec)) then
-                if (abs(coord(1,iglob)) < TINYVAL) then ! First GLJ point
+                if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
                   xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
                   rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
                       + xxi*wxglj(i)*wzgll(j)*jacobian(i,j,ispec) / kappal

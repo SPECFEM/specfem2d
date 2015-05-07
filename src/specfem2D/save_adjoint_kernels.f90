@@ -61,14 +61,7 @@ subroutine save_adjoint_kernels()
   endif
 
   if(any_acoustic) then
-    if(.not. save_ASCII_kernels)then
-       write(95)coord
-       write(95)rho_ac_kl
-       write(95)kappa_ac_kl
-       write(96)coord
-       write(96)rho_ac_kl
-       write(96)alpha_ac_kl
-    else
+    if(save_ASCII_kernels) then ! ascii format
       do ispec = 1, nspec
         do j = 1, NGLLZ
           do i = 1, NGLLX
@@ -83,40 +76,34 @@ subroutine save_adjoint_kernels()
           enddo
         enddo
       enddo
-    endif
-    close(95)
-    close(96)
+      close(95)
+      close(96)
+
+    else if (NEW_BINARY_FORMAT) then ! binary format
+       write(200)rho_kl
+       write(201)kappa_ac_kl
+       write(202)rhop_kl
+       write(203)alpha_kl
+       close(200)
+       close(201)
+       close(202)
+       close(203)
+
+    else ! legacy binary format
+       write(95)coord
+       write(95)rho_ac_kl
+       write(95)kappa_ac_kl
+       write(96)coord
+       write(96)rho_ac_kl
+       write(96)alpha_ac_kl
+       close(95)
+       close(96)
+      endif
   endif
 
   if(any_elastic) then
-    if(.not. save_ASCII_kernels)then
-       if (NEW_BINARY_FORMAT) then
-         write(200)rho_kl
-         write(201)kappa_kl
-         write(202)mu_kl
-         write(203)rhop_kl
-         write(204)alpha_kl
-         write(205)beta_kl
-         close(200)
-         close(201)
-         close(202)
-         close(203)
-         close(204)
-         close(205)
-       else
-         write(97)coord
-         write(97)rho_kl
-         write(97)kappa_kl
-         write(97)mu_kl
-         write(98)coord
-         write(98)rhop_kl
-         write(98)alpha_kl
-         write(98)beta_kl
-         close(97)
-         close(98)
-       endif
-    else
-      do ispec = 1, nspec
+    if(save_ASCII_kernels)then ! ascii format
+    do ispec = 1, nspec
         do j = 1, NGLLZ
           do i = 1, NGLLX
             iglob = ibool(i,j,ispec)
@@ -126,10 +113,36 @@ subroutine save_adjoint_kernels()
             write(98,'(5e15.5e4)')xx,zz,rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
             !write(98,'(5e15.5e4)')rhorho_el_hessian_final1(i,j,ispec),
             !rhorho_el_hessian_final2(i,j,ispec),&
-            !                    rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
+            !rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
           enddo
         enddo
       enddo
+      close(97)
+      close(98)
+
+    else if (NEW_BINARY_FORMAT) then ! binary format
+      write(200)rho_kl
+      write(201)kappa_kl
+      write(202)mu_kl
+      write(203)rhop_kl
+      write(204)alpha_kl
+      write(205)beta_kl
+      close(200)
+      close(201)
+      close(202)
+      close(203)
+      close(204)
+      close(205)
+
+    else ! legacy binary format
+      write(97)coord
+      write(97)rho_kl
+      write(97)kappa_kl
+      write(97)mu_kl
+      write(98)coord
+      write(98)rhop_kl
+      write(98)alpha_kl
+      write(98)beta_kl
       close(97)
       close(98)
     endif
@@ -138,6 +151,9 @@ subroutine save_adjoint_kernels()
 if (.NOT. GPU_MODE )  then
 
   if(any_poroelastic) then
+
+      if (.not. SAVE_ASCII_KERNELS) stop 'poroelastic simulations must use SAVE_ASCII_KERNELS'
+
     do ispec = 1, nspec
       do j = 1, NGLLZ
         do i = 1, NGLLX

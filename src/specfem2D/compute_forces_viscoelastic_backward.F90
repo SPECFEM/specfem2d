@@ -337,7 +337,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
           duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
           duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
-          if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL) ) then ! du_z/dr=0 on the axis
+          if (AXISYM .and. is_on_the_axis(ispec) .and. i == 1 ) then ! du_z/dr=0 on the axis
             duz_dxl = 0.d0
           endif
 
@@ -372,7 +372,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
 
             if( AXISYM ) then
               if (is_on_the_axis(ispec) ) then
-                if (abs(coord(1,ibool(i,j,ispec))) < TINYVAL ) then ! First GLJ point
+                if ( is_on_the_axis(ispec) .and. i == 1 ) then ! First GLJ point
                   sigma_xx = 0._CUSTOM_REAL
                   sigma_zz = 0._CUSTOM_REAL
                   sigma_thetatheta(i,j) = 0._CUSTOM_REAL
@@ -439,7 +439,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
 
             if( AXISYM ) then
               if (is_on_the_axis(ispec) ) then
-                if (abs(coord(1,ibool(i,j,ispec))) < TINYVAL ) then ! First GLJ point
+                if ( is_on_the_axis(ispec) .and. i == 1 ) then ! First GLJ point
                   sigma_xx = 0._CUSTOM_REAL
                   sigma_zz = 0._CUSTOM_REAL
                   sigma_thetatheta(i,j) = 0._CUSTOM_REAL
@@ -537,7 +537,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
               tempx3(i,j) = wzgll(j)*jacobian(1,j,ispec)*sigma_thetatheta(1,j)*hprimeBarwglj_xx(1,i)
               !wxglj(1)*hprimeBar_xx(1,i)
 
-              if (abs(coord(1,ibool(i,j,ispec))) > TINYVAL ) then ! Not first GLJ points
+              if ( i > 1 ) then ! Not first GLJ point
                 if (i==1 ) then
                   call exit_MPI('AB AB: axial element found is rotated. The code should have been stopped before ')
                 endif

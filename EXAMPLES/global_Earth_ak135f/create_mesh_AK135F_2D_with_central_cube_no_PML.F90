@@ -101,6 +101,8 @@
   double precision, dimension(ngnod,nspec_exact) :: xcoord,ycoord
 
   double precision, dimension(npoin_max) :: xp,yp,work
+  integer, dimension(npoin_max) :: iwork
+  equivalence(work,iwork)
   integer, dimension(npoin_max) :: loc,ind,ninseg,iglob
   logical, dimension(npoin_max) :: ifseg
 
@@ -1090,7 +1092,7 @@
       endif
       call swap(xp(ioff),work,ind,ninseg(iseg))
       call swap(yp(ioff),work,ind,ninseg(iseg))
-      call iswap(loc(ioff),work,ind,ninseg(iseg))
+      call iswap(loc(ioff),iwork,ind,ninseg(iseg))
       ioff=ioff+ninseg(iseg)
    enddo
 !  Check for jumps in current coordinate
@@ -1270,15 +1272,15 @@
 
   do ispec=1,nspec
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
-    if(xcoord(1,ispec) < 0.001d0 .and. xcoord(2,ispec) < 0.001d0) write(22) ispec,IBOTTOM
-    if(xcoord(2,ispec) < 0.001d0 .and. xcoord(3,ispec) < 0.001d0) write(22) ispec,IRIGHT
-    if(xcoord(3,ispec) < 0.001d0 .and. xcoord(4,ispec) < 0.001d0) write(22) ispec,ITOP
-    if(xcoord(4,ispec) < 0.001d0 .and. xcoord(1,ispec) < 0.001d0) write(22) ispec,ILEFT
+    if(xcoord(1,ispec) < 0.001d0 .and. xcoord(2,ispec) < 0.001d0) write(22) ispec,' 2 ',ibool(1,ispec),ibool(2,ispec),IBOTTOM
+    if(xcoord(2,ispec) < 0.001d0 .and. xcoord(3,ispec) < 0.001d0) write(22) ispec,' 2 ',ibool(2,ispec),ibool(3,ispec),IRIGHT
+    if(xcoord(3,ispec) < 0.001d0 .and. xcoord(4,ispec) < 0.001d0) write(22) ispec,' 2 ',ibool(3,ispec),ibool(4,ispec),ITOP
+    if(xcoord(4,ispec) < 0.001d0 .and. xcoord(1,ispec) < 0.001d0) write(22) ispec,' 2 ',ibool(4,ispec),ibool(1,ispec),ILEFT
 #else
-    if(xcoord(1,ispec) < 0.001d0 .and. xcoord(2,ispec) < 0.001d0) write(22,*) ispec,IBOTTOM
-    if(xcoord(2,ispec) < 0.001d0 .and. xcoord(3,ispec) < 0.001d0) write(22,*) ispec,IRIGHT
-    if(xcoord(3,ispec) < 0.001d0 .and. xcoord(4,ispec) < 0.001d0) write(22,*) ispec,ITOP
-    if(xcoord(4,ispec) < 0.001d0 .and. xcoord(1,ispec) < 0.001d0) write(22,*) ispec,ILEFT
+    if(xcoord(1,ispec) < 0.001d0 .and. xcoord(2,ispec) < 0.001d0) write(22,*) ispec,' 2 ',ibool(1,ispec),ibool(2,ispec),IBOTTOM
+    if(xcoord(2,ispec) < 0.001d0 .and. xcoord(3,ispec) < 0.001d0) write(22,*) ispec,' 2 ',ibool(2,ispec),ibool(3,ispec),IRIGHT
+    if(xcoord(3,ispec) < 0.001d0 .and. xcoord(4,ispec) < 0.001d0) write(22,*) ispec,' 2 ',ibool(3,ispec),ibool(4,ispec),ITOP
+    if(xcoord(4,ispec) < 0.001d0 .and. xcoord(1,ispec) < 0.001d0) write(22,*) ispec,' 2 ',ibool(4,ispec),ibool(1,ispec),ILEFT
 #endif
   enddo
 
