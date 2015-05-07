@@ -671,6 +671,7 @@ contains
      index_rotation6 = 4
      index_rotation7 = 1
      index_rotation8 = 4
+     ! index_rotation9 does not exist because the center rotates on itself
    else if(index_edge == 2) then
    ! right edge
      index_rotation1 = 2
@@ -867,19 +868,19 @@ subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and
  enddo
 
  do j = 1, 4 ! Loop on the corners
-!        print *, "CORNER NUMBER :", j
+   print *, "CORNER NUMBER :", j
    if(j == 1) then
      index_edge = 3 ! top edge
-     ibool_rotated(:,:) = ibool(:,:)
+     ibool_rotated(:,:) = ibool(:,:) ! During this first step we just copy the ibool
    else if(j == 2) then
      index_edge = 1 ! bottom edge
-     ibool(:,:) = ibool_rotated(:,:)
+     ibool(:,:) = ibool_rotated(:,:) ! We replace the ibool by ibool_rotated
    else if(j == 3) then
      index_edge = 4 ! left edge
-     ibool(:,:) = ibool_rotated(:,:)
+     ibool(:,:) = ibool_rotated(:,:) ! We replace the ibool by ibool_rotated
    else if(j == 4) then
      index_edge = 2 ! right edge
-     ibool(:,:) = ibool_rotated(:,:)
+     ibool(:,:) = ibool_rotated(:,:) ! We replace the ibool by ibool_rotated
    else
      stop 'rotate_mesh_for_axisym: j should be >=1 and <=4'
    endif
@@ -894,6 +895,7 @@ subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and
      index_rotation6 = 4
      index_rotation7 = 1
      index_rotation8 = 4
+     ! index_rotation9 does not exist because the center rotates on itself
    else if(index_edge == 2) then
    ! right edge
      index_rotation1 = 2
@@ -934,8 +936,8 @@ subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and
      print *
      print *,"        Element on the axis",i
      if(index_edge == axisym_edge_type(i)) then
-      print *,"       rotating that axial element"
-       ispec=ispec_of_axial_elements(i)+1
+       print *,"       rotating that axial element"
+       ispec = ispec_of_axial_elements(i) + 1 ! ispec_of_axial_elements starts from 0
        found_this_point = .false.
      !  print *,"        Loop on the control points and look for ", inode1_axial_elements(i)
        do inode = 1,ngnod ! loop on the control points on the axial element ispec_of_axial_elements(i)
