@@ -909,7 +909,9 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
 
               if ( abs(coord(1,ibool(i,j,ispec))) > TINYVAL ) then ! Not first GLJ point
                 if ( i == 1 ) then
-                  call exit_MPI('AB AB: axial element found is rotated. The code should have been stopped before ')
+                  call exit_MPI("AB AB: axial element found is rotated. The code should have been stopped before. Check that your &
+                   &coordinates are >> TINYVAL. Maybe you should also have a look to &
+                   &doc/problematic_case_that_we_exclude_for_axisymmetric.pdf")
                 endif
                 tempx3(i,j) = tempx3(i,j) + wzgll(j)*wxglj(i)*jacobian(i,j,ispec) &
                               * sigma_thetatheta(i,j)/(xiglj(i)+ONE) ! this goes to accel_x
