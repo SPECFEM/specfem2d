@@ -155,7 +155,7 @@
           dux_dxl = dux_dxi * xixl + dux_dgamma * gammaxl
           dux_dzl = dux_dxi * xizl + dux_dgamma * gammazl
 
-          if( AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL) ) then ! dchi/dr=rho * u_r=0 on the axis
+          if( AXISYM .and. is_on_the_axis(ispec) .and. i == 1 ) then ! dchi/dr=rho * u_r=0 on the axis
             dux_dxl = ZERO
           endif
 
@@ -276,7 +276,7 @@
                                               A10 * rmemory_acoustic_dux_dz(i,j,ispec_PML,2)
           endif
 
-          if( AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL) ) then ! dchi/dr=rho * u_r=0 on the axis
+          if( AXISYM .and. is_on_the_axis(ispec) .and. i == 1 ) then ! dchi/dr=rho * u_r=0 on the axis
             PML_dux_dxl_old(i,j) = ZERO
             dux_dxl = ZERO
           endif
@@ -289,7 +289,7 @@
           endif
 
           if( AXISYM ) then
-            if( abs(coord(1,ibool(i,j,ispec))) < TINYVAL ) then
+            if( is_on_the_axis(ispec) .and. i == 1 ) then
               xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
               r_xiplus1(i,j) = xxi
             else if( is_on_the_axis(ispec) ) then
