@@ -194,7 +194,7 @@
               ! derivatives of potential
               PML_dux_dxl_old(i,j) = dux_dxi * xixl + dux_dgamma * gammaxl
               PML_dux_dzl_old(i,j) = dux_dxi * xizl + dux_dgamma * gammazl
-              
+
               if( AXISYM .and. is_on_the_axis(ispec) .and. i == 1 ) then ! dchi/dr=rho * u_r=0 on the axis
                 PML_dux_dxl_old(i,j) = ZERO
               endif
