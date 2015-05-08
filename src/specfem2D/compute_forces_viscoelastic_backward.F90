@@ -337,7 +337,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
           duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
           duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
-          if (AXISYM .and. is_on_the_axis(ispec) .and. i == 1 ) then ! du_z/dr=0 on the axis
+          if (AXISYM .and. is_on_the_axis(ispec) .and. i == 1 ) then ! d_uz/dr=0 on the axis
             duz_dxl = 0.d0
           endif
 
@@ -535,11 +535,12 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
           if (AXISYM ) then
             if (is_on_the_axis(ispec) ) then
               tempx3(i,j) = wzgll(j)*jacobian(1,j,ispec)*sigma_thetatheta(1,j)*hprimeBarwglj_xx(1,i)
-              !wxglj(1)*hprimeBar_xx(1,i)
 
               if ( abs(coord(1,ibool(i,j,ispec))) > TINYVAL ) then ! Not first GLJ point
                 if ( i == 1 ) then
-                  call exit_MPI('AB AB: axial element found is rotated. The code should have been stopped before ')
+                  call exit_MPI("error: an axial element is rotated. The code should have been stopped before. Check that your &
+                   &coordinates are >> TINYVAL. Maybe you should also have a look to &
+                   &doc/problematic_case_that_we_exclude_for_axisymmetric.pdf")
                 endif
                 tempx3(i,j) = tempx3(i,j) + wzgll(j)*wxglj(i)*jacobian(i,j,ispec) &
                               * sigma_thetatheta(i,j)/(xiglj(i)+ONE) ! this goes to accel_x
@@ -552,7 +553,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
                             * (sigma_xx*xixl+sigma_zx*xizl) ! this goes to accel_x
               tempz1(i,j) = r_xiplus1(i,j)*wzgll(j)*jacobianl &
                             * (sigma_xz*xixl+sigma_zz*xizl) ! this goes to accel_z
-            else !axisym but not on the axis
+            else ! axisym but not on the axis
               tempx2(i,j) = coord(1,ibool(i,j,ispec))*wxgll(i)*jacobianl &
                             *(sigma_xx*gammaxl+sigma_zx*gammazl) ! this goes to accel_x
               tempz2(i,j) = coord(1,ibool(i,j,ispec))*wxgll(i)*jacobianl &

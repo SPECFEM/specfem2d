@@ -953,7 +953,7 @@ subroutine prepare_timerun_read()
   ! reads in source infos
   call read_databases_sources()
 
-  !if(AXISYM) factor = factor/(TWO*PI)   !!!!!axisym TODO verify
+  !if(AXISYM) factor = factor/(TWO*PI)   !!!!! axisym TODO verify
 
   ! sets source parameters
   call set_sources()

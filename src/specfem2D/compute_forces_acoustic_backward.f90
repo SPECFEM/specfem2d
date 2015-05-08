@@ -127,11 +127,6 @@
             dux_dxl = ZERO
           endif
 
-
-          if( AXISYM .and. is_on_the_axis(ispec) .and. i == 1 ) then ! dchi/dr=rho * u_r=0 on the axis
-            dux_dxl = ZERO
-          endif
-
           jacobianl = jacobian(i,j,ispec)
 
           ! if external density model

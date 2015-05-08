@@ -191,7 +191,7 @@
         dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
         duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
-        if (AXISYM .and. is_on_the_axis(ispec) .and. i == 1) then ! du_z/dr=0 on the axis
+        if (AXISYM .and. is_on_the_axis(ispec) .and. i == 1) then ! d_uz/dr=0 on the axis
           duz_dxl = 0.d0
         endif
 
@@ -359,7 +359,7 @@
           duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
           dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
 
-          if (AXISYM .and. is_on_the_axis(ispec) .and. i == 1) then ! du_z/dr=0 on the axis
+          if (AXISYM .and. is_on_the_axis(ispec) .and. i == 1) then ! d_uz/dr=0 on the axis
             duz_dxl = 0.d0
           endif
 
