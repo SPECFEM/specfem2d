@@ -185,8 +185,8 @@ subroutine  build_is_on_the_axis()
     ! for acoustic elements we do not need to do anything, some gradient components
     ! will be set to zero on the axis later in the code, when they are computed
 
-    use specfem_par, only: acoustic, elastic, coord, ibool, nelem_on_the_axis, ispec_of_axial_elements, is_on_the_axis, &
-            potential_acoustic, displ_elastic, veloc_elastic, accel_elastic !, potential_dot_acoustic, potential_dot_dot_acoustic
+    use specfem_par, only: elastic, ibool, nelem_on_the_axis, ispec_of_axial_elements, is_on_the_axis, &
+            displ_elastic, veloc_elastic, accel_elastic
 
     implicit none
 
