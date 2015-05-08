@@ -41,73 +41,8 @@
 !
 !========================================================================
 
-! On this file we gather some subroutines related to the AXISYM option (some others can be found
+! In this file we gather some subroutines related to the AXISYM option (some others can be found
 ! in gll_library.f90 and define_derivation_matrices.f90)
-
-  module qsort_c_module
-
-! Recursive Fortran 95 quicksort routines (used by enforce_zero_radial_displacements_on_the_axis)
-! sorts real numbers into ascending numerical order
-! Author: Juli Rew, SCD Consulting (juliana@ucar.edu), 9/03
-! Based on algorithm from Cormen et al., Introduction to Algorithms,
-! 1997 printing
-! Made F conformant by Walt Brainerd
-
-    implicit none
-    public :: qsortC
-    private :: partition
-
-    contains
-
-    recursive subroutine qsortC(A)
-      double precision, intent(in out), dimension(:) :: A
-      integer :: iq
-
-      if(size(A) > 1) then
-         call partition(A, iq)
-         call qsortC(A(:iq-1))
-         call qsortC(A(iq:))
-      endif
-    end subroutine QsortC
-
-    subroutine partition(A, marker)
-      double precision, intent(in out), dimension(:) :: A
-      integer, intent(out) :: marker
-      integer :: i, j
-      double precision :: temp
-      double precision :: x      ! pivot point
-      x = A(1)
-      i = 0
-      j = size(A) + 1
-
-      do
-         j = j-1
-         do
-            if (A(j) <= x) exit
-            j = j-1
-         enddo
-         i = i+1
-         do
-            if (A(i) >= x) exit
-            i = i+1
-         enddo
-         if (i < j) then
-            ! exchange A(i) and A(j)
-            temp = A(i)
-            A(i) = A(j)
-            A(j) = temp
-         else if (i == j) then
-            marker = i+1
-            return
-         else
-            marker = i
-            return
-         endif
-      enddo
-
-    end subroutine partition
-
-  end module qsort_c_module
 
 subroutine  build_is_on_the_axis()
   ! This subroutine set the vector of logicals is_on_the_axis. is_on_the_axis(ispec)
@@ -242,54 +177,32 @@ subroutine  build_is_on_the_axis()
 
   end subroutine check_compatibility_axisym
 
+!---------------------------------------------------------------------------
+
   subroutine enforce_zero_radial_displacements_on_the_axis()
-    ! This subroutine enforce zero displacement on the axis
-    ! _For elastic elements it is straight forward : displ_elastic(1,ibool(i,j,ispec))=ZERO
-    ! _For acoustic elements rho*u = grad(potential) hence the two elements near the axis need to share the same values
-    !  of potential
+
+    ! This subroutine enforces zero displacement, velocity and acceleration on the axis for elastic elements;
+    ! for acoustic elements we do not need to do anything, some gradient components
+    ! will be set to zero on the axis later in the code, when they are computed
 
     use specfem_par, only: acoustic, elastic, coord, ibool, nelem_on_the_axis, ispec_of_axial_elements, is_on_the_axis, &
             potential_acoustic, displ_elastic, veloc_elastic, accel_elastic !, potential_dot_acoustic, potential_dot_dot_acoustic
-    use qsort_c_module
 
     implicit none
 
     include "constants.h"
 
-    ! Local :
-    integer i_on_the_axis,ispec_axis,i,j,i_1,i_2
-    double precision, dimension(NGLJ) :: coord_line, coord_line_sorted
-    integer, dimension(NGLJ) :: indices
+    ! local variables
+    integer i_on_the_axis,ispec_axis,i,j
 
     do i_on_the_axis = 1,nelem_on_the_axis ! Loop on the elements on the axis
       ispec_axis = ispec_of_axial_elements(i_on_the_axis)
 
-      if ( acoustic(ispec_axis) ) then ! If the element is acoustic
-        do j = 1,NGLLZ ! For each depth
-          ! For each depth we have NGLJ points (say 4) : *  *  *  *
-          ! We have to know which on is the first one, and which one is at its side
-          do i = 1,NGLJ
-            coord_line(i) = coord(1,ibool(i,j,ispec_axis)) ! Ex : coord_line = (8.12 3.68 15.42 0.0)
-          enddo
-          coord_line_sorted = coord_line
-          !print *, "coord_line :",coord_line
-          !print *, "coord_line_sorted :",coord_line_sorted
-          call qsortC(coord_line_sorted) ! Ex : coord_line_sorted = (0.0,3.68,8.12,15.42)
-          do i = 1,NGLJ
-           indices(i) = minloc(abs(coord_line - coord_line_sorted(i)), 1) ! Ex : Indices = (3,2,4,1)
-           if ( indices(i) == 1 ) i_1 = i ! Ex : i_1 = 4 -> index of the first point (the one on the axis)
-           if ( indices(i) == 2 ) i_2 = i ! Ex : i_2 = 2 -> index of the one at its side
-          enddo
-          !print *, "coord_line :",coord_line
-          !print *, "coord_line_sorted :",coord_line_sorted
-          !print *, "indices :", indices
-          potential_acoustic(ibool(i_2,j,ispec_axis)) = potential_acoustic(ibool(i_1,j,ispec_axis))
-          !potential_dot_acoustic(ibool(i_2,j,ispec_axis)) = potential_dot_acoustic(ibool(i_1,j,ispec_axis))
-          !potential_dot_dot_acoustic(ibool(i_2,j,ispec_axis)) = potential_dot_dot_acoustic(ibool(i_1,j,ispec_axis))
-        enddo
+      ! if the element is acoustic we do not need to do anything, some gradient components
+      ! will be set to zero on the axis later in the code, when they are computed
 
-      else if ( elastic(ispec_axis) ) then ! Else if the element is elastic
-
+      ! if the element is elastic
+      if ( elastic(ispec_axis) ) then
         do j = 1,NGLLZ ! Loop on the GLL/GLJ points
           do i = 1,NGLJ
             if( is_on_the_axis(ispec_axis) .and. i == 1 ) then ! If the point scanned is on the axis
@@ -299,7 +212,6 @@ subroutine  build_is_on_the_axis()
             endif
           enddo
         enddo
-
       endif
 
     enddo
