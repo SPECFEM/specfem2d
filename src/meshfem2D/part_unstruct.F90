@@ -452,7 +452,7 @@ contains
   print *,'done testing for duplicates'
   print *
 
-  !axisym TODO : Test if the informations supplied are compatible with axisym
+  ! axisym TODO : Test if the informations supplied are compatible with axisym
 
   ispec_of_axial_elements(:) = ispec_of_axial_elements(:) - remove_min_to_start_at_zero
   inode1_axial_elements(:) = inode1_axial_elements(:) - remove_min_to_start_at_zero

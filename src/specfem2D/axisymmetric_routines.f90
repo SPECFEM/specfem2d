@@ -43,7 +43,6 @@
 
 ! On this file we gather some subroutines related to the AXISYM option (some others can be found
 ! in gll_library.f90 and define_derivation_matrices.f90)
-!axisym!axisym!axisym!axisym!axisym!axisym!axisym!axisym!axisym!axisym!axisym
 
   module qsort_c_module
 
@@ -265,8 +264,8 @@ subroutine  build_is_on_the_axis()
 
     do i_on_the_axis = 1,nelem_on_the_axis ! Loop on the elements on the axis
       ispec_axis = ispec_of_axial_elements(i_on_the_axis)
+
       if ( acoustic(ispec_axis) ) then ! If the element is acoustic
-        ! TODO : For the moment we don't do anything
         do j = 1,NGLLZ ! For each depth
           ! For each depth we have NGLJ points (say 4) : *  *  *  *
           ! We have to know which on is the first one, and which one is at its side
@@ -295,9 +294,9 @@ subroutine  build_is_on_the_axis()
         do j = 1,NGLLZ ! Loop on the GLL/GLJ points
           do i = 1,NGLJ
             if( is_on_the_axis(ispec_axis) .and. i == 1 ) then ! If the point scanned is on the axis
-              displ_elastic(1,ibool(i,j,ispec_axis)) = ZERO ! We enforce the radial displacement to zero
-              !veloc_elastic(1,ibool(i,j,ispec_axis)) = ZERO ! We enforce the radial displacement to zero
-              !accel_elastic(1,ibool(i,j,ispec_axis)) = ZERO ! We enforce the radial displacement to zero
+              displ_elastic(1,ibool(i,j,ispec_axis)) = ZERO ! enforce the radial displacement to zero
+              veloc_elastic(1,ibool(i,j,ispec_axis)) = ZERO ! enforce the radial velocity to zero
+              accel_elastic(1,ibool(i,j,ispec_axis)) = ZERO ! enforce the radial acceleration to zero
             endif
           enddo
         enddo

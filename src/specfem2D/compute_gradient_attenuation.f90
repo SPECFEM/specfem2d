@@ -56,7 +56,7 @@
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
 
-  logical, dimension(nspec) :: elastic!,is_on_the_axis
+  logical, dimension(nspec) :: elastic
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec)  :: xix,xiz,gammax,gammaz
@@ -135,9 +135,8 @@
           duz_dxl(i,j,ispec) = duz_dxi*xixl + duz_dgamma*gammaxl
           duz_dzl(i,j,ispec) = duz_dxi*xizl + duz_dgamma*gammazl
 
-          if (AXISYM .and. is_on_the_axis(ispec) .and. i == 1) then ! du_z/dr=0 on the axis
+          if (AXISYM .and. is_on_the_axis(ispec) .and. i == 1) then ! d_uz/dr=0 on the axis
             duz_dxl(i,j,ispec) = 0.d0
-            !dux_dxl = 0.d0
           endif
 
         enddo
