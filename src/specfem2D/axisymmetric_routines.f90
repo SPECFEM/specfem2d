@@ -53,41 +53,13 @@ subroutine  build_is_on_the_axis()
 
     implicit none
 
-    ! include "constants.h"
-
     ! local parameters
     integer :: ispec
 
-    is_on_the_axis(:) = .false. ! Normally this has been done before but we can never be too careful.
-
+    is_on_the_axis(:) = .false.
     do ispec = 1,nspec
       if (any(ispec_of_axial_elements == ispec)) is_on_the_axis(ispec) = .true.
     enddo
-
-  ! do ispec = 1,nspec
-  !   counter = 0
-  !   do j = 1,NGLLZ,NGLLZ-1    ! just check the corners
-  !     do i = 1,NGLLX,NGLLX-1  ! just check the corners
-  !       iglob = ibool(i,j,ispec)
-  !       if (abs(coord(1,iglob)) < TINYVAL) counter = counter + 1
-  !     enddo
-  !   enddo
-  !
-  !if ( counter == 1 ) call exit_MPI('error: element with a single point on the symmetry axis found')
-  !if ( counter > 2 ) call exit_MPI('error: element with more than two points on the symmetry axis found; this should never happen')
-  ! TODO see how to check that with our new implementation
-  !   if ( counter == 2 ) then
-  !     is_on_the_axis(ispec)=.true.
-  ! DK DK and AB AB: for now make sure that the left edge is the one that is on the axis;
-  ! DK DK and AB AB: we could remove this constraint but we purposely do not do it for now
-  !     iglob1 = ibool(1,1,ispec)
-  !     iglob2 = ibool(1,NGLLZ,ispec)
-  !     if ( abs(coord(1,iglob1)) > TINYVAL .or. abs(coord(1,iglob2)) > TINYVAL ) then
-  !        call exit_MPI('DK DK and AB AB: axial element found is rotated; this is currently not implemented')
-  ! TODO see how to check that with our new implementation
-  !     endif
-  !   endif
-  ! enddo
 
   end subroutine build_is_on_the_axis
 
@@ -119,8 +91,6 @@ subroutine  build_is_on_the_axis()
 
     if ( any_poroelastic ) &
       call exit_MPI('Poroelasticity is presently not implemented for axisymmetric simulations')
-    !if ( ATTENUATION_VISCOELASTIC_SOLID) &
-    !  call exit_MPI('Attenuation (ATTENUATION_VISCOELASTIC_SOLID) is presently not implemented for axisymmetric simulations')
     if ( any(anisotropic(:) .eqv. .true.) ) &
       call exit_MPI('Anisotropy is presently not implemented for axisymmetric simulations')
     if ( ROTATE_PML_ACTIVATE ) &

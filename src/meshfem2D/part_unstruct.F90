@@ -671,7 +671,7 @@ contains
      index_rotation6 = 4
      index_rotation7 = 1
      index_rotation8 = 4
-     ! index_rotation9 does not exist because the center rotates on itself
+     ! index_rotation9 does not need to exist because the center rotates on itself
    else if(index_edge == 2) then
    ! right edge
      index_rotation1 = 2
@@ -682,6 +682,7 @@ contains
      index_rotation6 = 4
      index_rotation7 = 1
      index_rotation8 = 2
+     ! index_rotation9 does not need to exist because the center rotates on itself
    else if(index_edge == 3) then
    ! top edge
      index_rotation1 = 3
@@ -692,6 +693,7 @@ contains
      index_rotation6 = 2
      index_rotation7 = 2
      index_rotation8 = 3
+     ! index_rotation9 does not need to exist because the center rotates on itself
    else if(index_edge == 4) then
    ! left edge
      index_rotation1 = 1
@@ -702,6 +704,7 @@ contains
      index_rotation6 = 3
      index_rotation7 = 3
      index_rotation8 = 4
+     ! index_rotation9 does not need to exist because the center rotates on itself
    else
      stop 'The edge on which abs_nodes is located should be defined'
    endif
@@ -868,7 +871,7 @@ subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and
  enddo
 
  do j = 1, 4 ! Loop on the corners
-   print *, "CORNER NUMBER :", j
+!  print *, "corner number: ", j
    if(j == 1) then
      index_edge = 3 ! top edge
      ibool_rotated(:,:) = ibool(:,:) ! During this first step we just copy the ibool
@@ -895,7 +898,7 @@ subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and
      index_rotation6 = 4
      index_rotation7 = 1
      index_rotation8 = 4
-     ! index_rotation9 does not exist because the center rotates on itself
+     ! index_rotation9 does not need to exist because the center rotates on itself
    else if(index_edge == 2) then
    ! right edge
      index_rotation1 = 2
@@ -906,6 +909,7 @@ subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and
      index_rotation6 = 4
      index_rotation7 = 1
      index_rotation8 = 2
+     ! index_rotation9 does not need to exist because the center rotates on itself
    else if(index_edge == 3) then
    ! top edge
      index_rotation1 = 3
@@ -916,6 +920,7 @@ subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and
      index_rotation6 = 2
      index_rotation7 = 2
      index_rotation8 = 3
+     ! index_rotation9 does not need to exist because the center rotates on itself
    else if(index_edge == 4) then
    ! left edge
      index_rotation1 = 1
@@ -926,22 +931,23 @@ subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and
      index_rotation6 = 3
      index_rotation7 = 3
      index_rotation8 = 4
+     ! index_rotation9 does not need to exist because the center rotates on itself
    else
      stop 'rotate_mesh_for_axisym: the edge on which axisym_edge is located should be defined'
    endif
 
 
-  ! print *,"    Loop on the elements on the axis... : "
+!   print *,"    Loop on the elements on the axis... : "
    do i = 1,nelem_on_the_axis ! Loop on the elements on the axis (read from the axisym file)
-     print *
-     print *,"        Element on the axis",i
+!    print *
+!    print *,"        Element on the axis",i
      if(index_edge == axisym_edge_type(i)) then
-       print *,"       rotating that axial element"
+!      print *,"       rotating that axial element"
        ispec = ispec_of_axial_elements(i) + 1 ! ispec_of_axial_elements starts from 0
        found_this_point = .false.
-     !  print *,"        Loop on the control points and look for ", inode1_axial_elements(i)
+!       print *,"        Loop on the control points and look for ", inode1_axial_elements(i)
        do inode = 1,ngnod ! loop on the control points on the axial element ispec_of_axial_elements(i)
-      !   print *,ibool(inode,ispec)
+!         print *,ibool(inode,ispec)
          if(ibool(inode,ispec) == inode1_axial_elements(i)) then
            i1 = inode
            found_this_point = .true.
@@ -966,9 +972,9 @@ subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and
        endif
        ! test orientation
        if(i1 == index_rotation1 .and. i2 == index_rotation2) then
-         print *,'orientation of element ',i,' is already good'
+!        print *,'orientation of element ',i,' is already good'
        else if (i1 == index_rotation3 .and. i2 == index_rotation4) then !for this one, remember that we have swapped, thus 41 is 14
-         print *,'element ',i,' must be rotated 3 times'
+!        print *,'element ',i,' must be rotated 3 times'
          ibool_rotated(4,ispec) = ibool(1,ispec)
          ibool_rotated(1,ispec) = ibool(2,ispec)
          ibool_rotated(2,ispec) = ibool(3,ispec)
@@ -982,7 +988,7 @@ subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and
          endif
 
        else if (i1 == index_rotation5 .and. i2 == index_rotation6) then
-         print *,'element ',i,ispec,' must be rotated 2 times top'
+!        print *,'element ',i,ispec,' must be rotated 2 times top'
          ibool_rotated(3,ispec) = ibool(1,ispec)
          ibool_rotated(4,ispec) = ibool(2,ispec)
          ibool_rotated(1,ispec) = ibool(3,ispec)
@@ -996,7 +1002,7 @@ subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and
          endif
 
        else if (i1 == index_rotation7 .and. i2 == index_rotation8) then
-         print *,'element ',i,' must be rotated 1 time'
+!        print *,'element ',i,' must be rotated 1 time'
          ibool_rotated(2,ispec) = ibool(1,ispec)
          ibool_rotated(3,ispec) = ibool(2,ispec)
          ibool_rotated(4,ispec) = ibool(3,ispec)
@@ -1012,7 +1018,7 @@ subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and
          stop 'rotate_mesh_for_axisym: problem in an element'
        endif
      else ! of if(index_edge == axisym_edge_type(i))
-      print *,"       NOT rotating that axial element"
+!     print *,'       NOT rotating that axial element'
      endif ! of if(index_edge == axisym_edge_type(i))
    enddo
  enddo
