@@ -947,7 +947,6 @@ subroutine rotate_mesh_for_axisym(ngnod) ! TODO merge with the routine above and
        found_this_point = .false.
 !       print *,"        Loop on the control points and look for ", inode1_axial_elements(i)
        do inode = 1,ngnod ! loop on the control points on the axial element ispec_of_axial_elements(i)
-!         print *,ibool(inode,ispec)
          if(ibool(inode,ispec) == inode1_axial_elements(i)) then
            i1 = inode
            found_this_point = .true.
