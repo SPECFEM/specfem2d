@@ -16,7 +16,7 @@ UNDO_ATTENUATION                = .false.
 NT_DUMP_ATTENUATION             = 500
 
 # parameters concerning partitioning
-nproc                           = 1              # number of processes
+nproc                           = 4              # number of processes
 partitioning_method             = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
 
 ngnod                           = 9              # number of control nodes per element (4 or 9)
@@ -89,7 +89,7 @@ output_color_image              = .true.         # output JPEG color image of th
 imagetype_JPEG                  = 2              # display 1=displ_Ux 2=displ_Uz 3=displ_norm 4=veloc_Vx 5=veloc_Vz 6=veloc_norm 7=accel_Ax 8=accel_Az 9=accel_norm 10=pressure
 factor_subsample_image          = 1.0d0          # (double precision) factor to subsample color images output by the code (useful for very large models)
 USE_CONSTANT_MAX_AMPLITUDE      = .false.        # by default the code normalizes each image independently to its maximum; use this option to use the global maximum below instead
-CONSTANT_MAX_AMPLITUDE_TO_USE   = 1.17d4         # constant maximum amplitude to use for all color images if the above USE_CONSTANT_MAX_AMPLITUDE option is true
+CONSTANT_MAX_AMPLITUDE_TO_USE   = 20.0d-5         # constant maximum amplitude to use for all color images if the above USE_CONSTANT_MAX_AMPLITUDE option is true
 POWER_DISPLAY_COLOR             = 0.30d0         # non linear display to enhance small amplitudes in JPEG color images
 DRAW_SOURCES_AND_RECEIVERS      = .true.         # display sources as orange crosses and receivers as green squares in JPEG images or not
 DRAW_WATER_IN_BLUE              = .true.         # display acoustic layers as constant blue in JPEG images, because they likely correspond to water in the case of ocean acoustics or in the case of offshore oil industry experiments (if off, display them as greyscale, as for elastic or poroelastic elements, for instance for acoustic-only oil industry models of solid media)
