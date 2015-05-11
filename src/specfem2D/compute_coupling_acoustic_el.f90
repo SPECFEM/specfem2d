@@ -353,14 +353,30 @@
         jacobian1D = sqrt(xgamma**2 + zgamma**2)
         nx = - zgamma / jacobian1D
         nz = + xgamma / jacobian1D
-        weight = jacobian1D * wzgll(j)
+        if( AXISYM ) then
+          if( is_on_the_axis(ispec_acoustic) ) then
+            stop 'error: rotated element detected on the symmetry axis, this should not happen'
+          else
+            weight = jacobian1D * wzgll(j) * coord(1,ibool(i,j,ispec_acoustic))
+          endif
+        else
+          weight = jacobian1D * wzgll(j)
+        endif
       else if( iedge_acoustic ==IRIGHT ) then
         xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         jacobian1D = sqrt(xgamma**2 + zgamma**2)
         nx = + zgamma / jacobian1D
         nz = - xgamma / jacobian1D
-        weight = jacobian1D * wzgll(j)
+        if( AXISYM ) then
+          if( is_on_the_axis(ispec_acoustic) ) then
+            stop 'error: rotated element detected on the symmetry axis, this should not happen'
+          else
+            weight = jacobian1D * wzgll(j) * coord(1,ibool(i,j,ispec_acoustic))
+          endif
+        else
+          weight = jacobian1D * wzgll(j)
+        endif
       endif
 
       ! compute dot product
