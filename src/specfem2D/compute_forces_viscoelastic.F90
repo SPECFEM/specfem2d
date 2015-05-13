@@ -905,6 +905,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
           if (AXISYM) then
             if (is_on_the_axis(ispec) ) then
               tempx3(i,j) = wzgll(j)*jacobian(1,j,ispec)*sigma_thetatheta(1,j)*hprimeBarwglj_xx(1,i)
+              ! This is normal, we add a contribution depending to the value on the axis.
 
               if ( abs(coord(1,ibool(i,j,ispec))) > TINYVAL ) then ! Not first GLJ point
                 if ( i == 1 ) then
