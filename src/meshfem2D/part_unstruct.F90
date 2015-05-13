@@ -833,7 +833,7 @@ subroutine rotate_mesh_for_axisym(ngnod)
 ! Ex :
 !   x=0
 !   ...
-!    |    
+!    |
 !    O ibool = 235   ---> We want that index to be saved in ibool(1,ispec) or ibool(4,ispec)
 !    |
 !    |
@@ -934,7 +934,7 @@ subroutine rotate_mesh_for_axisym(ngnod)
       i1 = i2
       i2 = iswap
     endif
-    
+
     ! print *,"point 1 (with coord 0):",inode1_axial_elements(i)
     ! print *,"point 2 (with coord 0):",inode2_axial_elements(i)
     ! print *,"ibool of this element :"
@@ -961,7 +961,7 @@ subroutine rotate_mesh_for_axisym(ngnod)
         ibool_rotated(6,ispec) = ibool(7,ispec)
         ibool_rotated(7,ispec) = ibool(8,ispec)
         ! 9th point is at the element center and thus never changes when we rotate an element
-      endif  
+      endif
     else if (i1 == 2 .and. i2 == 3) then ! Element must be rotated 2 times
       ! print *,'element ',i,ispec,' must be rotated 2 times top'
       ibool_rotated(3,ispec) = ibool(1,ispec)
@@ -974,7 +974,7 @@ subroutine rotate_mesh_for_axisym(ngnod)
         ibool_rotated(5,ispec) = ibool(7,ispec)
         ibool_rotated(6,ispec) = ibool(8,ispec)
         ! 9th point is at the element center and thus never changes when we rotate an element
-      endif 
+      endif
     else if (i1 == 3 .and. i2 == 4) then ! Element must be rotated 1 time
       ! print *,'element ',i,' must be rotated 1 time'
       ibool_rotated(2,ispec) = ibool(1,ispec)
@@ -992,7 +992,7 @@ subroutine rotate_mesh_for_axisym(ngnod)
       stop 'rotate_mesh_for_axisym: problem in an element'
     endif
   enddo
-  
+
   ! Here we put the result back in the not-so-easy to use format at the end of the routine
   do ispec = 1, nelmnts
     if(ngnod == 4) then
