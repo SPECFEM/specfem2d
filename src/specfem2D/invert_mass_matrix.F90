@@ -263,7 +263,7 @@
             ispec_PML=spec_to_PML(ispec)
             if(time_stepping_scheme == 1)then
               if(region_CPML(ispec) == CPML_X_ONLY) then
-                if (AXISYM) then   !! AB AB : This PML can't be on the axis : it is a right pml
+                if (AXISYM) then   !! AB AB: This PML cannot be on the axis: it is a right PML
                   rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
                        + coord(1,iglob)*wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) &
                        + d_x_store(i,j,ispec_PML) * deltat / 2.d0)
@@ -274,7 +274,7 @@
                 endif
 
               else if (region_CPML(ispec) == CPML_XZ_ONLY) then
-                if (AXISYM) then   !! AB AB : This corner can't be on the axis
+                if (AXISYM) then   !! AB AB: This corner cannot be on the axis
                   rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
                        + coord(1,iglob)*wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) &
                        *  (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML) &
