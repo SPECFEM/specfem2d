@@ -578,8 +578,8 @@ class mesh(object,mesh_tools):
                             for i in nodes: # ??? TODO nodes_ok == node_edge ???
                                 if i in node_edge:
                                     nodes_ok.append(i)
-                            txt='%10i %10i %10i %10i %10i\n' % (id_element,2,nodes_ok[0],nodes_ok[1],4) 
-                            # Write the id of the quad, 2 (number of nodes describing a free surface elements), the nodes, and the orientation (4=left)
+                            txt='%10i %10i %10i %10i\n' % (id_element,2,nodes_ok[0],nodes_ok[1]) 
+                            # Write the id of the quad, 2 (number of nodes describing a free surface elements), the nodes
                             axisedge.write(txt)
         axisedge.close()
         print 'Ok'
