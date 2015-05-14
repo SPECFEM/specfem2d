@@ -47,6 +47,7 @@ subroutine save_adjoint_kernels()
                           any_acoustic, any_elastic, any_poroelastic, &
                           rho_ac_kl, kappa_ac_kl, alpha_ac_kl, rhop_ac_kl, &
                           rho_kl, kappa_kl, mu_kl, rhop_kl, alpha_kl, beta_kl, &
+                          bulk_c_kl, bulk_beta_kl, &
                           rhot_kl, rhof_kl, sm_kl, eta_kl, mufr_kl, B_kl, &
                           C_kl, M_kl, rhob_kl, rhofb_kl, phi_kl, Bb_kl, Cb_kl, Mb_kl, mufrb_kl, &
                           rhobb_kl, rhofbb_kl, phib_kl, cpI_kl, cpII_kl, cs_kl, ratio_kl, GPU_MODE
@@ -127,6 +128,8 @@ subroutine save_adjoint_kernels()
       write(203)rhop_kl
       write(204)alpha_kl
       write(205)beta_kl
+      write(206)bulk_c_kl
+      write(207)bulk_beta_kl
       close(200)
       close(201)
       close(202)

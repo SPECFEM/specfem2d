@@ -1010,6 +1010,8 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
       allocate(rhop_kl(NGLLX,NGLLZ,nspec))
       allocate(alpha_kl(NGLLX,NGLLZ,nspec))
       allocate(beta_kl(NGLLX,NGLLZ,nspec))
+      allocate(bulk_c_kl(NGLLX,NGLLZ,nspec))
+      allocate(bulk_beta_kl(NGLLX,NGLLZ,nspec))
       allocate(rhorho_el_hessian_final2(NGLLX,NGLLZ,nspec))
       allocate(rhorho_el_hessian_temp2(nglob))
       allocate(rhorho_el_hessian_final1(NGLLX,NGLLZ,nspec))

@@ -345,6 +345,15 @@ subroutine prepare_timerun_kernel()
           open(unit = 205, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
           if (ios /= 0) stop 'Error writing kernel file to disk'
 
+          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_c_kernel.bin'
+          open(unit = 206,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
+          if (ios /= 0) stop 'Error writing kernel file to disk'
+
+          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_beta_kernel.bin'
+          open(unit = 207,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
+          if (ios /= 0) stop 'Error writing kernel file to disk'
+
+
       else ! legacy binary format
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_mu_kernel.bin'
         open(unit = 97, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
@@ -363,6 +372,9 @@ subroutine prepare_timerun_kernel()
       rhop_kl(:,:,:) = 0._CUSTOM_REAL
       beta_kl(:,:,:) = 0._CUSTOM_REAL
       alpha_kl(:,:,:) = 0._CUSTOM_REAL
+      bulk_c_kl(:,:,:) = 0._CUSTOM_REAL
+      bulk_beta_kl(:,:,:) = 0._CUSTOM_REAL
+
       rhorho_el_hessian_final2(:,:,:) = 0._CUSTOM_REAL
       rhorho_el_hessian_temp2(:) = 0._CUSTOM_REAL
       rhorho_el_hessian_final1(:,:,:) = 0._CUSTOM_REAL

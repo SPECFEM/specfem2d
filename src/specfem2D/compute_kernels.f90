@@ -50,7 +50,7 @@
 ! see e.g. Tromp et al. (2005)
 
   use specfem_par, only: elastic,rho_k,rhorho_el_hessian_temp1,rhorho_el_hessian_temp2, &
-                         rho_kl,mu_kl,kappa_kl,rhop_kl,beta_kl,alpha_kl, &
+                         rho_kl,mu_kl,kappa_kl,rhop_kl,beta_kl,alpha_kl,bulk_c_kl,bulk_beta_kl, &
                          rhorho_el_hessian_final1,rhorho_el_hessian_final2, &
                          nglob,nspec,ibool,accel_elastic,b_displ_elastic,b_accel_elastic, &
                          rhol_global,mul_global,kappal_global, &
@@ -182,6 +182,10 @@
                         (3._CUSTOM_REAL * kappal_global(iglob)) * kappa_kl(i,j,ispec))
           alpha_kl(i,j,ispec) = TWO * (1._CUSTOM_REAL + 4._CUSTOM_REAL * mul_global(iglob)/&
                          (3._CUSTOM_REAL * kappal_global(iglob))) * kappa_kl(i,j,ispec)
+          !
+          bulk_c_kl(i,j,ispec) =  TWO * kappa_kl(i,j,ispec)
+          bulk_beta_kl(i,j,ispec) =  TWO * mu_kl(i,j,ispec)
+
           rhorho_el_hessian_final1(i,j,ispec) = rhorho_el_hessian_final1(i,j,ispec) + &
                                   rhorho_el_hessian_temp1(iglob) * deltat
           rhorho_el_hessian_final2(i,j,ispec) = rhorho_el_hessian_final2(i,j,ispec) + &
