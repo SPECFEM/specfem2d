@@ -904,8 +904,9 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
 
           if (AXISYM) then
             if (is_on_the_axis(ispec) ) then
+              ! This is normal, we always add a contribution depending on the value on the axis
+              ! i.e. we purposely sum something at point (i,j) with something at point (1,j)
               tempx3(i,j) = wzgll(j)*jacobian(1,j,ispec)*sigma_thetatheta(1,j)*hprimeBarwglj_xx(1,i)
-              ! This is normal, we add a contribution depending to the value on the axis.
 
               ! not first GLJ point
               if ( abs(coord(1,ibool(i,j,ispec))) > TINYVAL ) then

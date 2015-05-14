@@ -117,8 +117,7 @@ contains
   if(num_sources /= NSOURCES) then
        print *,'num_sources :',num_sources
        print *,'NSOURCES :',NSOURCES
-       print *,'Total number of sources read is different than declared in Par_file'
-       stop
+       stop 'error: Total number of sources read is different from that declared in the Par_file'
   endif
 
   ! reads in source parameters
