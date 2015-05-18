@@ -44,6 +44,8 @@
   subroutine define_external_model_dummy(coord,material_element,ibool, &
               rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
               c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
+              
+  use specfem_par, only: poroelastcoef,density,kmato
 
   implicit none
 
@@ -86,47 +88,53 @@
     do j = 1,NGLLZ
       do i = 1,NGLLX
 
-   iglob = ibool(i,j,ispec)
+        iglob = ibool(i,j,ispec)
 
-   x = coord(1,iglob)
-   z = coord(2,iglob)
+        x = coord(1,iglob)
+        z = coord(2,iglob)
 
-   if(material_element(ispec) == 1 .or. x < 1700.d0 .or. z >= 2300.d0) then
-     rho(i,j,ispec) = 2000.d0
-     vp(i,j,ispec) = 3000.d0
-     vs(i,j,ispec) = vp(i,j,ispec) / sqrt(3.d0)
-     QKappa_attenuation(i,j,ispec) = 9999. ! this means no attenuation
-     Qmu_attenuation(i,j,ispec)    = 9999. ! this means no attenuation
-     c11(i,j,ispec) = 169.d9
-     c13(i,j,ispec) = 122.d9
-     c15(i,j,ispec) = 0.d0
-     c33(i,j,ispec) = c11(i,j,ispec)
-     c35(i,j,ispec) = 0.d0
-     c55(i,j,ispec) = 75.3d9
-     c12(i,j,ispec) = 0.d0
-     c23(i,j,ispec) = 0.d0
-     c25(i,j,ispec) = 0.d0
+        if(material_element(ispec) == 1 .or. x < 1700.d0 .or. z >= 2300.d0) then
+          rho(i,j,ispec) = 2000.d0
+          vp(i,j,ispec) = 3000.d0
+          vs(i,j,ispec) = vp(i,j,ispec) / sqrt(3.d0)
+          QKappa_attenuation(i,j,ispec) = 9999. ! this means no attenuation
+          Qmu_attenuation(i,j,ispec)    = 9999. ! this means no attenuation
+          c11(i,j,ispec) = 169.d9
+          c13(i,j,ispec) = 122.d9
+          c15(i,j,ispec) = 0.d0
+          c33(i,j,ispec) = c11(i,j,ispec)
+          c35(i,j,ispec) = 0.d0
+          c55(i,j,ispec) = 75.3d9
+          c12(i,j,ispec) = 0.d0
+          c23(i,j,ispec) = 0.d0
+          c25(i,j,ispec) = 0.d0
 
-   else if(material_element(ispec) == 2) then
-     rho(i,j,ispec) = 2500.d0
-     vp(i,j,ispec) = 3600.d0
-     vs(i,j,ispec) = vp(i,j,ispec) / 2.d0
-     QKappa_attenuation(i,j,ispec) = 120.
-     Qmu_attenuation(i,j,ispec) = 120.
-     c11(i,j,ispec) = 0.d0   ! this means no anisotropy
-     c13(i,j,ispec) = 0.d0
-     c15(i,j,ispec) = 0.d0
-     c33(i,j,ispec) = 0.d0
-     c35(i,j,ispec) = 0.d0
-     c55(i,j,ispec) = 0.d0
-     c12(i,j,ispec) = 0.d0
-     c23(i,j,ispec) = 0.d0
-     c25(i,j,ispec) = 0.d0
+        else if(material_element(ispec) == 2) then
+          rho(i,j,ispec) = 2500.d0
+          vp(i,j,ispec) = 3600.d0
+          vs(i,j,ispec) = vp(i,j,ispec) / 2.d0
+          QKappa_attenuation(i,j,ispec) = 120.
+          Qmu_attenuation(i,j,ispec) = 120.
+          c11(i,j,ispec) = 0.d0   ! this means no anisotropy
+          c13(i,j,ispec) = 0.d0
+          c15(i,j,ispec) = 0.d0
+          c33(i,j,ispec) = 0.d0
+          c35(i,j,ispec) = 0.d0
+          c55(i,j,ispec) = 0.d0
+          c12(i,j,ispec) = 0.d0
+          c23(i,j,ispec) = 0.d0
+          c25(i,j,ispec) = 0.d0
 
-   else
-     write(IOUT,*) 'flag number in external model is equal to ',material_element(ispec)
-     stop 'wrong flag number in external model; exiting...'
-   endif
+        else
+          write(IOUT,*) 'flag number in external model is equal to ',material_element(ispec)
+          stop 'wrong flag number in external model; exiting...'
+        endif
+        
+        !! AB AB Do not forget these 3 lines otherwise PML may not work !!
+        density(1,kmato(ispec)) = rho(i,j,ispec)
+        poroelastcoef(3,1,kmato(ispec)) = rho(i,j,ispec) * vp(i,j,ispec) * vp(i,j,ispec)
+        poroelastcoef(2,1,kmato(ispec)) =  rho(i,j,ispec) * vs(i,j,ispec) * vs(i,j,ispec)
+        !! AB AB Do not forget these 3 lines otherwise PML may not work !!
 
       enddo
     enddo
