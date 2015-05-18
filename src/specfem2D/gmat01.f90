@@ -220,7 +220,7 @@
         ! Poisson's ratio must be between -1 and +1/2
         if (poisson_s < -1.d0 .or. poisson_s > 0.5d0) stop 'Poisson''s ratio for the solid phase out of range'
      else if (indic <= 0) then
-       assign_external_model =.true.
+       assign_external_model = .true.
        tomo_material = n
        mu = val2 ! for acoustic medium vs must be 0 anyway
      else
