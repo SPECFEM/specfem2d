@@ -84,13 +84,12 @@ module interpolation
 
   ! ====================== Implementation part ===============
 
-  integer function binarysearch(length, array, value, delta)
-    ! Given a sorted array and a value, returns the index of the element that
+  integer function searchInf(length, array, value,delta)
+    ! Given a a sorted array and a value, returns the index of the element that
     ! is closest to, but less than, the given value.
     ! Uses a binary search algorithm.
-    ! "delta" is the tolerance used to determine if two values are equal
-    ! if ( abs(x1 - x2) <= delta) then assume x1 = x2
-    ! endif
+    ! 12 40 45 60 62 80 95  
+
 
     implicit none
 
@@ -98,45 +97,52 @@ module interpolation
     double precision, dimension(length), intent(in) :: array
     double precision, intent(in) :: value
     double precision, intent(in), optional :: delta
-
-    ! Local variables
-    integer :: left, middle, right
     double precision :: d
+    integer :: index_closest = 1
 
-    binarysearch = -1
-    if (present(delta) .eqv. .true.) then
+    if (present(delta)) then
       d = delta
     else
       d = 1e-9
     endif
-    left = 1
-    right = length
-    do
-      if (left > right) then
-        if (right > 0) then
-          binarysearch = right
-        else ! Value is inferior to the lowest value of array
-          binarysearch = left ! We return the first value of the array
-        endif
+        
+    if (length <= 0) then
+      stop "Incorrect length in searchInf"
+    else if(length == 1) then
+      searchInf = array(1)
+    else
+      if (array(1) > array(2)) stop "searchInf needs an increasing array"
+      if (value < array(1)) then
+        searchInf = 1
+        return
+      else if (value >= array(length)) then
+        searchInf = length - 1
         return
       endif
-      middle = nint((left+right) / 2.0)
-      if ( abs(array(middle) - value) <= d) then
-        binarysearch = middle
-        if(binarysearch == length) then
-          binarysearch = middle - 1
-        else
-          binarysearch = middle
-        endif
-        return
-      else if (array(middle) > value) then
-        right = middle - 1
+      index_closest = 1
+      do while (array(index_closest) < value)
+        index_closest = index_closest+1        
+      enddo
+   !   index_closest = minloc( abs(array-value) , dim = 1) ! Index of closest value
+      if (abs(array(index_closest)-value) > d) then
+        searchInf = index_closest - 1
       else
-        left = middle + 1
+        searchInf = index_closest
       endif
-    enddo
-
-  end function binarysearch
+      
+   !   index_closest = minloc( abs(array-value) , dim = 1) ! Index of closest value
+   !   if (abs(array(index_closest)-value) > d) then
+   !     if (array(index_closest) > value) then
+   !       searchInf = index_closest - 1
+   !     else
+   !       searchInf = index_closest
+   !     endif
+   !   else
+   !     searchInf = index_closest
+   !   endif
+    endif
+    return
+  end function searchInf
 
   !
   !-------------------------------------------------------------------------------------------------
@@ -159,7 +165,7 @@ module interpolation
     double precision, intent(in), optional :: delta
 
     ! Local variables
-    double precision :: denom, x1, x2, y1, y2
+    double precision :: denom, x1, x2, y1, y2, minx, maxx, miny, maxy
     integer :: i,j
     double precision :: d
 
@@ -168,27 +174,161 @@ module interpolation
     else
       d = 1e-9
     endif
-    i = binarysearch(x_len, x_array, x, delta)
-    j = binarysearch(y_len, y_array, y, delta)
-    if (i < x_len) then
-      x1 = x_array(i)
-      x2 = x_array(i+1)
-    else
-      x1 = x_array(i-1)
-      x2 = x_array(i)
-    endif
-    if (j < y_len) then
-      y1 = y_array(j)
-      y2 = y_array(j+1)
-    else
-      y1 = y_array(j-1)
-      y2 = y_array(j)
-    endif
-    denom = (x2 - x1)*(y2 - y1)
-    interpolate = (f(i,j)*(x2-x)*(y2-y) + f(i+1,j)*(x-x1)*(y2-y) + &
-                  f(i,j+1)*(x2-x)*(y-y1) + f(i+1, j+1)*(x-x1)*(y-y1))/denom
 
-  end function interpolate
+!    print *,"f : "
+!    write(*,'(A22)', advance='no') '            '
+!    do i=1,x_len
+!       write(*,'(F20.12)', advance='no') x_array(i)
+!    enddo
+!    print *,""
+!    print *,""
+!    do j=1,y_len
+!      do i=1,x_len
+!        if (i == 1) then
+!          write(*,'(F20.12,A2,F20.12)', advance='no') y_array(j),'  ',f(i,j)
+!        else
+!          write(*,'(F20.12)', advance='no') f(i,j)
+!        endif
+!      enddo
+!      print *,""
+!    enddo
+!    print *,""
+    
+    minx = minval(x_array)
+    maxx = maxval(x_array)
+    miny = minval(y_array)
+    maxy = maxval(y_array)
+    !        y 
+    !        ^
+    ! case 3 | case 6 | case 2
+    ! ------------------------
+    !        |        |
+    ! case 7 | case 9 | case 8
+    !        |        |
+    ! ------------------------> x
+    ! case 1 | case 5 | case 4
+    
+    if (x <= minx .and. y <= miny) then ! case 1
+      !print *,"case1"
+      interpolate = f(1,1)
+    else if (x > maxx .and. y >= maxy) then ! case 2
+      !print *,"case2"
+      interpolate = f(x_len,y_len)
+    else if (x <= minx .and. y >= maxy) then ! case 3
+      !print *,"case3"
+      interpolate = f(1,y_len)
+    else if (x >= maxx .and. y <= miny) then ! case 4
+      !print *,"case4"
+      interpolate = f(x_len,1)
+    else if (x >= minx .and. x <= maxx .and. y <= miny) then ! case 5
+      !print *,"case5"
+      y1 = y_array(1)
+      y2 = y_array(2)
+      ! y = y1
+      i = searchInf(x_len, x_array, x) ! Test also if the array is increasing
+      j = 1
+      if (i < x_len) then
+        x1 = x_array(i)
+        x2 = x_array(i+1)
+      else
+        x1 = x_array(i-1)
+        x2 = x_array(i)
+      endif
+      denom = (x2 - x1)*(y2 - y1)
+      interpolate = (f(i,j)*(x2-x)*(y2-y1) + f(i+1,j)*(x-x1)*(y2-y1))/denom
+    else if (x >= minx .and. x <= maxx .and. y >= maxy) then ! case 6
+      !print *,"case6"
+      y1 = y_array(y_len-1)
+      y2 = y_array(y_len)
+      ! y = y2
+      i = searchInf(x_len, x_array, x) ! Test also if the array is increasing
+      j = y_len - 1
+      if (i < x_len) then
+        x1 = x_array(i)
+        x2 = x_array(i+1)
+      else
+        x1 = x_array(i-1)
+        x2 = x_array(i)
+      endif
+      denom = (x2 - x1)*(y2 - y1)
+      interpolate = (f(i,j+1)*(x2-x)*(y2-y1) + f(i+1, j+1)*(x-x1)*(y2-y1))/denom
+    else if (x <= minx .and. y >= miny .and. y <= maxy) then ! case 7
+      !print *,"case7"
+      x1 = x_array(1)
+      x2 = x_array(2)
+      ! x = x1
+      i = 1
+      j = searchInf(y_len, y_array, y) ! Test also if the array is increasing
+      if (j < y_len) then
+        y1 = y_array(j)
+        y2 = y_array(j+1)
+      else
+        y1 = y_array(j-1)
+        y2 = y_array(j)
+      endif
+      denom = (x2 - x1)*(y2 - y1)
+      interpolate = (f(i,j)*(x2-x1)*(y2-y) + f(i,j+1)*(x2-x1)*(y-y1))/denom
+    else if (x >= maxx .and. y >= miny .and. y <= maxy) then ! case 8
+      !print *,"case8"
+      x1 = x_array(x_len-1)
+      x2 = x_array(x_len)
+      ! x = x2
+      i = x_len - 1
+      j = searchInf(y_len, y_array, y) ! Test also if the array is increasing
+      if (j < y_len) then
+        y1 = y_array(j)
+        y2 = y_array(j+1)
+      else
+        y1 = y_array(j-1)
+        y2 = y_array(j)
+      endif
+      denom = (x2 - x1)*(y2 - y1)
+      interpolate = (f(i+1,j)*(x-x1)*(y2-y) + f(i+1, j+1)*(x-x1)*(y-y1))/denom
+    else ! case 9 ! The point is exactly on the area defined
+      !print *,"case9"
+      !print *,"searchInf i:"
+      i = searchInf(x_len, x_array, x) ! Test also if the array is increasing
+      !print *,"searchInf j:"
+      j = searchInf(y_len, y_array, y) ! Test also if the array is increasing
+
+      if (i < x_len) then
+        x1 = x_array(i)
+        x2 = x_array(i+1)
+      else
+        x1 = x_array(i-1)
+        x2 = x_array(i)
+      endif
+      if (j < y_len) then
+        y1 = y_array(j)
+        y2 = y_array(j+1)
+      else
+        y1 = y_array(j-1)
+        y2 = y_array(j)
+      endif
+      denom = (x2 - x1)*(y2 - y1)
+      interpolate = (f(i,j)*(x2-x)*(y2-y) + f(i+1,j)*(x-x1)*(y2-y) + &
+                    f(i,j+1)*(x2-x)*(y-y1) + f(i+1, j+1)*(x-x1)*(y-y1))/denom
+    endif
+    
+!    if (vss .and. (interpolate < 0) ) then
+!      print *,"x_len:",x_len
+!      print *,"min x_array:",minval(x_array)
+!      print *,"max x_array:",maxval(x_array)
+!      print *,"y_len",y_len
+!      print *,"min y_array:",minval(y_array)
+!      print *,"max y_array:",maxval(y_array)
+!      print *,"min f:",minval(f)
+!      print *,"max f:",maxval(f)
+!      print *,"searchInf i:",i
+!      print *,"searchInf j:",j
+!      print *,"x:",x
+!      print *,"y:",y    
+!      print *,''
+!      print *,"interpolate:",interpolate
+!      stop
+!    endif
+      
+ end function interpolate
 
 end module interpolation
 
@@ -242,6 +382,9 @@ subroutine define_external_model_from_tomo_file()
            c12ext(i,j,ispec) = 0.d0
            c23ext(i,j,ispec) = 0.d0
            c25ext(i,j,ispec) = 0.d0
+           density(1,kmato(ispec)) = rhoext(i,j,ispec)
+           poroelastcoef(3,1,kmato(ispec)) = rhoext(i,j,ispec) * vpext(i,j,ispec) * vpext(i,j,ispec)
+           poroelastcoef(2,1,kmato(ispec)) =  rhoext(i,j,ispec) * vsext(i,j,ispec) * vsext(i,j,ispec)
          else
            rhoext(i,j,ispec) = density(1,kmato(ispec))
            vpext(i,j,ispec) = sqrt(poroelastcoef(3,1,kmato(ispec))/rhoext(i,j,ispec))
@@ -298,6 +441,7 @@ subroutine read_tomo_file()
   ! x(NX) z(NZ) vp vs rho
   !
   ! Where :
+  ! _x and z must be increasing
   ! _ORIGIN_X, END_X are, respectively, the coordinates of the initial and final tomographic
   !  grid points along the x direction (in meters)
   ! _ORIGIN_Z, END_Z are, respectively, the coordinates of the initial and final tomographic
