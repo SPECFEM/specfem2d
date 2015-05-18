@@ -88,7 +88,7 @@ module interpolation
     ! Given a a sorted array and a value, returns the index of the element that
     ! is closest to, but less than, the given value.
     ! Uses a binary search algorithm.
-    ! 12 40 45 60 62 80 95  
+    ! 12 40 45 60 62 80 95
 
 
     implicit none
@@ -105,7 +105,7 @@ module interpolation
     else
       d = 1e-9
     endif
-        
+
     if (length <= 0) then
       stop "Incorrect length in searchInf"
     else if(length == 1) then
@@ -121,7 +121,7 @@ module interpolation
       endif
       index_closest = 1
       do while (array(index_closest) < value)
-        index_closest = index_closest+1        
+        index_closest = index_closest+1
       enddo
    !   index_closest = minloc( abs(array-value) , dim = 1) ! Index of closest value
       if (abs(array(index_closest)-value) > d) then
@@ -129,7 +129,7 @@ module interpolation
       else
         searchInf = index_closest
       endif
-      
+
    !   index_closest = minloc( abs(array-value) , dim = 1) ! Index of closest value
    !   if (abs(array(index_closest)-value) > d) then
    !     if (array(index_closest) > value) then
@@ -193,12 +193,12 @@ module interpolation
 !      print *,""
 !    enddo
 !    print *,""
-    
+
     minx = minval(x_array)
     maxx = maxval(x_array)
     miny = minval(y_array)
     maxy = maxval(y_array)
-    !        y 
+    !        y
     !        ^
     ! case 3 | case 6 | case 2
     ! ------------------------
@@ -207,7 +207,7 @@ module interpolation
     !        |        |
     ! ------------------------> x
     ! case 1 | case 5 | case 4
-    
+
     if (x <= minx .and. y <= miny) then ! case 1
       !print *,"case1"
       interpolate = f(1,1)
@@ -309,7 +309,7 @@ module interpolation
       interpolate = (f(i,j)*(x2-x)*(y2-y) + f(i+1,j)*(x-x1)*(y2-y) + &
                     f(i,j+1)*(x2-x)*(y-y1) + f(i+1, j+1)*(x-x1)*(y-y1))/denom
     endif
-    
+
 !    if (vss .and. (interpolate < 0) ) then
 !      print *,"x_len:",x_len
 !      print *,"min x_array:",minval(x_array)
@@ -322,12 +322,12 @@ module interpolation
 !      print *,"searchInf i:",i
 !      print *,"searchInf j:",j
 !      print *,"x:",x
-!      print *,"y:",y    
+!      print *,"y:",y
 !      print *,''
 !      print *,"interpolate:",interpolate
 !      stop
 !    endif
-      
+
  end function interpolate
 
 end module interpolation
