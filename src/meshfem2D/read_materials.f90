@@ -126,7 +126,7 @@
 
         aniso3(i) = val3read
         aniso4(i) = val4read
-        if(cs(i) /= 0.d0) then
+        if(abs(cs(i)) < TINYVAL) then
            phi(i) = 0.d0           ! elastic
         else
            phi(i) = 1.d0           ! acoustic
@@ -172,7 +172,7 @@
         if(Qmu(i) <= 0.00000001d0) stop 'non-positive value of Qmu'
 
       else if (icodemat(i) <= 0) then
-        number_of_materials_defined_by_tomo_file = number_of_materials_defined_by_tomo_file +1
+        number_of_materials_defined_by_tomo_file = number_of_materials_defined_by_tomo_file + 1
         if (number_of_materials_defined_by_tomo_file > 1) then
           stop 'Just one material can be defined by a tomo file for now (we would need to write a nummaterial_velocity_file)'
         endif
@@ -184,7 +184,7 @@
         Qmu(i) = -1.0d0
         aniso3(i) = -1.0d0
         aniso4(i) = -1.0d0
-        if(cs(i) /= 0.d0) then
+        if(abs(cs(i)) < TINYVAL) then
            phi(i) = 0.d0           ! elastic
         else
            phi(i) = 1.d0           ! acoustic
