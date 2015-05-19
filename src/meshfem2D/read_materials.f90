@@ -126,7 +126,7 @@
 
         aniso3(i) = val3read
         aniso4(i) = val4read
-        if(abs(cs(i)) < TINYVAL) then
+        if(abs(cs(i)) > TINYVAL) then
            phi(i) = 0.d0           ! elastic
         else
            phi(i) = 1.d0           ! acoustic
@@ -184,7 +184,7 @@
         Qmu(i) = -1.0d0
         aniso3(i) = -1.0d0
         aniso4(i) = -1.0d0
-        if(abs(cs(i)) < TINYVAL) then
+        if(abs(cs(i)) > TINYVAL) then
            phi(i) = 0.d0           ! elastic
         else
            phi(i) = 1.d0           ! acoustic
