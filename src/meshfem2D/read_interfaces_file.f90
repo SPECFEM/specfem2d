@@ -77,7 +77,7 @@ contains
   print *,'Reading interface data from file DATA/',interfacesfile(1:len_trim(interfacesfile)),' to count the spectral elements'
   open(unit=IIN_INTERFACES,file='DATA/'//interfacesfile,status='old',iostat=ios)
   if( ios /= 0 ) then
-    print*,'error opening file: ',trim('DATA/'//interfacesfile)
+    print *,'error opening file: ',trim('DATA/'//interfacesfile)
     stop 'error read interface file in meshfem2D'
   endif
 

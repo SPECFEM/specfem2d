@@ -501,7 +501,7 @@ SUBROUTINE decomposition_LU(a,i_min,n,indx,d)
       endif
     enddo
     if (big==0.) then
-      print*,'Singular matrix in routine decomposition_LU'
+      print *,'Singular matrix in routine decomposition_LU'
     endif
     vv(i) = 1./big
   enddo
@@ -648,7 +648,7 @@ SUBROUTINE lfit_zener(x,y,sig,ndat,poids,ia,covar,chisq,ma,Qref,point)
     endif
   enddo
   if(mfit==0) then
-    print*,'lfit: no parameters to be fitted'
+    print *,'lfit: no parameters to be fitted'
   endif
 
   do j=1,mfit

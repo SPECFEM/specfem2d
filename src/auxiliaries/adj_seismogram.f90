@@ -109,14 +109,14 @@ program adj_seismogram
 
      istart = max(floor(tstart(irec)/deltat),1)
      iend = min(floor(tend(irec)/deltat),NSTEP)
-     print*,'istart =',istart, 'iend =', iend
-     print*,'tstart =',istart*deltat, 'tend =', iend*deltat
+     print *,'istart =',istart, 'iend =', iend
+     print *,'tstart =',istart*deltat, 'tend =', iend*deltat
      if(istart >= iend) stop 'check istart,iend'
      nlenval = iend - istart +1
 
      do icomp = 1, NDIM
 
-        print*,comp(icomp)
+        print *,comp(icomp)
 
         filename = 'SEM/'//trim(station_name(irec))//'.AA.'// comp(icomp) // '.adj'
         open(unit = 11, file = trim(filename))
@@ -149,10 +149,10 @@ program adj_seismogram
         if(abs(Nnorm) > EPS) then
            !ft_bar(:) = -seism_veloc(:) * time_window(:) / Nnorm
            ft_bar(:) = seism_veloc(:) * time_window(:) / Nnorm
-           print*,'Norm =', Nnorm
+           print *,'Norm =', Nnorm
         else
            print *, 'norm < EPS for file '
-           print*,'Norm =', Nnorm
+           print *,'Norm =', Nnorm
            ft_bar(:) = 0.d0
         endif
 
@@ -168,8 +168,8 @@ program adj_seismogram
      close(11)
 
   enddo
-  print*,'*************************'
-  print*,'The input files (S****.AA.BXX/BXY/BXZ.adj) needed to run the adjoint simulation are in SEM'
-  print*,'*************************'
+  print *,'*************************'
+  print *,'The input files (S****.AA.BXX/BXY/BXZ.adj) needed to run the adjoint simulation are in SEM'
+  print *,'*************************'
 
 end program adj_seismogram

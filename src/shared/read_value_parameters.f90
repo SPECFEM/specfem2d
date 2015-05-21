@@ -307,7 +307,7 @@
 
   call param_read_nextline(string_read, len(string_read), ierr)
   if (ierr /= 0) stop 'error reading material parameter'
-  print*,trim(string_read)
+  print *,trim(string_read)
   read(string_read,*,iostat=ierr) i,icodematread,val0read,val1read,val2read,val3read,val4read,val5read,&
                       val6read,val7read,val8read,val9read,val10read,val11read,val12read
 
@@ -329,7 +329,7 @@
 
   call param_read_nextline(string_read, len(string_read), ierr)
   if (ierr /= 0) stop 'error reading region coordinates'
-  !print*,string_read
+  !print *,string_read
 
   read(string_read,*,iostat=ierr) value_to_read_1,value_to_read_2,value_to_read_3,value_to_read_4,value_to_read_5
 

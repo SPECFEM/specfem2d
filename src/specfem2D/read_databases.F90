@@ -171,10 +171,10 @@
   if(imagetype_postscript < 1 .or. imagetype_postscript > 4) call exit_MPI('Wrong type for PostScript snapshots')
 
   if(SAVE_FORWARD .and. (seismotype /= 1 .and. seismotype /= 6)) then
-    print*, '***** WARNING *****'
-    print*, 'seismotype =',seismotype
-    print*, 'Save forward wavefield => seismogram must be in displacement for (poro)elastic or potential for acoustic'
-    print*, 'Seismotype must be changed to 1 (elastic/poroelastic adjoint source) or 6 (acoustic adjoint source)'
+    print *, '***** WARNING *****'
+    print *, 'seismotype =',seismotype
+    print *, 'Save forward wavefield => seismogram must be in displacement for (poro)elastic or potential for acoustic'
+    print *, 'Seismotype must be changed to 1 (elastic/poroelastic adjoint source) or 6 (acoustic adjoint source)'
   !  stop
   endif
 

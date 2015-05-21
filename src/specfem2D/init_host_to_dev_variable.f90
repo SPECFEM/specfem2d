@@ -94,7 +94,7 @@ free_ac_ispec(:)=acoustic_surface(1,:)
 
   ! checks
   if( nelemabs < 0 ) then
-    print*,'host_to_dev: reading in negative nelemabs ',nelemabs,'...resetting to zero'
+    print *,'host_to_dev: reading in negative nelemabs ',nelemabs,'...resetting to zero'
     nelemabs = 0
   endif
 

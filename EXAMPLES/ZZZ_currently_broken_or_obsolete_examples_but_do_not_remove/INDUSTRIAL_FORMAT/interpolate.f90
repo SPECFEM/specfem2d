@@ -12,7 +12,7 @@
   character(len=512) :: system_command,sep_file,data_format,mesh_file,wavespeed_file
 
      ! creating mesh/grid
-     print*, 'generating mesh/grid...'
+     print *, 'generating mesh/grid...'
      write(system_command,"('sed -e ""s#^SIMULATION_TYPE.*#SIMULATION_TYPE = 1 #g""                     < ./DATA/Par_file > temp; mv temp ./DATA/Par_file')"); call system(system_command)
      write(system_command,"('sed -e ""s#^SAVE_FORWARD.*#SAVE_FORWARD = .false. #g""                     < ./DATA/Par_file > temp; mv temp ./DATA/Par_file')"); call system(system_command)
      write(system_command,"('sed -e ""s#^assign_external_model.*#assign_external_model = .false. #g""   < ./DATA/Par_file > temp; mv temp ./DATA/Par_file')"); call system(system_command)
@@ -22,7 +22,7 @@
      write(system_command,"('./xspecfem2D')"); call system(system_command)
 
      ! reading SEP models
-     print*, 'reading SEP models...'
+     print *, 'reading SEP models...'
      !!! VP model in SEP format
      call READ_SEP_HEADER(sep_directory,sep_header_file_vp, &
                           sep_file,NX,NY,NZ,OX,OY,OZ,DX,DY,DZ, &
@@ -51,7 +51,7 @@
      !call READ_SEP_MODEL_2D(sep_file,NX,NY,NZ,OX,OY,OZ,DX,DY,DZ,esize,data_format,rho_SEP)
 
      ! interpolating models
-     print*, 'interpolating models onto mesh/grid...'
+     print *, 'interpolating models onto mesh/grid...'
      mesh_file="./DATA/model_velocity.dat_output"
      wavespeed_file="./DATA/model_velocity.dat_input"
      call interpolate(vp_SEP,vs_SEP,rho_SEP,NX,NY,NZ,DX,DY,DZ,OX,OY,OZ,mesh_file,wavespeed_file)
@@ -86,10 +86,10 @@
   sep_header_file_complete=trim(adjustl(sep_directory))//trim(adjustl(sep_header_file))
 
   open(unit=13,file=trim(adjustl(sep_header_file_complete)),status='old',iostat=ier)
-  print*, ''
-  print*, '*******************************************************************************'
-  print*, 'reading sep header file: '
-  print*, trim(adjustl(sep_header_file_complete))
+  print *, ''
+  print *, '*******************************************************************************'
+  print *, 'reading sep header file: '
+  print *, trim(adjustl(sep_header_file_complete))
   if (ier/=0) stop 'ERROR: cannot open sep header file'
 
   read(13,'(a3a)')     junk, sep_file
@@ -108,15 +108,15 @@
   sep_file=trim(adjustl(sep_directory))//trim(adjustl(sep_file))
   data_format=data_format(1:len_trim(adjustl(data_format))-1)
 
-  print*, ''
-  print*, 'sep file specified in the header file is: ', trim(adjustl(sep_file))
-  print*, 'NX,NY,NZ = ', NX,NY,NZ
-  print*, 'OX,OY,OZ = ', OX,OY,OZ
-  print*, 'DX,DY,DZ = ', DX,DY,DZ
-  print*, 'esize = ', esize
-  print*, 'data_format = ', trim(adjustl(data_format))
-  print*, '*******************************************************************************'
-  print*, ''
+  print *, ''
+  print *, 'sep file specified in the header file is: ', trim(adjustl(sep_file))
+  print *, 'NX,NY,NZ = ', NX,NY,NZ
+  print *, 'OX,OY,OZ = ', OX,OY,OZ
+  print *, 'DX,DY,DZ = ', DX,DY,DZ
+  print *, 'esize = ', esize
+  print *, 'data_format = ', trim(adjustl(data_format))
+  print *, '*******************************************************************************'
+  print *, ''
 
   end subroutine READ_SEP_HEADER
 
@@ -148,17 +148,17 @@
 
   ! note that we keep NY as general in the following (for 3D problems in the future)
   open(unit=14,file=trim(adjustl(sep_file)),access='direct',status='old',recl=4*NX*NY*NZ,iostat=ier)
-  print*, '*******************************************************************************'
-  print*, 'reading sep file: '
-  print*, trim(adjustl(sep_file))
+  print *, '*******************************************************************************'
+  print *, 'reading sep file: '
+  print *, trim(adjustl(sep_file))
   if (ier/=0) stop 'ERROR: cannot open sep file'
 
   read(14,rec=1,iostat=ier) model(:,:)
   close(14)
   if (ier/=0) stop 'ERROR: reading sep file'
-  print*, 'done reading sucessfully'
-  print*, '*******************************************************************************'
-  print*, ''
+  print *, 'done reading sucessfully'
+  print *, '*******************************************************************************'
+  print *, ''
 
   end subroutine READ_SEP_MODEL_2D
 

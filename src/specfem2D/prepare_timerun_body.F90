@@ -636,7 +636,7 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
           adj_sourcearray(:,:,:,:) = 0.0
           read(111,rec=irec,iostat=ios) r4head, adj_src_s(:,1)
                if (ios /= 0) call exit_MPI(' file '//trim(filename)//' read error')
-          if (irec==1) print*, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
+          if (irec==1) print *, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
           call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
           call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
           source_adjointe(irec_local,:,1) = adj_src_s(:,1)
