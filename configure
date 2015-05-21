@@ -584,7 +584,7 @@ PACKAGE_STRING='Specfem 2D 6.2.0'
 PACKAGE_BUGREPORT='see the wiki'
 PACKAGE_URL=''
 
-ac_unique_file="README"
+ac_unique_file="README.md"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
