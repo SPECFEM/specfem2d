@@ -29,7 +29,8 @@ from __future__ import (absolute_import, division, print_function)
 # planes and use that script as well. Better than nothing.
 
 # import the necessary packages
-import matplotlib.pyplot as plt
+import sys
+
 import numpy as np
 from skimage.color import rgb2grey
 from skimage.data import imread
@@ -48,26 +49,29 @@ def mse(imageA, imageB):
     return err
 
 
-def compare_images(imageA, imageB, title):
+def compare_images(imageA, imageB, title, show_plot=True):
     # compute the mean squared error and structural similarity
     # index for the images
     m = mse(imageA, imageB)
     s = ssim(imageA, imageB)
 
-    # setup the figure
-    fig, ax = plt.subplots(1, 2)
-    fig.suptitle("%s\nMSE: %.5f, SSIM: %.5f" % (title, m, s))
+    if show_plot:
+        import matplotlib.pyplot as plt
 
-    # show first image
-    ax[0].imshow(imageA, cmap=plt.cm.gray)
-    ax[0].axis("off")
+        # setup the figure
+        fig, ax = plt.subplots(1, 2)
+        fig.suptitle("%s\nMSE: %.5f, SSIM: %.5f" % (title, m, s))
 
-    # show the second image
-    ax[1].imshow(imageB, cmap=plt.cm.gray)
-    ax[1].axis("off")
+        # show first image
+        ax[0].imshow(imageA, cmap=plt.cm.gray)
+        ax[0].axis("off")
 
-    # show the images
-    plt.show()
+        # show the second image
+        ax[1].imshow(imageB, cmap=plt.cm.gray)
+        ax[1].axis("off")
+
+        # show the images
+        plt.show()
 
 
 # load the images
@@ -82,4 +86,5 @@ image_from_new_calculation = rgb2grey(image_from_new_calculation)
 
 # compare the images
 compare_images(original_reference, image_from_new_calculation,
-               "Original reference vs. image from new calculation")
+               "Original reference vs. image from new calculation",
+               show_plot="-p" in sys.argv)
