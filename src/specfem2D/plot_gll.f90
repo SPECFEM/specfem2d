@@ -235,7 +235,8 @@
   write(20,*) 'set xlabel "X"'
   write(20,*) 'set ylabel "Y"'
   write(20,*) 'set title "Gauss-Lobatto-Legendre Mesh"'
-  write(20,*) 'plot "gllmesh1.gnu" title '''' w l 2, "gllmesh2.gnu" title '''' w linesp 1 3'
+  write(20,*) 'set size ratio -1'
+  write(20,*) 'plot "gllmesh1.gnu" title '''' w l lc 2, "gllmesh2.gnu" title '''' w l lc 3'
   write(20,*) 'pause -1 "Hit any key to exit..."'
   close(20)
 
@@ -246,7 +247,8 @@
   write(20,*) 'set xlabel "X"'
   write(20,*) 'set ylabel "Y"'
   write(20,*) 'set title "Spectral Element (Macrobloc) Mesh"'
-  write(20,*) 'plot "macros2.gnu" title '''' w l 2, "macros1.gnu" title '''' w linesp 1 3'
+  write(20,*) 'set size ratio -1'
+  write(20,*) 'plot "macros2.gnu" title '''' w l lc 2, "macros1.gnu" title '''' w l lc 3'
   write(20,*) 'pause -1 "Hit any key to exit..."'
   close(20)
 
