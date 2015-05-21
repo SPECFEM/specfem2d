@@ -100,7 +100,7 @@ module interpolation
     !
     ! TODO : This function could be rewriten using a binary search algorithm
     !        for a better efficiency
-    
+
     implicit none
 
     integer, intent(in) :: length
@@ -152,7 +152,7 @@ module interpolation
     ! of a function f at point (x,y)
     ! f is assumed to be sampled on a regular grid, with the grid x values specified
     ! by x_array and the grid y values specified by y_array
-    ! This function works even if (x,y) is outside the definition domain of f 
+    ! This function works even if (x,y) is outside the definition domain of f
     ! (case 1,2,3,4,5,6,7,8 below). It that case we just use border values
     !        y
     !        ^
