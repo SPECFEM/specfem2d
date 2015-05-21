@@ -88,9 +88,19 @@ module interpolation
     ! Given a a sorted array and a value, returns the index of the element that
     ! is closest to, but less than, the given value.
     ! Uses a binary search algorithm.
-    ! 12 40 45 60 62 80 95
-
-
+    ! Never returns the last value !
+    !
+    ! Behaviour with vec=(-5,-2,8,12,40,45,60,62,80,95) :
+    ! value = 42.5 --> searchInf = 40
+    ! value = -2   --> searchInf = -2
+    ! value = -5   --> searchInf = -5
+    ! value = -95  --> searchInf = -5
+    ! value = 100  --> searchInf = 80
+    ! value = -8   --> searchInf = -5
+    !
+    ! TODO : This function could be rewriten using a binary search algorithm
+    !        for a better efficiency
+    
     implicit none
 
     integer, intent(in) :: length
@@ -123,23 +133,12 @@ module interpolation
       do while (array(index_closest) < value)
         index_closest = index_closest+1
       enddo
-   !   index_closest = minloc( abs(array-value) , dim = 1) ! Index of closest value
       if (abs(array(index_closest)-value) > d) then
         searchInf = index_closest - 1
       else
         searchInf = index_closest
       endif
 
-   !   index_closest = minloc( abs(array-value) , dim = 1) ! Index of closest value
-   !   if (abs(array(index_closest)-value) > d) then
-   !     if (array(index_closest) > value) then
-   !       searchInf = index_closest - 1
-   !     else
-   !       searchInf = index_closest
-   !     endif
-   !   else
-   !     searchInf = index_closest
-   !   endif
     endif
     return
   end function searchInf
@@ -153,6 +152,17 @@ module interpolation
     ! of a function f at point (x,y)
     ! f is assumed to be sampled on a regular grid, with the grid x values specified
     ! by x_array and the grid y values specified by y_array
+    ! This function works even if (x,y) is outside the definition domain of f 
+    ! (case 1,2,3,4,5,6,7,8 below). It that case we just use border values
+    !        y
+    !        ^
+    ! case 3 | case 6 | case 2
+    ! ------------------------
+    !        |        |
+    ! case 7 | case 9 | case 8
+    !        |        |
+    ! ------------------------> x
+    ! case 1 | case 5 | case 4
     ! Reference: http://en.wikipedia.org/wiki/Bilinear_interpolation
 
     implicit none
@@ -174,25 +184,6 @@ module interpolation
     else
       d = 1e-9
     endif
-
-!    print *,"f : "
-!    write(*,'(A22)', advance='no') '            '
-!    do i=1,x_len
-!       write(*,'(F20.12)', advance='no') x_array(i)
-!    enddo
-!    print *,""
-!    print *,""
-!    do j=1,y_len
-!      do i=1,x_len
-!        if (i == 1) then
-!          write(*,'(F20.12,A2,F20.12)', advance='no') y_array(j),'  ',f(i,j)
-!        else
-!          write(*,'(F20.12)', advance='no') f(i,j)
-!        endif
-!      enddo
-!      print *,""
-!    enddo
-!    print *,""
 
     minx = minval(x_array)
     maxx = maxval(x_array)
@@ -286,9 +277,7 @@ module interpolation
       interpolate = (f(i+1,j)*(x-x1)*(y2-y) + f(i+1, j+1)*(x-x1)*(y-y1))/denom
     else ! case 9 ! The point is exactly on the area defined
       !print *,"case9"
-      !print *,"searchInf i:"
       i = searchInf(x_len, x_array, x) ! Test also if the array is increasing
-      !print *,"searchInf j:"
       j = searchInf(y_len, y_array, y) ! Test also if the array is increasing
 
       if (i < x_len) then
@@ -309,24 +298,6 @@ module interpolation
       interpolate = (f(i,j)*(x2-x)*(y2-y) + f(i+1,j)*(x-x1)*(y2-y) + &
                     f(i,j+1)*(x2-x)*(y-y1) + f(i+1, j+1)*(x-x1)*(y-y1))/denom
     endif
-
-!    if (vss .and. (interpolate < 0) ) then
-!      print *,"x_len:",x_len
-!      print *,"min x_array:",minval(x_array)
-!      print *,"max x_array:",maxval(x_array)
-!      print *,"y_len",y_len
-!      print *,"min y_array:",minval(y_array)
-!      print *,"max y_array:",maxval(y_array)
-!      print *,"min f:",minval(f)
-!      print *,"max f:",maxval(f)
-!      print *,"searchInf i:",i
-!      print *,"searchInf j:",j
-!      print *,"x:",x
-!      print *,"y:",y
-!      print *,''
-!      print *,"interpolate:",interpolate
-!      stop
-!    endif
 
  end function interpolate
 
@@ -382,6 +353,7 @@ subroutine define_external_model_from_tomo_file()
            c12ext(i,j,ispec) = 0.d0
            c23ext(i,j,ispec) = 0.d0
            c25ext(i,j,ispec) = 0.d0
+           !! AB AB : The 3 following lines are important, otherwise PMLs won't work :
            density(1,kmato(ispec)) = rhoext(i,j,ispec)
            poroelastcoef(3,1,kmato(ispec)) = rhoext(i,j,ispec) * vpext(i,j,ispec) * vpext(i,j,ispec)
            poroelastcoef(2,1,kmato(ispec)) =  rhoext(i,j,ispec) * vsext(i,j,ispec) * vsext(i,j,ispec)
@@ -562,6 +534,7 @@ end subroutine read_tomo_file
 !
 
 subroutine tomo_read_next_line(unit_in,string_read)
+! Store next line of file unit_in in string_read
 
   implicit none
 
