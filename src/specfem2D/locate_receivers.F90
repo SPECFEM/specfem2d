@@ -76,7 +76,7 @@ use specfem_par, only : gather_ispec_selected_rec,acoustic,USE_TRICK_FOR_BETTER_
 
   integer irec,i,j,ispec,iglob,iter_loop,ix_initial_guess,iz_initial_guess
 
-  double precision x_source,z_source,dist,stele,stbur
+  double precision x_source,z_source,dist_squared,stele,stbur
   double precision, dimension(nrec)  :: distance_receiver
   double precision xi,gamma,dx,dz,dxi,dgamma
 
@@ -87,7 +87,7 @@ use specfem_par, only : gather_ispec_selected_rec,acoustic,USE_TRICK_FOR_BETTER_
   double precision x,z,xix,xiz,gammax,gammaz,jacobian
 
 ! use dynamic allocation
-  double precision distmin
+  double precision distmin_squared
   double precision, dimension(:), allocatable :: final_distance
 
 ! receiver information
@@ -134,7 +134,7 @@ use specfem_par, only : gather_ispec_selected_rec,acoustic,USE_TRICK_FOR_BETTER_
   do irec=1,nrec
 
     ! set distance to huge initial value
-    distmin=HUGEVAL
+    distmin_squared = HUGEVAL
 
     read(1,*) station_name(irec),network_name(irec),st_xval(irec),st_zval(irec),stele,stbur
 
@@ -152,11 +152,13 @@ use specfem_par, only : gather_ispec_selected_rec,acoustic,USE_TRICK_FOR_BETTER_
         do i=2,NGLLX-1
 
           iglob = ibool(i,j,ispec)
-          dist = sqrt((st_xval(irec)-dble(coord(1,iglob)))**2 + (st_zval(irec)-dble(coord(2,iglob)))**2)
+
+          !  we compare squared distances instead of distances themselves to significantly speed up calculations
+          dist_squared = (st_xval(irec)-dble(coord(1,iglob)))**2 + (st_zval(irec)-dble(coord(2,iglob)))**2
 
           ! keep this point if it is closer to the receiver
-          if(dist < distmin) then
-            distmin = dist
+          if(dist_squared < distmin_squared) then
+            distmin_squared = dist_squared
             ispec_selected_rec(irec) = ispec
             ix_initial_guess = i
             iz_initial_guess = j
