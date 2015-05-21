@@ -208,7 +208,7 @@ subroutine add_adjoint_sources_SU
       read(113,rec=irec,iostat=ios) r4head, adj_src_s(:,3)
            if (ios /= 0) call exit_MPI(' file '//trim(filename)//' read error')
       header2=int(r4head(29), kind=2)
-      if (irec==1) print*, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
+      if (irec==1) print *, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
       call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
       call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
       source_adjointe(irec_local,:,1) = adj_src_s(:,1)

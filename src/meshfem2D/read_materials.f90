@@ -210,7 +210,7 @@
      else if (icodemat(i) == ANISOTROPIC_MATERIAL) then
         print *,'Material #',i,' anisotropic'
         print *,'rho,cp,cs = ',rho_s(i),cp(i),cs(i)
-        print*,'c11,c13,c15,c33,c35,c55,c12,c23,c25 = ',aniso3(i),aniso4(i),aniso5(i),aniso6(i),aniso7(i),aniso8(i), &
+        print *,'c11,c13,c15,c33,c35,c55,c12,c23,c25 = ',aniso3(i),aniso4(i),aniso5(i),aniso6(i),aniso7(i),aniso8(i), &
                                                         aniso9(i),aniso10(i),aniso11(i)
         print *,'QKappa,Qmu = ',QKappa(i),Qmu(i)
      else if (icodemat(i) == POROELASTIC_MATERIAL) then

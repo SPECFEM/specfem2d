@@ -1766,14 +1766,14 @@ subroutine prepare_timerun_attenuation()
       deltat**3*thetainv**3 / 6.d0 + deltat**4*thetainv**4 / 24.d0
     betaval = deltat / 2.d0 + deltat**2*thetainv / 3.d0 + deltat**3*thetainv**2 / 8.d0 + deltat**4*thetainv**3 / 24.d0
     gammaval = deltat / 2.d0 + deltat**2*thetainv / 6.d0 + deltat**3*thetainv**2 / 24.d0
-   print*,'************************************************************'
-   print*,'****** Visco attenuation coefficients (poroelastic) ********'
-   print*,'theta_e = ', theta_e
-   print*,'theta_s = ', theta_s
-   print*,'alpha = ', alphaval
-   print*,'beta = ', betaval
-   print*,'gamma = ', gammaval
-   print*,'************************************************************'
+   print *,'************************************************************'
+   print *,'****** Visco attenuation coefficients (poroelastic) ********'
+   print *,'theta_e = ', theta_e
+   print *,'theta_s = ', theta_s
+   print *,'alpha = ', alphaval
+   print *,'beta = ', betaval
+   print *,'gamma = ', gammaval
+   print *,'************************************************************'
 
 ! initialize memory variables for attenuation
     viscox(:,:,:) = 0.d0

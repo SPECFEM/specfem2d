@@ -157,15 +157,15 @@
 
 
   if(.not. p_sv .and. .not. any_elastic) then
-    print*, '*************** WARNING ***************'
-    print*, 'Surface (membrane) waves calculation needs an elastic medium'
-    print*, '*************** WARNING ***************'
+    print *, '*************** WARNING ***************'
+    print *, 'Surface (membrane) waves calculation needs an elastic medium'
+    print *, '*************** WARNING ***************'
     stop
   endif
   if(.not. p_sv .and. (ATTENUATION_VISCOELASTIC_SOLID)) then
-    print*, '*************** WARNING ***************'
-    print*, 'Attenuation and anisotropy are not implemented for surface (membrane) waves calculation'
-    print*, '*************** WARNING ***************'
+    print *, '*************** WARNING ***************'
+    print *, 'Attenuation and anisotropy are not implemented for surface (membrane) waves calculation'
+    print *, '*************** WARNING ***************'
     stop
   endif
 
