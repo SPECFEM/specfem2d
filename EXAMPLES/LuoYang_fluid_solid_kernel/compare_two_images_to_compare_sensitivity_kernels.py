@@ -73,6 +73,8 @@ def compare_images(imageA, imageB, title, show_plot=True):
         # show the images
         plt.show()
 
+    return m, s
+
 
 # load the images
 original_reference = imread(
@@ -85,6 +87,13 @@ original_reference = rgb2grey(original_reference)
 image_from_new_calculation = rgb2grey(image_from_new_calculation)
 
 # compare the images
-compare_images(original_reference, image_from_new_calculation,
-               "Original reference vs. image from new calculation",
-               show_plot="-p" in sys.argv)
+m, s = compare_images(original_reference, image_from_new_calculation,
+                      "Original reference vs. image from new calculation",
+                      show_plot="-p" in sys.argv)
+
+if s < 0.99:
+    # Failure
+    sys.exit(1)
+else:
+    # Success
+    sys.exit(0)
