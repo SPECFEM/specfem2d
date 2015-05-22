@@ -89,13 +89,13 @@
     write(15,*) '#'
 
     write(15,*) 'Title of the simulation'
-    write(15,"(a100)") title
+    write(15,'(a100)') title
 
     write(15,*) 'Axisymmetric (2.5D, .true.) or Cartesian planar (2D; .false.) simulation'
     write(15,*) AXISYM
 
     write(15,*) 'Type of simulation'
-    write(15,*) SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD
+    write(15,*) SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD, UNDO_ATTENUATION
 
     call write_glob2loc_nodes_database(15, iproc, npgeo, 1)
 
@@ -154,8 +154,11 @@
     write(15,*) 'seismotype imagetype_postscript'
     write(15,*) seismotype,imagetype_postscript
 
-    write(15,*) 'assign_external_model READ_EXTERNAL_SEP_FILE'
-    write(15,*) assign_external_model,READ_EXTERNAL_SEP_FILE
+    write(15,*) 'MODEL'
+    write(15,'(a100)') MODEL
+
+    write(15,*) 'TOMOGRAPHY_FILE'
+    write(15,'(a100)') TOMOGRAPHY_FILE
 
     write(15,*) 'output_grid_ASCII output_energy output_wavefield_dumps'
     write(15,*) output_grid_ASCII,output_energy,output_wavefield_dumps
@@ -171,6 +174,9 @@
 
     write(15,*) 'save_binary_seismograms_single save_binary_seismograms_double'
     write(15,*) save_binary_seismograms_single,save_binary_seismograms_double
+
+    write(15,*) 'USE_TRICK_FOR_BETTER_PRESSURE'
+    write(15,*) USE_TRICK_FOR_BETTER_PRESSURE
 
     write(15,*) 'save_ASCII_kernels'
     write(15,*) save_ASCII_kernels
@@ -223,8 +229,14 @@
     write(15,*) 'PERIODIC_HORIZ_DIST'
     write(15,*) PERIODIC_HORIZ_DIST
 
+    write(15,*) 'GPU_MODE'
+    write(15,*) GPU_MODE
+
     write(15,*) 'nt deltat'
     write(15,*) nt,deltat
+
+    write(15,*) 'NT_DUMP_ATTENUATION'
+    write(15,*) NT_DUMP_ATTENUATION
 
     write(15,*) 'ACOUSTIC_FORCING'
     write(15,*) ACOUSTIC_FORCING
@@ -293,14 +305,18 @@
     do i=1,nb_materials
       if (icodemat(i) == ISOTROPIC_MATERIAL) then
          write(15,*) i,icodemat(i),rho_s(i),cp(i),cs(i),0,0,QKappa(i),Qmu(i),0,0,0,0,0,0
+      else if (icodemat(i) == ANISOTROPIC_MATERIAL) then
+         write(15,*) i,icodemat(i),rho_s(i), &
+                    aniso3(i),aniso4(i),aniso5(i),aniso6(i),&
+                    aniso7(i),aniso8(i),aniso9(i),aniso10(i),aniso11(i),0,0,0
       else if(icodemat(i) == POROELASTIC_MATERIAL) then
          write(15,*) i,icodemat(i),rho_s(i),rho_f(i),phi(i),tortuosity(i), &
                     permxx(i),permxz(i),permzz(i),kappa_s(i),&
                     kappa_f(i),kappa_fr(i),eta_f(i),mu_fr(i),Qmu(i)
+      else if (icodemat(i) <= 0) then ! The values will be read from an external tomo file
+         write(15,*) i,icodemat(i),rho_s(i),cp(i),cs(i),0,0,QKappa(i),Qmu(i),0,0,0,0,0,0
       else
-         write(15,*) i,icodemat(i),rho_s(i), &
-                    aniso3(i),aniso4(i),aniso5(i),aniso6(i),&
-                    aniso7(i),aniso8(i),aniso9(i),aniso10(i),aniso11(i),0,0,0
+        stop 'Unknown material code'
       endif
     enddo
 

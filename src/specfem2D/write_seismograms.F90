@@ -43,20 +43,208 @@
 
 ! write seismograms to text files
 
+  subroutine write_seismograms
 
-  subroutine write_seismograms(x_source,z_source)
+  use specfem_par
+
+  implicit none
+
+  integer :: i, j, iglob, irecloc, irec, ispec
+
+
+
+! update position in seismograms
+    seismo_current = seismo_current + 1
+
+    do irecloc = 1,nrecloc
+
+      irec = recloc(irecloc)
+
+      ispec = ispec_selected_rec(irec)
+
+      ! compute pressure in this element if needed
+      if(seismotype == 4) then
+
+        call compute_pressure_one_element(ispec)
+
+      else if(acoustic(ispec)) then
+
+        ! for acoustic medium, compute vector field from gradient of potential for seismograms
+        if(seismotype == 1 .or. seismotype == 7) then
+          call compute_vector_one_element(potential_acoustic,potential_gravitoacoustic, &
+                              potential_gravito,displ_elastic,displs_poroelastic,ispec)
+        else if(seismotype == 2) then
+          call compute_vector_one_element(potential_dot_acoustic,potential_dot_gravitoacoustic, &
+                              potential_dot_gravito,veloc_elastic,velocs_poroelastic,ispec)
+        else if(seismotype == 3) then
+          call compute_vector_one_element(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
+                              potential_dot_dot_gravito,accel_elastic,accels_poroelastic,ispec)
+        endif
+
+      else if(gravitoacoustic(ispec)) then
+
+        ! for acoustic medium, compute vector field from gradient of potential for seismograms
+        if(seismotype == 1 .or. seismotype == 7) then
+          call compute_vector_one_element(potential_acoustic,potential_gravitoacoustic, &
+                              potential_gravito,displ_elastic,displs_poroelastic,ispec)
+        else if(seismotype == 2) then
+          call compute_vector_one_element(potential_dot_acoustic,potential_dot_gravitoacoustic, &
+                              potential_dot_gravito,veloc_elastic,velocs_poroelastic,ispec)
+        else if(seismotype == 3) then
+          call compute_vector_one_element(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
+                              potential_dot_dot_gravito,accel_elastic,accels_poroelastic,ispec)
+        endif
+
+      else if(seismotype == 5) then
+        call compute_curl_one_element(ispec)
+      endif
+
+      ! perform the general interpolation using Lagrange polynomials
+      valux = ZERO
+      valuy = ZERO
+      valuz = ZERO
+
+      valcurl = ZERO
+
+      dxd = 0
+      dyd = 0
+      dzd = 0
+
+      dcurld = 0
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          iglob = ibool(i,j,ispec)
+          hlagrange = hxir_store(irec,i)*hgammar_store(irec,j)
+          dcurld=ZERO
+
+          if(seismotype == 4) then
+            if (USE_TRICK_FOR_BETTER_PRESSURE .and. (acoustic(ispec) .or. gravitoacoustic(ispec))) then
+              ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
+              ! use the second derivative of the source for the source time function instead of the source itself,
+              ! and then record -potential_acoustic() as pressure seismograms instead of -potential_dot_dot_acoustic();
+              ! this is mathematically equivalent, but numerically significantly more accurate because in the explicit
+              ! Newmark time scheme acceleration is accurate at zeroth order while displacement is accurate at second order,
+              ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
+              ! is accurate at second order and thus contains significantly less numerical noise.
+              ! compute pressure on the fluid/porous medium edge
+              if(gravitoacoustic(ispec)) then
+                dxd = - potential_gravitoacoustic(iglob)
+              else
+                dxd = - potential_acoustic(iglob)
+              endif
+            else
+              dxd = pressure_element(i,j) ! == potential_dot_dot_acoustic(iglob) (or potential_dot_dot_gravitoacoustic(iglob))
+            endif
+            dzd = ZERO
+
+          else if((acoustic(ispec) .or. gravitoacoustic(ispec)) .and.  seismotype /= 6) then
+
+            dxd = vector_field_element(1,i,j)
+            dzd = vector_field_element(3,i,j)
+
+          else if(acoustic(ispec) .and. seismotype == 6) then
+
+            dxd = potential_acoustic(iglob)
+            dzd = ZERO
+
+          else if(gravitoacoustic(ispec) .and. seismotype == 6) then
+
+            dxd = potential_acoustic(iglob)
+            dzd = ZERO
+
+          else if(seismotype == 1) then
+
+            if(poroelastic(ispec)) then
+              dxd = displs_poroelastic(1,iglob)
+              dzd = displs_poroelastic(2,iglob)
+            else if(elastic(ispec)) then
+              dxd = displ_elastic(1,iglob)
+              dyd = displ_elastic(2,iglob)
+              dzd = displ_elastic(3,iglob)
+            endif
+
+          else if(seismotype == 2) then
+
+            if(poroelastic(ispec)) then
+              dxd = velocs_poroelastic(1,iglob)
+              dzd = velocs_poroelastic(2,iglob)
+            else if(elastic(ispec)) then
+              dxd = veloc_elastic(1,iglob)
+              dyd = veloc_elastic(2,iglob)
+              dzd = veloc_elastic(3,iglob)
+            endif
+
+          else if(seismotype == 3) then
+
+            if(poroelastic(ispec)) then
+              dxd = accels_poroelastic(1,iglob)
+              dzd = accels_poroelastic(2,iglob)
+            else if(elastic(ispec)) then
+              dxd = accel_elastic(1,iglob)
+              dyd = accel_elastic(2,iglob)
+              dzd = accel_elastic(3,iglob)
+            endif
+
+          else if(seismotype == 5) then
+
+            if(poroelastic(ispec)) then
+              dxd = displs_poroelastic(1,iglob)
+              dzd = displs_poroelastic(2,iglob)
+            else if(elastic(ispec)) then
+              dxd = displ_elastic(1,iglob)
+              dzd = displ_elastic(2,iglob)
+            endif
+            dcurld = curl_element(i,j)
+
+          endif
+
+          ! compute interpolated field
+          valux = valux + dxd*hlagrange
+          if(elastic(ispec))  valuy = valuy + dyd*hlagrange
+          valuz = valuz + dzd*hlagrange
+          valcurl = valcurl + dcurld*hlagrange
+
+        enddo
+      enddo
+
+      ! check for edge effects
+      if(seismo_current < 1 .or. seismo_current > NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos) &
+        stop 'error: seismo_current out of bounds in recording of seismograms'
+
+      ! rotate seismogram components if needed, except if recording pressure, which is a scalar
+      if(seismotype /= 4 .and. seismotype /= 6) then
+        if(p_sv) then
+          sisux(seismo_current,irecloc) =   cosrot_irec(irecloc)*valux + sinrot_irec(irecloc)*valuz
+          sisuz(seismo_current,irecloc) = - sinrot_irec(irecloc)*valux + cosrot_irec(irecloc)*valuz
+        else
+          sisux(seismo_current,irecloc) = valuy
+          sisuz(seismo_current,irecloc) = ZERO
+        endif
+      else
+        sisux(seismo_current,irecloc) = valux
+        sisuz(seismo_current,irecloc) = ZERO
+      endif
+      siscurl(seismo_current,irecloc) = valcurl
+
+    enddo
+
+  end subroutine write_seismograms
+
+
+
+!================================================================
+
+  subroutine write_seismograms_to_file(x_source,z_source)
 
 #ifdef USE_MPI
   use mpi
 #endif
 
   use specfem_par, only : sisux,sisuz,siscurl,station_name,network_name, &
-                          NSTEP,nrecloc,which_proc_receiver,nrec,myrank,deltat,seismotype,st_xval,t0, &
+                          NSTEP,which_proc_receiver,nrec,myrank,deltat,seismotype,t0, &
                           NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,p_sv, &
-                          st_zval,SU_FORMAT,save_ASCII_seismograms, &
+                          SU_FORMAT,save_ASCII_seismograms, &
                           save_binary_seismograms_single,save_binary_seismograms_double,subsamp_seismos
-
-  implicit none
 
 ! uncomment this to save the ASCII *.sem* seismograms in binary instead, to save disk space and/or writing time
 ! we could/should move this flag to DATA/Par_file one day.
@@ -65,16 +253,16 @@
 
   include "constants.h"
 
-  integer :: deltat_int2
   logical :: save_binary_seismograms
   integer irec,length_station_name,length_network_name,iorientation,isample,number_of_components
 
-  character(len=4) chn
+  character(len=4) channel
   character(len=1) component
+  character(len=4) suffix
   character(len=150) sisname
 
 ! to write seismograms in single precision SEP and double precision binary format
-  double precision, dimension(:,:), allocatable :: buffer_binary
+  double precision, dimension(:,:,:), allocatable :: buffer_binary
 
 ! scaling factor for Seismic Unix xsu dislay
   double precision, parameter :: FACTORXSU = 1.d0
@@ -82,10 +270,7 @@
 
   integer  :: irecloc
 
-!<SU_FORMAT
   double precision :: x_source,z_source
-  integer(kind=2) :: header2(2)
-!>SU_FORMAT
 
 #ifdef USE_MPI
   integer  :: ierror
@@ -126,74 +311,88 @@
      number_of_components = NDIM
   endif
 
-  allocate(buffer_binary(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,number_of_components))
+
+! filename extension
+  if (.not. SU_FORMAT) then
+    suffix = '.bin'
+  else
+    suffix = '.su'
+  endif
+
+  allocate(buffer_binary(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrec,number_of_components))
 
   if (save_binary_seismograms .and. myrank == 0 .and. seismo_offset == 0) then
 
-! delete the old files
-     open(unit=12,file='OUTPUT_FILES/Ux_file_single.bin',status='unknown')
+! delete old files
+     open(unit=12,file='OUTPUT_FILES/Ux_file_single'//suffix,status='unknown')
      close(12,status='delete')
 
-     open(unit=12,file='OUTPUT_FILES/Ux_file_double.bin',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/Ux_file_double'//suffix,status='unknown')
      close(12,status='delete')
 
-     open(unit=12,file='OUTPUT_FILES/pressure_file_single.bin',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/Uy_file_single'//suffix,status='unknown')
      close(12,status='delete')
 
-     open(unit=12,file='OUTPUT_FILES/pressure_file_double.bin',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/Uy_file_double'//suffix,status='unknown')
      close(12,status='delete')
 
-     open(unit=12,file='OUTPUT_FILES/Uz_file_single.bin',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/Uz_file_single'//suffix,status='unknown')
      close(12,status='delete')
 
-     open(unit=12,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/Uz_file_double'//suffix,status='unknown')
      close(12,status='delete')
 
-     open(unit=12,file='OUTPUT_FILES/Curl_file_single.bin',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/Up_file_single'//suffix,status='unknown')
      close(12,status='delete')
 
-     open(unit=12,file='OUTPUT_FILES/Curl_file_double.bin',status='unknown')
+     open(unit=12,file='OUTPUT_FILES/Up_file_double'//suffix,status='unknown')
+     close(12,status='delete')
+
+     open(unit=12,file='OUTPUT_FILES/Uc_file_single'//suffix,status='unknown')
+     close(12,status='delete')
+
+     open(unit=12,file='OUTPUT_FILES/Uc_file_double'//suffix,status='unknown')
      close(12,status='delete')
 
   endif
 
+
   if (save_binary_seismograms .and. myrank == 0) then
 
-! write the new files
+     ! write the new files
      if(save_binary_seismograms_single) then
      if(seismotype == 4 .or. seismotype == 6) then
-        open(unit=12,file='OUTPUT_FILES/pressure_file_single.bin',status='unknown',access='direct',recl=4)
+        open(unit=12,file='OUTPUT_FILES/Up_file_single'//suffix,status='unknown',access='direct',recl=4)
      else if(.not.p_sv) then
-        open(unit=12,file='OUTPUT_FILES/Uy_file_single.bin',status='unknown',access='direct',recl=4)
+        open(unit=12,file='OUTPUT_FILES/Uy_file_single'//suffix,status='unknown',access='direct',recl=4)
      else
-        open(unit=12,file='OUTPUT_FILES/Ux_file_single.bin',status='unknown',access='direct',recl=4)
+        open(unit=12,file='OUTPUT_FILES/Ux_file_single'//suffix,status='unknown',access='direct',recl=4)
      endif
      endif
 
      if(save_binary_seismograms_double) then
      if(seismotype == 4 .or. seismotype == 6) then
-        open(unit=13,file='OUTPUT_FILES/pressure_file_double.bin',status='unknown',access='direct',recl=8)
      else if(.not.p_sv) then
-        open(unit=13,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown',access='direct',recl=8)
+        open(unit=13,file='OUTPUT_FILES/Uz_file_double'//suffix,status='unknown',access='direct',recl=8)
      else
-        open(unit=13,file='OUTPUT_FILES/Ux_file_double.bin',status='unknown',access='direct',recl=8)
+        open(unit=13,file='OUTPUT_FILES/Ux_file_double'//suffix,status='unknown',access='direct',recl=8)
      endif
      endif
 
-! no Z component seismogram if pressure
+     ! no Z component seismogram if pressure
      if(seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
        if(save_binary_seismograms_single) &
-        open(unit=14,file='OUTPUT_FILES/Uz_file_single.bin',status='unknown',access='direct',recl=4)
+        open(unit=14,file='OUTPUT_FILES/Uz_file_single'//suffix,status='unknown',access='direct',recl=4)
        if(save_binary_seismograms_double) &
-        open(unit=15,file='OUTPUT_FILES/Uz_file_double.bin',status='unknown',access='direct',recl=8)
+        open(unit=15,file='OUTPUT_FILES/Uz_file_double'//suffix,status='unknown',access='direct',recl=8)
      endif
 
-! curl output
+     ! curl output
      if(seismotype == 5) then
        if(save_binary_seismograms_single) &
-        open(unit=16,file='OUTPUT_FILES/Curl_file_single.bin',status='unknown',access='direct',recl=4)
+        open(unit=16,file='OUTPUT_FILES/Uc_file_single'//suffix,status='unknown',access='direct',recl=4)
        if(save_binary_seismograms_double) &
-        open(unit=17,file='OUTPUT_FILES/Curl_file_double.bin',status='unknown',access='direct',recl=8)
+        open(unit=17,file='OUTPUT_FILES/Uc_file_double'//suffix,status='unknown',access='direct',recl=8)
      endif
 
   endif
@@ -206,30 +405,39 @@
 
         if ( which_proc_receiver(irec) == myrank ) then
            irecloc = irecloc + 1
-           buffer_binary(:,1) = sisux(:,irecloc)
+           buffer_binary(:,irec,1) = sisux(:,irecloc)
            if ( number_of_components == 2 ) then
-              buffer_binary(:,2) = sisuz(:,irecloc)
+              buffer_binary(:,irec,2) = sisuz(:,irecloc)
            else if ( number_of_components == 3 ) then
-              buffer_binary(:,2) = sisuz(:,irecloc)
-              buffer_binary(:,3) = siscurl(:,irecloc)
+              buffer_binary(:,irec,2) = sisuz(:,irecloc)
+              buffer_binary(:,irec,3) = siscurl(:,irecloc)
            endif
 
 #ifdef USE_MPI
         else
-           call MPI_RECV(buffer_binary(1,1),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
+           call MPI_RECV(buffer_binary(1,irec,1),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
                 which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ierror)
            if ( number_of_components == 2 ) then
-              call MPI_RECV(buffer_binary(1,2),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
+              call MPI_RECV(buffer_binary(1,irec,2),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
                    which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ierror)
            endif
            if ( number_of_components == 3 ) then
-              call MPI_RECV(buffer_binary(1,2),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
+              call MPI_RECV(buffer_binary(1,irec,2),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
                    which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ierror)
-              call MPI_RECV(buffer_binary(1,3),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
+              call MPI_RECV(buffer_binary(1,irec,3),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
                    which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ierror)
            endif
 #endif
         endif
+
+    endif
+
+  enddo
+
+  irecloc = 0
+  do irec = 1,nrec
+
+     if ( myrank == 0 ) then
 
         if(.not. SU_FORMAT) then
 
@@ -239,19 +447,19 @@
           do iorientation = 1,number_of_components
 
              if(iorientation == 1) then
-                chn = 'BXX'
+                channel = 'BXX'
              else if(iorientation == 2) then
-                chn = 'BXZ'
+                channel = 'BXZ'
              else if(iorientation == 3) then
-                chn = 'cur'
+                channel = 'cur'
              else
                 call exit_MPI('incorrect channel value')
              endif
 
              ! in case of pressure, use different abbreviation
-             if(seismotype == 4 .or. seismotype == 6) chn = 'PRE'
+             if(seismotype == 4 .or. seismotype == 6) channel = 'PRE'
              ! in case of SH (membrane) waves, use different abbreviation
-             if(.not.p_sv) chn = 'BXY'
+             if(.not.p_sv) channel = 'BXY'
 
              ! create the name of the seismogram file for each slice
              ! file name includes the name of the station, the network and the component
@@ -267,7 +475,7 @@
             endif
 
              write(sisname,"('OUTPUT_FILES/',a,'.',a,'.',a3,'.sem',a1)") &
-                  network_name(irec)(1:length_network_name),station_name(irec)(1:length_station_name),chn,component
+                  network_name(irec)(1:length_network_name),station_name(irec)(1:length_station_name),channel,component
 
              ! save seismograms in text format with no subsampling.
              ! Because we do not subsample the output, this can result in large files
@@ -289,10 +497,10 @@
 #ifndef PAUL_SAVE_ASCII_IN_BINARY
              do isample = 1,seismo_current
                  write(11,*) sngl(dble(seismo_offset+isample-1)*deltat - t0),' ', &
-                              sngl(buffer_binary(isample,iorientation))
+                              sngl(buffer_binary(isample,irec,iorientation))
              enddo
 #else
-                 write(11) sngl(buffer_binary(:,iorientation))
+                 write(11) sngl(buffer_binary(:,irec,iorientation))
 #endif
 
              close(11)
@@ -304,75 +512,27 @@
           if(save_binary_seismograms) then
           do isample = 1, seismo_current
             if(save_binary_seismograms_single) &
-              write(12,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,1))
+              write(12,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,irec,1))
               if(save_binary_seismograms_double) &
-              write(13,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,1)
+              write(13,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,irec,1)
             if ( seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
               if(save_binary_seismograms_single) &
-                write(14,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,2))
+                write(14,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,irec,2))
               if(save_binary_seismograms_double) &
-                write(15,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,2)
+                write(15,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,irec,2)
             endif
             if ( seismotype == 5 ) then
               if(save_binary_seismograms_single) &
-                write(16,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,3))
+                write(16,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,irec,3))
               if(save_binary_seismograms_double) &
-                write(17,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,3)
+                write(17,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,irec,3)
             endif
           enddo
           endif
 
         else ! if SU_FORMAT
 
-          if (seismo_offset==0) then
-
-             if (deltat*1.0d6 > 2**15) then
-                deltat_int2 = 0
-             else
-                deltat_int2 = NINT(deltat*1.0d6, kind=2) ! deltat (unit: 10^{-6} second)
-             endif
-
-             ! write SU headers (refer to Seismic Unix for details)
-             write(12,rec=(irec-1)*60+(irec-1)*NSTEP+1)  irec                          ! receiver ID
-             write(12,rec=(irec-1)*60+(irec-1)*NSTEP+10) NINT(st_xval(irec)-x_source)  ! offset
-             write(12,rec=(irec-1)*60+(irec-1)*NSTEP+19) NINT(x_source)                ! source location xs
-             write(12,rec=(irec-1)*60+(irec-1)*NSTEP+20) NINT(z_source)                ! source location zs
-             write(12,rec=(irec-1)*60+(irec-1)*NSTEP+21) NINT(st_xval(irec))           ! receiver location xr
-             write(12,rec=(irec-1)*60+(irec-1)*NSTEP+22) NINT(st_zval(irec))           ! receiver location zr
-             if (nrec>1) write(12,rec=(irec-1)*60+(irec-1)*NSTEP+48) SNGL(st_xval(2)-st_xval(1)) ! receiver interval
-             header2(1)=0  ! dummy
-             header2(2)=int(NSTEP, kind=2)
-             write(12,rec=(irec-1)*60+(irec-1)*NSTEP+29) header2
-             header2(1)=deltat_int2
-             header2(2)=0  ! dummy
-             write(12,rec=(irec-1)*60+(irec-1)*NSTEP+30) header2
-             if ( seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
-                ! headers
-                if (seismo_offset==0) then
-                   write(14,rec=(irec-1)*60+(irec-1)*NSTEP+1)  irec
-                   write(14,rec=(irec-1)*60+(irec-1)*NSTEP+10) NINT(st_xval(irec)-x_source)
-                   write(14,rec=(irec-1)*60+(irec-1)*NSTEP+19) NINT(x_source)
-                   write(14,rec=(irec-1)*60+(irec-1)*NSTEP+20) NINT(z_source)
-                   write(14,rec=(irec-1)*60+(irec-1)*NSTEP+21) NINT(st_xval(irec))
-                   write(14,rec=(irec-1)*60+(irec-1)*NSTEP+22) NINT(st_zval(irec))
-                   if(nrec>1) write(14,rec=(irec-1)*60+(irec-1)*NSTEP+48) SNGL(st_xval(2)-st_xval(1))
-                   header2(1)=0  ! dummy
-                   header2(2)=int(NSTEP, kind=2)
-                   write(14,rec=(irec-1)*60+(irec-1)*NSTEP+29) header2
-                   header2(1)=deltat_int2
-                   header2(2)=0  ! dummy
-                   write(14,rec=(irec-1)*60+(irec-1)*NSTEP+30) header2
-                endif
-             endif
-          endif
-
-          ! the "60" in the following corresponds to 240 bytes header (note the reclength is 4 bytes)
-          do isample = 1, seismo_current
-             write(12,rec=irec*60+(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,1))
-             if ( seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
-                write(14,rec=irec*60+(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,2))
-             endif
-          enddo
+            call write_output_SU(x_source,z_source,irec,buffer_binary,number_of_components)
 
         endif
 
@@ -412,5 +572,5 @@
 
   deallocate(buffer_binary)
 
-  end subroutine write_seismograms
+  end subroutine write_seismograms_to_file
 

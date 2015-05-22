@@ -51,17 +51,12 @@
 
   use mpi
 
-  use specfem_par, only: nspec,ibool,knods,ngnod,nglob,elastic,poroelastic, &
-                    ninterface, max_interface_size, &
-                    my_nelmnts_neighbours,my_interfaces,my_neighbours, &
-                    ibool_interfaces_acoustic, ibool_interfaces_elastic, &
+  use specfem_par, only: nspec,ibool,nglob, &
+                    ninterface,ibool_interfaces_acoustic,ibool_interfaces_elastic, &
                     ibool_interfaces_poroelastic, &
-                    nibool_interfaces_acoustic, nibool_interfaces_elastic, &
+                    nibool_interfaces_acoustic,nibool_interfaces_elastic, &
                     nibool_interfaces_poroelastic, &
-                    inum_interfaces_acoustic, inum_interfaces_elastic, &
-                    inum_interfaces_poroelastic, &
-                    ninterface_acoustic, ninterface_elastic, ninterface_poroelastic, &
-                    mask_ispec_inner_outer, &
+                    ninterface_acoustic,ninterface_elastic,ninterface_poroelastic, &
                     myrank,coord,buffer_send_faces_vector_ac,buffer_recv_faces_vector_ac,&
                     tab_requests_send_recv_acoustic
 

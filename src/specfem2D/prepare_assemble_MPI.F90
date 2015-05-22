@@ -60,7 +60,7 @@
   subroutine prepare_assemble_MPI()
 
   use specfem_par, only: nspec,ibool,knods, ngnod,nglob, elastic, poroelastic, &
-                                ninterface, max_interface_size, &
+                                ninterface, &
                                 my_nelmnts_neighbours, my_interfaces, &
                                 ibool_interfaces_acoustic, ibool_interfaces_elastic, &
                                 ibool_interfaces_poroelastic, &
@@ -69,7 +69,7 @@
                                 inum_interfaces_acoustic, inum_interfaces_elastic, &
                                 inum_interfaces_poroelastic, &
                                 ninterface_acoustic, ninterface_elastic, ninterface_poroelastic, &
-                                mask_ispec_inner_outer
+                                mask_ispec_inner_outer,nibool_interfaces_ext_mesh, ibool_interfaces_ext_mesh_init
   implicit none
 
   include 'constants.h'
@@ -80,12 +80,14 @@
   logical, dimension(nglob)  :: mask_ibool_acoustic
   logical, dimension(nglob)  :: mask_ibool_elastic
   logical, dimension(nglob)  :: mask_ibool_poroelastic
+  logical, dimension(nglob)  :: mask_ibool_ext_mesh
   integer  :: ixmin, ixmax, izmin, izmax, ix, iz
   integer, dimension(ngnod)  :: n
   integer  :: e1, e2, itype, ispec, k, sens, iglob
   integer  :: nglob_interface_acoustic
   integer  :: nglob_interface_elastic
   integer  :: nglob_interface_poroelastic
+  integer :: npoin_interface_ext_mesh
 
 
 
@@ -97,15 +99,19 @@
   nibool_interfaces_elastic(:) = 0
   ibool_interfaces_poroelastic(:,:) = 0
   nibool_interfaces_poroelastic(:) = 0
+  nibool_interfaces_ext_mesh(:) = 0
+  ibool_interfaces_ext_mesh_init(:,:) = 0
 
   do num_interface = 1, ninterface
     ! initializes interface point counters
     nglob_interface_acoustic = 0
     nglob_interface_elastic = 0
     nglob_interface_poroelastic = 0
+    npoin_interface_ext_mesh = 0
     mask_ibool_acoustic(:) = .false.
     mask_ibool_elastic(:) = .false.
     mask_ibool_poroelastic(:) = .false.
+    mask_ibool_ext_mesh(:) = .false.
 
     do ispec_interface = 1, my_nelmnts_neighbours(num_interface)
       ! element id
@@ -126,6 +132,14 @@
         do ix = ixmin, ixmax, sens
           ! global index
           iglob = ibool(ix,iz,ispec)
+
+           if(.not. mask_ibool_ext_mesh(iglob)) then
+              ! masks point as being accounted for
+              mask_ibool_ext_mesh(iglob) = .true.
+              ! adds point to interface
+              npoin_interface_ext_mesh = npoin_interface_ext_mesh + 1
+              ibool_interfaces_ext_mesh_init(npoin_interface_ext_mesh,num_interface) = iglob
+            endif
 
 
           ! checks to which material this common interface belongs
@@ -160,6 +174,7 @@
     nibool_interfaces_acoustic(num_interface) = nglob_interface_acoustic
     nibool_interfaces_elastic(num_interface) = nglob_interface_elastic
     nibool_interfaces_poroelastic(num_interface) = nglob_interface_poroelastic
+    nibool_interfaces_ext_mesh(num_interface) = npoin_interface_ext_mesh
     ! sets inner/outer element flags
     do ispec = 1, nspec
       do iz = 1, NGLLZ

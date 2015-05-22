@@ -47,32 +47,32 @@
 !  builds the global mass matrix
 
   use specfem_par, only: any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic, &
-                                rmass_inverse_elastic_one,nglob_elastic, &
-                                rmass_inverse_acoustic,nglob_acoustic, &
+                                rmass_inverse_elastic_one, &
+                                rmass_inverse_acoustic, &
                                 rmass_inverse_gravitoacoustic, &
-                                rmass_inverse_gravito,nglob_gravitoacoustic, &
+                                rmass_inverse_gravito, &
                                 rmass_s_inverse_poroelastic, &
-                                rmass_w_inverse_poroelastic,nglob_poroelastic, &
+                                rmass_w_inverse_poroelastic, &
                                 nspec,ibool,kmato,wxgll,wzgll,jacobian, &
                                 elastic,acoustic,gravitoacoustic,poroelastic, &
-                                assign_external_model,numat, &
+                                assign_external_model, &
                                 density,poroelastcoef,porosity,tortuosity, &
                                 vpext,rhoext, &
-                                anyabs,numabs,deltat,codeabs,&
+                                anyabs,numabs,deltat,codeabs,codeabs_corner,&
                                 ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
                                 ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
                                 rmass_inverse_elastic_three,&
                                 nelemabs,vsext,xix,xiz,gammaz,gammax, &
                                 K_x_store,K_z_store,is_PML,&
-                                AXISYM,nglob,is_on_the_axis,coord,wxglj,xiglj, &
+                                AXISYM,is_on_the_axis,coord,wxglj,xiglj, &
                                 d_x_store,d_z_store,PML_BOUNDARY_CONDITIONS,region_CPML, &
-                                nspec_PML,spec_to_PML,time_stepping_scheme,ispec,i,j,iglob
+                                spec_to_PML,time_stepping_scheme
 
   implicit none
   include 'constants.h'
 
 
-  integer :: ibegin,iend,ispecabs,jbegin,jend
+  integer :: ibegin,iend,ispecabs,jbegin,jend,ispec,i,j,iglob
 
 
   ! local parameter
@@ -173,7 +173,7 @@
               else if(region_CPML(ispec) == CPML_Z_ONLY) then
                 if (AXISYM) then
                   if (is_on_the_axis(ispec)) then
-                    if (abs(coord(1,iglob)) < TINYVAL) then ! First GLJ point
+                    if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
                       xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
                       rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
                          + xxi*wxglj(i)*wzgll(j)*rhol*jacobian(i,j,ispec) &
@@ -211,11 +211,12 @@
                 rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
               endif
             endif
-          else ! no PLM
+
+          else ! no PML
 
             if (AXISYM) then
               if (is_on_the_axis(ispec)) then
-                if (abs(coord(1,iglob)) < TINYVAL) then ! First GLJ point
+                if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
                   xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
                   rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
                       + xxi*wxglj(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
@@ -262,7 +263,7 @@
             ispec_PML=spec_to_PML(ispec)
             if(time_stepping_scheme == 1)then
               if(region_CPML(ispec) == CPML_X_ONLY) then
-                if (AXISYM) then   !! AB AB : This PML can't be on the axis : it is a right pml
+                if (AXISYM) then   !! AB AB: This PML cannot be on the axis: it is a right PML
                   rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
                        + coord(1,iglob)*wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) &
                        + d_x_store(i,j,ispec_PML) * deltat / 2.d0)
@@ -273,7 +274,7 @@
                 endif
 
               else if (region_CPML(ispec) == CPML_XZ_ONLY) then
-                if (AXISYM) then   !! AB AB : This corner can't be on the axis
+                if (AXISYM) then   !! AB AB: This corner cannot be on the axis
                   rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
                        + coord(1,iglob)*wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) &
                        *  (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML) &
@@ -289,7 +290,7 @@
               else if(region_CPML(ispec) == CPML_Z_ONLY) then
                 if (AXISYM) then
                   if (is_on_the_axis(ispec)) then
-                    if (abs(coord(1,iglob)) < TINYVAL) then ! First GLJ point
+                    if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
                       xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
                       rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
                          + xxi*wxglj(i)*wzgll(j)/kappal*jacobian(i,j,ispec) &
@@ -322,11 +323,11 @@
                      + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML))
               endif
             endif
-          else  ! no PLM
+          else  ! no PML
 
             if (AXISYM) then
               if (is_on_the_axis(ispec)) then
-                if (abs(coord(1,iglob)) < TINYVAL) then ! First GLJ point
+                if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
                   xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
                   rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
                       + xxi*wxglj(i)*wzgll(j)*jacobian(i,j,ispec) / kappal
@@ -513,7 +514,7 @@
 ! exclude corners to make sure there is no contradiction on the normal
 ! for Stacey absorbing conditions but not for incident plane waves;
 ! thus subtract nothing i.e. zero in that case
-                 if((codeabs(IEDGE4,ispecabs) .and. i == 1) .or. (codeabs(IEDGE2,ispecabs) .and. i == NGLLX)) then
+                 if((codeabs_corner(1,ispecabs) .and. i == 1) .or. (codeabs_corner(2,ispecabs) .and. i == NGLLX)) then
                    tx = 0
                    ty = 0
                    tz = 0
@@ -574,7 +575,7 @@
 ! exclude corners to make sure there is no contradiction on the normal
 ! for Stacey absorbing conditions but not for incident plane waves;
 ! thus subtract nothing i.e. zero in that case
-                 if((codeabs(IEDGE4,ispecabs) .and. i == 1) .or. (codeabs(IEDGE2,ispecabs) .and. i == NGLLX)) then
+                 if((codeabs_corner(3,ispecabs) .and. i == 1) .or. (codeabs_corner(4,ispecabs) .and. i == NGLLX)) then
                    tx = 0
                    ty = 0
                    tz = 0
@@ -660,8 +661,8 @@
           ibegin = ibegin_edge1(ispecabs)
           iend = iend_edge1(ispecabs)
           ! exclude corners to make sure there is no contradiction on the normal
-          if(codeabs(IEDGE4,ispecabs)) ibegin = 2
-          if(codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
+          if(codeabs_corner(1,ispecabs)) ibegin = 2
+          if(codeabs_corner(2,ispecabs)) iend = NGLLX-1
           do i = ibegin,iend
             iglob = ibool(i,j,ispec)
             ! external velocity model
@@ -686,8 +687,8 @@
           ibegin = ibegin_edge3(ispecabs)
           iend = iend_edge3(ispecabs)
           ! exclude corners to make sure there is no contradiction on the normal
-          if(codeabs(IEDGE4,ispecabs)) ibegin = 2
-          if(codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
+          if(codeabs_corner(3,ispecabs)) ibegin = 2
+          if(codeabs_corner(4,ispecabs)) iend = NGLLX-1
           do i = ibegin,iend
             iglob = ibool(i,j,ispec)
             ! external velocity model
@@ -722,12 +723,11 @@
 
   use specfem_par, only: any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic, &
                                 rmass_inverse_elastic_one,rmass_inverse_elastic_three,&
-                                nglob_elastic, &
-                                rmass_inverse_acoustic,nglob_acoustic, &
+                                rmass_inverse_acoustic, &
                                 rmass_inverse_gravitoacoustic, &
-                                rmass_inverse_gravito,nglob_gravitoacoustic, &
+                                rmass_inverse_gravito, &
                                 rmass_s_inverse_poroelastic, &
-                                rmass_w_inverse_poroelastic,nglob_poroelastic
+                                rmass_w_inverse_poroelastic
   implicit none
   include 'constants.h'
 

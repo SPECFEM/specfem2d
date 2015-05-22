@@ -67,9 +67,9 @@
 ! array containing coordinates of the points
   double precision coord(NDIM,nglob)
 
-  integer i,j,ispec,iglob,iter_loop,ix_initial_guess,iz_initial_guess
+  integer i,j,ispec,iglob,iter_loop,ix_initial_guess,iz_initial_guess,number_of_iterations
 
-  double precision x_source,z_source,dist
+  double precision x_source,z_source,dist_squared
   double precision xi,gamma,dx,dz,dxi,dgamma
 
 ! Gauss-Lobatto-Legendre points of integration
@@ -77,7 +77,7 @@
   double precision zigll(NGLLZ)
 
   double precision x,z,xix,xiz,gammax,gammaz,jacobian
-  double precision distmin,final_distance,dist_glob
+  double precision distmin_squared,final_distance,dist_glob_squared
 
 ! source information
   integer ispec_selected_source,is_proc_source,nb_proc_source,iglob_source
@@ -102,7 +102,7 @@
   endif
 
 ! set distance to huge initial value
-  distmin = HUGEVAL
+  distmin_squared = HUGEVAL
 
   is_proc_source = 0
 
@@ -114,13 +114,14 @@
         do i = 2,NGLLX-1
 
            iglob = ibool(i,j,ispec)
-           dist = sqrt((x_source-dble(coord(1,iglob)))**2 &
-                     + (z_source-dble(coord(2,iglob)))**2)
 
-!          keep this point if it is closer to the source
-           if(dist < distmin) then
+           !  we compare squared distances instead of distances themselves to significantly speed up calculations
+           dist_squared = (x_source-dble(coord(1,iglob)))**2 + (z_source-dble(coord(2,iglob)))**2
+
+           ! keep this point if it is closer to the source
+           if(dist_squared < distmin_squared) then
               iglob_source = iglob
-              distmin = dist
+              distmin_squared = dist_squared
               ispec_selected_source = ispec
               ix_initial_guess = i
               iz_initial_guess = j
@@ -134,27 +135,20 @@
 
 #ifdef USE_MPI
   ! global minimum distance computed over all processes
-  call MPI_ALLREDUCE (distmin, dist_glob, 1, MPI_DOUBLE_PRECISION, &
-                      MPI_MIN, MPI_COMM_WORLD, ierror)
-
+  call MPI_ALLREDUCE (distmin_squared, dist_glob_squared, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ierror)
 #else
-  dist_glob = distmin
-
+  dist_glob_squared = distmin_squared
 #endif
 
 ! check if this process contains the source
-  if ( abs(dist_glob - distmin) < TINYVAL ) is_proc_source = 1
+  if ( abs(sqrt(dist_glob_squared) - sqrt(distmin_squared)) < TINYVAL ) is_proc_source = 1
 
 #ifdef USE_MPI
   ! determining the number of processes that contain the source
   ! (useful when the source is located on an interface)
-  call MPI_ALLREDUCE (is_proc_source, nb_proc_source, 1, MPI_INTEGER, &
-                      MPI_SUM, MPI_COMM_WORLD, ierror)
-
+  call MPI_ALLREDUCE (is_proc_source, nb_proc_source, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD, ierror)
 #else
-
   nb_proc_source = is_proc_source
-
 #endif
 
 
@@ -184,6 +178,12 @@
   gamma = zigll(iz_initial_guess)
 
 ! iterate to solve the non linear system
+  if(USE_BEST_LOCATION_FOR_SOURCE) then
+    number_of_iterations = NUM_ITER
+  else
+    number_of_iterations = 0 ! this means that the loop below will not be executed, i.e. we will not iterate
+  endif
+
   do iter_loop = 1,NUM_ITER
 
 ! recompute jacobian for the new point
@@ -248,10 +248,6 @@
      write(IOUT,*) 'end of force source detection'
      write(IOUT,*)
   endif
-
-#ifdef USE_MPI
-  call MPI_BARRIER(MPI_COMM_WORLD,ierror)
-#endif
 
   end subroutine locate_source_force
 

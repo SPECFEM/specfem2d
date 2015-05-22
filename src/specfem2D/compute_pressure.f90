@@ -45,27 +45,17 @@
 
 ! compute pressure in acoustic elements and in elastic elements
 
-  use specfem_par, only: potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic,displ_elastic,&
-                         displs_poroelastic,displw_poroelastic,acoustic,gravitoacoustic,elastic,poroelastic,vector_field_display, &
-                         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
-                         AXISYM,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
-                         nglob,nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
-                         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
-                         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,e1,e11, &
-                         ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS,i,j,ispec,iglob
+  use specfem_par
 
   implicit none
 
-  include "constants.h"
-
-! pressure in this element
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: pressure_element
+  integer i,j,ispec,iglob
 
 ! loop over spectral elements
   do ispec = 1,nspec
 
 ! compute pressure in this element
-    call compute_pressure_one_element()
+    call compute_pressure_one_element(ispec)
 
 ! use vector_field_display as temporary storage, store pressure in its second component
     do j = 1,NGLLZ
@@ -83,24 +73,17 @@
 !=====================================================================
 !
 
-  subroutine compute_pressure_one_element()
+  subroutine compute_pressure_one_element(ispec)
 
 
 ! compute pressure in acoustic elements and in elastic elements
 
-  use specfem_par, only: pressure_element,potential_dot_dot_acoustic, &
-                         potential_dot_dot_gravitoacoustic,displ_elastic,&
-                         displs_poroelastic,displw_poroelastic,acoustic,gravitoacoustic,elastic,poroelastic,&
-                         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,nspec, &
-                         AXISYM,nglob,coord,jacobian,is_on_the_axis,hprimeBar_xx, &
-                         nglob_acoustic,nglob_gravitoacoustic,nglob_elastic,nglob_poroelastic,assign_external_model, &
-                         numat,kmato,density,porosity,tortuosity,poroelastcoef,vpext,vsext,rhoext, &
-                         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropic,anisotropy,ispec,e1,e11, &
-                         ATTENUATION_VISCOELASTIC_SOLID,Mu_nu1,Mu_nu2,N_SLS
+  use specfem_par
 
   implicit none
 
-  include "constants.h"
+
+  integer ispec
 
   real(kind=CUSTOM_REAL) :: e1_sum,e11_sum
 
@@ -109,29 +92,14 @@
 ! local variables
   integer :: i,j,k,iglob
 
-! jacobian
-  real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl
+  real(kind=CUSTOM_REAL) :: sigma_yy !! ,sigmap
+  real(kind=CUSTOM_REAL) :: sigma_thetatheta
 
-! spatial derivatives
-  real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
-  real(kind=CUSTOM_REAL) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
-  real(kind=CUSTOM_REAL) :: sigma_xx,sigma_yy,sigma_zz !! ,sigmap
-  real(kind=CUSTOM_REAL) :: sigma_thetatheta,xxi
-  real(kind=CUSTOM_REAL) :: dwx_dxi,dwx_dgamma,dwz_dxi,dwz_dgamma
-  real(kind=CUSTOM_REAL) :: dwx_dxl,dwz_dzl
 
 ! material properties of the elastic medium
-  real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic,denst
+  real(kind=CUSTOM_REAL) :: denst
   real(kind=CUSTOM_REAL) :: mul_relaxed_viscoelastic,lambdal_relaxed_viscoelastic,lambdalplus2mul_relaxed_viscoel,cpl,csl
 
-  real(kind=CUSTOM_REAL) :: mul_s,kappal_s,rhol_s
-  real(kind=CUSTOM_REAL) :: kappal_f,rhol_f
-  real(kind=CUSTOM_REAL) :: mul_fr,kappal_fr,phil,tortl
-  real(kind=CUSTOM_REAL) :: D_biot,H_biot,C_biot,M_biot,rhol_bar
-  real(kind=CUSTOM_REAL) :: mul_G,lambdal_G,lambdalplus2mul_G
-
-! for anisotropy
-  double precision ::  c11,c15,c13,c33,c35,c55,c12,c23,c25
 
 ! if elastic element
 !
@@ -223,7 +191,7 @@
         dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
         duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
-        if (AXISYM .and. (abs(coord(1,ibool(i,j,ispec))) < TINYVAL)) then ! du_z/dr=0 on the axis
+        if (AXISYM .and. is_on_the_axis(ispec) .and. i == 1) then ! d_uz/dr=0 on the axis
           duz_dxl = 0.d0
         endif
 
@@ -252,11 +220,50 @@
           mul_relaxed_viscoelastic = mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
           lambdalplus2mul_relaxed_viscoel = lambdal_relaxed_viscoelastic + TWO*mul_relaxed_viscoelastic
 
-          ! compute the stress using the unrelaxed Lame parameters (Carcione 2007 page 125)
-          sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
-          ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
-          sigma_yy = lambdal_unrelaxed_elastic*(dux_dxl + duz_dzl)
-          sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
+          if(AXISYM) then
+            if (is_on_the_axis(ispec)) then
+              if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
+                sigma_xx = 0._CUSTOM_REAL
+                sigma_zz = 0._CUSTOM_REAL
+                sigma_thetatheta = 0._CUSTOM_REAL
+                xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+                do k = 1,NGLJ
+                  sigma_xx = sigma_xx + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                  sigma_zz = sigma_zz + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                  sigma_thetatheta = sigma_thetatheta + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                enddo
+                sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl &
+                           + lambdal_unrelaxed_elastic*sigma_xx/xxi
+                sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
+                           + lambdal_unrelaxed_elastic*sigma_zz/xxi
+                sigma_thetatheta = lambdal_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
+                                   + lambdaplus2mu_unrelaxed_elastic*sigma_thetatheta/xxi
+              else ! Not first GLJ point
+                sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl &
+                           + lambdal_unrelaxed_elastic*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
+                sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
+                           + lambdal_unrelaxed_elastic*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
+                sigma_thetatheta = lambdal_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
+                                        + lambdaplus2mu_unrelaxed_elastic &
+                                        * displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
+              endif
+            else ! Not on the axis
+              sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl &
+                         + lambdal_unrelaxed_elastic*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
+              sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
+                         + lambdal_unrelaxed_elastic*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
+              sigma_thetatheta = lambdal_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl &
+                                      + lambdaplus2mu_unrelaxed_elastic &
+                                      * displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
+            endif
+            sigma_yy = sigma_thetatheta
+          else ! Not axisym
+            ! compute the stress using the unrelaxed Lame parameters (Carcione 2007 page 125)
+            sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
+            ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
+            sigma_yy = lambdal_unrelaxed_elastic*(dux_dxl + duz_dzl)
+            sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
+          endif
 
           ! add the memory variables using the relaxed parameters (Carcione 2007 page 125)
           ! beware: there is a bug in Carcione's equation (2c) of his 1993 paper for sigma_zz, we fixed it in the code below
@@ -281,7 +288,7 @@
 
           if(AXISYM) then
             if (is_on_the_axis(ispec)) then
-              if (abs(coord(1,ibool(i,j,ispec))) < TINYVAL) then ! First GLJ point
+              if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
                 sigma_xx = 0._CUSTOM_REAL
                 sigma_zz = 0._CUSTOM_REAL
                 sigma_thetatheta = 0._CUSTOM_REAL
@@ -351,6 +358,10 @@
 
           duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
           dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
+
+          if (AXISYM .and. is_on_the_axis(ispec) .and. i == 1) then ! d_uz/dr=0 on the axis
+            duz_dxl = 0.d0
+          endif
 
           ! implement anisotropy in 2D
           sigma_xx = c11*dux_dxl + c13*duz_dzl + c15*(duz_dxl + dux_dzl)

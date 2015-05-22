@@ -45,7 +45,7 @@
 
 ! generate the global numbering
 
-  use specfem_par, only : knods,ibool,nglob,nspec,ngnod,myrank
+  use specfem_par, only : knods,ibool,nglob,nspec,myrank
 
   implicit none
 

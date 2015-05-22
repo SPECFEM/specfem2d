@@ -8,6 +8,12 @@ AXISYM                          = .false.
 SIMULATION_TYPE                 = 1  # 1 = forward, 3 = adjoint + kernels; 2 is purposely UNUSED (for compatibility with the numbering of our 3D codes)
 NOISE_TOMOGRAPHY                = 0  # 0 = earthquake simulation, 1/2/3 = noise simulation
 SAVE_FORWARD                    = .true. # save the last frame, needed for adjoint simulation
+# to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
+# use the flag below. It performs undoing of attenuation in an exact way for sensitivity kernel calculations
+# but requires disk space for temporary storage, and uses a significant amount of memory used as buffers for temporary storage.
+# When that option is on the second parameter indicates how often the code dumps restart files to disk (if in doubt, use something between 100 and 1000).
+UNDO_ATTENUATION                = .false.
+NT_DUMP_ATTENUATION             = 500
 
 # parameters concerning partitioning
 nproc                           = 1              # number of processes
@@ -16,8 +22,16 @@ partitioning_method             = 3              # SCOTCH = 3, ascending order (
 ngnod                           = 4              # number of control nodes per element (4 or 9)
 initialfield                    = .true.        # use a plane wave as source or not
 add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
-assign_external_model           = .false.        # define external earth model or not
-READ_EXTERNAL_SEP_FILE          = .false.        # Read external model from DATA/model_velocity.dat_input, or use routine
+
+# available models
+#   default: define model using nbmodels below
+#   ascii: read model from ascii database file
+#   binary: read model from binary databse file
+#   external: define model using define_external_model subroutine
+#   legacy: read model from model_velocity.dat_input
+MODEL                           = default
+
+
 ATTENUATION_VISCOELASTIC_SOLID  = .false.        # turn attenuation (viscoelasticity) on or off for non-poroelastic solid parts of the model
 ATTENUATION_PORO_FLUID_PART     = .false.        # turn viscous attenuation on or off for the fluid part of poroelastic parts of the model
 Q0                              =  1             # quality factor for viscous attenuation
@@ -40,15 +54,11 @@ force_normal_to_surface         = .false.        # angleforce normal to surface 
 # for viscoelastic attenuation
 N_SLS                           = 2                      # number of standard linear solids for attenuation
 f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the CMTSOLUTION file
-# shift (i.e. change) velocities read from the input file to take average physical dispersion into account,
-# i.e. if needed change the reference frequency at which these velocities are defined internally in the code:
-# by default, the seismic velocity values that are read at the end of this Par_file of the code are supposed to be the unrelaxed values,
-# i.e. the velocities at infinite frequency. We may want to change this and impose that the values read are those for a given frequency (here f0_attenuation).
-# (when we do this, velocities will then slightly decrease and waves will thus slightly slow down)
-READ_VELOCITIES_AT_f0           = .false.
+READ_VELOCITIES_AT_f0           = .false.        # shift velocities to account for physical dispersion (see user manual for more information)
 
 # receiver set parameters for seismograms
 seismotype                      = 1              # record 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential
+USE_TRICK_FOR_BETTER_PRESSURE   = .false.        # so far, this option can only be used if all the receivers are in acoustic elements
 NSTEP_BETWEEN_OUTPUT_SEISMOS    = 5000000        # every how many time steps we save the seismograms (costly, do not use a very small value; if you use a very large value that is larger than the total number of time steps of the run, the seismograms will automatically be saved once at the end of the run anyway)
 save_ASCII_seismograms          = .true.         # save seismograms in ASCII format or not
 save_binary_seismograms_single  = .true.         # save seismograms in single precision binary format or not (can be used jointly with ASCII above to save both)
@@ -106,34 +116,20 @@ output_grid_Gnuplot             = .false.        # generate a GNUPLOT file conta
 output_grid_ASCII               = .false.        # dump the grid in an ASCII text file consisting of a set of X,Y,Z points or not
 output_energy                   = .false.        # compute and output total acoustic and elastic energy curves (slows down the code significantly)
 
-# velocity and density models
-nbmodels                        = 2              # nb of different models
-# define models as
-# I:   (model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0) or
-# II:  (model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0) or
-# III: (model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu).
-#
-# For istropic elastic/acoustic material use I and set Vs to zero to make a given model acoustic, for anisotropic elastic use II,
-# and for isotropic poroelastic material use III. The mesh can contain acoustic, elastic, and poroelastic models simultaneously.
-#
-# For anisotropic media in the most general 2D case we have the following convention for the stress-strain relationship:
-# ! implement anisotropy in 2D
-# sigma_xx = c11*dux_dx + c13*duz_dz + c15*(duz_dx + dux_dz)
-# sigma_zz = c13*dux_dx + c33*duz_dz + c35*(duz_dx + dux_dz)
-# sigma_xz = c15*dux_dx + c35*duz_dz + c55*(duz_dx + dux_dz)
-# sigma_yy is not equal to zero in the plane strain formulation
-# but is used only in post-processing if needed,
-# to compute pressure for display or seismogram recording purposes
-# sigma_yy = c12*dux_dx + c23*duz_dz + c25*(duz_dx + dux_dz)
-# where the notations are for instance duz_dx = d(Uz) / dx.
-#
-# For anisotropic elastic media the last three parameters, c12 c23 c25, are used only when the user asks the code to compute pressure for display
-# or seismogram recording purposes. Thus, if you do not know these parameters for your anisotropic material and/or if you do not plan to display or record pressure you
-# can ignore them and set them to zero. When pressure is used these three parameters are needed because the code needs to compute sigma_yy,
-# which is not equal to zero in the plane strain formulation.
-#
+
+nbmodels                        = 2
+# available material types (see user manual for more information)
+#   acoustic:    model_number 1 rho Vp 0  0 0 QKappa Qmu 0 0 0 0 0 0
+#   elastic:     model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0
+#   anistoropic: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0
+#   poroelastic: model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu
+#   tomo:        model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0
+
 1 1 2800.d0 6500.d0 3700d0 0 0 10.d0 10.d0 0 0 0 0 0 0
 2 1 3200.d0 8300.d0 4700d0 0 0 10.d0 10.d0 0 0 0 0 0 0
+
+# external tomography file
+TOMOGRAPHY_FILE                 = ./DATA/tomo_file.xyz
 
 # external mesh or not
 read_external_mesh              = .false.
@@ -151,6 +147,9 @@ ADD_PERIODIC_CONDITIONS         = .false.
 
 # horizontal periodicity distance for periodic conditions
 PERIODIC_HORIZ_DIST             = 0.3597d0
+
+# set to true to use GPUs
+GPU_MODE                        = .false.
 
 #-----------------------------------------------------------------------------
 # PARAMETERS FOR EXTERNAL MESHING

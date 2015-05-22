@@ -1,0 +1,51 @@
+
+Subject: Re: [CIG-SEISMO] Multiple receiver types - SpecFEM2D
+From: Ra Cleave  / ra AT rippletech.co.nz
+Date: 03/14/2013 02:11 AM
+To: Dimitri Komatitsch
+
+Dimitri,
+
+Here are the routines I have modified. As I mentioned the code now optionally
+records pressure at each receiver. Most changes are preceded by a comment that
+starts with "!RC:". The par_file needs to have the following line:
+
+seismo_p = .true.         # Whether pressure should also be recorded
+
+Files:
+SPECFEM2D-7.0.0-RC/src/specfem2D/write_seismograms.F90
+SPECFEM2D-7.0.0-RC/src/specfem2D/specfem2D.F90
+SPECFEM2D-7.0.0-RC/src/specfem2D/read_databases.f90
+
+SPECFEM2D-7.0.0-RC/src/meshfem2D/read_parameter_file.F90
+SPECFEM2D-7.0.0-RC/src/meshfem2D/save_databases.f90
+
+Best regards,
+Ra
+
+-- Ra Cleave RippleTech www.rippletech.co.nz  On Fri, 08 Mar 2013 12:34:09 you wrote:
+> > Hello,
+> >
+> > That is a good idea. It is not available in the current version but you
+> > can implement it easily by copying and pasting all the sections that
+> > contain the word "seismogram" in the main program
+> > (src/specfem2D/specfem2D.F90) and using one set of arrays for velocity
+> > seismograms and another one for pressure.
+> >
+> > PS: if you implement that, please email me the new routine and I will
+> > add it to the official source code. It will be very useful.
+> >
+> > Thank you,
+> > Dimitri.
+> >
+> > On 03/08/2013 03:32 AM, Ra Cleave wrote:
+>> > > Hello,
+>> > >
+>> > > Is there any way to having different receiver types in one SpecFEM2D
+>> > > simulation? I am, in this case, interested in velocity and pressure
+>> > > receivers in the same simulation.
+>> > >
+>> > > Thanks in advance,
+>> > > Ra
+>> > >
+

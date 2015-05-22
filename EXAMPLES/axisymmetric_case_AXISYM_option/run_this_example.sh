@@ -2,7 +2,7 @@
 #
 # This script runs Specfem2d mesher and solver
 # with AXISYM=.true.
-# This is then a axisymmetric simulation
+# This is then an axisymmetric simulation
 #
 # To clean this directory : rm -rf DATA/ OUTPUT_FILES/ plot_points_per_wavelength_histogram.gnu points_per_wavelength_histogram_* x* *~
 
@@ -26,6 +26,8 @@ cd ../
 # Clean output files
 rm -rf OUTPUT_FILES/*
 
+#cd ../../
+#make -j 16
 cd $currentdir
 
 # Link executables

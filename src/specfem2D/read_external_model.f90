@@ -45,14 +45,15 @@
   subroutine read_external_model()
 
   use specfem_par, only: any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic, &
-                         acoustic,gravitoacoustic,elastic,poroelastic,anisotropic,nspec,nglob,N_SLS,ibool, &
-                         f0_attenuation,READ_VELOCITIES_AT_f0,tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,&
+                         acoustic,gravitoacoustic,elastic,poroelastic,anisotropic,nspec,nglob,ibool, &
+                         READ_VELOCITIES_AT_f0,inv_tau_sigma_nu1_sent,&
                          phi_nu1_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent, &
                          inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,&
                          coord,kmato,rhoext,vpext,vsext,gravityext,Nsqext, &
                          QKappa_attenuationext,Qmu_attenuationext, &
                          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
-                         READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID,p_sv
+                         MODEL,ATTENUATION_VISCOELASTIC_SOLID,p_sv,&
+                         inputname,ios,tomo_material
 
   implicit none
   include "constants.h"
@@ -60,17 +61,13 @@
 
   ! Local variables
   integer :: i,j,ispec,iglob
-  double precision :: previous_vsext
-  double precision :: tmp1, tmp2,tmp3
+  real(kind=CUSTOM_REAL) :: previous_vsext
+  real(kind=CUSTOM_REAL) :: tmp1, tmp2,tmp3
+  double precision :: rho_dummy,vp_dummy,vs_dummy,mu_dummy,lambda_dummy
 
-  double precision :: mu_dummy,lambda_dummy
+  if (tomo_material > 0) MODEL = 'tomo'
 
-  if(READ_EXTERNAL_SEP_FILE) then
-    write(IOUT,*)
-    write(IOUT,*) '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
-    write(IOUT,*) 'Assigning external velocity and density model (elastic (no attenuation) and/or acoustic)...'
-    write(IOUT,*) 'Read outside SEG model...'
-    write(IOUT,*) '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+  if(trim(MODEL) == 'legacy') then
 
     open(unit=1001,file='DATA/model_velocity.dat_input',status='unknown')
     do ispec = 1,nspec
@@ -78,9 +75,6 @@
         do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
           read(1001,*) tmp1,tmp2,tmp3,rhoext(i,j,ispec),vpext(i,j,ispec),vsext(i,j,ispec)
-          !     vsext(i,j,ispec)=0.0
-          ! QKappa, Qmu : dummy values. If attenuation needed than the "read" line and model_velocity.dat_input
-          ! need to be modified to provide QKappa & Qmu values
           QKappa_attenuationext(i,j,ispec) = 9999.d0
           Qmu_attenuationext(i,j,ispec) = 9999.d0
         enddo
@@ -88,12 +82,58 @@
     enddo
     close(1001)
 
-  else
 
+  else if(trim(MODEL)=='ascii') then
+    open(unit=1001,file='DATA/proc000000_rho_vp_vs.dat',status='unknown')
+    do ispec = 1,nspec
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          iglob = ibool(i,j,ispec)
+          read(1001,*) tmp1,tmp2,rhoext(i,j,ispec),vpext(i,j,ispec),vsext(i,j,ispec)
+          QKappa_attenuationext(i,j,ispec) = 9999.d0
+          Qmu_attenuationext(i,j,ispec) = 9999.d0
+        enddo
+      enddo
+    enddo
+    close(1001)
+
+  else if((trim(MODEL) == 'binary') .or. (trim(MODEL) == 'gll')) then
+      write(inputname,'(a)') 'DATA/proc000000_rho.bin'
+      open(unit = 1001, file = inputname, status='old',action='read',form='unformatted', iostat=ios)
+      if (ios /= 0) stop 'Error opening rho.bin file.'
+
+      read(1001) rhoext
+      close(1001)
+      print *, 'rho', minval(rhoext), maxval(rhoext)
+
+      write(inputname,'(a)') 'DATA/proc000000_vp.bin'
+      open(unit = 1001, file = inputname, status='old',action='read',form='unformatted', iostat=ios)
+      if (ios /= 0) stop 'Error opening vp.bin file.'
+
+      read(1001) vpext
+      close(1001)
+
+      write(inputname,'(a)') 'DATA/proc000000_vs.bin'
+      open(unit = 1001, file = inputname, status='old',action='read',form='unformatted', iostat=ios)
+      if (ios /= 0) stop 'Error opening vs.bin file.'
+
+      read(1001) vsext
+      close(1001)
+
+      QKappa_attenuationext(:,:,:) = 9999.d0
+      Qmu_attenuationext(:,:,:) = 9999.d0
+
+
+  else if(trim(MODEL)=='external') then
     call define_external_model(coord,kmato,ibool,rhoext,vpext,vsext,QKappa_attenuationext,Qmu_attenuationext,gravityext,Nsqext, &
                                c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,nspec,nglob)
+  else if(trim(MODEL)=='tomo') then
+    call define_external_model_from_tomo_file()
+  endif
 
-! check that the external model that has just been defined makes sense
+  if(trim(MODEL)=='external' .or. trim(MODEL)=='tomo') then
+
+    ! check that the external model that has just been defined makes sense
     do ispec = 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
@@ -105,7 +145,7 @@
             vsext(i,j,ispec) = 10.d0
           endif
 
-! check that the element type is not redefined compared to what is defined initially in DATA/Par_file
+          ! check that the element type is not redefined compared to what is defined initially in DATA/Par_file
           if((c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
               c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) &
               .and. .not. anisotropic(ispec)) &
@@ -195,7 +235,7 @@
 !       if no attenuation in that elastic element
         if(QKappa_attenuationext(i,j,ispec) > 9998.999d0) cycle
 
-        call attenuation_model(QKappa_attenuationext(i,j,ispec),Qmu_attenuationext(i,j,ispec))
+        call attenuation_model(dble(QKappa_attenuationext(i,j,ispec)),dble(Qmu_attenuationext(i,j,ispec)))
 
         inv_tau_sigma_nu1(i,j,ispec,:) = inv_tau_sigma_nu1_sent(:)
         phi_nu1(i,j,ispec,:) = phi_nu1_sent(:)
@@ -207,7 +247,12 @@
         if(ATTENUATION_VISCOELASTIC_SOLID .and. READ_VELOCITIES_AT_F0) then
           if(anisotropic(ispec) .or. poroelastic(ispec) .or. gravitoacoustic(ispec)) stop &
              'READ_VELOCITIES_AT_F0 only implemented for non anisotropic, non poroelastic, non gravitoacoustic materials for now'
-          call shift_velocities_from_f0(vpext(i,j,ispec),vsext(i,j,ispec),rhoext(i,j,ispec),mu_dummy,lambda_dummy)
+
+          vp_dummy = dble(vpext(i,j,ispec))
+          vs_dummy = dble(vpext(i,j,ispec))
+          rho_dummy = dble(rhoext(i,j,ispec))
+
+          call shift_velocities_from_f0(vp_dummy,vs_dummy,rho_dummy,mu_dummy,lambda_dummy)
 
         endif
 

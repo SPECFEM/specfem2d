@@ -53,6 +53,8 @@
                           coorg,knods,ngnod,npgeo, &
                           x_final_receiver, z_final_receiver)
 
+use specfem_par, only : gather_ispec_selected_rec,acoustic,USE_TRICK_FOR_BETTER_PRESSURE
+
 #ifdef USE_MPI
   use mpi
 #endif
@@ -74,7 +76,7 @@
 
   integer irec,i,j,ispec,iglob,iter_loop,ix_initial_guess,iz_initial_guess
 
-  double precision x_source,z_source,dist,stele,stbur
+  double precision x_source,z_source,dist_squared,stele,stbur
   double precision, dimension(nrec)  :: distance_receiver
   double precision xi,gamma,dx,dz,dxi,dgamma
 
@@ -85,7 +87,7 @@
   double precision x,z,xix,xiz,gammax,gammaz,jacobian
 
 ! use dynamic allocation
-  double precision distmin
+  double precision distmin_squared
   double precision, dimension(:), allocatable :: final_distance
 
 ! receiver information
@@ -104,15 +106,12 @@
 
   double precision, dimension(nrec,nproc)  :: gather_final_distance
   double precision, dimension(nrec,nproc)  :: gather_xi_receiver, gather_gamma_receiver
-  integer, dimension(nrec,nproc)  :: gather_ispec_selected_rec
+
   integer, dimension(nrec), intent(inout)  :: which_proc_receiver
   integer  :: ierror
 
-
+  allocate(gather_ispec_selected_rec(nrec,nproc))
   ierror = 0
-#ifdef USE_MPI
-  call MPI_BARRIER(MPI_COMM_WORLD,ierror)
-#endif
 
 ! **************
 
@@ -135,7 +134,7 @@
   do irec=1,nrec
 
     ! set distance to huge initial value
-    distmin=HUGEVAL
+    distmin_squared = HUGEVAL
 
     read(1,*) station_name(irec),network_name(irec),st_xval(irec),st_zval(irec),stele,stbur
 
@@ -153,11 +152,13 @@
         do i=2,NGLLX-1
 
           iglob = ibool(i,j,ispec)
-          dist = sqrt((st_xval(irec)-dble(coord(1,iglob)))**2 + (st_zval(irec)-dble(coord(2,iglob)))**2)
+
+          !  we compare squared distances instead of distances themselves to significantly speed up calculations
+          dist_squared = (st_xval(irec)-dble(coord(1,iglob)))**2 + (st_zval(irec)-dble(coord(2,iglob)))**2
 
           ! keep this point if it is closer to the receiver
-          if(dist < distmin) then
-            distmin = dist
+          if(dist_squared < distmin_squared) then
+            distmin_squared = dist_squared
             ispec_selected_rec(irec) = ispec
             ix_initial_guess = i
             iz_initial_guess = j
@@ -226,6 +227,8 @@
     x_final_receiver(irec) = x
     z_final_receiver(irec) = z
 
+
+
   enddo
 
   ! close receiver file
@@ -257,10 +260,17 @@
   gather_xi_receiver(:,1) = xi_receiver(:)
   gather_gamma_receiver(:,1) = gamma_receiver(:)
   gather_ispec_selected_rec(:,1) = ispec_selected_rec(:)
-
   which_proc_receiver(:) = 0
 
 #endif
+
+  if ((myrank == 0) .and. USE_TRICK_FOR_BETTER_PRESSURE) then
+    do irec=1,nrec
+      if (.not. acoustic(ispec_selected_rec(irec))) then
+        call exit_MPI('USE_TRICK_FOR_BETTER_PRESSURE : receivers must be in acoustic elements')
+      endif
+    enddo
+  endif
 
   nrecloc = 0
   do irec = 1, nrec
@@ -299,10 +309,6 @@
 
   ! deallocate arrays
   deallocate(final_distance)
-
-#ifdef USE_MPI
-  call MPI_BARRIER(MPI_COMM_WORLD,ierror)
-#endif
 
   end subroutine locate_receivers
 

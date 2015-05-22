@@ -4,9 +4,7 @@ aclocal.m4
 autom4te.cache
 config.log
 config.status
-./Makefile
-src/meshfem2D/Makefile
-src/specfem2D/Makefile
+/Makefile
 
 setup/config.h
 setup/constants.h

@@ -104,7 +104,7 @@
   subroutine initialize_simulation_domains()
 
   use specfem_par, only : any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic, &
-                          anisotropic,acoustic,gravitoacoustic,elastic,poroelastic,porosity,anisotropy,kmato,numat, &
+                          anisotropic,acoustic,gravitoacoustic,elastic,poroelastic,porosity,anisotropy,kmato, &
                           nspec,nspec_allocate,p_sv,ATTENUATION_VISCOELASTIC_SOLID,count_nspec_acoustic
   implicit none
   include "constants.h"
@@ -157,15 +157,15 @@
 
 
   if(.not. p_sv .and. .not. any_elastic) then
-    print*, '*************** WARNING ***************'
-    print*, 'Surface (membrane) waves calculation needs an elastic medium'
-    print*, '*************** WARNING ***************'
+    print *, '*************** WARNING ***************'
+    print *, 'Surface (membrane) waves calculation needs an elastic medium'
+    print *, '*************** WARNING ***************'
     stop
   endif
   if(.not. p_sv .and. (ATTENUATION_VISCOELASTIC_SOLID)) then
-    print*, '*************** WARNING ***************'
-    print*, 'Attenuation and anisotropy are not implemented for surface (membrane) waves calculation'
-    print*, '*************** WARNING ***************'
+    print *, '*************** WARNING ***************'
+    print *, 'Attenuation and anisotropy are not implemented for surface (membrane) waves calculation'
+    print *, '*************** WARNING ***************'
     stop
   endif
 

@@ -45,26 +45,26 @@
 
 ! compute forces for the fluid poroelastic part
 
-  use specfem_par, only: nglob,nspec,myrank,nelemabs,numat, &
-                         ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver,&
+  use specfem_par, only: nglob,nspec,myrank,nelemabs, &
+                         ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
                          source_type,it,NSTEP,anyabs, &
                          initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat, &
-                         ibool,kmato,numabs,poroelastic,codeabs, &
-                         accelw_poroelastic,velocw_poroelastic,displw_poroelastic,velocs_poroelastic,displs_poroelastic,&
+                         ibool,kmato,numabs,poroelastic,codeabs,codeabs_corner, &
+                         accelw_poroelastic,velocw_poroelastic,displw_poroelastic,velocs_poroelastic,displs_poroelastic, &
                          displs_poroelastic_old,b_accelw_poroelastic,b_displw_poroelastic,b_displs_poroelastic,&
                          density,porosity,tortuosity,permeability,poroelastcoef,xix,xiz,gammax,gammaz, &
                          jacobian,source_time_function,sourcearray,adj_sourcearrays, &
-                         e11,e13,hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll,&
+                         e11,e13,hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                          inv_tau_sigma_nu2,phi_nu2,Mu_nu2,N_SLS, &
-                         rx_viscous,rz_viscous,theta_e,theta_s,b_viscodampx,b_viscodampz,&
+                         rx_viscous,rz_viscous,theta_e,theta_s,b_viscodampx,b_viscodampz, &
                          ibegin_edge1_poro,iend_edge1_poro,ibegin_edge3_poro,iend_edge3_poro, &
-                         ibegin_edge4_poro,iend_edge4_poro,ibegin_edge2_poro,iend_edge2_poro,&
-                         C_k,M_k,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD,&
-                         b_absorb_poro_w_left,b_absorb_poro_w_right,b_absorb_poro_w_bottom,b_absorb_poro_w_top,&
-                         nspec_left,nspec_right,nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top,freq0,Q0, &
+                         ibegin_edge4_poro,iend_edge4_poro,ibegin_edge2_poro,iend_edge2_poro, &
+                         C_k,M_k,NSOURCES,nrec,SIMULATION_TYPE,SAVE_FORWARD, &
+                         b_absorb_poro_w_left,b_absorb_poro_w_right,b_absorb_poro_w_bottom,b_absorb_poro_w_top, &
+                         ib_left,ib_right,ib_bottom,ib_top,freq0,Q0, &
                          e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
                          e11_initial_rk,e13_initial_rk,e11_force_RK, e13_force_RK, &
-                         stage_time_scheme,i_stage,i_source
+                         stage_time_scheme,i_stage
 
   implicit none
 
@@ -78,7 +78,7 @@
 !--- local variables
 !---
 
-  integer :: ispec,i,j,k,iglob,ispecabs,ibegin,iend,jbegin,jend,irec,irec_local
+  integer :: ispec,i,j,k,iglob,ispecabs,ibegin,iend,jbegin,jend,irec,irec_local,i_source
   real(kind=CUSTOM_REAL) :: weight_rk
   real(kind=CUSTOM_REAL) :: e11_sum,e13_sum
   integer :: i_sls
@@ -743,8 +743,8 @@
         iend = iend_edge1_poro(ispecabs)
 
 ! exclude corners to make sure there is no contradiction on the normal
-        if(codeabs(IEDGE4,ispecabs)) ibegin = 2
-        if(codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
+        if(codeabs_corner(1,ispecabs)) ibegin = 2
+        if(codeabs_corner(2,ispecabs)) iend = NGLLX-1
 
         do i = ibegin,iend
 
@@ -803,8 +803,8 @@
         iend = iend_edge3_poro(ispecabs)
 
 ! exclude corners to make sure there is no contradiction on the normal
-        if(codeabs(IEDGE4,ispecabs)) ibegin = 2
-        if(codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
+        if(codeabs_corner(3,ispecabs)) ibegin = 2
+        if(codeabs_corner(4,ispecabs)) iend = NGLLX-1
 
         do i = ibegin,iend
 

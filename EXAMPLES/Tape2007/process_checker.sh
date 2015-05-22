@@ -24,7 +24,7 @@ mkdir DATA
 cd DATA/
 ln -s ../Par_file_Tape2007_132rec_checker Par_file
 ln -s ../SOURCE_005 SOURCE
-ln -s ../model_velocity.dat_checker model_velocity.dat_input 
+ln -s ../model_velocity.dat_checker model_velocity.dat_input
 cd ../
 
 # cleans output files
@@ -57,12 +57,12 @@ echo
 ./xspecfem2D > OUTPUT_FILES/output_solver.txt
 
 # stores output
-cp DATA/SOURCE_xz.dat OUTPUT_FILES/
+cp DATA/SOURCE OUTPUT_FILES/
 cp DATA/STATIONS OUTPUT_FILES/
-cp DATA/STATIONS_target OUTPUT_FILES/
+#cp DATA/STATIONS_target OUTPUT_FILES/
 
 echo
 echo "see results in directory: OUTPUT_FILES/"
 echo
 echo "done"
-echo `date`
+date

@@ -46,8 +46,8 @@
 
 ! starts reading in parameters from input Database file
 
-  use specfem_par, only: myrank,simulation_title,SIMULATION_TYPE,SAVE_FORWARD,AXISYM,&
-                         NOISE_TOMOGRAPHY,npgeo,nproc_read_from_database, &
+  use specfem_par, only: myrank,simulation_title,SIMULATION_TYPE,SAVE_FORWARD,UNDO_ATTENUATION,AXISYM,&
+                         NOISE_TOMOGRAPHY,MODEL,npgeo,nproc_read_from_database, &
                          output_grid_Gnuplot,interpol,NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS, &
                          NSTEP_BETWEEN_OUTPUT_IMAGES,PML_BOUNDARY_CONDITIONS,&
                          ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,NELEM_PML_THICKNESS,&
@@ -56,16 +56,16 @@
                          output_postscript_snapshot,output_color_image,colors,numbers, &
                          meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows, &
                          anglerec,initialfield,add_Bielak_conditions, &
-                         seismotype,imagetype_postscript,assign_external_model,READ_EXTERNAL_SEP_FILE, &
+                         seismotype,imagetype_postscript,assign_external_model, &
                          output_grid_ASCII,output_energy,output_wavefield_dumps,use_binary_for_wavefield_dumps, &
                          ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms, &
                          save_binary_seismograms_single,save_binary_seismograms_double,DRAW_SOURCES_AND_RECEIVERS, &
-                         Q0,freq0,p_sv,NSTEP,deltat,NSOURCES, &
+                         Q0,freq0,p_sv,NSTEP,deltat,NT_DUMP_ATTENUATION,NSOURCES,USE_TRICK_FOR_BETTER_PRESSURE, &
                          factor_subsample_image,USE_CONSTANT_MAX_AMPLITUDE,CONSTANT_MAX_AMPLITUDE_TO_USE, &
                          USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                          POWER_DISPLAY_COLOR,SU_FORMAT,USER_T0, time_stepping_scheme, &
                          ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_HORIZ_DIST, &
-                         read_external_mesh,ACOUSTIC_FORCING,save_ASCII_kernels
+                         read_external_mesh,ACOUSTIC_FORCING,save_ASCII_kernels,GPU_MODE,TOMOGRAPHY_FILE
   implicit none
   include "constants.h"
 
@@ -106,11 +106,13 @@
   if (myrank == 0 .and. AXISYM) then
     write(IOUT,*)
     write(IOUT,*)
-    write(IOUT,*) '=== A x i s y m m e t r i c  S i m u l a t i o n ==='
+    write(IOUT,*) '====================================================='
+    write(IOUT,*) '=== A x i s y m m e t r i c   S i m u l a t i o n ==='
+    write(IOUT,*) '====================================================='
   endif
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD
+  read(IIN,*) SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD, UNDO_ATTENUATION
 
   read(IIN,"(a80)") datlin
   read(IIN,*) npgeo,nproc
@@ -169,15 +171,18 @@
   if(imagetype_postscript < 1 .or. imagetype_postscript > 4) call exit_MPI('Wrong type for PostScript snapshots')
 
   if(SAVE_FORWARD .and. (seismotype /= 1 .and. seismotype /= 6)) then
-    print*, '***** WARNING *****'
-    print*, 'seismotype =',seismotype
-    print*, 'Save forward wavefield => seismogram must be in displacement for (poro)elastic or potential for acoustic'
-    print*, 'Seismotype must be changed to 1 (elastic/poroelastic adjoint source) or 6 (acoustic adjoint source)'
+    print *, '***** WARNING *****'
+    print *, 'seismotype =',seismotype
+    print *, 'Save forward wavefield => seismogram must be in displacement for (poro)elastic or potential for acoustic'
+    print *, 'Seismotype must be changed to 1 (elastic/poroelastic adjoint source) or 6 (acoustic adjoint source)'
   !  stop
   endif
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) assign_external_model,READ_EXTERNAL_SEP_FILE
+  read(IIN,'(a100)') MODEL
+
+  read(IIN,"(a80)") datlin
+  read(IIN,'(a100)') TOMOGRAPHY_FILE
 
   read(IIN,"(a80)") datlin
   read(IIN,*) output_grid_ASCII,output_energy,output_wavefield_dumps
@@ -193,6 +198,9 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,*) save_binary_seismograms_single,save_binary_seismograms_double
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) USE_TRICK_FOR_BETTER_PRESSURE
 
   read(IIN,"(a80)") datlin
   read(IIN,*) save_ASCII_kernels
@@ -245,26 +253,46 @@
   read(IIN,"(a80)") datlin
   read(IIN,*) PERIODIC_HORIZ_DIST
 
+  read(IIN,"(a80)") datlin
+  read(IIN,*) GPU_MODE
+
   !---- check parameters read
   if (myrank == 0) then
     write(IOUT,200) npgeo,NDIM
     write(IOUT,600) NSTEP_BETWEEN_OUTPUT_INFO,colors,numbers
     write(IOUT,700) seismotype,anglerec
-    write(IOUT,750) initialfield,add_Bielak_conditions,assign_external_model,&
-                    READ_EXTERNAL_SEP_FILE,ATTENUATION_VISCOELASTIC_SOLID, &
+    write(IOUT,750) initialfield,add_Bielak_conditions,&
+                    ATTENUATION_VISCOELASTIC_SOLID, &
                     output_grid_ASCII,output_energy
     write(IOUT,800) imagetype_postscript,100.d0*cutsnaps,subsamp_postscript
+  endif
+
+
+  !---- check model
+  if (trim(MODEL) == 'default') then
+      assign_external_model = .false.
+  else
+      assign_external_model = .true.
   endif
 
   !---- read time step
   read(IIN,"(a80)") datlin
   read(IIN,*) NSTEP,deltat
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) NT_DUMP_ATTENUATION
   if (myrank == 0) write(IOUT,703) NSTEP,deltat,NSTEP*deltat
 
   if(SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. &
-     (ATTENUATION_VISCOELASTIC_SOLID .or. ATTENUATION_PORO_FLUID_PART)) then
+     (ATTENUATION_PORO_FLUID_PART)) then
     print *, '*************** error ***************'
-    stop 'Anisotropy & Attenuation & Viscous damping are not presently implemented for adjoint calculations'
+    stop 'Anisotropy & Viscous damping are not presently implemented for adjoint calculations'
+  endif
+
+  if(SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. &
+     ATTENUATION_PORO_FLUID_PART .and. (.not. UNDO_ATTENUATION)) then
+    print *, '*************** error ***************'
+    stop 'attenuation is only implemented for adjoint calculations with UNDO_ATTENUATION'
   endif
 
 ! make sure NSTEP_BETWEEN_OUTPUT_SEISMOS is a multiple of subsamp_seismos
@@ -318,8 +346,6 @@
 750 format(//1x,'C o n t r o l',/1x,13('='),//5x, &
   'Read external initial field. . . . . .(initialfield) = ',l6/5x, &
   'Add Bielak conditions . . . .(add_Bielak_conditions) = ',l6/5x, &
-  'Assign external model . . . .(assign_external_model) = ',l6/5x, &
-  'Read external SEP file . . .(READ_EXTERNAL_SEP_FILE) = ',l6/5x, &
   'Attenuation on/off .(ATTENUATION_VISCOELASTIC_SOLID) = ',l6/5x, &
   'Save grid in ASCII file or not . (output_grid_ASCII) = ',l6/5x, &
   'Save a file with total energy or not.(output_energy) = ',l6)
@@ -545,7 +571,7 @@
 
 ! reads in interfaces
 
-  use specfem_par, only : ninterface,max_interface_size,my_neighbours,my_nelmnts_neighbours,my_interfaces
+  use specfem_par, only : ninterface,my_neighbours,my_nelmnts_neighbours,my_interfaces
   implicit none
   include "constants.h"
 
@@ -598,7 +624,7 @@
   use specfem_par, only : myrank,nelemabs,nspec,anyabs, &
                           ibegin_edge1,iend_edge1,ibegin_edge2,iend_edge2, &
                           ibegin_edge3,iend_edge3,ibegin_edge4,iend_edge4, &
-                          numabs,codeabs,typeabs, &
+                          numabs,codeabs,codeabs_corner,typeabs, &
                           nspec_left,nspec_right,nspec_bottom,nspec_top, &
                           ib_right,ib_left,ib_bottom,ib_top,PML_BOUNDARY_CONDITIONS
 
@@ -606,7 +632,7 @@
   include "constants.h"
 
   ! local parameters
-  integer :: inum,numabsread,typeabsread
+  integer :: inum,inum_duplicate,numabsread,typeabsread
   logical :: codeabsread(4)
   character(len=80) :: datlin
 
@@ -618,6 +644,7 @@
 
   ! initializes
   codeabs(:,:) = .false.
+  codeabs_corner(:,:) = .false.
   typeabs(:) = 0
 
   ibegin_edge1(:) = 0
@@ -678,6 +705,51 @@
       endif
 
     enddo
+
+! detection of the corner element
+    do inum = 1,nelemabs
+
+      if (codeabs(IEDGE1,inum)) then
+        do inum_duplicate = 1,nelemabs
+           if (inum == inum_duplicate) then
+             ! left for blank, since no operation is needed.
+           else
+             if (numabs(inum) == numabs(inum_duplicate)) then
+                if (codeabs(IEDGE4,inum_duplicate)) then
+                   codeabs_corner(1,inum) = .true.
+                endif
+
+                if (codeabs(IEDGE2,inum_duplicate)) then
+                   codeabs_corner(2,inum) = .true.
+                endif
+
+             endif
+           endif
+        enddo
+      endif
+
+      if (codeabs(IEDGE3,inum)) then
+        do inum_duplicate = 1,nelemabs
+           if (inum == inum_duplicate) then
+             ! left for blank, since no operation is needed.
+           else
+             if (numabs(inum) == numabs(inum_duplicate)) then
+                if (codeabs(IEDGE4,inum_duplicate)) then
+                   codeabs_corner(3,inum) = .true.
+                endif
+
+                if (codeabs(IEDGE2,inum_duplicate)) then
+                   codeabs_corner(4,inum) = .true.
+                endif
+
+             endif
+           endif
+        enddo
+      endif
+
+    enddo
+
+! detection of the corner element
 
     ! boundary element numbering
     do inum = 1,nelemabs

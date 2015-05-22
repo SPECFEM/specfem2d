@@ -45,7 +45,7 @@
 
 ! same as subroutine "createnum_slow" but with a faster algorithm
 
-  use specfem_par, only: knods,ibool,shape2D,coorg,nglob,npgeo,nspec,ngnod,myrank,i,j
+  use specfem_par, only: knods,ibool,shape2D,coorg,nglob,nspec,ngnod,myrank
   implicit none
 
   include "constants.h"
@@ -55,7 +55,7 @@
   logical, dimension(:), allocatable :: ifseg
   double precision, dimension(:), allocatable :: xp,yp,work
 
-  integer :: ispec,nseg,ioff,iseg,ig
+  integer :: ispec,nseg,ioff,iseg,ig,i,j
   integer :: nxyz,ntot,ieoff,ilocnum,iy,ix,in,nnum
 
   double precision :: xmaxval,xminval,ymaxval,yminval,xtol,xtypdist

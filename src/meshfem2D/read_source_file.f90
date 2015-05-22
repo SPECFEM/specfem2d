@@ -114,8 +114,11 @@ contains
   num_sources = icounter / NLINES_PER_SOURCE
 
   if(num_sources < 1) stop 'need at least one source in SOURCE file'
-  if(num_sources /= NSOURCES) &
-       stop 'total number of sources read is different than declared in Par_file'
+  if(num_sources /= NSOURCES) then
+       print *,'num_sources :',num_sources
+       print *,'NSOURCES :',NSOURCES
+       stop 'error: Total number of sources read is different from that declared in the Par_file'
+  endif
 
   ! reads in source parameters
   open(unit=IIN_SOURCE,file='DATA/SOURCE',status='old',action='read')

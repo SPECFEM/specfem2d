@@ -39,82 +39,215 @@
 # The full text of the license is available in file "LICENSE".
 #
 #========================================================================
+#
+# @configure_input@
+#######################################
 
+FC = @FC@
+FCFLAGS = @FCFLAGS@
+MPIFC = @MPIFC@
+MPILIBS = @MPILIBS@
+CC = @CC@
+
+DEF_FFLAGS = @DEF_FFLAGS@ -I${SETUP}
+CPPFLAGS = @CPPFLAGS@ $(COND_MPI_CPPFLAGS)
+CFLAGS = @CFLAGS@ $(CPPFLAGS) -I${SETUP}
+
+FC_MODEXT = @FC_MODEXT@
+FC_MODDIR = @FC_MODDIR@
+
+## serial or parallel
+@COND_MPI_TRUE@F90 = $(MPIFC) $(FCFLAGS) @FC_DEFINE@USE_MPI @FC_DEFINE@USE_SCOTCH -I"@SCOTCH_INCLUDEDIR@" $(MPILIBS)
+@COND_MPI_FALSE@F90 = $(FC) $(FCFLAGS)
+
+USE_BUNDLED_SCOTCH = @USE_BUNDLED_SCOTCH@
+SCOTCH_DIR = @SCOTCH_DIR@
+SCOTCH_INCLUDEDIR = @SCOTCH_INCLUDEDIR@
+SCOTCH_LIBDIR = @SCOTCH_LIBDIR@
+
+LIB =
+
+## scotch libraries
+@COND_MPI_TRUE@LIB += -L"@SCOTCH_LIBDIR@" -lscotch -lscotcherr
+@COND_MPI_FALSE@LIB +=
+
+LINK = $(F90)
+
+
+#######################################
+####
+#### CUDA
+#### with configure: ./configure --with-cuda=cuda5 CUDA_FLAGS=.. CUDA_LIB=.. CUDA_INC=.. MPI_INC=.. ..
+####
+#######################################
+
+@COND_CUDA_TRUE@CUDA = yes
+@COND_CUDA_FALSE@CUDA = no
+
+@COND_CUDA5_TRUE@CUDA5 = yes
+@COND_CUDA5_FALSE@CUDA5 = no
+
+# default cuda libraries
+# runtime library -lcudart -lcuda and -lcublas needed
+
+CUDA_FLAGS = @CUDA_FLAGS@ 
+CUDA_INC = @CUDA_CPPFLAGS@ -I${SETUP}
+CUDA_LINK = @CUDA_LDFLAGS@ @CUDA_LIBS@
+
+@COND_CUDA_TRUE@NVCC = nvcc
+@COND_CUDA_FALSE@NVCC = @CC@
+
+# GPU architecture
+
+# CUDA architecture / code version
+# Fermi: -gencode=arch=compute_10,code=sm_10 not supported
+# Tesla (default): -gencode=arch=compute_20,code=sm_20
+# Geforce GT 650m: -gencode=arch=compute_30,code=sm_30
+# Kepler (cuda5) : -gencode=arch=compute_35,code=sm_35
+GENCODE_20 = -gencode=arch=compute_20,code=\"sm_20,compute_20\"
+GENCODE_30 = -gencode=arch=compute_30,code=\"sm_30,compute_30\"
+GENCODE_35 = -gencode=arch=compute_35,code=\"sm_35,compute_35\"
+
+# CUDA version 5.x
+@COND_CUDA_TRUE@@COND_CUDA5_TRUE@GENCODE = $(GENCODE_35)
+# CUDA version 4.x
+@COND_CUDA_TRUE@@COND_CUDA5_FALSE@GENCODE = $(GENCODE_20)
+
+# CUDA flags and linking
+@COND_CUDA_TRUE@NVCC_FLAGS_BASE = $(CUDA_FLAGS) $(CUDA_INC) $(COND_MPI_CPPFLAGS)
+@COND_CUDA_TRUE@@COND_CUDA5_TRUE@NVCC_FLAGS = $(NVCC_FLAGS_BASE) -DCUDA $(GENCODE) -ftz=true
+@COND_CUDA_TRUE@@COND_CUDA5_FALSE@NVCC_FLAGS = $(NVCC_FLAGS_BASE) -DCUDA -DUSE_OLDER_CUDA4_GPU $(GENCODE)
+
+@COND_CUDA_TRUE@@COND_CUDA5_TRUE@NVCCLINK_BASE = $(NVCC) $(CUDA_INC) $(COND_MPI_CPPFLAGS) -DCUDA
+@COND_CUDA_TRUE@@COND_CUDA5_TRUE@NVCCLINK = $(NVCCLINK_BASE) -dlink $(GENCODE)
+@COND_CUDA_TRUE@@COND_CUDA5_FALSE@NVCCLINK = $(NVCCLINK_BASE) -DUSE_OLDER_CUDA4_GPU $(GENCODE)
+
+@COND_CUDA_FALSE@NVCC_FLAGS = $(COND_MPI_CPPFLAGS)
+@COND_CUDA_FALSE@NVCCLINK = $(NVCC) $(NVCC_FLAGS)
+
+
+#######################################
+####
+#### directories
+####
+#######################################
+
+## compilation directories
+# B : build directory
+B = @top_builddir@
+# E : executables directory
+E = $B/bin
+# O : objects directory
+O = $B/obj
+# L : libraries directory
+L = $B/lib
+# setup file directory
+SETUP = $B/setup
+# output file directory
+OUTPUT = $B/OUTPUT_FILES
+# S_TOP : source file root directory
+S_TOP = @top_srcdir@
+
+
+#######################################
 ####
 #### targets
 ####
+#######################################
 
+# code subdirectories
+SUBDIRS = \
+	meshfem2D \
+	shared \
+	cuda \
+	specfem2D \
+	tomography/postprocess_sensitivity_kernels \
+	auxiliaries \
+	$(EMPTY_MACRO)
+
+# default targets for the pure Fortran version
 DEFAULT = \
 	xmeshfem2D \
 	xspecfem2D \
-	xconvolve_source_timefunction \
-	xcheck_quality_external_mesh \
 	xadj_seismogram \
+	xcheck_quality_external_mesh \
+	xconvolve_source_timefunction \
 	$(EMPTY_MACRO)
+
 
 default: $(DEFAULT)
 
-all: default
-
-mesh : meshfem2D
-spec : specfem2D
-specfem2D: xspecfem2D
-meshfem2D: xmeshfem2D
-convolve_source_timefunction: xconvolve_source_timefunction
-check_quality_external_mesh: xcheck_quality_external_mesh
-adj_seismogram: xadj_seismogram
-
-##
-## mesher
-##
-xmeshfem2D:
-	$(MAKE) -C src/meshfem2D
-
-##
-## check_quality_external_mesh
-##
-xcheck_quality_external_mesh:
-	$(MAKE) -C src/meshfem2D xcheck_quality_external_mesh
-
-##
-## solver
-##
-xspecfem2D:
-	$(MAKE) -C src/specfem2D specfem2D
-
-##
-## convolve_source_timefunction
-##
-xconvolve_source_timefunction:
-	$(MAKE) -C src/specfem2D xconvolve_source_timefunction
+all: default auxiliaries tomography/postprocess_sensitivity_kernels
 
 
-##
-## adj_seismogram
-##
-xadj_seismogram:
-	$(MAKE) -C src/specfem2D xadj_seismogram
-
-
+ifdef CLEAN
 clean:
-	rm -rf obj/* bin/* src/meshfem2D/*.mod src/specfem2D/*.mod src/meshfem2D/*__genmod.f90 src/specfem2D/*__genmod.f90
-	$(MAKE) -C src/meshfem2D/scotch/src realclean
+	@echo "cleaning by CLEAN"
+	-rm -f $(foreach dir, $(CLEAN), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_SHARED_OBJECTS) $($(dir)_TARGETS))
+	-rm -f ${E}/*__genmod.*
+	-rm -f ${O}/*__genmod.*
+else
+clean:
+	@echo "cleaning all"
+	-rm -f $(foreach dir, $(SUBDIRS), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_TARGETS))
+	-rm -f ${E}/*__genmod.*
+	-rm -f ${O}/*__genmod.*
+endif
+
+realclean: clean
+ifeq (${SCOTCH_BUNDLED},1)
+	@echo "cleaning bundled Scotch in directory: ${SCOTCH_DIR}/src"
+	$(MAKE) -C ${SCOTCH_DIR}/src realclean
+endif
+	-rm -rf $E/* $O/*
+
 
 help:
 	@echo "usage: make [executable]"
 	@echo ""
 	@echo "supported executables:"
-	@echo "    xspecfem3D"
-	@echo "    xmeshfem3D"
-	@echo "    xconvolve_source_timefunction"
-	@echo "    xcheck_quality_external_mesh"
+	@echo "    xspecfem2D"
+	@echo "    xmeshfem2D"
 	@echo "    xadj_seismogram"
+	@echo "    xcheck_quality_external_mesh"
+	@echo "    xconvolve_source_timefunction"
 	@echo ""
 
-.PHONY: default all clean help \
-	mesh meshfem2D xmeshfem2D \
-	spec specfem2D xspecfem2D \
-	convolve_source_timefunction xconvolve_source_timefunction \
-	check_quality_external_mesh xcheck_quality_external_mesh \
-	adj_seismogram xadj_seismogram
 
+.PHONY: all default backup clean realclean help
+
+#######################################
+
+
+# Get dependencies and rules for building stuff
+include $(patsubst %, ${S_TOP}/src/%/rules.mk, $(SUBDIRS))
+
+#######################################
+
+##
+## Shortcuts
+##
+
+# Shortcut for: <prog>/<xprog> -> bin/<xprog>
+define target_shortcut
+$(patsubst $E/%, %, $(1)): $(1)
+.PHONY: $(patsubst $E/%, %, $(1))
+$(patsubst $E/x%, %, $(1)): $(1)
+.PHONY: $(patsubst $E/x%, %, $(1))
+endef
+
+# Shortcut for: dir -> src/dir/<targets in here>
+define shortcut
+$(1): $($(1)_TARGETS)
+.PHONY: $(1)
+$$(foreach target, $$(filter $E/%,$$($(1)_TARGETS)), $$(eval $$(call target_shortcut,$$(target))))
+endef
+
+$(foreach dir, $(SUBDIRS), $(eval $(call shortcut,$(dir))))
+
+
+# Other old shortcuts
+
+mesh : $E/xmeshfem2D
+spec : $E/xspecfem2D
+.PHONY: mesh spec

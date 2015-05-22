@@ -41,19 +41,16 @@
 !
 !========================================================================
 
-  subroutine attenuation_model(QKappa_attenuation,Qmu_attenuation)
+  subroutine attenuation_model(QKappa_att,QMu_att)
 
 ! define the attenuation constants
 
-  use specfem_par, only :  N_SLS, f0_attenuation,tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,phi_nu1_sent, &
-                           inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent
+  use specfem_par
 
 
   implicit none
 
-  include "constants.h"
-
-  double precision :: QKappa_attenuation,Qmu_attenuation
+  double precision :: QKappa_att,QMu_att
 
   integer :: i_sls
 
@@ -79,16 +76,16 @@
 ! We thus strongly discourage using the old routine.
   if(USE_NEW_SOLVOPT_ROUTINE) then
 
-    call determination_coef(N_SLS,QKappa_attenuation,f0_attenuation,f_min_attenuation,f_max_attenuation, &
-                                  tau_epsilon_nu1_d,tau_sigma_nu1)
+    call compute_attenuation_coeffs(N_SLS,QKappa_att,f0_attenuation,f_min_attenuation,f_max_attenuation, &
+                                        tau_epsilon_nu1_d,tau_sigma_nu1)
 
-    call determination_coef(N_SLS,Qmu_attenuation,f0_attenuation,f_min_attenuation,f_max_attenuation, &
-                                  tau_epsilon_nu2_d,tau_sigma_nu2)
+    call compute_attenuation_coeffs(N_SLS,QMu_att,f0_attenuation,f_min_attenuation,f_max_attenuation, &
+                                        tau_epsilon_nu2_d,tau_sigma_nu2)
 
 !   print *
 !   print *,'with new SolvOpt:'
 !   print *
-!   print *,'N_SLS, QKappa_attenuation, Qmu_attenuation = ',N_SLS, QKappa_attenuation, Qmu_attenuation
+!   print *,'N_SLS, QKappa_att, QMu_att = ',N_SLS, QKappa_att, QMu_att
 !   print *,'f0_attenuation,f_min_attenuation,f_max_attenuation = ',f0_attenuation,f_min_attenuation,f_max_attenuation
 !   print *,'tau_epsilon_nu1 = ',tau_epsilon_nu1_d
 !   print *,'tau_sigma_nu1 = ',tau_sigma_nu1
@@ -100,13 +97,13 @@
 
 ! call a C function that computes attenuation parameters (function in file "attenuation_compute_param.c";
 ! a main can be found in UTILS/attenuation directory).
-    call attenuation_compute_param(N_SLS, QKappa_attenuation, Qmu_attenuation, &
+    call attenuation_compute_param(N_SLS, QKappa_att, QMu_att, &
          f_min_attenuation,f_max_attenuation,tau_sigma_nu1, tau_sigma_nu2, tau_epsilon_nu1_d, tau_epsilon_nu2_d)
 
 !   print *
 !   print *,'with old C routine:'
 !   print *
-!   print *,'N_SLS, QKappa_attenuation, Qmu_attenuation = ',N_SLS, QKappa_attenuation, Qmu_attenuation
+!   print *,'N_SLS, QKappa_att, QMu_att = ',N_SLS, QKappa_att, QMu_att
 !   print *,'f0_attenuation,f_min_attenuation,f_max_attenuation = ',f0_attenuation,f_min_attenuation,f_max_attenuation
 !   print *,'tau_epsilon_nu1 = ',tau_epsilon_nu1_d
 !   print *,'tau_sigma_nu1 = ',tau_sigma_nu1
@@ -207,7 +204,6 @@
 
   subroutine shift_velocities_from_f0(vp,vs,rho,mu,lambda)
 
-
 ! From Emmanuel Chaljub, CNRS Grenoble, France:
 
 ! shift (i.e. change) velocities read from the input file to take average physical dispersion into account,
@@ -225,6 +221,35 @@
 !
 !     Sum_k   { [  w*tau_k*Q(w) - (w*tau_k)^2 ] / [ 1 + (w*tau_k)^2 ] }  ak  = 1
 !                  where tau_k = tau_epsilon_k
+!
+!  To see how to obtain these formulas, see for instance equations (8), (9) and (10) of
+!  P. Moczo, E. Bystricky, J. Kristek, J. M. Carcione and M. Bouchon,
+!  Hybrid modeling of P-SV seismic motion at inhomogeneous viscoelastic topographic structures,
+!  Bulletin of the Seismological Society of Americal, vol. 87, p. 1305-1323 (1997).
+!
+!  See also file notes_from_Emmanuel_Chaljub_about_how_to_shift_a_Zener_body_from_a_frequency_f0_to_a_frequency_f1.pdf
+!  in the "doc/" directory of the code.
+!  If one wants to shift the Vp and Vs velocities from a frequency f0 to another frequency f1 instead of
+!  shifting them to infinite frequency (i.e., to the unrelaxed state) as in the routine below, an easy way
+!  of doing that is to use the complex modulus and use the unrelaxed modulus Mu as an intermediate step:
+!
+!       M(f1)/M(f2) = ( M(f1)/Mu ) * ( Mu/M(f2) )
+!
+!  and use equation (9) from notes_from_Emmanuel_Chaljub_about_how_to_shift_a_Zener_body_from_a_frequency_f0_to_a_frequency_f1.pdf
+!  to compute the M(f)/Mu values, and equations (6) and (7) to convert that to what is needed in SPECFEM.
+!
+!  The above formulas are for a Zener-body approximation of a constant Q model, which is what SPECFEM uses.
+!  If one wants to use exact formulas for a truly constant Q model instead (i.e., not approximated by a set of Zener bodies),
+!  the expression of the scaling can be found for instance in equation (49) of Komatitsch and Tromp,
+!  Spectral-Element Simulations of Global Seismic Wave Propagation-I. Validation, Geophys. J. Int. vol. 149 p. 390-412 (2002),
+!  which is also in file "doc/exact_formula_to_scale_mu_from_a_frequency_f0_to_a_frequency_f1_from_Komatitsch_Tromp_GJI_2002.pdf":
+!
+!       mu(omega_c) = mu(omega_0) * (1 + 2 * ln(omega_c/omega_0) / (PI * Q_mu))
+!
+!  (the formula to scale Vs is the same except for the factor of 2, which needs to be removed because mu is related to Vs squared.
+!
+!  A similar expression can then be established for Q_Kappa, and conversion from Q_Kappa and Q_mu to Q_P and Q_S (if needed)
+!  can be found for instance in equations (9.59) and (9.60) of the book of Dahlen and Tromp (1998).
 
   use specfem_par, only : f0_attenuation,tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent,N_SLS
 
@@ -279,13 +304,23 @@
 !
 
 ! use of SolvOpt to compute attenuation relaxation mechanisms,
-! from Emilie Blanc and Bruno Lombard, CNRS Marseille, France, for a Generalized Zener body model.
+! from Emilie Blanc, Bruno Lombard and Dimitri Komatitsch, CNRS Marseille, France, for a Generalized Zener body model.
 
 ! The SolvOpt algorithm was developed by Franz Kappel and Alexei V. Kuntsevich
 ! and is available open source at http://www.uni-graz.at/imawww/kuntsevich/solvopt
 !
 ! It is described in Kappel and Kuntsevich, An Implementation of Shor's r-Algorithm,
 ! Computational Optimization and Applications, vol. 15, p. 193-205 (2000).
+
+! If you use this code for your own research, please cite some (or all) of these articles:
+!
+! @Article{BlKoChLoXi15,
+! Title   = {Positivity-preserving highly-accurate optimization of the {Z}ener viscoelastic model, with application
+!            to wave propagation in the presence of strong attenuation},
+! Author  = {\'Emilie Blanc and Dimitri Komatitsch and Emmanuel Chaljub and Bruno Lombard and Zhinan Xie},
+! Journal = {Geophysical Journal International},
+! Year    = {2015},
+! Note    = {in press.}}
 
 !-------------------------------------------------------------------------
 
@@ -302,16 +337,16 @@
 ! Lombard and Piraux, Numerical modeling of transient two-dimensional viscoelastic waves,
 ! Journal of Computational Physics, Volume 230, Issue 15, Pages 6099-6114 (2011)
 
-! Suivant les compilateurs et les options de compilation utilisées,
-! il peut y avoir des différences au 4ème chiffre significatif. C'est sans conséquences sur la précision du calcul :
-! l'erreur est de 0.015 % avec optimisation non linéaire, à comparer à 1.47 % avec Emmerich and Korn (1987).
-! Si je relance le calcul en initialisant avec le résultat précédent, ce chiffre varie à nouveau très légèrement.
+! Suivant les compilateurs et les options de compilation utilisees,
+! il peut y avoir des differences au 4eme chiffre significatif. C'est sans consequences sur la precision du calcul :
+! l'erreur est de 0.015 % avec optimisation non lineaire, a comparer a 1.47 % avec Emmerich and Korn (1987).
+! Si je relance le calcul en initialisant avec le resultat precedent, ce chiffre varie a nouveau tres legerement.
 
 !-------------------------------------------------------------------------
 
 ! From Bruno Lombard, June 2014:
 
-! j'ai relu en détail :
+! j'ai relu en detail :
 
 ! [1] Carcione, Kosslof, Kosslof, "Viscoacoustic wave propagation simulation in the Earth",
 !            Geophysics 53-6 (1988), 769-777
@@ -322,24 +357,24 @@
 ! [3] Moczo, Kristek, "On the rheological models used for time-domain methods of seismic wave propagation",
 !            Geophysical Research Letters 32 (2005).
 
-! Le problème provient probablement d'une erreur récurrente dans [1,2] et datant de Liu et al 1976 :
-! l'oubli du facteur 1/N dans la fonction de relaxation d'un modèle de Zener à N éléments.
-! Il est effectivement facile de faire l'erreur. Voir l'équation (12) de [3], et le paragraphe qui suit.
+! Le probleme provient probablement d'une erreur recurrente dans [1,2] et datant de Liu et al 1976 :
+! l'oubli du facteur 1/N dans la fonction de relaxation d'un modele de Zener a N elements.
+! Il est effectivement facile de faire l'erreur. Voir l'equation (12) de [3], et le paragraphe qui suit.
 
-! Du coup le module de viscoélasticité est faux dans [1,2], et donc le facteur de qualité,
+! Du coup le module de viscoelasticite est faux dans [1,2], et donc le facteur de qualite,
 ! et donc les temps de relaxation tau_sigma...
 
-! Après, [2] calcule une solution analytique juste, mais avec des coefficients sans sens physique.
-! Et quand SPECFEM2D obtient un bon accord avec cette solution analytique, ça valide SPECFEM, mais pas le calcul des coefficients.
+! Apres, [2] calcule une solution analytique juste, mais avec des coefficients sans sens physique.
+! Et quand SPECFEM2D obtient un bon accord avec cette solution analytique, ca valide SPECFEM, mais pas le calcul des coefficients.
 
 ! Il y a donc une erreur dans [1,2], et [3] a raison.
 
-! Sa solution analytique découle d'un travail sur ses fonctions de relaxation (A4),
+! Sa solution analytique decoule d'un travail sur ses fonctions de relaxation (A4),
 ! qu'il injecte ensuite dans la relation de comportement (A1) et travaille en Fourier.
 
-! Le problème est que sa fonction de relaxation (A4) est fausse : il manque 1/N.
-! De ce fait, sa solution analytique est cohérente avec sa solution numérique.
-! Dans les deux cas, ce sont les mêmes temps de relaxation qui sont utilisés. Mais ces temps sont calculés de façon erronée.
+! Le probleme est que sa fonction de relaxation (A4) est fausse : il manque 1/N.
+! De ce fait, sa solution analytique est coherente avec sa solution numerique.
+! Dans les deux cas, ce sont les memes temps de relaxation qui sont utilises. Mais ces temps sont calcules de facon erronee.
 
 !-------------------------------------------------------------------------
 
@@ -354,41 +389,92 @@
 
 ! From Emilie Blanc, April 2014:
 
-! le programme SolvOpt d'optimisation non-linéaire
-! avec contrainte. Ce programme prend quatre fonctions en entrée :
+! le programme SolvOpt d'optimisation non-lineaire
+! avec contrainte. Ce programme prend quatre fonctions en entree :
 
-! - fun() est la fonction à minimiser
+! - fun() est la fonction a minimiser
 
-! - grad() est le gradient de la fonction à minimiser par rapport à chaque paramètre
+! - grad() est le gradient de la fonction a minimiser par rapport a chaque parametre
 
-! - func() est le maximum des résidus (= 0 si toutes les contraintes sont satisfaites)
+! - func() est le maximum des residus (= 0 si toutes les contraintes sont satisfaites)
 
-! - gradc() est le gradient du maximum des résidus (= 0 si toutes les
+! - gradc() est le gradient du maximum des residus (= 0 si toutes les
 ! contraintes sont satisfaites)
 
-! Ce programme a été développé par Kappel et Kuntsevich. Leur article décrit l'algorithme.
+! Ce programme a ete developpe par Kappel et Kuntsevich. Leur article decrit l'algorithme.
 
-! J'ai utilisé ce code pour la poroélasticité haute-fréquence, et aussi en
-! viscoélasticité fractionnaire (modèle d'Andrade, avec Bruno Lombard et
-! Cédric Bellis). Nous pouvons interagir sur l'algorithme d'optimisation
-! pour votre modèle visco, et étudier l'effet des coefficients ainsi obtenus.
+! J'ai utilise ce code pour la poroelasticite haute-frequence, et aussi en
+! viscoelasticite fractionnaire (modele d'Andrade, avec Bruno Lombard et
+! Cedric Bellis). Nous pouvons interagir sur l'algorithme d'optimisation
+! pour votre modele visco, et etudier l'effet des coefficients ainsi obtenus.
 
 !---------------------------------------------------
 
 ! From Emilie Blanc, March 2014:
 
-! Les entrées du programme principal sont le nombre de variables
-! diffusives, le facteur de qualité voulu Qref et la fréquence centrale f0.
+! Les entrees du programme principal sont le nombre de variables
+! diffusives, le facteur de qualite voulu Qref et la frequence centrale f0.
 
-! Cependant, pour l'optimisation non-linéaire, j'ai mis theta_max=100*f0
+! Cependant, pour l'optimisation non-lineaire, j'ai mis theta_max=100*f0
 ! et non pas theta_max=2*pi*100*f0. En effet, dans le programme, on
-! travaille sur les fréquences, et non pas sur les fréquences angulaires.
-! Cela dit, dans les deux cas j'obtiens les mêmes coefficients...
+! travaille sur les frequences, et non pas sur les frequences angulaires.
+! Cela dit, dans les deux cas j'obtiens les memes coefficients...
 
 
 !---------------------------------------------------
 
-! Calcul classique des coefficients par moindres carres lineaires
+SUBROUTINE compute_attenuation_coeffs(N,Qref,f0,f_min,f_max,tau_epsilon,tau_sigma)
+
+  IMPLICIT NONE
+
+! pi
+  double precision, parameter :: PI = 3.141592653589793d0
+  double precision, parameter :: TWO_PI = 2.d0 * PI
+
+  integer, intent(in) :: N
+  double precision, intent(in) :: Qref,f_min,f_max,f0
+  double precision, dimension(1:N), intent(out) :: tau_epsilon,tau_sigma
+
+  integer i
+  double precision, dimension(1:N) :: point,weight
+
+! nonlinear optimization with constraints
+  call nonlinear_optimization(N,Qref,f0,point,weight,f_min,f_max)
+
+  do i = 1,N
+    tau_sigma(i) = 1.d0 / point(i)
+    tau_epsilon(i) = tau_sigma(i) * (1.d0 + N * weight(i))
+  enddo
+
+! print *,'points = '
+! do i = 1,N
+!   print *,point(i)
+! enddo
+! print *
+
+! print *,'weights = '
+! do i = 1,N
+!   print *,weight(i)
+! enddo
+! print *
+
+! print *,'tau_epsilon = '
+! do i = 1,N
+!   print *,tau_epsilon(i)
+! enddo
+! print *
+
+! print *,'tau_sigma = '
+! do i = 1,N
+!   print *,tau_sigma(i)
+! enddo
+! print *
+
+END SUBROUTINE compute_attenuation_coeffs
+
+!---------------------------------------------------
+
+! classical calculation of the coefficients based on linear least squares
 
 SUBROUTINE decomposition_LU(a,i_min,n,indx,d)
 
@@ -415,7 +501,7 @@ SUBROUTINE decomposition_LU(a,i_min,n,indx,d)
       endif
     enddo
     if (big==0.) then
-      print*,'Singular matrix in routine decomposition_LU'
+      print *,'Singular matrix in routine decomposition_LU'
     endif
     vv(i) = 1./big
   enddo
@@ -562,7 +648,7 @@ SUBROUTINE lfit_zener(x,y,sig,ndat,poids,ia,covar,chisq,ma,Qref,point)
     endif
   enddo
   if(mfit==0) then
-    print*,'lfit: no parameters to be fitted'
+    print *,'lfit: no parameters to be fitted'
   endif
 
   do j=1,mfit
@@ -2158,7 +2244,7 @@ SUBROUTINE grad_max_residu(x,grad,N,Nopt,theta_min,theta_max)
 
 END SUBROUTINE grad_max_residu
 
-SUBROUTINE opti_nonlineaire(N,Qref,f0,point,poids,f_min,f_max)
+SUBROUTINE nonlinear_optimization(N,Qref,f0,point,poids,f_min,f_max)
 
   IMPLICIT NONE
 
@@ -2203,57 +2289,5 @@ SUBROUTINE opti_nonlineaire(N,Qref,f0,point,poids,f_min,f_max)
     poids(i) = x(N+i)*x(N+i)
   enddo
 
-END SUBROUTINE opti_nonlineaire
-
-SUBROUTINE determination_coef(N,Qref,f0,f_min,f_max,tau_epsilon,tau_sigma)
-
-  IMPLICIT NONE
-
-  include "constants.h"
-
-  integer, intent(in) :: N
-  double precision, intent(in) :: Qref,f_min,f_max,f0
-  double precision, dimension(1:N), intent(out) :: tau_epsilon,tau_sigma
-
-  integer i
-  double precision, dimension(1:N) :: point,poids
-
-  if(USE_SOLVOPT_INSTEAD_OF_LINEAR) then
-!   nonlinear optimization with constraints
-    call opti_nonlineaire(N,Qref,f0,point,poids,f_min,f_max)
-  else
-!   classical linear least squares
-    call classical_linear_least_squares(Qref,poids,point,N,f_min,f_max)
-  endif
-
-  do i = 1,N
-    tau_sigma(i) = 1.d0 / point(i)
-    tau_epsilon(i) = tau_sigma(i) * (1.d0 + N * poids(i))
-  enddo
-
-! print *,'points = '
-! do i = 1,N
-!   print *,point(i)
-! enddo
-! print *
-
-! print *,'poids = '
-! do i = 1,N
-!   print *,poids(i)
-! enddo
-! print *
-
-! print *,'tau_epsilon = '
-! do i = 1,N
-!   print *,tau_epsilon(i)
-! enddo
-! print *
-
-! print *,'tau_sigma = '
-! do i = 1,N
-!   print *,tau_sigma(i)
-! enddo
-! print *
-
-END SUBROUTINE determination_coef
+END SUBROUTINE nonlinear_optimization
 

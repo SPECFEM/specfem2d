@@ -62,7 +62,7 @@
        permzz,kappa_s,kappa_f,kappa_fr,eta_f,mu_fr
 
   ! local parameters
-  integer :: imaterial,i,icodematread
+  integer :: imaterial,i,icodematread,number_of_materials_defined_by_tomo_file
   double precision :: val0read,val1read,val2read,val3read,val4read, &
        val5read,val6read,val7read,val8read,val9read,val10read,val11read,val12read
 
@@ -93,6 +93,7 @@
   kappa_fr(:) = 0.d0
   eta_f(:) = 0.d0
   mu_fr(:) = 0.d0
+  number_of_materials_defined_by_tomo_file = 0
 
   ! reads in material parameters
   do imaterial=1,nb_materials
@@ -125,7 +126,7 @@
 
         aniso3(i) = val3read
         aniso4(i) = val4read
-        if(cs(i) /= 0.d0) then
+        if(abs(cs(i)) > TINYVAL) then
            phi(i) = 0.d0           ! elastic
         else
            phi(i) = 1.d0           ! acoustic
@@ -145,7 +146,7 @@
         aniso10(i) = val8read
         aniso11(i) = val9read
 
-     else
+     else if (icodemat(i) == POROELASTIC_MATERIAL) then
 
         ! poroelastic materials
 
@@ -170,6 +171,26 @@
         endif
         if(Qmu(i) <= 0.00000001d0) stop 'non-positive value of Qmu'
 
+      else if (icodemat(i) <= 0) then
+        number_of_materials_defined_by_tomo_file = number_of_materials_defined_by_tomo_file + 1
+        if (number_of_materials_defined_by_tomo_file > 1) then
+          stop 'Just one material can be defined by a tomo file for now (we would need to write a nummaterial_velocity_file)'
+        endif
+        ! Assign dummy values for now (they will be read by the solver). Vs must be == 0 for acoustic media anyway
+        rho_s(i) = -1.0d0
+        cp(i) = -1.0d0
+        cs(i) = val2read
+        QKappa(i) = -1.0d0
+        Qmu(i) = -1.0d0
+        aniso3(i) = -1.0d0
+        aniso4(i) = -1.0d0
+        if(abs(cs(i)) > TINYVAL) then
+           phi(i) = 0.d0           ! elastic
+        else
+           phi(i) = 1.d0           ! acoustic
+        endif
+      else
+        stop 'Unknown material code'
      endif
   enddo
 
@@ -178,7 +199,7 @@
   print *, 'Nb of solid, fluid or porous materials = ',nb_materials
   print *
   do i=1,nb_materials
-     if(icodemat(i) /= ANISOTROPIC_MATERIAL .and. icodemat(i) /= POROELASTIC_MATERIAL) then
+     if(icodemat(i) == ISOTROPIC_MATERIAL) then
         print *,'Material #',i,' isotropic'
         print *,'rho,cp,cs = ',rho_s(i),cp(i),cs(i),QKappa(i),Qmu(i)
         if(cs(i) < TINYVAL) then
@@ -186,19 +207,23 @@
         else
            print *,'Material is solid'
         endif
-     else if(icodemat(i) == POROELASTIC_MATERIAL) then
+     else if (icodemat(i) == ANISOTROPIC_MATERIAL) then
+        print *,'Material #',i,' anisotropic'
+        print *,'rho,cp,cs = ',rho_s(i),cp(i),cs(i)
+        print *,'c11,c13,c15,c33,c35,c55,c12,c23,c25 = ',aniso3(i),aniso4(i),aniso5(i),aniso6(i),aniso7(i),aniso8(i), &
+                                                        aniso9(i),aniso10(i),aniso11(i)
+        print *,'QKappa,Qmu = ',QKappa(i),Qmu(i)
+     else if (icodemat(i) == POROELASTIC_MATERIAL) then
         print *,'Material #',i,' isotropic'
         print *,'rho_s, kappa_s= ',rho_s(i),kappa_s(i)
         print *,'rho_f, kappa_f, eta_f= ',rho_f(i),kappa_f(i),eta_f(i)
         print *,'phi, tortuosity, permxx, permxz, permzz= ',phi(i),tortuosity(i),permxx(i),permxz(i),permzz(i)
         print *,'kappa_fr, mu_fr, Qmu= ',kappa_fr(i),mu_fr(i),Qmu(i)
         print *,'Material is porous'
+     else if (icodemat(i) <= 0) then
+        print *,'Material #',i,' will be read in an external tomography file (TOMOGRAPHY_FILE in Par_file)'
      else
-        print *,'Material #',i,' anisotropic'
-        print *,'rho,cp,cs = ',rho_s(i),cp(i),cs(i)
-        print*,'c11,c13,c15,c33,c35,c55,c12,c23,c25 = ',aniso3(i),aniso4(i),aniso5(i),aniso6(i),aniso7(i),aniso8(i), &
-                                                        aniso9(i),aniso10(i),aniso11(i)
-        print *,'QKappa,Qmu = ',QKappa(i),Qmu(i)
+        stop 'Unknown material code'
      endif
      print *
   enddo

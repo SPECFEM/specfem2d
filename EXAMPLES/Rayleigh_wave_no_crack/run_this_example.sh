@@ -40,6 +40,9 @@ ln -s ../../bin/xspecfem2D
 cp DATA/Par_file OUTPUT_FILES/
 cp DATA/SOURCE OUTPUT_FILES/
 
+# Get the number of processors from Par_file
+NPROC=`grep nproc DATA/Par_file | cut -d = -f 2 | cut -d \# -f 1 | tr -d ' '`
+
 # runs database generation
 echo
 echo "  running mesher..."
@@ -47,10 +50,17 @@ echo
 ./xmeshfem2D
 
 # runs simulation
-echo
-echo "  running solver..."
-echo
-./xspecfem2D
+if [ "$NPROC" -eq 1 ]; then # This is a serial simulation
+  echo
+  echo " Running solver..."
+  echo
+  ./xspecfem2D
+else # This is a MPI simulation
+  echo
+  echo " Running solver on $NPROC processors..."
+  echo
+  mpirun -np $NPROC ./xspecfem2D
+fi
 
 # stores output
 cp DATA/*SOURCE* DATA/*STATIONS* OUTPUT_FILES
@@ -59,4 +69,4 @@ echo
 echo "see results in directory: OUTPUT_FILES/"
 echo
 echo "done"
-echo `date`
+date

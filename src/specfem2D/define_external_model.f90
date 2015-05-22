@@ -45,15 +45,19 @@
               rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
               c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
 
+  use specfem_par, only: poroelastcoef,density,kmato
+
   implicit none
 
   include "constants.h"
 
 ! -------------------------------------------------------------------------------------
-! Dummy example of this routine, to be used as a template that can be modified by users
+! Dummy example of this routine, to be used as a template that users can modify.
+! To use it you will need to rename it as define_external_model() (i.e., get rid of "_dummy")
+! and suppress the existing define_external_model() routine provided below for the AK135F global Earth model.
 ! -------------------------------------------------------------------------------------
 
-! user can modify this routine to assign any different external model (rho, vp, vs)
+! users can modify this routine to assign any different external model (rho, vp, vs)
 ! based on the x and y coordinates of that grid point and the material number of the region it belongs to
 
   integer, intent(in) :: nspec,nglob
@@ -64,16 +68,17 @@
 
   integer, dimension(NGLLX,NGLLZ,nspec), intent(in) :: ibool
 
-  double precision, dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
                                                                  c11,c15,c13,c33,c35,c55,c12,c23,c25
 
   integer :: i,j,ispec,iglob
 
   double precision :: x,z
 
-! completely dummy routine here, just to demonstrate how the model can be assigned
+! dummy routine here, just to demonstrate how the model can be assigned
 ! and how such a routine can be written
 
+! remove gravity
 ! leave these arrays here even if you do not assign them to use them because they need to be cleared
   gravity(:,:,:) = 0.d0
   Nsq(:,:,:) = 0.d0
@@ -83,47 +88,53 @@
     do j = 1,NGLLZ
       do i = 1,NGLLX
 
-   iglob = ibool(i,j,ispec)
+        iglob = ibool(i,j,ispec)
 
-   x = coord(1,iglob)
-   z = coord(2,iglob)
+        x = coord(1,iglob)
+        z = coord(2,iglob)
 
-   if(material_element(ispec) == 1 .or. x < 1700.d0 .or. z >= 2300.d0) then
-     rho(i,j,ispec) = 2000.d0
-     vp(i,j,ispec) = 3000.d0
-     vs(i,j,ispec) = vp(i,j,ispec) / sqrt(3.d0)
-     QKappa_attenuation(i,j,ispec) = 9999. ! this means no attenuation
-     Qmu_attenuation(i,j,ispec)    = 9999. ! this means no attenuation
-     c11(i,j,ispec) = 169.d9
-     c13(i,j,ispec) = 122.d9
-     c15(i,j,ispec) = 0.d0
-     c33(i,j,ispec) = c11(i,j,ispec)
-     c35(i,j,ispec) = 0.d0
-     c55(i,j,ispec) = 75.3d9
-     c12(i,j,ispec) = 0.d0
-     c23(i,j,ispec) = 0.d0
-     c25(i,j,ispec) = 0.d0
+        if(material_element(ispec) == 1 .or. x < 1700.d0 .or. z >= 2300.d0) then
+          rho(i,j,ispec) = 2000.d0
+          vp(i,j,ispec) = 3000.d0
+          vs(i,j,ispec) = vp(i,j,ispec) / sqrt(3.d0)
+          QKappa_attenuation(i,j,ispec) = 9999. ! this means no attenuation
+          Qmu_attenuation(i,j,ispec)    = 9999. ! this means no attenuation
+          c11(i,j,ispec) = 169.d9
+          c13(i,j,ispec) = 122.d9
+          c15(i,j,ispec) = 0.d0
+          c33(i,j,ispec) = c11(i,j,ispec)
+          c35(i,j,ispec) = 0.d0
+          c55(i,j,ispec) = 75.3d9
+          c12(i,j,ispec) = 0.d0
+          c23(i,j,ispec) = 0.d0
+          c25(i,j,ispec) = 0.d0
 
-   else if(material_element(ispec) == 2) then
-     rho(i,j,ispec) = 2500.d0
-     vp(i,j,ispec) = 3600.d0
-     vs(i,j,ispec) = vp(i,j,ispec) / 2.d0
-     QKappa_attenuation(i,j,ispec) = 120.
-     Qmu_attenuation(i,j,ispec) = 120.
-     c11(i,j,ispec) = 0.d0   ! this means no anisotropy
-     c13(i,j,ispec) = 0.d0
-     c15(i,j,ispec) = 0.d0
-     c33(i,j,ispec) = 0.d0
-     c35(i,j,ispec) = 0.d0
-     c55(i,j,ispec) = 0.d0
-     c12(i,j,ispec) = 0.d0
-     c23(i,j,ispec) = 0.d0
-     c25(i,j,ispec) = 0.d0
+        else if(material_element(ispec) == 2) then
+          rho(i,j,ispec) = 2500.d0
+          vp(i,j,ispec) = 3600.d0
+          vs(i,j,ispec) = vp(i,j,ispec) / 2.d0
+          QKappa_attenuation(i,j,ispec) = 120.
+          Qmu_attenuation(i,j,ispec) = 120.
+          c11(i,j,ispec) = 0.d0   ! this means no anisotropy
+          c13(i,j,ispec) = 0.d0
+          c15(i,j,ispec) = 0.d0
+          c33(i,j,ispec) = 0.d0
+          c35(i,j,ispec) = 0.d0
+          c55(i,j,ispec) = 0.d0
+          c12(i,j,ispec) = 0.d0
+          c23(i,j,ispec) = 0.d0
+          c25(i,j,ispec) = 0.d0
 
-   else
-     write(IOUT,*) 'flag number in external model is equal to ',material_element(ispec)
-     stop 'wrong flag number in external model; exiting...'
-   endif
+        else
+          write(IOUT,*) 'flag number in external model is equal to ',material_element(ispec)
+          stop 'wrong flag number in external model; exiting...'
+        endif
+
+        !! AB AB Do not forget these 3 lines otherwise PML may not work !!
+        density(1,kmato(ispec)) = rho(i,j,ispec)
+        poroelastcoef(3,1,kmato(ispec)) = rho(i,j,ispec) * vp(i,j,ispec) * vp(i,j,ispec)
+        poroelastcoef(2,1,kmato(ispec)) =  rho(i,j,ispec) * vs(i,j,ispec) * vs(i,j,ispec)
+        !! AB AB Do not forget these 3 lines otherwise PML may not work !!
 
       enddo
     enddo
@@ -181,7 +192,7 @@
 
   integer, dimension(NGLLX,NGLLZ,nspec), intent(in) :: ibool
 
-  double precision, dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
                                                                  c11,c15,c13,c33,c35,c55,c12,c23,c25
 
 ! number of layers in ak135-f
@@ -205,6 +216,7 @@
   double precision :: x,z,r,frac
 
 ! remove gravity
+! leave these arrays here even if you do not assign them to use them because they need to be cleared
   gravity(:,:,:) = 0.d0
   Nsq(:,:,:)     = 0.d0
 
@@ -1158,7 +1170,7 @@
 
   integer, dimension(NGLLX,NGLLZ,nspec), intent(in) :: ibool
 
-  double precision, dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
                                               c11,c15,c13,c33,c35,c55,c12,c23,c25
 
 ! number of layers in the model
@@ -1192,7 +1204,7 @@
 ! loop on all the elements of the mesh, and inside each element loop on all the GLL points
   do ispec = 1,nspec
 
-  if(material_element(ispec) /= IREGION_AIR ) stop '1wrong flag number in external model'
+  if(material_element(ispec) /= IREGION_AIR ) stop 'error: Wrong flag number in external model'
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
