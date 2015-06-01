@@ -657,6 +657,13 @@ If you have an existing CUBIT (or similar) mesh stored in SPECFEM2D
 format but do not know how to assign CPML flags to it,
 we have created a small serial Fortran program that will do that automatically for you.
 That program is utils/CPML/convert\_external\_layers\_of\_a\_given\_mesh\_to\_CPML\_layers2D.f90.
+When you create the PML layers using that script, you do not need to mark
+(i.e. assign to physical entities with a specific name) those external layers in the mesher.
+However you still need to specify the boundary of the mesh as you where doing in the case of absorbing conditions.
+The script will automatically extract the elements on the PML. It will ask you for a thickness for the PML layers.
+Suppose that you have created a region with a 1-meter size element, when it will prompt for the PML thickness
+you can enter 3.1 and it will create a PML 3 element thick. Always input a slightly larger (5-10\%) size because the element might be slightly skewed,
+or if you have not created your PML region via extrusion/webcut in CUBIT/TRELIS.
 
 If you use PML and an external velocity and density model (e.g., setting flag ``\texttt{MODEL}'' to \texttt{tomography}),
 you should be careful because mathematically a PML cannot handle heterogeneities along the
