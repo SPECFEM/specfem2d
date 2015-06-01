@@ -62,7 +62,7 @@
 
   if( this_is_the_first_time_we_dump ) then
 
-    allocate(mask_ibool(nglob))
+    if (.not. allocated(mask_ibool)) allocate(mask_ibool(nglob))
 
 ! save the grid separately once and for all
     if( use_binary_for_wavefield_dumps ) then
