@@ -144,7 +144,8 @@
 ! read in time series based on noise spectrum and construct noise "source" array
   subroutine compute_source_array_noise()
 
-  use specfem_par, only: p_sv,NSTEP,deltat,ibool,ispec_noise, &
+
+  use specfem_par, only: AXISYM,is_on_the_axis,xiglj,p_sv,NSTEP,deltat,ibool,ispec_noise, &
                        xi_noise,gamma_noise,xigll,zigll, &
                        time_function_noise,source_array_noise
 
@@ -245,7 +246,17 @@
 
   !interpolate over GLL points
   source_array_noise(:,:,:,:) = 0._CUSTOM_REAL
-  call lagrange_any(xi_noise,NGLLX,xigll,hxi,hpxi)
+
+  if (AXISYM) then
+    if(is_on_the_axis(ispec_noise)) then
+      call lagrange_any(xi_noise,NGLJ,xiglj,hxi,hpxi)
+    else
+      call lagrange_any(xi_noise,NGLLX,xigll,hxi,hpxi)
+    endif
+  else
+    call lagrange_any(xi_noise,NGLLX,xigll,hxi,hpxi)
+  endif
+
   call lagrange_any(gamma_noise,NGLLZ,zigll,hgamma,hpgamma)
 
   if(p_sv) then ! P-SV simulation
