@@ -49,6 +49,8 @@
                ispec_selected_source,is_proc_source,nb_proc_source,nproc,myrank, &
                xi_source,gamma_source,coorg,knods,ngnod,npgeo,iglob_source)
 
+  use specfem_par, only : AXISYM,is_on_the_axis,xiglj
+
 #ifdef USE_MPI
   use mpi
 #endif
@@ -174,7 +176,15 @@
 ! ****************************************
 
 ! use initial guess in xi and gamma
-  xi = xigll(ix_initial_guess)
+  if (AXISYM) then
+    if (is_on_the_axis(ispec_selected_source)) then
+      xi = xiglj(ix_initial_guess)
+    else
+      xi = xigll(ix_initial_guess)
+    endif
+  else
+    xi = xigll(ix_initial_guess)
+  endif
   gamma = zigll(iz_initial_guess)
 
 ! iterate to solve the non linear system
