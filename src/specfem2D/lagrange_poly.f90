@@ -76,6 +76,41 @@
 !=====================================================================
 !
 
+  double precision function hglj(I,Z,ZGLJ,NZ)
+
+!-------------------------------------------------------------
+!
+!  Compute the value of the Lagrangian interpolant L through
+!  the NZ Gauss-Lobatto Jacobi points ZGLJ at point Z
+!
+!-------------------------------------------------------------
+
+  implicit none
+
+  integer i,nz
+  double precision z
+  double precision ZGLJ(0:nz-1)
+
+  integer n
+  double precision EPS,DZ,ALFAN
+  double precision, external :: PNGLJ,PNDGLJ
+
+  EPS = 1.d-5
+  DZ = Z - ZGLJ(I)
+  if(abs(DZ) < EPS) then
+   HGLJ = 1.d0
+   return
+  endif
+  N = NZ - 1
+  ALFAN = dble(N)*(dble(N)+2.d0)
+  HGLJ = - (1.d0-Z*Z)*PNDGLJ(Z,N)/ (ALFAN*PNGLJ(ZGLJ(I),N)*(Z-ZGLJ(I)))
+
+  end function hglj
+
+!
+!=====================================================================
+!
+
   subroutine lagrange_any(xi,NGLL,xigll,h,hprime)
 
 ! subroutine to compute the Lagrange interpolants based upon the GLL points
@@ -91,27 +126,27 @@
 
   do dgr=1,NGLL
 
-  prod1 = 1.0d0
-  prod2 = 1.0d0
-  do i=1,NGLL
-    if(i /= dgr) then
-      prod1 = prod1*(xi-xigll(i))
-      prod2 = prod2*(xigll(dgr)-xigll(i))
-    endif
-  enddo
-  h(dgr)=prod1/prod2
+    prod1 = 1.0d0
+    prod2 = 1.0d0
+    do i=1,NGLL
+      if(i /= dgr) then
+        prod1 = prod1*(xi-xigll(i))
+        prod2 = prod2*(xigll(dgr)-xigll(i))
+      endif
+    enddo
+    h(dgr)=prod1/prod2
 
-  hprime(dgr)=0.0d0
-  do i=1,NGLL
-    if(i /= dgr) then
-      prod1=1.0d0
-      do j=1,NGLL
-        if(j /= dgr .and. j /= i) prod1 = prod1*(xi-xigll(j))
-      enddo
-      hprime(dgr) = hprime(dgr)+prod1
-    endif
-  enddo
-  hprime(dgr) = hprime(dgr)/prod2
+    hprime(dgr)=0.0d0
+    do i=1,NGLL
+      if(i /= dgr) then
+        prod1=1.0d0
+        do j=1,NGLL
+          if(j /= dgr .and. j /= i) prod1 = prod1*(xi-xigll(j))
+        enddo
+        hprime(dgr) = hprime(dgr)+prod1
+      endif
+    enddo
+    hprime(dgr) = hprime(dgr)/prod2
 
   enddo
 
