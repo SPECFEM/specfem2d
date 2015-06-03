@@ -43,6 +43,8 @@
 
   subroutine compute_arrays_source(ispec_selected_source,xi_source,gamma_source,sourcearray, &
              Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,nspec)
+ 
+  use specfem_par, only : AXISYM,is_on_the_axis,xiglj
 
   implicit none
 
@@ -94,7 +96,17 @@
   enddo
 
 ! compute Lagrange polynomials at the source location
-  call lagrange_any(xi_source,NGLLX,xigll,hxis,hpxis)
+
+  if (AXISYM) then
+    if(is_on_the_axis(ispec_selected_source)) then ! TODO verify if we have to add : .and. is_proc_source(i)
+      call lagrange_any(xi_source,NGLJ,xiglj,hxis,hpxis)
+    else
+      call lagrange_any(xi_source,NGLLX,xigll,hxis,hpxis)
+    endif
+  else
+    call lagrange_any(xi_source,NGLLX,xigll,hxis,hpxis)
+  endif
+
   call lagrange_any(gamma_source,NGLLZ,zigll,hgammas,hpgammas)
 
 ! calculate source array
@@ -129,14 +141,12 @@
 ! ------------------------------------------------------------------------------------------------------
 
 
-  subroutine compute_arrays_adj_source(xi_rec,gamma_rec)
+ subroutine compute_arrays_adj_source(xi_rec,gamma_rec)
 
  use constants
  use specfem_par
 
  implicit none
-
-
 
   double precision xi_rec, gamma_rec
 
@@ -144,11 +154,7 @@
   double precision :: junk
   character(len=3) :: comp(3)
 
-  call lagrange_any(xi_rec,NGLLX,xigll,hxir,hpxir)
-  call lagrange_any(gamma_rec,NGLLZ,zigll,hgammar,hpgammar)
-
   adj_sourcearray(:,:,:,:) = 0.
-
 
   if(seismotype == 1 .or. seismotype == 2 .or. seismotype == 3) then
 
@@ -194,6 +200,18 @@
   endif
 
   source_adjointe(irec_local,:,1) = adj_src_s(:,1)
+  
+  if (AXISYM) then
+    if(is_on_the_axis(ispec_selected_rec(irec_local))) then ! TODO verify irec_local...
+      call lagrange_any(xi_rec,NGLJ,xiglj,hxir,hpxir)
+    else
+      call lagrange_any(xi_rec,NGLLX,xigll,hxir,hpxir)
+    endif
+  else
+    call lagrange_any(xi_rec,NGLLX,xigll,hxir,hpxir)
+  endif
+
+  call lagrange_any(gamma_rec,NGLLZ,zigll,hgammar,hpgammar)
 
   do k = 1, NGLLZ
       do i = 1, NGLLX
