@@ -264,7 +264,7 @@ module specfem_par
   ! for SEM discretization of the model
   !---------------------------------------------------------------------
   ! for Lagrange interpolants
-  double precision, external :: hgll
+  double precision, external :: hgll, hglj
   ! Gauss-Lobatto-Legendre points and weights
   double precision, dimension(NGLLX) :: xigll
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
