@@ -72,9 +72,8 @@ subroutine  build_is_on_the_axis()
   !   If it is on the axis the source need to be in the x direction (test if sourceangle =0 /180+-epsilon)
   !  Warning if the source is not on the axis (circular source)
   ! _Not implemented yet (or not tested):
-  !   poroelasticity, anisotropy, attenuation, Stacey absorbing boundaries, time stepping scheme /= 1, PML rotated, adjoint
-  !   simulations, periodic conditions, noise tomographies, source and receivers on the elements along the axis but not
-  !   exactly on the axis.
+  !   poroelasticity, anisotropy, Stacey absorbing boundaries, time stepping scheme /= 1, PML rotated, adjoint
+  !   simulations, periodic conditions, noise tomographies
 
     use specfem_par, only: any_poroelastic, anisotropic,ROTATE_PML_ACTIVATE, &
                            STACEY_BOUNDARY_CONDITIONS, SIMULATION_TYPE, SAVE_FORWARD,time_stepping_scheme, &
@@ -87,7 +86,7 @@ subroutine  build_is_on_the_axis()
     include "constants.h"
 
     ! Local parameters
-    integer :: irec, isource
+    integer :: isource
 
     if ( any_poroelastic ) &
       call exit_MPI('Poroelasticity is presently not implemented for axisymmetric simulations')
@@ -107,28 +106,13 @@ subroutine  build_is_on_the_axis()
       call exit_MPI('Periodic conditions (ADD_PERIODIC_CONDITIONS) are presently not implemented for axisymmetric simulations')
     if ( NOISE_TOMOGRAPHY /= 0 ) &
       call exit_MPI('Axisymmetric noise tomographies are not possible yet')
-
-    ! Check receivers
-    do irec = 1,nrec                                                               ! Loop on the receivers :
-      if ( myrank == which_proc_receiver(irec) ) then
-        if ( is_on_the_axis(ispec_selected_rec(irec)) ) then                         !   If the receiver is on an axial element ...
-          if ( (xi_receiver(irec) > -1.d0) .and. (xi_receiver(irec) < 1.d0 ) ) then  !   ... but not exactly on the edges
-            call exit_MPI('Axisymmetry : a receiver has been set on the 1st element but not on the edges, this is not possible yet')
-          endif
-        endif
-      endif
-    enddo
-
     ! Check sources
     do isource = 1,NSOURCES                                      ! Loop on the sources :
       if ( is_proc_source(isource) == 1 ) then
         if ( source_type(isource) /= 1 ) then                       !  If the source is not an elastic force or an acoustic pressure
-          call exit_MPI('Axisymmetry : just elastic force or acoustic pressure sources are implemented so far')
+          call exit_MPI('Axisymmetry : just elastic force or acoustic pressure sources has been tested so far)')
         endif
         if ( is_on_the_axis(ispec_selected_source(isource)) ) then  !   If the source is on an axial element
-          if ( (xi_source(isource) > -1.d0)  .and. (xi_source(isource) < 1.d0 )) then  !   ... but not exactly on the edges
-            call exit_MPI('Axisymmetry : a source has been set on the first element but not on the axis, this is not possible yet')
-          endif
           if ( elastic(ispec_selected_source(isource)) ) then       !  ... or if the source is (at r=0) on an elastic axial element.
             if ( ((anglesource(isource) > TINYVAL) .and. (anglesource(isource) < PI) ) &    ! ... and has a radial component.
                .or. ( (anglesource(isource) > PI) .and. (anglesource(isource) < TWO*PI)) ) then
