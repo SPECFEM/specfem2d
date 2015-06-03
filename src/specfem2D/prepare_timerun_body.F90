@@ -176,7 +176,7 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
     do i=1,pointsdisp
       xirec  = 2.d0*dble(i-1)/dble(pointsdisp-1) - 1.d0
       flagrange(j,i) = hgll(j-1,xirec,xigll,NGLLX)
-      if(AXISYM) flagrange_GLJ(j,i) = hgll(j-1,xirec,xiglj,NGLJ)
+      if(AXISYM) flagrange_GLJ(j,i) = hglj(j-1,xirec,xiglj,NGLJ)
     enddo
   enddo
 
@@ -637,7 +637,20 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
           read(111,rec=irec,iostat=ios) r4head, adj_src_s(:,1)
                if (ios /= 0) call exit_MPI(' file '//trim(filename)//' read error')
           if (irec==1) print *, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
-          call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
+          
+          if (AXISYM) then
+            if(is_on_the_axis(ispec_selected_rec(irec))) then
+              call lagrange_any(xi_receiver(irec),NGLJ,xiglj,hxir,hpxir)
+              !do j=1,NGLJ ! Same result with that loop
+              !  hxir(j) = hglj(j-1,xi_receiver(irec),xiglj,NGLJ)
+              !enddo
+            else
+              call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
+            endif
+          else
+            call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
+          endif
+
           call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
           source_adjointe(irec_local,:,1) = adj_src_s(:,1)
 
@@ -931,25 +944,41 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
 ! define and store Lagrange interpolators at all the receivers
   irec_local=0
   do irec = 1,nrec
-    call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
+
+    if (AXISYM) then
+      if(is_on_the_axis(ispec_selected_rec(irec)) .and. myrank == which_proc_receiver(irec)) then
+        call lagrange_any(xi_receiver(irec),NGLJ,xiglj,hxir,hpxir)
+        !do j=1,NGLJ ! AB AB Same result with that loop
+        !  hxir(j) = hglj(j-1,xi_receiver(irec),xiglj,NGLJ)
+        !enddo
+      else
+        call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
+      endif
+    else
+      call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
+    endif
+
     call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
     hxir_store(irec,:) = hxir(:)
     hgammar_store(irec,:) = hgammar(:)
-    if(myrank == which_proc_receiver(irec))then
-           irec_local = irec_local + 1
 
+    if(myrank == which_proc_receiver(irec)) then
+     irec_local = irec_local + 1
       do i = 1, NGLLX
-    xir_store_loc(irec_local,i)    = sngl(hxir(i))
-    gammar_store_loc(irec_local,i) = sngl(hgammar(i))
+        xir_store_loc(irec_local,i)    = sngl(hxir(i))
+        gammar_store_loc(irec_local,i) = sngl(hgammar(i))
       enddo
     endif
   enddo
 
-! define and store Lagrange interpolators at all the sources
+  ! define and store Lagrange interpolators at all the sources
   do i = 1,NSOURCES
     if (AXISYM) then
-      if((is_proc_source(i) == 1) .and. is_on_the_axis(ispec_selected_source(i))) then
+      if(is_on_the_axis(ispec_selected_source(i)) .and. is_proc_source(i) == 1) then
         call lagrange_any(xi_source(i),NGLJ,xiglj,hxis,hpxis)
+        !do j=1,NGLJ ! AB AB same result with that loop
+        !  hxis(j) = hglj(j-1,xi_source(i),xiglj,NGLJ)
+        !enddo
       else
         call lagrange_any(xi_source(i),NGLLX,xigll,hxis,hpxis)
       endif
