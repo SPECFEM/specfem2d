@@ -77,9 +77,8 @@ subroutine  build_is_on_the_axis()
 
     use specfem_par, only: any_poroelastic, anisotropic,ROTATE_PML_ACTIVATE, &
                            STACEY_BOUNDARY_CONDITIONS, SIMULATION_TYPE, SAVE_FORWARD,time_stepping_scheme, &
-                           NOISE_TOMOGRAPHY, NSOURCES, source_type, ispec_selected_source, xi_source, ADD_PERIODIC_CONDITIONS, &
-                           anglesource, nrec, ispec_selected_rec, xi_receiver, is_on_the_axis, elastic, myrank, &
-                           is_proc_source, which_proc_receiver
+                           NOISE_TOMOGRAPHY, NSOURCES, source_type, ispec_selected_source, ADD_PERIODIC_CONDITIONS, &
+                           anglesource, is_on_the_axis, elastic, is_proc_source
 
     implicit none
 
