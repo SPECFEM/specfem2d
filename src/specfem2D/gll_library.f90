@@ -382,6 +382,34 @@
 !------------------------------------------------------------------------
 !
 
+  double precision function pndglj(z,n)
+
+!------------------------------------------------------------------------
+!
+!     Compute the value of the derivative of Nth order polynomial of the
+!     Gauss-Lobatto-Jacobi (0,1) at Z. from Legendre polynomials.
+!
+!------------------------------------------------------------------------
+
+  implicit none
+  include 'constants.h'
+
+  double precision z
+  integer n
+  double precision, external :: pnleg, pndleg
+
+  if (abs(z+1.d0) > TINYVAL) then  ! if (z /= -1.d0)
+    pndglj = (pndleg(z,n)+pndleg(z,n+1))/(ONE+z) - (pnleg(z,n)+pnleg(z,n+1))/((ONE+z)**2)
+  else
+    pndglj = pnleg(-1.d0,n)+pnleg(-1.d0,n+1)
+  endif
+
+  end function pndglj
+
+!
+!------------------------------------------------------------------------
+!
+
   double precision function pnormj (n,alpha,beta)
 
   implicit none
