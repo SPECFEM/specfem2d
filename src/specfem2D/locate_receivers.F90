@@ -53,7 +53,7 @@
                           coorg,knods,ngnod,npgeo, &
                           x_final_receiver, z_final_receiver)
 
-use specfem_par, only : gather_ispec_selected_rec,acoustic,USE_TRICK_FOR_BETTER_PRESSURE
+use specfem_par, only : AXISYM,is_on_the_axis,xiglj,gather_ispec_selected_rec,acoustic,USE_TRICK_FOR_BETTER_PRESSURE
 
 #ifdef USE_MPI
   use mpi
@@ -171,18 +171,25 @@ use specfem_par, only : gather_ispec_selected_rec,acoustic,USE_TRICK_FOR_BETTER_
     enddo
 
 
-! ****************************************
-! find the best (xi,gamma) for each receiver
-! ****************************************
-
+    ! ****************************************
+    ! find the best (xi,gamma) for each receiver
+    ! ****************************************
     ! use initial guess in xi and gamma
-    xi = xigll(ix_initial_guess)
+
+    if (AXISYM) then ! TODO
+      if (is_on_the_axis(ispec_selected_rec(irec))) then
+        xi = xiglj(ix_initial_guess)
+      else
+        xi = xigll(ix_initial_guess)
+      endif
+    else
+      xi = xigll(ix_initial_guess)
+    endif
     gamma = zigll(iz_initial_guess)
 
     ! iterate to solve the non linear system
     do iter_loop = 1,NUM_ITER
-
-      ! recompute jacobian for the new point
+      ! compute coordinates of the new point and derivatives dxi/dx, dxi/dz
       call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
                   coorg,knods,ispec_selected_rec(irec),ngnod,nspec,npgeo, &
                   .true.)
@@ -226,8 +233,6 @@ use specfem_par, only : gather_ispec_selected_rec,acoustic,USE_TRICK_FOR_BETTER_
 
     x_final_receiver(irec) = x
     z_final_receiver(irec) = z
-
-
 
   enddo
 
