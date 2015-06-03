@@ -47,7 +47,7 @@
 
 ! prepares source_time_function array
 
-  use specfem_par, only: NSTEP,NSOURCES,source_time_function, &
+  use specfem_par, only: AXISYM,NSTEP,NSOURCES,source_time_function, &
                          time_function_type,f0,tshift_src,factor,aval, &
                          t0,nb_proc_source,deltat,stage_time_scheme,c_LDDRK,is_proc_source, &
                          USE_TRICK_FOR_BETTER_PRESSURE
@@ -81,6 +81,10 @@
 
     ! loop on all the sources
     do i_source=1,NSOURCES
+
+    if (AXISYM) then
+      factor(i_source) = - factor(i_source)
+    endif
 
     num_file = 800 + i_source
 
