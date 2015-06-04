@@ -665,6 +665,17 @@ Suppose that you have created a region with a 1-meter size element, when it will
 you can enter 3.1 and it will create a PML 3 element thick. Always input a slightly larger (5-10\%) size because the element might be slightly skewed,
 or if you have not created your PML region via extrusion/webcut in CUBIT/TRELIS.
 
+To be more precise:
+
+1/ If one wants to use PML layers, they should NOT mark the layers according to that python script - the reason is that the xmeshfem2d does not recognize those CPML flags. If whoever developed the script adjusts it to solve this problem - this might be a great relief for users; as of now no physical identifiers are needed for those layers.
+
+2/ HOWEVER, the "Top", "Bottom", "Left"," and "Right" boundaries of the model, need to be re-assigned to outer boundaries of the model - that will be the leftmost boundary of the left -bounding PML , rightmost of the right PML, topmost for the Top PML (if there is one) and the bottom boundary of the bottom layer. Those and only those lines need to have the mentioned identifiers (opposite to the example with the two-holed square with Stacey conditions).
+
+3/ There is no need to create Top PML in case one wants it to be reflective; as the fortran script that assigns the flag will ignore the elements that sit within  PML-layer thickness distance to the top.
+
+4/ The Fortran program utils/CPML/convert\_external\_layers\_of\_a\_given\_mesh\_to\_CPML\_layers2D.f90
+that flags the PML elements does not create additional elements; it simply takes the elements within chosen distance from the boundaries, that sit in the interior of model and marks them as absorbing.
+
 If you use PML and an external velocity and density model (e.g., setting flag ``\texttt{MODEL}'' to \texttt{tomography}),
 you should be careful because mathematically a PML cannot handle heterogeneities along the
 normal to the PML edge inside the PML layer. This comes from the fact that the damping profile
