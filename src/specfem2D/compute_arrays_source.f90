@@ -43,7 +43,7 @@
 
   subroutine compute_arrays_source(ispec_selected_source,xi_source,gamma_source,sourcearray, &
              Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,nspec)
- 
+
   use specfem_par, only : AXISYM,is_on_the_axis,xiglj
 
   implicit none
@@ -200,7 +200,7 @@
   endif
 
   source_adjointe(irec_local,:,1) = adj_src_s(:,1)
-  
+
   if (AXISYM) then
     if(is_on_the_axis(ispec_selected_rec(irec_local))) then ! TODO verify irec_local...
       call lagrange_any(xi_rec,NGLJ,xiglj,hxir,hpxir)
