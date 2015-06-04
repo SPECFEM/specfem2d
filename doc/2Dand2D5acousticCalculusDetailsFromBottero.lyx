@@ -1,0 +1,1735 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass book
+\begin_preamble
+\usepackage{bigints}
+\end_preamble
+\use_default_options true
+\begin_modules
+theorems-ams
+\end_modules
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize 10
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_amsmath 1
+\use_esint 2
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 1cm
+\topmargin 1cm
+\rightmargin 1cm
+\bottommargin 1cm
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+scriptsize
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section*
+2D spectral-elements formulation in cartesian coordinates (acoustic medium)
+\end_layout
+
+\begin_layout Subsection*
+Introduction : assumptions, conventions, weak form
+\end_layout
+
+\begin_layout Standard
+\noindent
+We shall start from the wave equation for a 3D inhomogeneous 
+\color blue
+fluid medium
+\color inherit
+ 
+\begin_inset Formula $\Omega$
+\end_inset
+
+ 
+\color blue
+without source
+\color inherit
+:
+\end_layout
+
+\begin_layout Standard
+\noindent
+\begin_inset Formula 
+\begin{equation}
+\rho\ddot{\boldsymbol{u}}=\boldsymbol{\nabla}\cdot\boldsymbol{T}\label{eq:momentum}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+With 
+\begin_inset Formula $\boldsymbol{\nabla}\cdot\boldsymbol{T}$
+\end_inset
+
+ refering to the divergence of the stress tensor field 
+\begin_inset Formula $\boldsymbol{T}$
+\end_inset
+
+ .
+ In 
+\color blue
+acoustic isotropic media
+\color inherit
+ :
+\end_layout
+
+\begin_layout Standard
+\noindent
+\begin_inset Formula 
+\[
+\forall i,j\in\{x,y,z\}^{2}\quad T_{ij}=\lambda\delta_{ij}\epsilon_{kk}=\lambda\delta_{ij}(\epsilon_{11}+\epsilon_{22}+\epsilon_{33})
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+(We could introduce the bulk modulus here : 
+\begin_inset Formula $\kappa=\lambda+\dfrac{2}{3}\mu=\lambda$
+\end_inset
+
+)
+\end_layout
+
+\begin_layout Standard
+\noindent
+\begin_inset Formula $\boldsymbol{\epsilon}$
+\end_inset
+
+ being the strain tensor, by definition :
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+ 
+\begin_inset Formula $\boldsymbol{\epsilon}=\dfrac{1}{2}(\boldsymbol{\nabla}\boldsymbol{u}+\boldsymbol{\nabla^{\top}}\boldsymbol{u})$
+\end_inset
+
+ which in cartesian coordinate is written : 
+\begin_inset Formula $\forall i,j\in\{x,y,z\}^{2}\quad\epsilon_{ij}=\dfrac{1}{2}(\partial_{i}u_{j}+\partial_{j}u_{i})$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+\noindent
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+So 
+\begin_inset Formula $\epsilon_{kk}=\dfrac{\partial u_{x}}{\partial x}+\dfrac{\partial u_{y}}{\partial y}+\dfrac{\partial u_{z}}{\partial z}=\boldsymbol{\nabla}\cdot\boldsymbol{u}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+To summarize :
+\end_layout
+
+\begin_layout Standard
+\noindent
+\begin_inset Formula 
+\[
+\left(\begin{array}{ccc}
+T_{xx} & T_{xy} & T_{xz}\\
+T_{yx} & T_{yy} & T_{yz}\\
+T_{zx} & T_{zy} & T_{zz}
+\end{array}\right)=\left(\begin{array}{ccc}
+\lambda\epsilon_{kk} & 0 & 0\\
+0 & \lambda\epsilon_{kk} & 0\\
+0 & 0 & \lambda\epsilon_{kk}
+\end{array}\right)=\left(\begin{array}{ccc}
+\lambda\boldsymbol{\nabla}\cdot\boldsymbol{u} & 0 & 0\\
+0 & \lambda\boldsymbol{\nabla}\cdot\boldsymbol{u} & 0\\
+0 & 0 & \lambda\boldsymbol{\nabla}\cdot\boldsymbol{u}
+\end{array}\right)\equiv-\left(\begin{array}{ccc}
+P & 0 & 0\\
+0 & P & 0\\
+0 & 0 & P
+\end{array}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+We also remark that : 
+\begin_inset Formula 
+\[
+\boldsymbol{\nabla}\cdot\boldsymbol{T}=-\boldsymbol{\nabla}P
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+It could be useful to express 
+\begin_inset Formula $\rho\ddot{\boldsymbol{u}}$
+\end_inset
+
+ as a gradient! As Chaljub Valette 2004 we introduce a scalar potential
+ 
+\begin_inset Formula $\chi$
+\end_inset
+
+ of 
+\begin_inset Formula $\rho\boldsymbol{u}$
+\end_inset
+
+ :
+\begin_inset Formula 
+\[
+\rho\boldsymbol{u}=\boldsymbol{\nabla}\chi
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+The wave equation becomes :
+\end_layout
+
+\begin_layout Standard
+\noindent
+\begin_inset Formula 
+\[
+\boldsymbol{\nabla}\ddot{\chi}=-\boldsymbol{\nabla}P
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+It implies then : 
+\begin_inset Formula 
+\[
+\ddot{\chi}(x,y,z,t)=-P(x,y,z,t)+P_{0}(t)
+\]
+
+\end_inset
+
+ 
+\color blue
+We decide 
+\begin_inset Formula $P_{0}(t)=0$
+\end_inset
+
+.
+
+\color inherit
+ 
+\begin_inset Formula 
+\[
+\ddot{\chi}=-P=\lambda\boldsymbol{\nabla}\cdot\boldsymbol{u}=\dfrac{\lambda}{\rho}\boldsymbol{\nabla}\cdot\boldsymbol{\nabla}\chi
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+And the wave equation expresses :
+\begin_inset Formula 
+\begin{equation}
+\dfrac{1}{\lambda}\ddot{\chi}=\dfrac{1}{\rho}\boldsymbol{\nabla}\cdot\boldsymbol{\nabla}\chi\label{eq:momentumChi}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+These relations does not depend on the coordinate system (if it remains
+ orthogonal).
+ 
+\end_layout
+
+\begin_layout Standard
+\noindent
+Let 
+\begin_inset Formula $M$
+\end_inset
+
+ be a point of 
+\begin_inset Formula $\Omega$
+\end_inset
+
+ and 
+\begin_inset Formula $M\mapsto w(M)$
+\end_inset
+
+ an arbitrary test function.
+ Let us suppose that 
+\begin_inset Formula $\Omega$
+\end_inset
+
+ has a free surface 
+\begin_inset Formula $\partial\Omega$
+\end_inset
+
+ with normal 
+\begin_inset Formula $\boldsymbol{n}(x,y,z)$
+\end_inset
+
+ and an artificial boundary 
+\begin_inset Formula $\Gamma$
+\end_inset
+
+ with a solid medium.
+ We obtain the week formulation from the wave equation by dotting the momentum
+ equation 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:momentumChi"
+
+\end_inset
+
+ with an the test function 
+\begin_inset Formula $w$
+\end_inset
+
+ and integrating by part over the model volume 
+\begin_inset Formula $\Omega$
+\end_inset
+
+ :
+\begin_inset Formula 
+\[
+\begin{array}{ccl}
+\underset{\text{ mass integral}}{\underbrace{{\displaystyle \int_{\Omega}w\dfrac{1}{\lambda}\ddot{\chi}\:\mathrm{d^{2}\boldsymbol{x}}}}} & = & -\underset{\text{ stiffness integral}}{\underbrace{\int_{\Omega}\dfrac{1}{\rho}\boldsymbol{\nabla}w\cdot\boldsymbol{\nabla}\chi\:\mathrm{d^{2}\boldsymbol{x}}}}+\underset{\text{coupling integral}}{\underbrace{\int_{\Gamma}w\boldsymbol{n}\cdot\dot{\boldsymbol{u}}\:\mathrm{dx}}}\end{array}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+\begin_inset Formula 
+\[
+\begin{array}{ccl}
+{\displaystyle \int_{\Omega}w\dfrac{1}{\lambda}\ddot{\chi}\:\mathrm{d^{2}\boldsymbol{x}}} & = & -\int_{\Omega}\dfrac{1}{\rho}\boldsymbol{\nabla}w\cdot\boldsymbol{\nabla}\chi\:\mathrm{d^{2}\boldsymbol{x}}+\int_{\Gamma}w\boldsymbol{n}\cdot\dot{\boldsymbol{u}}\:\mathrm{dx}\end{array}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+At this point we will choose the 
+\color blue
+plane-strain convention : we suppose an infinite medium along 
+\begin_inset Formula $y$
+\end_inset
+
+ and that the important loads are in the 
+\begin_inset Formula $x-z$
+\end_inset
+
+ plane and do not change with 
+\begin_inset Formula $y$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Hence for example 
+\begin_inset Formula $P=-\lambda\left[\dfrac{\partial u_{x}}{\partial x}+\dfrac{\partial u_{z}}{\partial z}\right]$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+The test functions 
+\begin_inset Formula $M\mapsto w(M)$
+\end_inset
+
+ expresses
+\begin_inset Formula $\left(x,z\right)\mapsto w(x,z)$
+\end_inset
+
+.
+ We have then :
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\boldsymbol{\nabla}w\cdot\boldsymbol{\nabla}\chi=\dfrac{\partial w}{\partial x}\dfrac{\partial\chi}{\partial x}+\dfrac{\partial w}{\partial z}\dfrac{\partial\chi}{\partial z}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+The wave equation becomes : 
+\end_layout
+
+\begin_layout Standard
+\noindent
+\begin_inset Formula 
+\begin{equation}
+\begin{array}{lll}
+\int_{\Omega}w\dfrac{1}{\lambda}\ddot{\chi}\:\mathrm{d^{2}\boldsymbol{x}} & = & {\displaystyle -\int_{\Omega}\dfrac{1}{\rho}\left(\dfrac{\partial w}{\partial x}\dfrac{\partial\chi}{\partial x}+\dfrac{\partial w}{\partial z}\dfrac{\partial\chi}{\partial z}\right)\:\mathrm{d^{2}\boldsymbol{x}}}\end{array}\label{eq:weakForm2D}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+vspace{0.5cm}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection*
+Mapping
+\end_layout
+
+\begin_layout Standard
+We subdivide the model volume 
+\begin_inset Formula $\Omega$
+\end_inset
+
+ into a number of non-overlapping hexahedral elements 
+\begin_inset Formula $\Omega_{e}$
+\end_inset
+
+ , 
+\begin_inset Formula $e=1,\ldots,n_{e}$
+\end_inset
+
+ such that 
+\begin_inset Formula ${\displaystyle \Omega=\bigcup_{e}\Omega_{e}}$
+\end_inset
+
+.
+ As the result of this subdivision, the artificial boundary 
+\begin_inset Formula $\Gamma$
+\end_inset
+
+ would be similarly represented by a number of 1D elements 
+\begin_inset Formula $\Gamma_{b}$
+\end_inset
+
+, 
+\begin_inset Formula $b=1,\ldots,n_{b}$
+\end_inset
+
+ such that 
+\begin_inset Formula ${\displaystyle \Gamma=\bigcup_{b}\Gamma_{b}}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+\bar under
+Boundary elements
+\end_layout
+
+\begin_layout Standard
+\noindent
+Each linear boundary element 
+\begin_inset Formula $\Gamma_{b}$
+\end_inset
+
+ is isomorphous to a line and can be mapped onto the reference interval
+ 
+\begin_inset Formula $[-1,1]$
+\end_inset
+
+ :
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{array}{cccc}
+\forall x\in\Gamma_{b}\:\forall\xi\in[-1,1] & x(\xi) & = & F(\xi)\\
+ &  & = & {\displaystyle \sum_{a=1}^{n_{a}}N_{a}(\xi)x_{a}}
+\end{array}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The 
+\begin_inset Formula $N_{a}$
+\end_inset
+
+ are called shape functions and define the mapping.
+ They usually are Lagrange polynomials of degree 
+\begin_inset Formula $n_{a}-1$
+\end_inset
+
+.
+ 
+\begin_inset Formula $x_{a}$
+\end_inset
+
+ are the anchor nodes 
+\begin_inset Formula $\forall a\in1\dots n_{a}\quad x(\xi_{a})=x_{a}$
+\end_inset
+
+ .
+ On this 1-D case we have got two shape functions 
+\begin_inset Formula $N_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $N_{2}$
+\end_inset
+
+ (which are Lagrange polynomials of degree 
+\begin_inset Formula $1$
+\end_inset
+
+) and two anchor nodes 
+\begin_inset Formula $x_{1}=X_{b}$
+\end_inset
+
+ and 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $x_{2}=X_{b+1}$
+\end_inset
+
+ corresponding to 
+\begin_inset Formula $\xi_{1}=-1$
+\end_inset
+
+ and 
+\begin_inset Formula $\xi_{2}=1$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{array}{cccc}
+\forall x\in\Gamma_{b}\:\forall\xi\in[-1,1] & x(\xi) & = & (X_{b+1}-X_{b})\dfrac{\xi+1}{2}+X_{b}\end{array}=\Delta_{e}\dfrac{\xi+1}{2}+X_{b}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Thus 
+\begin_inset Formula $\dfrac{dx}{d\xi}=\dfrac{X_{b+1}-X_{b}}{2}$
+\end_inset
+
+ and 
+\begin_inset Formula $\dfrac{d\xi}{dx}=\dfrac{2}{X_{b+1}-X_{b}}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+\bar under
+Surface elements
+\end_layout
+
+\begin_layout Standard
+Points 
+\begin_inset Formula $\boldsymbol{x}=\left(x,z\right)$
+\end_inset
+
+ within each hexahedral element 
+\begin_inset Formula $\Omega_{e}$
+\end_inset
+
+ may be uniquely related to points 
+\begin_inset Formula $\boldsymbol{\xi}=(\xi,\eta)$
+\end_inset
+
+, 
+\begin_inset Formula $-1\leq\xi,\eta\leq1$
+\end_inset
+
+ in a reference square 
+\begin_inset Formula $\Lambda$
+\end_inset
+
+ based upon the invertible mapping 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\boldsymbol{x}(\boldsymbol{\xi})=\sum_{a=1}^{n_{a}}\boldsymbol{x}_{a}N_{a}(\boldsymbol{\xi})
+\]
+
+\end_inset
+
+The 
+\begin_inset Formula $n_{a}$
+\end_inset
+
+ anchors nodes 
+\begin_inset Formula $\boldsymbol{x}_{a}=\boldsymbol{x}(\xi_{a},\eta_{a})$
+\end_inset
+
+ and shape functions 
+\begin_inset Formula $N_{a}(\boldsymbol{\xi})$
+\end_inset
+
+ define the geometry of an element 
+\begin_inset Formula $\Omega_{e}$
+\end_inset
+
+ (here we should add more detail for a paper).
+ A surface element 
+\begin_inset Formula $\mathrm{dx}\mathrm{dz}$
+\end_inset
+
+ within a given element 
+\begin_inset Formula $\Omega_{e}$
+\end_inset
+
+ is related to a surface element in the reference square by the relation
+ : 
+\begin_inset Formula 
+\[
+\mathrm{dx}\mathrm{dz}=\left|\mathcal{J}_{e}\right|\mathrm{d\xi}\mathrm{d\eta}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Where 
+\begin_inset Formula $\mathcal{J}_{e}$
+\end_inset
+
+ is the surface Jacobian.
+ For 
+\begin_inset Formula $(x,z)\in\Omega_{e}$
+\end_inset
+
+ it expresses :
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathcal{J}_{e}=\left|\dfrac{\partial x}{\partial\xi}\dfrac{\partial z}{\partial\eta}-\dfrac{\partial x}{\partial\eta}\dfrac{\partial z}{\partial\xi}\right|
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+With of course 
+\begin_inset Formula ${\displaystyle \dfrac{\partial x}{\partial\xi}=\sum_{a=1}^{n_{a}}\dfrac{\partial N_{a}}{\partial\xi}x_{a}}$
+\end_inset
+
+, 
+\begin_inset Formula ${\displaystyle \dfrac{\partial z}{\partial\xi}=\sum_{a=1}^{n_{a}}\dfrac{\partial N_{a}}{\partial\xi}z_{a}}$
+\end_inset
+
+, 
+\begin_inset Formula ${\displaystyle \dfrac{\partial x}{\partial\eta}=\sum_{a=1}^{n_{a}}\dfrac{\partial N_{a}}{\partial\eta}x_{a}}$
+\end_inset
+
+ and 
+\begin_inset Formula ${\displaystyle \dfrac{\partial z}{\partial\eta}=\sum_{a=1}^{n_{a}}\dfrac{\partial N_{a}}{\partial\eta}z_{a}}$
+\end_inset
+
+.
+ Moreover for any function 
+\begin_inset Formula $(x,z)\in\Omega_{e}\mapsto f(x,z)$
+\end_inset
+
+ we have the three identities :
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+vspace{0.2cm}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\left(\begin{array}{c}
+\dfrac{\partial f}{\partial\xi}\\
+\dfrac{\partial f}{\partial\eta}
+\end{array}\right)=\underset{J_{e}}{\underbrace{\left(\begin{array}{cc}
+\dfrac{\partial x}{\partial\xi} & \dfrac{\partial z}{\partial\xi}\\
+\dfrac{\partial x}{\partial\eta} & \dfrac{\partial z}{\partial\eta}
+\end{array}\right)}}\times\left(\begin{array}{c}
+\dfrac{\partial f}{\partial x}\\
+\dfrac{\partial f}{\partial z}
+\end{array}\right)=\left(\begin{array}{c}
+\dfrac{\partial f}{\partial x}\dfrac{\partial x}{\partial\xi}+\dfrac{\partial f}{\partial z}\dfrac{\partial z}{\partial\xi}\\
+\dfrac{\partial f}{\partial x}\dfrac{\partial x}{\partial\eta}+\dfrac{\partial f}{\partial z}\dfrac{\partial z}{\partial\eta}
+\end{array}\right)$
+\end_inset
+
+ ,
+\begin_inset Formula $\left(\begin{array}{c}
+\dfrac{\partial f}{\partial x}\\
+\dfrac{\partial f}{\partial z}
+\end{array}\right)=\underset{J_{e}^{-1}}{\underbrace{\left(\begin{array}{cc}
+\dfrac{\partial\xi}{\partial x} & \dfrac{\partial\eta}{\partial x}\\
+\dfrac{\partial\xi}{\partial z} & \dfrac{\partial\eta}{\partial z}
+\end{array}\right)}}\times\left(\begin{array}{c}
+\dfrac{\partial f}{\partial\xi}\\
+\dfrac{\partial f}{\partial\eta}
+\end{array}\right)=\left(\begin{array}{c}
+\dfrac{\partial f}{\partial\xi}\dfrac{\partial\xi}{\partial x}+\dfrac{\partial f}{\partial\eta}\dfrac{\partial\eta}{\partial x}\\
+\dfrac{\partial f}{\partial\xi}\dfrac{\partial\xi}{\partial z}+\dfrac{\partial f}{\partial\eta}\dfrac{\partial\eta}{\partial z}
+\end{array}\right)$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+and 
+\begin_inset Formula $\left(\begin{array}{c}
+\dfrac{\partial f}{\partial x}\\
+\dfrac{\partial f}{\partial z}
+\end{array}\right)=\underset{J_{e}^{-1}}{\underbrace{\dfrac{1}{\mathcal{J}_{e}}\left(\begin{array}{cc}
+\dfrac{\partial z}{\partial\eta} & -\dfrac{\partial z}{\partial\xi}\\
+-\dfrac{\partial x}{\partial\eta} & \dfrac{\partial x}{\partial\xi}
+\end{array}\right)}}\times\left(\begin{array}{c}
+\dfrac{\partial f}{\partial\xi}\\
+\dfrac{\partial f}{\partial\eta}
+\end{array}\right)=\dfrac{1}{\mathcal{J}_{e}}\left(\begin{array}{c}
+\dfrac{\partial f}{\partial\xi}\dfrac{\partial z}{\partial\eta}-\dfrac{\partial f}{\partial\eta}\dfrac{\partial z}{\partial\xi}\\
+-\dfrac{\partial f}{\partial\xi}\dfrac{\partial x}{\partial\eta}+\dfrac{\partial f}{\partial\eta}\dfrac{\partial x}{\partial\xi}
+\end{array}\right)$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+vspace{0.2cm}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+That supplies : 
+\begin_inset Formula $\begin{array}{ccccccc}
+\dfrac{\partial x}{\partial\xi} & = & \mathcal{J}_{e}\dfrac{\partial\eta}{\partial z} & \quad & \dfrac{\partial z}{\partial\xi} & = & -\mathcal{J}_{e}\dfrac{\partial\eta}{\partial x}\\
+\\
+\dfrac{\partial x}{\partial\eta} & = & -\mathcal{J}_{e}\dfrac{\partial\xi}{\partial z} & \quad & \dfrac{\partial z}{\partial\eta} & = & \mathcal{J}_{e}\dfrac{\partial\xi}{\partial x}
+\end{array}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+vspace{0.2cm}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note : Something would have to be said about the Jacobian (it must not be
+ singular)
+\end_layout
+
+\begin_layout Standard
+We can then write :
+\begin_inset Formula 
+\[
+\begin{array}{ccl}
+\boldsymbol{\nabla}w\cdot\boldsymbol{\nabla}\chi & = & \dfrac{\partial w}{\partial x}\dfrac{\partial\chi}{\partial x}+\dfrac{\partial w}{\partial z}\dfrac{\partial\chi}{\partial z}\\
+ & = & \left[\dfrac{\partial w}{\partial\xi}\partial_{x}\xi+\dfrac{\partial w}{\partial\eta}\partial_{x}\eta\right]\left[\dfrac{\partial\chi}{\partial\xi}\partial_{x}\xi+\dfrac{\partial\chi}{\partial\eta}\partial_{x}\eta\right]+\left[\dfrac{\partial w}{\partial\xi}\partial_{z}\xi+\dfrac{\partial w}{\partial\eta}\partial_{z}\eta\right]\left[\dfrac{\partial\chi}{\partial\xi}\partial_{z}\xi+\dfrac{\partial\chi}{\partial\eta}\partial_{z}\eta\right]\\
+ & = & \dfrac{\partial w}{\partial\xi}\left(\partial_{x}\xi\left[\dfrac{\partial\chi}{\partial\xi}\partial_{x}\xi+\dfrac{\partial\chi}{\partial\eta}\partial_{x}\eta\right]+\partial_{z}\xi\left[\dfrac{\partial\chi}{\partial\xi}\partial_{z}\xi+\dfrac{\partial\chi}{\partial\eta}\partial_{z}\eta\right]\right)+\dfrac{\partial w}{\partial\eta}\left(\partial_{x}\eta\left[\dfrac{\partial\chi}{\partial\xi}\partial_{x}\xi+\dfrac{\partial\chi}{\partial\eta}\partial_{x}\eta\right]+\partial_{z}\eta\left[\dfrac{\partial\chi}{\partial\xi}\partial_{z}\xi+\dfrac{\partial\chi}{\partial\eta}\partial_{z}\eta\right]\right)\\
+ & = & \dfrac{\partial w}{\partial\xi}\left(\partial_{x}\xi\dfrac{\partial\chi}{\partial x}+\partial_{z}\xi\dfrac{\partial\chi}{\partial z}\right)+\dfrac{\partial w}{\partial\eta}\left(\partial_{x}\eta\dfrac{\partial\chi}{\partial x}+\partial_{z}\eta\dfrac{\partial\chi}{\partial z}\right)
+\end{array}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+\bar under
+Splitting and substitution
+\end_layout
+
+\begin_layout Standard
+_For elements on the boundary, after splitting the 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+2D P-SV wave equation becomes :
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\forall e=1\ldots n_{e}\qquad{\displaystyle \int_{\Omega^{e}}w\dfrac{1}{\lambda}\ddot{\chi}\:\mathrm{d^{2}\boldsymbol{x}}}={\displaystyle \int_{\Omega^{e}}\dfrac{1}{\rho}\boldsymbol{\nabla}w\cdot\boldsymbol{\nabla}\chi\:\mathrm{d^{2}\boldsymbol{x}}+\int_{\Gamma^{e}}w\boldsymbol{n}\cdot\dot{\boldsymbol{u}}\:\mathrm{dx}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note : something has to be said about the test functions before being able
+ to split the equation.
+\end_layout
+
+\begin_layout Standard
+Then we make the substitution :
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\forall e=1\ldots n_{e}\qquad{\displaystyle \int_{\Lambda}w\dfrac{1}{\lambda}\ddot{\chi}\:\left|\mathcal{J}_{e}\right|\mathrm{d\xi}\mathrm{d\eta}}={\displaystyle \int_{\Lambda}\dfrac{1}{\rho}\boldsymbol{\nabla}w\cdot\boldsymbol{\nabla}\chi\:\left|\mathcal{J}_{e}\right|\mathrm{d\xi}\mathrm{d\eta}}+\int_{-1}^{1}w\boldsymbol{n}\cdot\dot{\boldsymbol{u}}\:\dfrac{dx}{d\xi}\mathrm{d\xi}
+\]
+
+\end_inset
+
+_For elements with no boundary, after splitting the 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+2D P-SV wave equation becomes :
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\forall e=1\ldots n_{e}\qquad{\displaystyle \int_{\Omega^{e}}w\dfrac{1}{\lambda}\ddot{\chi}\:\mathrm{d^{2}\boldsymbol{x}}}={\displaystyle \int_{\Omega^{e}}\dfrac{1}{\rho}\boldsymbol{\nabla}w\cdot\boldsymbol{\nabla}\chi\:\mathrm{d^{2}\boldsymbol{x}}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note : something has to be said about the test functions before being able
+ to split the equation.
+\end_layout
+
+\begin_layout Standard
+Then we make the substitution :
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\forall e=1\ldots n_{e}\qquad{\displaystyle \int_{\Lambda}w\dfrac{1}{\lambda}\ddot{\chi}\:\left|\mathcal{J}_{e}\right|\mathrm{d\xi}\mathrm{d\eta}}={\displaystyle \int_{\Lambda}\dfrac{1}{\rho}\boldsymbol{\nabla}w\cdot\boldsymbol{\nabla}\chi\:\left|\mathcal{J}_{e}\right|\mathrm{d\xi}\mathrm{d\eta}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection*
+Representation of functions on the elements (GLL interpolation)
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+\bar under
+1D elements
+\end_layout
+
+\begin_layout Standard
+We interpolate the functions with Lagrange polynomials of degree 
+\begin_inset Formula $N$
+\end_inset
+
+ with GLL points 
+\begin_inset Formula $(\xi_{\alpha})_{\alpha=0\ldots N}$
+\end_inset
+
+ as collocation points.
+ For any function 
+\begin_inset Formula $f:\xi\mapsto f(\xi)$
+\end_inset
+
+ on 
+\begin_inset Formula $\Lambda=[-1,1]$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\forall\xi\in[-1,1]\quad f(\boldsymbol{x}(\xi))=\sum_{\alpha=0}^{N}f(\xi_{\alpha})\ell_{\alpha}(\xi)=\sum_{\alpha=0}^{N}f^{\alpha}\ell_{\alpha}(\xi)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+and :
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\forall\xi\in[-1,1]\quad\dfrac{\partial f}{\partial\xi}(\boldsymbol{x}(\xi))=\sum_{\alpha=0}^{N}f(\xi_{\alpha})\dfrac{d\ell_{\alpha}}{d\xi}(\xi)=\sum_{\alpha=0}^{N}f^{\alpha}\ell'_{\alpha}(\xi)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The 
+\begin_inset Formula $\ell_{\alpha}$
+\end_inset
+
+ are the Lagrange polynomials defined on the colocation points of the Gauss-Loba
+tto-Legendre quadrature.
+ The 
+\begin_inset Formula $\xi_{\alpha}$
+\end_inset
+
+ are the GLL points.
+ It is of paramount importance to note that 
+\begin_inset Formula $\ell_{i}(\xi_{j})=\delta_{ij}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+We evaluate the integrals with the quadrature :
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+{\displaystyle \int_{-1}^{1}f(\xi)\mathrm{d}\xi\approx\sum_{i=0}^{N}\omega_{i}f^{i}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+\bar under
+Surface elements
+\end_layout
+
+\begin_layout Standard
+We interpolate the functions with Lagrange polynomials of degree 
+\begin_inset Formula $N$
+\end_inset
+
+ with GLL points 
+\begin_inset Formula $(\xi_{\alpha},\eta_{\beta})_{\alpha,\beta=0\ldots N}$
+\end_inset
+
+ as collocation points (here we should add more detail for a paper).
+ For any function 
+\begin_inset Formula $f:(x,z)\mapsto f(x,z)$
+\end_inset
+
+ on 
+\begin_inset Formula $\Omega_{e}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\forall(\xi,\eta)\in\Lambda\quad f(\boldsymbol{x}(\xi,\eta))\approx\sum_{\alpha=0}^{N}\sum_{\beta=0}^{N}f(\xi_{\alpha},\eta_{\beta})\ell_{\alpha}(\xi)\ell_{\beta}(\eta)=\sum_{\alpha,\beta=0}^{N}f^{\alpha\beta}\ell_{\alpha}(\xi)\ell_{\beta}(\eta)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+and :
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{array}{ccccccc}
+\forall(\xi,\eta)\in\Lambda & \quad\\
+ &  & \dfrac{\partial f}{\partial\xi}(\boldsymbol{x}(\xi,\eta)) & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}f^{\alpha\beta}\dfrac{\partial\ell_{\alpha}(\xi)}{\partial\xi}\ell_{\beta}(\eta)} & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}f^{\alpha\beta}\ell'_{\alpha}(\xi)\ell_{\beta}(\eta)}\\
+ &  & \dfrac{\partial f}{\partial\eta}(\boldsymbol{x}(\xi,\eta)) & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}f^{\alpha\beta}\ell_{\alpha}(\xi)\dfrac{\partial\ell_{\beta}(\eta)}{\partial\eta}} & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}f^{\alpha\beta}\ell_{\alpha}(\xi)\ell'_{\beta}(\eta)}
+\end{array}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The 
+\begin_inset Formula $\ell_{i}$
+\end_inset
+
+ are the Lagrange polynomials defined on the colocation points of the Gauss-Loba
+tto-Legendre quadrature.
+ The 
+\begin_inset Formula $\xi_{i},\eta_{i}$
+\end_inset
+
+ are the GLL points.
+ It is of paramount importance to note that 
+\begin_inset Formula $\ell_{i}(\xi_{j})=\delta_{ij}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+We evaluate the integrals with the quadrature :
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\int_{\Lambda}f(\boldsymbol{x}(\xi,\eta))\:\mathrm{d\xi}\mathrm{d\eta}\approx\sum_{i,j=0}^{N}\omega_{i}\omega_{j}f^{ij}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection*
+Derivation of the algebraic system
+\end_layout
+
+\begin_layout Standard
+\noindent
+We begin by calculating the potential gradient on the GLL points 
+\begin_inset Formula $(\xi_{\sigma},\eta_{\nu})_{\sigma,\nu=0\ldots N}$
+\end_inset
+
+ of element 
+\begin_inset Formula $\Omega_{e}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\noindent
+\begin_inset Formula 
+\[
+\begin{array}{ccl}
+\partial_{i}\chi & = & \dfrac{\partial\chi}{\partial\xi}\partial_{i}\xi+\dfrac{\partial\chi}{\partial\eta}\partial_{i}\eta\\
+ & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}\chi^{\alpha\beta}\ell'_{\alpha}(\xi_{\sigma})\ell_{\beta}(\eta_{\nu})}\partial_{i}\xi+{\displaystyle \sum_{\alpha,\beta=0}^{N}\chi^{\alpha\beta}\ell_{\alpha}(\xi_{\sigma})\ell'_{\beta}(\eta_{\nu})}\partial_{i}\eta\\
+ & = & {\displaystyle \sum_{\alpha=0}^{N}\chi^{\alpha\nu}\ell'_{\alpha}(\xi_{\text{\sigma}})}\partial_{i}\xi+{\displaystyle \sum_{\beta=0}^{N}\chi^{\sigma\beta}\ell'_{\beta}(\eta_{\nu})}\partial_{i}\eta\\
+ & = & \left[{\displaystyle \sum_{\alpha=0}^{N}\chi^{\alpha\nu}\ell'_{\alpha}(\xi_{\text{\sigma}})}\right]\partial_{i}\xi+\left[{\displaystyle \sum_{\alpha=0}^{N}\chi^{\sigma\alpha}\ell'_{\alpha}(\eta_{\nu})}\right]\partial_{i}\eta
+\end{array}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We need the four terms 
+\begin_inset Formula $\partial_{x}\xi$
+\end_inset
+
+,
+\begin_inset Formula $\partial_{z}\xi$
+\end_inset
+
+,
+\begin_inset Formula $\partial_{x}\eta$
+\end_inset
+
+,
+\begin_inset Formula $\partial_{z}\eta$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+The GLL interpolation tells :
+\begin_inset Formula 
+\[
+\begin{array}{ccccc}
+\dfrac{\partial w}{\partial\xi}(\xi_{\sigma},\eta_{\nu}) & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}w^{\alpha\beta}\ell'_{\alpha}(\xi_{\sigma})\ell{}_{\beta}(\eta_{\nu})} & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}w^{\alpha\beta}\ell'_{\alpha}(\xi_{\sigma})\delta_{\beta\nu}}\\
+\dfrac{\partial w}{\partial\eta}(\xi_{\sigma},\eta_{\nu}) & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}w^{\alpha\beta}\ell_{\alpha}(\xi_{\sigma})\ell'_{\beta}(\eta_{\nu})} & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}w^{\alpha\beta}\delta_{\alpha\sigma}\ell'_{\beta}(\eta_{\nu})}
+\end{array}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We use then the quadrature rule to calculate the elemental stiffness integral
+ :
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{array}{ccl}
+{\displaystyle \int_{\Lambda}\dfrac{1}{\rho}\boldsymbol{\nabla}w\cdot\boldsymbol{\nabla}\chi\:\left|\mathcal{J}_{e}\right|\mathrm{d\xi}\mathrm{d\eta}} & = & {\displaystyle \int_{\Lambda}\dfrac{1}{\rho}\left[\dfrac{\partial w}{\partial\xi}\left(\partial_{x}\xi\dfrac{\partial\chi}{\partial x}+\partial_{z}\xi\dfrac{\partial\chi}{\partial z}\right)+\dfrac{\partial w}{\partial\eta}\left(\partial_{x}\eta\dfrac{\partial\chi}{\partial x}+\partial_{z}\eta\dfrac{\partial\chi}{\partial z}\right)\right]\:\left|\mathcal{J}_{e}\right|\mathrm{d\xi}\mathrm{d\eta}}\\
+ & = & {\displaystyle \sum_{\sigma,\nu=0}^{N}\omega_{\sigma}\omega_{\nu}\dfrac{\left|\mathcal{J}_{e}^{\sigma\nu}\right|}{\rho^{\sigma\nu}}\left[\sum_{\alpha,\beta=0}^{N}w^{\alpha\beta}\ell'_{\alpha}(\xi_{\sigma})\delta_{\beta\nu}\left(\partial_{x}\xi\dfrac{\partial\chi}{\partial x}+\partial_{z}\xi\dfrac{\partial\chi}{\partial z}\right)+\sum_{\alpha,\beta=0}^{N}w^{\alpha\beta}\delta_{\alpha\sigma}\ell'_{\beta}(\eta_{\nu})\left(\partial_{x}\eta\dfrac{\partial\chi}{\partial x}+\partial_{z}\eta\dfrac{\partial\chi}{\partial z}\right)\right]}\\
+ & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}w^{\alpha\beta}\left[\omega_{\beta}\sum_{\sigma=0}^{N}\omega_{\sigma}\dfrac{\left|\mathcal{J}_{e}^{\sigma\beta}\right|}{\rho^{\sigma\beta}}\ell'_{\alpha}(\xi_{\sigma})\left(\partial_{x}\xi\dfrac{\partial\chi}{\partial x}+\partial_{z}\xi\dfrac{\partial\chi}{\partial z}\right)+\omega_{\alpha}\sum_{\nu=0}^{N}\omega_{\nu}\dfrac{\left|\mathcal{J}_{e}^{\alpha\nu}\right|}{\rho^{\alpha\nu}}\ell'_{\beta}(\eta_{\nu})\left(\partial_{x}\eta\dfrac{\partial\chi}{\partial x}+\partial_{z}\eta\dfrac{\partial\chi}{\partial z}\right)\right]}\\
+ & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}w^{\alpha\beta}B^{\alpha\beta}}
+\end{array}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We follow the same reasoning for the elemental mass integral :
+\begin_inset Formula 
+\[
+\begin{array}{cll}
+{\displaystyle \int_{\Lambda}w\dfrac{1}{\lambda}\ddot{\chi}\:\left|\mathcal{J}_{e}\right|\mathrm{d\xi}\mathrm{d\eta}} & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}w^{\alpha\beta}\omega_{\alpha}\omega_{\beta}\dfrac{1}{\lambda^{\alpha\beta}}\left|\mathcal{J}_{e}^{\alpha\beta}\right|\ddot{\chi}^{\alpha\beta}}\\
+ & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}w^{\alpha\beta}A^{\alpha\beta}}
+\end{array}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The coupling integral reads : 
+\begin_inset Formula 
+\[
+\begin{array}{ccc}
+\int_{-1}^{1}w\boldsymbol{n}\cdot\dot{\boldsymbol{u}}\:\dfrac{dx}{d\xi}\mathrm{d\xi} & = & {\displaystyle \sum_{\alpha=0}^{N}w^{\alpha N}\omega_{\alpha}\left.\dfrac{dx}{d\xi}\right|^{\alpha}\left(n_{x}^{\alpha}\dot{u}_{x}^{\alpha}+n_{z}^{\alpha}\dot{u}_{z}^{\alpha}\right)}\\
+ & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}w^{\alpha\beta}\omega_{\alpha}\left.\dfrac{dx}{d\xi}\right|^{\alpha}\left(n_{x}^{\alpha}\dot{u}_{x}^{\alpha}+n_{z}^{\alpha}\dot{u}_{z}^{\alpha}\right)\delta_{\beta N}}\\
+ & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}w^{\alpha\beta}C^{\alpha\beta}}
+\end{array}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+As the relation : 
+\begin_inset Formula ${\displaystyle \sum_{\alpha,\beta=0}^{N}w^{\alpha\beta}A^{\alpha\beta}}+{\displaystyle \sum_{\alpha,\beta=0}^{N}w^{\alpha\beta}B^{\alpha\beta}}=C^{\alpha\beta}$
+\end_inset
+
+ must hold for any test function 
+\begin_inset Formula $w(x,z)$
+\end_inset
+
+, we can conclude :
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\forall\alpha,\beta=0\dots N\quad\forall e=0\dots n_{e}-1\quad A^{\alpha\beta}+B^{\alpha\beta}=0\quad\left(w=\delta_{\alpha\beta}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We have then :
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{array}{c}
+\forall\alpha,\beta=0\dots N\quad\forall e=0\dots n_{e}-1\quad\\
+\begin{array}{rll}
+\omega_{\alpha}\omega_{\beta}\dfrac{1}{\lambda^{\alpha\beta}}\left|\mathcal{J}_{e}^{\alpha\beta}\right|\ddot{\chi}^{\alpha\beta}+{\displaystyle \left[\omega_{\beta}\sum_{\sigma=0}^{N}\omega_{\sigma}\dfrac{\left|\mathcal{J}_{e}^{\sigma\beta}\right|}{\rho^{\sigma\beta}}\ell'_{\alpha}(\xi_{\sigma})\left(\partial_{x}\xi\dfrac{\partial\chi}{\partial x}+\partial_{z}\xi\dfrac{\partial\chi}{\partial z}\right)+\omega_{\alpha}\sum_{\nu=0}^{N}\omega_{\nu}\dfrac{\left|\mathcal{J}_{e}^{\alpha\nu}\right|}{\rho^{\alpha\nu}}\ell'_{\beta}(\eta_{\nu})\left(\partial_{x}\eta\dfrac{\partial\chi}{\partial x}+\partial_{z}\eta\dfrac{\partial\chi}{\partial z}\right)\right]} & = & \omega_{\alpha}\left.\dfrac{dx}{d\xi}\right|^{\alpha}\left(n_{x}^{\alpha}\dot{u}_{x}^{\alpha}+n_{z}^{\alpha}\dot{u}_{z}^{\alpha}\right)\delta_{\beta N}\\
+M^{\alpha\beta}\ddot{\chi}^{\alpha\beta}+{\displaystyle \left[\sum_{I,J=0}^{N}K{}^{\alpha\beta IJ}\chi^{IJ}\right]} & = & C^{\alpha\beta}
+\end{array}
+\end{array}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Or in tensorial form for each element 
+\begin_inset Formula $e$
+\end_inset
+
+ :
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+{\displaystyle \boldsymbol{M}\odot\ddot{\boldsymbol{\chi}}+\boldsymbol{K}\cdot\boldsymbol{\chi}}=\boldsymbol{0}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+(We have defined 
+\begin_inset Formula $\left(\boldsymbol{A}\odot\boldsymbol{B}\right)_{ij}=A_{ij}B_{ij}$
+\end_inset
+
+ and 
+\begin_inset Formula ${\displaystyle \left(\boldsymbol{A}\cdot\boldsymbol{B}\right)_{ij}=\sum_{k,l=0}^{N}A{}_{ijkl}B_{kl}}$
+\end_inset
+
+ ).
+ Hence, after assembly :
+\begin_inset Formula 
+\[
+{\displaystyle \ddot{\boldsymbol{\chi}}}=\dfrac{\boldsymbol{F}_{x,int}^{g}(t)}{\boldsymbol{M}^{g}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section*
+2.5D spectral-elements formulation in curvilinear cylindrical coordinates
+ (acoustic medium)
+\end_layout
+
+\begin_layout Subsection*
+Introduction : assumptions, conventions, weak form
+\end_layout
+
+\begin_layout Standard
+We shall start from a 3D formulation.
+ I recall the weak form of the 3D momentum equation : 
+\end_layout
+
+\begin_layout Standard
+\noindent
+\begin_inset Formula 
+\[
+\begin{array}{ccl}
+\underset{\text{ mass integral}}{\underbrace{{\displaystyle \int_{\Omega}w\dfrac{1}{\lambda}\ddot{\chi}\:\mathrm{d^{3}\boldsymbol{x}}}}} & = & -\underset{\text{ stiffness integral}}{\underbrace{\int_{\Omega}\dfrac{1}{\rho}\boldsymbol{\nabla}w\cdot\boldsymbol{\nabla}\chi\:\mathrm{d^{3}\boldsymbol{x}}}}+\underset{\text{coupling integral}}{\underbrace{\int_{\Gamma}w\boldsymbol{n}\cdot\dot{\boldsymbol{u}}\:\mathrm{dx}}}\end{array}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The test functions : 
+\begin_inset Formula $\left(r,\theta,z\right)\mapsto w(r,\theta,z)$
+\end_inset
+
+ now belongs to the subspace of Sobolev space 
+\begin_inset Formula $H_{1}^{1}(\Omega)$
+\end_inset
+
+ of the functions that cancel on the axis.
+ (Bernardi and p.12 of Alexandre Fournier phd tesis, we would have to introduce
+ these spaces).
+ The wave equation reads :
+\end_layout
+
+\begin_layout Standard
+\noindent
+\begin_inset Formula 
+\begin{equation}
+\begin{array}{clll}
+ & {\displaystyle \int_{\Omega}w\dfrac{1}{\lambda}\ddot{\chi}\:\mathrm{d^{3}\boldsymbol{x}}} & = & {\displaystyle -\int_{\Omega}\dfrac{1}{\rho}\boldsymbol{\nabla}w\cdot\boldsymbol{\nabla}\chi\:\mathrm{d^{3}\boldsymbol{x}}+\int_{\Gamma}w\boldsymbol{n}\cdot\dot{\boldsymbol{u}}\:2\pi r\mathrm{dr}}\\
+\Longleftrightarrow & {\displaystyle \int_{\Omega}w\dfrac{1}{\lambda}\ddot{\chi}\:2\pi r\mathrm{dr}\mathrm{d\theta}\mathrm{dz}} & = & -{\displaystyle \int_{\Omega}\dfrac{1}{\rho}\boldsymbol{\nabla}w\cdot\boldsymbol{\nabla}\chi\:2\pi r\mathrm{dr}\mathrm{d\theta}\mathrm{dz}}+\int_{\Gamma}w\boldsymbol{n}\cdot\dot{\boldsymbol{u}}\:2\pi r\mathrm{dx}
+\end{array}\label{eq:weakForm2.5D}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We still consider an 
+\color blue
+acoustic isotropic media,
+\color inherit
+ the stress tensor still expresses : 
+\begin_inset Formula 
+\[
+\forall i,j\in\{x,y,z\}^{2}\quad T_{ij}=\lambda\delta_{ij}\epsilon_{kk}=\lambda\delta_{ij}(\epsilon_{11}+\epsilon_{22}+\epsilon_{33})
+\]
+
+\end_inset
+
+ Nevertheless now 
+\begin_inset Formula $\boldsymbol{\nabla}f=\left(\begin{array}{c}
+\dfrac{\partial f}{\partial r}\\
+\dfrac{1}{r}\dfrac{\partial f}{\partial\theta}\\
+\dfrac{\partial f}{\partial z}
+\end{array}\right)$
+\end_inset
+
+ consequently : 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $\boldsymbol{\nabla}w\cdot\boldsymbol{\nabla}\chi=\dfrac{\partial w}{\partial r}\dfrac{\partial\chi}{\partial r}+\dfrac{1}{r^{2}}\dfrac{\partial w}{\partial\theta}\dfrac{\partial\chi}{\partial\theta}+\dfrac{\partial w}{\partial z}\dfrac{\partial\chi}{\partial z}$
+\end_inset
+
+.
+ Moreover 
+\begin_inset Formula $\left\{ \begin{array}{ccc}
+u_{r} & = & \dfrac{1}{\rho}\dfrac{\partial\chi}{\partial r}\\
+u_{\theta} & = & \dfrac{1}{\rho r}\dfrac{\partial\chi}{\partial\theta}\\
+u_{z} & = & \dfrac{1}{\rho}\dfrac{\partial\chi}{\partial z}
+\end{array}\right.$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+At this point we will choose the 
+\color blue
+2.5D convention : we suppose an axisymetric geometry and that the important
+ loads are not along 
+\begin_inset Formula $\boldsymbol{\theta}$
+\end_inset
+
+ and do not change with 
+\begin_inset Formula $\theta$
+\end_inset
+
+
+\color inherit
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\dfrac{\partial}{\partial\theta}=0
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+That leads to : 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $\boldsymbol{\nabla}w\cdot\boldsymbol{\nabla}\chi=\dfrac{\partial w}{\partial r}\dfrac{\partial\chi}{\partial r}+\dfrac{\partial w}{\partial z}\dfrac{\partial\chi}{\partial z}$
+\end_inset
+
+ and 
+\begin_inset Formula $\left\{ \begin{array}{ccc}
+u_{r} & = & \dfrac{1}{\rho}\dfrac{\partial\chi}{\partial r}\\
+u_{\theta} & = & 0\\
+u_{z} & = & \dfrac{1}{\rho}\dfrac{\partial\chi}{\partial z}
+\end{array}\right.$
+\end_inset
+
+which is exactly the same than in cartesian coordinates with 
+\begin_inset Formula $r\longleftrightarrow x$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection*
+For non-axial elements
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{array}{ccl}
+{\displaystyle \int_{\Lambda}\dfrac{1}{\rho}\boldsymbol{\nabla}w\cdot\boldsymbol{\nabla}\chi\:\left|\mathcal{J}_{e}\right|r\mathrm{d\xi}\mathrm{d\eta}} & = & {\displaystyle \int_{\Lambda}\dfrac{1}{\rho}\left[\dfrac{\partial w}{\partial\xi}\left(\partial_{r}\xi\dfrac{\partial\chi}{\partial r}+\partial_{z}\xi\dfrac{\partial\chi}{\partial z}\right)+\dfrac{\partial w}{\partial\eta}\left(\partial_{r}\eta\dfrac{\partial\chi}{\partial r}+\partial_{z}\eta\dfrac{\partial\chi}{\partial z}\right)\right]\:\left|\mathcal{J}_{e}\right|r\mathrm{d\xi}\mathrm{d\eta}}\\
+ & = & {\displaystyle \sum_{\sigma,\nu=0}^{N}\omega_{\sigma}\omega_{\nu}\dfrac{\left|\mathcal{J}_{e}^{\sigma\nu}\right|r^{\sigma\nu}}{\rho^{\sigma\nu}}\left[\sum_{\alpha,\beta=0}^{N}w^{\alpha\beta}\ell'_{\alpha}(\xi_{\sigma})\delta_{\beta\nu}\left(\partial_{r}\xi\dfrac{\partial\chi}{\partial r}+\partial_{z}\xi\dfrac{\partial\chi}{\partial z}\right)+\sum_{\alpha,\beta=0}^{N}w^{\alpha\beta}\delta_{\alpha\sigma}\ell'_{\beta}(\eta_{\nu})\left(\partial_{r}\eta\dfrac{\partial\chi}{\partial r}+\partial_{z}\eta\dfrac{\partial\chi}{\partial z}\right)\right]}\\
+ & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}w^{\alpha\beta}\left[\omega_{\beta}\sum_{\sigma=0}^{N}\omega_{\sigma}\dfrac{\left|\mathcal{J}_{e}^{\sigma\beta}\right|}{\rho^{\sigma\beta}}{\color{green}r^{\sigma\beta}}\ell'_{\alpha}(\xi_{\sigma})\left(\partial_{r}\xi\dfrac{\partial\chi}{\partial r}+\partial_{z}\xi\dfrac{\partial\chi}{\partial z}\right)+\omega_{\alpha}\sum_{\nu=0}^{N}\omega_{\nu}\dfrac{\left|\mathcal{J}_{e}^{\alpha\nu}\right|}{\rho^{\alpha\nu}}{\color{green}r^{\alpha\nu}}\ell'_{\beta}(\eta_{\nu})\left(\partial_{r}\eta\dfrac{\partial\chi}{\partial r}+\partial_{z}\eta\dfrac{\partial\chi}{\partial z}\right)\right]}\\
+ & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}w^{\alpha\beta}B^{\alpha\beta}}
+\end{array}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{array}{cll}
+{\displaystyle \int_{\Lambda}w\dfrac{1}{\lambda}\ddot{\chi}\:\left|\mathcal{J}_{e}\right|r\mathrm{d\xi}\mathrm{d\eta}} & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}w^{\alpha\beta}\omega_{\alpha}\omega_{\beta}\dfrac{1}{\lambda^{\alpha\beta}}\left|\mathcal{J}_{e}^{\alpha\beta}\right|{\color{green}r^{\alpha\beta}}\ddot{\chi}^{\alpha\beta}}\\
+ & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}w^{\alpha\beta}A^{\alpha\beta}}
+\end{array}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{array}{ccc}
+\int_{-1}^{1}w\boldsymbol{n}\cdot\dot{\boldsymbol{u}}\:\dfrac{dr}{d\xi}r\mathrm{d\xi} & = & {\displaystyle \sum_{\alpha=0}^{N}w^{\alpha N}\omega_{\alpha}\left.\dfrac{dr}{d\xi}\right|^{\alpha}r^{\alpha}\left(n_{r}^{\alpha}\dot{u}_{r}^{\alpha}+n_{z}^{\alpha}\dot{u}_{z}^{\alpha}\right)}\\
+ & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}w^{\alpha\beta}\omega_{\alpha}\left.\dfrac{dx}{d\xi}\right|^{\alpha}{\color{green}r^{\alpha}}\left(n_{r}^{\alpha}\dot{u}_{r}^{\alpha}+n_{z}^{\alpha}\dot{u}_{z}^{\alpha}\right)\delta_{\beta N}}\\
+ & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}w^{\alpha\beta}C^{\alpha\beta}}
+\end{array}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection*
+For axial elements
+\end_layout
+
+\begin_layout Standard
+\noindent
+\begin_inset Formula 
+\[
+\begin{array}{ccl}
+\partial_{i}\chi(\boldsymbol{r}(\overline{\xi}_{\sigma},\eta_{\nu}),t) & = & \dfrac{\partial\chi}{\partial\xi}\partial_{i}\xi+\dfrac{\partial\chi}{\partial\eta}\partial_{i}\eta\\
+ & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}\chi^{\overline{\alpha}\beta}\overline{\ell}'_{\alpha}(\overline{\xi}_{\sigma})\ell_{\beta}(\eta_{\nu})}\partial_{i}\xi+{\displaystyle \sum_{\alpha,\beta=0}^{N}\chi^{\overline{\alpha}\beta}\ell_{\alpha}(\overline{\xi}_{\sigma})\ell'_{\beta}(\eta_{\nu})}\partial_{i}\eta\\
+ & = & {\displaystyle \sum_{\alpha=0}^{N}\chi^{\overline{\alpha}\nu}\overline{\ell}'_{\alpha}(\overline{\xi}_{\text{\sigma}})}\partial_{i}\xi+{\displaystyle \sum_{\beta=0}^{N}\chi^{\overline{\sigma}\beta}\ell'_{\beta}(\eta)}\partial_{i}\eta\\
+ & = & \left[{\displaystyle \sum_{\alpha=0}^{N}\chi^{\overline{\alpha}\nu}\overline{\ell}'_{\alpha}(\overline{\xi}_{\text{\sigma}})}\right]\partial_{i}\xi+\left[{\displaystyle \sum_{\alpha=0}^{N}\chi^{\overline{\sigma}\alpha}\ell'_{\alpha}(\eta)}\right]\partial_{i}\eta
+\end{array}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{array}{ccl}
+{\displaystyle \int_{\Lambda}\dfrac{1}{\rho}\boldsymbol{\nabla}w\cdot\boldsymbol{\nabla}\chi\:\left|\mathcal{J}_{e}\right|r\mathrm{d\xi}\mathrm{d\eta}} & = & {\displaystyle \int_{\Lambda}\dfrac{1}{\rho}\left[\dfrac{\partial w}{\partial\xi}\left(\partial_{r}\xi\dfrac{\partial\chi}{\partial r}+\partial_{z}\xi\dfrac{\partial\chi}{\partial z}\right)+\dfrac{\partial w}{\partial\eta}\left(\partial_{r}\eta\dfrac{\partial\chi}{\partial r}+\partial_{z}\eta\dfrac{\partial\chi}{\partial z}\right)\right]\:\left|\mathcal{J}_{e}\right|r\mathrm{d\xi}\mathrm{d\eta}}\\
+ & = & {\displaystyle \sum_{\sigma,\nu=0}^{N}\overline{\omega}_{\sigma}\omega_{\nu}\dfrac{\left|\mathcal{J}_{e}^{\overline{\sigma}\nu}\right|}{\rho^{\overline{\sigma}\nu}}\dfrac{r^{\overline{\sigma}\nu}}{1+\overline{\xi}_{\sigma}}\left[\sum_{\alpha,\beta=0}^{N}w^{\overline{\alpha}\beta}\overline{\ell}'_{\alpha}(\overline{\xi}_{\sigma})\delta_{\beta\nu}\left(\partial_{r}\xi\dfrac{\partial\chi}{\partial r}+\partial_{z}\xi\dfrac{\partial\chi}{\partial z}\right)+\sum_{\alpha,\beta=0}^{N}w^{\overline{\alpha}\beta}\delta_{\alpha\sigma}\ell'_{\beta}(\eta_{\nu})\left(\partial_{r}\eta\dfrac{\partial\chi}{\partial r}+\partial_{z}\eta\dfrac{\partial\chi}{\partial z}\right)\right]}\\
+ & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}w^{\overline{\alpha}\beta}\left[\omega_{\beta}\sum_{\sigma=0}^{N}\overline{\omega}_{\sigma}\dfrac{\left|\mathcal{J}_{e}^{\overline{\sigma}\beta}\right|}{\rho^{\overline{\sigma}\beta}}{\color{green}\dfrac{r^{\overline{\sigma}\beta}}{1+\overline{\xi}_{\sigma}}}\overline{\ell}'_{\alpha}(\overline{\xi}_{\sigma})\left(\partial_{r}\xi\dfrac{\partial\chi}{\partial r}+\partial_{z}\xi\dfrac{\partial\chi}{\partial z}\right)+\overline{\omega}_{\alpha}\sum_{\nu=0}^{N}\omega_{\nu}\dfrac{\left|\mathcal{J}_{e}^{\overline{\alpha}\nu}\right|}{\rho^{\overline{\alpha}\nu}}{\color{green}\dfrac{r^{\overline{\alpha}\nu}}{1+\overline{\xi}_{\alpha}}}\ell'_{\beta}(\eta_{\nu})\left(\partial_{r}\eta\dfrac{\partial\chi}{\partial r}+\partial_{z}\eta\dfrac{\partial\chi}{\partial z}\right)\right]}\\
+ & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}w^{\overline{\alpha}\beta}B^{\overline{\alpha}\beta}}
+\end{array}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{array}{cll}
+{\displaystyle \int_{\Lambda}w\dfrac{1}{\lambda}\ddot{\chi}\:\left|\mathcal{J}_{e}\right|r\mathrm{d\xi}\mathrm{d\eta}} & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}w^{\overline{\alpha}\beta}\omega_{\alpha}\omega_{\beta}\dfrac{1}{\lambda^{\overline{\alpha}\beta}}\left|\mathcal{J}_{e}^{\overline{\alpha}\beta}\right|{\color{green}\dfrac{r^{\overline{\alpha}\beta}}{1+\overline{\xi}_{\alpha}}}\ddot{\chi}^{\overline{\alpha}\beta}}\\
+ & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}w^{\overline{\alpha}\beta}A^{\overline{\alpha}\beta}}
+\end{array}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{array}{ccc}
+{\displaystyle \int_{-1}^{1}w\boldsymbol{n}\cdot\dot{\boldsymbol{u}}\:\dfrac{dr}{d\xi}r\mathrm{d\xi}} & = & {\displaystyle \sum_{\alpha=0}^{N}w^{\overline{\alpha}N}\overline{\omega}_{\alpha}\left.\dfrac{dr}{d\xi}\right|^{\overline{\alpha}}\dfrac{r^{\overline{\alpha}}}{1+\overline{\xi}_{\alpha}}\left(n_{r}^{\overline{\alpha}}\dot{u}_{r}^{\overline{\alpha}}+n_{z}^{\overline{\alpha}}\dot{u}_{z}^{\overline{\alpha}}\right)}\\
+ & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}w^{\overline{\alpha}\beta}\overline{\omega}_{\alpha}\left.\dfrac{dx}{d\xi}\right|^{\overline{\alpha}}{\color{green}\dfrac{r^{\overline{\alpha}}}{1+\overline{\xi}_{\alpha}}}\left(n_{r}^{\overline{\alpha}}\dot{u}_{r}^{\overline{\alpha}}+n_{z}^{\overline{\alpha}}\dot{u}_{z}^{\overline{\alpha}}\right)\delta_{\beta N}}\\
+ & = & {\displaystyle \sum_{\alpha,\beta=0}^{N}w^{\overline{\alpha}\beta}C^{\overline{\alpha}\beta}}
+\end{array}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+With 
+\begin_inset Formula $\dfrac{r^{0\beta}}{1+\overline{\xi}_{0}}\equiv\dfrac{\partial r}{\partial\xi}(\overline{\xi}_{0},\eta_{\beta})$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+There is a point if we need to calculate the pressure on the axis : 
+\begin_inset Formula $P=\lambda\left[\dfrac{\partial u_{r}}{\partial r}+\dfrac{\partial u_{z}}{\partial z}{\color{green}+\dfrac{u_{r}}{r}}\right]=\lambda\left[\dfrac{\partial\rho^{-1}\dfrac{\partial\chi}{\partial r}}{\partial r}+\dfrac{\partial\rho^{-1}\dfrac{\partial\chi}{\partial z}}{\partial z}{\color{green}+\dfrac{1}{\rho r}\dfrac{\partial\chi}{\partial r}}\right]=\lambda\left[\left(\dfrac{\partial\rho^{-1}}{\partial r}{\color{green}+\dfrac{1}{\rho r}}\right)\dfrac{\partial\chi}{\partial r}+\dfrac{1}{\rho}\dfrac{\partial^{2}\chi}{\partial r^{2}}+\dfrac{\partial\rho^{-1}}{\partial z}\dfrac{\partial\chi}{\partial z}+\dfrac{1}{\rho}\dfrac{\partial^{2}\chi}{\partial z^{2}}\right]$
+\end_inset
+
+.
+ But do we need it?
+\end_layout
+
+\end_body
+\end_document
