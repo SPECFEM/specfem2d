@@ -408,6 +408,8 @@ Packages such as \texttt{doxywizard} can be used to visualize the subroutine cal
 
 If you want to develop new features in the code, and/or if you want to make small changes, improvements, or bug fixes, you are very welcome to contribute. To do so, i.e. to access the development branch of the source code with read/write access (in a safe way, no need to worry too much about breaking the package, there is a robot called BuildBot that is in charge of checking and validating all new contributions and changes), please visit this Web page: \url{https://github.com/geodynamics/specfem2d/wiki/Using-Hub}.
 
+To visualize the call tree (calling tree) of the source code, you can see the Doxygen tool available in directory \texttt{doc/call\_trees\_of\_the\_source\_code}.
+
 %------------------------------------------------------------------------------------------------%
 
 \chapter{Mesh Generation}
@@ -506,7 +508,7 @@ the local coordinate system being $\xi$ and $\eta$ (\texttt{xi} and \texttt{eta}
 Note that this convention is used to describe the geometry only. In the solver the wave field is then described based on high-order Lagrange interpolants
 at Gauss-Lobatto-Legendre points, as is classical in spectral-element methods.
 
-\section{How to use Gmsh to generate an external mesh}
+\section{How to use CUBIT/TRELIS or Gmsh to generate an external mesh}
 
 Gmsh%
 \footnote{freely available at the following address : http://www.geuz.org/gmsh/%
