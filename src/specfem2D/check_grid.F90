@@ -421,7 +421,8 @@
       write(IOUT,*) '*** Min grid size = ',distance_min
       write(IOUT,*) '*** Max/min ratio = ',distance_max / distance_min
       write(IOUT,*)
-      write(IOUT,*) '*** Max stability for P wave velocity (must be below about 0.50 or so) = ',courant_stability_number_max
+      write(IOUT,*) '*** Max CFL stability condition of the time scheme &
+                         &based on P wave velocity (must be below about 0.50 or so) = ',courant_stability_number_max
       write(IOUT,*)
     endif
 
