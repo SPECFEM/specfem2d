@@ -333,14 +333,16 @@ command names for your Fortran compiler (another option is to define FC, CC and 
 or your .cshrc file):
 %
 \begin{verbatim}
-    ./configure FC=ifort
+    ./configure FC=gfortran CC=gcc
 \end{verbatim}
 %
 If you want to run in parallel, i.e., using more than one processor core, then you would type
 %
 \begin{verbatim}
-    ./configure FC=ifort MPIFC=mpif90 --with-mpi
+    ./configure FC=gfortran CC=gcc MPIFC=mpif90 --with-mpi
 \end{verbatim}
+
+You can replace the GNU compilers above (gfortran and gcc) with other compilers if you want to; for instance for Intel ifort and icc use FC=ifort CC=icc instead.
 
 Before running the \texttt{configure} script, you should probably edit file \texttt{flags.guess} to make sure that it contains the best compiler options for your system. Known issues or things to check are:
 
