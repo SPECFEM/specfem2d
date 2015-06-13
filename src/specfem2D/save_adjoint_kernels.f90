@@ -122,20 +122,22 @@ subroutine save_adjoint_kernels()
       close(98)
 
     else if (NEW_BINARY_FORMAT) then ! binary format
-      write(200)rho_kl
-      write(201)kappa_kl
-      write(202)mu_kl
-      write(203)rhop_kl
-      write(204)alpha_kl
-      write(205)beta_kl
-      write(206)bulk_c_kl
-      write(207)bulk_beta_kl
-      close(200)
-      close(201)
-      close(202)
-      close(203)
+      write(204)rho_kl
+      write(205)kappa_kl
+      write(206)mu_kl
+      write(207)rhop_kl
+      write(208)alpha_kl
+      write(209)beta_kl
+      write(210)bulk_c_kl
+      write(211)bulk_beta_kl
       close(204)
       close(205)
+      close(202)
+      close(207)
+      close(208)
+      close(209)
+      close(210)
+      close(211)
 
     else ! legacy binary format
       write(97)coord

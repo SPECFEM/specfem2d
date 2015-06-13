@@ -322,35 +322,35 @@ subroutine prepare_timerun_kernel()
 
       else if (NEW_BINARY_FORMAT) then
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kernel.bin'
-          open(unit = 200, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
+          open(unit = 204, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
           if (ios /= 0) stop 'Error writing kernel file to disk'
 
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_kappa_kernel.bin'
-          open(unit = 201, file ='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
+          open(unit = 205, file ='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
           if (ios /= 0) stop 'Error writing kernel file to disk'
 
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mu_kernel.bin'
-          open(unit = 202, file ='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
+          open(unit = 206, file ='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
           if (ios /= 0) stop 'Error writing kernel file to disk'
 
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_kernel.bin'
-          open(unit = 203, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
+          open(unit = 207, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
           if (ios /= 0) stop 'Error writing kernel file to disk'
 
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_alpha_kernel.bin'
-          open(unit = 204, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
+          open(unit = 208, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
           if (ios /= 0) stop 'Error writing kernel file to disk'
 
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_beta_kernel.bin'
-          open(unit = 205, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
+          open(unit = 209, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
           if (ios /= 0) stop 'Error writing kernel file to disk'
 
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_c_kernel.bin'
-          open(unit = 206,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
+          open(unit = 210,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
           if (ios /= 0) stop 'Error writing kernel file to disk'
 
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_beta_kernel.bin'
-          open(unit = 207,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
+          open(unit = 211,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
           if (ios /= 0) stop 'Error writing kernel file to disk'
 
 
