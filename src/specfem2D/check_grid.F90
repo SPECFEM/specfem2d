@@ -727,7 +727,7 @@
   if (myrank == 0) then
 
   open(unit=14,file='plot_points_per_wavelength_histogram.gnu',status='unknown')
-  write(14,*) 'set term x11'
+  write(14,*) 'set term wxt'
 
   if(nspec_counted_all_solid > 0) then
     write(14,*) '#set term gif'
