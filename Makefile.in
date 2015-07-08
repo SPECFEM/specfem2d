@@ -177,7 +177,7 @@ DEFAULT = \
 
 default: $(DEFAULT)
 
-all: default auxiliaries tomography/postprocess_sensitivity_kernels
+all: default auxiliaries postprocess
 
 
 ifdef CLEAN
