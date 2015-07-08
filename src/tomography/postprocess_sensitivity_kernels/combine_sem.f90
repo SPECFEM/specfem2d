@@ -77,7 +77,7 @@ program combine_sem
   implicit none
 
   character(len=MAX_STRING_LEN) :: kernel_paths(MAX_KERNEL_PATHS), kernel_names(MAX_KERNEL_NAMES)
-  character(len=MAX_STRING_LEN) :: kernel_name, kernel_names_comma_delimited
+  character(len=MAX_STRING_LEN) :: kernel_names_comma_delimited
   character(len=MAX_STRING_LEN) :: line,filename,output_dir,input_file
   character(len=MAX_STRING_LEN) :: arg(3)
   integer :: npath,nker,nspec
@@ -125,7 +125,7 @@ program combine_sem
   ! whenever mech changes, and avoids dealing with SPECFEM2D database system,
   ! which is a bit messy. Disadvantage of this approach is that it is a hack and
   ! possibly not portable.
-  write(filename, '(a)') '/proc000000_'//trim(kernel_name)//'.bin'
+  write(filename, '(a)') '/proc000000_'//trim(kernel_names(1))//'.bin'
   open(IIN, file=trim(kernel_paths(1))//trim(filename))
   inquire(IIN, size=filesize)
   close(IIN)
