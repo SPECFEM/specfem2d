@@ -22,8 +22,15 @@ partitioning_method             = 3              # SCOTCH = 3, ascending order (
 ngnod                           = 9              # number of control nodes per element (4 or 9)
 initialfield                    = .false.        # use a plane wave as source or not
 add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
-assign_external_model           = .false.        # define external earth model or not
-READ_EXTERNAL_SEP_FILE          = .false.        # Read external model from DATA/model_velocity.dat_input, or use routine
+
+# available models
+#   default: define model using nbmodels below
+#   ascii: read model from ascii database file
+#   binary: read model from binary database file
+#   external: define model using define_external_model subroutine
+#   legacy: read model from model_velocity.dat_input
+MODEL                           = default
+
 ATTENUATION_VISCOELASTIC_SOLID  = .false.        # turn attenuation (viscoelasticity) on or off for non-poroelastic solid parts of the model
 ATTENUATION_PORO_FLUID_PART     = .false.        # turn viscous attenuation on or off for the fluid part of poroelastic parts of the model
 Q0                              =  1             # quality factor for viscous attenuation
@@ -138,6 +145,9 @@ nbmodels                        = 4
 3 1 4200.d0 4500.d0 2443.375d0 0 0 9999 9999 0 0 0 0 0 0
 4 1 4200.d0 4200.d0 2343.375d0 0 0 9999 9999 0 0 0 0 0 0
 
+# external tomography file
+TOMOGRAPHY_FILE                 = ./DATA/tomo_file.xyz
+
 # external mesh or not
 read_external_mesh              = .false.
 
@@ -149,11 +159,17 @@ ROTATE_PML_ANGLE                = 30.
 STACEY_ABSORBING_CONDITIONS     = .false.
 ADD_SPRING_TO_STACEY            = .true.
 
+# fixed boundary of elastic region active or not
+ELASTIC_FIXED_BOUNDARY_CONDITIONS  = .false.
+
 # for horizontal periodic conditions: detect common points between left and right edges
 ADD_PERIODIC_CONDITIONS         = .false.
 
 # horizontal periodicity distance for periodic conditions
 PERIODIC_HORIZ_DIST             = 0.3597d0
+
+# set to true to use GPUs
+GPU_MODE                        = .false.
 
 #-----------------------------------------------------------------------------
 # PARAMETERS FOR EXTERNAL MESHING
@@ -186,6 +202,12 @@ absorbbottom                    = .false.
 absorbright                     = .true.
 absorbtop                       = .true.
 absorbleft                      = .true.
+
+# fixed boundary parameters (see ELASTIC_FIXED_BOUNDARY_CONDITIONS above)
+elastic_fixed_bottom            = .false.
+elastic_fixed_right             = .false.
+elastic_fixed_top               = .false.
+elastic_fixed_left              = .false.
 
 # define the different regions of the model in the (nx,nz) spectral element mesh
 nbregions                       = 1              # nb of regions and model number for each

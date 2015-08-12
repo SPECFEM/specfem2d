@@ -140,6 +140,9 @@ ROTATE_PML_ANGLE                = 30.
 STACEY_ABSORBING_CONDITIONS     = .false.
 ADD_SPRING_TO_STACEY            = .false.
 
+# fixed boundary of elastic region active or not
+ELASTIC_FIXED_BOUNDARY_CONDITIONS  = .false.
+
 # for horizontal periodic conditions: detect common points between left and right edges
 ADD_PERIODIC_CONDITIONS         = .false.
 
@@ -180,6 +183,12 @@ absorbbottom                    = .true.
 absorbright                     = .true.
 absorbtop                       = .false.
 absorbleft                      = .true.
+
+# fixed boundary parameters (see ELASTIC_FIXED_BOUNDARY_CONDITIONS above)
+elastic_fixed_bottom            = .false.
+elastic_fixed_right             = .false.
+elastic_fixed_top               = .false.
+elastic_fixed_left              = .false.
 
 # define the different regions of the model in the (nx,nz) spectral element mesh
 nbregions                       = 1              # nb of regions and model number for each

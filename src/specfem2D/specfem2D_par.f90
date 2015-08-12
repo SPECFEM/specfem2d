@@ -206,6 +206,12 @@ module specfem_par
   logical :: any_acoustic_edges
   integer  :: ixmin, ixmax, izmin, izmax
 
+  !for elastic fixed boundary
+  integer, dimension(:,:), allocatable :: elastic_fixed_surface
+  integer, dimension(:,:), allocatable :: elastic_fixed_edges
+  logical :: ELASTIC_FIXED_BOUNDARY_CONDITIONS,any_elastic_fixed_edges
+  integer :: nelem_elastic_fixed_surface,ispec_elastic_fixed_surface
+
   ! perform a forcing of an acoustic medium with a rigid boundary
   logical :: ACOUSTIC_FORCING
   integer :: nelem_acforcing,nelem_acoustic_surface

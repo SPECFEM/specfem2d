@@ -52,13 +52,13 @@
                          nproc,myrank,xi_source,gamma_source,coorg,knods,ngnod, &
                          nrec,nrecloc,recloc,which_proc_receiver,st_xval,st_zval, &
                          xi_receiver,gamma_receiver,station_name,network_name,x_final_receiver,&
-                         z_final_receiver,iglob_source
+                         z_final_receiver,iglob_source, nelem_elastic_fixed_surface,elastic_fixed_surface
   implicit none
 
   include "constants.h"
 
   ! Local variables
-  integer ispec_acoustic_surface
+  integer ispec_acoustic_surface,ispec_elastic_fixed_surface
   integer  :: ixmin, ixmax, izmin, izmax,i_source,ispec
 #ifndef USE_MPI
   integer irec
@@ -112,6 +112,39 @@
       call locate_source_moment_tensor(ibool,coord,nspec,nglob,xigll,zigll,x_source(i_source),z_source(i_source), &
              ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source), &
              nproc,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo)
+
+      ! check that elastic source is not exactly on the fixed boundary because accel,veloc,and displ are zero there
+      if(is_proc_source(i_source) == 1) then
+        do ispec_elastic_fixed_surface = 1,nelem_elastic_fixed_surface
+          ispec = elastic_fixed_surface(1,ispec_elastic_fixed_surface)
+          ixmin = elastic_fixed_surface(2,ispec_elastic_fixed_surface)
+          ixmax = elastic_fixed_surface(3,ispec_elastic_fixed_surface)
+          izmin = elastic_fixed_surface(4,ispec_elastic_fixed_surface)
+          izmax = elastic_fixed_surface(5,ispec_elastic_fixed_surface)
+          if( .not. elastic(ispec) .and. .not. poroelastic(ispec) .and. &
+            ispec == ispec_selected_source(i_source) ) then
+            if ( (izmin==1 .and. izmax==1 .and. ixmin==1 .and. ixmax==NGLLX .and. &
+                gamma_source(i_source) < -0.99d0) .or.&
+                (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==NGLLX .and. &
+                gamma_source(i_source) > 0.99d0) .or.&
+                (izmin==1 .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==1 .and. &
+                xi_source(i_source) < -0.99d0) .or.&
+                (izmin==1 .and. izmax==NGLLZ .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
+                xi_source(i_source) > 0.99d0) .or.&
+                (izmin==1 .and. izmax==1 .and. ixmin==1 .and. ixmax==1 .and. &
+                gamma_source(i_source) < -0.99d0 .and. xi_source(i_source) < -0.99d0) .or.&
+                (izmin==1 .and. izmax==1 .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
+                gamma_source(i_source) < -0.99d0 .and. xi_source(i_source) > 0.99d0) .or.&
+                (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==1 .and. &
+                gamma_source(i_source) > 0.99d0 .and. xi_source(i_source) < -0.99d0) .or.&
+                (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
+                gamma_source(i_source) > 0.99d0 .and. xi_source(i_source) > 0.99d0) ) then
+              call exit_MPI('an acoustic source cannot be located exactly '// &
+                            'on the free surface because pressure is zero there')
+            endif
+          endif
+        enddo
+      endif
 
       ! compute source array for moment-tensor source
       call compute_arrays_source(ispec_selected_source(i_source),xi_source(i_source),gamma_source(i_source),&

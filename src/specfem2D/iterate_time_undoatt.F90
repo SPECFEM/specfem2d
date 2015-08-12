@@ -193,6 +193,9 @@ subroutine iterate_time_undoatt()
           endif
 
           if( any_elastic ) then
+            if( nelem_elastic_fixed_surface > 0 ) then
+              call enforce_elastic_fixed_surface(accel_elastic,veloc_elastic,displ_elastic)
+            endif
             call update_displacement_precondition_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
                                                                   accel_elastic,veloc_elastic,&
                                                                   displ_elastic,displ_elastic_old,&
@@ -317,6 +320,9 @@ subroutine iterate_time_undoatt()
           ! ************* multiply by the inverse of the mass matrix and update velocity
           ! ************************************************************************************
           if( any_elastic ) then
+            if( nelem_elastic_fixed_surface > 0 ) then
+              call enforce_elastic_fixed_surface(accel_elastic,veloc_elastic,displ_elastic)
+            endif
             !! DK DK this should be vectorized
             accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic_one
             accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic_one
@@ -411,6 +417,10 @@ subroutine iterate_time_undoatt()
           ! ************* update_displacement_precondition_newmark
           ! *********************************************************
           if( any_acoustic ) then
+            if( nelem_acoustic_surface > 0 ) then
+              call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
+                                                 b_potential_acoustic)
+            endif
             call update_displacement_precondition_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
                                                                    b_potential_dot_dot_acoustic,b_potential_dot_acoustic,&
                                                                    b_potential_acoustic,b_potential_acoustic_old, &
@@ -418,6 +428,9 @@ subroutine iterate_time_undoatt()
           endif
 
           if( any_elastic ) then
+            if( nelem_elastic_fixed_surface > 0 ) then
+              call enforce_elastic_fixed_surface(b_accel_elastic,b_veloc_elastic,b_displ_elastic)
+            endif
             call update_displacement_precondition_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
                                                                   b_accel_elastic,b_veloc_elastic,&
                                                                   b_displ_elastic,b_displ_elastic_old,&
@@ -428,11 +441,6 @@ subroutine iterate_time_undoatt()
 ! ************* main solver for the acoustic elements
 ! *********************************************************
           if( any_acoustic ) then
-            if( nelem_acoustic_surface > 0 ) then
-              call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                                                 b_potential_acoustic)
-            endif
-
             if( PML_BOUNDARY_CONDITIONS ) then
               it_backward = NSTEP-(iteration_on_subset*NT_DUMP_ATTENUATION-it_of_this_subset+1)
               call rebuild_value_on_PML_interface_acoustic(it_backward)  !ZN need to modify the it value inside this code
@@ -575,6 +583,9 @@ subroutine iterate_time_undoatt()
           ! ************* multiply by the inverse of the mass matrix and update velocity
           ! ************************************************************************************
           if( any_elastic ) then
+            if( nelem_elastic_fixed_surface > 0 ) then
+              call enforce_elastic_fixed_surface(b_accel_elastic,b_veloc_elastic,b_displ_elastic)
+            endif
             !! DK DK this should be vectorized
             b_accel_elastic(1,:) = b_accel_elastic(1,:) * rmass_inverse_elastic_one(:)
             b_accel_elastic(2,:) = b_accel_elastic(2,:) * rmass_inverse_elastic_one(:)
@@ -651,6 +662,9 @@ subroutine iterate_time_undoatt()
           endif
 
           if( any_elastic ) then
+            if( nelem_elastic_fixed_surface > 0 ) then
+              call enforce_elastic_fixed_surface(accel_elastic,veloc_elastic,displ_elastic)
+            endif
             call update_displacement_precondition_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
                                                                   accel_elastic,veloc_elastic,&
                                                                   displ_elastic,displ_elastic_old,&
@@ -697,6 +711,9 @@ subroutine iterate_time_undoatt()
           ! ************* multiply by the inverse of the mass matrix and update velocity
           ! ************************************************************************************
           if( any_elastic ) then
+            if( nelem_elastic_fixed_surface > 0 ) then
+              call enforce_elastic_fixed_surface(accel_elastic,veloc_elastic,displ_elastic)
+            endif
             !! DK DK this should be vectorized
             accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic_one(:)
             accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic_one(:)

@@ -1518,6 +1518,30 @@ subroutine prepare_timerun_read()
     endif
   endif
 
+!
+!----  read elastic fixed surface data
+!
+  if(nelem_elastic_fixed_surface > 0) then
+    any_elastic_fixed_edges = .true.
+  else
+    any_elastic_fixed_edges = .false.
+    nelem_elastic_fixed_surface = 1
+  endif
+  allocate(elastic_fixed_edges(4,nelem_elastic_fixed_surface))
+  allocate(elastic_fixed_surface(5,nelem_elastic_fixed_surface))
+  call read_databases_elastic_fixed_surf()
+  ! resets nelem_acoustic_surface
+  if( any_elastic_fixed_edges .eqv. .false. ) nelem_elastic_fixed_surface = 0
+
+  ! constructs acoustic surface
+  if(nelem_elastic_fixed_surface > 0) then
+    call construct_elastic_fixed_surface ()
+    if (myrank == 0) then
+      write(IOUT,*)
+      write(IOUT,*) 'Number of free surface elements: ',nelem_elastic_fixed_surface
+    endif
+  endif
+
 
   !
   !---- read coupled edges

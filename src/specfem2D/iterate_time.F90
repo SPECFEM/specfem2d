@@ -121,6 +121,10 @@ subroutine iterate_time()
           endif
 
           if( SIMULATION_TYPE == 3 ) then
+            if( nelem_acoustic_surface > 0 ) then
+              call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
+                                                 b_potential_acoustic)
+            endif
             !Since we do not do anything in PML region in case of backward simulation, thus we set
             !PML_BOUNDARY_CONDITIONS = .false.
             if( time_stepping_scheme == 1 ) then
@@ -152,6 +156,10 @@ subroutine iterate_time()
 #endif
             endif
 
+            if( nelem_elastic_fixed_surface > 0 ) then
+              call enforce_elastic_fixed_surface(accel_elastic,veloc_elastic,displ_elastic)
+            endif
+
             if( time_stepping_scheme == 1 ) then
               call update_displacement_precondition_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
                                                                     accel_elastic,veloc_elastic,&
@@ -169,6 +177,9 @@ subroutine iterate_time()
           endif
 
           if( SIMULATION_TYPE == 3 ) then
+            if( nelem_elastic_fixed_surface > 0 ) then
+              call enforce_elastic_fixed_surface(b_accel_elastic,b_veloc_elastic,b_displ_elastic)
+            endif
             !Since we do not do anything in PML region in case of backward simulation, thus we set
             !PML_BOUNDARY_CONDITIONS = .false.
             if( time_stepping_scheme == 1 ) then
@@ -597,6 +608,10 @@ subroutine iterate_time()
               call rebuild_value_on_PML_interface_viscoelastic(it_temp)
             endif
 
+            if( nelem_elastic_fixed_surface > 0 ) then
+              call enforce_elastic_fixed_surface(accel_elastic,veloc_elastic,displ_elastic)
+            endif
+
             call compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,b_displ_elastic_old, &
                                                       PML_BOUNDARY_CONDITIONS,e1,e11,e13)
             if( PML_BOUNDARY_CONDITIONS ) then
@@ -722,6 +737,13 @@ subroutine iterate_time()
         ! ************* multiply by the inverse of the mass matrix and update velocity
         ! ************************************************************************************
         if( any_elastic ) then
+          if( nelem_elastic_fixed_surface > 0 ) then
+            call enforce_elastic_fixed_surface(accel_elastic,veloc_elastic,displ_elastic)
+            if( SIMULATION_TYPE == 3 ) then
+              call enforce_elastic_fixed_surface(b_accel_elastic,b_veloc_elastic,b_displ_elastic)
+            endif
+          endif
+
           !! DK DK this should be vectorized
           accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic_one
           accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic_one
@@ -1121,6 +1143,9 @@ subroutine iterate_time()
            b_veloc_elastic(2,:) = 0._CUSTOM_REAL
            b_accel_elastic(3,:) = b_accel_elastic(2,:)
            b_accel_elastic(2,:) = 0._CUSTOM_REAL
+           if( nelem_elastic_fixed_surface > 0 ) then
+             call enforce_elastic_fixed_surface(b_accel_elastic,b_veloc_elastic,b_displ_elastic)
+           endif
          endif
 
        else !SH (membrane) waves
@@ -1135,6 +1160,9 @@ subroutine iterate_time()
          b_veloc_elastic(3,:) = 0._CUSTOM_REAL
          b_accel_elastic(1,:) = 0._CUSTOM_REAL
          b_accel_elastic(3,:) = 0._CUSTOM_REAL
+         if( nelem_elastic_fixed_surface > 0 ) then
+           call enforce_elastic_fixed_surface(b_accel_elastic,b_veloc_elastic,b_displ_elastic)
+         endif
        endif
        close(55)
      endif

@@ -103,6 +103,7 @@ specfem2D_OBJECTS = \
 	$O/define_external_model.spec.o \
 	$O/define_external_model_from_tomo_file.spec.o \
 	$O/enforce_acoustic_free_surface.spec.o \
+	$O/elastic_fixed_boundary.spec.o \
 	$O/exit_mpi.spec.o \
 	$O/finalize_simulation.spec.o \
 	$O/force_ftz.cc.o \
@@ -344,6 +345,7 @@ $O/define_external_model.o: $O/specfem2D_par.spec.o
 $O/define_external_model_from_tomo_file.spec.o: $O/specfem2D_par.spec.o
 $O/elastic_cuda.spec.o: $O/specfem2D_par.spec.o
 $O/enforce_acoustic_free_surface.spec.o: $O/specfem2D_par.spec.o
+$O/elastic_fixed_boundary.spec.o: $O/specfem2D_par.spec.o
 $O/finalize_simulation.spec.o: $O/specfem2D_par.spec.o
 $O/get_MPI.spec.o: $O/specfem2D_par.spec.o
 $O/get_global.spec.o: $O/specfem2D_par.spec.o

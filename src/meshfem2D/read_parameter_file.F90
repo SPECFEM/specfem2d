@@ -84,7 +84,7 @@ module parameter_file
   character(len=256) :: mesh_file, nodes_coords_file, materials_file, &
                         free_surface_file, acoustic_forcing_surface_file, &
                         absorbing_surface_file, CPML_element_file, &
-                        axial_elements_file
+                        axial_elements_file,elastic_fixed_surface_file
   character(len=256)  :: tangential_detection_curve_file
 
   ! material file for changing the model parameter for inner mesh or updating the
@@ -118,6 +118,10 @@ module parameter_file
   logical :: ADD_PERIODIC_CONDITIONS
   ! horizontal periodicity distance for periodic conditions
   double precision :: PERIODIC_HORIZ_DIST
+
+  ! variables used for fixed boundary condition of the elastic region
+  logical :: ELASTIC_FIXED_BOUNDARY_CONDITIONS
+  logical :: elastic_fixed_bottom,elastic_fixed_right,elastic_fixed_top,elastic_fixed_left
 
   ! variables used for source-receiver geometry
   integer :: NSOURCES
@@ -570,14 +574,17 @@ contains
 
   if(add_Bielak_conditions .or. initialfield ) ADD_SPRING_TO_STACEY = .false.
 
-  call read_value_logical_p(ADD_PERIODIC_CONDITIONS, 'solver.ADD_PERIODIC_CONDITIONS')
+  call read_value_logical_p(ELASTIC_FIXED_BOUNDARY_CONDITIONS, 'solver.ELASTIC_FIXED_BOUNDARY_CONDITIONS')
   if(err_occurred() /= 0) stop 'error reading parameter 51b in Par_file'
 
-  call read_value_double_precision_p(PERIODIC_HORIZ_DIST, 'solver.PERIODIC_HORIZ_DIST')
+  call read_value_logical_p(ADD_PERIODIC_CONDITIONS, 'solver.ADD_PERIODIC_CONDITIONS')
   if(err_occurred() /= 0) stop 'error reading parameter 51c in Par_file'
 
+  call read_value_double_precision_p(PERIODIC_HORIZ_DIST, 'solver.PERIODIC_HORIZ_DIST')
+  if(err_occurred() /= 0) stop 'error reading parameter 51d in Par_file'
+
   call read_value_logical_p(GPU_MODE, 'solver.GPU_MODE')
-  if(err_occurred() /= 0) stop 'error reading parameter gpu in Par_file'
+  if(err_occurred() /= 0) stop 'error reading parameter GPU in Par_file'
 
   !-----------------
   ! external mesh parameters
@@ -608,6 +615,9 @@ contains
 
   call read_value_string_p(CPML_element_file, 'mesher.CPML_element_file')
   if(err_occurred() /= 0) stop 'error reading parameter 56c in Par_file'
+
+  call read_value_string_p(elastic_fixed_surface_file, 'mesher.elastic_fixed_surface_file')
+  if(err_occurred() /= 0) stop 'error reading parameter 56d in Par_file'
 
   call read_value_string_p(tangential_detection_curve_file, 'mesher.tangential_detection_curve_file')
   if(err_occurred() /= 0) stop 'error reading parameter 57 in Par_file'
@@ -643,6 +653,19 @@ contains
 
   call read_value_logical_p(absleft, 'solver.absorbleft')
   if(err_occurred() /= 0) stop 'error reading parameter 65 in Par_file'
+
+  ! read elastic fixed boundary parameters
+  call read_value_logical_p(elastic_fixed_bottom, 'solver.elastic_fixed_bottom')
+  if(err_occurred() /= 0) stop 'error reading parameter 66a in Par_file'
+
+  call read_value_logical_p(elastic_fixed_right, 'solver.elastic_fixed_right')
+  if(err_occurred() /= 0) stop 'error reading parameter 66b in Par_file'
+
+  call read_value_logical_p(elastic_fixed_top, 'solver.elastic_fixed_top')
+  if(err_occurred() /= 0) stop 'error reading parameter 66c in Par_file'
+
+  call read_value_logical_p(elastic_fixed_left, 'solver.elastic_fixed_left')
+  if(err_occurred() /= 0) stop 'error reading parameter 66d in Par_file'
 
   ! note: if internal mesh, then regions will be read in by read_regions (from meshfem2D)
 
