@@ -937,6 +937,8 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
   enddo
 
 ! check if elastic receiver is exactly on the fixed boundary because accel, veloc and displ are zero there
+!! DK DK added this patch to fix a bug in the last commit: elastic fixed surfaces currently do not work fine and broke the code
+  nelem_elastic_fixed_surface = 0 !!!  DK DK UGLY ugly temporary patch by Dimitri to fix a bug  DK DK
   do ispec_elastic_fixed_surface = 1,nelem_elastic_fixed_surface
     ispec = elastic_fixed_surface(1,ispec_elastic_fixed_surface)
     ixmin = elastic_fixed_surface(2,ispec_elastic_fixed_surface)

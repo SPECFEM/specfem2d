@@ -483,6 +483,7 @@
   read(IIN,*) nelemabs,nelem_acforcing,nelem_acoustic_surface,num_fluid_solid_edges, &
               num_fluid_poro_edges,num_solid_poro_edges,nnodes_tangential_curve, &
               nelem_on_the_axis,nelem_elastic_fixed_surface
+
   !---- print element group main parameters
   if (myrank == 0 ) then
     write(IOUT,107)

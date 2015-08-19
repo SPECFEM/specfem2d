@@ -20,7 +20,7 @@ nproc                           = 1              # number of processes
 partitioning_method             = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
 
 ngnod                           = 9              # number of control nodes per element (4 or 9)
-initialfield                    = .false.        # use an existing initial wave field as source or start from zero (medium initially at rest)
+initialfield                    = .false.        # use an existing initial wave field (e.g. a plane wave) as source or start from zero (medium initially at rest)
 add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
 
 # available models
@@ -142,7 +142,13 @@ ROTATE_PML_ACTIVATE             = .false.
 ROTATE_PML_ANGLE                = 30.
 STACEY_ABSORBING_CONDITIONS     = .false.
 ADD_SPRING_TO_STACEY            = .false.
+
+# fixed boundary of elastic region active or not
+ELASTIC_FIXED_BOUNDARY_CONDITIONS  = .false.
+
+# for horizontal periodic conditions: detect common points between left and right edges
 ADD_PERIODIC_CONDITIONS         = .false.
+# horizontal periodicity distance for periodic conditions
 PERIODIC_HORIZ_DIST             = 4000.d0
 
 # set to true to use GPUs
@@ -179,6 +185,12 @@ absorbbottom                    = .true.
 absorbright                     = .true.
 absorbtop                       = .false.
 absorbleft                      = .true.
+
+# fixed boundary parameters (see ELASTIC_FIXED_BOUNDARY_CONDITIONS above)
+elastic_fixed_bottom            = .false.
+elastic_fixed_right             = .false.
+elastic_fixed_top               = .false.
+elastic_fixed_left              = .false.
 
 # define the different regions of the model in the (nx,nz) spectral-element mesh
 nbregions                       = 4              # then set below the different regions and model number for each region

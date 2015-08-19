@@ -1,12 +1,12 @@
 # title of job
-title                           = Test for simple topography
+title                           = Test of SPECFEM2D with curved interfaces
 
 # axisymmetric (2.5D) or Cartesian planar (2D) simulation
 AXISYM                          = .false.
 
 # forward or adjoint simulation
 SIMULATION_TYPE                 = 1  # 1 = forward, 3 = adjoint + kernels; 2 is purposely UNUSED (for compatibility with the numbering of our 3D codes)
-NOISE_TOMOGRAPHY                = 0  # 0 = earthquake simulation, 1/2/3 = noise simulation
+NOISE_TOMOGRAPHY                = 0  # 0 = regular wave propagation simulation, 1/2/3 = noise simulation
 SAVE_FORWARD                    = .false. # save the last frame, needed for adjoint simulation
 # to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
 # use the flag below. It performs undoing of attenuation in an exact way for sensitivity kernel calculations
@@ -20,7 +20,7 @@ nproc                           = 1              # number of processes
 partitioning_method             = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
 
 ngnod                           = 9              # number of control nodes per element (4 or 9)
-initialfield                    = .false.        # use a plane wave as source or not
+initialfield                    = .false.        # use an existing initial wave field (e.g. a plane wave) as source or start from zero (medium initially at rest)
 add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
 
 # available models
@@ -31,7 +31,6 @@ add_Bielak_conditions           = .false.        # add Bielak conditions or not 
 #   legacy: read model from model_velocity.dat_input
 MODEL                           = default
 
-
 ATTENUATION_VISCOELASTIC_SOLID  = .false.        # turn attenuation (viscoelasticity) on or off for non-poroelastic solid parts of the model
 ATTENUATION_PORO_FLUID_PART     = .false.        # turn viscous attenuation on or off for the fluid part of poroelastic parts of the model
 Q0                              =  1             # quality factor for viscous attenuation
@@ -40,7 +39,7 @@ p_sv                            = .true.         # set the type of calculation (
 
 # time step parameters
 nt                              = 1600           # total number of time steps
-deltat                          = 1.d-3          # duration of a time step (see section "How to choose the time step" of the manual for how to do this)
+deltat                          = 1.1d-3         # duration of a time step (see section "How to choose the time step" of the manual for how to do this)
 USER_T0                         = 0.0d0          # use this t0 as earliest starting time rather than the automatically calculated one
 time_stepping_scheme            = 1              # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta), 3 = classical RK4 4th-order 4-stage Runge-Kutta
 
@@ -48,15 +47,15 @@ time_stepping_scheme            = 1              # 1 = Newmark (2nd order), 2 = 
 ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoustic medium with a rigid interface
 
 # source parameters
-NSOURCES                        = 1              # number of sources (source info read from DATA/CMTSOLUTION file)
+NSOURCES                        = 1              # number of sources (source information is then read from the DATA/SOURCE file)
 force_normal_to_surface         = .false.        # angleforce normal to surface (external mesh and curve file needed)
 
 # for viscoelastic attenuation
-N_SLS                           = 2                      # number of standard linear solids for attenuation
-f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the CMTSOLUTION file
+N_SLS                           = 3              # number of standard linear solids for attenuation (3 is usually the minimum)
+f0_attenuation                  = 5.196          # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the CMTSOLUTION file
 READ_VELOCITIES_AT_f0           = .false.        # shift velocities to account for physical dispersion (see user manual for more information)
 
-# receiver set parameters for seismograms
+# receiver set parameters for recording stations (i.e. recording points)
 seismotype                      = 1              # record 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential
 USE_TRICK_FOR_BETTER_PRESSURE   = .false.        # so far, this option can only be used if all the receivers are in acoustic elements
 NSTEP_BETWEEN_OUTPUT_SEISMOS    = 5000000        # every how many time steps we save the seismograms (costly, do not use a very small value; if you use a very large value that is larger than the total number of time steps of the run, the seismograms will automatically be saved once at the end of the run anyway)
@@ -66,7 +65,7 @@ save_binary_seismograms_double  = .false.        # save seismograms in double pr
 SU_FORMAT                       = .false.        # output single precision binary seismograms in Seismic Unix format (adjoint traces will be read in the same format)
 subsamp_seismos                 = 1              # subsampling of the seismograms to create smaller files (but less accurately sampled in time)
 use_existing_STATIONS           = .false.        # use an existing STATION file found in ./DATA or create a new one from the receiver positions below in this Par_file
-nreceiversets                   = 1              # number of receiver sets
+nreceiversets                   = 1              # number of receiver sets (i.e. number of receiver lines to create below)
 anglerec                        = 0.d0           # angle to rotate components at receivers
 rec_normal_to_surface           = .false.        # base anglerec normal to surface (external mesh and curve file needed)
 save_ASCII_kernels              = .true.         # save sensitivity kernels in ASCII format (much bigger files, but compatible with current GMT scripts) or in binary format
@@ -77,7 +76,7 @@ xdeb                            = 300.           # first receiver x in meters
 zdeb                            = 2200.          # first receiver z in meters
 xfin                            = 3700.          # last receiver x in meters (ignored if only one receiver)
 zfin                            = 2200.          # last receiver z in meters (ignored if only one receiver)
-enreg_surf_same_vertical        = .true.         # receivers inside the medium or at the surface
+enreg_surf_same_vertical        = .true.         # receivers inside the medium or at the surface (z values are ignored if this is set to true, they are replaced with the topography height)
 
 # display parameters
 NSTEP_BETWEEN_OUTPUT_INFO       = 100            # every how many time steps we display information about the simulation (costly, do not use a very small value)
@@ -86,7 +85,7 @@ NSTEP_BETWEEN_OUTPUT_IMAGES     = 100            # every how many time steps we 
 cutsnaps                        = 1.             # minimum amplitude kept in % for the JPEG and PostScript snapshots; amplitudes below that are muted
 #### for JPEG color images ####
 output_color_image              = .true.         # output JPEG color image of the results every NSTEP_BETWEEN_OUTPUT_IMAGES time steps or not
-imagetype_JPEG                  = 3              # display 1=displ_Ux 2=displ_Uz 3=displ_norm 4=veloc_Vx 5=veloc_Vz 6=veloc_norm 7=accel_Ax 8=accel_Az 9=accel_norm 10=pressure
+imagetype_JPEG                  = 2              # display 1=displ_Ux 2=displ_Uz 3=displ_norm 4=veloc_Vx 5=veloc_Vz 6=veloc_norm 7=accel_Ax 8=accel_Az 9=accel_norm 10=pressure
 factor_subsample_image          = 1.0d0          # (double precision) factor to subsample color images output by the code (useful for very large models)
 USE_CONSTANT_MAX_AMPLITUDE      = .false.        # by default the code normalizes each image independently to its maximum; use this option to use the global maximum below instead
 CONSTANT_MAX_AMPLITUDE_TO_USE   = 1.17d4         # constant maximum amplitude to use for all color images if the above USE_CONSTANT_MAX_AMPLITUDE option is true
@@ -118,9 +117,10 @@ output_energy                   = .false.        # compute and output total acou
 
 nbmodels                        = 4
 # available material types (see user manual for more information)
-#   acoustic:    model_number 1 rho Vp 0  0 0 QKappa Qmu 0 0 0 0 0 0
-#   elastic:     model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0
-#   anistoropic: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0
+#   acoustic:    model_number 1 rho Vp 0  0 0 QKappa Qmu 0 0 0 0 0 0 (for QKappa and Qmu use 9999 to ignore them)
+#### currently acoustic media have no attenuation and thus QKappa and Qmu are ignored, but this will or should change soon
+#   elastic:     model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0 (for QKappa and Qmu use 9999 to ignore them)
+#   anisotropic: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0
 #   poroelastic: model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu
 #   tomo:        model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0
 
@@ -132,7 +132,7 @@ nbmodels                        = 4
 # external tomography file
 TOMOGRAPHY_FILE                 = ./DATA/tomo_file.xyz
 
-# external mesh or not
+# use an external mesh created by an external meshing tool or use the internal mesher
 read_external_mesh              = .false.
 
 # absorbing boundary active or not
@@ -148,7 +148,6 @@ ELASTIC_FIXED_BOUNDARY_CONDITIONS  = .false.
 
 # for horizontal periodic conditions: detect common points between left and right edges
 ADD_PERIODIC_CONDITIONS         = .false.
-
 # horizontal periodicity distance for periodic conditions
 PERIODIC_HORIZ_DIST             = 0.3597d0
 
@@ -174,7 +173,7 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes # file containing the
 # PARAMETERS FOR INTERNAL MESHING
 
 # file containing interfaces for internal mesh
-interfacesfile                  = ../interfaces_simple_topo_curved.dat
+interfacesfile                  = ../EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/interfaces_simple_topo_curved.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
@@ -193,8 +192,9 @@ elastic_fixed_right             = .false.
 elastic_fixed_top               = .false.
 elastic_fixed_left              = .false.
 
-# define the different regions of the model in the (nx,nz) spectral element mesh
-nbregions                       = 4              # nb of regions and model number for each
+# define the different regions of the model in the (nx,nz) spectral-element mesh
+nbregions                       = 4              # then set below the different regions and model number for each region
+# format of each line: nxmin nxmax nzmin nzmax material_number
 1 80  1 20 1
 1 80 21 40 2
 1 80 41 60 3
