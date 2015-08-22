@@ -936,44 +936,7 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
     enddo
   enddo
 
-! check if elastic receiver is exactly on the fixed boundary because accel, veloc and displ are zero there
-!! DK DK added this patch to fix a bug in the last commit: elastic fixed surfaces currently do not work fine and broke the code
-  nelem_elastic_fixed_surface = 0 !!!  DK DK UGLY ugly temporary patch by Dimitri to fix a bug  DK DK
-  do ispec_elastic_fixed_surface = 1,nelem_elastic_fixed_surface
-    ispec = elastic_fixed_surface(1,ispec_elastic_fixed_surface)
-    ixmin = elastic_fixed_surface(2,ispec_elastic_fixed_surface)
-    ixmax = elastic_fixed_surface(3,ispec_elastic_fixed_surface)
-    izmin = elastic_fixed_surface(4,ispec_elastic_fixed_surface)
-    izmax = elastic_fixed_surface(5,ispec_elastic_fixed_surface)
-    do irecloc = 1,nrecloc
-      irec = recloc(irecloc)
-      if(elastic(ispec) .and. ispec == ispec_selected_rec(irec)) then
-        if ( (izmin==1 .and. izmax==1 .and. ixmin==1 .and. ixmax==NGLLX .and. &
-        gamma_receiver(irec) < -0.99d0) .or.&
-        (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==NGLLX .and. &
-        gamma_receiver(irec) > 0.99d0) .or.&
-        (izmin==1 .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==1 .and. &
-        xi_receiver(irec) < -0.99d0) .or.&
-        (izmin==1 .and. izmax==NGLLZ .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
-        xi_receiver(irec) > 0.99d0) .or.&
-        (izmin==1 .and. izmax==1 .and. ixmin==1 .and. ixmax==1 .and. &
-        gamma_receiver(irec) < -0.99d0 .and. xi_receiver(irec) < -0.99d0) .or.&
-        (izmin==1 .and. izmax==1 .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
-        gamma_receiver(irec) < -0.99d0 .and. xi_receiver(irec) > 0.99d0) .or.&
-        (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==1 .and. &
-        gamma_receiver(irec) > 0.99d0 .and. xi_receiver(irec) < -0.99d0) .or.&
-        (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
-        gamma_receiver(irec) > 0.99d0 .and. xi_receiver(irec) > 0.99d0) ) then
-        call exit_MPI('an elastic receiver cannot be located exactly '// &
-                      'on the fixed surface because accel, veloc and displ are zero there')
-            print *, '**********************************************************************'
-            print *, '*** Warning: elastic receiver located exactly on the free surface ***'
-            print *, '**********************************************************************'
-            print *
-        endif
-      endif
-    enddo
-  enddo
+
 
   allocate(xir_store_loc(nrecloc,NGLLX))
   allocate(gammar_store_loc(nrecloc,NGLLX))

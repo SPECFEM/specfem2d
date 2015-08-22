@@ -82,10 +82,6 @@ module part_unstruct
   integer, dimension(:,:), pointer  :: acoustic_surface
   integer :: nelem_acoustic_surface_loc
 
-  integer :: nelem_elastic_fixed_surface
-  integer, dimension(:,:), pointer  :: elastic_fixed_surface
-  integer :: nelem_elastic_fixed_surface_loc
-
   integer :: nelem_on_the_axis
   integer :: nelem_on_the_axis_loc
   integer, dimension(:), pointer  :: ispec_of_axial_elements, inode1_axial_elements, inode2_axial_elements
@@ -392,90 +388,6 @@ contains
   enddo
 
   end subroutine read_acoustic_surface
-
-  !-----------------------------------------------
-  ! Read elastic fixed surface.
-  ! Edges from acoustic elements are discarded.
-  ! 'elastic_fixed_surface' contains 1/ element number, 2/ number of nodes that form the elastic fixed surface,
-  ! 3/ first node on the elastic fixed surface, 4/ second node on the elastic fixed surface, if relevant (if 2/ is equal to 2)
-  !-----------------------------------------------
-
-  subroutine read_elastic_fixed_surface(filename, num_material, &
-                ANISOTROPIC_MATERIAL, nb_materials, icodemat, phi, remove_min_to_start_at_zero)
-
-  implicit none
-
-  !include "constants.h"
-
-  character(len=256), intent(in)  :: filename
-  integer, dimension(0:nelmnts-1)  :: num_material
-  integer, intent(in)  :: ANISOTROPIC_MATERIAL
-  integer, intent(in)  :: nb_materials
-  integer, dimension(1:nb_materials), intent(in)  :: icodemat
-  double precision, dimension(1:nb_materials), intent(in)  :: phi
-  integer, intent(in)  :: remove_min_to_start_at_zero
-
-
-  integer, dimension(:,:), allocatable  :: elastic_fixed_surface_tmp
-  integer  :: nelmnts_surface
-  integer  :: i,ier
-  integer  :: imaterial_number
-
-
-#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
-  open(unit=993, file=trim(filename), form='unformatted' , status='old', action='read', iostat=ier)
-#else
-  open(unit=993, file=trim(filename), form='formatted' , status='old', action='read', iostat=ier)
-#endif
-  if( ier /= 0 ) then
-    print *,'error opening file: ',trim(filename)
-    stop 'error read acoustic surface file'
-  endif
-
-#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
-  read(993) nelmnts_surface
-#else
-  read(993,*) nelmnts_surface
-#endif
-
-  allocate(elastic_fixed_surface_tmp(4,nelmnts_surface))
-
-  do i = 1, nelmnts_surface
-#ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
-    read(993) elastic_fixed_surface_tmp(1,i), elastic_fixed_surface_tmp(2,i), &
-              elastic_fixed_surface_tmp(3,i), elastic_fixed_surface_tmp(4,i)
-#else
-    read(993,*) elastic_fixed_surface_tmp(1,i), elastic_fixed_surface_tmp(2,i), &
-                elastic_fixed_surface_tmp(3,i), elastic_fixed_surface_tmp(4,i)
-#endif
-  enddo
-
-  close(993)
-
-  elastic_fixed_surface_tmp(1,:) = elastic_fixed_surface_tmp(1,:) - remove_min_to_start_at_zero
-  elastic_fixed_surface_tmp(3,:) = elastic_fixed_surface_tmp(3,:) - remove_min_to_start_at_zero
-  elastic_fixed_surface_tmp(4,:) = elastic_fixed_surface_tmp(4,:) - remove_min_to_start_at_zero
-
-  nelem_elastic_fixed_surface = 0
-  do i = 1, nelmnts_surface
-     imaterial_number = num_material(elastic_fixed_surface_tmp(1,i))
-     if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) <= 0.d0 ) then
-        nelem_elastic_fixed_surface = nelem_elastic_fixed_surface + 1
-     endif
-  enddo
-
-  allocate(elastic_fixed_surface(4,nelem_elastic_fixed_surface))
-
-  nelem_elastic_fixed_surface = 0
-  do i = 1, nelmnts_surface
-     imaterial_number = num_material(elastic_fixed_surface_tmp(1,i))
-     if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) <= 0.d0 ) then
-        nelem_elastic_fixed_surface = nelem_elastic_fixed_surface + 1
-        elastic_fixed_surface(:,nelem_elastic_fixed_surface) = elastic_fixed_surface_tmp(:,i)
-     endif
-  enddo
-
-  end subroutine read_elastic_fixed_surface
 
   !-----------------------------------------------
   ! Read axial elements file.

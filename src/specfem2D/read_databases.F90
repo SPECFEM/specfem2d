@@ -65,8 +65,7 @@
                          USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                          POWER_DISPLAY_COLOR,SU_FORMAT,USER_T0, time_stepping_scheme, &
                          ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_HORIZ_DIST, &
-                         read_external_mesh,ACOUSTIC_FORCING,save_ASCII_kernels,GPU_MODE,TOMOGRAPHY_FILE,&
-                         ELASTIC_FIXED_BOUNDARY_CONDITIONS
+                         read_external_mesh,ACOUSTIC_FORCING,save_ASCII_kernels,GPU_MODE,TOMOGRAPHY_FILE
   implicit none
   include "constants.h"
 
@@ -247,9 +246,6 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,*) ADD_SPRING_TO_STACEY
-
-  read(IIN,"(a80)") datlin
-  read(IIN,*) ELASTIC_FIXED_BOUNDARY_CONDITIONS
 
   read(IIN,"(a80)") datlin
   read(IIN,*) ADD_PERIODIC_CONDITIONS
@@ -441,7 +437,7 @@
                           nelemabs,nelem_acforcing,nelem_acoustic_surface, &
                           num_fluid_solid_edges,num_fluid_poro_edges, &
                           num_solid_poro_edges,nnodes_tangential_curve, &
-                          nelem_on_the_axis,nelem_elastic_fixed_surface
+                          nelem_on_the_axis
 
 
   implicit none
@@ -482,8 +478,7 @@
   read(IIN,"(a80)") datlin
   read(IIN,*) nelemabs,nelem_acforcing,nelem_acoustic_surface,num_fluid_solid_edges, &
               num_fluid_poro_edges,num_solid_poro_edges,nnodes_tangential_curve, &
-              nelem_on_the_axis,nelem_elastic_fixed_surface
-
+              nelem_on_the_axis
   !---- print element group main parameters
   if (myrank == 0 ) then
     write(IOUT,107)
@@ -973,40 +968,6 @@
   endif
 
   end subroutine read_databases_free_surf
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine read_databases_elastic_fixed_surf()
-
-! reads acoustic free surface data
-  use specfem_par, only : nelem_elastic_fixed_surface,elastic_fixed_edges,any_elastic_fixed_edges
-  implicit none
-  include "constants.h"
-
-  ! local parameters
-  integer :: inum, elastic_fixed_edges_read
-  character(len=80) :: datlin
-
-  ! initializes
-  elastic_fixed_edges(:,:) = 0
-
-  ! reads in any possible free surface edges
-  read(IIN,"(a80)") datlin
-
-  if( any_elastic_fixed_edges ) then
-    do inum = 1,nelem_elastic_fixed_surface
-      read(IIN,*) elastic_fixed_edges_read, elastic_fixed_edges(2,inum), elastic_fixed_edges(3,inum), &
-           elastic_fixed_edges(4,inum)
-
-      elastic_fixed_edges(1,inum) = elastic_fixed_edges_read
-
-    enddo
-
-  endif
-
-  end subroutine read_databases_elastic_fixed_surf
 
 !
 !-------------------------------------------------------------------------------------------------

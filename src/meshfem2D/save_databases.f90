@@ -223,9 +223,6 @@
     write(15,*) 'ADD_SPRING_TO_STACEY'
     write(15,*) ADD_SPRING_TO_STACEY
 
-    write(15,*) 'ELASTIC_FIXED_BOUNDARY_CONDITIONS'
-    write(15,*) ELASTIC_FIXED_BOUNDARY_CONDITIONS
-
     write(15,*) 'ADD_PERIODIC_CONDITIONS'
     write(15,*) ADD_PERIODIC_CONDITIONS
 
@@ -278,10 +275,7 @@
     endif
 
     call write_surface_database(15, nelem_acoustic_surface, acoustic_surface, nelem_acoustic_surface_loc, &
-                                iproc, 1)
-
-    call write_surface_database(15, nelem_elastic_fixed_surface, elastic_fixed_surface, &
-                                nelem_elastic_fixed_surface_loc, iproc, 1)
+                              iproc, 1)
 
     call write_fluidsolid_edges_database(15,nedges_coupled, nedges_coupled_loc, &
                                         edges_coupled, iproc, 1)
@@ -303,7 +297,7 @@
     write(15,*) nelemabs_loc,nelemacforcing_loc,nelem_acoustic_surface_loc, &
                 nedges_coupled_loc,nedges_acporo_coupled_loc,&
                 nedges_elporo_coupled_loc,nnodes_tangential_curve, &
-                nelem_on_the_axis_loc,nelem_elastic_fixed_surface_loc
+                nelem_on_the_axis_loc
 
     write(15,*) 'Material sets (num 1 rho vp vs 0 0 QKappa Qmu 0 0 0 0 0 0) or '
     write(15,*) '(num 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0) or '
@@ -362,9 +356,6 @@
     call write_surface_database(15, nelem_acoustic_surface, acoustic_surface, nelem_acoustic_surface_loc, &
                                 iproc, 2)
 
-    write(15,*) 'List of elastic fixed boundary elements:'
-    call write_surface_database(15, nelem_elastic_fixed_surface, elastic_fixed_surface, &
-                                nelem_elastic_fixed_surface_loc, iproc, 2)
 
     write(15,*) 'List of acoustic elastic coupled edges:'
     call write_fluidsolid_edges_database(15, nedges_coupled, nedges_coupled_loc, &

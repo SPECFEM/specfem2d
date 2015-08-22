@@ -437,9 +437,9 @@ program meshfem2D
 
   else
      call read_interfaces_file(interfacesfile,max_npoints_interface, &
-                               number_of_interfaces,npoints_interface_bottom, &
-                               number_of_layers,nz_layer,nx,nz,nxread,nzread,ngnod, &
-                               nelmnts,elmnts)
+                                number_of_interfaces,npoints_interface_bottom, &
+                                number_of_layers,nz_layer,nx,nz,nxread,nzread,ngnod, &
+                                nelmnts,elmnts)
   endif
 
   allocate(num_material(nelmnts))
@@ -456,8 +456,8 @@ program meshfem2D
      endif
   else
      call read_regions(nbregion,nb_materials,icodemat,cp,cs, &
-                       rho_s,QKappa,Qmu,aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11, &
-                       nelmnts,num_material,nxread,nzread)
+                      rho_s,QKappa,Qmu,aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11, &
+                      nelmnts,num_material,nxread,nzread)
   endif
 
   ! closes file Par_file
@@ -638,9 +638,6 @@ program meshfem2D
      call read_acoustic_surface(free_surface_file, num_material, &
                         ANISOTROPIC_MATERIAL, nb_materials, icodemat, phi, remove_min_to_start_at_zero)
 
-     call read_elastic_fixed_surface(elastic_fixed_surface_file, num_material, &
-                        ANISOTROPIC_MATERIAL, nb_materials, icodemat, phi, remove_min_to_start_at_zero)
-
      if ( any_abs ) then
         call read_abs_surface(absorbing_surface_file, remove_min_to_start_at_zero)
 ! rotate the elements that are located on the edges of the mesh if needed
@@ -754,110 +751,6 @@ program meshfem2D
               acoustic_surface(2,nelem_acoustic_surface) = 2
               acoustic_surface(3,nelem_acoustic_surface) = elmnts(1+ngnod*((j-1)*nxread+i-1))
               acoustic_surface(4,nelem_acoustic_surface) = elmnts(2+ngnod*((j-1)*nxread+i-1))
-           endif
-        enddo
-     endif
-
-     !
-     !--- definition of elastic fixed boundary
-     !
-     ! count the number of elastic fixed boundry elements
-     nelem_elastic_fixed_surface = 0
-
-     ! if the surface is absorbing, it cannot be free at the same time
-     if(.not. abstop) then
-        j = nzread
-        do i = 1,nxread
-           imaterial_number = num_material((j-1)*nxread+i)
-           if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) <= 0.d0 ) then
-              nelem_elastic_fixed_surface = nelem_elastic_fixed_surface + 1
-           endif
-        enddo
-     endif
-     if(.not. absbottom) then
-        j = 1
-        do i = 1,nxread
-           imaterial_number = num_material((j-1)*nxread+i)
-           if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) <= 0.d0 ) then
-              nelem_elastic_fixed_surface = nelem_elastic_fixed_surface + 1
-           endif
-        enddo
-     endif
-     ! in the axisymmetric case if xmin == 0 the axis is a symmetry axis and thus cannot be a free surface as well
-     if(.not. absleft .and. .not. (AXISYM .and. abs(xmin) < TINYVAL)) then
-        i = 1
-        do j = 1,nzread
-           imaterial_number = num_material((j-1)*nxread+i)
-           if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) <= 0.d0 ) then
-              nelem_elastic_fixed_surface = nelem_elastic_fixed_surface + 1
-           endif
-        enddo
-     endif
-     if(.not. absright) then
-        i = nxread
-        do j = 1,nzread
-           imaterial_number = num_material((j-1)*nxread+i)
-           if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) <= 0.d0 ) then
-              nelem_elastic_fixed_surface = nelem_elastic_fixed_surface + 1
-           endif
-        enddo
-     endif
-
-
-     allocate(elastic_fixed_surface(4,nelem_elastic_fixed_surface))
-
-     nelem_elastic_fixed_surface = 0
-
-     if(.not. abstop) then
-        j = nzread
-        do i = 1,nxread
-           imaterial_number = num_material((j-1)*nxread+i)
-           if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) <= 0.d0 ) then
-              nelem_elastic_fixed_surface = nelem_elastic_fixed_surface + 1
-              elastic_fixed_surface(1,nelem_elastic_fixed_surface) = (j-1)*nxread + (i-1)
-              elastic_fixed_surface(2,nelem_elastic_fixed_surface) = 2
-              elastic_fixed_surface(3,nelem_elastic_fixed_surface) = elmnts(3+ngnod*((j-1)*nxread+i-1))
-              elastic_fixed_surface(4,nelem_elastic_fixed_surface) = elmnts(2+ngnod*((j-1)*nxread+i-1))
-           endif
-        enddo
-     endif
-     if(.not. absbottom) then
-        j = 1
-        do i = 1,nxread
-           imaterial_number = num_material((j-1)*nxread+i)
-           if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) <= 0.d0 ) then
-              nelem_elastic_fixed_surface = nelem_elastic_fixed_surface + 1
-              elastic_fixed_surface(1,nelem_elastic_fixed_surface) = (j-1)*nxread + (i-1)
-              elastic_fixed_surface(2,nelem_elastic_fixed_surface) = 2
-              elastic_fixed_surface(3,nelem_elastic_fixed_surface) = elmnts(0+ngnod*((j-1)*nxread+i-1))
-              elastic_fixed_surface(4,nelem_elastic_fixed_surface) = elmnts(1+ngnod*((j-1)*nxread+i-1))
-           endif
-        enddo
-     endif
-     ! in the axisymmetric case if xmin == 0 the axis is a symmetry axis and thus cannot be a free surface as well
-     if(.not. absleft .and. .not. (AXISYM .and. abs(xmin) < TINYVAL)) then
-        i = 1
-        do j = 1,nzread
-           imaterial_number = num_material((j-1)*nxread+i)
-           if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) <= 0.d0 ) then
-              nelem_elastic_fixed_surface = nelem_elastic_fixed_surface + 1
-              elastic_fixed_surface(1,nelem_elastic_fixed_surface) = (j-1)*nxread + (i-1)
-              elastic_fixed_surface(2,nelem_elastic_fixed_surface) = 2
-              elastic_fixed_surface(3,nelem_elastic_fixed_surface) = elmnts(0+ngnod*((j-1)*nxread+i-1))
-              elastic_fixed_surface(4,nelem_elastic_fixed_surface) = elmnts(3+ngnod*((j-1)*nxread+i-1))
-           endif
-        enddo
-     endif
-     if(.not. absright) then
-        i = nxread
-        do j = 1,nzread
-           imaterial_number = num_material((j-1)*nxread+i)
-           if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) <= 0.d0 ) then
-              nelem_elastic_fixed_surface = nelem_elastic_fixed_surface + 1
-              elastic_fixed_surface(1,nelem_elastic_fixed_surface) = (j-1)*nxread + (i-1)
-              elastic_fixed_surface(2,nelem_elastic_fixed_surface) = 2
-              elastic_fixed_surface(3,nelem_elastic_fixed_surface) = elmnts(1+ngnod*((j-1)*nxread+i-1))
-              elastic_fixed_surface(4,nelem_elastic_fixed_surface) = elmnts(2+ngnod*((j-1)*nxread+i-1))
            endif
         enddo
      endif

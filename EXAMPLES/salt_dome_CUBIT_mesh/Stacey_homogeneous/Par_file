@@ -40,7 +40,7 @@ p_sv                            = .true.         # set the type of calculation (
 
 # time step parameters
 nt                              = 10000           # total number of time steps
-deltat                          = 4.25e-4         # duration of a time step (see section "How to choose the time step" of the manual for how to do this) (see section "How to choose the time step" of the manual for how to do this) (for the choice of deltat please refer to section 4.5 of the user manual)
+deltat                          = 4.25e-4         # duration of a time step (see section "How to choose the time step" of the manual for how to do this) (for the choice of deltat please refer to section 4.5 of the user manual)
 USER_T0                         = 0.0d0          # use this t0 as earliest starting time rather than the automatically calculated one
 time_stepping_scheme            = 1              # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta), 3 = classical RK4 4th-order 4-stage Runge-Kutta
 
@@ -140,9 +140,6 @@ ROTATE_PML_ANGLE                = 30.
 STACEY_ABSORBING_CONDITIONS     = .true.
 ADD_SPRING_TO_STACEY            = .false.
 
-# fixed boundary of elastic region active or not
-ELASTIC_FIXED_BOUNDARY_CONDITIONS  = .false.
-
 # for horizontal periodic conditions: detect common points between left and right edges
 ADD_PERIODIC_CONDITIONS         = .false.
 
@@ -183,12 +180,6 @@ absorbbottom                    = .true.
 absorbright                     = .true.
 absorbtop                       = .false.
 absorbleft                      = .true.
-
-# fixed boundary parameters (see ELASTIC_FIXED_BOUNDARY_CONDITIONS above)
-elastic_fixed_bottom            = .false.
-elastic_fixed_right             = .false.
-elastic_fixed_top               = .false.
-elastic_fixed_left              = .false.
 
 # define the different regions of the model in the (nx,nz) spectral element mesh
 nbregions                       = 7              # nb of regions and model number for each

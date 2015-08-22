@@ -129,7 +129,7 @@
                     2.0d0*aval(i_source) * (3.0d0 - 12.0d0*aval(i_source)*t_used**2 + 4.0d0*aval(i_source)**2*t_used**4) * &
                     exp(-aval(i_source)*t_used**2)
         else
-          ! Ricker (second derivative of a Gaussian) source time function
+           ! Ricker (second derivative of a Gaussian) source time function
           source_time_function(i_source,it,i_stage) = - factor(i_source) * &
                     (ONE-TWO*aval(i_source)*t_used**2) * &
                     exp(-aval(i_source)*t_used**2)

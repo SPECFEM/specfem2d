@@ -920,69 +920,6 @@ def ProcessParfile_tomography_file(fic):
     print 'xxxxx------> '+fic+' processed to '+release_number
     return
 #------------------------------------------------------------------------------
-def ProcessParfile_elastic_fixed_boundary_conditions(fic):
-    # define the release number
-    release_number='elastic_fixed_boundary_conditions'
-    # Open the file and get all lines from Par_file
-    ligs= LoadLig(fic)
-
-    # Test if already processed
-    for lig in ligs:
-        if lig.startswith('ELASTIC_FIXED_BOUNDARY_CONDITIONS'):
-            print '----> '+fic+' already processed to '+release_number
-            return
-    #
-    a1='\n# fixed boundary of elastic region active or not\nELASTIC_FIXED_BOUNDARY_CONDITIONS  = '+\
-    '.false.\n'
-    #--------------------------------------------------------------------------
-    # Add new parameters
-    #
-    for ilg, lig in enumerate(ligs):
-        if lig.startswith('ADD_PERIODIC_CONDITIONS'):
-            ligs.insert(ilg-2,a1)
-            break
-    #
-    move(fic,fic+'.before_update_to_'+release_number)
-    #
-    fm = open(fic,'w')
-    fm.writelines(ligs)
-    fm.close()
-    #
-    print 'xxxxx------> '+fic+' processed to '+release_number
-    return
-#------------------------------------------------------------------------------
-def ProcessParfile_elastic_fixed_boundary_definition(fic):
-    # define the release number
-    release_number='elastic_fixed_boundary_definition'
-    # Open the file and get all lines from Par_file
-    ligs= LoadLig(fic)
-
-    # Test if already processed
-    for lig in ligs:
-        if lig.startswith('elastic_fixed_boundary_definition'):
-            print '----> '+fic+' already processed to '+release_number
-            return
-    #
-    a1='\n# fixed boundary parameters (see ELASTIC_FIXED_BOUNDARY_CONDITIONS above)\nelastic_fixed_bottom            = '+\
-    '.false.\nelastic_fixed_right             = .false.\nelastic_fixed_top               = .false.\n'+\
-    'elastic_fixed_left              = .false.\n'
-    #--------------------------------------------------------------------------
-    # Add new parameters
-    #
-    for ilg, lig in enumerate(ligs):
-        if lig.startswith('nbregions'):
-            ligs.insert(ilg-2,a1)
-            break
-    #
-    move(fic,fic+'.before_update_to_'+release_number)
-    #
-    fm = open(fic,'w')
-    fm.writelines(ligs)
-    fm.close()
-    #
-    print 'xxxxx------> '+fic+' processed to '+release_number
-    return
-#------------------------------------------------------------------------------
 if __name__=='__main__':
     ## List of all files of current directory
     Fichiers=[]
@@ -1022,8 +959,6 @@ if __name__=='__main__':
                     ProcessParfile_external_model(fic)
                     ProcessParfile_pressure_trick(fic)
                     ProcessParfile_tomography_file(fic)
-                    ProcessParfile_elastic_fixed_boundary_conditions(fic)
-                    ProcessParfile_elastic_fixed_boundary_definition(fic)
                     print '~'*80
     #
     print 'Number of Par_file analysed : ', Ct_Par_file
