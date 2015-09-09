@@ -77,7 +77,7 @@ module parameter_file
   logical, dimension(:), pointer :: enreg_surf_same_vertical
 
   ! mesh files when using external mesh
-  character(len=100) :: MODEL
+  character(len=100) :: MODEL, SAVE_MODEL
   logical :: read_external_mesh
   ! integer ::  ngnod 'the node of element in meshfile must match with ngnod'
 
@@ -268,6 +268,9 @@ contains
 
   call read_value_string_p(MODEL, 'mesher.MODEL')
   if(err_occurred() /= 0) stop 'error reading parameter 9 in Par_file'
+
+  call read_value_string_p(SAVE_MODEL, 'mesher.SAVE_MODEL')
+  if(err_occurred() /= 0) stop 'error reading parameter save model in Par_file'
 
   call read_value_logical_p(ATTENUATION_VISCOELASTIC_SOLID, 'solver.ATTENUATION_VISCOELASTIC_SOLID')
   if(err_occurred() /= 0) stop 'error reading parameter 11 in Par_file'
@@ -690,6 +693,15 @@ contains
   case default
     stop 'Bad value: MODEL'
   end select
+
+  ! checks model
+  select case (SAVE_MODEL)
+  case ('default','ascii','binary','external','gll')
+    print * ! do nothing
+  case default
+    stop 'Bad value: SAVE_MODEL'
+  end select
+
 
   ! checks absorbing boundaries
   if ( .not. any_abs ) then

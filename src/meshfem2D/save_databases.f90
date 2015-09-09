@@ -157,6 +157,9 @@
     write(15,*) 'MODEL'
     write(15,'(a100)') MODEL
 
+    write(15,*) 'SAVE_MODEL'
+    write(15,'(a100)') SAVE_MODEL
+
     write(15,*) 'TOMOGRAPHY_FILE'
     write(15,'(a100)') TOMOGRAPHY_FILE
 

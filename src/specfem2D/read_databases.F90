@@ -65,7 +65,7 @@
                          USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
                          POWER_DISPLAY_COLOR,SU_FORMAT,USER_T0, time_stepping_scheme, &
                          ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_HORIZ_DIST, &
-                         read_external_mesh,ACOUSTIC_FORCING,save_ASCII_kernels,GPU_MODE,TOMOGRAPHY_FILE
+                         read_external_mesh,ACOUSTIC_FORCING,save_ASCII_kernels,GPU_MODE,TOMOGRAPHY_FILE,SAVE_MODEL
   implicit none
   include "constants.h"
 
@@ -180,6 +180,9 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,'(a100)') MODEL
+
+  read(IIN,"(a80)") datlin
+  read(IIN,'(a100)') SAVE_MODEL
 
   read(IIN,"(a80)") datlin
   read(IIN,'(a100)') TOMOGRAPHY_FILE

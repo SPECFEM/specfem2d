@@ -31,6 +31,8 @@ add_Bielak_conditions           = .false.        # add Bielak conditions or not 
 #   legacy: read model from model_velocity.dat_input
 MODEL                           = external
 
+# Output the model with the requested type, does not save if turn to default
+SAVE_MODEL                      = default
 
 ATTENUATION_VISCOELASTIC_SOLID  = .false.        # turn attenuation (viscoelasticity) on or off for non-poroelastic solid parts of the model
 ATTENUATION_PORO_FLUID_PART     = .false.        # turn viscous attenuation on or off for the fluid part of poroelastic parts of the model
