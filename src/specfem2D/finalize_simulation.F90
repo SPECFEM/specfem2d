@@ -100,7 +100,7 @@ enddo
           write(172) z_save
           close(172)
 
-  else 
+  else
        stop 'Save Model not implemented for external and tomo'
 
   endif !Type of model
