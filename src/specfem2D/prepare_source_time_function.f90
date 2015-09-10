@@ -47,7 +47,7 @@
 
 ! prepares source_time_function array
 
-  use specfem_par, only: AXISYM,is_on_the_axis,wxglj,poroelastcoef,kmato,rhoext,vsext,NSTEP,NSOURCES,source_time_function, &
+  use specfem_par, only: AXISYM,is_on_the_axis,wxglj,poroelastcoef,kmato,NSTEP,NSOURCES,source_time_function, &
                          time_function_type,name_of_source_file,burst_band_width,burst_central_frequency,f0,tshift_src,factor, &
                          aval,t0,nb_proc_source,deltat,stage_time_scheme,c_LDDRK,is_proc_source, &
                          USE_TRICK_FOR_BETTER_PRESSURE,jacobian,ispec_selected_source
@@ -262,8 +262,8 @@
         t_used = (timeval-t0-tshift_src(i_source))
         source_time_function(i_source,it,i_stage) = - factor(i_source) * &
                     exp(-aval(i_source)*t_used**2) * cos(TWO*PI*f0(i_source)*t_used)
-        ! burst_band_width
-        ! burst_central_frequency
+        burst_band_width = 0.0d0 ! TODO : temporary
+        burst_central_frequency = 0.0d0 ! TODO : temporary
       else
         call exit_MPI('unknown source time function')
       endif
