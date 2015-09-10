@@ -354,7 +354,7 @@ subroutine define_external_model_from_tomo_file()
            c12ext(i,j,ispec) = 0.d0
            c23ext(i,j,ispec) = 0.d0
            c25ext(i,j,ispec) = 0.d0
-           !! AB AB : The 3 following lines are important, otherwise PMLs won't work. This should be fixed TODO
+           !! AB AB : The 3 following lines are important, otherwise PMLs won't work.
            !! (we assign these values several times: indeed for each kmato(ispec) it can exist a lot of rhoext(i,j,ispec) )
            density(1,kmato(ispec)) = rhoext(i,j,ispec)
            poroelastcoef(3,1,kmato(ispec)) = rhoext(i,j,ispec) * vpext(i,j,ispec) * vpext(i,j,ispec)

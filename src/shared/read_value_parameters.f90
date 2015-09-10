@@ -91,6 +91,22 @@
 
 !--------------------
 
+  subroutine read_value_string(iin,ignore_junk,value_to_read)
+
+  implicit none
+
+  integer iin
+  logical ignore_junk
+  character(len=100) value_to_read
+  character(len=100) string_read
+
+  call read_next_line(iin,ignore_junk,string_read)
+  read(string_read,*) value_to_read
+
+  end subroutine read_value_string
+
+!--------------------
+
   subroutine read_two_interface_points(iin,ignore_junk,value_to_read_1,value_to_read_2)
 
   implicit none

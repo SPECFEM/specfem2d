@@ -183,6 +183,8 @@ module specfem_par
   ! source description
   integer NSOURCES
   integer, dimension(:), allocatable :: source_type,time_function_type
+  character(len=150), dimension(:), allocatable :: name_of_source_file
+  double precision, dimension(:), allocatable :: burst_band_width,burst_central_frequency
   double precision, dimension(:), allocatable :: x_source,z_source,xi_source,gamma_source,&
                                                  Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sourcearray
