@@ -83,18 +83,18 @@
     ! loop on all the sources
     do i_source=1,NSOURCES
 
-    if (AXISYM) then
-      factor(i_source) = - factor(i_source)
-      if (is_on_the_axis(ispec_selected_source(i_source))) then
-        do i=1,NGLLX
-        do j=1,NGLLZ
-          print *,"jacobian :",jacobian(i,j,ispec_selected_source(i_source))
-          print *,"wxglj:",wxglj(i)
-          print *,"mu :",poroelastcoef(2,1,kmato(ispec_selected_source(i_source)))
-        enddo
-        enddo
-      endif
-    endif
+     if (AXISYM) then
+       factor(i_source) = - factor(i_source)
+     !   if (is_on_the_axis(ispec_selected_source(i_source))) then
+     !     do i=1,NGLLX
+     !     do j=1,NGLLZ
+     !       print *,"jacobian :",jacobian(i,j,ispec_selected_source(i_source))
+     !       print *,"wxglj:",wxglj(i)
+     !       print *,"mu :",poroelastcoef(2,1,kmato(ispec_selected_source(i_source)))
+     !     enddo
+     !     enddo
+     !   endif
+     endif
 
     num_file = 800 + i_source
 
