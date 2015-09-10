@@ -64,7 +64,7 @@ module specfem_par
   !---------------------------------------------------------------------
   !for model description
   !---------------------------------------------------------------------
-  character(len=100) :: MODEL
+  character(len=100) :: MODEL, SAVE_MODEL
   integer :: SIMULATION_TYPE  ! 1 = forward wavefield, 3 = backward and adjoint wavefields and kernels
   logical :: p_sv   ! for P-SV or SH (membrane) waves calculation
   logical :: SAVE_FORWARD ! whether or not the last frame is saved to reconstruct the forward field

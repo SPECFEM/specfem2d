@@ -164,6 +164,9 @@
   read(IIN,'(a100)') MODEL
 
   read(IIN,"(a80)") datlin
+  read(IIN,'(a100)') SAVE_MODEL
+
+  read(IIN,"(a80)") datlin
   read(IIN,'(a100)') TOMOGRAPHY_FILE
 
   read(IIN,"(a80)") datlin
