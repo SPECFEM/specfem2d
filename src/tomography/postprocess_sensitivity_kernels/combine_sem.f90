@@ -44,7 +44,7 @@
 ! XCOMBINE_SEM
 !
 ! USAGE
-!   bin/xcombine_sem KERNEL_NAMES INPUT_FILE OUTPUT_DIR
+!   mpirun -n NPROC ./bin/xcombine_sem KERNEL_NAMES INPUT_FILE OUTPUT_DIR
 !
 !
 ! COMMAND LINE ARGUMENTS
@@ -61,38 +61,46 @@
 !   kernel direcotires, one directoy per line.
 !
 !   This program's primary use case is to clip kernels. It can be used though on
-!   any scalar field of dimension (NGLLX,NGLLY,NGLLZ,NSPEC).
+!   any scalar field of dimension (NGLLX,NGLLZ,NSPEC).
 !
-!   This is a parrallel program -- it must be invoked with mpirun or other
+!   This is a parallel program -- it must be invoked with mpirun or other
 !   appropriate utility.  Operations are performed in embarassingly-parallel
 !   fashion.
 
 
 program combine_sem
 
+  use mpi
   use postprocess_par, only: MAX_STRING_LEN, MAX_KERNEL_PATHS, MAX_KERNEL_NAMES, &
     CUSTOM_REAL, NGLLX, NGLLZ, IIN, IOUT
 
-
   implicit none
+
 
   character(len=MAX_STRING_LEN) :: kernel_paths(MAX_KERNEL_PATHS), kernel_names(MAX_KERNEL_NAMES)
   character(len=MAX_STRING_LEN) :: kernel_names_comma_delimited
   character(len=MAX_STRING_LEN) :: line,filename,output_dir,input_file
   character(len=MAX_STRING_LEN) :: arg(3)
   integer :: npath,nker,nspec
-  integer :: i,ier,iker
+  integer :: i,ier,iker, nproc, myrank
   integer :: filesize
 
+  call MPI_INIT(ier)
+  call MPI_COMM_SIZE(MPI_COMM_WORLD,nproc,ier)
+  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
+  if( ier /= 0 ) stop 'error MPI initialization'
+
+
+  if (myrank==0) then
   print *, 'Running XCOMBINE_SEM'
   print *
 
   if (command_argument_count() /= 3) then
-    print *, 'bin/xcombine_sem KERNEL_NAMES INPUT_FILE OUTPUT_DIR'
+    print *, 'mpirun -n NPROC bin/xcombine_sem KERNEL_NAMES INPUT_FILE OUTPUT_DIR'
     print *, ''
     stop 'Please check command line arguments'
   endif
-
+  endif
   do i = 1, 3
     call get_command_argument(i,arg(i), status=ier)
   enddo
@@ -125,16 +133,18 @@ program combine_sem
   ! whenever mech changes, and avoids dealing with SPECFEM2D database system,
   ! which is a bit messy. Disadvantage of this approach is that it is a hack and
   ! possibly not portable.
-  write(filename, '(a)') '/proc000000_'//trim(kernel_names(1))//'.bin'
+
+  write(filename, '(a,i6.6,a)') '/proc',myrank,'_'//trim(kernel_names(1))//'.bin'
   open(IIN, file=trim(kernel_paths(1))//trim(filename))
   inquire(IIN, size=filesize)
   close(IIN)
   nspec=(filesize-8)/(CUSTOM_REAL*NGLLX*NGLLZ)
 
   do iker=1,nker
-      call combine_sem_array(kernel_names(iker),kernel_paths,output_dir,npath,nspec)
+      call combine_sem_array(kernel_names(iker),kernel_paths,output_dir,npath,nspec,myrank)
   enddo
 
+  call MPI_FINALIZE(ier)
 
 end program combine_sem
 
@@ -142,7 +152,7 @@ end program combine_sem
 !-------------------------------------------------------------------------------------------------
 !
 
-subroutine combine_sem_array(kernel_name,kernel_paths,output_dir,npath,nspec)
+subroutine combine_sem_array(kernel_name,kernel_paths,output_dir,npath,nspec,myrank)
 
   use postprocess_par, only: MAX_STRING_LEN, MAX_KERNEL_PATHS, MAX_KERNEL_NAMES, &
     CUSTOM_REAL, NGLLX, NGLLZ, IIN, IOUT
@@ -152,7 +162,7 @@ subroutine combine_sem_array(kernel_name,kernel_paths,output_dir,npath,nspec)
 
   character(len=MAX_STRING_LEN) :: kernel_name,kernel_paths(MAX_KERNEL_PATHS)
   character(len=MAX_STRING_LEN) :: output_dir
-  integer :: npath,nspec
+  integer :: npath,nspec,myrank
 
   ! local parameters
   character(len=MAX_STRING_LEN) :: filename
@@ -171,7 +181,7 @@ subroutine combine_sem_array(kernel_name,kernel_paths,output_dir,npath,nspec)
 
     ! read array
     array = 0._CUSTOM_REAL
-    write(filename,'(a)') trim(kernel_paths(iker)) //'/proc000000_'//trim(kernel_name)//'.bin'
+    write(filename,'(a,i6.6,a)') trim(kernel_paths(iker)) //'/proc',myrank,'_'//trim(kernel_name)//'.bin'
     open(IIN,file=trim(filename),status='old',form='unformatted',action='read',iostat=ier)
     if (ier /= 0) then
       write(*,*) '  array not found: ',trim(filename)
@@ -187,7 +197,7 @@ subroutine combine_sem_array(kernel_name,kernel_paths,output_dir,npath,nspec)
 
   ! write sum
   write(*,*) 'writing sum: ',trim(kernel_name)
-  write(filename,'(a)') trim(output_dir)//'/proc000000_'//trim(kernel_name)//'.bin'
+  write(filename,'(a,i6.6,a)') trim(output_dir)//'/proc',myrank,'_'//trim(kernel_name)//'.bin'
   open(IOUT,file=trim(filename),form='unformatted',status='unknown',action='write',iostat=ier)
   if (ier /= 0) then
     write(*,*) 'Error array not written:',trim(filename)
