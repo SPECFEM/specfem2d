@@ -244,11 +244,6 @@ subroutine iterate_time()
             endif
           endif
 
-          if( anyabs .and. STACEY_BOUNDARY_CONDITIONS) then
-            if( SAVE_FORWARD .and. SIMULATION_TYPE == 1 ) then
-              call store_stacey_BC_effect_term_acoustic()
-            endif
-          endif
         endif ! end of test if any acoustic element
 
         ! *********************************************************
@@ -605,11 +600,6 @@ subroutine iterate_time()
             endif
           endif
 
-          if( anyabs .and. STACEY_BOUNDARY_CONDITIONS) then
-            if( SAVE_FORWARD .and. SIMULATION_TYPE == 1 ) then
-              call store_stacey_BC_effect_term_viscoelastic()
-            endif
-          endif
         endif !if(any_elastic)
 
         ! *********************************************************
@@ -849,9 +839,6 @@ subroutine iterate_time()
             !     write(24,rec=it) b_viscodampz
           endif
 
-          if( anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1 ) then
-            call store_stacey_BC_effect_term_poro()
-          endif
         endif !if(any_poroelastic) then
 
         ! *********************************************************
