@@ -81,10 +81,10 @@ subroutine save_adjoint_kernels()
       close(96)
 
     else if (NEW_BINARY_FORMAT) then ! binary format
-       write(200)rho_kl
+       write(200)rho_ac_kl
        write(201)kappa_ac_kl
-       write(202)rhop_kl
-       write(203)alpha_kl
+       write(202)rhop_ac_kl
+       write(203)alpha_ac_kl
        close(200)
        close(201)
        close(202)
