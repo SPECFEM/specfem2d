@@ -8,6 +8,12 @@ zs                              = 1500.          # source location z in meters
 # for a plane wave without converted nor reflected waves at the free surface, i.e. with the incident wave only, P wave = 4, S wave = 5
 source_type                     = 1
 time_function_type              = 1              # Ricker = 1, first derivative = 2, Gaussian = 3, Dirac = 4, Heaviside = 5
+# time function_type == 8 source read from file, if time function_type == 9 : burst
+# If time_function_type == 8, enter below the custom source file to read (two columns file with time and amplitude) :
+# (For the moment dt must be equal to the dt of the simulation. File name can't exceed 150 characters)
+name_of_source_file             = "/uoigaf/iuagzf/afb" # Only for option 8 : file containing the source wavelet
+burst_band_width                = 200.415        # Only for option 9 : band width of the burst
+burst_central_frequency         = 100.546        # Only for option 9 : central frequency of the burst
 f0                              = 10.0           # dominant source frequency (Hz) if not Dirac or Heaviside
 tshift                          = 0.0            # time shift when multi sources (if one source, must be zero)
 anglesource                     = 0.0            # angle of the source (for a force only); for a plane wave, this is the incidence angle; for moment tensor sources this is unused
