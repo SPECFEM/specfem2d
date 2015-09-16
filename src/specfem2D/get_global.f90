@@ -45,7 +45,7 @@
 
   subroutine get_global()
 
-  use specfem_par, only : nspec,ibool,copy_ibool_ori,integer_mask_ibool
+  use specfem_par, only : nspec,ibool,copy_ibool_ori,integer_mask_ibool,SAVE_MODEL,outputname,myrank,ier
 
   implicit none
   include "constants.h"
@@ -76,6 +76,22 @@
         enddo
       enddo
     enddo
+
+if (save_model=='binary') then
+
+  write(outputname,'(a,i6.6,a)') './DATA/proc',myrank,'_NSPEC_ibool.bin'
+
+  open(888,file=trim(outputname),status='unknown',form='unformatted',iostat=ier)
+  if (ier /= 0) stop 'Error opening smoothed kernel file'
+  write(888) nspec
+  write(888) ibool
+  close(888)
+
+
+
+endif
+
+
 
   end subroutine get_global
 
