@@ -9,7 +9,6 @@ time_function_type              = 1              # Ricker = 1, first derivative 
 # (For the moment dt must be equal to the dt of the simulation. File name can't exceed 150 characters)
 name_of_source_file             = "/uoigaf/iuagzf/afb" # Only for option 8 : file containing the source wavelet
 burst_band_width                = 200.415        # Only for option 9 : band width of the burst
-burst_central_frequency         = 100.546        # Only for option 9 : central frequency of the burst
 f0                              = 18.0           # dominant source frequency (Hz) if not Dirac or Heaviside
 tshift                          = 0.0            # time shift when multi sources (if one source, must be zero)
 anglesource                     = 0.             # angle of the source (for a force only)

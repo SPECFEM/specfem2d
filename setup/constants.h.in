@@ -113,7 +113,7 @@
   integer, parameter :: IIN_UNDO_ATT = IOUT_UNDO_ATT
 
 ! number of lines per source in SOURCE file
-  integer, parameter :: NLINES_PER_SOURCE = 15
+  integer, parameter :: NLINES_PER_SOURCE = 14
 
 ! flags for Stacey absorbing boundaries
   integer, parameter :: IBOTTOM = 1
