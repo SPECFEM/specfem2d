@@ -47,10 +47,10 @@
 
 ! prepares source_time_function array
 
-  use specfem_par, only: AXISYM,is_on_the_axis,wxglj,poroelastcoef,kmato,NSTEP,NSOURCES,source_time_function, &
+  use specfem_par, only: AXISYM,NSTEP,NSOURCES,source_time_function, &
                          time_function_type,name_of_source_file,burst_band_width,burst_central_frequency,f0,tshift_src,factor, &
                          aval,t0,nb_proc_source,deltat,stage_time_scheme,c_LDDRK,is_proc_source, &
-                         USE_TRICK_FOR_BETTER_PRESSURE,jacobian,ispec_selected_source
+                         USE_TRICK_FOR_BETTER_PRESSURE
 
   implicit none
   include "constants.h"
@@ -59,7 +59,7 @@
   double precision :: stf_used, timeval, DecT, Tc, omegat, omega_coa,time,coeff, t_used
   double precision, dimension(NSOURCES) :: hdur,hdur_gauss
   double precision, external :: netlib_specfun_erf
-  integer :: it,i_source,ier,num_file,i,j
+  integer :: it,i_source,ier,num_file
   integer :: i_stage
   double precision, dimension(4) :: c_RK
   character(len=27) :: error_msg1='Error opening file source: '
@@ -83,18 +83,18 @@
     ! loop on all the sources
     do i_source=1,NSOURCES
 
-    if (AXISYM) then
-      factor(i_source) = - factor(i_source)
-      if (is_on_the_axis(ispec_selected_source(i_source))) then
-        do i=1,NGLLX
-        do j=1,NGLLZ
-          print *,"jacobian :",jacobian(i,j,ispec_selected_source(i_source))
-          print *,"wxglj:",wxglj(i)
-          print *,"mu :",poroelastcoef(2,1,kmato(ispec_selected_source(i_source)))
-        enddo
-        enddo
-      endif
-    endif
+     if (AXISYM) then
+       factor(i_source) = - factor(i_source)
+     !   if (is_on_the_axis(ispec_selected_source(i_source))) then
+     !     do i=1,NGLLX
+     !     do j=1,NGLLZ
+     !       print *,"jacobian :",jacobian(i,j,ispec_selected_source(i_source))
+     !       print *,"wxglj:",wxglj(i)
+     !       print *,"mu :",poroelastcoef(2,1,kmato(ispec_selected_source(i_source)))
+     !     enddo
+     !     enddo
+     !   endif
+     endif
 
     num_file = 800 + i_source
 

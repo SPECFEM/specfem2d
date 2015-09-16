@@ -11,7 +11,7 @@ This example is defined by three files : _Par_file_axisym -> contains all the pa
 
 To run the example, type:
 
-  ./process.sh
+  ./run_this_example.sh
 
 in this directory.
 
