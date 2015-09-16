@@ -85,7 +85,7 @@ program smooth_sem
 
   integer :: i,j,iglob,ier,ispec2,ispec,inum, iker
   integer :: iproc, num_interfaces_ext_mesh, filesize, ninterface, max_interface_size
-  integer, dimension(:,:),allocatable :: ibool_interfaces_ext_mesh 
+  integer, dimension(:,:),allocatable :: ibool_interfaces_ext_mesh
   integer, dimension(:),allocatable :: nelmnts_neighbours, nibool_interfaces_ext_mesh
 
   character(len=MAX_STRING_LEN) :: arg(5)
@@ -197,7 +197,7 @@ program smooth_sem
     ! global point arrays
     read(IIN) xstore_me
     close(IIN)
-   
+
     write(prname, '(a,i6.6,a)') trim(input_dir)//'/proc',myrank,'_z.bin'
     ! gets the coordinate z of the points located in my slice
     open(unit=IIN,file=trim(prname),status='old',action='read',form='unformatted',iostat=ier)
@@ -248,7 +248,7 @@ program smooth_sem
     ! global point arrays
     read(IIN) xstore_other
     close(IIN)
-   
+
     write(prname, '(a,i6.6,a)') trim(input_dir)//'/proc',iproc,'_z.bin'
     ! gets the coordinate z of the points located in the other slice
     open(unit=IIN,file=trim(prname),status='old',action='read',form='unformatted',iostat=ier)
@@ -385,7 +385,7 @@ enddo
 
   ! the maximum value for the smoothed kernel
   norm(:) = max_old(:)
- 
+
   call MPI_REDUCE(norm,max_old,nker,CUSTOM_MPI_TYPE,MPI_MAX,0,MPI_COMM_WORLD,ier)
 
   norm(:) = max_new(:)
@@ -419,8 +419,8 @@ end program smooth_sem
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLZ),intent(in) :: xx_elem, zz_elem
   real(kind=CUSTOM_REAL),intent(in) :: x0,z0,sigma_h2,sigma_v2
   integer :: nglob_other, ispec, nspec, i, j,max_interface_size, ninterface, iproc
-  integer,dimension(NGLLX,NGLLZ,nglob_other) :: imask  
-  integer,dimension(NGLLX,NGLLZ,nspec) :: ibool 
+  integer,dimension(NGLLX,NGLLZ,nglob_other) :: imask
+  integer,dimension(NGLLX,NGLLZ,nspec) :: ibool
   integer,dimension(ninterface) :: nelmnts_neighbours,  nibool_interfaces_ext_mesh
   integer,dimension(NGLLX*max_interface_size,ninterface) :: ibool_interfaces_ext_mesh
 
@@ -441,18 +441,18 @@ end program smooth_sem
 
     do jj = 1, NGLLZ
       do ii = 1, NGLLX
- 
+
     iglob= ibool(ii,jj,ispec)
 
      !Check if the point has not already be taken in account in an other element of the same slice
      if (imask(i,j,iglob)==1) cycle
- 
+
     !Check if the point has not already be taken in account in an other element of an other slice ( located in an interface between MPI slices )
      if(nb_former_neighbour_slice>0) then
      iinterface=1
-     do i_former_slice = 1,nb_former_neighbour_slice 
-       do while (nelmnts_neighbours(iinterface)<iproc) 
-          iinterface= iinterface+1   
+     do i_former_slice = 1,nb_former_neighbour_slice
+       do while (nelmnts_neighbours(iinterface)<iproc)
+          iinterface= iinterface+1
        enddo
        do k = 1, nibool_interfaces_ext_mesh(iinterface)
           if (iglob==ibool_interfaces_ext_mesh(k,i_former_slice)) imask(i,j,iglob)=1
