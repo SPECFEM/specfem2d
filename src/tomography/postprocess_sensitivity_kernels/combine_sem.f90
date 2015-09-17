@@ -70,7 +70,7 @@
 
 program combine_sem
 
-  use mpi
+!! DK DK comments this out to avoid a compilation error  use mpi
   use postprocess_par, only: MAX_STRING_LEN, MAX_KERNEL_PATHS, MAX_KERNEL_NAMES, &
     CUSTOM_REAL, NGLLX, NGLLZ, IIN, IOUT
 
@@ -82,12 +82,14 @@ program combine_sem
   character(len=MAX_STRING_LEN) :: line,filename,output_dir,input_file
   character(len=MAX_STRING_LEN) :: arg(3)
   integer :: npath,nker,nspec
-  integer :: i,ier,iker, nproc, myrank
+!! DK DK comments this out to avoid a compilation error  integer :: i,ier,iker, nproc, myrank
+  integer :: i,ier,iker, myrank
   integer :: filesize
 
-  call MPI_INIT(ier)
-  call MPI_COMM_SIZE(MPI_COMM_WORLD,nproc,ier)
-  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
+!! DK DK comments this out to avoid a compilation error  call MPI_INIT(ier)
+!! DK DK comments this out to avoid a compilation error  call MPI_COMM_SIZE(MPI_COMM_WORLD,nproc,ier)
+!! DK DK comments this out to avoid a compilation error  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
+  stop 'there is a bug here, DK DK adds this stop statement for now'
   if( ier /= 0 ) stop 'error MPI initialization'
 
 
@@ -144,7 +146,7 @@ program combine_sem
       call combine_sem_array(kernel_names(iker),kernel_paths,output_dir,npath,nspec,myrank)
   enddo
 
-  call MPI_FINALIZE(ier)
+!! DK DK comments this out to avoid a compilation error  call MPI_FINALIZE(ier)
 
 end program combine_sem
 

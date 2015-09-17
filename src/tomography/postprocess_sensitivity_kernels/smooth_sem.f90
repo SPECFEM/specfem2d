@@ -71,27 +71,33 @@
 
 program smooth_sem
 
-  use mpi
+!! DK DK comments this out to avoid a compilation error  use mpi
   use postprocess_par
 
   implicit none
-  include "precision.h"
+!! DK DK comments this out to avoid a compilation error  include "precision.h"
   integer, parameter :: NARGS = 5
 
   ! data must be of dimension: (NGLLX,NGLLZ,NSPEC_AB)
   real(kind=CUSTOM_REAL), dimension(:,:,:),allocatable :: dat
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: dat_store,dat_smooth
-  integer :: NGLOB_me, myrank,nproc, NGLOB_other, nspec_me, nspec_other
+!! DK DK comments this out to avoid a compilation error
+!! DK DK  integer :: NGLOB_me, myrank,nproc, NGLOB_other, nspec_me, nspec_other
+  integer :: myrank,nproc, NGLOB_other, nspec_me, nspec_other
 
-  integer :: i,j,iglob,ier,ispec2,ispec,inum, iker
-  integer :: iproc, num_interfaces_ext_mesh, filesize, ninterface, max_interface_size
+!! DK DK comments this out to avoid a compilation error  integer :: i,j,iglob,ier,ispec2,ispec,inum,iker
+  integer :: i,j,ier,ispec2,ispec,iker
+!! DK DK comments this out to avoid a compilation error
+!! DK DK  integer :: iproc, num_interfaces_ext_mesh, filesize, ninterface, max_interface_size
+  integer :: iproc, ninterface, max_interface_size
   integer, dimension(:,:),allocatable :: ibool_interfaces_ext_mesh
   integer, dimension(:),allocatable :: nelmnts_neighbours, nibool_interfaces_ext_mesh
 
   character(len=MAX_STRING_LEN) :: arg(5)
   character(len=MAX_STRING_LEN) :: input_dir, output_dir
-  character(len=MAX_STRING_LEN) :: prname_lp, prname, local_path
-  character(len=MAX_STRING_LEN*2) :: local_data_file
+!! DK DK comments this out to avoid a compilation error  character(len=MAX_STRING_LEN) :: prname_lp, prname, local_path
+  character(len=MAX_STRING_LEN) :: prname
+!! DK DK comments this out to avoid a compilation error  character(len=MAX_STRING_LEN*2) :: local_data_file
 
 
   character(len=MAX_STRING_LEN) :: kernel_names(MAX_KERNEL_NAMES)
@@ -109,7 +115,8 @@ program smooth_sem
   integer, dimension(:,:,:),allocatable :: ibool_other
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: tk
   real(kind=CUSTOM_REAL), dimension(:,:,:),allocatable :: bk
-  real(kind=CUSTOM_REAL), dimension(:,:,:),allocatable :: xl,  zl
+!! DK DK comments this out to avoid a compilation error
+!! DK DK  real(kind=CUSTOM_REAL), dimension(:,:,:),allocatable :: xl,  zl
   real(kind=CUSTOM_REAL), dimension(:,:,:),allocatable :: xstore_me, zstore_me,xstore_other, zstore_other
   integer, dimension(:,:,:),allocatable :: imask
 
@@ -117,12 +124,13 @@ program smooth_sem
   real(kind=CUSTOM_REAL) :: element_size
   REAL(kind=CUSTOM_REAL), PARAMETER :: PI = 3.1415927
 
-  call MPI_INIT(ier)
-  call MPI_COMM_SIZE(MPI_COMM_WORLD,nproc,ier)
-  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
+!! DK DK comments this out to avoid a compilation error  call MPI_INIT(ier)
+!! DK DK comments this out to avoid a compilation error  call MPI_COMM_SIZE(MPI_COMM_WORLD,nproc,ier)
+!! DK DK comments this out to avoid a compilation error  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
 
   if (myrank == 0) print *,"Running XSMOOTH_SEM"
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
+!! DK DK comments this out to avoid a compilation error  call MPI_BARRIER(MPI_COMM_WORLD,ier)
+  stop 'there is a bug here thus DK DK adds this stop statement for now'
 
   ! parse command line arguments
   if (command_argument_count() /= NARGS) then
@@ -131,7 +139,7 @@ program smooth_sem
       stop ' Please check command line arguments'
     endif
   endif
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
+!! DK DK comments this out to avoid a compilation error  call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
   do i = 1, NARGS
     call get_command_argument(i,arg(i), status=ier)
@@ -146,7 +154,7 @@ program smooth_sem
   call parse_kernel_names(kernel_names_comma_delimited,kernel_names,nker)
   allocate(norm(nker),max_new(nker),max_old(nker))
 
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
+!! DK DK comments this out to avoid a compilation error  call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
   ! check smoothing radii
   sigma_h2 = 2.0 * sigma_h ** 2  ! factor two for gaussian distribution with standard variance sigma
@@ -210,7 +218,7 @@ program smooth_sem
     close(IIN)
 
   ! synchronizes
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
+!! DK DK comments this out to avoid a compilation error  call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
 ! loops over slices
 ! each process reads in his own neighbor slices and gaussian filters the values
@@ -381,15 +389,17 @@ enddo
   deallocate(dat_smooth)
 
   ! synchronizes
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
+!! DK DK comments this out to avoid a compilation error  call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
   ! the maximum value for the smoothed kernel
   norm(:) = max_old(:)
 
-  call MPI_REDUCE(norm,max_old,nker,CUSTOM_MPI_TYPE,MPI_MAX,0,MPI_COMM_WORLD,ier)
+!! DK DK comments this out to avoid a compilation error
+!! DK DK call MPI_REDUCE(norm,max_old,nker,CUSTOM_MPI_TYPE,MPI_MAX,0,MPI_COMM_WORLD,ier)
 
   norm(:) = max_new(:)
-  call MPI_REDUCE(norm,max_new,nker,CUSTOM_MPI_TYPE,MPI_MAX,0,MPI_COMM_WORLD,ier)
+!! DK DK comments this out to avoid a compilation error
+!! DK DK call MPI_REDUCE(norm,max_new,nker,CUSTOM_MPI_TYPE,MPI_MAX,0,MPI_COMM_WORLD,ier)
 do iker= 1, nker
   if (myrank == 0) then
     print *
@@ -401,7 +411,7 @@ enddo
    if (myrank == 0) close(IIN)
 
   ! stop all the processes and exit
-  call MPI_FINALIZE(ier)
+!! DK DK comments this out to avoid a compilation error  call MPI_FINALIZE(ier)
 
 end program smooth_sem
 
@@ -442,12 +452,13 @@ end program smooth_sem
     do jj = 1, NGLLZ
       do ii = 1, NGLLX
 
-    iglob= ibool(ii,jj,ispec)
+    iglob = ibool(ii,jj,ispec)
 
-     !Check if the point has not already be taken in account in an other element of the same slice
+     ! Check if the point has not already be taken in account in an other element of the same slice
      if (imask(i,j,iglob)==1) cycle
 
-    !Check if the point has not already be taken in account in an other element of an other slice ( located in an interface between MPI slices )
+    ! Check if the point has not already be taken in account in an other element of an other slice
+    ! (located in an interface between MPI slices)
      if(nb_former_neighbour_slice>0) then
      iinterface=1
      do i_former_slice = 1,nb_former_neighbour_slice
