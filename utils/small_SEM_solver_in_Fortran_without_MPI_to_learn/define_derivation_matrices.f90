@@ -86,3 +86,43 @@
 
   end subroutine define_derivation_matrices
 
+!____________________________________________________________________________________
+!
+!subroutine define_GLJ_derivation_matrix(xiglj,wxglj,hprimeBar_xx,hprimeBarwglj_xx)
+! Calculate all that we need for the GLJ quadrature on axial elements :
+! Weights, GLJ points and derivatives of polynomials at GLJ points.
+!____________________________________________________________________________________
+!
+
+  subroutine define_GLJ_derivation_matrix(xiglj,wxglj,hprimeBar_xx,hprimeBarwglj_xx,NGLJ)
+
+  implicit none
+
+  double precision, parameter    :: alphaGLJ=0.d0,betaGLJ=1.d0
+
+  integer :: NGLJ
+
+! array with derivatives of Lagrange polynomials and precalculated products
+  double precision, dimension(NGLJ) :: xiglj,wxglj
+  double precision, dimension(NGLJ,NGLJ) :: hprimeBar_xx,hprimeBarwglj_xx
+
+! function for calculating derivatives of GLJ polynomials
+  double precision, external :: poly_deriv_GLJ
+
+  integer i1,i2
+
+! set up coordinates of the Gauss-Lobatto-Jacobi points
+  call zwgljd(xiglj,wxglj,NGLJ,alphaGLJ,betaGLJ)
+
+! calculate derivatives of the GLJ quadrature polynomials
+! and precalculate some products in double precision
+! hprimeBar(i,j) = hBar'_j(xiglj_i) by definition of the derivation matrix
+  do i1=1,NGLJ
+    do i2=1,NGLJ
+      hprimeBar_xx(i2,i1) = poly_deriv_GLJ(i1-1,i2-1,xiglj,NGLJ)
+      hprimeBarwglj_xx(i2,i1) = wxglj(i2) * hprimeBar_xx(i2,i1)
+    enddo
+  enddo
+
+  end subroutine define_GLJ_derivation_matrix
+
