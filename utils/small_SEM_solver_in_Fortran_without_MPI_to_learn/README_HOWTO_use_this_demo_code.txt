@@ -7,9 +7,9 @@ Also useful to test new ideas by modifying this simple code to run some tests.
 
 Here is how to compile and use it:
 
-1/ edit make_Fortran.csh if needed to change the compiler or compiler options
+1/ edit make_Fortran_2D_plane_strain.csh if needed to change the compiler or compiler options
 
-2/ ./make_Fortran.csh
+2/ ./make_Fortran_2D_plane_strain.csh
 
 3/ ./xspecfem2D
 
