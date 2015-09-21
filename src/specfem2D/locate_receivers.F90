@@ -269,10 +269,12 @@ use specfem_par, only : AXISYM,is_on_the_axis,xiglj,gather_ispec_selected_rec,ac
 
 #endif
 
-  if ((myrank == 0) .and. USE_TRICK_FOR_BETTER_PRESSURE) then
+  if (USE_TRICK_FOR_BETTER_PRESSURE) then
     do irec=1,nrec
-      if (.not. acoustic(ispec_selected_rec(irec))) then
-        call exit_MPI('USE_TRICK_FOR_BETTER_PRESSURE : receivers must be in acoustic elements')
+      if (which_proc_receiver(irec) == myrank) then
+        if (.not. acoustic(ispec_selected_rec(irec))) then
+          call exit_MPI('USE_TRICK_FOR_BETTER_PRESSURE : receivers must be in acoustic elements')
+        endif
       endif
     enddo
   endif
