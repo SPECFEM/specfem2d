@@ -120,7 +120,7 @@
 
 ! When implementing viscoelasticity according to the Carcione 1993 paper, attenuation is
 ! non-causal rather than causal. We fixed the problem by using equations in Carcione's
-! 2004 paper and his 2007 book. See also file doc/problem_attenuation_reference_Specfem2D_fixed_by_Xie_Zhinan.pdf
+! 2004 paper and his 2007 book. See also file doc/old_problem_attenuation_reference_Specfem2D_fixed_by_Xie_Zhinan.pdf
 
 ! from J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
 ! vol. 58(1), p. 110-120 (1993) for two memory-variable mechanisms (page 112).
@@ -320,7 +320,7 @@
 ! Author  = {\'Emilie Blanc and Dimitri Komatitsch and Emmanuel Chaljub and Bruno Lombard and Zhinan Xie},
 ! Journal = {Geophysical Journal International},
 ! Year    = {2015},
-! Note    = {in press.}}
+! Note    = {submitted.}}
 
 !-------------------------------------------------------------------------
 
