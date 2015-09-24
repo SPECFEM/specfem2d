@@ -1393,8 +1393,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
               enddo
               if (ii==n .or. nrmz==zero) then
                 if (dispwarn) then
-                  print *,'SolvOpt warning:'
-                  print *,'Normal re-setting of a transformation matrix.'
+                  print *,'SolvOpt warning: Normal re-setting of a transformation matrix'
                 endif
                 if (dabs(fst-f)<dabs(f)*1.d-2) then
                    ajp=ajp-10*n
