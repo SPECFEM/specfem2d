@@ -79,7 +79,7 @@ xdeb                            = 14.5           # first receiver x in meters
 zdeb                            = 9.             # first receiver z in meters
 xfin                            = 17.5           # last receiver x in meters (ignored if only one receiver)
 zfin                            = 9.             # last receiver z in meters (ignored if only one receiver)
-enreg_surf_same_vertical        = .false.        # receivers inside the medium or at the surface
+record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface
 
 # display parameters
 NSTEP_BETWEEN_OUTPUT_INFO      = 200            # every how many time steps we display information about the simulation (costly, do not use a very small value)
