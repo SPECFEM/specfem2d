@@ -46,31 +46,13 @@
 
 ! starts reading in parameters from input Database file
 
-  use specfem_par, only: myrank,simulation_title,SIMULATION_TYPE,SAVE_FORWARD,UNDO_ATTENUATION,AXISYM,&
-                         NOISE_TOMOGRAPHY,MODEL,npgeo,nproc_read_from_database, &
-                         output_grid_Gnuplot,interpol,NSTEP_BETWEEN_OUTPUT_INFO,NSTEP_BETWEEN_OUTPUT_SEISMOS, &
-                         NSTEP_BETWEEN_OUTPUT_IMAGES,PML_BOUNDARY_CONDITIONS,&
-                         ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,NELEM_PML_THICKNESS,&
-                         NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS,subsamp_seismos, &
-                         imagetype_JPEG,imagetype_wavefield_dumps, &
-                         output_postscript_snapshot,output_color_image,colors,numbers, &
-                         meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows, &
-                         anglerec,initialfield,add_Bielak_conditions, &
-                         seismotype,imagetype_postscript,assign_external_model, &
-                         output_grid_ASCII,output_energy,output_wavefield_dumps,use_binary_for_wavefield_dumps, &
-                         ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,save_ASCII_seismograms, &
-                         save_binary_seismograms_single,save_binary_seismograms_double,DRAW_SOURCES_AND_RECEIVERS, &
-                         Q0,freq0,p_sv,NSTEP,deltat,NT_DUMP_ATTENUATION,NSOURCES,USE_TRICK_FOR_BETTER_PRESSURE, &
-                         factor_subsample_image,USE_CONSTANT_MAX_AMPLITUDE,CONSTANT_MAX_AMPLITUDE_TO_USE, &
-                         USE_SNAPSHOT_NUMBER_IN_FILENAME,DRAW_WATER_IN_BLUE,US_LETTER, &
-                         POWER_DISPLAY_COLOR,SU_FORMAT,USER_T0, time_stepping_scheme, &
-                         ADD_SPRING_TO_STACEY,ADD_PERIODIC_CONDITIONS,PERIODIC_HORIZ_DIST, &
-                         read_external_mesh,ACOUSTIC_FORCING,save_ASCII_kernels,GPU_MODE,TOMOGRAPHY_FILE
+  use specfem_par
+
   implicit none
-  include "constants.h"
 
   ! local parameters
-  integer :: ier,nproc
+
+  !integer :: ier,nproc
   character(len=80) :: datlin
   character(len=256)  :: prname
 
@@ -180,6 +162,9 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,'(a100)') MODEL
+
+  read(IIN,"(a80)") datlin
+  read(IIN,'(a100)') SAVE_MODEL
 
   read(IIN,"(a80)") datlin
   read(IIN,'(a100)') TOMOGRAPHY_FILE
@@ -369,7 +354,7 @@
   subroutine read_databases_sources()
 
 ! reads source parameters
-  use specfem_par, only : NSOURCES,source_type,time_function_type, &
+  use specfem_par, only : NSOURCES,source_type,time_function_type,name_of_source_file,burst_band_width, &
                           x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource
   implicit none
   include "constants.h"
@@ -395,9 +380,10 @@
   ! reads in source info from Database file
   do i_source=1,NSOURCES
      read(IIN,"(a80)") datlin
-     read(IIN,*) source_type(i_source),time_function_type(i_source), &
-                 x_source(i_source),z_source(i_source),f0(i_source),tshift_src(i_source), &
-                 factor(i_source),anglesource(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
+     read(IIN,*) source_type(i_source),time_function_type(i_source)
+     read(IIN,"(a100)") name_of_source_file(i_source)
+     read(IIN,*) burst_band_width(i_source),x_source(i_source),z_source(i_source),f0(i_source), &
+                 tshift_src(i_source),factor(i_source),anglesource(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
   enddo
 
   end subroutine read_databases_sources

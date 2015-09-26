@@ -53,7 +53,7 @@
                          QKappa_attenuationext,Qmu_attenuationext, &
                          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
                          MODEL,ATTENUATION_VISCOELASTIC_SOLID,p_sv,&
-                         inputname,ios,tomo_material
+                         inputname,ios,tomo_material, myrank
 
   implicit none
   include "constants.h"
@@ -69,7 +69,8 @@
 
   if(trim(MODEL) == 'legacy') then
 
-    open(unit=1001,file='DATA/model_velocity.dat_input',status='unknown')
+    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_model_velocity.dat_input'
+    open(unit=1001,file=inputname,status='unknown')
     do ispec = 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
@@ -84,7 +85,8 @@
 
 
   else if(trim(MODEL)=='ascii') then
-    open(unit=1001,file='DATA/proc000000_rho_vp_vs.dat',status='unknown')
+    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho_vp_vs.dat'
+    open(unit=1001,file= inputname,status='unknown')
     do ispec = 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
@@ -98,7 +100,7 @@
     close(1001)
 
   else if((trim(MODEL) == 'binary') .or. (trim(MODEL) == 'gll')) then
-      write(inputname,'(a)') 'DATA/proc000000_rho.bin'
+      write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho.bin'
       open(unit = 1001, file = inputname, status='old',action='read',form='unformatted', iostat=ios)
       if (ios /= 0) stop 'Error opening rho.bin file.'
 
@@ -106,14 +108,14 @@
       close(1001)
       print *, 'rho', minval(rhoext), maxval(rhoext)
 
-      write(inputname,'(a)') 'DATA/proc000000_vp.bin'
+      write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_vp.bin'
       open(unit = 1001, file = inputname, status='old',action='read',form='unformatted', iostat=ios)
       if (ios /= 0) stop 'Error opening vp.bin file.'
 
       read(1001) vpext
       close(1001)
 
-      write(inputname,'(a)') 'DATA/proc000000_vs.bin'
+      write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_vs.bin'
       open(unit = 1001, file = inputname, status='old',action='read',form='unformatted', iostat=ios)
       if (ios /= 0) stop 'Error opening vs.bin file.'
 

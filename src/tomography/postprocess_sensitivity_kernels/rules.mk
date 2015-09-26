@@ -42,18 +42,20 @@
 
 ## compilation directories
 S := ${S_TOP}/src/tomography/postprocess_sensitivity_kernels
-$(postprocess_OBJECTS): S := ${S_TOP}/src/postprocess_sensitivity_kernels
+$(postprocess_OBJECTS): S := ${S_TOP}/src/tomography/postprocess_sensitivity_kernels
 
 #######################################
 
 postprocess_TARGETS = \
 	$E/xcombine_sem \
 	$E/xsum_kernels_ascii \
+	$E/xsmooth_sem \
 	$(EMPTY_MACRO)
 
 postprocess_OBJECTS = \
 	$(xcombine_sem_OBJECTS) \
 	$(xsum_kernels_ascii_OBJECTS) \
+	$(xsmooth_sem_OBJECTS) \
 	$(EMPTY_MACRO)
 
 postprocess_MODULES = \
@@ -78,6 +80,8 @@ xcombine_sem: $E/xcombine_sem
 sum_kernels_ascii: xsum_kernels_ascii
 xsum_kernels_ascii: $E/xsum_kernels_ascii
 
+smooth_sem: xsmooth_sem
+xsmooth_sem: $E/xsmooth_sem
 
 #######################################
 
@@ -115,6 +119,20 @@ xsum_kernels_ascii_SHARED_OBJECTS = \
 ${E}/xsum_kernels_ascii: $(xsum_kernels_ascii_OBJECTS) $(xsum_kernels_ascii_SHARED_OBJECTS)
 	${LINK} $(DEF_FFLAGS) -o $@ $+
 
+#######################################
+
+##
+## smooth_sum
+##
+
+xsmooth_sem_OBJECTS = \
+	$O/postprocess_par.postprocess_module.o \
+	$O/smooth_sem.postprocess.o \
+	$O/parse_kernel_names.postprocess.o \
+	$(EMPTY_MACRO)
+
+${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS) 
+	${LINK} $(DEF_FFLAGS) -o $@ $+
 
 #######################################
 

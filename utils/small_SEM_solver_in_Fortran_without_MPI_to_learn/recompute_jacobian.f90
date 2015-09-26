@@ -40,66 +40,83 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
- subroutine store_stacey_BC_effect_term_poro()
 
-  use specfem_par, only: nspec_left,nspec_right,nspec_bottom,nspec_top, &
-                         b_absorb_poro_s_left,b_absorb_poro_w_left, &
-                         b_absorb_poro_s_right,b_absorb_poro_w_right, &
-                         b_absorb_poro_s_bottom,b_absorb_poro_w_bottom, &
-                         b_absorb_poro_s_top,b_absorb_poro_w_top,it
+! Recompute 2D jacobian at a given point in a 4-node or 9-node element
+! Compute also the global coordinates of the point defined by: (xi,gamma,ispec)
+
+  subroutine recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian,coorg,knods,ispec,ngnod,nspec,npgeo,NDIM)
+
   implicit none
-  include "constants.h"
 
-  !local variable
-  integer :: i,id,ispec
+  integer, intent(in) :: ispec,ngnod,nspec,npgeo,NDIM
+  double precision, intent(out) :: x,z,xix,xiz,gammax,gammaz,jacobian
+  double precision, intent(in) :: xi,gamma
 
-  !--- left absorbing boundary
-  if(nspec_left >0) then
-    do ispec = 1,nspec_left
-      do id =1,2
-        do i=1,NGLLZ
-          write(45) b_absorb_poro_s_left(id,i,ispec,it)
-          write(25) b_absorb_poro_w_left(id,i,ispec,it)
-        enddo
-      enddo
+  integer, intent(in) :: knods(ngnod,nspec)
+  double precision, intent(in) :: coorg(NDIM,npgeo)
+
+! 2D shape functions and their derivatives at receiver
+  double precision shape2D(ngnod)
+  double precision dershape2D(NDIM,ngnod)
+
+  double precision xxi,zxi,xgamma,zgamma,xelm,zelm
+
+  integer ia,nnum
+
+! recompute jacobian for any (xi,gamma) point, not necessarily a GLL point
+
+! create the 2D shape functions and then the Jacobian
+  call define_shape_functions(shape2D,dershape2D,xi,gamma,ngnod,NDIM)
+
+! compute coordinates and jacobian matrix
+  x = 0.d0
+  z = 0.d0
+
+  xxi = 0.d0
+  zxi = 0.d0
+  xgamma = 0.d0
+  zgamma = 0.d0
+
+  do ia=1,ngnod
+
+    nnum = knods(ia,ispec)
+
+    xelm = coorg(1,nnum)
+    zelm = coorg(2,nnum)
+
+    x = x + shape2D(ia)*xelm
+    z = z + shape2D(ia)*zelm
+
+    xxi = xxi + dershape2D(1,ia)*xelm
+    zxi = zxi + dershape2D(1,ia)*zelm
+    xgamma = xgamma + dershape2D(2,ia)*xelm
+    zgamma = zgamma + dershape2D(2,ia)*zelm
+
+  enddo
+
+  jacobian = xxi*zgamma - xgamma*zxi
+
+! the Jacobian is negative, so far this means that there is an error in the mesh
+! therefore print the coordinates of the mesh points of this element
+! and also create an OpenDX file to visualize it
+  if(jacobian <= 0.d0) then
+! print the coordinates of the mesh points of this element
+    print *, 'ispec = ', ispec
+    print *, 'ngnod = ', ngnod
+    do ia=1,ngnod
+      nnum = knods(ia,ispec)
+      xelm = coorg(1,nnum)
+      zelm = coorg(2,nnum)
+      print *,'node ', ia,' x,y = ',xelm,zelm
     enddo
+    stop 'error: negative 2D Jacobian found'
   endif
 
-  !--- right absorbing boundary
-  if(nspec_right >0) then
-    do ispec = 1,nspec_right
-      do id =1,2
-        do i=1,NGLLZ
-          write(46) b_absorb_poro_s_right(id,i,ispec,it)
-          write(26) b_absorb_poro_w_right(id,i,ispec,it)
-        enddo
-      enddo
-    enddo
-  endif
+! invert the relation
+  xix = zgamma / jacobian
+  gammax = - zxi / jacobian
+  xiz = - xgamma / jacobian
+  gammaz = xxi / jacobian
 
-  !--- bottom absorbing boundary
-  if(nspec_bottom >0) then
-    do ispec = 1,nspec_bottom
-      do id =1,2
-        do i=1,NGLLX
-          write(47) b_absorb_poro_s_bottom(id,i,ispec,it)
-          write(29) b_absorb_poro_w_bottom(id,i,ispec,it)
-        enddo
-      enddo
-    enddo
-  endif
-
-  !--- top absorbing boundary
-  if(nspec_top >0) then
-    do ispec = 1,nspec_top
-      do id =1,2
-        do i=1,NGLLX
-          write(48) b_absorb_poro_s_top(id,i,ispec,it)
-          write(28) b_absorb_poro_w_top(id,i,ispec,it)
-        enddo
-      enddo
-    enddo
-  endif
-
- end subroutine store_stacey_BC_effect_term_poro
+  end subroutine recompute_jacobian
 

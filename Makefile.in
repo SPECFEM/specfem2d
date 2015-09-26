@@ -177,7 +177,7 @@ DEFAULT = \
 
 default: $(DEFAULT)
 
-all: default auxiliaries tomography/postprocess_sensitivity_kernels
+all: default auxiliaries postprocess
 
 
 ifdef CLEAN
@@ -195,10 +195,8 @@ clean:
 endif
 
 realclean: clean
-ifeq (${SCOTCH_BUNDLED},1)
 	@echo "cleaning bundled Scotch in directory: ${SCOTCH_DIR}/src"
 	$(MAKE) -C ${SCOTCH_DIR}/src realclean
-endif
 	-rm -rf $E/* $O/*
 
 

@@ -170,10 +170,10 @@
 
 subroutine add_adjoint_sources_SU
 
-  use specfem_par, only: myrank, NSTEP, nrec, xi_receiver, gamma_receiver, which_proc_receiver, &
+  use specfem_par, only: AXISYM,xiglj,is_on_the_axis,myrank, NSTEP, nrec, xi_receiver, gamma_receiver, which_proc_receiver, &
                          xigll,zigll,hxir,hgammar,hpxir,hpgammar, &
                          adj_sourcearray, adj_sourcearrays, &
-                         r4head, header2, filename, source_adjointe, GPU_MODE
+                         r4head, header2, filename, source_adjointe, GPU_MODE, ispec_selected_rec
 
   include "constants.h"
 
@@ -209,7 +209,17 @@ subroutine add_adjoint_sources_SU
            if (ios /= 0) call exit_MPI(' file '//trim(filename)//' read error')
       header2=int(r4head(29), kind=2)
       if (irec==1) print *, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
-      call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
+
+      if (AXISYM) then
+        if(is_on_the_axis(ispec_selected_rec(irec))) then ! TODO verify ispec_selected_rec and not ispec_selected_source
+          call lagrange_any(xi_receiver(irec),NGLJ,xiglj,hxir,hpxir)
+        else
+          call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
+        endif
+      else
+        call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
+      endif
+
       call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
       source_adjointe(irec_local,:,1) = adj_src_s(:,1)
       source_adjointe(irec_local,:,2) = adj_src_s(:,3)

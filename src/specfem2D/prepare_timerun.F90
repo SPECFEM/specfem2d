@@ -322,35 +322,35 @@ subroutine prepare_timerun_kernel()
 
       else if (NEW_BINARY_FORMAT) then
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kernel.bin'
-          open(unit = 200, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
+          open(unit = 204, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
           if (ios /= 0) stop 'Error writing kernel file to disk'
 
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_kappa_kernel.bin'
-          open(unit = 201, file ='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
+          open(unit = 205, file ='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
           if (ios /= 0) stop 'Error writing kernel file to disk'
 
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mu_kernel.bin'
-          open(unit = 202, file ='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
+          open(unit = 206, file ='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
           if (ios /= 0) stop 'Error writing kernel file to disk'
 
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_kernel.bin'
-          open(unit = 203, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
+          open(unit = 207, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
           if (ios /= 0) stop 'Error writing kernel file to disk'
 
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_alpha_kernel.bin'
-          open(unit = 204, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
+          open(unit = 208, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
           if (ios /= 0) stop 'Error writing kernel file to disk'
 
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_beta_kernel.bin'
-          open(unit = 205, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
+          open(unit = 209, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
           if (ios /= 0) stop 'Error writing kernel file to disk'
 
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_c_kernel.bin'
-          open(unit = 206,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
+          open(unit = 210,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
           if (ios /= 0) stop 'Error writing kernel file to disk'
 
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_beta_kernel.bin'
-          open(unit = 207,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
+          open(unit = 211,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
           if (ios /= 0) stop 'Error writing kernel file to disk'
 
 
@@ -941,6 +941,8 @@ subroutine prepare_timerun_read()
   !
     allocate( source_type(NSOURCES) )
     allocate( time_function_type(NSOURCES) )
+    allocate( name_of_source_file(NSOURCES) )
+    allocate( burst_band_width(NSOURCES) )
     allocate( x_source(NSOURCES) )
     allocate( z_source(NSOURCES) )
     allocate( ix_image_color_source(NSOURCES) )
@@ -1766,14 +1768,6 @@ subroutine prepare_timerun_attenuation()
       deltat**3*thetainv**3 / 6.d0 + deltat**4*thetainv**4 / 24.d0
     betaval = deltat / 2.d0 + deltat**2*thetainv / 3.d0 + deltat**3*thetainv**2 / 8.d0 + deltat**4*thetainv**3 / 24.d0
     gammaval = deltat / 2.d0 + deltat**2*thetainv / 6.d0 + deltat**3*thetainv**2 / 24.d0
-   print *,'************************************************************'
-   print *,'****** Visco attenuation coefficients (poroelastic) ********'
-   print *,'theta_e = ', theta_e
-   print *,'theta_s = ', theta_s
-   print *,'alpha = ', alphaval
-   print *,'beta = ', betaval
-   print *,'gamma = ', gammaval
-   print *,'************************************************************'
 
 ! initialize memory variables for attenuation
     viscox(:,:,:) = 0.d0

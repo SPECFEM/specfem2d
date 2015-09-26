@@ -333,14 +333,16 @@ command names for your Fortran compiler (another option is to define FC, CC and 
 or your .cshrc file):
 %
 \begin{verbatim}
-    ./configure FC=ifort
+    ./configure FC=gfortran CC=gcc
 \end{verbatim}
 %
 If you want to run in parallel, i.e., using more than one processor core, then you would type
 %
 \begin{verbatim}
-    ./configure FC=ifort MPIFC=mpif90 --with-mpi
+    ./configure FC=gfortran CC=gcc MPIFC=mpif90 --with-mpi
 \end{verbatim}
+
+You can replace the GNU compilers above (gfortran and gcc) with other compilers if you want to; for instance for Intel ifort and icc use FC=ifort CC=icc instead.
 
 Before running the \texttt{configure} script, you should probably edit file \texttt{flags.guess} to make sure that it contains the best compiler options for your system. Known issues or things to check are:
 
@@ -407,6 +409,8 @@ Packages such as \texttt{doxywizard} can be used to visualize the subroutine cal
 \section{Becoming a developer of the code, or making small modifications in the source code}
 
 If you want to develop new features in the code, and/or if you want to make small changes, improvements, or bug fixes, you are very welcome to contribute. To do so, i.e. to access the development branch of the source code with read/write access (in a safe way, no need to worry too much about breaking the package, there is a robot called BuildBot that is in charge of checking and validating all new contributions and changes), please visit this Web page: \url{https://github.com/geodynamics/specfem2d/wiki/Using-Hub}.
+
+To visualize the call tree (calling tree) of the source code, you can see the Doxygen tool available in directory \texttt{doc/call\_trees\_of\_the\_source\_code}.
 
 %------------------------------------------------------------------------------------------------%
 
@@ -506,7 +510,7 @@ the local coordinate system being $\xi$ and $\eta$ (\texttt{xi} and \texttt{eta}
 Note that this convention is used to describe the geometry only. In the solver the wave field is then described based on high-order Lagrange interpolants
 at Gauss-Lobatto-Legendre points, as is classical in spectral-element methods.
 
-\section{How to use Gmsh to generate an external mesh}
+\section{How to use CUBIT/TRELIS or Gmsh to generate an external mesh}
 
 Gmsh%
 \footnote{freely available at the following address : http://www.geuz.org/gmsh/%
@@ -653,13 +657,28 @@ outer edges of the computational domain without PML; by doing so, the PMLs obtai
 in time (PML being weakly unstable from a mathematical point of view, very deformed mesh elements
 inside the PMLs can trigger instabilities much more quickly).
 
-When you have an existing CUBIT (or similar) mesh stored in SPECFEM2D
-format but do not know how to assign CPML flags to it, in the 3D version of the code (SPECFEM3D)
-we have created a small serial Fortran program that will do that automatically for you, thus you can adapt that program to SPECFEM2D.
-That program is utils/CPML/convert\_external\_layers\_of\_a\_given\_mesh\_to\_CPML\_layers.f90 in the source code of SPECFEM3D,
-and a small Makefile is provided in that directory (utils/CPML).
-Note from Dimitri: we will soon provide a clean 2D version in utils/CPML of the SPECFEM2D source code;
-Andrea Colombi from CNRS Grenoble, France, is currently working on that.
+If you have an existing CUBIT (or similar) mesh stored in SPECFEM2D
+format but do not know how to assign CPML flags to it,
+we have created a small serial Fortran program that will do that automatically for you.
+That program is utils/CPML/convert\_external\_layers\_of\_a\_given\_mesh\_to\_CPML\_layers2D.f90.
+When you create the PML layers using that script, you do not need to mark
+(i.e. assign to physical entities with a specific name) those external layers in the mesher.
+However you still need to specify the boundary of the mesh as you where doing in the case of absorbing conditions.
+The script will automatically extract the elements on the PML. It will ask you for a thickness for the PML layers.
+Suppose that you have created a region with a 1-meter size element, when it will prompt for the PML thickness
+you can enter 3.1 and it will create a PML 3 element thick. Always input a slightly larger (5-10\%) size because the element might be slightly skewed,
+or if you have not created your PML region via extrusion/webcut in CUBIT/TRELIS.
+
+To be more precise:
+
+1/ If one wants to use PML layers, they should NOT mark the layers according to that python script - the reason is that the xmeshfem2d does not recognize those CPML flags. If whoever developed the script adjusts it to solve this problem - this might be a great relief for users; as of now no physical identifiers are needed for those layers.
+
+2/ HOWEVER, the "Top", "Bottom", "Left"," and "Right" boundaries of the model, need to be re-assigned to outer boundaries of the model - that will be the leftmost boundary of the left -bounding PML , rightmost of the right PML, topmost for the Top PML (if there is one) and the bottom boundary of the bottom layer. Those and only those lines need to have the mentioned identifiers (opposite to the example with the two-holed square with Stacey conditions).
+
+3/ There is no need to create Top PML in case one wants it to be reflective; as the fortran script that assigns the flag will ignore the elements that sit within  PML-layer thickness distance to the top.
+
+4/ The Fortran program utils/CPML/convert\_external\_layers\_of\_a\_given\_mesh\_to\_CPML\_layers2D.f90
+that flags the PML elements does not create additional elements; it simply takes the elements within chosen distance from the boundaries, that sit in the interior of model and marks them as absorbing.
 
 If you use PML and an external velocity and density model (e.g., setting flag ``\texttt{MODEL}'' to \texttt{tomography}),
 you should be careful because mathematically a PML cannot handle heterogeneities along the
@@ -1360,21 +1379,24 @@ p^\dagger &\equiv -\kappa\left(\nabla\cdot\mathbf{s}^\dagger\right) = \phi^\dagg
 
 %------------------------------------------------------------------------------------------------%
 
-\chapter{Information for developers of the code, and for people who want to learn how the technique works}
+\chapter{Information for developers of the code, and for people who want to learn how the technique works}\label{cha:developers}
 
 %------------------------------------------------------------------------------------------------%
 
-You can get a very simple 1D version of a demo code (there is one in Fortran and one in Python):\\
-
-git clone --recursive https://github.com/geodynamics/specfem1d.git\\
+You can get a very simple 1D version of a demo code (there is one in Fortran and one in Python):
+\begin{verbatim}
+git clone --recursive https://github.com/geodynamics/specfem1d.git
+\end{verbatim}
 
 \noindent We also have simple 3D demo source codes that implement the SEM in a single, small program, in directory\\
 utils/small\_SEM\_solvers\_in\_Fortran\_and\_C\_without\_MPI\_to\_learn of the specfem3d package.
 They are useful to learn how the spectral-element method works, and how to write or modify a code to implement it.
-Also useful to test new ideas by modifying these simple codes to run some tests.\\
+Also useful to test new ideas by modifying these simple codes to run some tests.
+We also have a similar, even simpler, demo source code for the 2D case in directory\\
+utils/small\_SEM\_solver\_in\_Fortran\_without\_MPI\_to\_learn of the specfem2d package.
 
 \noindent For information on how to contribute to the code, i.e., for how to make your modifications, additions or improvements part of the
-official package, see https://github.com/geodynamics/specfem3d/wiki .
+official package, see \url{https://github.com/geodynamics/specfem3d/wiki} .
 
 %------------------------------------------------------------------------------------------------%
 

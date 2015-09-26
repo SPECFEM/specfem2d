@@ -100,7 +100,7 @@
   open(unit=20,file='OUTPUT_FILES/plotgnu',status='unknown',iostat=ios)
   if( ios /= 0 ) stop 'error saving plotgnu file'
 
-  write(20,*) '#set term X11'
+  write(20,*) '#set term wxt'
   write(20,*) 'set term postscript landscape monochrome solid "Helvetica" 22'
   write(20,*) 'set output "grid.ps"'
   write(20,*) '#set xrange [',sngl(minval(x)),':',sngl(maxval(x)),']'

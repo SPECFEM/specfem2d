@@ -47,28 +47,29 @@
 
 ! prepares source_time_function array
 
-  use specfem_par, only: NSTEP,NSOURCES,source_time_function, &
-                         time_function_type,f0,tshift_src,factor,aval, &
-                         t0,nb_proc_source,deltat,stage_time_scheme,c_LDDRK,is_proc_source, &
+  use specfem_par, only: AXISYM,NSTEP,NSOURCES,source_time_function, &
+                         time_function_type,name_of_source_file,burst_band_width,f0,tshift_src,factor, &
+                         aval,t0,nb_proc_source,deltat,stage_time_scheme,c_LDDRK,is_proc_source, &
                          USE_TRICK_FOR_BETTER_PRESSURE
 
   implicit none
   include "constants.h"
 
   ! local parameters
-  double precision :: stf_used, timeval, DecT, Tc, omegat, omega_coa,time,coeff, t_used
+  double precision :: stf_used, timeval, DecT, Tc, omegat, omega_coa,time,coeff, t_used, Nc
   double precision, dimension(NSOURCES) :: hdur,hdur_gauss
   double precision, external :: netlib_specfun_erf
   integer :: it,i_source,ier,num_file
   integer :: i_stage
   double precision, dimension(4) :: c_RK
-  character(len=256) :: name_of_file
+  character(len=27) :: error_msg1='Error opening file source: '
+  character(len=177) :: error_msg
 
-  if(stage_time_scheme == 4)then
-   c_RK(1)=0.0d0*deltat
-   c_RK(2)=0.5d0*deltat
-   c_RK(3)=0.5d0*deltat
-   c_RK(4)=1.0d0*deltat
+  if (stage_time_scheme == 4) then
+    c_RK(1)=0.0d0*deltat
+    c_RK(2)=0.5d0*deltat
+    c_RK(3)=0.5d0*deltat
+    c_RK(4)=1.0d0*deltat
   endif
 
   ! user output
@@ -81,6 +82,19 @@
 
     ! loop on all the sources
     do i_source=1,NSOURCES
+
+     if (AXISYM) then
+       factor(i_source) = - factor(i_source)
+     !   if (is_on_the_axis(ispec_selected_source(i_source))) then
+     !     do i=1,NGLLX
+     !     do j=1,NGLLZ
+     !       print *,"jacobian :",jacobian(i,j,ispec_selected_source(i_source))
+     !       print *,"wxglj:",wxglj(i)
+     !       print *,"mu :",poroelastcoef(2,1,kmato(ispec_selected_source(i_source)))
+     !     enddo
+     !     enddo
+     !   endif
+     endif
 
     num_file = 800 + i_source
 
@@ -233,18 +247,29 @@
         endif
 
        else if(time_function_type(i_source) == 8) then
-
         if (it == 1 ) then
           coeff = factor(i_source)
-          write(name_of_file,"(a,i3.3,a)") 'DATA/source_custom',int(coeff),'.txt'
-          open(unit=num_file,file=name_of_file,iostat=ier)
-          if( ier /= 0 ) call exit_MPI('error opening file source_custom*****')
+          error_msg = error_msg1//name_of_source_file(i_source)
+          open(unit=num_file,file=name_of_source_file(i_source),iostat=ier)
+          if( ier /= 0 ) call exit_MPI(error_msg)
         endif
 
         read(num_file,*) time, source_time_function(i_source,it,i_stage)
 
         if (it == NSTEP ) close(num_file)
-
+      else if(time_function_type(i_source) == 9) then
+        DecT = t0 + tshift_src(i_source)
+        t_used = (timeval-t0-tshift_src(i_source))
+        Nc = TWO * f0(i_source) / burst_band_width(i_source)
+        Tc = Nc / f0(i_source) + DecT
+        if (timeval > DecT .and. timeval < Tc) then ! t_used > 0 t_used < Nc/f0(i_source)) then
+          source_time_function(i_source,it,i_stage) = - factor(i_source) * &
+                      0.5d0*(ONE-cos(TWO*PI*f0(i_source)*t_used/Nc))*sin(TWO*PI*f0(i_source)*t_used)
+        !else if ( timeval > DecT ) then
+        !  source_time_function(i_source,it,i_stage) = ZERO
+        else
+          source_time_function(i_source,it,i_stage) = ZERO
+        endif
       else
         call exit_MPI('unknown source time function')
       endif

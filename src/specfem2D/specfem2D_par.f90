@@ -64,7 +64,7 @@ module specfem_par
   !---------------------------------------------------------------------
   !for model description
   !---------------------------------------------------------------------
-  character(len=100) :: MODEL
+  character(len=100) :: MODEL, SAVE_MODEL
   integer :: SIMULATION_TYPE  ! 1 = forward wavefield, 3 = backward and adjoint wavefields and kernels
   logical :: p_sv   ! for P-SV or SH (membrane) waves calculation
   logical :: SAVE_FORWARD ! whether or not the last frame is saved to reconstruct the forward field
@@ -183,6 +183,8 @@ module specfem_par
   ! source description
   integer NSOURCES
   integer, dimension(:), allocatable :: source_type,time_function_type
+  character(len=150), dimension(:), allocatable :: name_of_source_file
+  double precision, dimension(:), allocatable :: burst_band_width
   double precision, dimension(:), allocatable :: x_source,z_source,xi_source,gamma_source,&
                                                  Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sourcearray
@@ -264,7 +266,7 @@ module specfem_par
   ! for SEM discretization of the model
   !---------------------------------------------------------------------
   ! for Lagrange interpolants
-  double precision, external :: hgll
+  double precision, external :: hgll, hglj
   ! Gauss-Lobatto-Legendre points and weights
   double precision, dimension(NGLLX) :: xigll
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll

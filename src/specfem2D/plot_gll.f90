@@ -229,7 +229,7 @@
 !----  generate the command file for Gnuplot
 !
   open(unit=20,file='plotall_gll_mesh.gnu',status='unknown')
-  write(20,*) 'set term x11'
+  write(20,*) 'set term wxt'
   write(20,*) '# set term postscript landscape color solid "Helvetica" 22'
   write(20,*) '# set output "gll_mesh.ps"'
   write(20,*) 'set xlabel "X"'
@@ -241,7 +241,7 @@
   close(20)
 
   open(unit=20,file='plotall_macro_mesh.gnu',status='unknown')
-  write(20,*) 'set term x11'
+  write(20,*) 'set term wxt'
   write(20,*) '# set term postscript landscape color solid "Helvetica" 22'
   write(20,*) '# set output "macro_mesh.ps"'
   write(20,*) 'set xlabel "X"'

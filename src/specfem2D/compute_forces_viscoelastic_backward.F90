@@ -352,7 +352,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
             ! Compute unrelaxed elastic coefficients from formulas in Carcione 2007 page 125.
             ! When implementing viscoelasticity according to the Carcione 1993 paper, attenuation is
             ! non-causal rather than causal. We fixed the problem by using equations in Carcione's
-            ! 2004 paper and his 2007 book. See also file doc/problem_attenuation_reference_Specfem2D_fixed_by_Xie_Zhinan.pdf
+            ! 2004 paper and his 2007 book. See also file doc/old_problem_attenuation_reference_Specfem2D_fixed_by_Xie_Zhinan.pdf
 
             ! J. M. Carcione, H B. Helle, The physics and simulation of wave propagation at the ocean
             ! bottom, Geophysics, vol. 69(3), p. 825-839, 2004
@@ -368,7 +368,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
             ! compute the stress using the unrelaxed Lame parameters (Carcione 2007 page 125)
             ! When implementing viscoelasticity according to the Carcione 1993 paper, attenuation is
             ! non-causal rather than causal. We fixed the problem by using equations in Carcione's
-            ! 2004 paper and his 2007 book. See also file doc/problem_attenuation_reference_Specfem2D_fixed_by_Xie_Zhinan.pdf
+            ! 2004 paper and his 2007 book. See also file doc/old_problem_attenuation_reference_Specfem2D_fixed_by_Xie_Zhinan.pdf
 
             if( AXISYM ) then
               if (is_on_the_axis(ispec) ) then
@@ -421,7 +421,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
             ! beware: there is a bug in Carcione's equation (2c) of his 1993 paper for sigma_zz, we fixed it in the code below.
             ! When implementing viscoelasticity according to the Carcione 1993 paper, attenuation is
             ! non-causal rather than causal. We fixed the problem by using equations in Carcione's
-            ! 2004 paper and his 2007 book. See also file doc/problem_attenuation_reference_Specfem2D_fixed_by_Xie_Zhinan.pdf
+            ! 2004 paper and his 2007 book. See also file doc/old_problem_attenuation_reference_Specfem2D_fixed_by_Xie_Zhinan.pdf
             e1_sum = 0._CUSTOM_REAL; e11_sum = 0._CUSTOM_REAL;  e13_sum = 0._CUSTOM_REAL
             do i_sls = 1,N_SLS
               e1_sum = e1_sum + e1(i,j,ispec,i_sls)
@@ -576,7 +576,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
 
           endif
         enddo
-      enddo  ! End of the loops on the colocation points i,j
+      enddo  ! end of the loops on the collocation points i,j
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !

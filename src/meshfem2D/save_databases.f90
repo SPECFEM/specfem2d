@@ -157,6 +157,9 @@
     write(15,*) 'MODEL'
     write(15,'(a100)') MODEL
 
+    write(15,*) 'SAVE_MODEL'
+    write(15,'(a100)') SAVE_MODEL
+
     write(15,*) 'TOMOGRAPHY_FILE'
     write(15,'(a100)') TOMOGRAPHY_FILE
 
@@ -246,7 +249,9 @@
 
     do i_source=1,NSOURCES
       write(15,*) 'source', i_source
-      write(15,*) source_type(i_source),time_function_type(i_source), &
+      write(15,*) source_type(i_source),time_function_type(i_source)
+      write(15,'(a100)') name_of_source_file(i_source) ! aXXX: Write wrong character if XXX != 100 !!!
+      write(15,*) burst_band_width(i_source), &
                   xs(i_source),zs(i_source),f0(i_source),tshift_src(i_source), &
                   factor(i_source),anglesource(i_source), &
                   Mxx(i_source),Mzz(i_source),Mxz(i_source)
@@ -322,7 +327,7 @@
 
     write(15,*) 'Arrays kmato and knods for each bloc:'
 
-!   DK DK add support for using pml in MPI mode with external mesh
+!   DK DK add support for using PML in MPI mode with external mesh
 !   call write_partition_database(15, iproc, nspec, num_material, ngnod, 2)
     call write_partition_database(15, iproc, nspec, num_material, region_pml_external_mesh, ngnod, 2)
 

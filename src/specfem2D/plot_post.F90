@@ -2687,13 +2687,8 @@
 
   x1 =(xinterp(i,j)-xmin)*ratio_page
   z1 =(zinterp(i,j)-zmin)*ratio_page
-  if (dispmax > TINYVAL) then
-    x2 = Uxinterp(i,j)*sizemax_arrows/dispmax
-    z2 = Uzinterp(i,j)*sizemax_arrows/dispmax
-  else
-    x2 = ZERO
-    z2 = ZERO
-  endif
+  x2 = Uxinterp(i,j)*sizemax_arrows/dispmax
+  z2 = Uzinterp(i,j)*sizemax_arrows/dispmax
 
   d = sqrt(x2**2 + z2**2)
 
