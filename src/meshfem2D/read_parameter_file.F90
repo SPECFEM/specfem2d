@@ -564,6 +564,8 @@ contains
   ! CPML and Stacey are mutually exclusive
   if(any_abs .and. PML_BOUNDARY_CONDITIONS) &
     stop 'STACEY_ABSORBING_CONDITIONS and PML_BOUNDARY_CONDITIONS are mutually exclusive but are both set to .true.'
+  ! we also set in subroutine prepare_timerun_read to make sure that STACEY_ABSORBING_CONDITIONS = .false. when
+  ! PML_BOUNDARY_CONDITIONS is used.
 
   ! solve the conflict in value of PML_BOUNDARY_CONDITIONS and STACEY_ABSORBING_CONDITIONS
   if(PML_BOUNDARY_CONDITIONS) any_abs = .true.
