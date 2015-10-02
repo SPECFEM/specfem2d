@@ -11,14 +11,12 @@ subroutine finalize_simulation()
 
 integer i,ispec,j,iglob
 
-
 #ifdef USE_MPI
   include "precision.h"
 #endif
 
 
   real(kind=4),dimension(:,:,:),allocatable :: rho_save, vp_save, vs_save, kappa_save, x_save, z_save
-
 
 if ( trim(SAVE_MODEL) /= 'default' ) then
    allocate(rho_save(NGLLX,NGLLZ,nspec))
@@ -39,7 +37,7 @@ do ispec=1,nspec
                                                 4._CUSTOM_REAL*mul_unrelaxed_elastic/ &
                                                 3._CUSTOM_REAL)/density(1,kmato(ispec)))
               vs_save(i,j,ispec)             = sqrt(mul_unrelaxed_elastic/density(1,kmato(ispec)))
-            iglob = ibool(i,j,ispec)
+              iglob = ibool(i,j,ispec)
               x_save(i,j,ispec)              = coord(1,iglob)
               z_save(i,j,ispec)              = coord(2,iglob)
               enddo
@@ -129,47 +127,15 @@ if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer, &
       if (any_acoustic) then
 
         !--- left absorbing boundary
-        if(nspec_left >0) then
-         do it =1,NSTEP
-          do ispec = 1,nspec_left
-            do i=1,NGLLZ
-              write(65) b_absorb_acoustic_left(i,ispec,it)
-            enddo
-          enddo
-         enddo
-        endif
+        if(nspec_left >0) write(65) b_absorb_acoustic_left
         !--- right absorbing boundary
-        if(nspec_right >0) then
-         do it =1,NSTEP
-          do ispec = 1,nspec_right
-            do i=1,NGLLZ
-              write(66) b_absorb_acoustic_right(i,ispec,it)
-            enddo
-          enddo
-         enddo
-        endif
+        if(nspec_right >0) write(66) b_absorb_acoustic_right
         !--- bottom absorbing boundary
-        if(nspec_bottom >0) then
-         do it =1,NSTEP
-          do ispec = 1,nspec_bottom
-            do i=1,NGLLX
-              write(67) b_absorb_acoustic_bottom(i,ispec,it)
-            enddo
-          enddo
-         enddo
-        endif
+        if(nspec_bottom >0) write(67) b_absorb_acoustic_bottom
         !--- top absorbing boundary
-        if(nspec_top >0) then
-         do it =1,NSTEP
-          do ispec = 1,nspec_top
-            do i=1,NGLLX
-              write(68) b_absorb_acoustic_top(i,ispec,it)
-            enddo
-          enddo
-         enddo
-        endif
+        if(nspec_top >0) write(68) b_absorb_acoustic_top
 
-    endif !any acoustic
+      endif !any acoustic
 
       close(65)
       close(66)
@@ -180,81 +146,13 @@ if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer, &
  if(any_elastic) then
 
         !--- left absorbing boundary
-        if(nspec_left >0) then
-         do it =1,NSTEP
-          do ispec = 1,nspec_left
-            if(p_sv)then!P-SV waves
-              do i=1,NGLLZ
-                write(35) b_absorb_elastic_left(1,i,ispec,it)
-              enddo
-              do i=1,NGLLZ
-                write(35) b_absorb_elastic_left(3,i,ispec,it)
-              enddo
-            else!SH (membrane) waves
-              do i=1,NGLLZ
-                write(35) b_absorb_elastic_left(2,i,ispec,it)
-              enddo
-            endif
-          enddo
-         enddo
-        endif
+        if(nspec_left >0) write(35) b_absorb_elastic_left
         !--- right absorbing boundary
-        if(nspec_right >0) then
-         do it =1,NSTEP
-          do ispec = 1,nspec_right
-            if(p_sv)then!P-SV waves
-              do i=1,NGLLZ
-                write(36) b_absorb_elastic_right(1,i,ispec,it)
-              enddo
-              do i=1,NGLLZ
-                write(36) b_absorb_elastic_right(3,i,ispec,it)
-              enddo
-            else!SH (membrane) waves
-              do i=1,NGLLZ
-                write(36) b_absorb_elastic_right(2,i,ispec,it)
-              enddo
-            endif
-          enddo
-         enddo
-        endif
+        if(nspec_right >0)  write(36) b_absorb_elastic_right
         !--- bottom absorbing boundary
-        if(nspec_bottom >0) then
-         do it =1,NSTEP
-          do ispec = 1,nspec_bottom
-            if(p_sv)then!P-SV waves
-              do i=1,NGLLX
-                write(37) b_absorb_elastic_bottom(1,i,ispec,it)
-              enddo
-              do i=1,NGLLX
-                write(37) b_absorb_elastic_bottom(3,i,ispec,it)
-              enddo
-            else!SH (membrane) waves
-              do i=1,NGLLX
-                write(37) b_absorb_elastic_bottom(2,i,ispec,it)
-              enddo
-            endif
-          enddo
-         enddo
-        endif
+        if(nspec_bottom >0)  write(37) b_absorb_elastic_bottom
         !--- top absorbing boundary
-        if(nspec_top >0) then
-         do it =1,NSTEP
-          do ispec = 1,nspec_top
-            if(p_sv)then!P-SV waves
-              do i=1,NGLLX
-                write(38) b_absorb_elastic_top(1,i,ispec,it)
-              enddo
-              do i=1,NGLLX
-                write(38) b_absorb_elastic_top(3,i,ispec,it)
-              enddo
-            else!SH (membrane) waves
-              do i=1,NGLLX
-                write(38) b_absorb_elastic_top(2,i,ispec,it)
-              enddo
-            endif
-          enddo
-         enddo
-        endif
+        if(nspec_top >0) write(38) b_absorb_elastic_top
 
    endif !any elastic
 
@@ -284,24 +182,15 @@ if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer, &
   if(SAVE_FORWARD .and. SIMULATION_TYPE ==1 .and. any_elastic) then
     if ( myrank == 0 ) then
       write(IOUT,*)
-      write(IOUT,*) 'Saving elastic last frame...'
       write(IOUT,*)
     endif
     write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
     open(unit=55,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
-    if(p_sv)then !P-SV waves
-      do j=1,nglob
-        write(55) displ_elastic(1,j), displ_elastic(3,j), &
-                  veloc_elastic(1,j), veloc_elastic(3,j), &
-                  accel_elastic(1,j), accel_elastic(3,j)
-      enddo
-    else !SH (membrane) waves
-      do j=1,nglob
-        write(55) displ_elastic(2,j), &
-                  veloc_elastic(2,j), &
-                  accel_elastic(2,j)
-      enddo
-    endif
+
+        write(55) displ_elastic
+        write(55) veloc_elastic
+        write(55) accel_elastic
+
     close(55)
   endif
 
@@ -315,14 +204,14 @@ if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer, &
     open(unit=55,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
     write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
     open(unit=56,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
-       do j=1,nglob
-      write(55) (displs_poroelastic(i,j), i=1,NDIM), &
-                  (velocs_poroelastic(i,j), i=1,NDIM), &
-                  (accels_poroelastic(i,j), i=1,NDIM)
-      write(56) (displw_poroelastic(i,j), i=1,NDIM), &
-                  (velocw_poroelastic(i,j), i=1,NDIM), &
-                  (accelw_poroelastic(i,j), i=1,NDIM)
-       enddo
+
+      write(55) displs_poroelastic
+      write(55) velocs_poroelastic
+      write(55) accels_poroelastic
+      write(56) displw_poroelastic
+      write(56) velocw_poroelastic
+      write(56) accelw_poroelastic
+
     close(55)
     close(56)
   endif
@@ -335,11 +224,9 @@ if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer, &
     endif
     write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
     open(unit=55,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
-       do j=1,nglob
-      write(55) potential_acoustic(j),&
-               potential_dot_acoustic(j),&
-               potential_dot_dot_acoustic(j)
-       enddo
+      write(55) potential_acoustic
+      write(55) potential_dot_acoustic
+      write(55) potential_dot_dot_acoustic
     close(55)
   endif
 

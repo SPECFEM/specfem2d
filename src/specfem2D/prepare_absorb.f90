@@ -254,112 +254,21 @@
 
   subroutine prepare_absorb_elastic()
 
-  use specfem_par, only: NSTEP,p_sv, &
-                         nspec_left,nspec_right,nspec_bottom,nspec_top, &
+  use specfem_par, only: nspec_left,nspec_right,nspec_bottom,nspec_top, &
                          b_absorb_elastic_left,b_absorb_elastic_right, &
                          b_absorb_elastic_bottom,b_absorb_elastic_top
 
   implicit none
   include "constants.h"
 
-  ! local parameters
-  integer :: ispec,i,it
-
-  do it =1, NSTEP
-
     !--- left absorbing boundary
-    if(nspec_left >0) then
-      do ispec = 1,nspec_left
-
-        if(p_sv)then!P-SV waves
-          do i=1,NGLLZ
-            read(35) b_absorb_elastic_left(1,i,ispec,it)
-          enddo
-          do i=1,NGLLZ
-            read(35) b_absorb_elastic_left(3,i,ispec,it)
-          enddo
-          b_absorb_elastic_left(2,:,ispec,it) = ZERO
-        else!SH (membrane) waves
-          do i=1,NGLLZ
-            read(35) b_absorb_elastic_left(2,i,ispec,it)
-          enddo
-          b_absorb_elastic_left(1,:,ispec,it) = ZERO
-          b_absorb_elastic_left(3,:,ispec,it) = ZERO
-        endif
-
-      enddo
-    endif
-
+    if(nspec_left >0) read(35) b_absorb_elastic_left
     !--- right absorbing boundary
-    if(nspec_right >0) then
-      do ispec = 1,nspec_right
-
-        if(p_sv)then!P-SV waves
-          do i=1,NGLLZ
-            read(36) b_absorb_elastic_right(1,i,ispec,it)
-          enddo
-          do i=1,NGLLZ
-            read(36) b_absorb_elastic_right(3,i,ispec,it)
-          enddo
-          b_absorb_elastic_right(2,:,ispec,it) = ZERO
-        else!SH (membrane) waves
-          do i=1,NGLLZ
-            read(36) b_absorb_elastic_right(2,i,ispec,it)
-          enddo
-          b_absorb_elastic_right(1,:,ispec,it) = ZERO
-          b_absorb_elastic_right(3,:,ispec,it) = ZERO
-        endif
-
-      enddo
-    endif
-
+    if(nspec_right >0) read(36) b_absorb_elastic_right
     !--- bottom absorbing boundary
-    if(nspec_bottom >0) then
-      do ispec = 1,nspec_bottom
-
-        if(p_sv)then!P-SV waves
-          do i=1,NGLLX
-            read(37) b_absorb_elastic_bottom(1,i,ispec,it)
-          enddo
-          do i=1,NGLLX
-            read(37) b_absorb_elastic_bottom(3,i,ispec,it)
-          enddo
-          b_absorb_elastic_bottom(2,:,ispec,it) = ZERO
-        else!SH (membrane) waves
-          do i=1,NGLLZ
-            read(37) b_absorb_elastic_bottom(2,i,ispec,it)
-          enddo
-          b_absorb_elastic_bottom(1,:,ispec,it) = ZERO
-          b_absorb_elastic_bottom(3,:,ispec,it) = ZERO
-        endif
-
-      enddo
-    endif
-
-    !--- top absorbing boundary
-    if(nspec_top >0) then
-      do ispec = 1,nspec_top
-
-        if(p_sv)then!P-SV waves
-          do i=1,NGLLX
-            read(38) b_absorb_elastic_top(1,i,ispec,it)
-          enddo
-          do i=1,NGLLX
-            read(38) b_absorb_elastic_top(3,i,ispec,it)
-          enddo
-          b_absorb_elastic_top(2,:,ispec,it) = ZERO
-        else!SH (membrane) waves
-          do i=1,NGLLZ
-            read(38) b_absorb_elastic_top(2,i,ispec,it)
-          enddo
-          b_absorb_elastic_top(1,:,ispec,it) = ZERO
-          b_absorb_elastic_top(3,:,ispec,it) = ZERO
-        endif
-
-      enddo
-    endif
-
-  enddo
+    if(nspec_bottom >0) read(37) b_absorb_elastic_bottom
+   !--- top absorbing boundary
+    if(nspec_top >0) read(38) b_absorb_elastic_top
 
   end subroutine prepare_absorb_elastic
 
@@ -442,56 +351,20 @@
 
   subroutine prepare_absorb_acoustic()
 
-  use specfem_par, only: NSTEP, &
-                         nspec_left,nspec_right,nspec_bottom,nspec_top, &
+  use specfem_par, only: nspec_left,nspec_right,nspec_bottom,nspec_top, &
                          b_absorb_acoustic_left,b_absorb_acoustic_right, &
                          b_absorb_acoustic_bottom,b_absorb_acoustic_top
 
   implicit none
   include "constants.h"
 
-  ! local parameters
-  integer :: ispec,i,it
-
-  do it =1, NSTEP
-
     !--- left absorbing boundary
-    if(nspec_left >0) then
-      do ispec = 1,nspec_left
-         do i=1,NGLLZ
-          read(65) b_absorb_acoustic_left(i,ispec,it)
-         enddo
-      enddo
-    endif
-
+    if(nspec_left >0)  read(65) b_absorb_acoustic_left
     !--- right absorbing boundary
-    if(nspec_right >0) then
-      do ispec = 1,nspec_right
-         do i=1,NGLLZ
-          read(66) b_absorb_acoustic_right(i,ispec,it)
-         enddo
-      enddo
-    endif
-
+    if(nspec_right >0) read(66) b_absorb_acoustic_right
     !--- bottom absorbing boundary
-    if(nspec_bottom >0) then
-      do ispec = 1,nspec_bottom
-         do i=1,NGLLX
-          read(67) b_absorb_acoustic_bottom(i,ispec,it)
-         enddo
-      enddo
-    endif
-
-    !--- top absorbing boundary
-    if(nspec_top >0) then
-      do ispec = 1,nspec_top
-         do i=1,NGLLX
-          read(68) b_absorb_acoustic_top(i,ispec,it)
-         enddo
-      enddo
-    endif
-
-  enddo
+    if(nspec_bottom >0) read(67) b_absorb_acoustic_bottom
+   !--- top absorbing boundary
+    if(nspec_top >0) read(68) b_absorb_acoustic_top
 
   end subroutine prepare_absorb_acoustic
-
