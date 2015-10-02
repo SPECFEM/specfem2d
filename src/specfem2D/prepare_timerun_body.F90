@@ -79,11 +79,11 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
 !---- compute shape functions and their derivatives for SEM grid
 !
 
-! set up Gauss-Lobatto-Legendre derivation matrices
+! set up Gauss-Lobatto-Legendre points, weights and also derivation matrices
   call define_derivation_matrices()
 
   if (AXISYM) then
-    ! set up Gauss-Lobatto-Jacobi derivation matrices
+    ! set up Gauss-Lobatto-Jacobi points, weights and also derivation matrices
     call define_GLJ_derivation_matrix()
   endif
 

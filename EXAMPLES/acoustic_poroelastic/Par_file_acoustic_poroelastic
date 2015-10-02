@@ -79,7 +79,7 @@ xdeb                            = 1700.           # first receiver x in meters
 zdeb                            = 3000.          # first receiver z in meters
 xfin                            = 3700.          # last receiver x in meters (ignored if only one receiver)
 zfin                            = 2200.          # last receiver z in meters (ignored if only one receiver)
-enreg_surf_same_vertical        = .false.         # receivers inside the medium or at the surface
+record_at_surface_same_vertical = .false.         # receivers inside the medium or at the surface
 
 # second receiver set (in the poroelastic layer)
 nrec                            = 1             # number of receivers
@@ -87,7 +87,7 @@ xdeb                            = 2000.           # first receiver x in meters
 zdeb                            = 1866.67          # first receiver z in meters
 xfin                            = 3777       # last receiver x in meters (ignored if onlyone receiver)
 zfin                            = 1866.67          # last receiver z in meters (ignored if onlyone receiver)
-enreg_surf_same_vertical        = .false.         # receivers inside the medium or at the surface
+record_at_surface_same_vertical = .false.         # receivers inside the medium or at the surface
 
 # display parameters
 NSTEP_BETWEEN_OUTPUT_INFO      = 300            # every how many time steps we display information about the simulation (costly, do not use a very small value)

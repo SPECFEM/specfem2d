@@ -354,7 +354,7 @@
   subroutine read_databases_sources()
 
 ! reads source parameters
-  use specfem_par, only : NSOURCES,source_type,time_function_type,name_of_source_file,burst_band_width,burst_central_frequency, &
+  use specfem_par, only : NSOURCES,source_type,time_function_type,name_of_source_file,burst_band_width, &
                           x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource
   implicit none
   include "constants.h"
@@ -382,7 +382,7 @@
      read(IIN,"(a80)") datlin
      read(IIN,*) source_type(i_source),time_function_type(i_source)
      read(IIN,"(a100)") name_of_source_file(i_source)
-     read(IIN,*) burst_band_width(i_source),burst_central_frequency(i_source),x_source(i_source),z_source(i_source),f0(i_source), &
+     read(IIN,*) burst_band_width(i_source),x_source(i_source),z_source(i_source),f0(i_source), &
                  tshift_src(i_source),factor(i_source),anglesource(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
   enddo
 

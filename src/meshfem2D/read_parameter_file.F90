@@ -74,7 +74,7 @@ module parameter_file
   double precision :: xmin,xmax
   integer :: nx, ngnod
   character(len=100) :: interfacesfile
-  logical, dimension(:), pointer :: enreg_surf_same_vertical
+  logical, dimension(:), pointer :: record_at_surface_same_vertical
 
   ! mesh files when using external mesh
   character(len=100) :: MODEL, SAVE_MODEL
@@ -378,7 +378,7 @@ contains
   allocate(zdeb(nreceiversets))
   allocate(xfin(nreceiversets))
   allocate(zfin(nreceiversets))
-  allocate(enreg_surf_same_vertical(nreceiversets),stat=ios)
+  allocate(record_at_surface_same_vertical(nreceiversets),stat=ios)
   if( ios /= 0 ) stop 'error allocating receiver lines'
 
   ! loop on all the receiver lines
@@ -398,11 +398,11 @@ contains
     call read_value_double_prec_next_p(zfin(ireceiverlines),'solver.zfin')
     if(err_occurred() /= 0) stop 'error reading parameter 31 in Par_file'
 
-    call read_value_logical_next_p(enreg_surf_same_vertical(ireceiverlines),'solver.enreg_surf_same_vertical')
+    call read_value_logical_next_p(record_at_surface_same_vertical(ireceiverlines),'solver.record_at_surface_same_vertical')
     if(err_occurred() /= 0) stop 'error reading parameter 32 in Par_file'
 
-    if (read_external_mesh .and. enreg_surf_same_vertical(ireceiverlines)) then
-      stop 'Cannot use enreg_surf_same_vertical with external meshes!'
+    if (read_external_mesh .and. record_at_surface_same_vertical(ireceiverlines)) then
+      stop 'Cannot use record_at_surface_same_vertical with external meshes!'
     endif
   enddo
 
@@ -564,6 +564,8 @@ contains
   ! CPML and Stacey are mutually exclusive
   if(any_abs .and. PML_BOUNDARY_CONDITIONS) &
     stop 'STACEY_ABSORBING_CONDITIONS and PML_BOUNDARY_CONDITIONS are mutually exclusive but are both set to .true.'
+  ! we also set in subroutine prepare_timerun_read to make sure that STACEY_ABSORBING_CONDITIONS = .false. when
+  ! PML_BOUNDARY_CONDITIONS is used.
 
   ! solve the conflict in value of PML_BOUNDARY_CONDITIONS and STACEY_ABSORBING_CONDITIONS
   if(PML_BOUNDARY_CONDITIONS) any_abs = .true.
