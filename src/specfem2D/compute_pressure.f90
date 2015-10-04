@@ -468,7 +468,7 @@
 ! non-causal rather than causal. We fixed the problem by using equations in Carcione's
 ! 2004 paper and his 2007 book (Carcione 2007 page 125).
 
-! J. M. Carcione, H B. Helle, The physics and simulation of wave propagation at the ocean
+! J. M. Carcione, H. B. Helle, The physics and simulation of wave propagation at the ocean
 !  bottom, Geophysics, vol. 69(3), p. 825-839, 2004
 ! J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic
 !  and porous media, Elsevier, p. 124-125, 2007

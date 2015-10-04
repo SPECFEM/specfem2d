@@ -115,8 +115,17 @@
 
   if(any(tau_sigma_nu1 < 0.d0) .or. any(tau_sigma_nu2 < 0.d0) .or. &
      any(tau_epsilon_nu1_d < 0.d0) .or. any(tau_epsilon_nu2_d < 0.d0)) &
-
        stop 'error: negative relaxation time found for a viscoelastic material'
+
+! in the old formulation of Carcione 1993, which is based on Liu et al. 1976, the 1/N factor is missing
+! and thus this does not apply; it only applies to the right formula with 1/N included
+  if(USE_NEW_SOLVOPT_ROUTINE .and. (minval(tau_epsilon_nu1_d / tau_sigma_nu1) < 0.999d0 .or. &
+                                    minval(tau_epsilon_nu2_d / tau_sigma_nu2) < 0.999d0)) then
+       print *
+       print *,'minval(tau_epsilon_nu1 / tau_sigma_nu1) = ',minval(tau_epsilon_nu1_d / tau_sigma_nu1)
+       print *,'minval(tau_epsilon_nu2 / tau_sigma_nu2) = ',minval(tau_epsilon_nu2_d / tau_sigma_nu2)
+       stop 'error: tau_epsilon should never be smaller than tau_sigma for viscoelasticity'
+  endif
 
 ! When implementing viscoelasticity according to the Carcione 1993 paper, attenuation is
 ! non-causal rather than causal. We fixed the problem by using equations in Carcione's
@@ -164,16 +173,31 @@
    inv_tau_sigma_nu1_sent(:) = sngl(dble(ONE) / tau_sigma_nu1(:))
    inv_tau_sigma_nu2_sent(:) = sngl(dble(ONE) / tau_sigma_nu2(:))
 
-   phi_nu1_sent(:) = sngl((dble(ONE) - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:))
-   phi_nu2_sent(:) = sngl((dble(ONE) - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:))
+   if(USE_NEW_SOLVOPT_ROUTINE) then
 
-   Mu_nu1_sent = dble(ONE)
-   Mu_nu2_sent = dble(ONE)
+! use the right formula with 1/N included
+     phi_nu1_sent(:) = sngl((dble(ONE) - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:) &
+                                                                           / sum(tau_epsilon_nu1_d/tau_sigma_nu1))
+     phi_nu2_sent(:) = sngl((dble(ONE) - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:) &
+                                                                           / sum(tau_epsilon_nu2_d/tau_sigma_nu2))
 
-   do i_sls = 1,N_SLS
-     Mu_nu1_sent = sngl(dble(Mu_nu1_sent) - (dble(ONE) - tau_epsilon_nu1_d(i_sls)/tau_sigma_nu1(i_sls)))
-     Mu_nu2_sent = sngl(dble(Mu_nu2_sent) - (dble(ONE) - tau_epsilon_nu2_d(i_sls)/tau_sigma_nu2(i_sls)))
-   enddo
+     Mu_nu1_sent = sngl(sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS))
+     Mu_nu2_sent = sngl(sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS))
+
+   else
+
+! in the old formulation of Carcione 1993, which is based on Liu et al. 1976, the 1/N factor is missing
+     phi_nu1_sent(:) = sngl((dble(ONE) - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:))
+     phi_nu2_sent(:) = sngl((dble(ONE) - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:))
+
+     Mu_nu1_sent = dble(ONE)
+     Mu_nu2_sent = dble(ONE)
+     do i_sls = 1,N_SLS
+       Mu_nu1_sent = sngl(dble(Mu_nu1_sent) - (dble(ONE) - tau_epsilon_nu1_d(i_sls)/tau_sigma_nu1(i_sls)))
+       Mu_nu2_sent = sngl(dble(Mu_nu2_sent) - (dble(ONE) - tau_epsilon_nu2_d(i_sls)/tau_sigma_nu2(i_sls)))
+     enddo
+
+   endif
 
   else
 
@@ -183,16 +207,29 @@
    inv_tau_sigma_nu1_sent(:) = ONE / tau_sigma_nu1(:)
    inv_tau_sigma_nu2_sent(:) = ONE / tau_sigma_nu2(:)
 
-   phi_nu1_sent(:) = (ONE - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:)
-   phi_nu2_sent(:) = (ONE - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:)
+   if(USE_NEW_SOLVOPT_ROUTINE) then
 
-   Mu_nu1_sent = ONE
-   Mu_nu2_sent = ONE
+! use the right formula with 1/N included
+     phi_nu1_sent(:) = (ONE - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:) / sum(tau_epsilon_nu1_d/tau_sigma_nu1)
+     phi_nu2_sent(:) = (ONE - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:) / sum(tau_epsilon_nu2_d/tau_sigma_nu2)
 
-   do i_sls = 1,N_SLS
-     Mu_nu1_sent = Mu_nu1_sent - (ONE - tau_epsilon_nu1_d(i_sls)/tau_sigma_nu1(i_sls))
-     Mu_nu2_sent = Mu_nu2_sent - (ONE - tau_epsilon_nu2_d(i_sls)/tau_sigma_nu2(i_sls))
-   enddo
+     Mu_nu1_sent = sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS)
+     Mu_nu2_sent = sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS)
+
+   else
+
+! in the old formulation of Carcione 1993, which is based on Liu et al. 1976, the 1/N factor is missing
+     phi_nu1_sent(:) = (ONE - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:)
+     phi_nu2_sent(:) = (ONE - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:)
+
+     Mu_nu1_sent = ONE
+     Mu_nu2_sent = ONE
+     do i_sls = 1,N_SLS
+       Mu_nu1_sent = Mu_nu1_sent - (ONE - tau_epsilon_nu1_d(i_sls)/tau_sigma_nu1(i_sls))
+       Mu_nu2_sent = Mu_nu2_sent - (ONE - tau_epsilon_nu2_d(i_sls)/tau_sigma_nu2(i_sls))
+     enddo
+
+   endif
 
   endif
 
@@ -2271,6 +2308,7 @@ SUBROUTINE nonlinear_optimization(N,Qref,f0,point,poids,f_min,f_max)
 
   ! this is used as a first guess
   call classical_linear_least_squares(Qref,poids,point,N,f_min,f_max)
+  if(.not. USE_SOLVOPT_INSTEAD_OF_LINEAR) return
 
   ! what follows is the nonlinear optimization part
 

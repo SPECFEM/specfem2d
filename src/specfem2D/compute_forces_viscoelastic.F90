@@ -125,7 +125,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
   ! material properties of the elastic medium
   real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic, &
     lambdaplus2mu_unrelaxed_elastic,kappal,cpl,csl,rhol, &
-    lambdal_relaxed_viscoelastic,mul_relaxed_viscoelastic,lambdalplusmul_relaxed_viscoel
+    lambdal_relaxed_viscoelastic,mul_relaxed_viscoelastic,lambdalplusmul_relaxed_viscoel,lambdalplusmul_unrelaxed_elastic
 
   ! for attenuation
   real(kind=CUSTOM_REAL) :: phinu1,phinu2,theta_n_u,theta_nsub1_u
@@ -326,6 +326,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
       lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
       mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
       lambdaplus2mu_unrelaxed_elastic = poroelastcoef(3,1,kmato(ispec))
+      lambdalplusmul_unrelaxed_elastic = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
 
       ! first double loop over GLL points to compute and store gradients
       do j = 1,NGLLZ
@@ -338,6 +339,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
             mul_unrelaxed_elastic = rhol*csl*csl
             lambdal_unrelaxed_elastic = rhol*cpl*cpl - TWO*mul_unrelaxed_elastic
             lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic
+            lambdalplusmul_unrelaxed_elastic = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
           endif
 
           ! derivative along x and along z
@@ -683,7 +685,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
             ! non-causal rather than causal. We fixed the problem by using equations in Carcione's
             ! 2004 paper and his 2007 book. See also file doc/old_problem_attenuation_reference_Specfem2D_fixed_by_Xie_Zhinan.pdf
 
-            ! J. M. Carcione, H B. Helle, The physics and simulation of wave propagation at the ocean
+            ! J. M. Carcione, H. B. Helle, The physics and simulation of wave propagation at the ocean
             ! bottom, Geophysics, vol. 69(3), p. 825-839, 2004
             ! J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic
             ! and porous media, Elsevier, p. 124-125, 2007
@@ -758,10 +760,21 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
               e13_sum = e13_sum + e13(i,j,ispec,i_sls)
             enddo
 
-            sigma_xx = sigma_xx + lambdalplusmul_relaxed_viscoel * e1_sum + TWO * mul_relaxed_viscoelastic * e11_sum
-            sigma_xz = sigma_xz + mul_relaxed_viscoelastic * e13_sum
-            sigma_zz = sigma_zz + lambdalplusmul_relaxed_viscoel * e1_sum - TWO * mul_relaxed_viscoelastic * e11_sum
-            sigma_zx = sigma_xz
+            if(USE_NEW_SOLVOPT_ROUTINE) then
+! use the right formula with 1/N included
+! i.e. use the unrelaxed moduli here (see Carcione's book, third edition, equation (3.189))
+              sigma_xx = sigma_xx + lambdalplusmul_unrelaxed_elastic * e1_sum + TWO * mul_unrelaxed_elastic * e11_sum
+              sigma_xz = sigma_xz + mul_unrelaxed_elastic * e13_sum
+              sigma_zz = sigma_zz + lambdalplusmul_unrelaxed_elastic * e1_sum - TWO * mul_unrelaxed_elastic * e11_sum
+              sigma_zx = sigma_xz
+            else
+! in the old formulation of Carcione 1993, which is based on Liu et al. 1976, the 1/N factor is missing
+! i.e. use the relaxed moduli here
+              sigma_xx = sigma_xx + lambdalplusmul_relaxed_viscoel * e1_sum + TWO * mul_relaxed_viscoelastic * e11_sum
+              sigma_xz = sigma_xz + mul_relaxed_viscoelastic * e13_sum
+              sigma_zz = sigma_zz + lambdalplusmul_relaxed_viscoel * e1_sum - TWO * mul_relaxed_viscoelastic * e11_sum
+              sigma_zx = sigma_xz
+            endif
 
             if( PML_BOUNDARY_CONDITIONS .and. is_PML(ispec) ) then
               sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*PML_duz_dzl(i,j)
