@@ -760,21 +760,12 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
               e13_sum = e13_sum + e13(i,j,ispec,i_sls)
             enddo
 
-            if(USE_NEW_SOLVOPT_ROUTINE) then
-! use the right formula with 1/N included
-! i.e. use the unrelaxed moduli here (see Carcione's book, third edition, equation (3.189))
-              sigma_xx = sigma_xx + lambdalplusmul_unrelaxed_elastic * e1_sum + TWO * mul_unrelaxed_elastic * e11_sum
-              sigma_xz = sigma_xz + mul_unrelaxed_elastic * e13_sum
-              sigma_zz = sigma_zz + lambdalplusmul_unrelaxed_elastic * e1_sum - TWO * mul_unrelaxed_elastic * e11_sum
-              sigma_zx = sigma_xz
-            else
-! in the old formulation of Carcione 1993, which is based on Liu et al. 1976, the 1/N factor is missing
-! i.e. use the relaxed moduli here
-              sigma_xx = sigma_xx + lambdalplusmul_relaxed_viscoel * e1_sum + TWO * mul_relaxed_viscoelastic * e11_sum
-              sigma_xz = sigma_xz + mul_relaxed_viscoelastic * e13_sum
-              sigma_zz = sigma_zz + lambdalplusmul_relaxed_viscoel * e1_sum - TWO * mul_relaxed_viscoelastic * e11_sum
-              sigma_zx = sigma_xz
-            endif
+            ! use the right formula with 1/N included
+            ! i.e. use the unrelaxed moduli here (see Carcione's book, third edition, equation (3.189))
+            sigma_xx = sigma_xx + lambdalplusmul_unrelaxed_elastic * e1_sum + TWO * mul_unrelaxed_elastic * e11_sum
+            sigma_xz = sigma_xz + mul_unrelaxed_elastic * e13_sum
+            sigma_zz = sigma_zz + lambdalplusmul_unrelaxed_elastic * e1_sum - TWO * mul_unrelaxed_elastic * e11_sum
+            sigma_zx = sigma_xz
 
             if( PML_BOUNDARY_CONDITIONS .and. is_PML(ispec) ) then
               sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*PML_duz_dzl(i,j)
