@@ -63,7 +63,7 @@
 ! nu2 is the shear mode (Qmu)
 ! array index (1) is the first standard linear solid, (2) is the second etc.
 
-! f_min and f_max are computed as : f_max/f_min=12 and (log(f_min)+log(f_max))/2 = log(f0)
+! f_min and f_max are computed as: f_max/f_min=12 and (log(f_min)+log(f_max))/2 = log(f0)
   f_min_attenuation = exp(log(f0_attenuation)-log(12.d0)/2.d0)
   f_max_attenuation = 12.d0 * f_min_attenuation
 
