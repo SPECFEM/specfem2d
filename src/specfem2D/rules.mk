@@ -59,7 +59,6 @@ specfem2D_TARGETS = \
 specfem2D_OBJECTS = \
 	$O/acoustic_forcing_boundary.spec.o \
 	$O/assemble_MPI.spec.o \
-	$O/attenuation_compute_param.cc.o \
 	$O/attenuation_model.spec.o \
 	$O/axisymmetric_routines.spec.o \
 	$O/calendar.spec.o \
