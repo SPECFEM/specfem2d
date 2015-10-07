@@ -184,16 +184,12 @@ subroutine compute_forces_acoustic_GPU()
   enddo
 
 
- ! divides pressure with mass matrix
-  call kernel_3_a_acoustic_cuda(Mesh_pointer)
-
-
+! divides pressure with mass matrix
 ! corrector:
 ! updates the chi_dot term which requires chi_dot_dot(t+delta)
-  call kernel_3_b_acoustic_cuda(Mesh_pointer,deltatover2f,b_deltatover2f)
+  call kernel_3_acoustic_cuda(Mesh_pointer,deltatover2f,b_deltatover2f)
 
 ! enforces free surface (zeroes potentials at free surface)
-
  call acoustic_enforce_free_surf_cuda(Mesh_pointer)
 
 

@@ -1173,6 +1173,9 @@ subroutine iterate_time()
        if( it == NSTEP ) then
          if( any_acoustic ) then
            call transfer_kernels_ac_to_host(Mesh_pointer,rho_ac_kl,kappa_ac_kl,NSPEC_AB)
+          rhop_ac_kl(:,:,:) = rho_ac_kl(:,:,:) + kappa_ac_kl(:,:,:)
+          alpha_ac_kl(:,:,:) = TWO *  kappa_ac_kl(:,:,:)
+
          endif
 
          if( any_elastic ) then
