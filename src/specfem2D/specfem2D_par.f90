@@ -94,8 +94,8 @@ module specfem_par
 
   ! anisotropy parameters
   logical :: all_anisotropic
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
-  double precision ::  c11,c13,c15,c33,c35,c55,c12,c23,c25
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,c22ext
+  double precision ::  c11,c13,c15,c33,c35,c55,c12,c23,c25,c22
   logical, dimension(:), allocatable :: anisotropic
   double precision, dimension(:,:), allocatable :: anisotropy
 

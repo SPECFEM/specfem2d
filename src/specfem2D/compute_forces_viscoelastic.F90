@@ -52,7 +52,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
                          initialfield,ATTENUATION_VISCOELASTIC_SOLID,nspec_allocate,N_SLS,anglesource, &
                          ibool,kmato,numabs,elastic,codeabs,codeabs_corner, &
                          density,poroelastcoef,xix,xiz,gammax,gammaz, &
-                         jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,&
+                         jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,c22ext, &
                          anisotropic,anisotropy, &
                          e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK,c_LDDRK, &
                          e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_RK, e11_force_RK, e13_force_RK, &
@@ -132,7 +132,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
   double precision :: tauinvnu1,tauinvnu2
 
   ! for anisotropy
-  double precision ::  c11,c15,c13,c33,c35,c55,c12,c23,c25
+  double precision ::  c11,c15,c13,c33,c35,c55,c12,c23,c25,c22
 
   ! for analytical initial plane wave for Bielak's conditions
   double precision :: veloc_horiz,veloc_vert,dxUx,dzUx,dxUz,dzUz,traction_x_t0,traction_z_t0
@@ -876,6 +876,9 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
               c12 = c12ext(i,j,ispec)
               c23 = c23ext(i,j,ispec)
               c25 = c25ext(i,j,ispec)
+              if ( AXISYM ) then
+                c22 = c22ext(i,j,ispec) ! This variable is used just for axisym simulations
+              endif
             else
               c11 = anisotropy(1,kmato(ispec))
               c13 = anisotropy(2,kmato(ispec))
@@ -886,12 +889,48 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
               c12 = anisotropy(7,kmato(ispec))
               c23 = anisotropy(8,kmato(ispec))
               c25 = anisotropy(9,kmato(ispec))
+              if ( AXISYM ) then
+                c22 = anisotropy(10,kmato(ispec)) ! This variable is used just for axisym simulations
+              endif
             endif
 
             ! implement anisotropy in 2D
-            sigma_xx = c11*dux_dxl + c13*duz_dzl + c15*(duz_dxl + dux_dzl)
-            sigma_zz = c13*dux_dxl + c33*duz_dzl + c35*(duz_dxl + dux_dzl)
-            sigma_xz = c15*dux_dxl + c35*duz_dzl + c55*(duz_dxl + dux_dzl)
+            if ( AXISYM ) then
+              if ( is_on_the_axis(ispec) ) then
+                if ( i == 1 ) then ! first GLJ point, on the axis
+                  sigma_xx = 0._CUSTOM_REAL
+                  sigma_zz = 0._CUSTOM_REAL
+                  sigma_thetatheta(i,j) = 0._CUSTOM_REAL
+                  xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+                  r_xiplus1(i,j) = xxi
+                  do k = 1,NGLJ ! Compute the sum
+                    sigma_xx = sigma_xx + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                    sigma_zz = sigma_zz + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                    sigma_thetatheta(i,j) = sigma_thetatheta(i,j) + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                  enddo
+                  sigma_xx = c11*dux_dxl + c13*duz_dzl + c12*sigma_xx/xxi
+                  sigma_zz = c13*dux_dxl + c33*duz_dzl + c23*sigma_zz/xxi
+                  sigma_xz = c15*dux_dxl + c35*duz_dzl + c55*(duz_dxl + dux_dzl)
+                  sigma_thetatheta(i,j) = c12*dux_dxl + c23*duz_dzl + c22*sigma_thetatheta(i,j)/xxi
+
+                else ! first GLJ point but not on the axis
+                  sigma_xx = c11*dux_dxl + c13*duz_dzl + c12*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
+                  sigma_zz = c13*dux_dxl + c33*duz_dzl + c23*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
+                  sigma_xz = c15*dux_dxl + c35*duz_dzl + c55*(duz_dxl + dux_dzl)
+                  sigma_thetatheta(i,j) = c12*dux_dxl + c23*duz_dzl + &
+                                          c22*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
+                endif
+              else ! axisym but not on the axis
+                sigma_xx = c11*dux_dxl + c13*duz_dzl + c12*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
+                sigma_zz = c13*dux_dxl + c33*duz_dzl + c23*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
+                sigma_xz = c15*dux_dxl + c35*duz_dzl + c55*(duz_dxl + dux_dzl)
+                sigma_thetatheta(i,j) = c12*dux_dxl + c23*duz_dzl + c22*displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
+              endif
+            else ! not AXISYM
+              sigma_xx = c11*dux_dxl + c13*duz_dzl + c15*(duz_dxl + dux_dzl)
+              sigma_zz = c13*dux_dxl + c33*duz_dzl + c35*(duz_dxl + dux_dzl)
+              sigma_xz = c15*dux_dxl + c35*duz_dzl + c55*(duz_dxl + dux_dzl)
+            endif
           endif
 
           ! weak formulation term based on stress tensor (non-symmetric form)
