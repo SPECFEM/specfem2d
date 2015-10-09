@@ -1060,11 +1060,11 @@ subroutine iterate_time()
      if( any_acoustic ) then
        write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
        open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
-       do j=1,nglob
-         read(55) b_potential_acoustic(j),&
-                  b_potential_dot_acoustic(j),&
-                  b_potential_dot_dot_acoustic(j)
-       enddo
+
+         read(55) b_potential_acoustic
+         read(55) b_potential_dot_acoustic
+         read(55) b_potential_dot_dot_acoustic
+
        close(55)
 
        if( GPU_MODE ) then
@@ -1087,12 +1087,9 @@ subroutine iterate_time()
        write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
        open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
        if( p_sv ) then !P-SV waves
-         do j=1,nglob
-           read(55) (b_displ_elastic(i,j), i=1,NDIM), &
-                    (b_veloc_elastic(i,j), i=1,NDIM), &
-                    (b_accel_elastic(i,j), i=1,NDIM)
-         enddo
-
+           read(55) b_displ_elastic
+           read(55) b_veloc_elastic
+           read(55) b_accel_elastic
          if( GPU_MODE ) then
            b_displ_2D(1,:) = b_displ_elastic(1,:)
            b_displ_2D(2,:) = b_displ_elastic(2,:)
@@ -1101,21 +1098,14 @@ subroutine iterate_time()
            b_accel_2D(1,:) = b_accel_elastic(1,:)
            b_accel_2D(2,:) = b_accel_elastic(2,:)
            call transfer_b_fields_to_device(NDIM*NGLOB_AB,b_displ_2D,b_veloc_2D,b_accel_2D,Mesh_pointer)
-         else
-           b_displ_elastic(3,:) = b_displ_elastic(2,:)
-           b_displ_elastic(2,:) = 0._CUSTOM_REAL
-           b_veloc_elastic(3,:) = b_veloc_elastic(2,:)
-           b_veloc_elastic(2,:) = 0._CUSTOM_REAL
-           b_accel_elastic(3,:) = b_accel_elastic(2,:)
-           b_accel_elastic(2,:) = 0._CUSTOM_REAL
          endif
 
        else !SH (membrane) waves
-         do j=1,nglob
-           read(55) b_displ_elastic(2,j), &
-                    b_veloc_elastic(2,j), &
-                    b_accel_elastic(2,j)
-         enddo
+
+           read(55) b_displ_elastic
+           read(55) b_veloc_elastic
+           read(55) b_accel_elastic
+
          b_displ_elastic(1,:) = 0._CUSTOM_REAL
          b_displ_elastic(3,:) = 0._CUSTOM_REAL
          b_veloc_elastic(1,:) = 0._CUSTOM_REAL
@@ -1183,6 +1173,9 @@ subroutine iterate_time()
        if( it == NSTEP ) then
          if( any_acoustic ) then
            call transfer_kernels_ac_to_host(Mesh_pointer,rho_ac_kl,kappa_ac_kl,NSPEC_AB)
+          rhop_ac_kl(:,:,:) = rho_ac_kl(:,:,:) + kappa_ac_kl(:,:,:)
+          alpha_ac_kl(:,:,:) = TWO *  kappa_ac_kl(:,:,:)
+
          endif
 
          if( any_elastic ) then

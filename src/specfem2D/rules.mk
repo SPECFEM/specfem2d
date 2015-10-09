@@ -334,7 +334,7 @@ $O/create_color_image.spec.o: $O/specfem2D_par.spec.o
 $O/createnum_fast.spec.o: $O/specfem2D_par.spec.o
 $O/createnum_slow.spec.o: $O/specfem2D_par.spec.o
 $O/define_derivation_matrices.spec.o: $O/specfem2D_par.spec.o
-$O/define_external_model.o: $O/specfem2D_par.spec.o
+$O/define_external_model.spec.o: $O/specfem2D_par.spec.o
 $O/define_external_model_from_tomo_file.spec.o: $O/specfem2D_par.spec.o
 $O/elastic_cuda.spec.o: $O/specfem2D_par.spec.o
 $O/enforce_acoustic_free_surface.spec.o: $O/specfem2D_par.spec.o

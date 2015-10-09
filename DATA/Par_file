@@ -79,7 +79,7 @@ xdeb                            = 300.           # first receiver x in meters
 zdeb                            = 2200.          # first receiver z in meters
 xfin                            = 3700.          # last receiver x in meters (ignored if only one receiver)
 zfin                            = 2200.          # last receiver z in meters (ignored if only one receiver)
-enreg_surf_same_vertical        = .true.         # receivers inside the medium or at the surface (z values are ignored if this is set to true, they are replaced with the topography height)
+record_at_surface_same_vertical = .true.         # receivers inside the medium or at the surface (z values are ignored if this is set to true, they are replaced with the topography height)
 
 # display parameters
 NSTEP_BETWEEN_OUTPUT_INFO       = 100            # every how many time steps we display information about the simulation (costly, do not use a very small value)
@@ -122,6 +122,8 @@ nbmodels                        = 4
 # available material types (see user manual for more information)
 #   acoustic:    model_number 1 rho Vp 0  0 0 QKappa Qmu 0 0 0 0 0 0 (for QKappa and Qmu use 9999 to ignore them)
 #### currently acoustic media have no attenuation and thus QKappa and Qmu are ignored, but this will or should change soon
+# when viscoelasticity is turned on, the Vp and Vs values that are read here are the RELAXED ones i.e. the values at zero frequency
+# unless the READ_VELOCITIES_AT_f0 parameter above is set to true, in which case they are the values at frequency f0.
 #   elastic:     model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0 (for QKappa and Qmu use 9999 to ignore them)
 #   anisotropic: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0
 #   anisotropic in AXISYM: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 c22 0 0
