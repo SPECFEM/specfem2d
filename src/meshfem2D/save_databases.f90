@@ -313,7 +313,7 @@
       else if (icodemat(i) == ANISOTROPIC_MATERIAL) then
          write(15,*) i,icodemat(i),rho_s(i), &
                     aniso3(i),aniso4(i),aniso5(i),aniso6(i),&
-                    aniso7(i),aniso8(i),aniso9(i),aniso10(i),aniso11(i),0,0,0
+                    aniso7(i),aniso8(i),aniso9(i),aniso10(i),aniso11(i),aniso12(i),0,0
       else if(icodemat(i) == POROELASTIC_MATERIAL) then
          write(15,*) i,icodemat(i),rho_s(i),rho_f(i),phi(i),tortuosity(i), &
                     permxx(i),permxz(i),permzz(i),kappa_s(i),&
