@@ -75,7 +75,7 @@ subroutine  build_is_on_the_axis()
   !   poroelasticity, anisotropy, Stacey absorbing boundaries, time stepping scheme /= 1, PML rotated, adjoint
   !   simulations, periodic conditions, noise tomographies
 
-    use specfem_par, only: any_poroelastic, anisotropic,ROTATE_PML_ACTIVATE, &
+    use specfem_par, only: any_poroelastic, ROTATE_PML_ACTIVATE, &
                            STACEY_BOUNDARY_CONDITIONS, SIMULATION_TYPE, SAVE_FORWARD,time_stepping_scheme, &
                            NOISE_TOMOGRAPHY, NSOURCES, source_type, ispec_selected_source, ADD_PERIODIC_CONDITIONS, &
                            anglesource, is_on_the_axis, elastic, is_proc_source
