@@ -890,7 +890,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
               c23 = c23ext(i,j,ispec)
               c25 = c25ext(i,j,ispec)
               if ( AXISYM ) then
-                c22 = c22ext(i,j,ispec) ! This variable is used just for axisym simulations
+                c22 = c22ext(i,j,ispec) ! This variable is used for axisym simulations only
               endif
             else
               c11 = anisotropy(1,kmato(ispec))
@@ -903,7 +903,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
               c23 = anisotropy(8,kmato(ispec))
               c25 = anisotropy(9,kmato(ispec))
               if ( AXISYM ) then
-                c22 = anisotropy(10,kmato(ispec)) ! This variable is used just for axisym simulations
+                c22 = anisotropy(10,kmato(ispec)) ! This variable is used for axisym simulations only
               endif
             endif
 

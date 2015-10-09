@@ -345,15 +345,15 @@ subroutine define_external_model_from_tomo_file()
            vsext(i,j,ispec) = interpolate(NX, x_tomo, NZ, z_tomo, vs_tomo, xmesh, zmesh,TINYVAL)
            QKappa_attenuationext(i,j,ispec) = 9999. ! this means no attenuation
            Qmu_attenuationext(i,j,ispec)    = 9999. ! this means no attenuation
-           c11ext(i,j,ispec) = 0.d0 !  interpolate(NX, x_tomo, NZ, z_tomo, c11_tomo, xmesh, zmesh,TINYVAL)
-           c13ext(i,j,ispec) = 0.d0 !  interpolate(NX, x_tomo, NZ, z_tomo, c13_tomo, xmesh, zmesh,TINYVAL)
-           c15ext(i,j,ispec) = 0.d0 !  interpolate(NX, x_tomo, NZ, z_tomo, c15_tomo, xmesh, zmesh,TINYVAL)
-           c33ext(i,j,ispec) = 0.d0 !  interpolate(NX, x_tomo, NZ, z_tomo, c33_tomo, xmesh, zmesh,TINYVAL)
-           c35ext(i,j,ispec) = 0.d0 !  interpolate(NX, x_tomo, NZ, z_tomo, c35_tomo, xmesh, zmesh,TINYVAL)
-           c55ext(i,j,ispec) = 0.d0 !  interpolate(NX, x_tomo, NZ, z_tomo, c55_tomo, xmesh, zmesh,TINYVAL)
-           c12ext(i,j,ispec) = 0.d0 !  interpolate(NX, x_tomo, NZ, z_tomo, c12_tomo, xmesh, zmesh,TINYVAL)
-           c23ext(i,j,ispec) = 0.d0 !  interpolate(NX, x_tomo, NZ, z_tomo, c23_tomo, xmesh, zmesh,TINYVAL)
-           c25ext(i,j,ispec) = 0.d0 !  interpolate(NX, x_tomo, NZ, z_tomo, c25_tomo, xmesh, zmesh,TINYVAL)
+           c11ext(i,j,ispec) = 0.d0   ! this means no anisotropy
+           c13ext(i,j,ispec) = 0.d0
+           c15ext(i,j,ispec) = 0.d0
+           c33ext(i,j,ispec) = 0.d0
+           c35ext(i,j,ispec) = 0.d0
+           c55ext(i,j,ispec) = 0.d0
+           c12ext(i,j,ispec) = 0.d0
+           c23ext(i,j,ispec) = 0.d0
+           c25ext(i,j,ispec) = 0.d0
            !! AB AB : The 3 following lines are important, otherwise PMLs won't work.
            !! (we assign these values several times: indeed for each kmato(ispec) it can exist a lot of rhoext(i,j,ispec) )
            density(1,kmato(ispec)) = rhoext(i,j,ispec)

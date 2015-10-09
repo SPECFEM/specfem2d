@@ -145,7 +145,7 @@
         c12 = val7
         c23 = val8
         c25 = val9
-        c22 = val10  ! This value is used only with AXISYM
+        c22 = val10  ! This value is used for AXISYM only
 
         ! P and S velocity
         cp = sqrt(c33/density_mat(1))
@@ -261,7 +261,7 @@
         anisotropy(7,n) = c12
         anisotropy(8,n) = c23
         anisotropy(9,n) = c25
-        anisotropy(10,n) = c22 ! This value is used only with AXISYM
+        anisotropy(10,n) = c22 ! This value is used for AXISYM only
         porosity(n) = 0.d0
      else if (indic == 3) then
         density(1,n) = density_mat(1)

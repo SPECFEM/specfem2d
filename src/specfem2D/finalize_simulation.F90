@@ -119,7 +119,7 @@ if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer, &
   if(output_wavefield_dumps) deallocate(mask_ibool)
 
 
-!!!! Deplacement Etienne GPU
+!!!! Displacement Etienne GPU
 
 ! stores absorbing boundary contributions into files
       if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1 .and. (.not. PML_BOUNDARY_CONDITIONS)) then
@@ -182,6 +182,7 @@ if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer, &
   if(SAVE_FORWARD .and. SIMULATION_TYPE ==1 .and. any_elastic) then
     if ( myrank == 0 ) then
       write(IOUT,*)
+      write(IOUT,*) 'Saving elastic last frame...'
       write(IOUT,*)
     endif
     write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
