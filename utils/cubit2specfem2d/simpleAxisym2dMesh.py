@@ -79,13 +79,13 @@ cubit.cmd('block 1002 attribute index 1 1')      # material index
 cubit.cmd('block 1002 element type QUAD4')
 
 ### Creating absorbing surfaces
-cubit.cmd('block 2 edge in curve 4') 
+cubit.cmd('block 2 edge in curve 22 23 24')
 cubit.cmd('block 2 name "abs_right"')
 cubit.cmd('block 2 element type BAR2')
-cubit.cmd('block 3 edge in curve 1') 
+cubit.cmd('block 3 edge in curve 8 18')
 cubit.cmd('block 3 name "abs_bottom"')
 cubit.cmd('block 3 element type BAR2')
-cubit.cmd('block 4 edge in curve 3') 
+cubit.cmd('block 4 edge in curve 12 21')
 cubit.cmd('block 4 name "abs_top"')
 cubit.cmd('block 4 element type BAR2')
 
