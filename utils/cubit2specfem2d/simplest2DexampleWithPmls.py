@@ -8,20 +8,25 @@
 
 import cubit
 
+elementSize=0.5
+nPml=3
+
+# Create the geometry
+
 cubit.cmd('create surface rectangle width 10 height 10 yplane')
 cubit.cmd('volume 1 move x 5 z -5') # To get correct coordinates
 cubit.cmd('color volume 1 grey')
-elementSize=0.5
-nPml=3
+
+# Imprinting # This is not necessary here as we have just one volume but it has to be done for more than one!
+
+cubit.cmd('imprint all')
 
 # Meshing #
 
 cubit.cmd('surface 1 size '+str(elementSize))
 cubit.cmd('mesh surf all')
 
-# End of meshing ##
-
-### Define material properties
+# Define material properties #
 cubit.cmd('#### DEFINE MATERIAL PROPERTIES #######################')
 cubit.cmd('block 1 face in surf 1')           # Create block number 1 containing all faces in surface 1
 cubit.cmd('block 1 name "Granit"')            # The name of the block is...
@@ -43,17 +48,17 @@ cubit.cmd('block 200 face in block 101 with z_coord > 0')
 cubit.cmd('block 201 face in block 101 with z_coord < '+str(-10))
 cubit.cmd('block 102 face in block 200 201')
 
-# Create geometry (surfaces, curves... from free elements just created)
+# Create geometry (surfaces, curves... from free elements just created) #
 cubit.cmd('create mesh geometry face in block 100 feature_angle 135.0')
 cubit.cmd('create mesh geometry face in block 101 feature_angle 135.0')
 cubit.cmd('create mesh geometry face in block 102 feature_angle 135.0')
 
 cubit.cmd('merge all')
 
-# Delete temporqry blocks
+# Delete temporqry blocks #
 cubit.cmd('delete block 100 101 102 200 201')
 
-# Create definitive blocks (that will be read by cubit2specfem2d.py) :
+# Create definitive blocks (that will be read by cubit2specfem2d.py) #
 cubit.cmd('block 1000 face in surf 2 3')
 cubit.cmd('block 1000 name "pml_z_elast"')
 cubit.cmd('block 1000 attribute count 1')
