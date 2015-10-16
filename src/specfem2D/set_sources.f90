@@ -207,7 +207,7 @@
         endif
 
         ! checks source onset time
-        if( t0+tshift_src(i_source) <= 1.d0/f0(i_source)) then
+        if( t0+tshift_src(i_source) < 1.d0/f0(i_source)) then
           call exit_MPI('Onset time too small')
         else
           if( myrank == 0 ) then

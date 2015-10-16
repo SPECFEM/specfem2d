@@ -122,9 +122,19 @@
   if(USE_NEW_SOLVOPT_ROUTINE .and. (minval(tau_epsilon_nu1_d / tau_sigma_nu1) < 0.999d0 .or. &
                                     minval(tau_epsilon_nu2_d / tau_sigma_nu2) < 0.999d0)) then
        print *
+       print *,'*******************************************************************************'
+       print *,'*******************************************************************************'
+       print *,'*******************************************************************************'
+       print *,'*******************************************************************************'
+       print *,'*******************************************************************************'
        print *,'minval(tau_epsilon_nu1 / tau_sigma_nu1) = ',minval(tau_epsilon_nu1_d / tau_sigma_nu1)
        print *,'minval(tau_epsilon_nu2 / tau_sigma_nu2) = ',minval(tau_epsilon_nu2_d / tau_sigma_nu2)
-       stop 'error: tau_epsilon should never be smaller than tau_sigma for viscoelasticity'
+       print *,'WARNING: tau_epsilon should never be smaller than tau_sigma for viscoelasticity'
+       print *,'*******************************************************************************'
+       print *,'*******************************************************************************'
+       print *,'*******************************************************************************'
+       print *,'*******************************************************************************'
+       print *,'*******************************************************************************'
   endif
 
 ! When implementing viscoelasticity according to the Carcione 1993 paper, attenuation is
@@ -173,18 +183,18 @@
    inv_tau_sigma_nu1_sent(:) = sngl(dble(ONE) / tau_sigma_nu1(:))
    inv_tau_sigma_nu2_sent(:) = sngl(dble(ONE) / tau_sigma_nu2(:))
 
-   if(USE_NEW_SOLVOPT_ROUTINE) then
+!!!!!!   if(USE_NEW_SOLVOPT_ROUTINE) then
 
-! use the right formula with 1/N included
-     phi_nu1_sent(:) = sngl((dble(ONE) - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:) &
-                                                                           / sum(tau_epsilon_nu1_d/tau_sigma_nu1))
-     phi_nu2_sent(:) = sngl((dble(ONE) - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:) &
-                                                                           / sum(tau_epsilon_nu2_d/tau_sigma_nu2))
+!!!!!!! use the right formula with 1/N included
+!!!!!!     phi_nu1_sent(:) = sngl((dble(ONE) - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:) &
+!!!!!!                                                                           / sum(tau_epsilon_nu1_d/tau_sigma_nu1))
+!!!!!!     phi_nu2_sent(:) = sngl((dble(ONE) - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:) &
+!!!!!!                                                                           / sum(tau_epsilon_nu2_d/tau_sigma_nu2))
 
-     Mu_nu1_sent = sngl(sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS))
-     Mu_nu2_sent = sngl(sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS))
+!!!!!!     Mu_nu1_sent = sngl(sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS))
+!!!!!!     Mu_nu2_sent = sngl(sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS))
 
-   else
+!!!!!!   else
 
 ! in the old formulation of Carcione 1993, which is based on Liu et al. 1976, the 1/N factor is missing
      phi_nu1_sent(:) = sngl((dble(ONE) - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:))
@@ -197,7 +207,7 @@
        Mu_nu2_sent = sngl(dble(Mu_nu2_sent) - (dble(ONE) - tau_epsilon_nu2_d(i_sls)/tau_sigma_nu2(i_sls)))
      enddo
 
-   endif
+!!!!!!   endif
 
   else
 
@@ -207,16 +217,16 @@
    inv_tau_sigma_nu1_sent(:) = ONE / tau_sigma_nu1(:)
    inv_tau_sigma_nu2_sent(:) = ONE / tau_sigma_nu2(:)
 
-   if(USE_NEW_SOLVOPT_ROUTINE) then
+!!!!!!   if(USE_NEW_SOLVOPT_ROUTINE) then
 
-! use the right formula with 1/N included
-     phi_nu1_sent(:) = (ONE - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:) / sum(tau_epsilon_nu1_d/tau_sigma_nu1)
-     phi_nu2_sent(:) = (ONE - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:) / sum(tau_epsilon_nu2_d/tau_sigma_nu2)
+!!!!!!! use the right formula with 1/N included
+!!!!!!     phi_nu1_sent(:) = (ONE - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:) / sum(tau_epsilon_nu1_d/tau_sigma_nu1)
+!!!!!!     phi_nu2_sent(:) = (ONE - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:) / sum(tau_epsilon_nu2_d/tau_sigma_nu2)
 
-     Mu_nu1_sent = sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS)
-     Mu_nu2_sent = sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS)
+!!!!!!     Mu_nu1_sent = sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS)
+!!!!!!     Mu_nu2_sent = sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS)
 
-   else
+!!!!!!   else
 
 ! in the old formulation of Carcione 1993, which is based on Liu et al. 1976, the 1/N factor is missing
      phi_nu1_sent(:) = (ONE - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:)
@@ -229,7 +239,7 @@
        Mu_nu2_sent = Mu_nu2_sent - (ONE - tau_epsilon_nu2_d(i_sls)/tau_sigma_nu2(i_sls))
      enddo
 
-   endif
+!!!!!!   endif
 
   endif
 
@@ -480,7 +490,8 @@ SUBROUTINE compute_attenuation_coeffs(N,Qref,f0,f_min,f_max,tau_epsilon,tau_sigm
 
   do i = 1,N
     tau_sigma(i) = 1.d0 / point(i)
-    tau_epsilon(i) = tau_sigma(i) * (1.d0 + N * weight(i))
+!!!!!!!!!!!!!!!!!!!    tau_epsilon(i) = tau_sigma(i) * (1.d0 + N * weight(i))
+    tau_epsilon(i) = tau_sigma(i) * (1.d0 + weight(i))
   enddo
 
 ! print *,'points = '

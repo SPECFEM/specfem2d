@@ -158,7 +158,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
   ! temp variable RK
   real(kind=CUSTOM_REAL) :: weight_rk
 
-  !!!update momeory variable in viscoelastic simulation
+  !!!update memory variable in viscoelastic simulation
   if( ATTENUATION_VISCOELASTIC_SOLID ) then
 
     ! compute Grad(displ_elastic) at time step n for attenuation
@@ -286,7 +286,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
       endif
     enddo
   endif
-!!!! end of update momeory variable in viscoelastic simulation
+!!!! end of update memory variable in viscoelastic simulation
 
 ! this to avoid a warning at execution time about an undefined variable being used
 ! for the SH component in the case of a P-SV calculation, and vice versa
@@ -762,23 +762,24 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
               e13_sum = e13_sum + e13(i,j,ispec,i_sls)
             enddo
 
-            if(USE_NEW_SOLVOPT_ROUTINE) then
-! use the right formula with 1/N included
-! i.e. use the unrelaxed moduli here (see Carcione's book, third edition, equation (3.189))
-              sigma_xx = sigma_xx + lambdalplusmul_unrelaxed_elastic * e1_sum + TWO * mul_unrelaxed_elastic * e11_sum
-              sigma_xz = sigma_xz + mul_unrelaxed_elastic * e13_sum
-              sigma_zz = sigma_zz + lambdalplusmul_unrelaxed_elastic * e1_sum - TWO * mul_unrelaxed_elastic * e11_sum
-              sigma_zx = sigma_xz
-            else
+!!!!!            if(USE_NEW_SOLVOPT_ROUTINE) then
+!!!!!! use the right formula with 1/N included
+!!!!!! i.e. use the unrelaxed moduli here (see Carcione's book, third edition, equation (3.189))
+!!!!!              sigma_xx = sigma_xx + lambdalplusmul_unrelaxed_elastic * e1_sum + TWO * mul_unrelaxed_elastic * e11_sum
+!!!!!              sigma_xz = sigma_xz + mul_unrelaxed_elastic * e13_sum
+!!!!!              sigma_zz = sigma_zz + lambdalplusmul_unrelaxed_elastic * e1_sum - TWO * mul_unrelaxed_elastic * e11_sum
+!!!!!              sigma_zx = sigma_xz
+!!!!!            else
 ! in the old formulation of Carcione 1993, which is based on Liu et al. 1976, the 1/N factor is missing
 ! i.e. use the relaxed moduli here
               sigma_xx = sigma_xx + lambdalplusmul_relaxed_viscoel * e1_sum + TWO * mul_relaxed_viscoelastic * e11_sum
               sigma_xz = sigma_xz + mul_relaxed_viscoelastic * e13_sum
               sigma_zz = sigma_zz + lambdalplusmul_relaxed_viscoel * e1_sum - TWO * mul_relaxed_viscoelastic * e11_sum
               sigma_zx = sigma_xz
-            endif
+!!!!!            endif
 
             if( PML_BOUNDARY_CONDITIONS .and. is_PML(ispec) ) then
+! PML currently has no support for viscoelasticity, use the elastic formula instead
               sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*PML_duz_dzl(i,j)
               sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*PML_dux_dxl(i,j)
               sigma_zx = mul_unrelaxed_elastic * (PML_duz_dxl(i,j) + dux_dzl)
@@ -1636,6 +1637,4 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
   endif  ! end of PML_BOUNDARY_CONDITIONS
 
 end subroutine compute_forces_viscoelastic
-
-!========================================================================
 

@@ -122,7 +122,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
   ! temp variable RK
   real(kind=CUSTOM_REAL) :: weight_rk
 
-  !!!update momeory variable in viscoelastic simulation
+  !!!update memory variable in viscoelastic simulation
   if( ATTENUATION_VISCOELASTIC_SOLID ) then
 
     ! compute Grad(b_displ_elastic) at time step n for attenuation
@@ -250,7 +250,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
       endif
     enddo
   endif
-!!!! end of update momeory variable in viscoelastic simulation
+!!!! end of update memory variable in viscoelastic simulation
 
 ! this to avoid a warning at execution time about an undefined variable being used
 ! for the SH component in the case of a P-SV calculation, and vice versa
