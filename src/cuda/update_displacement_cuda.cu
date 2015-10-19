@@ -172,7 +172,7 @@ void FC_FUNC_(update_displacement_cuda,
 // KERNEL 1
 /* ----------------------------------------------------------------------------------------------- */
 
-__global__ void UpdatePotential_kernel(realw* potential_acoustic,
+__global__ void UpdatePotential_kernel(realw_p potential_acoustic,
                                        realw* potential_dot_acoustic,
                                        realw* potential_dot_dot_acoustic,
                                        int size,
@@ -460,8 +460,8 @@ __global__ void kernel_3_acoustic_cuda_device(realw* potential_dot_dot_acoustic,
                                                 realw* b_potential_dot_acoustic,
                                                 int size,
                                                 int simulation_type,
-                                                realw* deltatover2,
-                                                realw* b_deltatover2,
+                                                realw deltatover2,
+                                                realw b_deltatover2,
                                                 realw* rmass_acoustic) {
 
   int id = threadIdx.x + blockIdx.x*blockDim.x + blockIdx.y*gridDim.x*blockDim.x;
@@ -482,7 +482,7 @@ __global__ void kernel_3_acoustic_cuda_device(realw* potential_dot_dot_acoustic,
       b_potential_dot_dot_acoustic[id] = p_dot_dot;
       // corrector:
       // updates the chi_dot term which requires chi_dot_dot(t+delta)
-      b_potential_dot_acoustic[id] += deltatover2*p_dot_dot;}
+      b_potential_dot_acoustic[id] += b_deltatover2*p_dot_dot;}
 
   }
 }

@@ -154,14 +154,12 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
 
   int I,J;
   int iglob,offset;
-  int working_element;
 
   realw temp1l,temp3l;
   realw xixl,xizl,gammaxl,gammazl;
-  realw jacobianl;
 
   realw dpotentialdxl,dpotentialdzl;
-  realw rho_invl;
+  realw rho_invl_times_jacobianl;
 
   realw sum_terms;
 
@@ -173,6 +171,7 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
   __shared__ realw sh_hprime_xx[NGLL2];
   __shared__ realw sh_hprimewgll_xx[NGLL2];
   __shared__ realw sh_wxgll[NGLLX];
+
 
 
 // arithmetic intensity: ratio of number-of-arithmetic-operations / number-of-bytes-accessed-on-DRAM
@@ -193,23 +192,13 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
   // checks if anything to do
   if( bx >= nb_blocks_to_compute ) return;
 
-  // limits thread ids to range [0,25-1]
-  if( tx >= NGLL2 ) tx =  NGLL2-1;
-
 // counts:
 // + 1 FLOP
 //
 // + 0 BYTE
 
-  // spectral-element id
-
-    // iphase-1 and working_element-1 for Fortran->C array conventions
-    working_element = d_phase_ispec_inner_acoustic[bx + num_phase_ispec_acoustic*(d_iphase-1)]-1;
-
-
-
   // local padded index
-  offset = working_element*NGLL2_PADDED + tx;
+   offset = (d_phase_ispec_inner_acoustic[bx + num_phase_ispec_acoustic*(d_iphase-1)]-1)*NGLL2_PADDED + tx;
 
   // global index
   iglob = d_ibool[offset] - 1;
@@ -255,11 +244,7 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
   gammaxl = d_gammax[offset];
   gammazl = d_gammaz[offset];
 
-  jacobianl = 1.f / (xixl*gammazl-gammaxl*xizl);
-
-
-  // density (reciproc)
-  rho_invl = 1.f / d_rhostore[offset];
+  rho_invl_times_jacobianl = 1.f /(d_rhostore[offset] * (xixl*gammazl-gammaxl*xizl));
 
 
 // counts:
@@ -268,7 +253,7 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
 // + 5 float * 32 threads = 160 BYTE
 
   // loads hprime into shared memory
-if(threadIdx.x<NGLL2){
+
 #ifdef USE_TEXTURES_CONSTANTS
     sh_hprime_xx[tx] = tex1Dfetch(d_hprime_xx_tex,tx);
 #else
@@ -276,14 +261,16 @@ if(threadIdx.x<NGLL2){
 #endif
     // loads hprimewgll into shared memory
     sh_hprimewgll_xx[tx] = hprimewgll_xx[tx];
-}
-else
+
+if(threadIdx.x<NGLLX){
 #ifdef USE_TEXTURES_CONSTANTS
-    sh_wxgll[tx-NGLL2] = tex1Dfetch(d_wxgll_xx_tex,tx-NGLL2);
+    sh_wxgll[tx] = tex1Dfetch(d_wxgll_xx_tex,tx);
 #else
     // changing iglob indexing to match fortran row changes fast style
-    sh_wxgll[tx-NGLL2] = wxgll[tx-NGLL2];
+    sh_wxgll[tx] = wxgll[tx];
 #endif
+}
+
 
 // counts:
 // + 0 FLOP
@@ -326,8 +313,8 @@ for (int k=0 ; k< nb_field ; k++)
 
   // form the dot product with the test vector
 
-    s_temp1[tx] = sh_wxgll[J] * jacobianl * rho_invl * (dpotentialdxl*xixl  + dpotentialdzl*xizl)  ;
-    s_temp3[tx] = sh_wxgll[I] * jacobianl * rho_invl * (dpotentialdxl*gammaxl + dpotentialdzl*gammazl)  ;
+      s_temp1[tx] = sh_wxgll[J]*rho_invl_times_jacobianl  * (dpotentialdxl*xixl  + dpotentialdzl*xizl)  ;
+      s_temp3[tx] = sh_wxgll[I]*rho_invl_times_jacobianl  * (dpotentialdxl*gammaxl + dpotentialdzl*gammazl)  ;
 
 // counts:
 // + 2 * 6 FLOP = 12 FLOP
@@ -389,7 +376,7 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
   // if the grid can handle the number of blocks, we let it be 1D
   // grid_2_x = nb_elem_color;
   // nb_elem_color is just how many blocks we are computing now
-  int blocksize = NGLL2_PADDED;
+  int blocksize = NGLL2;
 
   int num_blocks_x, num_blocks_y, nb_field;
   get_blocks_xy(nb_blocks_to_compute,&num_blocks_x,&num_blocks_y);
@@ -424,7 +411,6 @@ else nb_field=1;
                                                                     mp->use_mesh_coloring_gpu,
                                                                     d_kappastore);
 
-  }
 
   // Cuda timing
   if( CUDA_TIMING ){
