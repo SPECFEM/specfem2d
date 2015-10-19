@@ -63,9 +63,15 @@
 ! nu2 is the shear mode (Qmu)
 ! array index (1) is the first standard linear solid, (2) is the second etc.
 
+  if(N_SLS == 2) then
 ! f_min and f_max are computed as: f_max/f_min=12 and (log(f_min)+log(f_max))/2 = log(f0)
-  f_min_attenuation = exp(log(f0_attenuation)-log(12.d0)/2.d0)
-  f_max_attenuation = 12.d0 * f_min_attenuation
+    f_min_attenuation = exp(log(f0_attenuation)-log(12.d0)/2.d0)
+    f_max_attenuation = 12.d0 * f_min_attenuation
+  else
+! we can use a much wider bandwidth if using 3 or more Standard Linear Solids
+    f_min_attenuation = f0_attenuation / 10.d0
+    f_max_attenuation = f0_attenuation * 10.d0
+  endif
 
 ! use new SolvOpt nonlinear optimization with constraints from Emilie Blanc and Bruno Lombard to compute attenuation mechanisms,
 ! or use old solver in C from Jeroen Tromp. Beware that the old C routine implements an attenuation model that is not fully correct
@@ -474,10 +480,6 @@ SUBROUTINE compute_attenuation_coeffs(N,Qref,f0,f_min,f_max,tau_epsilon,tau_sigm
 
   IMPLICIT NONE
 
-! pi
-  double precision, parameter :: PI = 3.141592653589793d0
-  double precision, parameter :: TWO_PI = 2.d0 * PI
-
   integer, intent(in) :: N
   double precision, intent(in) :: Qref,f_min,f_max,f0
   double precision, dimension(1:N), intent(out) :: tau_epsilon,tau_sigma
@@ -787,7 +789,7 @@ SUBROUTINE remplit_point(fmin,fmax,N,point)
   ELSE
     do l = 1, N, 1
       point(l) = (fmax/fmin) ** ((l-1.)/(N-1.))
-      point(l) = TWO_PI * point(l) * fmin
+      point(l) = TWO_PI_OR_ONE * point(l) * fmin
     enddo
   endif
 
@@ -817,7 +819,7 @@ SUBROUTINE classical_linear_least_squares(Qref,poids,point,N,fmin,fmax)
 
   do k=1,m
     freq = (fmax/fmin) ** ((k - 1.)/(m - 1.))
-    freq = TWO_PI * fmin * freq
+    freq = TWO_PI_OR_ONE * fmin * freq
     x(k) = freq
     y_ref(k) = ref
     sig(k) = 1.
@@ -2157,11 +2159,11 @@ SUBROUTINE func_mini(x,res,Qref,N,Nopt,K,f_min,f_max)
   integer i
   double precision d,freq,aux
 
-  res = 0.
+  res = 0.d0
   do i=1,K
-    freq = TWO_PI * f_min*((f_max/f_min)**((i-1.)/(K-1.)))
+    freq = TWO_PI_OR_ONE * f_min*((f_max/f_min)**((i-1.d0)/(K-1.d0)))
     call func_objective(x,aux,freq,Qref,N,Nopt)
-    d = aux - 1.
+    d = aux - 1.d0
     res = res + d*d
   enddo
 
@@ -2184,7 +2186,7 @@ SUBROUTINE grad_func_mini(x,grad,Qref,N,Nopt,K,f_min,f_max)
   double precision, dimension(1:K) :: freq
 
   do i=1,K
-    freq(i) = TWO_PI * f_min*((f_max/f_min)**((i-1.)/(K-1.)))
+    freq(i) = TWO_PI_OR_ONE * f_min*((f_max/f_min)**((i-1.d0)/(K-1.d0)))
   enddo
 
   do l=1,N
@@ -2193,29 +2195,29 @@ SUBROUTINE grad_func_mini(x,grad,Qref,N,Nopt,K,f_min,f_max)
   enddo
 
   do l=1,N
-    grad(l) = 0.
-    grad(N+l) = 0.
+    grad(l) = 0.d0
+    grad(N+l) = 0.d0
 
     do i=1,K
       call func_objective(x,R,freq(i),Qref,N,Nopt)
-      temp3 = R - 1.
+      temp3 = R - 1.d0
       temp0 = freq(i)*Qref
 
-      !derivee par rapport aux poids
+      ! derivee par rapport aux poids
       temp1 = temp0*(point(l)*point(l) - freq(i)/qref)
-      temp1 = temp1*2.*poids(l)
-      temp2 = (point(l)**4.) + freq(i)*freq(i)
+      temp1 = temp1*2.d0*poids(l)
+      temp2 = (point(l)**4.d0) + freq(i)*freq(i)
       temp1 = temp1/temp2
-      tamp = 2.*temp3*temp1
+      tamp = 2.d0*temp3*temp1
       grad(N+l) = grad(N+l) + tamp
 
-      !derivee par rapport aux points
-      aux1 = -2.*(point(l)**5.) + 2.*point(l)*freq(i)*freq(i) + 4.*(point(l)**3.)*freq(i)/Qref
+      ! derivee par rapport aux points
+      aux1 = -2.d0*(point(l)**5.d0) + 2.d0*point(l)*freq(i)*freq(i) + 4.d0*(point(l)**3.d0)*freq(i)/Qref
       aux3 = temp2*temp2
       aux4 = aux1/aux3
       aux4 = aux4*temp0
       aux2 = aux4*poids(l)*poids(l)
-      tamp = 2.*temp3*aux2
+      tamp = 2.d0*temp3*aux2
       grad(l) = grad(l) + tamp
     enddo
   enddo
@@ -2314,8 +2316,8 @@ SUBROUTINE nonlinear_optimization(N,Qref,f0,point,poids,f_min,f_max)
   flfc = .true.
 
   K = 4*N
-  theta_min = TWO_PI*0.d0
-  theta_max = TWO_PI*100.d0*f0
+  theta_min = 0.d0        ! arbitrary lower limit from Bruno Lombard to make sure points never become negative
+  theta_max = 1000.d0*f0  ! arbitrary upper limit from Bruno Lombard to make sure points never tend to infinity
 
   ! this is used as a first guess
   call classical_linear_least_squares(Qref,poids,point,N,f_min,f_max)

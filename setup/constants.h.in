@@ -206,6 +206,9 @@
 ! maximum number of stages for optimized (for reduced storage) LDDRK4-6 Runge-Kutta time scheme
   integer, parameter :: Nstages = 6
 
+! to compute optimized weights for attenuation (1 means we work in frequency, 2 PI means we work in angular frequency)
+  double precision, parameter :: TWO_PI_OR_ONE = 1.d0 ! TWO_PI
+
 ! For CUDA mode
   logical, parameter :: USE_MESH_COLORING_GPU = .false.
   integer, parameter :: itag = 0
