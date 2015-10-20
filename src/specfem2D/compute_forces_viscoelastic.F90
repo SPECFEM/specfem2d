@@ -155,7 +155,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
                       A0,A1,A2,A3,A4,bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2
   integer :: CPML_region_local,singularity_type_zx,singularity_type_xz,singularity_type
 
-  ! temp variable RK
+  ! temporary RK4 variable
   real(kind=CUSTOM_REAL) :: weight_rk
 
   !!!update memory variable in viscoelastic simulation
@@ -237,9 +237,9 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
               e1_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (theta_n_u * phinu1 - e1(i,j,ispec,i_sls) * tauinvnu1)
 
               if( i_stage==1 .or. i_stage==2 .or. i_stage==3 ) then
-                if( i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
-                if( i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
-                if( i_stage == 3)weight_rk = 1._CUSTOM_REAL
+                if( i_stage == 1) weight_rk = 0.5_CUSTOM_REAL
+                if( i_stage == 2) weight_rk = 0.5_CUSTOM_REAL
+                if( i_stage == 3) weight_rk = 1._CUSTOM_REAL
 
                 if( i_stage==1) e1_initial_rk(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls)
                 e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) + weight_rk * e1_force_RK(i,j,ispec,i_sls,i_stage)
@@ -253,9 +253,9 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
                                                                  e11(i,j,ispec,i_sls) * tauinvnu2)
 
               if( i_stage==1 .or. i_stage==2 .or. i_stage==3 ) then
-                if( i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
-                if( i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
-                if( i_stage == 3)weight_rk = 1._CUSTOM_REAL
+                if( i_stage == 1) weight_rk = 0.5_CUSTOM_REAL
+                if( i_stage == 2) weight_rk = 0.5_CUSTOM_REAL
+                if( i_stage == 3) weight_rk = 1._CUSTOM_REAL
 
                 if( i_stage==1) e11_initial_rk(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)
                 e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + weight_rk * e11_force_RK(i,j,ispec,i_sls,i_stage)
@@ -268,9 +268,9 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
               e13_force_RK(i,j,ispec,i_sls,i_stage) = deltat * ((dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec))*phinu2 - &
                                                                  e13(i,j,ispec,i_sls) * tauinvnu2)
               if( i_stage==1 .or. i_stage==2 .or. i_stage==3 ) then
-                if( i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
-                if( i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
-                if( i_stage == 3)weight_rk = 1._CUSTOM_REAL
+                if( i_stage == 1) weight_rk = 0.5_CUSTOM_REAL
+                if( i_stage == 2) weight_rk = 0.5_CUSTOM_REAL
+                if( i_stage == 3) weight_rk = 1._CUSTOM_REAL
 
                 if( i_stage==1) e13_initial_rk(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)
                 e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + weight_rk * e13_force_RK(i,j,ispec,i_sls,i_stage)
