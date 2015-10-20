@@ -63,15 +63,9 @@
 ! nu2 is the shear mode (Qmu)
 ! array index (1) is the first standard linear solid, (2) is the second etc.
 
-  if(N_SLS == 2) then
-! f_min and f_max are computed as: f_max/f_min=12 and (log(f_min)+log(f_max))/2 = log(f0)
-    f_min_attenuation = exp(log(f0_attenuation)-log(12.d0)/2.d0)
-    f_max_attenuation = 12.d0 * f_min_attenuation
-  else
-! we can use a much wider bandwidth if using 3 or more Standard Linear Solids
-    f_min_attenuation = f0_attenuation / 10.d0
-    f_max_attenuation = f0_attenuation * 10.d0
-  endif
+! use a wide bandwidth (always OK when using three or more Standard Linear Solids, can be a bit inaccurate if using only two)
+  f_min_attenuation = f0_attenuation / 10.d0
+  f_max_attenuation = f0_attenuation * 10.d0
 
 ! use new SolvOpt nonlinear optimization with constraints from Emilie Blanc and Bruno Lombard to compute attenuation mechanisms,
 ! or use old solver in C from Jeroen Tromp. Beware that the old C routine implements an attenuation model that is not fully correct
