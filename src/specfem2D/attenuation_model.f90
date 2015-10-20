@@ -52,8 +52,6 @@
 
   double precision :: QKappa_att,QMu_att
 
-  integer :: i_sls
-
   double precision, dimension(N_SLS) :: tau_epsilon_nu1_d,tau_sigma_nu1,tau_epsilon_nu2_d,tau_sigma_nu2
 
   double precision :: f_min_attenuation, f_max_attenuation
@@ -67,51 +65,20 @@
   f_min_attenuation = f0_attenuation / 10.d0
   f_max_attenuation = f0_attenuation * 10.d0
 
-! use new SolvOpt nonlinear optimization with constraints from Emilie Blanc and Bruno Lombard to compute attenuation mechanisms,
-! or use old solver in C from Jeroen Tromp. Beware that the old C routine implements an attenuation model that is not fully correct
-! because a 1/N factor is missing in the original article of Liu et al. 1976 as well as in Carcione's articles on attenuation,
-! as mentioned in more recent articles by Peter Moczo et al. and also by Bruno Lombard et al.
-! For more details, see the comment about this at the beginning of the "SolvOpt" routine
-! in file src/specfem2D/attenuation_model.f90.
-! We thus strongly discourage using the old routine.
-  if(USE_NEW_SOLVOPT_ROUTINE) then
-
-    call compute_attenuation_coeffs(N_SLS,QKappa_att,f0_attenuation,f_min_attenuation,f_max_attenuation, &
+  call compute_attenuation_coeffs(N_SLS,QKappa_att,f0_attenuation,f_min_attenuation,f_max_attenuation, &
                                         tau_epsilon_nu1_d,tau_sigma_nu1)
 
-    call compute_attenuation_coeffs(N_SLS,QMu_att,f0_attenuation,f_min_attenuation,f_max_attenuation, &
+  call compute_attenuation_coeffs(N_SLS,QMu_att,f0_attenuation,f_min_attenuation,f_max_attenuation, &
                                         tau_epsilon_nu2_d,tau_sigma_nu2)
 
-!   print *
-!   print *,'with new SolvOpt:'
-!   print *
-!   print *,'N_SLS, QKappa_att, QMu_att = ',N_SLS, QKappa_att, QMu_att
-!   print *,'f0_attenuation,f_min_attenuation,f_max_attenuation = ',f0_attenuation,f_min_attenuation,f_max_attenuation
-!   print *,'tau_epsilon_nu1 = ',tau_epsilon_nu1_d
-!   print *,'tau_sigma_nu1 = ',tau_sigma_nu1
-!   print *,'tau_epsilon_nu2 = ',tau_epsilon_nu2_d
-!   print *,'tau_sigma_nu2 = ',tau_sigma_nu2
-!   print *
-
-  else
-
-! call a C function that computes attenuation parameters (function in file "attenuation_compute_param.c";
-! a main can be found in UTILS/attenuation directory).
-    call attenuation_compute_param(N_SLS, QKappa_att, QMu_att, &
-         f_min_attenuation,f_max_attenuation,tau_sigma_nu1, tau_sigma_nu2, tau_epsilon_nu1_d, tau_epsilon_nu2_d)
-
-!   print *
-!   print *,'with old C routine:'
-!   print *
-!   print *,'N_SLS, QKappa_att, QMu_att = ',N_SLS, QKappa_att, QMu_att
-!   print *,'f0_attenuation,f_min_attenuation,f_max_attenuation = ',f0_attenuation,f_min_attenuation,f_max_attenuation
-!   print *,'tau_epsilon_nu1 = ',tau_epsilon_nu1_d
-!   print *,'tau_sigma_nu1 = ',tau_sigma_nu1
-!   print *,'tau_epsilon_nu2 = ',tau_epsilon_nu2_d
-!   print *,'tau_sigma_nu2 = ',tau_sigma_nu2
-!   print *
-
-  endif
+! print *
+! print *,'N_SLS, QKappa_att, QMu_att = ',N_SLS, QKappa_att, QMu_att
+! print *,'f0_attenuation,f_min_attenuation,f_max_attenuation = ',f0_attenuation,f_min_attenuation,f_max_attenuation
+! print *,'tau_epsilon_nu1 = ',tau_epsilon_nu1_d
+! print *,'tau_sigma_nu1 = ',tau_sigma_nu1
+! print *,'tau_epsilon_nu2 = ',tau_epsilon_nu2_d
+! print *,'tau_sigma_nu2 = ',tau_sigma_nu2
+! print *
 
   if(any(tau_sigma_nu1 < 0.d0) .or. any(tau_sigma_nu2 < 0.d0) .or. &
      any(tau_epsilon_nu1_d < 0.d0) .or. any(tau_epsilon_nu2_d < 0.d0)) &
@@ -119,8 +86,8 @@
 
 ! in the old formulation of Carcione 1993, which is based on Liu et al. 1976, the 1/N factor is missing
 ! and thus this does not apply; it only applies to the right formula with 1/N included
-  if(USE_NEW_SOLVOPT_ROUTINE .and. (minval(tau_epsilon_nu1_d / tau_sigma_nu1) < 0.999d0 .or. &
-                                    minval(tau_epsilon_nu2_d / tau_sigma_nu2) < 0.999d0)) then
+  if(minval(tau_epsilon_nu1_d / tau_sigma_nu1) < 0.999d0 .or. &
+                                    minval(tau_epsilon_nu2_d / tau_sigma_nu2) < 0.999d0) then
        print *
        print *,'*******************************************************************************'
        print *,'*******************************************************************************'
@@ -183,34 +150,17 @@
    inv_tau_sigma_nu1_sent(:) = sngl(dble(ONE) / tau_sigma_nu1(:))
    inv_tau_sigma_nu2_sent(:) = sngl(dble(ONE) / tau_sigma_nu2(:))
 
-   if(USE_NEW_SOLVOPT_ROUTINE) then
-
 ! use the right formula with 1/N included
-     phi_nu1_sent(:) = sngl((dble(ONE) - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:) &
+   phi_nu1_sent(:) = sngl((dble(ONE) - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:) &
                                                                            / sum(tau_epsilon_nu1_d/tau_sigma_nu1))
-     phi_nu2_sent(:) = sngl((dble(ONE) - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:) &
+   phi_nu2_sent(:) = sngl((dble(ONE) - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:) &
                                                                            / sum(tau_epsilon_nu2_d/tau_sigma_nu2))
 
-     Mu_nu1_sent = sngl(sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS))
-     Mu_nu2_sent = sngl(sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS))
+   Mu_nu1_sent = sngl(sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS))
+   Mu_nu2_sent = sngl(sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS))
 
-     if(Mu_nu1_sent < 1. .or. Mu_nu2_sent < 1.) &
+   if(Mu_nu1_sent < 1. .or. Mu_nu2_sent < 1.) &
        stop 'error in Zener viscoelasticity: must have Mu_nu1 and Mu_nu2 both greater than one'
-
-   else
-
-! in the old formulation of Carcione 1993, which is based on Liu et al. 1976, the 1/N factor is missing
-     phi_nu1_sent(:) = sngl((dble(ONE) - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:))
-     phi_nu2_sent(:) = sngl((dble(ONE) - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:))
-
-     Mu_nu1_sent = dble(ONE)
-     Mu_nu2_sent = dble(ONE)
-     do i_sls = 1,N_SLS
-       Mu_nu1_sent = sngl(dble(Mu_nu1_sent) - (dble(ONE) - tau_epsilon_nu1_d(i_sls)/tau_sigma_nu1(i_sls)))
-       Mu_nu2_sent = sngl(dble(Mu_nu2_sent) - (dble(ONE) - tau_epsilon_nu2_d(i_sls)/tau_sigma_nu2(i_sls)))
-     enddo
-
-   endif
 
   else
 
@@ -220,32 +170,15 @@
    inv_tau_sigma_nu1_sent(:) = ONE / tau_sigma_nu1(:)
    inv_tau_sigma_nu2_sent(:) = ONE / tau_sigma_nu2(:)
 
-   if(USE_NEW_SOLVOPT_ROUTINE) then
-
 ! use the right formula with 1/N included
-     phi_nu1_sent(:) = (ONE - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:) / sum(tau_epsilon_nu1_d/tau_sigma_nu1)
-     phi_nu2_sent(:) = (ONE - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:) / sum(tau_epsilon_nu2_d/tau_sigma_nu2)
+   phi_nu1_sent(:) = (ONE - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:) / sum(tau_epsilon_nu1_d/tau_sigma_nu1)
+   phi_nu2_sent(:) = (ONE - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:) / sum(tau_epsilon_nu2_d/tau_sigma_nu2)
 
-     Mu_nu1_sent = sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS)
-     Mu_nu2_sent = sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS)
+   Mu_nu1_sent = sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS)
+   Mu_nu2_sent = sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS)
 
-     if(Mu_nu1_sent < 1.d0 .or. Mu_nu2_sent < 1.d0) &
+   if(Mu_nu1_sent < 1.d0 .or. Mu_nu2_sent < 1.d0) &
        stop 'error in Zener viscoelasticity: must have Mu_nu1 and Mu_nu2 both greater than one'
-
-   else
-
-! in the old formulation of Carcione 1993, which is based on Liu et al. 1976, the 1/N factor is missing
-     phi_nu1_sent(:) = (ONE - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:)
-     phi_nu2_sent(:) = (ONE - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:)
-
-     Mu_nu1_sent = ONE
-     Mu_nu2_sent = ONE
-     do i_sls = 1,N_SLS
-       Mu_nu1_sent = Mu_nu1_sent - (ONE - tau_epsilon_nu1_d(i_sls)/tau_sigma_nu1(i_sls))
-       Mu_nu2_sent = Mu_nu2_sent - (ONE - tau_epsilon_nu2_d(i_sls)/tau_sigma_nu2(i_sls))
-     enddo
-
-   endif
 
   endif
 
@@ -2320,7 +2253,7 @@ SUBROUTINE nonlinear_optimization(N,Qref,f0,point,poids,f_min,f_max)
 
   ! this is used as a first guess
   call classical_linear_least_squares(Qref,poids,point,N,f_min,f_max)
-  if(.not. USE_SOLVOPT_INSTEAD_OF_LINEAR) return
+  if(.not. USE_SOLVOPT) return
 
   ! what follows is the nonlinear optimization part
 

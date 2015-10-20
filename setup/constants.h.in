@@ -37,17 +37,8 @@
 ! note: this can be turned off to speedup location search and locate the source at the closest GLL point instead.
   logical, parameter :: USE_BEST_LOCATION_FOR_SOURCE = .true.
 
-! use new SolvOpt nonlinear optimization with constraints from Emilie Blanc and Bruno Lombard to compute attenuation mechanisms,
-! or use old solver in C from Jeroen Tromp. Beware that the old C routine implements an attenuation model that is not fully correct
-! because a 1/N factor is missing in the original article of Liu et al. 1976 as well as in Carcione's articles on attenuation,
-! as mentioned in more recent articles by Peter Moczo et al. and also by Bruno Lombard et al.
-! For more details, see the comment about this at the beginning of the "SolvOpt" routine
-! in file src/specfem2D/attenuation_model.f90.
-! We thus strongly discourage using the old routine.
-  logical, parameter :: USE_NEW_SOLVOPT_ROUTINE = .true.
-
-! use SolvOpt nonlinear optimization with constraints or classical linear least squares
-  logical, parameter :: USE_SOLVOPT_INSTEAD_OF_LINEAR = .true.
+! use SolvOpt nonlinear optimization with constraints or less accurate classical linear least squares
+  logical, parameter :: USE_SOLVOPT = .true.
 
 ! update the memory variables using a convolution or using a differential equation
   logical, parameter :: CONVOLUTION_MEMORY_VARIABLES = .true.
