@@ -106,8 +106,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
 
   ! material properties of the elastic medium
   real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic, &
-    lambdaplus2mu_unrelaxed_elastic,cpl,csl,rhol, &
-    lambdal_relaxed_viscoelastic,mul_relaxed_viscoelastic,lambdalplusmul_relaxed_viscoel
+    lambdalplusmul_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic,cpl,csl,rhol
 
   ! for attenuation
   real(kind=CUSTOM_REAL) :: phinu1,phinu2,theta_n_u,theta_nsub1_u
@@ -273,6 +272,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
       ! get unrelaxed elastic parameters of current spectral element
       lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
       mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
+      lambdalplusmul_unrelaxed_elastic = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
       lambdaplus2mu_unrelaxed_elastic = poroelastcoef(3,1,kmato(ispec))
 
       ! first double loop over GLL points to compute and store gradients
@@ -285,6 +285,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
             rhol = rhoext(i,j,ispec)
             mul_unrelaxed_elastic = rhol*csl*csl
             lambdal_unrelaxed_elastic = rhol*cpl*cpl - TWO*mul_unrelaxed_elastic
+            lambdalplusmul_unrelaxed_elastic = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
             lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic
           endif
 
@@ -359,12 +360,6 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
             ! J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic
             ! and porous media, Elsevier, p. 124-125, 2007
 
-            lambdal_relaxed_viscoelastic = (lambdal_unrelaxed_elastic + 2._CUSTOM_REAL*mul_unrelaxed_elastic/3._CUSTOM_REAL)&
-                                           / Mu_nu1(i,j,ispec) &
-                                           - (2._CUSTOM_REAL*mul_unrelaxed_elastic/3._CUSTOM_REAL) / Mu_nu2(i,j,ispec)
-            mul_relaxed_viscoelastic = mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
-            lambdalplusmul_relaxed_viscoel = lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic
-
             ! compute the stress using the unrelaxed Lame parameters (Carcione 2007 page 125)
             ! When implementing viscoelasticity according to the Carcione 1993 paper, attenuation is
             ! non-causal rather than causal. We fixed the problem by using equations in Carcione's
@@ -417,7 +412,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
               sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
             endif
 
-            ! add the memory variables using the relaxed parameters (Carcione 2007 page 125)
+            ! add the memory variables (Carcione 2007 page 125)
             ! beware: there is a bug in Carcione's equation (2c) of his 1993 paper for sigma_zz, we fixed it in the code below.
             ! When implementing viscoelasticity according to the Carcione 1993 paper, attenuation is
             ! non-causal rather than causal. We fixed the problem by using equations in Carcione's
@@ -429,9 +424,9 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
               e13_sum = e13_sum + e13(i,j,ispec,i_sls)
             enddo
 
-            sigma_xx = sigma_xx + lambdalplusmul_relaxed_viscoel * e1_sum + TWO * mul_relaxed_viscoelastic * e11_sum
-            sigma_xz = sigma_xz + mul_relaxed_viscoelastic * e13_sum
-            sigma_zz = sigma_zz + lambdalplusmul_relaxed_viscoel * e1_sum - TWO * mul_relaxed_viscoelastic * e11_sum
+            sigma_xx = sigma_xx + lambdalplusmul_unrelaxed_elastic * e1_sum + TWO * mul_unrelaxed_elastic * e11_sum
+            sigma_xz = sigma_xz + mul_unrelaxed_elastic * e13_sum
+            sigma_zz = sigma_zz + lambdalplusmul_unrelaxed_elastic * e1_sum - TWO * mul_unrelaxed_elastic * e11_sum
             sigma_zx = sigma_xz
 
           else
@@ -702,4 +697,3 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
 
 end subroutine compute_forces_viscoelastic_backward
 
-!========================================================================

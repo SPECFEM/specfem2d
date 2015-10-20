@@ -183,18 +183,21 @@
    inv_tau_sigma_nu1_sent(:) = sngl(dble(ONE) / tau_sigma_nu1(:))
    inv_tau_sigma_nu2_sent(:) = sngl(dble(ONE) / tau_sigma_nu2(:))
 
-!!!!!!   if(USE_NEW_SOLVOPT_ROUTINE) then
+   if(USE_NEW_SOLVOPT_ROUTINE) then
 
-!!!!!!! use the right formula with 1/N included
-!!!!!!     phi_nu1_sent(:) = sngl((dble(ONE) - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:) &
-!!!!!!                                                                           / sum(tau_epsilon_nu1_d/tau_sigma_nu1))
-!!!!!!     phi_nu2_sent(:) = sngl((dble(ONE) - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:) &
-!!!!!!                                                                           / sum(tau_epsilon_nu2_d/tau_sigma_nu2))
+! use the right formula with 1/N included
+     phi_nu1_sent(:) = sngl((dble(ONE) - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:) &
+                                                                           / sum(tau_epsilon_nu1_d/tau_sigma_nu1))
+     phi_nu2_sent(:) = sngl((dble(ONE) - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:) &
+                                                                           / sum(tau_epsilon_nu2_d/tau_sigma_nu2))
 
-!!!!!!     Mu_nu1_sent = sngl(sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS))
-!!!!!!     Mu_nu2_sent = sngl(sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS))
+     Mu_nu1_sent = sngl(sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS))
+     Mu_nu2_sent = sngl(sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS))
 
-!!!!!!   else
+     if(Mu_nu1_sent < 1. .or. Mu_nu2_sent < 1.) &
+       stop 'error in Zener viscoelasticity: must have Mu_nu1 and Mu_nu2 both greater than one'
+
+   else
 
 ! in the old formulation of Carcione 1993, which is based on Liu et al. 1976, the 1/N factor is missing
      phi_nu1_sent(:) = sngl((dble(ONE) - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:))
@@ -207,7 +210,7 @@
        Mu_nu2_sent = sngl(dble(Mu_nu2_sent) - (dble(ONE) - tau_epsilon_nu2_d(i_sls)/tau_sigma_nu2(i_sls)))
      enddo
 
-!!!!!!   endif
+   endif
 
   else
 
@@ -217,16 +220,19 @@
    inv_tau_sigma_nu1_sent(:) = ONE / tau_sigma_nu1(:)
    inv_tau_sigma_nu2_sent(:) = ONE / tau_sigma_nu2(:)
 
-!!!!!!   if(USE_NEW_SOLVOPT_ROUTINE) then
+   if(USE_NEW_SOLVOPT_ROUTINE) then
 
-!!!!!!! use the right formula with 1/N included
-!!!!!!     phi_nu1_sent(:) = (ONE - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:) / sum(tau_epsilon_nu1_d/tau_sigma_nu1)
-!!!!!!     phi_nu2_sent(:) = (ONE - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:) / sum(tau_epsilon_nu2_d/tau_sigma_nu2)
+! use the right formula with 1/N included
+     phi_nu1_sent(:) = (ONE - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:) / sum(tau_epsilon_nu1_d/tau_sigma_nu1)
+     phi_nu2_sent(:) = (ONE - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:) / sum(tau_epsilon_nu2_d/tau_sigma_nu2)
 
-!!!!!!     Mu_nu1_sent = sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS)
-!!!!!!     Mu_nu2_sent = sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS)
+     Mu_nu1_sent = sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS)
+     Mu_nu2_sent = sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS)
 
-!!!!!!   else
+     if(Mu_nu1_sent < 1.d0 .or. Mu_nu2_sent < 1.d0) &
+       stop 'error in Zener viscoelasticity: must have Mu_nu1 and Mu_nu2 both greater than one'
+
+   else
 
 ! in the old formulation of Carcione 1993, which is based on Liu et al. 1976, the 1/N factor is missing
      phi_nu1_sent(:) = (ONE - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:)
@@ -239,7 +245,7 @@
        Mu_nu2_sent = Mu_nu2_sent - (ONE - tau_epsilon_nu2_d(i_sls)/tau_sigma_nu2(i_sls))
      enddo
 
-!!!!!!   endif
+   endif
 
   endif
 
@@ -486,8 +492,7 @@ SUBROUTINE compute_attenuation_coeffs(N,Qref,f0,f_min,f_max,tau_epsilon,tau_sigm
 
   do i = 1,N
     tau_sigma(i) = 1.d0 / point(i)
-!!!!!!!!!!!!!!!!!!!    tau_epsilon(i) = tau_sigma(i) * (1.d0 + N * weight(i))
-    tau_epsilon(i) = tau_sigma(i) * (1.d0 + weight(i))
+    tau_epsilon(i) = tau_sigma(i) * (1.d0 + N * weight(i))
   enddo
 
 ! print *,'points = '

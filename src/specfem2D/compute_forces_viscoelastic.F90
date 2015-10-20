@@ -124,8 +124,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
 
   ! material properties of the elastic medium
   real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic, &
-    lambdaplus2mu_unrelaxed_elastic,kappal,cpl,csl,rhol, &
-    lambdal_relaxed_viscoelastic,mul_relaxed_viscoelastic,lambdalplusmul_relaxed_viscoel,lambdalplusmul_unrelaxed_elastic
+    lambdaplus2mu_unrelaxed_elastic,kappal,cpl,csl,rhol,lambdalplusmul_unrelaxed_elastic
 
   ! for attenuation
   real(kind=CUSTOM_REAL) :: phinu1,phinu2,theta_n_u,theta_nsub1_u
@@ -199,20 +198,33 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
             ! IEEE Transactions on Antennas and Propagation, vol. 54, no. 1, (2006)
             if( stage_time_scheme == 1 ) then
 
-              call compute_coef_convolution(tauinvnu1,deltat,coef0,coef1,coef2)
+! update the memory variables using a convolution or using a differential equation
+              if(CONVOLUTION_MEMORY_VARIABLES) then
+                call compute_coef_convolution(tauinvnu1,deltat,coef0,coef1,coef2)
 
-              e1(i,j,ispec,i_sls) = coef0 * e1(i,j,ispec,i_sls) + &
-                                    phinu1 * (coef1 * theta_n_u + coef2 * theta_nsub1_u)
+                e1(i,j,ispec,i_sls) = coef0 * e1(i,j,ispec,i_sls) + &
+                                      phinu1 * (coef1 * theta_n_u + coef2 * theta_nsub1_u)
 
-              call compute_coef_convolution(tauinvnu2,deltat,coef0,coef1,coef2)
+                call compute_coef_convolution(tauinvnu2,deltat,coef0,coef1,coef2)
 
-              e11(i,j,ispec,i_sls) = coef0 * e11(i,j,ispec,i_sls) + &
-                                     phinu2 * (coef1 * (dux_dxl_n(i,j,ispec)-theta_n_u/TWO) + &
-                                               coef2 * (dux_dxl_nsub1(i,j,ispec)-theta_nsub1_u/TWO))
+                e11(i,j,ispec,i_sls) = coef0 * e11(i,j,ispec,i_sls) + &
+                                       phinu2 * (coef1 * (dux_dxl_n(i,j,ispec)-theta_n_u/TWO) + &
+                                                 coef2 * (dux_dxl_nsub1(i,j,ispec)-theta_nsub1_u/TWO))
 
-              e13(i,j,ispec,i_sls) = coef0 * e13(i,j,ispec,i_sls) + &
-                                     phinu2 * (coef1 * (dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)) + &
-                                               coef2 * (dux_dzl_nsub1(i,j,ispec) + duz_dxl_nsub1(i,j,ispec)))
+                e13(i,j,ispec,i_sls) = coef0 * e13(i,j,ispec,i_sls) + &
+                                       phinu2 * (coef1 * (dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)) + &
+                                                 coef2 * (dux_dzl_nsub1(i,j,ispec) + duz_dxl_nsub1(i,j,ispec)))
+              else
+                e1(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls) + deltat * &
+                     (- e1(i,j,ispec,i_sls)*tauinvnu1 + phinu1 * theta_n_u)
+
+                e11(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls) + deltat * &
+                     (- e11(i,j,ispec,i_sls)*tauinvnu2 + phinu2 * (dux_dxl_n(i,j,ispec)-theta_n_u/TWO))
+
+                e13(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls) + deltat * &
+                   (- e13(i,j,ispec,i_sls)*tauinvnu2 + phinu2 * (dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)))
+              endif
+
             endif
 
             ! update e1, e11, e13 in ADE formation with fourth-order LDDRK scheme
@@ -692,12 +704,6 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
             ! J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic
             ! and porous media, Elsevier, p. 124-125, 2007
 
-            lambdal_relaxed_viscoelastic = (lambdal_unrelaxed_elastic + 2._CUSTOM_REAL*mul_unrelaxed_elastic/3._CUSTOM_REAL)&
-                                           / Mu_nu1(i,j,ispec) &
-                                           - (2._CUSTOM_REAL*mul_unrelaxed_elastic/3._CUSTOM_REAL) / Mu_nu2(i,j,ispec)
-            mul_relaxed_viscoelastic = mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
-            lambdalplusmul_relaxed_viscoel = lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic
-
             ! compute the stress using the unrelaxed Lame parameters (Carcione 2007 page 125)
             ! When implementing viscoelasticity according to the Carcione 1993 paper, attenuation is
             ! non-causal rather than causal. We fixed the problem by using equations in Carcione's
@@ -762,21 +768,23 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
               e13_sum = e13_sum + e13(i,j,ispec,i_sls)
             enddo
 
-!!!!!            if(USE_NEW_SOLVOPT_ROUTINE) then
-!!!!!! use the right formula with 1/N included
-!!!!!! i.e. use the unrelaxed moduli here (see Carcione's book, third edition, equation (3.189))
-!!!!!              sigma_xx = sigma_xx + lambdalplusmul_unrelaxed_elastic * e1_sum + TWO * mul_unrelaxed_elastic * e11_sum
-!!!!!              sigma_xz = sigma_xz + mul_unrelaxed_elastic * e13_sum
-!!!!!              sigma_zz = sigma_zz + lambdalplusmul_unrelaxed_elastic * e1_sum - TWO * mul_unrelaxed_elastic * e11_sum
-!!!!!              sigma_zx = sigma_xz
-!!!!!            else
+            if(USE_NEW_SOLVOPT_ROUTINE) then
+! use the right formula with 1/N included
+! i.e. use the unrelaxed moduli here (see Carcione's book, third edition, equation (3.189))
+              sigma_xx = sigma_xx + lambdalplusmul_unrelaxed_elastic * e1_sum + TWO * mul_unrelaxed_elastic * e11_sum
+              sigma_xz = sigma_xz + mul_unrelaxed_elastic * e13_sum
+              sigma_zz = sigma_zz + lambdalplusmul_unrelaxed_elastic * e1_sum - TWO * mul_unrelaxed_elastic * e11_sum
+              sigma_zx = sigma_xz
+            else
 ! in the old formulation of Carcione 1993, which is based on Liu et al. 1976, the 1/N factor is missing
 ! i.e. use the relaxed moduli here
-              sigma_xx = sigma_xx + lambdalplusmul_relaxed_viscoel * e1_sum + TWO * mul_relaxed_viscoelastic * e11_sum
-              sigma_xz = sigma_xz + mul_relaxed_viscoelastic * e13_sum
-              sigma_zz = sigma_zz + lambdalplusmul_relaxed_viscoel * e1_sum - TWO * mul_relaxed_viscoelastic * e11_sum
+!! DK DK
+              stop 'old formulation not implemented any more because *_relaxed_* parameters not defined any more'
+!             sigma_xx = sigma_xx + lambdalplusmul_unrelaxed_viscoel * e1_sum + TWO * mul_relaxed_viscoelastic * e11_sum
+!             sigma_xz = sigma_xz + mul_relaxed_viscoelastic * e13_sum
+!             sigma_zz = sigma_zz + lambdalplusmul_relaxed_viscoel * e1_sum - TWO * mul_relaxed_viscoelastic * e11_sum
               sigma_zx = sigma_xz
-!!!!!            endif
+            endif
 
             if( PML_BOUNDARY_CONDITIONS .and. is_PML(ispec) ) then
 ! PML currently has no support for viscoelasticity, use the elastic formula instead

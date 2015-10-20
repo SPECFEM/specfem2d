@@ -98,8 +98,7 @@
 
 ! material properties of the elastic medium
   real(kind=CUSTOM_REAL) :: denst
-  real(kind=CUSTOM_REAL) :: mul_relaxed_viscoelastic,lambdal_relaxed_viscoelastic,lambdalplus2mul_relaxed_viscoel,cpl,csl
-
+  real(kind=CUSTOM_REAL) :: cpl,csl
 
 ! if elastic element
 !
@@ -214,12 +213,6 @@
 ! J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic
 !  and porous media, Elsevier, p. 124-125, 2007
 
-          ! compute unrelaxed elastic coefficients from formulas in Carcione 2007 page 125
-          lambdal_relaxed_viscoelastic = (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) / Mu_nu1(i,j,ispec) &
-                            - mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
-          mul_relaxed_viscoelastic = mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
-          lambdalplus2mul_relaxed_viscoel = lambdal_relaxed_viscoelastic + TWO*mul_relaxed_viscoelastic
-
           if(AXISYM) then
             if (is_on_the_axis(ispec)) then
               if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
@@ -275,12 +268,12 @@
             e11_sum = e11_sum + e11(i,j,ispec,i_sls)
           enddo
 
-          sigma_xx = sigma_xx + (lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic) * e1_sum &
+          sigma_xx = sigma_xx + (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) * e1_sum &
                       + TWO * mul_unrelaxed_elastic * e11_sum
           ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
-          sigma_yy = sigma_yy + (lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic) * e1_sum
-          sigma_zz = sigma_zz + (lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic) * e1_sum &
-                      - TWO * mul_relaxed_viscoelastic * e11_sum
+          sigma_yy = sigma_yy + (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) * e1_sum
+          sigma_zz = sigma_zz + (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) * e1_sum &
+                      - TWO * mul_unrelaxed_elastic * e11_sum
 
         else
 
@@ -456,7 +449,6 @@
 ! compute diagonal components of the stress tensor (include attenuation if needed)
 
         if(ATTENUATION_VISCOELASTIC_SOLID) then
-!-------------------- ATTENTION TO BE DEFINED ------------------------------!
 
 ! attenuation is implemented following the memory variable formulation of
 ! J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
@@ -472,12 +464,6 @@
 !  bottom, Geophysics, vol. 69(3), p. 825-839, 2004
 ! J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic
 !  and porous media, Elsevier, p. 124-125, 2007
-
-          ! compute relaxed elastic coefficients from formulas in Carcione 2007 page 125
-          lambdal_relaxed_viscoelastic = (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) / Mu_nu1(i,j,ispec) &
-                            - mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
-          mul_relaxed_viscoelastic = mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
-          lambdalplus2mul_relaxed_viscoel = lambdal_relaxed_viscoelastic + TWO*mul_relaxed_viscoelastic
 
           ! compute the stress using the unrelaxed Lame parameters (Carcione 2007 page 125)
           sigma_xx = (lambdal_unrelaxed_elastic + 2.0 * mul_unrelaxed_elastic)*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
@@ -496,13 +482,13 @@
             e11_sum = e11_sum + e11(i,j,ispec,i_sls)
           enddo
 
-          sigma_xx = sigma_xx + (lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic) * e1_sum &
-                    + TWO * mul_relaxed_viscoelastic * e11_sum
+          sigma_xx = sigma_xx + (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) * e1_sum &
+                    + TWO * mul_unrelaxed_elastic * e11_sum
           ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
 !         sigma_yy = ...  ! it is not zero because of the plane strain formulation, thus it should be computed here
           stop 'pressure calculation not implemented for poroelastic media yet, you should compute sigma_yy here'
-          sigma_zz = sigma_zz + (lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic) * e1_sum &
-                    - TWO * mul_relaxed_viscoelastic * e11_sum
+          sigma_zz = sigma_zz + (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) * e1_sum &
+                    - TWO * mul_unrelaxed_elastic * e11_sum
 
         else
 
