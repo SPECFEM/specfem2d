@@ -853,7 +853,7 @@ To make a given region poroeslatic, use III.  See Section 4.3 for more details.
 
 When viscoelasticity is turned on, the \texttt{Vp} and \texttt{Vs} values that are read here are the UNRELAXED ones i.e. the values at infinite frequency
 unless the READ\_VELOCITIES\_AT\_f0 parameter above is set to true, in which case they are the values at frequency $f_0$.
-
+Please also note that Qmu is always equal to Qs, but Qkappa is in general not equal to Qp. To convert one to the other see doc/note\_on\_Qkappa\_versus\_Qp.pdf and utils/attenuation/conversion\_from\_Qkappa\_Qmu\_to\_Qp\_Qs\_from\_Dahlen\_Tromp\_959\_960.f90.
 
 \item[nbregions]  With \texttt{MODEL = default} chosen, a variety of simple layered model configurations can be specified using the \texttt{nbregions} device.
 

@@ -105,39 +105,19 @@
   endif
 
 ! When implementing viscoelasticity according to the Carcione 1993 paper, attenuation is
-! non-causal rather than causal. We fixed the problem by using equations in Carcione's
-! 2004 paper and his 2007 book. See also file doc/old_problem_attenuation_reference_Specfem2D_fixed_by_Xie_Zhinan.pdf
+! non-causal rather than causal i.e. wave speed up instead of slowing down
+! when attenuation is turned on. We fixed that issue (which is not incorrect but non traditional)
+! by taking the unrelaxed state (infinite frequency) as a reference instead of the relaxed state (zero frequency)
+! and also using equations in Carcione's 2007 book.
+! See file doc/old_problem_attenuation_reference_Specfem2D_fixed_by_Xie_Zhinan.pdf
+! and doc/how_we_modified_Carcione_1993_to_make_it_causal_and_include_the_missing_1_over_L_factor.pdf
 
-! from J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
+! See also J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
 ! vol. 58(1), p. 110-120 (1993) for two memory-variable mechanisms (page 112).
-! Beware: these values implement specific values of the quality factors:
-! Qp approximately equal to 13, Qkappa approximately to 20 and Qmu / Qs approximately to 10,
-! which means very high attenuation, see that paper for details.
-! tau_epsilon_nu1(1) = 0.0334d0
-! tau_sigma_nu1(1)   = 0.0303d0
-! tau_epsilon_nu2(1) = 0.0352d0
-! tau_sigma_nu2(1)   = 0.0287d0
 
-! tau_epsilon_nu1(2) = 0.0028d0
-! tau_sigma_nu1(2)   = 0.0025d0
-! tau_epsilon_nu2(2) = 0.0029d0
-! tau_sigma_nu2(2)   = 0.0024d0
-
-! from J. M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation
+! and J. M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation
 ! in a linear viscoelastic medium, Geophysical Journal International,
 ! vol. 95, p. 597-611 (1988) for two memory-variable mechanisms (page 604).
-! Beware: these values implement specific values of the quality factors:
-! Qkappa approximately to 27 and Qmu / Qs approximately to 20,
-! which means very high attenuation, see that paper for details.
-!  tau_epsilon_nu1(1) = 0.0325305d0
-!  tau_sigma_nu1(1)   = 0.0311465d0
-!  tau_epsilon_nu2(1) = 0.0332577d0
-!  tau_sigma_nu2(1)   = 0.0304655d0
-
-!  tau_epsilon_nu1(2) = 0.0032530d0
-!  tau_sigma_nu1(2)   = 0.0031146d0
-!  tau_epsilon_nu2(2) = 0.0033257d0
-!  tau_sigma_nu2(2)   = 0.0030465d0
 
 !
 !--- other constants computed from the parameters above, do not modify

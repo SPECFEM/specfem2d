@@ -124,6 +124,9 @@ nbmodels                        = 4
 #### currently acoustic media have no attenuation and thus QKappa and Qmu are ignored, but this will or should change soon
 # when viscoelasticity is turned on, the Vp and Vs values that are read here are the UNRELAXED ones i.e. the values at infinite frequency
 # unless the READ_VELOCITIES_AT_f0 parameter above is set to true, in which case they are the values at frequency f0.
+# Please also note that Qmu is always equal to Qs, but Qkappa is in general not equal to Qp.
+# To convert one to the other see doc/note_on_Qkappa_versus_Qp.pdf and
+# utils/attenuation/conversion_from_Qkappa_Qmu_to_Qp_Qs_from_Dahlen_Tromp_959_960.f90.
 #   elastic:     model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0 (for QKappa and Qmu use 9999 to ignore them)
 #   anisotropic: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0
 #   anisotropic in AXISYM: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 c22 0 0

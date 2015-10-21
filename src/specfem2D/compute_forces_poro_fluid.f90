@@ -370,15 +370,20 @@
 ! J. M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation in a linear
 ! viscoelastic medium, Geophysical Journal International, vol. 95, p. 597-611 (1988).
 
-! When implementing viscoelasticity according to Carcione 1993 paper, the attenuation is
-! non-causal rather than causal. We fixed the problem by using equations in Carcione's
-! 2004 paper and his 2007 book (Carcione 2007 page 125).
+! When implementing viscoelasticity according to the Carcione 1993 paper, attenuation is
+! non-causal rather than causal i.e. wave speed up instead of slowing down
+! when attenuation is turned on. We fixed that issue (which is not incorrect but non traditional)
+! by taking the unrelaxed state (infinite frequency) as a reference instead of the relaxed state (zero frequency)
+! and also using equations in Carcione's 2007 book.
+! See file doc/old_problem_attenuation_reference_Specfem2D_fixed_by_Xie_Zhinan.pdf
+! and doc/how_we_modified_Carcione_1993_to_make_it_causal_and_include_the_missing_1_over_L_factor.pdf
 
-! J. M. Carcione, H. B. Helle, The physics and simulation of wave propagation at the ocean
-! bottom, Geophysics, vol. 69(3), p. 825-839, 2004
-! J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic
-! and porous media, Elsevier, p. 124-125, 2007
+! See also J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
+! vol. 58(1), p. 110-120 (1993) for two memory-variable mechanisms (page 112).
 
+! and J. M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation
+! in a linear viscoelastic medium, Geophysical Journal International,
+! vol. 95, p. 597-611 (1988) for two memory-variable mechanisms (page 604).
 
 ! compute unrelaxed elastic coefficients from formulas in Carcione 2007 page 125
     lambdal_relaxed_viscoelastic = (lambdal_G + mul_G) - mul_G / Mu_nu2(i,j,ispec)
