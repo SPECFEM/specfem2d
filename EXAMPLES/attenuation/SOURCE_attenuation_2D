@@ -15,4 +15,4 @@ anglesource                     = 0.             # angle of the source (for a fo
 Mxx                             = 1.             # Mxx component (for a moment tensor source only)
 Mzz                             = 1.             # Mzz component (for a moment tensor source only)
 Mxz                             = 0.             # Mxz component (for a moment tensor source only)
-factor                          = 44371246.83d10 # amplification factor
+factor                          = 42152684.4885d10 # amplification factor

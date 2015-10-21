@@ -1,6 +1,12 @@
 
       program analytical_sol
 
+!! DK DK Dimitri Komatitsch, CNRS Marseille, France, October 2015:
+!! DK DK I removed the fix for attenuation causality (using the unrelaxed velocities
+!! DK DK as reference instead of the relaxed ones) because it is not useful any more,
+!! DK DK this modification was not consistent with the calculations of the tau values
+!! DK DK made by Carcione et al. 1988 and by Carcione 1993.
+
       implicit none
 
       integer iratio
@@ -37,14 +43,13 @@
       double precision f0,t0,eta
       parameter(f0 = 18.d0)
       parameter(t0 = 1.2d0 / f0)
-      parameter(eta = 0.5d0)
 
 ! Definition source Carcione
-!      double precision f0,t0,eta,epsil
-!      parameter(f0 = 50.d0)
-!      parameter(t0 = 0.075d0)
-!      parameter(epsil = 1.d0)
-!      parameter(eta = 0.5d0)
+!     double precision f0,t0,eta,epsil
+!     parameter(f0 = 50.d0)
+!     parameter(t0 = 0.075d0)
+!     parameter(epsil = 1.d0)
+!     parameter(eta = 0.5d0)
 
 ! attenuation constants from Carcione 1988 GJI vol 95 p 604
 ! two mechanisms for the moment
@@ -55,18 +60,26 @@
      .  tau_sigma_nu1_mech2, tau_epsilon_nu2_mech2,
      .  tau_sigma_nu2_mech2
 
-      parameter(tau_epsilon_nu1_mech1 = 0.0325305d0)
-      parameter(tau_sigma_nu1_mech1   = 0.0311465d0)
-      parameter(tau_epsilon_nu2_mech1 = 0.0332577d0)
-      parameter(tau_sigma_nu2_mech1   = 0.0304655d0)
-      parameter(tau_epsilon_nu1_mech2 = 0.0032530d0)
-      parameter(tau_sigma_nu1_mech2   = 0.0031146d0)
-      parameter(tau_epsilon_nu2_mech2 = 0.0033257d0)
-      parameter(tau_sigma_nu2_mech2   = 0.0030465d0)
+! IMPORTANT: for this analytical code the weights to use must be defined with
+!   tau_epsilon(i) = tau_sigma(i) * (1.d0 + weight(i))
+! instead of
+!   tau_epsilon(i) = tau_sigma(i) * (1.d0 + N * weight(i))
+! in file src/specfem2D/attenuation_model.f90
+! because the analytical formulas of Carcione et al. 1998 do not include the 1/N factor
+      parameter(tau_epsilon_nu1_mech1 = 0.267810177764254)
+      parameter(tau_epsilon_nu1_mech2 = 1.163370309896023E-002)
+      parameter(tau_sigma_nu1_mech1   = 0.243596771493927)
+      parameter(tau_sigma_nu1_mech2   = 1.049004095935143E-002)
+
+      parameter(tau_epsilon_nu2_mech1 = 0.267684299903122d0)
+      parameter(tau_epsilon_nu2_mech2 = 1.166365166210135d-002)
+      parameter(tau_sigma_nu2_mech1   = 0.240851555587848d0)
+      parameter(tau_sigma_nu2_mech2   = 1.038145073000886d-002)
 
       integer Lnu
 
       double precision M1,M2
+! these values come from Carcione et al. 1998, Table 1
       parameter(M1 = 20.d9)
       parameter(M2 = 16.d9)
 
@@ -118,14 +131,14 @@
             omega0 = 2.d0 * pi * f0
             comparg = dcmplx(0.d0,omega*t0)
 
-! definir le spectre du ricker de carcione avec cos()
+! definir le spectre du Ricker de Carcione avec cos()
 ! d'apres Carcione GJI vol 93 p 401 (1988)
 !            fomega(ifreq) = pi * dsqrt(pi/eta) * (1.d0/omega0)
 !     .        * cdexp(comparg) *
 !     .    ( dexp(- (pi*pi/eta) * (epsil/2 - omega/omega0)**2)
 !     .    + dexp(- (pi*pi/eta) * (epsil/2 + omega/omega0)**2) )
 
-! definir le spectre du ricker de carcione avec cos()
+! definir le spectre du Ricker de Carcione avec cos()
 ! d'apres Carcione GJI vol 93 p 401 (1988)
             fomega(ifreq) = - omega**2 * 2.d0 * (dsqrt(pi)/omega0)
 ! DK DK     .        * cdexp(comparg) * dexp(- (omega/omega0)**2)
@@ -235,7 +248,7 @@
       deltat = 1.d0 / (freqmax*dble(iratio))
 
 ! save time result inverse FFT for Ux
-      open(unit=11,file='Ux_time_analytical_solution.dat',
+      open(unit=11,file='Ux_time_analytical_solution_viscoelastic.dat',
      .                           status='unknown')
       do it=1,nt
 !c DK DK Dec 2011: subtract t0 to be consistent with the SPECFEM2D code
@@ -261,7 +274,7 @@
       call cfftb(nt,c,wsave)
 
 ! save time result inverse FFT for Uz
-      open(unit=11,file='Uz_time_analytical_solution.dat',
+      open(unit=11,file='Uz_time_analytical_solution_viscoelastic.dat',
      .                           status='unknown')
       do it=1,nt
 !c DK DK Dec 2011: subtract t0 to be consistent with the SPECFEM2D code
@@ -7560,7 +7573,8 @@
 !
       REAL CONX02
 !bc      DATA CONX02 /0000006220426276611547B /
-      DATA CONX02 / 2.708212596942E-1233 /
+!! DK DK      DATA CONX02 / 2.708212596942E-1233 /
+      DATA CONX02 / 2.708212596942E-30 /
 !     .. Executable Statements ..
       X02ANE = CONX02
       RETURN
