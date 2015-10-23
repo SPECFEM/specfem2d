@@ -170,7 +170,7 @@
 
   subroutine shift_velocities_from_f0(vp,vs,rho,mu,lambda)
 
-! From Emmanuel Chaljub, CNRS Grenoble, France:
+! From Emmanuel Chaljub, ISTerre, OSU Grenoble, France:
 
 ! shift (i.e. change) velocities read from the input file to take average physical dispersion into account,
 ! i.e. if needed change the reference frequency at which these velocities are defined internally in the code:
@@ -179,32 +179,25 @@
 !  i.e. the velocities at infinite frequency.
 !  We may want to change this and impose that the values read are those for a given frequency (here f0_attenuation).
 !
-!  The unrelaxed values are then defined from the values read at frequency f0_attenuation as follows:
+!  The unrelaxed values are then defined from the reference values read at frequency f0_attenuation as follows:
 !
-!     mu_unrelaxed = mu (w_ref) / [ 1 - ( Sum_k ak/(1+(w_ref*tau_k)**2) )/( 1 + Sum_k ak ) ]
-!     where ak = tau_epsilon_k/tau_sigma_k - 1
-!     and the ak are the solutions of the linear system:
+!     mu_unrelaxed = mu (w_ref) * [ ( 1 + (1/N) Sum_k ak ) / (1 + (1/N) Sum_k ak/(1+(w_ref*tau_k)**2) ) ]
 !
-!     Sum_k   { [  w*tau_k*Q(w) - (w*tau_k)^2 ] / [ 1 + (w*tau_k)^2 ] }  ak  = 1
-!                  where tau_k = tau_epsilon_k
+!     where w_ref = 2*PI*f0_attenuation
+!           tau_k = tau_epsilon_k is the strain relaxation time of the k-th SLS mechanism
+!              ak = tau_k/tau_sigma_k - 1
+!     The ak are the solutions of the linear system:
+!     (1/N) Sum_k   { [  w*tau_k*Q(w) - (w*tau_k)^2 ] / [ 1 + (w*tau_k)^2 ] }  ak  = 1
 !
 !  To see how to obtain these formulas, see for instance equations (8), (9) and (10) of
 !  P. Moczo, E. Bystricky, J. Kristek, J. M. Carcione and M. Bouchon,
 !  Hybrid modeling of P-SV seismic motion at inhomogeneous viscoelastic topographic structures,
 !  Bulletin of the Seismological Society of Americal, vol. 87, p. 1305-1323 (1997).
 !
-!  See also file notes_from_Emmanuel_Chaljub_about_how_to_shift_a_Zener_body_from_a_frequency_f0_to_a_frequency_f1.pdf
-!  in the "doc/" directory of the code.
-!  If one wants to shift the Vp and Vs velocities from a frequency f0 to another frequency f1 instead of
-!  shifting them to infinite frequency (i.e., to the unrelaxed state) as in the routine below, an easy way
-!  of doing that is to use the complex modulus and use the unrelaxed modulus Mu as an intermediate step:
+!  See also file doc/how_we_modified_Carcione_1993_to_make_it_causal_and_include_the_missing_1_over_L_factor.pdf
+!  in the "doc/" directory of the code (in which the ak are denoted kappa_k).
 !
-!       M(f1)/M(f2) = ( M(f1)/Mu ) * ( Mu/M(f2) )
-!
-!  and use equation (9) from notes_from_Emmanuel_Chaljub_about_how_to_shift_a_Zener_body_from_a_frequency_f0_to_a_frequency_f1.pdf
-!  to compute the M(f)/Mu values, and equations (6) and (7) to convert that to what is needed in SPECFEM.
-!
-!  The above formulas are for a Zener-body approximation of a constant Q model, which is what SPECFEM uses.
+!  The above formulas are for a Zener-body approximation of a Q(f) model, which is what SPECFEM uses.
 !  If one wants to use exact formulas for a truly constant Q model instead (i.e., not approximated by a set of Zener bodies),
 !  the expression of the scaling can be found for instance in equation (49) of Komatitsch and Tromp,
 !  Spectral-Element Simulations of Global Seismic Wave Propagation-I. Validation, Geophys. J. Int. vol. 149 p. 390-412 (2002),
@@ -230,34 +223,34 @@
 
 ! local variables
   integer :: i_sls
-  double precision :: xtmp1_nu1,xtmp1_nu2,xtmp2_nu1,xtmp2_nu2,xtmp_ak_nu1,xtmp_ak_nu2,delta_mu,kappa,delta_kappa
+  double precision :: xtmp1_nu1,xtmp1_nu2,xtmp2_nu1,xtmp2_nu2,xtmp_ak_nu1,xtmp_ak_nu2,factor_mu,kappa,factor_kappa
 
   mu = rho * vs*vs
   lambda = rho * vp*vp - TWO * mu
   kappa  = lambda + TWO_THIRDS*mu
 
-  xtmp1_nu1 = ZERO
+  xtmp1_nu1 = ONE
   xtmp2_nu1 = ONE
-  xtmp1_nu2 = ZERO
+  xtmp1_nu2 = ONE
   xtmp2_nu2 = ONE
 
   do i_sls = 1,N_SLS
 !! DK DK changed this to the pre-computed inverse     xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)/tau_sigma_nu2(i_sls) - ONE
      xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)*inv_tau_sigma_nu2_sent(i_sls) - ONE
-     xtmp1_nu2 = xtmp1_nu2 + xtmp_ak_nu2/(ONE + (TWO * PI * f0_attenuation * tau_epsilon_nu2(i_sls))**2)
-     xtmp2_nu2 = xtmp2_nu2 + xtmp_ak_nu2
+     xtmp1_nu2 = xtmp1_nu2 + xtmp_ak_nu2/N_SLS
+     xtmp2_nu2 = xtmp2_nu2 + xtmp_ak_nu2/(ONE + (TWO * PI * f0_attenuation * tau_epsilon_nu2(i_sls))**2)/N_SLS
 
 !! DK DK changed this to the pre-computed inverse     xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)/tau_sigma_nu1(i_sls) - ONE
      xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)*inv_tau_sigma_nu1_sent(i_sls) - ONE
-     xtmp1_nu1 = xtmp1_nu1 + xtmp_ak_nu1/(ONE + (TWO * PI * f0_attenuation * tau_epsilon_nu1(i_sls))**2)
-     xtmp2_nu1 = xtmp2_nu1 + xtmp_ak_nu1
+     xtmp1_nu1 = xtmp1_nu1 + xtmp_ak_nu1/N_SLS
+     xtmp2_nu1 = xtmp2_nu1 + xtmp_ak_nu1/(ONE + (TWO * PI * f0_attenuation * tau_epsilon_nu1(i_sls))**2)/N_SLS
   enddo
 
-  delta_mu = ONE - xtmp1_nu2/xtmp2_nu2
-  mu    = mu    / delta_mu
+  factor_mu = xtmp1_nu2/xtmp2_nu2
+  mu    = mu    * factor_mu
 
-  delta_kappa = ONE - xtmp1_nu1/xtmp2_nu1
-  kappa = kappa / delta_kappa
+  factor_kappa = xtmp1_nu1/xtmp2_nu1
+  kappa = kappa * factor_kappa
 
   lambda = kappa - TWO_THIRDS*mu
   vp = dsqrt((lambda + TWO * mu) / rho)
