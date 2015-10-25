@@ -48,6 +48,8 @@ subroutine save_adjoint_kernels()
                           rho_ac_kl, kappa_ac_kl, alpha_ac_kl, rhop_ac_kl, &
                           rho_kl, kappa_kl, mu_kl, rhop_kl, alpha_kl, beta_kl, &
                           bulk_c_kl, bulk_beta_kl, &
+                          rhorho_ac_hessian_final1, rhorho_ac_hessian_final2, &
+                          rhorho_el_hessian_final1, rhorho_el_hessian_final2, &
                           rhot_kl, rhof_kl, sm_kl, eta_kl, mufr_kl, B_kl, &
                           C_kl, M_kl, rhob_kl, rhofb_kl, phi_kl, Bb_kl, Cb_kl, Mb_kl, mufrb_kl, &
                           rhobb_kl, rhofbb_kl, phib_kl, cpI_kl, cpII_kl, cs_kl, ratio_kl, GPU_MODE
@@ -80,7 +82,7 @@ subroutine save_adjoint_kernels()
       close(95)
       close(96)
 
-    else if (NEW_BINARY_FORMAT) then ! binary format
+    else ! binary format
        write(200)rho_ac_kl
        write(201)kappa_ac_kl
        write(202)rhop_ac_kl
@@ -90,16 +92,14 @@ subroutine save_adjoint_kernels()
        close(202)
        close(203)
 
-    else ! legacy binary format
-       write(95)coord
-       write(95)rho_ac_kl
-       write(95)kappa_ac_kl
-       write(96)coord
-       write(96)rho_ac_kl
-       write(96)alpha_ac_kl
-       close(95)
-       close(96)
+      if (SAVE_DIAGONAL_HESSIAN) then
+        write(212)rhorho_ac_hessian_final1
+        write(213)rhorho_ac_hessian_final2
+        close(212)
+        close(213)
       endif
+
+    endif
   endif
 
   if(any_elastic) then
@@ -121,7 +121,7 @@ subroutine save_adjoint_kernels()
       close(97)
       close(98)
 
-    else if (NEW_BINARY_FORMAT) then ! binary format
+    else ! binary format
       write(204)rho_kl
       write(205)kappa_kl
       write(206)mu_kl
@@ -139,17 +139,13 @@ subroutine save_adjoint_kernels()
       close(210)
       close(211)
 
-    else ! legacy binary format
-      write(97)coord
-      write(97)rho_kl
-      write(97)kappa_kl
-      write(97)mu_kl
-      write(98)coord
-      write(98)rhop_kl
-      write(98)alpha_kl
-      write(98)beta_kl
-      close(97)
-      close(98)
+      if (SAVE_DIAGONAL_HESSIAN) then
+        write(214) rhorho_el_hessian_final1
+        write(215) rhorho_el_hessian_final2
+        close(214)
+        close(215)
+      endif
+
     endif
   endif
 
