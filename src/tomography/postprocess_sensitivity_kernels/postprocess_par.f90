@@ -58,7 +58,7 @@ module postprocess_par
 
   implicit none
 
-  integer,parameter :: MAX_STRING_LEN = 150
+  integer,parameter :: MAX_STRING_LEN = 1023
 
   integer,parameter :: MAX_KERNEL_NAMES = 255
   integer,parameter :: MAX_KERNEL_PATHS = 65535
