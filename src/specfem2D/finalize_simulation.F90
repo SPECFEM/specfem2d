@@ -250,38 +250,6 @@ if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer, &
 !----  close energy file
   if(output_energy .and. myrank == 0) close(IOUT_ENERGY)
 
-  if (OUTPUT_MODEL_VELOCITY_FILE .and. .not. any_poroelastic) then
-    write(outputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho_vp_vs.dat_output'
-    open(unit=1001,file=outputname,status='unknown')
-    if ( .NOT. assign_external_model) then
-      allocate(rho_local(ngllx,ngllz,nspec)); rho_local=0.
-      allocate(vp_local(ngllx,ngllz,nspec)); vp_local=0.
-      allocate(vs_local(ngllx,ngllz,nspec)); vs_local=0.
-      do ispec = 1,nspec
-        do j = 1,NGLLZ
-          do i = 1,NGLLX
-            iglob = ibool(i,j,ispec)
-            rho_local(i,j,ispec) = density(1,kmato(ispec))
-            vp_local(i,j,ispec) = sqrt(poroelastcoef(3,1,kmato(ispec))/density(1,kmato(ispec)))
-            vs_local(i,j,ispec) = sqrt(poroelastcoef(2,1,kmato(ispec))/density(1,kmato(ispec)))
-            write(1001,'(I10, 5F13.4)') iglob, coord(1,iglob),coord(2,iglob),&
-                                      rho_local(i,j,ispec),vp_local(i,j,ispec),vs_local(i,j,ispec)
-          enddo
-        enddo
-      enddo
-    else
-      do ispec = 1,nspec
-        do j = 1,NGLLZ
-          do i = 1,NGLLX
-            iglob = ibool(i,j,ispec)
-            write(1001,'(I10,5F13.4)') iglob, coord(1,iglob),coord(2,iglob),&
-                                       rhoext(i,j,ispec),vpext(i,j,ispec),vsext(i,j,ispec)
-          enddo
-        enddo
-      enddo
-    endif
-    close(1001)
-  endif
 
 ! print exit banner
   if (myrank == 0) call datim(simulation_title)
