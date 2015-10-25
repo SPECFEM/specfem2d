@@ -148,9 +148,9 @@
     rho_k(iglob) =  accel_elastic(1,iglob)*b_displ_elastic(1,iglob) + &
                     accel_elastic(2,iglob)*b_displ_elastic(2,iglob) + &
                     accel_elastic(3,iglob)*b_displ_elastic(3,iglob)
-    rhorho_el_hessian_temp1(iglob) = accel_elastic(1,iglob)*accel_elastic(1,iglob) + &
-                                     accel_elastic(2,iglob)*accel_elastic(2,iglob) + &
-                                     accel_elastic(3,iglob)*accel_elastic(3,iglob)
+    rhorho_el_hessian_temp1(iglob) = b_accel_elastic(1,iglob)*b_accel_elastic(1,iglob) + &
+                                     b_accel_elastic(2,iglob)*b_accel_elastic(2,iglob) + &
+                                     b_accel_elastic(3,iglob)*b_accel_elastic(3,iglob)
     rhorho_el_hessian_temp2(iglob) = accel_elastic(1,iglob)*b_accel_elastic(1,iglob) + &
                                      accel_elastic(2,iglob)*b_accel_elastic(2,iglob) + &
                                      accel_elastic(3,iglob)*b_accel_elastic(3,iglob)
