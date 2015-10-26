@@ -47,7 +47,7 @@
   integer, parameter :: NX_NZ_IMAGE_MAX = 10000
 
 ! outputs diagonal Hessian for preconditioning
-  integer, logical :: SAVE_DIAGONAL_HESSIAN = .false.
+  logical, parameter :: SAVE_DIAGONAL_HESSIAN = .false.
 
 ! remove the PMLs from JPEG images if needed: set the vector field to zero there
   logical, parameter :: REMOVE_PMLS_FROM_JPEG_IMAGES = .true.
