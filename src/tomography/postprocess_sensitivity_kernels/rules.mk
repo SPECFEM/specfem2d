@@ -48,13 +48,11 @@ $(postprocess_OBJECTS): S := ${S_TOP}/src/tomography/postprocess_sensitivity_ker
 
 postprocess_TARGETS = \
 	$E/xcombine_sem \
-	$E/xsum_kernels_ascii \
 	$E/xsmooth_sem \
 	$(EMPTY_MACRO)
 
 postprocess_OBJECTS = \
 	$(xcombine_sem_OBJECTS) \
-	$(xsum_kernels_ascii_OBJECTS) \
 	$(xsmooth_sem_OBJECTS) \
 	$(EMPTY_MACRO)
 
@@ -77,9 +75,6 @@ postprocess: $(postprocess_TARGETS)
 combine_sem: xcombine_sem
 xcombine_sem: $E/xcombine_sem
 
-sum_kernels_ascii: xsum_kernels_ascii
-xsum_kernels_ascii: $E/xsum_kernels_ascii
-
 smooth_sem: xsmooth_sem
 xsmooth_sem: $E/xsmooth_sem
 
@@ -101,24 +96,6 @@ xcombine_sem_SHARED_OBJECTS = \
 ${E}/xcombine_sem: $(xcombine_sem_OBJECTS) $(xcombine_sem_SHARED_OBJECTS)
 	${LINK} $(DEF_FFLAGS) -o $@ $+
 
-
-#######################################
-
-##
-## sum_kernels_ascii
-##
-
-xsum_kernels_ascii_OBJECTS = \
-	$O/postprocess_par.postprocess_module.o \
-	$O/sum_kernels_ascii.postprocess.o \
-	$(EMPTY_MACRO)
-
-xsum_kernels_ascii_SHARED_OBJECTS = \
-	$(EMPTY_MACRO)
-
-${E}/xsum_kernels_ascii: $(xsum_kernels_ascii_OBJECTS) $(xsum_kernels_ascii_SHARED_OBJECTS)
-	${LINK} $(DEF_FFLAGS) -o $@ $+
-
 #######################################
 
 ##
@@ -129,12 +106,40 @@ xsmooth_sem_OBJECTS = \
 	$O/postprocess_par.postprocess_module.o \
 	$O/smooth_sem.postprocess.o \
 	$O/parse_kernel_names.postprocess.o \
+	$O/gll_library.spec.o \
+	$O/exit_mpi.spec.o \
 	$(EMPTY_MACRO)
 
-${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS) 
-	${LINK} $(DEF_FFLAGS) -o $@ $+
+cuda_smooth_sem_STUBS = \
+	$O/smooth_sem_cuda_stubs.postprocess.o \
+	$(EMPTY_MACRO)
 
+cuda_smooth_sem_OBJECTS = \
+	$O/smooth_cuda.postprocess.cuda.o \
+	$O/check_fields_cuda.cuda.o \
+	$O/initialize_cuda.cuda.o \
+	$(EMPTY_MACRO)
+
+ifeq ($(CUDA),yes)
+## cuda version
+${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS)  $(cuda_smooth_sem_OBJECTS)
+	@echo ""
+	@echo "building xsmooth_sem with CUDA support"
+	@echo ""
+	$(LINK) $(DEF_FFLAGS) -o ${E}/xsmooth_sem $(xsmooth_sem_OBJECTS) $(cuda_smooth_sem_OBJECTS) $(MPILIBS) $(CUDA_LINK)
+	@echo ""
+else
+## non-cuda version
+${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS) $(cuda_smooth_sem_STUBS)
+	@echo ""
+	@echo "building xsmooth_sem without CUDA support"
+	@echo ""
+	$(LINK) $(DEF_FFLAGS) -o ${E}/xsmooth_sem $(xsmooth_sem_OBJECTS) $(cuda_smooth_sem_STUBS) $(MPILIBS)
+	@echo ""
+
+endif
 #######################################
+
 
 ####
 #### rule for each .o file below
@@ -143,6 +148,8 @@ ${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS)
 ##
 ## postprocess
 ##
+$O/%.postprocess.cuda.o: $S/%.cu ${SETUP}/config.h $S/smooth_cuda.h
+	${NVCC} -c $< -o $@ $(NVCC_FLAGS)
 
 $O/%.postprocess_module.o: $S/%.f90 ${SETUP}/constants.h $O/specfem2D_par.spec.o
 	${F90} ${DEF_FFLAGS} -c -o $@ $<
@@ -150,3 +157,8 @@ $O/%.postprocess_module.o: $S/%.f90 ${SETUP}/constants.h $O/specfem2D_par.spec.o
 $O/%.postprocess.o: $S/%.f90
 	${F90} ${DEF_FFLAGS} -c -o $@ $<
 
+$O/%.postprocess.o: $S/%.F90
+	${F90} ${DEF_FFLAGS} -c -o $@ $<
+
+$O/%.postprocess.o: $S/%.c ${SETUP}/config.h
+	${CC} -c $(CPPFLAGS) $(CFLAGS) $(MPI_INCLUDES) -o $@ $<

@@ -70,7 +70,7 @@
                                 inum_interfaces_poroelastic, &
                                 ninterface_acoustic, ninterface_elastic, ninterface_poroelastic, &
                                 mask_ispec_inner_outer,nibool_interfaces_ext_mesh, ibool_interfaces_ext_mesh_init,&
-                                max_interface_size, outputname,myrank, SAVE_MODEL
+                                max_interface_size
   implicit none
 
   include 'constants.h'
@@ -217,20 +217,6 @@
       inum_interfaces_poroelastic(ninterface_poroelastic) = num_interface
     endif
   enddo
-
-if (SAVE_MODEL=='binary') then
-
-    write(outputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_MPI_interfaces_info.bin'
-    open(unit=172,file=outputname,status='unknown',form='unformatted')
-    write(172) ninterface
-    write(172) my_nelmnts_neighbours
-    write(172) nibool_interfaces_ext_mesh
-    write(172) max_interface_size
-    write(172) ibool_interfaces_ext_mesh_init
-    close(172)
-
-endif
-
 
   end subroutine prepare_assemble_MPI
 

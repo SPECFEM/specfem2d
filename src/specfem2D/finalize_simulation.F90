@@ -98,6 +98,12 @@ enddo
           write(172) z_save
           close(172)
 
+          write(outputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_jacobian.bin'
+          open(unit=172,file=outputname,status='unknown',form='unformatted')
+          write(172) jacobian
+          close(172)
+
+
   else
        stop 'Save Model not implemented for external and tomo'
 
