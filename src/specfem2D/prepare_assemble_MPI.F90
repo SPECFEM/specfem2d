@@ -69,8 +69,7 @@
                                 inum_interfaces_acoustic, inum_interfaces_elastic, &
                                 inum_interfaces_poroelastic, &
                                 ninterface_acoustic, ninterface_elastic, ninterface_poroelastic, &
-                                mask_ispec_inner_outer,nibool_interfaces_ext_mesh, ibool_interfaces_ext_mesh_init,&
-                                max_interface_size
+                                mask_ispec_inner_outer,nibool_interfaces_ext_mesh, ibool_interfaces_ext_mesh_init
   implicit none
 
   include 'constants.h'
