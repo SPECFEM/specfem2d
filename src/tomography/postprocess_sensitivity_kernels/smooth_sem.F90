@@ -53,7 +53,7 @@
 !   KERNEL_NAME            - kernel name, e.g. alpha_kernel
 !   INPUT_DIR              - directory from which kernels are read
 !   OUTPUT_DIR             - directory to which smoothed kernels are written
-!   GPU_MODE               - use GPUs to process smoothing (logical T F) 
+!   GPU_MODE               - use GPUs to process smoothing (logical T F)
 
 ! DESCRIPTION
 !   Smooths kernels by convolution with a Gaussian. Writes the resulting
@@ -168,7 +168,7 @@ myrank = 0
  if(GPU_MODE) call initialize_cuda_device(myrank,ncuda_devices)
 
   call zwgljd(xigll,wxgll,NGLLX,alphaGLL,betaGLL)
-  !We assume NGLLX=NGLLZ	
+  !We assume NGLLX=NGLLZ
   do j=1,NGLLZ
     do i=1,NGLLX
       wgll_sq(i,j) = wxgll(i)*wxgll(j)
@@ -352,7 +352,7 @@ else
 
         ! checks distance between centers of elements
    !     if (dist_h > 2*sigma_h3_sq .or. dist_v > 2*sigma_v3_sq) cycle
-    
+
 
 
         factor(:,:) = jacobian(:,:,ispec2) * wgll_sq(:,:)
@@ -368,7 +368,7 @@ else
 
               call smoothing_weights_vec(xstore_me(i,j,ispec),zstore_me(i,j,ispec),sigma_h2_inv,sigma_v2_inv,exp_val,&
                       xstore_other(:,:,ispec2),zstore_other(:,:,ispec2))
-              
+
               exp_val(:,:) = exp_val(:,:) * factor(:,:)
 
               ! adds contribution of element ispec2 to smoothed kernel values
@@ -481,9 +481,9 @@ enddo
    call cpu_time(t2)
 
   if (GPU_Mode) then
-    print*,'Computation time with GPU:',t2-t1
+    print *,'Computation time with GPU:',t2-t1
   else
-    print*,'Computation time with CPU:',t2-t1
+    print *,'Computation time with CPU:',t2-t1
   endif
 
    if (myrank == 0) close(IIN)
@@ -512,7 +512,7 @@ end program smooth_sem
   integer :: ii,jj
   real(kind=CUSTOM_REAL) :: dist_h,dist_v
 
- 
+
   do jj = 1, NGLLZ
     do ii = 1, NGLLX
       ! gets vertical and horizontal distance
