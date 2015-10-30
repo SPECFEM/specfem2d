@@ -92,13 +92,11 @@ subroutine  build_is_on_the_axis()
     if ( ROTATE_PML_ACTIVATE ) &
       call exit_MPI('ROTATE_PML_ACTIVATE is presently not implemented for axisymmetric simulations')
     if ( STACEY_BOUNDARY_CONDITIONS ) &
-      call exit_MPI('Stacey boundary conditions are presently not implemented for axisymmetric simulations -> use PML instead')
+      call exit_MPI('Stacey boundary conditions are presently not implemented for axisymmetric simulations -> use PMLs instead')
     if ( SIMULATION_TYPE /= 1 ) &
       call exit_MPI('Just axisymmetric FORWARD simulations are possible so far')
     if ( SAVE_FORWARD ) &
       call exit_MPI('SAVE_FORWARD has presently not been tested with axisymmetric simulations')
-    if ( time_stepping_scheme /= 1 ) &
-      call exit_MPI('Just Newmark scheme is presently possible for axisymmetric simulation')
     if ( ADD_PERIODIC_CONDITIONS ) &
       call exit_MPI('Periodic conditions (ADD_PERIODIC_CONDITIONS) are presently not implemented for axisymmetric simulations')
     if ( NOISE_TOMOGRAPHY /= 0 ) &
