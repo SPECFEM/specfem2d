@@ -238,12 +238,12 @@
 !! DK DK changed this to the pre-computed inverse     xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)/tau_sigma_nu2(i_sls) - ONE
      xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)*inv_tau_sigma_nu2_sent(i_sls) - ONE
      xtmp1_nu2 = xtmp1_nu2 + xtmp_ak_nu2/N_SLS
-     xtmp2_nu2 = xtmp2_nu2 + xtmp_ak_nu2/(ONE + (TWO * PI * f0_attenuation * tau_epsilon_nu2(i_sls))**2)/N_SLS
+     xtmp2_nu2 = xtmp2_nu2 + xtmp_ak_nu2/(ONE + ONE/(TWO * PI * f0_attenuation * tau_epsilon_nu2(i_sls))**2)/N_SLS
 
 !! DK DK changed this to the pre-computed inverse     xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)/tau_sigma_nu1(i_sls) - ONE
      xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)*inv_tau_sigma_nu1_sent(i_sls) - ONE
      xtmp1_nu1 = xtmp1_nu1 + xtmp_ak_nu1/N_SLS
-     xtmp2_nu1 = xtmp2_nu1 + xtmp_ak_nu1/(ONE + (TWO * PI * f0_attenuation * tau_epsilon_nu1(i_sls))**2)/N_SLS
+     xtmp2_nu1 = xtmp2_nu1 + xtmp_ak_nu1/(ONE + ONE/(TWO * PI * f0_attenuation * tau_epsilon_nu1(i_sls))**2)/N_SLS
   enddo
 
   factor_mu = xtmp1_nu2/xtmp2_nu2
