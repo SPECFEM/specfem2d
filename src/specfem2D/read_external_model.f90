@@ -246,9 +246,9 @@
         Mu_nu1(i,j,ispec) = Mu_nu1_sent
         Mu_nu2(i,j,ispec) = Mu_nu2_sent
 
-        if(ATTENUATION_VISCOELASTIC_SOLID .and. READ_VELOCITIES_AT_F0) then
+        if(ATTENUATION_VISCOELASTIC_SOLID .and. READ_VELOCITIES_AT_f0) then
           if(anisotropic(ispec) .or. poroelastic(ispec) .or. gravitoacoustic(ispec)) stop &
-             'READ_VELOCITIES_AT_F0 only implemented for non anisotropic, non poroelastic, non gravitoacoustic materials for now'
+             'READ_VELOCITIES_AT_f0 only implemented for non anisotropic, non poroelastic, non gravitoacoustic materials for now'
 
           vp_dummy = dble(vpext(i,j,ispec))
           vs_dummy = dble(vpext(i,j,ispec))

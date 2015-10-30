@@ -1252,9 +1252,9 @@ subroutine prepare_timerun_read()
       enddo
     enddo
 
-    if(ATTENUATION_VISCOELASTIC_SOLID .and. READ_VELOCITIES_AT_F0 .and. .not. assign_external_model) then
+    if(ATTENUATION_VISCOELASTIC_SOLID .and. READ_VELOCITIES_AT_f0 .and. .not. assign_external_model) then
       if(anisotropic(ispec) .or. poroelastic(ispec) .or. gravitoacoustic(ispec)) &
-         stop 'READ_VELOCITIES_AT_F0 only implemented for non anisotropic, non poroelastic, non gravitoacoustic materials for now'
+         stop 'READ_VELOCITIES_AT_f0 only implemented for non anisotropic, non poroelastic, non gravitoacoustic materials for now'
       n = kmato(ispec)
       if(.not. already_shifted_velocity(n)) then
         rho = density(1,n)
