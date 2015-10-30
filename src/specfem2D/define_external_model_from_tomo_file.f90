@@ -315,7 +315,7 @@ subroutine define_external_model_from_tomo_file()
   use specfem_par, only: tomo_material,coord,nspec,ibool,kmato,rhoext,vpext,vsext, &
                        QKappa_attenuation,Qmu_attenuation,anisotropy, &
                        QKappa_attenuationext,Qmu_attenuationext,poroelastcoef,density, &
-                       c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
+                       c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,c22ext
 
   use model_tomography_par
   use interpolation
@@ -354,6 +354,7 @@ subroutine define_external_model_from_tomo_file()
            c12ext(i,j,ispec) = 0.d0
            c23ext(i,j,ispec) = 0.d0
            c25ext(i,j,ispec) = 0.d0
+           c22ext(i,j,ispec) = 0.d0
            !! AB AB : The 3 following lines are important, otherwise PMLs won't work.
            !! (we assign these values several times: indeed for each kmato(ispec) it can exist a lot of rhoext(i,j,ispec) )
            density(1,kmato(ispec)) = rhoext(i,j,ispec)
@@ -369,6 +370,7 @@ subroutine define_external_model_from_tomo_file()
            anisotropy(7,kmato(ispec)) = c12ext(i,j,ispec)
            anisotropy(8,kmato(ispec)) = c23ext(i,j,ispec)
            anisotropy(9,kmato(ispec)) = c25ext(i,j,ispec)
+           anisotropy(10,kmato(ispec)) = c22ext(i,j,ispec)
            QKappa_attenuation(kmato(ispec)) = QKappa_attenuationext(i,j,ispec)
            Qmu_attenuation(kmato(ispec)) = Qmu_attenuationext(i,j,ispec)
          else ! Internal model
@@ -386,6 +388,7 @@ subroutine define_external_model_from_tomo_file()
            c12ext(i,j,ispec) = anisotropy(7,kmato(ispec))
            c23ext(i,j,ispec) = anisotropy(8,kmato(ispec))
            c25ext(i,j,ispec) = anisotropy(9,kmato(ispec))
+           c22ext(i,j,ispec) = anisotropy(10,kmato(ispec))
          endif
       enddo
     enddo
