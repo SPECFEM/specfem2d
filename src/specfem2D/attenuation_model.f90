@@ -181,7 +181,7 @@
 !
 !  The unrelaxed values are then defined from the reference values read at frequency f0_attenuation as follows:
 !
-!     mu_unrelaxed = mu (w_ref) * [ ( 1 + (1/N) Sum_k ak ) / (1 + (1/N) Sum_k ak/(1+(w_ref*tau_k)**2) ) ]
+!     mu_unrelaxed = mu (w_ref) * [ ( 1 + (1/N) Sum_k ak ) / (1 + (1/N) Sum_k ak/(1+1/(w_ref*tau_sigma_k)**2) ) ]
 !
 !     where w_ref = 2*PI*f0_attenuation
 !           tau_k = tau_epsilon_k is the strain relaxation time of the k-th SLS mechanism
@@ -238,12 +238,12 @@
 !! DK DK changed this to the pre-computed inverse     xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)/tau_sigma_nu2(i_sls) - ONE
      xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)*inv_tau_sigma_nu2_sent(i_sls) - ONE
      xtmp1_nu2 = xtmp1_nu2 + xtmp_ak_nu2/N_SLS
-     xtmp2_nu2 = xtmp2_nu2 + xtmp_ak_nu2/(ONE + ONE/(TWO * PI * f0_attenuation * tau_epsilon_nu2(i_sls))**2)/N_SLS
+     xtmp2_nu2 = xtmp2_nu2 + xtmp_ak_nu2/(ONE + ONE/(TWO * PI * f0_attenuation / inv_tau_sigma_nu2_sent(i_sls))**2)/N_SLS
 
 !! DK DK changed this to the pre-computed inverse     xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)/tau_sigma_nu1(i_sls) - ONE
      xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)*inv_tau_sigma_nu1_sent(i_sls) - ONE
      xtmp1_nu1 = xtmp1_nu1 + xtmp_ak_nu1/N_SLS
-     xtmp2_nu1 = xtmp2_nu1 + xtmp_ak_nu1/(ONE + ONE/(TWO * PI * f0_attenuation * tau_epsilon_nu1(i_sls))**2)/N_SLS
+     xtmp2_nu1 = xtmp2_nu1 + xtmp_ak_nu1/(ONE + ONE/(TWO * PI * f0_attenuation / inv_tau_sigma_nu1_sent(i_sls))**2)/N_SLS
   enddo
 
   factor_mu = xtmp1_nu2/xtmp2_nu2
