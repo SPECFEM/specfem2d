@@ -539,15 +539,15 @@ do ispec=1,nspec
         do j = 1,NGLLZ
              do i = 1,NGLLX
 
-                c11store(i,j,ispec) = sngl(c11ext(i,j,ispec))
-                c13store(i,j,ispec) = sngl(c13ext(i,j,ispec))
-                c15store(i,j,ispec) = sngl(c15ext(i,j,ispec))
-                c33store(i,j,ispec) = sngl(c33ext(i,j,ispec))
-                c35store(i,j,ispec) = sngl(c35ext(i,j,ispec))
-                c55store(i,j,ispec) = sngl(c55ext(i,j,ispec))
-                c12store(i,j,ispec) = sngl(c12ext(i,j,ispec))
-                c23store(i,j,ispec) = sngl(c23ext(i,j,ispec))
-                c25store(i,j,ispec) = sngl(c25ext(i,j,ispec))
+                c11store(i,j,ispec) = c11ext(i,j,ispec)
+                c13store(i,j,ispec) = c13ext(i,j,ispec)
+                c15store(i,j,ispec) = c15ext(i,j,ispec)
+                c33store(i,j,ispec) = c33ext(i,j,ispec)
+                c35store(i,j,ispec) = c35ext(i,j,ispec)
+                c55store(i,j,ispec) = c55ext(i,j,ispec)
+                c12store(i,j,ispec) = c12ext(i,j,ispec)
+                c23store(i,j,ispec) = c23ext(i,j,ispec)
+                c25store(i,j,ispec) = c25ext(i,j,ispec)
 
                enddo
        enddo
