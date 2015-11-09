@@ -161,7 +161,7 @@ myrank = 0
   kernel_names_comma_delimited = arg(3)
   input_dir= arg(4)
   output_dir = arg(5)
-  read(arg(6),*) GPU_MODE 
+  read(arg(6),*) GPU_MODE
 
   call parse_kernel_names(kernel_names_comma_delimited,kernel_names,nker)
   allocate(norm(nker),max_new(nker),max_old(nker),min_new(nker),min_old(nker))
