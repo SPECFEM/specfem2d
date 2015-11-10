@@ -149,7 +149,7 @@ subroutine save_adjoint_kernels()
     endif
   endif
 
-if (.NOT. GPU_MODE )  then
+if (.not. GPU_MODE )  then
 
   if(any_poroelastic) then
 
