@@ -166,7 +166,6 @@
   integer ihours,iminutes,iseconds,int_tCPU
   double precision :: time_start,time_end,tCPU
 
-! estimate of total memory size used
   print *
   print *,'NSPEC = ',NSPEC
   print *,'NGLOB = ',NGLOB
@@ -433,7 +432,8 @@
     accel(2,iglob) = accel(2,iglob) - factor_amplitude * (1.-2.*a*(time-t0)**2) * exp(-a*(time-t0)**2)
 
 ! big loop over all the global points (not elements) in the mesh to update
-! the acceleration and velocity vectors
+! the acceleration and velocity vectors.
+! To compute acceleration from the elastic forces we need to divide them by the mass matrix, i.e. multiply by its inverse
     accel(1,:) = accel(1,:)*rmass_inverse(:)
     accel(2,:) = accel(2,:)*rmass_inverse(:)
 
