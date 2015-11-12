@@ -199,6 +199,10 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
             if( stage_time_scheme == 1 ) then
 
 ! update the memory variables using a convolution or using a differential equation
+! From Zhinan Xie and Dimitri Komatitsch:
+! For cases in which a value of tau_sigma is small, then its inverse is large,
+! which may result in a in stiff ordinary differential equation to solve;
+! in such a case, resorting to the convolution formulation may be better (?)
               if(CONVOLUTION_MEMORY_VARIABLES) then
                 call compute_coef_convolution(tauinvnu1,deltat,coef0,coef1,coef2)
 
