@@ -190,7 +190,7 @@ for (unsigned int s=1; s<NGLL2_PADDED ; s *= 2) {
 extern "C"
 void FC_FUNC_(compute_seismograms_cuda,
               COMPUTE_SEISMOGRAMS_CUDA)(long* Mesh_pointer_f,int* seismotypef,double* sisux, double* sisuz,int* seismo_currentf,
-                                   int* NSTEP_BETWEEN_OUTPUT_SEISMOSf,int * any_elastic_glob,int * any_acoustic_glob) {
+                                   int* NSTEP_BETWEEN_OUTPUT_SEISMOSf,int * any_elastic_glob,int * any_acoustic_glob,int* USE_TRICK_FOR_BETTER_PRESSURE) {
 
 // compute_seismograms
   TRACE("\tcompute_seismograms");
@@ -258,6 +258,16 @@ void FC_FUNC_(compute_seismograms_cuda,
  case 4 :  //Pression
 
   if (! *any_acoustic_glob) printf("\nWrong type of seismogram for a pure elasticsimulation, use displ veloc or accel in seismotype\n");
+  if (*USE_TRICK_FOR_BETTER_PRESSURE)
+  compute_acoustic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(      mp->nrec_local,
+                                                                                  mp->d_potential_acoustic,
+                                                                                  mp->d_ibool,
+                                                                                  mp->d_xir_store_loc, mp->d_gammar_store_loc,
+                                                                                  mp->d_seismograms,
+                                                                                  mp->d_number_receiver_global,
+                                                                                  mp->d_ispec_selected_rec
+                                                                                  );
+  else
   compute_acoustic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(      mp->nrec_local,
                                                                                   mp->d_potential_dot_dot_acoustic,
                                                                                   mp->d_ibool,
@@ -266,7 +276,6 @@ void FC_FUNC_(compute_seismograms_cuda,
                                                                                   mp->d_number_receiver_global,
                                                                                   mp->d_ispec_selected_rec
                                                                                   );
-
 
   break;
 

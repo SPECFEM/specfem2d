@@ -1209,12 +1209,20 @@ subroutine iterate_time()
        endif  !! End NSTEP
      endif  !! End Sim 3
 
-     ! Simulating seismograms
      if( mod(it-1,subsamp_seismos) == 0 .and. SIMULATION_TYPE == 1 ) then
        seismo_current = seismo_current + 1
-       if( nrecloc > 0 ) call compute_seismograms_cuda(Mesh_pointer,seismotype,sisux,sisuz,seismo_current,&
+       if( nrecloc > 0 ) then
+          if (USE_TRICK_FOR_BETTER_PRESSURE) then
+
+           call compute_seismograms_cuda(Mesh_pointer,seismotype,sisux,sisuz,seismo_current,&
                                                        NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, &
-                                                       any_elastic_glob,any_acoustic_glob)
+                                                       any_elastic_glob,any_acoustic_glob,1)
+          else
+           call compute_seismograms_cuda(Mesh_pointer,seismotype,sisux,sisuz,seismo_current,&
+                                                       NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,&
+                                                       any_elastic_glob,any_acoustic_glob,0)
+          endif
+       endif
      endif
 
      ! Fields transfer for imaging
