@@ -61,7 +61,7 @@ subroutine compute_forces_elastic_GPU()
 
   ! check
   if( PML_BOUNDARY_CONDITIONS ) &
-    call exit_MPI(myrank,'PML conditions not yet implemented for routine compute_forces_viscoelastic_GPU()')
+    call exit_MPI('PML conditions not yet implemented for routine compute_forces_viscoelastic_GPU()')
 
   ! distinguishes two runs: for points on MPI interfaces, and points within the partitions
   do iphase=1,2

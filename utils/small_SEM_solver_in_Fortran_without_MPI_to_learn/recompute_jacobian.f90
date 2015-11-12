@@ -98,7 +98,6 @@
 
 ! the Jacobian is negative, so far this means that there is an error in the mesh
 ! therefore print the coordinates of the mesh points of this element
-! and also create an OpenDX file to visualize it
   if(jacobian <= 0.d0) then
 ! print the coordinates of the mesh points of this element
     print *, 'ispec = ', ispec

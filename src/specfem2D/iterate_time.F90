@@ -97,7 +97,7 @@ subroutine iterate_time()
         call update_displacement_precondition_newmark_GPU()
       endif
 
-      if( .NOT. GPU_MODE ) then
+      if( .not. GPU_MODE ) then
 
         if( any_acoustic ) then
           ! free surface for an acoustic medium
@@ -441,7 +441,7 @@ subroutine iterate_time()
 ! NO MIX OF ACOUSTIC AND GRAVITOACOUTIC ELEMENTS
 ! NO COUPLING TO ELASTIC AND POROELASTIC SIDES
 ! *********************************************************
-      if( .NOT. GPU_MODE ) then
+      if( .not. GPU_MODE ) then
         if( (any_gravitoacoustic) ) then
           if( time_stepping_scheme==1 ) then
             ! Newmark time scheme
@@ -567,7 +567,7 @@ subroutine iterate_time()
 ! ************* main solver for the elastic elements
 ! *********************************************************
 
-      if(.NOT. GPU_MODE ) then
+      if(.not. GPU_MODE ) then
         if(any_elastic) then
           if( SIMULATION_TYPE == 1 ) then
             call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
@@ -813,7 +813,7 @@ subroutine iterate_time()
 ! ******************************************************************************************************************
 ! ************* main solver for the poroelastic elements: first the solid (u_s) then the fluid (w)
 ! ******************************************************************************************************************
-      if( .NOT. GPU_MODE) then
+      if( .not. GPU_MODE) then
         if( any_poroelastic ) then
           !--------------------------------------------------------------------------------------------
           ! implement viscous attenuation for poroelastic media
@@ -1209,12 +1209,20 @@ subroutine iterate_time()
        endif  !! End NSTEP
      endif  !! End Sim 3
 
-     ! Simulating seismograms
      if( mod(it-1,subsamp_seismos) == 0 .and. SIMULATION_TYPE == 1 ) then
        seismo_current = seismo_current + 1
-       if( nrecloc > 0 ) call compute_seismograms_cuda(Mesh_pointer,seismotype,sisux,sisuz,seismo_current,&
+       if( nrecloc > 0 ) then
+          if (USE_TRICK_FOR_BETTER_PRESSURE) then
+
+           call compute_seismograms_cuda(Mesh_pointer,seismotype,sisux,sisuz,seismo_current,&
                                                        NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, &
-                                                       any_elastic_glob,any_acoustic_glob)
+                                                       any_elastic_glob,any_acoustic_glob,1)
+          else
+           call compute_seismograms_cuda(Mesh_pointer,seismotype,sisux,sisuz,seismo_current,&
+                                                       NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,&
+                                                       any_elastic_glob,any_acoustic_glob,0)
+          endif
+       endif
      endif
 
      ! Fields transfer for imaging
@@ -1237,7 +1245,7 @@ subroutine iterate_time()
    !*******************************************************************************
    ! CPU_MODE
    !*******************************************************************************
-   if( .NOT. GPU_MODE ) then
+   if( .not. GPU_MODE ) then
      !----  compute kinetic and potential energy
      if( output_energy ) then
        call compute_energy()
@@ -1290,7 +1298,7 @@ subroutine iterate_time()
      endif
 
      !<NOISE_TOMOGRAPHY
-     if(.NOT. GPU_MODE ) then
+     if(.not. GPU_MODE ) then
        if(NOISE_TOMOGRAPHY == 3 .and. output_wavefields_noise) then
 
          !load ensemble forward source

@@ -618,7 +618,7 @@ SUBROUTINE lfit_zener(x,y,sig,ndat,poids,ia,covar,chisq,ma,Qref,point)
     ym = y(i)
     if (mfit < ma) then
       do j=1,ma
-        if (.NOT. ia(j)) then
+        if (.not. ia(j)) then
           ym = ym - poids(j) * afunc(j)
         endif
       enddo
@@ -731,7 +731,7 @@ SUBROUTINE classical_linear_least_squares(Qref,poids,point,N,fmin,fmax)
   enddo
 
   do k=1,N
-    ia(k) = .TRUE.
+    ia(k) = .true.
   enddo
 
   call lfit_zener(x,y_ref,sig,m,poids,ia,covar,chi2,N,Qref,point)

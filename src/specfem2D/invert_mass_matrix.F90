@@ -235,7 +235,6 @@
             rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
           endif
 
-          ! for acoustic medium
           ! for gravitoacoustic medium
           !!! PML NOT WORKING YET !!!
         else if( gravitoacoustic(ispec) ) then
@@ -251,6 +250,7 @@
                   + wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
 
          else
+          ! for acoustic medium
 
           this_element_has_PML = .false.
           if(PML_BOUNDARY_CONDITIONS .and. size(is_PML) > 1) then
