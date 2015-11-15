@@ -47,32 +47,44 @@ FC = @FC@
 FCFLAGS = @FCFLAGS@
 MPIFC = @MPIFC@
 MPILIBS = @MPILIBS@
-CC = @CC@
 
 DEF_FFLAGS = @DEF_FFLAGS@ -I${SETUP}
-CPPFLAGS = @CPPFLAGS@ $(COND_MPI_CPPFLAGS)
+
+CC = @CC@
 CFLAGS = @CFLAGS@ $(CPPFLAGS) -I${SETUP}
+CPPFLAGS = @CPPFLAGS@ $(COND_MPI_CPPFLAGS)
 
 FC_MODEXT = @FC_MODEXT@
 FC_MODDIR = @FC_MODDIR@
+
+LIB =
+LINK = $(F90)
+
+#######################################
+####
+#### MPI
+####
+#######################################
 
 ## serial or parallel
 @COND_MPI_TRUE@F90 = $(MPIFC) $(FCFLAGS) @FC_DEFINE@USE_MPI @FC_DEFINE@USE_SCOTCH -I"@SCOTCH_INCLUDEDIR@" $(MPILIBS)
 @COND_MPI_FALSE@F90 = $(FC) $(FCFLAGS)
 
+#######################################
+####
+#### SCOTCH
+####
+#######################################
+
 USE_BUNDLED_SCOTCH = @USE_BUNDLED_SCOTCH@
+
 SCOTCH_DIR = @SCOTCH_DIR@
 SCOTCH_INCLUDEDIR = @SCOTCH_INCLUDEDIR@
 SCOTCH_LIBDIR = @SCOTCH_LIBDIR@
 
-LIB =
-
 ## scotch libraries
 @COND_MPI_TRUE@LIB += -L"@SCOTCH_LIBDIR@" -lscotch -lscotcherr
 @COND_MPI_FALSE@LIB +=
-
-LINK = $(F90)
-
 
 #######################################
 ####
@@ -84,8 +96,12 @@ LINK = $(F90)
 @COND_CUDA_TRUE@CUDA = yes
 @COND_CUDA_FALSE@CUDA = no
 
+# CUDA version 5x & 6x
 @COND_CUDA5_TRUE@CUDA5 = yes
 @COND_CUDA5_FALSE@CUDA5 = no
+
+@COND_CUDA6_TRUE@CUDA6 = yes
+@COND_CUDA6_FALSE@CUDA6 = no
 
 # default cuda libraries
 # runtime library -lcudart -lcuda and -lcublas needed
@@ -104,10 +120,14 @@ CUDA_LINK = @CUDA_LDFLAGS@ @CUDA_LIBS@ -lcudart -lstdc++
 # Tesla (default): -gencode=arch=compute_20,code=sm_20
 # Geforce GT 650m: -gencode=arch=compute_30,code=sm_30
 # Kepler (cuda5) : -gencode=arch=compute_35,code=sm_35
+# Kepler (cuda6.5,K80): -gencode=arch=compute_37,code=sm_37
 GENCODE_20 = -gencode=arch=compute_20,code=\"sm_20,compute_20\"
 GENCODE_30 = -gencode=arch=compute_30,code=\"sm_30,compute_30\"
 GENCODE_35 = -gencode=arch=compute_35,code=\"sm_35,compute_35\"
+GENCODE_37 = -gencode=arch=compute_37,code=\"sm_37\"
 
+# CUDA version 6.5
+@COND_CUDA_TRUE@@COND_CUDA6_TRUE@GENCODE = $(GENCODE_37)
 # CUDA version 5.x
 @COND_CUDA_TRUE@@COND_CUDA5_TRUE@GENCODE = $(GENCODE_35)
 # CUDA version 4.x
@@ -139,14 +159,14 @@ B = @top_builddir@
 E = $B/bin
 # O : objects directory
 O = $B/obj
+# S_TOP : source file root directory
+S_TOP = @top_srcdir@
 # L : libraries directory
 L = $B/lib
 # setup file directory
 SETUP = $B/setup
 # output file directory
 OUTPUT = $B/OUTPUT_FILES
-# S_TOP : source file root directory
-S_TOP = @top_srcdir@
 
 
 #######################################
@@ -157,12 +177,12 @@ S_TOP = @top_srcdir@
 
 # code subdirectories
 SUBDIRS = \
+	auxiliaries \
+	cuda \
 	meshfem2D \
 	shared \
-	cuda \
 	specfem2D \
 	tomography/postprocess_sensitivity_kernels \
-	auxiliaries \
 	$(EMPTY_MACRO)
 
 # default targets for the pure Fortran version
@@ -195,17 +215,21 @@ clean:
 endif
 
 realclean: clean
+ifeq (${SCOTCH_BUNDLED},1)
 	@echo "cleaning bundled Scotch in directory: ${SCOTCH_DIR}/src"
 	$(MAKE) -C ${SCOTCH_DIR}/src realclean
+endif
 	-rm -rf $E/* $O/*
 
 
 help:
 	@echo "usage: make [executable]"
 	@echo ""
-	@echo "supported executables:"
+	@echo "supported main executables:"
 	@echo "    xspecfem2D"
 	@echo "    xmeshfem2D"
+	@echo ""
+	@echo "additional executables:"
 	@echo "    xadj_seismogram"
 	@echo "    xcheck_quality_external_mesh"
 	@echo "    xconvolve_source_timefunction"

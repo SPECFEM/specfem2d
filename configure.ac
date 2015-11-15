@@ -6,15 +6,25 @@ dnl autoreconf -i
 dnl
 dnl You must have recent versions of Autoconf and Automake installed.
 
+############################################################
 
 AC_PREREQ(2.61)
-AC_INIT([Specfem 2D], [6.2.0], [see the wiki], [Specfem2D])
+AC_INIT([Specfem 2D], [7.0.0], [see the wiki], [Specfem2D])
 AC_CONFIG_SRCDIR([README.md])
+
 AC_CONFIG_HEADER([setup/config.h])
+
 AC_CONFIG_MACRO_DIR([m4])
 
+############################################################
+
+AS_BOX([setting up compilation flags])
 
 # 'configure' options
+
+###
+### MPI
+###
 
 AC_ARG_WITH([mpi],
     [AC_HELP_STRING([--with-mpi],
@@ -23,35 +33,9 @@ AC_ARG_WITH([mpi],
     [want_mpi=no])
 AM_CONDITIONAL([COND_MPI], [test "$want_mpi" = yes])
 
-
-
 ###
-### CUDA
+### precision
 ###
-
-AC_ARG_WITH([cuda],
-    [AS_HELP_STRING([--with-cuda],
-        [build CUDA GPU enabled version @<:@default=no@:>@])],
-    [want_cuda="$withval"],
-    [want_cuda=no])
-AM_CONDITIONAL([COND_CUDA], [test "$want_cuda" != no])
-AM_CONDITIONAL([COND_CUDA5], [test "$want_cuda" = cuda5])
-
-
-###
-### debugging
-###
-
-AC_ARG_ENABLE([debug],
-    [AC_HELP_STRING([--enable-debug],
-        [build with debugging options enabled @<:@default=no@:>@])],
-    [want_debug="$enableval"],
-    [want_debug=no])
-AM_CONDITIONAL([COND_DEBUG], [test x"$want_debug" != xno])
-export COND_DEBUG_FALSE
-export COND_DEBUG_TRUE
-
-
 
 AC_ARG_ENABLE([double-precision],
     [AC_HELP_STRING([--enable-double-precision],
@@ -68,6 +52,33 @@ fi
 AC_SUBST([CUSTOM_REAL])
 AC_SUBST([CUSTOM_MPI_TYPE])
 
+###
+### debugging
+###
+
+AC_ARG_ENABLE([debug],
+    [AC_HELP_STRING([--enable-debug],
+        [build with debugging options enabled @<:@default=no@:>@])],
+    [want_debug="$enableval"],
+    [want_debug=no])
+AM_CONDITIONAL([COND_DEBUG], [test x"$want_debug" != xno])
+export COND_DEBUG_FALSE
+export COND_DEBUG_TRUE
+
+###
+### CUDA
+###
+
+AC_ARG_WITH([cuda],
+    [AS_HELP_STRING([--with-cuda],
+        [build CUDA GPU enabled version @<:@default=no@:>@])],
+    [want_cuda="$withval"],
+    [want_cuda=no])
+AM_CONDITIONAL([COND_CUDA], [test "$want_cuda" != no])
+AM_CONDITIONAL([COND_CUDA5], [test "$want_cuda" = cuda5])
+
+
+############################################################
 
 # Checks for programs.
 
@@ -84,6 +95,7 @@ export FC
 export MPIFC
 F77="$FC"
 FFLAGS="$FCFLAGS"
+
 AC_PROVIDE([AC_PROG_F77])
 AC_SUBST([FCENV])
 
@@ -97,8 +109,10 @@ AC_FC_WRAPPERS
 AC_LANG(Fortran)
 AC_FC_SRCEXT(f90)
 AC_FC_FREEFORM()
+
 AC_FC_PP_DEFINE()
 AC_SUBST([FC_DEFINE])
+
 AC_FC_MODULE_EXTENSION
 AC_SUBST([FC_MODEXT])
 AC_FC_MODULE_FLAG([], [])
@@ -118,7 +132,11 @@ AC_CHECK_HEADER(emmintrin.h,AC_DEFINE([HAVE_EMMINTRIN],[1],[Define if emmintrin.
 AC_CHECK_HEADER(xmmintrin.h,AC_DEFINE([HAVE_XMMINTRIN],[1],[Define if xmmintrin.h]))
 AC_LANG_POP(C)
 
+
+############################################################
+
 #checks for Scotch
+AS_BOX([SCOTCH])
 
 export SCOTCH_DIR
 export SCOTCH_LIBDIR
@@ -228,56 +246,60 @@ fi
 LDFLAGS=${ac_save_ldflags}
 
 
-
-###
-### CUDA
-###
-
-if test "$want_cuda" != no; then
-    AS_BOX([CUDA])
-    CIT_CUDA_CONFIG
-fi
-
-
-
-
-
-
+############################################################
 # influential environment variables
 
 AC_ARG_VAR(USE_BUNDLED_SCOTCH, [Set to 1 to always use the bundled Scotch library])
 AC_ARG_VAR(SCOTCH_DIR, [Directory where Scotch is installed])
 AC_ARG_VAR(SCOTCH_INCLUDEDIR, [Directory where Scotch headers are installed])
 AC_ARG_VAR(SCOTCH_LIBDIR, [Directory where Scotch libraries are installed])
+
 AC_ARG_VAR(MPIFC, [MPI Fortran compiler command])
 AC_ARG_VAR(MPILIBS, [extra libraries for linking MPI programs])
 AC_ARG_VAR(MPICC, [MPI C compiler command])
-AC_ARG_VAR(DEF_FFLAGS, [Fortran compiler flags])
-if test x"$MPIFC" = x; then
-    MPIFC=mpif90
-fi
-if test x"$MPICC" = x; then
-    MPICC=mpicc
-fi
 
+AC_ARG_VAR(DEF_FFLAGS, [Fortran compiler flags])
+
+# scratch disks
 AC_ARG_VAR(LOCAL_PATH_IS_ALSO_GLOBAL, [files on a local path on each node are also seen as global with same path @<:@default=true@:>@])
-if test x"$LOCAL_PATH_IS_ALSO_GLOBAL" = x; then
+
+############################################################
+
+# tests
+AS_IF([test x"$MPIFC" = x],[
+    MPIFC=mpif90
+])
+AS_IF([test x"$MPICC" = x],[
+    MPICC=mpicc
+])
+AS_IF([test x"$LOCAL_PATH_IS_ALSO_GLOBAL" = x],[
     LOCAL_PATH_IS_ALSO_GLOBAL=true
-fi
+])
 
 # Checks for libraries.
 
-# Checks for header files.
+###
+### MPI
+###
 
-# if test "$want_mpi" = yes; then
-#     CIT_FC_MPI_MODULE([mpif.h], [$MPIFC], [$DEF_FFLAGS], [], [
-#         AC_MSG_FAILURE([cannot compile a trivial MPI program using $MPIFC])
-#     ])
-# fi
+AS_IF([test "$want_mpi" = yes], [
+    AS_BOX([MPI])
+    CIT_MPI_INCDIR([$MPIFC])
+])
 
-# Checks for typedefs, structures, and compiler characteristics.
+###
+### CUDA
+###
 
-# Checks for library functions.
+AS_IF([test x"$want_cuda" != xno], [
+    AS_BOX([CUDA])
+    CIT_CUDA_CONFIG
+])
+
+
+############################################################
+
+AS_BOX([setting up default simulation setup])
 
 AC_CONFIG_FILES([
 	Makefile
@@ -297,5 +319,19 @@ AC_CONFIG_COMMANDS([OUTPUT_FILES], [AS_MKDIR_P(OUTPUT_FILES)])
 
 AC_OUTPUT
 
+dnl FYI, this is not a "result", but AS_ECHO is not available in 2.61, and it
+dnl basically works like a portable echo.
+
+AC_MSG_RESULT([])
+AS_BOX([$PACKAGE_NAME $PACKAGE_VERSION])
+AC_MSG_RESULT([])
+AC_MSG_RESULT([$0 has completed and set up a default configuration to build.])
+AC_MSG_RESULT([])
+AC_MSG_RESULT([You may wish to modify the following files before running a simulation:])
+AC_MSG_RESULT([AS_HELP_STRING([DATA/Par_file],
+                              [Set parameters affecting the simulation.])])
+AC_MSG_RESULT([AS_HELP_STRING([DATA/SOURCE],
+                              [Set the source parameters before running the solver.])])
+AC_MSG_RESULT([])
 
 dnl end of configure.ac
