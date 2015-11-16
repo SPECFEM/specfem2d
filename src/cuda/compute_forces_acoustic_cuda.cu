@@ -80,9 +80,10 @@ template<> __device__ float texfetch_potential_dot_dot<3>(int x) { return tex1Df
 #endif
 
 #ifdef USE_TEXTURES_CONSTANTS
-realw_texture d_hprime_xx_tex;
-//realw_texture d_hprimewgll_xx_tex;
-realw_texture d_wxgll_xx_tex;
+// already defined in compute_forces_viscoelastic_cuda.cu
+extern realw_texture d_hprime_xx_tex;
+//extern realw_texture d_hprimewgll_xx_tex;
+extern realw_texture d_wxgll_xx_tex;
 #endif
 
 
@@ -454,73 +455,6 @@ void FC_FUNC_(compute_forces_acoustic_cuda,
   //double start_time = get_time();
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); // get Mesh from fortran integer wrapper
-
-
-if(mp->simulation_type==3){
-  #ifdef USE_TEXTURES_FIELDS
-  {
-      int size = mp->NGLOB_AB;
-    #ifdef USE_OLDER_CUDA4_GPU
-      cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
-      const textureReference* d_b_potential_tex_ref_ptr;
-      print_CUDA_error_if_any(cudaGetTextureReference(&d_b_potential_tex_ref_ptr, "d_b_potential_tex"), 3001);
-      print_CUDA_error_if_any(cudaBindTexture(0, d_b_potential_tex_ref_ptr, mp->d_b_potential_acoustic, &channelDesc, sizeof(realw)*size), 3001);
-
-      const textureReference* d_b_potential_dot_dot_tex_ref_ptr;
-      print_CUDA_error_if_any(cudaGetTextureReference(&d_b_potential_dot_dot_tex_ref_ptr, "d_b_potential_dot_dot_tex"),3003);
-      print_CUDA_error_if_any(cudaBindTexture(0, d_b_potential_dot_dot_tex_ref_ptr, mp->d_b_potential_dot_dot_acoustic, &channelDesc, sizeof(realw)*size), 3003);
-    #else
-      cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
-      print_CUDA_error_if_any(cudaBindTexture(0, &d_b_potential_tex, mp->d_b_potential_acoustic, &channelDesc, sizeof(realw)*size), 3001);
-      print_CUDA_error_if_any(cudaBindTexture(0, &d_b_potential_dot_dot_tex, mp->d_b_potential_dot_dot_acoustic, &channelDesc, sizeof(realw)*size), 3003);
-    #endif
-  }
-  #endif
-
-}
-
-  #ifdef USE_TEXTURES_FIELDS
-  {
-      int size = mp->NGLOB_AB;
-    #ifdef USE_OLDER_CUDA4_GPU
-      cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
-      const textureReference* d_potential_tex_ref_ptr;
-      print_CUDA_error_if_any(cudaGetTextureReference(&d_potential_tex_ref_ptr, "d_potential_tex"), 2001);
-      print_CUDA_error_if_any(cudaBindTexture(0, d_potential_tex_ref_ptr, mp->d_potential_acoustic, &channelDesc, sizeof(realw)*size), 2001);
-
-      const textureReference* d_potential_dot_dot_tex_ref_ptr;
-      print_CUDA_error_if_any(cudaGetTextureReference(&d_potential_dot_dot_tex_ref_ptr, "d_potential_dot_dot_tex"), 2003);
-      print_CUDA_error_if_any(cudaBindTexture(0, d_potential_dot_dot_tex_ref_ptr, mp->d_potential_dot_dot_acoustic, &channelDesc, sizeof(realw)*size), 2003);
-    #else
-      cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
-      print_CUDA_error_if_any(cudaBindTexture(0, &d_potential_tex, mp->d_potential_acoustic, &channelDesc, sizeof(realw)*size), 2001);
-      print_CUDA_error_if_any(cudaBindTexture(0, &d_potential_dot_dot_tex, mp->d_potential_dot_dot_acoustic, &channelDesc, sizeof(realw)*size), 2003);
-    #endif
-  }
-  #endif
-
-
-
-  #ifdef USE_TEXTURES_CONSTANTS
-  {
-    #ifdef USE_OLDER_CUDA4_GPU
-      cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
-      const textureReference* d_hprime_xx_tex_ptr;
-      print_CUDA_error_if_any(cudaGetTextureReference(&d_hprime_xx_tex_ptr, "d_hprime_xx_tex"), 4101);
-      print_CUDA_error_if_any(cudaBindTexture(0, d_hprime_xx_tex_ptr, mp->d_hprime_xx, &channelDesc, sizeof(realw)*(NGLL2)), 4001);
-      const textureReference* d_wxgll_xx_tex_ptr;
-      print_CUDA_error_if_any(cudaGetTextureReference(&d_wxgll_xx_tex_ptr, "d_wxgll_xx_tex"), 4101);
-      print_CUDA_error_if_any(cudaBindTexture(0, d_wxgll_xx_tex_ptr, mp->d_wxgll, &channelDesc, sizeof(realw)*(NGLL2)), 4001);
-   #else
-      cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
-//      print_CUDA_error_if_any(cudaBindTexture(0, &d_hprimewgll_xx_tex, mp->d_hprimewgll_xx, &channelDesc, sizeof(realw)*(NGLL2)), 40010);
-      print_CUDA_error_if_any(cudaBindTexture(0, &d_hprime_xx_tex, mp->d_hprime_xx, &channelDesc, sizeof(realw)*(NGLL2)), 4002);
-      print_CUDA_error_if_any(cudaBindTexture(0, &d_wxgll_xx_tex, mp->d_wxgll, &channelDesc, sizeof(realw)*(NGLLX)), 40013);
-   #endif
-  }
-  #endif
-
-
   int num_elements;
 
   if( *iphase == 1 )
@@ -530,15 +464,13 @@ if(mp->simulation_type==3){
 
   if( num_elements == 0 ) return;
 
-    // no mesh coloring: uses atomic updates
-    Kernel_2_acoustic(num_elements, mp, *iphase,
-                      mp->d_ibool,
-                      mp->d_xix,mp->d_xiz,
-                      mp->d_gammax,mp->d_gammaz,
-                      mp->d_rhostore,
-                      mp->d_kappastore);
-
-
+  // no mesh coloring: uses atomic updates
+  Kernel_2_acoustic(num_elements, mp, *iphase,
+                    mp->d_ibool,
+                    mp->d_xix,mp->d_xiz,
+                    mp->d_gammax,mp->d_gammaz,
+                    mp->d_rhostore,
+                    mp->d_kappastore);
 }
 
 
