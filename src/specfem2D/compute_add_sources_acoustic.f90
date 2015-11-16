@@ -168,10 +168,10 @@
             displ_x = 0
             displ_z = 0
           else
-            call acoustic_forcing_boundary()
+            call acoustic_forcing_boundary(iglob)
           endif
         else
-          call acoustic_forcing_boundary()
+          call acoustic_forcing_boundary(iglob)
         endif
 
         ! compute dot product
@@ -198,10 +198,10 @@
             displ_x = 0
             displ_z = 0
           else
-            call acoustic_forcing_boundary()
+            call acoustic_forcing_boundary(iglob)
           endif
         else
-          call acoustic_forcing_boundary()
+          call acoustic_forcing_boundary(iglob)
         endif
 
         ! compute dot product
@@ -228,10 +228,10 @@
             displ_x = 0
             displ_z = 0
           else
-            call acoustic_forcing_boundary()
+            call acoustic_forcing_boundary(iglob)
           endif
         else
-          call acoustic_forcing_boundary()
+          call acoustic_forcing_boundary(iglob)
         endif
 
         ! compute dot product
@@ -258,10 +258,10 @@
             displ_x = 0
             displ_z = 0
           else
-            call acoustic_forcing_boundary()
+            call acoustic_forcing_boundary(iglob)
           endif
         else
-          call acoustic_forcing_boundary()
+          call acoustic_forcing_boundary(iglob)
         endif
 
         ! compute dot product
@@ -322,10 +322,10 @@
             displ_x = 0
             displ_z = 0
           else
-            call acoustic_forcing_boundary()
+            call acoustic_forcing_boundary(iglob)
           endif
         else
-          call acoustic_forcing_boundary()
+          call acoustic_forcing_boundary(iglob)
         endif
 
         ! compute displacement at this point
@@ -391,10 +391,10 @@
             displ_x = 0
             displ_z = 0
           else
-            call acoustic_forcing_boundary()
+            call acoustic_forcing_boundary(iglob)
           endif
         else
-          call acoustic_forcing_boundary()
+          call acoustic_forcing_boundary(iglob)
         endif
 
         ! compute displacement at this point
@@ -461,10 +461,10 @@
             displ_x = 0
             displ_z = 0
           else
-            call acoustic_forcing_boundary()
+            call acoustic_forcing_boundary(iglob)
           endif
         else
-          call acoustic_forcing_boundary()
+          call acoustic_forcing_boundary(iglob)
         endif
 
         ! compute displacement at this point
@@ -530,10 +530,10 @@
             displ_x = 0
             displ_z = 0
           else
-            call acoustic_forcing_boundary()
+            call acoustic_forcing_boundary(iglob)
           endif
         else
-          call acoustic_forcing_boundary()
+          call acoustic_forcing_boundary(iglob)
         endif
 
         ! compute z displacement at this point

@@ -46,17 +46,18 @@
 ! variable forcing_type should be passed as a parameter
 ! in future versions
 
-  subroutine acoustic_forcing_boundary()
-  !ZNZN It seems we have to define a dummy for iglob.
+  subroutine acoustic_forcing_boundary(iglob)
 
   use specfem_par
 
   implicit none
 
+  integer,intent(in) :: iglob
+
 ! local variables
   real, parameter :: pigrec = 3.1415927
   real :: alpha,tho,A,c,delayed,delta_x
-  integer :: forcing_type,k,ngoce_time_step,n_models,kk,ll,iglob
+  integer :: forcing_type,k,ngoce_time_step,n_models,kk,ll
 
   double precision, dimension(:), allocatable :: goce_time,distance
   double precision, dimension(:,:), allocatable ::syn
