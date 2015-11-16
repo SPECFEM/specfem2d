@@ -125,13 +125,13 @@ xconvolve_source_timefunction: $E/xconvolve_source_timefunction
 
 
 $E/xadj_seismogram: $(adj_seismogram_auxiliaries_OBJECTS) $(adj_seismogram_auxiliaries_SHARED_OBJECTS)
-	${LINK} $(DEF_FFLAGS) -o $@ $+
+	${FCLINK} -o $@ $+
 
 $E/xcheck_quality_external_mesh: $(check_quality_external_mesh_auxiliaries_OBJECTS) $(check_quality_external_mesh_auxiliaries_SHARED_OBJECTS)
-	${LINK} $(DEF_FFLAGS) -o $@ $+
+	${FCLINK} -o $@ $+
 
 $E/xconvolve_source_timefunction: $(convolve_source_timefunction_auxiliaries_OBJECTS) $(convolve_source_timefunction_auxiliaries_SHARED_OBJECTS)
-	${LINK} $(DEF_FFLAGS) -o $@ $+
+	${FCLINK} -o $@ $+
 
 #######################################
 
@@ -144,5 +144,5 @@ $E/xconvolve_source_timefunction: $(convolve_source_timefunction_auxiliaries_OBJ
 ##
 
 $O/%.aux.o: $S/%.f90
-	${F90} ${DEF_FFLAGS} -c -o $@ $<
+	${F90} ${FCFLAGS_f90} -c -o $@ $<
 

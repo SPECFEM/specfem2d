@@ -81,7 +81,7 @@ meshfem2D_SHARED_OBJECTS = \
 	$O/param_reader.cc.o \
 	$(EMPTY_MACRO)
 
-$(SCOTCH_INCLUDEDIR)/scotchf.h: scotch_library
+$(SCOTCH_INCDIR)/scotchf.h: scotch_library
 scotch_library:
 ifeq ($(USE_BUNDLED_SCOTCH),1)
 	@echo "Using bundled Scotch"
@@ -103,7 +103,7 @@ meshfem2D: xmeshfem2D
 xmeshfem2D: $E/xmeshfem2D
 
 $E/xmeshfem2D: $(meshfem2D_OBJECTS) $(meshfem2D_SHARED_OBJECTS)
-	$(LINK) $(DEF_FFLAGS) -o ${E}/xmeshfem2D $(meshfem2D_OBJECTS) $(meshfem2D_SHARED_OBJECTS) $(LIB)
+	$(FCLINK) -o ${E}/xmeshfem2D $(meshfem2D_OBJECTS) $(meshfem2D_SHARED_OBJECTS) $(MPILIBS)
 
 
 #######################################
@@ -114,8 +114,8 @@ $E/xmeshfem2D: $(meshfem2D_OBJECTS) $(meshfem2D_SHARED_OBJECTS)
 
 $O/meshfem2D.mesh.o: $O/part_unstruct.mesh.o $O/read_interfaces_file.mesh.o $O/read_parameter_file.mesh.o $O/read_source_file.mesh.o
 
-ifdef SCOTCH_INCLUDEDIR
-$O/part_unstruct.mesh.o: $(SCOTCH_INCLUDEDIR)/scotchf.h
+ifdef SCOTCH_INCDIR
+$O/part_unstruct.mesh.o: $(SCOTCH_INCDIR)/scotchf.h
 endif
 
 $O/save_databases.mesh.o: $O/part_unstruct.mesh.o $O/read_parameter_file.mesh.o $O/read_source_file.mesh.o
@@ -125,7 +125,7 @@ $O/save_databases.mesh.o: $O/part_unstruct.mesh.o $O/read_parameter_file.mesh.o 
 ####
 
 $O/%.mesh.o: $S/%.f90 ${SETUP}/constants.h
-	${F90} ${DEF_FFLAGS} -c -o $@ $<
+	${F90} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.mesh.o: $S/%.F90 ${SETUP}/constants.h
-	${F90} ${DEF_FFLAGS} -c -o $@ $<
+	${F90} ${FCFLAGS_f90} -c -o $@ $<

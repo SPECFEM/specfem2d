@@ -637,8 +637,13 @@ ac_ct_CXX
 CXXFLAGS
 CXX
 MPI_INC
+FC_MODDIR
+FC_MODOUT
+ac_empty
+FC_MODINC
+FC_MODEXT
 LOCAL_PATH_IS_ALSO_GLOBAL
-DEF_FFLAGS
+FLAGS_CHECK
 MPICC
 MPILIBS
 MPIFC
@@ -658,11 +663,7 @@ LEX
 EGREP
 GREP
 CPP
-FC_MODDIR
-FC_MODOUT
-ac_empty
-FC_MODINC
-FC_MODEXT
+FCFLAGS_F90
 FC_DEFINE
 FCFLAGS_F
 FCFLAGS_f90
@@ -686,6 +687,10 @@ ac_ct_FC
 LDFLAGS
 FCFLAGS
 FC
+COND_CUDA_PLUS_FALSE
+COND_CUDA_PLUS_TRUE
+COND_CUDA6_FALSE
+COND_CUDA6_TRUE
 COND_CUDA5_FALSE
 COND_CUDA5_TRUE
 COND_CUDA_FALSE
@@ -765,7 +770,7 @@ SCOTCH_LIBDIR
 MPIFC
 MPILIBS
 MPICC
-DEF_FFLAGS
+FLAGS_CHECK
 LOCAL_PATH_IS_ALSO_GLOBAL
 MPI_INC
 CXX
@@ -1433,7 +1438,7 @@ Some influential environment variables:
   MPIFC       MPI Fortran compiler command
   MPILIBS     extra libraries for linking MPI programs
   MPICC       MPI C compiler command
-  DEF_FFLAGS  Fortran compiler flags
+  FLAGS_CHECK Fortran compiler flags
   LOCAL_PATH_IS_ALSO_GLOBAL
               files on a local path on each node are also seen as global with
               same path [default=true]
@@ -2520,6 +2525,22 @@ else
   COND_CUDA5_FALSE=
 fi
 
+ if test "$want_cuda" = cuda6; then
+  COND_CUDA6_TRUE=
+  COND_CUDA6_FALSE='#'
+else
+  COND_CUDA6_TRUE='#'
+  COND_CUDA6_FALSE=
+fi
+
+# cuda linking for cuda 5x and 6x
+ if test "$want_cuda" = cuda5 -o "$want_cuda" = cuda6; then
+  COND_CUDA_PLUS_TRUE=
+  COND_CUDA_PLUS_FALSE='#'
+else
+  COND_CUDA_PLUS_TRUE='#'
+  COND_CUDA_PLUS_FALSE=
+fi
 
 
 ############################################################
@@ -2532,6 +2553,10 @@ if test x"$FC" = x && test x"$F90" != x; then
 fi
 if test x"$MPIFC" = x && test x"$MPIF90" != x; then
     MPIFC="$MPIF90"
+fi
+# note: if not set, default FCFLAGS (and CFLAGS) will be set by autoconf/configure script (mostly -g -O2)
+if test x"$FCFLAGS" = x && test x"$FLAGS_CHECK" != x ; then
+    FCFLAGS=""
 fi
 
 ac_ext=${ac_fc_srcext-f}
@@ -4589,204 +4614,78 @@ ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Fortran 90 module extension" >&5
-$as_echo_n "checking Fortran 90 module extension... " >&6; }
-if ${ac_cv_fc_module_ext+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_ext=${ac_fc_srcext-f}
-ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
-mkdir conftest.dir
-cd conftest.dir
-ac_cv_fc_module_ext=unknown
-cat > conftest.$ac_ext <<_ACEOF
-
-      module conftest_module
-      contains
-      subroutine conftest_routine
-      write(*,'(a)') 'gotcha!'
-      end subroutine
-      end module
-_ACEOF
-if ac_fn_fc_try_compile "$LINENO"; then :
-  ac_cv_fc_module_ext=`ls | sed -n 's,conftest_module\.,,p'`
-   if test x$ac_cv_fc_module_ext = x; then
-     ac_cv_fc_module_ext=`ls | sed -n 's,CONFTEST_MODULE\.,,p'`
-   fi
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-cd ..
-rm -rf conftest.dir
 ac_ext=${ac_fc_srcext-f}
 ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
 ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_fc_module_ext" >&5
-$as_echo "$ac_cv_fc_module_ext" >&6; }
-FC_MODEXT=$ac_cv_fc_module_ext
-if test "$FC_MODEXT" = unknown; then
-  FC_MODEXT=
-fi
-
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Fortran 90 module inclusion flag" >&5
-$as_echo_n "checking Fortran 90 module inclusion flag... " >&6; }
-if ${ac_cv_fc_module_flag+:} false; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for Fortran flag to compile preprocessed .F90 files" >&5
+$as_echo_n "checking for Fortran flag to compile preprocessed .F90 files... " >&6; }
+if ${ac_cv_fc_pp_srcext_F90+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  ac_ext=${ac_fc_srcext-f}
-ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
-ac_cv_fc_module_flag=unknown
-mkdir conftest.dir
-cd conftest.dir
-cat > conftest.$ac_ext <<_ACEOF
-
-      module conftest_module
-      contains
-      subroutine conftest_routine
-      write(*,'(a)') 'gotcha!'
-      end subroutine
-      end module
-_ACEOF
-if ac_fn_fc_try_compile "$LINENO"; then :
-  cd ..
-   ac_fc_module_flag_FCFLAGS_save=$FCFLAGS
-   # Flag ordering is significant for gfortran and Sun.
-   for ac_flag in -M -I '-I ' '-M ' -p '-mod ' '-module ' '-Am -I'; do
-     # Add the flag twice to prevent matching an output flag.
-     FCFLAGS="$ac_fc_module_flag_FCFLAGS_save ${ac_flag}conftest.dir ${ac_flag}conftest.dir"
-     cat > conftest.$ac_ext <<_ACEOF
-
-      program main
-      use conftest_module
-      call conftest_routine
-      end program
-_ACEOF
-if ac_fn_fc_try_compile "$LINENO"; then :
-  ac_cv_fc_module_flag="$ac_flag"
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-     if test "$ac_cv_fc_module_flag" != unknown; then
-       break
-     fi
-   done
-   FCFLAGS=$ac_fc_module_flag_FCFLAGS_save
-
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-rm -rf conftest.dir
-ac_ext=${ac_fc_srcext-f}
-ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_fc_module_flag" >&5
-$as_echo "$ac_cv_fc_module_flag" >&6; }
-if test "$ac_cv_fc_module_flag" != unknown; then
-  FC_MODINC=$ac_cv_fc_module_flag
-
-else
-  FC_MODINC=
-  as_fn_error $? "unable to find compiler flag for module search path" "$LINENO" 5
-fi
-
-# Ensure trailing whitespace is preserved in a Makefile.
-ac_empty=""
-
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Fortran 90 module output flag" >&5
-$as_echo_n "checking Fortran 90 module output flag... " >&6; }
-if ${ac_cv_fc_module_output_flag+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_ext=${ac_fc_srcext-f}
-ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
-mkdir conftest.dir conftest.dir/sub
-cd conftest.dir
-ac_cv_fc_module_output_flag=unknown
-ac_fc_module_output_flag_FCFLAGS_save=$FCFLAGS
-# Flag ordering is significant: put flags late which some compilers use
-# for the search path.
-for ac_flag in -J '-J ' -fmod= -moddir= +moddir= -qmoddir= '-mod ' \
-	      '-module ' -M '-Am -M' '-e m -J '; do
-  FCFLAGS="$ac_fc_module_output_flag_FCFLAGS_save ${ac_flag}sub"
+  ac_ext=F90
+ac_fcflags_pp_srcext_save=$ac_fcflags_srcext
+ac_fcflags_srcext=
+ac_cv_fc_pp_srcext_F90=unknown
+case $ac_ext in #(
+  [fF]77) ac_try=f77-cpp-input;; #(
+  *) ac_try=f95-cpp-input;;
+esac
+for ac_flag in none -ftpp -fpp -Tf "-fpp -Tf" -xpp=fpp -Mpreprocess "-e Z" \
+               -cpp -xpp=cpp -qsuffix=cpp=F90 "-x $ac_try" +cpp -Cpp; do
+  test "x$ac_flag" != xnone && ac_fcflags_srcext="$ac_flag"
   cat > conftest.$ac_ext <<_ACEOF
-
-      module conftest_module
-      contains
-      subroutine conftest_routine
-      write(*,'(a)') 'gotcha!'
-      end subroutine
-      end module
-_ACEOF
-if ac_fn_fc_try_compile "$LINENO"; then :
-  cd sub
-     cat > conftest.$ac_ext <<_ACEOF
-
       program main
-      use conftest_module
-      call conftest_routine
-      end program
+
+#if 0
+#include <ac_nonexistent.h>
+      choke me
+#endif
+      end
 _ACEOF
 if ac_fn_fc_try_compile "$LINENO"; then :
-  ac_cv_fc_module_output_flag="$ac_flag"
+  cat > conftest.$ac_ext <<_ACEOF
+      program main
+
+#if 1
+#include <ac_nonexistent.h>
+      choke me
+#endif
+      end
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+
+else
+  ac_cv_fc_pp_srcext_F90=$ac_flag; break
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-     cd ..
-     if test "$ac_cv_fc_module_output_flag" != unknown; then
-       break
-     fi
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 done
-FCFLAGS=$ac_fc_module_output_flag_FCFLAGS_save
-cd ..
-rm -rf conftest.dir
+rm -f conftest.$ac_objext conftest.F90
+ac_fcflags_srcext=$ac_fcflags_pp_srcext_save
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_fc_pp_srcext_F90" >&5
+$as_echo "$ac_cv_fc_pp_srcext_F90" >&6; }
+if test "x$ac_cv_fc_pp_srcext_F90" = xunknown; then
+  as_fn_error $? "Fortran could not compile preprocessed .F90 files" "$LINENO" 5
+else
+  ac_fc_srcext=F90
+  if test "x$ac_cv_fc_pp_srcext_F90" = xnone; then
+    ac_fcflags_srcext=""
+    FCFLAGS_F90=""
+  else
+    ac_fcflags_srcext=$ac_cv_fc_pp_srcext_F90
+    FCFLAGS_F90=$ac_cv_fc_pp_srcext_F90
+  fi
+
+
+fi
 ac_ext=${ac_fc_srcext-f}
 ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
 ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_fc_module_output_flag" >&5
-$as_echo "$ac_cv_fc_module_output_flag" >&6; }
-if test "$ac_cv_fc_module_output_flag" != unknown; then
-  FC_MODOUT=$ac_cv_fc_module_output_flag
-
-    DEF_FFLAGS="$FC_MODOUT./obj $FC_MODINC./obj $FC_MODINC. $DEF_FFLAGS"
-    FC_MODDIR=./obj
-
-else
-  FC_MODOUT=
-
-    FC_MODDIR=.
-
-fi
-
-# Ensure trailing whitespace is preserved in a Makefile.
-ac_empty=""
-
-
-
-
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -5794,6 +5693,15 @@ $as_echo "#define HAVE_XMMINTRIN 1" >>confdefs.h
 fi
 
 
+# AIX doesn't have err.h so we need to check
+ac_fn_c_check_header_mongrel "$LINENO" "err.h" "ac_cv_header_err_h" "$ac_includes_default"
+if test "x$ac_cv_header_err_h" = xyes; then :
+
+$as_echo "#define HAVE_ERR 1" >>confdefs.h
+
+fi
+
+
 ac_ext=${ac_fc_srcext-f}
 ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
 ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
@@ -6556,6 +6464,212 @@ if test x"$LOCAL_PATH_IS_ALSO_GLOBAL" = x; then :
     LOCAL_PATH_IS_ALSO_GLOBAL=true
 
 fi
+
+# Checks for typedefs, structures, and compiler characteristics.
+
+# check fortran modules flag
+
+$as_echo "## ----------------- ##
+## module extensions ##
+## ----------------- ##"
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Fortran 90 module extension" >&5
+$as_echo_n "checking Fortran 90 module extension... " >&6; }
+if ${ac_cv_fc_module_ext+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+mkdir conftest.dir
+cd conftest.dir
+ac_cv_fc_module_ext=unknown
+cat > conftest.$ac_ext <<_ACEOF
+
+      module conftest_module
+      contains
+      subroutine conftest_routine
+      write(*,'(a)') 'gotcha!'
+      end subroutine
+      end module
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+  ac_cv_fc_module_ext=`ls | sed -n 's,conftest_module\.,,p'`
+   if test x$ac_cv_fc_module_ext = x; then
+     ac_cv_fc_module_ext=`ls | sed -n 's,CONFTEST_MODULE\.,,p'`
+   fi
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+cd ..
+rm -rf conftest.dir
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_fc_module_ext" >&5
+$as_echo "$ac_cv_fc_module_ext" >&6; }
+FC_MODEXT=$ac_cv_fc_module_ext
+if test "$FC_MODEXT" = unknown; then
+  FC_MODEXT=
+fi
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Fortran 90 module inclusion flag" >&5
+$as_echo_n "checking Fortran 90 module inclusion flag... " >&6; }
+if ${ac_cv_fc_module_flag+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+ac_cv_fc_module_flag=unknown
+mkdir conftest.dir
+cd conftest.dir
+cat > conftest.$ac_ext <<_ACEOF
+
+      module conftest_module
+      contains
+      subroutine conftest_routine
+      write(*,'(a)') 'gotcha!'
+      end subroutine
+      end module
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+  cd ..
+   ac_fc_module_flag_FCFLAGS_save=$FCFLAGS
+   # Flag ordering is significant for gfortran and Sun.
+   for ac_flag in -M -I '-I ' '-M ' -p '-mod ' '-module ' '-Am -I'; do
+     # Add the flag twice to prevent matching an output flag.
+     FCFLAGS="$ac_fc_module_flag_FCFLAGS_save ${ac_flag}conftest.dir ${ac_flag}conftest.dir"
+     cat > conftest.$ac_ext <<_ACEOF
+
+      program main
+      use conftest_module
+      call conftest_routine
+      end program
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+  ac_cv_fc_module_flag="$ac_flag"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+     if test "$ac_cv_fc_module_flag" != unknown; then
+       break
+     fi
+   done
+   FCFLAGS=$ac_fc_module_flag_FCFLAGS_save
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+rm -rf conftest.dir
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_fc_module_flag" >&5
+$as_echo "$ac_cv_fc_module_flag" >&6; }
+if test "$ac_cv_fc_module_flag" != unknown; then
+  FC_MODINC=$ac_cv_fc_module_flag
+
+else
+  FC_MODINC=
+  as_fn_error $? "unable to find compiler flag for module search path" "$LINENO" 5
+fi
+
+# Ensure trailing whitespace is preserved in a Makefile.
+ac_empty=""
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Fortran 90 module output flag" >&5
+$as_echo_n "checking Fortran 90 module output flag... " >&6; }
+if ${ac_cv_fc_module_output_flag+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+mkdir conftest.dir conftest.dir/sub
+cd conftest.dir
+ac_cv_fc_module_output_flag=unknown
+ac_fc_module_output_flag_FCFLAGS_save=$FCFLAGS
+# Flag ordering is significant: put flags late which some compilers use
+# for the search path.
+for ac_flag in -J '-J ' -fmod= -moddir= +moddir= -qmoddir= '-mod ' \
+	      '-module ' -M '-Am -M' '-e m -J '; do
+  FCFLAGS="$ac_fc_module_output_flag_FCFLAGS_save ${ac_flag}sub"
+  cat > conftest.$ac_ext <<_ACEOF
+
+      module conftest_module
+      contains
+      subroutine conftest_routine
+      write(*,'(a)') 'gotcha!'
+      end subroutine
+      end module
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+  cd sub
+     cat > conftest.$ac_ext <<_ACEOF
+
+      program main
+      use conftest_module
+      call conftest_routine
+      end program
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+  ac_cv_fc_module_output_flag="$ac_flag"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+     cd ..
+     if test "$ac_cv_fc_module_output_flag" != unknown; then
+       break
+     fi
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+done
+FCFLAGS=$ac_fc_module_output_flag_FCFLAGS_save
+cd ..
+rm -rf conftest.dir
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_fc_module_output_flag" >&5
+$as_echo "$ac_cv_fc_module_output_flag" >&6; }
+if test "$ac_cv_fc_module_output_flag" != unknown; then
+  FC_MODOUT=$ac_cv_fc_module_output_flag
+
+	FCFLAGS_f90="$FC_MODOUT./obj $FC_MODINC./obj $FC_MODINC. $FCFLAGS_f90"
+	FC_MODDIR=./obj
+
+else
+  FC_MODOUT=
+
+	FC_MODDIR=.
+
+fi
+
+# Ensure trailing whitespace is preserved in a Makefile.
+ac_empty=""
+
+
+
+
 
 # Checks for libraries.
 
@@ -7320,6 +7434,7 @@ $as_echo "## ----------------------------------- ##
 ## setting up default simulation setup ##
 ## ----------------------------------- ##"
 
+# Output results.
 ac_config_files="$ac_config_files Makefile setup/constants.h setup/precision.h"
 
 
@@ -7458,6 +7573,14 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_CUDA5_TRUE}" && test -z "${COND_CUDA5_FALSE}"; then
   as_fn_error $? "conditional \"COND_CUDA5\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_CUDA6_TRUE}" && test -z "${COND_CUDA6_FALSE}"; then
+  as_fn_error $? "conditional \"COND_CUDA6\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_CUDA_PLUS_TRUE}" && test -z "${COND_CUDA_PLUS_FALSE}"; then
+  as_fn_error $? "conditional \"COND_CUDA_PLUS\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 case $FC_MODINC in #(

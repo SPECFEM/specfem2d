@@ -71,12 +71,15 @@ cuda_OBJECTS = \
 	$(EMPTY_MACRO)
 
 
-cuda_specfem2D_STUBS = \
+cuda_STUBS = \
 	$O/specfem2D_wrapper_cuda_method_stubs.cudaf90.o \
 	$O/specfem2D_gpu_cuda_method_stubs.cudacc.o \
 	$(EMPTY_MACRO)
 
 
+cuda_DEVICE_OBJ = \
+	$O/cuda_device_obj.o \
+	$(EMPTY_MACRO)
 
 
 #######################################
@@ -96,4 +99,4 @@ $O/%.cudacc.o: $S/%.c ${SETUP}/config.h
 	${CC} -c $(CPPFLAGS) $(CFLAGS) $(MPI_INCLUDES) -o $@ $<
 
 $O/%.cudaf90.o: $S/%.f90
-	${F90} ${DEF_FFLAGS} -c -o $@ $<
+	${F90} ${FCFLAGS_f90} -c -o $@ $<

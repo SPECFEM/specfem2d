@@ -44,7 +44,10 @@
 S := ${S_TOP}/src/specfem2D
 $(specfem2D_OBJECTS): S := ${S_TOP}/src/specfem2D
 
-LIBJPEG = ./libjpeg
+# libjpeg file directory
+LIBJPEG = ${S_TOP}/src/specfem2D/libjpeg
+$(JPEGLIB_OBJECTS): S := ${S_TOP}/src/specfem2D/libjpeg
+
 
 ####
 #### targets
@@ -155,6 +158,8 @@ specfem2D_OBJECTS = \
 specfem2D_MODULES = \
 	$(FC_MODDIR)/constants.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/interpolation.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_tomography_par.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
 specfem2D_SHARED_OBJECTS = \
@@ -246,6 +251,19 @@ cuda_specfem2D_STUBS = \
 	$O/specfem2D_gpu_cuda_method_stubs.cudacc.o \
 	$(EMPTY_MACRO)
 
+cuda_specfem2D_DEVICE_OBJ = \
+	$O/cuda_device_obj.o \
+	$(EMPTY_MACRO)
+
+ifeq ($(CUDA),yes)
+specfem2D_OBJECTS += $(cuda_specfem2D_OBJECTS)
+ifeq ($(CUDA_PLUS),yes)
+specfem2D_OBJECTS += $(cuda_specfem2D_DEVICE_OBJ)
+endif
+else
+specfem2D_OBJECTS += $(cuda_specfem2D_STUBS)
+endif
+
 #######################################
 
 
@@ -261,29 +279,29 @@ xspecfem2D: $E/xspecfem2D
 
 ifeq ($(CUDA),yes)
 ## cuda version
-${E}/xspecfem2D: $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS) $(cuda_specfem2D_OBJECTS)
-
-ifeq ($(CUDA5),yes)
-## cuda 5 version
-	@echo ""
-	@echo "building xspecfem2D with CUDA 5 support"
-	@echo ""
+ifeq ($(CUDA_PLUS),yes)
+## cuda 5x & 6x version
+INFO_CUDA="building xspecfem2D with CUDA support"
 else
 ## cuda 4 version
-	@echo ""
-	@echo "building xspecfem2D with CUDA 4 support"
-	@echo ""
+INFO_CUDA="building xspecfem2D with CUDA 4 support"
 endif
-	$(LINK) $(DEF_FFLAGS) -o ${E}/xspecfem2D $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS) $(cuda_specfem2D_OBJECTS) $(MPILIBS) $(CUDA_LINK)
+
+${E}/xspecfem2D: $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS)
 	@echo ""
+	@echo $(INFO_CUDA)
+	@echo ""
+	$(FCLINK) -o ${E}/xspecfem2D $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS) $(MPILIBS) $(CUDA_LINK)
+	@echo ""
+
 else
 
 ## non-cuda version
-${E}/xspecfem2D: $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS) $(cuda_specfem2D_STUBS)
+${E}/xspecfem2D: $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS)
 	@echo ""
 	@echo "building xspecfem2D without CUDA support"
 	@echo ""
-	$(LINK) $(DEF_FFLAGS) -o ${E}/xspecfem2D $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS) $(cuda_specfem2D_STUBS) $(MPILIBS)
+	$(FCLINK) -o ${E}/xspecfem2D $(specfem2D_OBJECTS) $(specfem2D_SHARED_OBJECTS) $(MPILIBS)
 	@echo ""
 
 endif
@@ -386,13 +404,20 @@ $O/write_wavefield_dumps.spec.o: $O/specfem2D_par.spec.o
 ####
 
 $O/%.spec.o: $S/%.f90 ${SETUP}/constants.h
-	${F90} ${DEF_FFLAGS} -c -o $@ $<
+	${F90} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.spec.o: $S/%.F90 ${SETUP}/constants.h
-	${F90} ${DEF_FFLAGS} -c -o $@ $<
+	${F90} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.cc.o: $S/%.c ${SETUP}/config.h
 	${CC} ${CFLAGS} -c -o $@ $<
+
+###
+### CUDA 5 only
+###
+
+$(cuda_specfem2D_DEVICE_OBJ): $(cuda_OBJECTS)
+	${NVCCLINK} -o $(cuda_specfem2D_DEVICE_OBJ) $(cuda_OBJECTS)
 
 
 ##
@@ -400,4 +425,4 @@ $O/%.cc.o: $S/%.c ${SETUP}/config.h
 ##
 
 $O/%.cc.o: $S/libjpeg/%.c
-	${CC} -c $(CFLAGS) -I$S/libjpeg -o $@ $<
+	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $@ $<

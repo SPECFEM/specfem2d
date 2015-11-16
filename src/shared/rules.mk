@@ -74,7 +74,7 @@ shared_MODULES = \
 ##
 
 $O/%.shared.o: $S/%.f90
-	${F90} $(DEF_FFLAGS) -c -o $@ $<
+	${F90} ${FCFLAGS_f90} -c -o $@ $<
 
 
 ##

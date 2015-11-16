@@ -42,25 +42,25 @@
 
 ## compilation directories
 S := ${S_TOP}/src/tomography/postprocess_sensitivity_kernels
-$(postprocess_OBJECTS): S := ${S_TOP}/src/tomography/postprocess_sensitivity_kernels
+$(tomography/postprocess_sensitivity_kernels_OBJECTS): S := ${S_TOP}/src/tomography/postprocess_sensitivity_kernels
 
 #######################################
 
-postprocess_TARGETS = \
+tomography/postprocess_sensitivity_kernels_TARGETS = \
 	$E/xcombine_sem \
 	$E/xsmooth_sem \
 	$(EMPTY_MACRO)
 
-postprocess_OBJECTS = \
+tomography/postprocess_sensitivity_kernels_OBJECTS = \
 	$(xcombine_sem_OBJECTS) \
 	$(xsmooth_sem_OBJECTS) \
 	$(EMPTY_MACRO)
 
-postprocess_MODULES = \
+tomography/postprocess_sensitivity_kernels_MODULES = \
 	$(FC_MODDIR)/postprocess_par.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
-postprocess_SHARED_OBJECTS = \
+tomography/postprocess_sensitivity_kernels_SHARED_OBJECTS = \
 	$(EMPTY_MACRO)
 
 
@@ -70,13 +70,19 @@ postprocess_SHARED_OBJECTS = \
 #### rules for executables
 ####
 
-postprocess: $(postprocess_TARGETS)
+postprocess: $(tomography/postprocess_sensitivity_kernels_TARGETS)
 
 combine_sem: xcombine_sem
 xcombine_sem: $E/xcombine_sem
 
 smooth_sem: xsmooth_sem
 xsmooth_sem: $E/xsmooth_sem
+
+#######################################
+
+####
+#### rules for each program follow
+####
 
 #######################################
 
@@ -94,7 +100,7 @@ xcombine_sem_SHARED_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ${E}/xcombine_sem: $(xcombine_sem_OBJECTS) $(xcombine_sem_SHARED_OBJECTS)
-	${LINK} $(DEF_FFLAGS) -o $@ $+
+	${FCLINK} -o $@ $+
 
 #######################################
 
@@ -120,24 +126,35 @@ cuda_smooth_sem_OBJECTS = \
 	$O/initialize_cuda.cuda.o \
 	$(EMPTY_MACRO)
 
+cuda_smooth_sem_DEVICE_OBJ = \
+	$O/cuda_device_smooth_obj.o \
+	$(EMPTY_MACRO)
+
 ifeq ($(CUDA),yes)
 ## cuda version
-${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS)  $(cuda_smooth_sem_OBJECTS)
-	@echo ""
-	@echo "building xsmooth_sem with CUDA support"
-	@echo ""
-	$(LINK) $(DEF_FFLAGS) -o ${E}/xsmooth_sem $(xsmooth_sem_OBJECTS) $(cuda_smooth_sem_OBJECTS) $(MPILIBS) $(CUDA_LINK)
-	@echo ""
+xsmooth_sem_OBJECTS += $(cuda_smooth_sem_OBJECTS)
+ifeq ($(CUDA_PLUS),yes)
+xsmooth_sem_OBJECTS += $(cuda_smooth_sem_DEVICE_OBJ)
+endif
+## libs
+xsmooth_sem_LIBS = $(MPILIBS) $(CUDA_LINK)
+INFO_CUDA="building xsmooth_sem with CUDA support"
 else
 ## non-cuda version
-${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS) $(cuda_smooth_sem_STUBS)
+xsmooth_sem_OBJECTS += $(cuda_smooth_sem_STUBS)
+## libs
+xsmooth_sem_LIBS = $(MPILIBS)
+INFO_CUDA="building xsmooth_sem without CUDA support"
+endif
+
+
+${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS)
 	@echo ""
-	@echo "building xsmooth_sem without CUDA support"
+	@echo $(INFO_CUDA)
 	@echo ""
-	$(LINK) $(DEF_FFLAGS) -o ${E}/xsmooth_sem $(xsmooth_sem_OBJECTS) $(cuda_smooth_sem_STUBS) $(MPILIBS)
+	$(FCLINK) -o ${E}/xsmooth_sem $(xsmooth_sem_OBJECTS) $(xsmooth_sem_LIBS)
 	@echo ""
 
-endif
 #######################################
 
 
@@ -148,17 +165,26 @@ endif
 ##
 ## postprocess
 ##
-$O/%.postprocess.cuda.o: $S/%.cu ${SETUP}/config.h $S/smooth_cuda.h
-	${NVCC} -c $< -o $@ $(NVCC_FLAGS)
 
 $O/%.postprocess_module.o: $S/%.f90 ${SETUP}/constants.h $O/specfem2D_par.spec.o
-	${F90} ${DEF_FFLAGS} -c -o $@ $<
+	${F90} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.postprocess.o: $S/%.f90
-	${F90} ${DEF_FFLAGS} -c -o $@ $<
+$O/%.postprocess.o: $S/%.f90 $O/postprocess_par.postprocess_module.o
+	${F90} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.postprocess.o: $S/%.F90
-	${F90} ${DEF_FFLAGS} -c -o $@ $<
+$O/%.postprocess.o: $S/%.F90 $O/postprocess_par.postprocess_module.o
+	${F90} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.postprocess.o: $S/%.c ${SETUP}/config.h
 	${CC} -c $(CPPFLAGS) $(CFLAGS) $(MPI_INCLUDES) -o $@ $<
+
+
+###
+### CUDA
+###
+$O/%.postprocess.cuda.o: $S/%.cu ${SETUP}/config.h $S/smooth_cuda.h
+	${NVCC} -c $< -o $@ $(NVCC_FLAGS)
+
+$(cuda_smooth_sem_DEVICE_OBJ): $(cuda_smooth_sem_OBJECTS)
+	${NVCCLINK} -o $(cuda_smooth_sem_DEVICE_OBJ) $(cuda_smooth_sem_OBJECTS)
+

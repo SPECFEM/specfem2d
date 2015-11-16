@@ -76,7 +76,9 @@ AC_ARG_WITH([cuda],
     [want_cuda=no])
 AM_CONDITIONAL([COND_CUDA], [test "$want_cuda" != no])
 AM_CONDITIONAL([COND_CUDA5], [test "$want_cuda" = cuda5])
-
+AM_CONDITIONAL([COND_CUDA6], [test "$want_cuda" = cuda6])
+# cuda linking for cuda 5x and 6x
+AM_CONDITIONAL([COND_CUDA_PLUS], [test "$want_cuda" = cuda5 -o "$want_cuda" = cuda6])
 
 ############################################################
 
@@ -88,6 +90,10 @@ if test x"$FC" = x && test x"$F90" != x; then
 fi
 if test x"$MPIFC" = x && test x"$MPIF90" != x; then
     MPIFC="$MPIF90"
+fi
+# note: if not set, default FCFLAGS (and CFLAGS) will be set by autoconf/configure script (mostly -g -O2)
+if test x"$FCFLAGS" = x && test x"$FLAGS_CHECK" != x ; then
+    FCFLAGS=""
 fi
 
 AC_PROG_FC
@@ -112,24 +118,15 @@ AC_FC_FREEFORM()
 
 AC_FC_PP_DEFINE()
 AC_SUBST([FC_DEFINE])
-
-AC_FC_MODULE_EXTENSION
-AC_SUBST([FC_MODEXT])
-AC_FC_MODULE_FLAG([], [])
-AC_FC_MODULE_OUTPUT_FLAG([
-    DEF_FFLAGS="$FC_MODOUT./obj $FC_MODINC./obj $FC_MODINC. $DEF_FFLAGS"
-    FC_MODDIR=./obj
-], [
-    FC_MODDIR=.
-])
-AC_SUBST([FC_MODDIR])
-
+AC_FC_PP_SRCEXT(F90)dnl Because AC_FC_PP_DEFINE messes with things.
 
 AC_PROG_CC
 
 AC_LANG_PUSH(C)
 AC_CHECK_HEADER(emmintrin.h,AC_DEFINE([HAVE_EMMINTRIN],[1],[Define if emmintrin.h]))
 AC_CHECK_HEADER(xmmintrin.h,AC_DEFINE([HAVE_XMMINTRIN],[1],[Define if xmmintrin.h]))
+# AIX doesn't have err.h so we need to check
+AC_CHECK_HEADER(err.h,      AC_DEFINE([HAVE_ERR],      [1],[Define if err.h]))
 AC_LANG_POP(C)
 
 
@@ -258,7 +255,7 @@ AC_ARG_VAR(MPIFC, [MPI Fortran compiler command])
 AC_ARG_VAR(MPILIBS, [extra libraries for linking MPI programs])
 AC_ARG_VAR(MPICC, [MPI C compiler command])
 
-AC_ARG_VAR(DEF_FFLAGS, [Fortran compiler flags])
+AC_ARG_VAR(FLAGS_CHECK, [Fortran compiler flags])
 
 # scratch disks
 AC_ARG_VAR(LOCAL_PATH_IS_ALSO_GLOBAL, [files on a local path on each node are also seen as global with same path @<:@default=true@:>@])
@@ -275,6 +272,24 @@ AS_IF([test x"$MPICC" = x],[
 AS_IF([test x"$LOCAL_PATH_IS_ALSO_GLOBAL" = x],[
     LOCAL_PATH_IS_ALSO_GLOBAL=true
 ])
+
+# Checks for typedefs, structures, and compiler characteristics.
+
+# check fortran modules flag
+
+AS_BOX([module extensions])
+
+AC_FC_MODULE_EXTENSION
+AC_SUBST([FC_MODEXT])
+AC_FC_MODULE_FLAG([], [])
+AC_FC_MODULE_OUTPUT_FLAG([
+	FCFLAGS_f90="$FC_MODOUT./obj $FC_MODINC./obj $FC_MODINC. $FCFLAGS_f90"
+	FC_MODDIR=./obj
+], [
+	FC_MODDIR=.
+])
+AC_SUBST([FC_MODDIR])
+
 
 # Checks for libraries.
 
@@ -301,6 +316,7 @@ AS_IF([test x"$want_cuda" != xno], [
 
 AS_BOX([setting up default simulation setup])
 
+# Output results.
 AC_CONFIG_FILES([
 	Makefile
 	setup/constants.h

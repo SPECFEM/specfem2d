@@ -40,7 +40,7 @@
 #
 #========================================================================
 
-DIR = postprocess
+DIR = tomography/postprocess_sensitivity_kernels
 
 # The rest of this file is generic
 #######################################
